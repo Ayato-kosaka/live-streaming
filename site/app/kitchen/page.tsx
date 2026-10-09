@@ -69,7 +69,7 @@ export default function KitchenPage() {
   // 「作った料理」は島に建っていて、島から直接押して入る。「配信」の下に
   // ぶら下げると、パンくずと実際の行き方が食い違う（`docs/island-design.md` 6章）。
   return (
-    <PageShell crumbs={[{ label: "作った料理" }]}>
+    <PageShell current="kitchen" crumbs={[{ label: "作った料理" }]}>
       {/* h1 は場所の名前（`docs/island-ux.md` 4.3）。「クッキング・スタンプ帳」は
           この小屋に置いてある帳面の名前なので、1行下に降ろす。パンくずと h1 で
           名前が2つあると、どこに居るのかを画面が2通りに答えてしまう。 */}

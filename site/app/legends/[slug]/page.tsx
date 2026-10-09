@@ -44,7 +44,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   const picked = new Set(streams.map((s) => s.videoId).filter(Boolean));
 
   return (
-    <PageShell
+    <PageShell current="legends"
       crumbs={[
         { label: "伝説の企画", href: "/legends" },
         { label: l.title },

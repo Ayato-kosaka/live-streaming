@@ -105,7 +105,7 @@ const LINE_LEFT = Math.max(0, LINE_WANT - LINE_STAMPS.length);
 
 export default function GoodsPage() {
   return (
-    <PageShell crumbs={[{ label: "あやとグッズ" }]}>
+    <PageShell current="goods" crumbs={[{ label: "あやとグッズ" }]}>
       <PageHead
         mark={<Icon name="gift" size={44} />}
         title="あやとグッズ"

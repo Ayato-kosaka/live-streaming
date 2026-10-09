@@ -50,7 +50,7 @@ export default function LegendsPage() {
     .filter((l) => l.date < awhile);
 
   return (
-    <PageShell crumbs={[{ label: "伝説の企画" }]}>
+    <PageShell current="legends" crumbs={[{ label: "伝説の企画" }]}>
       {/* カモメは遊び方のある面だけに出す（`docs/island-ux.md` 5.2）。
           ここは読む面なので出さない。読みかた（数字だけ追えば分かる）は
           「丘に立っているもの」の1行が受け持つ。 */}
