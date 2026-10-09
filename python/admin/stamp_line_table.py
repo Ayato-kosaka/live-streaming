@@ -105,12 +105,17 @@ def fetch_rows(client) -> list:
         # 図鑑（＝絵と名前の正。`docs/island-db.md` 3.4）
         c = chars.document(d.id).get()
         cv = (c.to_dict() or {}) if c.exists else {}
-        name = (cv.get("channelName") or "").strip()
+        # **呼び名は `aliases` が先。** `characters_migrate` が
+        # `@` 付きのハンドルだけを `channelName` に入れたので、
+        # あちらを先に見ると**名前のかわりに `@…` が並ぶ**
+        # （`python/admin/characters_why.py` 53行目と同じ読み）
+        name = ""
+        for a in (cv.get("aliases") or []):
+            if isinstance(a, str) and a.strip():
+                name = a.strip()
+                break
         if not name:
-            for a in (cv.get("aliases") or []):
-                if isinstance(a, str) and a.strip():
-                    name = a.strip()
-                    break
+            name = (cv.get("channelName") or "").strip()
         out.append({
             "id": d.id,
             "channelId": ch,
@@ -474,9 +479,15 @@ def main() -> int:
     body = body_of(rows, counts, top)
     parts = chunks(body)
     log.info("本文: %d 字 / %d コメント", len(body), len(parts))
+    # **名前が引けない人数も注記に出す。** ログは置き場から配られて
+    # 口からは読めないので、下見で確かめられるのは注記だけ。
+    # ここに出していないと「名前のかわりに『引けません』が25行並ぶ」が
+    # 貼ってからしか分からない
     notice(f"セリフの表{'（下見）' if not apply else ''}: "
            f"{len(rows)}人 / 候補あり {len(got)}人 / 候補なし {len(non)}人 / "
-           f"重複 {len(dups)}人 / 回数不明 {unknown}本 / {len(parts)}コメント")
+           f"重複 {len(dups)}人 / 回数不明 {unknown}本 / "
+           f"名前が引けない {len(noname)}人 / 図鑑に居ない {len(nochar)}人 / "
+           f"{len(parts)}コメント")
 
     if not apply:
         log.info("下見なので**1文字も貼っていません**。"
