@@ -118,6 +118,77 @@ export function opaqueBox(img: HTMLImageElement): Box {
 }
 
 /**
+ * ふちの太さ（人の見えている幅に対して）。
+ *
+ * **ダイカットのシールの白ぶち。** これが無いと、賑やかな写真の上で
+ * 人の輪郭が地に溶ける（あやと 2026-10-09「埋め込みがイケテなさすぎる」）。
+ * 影だけでは足りない——影は輪郭の**外**にぼけて出るので、地が暗いところでは
+ * 輪郭そのものが消える。太すぎると人が白い塊になるので、3.4%——
+ * 1200px の写真で 14px。
+ */
+export const EDGE = 0.034;
+
+/** ふちの外へ落ちるやわらかい影。**人の幅に対して。** */
+const CAST = { blur: 0.062, down: 0.024, ink: "rgba(0,0,0,0.34)" };
+
+/** ふちを作るときに、絵を何方向へずらして重ねるか。少ないと角が尖る。 */
+const EDGE_STEPS = 20;
+
+/**
+ * 白いふちの形（シールの台紙）を1枚作って返す。
+ *
+ * **絵の見えている画素を全方向へ `r` だけ太らせて、白で塗りつぶしたもの。**
+ * `source-in` で塗るので、半透明のふち（アンチエイリアス）も白くなり、
+ * 上に本体を重ねたときに**切り抜いたシールの縁**として見える。
+ *
+ * 返る canvas は、本体の箱より四方 `pad` だけ大きい。描くときは
+ * `box.x - pad, box.y - pad` に置く。
+ *
+ * **`ctx.filter` を使わない。** `drop-shadow()` を重ねれば同じ形は作れるが、
+ * Safari は `ctx.filter` を黙って無視する。無視されても絵は出るので、
+ * **iPhone だけふちの無い1枚が落ちてくる**——いちばん多く使われる端末で。
+ *
+ * @param img もとの絵 @param src 透明なふちを落とした中身のところ
+ * @param w 描く幅 @param h 描く高さ @param r ふちの太さ（px）
+ */
+function dieCut(
+  img: HTMLImageElement,
+  src: Box,
+  w: number,
+  h: number,
+  r: number,
+): { cv: HTMLCanvasElement; pad: number } | null {
+  const pad = Math.ceil(r) + 1;
+  const cw = Math.max(1, Math.ceil(w) + pad * 2);
+  const ch = Math.max(1, Math.ceil(h) + pad * 2);
+  const cv = document.createElement("canvas");
+  cv.width = cw;
+  cv.height = ch;
+  const g = cv.getContext("2d");
+  if (!g) return null;
+  for (let i = 0; i < EDGE_STEPS; i++) {
+    const a = (i / EDGE_STEPS) * Math.PI * 2;
+    g.drawImage(
+      img,
+      src.x,
+      src.y,
+      src.w,
+      src.h,
+      pad + Math.cos(a) * r,
+      pad + Math.sin(a) * r,
+      w,
+      h,
+    );
+  }
+  /* 太らせた形を、まるごと白にする。**色は捨てて形だけ使う** */
+  g.globalCompositeOperation = "source-in";
+  g.fillStyle = "#fff";
+  g.fillRect(0, 0, cw, ch);
+  g.globalCompositeOperation = "source-over";
+  return { cv, pad };
+}
+
+/**
  * 足元に落ちる影。
  *
  * 島の絵の決まりの3番目（`docs/island-design.md` 2章）。
@@ -205,7 +276,15 @@ export function composeMany(
   return cv;
 }
 
-/** 1体を、傾きと左右の返しごと描く。傾きの原点は足元（画面側と同じ）。 */
+/**
+ * 1体を、傾きと左右の返しごと描く。傾きの原点は足元（画面側と同じ）。
+ *
+ * **白いふち → やわらかい影 → 本体**の順。ふちの形を影つきで1回描けば、
+ * 影は**シールの縁から**落ちる（本体の輪郭からではない）。
+ *
+ * 影のずれは**下だけ**（`shadowOffsetX` は置かない）。左右を返すときは
+ * `scale(-1, 1)` の中にいるので、横へずらすと**返した人だけ影が逆へ**出る。
+ */
 function draw(
   g: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -223,6 +302,15 @@ function draw(
     // 返さないと本人に背を向けたまま並ぶ
     if (at.flip) g.scale(-1, 1);
     g.translate(-cx, -foot);
+  }
+  const cut = dieCut(img, src, at.box.w, at.box.h, at.box.w * EDGE);
+  if (cut) {
+    g.save();
+    g.shadowColor = CAST.ink;
+    g.shadowBlur = at.box.w * CAST.blur;
+    g.shadowOffsetY = at.box.w * CAST.down;
+    g.drawImage(cut.cv, at.box.x - cut.pad, at.box.y - cut.pad);
+    g.restore();
   }
   g.drawImage(img, src.x, src.y, src.w, src.h, at.box.x, at.box.y, at.box.w, at.box.h);
   if (moved) g.restore();

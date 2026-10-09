@@ -55,10 +55,22 @@
 .akd-chr {
   position: absolute;
   transform-origin: bottom center;
-  /* 地面に落ちる影。焼き込む1枚（`components/nordic/stamp.ts`）と同じ役で、
-     これが無いとキャラクターが景色に貼った紙に見える
-     （`docs/island-design.md` 2章の3）。写真の地が何色でも効くよう、薄く。 */
-  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.28));
+  /* **白いふち＋やわらかい影**（ダイカットのシール）。焼き込む1枚
+     （`components/nordic/stamp.ts` の `dieCut`）と同じ役なので、
+     **画面のカードと持って帰る1枚が同じ顔**になる。
+
+     ふちが要るのは、賑やかな写真の上で人の輪郭が地に溶けるから
+     （あやと 2026-10-09「埋め込みがイケテなさすぎる」）。影だけでは
+     足りない——影は輪郭の外にぼけて出るので、**地が暗いところでは
+     輪郭そのものが消える。**
+
+     `drop-shadow` は**前の結果にかかる**ので、4方向を重ねると斜めも
+     埋まる。8方向書くより軽くて、同じ形になる（焼くほうは20方向で
+     太らせているが、画面のカードは絵が 60px 前後なので4方向で足りる）。 */
+  filter:
+    drop-shadow(1.6px 0 0 #fff) drop-shadow(-1.6px 0 0 #fff)
+    drop-shadow(0 1.6px 0 #fff) drop-shadow(0 -1.6px 0 #fff)
+    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32));
 }
 
 /* 下の帯。字は3つまで（日付・その日の企画・名前）。 */
