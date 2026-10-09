@@ -228,22 +228,35 @@ def badge_scale(path, margin=0.80):
     return round(min(1.0, (min(w, h) / 2) / rmax * margin), 3)
 
 
-def panel_fit(path, kw=172, kh=160, max_w=86, max_h=122):
+# **SUZURI の scale は「絵の画素数 × 倍率」で効く**（埋める大きさに対する倍率ではない）。
+# 同じ 0.73 でも、783px の絵は 1255px の絵の 6割の大きさに刷られる。前から上がっていた絵
+# （644〜1044px）だけ缶バッジもパネルも小さく出て気づいた（2026-10-09）。
+# 見本で測ると、刷られる大きさ ≈ MM_PER_PX × scale × 画素数（縦横とも）:
+#   🦄 1255px・0.64 で中身 1114px → 89mm、🪽 1562px・0.632 で 1236px → 94mm、
+#   🐈‍⬛ 1362px・0.788 で縦 1310px → 約 130mm。どれも 0.12〜0.126
+MM_PER_PX = 0.123
+# 缶バッジの大きさを合わせた基準の絵（🦄）の画素数。これより大きい絵は scale を小さく
+REF_PX = 1255
+
+
+def panel_fit(path, max_w=86, max_h=122):
     """アクリルパネル（100x148mm の縦長）の大きさと縦の位置。
-    scale s のとき、正方形の絵の一辺は**横がおよそ kw·s mm（kw≈172）、縦が kh·s mm（kh≈160）**。
-    見本の絵で測った（🪽 0.696 で中身が幅の 94% → kw≈171、🐈‍⬛ 0.788 で縦がちょうど収まる）。🦄 は 0.64 で中身が
-    幅いっぱい（約 98mm）に届いた。**最初 k=147 で見積もって、縦長の絵の左右が切れた**
-    （🪽 🐈‍⬛ 🪆 🤟 など。2026-10-09）。
-    既定では絵の上端がパネルの上端に付き、offsetY を足すと下がる（0.1 で高さの約1割）。
-    中身（描いてある外接矩形）が幅 max_w・高さ max_h（下はスタンドのぶん空ける）に
-    収まるいちばん大きい s を取り、正方形の真ん中をパネルの高さの 47% に置く。"""
+    中身（描いてある外接矩形）が幅 max_w・高さ max_h mm（下はスタンドのぶん空ける）に
+    収まるいちばん大きい scale を取り、正方形の真ん中をパネルの高さの 47% に置く。
+    既定では絵の上端がパネルの上端に付き、offsetY はパネルの高さに対する割合で下へ動く
+    （🦄 で 0.1 → 約 1割）。"""
     from PIL import Image
     im = Image.open(path).convert("RGBA")
     bb = im.getchannel("A").point(lambda v: 255 if v >= 16 else 0).getbbox()
     side = max(im.size)
-    wf, hf = (bb[2] - bb[0]) / side, (bb[3] - bb[1]) / side
-    s = min(max_w / (wf * kw), max_h / (hf * kh))
-    return {"scale": round(s, 3), "offsetY": round(0.47 - kh * s / 296, 3)}
+    w, h = bb[2] - bb[0], bb[3] - bb[1]
+    s = min(max_w / (MM_PER_PX * w), max_h / (MM_PER_PX * h))
+    return {"scale": round(s, 3), "offsetY": round((148 * 0.47 - MM_PER_PX * s * side / 2) / 148, 3)}
+
+
+def _side(path):
+    from PIL import Image
+    return max(Image.open(path).size)
 
 
 def layout(path):
@@ -259,7 +272,7 @@ def layout(path):
     return [
         {"item": "sticker"},
         {"item": "acrylic-keychain"},
-        {"item": "can-badge", "scale": badge_scale(path), "offsetX": 0.0, "offsetY": 0.0},
+        {"item": "can-badge", "scale": round(badge_scale(path) * REF_PX / _side(path), 3), "offsetX": 0.0, "offsetY": 0.0},
         {"item": "mug"},
         dict({"item": "acrylic-panel", "offsetX": 0.0}, **panel_fit(path)),
     ]
