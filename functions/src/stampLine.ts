@@ -128,7 +128,8 @@ export function shapeLines(v: unknown): string[] {
   for (const x of v) {
     /* **改行は落とす。** スタンプの絵に乗るのは1行で、改行を残すと
        画面では見えないまま字数だけ食う */
-    const t = clean(typeof x === "string" ? x.replace(/\s+/g, " ") : "", MAX_LEN);
+    const one = typeof x === "string" ? x.replace(/\s+/g, " ") : "";
+    const t = clean(one, MAX_LEN);
     if (!t) continue;
     if (out.includes(t)) continue;
     out.push(t);
