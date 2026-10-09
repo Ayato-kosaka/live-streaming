@@ -168,7 +168,8 @@ export type LineStamp = {
 export const LINE_PENDING = "/goods/line/pending.webp";
 
 /**
- * あやとのぶん。**いま18枚**（`LINE_WANT` は 15。**候補が行き先より多い**）。
+ * あやとのぶん。**いま19枚**（`LINE_WANT` は 15。**候補が行き先より多い**。
+ * あやと 2026-10-09:「住人スタンプ削るか、良いね数見てあやとスタンプ削るかで40にしますよ」）。
  *
  * 並べ替えない——「おはよう・こんばんは・おやすみ」で1日が回って、
  * そのあとに気持ちが4つ、最後に使いどころのある3つ、という並びになっている。
@@ -192,6 +193,10 @@ export const LINE_STAMPS: LineStamp[] = [
      （うれしい → すごいよ → いいやんか）。LINE に出すときの順番は
      あやとが後で決めるので、ここの並びは島の面の並びでしかない。 */
   { id: "sugoiyo", line: "すごいよ", art: "/goods/line/sugoiyo.webp" },
+  /* **パチパチ**（あやと 2026-10-09 の作り直しで1枚増えた）。
+     ほめる側の一言なので「すごいよ」の次。手だけが色付きで、
+     ほかの14枚と同じ黒の線に拍手の黄が乗っている */
+  { id: "pachipachi", line: "パチパチ", art: "/goods/line/pachipachi.webp" },
   /* 気持ちのかたまりの中。「すごいよ」の次に、もう一段上げる一言 */
   { id: "nextlevel", line: "ネクストレベル", art: "/goods/line/nextlevel.webp" },
   { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
