@@ -219,13 +219,20 @@ def main() -> int:
     # 名前順。`NAME_A`（い）→ `NAME_B`（や）
     check(body.index(NAME_A) < body.index(NAME_B),
           "中は名前順（**強い順ではない**）")
-    check("`そうきたか`／`そうきたか！！`" in body,
+    check("「そうきたか」／「そうきたか！！」" in body,
           "**同じことばが2本になっている人を書く**")
     check("3人" in body, "人数を書く")
     check("25人そろっていません" in body, "**足りないと書く**")
     # 選び方の内側（島ぜんぶの回数・割合・点）を本文に出さない
     for w in ("割合", "島ぜんぶ", "点が", "スコア"):
         check(w not in body, f"選び方の内側を本文に出さない（{w}）")
+
+    print("== markdown に読まれてしまう字 ==")
+    check(tbl.cell("_ねむい_") == "\\_ねむい\\_",
+          "**下線は逃がす**（斜体にならない）")
+    check(tbl.cell("a|b") == "a\\|b", "**縦棒は逃がす**（欄が割れない）")
+    check(tbl.cell("ふつうの字") == "ふつうの字",
+          "ふつうの字には1文字も足さない")
 
     print("== 公開のログ ==")
     logged = BUF.getvalue()

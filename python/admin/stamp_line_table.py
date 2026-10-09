@@ -187,11 +187,18 @@ def counts_of(rows: list, days: int) -> dict:
             for ch, box in own.items()}
 
 
+# markdown として読まれてしまう字。**逃がさないと、その人が打った形で
+# 読めなくなる**（`_ねむい_` が斜体になる、`|` で欄が割れる、
+# `<b>` が消える）。GitHub は ASCII の記号を `\` で逃がせる
+MD = "\\`*_[]<>&|~#"
+
+
 def cell(text: str) -> str:
-    """表のます1つ。**縦棒だけ逃がす。字そのものは直さない。**
+    """表のます1つ。**読まれ方だけ逃がす。字そのものは直さない。**
 
     送り仮名も語尾も、その人が打った形のまま出す
     （`python/stamp_line_pick.py`「字そのものは書き換えない」）。
+    ここで足すのは `\` だけで、**GitHub の画面では元の字に戻る。**
 
     Args:
         text: 出す字
@@ -199,7 +206,12 @@ def cell(text: str) -> str:
     Returns:
         表に入れてよい形
     """
-    return (text or "").replace("|", "\\|")
+    out = []
+    for c in (text or ""):
+        if c in MD:
+            out.append("\\")
+        out.append(c)
+    return "".join(out)
 
 
 def dup_of(row: dict) -> list:
@@ -307,8 +319,11 @@ def body_of(rows: list, counts: dict, top: int) -> str:
         p.append("")
         for r, d in dups:
             # **組ごとに並べる。** どれとどれが同じことばなのかが要る
+            # **組ごとに並べる。** どれとどれが同じことばなのかが要る。
+            # 囲いに `` ` `` を使わない——ことばの中に `` ` `` が
+            # 入っていたら囲いが割れる
             p.append(f"- {r['emoji']} {cell(r['name'])} — "
-                     + " / ".join("／".join(f"`{cell(x)}`" for x in g)
+                     + " / ".join("／".join(f"「{cell(x)}」" for x in g)
                                   for g in d))
         p.append("")
         p.append("**どちらかを別のことばに替えます。** 入れ替えたい字があれば"
@@ -324,7 +339,7 @@ def body_of(rows: list, counts: dict, top: int) -> str:
         p.append("| :--: | :-- | --- |")
         for r in sorted(decided, key=lambda r: (r["name"] or "￿", r["id"])):
             p.append(f"| {r['emoji']} | {cell(r['name'])} | "
-                     + "／".join(f"`{cell(x)}`" for x in r["lines"]) + " |")
+                     + "／".join(f"「{cell(x)}」" for x in r["lines"]) + " |")
         p.append("")
         p.append("**こちらは本人の字なので、こちらからは触りません。**")
         p.append("")
