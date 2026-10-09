@@ -42,7 +42,7 @@
 
 ## 右下だけは、島の持ち物
 
-右下の「STOP」は `site/public/goods/ayato-sticker.jpg`。あやとが描いた絵で、
+右下の「STOP」は `site/public/goods/ayato-sticker.png`。あやとが描いた絵で、
 島では無料で配っている（`goods.ts` の `STICKERS`）。**元絵は白地の平らな絵**
 なので、ほかの3枚（商品の写真）とそのまま並べると1枚だけ別の世界のものに
 見える。だから、ここで**ふちを付けてステッカーの形に抜いてから**並べる。
@@ -63,7 +63,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 DEST = ROOT / "site/public/goods/suzuri-goods.webp"
-STOP_ART = ROOT / "site/public/goods/ayato-sticker.jpg"
+STOP_ART = ROOT / "site/public/goods/ayato-sticker.png"
 
 SIDE = 560
 CELL = SIDE // 2
