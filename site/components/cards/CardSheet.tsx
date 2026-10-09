@@ -179,6 +179,10 @@ export default function CardSheet({
   const tuneRef = useRef<HTMLDivElement>(null);
   /** 写真の箱。**焼き直しているあいだ、高さを畳ませない**ために測る */
   const shotRef = useRef<HTMLDivElement>(null);
+  /** 送る胴。**まだ下に続くか**を見るのに要る */
+  const bodyRef = useRef<HTMLDivElement>(null);
+  /** まだ下に続くか。続くなら、紙の底に合図を出す */
+  const [more, setMore] = useState(false);
   /** 最後に出ていた写真の高さ（px）。0 はまだ1度も出ていない */
   const shotH = useRef(0);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
@@ -238,6 +242,61 @@ export default function CardSheet({
     );
     return () => clearTimeout(t);
   }, [chosen]);
+
+  /* 紙の底に「まだ下に続く」の合図を出す。
+
+     図鑑（`/friends`）やじぶんのこと（`/me`）から開いた紙は、**最初から
+     人が入っている**ので下へ送らない（開いて最初に見たいのは写真のほう）。
+     そのぶん「あやとも入れますか」が窓の下に隠れていて、**見えているところが
+     『だれを入れますか』で終わって、罫と足が続く。** 終わった紙に見える。
+
+     本番で撮って分かった（2026-10-08。390×850）。あやとの札4枚は
+     1枚も画面に入っていなかった。送れば出るのに、**送れることが見えない。**
+
+     動かさずに、**続いていることだけ**を見せる。送り切ったら消える。
+
+     **薄れる帯だけでは足りなかった。** 切れ目がちょうど欄と欄のあいだの
+     空きに来ると、紙の色が紙の色に薄れるだけで何も見えない（撮って確かめた）。
+     だから最初から人の入っている紙では、**次の見出しの頭が覗くぶんだけ**
+     送っておく（下の `peek`）。写真はほとんど隠れない。 */
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const look = () => setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+    look();
+    el.addEventListener("scroll", look, { passive: true });
+    /* 中身は**あとから伸びる**（焼き上がりが戻る・人を選んで手が増える）。
+       送りの合図だけでは、伸びた瞬間に古い答えのまま残る */
+    const ro = new ResizeObserver(look);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", look);
+      ro.disconnect();
+    };
+  }, []);
+
+  /* 最初から人の入っている紙（図鑑・じぶんのこと）だけ、**ひと覗きぶん送る。**
+
+     全部送ると写真が窓から出る（開いて最初に見たいのは写真）。
+     送らないと、切れ目が欄と欄の空きに来て「終わった紙」に見える。
+     **次の見出しの頭が切れて見えるところ**で止める。
+
+     1度だけ。送ったあとに読んでいる人が戻したものを、押し返さない。 */
+  const peeked = useRef(false);
+  useEffect(() => {
+    if (!startIcon || peeked.current) return;
+    const el = bodyRef.current;
+    if (!el) return;
+    /* 焼き上がりが戻って高さが決まってから。**決まる前に送ると送り足りない** */
+    const t = setTimeout(() => {
+      const left = el.scrollHeight - el.clientHeight - el.scrollTop;
+      if (left <= 8) return;
+      peeked.current = true;
+      el.scrollTo({ top: el.scrollTop + Math.min(56, left), behavior: "smooth" });
+    }, 420);
+    return () => clearTimeout(t);
+  }, [startIcon, out]);
 
   /* 写真の箱の高さを覚える。**焼き直しのあいだ畳ませない**ため。
 
@@ -563,7 +622,7 @@ export default function CardSheet({
     <div className="akd-modal" role="dialog" aria-modal="true" aria-label="あやと島カード">
       {/* 外を押しても閉じる。絵の裏なので、押せる合図は持たせない */}
       <button className="akd-back" aria-label="閉じる" onClick={onClose} />
-      <div className="akd-sheet">
+      <div className={`akd-sheet${more ? " is-more" : ""}`}>
         {/* **紙は、頭・胴・足の3つ。**
             送るのは胴だけで、頭（日付と閉じる）と足（持って帰る）は動かない。
 
@@ -582,7 +641,7 @@ export default function CardSheet({
           </button>
         </div>
 
-        <div className="akd-sheet-body">
+        <div className="akd-sheet-body" ref={bodyRef}>
           <div
             className="nstudio-shot"
             ref={shotRef}
