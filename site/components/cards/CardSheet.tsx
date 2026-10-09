@@ -98,6 +98,13 @@ import {
 /** 選ぶところに出す1人。 */
 type Pick = { key: string; icon: string; name: string; place: Place | null };
 
+/**
+ * 最初から人の入っている紙で、「あやとも入れますか」の頭を
+ * 胴の下から何 px 覗かせるか。**字が1行ぶん読める高さ。**
+ * これより小さいと「何か在る」だけになって、何が在るか分からない。
+ */
+const PEEK = 36;
+
 /** 手が止まってから焼くまで。**動かしているあいだは焼かない** */
 const BAKE_MS = 150;
 /** 動かし終わってから覚えるまで。**引きずっている途中には投げない** */
@@ -280,23 +287,55 @@ export default function CardSheet({
 
      全部送ると写真が窓から出る（開いて最初に見たいのは写真）。
      送らないと、切れ目が欄と欄の空きに来て「終わった紙」に見える。
-     **次の見出しの頭が切れて見えるところ**で止める。
 
-     1度だけ。送ったあとに読んでいる人が戻したものを、押し返さない。 */
-  const peeked = useRef(false);
+     ## 「◯px 送る」で書かない
+
+     はじめ `setTimeout(420)` で 56px 送る、と書いた。**手元では通って、
+     本番では 15px しか送らなかった**（2026-10-09 実測。胴 614px に対して
+     中身 854px、問いの頭は 693px のところ）。写真が遠くから届くぶん、
+     420ms ではまだ背が決まっていない。**決まる前の高さで計った送り量は、
+     決まる前の紙のための数。**
+
+     だから**量ではなく、行き先で書く。** 「問いの頭が胴の下から
+     `PEEK` だけ覗くところ」を狙って、**中身の背が変わるたびに狙い直す。**
+     背が何回伸びても、最後には同じところに落ち着く。
+
+     止めるのは2つ。**読んでいる人が自分で送ったら、もう押し返さない。**
+     それと、いつまでも狙い続けないように時間で切る。 */
+  const askRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (!startIcon || peeked.current) return;
+    if (!startIcon) return;
     const el = bodyRef.current;
     if (!el) return;
-    /* 焼き上がりが戻って高さが決まってから。**決まる前に送ると送り足りない** */
-    const t = setTimeout(() => {
-      const left = el.scrollHeight - el.clientHeight - el.scrollTop;
-      if (left <= 8) return;
-      peeked.current = true;
-      el.scrollTo({ top: el.scrollTop + Math.min(56, left), behavior: "smooth" });
-    }, 420);
-    return () => clearTimeout(t);
-  }, [startIcon, out]);
+    let stop = false;
+    const put = () => {
+      const ask = askRef.current;
+      if (stop || !ask) return;
+      /* 問いの頭が、胴の下から `PEEK` だけ覗くところ。
+         **下へ行くときだけ送る**——読んでいる人が先へ進めていたら、戻さない */
+      const want = ask.offsetTop - el.clientHeight + PEEK;
+      if (want > el.scrollTop + 2) el.scrollTo({ top: want, behavior: "smooth" });
+    };
+    put();
+    /* 中身は**あとから伸びる**（写真が届く・焼き上がりが戻る）。
+       伸びるたびに狙い直すので、「何 ms 待てば決まるか」を当てにしない */
+    const ro = new ResizeObserver(put);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    const hands = () => {
+      stop = true;
+      ro.disconnect();
+    };
+    el.addEventListener("wheel", hands, { passive: true });
+    el.addEventListener("touchstart", hands, { passive: true });
+    const t = setTimeout(hands, 4000);
+    return () => {
+      hands();
+      clearTimeout(t);
+      el.removeEventListener("wheel", hands);
+      el.removeEventListener("touchstart", hands);
+    };
+  }, [startIcon]);
 
   /* 写真の箱の高さを覚える。**焼き直しのあいだ畳ませない**ため。
 
@@ -756,7 +795,7 @@ export default function CardSheet({
               {/* 顔の札（「だれを入れますか」）と**同じ声で問う。** 札の列の中へ
                   入れてみたが、問いの字のぶん折り返しが1段増えて、かえって
                   40px 高くなった（実測 104px → 160px）。1行取るほうが短い。 */}
-              <p className="nstudio-ask">あやとも入れますか</p>
+              <p className="nstudio-ask" ref={askRef}>あやとも入れますか</p>
               <div className="akd-mates" role="group" aria-label="あやとも入れますか">
                 <button
                   type="button"
