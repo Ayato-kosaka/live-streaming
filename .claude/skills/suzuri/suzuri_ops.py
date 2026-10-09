@@ -30,7 +30,7 @@ SUZURI 自身のアップロード処理（presign → lens へ送る → デザ
 """
 import json, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
-from cdp import Tab, up, tab, where  # noqa: E402
+from cdp import Tab, down, up, tab, where  # noqa: E402
 
 BASE = "https://suzuri.jp"
 
@@ -51,10 +51,20 @@ def open_tab():
     for p in pages:
         if p["id"] != keep["id"]:
             urllib.request.urlopen(f"http://localhost:{port}/json/close/{p['id']}")
-    t = Tab(port, keep)
-    if "suzuri.jp" not in (t.url() or ""):
+    try:
+        t = Tab(port, keep, timeout=15)
+        t.ws.settimeout(60)
+        if "suzuri.jp" not in (t.url() or ""):
+            t.go(BASE + "/account/materials")
+        return t
+    except Exception as e:
+        # タブが固まっている（WebSocket が返らない）。Chrome ごと起こし直す
+        print(f"open_tab: tab unresponsive ({e!r}); restarting chrome", flush=True)
+        down("suzuri")
+        port = up("suzuri", BASE + "/account/materials")
+        t = tab("suzuri")
         t.go(BASE + "/account/materials")
-    return t
+        return t
 
 
 def _ajax(t, method, url, body=None):
@@ -76,10 +86,14 @@ def _ajax(t, method, url, body=None):
 
 
 def read(t, mid):
-    """編集画面に埋まっている JSON を読む。戻り値は (material, products)"""
-    r = t.js(f"""fetch('/account/materials/{mid}').then(r => r.text()).then(h => {{
-      const d = new DOMParser().parseFromString(h, 'text/html'); const e = d.querySelector('.editor-step01');
-      return e ? [e.getAttribute('data-material'), e.getAttribute('data-products')] : null; }})""", await_promise=True)
+    """編集画面に埋まっている JSON を読む。戻り値は (material, products)。
+    **DOMParser に通さない。** 編集画面の HTML は 3.8MB あり、1件ごとに組み立てると
+    タブが固まった（20件目あたりで WebSocket が返らなくなった）。属性2つだけを
+    正規表現で抜き、実体参照（&quot; など）を戻す"""
+    r = t.js(f"""fetch('/account/materials/{mid}').then(r => r.status == 200 ? r.text() : '').then(h => {{
+      const un = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      const m = h.match(/data-material="([^"]*)"/), p = h.match(/data-products="([^"]*)"/);
+      return m && p ? [un(m[1]), un(p[1])] : null; }})""", await_promise=True)
     if not r:
         return None, None
     return json.loads(r[0]), json.loads(r[1])
@@ -121,6 +135,8 @@ def upload(t, path, mid=None, timeout=120):
                 # 画面の側の保存（2回目の save）が終わるのを少し待つ
                 busy = t.js("!!document.querySelector('.progress canvas, .progress svg')")
                 if not busy:
+                    # 編集画面（3.8MB・146品目の見本）を開いたままにしない。タブが重くなる
+                    t.go(f"{BASE}/account/materials", wait=1)
                     return cur
         err = t.js("(document.querySelector('#material-dropzone .error') || {}).innerText || ''")
         if err and err.strip():

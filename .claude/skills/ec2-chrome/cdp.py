@@ -85,18 +85,21 @@ def down(name):
         return
     import websocket
     v = json.load(urllib.request.urlopen(f"http://localhost:{port}/json/version"))
-    ws = websocket.create_connection(v["webSocketDebuggerUrl"], timeout=10, suppress_origin=True)
-    ws.send(json.dumps({"id": 1, "method": "Browser.close"}))
-    time.sleep(5)
+    try:
+        ws = websocket.create_connection(v["webSocketDebuggerUrl"], timeout=10, suppress_origin=True)
+        ws.send(json.dumps({"id": 1, "method": "Browser.close"}))
+        time.sleep(5)
+    except Exception:
+        pass
     subprocess.run(["pkill", "-u", "ubuntu", "-f", f"user-data-dir={_udd(name)}"])
 
 
 class Tab:
-    def __init__(self, port, target):
+    def __init__(self, port, target, timeout=60):
         import websocket
         self.port, self.target = port, target
         # Origin を付けると Chrome 111+ は 403 で弾く
-        self.ws = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=60, suppress_origin=True)
+        self.ws = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=timeout, suppress_origin=True)
         self.n = 0
         self.events = []
         self.call("Page.enable")
