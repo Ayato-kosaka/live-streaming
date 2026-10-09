@@ -55,10 +55,22 @@
 .akd-chr {
   position: absolute;
   transform-origin: bottom center;
-  /* 地面に落ちる影。焼き込む1枚（`components/nordic/stamp.ts`）と同じ役で、
-     これが無いとキャラクターが景色に貼った紙に見える
-     （`docs/island-design.md` 2章の3）。写真の地が何色でも効くよう、薄く。 */
-  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.28));
+  /* **白いふち＋やわらかい影**（ダイカットのシール）。焼き込む1枚
+     （`components/nordic/stamp.ts` の `dieCut`）と同じ役なので、
+     **画面のカードと持って帰る1枚が同じ顔**になる。
+
+     ふちが要るのは、賑やかな写真の上で人の輪郭が地に溶けるから
+     （あやと 2026-10-09「埋め込みがイケテなさすぎる」）。影だけでは
+     足りない——影は輪郭の外にぼけて出るので、**地が暗いところでは
+     輪郭そのものが消える。**
+
+     `drop-shadow` は**前の結果にかかる**ので、4方向を重ねると斜めも
+     埋まる。8方向書くより軽くて、同じ形になる（焼くほうは20方向で
+     太らせているが、画面のカードは絵が 60px 前後なので4方向で足りる）。 */
+  filter:
+    drop-shadow(1.6px 0 0 #fff) drop-shadow(-1.6px 0 0 #fff)
+    drop-shadow(0 1.6px 0 #fff) drop-shadow(0 -1.6px 0 #fff)
+    drop-shadow(0 3px 4px rgba(0, 0, 0, 0.32));
 }
 
 /* 下の帯。字は3つまで（日付・その日の企画・名前）。 */
@@ -468,14 +480,58 @@
    **列を1つ増やすのがいちばん効く。** 段が減るので、9枚でも2段で済む。
    4列のままだと9枚は3段になり、3段目を覗かせるには写真を 299px まで
    下げることになる（主役が主役でなくなる）。 */
+/* --- 写真は、送っても消えない ------------------------------------------
+   **いちばん効いた1つ。** 人を選ぶと手が3段ぶん増えるので、紙は増えた
+   ところまで送る（#214）。送ると**写真が窓の上へ出ていってしまう**——
+   実測で `.akd-stage` の上端が **y = -253px**、つまり画面の外だった
+   （2026-10-09。390×844）。写真の上をなぞって人を動かす面で、
+   **動かす相手が画面に居ない。** あやと「操作性が悪くて、綺麗な壁紙に
+   できない」の、いちばん大きい中身がこれ。
+
+   だから写真を**胴の天井に貼り付ける**（`sticky`）。手はその下を流れて
+   いくので、大きさを変えても、ひねっても、**変わっていく絵がいつも見える。**
+   地を紙と同じ色にしておかないと、下を通る字が透けて重なる。 */
+.akd-sheet-body .nstudio-shot {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  /* 胴の左右の余白ぶん、貼り付けた地を広げる（字が脇から覗かない） */
+  margin: 0 calc(var(--sp-4) * -1);
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  background: var(--pg-sheet);
+  border-bottom: 1px solid var(--pg-rule);
+}
+/* 貼り付けたぶん、**写真は 42vh から 36vh へ**。42vh のままだと、
+   頭（100px）＋写真（354px）＋足（98px）で窓が埋まり、手の通る帯が
+   242px しか残らない（実測 390×844）。36vh にすると 295px になって、
+   大きさ・かたむき・むきの3段がまるごと帯の中に入る。
+   **写真はこの面の主役のままで、縮めたのは 50px。** */
 .akd-sheet-body .nstudio-shot img {
-  max-height: 42vh;
+  max-height: 36vh;
+}
+/* かべがみのかたちは、塀が 9:19.5 と細長い。36vh（304px）だと横幅が
+   140px しか無くて、指で置きどころを決めるには小さすぎる。
+   **縦に伸ばして 44vh（372px）**。横は 171px になる。
+   そのぶん手の通る帯は 283 → 215px になるが、かべがみのときに触るのは
+   大きさ・かたむき・むきの3つだけなので、そこは帯に収まる。 */
+.akd-sheet-body .nstudio-shot.is-wall img,
+.akd-sheet-body .nstudio-shot.is-wall .akd-stage > canvas {
+  max-height: 44vh;
 }
 /* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
    **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても
    窓に収まる。 */
-.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot img {
-  max-height: 34vh;
+/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
+   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても窓に収まる。
+
+   **かべがみのかたちは下げない**（`:not(.is-wall)`）。あちらは塀が
+   9:19.5 と細長いので、背を下げるとそのぶん横幅が削れて、指で置きどころを
+   決められなくなる。それに——下げる値を `img` と `canvas` で**別々に**
+   書いてあるので、片方だけ `.is-wall` に負けると**上に焼き上がり・下に
+   canvas の2段**に割れる。実際に割れた（2026-10-09。12人立てる写真の
+   かべがみで、焼き上がりが 253px・canvas が 371px）。 */
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) img {
+  max-height: 30vh;
 }
 .akd-sheet-body .nstudio-ask {
   margin-top: var(--sp-4);
@@ -517,14 +573,14 @@
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 42vh;
+  max-height: 36vh;
   border-radius: var(--r-0);
   box-shadow: var(--shadow-1);
 }
 /* 札が3段になる日（11枚以上）は、写真を下げて3段目を覗かせる。
    **上の `img` と同じ値**にする（片方だけだと、指を離した瞬間に跳ねる） */
-.akd-sheet-body:has(.npick:nth-child(11)) .akd-stage > canvas {
-  max-height: 34vh;
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) .akd-stage > canvas {
+  max-height: 30vh;
 }
 .akd-stage > img {
   position: absolute;
@@ -539,14 +595,102 @@
    消すと、指を離すまでのあいだ長押しの相手がいなくなる */
 .akd-stage > canvas.is-live { z-index: 2; }
 /* 入れた人がいるときだけ、引きずれる。素の写真のときは手を出さない
-   （`touch-action` を外しておかないと、紙を指で送れなくなる） */
-.akd-stage > img.is-movable {
+   （`touch-action` を外しておかないと、紙を指で送れなくなる）。
+
+   **付けるのは台のほう。** 前は焼き上がり（`img`）に付けていたが、
+   焼き直している 150ms のあいだ `img` は居ない。その隙に指を置くと
+   掴めなかったし、**紙のほうが送れてしまって絵が指から外れた。**
+
+   `touch-action: none` は2つを止める。**紙が一緒に送られるの**と、
+   2本指が**面ごと拡大するの**。ひねりで回すので、後者が要る。 */
+.akd-stage.is-movable {
   cursor: grab;
   touch-action: none;
+  /* 引きずっているあいだ、絵や字が選択されない（iOS の虫めがねも出ない） */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: default;
 }
-.akd-stage > img.is-movable:active { cursor: grabbing; }
+.akd-stage.is-movable:active { cursor: grabbing; }
 
-/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。** */
+/* 出すかたち。カードのまま／スマホのかべがみ。
+   **押すと切り替わる札**なので、あやとの札（`.akd-mate`）と同じ厚み。 */
+.akd-shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.akd-shape {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+}
+.akd-shape.is-on {
+  background: var(--accent-soft, var(--paper-2));
+  border-color: var(--accent-2);
+  box-shadow: none;
+  transform: translateY(2px);
+}
+.akd-shape:active { transform: translateY(4px); box-shadow: none; }
+.akd-shape:disabled { opacity: 0.5; box-shadow: none; }
+
+/* かべがみのときだけ出る、**スマホが上に出すものの居場所**。
+   とけい（上）とボタン（下）は写真に重なるので、そこへ人を置くと隠れる。
+   **焼く1枚には入らない**——画面の上に浮かせているだけ。
+
+   地が明るい写真でも暗い写真でも読めるように、白い字に黒い縁取り。
+   破線は島の「空けておく」の言い方（`.blank` と同じ）。 */
+.akd-safe {
+  position: absolute;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.8);
+  border-style: dashed;
+  border-width: 0;
+  pointer-events: none;
+}
+/* **字は左端に寄せる。** 真ん中に置くと、だいたい人の顔の上に乗る
+   （撮って分かった。「ボタン」があやとの胸に重なっていた）。
+   地が明るい写真でも読めるように、字の後ろに暗い札を敷く。 */
+.akd-safe i {
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+/* 上は画面のてっぺんから 30%。iPhone のロック画面の時計はこのあたりまで出る */
+.akd-safe.is-top {
+  top: 0;
+  height: 30%;
+  padding: 0 0 2px 4px;
+  border-bottom-width: 1.5px;
+  align-items: flex-end;
+}
+/* 下はボタン（ライト・カメラ）とホームバーのぶん */
+.akd-safe.is-foot {
+  bottom: 0;
+  height: 12%;
+  padding: 2px 0 0 4px;
+  border-top-width: 1.5px;
+  align-items: flex-start;
+}
+
+/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
+   出るのは**いま手にしている1人ぶんだけ**なので、2人いても段は増えない。 */
 .akd-tune {
   display: flex;
   flex-wrap: wrap;
@@ -554,6 +698,43 @@
   gap: var(--sp-2) var(--sp-3);
   margin-top: var(--sp-3);
 }
+/* いま手にしているのは誰か。**札ではない**（押しても切り替わらない）ので、
+   厚みも押しどころも持たせない。切り替えるのは**絵を押すほう。**
+   顔を出すのは、字だけだと目が滑るから——写真の上の人と見比べられる。 */
+.akd-hand {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.akd-hand img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+}
+.akd-hand b { color: var(--ink); }
+/* むきをかえる。**もとのばしょと同じ重さ**——どちらもやり直しの手で、
+   ふだん押すものではない。字の行き先ではないので、下線ではなく細い枠。 */
+.akd-turn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+}
+.akd-turn:active { transform: translateY(4px); box-shadow: none; }
 /* あやとも入れる。**押すと切り替わる札**なので、押せる厚みを持たせる */
 .akd-mate {
   display: inline-flex;

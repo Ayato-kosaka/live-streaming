@@ -164,7 +164,7 @@ export type LineStamp = {
 export const LINE_PENDING = "/goods/line/pending.webp";
 
 /**
- * あやとの10枚。**順番もあやとが決めたとおり。**
+ * あやとのぶん。**いま18枚**（`LINE_WANT` は 15。**候補が行き先より多い**）。
  *
  * 並べ替えない——「おはよう・こんばんは・おやすみ」で1日が回って、
  * そのあとに気持ちが4つ、最後に使いどころのある3つ、という並びになっている。
@@ -173,15 +173,32 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "ohayou", line: "おはよう", art: "/goods/line/ohayou.webp" },
   { id: "konbanwa", line: "こんばんは", art: "/goods/line/konbanwa.webp" },
   { id: "oyasumi", line: "おやすみ", art: "/goods/line/oyasumi.webp" },
+  /* **bye-bye は、1日が回る並びのしまい。** 「おはよう → こんばんは → おやすみ」で
+     1日が閉じたあと、その場を離れるときの一言なので、挨拶のかたまりの最後に置いた
+     （あやと 2026-10-09 に3枚追加。LINE に出すときの順番はあやとが後で決めるので、
+     ここの並びは島の面の並びでしかない）。 */
+  { id: "byebye", line: "bye-bye", art: "/goods/line/byebye.webp" },
   { id: "arigatou", line: "ありがとう", art: "/goods/line/arigatou.webp" },
   { id: "ureshii", line: "うれしい", art: "/goods/line/ureshii.webp" },
+  /* **新しい4枚**（あやと 2026-10-09。改良ぶんは絵だけ差し替え）。
+     気持ちのかたまりに、うれしいの濃いほうを2つ */
+  { id: "waai", line: "わーい", art: "/goods/line/waai.webp" },
+  { id: "kawaee", line: "かわええなぁ", art: "/goods/line/kawaee.webp" },
   /* **すごいよ は、あとから届いた11枚目。** 気持ちの並びの中に入れてある
      （うれしい → すごいよ → いいやんか）。LINE に出すときの順番は
      あやとが後で決めるので、ここの並びは島の面の並びでしかない。 */
   { id: "sugoiyo", line: "すごいよ", art: "/goods/line/sugoiyo.webp" },
+  /* 気持ちのかたまりの中。「すごいよ」の次に、もう一段上げる一言 */
+  { id: "nextlevel", line: "ネクストレベル", art: "/goods/line/nextlevel.webp" },
   { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
+  /* 相づちのかたまり。「いいやんか」の次に、締めの一言 */
+  { id: "hona", line: "ほな", art: "/goods/line/hona.webp" },
   { id: "yabai", line: "やばいよやばいよ", art: "/goods/line/yabai.webp" },
   { id: "chottomatte", line: "ちょっとまってよ", art: "/goods/line/chottomatte.webp" },
+  /* 返事。間のかたまりに置く（待たせる・応える・迷う） */
+  { id: "hai", line: "はいっ", art: "/goods/line/hai.webp" },
+  /* 使いどころのあるほうのかたまり。フライパンの絵なので、台所の配信で効く */
+  { id: "nanitabeyo", line: "なに食べよ", art: "/goods/line/nanitabeyo.webp" },
   { id: "sugumodoru", line: "すぐもどる", art: "/goods/line/sugumodoru.webp" },
   { id: "oumaiga", line: "おーまいがー", art: "/goods/line/oumaiga.webp" },
 ];

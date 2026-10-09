@@ -1,0 +1,174 @@
+route.mjs 根=/tmp/claude-0/wt-tapink / 手元の絵 住人91 視聴者28 ショート825 キャラ390
+── 対照（押せないのに厚みを、挙げられるか／挙げずにいられるか）
+  ○ pf-bad-shadow（押せないのに厚み）            拾ってほしい / 拾った
+  ○ pf-bad-shadow（厚みの一覧）               拾ってほしい / 拾った
+  ○ pf-bad-filter（押せないのに厚み）            拾ってほしい / 拾った
+  ○ pf-bad-filter（厚みの一覧）               拾ってほしい / 拾った
+  ○ pf-ok-link（押せないのに厚み）               拾ってはいけない / 拾わなかった
+  ○ pf-ok-link（厚みの一覧）                  拾ってほしい / 拾った
+  ○ pf-ok-cursor（押せないのに厚み）             拾ってはいけない / 拾わなかった
+  ○ pf-ok-cursor（厚みの一覧）                拾ってほしい / 拾った
+  ○ pf-ok-child（押せないのに厚み）              拾ってはいけない / 拾わなかった
+  ○ pf-ok-child（厚みの一覧）                 拾ってほしい / 拾った
+  ○ pf-ok-details（押せないのに厚み）            拾ってはいけない / 拾わなかった
+  ○ pf-ok-details（厚みの一覧）               拾ってほしい / 拾った
+  ○ pf-no-blur（押せないのに厚み）               拾ってはいけない / 拾わなかった
+  ○ pf-no-blur（厚みの一覧）                  拾ってはいけない / 拾わなかった
+  ○ pf-no-inset（押せないのに厚み）              拾ってはいけない / 拾わなかった
+  ○ pf-no-inset（厚みの一覧）                 拾ってはいけない / 拾わなかった
+  ○ pf-no-up（押せないのに厚み）                 拾ってはいけない / 拾わなかった
+  ○ pf-no-up（厚みの一覧）                    拾ってはいけない / 拾わなかった
+  ○ pf-no-plain（押せないのに厚み）              拾ってはいけない / 拾わなかった
+  ○ pf-no-plain（厚みの一覧）                 拾ってはいけない / 拾わなかった
+  対照 20件中 20件 一致
+/ 54 / 見た要素 762
+/404 15 / 見た要素 89
+/about 42 / 見た要素 613
+/all 23 / 見た要素 1136
+/apps 20 / 見た要素 224
+/apps/nanikore 16 / 見た要素 238
+/apps/nanitabeyo 18 / 見た要素 538
+/apps/spelieve 17 / 見た要素 185
+/atlas 16 / 見た要素 204
+/board 40 / 見た要素 218
+/cards 14 / 見た要素 143
+/design 13 / 見た要素 10285
+/friends 16 / 見た要素 149
+/goods 26 / 見た要素 345
+/island/albania 21 / 見た要素 327
+/island/caucasus 43 / 見た要素 880
+/island/caucasus/streams 509 / 見た要素 5484
+/island/europe 40 / 見た要素 601
+/island/europe/streams 151 / 見た要素 1585
+/island/iran-walk 32 / 見た要素 491
+/island/iran-walk/streams 36 / 見た要素 328
+/island/middle-east 39 / 見た要素 573
+/island/middle-east/streams 134 / 見た要素 1408
+/island/nordic 34 / 見た要素 522
+/island/nordic/streams 42 / 見た要素 405
+/island/north-macedonia 18 / 見た要素 170
+/kitchen 47 / 見た要素 538
+/kitchen/acqua-pazza 20 / 見た要素 362
+/kitchen/az-curry 21 / 見た要素 291
+/kitchen/az-pilaf 20 / 見た要素 389
+/kitchen/az-salad 21 / 見た要素 301
+/kitchen/carbonara 21 / 見た要素 403
+/kitchen/chawanmushi 21 / 見た要素 385
+/kitchen/chicken-katsu-don 19 / 見た要素 385
+/kitchen/compote 19 / 見た要素 327
+/kitchen/crepe 20 / 見た要素 396
+/kitchen/egg-sandwich 19 / 見た要素 294
+/kitchen/french-toast 23 / 見た要素 350
+/kitchen/fruit-juice 20 / 見た要素 290
+/kitchen/galette 20 / 見た要素 393
+/kitchen/garlic-tomato 21 / 見た要素 333
+/kitchen/german-potato 24 / 見た要素 373
+/kitchen/gyoza 22 / 見た要素 373
+/kitchen/iwashi-hiyashi 21 / 見た要素 416
+/kitchen/iwashi-paella 20 / 見た要素 390
+/kitchen/iwashi-shioyaki 19 / 見た要素 347
+/kitchen/kamatama-udon 17 / 見た要素 412
+/kitchen/karaage 16 / 見た要素 373
+/kitchen/karaage-teishoku 20 / 見た要素 367
+/kitchen/kebab 22 / 見た要素 362
+/kitchen/korokke 17 / 見た要素 414
+/kitchen/margherita 20 / 見た要素 403
+/kitchen/nanban-5 21 / 見た要素 362
+/kitchen/ojakhuri 20 / 見た要素 363
+/kitchen/okonomiyaki 20 / 見た要素 416
+/kitchen/oshinko 20 / 見た要素 390
+/kitchen/pepper-pot-au-feu 19 / 見た要素 358
+/kitchen/pot-au-feu 22 / 見た要素 352
+/kitchen/roast-chicken 21 / 見た要素 293
+/kitchen/russian-soup 24 / 見た要素 357
+/kitchen/shkmeruli-pasta 21 / 見た要素 396
+/kitchen/takikomi-gohan 21 / 見た要素 384
+/kitchen/tamagoyaki 19 / 見た要素 386
+/kitchen/tempura 17 / 見た要素 425
+/kitchen/tomato-chicken-rice 19 / 見た要素 291
+/kitchen/tortilla 19 / 見た要素 287
+/legends 26 / 見た要素 256
+/legends/egypt-festival 20 / 見た要素 295
+/legends/iran-walk 21 / 見た要素 365
+/legends/iwashi-festival 19 / 見た要素 219
+/legends/kazbegi 20 / 見た要素 394
+/legends/million-views 18 / 見た要素 294
+/legends/newyear-24h 16 / 見た要素 181
+/legends/roulette-georgia 16 / 見た要素 195
+/legends/thousand-subs 16 / 見た要素 179
+/map 79 / 見た要素 1036
+/map/armenia 38 / 見た要素 518
+/map/austria 28 / 見た要素 351
+/map/azerbaijan 50 / 見た要素 582
+/map/belgium 33 / 見た要素 418
+/map/cyprus 35 / 見た要素 437
+/map/czech 26 / 見た要素 333
+/map/egypt 52 / 見た要素 646
+/map/estonia 17 / 見た要素 224
+/map/finland 21 / 見た要素 264
+/map/france 40 / 見た要素 542
+/map/georgia 87 / 見た要素 978
+/map/germany 36 / 見た要素 487
+/map/hungary 24 / 見た要素 304
+/map/iran-border 39 / 見た要素 460
+/map/jordan 43 / 見た要素 521
+/map/latvia 21 / 見た要素 261
+/map/lithuania 19 / 見た要素 243
+/map/netherlands 17 / 見た要素 230
+/map/poland 23 / 見た要素 330
+/map/slovakia 17 / 見た要素 239
+/map/sweden 24 / 見た要素 304
+/map/turkey 38 / 見た要素 496
+/map/uae 21 / 見た要素 260
+/map/uk 71 / 見た要素 855
+/me 14 / 見た要素 85
+/me/desk 14 / 見た要素 84
+/me/remote 14 / 見た要素 87
+/me/roulette 14 / 見た要素 87
+/next 41 / 見た要素 479
+/next/new 40 / 見た要素 218
+/nordic 48 / 見た要素 1069
+/nordic/day/1 67 / 見た要素 1119
+/nordic/day/10 61 / 見た要素 850
+/nordic/day/11 61 / 見た要素 850
+/nordic/day/12 61 / 見た要素 850
+/nordic/day/13 61 / 見た要素 850
+/nordic/day/14 61 / 見た要素 850
+/nordic/day/15 61 / 見た要素 850
+/nordic/day/16 60 / 見た要素 847
+/nordic/day/2 62 / 見た要素 972
+/nordic/day/3 85 / 見た要素 1362
+/nordic/day/4 62 / 見た要素 891
+/nordic/day/5 88 / 見た要素 1367
+/nordic/day/6 65 / 見た要素 882
+/nordic/day/7 97 / 見た要素 1472
+/nordic/day/8 134 / 見た要素 1984
+/nordic/day/9 62 / 見た要素 869
+/nordic/day/depart 59 / 見た要素 876
+/nordic/estonia 65 / 見た要素 1943
+/nordic/finland 91 / 見た要素 2793
+/nordic/guide 66 / 見た要素 1261
+/nordic/latvia 65 / 見た要素 1857
+/nordic/lithuania 68 / 見た要素 1960
+/nordic/photos 14 / 見た要素 143
+/nordic/poland 95 / 見た要素 2488
+/nordic/sweden 84 / 見た要素 2487
+/north-macedonia 36 / 見た要素 749
+/now 22 / 見た要素 188
+/privacy 13 / 見た要素 106
+/streams 59 / 見た要素 624
+/streams/cooking 18 / 見た要素 249
+/streams/making 19 / 見た要素 240
+/streams/meeting 19 / 見た要素 251
+/streams/monthly 17 / 見た要素 237
+/streams/walk 19 / 見た要素 251
+
+── 数えたもの
+  見た面           141 / 141
+  見た要素         94004 件（画面に出ていたもの）
+  厚みのある要素   5495 件
+  押せないのに厚み 0 件 {}
+  見ていないもの: 押せるのに厚みが無いほう（例外がある。上の docstring）
+
+141面、見つかりませんでした。
+route.mjs 本物で返した枚数: キャラ 338/338 / ショート 327/327 / 視聴者 73/73 / 写真(1枚返し) 82/82

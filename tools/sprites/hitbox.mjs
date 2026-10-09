@@ -128,9 +128,24 @@ export async function openFolds(p, { waitMs = 250, rounds = 8, scroll = "auto" }
  *
  * 戻り: { rows 測れたもの, skipped 測れなかったもの, excluded 数えなかった内訳 }
  */
-export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold = "open" } = {}) {
+/**
+ * 押しどころを測る。
+ *
+ * `clear: true` を渡すと、**真ん中へ送ったあと、覆いの下から出るまで
+ * もう少し送る。** 貼り付けた頭（`position: sticky` の写真や帯）を持つ面で
+ * 要る——`scrollIntoView({block:"center"})` が狙う窓の真ん中が覆いの下に
+ * あると、**そこでの大きさ**を実寸として読んでしまう。
+ * あやと島カードの紙がそれで、88px の札が 45px と出た（2026-10-09）。
+ *
+ * **既定は false。** これまでの5本（`pchit` `foldsweep` `mesweep`
+ * `livecheck` `hitab`）の数え方は1つも変えない。
+ */
+export async function measure(
+  p,
+  { sel = SEL_ALL, min = 48, maxGrow = 80, fold = "open", clear = false } = {},
+) {
   return p.evaluate(
-    ({ sel, min, maxGrow, fold }) => {
+    ({ sel, min, maxGrow, fold, clear }) => {
       const nm = (e) =>
         e
           ? e.tagName +
@@ -228,6 +243,33 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
         }
 
         target.scrollIntoView({ block: "center" });
+        if (clear) {
+          /* **覆いの下から出す。** 上端か下端が自分でないものに取られて
+             いるあいだ、送る箱を少しずつ動かす。動かす向きは取られた側で
+             決める（上を取られていたら、自分を下へ＝箱を上へ送る）。
+             出られなければ、そのときの位置のまま測る——**出られないことは
+             下の「上にいる」で挙がる。** */
+          let sc = target.parentElement;
+          while (sc && sc !== document.body) {
+            const cs = getComputedStyle(sc);
+            if (/auto|scroll/.test(cs.overflowY) && sc.scrollHeight > sc.clientHeight) break;
+            sc = sc.parentElement;
+          }
+          if (sc && sc !== document.body) {
+            for (let n = 0; n < 40; n++) {
+              const q = target.getBoundingClientRect();
+              const mx = q.x + q.width / 2;
+              const up = document.elementFromPoint(mx, q.top + 2);
+              const dn = document.elementFromPoint(mx, q.bottom - 2);
+              const okUp = up && (up === target || target.contains(up));
+              const okDn = dn && (dn === target || target.contains(dn));
+              if (okUp && okDn) break;
+              const was = sc.scrollTop;
+              sc.scrollTop += okUp ? 10 : -10;
+              if (sc.scrollTop === was) break;
+            }
+          }
+        }
         const r = target.getBoundingClientRect();
         if (r.width < 1 || r.height < 1) { drop("見た目が 1px 未満"); continue; }
 
@@ -331,7 +373,7 @@ export async function measure(p, { sel = SEL_ALL, min = 48, maxGrow = 80, fold =
       }
       return { rows, skipped, excluded };
     },
-    { sel, min, maxGrow, fold },
+    { sel, min, maxGrow, fold, clear },
   );
 }
 

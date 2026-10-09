@@ -100,7 +100,8 @@ execFileSync(TSC, [
 ], {stdio: "inherit"});
 
 const nodeRequire = createRequire(import.meta.url);
-const {stampBox, clampPlace, defaultPlaceFor, layout, aabb} =
+const {stampBox, clampPlace, defaultPlaceFor, layout, aabb,
+  placeFromBox, pickAt, TILT_MAX, SCALE_MAX} =
   nodeRequire(join(OUT, "place.js"));
 console.log(`# 組み立てた本体: ${SRC}`);
 
@@ -190,7 +191,10 @@ console.log("\n# 1. 枠の外へ送っても、枠の中に収まる（四隅ぜ
   for (const [pw, ph] of SHOTS) {
     for (const [cw, ch] of CHARS) {
       for (const [x, y] of CORNERS) {
-        for (const scale of [0.4, 1, 2, 9]) {
+        /* **倍率も傾きも、いちばん端まで振る。** ひねりを指で回せるように
+           した日（2026-10-09）に傾きの幅を 20 → 45 度へ広げたので、
+           広げた端でも枠から出ないことをここで見る。 */
+        for (const scale of [0.4, 1, SCALE_MAX, 9]) {
           const at = stampBox(pw, ph, cw, ch, {x, y, rot: 0, scale});
           n += 1;
           if (!inFrame(at, pw, ph)) out += 1;
@@ -254,7 +258,9 @@ console.log("\n# 3〜5. 2体。重ならない・足元がそろう・両方と�
   const XS = [0, 0.25, 0.5, 0.75, 1, 0.49, 0.51];
   const YS = [0.3, 0.7, 1];
   const SCALES = [0.4, 1, 1.6, 2];
-  const ROTS = [0, 20, -20];
+  /* **広げた端まで振る。** 45 度の人の頭は箱の外へ出るので、
+     隣に立つ連れがそこへ食い込まないことを見る（重なりは `aabb` で見る） */
+  const ROTS = [0, 20, -20, TILT_MAX, -TILT_MAX];
   for (const [pw, ph] of SHOTS) {
     for (const [cw, ch] of CHARS) {
       for (const [mw, mh] of CHARS) {
@@ -368,6 +374,152 @@ console.log("\n# 3c. 連れは、本人に背を向けない（左に立った�
   check("返さなくても、立つところは同じ",
     near(字.box.x, left.box.x, 0.001) && near(字.box.w, left.box.w, 0.001),
     `返す ${left.box.x.toFixed(1)} / 返さない ${字.box.x.toFixed(1)}`);
+}
+
+/* ================================================================= 3d */
+
+console.log("\n# 3d. 連れを自分で置いたら、機械が動かさない");
+{
+  /* あやと（2026-10-09）「離せない・大きさを変えられない・向きも選べない」。
+     連れに `place` を渡したら、**`stampBox` がそのまま効く**こと
+     ——押しのけも、足元そろえも、隣に寄せるのもしない。 */
+  let moved = 0;
+  let youMoved = 0;
+  let n = 0;
+  for (const [pw, ph] of SHOTS) {
+    for (const [mw, mh] of CHARS) {
+      for (const x of [0.05, 0.5, 0.95]) {
+        for (const y of [0.3, 1]) {
+          for (const scale of [0.4, 1, SCALE_MAX]) {
+            const mine = {x, y, rot: 30, scale};
+            const want = stampBox(pw, ph, mw, mh, mine);
+            const soloYou = layout(pw, ph, [{w: 512, h: 512}]);
+            const [you, mate] = layout(pw, ph, [
+              {w: 512, h: 512},
+              {w: mw, h: mh, place: mine},
+            ]);
+            n += 1;
+            for (const k of ["x", "y", "w", "h"]) {
+              if (!near(mate.box[k], want[k], 0.001)) moved += 1;
+            }
+            // **本人のほうも動かない。** 連れを置いたせいで2人そろって縮む道へ
+            // 落ちていたら、ここで出る
+            for (const k of ["x", "y", "w", "h"]) {
+              if (!near(you.box[k], soloYou[0].box[k], 0.001)) youMoved += 1;
+            }
+            if (!near(mate.rot, 30, 0.001)) moved += 1;
+          }
+        }
+      }
+    }
+  }
+  check(`${n} 通りとも、置いたところに立つ`, moved === 0, `${moved} か所ずれた`);
+  check("連れを置いても、本人は1pxも動かない", youMoved === 0, `${youMoved} か所ずれた`);
+  // 探し方が当たることを見る。**渡さなければ、いままでどおり機械が並べる**
+  const [, auto] = layout(1152, 2048, [{w: 512, h: 512}, {w: 512, h: 512}]);
+  const self = stampBox(1152, 2048, 512, 512, null);
+  check("（対照）渡さなければ、連れは本人の隣へ寄る",
+    !near(auto.box.x, self.x, 0.5),
+    `どちらも x=${auto.box.x.toFixed(1)}`);
+}
+
+/* ================================================================= 3e */
+
+console.log("\n# 3e. 向きは、押した人が決めたときだけ返る");
+{
+  const 右 = layout(1152, 2048, [
+    {w: 512, h: 512},
+    {w: 512, h: 512, place: {x: 0.2, y: 1, rot: 0, scale: 1}, flip: true},
+  ])[1];
+  check("連れ: 返すと言えば返る", 右.flip === true);
+  const 素 = layout(1152, 2048, [
+    {w: 512, h: 512},
+    {w: 512, h: 512, place: {x: 0.2, y: 1, rot: 0, scale: 1}},
+  ])[1];
+  check("連れ: 言わなければ返らない", 素.flip === false);
+  const 字 = layout(1152, 2048, [
+    {w: 512, h: 512},
+    {w: 512, h: 512, place: {x: 0.2, y: 1, rot: 0, scale: 1}, flip: true, canFlip: false},
+  ])[1];
+  check("連れ: 字の入った絵は、返すと言っても返らない", 字.flip === false);
+  const 本人 = layout(1152, 2048, [{w: 512, h: 512, flip: true}])[0];
+  check("本人: 返すと言えば返る", 本人.flip === true);
+  const 本人素 = layout(1152, 2048, [{w: 512, h: 512}])[0];
+  check("本人: 言わなければ返らない（いままでと同じ）", 本人素.flip === false);
+  // 返しても、立つところは1pxも変わらない（箱は左右対称に作る）
+  let diff = 0;
+  for (const k of ["x", "y", "w", "h"]) {
+    if (!near(本人.box[k], 本人素.box[k], 0.001)) diff += 1;
+  }
+  check("返しても、立つところは同じ", diff === 0, `${diff} か所ずれた`);
+}
+
+/* ================================================================= 3f */
+
+console.log("\n# 3f. 掴んだ瞬間に動かない（placeFromBox）");
+{
+  /* 機械が置いた連れを**はじめて掴んだ瞬間**、`placeFromBox` で
+     「いまのところ」を `place` にする。ここが1pxでもずれると、
+     指を置いただけで絵が跳ぶ。 */
+  let diff = 0;
+  let n = 0;
+  for (const [pw, ph] of SHOTS) {
+    for (const [cw, ch] of CHARS) {
+      for (const scale of [0.4, 0.7, 1, 1.4, SCALE_MAX]) {
+        for (const x of [0.1, 0.5, 0.9]) {
+          const was = {x, y: 0.9, rot: 0, scale};
+          const box = stampBox(pw, ph, cw, ch, was);
+          const again = stampBox(pw, ph, cw, ch, placeFromBox(pw, ph, cw, ch, box, 0));
+          n += 1;
+          for (const k of ["x", "y", "w", "h"]) {
+            if (!near(again[k], box[k], 0.5)) diff += 1;
+          }
+        }
+      }
+    }
+  }
+  check(`${n} 通りとも、掴んでも同じ箱`, diff === 0, `${diff} か所ずれた`);
+  // 機械が隣に並べた連れでも同じ（こちらが本番で起きるほう）
+  const [, auto] = layout(1152, 2048, [{w: 512, h: 512}, {w: 360, h: 640}]);
+  const got = stampBox(1152, 2048, 360, 640,
+    placeFromBox(1152, 2048, 360, 640, auto.box, auto.rot));
+  let d2 = 0;
+  for (const k of ["x", "y", "w", "h"]) if (!near(got[k], auto.box[k], 0.5)) d2 += 1;
+  check("機械が並べた連れを掴んでも同じ箱", d2 === 0, `${d2} か所ずれた`);
+  // 探し方が当たることを見る
+  check("（対照）違う箱なら違う答えになる",
+    !near(placeFromBox(1152, 2048, 512, 512, {x: 0, y: 0, w: 100, h: 100}, 0).scale,
+      placeFromBox(1152, 2048, 512, 512, {x: 0, y: 0, w: 300, h: 300}, 0).scale, 0.01));
+}
+
+/* ================================================================= 3g */
+
+console.log("\n# 3g. 押したところに居る人を掴む（pickAt）");
+{
+  const at = layout(1152, 2048, [
+    {w: 512, h: 512, place: {x: 0.3, y: 0.9, rot: 0, scale: 1}},
+    {w: 512, h: 512, place: {x: 0.75, y: 0.9, rot: 0, scale: 1}},
+  ]);
+  const mid = (b) => [b.x + b.w / 2, b.y + b.h / 2];
+  check("本人のところを押したら本人", pickAt(at, ...mid(at[0].box)) === 0);
+  check("連れのところを押したら連れ", pickAt(at, ...mid(at[1].box)) === 1);
+  check("誰も居ないところは -1", pickAt(at, 10, 10) === -1);
+  /* **重なっていたら手前（あとに描くほう）。** 札で切り替えないので、
+     重なったときにどちらが来るかが決まっていないと掴めない */
+  const 重 = layout(1152, 2048, [
+    {w: 512, h: 512, place: {x: 0.5, y: 0.9, rot: 0, scale: 1}},
+    {w: 512, h: 512, place: {x: 0.5, y: 0.9, rot: 0, scale: 1}},
+  ]);
+  check("重なっていたら手前の人", pickAt(重, ...mid(重[0].box)) === 1);
+  /* 傾いた人は、傾きを戻してから見る。45度に傾けた人の**角の外**は
+     箱の中に入っていない */
+  const 傾 = layout(1152, 2048, [
+    {w: 512, h: 512, place: {x: 0.5, y: 0.9, rot: TILT_MAX, scale: 1}},
+  ]);
+  check("傾けた人の真ん中は掴める", pickAt(傾, ...mid(傾[0].box)) === 0);
+  const aa = aabb(傾[0].box, 傾[0].rot);
+  check("（対照）傾けると外接矩形は箱より広い", aa.w > 傾[0].box.w + 1);
+  check("外接矩形の角は、掴めない", pickAt(傾, aa.x + 1, aa.y + 1) === -1);
 }
 
 /* ================================================================== 6 */

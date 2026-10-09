@@ -37,7 +37,7 @@ export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
 
   return (
-    <PageShell crumbs={[{ label: "住んでる人" }]}>
+    <PageShell current="fellows" crumbs={[{ label: "住んでる人" }]}>
       {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
           パンくずが「住んでる人」なので、h1 もそれに合わせる。
           「愉快な仲間達」は、その人たちの呼び名なので1行下へ。

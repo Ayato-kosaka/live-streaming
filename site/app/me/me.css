@@ -1474,3 +1474,131 @@
 
 /* 打ち間違えた目標を消す。**終わらせる道ではない**ので、離して置く。 */
 .fd-drop { margin-top: var(--sp-4); }
+
+/* =========================================================
+   スタンプのことば（components/me/StampLine.tsx・#716）
+   ---------------------------------------------------------
+   **選ばれた本人にだけ出る1枚。** 置けるのは4本までなので、溜まっても
+   背は変わらない（`docs/island-standards.md` 7）。4本のときに
+   390px 幅で 1画面に収まる高さにしてある。
+
+   押しどころは3種類あって、**役目が違うものを同じ厚みにしない**
+   （`docs/island-design.md` 3-3）。
+
+     これでいく（`.me-save`）… 進める。金の板・厚み6px（既存のものを使う）
+     じぶんで書く / ほかの言いかた … 足す。紙の板・厚み4px
+     けす                        … 1本だけ減らす。**厚みを付けない**
+
+   「けす」に厚みを付けないのは、**足す側と見分けるため。** 同じ面に
+   「押せば増える」と「押せば減る」が並ぶので、合図が1種類だと取り違える。
+   平らだが、当たりは 48px ある（下の `min-height`）。
+   ========================================================= */
+.slp-lead { margin-bottom: var(--sp-3); }
+
+.slp-list { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.slp-list > li { display: flex; align-items: center; gap: var(--sp-2); }
+
+/* 1行ぶん。番号・入力・字数を1つの枠に入れる。
+   **枠そのものは押せない**（押すところは中の入力）ので厚みは付けない。 */
+.slp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.slp-no {
+  flex: 0 0 auto;
+  width: 20px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.slp-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 枠は外側が持っているので、ここは素のまま。**高さは枠が 48px を保つ** */
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  color: var(--ink);
+}
+.slp-row input:focus { outline: none; }
+/* 置いておく字（placeholder）は、ブラウザの既定の灰色にしない。
+   既定は紙の上で 4.5 を割る。**地は `--paper` なので `--ink-2` で 6.82**
+   （`inkpx.mjs` は欄の中の字を測らないので、ここは手で合わせてある）。 */
+.slp-row input::placeholder { color: var(--ink-2); font-weight: 700; opacity: 1; }
+/* 字を打っているあいだ、どの行を触っているかを枠で言う。
+   **光らせない。** 選んでいるものは朱の細枠（`.me-pick.is-on` と同じ決め） */
+.slp-row:focus-within { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick); }
+.slp-len {
+  flex: 0 0 auto;
+  font-size: var(--fs-min);
+  font-weight: 800;
+  font-style: normal;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 減らす側。**厚みを付けない**（上の長い注）。当たりは 48px */
+.slp-drop {
+  flex: 0 0 auto;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 var(--sp-2);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: transparent;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.slp-drop:active { background: color-mix(in srgb, var(--frame) 22%, transparent); }
+
+.slp-more { margin-top: var(--sp-4); }
+.slp-more-t {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink-2);
+}
+/* 提案。**字そのものが押しどころ。** 縦に積まずに折り返す（最大3枚） */
+.slp-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.slp-chip,
+.slp-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 72%, var(--paper-2)) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+}
+.slp-chip:active,
+.slp-add:active { transform: translateY(4px); box-shadow: none; }
+
+/* 足す側と進める側を1行に並べる。**狭いときは折り返す**（390px で2段） */
+.slp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+/* `.me-save` は上に余白を持っているので、ここでは行に合わせて外す */
+.slp-foot .me-save { margin-top: 0; }

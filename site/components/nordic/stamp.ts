@@ -27,10 +27,15 @@
    **ここから呼ぶ側のために通してある**（import 先を増やさないため）。 */
 export {
   STAMP,
+  SCALE_MAX,
+  SCALE_MIN,
+  TILT_MAX,
   stampBox,
   clampPlace,
   defaultPlaceFor,
   layout,
+  pickAt,
+  placeFromBox,
   tiltOf,
   type Box,
   type Place,
@@ -46,6 +51,89 @@ import {
 
 /** 焼き上がりの長辺。これ以上大きくしても、持って帰る先で使い道がない。 */
 export const OUT_LONG = 2048;
+
+/**
+ * 焼く塀の大きさ（画素）。**渡さなければ写真そのままの形。**
+ *
+ * かべがみにするときは、見ている端末の画面の形と画素数を渡す
+ * （`screenFrame()`）。写真は塀いっぱいに敷いて、はみ出すぶんを切る。
+ */
+export type Frame = { w: number; h: number };
+
+/** canvas1枚に許す画素数。これを越えると、端末によっては真っ白で返る。 */
+const MAX_PIXELS = 12_000_000;
+/** canvas1辺に許す画素数。 */
+const MAX_SIDE = 4096;
+
+/**
+ * この端末の画面を、そのまま塀にする。
+ *
+ * **`screen` と `devicePixelRatio` から出す。** 窓の大きさ（`innerWidth`）
+ * ではない——かべがみは画面に貼るものなので、ブラウザの窓ではなく
+ * 画面そのものの画素数が要る。
+ *
+ * 大きすぎる画面（4K のPC）は上限で丸める。**丸めたかどうかは呼ぶ側が
+ * 分かるように**、求めた値も返す（画面に出して隠さない）。
+ */
+export function screenFrame(): { want: Frame; out: Frame } {
+  const dpr = Math.max(1, Math.min(4, window.devicePixelRatio || 1));
+  const sw = Math.max(1, Math.round((window.screen?.width || 390) * dpr));
+  const sh = Math.max(1, Math.round((window.screen?.height || 844) * dpr));
+  const want = { w: sw, h: sh };
+  let k = 1;
+  if (sw > MAX_SIDE || sh > MAX_SIDE) k = MAX_SIDE / Math.max(sw, sh);
+  if (sw * sh * k * k > MAX_PIXELS) k = Math.sqrt(MAX_PIXELS / (sw * sh));
+  return {
+    want,
+    out: { w: Math.max(1, Math.round(sw * k)), h: Math.max(1, Math.round(sh * k)) },
+  };
+}
+
+/**
+ * 塀の大きさと、写真から切り取るところ。
+ *
+ * 塀を渡さなければ**写真そのまま**（長辺 `OUT_LONG` で頭打ち）。
+ * これまでと1pxも変わらない道。
+ */
+function frameOf(
+  photo: HTMLImageElement,
+  frame?: Frame | null,
+): { w: number; h: number; sx: number; sy: number; sw: number; sh: number } {
+  const iw = Math.max(1, photo.naturalWidth);
+  const ih = Math.max(1, photo.naturalHeight);
+  if (!frame) {
+    const long = Math.max(iw, ih);
+    const k = long > OUT_LONG ? OUT_LONG / long : 1;
+    return {
+      w: Math.round(iw * k),
+      h: Math.round(ih * k),
+      sx: 0,
+      sy: 0,
+      sw: iw,
+      sh: ih,
+    };
+  }
+  const w = Math.max(1, Math.round(frame.w));
+  const h = Math.max(1, Math.round(frame.h));
+  /* `cover`。写真のほうが横長なら左右を、縦長なら上下を切る。**真ん中を残す** */
+  const k = Math.max(w / iw, h / ih);
+  const sw = Math.min(iw, w / k);
+  const sh = Math.min(ih, h / k);
+  return { w, h, sx: (iw - sw) / 2, sy: (ih - sh) / 2, sw, sh };
+}
+
+/**
+ * その塀に敷いたとき、写真を何倍に広げることになるか。
+ *
+ * **隠さずに出すための数。** 3:4 の写真を 9:19.5 の画面いっぱいに敷くと、
+ * 使えるのは写真の真ん中の細い帯だけになる（1200×1600 の写真で 740×1600）。
+ * そこから画面の画素数まで広げるので、いまのスマホでは 1.6倍前後になる。
+ * 1 を下回れば縮んでいる（粗くならない）。
+ */
+export function stretchOf(photo: HTMLImageElement, frame?: Frame | null): number {
+  const fit = frameOf(photo, frame);
+  return fit.w / Math.max(1, fit.sw);
+}
 
 /** 貼るときに縮める長辺。10日ぶん何枚でも貼るので、元のままでは置き場が持たない。 */
 export const UPLOAD_LONG = 1600;
@@ -68,6 +156,16 @@ export function loadImage(src: string): Promise<HTMLImageElement | null> {
 }
 
 /**
+ * 一度数えた中身のところを覚えておく。
+ *
+ * **引きずっているあいだ、1フレームに何度もここを通る**（描くときと、
+ * 指が誰を掴んだかを決めるとき）。絵は変わらないのに、毎回 256px ぶんの
+ * 画素を読み直していた（`getImageData`）。絵そのものを鍵にするので、
+ * 絵が差し替われば勝手に数え直される。
+ */
+const SEEN = new WeakMap<HTMLImageElement, Box>();
+
+/**
  * 透明なふちを落とした、絵の中身のところ。
  *
  * キャラクターの絵は上下左右に透明な余白を持っている。そのまま置くと
@@ -77,6 +175,8 @@ export function loadImage(src: string): Promise<HTMLImageElement | null> {
  * 読めなかったとき（描けない絵など）は、絵ぜんぶを返す。
  */
 export function opaqueBox(img: HTMLImageElement): Box {
+  const had = SEEN.get(img);
+  if (had) return had;
   const all = { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
   // 端の1画素まで見る必要はない。粗く見て軽くする
   const step = Math.max(1, Math.floor(Math.max(all.w, all.h) / 256));
@@ -109,12 +209,87 @@ export function opaqueBox(img: HTMLImageElement): Box {
     }
   }
   if (x1 < 0) return all;
-  return {
+  const box = {
     x: (x0 * all.w) / cw,
     y: (y0 * all.h) / ch,
     w: ((x1 - x0 + 1) * all.w) / cw,
     h: ((y1 - y0 + 1) * all.h) / ch,
   };
+  /* **絵が読み終わってから数えたぶんだけ覚える。** まだ 0×0 のうちに
+     数えた値を覚えると、届いたあとも 0 のままになる */
+  if (all.w > 0 && all.h > 0) SEEN.set(img, box);
+  return box;
+}
+
+/**
+ * ふちの太さ（人の見えている幅に対して）。
+ *
+ * **ダイカットのシールの白ぶち。** これが無いと、賑やかな写真の上で
+ * 人の輪郭が地に溶ける（あやと 2026-10-09「埋め込みがイケテなさすぎる」）。
+ * 影だけでは足りない——影は輪郭の**外**にぼけて出るので、地が暗いところでは
+ * 輪郭そのものが消える。太すぎると人が白い塊になるので、3.4%——
+ * 1200px の写真で 14px。
+ */
+export const EDGE = 0.034;
+
+/** ふちの外へ落ちるやわらかい影。**人の幅に対して。** */
+const CAST = { blur: 0.062, down: 0.024, ink: "rgba(0,0,0,0.34)" };
+
+/** ふちを作るときに、絵を何方向へずらして重ねるか。少ないと角が尖る。 */
+const EDGE_STEPS = 20;
+
+/**
+ * 白いふちの形（シールの台紙）を1枚作って返す。
+ *
+ * **絵の見えている画素を全方向へ `r` だけ太らせて、白で塗りつぶしたもの。**
+ * `source-in` で塗るので、半透明のふち（アンチエイリアス）も白くなり、
+ * 上に本体を重ねたときに**切り抜いたシールの縁**として見える。
+ *
+ * 返る canvas は、本体の箱より四方 `pad` だけ大きい。描くときは
+ * `box.x - pad, box.y - pad` に置く。
+ *
+ * **`ctx.filter` を使わない。** `drop-shadow()` を重ねれば同じ形は作れるが、
+ * Safari は `ctx.filter` を黙って無視する。無視されても絵は出るので、
+ * **iPhone だけふちの無い1枚が落ちてくる**——いちばん多く使われる端末で。
+ *
+ * @param img もとの絵 @param src 透明なふちを落とした中身のところ
+ * @param w 描く幅 @param h 描く高さ @param r ふちの太さ（px）
+ */
+function dieCut(
+  img: HTMLImageElement,
+  src: Box,
+  w: number,
+  h: number,
+  r: number,
+): { cv: HTMLCanvasElement; pad: number } | null {
+  const pad = Math.ceil(r) + 1;
+  const cw = Math.max(1, Math.ceil(w) + pad * 2);
+  const ch = Math.max(1, Math.ceil(h) + pad * 2);
+  const cv = document.createElement("canvas");
+  cv.width = cw;
+  cv.height = ch;
+  const g = cv.getContext("2d");
+  if (!g) return null;
+  for (let i = 0; i < EDGE_STEPS; i++) {
+    const a = (i / EDGE_STEPS) * Math.PI * 2;
+    g.drawImage(
+      img,
+      src.x,
+      src.y,
+      src.w,
+      src.h,
+      pad + Math.cos(a) * r,
+      pad + Math.sin(a) * r,
+      w,
+      h,
+    );
+  }
+  /* 太らせた形を、まるごと白にする。**色は捨てて形だけ使う** */
+  g.globalCompositeOperation = "source-in";
+  g.fillStyle = "#fff";
+  g.fillRect(0, 0, cw, ch);
+  g.globalCompositeOperation = "source-over";
+  return { cv, pad };
 }
 
 /**
@@ -149,12 +324,39 @@ export type Figure = {
   img: HTMLImageElement;
   place?: Place | null;
   /**
+   * 押した人が選んだ向き。`true` で左右を返す。
+   * **判断そのものは `components/cards/place.ts` の `Actor.flip`。**
+   */
+  flip?: boolean;
+  /**
    * 左右を返してよい絵か。**既定は返してよい。**
    * 字や標識の入った絵（あやとステッカーの「STOP」）は `false`。
    * 判断そのものは `components/cards/place.ts` の `Actor.canFlip`。
    */
   canFlip?: boolean;
 };
+
+/**
+ * 何人が、どこに、どれだけの大きさで立つか。**描かずに答えだけ返す。**
+ *
+ * 焼くとき（`composeMany`）と、**指が誰を掴んだかを決めるとき**
+ * （`components/cards/CardSheet.tsx`）が、同じ答えを見る必要がある。
+ * 別々に数えると、**見えている人と掴める人がずれる。**
+ */
+export function framesOf(pw: number, ph: number, figures: Figure[]): Placed[] {
+  const src = figures.map((f) => opaqueBox(f.img));
+  return layout(
+    pw,
+    ph,
+    src.map((b, i) => ({
+      w: b.w,
+      h: b.h,
+      place: figures[i].place,
+      flip: figures[i].flip,
+      canFlip: figures[i].canFlip,
+    })),
+  );
+}
 
 /**
  * 写真にキャラクターを焼いて、canvas を返す。
@@ -173,31 +375,23 @@ export function composeMany(
   photo: HTMLImageElement,
   figures: Figure[],
   into?: HTMLCanvasElement | null,
+  frame?: Frame | null,
 ): HTMLCanvasElement {
-  const long = Math.max(photo.naturalWidth, photo.naturalHeight);
-  const k = long > OUT_LONG ? OUT_LONG / long : 1;
-  const pw = Math.round(photo.naturalWidth * k);
-  const ph = Math.round(photo.naturalHeight * k);
+  const fit = frameOf(photo, frame);
+  const { w: pw, h: ph } = fit;
   const cv = into ?? document.createElement("canvas");
   cv.width = pw;
   cv.height = ph;
   const g = cv.getContext("2d");
   if (!g) return cv;
   g.clearRect(0, 0, pw, ph);
-  g.drawImage(photo, 0, 0, pw, ph);
+  /* 塀いっぱいに敷く。**写真の比と塀の比が違えば、はみ出すぶんを切る**
+     （`cover`）。真ん中を残す——端を残すと、たいてい人や空だけになる。 */
+  g.drawImage(photo, fit.sx, fit.sy, fit.sw, fit.sh, 0, 0, pw, ph);
   if (figures.length === 0) return cv;
 
   const src = figures.map((f) => opaqueBox(f.img));
-  const at = layout(
-    pw,
-    ph,
-    src.map((b, i) => ({
-      w: b.w,
-      h: b.h,
-      place: figures[i].place,
-      canFlip: figures[i].canFlip,
-    })),
-  );
+  const at = framesOf(pw, ph, figures);
   /* **影を先に、ぜんぶまとめて落とす。** 1人ずつ「影→本体」で描くと、
      隣に立った人の足元の影が、先に描いた人の足の上に乗る。 */
   at.forEach((p) => groundShadow(g, p.box));
@@ -205,7 +399,15 @@ export function composeMany(
   return cv;
 }
 
-/** 1体を、傾きと左右の返しごと描く。傾きの原点は足元（画面側と同じ）。 */
+/**
+ * 1体を、傾きと左右の返しごと描く。傾きの原点は足元（画面側と同じ）。
+ *
+ * **白いふち → やわらかい影 → 本体**の順。ふちの形を影つきで1回描けば、
+ * 影は**シールの縁から**落ちる（本体の輪郭からではない）。
+ *
+ * 影のずれは**下だけ**（`shadowOffsetX` は置かない）。左右を返すときは
+ * `scale(-1, 1)` の中にいるので、横へずらすと**返した人だけ影が逆へ**出る。
+ */
 function draw(
   g: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -223,6 +425,15 @@ function draw(
     // 返さないと本人に背を向けたまま並ぶ
     if (at.flip) g.scale(-1, 1);
     g.translate(-cx, -foot);
+  }
+  const cut = dieCut(img, src, at.box.w, at.box.h, at.box.w * EDGE);
+  if (cut) {
+    g.save();
+    g.shadowColor = CAST.ink;
+    g.shadowBlur = at.box.w * CAST.blur;
+    g.shadowOffsetY = at.box.w * CAST.down;
+    g.drawImage(cut.cv, at.box.x - cut.pad, at.box.y - cut.pad);
+    g.restore();
   }
   g.drawImage(img, src.x, src.y, src.w, src.h, at.box.x, at.box.y, at.box.w, at.box.h);
   if (moved) g.restore();
@@ -261,6 +472,15 @@ export function toJpeg(cv: HTMLCanvasElement): Promise<Blob | null> {
  * 旅が終わっても、この1枚は「あやと島カード」であり続ける。
  */
 export const stampFileName = (day: string) => `ayato-island-card-${day}.jpg`;
+
+/**
+ * かべがみにしたときの名前。**カードと分ける。**
+ *
+ * 同じ日の写真から、カードもかべがみも作れる。名前が同じだと、
+ * 端末の写真フォルダで**あとから貼ったほうが前のを隠す**（同名で保存すると
+ * 2枚目に `(1)` が付くだけで、どちらがどちらか分からない）。
+ */
+export const wallFileName = (day: string) => `ayato-island-wall-${day}.jpg`;
 
 /**
  * 貼るまえに縮めて焼く。既定は長辺 1600px の webp。

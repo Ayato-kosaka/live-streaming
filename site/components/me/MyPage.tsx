@@ -17,6 +17,7 @@ import Icon from "@/components/ui/IconCore";
 import IslandMe from "@/components/live/IslandMe";
 import MeHero from "./MeHero";
 import MyStuff, { type Bag } from "./MyStuff";
+import StampLine from "./StampLine";
 import ReadAgain, { WaitingPanel } from "./ReadAgain";
 import { TOOL_LINE } from "./tools";
 import { withIcons, type PlanDays, type ShownCard } from "@/components/cards/cards";
@@ -30,6 +31,7 @@ import SignIn from "@/components/live/SignIn";
  * 置くのは「あなたは誰で、島に何を置いてきたか」だけ。
  *   - 立ち位置（`MeHero`）… 顔・キャラクター・名前・いっしょにいた日数
  *   - じぶんのもの（`MyStuff`）… 付箋・企画・カードを札で切り替える
+ *   - スタンプのことば（`StampLine`）… **選ばれた本人にだけ出る1枚**
  *   - 島に名前を出すか（畳み）
  *   - 島から出る
  *
@@ -177,6 +179,15 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       {/* 自分が誰かを読めなかったとき。**「あやとではない」に倒さない。**
           押せば読み直せるので、開き直さなくていい。 */}
       {meDown && <ReadAgain what="じぶんのこと" onRetry={retry} />}
+
+      {/* スタンプのことば（#716）。**選ばれた本人にだけ1枚出る。**
+          選ばれていない人の画面には、読み込み中も読めなかったときも
+          1文字も出ない（`StampLine.tsx` の頭に理由）。
+
+          じぶんのものより上に置くのは、**押して終わる用事**だから。
+          付箋・企画・カードは何度も見に来る棚で、こちらは1回決めれば済む。
+          下に積むと、決めていない人が気づかないまま閉じる。 */}
+      <StampLine />
 
       <MyStuff
         stickies={stickies}
