@@ -32,7 +32,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, ring, type Box } from "./plates";
+import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, nooks, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -1919,12 +1919,18 @@ function placePlates(
         c.y >= padTop &&
         c.y + c.h <= o.b.h - padBottom &&
         !tkn.some((q) => hits(c, q));
-      /* 8か所が全部ふさがっていたら、**輪を広げてもう一度回る**（`./plates.ts`
-         の `ring`）。輪は `MAX_LEAD` までなので、ここで見つかった場所は
-         「建物のそば」の決まりを満たしている。輪を作るのは8か所が全滅した
+      /* 8か所が全部ふさがっていたら、**隙間の縁に合わせて探す**（`./plates.ts`
+         の `nooks`）。候補はどれも `MAX_LEAD` の中なので、ここで見つかった
+         場所は「建物のそば」の決まりを満たしている。作るのは8か所が全滅した
          ときだけ——ふだんは1つめで決まるので、重さは前と変わらない。 */
       const spot =
-        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ?? ring(rect, pl.fx, pl.fy).find(free);
+        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ??
+        nooks(rect, pl.fx, pl.fy, tkn, {
+          x: pad,
+          y: padTop,
+          w: o.b.w - pad * 2,
+          h: o.b.h - padTop - padBottom,
+        }).find(free);
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
