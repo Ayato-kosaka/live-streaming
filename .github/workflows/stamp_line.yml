@@ -7,6 +7,7 @@ name: スタンプのことば
 #   seed    … あやとが選んだ25人を Firestore（`islandStampLine`）へ置く
 #   suggest … その人が実際に何度も言っている言い回しを BigQuery から引いて、
 #             提案（`suggested`）として置く
+#   table   … 入っている中身を**あやとと話すための表**にして issue に貼る
 #
 # ## なぜ `run_admin_script.yml` ではなく、別のワークフローなのか
 #
@@ -35,6 +36,22 @@ name: スタンプのことば
 # だから `workflow_dispatch` からも押せるようにしてある（`op: suggest`）。
 # `seed` を `workflow_dispatch` から押すことはできない——
 # 入力に名簿を取る口を作らない。
+#
+# ## `table` だけが、名前とことばを外へ出す
+#
+# あやと（2026-10-09）:
+#
+# > 住人25人ぶんのセリフの件、チケットで会話しましょう。名前やコメント出しても問題ない。
+# > Aで進めて
+#
+# 出してよいのは **issue の本文ひとつ**で、**公開の Actions ログには
+# 1文字も出さない**（`python/admin/stamp_line_table.py` が件数しか出さない）。
+# 出さないものは変わらない——**金額・順位・それを当てられる数**
+# （`docs/island-money.md`）。だから表は強さで並べず、出す数は
+# 「その人がその字を打った回数」まで。
+#
+# そのために、このジョブだけ `issues: write` を持つ。
+# **既定は下見**で、`apply` を立てたときだけ貼る。
 
 on:
   repository_dispatch:
@@ -46,12 +63,22 @@ on:
         required: true
         default: suggest
         type: choice
-        options: [suggest]
+        options: [suggest, table]
       apply:
         description: "書くか（既定は下見で、1バイトも書かない）"
         required: false
         default: false
         type: boolean
+      issue:
+        description: "table のとき、どの issue に貼るか（番号だけ）"
+        required: false
+        default: "716"
+        type: string
+
+# `table` が issue にコメントを貼る。**それ以外は読むだけ。**
+permissions:
+  contents: read
+  issues: write
 
 # 同時に走らせると読み書きが交錯するので1本ずつ
 concurrency:
@@ -110,8 +137,9 @@ jobs:
           case "$op" in
             seed)    script=stamp_line_seed ;;
             suggest) script=stamp_line_suggest ;;
+            table)   script=stamp_line_table ;;
             *)
-              echo "::error::op は seed か suggest です: $op"
+              echo "::error::op は seed / suggest / table です: $op"
               exit 1
               ;;
           esac
@@ -129,7 +157,16 @@ jobs:
           ' "$GITHUB_EVENT_PATH")"
           [ "$apply" = "true" ] || apply=false
           echo "apply=$apply" >> "$GITHUB_OUTPUT"
-          echo "走らせるもの: $script / 書く: $apply"
+          # `table` の行き先。**数字だけ通す**——あとで ARGS の JSON に
+          # そのまま入るので、`716 || …` のようなものを通さない
+          issue="$(jq -r '
+            (.client_payload.issue // .inputs.issue // 716) | tostring
+          ' "$GITHUB_EVENT_PATH")"
+          case "$issue" in
+            ''|*[!0-9]*) echo "::error::issue は番号だけ: $issue"; exit 1 ;;
+          esac
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+          echo "走らせるもの: $script / 書く: $apply / 行き先: #$issue"
 
       - name: Python 環境のセットアップ
         uses: actions/setup-python@v6
@@ -161,6 +198,7 @@ jobs:
           set -euo pipefail
           python3 python/admin/stamp_line_seed_selftest.py
           python3 python/admin/stamp_line_suggest_selftest.py
+          python3 python/admin/stamp_line_table_selftest.py
           python3 python/stamp_line_pick_selftest.py
 
       - name: 実行
@@ -168,6 +206,10 @@ jobs:
         # **ARGS に名簿を入れない。** 真偽値だけを渡す。
         # 名簿は `$GITHUB_EVENT_PATH` からスクリプトが読む
         env:
-          ARGS: '{"apply": ${{ steps.pick.outputs.apply }}}'
+          ARGS: >-
+            {"apply": ${{ steps.pick.outputs.apply }},
+             "issue": ${{ steps.pick.outputs.issue }}}
+          # `table` が issue に貼るのに使う。**値はログに出ない**
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         run: python "${{ steps.pick.outputs.script }}.py"
