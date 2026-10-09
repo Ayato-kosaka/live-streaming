@@ -3,8 +3,8 @@
 
     python3 python/suzuri_api.py materials                     # 自分のデザインの一覧
     python3 python/suzuri_api.py characters [--dry-run]        # 島に居てグッズになっていない人を作る
-    python3 python/suzuri_api.py create  --title … --texture <URL|ファイル> [--items sticker,mug] [--dry-run]
-    python3 python/suzuri_api.py update  <デザインid> [--title …] [--description …] [--price 300] [--items …]
+    python3 python/suzuri_api.py create  --title … --texture <URL|ファイル|island:🦄> [--dry-run] [--delete-after]
+    python3 python/suzuri_api.py update  <デザインid> [--title …] [--description …] [--price 300]
     python3 python/suzuri_api.py delete  <デザインid> [--dry-run]
     python3 python/suzuri_api.py preview <商品id> --scale 0.8 [--offset-x 0] [--offset-y 0]
     python3 python/suzuri_api.py probe   0 --item can-badge --scale 0.8   # 大きさを保存できるか試す（0 = 試し用を作って消す）
@@ -17,12 +17,12 @@
 | --- | --- |
 | デザインを作る（絵は URL かデータ URI）・題・本文・利益・品目・消す | ○ |
 | 品目ごとの「領域に合わせる」（`resizeMode`: contain / cover） | ○ |
-| **品目ごとの大きさ・位置（scale / offsetX / offsetY）を保存** | **書いていない**（見本の絵を見るだけの `placement_preview` はある） |
+| **品目ごとの大きさ・位置（scale / offsetX / offsetY）を保存** | **ドキュメントには無いが、できる**（下） |
 
-なので、ここで**既定で作るのはステッカー・キーホルダー・マグの3品目**（どれも既定の大きさで
-きれいに出る。`.claude/skills/suzuri/ops.md` 5章）。缶バッジとパネルは大きさを決めないと
-切れるので、`probe` で保存できると分かるまで入れない（あやと 2026-10-09: 「缶バッジも試行錯誤
-しながらコツ掴めば、ワークフローで投入できそう」）。それまでは EC2 のスキル（`/suzuri`）で足す。
+**`PUT /materials/{id}` の `products[]` に `scale` / `offsetX` / `offsetY` を載せると保存される**
+（2026-10-09 に `probe` で確かめた。試し用のデザインで 0.8 を送り、見本の絵の URL が
+`png.0.8+0.0+0.0` に変わった）。なので5品目とも作れる: 作る（POST）→ すぐ大きさを入れる（PUT）→
+読み直して確かめる。大きさの決め方は EC2 のスキルと同じ `suzuri_common.layout()`。
 
 ## ログは誰でも読める
 
@@ -47,8 +47,8 @@ BASE = "https://suzuri.jp/api/v1"
 USER_ID = 2272949            # ayato_arigato（編集画面の data-current-user の id）
 SERIES = "カサ・アヤトの住人"
 ISLAND = "https://live-streaming-d3cac.web.app/island-api/characters"
-# API で既定の大きさのまま出せる3品目（缶バッジ・パネルは probe で確かめるまで入れない）
-SAFE_ITEMS = ["sticker", "acrylic-keychain", "mug"]
+# 作る品目。缶バッジとパネルの大きさは、作った直後に PUT で入れる（POST で効くかは確かめていない）
+SAFE_ITEMS = ["sticker", "acrylic-keychain", "can-badge", "mug", "acrylic-panel"]
 # 公開のログに中身を出してはいけない口
 PRIVATE = ("/user/sold", "/user/analytics", "/activities", "/user?", "/user/")
 
@@ -125,9 +125,35 @@ def products_for(items, src=None, placement=False):
     return out
 
 
+def local_src(texture, work="/tmp/suzuri"):
+    """絵を手元のファイルにして、透過を確かめ、余白を落とした正方形にする。
+    **大きさ（scale）は上げた絵の画素数に掛かる**ので、上げる絵と大きさを決める絵は同じファイルにする"""
+    os.makedirs(work, exist_ok=True)
+    if texture.startswith("island:"):
+        # 「island:🦄」で、島のキャラの背景なしの絵を指す
+        want = norm(texture.split(":", 1)[1])
+        chars = json.load(urllib.request.urlopen(urllib.request.Request(ISLAND, headers={"User-Agent": "ayato-island/1.0"}), timeout=60))["characters"]
+        hit = [c for c in chars if norm(c["emoji"]) == want]
+        if len(hit) != 1:
+            sys.exit(f"島に {texture} のキャラが {len(hit)} 人")
+        texture = hit[0]["plain"]["full"]
+    raw = texture
+    if texture.startswith("http"):
+        raw = f"{work}/dl-{abs(hash(texture))}.png"
+        open(raw, "wb").write(urllib.request.urlopen(urllib.request.Request(texture, headers={"User-Agent": "ayato-island/1.0"}), timeout=120).read())
+    if not transparent(raw):
+        sys.exit(f"背景が抜けていない絵は上げない: {texture[:80]}")
+    dst = f"{work}/prep-{os.path.basename(raw)}"
+    prep(raw, dst)
+    return dst
+
+
 def create(title, description, texture, items, price=300, dry=False, src=None):
+    """作る → 大きさを入れる → 読み直して確かめる"""
+    src = src or local_src(texture)
+    texture = src
     body = {"title": title, "description": description, "price": price, "texture": texture_of(texture),
-            "products": products_for(items, src)}
+            "products": products_for(items)}
     if dry:
         print(f"  dry-run: POST /materials {title!r} items={items} texture={'data-uri' if body['texture'].startswith('data:') else body['texture'][:60]}")
         return None
@@ -136,7 +162,32 @@ def create(title, description, texture, items, price=300, dry=False, src=None):
         sys.exit(f"POST /materials {st}: {r}")
     m = r["material"]
     print(f"  created {m['id']} {m['title']!r} products={[p['item']['name'] for p in r.get('products', [])]}")
+    set_layout(m["id"], items, src)
     return m["id"]
+
+
+def set_layout(material_id, items, src):
+    """缶バッジ・パネルなど、大きさを決める品目に scale / offset を入れ、読み直して確かめる。
+    **品目は全部載せて送る**（1品目だけだと残りがどうなるかドキュメントに書いていない）"""
+    prods = products_for(items, src, placement=True)
+    st, r = call("PUT", f"/materials/{material_id}", {"products": prods})
+    if st != 200:
+        sys.exit(f"PUT /materials/{material_id} {st}: {r}")
+    for p in prods:
+        if "scale" not in p:
+            continue
+        it = next(k for k, v in ITEM_IDS.items() if v == p["itemId"])
+        got, _ = placement_of(material_id, it)
+        ok = bool(got) and abs(got[0] - p["scale"]) < 0.0015
+        print(f"    {it}: scale {p['scale']} offset {p.get('offsetX')},{p.get('offsetY')} -> 見本 {got} {'ok' if ok else '**入っていない**'}")
+        print(f"      {sample_url(material_id, it)}")
+        if not ok:
+            sys.exit(f"{material_id} の {it} に大きさが入らなかった")
+
+
+def sample_url(material_id, item):
+    st, r = call("GET", "/products", query={"materialId": material_id, "itemId": ITEM_IDS[item], "limit": 1})
+    return (r.get("products") or [{}])[0].get("sampleImageUrl") if st == 200 else None
 
 
 def placement_of(material_id, item):
@@ -226,7 +277,7 @@ def characters(dry=False, items=SAFE_ITEMS, work="/tmp/suzuri"):
             skipped.append(c["emoji"])
             continue
         prep(raw, src)
-        mid = create(TITLE.format(emoji=c["emoji"]), DESCRIPTION.format(emoji=c["emoji"]), src, items, 300, dry)
+        mid = create(TITLE.format(emoji=c["emoji"]), DESCRIPTION.format(emoji=c["emoji"]), src, items, 300, dry, src=src)
         made.append((c["emoji"], mid))
         time.sleep(2)
     print(f"作った {len(made)} / 透過が無くて作らなかった {len(skipped)} {''.join(skipped)}")
@@ -249,8 +300,10 @@ def main():
     c = sub.add_parser("create")
     c.add_argument("--title", required=True); c.add_argument("--description", default=""); c.add_argument("--price", type=int, default=300)
     c.add_argument("--texture", required=True); c.add_argument("--items", default=",".join(SAFE_ITEMS)); c.add_argument("--dry-run", action="store_true")
+    c.add_argument("--delete-after", action="store_true", help="作って確かめたら消す（試し用）")
     c = sub.add_parser("update"); c.add_argument("id", type=int)
-    c.add_argument("--title"); c.add_argument("--description"); c.add_argument("--price", type=int); c.add_argument("--items")
+    # 品目は直させない。大きさ無しで品目を送ると、缶バッジ・パネルの大きさが既定に戻りうる
+    c.add_argument("--title"); c.add_argument("--description"); c.add_argument("--price", type=int)
     c = sub.add_parser("delete"); c.add_argument("id", type=int); c.add_argument("--dry-run", action="store_true")
     c = sub.add_parser("preview"); c.add_argument("id", type=int)
     c.add_argument("--scale", required=True); c.add_argument("--offset-x", default="0"); c.add_argument("--offset-y", default="0")
@@ -266,11 +319,12 @@ def main():
     elif a.cmd == "characters":
         characters(a.dry_run, [x for x in a.items.split(",") if x])
     elif a.cmd == "create":
-        create(a.title, a.description, a.texture, [x for x in a.items.split(",") if x], a.price, a.dry_run)
+        mid = create(a.title, a.description, a.texture, [x for x in a.items.split(",") if x], a.price, a.dry_run)
+        if mid and a.delete_after:
+            st, _ = call("DELETE", f"/materials/{mid}")
+            print("消した", mid, st)
     elif a.cmd == "update":
         body = {k: v for k, v in {"title": a.title, "description": a.description, "price": a.price}.items() if v is not None}
-        if a.items:
-            body["products"] = products_for([x for x in a.items.split(",") if x])
         st, r = call("PUT", f"/materials/{a.id}", body)
         print("PUT", a.id, st, (r.get("error") if st != 200 else r.get("material", {}).get("title")))
         sys.exit(0 if st == 200 else 1)
