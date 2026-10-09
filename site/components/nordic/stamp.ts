@@ -52,6 +52,89 @@ import {
 /** 焼き上がりの長辺。これ以上大きくしても、持って帰る先で使い道がない。 */
 export const OUT_LONG = 2048;
 
+/**
+ * 焼く塀の大きさ（画素）。**渡さなければ写真そのままの形。**
+ *
+ * かべがみにするときは、見ている端末の画面の形と画素数を渡す
+ * （`screenFrame()`）。写真は塀いっぱいに敷いて、はみ出すぶんを切る。
+ */
+export type Frame = { w: number; h: number };
+
+/** canvas1枚に許す画素数。これを越えると、端末によっては真っ白で返る。 */
+const MAX_PIXELS = 12_000_000;
+/** canvas1辺に許す画素数。 */
+const MAX_SIDE = 4096;
+
+/**
+ * この端末の画面を、そのまま塀にする。
+ *
+ * **`screen` と `devicePixelRatio` から出す。** 窓の大きさ（`innerWidth`）
+ * ではない——かべがみは画面に貼るものなので、ブラウザの窓ではなく
+ * 画面そのものの画素数が要る。
+ *
+ * 大きすぎる画面（4K のPC）は上限で丸める。**丸めたかどうかは呼ぶ側が
+ * 分かるように**、求めた値も返す（画面に出して隠さない）。
+ */
+export function screenFrame(): { want: Frame; out: Frame } {
+  const dpr = Math.max(1, Math.min(4, window.devicePixelRatio || 1));
+  const sw = Math.max(1, Math.round((window.screen?.width || 390) * dpr));
+  const sh = Math.max(1, Math.round((window.screen?.height || 844) * dpr));
+  const want = { w: sw, h: sh };
+  let k = 1;
+  if (sw > MAX_SIDE || sh > MAX_SIDE) k = MAX_SIDE / Math.max(sw, sh);
+  if (sw * sh * k * k > MAX_PIXELS) k = Math.sqrt(MAX_PIXELS / (sw * sh));
+  return {
+    want,
+    out: { w: Math.max(1, Math.round(sw * k)), h: Math.max(1, Math.round(sh * k)) },
+  };
+}
+
+/**
+ * 塀の大きさと、写真から切り取るところ。
+ *
+ * 塀を渡さなければ**写真そのまま**（長辺 `OUT_LONG` で頭打ち）。
+ * これまでと1pxも変わらない道。
+ */
+function frameOf(
+  photo: HTMLImageElement,
+  frame?: Frame | null,
+): { w: number; h: number; sx: number; sy: number; sw: number; sh: number } {
+  const iw = Math.max(1, photo.naturalWidth);
+  const ih = Math.max(1, photo.naturalHeight);
+  if (!frame) {
+    const long = Math.max(iw, ih);
+    const k = long > OUT_LONG ? OUT_LONG / long : 1;
+    return {
+      w: Math.round(iw * k),
+      h: Math.round(ih * k),
+      sx: 0,
+      sy: 0,
+      sw: iw,
+      sh: ih,
+    };
+  }
+  const w = Math.max(1, Math.round(frame.w));
+  const h = Math.max(1, Math.round(frame.h));
+  /* `cover`。写真のほうが横長なら左右を、縦長なら上下を切る。**真ん中を残す** */
+  const k = Math.max(w / iw, h / ih);
+  const sw = Math.min(iw, w / k);
+  const sh = Math.min(ih, h / k);
+  return { w, h, sx: (iw - sw) / 2, sy: (ih - sh) / 2, sw, sh };
+}
+
+/**
+ * その塀に敷いたとき、写真を何倍に広げることになるか。
+ *
+ * **隠さずに出すための数。** 3:4 の写真を 9:19.5 の画面いっぱいに敷くと、
+ * 使えるのは写真の真ん中の細い帯だけになる（1200×1600 の写真で 740×1600）。
+ * そこから画面の画素数まで広げるので、いまのスマホでは 1.6倍前後になる。
+ * 1 を下回れば縮んでいる（粗くならない）。
+ */
+export function stretchOf(photo: HTMLImageElement, frame?: Frame | null): number {
+  const fit = frameOf(photo, frame);
+  return fit.w / Math.max(1, fit.sw);
+}
+
 /** 貼るときに縮める長辺。10日ぶん何枚でも貼るので、元のままでは置き場が持たない。 */
 export const UPLOAD_LONG = 1600;
 
@@ -292,18 +375,19 @@ export function composeMany(
   photo: HTMLImageElement,
   figures: Figure[],
   into?: HTMLCanvasElement | null,
+  frame?: Frame | null,
 ): HTMLCanvasElement {
-  const long = Math.max(photo.naturalWidth, photo.naturalHeight);
-  const k = long > OUT_LONG ? OUT_LONG / long : 1;
-  const pw = Math.round(photo.naturalWidth * k);
-  const ph = Math.round(photo.naturalHeight * k);
+  const fit = frameOf(photo, frame);
+  const { w: pw, h: ph } = fit;
   const cv = into ?? document.createElement("canvas");
   cv.width = pw;
   cv.height = ph;
   const g = cv.getContext("2d");
   if (!g) return cv;
   g.clearRect(0, 0, pw, ph);
-  g.drawImage(photo, 0, 0, pw, ph);
+  /* 塀いっぱいに敷く。**写真の比と塀の比が違えば、はみ出すぶんを切る**
+     （`cover`）。真ん中を残す——端を残すと、たいてい人や空だけになる。 */
+  g.drawImage(photo, fit.sx, fit.sy, fit.sw, fit.sh, 0, 0, pw, ph);
   if (figures.length === 0) return cv;
 
   const src = figures.map((f) => opaqueBox(f.img));
@@ -388,6 +472,15 @@ export function toJpeg(cv: HTMLCanvasElement): Promise<Blob | null> {
  * 旅が終わっても、この1枚は「あやと島カード」であり続ける。
  */
 export const stampFileName = (day: string) => `ayato-island-card-${day}.jpg`;
+
+/**
+ * かべがみにしたときの名前。**カードと分ける。**
+ *
+ * 同じ日の写真から、カードもかべがみも作れる。名前が同じだと、
+ * 端末の写真フォルダで**あとから貼ったほうが前のを隠す**（同名で保存すると
+ * 2枚目に `(1)` が付くだけで、どちらがどちらか分からない）。
+ */
+export const wallFileName = (day: string) => `ayato-island-wall-${day}.jpg`;
 
 /**
  * 貼るまえに縮めて焼く。既定は長辺 1600px の webp。
