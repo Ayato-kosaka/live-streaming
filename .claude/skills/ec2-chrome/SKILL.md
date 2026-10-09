@@ -28,7 +28,22 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
 | `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`・`state`/`start`/`stop` |
-| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot` |
+| `ec2_exec.sh` | 手元 | **起こして → 実行して → 必ず止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ）。実行の前に `cdp.py` を EC2 へ置き直す |
+| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
+
+**`ec2.py run` と `ec2_exec.sh` の使い分け:** 箱がもう起きている（あやとが入っている・何回にも分けて触る）
+なら `ec2.py run`。止まっている箱で1回だけ回すなら `ec2_exec.sh`（終わったら止める）。
+起きている箱に `ec2_exec.sh` を使うと、**あやとが使っている最中でも止めてしまう。**
+
+### ページの絵を取る（ChatGPT の共有リンクなど）
+
+```bash
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 cdp.py fetch-image https://chatgpt.com/s/m_… /home/ubuntu/shots/x.png') 150
+python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/x.png /tmp/claude-0/scr/x.png
+```
+
+ページを開いて、いちばん大きい絵を**ページの中の fetch で**取る。ChatGPT の絵の URL は数分で切れる
+署名付きなので、URL を写して後から curl しても取れない。ログインの要らないページなら、どこでも同じ。
 
 最初に1回、`cdp.py` を置く:
 

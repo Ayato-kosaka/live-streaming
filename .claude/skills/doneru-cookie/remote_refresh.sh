@@ -7,45 +7,34 @@
 # **パスワード欄・本人確認（2段階）が出たら何も押さずに終了コード3で止まる。** そこから先はあやとの手。
 set -u
 REPO="Ayato-kosaka/live-streaming"
-# Google / Doneru のセッションが残っているのは既定のプロファイル（nanitabeyo の作業で作ったもの）。
-# ただし Chrome 136 以降は既定の user-data-dir ではデバッグポートを開かないので、
-# そこから複製した別ディレクトリで起動する。複製は無いときだけ（以後はこちらが正）。
-SRC_UDD="/home/ubuntu/.config/google-chrome"
+# Chrome の起こし方・プロファイルの複製・CDP の繋ぎ方は、共通の土台（.claude/skills/ec2-chrome/cdp.py）に任せる。
+# ec2_exec.sh が実行の前に /home/ubuntu/cdp/cdp.py を置き直している。
+# ログインが残っているのは ~/doneru-chrome（cdp.up("doneru") がここを使う。無ければ既定のプロファイルから1回だけ複製）
 PROFILE="/home/ubuntu/doneru-chrome"
-PORT=9222
 DT_FILE=/tmp/.doneru_dt
+# CHECK_ONLY=1 のときは、_dt が生きているかを見るだけで、ログインは押さない・Secret も入れない。
+# **試すときはこれで回す。** ログインを押すと /challenge/ が開き、その場であやとのスマホに通知が飛ぶ
+CHECK_ONLY="${CHECK_ONLY:-0}"
 # どこで抜けても Chrome を閉じてからにする。閉じずに止めると、取り直したセッションが EBS に書き戻されない
 trap 'pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 5; rm -f "$DT_FILE" "$DT_FILE.browser" /tmp/doneru_challenge.txt /tmp/doneru_choice.txt' EXIT
 
-# Ubuntu の pip は PEP 668 で素のままだと入れてくれない。apt を先に試す。
+[ -f /home/ubuntu/cdp/cdp.py ] || { echo "ERROR: /home/ubuntu/cdp/cdp.py が無い（ec2_exec.sh から回したか）"; exit 1; }
 python3 -c 'import websocket' 2>/dev/null || apt-get install -y -qq python3-websocket >/dev/null 2>&1 \
   || pip3 install --quiet --break-system-packages websocket-client >/dev/null 2>&1
 python3 -c 'import websocket' 2>/dev/null || { echo "ERROR: websocket-client を入れられない"; exit 1; }
 
-# 画面（Xvfb :20）が無ければ立てる
-pgrep -f 'Xvfb :20' >/dev/null || { sudo -u ubuntu sh -c 'nohup Xvfb :20 -screen 0 1280x900x24 >/tmp/xvfb.log 2>&1 &'; sleep 2; }
-
-if [ ! -d "$PROFILE/Default" ]; then
-  echo "seed: $SRC_UDD/Default を $PROFILE に複製"
-  mkdir -p "$PROFILE" && cp -a "$SRC_UDD/Default" "$SRC_UDD/Local State" "$PROFILE/" && chown -R ubuntu:ubuntu "$PROFILE"
-fi
-# 前回の起動が残した鍵を外す（Chrome は動いていない前提。動いていれば起動し直す）
-pkill -u ubuntu -f "user-data-dir=${PROFILE}" 2>/dev/null; sleep 2
-rm -f "$PROFILE"/Singleton*
-
-# 1. デバッグポート付きで起動
-sudo -u ubuntu -i -- sh -c "export DISPLAY=:20; nohup google-chrome \
-  --user-data-dir=${PROFILE} --remote-debugging-port=${PORT} --remote-allow-origins=http://localhost:${PORT} \
-  --no-first-run --no-default-browser-check https://doneru.jp/ \
-  >/tmp/chrome_doneru.log 2>&1 & sleep 20; echo launched"
-curl -s "http://localhost:${PORT}/json/version" >/dev/null || { echo "ERROR: デバッグポートが開かない"; tail -5 /tmp/chrome_doneru.log; exit 1; }
+# 1. デバッグポート付きで起動（もう動いていればそのまま使う）
+python3 -c 'import sys; sys.path.insert(0, "/home/ubuntu/cdp"); from cdp import up; print("chrome port", up("doneru", "https://doneru.jp/"))' \
+  || { echo "ERROR: デバッグポートが開かない"; tail -5 /tmp/chrome-doneru.log; exit 1; }
 
 # 2. CDP で _dt を読む。無ければログインボタンを押していく（値は DT_FILE にだけ書く）
 rm -f "$DT_FILE" /tmp/doneru_choice.txt
-python3 - "$DT_FILE" <<'PY'
-import hashlib, json, os, re, sys, time, urllib.request, websocket
+CHECK_ONLY="$CHECK_ONLY" python3 - "$DT_FILE" <<'PY'
+import hashlib, json, os, re, sys, time
+sys.path.insert(0, "/home/ubuntu/cdp")
+import cdp
 out = sys.argv[1]
-BASE = "http://localhost:9222"
+CHECK_ONLY = os.environ.get("CHECK_ONLY") == "1"
 # Doneru（YouTube チャンネル ayato_arigato）に使う Google アカウント（あやと 2026-09-23）。
 # リポジトリは公開なので、メールそのものではなく小文字にしたものの SHA-256 で照合する。
 # 上を当て推量で押したら別のアカウントで本人確認に飛んだので、一致しなければ押さずに止める
@@ -63,19 +52,11 @@ NUMS = r"""[...document.querySelectorAll('body *')].filter(e => e.children.lengt
 ACCOUNT_SHA256 = "fc610098750871be3c2dbc1490ffff5de0e60d720b520366f993698fa8bb4adc"
 
 def pages():
-    return [t for t in json.load(urllib.request.urlopen(BASE + "/json/list")) if t["type"] == "page"]
+    return cdp.pages("doneru")
 
-class Tab:
-    def __init__(self, t):
-        # Origin を付けると Chrome 111+ は 403 で弾く（起動側の --remote-allow-origins と二重に塞ぐ）
-        self.ws = websocket.create_connection(t["webSocketDebuggerUrl"], timeout=30, suppress_origin=True); self.n = 0
-    def call(self, method, **params):
-        self.n += 1; self.ws.send(json.dumps({"id": self.n, "method": method, "params": params}))
-        while True:
-            m = json.loads(self.ws.recv())
-            if m.get("id") == self.n: return m.get("result", {})
-    def js(self, expr):
-        return self.call("Runtime.evaluate", expression=expr, returnByValue=True).get("result", {}).get("value")
+def Tab(t):
+    # 土台の Tab。エラーを例外にしない（閉じかけの Google の窓に投げても止まらない、前の作りのまま）
+    return cdp.Tab(cdp._port("doneru"), t, timeout=30, strict=False)
 
 def where(url):  # クエリには鍵が乗ることがあるので、ホストとパスだけ出す
     m = re.match(r"https?://([^/?#]+)([^?#]*)", url or ""); return (m.group(1) + m.group(2)) if m else url
@@ -152,6 +133,9 @@ if dt:
     print("existing _dt, browser fetch:", bs)
     if not bs.startswith("200"):
         print("  → 入っているが寄付一覧が読めない。ログインし直す"); stale = dt; dt = None
+if CHECK_ONLY:
+    print("CHECK_ONLY: _dt は", "生きている（寄付一覧が読めた）" if dt else "切れている／読めない。ログインは押さずに止める")
+    sys.exit(0 if dt else 4)
 if not dt:
     # 配信者のログインは /auth/login?loginType=streamer の「Sign in with YouTube」で、その行き先が
     # /auth/youtube?type=streamer（あやと 2026-09-23）。直接行けば Google のアカウント選択から始まる。
@@ -235,6 +219,7 @@ else:
 PY
 RC=$?
 [ "$RC" -eq 3 ] && exit 3
+if [ "$CHECK_ONLY" = 1 ]; then echo "CHECK_ONLY: ここで止める（Secret は触らない。exit $RC）"; exit "$RC"; fi
 [ "$RC" -eq 0 ] || { echo "ERROR: CDP の手順が落ちた（exit $RC）。STDERR を見る"; exit 1; }
 [ -s "$DT_FILE" ] || { echo "ERROR: _dt を取れなかった。上の step の行を見て、押す所を足す"; exit 2; }
 DT=$(cat "$DT_FILE"); rm -f "$DT_FILE"

@@ -95,9 +95,11 @@ def down(name):
 
 
 class Tab:
-    def __init__(self, port, target, timeout=60):
+    def __init__(self, port, target, timeout=60, strict=True):
+        """strict=False だと、CDP がエラーを返しても例外にせず空の結果を返す
+        （Doneru のログイン手順は、閉じかけの窓に投げて黙って進む作りになっている）"""
         import websocket
-        self.port, self.target = port, target
+        self.port, self.target, self.strict = port, target, strict
         # Origin を付けると Chrome 111+ は 403 で弾く
         self.ws = websocket.create_connection(target["webSocketDebuggerUrl"], timeout=timeout, suppress_origin=True)
         self.n = 0
@@ -112,7 +114,7 @@ class Tab:
         while True:
             m = json.loads(self.ws.recv())
             if m.get("id") == self.n:
-                if "error" in m:
+                if "error" in m and self.strict:
                     raise RuntimeError(f"{method}: {m['error']}")
                 return m.get("result", {})
             if "method" in m:
@@ -198,6 +200,10 @@ class Tab:
           .filter(s => s).slice(0, {limit})""")
 
 
+def pages(name):
+    return [t for t in json.load(urllib.request.urlopen(f"http://localhost:{_port(name)}/json/list")) if t["type"] == "page"]
+
+
 def tab(name="suzuri", index=0, new=False):
     port = _port(name)
     if new:
@@ -211,3 +217,45 @@ def where(url):
     """クエリには鍵が乗ることがあるので、ホストとパスだけ出す"""
     m = re.match(r"https?://([^/?#]+)([^?#]*)", url or "")
     return (m.group(1) + m.group(2)) if m else url
+
+
+def fetch_image(url, out, name="web", min_px=600, wait=8):
+    """ページを開き、いちばん大きい絵を**ページの中から**取ってファイルに書く。戻り値は (形式, バイト数, 幅, 高さ)。
+
+    ChatGPT の共有リンク（https://chatgpt.com/s/m_…）で使った。絵の URL には期限付きの署名が
+    付いていて（数分で切れる）、curl で後から取りに行けない。ページの中の fetch なら、
+    そのときの署名とログインのまま取れる。ログインの要らないページなら、どのサイトでも同じ形で使える。
+
+        python3 /home/ubuntu/cdp/cdp.py fetch-image <ページのURL> <書き出し先>
+    """
+    up(name, "about:blank")
+    t = tab(name, new=True)
+    try:
+        t.go(url, wait=wait)
+        r = t.js(f"""(async () => {{
+          const im = [...document.images].filter(i => i.naturalWidth >= {min_px})
+                       .sort((a, b) => b.naturalWidth * b.naturalHeight - a.naturalWidth * a.naturalHeight)[0];
+          if (!im) return null;
+          const b = await (await fetch(im.src)).blob();
+          const data = await new Promise(res => {{ const fr = new FileReader(); fr.onload = () => res(fr.result.split(',')[1]); fr.readAsDataURL(b); }});
+          return [b.type, data, im.naturalWidth, im.naturalHeight];
+        }})()""", await_promise=True)
+        if not r:
+            raise RuntimeError(f"{min_px}px 以上の絵が無い: {where(url)}")
+        data = base64.b64decode(r[1])
+        os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+        open(out, "wb").write(data)
+        return r[0], len(data), r[2], r[3]
+    finally:
+        try:
+            t.call("Page.close")
+        except Exception:
+            pass
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) >= 4 and sys.argv[1] == "fetch-image":
+        print(fetch_image(sys.argv[2], sys.argv[3]))
+    else:
+        print("usage: cdp.py fetch-image <url> <out>")
