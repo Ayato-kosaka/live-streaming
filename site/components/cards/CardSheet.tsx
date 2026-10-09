@@ -4,11 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Icon from "@/components/ui/IconCore";
 import {
+  SCALE_MAX,
+  SCALE_MIN,
+  TILT_MAX,
   clampPlace,
   composeMany,
   defaultPlaceFor,
+  framesOf,
   loadImage,
   opaqueBox,
+  pickAt,
+  placeFromBox,
   stampFileName,
   toJpeg,
   type Figure,
@@ -99,6 +105,16 @@ import {
 type Pick = { key: string; icon: string; name: string; place: Place | null };
 
 /**
+ * 1人ぶんの持ちかた。
+ *
+ * **`flip` は保存しない。** 口（`POST /cards/<id>`）が受けるのは
+ * `x/y/rot/scale` だけで、ここに1欄足すと**他の人が見るカードの向きまで
+ * 変わる。** 誰も頼んでいない（入れるあやとを保存しないのと同じ理由）。
+ */
+type Hold = { place: Place | null; flip: boolean };
+const BLANK: Hold = { place: null, flip: false };
+
+/**
  * 最初から人の入っている紙で、「あやとも入れますか」の頭を
  * 胴の下から何 px 覗かせるか。**字が1行ぶん読める高さ。**
  * これより小さいと「何か在る」だけになって、何が在るか分からない。
@@ -169,8 +185,32 @@ export default function CardSheet({
   );
   /** どのあやとを入れるか（`STICKERS` の `id`）。**null は入れない。手元だけ。** */
   const [mateId, setMateId] = useState<string | null>(null);
+  /**
+   * 1人ぶんの持ちかた。立ち位置と、向き。
+   *
+   * **`place` が null は「まだ自分で置いていない」**——住人なら覚えてある
+   * ぶん（か既定の右下）、あやとなら機械が隣に並べたところ。
+   */
+  const [youAt, setYouAt] = useState<Hold>(BLANK);
+  const [mateAt, setMateAt] = useState<Hold>(BLANK);
+  /**
+   * **いま手にしている人**（0＝住人 / 1＝あやと）。
+   *
+   * 札で選ばせない（あやと 2026-10-09「押したほうが動く」）。押したところに
+   * 立っている人が手に入る。手の欄（大きさ・かたむき・むき）は、
+   * **その1人ぶんだけ**出す。
+   */
+  const [hand, setHand] = useState<0 | 1>(0);
+  /**
+   * 決めるのは ref、描くのは state。
+   *
+   * 指が1本増えた・減った瞬間に「いまどこに立っているか」を読み直す
+   * （2本指の基準を取り直すため）。state は次の描画まで古いままなので、
+   * **そこを読むと、指を足した瞬間に絵が跳ぶ。**
+   */
+  const holdRef = useRef<[Hold, Hold]>([BLANK, BLANK]);
   /** 動かしたぶん。**null はその人の元の立ち位置**（既定か、覚えてあるぶん） */
-  const [moved, setMoved] = useState<Place | null>(null);
+  const moved = youAt.place;
   const [out, setOut] = useState<{ url: string; blob: Blob } | null>(null);
   /** 動かしている最中。canvas を前に出して、jpeg へは焼かない */
   const [live, setLive] = useState(false);
@@ -186,6 +226,8 @@ export default function CardSheet({
   const tuneRef = useRef<HTMLDivElement>(null);
   /** 写真の箱。**焼き直しているあいだ、高さを畳ませない**ために測る */
   const shotRef = useRef<HTMLDivElement>(null);
+  /** 絵の台。**指を受けるのはここ**（canvas と焼き上がりの両方を覆う） */
+  const stageRef = useRef<HTMLDivElement>(null);
   /** 送る胴。**まだ下に続くか**を見るのに要る */
   const bodyRef = useRef<HTMLDivElement>(null);
   /** まだ下に続くか。続くなら、紙の底に合図を出す */
@@ -214,9 +256,24 @@ export default function CardSheet({
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  /* 人を選び直したら、動かしたぶんは持ち越さない。立ち位置は人ごとのもの */
+  /* 人を選び直したら、動かしたぶんは持ち越さない。立ち位置は人ごとのもの。
+     **あやとのぶんも一緒に戻す**——隣に並ぶ相手が変われば、空いている
+     ほうも変わる。前の人の隣に置いた場所をそのまま使うと、重なる。 */
   const who = chosen?.icon ?? "";
-  useEffect(() => setMoved(null), [who]);
+  useEffect(() => {
+    holdRef.current = [BLANK, BLANK];
+    setYouAt(BLANK);
+    setMateAt(BLANK);
+    setHand(0);
+  }, [who]);
+
+  /* あやとを選び直したら、あやとのぶんだけ戻す。**絵が変われば寸法も変わる**
+     ので、前の絵のために決めた置き場所をそのまま当てると、はみ出す。 */
+  useEffect(() => {
+    holdRef.current = [holdRef.current[0], BLANK];
+    setMateAt(BLANK);
+    setHand(0);
+  }, [mateId]);
 
   /* 人を選ぶと、紙の下に3つ差し込まれる——なぞれる案内・あやとの札・
      大きさともとのばしょ。**紙はそこまで送られない。**
@@ -364,6 +421,14 @@ export default function CardSheet({
   const mateSrc = mate?.file ?? null;
   /** 左右を返してよい絵か。**字の入った絵は返さない**（`content/goods.ts`） */
   const mateFlip = mate?.canFlip ?? true;
+  /**
+   * 目盛りに出す値。**まだ自分で置いていない人は、既定（1倍・0度）。**
+   *
+   * ここは**見せるためだけ**で、書き戻す起点には使わない（`poseOf` を使う）。
+   * 絵が届く前でも目盛りが出ていないと、手が1つも無い紙に見える。
+   */
+  const handPlace: Place =
+    (hand === 0 ? youAt.place : mateAt.place) ?? { x: 0.8, y: 0.95, rot: 0, scale: 1 };
 
   /* ---- 絵を読む。**人や写真が変わったときだけ** ---- */
   useEffect(() => {
@@ -439,22 +504,77 @@ export default function CardSheet({
     };
   }, [mateSrc]);
 
+  /**
+   * いま焼く人たち。**先頭が住人、2人目があやと。**
+   *
+   * 描くほうと、**指が誰を掴んだかを決めるほう**が同じ並びを見る。
+   * 別々に組むと、見えている人と掴める人がずれる。
+   */
+  const figures = useCallback((): Figure[] => {
+    const { chr, mate: m } = art.current;
+    const out: Figure[] = [];
+    if (chr) out.push({ img: chr, place, flip: youAt.flip });
+    /* あやとは**入れると言ったときだけ、2体目として。**
+       自分で置いていなければ、並べ方（押しのけない・足元をそろえる・
+       重ならない）は `place.ts` の `layout` が決める。
+       **字の入った絵は左右を返さない**（`canFlip`） */
+    if (chr && m)
+      out.push({ img: m, place: mateAt.place, flip: mateAt.flip, canFlip: mateFlip });
+    return out;
+    /* `art.current` は再描画を起こさないので、読み終わりの合図（`ready` /
+       `mateReady`）も鍵に入れる。入れないと、絵が届いても組み直されない */
+  }, [place, youAt.flip, mateAt.place, mateAt.flip, mateFlip, ready, mateReady]);
+
   /* ---- canvas に描く。**動かしているあいだはここだけ** ---- */
   useEffect(() => {
-    const { photo, chr } = art.current;
+    const { photo } = art.current;
     const cv = cvRef.current;
     if (!photo || !cv) return;
     /* 止めているあいだは描かない。**描くと、出せない絵が canvas に残る** */
     if (failed) return;
-    const figures: Figure[] = [];
-    if (chr) figures.push({ img: chr, place });
-    /* あやとは**入れると言ったときだけ、2体目として。** 並べ方
-       （押しのけない・足元をそろえる・重ならない）は `place.ts` の `layout`。
-       **字の入った絵は左右を返さない**（`canFlip`） */
-    if (chr && art.current.mate)
-      figures.push({ img: art.current.mate, canFlip: mateFlip });
-    composeMany(photo, figures, cv);
-  }, [ready, mateReady, place, failed, mateFlip]);
+    const list = figures();
+    composeMany(photo, list, cv);
+    /* **測る道具のために、いまの立ち位置を札として置く。**
+       `tools/sprites/cardwall.mjs` が「2人が別々に動いたか」をここから読む。
+       状態（React）ではなく描いた結果から出すので、**見えているものと
+       同じ値**になる。再描画は起こさない（`dataset` を書くだけ）。 */
+    const at = framesOf(cv.width, cv.height, list);
+    /* **あやとが出てきたところで、その場に釘を打つ。**
+       機械の並べ方（本人の隣）に任せたままだと、**住人を引きずるたびに
+       あやとが付いてくる**——離して置けない、というあやとの指摘そのもの。
+       出てきた瞬間の箱をそのまま `place` にするので、**見た目は1pxも
+       変わらない**（`placeFromBox` の往復。自己点検の 3f）。
+
+       ただし、2人そろって縮む道（`MATE_MIN`）に落ちているときは打たない。
+       あちらは**本人の箱も縮めている**ので、連れだけ釘を打つと次の絵で
+       本人が元の大きさへ跳ね返る。1人だけで並べた箱と見比べて、
+       本人が動いていないときだけにする。 */
+    if (list.length === 2 && !holdRef.current[1].place) {
+      const solo = framesOf(cv.width, cv.height, [list[0]]);
+      const 同じ =
+        Math.abs(solo[0].box.x - at[0].box.x) < 0.5 &&
+        Math.abs(solo[0].box.w - at[0].box.w) < 0.5;
+      if (同じ) {
+        const b = opaqueBox(list[1].img);
+        const now: Hold = {
+          place: placeFromBox(cv.width, cv.height, b.w, b.h, at[1].box, at[1].rot),
+          flip: at[1].flip,
+        };
+        holdRef.current = [holdRef.current[0], now];
+        setMateAt(now);
+      }
+    }
+    const el = stageRef.current;
+    if (el) {
+      el.dataset.at = JSON.stringify(
+        at.map((q, i) => {
+          const b = opaqueBox(list[i].img);
+          const got = placeFromBox(cv.width, cv.height, b.w, b.h, q.box, q.rot);
+          return { x: got.x, y: got.y, rot: got.rot, scale: got.scale, flip: q.flip };
+        }),
+      );
+    }
+  }, [figures, failed]);
 
   /* ---- 焼く。**手が止まってから1回** ---- */
   useEffect(() => {
@@ -479,7 +599,9 @@ export default function CardSheet({
       gone = true;
       clearTimeout(t);
     };
-  }, [ready, mateReady, place, live, failed]);
+    /* **焼き直す鍵は、描く鍵と同じ。** 片方だけに足すと、動かしたのに
+       古い焼き上がりが残る（長押しで持って帰るのはそちら） */
+  }, [figures, live, failed]);
 
   /* 紙を閉じるときに、最後の1枚を捨てる（放っておくと溜まる）。
      **閉じるときの1回だけ**なので、入れ替えのたびの始末は上でやっている。 */
@@ -526,58 +648,236 @@ export default function CardSheet({
     [],
   );
 
-  /** いまの立ち位置を、割合で。動かしていなければ既定のところから始める */
-  const placeNow = useCallback((): Place => {
-    if (place) return place;
-    const { photo, chr } = art.current;
-    const cv = cvRef.current;
-    if (!photo || !chr || !cv) return { x: 0.8, y: 0.95, rot: 0, scale: 1 };
-    const src = opaqueBox(chr);
-    return defaultPlaceFor(cv.width, cv.height, src.w, src.h);
-  }, [place]);
+  /**
+   * かたちを変える。**それぞれのかたちの立ち位置を、別々に覚えておく。**
+   *
+   * 同じ割合（x/y）でも、塀の比が違えば立つところは変わる。持っていくと
+   * 「カードでちょうど良かった位置」が壁紙では画面の下に落ちるので、
+   * **持っていかずに、戻ってきたらそのまま**にする。
+   */
+  /**
+   * その人が**いま立っているところ**を、割合で。
+   *
+   * まだ自分で置いていない人（住人の既定、機械が隣に並べたあやと）も、
+   * **掴んだ瞬間にそこを起点にする。** `placeFromBox` が
+   * 「いまの箱 → 同じ箱を作る `place`」を返すので、**指を置いただけでは
+   * 1pxも動かない**（`site/selftest/cardplace_selftest.mjs` の 3f）。
+   */
+  const poseOf = useCallback(
+    (i: 0 | 1): Place => {
+      const had = holdRef.current[i]?.place;
+      if (had) return had;
+      const cv = cvRef.current;
+      const list = figures();
+      const f = list[i];
+      if (!cv || !f) return { x: 0.8, y: 0.95, rot: 0, scale: 1 };
+      const src = opaqueBox(f.img);
+      const at = framesOf(cv.width, cv.height, list)[i];
+      if (!at) return defaultPlaceFor(cv.width, cv.height, src.w, src.h);
+      return placeFromBox(cv.width, cv.height, src.w, src.h, at.box, at.rot);
+    },
+    [figures],
+  );
 
-  /** 動かす。**締め方はサーバーと同じ式**（`place.ts` の `clampPlace`） */
-  const nudge = useCallback(
-    (dx: number, dy: number, dk = 0) => {
-      const now = placeNow();
-      setMoved(
-        clampPlace(
-          { x: now.x + dx, y: now.y + dy, rot: now.rot, scale: now.scale + dk },
-          now,
-        ),
+  /**
+   * 立ち位置を置き直す。**描く範囲まで締めてから渡す。**
+   *
+   * `clampPlace` は口と同じ式（0.2〜3倍・±180度）だが、**描くほうは
+   * もう一段せまい**（枠から出ないため。`place.ts` の `SCALE_MAX`）。
+   * 締める前の値を覚えると、**指を回しても絵が動かないのに数字だけ増える。**
+   */
+  const setPose = useCallback(
+    (i: 0 | 1, want: Place) => {
+      const fit = clampPlace(
+        {
+          x: want.x,
+          y: want.y,
+          rot: Math.max(-TILT_MAX, Math.min(TILT_MAX, want.rot)),
+          scale: Math.max(SCALE_MIN, Math.min(SCALE_MAX, want.scale)),
+        },
+        want,
       );
-      touch();
-    },
-    [placeNow, touch],
-  );
-
-  /* ---- 指とマウス。**引きずった距離ぶん動かす**（指の下へ飛ばさない） ---- */
-  const grab = useRef<{ id: number; x: number; y: number; at: Place } | null>(null);
-  const onDown = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
-      e.currentTarget.setPointerCapture(e.pointerId);
-      grab.current = { id: e.pointerId, x: e.clientX, y: e.clientY, at: placeNow() };
-    },
-    [placeNow],
-  );
-  const onMove = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
-      const g = grab.current;
-      if (!g || g.id !== e.pointerId) return;
-      const box = e.currentTarget.getBoundingClientRect();
-      if (!box.width || !box.height) return;
-      const x = g.at.x + (e.clientX - g.x) / box.width;
-      const y = g.at.y + (e.clientY - g.y) / box.height;
-      setMoved(clampPlace({ ...g.at, x, y }, g.at));
+      const was = holdRef.current[i] ?? BLANK;
+      const now: Hold = { ...was, place: fit };
+      holdRef.current = i === 0 ? [now, holdRef.current[1]] : [holdRef.current[0], now];
+      if (i === 0) setYouAt(now);
+      else setMateAt(now);
       touch();
     },
     [touch],
   );
-  const onUp = useCallback((e: React.PointerEvent<HTMLImageElement>) => {
-    if (grab.current?.id === e.pointerId) grab.current = null;
-    setLive(false);
-  }, []);
 
+  /** 動かす。**いま手にしている人ぶんだけ。** */
+  const nudge = useCallback(
+    (dx: number, dy: number, dk = 0, dr = 0) => {
+      const now = poseOf(hand);
+      setPose(hand, {
+        x: now.x + dx,
+        y: now.y + dy,
+        rot: now.rot + dr,
+        scale: now.scale + dk,
+      });
+    },
+    [hand, poseOf, setPose],
+  );
+
+  /** 向きを返す。**字の入った絵は返らない**（`canFlip`）ので、札も出さない */
+  const turn = useCallback(() => {
+    const i = hand;
+    const was = holdRef.current[i] ?? BLANK;
+    /* 置き場所も一緒に確定させる。**返したあとに掴んだときの起点**が
+       「機械が並べたところ」に戻ってしまわないように */
+    const now: Hold = { place: was.place ?? poseOf(i), flip: !was.flip };
+    holdRef.current = i === 0 ? [now, holdRef.current[1]] : [holdRef.current[0], now];
+    if (i === 0) setYouAt(now);
+    else setMateAt(now);
+    touch();
+  }, [hand, poseOf, touch]);
+
+  /* ---- 指とマウス ----------------------------------------------------
+
+     **押したほうが動く。** 札で「いま動かす人」を選ばせない
+     （あやと 2026-10-09）。押したところに立っている人が手に入り、
+     そのまま引きずれる。重なっていたら手前（`place.ts` の `pickAt`）。
+
+     **指が2本なら、その1人の大きさと向きが変わる。**
+     ひらけば大きく、ひねれば回る。真ん中が動けばその人も動く。
+     **2本目を置いたところで基準を取り直す**ので、1本から2本へ移る瞬間に
+     絵が跳ばない。離して1本に戻るときも同じ。
+
+     引きずった**距離ぶん**動かす（指の下へ飛ばさない）。 */
+
+  /** いま触っている指。**2本まで見る**（3本目は基準を変えない） */
+  const pts = useRef(new Map<number, { x: number; y: number }>());
+  /** 掴んでいる1人と、掴んだときの基準 */
+  const grab = useRef<{
+    who: 0 | 1;
+    base: Place;
+    box: DOMRect;
+    /** 1本指のときの、指の居たところ */
+    from: { x: number; y: number };
+    /** 2本指のときの、間隔・角度・真ん中 */
+    two: { d: number; a: number; cx: number; cy: number } | null;
+  } | null>(null);
+
+  /** いまの指から、基準を取り直す。**指の本数が変わるたびに呼ぶ** */
+  const rebase = useCallback(() => {
+    const g = grab.current;
+    if (!g) return;
+    const now = [...pts.current.values()];
+    const base = poseOf(g.who);
+    if (now.length >= 2) {
+      const d = Math.hypot(now[0].x - now[1].x, now[0].y - now[1].y);
+      grab.current = {
+        ...g,
+        base,
+        two: {
+          d: Math.max(1, d),
+          a: Math.atan2(now[1].y - now[0].y, now[1].x - now[0].x),
+          cx: (now[0].x + now[1].x) / 2,
+          cy: (now[0].y + now[1].y) / 2,
+        },
+      };
+    } else if (now.length === 1) {
+      grab.current = { ...g, base, two: null, from: { x: now[0].x, y: now[0].y } };
+    }
+  }, [poseOf]);
+
+  const onDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!chosen) return;
+      const el = stageRef.current;
+      const cv = cvRef.current;
+      if (!el || !cv) return;
+      const box = el.getBoundingClientRect();
+      if (!box.width || !box.height) return;
+      pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* 捕まえられない端末でも、引きずりそのものは動く */
+      }
+      if (pts.current.size === 1) {
+        /* **押したところに立っている人**を掴む。誰も居なければ、
+           いま手にしている人のまま（写真の余白を引きずっても動く） */
+        const list = figures();
+        let who: 0 | 1 = hand;
+        if (list.length) {
+          const at = framesOf(cv.width, cv.height, list);
+          const px = ((e.clientX - box.left) / box.width) * cv.width;
+          const py = ((e.clientY - box.top) / box.height) * cv.height;
+          const i = pickAt(at, px, py);
+          if (i >= 0) who = i as 0 | 1;
+        }
+        if (who >= list.length) who = 0;
+        setHand(who);
+        grab.current = {
+          who,
+          base: poseOf(who),
+          box,
+          from: { x: e.clientX, y: e.clientY },
+          two: null,
+        };
+      } else {
+        grab.current = grab.current && { ...grab.current, box };
+        rebase();
+      }
+      touch();
+    },
+    [chosen, figures, hand, poseOf, rebase, touch],
+  );
+
+  const onMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const g = grab.current;
+      if (!g || !pts.current.has(e.pointerId)) return;
+      pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const now = [...pts.current.values()];
+      const b = g.base;
+      if (g.two && now.length >= 2) {
+        const d = Math.max(1, Math.hypot(now[0].x - now[1].x, now[0].y - now[1].y));
+        const a = Math.atan2(now[1].y - now[0].y, now[1].x - now[0].x);
+        const cx = (now[0].x + now[1].x) / 2;
+        const cy = (now[0].y + now[1].y) / 2;
+        setPose(g.who, {
+          x: b.x + (cx - g.two.cx) / g.box.width,
+          y: b.y + (cy - g.two.cy) / g.box.height,
+          rot: b.rot + ((a - g.two.a) * 180) / Math.PI,
+          scale: b.scale * (d / g.two.d),
+        });
+      } else if (now.length === 1) {
+        setPose(g.who, {
+          x: b.x + (now[0].x - g.from.x) / g.box.width,
+          y: b.y + (now[0].y - g.from.y) / g.box.height,
+          rot: b.rot,
+          scale: b.scale,
+        });
+      }
+    },
+    [setPose],
+  );
+
+  const onUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      pts.current.delete(e.pointerId);
+      try {
+        stageRef.current?.releasePointerCapture(e.pointerId);
+      } catch {
+        /* もう離れている */
+      }
+      if (pts.current.size === 0) {
+        grab.current = null;
+        setLive(false);
+      } else {
+        /* 1本だけ離した。**残った指で基準を取り直す**——取り直さないと、
+           離した瞬間に残った指のところへ絵が飛ぶ */
+        rebase();
+      }
+    },
+    [rebase],
+  );
+
+  /** 矢印で動かす。**指が1本も無いところ（PC）のために。** */
   const onKey = useCallback(
     (e: React.KeyboardEvent) => {
       const step = e.shiftKey ? 0.05 : 0.01;
@@ -595,9 +895,21 @@ export default function CardSheet({
     [nudge],
   );
 
-  /** もとの場所へ。**覚えてあるぶんも、既定と同じところへ戻す** */
+  /**
+   * もとの場所へ。**いま手にしている人ぶんだけ。**
+   *
+   * あやとを戻すのは手元だけの話（保存する欄が無い）。住人を戻したときは、
+   * **覚えてあるぶんも既定と同じところへ**書き戻す。
+   */
   const reset = useCallback(() => {
-    setMoved(null);
+    if (hand === 1) {
+      holdRef.current = [holdRef.current[0], BLANK];
+      setMateAt(BLANK);
+      touch();
+      return;
+    }
+    holdRef.current = [BLANK, holdRef.current[1]];
+    setYouAt(BLANK);
     touch();
     if (!canSave || !cardId) return;
     const { photo, chr } = art.current;
@@ -623,7 +935,7 @@ export default function CardSheet({
         /* 戻せなくても、出ている絵は既定のところに立っている */
       }
     })();
-  }, [canSave, cardId, token, touch]);
+  }, [canSave, cardId, hand, token, touch]);
 
   const save = useCallback(async () => {
     if (!out) return;
@@ -692,23 +1004,33 @@ export default function CardSheet({
                 中身は同じ絵。動かしているあいだだけ canvas が前に出る
                 （`is-live`）ので、指に付いてくるのは canvas のほう。
                 手が止まれば jpeg が戻ってきて、長押しでそのまま保存できる。 */}
-            <div className={`akd-stage${out || live ? "" : " is-off"}`}>
+            {/* **指を受けるのは台のほう。** 前は焼き上がり（`<img>`）に
+                付けていたが、台には canvas も乗っていて、**焼き直している
+                150ms のあいだは `<img>` が居ない。** その隙に指を置くと
+                掴めなかった。台なら、どちらが前に出ていても指が届く。 */}
+            <div
+              ref={stageRef}
+              className={`akd-stage${out || live ? "" : " is-off"}${chosen ? " is-movable" : ""}`}
+              {...(chosen
+                ? {
+                    onPointerDown: onDown,
+                    onPointerMove: onMove,
+                    onPointerUp: onUp,
+                    onPointerCancel: onUp,
+                  }
+                : {})}
+            >
               <canvas ref={cvRef} className={live ? "is-live" : ""} aria-hidden />
               {out && (
                 <img
                   src={out.url}
                   alt={group.note || "その日の写真"}
-                  className={chosen ? "is-movable" : ""}
-                  /* 入れている人がいるときだけ、引きずって動かせる。
+                  /* 入れている人がいるときだけ、矢印キーでも動かせる。
                      いないときは素の写真なので、動かすものが無い */
                   {...(chosen
                     ? {
                         tabIndex: 0,
                         "aria-label": "キャラクターのいるところ。矢印キーでうごかせます",
-                        onPointerDown: onDown,
-                        onPointerMove: onMove,
-                        onPointerUp: onUp,
-                        onPointerCancel: onUp,
                         onKeyDown: onKey,
                       }
                     : {})}
@@ -745,7 +1067,14 @@ export default function CardSheet({
               一緒にしていたが、候補が11人いる日は札が3段になって、
               そこが窓の下へ落ちる。**なぞれることを、いちばん知って
               ほしい人に届かない**（9月6日の紙が実際にそうだった）。 */}
-          {chosen && <p className="nstudio-tip">写真の上をなぞると、立つところが変わります。</p>}
+          {/* なぞれること・2本指でできることを、**ここで1行だけ**言う。
+              写真のすぐ下に置くのは、下の手まで落ちると窓の外へ出るから
+              （候補が11人いる日は札が3段になる）。 */}
+          {chosen && (
+            <p className="nstudio-tip">
+              写真の上をなぞると、うごきます。2本の指でひらくと大きく、ひねるとまわります。
+            </p>
+          )}
           {group.note && <p className="nstudio-note">{group.note}</p>}
 
           {picks.length > 0 && (
@@ -833,23 +1162,65 @@ export default function CardSheet({
           )}
 
           {/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
-              並びはやることの順（大きさ → もとへ）。 */}
+
+              **出るのは、いま手にしている1人ぶんだけ。** 2人ぶん並べると、
+              どちらの目盛りを触っているのか分からなくなる（390px では
+              4本の目盛りが2段になる）。手に入れ替わるのは**絵を押したとき**
+              なので、ここに切り替えの札は置かない（あやと 2026-10-09
+              「押したほうが動く」）。
+
+              並びはやることの順（だれを持っているか → 大きさ → かたむき →
+              むき → もとへ）。 */}
           {chosen && (
             <div className="akd-tune" ref={tuneRef}>
+              {/* 2人いるときだけ、どちらを持っているかを出す。1人しか
+                  立っていない紙では、持っているのはその人しかいない */}
+              {mate && (
+                <p className="akd-hand">
+                  <img src={hand === 0 ? cardIcon(chosen.icon, 128) : mate.art} alt="" />
+                  <b>{hand === 0 ? chosen.name || "この人" : mate.name}</b>
+                </p>
+              )}
               <label className="akd-zoom">
                 <span>大きさ</span>
                 <input
                   type="range"
-                  min={60}
-                  max={160}
+                  data-tune="scale"
+                  min={Math.round(SCALE_MIN * 100)}
+                  max={Math.round(SCALE_MAX * 100)}
                   step={5}
-                  value={Math.min(160, Math.max(60, Math.round((place?.scale ?? 1) * 100)))}
+                  value={Math.round(handPlace.scale * 100)}
                   aria-label="大きさ"
+                  /* **いまの立ち位置から**変える。目盛りに出している値は
+                     「まだ置いていない人」のとき既定（1倍・0度）なので、
+                     そこを起点に書き戻すと x/y ごと既定へ飛ぶ */
                   onChange={(e) =>
-                    nudge(0, 0, Number(e.target.value) / 100 - (place?.scale ?? 1))
+                    setPose(hand, { ...poseOf(hand), scale: Number(e.target.value) / 100 })
                   }
                 />
               </label>
+              <label className="akd-zoom">
+                <span>かたむき</span>
+                <input
+                  type="range"
+                  data-tune="rot"
+                  min={-TILT_MAX}
+                  max={TILT_MAX}
+                  step={1}
+                  value={Math.round(handPlace.rot)}
+                  aria-label="かたむき"
+                  onChange={(e) =>
+                    setPose(hand, { ...poseOf(hand), rot: Number(e.target.value) })
+                  }
+                />
+              </label>
+              {/* 字や標識の入った絵は返らない（`content/goods.ts` の
+                  `canFlip`）ので、**押せない札を出さない** */}
+              {(hand === 0 || mateFlip) && (
+                <button type="button" className="akd-turn" onClick={turn}>
+                  むきをかえる
+                </button>
+              )}
               <button type="button" className="akd-undo" onClick={reset}>
                 もとのばしょ
               </button>
