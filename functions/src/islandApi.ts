@@ -43,6 +43,9 @@ import {
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
+/* LINE スタンプの、住人のことば(#716)。同じ理由で外に置いてある。
+   **本人にだけ見せる口**で、パスに id を取らない（`stampLine.ts` 冒頭）。 */
+import {handleStampLine} from "./stampLine";
 /* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
    **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
    引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
@@ -2552,6 +2555,20 @@ export const islandApi = onRequest(
           {method, path, auth: req.headers.authorization, body},
           res,
           {whoIs, ownerUid, listResidents},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- スタンプのことば(#716) ----------------
+         中身は `stampLine.ts`。ここは取り付けだけ。扱ったら true が返る。
+         **ログインした本人に、自分のぶんだけ。** 「誰か」を見るところと
+         1日の上限を数えるところを増やさないよう、どちらも関数で渡す。 */
+      if (
+        await handleStampLine(
+          {method, path, auth: req.headers.authorization, body},
+          res,
+          {whoIs, takeQuota},
         )
       ) {
         return;
