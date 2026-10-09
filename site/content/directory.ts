@@ -60,9 +60,12 @@ export const SHELVES: Shelf[] = [
   {
     id: "island",
     title: "島のなか",
-    note: "島に建っている10軒と、島そのもの",
+    /* **軒数を書かない。** 「10軒」と焼いてあったので、島に1軒足した日から
+       `/all` だけが古い数を名乗ることになる（`docs/island-standards.md` 8章）。
+       数は下の一覧が持っていて、そこは `DOORS` から作られている。 */
+    note: "島に建っているものと、島そのもの",
     items: [
-      { href: "/", name: "島", note: "ここ。10軒とも押せば入れる", q: q("島 top home ayato") },
+      { href: "/", name: "島", note: "ここ。建っているものは、ぜんぶ押せば入れる", q: q("島 top home ayato") },
       /* 建物ではないが、島の直下にある面（#173）。`/about` と `/friends` と
          `/me` の3か所から見えるので、どれかの子にはしていない。 */
       {
