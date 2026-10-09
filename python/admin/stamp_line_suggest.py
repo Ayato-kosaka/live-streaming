@@ -5,10 +5,11 @@
 ## 何をするか
 
 1. `islandStampLine` に在る書類（＝あやとが選んだ人）の `channelId` を集める
-2. BigQuery の `chat_messages` から、**島ぜんぶの「同じ字を何回言ったか」**を引く
-3. 選び方は `python/stamp_line_pick.py`（**その人が何度も言っていて、
-   かつ島のみんなが言っているのではない言い回し**）
-4. 1人3本を `suggested` に置く
+2. BigQuery の `chat_messages` から、**島ぜんぶの「同じ字を、何回・何日に
+   わたって言ったか」**を引く
+3. 選び方は `python/stamp_line_pick.py`（**日常で使えるか**——
+   日数 × √らしさ × 短さ）
+4. 1人3本を `suggested` に、**元の字**を `suggestedFrom` に置く
 
 **名簿は要らない。** 入れ物に在る書類がそのまま相手なので、この口に
 名簿を渡す必要がない（渡さないほうが安全）。だから `workflow_dispatch`
@@ -28,8 +29,13 @@
 
 ## 本人が決めたことばは、絶対に触らない
 
-触るのは `suggested` と `suggestedAt` の2つだけ。`lines` を書くと、
-本人が決めたことばが流し直しで消える（人の字なので戻らない）。
+触るのは `suggested` と `suggestedFrom` と `suggestedAt` の3つだけ。
+`lines` を書くと、本人が決めたことばが流し直しで消える（人の字なので戻らない）。
+
+**`suggestedFrom` は、同じ並びの「元の字」。** 機械が触ってよいのは末尾の
+句読点だけだが、触ったかどうかが**あとから分からなくなると困る**——
+あやとが表で「それは言わない」と言えるのは、元の字が並んでいるときだけ
+（あやと 2026-10-09「元の字と、直した字の両方を表に出す」）。
 
 ## 流す前に見積もる
 
@@ -67,7 +73,7 @@ TOP = 3
 
 
 def sql_of(days: int) -> str:
-    """島ぜんぶの「同じ字を、誰が何回言ったか」。
+    """島ぜんぶの「同じ字を、誰が・何回・何日にわたって言ったか」。
 
     **名前は SELECT しない**（`chatter_one.py` と同じ決め）。
     `event_type = 'TEXT'` に絞るのは、スパチャの本文をスタンプの候補に
@@ -76,6 +82,12 @@ def sql_of(days: int) -> str:
     島ぜんぶを引くのは、**その字をみんなが言っているかを見る**ため。
     選ばれた人のぶんだけ引くと、「こんばんは」が全員の1位になる
     （`python/stamp_line_pick.py` の割合）。
+
+    **日数は「配信の日」で切る。** 日本時間の 0 時で切ると、0時をまたいだ
+    1回の配信が2日に数えられて、**その日かぎりの実況が「2日にわたって
+    言った」に化ける**（`MIN_DAYS` の関所を素通りする）。6時間ずらすのは
+    `docs/island-money.md` 5章「開始が 6:00 JST より前の続き枠は前日に
+    寄せる」と同じ向き。
 
     Args:
         days: さかのぼる日数。0 なら全期間
@@ -93,7 +105,9 @@ def sql_of(days: int) -> str:
     SELECT
       author_channel_id AS ch,
       message_text AS t,
-      COUNT(*) AS n
+      COUNT(*) AS n,
+      COUNT(DISTINCT DATE(
+        TIMESTAMP_SUB(published_at, INTERVAL 6 HOUR), 'Asia/Tokyo')) AS d
     FROM `{PROJECT}.{DATASET}.chat_messages`
     WHERE event_type = 'TEXT'
       AND message_text IS NOT NULL
@@ -167,13 +181,19 @@ def main() -> int:
         log.error("上限を超えるので**引きません**。days を小さくしてください")
         return 1
 
-    rows = [(r["ch"], r["t"], r["n"]) for r in bq.query(sql).result()]
+    rows = [(r["ch"], r["t"], r["n"], r["d"]) for r in bq.query(sql).result()]
     log.info("数え上げ: %d 通り（島ぜんぶ）", len(rows))
     if not rows:
         log.error("コメントが1件も引けませんでした")
         return 2
 
     got = pick_all(rows, who.keys(), top=top)
+    # **前の式でも1回選んで、人数だけ並べる。** 選び方を変えた晩に
+    # 「誰も候補が出なくなった」を、貼ってからではなくここで見る。
+    # 出すのは**人数だけ**（ことばは1文字も出さない）
+    was = pick_all(rows, who.keys(), top=top, before=True)
+    log.info("候補が出た人数: 前の式 %d 人 → いまの式 %d 人",
+             len(was), len(got))
     # **1本も出なかった人を、黙って落とさない。**
     # 「候補が出た人数」だけ出すと、出なかった人が0件に化ける
     none_of = [doc for ch, doc in who.items() if ch not in got]
@@ -190,11 +210,23 @@ def main() -> int:
         spread[len(got[ch])] = spread.get(len(got[ch]), 0) + 1
     log.info("本数の散らばり: %s",
              " / ".join(f"{k}本 {v}人" for k, v in sorted(spread.items())))
+    # **日数の散らばり。** 今回いちばん強い軸なので、効いているかを数で見る。
+    # 候補がぜんぶ2〜3日なら、関所を通っただけで「毎日の言葉」ではない
+    ds = sorted(c["d"] for cs in got.values() for c in cs)
+    if ds:
+        log.info("候補の日数: いちばん少ない %d / 真ん中 %d / いちばん多い %d",
+                 ds[0], ds[len(ds) // 2], ds[-1])
+    # 機械が末尾の句読点を落とした本数。**言い方は変えていない**
+    tidied = sum(1 for cs in got.values() for c in cs
+                 if c["text"] != c["from"])
+    log.info("末尾の句読点を落とした候補: %d 本 / %d 本", tidied, len(ds))
     # **押した人が口から読めるようにする**（上の `notice` と同じ理由）
     notice(
         f"候補{'（下見）' if not apply else ''}: 相手 {len(who)} 人 / "
-        f"候補が出た {len(got)} 人 / 1本も出なかった {len(none_of)} 人 / "
-        + " ".join(f"{k}本:{v}人" for k, v in sorted(spread.items())))
+        f"候補が出た {len(got)} 人（前の式なら {len(was)} 人）/ "
+        f"1本も出なかった {len(none_of)} 人 / "
+        + " ".join(f"{k}本:{v}人" for k, v in sorted(spread.items()))
+        + f" / 句読点を落とした {tidied} 本")
 
     if not apply:
         log.info("下見なので**1バイトも書いていません**。"
@@ -204,11 +236,18 @@ def main() -> int:
     lines = client.collection("islandStampLine")
     now = _now()
     n = 0
-    for ch, texts in got.items():
-        # **触るのは suggested と suggestedAt だけ。**
-        # `lines`（本人が決めたことば）には1バイトも書かない
+    for ch, cands in got.items():
+        # **触るのは suggested と suggestedFrom と suggestedAt だけ。**
+        # `lines`（本人が決めたことば）には1バイトも書かない。
+        # 2つの並びは**同じ長さ・同じ順**で置く——表が1本ずつ突き合わせる
         lines.document(who[ch]).set(
-            {"suggested": texts, "suggestedAt": now}, merge=True)
+            {
+                "suggested": [c["text"] for c in cands],
+                "suggestedFrom": [c["from"] for c in cands],
+                "suggestedAt": now,
+            },
+            merge=True,
+        )
         n += 1
     log.info("置きました: %d 人ぶん", n)
     notice(f"候補: 置いた {n} 人ぶん")

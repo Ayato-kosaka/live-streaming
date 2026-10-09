@@ -20,7 +20,8 @@
   1. **相手は入れ物の書類から集める**（名簿を渡さない）
   2. `channelId` の無い書類は**数えて出す**（黙って落とさない）
   3. **`apply` 無しでは書き込みが1回も呼ばれない**
-  4. `apply` を付けると、**`suggested` と `suggestedAt` だけ**が入る
+  4. `apply` を付けると、**`suggested` と `suggestedFrom` と
+     `suggestedAt` だけ**が入る（2つの並びは**同じ長さ・同じ順**）
   5. **1本も出なかった人には、空の提案を置かない**
   6. 出力に**候補のことばもチャンネルIDも書類IDも1文字も出ない**
   7. **相手が0人なら 2 で止まる**（0人と「読めなかった」を混ぜない）
@@ -75,6 +76,8 @@ from _fake_fs import FakeDb, cid  # noqa: E402
 MINE = "いやぁまいったね"
 MINE2 = "ねむい"
 MINE3 = "そうきたか"
+# **その場かぎりの実況。** 回数はいちばん多いが1日に固まっている
+EVENT = "特大花火が打ち上がりました"
 # **本人が決めたことば。** 1文字でも消えたら落とす
 KEPT = ["もうきめた"]
 
@@ -128,7 +131,8 @@ class FakeBq:
             return type("Dry", (), {
                 "total_bytes_processed": int(self.mb * (1 << 20))})()
         self.ran += 1
-        rows = [{"ch": c, "t": t, "n": n} for c, t, n in self.rows]
+        rows = [{"ch": c, "t": t, "n": n, "d": d}
+                for c, t, n, d in self.rows]
         return type("Job", (), {"result": lambda self_: rows})()
 
 
@@ -152,15 +156,16 @@ def rows() -> list:
     """偽の数え上げ。**b には候補が1本も出ない。**
 
     Returns:
-        `(チャンネルID, 字, 回数)` の並び
+        `(チャンネルID, 字, 回数, 日数)` の並び
     """
     return [
-        (CH["a"], MINE, 6),
-        (CH["a"], MINE2, 4),
-        (CH["a"], MINE3, 3),
-        # b は短い相槌しか打っていない。**1本も出ない**
-        (CH["b"], "w", 50),
-        (CH["b"], "888", 30),
+        (CH["a"], MINE, 6, 5),
+        (CH["a"], MINE2, 4, 4),
+        (CH["a"], MINE3 + "。", 3, 3),   # **末尾の句点は機械が落とす**
+        # b は短い相槌と、**1日に固まった実況**だけ。**1本も出ない**
+        (CH["b"], "w", 50, 20),
+        (CH["b"], "888", 30, 15),
+        (CH["b"], EVENT, 9, 1),
     ]
 
 
@@ -206,6 +211,12 @@ check("相手は2人と数えた（channelId の無い1件を除いた）",
       "候補を出す相手: 2 人" in out)
 check("1本も出なかった人を数えて出した",
       "候補が出た 1 人 / 1本も出なかった 1 人" in out)
+check("前の式なら2人、いまの式なら1人（実況だけの人が落ちた）",
+      "候補が出た人数: 前の式 2 人 → いまの式 1 人" in out, out[-400:])
+check("候補の日数を出した（いちばん強い軸が効いているか）",
+      "候補の日数: いちばん少ない" in out)
+check("句読点を落とした本数を出した",
+      "末尾の句読点を落とした候補: 1 本 / 3 本" in out)
 check("channelId の無い書類を言っている", "候補を出せない" in out)
 
 print("\n# 1. 下見は1バイトも書かない")
@@ -218,7 +229,8 @@ check("書いたのは1人ぶんだけ", len(fake.writes) == 1, str(len(fake.wri
 check("書いた先は候補が出た人",
       fake.writes[0]["id"] == DOC["a"], fake.writes[0]["id"])
 keys = sorted(fake.writes[0]["patch"])
-check("触った欄は2つだけ", keys == ["suggested", "suggestedAt"], ",".join(keys))
+check("触った欄は3つだけ",
+      keys == ["suggested", "suggestedAt", "suggestedFrom"], ",".join(keys))
 check("まるごと置き換えない（merge）", fake.writes[0]["merge"] is True)
 check("lines を送っていない", "lines" not in fake.writes[0]["patch"])
 check("本人が決めたことばが残っている",
@@ -227,8 +239,21 @@ check("本人が決めたことばが残っている",
 check("3本置いた", len(fake.writes[0]["patch"]["suggested"]) == 3,
       str(fake.writes[0]["patch"]["suggested"]))
 check("1本目は口ぐせ", fake.writes[0]["patch"]["suggested"][0] == MINE)
+put = fake.writes[0]["patch"]["suggested"]
+src = fake.writes[0]["patch"]["suggestedFrom"]
+check("元の字が同じ本数・同じ順で入っている", len(src) == len(put))
+check("末尾の句点は落ちている", MINE3 in put and MINE3 + "。" not in put,
+      str(put))
+check("元の字のほうは、打った形のまま残っている", MINE3 + "。" in src,
+      str(src))
+check("直していないものは、元の字と同じ",
+      [a == b for a, b in zip(put, src)].count(True) == 2,
+      str(list(zip(put, src))))
 
 print("\n# 3. 1本も出なかった人には、空の提案を置かない")
+check("**1日に固まった実況しか無い人には、1本も置かない**",
+      all(EVENT not in (w["patch"].get("suggested") or [])
+          for w in fake.writes), str(fake.writes))
 check("その人の書類に suggested が入っていない",
       "suggested" not in fake.data["islandStampLine"][DOC["b"]],
       str(fake.data["islandStampLine"][DOC["b"]]))
@@ -249,11 +274,12 @@ check("見積もりだけで止まった", big.dry == 1 and big.ran == 0,
       f"dry={big.dry} ran={big.ran}")
 
 # **漏れたら落とすもの**。注記と本文の両方に当てる
-LEAK = [MINE, MINE2, MINE3] + KEPT + list(CH.values()) + list(DOC.values())
+LEAK = ([MINE, MINE2, MINE3, EVENT] + KEPT
+        + list(CH.values()) + list(DOC.values()))
 
 print("\n# 6. 出力に、素性も候補のことばも1文字も出ていない")
 out = BUF.getvalue()
-for v in [MINE, MINE2, MINE3] + KEPT:
+for v in [MINE, MINE2, MINE3, EVENT] + KEPT:
     check(f"ことばが出ていない（{v[:3]}…）", v not in out)
 for v in list(CH.values()) + list(DOC.values()):
     check(f"識別子が出ていない（{v[:4]}…）", v not in out)

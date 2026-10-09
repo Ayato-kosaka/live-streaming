@@ -14,15 +14,35 @@ Doneru の取り込み（`Fetch Doneru Donations`）の認証は、ブラウザ�
 
 ## 0. 道具
 
+**EC2 の Chrome を触る土台は `ec2-chrome`（共通）。** Chrome の起こし方・CDP の繋ぎ方・
+SSM の躓きはそちらに書いてある。ここに残すのは **Doneru に固有のこと**（ログインの道すじ・
+本人確認・Secret への入れ方）だけ。
+
 | ファイル | 何をするか |
 | --- | --- |
-| `ec2_exec.sh` | EC2 を起動 → SSM で渡したスクリプトを実行 → **必ず停止**。最後に `final state: stopped` を出す |
-| `remote_refresh.sh` | EC2 上で走る。Chrome を CDP 付きで起動 → `_dt` を読む → 切れていれば押してログイン → `api.doneru.jp` で 200 を確かめる → `gh secret set DONERU_COOKIE` |
+| `ec2_exec.sh` | 土台の `ec2-chrome/ec2_exec.sh` へ渡すだけの1行。EC2 を起動 → `cdp.py` を置き直す → SSM でスクリプトを実行 → **必ず停止**。最後に `final state: stopped` を出す |
+| `remote_refresh.sh` | EC2 上で走る。`cdp.up("doneru")` で Chrome を起こす → `_dt` を読む → 切れていれば押してログイン → `api.doneru.jp` で 200 を確かめる → `gh secret set DONERU_COOKIE` |
+| `wait_challenge.sh` | 本人確認の数字が画面に出た瞬間に1行出して抜ける |
 
 - EC2: `i-0684d39b0c1b1abb6`（ap-northeast-1）、aws の profile は `sandbox`
-- **必ずこの固定パスから呼ぶ。** `.claude/settings.json` の allow はこのパスに対して書いてある。
-  スクラッチパッドに写して回すと、権限の確認で止められる
-- 1行目が `#TIMEOUT=<秒>` なら、その秒数が SSM の待ち時間になる（`remote_refresh.sh` は 900）
+- **必ずこの固定パスから呼ぶ。** `.claude/settings.json` の allow は `doneru-cookie/ec2_exec.sh` に対して書いてある。
+  中身は土台にあるが、呼ぶのはこちらのパス。スクラッチパッドに写して回すと、権限の確認で止められる
+- 1行目が `#TIMEOUT=<秒>` なら、その秒数が SSM の待ち時間になる（`remote_refresh.sh` は 1200）
+
+### 試すときは CHECK_ONLY で（あやとのスマホを鳴らさない）
+
+`_dt` が生きているかだけを見て、**ログインは押さない・Secret も触らない**形がある。
+スクリプトを直したあとは、まずこれで回す。EC2 がもう起きているときは止めずに回せる:
+
+```bash
+{ echo 'export CHECK_ONLY=1'; tail -n +2 .claude/skills/doneru-cookie/remote_refresh.sh; } > /tmp/claude-0/scr/doneru_check.sh
+python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/ec2-chrome/cdp.py /home/ubuntu/cdp/cdp.py
+python3 .claude/skills/ec2-chrome/ec2.py run /tmp/claude-0/scr/doneru_check.sh 300
+```
+
+`CHECK_ONLY: _dt は 生きている` なら寄付一覧まで読めている。`切れている` なら exit 4 で止まる
+（このときは下の「1. 回す」を、あやとがスマホを持てる時刻に）。2026-10-09 に土台へ載せ替えたあと、
+これで `browser fetch: 200` まで通ることを確かめた。
 
 ## 1. 回す（あやとがスマホを手に持てるときに）
 
@@ -119,6 +139,9 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 `_dt` は7日で切れるので、**切れる前に、あやとと時刻を合わせて回す。**
 
 ## 6. ハマったところ（同じ所で転ばない）
+
+（Chrome 136 のデバッグポート・CDP の Origin・PEP 668 など、**Doneru に限らない躓きは
+`ec2-chrome/SKILL.md` にも書いてある**。ここは経緯として残す）
 
 - **ログインが残っているのは既定のプロファイル**（`~/.config/google-chrome/Default`）。
   `doneru-chrome` は最初は無かった
