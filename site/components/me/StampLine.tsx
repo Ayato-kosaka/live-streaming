@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import Icon from "@/components/ui/IconCore";
 import ReadAgain, { sayable } from "./ReadAgain";
-import { phase, startLines } from "./stampShow";
+import { leadKey, phase, startLines } from "./stampShow";
 
 /**
  * スタンプのことば（#716）。**選ばれた本人にだけ、1枚出る。**
@@ -173,9 +173,13 @@ export default function StampLine() {
   return (
     <section className="panel paper slp">
       <h2>スタンプのことば</h2>
-      {/* 何が起きるかだけ。どうやって選んだかは書かない */}
+      {/* 何が起きるかだけ。どうやって選んだかは書かない。
+          **提案が1本も出なかった人には、書きなおす話をしない**——
+          何も無いところを指すことになる（`stampShow.ts` の `leadKey`）。 */}
       <p className="slp-lead">
-        あなたのスタンプに、このことばが入ります。ちがうと思ったら、書きなおしてください。
+        {leadKey(suggested, lines) === "rewrite" ?
+          "あなたのスタンプに、このことばが入ります。ちがうと思ったら、書きなおしてください。" :
+          "あなたのスタンプに入れることばを、書いてください。"}
       </p>
 
       <ul className="slp-list">
