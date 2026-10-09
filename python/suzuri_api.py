@@ -7,7 +7,7 @@
     python3 python/suzuri_api.py update  <デザインid> [--title …] [--description …] [--price 300] [--items …]
     python3 python/suzuri_api.py delete  <デザインid> [--dry-run]
     python3 python/suzuri_api.py preview <商品id> --scale 0.8 [--offset-x 0] [--offset-y 0]
-    python3 python/suzuri_api.py probe   <デザインid> --item can-badge --scale 0.8   # 大きさを保存できるか試す
+    python3 python/suzuri_api.py probe   0 --item can-badge --scale 0.8   # 大きさを保存できるか試す（0 = 試し用を作って消す）
 
 鍵は環境変数 `SUZURI_API_KEY`（あやとの API キー。SUZURI の開発者画面の「API Key」）。
 
@@ -139,6 +139,66 @@ def create(title, description, texture, items, price=300, dry=False, src=None):
     return m["id"]
 
 
+def placement_of(material_id, item):
+    """いまの大きさと位置。商品一覧の見本の絵の URL に `…png.{scale}+{x}+{y}.webp` の形で埋まっている
+    （API の応答に scale の欄は無い）。既定の大きさなら None"""
+    import re
+    st, r = call("GET", "/products", query={"materialId": material_id, "itemId": ITEM_IDS[item], "limit": 5})
+    if st != 200 or not r.get("products"):
+        return None, None
+    url = r["products"][0].get("sampleImageUrl") or ""
+    m = re.search(r"\.png\.(-?[0-9.]+)([+-][0-9.]+)?([+-][0-9.]+)?\.(?:webp|png|jpg)", url)
+    return (tuple(float(x) for x in m.groups() if x) if m else None), r["products"][0].get("id")
+
+
+def probe(material_id, item, scale, ox=0.0, oy=0.0, items=None):
+    """ドキュメントに書いていない scale / offset を PUT に載せ、保存されたかを読み直して確かめる。
+    **保存されたら、元の値に戻して終わる**（試しで売り場を変えたままにしない）。
+    保存できると分かれば、缶バッジとパネルもワークフローで作れる（`SAFE_ITEMS`）"""
+    # 5品目ぶんのいまの値を読んで、目当ての品目だけ変えて全部を送る。
+    # products に1品目だけ入れると、残りが外れる（非公開になる）かもしれない（ドキュメントに書いていない）
+    from suzuri_common import ORDER
+    ORDER = items or ORDER
+    got = {it: placement_of(material_id, it) for it in ORDER}
+    now = {it: v[0] for it, v in got.items()}
+    alive = {it for it, v in got.items() if v[1]}
+    before = now[item]
+    print(f"前: {now} / 売り場にある品目 {sorted(alive)}")
+
+    def put(sc, x, y):
+        prods = []
+        for it in ORDER:
+            p = {"itemId": ITEM_IDS[it], "exemplaryItemVariantId": SAMPLE_VARIANT[it], "published": True}
+            cur = (sc, x, y) if it == item else now[it]
+            if cur:
+                p.update(scale=cur[0], offsetX=(cur[1] if len(cur) > 1 else 0.0), offsetY=(cur[2] if len(cur) > 2 else 0.0))
+            prods.append(p)
+        st, r = call("PUT", f"/materials/{material_id}", {"products": prods})
+        print(f"  PUT {item} scale={sc} offsetX={x} offsetY={y} -> {st} {r.get('error', '')}")
+        return st
+    put(scale, ox, oy)
+    got2 = {it: placement_of(material_id, it) for it in ORDER}
+    after_all = {it: v[0] for it, v in got2.items()}
+    after = after_all[item]
+    alive2 = {it for it, v in got2.items() if v[1]}
+    print(f"後: {after_all} / 売り場にある品目 {sorted(alive2)}")
+    if alive - alive2:
+        print("**売り場から消えた品目がある**:", sorted(alive - alive2))
+    lost = [it for it in ORDER if now[it] is not None and after_all[it] is None and it != item]
+    if lost:
+        print("**ほかの品目の大きさが既定に戻った**:", lost)
+    saved = bool(after) and abs(after[0] - scale) < 0.0005
+    print("結果:", "保存できた（scale が API で効く）" if saved else "保存されなかった（API では大きさを変えられない）")
+    if saved and before:
+        put(*(list(before) + [0.0, 0.0])[:3])
+        back, _ = placement_of(material_id, item)
+        print(f"戻した: {back}")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a") as f:
+            f.write(f"### probe {material_id} {item}\n\n- 前 {before} / 送った {scale},{ox},{oy} / 後 {after}\n- **{'保存できた' if saved else '保存されなかった'}**\n")
+
+
 def norm(e):
     return "".join(ch for ch in (e or "") if ch not in "️‍♂♀ ")
 
@@ -225,17 +285,24 @@ def main():
                      query={"scale": a.scale, "offsetX": a.offset_x, "offsetY": a.offset_y})
         print(st, r.get("previewUrl") or r)
     elif a.cmd == "probe":
-        # ドキュメントに書いていない scale / offset を PUT に載せ、保存されたかを読み直す。
-        # 「保存できる」と分かれば、缶バッジとパネルもワークフローで作れる
-        p = {"itemId": ITEM_IDS[a.item], "exemplaryItemVariantId": SAMPLE_VARIANT[a.item], "published": True,
-             "scale": a.scale, "offsetX": a.offset_x, "offsetY": a.offset_y}
-        st, r = call("PUT", f"/materials/{a.id}", {"products": [p]})
-        print("PUT", st, r.get("error", ""))
-        for prod in r.get("products", []):
-            if prod.get("item", {}).get("name") == a.item:
-                print("返ってきた:", {k: prod.get(k) for k in ("scale", "offsetX", "offsetY", "resizeMode")},
-                      "見本:", prod.get("sampleImageUrl"))
-
+        if a.id == 0:
+            # 試し用のデザインを作って試し、すぐ消す。本物で試すと、API が大きさを無視したうえで
+            # ほかの品目の大きさまで既定に戻すかもしれない（ドキュメントからは分からない）
+            chars = json.load(urllib.request.urlopen(urllib.request.Request(ISLAND, headers={"User-Agent": "ayato-island/1.0"}), timeout=60))["characters"]
+            tex = next(c for c in chars if c["emoji"] == "✝️")["plain"]["full"]
+            st, r = call("POST", "/materials", {"title": "（試し・すぐ消します）", "description": "", "price": 300, "texture": tex,
+                                               "products": products_for(["sticker", a.item])})
+            if st != 200:
+                sys.exit(f"試し用のデザインを作れなかった {st}: {r}")
+            mid = r["material"]["id"]
+            print("試し用のデザイン", mid)
+            try:
+                probe(mid, a.item, a.scale, a.offset_x, a.offset_y, items=["sticker", a.item])
+            finally:
+                st, _ = call("DELETE", f"/materials/{mid}")
+                print("試し用のデザインを消した", mid, st)
+        else:
+            probe(a.id, a.item, a.scale, a.offset_x, a.offset_y)
 
 if __name__ == "__main__":
     main()
