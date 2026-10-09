@@ -729,28 +729,29 @@ export default function CardSheet({
    */
   const shape = useCallback(
     (toWall: boolean) => {
-      setWall((was) => {
-        if (was === toWall) return was;
-        let keep = other.current;
-        /* **はじめてかべがみにしたときだけ、置きどころを決めてやる。**
-           既定のまま持っていくと、足がスマホのボタンの下に隠れる。
-           1度でも自分で動かしていれば（`place` が入っていれば）触らない。 */
-        if (toWall && !keep[0].place) {
-          const list = figures();
-          const art0 = list[0];
-          if (art0 && screen) {
-            const b = opaqueBox(art0.img);
-            const d = defaultPlaceFor(screen.out.w, screen.out.h, b.w, b.h);
-            keep = [{ place: { ...d, y: Math.max(0.3, d.y - WALL_FOOT) }, flip: false }, BLANK];
-          }
+      if (wall === toWall) return;
+      let keep = other.current;
+      /* **はじめてかべがみにしたときだけ、置きどころを決めてやる。**
+         既定のまま持っていくと、足がスマホのボタンの下に隠れる。
+         1度でも自分で動かしていれば（`place` が入っていれば）触らない。 */
+      if (toWall && !keep[0].place) {
+        const list = figures();
+        const art0 = list[0];
+        if (art0 && screen) {
+          const b = opaqueBox(art0.img);
+          const d = defaultPlaceFor(screen.out.w, screen.out.h, b.w, b.h);
+          keep = [{ place: { ...d, y: Math.max(0.3, d.y - WALL_FOOT) }, flip: false }, BLANK];
         }
-        other.current = holdRef.current;
-        holdRef.current = keep;
-        setYouAt(keep[0]);
-        setMateAt(keep[1]);
-        setHand(0);
-        return toWall;
-      });
+      }
+      /* **入れ替えるのは ref、知らせるのは state。** `setWall` の中で
+         ほかの state を触ると、React が更新の式を2度呼ぶ作り（開発時）で
+         **入れ替えが2回起きて元に戻る。** 式の外で済ませる。 */
+      other.current = holdRef.current;
+      holdRef.current = keep;
+      setYouAt(keep[0]);
+      setMateAt(keep[1]);
+      setHand(0);
+      setWall(toWall);
       /* **写真の箱の下限を捨てる。** 「焼き直しのあいだ畳ませない」ために
          一度測った高さを下限にしているが、**かたちが変われば背も変わる。**
          かべがみ（44vh）からカードへ戻ると、392px の下限だけが残って
@@ -766,7 +767,7 @@ export default function CardSheet({
       });
       touch();
     },
-    [figures, screen, touch],
+    [figures, screen, touch, wall],
   );
 
 
