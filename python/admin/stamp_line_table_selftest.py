@@ -87,6 +87,9 @@ from _fake_fs import FakeDb, cid  # noqa: E402
 NAME_A = "いそぎんちゃく座"
 NAME_B = "やまびこ用務員"
 NAME_C = "こだまの観測者"
+# **`channelName` に入っているのはハンドル。** 名前のかわりにこれが
+# 並んだら落とす
+HANDLE_A = "@isoginchaku-za"
 MINE_A1 = "いやぁまいったね"
 MINE_A2 = "ねむいよ"
 MINE_B1 = "そうきたか"
@@ -131,9 +134,14 @@ def fake_db() -> FakeDb:
                        "suggested": [MINE_A1, MINE_A2]},
         },
         "islandCharacter": {
-            DOC["a"]: {"emoji": "🐧", "channelName": NAME_A},
+            # **本番の形。** `channelName` は `@` 付きのハンドルで、
+            # 呼び名は `aliases` に入っている（`characters_migrate`）
+            DOC["a"]: {"emoji": "🐧", "channelName": HANDLE_A,
+                       "aliases": [NAME_A]},
+            # `aliases` が無い人は `channelName` に落ちる
             DOC["b"]: {"emoji": "🦔", "channelName": NAME_B},
-            DOC["c"]: {"emoji": "🐢", "channelName": NAME_C},
+            DOC["c"]: {"emoji": "🐢", "channelName": "",
+                       "aliases": [NAME_C]},
         },
     })
 
@@ -226,6 +234,11 @@ def main() -> int:
     # 選び方の内側（島ぜんぶの回数・割合・点）を本文に出さない
     for w in ("割合", "島ぜんぶ", "点が", "スコア"):
         check(w not in body, f"選び方の内側を本文に出さない（{w}）")
+
+    print("== 呼び名をどこから取るか ==")
+    check(HANDLE_A not in body,
+          "**`channelName` のハンドルを名前として出さない**")
+    check("名前が引けません" not in body, "名前は3人とも引けている")
 
     print("== markdown に読まれてしまう字 ==")
     check(tbl.cell("_ねむい_") == "\\_ねむい\\_",
