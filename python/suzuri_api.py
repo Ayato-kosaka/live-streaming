@@ -162,7 +162,13 @@ def create(title, description, texture, items, price=300, dry=False, src=None):
         sys.exit(f"POST /materials {st}: {r}")
     m = r["material"]
     print(f"  created {m['id']} {m['title']!r} products={[p['item']['name'] for p in r.get('products', [])]}")
-    set_layout(m["id"], items, src)
+    try:
+        set_layout(m["id"], items, src)
+    except BaseException:
+        # 大きさが入らないまま売り場に残すと、缶バッジとパネルが切れたまま売られる。消して止まる
+        st, _ = call("DELETE", f"/materials/{m['id']}")
+        print(f"  大きさが入らなかったので消した {m['id']} -> {st}")
+        raise
     return m["id"]
 
 
@@ -191,14 +197,16 @@ def sample_url(material_id, item):
 
 
 def placement_of(material_id, item):
-    """いまの大きさと位置。商品一覧の見本の絵の URL に `…png.{scale}+{x}+{y}.webp` の形で埋まっている
+    """いまの大きさと位置。商品一覧の見本の絵の URL に `…{幅}x{高さ}[.png].{scale}+{x}+{y}.webp` の形で埋まっている
     （API の応答に scale の欄は無い）。既定の大きさなら None"""
     import re
     st, r = call("GET", "/products", query={"materialId": material_id, "itemId": ITEM_IDS[item], "limit": 5})
     if st != 200 or not r.get("products"):
         return None, None
     url = r["products"][0].get("sampleImageUrl") or ""
-    m = re.search(r"\.png\.(-?[0-9.]+)([+-][0-9.]+)?([+-][0-9.]+)?\.(?:webp|png|jpg)", url)
+    # 画面から上げた絵は「…-1024x1024.png.0.73+0.0+0.0.webp」、API で上げた絵は
+    # 「…-1060x1060.0.953+0.0+0.0.webp」（.png が付かない）。どちらも読む
+    m = re.search(r"-\d+x\d+(?:\.(?:png|jpe?g))?\.(-?[0-9.]+)([+-][0-9.]+)?([+-][0-9.]+)?\.(?:webp|png|jpg)", url)
     return (tuple(float(x) for x in m.groups() if x) if m else None), r["products"][0].get("id")
 
 
