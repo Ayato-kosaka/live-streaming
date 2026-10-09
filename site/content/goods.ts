@@ -122,12 +122,16 @@ export const STICKERS: Sticker[] = [
   {
     id: "hitch",
     name: "ヒッチハイクするあやと",
+    /* **2026-10-09 に描き直した1枚に差し替えた**（あやと「早急なお願い」）。
+       前は白地の jpg で、白の無いところへ貼ると四角が出ていた。
+       いまは**透過のまま配る**ので、どこへでも貼れる。
+       縦横比も 0.667 → 0.908 に変わっている（下の `w`/`h`）。 */
     art: "/goods/ayato-sticker.webp",
-    file: "/goods/ayato-sticker.jpg",
-    saveAs: "ayato-hitchhike.jpg",
+    file: "/goods/ayato-sticker.png",
+    saveAs: "ayato-hitchhike.png",
     /* 「STOP」の字が入っている。返すと読めなくなるので、返さない */
     canFlip: false,
-    w: 320,
+    w: 436,
     h: 480,
   },
 ];
