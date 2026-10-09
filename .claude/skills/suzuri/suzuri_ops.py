@@ -41,6 +41,36 @@ ITEM_IDS = {"sticker": 11, "acrylic-keychain": 147, "can-badge": 17, "mug": 3, "
 SAMPLE_VARIANT = {"sticker": 606, "acrylic-keychain": 1952, "can-badge": 849, "mug": 82, "acrylic-panel": 4938}
 
 
+def fresh_tab():
+    """新しいタブを開いて、それ以外を閉じる。**1デザインごとに呼ぶ。**
+    編集画面は 146品目ぶんの見本の絵を読み込むので、同じタブで8件ほど続けると
+    CDP が返らなくなった（2026-10-09 に2回）。タブを替えると描画のプロセスも替わる"""
+    import urllib.request
+    port = up("suzuri", BASE + "/account/materials")
+    old = [p for p in json.load(urllib.request.urlopen(f"http://localhost:{port}/json/list")) if p["type"] == "page"]
+    t = tab("suzuri", new=True)
+    for p in old:
+        try:
+            urllib.request.urlopen(f"http://localhost:{port}/json/close/{p['id']}", timeout=10)
+        except Exception:
+            pass
+    t.go(BASE + "/account/materials", wait=1)
+    return t
+
+
+def retrying(fn, *args, **kw):
+    """CDP が返らなくなったら Chrome ごと起こし直して、1回だけやり直す。
+    fn の1つ目の引数はタブ（やり直すときは新しいタブを渡す）"""
+    try:
+        return fn(fresh_tab(), *args, **kw)
+    except Exception as e:
+        if "timed out" not in repr(e).lower():
+            raise
+        print(f"retry after {e!r}: restarting chrome", flush=True)
+        down("suzuri")
+        return fn(fresh_tab(), *args, **kw)
+
+
 def open_tab():
     """suzuri.jp を開いているタブを1枚だけ残して返す。
     ほかのサイトのタブで fetch('/account/...') を投げると、そのサイトに飛んで空が返る"""
@@ -89,11 +119,13 @@ def read(t, mid):
     """編集画面に埋まっている JSON を読む。戻り値は (material, products)。
     **DOMParser に通さない。** 編集画面の HTML は 3.8MB あり、1件ごとに組み立てると
     タブが固まった（20件目あたりで WebSocket が返らなくなった）。属性2つだけを
-    正規表現で抜き、実体参照（&quot; など）を戻す"""
+    正規表現で抜き、実体参照（&quot; など）を戻す。
+    **サーバーが返す生の HTML は属性を一重引用符で囲む**（`data-material='{&quot;id…'`）。
+    DOM の outerHTML は二重引用符で見せるので、それに合わせて書くと1件も当たらない"""
     r = t.js(f"""fetch('/account/materials/{mid}').then(r => r.status == 200 ? r.text() : '').then(h => {{
       const un = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-      const m = h.match(/data-material="([^"]*)"/), p = h.match(/data-products="([^"]*)"/);
-      return m && p ? [un(m[1]), un(p[1])] : null; }})""", await_promise=True)
+      const m = h.match(/data-material=(["'])([^"']*)\\1/), p = h.match(/data-products=(["'])([^"']*)\\1/);
+      return m && p ? [un(m[2]), un(p[2])] : null; }})""", await_promise=True)
     if not r:
         return None, None
     return json.loads(r[0]), json.loads(r[1])
@@ -196,21 +228,22 @@ def badge_scale(path, margin=0.80):
     return round(min(1.0, (min(w, h) / 2) / rmax * margin), 3)
 
 
-def panel_fit(path):
+def panel_fit(path, kw=172, kh=160, max_w=86, max_h=122):
     """アクリルパネル（100x148mm の縦長）の大きさと縦の位置。
-    実測（🦄、2026-10-09）: scale 0.64 で正方形の一辺がパネルの幅いっぱい（約 94mm）、
-    既定では絵の上端がパネルの上端に付き、offsetY 0.1 でパネルの高さの約 1 割下がる。
-    つまり scale s のときの正方形の一辺は約 147·s mm。
-    中身（描いてある外接矩形）が幅 92mm・高さ 135mm（下はスタンドのぶん空ける）に
-    収まるいちばん大きい s を取り、正方形の真ん中をパネルの高さの 47% に置く。
-    横長・正方形の絵は 0.64 前後、縦長の絵（歩いているあやと）は 0.95 前後になる。"""
+    scale s のとき、正方形の絵の一辺は**横がおよそ kw·s mm（kw≈172）、縦が kh·s mm（kh≈160）**。
+    見本の絵で測った（🪽 0.696 で中身が幅の 94% → kw≈171、🐈‍⬛ 0.788 で縦がちょうど収まる）。🦄 は 0.64 で中身が
+    幅いっぱい（約 98mm）に届いた。**最初 k=147 で見積もって、縦長の絵の左右が切れた**
+    （🪽 🐈‍⬛ 🪆 🤟 など。2026-10-09）。
+    既定では絵の上端がパネルの上端に付き、offsetY を足すと下がる（0.1 で高さの約1割）。
+    中身（描いてある外接矩形）が幅 max_w・高さ max_h（下はスタンドのぶん空ける）に
+    収まるいちばん大きい s を取り、正方形の真ん中をパネルの高さの 47% に置く。"""
     from PIL import Image
     im = Image.open(path).convert("RGBA")
     bb = im.getchannel("A").point(lambda v: 255 if v >= 16 else 0).getbbox()
     side = max(im.size)
     wf, hf = (bb[2] - bb[0]) / side, (bb[3] - bb[1]) / side
-    s = min(92 / (wf * 147), 135 / (hf * 147))
-    return {"scale": round(s, 3), "offsetY": round(0.47 - 147 * s / 296, 3)}
+    s = min(max_w / (wf * kw), max_h / (hf * kh))
+    return {"scale": round(s, 3), "offsetY": round(0.47 - kh * s / 296, 3)}
 
 
 def layout(path):
@@ -269,8 +302,16 @@ def sheet(t, mids, out, cell=180):
             if not u:
                 d.text(((c + 1) * cell + 40, r * cell + 80), "NONE", fill="red")
                 continue
-            im = Image.open(io.BytesIO(urllib.request.urlopen(u, timeout=60).read())).convert("RGB")
-            sh.paste(im.resize((cell, cell)), ((c + 1) * cell, r * cell))
+            # lens は描きたての絵で 502 を返すことがある。少し待って取り直す
+            for k2 in range(4):
+                try:
+                    im = Image.open(io.BytesIO(urllib.request.urlopen(u, timeout=60).read())).convert("RGB")
+                    sh.paste(im.resize((cell, cell)), ((c + 1) * cell, r * cell))
+                    break
+                except Exception:
+                    time.sleep(3 * (k2 + 1))
+            else:
+                d.text(((c + 1) * cell + 40, r * cell + 80), "FETCH FAIL", fill="red")
     sh.save(out, quality=70)
     return [(mid, title, sorted(imgs)) for mid, title, imgs in rows]
 
