@@ -890,6 +890,10 @@ island/state
 - **焼き込み（`site/content/*.ts`）にも git にも入れない。**
   種をまくのは `python/admin/stamp_line_seed.py`（名簿は Actions の
   `repository_dispatch` で渡して、ジョブの頭で伏せ字にする）
+- **中身を人が読める形で出すのは `python/admin/stamp_line_table.py` だけ**
+  （`op: table`）。行き先は **#716 の本文ひとつ**で、公開の Actions ログには
+  件数しか出さない。**強さで並べない**——点の高い順に並べると、それが
+  そのまま協力の順位表になる。出す数は「その人がその字を打った回数」まで
 
 **`channelId` は写しで、正は `islandCharacter.channelId`**（3.4）。
 写しを持つのは、本人を引くのに2回読まないため。図鑑の側が変わったら
