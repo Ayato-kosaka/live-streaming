@@ -71,6 +71,11 @@ sys.stderr = Tee(REAL_ERR, BUF)
 
 # `_fs` が読む `config.py` は、この環境変数が無いと import の時点で落ちる。
 # 偽物しか触らないので**本物の名前は要らない**
+# **注記（`::notice::`）の道も通す。** ログは置き場から配られて口からは
+# 読めないので、押したあとに件数を確かめられるのは注記だけ。
+# ここを立てないと、**その1行だけ見張りを素通りする**
+os.environ["GITHUB_ACTIONS"] = "true"
+
 os.environ.setdefault("BQ_PROJECT_ID", "stamp-line-seed-selftest")
 
 import stamp_line_seed as seed  # noqa: E402
@@ -273,6 +278,9 @@ check("出来事の中身が勝つ",
 os.environ.pop("ARGS", None)
 os.environ.pop("GITHUB_EVENT_PATH", None)
 
+# **漏れたら落とすもの**。注記と本文の両方に当てる
+LEAK = list(DOC.values()) + list(CH.values()) + KEPT + KEPT_SUG
+
 print("\n# 8. 出力に、素性が1文字も出ていない")
 out = BUF.getvalue()
 for tag, v in [("書類ID", DOC["fresh"]), ("書類ID", DOC["had"]),
@@ -282,6 +290,12 @@ for tag, v in [("書類ID", DOC["fresh"]), ("書類ID", DOC["had"]),
 for v in KEPT + KEPT_SUG:
     check(f"本人のことばが出ていない（{v[:3]}…）", v not in out)
 check("指紋は出ている（伏せ字ではなく追える形）", "#" in out)
+check("注記（::notice::）が出ている", "::notice::" in out,
+      out[-200:])
+# 注記は1行で切れるので、改行が混ざっていないことも見る
+for ln in [x for x in out.splitlines() if x.startswith("::notice::")]:
+    check(f"注記に件数しか出ていない（{ln[10:30]}…）",
+          all(v not in ln for v in LEAK))
 print(f"  出た行: {len(out.splitlines())} 行")
 
 print("")

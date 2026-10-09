@@ -86,6 +86,106 @@ export function around(rect: Box, fx: number, fy: number, artW: number, mh: numb
   ];
 }
 
+/**
+ * `around` の8か所が全部ふさがっていたときに、**空いている隙間を探す。**
+ *
+ * ## なぜ足したか
+ *
+ * 札が消えるのは、**逃げ場を8か所しか見ていなかったから。**
+ * 実測（表紙の引き。`around` の8候補が全部ふさがっていた3枚）:
+ *
+ *     1280px あやとのこと  空きは「真横 95px」。8候補の「真横」より 26px 下
+ *     1280px 歩いた国      空きは「左下 100px」。8候補に斜め下の遠いほうが無い
+ *      390px やってほしいこと 空きは「左端・建物から 47px」。縦に **10px** しか幅が無い
+ *
+ * どれも**建物の 108px 以内に空きがあるのに、8か所がたまたま全部埋まって
+ * いた**だけ。そこで上下へ運ばれて 152px・311px・222px まで離れ、
+ * 離れすぎとして落ちていた。**島が混んでくるほど、8か所では足りない。**
+ *
+ * ## 半径を決めた輪では足りない
+ *
+ * はじめは `MAX_LEAD` までの輪（半径 52/68/84/100 × 16方向）を回した。
+ * 1280px の2枚はそれで戻ったが、**390px の「やってほしいこと」は戻らない。**
+ * あそこの空きは縦 10px（上は建物の当たりの下辺、下は別の建物の当たりの上辺）で、
+ * 16方向の点はその 10px を素通りする。実測で、輪の上の点は 46点が板の中に
+ * 入っていて、**空きに当たったのは 0点**だった。
+ * **刻みを細かくするのは、次に 5px の隙間が出たら同じことになる。**
+ *
+ * ## 決めたこと — 隙間の縁に合わせて置く
+ *
+ * 空きがあるなら、その空きは必ず**何かの縁で終わっている。**
+ * なので置き場所の候補を、避ける相手の縁（右端の隣・左端の隣・下辺の下・
+ * 上辺の上）と、板の縁と、`MAX_LEAD` の届く端から作る。
+ * 縦と横を掛け合わせれば、**空きが1つでもあれば必ずその中の1点が候補に入る。**
+ * 刻みの細かさに頼らない。
+ *
+ * 候補は数えてから作る（`MAX_LEAD` の外と板の外は先に落とす）ので、
+ * 混んだ島でも 100 ほど。**作るのは8か所が全滅したときだけ**なので、
+ * ふだんの重さは変わらない。
+ *
+ * @param rect 既定の置き場所（建物の真上）
+ * @param fx,fy 建物の足元
+ * @param keepOut 避ける相手（島の隅の道具・先に置いた札・ほかの建物の当たり）
+ * @param bounds 札を置いてよい板（`IsleStage` の pad を引いたもの）
+ */
+export function nooks(
+  rect: Box,
+  fx: number,
+  fy: number,
+  keepOut: Box[],
+  bounds: Box,
+  max = MAX_LEAD,
+): Box[] {
+  /** 相手に触れない程度に離す。0 だと縁がぴったり合って読みづらい */
+  const gap = 2;
+  /* 置いてよい左上の範囲。**板の中**で、かつ**札の中心が建物から `max` 以内**。
+     どちらも先に効かせておくと、候補が一桁減る */
+  const xLo = Math.max(bounds.x, fx - max - rect.w / 2);
+  const xHi = Math.min(bounds.x + bounds.w - rect.w, fx + max - rect.w / 2);
+  const yLo = Math.max(bounds.y, fy - max - rect.h / 2);
+  const yHi = Math.min(bounds.y + bounds.h - rect.h, fy + max - rect.h / 2);
+  if (xLo > xHi || yLo > yHi) return [];
+  /* 縁の候補。**範囲の外に出たものは捨てずに、範囲の端へ寄せる。**
+     捨てていると、390px の「やってほしいこと」のように**板の左端ぎわだけが
+     空いている**ときに候補が1つも残らない（札が 140px あるので、建物の
+     左 52px の点は左端から外へ出る。寄せれば 8px で収まる）。 */
+  const axis = (at: number, lo: number, hi: number, edges: number[]) => {
+    const fit = (v: number) => Math.min(Math.max(v, lo), hi);
+    const seen = new Set<number>();
+    const out: number[] = [];
+    for (const v of [at, lo, hi, ...edges]) {
+      const k = Math.round(fit(v) * 10) / 10;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(k);
+    }
+    return out;
+  };
+  const xs = axis(
+    rect.x,
+    xLo,
+    xHi,
+    keepOut.flatMap((q) => [q.x - rect.w - gap, q.x + q.w + gap]),
+  );
+  const ys = axis(
+    rect.y,
+    yLo,
+    yHi,
+    keepOut.flatMap((q) => [q.y - rect.h - gap, q.y + q.h + gap]),
+  );
+  const out: Box[] = [];
+  for (const y of ys)
+    for (const x of xs) {
+      const c = { ...rect, x, y };
+      if (lead(c, fx, fy) <= max) out.push(c);
+    }
+  /* **既定の置き場所からいちばん動かないものを先に返す。** 建物からの近さで
+     並べると建物の真下ばかりが選ばれて、札が建物のあいだを毎回飛ぶ。
+     離れ具合は `max` で頭打ちにしてあるので、ここは動かなさで並べてよい */
+  const moved = (b: Box) => Math.hypot(b.x - rect.x, b.y - rect.y);
+  return out.sort((a, b) => moved(a) - moved(b));
+}
+
 /* =========================================================
    押しどころの取り合い
    ---------------------------------------------------------
@@ -141,6 +241,16 @@ export function around(rect: Box, fx: number, fy: number, artW: number, mh: numb
 
 /** 指で押せる最小（`docs/island-design.md` 3-2） */
 export const TAP = 48;
+
+/**
+ * 札の指の当たりのまわりに取る、息の幅。
+ *
+ * **要るのは「隣で読まれるもの」との間だけ。** ほかの札・島の隅の道具・看板は、
+ * 札とくっついていると両方読みづらい。**見えない当たり（建物）には要らない。**
+ * 要るのは重ならないことだけで、まわりに立ち入り禁止の帯は要らない
+ * （`IsleStage` の `slim`。付けたままにしていて、札が1枚消えていた）。
+ */
+export const AIR = 6;
 
 /**
  * 当たりを決めるときに狙う大きさ。**48 ではなく 49。**

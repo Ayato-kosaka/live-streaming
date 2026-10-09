@@ -1602,3 +1602,17 @@
 }
 /* `.me-save` は上に余白を持っているので、ここでは行に合わせて外す */
 .slp-foot .me-save { margin-top: 0; }
+
+/* まだ1文字も無いときの「これでいく」。**押せないものは完全に平ら**
+   （`docs/island-design.md` 3-3）。厚みを残すと、押せるのに効かないものに
+   見える。
+
+   **薄くはしない。** いちど `opacity: 0.55` にしたら、字の濃さが
+   2.64 まで落ちた（`inkpx.mjs` が拾った。金の地の上の `--ink`）。
+   読めない字を置くくらいなら、合図は厚みだけで足りる——
+   地を金から紙へ落として、厚みを外す（字は `--ink` のまま 8.61）。 */
+.slp-foot .me-save:disabled {
+  box-shadow: none;
+  background: var(--paper-2);
+  border-color: var(--frame);
+}

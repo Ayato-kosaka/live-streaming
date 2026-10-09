@@ -55,7 +55,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from _fs import args, db, log, readonly  # noqa: E402
+from _fs import args, db, log, notice, readonly  # noqa: E402
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -199,6 +199,13 @@ def main() -> int:
         "新しく置く %d 件 / すでに在る %d 件 / 図鑑に居ない %d 件",
         len(p["new"]), len(p["same"]), p["missing"],
     )
+    # **押した人が口から読めるようにする。** ログは置き場から配られるので
+    # REST からは読めない（注記だけが読める）。出すのは件数だけ
+    notice(
+        f"種まき{'（下見）' if not apply else ''}: 渡された {len(picks)} 件 / "
+        f"新しく置く {len(p['new'])} / すでに在る {len(p['same'])} / "
+        f"図鑑に居ない {p['missing']} / channelId が無い "
+        f"{len(p['nochannel'])}")
     if p["nochannel"]:
         # **黙って通さない。** この人たちは画面で自分のぶんを見られない
         log.warning(
@@ -225,6 +232,7 @@ def main() -> int:
     # **置いたことを数え直す。** 書いたつもりで入っていない日に気づけない
     after = len(list(client.collection("islandStampLine").list_documents()))
     log.info("入れ物にある書類: %d 件", after)
+    notice(f"種まき: 置いた {n} 件 / 入れ物にある書類 {after} 件")
     return 0
 
 
