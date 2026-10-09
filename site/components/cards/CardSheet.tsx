@@ -98,6 +98,13 @@ import {
 /** 選ぶところに出す1人。 */
 type Pick = { key: string; icon: string; name: string; place: Place | null };
 
+/**
+ * 最初から人の入っている紙で、「あやとも入れますか」の頭を
+ * 胴の下から何 px 覗かせるか。**字が1行ぶん読める高さ。**
+ * これより小さいと「何か在る」だけになって、何が在るか分からない。
+ */
+const PEEK = 36;
+
 /** 手が止まってから焼くまで。**動かしているあいだは焼かない** */
 const BAKE_MS = 150;
 /** 動かし終わってから覚えるまで。**引きずっている途中には投げない** */
@@ -179,6 +186,10 @@ export default function CardSheet({
   const tuneRef = useRef<HTMLDivElement>(null);
   /** 写真の箱。**焼き直しているあいだ、高さを畳ませない**ために測る */
   const shotRef = useRef<HTMLDivElement>(null);
+  /** 送る胴。**まだ下に続くか**を見るのに要る */
+  const bodyRef = useRef<HTMLDivElement>(null);
+  /** まだ下に続くか。続くなら、紙の底に合図を出す */
+  const [more, setMore] = useState(false);
   /** 最後に出ていた写真の高さ（px）。0 はまだ1度も出ていない */
   const shotH = useRef(0);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
@@ -238,6 +249,93 @@ export default function CardSheet({
     );
     return () => clearTimeout(t);
   }, [chosen]);
+
+  /* 紙の底に「まだ下に続く」の合図を出す。
+
+     図鑑（`/friends`）やじぶんのこと（`/me`）から開いた紙は、**最初から
+     人が入っている**ので下へ送らない（開いて最初に見たいのは写真のほう）。
+     そのぶん「あやとも入れますか」が窓の下に隠れていて、**見えているところが
+     『だれを入れますか』で終わって、罫と足が続く。** 終わった紙に見える。
+
+     本番で撮って分かった（2026-10-08。390×850）。あやとの札4枚は
+     1枚も画面に入っていなかった。送れば出るのに、**送れることが見えない。**
+
+     動かさずに、**続いていることだけ**を見せる。送り切ったら消える。
+
+     **薄れる帯だけでは足りなかった。** 切れ目がちょうど欄と欄のあいだの
+     空きに来ると、紙の色が紙の色に薄れるだけで何も見えない（撮って確かめた）。
+     だから最初から人の入っている紙では、**次の見出しの頭が覗くぶんだけ**
+     送っておく（下の `peek`）。写真はほとんど隠れない。 */
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const look = () => setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+    look();
+    el.addEventListener("scroll", look, { passive: true });
+    /* 中身は**あとから伸びる**（焼き上がりが戻る・人を選んで手が増える）。
+       送りの合図だけでは、伸びた瞬間に古い答えのまま残る */
+    const ro = new ResizeObserver(look);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", look);
+      ro.disconnect();
+    };
+  }, []);
+
+  /* 最初から人の入っている紙（図鑑・じぶんのこと）だけ、**ひと覗きぶん送る。**
+
+     全部送ると写真が窓から出る（開いて最初に見たいのは写真）。
+     送らないと、切れ目が欄と欄の空きに来て「終わった紙」に見える。
+
+     ## 「◯px 送る」で書かない
+
+     はじめ `setTimeout(420)` で 56px 送る、と書いた。**手元では通って、
+     本番では 15px しか送らなかった**（2026-10-09 実測。胴 614px に対して
+     中身 854px、問いの頭は 693px のところ）。写真が遠くから届くぶん、
+     420ms ではまだ背が決まっていない。**決まる前の高さで計った送り量は、
+     決まる前の紙のための数。**
+
+     だから**量ではなく、行き先で書く。** 「問いの頭が胴の下から
+     `PEEK` だけ覗くところ」を狙って、**中身の背が変わるたびに狙い直す。**
+     背が何回伸びても、最後には同じところに落ち着く。
+
+     止めるのは2つ。**読んでいる人が自分で送ったら、もう押し返さない。**
+     それと、いつまでも狙い続けないように時間で切る。 */
+  const askRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (!startIcon) return;
+    const el = bodyRef.current;
+    if (!el) return;
+    let stop = false;
+    const put = () => {
+      const ask = askRef.current;
+      if (stop || !ask) return;
+      /* 問いの頭が、胴の下から `PEEK` だけ覗くところ。
+         **下へ行くときだけ送る**——読んでいる人が先へ進めていたら、戻さない */
+      const want = ask.offsetTop - el.clientHeight + PEEK;
+      if (want > el.scrollTop + 2) el.scrollTo({ top: want, behavior: "smooth" });
+    };
+    put();
+    /* 中身は**あとから伸びる**（写真が届く・焼き上がりが戻る）。
+       伸びるたびに狙い直すので、「何 ms 待てば決まるか」を当てにしない */
+    const ro = new ResizeObserver(put);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    const hands = () => {
+      stop = true;
+      ro.disconnect();
+    };
+    el.addEventListener("wheel", hands, { passive: true });
+    el.addEventListener("touchstart", hands, { passive: true });
+    const t = setTimeout(hands, 4000);
+    return () => {
+      hands();
+      clearTimeout(t);
+      el.removeEventListener("wheel", hands);
+      el.removeEventListener("touchstart", hands);
+    };
+  }, [startIcon]);
 
   /* 写真の箱の高さを覚える。**焼き直しのあいだ畳ませない**ため。
 
@@ -563,7 +661,7 @@ export default function CardSheet({
     <div className="akd-modal" role="dialog" aria-modal="true" aria-label="あやと島カード">
       {/* 外を押しても閉じる。絵の裏なので、押せる合図は持たせない */}
       <button className="akd-back" aria-label="閉じる" onClick={onClose} />
-      <div className="akd-sheet">
+      <div className={`akd-sheet${more ? " is-more" : ""}`}>
         {/* **紙は、頭・胴・足の3つ。**
             送るのは胴だけで、頭（日付と閉じる）と足（持って帰る）は動かない。
 
@@ -582,7 +680,7 @@ export default function CardSheet({
           </button>
         </div>
 
-        <div className="akd-sheet-body">
+        <div className="akd-sheet-body" ref={bodyRef}>
           <div
             className="nstudio-shot"
             ref={shotRef}
@@ -697,7 +795,7 @@ export default function CardSheet({
               {/* 顔の札（「だれを入れますか」）と**同じ声で問う。** 札の列の中へ
                   入れてみたが、問いの字のぶん折り返しが1段増えて、かえって
                   40px 高くなった（実測 104px → 160px）。1行取るほうが短い。 */}
-              <p className="nstudio-ask">あやとも入れますか</p>
+              <p className="nstudio-ask" ref={askRef}>あやとも入れますか</p>
               <div className="akd-mates" role="group" aria-label="あやとも入れますか">
                 <button
                   type="button"

@@ -2,7 +2,7 @@
    ▲ Next.js 15.5.4
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 25.7s
+ ✓ Compiled successfully in 32.0s
    Linting and checking validity of types ...
  ⨯ ESLint must be installed in order to run during builds: npm install --save-dev eslint
    Collecting page data ...
@@ -29,9 +29,9 @@ Route (app)                                 Size  First Load JS
 ├   └ /apps/nanitabeyo
 ├ ○ /atlas                               10.4 kB         164 kB
 ├ ○ /board                               4.67 kB         141 kB
-├ ○ /cards                               5.51 kB         172 kB
+├ ○ /cards                               1.54 kB         173 kB
 ├ ○ /design                                219 B         115 kB
-├ ○ /friends                             5.33 kB         177 kB
+├ ○ /friends                              5.3 kB         184 kB
 ├ ○ /goods                               2.34 kB         139 kB
 ├ ○ /icon.svg                                0 B            0 B
 ├ ● /island/[chapter]                     2.1 kB         264 kB
@@ -62,7 +62,7 @@ Route (app)                                 Size  First Load JS
 ├   ├ /map/netherlands
 ├   ├ /map/belgium
 ├   └ [+21 more paths]
-├ ○ /me                                   4.7 kB         152 kB
+├ ○ /me                                  4.64 kB         160 kB
 ├ ○ /me/desk                             10.6 kB         212 kB
 ├ ○ /me/remote                           4.28 kB         153 kB
 ├ ○ /me/roulette                         8.21 kB         127 kB
