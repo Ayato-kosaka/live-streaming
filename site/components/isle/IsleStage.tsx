@@ -32,7 +32,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, type Box } from "./plates";
+import { AIR, MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, nooks, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -1677,7 +1677,41 @@ function placePlates(
    * 8方向とも塞がれて島の下 112px まで運ばれ、離れすぎ（`MAX_LEAD` 108）で
    * 落ちていた。**代表6件が5枚になっていたのはこれ。**
    */
-  const other = (i: number) => hitBoxes.filter((_, j) => j !== i && takesTap(j));
+  /* **建物の当たりは `AIR` ぶん細らせてから渡す。**
+     札の箱（上の `rect`）は、指の当たりのまわりに `AIR`（6px）の息を足した
+     もの。**息が要るのは「隣で読まれるもの」との間だけ**——ほかの札、島の隅の
+     道具、看板。建物の当たりは**見えない箱**なので、読みやすさの言い分が無い。
+     要るのは「重ならない」ことだけで、まわりに no man's land は要らない。
+
+     息を付けたまま当たっていたので、建物1軒ごとに **12px の帯**（札の 6px ＋
+     相手の 6px）が立ち入り禁止になっていた。390px の表紙は看板でない建物が
+     7軒、縦 340px の中に 50px 間隔で並んでいるので、**帯がつながって壁に
+     なる。** 実測（引き・「やってほしいこと」。札は 140x60）で、
+     縁に合わせた候補 129 のうち空きは **0**。細らせると、建物から 44px の
+     ところ（島の左ぎわ）が空いた。
+
+     細らせてよい証明は 1次元で足りる。札 `[a, a+w]` に息を足した
+     `[a-6, a+w+6]` が相手 `[b, b+v]` を外すのと、札そのものが相手を
+     `6` 細らせた `[b+6, b+v-6]` を外すのは、同じ式になる（`v > 12` のかぎり。
+     当たりは 48px 以上あるので必ず成り立つ）。
+
+     **細らせるのは引きだけ。**
+
+     - 引きの札は**閉じた名前1枚**（49x30）で、看板の6軒にとっては
+       **唯一の入口**（建物の当たりは止めてある）。置き場所が無いと入口が
+       まるごと消えるので、要らない 6px のために消してよいものではない
+     - 寄りの札は**開いた1枚**（390px で 237x64。添え書きと「はいる」つき）で、
+       読むのに時間がかかる。そして建物の当たりは寄りでは生きているので、
+       札が置けなくても入口は消えない。**息を詰める理由が無い。**
+
+     寄りでも細らせてみたら、開いた札（237x64）の置き場所が変わって、
+     「いまどこ」「企画」の当たりが札の下に入った（`islereach.mjs` で
+     「いつも 13 → 11・ときどき届かない」）。**入口を1つ救う直しで、
+     別の入口を2つ潰していた。** 引きに閉じれば両方立つ。 */
+  const slim = (q: Box): Box =>
+    o.wide ? { x: q.x + AIR, y: q.y + AIR, w: q.w - AIR * 2, h: q.h - AIR * 2 } : q;
+  const other = (i: number) =>
+    hitBoxes.filter((_, j) => j !== i && takesTap(j)).map(slim);
   /**
    * その札が**いま画面に出ているか**。`chain.css` の `.isle-mark` の
    * opacity と同じ条件（寄りは近づいた1軒だけ、引きは看板の6つだけ）。
@@ -1864,11 +1898,14 @@ function placePlates(
          上にいた。** 重なりを見る箱がそこだけ実物とずれるので、
          「避けたはずの建物」が札の下に入っていた。 */
       const stand = Math.max(mh, 46);
+      /* 指の当たりのまわりに取る息の幅（`AIR`）。**読める相手との間だけに要る。**
+         下の `other()` がここと同じ数で建物の当たりを削っているので、
+         片方だけ変えないこと（変えると札が建物の当たりへ食い込む）。 */
       const rect = {
-        x: px - hw / 2 - 6,
+        x: px - hw / 2 - AIR,
         y: py - stand - 12 - sz.h - (hh - sz.h) / 2 - gy,
-        w: hw + 12,
-        h: hh + gy + 6,
+        w: hw + AIR * 2,
+        h: hh + gy + AIR,
       };
       const out =
         rect.x < pad ||
@@ -1910,17 +1947,27 @@ function placePlates(
       /* **まず建物のまわりを回る。** 上がふさがっていても、下・右・左が
          空いていることが多い。ここを見ずに上下へ運んでいたので、混んだ島では
          札が海の上まで運ばれていた（`./plates.ts` に実測を書いた）。 */
-      const spot = around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(
-        (c) =>
-          c.x >= pad &&
-          c.x + c.w <= o.b.w - pad &&
-          c.y >= padTop &&
-          c.y + c.h <= o.b.h - padBottom &&
-          /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
-             （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
-             見えない当たりの下になって、札の押しどころが削られる */
-          !tkn.some((q) => hits(c, q)),
-      );
+      /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
+         （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
+         見えない当たりの下になって、札の押しどころが削られる */
+      const free = (c: Box) =>
+        c.x >= pad &&
+        c.x + c.w <= o.b.w - pad &&
+        c.y >= padTop &&
+        c.y + c.h <= o.b.h - padBottom &&
+        !tkn.some((q) => hits(c, q));
+      /* 8か所が全部ふさがっていたら、**隙間の縁に合わせて探す**（`./plates.ts`
+         の `nooks`）。候補はどれも `MAX_LEAD` の中なので、ここで見つかった
+         場所は「建物のそば」の決まりを満たしている。作るのは8か所が全滅した
+         ときだけ——ふだんは1つめで決まるので、重さは前と変わらない。 */
+      const spot =
+        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ??
+        nooks(rect, pl.fx, pl.fy, tkn, {
+          x: pad,
+          y: padTop,
+          w: o.b.w - pad * 2,
+          h: o.b.h - padTop - padBottom,
+        }).find(free);
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
@@ -1986,7 +2033,14 @@ function placePlates(
       const okUp = inView(up);
       const okDown = inView(down);
       let t0: number;
-      if (okUp && okDown) t0 = Math.abs(up - top) <= Math.abs(down - top) ? up : down;
+      /* **上と下で迷ったら、建物に近いほうを採る。「動きの少ないほう」ではない。**
+         落とす／落とさないを決めているのは建物からの距離（下の `lead`）なのに、
+         選ぶほうは動いた量で決めていた。**測るものと決めるものが違っていた。**
+         実測（1280px・引き・「あやとのこと」）で、上は 74px 動いて建物から
+         152px（＝落ちる）、下は 85px 動いて建物から 7px だった。
+         11px 余計に動くのを惜しんで、札を1枚消していた。 */
+      const far2 = (t: number) => lead({ x: left, y: t, w: rect.w, h: rect.h }, pl.fx, pl.fy);
+      if (okUp && okDown) t0 = far2(up) <= far2(down) ? up : down;
       else if (okUp) t0 = up;
       else if (okDown) t0 = down;
       else {
