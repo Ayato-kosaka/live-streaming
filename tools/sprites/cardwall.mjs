@@ -164,6 +164,22 @@ const stop = async (code, msg) => {
 await p.goto(`http://localhost:${PORT}/cards.html`, { waitUntil: "networkidle" });
 await p.waitForTimeout(600);
 
+/* **畳みを先に開く。** 一覧は3日ぶんずつしか出していない（`Longer`）ので、
+   開かないと差し込みの「1枚に12人」の写真が1つも出てこない。
+   1人しか立てない写真を開くと、**2人を別々に動かすところが試せない。** */
+for (let n = 0; n < 6; n++) {
+  const more = await p.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((e) =>
+      /あと\s*\d+\s*(日ぶん|枚)/.test(e.textContent || ""),
+    );
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  if (!more) break;
+  await p.waitForTimeout(400);
+}
+
 /* いちばん人の多い写真のマスを開く（`cardshot.mjs` / `cardmate.mjs` と同じ選びかた）。
    1人しか立てない写真だと、2人を別々に動かすところが試せない。 */
 const tile = await p.evaluate(async () => {
@@ -265,6 +281,46 @@ console.log("開いたマス:", JSON.stringify(tile), "/ 差し替えた写真",
 console.log("焼き上がり:", JSON.stringify(await fingerprint()));
 console.log("立ち位置:", JSON.stringify(await boxes()));
 
+/**
+ * 焼き上がり（`<img>`）と canvas が、**同じ大きさで重なっているか。**
+ *
+ * 絵の大きさを決めるのは canvas で、焼き上がりはその上に `inset: 0` で
+ * 重ねているだけ。背の決まりを `img` と `canvas` に**別々に**書いてあるので、
+ * 片方だけ別の規則に負けると**上に焼き上がり・下に canvas の2段**に割れる。
+ * 実際に割れた（2026-10-09。12人立てる写真のかべがみで、
+ * 焼き上がり 253px に対して canvas 371px）。
+ *
+ * **焼き上がりは出ている絵そのもの**なので、ここがずれていると、
+ * 画面で見ているものと持って帰るものが違う。
+ */
+async function layers(どこ) {
+  const r = await p.evaluate(() => {
+    const cv = document.querySelector(".akd-modal .akd-stage > canvas");
+    const im = document.querySelector(".akd-modal .akd-stage > img");
+    const st = document.querySelector(".akd-modal .akd-stage");
+    const box = (e) => {
+      if (!e) return null;
+      const b = e.getBoundingClientRect();
+      return [Math.round(b.width), Math.round(b.height)];
+    };
+    return { canvas: box(cv), 焼き: box(im), 台: box(st) };
+  });
+  console.log(`重なり（${どこ}）: ${JSON.stringify(r)}`);
+  if (!r.canvas) {
+    missing.push(`canvas が出ていない（${どこ}）`);
+    return;
+  }
+  if (!r.焼き) return; // まだ焼けていないだけ
+  const ずれ = Math.abs(r.canvas[0] - r.焼き[0]) + Math.abs(r.canvas[1] - r.焼き[1]);
+  if (ずれ > 2) {
+    bad.push(
+      `${どこ}: 焼き上がりと canvas の大きさが違う` +
+        `（canvas ${r.canvas.join("x")} / 焼き ${r.焼き.join("x")}）。` +
+        `背の決まりが片方にだけ効いている`,
+    );
+  }
+}
+
 /* ---- 2 引きずっているあいだ、紙と面が動かないか ---- */
 const ta = await p.evaluate(() => {
   const el = document.querySelector(".akd-stage");
@@ -274,6 +330,7 @@ const ta = await p.evaluate(() => {
   return { 台: css(el), 絵: css(img), 胴: css(body) };
 });
 console.log("touch-action:", JSON.stringify(ta));
+await layers("カードのかたち");
 /* 指を受けるのは台。**台が `none` でないと、引きずるたびに紙も一緒に動く**し、
    2本指が面ごと拡大して、ひねりがブラウザに取られる。 */
 if (ta.台 !== "none") {
@@ -363,6 +420,8 @@ async function drag(from, to) {
   return true;
 }
 
+/** 住人とあやとを引きずったあとの立ち位置（かたちの往復で突き合わせる） */
+let 後2 = null;
 const 前 = await boxes();
 if (!前) await stop(2, "見つからなかった: canvas が出ていない");
 if (!前.人 || !前.あやと) {
@@ -387,7 +446,7 @@ if (前.人 && 前.あやと) {
   /* あやとのところを掴んで右下へ。**住人は動いてはいけない** */
   const 中 = await boxes();
   await drag([中.あやと.x, 中.あやと.y - 0.06], [0.8, 0.86]);
-  const 後2 = await boxes();
+  後2 = await boxes();
   const あやと動いた =
     後2.あやと && (Math.abs(後2.あやと.x - 中.あやと.x) > 0.02 || Math.abs(後2.あやと.y - 中.あやと.y) > 0.02);
   const 人留まった = 後2.人 && Math.abs(後2.人.x - 中.人.x) < 0.005 && Math.abs(後2.人.y - 中.人.y) < 0.005;
@@ -411,6 +470,71 @@ if (前.人 && 前.あやと) {
   });
   console.log("回しの目盛り:", JSON.stringify(回));
   if (!回) missing.push("回しの目盛り（input[data-tune=rot]）が無い");
+}
+
+/* ---- 4 出すかたち（かべがみ） ---- */
+const 画面 = await p.evaluate(() => ({
+  w: Math.round(screen.width * devicePixelRatio),
+  h: Math.round(screen.height * devicePixelRatio),
+}));
+const かたち札 = p.locator(".akd-shape");
+if ((await かたち札.count()) < 2) {
+  missing.push(`かたちの札（.akd-shape）が ${await かたち札.count()} 枚`);
+} else {
+  was = await nowUrl();
+  await かたち札.nth(1).click();
+  await settle(was);
+  const 壁 = await fingerprint();
+  const 文 = await p.evaluate(() => {
+    const el = [...document.querySelectorAll(".akd-sheet-body .nstudio-note")].pop();
+    return el?.textContent?.trim() ?? "";
+  });
+  console.log(`\nこの端末の画面: ${画面.w}x${画面.h}`);
+  console.log(`かべがみの焼き上がり: ${JSON.stringify(壁)}`);
+  console.log(`画面に出た字: ${文}`);
+  if (!壁 || 壁.w !== 画面.w || 壁.h !== 画面.h) {
+    bad.push(`かべがみの大きさが画面と違う（画面 ${画面.w}x${画面.h} / 焼き ${壁?.w}x${壁?.h}）`);
+  }
+  /* **広げた倍率を隠していないか。** 元が長辺 1600 しか無いので、
+     いまのスマホでは 1.5〜1.8倍に広がる。そこを黙って焼くと、
+     「なんだか眠い壁紙」になった理由が誰にも分からない。 */
+  if (!/倍に広げ|分の1に縮め/.test(文)) {
+    bad.push(`広げた倍率が画面に出ていない（出ていた字: ${文 || "なし"}）`);
+  }
+  /* とけい・ボタンの居場所が出ているか（置くときに避けられるように） */
+  const 目印 = await p.evaluate(() =>
+    [...document.querySelectorAll(".akd-stage .akd-safe")].map((e) => e.textContent?.trim()),
+  );
+  console.log(`よけるところの目印: ${JSON.stringify(目印)}`);
+  await layers("かべがみのかたち");
+  if (目印.length < 2) bad.push(`とけい／ボタンの目印が ${目印.length} 個`);
+  if (SHOTS) {
+    await p.screenshot({ path: join(SHOTS, `wall-${W}x${H}-lag${LAG}.png`) });
+    const png = await p.evaluate(() => {
+      const cv = document.querySelector(".akd-modal .akd-stage > canvas");
+      return cv ? cv.toDataURL("image/png") : null;
+    });
+    if (png) {
+      writeFileSync(
+        join(SHOTS, `wallbaked-${W}x${H}-lag${LAG}.png`),
+        Buffer.from(png.slice(png.indexOf(",") + 1), "base64"),
+      );
+    }
+  }
+  /* **カードのかたちへ戻したら、立ち位置も戻ること。**
+     かたちごとに別に覚えているので、行って帰ってきたら同じ絵になる */
+  const 壁位置 = await boxes();
+  was = await nowUrl();
+  await かたち札.nth(0).click();
+  await settle(was);
+  const 戻り = await boxes();
+  console.log(`かべがみでの立ち位置: ${JSON.stringify(壁位置.人)}`);
+  console.log(`カードへ戻したあと  : ${JSON.stringify(戻り.人)}`);
+  if (後2?.人 && 戻り.人 && Math.abs(戻り.人.x - 後2.人.x) > 0.005) {
+    bad.push(
+      `かたちを往復したら、カードのほうの立ち位置が変わった（${後2.人.x} → ${戻り.人.x}）`,
+    );
+  }
 }
 
 /* ---- 撮る ---- */

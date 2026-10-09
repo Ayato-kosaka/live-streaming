@@ -509,6 +509,30 @@
 .akd-sheet-body .nstudio-shot img {
   max-height: 36vh;
 }
+/* かべがみのかたちは、塀が 9:19.5 と細長い。36vh（304px）だと横幅が
+   140px しか無くて、指で置きどころを決めるには小さすぎる。
+   **縦に伸ばして 44vh（372px）**。横は 171px になる。
+   そのぶん手の通る帯は 283 → 215px になるが、かべがみのときに触るのは
+   大きさ・かたむき・むきの3つだけなので、そこは帯に収まる。 */
+.akd-sheet-body .nstudio-shot.is-wall img,
+.akd-sheet-body .nstudio-shot.is-wall .akd-stage > canvas {
+  max-height: 44vh;
+}
+/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
+   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても
+   窓に収まる。 */
+/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
+   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても窓に収まる。
+
+   **かべがみのかたちは下げない**（`:not(.is-wall)`）。あちらは塀が
+   9:19.5 と細長いので、背を下げるとそのぶん横幅が削れて、指で置きどころを
+   決められなくなる。それに——下げる値を `img` と `canvas` で**別々に**
+   書いてあるので、片方だけ `.is-wall` に負けると**上に焼き上がり・下に
+   canvas の2段**に割れる。実際に割れた（2026-10-09。12人立てる写真の
+   かべがみで、焼き上がりが 253px・canvas が 371px）。 */
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) img {
+  max-height: 30vh;
+}
 .akd-sheet-body .nstudio-ask {
   margin-top: var(--sp-4);
 }
@@ -555,7 +579,7 @@
 }
 /* 札が3段になる日（11枚以上）は、写真を下げて3段目を覗かせる。
    **上の `img` と同じ値**にする（片方だけだと、指を離した瞬間に跳ねる） */
-.akd-sheet-body:has(.npick:nth-child(11)) .akd-stage > canvas {
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) .akd-stage > canvas {
   max-height: 30vh;
 }
 .akd-stage > img {
@@ -588,6 +612,82 @@
   -webkit-touch-callout: default;
 }
 .akd-stage.is-movable:active { cursor: grabbing; }
+
+/* 出すかたち。カードのまま／スマホのかべがみ。
+   **押すと切り替わる札**なので、あやとの札（`.akd-mate`）と同じ厚み。 */
+.akd-shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.akd-shape {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+}
+.akd-shape.is-on {
+  background: var(--accent-soft, var(--paper-2));
+  border-color: var(--accent-2);
+  box-shadow: none;
+  transform: translateY(2px);
+}
+.akd-shape:active { transform: translateY(4px); box-shadow: none; }
+.akd-shape:disabled { opacity: 0.5; box-shadow: none; }
+
+/* かべがみのときだけ出る、**スマホが上に出すものの居場所**。
+   とけい（上）とボタン（下）は写真に重なるので、そこへ人を置くと隠れる。
+   **焼く1枚には入らない**——画面の上に浮かせているだけ。
+
+   地が明るい写真でも暗い写真でも読めるように、白い字に黒い縁取り。
+   破線は島の「空けておく」の言い方（`.blank` と同じ）。 */
+.akd-safe {
+  position: absolute;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  width: 100%;
+  border-color: rgba(255, 255, 255, 0.8);
+  border-style: dashed;
+  border-width: 0;
+  pointer-events: none;
+}
+/* **字は左端に寄せる。** 真ん中に置くと、だいたい人の顔の上に乗る
+   （撮って分かった。「ボタン」があやとの胸に重なっていた）。
+   地が明るい写真でも読めるように、字の後ろに暗い札を敷く。 */
+.akd-safe i {
+  padding: 2px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+/* 上は画面のてっぺんから 30%。iPhone のロック画面の時計はこのあたりまで出る */
+.akd-safe.is-top {
+  top: 0;
+  height: 30%;
+  padding: 0 0 2px 4px;
+  border-bottom-width: 1.5px;
+  align-items: flex-end;
+}
+/* 下はボタン（ライト・カメラ）とホームバーのぶん */
+.akd-safe.is-foot {
+  bottom: 0;
+  height: 12%;
+  padding: 2px 0 0 4px;
+  border-top-width: 1.5px;
+  align-items: flex-start;
+}
 
 /* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
    出るのは**いま手にしている1人ぶんだけ**なので、2人いても段は増えない。 */
