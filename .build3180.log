@@ -2,15 +2,15 @@
    ▲ Next.js 15.5.4
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 12.6s
+ ✓ Compiled successfully in 25.7s
    Linting and checking validity of types ...
  ⨯ ESLint must be installed in order to run during builds: npm install --save-dev eslint
    Collecting page data ...
-   Generating static pages (0/147) ...
-   Generating static pages (36/147) 
-   Generating static pages (73/147) 
-   Generating static pages (110/147) 
- ✓ Generating static pages (147/147)
+   Generating static pages (0/148) ...
+   Generating static pages (37/148) 
+   Generating static pages (74/148) 
+   Generating static pages (111/148) 
+ ✓ Generating static pages (148/148)
    Finalizing page optimization ...
    Collecting build traces ...
    Exporting (0/2) ...
@@ -29,9 +29,10 @@ Route (app)                                 Size  First Load JS
 ├   └ /apps/nanitabeyo
 ├ ○ /atlas                               10.4 kB         164 kB
 ├ ○ /board                               4.67 kB         141 kB
-├ ○ /cards                               4.79 kB         171 kB
+├ ○ /cards                               5.51 kB         172 kB
 ├ ○ /design                                219 B         115 kB
 ├ ○ /friends                             5.33 kB         177 kB
+├ ○ /goods                               2.34 kB         139 kB
 ├ ○ /icon.svg                                0 B            0 B
 ├ ● /island/[chapter]                     2.1 kB         264 kB
 ├   ├ /island/europe
@@ -95,7 +96,7 @@ Route (app)                                 Size  First Load JS
 + First Load JS shared by all             102 kB
   ├ chunks/8504-03fab4fcf9deb40d.js      45.6 kB
   ├ chunks/b486655f-c2d242651fcf0459.js  54.2 kB
-  └ other shared chunks (total)          2.46 kB
+  └ other shared chunks (total)          2.47 kB
 
 
 ○  (Static)  prerendered as static content

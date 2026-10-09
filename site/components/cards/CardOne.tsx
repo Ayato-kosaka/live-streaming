@@ -27,18 +27,38 @@ import { cardIcon, cardPlace, cardWhen, type PlanBrief, type ShownCard } from ".
  * 横の写真は高さの20%。** 焼く1枚（`components/nordic/stamp.ts`）も
  * 同じ寸法・同じ右下なので、**画面で見えている絵と持って帰る絵が同じ**になる。
  *
- * ## 押せない
+ * ## 押せる（`onOpen` を渡したときだけ）
  *
- * カードは見るもので、行き先ではない。**厚みを付けない**
- * （`docs/island-design.md` 3章。厚みは「押せる」の合図なので、
- * 押せないものに付けると合図が2つになる）。中で押せるのは、
- * その日の企画への字の行き先だけ。
+ * あやと（2026-10-08）:
+ *
+ * > 当たり前すぎてキレそうですけど、このページからあやとじまカード
+ * > ダウンロードできないとダメ。キャラクターの移動や、あやとと一緒にも
+ * > 含めて。**同じコンポーネントでね。**
+ *
+ * 図鑑（`/friends`）とじぶんのこと（`/me`）は、カードを並べるだけで
+ * **落とす道が1本も無かった。** 自分のカードが並んでいる面なのに、
+ * 持って帰れない。押したら `/cards` と同じ紙（`CardSheet`）が開く。
+ *
+ * **押す場所は絵そのもの**（`docs/island-design.md` 3章の1）。帯の中の
+ * 企画は**字の行き先**で、絵とは別の場所へ行く。`<button>` の中に
+ * `<a>` は入れられないので、押せるようにするのは絵のところだけ。
+ *
+ * **厚みを付ける**（3章の3）。3章には「一面に並ぶマスが全部押せるときは
+ * 1枚ずつに厚みを付けない」という例外があり、`/cards` の写真のマス
+ * （`.akd-tile`）はそちら側だが、**ここは違う。** 図鑑もじぶんのことも、
+ * カードは欄のひとつとして数枚ならぶだけで、まわりは押せない字と欄。
+ * 例外の理由は「並びそのものが合図になる」なので、並びが面を埋めて
+ * いないときは効かない。
+ *
+ * **渡さなければ、いままでどおり押せない。** `/about` の見本のように
+ * 見せるだけの使い道が残っている。
  */
 export default function CardOne({
   card,
   plans,
   showName = true,
   showWhen = true,
+  onOpen,
 }: {
   card: ShownCard;
   /** その日の企画。**1日に何本でも立つ。** 無い日は何も出さない */
@@ -56,15 +76,30 @@ export default function CardOne({
    * 付けると人数ぶん同じ字が並ぶ（あやとの「一覧画面が散らかる」）。
    */
   showWhen?: boolean;
+  /**
+   * 押したときに開く。**渡したときだけ絵が押せるようになる。**
+   * 渡さなければ、厚みも付かず押しどころにもならない。
+   */
+  onOpen?: () => void;
 }) {
   const at = cardPlace(card);
   // 帯に出すものが1つも無ければ、帯ごと出さない。字の無い罫だけが残るため
   const foot = showWhen || (showName && card.name);
+  /* 押せるときだけ `<button>` にする。**絵の寸法は変えない**——
+     比も中の置き方も同じもので、足すのは厚みと押しどころだけ。 */
+  const Shot = onOpen ? "button" : "div";
   return (
     <article className="akd">
-      <div
-        className="akd-shot"
+      <Shot
+        className={`akd-shot${onOpen ? " is-tap" : ""}`}
         style={{ aspectRatio: card.w && card.h ? `${card.w} / ${card.h}` : "3 / 4" }}
+        {...(onOpen
+          ? {
+              type: "button" as const,
+              onClick: onOpen,
+              "aria-label": `${cardWhen(card.day)}のカードをひらく`,
+            }
+          : {})}
       >
         {/* **crossOrigin を付ける。** ここと `CardSheet` の canvas は同じ
             URL を読む。片方を素で先に読むと、CORS のヘッダを持たない絵が
@@ -84,7 +119,7 @@ export default function CardOne({
           crossOrigin="anonymous"
           style={at}
         />
-      </div>
+      </Shot>
       {foot && (
         <div className="akd-foot">
           {showWhen && <b>{cardWhen(card.day)}</b>}

@@ -106,6 +106,7 @@ const SAVE_MS = 700;
 export default function CardSheet({
   group,
   plans,
+  startIcon,
   onClose,
   onDropped,
 }: {
@@ -113,6 +114,19 @@ export default function CardSheet({
   group: PhotoGroup;
   /** その日の企画。**1日に何本でも立つ** */
   plans?: PlanBrief[];
+  /**
+   * 開いた瞬間から入れておく人の絵。
+   *
+   * **渡すのは「1人ぶんの紙」だけ**（図鑑とじぶんのこと）。あちらは
+   * その人のカード1枚を押して開くので、素の写真で開くと**押した絵と
+   * 開いた絵が別もの**になる。
+   *
+   * **渡さなければ素の写真のまま**（`/cards` の、何人も写っている紙）。
+   * あやと「代表でキャラクターを埋めるのはやめて欲しい」は、
+   * 4人ぶんあるカードの1人目が代表に見える、という話だった。
+   * 1人しかいない紙には、代表も何もない。
+   */
+  startIcon?: string;
   onClose: () => void;
   /** 消えた1枚。**あやとだけ**（道具そのものが `DropPhoto` の中で消える） */
   onDropped?: (photoId: string) => void;
@@ -139,8 +153,13 @@ export default function CardSheet({
     return out;
   }, [group.cards]);
 
-  /** いま入れている人。**はじめは誰も入れない。** */
-  const [chosen, setChosen] = useState<Pick | null>(null);
+  /**
+   * いま入れている人。**はじめは誰も入れない**——`startIcon` を渡した
+   * 1人ぶんの紙だけ、その人から始まる。
+   */
+  const [chosen, setChosen] = useState<Pick | null>(
+    () => (startIcon ? (picks.find((p) => p.icon === startIcon) ?? null) : null),
+  );
   /** どのあやとを入れるか（`STICKERS` の `id`）。**null は入れない。手元だけ。** */
   const [mateId, setMateId] = useState<string | null>(null);
   /** 動かしたぶん。**null はその人の元の立ち位置**（既定か、覚えてあるぶん） */
@@ -156,6 +175,12 @@ export default function CardSheet({
   const [mateReady, setMateReady] = useState(0);
   const closeRef = useRef<HTMLButtonElement>(null);
   const cvRef = useRef<HTMLCanvasElement>(null);
+  /** 人を選んだときに増える手。**増えたところまで紙を送る**のに要る */
+  const tuneRef = useRef<HTMLDivElement>(null);
+  /** 写真の箱。**焼き直しているあいだ、高さを畳ませない**ために測る */
+  const shotRef = useRef<HTMLDivElement>(null);
+  /** 最後に出ていた写真の高さ（px）。0 はまだ1度も出ていない */
+  const shotH = useRef(0);
   /** 読み終えた絵。焼き直しのたびに読み直さない */
   const art = useRef<{
     photo: HTMLImageElement | null;
@@ -181,6 +206,53 @@ export default function CardSheet({
   /* 人を選び直したら、動かしたぶんは持ち越さない。立ち位置は人ごとのもの */
   const who = chosen?.icon ?? "";
   useEffect(() => setMoved(null), [who]);
+
+  /* 人を選ぶと、紙の下に3つ差し込まれる——なぞれる案内・あやとの札・
+     大きさともとのばしょ。**紙はそこまで送られない。**
+
+     本番で実際にそうなっていた（2026-10-08。390×850・dpr2）。
+     「あやとも入れますか」の見出しだけが足のすぐ上に顔を出して、
+     **札4枚は1枚も押せなかった**——3枚は足（`ほぞんする`）の下、
+     1枚は画面の外。`getBoundingClientRect` は 48px と答えるので、
+     大きさだけ数えると合格に見える（`CLAUDE.md`「押しどころは、
+     見た目の箱で測らない」）。
+
+     **いちばん下に増えたもの（`.akd-tune`）が見えるところまで送る。**
+     そこが入れば、上の札も一緒に入る。`block: "nearest"` なので
+     必要なぶんしか動かない。
+
+     **開いた直後は送らない。** 1人ぶんの紙（`startIcon`）は最初から
+     人が入っているが、開いて最初に見たいのは写真のほう。 */
+  const grew = useRef(!!startIcon);
+  useEffect(() => {
+    if (!chosen) {
+      grew.current = false;
+      return;
+    }
+    // すでに出ているなら、人を選び直しただけ。増えていないので送らない
+    if (grew.current) return;
+    grew.current = true;
+    const t = setTimeout(
+      () => tuneRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+      0,
+    );
+    return () => clearTimeout(t);
+  }, [chosen]);
+
+  /* 写真の箱の高さを覚える。**焼き直しのあいだ畳ませない**ため。
+
+     人を選び直すと焼き上がりをいったん捨てる（上の `setOut(null)`）ので、
+     写真の代わりに待ちの印（`--wait-h: 200px`）が出る。本物の写真は
+     1280 幅で 376px あるので、**選ぶたびに紙が 176px 縮んで、150ms 後に
+     また伸びる。** 読んでいる人の指の下で下の手が飛ぶし、
+     「増えたところまで送る」も縮んだ側の高さで送ってしまう
+     （実測 2026-10-08: 送ったのは 5px、要るのは 225px）。
+
+     写真そのものは変わらないので、**一度測ったら、その高さを下限にする。** */
+  useEffect(() => {
+    const h = shotRef.current?.getBoundingClientRect().height ?? 0;
+    if (out && h > 0) shotH.current = h;
+  }, [out]);
 
   const shot = group.url;
   const icon = chosen?.icon ?? null;
@@ -511,7 +583,13 @@ export default function CardSheet({
         </div>
 
         <div className="akd-sheet-body">
-          <div className="nstudio-shot">
+          <div
+            className="nstudio-shot"
+            ref={shotRef}
+            /* **畳ませない。** 理由は上の `shotH`。まだ1度も出ていないときは
+               何も指定しない（待ちの印の高さのままでよい） */
+            style={shotH.current ? { minHeight: shotH.current } : undefined}
+          >
             {/* **canvas が土台で、焼いた jpeg がその上に乗っている。**
                 中身は同じ絵。動かしているあいだだけ canvas が前に出る
                 （`is-live`）ので、指に付いてくるのは canvas のほう。
@@ -633,7 +711,7 @@ export default function CardSheet({
                   {/* 「入れない」は禁止ではなく、対等な選択肢の1つ。空けておく、を
                       島の言葉（破線）で言う（顔の札の `.npick-none` と同じ）。 */}
                   <span className="akd-mate-none" aria-hidden />
-                  入れない
+                  <i>入れない</i>
                 </button>
                 {STICKERS.map((s) => (
                   <button
@@ -648,8 +726,8 @@ export default function CardSheet({
                   >
                     {/* 札に出すのは小さいほう（`art`）。**焼くのは元絵（`file`）**で、
                         そちらは押されたときに読みにいく */}
-                    <img src={s.art} alt="" width={30} height={30} />
-                    {s.name}
+                    <img src={s.art} alt="" width={52} height={52} />
+                    <i>{s.name}</i>
                   </button>
                 ))}
               </div>
@@ -659,7 +737,7 @@ export default function CardSheet({
           {/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
               並びはやることの順（大きさ → もとへ）。 */}
           {chosen && (
-            <div className="akd-tune">
+            <div className="akd-tune" ref={tuneRef}>
               <label className="akd-zoom">
                 <span>大きさ</span>
                 <input

@@ -30,7 +30,7 @@
      実測（2026-10-08 / `/nordic/day/7` / 幅 1000px）:
      箱 48.00px・**当たり 47.52px** → `position: relative` で 48.49px。
      同じボタンが面によって 47.4〜48.8 に散っていたのがこれ
-     （`docs/island-misses.md` #214）。 */
+     （`docs/island-misses.md` #215）。 */
   position: relative;
 }
 .longer:active {
