@@ -32,7 +32,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, type Box } from "./plates";
+import { MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, ring, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -1910,17 +1910,21 @@ function placePlates(
       /* **まず建物のまわりを回る。** 上がふさがっていても、下・右・左が
          空いていることが多い。ここを見ずに上下へ運んでいたので、混んだ島では
          札が海の上まで運ばれていた（`./plates.ts` に実測を書いた）。 */
-      const spot = around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(
-        (c) =>
-          c.x >= pad &&
-          c.x + c.w <= o.b.w - pad &&
-          c.y >= padTop &&
-          c.y + c.h <= o.b.h - padBottom &&
-          /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
-             （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
-             見えない当たりの下になって、札の押しどころが削られる */
-          !tkn.some((q) => hits(c, q)),
-      );
+      /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
+         （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
+         見えない当たりの下になって、札の押しどころが削られる */
+      const free = (c: Box) =>
+        c.x >= pad &&
+        c.x + c.w <= o.b.w - pad &&
+        c.y >= padTop &&
+        c.y + c.h <= o.b.h - padBottom &&
+        !tkn.some((q) => hits(c, q));
+      /* 8か所が全部ふさがっていたら、**輪を広げてもう一度回る**（`./plates.ts`
+         の `ring`）。輪は `MAX_LEAD` までなので、ここで見つかった場所は
+         「建物のそば」の決まりを満たしている。輪を作るのは8か所が全滅した
+         ときだけ——ふだんは1つめで決まるので、重さは前と変わらない。 */
+      const spot =
+        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ?? ring(rect, pl.fx, pl.fy).find(free);
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
@@ -1986,7 +1990,14 @@ function placePlates(
       const okUp = inView(up);
       const okDown = inView(down);
       let t0: number;
-      if (okUp && okDown) t0 = Math.abs(up - top) <= Math.abs(down - top) ? up : down;
+      /* **上と下で迷ったら、建物に近いほうを採る。「動きの少ないほう」ではない。**
+         落とす／落とさないを決めているのは建物からの距離（下の `lead`）なのに、
+         選ぶほうは動いた量で決めていた。**測るものと決めるものが違っていた。**
+         実測（1280px・引き・「あやとのこと」）で、上は 74px 動いて建物から
+         152px（＝落ちる）、下は 85px 動いて建物から 7px だった。
+         11px 余計に動くのを惜しんで、札を1枚消していた。 */
+      const far2 = (t: number) => lead({ x: left, y: t, w: rect.w, h: rect.h }, pl.fx, pl.fy);
+      if (okUp && okDown) t0 = far2(up) <= far2(down) ? up : down;
       else if (okUp) t0 = up;
       else if (okDown) t0 = down;
       else {
