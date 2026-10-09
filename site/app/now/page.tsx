@@ -39,7 +39,7 @@ export const metadata: Metadata = {
  */
 export default function NowPage() {
   return (
-    <PageShell crumbs={[{ label: "いまどこ" }]}>
+    <PageShell current="now" crumbs={[{ label: "いまどこ" }]}>
       {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
           （`docs/island-design.md` 6章 / `docs/island-world.md` 7.5）。
           「いま何してる」は問いなので、すぐ下の1行で受ける。

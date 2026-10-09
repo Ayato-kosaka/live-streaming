@@ -1122,6 +1122,43 @@ export const getCards = () => req<{ cards: IslandCard[] }>("/cards");
 export const getMyCards = (token: string) =>
   req<{ cards: IslandCard[] }>("/cards/mine", { headers: auth(token) });
 
+/* ---------------- スタンプのことば（#716） ----------------
+
+   LINE スタンプに乗せる1行を、本人に決めてもらう。
+
+   **選ばれた人にしか書類が無い。** 名簿を公開の面に並べると、選ばれかたが
+   「協力してくれた人」なので、そのまま投げ銭の順位表になる
+   （`docs/island-money.md`）。だから口は本人のぶんしか返さず、この型は
+   **「入っていない」を欄の有無ではなく `picked` で言う**——空の `suggested`
+   を返すと、画面が「在るが空」と「無い」を見分けられない。 */
+
+/** じぶんのスタンプのことば。**入っていない人は `picked: false` だけ。** */
+export type MyStampLine =
+  | { picked: false }
+  | {
+      picked: true;
+      /** 提案（本人の言い回しから引いたもの） */
+      suggested: string[];
+      /** 本人が決めたことば。空なら、まだ決めていない */
+      lines: string[];
+      /** 置ける本数 */
+      max: number;
+      /** 1本の字数 */
+      maxLen: number;
+    };
+
+/** じぶんのぶんを引く。**他人のぶんは、口に頼む道が無い。** */
+export const getMyStampLine = (token: string) =>
+  req<MyStampLine>("/stampline/mine", { headers: auth(token) });
+
+/** じぶんのぶんを書く。**送るのはことばだけ**（誰のぶんかは口が決める）。 */
+export const saveMyStampLine = (token: string, lines: string[]) =>
+  req<MyStampLine>("/stampline/mine", {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ lines }),
+  });
+
 /** カードの置き方。0〜1 の割合と、傾きと、大きさ。 */
 export type CardPlace = { x: number; y: number; rot: number; scale: number };
 

@@ -287,6 +287,16 @@ service cloud.firestore {
        (#284 の (i))。**そこは閉じるほうへ変える、と決めた。** */
     match /islandCharacter/{docId} { allow read, write: if false; }
 
+    /* LINE スタンプの、住人のことば(#716)。**ここを開けない。**
+       書類があるのは、あやとが選んだ人だけ。collection ごと引けると
+       **「誰が選ばれたか」が、画面を作らなくても全部読める**——
+       選ばれかたが「協力してくれた人」なので、それはそのまま投げ銭の
+       順位表になる（`docs/island-money.md`「実額は視聴者には一切見せない」）。
+       中には `channelId` も入っているので、名簿としてもそのまま読める。
+       読み書きは islandApi の `/stampline/mine` だけで、**その口は
+       ログインした本人のぶんしか返さない。** */
+    match /islandStampLine/{docId} { allow read, write: if false; }
+
     // それ以外は禁止
     match /{document=**} {
       allow read, write: if false;

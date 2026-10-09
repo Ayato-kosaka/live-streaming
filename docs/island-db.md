@@ -384,6 +384,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
+| **スタンプに乗せることば** | Firestore `islandStampLine.lines` | **本人**（`POST /stampline/mine`） | LINE スタンプを作るとき（公開の面には出さない） | **戻らない。** 人の字 |
 | いまいる場所・今週 | Firestore `island/state.current` | あやと（口から、または `island_set_current.py`） | 島の看板 | 入れ直せる |
 
 ### 3.2 写し（正から作り直せる。壊れても焼き直せばよい）
@@ -735,6 +736,9 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 **`islandGoal` と `islandGoalHealth` は在るが、もう誰も読まない**（#639）。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
+**`islandStampLine` もこれから作る**（#716・下の a）。LINE スタンプに乗せる
+ことばを1人1書類。**書類が在ること自体が「選ばれた」という意味**なので、
+閉じたままにする。
 **`islandDoneruHealth` もこれから作る**（#294）。Doneru のぶんが最後に
 BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
 取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
@@ -861,6 +865,39 @@ island/state
 「来た日」が繰り上がる）。ずれている値を直すのは
 `python/admin/donors_first_seen.py`（人が押す）。空欄を埋めるほうは
 もう毎晩の仕事なので、押さなくても入る。
+
+**`islandStampLine/{図鑑の書類ID}`** — LINE スタンプの、住人のことば（#716）
+
+書類IDは **`islandCharacter` の書類ID**（＝絵のID）。スタンプは「絵 ＋ ことば」で
+1人1枚なので、絵と同じ鍵で並べる。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `channelId` | string | **本人を引く鍵。** `islandCharacter.channelId` の**写し** |
+| `suggested` | string[] | 提案（3本）。**機械が入れる。人は触らない** |
+| `suggestedAt` | number | 引いた時刻 |
+| `lines` | string[] | **本人が決めたことば**（1本20字・4本まで）。空＝まだ決めていない |
+| `pickedAt` | number | この入れ物に入った時刻 |
+| `updatedAt` / `updatedBy` | number / string | 最後に書いた時刻と uid |
+
+**書類が在るのは、あやとが選んだ人だけ。** 選ばれかたが「協力してくれた人」なので、
+**この入れ物の書類IDを並べると、そのまま投げ銭の順位表になる**
+（`docs/island-money.md`「実額は視聴者には一切見せない」）。だから
+
+- `firestore.rules` で**名指しで閉じてある**（ブラウザからは読み書きできない）
+- 読み書きの口は `/stampline/mine` だけで、**パスに id を取らない。**
+  他人を名指しする道が1本も無い（`docs/island-api.md` 11章）
+- **焼き込み（`site/content/*.ts`）にも git にも入れない。**
+  種をまくのは `python/admin/stamp_line_seed.py`（名簿は Actions の
+  `repository_dispatch` で渡して、ジョブの頭で伏せ字にする）
+
+**`channelId` は写しで、正は `islandCharacter.channelId`**（3.4）。
+写しを持つのは、本人を引くのに2回読まないため。図鑑の側が変わったら
+`stamp_line_seed` を流し直して写し直す。**`channelId` が空の人は、この口から
+自分のぶんを引けない**——図鑑に channelId の無い人が本番に18人いる（3.4）。
+
+**`lines` は1本の欄にまとめてある。** 「選んだ1本」と「足した案」を別の欄にすると、
+どちらがスタンプに乗るのかが欄の形で決まらない。**並びの先頭が答え。**
 
 #### b. 企画・写真・カード・投げ銭
 
