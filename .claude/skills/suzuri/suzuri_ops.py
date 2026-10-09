@@ -239,12 +239,14 @@ MM_PER_PX = 0.123
 REF_PX = 1255
 
 
-def panel_fit(path, max_w=86, max_h=122):
+def panel_fit(path, max_w=86, max_h=115):
     """アクリルパネル（100x148mm の縦長）の大きさと縦の位置。
     中身（描いてある外接矩形）が幅 max_w・高さ max_h mm（下はスタンドのぶん空ける）に
     収まるいちばん大きい scale を取り、正方形の真ん中をパネルの高さの 47% に置く。
     既定では絵の上端がパネルの上端に付き、offsetY はパネルの高さに対する割合で下へ動く
-    （🦄 で 0.1 → 約 1割）。"""
+    （🦄 で 0.1 → 約 1割）。
+    縦は横より少し大きく出る（島にいるあやと 0.806 で中身が約 128mm。見積もりは 122mm）。
+    max_h=122 では縦長の絵の頭がパネルの上端すれすれになったので 115 にしてある。"""
     from PIL import Image
     im = Image.open(path).convert("RGBA")
     bb = im.getchannel("A").point(lambda v: 255 if v >= 16 else 0).getbbox()
