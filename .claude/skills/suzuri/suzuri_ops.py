@@ -216,7 +216,8 @@ def badge_scale(path, margin=0.80):
     四隅がはみ出して切れる（🦄 で、たてがみと脚が切れた）。
     中心からいちばん遠い「描いてある画素」までの距離を測り、それが丸の中に
     収まる大きさにする。缶バッジは縁が側面へ回り込むので、`margin` ぶん内側に置く。
-    形で変わる: 丸い絵は 0.9 前後、四角い絵は 0.65 前後になる。"""
+    **ここで返すのは 1255px の絵（🦄）で合わせた値。** 画素数の違う絵は `layout()` が
+    割り戻す（下の MM_PER_PX の注を読む）。直接 set_items に渡さない。"""
     from PIL import Image
     im = Image.open(path).convert("RGBA")
     small = im.resize((200, 200 * im.height // im.width))
@@ -346,3 +347,79 @@ def prep(src, dst, pad=1.04):
     sq.paste(im, ((side - im.width) // 2, (side - im.height) // 2))
     sq.save(dst, optimize=True)
     return dst
+
+
+def transparent(path):
+    """背景が抜けているか。**毎回、上げる前に確かめる**（あやと 2026-10-09）。
+    島の「背景なし」の絵でも、🃏 は透過が無く白い四角の地が付いていた。そのまま上げると
+    ステッカーもキーホルダーも四角に切られる。
+
+    見るのは**ふち（外周1px）の2割以上が透明か**と、**全体の 5% 以上が透明か**。
+    四隅だけで見ると、足元が下の角まで届く絵（🎃）を「抜けていない」と誤って落とす。
+    ⛰️ は山の裾が3辺にかかっていて、ふちの透明は半分に届かない。地が焼き付いた絵なら
+    ふちの透明はほぼ 0 なので、2割で分かれる"""
+    from PIL import Image
+    im = Image.open(path)
+    if im.mode not in ("RGBA", "LA", "PA") and "transparency" not in im.info:
+        return False
+    a = im.convert("RGBA").getchannel("A")
+    w, h = a.size
+    px = a.load()
+    edge = [px[x, 0] for x in range(w)] + [px[x, h - 1] for x in range(w)] + [px[0, y] for y in range(h)] + [px[w - 1, y] for y in range(h)]
+    edge_clear = sum(1 for v in edge if v < 8) / len(edge)
+    clear = a.histogram()[0] / (w * h)
+    return edge_clear >= 0.2 and clear >= 0.05
+
+
+def create(t, src, title, description, price=300, known=None):
+    """新しいデザインを作って、5品目と題・本文・利益まで入れる。戻り値はデザインの id。
+
+    **やり直しで2つ作らない。** 絵を上げた直後に CDP が固まると、SUZURI には空のデザインが
+    できているのに、こちらには id が返らない。上げる前の一覧（known）と比べて、増えた1件を拾う。
+    一括で回すときは known を持ち回すと、毎回一覧を引かずに済む"""
+    known = set(known) if known is not None else set(list_ids(t))
+    mid = None
+    try:
+        mid = upload(t, src, None)
+    finally:
+        new = [i for i in list_ids(t) if i not in known]
+        if len(new) == 1:
+            mid = new[0]
+        elif len(new) > 1:
+            raise RuntimeError(f"知らないデザインが {len(new)} 件増えた: {new}（手で見る）")
+    if not mid:
+        raise RuntimeError("絵を上げたがデザインができていない")
+    finish(t, mid, src, title, description, price)
+    return mid
+
+
+def swap(t, mid, src):
+    """いまのデザインの絵を差し替えて、大きさを決め直す（題・本文・URL・売れた履歴はそのまま）"""
+    upload(t, src, mid)
+    st, r = set_items(t, mid, layout(src))
+    if st != 200:
+        raise RuntimeError(f"bulk_upsert {st}: {r}")
+
+
+def finish(t, mid, src, title=None, description=None, price=300):
+    """5品目と大きさ、（渡されれば）題・本文・利益を入れて、入ったことを読み直して確かめる"""
+    st, r = set_items(t, mid, layout(src))
+    if st != 200:
+        raise RuntimeError(f"bulk_upsert {st}: {r}")
+    if title is not None:
+        st, r = set_text(t, mid, title, description, price)
+        if st != 200:
+            raise RuntimeError(f"material PUT {st}: {r}")
+    m, ps = read(t, mid)
+    pub = sorted(p["item"]["name"] for p in ps if p["published"])
+    if pub != sorted(ORDER):
+        raise RuntimeError(f"品目が揃っていない: {pub}")
+    if title is not None and (m["title"] != title or m["price"] != price or not m["published"]):
+        raise RuntimeError(f"題・利益・公開が入っていない: {m['title']!r} {m['price']} {m['published']}")
+
+
+# あやとの絵のグッズの本文（ayato.md）。1行目だけ絵ごとに書き、これを後ろに足す
+AYATO_COMMON = (
+    "\nあやと（YouTube@あやとグルメアプリ）のライブ配信「あやと島」から、あやと本人がグッズになりました！"
+    "\n配信のおともに、旅のおともに。いつでも、どこでも、あやとと一緒に🏝️✨"
+)
