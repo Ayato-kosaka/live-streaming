@@ -514,13 +514,23 @@
    **縦に伸ばして 44vh（372px）**。横は 171px になる。
    そのぶん手の通る帯は 283 → 215px になるが、かべがみのときに触るのは
    大きさ・かたむき・むきの3つだけなので、そこは帯に収まる。 */
-.akd-sheet-body .nstudio-shot.is-wall img {
+.akd-sheet-body .nstudio-shot.is-wall img,
+.akd-sheet-body .nstudio-shot.is-wall .akd-stage > canvas {
   max-height: 44vh;
 }
 /* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
    **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても
    窓に収まる。 */
-.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot img {
+/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
+   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても窓に収まる。
+
+   **かべがみのかたちは下げない**（`:not(.is-wall)`）。あちらは塀が
+   9:19.5 と細長いので、背を下げるとそのぶん横幅が削れて、指で置きどころを
+   決められなくなる。それに——下げる値を `img` と `canvas` で**別々に**
+   書いてあるので、片方だけ `.is-wall` に負けると**上に焼き上がり・下に
+   canvas の2段**に割れる。実際に割れた（2026-10-09。12人立てる写真の
+   かべがみで、焼き上がりが 253px・canvas が 371px）。 */
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) img {
   max-height: 30vh;
 }
 .akd-sheet-body .nstudio-ask {
@@ -569,12 +579,8 @@
 }
 /* 札が3段になる日（11枚以上）は、写真を下げて3段目を覗かせる。
    **上の `img` と同じ値**にする（片方だけだと、指を離した瞬間に跳ねる） */
-.akd-sheet-body:has(.npick:nth-child(11)) .akd-stage > canvas {
+.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot:not(.is-wall) .akd-stage > canvas {
   max-height: 30vh;
-}
-/* 上の `img` と同じ値にする（片方だけだと、指を離した瞬間に跳ねる） */
-.akd-sheet-body .nstudio-shot.is-wall .akd-stage > canvas {
-  max-height: 44vh;
 }
 .akd-stage > img {
   position: absolute;

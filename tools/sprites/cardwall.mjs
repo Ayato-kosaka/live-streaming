@@ -281,6 +281,46 @@ console.log("開いたマス:", JSON.stringify(tile), "/ 差し替えた写真",
 console.log("焼き上がり:", JSON.stringify(await fingerprint()));
 console.log("立ち位置:", JSON.stringify(await boxes()));
 
+/**
+ * 焼き上がり（`<img>`）と canvas が、**同じ大きさで重なっているか。**
+ *
+ * 絵の大きさを決めるのは canvas で、焼き上がりはその上に `inset: 0` で
+ * 重ねているだけ。背の決まりを `img` と `canvas` に**別々に**書いてあるので、
+ * 片方だけ別の規則に負けると**上に焼き上がり・下に canvas の2段**に割れる。
+ * 実際に割れた（2026-10-09。12人立てる写真のかべがみで、
+ * 焼き上がり 253px に対して canvas 371px）。
+ *
+ * **焼き上がりは出ている絵そのもの**なので、ここがずれていると、
+ * 画面で見ているものと持って帰るものが違う。
+ */
+async function layers(どこ) {
+  const r = await p.evaluate(() => {
+    const cv = document.querySelector(".akd-modal .akd-stage > canvas");
+    const im = document.querySelector(".akd-modal .akd-stage > img");
+    const st = document.querySelector(".akd-modal .akd-stage");
+    const box = (e) => {
+      if (!e) return null;
+      const b = e.getBoundingClientRect();
+      return [Math.round(b.width), Math.round(b.height)];
+    };
+    return { canvas: box(cv), 焼き: box(im), 台: box(st) };
+  });
+  console.log(`重なり（${どこ}）: ${JSON.stringify(r)}`);
+  if (!r.canvas) {
+    missing.push(`canvas が出ていない（${どこ}）`);
+    return;
+  }
+  if (!r.焼き) return; // まだ焼けていないだけ
+  const ずれ = Math.abs(r.canvas[0] - r.焼き[0]) + Math.abs(r.canvas[1] - r.焼き[1]);
+  if (ずれ > 2) {
+    bad.push(
+      `${どこ}: 焼き上がりと canvas の大きさが違う` +
+        `（canvas ${r.canvas.join("x")} / 焼き ${r.焼き.join("x")}）。` +
+        `背の決まりが片方にだけ効いている`,
+    );
+  }
+}
+
 /* ---- 2 引きずっているあいだ、紙と面が動かないか ---- */
 const ta = await p.evaluate(() => {
   const el = document.querySelector(".akd-stage");
@@ -290,6 +330,7 @@ const ta = await p.evaluate(() => {
   return { 台: css(el), 絵: css(img), 胴: css(body) };
 });
 console.log("touch-action:", JSON.stringify(ta));
+await layers("カードのかたち");
 /* 指を受けるのは台。**台が `none` でないと、引きずるたびに紙も一緒に動く**し、
    2本指が面ごと拡大して、ひねりがブラウザに取られる。 */
 if (ta.台 !== "none") {
@@ -465,6 +506,7 @@ if ((await かたち札.count()) < 2) {
     [...document.querySelectorAll(".akd-stage .akd-safe")].map((e) => e.textContent?.trim()),
   );
   console.log(`よけるところの目印: ${JSON.stringify(目印)}`);
+  await layers("かべがみのかたち");
   if (目印.length < 2) bad.push(`とけい／ボタンの目印が ${目印.length} 個`);
   if (SHOTS) {
     await p.screenshot({ path: join(SHOTS, `wall-${W}x${H}-lag${LAG}.png`) });
