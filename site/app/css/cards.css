@@ -480,14 +480,34 @@
    **列を1つ増やすのがいちばん効く。** 段が減るので、9枚でも2段で済む。
    4列のままだと9枚は3段になり、3段目を覗かせるには写真を 299px まで
    下げることになる（主役が主役でなくなる）。 */
-.akd-sheet-body .nstudio-shot img {
-  max-height: 42vh;
+/* --- 写真は、送っても消えない ------------------------------------------
+   **いちばん効いた1つ。** 人を選ぶと手が3段ぶん増えるので、紙は増えた
+   ところまで送る（#214）。送ると**写真が窓の上へ出ていってしまう**——
+   実測で `.akd-stage` の上端が **y = -253px**、つまり画面の外だった
+   （2026-10-09。390×844）。写真の上をなぞって人を動かす面で、
+   **動かす相手が画面に居ない。** あやと「操作性が悪くて、綺麗な壁紙に
+   できない」の、いちばん大きい中身がこれ。
+
+   だから写真を**胴の天井に貼り付ける**（`sticky`）。手はその下を流れて
+   いくので、大きさを変えても、ひねっても、**変わっていく絵がいつも見える。**
+   地を紙と同じ色にしておかないと、下を通る字が透けて重なる。 */
+.akd-sheet-body .nstudio-shot {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  /* 胴の左右の余白ぶん、貼り付けた地を広げる（字が脇から覗かない） */
+  margin: 0 calc(var(--sp-4) * -1);
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  background: var(--pg-sheet);
+  border-bottom: 1px solid var(--pg-rule);
 }
-/* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
-   **ふだんは下げない。** 写真がこの面の主役で、2段までは下げなくても
-   窓に収まる。 */
-.akd-sheet-body:has(.npick:nth-child(11)) .nstudio-shot img {
-  max-height: 34vh;
+/* 貼り付けたぶん、**写真は 42vh から 36vh へ**。42vh のままだと、
+   頭（100px）＋写真（354px）＋足（98px）で窓が埋まり、手の通る帯が
+   242px しか残らない（実測 390×844）。36vh にすると 295px になって、
+   大きさ・かたむき・むきの3段がまるごと帯の中に入る。
+   **写真はこの面の主役のままで、縮めたのは 50px。** */
+.akd-sheet-body .nstudio-shot img {
+  max-height: 36vh;
 }
 .akd-sheet-body .nstudio-ask {
   margin-top: var(--sp-4);
@@ -529,14 +549,14 @@
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: 42vh;
+  max-height: 36vh;
   border-radius: var(--r-0);
   box-shadow: var(--shadow-1);
 }
 /* 札が3段になる日（11枚以上）は、写真を下げて3段目を覗かせる。
    **上の `img` と同じ値**にする（片方だけだと、指を離した瞬間に跳ねる） */
 .akd-sheet-body:has(.npick:nth-child(11)) .akd-stage > canvas {
-  max-height: 34vh;
+  max-height: 30vh;
 }
 .akd-stage > img {
   position: absolute;
@@ -551,14 +571,26 @@
    消すと、指を離すまでのあいだ長押しの相手がいなくなる */
 .akd-stage > canvas.is-live { z-index: 2; }
 /* 入れた人がいるときだけ、引きずれる。素の写真のときは手を出さない
-   （`touch-action` を外しておかないと、紙を指で送れなくなる） */
-.akd-stage > img.is-movable {
+   （`touch-action` を外しておかないと、紙を指で送れなくなる）。
+
+   **付けるのは台のほう。** 前は焼き上がり（`img`）に付けていたが、
+   焼き直している 150ms のあいだ `img` は居ない。その隙に指を置くと
+   掴めなかったし、**紙のほうが送れてしまって絵が指から外れた。**
+
+   `touch-action: none` は2つを止める。**紙が一緒に送られるの**と、
+   2本指が**面ごと拡大するの**。ひねりで回すので、後者が要る。 */
+.akd-stage.is-movable {
   cursor: grab;
   touch-action: none;
+  /* 引きずっているあいだ、絵や字が選択されない（iOS の虫めがねも出ない） */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: default;
 }
-.akd-stage > img.is-movable:active { cursor: grabbing; }
+.akd-stage.is-movable:active { cursor: grabbing; }
 
-/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。** */
+/* 入れた人がいるときだけ出る手。**入れていない紙には1つも出ない。**
+   出るのは**いま手にしている1人ぶんだけ**なので、2人いても段は増えない。 */
 .akd-tune {
   display: flex;
   flex-wrap: wrap;
@@ -566,6 +598,43 @@
   gap: var(--sp-2) var(--sp-3);
   margin-top: var(--sp-3);
 }
+/* いま手にしているのは誰か。**札ではない**（押しても切り替わらない）ので、
+   厚みも押しどころも持たせない。切り替えるのは**絵を押すほう。**
+   顔を出すのは、字だけだと目が滑るから——写真の上の人と見比べられる。 */
+.akd-hand {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.akd-hand img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+}
+.akd-hand b { color: var(--ink); }
+/* むきをかえる。**もとのばしょと同じ重さ**——どちらもやり直しの手で、
+   ふだん押すものではない。字の行き先ではないので、下線ではなく細い枠。 */
+.akd-turn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+}
+.akd-turn:active { transform: translateY(4px); box-shadow: none; }
 /* あやとも入れる。**押すと切り替わる札**なので、押せる厚みを持たせる */
 .akd-mate {
   display: inline-flex;

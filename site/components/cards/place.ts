@@ -35,6 +35,29 @@ export const STAMP = {
 export const GAP = 0.015;
 
 /**
+ * 焼くときに許す傾きの幅（度）。**画面側（`cards.ts` の `cardPlace`）と同じ値。**
+ *
+ * 前は 20 度だった。2本指のひねりで回せるようにした日（2026-10-09）に
+ * 45 度まで広げてある——壁紙に貼るシールは、そのくらい傾いていてよい。
+ *
+ * **いままでのカードは1枚も動かない。** 置き場に入っている 871枚は
+ * どれも `moved` が付いていない（＝`place` を渡さない）ので、
+ * `tiltOf(null)` の `STAMP.tilt`（0度）のまま。
+ */
+export const TILT_MAX = 45;
+
+/**
+ * 絵に効かせてよい倍率の幅。**`clampPlace`（口と同じ式）より狭い。**
+ *
+ * 口は 0.2〜3 まで受けるが、**そこまで大きくすると枠から出る**
+ * （1200×1600 の写真に縦長の絵を 3倍で置くと、高さが 1600 を越える）。
+ * 「四隅のどこへ送っても枠の中」は守らなければならない決めなので、
+ * 描くときにもう一段締める（`site/selftest/cardplace_selftest.mjs` の 1）。
+ */
+export const SCALE_MIN = 0.4;
+export const SCALE_MAX = 2;
+
+/**
  * 連れを縮めてよい下限（本人に対する比）。
  *
  * これを下回るまで縮めないと並ばないときは、**2人とも同じ割合で縮める**。
@@ -76,6 +99,18 @@ export type Actor = {
    * （あやとステッカーの「STOP」が実際にそうなった。2026-10-08）。
    */
   canFlip?: boolean;
+  /**
+   * **押した人が選んだ向き。** `true` で左右を返す。
+   *
+   * 機械が返すのは「連れが本人の左に立ったとき」だけで、それは
+   * `place` を渡していないとき（＝並べ方を機械に任せているとき）の話。
+   * **自分で置いた人は、向きも自分で決める**（あやと 2026-10-09
+   * 「向きも選べない」）。`canFlip` が `false` の絵は、ここを立てても返らない。
+   *
+   * **保存しない。** 口（`POST /cards/<id>`）が受けるのは `x/y/rot/scale`
+   * だけで、ここに1欄足すと**他の人が見るカードの向きまで変わる。**
+   */
+  flip?: boolean;
 };
 
 const clamp = (n: number, lo: number, hi: number) =>
@@ -135,7 +170,7 @@ export function stampBox(
   place?: Place | null,
 ): Box {
   const aspect = cw / Math.max(1, ch);
-  const k = place ? Math.min(2, Math.max(0.4, place.scale || 1)) : 1;
+  const k = place ? Math.min(SCALE_MAX, Math.max(SCALE_MIN, place.scale || 1)) : 1;
   const w = (ph > pw ? pw * STAMP.byWidth : ph * STAMP.byHeight * aspect) * k;
   const h = w / aspect;
   if (!place) {
@@ -148,7 +183,64 @@ export function stampBox(
 
 /** 焼くときの傾き。**`place` が無ければ見本の0度。** */
 export const tiltOf = (place?: Place | null): number =>
-  place ? clamp(place.rot || 0, -20, 20) : STAMP.tilt;
+  place ? clamp(place.rot || 0, -TILT_MAX, TILT_MAX) : STAMP.tilt;
+
+/**
+ * 箱から `place` を逆に出す。**いま立っているところを、動かす値にする。**
+ *
+ * 機械が置いた連れ（`layout` が隣に並べたぶん）を、押した人が
+ * **はじめて掴んだ瞬間**に要る。そこから引きずるので、**掴む前と
+ * 掴んだ直後で1pxも動いてはいけない。**
+ *
+ * @param pw 写真の横幅 @param ph 写真の高さ
+ * @param cw 絵の中身の横幅 @param ch 同じく高さ
+ * @param box いま立っている箱 @param rot いまの傾き
+ */
+export function placeFromBox(
+  pw: number,
+  ph: number,
+  cw: number,
+  ch: number,
+  box: Box,
+  rot = 0,
+): Place {
+  const base = stampBox(pw, ph, cw, ch, null);
+  const k = base.w > 0 ? box.w / base.w : 1;
+  return {
+    x: (box.x + box.w / 2) / Math.max(1, pw),
+    y: (box.y + box.h) / Math.max(1, ph),
+    rot,
+    scale: Math.min(SCALE_MAX, Math.max(SCALE_MIN, k)),
+  };
+}
+
+/**
+ * その点に立っているのは誰か。**いちばん手前から見る。**
+ *
+ * 札で「いま動かす人」を選ばせない（あやと 2026-10-09）ので、
+ * **押したところに居る人**を掴む。描くのは先頭から順なので、
+ * 重なっているときに手前にいるのは**あとの人**。だから後ろから見る。
+ *
+ * 傾いている人は、傾きを戻してから箱に入っているかを見る。
+ * 返し（`flip`）は箱を変えないので見なくてよい。
+ *
+ * @param at `layout` が返した置きどころ @param px @param py 写真の中の座標
+ * @return 何番目の人か。誰も居なければ -1
+ */
+export function pickAt(at: Placed[], px: number, py: number): number {
+  for (let i = at.length - 1; i >= 0; i--) {
+    const b = at[i].box;
+    const ox = b.x + b.w / 2;
+    const oy = b.y + b.h;
+    const r = (-at[i].rot * Math.PI) / 180;
+    const dx = px - ox;
+    const dy = py - oy;
+    const qx = ox + dx * Math.cos(r) - dy * Math.sin(r);
+    const qy = oy + dx * Math.sin(r) + dy * Math.cos(r);
+    if (qx >= b.x && qx <= b.x + b.w && qy >= b.y && qy <= b.y + b.h) return i;
+  }
+  return -1;
+}
 
 /**
  * 既定（右下）とまったく同じところに立つ `place`。
@@ -238,11 +330,28 @@ export function layout(pw: number, ph: number, actors: Actor[]): Placed[] {
   const you: Placed = {
     box: stampBox(pw, ph, a.w, a.h, a.place),
     rot: tiltOf(a.place),
-    flip: false,
+    /* 本人の向きは**押した人が決めたときだけ**返す。機械は返さない
+       （1体のときの絵を変えないため。`Placed` の注） */
+    flip: a.canFlip !== false && !!a.flip,
   };
   if (actors.length === 1) return [you];
 
   const m = actors[1];
+  /* **連れを自分で置いた人には、機械が口を出さない。**
+     押しのけない・足元をそろえる・隣に立つ、はどれも
+     「どこに置けばいいか分からない連れ」のための決め。置く場所を
+     自分で決めた人にそれを当てると、**指で動かしたところから勝手に
+     ずれる**（あやと 2026-10-09「離せない」）。 */
+  if (m.place) {
+    return [
+      you,
+      {
+        box: stampBox(pw, ph, m.w, m.h, m.place),
+        rot: tiltOf(m.place),
+        flip: m.canFlip !== false && !!m.flip,
+      },
+    ];
+  }
   const gap = pw * GAP;
   /* 連れの大きさは**本人と同じ決め方**。横幅の基準も倍率もそろえて、
      「2人のうち1人だけ大きい」が起きないようにする（置く場所は下で決める）。 */

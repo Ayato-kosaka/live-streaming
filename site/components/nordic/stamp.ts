@@ -27,10 +27,15 @@
    **ここから呼ぶ側のために通してある**（import 先を増やさないため）。 */
 export {
   STAMP,
+  SCALE_MAX,
+  SCALE_MIN,
+  TILT_MAX,
   stampBox,
   clampPlace,
   defaultPlaceFor,
   layout,
+  pickAt,
+  placeFromBox,
   tiltOf,
   type Box,
   type Place,
@@ -68,6 +73,16 @@ export function loadImage(src: string): Promise<HTMLImageElement | null> {
 }
 
 /**
+ * 一度数えた中身のところを覚えておく。
+ *
+ * **引きずっているあいだ、1フレームに何度もここを通る**（描くときと、
+ * 指が誰を掴んだかを決めるとき）。絵は変わらないのに、毎回 256px ぶんの
+ * 画素を読み直していた（`getImageData`）。絵そのものを鍵にするので、
+ * 絵が差し替われば勝手に数え直される。
+ */
+const SEEN = new WeakMap<HTMLImageElement, Box>();
+
+/**
  * 透明なふちを落とした、絵の中身のところ。
  *
  * キャラクターの絵は上下左右に透明な余白を持っている。そのまま置くと
@@ -77,6 +92,8 @@ export function loadImage(src: string): Promise<HTMLImageElement | null> {
  * 読めなかったとき（描けない絵など）は、絵ぜんぶを返す。
  */
 export function opaqueBox(img: HTMLImageElement): Box {
+  const had = SEEN.get(img);
+  if (had) return had;
   const all = { x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight };
   // 端の1画素まで見る必要はない。粗く見て軽くする
   const step = Math.max(1, Math.floor(Math.max(all.w, all.h) / 256));
@@ -109,12 +126,16 @@ export function opaqueBox(img: HTMLImageElement): Box {
     }
   }
   if (x1 < 0) return all;
-  return {
+  const box = {
     x: (x0 * all.w) / cw,
     y: (y0 * all.h) / ch,
     w: ((x1 - x0 + 1) * all.w) / cw,
     h: ((y1 - y0 + 1) * all.h) / ch,
   };
+  /* **絵が読み終わってから数えたぶんだけ覚える。** まだ 0×0 のうちに
+     数えた値を覚えると、届いたあとも 0 のままになる */
+  if (all.w > 0 && all.h > 0) SEEN.set(img, box);
+  return box;
 }
 
 /**
@@ -220,12 +241,39 @@ export type Figure = {
   img: HTMLImageElement;
   place?: Place | null;
   /**
+   * 押した人が選んだ向き。`true` で左右を返す。
+   * **判断そのものは `components/cards/place.ts` の `Actor.flip`。**
+   */
+  flip?: boolean;
+  /**
    * 左右を返してよい絵か。**既定は返してよい。**
    * 字や標識の入った絵（あやとステッカーの「STOP」）は `false`。
    * 判断そのものは `components/cards/place.ts` の `Actor.canFlip`。
    */
   canFlip?: boolean;
 };
+
+/**
+ * 何人が、どこに、どれだけの大きさで立つか。**描かずに答えだけ返す。**
+ *
+ * 焼くとき（`composeMany`）と、**指が誰を掴んだかを決めるとき**
+ * （`components/cards/CardSheet.tsx`）が、同じ答えを見る必要がある。
+ * 別々に数えると、**見えている人と掴める人がずれる。**
+ */
+export function framesOf(pw: number, ph: number, figures: Figure[]): Placed[] {
+  const src = figures.map((f) => opaqueBox(f.img));
+  return layout(
+    pw,
+    ph,
+    src.map((b, i) => ({
+      w: b.w,
+      h: b.h,
+      place: figures[i].place,
+      flip: figures[i].flip,
+      canFlip: figures[i].canFlip,
+    })),
+  );
+}
 
 /**
  * 写真にキャラクターを焼いて、canvas を返す。
@@ -259,16 +307,7 @@ export function composeMany(
   if (figures.length === 0) return cv;
 
   const src = figures.map((f) => opaqueBox(f.img));
-  const at = layout(
-    pw,
-    ph,
-    src.map((b, i) => ({
-      w: b.w,
-      h: b.h,
-      place: figures[i].place,
-      canFlip: figures[i].canFlip,
-    })),
-  );
+  const at = framesOf(pw, ph, figures);
   /* **影を先に、ぜんぶまとめて落とす。** 1人ずつ「影→本体」で描くと、
      隣に立った人の足元の影が、先に描いた人の足の上に乗る。 */
   at.forEach((p) => groundShadow(g, p.box));

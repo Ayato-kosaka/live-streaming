@@ -11,6 +11,9 @@ import {
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import { RESIDENTS } from "@/content/residents";
 import { charImg } from "@/lib/charImg";
+/* 締めかたは**焼くほうと1本**にする（`cardPlace` の注）。ここに数を写すと、
+   広げた日に画面と焼き上がりが別のところに立つ */
+import { SCALE_MAX, SCALE_MIN, TILT_MAX } from "./place";
 
 /**
  * あやと島カード（#173）の、画面まわりの共通のところ。
@@ -670,7 +673,7 @@ export function cardPlace(card: ShownCard): CardPlace {
   }
   /* 動かしたぶん。**枠から出さない。** 横の写真は高さで決めているので、
      横幅は写真の縦横比から見積もる（絵はおおむね正方形）。 */
-  const k = Math.min(2, Math.max(0.4, card.scale || 1));
+  const k = Math.min(SCALE_MAX, Math.max(SCALE_MIN, card.scale || 1));
   const w = (tall ? size : (size * card.h) / Math.max(1, card.w)) * k;
   const half = Math.min(0.5, w / 2);
   const cx = Math.min(1 - half, Math.max(half, card.x));
@@ -678,6 +681,6 @@ export function cardPlace(card: ShownCard): CardPlace {
     ...(tall ? { width: `${size * k * 100}%` } : { height: `${size * k * 100}%` }),
     left: `${cx * 100}%`,
     bottom: `${Math.min(0.9, Math.max(0, 1 - card.y)) * 100}%`,
-    transform: `translateX(-50%) rotate(${Math.max(-20, Math.min(20, card.rot || 0))}deg)`,
+    transform: `translateX(-50%) rotate(${Math.max(-TILT_MAX, Math.min(TILT_MAX, card.rot || 0))}deg)`,
   };
 }
