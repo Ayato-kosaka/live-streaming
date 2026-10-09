@@ -13923,7 +13923,72 @@ const ro = new ResizeObserver(put);
    （「操作性が悪くて」）が本体だった。見た目だけ直して出していたら、
    **綺麗になった、動かせないもの**を出していた
 
-## #218 **「代表6件のボタンが毎回消える」の4回目。消えていたのは札ではなく、札の置き場所——見えない当たりのまわりに自分で引いた12pxの帯だった**（2026-10-09。`site/components/isle/plates.ts` / `site/components/isle/IsleStage.tsx` / `/`）
+## #218 **型も見張りも PR も全部緑のまま master に入って、本番の Functions だけが2回続けて配られなかった。落ちていたのは 82字の1行**（2026-10-09。`functions/src/stampLine.ts` / `firebase.json` の `predeploy`）
+
+`/island-api/stampline/mine` を足して出した。出すまでは全部緑だった——
+`tsc` 0、見張り107本0、`crawl` 0、PR の3つとも success。マージして
+Hosting と Functions の両方を押したら、**Functions だけが落ちた。**
+押し直しても同じところで落ちた。
+
+落ちていたのは**これ1行**:
+
+```
+  error  This line has a length of 82. Maximum allowed is 80  max-len
+```
+
+### なぜ、出す前のどれにも引っかからなかったのか
+
+`firebase.json` の `functions.predeploy` は2本ある。
+
+```
+npm --prefix "$RESOURCE_DIR" run lint
+npm --prefix "$RESOURCE_DIR" run build
+```
+
+**配るワークフローは `build` しか回していない**（`🔨 TypeScript ビルド`）。
+`lint` が走るのは `firebase deploy` の中だけで、ほかのどこからも走らない。
+
+| どこ | `tsc` | `eslint` |
+| --- | --- | --- |
+| 手元（`npm run build` / 見張り） | 回る | **回らない** |
+| `selftest.yml`（毎 PR） | 回る（見張りが1本ずつ呼ぶ） | **回らない** |
+| `firebase-functions-deploy.yml` | 回る | **回らない** |
+| `firebase deploy`（本番へ配る瞬間） | 回る | **ここだけ回る** |
+
+つまり **eslint は「本番へ配る瞬間」にしか走らない。**
+そこで落ちると、出るのは `🚀 Deploy to Firebase` が赤い、の1行だけ。
+
+### しかも、理由がどこにも読めない
+
+Actions のログは置き場（Azure Blob）から配られていて、**REST の口からは
+取れない**（`gh api .../logs` は redirect を返す）。注記（annotations）にも
+step の `conclusion` にも中身は出ない。**「赤い」以外の情報が0。**
+
+### いちばん悪いのは、半分だけ出ること
+
+Hosting は通った。だから**画面は新しく、口だけ古い**状態で本番に残る。
+画面は「読めなかった」の顔すら出さない（この面は選ばれていない人には
+何も出さない作りなので、**誰も何も気づかない**）。
+
+### 決め
+
+- **`predeploy` に書いてあるものは、マージする前に同じ順で回す。**
+  道具は `functions/selftest/predeploy_selftest.mjs`。
+  **`firebase.json` から読む。写しを持たない**——あちらに3本目が足された日に、
+  写しを持った見張りは古いまま通る。取り出せたのが2本未満なら、
+  通さずに 2 で止まる（0本でも「落ちなかった」になるので）
+- **「ビルドが通る」と「配れる」を同じものとして数えない。**
+  配る側が自分で足している関所は、`firebase.json` のような**配り先の設定**に
+  書いてある。コードの中を探しても出てこない
+- **口を足したら、本番で口を叩くまでが出荷。** 画面が出たことは、
+  口が出たことの証明ではない。確かめかたは1行:
+
+  ```bash
+  curl -s -o /dev/null -w '%{http_code}\n' https://live-streaming-d3cac.web.app/island-api/stampline/mine
+  # 401 = 配られている（ログインが要る口）/ 404 = まだ配られていない
+  ```
+
+## #219 **「代表6件のボタンが毎回消える」の4回目。消えていたのは札ではなく、札の置き場所——見えない当たりのまわりに自分で引いた12pxの帯だった**（2026-10-09。`site/components/isle/plates.ts` / `site/components/isle/IsleStage.tsx` / `/`）
 
 あやとの言葉（2026-09-15。**3回目**）:
 

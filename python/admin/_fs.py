@@ -67,6 +67,25 @@ def show(v) -> str:
     return sketch(v)
 
 
+def notice(text: str) -> None:
+    """Actions の**注記**として出す。手元では何もしない。
+
+    ログそのものは置き場（Azure Blob）から配られるので、**口（REST）からは
+    読めない。** 注記だけは `check-runs/{id}/annotations` から読めるので、
+    押したあとに「何件動いたか」を確かめる道がここにしか無い。
+
+    **出してよいのは件数と指紋だけ。** 注記も公開で、消せない。
+    値を通したいときは `logsafe.mask(v, public=True)` に通してから渡す。
+
+    Args:
+        text: 1行。**改行を入れない**（注記は1行で切れる）
+    """
+    if not os.getenv("GITHUB_ACTIONS"):
+        return
+    one = " ".join(str(text).split())
+    print(f"::notice::{one}", flush=True)
+
+
 class ReadOnly(Exception):
     """下見のつもりで、書きに行った。"""
 
