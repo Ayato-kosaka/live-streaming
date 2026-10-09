@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-10-08
+ * 数えた日: 2026-10-09
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -265,26 +265,27 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   },
   // アルバニア
   "albania": {
-    people: 90,
-    streams: 13,
+    people: 94,
+    streams: 14,
     residents: [
-      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 10 },
+      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 11 },
+      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 10 },
       { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 10 },
       { icon: "cf129e7ea06f499693a002543dcd7c290", days: 10 },
       { icon: "f203e9529b7941c89940a568e03b83b00", days: 10 },
-      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 9 },
+      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 9 },
       { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 9 },
       { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 8 },
-      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 8 },
+      { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 6 },
       { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 6 },
+      { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 6 },
       { icon: "5cc99a90acad4e7997d92b27c5207c6c0", days: 6 },
-      { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 5 },
-      { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 5 },
       { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", days: 4 },
+      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 3 },
       { icon: "a43e965774df4900b7c8724c66f5deba0", days: 3 },
-      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 2 },
       { icon: "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp", days: 2 },
       { icon: "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO", days: 2 },
+      { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", days: 1 },
       { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", days: 1 },
       { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", days: 1 },
       { icon: "1m_QE_hV46Ppy50vh5ic2H89AdkRVWMLG", days: 1 },

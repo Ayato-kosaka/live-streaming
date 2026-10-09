@@ -29,7 +29,7 @@ export type CountryStat = {
 };
 
 const COUNTRY_STATS: Record<string, CountryStat> = {
-  "albania": { lives: 11, people: 88, msgs: 3385, days: 9, top: ["2026-09-30", "cpOZCgtD4GI", "アルバニアでケバブスフラキたべよ", 33] },
+  "albania": { lives: 12, people: 92, msgs: 3614, days: 10, top: ["2026-09-30", "cpOZCgtD4GI", "アルバニアでケバブスフラキたべよ", 33] },
   "armenia": { lives: 37, people: 779, msgs: 11663, days: 29, top: ["2026-05-06", "8A-2mqkoAYs", "【8日目】怖いイメージを変えたいので 一緒にご飯食べにイランまで歩く。 8日目 Tatev 29キロ", 211] },
   "austria": { lives: 7, people: 18, msgs: 136, days: 7, top: ["2024-11-30", "A-5gn9cQM34", "日本は深夜やけど、オーストリアは良い時間なので靴磨きします", 6] },
   "azerbaijan": { lives: 21, people: 27, msgs: 2223, days: 19, top: ["2025-07-04", "I-9ORIGJG-w", "なにこれの新バージョンの紹介します。スーパー行きました。", 9] },
