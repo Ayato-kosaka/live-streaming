@@ -1,0 +1,173 @@
+name: スタンプのことば
+
+# LINE スタンプの、住人のことば(#716)。
+#
+# やることは2つ。
+#
+#   seed    … あやとが選んだ25人を Firestore（`islandStampLine`）へ置く
+#   suggest … その人が実際に何度も言っている言い回しを BigQuery から引いて、
+#             提案（`suggested`）として置く
+#
+# ## なぜ `run_admin_script.yml` ではなく、別のワークフローなのか
+#
+# **名簿を ARGS に取れない。** ARGS は実行ステップの env として
+# **公開のログに出る**（`run_admin_script.yml` に実際にそう書いてある）。
+# 25人の名簿は「誰が選ばれたか」そのもので、選ばれかたが
+# 「協力してくれた人」なので、**それはそのまま投げ銭の順位表**
+# （`docs/island-money.md`「実額は視聴者には一切見せない」）。
+#
+# だから名簿は **`repository_dispatch` の `client_payload`** で渡す。
+# 出来事の中身（`$GITHUB_EVENT_PATH`）はジョブの中からしか読めず、
+# どの REST の口にも UI にも出てこない。
+#
+#   gh api -X POST repos/<owner>/<repo>/dispatches --input payload.json
+#   payload.json:
+#     {"event_type":"stamp-line",
+#      "client_payload":{"op":"seed","picks":["…","…"],"apply":true}}
+#
+# **そのうえで**、ジョブの頭で1件ずつ `::add-mask::` に入れる。
+# 伏せ字は保険で、本体は「スクリプトが1文字も出さない」こと
+# （`python/admin/stamp_line_seed.py` / `stamp_line_suggest.py`）。
+#
+# ## 名簿を要らない側は、手で押せる
+#
+# `suggest` は Firestore に置いてある書類を見て回るので、**名簿を渡さない。**
+# だから `workflow_dispatch` からも押せるようにしてある（`op: suggest`）。
+# `seed` を `workflow_dispatch` から押すことはできない——
+# 入力に名簿を取る口を作らない。
+
+on:
+  repository_dispatch:
+    types: [stamp-line]
+  workflow_dispatch:
+    inputs:
+      op:
+        description: "何をするか。**seed は押せません**（名簿を入力に取らない）"
+        required: true
+        default: suggest
+        type: choice
+        options: [suggest]
+      apply:
+        description: "書くか（既定は下見で、1バイトも書かない）"
+        required: false
+        default: false
+        type: boolean
+
+# 同時に走らせると読み書きが交錯するので1本ずつ
+concurrency:
+  group: stamp-line
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      # **いちばん先に伏せる。** ここより下で何かが字になる前に。
+      #
+      # 読めなかったときに素通ししない。ここは名簿が公開ログへ出る前の
+      # 最後の関所なので、`|| true` で空にして先へ進むと
+      # 「伏せるものが無かった」と同じ顔で名簿が通る。読めないなら止める
+      # （`run_admin_script.yml` の同じ step と同じ決め）。
+      - name: 名簿を伏せ字にする
+        shell: bash
+        run: |
+          set -uo pipefail
+          if ! raw="$(jq -r '
+            [ (.client_payload.picks // [])[],
+              (.inputs.picks // [])[] ]
+            | map(select(type == "string"))
+            | .[]
+          ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
+            echo "::error::出来事の中身が読めませんでした（jq が落ちた）。何も走らせません"
+            exit 1
+          fi
+          n=0
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            # **短すぎる字は伏せない。** GitHub が嫌うし、伏せても
+            # ログが読めなくなるだけ。形で落ちるぶんはスクリプトが弾く
+            [ "${#v}" -lt 6 ] && continue
+            echo "::add-mask::$v"
+            n=$((n + 1))
+          done <<< "$raw"
+          # 伏せた値そのものは出さない。件数だけ
+          echo "名簿の $n 件を伏せ字にしました"
+
+      - name: 何をするかを決める
+        id: pick
+        shell: bash
+        run: |
+          set -uo pipefail
+          if ! op="$(jq -r '.client_payload.op // .inputs.op // ""' "$GITHUB_EVENT_PATH")"; then
+            echo "::error::出来事の中身が読めませんでした。何も走らせません"
+            exit 1
+          fi
+          case "$op" in
+            seed)    script=stamp_line_seed ;;
+            suggest) script=stamp_line_suggest ;;
+            *)
+              echo "::error::op は seed か suggest です: $op"
+              exit 1
+              ;;
+          esac
+          # **押せるのは、ファイルが在るものだけ。**
+          if [ ! -f "python/admin/${script}.py" ]; then
+            echo "::error::python/admin/${script}.py がありません"
+            exit 1
+          fi
+          echo "script=$script" >> "$GITHUB_OUTPUT"
+          # 書くかどうかも、出来事の中身から読む（**既定は下見**）。
+          # 式の中で `inputs` と `client_payload` を混ぜると、押され方が
+          # 違う日にどちらかが無くて評価が落ちる。1か所で jq に決めさせる
+          apply="$(jq -r '
+            (.client_payload.apply // .inputs.apply // false) | tostring
+          ' "$GITHUB_EVENT_PATH")"
+          [ "$apply" = "true" ] || apply=false
+          echo "apply=$apply" >> "$GITHUB_OUTPUT"
+          echo "走らせるもの: $script / 書く: $apply"
+
+      - name: Python 環境のセットアップ
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **明細を出す前に、伏せる側が効いているかを見る。**
+      # ここから回る2本はどちらも「誰が選ばれたか」に触るので、
+      # `python/logsafe.py` が素通しになったら1行も走らせない。
+      # 認証もクエリも要らず 0.5 秒で終わる。
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # **その2本の決め方そのものも、本物に1行も書く前に回す。**
+      # 偽の Firestore と偽の BigQuery で動くので、ここで落ちたら
+      # 本番には1バイトも行かない（`channel_alias` と同じ形）。
+      - name: 決め方の見張り（偽のデータで動かす）
+        run: |
+          set -euo pipefail
+          python3 python/admin/stamp_line_seed_selftest.py
+          python3 python/admin/stamp_line_suggest_selftest.py
+          python3 python/stamp_line_pick_selftest.py
+
+      - name: 実行
+        working-directory: python/admin
+        # **ARGS に名簿を入れない。** 真偽値だけを渡す。
+        # 名簿は `$GITHUB_EVENT_PATH` からスクリプトが読む
+        env:
+          ARGS: '{"apply": ${{ steps.pick.outputs.apply }}}'
+
+        run: python "${{ steps.pick.outputs.script }}.py"

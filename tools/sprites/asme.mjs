@@ -668,6 +668,36 @@ export async function apply(ctx, opts = {}) {
        ここを差し替えないと、撮ったときだけ「カードが読めなかった」の顔に
        なって、直っていないものが壊れて見える。 */
     if (path === "/cards/mine") return json(r, { cards: MY_CARDS });
+    /* スタンプのことば（#716）。**本人だけの口**なので、ここを差し替えないと
+       `/me` の1枚がまるごと写らない（＝測れない）。
+       `STAMP=` で3つの姿を出し分ける:
+
+         fresh（既定） … 提案3本・まだ決めていない
+         set           … 本人がもう4本決めている（**いちばん背が高い姿**）
+         none          … 選ばれていない（**余計なものが1つも出ないことを見る**）
+
+       **ことばは作り物。** 本番の誰かの口ぐせをこの箱に落とさない。 */
+    if (path === "/stampline/mine") {
+      const how = process.env.STAMP || "fresh";
+      if (how === "none") return json(r, { picked: false });
+      const base = {
+        picked: true,
+        suggested: ["いやぁまいったね", "ねむい", "そうきたか"],
+        max: 4,
+        maxLen: 20,
+      };
+      if (r.request().method() === "POST") {
+        let body = {};
+        try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
+        return json(r, { ...base, lines: (body.lines || []).slice(0, 4) });
+      }
+      return json(r, {
+        ...base,
+        lines: how === "set" ?
+            ["いやぁまいったね", "ねむい", "そうきたか", "あしたもがんばる"] :
+            [],
+      });
+    }
     if (path.startsWith("/donors")) {
       if (r.request().method() === "GET") return json(r, { donors: DONORS });
       const pk = decodeURIComponent(path.slice("/donors/".length));

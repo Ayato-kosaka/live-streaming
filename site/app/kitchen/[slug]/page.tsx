@@ -61,7 +61,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const stepOf = new Map(r.streams.map((s) => [s.videoId, s.label]));
 
   return (
-    <PageShell
+    <PageShell current="kitchen"
       crumbs={[
         { label: "作った料理", href: "/kitchen" },
         { label: r.name },
