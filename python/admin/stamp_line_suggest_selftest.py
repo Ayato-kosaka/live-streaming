@@ -61,6 +61,11 @@ class Tee:
 sys.stdout = Tee(REAL_OUT, BUF)
 sys.stderr = Tee(REAL_ERR, BUF)
 
+# **注記（`::notice::`）の道も通す。** ログは置き場から配られて口からは
+# 読めないので、押したあとに件数を確かめられるのは注記だけ。
+# ここを立てないと、**その1行だけ見張りを素通りする**
+os.environ["GITHUB_ACTIONS"] = "true"
+
 os.environ.setdefault("BQ_PROJECT_ID", "stamp-line-suggest-selftest")
 
 import stamp_line_suggest as sug  # noqa: E402
@@ -243,6 +248,9 @@ check("1 で終わる", code == 1, str(code))
 check("見積もりだけで止まった", big.dry == 1 and big.ran == 0,
       f"dry={big.dry} ran={big.ran}")
 
+# **漏れたら落とすもの**。注記と本文の両方に当てる
+LEAK = [MINE, MINE2, MINE3] + KEPT + list(CH.values()) + list(DOC.values())
+
 print("\n# 6. 出力に、素性も候補のことばも1文字も出ていない")
 out = BUF.getvalue()
 for v in [MINE, MINE2, MINE3] + KEPT:
@@ -250,6 +258,12 @@ for v in [MINE, MINE2, MINE3] + KEPT:
 for v in list(CH.values()) + list(DOC.values()):
     check(f"識別子が出ていない（{v[:4]}…）", v not in out)
 check("指紋は出ている（伏せ字ではなく追える形）", "#" in out)
+check("注記（::notice::）が出ている", "::notice::" in out,
+      out[-200:])
+# 注記は1行で切れるので、改行が混ざっていないことも見る
+for ln in [x for x in out.splitlines() if x.startswith("::notice::")]:
+    check(f"注記に件数しか出ていない（{ln[10:30]}…）",
+          all(v not in ln for v in LEAK))
 print(f"  出た行: {len(out.splitlines())} 行")
 
 print("")

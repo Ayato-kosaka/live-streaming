@@ -48,7 +48,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from _fs import args, db, log, readonly  # noqa: E402
+from _fs import args, db, log, notice, readonly  # noqa: E402
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -190,6 +190,11 @@ def main() -> int:
         spread[len(got[ch])] = spread.get(len(got[ch]), 0) + 1
     log.info("本数の散らばり: %s",
              " / ".join(f"{k}本 {v}人" for k, v in sorted(spread.items())))
+    # **押した人が口から読めるようにする**（上の `notice` と同じ理由）
+    notice(
+        f"候補{'（下見）' if not apply else ''}: 相手 {len(who)} 人 / "
+        f"候補が出た {len(got)} 人 / 1本も出なかった {len(none_of)} 人 / "
+        + " ".join(f"{k}本:{v}人" for k, v in sorted(spread.items())))
 
     if not apply:
         log.info("下見なので**1バイトも書いていません**。"
@@ -206,6 +211,7 @@ def main() -> int:
             {"suggested": texts, "suggestedAt": now}, merge=True)
         n += 1
     log.info("置きました: %d 人ぶん", n)
+    notice(f"候補: 置いた {n} 人ぶん")
     return 0
 
 
