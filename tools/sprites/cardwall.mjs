@@ -283,9 +283,14 @@ if (ta.台 !== "none") {
 /* ---- 1 押しどころ。**大きさと「自分が最前か」の両方** ---- */
 /* 測るのは**紙の中だけ。** `.akd-back`（絵の裏の「閉じる」）は面ぜんぶを
    覆う層で、紙がその上に乗っているのが正しい形なので、数に混ぜない。 */
+/* `clear: true`。**この紙は写真を胴の天井に貼り付けている**ので、
+   `scrollIntoView({block:"center"})` が狙う窓の真ん中は写真の下になる。
+   そこで測ると、88px の札が 45px と出る（実際に出た。2026-10-09）。
+   覆いの下から出してから測り、出られなかったものは下で別に挙げる。 */
 const hit = await measure(p, {
   sel: ".akd-sheet a[href],.akd-sheet button,.akd-sheet label,.akd-sheet input",
   min: 48,
+  clear: true,
 });
 const small = hit.rows.filter((r) => r.small);
 const 隠れ = hit.skipped.filter((s) => /が上にいる|画面の外/.test(s.why));
