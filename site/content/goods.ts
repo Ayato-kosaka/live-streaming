@@ -245,7 +245,7 @@ export type ShopShot = {
 export const SUZURI = {
   href: "https://suzuri.jp/ayato_arigato",
   /**
-   * 店に並んでいるもの。**2枚以上。1枚だと、その1枚しか無い店に見える。**
+   * 札に並べる写真。**2枚以上。1枚だと、その1枚しか無い店に見える。**
    *
    * 2枚目は**こちらで組んだ2×2**（`tools/goods/shopshot.py`）。
    *
