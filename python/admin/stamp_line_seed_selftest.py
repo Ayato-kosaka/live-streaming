@@ -78,23 +78,9 @@ from _fs import ReadOnly, readonly  # noqa: E402
 
 # ---------------------------------------------------------------- 偽の中身
 
-# 偽のチャンネルID。**本物の形（`UC` + 22文字）から1文字ずらしてある。**
-# このファイルは公開のリポジトリに残るので、本物の形で並べない
-# （`tools/logident.py` が数えたものが0でなくなると、本物が混ざった日に
-# 気づけなくなる。`characters_link_selftest.py` と同じ決め）
-
-
-def cid(tag: str) -> str:
-    """偽のチャンネルID。
-
-    Args:
-        tag: 見分けるための短い字
-
-    Returns:
-        `UC` + 21文字
-    """
-    return "UC" + (tag + "0123456789abcdefghijk")[:21]
-
+# 偽の Firestore は `_fake_fs.py`（見張り3本で同じものを使う。写しを置くと、
+# 片方を直したのに残りが古いまま通る）
+from _fake_fs import FakeDb as _Db, cid  # noqa: E402
 
 # 図鑑の書類ID（本番と同じ32桁の形）
 DOC = {
@@ -114,117 +100,32 @@ KEPT = ["もうきめた", "これにする"]
 KEPT_SUG = ["ていあん1", "ていあん2", "ていあん3"]
 
 
-class FakeDoc:
-    """書類1件。"""
+def FakeDb() -> _Db:  # noqa: N802
+    """偽の Firestore に、確かめる中身を入れたもの。
 
-    def __init__(self, store, name, doc_id):
-        self._store = store
-        self._name = name
-        self.id = doc_id
+    - `fresh`  … 図鑑に居て、入れ物にまだ無い
+    - `had`    … 入れ物に在って、**本人がもう決めている**
+    - `nochan` … 図鑑に channelId が無い（本番に18人いる形）
+    - `ghost`  … 図鑑に居ない
 
-    def get(self):
-        """引く。
-
-        Returns:
-            書類の姿
-        """
-        v = self._store.data.get(self._name, {}).get(self.id)
-        return FakeSnap(self.id, v)
-
-    def set(self, patch, merge=False):
-        """置く。**何を置いたかを跡に残す。**
-
-        Args:
-            patch: 置く中身
-            merge: 混ぜるか
-        """
-        self._store.writes.append(
-            {"collection": self._name, "id": self.id,
-             "patch": dict(patch), "merge": merge})
-        box = self._store.data.setdefault(self._name, {})
-        if merge:
-            box[self.id] = {**(box.get(self.id) or {}), **patch}
-        else:
-            box[self.id] = dict(patch)
-
-
-class FakeSnap:
-    """引いた結果。"""
-
-    def __init__(self, doc_id, v):
-        self.id = doc_id
-        self.exists = v is not None
-        self._v = v
-
-    def to_dict(self):
-        """中身。
-
-        Returns:
-            中身の辞書（無ければ None）
-        """
-        return dict(self._v) if self._v is not None else None
-
-
-class FakeCollection:
-    """入れ物。"""
-
-    def __init__(self, store, name):
-        self._store = store
-        self._name = name
-
-    def document(self, doc_id):
-        """書類を指す。
-
-        Args:
-            doc_id: 書類ID
-
-        Returns:
-            書類
-        """
-        return FakeDoc(self._store, self._name, doc_id)
-
-    def list_documents(self):
-        """中の書類ぜんぶ。
-
-        Returns:
-            書類の一覧
-        """
-        return [FakeDoc(self._store, self._name, k)
-                for k in self._store.data.get(self._name, {})]
-
-
-class FakeDb:
-    """偽の Firestore。`collection` だけ。"""
-
-    def __init__(self):
-        self.data = {
-            "islandCharacter": {
-                DOC["fresh"]: {"channelId": CH["fresh"], "emoji": "🐟"},
-                DOC["had"]: {"channelId": CH["had"], "emoji": "🐰"},
-                # **channelId が空の人。** 本番に18人いる形
-                DOC["nochan"]: {"channelId": "", "emoji": "🐻"},
+    Returns:
+        偽の db
+    """
+    return _Db({
+        "islandCharacter": {
+            DOC["fresh"]: {"channelId": CH["fresh"], "emoji": "\U0001f41f"},
+            DOC["had"]: {"channelId": CH["had"], "emoji": "\U0001f430"},
+            DOC["nochan"]: {"channelId": "", "emoji": "\U0001f43b"},
+        },
+        "islandStampLine": {
+            DOC["had"]: {
+                "channelId": CH["had"],
+                "lines": list(KEPT),
+                "suggested": list(KEPT_SUG),
+                "pickedAt": 1,
             },
-            "islandStampLine": {
-                DOC["had"]: {
-                    "channelId": CH["had"],
-                    "lines": list(KEPT),
-                    "suggested": list(KEPT_SUG),
-                    "pickedAt": 1,
-                },
-            },
-        }
-        self.writes = []
-
-    def collection(self, name):
-        """入れ物を指す。
-
-        Args:
-            name: 入れ物の名前
-
-        Returns:
-            入れ物
-        """
-        return FakeCollection(self, name)
+        },
+    })
 
 
 BAD = 0
