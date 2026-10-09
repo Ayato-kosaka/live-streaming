@@ -8,6 +8,7 @@ name: スタンプのことば
 #   suggest … その人が実際に何度も言っている言い回しを BigQuery から引いて、
 #             提案（`suggested`）として置く
 #   table   … 入っている中身を**あやとと話すための表**にして issue に貼る
+#   arrange … 提案のことばを、**人が手で直したもの**に差し替える
 #
 # ## なぜ `run_admin_script.yml` ではなく、別のワークフローなのか
 #
@@ -34,8 +35,9 @@ name: スタンプのことば
 #
 # `suggest` は Firestore に置いてある書類を見て回るので、**名簿を渡さない。**
 # だから `workflow_dispatch` からも押せるようにしてある（`op: suggest`）。
-# `seed` を `workflow_dispatch` から押すことはできない——
-# 入力に名簿を取る口を作らない。
+# `seed` と `arrange` を `workflow_dispatch` から押すことはできない——
+# **入力に名簿もことばも取る口を作らない**（`workflow_dispatch` の入力は
+# 公開のログに出る）。あちらは `repository_dispatch` の `client_payload` だけ。
 #
 # ## `table` だけが、名前とことばを外へ出す
 #
@@ -104,9 +106,14 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          # 名簿（`picks`）と、**手で直したことば（`fix[].lines[]`）**の
+          # 両方を伏せる。あとから足した `arrange` を入れ忘れると、
+          # ことばが素通りする道が1本できる
           if ! raw="$(jq -r '
             [ (.client_payload.picks // [])[],
-              (.inputs.picks // [])[] ]
+              (.inputs.picks // [])[],
+              ((.client_payload.fix // [])[] | (.id, ((.lines // [])[]
+                 | (.text, .from)))) ]
             | map(select(type == "string"))
             | .[]
           ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
@@ -138,8 +145,9 @@ jobs:
             seed)    script=stamp_line_seed ;;
             suggest) script=stamp_line_suggest ;;
             table)   script=stamp_line_table ;;
+            arrange) script=stamp_line_arrange ;;
             *)
-              echo "::error::op は seed / suggest / table です: $op"
+              echo "::error::op は seed / suggest / table / arrange です: $op"
               exit 1
               ;;
           esac
@@ -184,13 +192,13 @@ jobs:
           pip install -r python/requirements.txt
 
       # **明細を出す前に、伏せる側が効いているかを見る。**
-      # ここから回る2本はどちらも「誰が選ばれたか」に触るので、
+      # ここから回るものはどれも「誰が選ばれたか」に触るので、
       # `python/logsafe.py` が素通しになったら1行も走らせない。
       # 認証もクエリも要らず 0.5 秒で終わる。
       - name: 公開のログに素性が出ない側が効いているか
         run: python3 python/logsafe_selftest.py
 
-      # **その2本の決め方そのものも、本物に1行も書く前に回す。**
+      # **決め方そのものも、本物に1行も書く前に回す。**
       # 偽の Firestore と偽の BigQuery で動くので、ここで落ちたら
       # 本番には1バイトも行かない（`channel_alias` と同じ形）。
       - name: 決め方の見張り（偽のデータで動かす）
@@ -199,6 +207,7 @@ jobs:
           python3 python/admin/stamp_line_seed_selftest.py
           python3 python/admin/stamp_line_suggest_selftest.py
           python3 python/admin/stamp_line_table_selftest.py
+          python3 python/admin/stamp_line_arrange_selftest.py
           python3 python/stamp_line_pick_selftest.py
 
       - name: 実行
