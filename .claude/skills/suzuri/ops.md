@@ -5,6 +5,7 @@
 ```bash
 python3 .claude/skills/ec2-chrome/ec2.py state            # running でなければ start（自分で起こしたら最後に stop）
 python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/ec2-chrome/cdp.py   /home/ubuntu/cdp/cdp.py
+python3 .claude/skills/ec2-chrome/ec2.py put python/suzuri_common.py              /home/ubuntu/cdp/suzuri_common.py
 python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/suzuri/suzuri_ops.py /home/ubuntu/cdp/suzuri_ops.py
 python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/suzuri/characters.py /home/ubuntu/cdp/characters.py
 ```
@@ -94,7 +95,7 @@ presign を取る → lens へ送る → 画素数を書き戻す → デザイ�
 | Mug (3) | 既定（高さいっぱいで片面に収まる） | 82（白 M） |
 | Acrylic Panel (766) | **中身が幅 86mm × 高さ 115mm に収まる最大**（`panel_fit`）。縦は真ん中より少し上 | 4938（100×148mm） |
 
-`layout(絵)` がこの5つを返す。**ここが今回いちばん外したところ**なので、理由を残す:
+`layout(絵)` がこの5つを返す（`python/suzuri_common.py`。**EC2 のスキルと Actions の `SUZURI API` が同じものを読む**）。**ここが今回いちばん外したところ**なので、理由を残す:
 
 - **`scale` は「絵の画素数 × 倍率」で効く。** 埋める大きさに対する倍率ではない。
   同じ 0.73 でも、783px の絵は 1255px の絵の 6割の大きさに刷られる。
@@ -144,4 +145,23 @@ sheet(t, [id, ...], "/home/ubuntu/shots/v.jpg", cell=150)   # 1行1デザイン�
 | この箱から届くか | ×（suzuri.jp はプロキシで 403） | コネクタとして繋げば届く | EC2 経由で届く |
 
 つまり、**REST API だけでは缶バッジとパネルの大きさを合わせられない**（contain は「印刷の領域いっぱい」で、
-缶バッジの縁に絵がかかる）。MCP なら合わせられる見込みだが、まだ繋いでいない（繋ぐのはあやとの操作）。
+缶バッジの縁に絵がかかる）。
+
+**あやとの決め（#732）: REST API を GitHub Actions から呼ぶ口を作り、早いときはそちらを使う。**
+それが `SUZURI API`（`.github/workflows/suzuri_api.yml` / `python/suzuri_api.py`）。
+
+| 用事 | 先に使う | 理由 |
+| --- | --- | --- |
+| 島に新しいキャラが入った | **ワークフロー**（毎晩ひとりでに `characters`） | ステッカー・キーホルダー・マグの3品目まで |
+| その人の缶バッジ・パネル | スキル（EC2） | API で大きさを保存できると分かるまで（`probe` で試す） |
+| 題・本文・利益を直す／消す／一覧 | ワークフロー（手で押す） | EC2 を起こさずに済む |
+| 絵の差し替え・大きさの作り直し・見本を並べて確かめる | スキル（EC2） | API に大きさの保存が無い・見本を並べる道具は EC2 側 |
+
+手で押すとき（この箱からは `mcp__github__actions_run_trigger`）:
+
+```text
+workflow_id: suzuri_api.yml  ref: master
+inputs: {"command": "update", "args": "21116414 --price 300", "dry_run": "false"}
+```
+
+結果は Actions のログ（`mcp__github__get_job_logs`）。**ログは公開**なので、売上・ユーザ情報の口は呼べないようにしてある。

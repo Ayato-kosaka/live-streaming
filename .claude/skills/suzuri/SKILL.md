@@ -19,6 +19,8 @@ description: SUZURI（suzuri.jp/ayato_arigato）のグッズを、EC2 のログ�
 | --- | --- | --- |
 | `suzuri_ops.py` | EC2（`/home/ubuntu/cdp/`） | 読む・書く・上げる・消す・大きさを決める・見本を並べて焼く |
 | `characters.py` | EC2（`/home/ubuntu/cdp/`） | 島のキャラと SUZURI を突き合わせ、「作る／差し替える／島に居ない／透過なし」を出す |
+| `python/suzuri_common.py` | どちらでも | 大きさ・下ごしらえ・透過・題と本文。**EC2 のスキルと Actions が同じものを読む** |
+| `python/suzuri_api.py` ＋ `.github/workflows/suzuri_api.yml` | GitHub Actions | 公式の API を呼ぶ口。**早いときはこちらを先に使う**（あやと #732）。毎晩、新しいキャラの住人グッズを3品目で作る |
 
 **EC2 の Chrome の触り方は `ec2-chrome` に書いてある（共通の土台）。** SSM で送る・ファイルを持ち帰る・
 Chrome を起こす・固まったときの直し方は、ここには書かない。
@@ -43,5 +45,5 @@ Chrome を起こす・固まったときの直し方は、ここには書かな�
 SUZURI には **REST API**（`suzuri.jp/api/v1`、ユーザごとの API キー）と、**SUZURI MCP**
 （`https://mcp.suzuri.jp/mcp`、Claude から OAuth で繋ぐ）がある。何ができて何ができないかは
 [`ops.md` の「公式の API と MCP」](ops.md#公式の-api-と-mcp) に表にしてある。
-**このスキルは EC2 の Chrome を通す形で書いてある**が、MCP が繋がったら、作る・直す・消すは
-MCP に寄せられる（大きさの決め方・確かめ方・突き合わせは、どちらでも同じ）。
+**どちらで回すかの表は `ops.md` の同じ節にある。** API は缶バッジとパネルの大きさを保存できないので、
+その2つと、見本を並べて確かめるところは EC2 のスキルに残る。
