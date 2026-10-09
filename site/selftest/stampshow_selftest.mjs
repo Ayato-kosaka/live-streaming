@@ -47,10 +47,11 @@ const mod = { exports: {} };
 new Function("exports", "require", "module", code)(
   mod.exports, require, mod,
 );
-const { phase, startLines } = mod.exports;
+const { phase, startLines, leadKey } = mod.exports;
 
-if (typeof phase !== "function" || typeof startLines !== "function") {
-  console.error("stampShow.ts から phase / startLines を取り出せなかった");
+if (typeof phase !== "function" || typeof startLines !== "function" ||
+    typeof leadKey !== "function") {
+  console.error("stampShow.ts から phase / startLines / leadKey を取り出せなかった");
   process.exit(2);
 }
 
@@ -130,6 +131,17 @@ eq("提案が空白だけなら、空の欄が1つ", startLines([], ["   "]), ["
 eq("決めてあるものは何本でもそのまま",
   startLines(["あ", "い", "う", "え"], ["ていあん"]),
   ["あ", "い", "う", "え"]);
+
+/* ---------------- 5. 頭の1行 ---------------- */
+
+console.log("\n# 5. 頭の1行");
+/* **本番で25人中6人に提案が出なかった**（口ぐせが見つからなかっただけ）。
+   その人に「このことばが入ります」と言うと、何も無いところを指す */
+eq("提案が在る → 書きなおす話", leadKey(["ていあん"], [""]), "rewrite");
+eq("もう書いてある → 書きなおす話", leadKey([], ["かいた"]), "rewrite");
+eq("どちらも無い → 書く話", leadKey([], [""]), "write");
+eq("どちらも空白だけ → 書く話", leadKey(["  "], ["   "]), "write");
+eq("提案が空の配列、欄も空 → 書く話", leadKey([], []), "write");
 
 console.log("");
 if (seen === 0) {

@@ -71,3 +71,30 @@ export function startLines(lines: string[], suggested: string[]): string[] {
   const first = suggested.find((s) => !!s && !!s.trim());
   return [first ?? ""];
 }
+
+/** 面の頭に置く1行。 */
+export type Lead =
+  /** 提案が出ている（または、もう書いてある）。**書きなおす話をする** */
+  | "rewrite"
+  /** まだ1文字も無い。**書く話をする** */
+  | "write";
+
+/**
+ * 頭の1行を選ぶ。
+ *
+ * **提案が1本も出なかった人がいる**（本番で25人中6人。その人の口ぐせが
+ * 見つからなかっただけで、ここには何の意味も無い）。その人に
+ * 「このことばが入ります」と言うと、**何も無いところを指すことになる。**
+ *
+ * なぜ提案が無いのかは**書かない**（`docs/island-standards.md` 6）。
+ * 書くのは「これから何をするか」だけ。
+ *
+ * @param suggested 提案
+ * @param lines いま欄に入っていることば
+ * @return 頭の1行の選び
+ */
+export function leadKey(suggested: string[], lines: string[]): Lead {
+  if (suggested.some((s) => !!s && !!s.trim())) return "rewrite";
+  if (lines.some((t) => !!t && !!t.trim())) return "rewrite";
+  return "write";
+}
