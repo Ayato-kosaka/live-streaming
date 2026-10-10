@@ -18,44 +18,48 @@
 
 どれも赤くならない。
 
-## 2026-10-09 から、見るものが3つ増えた
+## 2026-10-10 から、見るものが3つ増えた
 
-**式を変えたなら、どの字がどう動いたかを出すまでが仕事**（あやと）。
-だから「表が貼れた」では足りない。
+あやと（#716）:
 
-  11. **「何日にわたって言ったか」が、候補と同じ並びで出る**
-  12. **落ちた字・上がった字・前と変わらなかった人数が出る**
-  13. **元の字と出す字の両方が出る**（直していないものは、
-      一覧に出てこないことで分かる）
+> **「うん」とか出すのやめて。採用するわけない。個性がなさすぎる。**
+> あと**候補が少なくてしっくりこない**。
 
-そして動きの突き合わせは**鍵で**やる。字でやると、末尾の句点を落として
-あるだけのものが「1本落ちて1本上がった」に化けて、**本当に動いた字が
-埋もれる。**
+  11. **採点表**（あやとが挙げた字が出たか）を、本文の頭に出す。
+      **出なかったものは理由と、データで見つかった近い字まで出す**
+  12. **門で落ちた字**を出す。「個性のない字が落ちた」は
+      **候補が0本でも通る**（`docs/island-misses.md` #19）
+  13. **1人1区切りで、番号を振って出す。**
+      10本を横に並べると読めないし、番号が無いと返せない
+
+そして**採点表のことばは、公開のログに1文字も出してはいけない。**
+`client_payload` から来るので、**ARGS と同じ顔でログに出る道が1本できた。**
 
 ## 確かめるもの
 
   1. **`apply` 無しでは1本も貼らない**
   2. `apply` を付けると**貼る**（本文が渡る）
-  3. ログと注記に、**名前も候補のことばも1文字も出ない**
+  3. ログと注記に、**名前も候補のことばも採点表のことばも1文字も出ない**
   4. **候補の出た人が先、出なかった人が後**。中は名前順（強さで並べない）。
      **名前と数の向きが逆の人を1人入れてある**——数の多い人が名前でも
      先だと、強い順に並べ替えても同じ並びになって、見分けがつかない
   5. **候補が0本の人も、行として出る**
-  6. 「何回言ったか」「何日にわたって」は**候補と同じ並び**で出る
+  6. 候補は**番号つきで、回数・日数・何人が言ったかと一緒に**出る
   7. **島ぜんぶの回数も、割合の点も、本文に出さない**
   8. 同じことばが2本になっている人を**書く**
   9. **人数が足りなければ、足りないと書く**
   10. 入れ物が空なら **2 で止まる**（0人と「読めなかった」を混ぜない）
   11〜13. 上の3つ
   14. **入れ物の中身といまの式が食い違ったら、ログで言う**
-      （`stamp_line_suggest` を流し直す前に貼ろうとしている）
 
 終了コード: 0=通った / 1=落ちた
 """
 
 import io
+import json
 import os
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -102,7 +106,7 @@ os.environ.setdefault("BQ_PROJECT_ID", "stamp-line-table-selftest")
 import stamp_line_table as tbl  # noqa: E402
 from _fake_fs import FakeDb, cid  # noqa: E402
 
-# **1文字でも出力に出たら落とすもの。**
+# **1文字でも公開のログに出たら落とすもの。**
 NAME_A = "いそぎんちゃく座"
 NAME_B = "やまびこ用務員"
 NAME_C = "こだまの観測者"
@@ -113,14 +117,17 @@ MINE_D1 = "どうも"
 # **`channelName` に入っているのはハンドル。** 名前のかわりにこれが
 # 並んだら落とす
 HANDLE_A = "@isoginchaku-za"
-MINE_A1 = "いやぁまいったね"
+MINE_A1 = "えがたえがた"
 # **末尾に句点のある字。** 機械が落とすので、元の字と出す字が違う
 MINE_A2_SRC = "ねむいよ。"
 MINE_A2 = "ねむいよ"
-MINE_B1 = "そうきたか"
-MINE_B2 = "そうきたか！！"
-# **その場かぎりの実況。** 前の式では1位だが、1日に固まっている
-EVENT = "特大花火が打ち上がりました"
+MINE_B1 = "ほなちがうか"
+MINE_B2 = "ほなちがうか！！"
+# **島のみんなが言う字。** 門で落ちる。**候補の表に出たら落とす**
+PLAIN = "こんばんは"
+# **あやとが挙げた字（採点表）。** `client_payload` で渡す
+SHEET_GOT = MINE_A1          # 候補に出る
+SHEET_NONE = "そんなこと言ってない"   # データに無い
 
 DOC = {
     "a": "a" + "0123456789abcdef" * 2,
@@ -129,6 +136,7 @@ DOC = {
     "d": "d" + "0123456789abcdef" * 2,
 }
 CH = {"a": cid("aa"), "b": cid("bb"), "c": cid("cc"), "d": cid("dd")}
+MOB = [cid(f"m{i}") for i in range(12)]
 
 BAD = 0
 
@@ -166,7 +174,7 @@ def chars() -> dict:
 
 
 def fake_db() -> FakeDb:
-    """3人ぶんの偽の Firestore。**いまの式で選び直したものと揃っている。**
+    """4人ぶんの偽の Firestore。**いまの式で選び直したものと揃っている。**
 
     Returns:
         偽の Firestore
@@ -209,14 +217,18 @@ def bqrows() -> list:
     Returns:
         並び
     """
-    return [
+    r = [
         (CH["a"], MINE_A1, 12, 6),
         (CH["a"], MINE_A2_SRC, 5, 4),
-        # b は**前の式では実況が1位**だった。1日に固まっているので落ちる
-        (CH["b"], EVENT, 9, 1),
+        # **島のみんなが言う字を、いちばん多く言っている人。**
+        # 門が効いていなければ、ここが候補の1位に来る
+        (CH["a"], PLAIN, 200, 60),
         (CH["b"], MINE_B1, 7, 5),
+        (CH["b"], PLAIN, 20, 9),
         (CH["d"], MINE_D1, 3, 3),
     ]
+    r += [(m, PLAIN, 30, 12) for m in MOB]
+    return r
 
 
 POSTED: list = []
@@ -236,12 +248,17 @@ def fake_post(issue, body):
     return 1000 + len(POSTED)
 
 
+SHEET = [{"name": NAME_A, "lines": [SHEET_GOT]},
+         {"name": NAME_B, "lines": [SHEET_NONE], "words": ["ちがうか"]},
+         {"name": NAME_D, "lines": []}]
+
+
 def run(apply: bool, data=None) -> int:
     """1回動かす。
 
     Args:
         apply: 貼るか
-        data: 偽の Firestore（省略すると3人ぶん）
+        data: 偽の Firestore（省略すると4人ぶん）
 
     Returns:
         終了コード
@@ -251,7 +268,15 @@ def run(apply: bool, data=None) -> int:
     tbl.db = lambda: fake
     tbl.island = lambda days: bqrows()  # noqa: ARG005
     tbl.post = fake_post
-    os.environ["ARGS"] = '{"apply": true}' if apply else "{}"
+    # **採点表は `client_payload` から渡す。** ARGS に置かない
+    body = {"check": SHEET}
+    if apply:
+        body["apply"] = True
+    fd, path = tempfile.mkstemp(suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"client_payload": body}, f)
+    os.environ["GITHUB_EVENT_PATH"] = path
+    os.environ["ARGS"] = "{}"
     return tbl.main()
 
 
@@ -276,46 +301,62 @@ def main() -> int:
           "末尾に手順どおりの署名が付く")
 
     print("== 本文の中身 ==")
-    for nm in (NAME_A, NAME_B, NAME_C, NAME_D):
-        check(nm in body, "名前が本文に出る（あやとと話すための表）")
-    for t in (MINE_A1, MINE_A2, MINE_B1):
-        check(t in body, "候補のことばが本文に出る")
-    check("| 6 / 4 |" in body, "**日数が候補と同じ並びで出る**")
-    check("| 12 / 5 |" in body, "**回数が候補と同じ並びで出る**")
-    check("何日にわたって" in body, "日数の欄がある")
+    for i, nm in enumerate((NAME_A, NAME_B, NAME_C, NAME_D)):
+        check(nm in body, f"名前が本文に出る（{i + 1}人目）")
+    for i, t in enumerate((MINE_A1, MINE_A2, MINE_B1)):
+        check(t in body, f"候補のことばが本文に出る（{i + 1}本目）")
+    check("| 1 | えがたえがた | その人だけ | 12 | 6 |" in body,
+          "**番号・ことば・何人が言ったか・回数・日数が1行で出る**")
+    check("| 2 | ねむいよ |" in body, "**2本目には2番が付く**")
     # 並び: 候補の出た人（名前順）→ 出なかった人
     i_got = body.index("### 候補が出た人")
     i_non = body.index("### 候補が1本も出なかった人")
     check(i_got < i_non, "**候補の出た人が先、出なかった人が後**")
-    check(i_got < body.index(NAME_A) < i_non,
-          "候補の出た人は、前の表に入る")
-    check(body.index(NAME_C) > i_non,
+    # **名前は採点表にも出る。** 並びを見るときは「候補が出た人」より
+    # 後ろから探す——頭から探すと、採点表に出た1件を数えてしまう
+    at_a = body.index(NAME_A, i_got)
+    at_b = body.index(NAME_B, i_got)
+    at_d = body.index(NAME_D, i_got)
+    check(i_got < at_a < i_non, "候補の出た人は、前の区切りに入る")
+    check(body.index(NAME_C, i_got) > i_non,
           "**候補が0本の人も、行として出る**（後ろの表）")
     # 名前順。`NAME_A`（い）→ `NAME_B`（や）
-    check(body.index(NAME_A) < body.index(NAME_B),
-          "中は名前順（**強い順ではない**）")
+    check(at_a < at_b, "中は名前順（**強い順ではない**）")
     check("4人" in body, "人数を書く")
     check("25人そろっていません" in body, "**足りないと書く**")
     # **名前順かどうかは、名前と数の向きが逆の人を1人入れて見る。**
     # 数の多い人が名前でも先だと、強い順に並べても同じ並びになる
-    check(body.index(NAME_D) < body.index(NAME_A) < body.index(NAME_B),
+    check(at_d < at_a < at_b,
           "**名前順に並んでいる**（数のいちばん小さい人が先頭）")
     # 選び方の内側（島ぜんぶの回数・割合・点）を本文に出さない
-    for w in ("割合", "島ぜんぶ", "点が", "スコア"):
+    for w in ("割合 0", "島ぜんぶで", "点が", "スコア"):
         check(w not in body, f"選び方の内側を本文に出さない（{w}）")
 
-    print("== 前の式との動き ==")
-    i_mv = body.index("### 前の式との動き")
-    check("#### 落ちた字（1本）" in body, "**落ちた字の本数を書く**")
-    check(EVENT in body[i_mv:], "**落ちた字そのものを出す**（目で見るため）")
-    check(EVENT not in body[:i_mv],
-          "**落ちた字を、候補の表には出さない**")
-    check("上がった字はありません" in body,
-          "上がった字が0本なら、0本と書く")
-    check("変わらなかったのは 2人" in body,
-          "**前と変わらなかった人数を書く**（全員入れ替わりを見つけるため）")
-    check("| 1 | 9 | 13 |" in body,
-          "落ちた字に、日数・回数・字数を並べる")
+    print("== 採点表（あやとが挙げた字が出たか）==")
+    i_sheet = body.index("### あやとが挙げた字が、出たか")
+    check(i_sheet < i_got, "**採点表は候補の前に出す**（ここが合否）")
+    check("2本のうち、候補に出たのは 1本" in body,
+          "**何本中何本出たかを書く**")
+    check(SHEET_GOT in body[i_sheet:i_got], "挙げた字が表に並ぶ")
+    check("**出た**" in body[i_sheet:i_got], "出たものは「出た」と書く")
+    check(SHEET_NONE in body[i_sheet:i_got], "出なかった字も並ぶ")
+    check("**データに無い**" in body[i_sheet:i_got],
+          "**データに無いものは「データに無い」と書く**")
+    check("ちがうか" in body[i_sheet:i_got]
+          and MINE_B1 in body[i_sheet:i_got],
+          "**語で探したぶんも並べる**（うろ覚えのぶん）")
+    check("（挙げていない）" in body[i_sheet:i_got],
+          "字を挙げていない人も行として出す")
+    check("言い方の揺れまで探したうえで" in body,
+          "**探し方を書く**（探さずに「無い」と言っていない）")
+
+    print("== 門で落ちた字 ==")
+    i_gate = body.index("### 門で落ちた字")
+    check(PLAIN in body[i_gate:], "**門で落ちた字そのものを出す**")
+    check(PLAIN not in body[i_got:i_non],
+          "**門で落ちた字は、候補の区切りに出さない**")
+    check("| 14人 | 200 |" in body[i_gate:],
+          "落ちた字に、何人が言ったかと回数を並べる")
 
     print("== 元の字と、出す字 ==")
     i_fix = body.index("### 手を入れた字")
@@ -329,7 +370,7 @@ def main() -> int:
     rc = run(apply=True, data=stale_db())
     check(rc == 0, "それでも貼れる（止めない）")
     _, body2 = POSTED[0] if POSTED else (0, "")
-    check("「そうきたか」／「そうきたか！！」" in body2,
+    check(f"「{MINE_B1}」／「{MINE_B2}」" in body2,
           "**同じことばが2本になっている人を書く**")
     check("入れ物の中身と、いま選び直したものが 1 人ぶん食い違います"
           in BUF.getvalue(),
@@ -351,15 +392,20 @@ def main() -> int:
     logged = BUF.getvalue()
     for b in (body, body2):
         logged = logged.replace(b, "")
-    for nm in (NAME_A, NAME_B, NAME_C, NAME_D):
-        check(nm not in logged, "**名前が公開のログに出ない**")
-    for t in (MINE_A1, MINE_A2, MINE_A2_SRC, MINE_B1, MINE_B2, EVENT,
-              MINE_D1):
-        check(t not in logged, "**候補のことばが公開のログに出ない**")
+    # **ここで確かめる字を、確かめの名前に入れない。**
+    # 入れると、この見張り自身の出力に出てしまって必ず落ちる
+    for i, nm in enumerate((NAME_A, NAME_B, NAME_C, NAME_D)):
+        check(nm not in logged, f"**名前が公開のログに出ない**（{i + 1}人目）")
+    for i, t in enumerate((MINE_A1, MINE_A2, MINE_A2_SRC, MINE_B1, MINE_B2,
+                           MINE_D1, SHEET_NONE)):
+        check(t not in logged,
+              f"**ことばが公開のログに出ない**（{i + 1}本目）")
     for ch in CH.values():
         check(ch not in logged, "**チャンネルIDが公開のログに出ない**")
     for d in DOC.values():
         check(d not in logged, "**図鑑の書類IDが公開のログに出ない**")
+    check("採点表: 2 本中 1 本が候補に出た" in logged,
+          "**採点表は、本数と記号だけログに出す**")
 
     print("== 入れ物が空 ==")
     rc = run(apply=True, data=FakeDb({"islandStampLine": {},
