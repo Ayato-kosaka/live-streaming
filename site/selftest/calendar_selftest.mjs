@@ -18,8 +18,10 @@
  *
  * ## 見ているもの
  *
- *  1. `CALENDARS` の `shots` が指す絵が**全部実在し、890×635**
- *     （`CAL_SHOT_W`×`CAL_SHOT_H`。**数は goods.ts から取る**）
+ *  1. `CALENDARS` の `shots` が指す絵が**全部実在し、890×760**
+ *     （`CAL_SHOT_W`×`CAL_SHOT_H`。**数は goods.ts から取る**）。
+ *     そして**1つの型に1枚**（2枚目を足した日に赤くなる——
+ *     面は1枚を板の幅いっぱいに出す形で、2枚目は下に積まれるだけ）
  *  2. `vote` が**空でなく、3つとも違う**
  *  3. `vote` が `LINE_WORDS` と**かぶっていない**
  *  4. **いいねの仕掛けが1本しか無い。** 付箋の口（`heartSticky` ほか）を
@@ -29,10 +31,11 @@
  * ## わざと壊して、赤くなることを見る
  *
  * ```bash
- * # 1. 絵の寸法を変える（890×635 でない絵を置いたことにする）
+ * # 1. 絵の寸法を変える（890×760 でない絵を置いたことにする）
+ * mkdir -p /tmp/badcal-public/goods/calendar
  * python3 -c "from PIL import Image; import sys
  * for n in sys.argv[1:]: Image.new('RGB',(640,480),(200,200,200)).save(n,'WEBP')" \
- *   /tmp/badcal/illust-01.webp …
+ *   /tmp/badcal-public/goods/calendar/{illust,scene,archive}.webp
  * CAL_PUBLIC=/tmp/badcal-public node site/selftest/calendar_selftest.mjs   # → 1
  *
  * # 2. 3つのうち2つの vote を同じ字にする
@@ -50,7 +53,19 @@
  * sed -i 's#.*from "@/components/goods/wordVotes";#import { heartSticky } from "@/lib/api";#' \
  *   /tmp/broken-goods-dir/CalendarTries.tsx
  * CAL_GOODS_DIR=/tmp/broken-goods-dir node site/selftest/calendar_selftest.mjs   # → 1
+ *
+ * # 5. 1つの型に2枚めの絵を足す（同じ1枚を、そのまま下へ複製する）
+ * python3 -c "import re,sys
+ * s=open(sys.argv[1],encoding='utf-8').read()
+ * m=re.search(r'      \{\n        src: \"/goods/calendar/illust\.webp\",\n.*?\n      \},\n',s,re.S)
+ * open(sys.argv[2],'w',encoding='utf-8').write(s[:m.end()]+m.group(0)+s[m.end():])" \
+ *   site/content/goods.ts /tmp/broken-two.ts
+ * CAL_GOODS_TS=/tmp/broken-two.ts node site/selftest/calendar_selftest.mjs   # → 1
  * ```
+ *
+ * **組み立てに失敗した写しは 1 ではなく 2 で落ちる**（型が合わない goods.ts を
+ * 渡したとき）。1 で落とすと「中身が食い違った」に見えるが、中身は1つも
+ * 読めていない。
  *
  * **対照は本物を1つも見る前に回る。** 絵の寸法を読む手と、仕掛けを数える手と、
  * 字のかぶりを見る手を、こちらで組んだ材料で両側から当てる（通るものが通り、
@@ -200,22 +215,22 @@ function mechanisms(dir) {
   };
   const vp8x = Buffer.alloc(10);
   vp8x.writeUIntLE(890 - 1, 4, 3);
-  vp8x.writeUIntLE(635 - 1, 7, 3);
+  vp8x.writeUIntLE(760 - 1, 7, 3);
   const lossy = Buffer.alloc(14);
   lossy[3] = 0x9d; lossy[4] = 0x01; lossy[5] = 0x2a;
   lossy.writeUInt16LE(890, 6);
-  lossy.writeUInt16LE(635, 8);
+  lossy.writeUInt16LE(760, 8);
   const lossless = Buffer.alloc(5);
   lossless[0] = 0x2f;
-  lossless.writeUInt32LE((890 - 1) | ((635 - 1) << 14), 1);
+  lossless.writeUInt32LE((890 - 1) | ((760 - 1) << 14), 1);
   for (const [tag, buf] of [
     ["VP8X", riff([chunk("VP8X", vp8x), chunk("ALPH", Buffer.alloc(3)), chunk("VP8 ", lossy)])],
     ["VP8 ", riff([chunk("VP8 ", lossy)])],
     ["VP8L", riff([chunk("VP8L", lossless)])],
   ]) {
     const got = webpSize(buf);
-    if (!got || got.w !== 890 || got.h !== 635) {
-      bad.push(`${tag} を ${JSON.stringify(got)} と読んだ（890×635 のはず）`);
+    if (!got || got.w !== 890 || got.h !== 760) {
+      bad.push(`${tag} を ${JSON.stringify(got)} と読んだ（890×760 のはず）`);
     }
   }
   /* **違う寸法を「合っている」と言わないか。** ここが効かないと、
@@ -264,14 +279,21 @@ writeFileSync(
   join(WORK, "goods.ts"),
   readFileSync(GOODS_TS, "utf8").replace(/@\/lib\//g, "./"),
 );
-execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
-  join(WORK, "goods.ts"),
-  "--outDir", OUT,
-  "--module", "commonjs",
-  "--target", "es2022",
-  "--strict",
-  "--skipLibCheck",
-], { stdio: "inherit" });
+/* 組み立てに失敗したら **2**（数えるものが無い）。1 で落とすと「カレンダーの
+   中身が食い違った」に見えるが、ここで落ちているのは型のほうで、中身は
+   1つも読めていない */
+try {
+  execFileSync(join(SITE, "node_modules", ".bin", "tsc"), [
+    join(WORK, "goods.ts"),
+    "--outDir", OUT,
+    "--module", "commonjs",
+    "--target", "es2022",
+    "--strict",
+    "--skipLibCheck",
+  ], { stdio: "inherit" });
+} catch {
+  give(2, `${relative(REPO, GOODS_TS)} を組み立てられなかった（上の tsc を見る）`);
+}
 const goods = createRequire(import.meta.url)(join(OUT, "goods.js"));
 
 const { CALENDARS, CAL_SHOT_W, CAL_SHOT_H, CAL_WORDS, LINE_WORDS } = goods;
@@ -292,8 +314,9 @@ console.log(
 console.log(`\n# 1. 絵が実在して、${CAL_SHOT_W}×${CAL_SHOT_H} か`);
 let shots = 0;
 for (const cal of CALENDARS) {
-  /* **1枚だけだと「同じ型で1年つづく」感じが分からない**（1月と7月） */
-  check(`${cal.id}: 試作が2枚ある`, cal.shots.length === 2, `${cal.shots.length}枚`);
+  /* **型に1枚**（あやと 2026-10-10、#759「またそれぞれの例は一つで良い」）。
+     面は1枚を板の幅いっぱいに出す形なので、2枚目は下に積まれるだけになる */
+  check(`${cal.id}: 試作が1枚だけ`, cal.shots.length === 1, `${cal.shots.length}枚`);
   for (const shot of cal.shots) {
     const f = join(PUBLIC, shot.src.replace(/^\//, ""));
     const name = `${cal.id}: ${shot.src}`;
