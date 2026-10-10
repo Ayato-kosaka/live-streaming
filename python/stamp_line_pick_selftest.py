@@ -204,6 +204,9 @@ def rows() -> list:
     for w in PLAIN:
         r.append((ME, w, 296, 92))
         r += [(m, w, 10, 8) for m in MOB]
+    # **切った字が候補になるには、だれかが1行まるごとそう打っていること。**
+    # ここが無いと「あや ちゃん」の後ろ半分のような切れ端が候補に来る
+    r += [(MOB[0], "ほんま", 1, 1), (MOB[1], "たのしかった", 1, 1)]
     # 島のみんなが言う挨拶・言い回し（剥がす相手・切り離す相手）
     r += [(m, "そうですね", 9, 6) for m in MOB]
     r += [(m, "こんばんは", 80, 40) for m in MOB]
@@ -261,15 +264,28 @@ check("20字に近い長い名セリフも残る",
       LONGONE in MINE, str(MINE))
 
 print("\n# 3. **1行に2つ言っている片方が、ちゃんと数えられている**")
-check("言い切りごとに切れている", TWO_HEAD in MINE, str(MINE))
+# **数えられているかを、鍵の回数で見る。** 候補に出るかで見ると、
+# 行まるごとのほうが点で勝つ回に素通りする（行の長さしだいで変わる）
+check("言い切りごとに切れて、回数が付いている",
+      C.said(ME, TWO_HEAD).get("n") == 2,
+      str(C.said(ME, TWO_HEAD)))
 check("**島のことばが1つも入っていない行でも、切れている**"
-      "（剥がす側では取れない）", PAIR_HEAD in MINE, str(MINE))
-check("切る前の行まるごとは並ばない（2つ言っているほう）",
-      PAIR not in MINE, str(MINE))
-check("後ろ（島のみんなが言う字）は出ていない",
+      "（剥がす側では取れない）",
+      C.said(ME, PAIR_HEAD).get("n") == 3,
+      str(C.said(ME, PAIR_HEAD)))
+check("切った字にも、島で何人が言ったかが付く",
+      C.speakers(TWO_HEAD) == 2, str(C.speakers(TWO_HEAD)))
+# **切った字は、だれかが1行まるごとそう打っている字だけ。**
+# 「あや ちゃん」の後ろ半分のような切れ端を候補にしない
+frag2 = [(ME, "あや ちゃん", 60, 2), (ME, "まるごと言う", 3, 3)]
+check("**だれも1行まるごと打っていない切れ端は、候補にならない**",
+      "ちゃん" not in texts_of(pick_all(frag2, [ME], top=5).get(ME, [])),
+      str(texts_of(pick_all(frag2, [ME], top=5).get(ME, []))))
+check("切る前の行まるごとは、そのまま候補になる",
+      "あや ちゃん" in texts_of(pick_all(frag2, [ME], top=5).get(ME, [])),
+      str(texts_of(pick_all(frag2, [ME], top=5).get(ME, []))))
+check("後ろ（島のみんなが言う字）は候補に出ていない",
       "おやすみなさい！" not in MINE, str(MINE))
-check("切る前の行まるごとは並ばない（同じ言い方を2本出さない）",
-      TWO not in MINE, str(MINE))
 
 print("\n# 4. **挨拶がくっついた名セリフが、剥がれている**")
 check("剥がした残りが出る", STUCK_HEAD in MINE, str(MINE))
