@@ -348,8 +348,11 @@ def usable(text: str) -> bool:
         return False
     if len(text) < MIN_LEN or len(text) > MAX_LEN:
         return False
-    # 記号と数字だけの行は、読んで何も分からない
-    if not re.search(r"[^\W\d_]", text, re.UNICODE):
+    # **字が2つ以上入っていること。** 記号と数字だけの行は読んで何も
+    # 分からないし、**字が1つしか無い行は顔文字の切れ端**
+    # （「T)」「('ω'」が候補に並んだ。2026-10-10 の実測）。
+    # 2つにすると「MC」「ヘイbro！」のような短い字は残る
+    if len(re.findall(r"[^\W\d_]", text, re.UNICODE)) < 2:
         return False
     return True
 
