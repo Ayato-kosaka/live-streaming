@@ -98,6 +98,7 @@ sys.path.insert(
 
 from logsafe import mask  # noqa: E402
 from stamp_line_pick import (  # noqa: E402
+    GOOD_LEN,
     MANY_SPEAKERS,
     TOP,
     gated,
@@ -448,7 +449,8 @@ def body_of(rows: list, counts, hits: list, top: int) -> str:
              "**2乗で効かせます。** 前は √ で弱めていた——そこが外した場所 |")
     p.append("| **回数** | 何回言ったか | **3乗根。** 効かせるが殴らせない。"
              "回数で殴ると、**回数の少ない名セリフがいちばん先に落ちる** |")
-    p.append("| **短さ** | 8字までは下駄なし、長いほど薄く | "
+    # **字数を手で書かない。** 式のほうを直した日に、ここが黙って嘘になる
+    p.append(f"| **短さ** | {GOOD_LEN}字までは下駄なし、長いほど薄く | "
              "スタンプの1枚に乗るのは短い字。ただし薄めかたを弱めました——"
              "**長い名セリフを殺さないため** |")
     p.append("| 日数 | 何日にわたって言ったか | "
