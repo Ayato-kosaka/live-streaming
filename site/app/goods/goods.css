@@ -303,16 +303,89 @@
 
 /* 数を取りに行っているあいだ。**0 と同じ絵にしない**ので、数字を出さずに
    場所だけ取る（`docs/island-design.md` 4章の「読み込み中」）。
-   ハート（48px）と同じ背にして、数が入ったときに行が飛ばないようにする */
-.gd-stampwait {
+   ハート（48px）と同じ背にして、数が入ったときに行が飛ばないようにする。
+
+   **スタンプとカレンダーで同じもの**（`components/goods/wordVotes.tsx` の
+   `VoteHeart` が出す）。名前が `gd-stamp…` のままだと、カレンダーの側が
+   「スタンプの板」を借りているように見えるので `gd-vote…` にしてある。 */
+.gd-votewait {
   display: block;
   width: 62px;
   /* **ハート（`.nt-heart` の min-height）と同じ背。** 1px でも違うと、
-     数が入った瞬間に10枚ぶんの行がいっせいに飛ぶ
+     数が入った瞬間に枠ぜんぶの行がいっせいに飛ぶ
      （`docs/island-standards.md` 7章） */
   height: 48px;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--rule) 30%, transparent);
+}
+
+/* ---- カレンダーの試作 --------------------------------------------------- */
+
+/* 型は**縦**に並べる。390px で3つを横に並べると、1枚が小指の爪になる */
+.gd-cals {
+  display: grid;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+/* **名前・ハート・2枚の絵を、同じ幅の中に入れる。**
+   PC では板が 1,000px を超えるので、絵だけを止めてハートを板の右端に置くと、
+   押しどころが何も無い余白にぽつんと浮いて、どの型のハートか分からなくなる。
+   止める幅はスタンプの並び（`.gd-grid`）と同じ 608px——面の中で1つだけ
+   別の縮尺になっていると、並べて見比べるものに見えない。
+   スマホ（390px）では板のほうが狭いので、ここは効かない */
+.gd-cal {
+  max-width: 608px;
+}
+
+/* 型の名前とハート。**ハートは型に1つ**（絵1枚ずつには付けない）。
+   知りたいのは「イラストか、風景か、スクショか」なので、押しどころも
+   型と同じ数だけ置く */
+.gd-calh {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.gd-calh > b {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ink);
+}
+/* ハートは右端。読めていないあいだ場所を取る板も同じ場所に置く */
+.gd-calh > .nt-heart,
+.gd-calh > .gd-votewait {
+  flex: none;
+  margin-left: auto;
+}
+
+/* 1つの型の中では、2枚を**横**に並べる。12ページあるものなので、
+   1枚だけだと「同じ型で1年つづく」感じが分からない（1月と7月） */
+.gd-calshots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+/* **スマホでは1枚ずつ縦に。** 390px で横に2枚並べると1枚 162px——
+   絵の中身は見分けがつくが、「紙として良いか」を決められる大きさではない。
+   どの絵がいいかを押してもらう面なので、**見て決められる大きさ**を取る
+   （縦に並べても、1月と7月の2枚が並ぶことは変わらない） */
+@media (max-width: 559px) {
+  .gd-calshots { grid-template-columns: minmax(0, 1fr); }
+}
+
+.gd-calshots > img {
+  display: block;
+  width: 100%;
+  /* 縦横比は `content/goods.ts` の1本から（`style` で入る）。
+     **ここに数を書かない**——焼き直した日に、ここだけ古くなる */
+  height: auto;
+  border-radius: var(--r-0);
+  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり）。
+     **押せないので厚みは付けない**（`island-design.md` 3-3） */
+  border: 1px solid var(--rule);
+  background: var(--paper-2);
+  object-fit: cover;
 }
 
 /* 広い画面では、ステッカーをもう一回り大きく。**1枚しか無いので主役にする** */

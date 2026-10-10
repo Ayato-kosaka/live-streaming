@@ -137,6 +137,95 @@ export const STICKERS: Sticker[] = [
 ];
 
 /**
+ * カレンダーの試作、1つの型。
+ *
+ * あやとの言葉（2026-10-10）:
+ *
+ * > カレンダー、何パターンか試作してみて みんなの反応見てみようか
+ * > ・添付画像みたいなイラストが良いのか
+ * > ・あやと島カードしてるみたいな海外の風景が良いのか
+ * > ・配信のアーカイブのスクショが良いのか
+ * > いいねで反応見れるように作ってください
+ *
+ * **絵は焼いたものを置くだけ**（`site/public/goods/calendar/`）。
+ * ここに書くのは、どの絵をどの名前で並べて、どの字にいいねを当てるか。
+ */
+export type Calendar = {
+  /** 変えない。焼いた絵のファイル名になる */
+  id: string;
+  /** 面に出す名前 */
+  name: string;
+  /**
+   * いいねの鍵。**付箋の字そのもの**（`components/goods/wordVotes.tsx` と
+   * 同じ当て方）。**3つとも違う字**で、**LINEスタンプのセリフと
+   * かぶらせない**——かぶると、別の欄のいいねを数える
+   * （`site/selftest/calendar_selftest.mjs` が毎 PR で見ている）。
+   */
+  vote: string;
+  /** 試作のページ。**2枚**（1月と7月） */
+  shots: { src: string; alt: string }[];
+};
+
+/**
+ * 試作のページ1枚の寸法。**3つとも同じなので、1枚ずつに書かない。**
+ *
+ * 卓上の1ページの形（横長）をそのまま焼いてある。場所を先に取るために要る
+ * （`<img>` の `width` / `height`。入れておかないと、絵が届いた瞬間に
+ * 3つぶんの行が飛ぶ。`docs/island-standards.md` 7章）。
+ */
+export const CAL_SHOT_W = 890;
+export const CAL_SHOT_H = 635;
+
+/**
+ * 並べる試作。**1つの型につき2枚**（1月と7月）。
+ *
+ * 12ページあるものなので、1枚だけだと「同じ型で1年つづく」感じが分からない。
+ * 冬と夏を並べると、同じ型で絵がどう変わるかが見える。
+ *
+ * **絵の名前は `<id>-01` / `<id>-02`。** `-01` が1月、`-02` が7月。
+ */
+export const CALENDARS: Calendar[] = [
+  {
+    id: "illust",
+    name: "イラスト",
+    vote: "イラストのカレンダー",
+    /* `alt` は**写っているものだけを言う**（`SUZURI` の `shots` と同じ作法） */
+    shots: [
+      { src: "/goods/calendar/illust-01.webp", alt: "イラストのカレンダー、1月のページ" },
+      { src: "/goods/calendar/illust-02.webp", alt: "イラストのカレンダー、7月のページ" },
+    ],
+  },
+  {
+    id: "scene",
+    name: "海外の風景",
+    vote: "海外の風景のカレンダー",
+    shots: [
+      { src: "/goods/calendar/scene-01.webp", alt: "海外の風景のカレンダー、1月のページ" },
+      { src: "/goods/calendar/scene-02.webp", alt: "海外の風景のカレンダー、7月のページ" },
+    ],
+  },
+  {
+    id: "archive",
+    name: "配信のスクショ",
+    vote: "配信のスクショのカレンダー",
+    shots: [
+      { src: "/goods/calendar/archive-01.webp", alt: "配信のスクショのカレンダー、1月のページ" },
+      { src: "/goods/calendar/archive-02.webp", alt: "配信のスクショのカレンダー、7月のページ" },
+    ],
+  },
+];
+
+/**
+ * 型の字だけ。**付箋の中から「この型のこと」を見分けるのに使う**
+ * （`LINE_WORDS` と同じ役。`Notes` の `omitTexts` にも渡す——
+ * 枠のほうで出ているので、一覧に同じ字が2回ならばないように）。
+ *
+ * **その場で `map` せずにここから渡す。** 画面の中で組むと、毎回新しい
+ * 配列に見えて数え直しが止まらない。
+ */
+export const CAL_WORDS = CALENDARS.map((c) => c.vote);
+
+/**
  * LINEスタンプの1枚。
  *
  * **セリフは決まっていて、絵はまだ届いていない。**
