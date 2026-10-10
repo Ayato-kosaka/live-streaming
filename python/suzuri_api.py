@@ -269,8 +269,10 @@ def characters(dry=False, items=SAFE_ITEMS, work="/tmp/suzuri"):
     扱いは人の判断が入る場面があるので、ここでは作るだけ（`.claude/skills/suzuri/characters.md`）。
     **背景なしの絵に透過が無い人は作らない**（あやと 2026-10-09。🃏 がそうだった）。"""
     os.makedirs(work, exist_ok=True)
-    have = {norm(m["title"].replace(SERIES, "").strip().split()[0])
-            for m in materials() if m.get("title", "").startswith(SERIES) and m["title"].replace(SERIES, "").strip()}
+    # 題の無い下書き（title が null）が混ざっている。m.get("title", "") では None が返る
+    titles = [(m.get("title") or "") for m in materials()]
+    have = {norm(t.replace(SERIES, "").strip().split()[0]) for t in titles
+            if t.startswith(SERIES) and t.replace(SERIES, "").strip()}
     chars = json.load(urllib.request.urlopen(urllib.request.Request(ISLAND, headers={"User-Agent": "ayato-island/1.0"}), timeout=60))["characters"]
     todo = [c for c in chars if norm(c["emoji"]) not in have]
     todo.sort(key=lambda c: c.get("createdAt") or "")
@@ -323,7 +325,7 @@ def main():
         ms = materials()
         print(f"{len(ms)} 件")
         for m in ms:
-            print(m["id"], "公開" if m.get("published") else "非公開", m.get("price"), m.get("title"))
+            print(m["id"], "公開" if m.get("published") else "非公開", m.get("price"), m.get("title") or "（題なし）")
     elif a.cmd == "characters":
         characters(a.dry_run, [x for x in a.items.split(",") if x])
     elif a.cmd == "create":
