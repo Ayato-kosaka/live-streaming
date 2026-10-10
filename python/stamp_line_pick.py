@@ -328,11 +328,15 @@ def fold(text: str) -> str:
     t = norm(text)
     if not t:
         return ""
-    t = t.translate(FOLD_DROP).translate(FOLD_SMALL)
-    # 片仮名 → 平仮名（ァ〜ヶ の 0x60 ぶん下）
+    t = t.translate(FOLD_DROP)
+    # 片仮名 → 平仮名（ァ〜ヶ の 0x60 ぶん下）。
+    # **小書きを大書きにするより先に。** 逆にすると、平仮名で書いた
+    # 「きゅーん」が「きゆん」になるのに、片仮名の「キューーーン」は
+    # 「きゅん」のままで、**同じことばが別の字として扱われる**
+    # （2026-10-10 に実際にそうなって、探して「無い」と答えた）
     t = "".join(
         chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in t)
-    return t
+    return t.translate(FOLD_SMALL)
 
 
 def usable(text: str) -> bool:
