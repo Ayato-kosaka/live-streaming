@@ -249,7 +249,10 @@ def fake_post(issue, body, comment=0):
     return comment or (1000 + len(POSTED))
 
 
-SHEET = [{"name": NAME_A, "lines": [SHEET_GOT]},
+SHEET = [{"name": NAME_A, "lines": [SHEET_GOT],
+          # **当たる語と当たらない語を、1人に両方渡す。**
+          # まとめて切ると、当たらなかったほうが黙って消える
+          "words": ["えがた", "あるはずの字"]},
          {"name": NAME_B, "lines": [SHEET_NONE], "words": ["ちがうか"]},
          # **字は挙げていないが、うろ覚えの語だけ渡された人。**
          # その語で探して無かったことを、表に出さないといけない
@@ -357,6 +360,10 @@ def main() -> int:
     check("「みかんの話」で探しましたが、**チャットには1本もありません**"
           in body[i_sheet:i_got],
           "**語で探して無かったことを、何で探したかと一緒に書く**")
+    check("「あるはずの字」で探しましたが、**チャットには1本もありません**"
+          in body[i_sheet:i_got],
+          "**当たった語と当たらなかった語が1人に両方あっても、"
+          "当たらなかったほうが消えない**")
     check(f"| **短さ** | {tbl.GOOD_LEN}字までは" in body,
           "**短さの字数を手で書いていない**（式から出す）")
     check("言い方の揺れまで探したうえで" in body,
