@@ -15,7 +15,7 @@ python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && pyth
 | `changed`（絵文字が変わった） | 同じ絵が別の絵文字で居る | 消さずに残し、題を新しい絵文字に直して `finish()`（#731 Q1: A。🧘 → 🧘‍♂️） |
 | `gone` | SUZURI に在って、島に居ない | **消す**（#731 Q3: A。島に居る人だけにそろえる） |
 | `opaque` | 背景なしの絵に透過が無い | **作らない**（#731 Q5: A）。島の絵が直ってから。下の 3 |
-| `short` | 品目が5つそろっていない住人（毎晩の Actions が3品目で作った人） | `finish(t, id, src)` で缶バッジとパネルを足して5品目にする（下の 5） |
+| `short` | 品目が5つそろっていない住人（途中で止まった・手で品目を外した など） | `finish(t, id, src)` で缶バッジとパネルを足して5品目にする（下の 5） |
 
 `characters.py` は島の口（`/island-api/characters`）から全員を取り、背景なしの元絵（`plain.full`）を
 `/home/ubuntu/suzuri/plain/` に落とし、透過を確かめ、余白を落とした版を `prep/` に作る。
@@ -61,10 +61,9 @@ for c in d["new"]:
 ## 5. いつ回すか
 
 **毎晩ひとりでに、ワークフロー `SUZURI API` が作る**（あやとの決め #732: C 案）。取り込みの完了に繋いであり、
-島に居て題に絵文字の付いた住人グッズが無い人を、**ステッカー・キーホルダー・マグの3品目**で作る。
-透過の無い人は飛ばす。結果は Actions の Summary に、作った人と商品ページの URL が並ぶ。
+島に居て題に絵文字の付いた住人グッズが無い人を、**5品目・大きさまで入れて**作る（大きさは `layout()`）。
+透過の無い人は飛ばす。大きさが入らなかったら、作りかけを消して赤で止まる（次の晩にもう一度）。
+結果は Actions の Summary に、作った人と商品ページの URL が並ぶ。
 
-**缶バッジとパネルは、まだこのスキルで足す。** API で大きさを保存できないため。
-`/island-daily` の 1-5 で `characters.py` を流すと、3品目だけの人が `short` に出るので、
-その人に `finish(t, id, src)` で5品目にそろえる（大きさは `layout()` が決める）。
-`python3 python/suzuri_api.py probe` で保存できると分かったら、`SAFE_ITEMS` に2つを足して、ここを消す。
+`/island-daily` の 1-5 では、**作られたものを目で見る**（`sheet()`）のと、`changed` `gone` `opaque` を片づける。
+`short`（品目が足りない住人）が出たら `finish(t, id, src)` で5品目にそろえる。
