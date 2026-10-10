@@ -402,13 +402,18 @@ def peels(text: str, common: set, known: set = None) -> list:
     **残った字が、島のどこかで**（誰かが1行まるごと、または言い切り1つとして）
     **言われている字でなければ剥がさない。** 剥がしは**回数を足すだけ**で、
     **新しい字を作らない**。「イケオニこんばんは」から「イケオニ」が
-    出るのは、その人が「イケオニ」とだけ打った行も在るからで、
+    出るのは、その人が「いけおにー」とだけ打った行も在るからで、
     その字が無いなら剥がす意味がない。
+
+    **在るかどうかは `fold` で見る**（片仮名と平仮名、伸ばし棒のちがいを
+    畳んだ形）。鍵のままで見ると、**「いけおにー」と打った行が在るのに
+    「イケオニ」が剥がせない**——同じことばを別の字で打っているだけなのに。
 
     Args:
         text: `clean()` を通した字
         common: 島のことば（打った形の集まり）。`common_of()` が作る
-        known: 島のどこかで言われている鍵の集まり（`None` なら見ない）
+        known: 島のどこかで言われている字の集まり（**畳んだ形**。
+            `None` なら見ない）
 
     Returns:
         残りの並び（0本か1本）
@@ -427,7 +432,7 @@ def peels(text: str, common: set, known: set = None) -> list:
             rest = t[:-ln].strip()
             if not usable(rest):
                 return []
-            if known is not None and norm(rest) not in known:
+            if known is not None and fold(rest) not in known:
                 return []
             return [rest]
     return []
@@ -670,8 +675,9 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
             cur[raw] = cur.get(raw, 0) + cnt
     common = common_of(got.spk, raw_of)
     # **剥がした残りは、島のどこかで言われている字だけ。**
-    # 1周目に出た鍵（丸ごと・言い切り）がその集まり
-    known = set(got.all_n)
+    # 1周目に出た鍵（丸ごと・言い切り）がその集まり。
+    # **畳んだ形で持つ**——片仮名と平仮名で打ち分けている人が居る
+    known = {fold(k) for k in got.all_n}
     cache2: dict = {}
 
     def with_peel(base: str) -> list:
