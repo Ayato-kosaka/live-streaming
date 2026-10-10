@@ -455,6 +455,10 @@ check(f"候補がたくさんあるときは {TOP} 本出る",
 print("\n# 15. 整えるところ")
 check("空は使えない", not usable(""))
 check("記号だけは使えない", not usable("！！！"))
+check("**顔文字の切れ端は使えない**（字が1つしか入っていない）",
+      not usable("T)") and not usable("('ω'"))
+check("字が2つ入っていれば使える（短い名前も残る）",
+      usable("MC") and usable("ヘイbro！"))
 check("数字だけは使えない", not usable("1234"))
 check("絵文字だけの行は空になる", clean("🎉🎉") == "")
 check("改行は1つの余白になる", clean("あし\nたも") == "あし たも")
