@@ -8,7 +8,7 @@
     d["changed"]  # 同じ絵文字で、島の絵が描き直された人 [{mid, char, emoji, src, sim}]
     d["gone"]     # SUZURI に在って、島に居ない人      [{mid, title}]
     d["opaque"]   # 背景なしの絵に透過が無い人（作らない）[{char, emoji}]
-    d["short"]    # 品目が5つそろっていない住人（Actions が3品目で作った人など）[{mid, char, emoji, src, items}]
+    d["short"]    # 品目が5つそろっていない住人（途中で止まった・手で品目を外した など）[{mid, char, emoji, src, items}]
 
 ## 何で突き合わせるか
 
