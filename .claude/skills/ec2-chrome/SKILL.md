@@ -122,6 +122,11 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
 - **このセッションの箱は途中で作り直されることがある**（2026-10-09 に1回）。裏で回していた
   `ec2.py run` は消えるが、EC2 の上のコマンドは走り続ける。手元に残したいものは早めに
   コミットし、EC2 の上の進み具合はログの JSON で確かめる
+- **前の send-command で開いたタブに繋ぎ直すと、固まっていることがある。** `Page.enable` も `Runtime.evaluate` も
+  返らない（YouTube Studio で 2026-10-10 に2回。ダイアログは出ていなかった）。`/json/close` ではなく、
+  ブラウザの WebSocket から `Target.createTarget` で新しいタブを作り、古いタブを `Target.closeTarget` で閉じる。
+  形は `youtube-studio/yt_studio.py` の `studio()` と `current()`
+- **最初の `up(名前)` は、既定のプロファイル（1.2GB）を複製するので数分かかる。** 120秒を超えるので裏で回す
 - **「測った数が合わない」ときは、見えていない変数を疑う。** SUZURI の大きさを1つの数で
   見積もって3回外した。原因は「倍率が絵の画素数に掛かる」ことで、画素数の違う絵を
   混ぜて測っていたから。数を2つ以上の見本で測り、**合わなければ何が違う見本かを先に並べる**

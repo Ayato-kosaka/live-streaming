@@ -1,0 +1,827 @@
+{
+ "checked_through": {
+  "start": 1791550477,
+  "jst": "2026-10-09 21:54",
+  "id": "yGEacTlskmY"
+ },
+ "last_run": "2026-10-10",
+ "hold": {
+  "GdpNMDDtj00": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "egwcxcu7YYw": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "KON8im0U6Tk": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "h-MRAFyj3Yc": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "kWnLiOQGhFE": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "jCwf-vlnEiM": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "iLNWFjrdVFw": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）",
+  "8Hhmi6vk0QY": "#757 Q2 の答え待ち（収益を権利者と分け合っている）",
+  "KBlD-bDbwgA": "#757 Q2 の答え待ち（収益を権利者と分け合っている）",
+  "GZjeibPxjlQ": "#757 Q2 の答え待ち（収益を権利者と分け合っている）"
+ },
+ "videos": {
+  "hK0SwIeAxg0": {
+   "title": "アルバニアの首都を待ち歩きや！",
+   "start": "2026-10-03 21:59",
+   "state": "editing",
+   "claims_left": 1,
+   "history": [
+    {
+     "date": "2026-10-10",
+     "claim": "IgdYFWnLsvc",
+     "song": "Marry You / Bruno Mars",
+     "action": "mute",
+     "segments": [
+      [
+       6603,
+       6634
+      ]
+     ]
+    }
+   ],
+   "why": "動画編集が進行中"
+  },
+  "C1dzddgQr30": {
+   "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
+   "start": "2026-10-01 22:26",
+   "state": "to-mute",
+   "claims_left": 10,
+   "history": [],
+   "why": "Time Of My Life (Extended Instrumental) / Danceteria"
+  },
+  "-XSFRIeEpSw": {
+   "title": "アルバニアでルーティン立て直すぞ！今週の作戦会議や！！",
+   "start": "2026-09-29 21:57",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Animal (on the dance floor) / KATSEYE"
+  },
+  "d2q2XuA7ss0": {
+   "title": "【最終日】親友に会いにスウェーデンまでヒッチハイクします。フィンランド🇫🇮ヘルシンキ　まで part 2",
+   "start": "2026-09-19 20:10",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Time Out of Mind / Lou Hayter"
+  },
+  "kunXt2sXnFQ": {
+   "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
+   "start": "2026-09-18 13:03",
+   "state": "to-mute",
+   "claims_left": 7,
+   "history": [],
+   "why": "DROP DEAD / "
+  },
+  "k4DxGQlkD6U": {
+   "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
+   "start": "2026-09-17 19:00",
+   "state": "to-mute",
+   "claims_left": 5,
+   "history": [],
+   "why": "Someone You Loved / Lewis Capaldi"
+  },
+  "f3W2JxAHsQs": {
+   "title": "【二日目】親友に会いにスウェーデンまで、ビャウィストクまで",
+   "start": "2026-09-13 16:23",
+   "state": "to-mute",
+   "claims_left": 3,
+   "history": [],
+   "why": "Tutti Frutti / Andro, Мот"
+  },
+  "HCI2IKaVEuQ": {
+   "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで part2",
+   "start": "2026-09-13 00:34",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Presja / Mortal, Jonatan"
+  },
+  "hrXYXcu9IDE": {
+   "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで",
+   "start": "2026-09-12 13:21",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Just Dance / Wasback"
+  },
+  "2eQ9F-vml24": {
+   "title": "ジョージアのはなびや！！！ジョージア最後の町歩き",
+   "start": "2026-09-07 02:49",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Signed, Sealed, Delivered I'm Yours / Blue"
+  },
+  "v3L539GafQo": {
+   "title": "海外の山の上の湖まで歩きます",
+   "start": "2026-08-23 19:01",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Anataga Iru Kotode / Uru"
+  },
+  "lPCx2VMe4pc": {
+   "title": "カズベキの滝見に行こ！カズ滝",
+   "start": "2026-08-12 22:01",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Nothing Compares 2 U / Sinéad O'Connor"
+  },
+  "ZcchwhRE_Ks": {
+   "title": "本気のクッキングや！！唐揚げ定食つくるぞ！！",
+   "start": "2026-07-31 22:00",
+   "state": "to-mute",
+   "claims_left": 3,
+   "history": [],
+   "why": "Любимая, любимая (AFP) (AFP) / Манвел Пашаян"
+  },
+  "d8UwWnFhjwY": {
+   "title": "7月の月末配信や！！アツい1ヶ月だった！朝日みるぞ！",
+   "start": "2026-07-26 10:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "iOSWFRFuAQ4": {
+   "title": "アプリ作り配信！チュートリアル機能と機能改善４０件出来るまで終われません！",
+   "start": "2026-07-25 17:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "EjRXQuzubLo": {
+   "title": "ジョージアイワシ祭り最終日！イワシのパエリア作ります！",
+   "start": "2026-07-24 22:02",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "SQXQOF1_Qhg": {
+   "title": "ジョージアでイワシの塩焼き作ります！",
+   "start": "2026-07-23 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "lAzVgZ_DdTw": {
+   "title": "ジョージアでイワシの冷やし中華作ります！",
+   "start": "2026-07-22 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "n-BJIqSuH9M": {
+   "title": "ジョージアでクッキング企画会議や！",
+   "start": "2026-07-21 22:01",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "X9BRHSxuK1g": {
+   "title": "ジョージアで今週の企画会議や！",
+   "start": "2026-07-20 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "8FwBXXD97Ik": {
+   "title": "新企画！ルーレットで行く！ジョージアぶらり旅",
+   "start": "2026-07-19 19:01",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "f0D0YNq41lI": {
+   "title": "アプリ作り配信！料理提案大型アップデート！力尽きるまでやりきる。",
+   "start": "2026-07-18 19:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "Hc-z52fs108": {
+   "title": "自作グルメアプリの食べログ越えなるか！？！？ならないか！？！？",
+   "start": "2026-07-17 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "c6FFPcY8Tac": {
+   "title": "ジョージア風南蛮漬け5種をついに食べます！",
+   "start": "2026-07-16 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "yftA1HCSLiQ": {
+   "title": "ジョージア風南蛮漬け5種の浸けます！！",
+   "start": "2026-07-15 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "uTgvBEi0FsM": {
+   "title": "ジョージア風南蛮漬け5種のタレ作ります",
+   "start": "2026-07-14 22:01",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "80yNqqNdYD4": {
+   "title": "ジョージア風企画会議のおじかんです",
+   "start": "2026-07-13 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "UeDyvW4zAgo": {
+   "title": "ジョージア風今週のふりかえり",
+   "start": "2026-07-12 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "Pnbi01M0t0I": {
+   "title": "土曜やしトビリシ海まで歩こか！",
+   "start": "2026-07-11 21:57",
+   "state": "to-mute",
+   "claims_left": 9,
+   "history": [],
+   "why": "a thousand years / Christina Perri"
+  },
+  "8I2AUKaWgH4": {
+   "title": "ジョージアで週末の企画会議や",
+   "start": "2026-07-10 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "e-UXOUdzTLU": {
+   "title": "ジョージア風コロッケの作るで！",
+   "start": "2026-07-09 22:01",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "I5O7KhOAuV0": {
+   "title": "ジョージア風コロッケのたねつくる",
+   "start": "2026-07-08 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "qfktydDGtIk": {
+   "title": "自作グルメアプリ「なに食べよ」の新機能（新条件＋深堀検索）を1日で作ります。作り切るまで終われません！出来上がったらみん",
+   "start": "2026-07-07 19:01",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "UvJzCI27X4Q": {
+   "title": "ごっつり今週の企画会議しよー",
+   "start": "2026-07-06 21:58",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "fk6rtyQMGY0": {
+   "title": "ジョージアの日曜日。クッキングをふりかえろー！",
+   "start": "2026-07-05 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "zQJSiKL0D3U": {
+   "title": "ジョージア風クレープ作ります！",
+   "start": "2026-07-04 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "4uICARYwXbY": {
+   "title": "ジョージア風ガレット作ります！",
+   "start": "2026-07-03 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "pcATx8Qq4s8": {
+   "title": "ジョジアデコンポトツクル",
+   "start": "2026-07-02 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "fwUCpg4w0zE": {
+   "title": "7月はじめまして！パンケーキ！探すぞ",
+   "start": "2026-07-01 21:59",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Circles / Atlantic Starr"
+  },
+  "otPMZDtsjTI": {
+   "title": "６月最後の配信やぁーー、今週の企画会議やぁ",
+   "start": "2026-06-30 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "nvm2i_dWnN8": {
+   "title": "６月末タップ結果発表！！！",
+   "start": "2026-06-29 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "anL82TSPG4c": {
+   "title": "６月末配信！なかなか素晴らしい1ヶ月やったんちゃう？",
+   "start": "2026-06-28 17:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "qnOk5802V0o": {
+   "title": "ジョージアは晴れとるわ！月末配信の企画会議",
+   "start": "2026-06-27 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "DPVX8gBosWM": {
+   "title": "食べたい料理の好き嫌い投票機能を1日で作ります！作り切るまで終われません！出来上がったらみんなで使ってみる！",
+   "start": "2026-06-24 18:43",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Gel Bahtımın Kar Beyazı / Müslüm Gürses"
+  },
+  "CivhSffnPXE": {
+   "title": "トビリシ海まで歩きます",
+   "start": "2026-06-07 21:32",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Koi Uta / Shota Shimizu"
+  },
+  "_Azl32caALw": {
+   "title": "ジョージア風フレンチトースト作るで！",
+   "start": "2026-05-25 21:58",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "JJdPN0ozwZI": {
+   "title": "セヴァン湖までセヴァンマス食べに行きます",
+   "start": "2026-05-20 19:16",
+   "state": "to-mute",
+   "claims_left": 3,
+   "history": [],
+   "why": "Мальборо / SAYAN"
+  },
+  "haHAczqMooM": {
+   "title": "セヴァン湖までセヴァンマス食べに行きます",
+   "start": "2026-05-20 13:02",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Ax tariner / Ashot Arakelyan"
+  },
+  "6ZezMEA3emg": {
+   "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
+   "start": "2026-05-10 14:48",
+   "state": "to-mute",
+   "claims_left": 35,
+   "history": [],
+   "why": "Suddenly / Richard Marx"
+  },
+  "gse7fek4Cpk": {
+   "title": "【5日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
+   "start": "2026-05-03 13:00",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Кусай мои губы / лучнадежды"
+  },
+  "fH13PheJneU": {
+   "title": "【3日目】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。\nアレニ 50キロ",
+   "start": "2026-05-01 13:01",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Тише, Тише / Yaia"
+  },
+  "5cWmE-KqHLA": {
+   "title": "四月の月末配信じゃい！！！",
+   "start": "2026-04-25 18:59",
+   "state": "to-mute",
+   "claims_left": 6,
+   "history": [],
+   "why": "Tout Doucement (Restored Edition '25) / Blossom Dearie"
+  },
+  "OeptOBqm1dY": {
+   "title": "ショッピングモールなう",
+   "start": "2026-04-15 00:48",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "rockstar / Post Malone"
+  },
+  "-e92y31em14": {
+   "title": "60本くらい量産したで。投稿できてなかったけど",
+   "start": "2026-03-20 21:59",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Almond Chocolate / ILLIT"
+  },
+  "65cHXjYLotA": {
+   "title": "そして復活",
+   "start": "2026-03-08 23:38",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "6xXbt7j8eMk": {
+   "title": "5分だけ。携帯の充電がこわれたぁぁぁ😢",
+   "start": "2026-03-08 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "a47b3QbCPp8": {
+   "title": "いっぬとローラースケート",
+   "start": "2026-03-07 21:59",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "_fKdIvPAb3Y": {
+   "title": "暫定一位のMVSみっけ！",
+   "start": "2026-02-25 21:57",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "hnVwWLDS6B8": {
+   "title": "ケバブ作る",
+   "start": "2026-02-17 00:31",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "L1YzClufXdY": {
+   "title": "いなり寿司のが好き",
+   "start": "2026-02-07 22:00",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Відірватись від землі / Наталія Могилевська"
+  },
+  "I_HQ2ikfjTY": {
+   "title": "一月最後の配信や",
+   "start": "2026-02-01 00:12",
+   "state": "to-mute",
+   "claims_left": 4,
+   "history": [],
+   "why": "Don't Change / Why Don't We"
+  },
+  "egwcxcu7YYw": {
+   "title": "行けるとこまで行くぞおおおお",
+   "start": "2026-01-23 21:59",
+   "state": "hold",
+   "claims_left": 6,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "iw-f7jtZXgs": {
+   "title": "【緊急】ハッピーニューイヤー",
+   "start": "2026-01-14 05:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "M1RvClI7mDg": {
+   "title": "アリロ。ジョージア正教会のクリスマス！！",
+   "start": "2026-01-07 18:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "TFfohG4dICY": {
+   "title": "ちょみんなごめん、一個言い忘れた",
+   "start": "2026-01-06 23:18",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "IiJX0zNQu0w": {
+   "title": "スパチャテスト",
+   "start": "2026-01-04 03:43",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "GdpNMDDtj00": {
+   "title": "㊗️アプリ広告開始！みんな感謝！！",
+   "start": "2025-12-29 22:00",
+   "state": "hold",
+   "claims_left": 15,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "4cwHL30x2-0": {
+   "title": "日本は一日クリスマスが早い。メリークリスマス🎅",
+   "start": "2025-12-25 21:59",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Jingle Bell Rock / Bobby Helms"
+  },
+  "47fQGDiMHOU": {
+   "title": "みんなの感性の結晶が出来てきたな〜",
+   "start": "2025-12-21 22:00",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "h-MRAFyj3Yc": {
+   "title": "㊗️チャンネル登録者１,000人超えました",
+   "start": "2025-12-16 22:25",
+   "state": "hold",
+   "claims_left": 8,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "kWnLiOQGhFE": {
+   "title": "㊗️動画本数500本突破！！！！",
+   "start": "2025-12-14 22:29",
+   "state": "hold",
+   "claims_left": 8,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "B-HpGmWTtgA": {
+   "title": "海外でアプリ作ってます",
+   "start": "2025-11-11 22:29",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Let's Twist Again / Chubby Checker"
+  },
+  "5DCVhyPVibM": {
+   "title": "大雨に荒れる黒海を見て、スイーツ巡り。",
+   "start": "2025-10-20 22:20",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "RW - Beach In The Snow / Jang"
+  },
+  "Gj9w3wu3jfQ": {
+   "title": "【神回】ヨルダンの死海×絶景リゾート街歩き＆贅沢ランチLIVE！",
+   "start": "2025-06-14 16:20",
+   "state": "to-mute",
+   "claims_left": 5,
+   "history": [],
+   "why": "Amaken El Sahar / Amr Diab"
+  },
+  "f9j0z_OcZpo": {
+   "title": "【神回】ヨルダンの古都アンマン街歩き！城塞遺跡から激ウマグルメまで全部盛り☕🍴",
+   "start": "2025-06-07 15:59",
+   "state": "to-mute",
+   "claims_left": 4,
+   "history": [],
+   "why": "Khalik Ma'aya / Amr Diab"
+  },
+  "iLNWFjrdVFw": {
+   "title": "GWエジプト祭前夜！エジプト🇪🇬ピザ🍕食べました",
+   "start": "2025-05-02 22:30",
+   "state": "hold",
+   "claims_left": 3,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "xuC2Qbr3wpE": {
+   "title": "エジプト🇪🇬料理のコシャリを食べました",
+   "start": "2025-04-28 22:30",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "ما تيسر من سورة يوسف 9 / الشيخ السيد سعيد"
+  },
+  "6_2Pw1uIDqI": {
+   "title": "トルコ🇹🇷イスタンブールでチャンネル登録500人を祝います",
+   "start": "2025-04-06 22:27",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Saat 03.00 (By Erhan Bayrak) / Bengü"
+  },
+  "hhW0LTh3xIw": {
+   "title": "【神回】トルコの渋谷？タクシム広場から、空と街が交差するガラタ塔まで！イスタンブール街歩き配信！",
+   "start": "2025-04-05 15:58",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Let It Happen (Soulwax Remix) / Tame Impala"
+  },
+  "-5Ihju_Nzgc": {
+   "title": "後編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃",
+   "start": "2025-03-29 01:53",
+   "state": "to-mute",
+   "claims_left": 13,
+   "history": [],
+   "why": "HEAVY FLOWERS / "
+  },
+  "BTl89GOp-QU": {
+   "title": "ベルギー🇧🇪リエージュからドイツ🇩🇪ケルンに移動します 21:30~",
+   "start": "2025-03-27 21:30",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Circles / Durand Jones & The Indications, Durand Jones"
+  },
+  "cIEa-dFtCZU": {
+   "title": "ベルギー🇧🇪リエージュ着きましたんで少し。ホステルが綺麗すぎました。",
+   "start": "2025-03-21 00:45",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Fly Me To The Moon (In Other Words) / Frank Sinatra, Count Basie"
+  },
+  "jCwf-vlnEiM": {
+   "title": "グッズ販売開始しました〜パリのホステルで少し。",
+   "start": "2025-03-14 22:39",
+   "state": "hold",
+   "claims_left": 7,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "mhw2n8CLiOM": {
+   "title": "ロンドンついてウキウキしてきたので少し",
+   "start": "2025-02-25 22:27",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Apparently Nothin' (Soul River) / Young Disciples"
+  },
+  "8Hhmi6vk0QY": {
+   "title": "前編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
+   "start": "2025-02-15 18:01",
+   "state": "hold",
+   "claims_left": 1,
+   "history": [],
+   "why": "#757 Q2 の答え待ち（収益を権利者と分け合っている）"
+  },
+  "5eN04y7p0JA": {
+   "title": "靴探しにイギリスのアウトレットいきます",
+   "start": "2025-02-02 19:26",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Ex-Files / The Bamboos"
+  },
+  "nKTakrtzWM8": {
+   "title": "イギリスの古都チェスターを歩く！城壁に囲まれた、黒白の美しい街並み、絶景リバーサイド散歩！",
+   "start": "2025-02-01 18:27",
+   "state": "to-mute",
+   "claims_left": 1,
+   "history": [],
+   "why": "Aawake At Night / half·alive"
+  },
+  "zDQm0D-YmGA": {
+   "title": "【神回】イギリスの港町リバプール街歩き！元世界遺産のドックと美術館・カフェを巡る旅！",
+   "start": "2025-01-31 18:46",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "nxWncbFtsSU": {
+   "title": "【神回】イギリス・スコットランドの首都エディンバラ歩き！絶景からハギスまで、歴史とグルメの贅沢旅！",
+   "start": "2025-01-19 18:38",
+   "state": "to-mute",
+   "claims_left": 4,
+   "history": [],
+   "why": "Life In The City / The Lumineers"
+  },
+  "S5yf_Ir50xU": {
+   "title": "【神回】イギリス第三の街リーズを歩く！武器博物館や、アート、ショッピングが最高でした。ドーナツも絶品！",
+   "start": "2025-01-17 18:42",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "_VmXgP27Dqw": {
+   "title": "【神回】イギリスの古都、ヨークを歩いてみた。中世感じる街並みが美しすぎました。そして、老舗ティーハウスが沁みました。",
+   "start": "2025-01-12 18:58",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  },
+  "KBlD-bDbwgA": {
+   "title": "【神回】イギリス・ロンドン街歩き配信。船乗って、博物館、美術館、丸亀製麺を見に行こう！",
+   "start": "2025-01-10 18:59",
+   "state": "hold",
+   "claims_left": 1,
+   "history": [],
+   "why": "#757 Q2 の答え待ち（収益を権利者と分け合っている）"
+  },
+  "1OmH1KpsnCY": {
+   "title": "【祝PC配信始動】カサ・アヤト竣工式",
+   "start": "2025-01-09 23:00",
+   "state": "to-mute",
+   "claims_left": 7,
+   "history": [],
+   "why": "Hypersonic Missiles / "
+  },
+  "GZjeibPxjlQ": {
+   "title": "ロンドンホステルで雑談配信でイギリスのスーパーの買い物を紹介しました。",
+   "start": "2025-01-06 22:56",
+   "state": "hold",
+   "claims_left": 1,
+   "history": [],
+   "why": "#757 Q2 の答え待ち（収益を権利者と分け合っている）"
+  },
+  "fqk0KVAqMps": {
+   "title": "【神回】ロンドン街散策！！ノッティングヒルから、アフタヌーンティー、冬のワンダーランドへ！",
+   "start": "2025-01-05 19:12",
+   "state": "to-mute",
+   "claims_left": 5,
+   "history": [],
+   "why": "Only Girl (In The World) (Dance Nation Mix – The Hits Edit) / Rihanna"
+  },
+  "ceSScIFdVuE": {
+   "title": "ヨーロッパ旅が終わってしまったので1時間配信します😕",
+   "start": "2024-12-25 00:03",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Little Bit More / Jidenna"
+  },
+  "yyFLknDb9oQ": {
+   "title": "【あと2日】最後の観光が最高すぎたので、ケバブ語ります",
+   "start": "2024-12-23 06:56",
+   "state": "to-mute",
+   "claims_left": 2,
+   "history": [],
+   "why": "Wave(s) / Lewis Del Mar"
+  },
+  "KON8im0U6Tk": {
+   "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
+   "start": "2024-12-07 23:56",
+   "state": "hold",
+   "claims_left": 4,
+   "history": [],
+   "why": "#757 Q3 の答え待ち（ミュートで消える音が2割を超える）"
+  },
+  "aencgvAwwn4": {
+   "title": "ハンガリー最終日、別れはいつも突然に😢",
+   "start": "2024-11-24 22:57",
+   "state": "enable",
+   "claims_left": 0,
+   "history": [],
+   "why": "申し立てが無いのに収益化がオフ"
+  }
+ }
+}
