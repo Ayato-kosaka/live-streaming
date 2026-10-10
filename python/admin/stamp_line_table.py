@@ -473,6 +473,12 @@ def body_of(rows: list, counts, hits: list, top: int) -> str:
         p.append("")
     p += sheet_block(hits)
     p.append("")
+    p.append("**あやとが挙げた字は、こちらの門より強いです。** "
+             "「落とした」と書いてあっても、**「それでいく」と書いてもらえれば"
+             "そのまま入れます**——門は機械が「島のみんなの字だ」と"
+             "数えただけで、その人の名セリフかどうかを決めるのは"
+             "あやとのほうです。")
+    p.append("")
     p.append("**「データに無い」は、言い方の揺れまで探したうえで言っています**"
              "（「ばあい」「ばぁい」「ばーい」、「コンバンワ」「コン バンワ」を"
              "同じものとして探しました）。**配信中の声で言っていて、"
@@ -625,15 +631,21 @@ def chunks(text: str, limit: int = CHUNK) -> list:
     return out
 
 
-def post(issue: int, body: str) -> int:
-    """issue にコメントを貼る。
+def post(issue: int, body: str, comment: int = 0) -> int:
+    """issue にコメントを貼る（`comment` を渡すと**そのコメントを書き替える**）。
 
     **ここが唯一、名前とことばが外へ出る口。** 貼ったものは公開の
     issue に出るが、ログには1文字も出さない（出すのは字数だけ）。
 
+    **書き替えの道があるのは、同じ表を貼り直すことがあるから。**
+    選び方を直して流し直すたびに新しいコメントが積まれると、
+    **あやとがどれを読めばいいのか分からなくなる**（古い表は残すが、
+    それは「別の選び方で出した表」であって、同じ選び方の貼り直しとは違う）。
+
     Args:
         issue: issue の番号
         body: 本文
+        comment: 書き替えるコメントの番号（0 なら新しく貼る）
 
     Returns:
         コメントの番号（落ちたら 0）
@@ -643,8 +655,11 @@ def post(issue: int, body: str) -> int:
     if not token:
         log.error("GH_TOKEN がありません。貼れません")
         return 0
+    where = (f"https://api.github.com/repos/{repo}/issues/comments/{comment}"
+             if comment else
+             f"https://api.github.com/repos/{repo}/issues/{issue}/comments")
     req = urllib.request.Request(
-        f"https://api.github.com/repos/{repo}/issues/{issue}/comments",
+        where,
         data=json.dumps({"body": body}).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {token}",
@@ -652,7 +667,7 @@ def post(issue: int, body: str) -> int:
             "Content-Type": "application/json",
             "User-Agent": "stamp-line-table",
         },
-        method="POST",
+        method="PATCH" if comment else "POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as res:
@@ -680,6 +695,8 @@ def main() -> int:
     a = payload()
     apply = bool(a.get("apply"))
     issue = int(a.get("issue") or ISSUE)
+    # **貼り替え先。** 同じ選び方の表を貼り直すときだけ渡す
+    comment = int(a.get("comment") or 0)
     days = int(a.get("days") or 0)
     top = int(a.get("top") or TOP)
 
@@ -771,18 +788,24 @@ def main() -> int:
                  '貼るには {"apply": true} を付けてください')
         return 0
 
+    if comment and len(parts) > 1:
+        # **切り分けたものを1つのコメントに書き替えられない。**
+        # 黙って1本目だけ書き替えると、残りが消える
+        log.error("本文が %d つに分かれるので、書き替えられません", len(parts))
+        return 3
     ids = []
     for i, part in enumerate(parts):
         tail = SIGN if i == len(parts) - 1 else ""
         head = "" if len(parts) == 1 else f"（{i + 1}/{len(parts)}）\n\n"
-        cid = post(issue, head + part + tail)
+        cid = post(issue, head + part + tail, comment)
         if not cid:
             log.error("%d 本目が貼れませんでした。%d 本は貼れています",
                       i + 1, len(ids))
             return 3
         ids.append(cid)
-    log.info("貼りました: #%d に %d コメント", issue, len(ids))
-    notice(f"セリフの表: #{issue} に {len(ids)} コメント貼りました")
+    how = "書き替えました" if comment else "貼りました"
+    log.info("%s: #%d に %d コメント", how, issue, len(ids))
+    notice(f"セリフの表: #{issue} に {len(ids)} コメント{how}")
     return 0
 
 
