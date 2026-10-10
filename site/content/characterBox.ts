@@ -243,7 +243,7 @@ export function charFit(
  */
 export const CHARACTER_BOX_BAKED = {
   /** 焼いた日 */
-  at: "2026-10-09",
+  at: "2026-10-10",
   /** そのとき口（`/island-api/characters`）が返した人数 */
   people: 100,
   /** そのうち、実際に測れた人数 */
