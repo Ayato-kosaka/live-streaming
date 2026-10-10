@@ -579,6 +579,13 @@ def _keys(text: str, common, known: set = None) -> list:
         k = norm(r)
         if not k or k in seen:
             continue
+        # **こちらが切って作った字は、島のだれかが1行まるごとそう打って
+        # いる字だけ。** これが無いと「あや ちゃん」の後ろ半分
+        # （「ちゃん」63回）のような**読んで何も分からない切れ端**が
+        # 上位に来る（2026-10-10 の実測）。
+        # **候補はぜんぶ、だれかが1行まるごとそう打った字**になる
+        if src != "丸" and known is not None and fold(r) not in known:
+            continue
         seen.add(k)
         out.append((k, r, src))
     return out
@@ -610,6 +617,7 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
     # **1回だけ整える。** 鍵を作るのがいちばん重いので、2周目で作り直さない。
     # 同じ字を何人も打っているので、鍵は字ごとに覚えて使い回す
     cache: dict = {}
+    whole: set = set()
     prep = []
     for row in rows:
         ch, text, n = row[0], row[1], row[2]
@@ -622,6 +630,9 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
             continue
         if base not in cache:
             cache[base] = _keys(base, None)
+            # **1行まるごとそう打たれた字**（`_keys` の先頭が丸ごと）。
+            # 切った字・剥がした字を候補にしてよいかの関所になる
+            whole.add(fold(base))
         days = cnt if d is None else min(int(d or 0), cnt)
         prep.append((ch or "", base, cnt, max(days, 0)))
     # **同じ人のぶんを続けて見る。** 人数を数えるのに `set` を使わない
@@ -677,10 +688,9 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
             cur = raw_of.setdefault(k, {})
             cur[raw] = cur.get(raw, 0) + cnt
     common = common_of(got.spk, raw_of)
-    # **剥がした残りは、島のどこかで言われている字だけ。**
-    # 1周目に出た鍵（丸ごと・言い切り）がその集まり。
+    # **切った字・剥がした字は、だれかが1行まるごとそう打っている字だけ。**
     # **畳んだ形で持つ**——片仮名と平仮名で打ち分けている人が居る
-    known = {fold(k) for k in got.all_n}
+    known = whole
     cache2: dict = {}
 
     def with_peel(base: str) -> list:
