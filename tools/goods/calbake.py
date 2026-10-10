@@ -82,7 +82,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = Path(__file__).resolve().parent          # tools/goods/
 REPO = HERE.parent.parent
@@ -142,13 +142,17 @@ WEEK_INK = (SUN_INK, INK, INK, INK, INK, INK, SEA_INK)
 #: `box` は元の絵から切り取るところ（左・上・右・下）。`None` なら中央で
 #: 枠の縦横比に合わせて切る。**縦と横の縮尺が揃っていないと対照が落ちる。**
 SOURCES = {
+    # 島の背景は `calisle.mjs` が撮る（看板も帯も住人も、島のあやとも外してある）。
+    # 主役は `over` で**ここで**大きく立てる。
     ("illust", "01"): dict(
         file="illust-01.png", box=None, url=None,
-        note="本番のあやと島を引きで撮ったもの（住人は1人も写していない）",
+        over=dict(art="characters/ayato.webp", h=0.44, cx=0.62, feet=0.70),
+        note="あやと島の浜と海。桟橋へ下りる道にあやとが立つ",
     ),
     ("illust", "02"): dict(
         file="illust-02.png", box=None, url=None,
-        note="同じ島の寄り。降り立ったところ",
+        over=dict(art="characters/ayato.webp", h=0.54, cx=0.44, feet=0.88),
+        note="あやと島の建物の並び。広場にあやとが立つ",
     ),
     ("scene", "01"): dict(
         file="scene-01.jpg", box=None,
@@ -167,16 +171,23 @@ SOURCES = {
     # 配信のコマは 1280×720 の中に 9:16 のタテ配信が入っていて、左右は同じ絵の
     # ぼかし。**ぼかしの帯は切り落とす**（刷ると帯にしか見えない）。
     # タテの中身は 720×9/16 = 405px ぶんで、左端は (1280-405)/2 = 437.5。
+    #
+    # **縦は上から 540px を取る**（2026-10-10）。PRISM Live の題の帯は**上**に、
+    # 「なに食べよの広告費」の目標バーは**下**に出るので、下を落とすと
+    # **金額だけが消えて、題は残る**（`docs/island-money.md`。実額を面に出さない）。
+    # 1回目は帯ごと落として、ただの顔写真になっていた——あやとが見本に出したのは
+    # 帯も題も入ったスクショそのものなので、落とすのは金額のところだけにする。
     ("archive", "01"): dict(
-        file="archive-01.jpg", box=(438, 75, 843, 615),
-        url="https://i.ytimg.com/vi/V6lxgRozDJk/maxres3.jpg",
-        note="2025-03-22『前編【神回】ベルギーのワッフルはここから始まった！？"
-             "リエージュで本物の味に出会う旅』V6lxgRozDJk",
+        file="archive-01.jpg", box=(438, 0, 843, 540),
+        url="https://i.ytimg.com/vi/M1RvClI7mDg/maxres1.jpg",
+        note="2026-01-07『アリロ。ジョージア正教会のクリスマス！！』M1RvClI7mDg"
+             "（1月の配信。題の帯つき・金額は枠の外）",
     ),
     ("archive", "02"): dict(
-        file="archive-02.jpg", box=(438, 20, 843, 560),
-        url="https://i.ytimg.com/vi/QmUl3HrOOC4/maxres3.jpg",
-        note="2025-05-10『【神回】エジプト・シワの隠れ塩湖とサハラ砂漠の夕焼けが神すぎた』QmUl3HrOOC4",
+        file="archive-02.jpg", box=(438, 0, 843, 540),
+        url="https://i.ytimg.com/vi/SQXQOF1_Qhg/maxres2.jpg",
+        note="2026-07-23『ジョージアでイワシの塩焼き作ります！』SQXQOF1_Qhg"
+             "（7月の配信。題の帯つき・この枠に金額は無い）",
     ),
 }
 
@@ -338,6 +349,42 @@ def rules(page: Image.Image) -> None:
     d.line([(COL_X, 172), (PAGE_W - PAD, 172)], fill=RULE, width=1)
 
 
+#: 主役を立てるときに敷く、足もとの影。島の影と同じ色・同じ濃さ
+#: （`IsleStage.tsx` の `fill="#134a2c" opacity=0.22`）。
+#: **これが無いと、人が地面から浮く**（`docs/island-design.md` 2章の3）。
+SHADE = (0x13, 0x4a, 0x2c)
+SHADE_A = 56
+
+
+def stand(page: Image.Image, over: dict) -> None:
+    """左の欄に、主役を1人立てる。
+
+    **島のほうからは同じ人を取り除いてある**（`calisle.mjs`）ので、
+    2人に見えることはない。引きの島のあやとは 20px の点にしかならず、
+    カレンダーの絵の主役にはならない——だからここで大きく置く。
+
+    `h` は絵の高さ（枠の高さに対する割合）、`cx` は左右のまんなか、
+    `feet` は**足の裏**の高さ。頭は上から測らない——立つものは
+    足もとで位置が決まる（上で合わせると、背の違う絵で宙に浮く）。
+    """
+    art = Image.open(REPO / "site" / "public" / over["art"]).convert("RGBA")
+    h = round(PHOTO_H * over["h"])
+    w = round(art.width * h / art.height)
+    art = art.resize((w, h), Image.LANCZOS)
+    cx = round(PHOTO_W * over["cx"])
+    bottom = round(PHOTO_H * over["feet"])
+
+    shade = Image.new("RGBA", (PHOTO_W, PHOTO_H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(shade)
+    rx, ry = w * 0.30, w * 0.085
+    d.ellipse([cx - rx, bottom - ry, cx + rx, bottom + ry], fill=SHADE + (SHADE_A,))
+    shade = shade.filter(ImageFilter.GaussianBlur(w * 0.03))
+    shade.alpha_composite(art, (cx - w // 2, bottom - h))
+
+    page.paste(Image.alpha_composite(
+        page.crop((0, 0, PHOTO_W, PHOTO_H)).convert("RGBA"), shade).convert("RGB"), (0, 0))
+
+
 def base(kind: str, no: str) -> Image.Image:
     """字を1文字も置いていない1枚。**濃さを測るとき、これが「地」になる。**"""
     page = Image.new("RGB", (PAGE_W, PAGE_H), PAPER_TOP)
@@ -345,6 +392,8 @@ def base(kind: str, no: str) -> Image.Image:
     im = Image.open(SRC / src["file"]).convert("RGB")
     box = photo_box(im, src["box"])
     page.paste(im.crop(box).resize((PHOTO_W, PHOTO_H), Image.LANCZOS), (0, 0))
+    if src.get("over"):
+        stand(page, src["over"])
     paper(page)
     seam(page)
     rules(page)
