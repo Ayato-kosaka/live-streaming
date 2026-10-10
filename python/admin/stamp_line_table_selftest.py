@@ -251,7 +251,9 @@ def fake_post(issue, body, comment=0):
 
 SHEET = [{"name": NAME_A, "lines": [SHEET_GOT]},
          {"name": NAME_B, "lines": [SHEET_NONE], "words": ["ちがうか"]},
-         {"name": NAME_D, "lines": []}]
+         # **字は挙げていないが、うろ覚えの語だけ渡された人。**
+         # その語で探して無かったことを、表に出さないといけない
+         {"name": NAME_D, "lines": [], "words": ["みかんの話"]}]
 
 
 def run(apply: bool, data=None, comment=0) -> int:
@@ -352,6 +354,9 @@ def main() -> int:
           "**語で探したぶんも並べる**（うろ覚えのぶん）")
     check("（挙げていない）" in body[i_sheet:i_got],
           "字を挙げていない人も行として出す")
+    check("「みかんの話」で探しましたが、**チャットには1本もありません**"
+          in body[i_sheet:i_got],
+          "**語で探して無かったことを、何で探したかと一緒に書く**")
     check(f"| **短さ** | {tbl.GOOD_LEN}字までは" in body,
           "**短さの字数を手で書いていない**（式から出す）")
     check("言い方の揺れまで探したうえで" in body,

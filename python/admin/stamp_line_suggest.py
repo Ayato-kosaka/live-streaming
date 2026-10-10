@@ -315,9 +315,13 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
         words = []
         for w in one.get("words") or []:
             words += [place(dict(x, word=w)) for x in by_word(w, own, counts)]
+        # **何の語で探したかも持ち回る。** 「1本も無い」と言うときに、
+        # **何で探して無かったのか**が出ないと、探していないのと同じに読める
+        asked = list(one.get("words") or [])
         if not one["lines"]:
             out.append({"name": one["name"], "line": "", "how": "空",
-                        "near": [], "words": words, "got": got})
+                        "near": [], "words": words, "got": got,
+                        "asked": asked})
             continue
         for line in one["lines"]:
             if not ch:
@@ -339,7 +343,8 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
                 else:
                     how = "無"
             out.append({"name": one["name"], "line": line, "how": how,
-                        "near": close, "words": words, "got": got})
+                        "near": close, "words": words, "got": got,
+                        "asked": asked})
     return out
 
 
