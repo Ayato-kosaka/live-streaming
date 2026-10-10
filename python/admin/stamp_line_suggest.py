@@ -289,7 +289,8 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
         picks: `{channelId: [候補]}`
 
     Returns:
-        `[{"name", "line", "how", "near": [...], "words": [...]}]`
+        `[{"name", "line", "how", "near", "words", "miss", "asked", "got"}]`。
+        `miss` は**探したのに1本も無かった語**
     """
     out = []
     for one in sheet:
@@ -312,16 +313,24 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
             """
             return dict(x, no=where.get(pick_mod.fold(x["text"]), 0))
 
-        words = []
+        # **語ごとに、当たったか当たらなかったかを分けて持つ。**
+        # まとめて3本に切ると、**当たった語の中身で埋まって、
+        # 当たらなかった語が黙って消える**（あやとは1人に2つの語を
+        # 挙げることがある。「ほなちがうか」と「◯◯だぞう」）
+        words, miss = [], []
         for w in one.get("words") or []:
-            words += [place(dict(x, word=w)) for x in by_word(w, own, counts)]
+            hit = [place(dict(x, word=w)) for x in by_word(w, own, counts)]
+            if hit:
+                words += hit[:2]
+            else:
+                miss.append(w)
         # **何の語で探したかも持ち回る。** 「1本も無い」と言うときに、
         # **何で探して無かったのか**が出ないと、探していないのと同じに読める
         asked = list(one.get("words") or [])
         if not one["lines"]:
             out.append({"name": one["name"], "line": "", "how": "空",
                         "near": [], "words": words, "got": got,
-                        "asked": asked})
+                        "asked": asked, "miss": miss})
             continue
         for line in one["lines"]:
             if not ch:
@@ -344,7 +353,7 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
                     how = "無"
             out.append({"name": one["name"], "line": line, "how": how,
                         "near": close, "words": words, "got": got,
-                        "asked": asked})
+                        "asked": asked, "miss": miss})
     return out
 
 

@@ -356,11 +356,15 @@ def sheet_block(hits: list) -> list:
             # ここに「1本も無い」と出すと、候補が無いように読める。
             # **語で探したぶんが在れば、そちらを先に出す**——
             # うろ覚えで挙げてもらったぶんは、ここにしか出てこない
-            if not found and h.get("asked"):
-                found = ["／".join(f"「{cell(w)}」" for w in h["asked"])
-                         + "で探しましたが、**チャットには1本もありません**"]
             found.append(f"候補は {len(h['got'])}本あります" if h["got"]
                          else "候補も1本も出ていません")
+        # **探したのに1本も無かった語は、語の名前ごと書く。**
+        # 書かないと「探していない」と同じに読める（あやと「データに
+        # 無いものは、はっきり書く」）
+        if h.get("miss"):
+            found.append(
+                "／".join(f"「{cell(w)}」" for w in h["miss"])
+                + "で探しましたが、**チャットには1本もありません**")
         if not found and h["how"] == "出":
             found = ["—"]
         out.append(
