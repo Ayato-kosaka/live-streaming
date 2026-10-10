@@ -339,11 +339,17 @@ def sheet_block(hits: list) -> list:
            "| :-- | --- | :-- | --- |"]
     for h in hits:
         found = []
-        for x in h["near"][:3]:
-            found.append(f"「{cell(x['text'])}」{x['n']}回"
-                         + ("" if x["how"] == "同じ" else f"（{x['how']}）"))
-        for x in h["words"][:3]:
-            found.append(f"「{cell(x['text'])}」{x['n']}回")
+        for x in h["near"][:3] + h["words"][:3]:
+            # **何人が言ったかまで出す。** 「門で落とした」と言うだけでは、
+            # あやとに「どれくらいみんなが言っているのか」が分からない
+            said = (f"「{cell(x['text'])}」{x['n']}回・"
+                    + ("その人だけ" if (x.get("people") or 0) <= 1
+                       else f"島で{x['people']}人"))
+            if x.get("how") and x["how"] != "同じ":
+                said += f"（{x['how']}）"
+            if x.get("no"):
+                said += f" ← **候補の{x['no']}番**"
+            found.append(said)
         if h["how"] == "空":
             # **字を挙げていない人には、候補の本数を出す。**
             # ここに「1本も無い」と出すと、候補が無いように読める

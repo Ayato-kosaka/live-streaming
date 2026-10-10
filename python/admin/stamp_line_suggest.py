@@ -297,9 +297,24 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
         own = (counts.own.get(ch) or {}) if ch else {}
         got = [t for t in texts_of(picks.get(ch, []))]
         folds = {pick_mod.fold(t) for t in got}
+        # **見つかった字が、候補の何番なのかまで言う。**
+        # 「在る」だけ言われても、あやとは候補の表を目で探し直すことになる
+        where = {pick_mod.fold(t): i + 1 for i, t in enumerate(got)}
+
+        def place(x: dict) -> dict:
+            """候補の何番かを足す。
+
+            Args:
+                x: `near()` / `by_word()` の1件
+
+            Returns:
+                `no` を足したもの（候補に無ければ 0）
+            """
+            return dict(x, no=where.get(pick_mod.fold(x["text"]), 0))
+
         words = []
         for w in one.get("words") or []:
-            words += [dict(x, word=w) for x in by_word(w, own, counts)]
+            words += [place(dict(x, word=w)) for x in by_word(w, own, counts)]
         if not one["lines"]:
             out.append({"name": one["name"], "line": "", "how": "空",
                         "near": [], "words": words, "got": got})
@@ -308,7 +323,7 @@ def sheet_hits(sheet: list, counts, picks: dict) -> list:
             if not ch:
                 how, close = "？", []
             else:
-                close = near(line, own, counts)
+                close = [place(x) for x in near(line, own, counts)]
                 k = norm(line)
                 f = pick_mod.fold(line)
                 if f in folds:
