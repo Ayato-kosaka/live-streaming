@@ -18,6 +18,7 @@ description: SUZURI（suzuri.jp/ayato_arigato）のグッズを、EC2 のログ�
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
 | `suzuri_ops.py` | EC2（`/home/ubuntu/cdp/`） | 読む・書く・上げる・消す・大きさを決める・見本を並べて焼く |
+| `login.py` ＋ `login_ec2.sh` | EC2 ＋ 手元 | ログインの確かめ（`check`）と、切れていたときの Google ログイン（確認コードはあやとから） |
 | `characters.py` | EC2（`/home/ubuntu/cdp/`） | 島のキャラと SUZURI を突き合わせ、「作る／差し替える／島に居ない／透過なし」を出す |
 | `python/suzuri_common.py` | どちらでも | 大きさ・下ごしらえ・透過・題と本文。**EC2 のスキルと Actions が同じものを読む** |
 | `python/suzuri_api.py` ＋ `.github/workflows/suzuri_api.yml` | GitHub Actions | 公式の API を呼ぶ口。**早いときはこちらを先に使う**（あやと #732）。毎晩、新しいキャラの住人グッズを5品目（大きさまで）で作る |
