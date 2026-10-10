@@ -353,9 +353,14 @@ def sheet_block(hits: list) -> list:
             found.append(said)
         if h["how"] == "空":
             # **字を挙げていない人には、候補の本数を出す。**
-            # ここに「1本も無い」と出すと、候補が無いように読める
-            found = [f"候補は {len(h['got'])}本あります" if h["got"]
-                     else "候補も1本も出ていません"]
+            # ここに「1本も無い」と出すと、候補が無いように読める。
+            # **語で探したぶんが在れば、そちらを先に出す**——
+            # うろ覚えで挙げてもらったぶんは、ここにしか出てこない
+            if not found and h.get("asked"):
+                found = ["／".join(f"「{cell(w)}」" for w in h["asked"])
+                         + "で探しましたが、**チャットには1本もありません**"]
+            found.append(f"候補は {len(h['got'])}本あります" if h["got"]
+                         else "候補も1本も出ていません")
         if not found and h["how"] == "出":
             found = ["—"]
         out.append(
