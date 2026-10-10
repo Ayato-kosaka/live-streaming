@@ -425,6 +425,17 @@ def main() -> int:
     check("採点表: 2 本中 1 本が候補に出た" in logged,
           "**採点表は、本数と記号だけログに出す**")
 
+    print("== 候補が0本の人が居ないとき ==")
+    full = fake_db()
+    full.data["islandStampLine"][DOC["c"]] = {
+        "channelId": CH["c"], "suggested": [MINE_B1], "suggestedFrom": [MINE_B1]}
+    rc = run(apply=True, data=full)
+    check(rc == 0, "それでも貼れる")
+    _, body3, _w3 = POSTED[0] if POSTED else (0, "", 0)
+    check("候補が0本の0人" not in body3,
+          "**0人のときに「0人と、」と書かない**（数は合っているのに読めない）")
+    check("1人もいません" in body3, "0人なら「1人もいません」と書く")
+
     print("== 入れ物が空 ==")
     rc = run(apply=True, data=FakeDb({"islandStampLine": {},
                                       "islandCharacter": {}}))
