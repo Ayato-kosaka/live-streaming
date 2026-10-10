@@ -156,9 +156,16 @@ PAIR_HEAD = "ほんま！"
 # 同じ回数なら丸ごとのほうが先に並ぶので、切れ端は候補に出ない
 SPACED = "コン バンワ"
 
-# **挨拶がくっついている名セリフ。** 剥がすと前だけ残る
+# **挨拶がくっついている名セリフ。** 剥がすと前だけ残る。
+# **剥がした残りは、その人が丸ごとそう打った行も在るときだけ出る**
+# （剥がしは回数を足すだけで、新しい字を作らない）
 STUCK = "イケオニこんばんは"
 STUCK_HEAD = "イケオニ"
+
+# **長すぎる行。** 尻尾に島のことばが付いているが、**剥がしてはいけない**
+# ——縮めて使える長さにするのは、名セリフを作っているのと同じ
+TOOLONG = "あとは雨の日にすべらなさそうなのでそうですね"
+TOOLONG_CUT = "あとは雨の日にすべらなさそうなので"
 
 # **長い名セリフ。** 20字ちょうど。短さの下駄で消してはいけない
 LONGONE = "この先のコンビニで買ってやってくれ"
@@ -178,6 +185,8 @@ def rows() -> list:
         (ME, PAIR, 3, 2),
         (ME, SPACED, 9, 7),
         (ME, STUCK, 16, 16),
+        (ME, STUCK_HEAD, 3, 3),
+        (ME, TOOLONG, 1, 1),
         (ME, LONGONE, 4, 3),
         (ME, "w", 40, 20),              # 短すぎる。**落ちる**
         (ME, "https://example.invalid/とてもすごい", 5, 4),  # URL。**落ちる**
@@ -195,7 +204,8 @@ def rows() -> list:
     for w in PLAIN:
         r.append((ME, w, 296, 92))
         r += [(m, w, 10, 8) for m in MOB]
-    # 島のみんなが言う挨拶（剥がす相手・切り離す相手）
+    # 島のみんなが言う挨拶・言い回し（剥がす相手・切り離す相手）
+    r += [(m, "そうですね", 9, 6) for m in MOB]
     r += [(m, "こんばんは", 80, 40) for m in MOB]
     r += [(m, "おやすみなさい！", 12, 9) for m in MOB]
     return r
@@ -272,6 +282,14 @@ check("**剥がした残りが、剥がす前の字より先に並ぶ**"
 check("**頭は剥がさない**（語尾だけの切れ端を作らない）",
       "こんばんは" not in MINE and all(not t.startswith("ニ") for t in MINE),
       str(MINE))
+check("剥がすと回数が足される（丸ごと3回 ＋ 挨拶つき16回 ＝ 19回）",
+      [c["n"] for c in GOT[ME] if c["text"] == STUCK_HEAD] == [19],
+      str([(c["text"], c["n"]) for c in GOT[ME]]))
+check("**長すぎる行の尻尾は剥がさない**"
+      "（縮めて使える長さにするのは、名セリフを作っているのと同じ）",
+      TOOLONG_CUT not in MINE, str(MINE))
+check("剥がせない行は、そのまま（長すぎるので候補にも出ない）",
+      TOOLONG not in MINE and len(TOOLONG) > MAX_LEN, str(MINE))
 
 print("\n# 4.5 **空白で切っても、丸ごとのほうが残る**")
 check("空白で区切った名セリフが、そのまま候補に出る",
@@ -305,6 +323,14 @@ low = [(ME, "わけあい", 4, 3), (YOU, "わけあい", 9, 5)]
 check("相手のほうが多く言っている字は落ちる",
       "わけあい" not in texts_of(pick_all(low, [ME]).get(ME, [])),
       str(texts_of(pick_all(low, [ME]).get(ME, []))))
+# **切れ端。** こちらが切って出てきた字は、1回では通さない
+frag = [(ME, "つなげて かいた1かい", 1, 1), (ME, "まるごと1かい", 1, 1)]
+check("**1回しか言っていない切れ端は落ちる**（切った片方）",
+      "つなげて" not in texts_of(pick_all(frag, [ME]).get(ME, [])),
+      str(texts_of(pick_all(frag, [ME]).get(ME, []))))
+check("**1行まるごと1回なら残る**（その人がそう打った）",
+      "まるごと1かい" in texts_of(pick_all(frag, [ME]).get(ME, [])),
+      str(texts_of(pick_all(frag, [ME]).get(ME, []))))
 # **回数。** 2人で分けているなら、1回では通さない
 one = [(ME, "いちどだけ", 1, 1), (YOU, "いちどだけ", 1, 1)]
 check(f"2人が言っている字は、{MIN_SAID} 回言っていないと落ちる",

@@ -377,7 +377,7 @@ def parts(text: str) -> list:
     return got[:MAX_PARTS]
 
 
-def peels(text: str, common: set) -> list:
+def peels(text: str, common: set, known: set = None) -> list:
     """**後ろにくっついた島のことばを剥がした残り**を返す。
 
     「イケオニこんばんは」の「こんばんは」は島のみんなの字で、
@@ -393,9 +393,22 @@ def peels(text: str, common: set) -> list:
     剥がすのは**いちばん長く一致するもの1つだけ。** 何度も剥がすと、
     どんな字でも2字まで削れてしまう。
 
+    **剥がしてよいのは、元の行がそのままでも使える長さのときだけ。**
+    長すぎる行の尻尾を落として使える長さに縮めるのは、剥がすのではなく
+    **名セリフを作っている**（2026-10-10 に実際にそうなった——
+    20字を超える行の尻尾が落ちて、「あとは雨の日に滑らなさ」のような
+    **途中で切れた字**が候補の3〜10番を埋めた）。
+
+    **残った字が、島のどこかで**（誰かが1行まるごと、または言い切り1つとして）
+    **言われている字でなければ剥がさない。** 剥がしは**回数を足すだけ**で、
+    **新しい字を作らない**。「イケオニこんばんは」から「イケオニ」が
+    出るのは、その人が「イケオニ」とだけ打った行も在るからで、
+    その字が無いなら剥がす意味がない。
+
     Args:
         text: `clean()` を通した字
         common: 島のことば（打った形の集まり）。`common_of()` が作る
+        known: 島のどこかで言われている鍵の集まり（`None` なら見ない）
 
     Returns:
         残りの並び（0本か1本）
@@ -403,13 +416,20 @@ def peels(text: str, common: set) -> list:
     t = (text or "").strip()
     if not t or not common:
         return []
+    # **長すぎる行は剥がさない。** 縮めて使える長さにするのは別のこと
+    if not usable(t):
+        return []
     # **長いほうから見て、最初に当たったところで止める。**
     # 短い一致（「んは」）で切ると、切りすぎる
     top = min(PEEL_LEN, len(t) - MIN_LEN)
     for ln in range(top, MIN_LEN - 1, -1):
         if t[-ln:] in common:
             rest = t[:-ln].strip()
-            return [rest] if usable(rest) else []
+            if not usable(rest):
+                return []
+            if known is not None and norm(rest) not in known:
+                return []
+            return [rest]
     return []
 
 
@@ -524,33 +544,35 @@ def common_of(spk: Counter, raw_of: dict) -> set:
     return out
 
 
-def _keys(text: str, common) -> list:
+def _keys(text: str, common, known: set = None) -> list:
     """1行から数える鍵を作る。**行まるごと・言い切り・剥がした残り。**
 
     Args:
         text: その人が打った字（生）
         common: 剥がしてよい島のことばの集まり（無ければ剥がさない）
+        known: 島のどこかで言われている鍵の集まり（剥がす先を縛る）
 
     Returns:
-        `[(鍵, 打った形, 剥がした残りか)]`。**同じ鍵は1行から1回だけ**
-        （同じ回数を2回数えない）
+        `[(鍵, 打った形, 出どころ)]`。出どころは
+        `"丸"`（1行まるごと）/ `"切"`（言い切り1つ）/ `"剥"`（剥がした残り）。
+        **同じ鍵は1行から1回だけ**（同じ回数を2回数えない）
     """
     base = clean(text)
     if not base:
         return []
-    raws = [(base, False)]
-    raws += [(r, False) for r in parts(base)]
+    raws = [(base, "丸")]
+    raws += [(r, "切") for r in parts(base)]
     if common:
-        for r, _ in list(raws):
-            raws += [(x, True) for x in peels(r, common)]
+        for r, _src in list(raws):
+            raws += [(x, "剥") for x in peels(r, common, known)]
     out = []
     seen = set()
-    for r, cut in raws:
+    for r, src in raws:
         k = norm(r)
         if not k or k in seen:
             continue
         seen.add(k)
-        out.append((k, r, cut))
+        out.append((k, r, src))
     return out
 
 
@@ -612,7 +634,7 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
         for ch, base, cnt, days in prep:
             if ch != here:
                 here, mine = ch, set()
-            for k, raw, cut in keys_of(base):
+            for k, raw, src in keys_of(base):
                 c.all_n[k] += cnt
                 if ch and k not in mine:
                     mine.add(k)
@@ -621,14 +643,19 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
                     continue
                 box = c.own.setdefault(ch, {})
                 slot = box.setdefault(k, {"n": 0, "d": 0, "raw": Counter(),
-                                          "cut": False})
+                                          "cut": False, "whole": False})
                 slot["n"] += cnt
                 slot["d"] = max(slot["d"], days)
                 slot["raw"][raw] += cnt
                 # **剥がした残りかどうかを覚える。**
                 # 同じ点なら、剥がした残りのほうを先に並べる（`pick`）
-                if cut:
+                if src == "剥":
                     slot["cut"] = True
+                else:
+                    # **1行まるごと（または言い切り1つ）そう打ったか。**
+                    # 1回しか言っていない字を候補にしてよいのは、
+                    # ここが立っているときだけ（`gate_of`）
+                    slot["whole"] = True
         return c
 
     got = walk(lambda base: cache[base])
@@ -638,10 +665,13 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
     # 「島で何人が言っているか」を知らないと、剥がしてよい字が分からない
     raw_of: dict = {}
     for _ch, base, cnt, _d in prep:
-        for k, raw, _cut in cache[base]:
+        for k, raw, _src in cache[base]:
             cur = raw_of.setdefault(k, {})
             cur[raw] = cur.get(raw, 0) + cnt
     common = common_of(got.spk, raw_of)
+    # **剥がした残りは、島のどこかで言われている字だけ。**
+    # 1周目に出た鍵（丸ごと・言い切り）がその集まり
+    known = set(got.all_n)
     cache2: dict = {}
 
     def with_peel(base: str) -> list:
@@ -651,10 +681,10 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
             base: 整えた字
 
         Returns:
-            `[(鍵, 打った形)]`
+            `[(鍵, 打った形, 出どころ)]`
         """
         if base not in cache2:
-            cache2[base] = _keys(base, common)
+            cache2[base] = _keys(base, common, known)
         return cache2[base]
 
     return walk(with_peel)
@@ -695,7 +725,8 @@ def gate_of(key: str, slot: dict, counts: Counts) -> tuple:
     total = max(int(counts.all_n.get(key, n)), n, 1)
     one = {"text": text, "from": src, "n": n, "d": d,
            "people": people, "share": n / total,
-           "cut": bool(slot.get("cut"))}
+           "cut": bool(slot.get("cut")),
+           "whole": bool(slot.get("whole", True))}
     if not usable(src) or not usable(text):
         return (False, "形", one)
     if people >= MANY_SPEAKERS:
@@ -703,6 +734,11 @@ def gate_of(key: str, slot: dict, counts: Counts) -> tuple:
         return (False, "人数", one)
     if n < lone_said(people):
         return (False, "回数", one)
+    # **1回しか言っていない字を候補にしてよいのは、その人がその行を
+    # 丸ごとそう打ったときだけ。** こちらが切ったり剥がしたりして出てきた
+    # 切れ端は、1回では「その人が言った」と言えない
+    if n < MIN_SAID and not one["whole"]:
+        return (False, "切れ端", one)
     if one["share"] < MIN_SHARE:
         return (False, "割合", one)
     return (True, "", one)
