@@ -139,8 +139,13 @@ MAX_LEN = 20
 MIN_LEN = 2
 
 # **ここまでなら、字の大きさを落とさずにスタンプの絵に乗る。**
-# 20（上限）との差が「短さ」の下駄になる
-GOOD_LEN = 8
+# 20（上限）との差が「短さ」の下駄になる。
+#
+# **8 から 12 に広げた**（2026-10-10、本番の1回目を見て）。
+# 8 のままだと、あやとが名セリフとして挙げた「まめまめキューーーン」（11字）が
+# **同じ回数・同じ独占ぐあいの7字の字に負けて、10本から落ちた。**
+# スタンプの絵に11字は普通に乗るので、ここで負けるのは下駄の付けすぎ
+GOOD_LEN = 12
 
 # 1人あたり出す本数。**あやと「候補が少なくてしっくりこない」**（#716）。
 # 画面に出るのは口が切る先頭3本なので、ここを増やしても画面は変わらない
@@ -211,9 +216,14 @@ TAIL = re.compile(r"[!?！？ー〜~…。、\.wｗ笑草]+$")
 # 笑いも伸ばし棒も、**その人の言い方そのもの**なので触らない
 TIDY_TAIL = re.compile(r"[。、]+$")
 
-# **言い切りの切れ目。** 言い終わりの印（その印は前の側に残す）と、空白。
-# 「たのしかった！ おやすみなさい！」を2本にするのがこれ
-SPLIT = re.compile(r"(?<=[。！？!?♪…])\s*|\s+")
+# **言い切りの切れ目。** 言い終わりの印だけ（その印は前の側に残す）。
+# 「たのしかった！ おやすみなさい！」を2本にするのがこれ。
+#
+# **素の空白では切らない**（2026-10-10、本番の1回目を見て）。
+# 空白で切ると「コン バンワ」が「コン」と「バンワ」になって、
+# **あやとが挙げた名セリフが切れ端に割れる。** 日本語のチャットの空白は
+# 言い切りの境ではなく、ただの間（ま）のことが多い
+SPLIT = re.compile(r"(?<=[。！？!?♪…])\s*")
 
 # 探すときだけ畳む字。伸ばし棒・中黒・空白（`fold`）
 FOLD_DROP = str.maketrans({c: "" for c in "ー〜~・ 　,，"})
@@ -357,39 +367,40 @@ def parts(text: str) -> list:
     return got[:MAX_PARTS]
 
 
-def peels(text: str, common: dict) -> list:
-    """**島のことばを剥がした残り**を返す。
+def peels(text: str, common: set) -> list:
+    """**後ろにくっついた島のことばを剥がした残り**を返す。
 
     「イケオニこんばんは」の「こんばんは」は島のみんなの字で、
     くっついているだけ。剥がすと「イケオニ」が出る。
 
+    **剥がすのは末尾だけ。頭は剥がさない**（2026-10-10、本番の1回目を見て）。
+    頭を剥がすと、**語尾だけの切れ端が残る**——「あやとちゃん」から
+    「あやと」を剥がして「ちゃん」が1位に来た。日本語は言いたいことが前に
+    来て、挨拶や丁寧語が後ろにつくので、**剥がしてよいのは後ろだけ**。
+
     **剥がすのは、島で `PEEL_SPEAKERS` 人以上が言っている字だけ。**
     語の表は持たない——データがそう言っているものだけを剥がす。
-    剥がすのは**1回だけ**（頭と末尾を1つずつ）。何度も剥がすと、
+    剥がすのは**いちばん長く一致するもの1つだけ。** 何度も剥がすと、
     どんな字でも2字まで削れてしまう。
 
     Args:
         text: `clean()` を通した字
-        common: `{島のことば（打った形）: True}`。`common_of()` が作る
+        common: 島のことば（打った形の集まり）。`common_of()` が作る
 
     Returns:
-        残りの並び（無ければ空）
+        残りの並び（0本か1本）
     """
     t = (text or "").strip()
-    out = []
     if not t or not common:
-        return out
-    for c in common.get(t[-2:], ()):      # 末尾から剥がす
-        if len(c) < len(t) and t.endswith(c):
-            rest = t[: -len(c)].strip()
-            if usable(rest):
-                out.append(rest)
-    for c in common.get(t[:2], ()):       # 頭から剥がす
-        if len(c) < len(t) and t.startswith(c):
-            rest = t[len(c):].strip()
-            if usable(rest):
-                out.append(rest)
-    return out
+        return []
+    # **長いほうから見て、最初に当たったところで止める。**
+    # 短い一致（「んは」）で切ると、切りすぎる
+    top = min(PEEL_LEN, len(t) - MIN_LEN)
+    for ln in range(top, MIN_LEN - 1, -1):
+        if t[-ln:] in common:
+            rest = t[:-ln].strip()
+            return [rest] if usable(rest) else []
+    return []
 
 
 def short_of(text: str) -> float:
@@ -478,55 +489,58 @@ class Counts:
         return int(self.spk.get(norm(text), 0))
 
 
-def common_of(spk: Counter, raw_of: dict) -> dict:
-    """**剥がしてよい「島のことば」**を、頭と末尾の2字で引ける形にする。
+def common_of(spk: Counter, raw_of: dict) -> set:
+    """**剥がしてよい「島のことば」**の集まり。
+
+    **打ち方の揺れを全部入れる。** いちばん多い形1つだけを入れていたのが、
+    本番の1回目で効かなかった原因——島のみんなは「こんばんはー」と
+    打つことが多くて、**「こんばんは」で終わる字が1本も剥がれなかった**
+    （「イケオニこんばんは」がそのまま1位になった）。
 
     Args:
         spk: `{鍵: 言った人の数}`
-        raw_of: `{鍵: いちばん多く打たれた形}`
+        raw_of: `{鍵: {打った形: 回数}}`
 
     Returns:
-        `{2字: [打った形, …]}`。頭引きと末尾引きの両方を同じ入れ物に入れる
+        打った形の集まり（`peels()` が末尾と突き合わせる）
     """
-    out: dict = {}
+    out: set = set()
     for k, people in spk.items():
         if people < PEEL_SPEAKERS:
             continue
-        raw = raw_of.get(k) or ""
-        if not raw or len(raw) > PEEL_LEN or len(raw) < MIN_LEN:
-            continue
-        for edge in {raw[:2], raw[-2:]}:
-            out.setdefault(edge, []).append(raw)
+        for raw in (raw_of.get(k) or {}):
+            if MIN_LEN <= len(raw) <= PEEL_LEN:
+                out.add(raw)
     return out
 
 
-def _keys(text: str, common: dict) -> list:
+def _keys(text: str, common) -> list:
     """1行から数える鍵を作る。**行まるごと・言い切り・剥がした残り。**
 
     Args:
         text: その人が打った字（生）
-        common: 剥がしてよい島のことば（無ければ剥がさない）
+        common: 剥がしてよい島のことばの集まり（無ければ剥がさない）
 
     Returns:
-        `[(鍵, 打った形)]`。**同じ鍵は1行から1回だけ**（同じ回数を2回
-        数えない）
+        `[(鍵, 打った形, 剥がした残りか)]`。**同じ鍵は1行から1回だけ**
+        （同じ回数を2回数えない）
     """
     base = clean(text)
     if not base:
         return []
-    raws = [base]
-    raws += parts(base)
+    raws = [(base, False)]
+    raws += [(r, False) for r in parts(base)]
     if common:
-        for r in list(raws):
-            raws += peels(r, common)
+        for r, _ in list(raws):
+            raws += [(x, True) for x in peels(r, common)]
     out = []
     seen = set()
-    for r in raws:
+    for r, cut in raws:
         k = norm(r)
         if not k or k in seen:
             continue
         seen.add(k)
-        out.append((k, r))
+        out.append((k, r, cut))
     return out
 
 
@@ -567,7 +581,7 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
         if not base:
             continue
         if base not in cache:
-            cache[base] = _keys(base, {})
+            cache[base] = _keys(base, None)
         days = cnt if d is None else min(int(d or 0), cnt)
         prep.append((ch or "", base, cnt, max(days, 0)))
     # **同じ人のぶんを続けて見る。** 人数を数えるのに `set` を使わない
@@ -588,7 +602,7 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
         for ch, base, cnt, days in prep:
             if ch != here:
                 here, mine = ch, set()
-            for k, raw in keys_of(base):
+            for k, raw, cut in keys_of(base):
                 c.all_n[k] += cnt
                 if ch and k not in mine:
                     mine.add(k)
@@ -596,10 +610,15 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
                 if not ch or (want is not None and ch not in want):
                     continue
                 box = c.own.setdefault(ch, {})
-                slot = box.setdefault(k, {"n": 0, "d": 0, "raw": Counter()})
+                slot = box.setdefault(k, {"n": 0, "d": 0, "raw": Counter(),
+                                          "cut": False})
                 slot["n"] += cnt
                 slot["d"] = max(slot["d"], days)
                 slot["raw"][raw] += cnt
+                # **剥がした残りかどうかを覚える。**
+                # 同じ点なら、剥がした残りのほうを先に並べる（`pick`）
+                if cut:
+                    slot["cut"] = True
         return c
 
     got = walk(lambda base: cache[base])
@@ -609,12 +628,10 @@ def tally(rows, who=None, peel: bool = True) -> Counts:
     # 「島で何人が言っているか」を知らないと、剥がしてよい字が分からない
     raw_of: dict = {}
     for _ch, base, cnt, _d in prep:
-        for k, raw in cache[base]:
+        for k, raw, _cut in cache[base]:
             cur = raw_of.setdefault(k, {})
             cur[raw] = cur.get(raw, 0) + cnt
-    top_raw = {k: max(v.items(), key=lambda kv: (-kv[1], len(kv[0]), kv[0]))[0]
-               for k, v in raw_of.items()}
-    common = common_of(got.spk, top_raw)
+    common = common_of(got.spk, raw_of)
     cache2: dict = {}
 
     def with_peel(base: str) -> list:
@@ -667,7 +684,8 @@ def gate_of(key: str, slot: dict, counts: Counts) -> tuple:
     text = tidy(src)
     total = max(int(counts.all_n.get(key, n)), n, 1)
     one = {"text": text, "from": src, "n": n, "d": d,
-           "people": people, "share": n / total}
+           "people": people, "share": n / total,
+           "cut": bool(slot.get("cut"))}
     if not usable(src) or not usable(text):
         return (False, "形", one)
     if people >= MANY_SPEAKERS:
@@ -699,14 +717,22 @@ def pick(own_one: dict, counts: Counts, top: int = TOP) -> list:
         pt = score(one["share"], one["n"], one["text"])
         # 並びを決め打ちにする。**同じ入力なら同じ答え**
         # （`docs/island-design.md`「乱数を使わない」）。
-        # 同点は 日数 → 回数 → 短い順 → 字の順。
+        # 同点は **剥がした残りが先** → 日数 → 回数 → **長いほう** → 字の順。
+        #
+        # **剥がした残りを先にする**のは、剥がしたのが「島のみんなの字」
+        # だから——付いていても名セリフにならない（「イケオニこんばんは」
+        # より「イケオニ」。本番の1回目は、同じ点で長いほうが勝って
+        # **挨拶付きのまま1位**になった）。
+        # 長いほうを先にするのは、同じ点なら**言い切っているほう**が
+        # 名セリフだから（短いほうを先にすると、回数の並んだ中から
+        # **いちばん短い切れ端**が10本を埋める）。
         # **日数はここにしか出てこない**（あやと「日常度は同点決着だけ」）
-        scored.append((pt, one["d"], one["n"], -len(one["text"]),
-                       one["text"], one))
-    scored.sort(key=lambda r: (-r[0], -r[1], -r[2], r[3], r[4]))
+        scored.append((pt, 0 if one["cut"] else 1, one["d"], one["n"],
+                       -len(one["text"]), one["text"], one))
+    scored.sort(key=lambda r: (-r[0], r[1], -r[2], -r[3], r[4], r[5]))
     out: list = []
     folds: list = []
-    for _pt, _d, _n, _l, text, one in scored:
+    for _pt, _cut, _d, _n, _l, text, one in scored:
         f = fold(text)
         # **同じ言い方を並べない。** 「イケオニ」を採ったあとに
         # 「イケオニこんばんは」を並べても、選ぶ余地が増えない
