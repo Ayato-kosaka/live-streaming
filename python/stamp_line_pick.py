@@ -649,7 +649,7 @@ def best_raw(slot: dict) -> str:
     return raw[0][0] if raw else ""
 
 
-def _gate(key: str, slot: dict, counts: Counts) -> tuple:
+def gate_of(key: str, slot: dict, counts: Counts) -> tuple:
     """1本ぶんの関所。**落ちた理由も返す。**
 
     Args:
@@ -693,7 +693,7 @@ def pick(own_one: dict, counts: Counts, top: int = TOP) -> list:
     """
     scored = []
     for k, slot in (own_one or {}).items():
-        ok, _why, one = _gate(k, slot, counts)
+        ok, _why, one = gate_of(k, slot, counts)
         if not ok:
             continue
         pt = score(one["share"], one["n"], one["text"])
@@ -739,7 +739,7 @@ def gated(own_one: dict, counts: Counts, top: int = 3) -> list:
     """
     out = []
     for k, slot in (own_one or {}).items():
-        ok, why, one = _gate(k, slot, counts)
+        ok, why, one = gate_of(k, slot, counts)
         if ok or why in ("形",):
             continue
         one["why"] = why

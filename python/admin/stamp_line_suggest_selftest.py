@@ -7,24 +7,28 @@
 ## なぜ、これを書いたか
 
 選び方そのものは `python/stamp_line_pick_selftest.py` が見ている。
-ここが見るのは**出し入れのところ**で、外れると戻らないのが2つある。
+ここが見るのは**出し入れのところ**で、外れると戻らないのが3つある。
 
   1. **`lines` を書いてしまう**（本人が決めたことばが流し直しで消える。人の字）
   2. **候補のことばをログに出してしまう**（公開の Actions ログに残る。
      本人のコメントから取った字なので、並べれば「誰が何を言っているか」）
+  3. **採点表のことばをログに出してしまう**（2026-10-10 から。
+     あやとが #716 で挙げた名セリフを `client_payload` で受け取るので、
+     **ARGS と同じ顔でログに出す道が1本できた**）
 
-どちらも赤くならない。
+どれも赤くならない。
 
-## 確かめるもの
+## 2026-10-10 から、見るものが2つ増えた
 
-  1. **相手は入れ物の書類から集める**（名簿を渡さない）
-  2. `channelId` の無い書類は**数えて出す**（黙って落とさない）
-  3. **`apply` 無しでは書き込みが1回も呼ばれない**
-  4. `apply` を付けると、**`suggested` と `suggestedFrom` と
-     `suggestedAt` だけ**が入る（2つの並びは**同じ長さ・同じ順**）
-  5. **1本も出なかった人には、空の提案を置かない**
-  6. 出力に**候補のことばもチャンネルIDも書類IDも1文字も出ない**
-  7. **相手が0人なら 2 で止まる**（0人と「読めなかった」を混ぜない）
+あやと（#716）:
+
+> 「うん」とか出すのやめて。採用するわけない。個性がなさすぎる。
+
+  7. **下見が、門のしきいを何通りか当てて数を出す**（較正）。
+     しきいは当てて決めるもので、決めてから当てるものではない
+  8. **個性のない字が候補に残った本数を、毎回出す。**
+     0 でなければ門が緩い——**0件を黙って通さない**ために、
+     偽データ側には「みんなが言う字」を1本入れてある
 
 終了コード: 0=通った / 1=落ちた
 """
@@ -33,6 +37,7 @@ import io
 import json
 import os
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -47,11 +52,20 @@ class Tee:
         self.ws = ws
 
     def write(self, s):
+        """書く。
+
+        Args:
+            s: 字
+
+        Returns:
+            書いた長さ
+        """
         for w in self.ws:
             w.write(s)
         return len(s)
 
     def flush(self):
+        """流す。"""
         for w in self.ws:
             try:
                 w.flush()
@@ -72,14 +86,19 @@ os.environ.setdefault("BQ_PROJECT_ID", "stamp-line-suggest-selftest")
 import stamp_line_suggest as sug  # noqa: E402
 from _fake_fs import FakeDb, cid  # noqa: E402
 
-# **候補になる口ぐせ。** これが1文字でも出力に出たら落とす
-MINE = "いやぁまいったね"
-MINE2 = "ねむい"
+# **候補になる名セリフ。** これが1文字でも出力に出たら落とす
+MINE = "えがたえがた"
+MINE2 = "ほなちがうか〜"
 MINE3 = "そうきたか"
-# **その場かぎりの実況。** 回数はいちばん多いが1日に固まっている
-EVENT = "特大花火が打ち上がりました"
+# **島のみんなが言う字。** 門で落ちる。**候補に出たら落とす**
+PLAIN = "こんばんは"
 # **本人が決めたことば。** 1文字でも消えたら落とす
 KEPT = ["もうきめた"]
+# **あやとが挙げた字（採点表）。** `client_payload` で渡す。
+# **1文字でも出力に出たら落とす**
+SHEET_NAME = "いそぎんちゃく座"
+SHEET_LINE = MINE
+SHEET_WORD = "ちがうか"
 
 DOC = {
     "a": "a" + "0123456789abcdef" * 2,
@@ -87,6 +106,7 @@ DOC = {
     "nochan": "c" + "0123456789abcdef" * 2,
 }
 CH = {"a": cid("aa"), "b": cid("bb")}
+MOB = [cid(f"m{i}") for i in range(12)]
 
 BAD = 0
 
@@ -137,7 +157,7 @@ class FakeBq:
 
 
 def store() -> FakeDb:
-    """偽の Firestore。**入れ物に3件**。
+    """偽の Firestore。**入れ物に3件、図鑑に1件。**
 
     Returns:
         偽の db
@@ -149,6 +169,11 @@ def store() -> FakeDb:
         # **channelId の無い書類。** 候補を出せない
         DOC["nochan"]: {"channelId": "", "lines": [], "pickedAt": 1},
     }
+    # 採点表の名前を当てるのに使う（`aliases` が先。`name_of`）
+    fake.data["islandCharacter"] = {
+        DOC["a"]: {"emoji": "🐧", "channelName": "@isoginchaku-za",
+                   "aliases": [SHEET_NAME]},
+    }
     return fake
 
 
@@ -158,25 +183,46 @@ def rows() -> list:
     Returns:
         `(チャンネルID, 字, 回数, 日数)` の並び
     """
-    return [
-        (CH["a"], MINE, 6, 5),
-        (CH["a"], MINE2, 4, 4),
+    r = [
+        (CH["a"], MINE, 18, 7),
+        (CH["a"], MINE2, 6, 4),
         (CH["a"], MINE3 + "。", 3, 3),   # **末尾の句点は機械が落とす**
-        # b は短い相槌と、**1日に固まった実況**だけ。**1本も出ない**
+        # **島のみんなが言う字を、いちばん多く言っている人。**
+        # 門が効いていなければ、ここが候補の1位に来る
+        (CH["a"], PLAIN, 300, 90),
+        # b は短い相槌と、**みんなが言う字**だけ。**1本も出ない**
         (CH["b"], "w", 50, 20),
         (CH["b"], "888", 30, 15),
-        (CH["b"], EVENT, 9, 1),
+        (CH["b"], PLAIN, 9, 5),
     ]
+    r += [(m, PLAIN, 20, 10) for m in MOB]
+    return r
 
 
-def run(apply_it, fake=None, bq=None, extra=None):
+def event(body: dict) -> str:
+    """偽の `GITHUB_EVENT_PATH`（`repository_dispatch` の姿）。
+
+    Args:
+        body: `client_payload` に入れるもの
+
+    Returns:
+        書いたファイルの道
+    """
+    fd, path = tempfile.mkstemp(suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"client_payload": body}, f)
+    return path
+
+
+def run(apply_it, fake=None, bq=None, extra=None, payload=None):
     """`stamp_line_suggest.main()` を1回回す。
 
     Args:
         apply_it: 置くか
         fake: 偽の Firestore
         bq: 偽の BigQuery
-        extra: 追加の入力
+        extra: ARGS に足すもの
+        payload: `client_payload` に入れるもの（採点表はこちらから渡す）
 
     Returns:
         (終了コード, 偽の Firestore, 偽の BigQuery)
@@ -185,11 +231,14 @@ def run(apply_it, fake=None, bq=None, extra=None):
     bq = bq or FakeBq(rows())
     sug.db = lambda: fake  # noqa: ARG005
     sug.bigquery = None
-    os.environ.pop("GITHUB_EVENT_PATH", None)
     body = dict(extra or {})
     if apply_it:
         body["apply"] = True
     os.environ["ARGS"] = json.dumps(body)
+    if payload is None:
+        os.environ.pop("GITHUB_EVENT_PATH", None)
+    else:
+        os.environ["GITHUB_EVENT_PATH"] = event(payload)
 
     # **`google.cloud.bigquery` を偽物に差し替える。** この箱に本物は無い
     mod = type("M", (), {})()
@@ -200,8 +249,11 @@ def run(apply_it, fake=None, bq=None, extra=None):
     return code, fake, bq
 
 
+SHEET = [{"name": SHEET_NAME, "lines": [SHEET_LINE], "words": [SHEET_WORD]},
+         {"name": "だれでもない人", "lines": ["でたらめ"]}]
+
 print("# 0. 探し方が当たるか（先に見る）")
-code, fake, bq = run(False)
+code, fake, bq = run(False, payload={"check": SHEET})
 check("下見は 0 で終わる", code == 0, str(code))
 check("入れ物に3件ある", len(fake.data["islandStampLine"]) == 3)
 check("BigQuery を見積もってから引いた", bq.dry == 1 and bq.ran == 1,
@@ -211,19 +263,34 @@ check("相手は2人と数えた（channelId の無い1件を除いた）",
       "候補を出す相手: 2 人" in out)
 check("1本も出なかった人を数えて出した",
       "候補が出た 1 人 / 1本も出なかった 1 人" in out)
-check("前の式なら2人、いまの式なら1人（実況だけの人が落ちた）",
-      "候補が出た人数: 前の式 2 人 → いまの式 1 人" in out, out[-400:])
-check("候補の日数を出した（いちばん強い軸が効いているか）",
-      "候補の日数: いちばん少ない" in out)
-check("句読点を落とした本数を出した",
-      "末尾の句読点を落とした候補: 1 本 / 3 本" in out)
 check("channelId の無い書類を言っている", "候補を出せない" in out)
 
-print("\n# 1. 下見は1バイトも書かない")
+print("\n# 1. **門が効いているか**（個性のない字が残っていない）")
+check("個性のない字が0本と出ている",
+      "個性のない字が候補に残った本数: 0 本" in out, out[-600:])
+check("門のしきいをログに出している",
+      "門のしきいは 4 人以上で落とす" in out, out[-600:])
+check("その人しか言っていない字の本数を出している",
+      "島でその人しか言っていない字:" in out)
+
+print("\n# 2. **採点表**（あやとが挙げた字が出たか）")
+check("採点表の人数を数えた", "採点表: 2 人ぶん" in out, out[-900:])
+check("名前が当たらなかった人を数えた", "名前が当たらなかった 1 人" in out)
+check("**挙げた字が候補に出た**と言っている",
+      "2 本中 **1 本が候補に出た**" in out, out[-900:])
+check("内訳は番号と記号だけ", "1:出 2:？" in out, out[-900:])
+
+print("\n# 3. **較正**（しきいを何通りか当てる）")
+for many in (2, 3, 4, 5, 7, 10):
+    check(f"しきい {many} 人以上 を当てている",
+          f"しきい {many} 人以上で落とす:" in out)
+check("いまのしきいに印が付いている", "← いまのしきい" in out)
+
+print("\n# 4. 下見は1バイトも書かない")
 check("書き込みが1回も呼ばれていない", fake.writes == [], str(fake.writes))
 
-print("\n# 2. apply を付けると、suggested だけが入る")
-code, fake, bq = run(True)
+print("\n# 5. apply を付けると、suggested だけが入る")
+code, fake, bq = run(True, payload={"check": SHEET})
 check("0 で終わる", code == 0, str(code))
 check("書いたのは1人ぶんだけ", len(fake.writes) == 1, str(len(fake.writes)))
 check("書いた先は候補が出た人",
@@ -236,56 +303,57 @@ check("lines を送っていない", "lines" not in fake.writes[0]["patch"])
 check("本人が決めたことばが残っている",
       fake.data["islandStampLine"][DOC["a"]]["lines"] == KEPT,
       str(fake.data["islandStampLine"][DOC["a"]]["lines"]))
-check("3本置いた", len(fake.writes[0]["patch"]["suggested"]) == 3,
-      str(fake.writes[0]["patch"]["suggested"]))
-check("1本目は口ぐせ", fake.writes[0]["patch"]["suggested"][0] == MINE)
 put = fake.writes[0]["patch"]["suggested"]
 src = fake.writes[0]["patch"]["suggestedFrom"]
+check("3本置いた（偽データで候補になるのは3本）", len(put) == 3, str(len(put)))
+check("1本目は名セリフ", put[0] == MINE, str(put[0] == MINE))
+check("**個性のない字が1本も入っていない**", PLAIN not in put,
+      str(PLAIN in put))
 check("元の字が同じ本数・同じ順で入っている", len(src) == len(put))
 check("末尾の句点は落ちている", MINE3 in put and MINE3 + "。" not in put,
-      str(put))
+      str(MINE3 in put))
 check("元の字のほうは、打った形のまま残っている", MINE3 + "。" in src,
-      str(src))
+      str(MINE3 + "。" in src))
 check("直していないものは、元の字と同じ",
       [a == b for a, b in zip(put, src)].count(True) == 2,
-      str(list(zip(put, src))))
+      str([a == b for a, b in zip(put, src)]))
+check("較正は apply のときは回していない（本番の前に遊ばない）",
+      "しきい 7 人以上で落とす:" not in BUF.getvalue()[len(out):],
+      "apply でも較正が回っている")
 
-print("\n# 3. 1本も出なかった人には、空の提案を置かない")
-check("**1日に固まった実況しか無い人には、1本も置かない**",
-      all(EVENT not in (w["patch"].get("suggested") or [])
-          for w in fake.writes), str(fake.writes))
+print("\n# 6. 1本も出なかった人には、空の提案を置かない")
 check("その人の書類に suggested が入っていない",
       "suggested" not in fake.data["islandStampLine"][DOC["b"]],
       str(fake.data["islandStampLine"][DOC["b"]]))
 check("channelId の無い書類にも入っていない",
       "suggested" not in fake.data["islandStampLine"][DOC["nochan"]])
 
-print("\n# 4. 相手が0人なら 2 で止まる")
+print("\n# 7. 相手が0人なら 2 で止まる")
 empty = FakeDb({"islandStampLine": {}})
 code, _, bq2 = run(True, fake=empty)
 check("2 で終わる", code == 2, str(code))
 check("BigQuery を1回も引いていない", bq2.dry == 0 and bq2.ran == 0,
       f"dry={bq2.dry} ran={bq2.ran}")
 
-print("\n# 5. 上限を超えたら引かない")
+print("\n# 8. 上限を超えたら引かない")
 code, _, big = run(True, bq=FakeBq(rows(), mb=2048.0))
 check("1 で終わる", code == 1, str(code))
 check("見積もりだけで止まった", big.dry == 1 and big.ran == 0,
       f"dry={big.dry} ran={big.ran}")
 
 # **漏れたら落とすもの**。注記と本文の両方に当てる
-LEAK = ([MINE, MINE2, MINE3, EVENT] + KEPT
-        + list(CH.values()) + list(DOC.values()))
+LEAK = ([MINE, MINE2, MINE3, SHEET_LINE, SHEET_WORD, SHEET_NAME]
+        + KEPT + list(CH.values()) + list(DOC.values()))
 
-print("\n# 6. 出力に、素性も候補のことばも1文字も出ていない")
+print("\n# 9. 出力に、素性も候補も採点表のことばも1文字も出ていない")
 out = BUF.getvalue()
-for v in [MINE, MINE2, MINE3, EVENT] + KEPT:
+for v in [MINE, MINE2, MINE3, SHEET_WORD] + KEPT:
     check(f"ことばが出ていない（{v[:3]}…）", v not in out)
+check(f"採点表の名前が出ていない（{SHEET_NAME[:3]}…）", SHEET_NAME not in out)
 for v in list(CH.values()) + list(DOC.values()):
     check(f"識別子が出ていない（{v[:4]}…）", v not in out)
 check("指紋は出ている（伏せ字ではなく追える形）", "#" in out)
-check("注記（::notice::）が出ている", "::notice::" in out,
-      out[-200:])
+check("注記（::notice::）が出ている", "::notice::" in out, out[-200:])
 # 注記は1行で切れるので、改行が混ざっていないことも見る
 for ln in [x for x in out.splitlines() if x.startswith("::notice::")]:
     check(f"注記に件数しか出ていない（{ln[10:30]}…）",
