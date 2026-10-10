@@ -5,8 +5,16 @@ import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import CalendarTries from "@/components/goods/CalendarTries";
 import StampVotes from "@/components/goods/StampVotes";
-import { LINE_STAMPS, LINE_WANT, LINE_WORDS, STICKERS, SUZURI } from "@/content/goods";
+import {
+  CAL_WORDS,
+  LINE_STAMPS,
+  LINE_WANT,
+  LINE_WORDS,
+  STICKERS,
+  SUZURI,
+} from "@/content/goods";
 
 import "./goods.css";
 
@@ -206,12 +214,20 @@ export default function GoodsPage() {
           icon="calendar"
           title="カレンダー"
           tag="検討中"
-          lead="壁にかけるか、机に置くか。どの月にどの写真が来るか。まだ何も決まっていません。"
+          /* **「壁にかけるか、机に置くか」はもう聞いていない。** 卓上のものを
+             作る話で動いているので、聞いているのは絵のほうだけ。
+             数（型がいくつ・何年ぶん）も、値段も寸法も書かない——
+             増えたり変わったりした日から嘘になる（`island-standards.md` 16章）。
+             仕組みの説明も1文字も置かない（同 6章） */
+          lead="どの絵のカレンダーがいいか、押して教えてください。"
         >
+          <CalendarTries />
           <Say
             theme="goods-calendar"
-            title="こんなのがほしい、を出す"
-            lead="写真も貼れる。1枚でも、12枚ぶんの案でも"
+            title="ほかの絵を出す"
+            lead="こんな絵がいい、を一言でも。写真も貼れる"
+            /* 3つの枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
+            omit={CAL_WORDS}
           />
         </Sec>
 
