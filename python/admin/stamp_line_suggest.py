@@ -471,16 +471,24 @@ def main() -> int:
         log.info("内訳（番号は issue の並び。出=候補に出た / 外=候補の外 / "
                  "門割回形=関所 / 揺=言い方ちがいで在る / 無=データに無い / "
                  "？=名前が当たらない / 空=字を挙げていない）: %s", tag)
+        # **注記にも出す。** ログは置き場（Azure Blob）から配られて
+        # **口からは読めない**——押したあとに中身を確かめられるのは注記だけ
+        # （`_fs.notice` の説明と同じ理由）。出るのは**番号と記号だけ**で、
+        # ことばは1文字も通らない
+        notice(f"採点表の内訳（出/外/門/割/回/形/揺/無/？/空）: {tag}")
     if not apply:
         # ---- 較正（**下見のときだけ**。しきいを当てて数を並べる）
         for g in calibrate(rows, list(who), sheet, top):
-            log.info(
-                "しきい %d 人以上で落とす: 候補が出た %d 人 / 候補 %d 本 / "
-                "採点表 %d/%d / 個性のない字 %d 本%s",
-                g["many"], g["people"], g["lines"], g["hit"], g["of"],
-                g["plain"],
-                "  ← いまのしきい" if g["many"] == pick_mod.MANY_SPEAKERS
-                else "")
+            here = ("  ← いまのしきい"
+                    if g["many"] == pick_mod.MANY_SPEAKERS else "")
+            line = (f"較正 しきい{g['many']}人以上で落とす: "
+                    f"候補が出た {g['people']}人 / 候補 {g['lines']}本 / "
+                    f"採点表 {g['hit']}/{g['of']} / "
+                    f"個性のない字 {g['plain']}本{here}")
+            log.info("%s", line)
+            # **較正こそ注記に出す。** これを見てしきいを決めるのに、
+            # ログが口から読めなければ、決める材料が1つも手に入らない
+            notice(line)
 
     notice(
         f"候補{'（下見）' if not apply else ''}: 相手 {len(who)} 人 / "

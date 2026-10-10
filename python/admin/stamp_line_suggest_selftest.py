@@ -283,8 +283,17 @@ check("内訳は番号と記号だけ", "1:出 2:？" in out, out[-900:])
 print("\n# 3. **較正**（しきいを何通りか当てる）")
 for many in (2, 3, 4, 5, 7, 10):
     check(f"しきい {many} 人以上 を当てている",
-          f"しきい {many} 人以上で落とす:" in out)
+          f"較正 しきい{many}人以上で落とす:" in out)
 check("いまのしきいに印が付いている", "← いまのしきい" in out)
+# **較正は注記にも出す。** ログは置き場から配られて口からは読めないので、
+# しきいを決める材料が注記にしか残らない
+check("較正が注記にも出ている",
+      len([x for x in out.splitlines()
+           if x.startswith("::notice::較正")]) == 6,
+      str(len([x for x in out.splitlines()
+               if x.startswith("::notice::較正")])))
+check("採点表の内訳も注記に出ている",
+      "::notice::採点表の内訳" in out)
 
 print("\n# 4. 下見は1バイトも書かない")
 check("書き込みが1回も呼ばれていない", fake.writes == [], str(fake.writes))
@@ -318,7 +327,7 @@ check("直していないものは、元の字と同じ",
       [a == b for a, b in zip(put, src)].count(True) == 2,
       str([a == b for a, b in zip(put, src)]))
 check("較正は apply のときは回していない（本番の前に遊ばない）",
-      "しきい 7 人以上で落とす:" not in BUF.getvalue()[len(out):],
+      "較正 しきい7人以上で落とす:" not in BUF.getvalue()[len(out):],
       "apply でも較正が回っている")
 
 print("\n# 6. 1本も出なかった人には、空の提案を置かない")
