@@ -366,6 +366,14 @@
   gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
+/* **スマホでは1枚ずつ縦に。** 390px で横に2枚並べると1枚 162px——
+   絵の中身は見分けがつくが、「紙として良いか」を決められる大きさではない。
+   どの絵がいいかを押してもらう面なので、**見て決められる大きさ**を取る
+   （縦に並べても、1月と7月の2枚が並ぶことは変わらない） */
+@media (max-width: 559px) {
+  .gd-calshots { grid-template-columns: minmax(0, 1fr); }
+}
+
 .gd-calshots > img {
   display: block;
   width: 100%;
