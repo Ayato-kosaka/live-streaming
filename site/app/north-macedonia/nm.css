@@ -129,7 +129,10 @@
   margin-top: 2px;
   font-size: 12px;
   font-weight: 800;
-  color: var(--ink-2);
+  /* 下の `.nmspot-how` と同じ理由（12px の `--ink-2` は紙のムラで 4.5 を割る）。
+     こちらは実測では割れていなかったが、**同じ大きさ・同じ地の字**なので
+     揃える（`docs/island-standards.md` §5） */
+  color: var(--ink);
   /* キリル文字は焼いた丸ゴシック（fonts.css）に入っていないので、端末の字に落ちる */
   font-family: ui-rounded, -apple-system, "Hiragino Maru Gothic ProN", system-ui, sans-serif;
 }
@@ -142,5 +145,12 @@
   font-size: 12px;
   line-height: 1.85;
   font-weight: 700;
-  color: var(--ink-2);
+  /* **紙のムラの暗いところで `--ink-2` は 4.5 を割る。** 12px なので `--ink`。
+     実測（2026-10-08 / 幅 390px / dpr2）: 中央 4.64・いちばん明るい地 4.76 に
+     対して、**いちばん暗い地で 4.36**。中央値だけ見ると通る字で、
+     `CLAUDE.md`「地のばらつきを見る」で落ちた2か所がこれ。
+     `atlas.css` が同じ理由で同じことをしている（「紙にはムラがあって、
+     いちばん暗いところで --ink-2 は 4.47 : 1 まで落ちる」）。
+     添え物であることは、左の罫と字の小ささで出す。 */
+  color: var(--ink);
 }

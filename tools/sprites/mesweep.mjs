@@ -359,7 +359,10 @@ for (const [id, byW] of Object.entries(report)) {
     if (!r) continue;
     const probe = r.faces.filter((f) => f.probe).length;
     const real = r.faces.filter((f) => !f.probe);
-    const isSmall = (t) => !t.hit || t.hit[0] < 48 || t.hit[1] < 48;
+    /* 合否は `hitbox.mjs` が出した `small` を読む。こちらで 48 と
+       比べ直すと、境目を 1/16px まで詰めた値（47.9 など）を
+       別の目で判定することになる（`hitbox.mjs` の `small` の註） */
+    const isSmall = (t) => !t.hit || t.small;
     const small = r.taps.filter(isSmall);
     const small0 = r.tapsBefore.filter(isSmall);
     const inFold = r.taps.filter((t) => t.fold).length;
@@ -398,7 +401,7 @@ let t0 = 0, t1 = 0, s0 = 0, s1 = 0, fd = 0;
 for (const byW of Object.values(report)) {
   const r = byW[390];
   if (!r) continue;
-  const isSmall = (t) => !t.hit || t.hit[0] < 48 || t.hit[1] < 48;
+  const isSmall = (t) => !t.hit || t.small;   // 上と同じ。判定は1か所（hitbox.mjs）
   t0 += r.tapsBefore.length; t1 += r.taps.length;
   s0 += r.tapsBefore.filter(isSmall).length; s1 += r.taps.filter(isSmall).length;
   fd += r.taps.filter((t) => t.fold).length;
