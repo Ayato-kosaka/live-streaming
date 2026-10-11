@@ -72,22 +72,22 @@ const HINT = `わざと壊して、ここが落ちることを見るには（足
   cp site/components/isle/board.ts /tmp/board-ok.ts
   BOARD_TS=/tmp/board-ok.ts node site/selftest/isleboard_selftest.mjs   # -> 0
 
-  # 1) 畳んだ宛先を「まだ書ける」と読ませる（字が誘いに戻る）-> 足2が落ちる
+  # 1) 畳んだ宛先を「まだ書ける」と読ませる（字が誘いに戻る）-> 「誘い先の名乗り」が落ちる
   sed 's|themes.find((t) => isOpenTheme(t, now))|themes[0]|' \\
     site/components/isle/board.ts > /tmp/board-open.ts
   BOARD_TS=/tmp/board-open.ts node site/selftest/isleboard_selftest.mjs   # -> 1
 
-  # 2) 逆に、書ける宛先でも誘わなくする -> 「3の裏」が落ちる
+  # 2) 逆に、書ける宛先でも誘わなくする -> 「書ける見出しで組むと here」が落ちる
   sed 's|const here = themes.find|const here = undefined \\&\\& themes.find|' \\
     site/components/isle/board.ts > /tmp/board-mute.ts
   BOARD_TS=/tmp/board-mute.ts node site/selftest/isleboard_selftest.mjs   # -> 1
 
-  # 3) 島の側に手で字を書き足す（直す前の形）-> 足2と足6が落ちる
+  # 3) 島の側に手で字を書き足す（直す前の形）-> 「字が作り直しと同じ」と「手で書かれていない」が落ちる
   sed 's|^    sign: true,$|    sign: true,\\n    more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },|' \\
     site/components/isle/spec.ts > /tmp/spec-say.ts
   SPEC_TS=/tmp/spec-say.ts node site/selftest/isleboard_selftest.mjs   # -> 1
 
-  # 4) 表紙にも手で字を書き足す -> 足6が落ちる
+  # 4) 表紙にも手で字を書き足す -> 「手で書かれていない」が落ちる
   sed 's|^    icon: "statue",$|    icon: "statue",\\n    blurb: "やってほしいことを貼る",|' \\
     site/components/isle/cover.ts > /tmp/cover-say.ts
   COVER_TS=/tmp/cover-say.ts node site/selftest/isleboard_selftest.mjs   # -> 1`;
