@@ -1429,9 +1429,13 @@
 }
 
 /* 畳んである書く欄を開く（`.nt-open`）と、しまったものを見る（`.nt-bin`。
-   **あやとだけ**）。どちらも面のいちばん下に静かに置く、同じ形の板。 */
+   **あやとだけ**）、締め切った宛先から掲示板へ送る（`.nt-shut-go`）。
+   **どれも同じ形の板。** 同じ場所に出る同じ大きさの押しどころなので、
+   見た目を1つにしておく（3つめを別の形にすると、締め切った面だけ
+   別の仕掛けに見える）。 */
 .nt-open,
-.nt-bin {
+.nt-bin,
+.nt-shut-go {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1448,7 +1452,33 @@
   cursor: pointer;
 }
 .nt-open:active,
-.nt-bin:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-bin:active,
+.nt-shut-go:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-shut-go { margin-top: 0; text-decoration: none; }
+
+/* 締め切った宛先の1行（`components/live/Notes.tsx` の `shut`）。
+   書く段のあった場所にそのまま出る——押しどころが黙って1つ消えるのを
+   避けるためのものなので、場所を変えると意味が無くなる。
+
+   **字は薄くしない。** 薄い字は「出ていないもの」の顔なので
+   （読み込み中の灰色がそれ）、読ませたい1行をそこへ寄せない。
+   押せないのは字のほうだけなので、`<p>` には厚みを付けない
+   （`docs/island-design.md` 3-3）。 */
+.nt-shut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  /* 390px では字と板が2段になる。行の間を詰めすぎると、
+     板が字にくっついて1つのものに見える */
+  margin: var(--sp-4) 0 0;
+}
+.nt-shut > span {
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink);
+}
 
 
 /* =========================================================

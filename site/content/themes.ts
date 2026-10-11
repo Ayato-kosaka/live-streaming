@@ -367,6 +367,28 @@ export const THEMES: Theme[] = [
     placeholder: "例）「おなかすいた」をあやとの顔で。毎日つかう",
   },
   {
+    /* あやとの言葉（2026-10-11）:
+
+       > こんなスズリグッズが欲しい！ を書けるように付箋作って
+
+       **`id` はグッズの3つに揃える**（`goods-` 始まり）。束が同じなので、
+       字の形も同じにしておく——1つだけ別の形にすると、次に足す人が
+       どちらに倣うか分からなくなる。
+
+       **品ぞろえ・値段・個数を1文字も書かない**（`content/goods.ts` の
+       `SUZURI` の頭と同じ理由。向こうが持っているものを焼くと、
+       変わった日から嘘になる）。だから見本も「向こうに在るもの」ではなく
+       **ほしい人の言いかた**で書く。 */
+    id: "goods-suzuri",
+    name: "スズリのグッズ",
+    group: GOODS_GROUP,
+    /* 行き先はグッズの面の SUZURI の欄（`app/goods/page.tsx` の `id="suzuri"`）。
+       ほかの3つと同じく `#` 付きで、その欄まで送る。 */
+    href: "/goods#suzuri",
+    lead: "ほしいグッズと、どんな絵が入っているか。",
+    placeholder: "例）島の住人の絵が入ったマグカップがほしい。朝いちばんに使うから、大きいの",
+  },
+  {
     /* **注文ではない字の置き場。** 本番のデータを見ると、企画の欄に出された
        3件のうち1件が「イラン旅から見てます」という長く見ている人の便りだった
        （2026-09-30）。注文でもサイトへの要望でもないので、`island` にも
@@ -416,6 +438,30 @@ export function isOpenTheme(t: Theme, now: Date | null): boolean {
 /** いま書ける宛先だけ。**書く欄の選び先は、これを使う。** */
 export const openThemes = (now: Date | null): Theme[] =>
   THEMES.filter((t) => isOpenTheme(t, now));
+
+/**
+ * **宛先を決め打ちしている面で、その宛先がもう締め切られているか。**
+ *
+ * 2026-10-11 まで、畳んだ宛先を決め打ちしている面に**書く窓が残っていた。**
+ * 畳みの判定（`isOpenTheme`）を見ていたのは掲示板の選び札だけで、
+ * 面が宛先を決め打ちしている側（`components/live/Notes.tsx` の `fixed`）は
+ * 1度も見ていなかった。だから `/nordic/finland` の「フィンランドで
+ * これやって」に、締め切ったあとも貼れた。
+ *
+ * **赤くならない形の壊れ方。** 窓は出るし、貼れば 200 で入る
+ * （サーバーは宛先の表を持っていないので、締め切りを知らない）。
+ * 入った先の棚は畳みの中なので、書いた人からは消えたように見える。
+ *
+ * 画面の側で `t.closed` を直に見ないのは、**企画あての締め切りが
+ * 字ではなく日付で決まる**から（`isOpenTheme`）。判定を2か所に書くと、
+ * 片方だけが日付を見る形になる。
+ *
+ * @param fixed 面が決め打ちしている宛先。選ばせる面（掲示板）は undefined
+ * @param now 画面が出てからの今。まだ分からないときは null
+ * @return 締め切られているか。決め打ちしていない面はいつも false
+ */
+export const shutDest = (fixed: Theme | undefined, now: Date | null): boolean =>
+  !!fixed && !isOpenTheme(fixed, now);
 
 /** id から1つ引く。知らない id は undefined。 */
 export const themeById = (id: string): Theme | undefined =>

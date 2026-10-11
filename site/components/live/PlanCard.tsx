@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
-import { themeById } from "@/content/themes";
+import { shutDest, themeById } from "@/content/themes";
 import { LINKS } from "@/content/site";
 import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
@@ -344,16 +344,31 @@ function Reached({ plan }: { plan: Plan }) {
 }
 
 /**
- * この企画に付箋の欄が出るか。
+ * この企画に、いま**書ける**付箋の欄が出るか。
  *
- * 出るのは、企画の id と同じ id のテーマが `content/themes.ts` にあるときだけ
- * （`NextPlans.tsx` の `PlanNotes`）。**判定をここ1か所に置く。**
- * 欄の有無と、そこへ送る札の有無が別々に決まっていると、
- * 押しても何も起きない札が残る。
+ * 出るのは、企画の id と同じ id のテーマが `content/themes.ts` にあり
+ * （`NextPlans.tsx` の `PlanNotes`）、**その宛先がまだ締め切られていない**とき
+ * だけ。**判定をここ1か所に置く。** 欄の有無と、そこへ送る札の有無が
+ * 別々に決まっていると、押しても何も起きない札が残る。
+ *
+ * 締め切りを見るようにしたのは 2026-10-11。それまでは宛先が在るかだけを
+ * 見ていたので、**終わった企画の「付箋で教える」が、書く欄の無いところへ
+ * 降ろしていた**（`components/live/Notes.tsx` の `shut`）。
+ *
+ * **今日は画面が出てから入れる**（`output: "export"`）。入るまでは
+ * 焼いた日で決まる——`shutDest` が企画の日付を見るので、`Notes` 側と
+ * 同じ答えになる。片方だけ本物の今日を使うと、札は出ているのに
+ * 降りた先に欄が無い、という**いま直したばかりの形**に戻る。
+ *
  * @param {Plan} plan 企画
- * @return {boolean} 付箋の欄が出るか
+ * @return {boolean} いま書ける付箋の欄が出るか
  */
-const hasNotes = (plan: Plan) => !!themeById(plan.id);
+function useCanNote(plan: Plan): boolean {
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => setToday(new Date()), []);
+  const theme = themeById(plan.id);
+  return !!theme && !shutDest(theme, today);
+}
 
 /**
  * きみができること。
@@ -363,6 +378,7 @@ const hasNotes = (plan: Plan) => !!themeById(plan.id);
  * だから説明より先、題名のすぐ下に置く。
  */
 function Doing({ plan }: { plan: Plan }) {
+  const canNote = useCanNote(plan);
   const youtube = LINKS.find((l) => l.id === "youtube")!;
   return (
     <div className="nx-do">
@@ -371,7 +387,7 @@ function Doing({ plan }: { plan: Plan }) {
         {/* 宛先（`content/themes.ts`）を持つ企画にだけ、付箋の欄が出る
             （`NextPlans.tsx` の `PlanNotes`）。無い企画でこの札を出すと、
             押しても何も無いところへ飛ぶ。**行き先の有無を、札の有無に写す。** */}
-        {hasNotes(plan) && (
+        {canNote && (
           <a className="nx-do-b is-go" href={`#${plan.id}-notes`}>
             <Icon name="comment" size={26} />
             <span>
@@ -418,6 +434,7 @@ function Doing({ plan }: { plan: Plan }) {
  * 何を書けばいいのか分からない。空いている場所を先に出す。
  */
 function Asks({ plan, jump = true }: { plan: Plan; jump?: boolean }) {
+  const canNote = useCanNote(plan);
   if (!plan.asks?.length) return null;
   return (
     <div className="nx-asks">
@@ -430,7 +447,7 @@ function Asks({ plan, jump = true }: { plan: Plan; jump?: boolean }) {
       {/* 付箋の欄が閉じているとき（道のりの段）だけ、そこへ連れていく。
           主役の札は、この真下に入力欄が開いている。同じ行き先の札を
           20px 下にもう1つ置いても、押しどころが2つに割れるだけ。 */}
-      {jump && hasNotes(plan) && (
+      {jump && canNote && (
         <a href={`#${plan.id}-notes`}>
           付箋で教える
           <Icon name="right" size={12} />
