@@ -255,7 +255,11 @@ const WANT = {
   caucasus: "countries streams shorts legends apps facts pier",
   "iran-walk": "countries streams shorts legends facts pier",
   nordic: "countries streams shorts facts pier",
-  albania: "facts wish pier",
+  /* 役割の id を `wish`（風船）から `board` に改めた（2026-10-11）。
+     アルバニアあての宛先を畳んだので、あそこは「貼る場所」ではなく
+     **この旅に来ている付箋を読む板**になった（`components/isle/board.ts`）。
+     北欧の板と同じ役割・同じ字なので、id も揃える（上の 4 がそこを縛る）。 */
+  albania: "facts board pier",
   /* 着いていない島。まだ配信も歩いた国も焼かれていないので、建つのは
      足した案内（`macedoniaSpec`）と桟橋だけ。**歩いて素材が焼かれたら
      ここを増やす**——増えたことに気づかないまま減らさないため、
