@@ -169,71 +169,92 @@
 
 /* ---- ステッカー --------------------------------------------------------- */
 
+/* **升目にする**（2026-10-10。3枚が8枚になった）。
+   1枚ずつ横に寝かせていた形は1枚で 150px あり、8枚で 1,200px ——
+   スマホで3画面ぶん送ることになる（`docs/island-standards.md` 7章）。
+   390px で2列、広い画面で4列。**枚数で割らない**ので、足しても減っても
+   ここは触らない */
+.gd-stickers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  /* 広い画面で絵が間延びしないところで止める（4列ぶん） */
+  max-width: 680px;
+}
+
+/* 1マス。**マスぜんぶが押しどころ**（絵・名前・「おとす」でひとかたまり）。
+   押す場所は物そのもの（`docs/island-design.md` 3-1）。
+
+   **1枚ずつに厚みは付けない。** 並びのマスが全部押せるときは、並びそのものが
+   合図になる（同 3-3 の例外。料理32マス・住人22マスと同じ）。
+   **この並びに押せないマスを混ぜてはいけない。** */
+/* **マスは背を揃える。** 縦長の1枚（島にいるあやと 442×640）と丸い1枚が
+   並ぶので、絵の高さに任せると名前と「おとす」が1枚ずつ別の高さに来る。
+   列ごとに段違いになって、並びに見えない（撮って直した） */
+.gd-stickers > li { display: flex; }
+
 .gd-sticker {
+  flex: 1 1 auto;
   display: flex;
-  align-items: flex-start;
-  gap: var(--sp-4);
-  margin-top: var(--sp-3);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-1);
+  text-decoration: none;
+  color: var(--ink);
+}
+.gd-sticker > b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink);
 }
 
 .gd-stickerart {
-  flex: none;
-  width: 132px;
+  width: 100%;
+  /* **枠は正方形で固定。** 絵の比に任せると、上と同じ段違いが出る。
+     中身は縮めずに収める（`contain`。切ると、丸の字が欠ける） */
+  aspect-ratio: 1 / 1;
   height: auto;
+  object-fit: contain;
+  padding: 6px;
   border-radius: var(--r-0);
   background: var(--paper);
   /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり） */
   border: 1px solid var(--rule);
 }
 
-.gd-stickerside {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  /* **押しどころを横いっぱいに伸ばさない。** 広い画面で 1,000px の
-     「おとす」になると、押す場所が1つしか無いことが伝わらなくなる */
-  align-items: flex-start;
-  gap: var(--sp-3);
-}
-.gd-stickerside > b {
-  font-size: 14px;
-  font-weight: 900;
-  color: var(--ink);
-}
-
-/* 落とすところ。**48px を切らない。**
+/* 落とすところ。**マスの中の字**で、ここだけが押しどころではない
+   （マスぜんぶが押せる）。だから厚みは持たせない。
    色は掲示板の「はりだす」（`app/css/pages.css` の `.bbtn`）と同じ recipe。
    はじめ `--accent`（桃）の上に `--accent-ink` を置いていたら、描いた画素で
    **2.85 : 1** だった（`tools/sprites/inkpx.mjs`）。桃は「いま・今日」を
-   言う飾りの色で、字を乗せる地ではない。濃い桃にクリームの字で 4.8 : 1。
-   **桃そのものは、押したときの手ごたえと側面に残る。** */
+   言う飾りの色で、字を乗せる地ではない。濃い桃にクリームの字で 4.8 : 1。 */
 .gd-get {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
-  min-height: 48px;
-  padding: 0 var(--sp-5);
-  border: 0;
+  gap: var(--sp-1);
+  /* 名前が1行の1枚と2行の1枚が並ぶので、下に寄せて段を揃える */
+  margin-top: auto;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg,
     var(--accent-deep) 0%,
     color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
   color: var(--paper);
-  font-size: var(--fs-body);
+  font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-head);
-  text-decoration: none;
-  /* 側面は面より濃く。同じ色だと厚みが見えず、押せる合図が消える */
-  box-shadow:
-    0 6px 0 color-mix(in srgb, var(--accent-deep) 58%, var(--ink)),
-    inset 0 2px 0 rgba(255, 255, 255, 0.45);
 }
-.gd-get:active {
-  transform: translateY(6px);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45);
-}
+/* 押した手ごたえは**マスごと**沈む */
+.gd-sticker:active { transform: translateY(3px); }
 
 /* ---- LINEスタンプの10枚 ------------------------------------------------- */
 
@@ -328,14 +349,18 @@
   margin-top: var(--sp-3);
 }
 
-/* **名前・ハート・2枚の絵を、同じ幅の中に入れる。**
-   PC では板が 1,000px を超えるので、絵だけを止めてハートを板の右端に置くと、
-   押しどころが何も無い余白にぽつんと浮いて、どの型のハートか分からなくなる。
-   止める幅はスタンプの並び（`.gd-grid`）と同じ 608px——面の中で1つだけ
-   別の縮尺になっていると、並べて見比べるものに見えない。
-   スマホ（390px）では板のほうが狭いので、ここは効かない */
+/* **名前・ハート・絵を、同じ幅の中に入れる。**
+   絵だけを止めてハートを板の右端に置くと、押しどころが何も無い余白に
+   ぽつんと浮いて、どの型のハートか分からなくなる。
+
+   **止める幅は絵の原寸**（`--cal-w`。`CalendarTries` が `content/goods.ts` の
+   `CAL_SHOT_W` から入れる）。1枚になって、これより広げると絵が伸びてぼやける。
+   2枚ならんでいたころはスタンプの並びに合わせて 608px で止めていたが、
+   いまは3つとも同じ `--cal-w` なので、**別の縮尺になるのは面の中ではなく
+   絵どうしのあいだ**——そちらは揃っている。
+   この面の紙は 900px に届かないので、実際に効くのは紙の幅のほう */
 .gd-cal {
-  max-width: 608px;
+  max-width: var(--cal-w);
 }
 
 /* 型の名前とハート。**ハートは型に1つ**（絵1枚ずつには付けない）。
@@ -358,20 +383,11 @@
   margin-left: auto;
 }
 
-/* 1つの型の中では、2枚を**横**に並べる。12ページあるものなので、
-   1枚だけだと「同じ型で1年つづく」感じが分からない（1月と7月） */
+/* 絵は型に1枚。**横に2枚ならべていたころの決まりは置かない**——
+   並ぶものが1つなので、列の数も、幅で1枚ずつに折り返す決まりも要らない
+   （あやと 2026-10-10、#759）。板の幅いっぱいに出す */
 .gd-calshots {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-2);
   margin-top: var(--sp-2);
-}
-/* **スマホでは1枚ずつ縦に。** 390px で横に2枚並べると1枚 162px——
-   絵の中身は見分けがつくが、「紙として良いか」を決められる大きさではない。
-   どの絵がいいかを押してもらう面なので、**見て決められる大きさ**を取る
-   （縦に並べても、1月と7月の2枚が並ぶことは変わらない） */
-@media (max-width: 559px) {
-  .gd-calshots { grid-template-columns: minmax(0, 1fr); }
 }
 
 .gd-calshots > img {
@@ -388,10 +404,6 @@
   object-fit: cover;
 }
 
-/* 広い画面では、ステッカーをもう一回り大きく。**1枚しか無いので主役にする** */
-@media (min-width: 720px) {
-  .gd-stickerart { width: 188px; }
-}
 
 /* 押したのに動かなかったときの1行。**読めなかったときの札とは別の顔**にする
    （あちらは灰色の「もうすぐ出る」ではなく、もう一度読みに行く押しどころを持つ） */

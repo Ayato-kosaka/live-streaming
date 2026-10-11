@@ -76,7 +76,7 @@ export type Sticker = {
 };
 
 /**
- * いまあるステッカー。**3枚。並びもあやとが決めたとおり。**
+ * いまあるステッカー。**並びはあやとが決めたとおり。**
  *
  * 1枚目は**島でほんとうに歩いているあの絵**そのもの
  * （`public/characters/ayato.webp`。`IsleStage` が島に立てているのと同じ1枚）。
@@ -90,6 +90,19 @@ export type Sticker = {
  * **ここの並びが、あやと島カードに入れるあやとの選び先でもある**
  * （`components/cards/CardSheet.tsx`。2026-10-08 から）。1枚足せば、
  * 落とせる面とカードの両方で同時に増える。**カードの側に名簿は無い。**
+ *
+ * ## 4枚目から8枚目（あやと 2026-10-10）
+ *
+ * > あやとステッカーの付箋に来てる三つ、反映してください。クッキングと、思い出ステッカー
+ * > あとリドルのステッカー2枚、スズリの時に渡してるのでそれも反映して。
+ * > 背景透明がされてなかったらしてあげて
+ *
+ * 5枚とも**地を抜いて透過で配る**（`tools/goods/stickercut.py`）。
+ * 元絵は白い紙の上で撮ったもので、そのまま配ると白い四角が出る
+ * （3枚目で一度やった失敗。上の `hitch` のところ）。
+ *
+ * 看板の2枚だけは**青い四角ごと**配る。あれは地ではなく絵の一部で、
+ * 丸だけにすると形が崩れる。
  */
 export const STICKERS: Sticker[] = [
   {
@@ -134,6 +147,68 @@ export const STICKERS: Sticker[] = [
     w: 436,
     h: 480,
   },
+  {
+    /* **4枚目**。コック帽のあやとが、フォークとスプーンを持っている赤い丸。
+       台所の配信で効く1枚（`/kitchen` と同じ用事）。 */
+    id: "cooking",
+    name: "クッキングあやと",
+    art: "/goods/cooking.webp",
+    file: "/goods/cooking.png",
+    saveAs: "ayato-cooking.png",
+    /* 字も標識も入っていない。左を向いて立っているので、返してよい */
+    canFlip: true,
+    w: 480,
+    h: 475,
+  },
+  {
+    /* **思い出ステッカーの2枚**（ジョージア・ストックホルム）。
+       どちらも周年の丸で、行った先の名前が入っている。
+       並びは**行った順**（ジョージア → ストックホルム）。 */
+    id: "georgia",
+    name: "思い出ステッカー（ジョージア）",
+    art: "/goods/georgia.webp",
+    file: "/goods/georgia.png",
+    saveAs: "ayato-georgia.png",
+    /* 丸のふちに沿って字が入っている。返すと全部鏡字になる */
+    canFlip: false,
+    w: 480,
+    h: 479,
+  },
+  {
+    id: "stockholm",
+    name: "思い出ステッカー（ストックホルム）",
+    art: "/goods/stockholm.webp",
+    file: "/goods/stockholm.png",
+    saveAs: "ayato-stockholm.png",
+    canFlip: false,
+    w: 480,
+    h: 477,
+  },
+  {
+    /* **看板の2枚。** カラーは**青い四角ごと**が絵で、丸だけにすると形が崩れる
+       ので、四隅の透明な余白だけ落としてある（`tools/goods/stickercut.py`）。
+       **よその会社の名前は、ここにもコードにも面にも書かない**
+       （`.claude/skills/suzuri/ayato.md`、あやと 2026-10-09）。 */
+    id: "sign-color",
+    name: "みんな大好き AYATO（カラー）",
+    art: "/goods/sign-color.webp",
+    file: "/goods/sign-color.png",
+    saveAs: "ayato-sign-color.png",
+    /* 「AYATO」の字が入っている。返すと読めなくなる */
+    canFlip: false,
+    w: 480,
+    h: 480,
+  },
+  {
+    id: "sign-mono",
+    name: "みんな大好き AYATO（モノクロ）",
+    art: "/goods/sign-mono.webp",
+    file: "/goods/sign-mono.png",
+    saveAs: "ayato-sign-mono.png",
+    canFlip: false,
+    w: 479,
+    h: 480,
+  },
 ];
 
 /**
@@ -146,6 +221,15 @@ export const STICKERS: Sticker[] = [
  * > ・あやと島カードしてるみたいな海外の風景が良いのか
  * > ・配信のアーカイブのスクショが良いのか
  * > いいねで反応見れるように作ってください
+ *
+ * **差し戻しで、1つの型につき1枚になった**（あやと 2026-10-10、#759）:
+ *
+ * > またそれぞれの例は一つで良い
+ * > カレンダー例のやつ、もっとスズリに合わせないとイメージつかないよ。
+ * > 正方形にもなってないし
+ *
+ * 押して答えてもらうのは「イラストか、風景か、スクショか」の3つに1つなので、
+ * 同じ型を2枚見せても、決められることは増えない。**1枚を大きく見せる。**
  *
  * **絵は焼いたものを置くだけ**（`site/public/goods/calendar/`）。
  * ここに書くのは、どの絵をどの名前で並べて、どの字にいいねを当てるか。
@@ -160,39 +244,49 @@ export type Calendar = {
    * 同じ当て方）。**3つとも違う字**で、**LINEスタンプのセリフと
    * かぶらせない**——かぶると、別の欄のいいねを数える
    * （`site/selftest/calendar_selftest.mjs` が毎 PR で見ている）。
+   *
+   * **一度出した字は変えない。** もう押されたいいねは、この字そのものを
+   * 鍵に数えている。書き換えると、それまでのいいねが迷子になる。
    */
   vote: string;
-  /** 試作のページ。**2枚**（1月と7月） */
+  /**
+   * 試作の絵。**配列だが、入るのは1枚だけ**
+   * （2枚目は `calendar_selftest.mjs` が赤くする）。
+   *
+   * 足したくなったら、足す前に面のほうを見る——いまの面は1枚を板の幅
+   * いっぱいに出す形で、2枚目を足すと下へ積まれるだけになる。
+   */
   shots: { src: string; alt: string }[];
 };
 
 /**
- * 試作のページ1枚の寸法。**3つとも同じなので、1枚ずつに書かない。**
+ * 試作1枚の寸法。**3つとも同じなので、1枚ずつに書かない。**
  *
- * 卓上の1ページの形（横長）をそのまま焼いてある。場所を先に取るために要る
- * （`<img>` の `width` / `height`。入れておかないと、絵が届いた瞬間に
- * 3つぶんの行が飛ぶ。`docs/island-standards.md` 7章）。
+ * 立てたカレンダー1台の正面（上にリング、左に正方形の絵、右に暦、下にスタンド）を
+ * そのまま焼いてある。場所を先に取るために要る（`<img>` の `width` / `height`。
+ * 入れておかないと、絵が届いた瞬間に3つぶんの行が飛ぶ。
+ * `docs/island-standards.md` 7章）。
  */
 export const CAL_SHOT_W = 890;
-export const CAL_SHOT_H = 635;
+export const CAL_SHOT_H = 760;
 
 /**
- * 並べる試作。**1つの型につき2枚**（1月と7月）。
+ * 並べる試作。**1つの型につき1枚。**
  *
- * 12ページあるものなので、1枚だけだと「同じ型で1年つづく」感じが分からない。
- * 冬と夏を並べると、同じ型で絵がどう変わるかが見える。
- *
- * **絵の名前は `<id>-01` / `<id>-02`。** `-01` が1月、`-02` が7月。
+ * **絵の名前は `<id>.webp`。**
  */
 export const CALENDARS: Calendar[] = [
   {
     id: "illust",
     name: "イラスト",
     vote: "イラストのカレンダー",
-    /* `alt` は**写っているものだけを言う**（`SUZURI` の `shots` と同じ作法） */
+    /* `alt` は**写っているものだけを言う**（`SUZURI` の `shots` と同じ作法）。
+       何月かは言わない——焼き直して別の月になった日から嘘になる */
     shots: [
-      { src: "/goods/calendar/illust-01.webp", alt: "イラストのカレンダー、1月のページ" },
-      { src: "/goods/calendar/illust-02.webp", alt: "イラストのカレンダー、7月のページ" },
+      {
+        src: "/goods/calendar/illust.webp",
+        alt: "立てて置くカレンダー。上にリング、左にあやとのイラスト、右に暦",
+      },
     ],
   },
   {
@@ -200,8 +294,10 @@ export const CALENDARS: Calendar[] = [
     name: "海外の風景",
     vote: "海外の風景のカレンダー",
     shots: [
-      { src: "/goods/calendar/scene-01.webp", alt: "海外の風景のカレンダー、1月のページ" },
-      { src: "/goods/calendar/scene-02.webp", alt: "海外の風景のカレンダー、7月のページ" },
+      {
+        src: "/goods/calendar/scene.webp",
+        alt: "立てて置くカレンダー。上にリング、左に海外の街の写真、右に暦",
+      },
     ],
   },
   {
@@ -209,8 +305,10 @@ export const CALENDARS: Calendar[] = [
     name: "配信のスクショ",
     vote: "配信のスクショのカレンダー",
     shots: [
-      { src: "/goods/calendar/archive-01.webp", alt: "配信のスクショのカレンダー、1月のページ" },
-      { src: "/goods/calendar/archive-02.webp", alt: "配信のスクショのカレンダー、7月のページ" },
+      {
+        src: "/goods/calendar/archive.webp",
+        alt: "立てて置くカレンダー。上にリング、左に配信のスクリーンショット、右に暦",
+      },
     ],
   },
 ];

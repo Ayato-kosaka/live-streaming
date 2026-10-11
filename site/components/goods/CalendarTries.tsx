@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import {
   CALENDARS,
   CAL_SHOT_H,
@@ -20,20 +21,25 @@ import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes"
  * `goods-calendar`、鍵にする字が `CAL_WORDS` になるだけで、
  * 読む・押す・立てる・楽観更新・読めなかった日の扱いは1行も写していない。
  *
- * ## ハートは型に1つ
+ * ## ハートは型に1つ、絵も型に1枚
  *
- * 知りたいのは「イラストか、風景か、スクショか」なので、絵1枚ずつには付けない。
- * 2枚並んでいるのは、**同じ型で1年つづいたときの見当**を付けるため（1月と7月）。
+ * 知りたいのは「イラストか、風景か、スクショか」なので、押しどころは型と
+ * 同じ数だけ置く。**絵も1枚**（あやと 2026-10-10、#759「またそれぞれの例は
+ * 一つで良い」）。1枚になったぶん、板の幅いっぱいに出す——立てたかたちの
+ * 正面図なので、小さいと暦の字も、絵が正方形であることも読めない。
  *
  * ## 縦に並べる
  *
- * 390px で3つを横に並べると、絵が小指の爪になる。型は縦、型の中の2枚は横。
+ * 390px で3つを横に並べると、絵が小指の爪になる。型は縦に積む。
  */
 export default function CalendarTries() {
   const votes = useWordVotes("goods-calendar", CAL_WORDS);
 
   return (
-    <div className="gd-cals">
+    /* 絵より広い板にしない。**大きさの出どころは `content/goods.ts` の1本**で、
+       ここにも CSS にも数を書かない（焼き直して寸法が変わった日に、
+       止める幅だけ古くなる） */
+    <div className="gd-cals" style={{ "--cal-w": `${CAL_SHOT_W}px` } as CSSProperties}>
       {CALENDARS.map((cal) => (
         <div className="gd-cal" key={cal.id}>
           <div className="gd-calh">

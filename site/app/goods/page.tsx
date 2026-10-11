@@ -139,29 +139,45 @@ export default function GoodsPage() {
         >
           {/* **1枚ぶんを決め打ちしない。** `STICKERS[0]` と書いていたので、
               2枚目を足した日に増えたのはデータだけで、面は1枚のままだった。
-              増えても減っても、ここは並べるだけにしておく */}
-          {STICKERS.map((sticker) => (
-            <div className="gd-sticker" key={sticker.id}>
-              <img
-                className="gd-stickerart"
-                src={sticker.art}
-                alt={sticker.name}
-                width={sticker.w}
-                height={sticker.h}
-              />
-              <span className="gd-stickerside">
-                <b>{sticker.name}</b>
+              増えても減っても、ここは並べるだけにしておく。
+
+              **1枚ずつ横に寝かせるのをやめて、升目にした**（2026-10-10。
+              3枚が8枚になった）。横に寝かせた形は1枚で 150px あり、
+              8枚で 1,200px——欄の頭からいちばん下の1枚まで、スマホで
+              3画面ぶん送ることになる（`docs/island-standards.md` 7章
+              「溜まっても背が変わらない形にする」）。升目なら、390px で
+              2列・広い画面で4列に折り返す。
+
+              **升目ぜんぶが押せるので、1枚ずつに厚みは付けない**
+              （`docs/island-design.md` 3-3 の例外。料理32マス・住人22マスと
+              同じ扱い。並びそのものが「押せる」の合図になる）。
+              押す場所は絵そのもの（3-1）——絵・名前・「おとす」で1つの押しどころ */}
+          <ul className="gd-stickers">
+            {STICKERS.map((sticker) => (
+              <li key={sticker.id}>
                 {/* **落ちてくるのは元絵そのまま。** 面に出しているのは小さく
                     焼いたほうで、押したときだけ大きいほうを取りにいく
                     （`content/goods.ts`）。`download` を付けるので、
                     押すと開かずに手元へ落ちる */}
-                <a className="gd-get" href={sticker.file} download={sticker.saveAs}>
-                  <Icon name="download" size={18} />
-                  おとす
+                <a className="gd-sticker" href={sticker.file} download={sticker.saveAs}>
+                  {/* 名前はすぐ下に字で出ているので、絵は飾り扱いにする
+                      （読み上げで同じ名前が2回ならぶ） */}
+                  <img
+                    className="gd-stickerart"
+                    src={sticker.art}
+                    alt=""
+                    width={sticker.w}
+                    height={sticker.h}
+                  />
+                  <b>{sticker.name}</b>
+                  <span className="gd-get">
+                    <Icon name="download" size={16} />
+                    おとす
+                  </span>
                 </a>
-              </span>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
           <Say
             theme="goods-art"
             title="自分の1枚を出す"
