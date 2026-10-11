@@ -76,7 +76,7 @@ export type Sticker = {
 };
 
 /**
- * いまあるステッカー。**3枚。並びもあやとが決めたとおり。**
+ * いまあるステッカー。**並びはあやとが決めたとおり。**
  *
  * 1枚目は**島でほんとうに歩いているあの絵**そのもの
  * （`public/characters/ayato.webp`。`IsleStage` が島に立てているのと同じ1枚）。
@@ -90,6 +90,19 @@ export type Sticker = {
  * **ここの並びが、あやと島カードに入れるあやとの選び先でもある**
  * （`components/cards/CardSheet.tsx`。2026-10-08 から）。1枚足せば、
  * 落とせる面とカードの両方で同時に増える。**カードの側に名簿は無い。**
+ *
+ * ## 4枚目から8枚目（あやと 2026-10-10）
+ *
+ * > あやとステッカーの付箋に来てる三つ、反映してください。クッキングと、思い出ステッカー
+ * > あとリドルのステッカー2枚、スズリの時に渡してるのでそれも反映して。
+ * > 背景透明がされてなかったらしてあげて
+ *
+ * 5枚とも**地を抜いて透過で配る**（`tools/goods/stickercut.py`）。
+ * 元絵は白い紙の上で撮ったもので、そのまま配ると白い四角が出る
+ * （3枚目で一度やった失敗。上の `hitch` のところ）。
+ *
+ * 看板の2枚だけは**青い四角ごと**配る。あれは地ではなく絵の一部で、
+ * 丸だけにすると形が崩れる。
  */
 export const STICKERS: Sticker[] = [
   {
@@ -132,6 +145,68 @@ export const STICKERS: Sticker[] = [
     /* 「STOP」の字が入っている。返すと読めなくなるので、返さない */
     canFlip: false,
     w: 436,
+    h: 480,
+  },
+  {
+    /* **4枚目**。コック帽のあやとが、フォークとスプーンを持っている赤い丸。
+       台所の配信で効く1枚（`/kitchen` と同じ用事）。 */
+    id: "cooking",
+    name: "クッキングあやと",
+    art: "/goods/cooking.webp",
+    file: "/goods/cooking.png",
+    saveAs: "ayato-cooking.png",
+    /* 字も標識も入っていない。左を向いて立っているので、返してよい */
+    canFlip: true,
+    w: 480,
+    h: 475,
+  },
+  {
+    /* **思い出ステッカーの2枚**（ジョージア・ストックホルム）。
+       どちらも周年の丸で、行った先の名前が入っている。
+       並びは**行った順**（ジョージア → ストックホルム）。 */
+    id: "georgia",
+    name: "思い出ステッカー（ジョージア）",
+    art: "/goods/georgia.webp",
+    file: "/goods/georgia.png",
+    saveAs: "ayato-georgia.png",
+    /* 丸のふちに沿って字が入っている。返すと全部鏡字になる */
+    canFlip: false,
+    w: 480,
+    h: 479,
+  },
+  {
+    id: "stockholm",
+    name: "思い出ステッカー（ストックホルム）",
+    art: "/goods/stockholm.webp",
+    file: "/goods/stockholm.png",
+    saveAs: "ayato-stockholm.png",
+    canFlip: false,
+    w: 480,
+    h: 477,
+  },
+  {
+    /* **看板の2枚。** カラーは**青い四角ごと**が絵で、丸だけにすると形が崩れる
+       ので、四隅の透明な余白だけ落としてある（`tools/goods/stickercut.py`）。
+       **よその会社の名前は、ここにもコードにも面にも書かない**
+       （`.claude/skills/suzuri/ayato.md`、あやと 2026-10-09）。 */
+    id: "sign-color",
+    name: "みんな大好き AYATO（カラー）",
+    art: "/goods/sign-color.webp",
+    file: "/goods/sign-color.png",
+    saveAs: "ayato-sign-color.png",
+    /* 「AYATO」の字が入っている。返すと読めなくなる */
+    canFlip: false,
+    w: 480,
+    h: 480,
+  },
+  {
+    id: "sign-mono",
+    name: "みんな大好き AYATO（モノクロ）",
+    art: "/goods/sign-mono.webp",
+    file: "/goods/sign-mono.png",
+    saveAs: "ayato-sign-mono.png",
+    canFlip: false,
+    w: 479,
     h: 480,
   },
 ];
