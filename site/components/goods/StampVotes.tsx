@@ -1,6 +1,6 @@
 "use client";
 
-import { LINE_PENDING, LINE_STAMPS, LINE_WORDS } from "@/content/goods";
+import { LINE_PENDING, LINE_STAMPS, LINE_VOTES } from "@/content/goods";
 import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes";
 
 /**
@@ -21,9 +21,11 @@ import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes"
  * ここに残っているのは、この欄にしか無いもの——**スタンプの絵の並べ方**だけ。
  */
 export default function StampVotes() {
-  /* 鍵にする字はセリフそのもの。**`LINE_WORDS` を渡す**——
-     その場で `map` すると、毎回新しい配列に見えて数え直しが止まらない */
-  const votes = useWordVotes("goods-linestamp", LINE_WORDS);
+  /* 鍵にする字はセリフそのもの。**`LINE_VOTES` を渡す**——
+     その場で `map` すると、毎回新しい配列に見えて数え直しが止まらない。
+     1枚につき「絵のとおりの字 ＋ 同じスタンプを指すほかの字」で、
+     **押すのも枠に出るのも先頭**（`content/goods.ts` の `also`） */
+  const votes = useWordVotes("goods-linestamp", LINE_VOTES);
 
   return (
     <div className="gd-stamps">
@@ -44,7 +46,14 @@ export default function StampVotes() {
               {!s.art && <em>絵はこれから</em>}
             </span>
             <b className="gd-stampline">{s.line}</b>
-            <VoteHeart word={s.line} votes={votes} />
+            {/* **ハートは枠の底にそろえる。** セリフが2行になる枠があるので
+                （「にわかに信じられへん」は PC の 110px 幅で折り返す）、
+                そろえないと**その枠のハートだけが1行ぶん下がって**、
+                並びの行がガタつく。マスの背は grid がそろえてくれるので、
+                下に寄せるのはここ1行で足りる */}
+            <span style={{ marginTop: "auto" }}>
+              <VoteHeart word={s.line} votes={votes} />
+            </span>
           </li>
         ))}
       </ol>
