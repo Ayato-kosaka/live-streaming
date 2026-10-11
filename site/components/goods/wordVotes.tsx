@@ -37,6 +37,20 @@ import ReadAgain from "@/components/me/ReadAgain";
  * 一覧には出さない（面の上ですでに枠として出ているので、同じ字が2回ならぶ。
  * `Notes` の `omitTexts`）。
  *
+ * ## 1つの候補を、2つ以上の字が指すことがある
+ *
+ * 字が鍵なので、**言い方が変わると、すでに付いているいいねが迷子になる。**
+ * LINEスタンプは提案のときの言い方で付箋が立ち、あとから届いた絵の字が
+ * それと少し違うことがある（「サプラ〜イズ！！」→「サプラーイズ！」）。
+ *
+ * だから候補は**字1つではなく、字の並び**で渡せる。先頭が
+ * **枠に出て、押すと立つ字**で、2つ目から先は**同じ候補を指すほかの字**。
+ *
+ *   - いいねの数は、**並びぜんぶを足して**出す（同じ字が2枚立った回のために
+ *     足していたのと同じ形。足す相手が増えるだけ）
+ *   - 押して立つ／切り替わるのは**先頭の付箋だけ。** 後ろのほうは読むだけ
+ *   - 字1つだけの候補は、これまでどおり字で渡してよい（カレンダー側がそう）
+ *
  * ## 読めなかった日に「0いいね」と言わない
  *
  * `docs/island-standards.md` 10章。数は読めたときだけ出す。読めていない
@@ -68,11 +82,21 @@ export type WordVotes = {
 };
 
 /**
- * @param theme 付箋の宛先（`content/themes.ts` の id）。**新しく作らない**
- * @param words 候補の字。**呼び出し側が持つ定数を渡す**——
- *   その場で組んだ配列を渡すと、毎回新しいものに見えて数え直しが止まらない
+ * 候補1つぶんの鍵。字1つか、**同じ候補を指す字の並び**（先頭が押す字）。
  */
-export function useWordVotes(theme: string, words: string[]): WordVotes {
+export type VoteWord = string | string[];
+
+/** 鍵を、かならず「先頭が押す字」の並びに直す */
+const spell = (w: VoteWord) => (typeof w === "string" ? [w] : w);
+
+/**
+ * @param theme 付箋の宛先（`content/themes.ts` の id）。**新しく作らない**
+ * @param words 候補の鍵。**呼び出し側が持つ定数を渡す**——
+ *   その場で組んだ配列を渡すと、毎回新しいものに見えて数え直しが止まらない。
+ *   字の並びで渡したときは、**先頭が枠に出る字**（`hearts` / `on` / `press`
+ *   に渡すのもこれ）で、残りは数を足すだけの相手
+ */
+export function useWordVotes(theme: string, words: VoteWord[]): WordVotes {
   const [notes, setNotes] = useState<Sticky[] | null>(null);
   const [read, setRead] = useState<Read>("wait");
   const [again, setAgain] = useState(0);
@@ -117,19 +141,27 @@ export function useWordVotes(theme: string, words: string[]): WordVotes {
     };
   }, [again, theme]);
 
-  /** 字 → その札（付箋1枚）と、いいねの数 */
+  /**
+   * 枠に出る字 → その札（押す付箋1枚）と、いいねの数。
+   *
+   * **札が無くても、数が在ることがある。** ほかの言い方で付箋が立っていて、
+   * 枠に出る字ではまだ1枚も立っていないとき（`also`）。そのときは
+   * 数だけ出して、押されたらそこで先頭の付箋を立てる。
+   */
   const byWord = useMemo(() => {
-    const m = new Map<string, { note: Sticky; hearts: number }>();
-    for (const w of words) {
-      const hit = (notes ?? []).filter((n) => n.text.trim() === w);
-      if (hit.length) {
-        m.set(w, {
-          note: oldest(hit),
-          /* 同じ字が2枚立ってしまった回のために、**足して出す。**
-             札は1枚だが、数は字ぜんぶぶん。見ている人には1つの数に見える */
-          hearts: hit.reduce((n, x) => n + x.hearts, 0),
-        });
-      }
+    const m = new Map<string, { note?: Sticky; hearts: number }>();
+    for (const word of words) {
+      const says = spell(word);
+      const head = says[0];
+      /* 同じ字が2枚立ってしまった回のために、**足して出す。**
+         札は1枚だが、数は鍵の字ぜんぶぶん。見ている人には1つの数に見える */
+      const hit = (notes ?? []).filter((n) => says.includes(n.text.trim()));
+      if (!hit.length) continue;
+      const mine = hit.filter((n) => n.text.trim() === head);
+      m.set(head, {
+        note: mine.length ? oldest(mine) : undefined,
+        hearts: hit.reduce((n, x) => n + x.hearts, 0),
+      });
     }
     return m;
   }, [notes, words]);
@@ -139,8 +171,9 @@ export function useWordVotes(theme: string, words: string[]): WordVotes {
       if (busy) return;
       const t = await token();
       const hit = byWord.get(word);
-      if (!hit) {
-        /* まだ1枚も無い字。**立ててから押す。** */
+      if (!hit?.note) {
+        /* その字では、まだ1枚も立っていない。**立ててから押す。**
+           ほかの言い方の付箋に数が付いていても、立てるのは押された字のほう */
         setBusy(word);
         setWhy(null);
         try {
@@ -199,8 +232,8 @@ export function useWordVotes(theme: string, words: string[]): WordVotes {
     read,
     hearts: (word) => byWord.get(word)?.hearts,
     on: (word) => {
-      const hit = byWord.get(word);
-      return hit ? hearted.has(hit.note.id) : false;
+      const note = byWord.get(word)?.note;
+      return note ? hearted.has(note.id) : false;
     },
     press,
     busy,

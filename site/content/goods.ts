@@ -339,8 +339,23 @@ export const CAL_WORDS = CALENDARS.map((c) => c.vote);
 export type LineStamp = {
   /** 変えない。焼いた絵のファイル名になる */
   id: string;
-  /** スタンプの一言 */
+  /** スタンプの一言。**絵の中の字そのまま。** 枠に出るのも、押すとハートが立つのもこれ */
   line: string;
+  /**
+   * 同じスタンプを指す、**ほかの字**。読むだけで、押しても立たない。
+   *
+   * いいねは付箋の字に当たっている（`components/goods/wordVotes.tsx`）ので、
+   * **字が変わると、すでに付いているいいねが迷子になる。** 提案のときの
+   * 言い方で付箋が立っていて、あとから届いた絵の字がそれと少し違う、
+   * ということが起きる（2026-10-11 の3枚で2枚がそう——
+   * 「サプラ〜イズ！！」→「サプラーイズ！」、
+   * 「にわかには信じられへん」→「にわかに信じられへん」）。
+   *
+   * 絵のとおりの字を `line` に置いて、**前の言い方をここに残す。**
+   * いいねの数は `line` と `also` を足して出すので、迷子にならない。
+   * 字が変わっていないものには要らない。
+   */
+  also?: string[];
   /** 焼いた絵。**まだ届いていないあいだは書かない** */
   art?: string;
 };
@@ -355,7 +370,7 @@ export type LineStamp = {
 export const LINE_PENDING = "/goods/line/pending.webp";
 
 /**
- * あやとのぶん。**いま19枚**（`LINE_WANT` は 15。**候補が行き先より多い**。
+ * あやとのぶん。**いま22枚**（`LINE_WANT` は 15。**候補が行き先より多い**。
  * あやと 2026-10-09:「住人スタンプ削るか、良いね数見てあやとスタンプ削るかで40にしますよ」）。
  *
  * 並べ替えない——「おはよう・こんばんは・おやすみ」で1日が回って、
@@ -386,6 +401,29 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "pachipachi", line: "パチパチ", art: "/goods/line/pachipachi.webp" },
   /* 気持ちのかたまりの中。「すごいよ」の次に、もう一段上げる一言 */
   { id: "nextlevel", line: "ネクストレベル", art: "/goods/line/nextlevel.webp" },
+  /* **知らせの3枚**（あやと 2026-10-11）。気持ちのかたまりのしまいに置いた。
+     ここまでが自分の気持ちで、ここから先は相づち——そのつなぎ目が
+     「知らせを切り出して、受ける」という形になっている:
+     いい知らせ（サプラーイズ！）→ わるい知らせ（悲報なんやけど）→
+     受けて驚く（にわかに信じられへん）→ そのまま相づち（いいやんか…）。
+
+     **`also` は、付箋がその字で立っているから置いてある。** 絵が届く前に
+     提案の言い方で付箋が立っていて、絵の字と2枚ぶん食い違った
+     （`LineStamp` の `also` の説明）。絵のとおりを `line` にして、
+     前の言い方を `also` に残してある。 */
+  {
+    id: "surprise",
+    line: "サプラーイズ！",
+    also: ["サプラ〜イズ！！"],
+    art: "/goods/line/surprise.webp",
+  },
+  { id: "hihou", line: "悲報なんやけど", art: "/goods/line/hihou.webp" },
+  {
+    id: "shinjirarehen",
+    line: "にわかに信じられへん",
+    also: ["にわかには信じられへん"],
+    art: "/goods/line/shinjirarehen.webp",
+  },
   { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
   /* 相づちのかたまり。「いいやんか」の次に、締めの一言 */
   { id: "hona", line: "ほな", art: "/goods/line/hona.webp" },
@@ -399,8 +437,25 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "oumaiga", line: "おーまいがー", art: "/goods/line/oumaiga.webp" },
 ];
 
-/** スタンプの一言だけ。付箋の中から「この一言のこと」を見分けるのに使う。 */
-export const LINE_WORDS = LINE_STAMPS.map((s) => s.line);
+/**
+ * いいねを数える1枠ぶん。**先頭が押す字**（枠に出るのもこれ）で、
+ * 2つ目から先は**同じスタンプを指すほかの字**（読むだけ）。
+ *
+ * `wordVotes.tsx` に渡すのはこちら。**その場で組まない**——画面の中で
+ * `map` すると、毎回新しい配列に見えて数え直しが止まらない。
+ */
+export const LINE_VOTES: string[][] = LINE_STAMPS.map((s) => [
+  s.line,
+  ...(s.also ?? []),
+]);
+
+/**
+ * スタンプを指す字、ぜんぶ。付箋の中から「この一言のこと」を見分けるのに使う。
+ *
+ * **`also` も入れる。** `Notes` の `omitTexts` に渡しているので、
+ * 落とすと**同じスタンプを指す付箋が、一覧にもう一度並ぶ**。
+ */
+export const LINE_WORDS = LINE_VOTES.flat();
 
 /**
  * あやとのぶんを、最後に何枚にするか。
