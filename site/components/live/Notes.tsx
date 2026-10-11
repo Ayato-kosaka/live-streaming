@@ -14,7 +14,15 @@ import {
   replySticky,
   type Sticky,
 } from "@/lib/api";
-import { isOpenTheme, openThemes, shelves, THEMES, themeById, type Theme } from "@/content/themes";
+import {
+  isOpenTheme,
+  openThemes,
+  shelves,
+  THEMES,
+  themeById,
+  writeShelves,
+  type Theme,
+} from "@/content/themes";
 import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
 import ReadAgain from "@/components/me/ReadAgain";
 import Fold from "@/components/ui/Fold";
@@ -304,6 +312,21 @@ export default function Notes({
     () => openThemes(today).filter((t) => shelf.some((x) => x.id === t.id)),
     [shelf, today],
   );
+  /**
+   * 書く先の選び札を、**見出しごとに束ねたもの**（2026-10-11）。
+   *
+   * あやとの言葉:
+   *
+   * > 以下はグッズとしてカテゴリ分けして欲しい
+   *
+   * 前はここが平らだったので、旅あての1枚とグッズの3枚と受け皿の2枚が、
+   * 同じ丸札で6枚並んでいた。**押す人は、どれが何の話なのかを
+   * 札の字だけから当てることになる。**
+   *
+   * **並びは `content/themes.ts` の `ORDER` が決める。** ここには書かない
+   * （畳みのほう（`groups`）と同じ表を通す。表が2つあると片方だけ古くなる）。
+   */
+  const destGroups = useMemo(() => writeShelves(writable, today), [writable, today]);
   /** 書く宛先。**読んでいる棚とは別に持つ**（畳んだ棚を読みながら、生きた宛先に書ける） */
   const dest =
     fixed ?? writable.find((t) => t.id === to) ?? writable[0] ?? here;
@@ -595,30 +618,49 @@ export default function Notes({
               <span>{fixed.name}</span>あてに貼ります
             </p>
           ) : (
-            /* **書ける宛先だけを並べる**（`writable`）。棚は13〜15あるが、
-               そのうち生きているのは4つ。終わった国と終わった企画を選び先に
-               出しておくと、書いたものが誰も見ない棚に入る。 */
+            /* **書ける宛先だけを並べる**（`writable`）。棚は14〜16あるが、
+               そのうち生きているのは6つ。終わった国と終わった企画を選び先に
+               出しておくと、書いたものが誰も見ない棚に入る。
+
+               **見出しで束ねる**（`destGroups`。あやと 2026-10-11
+               「カテゴリ分けして欲しい」）。束ねかたは畳みのほう
+               （`.nb-group` / `.nb-glabel`）と同じ形にそろえる——同じ面の中で
+               同じ仕事（宛先を選ぶ）の束ねかたが2通りあると、別の仕掛けに見える。
+
+               **見出しが1つだけの束でも、見出しを出す。** 束のあるものと
+               無いものが混ざると、見出しの無い札が「どの束にも属さないもの」に
+               見える。いま1枚しか無いのは旅あてで、ここは**次の旅が始まれば
+               国と区間の札が増える**ところなので、1枚のときだけ形を変えると
+               増えた日に並びが突然変わる（`docs/island-standards.md` 7章）。
+
+               **畳まない。** ここは「これから書く人」が最初に押すところで、
+               1回押させると書く気が削れる（`docs/island-design.md` 3章）。 */
             <div className="nt-dest">
               <span className="nt-dest-l">どこへ</span>
-              <div className="nt-dests">
-                {writable.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    className={`nt-destb${t.id === dest.id ? " is-on" : ""}`}
-                    aria-pressed={t.id === dest.id}
-                    onClick={() => {
-                      setTo(t.id);
-                      /* **下の一覧もここで絞る。** この丸札が、生きている宛先の
-                         唯一の選び札になった（棚からは外した）。書く先だけ動かして
-                         一覧が前の宛先のままだと、書いた1枚がどこにも出てこない。 */
-                      setPick(t.id);
-                    }}
-                  >
-                    {t.name}
-                  </button>
-                ))}
-              </div>
+              {destGroups.map((g) => (
+                <div className="nt-destg" key={g.group}>
+                  <span className="nb-glabel">{g.group}</span>
+                  <div className="nt-dests">
+                    {g.themes.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        className={`nt-destb${t.id === dest.id ? " is-on" : ""}`}
+                        aria-pressed={t.id === dest.id}
+                        onClick={() => {
+                          setTo(t.id);
+                          /* **下の一覧もここで絞る。** この丸札が、生きている宛先の
+                             唯一の選び札になった（棚からは外した）。書く先だけ動かして
+                             一覧が前の宛先のままだと、書いた1枚がどこにも出てこない。 */
+                          setPick(t.id);
+                        }}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {/* 選んだ宛先が「何を書く場所か」を言う一行（`content/themes.ts` の `lead`）。

@@ -1362,7 +1362,13 @@
 /* 宛先の選び札。**書ける宛先だけが並ぶ**（`content/themes.ts` の `openThemes`）。
    棚の札（`.nb-tab`）と同じ形にはしない。あちらは読む棚を選ぶもので、
    同じ形だと同じことをする札が上下に2組並ぶ。こちらは小さい丸札。 */
-.nt-dest { display: grid; gap: var(--sp-2); }
+.nt-dest { display: grid; gap: var(--sp-3); }
+/* 見出しひとつぶんの束（2026-10-11）。束ねかたは畳みの `.nb-group` と
+   同じ形にそろえるが、`margin-top` は持たせない——あちらは紙の面の途中に
+   いくつも並ぶので間を空けるが、こちらは `.nt-dest` の grid が間を持っている
+   （両方効かせると、束と束のあいだだけ 22px 空いて見出しが浮く）。
+   見出しの字も畳みと同じ `.nb-glabel` を使う。 */
+.nt-destg { display: grid; gap: var(--sp-2); }
 .nt-dest-l {
   font-size: var(--fs-note);
   font-weight: 900;
