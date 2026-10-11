@@ -1435,6 +1435,13 @@
 }
 .isle-sheet-x {
   flex: none;
+  /* 見た目は 40px。**指の当たりだけ 48px に広げる**（下の `::after`）。
+     `docs/island-design.md` 3-2 は「指で押せる最小 48px」で、ここは
+     実測 40.9x40.9 しか無かった（2026-10-11。`tools/sprites/hitbox.mjs` の
+     測りかた＝中心から1pxずつ伸ばす、で測った）。
+     **絵のほうを大きくしない。** 48px にすると厚み（`box-shadow: 0 3px 0`）が
+     40px の札のために決めた値のまま残り、板の見出しの背も変わる。 */
+  position: relative;
   width: 40px;
   height: 40px;
   display: grid;
@@ -1443,6 +1450,12 @@
   color: var(--ink);
   background: #f0e5c8;
   box-shadow: 0 3px 0 #d3c09a;
+}
+/* 広げた当たり。**見えないので、厚みも色も付けない**（合図は厚み1種類だけ。3-3） */
+.isle-sheet-x::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }
 .isle-sheet-x:active { transform: translateY(2px); box-shadow: 0 1px 0 #d3c09a; }
 

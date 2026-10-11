@@ -2,7 +2,6 @@ import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterDays, type Chapter } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
-import { ALBANIA_GROUP, PLAN_GROUP, THEMES } from "@/content/themes";
 import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
@@ -87,37 +86,23 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
       more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/nordic" },
     };
   }
-  /* アルバニア。**旅の面（`/albania`）も、旅程も、まだ無い。**
-     だから北欧のように「しおり」「◯カ国」を並べる板は作れない——
-     作れば、中身の無い行き先が島に建つ。
-
-     代わりにここへ**風船**を建てる。あやとの言葉（2026-09-27）:
+  /* **アルバニアの風船は、ここには建てない**（2026-10-11）。
+     あやとの言葉（2026-09-27）:
 
      > 島に対する風船みたいな感じで、アルバニアでやってほしいこととか、
      > 今後やってほしいことみたいな付箋の貼り場所を作ってほしい
 
-     板に出すのは**来ている付箋**で、書くのは `/board`（`more` の1本）。
-     島の板は読むだけ、押す・書くは掲示板、という決まりに合わせてある
-     （`components/isle/IsleBoard.tsx`「ここでは押せない」）。
+     この「貼り場所」は、表紙では**常設の「やってほしいこと」**が持っている
+     （`components/island/layout.ts` の `board`。行き先も `/board` で同じ）。
+     旅あての風船をその隣に建てていたあいだ、表紙には**同じ用事の入口が2つ**
+     並んでいた。あやとが 2026-10-11 にアルバニアあての宛先を畳んでからは、
+     そのうち片方（風船）だけが「やってほしいことを貼る」と言い続けて、
+     **押した先で貼れない**状態になっていた。
 
-     **宛先を直書きしない。** 見出し（`ALBANIA_GROUP`）で引くので、
-     アルバニアの宛先が増えても、ここは1文字も変わらない。
-     「これからの企画」も一緒に出すのは、あやとが「今後やってほしい企画とかも
-     含めて」と言ったから——旅のことと、島のこれからを、同じ風船で受ける。 */
-  if (c.slug === "albania") {
-    return {
-      id: "trip",
-      label: "アルバニアでこれやって",
-      /* **日数も国数も言わない。** どちらもまだ決まっていないので、
-         0 を出すと「0カ国、0日の旅」が事実として島に建つ */
-      blurb: "やってほしいことを貼る",
-      icon: "lantern-hanging",
-      size: 58,
-      note: "行く先も、食べるものも、まだ何も決まっていない。",
-      board: THEMES.filter((t) => [ALBANIA_GROUP, PLAN_GROUP].includes(t.group)),
-      more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },
-    };
-  }
+     旅あての付箋そのものは、章の島（`/island/albania`）の板で読める
+     （`components/isle/spec.ts` の `albaniaSpec`）。表紙の旅の札は、
+     下の「この島のこと」——いま何日目で、何本配信して、何人来てくれたか——に戻す。
+     **それが、旅ごとに字を書き足さずに済む唯一の形。** */
   /* 旅の面を持たない章。**行き先を作らない。**
      数字だけを板に出して、そこから先は常設の入口に任せる */
   const st = CHAPTER_STATS[c.slug];

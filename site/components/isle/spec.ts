@@ -29,14 +29,9 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import {
-  ALBANIA_GROUP,
-  NORDIC_GROUP,
-  PLAN_GROUP,
-  THEMES,
-  type Theme,
-} from "@/content/themes";
+import { ALBANIA_GROUP, NORDIC_GROUP } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
+import { boardPlate, type IsleBoardSpec } from "./board";
 import { isleIcon } from "./icons";
 import { pier, type Neighbour } from "./pier";
 import { isleSpanRange } from "./span";
@@ -78,8 +73,9 @@ export type IslePlaceSpec = {
   note?: string;
   /** 「ぜんぶ見る」の行き先 */
   more?: { label: string; sub: string; href: string };
-  /** 板の中に出す掲示板の棚割り（`components/isle/IsleBoard.tsx`） */
-  board?: Theme[];
+  /** 板の中に出す掲示板（`components/isle/IsleBoard.tsx`）。
+      **字ごと `./board.ts` が作る**——島の側で書かない */
+  board?: IsleBoardSpec;
   /** 出発までの日数を出す。**画面が出てから数える**（焼き込まない） */
   countdown?: string;
   /** 島の「！」の札に出す6つ。いまは全部が出る（島に建つのが最大6つなので） */
@@ -380,23 +376,6 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
 }
 
 /**
- * この旅の掲示板の棚割り。
- *
- * **宛先の表（`content/themes.ts`）から、北欧の棚だけを渡す。**
- * 前は本文の頭の `【国名】` を読んで分けていたが、宛先が正式な欄になり
- * （#160）、既存の8件もそちらへ移した（#162）。棚の名前と並びは表が持って
- * いるので、ここは**そのうちどれを島に出すかを選ぶだけ**。
- *
- * あやとの言葉:「北欧周遊島の掲示板には、北欧周遊関連だけ見れれば良い」。
- *
- * 並びは表の順（旅で通る順）。**枚数では動かさない**
- * （`docs/island-play.md`「順位表を作らない」）。
- */
-function themesIn(...groups: string[]): Theme[] {
-  return THEMES.filter((t) => groups.includes(t.group));
-}
-
-/**
  * アルバニアの島。**素材の島に、風船を1つ足したもの。**
  *
  * 北欧の島（`nordicSpec`）は「この旅のこと・旅の6カ国・旅のしおり・
@@ -406,8 +385,12 @@ function themesIn(...groups: string[]): Theme[] {
  * **北欧の板が5枚**建っていた（`app/island/[chapter]/page.tsx` の注）。
  *
  * だから旅ごとに何を建てるかを決める。アルバニアで足すのは1つだけ——
- * やってほしいことを受ける風船（あやと 2026-09-27）。
+ * この旅あての付箋を読む板（あやと 2026-09-27 の「風船」）。
  * 旅程が決まったら、ここに国と区間の札が増える。
+ *
+ * **札の字は手で書かない**（`components/isle/board.ts`）。2026-10-11 に
+ * アルバニアあての宛先を畳んだのに、ここの字が「やってほしいことを貼る」
+ * 「ここから貼れる」のまま残って、**押した先で貼れない**板になっていた。
  *
  * ## なぜ素材の島を**作り直さず、包む**のか
  *
@@ -428,18 +411,16 @@ function themesIn(...groups: string[]): Theme[] {
 export function albaniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
   const isle = isleSpec(c, prev, next);
   const wish: IslePlaceSpec = {
-    id: "wish",
-    label: "アルバニアでこれやって",
-    blurb: "やってほしいことを貼る",
-    icon: isleIcon(c.slug, "wish", "lantern-hanging"),
+    /* **字は表から作る。** 手で書いた字をここに足さない——
+       足した1行が、宛先を畳んだ日から嘘になる（`./board.ts`）。 */
+    ...boardPlate({ name: "アルバニア", group: ALBANIA_GROUP }),
+    id: "board",
+    icon: isleIcon(c.slug, "board", "lantern-hanging"),
     size: 58,
     sign: true,
-    note: "行く先も、食べるものも、まだ何も決まっていない。",
-    board: themesIn(ALBANIA_GROUP, PLAN_GROUP),
-    more: { label: "島の掲示板へ", sub: "ここから貼れる", href: "/board" },
   };
   /* 桟橋は `isleSpec` が**いちばん最後**に足す。島から島へ渡るところなので
-     並びの末尾に置いておきたい。だから風船はその1つ手前に差す。 */
+     並びの末尾に置いておきたい。だから板はその1つ手前に差す。 */
   const places = [...isle.places];
   places.splice(Math.max(0, places.length - 1), 0, wish);
   return { ...isle, places, building: c.opensAt };
@@ -545,16 +526,17 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       href: "/nordic/guide",
     },
     {
+      /* **字は表から作る**（`./board.ts`）。手で書くと、宛先を畳んだ日に
+         ここだけが「ここから貼れる」と言い続ける。
+
+         **広げるのを先に書く**のは、あとから手で足した1行が
+         ここで勝つようにするため。勝ったものは見張りが
+         「表から作り直したものと違う」と言って落とす——
+         黙って無視されるより、落ちたほうが直る。 */
+      ...boardPlate({ name: "北欧", group: NORDIC_GROUP }),
       id: "board",
-      label: "この旅の掲示板",
-      blurb: "北欧に来ている付箋",
       icon: "signboard",
       size: 58,
-      note: "行きたい場所も、やってほしいことも。",
-      board: themesIn(NORDIC_GROUP),
-      /* **「企画も出せる」と言わない（2026-10-01）。** 押した先は付箋ひとつ。
-         ここの板は北欧あての付箋だけなので、言うのは「ほかの宛先もある」。 */
-      more: { label: "島の掲示板へ", sub: "北欧以外あての付箋も、ここから貼れる", href: "/board" },
     },
   ];
   return {
