@@ -209,6 +209,60 @@ export const STICKERS: Sticker[] = [
     w: 479,
     h: 480,
   },
+  {
+    /* **ここから4枚**（あやと 2026-10-11「無帰国系、看板、ふうせん、飛行機を
+       あやとステッカーに昇格して」）。題はあやとが付箋に書いた字そのまま。
+
+       4枚とも、もとは画面を撮った絵だった。地の抜きかたは1枚ずつ違う
+       （`tools/goods/stickercut.py` の頭）——この1枚は、**生成りの板と白い紙が
+       同じ色**なので、色ではなくかたちで切ってある。 */
+    id: "noreturn",
+    name: "無帰国系",
+    art: "/goods/noreturn.webp",
+    file: "/goods/noreturn.png",
+    saveAs: "ayato-noreturn.png",
+    /* `AYATO APP / NO RETURN TRIP` の字が入っている。返すと読めなくなる */
+    canFlip: false,
+    w: 480,
+    h: 480,
+  },
+  {
+    /* 黄色い標識。**右下に、画面を撮ったときの「共有」ボタンが写り込んでいた**。
+       絵ではないので消してある（`find_share`）。 */
+    id: "sign",
+    name: "看板",
+    art: "/goods/sign.webp",
+    file: "/goods/sign.png",
+    saveAs: "ayato-sign.png",
+    /* `AYATO_APP / WORLD TRAVELING NO RETURN` の字が入っている */
+    canFlip: false,
+    w: 471,
+    h: 480,
+  },
+  {
+    id: "balloon",
+    name: "ふうせん",
+    art: "/goods/balloon.webp",
+    file: "/goods/balloon.png",
+    saveAs: "ayato-balloon.png",
+    /* `NO RETURN AYATO APP / 2026` の字が入っている */
+    canFlip: false,
+    w: 480,
+    h: 407,
+  },
+  {
+    /* **「背景透明が漏れてる」の本体**（あやと 2026-10-11）。
+       透明をあらわす灰色の市松が、絵として焼き込まれていた。落としてある。 */
+    id: "plane",
+    name: "飛行機",
+    art: "/goods/plane.webp",
+    file: "/goods/plane.png",
+    saveAs: "ayato-plane.png",
+    /* `NO RETURN AYATO APP / 2026` の字が入っている */
+    canFlip: false,
+    w: 480,
+    h: 319,
+  },
 ];
 
 /**
