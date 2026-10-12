@@ -316,7 +316,10 @@ def resolve_claim_ui(t, video_id, song, how="erase"):
         return on.length === 1 ? on[0] : null; }})()"""
     _wait(t, f"!!{row_btn}", 20)
     t.click(row_btn)
-    _wait(t, f"!!{_dlg('操作を選択')}")
+    _wait(t, f"!!({_dlg('操作を選択')} || {_dlg('本人確認')})")
+    # 編集を続けて送ると Google が本人確認を求める。人しか通せないので、ここで止める
+    if t.js(f"!!{_dlg('本人確認')}"):
+        raise RuntimeError("REAUTH: 本人確認を求められた")
     D = _dlg('操作を選択')
     t.click(f"[...{D}.querySelectorAll('*')].find(e => e.children.length === 0 && e.innerText && e.innerText.trim() === '曲を消去する')")
     time.sleep(1)
