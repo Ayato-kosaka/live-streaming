@@ -30,6 +30,12 @@
   7. **3本より多くは置かない**
   8. 渡されたものが空なら **2 で止まる**
   9. ログと注記に、**ことばも書類IDも1文字も出ない**
+ 10. **名前でも指せる**（あやとが返してくるのは名前だけ。書類IDは
+     このリポジトリのどこにも無い）。`@` 付き・前後の空白は畳む
+ 11. **引けない名前には置かない**（打ち間違い）
+ 12. **同じ呼び名が2人に付いていたら、どちらにも置かない**
+     （片方に寄せると、他人のことばがその人の提案に出る）
+ 13. **名前も公開の Actions ログに出ない**
 
 終了コード: 0=通った / 1=落ちた
 """
@@ -90,7 +96,20 @@ DOC = {
 }
 # **入れ物に居ない書類ID。** ここに置こうとしたら落とす
 GONE = "z" + "0123456789abcdef" * 2
-CH = {"a": cid("aa"), "b": cid("bb")}
+# 同じ呼び名が2人に付いている側（どちらにも置かない）
+DOC["c"] = "c" + "0123456789abcdef" * 2
+DOC["d"] = "d" + "0123456789abcdef" * 2
+CH = {"a": cid("aa"), "b": cid("bb"), "c": cid("cc"), "d": cid("dd")}
+
+# 図鑑の呼び名。**`@` 付きのハンドルが入っていることがある**ので、
+# 当てる側で畳めているかをここで見る（`fold_name`）
+NAME = {"a": "@みどりのひと", "b": "そらのひと"}
+# あやとが返してくる形（`@` 無し・前後に空白）
+TYPED = " みどりのひと "
+# 入れ物のだれにも当たらない名前
+NONAME = "だれでもないひと"
+# 2人に付いている呼び名
+CLASH = "おなじなまえのひと"
 
 # **本人が決めたことば。** 1文字でも消えたら落とす
 KEPT = ["もうきめた"]
@@ -130,6 +149,15 @@ def store() -> FakeDb:
                        "suggested": [SRC], "suggestedFrom": [SRC],
                        "pickedAt": 1},
             DOC["b"]: {"channelId": CH["b"], "lines": [], "pickedAt": 1},
+            DOC["c"]: {"channelId": CH["c"], "lines": [], "pickedAt": 1},
+            DOC["d"]: {"channelId": CH["d"], "lines": [], "pickedAt": 1},
+        },
+        # **図鑑。** 呼び名は `aliases` が先（`name_of`）
+        "islandCharacter": {
+            DOC["a"]: {"aliases": [NAME["a"]], "channelName": "@handle-a"},
+            DOC["b"]: {"channelName": NAME["b"]},
+            DOC["c"]: {"aliases": [CLASH]},
+            DOC["d"]: {"aliases": [CLASH]},
         },
     })
 
@@ -212,6 +240,50 @@ def main() -> int:
     check(rc == 2 and not fake.writes, "**空なら 2 で止まる**")
     rc, fake = run("これは並びではない", True)
     check(rc == 2 and not fake.writes, "**形が違えば 2 で止まる**")
+    rc, fake = run([{"lines": [{"text": FIXED, "from": SRC}]}], True)
+    check(rc == 2 and not fake.writes,
+          "**書類IDも名前も無ければ置かない**")
+
+    print("== 名前で指す ==")
+    rc, fake = run([{"name": TYPED,
+                     "lines": [{"text": FIXED, "from": SRC}]}], True)
+    check(rc == 0 and len(fake.writes) == 1,
+          "**名前だけで置ける**（`@` と前後の空白は畳む）")
+    check(fake.writes and fake.writes[0]["id"] == DOC["a"],
+          "**呼び名から正しい書類を引いている**")
+    check(fake.writes
+          and fake.writes[0]["patch"].get("suggestedFrom") == [SRC],
+          "元の字がそのまま入っている")
+    rc, fake = run([{"name": NAME["b"],
+                     "lines": [{"text": SAME, "from": SAME}]}], True)
+    check(rc == 0 and fake.writes and fake.writes[0]["id"] == DOC["b"],
+          "**`channelName` しか無い人も引ける**（`aliases` が先）")
+    rc, fake = run([{"name": NONAME,
+                     "lines": [{"text": FIXED, "from": SRC}]}], True)
+    check(rc == 1 and not fake.writes,
+          "**引けない名前には置かない**")
+    rc, fake = run([{"name": CLASH,
+                     "lines": [{"text": FIXED, "from": SRC}]}], True)
+    check(rc == 1 and not fake.writes,
+          "**同じ呼び名が2人に付いていたら、どちらにも置かない**")
+    rc, fake = run([{"id": DOC["a"], "name": NONAME,
+                     "lines": [{"text": FIXED, "from": SRC}]}], True)
+    check(rc == 0 and fake.writes and fake.writes[0]["id"] == DOC["a"],
+          "**書類IDを渡されたら、名前は見ない**")
+    rc, fake = run([{"id": DOC["a"],
+                     "lines": [{"text": FIXED, "from": SRC}]},
+                    {"name": TYPED,
+                     "lines": [{"text": SAME, "from": SAME}]}], True)
+    check(len(fake.writes) == 1,
+          "**同じ人に2回渡されても、置くのは1回だけ**")
+    # **引けない名前が混ざっても、引けたぶんは置く。**
+    # 1件の打ち間違いで19人ぶんが止まると、どこまで入ったか分からなくなる
+    rc, fake = run([{"name": NONAME,
+                     "lines": [{"text": FIXED, "from": SRC}]},
+                    {"name": TYPED,
+                     "lines": [{"text": SAME, "from": SAME}]}], True)
+    check(rc == 0 and len(fake.writes) == 1,
+          "**引けない名前が混ざっても、引けたぶんは置く**")
 
     print("== 公開のログ ==")
     logged = BUF.getvalue()
@@ -219,10 +291,13 @@ def main() -> int:
         check(v not in logged, "**ことばが公開のログに出ない**")
     for v in list(CH.values()) + list(DOC.values()) + [GONE]:
         check(v not in logged, "**識別子が公開のログに出ない**")
+    for v in list(NAME.values()) + [TYPED.strip(), NONAME, CLASH]:
+        check(v not in logged, "**名前が公開のログに出ない**")
     check("::notice::" in logged, "注記（::notice::）が出ている")
     for ln in [x for x in logged.splitlines() if x.startswith("::notice::")]:
         check(all(v not in ln for v in
-                  [SRC, FIXED, SAME] + KEPT + list(CH.values())
+                  [SRC, FIXED, SAME, TYPED.strip(), NONAME, CLASH]
+                  + KEPT + list(NAME.values()) + list(CH.values())
                   + list(DOC.values())),
               "注記に件数しか出ていない")
 
