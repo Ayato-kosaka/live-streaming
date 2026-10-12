@@ -18,9 +18,16 @@
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
-   "state": "to-erase",
+   "state": "editing",
    "claims_left": 10,
-   "history": [],
+   "history": [
+    {
+     "date": "2026-10-12",
+     "claim": "",
+     "song": "Time Of My Life (Extended Instrumental) / Danceteria",
+     "action": "erase"
+    }
+   ],
    "why": ""
   },
   "-XSFRIeEpSw": {

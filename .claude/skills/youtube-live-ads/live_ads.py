@@ -66,45 +66,62 @@ def main():
     again = [i for i in led.get("videos", {}) if i not in known]
     seen += get_videos(t, again)
 
-    log, videos = [], {}
+    # 前回の台帳を下敷きにして1本ずつ上書きし、毎回書き出す。途中で落ちても、
+    # 見ていない動画は前回のまま残り、同じコマンドをもう一度流せば続きから進む
+    log, videos = [], dict(led.get("videos", {}))
     newest = led.get("checked_through", {})
+
+    def save():
+        out = {"checked_through": newest, "last_run": today(), "hold": hold,
+               "videos": dict(sorted(videos.items(), key=lambda kv: kv[1]["start"], reverse=True))}
+        json.dump(out, open(dst, "w"), ensure_ascii=False, indent=1)
+        json.dump(log, open(dst + ".log.json", "w"), ensure_ascii=False, indent=1)
+
     for v in seen:
         s = summarize(v)
-        active = []
-        if s["causes"] or s["m10n"] not in ("MONETIZING",):
-            active = [claim_summary(c) for c in claims(t, s["id"])]
-            active = [c for c in active if c["status"] == "ACTIVE"]
-        state, why = classify(s, active, hold)
         prev = led.get("videos", {}).get(s["id"], {})
-        row = {"title": s["title"][:60], "start": jst(s["start"]), "state": state,
-               "claims_left": len(active), "history": prev.get("history", [])}
-        if state == "erase":
-            c = next(c for c in active if c["claim"] == why)
-            if dry:
-                row["state"], why = "to-erase", f"{c['title']} / {', '.join(c['artists'])}"
-            else:
-                try:
+        row = {"title": s["title"][:60], "start": jst(s["start"]), "state": "error",
+               "claims_left": prev.get("claims_left", 0), "history": prev.get("history", [])}
+        try:
+            active = []
+            if s["causes"] or s["m10n"] not in ("MONETIZING",):
+                active = [claim_summary(c) for c in claims(t, s["id"])]
+                active = [c for c in active if c["status"] == "ACTIVE"]
+            state, why = classify(s, active, hold)
+            row.update(state=state, claims_left=len(active))
+            if state == "erase":
+                c = next(c for c in active if c["claim"] == why)
+                why = f"{c['title']} / {', '.join(c['artists'])}"
+                if dry:
+                    row["state"] = "to-erase"
+                else:
                     resolve_claim_ui(t, s["id"], c["title"], "erase")
                     row["state"] = "editing"
-                    why = f"{c['title']} / {', '.join(c['artists'])}"
                     row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": "erase"})
                     time.sleep(2)
-                except Exception as ex:
-                    row["state"], why = "error", str(ex)[:200]
+        except Exception as ex:
+            why = f"{type(ex).__name__}: {str(ex)[:180]}"
+            # 画面が返らなくなったタブは、そのあと何を投げても返らない（2026-10-12 に1本の
+            # タイムアウトから残り全部が落ちた）。タブを作り直して次へ進む
+            for _ in range(3):
+                try:
+                    t = studio(url_of("videos/live"))
+                    break
+                except Exception:
+                    time.sleep(20)
         row["why"] = why
         # EC2 の上で切り離して流すので、1本ずつ書き出して進み具合を外から読めるようにする
         with open(dst + ".progress", "a") as f:
             f.write(json.dumps({"id": s["id"], "state": row["state"], "why": why[:120]}, ensure_ascii=False) + "\n")
         log.append(dict(id=s["id"], **{k: row[k] for k in ("start", "state", "claims_left", "why")}, title=s["title"][:30]))
-        if row["state"] not in ("done", "skip"):
+        if row["state"] in ("done", "skip"):
+            videos.pop(s["id"], None)
+        else:
             videos[s["id"]] = row
         if s["stage"] == "PAST" and s["start"] > newest.get("start", 0):
             newest = {"start": s["start"], "jst": jst(s["start"]), "id": s["id"]}
+        save()
 
-    out = {"checked_through": newest, "last_run": today(), "hold": hold,
-           "videos": dict(sorted(videos.items(), key=lambda kv: kv[1]["start"], reverse=True))}
-    json.dump(out, open(dst, "w"), ensure_ascii=False, indent=1)
-    json.dump(log, open(dst + ".log.json", "w"), ensure_ascii=False, indent=1)
     from collections import Counter
     print(len(seen), "videos;", dict(Counter(x["state"] for x in log)))
 
