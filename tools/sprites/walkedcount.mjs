@@ -69,8 +69,6 @@ const DIST = fromRoot(process.env.DIST || "site/.next-3170");
 const BREAK = process.env.BREAK || "";
 const SELFTEST = process.argv.includes("--selftest");
 
-/** 見る日。**国境を越える日の前後を必ず入れる**（そこで焼き込みと画面が割れる） */
-const DAYS = (process.env.DAYS || "2026-09-13,2026-09-17,2026-09-18,2026-09-19,2026-09-26,2026-09-27,2026-09-28").split(",");
 
 // ---------------------------------------------------------------- ほしい数
 
@@ -137,6 +135,26 @@ function itineraryMatches() {
 
 /** 旅の土地の暦（UTC+2）で、その瞬間の日付 */
 const tripDate = (iso) => new Date(Date.parse(iso) + 2 * 3600_000).toISOString().slice(0, 10);
+
+/**
+ * 見る日。**国境を越える日の前後を必ず入れる**（そこで焼き込みと画面が割れる）。
+ *
+ * **越える日を手で並べない。** ここは日付の名簿を直書きしていて、北欧の7日で
+ * 止まっていた。そのあいだに国を2つ越えている（アルバニア 09-28、北マケドニア
+ * 10-12）のに、**新しい切れ目を1つも見ていなかった**——名簿を手で持つと、
+ * 新しい日がそこに載るまで見えない（`docs/island-standards.md` 8章、#165 と同じ形）。
+ * いまは `AHEAD_COUNTRIES` の `entered` から、その日と前日を自分で足す。
+ * 国が増えれば、次の回から勝手に増える。
+ *
+ * 直書きのほうに残してあるのは、**もう `AHEAD_COUNTRIES` に居ない国の切れ目**
+ * （歩き終わって `COUNTRIES` へ移った北欧の6カ国）。過去に割れた日なので、
+ * 導出では出てこないが、見つづける値がある。
+ */
+const PAST_EDGES = ["2026-09-13", "2026-09-17", "2026-09-18", "2026-09-19", "2026-09-26"];
+const prevDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
+const DAYS = process.env.DAYS
+  ? process.env.DAYS.split(",")
+  : [...new Set([...PAST_EDGES, ...AHEAD.flatMap((a) => [prevDay(a.entered), a.entered])])].sort();
 
 const want = (iso) => DONE.length + AHEAD.filter((a) => a.entered <= tripDate(iso)).length;
 

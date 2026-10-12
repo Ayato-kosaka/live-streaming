@@ -118,15 +118,30 @@ const ITINERARY = (() => {
  * 並べるものと数えるものを別の出どころから引くと、また食い違う。
  *
  * 日付は、旅程があればそちらが正（区間の日付）。無ければ `entered` を使う。
- * 街と出た日は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ * 街は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ *
+ * **出た日だけは、旅程が無くても埋まる。** つぎの国に入った日が分かっていれば、
+ * 前の国を出たのはその前日——人は2つの国に同時には居ない。`python/stays.py` の
+ * `chapter_stays()` が焼き込みをそう区切っている（`_prev_day`）ので、
+ * ここで空のままにすると**画面だけが前の国を開いたまま**にする。
+ * 2026-10-12 に北マケドニアへ移った日がそれで、アルバニアと北マケドニアが
+ * 2行とも「◯◯/◯◯ –」と出る。どちらにも居るように読める。
  *
  * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
  * 画面が出てから（`./parts.tsx` の `TripCountries`）。
  */
-const TRIP_STEPS: TripStep[] = AHEAD_COUNTRIES
+/** その日の前日。国の切れ目を引くためだけなので、暦は UTC で足りる */
+const prevDay = (d: string) =>
+  new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
+
+/** 歩いている最中の国を、入った順に。**出た日はつぎの国の `entered` から引く** */
+const AHEAD_ON_FOOT = AHEAD_COUNTRIES
   // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
   .filter((c) => isWalkedCountry(c.slug) && !COUNTRIES.some((d) => d.slug === c.slug))
-  .map((c) => {
+  .sort((a, b) => a.entered.localeCompare(b.entered));
+
+const TRIP_STEPS: TripStep[] = AHEAD_ON_FOOT
+  .map((c, i) => {
     const it = ITINERARY.get(c.slug);
     const from = it?.from || c.entered;
     /* 章は**その国に入った日に動いていた章**を引く。"nordic" と書くと、旅が
@@ -140,7 +155,9 @@ const TRIP_STEPS: TripStep[] = AHEAD_COUNTRIES
       name: it?.name ?? c.name,
       en: it?.en,
       from,
-      to: it?.to ?? "",
+      /* 旅程が終わりを持っていればそれが正。無ければ、つぎの国に入った前日まで。
+         つぎの国がまだ無い（いまいる国）なら、開いたままが事実 */
+      to: it?.to ?? (AHEAD_ON_FOOT[i + 1] ? prevDay(AHEAD_ON_FOOT[i + 1].entered) : ""),
       towns: it?.towns ?? [],
       chapter: ch.slug,
       chapterName: ch.name,
