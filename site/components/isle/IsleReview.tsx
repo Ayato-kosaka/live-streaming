@@ -7,8 +7,8 @@ import Icon from "@/components/ui/Icon";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { chapterDays, type Chapter } from "@/content/chapters";
-import { COUNTRIES } from "@/content/countries";
 import { shortsOf } from "@/content/shorts";
+import { chapterCountries } from "@/content/walked";
 import ChapDays from "./ChapDays";
 import IsleSpan from "./IsleSpan";
 import { MarkList, ShortGrid } from "./IsleLists";
@@ -55,9 +55,10 @@ import { charImg } from "@/lib/charImg";
 export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
   const days = chapterDays(c);
   const st = CHAPTER_STATS[c.slug];
-  const countries = c.countries
-    .map((s) => COUNTRIES.find((x) => x.slug === s))
-    .filter((x): x is NonNullable<typeof x> => Boolean(x));
+  /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
+     章の `countries` は歩き終わってからしか埋まらないので、ここだけ見ていると
+     歩いている島が「0カ国 歩いた」と言う。 */
+  const countries = chapterCountries(c);
   const legends = legendsOf(c);
   const apps = appsOf(c);
   /* 配信。**人の集まった順**に出す。新しい順にすると、440本のうち
@@ -103,12 +104,13 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
               const cities = k.stays.flatMap((s) => s.cities);
               return (
                 <li key={k.slug}>
-                  <Link href={`/map/${k.slug}`} prefetch={false}>
+                  <Link href={k.href} prefetch={false}>
                     <Flag slug={k.slug} size={30} />
                     <span className="isle-kuni-body">
                       <b>{k.name}</b>
                       <i>{stayText(k.stays, stayClosedOn(k.slug))}</i>
-                      <em>{cities.slice(0, 4).join("・")}</em>
+                      {/* 歩いている最中の国には街がまだ無い。**空の行を置かない** */}
+                      {cities.length > 0 && <em>{cities.slice(0, 4).join("・")}</em>}
                     </span>
                     <Icon name="right" size={14} />
                   </Link>
