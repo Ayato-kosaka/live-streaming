@@ -284,6 +284,21 @@ webp にするのは軽いから。実測で 256px が **19.5KB**（ドライブ
 置き場の古い png も**消さない。** 書類が指す先が webp に変わるだけで、
 口は同じ幅が2つあれば webp を採る。
 
+### 背景なしの絵を、透過の PNG に差し替える
+
+`python/admin/characters_plain_swap.py`。**既定では1バイトも書かない。**
+焼き直しと違って **`full` ごと**差し替える（透過の無い元を置き換えるため。#733）。
+
+```
+{"char": "<書類ID>", "src": "python/admin/plain_swap/<書類ID>.png"}                 … 数えるだけ
+{"char": "<書類ID>", "src": "python/admin/plain_swap/<書類ID>.png", "apply": true} … 送る
+```
+
+焼き方は画面の `bake` と同じ（`full` は長辺 2048 まで、幅 128/256/640 を
+元の幅未満だけ、webp 質 0.92）。透過の判定は SUZURI と同じ `suzuri_common.transparent()`。
+送ったあとはオーナーの名簿から読み直して、指す先・寸法・透過・scene が
+変わっていないことまで確かめる。絵の置き場と片づけは `python/admin/plain_swap/README.md`。
+
 ### ログインは要らなかった
 
 - **フォルダの一覧**は `drive.google.com/embeddedfolderview?id=…` が

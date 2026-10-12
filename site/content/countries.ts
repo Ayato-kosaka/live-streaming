@@ -589,6 +589,19 @@ export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] 
      `entered` を入れた日から「歩いた国」の数に1つ足される
      （`content/walked.ts`）。着いた日なので、そこは合っている。 */
   { slug: "albania", name: "アルバニア", entered: "2026-09-28" },
+  /* 北マケドニア。あやとが 2026-10-12 に着いた（本人の知らせ。`content/plans.ts` の
+     `north-macedonia` の `date` と同じ日）。アルバニアと**同じ島（`balkans`）のまま**で、
+     章は足さない決まりなので（`content/chapters.ts` の `balkans`）、
+     国が増えたことを知っているのはここだけになる。**ここに足さないと、
+     国境を越えても「歩いた国」の数が止まる。**
+
+     **`COUNTRIES` のほうには足さない。** あちらは歩き終わった国の表で、
+     街（`cities`）と滞在（`stays`）と見どころが要る。まだ滞在の最中なので、
+     書けるのは名前と旗の鍵と着いた日までしかない（アルバニアも同じ理由で待ち。#664）。
+
+     `entered` が入った日から、`content/walked.ts` が1つ足して数える。
+     `/map` の年表もここから並ぶので、**数と並びが同じ出どころ**になる。 */
+  { slug: "north-macedonia", name: "北マケドニア", entered: "2026-10-12" },
 ];
 
 /**
