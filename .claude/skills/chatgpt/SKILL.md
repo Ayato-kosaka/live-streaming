@@ -15,8 +15,8 @@ description: ChatGPT（chatgpt.com）を、EC2 のログイン済み Chrome か�
 
 | | 決め | 理由 |
 | --- | --- | --- |
-| アカウント | **あやとの ChatGPT**。あやとが既定のプロファイルでログインし、こちらは `up("chatgpt", reseed=True)` で複製し直して使う | Q1: A |
-| 会話の残し場所 | **専用のプロジェクト「あやと島案内鳥」** に入れる。一時チャットは使わない | Q2: C。あやとの履歴・メモリに島の作業を混ぜない。長い待ちのあとでも取りに戻れる |
+| アカウント | **あやとの ChatGPT**（Plus）。ログインは `~/cdp-chatgpt` の Chrome に入っている。**複製し直さない**（5） | Q1: A |
+| 会話の残し場所 | **専用のプロジェクト「あやと島案内鳥」**（`chatgpt.py` の `PROJECT`）に入れる。一時チャットは使わない。会話は消さない | Q2: C。あやとの履歴・メモリに島の作業を混ぜない。長い待ちのあとでも取りに戻れる |
 | 名乗り | ChatGPT への頼みごとの中で `Claude` と名乗らない（視聴者さんに出る字に混ざりうる） | CLAUDE.md |
 
 ## 1. 使いかた
@@ -39,11 +39,11 @@ python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && pyth
 
 ```python
 from chatgpt import *
-t = fresh()                 # ChatGPT のタブを1枚だけ残して、新しい会話を開く
+t = fresh(PROJECT)          # タブを1枚だけ残して、プロジェクトの中の新しい会話を開く
 print(logged_in(t))         # False なら止まる（下の 3）
 a = ask(t, "……")            # 返事の本文（Markdown）。同じ t で続けて呼べば同じ会話の続き
 print(turns(t))             # [(role, 本文, 書き終わったか), …]
-print(where(t.url()))       # 会話の URL（chatgpt.com/c/… ）。あとで fresh(url) で戻れる
+print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで fresh(url) で戻れる
 ```
 
 | 関数 | 何をするか |
@@ -53,27 +53,38 @@ print(where(t.url()))       # 会話の URL（chatgpt.com/c/… ）。あとで 
 | `turns(t)` | 会話を読む。返事は DOM から Markdown に戻す（コードブロック・表・箇条書き） |
 | `busy(t)` | 書いている途中か |
 | `logged_in(t)` | ログインしているか |
+| `attach(t, [EC2のパス])` | ファイルを入力欄に付ける（無いパスは先に弾く） |
+| `images(t)` / `save_image(t, src, out)` | いちばん後ろの返事の絵を並べる・ページの中から取ってファイルに書く（絵を作るのは `chatgpt-image`） |
 
 ## 2. 画面のつくり（2026-10-12 に見たもの）
 
 **class では探さない。** 2026-10 の画面は class が stylex の乱数（`x1gnnqk1 x9f619 …`）で、
 出し直しのたびに変わる。aria-label と data-* 属性で探す。
 
-| もの | 探しかた |
-| --- | --- |
-| 入力欄 | `textarea[name=prompt]`（aria-label「Chat with ChatGPT」。id は `mobile-composer-prompt`） |
-| 送る | `button[aria-label="Send message"]` |
-| 書いている途中 | 送るボタンが `button[aria-label="Stop generating"]` に変わる |
-| 会話 | `ol[aria-label=Conversation] > li[data-message-role=user\|assistant]` |
-| 書き終わった返事 | その `li` に `data-message-complete` が付く |
-| 返事の本文 | `li` の中の `section[aria-label="DIL content"]` |
-| 問いの見出し | `[data-message-attribution]`（「You said:」）。本文から外して読む |
-| ファイルを渡す | `input#octane-mobile-composer-files-input` / `…-photos-input`（`t.set_files(css, [パス])`） |
+**ログインの有無で、画面のつくりが別物になる。** `chatgpt.py` は両方を読む。
+
+| もの | ログイン（ふだんはこちら） | 未ログイン |
+| --- | --- | --- |
+| 入力欄 | `div.ProseMirror[contenteditable=true]`（aria-label「Ask ChatGPT」／プロジェクトでは「New chat in …」） | `textarea[name=prompt]` |
+| 送る | `button[aria-label="Send"]` | `button[aria-label="Send message"]` |
+| 1往復 | `div[data-talvt-turn-state="in_progress"→"complete"]` | `li[data-message-role]`。書き終わると `data-message-complete` |
+| 問い | `[data-user-message-bubble]` | 「You said:」の見出しを外した `li` |
+| 返事 | `h4[data-conversation-role=assistant]` の次の箱 | `section[aria-label="DIL content"]` |
+| 書いている途中 | **止めるボタンが出ないことがある**。箱が `in_progress` | `button[aria-label="Stop generating"]` |
+| 作った絵 | `[data-testid=generated-image-gallery] img`（alt「Generated image N」、src は `blob:`） | 作れない |
+| ファイルを渡す | `input[type=file][aria-label="Attach files"]` | 渡せない |
 
 - **`innerText` で読まない。** コードブロックの囲い（```）が落ち、言語名の札（`python`）が
   本文の1行に混ざる。`turns()` が DOM を Markdown に戻している
-- 書き終わりは「`data-message-complete` が付いた」**かつ**「Stop generating が消えた」の両方で見る。
-  片方だけだと、書き始める前の一瞬を「書き終わった」と取ることがある
+- **画面の字をまるごと出さない。** ログインした画面のサイドバーには、あやとの会話の題が並んでいる。
+  調べるときも `main` の中か、ボタンの aria-label だけを出す
+- **送るボタンは「入力欄と同じ form の中で、見えているもの」を押す。** `document.querySelector` で
+  最初の1つを取ると、見えていない別の「Send」を押して何も送られない
+- **絵を付けた直後の1回目の「送る」は、黙って無視されることがある**（2回に2回。ボタンは押せる見た目のまま）。
+  `send()` は入力欄が空になるまで押し直し、何回目で通ったかを返す
+- **送りそこねた問いは下書きとして残る。** 開き直しても戻ってくるので、`send()` は入れる前に入力欄を空にする
+- 中の API（`/backend-api/…`）は、ページの中の `fetch` でも **Bearer の札が要る**（cookie だけだと 401）。
+  画面の操作で足りるうちは叩かない
 
 ## 3. ログイン
 
@@ -82,20 +93,26 @@ print(where(t.url()))       # 会話の URL（chatgpt.com/c/… ）。あとで 
 - **ログインしていなくても、文字の問いには答えが返る**（2026-10-12 に実測。2〜7秒）。ただし
   **絵を作る・ファイルを渡す・会話を残す はできない**（画面に「Log in to … create images and upload files」）。
   未ログインの会話（`chatgpt.com/uc/…`）は、タブを閉じると戻れない（開き直すと `/` に飛ぶ）
-- 切れたら**こちらからログインしに行かない。** あやとに #780 の形で頼む（Chrome リモートデスクトップで入り、
-  ふだんの Chrome で chatgpt.com にログイン → こちらが `up("chatgpt", reseed=True)`）。
+- 切れたら**こちらからログインしに行かない。** issue であやとに頼む（`/ask-ayato`）。頼む前に `up("chatgpt", "https://chatgpt.com/")`
+  で窓を開いておき、「Chrome リモートデスクトップで入ると見える、chatgpt.com を開いた窓でログインして」と書く
+  （そのログインは `~/cdp-chatgpt` に入り、以後そのまま使える。既定のプロファイルからの複製は要らない）。
   `google_login.py` で「Continue with Google」を押す形は使わない——あやとの ChatGPT が Google で
   作ったものでなければ別のアカウントができてしまうのと、Google のログインを使う Chrome を増やすと
   まとめて切れた前例があるため（#768）
 
-## 4. 待ちかた（インスタンスを止めるか）
+## 4. 待ちかた（返事が止まって見えるとき・インスタンスを止めるか）
+
+**タブの上の返事は、途中で止まって見えることがある。** ログインして考える型（Medium など）で頼むと、
+サーバーでは書き終わっているのに、タブは「Thinking」のまま7分動かなかった（2026-10-12。あやとの画面には届いていた）。
+`wait_reply()` は **45秒ごとにページを読み直して**確かめる。読み直しても返事は消えない
+（ログインして、ふつうの会話かプロジェクトで頼んだとき。未ログインの会話は読み直すと消える）。
 
 **返事を待つあいだ、EC2 は止めない。** 止めて得になるのは待ちが1時間を超えるときだけ。
 
 | 待つもの | 長さ（実測） | EC2 |
 | --- | --- | --- |
-| 文字の返事 | 2〜7秒 | 止めない |
-| 絵1枚 | （ログイン後に測る） | 止めない |
+| 文字の返事（未ログイン） | 2〜7秒 | 止めない |
+| 絵1枚（ログイン・Medium） | 74〜99秒 | 止めない |
 | Deep research など | 数十分になりうる | 止めない。ただし SSM を握ったまま待たない（下） |
 | **人の返事**（あやとのログイン・ヒアリング） | 分からない | **止める**（`ec2-chrome` 2） |
 
@@ -103,5 +120,11 @@ print(where(t.url()))       # 会話の URL（chatgpt.com/c/… ）。あとで 
   SSM が繋がるまで**かかり、`/tmp` も消える。数分〜数十分の待ちで止めると、時間を払って何も浮かない
 - **SSM のコマンドを握ったまま長く待たない。** 同じ箱への send-command は1本ずつしか流れない
   （`ec2-chrome` 4）。長い返事は「送ったら、いったん抜ける」→「あとで `fresh(会話のURL)` で開き直して
-  `turns()` を読む」にする。**返事は ChatGPT のサーバーで作られるので、タブを閉じても会話に残る**
-  （ログインして、ふつうの会話かプロジェクトで頼んだときだけ。未ログイン・一時チャットは消える）
+  `turns()` を読む」にする
+
+## 5. ログインを消さない
+
+- **あやとが「ログインした」と言ったら、複製し直す前に、いま開いている窓がログインしているかを先に見る。**
+  2026-10-12 に、あやとがこちらの窓（`~/cdp-chatgpt`）でログインしたあと、こちらが既定のプロファイルから
+  複製し直して、そのログインを消した。あやとにもう一度ログインしてもらうことになった
+- 閉じるときは `down("chatgpt")`（セッションを書き戻させる）。pkill だけにしない

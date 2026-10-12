@@ -122,6 +122,21 @@ export type Plan = {
   href?: string;
   /** これが今いちばん大きい企画。トップの先頭に大きく出す。 */
   big?: boolean;
+  /**
+   * その回が、**配信の型そのもの**であるときの型の slug
+   * （`content/streamTypes.ts` の `slug`。いまのところ `"monthly"` だけ）。
+   *
+   * **「今夜は◯◯の日」と言ってよいのは、ここに日が立っている日だけ。**
+   * `/streams` の「今夜は何をやってる日」は、長いあいだ**その月の最終日**を
+   * 月末配信の日として言っていた。実測（`site/content/*.ts` の焼き込み）では
+   * 9/26・8/29・7/26・6/28・5/31 で、**最終日だったのは 5/31 の1回だけ。**
+   * 11月は最終日（11/30）が月曜なので、そのままだと外す
+   * （`docs/island-standards.md` 16章「その日が来ると嘘になる字」）。
+   *
+   * 曜日で当てにいっても同じ（土3回・日2回で割れている）。**日付を持って
+   * いるものから引く。立っていなければ、その夜は何も言わない。**
+   */
+  streamType?: string;
 };
 
 /* 北欧旅の節目の日。**`until` と文の両方に同じ日を手で書かない。**
@@ -348,6 +363,18 @@ export const PLANS: Plan[] = [
 ];
 
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
+
+/**
+ * その配信の型の回が立っている日（`YYYY-MM-DD`）。**立っていなければ空。**
+ *
+ * 返すのは**日付だけ**。`/streams` はこれをブラウザへ渡すので、企画の表
+ * まるごと（写真・本文・外への口）を連れていかせない
+ * （`components/streams/WeekRail.tsx` の注と同じ決め）。
+ */
+export const streamPlanDays = (slug: string): string[] =>
+  PLANS.filter((p) => p.streamType === slug && p.date)
+    .map((p) => p.date as string)
+    .sort();
 
 /** カードに添える、その日の企画(#173)。名前と、その企画の話がある面。 */
 export type PlanBrief = { title: string; href: string };

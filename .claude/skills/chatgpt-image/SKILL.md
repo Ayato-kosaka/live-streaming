@@ -1,0 +1,104 @@
+---
+name: chatgpt-image
+description: 絵の背景透過・描き直し・新しく描くを、手元の道具か ChatGPT（EC2 の Chrome）で行う。どちらを使うかの決め方、絵を渡して頼み・できた絵を持ち帰り・島に出せる形に整えるまで。島の住人・ステッカー・グッズの絵を触るときに使う。トリガー語:「背景透過」「透過PNG」「白い地を抜く」「切り抜き」「絵を描き直す」「高解像度に」「ChatGPT で絵」「画像生成」「chatgpt-image」。
+---
+
+# 絵を作る・直す（背景透過から）
+
+**ChatGPT の操作そのものは `chatgpt` スキル。** ここは絵の話だけ。
+
+## 0. 決まっていること（#780）
+
+| | 決め | 出どころ |
+| --- | --- | --- |
+| 背景透過 | **原則は手元で抜く**（`cutout.py`）。手元で抜いて汚れが目立つときだけ ChatGPT | D1 |
+| 枚数 | **上限なし**（あやとの ChatGPT の枠を使ってよい） | D2 |
+| 考える深さ | **画面の既定のまま**（2026-10 は Medium）。絵1枚に 1〜2分かかるが、出来を優先する | D3 |
+| 会話の置き場 | プロジェクト「あやと島案内鳥」（`chatgpt.py` の `PROJECT`） | Q2 |
+
+## 1. どちらで作るか
+
+**ChatGPT は絵を描き直して返す。** 「絵は変えないで」と頼んでも描き直す（2026-10-12、🃏 で実測）:
+
+| | 手元（`cutout.py`） | ChatGPT |
+| --- | --- | --- |
+| 元の画素 | **1画素も変わらない**（不透明部分の差 0） | 描き直される。寸法も変わる（1600×1200 → 1402×1122）。収まり・線の細部・色の濃さも少し変わる |
+| 境目 | 1〜2px のなめらかな透け。白いにじみ 0 | きれい |
+| 得意なもの | 白い地の上の、輪郭線のある絵 | 写真や模様の地・ぼやけた絵をくっきりさせる・大きくする・新しく描く |
+| かかる時間 | 数秒 | 1〜2分（74〜99秒） |
+
+**決め方:**
+
+1. もう島で知られている絵（住人・グッズ・ステッカー）の背景を抜く → **手元**
+2. 手元で抜いた結果を、紺と緑の上に置いて見る。**にじみ・まだら・ぼやけが目立つ**なら → ChatGPT
+   （付箋の地球の絵がこれ。届いたのが 437×480 の JPEG で、にじみで旗も名所もぼやけていた。
+   ChatGPT に描き直してもらうと 1254px でくっきりし、構図・旗・名所はほぼそのまま残った）
+3. 地が白でない・輪郭線が無い・大きくしたい・新しく描く → ChatGPT
+
+**描き直した絵は、元と並べて見比べてから出す。** 人物・旗・字が変わっていないかを目で見る。
+
+## 2. 手元で抜く
+
+```bash
+python3 .claude/skills/chatgpt-image/cutout.py <入力> <出力.png>
+# 外周の透明 100.0% / 全体の透明 65.6% / 不透明部分の元画素との差 最大 0 / 境目3px の白っぽい画素 0 / 19407
+```
+
+- 出てくる4つの数で確かめる。**外周の透明が 95% 未満・元画素との差が 0 でない・白っぽい画素が境目の 1% を超える** なら、
+  そのまま出さない
+- JPEG のにじみが多い絵は `--tchroma 28`、小さい絵（500px 前後）は `--min-island 200` くらいに下げる
+- 輪郭線の外に浮いた小さな描きこみ（離れ小島）は捨てる。残したいものが捨てられていたら `--min-island` を下げる
+- 絵の内側の白（歯・目の光・飛行機の胴）は抜けない。外とつながった白（杖と体のすき間）は抜ける
+
+## 3. ChatGPT で作る
+
+EC2 を起こし（`ec2-chrome` 2）、道具を置く:
+
+```bash
+python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/chatgpt/chatgpt.py /home/ubuntu/cdp/chatgpt.py
+python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/chatgpt-image/chatgpt_image.py /home/ubuntu/cdp/chatgpt_image.py
+python3 .claude/skills/ec2-chrome/ec2.py put <手元の絵> /home/ubuntu/chatgpt/in.png
+python3 .claude/skills/ec2-chrome/ec2.py put <頼みごとを書いたファイル> /home/ubuntu/chatgpt/q.txt
+```
+
+1〜2分かかるので、**裏で回す**（120秒を超えると Bash が裏に回す。`ec2-chrome` 4）:
+
+```bash
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt_image.py /home/ubuntu/chatgpt/q.txt /home/ubuntu/chatgpt/out /home/ubuntu/chatgpt/in.png') 700
+python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/chatgpt/out-0.png <手元>
+```
+
+最後に JSON で `url`（会話の URL）・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
+（`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭>`）。
+
+> `chatgpt_image.py` は、2026-10-12 に1本ずつ確かめた関数（`attach` → `send` → `wait_reply(want_images=True)` →
+> `images` → `save_image`）を1つにまとめたもの。まとめた形で EC2 の上を通したのは、まだ一度もない。
+> 初めて使った日に、ここの1行を「通った」に書き換える。
+
+### 頼みかた
+
+- **残してほしいものを名指しする。** 「構図・人物・国旗・名所・色をできるだけそのままに」と書くと、旗も名所も残った
+- **寸法は「長い辺 1024px 以上」と書く。** 返ってきたのは 1254×1254
+- **「透過PNGで」と書く。** 書けば透過で返る（地球の絵・🃏 とも、外周は透明だった）
+- **余白は頼まない。** 「余白をとって」と頼み直すと、かえって端が切れ、中身もまた描き直された。余白は手元で足す（下の 4）
+- 頼みごとの中で `Claude` と名乗らない
+
+## 4. 持ち帰った絵を整える
+
+```bash
+python3 .claude/skills/chatgpt-image/tidy.py <持ち帰った.png> <出力.png> [--square]
+# 端に掛かっていた画素（上・下・左・右）[0, 241, 0, 0] → 1292×1292、見えている画素のうち完全に不透明 96.4%
+```
+
+- **中の透明度を 255 にそろえる。** ChatGPT の絵は中身が 254 で入ってくる。見た目は同じだが、
+  「完全に不透明か」で数える道具がずれる
+- **端に掛かっている画素があれば、余白を足す。** 地球の絵は、円の底がちょうど端（1254.2px）に接していた。
+  円を当てはめて測ったら欠けは無く、余白を足すだけで直った。**欠けているかは、測ってから決める**
+
+## 5. 出す前に見る
+
+- 紺（#282840）と緑（#6c6）の上に置いて、**縮めた全体**と**境目の4倍拡大**を Read で見る。白いふち・穴・ゴミの粒が無いこと
+- 描き直した絵は、元と同じ大きさに並べて見る（人物・旗・字）
+- 島に出す先ごとの手順は、それぞれのスキル・道具にある:
+  - 住人の背景なし → `python/admin/characters_plain_swap.py`（`python/admin/plain_swap/README.md`）。そのあと SUZURI の住人グッズ（`suzuri` の characters.md）
+  - あやとのステッカー → `site/content/goods.ts` の `STICKERS`（`file` は大きいまま、`art` は長い辺 480 の webp `quality=86`）
