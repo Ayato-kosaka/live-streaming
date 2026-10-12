@@ -37,10 +37,10 @@ on:
       command:
         description: "何をするか"
         type: choice
-        options: [materials, characters, create, update, delete, preview, probe]
+        options: [materials, characters, create, update, delete, preview, probe, sheet]
         default: materials
       args:
-        description: "コマンドに渡す引数（例: update なら `21116414 --price 300`、probe なら `21116414 --item can-badge --scale 0.8`）"
+        description: "コマンドに渡す引数（例: update なら `21116414 --price 300`、probe なら `21116414 --item can-badge --scale 0.8`、sheet なら `21116414 21116420` か `--latest 5`）"
         required: false
         default: ""
       dry_run:
@@ -102,3 +102,14 @@ jobs:
       - name: 毎晩の回（島に新しく入ったキャラクターの住人グッズ）
         if: steps.key.outputs.ok == '1' && github.event_name != 'workflow_dispatch'
         run: python3 python/suzuri_api.py characters
+
+      # 見本の一覧（sheet）ができていれば成果物に置く。こちらは MCP の download_workflow_run_artifact で
+      # 取りに行って目で見る（#741）。中身は売り場に出ている見本の絵だけなので、公開されて困るものは無い
+      - name: 見本の一覧を成果物に置く
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suzuri-sheet
+          path: /tmp/suzuri-sheet/
+          if-no-files-found: ignore
+          retention-days: 14
