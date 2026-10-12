@@ -78,7 +78,8 @@ def studio(url=None, wait=8):
     time.sleep(1)
     # 閉じた直後の /json/list には閉じたタブが残るので、id で選ぶ
     p = next(p for p in pages(NAME) if p["id"] == tid)
-    t = Tab(port, p, timeout=60)
+    # 長い配信（5〜11時間）は「曲を消去する」の画面の読み込みが重く、60秒では返らないことがあった（2026-10-12 に13本）
+    t = Tab(port, p, timeout=180)
     t.go(url or url_of(), wait=wait)
     return t
 
