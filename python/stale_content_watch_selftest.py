@@ -81,6 +81,7 @@ from stale_content_watch import (  # noqa: E402
     KEY_FN,
     KEYS,
     LATEST,
+    SAME,
     SHARE,
     SKIP,
     SNAP,
@@ -254,6 +255,26 @@ def _drop_key(src: str, name: str, key: str) -> str:
     lines = [ln for ln in src.splitlines(keepends=True)
              if not (m := rx.match(ln)) or m.group(1) != key]
     return "".join(lines)
+
+
+def _drop_entry(src: str, key: str) -> str:
+    """`Record<string, …>` から `"鍵": { … },` を、**括弧の釣り合いごと**落とす。
+
+    `_drop_key` のように行で落とすと中身だけが残って、**残りの鍵まで
+    読めなくなる**（`ts_read.read_map` が括弧の釣り合いで歩くので）。
+    仕込みが本物と違う形になると、対照のほうが嘘になる。
+    """
+    i = src.find(f'"{key}": {{')
+    if i < 0:
+        return src
+    j = ts_read.close_at(src, src.index("{", i))
+    # 閉じ括弧のうしろのコンマと、その行の改行まで落とす
+    k = j + 1
+    if k < len(src) and src[k] == ",":
+        k += 1
+    nl = src.find("\n", k)
+    head = src.rfind("\n", 0, i)
+    return src[: head + 1] + src[(nl + 1) if nl >= 0 else k:]
 
 
 def _drop_stamp(src: str) -> str:
@@ -705,6 +726,55 @@ export const CHAPTERS: Chapter[] = [
         seen[up] = Facts(name=up, found=True, dates=base[up].dates, keys=[])
         check(f"{name} の上流の鍵が0件のとき", _status(seen, name), "数えられない")
 
+    # --- 4d. 鍵が上流の名前そのものの本（`SAME`）を、**両向きから** -----------
+    #
+    # `KEYS` は上流 → 下流の片向きしか見ない。`chapterStats.ts` の鍵は
+    # **章の slug そのもの**なので、章の名前を変えた回は両向きにずれる
+    # （新しい名前が焼かれていない／古い名前が焼き込みに残っている）。
+    # **片向きだけ当てると、残ったほうが緑のまま**になる
+    # （`docs/island-misses.md` #224）。
+    for name, b in BOOKS.items():
+        if b.rule != SAME:
+            continue
+        up = b.upstream
+        up_src, down_src = src_of[up], src_of[name]
+        mine, theirs = set(base[name].keys), set(base[up].keys)
+        # そろえる: 上流から「焼かれていない鍵」を、下流から「上流に無い鍵」を落とす。
+        # **本番がいまそろっているかに寄りかからない**——章の名前を変えた直後は
+        # ずれているのがふつうで、そこを基準にすると対照が日によって裏返る（#209）
+        for k in [x for x in base[up].keys if x not in mine]:
+            up_src = _drop_key(up_src, up, k)
+        for k in [x for x in base[name].keys if x not in theirs]:
+            down_src = _drop_entry(down_src, k)
+        seen = dict(base)
+        seen[up] = _facts(up, up_src)
+        seen[name] = _facts(name, down_src)
+        keys = seen[name].keys
+        check(f"{name} と {up} の鍵をそろえたとき", _status(seen, name), "通った")
+        # **そろえた写しが本物と同じ形か**を見る。括弧ごと落とせていないと、
+        # 残りの鍵まで読めなくなって「数えられない」側で緑になる
+        check(f"{name} をそろえたとき、鍵が1件以上読める（{len(keys)}件）", bool(keys), True)
+
+        # 欠け: 下流から1つ落とす（焼き直していない側）
+        s2 = dict(seen)
+        s2[name] = _facts(name, _drop_entry(down_src, keys[0]))
+        check(f"{name} から鍵を1つ落としたとき（欠け）", _status(s2, name), "赤")
+
+        # 余り: 上流から1つ落とす（＝下流に、上流に無い鍵が残る）
+        s3 = dict(seen)
+        s3[up] = _facts(up, _drop_key(up_src, up, keys[0]))
+        check(f"{up} から鍵を1つ落としたとき（余り）", _status(s3, name), "赤")
+
+        # 上流が0件なら「数えられない」（0件を通ったと読ませない。§15）
+        s4 = dict(seen)
+        s4[up] = Facts(name=up, found=True, dates=base[up].dates, keys=[])
+        check(f"{name} の上流の鍵が0件のとき", _status(s4, name), "数えられない")
+
+        # 下流が0件でも「数えられない」。**空のファイルを「全部欠け」と読ませない**
+        s5 = dict(seen)
+        s5[name] = Facts(name=name, found=True, dates=base[name].dates, keys=[])
+        check(f"{name} の鍵が0件のとき", _status(s5, name), "数えられない")
+
     # --- 4c. 「測れない人」の逃がしが、効いているか ---------------------------
     # `characterBox.ts` は**絵の無い人を焼けない。** 焼くほうがその人を
     # `noArt` に名指しで置くので、そこは赤にしない。**逃がす側だけを対照にすると、
@@ -842,6 +912,20 @@ export const CHAPTERS: Chapter[] = [
             for k in [k for k in base[up].keys if k not in set(base[name].keys)]:
                 clean = _drop_key(clean, up, k)
             (green_dir / up).write_text(clean, encoding="utf-8")
+        # `SAME` は**両向き**なので、上流を削るだけでは通らない。
+        # 下流に残っている「上流に無い鍵」も落とす（括弧ごと。`_drop_entry`）
+        for name, b in BOOKS.items():
+            if b.rule != SAME:
+                continue
+            up = b.upstream
+            clean = (green_dir / up).read_text(encoding="utf-8")
+            for k in [k for k in base[up].keys if k not in set(base[name].keys)]:
+                clean = _drop_key(clean, up, k)
+            (green_dir / up).write_text(clean, encoding="utf-8")
+            down = (green_dir / name).read_text(encoding="utf-8")
+            for k in [k for k in base[name].keys if k not in set(base[up].keys)]:
+                down = _drop_entry(down, k)
+            (green_dir / name).write_text(down, encoding="utf-8")
 
         red_dir = root / "red"
         shutil.copytree(green_dir, red_dir)
@@ -853,7 +937,30 @@ export const CHAPTERS: Chapter[] = [
         shutil.copytree(green_dir, blind_dir)
         (blind_dir / "newThing.ts").write_text("export const X = 1;\n", encoding="utf-8")
 
-        for label, d, want in (("通る", green_dir, 0), ("古い", red_dir, 1), ("数えられない", blind_dir, 2)):
+        # **章の名前を変えたまま焼き直していない写し。** `SAME` の本の鍵を1つ
+        # 名前だけ替える——上流に在る名前が焼かれておらず、上流に無い名前が
+        # 残っている、という**両向きにずれた**状態が、これ1手でできる。
+        # 2026-10-12 にアルバニアと北マケドニアを1章へまとめた回がこの形
+        # （`docs/island-misses.md` #224）。
+        same_dir = root / "same"
+        shutil.copytree(green_dir, same_dir)
+        renamed = 0
+        for name, b in BOOKS.items():
+            if b.rule != SAME:
+                continue
+            txt = (same_dir / name).read_text(encoding="utf-8")
+            keys = keys_of(name, txt)
+            if not keys:
+                continue
+            txt = txt.replace(f'"{keys[0]}": {{', f'"{keys[0]}-renamed": {{', 1)
+            (same_dir / name).write_text(txt, encoding="utf-8")
+            renamed += 1
+        # **仕込めていないまま緑を読まない**（§15）
+        check("章の名前を替えた写しを作れた", renamed > 0, True)
+
+        for label, d, want in (("通る", green_dir, 0), ("古い", red_dir, 1),
+                               ("章の名前を替えた", same_dir, 1),
+                               ("数えられない", blind_dir, 2)):
             r = subprocess.run(
                 [sys.executable, str(REPO / "python" / "stale_content_watch.py"),
                  "--dir", str(d), "--today", TODAY.isoformat()],

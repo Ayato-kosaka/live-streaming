@@ -8,6 +8,26 @@
     ],
     "redirects": [
       {
+        "source": "/island/albania",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/island/albania/**",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/island/north-macedonia",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/island/north-macedonia/**",
+        "destination": "/",
+        "type": 301
+      },
+      {
         "source": "/nordic_review.html",
         "destination": "/nordic/review",
         "type": 301

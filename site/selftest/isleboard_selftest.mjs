@@ -165,7 +165,7 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { isleSpec, albaniaSpec, macedoniaSpec, nordicSpec } = req(join(OUT, "components", "isle", "spec.js"));
+const { chapterIsle, TRIP_SPEC } = req(join(OUT, "components", "isle", "spec.js"));
 const { coverSpec } = req(join(OUT, "components", "isle", "cover.js"));
 const { CHAPTERS } = req(join(OUT, "content", "chapters.js"));
 const { THEMES, openThemes, isOpenTheme } = req(join(OUT, "content", "themes.js"));
@@ -192,18 +192,16 @@ function stop(why) {
 /** 今日。**島は焼き込みなので、字は日付で変わらない**が、表のほうは日で動く */
 const TODAY = new Date();
 
-/* 本番の面と同じ建てかた（`app/island/[chapter]/page.tsx`）。
-   旅の spec を持っている章は、建つものの多いほうで建つ。
+/* 本番の面と同じ建てかた。**振り分けの表を写さず、面と同じ1本を呼ぶ**
+   （`components/isle/spec.ts` の `chapterIsle` と `TRIP_SPEC`）。
    表紙（`app/page.tsx`）も1つ組む——あそこがいちばん人の目に触れる島 */
-const TRIP = { nordic: nordicSpec, albania: albaniaSpec, "north-macedonia": macedoniaSpec };
 const NEAR = { name: "となりの島", href: "/island/x" };
 const isles = [];
 for (const c of CHAPTERS) {
-  const base = isleSpec(c, NEAR, NEAR);
-  const trip = TRIP[c.slug]?.(c, NEAR, NEAR);
-  isles.push({ where: `/island/${c.slug}`, places: (trip && base.places.length < trip.places.length ? trip : base).places });
+  const trip = TRIP_SPEC[c.slug]?.(c, NEAR, NEAR);
+  isles.push({ where: `/island/${c.slug}`, places: chapterIsle(c, NEAR, NEAR).places });
   /* **建たなかったほうの旅の島も見る。** 素材が追い越して隠れているだけで、
-     配信が1本減れば明日また建つ（`albaniaSpec` の注）。隠れているあいだに
+     配信が1本減れば明日また建つ（`balkansSpec` の注）。隠れているあいだに
      嘘になった字は、建った日にそのまま出る */
   if (trip) isles.push({ where: `/island/${c.slug}（旅の島）`, places: trip.places });
   isles.push({ where: `表紙（章=${c.slug}）`, places: coverSpec(c, TODAY).places });
@@ -258,7 +256,10 @@ for (const b of boards) {
    突き合わせる。** 上書きが1文字でもあれば合わない。 */
 const FIELDS = ["label", "blurb", "note", "more", "board"];
 for (const b of boards) {
-  const again = boardPlate({ name: b.board.name, group: b.board.group });
+  /* 材料は `name` / `group` / `groups`。**棚の見出しも材料**——旅が国をまたぐと
+     棚は1つではないので（`components/isle/board.ts` の `groups`）、
+     ここで渡さないと作り直したほうだけ棚が痩せて、毎回落ちる。 */
+  const again = boardPlate({ name: b.board.name, group: b.board.group, also: b.board.groups });
   const got = JSON.stringify(FIELDS.map((f) => b[f] ?? null));
   const want = JSON.stringify(FIELDS.map((f) => again[f] ?? null));
   check(

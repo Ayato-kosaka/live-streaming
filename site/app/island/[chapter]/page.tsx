@@ -7,29 +7,9 @@ import IsleReview from "@/components/isle/IsleReview";
 import IsleSpan from "@/components/isle/IsleSpan";
 import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
-import {
-  albaniaSpec,
-  isleSpec,
-  macedoniaSpec,
-  nordicSpec,
-  type IsleSpec,
-  type Neighbour,
-} from "@/components/isle/spec";
+import { chapterIsle, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
 import { chapterNeighbours, type Chapter } from "@/content/chapters";
-
-/**
- * 旅そのものの島を建てる章。**章ごとに建てるものが違う。**
- *
- * ここに無い章は、素材（配信・歩いた国・伝説）だけで建つ（`isleSpec`）。
- * **「日どりが入っているか」で振り分けない**——アルバニアに日どりを
- * 入れた日に、アルバニアの島が北欧の島になる（下の注の事故）。
- */
-const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour, next?: Neighbour) => IsleSpec> = {
-  nordic: nordicSpec,
-  albania: albaniaSpec,
-  "north-macedonia": macedoniaSpec,
-};
 
 /**
  * 過去の島と、次の島。**歩ける。**
@@ -107,7 +87,6 @@ export default async function ChapterIsland({
      素材が1つも無い島は、旅の spec を持っていればそちらで建てる。
      日どりの決まっていない島（アルバニア）は旅の spec を持たないので、
      いままでどおり素材のあるぶんだけ建って、船着き場は残る。 */
-  const isle = isleSpec(c, prev, next);
   /* **建つものの多いほうで建てる。**
 
      ここは長いあいだ「素材の spec が桟橋1つしか建てられなければ旅の spec」
@@ -133,13 +112,13 @@ export default async function ChapterIsland({
   /* **旅の島は、章ごとに建てるものが違う。** ここは長いあいだ
      `c.opensAt ? nordicSpec(...)` で、**「日どりが入っている章 = 北欧」**
      という前提に寄りかかっていた。アルバニアに日どりが入った瞬間に
-     その前提が崩れる（上の注の事故がそのまま戻る）。 */
-  /* **となりの島は両方渡す。** `albaniaSpec` は中で `isleSpec` を建ててから
-     風船を足す作りなので、ここで `next` を落とすと、その島だけ「つぎの島」への
-     渡し板が桟橋から消える（いまのアルバニアは最後の章なので目には見えないが、
+     その前提が崩れる（上の注の事故がそのまま戻る）。
+     振り分けの表は `components/isle/spec.ts` の `TRIP_SPEC` 1枚。 */
+  /* **となりの島は両方渡す。** `balkansSpec` は中で `isleSpec` を建ててから
+     板と案内を足す作りなので、ここで `next` を落とすと、その島だけ「つぎの島」への
+     渡し板が桟橋から消える（いまのバルカンは最後の章なので目には見えないが、
      次の章を1行足した日に消える）。 */
-  const trip = TRIP_SPEC[c.slug]?.(c, prev, next);
-  const spec = trip && isle.places.length < trip.places.length ? trip : isle;
+  const spec = chapterIsle(c, prev, next);
 
   return (
     <>

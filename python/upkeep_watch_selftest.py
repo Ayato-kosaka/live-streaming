@@ -307,6 +307,18 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
         "nordicShops.ts": _ts(["2026-09-13"]),
         # 章を持たない先ぶんの表（`COVERS` / `ENDLESS`）。先の予定が1件は要る
         "plans.ts": _ts(["2026-10-01", "2026-12-24"]),
+        # 章ごとの数字（`SAME`）。**鍵は章の slug そのもの**なので、
+        # 仕込みの章から作る。手で並べると、章を差し替える確かめ
+        # （`CHAPTERS_NO_FROM` ほか）のたびに鍵がずれて「数えられない」に落ちる
+        "chapterStats.ts": "export const CHAPTER_STATS = {\n"
+                           + "".join(
+                               f'  "{r["slug"]}": {{\n    people: 1,\n  }},\n'
+                               for r in stale.read_chapters(
+                                   CHAPTERS_OK if chapters is None else chapters
+                               ).rows
+                               if r["from"]
+                           )
+                           + "};\n",
     }
     for name in stale.BOOKS:
         if name in special:

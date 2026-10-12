@@ -6,7 +6,11 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { pier } from "./pier";
-import type { IslePlaceSpec, IsleSpec } from "./spec";
+/* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
+   表紙の束に配信の一覧や伝説が付いてくることはない（`spec.ts` の `nordicSpec`
+   の注と同じ心配をしたが、ここは島を組む側＝サーバだけが通る道。
+   `Cover.tsx`（"use client"）が読むのは型だけ）。 */
+import { GUIDE_BLURB, GUIDE_LABEL, guideOf, type IslePlaceSpec, type IsleSpec } from "./spec";
 
 /**
  * 表紙の島（＝いま歩いている島）。
@@ -50,13 +54,19 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
  * 常設の10軒が重なって建つ。**式が正しくても、当てる先を間違えれば絵は壊れる**
  * （`docs/island-standards.md` 12）。
  *
- * ここが決めているのは「常設の10軒＋その旅のことが、重ならずに一周する広さ」。
+ * ここが決めているのは「建つものが、重ならずに一周する広さ」。
  * いちばん大きい章の島（コーカサス 434）と同じくらいで、比べ合いは
  * `/atlas` の航路の丸が持っている。
+ *
+ * **ここに14軒目を建てない。** いまいる国の案内を1軒足したら、寄りで
+ * **入口3つが届かなくなった**（`tools/sprites/islereach.mjs` で 11/11 → 7/10）。
+ * かたちを3通り、広さを 410 / 426 / 470 と試しても戻らない——
+ * **13軒ぶんに詰めてある島**なので、軒数そのものが効いている。
+ * だから国の案内は建物を増やさず、「この島のこと」の板の中に入れた（`tripPlace`）。
  */
 const COVER_R = 410;
 
-/** その旅そのものの入口。島に建つのは1軒で、中身は章によって変わる */
+/** その旅そのものの入口。中身は章によって変わる */
 function tripPlace(c: Chapter, days: number): IslePlaceSpec {
   /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
@@ -104,9 +114,16 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
      下の「この島のこと」——いま何日目で、何本配信して、何人来てくれたか——に戻す。
      **それが、旅ごとに字を書き足さずに済む唯一の形。** */
   /* 旅の面を持たない章。**行き先を作らない。**
-     数字だけを板に出して、そこから先は常設の入口に任せる */
+     数字を板に出して、そこから先は常設の入口に任せる。
+
+     **いまいる国の案内（`/north-macedonia`）だけは、ここに入れる。**
+     島に1軒足したかったが、表紙の島は13軒ぶんに詰めてあるので、
+     14軒目を建てると寄りで入口が3つ届かなくなった（`COVER_R` の注）。
+     行き先を減らさずに軒数を増やさない形が、この板の中。
+     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
   const st = CHAPTER_STATS[c.slug];
   const countries = c.countries.length;
+  const g = guideOf(c.slug);
   return {
     id: "trip",
     label: "この島のこと",
@@ -120,6 +137,13 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
       ...(st ? [{ n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" }] : []),
       ...(countries ? [{ n: String(countries), unit: "カ国", cap: "歩いた" }] : []),
     ],
+    ...(g ?
+      {
+        items: [
+          { label: GUIDE_LABEL, sub: GUIDE_BLURB, href: g.href, icon: "stall-green" },
+        ],
+      } :
+      {}),
   };
 }
 
@@ -156,6 +180,8 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        島の連なりへは、島の隅の「島の地図」からも行ける（`.isle-atlas`）ので
        袋小路にはならない。**章の島（`/island/<章>`）はそのまま**——
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
+    /* **島に建てるものは増やさない**（`COVER_R` の注）。いまいる国の案内は
+       「この島のこと」の板の中（`tripPlace`）。 */
     places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**

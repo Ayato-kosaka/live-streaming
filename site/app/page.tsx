@@ -4,6 +4,7 @@ import IslandStage from "@/components/island/IslandStage";
 import Cover from "@/components/isle/Cover";
 import { HAND_MADE_CHAPTER } from "@/components/isle/handmade";
 import { coverSpec } from "@/components/isle/cover";
+import { guideOf } from "@/components/isle/spec";
 import { NOW_CHAPTER } from "@/content/chapters";
 import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
@@ -86,6 +87,8 @@ export default function Home() {
      今日が食い違うので、画面が出てから入れ替わる（`Cover.tsx`）。 */
   const baked = NOW_CHAPTER;
   const cover = baked.slug === HAND_MADE_CHAPTER ? null : coverSpec(baked);
+  /** いまいる国の案内。島の札と同じ1本から引く（`components/isle/spec.ts` の `GUIDES`） */
+  const guide = guideOf(baked.slug);
 
   return (
     <main>
@@ -221,6 +224,37 @@ export default function Home() {
 
         <Chapter id="now" kicker="いま" title={HOME.about} note={HOME.aboutNote}>
           <Meishi />
+          {/* いまいる国のこと（2026-10-12）。
+              ------------------------------------------------
+              あやと:「北マケドニアについて事前に調べたページへの導線が初期ページから
+              無くなってるので、いい感じに追加してください。みんな気になってると思う」。
+
+              **島にも建てたうえで、紙にも1本引く。** `/goods` と `/cards` が同じ形で、
+              島に建てるだけでも、紙に引くだけでも足りない——島を歩く人には紙が見えず
+              （#448）、送って読む人には島の小さな札が見つからない（#216）。
+              島の札（「この国の歩きかた」）は近づけば名前が出るが、引きの札は
+              常設の6つで埋まっているので、ここが**押さずに読める1本**になる。
+
+              **なぜ「いま」の章か。** この章の問いは「いま何をしているんだろう」で、
+              その答えがいまいる国。「これから」は日にちの決まった企画の段なので、
+              国の読みものを混ぜると企画が1つ増えたように見える。
+
+              **国の名前をここに書かない。** `components/isle/spec.ts` の `GUIDES`
+              （島の札と同じ1本）から引く。書き写すと、国を越えた日に紙だけが
+              前の国を指す（`docs/island-standards.md` 8章）。
+              案内の面を持たない章では、この板ごと出ない。 */}
+          {guide && (
+            <Link prefetch={false} className="hjoin" href={guide.href}>
+              {/* 行き先の面が頭に出している印と同じ絵にする（`app/north-macedonia/page.tsx`）。
+                  寸法は `.hjoin-art` の 72px に合わせる（カードの板と同じ理由） */}
+              <Icon name="mountain" size={72} className="hjoin-art" />
+              <span className="hjoin-body">
+                <b>{guide.name}</b>
+                <i>{guide.lead}</i>
+              </span>
+              <Icon name="right" size={16} className="hjoin-go" />
+            </Link>
+          )}
         </Chapter>
 
         <Chapter
