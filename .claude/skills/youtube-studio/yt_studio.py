@@ -309,7 +309,11 @@ def resolve_claim_ui(t, video_id, song, how="erase"):
     row_btn = f"""(() => {{ for (const b of document.querySelectorAll('ytcp-button')) {{
         if (b.innerText.trim() !== '対応する' || b.hasAttribute('disabled')) continue;
         let r = b; while (r && !(r.innerText || '').toLowerCase().includes({title})) r = r.parentElement;
-        if (r && r.querySelectorAll('ytcp-button').length <= 3) return b; }} return null; }})()"""
+        if (r && r.querySelectorAll('ytcp-button').length <= 3) return b; }}
+        // 曲名の書き方が API と画面で違うことがある（「J EN AI MARRE」など）。押せる「対応する」が
+        // 1つしか無ければ、それがその申し立て
+        const on = [...document.querySelectorAll('ytcp-button')].filter(b => b.offsetParent && b.innerText.trim() === '対応する' && !b.hasAttribute('disabled'));
+        return on.length === 1 ? on[0] : null; }})()"""
     _wait(t, f"!!{row_btn}", 20)
     t.click(row_btn)
     _wait(t, f"!!{_dlg('操作を選択')}")
