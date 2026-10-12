@@ -57,6 +57,28 @@ function star(cx: number, cy: number, ro: number, ri: number, n: number) {
   return `M${p.join("L")}z`;
 }
 
+/**
+ * 八条の光芒。中心の円から八方へ、外へ行くほど太くなる帯。
+ *
+ * 北マケドニアの旗は**これと円だけ**でできているので、形を省くところが無い。
+ * 代わりに数字で決まるようにしてある——手で8本ぶんのパスを書くと、
+ * 1本だけ角度がずれたときに誰も気づけない。
+ *
+ * 外側は旗の外（`r1`）まで伸ばして、角の丸い抜き型（`fc-*`）に切らせる。
+ * ここで旗の縁に合わせて止めようとすると、斜めの4本だけ端が丸く見える。
+ *
+ * @param a0 円から出るところの半角（度）
+ * @param a1 外へ出たところの半角（度）。`a0` より大きいぶんが「太る」ぶん
+ */
+function rays(cx: number, cy: number, r0: number, r1: number, n = 8, a0 = 4.5, a1 = 15) {
+  const at = (r: number, deg: number) =>
+    `${(cx + r * Math.cos((deg * Math.PI) / 180)).toFixed(2)} ${(cy + r * Math.sin((deg * Math.PI) / 180)).toFixed(2)}`;
+  return Array.from({ length: n }, (_, i) => {
+    const t = (360 / n) * i;
+    return `M${at(r0, t - a0)}L${at(r1, t - a1)}L${at(r1, t + a1)}L${at(r0, t + a0)}z`;
+  }).join("");
+}
+
 /** 国旗の定義。slug は content/countries.ts と content/nordic の slug に合わせる。 */
 const FLAGS: Record<string, Spec> = {
   // --- これまで歩いた国 ---
@@ -232,6 +254,21 @@ const FLAGS: Record<string, Spec> = {
           + `M16.8 3.7 19 3.4 20 3.9 21.7 4.4 21.9 6 20.5 5.2 19.7 5.9 18.3 6.7 16.6 5.7z`,
         c: "#000000",
       },
+    ],
+  },
+
+  /* 北マケドニア。赤は #d20000、黄は #ffe600（どちらも国旗法の規格色）。
+     **太陽を抜くと赤い四角**になって、アルバニアと見分けがつかなくなるので、
+     ここも絵を入れる。20px で効くのは3つだけ——(1) 真ん中の黄色い円
+     (2) そこから八方へ出る帯 (3) 外へ行くほど太ること。
+     光芒の形は `rays()` が角度から出す（手で8本書くと1本だけずれても気づけない）。 */
+  "north-macedonia": {
+    k: "custom",
+    bg: "#d20000",
+    paths: [
+      // 光芒が先。円をあとに置いて、根もとの継ぎ目を円で隠す
+      { d: rays(W / 2, H / 2, 2.6, 40), c: "#ffe600" },
+      { d: `M${W / 2} ${H / 2}m-2.9 0a2.9 2.9 0 1 0 5.8 0a2.9 2.9 0 1 0 -5.8 0`, c: "#ffe600" },
     ],
   },
 
