@@ -100,7 +100,7 @@ def main():
                     row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": "erase"})
                     time.sleep(2)
         except Exception as ex:
-            why = f"{type(ex).__name__}: {str(ex)[:180]}"
+            row["state"], why = "error", f"{type(ex).__name__}: {str(ex)[:180]}"
             # 画面が返らなくなったタブは、そのあと何を投げても返らない（2026-10-12 に1本の
             # タイムアウトから残り全部が落ちた）。タブを作り直して次へ進む
             for _ in range(3):
