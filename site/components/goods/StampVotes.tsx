@@ -14,9 +14,9 @@ import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes"
  *
  * 押した数を置く先は**付箋そのもの**（`islandNotes` / 宛先 `goods-linestamp`）で、
  * 入れ物も口も1つも足していない。読む・押す・立てる・楽観更新・読めなかった日の
- * 扱いは、カレンダーの試作（`CalendarTries.tsx`）と**同じ1本**を使う
- * （`components/goods/wordVotes.tsx`）。**写しを作らない**——同じ用事に
- * 仕掛けが2つあると、片方だけ直す日が必ず来る。
+ * 扱いは `components/goods/wordVotes.tsx` の1本に置いてある。**写しを作らない**
+ * ——いいねを使う欄がもう1つ増えた日に、同じ用事の仕掛けが2つになる
+ * （カレンダーの試作が2026-10-12 まで同じ1本を使っていた）。
  *
  * ここに残っているのは、この欄にしか無いもの——**スタンプの絵の並べ方**だけ。
  */

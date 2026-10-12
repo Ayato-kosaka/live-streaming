@@ -326,9 +326,9 @@
    場所だけ取る（`docs/island-design.md` 4章の「読み込み中」）。
    ハート（48px）と同じ背にして、数が入ったときに行が飛ばないようにする。
 
-   **スタンプとカレンダーで同じもの**（`components/goods/wordVotes.tsx` の
-   `VoteHeart` が出す）。名前が `gd-stamp…` のままだと、カレンダーの側が
-   「スタンプの板」を借りているように見えるので `gd-vote…` にしてある。 */
+   **いいねを使う欄で共通のもの**（`components/goods/wordVotes.tsx` の
+   `VoteHeart` が出す）。いま使うのは LINEスタンプだけだが、ほかの欄が
+   使った日に「スタンプの板」を借りているように見えないよう `gd-vote…` にしてある。 */
 .gd-votewait {
   display: block;
   width: 62px;
@@ -340,57 +340,71 @@
   background: color-mix(in srgb, var(--rule) 30%, transparent);
 }
 
-/* ---- カレンダーの試作 --------------------------------------------------- */
+/* ---- カレンダー（月ごとの1枚） ------------------------------------------- */
 
-/* 型は**縦**に並べる。390px で3つを横に並べると、1枚が小指の爪になる */
+/* **止める幅は絵の原寸**（`--cal-w`。`CalendarMonths` が `content/goods.ts` の
+   `CAL_SHOT_W` から入れる）。これより広げると絵が伸びてぼやける。
+   この面の紙は 900px に届かないので、実際に効くのは紙の幅のほう */
 .gd-cals {
-  display: grid;
-  gap: var(--sp-4);
+  max-width: var(--cal-w);
   margin-top: var(--sp-3);
 }
 
-/* **名前・ハート・絵を、同じ幅の中に入れる。**
-   絵だけを止めてハートを板の右端に置くと、押しどころが何も無い余白に
-   ぽつんと浮いて、どの型のハートか分からなくなる。
-
-   **止める幅は絵の原寸**（`--cal-w`。`CalendarTries` が `content/goods.ts` の
-   `CAL_SHOT_W` から入れる）。1枚になって、これより広げると絵が伸びてぼやける。
-   2枚ならんでいたころはスタンプの並びに合わせて 608px で止めていたが、
-   いまは3つとも同じ `--cal-w` なので、**別の縮尺になるのは面の中ではなく
-   絵どうしのあいだ**——そちらは揃っている。
-   この面の紙は 900px に届かないので、実際に効くのは紙の幅のほう */
-.gd-cal {
-  max-width: var(--cal-w);
+/* 月の札。**札そのものは `.mp-tab`**（じぶんのこと・掲示板と同じ。`app/css/ui.css`）。
+   ここで決めるのは並べ方だけ——札は2〜3文字なので、`.mp-tabs` の2列では
+   12か月で6段（380px）になる。**1枚 56px 以上を守ったまま、入るだけ横に並べる。**
+   390px で6列×2段、広い画面は1段。絵のある月だけなので、並びの右が空くことがある */
+.gd-calmonths.mp-tabs {
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  margin-top: 0;
+  margin-bottom: var(--sp-3);
 }
 
-/* 型の名前とハート。**ハートは型に1つ**（絵1枚ずつには付けない）。
-   知りたいのは「イラストか、風景か、スクショか」なので、押しどころも
-   型と同じ数だけ置く */
+/* 見出し。**大きく「5月」、小さく「2026年5月の思い出」**。
+   暦の何月のページかと、何の思い出かを、この1行で言う */
 .gd-calh {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px var(--sp-2);
+  margin: 0;
 }
 .gd-calh > b {
-  font-size: 14px;
+  font-size: var(--fs-h2);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.gd-calh > small {
+  font-size: var(--fs-note);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* 絵。1枚の月は板の幅いっぱい。**候補が2〜3枚の月は、広い画面でだけ横に並べる**
+   （390px で横に並べると、暦の字も絵も小指の爪になる） */
+.gd-calshots {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 720px) {
+  .gd-calshots.is-many { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 候補の呼び名（A案・B案）。**押せないので平ら**（`island-design.md` 3-3）。
+   付箋で「Bがいい」と書くときの呼び名なので、絵の上ではなく外に置く */
+.gd-calpick {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
 }
-/* ハートは右端。読めていないあいだ場所を取る板も同じ場所に置く */
-.gd-calh > .nt-heart,
-.gd-calh > .gd-votewait {
-  flex: none;
-  margin-left: auto;
-}
 
-/* 絵は型に1枚。**横に2枚ならべていたころの決まりは置かない**——
-   並ぶものが1つなので、列の数も、幅で1枚ずつに折り返す決まりも要らない
-   （あやと 2026-10-10、#759）。板の幅いっぱいに出す */
-.gd-calshots {
-  margin-top: var(--sp-2);
-}
-
-.gd-calshots > img {
+.gd-calshots img {
   display: block;
   width: 100%;
   /* 縦横比は `content/goods.ts` の1本から（`style` で入る）。
@@ -403,7 +417,6 @@
   background: var(--paper-2);
   object-fit: cover;
 }
-
 
 /* 押したのに動かなかったときの1行。**読めなかったときの札とは別の顔**にする
    （あちらは灰色の「もうすぐ出る」ではなく、もう一度読みに行く押しどころを持つ） */

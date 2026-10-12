@@ -5,10 +5,11 @@ import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import CalendarTries from "@/components/goods/CalendarTries";
+import CalendarMonths from "@/components/goods/CalendarMonths";
 import StampVotes from "@/components/goods/StampVotes";
 import {
-  CAL_WORDS,
+  CAL_MONTHS,
+  CAL_SHOWN,
   LINE_STAMPS,
   LINE_WANT,
   LINE_WORDS,
@@ -27,7 +28,7 @@ import "./goods.css";
  * ## 「もう在る」と「まだ決めていない」を、形で分ける
  *
  * 6つのうち、ステッカー・カード・キャラクターは**もう手に入る**。
- * カレンダーと LINEスタンプは**まだ何も決まっていない**。
+ * カレンダーと LINEスタンプは**まだ形が決まりきっていない**。
  * 同じ顔で並べると、押して初めて「まだ無い」と分かる欄ができる。
  * 札（`.gd-tag`）と地の色で、開く前に見分けがつくようにした。
  *
@@ -111,6 +112,12 @@ function Say({ theme, title, lead, omit }: {
  * 埋まったら 0 になって、募集の字そのものが消える。
  */
 const LINE_LEFT = Math.max(0, LINE_WANT - LINE_STAMPS.length);
+
+/**
+ * カレンダーの、まだ絵の載っていない月の数。**これも手で書かない。**
+ * 12か月そろったら 0 になって、「できたものから載せます」の1行が消える。
+ */
+const CAL_LEFT = CAL_MONTHS.length - CAL_SHOWN.length;
 
 export default function GoodsPage() {
   return (
@@ -231,20 +238,28 @@ export default function GoodsPage() {
           icon="calendar"
           title="カレンダー"
           tag="検討中"
-          /* **「壁にかけるか、机に置くか」はもう聞いていない。** 卓上のものを
-             作る話で動いているので、聞いているのは絵のほうだけ。
-             数（型がいくつ・何年ぶん）も、値段も寸法も書かない——
-             増えたり変わったりした日から嘘になる（`island-standards.md` 16章）。
+          /* **「どの絵がいいか押して」はもう言わない**（あやと 2026-10-12、#759。
+             イラストで行くと決まった）。言うのは、このカレンダーが何か——
+             1年ぶんの思い出が、月ごとに1枚ずつ載る——だけ。
+             「2026年の」と書かない（暦11・12月は 2025年の思い出）。
+             値段も寸法も書かない（`island-standards.md` 16章）。
              仕組みの説明も1文字も置かない（同 6章） */
-          lead="どの絵のカレンダーがいいか、押して教えてください。"
+          lead="この1年の思い出を、月ごとに1枚の絵に。"
         >
-          <CalendarTries />
+          <CalendarMonths />
+          {/* まだの月を**並べない・名指ししない**。言うのは「これから増える」だけ。
+              0か月のときは「ほか」が無いので言い方を変える。そろったら出さない */}
+          {CAL_LEFT > 0 && (
+            <p className="gd-note">
+              {CAL_SHOWN.length > 0
+                ? "ほかの月は、できたものから載せます。"
+                : "できた月から、ここに載せます。"}
+            </p>
+          )}
           <Say
             theme="goods-calendar"
             title="ほかの絵を出す"
             lead="こんな絵がいい、を一言でも。写真も貼れる"
-            /* 3つの枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
-            omit={CAL_WORDS}
           />
         </Sec>
 
