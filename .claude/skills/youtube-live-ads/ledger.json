@@ -10,7 +10,7 @@
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
-   "state": "error",
+   "state": "editing",
    "claims_left": 6,
    "history": [
     {
@@ -42,9 +42,15 @@
      "claim": "MmEdFtLMyIw",
      "song": "Lay Low / Tiësto",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "Izp8Eh5RMTE",
+     "song": "Better Alone / Ioana Ignat & Zubi",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "Better Alone / Ioana Ignat & Zubi"
   },
   "kunXt2sXnFQ": {
    "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
@@ -57,7 +63,7 @@
   "k4DxGQlkD6U": {
    "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
    "start": "2026-09-17 19:00",
-   "state": "error",
+   "state": "editing",
    "claims_left": 2,
    "history": [
     {
@@ -71,9 +77,15 @@
      "claim": "znIAll7Y2Jk",
      "song": "Wish I Was Your Lover / Enrique Iglesias",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "ztEFKNPJFrY",
+     "song": "テルーの唄（歌集バージョン） / 手嶌 葵",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "テルーの唄（歌集バージョン） / 手嶌 葵"
   },
   "f3W2JxAHsQs": {
    "title": "【二日目】親友に会いにスウェーデンまで、ビャウィストクまで",
@@ -221,7 +233,7 @@
   "Pnbi01M0t0I": {
    "title": "土曜やしトビリシ海まで歩こか！",
    "start": "2026-07-11 21:57",
-   "state": "error",
+   "state": "editing",
    "claims_left": 6,
    "history": [
     {
@@ -235,9 +247,15 @@
      "claim": "FlK5-tQw5FA",
      "song": "Rain On Me / Lady Gaga, Ariana Grande",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "Kwtb6azY_KI",
+     "song": "MIRROR MIRROR [LP23] / 平井 大",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "MIRROR MIRROR [LP23] / 平井 大"
   },
   "8I2AUKaWgH4": {
    "title": "ジョージアで週末の企画会議や",
@@ -398,7 +416,7 @@
   "JJdPN0ozwZI": {
    "title": "セヴァン湖までセヴァンマス食べに行きます",
    "start": "2026-05-20 19:16",
-   "state": "editing",
+   "state": "enable",
    "claims_left": 0,
    "history": [
     {
@@ -420,7 +438,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "申し立てが無いのに収益化がオフ"
   },
   "haHAczqMooM": {
    "title": "セヴァン湖までセヴァンマス食べに行きます",
@@ -440,10 +458,17 @@
   "6ZezMEA3emg": {
    "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
    "start": "2026-05-10 14:48",
-   "state": "error",
+   "state": "editing",
    "claims_left": 34,
-   "history": [],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "history": [
+    {
+     "date": "2026-10-12",
+     "claim": "4tBDtQuB0G0",
+     "song": "Caravan (Remastered 1993) / Nat King Cole",
+     "action": "erase"
+    }
+   ],
+   "why": "Caravan (Remastered 1993) / Nat King Cole"
   },
   "gse7fek4Cpk": {
    "title": "【5日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
@@ -464,7 +489,7 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "5cWmE-KqHLA": {
    "title": "四月の月末配信じゃい！！！",
@@ -479,15 +504,15 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "OeptOBqm1dY": {
    "title": "ショッピングモールなう",
    "start": "2026-04-15 00:48",
-   "state": "enable",
+   "state": "error",
    "claims_left": 0,
    "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
+   "why": "RuntimeError: js: {\"exceptionId\": 1, \"text\": \"Uncaught (in promise) ReferenceError: ytcfg is not defined\", \"lineNumber\": 8, \"columnNumber\": 15, \"scriptId\": \"376\", \"stackTrace\": {\"callFrames\": [{"
   },
   "65cHXjYLotA": {
    "title": "そして復活",

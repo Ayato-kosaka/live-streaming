@@ -62,6 +62,9 @@ def classify(s, active, hold):
 def main():
     src, dst = sys.argv[1], sys.argv[2]
     dry, full = "--dry" in sys.argv, "--all" in sys.argv
+    # 1回に送る対応の上限。続けて送ると Google がログインを切る（2026-10-12 に2回）
+    cap = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else 10
+    sent = 0
     led = json.load(open(src))
     hold = led.get("hold", {})
     since = 0 if full else led.get("checked_through", {}).get("start", 0)
@@ -99,10 +102,13 @@ def main():
             if state in ("erase", "mute"):
                 c = next(c for c in active if c["claim"] == why)
                 why = f"{c['title']} / {', '.join(c['artists'])}"
+                if not dry and sent >= cap:
+                    dry = True  # 上限に達したら、残りは送らずに積むだけにする
                 if dry:
                     row["state"] = "to-" + state
                 else:
                     resolve_claim_ui(t, s["id"], c["title"], state)
+                    sent += 1
                     row["state"] = "editing"
                     row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": state})
                     time.sleep(2)
