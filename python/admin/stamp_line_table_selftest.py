@@ -52,6 +52,17 @@
   11〜13. 上の3つ
   14. **入れ物の中身といまの式が食い違ったら、ログで言う**
 
+## 2026-10-12 から、**決まったセリフの表**（`mode: decided`）
+
+  15. 1人1行で、**名前とことば**が出る
+  16. **元の字の扱いが3つに分かれる**——そのまま／手を入れた（元の字も
+      並ぶ）／**あやとの字（チャットに無い）**。あやと「元の字と、
+      直した字の両方を表に出す」
+  17. **本人が `/me` で書いた字は、そちらが勝つ**
+  18. **まだ決まっていない人を、表から落とさない**
+      （落とすと「決まった」と同じ顔になる。`island-standards` §10）
+  19. **候補から外した人は行に出さず、数だけ出す**
+
 終了コード: 0=通った / 1=落ちた
 """
 
@@ -259,13 +270,15 @@ SHEET = [{"name": NAME_A, "lines": [SHEET_GOT],
          {"name": NAME_D, "lines": [], "words": ["みかんの話"]}]
 
 
-def run(apply: bool, data=None, comment=0) -> int:
+def run(apply: bool, data=None, comment=0, mode="candidates") -> int:
     """1回動かす。
 
     Args:
         apply: 貼るか
         data: 偽の Firestore（省略すると4人ぶん）
         comment: 書き替えるコメントの番号
+        mode: どちらの表か（**この見張りの既定は古いほう**——
+            候補を並べる表を見ている確かめが下に並んでいる）
 
     Returns:
         終了コード
@@ -276,7 +289,7 @@ def run(apply: bool, data=None, comment=0) -> int:
     tbl.island = lambda days: bqrows()  # noqa: ARG005
     tbl.post = fake_post
     # **採点表は `client_payload` から渡す。** ARGS に置かない
-    body = {"check": SHEET}
+    body = {"check": SHEET, "mode": mode}
     if apply:
         body["apply"] = True
     if comment:
@@ -287,6 +300,32 @@ def run(apply: bool, data=None, comment=0) -> int:
     os.environ["GITHUB_EVENT_PATH"] = path
     os.environ["ARGS"] = "{}"
     return tbl.main()
+
+
+def decided_db() -> FakeDb:
+    """**決まったあと**の偽の Firestore。
+
+    Returns:
+        偽の Firestore
+    """
+    return FakeDb({
+        "islandStampLine": {
+            # そのまま（チャットでそう打っている）
+            DOC["a"]: {"channelId": CH["a"], "suggested": [MINE_A1],
+                       "suggestedFrom": [MINE_A1]},
+            # 手を入れた（元の字が違う）
+            DOC["b"]: {"channelId": CH["b"], "suggested": [MINE_B1],
+                       "suggestedFrom": [MINE_B2]},
+            # **チャットに無い字**（あやとの字）
+            DOC["c"]: {"channelId": CH["c"], "suggested": [SHEET_NONE],
+                       "suggestedFrom": [SHEET_NONE]},
+            # まだ決まっていない（候補が2本以上）／＋候補から外した人
+            DOC["d"]: {"channelId": CH["d"],
+                       "suggested": [MINE_D1, MINE_A1],
+                       "suggestedFrom": [MINE_D1, MINE_A1]},
+        },
+        "islandCharacter": chars(),
+    })
 
 
 def main() -> int:
@@ -453,6 +492,44 @@ def main() -> int:
                                       "islandCharacter": {}}))
     check(rc == 2, "**0人なら 2 で止まる**（読めなかったと混ぜない）")
     check(not POSTED, "0人のときは1本も貼らない")
+
+    print("== 決まったセリフの表（mode: decided）==")
+    rc = run(apply=True, data=decided_db(), mode="decided")
+    body = POSTED[0][1] if POSTED else ""
+    check(rc == 0 and body, "0 で終わって、貼っている")
+    check(f"**{MINE_A1}**" in body, "ことばが太字で1行に出る")
+    check("そのまま（12回）" in body,
+          "**そのままの字には、打った回数が出る**")
+    check(f"| {tbl.cell(MINE_B2)} |" in body and "**手を入れた**" in body,
+          "**手を入れた字は、元の字も同じ行に出る**")
+    check("**あやとの字**（チャットに無い）" in body,
+          "**チャットに無い字は、あやとの字と分かる**")
+    check("まだ決まっていません" in body,
+          "**決まっていない人も行に出る**（落とさない）")
+    check("3人ぶん決まりました" in body and "残り **1人**" in body,
+          "決まった数と残りが出る")
+
+    print("== 本人が決めた字が勝つ ==")
+    fake = decided_db()
+    fake.data["islandStampLine"][DOC["a"]]["lines"] = ["ぼくがきめた"]
+    rc = run(apply=True, data=fake, mode="decided")
+    body = POSTED[0][1] if POSTED else ""
+    check("**ぼくがきめた**" in body and "**本人が決めた字**" in body,
+          "**本人の字がそちらで出る**")
+
+    print("== 候補から外した人 ==")
+    fake = decided_db()
+    fake.data["islandStampLine"][DOC["d"]]["dropped"] = True
+    rc = run(apply=True, data=fake, mode="decided")
+    body = POSTED[0][1] if POSTED else ""
+    check(NAME_D not in body, "**外した人は行に出ない**")
+    check("候補から外した人が 1人" in body, "**外した数は出る**（黙らない）")
+    check("まだ決まっていません" not in body,
+          "外した人を「未決」として数えない")
+
+    print("== mode がおかしいとき ==")
+    rc = run(apply=True, mode="へんなもじ")
+    check(rc == 2 and not POSTED, "**知らない mode は 2 で止まる**")
 
     print(("通りました" if BAD == 0 else f"落ちました（{BAD} 件）"))
     return 1 if BAD else 0

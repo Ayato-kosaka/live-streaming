@@ -43,9 +43,48 @@
 触るのは `suggested` と `suggestedFrom` と `suggestedAt` の3つだけ。
 `lines` は人の字なので、消したら戻らない。
 
+## 書類IDの代わりに、**名前で指せる**
+
+あやとが返してくるのは、**名前と、決めたことばの2行だけ**。
+**図鑑の書類IDは、このリポジトリのどこにも無い**——`docs/` にも置かない
+決めなので、名前から引く道がここに要る。
+
+突き合わせは **`stamp_line_suggest` のものを使い回す**
+（`people()` で入れ物に居る人を集め、`fold_name()` で先頭の `@` と
+前後の空白を落として当てる）。**2か所で別々に書かない**——
+片方だけ直した日に、表で当たった名前が手直しで当たらなくなる。
+
+**1つに決まらない名前は置かない。** 同じ呼び名の人が2人居るときに
+どちらかへ置くと、**他人のことばがその人の提案に出る。**
+入れ物に居ない書類IDと同じ扱いで、数えて返すだけにする。
+
+## 候補から外すときは、**消さずに印を立てる**
+
+あやと（2026-10-12、#716）: 「🏀 ゴット → 候補から外す」
+
+**書類を消さない。** 理由が3つある。
+
+  1. **`lines` は人の字。** いまは空でも、消す道をここに作ると、次に
+     「外す」をやる人が**本人の決めたことばごと**消す
+  2. **`/me` の画面が「選ばれていません」に落ちる**
+     （`functions/src/stampLine.ts` の `mineOf` が引けなくなり、
+     GET は `{picked: false}`、書き込みは 403）。いちど選ばれた人に
+     出す画面としては合っていないし、**理由はどこにも出ない**
+  3. **入れ物が25人から減ると、「外した1人」と「種まきがまだの1人」が
+     同じ顔になる**（`stamp_line_table` の「25人そろっているか」が
+     毎回 warning を出す）。印なら、どちらなのかが数えられる
+     （`docs/island-standards.md` §10）
+
+だから `dropped` と `droppedAt` を立てるだけにする。
+**`lines` も `suggested` も1バイトも触らない。**
+表（`stamp_line_table`）は、印の立っている人を数えたうえで行から外す。
+
 入力（`client_payload`。`apply` だけは ARGS でもよい）:
   {"fix": [{"id": "<図鑑の書類ID>",
             "lines": [{"text": "出す字", "from": "元の字"}, …]}]}
+  {"fix": [{"name": "<図鑑の呼び名>",   ← `id` の代わりに置ける
+            "lines": [{"text": "出す字", "from": "元の字"}, …]}]}
+  {"drop": [{"name": "<図鑑の呼び名>"}]}   … 候補から外す（印を立てるだけ）
 """
 
 import json
@@ -56,6 +95,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from _fs import args, db, log, notice, readonly  # noqa: E402
+from stamp_line_suggest import fold_name, people  # noqa: E402
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -72,6 +112,10 @@ MAX_LINES = 3
 
 # 一度に直せる人数の上限。**暴走を止める栓**で、人数を絞る値ではない
 MAX_PEOPLE = 50
+
+# 名前の長さの上限。**図鑑の呼び名に収まる長さ**（打ち間違いを落とす栓で、
+# 短くするための値ではない）
+MAX_NAME = 80
 
 
 def payload() -> dict:
@@ -92,7 +136,12 @@ def payload() -> dict:
             sys.exit(2)
         for k in ("client_payload", "inputs"):
             v = d.get(k)
-            if isinstance(v, dict) and v:
+            # **こちらの入力が入っている出来事だけ拾う。**
+            # `run_admin_script.yml` から回すと `inputs` は
+            # `{"script": …, "args": "…"}` で、こちらの字は `args` の
+            # 中（＝ ARGS）に在る。形だけ見て拾うと、**空の入力を
+            # 渡されたのと同じ顔**になって 2 で落ちる
+            if isinstance(v, dict) and (v.get("fix") or v.get("drop")):
                 return v
     return args()
 
@@ -107,7 +156,8 @@ def shape(v) -> tuple[list, dict]:
         v: 渡されたもの（`fix`）
 
     Returns:
-        (`[(書類ID, [(出す字, 元の字), …])]`, 落とした理由の数え上げ)
+        (`[(書類ID, 名前, [(出す字, 元の字), …])]`, 落とした理由の数え上げ)。
+        書類IDと名前は**どちらか片方だけ**が入る
     """
     bad = {"形": 0, "長さ": 0, "元の字なし": 0, "本数": 0, "空": 0}
     if not isinstance(v, list):
@@ -119,7 +169,20 @@ def shape(v) -> tuple[list, dict]:
             continue
         doc_id = one.get("id")
         doc_id = doc_id.strip() if isinstance(doc_id, str) else ""
-        if not doc_id or not DOC_ID.match(doc_id):
+        name = one.get("name")
+        name = name.strip() if isinstance(name, str) else ""
+        if doc_id:
+            # **書類IDを渡されたら、そちらが先。** 名前は見ない——
+            # 両方渡されて食い違ったときに、どちらで置いたか分からなくなる
+            if not DOC_ID.match(doc_id):
+                bad["形"] += 1
+                continue
+            name = ""
+        elif name:
+            if len(name) > MAX_NAME:
+                bad["形"] += 1
+                continue
+        else:
             bad["形"] += 1
             continue
         got = []
@@ -154,13 +217,100 @@ def shape(v) -> tuple[list, dict]:
         if len(got) > MAX_LINES:
             bad["本数"] += len(got) - MAX_LINES
             got = got[:MAX_LINES]
-        out.append((doc_id, got))
+        out.append((doc_id, name, got))
     if isinstance(v, list) and len(v) > MAX_PEOPLE:
         bad["本数"] += len(v) - MAX_PEOPLE
     return out, bad
 
 
-def plan(client, fix: list) -> tuple[list, list]:
+def by_name(client) -> dict:
+    """図鑑の呼び名から、**入れ物に居る人の書類ID**を引く表。
+
+    **集めかたは `stamp_line_suggest.people()` のものを使い回す**
+    （入れ物に在る書類を歩いて、図鑑から呼び名を取る）。畳みかたも
+    あちらの `fold_name()`。2か所で別々に書くと、表で当たった名前が
+    手直しで当たらなくなる。
+
+    **同じ呼び名が2人に付いていたら、どちらも引けなくする。**
+    片方に寄せると、他人のことばがその人の提案に出る。
+
+    Args:
+        client: Firestore クライアント
+
+    Returns:
+        `{畳んだ名前: 書類ID}`。**1つに決まらない名前は入らない**
+    """
+    seen: dict = {}
+    for f in people(client):
+        key = fold_name(f.get("name") or "")
+        if not key:
+            continue
+        # None を置いて「2人居る」を覚える。消すと、3人目で生き返る
+        seen[key] = None if key in seen else f.get("id") or ""
+    return {k: v for k, v in seen.items() if v}
+
+
+def shape_drop(v) -> tuple[list, int]:
+    """**候補から外す相手**を、置いてよい形にする。
+
+    `fix` と同じ指しかた（`id` か `name`）。**ことばは取らない**——
+    外すのに字は要らないし、取れば伏せ字の抜けが1つ増える。
+
+    Args:
+        v: 渡されたもの（`drop`）
+
+    Returns:
+        (`[(書類ID, 名前)]`, 形で落とした数)
+    """
+    bad = 0
+    if not isinstance(v, list):
+        return [], bad
+    out = []
+    for one in v[:MAX_PEOPLE]:
+        if not isinstance(one, dict):
+            bad += 1
+            continue
+        doc_id = one.get("id")
+        doc_id = doc_id.strip() if isinstance(doc_id, str) else ""
+        name = one.get("name")
+        name = name.strip() if isinstance(name, str) else ""
+        if doc_id:
+            if not DOC_ID.match(doc_id):
+                bad += 1
+                continue
+            out.append((doc_id, ""))
+        elif name and len(name) <= MAX_NAME:
+            out.append(("", name))
+        else:
+            bad += 1
+    return out, bad
+
+
+def mark(client, rows: list, now: int) -> int:
+    """候補から外す印を立てる。**消さない。**
+
+    触るのは `dropped` と `droppedAt` の2つだけ。**`lines` も
+    `suggested` も1バイトも触らない**——`lines` は人の字で、
+    書類ごと消すと `/me` が「選ばれていません」に落ちる（docstring 参照）。
+
+    Args:
+        client: Firestore クライアント
+        rows: 書類IDの並び
+        now: いまの時刻（ミリ秒）
+
+    Returns:
+        印を立てた件数
+    """
+    lines = client.collection("islandStampLine")
+    n = 0
+    for doc_id in rows:
+        lines.document(doc_id).set(
+            {"dropped": True, "droppedAt": now}, merge=True)
+        n += 1
+    return n
+
+
+def plan(client, fix: list) -> tuple[list, list, list]:
     """1件ずつ、何をするかを決める。**読むだけ。**
 
     Args:
@@ -168,18 +318,36 @@ def plan(client, fix: list) -> tuple[list, list]:
         fix: `shape()` の結果
 
     Returns:
-        (置けるもの `[(書類ID, [(出す字, 元の字)])]`, 入れ物に居ない書類ID)
+        (置けるもの `[(書類ID, [(出す字, 元の字)])]`, 入れ物に居ない書類ID,
+        **引けなかった名前**)
     """
     lines = client.collection("islandStampLine")
-    ok, missing = [], []
-    for doc_id, got in fix:
+    # **名前で渡されたものが1件も無ければ、図鑑を1度も読まない。**
+    # 書類IDだけの呼ばれかたが、名前の道を足したぶん重くならないように
+    index = by_name(client) if any(n for _i, n, _g in fix) else {}
+    ok, missing, nomatch = [], [], []
+    seen: set = set()
+    for doc_id, name, got in fix:
+        if not doc_id:
+            doc_id = index.get(fold_name(name)) or ""
+            if not doc_id:
+                # **引けない名前には置かない。** 打ち間違いか、同じ呼び名が
+                # 2人に付いているか。どちらも「どの人か決まっていない」
+                nomatch.append(name)
+                continue
         # **入れ物に無い人には置かない。** 打ち間違いで知らない書類を
         # 作ると、その人は画面から自分のぶんを引けないまま提案だけ持つ
         if not lines.document(doc_id).get().exists:
             missing.append(doc_id)
             continue
+        if doc_id in seen:
+            # **同じ人に2回置かない。** 名前と書類IDで二重に渡されたとき、
+            # あとの1本が黙って前の1本を上書きする
+            missing.append(doc_id)
+            continue
+        seen.add(doc_id)
         ok.append((doc_id, got))
-    return ok, missing
+    return ok, missing, nomatch
 
 
 def write(client, rows: list, now: int) -> int:
@@ -220,27 +388,41 @@ def main() -> int:
     # `apply` だけは ARGS から拾ってもよい（真偽値なので素性を持たない）
     apply = bool(a.get("apply") or args().get("apply"))
     fix, bad = shape(a.get("fix"))
+    drop, dropbad = shape_drop(a.get("drop"))
     dropped = " / ".join(f"{k} {v}" for k, v in bad.items() if v)
-    if not fix:
-        log.error("fix がありません（形で落ちた: %s）", dropped or "0")
+    if not fix and not drop:
+        log.error("fix も drop もありません（形で落ちた: %s / 外す %d）",
+                  dropped or "0", dropbad)
         return 2
-    touched = sum(1 for _, got in fix for t, s in got if t != s)
-    kept = sum(1 for _, got in fix for t, s in got if t == s)
-    log.info("渡された: %d 人ぶん / 直した字 %d 本 / そのままの字 %d 本"
-             "（形で落ちた: %s）",
-             len(fix), touched, kept, dropped or "0")
+    if drop:
+        return main_drop(drop, dropbad, apply)
+    touched = sum(1 for _, _n, got in fix for t, s in got if t != s)
+    kept = sum(1 for _, _n, got in fix for t, s in got if t == s)
+    named = sum(1 for _i, n, _g in fix if n)
+    log.info("渡された: %d 人ぶん（うち名前で指されたもの %d 人）/ "
+             "直した字 %d 本 / そのままの字 %d 本（形で落ちた: %s）",
+             len(fix), named, touched, kept, dropped or "0")
 
     client = db()
-    ok, missing = plan(readonly(client), fix)
+    ok, missing, nomatch = plan(readonly(client), fix)
     if missing:
         # **黙って通さない。** 打ち間違いか、種まきがまだ
         log.warning(
-            "入れ物に居ない %d 件（指紋: %s）。**この人には置かない**"
-            "——先に stamp_line_seed を流してください",
+            "入れ物に居ない（か、2回渡された）%d 件（指紋: %s）。"
+            "**この人には置かない**——先に stamp_line_seed を流してください",
             len(missing), " ".join(mask(x, public=True) for x in missing))
+    if nomatch:
+        # **名前そのものは出さない。** 指紋だけで、同じ名前を2回渡したのか
+        # 別の名前なのかは追える
+        log.warning(
+            "図鑑の呼び名から引けなかった %d 件（指紋: %s）。"
+            "**この人には置かない**——表に出ている呼び名のとおりに"
+            "渡すか、書類IDで渡してください",
+            len(nomatch), " ".join(mask(x, public=True) for x in nomatch))
     notice(
         f"手直し{'（下見）' if not apply else ''}: 渡された {len(fix)} 人 / "
         f"置ける {len(ok)} 人 / 入れ物に居ない {len(missing)} 人 / "
+        f"名前が引けない {len(nomatch)} 人 / "
         f"直した字 {touched} 本 / そのままの字 {kept} 本")
     if not ok:
         log.error("置けるものが1件もありません")
@@ -254,6 +436,63 @@ def main() -> int:
     n = write(client, ok, _now())
     log.info("置きました: %d 人ぶん", n)
     notice(f"手直し: 置いた {n} 人ぶん")
+    return 0
+
+
+def main_drop(drop: list, bad: int, apply: bool) -> int:
+    """候補から外すほう。**`fix` と混ぜて渡されたときは、外すほうだけ。**
+
+    混ぜて通さないのは、**片方だけ通ったときに何が起きたか分からない**
+    から（置いたのか外したのか、注記1行では読めない）。
+
+    Args:
+        drop: `shape_drop()` の結果
+        bad: 形で落とした数
+        apply: 書くか
+
+    Returns:
+        0=通った / 1=外せるものが1件も無い
+    """
+    log.info("外す: 渡された %d 人（うち名前で指されたもの %d 人 / "
+             "形で落ちた %d）",
+             len(drop), sum(1 for _i, n in drop if n), bad)
+    client = db()
+    ro = readonly(client)
+    index = by_name(ro) if any(n for _i, n in drop) else {}
+    lines = ro.collection("islandStampLine")
+    ok, missing, nomatch = [], [], []
+    for doc_id, name in drop:
+        if not doc_id:
+            doc_id = index.get(fold_name(name)) or ""
+            if not doc_id:
+                nomatch.append(name)
+                continue
+        if not lines.document(doc_id).get().exists:
+            missing.append(doc_id)
+            continue
+        ok.append(doc_id)
+    if missing:
+        log.warning("入れ物に居ない %d 件（指紋: %s）",
+                    len(missing),
+                    " ".join(mask(x, public=True) for x in missing))
+    if nomatch:
+        log.warning("図鑑の呼び名から引けなかった %d 件（指紋: %s）",
+                    len(nomatch),
+                    " ".join(mask(x, public=True) for x in nomatch))
+    notice(f"候補から外す{'（下見）' if not apply else ''}: "
+           f"渡された {len(drop)} 人 / 外せる {len(ok)} 人 / "
+           f"入れ物に居ない {len(missing)} 人 / "
+           f"名前が引けない {len(nomatch)} 人")
+    if not ok:
+        log.error("外せるものが1件もありません")
+        return 1
+    if not apply:
+        log.info("下見なので**1バイトも書いていません**。"
+                 '書くには {"apply": true} を付けてください')
+        return 0
+    n = mark(client, ok, _now())
+    log.info("外しました: %d 人ぶん（**消していません。印を立てただけ**）", n)
+    notice(f"候補から外す: 印を立てた {n} 人ぶん")
     return 0
 
 
