@@ -43,6 +43,9 @@ def classify(s, active, hold):
         if s["id"] in hold:
             return "hold", hold[s["id"]]
         # 対応は「曲を消去する」（声は残す）。区間を全部ミュートはしない（#757、あやと 2026-10-12）
+        # 曲を消したあと、申し立ての付け直しが終わるまでは「再処理中」で選べない。待てば片づく
+        if any("BEING_REPROCESSED" in c["erase_ok"] for c in active):
+            return "editing", "申し立てを再処理中（曲の消去のあと）"
         ok = [c for c in active if "ERASE_SONG" in c["options"] and c["erase_ok"] == "ELIGIBLE"]
         if not ok:
             return "manual", "曲の消去で対応できない申し立て: " + ", ".join(c["type"] + "/" + c["title"] for c in active)

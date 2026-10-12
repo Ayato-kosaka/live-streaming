@@ -95,6 +95,13 @@ python3 $E put .claude/skills/youtube-live-ads/ledger.json /home/ubuntu/cdp/ledg
 - **「曲を消去する」が選べない申し立てがある。** `claimResolutionEligibility.waveformEraseEligibility` が
   `TOO_MANY_MATCHES_PER_CLAIM`（1件の申し立てに一致した箇所が多すぎる）か `COMPOSITION_CLAIM`
   （録音ではなく作曲への申し立て。カバー曲など）のとき。ミュートは選べる（#757 Q4）
+- **「曲を消去する」で申し立てが消えても、収益化はオフのまま残る**（2026-10-12、DPVX8gBosWM・6_2Pw1uIDqI ほか6本）。
+  ミュートで片づけた hK0SwIeAxg0 はひとりでにオンに戻ったが、曲の消去のほうは戻らなかった。
+  なので、片づいた動画も `enable`（収益化をオンにする）に回る
+- **曲を消したあと、しばらく「申し立てを再処理中」になる**（`waveformEraseEligibility` が `…CLAIMS_BEING_REPROCESSED`）。
+  このあいだは次の対応を選べない。`editing` として待つ
+- **録音への申し立てを消すと、作曲への申し立てだけが残ることがある**（kunXt2sXnFQ は6件残った）。
+  そのときは収益を分け合う形（`MONETIZING_WITH_REVSHARE`）で収益化が戻る。作曲への申し立ては曲の消去では消せない
 - **「曲を消去する」は早い。** d2q2XuA7ss0（6時間の配信）は、2026-10-12 00:30 UTC ごろに送って、
   00:47 には申し立てが消えて収益化されていた（17分以内）
 - **途中でログインが切れたら、すぐ止める。** Studio が 401 を返し始めると、以後は全部 `ytcfg` が無いで落ちる
