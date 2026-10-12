@@ -101,6 +101,13 @@ def main():
                     time.sleep(2)
         except Exception as ex:
             row["state"], why = "error", f"{type(ex).__name__}: {str(ex)[:180]}"
+            # ログインが切れると、以後は全部落ちる。台帳を書いて止める（#768）
+            # （Studio が 401 を返すか、ログイン画面に飛ばされて ytcfg が無くなる）
+            if "HTTP 401" in str(ex) or "ytcfg is not defined" in str(ex):
+                row["why"] = why
+                videos[s["id"]] = row
+                save()
+                sys.exit("ログインが切れた。あやとに EC2 の Chrome でログインし直してもらう（ec2-chrome の躓き）")
             # 画面が返らなくなったタブは、そのあと何を投げても返らない（2026-10-12 に1本の
             # タイムアウトから残り全部が落ちた）。タブを作り直して次へ進む
             for _ in range(3):

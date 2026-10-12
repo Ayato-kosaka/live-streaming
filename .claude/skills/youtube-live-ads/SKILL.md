@@ -95,6 +95,11 @@ python3 $E put .claude/skills/youtube-live-ads/ledger.json /home/ubuntu/cdp/ledg
 - **「曲を消去する」が選べない申し立てがある。** `claimResolutionEligibility.waveformEraseEligibility` が
   `TOO_MANY_MATCHES_PER_CLAIM`（1件の申し立てに一致した箇所が多すぎる）か `COMPOSITION_CLAIM`
   （録音ではなく作曲への申し立て。カバー曲など）のとき。ミュートは選べる（#757 Q4）
+- **「曲を消去する」は早い。** d2q2XuA7ss0（6時間の配信）は、2026-10-12 00:30 UTC ごろに送って、
+  00:47 には申し立てが消えて収益化されていた（17分以内）
+- **途中でログインが切れたら、すぐ止める。** Studio が 401 を返し始めると、以後は全部 `ytcfg` が無いで落ちる
+  （2026-10-12 に50本ぶん空振りした。#768）。`live_ads.py` は落ちた動画を台帳に残すので、ログインし直してから
+  同じコマンドを流し直せば続きから進む
 - **配信の数日後に付く申し立て。** 前回より14日さかのぼって見直しているが、それより後に付いたものは拾えない。
   ときどき `--all` で全件を見る
 

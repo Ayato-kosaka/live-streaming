@@ -127,6 +127,11 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   ブラウザの WebSocket から `Target.createTarget` で新しいタブを作り、古いタブを `Target.closeTarget` で閉じる。
   形は `youtube-studio/yt_studio.py` の `studio()` と `current()`
 - **最初の `up(名前)` は、既定のプロファイル（1.2GB）を複製するので数分かかる。** 120秒を超えるので裏で回す
+- **複製したプロファイルを長く使い続けると、Google のログインがまとめて切れることがある。** 2026-10-12 01:30 UTC、
+  10日に複製した `~/cdp-ytstudio` で YouTube Studio を2日使ったところで 401 になり、**既定のプロファイルのほうも
+  3アカウントとも Signed out** になっていた（#768）。原因は確かではないが、同じログインを2つの Chrome で
+  使い続けたのを Google が怪しんだ見立て。戻すには、あやとに Chrome リモートデスクトップでログインし直してもらうしかない。
+  **401 や accounts.google.com への転送が出たら、すぐ止める**（その先を流しても全部落ちるだけ）
 - **「測った数が合わない」ときは、見えていない変数を疑う。** SUZURI の大きさを1つの数で
   見積もって3回外した。原因は「倍率が絵の画素数に掛かる」ことで、画素数の違う絵を
   混ぜて測っていたから。数を2つ以上の見本で測り、**合わなければ何が違う見本かを先に並べる**
