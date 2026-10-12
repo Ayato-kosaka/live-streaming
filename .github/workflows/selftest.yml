@@ -337,7 +337,14 @@ jobs:
           BASE=http://127.0.0.1:4211 DIST=site/.next-ci \
             node tools/sprites/navtruth.mjs || rc3=$?
           echo "── navtruth 終了コード ${rc3}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ]
+          # navtruth は**焼きたての書き出し**を見るので、「焼いた日は合って
+          # いるが、次の日から古くなる札」は素通りする（#770。10-12 に焼いた
+          # 「いま 1 つ立っています」が、企画の終わった翌日からも配られた）。
+          # こちらは**時計を進めて**、札の字が日で変わらないことを見る
+          rc4=0
+          SPORT=4211 OUT=/tmp/nextempty node tools/sprites/nextempty.mjs || rc4=$?
+          echo "── nextempty 終了コード ${rc4}"
+          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ]
 
       # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
       # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。

@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getPoll, pollAnswer } from "@/lib/api";
 import { THEMES } from "@/content/themes";
 import { LEGENDS } from "@/content/legends";
-import { BUILT_AT, PLANS, planPhase } from "@/content/plans";
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
@@ -51,13 +50,9 @@ const PROOF = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia"]
 export default function Board() {
   /** 今夜のおたずねで押した1票。橋を渡ってきた人だけ、ここに入っている。 */
   const [ask, setAsk] = useState<{ question: string; label: string } | null>(null);
-  /** 画面が出てから決める。焼き込みの時刻で「あと◯つ」と言わないため */
-  const [now, setNow] = useState<number | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    setNow(Date.now());
-
     /* 「押す」から「書く」への橋を、渡ってきた側で受ける。
        島で今夜のおたずねを押した人は、押した直後に「理由も書ける？」で
        ここへ来る（`docs/island-play.md` 7章）。押した札を `Notes` へ渡して、
@@ -73,14 +68,6 @@ export default function Board() {
         /* おたずねが読めない日は、ただ橋が出ないだけ。ここで謝らない */
       });
   }, []);
-
-  /* 「これから」の札に出す数。**焼き込まない**（`CLAUDE.md`「静的書き出し」）。
-     `PLANS.length` を焼いていたので、9/12 を過ぎても「いま 4 つ立っています」の
-     ままだった。画面が出てから数え直す。 */
-  const aheadCount = useMemo(
-    () => PLANS.filter((p) => planPhase(p, now == null ? BUILT_AT : new Date(now)) !== "after").length,
-    [now],
-  );
 
   return (
     <>
@@ -112,20 +99,23 @@ export default function Board() {
           </Link>
         </div>
 
-        {/* 読む先。**出す先ではない。** 付箋から育った企画が、どこに出るか */}
+        {/* 読む先。**出す先ではない。** 付箋から育った企画が、どこに出るか。
+
+            **時制も数も名乗らない**（`docs/island-standards.md` 16章の決めごと1）。
+            ここは長いあいだ「これから／いま ◯ つ立っています」と数えていた。
+            数え直しは画面が出てからなので、**開いている人の目には合っている。**
+            合っていないのは**焼いた HTML のほう**で、出した日の数がそのまま
+            配られ続ける。10-12 に焼いた「いま 1 つ立っています」は、企画が
+            その日で終わったあとも配りっぱなしになった（#770）。
+            札は常設で、中身は日付で動く。**動かないほうに時制を置かない。** */}
         <Link prefetch={false} className="tile" href="/next" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/tent.webp" alt="" />
-          {/* **0件のときに「これから」と言わない。** ここは実際に
-              「これから／いま 0 つ立っています」と出していて、**同じ札が
-              自分で 0 と正しく数えているのに、太字だけが嘘**だった
-              （あやと 2026-10-01／`docs/island-standards.md` 16章）。 */}
           <span className="tile-text">
-            <b>{aheadCount > 0 ? "これから" : "企画"}</b>
-            <i>
-              {aheadCount > 0
-                ? `日にちが決まった企画。いま ${aheadCount} つ立っています`
-                : "やってきたことの記録"}
-            </i>
+            {/* **「終わったもの」とも書かない。** あれも時制で、`navtruth.mjs` の
+                `tenseOf` は過去の札として読む（＝行き先に先の日付が1つでも
+                在れば嘘になる）。札が言うのは**行き先が何の置き場か**だけ。 */}
+            <b>企画</b>
+            <i>付箋から育ったものが出る先</i>
           </span>
           <Icon name="right" size={15} className="tile-go" />
         </Link>
