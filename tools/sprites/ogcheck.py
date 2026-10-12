@@ -7,10 +7,14 @@
 ここで見るのは、**目で見なくても嘘と分かるところ**だけ。
 
   1. 1200×630 か（共有カードの枠）
-  2. 海が写っているか（青）
+  2. 水が写っているか（青とはかぎらない。内陸の島は湖の翡翠）
   3. 陸が写っているか（緑）。しかも**枠のまん中を通る大きさ**で
   4. 1色で塗りつぶされていないか（真っ白・真っ青で落ちる）
   5. 色の種類（描かれていない絵は数種類しか持たない）
+  6. **1枚に割れ目が無いか** — 上から下までまっすぐ色が変わる縦の線。
+     1〜5 はどれも**割合**なので、「同じ割合のまま、絵が2枚に割れている」を
+     1つも拾えない。実際それで、右 8% がページの地のまま何週間も配られていた
+     （`docs/island-misses.md` #226）
 
 **板（島の名前・帯）がそこに在るかは、ここでは見ない。** 浜の砂と紙は
 ほとんど同じ色で、画素では分けられない（砂だけの絵が「板 3.2%」と出た）。
@@ -26,9 +30,9 @@
 
 ## 対照
 
-本物の絵を測る前に、**こちらで作った13枚**を当てる。落ちる側（真っ白・真っ青・
-真っ緑・のっぺりした2色・小さすぎる陸・水の無い草原）と、通る側（島のかたちを
-した1枚と、**水が翡翠の1枚**）の**両方**を持つ。片側だけだと、判定が
+本物の絵を測る前に、**こちらで作った14枚**を当てる。落ちる側（真っ白・真っ青・
+真っ緑・のっぺりした2色・小さすぎる陸・水の無い草原・**縦のつなぎ目**）と、
+通る側（島のかたちをした1枚と、**水が翡翠の1枚**）の**両方**を持つ。片側だけだと、判定が
 ゆるみすぎても締まりすぎても気づけない（`docs/island-standards.md` §15）。
 `BREAK=` で判定の足を1本ずつ折れる。
 
@@ -52,6 +56,13 @@ STEP = 2
 
 # 左右のふちと呼ぶ幅。島は上下を切って撮るので、水が必ず残るのはここ
 RIM = 24
+
+# つなぎ目を探すときに縮める大きさ。**縮めてから見る**のは、画素の散らばりを
+# 均して「まっすぐな線」だけを残すため（対照の絵は3px升で色を散らしてあるので、
+# 原寸で隣の列と比べると、どの列でも6〜7割の行が動いてしまう）
+SEAM_W, SEAM_H = 300, 158
+# その線を「色が変わった」と呼ぶ差（L1）
+SEAM_STEP = 60
 
 # --- 合格の線。**どれも「1枚の絵として見たときに当たり前のこと」だけ** ---
 #
@@ -86,6 +97,30 @@ ONE_COLOR_MAX = 0.55  # 1色がこれを超えたら、のっぺり（真っ白�
 BINS_MIN = 40       # 色の種類（16段に丸めた粗さで）
 LAND_W_MIN = 0.22   # 陸の横幅（枠の幅に対して）
 LAND_H_MIN = 0.55   # 陸の縦幅。上下を切って撮るので、枠の半分以上は埋まる
+
+# **上から下までまっすぐ色が変わる線**（つなぎ目）。これを超えたら落ちる。
+#
+# ## なぜ要るか（2026-10-12）
+#
+# 上の線はどれも**割合**しか見ていない。割合は、**同じ割合のまま壊れている形**を
+# 拾えない。実際、撮った絵の右 8% が島の水ではなくページの地（濃い青）で、
+# そこに上から下まで1本のまっすぐな切り口が入っていた。青もまた「海」なので、
+# 海の割合は 49.2% と健全に見え、**見張りは素通りした。**
+# 見えるようになったのは島の水が翡翠に変わった日で、**傷そのものはそれ以前から
+# ずっとあった**（1つ前の絵も右はしは同じ青。画素を突き合わせた）。
+#
+# ## 線の根拠（git に残る og.png 8枚＋対照13枚を測った）
+#
+# | | いちばんまっすぐな線 |
+# | --- | --- |
+# | つなぎ目のある絵（2026-10-12 に配っていた1枚） | **100%** |
+# | 直したあとの同じ絵 | 33% |
+# | それ以前の og.png 7枚（北欧・アルバニア） | 38〜49% |
+# | 対照13枚（島のかたち・真っ白・のっぺり…） | 0〜52% |
+#
+# **つなぎ目だけが 100% で、残りは全部 52% 以下。** 線はそのまんなかに置く。
+# 島の浜は曲がっているので、どれだけ長くても全部の行では切り替わらない。
+SEAM_MAX = 0.80
 
 
 def kind(r: int, g: int, b: int) -> str:
@@ -139,6 +174,48 @@ def kind(r: int, g: int, b: int) -> str:
 NAME = {"sea": "海", "land": "陸", "paper": "紙", "other": "それ以外"}
 
 
+def seam_scan(im: Image.Image) -> dict:
+    """**上から下までまっすぐ色が変わる縦の線**を1本だけ探して、その強さを返す。
+
+    返すのは「いちばんまっすぐな線で、何割の行が切り替わったか」（`seam`）と、
+    その場所（`seam_x`、原寸の x）と、その左右の色（`seam_lr`）。
+
+    ## なぜ割合ではなくこれを見るのか
+
+    海の割合も陸の割合も健全なまま、**絵が2枚に割れている**ことがある。
+    撮るとき島の層を左右にずらすので、ずらしたぶんだけ枠のへりに島の外が
+    出る（`og.mjs` の注）。出たところはページの地で、**そこも「海」に
+    数えられる**ので、割合では1つも動かない。動くのは**形**のほうだけ。
+
+    ## なぜ縮めてから見るのか
+
+    原寸で隣の列と比べると、対照の絵（3px升で色を散らしてある）や本物の
+    草むらで、どの列でも6〜7割の行が動く＝つなぎ目と見分けがつかない。
+    面で平均してから（`Image.BOX`）見ると、散らばりは均されて、
+    **段になっているところだけが残る。**
+    """
+    s = im.convert("RGB").resize((SEAM_W, SEAM_H), Image.BOX)
+    px = s.load()
+    best = (0.0, None, None, None)
+    for x in range(SEAM_W - 1):
+        hit = 0
+        for y in range(SEAM_H):
+            a = px[x, y]
+            b = px[x + 1, y]
+            if abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2]) > SEAM_STEP:
+                hit += 1
+        f = hit / SEAM_H
+        if f > best[0]:
+            best = (f, x, px[x, SEAM_H // 2], px[x + 1, SEAM_H // 2])
+    f, x, left, right = best
+    return {
+        "seam": f,
+        # 原寸での場所。縮めた1列が原寸の何pxにあたるかを戻す
+        "seam_x": None if x is None else round((x + 1) * im.size[0] / SEAM_W),
+        "seam_lr": None if left is None else (left, right),
+    }
+
+
 def measure(im: Image.Image) -> dict:
     """1枚ぶんの数。**割合だけでなく、何点見たかも返す。**"""
     px = im.convert("RGB").load()
@@ -181,6 +258,7 @@ def measure(im: Image.Image) -> dict:
         box = (xs[cut], ys[cut], xs[-1 - cut], ys[-1 - cut])
     rim_seen = sum(rim_tally.values()) or 1
     rim_top = max(rim.items(), key=lambda kv: kv[1]) if rim else None
+    seam = seam_scan(im)
     return {
         "seen": seen,
         "size": (w, h),
@@ -193,6 +271,7 @@ def measure(im: Image.Image) -> dict:
         "rim": rim_top[0] if rim_top else None,
         "rim_share": (rim_top[1] / rim_seen) if rim_top else 0.0,
         "rim_kind": kind(*rim_top[0]) if rim_top else "",
+        **seam,
     }
 
 
@@ -211,6 +290,19 @@ def judge(m: dict, breaks: set[str]) -> list[str]:
         bad.append(f"1色が {m['one']:.1%}（{ONE_COLOR_MAX:.0%} 超。のっぺり）")
     if m["bins"] < BINS_MIN and "bins" not in breaks:
         bad.append(f"色の種類が {m['bins']}（{BINS_MIN} 未満）")
+    if m["seam"] > SEAM_MAX and "seam" not in breaks:
+        lr = m["seam_lr"]
+        where = f"x={m['seam_x']}"
+        colors = ""
+        if lr:
+            colors = (
+                f"。左 #{lr[0][0]:02x}{lr[0][1]:02x}{lr[0][2]:02x} /"
+                f" 右 #{lr[1][0]:02x}{lr[1][1]:02x}{lr[1][2]:02x}"
+            )
+        bad.append(
+            f"{where} に、上から下まで色が変わるまっすぐな線があります"
+            f"（{m['seam']:.0%} の行で切り替わり。{SEAM_MAX:.0%} 超）{colors}"
+        )
     if "box" not in breaks:
         if not m["box"]:
             bad.append("陸が1点も無い")
@@ -325,6 +417,25 @@ def fake_jade_island() -> Image.Image:
     return fake_island(sea=(15, 144, 104), grass=(74, 127, 42), sand=(199, 154, 134))
 
 
+def fake_seam_island() -> Image.Image:
+    """**島は写っているが、右はしに縦のつなぎ目がある。** つなぎ目の足だけが捕まえる。
+
+    2026-10-12 に本番で配っていた1枚と同じ壊れ方——島の層が左へずれたぶん
+    （101px）だけ、枠の右がページの地（`--ground-board` の濃い青）になる。
+    **海の割合は増えこそすれ減らない**ので、割合を見る足は1つも反応しない。
+    """
+    im = fake_jade_island()
+    d = ImageDraw.Draw(im)
+    # ページの地は上から下へ明るくなる縦のグラデーション。1枚の帯で写し取る
+    for y in range(H):
+        t = y / H
+        d.line(
+            [(W - 101, y), (W, y)],
+            fill=(11 + round(23 * t), 126 + round(27 * t), 211 + round(19 * t)),
+        )
+    return im
+
+
 def fake_lake_grass_only() -> Image.Image:
     """**翡翠の島の草だけ**で、水が1画素も写っていない。水の足だけが捕まえる。
 
@@ -404,6 +515,7 @@ def controls() -> list[tuple[str, Image.Image, bool]]:
         ("色が数種類しかない", fake_few_colors(), False),
         ("島が端に寄っている", fake_off_center(), False),
         ("翡翠の島の草だけ（水が無い）", fake_lake_grass_only(), False),
+        ("右はしに縦のつなぎ目", fake_seam_island(), False),
         ("島のかたち", fake_island(), True),
         ("島のかたち（水が翡翠）", fake_jade_island(), True),
     ]
@@ -456,6 +568,15 @@ def main() -> int:
         print(
             f"  左右のふちの色 #{r:02x}{g:02x}{b:02x}（外から {RIM}px のうち {m['rim_share']:.0%}）"
             f" → 「{NAME.get(m['rim_kind'], m['rim_kind'])}」と読みました"
+        )
+    if m["seam_lr"]:
+        lr = m["seam_lr"]
+        # **ここは落ちていなくても出す。** つなぎ目は「在る / 無い」ではなく
+        # 「どれだけまっすぐか」で、ふだんの絵がいくつなのかを知らないと、
+        # 次にこの行が 100% になった晩に大きい数なのか分からない
+        print(
+            f"  いちばんまっすぐな縦の線 {m['seam']:.0%}（x={m['seam_x']} / "
+            f"左 #{lr[0][0]:02x}{lr[0][1]:02x}{lr[0][2]:02x} 右 #{lr[1][0]:02x}{lr[1][1]:02x}{lr[1][2]:02x}）"
         )
     bad = judge(m, breaks)
     for line in bad:

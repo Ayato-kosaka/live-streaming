@@ -27,6 +27,9 @@ export const STAGES = [
     land: [".ig-sand", ".ig-grass"],
     /** 共有画像には要らないもの（隅の道具・案内・吹き出し・今日の板） */
     chrome: ".isle-tools,.isle-hint,.isle-talk,.isle-today,.today,.scroll-cue",
+    /** 島の水をページの地へ溶かす帯。**1枚の絵には「下のページ」が無い**ので、
+        撮るときだけ消す（`og.mjs`）。残すと枠の底が地の色へ寄る */
+    shore: ".isle-shore",
   },
   {
     kind: "island",
@@ -36,6 +39,7 @@ export const STAGES = [
     land: [".ground"],
     zoom: ".stage-view",
     chrome: ".island-bar,.walk-hint,.scroll-cue,.chatter,.who-call,.stage-tools,.today",
+    shore: ".stage-shore",
   },
 ];
 
