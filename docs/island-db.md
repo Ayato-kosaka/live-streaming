@@ -891,14 +891,21 @@ island/state
 - **焼き込み（`site/content/*.ts`）にも git にも入れない。**
   種をまくのは `python/admin/stamp_line_seed.py`（名簿は Actions の
   `repository_dispatch` で渡して、ジョブの頭で伏せ字にする）
-- **中身を人が読める形で出すのは `python/admin/stamp_line_table.py` だけ**
-  （`op: table`）。行き先は **#716 の本文ひとつ**で、公開の Actions ログには
+- **中身を人が読める形で出すのは `python/admin/stamp_line_table.py`
+  （`op: table`）と `stamp_line_dig.py`（`op: dig`。決めかねている人だけを
+  深く掘って候補を増やす。**1バイトも書かない**）の2本だけ。**
+  行き先は **#716 の本文ひとつ**で、公開の Actions ログには
   件数しか出さない。**強さで並べない**——点の高い順に並べると、それが
   そのまま協力の順位表になる。出す数は「その人がその字を打った回数と日数」と
   「その字を島で何人が言ったか」まで
 - **あやとが「この字が名セリフだ」と挙げたぶん（採点表）も、git に書かない。**
   名前と字の組は、10人ぶんでも「選ばれた25人の一部」そのもの。
   渡すのは `repository_dispatch` の `client_payload` の `check`
+- **手直し（`op: arrange`）は、書類IDの代わりに名前でも指せる**
+  （2026-10-12）。あやとが返してくるのは名前だけで、**書類IDは
+  このリポジトリのどこにも無い**（`docs/` にも置かない）。突き合わせは
+  `stamp_line_suggest.people()` ＋ `fold_name()` の使い回しで、
+  **同じ呼び名が2人に付いていたらどちらにも置かない**
 
 **`suggested` に何を入れるかは `python/stamp_line_pick.py`**（2026-10-10 から
 「**名セリフか**」で選ぶ。あやと「**「うん」とか出すのやめて。採用するわけない。

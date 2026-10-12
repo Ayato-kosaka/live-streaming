@@ -9,6 +9,8 @@ name: スタンプのことば
 #             提案（`suggested`）として置く
 #   table   … 入っている中身を**あやとと話すための表**にして issue に貼る
 #   arrange … 提案のことばを、**人が手で直したもの**に差し替える
+#   dig     … **決めかねている人だけ**を深く掘って、候補を増やして issue に貼る
+#             （門を外した側・緩めた側・語で探した側。**1バイトも書かない**）
 #
 # ## なぜ `run_admin_script.yml` ではなく、別のワークフローなのか
 #
@@ -35,7 +37,7 @@ name: スタンプのことば
 #
 # `suggest` は Firestore に置いてある書類を見て回るので、**名簿を渡さない。**
 # だから `workflow_dispatch` からも押せるようにしてある（`op: suggest`）。
-# `seed` と `arrange` を `workflow_dispatch` から押すことはできない——
+# `seed` と `arrange` と `dig` を `workflow_dispatch` から押すことはできない——
 # **入力に名簿もことばも取る口を作らない**（`workflow_dispatch` の入力は
 # 公開のログに出る）。あちらは `repository_dispatch` の `client_payload` だけ。
 #
@@ -119,17 +121,24 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          # 伏せるのは3つ。名簿（`picks`）・**手で直したことば
-          # （`fix[].lines[]`）**・**採点表（`check[]`。あやとが
-          # 「この字が名セリフだ」と挙げた、名前とことばの組）**。
-          # あとから足したものを入れ忘れると、そこだけ素通りする道ができる
+          # 伏せるのは4つ。名簿（`picks`）・**手で直したことば
+          # （`fix[].id` `fix[].name` `fix[].lines[]`）**・**採点表
+          # （`check[]`。あやとが「この字が名セリフだ」と挙げた、名前と
+          # ことばの組）**・**深掘りの相手（`who[]`。名前と探す語）**。
+          # あとから足したものを入れ忘れると、そこだけ素通りする道ができる。
+          #
+          # **`fix[].name` を入れ忘れない。** 2026-10-12 に「書類IDの
+          # 代わりに名前で指せる」道を足したので、`fix` の中に名前が
+          # 入るようになった（前は `id` しか無かった）
           if ! raw="$(jq -r '
             [ (.client_payload.picks // [])[],
               (.inputs.picks // [])[],
-              ((.client_payload.fix // [])[] | (.id, ((.lines // [])[]
-                 | (.text, .from)))),
+              ((.client_payload.fix // [])[] | (.id, .name,
+                 ((.lines // [])[] | (.text, .from)))),
               ((.client_payload.check // [])[]
-                 | (.name, ((.lines // [])[]), ((.words // [])[]))) ]
+                 | (.name, ((.lines // [])[]), ((.words // [])[]))),
+              ((.client_payload.who // [])[]
+                 | (.name, ((.words // [])[]))) ]
             | map(select(type == "string"))
             | .[]
           ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
@@ -162,8 +171,9 @@ jobs:
             suggest) script=stamp_line_suggest ;;
             table)   script=stamp_line_table ;;
             arrange) script=stamp_line_arrange ;;
+            dig)     script=stamp_line_dig ;;
             *)
-              echo "::error::op は seed / suggest / table / arrange です: $op"
+              echo "::error::op は seed / suggest / table / arrange / dig です: $op"
               exit 1
               ;;
           esac
@@ -224,6 +234,7 @@ jobs:
           python3 python/admin/stamp_line_suggest_selftest.py
           python3 python/admin/stamp_line_table_selftest.py
           python3 python/admin/stamp_line_arrange_selftest.py
+          python3 python/admin/stamp_line_dig_selftest.py
           python3 python/stamp_line_pick_selftest.py
 
       - name: 実行
