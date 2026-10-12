@@ -158,6 +158,10 @@ def send(t, text, ready_timeout=120):
     送ったかどうかは、入力欄が空になったかで確かめる"""
     if text:
         t.click(f"document.querySelector({json.dumps(COMPOSER)})")
+        # 前に送りそこねた下書きが残っていることがある（ChatGPT は下書きを覚えていて、開き直しても戻す）。
+        # 残したまま足すと、同じ問いが2回つながって送られる
+        t.js(f"(() => {{ const e = document.querySelector({json.dumps(COMPOSER)}); e.focus(); "
+             "if (e.select) e.select(); else document.execCommand('selectAll'); document.execCommand('delete'); })()")
         t.type(text)
     end = time.time() + ready_timeout
     while time.time() < end:
@@ -179,7 +183,7 @@ def send(t, text, ready_timeout=120):
 
 def _composer_text(t):
     return t.js(f"(() => {{ const e = document.querySelector({json.dumps(COMPOSER)}); "
-                "return e ? (e.value ?? e.innerText).trim() : ''; }})()")
+                "return e ? (e.value ?? e.innerText).trim() : ''; })()")
 
 
 def attach(t, paths, timeout=120):
