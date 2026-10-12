@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BUILT_AT, livePlans, planDaysLeft, planPhase, type Plan } from "@/content/plans";
 import { leadPlan, planBoard } from "@/lib/leadPlan";
-import { HOME } from "@/content/voice";
+import { HOME, NO_PLAN_TITLE } from "@/content/voice";
+import Phrase from "@/components/ui/Phrase";
 import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import { NoticeBell } from "./art";
@@ -83,7 +84,12 @@ export default function NextUp() {
             在る日の見出しなので、そのまま置いてある）。 */}
         <p className="nextup-eyebrow">企画</p>
         <div className="nextup-none">
-          <b>日にちの決まった企画は、いまはありません</b>
+          {/* 字は `/next` の0件の段（`components/live/NextPlans.tsx`）と同じものを読む。
+              `Phrase` は折ってよい場所を1つに絞る——360px で「ん」1文字だけが
+              2行目に落ちていた。 */}
+          <b>
+            <Phrase parts={NO_PLAN_TITLE} />
+          </b>
           {/* **島が止まったわけではない、と読める1行を置く。** 日にちの決まった
               企画が無いのはふつうの状態で、配信はその晩も立つ。これが無いと
               「ありません」だけが残って、島ごと止まって見える。

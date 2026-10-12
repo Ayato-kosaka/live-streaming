@@ -5,6 +5,8 @@ import { getState } from "@/lib/api";
 import { BUILT_AT, livePlans, planPhase, type Plan } from "@/content/plans";
 import { themeById } from "@/content/themes";
 import { nights } from "@/content/nights";
+import { NO_PLAN_TITLE } from "@/content/voice";
+import Phrase from "@/components/ui/Phrase";
 import Longer from "@/components/ui/Longer";
 import Notes from "./Notes";
 import PlanCard, { PlanRow } from "./PlanCard";
@@ -132,9 +134,12 @@ export default function NextPlans() {
           字で探すと、言い回しを1語直した日に見張りのほうが黙る。 */}
       {today && ahead.length === 0 && (
         <section className="panel paper nx-none">
-          {/* 字は表紙の0件の枝（`components/live/NextUp.tsx`）とそろえる。
-              同じことを2つの言い方で言うと、別のことが起きていると読める。 */}
-          <h2>日にちの決まった企画は、いまはありません</h2>
+          {/* 字は表紙の0件の枝（`components/live/NextUp.tsx`）と**同じものを読む**。
+              同じことを2つの言い方で言うと、別のことが起きていると読める。
+              `Phrase` は折ってよい場所を1つに絞る（行頭に「は、」を来させない）。 */}
+          <h2>
+            <Phrase parts={NO_PLAN_TITLE} />
+          </h2>
           <p>
             {/* **島が止まったわけではない。** 日にちの決まった企画が無いのは
                 ふつうの状態で、配信はその晩も立つ（あやと 2026-10-07「とくになし」）。

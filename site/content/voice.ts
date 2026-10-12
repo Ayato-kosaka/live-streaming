@@ -66,6 +66,15 @@ export const HOME = {
   tonightNote: say("span"),
 };
 
+/**
+ * 日にちの決まった企画が0件の日の見出し。**表紙と `/next` で同じ字。**
+ *
+ * 配列なのは、**折ってよい場所を1つに絞る**ため（`components/ui/Phrase.tsx`）。
+ * ひと続きの字にすると 390px で「日にちの決まった企画／は、いまはありません」と
+ * 折れて、行頭に「は、」が来る。
+ */
+export const NO_PLAN_TITLE = ["日にちの決まった企画は、", "いまはありません"];
+
 /** 押すもの・触るものの言葉。 */
 export const UI = {
   enter: "はいる",

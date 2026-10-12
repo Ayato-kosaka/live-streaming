@@ -33,8 +33,19 @@
  *  4. 0件の日に、**表紙と `/next` が「無い」と言っている**（空にしない）。
  *     `docs/island-standards.md` §10 §15——黙って消えるのは、読めていない
  *     のと同じ絵になる。
+ *  5. その字が、**どの幅でも読める行に折れている**（下の「行の折れ方」）。
  *
  * 撮った絵は `OUT` に置く。**数が通っても、目で見る。**
+ *
+ * ## 行の折れ方（2026-10-12 に足した）
+ *
+ * 0件の見出しは 390px で「日にちの決まった企画／**は、**いまはありません」と
+ * 折れていた。行頭に「は、」が来ていて、「企画」で切れているので一瞬べつの文に
+ * 見える。表紙の同じ字は 360px で**「ん」1文字だけ**が2行目に落ちていた。
+ *
+ * **絵を見ないと分からない種類の壊れ方**なので、ここで幅を振って行の頭を読む。
+ * 落とすのは2つ——**行頭に来てはいけない字で始まる行**と、
+ * **1〜2文字しか乗っていない行**。
  */
 import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -169,6 +180,81 @@ for (const iso of DAYS) {
   seen.set(day, { labels, lead, none, nextNone });
   await ctx.close();
 }
+// ------------------------------------------------- 5. 行の折れ方（幅を振る）
+
+/** 行の頭に来てはいけないもの。閉じる約物と、前の文節にくっつく助詞＋読点。 */
+const BADHEAD = /^[、。）」』！？]|^[はがをにでとも][、。]/;
+/** 幅を振って読む。**1枚ずつ開き直さず、器の幅だけ変える。** */
+const SWEEP = [320, 360, 390, 430, 768, 1000, 1280];
+
+/** その器の中の字が、幅ごとにどう折れるか。字ごとの top を行の高さで束ねる。 */
+const readLines = (p, sel) =>
+  p.evaluate((s) => {
+    const el = document.querySelector(s);
+    if (!el) return null;
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 24;
+    const r = document.createRange();
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const lines = [];
+    let n;
+    while ((n = walk.nextNode())) {
+      const s2 = n.textContent;
+      for (let i = 0; i < s2.length; i++) {
+        r.setStart(n, i);
+        r.setEnd(n, i + 1);
+        const top = r.getBoundingClientRect().top;
+        /* 字ごとの top は書体の差し替えで1〜2px ゆれる。行の高さの半分で束ねる */
+        const hit = lines.find((L) => Math.abs(L.top - top) < lh / 2);
+        if (hit) hit.s += s2[i];
+        else lines.push({ top, s: s2[i] });
+      }
+    }
+    return lines.sort((a, c) => a.top - c.top).map((L) => L.s);
+  }, sel);
+
+const wrapBad = [];
+let wrapRead = 0;
+{
+  const day0 = [...seen.entries()].find(([, v]) => !v.lead)?.[0];
+  const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, locale: "ja-JP", timezoneId: "Asia/Tokyo" });
+  await offline(ctx);
+  await ctx.route(/fonts\.googleapis\.com/, (r) =>
+    r.fulfill({ status: 200, contentType: "text/css", body: "" }),
+  );
+  await ctx.addInitScript(clock(`${day0}T11:00:00+09:00`));
+  const p = await ctx.newPage();
+  /* **対照**: `BREAK=nophrase` で `Phrase`（折る場所を1つに絞る仕掛け。
+     `site/components/ui/Phrase.tsx`）を外す。外したら落ちることを見ておかないと、
+     ここが通っても何も言っていない（`docs/island-standards.md` §15）。 */
+  const BREAK = process.env.BREAK || "";
+  console.log(`\n■ 行の折れ方（0件の日 ${day0}）${BREAK ? ` ※対照 ${BREAK}` : ""}`);
+  for (const [url, sel, name] of [
+    ["/next.html", ".nx-none > h2", "/next の見出し"],
+    ["/index.html", ".nextup-none b", "表紙の見出し"],
+  ]) {
+    await p.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded" });
+    await p.waitForTimeout(1500);
+    if (BREAK === "nophrase") await p.addStyleTag({ content: ".phrase > span { white-space: normal; }" });
+    for (const w of SWEEP) {
+      await p.setViewportSize({ width: w, height: 900 });
+      await p.waitForTimeout(150);
+      const lines = await readLines(p, sel);
+      if (!lines) {
+        wrapBad.push(`${name} が ${w}px で見つからない`);
+        continue;
+      }
+      wrapRead++;
+      const head = lines.slice(1).filter((l) => BADHEAD.test(l));
+      const thin = lines.filter((l) => [...l].length <= 2);
+      const ok = !head.length && !thin.length;
+      console.log(`  ${ok ? "○" : "×"} ${String(w).padStart(4)}px ${name}  ${lines.map((l) => `「${l}」`).join(" / ")}`);
+      for (const l of head) wrapBad.push(`${name} ${w}px: 行が「${l}」で始まっている`);
+      for (const l of thin) wrapBad.push(`${name} ${w}px: 「${l}」だけの行が出ている`);
+    }
+  }
+  await ctx.close();
+}
+
 await b.close();
 
 // ------------------------------------------------------------------ 読む
@@ -180,7 +266,11 @@ if (pagesRead < DAYS.length * PAGES.length) {
   process.exit(2);
 }
 
-const bad = [];
+const bad = [...wrapBad];
+if (!wrapRead) {
+  console.error("行の折れ方を1つも読めませんでした");
+  process.exit(2);
+}
 
 // 3. 対照——企画の在る日と、0件の日を両方通ったか
 const withLead = [...seen.entries()].filter(([, v]) => v.lead);
