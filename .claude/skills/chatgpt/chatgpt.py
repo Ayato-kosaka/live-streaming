@@ -91,48 +91,149 @@ const md = (n, depth = 0) => {
 
 
 def turns(t):
-    """会話を [(role, 本文, 書き終わったか)] で返す"""
+    """会話を [(role, 本文, 書き終わったか)] で返す。
+
+    画面のつくりがログインの有無で違う（2026-10-12 に両方を見た）:
+      未ログイン: <li data-message-role> の並び。書き終わると data-message-complete
+      ログイン:   1往復ごとに <div data-talvt-turn-state="in_progress|complete">。
+                  問いは [data-user-message-bubble]、返事は h4[data-conversation-role=assistant] の次の箱
+    """
     # 何度も呼ぶので、const md が二重に宣言されないよう関数で包む
-    return t.js("(() => {" + _MD + f"""return [...document.querySelectorAll({json.dumps(TURNS)})].map(li => {{
+    return t.js("(() => {" + _MD + f"""
+      const tidy = s => s.replace(/\\n{{3,}}/g, '\\n\\n').trim();
+      const boxes = [...document.querySelectorAll('[data-talvt-turn-state]')];
+      if (boxes.length) {{
+        const out = [];
+        for (const c of boxes) {{
+          const done = c.getAttribute('data-talvt-turn-state') === 'complete';
+          for (const u of c.querySelectorAll('[data-user-message-bubble]'))
+            out.push(['user', (u.querySelector('[dir=auto]') || u).innerText.trim(), true]);
+          for (const h of c.querySelectorAll('h4[data-conversation-role=assistant]'))
+            out.push(['assistant', h.nextElementSibling ? tidy(md(h.nextElementSibling)) : '', done]);
+        }}
+        return out;
+      }}
+      return [...document.querySelectorAll({json.dumps(TURNS)})].map(li => {{
         // 返事は本文の section だけを読む。問いは「You said:」の見出しを外して読む
         const body = li.querySelector('section[aria-label="DIL content"]');
-        let text = body ? md(body).replace(/\\n{3,}/g, '\\n\\n') : li.innerText;
+        let text = body ? tidy(md(body)) : li.innerText;
         const h = li.querySelector('[data-message-attribution]');
         if (!body && h) text = text.replace(h.innerText, '');
         return [li.dataset.messageRole, text.trim(), li.hasAttribute('data-message-complete')];
-    }}); }})()""") or []
+      }});
+    }})()""") or []
+
+
+# 入力欄と送るボタンは、ログインの有無で作りが違う（2026-10-12 に両方を見た）。
+#   未ログイン: <textarea name=prompt>・「Send message」
+#   ログイン:   ProseMirror の <div contenteditable>・「Send」
+COMPOSER = "textarea[name=prompt], div.ProseMirror[contenteditable=true], [contenteditable=true][aria-label]"
+SEND = ('button[aria-label="Send"], button[aria-label="Send message"], button[aria-label="Send prompt"], '
+        'button[data-testid=send-button]')
+STOP = 'button[aria-label^="Stop"]'
 
 
 def busy(t):
-    """返事を書いている途中か（送るボタンが「Stop generating」に変わっている）"""
-    return bool(t.js("!!document.querySelector('button[aria-label=\"Stop generating\"]')"))
+    """返事を書いている途中か。未ログインは送るボタンが「Stop …」に変わる。
+    ログインの画面には止めるボタンが出ないことがあり（考える型の返事）、1往復の箱が in_progress になる"""
+    return bool(t.js(f"!!document.querySelector({json.dumps(STOP)}) || "
+                     "!!document.querySelector('[data-talvt-turn-state=in_progress]')"))
 
 
-def send(t, text):
-    """入力欄に字を入れて送る。改行は Input.insertText がそのまま入れる"""
-    t.click("document.querySelector('textarea[name=prompt]')")
-    t.type(text)
-    time.sleep(0.6)
-    t.click("document.querySelector('button[aria-label=\"Send message\"]')")
+def _send_button_js():
+    """入力欄と同じ form の中で、**画面に見えている**送るボタン。
+    document.querySelector で最初の1つを取ると、見えていない別の「Send」を押して
+    何も送られないことがある（2026-10-12 にプロジェクトの画面で踏んだ。字も絵も入力欄に残ったまま）"""
+    return f"""(() => {{
+        const c = document.querySelector({json.dumps(COMPOSER)});
+        const scope = (c && c.closest('form')) || document;
+        return [...scope.querySelectorAll({json.dumps(SEND)})]
+            .find(b => {{ const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0; }}) || null;
+    }})()"""
 
 
-def wait_reply(t, n_before, timeout=180, poll=1.5):
-    """n_before 本より後ろに、書き終わった返事が来るまで待って本文を返す"""
+def send(t, text, ready_timeout=120):
+    """入力欄に字を入れて送る。改行は Input.insertText がそのまま入れる。
+    ファイルを付けたあとは、上げ終わるまで送るボタンが押せないので待つ。
+    送ったかどうかは、入力欄が空になったかで確かめる"""
+    if text:
+        t.click(f"document.querySelector({json.dumps(COMPOSER)})")
+        t.type(text)
+    end = time.time() + ready_timeout
+    while time.time() < end:
+        time.sleep(0.8)
+        if t.js(f"(() => {{ const b = {_send_button_js()}; return !!b && !b.disabled; }})()"):
+            break
+    else:
+        raise TimeoutError("送るボタンが押せるようにならない（ファイルの上げ待ち？）")
+    # 絵を付けた直後の1回目は、押しても黙って無視されることがある（2026-10-12 にプロジェクトの画面で2回。
+    # ボタンは押せる見た目のまま、字も絵も入力欄に残る）。入力欄が空になるまで、間をおいて押し直す
+    for attempt in range(6):
+        t.click(_send_button_js())
+        for _ in range(8):
+            time.sleep(0.5)
+            if not _composer_text(t):
+                return attempt + 1
+    raise RuntimeError("送るボタンを6回押したが、入力欄に字が残っている（送れていない）")
+
+
+def _composer_text(t):
+    return t.js(f"(() => {{ const e = document.querySelector({json.dumps(COMPOSER)}); "
+                "return e ? (e.value ?? e.innerText).trim() : ''; }})()")
+
+
+def attach(t, paths, timeout=120):
+    """ファイルを入力欄に付ける（ダイアログを開かない）。パスは EC2 の上のもの。
+    **無いパスを渡しても Chrome は黙って空のファイルを渡す**（ec2-chrome 4）ので、先にこちらで確かめる"""
+    import os
+    for p in paths:
+        if not os.path.isfile(p):
+            raise FileNotFoundError(p)
+    css = 'input[type=file][aria-label="Attach files"], input#octane-mobile-composer-files-input'
+    t.set_files(css, paths)
+    # 付けた絵の札（サムネイル）が出るまで待つ
     end = time.time() + timeout
     while time.time() < end:
+        time.sleep(1)
+        n = t.js("""document.querySelectorAll('form img, [data-testid*=attachment], [aria-label^="Remove file"], button[aria-label^="Remove"]').length""")
+        if n:
+            return n
+    raise TimeoutError("付けたファイルの札が出ない")
+
+
+def wait_reply(t, n_before, timeout=600, poll=3, reload_every=45, want_images=False):
+    """n_before 本より後ろに、書き終わった返事が来るまで待って本文を返す。
+
+    **タブの上の返事は途中で止まることがある。** ログインして考える型（Thinking）で頼むと、
+    サーバーでは書き終わっているのに、タブは「Thinking」のまま7分動かなかった（2026-10-12）。
+    なので reload_every 秒ごとにページを読み直して確かめる。返事はサーバーに残るので、読み直しても消えない
+    （ログインしていて、ふつうの会話かプロジェクトのとき。未ログインの会話は読み直すと消える）。
+    want_images=True なら、絵が出そろうまで待つ"""
+    end = time.time() + timeout
+    url = None
+    last_reload = time.time()
+    while time.time() < end:
         time.sleep(poll)
+        u = t.url()
+        if "/c/" in u:
+            url = u
         ts = turns(t)
         new = [x for x in ts[n_before:] if x[0] == "assistant"]
-        if new and new[-1][2] and not busy(t):
+        if new and new[-1][2] and not busy(t) and (not want_images or images(t)):
             return new[-1][1]
-    raise TimeoutError(f"{timeout}秒待っても返事が書き終わらない: {where(t.url())}")
+        if url and time.time() - last_reload > reload_every:
+            t.call("Page.reload", ignoreCache=True)
+            t.wait_ready()
+            time.sleep(4)
+            last_reload = time.time()
+    raise TimeoutError(f"{timeout}秒待っても返事が書き終わらない: {where(url or t.url())}")
 
 
-def ask(t, text, timeout=180):
+def ask(t, text, timeout=600, want_images=False):
     """1往復。返事の本文を返す。同じタブで続けて呼べば、同じ会話の続きになる"""
     n = len(turns(t))
     send(t, text)
-    return wait_reply(t, n, timeout)
+    return wait_reply(t, n, timeout, want_images=want_images)
 
 
 def logged_in(t):
@@ -148,3 +249,32 @@ if __name__ == "__main__":
         print(ask(t, open(sys.argv[2], encoding="utf-8").read().strip(), timeout=int(sys.argv[3]) if len(sys.argv) > 3 else 180))
     else:
         print("usage: chatgpt.py ask <file> [timeout]")
+
+
+def images(t, min_px=256):
+    """いちばん後ろの返事に入っている絵を [(src, 幅, 高さ)] で返す。読み込み中の絵（幅0）は数えない。
+    作った絵は [data-testid=generated-image-gallery] の中の img（alt「Generated image N」）。
+    src は blob: なので、取るときは save_image でページの中から取る"""
+    return t.js(f"""(() => {{
+        const boxes = [...document.querySelectorAll('[data-talvt-turn-state], li[data-message-role=assistant]')];
+        const last = boxes.pop();
+        if (!last) return [];
+        return [...last.querySelectorAll('[data-testid=generated-image-gallery] img, img[alt^="Generated image"]')]
+            .filter((i, k, a) => a.indexOf(i) === k && i.complete && i.naturalWidth >= {min_px})
+            .map(i => [i.currentSrc || i.src, i.naturalWidth, i.naturalHeight]);
+    }})()""") or []
+
+
+def save_image(t, src, out):
+    """絵を**ページの中の fetch で**取ってファイルに書く。戻り値は (形式, バイト数)。
+    絵の URL は署名付きで短い時間で切れるうえ、ログインの cookie が要るので、手元からは取りに行けない"""
+    import base64, os
+    r = t.js(f"""(async () => {{
+        const b = await (await fetch({json.dumps(src)}, {{credentials: 'include'}})).blob();
+        const d = await new Promise(res => {{ const f = new FileReader(); f.onload = () => res(f.result.split(',')[1]); f.readAsDataURL(b); }});
+        return [b.type, d];
+    }})()""", await_promise=True)
+    data = base64.b64decode(r[1])
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    open(out, "wb").write(data)
+    return r[0], len(data)
