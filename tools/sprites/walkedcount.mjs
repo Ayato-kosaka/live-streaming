@@ -341,13 +341,37 @@ async function contextAt(iso) {
 
 const READ_ARGS = { read: BREAK === "innertext" ? "innerText" : "textContent", only: BREAK === "band" ? ".mei-num" : null };
 
-/** 1面ぶん開いて、名乗りとそれ以外を拾う */
+/**
+ * 1面ぶん開いて、名乗りとそれ以外を拾う。
+ *
+ * **一度読んで終わりにしない。** この数は画面が出てから数え直されるので
+ * （`components/atlas/Walked.tsx`）、水あわせ（hydration）が済む前に読むと
+ * **焼いた数**が返る。前はここが 700ms の待ちひとつで、箱が混んでいると
+ * 間に合わなかった——2026-10-12 に `/about` の2か所だけ焼いた数（25）のまま
+ * 読んで、**直っているものを食い違いとして報告しかけた。** 同じ条件で
+ * もう一度回したら緑だった。待つ時間を伸ばしても、混み具合は測れない
+ * （`CLAUDE.md`「描画の速さを、壁の時計で測らない」）ので、
+ * **答えが2回続けて同じになるまで**読む。
+ */
 async function look(p, page) {
   await p.goto(`http://localhost:${SPORT}${page}`, { waitUntil: "domcontentloaded", timeout: 45000 });
   // 畳みの中の数は開かないと読めない（`CLAUDE.md`「畳んだ中の絵を数えない」）
   await p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
-  await p.waitForTimeout(700);
-  return await p.evaluate(harvest, READ_ARGS);
+  /* **面ごとの読みかた（`EXTRA`）も、ここで一緒に読む。** 外に出して後から
+     読んでいたので、`/map` だけ落ち着きを待たずに読んでいた——`/map` は
+     自分への名乗りを持たないので、名乗りの側は空のまま即座に落ち着いてしまう。
+     実際に 09-18 の行で `/map の札` だけ焼いた数（25）が出た。 */
+  let last = null;
+  for (let i = 0; i < 8; i++) {
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(harvest, READ_ARGS);
+    r.extra = {};
+    for (const [label, fn] of EXTRA[page] || []) r.extra[label] = await p.evaluate(fn);
+    const key = JSON.stringify([r.claims.map((c) => [c.where, c.n]).sort(), r.extra]);
+    if (last && last.key === key) return r;
+    last = { key, r };
+  }
+  return last.r;
 }
 
 /**
@@ -438,7 +462,7 @@ for (const day of DAYS) {
   for (const page of WATCH) {
     const r = await look(p, page);
     for (const c of r.claims) got.set(`${page}|${c.where}`, c.n);
-    for (const [label, fn] of EXTRA[page] || []) got.set(`${page}|${label}`, await p.evaluate(fn));
+    for (const [label, v] of Object.entries(r.extra || {})) got.set(`${page}|${label}`, v);
   }
   await ctx.close();
   const w = want(iso);

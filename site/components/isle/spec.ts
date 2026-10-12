@@ -25,10 +25,10 @@ import { APPS, PAST_APPS, type AppEntry, type AppMilestone } from "@/content/app
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
-import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
+import { chapterCountries } from "@/content/walked";
 import { ALBANIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { boardPlate, type IsleBoardSpec } from "./board";
@@ -199,10 +199,13 @@ const FIRST_STREAM = (() => {
 export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
   const days = chapterDays(c);
   const st = CHAPTER_STATS[c.slug];
-  const countries = c.countries
-    .map((s) => COUNTRIES.find((x) => x.slug === s))
-    .filter((x): x is NonNullable<typeof x> => Boolean(x));
-  const art = artOf(c.slug, countries.map((k) => k.region));
+  /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
+     章の `countries` だけを見ていたので、アルバニアを歩いて北マケドニアに居る日に
+     「0カ国 歩いた」と出ていた。 */
+  const countries = chapterCountries(c);
+  /* **地形は、記録のある国だけで決める。** 歩いている最中の国に地方を持たせると、
+     国に入った日に島の形が黙って変わる（`chapterCountries` の注）。 */
+  const art = artOf(c.slug, countries.flatMap((k) => (k.region ? [k.region] : [])));
   const streams = CHAPTER_STREAMS[c.slug] ?? [];
   const legends = legendsOf(c);
   const places: IslePlaceSpec[] = [];
@@ -215,13 +218,12 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
       icon: isleIcon(c.slug, "countries", "signpost-flags"),
       size: 64,
       sign: true,
-      items: countries.map((k) => ({
-        label: k.name,
-        // その国でどこにいたか。国名だけ並べても、島の記憶に結びつかない
-        sub: k.stays.flatMap((s) => s.cities).slice(0, 3).join("・"),
-        href: `/map/${k.slug}`,
-        flag: k.slug,
-      })),
+      items: countries.map((k) => {
+        // その国でどこにいたか。国名だけ並べても、島の記憶に結びつかない。
+        // **歩いている最中の国には街がまだ無い。空の欄を置かない**
+        const cities = k.stays.flatMap((s) => s.cities).slice(0, 3).join("・");
+        return { label: k.name, ...(cities ? { sub: cities } : {}), href: k.href, flag: k.slug };
+      }),
     });
   }
 

@@ -4,9 +4,9 @@ import PageShell from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import Walked from "@/components/atlas/Walked";
-import { WALKED_DONE } from "@/content/walked";
+import { WALKED_DONE, walkingCountries } from "@/content/walked";
 import { isWalkedCountry } from "@/content/countries";
-import { AHEAD_COUNTRIES, BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
+import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
@@ -130,18 +130,11 @@ const ITINERARY = (() => {
  * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
  * 画面が出てから（`./parts.tsx` の `TripCountries`）。
  */
-/** その日の前日。国の切れ目を引くためだけなので、暦は UTC で足りる */
-const prevDay = (d: string) =>
-  new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
-
-/** 歩いている最中の国を、入った順に。**出た日はつぎの国の `entered` から引く** */
-const AHEAD_ON_FOOT = AHEAD_COUNTRIES
-  // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
-  .filter((c) => isWalkedCountry(c.slug) && !COUNTRIES.some((d) => d.slug === c.slug))
-  .sort((a, b) => a.entered.localeCompare(b.entered));
-
-const TRIP_STEPS: TripStep[] = AHEAD_ON_FOOT
-  .map((c, i) => {
+/* 歩いている最中の国と、その切れ目は `content/walked.ts` が持っている。
+   **ここで組み直さない**——島の札（`components/isle/spec.ts`）も同じものを
+   読んでいるので、式が2本あると片方だけ直した日に数が割れる。 */
+const TRIP_STEPS: TripStep[] = walkingCountries()
+  .map((c) => {
     const it = ITINERARY.get(c.slug);
     const from = it?.from || c.entered;
     /* 章は**その国に入った日に動いていた章**を引く。"nordic" と書くと、旅が
@@ -155,9 +148,9 @@ const TRIP_STEPS: TripStep[] = AHEAD_ON_FOOT
       name: it?.name ?? c.name,
       en: it?.en,
       from,
-      /* 旅程が終わりを持っていればそれが正。無ければ、つぎの国に入った前日まで。
-         つぎの国がまだ無い（いまいる国）なら、開いたままが事実 */
-      to: it?.to ?? (AHEAD_ON_FOOT[i + 1] ? prevDay(AHEAD_ON_FOOT[i + 1].entered) : ""),
+      /* 旅程が終わりを持っていればそれが正。無ければ、つぎの国に入った前日まで
+         （`walkingCountries()` の `left`）。いまいる国なら開いたままが事実 */
+      to: it?.to || c.left,
       towns: it?.towns ?? [],
       chapter: ch.slug,
       chapterName: ch.name,
