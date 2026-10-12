@@ -10,8 +10,8 @@
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
-   "state": "editing",
-   "claims_left": 5,
+   "state": "to-erase",
+   "claims_left": 3,
    "history": [
     {
      "date": "2026-10-12",
@@ -56,21 +56,21 @@
      "action": "erase"
     }
    ],
-   "why": "Bad Dreams (HUGEL Extended Remix) / Teddy Swims"
+   "why": "Low / DJ Spade, Dawda"
   },
   "kunXt2sXnFQ": {
    "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
    "start": "2026-09-18 13:03",
-   "state": "error",
+   "state": "to-mute",
    "claims_left": 5,
    "history": [],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "THAT'S SO TRUE / "
   },
   "k4DxGQlkD6U": {
    "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
    "start": "2026-09-17 19:00",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -97,22 +97,7 @@
      "action": "mute"
     }
    ],
-   "why": "海の見える街 / "
-  },
-  "f3W2JxAHsQs": {
-   "title": "【二日目】親友に会いにスウェーデンまで、ビャウィストクまで",
-   "start": "2026-09-13 16:23",
-   "state": "error",
-   "claims_left": 1,
-   "history": [
-    {
-     "date": "2026-10-12",
-     "claim": "lTKz4sleuZc",
-     "song": "Музико / Alena Omargalieva",
-     "action": "erase"
-    }
-   ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "動画編集が進行中"
   },
   "hrXYXcu9IDE": {
    "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで",
@@ -122,131 +107,11 @@
    "history": [],
    "why": "申し立てを再処理中（曲の消去のあと）"
   },
-  "d8UwWnFhjwY": {
-   "title": "7月の月末配信や！！アツい1ヶ月だった！朝日みるぞ！",
-   "start": "2026-07-26 10:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "iOSWFRFuAQ4": {
-   "title": "アプリ作り配信！チュートリアル機能と機能改善４０件出来るまで終われません！",
-   "start": "2026-07-25 17:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "EjRXQuzubLo": {
-   "title": "ジョージアイワシ祭り最終日！イワシのパエリア作ります！",
-   "start": "2026-07-24 22:02",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "SQXQOF1_Qhg": {
-   "title": "ジョージアでイワシの塩焼き作ります！",
-   "start": "2026-07-23 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "lAzVgZ_DdTw": {
-   "title": "ジョージアでイワシの冷やし中華作ります！",
-   "start": "2026-07-22 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "n-BJIqSuH9M": {
-   "title": "ジョージアでクッキング企画会議や！",
-   "start": "2026-07-21 22:01",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "X9BRHSxuK1g": {
-   "title": "ジョージアで今週の企画会議や！",
-   "start": "2026-07-20 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "8FwBXXD97Ik": {
-   "title": "新企画！ルーレットで行く！ジョージアぶらり旅",
-   "start": "2026-07-19 19:01",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "f0D0YNq41lI": {
-   "title": "アプリ作り配信！料理提案大型アップデート！力尽きるまでやりきる。",
-   "start": "2026-07-18 19:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "Hc-z52fs108": {
-   "title": "自作グルメアプリの食べログ越えなるか！？！？ならないか！？！？",
-   "start": "2026-07-17 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "c6FFPcY8Tac": {
-   "title": "ジョージア風南蛮漬け5種をついに食べます！",
-   "start": "2026-07-16 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "yftA1HCSLiQ": {
-   "title": "ジョージア風南蛮漬け5種の浸けます！！",
-   "start": "2026-07-15 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "uTgvBEi0FsM": {
-   "title": "ジョージア風南蛮漬け5種のタレ作ります",
-   "start": "2026-07-14 22:01",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "80yNqqNdYD4": {
-   "title": "ジョージア風企画会議のおじかんです",
-   "start": "2026-07-13 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "UeDyvW4zAgo": {
-   "title": "ジョージア風今週のふりかえり",
-   "start": "2026-07-12 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
   "Pnbi01M0t0I": {
    "title": "土曜やしトビリシ海まで歩こか！",
    "start": "2026-07-11 21:57",
-   "state": "error",
-   "claims_left": 6,
+   "state": "to-erase",
+   "claims_left": 5,
    "history": [
     {
      "date": "2026-10-12",
@@ -267,103 +132,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
-  },
-  "8I2AUKaWgH4": {
-   "title": "ジョージアで週末の企画会議や",
-   "start": "2026-07-10 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "e-UXOUdzTLU": {
-   "title": "ジョージア風コロッケの作るで！",
-   "start": "2026-07-09 22:01",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "I5O7KhOAuV0": {
-   "title": "ジョージア風コロッケのたねつくる",
-   "start": "2026-07-08 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "qfktydDGtIk": {
-   "title": "自作グルメアプリ「なに食べよ」の新機能（新条件＋深堀検索）を1日で作ります。作り切るまで終われません！出来上がったらみん",
-   "start": "2026-07-07 19:01",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "UvJzCI27X4Q": {
-   "title": "ごっつり今週の企画会議しよー",
-   "start": "2026-07-06 21:58",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "fk6rtyQMGY0": {
-   "title": "ジョージアの日曜日。クッキングをふりかえろー！",
-   "start": "2026-07-05 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "zQJSiKL0D3U": {
-   "title": "ジョージア風クレープ作ります！",
-   "start": "2026-07-04 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "4uICARYwXbY": {
-   "title": "ジョージア風ガレット作ります！",
-   "start": "2026-07-03 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "pcATx8Qq4s8": {
-   "title": "ジョジアデコンポトツクル",
-   "start": "2026-07-02 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "fwUCpg4w0zE": {
-   "title": "7月はじめまして！パンケーキ！探すぞ",
-   "start": "2026-07-01 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "otPMZDtsjTI": {
-   "title": "６月最後の配信やぁーー、今週の企画会議やぁ",
-   "start": "2026-06-30 22:00",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
-  },
-  "nvm2i_dWnN8": {
-   "title": "６月末タップ結果発表！！！",
-   "start": "2026-06-29 21:59",
-   "state": "enable",
-   "claims_left": 0,
-   "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
+   "why": "Fushigina Poketto / Icchy & Naru (BomBom Academy)"
   },
   "anL82TSPG4c": {
    "title": "６月末配信！なかなか素晴らしい1ヶ月やったんちゃう？",
@@ -471,7 +240,7 @@
    "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
    "start": "2026-05-10 14:48",
    "state": "editing",
-   "claims_left": 33,
+   "claims_left": 32,
    "history": [
     {
      "date": "2026-10-12",
@@ -486,12 +255,12 @@
      "action": "erase"
     }
    ],
-   "why": "Share Your Love / Amuzement Park"
+   "why": "動画編集が進行中"
   },
   "gse7fek4Cpk": {
    "title": "【5日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
    "start": "2026-05-03 13:00",
-   "state": "error",
+   "state": "to-erase",
    "claims_left": 1,
    "history": [
     {
@@ -507,7 +276,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Hold Me / Hamidshax, Xezzo"
   },
   "5cWmE-KqHLA": {
    "title": "四月の月末配信じゃい！！！",
@@ -528,7 +297,7 @@
      "action": "erase"
     }
    ],
-   "why": "Jazz Méditerranée / Henri Salvador"
+   "why": "動画編集が進行中"
   },
   "OeptOBqm1dY": {
    "title": "ショッピングモールなう",
@@ -549,10 +318,10 @@
   "6xXbt7j8eMk": {
    "title": "5分だけ。携帯の充電がこわれたぁぁぁ😢",
    "start": "2026-03-08 22:00",
-   "state": "error",
+   "state": "enable",
    "claims_left": 0,
    "history": [],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "申し立てが無いのに収益化がオフ"
   },
   "a47b3QbCPp8": {
    "title": "いっぬとローラースケート",
@@ -608,8 +377,8 @@
   "egwcxcu7YYw": {
    "title": "行けるとこまで行くぞおおおお",
    "start": "2026-01-23 21:59",
-   "state": "editing",
-   "claims_left": 2,
+   "state": "to-erase",
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -642,7 +411,7 @@
      "action": "erase"
     }
    ],
-   "why": "Wise Woman / Jason Mraz"
+   "why": "Fried Neck Bones And Some Home Fries (Dan The Automator Remix) / Willie Bobo, Dan The Automator"
   },
   "iw-f7jtZXgs": {
    "title": "【緊急】ハッピーニューイヤー",
@@ -679,7 +448,7 @@
   "GdpNMDDtj00": {
    "title": "㊗️アプリ広告開始！みんな感謝！！",
    "start": "2025-12-29 22:00",
-   "state": "error",
+   "state": "to-erase",
    "claims_left": 12,
    "history": [
     {
@@ -701,7 +470,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Let It Snow! Let It Snow! Let It Snow! (Remastered) / Bing Crosby"
   },
   "47fQGDiMHOU": {
    "title": "みんなの感性の結晶が出来てきたな〜",
@@ -714,8 +483,8 @@
   "h-MRAFyj3Yc": {
    "title": "㊗️チャンネル登録者１,000人超えました",
    "start": "2025-12-16 22:25",
-   "state": "error",
-   "claims_left": 4,
+   "state": "to-erase",
+   "claims_left": 3,
    "history": [
     {
      "date": "2026-10-12",
@@ -742,13 +511,13 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "მდევარი / რეგიონი"
   },
   "kWnLiOQGhFE": {
    "title": "㊗️動画本数500本突破！！！！",
    "start": "2025-12-14 22:29",
-   "state": "editing",
-   "claims_left": 5,
+   "state": "to-erase",
+   "claims_left": 4,
    "history": [
     {
      "date": "2026-10-12",
@@ -775,7 +544,7 @@
      "action": "erase"
     }
    ],
-   "why": "Goyim Friends / The LeeVees"
+   "why": "Every Day's Like Christmas / Kylie Minogue"
   },
   "B-HpGmWTtgA": {
    "title": "海外でアプリ作ってます",
@@ -816,7 +585,7 @@
   "Gj9w3wu3jfQ": {
    "title": "【神回】ヨルダンの死海×絶景リゾート街歩き＆贅沢ランチLIVE！",
    "start": "2025-06-14 16:20",
-   "state": "error",
+   "state": "to-erase",
    "claims_left": 4,
    "history": [
     {
@@ -826,13 +595,13 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "El Look El Gedeed / Amr Diab"
   },
   "f9j0z_OcZpo": {
    "title": "【神回】ヨルダンの古都アンマン街歩き！城塞遺跡から激ウマグルメまで全部盛り☕🍴",
    "start": "2025-06-07 15:59",
-   "state": "error",
-   "claims_left": 2,
+   "state": "to-erase",
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -847,7 +616,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Haga Mestakhabeya / Mohamed Hamaki"
   },
   "iLNWFjrdVFw": {
    "title": "GWエジプト祭前夜！エジプト🇪🇬ピザ🍕食べました",
@@ -902,7 +671,7 @@
   "hhW0LTh3xIw": {
    "title": "【神回】トルコの渋谷？タクシム広場から、空と街が交差するガラタ塔まで！イスタンブール街歩き配信！",
    "start": "2025-04-05 15:58",
-   "state": "error",
+   "state": "to-erase",
    "claims_left": 1,
    "history": [
     {
@@ -912,7 +681,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "At Night (Alan Braxe Remix) / Shakedown"
   },
   "-5Ihju_Nzgc": {
    "title": "後編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃",
@@ -939,7 +708,7 @@
      "action": "mute"
     }
    ],
-   "why": "HEAVY FLOWERS / "
+   "why": "動画編集が進行中"
   },
   "BTl89GOp-QU": {
    "title": "ベルギー🇧🇪リエージュからドイツ🇩🇪ケルンに移動します 21:30~",
@@ -965,16 +734,16 @@
   "cIEa-dFtCZU": {
    "title": "ベルギー🇧🇪リエージュ着きましたんで少し。ホステルが綺麗すぎました。",
    "start": "2025-03-21 00:45",
-   "state": "error",
+   "state": "to-mute",
    "claims_left": 1,
    "history": [],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Fly Me To The Moon (In Other Words) / Frank Sinatra, Count Basie"
   },
   "jCwf-vlnEiM": {
    "title": "グッズ販売開始しました〜パリのホステルで少し。",
    "start": "2025-03-14 22:39",
-   "state": "editing",
-   "claims_left": 5,
+   "state": "to-erase",
+   "claims_left": 4,
    "history": [
     {
      "date": "2026-10-12",
@@ -995,7 +764,7 @@
      "action": "erase"
     }
    ],
-   "why": "I'm Like A Bird / Nelly Furtado"
+   "why": "Shallow / Lady Gaga, Bradley Cooper"
   },
   "mhw2n8CLiOM": {
    "title": "ロンドンついてウキウキしてきたので少し",
@@ -1052,7 +821,7 @@
   "nxWncbFtsSU": {
    "title": "【神回】イギリス・スコットランドの首都エディンバラ歩き！絶景からハギスまで、歴史とグルメの贅沢旅！",
    "start": "2025-01-19 18:38",
-   "state": "error",
+   "state": "to-erase",
    "claims_left": 3,
    "history": [
     {
@@ -1062,7 +831,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "One Day Like This (Instrumental) / Elbow"
   },
   "S5yf_Ir50xU": {
    "title": "【神回】イギリス第三の街リーズを歩く！武器博物館や、アート、ショッピングが最高でした。ドーナツも絶品！",
@@ -1098,7 +867,7 @@
   "fqk0KVAqMps": {
    "title": "【神回】ロンドン街散策！！ノッティングヒルから、アフタヌーンティー、冬のワンダーランドへ！",
    "start": "2025-01-05 19:12",
-   "state": "error",
+   "state": "editing",
    "claims_left": 4,
    "history": [
     {
@@ -1108,7 +877,7 @@
      "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "動画編集が進行中"
   },
   "ceSScIFdVuE": {
    "title": "ヨーロッパ旅が終わってしまったので1時間配信します😕",
@@ -1155,8 +924,8 @@
   "KON8im0U6Tk": {
    "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
    "start": "2024-12-07 23:56",
-   "state": "editing",
-   "claims_left": 2,
+   "state": "to-mute",
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -1177,7 +946,7 @@
      "action": "mute"
     }
    ],
-   "why": "I Wanna Dance With Somebody (Who Loves Me) (Single Version) / Whitney Houston"
+   "why": "I Will Survive (Single Version) / Gloria Gaynor"
   },
   "aencgvAwwn4": {
    "title": "ハンガリー最終日、別れはいつも突然に😢",
