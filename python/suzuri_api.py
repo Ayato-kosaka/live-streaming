@@ -123,6 +123,81 @@ def items(q=""):
     print(f"{n} 品目")
 
 
+RAW = "https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/master/"
+
+
+def goods(spec_path, dry=False, pub=False):
+    """ほしいグッズの付箋（#goods-suzuri）から、1件ずつ品目を決めて作る。
+
+    spec は `tools/goods/goods.json`。1件 = 1デザイン × 1品目。絵は `tools/goods/compose.sh` が
+    刷る面と同じ大きさに組んだもの（リポジトリの `tools/goods/art/out/`）を、公開の URL で渡す。
+    Tシャツは表を `texture`、裏を `sub_materials`（printSide=back）で渡す。
+
+    **既定は非公開で作る**（`published: false`）。見本を目で見てから `publish` で出す。
+    同じ題がすでにあれば作らない（押し直しても二重にならない）"""
+    spec = json.load(open(spec_path))
+    have = {(m.get("title") or "") for m in materials()}
+    os.makedirs("/tmp/suzuri-sheet", exist_ok=True)
+    made = []
+    for g in spec:
+        if g["title"] in have:
+            print(f"  skip {g['title']!r}: 同じ題がもうある")
+            continue
+        prod = {"itemId": g["itemId"], "exemplaryItemVariantId": g["variant"], "published": pub, "resizeMode": "contain"}
+        if g.get("back"):
+            prod["sub_materials"] = [{"texture": RAW + g["back"], "printSide": "back", "enabled": True}]
+        body = {"title": g["title"], "description": g["description"], "price": g.get("price", 300),
+                "texture": RAW + g["front"], "products": [prod]}
+        if dry:
+            print(f"  dry-run: POST /materials {g['title']!r} item={g['itemId']} front={g['front']} back={g.get('back')} 公開={pub}")
+            continue
+        st, r = call("POST", "/materials", body)
+        if st != 200:
+            print(f"  **作れなかった** {g['title']!r} {st}: {r}")
+            continue
+        m = r["material"]
+        pr = (r.get("products") or [{}])[0]
+        made.append((g["key"], m["id"], pr))
+        print(f"  created {m['id']} {m['title']!r} 公開={pr.get('published')} {pr.get('sampleUrl')}")
+        time.sleep(2)
+    for key, mid, pr in made:
+        # 見本の絵（表・裏）。公開されている URL なので、ログインなしで取れる
+        tpl = pr.get("imageUrl") or ""
+        urls = {"sample": pr.get("sampleImageUrl")}
+        if "{width}" in tpl:
+            base = tpl.replace("{width}", "1000").replace("{height}", "1000").replace("{size}", "s").replace("{color}", "white")
+            for ang in ("front", "back"):
+                urls[ang] = base.replace("[/angle]", f"/{ang}")
+        for name, u in urls.items():
+            raw = _fetch(u) if u else None
+            if raw:
+                open(f"/tmp/suzuri-sheet/{key}-{name}.jpg", "wb").write(raw)
+                print(f"    見本 {key}-{name}.jpg {len(raw)}B")
+            else:
+                print(f"    見本が取れなかった {key}-{name}")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary and made:
+        with open(summary, "a") as f:
+            f.write("### ほしいグッズ\n\n")
+            for key, mid, pr in made:
+                f.write(f"- {key} → {pr.get('sampleUrl')}（デザイン {mid}、公開={pr.get('published')}）\n")
+
+
+def publish(material_id):
+    """非公開で作ったグッズを公開する。品目は商品の一覧から引き直す（大きさは触らない）"""
+    st, r = call("GET", "/products", query={"materialId": material_id, "limit": 50})
+    if st != 200 or not r.get("products"):
+        sys.exit(f"GET /products {st}: {r}")
+    prods = [{"itemId": p["item"]["id"], "exemplaryItemVariantId": p["sampleItemVariant"]["id"], "published": True,
+              "resizeMode": "contain"} for p in r["products"]]
+    st, r = call("PUT", f"/materials/{material_id}", {"products": prods})
+    print("PUT", material_id, st, r.get("error", ""))
+    if st != 200:
+        sys.exit(1)
+    for p in r.get("products", []):
+        print(f"  公開={p.get('published')} {p.get('sampleUrl')}")
+
+
 def texture_of(src):
     """URL ならそのまま、ファイルなら余白を落として正方形にし、データ URI にする"""
     if src.startswith("http"):
@@ -390,6 +465,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("materials")
     c = sub.add_parser("goods"); c.add_argument("spec"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true")
+    c = sub.add_parser("publish"); c.add_argument("id", type=int)
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
@@ -415,7 +491,9 @@ def main():
     elif a.cmd == "items":
         items(a.q)
     elif a.cmd == "goods":
-        sys.exit("goods はこれから足す")
+        goods(a.spec, a.dry_run, a.publish)
+    elif a.cmd == "publish":
+        publish(a.id)
     elif a.cmd == "characters":
         characters(a.dry_run, [x for x in a.items.split(",") if x])
     elif a.cmd == "create":
