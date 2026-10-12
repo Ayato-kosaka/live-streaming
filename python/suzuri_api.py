@@ -389,6 +389,7 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("materials")
+    c = sub.add_parser("goods"); c.add_argument("spec"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true")
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
@@ -413,6 +414,8 @@ def main():
             print(m["id"], "公開" if m.get("published") else "非公開", m.get("price"), m.get("title") or "（題なし）")
     elif a.cmd == "items":
         items(a.q)
+    elif a.cmd == "goods":
+        sys.exit("goods はこれから足す")
     elif a.cmd == "characters":
         characters(a.dry_run, [x for x in a.items.split(",") if x])
     elif a.cmd == "create":
