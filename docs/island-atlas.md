@@ -54,8 +54,18 @@ BigQuery の `youtube_chat.videos`（配信のタイトルと日付）から決�
 
 **章の名前を変えると、焼き込み（`chapterStats` / `chapterStreams`）の鍵が
 ずれる。** 鍵は章の slug なので、焼き直すまで人数も配信も住人も
-**0ではなく欄ごと出ない。** `site/selftest/islechapter_selftest.mjs` が
-そこを名指しで赤くする（消しかたは `rebake.yml` を `dry_run: false` で1回）。
+**0ではなく欄ごと出ない。**
+
+見るのは**夜の側**——`rebake.yml` の「焼き込みが古くなっていないか」から走る
+`python/stale_content_watch.py` の `SAME`（上流 `chapters.ts` の slug と、
+`chapterStats.ts` の鍵が過不足なく同じか）。**毎 PR 走る見張りには置かない**——
+焼くのは master に対してなので、**マージの前に鍵は絶対に合わず**、
+章の名前を変える PR をその変更ごと毎回止めることになる
+（`docs/island-standards.md` §13）。消しかたは `rebake.yml` を
+`dry_run: false` で1回。
+
+島の建てかたのほう（振り分けの表・いまの章の島が建つか・表紙から国の案内へ
+行けるか）は `site/selftest/islechapter_selftest.mjs` が毎 PR 見る。
 
 **ジョージアを独立した島にしない。** アゼルバイジャン・ジョージア・アルメニアで
 ひとつのコーカサス周遊。ジョージアの274日はその中でいちばん長い滞在だが、

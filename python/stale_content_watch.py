@@ -35,7 +35,7 @@
 調べ直すことになるし、**35本ぶん並んでいないと分母にならない**
 （`docs/island-standards.md` §15）。
 
-## 5つの見かた
+## 6つの見かた
 
 | 見かた | 何が起きたら赤いか | どの本に付けるか |
 | --- | --- | --- |
@@ -43,7 +43,34 @@
 | `COVERS` | 中の**いちばん先の日付**が、要るところまで届いていない | 先ぶんの表（旅程） |
 | `SNAP` | **取った日**が、その旅のためのものになっていない | 旅ごとに取り直す写し（街の店） |
 | `KEYS` | **上流の鍵が、下流に無い**（1件でも） | 人が上流を書いたら続けて焼くもの（①b） |
+| `SAME` | 上流と下流の鍵が**過不足なく同じ**でない（どちらへずれたかを言う） | 鍵そのものが上流の名前である焼き込み（章ごとの数字） |
 | `SHARE` | 上流の鍵のうち**下流に無いものの割合**が `share`% を超えた | 全部そろわないのが普通のもの（セリフ） |
+
+### `SAME` は `KEYS` の両向き。**なぜ片向きでは足りないか**
+
+`chapterStats.ts` の鍵は**章の slug そのもの**（`chapters.ts`）。章の名前を変えると
+2つのことが同時に起きる——**新しい名前が焼かれていない**のと、
+**古い名前が焼き込みに残っている**。`KEYS`（上流 → 下流）は前者しか見ない。
+
+後者を落とすと、**焼き込みだけが前の章の名前で生き残っている**状態が緑になる。
+島は鍵で引くので（`CHAPTER_STATS[c.slug]`）、画面には何も出ない——
+**人数も配信も住人も、0ではなく欄ごと消える。** 型でもビルドでも巡回でも出ない。
+
+2026-10-12 にアルバニアと北マケドニアを「バルカン諸国周遊」1章へまとめたとき、
+実際にこの形になった（`docs/island-misses.md` #224）。
+
+### なぜ `site/selftest/` ではなく、ここなのか
+
+**焼き込みの鍵が合うのは、焼いたあと。** `rebake.yml` は master に対して焼くので、
+順番は必ず「PR をマージ → 焼き直す → 配る」になる。
+**マージの前に鍵は絶対に合わない。** これを毎 PR 走る見張り
+（`site/selftest/*.mjs`）に置くと、**自分が守ろうとしている変更そのものを
+毎回必ず止める。** 満たしようのない見張りは、いつも通る見張りと同じだけ悪い
+（`docs/island-standards.md` §13）。
+
+ここは `rebake.yml` の**焼いたあと**（deploy の後ろ）から走るので、
+焼けば消える赤になる。`rebake.yml` の関所（`KEEP`）とも軸が違う——
+あちらは章の**数**を数えるだけで（`a >= b`）、**名前の入れ替わりは見ていない。**
 
 `COVERS` と `SNAP` は、どちらも**章（旅）で切る。** 向きが逆なだけ——
 `COVERS` は「いちばん**先**が、要るところまで届いているか」、`SNAP` は
@@ -196,6 +223,7 @@ LATEST = "LATEST"  # いちばん新しい過去の日付が、今日から離�
 COVERS = "COVERS"  # いちばん先の日付が、要るところ（旅の最中なら今日、
                    # 終わった旅なら旅の最終日）まで届いているか
 KEYS = "KEYS"  # 上流の鍵が、下流に全部あるか
+SAME = "SAME"  # 上流と下流の鍵が、過不足なく同じか（`KEYS` の両向き。頭の表）
 SHARE = "SHARE"  # 上流の鍵のうち、下流に無いものの**割合**が share% を超えたか
 SNAP = "SNAP"  # 旅ごとに取り直す写し。旅が終わったら、その旅のうちに取れていればよい
 SKIP = "SKIP"  # 見ない（理由を必ず書く）
@@ -279,6 +307,9 @@ KEY_OF: dict[str, tuple] = {
     # 当てにしていた。焼くほう（`tools/nordic_sun.py`）が書く形と揃えてあったが、
     # 書く形が変わった日に**鍵が0件になって「数えられない」に化ける**
     "nordicSun.ts": (("SUN_BY_DAY",),),
+    # 章ごとの数字。**鍵は章の slug そのもの**（`chapters.ts`）。
+    # 表（`Record<string, ChapterStat>`）の鍵なので `("MAP",)` の形で取れる
+    "chapterStats.ts": (("CHAPTER_STATS",),),
 }
 
 # 鍵が「並びの欄」でも「表の鍵」でもない本。**`python/ts_read.py` の
@@ -298,6 +329,18 @@ KEY_OF: dict[str, tuple] = {
 KEY_FN = {
     # 旅程の日。**焼くほうと同じ `read_trip` を通す**
     "nordic.ts": lambda src: [d.date for d in read_trip(src).days],
+    # 章。**`from` の入っている章だけ**を鍵にする（`chapterStats.ts` の上流）。
+    #
+    # `from` は「着いた日」で、人が着いてから入れる欄。まだ入っていない章は
+    # 数える期間そのものが無いので、焼き込みに無くて正しい
+    # （`python/build_chapter_stats.py` も期間の無い章は飛ばす）。
+    # **ここを全章にすると、次の旅の行を1行足した日から、焼いても消えない赤**になる。
+    #
+    # `("CHAPTERS", "slug")` で取らないのは、同じ理由で**欄を2つ見たい**から
+    # （`KEY_OF` は欄を1つしか取れない）。字を読むのは `ts_read` の1本のまま。
+    "chapters.ts": lambda src: [
+        r["slug"] for r in read_chapters(src).rows if r["from"]
+    ],
 }
 
 
@@ -348,9 +391,22 @@ SKIP_REBAKE = "rebake.yml の「凍っていないか」が {}日で見ている
 
 BOOKS: dict[str, Book] = {
     # --- 毎晩ひとりでに焼ける。rebake が日数を持っている（ここでは判定しない）---
+    # --- 毎晩焼けるが、**鍵が上流の名前そのもの**。日ではなく鍵で見る ---
     "chapterStats.ts": Book(
-        MACHINE, SKIP, 0,
-        SKIP_REBAKE.format(4) + "。中にある日付は「数えた日」1つだけで、焼くたび今日になる",
+        MACHINE, SAME, 0,
+        "章ごとの人数・配信・住人。**鍵は `chapters.ts` の slug そのもの**なので、"
+        "章の名前を変えた回は両向きにずれる（新しい名前が焼かれていない／"
+        "古い名前が残っている）。島は鍵で引くので、ずれると画面から"
+        "**人数も配信も住人も、0ではなく欄ごと消える**（`docs/island-misses.md` #224）。"
+        "型でもビルドでも巡回でも出ない。"
+        "**日では見ない**——" + SKIP_REBAKE.format(4)
+        + "。中にある日付は「数えた日」1つだけで、焼くたび今日になる。"
+        "**軸が違うので、鍵のほうはここが持つ**（`rebake.yml` の関所は章の"
+        "**数**しか数えていない。`a >= b` なので、名前が入れ替わっただけの回は通る）",
+        upstream=CHAPTERS_TS,
+        todo="**焼き直せば消える。** Actions の「島の数字を焼き直す」を "
+             "`scripts: build_chapter_stats` / `dry_run: false` / `deploy: true` で押す"
+             "（毎晩の回でも入る）",
     ),
     "residents.ts": Book(MACHINE, SKIP, 0, SKIP_REBAKE.format(3) + "。日付を1つも持たない"),
     "streamPeaks.ts": Book(MACHINE, SKIP, 0, SKIP_REBAKE.format(10) + "。日付を1つも持たない"),
@@ -960,6 +1016,50 @@ def judge(seen: dict[str, Facts], today: date, books: dict[str, Book] | None = N
                 v.results.append(Result(name, b.who, SHARE, b.share, "赤", detail))
             else:
                 v.results.append(Result(name, b.who, SHARE, b.share, "通った", detail))
+            continue
+
+        if b.rule == SAME:
+            # **`KEYS` の両向き。** 片向きだと、古い鍵が焼き込みに残ったまま緑になる
+            # （頭の「`SAME` は `KEYS` の両向き」）
+            up = seen.get(b.upstream)
+            if up is None or not up.found:
+                v.blind.append(f"{name} の上流 {b.upstream} が読めません")
+                v.results.append(Result(name, b.who, SAME, 0, "数えられない", f"上流 {b.upstream} が無い"))
+                continue
+            if not up.keys:
+                v.blind.append(f"{b.upstream} から鍵が1つも取れません（{name} の上流）")
+                v.results.append(Result(name, b.who, SAME, 0, "数えられない", "上流の鍵が0件"))
+                continue
+            if not f.keys:
+                v.blind.append(f"{name} から鍵が1つも取れません")
+                v.results.append(Result(name, b.who, SAME, 0, "数えられない", "ここの鍵が0件"))
+                continue
+            mine, theirs = set(f.keys), set(up.keys)
+            missing = [k for k in up.keys if k not in mine]   # 上流に在って、焼かれていない
+            orphan = [k for k in f.keys if k not in theirs]   # 焼き込みに在って、上流に無い
+            detail = f"上流 {b.upstream} の {len(up.keys)}件 / ここ {len(f.keys)}件"
+            if missing or orphan:
+                # **どちらへずれたかを分けて言う。** 「合っていない」だけだと、
+                # 読んだ人が焼き直せばよいのか上流を直すのかを調べ直すことになる
+                lines = []
+                if missing:
+                    lines.append(
+                        f"{b.upstream} の {len(missing)}件が焼かれていません"
+                        + ("：" + ", ".join(missing[:10]) if b.names else "")
+                    )
+                if orphan:
+                    lines.append(
+                        f"{b.upstream} に無い鍵が {len(orphan)}件 残っています"
+                        + ("：" + ", ".join(orphan[:10]) if b.names else "")
+                    )
+                v.red.append(
+                    f"{name} の鍵が {b.upstream} と合っていません（" + " / ".join(lines) + "）"
+                    + (f" → {b.todo}" if b.todo else "")
+                )
+                v.results.append(Result(name, b.who, SAME, 0, "赤",
+                                        detail + f" / 欠け {len(missing)} / 余り {len(orphan)}"))
+            else:
+                v.results.append(Result(name, b.who, SAME, 0, "通った", detail))
             continue
 
         if b.rule == KEYS:

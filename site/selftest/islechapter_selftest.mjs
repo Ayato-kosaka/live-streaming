@@ -17,7 +17,7 @@
  * | 振り分けの表に古い章の名前が残る | 島が素材だけになって、板と案内が**黙って消える** |
  * | いまの章の島が建たない | 表紙が桟橋だけの島になる |
  * | 表紙から国の案内へ行けない | 面は在るのに、島から行く道が1本も無い（#216） |
- * | 焼き込みの鍵が章とずれる | 人数・配信・住人が**0ではなく、欄ごと消える** |
+ * | 焼き込みの鍵が章とずれる | 人数・配信・住人が**0ではなく、欄ごと消える**（→ 夜の側） |
  *
  * どれも型でもビルドでも巡回でも出ない。**島が薄くなるだけ**なので、
  * 誰かが見て言うまで誰も気づかない（`docs/island-misses.md` #185 #216 #223）。
@@ -30,39 +30,39 @@
  *     桟橋だけになっていない・絵がぜんぶ実在する
  *  3. **表紙から、いまいる国の案内へ行ける。** 押しどころが在って、
  *     行き先の面が実在して、索引（`sitemap.ts`）にも載っている
- *  4. **焼き込み（`chapterStats`）の鍵と、章の slug が合っている。**
- *     合っていないときに**黙らない**——どちらへずれているかを名指しで出す
  *
- * ## わざと壊すと赤くなる（5とおり。足を1本ずつ抜く）
+ * **焼き込み（`chapterStats`）の鍵が章の slug と合っているかは、ここでは見ない。**
+ * 焼くのは master に対してなので、**マージの前に鍵は絶対に合わない**——
+ * 毎 PR 走るここに置くと、章の名前を変える PR を毎回止める（§13）。
+ * 夜の側（`python/stale_content_watch.py` の `SAME`）に在る。下の「4」も読む。
+ *
+ * ## わざと壊すと赤くなる（4とおり。足を1本ずつ抜く）
  *
  * **先に「壊していない写しが通ること」を見る**（`docs/island-standards.md` 15章）。
- * 章の名前を変えた直後は 4 が落ちているのがふつうなので、
- * **焼き直したあとの写し**を当てて 0 になることを確かめてから、1本ずつ壊す。
+ * 素のままで 0 になることを確かめてから、1本ずつ壊す。
  *
  * ```bash
- * # (0) 焼き直したあとの写し（これが本来の緑）→ 落ちない
- * sed 's/^  "albania": {/  "balkans": {/' site/content/chapterStats.ts > /tmp/stats-baked.ts
- * STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ * # (0) 素のまま → 落ちない
+ * node site/selftest/islechapter_selftest.mjs
  *
  * # (a) 振り分けの表に、章に無い名前を残す → 1 が落ちる
  * sed 's/^  balkans: balkansSpec,$/  albania: balkansSpec,/' site/components/isle/spec.ts > /tmp/spec-ghost.ts
- * SPEC_TS=/tmp/spec-ghost.ts STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ * SPEC_TS=/tmp/spec-ghost.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (b) いまの章の島から、建つものを全部落とす → 2 が落ちる
- * BREAK=b STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ * BREAK=b node site/selftest/islechapter_selftest.mjs
  *
  * # (c) 国の案内の行き先を、面の無いところへ向ける → 3 が落ちる
  * sed 's#href: "/north-macedonia",#href: "/albania",#' site/components/isle/spec.ts > /tmp/spec-dead.ts
- * SPEC_TS=/tmp/spec-dead.ts STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ * SPEC_TS=/tmp/spec-dead.ts node site/selftest/islechapter_selftest.mjs
  *
- * # (d) 焼き込みの鍵を、章に無いものへ変える → 4 が落ちる
- * sed 's/^  "nordic": {$/  "nordic-trip": {/' site/content/chapterStats.ts > /tmp/stats-ghost.ts
- * STATS_TS=/tmp/stats-ghost.ts node site/selftest/islechapter_selftest.mjs
- *
- * # (e) トップの紙に、国の名前を書き写す → 3 の裏が落ちる
+ * # (d) トップの紙に、国の名前を書き写す → 3 の裏が落ちる
  * sed 's|<b>{guide.name}</b>|<b>北マケドニア</b>|' site/app/page.tsx > /tmp/home-copied.tsx
- * HOME_TSX=/tmp/home-copied.tsx STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ * HOME_TSX=/tmp/home-copied.tsx node site/selftest/islechapter_selftest.mjs
  * ```
+ *
+ * **焼き込みの鍵を壊す対照は、夜の側に在る**（`python/stale_content_watch_selftest.py`。
+ * `--dir` に「章の名前を替えた写し」を渡して 1 が返ることまで当てている）。
  *
  * **`BREAK=b` だけ、源を差し替えずにこちらで島を痩せさせる。**
  * 「建つものが無い島」は、どのファイルを1行いじっても作れない
@@ -387,41 +387,29 @@ const dead = [...islePlaces, ...coverPlaces]
   .filter((h) => !pageOf(h));
 check("島の中の行き先が、ぜんぶ面として在る", dead.length === 0, `無い面: ${[...new Set(dead)].join(" ")}`);
 
-// ---- 4. 焼き込みの鍵と、章の slug ------------------------------------------
+// ---- 4. 焼き込みの鍵は、**ここでは見ない** --------------------------------
 
-/** きょう。**始まっていない章は、焼き込みが無くて当たり前** */
-const TODAY = new Date();
-const started = CHAPTERS.filter((c) => c.from && Date.parse(`${c.from}T00:00:00+09:00`) <= +TODAY);
-const bakedKeys = Object.keys(CHAPTER_STATS);
-const orphan = bakedKeys.filter((k) => !SLUGS.includes(k));
-const unbaked = started.map((c) => c.slug).filter((s) => !bakedKeys.includes(s));
+/* **夜の側へ移した**（`python/stale_content_watch.py` の `SAME`。2026-10-12）。
+   一度ここに「`chapterStats` の鍵と `CHAPTERS` の slug が合っているか」を
+   2判定置いたが、**置き場所が違った。**
 
-console.log(`# 焼き込みの鍵 ${bakedKeys.length}（${bakedKeys.join(" ")}）／始まった章 ${started.length}`);
-/* **ここの赤は、焼き直しで消える赤。** それ以外の赤と混ぜない——混ぜると、
-   焼き直し待ちのあいだに本物の赤が1本紛れても見分けがつかない
-   （`docs/island-misses.md` #197「毎晩赤いものは、いつもの赤に化ける」）。
-   **黙らせはしない。** 消しかたを添えて、落とす。 */
-const beforeBake = BAD;
-check(
-  "焼き込みに、章の表に無い鍵が残っていない",
-  orphan.length === 0,
-  `${orphan.join(" ")} — 章の名前を変えたまま焼き直していない。` +
-    "rebake.yml を dry_run: false で回すと消える",
-);
-check(
-  "始まった章が、ぜんぶ焼き込みに在る",
-  unbaked.length === 0,
-  `${unbaked.join(" ")} — この島は人数・配信・住人の欄ごと出ない（0ではなく、無い）。` +
-    "rebake.yml を dry_run: false で回すと入る",
-);
+   焼き込みは `rebake.yml` が master に対して焼くので、順番は必ず
+   「PR をマージ → 焼き直す → 配る」。**マージの前に鍵は絶対に合わない。**
+   ここは毎 PR 走る（`.github/workflows/selftest.yml`）ので、
+   **章の名前を変える PR を、自分が守ろうとしているその変更ごと毎回止める。**
+   満たしようのない見張りは、いつも通る見張りと同じだけ悪い
+   （`docs/island-standards.md` §13）。
+
+   **落としたのではなく、移した。** いまは `rebake.yml` の
+   「焼き込みが古くなっていないか」（焼いたあと・deploy の後ろ）から走る
+   `python/stale_content_watch.py` が、`chapterStats.ts` を `SAME` で見ている——
+   上流 `chapters.ts` の slug と鍵が**過不足なく同じか**を、両向きで。
+   両側からの対照は `python/stale_content_watch_selftest.py`
+   （そろえた写し／欠け／余り／上流0件／下流0件／`--dir` で章の名前を替えた写し）。
+
+   **ここに足し直さない。** 足すと、また章の名前を変えられなくなる。 */
 
 // ------------------------------------------------------------------ しめ
 
-const bakeOnly = BAD > beforeBake && beforeBake === 0;
 console.log(`\n通った ${OK} / 落ちた ${BAD}`);
-if (bakeOnly)
-  console.log(
-    "落ちているのは焼き込みの鍵だけ。`rebake.yml` を `dry_run: false` で回せば消える" +
-      "（BigQuery が要るので、手元では回らない）。",
-  );
 process.exit(BAD ? 1 : 0);
