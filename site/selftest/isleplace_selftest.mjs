@@ -141,7 +141,7 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { isleSpec, albaniaSpec, macedoniaSpec, nordicSpec } = req(join(OUT, "components", "isle", "spec.js"));
+const { chapterIsle } = req(join(OUT, "components", "isle", "spec.js"));
 const { CHAPTERS } = req(join(OUT, "content", "chapters.js"));
 console.log(`# 組み立てた絵の表: ${SRC}`);
 
@@ -159,16 +159,12 @@ function check(name, good, why = "") {
   console.log(`  NG   ${name}${why ? ` — ${why}` : ""}`);
 }
 
-/* 島の建てかたは**本番の面と同じ**にする（`app/island/[chapter]/page.tsx`）。
-   旅の spec を持っている章は、建つものの多いほうで建つ */
-const TRIP = { nordic: nordicSpec, albania: albaniaSpec, "north-macedonia": macedoniaSpec };
+/* 島の建てかたは**本番の面と同じ1本を呼ぶ**（`components/isle/spec.ts` の
+   `chapterIsle`。面もこれを呼ぶ）。**振り分けの表をここに写さない**——
+   写していたあいだ、章の名前を変えると見張りだけが古い章を測り続けて、
+   建つはずの板が「建っていない」ではなく「章が無い」で落ちていた。 */
 const NEAR = { name: "となりの島", href: "/island/x" };
-const isles = CHAPTERS.map((c) => {
-  const base = isleSpec(c, NEAR, NEAR);
-  const trip = TRIP[c.slug]?.(c, NEAR, NEAR);
-  const spec = trip && base.places.length < trip.places.length ? trip : base;
-  return { slug: c.slug, places: spec.places };
-});
+const isles = CHAPTERS.map((c) => ({ slug: c.slug, places: chapterIsle(c, NEAR, NEAR).places }));
 
 /* **数を焼かない。** ここは長く `=== 6` だったので、**章を1つ足した日に
    この見張りが落ちた**（北マケドニアを足して実際に落ちた）。見たいのは
@@ -255,16 +251,18 @@ const WANT = {
   caucasus: "countries streams shorts legends apps facts pier",
   "iran-walk": "countries streams shorts legends facts pier",
   nordic: "countries streams shorts facts pier",
-  /* 役割の id を `wish`（風船）から `board` に改めた（2026-10-11）。
-     アルバニアあての宛先を畳んだので、あそこは「貼る場所」ではなく
-     **この旅に来ている付箋を読む板**になった（`components/isle/board.ts`）。
-     北欧の板と同じ役割・同じ字なので、id も揃える（上の 4 がそこを縛る）。 */
-  albania: "facts board pier",
-  /* 着いていない島。まだ配信も歩いた国も焼かれていないので、建つのは
-     足した案内（`macedoniaSpec`）と桟橋だけ。**歩いて素材が焼かれたら
-     ここを増やす**——増えたことに気づかないまま減らさないため、
-     減っても増えても赤くなる形にしてある。 */
-  "north-macedonia": "guidebook pier",
+  /* バルカン諸国周遊（2026-10-12 にアルバニアと北マケドニアを統合）。
+     **章の slug が `albania` から `balkans` に変わったので、焼き込み
+     （`chapterStats` / `chapterStreams`）の鍵がまだ合っていない。**
+     合うまでは配信も住人も国も拾えないので、建つのは足した2つと桟橋だけ。
+
+     - guidebook … この国の歩きかた（`/north-macedonia`）
+     - board ……… この旅に来ている付箋を読む板（`components/isle/board.ts`）
+
+     **焼き直したらここを増やす。** 増えたことに気づかないまま減らさない
+     ため、減っても増えても赤くなる形にしてある（`docs/island-misses.md` #210）。
+     鍵が合っていないことそのものは `islechapter_selftest.mjs` が名指しで言う。 */
+  balkans: "guidebook board pier",
 };
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");

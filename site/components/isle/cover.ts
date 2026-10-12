@@ -6,7 +6,11 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { pier } from "./pier";
-import type { IslePlaceSpec, IsleSpec } from "./spec";
+/* **値を1つだけ借りる。** `guidePlace` は `content/` しか読まない小さい関数で、
+   表紙の束に配信の一覧や伝説が付いてくることはない（`spec.ts` の `nordicSpec`
+   の注と同じ心配をしたが、ここは島を組む側＝サーバだけが通る道。
+   `Cover.tsx`（"use client"）が読むのは型だけ）。 */
+import { guidePlace, type IslePlaceSpec, type IsleSpec } from "./spec";
 
 /**
  * 表紙の島（＝いま歩いている島）。
@@ -56,7 +60,7 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
  */
 const COVER_R = 410;
 
-/** その旅そのものの入口。島に建つのは1軒で、中身は章によって変わる */
+/** その旅そのものの入口。中身は章によって変わる */
 function tripPlace(c: Chapter, days: number): IslePlaceSpec {
   /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
@@ -137,6 +141,8 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
   );
   const days = chapterDays(c, today);
   const st = CHAPTER_STATS[c.slug];
+  /** いまいる国の案内。**章の島と同じ1本（`spec.ts` の `guidePlace`）から作る** */
+  const guide = guidePlace(c.slug);
   return {
     slug: c.slug,
     name: c.name,
@@ -156,7 +162,36 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        島の連なりへは、島の隅の「島の地図」からも行ける（`.isle-atlas`）ので
        袋小路にはならない。**章の島（`/island/<章>`）はそのまま**——
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
-    places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
+    /* **いまいる国の案内は、表紙の島にも建てる。**
+       ------------------------------------------------
+       あやと（2026-10-12）:「北マケドニアについて事前に調べたページへの導線が
+       初期ページから無くなってるので、いい感じに追加してください。
+       みんな気になってると思う」。
+
+       **トップの紙から1本引くだけにしない。** 同じことを `/goods` で一度
+       やっていて、紙には道が在るのに**島には1軒も建っていなかった**ので
+       「動線が見当たらない」と言われた（`docs/island-misses.md` #216）。
+       島を歩いて建物に入る人から見れば、**島に無い＝道が無い。**
+
+       **消えた風船は戻さない**（#223）。あれは「やってほしいことを貼る」の
+       入口で、表紙には常設の「やってほしいこと」がもともと在る。
+       **同じ用事の入口を、同じ島に2つ建てない。** ここに建てるのは別の用事——
+       その国に何があるかを**読む**ところ。
+
+       **看板（`sign`）は付けない。** 引きで名前を出せるのは6つまでで
+       （`docs/island-design.md` 3-4／`island-atlas.md` 4章）、常設の6つで
+       ちょうど埋まっている。7枚目を足して引きの島に札が7枚並んだことが
+       一度あるので、そこへは戻さない。近づけば名前が出る。
+
+       **絵は既定（道しるべ）に落とす。** 章の島では市の屋台（`stall-green`）
+       だが、表紙では緑の日よけの屋台が「あやとグッズ」なので、章を渡すと
+       同じ島に屋台が2つ建つ（`isleIcon` は章を渡さなければ既定を返す）。 */
+    places: [
+      tripPlace(c, days),
+      ...(guide ? [{ ...guide, icon: "signpost", sign: undefined }] : []),
+      ...HOME_PLACES,
+      { ...pier(), sign: undefined },
+    ],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**
 

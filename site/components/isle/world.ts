@@ -331,12 +331,16 @@ type Ctx = {
 
 /** 低木・石・切株・草むらの取り合わせ。土地によって中身が変わる */
 function bushOf(art: IslandArt, r: () => number): DecoKindPick {
-  /* 土地が6つに増えたので、ここも名前で分けない。**何でできている地面か**で分ける。
+  /* 土地が増えたので、ここも名前で分けない。**何でできている地面か**で分ける。
      前は `desert` と `nordic` だけを見ていて、新しい土地はぜんぶ温帯の取り合わせ
-     （きのこ入り）に落ちていた。石灰岩のアルバニアにきのこは生えない。 */
+     （きのこ入り）に落ちていた。
+
+     **石灰岩の枝（`mediterranean`）は消した**（2026-10-12）。あの土地を名乗る
+     章が無くなったため。いまのバルカンの島（`lakeland`）は**オークとブナの
+     山で、10月**なので、きのこと切株の入る温帯の取り合わせのほうが合う
+     （撒くものにも `mushroom-tan` が入っている。`components/chain/shapes.ts`）。 */
   const dry = art.theme === "desert" || art.theme === "arid";
   const cold = art.theme === "nordic";
-  const stony = art.theme === "mediterranean";
   const k = r();
   if (dry) {
     if (k < 0.52) return { k: "rock", s: 15 + r() * 10 };
@@ -347,12 +351,6 @@ function bushOf(art: IslandArt, r: () => number): DecoKindPick {
     if (k < 0.44) return { k: "rock", s: 15 + r() * 10 };
     if (k < 0.78) return { k: "tuft", s: 13 + r() * 6 };
     return { k: "bush", s: 17 + r() * 7 };
-  }
-  if (stony) {
-    // 石灰岩の礫と、乾いた草むらと、硬葉樹の低木。きのこと切株は出さない
-    if (k < 0.46) return { k: "rock", s: 13 + r() * 9 };
-    if (k < 0.76) return { k: "tuft", s: 13 + r() * 7 };
-    return { k: "bush", s: 16 + r() * 7 };
   }
   if (k < 0.3) return { k: "bush", s: 19 + r() * 8 };
   if (k < 0.5) return { k: "tuft", s: 14 + r() * 7 };

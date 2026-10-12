@@ -29,7 +29,7 @@ import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import { ALBANIA_GROUP, NORDIC_GROUP } from "@/content/themes";
+import { ALBANIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP } from "@/content/themes";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { boardPlate, type IsleBoardSpec } from "./board";
 import { isleIcon } from "./icons";
@@ -376,89 +376,108 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
 }
 
 /**
- * アルバニアの島。**素材の島に、風船を1つ足したもの。**
+ * いま歩いている旅あての板を、どの宛先で建てるか。
  *
- * 北欧の島（`nordicSpec`）は「この旅のこと・旅の6カ国・旅のしおり・
- * この旅の掲示板」の4軒が建つ。**あれは素材がそろっているから建つ**ので、
- * アルバニアに同じものを渡すと、中身の無い行き先が4つ建つ。
- * 実際、振り分けが `c.opensAt` の有無だけだったころ、アルバニアの島に
- * **北欧の板が5枚**建っていた（`app/island/[chapter]/page.tsx` の注）。
+ * **島の側で見出しを直書きしない。** 直書きすると、宛先を畳んだ日に
+ * 島の板だけが前の旅の棚を出し続ける（`docs/island-misses.md` #223）。
+ * ここが持つのは「この島に属する宛先の、名前と見出し」の組だけで、
+ * **どれを建てるかは `boardPlate` が表（`content/themes.ts`）を見て決める。**
  *
- * だから旅ごとに何を建てるかを決める。アルバニアで足すのは1つだけ——
- * この旅あての付箋を読む板（あやと 2026-09-27 の「風船」）。
- * 旅程が決まったら、ここに国と区間の札が増える。
+ * 並びは**新しい国が先**。国を1つ越えたら、その国の組を先頭に足す。
+ */
+const BALKAN_BOARDS: { name: string; group: string }[] = [
+  { name: "北マケドニア", group: MACEDONIA_GROUP },
+  { name: "アルバニア", group: ALBANIA_GROUP },
+];
+
+/**
+ * その国の案内（行く前に調べた面）。**章 → その章で行く国のうち、面の在るもの。**
  *
- * **札の字は手で書かない**（`components/isle/board.ts`）。2026-10-11 に
- * アルバニアあての宛先を畳んだのに、ここの字が「やってほしいことを貼る」
- * 「ここから貼れる」のまま残って、**押した先で貼れない**板になっていた。
+ * 章を国ごとに割らないので（`content/chapters.ts` の `balkans`）、
+ * 「この国の歩きかた」の行き先は章の slug からは決まらない。だから表で持つ。
+ *
+ * - **並びは新しい国が先。** 国を1つ越えたら、その国の行を先頭に足す
+ * - **面の無い国を書かない。** 書くと、押した先で島の玄関が 200 を返して、
+ *   押した人には何が起きたのか分からない（`content/themes.ts` の同じ決まり）。
+ *   アルバニアがここに無いのは、`/albania` という面が無いから
+ * - **章の外へ持ち越さない。** 章が変われば、この表に無い章になって札は建たない。
+ *   持ち越すと、次の島に前の国の案内が建つ
+ *
+ * 行き先が本当に在るかは `site/selftest/islechapter_selftest.mjs` が数える。
+ */
+const GUIDES: Record<string, { name: string; href: string }[]> = {
+  balkans: [{ name: "北マケドニア", href: "/north-macedonia" }],
+};
+
+/**
+ * その章の「この国の歩きかた」。**案内の面を1枚も持たない章には建たない。**
+ *
+ * @param slug 章（`content/chapters.ts` の slug）
+ */
+export const guidePlace = (slug?: string): IslePlaceSpec | null => {
+  const g = (slug && GUIDES[slug]?.[0]) || null;
+  if (!g) return null;
+  return {
+    id: "guidebook",
+    /* **島の固有名詞を名前にしない**（`docs/island-design.md` 6章）。
+       押す前に、中に何があるかが読めること。 */
+    label: "この国の歩きかた",
+    blurb: "首都・見どころ・食べもの",
+    icon: isleIcon(slug, "guidebook", "signpost"),
+    size: 58,
+    sign: true,
+    href: g.href,
+  };
+};
+
+/**
+ * バルカン諸国周遊の島。**素材の島に、板と案内を足したもの。**
+ *
+ * あやと（2026-10-12）:「北マケドニアとアルバニアの島をわけろなんて言ってない。
+ * バルカン諸国周遊に島の名前を変えて統合してください。」
+ * アルバニアの島（`albaniaSpec`）と北マケドニアの島（`macedoniaSpec`）は、
+ * ここ1本になった。
  *
  * ## なぜ素材の島を**作り直さず、包む**のか
  *
- * ここは前、風船と桟橋の2軒だけを返していた。呼び出し側は
- * 「建つものの多いほうを採る」（`app/island/[chapter]/page.tsx`）ので、
- * **章の表に `from` が入って配信が焼かれた晩に、素材の島（配信のやぐら＋
- * この島のこと＋桟橋の3軒）が追い越して、風船が黙って消える。**
- * 実際に `chapters.ts` へ `from: "2026-09-28"` を入れて焼き直しを模すと、
- * `/island/albania` から「アルバニアでこれやって」が落ちた。
- * **赤くならない。島から1軒消えるだけ**——北欧が5日間ショート1軒の島に
- * なっていたのと同じ壊れ方（同ファイルの注）。
+ * ここが風船と桟橋だけを返していたころ、呼び出し側は「建つものの多いほうを採る」
+ * （`app/island/[chapter]/page.tsx`）ので、**章の表に `from` が入って配信が
+ * 焼かれた晩に、素材の島が追い越して、足したものが黙って消える。**
+ * 赤くならない。島から1軒消えるだけ——北欧が5日間ショート1軒の島に
+ * なっていたのと同じ壊れ方（`docs/island-misses.md` #185）。
  *
- * 風船は素材から生まれるものではない（掲示板の宛先が出どころ）ので、
- * **素材と取り替えっこにしない。** 素材の島を建ててから、その上に足す。
- * こうすると配信・住人・伝説が焼かれるたびに島が勝手に太り、
- * 風船は旅が終わるまで残る。
+ * 板も案内も素材から生まれるものではないので、**素材と取り替えっこにしない。**
+ * 素材の島を建ててから、その上に足す。こうすると配信・住人・伝説が焼かれる
+ * たびに島が勝手に太り、板と案内は周遊が終わるまで残る。
+ *
+ * ## 足すのは2つ
+ *
+ * - **この旅あての付箋を読む板**（あやと 2026-09-27 の「風船」）。
+ *   **札の字は手で書かない**（`components/isle/board.ts`）——2026-10-11 に
+ *   アルバニアあての宛先を畳んだのに字が「ここから貼れる」のまま残って、
+ *   押した先で貼れない板になっていた（#223）
+ * - **いまいる国の案内**（`/north-macedonia`）。行く先の中身が先に分かって
+ *   いる国なので、島に降りた人が最初に欲しいのはそれ
  */
-export function albaniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
+export function balkansSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
   const isle = isleSpec(c, prev, next);
+  /* **いま書ける宛先のある旅で板を建てる。** 無ければいちばん新しい旅で建てて、
+     `boardPlate` が「読むところ」として名乗る（誘いの字を出さない）。 */
+  const pick = BALKAN_BOARDS.find((b) => boardPlate(b).board.aim === "here") ?? BALKAN_BOARDS[0];
   const wish: IslePlaceSpec = {
     /* **字は表から作る。** 手で書いた字をここに足さない——
        足した1行が、宛先を畳んだ日から嘘になる（`./board.ts`）。 */
-    ...boardPlate({ name: "アルバニア", group: ALBANIA_GROUP }),
+    ...boardPlate(pick),
     id: "board",
     icon: isleIcon(c.slug, "board", "lantern-hanging"),
     size: 58,
     sign: true,
   };
   /* 桟橋は `isleSpec` が**いちばん最後**に足す。島から島へ渡るところなので
-     並びの末尾に置いておきたい。だから板はその1つ手前に差す。 */
+     並びの末尾に置いておきたい。だから足すものはその1つ手前に差す。 */
   const places = [...isle.places];
-  places.splice(Math.max(0, places.length - 1), 0, wish);
-  return { ...isle, places, building: c.opensAt };
-}
-
-/**
- * 北マケドニアの島。**素材の島に、国の案内を1つ足したもの。**
- *
- * 作りは `albaniaSpec` と同じ——**素材の島を作り直さず、包む。**
- * ここで風船や板を並べ直すと、配信が1本焼かれた晩に素材の島が建つ数で
- * 追い越して、足したものが黙って消える（`albaniaSpec` の注と
- * `docs/island-misses.md` #185）。
- *
- * 足すのは1つだけ。**この国に何があるかを読む面への入口**（`/north-macedonia`）。
- * アルバニアの風船（やってほしいことを貼る）と違うのは、あちらが
- * 「まだ何も決まっていない」island だったのに対して、こちらは**行く先の
- * 中身が先に分かっている**から——島に降りた人が最初に欲しいのはそれ。
- *
- * 国を歩いて `content/countries.ts` に載り、配信が焼かれれば、
- * 道しるべもやぐらも石碑も勝手に建つ。この札はそのあいだも残る。
- */
-export function macedoniaSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
-  const isle = isleSpec(c, prev, next);
-  const guide: IslePlaceSpec = {
-    id: "guidebook",
-    /* **島の固有名詞を名前にしない**（`docs/island-design.md` 6章）。
-       押す前に、中に何があるかが読めること。 */
-    label: "この国の歩きかた",
-    blurb: "首都・見どころ・食べもの",
-    icon: isleIcon(c.slug, "guidebook", "stall"),
-    size: 58,
-    sign: true,
-    href: "/north-macedonia",
-  };
-  /* 桟橋は `isleSpec` が**いちばん最後**に足す（島から島へ渡るところなので
-     並びの末尾）。だからその1つ手前に差す。 */
-  const places = [...isle.places];
-  places.splice(Math.max(0, places.length - 1), 0, guide);
+  const guide = guidePlace(c.slug);
+  places.splice(Math.max(0, places.length - 1), 0, ...(guide ? [guide] : []), wish);
   return { ...isle, places, building: c.opensAt };
 }
 
@@ -553,4 +572,35 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
     building: c.opensAt,
     art,
   };
+}
+
+/**
+ * 旅そのものの島を建てる章。**章ごとに建てるものが違う。**
+ *
+ * ここに無い章は、素材（配信・歩いた国・伝説）だけで建つ（`isleSpec`）。
+ * **「日どりが入っているか」で振り分けない**——アルバニアに日どりを入れた日に、
+ * アルバニアの島が北欧の島になった（`app/island/[chapter]/page.tsx` の注）。
+ *
+ * **表はここ1枚。** 面（`app/island/[chapter]/page.tsx`）も見張り
+ * （`site/selftest/isleplace_selftest.mjs` / `isleboard_selftest.mjs` /
+ * `islechapter_selftest.mjs`）も、ここを読む。写しを置いていたあいだ、
+ * 同じ表が3か所にあって、**章の名前を変えると3か所とも直さないと
+ * 見張りだけが古い島を測り続ける**状態だった（`docs/island-standards.md` 8章）。
+ */
+export const TRIP_SPEC: Record<string, (c: Chapter, prev?: Neighbour, next?: Neighbour) => IsleSpec> = {
+  nordic: nordicSpec,
+  balkans: balkansSpec,
+};
+
+/**
+ * 面と同じ建てかたで、その章の島を1つ。**建つものの多いほうを採る。**
+ *
+ * 数で切らない理由は `app/island/[chapter]/page.tsx` に書いてある
+ * （機械が素材を1本焼いた晩に、旅の島が黙って消える）。
+ * **面と見張りが同じ1本を呼ぶ**ので、建てかたを変えても両方が一緒に動く。
+ */
+export function chapterIsle(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
+  const isle = isleSpec(c, prev, next);
+  const trip = TRIP_SPEC[c.slug]?.(c, prev, next);
+  return trip && isle.places.length < trip.places.length ? trip : isle;
 }

@@ -167,7 +167,7 @@ export function stayNow(now: Date = new Date()): StayNow | null {
  * 返ってきたものが**まだ続いているか**をここで見る。見ていなかったので、
  * 旅から帰った 9/28 以降も表紙・`/now`・`/about` が「北欧周遊のとちゅう」、
  * 札が「旅に出て 20日目」と、日ごとに増えつづけていた。
- * 次の章（アルバニア）は日どりが決まっていないので、**待っていても始まらない。**
+ * そのときの次の章は日どりが決まっていなかったので、**待っていても始まらなかった。**
  */
 export function travelNow(now: Date = new Date()): TravelNow | null {
   if (stayNow(now)) return null;
