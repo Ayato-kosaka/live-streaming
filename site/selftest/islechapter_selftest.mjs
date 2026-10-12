@@ -78,6 +78,8 @@ const CHAPTERS_SRC = process.env.CHAPTERS_TS || join(CONTENT, "chapters.ts");
 const STATS_SRC = process.env.STATS_TS || join(CONTENT, "chapterStats.ts");
 /** 面。**字として読む**（表を自前で持っていないか） */
 const PAGE_SRC = process.env.PAGE_TSX || join(SITE, "app", "island", "[chapter]", "page.tsx");
+/** トップの紙。同じく字として読む（国の名前を書き写していないか） */
+const HOME_SRC = process.env.HOME_TSX || join(SITE, "app", "page.tsx");
 /** 判定の足を1本抜く。中身は頭のコメント */
 const BREAK = process.env.BREAK || "";
 
@@ -312,6 +314,24 @@ if (guide?.href) {
     "その行き先が、索引（sitemap.ts）にも載っている",
     sitemap.includes(`"${guide.href}"`),
     `${guide.href} が sitemap.ts に無い`,
+  );
+  /* 島に建てるだけでは足りない（送って読む人には小さな札が見つからない。#216 の裏）。
+     トップの紙にも1本引いてあるが、**そこに国の名前を書き写していない**こと。
+     書き写すと、国を越えた日に紙だけが前の国を指す（`docs/island-standards.md` 8章）。 */
+  const homeSrc = readFileSync(HOME_SRC, "utf8");
+  check(
+    "トップの紙の1本が、案内の表から字を引いている",
+    /guideOf\s*\(/.test(homeSrc),
+    "app/page.tsx が components/isle/spec.ts の GUIDES を読んでいない",
+  );
+  /* **注を落としてから見る。** あやとの言葉も、行き先の面の道も、注には出てくる。
+     見たいのは「画面に出る字」のほうだけ（`python/ts_read.py` の `code_only` と同じ）。 */
+  const code = homeSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const copied = [guide.name, guide.lead, guide.href].filter((w) => code.includes(w));
+  check(
+    "トップの紙に、国の名前や行き先が書き写されていない",
+    copied.length === 0,
+    `書き写し: ${copied.join(" / ")}`,
   );
   const isleGuide = islePlaces.filter((p) => p.href === guide.href);
   check(

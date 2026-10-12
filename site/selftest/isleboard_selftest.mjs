@@ -256,7 +256,10 @@ for (const b of boards) {
    突き合わせる。** 上書きが1文字でもあれば合わない。 */
 const FIELDS = ["label", "blurb", "note", "more", "board"];
 for (const b of boards) {
-  const again = boardPlate({ name: b.board.name, group: b.board.group });
+  /* 材料は `name` / `group` / `groups`。**棚の見出しも材料**——旅が国をまたぐと
+     棚は1つではないので（`components/isle/board.ts` の `groups`）、
+     ここで渡さないと作り直したほうだけ棚が痩せて、毎回落ちる。 */
+  const again = boardPlate({ name: b.board.name, group: b.board.group, also: b.board.groups });
   const got = JSON.stringify(FIELDS.map((f) => b[f] ?? null));
   const want = JSON.stringify(FIELDS.map((f) => again[f] ?? null));
   check(

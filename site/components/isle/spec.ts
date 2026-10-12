@@ -405,9 +405,25 @@ const BALKAN_BOARDS: { name: string; group: string }[] = [
  *
  * 行き先が本当に在るかは `site/selftest/islechapter_selftest.mjs` が数える。
  */
-const GUIDES: Record<string, { name: string; href: string }[]> = {
-  balkans: [{ name: "北マケドニア", href: "/north-macedonia" }],
+const GUIDES: Record<string, { name: string; href: string; lead: string }[]> = {
+  balkans: [
+    {
+      name: "北マケドニア",
+      href: "/north-macedonia",
+      /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
+         国を越えた日にも、何ヶ月たっても本当のことだけ。 */
+      lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",
+    },
+  ],
 };
+
+/**
+ * その章で、いま案内の面を持っている国。**無ければ `null`。**
+ *
+ * 島の札（`guidePlace`）も、島の下の紙の板（`app/page.tsx`）も、ここから引く。
+ * 国の名前を紙のほうへ書き写すと、国を越えた日に**紙だけが前の国を指す。**
+ */
+export const guideOf = (slug?: string) => (slug && GUIDES[slug]?.[0]) || null;
 
 /**
  * その章の「この国の歩きかた」。**案内の面を1枚も持たない章には建たない。**
@@ -415,7 +431,7 @@ const GUIDES: Record<string, { name: string; href: string }[]> = {
  * @param slug 章（`content/chapters.ts` の slug）
  */
 export const guidePlace = (slug?: string): IslePlaceSpec | null => {
-  const g = (slug && GUIDES[slug]?.[0]) || null;
+  const g = guideOf(slug);
   if (!g) return null;
   return {
     id: "guidebook",
@@ -461,13 +477,19 @@ export const guidePlace = (slug?: string): IslePlaceSpec | null => {
  */
 export function balkansSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
   const isle = isleSpec(c, prev, next);
-  /* **いま書ける宛先のある旅で板を建てる。** 無ければいちばん新しい旅で建てて、
-     `boardPlate` が「読むところ」として名乗る（誘いの字を出さない）。 */
-  const pick = BALKAN_BOARDS.find((b) => boardPlate(b).board.aim === "here") ?? BALKAN_BOARDS[0];
+  /* **いま書ける宛先のある国で板を名乗り、棚にはこの旅の国ぜんぶを並べる。**
+     名乗りを書ける国に寄せるのは、「◯◯でこれやって」が注文の宛先だから。
+     棚を旅ぜんぶにするのは、**畳んだ国あての付箋も、この島に来た付箋**だから——
+     片方だけにすると、アルバニアあての5枚が島から読めなくなる。
+     書ける国が1つも無ければいちばん新しい国で名乗って、`boardPlate` が
+     「読むところ」として出す（誘いの字を1文字も出さない）。 */
+  const also = BALKAN_BOARDS.map((b) => b.group);
+  const pick =
+    BALKAN_BOARDS.find((b) => boardPlate({ ...b, also }).board.aim === "here") ?? BALKAN_BOARDS[0];
   const wish: IslePlaceSpec = {
     /* **字は表から作る。** 手で書いた字をここに足さない——
        足した1行が、宛先を畳んだ日から嘘になる（`./board.ts`）。 */
-    ...boardPlate(pick),
+    ...boardPlate({ ...pick, also }),
     id: "board",
     icon: isleIcon(c.slug, "board", "lantern-hanging"),
     size: 58,

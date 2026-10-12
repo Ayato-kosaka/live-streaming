@@ -42,6 +42,15 @@ export type IsleBoardSpec = {
    */
   name: string;
   group: string;
+  /**
+   * 棚に並べる見出し、ぜんぶ。**旅が国をまたぐと、宛先は1つではない。**
+   *
+   * バルカン諸国周遊はアルバニアと北マケドニアを1つの島にしたので
+   * （`content/chapters.ts` の `balkans`）、島の板に出すのは**その旅に来た
+   * 付箋ぜんぶ**。`group`（いま書ける先）だけで絞ると、**畳んだ国あての
+   * 付箋が島から読めなくなる**——アルバニアあての5枚が実際にそうだった。
+   */
+  groups: string[];
   /** 板に並べる宛先。**読む側なので、畳んだものも入れる**（貼られた付箋は読める） */
   themes: Theme[];
   /**
@@ -75,21 +84,31 @@ const BOARD = "/board";
 /**
  * その旅の板を1枚。
  *
- * @param name 旅の名前（「アルバニア」「北欧」）。**島が名乗る字はこれだけ**
+ * @param name 旅の名前（「北マケドニア」「北欧」）。**島が名乗る字はこれだけ**
  * @param group 宛先の見出し（`content/themes.ts` の `*_GROUP`）。
  *   **誘うかどうかは、この見出しに書ける宛先が在るかで決まる**
+ * @param also この旅の、ほかの国の見出し。**読むためだけに棚へ足す。**
+ *   誘いの字はここからは作らない（畳んである国あてに「貼れる」と言わない）
  * @param now 画面が出てからの今。焼くときは渡さない（表と同じ決まり）
  */
-export function boardPlate(o: { name: string; group: string; now?: Date | null }): BoardPlate {
+export function boardPlate(o: {
+  name: string;
+  group: string;
+  also?: string[];
+  now?: Date | null;
+}): BoardPlate {
   const now = o.now ?? null;
+  /** この板が受け持つ見出し、ぜんぶ（いま書ける先が先頭） */
+  const groups = [o.group, ...(o.also ?? []).filter((g) => g !== o.group)];
   /* 並べるのは**この旅あてだけ。** あやとの言葉:「北欧周遊島の掲示板には、
      北欧周遊関連だけ見れれば良い」。企画あてを混ぜていたころ、アルバニアの
-     島に「ジョージアバイバイ」の付箋が並んでいた。 */
-  const themes = THEMES.filter((t) => t.group === o.group);
+     島に「ジョージアバイバイ」の付箋が並んでいた。
+     **旅が国をまたぐぶんは混ぜる**（`groups`）——同じ島に来た付箋なので。 */
+  const themes = THEMES.filter((t) => groups.includes(t.group));
   /** この旅あてに、いま書ける宛先。**ここだけが「誘ってよいか」を決める** */
   const here = themes.find((t) => isOpenTheme(t, now));
   /** 書ける宛先が、この旅の外にも在るか（`/board` へ送ってよいか） */
-  const away = THEMES.some((t) => t.group !== o.group && isOpenTheme(t, now));
+  const away = THEMES.some((t) => !groups.includes(t.group) && isOpenTheme(t, now));
 
   if (here) {
     return {
@@ -99,6 +118,7 @@ export function boardPlate(o: { name: string; group: string; now?: Date | null }
       board: {
         name: o.name,
         group: o.group,
+        groups,
         themes,
         aim: "here",
         blank: {
@@ -121,6 +141,7 @@ export function boardPlate(o: { name: string; group: string; now?: Date | null }
     board: {
       name: o.name,
       group: o.group,
+      groups,
       themes,
       aim: away ? "away" : "none",
       blank: {
