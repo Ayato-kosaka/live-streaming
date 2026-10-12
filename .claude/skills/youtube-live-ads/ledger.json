@@ -1,17 +1,17 @@
 {
  "checked_through": {
-  "start": 1791780073,
-  "jst": "2026-10-12 13:41",
-  "id": "yk-by7R7iPA"
+  "start": 1791814065,
+  "jst": "2026-10-12 23:07",
+  "id": "NY9pzYrA-5o"
  },
- "last_run": "2026-10-12",
+ "last_run": "2026-10-13",
  "hold": {},
  "videos": {
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
    "state": "editing",
-   "claims_left": 6,
+   "claims_left": 5,
    "history": [
     {
      "date": "2026-10-12",
@@ -48,9 +48,15 @@
      "claim": "Izp8Eh5RMTE",
      "song": "Better Alone / Ioana Ignat & Zubi",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "Y-8_2MnznFI",
+     "song": "Bad Dreams (HUGEL Extended Remix) / Teddy Swims",
+     "action": "erase"
     }
    ],
-   "why": "Better Alone / Ioana Ignat & Zubi"
+   "why": "Bad Dreams (HUGEL Extended Remix) / Teddy Swims"
   },
   "kunXt2sXnFQ": {
    "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
@@ -58,13 +64,13 @@
    "state": "error",
    "claims_left": 5,
    "history": [],
-   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "k4DxGQlkD6U": {
    "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
    "start": "2026-09-17 19:00",
    "state": "editing",
-   "claims_left": 2,
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -83,14 +89,20 @@
      "claim": "ztEFKNPJFrY",
      "song": "テルーの唄（歌集バージョン） / 手嶌 葵",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "U-O0aGYr19Y",
+     "song": "海の見える街 / ",
+     "action": "mute"
     }
    ],
-   "why": "テルーの唄（歌集バージョン） / 手嶌 葵"
+   "why": "海の見える街 / "
   },
   "f3W2JxAHsQs": {
    "title": "【二日目】親友に会いにスウェーデンまで、ビャウィストクまで",
    "start": "2026-09-13 16:23",
-   "state": "editing",
+   "state": "error",
    "claims_left": 1,
    "history": [
     {
@@ -100,7 +112,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "hrXYXcu9IDE": {
    "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで",
@@ -233,7 +245,7 @@
   "Pnbi01M0t0I": {
    "title": "土曜やしトビリシ海まで歩こか！",
    "start": "2026-07-11 21:57",
-   "state": "editing",
+   "state": "error",
    "claims_left": 6,
    "history": [
     {
@@ -255,7 +267,7 @@
      "action": "erase"
     }
    ],
-   "why": "MIRROR MIRROR [LP23] / 平井 大"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "8I2AUKaWgH4": {
    "title": "ジョージアで週末の企画会議や",
@@ -459,16 +471,22 @@
    "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
    "start": "2026-05-10 14:48",
    "state": "editing",
-   "claims_left": 34,
+   "claims_left": 33,
    "history": [
     {
      "date": "2026-10-12",
      "claim": "4tBDtQuB0G0",
      "song": "Caravan (Remastered 1993) / Nat King Cole",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "5KTBzJbp-tg",
+     "song": "Share Your Love / Amuzement Park",
+     "action": "erase"
     }
    ],
-   "why": "Caravan (Remastered 1993) / Nat King Cole"
+   "why": "Share Your Love / Amuzement Park"
   },
   "gse7fek4Cpk": {
    "title": "【5日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
@@ -494,7 +512,7 @@
   "5cWmE-KqHLA": {
    "title": "四月の月末配信じゃい！！！",
    "start": "2026-04-25 18:59",
-   "state": "error",
+   "state": "editing",
    "claims_left": 5,
    "history": [
     {
@@ -502,17 +520,23 @@
      "claim": "0tGJt6ftrNY",
      "song": "Tout Doucement (Restored Edition '25) / Blossom Dearie",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "9EW1Jre8PM0",
+     "song": "Jazz Méditerranée / Henri Salvador",
+     "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Jazz Méditerranée / Henri Salvador"
   },
   "OeptOBqm1dY": {
    "title": "ショッピングモールなう",
    "start": "2026-04-15 00:48",
-   "state": "error",
+   "state": "enable",
    "claims_left": 0,
    "history": [],
-   "why": "RuntimeError: js: {\"exceptionId\": 1, \"text\": \"Uncaught (in promise) ReferenceError: ytcfg is not defined\", \"lineNumber\": 8, \"columnNumber\": 15, \"scriptId\": \"376\", \"stackTrace\": {\"callFrames\": [{"
+   "why": "申し立てが無いのに収益化がオフ"
   },
   "65cHXjYLotA": {
    "title": "そして復活",
@@ -525,10 +549,10 @@
   "6xXbt7j8eMk": {
    "title": "5分だけ。携帯の充電がこわれたぁぁぁ😢",
    "start": "2026-03-08 22:00",
-   "state": "enable",
+   "state": "error",
    "claims_left": 0,
    "history": [],
-   "why": "申し立てが無いのに収益化がオフ"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "a47b3QbCPp8": {
    "title": "いっぬとローラースケート",
@@ -584,7 +608,7 @@
   "egwcxcu7YYw": {
    "title": "行けるとこまで行くぞおおおお",
    "start": "2026-01-23 21:59",
-   "state": "error",
+   "state": "editing",
    "claims_left": 2,
    "history": [
     {
@@ -610,9 +634,15 @@
      "claim": "dPQCJN9HWxg",
      "song": "Love Like This / Faith Evans",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "dy0eUW2LeGk",
+     "song": "Wise Woman / Jason Mraz",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "Wise Woman / Jason Mraz"
   },
   "iw-f7jtZXgs": {
    "title": "【緊急】ハッピーニューイヤー",
@@ -671,7 +701,7 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "47fQGDiMHOU": {
    "title": "みんなの感性の結晶が出来てきたな〜",
@@ -712,12 +742,12 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "kWnLiOQGhFE": {
    "title": "㊗️動画本数500本突破！！！！",
    "start": "2025-12-14 22:29",
-   "state": "error",
+   "state": "editing",
    "claims_left": 5,
    "history": [
     {
@@ -737,9 +767,15 @@
      "claim": "__UINOxTzPs",
      "song": "Jamaica Say You Will (2022 Remaster) / Jackson Browne",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "_fbdyjggCZ4",
+     "song": "Goyim Friends / The LeeVees",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "Goyim Friends / The LeeVees"
   },
   "B-HpGmWTtgA": {
    "title": "海外でアプリ作ってます",
@@ -790,7 +826,7 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "f9j0z_OcZpo": {
    "title": "【神回】ヨルダンの古都アンマン街歩き！城塞遺跡から激ウマグルメまで全部盛り☕🍴",
@@ -811,7 +847,7 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "iLNWFjrdVFw": {
    "title": "GWエジプト祭前夜！エジプト🇪🇬ピザ🍕食べました",
@@ -876,12 +912,12 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "-5Ihju_Nzgc": {
    "title": "後編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃",
    "start": "2025-03-29 01:53",
-   "state": "error",
+   "state": "editing",
    "claims_left": 11,
    "history": [
     {
@@ -895,9 +931,15 @@
      "claim": "zsMowYFRlZI",
      "song": "The Sun Shines Down on Me / Daniel Johnston",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "6X1X6XbOwxQ",
+     "song": "HEAVY FLOWERS / ",
+     "action": "mute"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "HEAVY FLOWERS / "
   },
   "BTl89GOp-QU": {
    "title": "ベルギー🇧🇪リエージュからドイツ🇩🇪ケルンに移動します 21:30~",
@@ -926,12 +968,12 @@
    "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "jCwf-vlnEiM": {
    "title": "グッズ販売開始しました〜パリのホステルで少し。",
    "start": "2025-03-14 22:39",
-   "state": "error",
+   "state": "editing",
    "claims_left": 5,
    "history": [
     {
@@ -945,9 +987,15 @@
      "claim": "3fcnahOBULY",
      "song": "This Love / Maroon 5",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "NgvyN7uv0V8",
+     "song": "I'm Like A Bird / Nelly Furtado",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "I'm Like A Bird / Nelly Furtado"
   },
   "mhw2n8CLiOM": {
    "title": "ロンドンついてウキウキしてきたので少し",
@@ -1004,7 +1052,7 @@
   "nxWncbFtsSU": {
    "title": "【神回】イギリス・スコットランドの首都エディンバラ歩き！絶景からハギスまで、歴史とグルメの贅沢旅！",
    "start": "2025-01-19 18:38",
-   "state": "editing",
+   "state": "error",
    "claims_left": 3,
    "history": [
     {
@@ -1014,7 +1062,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "S5yf_Ir50xU": {
    "title": "【神回】イギリス第三の街リーズを歩く！武器博物館や、アート、ショッピングが最高でした。ドーナツも絶品！",
@@ -1031,21 +1079,6 @@
    "claims_left": 0,
    "history": [],
    "why": "申し立てが無いのに収益化がオフ"
-  },
-  "KBlD-bDbwgA": {
-   "title": "【神回】イギリス・ロンドン街歩き配信。船乗って、博物館、美術館、丸亀製麺を見に行こう！",
-   "start": "2025-01-10 18:59",
-   "state": "editing",
-   "claims_left": 0,
-   "history": [
-    {
-     "date": "2026-10-12",
-     "claim": "wdvToK0VHCk",
-     "song": "IDEA 10 / ",
-     "action": "mute"
-    }
-   ],
-   "why": "動画編集が進行中"
   },
   "1OmH1KpsnCY": {
    "title": "【祝PC配信始動】カサ・アヤト竣工式",
@@ -1075,7 +1108,7 @@
      "action": "erase"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "ceSScIFdVuE": {
    "title": "ヨーロッパ旅が終わってしまったので1時間配信します😕",
@@ -1122,7 +1155,7 @@
   "KON8im0U6Tk": {
    "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
    "start": "2024-12-07 23:56",
-   "state": "error",
+   "state": "editing",
    "claims_left": 2,
    "history": [
     {
@@ -1136,9 +1169,15 @@
      "claim": "novN-Ww79ds",
      "song": "Feeling Good / Nina Simone",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-13",
+     "claim": "rLB765yrF8w",
+     "song": "I Wanna Dance With Somebody (Who Loves Me) (Single Version) / Whitney Houston",
+     "action": "mute"
     }
    ],
-   "why": "RuntimeError: timeout: !![...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('操作"
+   "why": "I Wanna Dance With Somebody (Who Loves Me) (Single Version) / Whitney Houston"
   },
   "aencgvAwwn4": {
    "title": "ハンガリー最終日、別れはいつも突然に😢",

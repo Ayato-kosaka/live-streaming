@@ -107,8 +107,9 @@ def main():
                 if dry:
                     row["state"] = "to-" + state
                 else:
-                    resolve_claim_ui(t, s["id"], c["title"], state)
+                    # 時間切れでも Google には届いていることがあるので、送れたかではなく試した回数で数える
                     sent += 1
+                    resolve_claim_ui(t, s["id"], c["title"], state)
                     row["state"] = "editing"
                     row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": state})
                     time.sleep(2)
