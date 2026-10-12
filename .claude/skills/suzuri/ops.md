@@ -138,13 +138,31 @@ presign を取る → lens へ送る → 画素数を書き戻す → デザイ�
 
 ## 6. 確かめる
 
-```python
-sheet(t, [id, ...], "/home/ubuntu/shots/v.jpg", cell=150)   # 1行1デザイン・5品目の見本を並べる
+**ワークフローで作る（先にこちら。EC2 も SUZURI のログインも要らない）。** 見本の絵はログイン無しの公開の URL なので、
+Actions の中で1枚に並べて成果物（`suzuri-sheet`）に置く（#741）。
+
+```text
+workflow_id: suzuri_api.yml  ref: master
+inputs: {"command": "sheet", "args": "--latest 6", "dry_run": "true"}     # 新しい6件。id を並べてもよい
 ```
 
-`ec2.py get` で持ち帰って `Read` で見る。たくさんあるときは、品目の列だけ切り出して並べ直すと見やすい
-（パネルだけ・缶バッジだけ）。**見るのは: 切れていないか／ほかと大きさがそろっているか／上下に寄っていないか。**
-見本の絵（lens）は描きたてだと 502 を返すことがある（`sheet()` は取り直す）。
+持ち帰りかた:
+
+1. `mcp__github__actions_list`（`list_workflow_run_artifacts`、その回の run id）で `suzuri-sheet` の id を引く
+2. `mcp__github__actions_get`（`download_workflow_run_artifact`）で署名付きの URL をもらう（**数分で切れる**。すぐ次へ）
+3. `bash .claude/skills/suzuri/fetch_artifact.sh '<URL>' <出し先>` → `sheet.jpg` を `Read` で見る
+
+置き場（`productionresultssa<N>.blob.core.windows.net`）はこの箱のネットワーク設定で止められていることがある。
+そのときは `fetch_artifact.sh` が EC2 に取りに行かせる（SSM だけ。ログインは使わない）。
+**EC2 で別の作業が長いコマンドを流していると、SSM は順番待ちになる**（2026-10-12 に5分以上待った）。
+
+毎晩の `characters` が作った晩は、その回の成果物に一覧がもう入っている。
+
+EC2 の Chrome で並べる形（`sheet(t, [id, ...], "/home/ubuntu/shots/v.jpg", cell=150)`）も残してある。
+ワークフローが使えないときだけ。
+
+**見るのは: 切れていないか／ほかと大きさがそろっているか／上下に寄っていないか。** 合否は機械で決めない。
+見本の絵（lens）は描きたてだと 502 を返すことがある（どちらの `sheet` も取り直す）。
 
 ## 7. 一括で回すとき
 
@@ -185,7 +203,8 @@ sheet(t, [id, ...], "/home/ubuntu/shots/v.jpg", cell=150)   # 1行1デザイン�
 | 島に新しいキャラが入った | **ワークフロー**（毎晩ひとりでに `characters`） | 5品目・大きさまで入れる |
 | あやとの絵など、1枚作る | **ワークフロー**（`create --texture <URL\|island:🦄>`） | EC2 を起こさずに済む |
 | 題・本文・利益を直す／消す／一覧 | ワークフロー（手で押す） | EC2 を起こさずに済む |
-| 絵の差し替え・見本を並べて確かめる | スキル（EC2） | 絵の差し替えは API の PUT に無い（texture は作るときだけ）。見本を並べる道具は EC2 側 |
+| 見本を並べて確かめる | **ワークフロー**（`sheet`） | 見本の絵は公開の URL。成果物に置いて持ち帰る（上の 6） |
+| 絵の差し替え | スキル（EC2） | 絵の差し替えは API の PUT に無い（texture は作るときだけ）。**EC2 の SUZURI ログインが要るのはここだけ** |
 
 手で押すとき（この箱からは `mcp__github__actions_run_trigger`）:
 

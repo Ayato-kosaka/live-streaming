@@ -63,7 +63,7 @@ for c in d["new"]:
 **毎晩ひとりでに、ワークフロー `SUZURI API` が作る**（あやとの決め #732: C 案）。取り込みの完了に繋いであり、
 島に居て題に絵文字の付いた住人グッズが無い人を、**5品目・大きさまで入れて**作る（大きさは `layout()`）。
 透過の無い人は飛ばす。大きさが入らなかったら、作りかけを消して赤で止まる（次の晩にもう一度）。
-結果は Actions の Summary に、作った人と商品ページの URL が並ぶ。
+結果は Actions の Summary に、作った人と商品ページの URL が並ぶ。作った晩は、見本の一覧が成果物 `suzuri-sheet` に入る。
 
-`/island-daily` の 1-5 では、**作られたものを目で見る**（`sheet()`）のと、`changed` `gone` `opaque` を片づける。
+`/island-daily` の 1-5 では、**作られたものを目で見る**（その回の成果物 `suzuri-sheet` を持ち帰る。ops.md 6）のと、`changed` `gone` `opaque` を片づける。
 `short`（品目が足りない住人）が出たら `finish(t, id, src)` で5品目にそろえる。
