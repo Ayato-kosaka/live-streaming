@@ -13,6 +13,9 @@ from cdp import Tab, up, pages, where, _port
 
 NAME = "chatgpt"
 BASE = "https://chatgpt.com"
+# 島の作業はここに入れる（#780 Q2: C）。あやとの履歴・メモリに混ぜないため。
+# 新しい会話は、この URL を開いて入力欄から送ると、プロジェクトの中に作られる
+PROJECT = BASE + "/g/g-p-6acd4f935b848191ba03fdbf6c8eedd2/project"
 
 
 def _browser(port):
@@ -246,10 +249,10 @@ def logged_in(t):
 
 
 if __name__ == "__main__":
-    # python3 chatgpt.py ask <問いを書いたファイル>   … 新しい会話で1往復して、返事を標準出力へ
+    # python3 chatgpt.py ask <問いを書いたファイル>   … プロジェクトの新しい会話で1往復して、返事を標準出力へ
     # 問いはファイルで渡す（SSM のコマンドに日本語や引用符を直に入れると崩れる）
     if len(sys.argv) >= 3 and sys.argv[1] == "ask":
-        t = fresh()
+        t = fresh(PROJECT)
         print(ask(t, open(sys.argv[2], encoding="utf-8").read().strip(), timeout=int(sys.argv[3]) if len(sys.argv) > 3 else 180))
     else:
         print("usage: chatgpt.py ask <file> [timeout]")
