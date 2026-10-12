@@ -8,6 +8,7 @@
     python3 python/suzuri_api.py delete  <デザインid> [--dry-run]
     python3 python/suzuri_api.py preview <商品id> --scale 0.8 [--offset-x 0] [--offset-y 0]
     python3 python/suzuri_api.py probe   0 --item can-badge --scale 0.8   # 大きさを保存できるか試す（0 = 試し用を作って消す）
+    python3 python/suzuri_api.py sheet   <デザインid…> | --latest 5         # 5品目の見本を1枚に並べる（目で見る用）
 
 鍵は環境変数 `SUZURI_API_KEY`（あやとの API キー。SUZURI の開発者画面の「API Key」）。
 
@@ -258,6 +259,64 @@ def probe(material_id, item, scale, ox=0.0, oy=0.0, items=None):
             f.write(f"### probe {material_id} {item}\n\n- 前 {before} / 送った {scale},{ox},{oy} / 後 {after}\n- **{'保存できた' if saved else '保存されなかった'}**\n")
 
 
+SHEET = os.environ.get("SUZURI_SHEET", "/tmp/suzuri-sheet/sheet.jpg")
+
+
+def _fetch(url, tries=4):
+    """見本の絵。描きたての絵は lens が 502 を返すことがある（EC2 の sheet() でも踏んだ）ので取り直す"""
+    for i in range(tries):
+        try:
+            return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "ayato-island/1.0"}), timeout=60).read()
+        except Exception as e:
+            if i == tries - 1:
+                print(f"    見本の絵が取れなかった: {e}")
+                return None
+            time.sleep(8 * (i + 1))
+
+
+def sheet(ids, out=SHEET, cell=220):
+    """デザインごとに1行、5品目の見本の絵を左から並べた1枚を作る。**合否は機械で決めない。目で見る**
+    （缶バッジ・パネルが切れていないか／ほかの住人と大きさがそろっているか／上下に寄っていないか）。
+
+    見本の絵はログイン無しで取れる公開の URL なので、EC2 の Chrome を使わずに Actions の中で作れる。
+    できた絵は Actions の成果物（artifact）に置く（ワークフローの最後の step）"""
+    from PIL import Image, ImageDraw
+    from suzuri_common import ORDER
+    label = 70
+    im = Image.new("RGB", (label + cell * len(ORDER), 24 + cell * len(ids)), "white")
+    d = ImageDraw.Draw(im)
+    for j, it in enumerate(ORDER):
+        d.text((label + j * cell + 6, 6), it, fill="black")
+    rows = []
+    for i, mid in enumerate(ids):
+        y = 24 + i * cell
+        d.text((6, y + cell // 2 - 6), f"{i + 1}\n{mid}", fill="black")
+        got = []
+        for j, it in enumerate(ORDER):
+            url = sample_url(mid, it)
+            raw = _fetch(url) if url else None
+            if not raw:
+                d.rectangle([label + j * cell + 4, y + 4, label + (j + 1) * cell - 4, y + cell - 4], outline="red", width=3)
+                got.append(f"{it}: 無い")
+                continue
+            t = Image.open(io.BytesIO(raw)).convert("RGB")
+            t.thumbnail((cell - 8, cell - 8))
+            im.paste(t, (label + j * cell + (cell - t.width) // 2, y + (cell - t.height) // 2))
+        rows.append((i + 1, mid, got))
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    im.save(out, quality=85)
+    print(f"sheet: {len(ids)} 件 -> {out}")
+    for n, mid, got in rows:
+        print(f"  {n}. {mid}" + (f"  **{' / '.join(got)}**" if got else ""))
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a") as f:
+            f.write(f"### 見本の一覧（{len(ids)} 件）\n\n成果物 `suzuri-sheet` に1枚。1行1デザイン、左から {' / '.join(ORDER)}\n\n")
+            for n, mid, got in rows:
+                f.write(f"{n}. https://suzuri.jp/ayato_arigato/{mid}/sticker/m/white" + (f" — **{' / '.join(got)}**" if got else "") + "\n")
+    return out
+
+
 def norm(e):
     return "".join(ch for ch in (e or "") if ch not in "️‍♂♀ ")
 
@@ -291,6 +350,9 @@ def characters(dry=False, items=SAFE_ITEMS, work="/tmp/suzuri"):
         made.append((c["emoji"], mid))
         time.sleep(2)
     print(f"作った {len(made)} / 透過が無くて作らなかった {len(skipped)} {''.join(skipped)}")
+    if any(mid for _, mid in made):
+        # 作ったものは、その場で見本を並べておく（目で見るのは /island-daily の 1-5）
+        sheet([mid for _, mid in made if mid])
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a") as f:
@@ -319,6 +381,7 @@ def main():
     c.add_argument("--scale", required=True); c.add_argument("--offset-x", default="0"); c.add_argument("--offset-y", default="0")
     c = sub.add_parser("probe"); c.add_argument("id", type=int); c.add_argument("--item", default="can-badge")
     c.add_argument("--scale", type=float, required=True); c.add_argument("--offset-x", type=float, default=0.0); c.add_argument("--offset-y", type=float, default=0.0)
+    c = sub.add_parser("sheet"); c.add_argument("ids", type=int, nargs="*"); c.add_argument("--latest", type=int, default=0)
     a = ap.parse_args()
 
     if a.cmd == "materials":
@@ -348,6 +411,14 @@ def main():
         st, r = call("GET", f"/products/{a.id}/placement_preview",
                      query={"scale": a.scale, "offsetX": a.offset_x, "offsetY": a.offset_y})
         print(st, r.get("previewUrl") or r)
+    elif a.cmd == "sheet":
+        ids = list(a.ids)
+        if a.latest:
+            # id は作った順に増える。新しいものから
+            ids += sorted((m["id"] for m in materials() if m.get("published")), reverse=True)[:a.latest]
+        if not ids:
+            sys.exit("デザインの id か --latest N を渡す")
+        sheet(ids)
     elif a.cmd == "probe":
         if a.id == 0:
             # 試し用のデザインを作って試し、すぐ消す。本物で試すと、API が大きさを無視したうえで
