@@ -1359,7 +1359,7 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
-| `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…） |
+| `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…）。**畳んだ宛先には新しく書けない**（`POST /stickies` が 409。写しは `functions/src/shutThemes.ts`） |
 | `text` | string | 中身（120字まで）。**改行が残る**（「改行」） |
 | `by` | string \| null | 名乗った名前（なくてもいい） |
 | `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
