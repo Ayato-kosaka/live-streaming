@@ -9,7 +9,7 @@ import Icon from "@/components/ui/IconCore";
 import ReadAgain from "@/components/me/ReadAgain";
 import { getStickies, type Sticky } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
-import type { Theme } from "@/content/themes";
+import type { IsleBoardSpec } from "./board";
 import Wrote from "@/components/ui/Wrote";
 
 /**
@@ -39,6 +39,16 @@ import Wrote from "@/components/ui/Wrote";
  * ところで、押す・書くは掲示板（`components/live/Notes.tsx`）の仕事。
  * 同じ機能を2か所に置くと、押した数がどちらで動いたのか読めなくなる。
  *
+ * ## 1枚も無いときの字は、ここに書かない（2026-10-11）
+ *
+ * ここは長く「**北欧**あての付箋は、まだ1枚も無い」「この旅に、言う →
+ * `/nordic#say`」と手で書いてあった。アルバニアの板にも同じ部品を使って
+ * いるので、**アルバニアの島で北欧の名前が出る**し、送り先も北欧だった。
+ * しかも `/nordic` の宛先はもう畳んである（`content/themes.ts` の `closed`）
+ * ので、**誘った先で貼れない。**
+ *
+ * 字は板を建てた側（`components/isle/board.ts`）が、宛先の表から作って渡す。
+ *
  * ## 読めなかったときは、読み直す道を出す（#34 #36 #43）
  *
  * 文言（「いま、付箋を読みに行けなかった」）はここにも書いてあったが、
@@ -58,10 +68,10 @@ const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 /** 1つの棚に出す枚数の上限。ここを越えたぶんは、貼ってある場所へ送る */
 const SHOW = 24;
 
-type Shelf = Theme & { items: Sticky[] };
+type Shelf = IsleBoardSpec["themes"][number] & { items: Sticky[] };
 
 /** 渡された棚に、宛先の合う付箋だけを入れる。中身の無い棚は作らない */
-function shelves(themes: Theme[], notes: Sticky[]): Shelf[] {
+function shelves(themes: IsleBoardSpec["themes"], notes: Sticky[]): Shelf[] {
   const out: Shelf[] = [];
   for (const t of themes) {
     const items = notes.filter((n) => n.theme === t.id);
@@ -70,7 +80,7 @@ function shelves(themes: Theme[], notes: Sticky[]): Shelf[] {
   return out;
 }
 
-export default function IsleBoard({ themes }: { themes: Theme[] }) {
+export default function IsleBoard({ themes, blank }: IsleBoardSpec) {
   /** 取りに行っている最中は null。0枚と区別する */
   const [notes, setNotes] = useState<Sticky[] | null>(null);
   /** 読めたかどうか。**「読んでいる最中」と「読めなかった」を混ぜない** */
@@ -151,12 +161,14 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
       <ReadAgain what="付箋" onRetry={() => setAgain((n) => n + 1)} />
     ) : (
       <div className="blank">
-        <b>北欧あての付箋は、まだ1枚も無い</b>
-        <p>行きたい場所も、やってほしいことも。いちばん乗りをどうぞ。</p>
-        <Link className="blank-go" href="/nordic#say" prefetch={false}>
-          この旅に、言う
-          <Icon name="right" size={14} />
-        </Link>
+        <b>{blank.title}</b>
+        {blank.lead && <p>{blank.lead}</p>}
+        {blank.go && (
+          <Link className="blank-go" href={blank.go.href} prefetch={false}>
+            {blank.go.label}
+            <Icon name="right" size={14} />
+          </Link>
+        )}
       </div>
     );
   }
@@ -166,20 +178,27 @@ export default function IsleBoard({ themes }: { themes: Theme[] }) {
 
   return (
     <div className="isle-board">
-      {/* 棚の選び札。厚みは1枚ずつ付ける（一面ぜんぶ押せる並びではない） */}
-      <div className="nb-tabs">
-        {list.map((s) => (
-          <button
-            key={s.id}
-            className={`nb-tab${s.id === now.id ? " is-on" : ""}`}
-            aria-pressed={s.id === now.id}
-            onClick={() => setPick(s.id)}
-          >
-            <b>{s.name}</b>
-            <i>{s.items.length}</i>
-          </button>
-        ))}
-      </div>
+      {/* 棚の選び札。厚みは1枚ずつ付ける（一面ぜんぶ押せる並びではない）。
+
+          **棚が1つのときは出さない**（2026-10-11）。押しても何も変わらない札で、
+          しかもすぐ下の見出しが同じ名前と同じ枚数を言っている。
+          「黙って何も起きない押しどころは壊れていると読まれる」
+          （`docs/island-design.md` 3-1）し、同じ字が2回ならぶ。 */}
+      {list.length > 1 && (
+        <div className="nb-tabs">
+          {list.map((s) => (
+            <button
+              key={s.id}
+              className={`nb-tab${s.id === now.id ? " is-on" : ""}`}
+              aria-pressed={s.id === now.id}
+              onClick={() => setPick(s.id)}
+            >
+              <b>{s.name}</b>
+              <i>{s.items.length}</i>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="nb-board">
         <div className="nb-head">

@@ -308,20 +308,42 @@ export async function measure(
           let k = 0;
           while (k < maxGrow && hits(cx + dx * (k + 1), cy + dy * (k + 1))) k++;
           const px = cx + dx * (k + 1), py = cy + dy * (k + 1);
-          if (k >= maxGrow) return { k, stop: "飽和" };
-          if (px < 0 || py < 0 || px >= innerWidth || py >= innerHeight) return { k, stop: "端" };
+          if (k >= maxGrow) return { k, d: k, stop: "飽和" };
+          if (px < 0 || py < 0 || px >= innerWidth || py >= innerHeight) return { k, d: k, stop: "端" };
+          /* **止まった1pxの中を、4回半分に割って境目を詰める**（1/16px まで）。
+             整数の格子だけで数えると、**ちょうど 48.00px の箱が 47 にも 49 にも
+             見える。** 箱の上端が小数の位置（例 398.08）に乗るので、格子の目が
+             箱の中に 47 個しか入らない回がある。どちらに転ぶかは、その面で
+             箱より上に何行あったかで決まる——**面の中身で合否が揺れる。**
+             2026-10-07 に 138面を回して、`/nordic/day/8` の「あと2件だす」
+             （`.longer` の `min-height: 48px`）が**1件だけ**割れた。
+             同じ `.longer` が他の面では 48 や 49 と出ていた。
+             **箱は足りていて、測り方の目が粗かった**（`docs/island-standards.md`
+             §13「不具合だと言う前に、まずその判定を疑う」）。
+             突く先は float を受けるので、目を細かくするのに掛かるのは
+             1方向あたり 4回の `elementFromPoint` だけ。 */
+          let lo = k, hi = k + 1;
+          for (let i = 0; i < 4; i++) {
+            const mid = (lo + hi) / 2;
+            if (hits(cx + dx * mid, cy + dy * mid)) lo = mid; else hi = mid;
+          }
           const e = document.elementFromPoint(px, py);
           const tap = e?.closest?.(TAP);
           const rival = tap && tap !== target && !target.contains(tap) && !tap.contains(target) ? tap : null;
           return {
-            k, stop: "要素", who: nm(e), rival: rival ? nm(rival) : "",
+            k, d: lo, stop: "要素", who: nm(e), rival: rival ? nm(rival) : "",
             rt: rival ? txt(rival) : "",
             // 相手の当たりが**自分の見た目の箱の中まで**入り込んでいるか
             inBox: rival ? px >= r.left && px <= r.right && py >= r.top && py <= r.bottom : false,
           };
         };
         const L = grow(-1, 0), R = grow(1, 0), U = grow(0, -1), D = grow(0, 1);
-        const w = L.k + R.k + 1, h = U.k + D.k + 1;
+        /* **中心から境目までの実距離を足す。** 前は当たった格子の目の数
+           （`L.k + R.k + 1`）で出していたので、同じ箱が面によって ±1px
+           ちがう値になった。上限や画面端で止まった向きは `d = k` のまま
+           ——そこは実寸ではないので「≧」を付けて読む（`fmtHit`）。 */
+        const r1 = (v) => Math.round(v * 10) / 10;
+        const w = r1(L.d + R.d), h = r1(U.d + D.d);
         const dirs = { 左: L, 右: R, 上: U, 下: D };
         const satW = L.stop === "飽和" || R.stop === "飽和";
         const satH = U.stop === "飽和" || D.stop === "飽和";
@@ -337,7 +359,16 @@ export async function measure(
           sat: [satW, satH],     // 実寸ではない（上限で止まった）
           edge: [edgeW, edgeH],  // 実寸ではない（画面の端で止まった）
           rivals,                // かぶり。隣の押しどころに止められた方向
-          small: w < min || h < min,
+          /* **合否は 1px の目で出す。測るのは 1/16px の目で。** 2つは別。
+             境目を詰めたら、`min-height: 48px` の箱が 47.8〜48.9 のあいだに
+             散った。下に来た札（`.chip`）の箱が小数の位置から始まるので、
+             0.1〜0.2px だけ食い込む回がある。
+             **0.2px は指の話ではない。** 決まり（`docs/island-design.md` 2章
+             「指で押せる最小 48px」）は CSS の px で書かれているので、
+             判定もその目で出す。測った値はそのまま印字するので、
+             「48.0 ちょうどで通った」ことは読む人に見える。
+             四捨五入でごまかせる幅は 0.5px まで。47.4 は 47 として落ちる。 */
+          small: Math.round(w) < min || Math.round(h) < min,
         });
       }
       return { rows, skipped, excluded };

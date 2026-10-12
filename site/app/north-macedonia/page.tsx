@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import { crumbOf } from "@/components/island/layout";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
+/* 付箋の板。**この面には `Notes` という自前の部品がもう在る**（下の、読みものを
+   畳んで並べるもの）ので、別の名前で読む。同じ名前にすると、どちらが出ているのか
+   読んで分からなくなる。 */
+import StickyNotes from "@/components/live/Notes";
 import NmMapSvg from "@/components/macedonia/NmMapSvg";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import {
@@ -219,6 +223,22 @@ export default function NorthMacedoniaPage() {
           <Notes items={NM_PRACTICAL} />
         </Chapter>
       </div>
+
+      {/* 付箋の板（あやと 2026-10-11「北マケドニアのボード欲しい。
+          北マケドニアのページにも表示すること」）。
+
+          **いちばん下に置く。** 上の7節は読みもので、閉じたまま2.5画面に
+          収まる。読んでから「これやって」と言う順になるので、板は読み終えた
+          先にいる。`/nordic/<国>` も `/nordic` も、同じ順で板を末尾に置いている。
+
+          地図のすぐ下に置くことも考えたが、そこに板を挟むと**この面の用事
+          （どんな国か読む）が、1画面目から書く欄に押し下げられる。**
+          書くのが用事の面は `/board` のほうで、そちらは書く欄を開いて出す。
+
+          **宛先は決まっているので、選ばせない**（`theme`）。ここまで来た人は
+          もう北マケドニアの話をしている。題は宛先の名前にそろえる
+          （`content/themes.ts` の `north-macedonia`）。 */}
+      <StickyNotes theme="north-macedonia" title="北マケドニアでこれやって" />
     </PageShell>
   );
 }

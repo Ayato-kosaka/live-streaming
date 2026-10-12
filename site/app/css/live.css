@@ -71,8 +71,15 @@
   color: var(--ink);
 }
 .nx-clock em b { display: block; font-size: 30px; line-height: 1; letter-spacing: -0.02em; margin-bottom: 1px; }
-/* 「あと」は数字の上に小さく。数字を読む邪魔をしない大きさで */
-.nx-clock em span { display: block; font-size: var(--fs-min); letter-spacing: 0.12em; opacity: 0.78; margin-bottom: 1px; }
+/* 「あと」は数字の上に小さく。数字を読む邪魔をしない大きさで。
+   **薄めない。** この札の桃は「墨をそのまま置いて 5.4 : 1」になるよう
+   紙を混ぜて決めた色で（すぐ上の註）、そこに `opacity: 0.78` を掛けると
+   **11.5px の字が 3.87 : 1** まで落ちる（2026-10-08 実測。
+   字[126,90,58] 地[255,187,190]）。`opacity` は computed の `color` に
+   出てこないので、**宣言だけ見ていると 5.4 のまま合格に見える**
+   （`CLAUDE.md`「字の色は、宣言された値ではなく描かれた画素から取る」）。
+   小ささは字の大きさと字間で出す。 */
+.nx-clock em span { display: block; font-size: var(--fs-min); letter-spacing: 0.12em; margin-bottom: 1px; }
 /* 日だけ大きく。人が見ているのは「あと何日」で、時分はその添え物 */
 .nx-clock em:first-child { min-width: 74px; }
 .nx-clock em:first-child b { font-size: 42px; }
@@ -1355,7 +1362,13 @@
 /* 宛先の選び札。**書ける宛先だけが並ぶ**（`content/themes.ts` の `openThemes`）。
    棚の札（`.nb-tab`）と同じ形にはしない。あちらは読む棚を選ぶもので、
    同じ形だと同じことをする札が上下に2組並ぶ。こちらは小さい丸札。 */
-.nt-dest { display: grid; gap: var(--sp-2); }
+.nt-dest { display: grid; gap: var(--sp-3); }
+/* 見出しひとつぶんの束（2026-10-11）。束ねかたは畳みの `.nb-group` と
+   同じ形にそろえるが、`margin-top` は持たせない——あちらは紙の面の途中に
+   いくつも並ぶので間を空けるが、こちらは `.nt-dest` の grid が間を持っている
+   （両方効かせると、束と束のあいだだけ 22px 空いて見出しが浮く）。
+   見出しの字も畳みと同じ `.nb-glabel` を使う。 */
+.nt-destg { display: grid; gap: var(--sp-2); }
 .nt-dest-l {
   font-size: var(--fs-note);
   font-weight: 900;
@@ -1416,9 +1429,13 @@
 }
 
 /* 畳んである書く欄を開く（`.nt-open`）と、しまったものを見る（`.nt-bin`。
-   **あやとだけ**）。どちらも面のいちばん下に静かに置く、同じ形の板。 */
+   **あやとだけ**）、締め切った宛先から掲示板へ送る（`.nt-shut-go`）。
+   **どれも同じ形の板。** 同じ場所に出る同じ大きさの押しどころなので、
+   見た目を1つにしておく（3つめを別の形にすると、締め切った面だけ
+   別の仕掛けに見える）。 */
 .nt-open,
-.nt-bin {
+.nt-bin,
+.nt-shut-go {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1435,7 +1452,33 @@
   cursor: pointer;
 }
 .nt-open:active,
-.nt-bin:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-bin:active,
+.nt-shut-go:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-shut-go { margin-top: 0; text-decoration: none; }
+
+/* 締め切った宛先の1行（`components/live/Notes.tsx` の `shut`）。
+   書く段のあった場所にそのまま出る——押しどころが黙って1つ消えるのを
+   避けるためのものなので、場所を変えると意味が無くなる。
+
+   **字は薄くしない。** 薄い字は「出ていないもの」の顔なので
+   （読み込み中の灰色がそれ）、読ませたい1行をそこへ寄せない。
+   押せないのは字のほうだけなので、`<p>` には厚みを付けない
+   （`docs/island-design.md` 3-3）。 */
+.nt-shut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  /* 390px では字と板が2段になる。行の間を詰めすぎると、
+     板が字にくっついて1つのものに見える */
+  margin: var(--sp-4) 0 0;
+}
+.nt-shut > span {
+  font-size: var(--fs-note);
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--ink);
+}
 
 
 /* =========================================================

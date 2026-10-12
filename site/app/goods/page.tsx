@@ -5,8 +5,16 @@ import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import CalendarTries from "@/components/goods/CalendarTries";
 import StampVotes from "@/components/goods/StampVotes";
-import { LINE_STAMPS, LINE_WANT, LINE_WORDS, STICKERS, SUZURI } from "@/content/goods";
+import {
+  CAL_WORDS,
+  LINE_STAMPS,
+  LINE_WANT,
+  LINE_WORDS,
+  STICKERS,
+  SUZURI,
+} from "@/content/goods";
 
 import "./goods.css";
 
@@ -25,13 +33,14 @@ import "./goods.css";
  *
  * ## 付箋は、欄の中に置く
  *
- * 宛先は**きのう足した3つ**（`content/themes.ts` の `goods-art` /
- * `goods-calendar` / `goods-linestamp`）。新しくは作らない。
+ * 宛先は `content/themes.ts` の `GOODS_GROUP` の束（`goods-art` /
+ * `goods-calendar` / `goods-linestamp` / `goods-suzuri`）。
+ * **数をここに書かない**——欄を1つ足した日に、この説明だけが古くなる。
  * 掲示板（`/board`）へ送らずにここで書けるのは、あやとの
  * 「該当の付箋も読み書きできる」に合わせたもの。
  *
- * **畳んで置く。** 3つぶんの書く欄を開いたまま並べると、それだけで
- * 900px を超えて、グッズそのものが画面の外へ出る
+ * **畳んで置く。** 書く欄を開いたまま並べると、1つで 300px 近く取るので、
+ * 欄の数ぶんでグッズそのものが画面の外へ出る
  * （`docs/island-design.md` 4章）。
  *
  * ## 誰がもらえるか、は1文字も書かない
@@ -131,29 +140,45 @@ export default function GoodsPage() {
         >
           {/* **1枚ぶんを決め打ちしない。** `STICKERS[0]` と書いていたので、
               2枚目を足した日に増えたのはデータだけで、面は1枚のままだった。
-              増えても減っても、ここは並べるだけにしておく */}
-          {STICKERS.map((sticker) => (
-            <div className="gd-sticker" key={sticker.id}>
-              <img
-                className="gd-stickerart"
-                src={sticker.art}
-                alt={sticker.name}
-                width={sticker.w}
-                height={sticker.h}
-              />
-              <span className="gd-stickerside">
-                <b>{sticker.name}</b>
+              増えても減っても、ここは並べるだけにしておく。
+
+              **1枚ずつ横に寝かせるのをやめて、升目にした**（2026-10-10。
+              3枚が8枚になった）。横に寝かせた形は1枚で 150px あり、
+              8枚で 1,200px——欄の頭からいちばん下の1枚まで、スマホで
+              3画面ぶん送ることになる（`docs/island-standards.md` 7章
+              「溜まっても背が変わらない形にする」）。升目なら、390px で
+              2列・広い画面で4列に折り返す。
+
+              **升目ぜんぶが押せるので、1枚ずつに厚みは付けない**
+              （`docs/island-design.md` 3-3 の例外。料理32マス・住人22マスと
+              同じ扱い。並びそのものが「押せる」の合図になる）。
+              押す場所は絵そのもの（3-1）——絵・名前・「おとす」で1つの押しどころ */}
+          <ul className="gd-stickers">
+            {STICKERS.map((sticker) => (
+              <li key={sticker.id}>
                 {/* **落ちてくるのは元絵そのまま。** 面に出しているのは小さく
                     焼いたほうで、押したときだけ大きいほうを取りにいく
                     （`content/goods.ts`）。`download` を付けるので、
                     押すと開かずに手元へ落ちる */}
-                <a className="gd-get" href={sticker.file} download={sticker.saveAs}>
-                  <Icon name="download" size={18} />
-                  おとす
+                <a className="gd-sticker" href={sticker.file} download={sticker.saveAs}>
+                  {/* 名前はすぐ下に字で出ているので、絵は飾り扱いにする
+                      （読み上げで同じ名前が2回ならぶ） */}
+                  <img
+                    className="gd-stickerart"
+                    src={sticker.art}
+                    alt=""
+                    width={sticker.w}
+                    height={sticker.h}
+                  />
+                  <b>{sticker.name}</b>
+                  <span className="gd-get">
+                    <Icon name="download" size={16} />
+                    おとす
+                  </span>
                 </a>
-              </span>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
           <Say
             theme="goods-art"
             title="自分の1枚を出す"
@@ -206,12 +231,20 @@ export default function GoodsPage() {
           icon="calendar"
           title="カレンダー"
           tag="検討中"
-          lead="壁にかけるか、机に置くか。どの月にどの写真が来るか。まだ何も決まっていません。"
+          /* **「壁にかけるか、机に置くか」はもう聞いていない。** 卓上のものを
+             作る話で動いているので、聞いているのは絵のほうだけ。
+             数（型がいくつ・何年ぶん）も、値段も寸法も書かない——
+             増えたり変わったりした日から嘘になる（`island-standards.md` 16章）。
+             仕組みの説明も1文字も置かない（同 6章） */
+          lead="どの絵のカレンダーがいいか、押して教えてください。"
         >
+          <CalendarTries />
           <Say
             theme="goods-calendar"
-            title="こんなのがほしい、を出す"
-            lead="写真も貼れる。1枚でも、12枚ぶんの案でも"
+            title="ほかの絵を出す"
+            lead="こんな絵がいい、を一言でも。写真も貼れる"
+            /* 3つの枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
+            omit={CAL_WORDS}
           />
         </Sec>
 
@@ -288,6 +321,21 @@ export default function GoodsPage() {
               <Icon name="external" size={16} />
             </span>
           </a>
+          {/* あやとの言葉（2026-10-11）:
+
+              > こんなスズリグッズが欲しい！ を書けるように付箋作って
+
+              **ほかの3つと同じ `Say`（畳んだ付箋）にそろえる。** この面の中で
+              「ほしい形を書く」の置き方が2通りあると、別の仕掛けに見える。
+
+              **ここに品ぞろえ・値段・個数を1文字も足さない**（`content/goods.ts`
+              の `SUZURI` の頭。向こうが持っているものを焼くと、変わった日から
+              嘘になる）。だから題も一行も、**書く人の側のこと**だけを言う。 */}
+          <Say
+            theme="goods-suzuri"
+            title="ほしいグッズを出す"
+            lead="こんなのがほしい、を一言でも。絵も貼れる"
+          />
         </Sec>
       </div>
     </PageShell>

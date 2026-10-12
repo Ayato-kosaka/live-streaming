@@ -76,7 +76,7 @@ export type Sticker = {
 };
 
 /**
- * いまあるステッカー。**3枚。並びもあやとが決めたとおり。**
+ * いまあるステッカー。**並びはあやとが決めたとおり。**
  *
  * 1枚目は**島でほんとうに歩いているあの絵**そのもの
  * （`public/characters/ayato.webp`。`IsleStage` が島に立てているのと同じ1枚）。
@@ -90,6 +90,19 @@ export type Sticker = {
  * **ここの並びが、あやと島カードに入れるあやとの選び先でもある**
  * （`components/cards/CardSheet.tsx`。2026-10-08 から）。1枚足せば、
  * 落とせる面とカードの両方で同時に増える。**カードの側に名簿は無い。**
+ *
+ * ## 4枚目から8枚目（あやと 2026-10-10）
+ *
+ * > あやとステッカーの付箋に来てる三つ、反映してください。クッキングと、思い出ステッカー
+ * > あとリドルのステッカー2枚、スズリの時に渡してるのでそれも反映して。
+ * > 背景透明がされてなかったらしてあげて
+ *
+ * 5枚とも**地を抜いて透過で配る**（`tools/goods/stickercut.py`）。
+ * 元絵は白い紙の上で撮ったもので、そのまま配ると白い四角が出る
+ * （3枚目で一度やった失敗。上の `hitch` のところ）。
+ *
+ * 看板の2枚だけは**青い四角ごと**配る。あれは地ではなく絵の一部で、
+ * 丸だけにすると形が崩れる。
  */
 export const STICKERS: Sticker[] = [
   {
@@ -134,7 +147,235 @@ export const STICKERS: Sticker[] = [
     w: 436,
     h: 480,
   },
+  {
+    /* **4枚目**。コック帽のあやとが、フォークとスプーンを持っている赤い丸。
+       台所の配信で効く1枚（`/kitchen` と同じ用事）。 */
+    id: "cooking",
+    name: "クッキングあやと",
+    art: "/goods/cooking.webp",
+    file: "/goods/cooking.png",
+    saveAs: "ayato-cooking.png",
+    /* 字も標識も入っていない。左を向いて立っているので、返してよい */
+    canFlip: true,
+    w: 480,
+    h: 475,
+  },
+  {
+    /* **思い出ステッカーの2枚**（ジョージア・ストックホルム）。
+       どちらも周年の丸で、行った先の名前が入っている。
+       並びは**行った順**（ジョージア → ストックホルム）。 */
+    id: "georgia",
+    name: "思い出ステッカー（ジョージア）",
+    art: "/goods/georgia.webp",
+    file: "/goods/georgia.png",
+    saveAs: "ayato-georgia.png",
+    /* 丸のふちに沿って字が入っている。返すと全部鏡字になる */
+    canFlip: false,
+    w: 480,
+    h: 479,
+  },
+  {
+    id: "stockholm",
+    name: "思い出ステッカー（ストックホルム）",
+    art: "/goods/stockholm.webp",
+    file: "/goods/stockholm.png",
+    saveAs: "ayato-stockholm.png",
+    canFlip: false,
+    w: 480,
+    h: 477,
+  },
+  {
+    /* **看板の2枚。** カラーは**青い四角ごと**が絵で、丸だけにすると形が崩れる
+       ので、四隅の透明な余白だけ落としてある（`tools/goods/stickercut.py`）。
+       **よその会社の名前は、ここにもコードにも面にも書かない**
+       （`.claude/skills/suzuri/ayato.md`、あやと 2026-10-09）。 */
+    id: "sign-color",
+    name: "みんな大好き AYATO（カラー）",
+    art: "/goods/sign-color.webp",
+    file: "/goods/sign-color.png",
+    saveAs: "ayato-sign-color.png",
+    /* 「AYATO」の字が入っている。返すと読めなくなる */
+    canFlip: false,
+    w: 480,
+    h: 480,
+  },
+  {
+    id: "sign-mono",
+    name: "みんな大好き AYATO（モノクロ）",
+    art: "/goods/sign-mono.webp",
+    file: "/goods/sign-mono.png",
+    saveAs: "ayato-sign-mono.png",
+    canFlip: false,
+    w: 479,
+    h: 480,
+  },
+  {
+    /* **ここから4枚**（あやと 2026-10-11「無帰国系、看板、ふうせん、飛行機を
+       あやとステッカーに昇格して」）。題はあやとが付箋に書いた字そのまま。
+
+       4枚とも、もとは画面を撮った絵だった。地の抜きかたは1枚ずつ違う
+       （`tools/goods/stickercut.py` の頭）——この1枚は、**生成りの板と白い紙が
+       同じ色**なので、色ではなくかたちで切ってある。 */
+    id: "noreturn",
+    name: "無帰国系",
+    art: "/goods/noreturn.webp",
+    file: "/goods/noreturn.png",
+    saveAs: "ayato-noreturn.png",
+    /* `AYATO APP / NO RETURN TRIP` の字が入っている。返すと読めなくなる */
+    canFlip: false,
+    w: 480,
+    h: 480,
+  },
+  {
+    /* 黄色い標識。**右下に、画面を撮ったときの「共有」ボタンが写り込んでいた**。
+       絵ではないので消してある（`find_share`）。 */
+    id: "sign",
+    name: "看板",
+    art: "/goods/sign.webp",
+    file: "/goods/sign.png",
+    saveAs: "ayato-sign.png",
+    /* `AYATO_APP / WORLD TRAVELING NO RETURN` の字が入っている */
+    canFlip: false,
+    w: 471,
+    h: 480,
+  },
+  {
+    id: "balloon",
+    name: "ふうせん",
+    art: "/goods/balloon.webp",
+    file: "/goods/balloon.png",
+    saveAs: "ayato-balloon.png",
+    /* `NO RETURN AYATO APP / 2026` の字が入っている */
+    canFlip: false,
+    w: 480,
+    h: 407,
+  },
+  {
+    /* **「背景透明が漏れてる」の本体**（あやと 2026-10-11）。
+       透明をあらわす灰色の市松が、絵として焼き込まれていた。落としてある。 */
+    id: "plane",
+    name: "飛行機",
+    art: "/goods/plane.webp",
+    file: "/goods/plane.png",
+    saveAs: "ayato-plane.png",
+    /* `NO RETURN AYATO APP / 2026` の字が入っている */
+    canFlip: false,
+    w: 480,
+    h: 319,
+  },
 ];
+
+/**
+ * カレンダーの試作、1つの型。
+ *
+ * あやとの言葉（2026-10-10）:
+ *
+ * > カレンダー、何パターンか試作してみて みんなの反応見てみようか
+ * > ・添付画像みたいなイラストが良いのか
+ * > ・あやと島カードしてるみたいな海外の風景が良いのか
+ * > ・配信のアーカイブのスクショが良いのか
+ * > いいねで反応見れるように作ってください
+ *
+ * **差し戻しで、1つの型につき1枚になった**（あやと 2026-10-10、#759）:
+ *
+ * > またそれぞれの例は一つで良い
+ * > カレンダー例のやつ、もっとスズリに合わせないとイメージつかないよ。
+ * > 正方形にもなってないし
+ *
+ * 押して答えてもらうのは「イラストか、風景か、スクショか」の3つに1つなので、
+ * 同じ型を2枚見せても、決められることは増えない。**1枚を大きく見せる。**
+ *
+ * **絵は焼いたものを置くだけ**（`site/public/goods/calendar/`）。
+ * ここに書くのは、どの絵をどの名前で並べて、どの字にいいねを当てるか。
+ */
+export type Calendar = {
+  /** 変えない。焼いた絵のファイル名になる */
+  id: string;
+  /** 面に出す名前 */
+  name: string;
+  /**
+   * いいねの鍵。**付箋の字そのもの**（`components/goods/wordVotes.tsx` と
+   * 同じ当て方）。**3つとも違う字**で、**LINEスタンプのセリフと
+   * かぶらせない**——かぶると、別の欄のいいねを数える
+   * （`site/selftest/calendar_selftest.mjs` が毎 PR で見ている）。
+   *
+   * **一度出した字は変えない。** もう押されたいいねは、この字そのものを
+   * 鍵に数えている。書き換えると、それまでのいいねが迷子になる。
+   */
+  vote: string;
+  /**
+   * 試作の絵。**配列だが、入るのは1枚だけ**
+   * （2枚目は `calendar_selftest.mjs` が赤くする）。
+   *
+   * 足したくなったら、足す前に面のほうを見る——いまの面は1枚を板の幅
+   * いっぱいに出す形で、2枚目を足すと下へ積まれるだけになる。
+   */
+  shots: { src: string; alt: string }[];
+};
+
+/**
+ * 試作1枚の寸法。**3つとも同じなので、1枚ずつに書かない。**
+ *
+ * 立てたカレンダー1台の正面（上にリング、左に正方形の絵、右に暦、下にスタンド）を
+ * そのまま焼いてある。場所を先に取るために要る（`<img>` の `width` / `height`。
+ * 入れておかないと、絵が届いた瞬間に3つぶんの行が飛ぶ。
+ * `docs/island-standards.md` 7章）。
+ */
+export const CAL_SHOT_W = 890;
+export const CAL_SHOT_H = 760;
+
+/**
+ * 並べる試作。**1つの型につき1枚。**
+ *
+ * **絵の名前は `<id>.webp`。**
+ */
+export const CALENDARS: Calendar[] = [
+  {
+    id: "illust",
+    name: "イラスト",
+    vote: "イラストのカレンダー",
+    /* `alt` は**写っているものだけを言う**（`SUZURI` の `shots` と同じ作法）。
+       何月かは言わない——焼き直して別の月になった日から嘘になる */
+    shots: [
+      {
+        src: "/goods/calendar/illust.webp",
+        alt: "立てて置くカレンダー。上にリング、左にあやとのイラスト、右に暦",
+      },
+    ],
+  },
+  {
+    id: "scene",
+    name: "海外の風景",
+    vote: "海外の風景のカレンダー",
+    shots: [
+      {
+        src: "/goods/calendar/scene.webp",
+        alt: "立てて置くカレンダー。上にリング、左に海外の街の写真、右に暦",
+      },
+    ],
+  },
+  {
+    id: "archive",
+    name: "配信のスクショ",
+    vote: "配信のスクショのカレンダー",
+    shots: [
+      {
+        src: "/goods/calendar/archive.webp",
+        alt: "立てて置くカレンダー。上にリング、左に配信のスクリーンショット、右に暦",
+      },
+    ],
+  },
+];
+
+/**
+ * 型の字だけ。**付箋の中から「この型のこと」を見分けるのに使う**
+ * （`LINE_WORDS` と同じ役。`Notes` の `omitTexts` にも渡す——
+ * 枠のほうで出ているので、一覧に同じ字が2回ならばないように）。
+ *
+ * **その場で `map` せずにここから渡す。** 画面の中で組むと、毎回新しい
+ * 配列に見えて数え直しが止まらない。
+ */
+export const CAL_WORDS = CALENDARS.map((c) => c.vote);
 
 /**
  * LINEスタンプの1枚。
@@ -152,8 +393,23 @@ export const STICKERS: Sticker[] = [
 export type LineStamp = {
   /** 変えない。焼いた絵のファイル名になる */
   id: string;
-  /** スタンプの一言 */
+  /** スタンプの一言。**絵の中の字そのまま。** 枠に出るのも、押すとハートが立つのもこれ */
   line: string;
+  /**
+   * 同じスタンプを指す、**ほかの字**。読むだけで、押しても立たない。
+   *
+   * いいねは付箋の字に当たっている（`components/goods/wordVotes.tsx`）ので、
+   * **字が変わると、すでに付いているいいねが迷子になる。** 提案のときの
+   * 言い方で付箋が立っていて、あとから届いた絵の字がそれと少し違う、
+   * ということが起きる（2026-10-11 の3枚で2枚がそう——
+   * 「サプラ〜イズ！！」→「サプラーイズ！」、
+   * 「にわかには信じられへん」→「にわかに信じられへん」）。
+   *
+   * 絵のとおりの字を `line` に置いて、**前の言い方をここに残す。**
+   * いいねの数は `line` と `also` を足して出すので、迷子にならない。
+   * 字が変わっていないものには要らない。
+   */
+  also?: string[];
   /** 焼いた絵。**まだ届いていないあいだは書かない** */
   art?: string;
 };
@@ -168,7 +424,7 @@ export type LineStamp = {
 export const LINE_PENDING = "/goods/line/pending.webp";
 
 /**
- * あやとのぶん。**いま19枚**（`LINE_WANT` は 15。**候補が行き先より多い**。
+ * あやとのぶん。**いま22枚**（`LINE_WANT` は 15。**候補が行き先より多い**。
  * あやと 2026-10-09:「住人スタンプ削るか、良いね数見てあやとスタンプ削るかで40にしますよ」）。
  *
  * 並べ替えない——「おはよう・こんばんは・おやすみ」で1日が回って、
@@ -199,6 +455,29 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "pachipachi", line: "パチパチ", art: "/goods/line/pachipachi.webp" },
   /* 気持ちのかたまりの中。「すごいよ」の次に、もう一段上げる一言 */
   { id: "nextlevel", line: "ネクストレベル", art: "/goods/line/nextlevel.webp" },
+  /* **知らせの3枚**（あやと 2026-10-11）。気持ちのかたまりのしまいに置いた。
+     ここまでが自分の気持ちで、ここから先は相づち——そのつなぎ目が
+     「知らせを切り出して、受ける」という形になっている:
+     いい知らせ（サプラーイズ！）→ わるい知らせ（悲報なんやけど）→
+     受けて驚く（にわかに信じられへん）→ そのまま相づち（いいやんか…）。
+
+     **`also` は、付箋がその字で立っているから置いてある。** 絵が届く前に
+     提案の言い方で付箋が立っていて、絵の字と2枚ぶん食い違った
+     （`LineStamp` の `also` の説明）。絵のとおりを `line` にして、
+     前の言い方を `also` に残してある。 */
+  {
+    id: "surprise",
+    line: "サプラーイズ！",
+    also: ["サプラ〜イズ！！"],
+    art: "/goods/line/surprise.webp",
+  },
+  { id: "hihou", line: "悲報なんやけど", art: "/goods/line/hihou.webp" },
+  {
+    id: "shinjirarehen",
+    line: "にわかに信じられへん",
+    also: ["にわかには信じられへん"],
+    art: "/goods/line/shinjirarehen.webp",
+  },
   { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
   /* 相づちのかたまり。「いいやんか」の次に、締めの一言 */
   { id: "hona", line: "ほな", art: "/goods/line/hona.webp" },
@@ -212,8 +491,25 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "oumaiga", line: "おーまいがー", art: "/goods/line/oumaiga.webp" },
 ];
 
-/** スタンプの一言だけ。付箋の中から「この一言のこと」を見分けるのに使う。 */
-export const LINE_WORDS = LINE_STAMPS.map((s) => s.line);
+/**
+ * いいねを数える1枠ぶん。**先頭が押す字**（枠に出るのもこれ）で、
+ * 2つ目から先は**同じスタンプを指すほかの字**（読むだけ）。
+ *
+ * `wordVotes.tsx` に渡すのはこちら。**その場で組まない**——画面の中で
+ * `map` すると、毎回新しい配列に見えて数え直しが止まらない。
+ */
+export const LINE_VOTES: string[][] = LINE_STAMPS.map((s) => [
+  s.line,
+  ...(s.also ?? []),
+]);
+
+/**
+ * スタンプを指す字、ぜんぶ。付箋の中から「この一言のこと」を見分けるのに使う。
+ *
+ * **`also` も入れる。** `Notes` の `omitTexts` に渡しているので、
+ * 落とすと**同じスタンプを指す付箋が、一覧にもう一度並ぶ**。
+ */
+export const LINE_WORDS = LINE_VOTES.flat();
 
 /**
  * あやとのぶんを、最後に何枚にするか。

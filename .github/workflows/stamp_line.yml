@@ -39,6 +39,19 @@ name: スタンプのことば
 # **入力に名簿もことばも取る口を作らない**（`workflow_dispatch` の入力は
 # 公開のログに出る）。あちらは `repository_dispatch` の `client_payload` だけ。
 #
+# ## 採点表（`check`）も `client_payload` だけ
+#
+# 2026-10-10 から、あやとが #716 で挙げた名セリフを渡せる
+# （`suggest` の下見が「しきいを変えると何本当たるか」を数え、
+# `table` が「出たか・落ちたか・データに無いか」を表にする）。
+#
+#   {"event_type":"stamp-line",
+#    "client_payload":{"op":"table","apply":true,
+#      "check":[{"name":"…","lines":["…"],"words":["…"]}]}}
+#
+# **名前とことばの組なので、`workflow_dispatch` の入力には取らない**
+# （入力は公開のログに出る）。ジョブの頭で1件ずつ伏せ字にする。
+#
 # ## `table` だけが、名前とことばを外へ出す
 #
 # あやと（2026-10-09）:
@@ -106,14 +119,17 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          # 名簿（`picks`）と、**手で直したことば（`fix[].lines[]`）**の
-          # 両方を伏せる。あとから足した `arrange` を入れ忘れると、
-          # ことばが素通りする道が1本できる
+          # 伏せるのは3つ。名簿（`picks`）・**手で直したことば
+          # （`fix[].lines[]`）**・**採点表（`check[]`。あやとが
+          # 「この字が名セリフだ」と挙げた、名前とことばの組）**。
+          # あとから足したものを入れ忘れると、そこだけ素通りする道ができる
           if ! raw="$(jq -r '
             [ (.client_payload.picks // [])[],
               (.inputs.picks // [])[],
               ((.client_payload.fix // [])[] | (.id, ((.lines // [])[]
-                 | (.text, .from)))) ]
+                 | (.text, .from)))),
+              ((.client_payload.check // [])[]
+                 | (.name, ((.lines // [])[]), ((.words // [])[]))) ]
             | map(select(type == "string"))
             | .[]
           ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then

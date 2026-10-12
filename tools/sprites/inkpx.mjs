@@ -311,8 +311,15 @@ async function bail(msg) {
 async function run(base, path, miss) {
   /* **面ごとに新しいタブ。** 同じタブで撮り続けると、背の高い面で
      描画のプロセスが落ちる（`shotstable.mjs` と同じ理由） */
-  const p = await ctx.newPage();
+  /* **タブを開くところも try の中。** ブラウザごと落ちたとき、ここが外に
+     あると `browserContext.newPage: Target page, context or browser has been
+     closed` が**捕まらない例外**になって、道具が数を1つも出さずに死ぬ。
+     2026-10-07 に 134面を一息で回したとき、75面目のあとで実際にそうなった
+     （`tapink.mjs` はそれ以来、面を小分けにして子を起こす）。
+     落ちたことは「測れなかった面」として数に残す——**黙って終わらない。** */
+  let p;
   try {
+    p = await ctx.newPage();
     /* **素のパスで開かない。** 静的に配ると `/map` は 301 して
        `python3 -m http.server` の**ディレクトリ一覧**を返す。黒字に白地なので
        濃さは楽に 4.5 を越え、**一覧の字を測って「読める」と報告していた**
@@ -443,7 +450,7 @@ async function run(base, path, miss) {
     miss.push(`${path}（撮れなかった: ${String(e).split("\n")[0].slice(0, 80)}）`);
     return null;
   } finally {
-    await p.close().catch(() => {});
+    await p?.close().catch(() => {});
   }
 }
 

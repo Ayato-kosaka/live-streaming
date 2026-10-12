@@ -1844,6 +1844,21 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "0BqO781Gq2Q",
         "title": "アルバニアでチーズケーキの材料買いに行こー！！",
         "date": "2026-10-08"
+      },
+      {
+        "videoId": "yGEacTlskmY",
+        "title": "アルバニアでチーズケーキつくろか！",
+        "date": "2026-10-09"
+      },
+      {
+        "videoId": "xNWJQCt3SLc",
+        "title": "アルバニアの湖いこか！",
+        "date": "2026-10-10"
+      },
+      {
+        "videoId": "2ij1R53ifcU",
+        "title": "アルバニアで髭剃り探しにいこ！",
+        "date": "2026-10-11"
       }
     ]
   }

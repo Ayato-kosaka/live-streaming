@@ -250,8 +250,15 @@ const bail = async (msg) => { console.log(msg); shots.close(); await b.close(); 
 async function bandRun(base, path, miss) {
   /* **面ごとに新しいタブ。** 同じタブで撮り続けると、背の高い面で
      描画のプロセスが落ちる（`shotstable.mjs` と同じ理由） */
-  const p = await ctx.newPage();
+  /* **タブを開くところも try の中。** ブラウザごと落ちたとき、ここが外に
+     あると `browserContext.newPage: Target page, context or browser has been
+     closed` が**捕まらない例外**になって、道具が数を1つも出さずに死ぬ。
+     2026-10-07 に 134面を一息で回したとき、75面目のあとで実際にそうなった
+     （`tapink.mjs` はそれ以来、面を小分けにして子を起こす）。
+     落ちたことは「測れなかった面」として数に残す——**黙って終わらない。** */
+  let p;
   try {
+    p = await ctx.newPage();
     const got = await openChecked(p, base, path, { miss, waitUntil: "networkidle", timeout: 60000 });
     if (!got.ok) return null;
     await p.waitForTimeout(1500);
@@ -306,7 +313,7 @@ async function bandRun(base, path, miss) {
     miss.push(`${path}（撮れなかった: ${String(e).split("\n")[0].slice(0, 80)}）`);
     return null;
   } finally {
-    await p.close().catch(() => {});
+    await p?.close().catch(() => {});
   }
 }
 

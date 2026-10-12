@@ -106,7 +106,7 @@ export default function IsleSheet({
 
         {/* 掲示板。北欧あての宛先だけを渡す（`spec.ts` の `nordicThemes`）。
             仕分けは付箋が持っている宛先（`theme`）そのもの */}
-        {place.board && <IsleBoard themes={place.board} />}
+        {place.board && <IsleBoard {...place.board} />}
 
         {place.items && (
           <ul className="isle-list">
