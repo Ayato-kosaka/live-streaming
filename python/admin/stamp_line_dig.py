@@ -48,10 +48,24 @@
 ## 名前を `workflow_dispatch` の入力に取らない
 
 誰を掘るかは**名前の並び**なので、それ自体が「選ばれた25人の一部」。
-渡すのは `repository_dispatch` の `client_payload` だけ
+名前で指すときは `repository_dispatch` の `client_payload` だけ
 （`workflow_dispatch` の入力は公開のログに出る）。
 
-入力（`client_payload`。`apply` と `issue` は ARGS でもよい）:
+**そのうえで、名前を1つも渡さずに押せる道をつけてある。**
+`who` を省くと、**まだ決まっていない人**——`suggested` が2本以上
+残っていて、本人も `lines` を書いていない人——を自分で集める。
+
+決まった人は `stamp_line_arrange` が**1本だけ**置くので、
+「2本以上残っている＝まだ決めかねている」が入れ物の中だけで分かる。
+**名前を入力に取らずに、決めかねている人だけを掘れる**のがこの道の値打ちで、
+`workflow_dispatch` から押せるのもそのため。
+
+`words`（探す語）は**名前ではない**ので、入力に取ってよい。
+その語で探した結果は、どのみち issue の表に出る。
+
+入力（`client_payload`。`apply` `issue` `top` `wide` `words` は ARGS でもよい）:
+  {}                        … **まだ決まっていない人**をぜんぶ掘る
+  {"words": ["好き", …]}    … 掘る人ぜんぶに、同じ語で探す
   {"who": [{"name": "<図鑑の呼び名>",
             "words": ["探す語", …],   … 省くと語では探さない
             "pool": false}],          … 省くと「その人だけ」も出す
@@ -60,6 +74,7 @@
 """
 
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -106,6 +121,57 @@ MAX_PEOPLE = 20
 
 # 1人につき探せる語の数
 MAX_WORDS = 12
+
+# **まだ決めかねている人**の見分け。`suggested` がこの本数以上
+# 残っていれば、まだ1本に絞れていない（決めた人は1本だけ置かれる）
+MIN_LEFT = 2
+
+
+def shape_words(v) -> list:
+    """掘る人ぜんぶに当てる語。
+
+    Args:
+        v: 渡されたもの（`words`。並びか、読点・コンマ区切りの1本）
+
+    Returns:
+        語の並び
+    """
+    if isinstance(v, str):
+        v = re.split(r"[,、\s]+", v)
+    if not isinstance(v, list):
+        return []
+    return [x.strip() for x in v
+            if isinstance(x, str) and x.strip()][:MAX_WORDS]
+
+
+def left_of(rows: list, words: list) -> list:
+    """**まだ決まっていない人**を、入れ物から集める。
+
+    名前を1つも渡されなかったときの相手。`suggested` が2本以上残って
+    いて、本人も `lines` を書いていない人が「まだ決めかねている人」。
+
+    **ここが名前を入力に取らずに済ませる唯一の道。** 名簿を渡すと、
+    渡した並びそのものが「選ばれた25人の一部」になる。
+
+    Args:
+        rows: `stamp_line_table.fetch_rows()` の結果
+        words: 掘る人ぜんぶに当てる語
+
+    Returns:
+        `[{"name", "words", "pool"}]`（名前順）
+    """
+    out = []
+    for r in sorted(rows, key=lambda r: (r.get("name") or "￿", r["id"])):
+        if not r.get("name") or not r.get("channelId"):
+            continue
+        if r.get("lines"):
+            # **本人が決めている人は掘らない。** 本人の字が勝つので、
+            # 候補を増やしても出番が無い
+            continue
+        if len(r.get("suggested") or []) < MIN_LEFT:
+            continue
+        out.append({"name": r["name"], "words": list(words), "pool": True})
+    return out[:MAX_PEOPLE]
 
 
 def shape(v) -> list:
@@ -383,19 +449,26 @@ def main() -> int:
     top = int(a.get("top") or TOP)
     wide = int(a.get("wide") or WIDE)
 
+    words = shape_words(a.get("words"))
     who = shape(a.get("who"))
-    if not who:
-        log.error("who がありません（名前の並びを client_payload で"
-                  "渡してください）")
-        return 2
-    log.info("掘る相手: %d 人 / 語で探す: %d 語",
-             len(who), sum(len(o["words"]) for o in who))
+    log.info("渡された相手: %d 人 / ぜんぶに当てる語: %d 語",
+             len(who), len(words))
 
     rows = fetch_rows(db())
     if not rows:
         log.error("`islandStampLine` が空です。"
                   "先に stamp_line_seed を流してください")
         return 1
+    if not who:
+        # **名前を渡されていないなら、まだ決まっていない人を自分で集める。**
+        # 名簿を入力に取らずに済ませる道（`workflow_dispatch` から押せる）
+        who = left_of(rows, words)
+        log.info("名前が渡されていないので、**まだ決まっていない人**を"
+                 "入れ物から集めました: %d 人", len(who))
+    if not who:
+        log.error("掘る相手がいません（まだ決まっていない人が0人）。"
+                  "名前で指すなら client_payload の who に渡してください")
+        return 2
     pairs, lost = match(who, rows)
     if lost:
         log.warning("名前から引けなかった %d 人（指紋: %s）",

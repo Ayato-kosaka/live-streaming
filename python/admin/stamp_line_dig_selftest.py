@@ -32,8 +32,14 @@ issue に貼る。** そのうえで、**門を外して**引くのがここだ�
   8. **こちらが剥がした切れ端は出さない**（1行まるごと打った字だけ）
   9. 並びは**回数の多い順**で、**点は1つも出さない**
   10. **名前から引けない人は数えて返す**（黙って落とさない）
-  11. `who` が空なら **2 で止まる**（0人と「読めなかった」を混ぜない）
-  12. ログと注記に、**名前もことばも探した語も1文字も出ない**
+  11. **名前を1つも渡さなくても掘れる**——`suggested` が2本以上
+      残っている人（＝まだ決めかねている人）を入れ物から集める。
+      **本人が `lines` を書いた人と、1本に決まった人は掘らない**
+      （`workflow_dispatch` から押すための道。名簿を入力に取らない）
+  12. `words` を1本の字（読点区切り）で渡しても、掘る人ぜんぶに当たる
+  13. 掘る相手が1人もいなければ **2 で止まる**（0人と「読めなかった」を
+      混ぜない）
+  14. ログと注記に、**名前もことばも探した語も1文字も出ない**
 
 終了コード: 0=通った / 1=落ちた
 """
@@ -155,6 +161,31 @@ def fake_db() -> FakeDb:
     })
 
 
+def left_db() -> FakeDb:
+    """**まだ決まっていない人**を見分けるための偽の Firestore。
+
+    Returns:
+        偽の Firestore
+    """
+    return FakeDb({
+        "islandStampLine": {
+            # まだ決めかねている（候補が2本以上残っている）
+            DOC["a"]: {"channelId": CH["a"],
+                       "suggested": [MINE_A1, MINE_A2]},
+            # **もう1本に決まった人**（`arrange` が置いたあとの姿）
+            DOC["b"]: {"channelId": CH["b"], "suggested": [SHARED]},
+            # **本人が決めた人**（本人の字が勝つので掘らない）
+            DOC["c"]: {"channelId": CH["c"], "lines": ["きめた"],
+                       "suggested": [MINE_A1, MINE_A2]},
+        },
+        "islandCharacter": {
+            DOC["a"]: {"emoji": "🐧", "aliases": [NAME_A]},
+            DOC["b"]: {"emoji": "🦔", "channelName": NAME_B},
+            DOC["c"]: {"emoji": "🐢", "aliases": [NAME_C]},
+        },
+    })
+
+
 def bqrows() -> list:
     """偽の数え上げ。`(チャンネルID, 字, 回数, 日数)`。
 
@@ -204,6 +235,32 @@ WHO = [{"name": TYPED_A, "words": [WORD_HIT, WORD_MISS]},
        {"name": NONAME},
        # チャンネルIDの無い人（数えるものが無い）
        {"name": NAME_C}]
+
+
+def run_left(words=None, data=None) -> tuple:
+    """**名前を1つも渡さずに**動かす。
+
+    Args:
+        words: 掘る人ぜんぶに当てる語
+        data: 偽の Firestore
+
+    Returns:
+        (終了コード, 偽の Firestore)
+    """
+    POSTED.clear()
+    fake = data if data is not None else left_db()
+    dig.db = lambda: fake
+    dig.island = lambda days: bqrows()  # noqa: ARG005
+    dig.post = fake_post
+    body = {"apply": True}
+    if words is not None:
+        body["words"] = words
+    fd, path = tempfile.mkstemp(suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"client_payload": body}, f)
+    os.environ["GITHUB_EVENT_PATH"] = path
+    os.environ["ARGS"] = "{}"
+    return dig.main(), fake
 
 
 def run(apply: bool, who=None, data=None) -> tuple:
@@ -282,9 +339,28 @@ def main() -> int:
     check("2人は名前から引けませんでした" in body,
           "**名前から引けない人を、黙って落とさず数えて書く**")
 
+    print("== 名前を渡さずに掘る ==")
+    rc, fake = run_left()
+    check(rc == 0 and len(POSTED) == 1, "名前を1つも渡さなくても掘れる")
+    left = POSTED[0][1] if POSTED else ""
+    check(NAME_A in left,
+          "**候補が2本以上残っている人**（まだ決めかねている人）は掘る")
+    check(NAME_B not in left,
+          "**もう1本に決まった人は掘らない**")
+    check(NAME_C not in left,
+          "**本人が決めた人は掘らない**（本人の字が勝つ）")
+    check(fake.writes == [], "ここでも Firestore に1バイトも書かない")
+
+    rc, fake = run_left(words=f"{WORD_HIT}、{WORD_MISS}")
+    left = POSTED[0][1] if POSTED else ""
+    check(rc == 0 and f"「{WORD_HIT}」" in left,
+          "**読点区切りの1本でも、語として受け取る**")
+    check("1本もありません" in left, "無かった語も、掘る人ぜんぶに当てる")
+
     print("== 入力が足りない ==")
     rc, fake = run(apply=True, who=[])
-    check(rc == 2 and not POSTED, "**who が空なら 2 で止まる**")
+    check(rc == 2 and not POSTED,
+          "**掘る相手が1人もいなければ 2 で止まる**")
     rc, fake = run(apply=True, who="これは並びではない")
     check(rc == 2 and not POSTED, "**形が違えば 2 で止まる**")
     rc, fake = run(apply=True, who=[{"name": NONAME}])
