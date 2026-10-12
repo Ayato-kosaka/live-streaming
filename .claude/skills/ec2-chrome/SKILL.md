@@ -30,6 +30,7 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 | `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`・`state`/`start`/`stop` |
 | `ec2_exec.sh` | 手元 | **起こして → 実行して → 必ず止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ）。実行の前に `cdp.py` を EC2 へ置き直す |
 | `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
+| `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む（`chatgpt` スキル） |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
 
 **`ec2.py run` と `ec2_exec.sh` の使い分け:** 箱がもう起きている（あやとが入っている・何回にも分けて触る）
@@ -76,6 +77,13 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   入っていることがある（2026-10-09 は `running` で、既定のプロファイルの Chrome が開いていた）。
   **そのときは止めない。** 自分で起こしたときだけ、終わったら `ec2.py stop` で止める
 - `/tmp` は止めると消える。持ち越すものは `/home/ubuntu/` の下に置く
+- **待つあいだに止めるかは、待ちの長さで決める**（あやと 2026-10-12「回答まちはインスタンス落とすか、
+  そこまでするほどではないか考えて」）。箱は t3.medium で1時間 約8円。起こし直しは1〜2分 + Chrome の起動
+  + SSM が繋がるまでで、`/tmp` と開いていたタブも消える
+  - **サイトの返事・処理の待ち（数秒〜数十分）は止めない。** 止めても数円しか浮かず、起こし直しの時間を払う
+  - **人の返事の待ち（ログインしてもらう・issue で聞いた）は止める。** いつ来るか分からないので、
+    1日つけっぱなしで約200円になる。あやとに EC2 で何かしてもらうときは「止めてあるので起こしてから入って」と書く
+  - 止める前に、開いた Chrome は `down(名前)` で閉じる（セッションを書き戻させる）
 
 ## 3. プロファイル
 
