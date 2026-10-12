@@ -110,7 +110,11 @@ def capture(t, url=None, match="youtubei/v1/", wait=10, act=None):
         m, p = e.get("method"), e.get("params", {})
         if m == "Network.requestWillBeSent" and match in p["request"]["url"]:
             reqs[p["requestId"]] = {"url": p["request"]["url"].split("?")[0].split("youtubei/v1/")[-1],
-                                    "post": p["request"].get("postData", "")}
+                                    "post": p["request"].get("postData", ""),
+                                    "headers": sorted(p["request"].get("headers", {}))}
+        elif m == "Network.requestWillBeSentExtraInfo" and p.get("requestId") in reqs:
+            # Cookie や Authorization は値を持ち帰らない（名前だけ）
+            reqs[p["requestId"]]["headers"] = sorted(set(reqs[p["requestId"]]["headers"]) | set(p.get("headers", {})))
         elif m == "Network.responseReceived":
             status[p["requestId"]] = p["response"]["status"]
     out = []
@@ -250,6 +254,7 @@ def claim_summary(c):
             "dur": int(m.get("longestMatchDurationSeconds") or 0),
             "options": [o.replace("NON_TAKEDOWN_CLAIM_OPTION_", "") for o in act.get("options", [])],
             "mute_ok": act.get("claimResolutionEligibility", {}).get("segmentMuteEligibility", "").replace("EFFECT_ELIGIBILITY_", ""),
+            "erase_ok": act.get("claimResolutionEligibility", {}).get("waveformEraseEligibility", "").replace("EFFECT_ELIGIBILITY_", ""),
             "not_actionable": act.get("claimNotActionableReason", "").replace("CLAIM_NOT_ACTIONABLE_REASON_", "")}
 
 
@@ -271,19 +276,64 @@ def claim_segments(t, video_id, claim_id):
             if m.get("matchType") == "CLAIM_MATCH_TYPE_AUDIO" and "videoSegment" in m]
 
 
-def mute_claim(t, video_id, claim_id):
-    """申し立て1件を「申し立てを受けたセグメントのすべての音をミュート」で対応する。
+# ---- 画面を押して申し立てに対応する ----
+# api() から video_editor/edit_video を送ると、200 の空 {} が返って何も起きない（2026-10-12 に49本ぶん踏んだ）。
+# 画面の要求に合わせて context.user の委任（DELEGATION_CONTEXT ほか）と、ヘッダーの
+# X-YouTube-Delegation-Context / Client-Name / Client-Version / X-Goog-Visitor-Id を足しても同じだった。
+# 画面から押すと通るので、書き込みは画面で押す。読み取りは api() でよい
+def _wait(t, js, secs=20):
+    end = time.time() + secs
+    while time.time() < end:
+        if t.js(js):
+            return True
+        time.sleep(0.5)
+    raise RuntimeError(f"timeout: {js[:100]}")
 
-    画面の 対応する → 曲を消去する → 次へ → 「…すべての音をミュートします」→ 保存 →
-    「恒久的であることを理解しました」→ 変更を確定 が送っているものと同じ（2026-10-10 に画面で押して写した）。
-    **元に戻せない。** 送ると動画は「動画編集が進行中です…」になり、終わるまで次の申し立てに触れない。
-    戻り値は送った区間"""
-    segs = claim_segments(t, video_id, claim_id)
-    if not segs:
-        raise RuntimeError(f"{video_id} {claim_id}: 一致した区間が無い")
-    r = api(t, "video_editor/edit_video", {"externalVideoId": video_id, "videoEdit": {"claimEditChange": {
-        "addRemoveSongEdit": {"claimId": claim_id, "method": "REMOVE_SONG_METHOD_MUTE",
-                              "muteSegments": segs, "allKnownMatchesCovered": True}}}})
-    if r.get("executionStatus") != "EDIT_EXECUTION_STATUS_SCHEDULED":
-        raise RuntimeError(f"{video_id} {claim_id}: {json.dumps(r)[:300]}")
-    return segs
+
+def _dlg(word):
+    return f"[...document.querySelectorAll('ytcp-dialog')].find(e => e.offsetParent && e.innerText.includes('{word}'))"
+
+
+def _btn(scope, label):
+    return f"[...({scope}).querySelectorAll('ytcp-button, button')].find(e => e.innerText.trim() === '{label}')"
+
+
+def resolve_claim_ui(t, video_id, song, how="erase"):
+    """申し立て1件を、画面の 対応する → 曲を消去する → 次へ → 方法を選ぶ → 保存 → 確認 → 変更を確定 で対応する。
+    song はその行に出ている曲名（claim_summary の title）。how は "erase"（曲だけ消す）か "mute"（区間を全部無音）。
+    戻り値は edit_video の返事。**元に戻せない**"""
+    t.go(url_of(f"video/{video_id}/claims"), wait=5)
+    title = json.dumps(song)
+    row_btn = f"""(() => {{ for (const b of document.querySelectorAll('ytcp-button')) {{
+        if (b.innerText.trim() !== '対応する' || b.hasAttribute('disabled')) continue;
+        let r = b; while (r && !(r.innerText || '').includes({title})) r = r.parentElement;
+        if (r && r.querySelectorAll('ytcp-button').length <= 3) return b; }} return null; }})()"""
+    _wait(t, f"!!{row_btn}", 20)
+    t.click(row_btn)
+    _wait(t, f"!!{_dlg('操作を選択')}")
+    D = _dlg('操作を選択')
+    t.click(f"[...{D}.querySelectorAll('*')].find(e => e.children.length === 0 && e.innerText && e.innerText.trim() === '曲を消去する')")
+    time.sleep(1)
+    t.click(_btn(D, '次へ'))
+    D = _dlg('曲を消去する方法')
+    radios = f"[...{D}.querySelectorAll('tp-yt-paper-radio-button')]"
+    _wait(t, f"!!{D} && {radios}.length >= 2")
+    want = 0 if how == "erase" else 1
+    if t.js(f"{radios}[{want}].getAttribute('aria-checked')") != "true":
+        t.click(f"{radios}[{want}]")
+        time.sleep(1)
+    st = t.js(f"{radios}.map(r => [r.innerText.trim().slice(0, 12), r.getAttribute('aria-checked')])")
+    if st[want][1] != "true" or not st[want][0].startswith("曲を消去する" if how == "erase" else "申し立てを受け"):
+        raise RuntimeError(f"方法を選べなかった: {st}")
+    t.click(_btn(D, '保存'))
+    C = _dlg('変更の確認')
+    _wait(t, f"!!{C}")
+    t.click(f"{C}.querySelector('ytcp-checkbox-lit')")
+    time.sleep(1)
+    if not t.js(f"{C}.querySelector('ytcp-checkbox-lit').hasAttribute('checked')"):
+        raise RuntimeError("確認のチェックが入らない")
+    reqs = capture(t, act=lambda t: t.click(_btn(C, '変更を確定')), wait=6)
+    ed = [r for r in reqs if r["url"] == "video_editor/edit_video"]
+    if not ed or not isinstance(ed[0]["resp"], dict) or ed[0]["resp"].get("executionStatus") != "EDIT_EXECUTION_STATUS_SCHEDULED":
+        raise RuntimeError(f"確定が通らなかった: {json.dumps(ed[0]['resp'] if ed else None)[:300]}")
+    return ed[0]

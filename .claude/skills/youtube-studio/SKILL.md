@@ -37,7 +37,7 @@ python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/youtube-studio/yt_st
 | `summarize(v)` | 1本を棚卸しの列（開始・長さ・公開・収益化・申し立ての理由・編集中か）にする |
 | `claims(t, id)` / `claim_summary(c)` | その動画の申し立て（曲名・方針・一致した最長区間・取れる対応） |
 | `claim_segments(t, id, claim)` | 申し立てが一致した区間（ミリ秒） |
-| `mute_claim(t, id, claim)` | 申し立て1件を「区間のすべての音をミュート」で対応する。**元に戻せない** |
+| `resolve_claim_ui(t, id, 曲名, how)` | 申し立て1件に**画面を押して**対応する。`how` は `erase`（曲だけ消し、声は残す）か `mute`（区間を全部無音）。**元に戻せない**。1本90秒ほど |
 
 EC2 で回すときの形:
 
@@ -73,7 +73,12 @@ PY
 | 1本ずつ | `creator/get_creator_videos` | `videoIds`・`mask` |
 | 申し立て | `creator/list_creator_received_claims` | `videoId` |
 | 一致した区間 | `copyright/get_creator_received_claim_matches` | `videoId`・`claimId`・`channelId` |
-| 申し立てに対応（曲の消去） | `video_editor/edit_video` | `claimEditChange.addRemoveSongEdit`（`method` は `REMOVE_SONG_METHOD_MUTE`＝区間を全部ミュート／`REMOVE_SONG_METHOD_WAVEFORM_ERASE_ML`＝曲だけ消す） |
+| 申し立てに対応（曲の消去） | `video_editor/edit_video` | `claimEditChange.addRemoveSongEdit`。曲だけ消す＝`claimId` と `method: REMOVE_SONG_METHOD_WAVEFORM_ERASE_ML` だけ／区間を全部ミュート＝`REMOVE_SONG_METHOD_MUTE` に `muteSegments`（`get_creator_received_claim_matches` の区間）と `allKnownMatchesCovered: true` |
+
+**書き込みは `api()` から送っても効かない。** `video_editor/edit_video` を画面と同じ本文で送ると、200 の空 `{}` が返って
+何も起きない（2026-10-12 に49本ぶん踏んだ）。`context.user` の委任と、画面が付けているヘッダー
+（`X-YouTube-Delegation-Context` ほか）を足しても同じだった。**書き込みは画面を押す**（`resolve_claim_ui`）。
+読み取り（一覧・申し立て・区間）は `api()` でよい
 
 列の読みかた（`summarize` が使っているもの）:
 
