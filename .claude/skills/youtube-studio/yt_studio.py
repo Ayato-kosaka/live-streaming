@@ -318,14 +318,18 @@ def resolve_claim_ui(t, video_id, song, how="erase"):
     t.click(_btn(D, '次へ'))
     D = _dlg('曲を消去する方法')
     radios = f"[...{D}.querySelectorAll('tp-yt-paper-radio-button')]"
-    _wait(t, f"!!{D} && {radios}.length >= 2")
-    want = 0 if how == "erase" else 1
-    if t.js(f"{radios}[{want}].getAttribute('aria-checked')") != "true":
-        t.click(f"{radios}[{want}]")
+    _wait(t, f"!!{D} && {radios}.length >= 1")
+    # 選択肢は位置ではなく字で選ぶ（曲の消去が選べない申し立てでは、並びが変わりうる）
+    label = "曲を消去する" if how == "erase" else "すべての音をミュート"
+    pick = (f"{radios}.find(r => r.innerText.trim().startsWith('曲を消去する'))" if how == "erase"
+            else f"{radios}.find(r => r.innerText.includes('すべての音をミュート'))")
+    if not t.js(f"!!{pick}"):
+        raise RuntimeError(f"「{label}」が無い: {t.js(f'{radios}.map(r => r.innerText.trim().slice(0, 20))')}")
+    if t.js(f"{pick}.getAttribute('aria-checked')") != "true":
+        t.click(pick)
         time.sleep(1)
-    st = t.js(f"{radios}.map(r => [r.innerText.trim().slice(0, 12), r.getAttribute('aria-checked')])")
-    if st[want][1] != "true" or not st[want][0].startswith("曲を消去する" if how == "erase" else "申し立てを受け"):
-        raise RuntimeError(f"方法を選べなかった: {st}")
+    if t.js(f"{pick}.getAttribute('aria-checked')") != "true":
+        raise RuntimeError(f"「{label}」を選べなかった")
     t.click(_btn(D, '保存'))
     C = _dlg('変更の確認')
     _wait(t, f"!!{C}")

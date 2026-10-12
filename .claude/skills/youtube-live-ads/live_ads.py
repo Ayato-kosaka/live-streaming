@@ -47,9 +47,13 @@ def classify(s, active, hold):
         if any("BEING_REPROCESSED" in c["erase_ok"] for c in active):
             return "editing", "申し立てを再処理中（曲の消去のあと）"
         ok = [c for c in active if "ERASE_SONG" in c["options"] and c["erase_ok"] == "ELIGIBLE"]
-        if not ok:
-            return "manual", "曲の消去で対応できない申し立て: " + ", ".join(c["type"] + "/" + c["title"] for c in active)
-        return "erase", ok[0]["claim"]
+        if ok:
+            return "erase", ok[0]["claim"]
+        # 曲の消去が選べない申し立て（一致した箇所が多すぎる・作曲への申し立て）は、区間をミュートする（#757 Q4: A）
+        mu = [c for c in active if "ERASE_SONG" in c["options"] and c["mute_ok"] == "ELIGIBLE"]
+        if mu:
+            return "mute", mu[0]["claim"]
+        return "manual", "曲の消去でもミュートでも対応できない申し立て: " + ", ".join(c["type"] + "/" + c["title"] for c in active)
     if s["m10n"] == "NOT_MONETIZING_OFF":
         return "enable", "申し立てが無いのに収益化がオフ"
     return "manual", f"申し立て以外の理由で収益化されていない: {s['m10n']}"
@@ -92,15 +96,15 @@ def main():
                 active = [c for c in active if c["status"] == "ACTIVE"]
             state, why = classify(s, active, hold)
             row.update(state=state, claims_left=len(active))
-            if state == "erase":
+            if state in ("erase", "mute"):
                 c = next(c for c in active if c["claim"] == why)
                 why = f"{c['title']} / {', '.join(c['artists'])}"
                 if dry:
-                    row["state"] = "to-erase"
+                    row["state"] = "to-" + state
                 else:
-                    resolve_claim_ui(t, s["id"], c["title"], "erase")
+                    resolve_claim_ui(t, s["id"], c["title"], state)
                     row["state"] = "editing"
-                    row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": "erase"})
+                    row["history"].append({"date": today(), "claim": c["claim"], "song": why, "action": state})
                     time.sleep(2)
         except Exception as ex:
             row["state"], why = "error", f"{type(ex).__name__}: {str(ex)[:180]}"
