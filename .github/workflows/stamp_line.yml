@@ -102,6 +102,12 @@ on:
         required: false
         default: "716"
         type: string
+      mode:
+        description: "table のとき、どちらの表か（既定は決まったセリフの表）"
+        required: false
+        default: decided
+        type: choice
+        options: [decided, candidates]
       words:
         description: "dig のとき、掘る人ぜんぶに当てる語（読点区切り。**名前は書かない**——入力は公開のログに出ます）"
         required: false
@@ -235,10 +241,14 @@ jobs:
                            "$GITHUB_EVENT_PATH")" \
             --arg top "$(jq -r '(.inputs.top // "") | tostring' \
                          "$GITHUB_EVENT_PATH")" \
+            --arg mode "$(jq -r '(.inputs.mode // "") | tostring' \
+                          "$GITHUB_EVENT_PATH")" \
             '{apply: $apply, issue: $issue}
              + (if $words == "" then {} else {words: $words} end)
              + (if ($top | test("^[0-9]+$")) then {top: ($top | tonumber)}
-                else {} end)')"
+                else {} end)
+             + (if ($mode | test("^(decided|candidates)$"))
+                then {mode: $mode} else {} end)')"
           echo "args=$args" >> "$GITHUB_OUTPUT"
           echo "走らせるもの: $script / 書く: $apply / 行き先: #$issue"
 
