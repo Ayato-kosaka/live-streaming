@@ -102,6 +102,27 @@ def materials():
         off += 50
 
 
+def items(q=""):
+    """品目の一覧（id・名前・刷れる面・見本にできる型）。新しい品目でグッズを作るとき、id と型を引く。
+    出すのは品目の素性だけ（売上・ユーザ情報は返さない口）"""
+    st, r = call("GET", "/items")
+    if st != 200:
+        sys.exit(f"GET /items {st}: {r}")
+    q = q.lower()
+    n = 0
+    for it in r.get("items", []):
+        name = f"{it.get('name', '')} {it.get('humanizeName', '')}"
+        if q and q not in name.lower():
+            continue
+        n += 1
+        vs = it.get("variants") or []
+        ex = [v for v in vs if v.get("exemplary")] or vs[:1]
+        ex = ex[0] if ex else {}
+        print(f"{it['id']}\t{it.get('name')}\t{it.get('humanizeName')}\t面={','.join(it.get('availablePrintPlaces', []))}"
+              f"\t型{ex.get('id')}({(ex.get('color') or {}).get('name')}/{(ex.get('size') or {}).get('name')})\t税込{it.get('minPriceWithTax')}〜")
+    print(f"{n} 品目")
+
+
 def texture_of(src):
     """URL ならそのまま、ファイルなら余白を落として正方形にし、データ URI にする"""
     if src.startswith("http"):
@@ -368,6 +389,7 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("materials")
+    c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
     c.add_argument("--title", required=True); c.add_argument("--description", default=""); c.add_argument("--price", type=int, default=300)
@@ -389,6 +411,8 @@ def main():
         print(f"{len(ms)} 件")
         for m in ms:
             print(m["id"], "公開" if m.get("published") else "非公開", m.get("price"), m.get("title") or "（題なし）")
+    elif a.cmd == "items":
+        items(a.q)
     elif a.cmd == "characters":
         characters(a.dry_run, [x for x in a.items.split(",") if x])
     elif a.cmd == "create":
