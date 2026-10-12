@@ -6,11 +6,11 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { pier } from "./pier";
-/* **値を1つだけ借りる。** `guidePlace` は `content/` しか読まない小さい関数で、
+/* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
    表紙の束に配信の一覧や伝説が付いてくることはない（`spec.ts` の `nordicSpec`
    の注と同じ心配をしたが、ここは島を組む側＝サーバだけが通る道。
    `Cover.tsx`（"use client"）が読むのは型だけ）。 */
-import { guidePlace, type IslePlaceSpec, type IsleSpec } from "./spec";
+import { GUIDE_BLURB, GUIDE_LABEL, guideOf, type IslePlaceSpec, type IsleSpec } from "./spec";
 
 /**
  * 表紙の島（＝いま歩いている島）。
@@ -54,9 +54,15 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
  * 常設の10軒が重なって建つ。**式が正しくても、当てる先を間違えれば絵は壊れる**
  * （`docs/island-standards.md` 12）。
  *
- * ここが決めているのは「常設の10軒＋その旅のことが、重ならずに一周する広さ」。
+ * ここが決めているのは「建つものが、重ならずに一周する広さ」。
  * いちばん大きい章の島（コーカサス 434）と同じくらいで、比べ合いは
  * `/atlas` の航路の丸が持っている。
+ *
+ * **ここに14軒目を建てない。** いまいる国の案内を1軒足したら、寄りで
+ * **入口3つが届かなくなった**（`tools/sprites/islereach.mjs` で 11/11 → 7/10）。
+ * かたちを3通り、広さを 410 / 426 / 470 と試しても戻らない——
+ * **13軒ぶんに詰めてある島**なので、軒数そのものが効いている。
+ * だから国の案内は建物を増やさず、「この島のこと」の板の中に入れた（`tripPlace`）。
  */
 const COVER_R = 410;
 
@@ -108,9 +114,16 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
      下の「この島のこと」——いま何日目で、何本配信して、何人来てくれたか——に戻す。
      **それが、旅ごとに字を書き足さずに済む唯一の形。** */
   /* 旅の面を持たない章。**行き先を作らない。**
-     数字だけを板に出して、そこから先は常設の入口に任せる */
+     数字を板に出して、そこから先は常設の入口に任せる。
+
+     **いまいる国の案内（`/north-macedonia`）だけは、ここに入れる。**
+     島に1軒足したかったが、表紙の島は13軒ぶんに詰めてあるので、
+     14軒目を建てると寄りで入口が3つ届かなくなった（`COVER_R` の注）。
+     行き先を減らさずに軒数を増やさない形が、この板の中。
+     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
   const st = CHAPTER_STATS[c.slug];
   const countries = c.countries.length;
+  const g = guideOf(c.slug);
   return {
     id: "trip",
     label: "この島のこと",
@@ -124,6 +137,13 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
       ...(st ? [{ n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" }] : []),
       ...(countries ? [{ n: String(countries), unit: "カ国", cap: "歩いた" }] : []),
     ],
+    ...(g ?
+      {
+        items: [
+          { label: GUIDE_LABEL, sub: GUIDE_BLURB, href: g.href, icon: "stall-green" },
+        ],
+      } :
+      {}),
   };
 }
 
@@ -141,8 +161,6 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
   );
   const days = chapterDays(c, today);
   const st = CHAPTER_STATS[c.slug];
-  /** いまいる国の案内。**章の島と同じ1本（`spec.ts` の `guidePlace`）から作る** */
-  const guide = guidePlace(c.slug);
   return {
     slug: c.slug,
     name: c.name,
@@ -162,36 +180,9 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        島の連なりへは、島の隅の「島の地図」からも行ける（`.isle-atlas`）ので
        袋小路にはならない。**章の島（`/island/<章>`）はそのまま**——
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
-    /* **いまいる国の案内は、表紙の島にも建てる。**
-       ------------------------------------------------
-       あやと（2026-10-12）:「北マケドニアについて事前に調べたページへの導線が
-       初期ページから無くなってるので、いい感じに追加してください。
-       みんな気になってると思う」。
-
-       **トップの紙から1本引くだけにしない。** 同じことを `/goods` で一度
-       やっていて、紙には道が在るのに**島には1軒も建っていなかった**ので
-       「動線が見当たらない」と言われた（`docs/island-misses.md` #216）。
-       島を歩いて建物に入る人から見れば、**島に無い＝道が無い。**
-
-       **消えた風船は戻さない**（#223）。あれは「やってほしいことを貼る」の
-       入口で、表紙には常設の「やってほしいこと」がもともと在る。
-       **同じ用事の入口を、同じ島に2つ建てない。** ここに建てるのは別の用事——
-       その国に何があるかを**読む**ところ。
-
-       **看板（`sign`）は付けない。** 引きで名前を出せるのは6つまでで
-       （`docs/island-design.md` 3-4／`island-atlas.md` 4章）、常設の6つで
-       ちょうど埋まっている。7枚目を足して引きの島に札が7枚並んだことが
-       一度あるので、そこへは戻さない。近づけば名前が出る。
-
-       **絵は既定（道しるべ）に落とす。** 章の島では市の屋台（`stall-green`）
-       だが、表紙では緑の日よけの屋台が「あやとグッズ」なので、章を渡すと
-       同じ島に屋台が2つ建つ（`isleIcon` は章を渡さなければ既定を返す）。 */
-    places: [
-      tripPlace(c, days),
-      ...(guide ? [{ ...guide, icon: "signpost", sign: undefined }] : []),
-      ...HOME_PLACES,
-      { ...pier(), sign: undefined },
-    ],
+    /* **島に建てるものは増やさない**（`COVER_R` の注）。いまいる国の案内は
+       「この島のこと」の板の中（`tripPlace`）。 */
+    places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**
 

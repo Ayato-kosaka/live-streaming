@@ -33,30 +33,45 @@
  *  4. **焼き込み（`chapterStats`）の鍵と、章の slug が合っている。**
  *     合っていないときに**黙らない**——どちらへずれているかを名指しで出す
  *
- * ## わざと壊すと赤くなる（4とおり。足を1本ずつ抜く）
+ * ## わざと壊すと赤くなる（5とおり。足を1本ずつ抜く）
+ *
+ * **先に「壊していない写しが通ること」を見る**（`docs/island-standards.md` 15章）。
+ * 章の名前を変えた直後は 4 が落ちているのがふつうなので、
+ * **焼き直したあとの写し**を当てて 0 になることを確かめてから、1本ずつ壊す。
  *
  * ```bash
+ * # (0) 焼き直したあとの写し（これが本来の緑）→ 落ちない
+ * sed 's/^  "albania": {/  "balkans": {/' site/content/chapterStats.ts > /tmp/stats-baked.ts
+ * STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
+ *
  * # (a) 振り分けの表に、章に無い名前を残す → 1 が落ちる
- * sed 's/  balkans: balkansSpec,/  albania: balkansSpec,/' site/components/isle/spec.ts > /tmp/spec-ghost.ts
- * SPEC_TS=/tmp/spec-ghost.ts node site/selftest/islechapter_selftest.mjs
+ * sed 's/^  balkans: balkansSpec,$/  albania: balkansSpec,/' site/components/isle/spec.ts > /tmp/spec-ghost.ts
+ * SPEC_TS=/tmp/spec-ghost.ts STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (b) いまの章の島から、建つものを全部落とす → 2 が落ちる
- * sed 's/^  places: IslePlaceSpec\[\],$/  places: [],/' ... （下の BREAK=b でも同じことをする）
- * BREAK=b node site/selftest/islechapter_selftest.mjs
+ * BREAK=b STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (c) 国の案内の行き先を、面の無いところへ向ける → 3 が落ちる
- * sed 's#href: "/north-macedonia"#href: "/albania"#' site/components/isle/spec.ts > /tmp/spec-dead.ts
- * SPEC_TS=/tmp/spec-dead.ts node site/selftest/islechapter_selftest.mjs
+ * sed 's#href: "/north-macedonia",#href: "/albania",#' site/components/isle/spec.ts > /tmp/spec-dead.ts
+ * SPEC_TS=/tmp/spec-dead.ts STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (d) 焼き込みの鍵を、章に無いものへ変える → 4 が落ちる
- * sed 's/^  "nordic": {/  "nordic-trip": {/' site/content/chapterStats.ts > /tmp/stats-ghost.ts
+ * sed 's/^  "nordic": {$/  "nordic-trip": {/' site/content/chapterStats.ts > /tmp/stats-ghost.ts
  * STATS_TS=/tmp/stats-ghost.ts node site/selftest/islechapter_selftest.mjs
+ *
+ * # (e) トップの紙に、国の名前を書き写す → 3 の裏が落ちる
+ * sed 's|<b>{guide.name}</b>|<b>北マケドニア</b>|' site/app/page.tsx > /tmp/home-copied.tsx
+ * HOME_TSX=/tmp/home-copied.tsx STATS_TS=/tmp/stats-baked.ts node site/selftest/islechapter_selftest.mjs
  * ```
  *
  * **`BREAK=b` だけ、源を差し替えずにこちらで島を痩せさせる。**
  * 「建つものが無い島」は、どのファイルを1行いじっても作れない
  * （素材が無い章は桟橋1軒で建つのが正しい姿）ので、**判定の足のほう**を
  * 抜いて、受け止める側が鳴ることを見る。
+ *
+ * **(e) は1度素通りした。** 書き写しを札（`guidePlace`）と見くらべていて、
+ * 札は国の名前を持っていないので、何を書き写しても一致しなかった。
+ * いまは表の行（`guideOf`）と見くらべる。**対照を当てるまで気づけない形**だった。
  */
 
 import { execFileSync } from "node:child_process";
@@ -167,7 +182,8 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { TRIP_SPEC, chapterIsle, guidePlace } = req(join(OUT, "components", "isle", "spec.js"));
+const { GUIDE_BLURB, GUIDE_LABEL, TRIP_SPEC, chapterIsle, guideOf, guidePlace } =
+  req(join(OUT, "components", "isle", "spec.js"));
 const { coverSpec } = req(join(OUT, "components", "isle", "cover.js"));
 const { CHAPTERS, chapterNow } = req(join(OUT, "content", "chapters.js"));
 const { CHAPTER_STATS } = req(join(OUT, "content", "chapterStats.js"));
@@ -289,18 +305,35 @@ check(
     `${NOW.slug} の案内が components/isle/spec.ts の GUIDES に無い`,
 );
 if (guide?.href) {
-  const onCover = coverPlaces.filter((p) => p.href === guide.href);
+  /* **建物そのものでも、建物の板の中の1行でもよい。**
+     表紙の島は13軒ぶんに詰めてあるので、14軒目を建てると寄りで入口が
+     3つ届かなくなる（`components/isle/cover.ts` の `COVER_R`）。
+     いま表紙では「この島のこと」の板の中に入っている。
+     **見たいのは「島から行けるか」**で、建物かどうかではない。 */
+  const goesTo = (p) =>
+    p.href === guide.href ||
+    (p.items ?? []).some((i) => i.href === guide.href) ||
+    p.more?.href === guide.href;
+  const onCover = coverPlaces.filter(goesTo);
   check(
-    `表紙に、その案内への押しどころがある（${guide.href}）`,
+    `表紙の島から、その案内へ行ける（${guide.href}）`,
     onCover.length >= 1,
     "表紙の島から、いまいる国の案内へ行く道が1本も無い（島に無い＝道が無い。#216）",
   );
-  /* **同じ用事の入口を、同じ島に2つ建てない**（#223）。
+  /* **同じ用事の入口を、同じ島に2つ置かない**（#223）。
      風船を戻すと、ここで捕まる */
   check(
     `表紙で、その案内への入口が1つだけ（${onCover.length}）`,
     onCover.length <= 1,
     `${onCover.map((p) => p.id).join(" ")} が同じ先を指している`,
+  );
+  /* 字は1か所から（`spec.ts` の `GUIDE_LABEL`）。板の中と建物で別の字になると、
+     同じ行き先が別の部屋に見える */
+  const rows = coverPlaces.flatMap((p) => (p.items ?? []).filter((i) => i.href === guide.href));
+  check(
+    "板の中の1行も、島の札と同じ字",
+    rows.every((r) => r.label === GUIDE_LABEL && r.sub === GUIDE_BLURB),
+    rows.map((r) => `「${r.label}」/${r.sub}`).join(" "),
   );
   check(
     "その行き先の面が実在する",
@@ -327,17 +360,22 @@ if (guide?.href) {
   /* **注を落としてから見る。** あやとの言葉も、行き先の面の道も、注には出てくる。
      見たいのは「画面に出る字」のほうだけ（`python/ts_read.py` の `code_only` と同じ）。 */
   const code = homeSrc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const copied = [guide.name, guide.lead, guide.href].filter((w) => code.includes(w));
+  /* **札（`guidePlace`）ではなく、表の行（`guideOf`）と見くらべる。** 札は
+     「この国の歩きかた」しか持っていないので、札と見くらべると**国の名前を
+     書き写しても気づけない**（この対照を当てて、実際に素通りした）。 */
+  const row = guideOf(NOW.slug) ?? {};
+  const copied = [row.name, row.lead, guide.href].filter((w) => w && code.includes(w));
   check(
     "トップの紙に、国の名前や行き先が書き写されていない",
     copied.length === 0,
     `書き写し: ${copied.join(" / ")}`,
   );
+  /* **章の島のほうは、建物で建てる。** あちらは建つものが少ないので詰まらない */
   const isleGuide = islePlaces.filter((p) => p.href === guide.href);
   check(
-    `章の島にも、同じ案内が1つ建っている（${isleGuide.length}）`,
+    `章の島に、同じ案内が1軒建っている（${isleGuide.length}）`,
     isleGuide.length === 1,
-    "章の島と表紙で、建つものが食い違っている",
+    "章の島と表紙で、行ける先が食い違っている",
   );
 }
 

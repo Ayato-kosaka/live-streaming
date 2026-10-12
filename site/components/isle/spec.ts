@@ -426,6 +426,16 @@ const GUIDES: Record<string, { name: string; href: string; lead: string }[]> = {
 export const guideOf = (slug?: string) => (slug && GUIDES[slug]?.[0]) || null;
 
 /**
+ * 案内の札の字。**島の建物でも、板の中の1行でも、同じ字にする**
+ * （`docs/island-design.md` 6章「島の固有名詞を名前にしない」。
+ * 押す前に、中に何があるかが読めること）。
+ * 表紙は建物を増やせないので板の中に入れていて（`components/isle/cover.ts`）、
+ * **2か所で別の字になると、同じ行き先が別の部屋に見える。**
+ */
+export const GUIDE_LABEL = "この国の歩きかた";
+export const GUIDE_BLURB = "首都・見どころ・食べもの";
+
+/**
  * その章の「この国の歩きかた」。**案内の面を1枚も持たない章には建たない。**
  *
  * @param slug 章（`content/chapters.ts` の slug）
@@ -435,10 +445,8 @@ export const guidePlace = (slug?: string): IslePlaceSpec | null => {
   if (!g) return null;
   return {
     id: "guidebook",
-    /* **島の固有名詞を名前にしない**（`docs/island-design.md` 6章）。
-       押す前に、中に何があるかが読めること。 */
-    label: "この国の歩きかた",
-    blurb: "首都・見どころ・食べもの",
+    label: GUIDE_LABEL,
+    blurb: GUIDE_BLURB,
     icon: isleIcon(slug, "guidebook", "signpost"),
     size: 58,
     sign: true,
