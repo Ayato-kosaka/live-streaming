@@ -251,6 +251,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1itaFtShGqKKOPGGFVYzdSJC-kFMCmHus", days: 2 },
       { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", days: 2 },
       { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", days: 2 },
+      { icon: "7590ed1286e344a198f74674296e64d20", days: 2 },
       { icon: "c3cca678865a4021a048e617fab35db30", days: 2 },
       { icon: "1F9mvP0wZ0hjX4S3bzcfytUd4jBxKuAXk", days: 1 },
       { icon: "1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz", days: 1 },
