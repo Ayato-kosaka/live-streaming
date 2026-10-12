@@ -258,16 +258,23 @@ const WANT = {
      `rebake.yml` を `dry_run: false` で回したぶん。106人 / 17本 / 住人28人）。
      上の注が「焼き直したらここを増やす」と言っていたのが、ここ。
 
+     **歩いた国（`countries`）も建つ**（2026-10-12）。章の `countries` は
+     空のままだが、島が数えるのは `content/walked.ts` の `chapterCountries`
+     に替えた——あそこは `AHEAD_COUNTRIES` の `entered` から章と国を結ぶので、
+     歩いている最中の2カ国（アルバニア・北マケドニア）がここで建つ。
+     建つまでは「0カ国 歩いた」と本番に出ていた。
+
+     - countries … この島で歩いた国（歩いている最中の国もふくむ）
      - facts ……… この島のこと（日数・配信・来た人。`chapterStats` が要る）
      - guidebook … この国の歩きかた（`/north-macedonia`）
      - board ……… この旅に来ている付箋を読む板（`components/isle/board.ts`）
 
-     **streams / shorts / countries / legends はまだ建たない。**
+     **streams / shorts / legends はまだ建たない。**
      `chapterStreams` に `balkans` の鍵が無く（焼いても1本も入らなかった）、
-     章の `countries` も空のまま（`content/chapters.ts`。#664）。
-     そちらが埋まったら、また増える——**増えても減っても赤くなる**形に
-     してあるので、気づかずに痩せることはない（`docs/island-misses.md` #210）。 */
-  balkans: "facts guidebook board pier",
+     この島の企画もまだ無い。そちらが埋まったら、また増える——
+     **増えても減っても赤くなる**形にしてあるので、気づかずに痩せることはない
+     （`docs/island-misses.md` #210）。 */
+  balkans: "countries facts guidebook board pier",
 };
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");
