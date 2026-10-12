@@ -23,8 +23,9 @@ else
   [ "$($EC2 state)" = running ] || { echo "EC2 が止まっている。ec2.py start で起こすか、置き場をネットワーク設定で通す"; exit 1; }
   S=$(mktemp)
   # URL は署名付き。シェルに通さず、一重引用符で丸ごと渡す（URL に ' は入らない）
-  printf "curl -sf --max-time 60 -o /tmp/artifact.zip '%s' && stat -c %%s /tmp/artifact.zip\n" "$URL" > "$S"
-  $EC2 run "$S" 90 | head -1; rm -f "$S"
+  printf "curl -sS -f --max-time 60 -o /tmp/artifact.zip '%s' 2>&1 | head -c 300; stat -c 'EC2 で取れた %%s bytes' /tmp/artifact.zip 2>&1\n" "$URL" > "$S"
+  # URL の期限は数分。EC2 で別の作業が SSM を使っていると順番待ちで切れる（2026-10-12 に1回切れた）
+  $EC2 run "$S" 90 | grep -v '^$\|ssm status'; rm -f "$S"
   $EC2 get /tmp/artifact.zip "$ZIP" || exit 1
   S=$(mktemp); echo "rm -f /tmp/artifact.zip" > "$S"; $EC2 run "$S" 30 >/dev/null; rm -f "$S"
 fi
