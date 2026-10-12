@@ -263,8 +263,8 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 1 },
     ],
   },
-  // アルバニア
-  "albania": {
+  // バルカン諸国周遊
+  "balkans": {
     people: 106,
     streams: 17,
     residents: [
