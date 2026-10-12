@@ -10,15 +10,15 @@
   "2ij1R53ifcU": {
    "title": "アルバニアで髭剃り探しにいこ！",
    "start": "2026-10-11 21:59",
-   "state": "manual",
+   "state": "editing",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/DJ Got Us Fallin' In Love (Almighty Radio Mix (No Rap))"
+   "why": "動画編集が進行中"
   },
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
-   "state": "error",
+   "state": "editing",
    "claims_left": 7,
    "history": [
     {
@@ -32,22 +32,28 @@
      "claim": "5EkmtTs_arM",
      "song": "Sleeping On My Left / GASHI",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "BI87PC8bcI0",
+     "song": "Mi Corazon / Fly Project",
+     "action": "erase"
     }
    ],
-   "why": "RuntimeError: 確認のチェックが入らない"
+   "why": "Mi Corazon / Fly Project"
   },
   "kunXt2sXnFQ": {
    "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
    "start": "2026-09-18 13:03",
-   "state": "manual",
+   "state": "error",
    "claims_left": 6,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/DROP DEAD, AUDIO/THAT'S SO TRUE, AUDIO/Oh Pretty Woman, AUDIO/LAISSE-MOI T'AIMER, AUDIO/ENCHANTED (TAYLOR'S VERSION), AUDIO/SIGN OF THE TiMES"
+   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
   },
   "k4DxGQlkD6U": {
    "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
    "start": "2026-09-17 19:00",
-   "state": "error",
+   "state": "editing",
    "claims_left": 3,
    "history": [
     {
@@ -55,9 +61,15 @@
      "claim": "_1fZb26Iyxw",
      "song": "It's A Man's, Man's, Man's World / James Brown",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "znIAll7Y2Jk",
+     "song": "Wish I Was Your Lover / Enrique Iglesias",
+     "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Wish I Was Your Lover / Enrique Iglesias"
   },
   "f3W2JxAHsQs": {
    "title": "【二日目】親友に会いにスウェーデンまで、ビャウィストクまで",
@@ -72,28 +84,7 @@
      "action": "erase"
     }
    ],
-   "why": "Музико / Alena Omargalieva"
-  },
-  "HCI2IKaVEuQ": {
-   "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで part2",
-   "start": "2026-09-13 00:34",
-   "state": "editing",
-   "claims_left": 1,
-   "history": [
-    {
-     "date": "2026-10-12",
-     "claim": "-jsCOLZb93Y",
-     "song": "Presja / Mortal, Jonatan",
-     "action": "erase"
-    },
-    {
-     "date": "2026-10-12",
-     "claim": "sMs3paDZIig",
-     "song": "Pełnia / Smolasty, Ewa Farna",
-     "action": "erase"
-    }
-   ],
-   "why": "Pełnia / Smolasty, Ewa Farna"
+   "why": "動画編集が進行中"
   },
   "hrXYXcu9IDE": {
    "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで",
@@ -107,7 +98,7 @@
    "title": "海外の山の上の湖まで歩きます",
    "start": "2026-08-23 19:01",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -116,21 +107,28 @@
      "action": "erase"
     }
    ],
-   "why": "Life Is A Highway (2008 Remaster) / Rascal Flatts"
+   "why": "動画編集が進行中"
   },
   "lPCx2VMe4pc": {
    "title": "カズベキの滝見に行こ！カズ滝",
    "start": "2026-08-12 22:01",
-   "state": "manual",
+   "state": "editing",
    "claims_left": 1,
-   "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/Nothing Compares 2 U"
+   "history": [
+    {
+     "date": "2026-10-12",
+     "claim": "Gg8sySww2to",
+     "song": "Nothing Compares 2 U / Sinéad O'Connor",
+     "action": "mute"
+    }
+   ],
+   "why": "Nothing Compares 2 U / Sinéad O'Connor"
   },
   "ZcchwhRE_Ks": {
    "title": "本気のクッキングや！！唐揚げ定食つくるぞ！！",
    "start": "2026-07-31 22:00",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -151,7 +149,7 @@
      "action": "erase"
     }
    ],
-   "why": "Broken Angel (feat. Helena) / Arash"
+   "why": "動画編集が進行中"
   },
   "d8UwWnFhjwY": {
    "title": "7月の月末配信や！！アツい1ヶ月だった！朝日みるぞ！",
@@ -292,7 +290,7 @@
      "action": "erase"
     }
    ],
-   "why": "Rain On Me / Lady Gaga, Ariana Grande"
+   "why": "動画編集が進行中"
   },
   "8I2AUKaWgH4": {
    "title": "ジョージアで週末の企画会議や",
@@ -425,7 +423,7 @@
    "title": "トビリシ海まで歩きます",
    "start": "2026-06-07 21:32",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -440,7 +438,7 @@
      "action": "erase"
     }
    ],
-   "why": "Lilac / Mrs. GREEN APPLE"
+   "why": "動画編集が進行中"
   },
   "_Azl32caALw": {
    "title": "ジョージア風フレンチトースト作るで！",
@@ -454,7 +452,7 @@
    "title": "セヴァン湖までセヴァンマス食べに行きます",
    "start": "2026-05-20 19:16",
    "state": "editing",
-   "claims_left": 2,
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -469,7 +467,7 @@
      "action": "erase"
     }
    ],
-   "why": "The Sound of Silence (CYRIL Extended Remix) / Disturbed"
+   "why": "動画編集が進行中"
   },
   "haHAczqMooM": {
    "title": "セヴァン湖までセヴァンマス食べに行きます",
@@ -566,7 +564,7 @@
      "action": "erase"
     }
    ],
-   "why": "Almond Chocolate / ILLIT"
+   "why": "動画編集が進行中"
   },
   "65cHXjYLotA": {
    "title": "そして復活",
@@ -611,10 +609,10 @@
   "L1YzClufXdY": {
    "title": "いなり寿司のが好き",
    "start": "2026-02-07 22:00",
-   "state": "manual",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/J EN AI MARRE"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "I_HQ2ikfjTY": {
    "title": "一月最後の配信や",
@@ -635,13 +633,13 @@
      "action": "erase"
     }
    ],
-   "why": "So Good to Me / Zach Williams"
+   "why": "動画編集が進行中"
   },
   "egwcxcu7YYw": {
    "title": "行けるとこまで行くぞおおおお",
    "start": "2026-01-23 21:59",
    "state": "editing",
-   "claims_left": 5,
+   "claims_left": 4,
    "history": [
     {
      "date": "2026-10-12",
@@ -654,9 +652,15 @@
      "claim": "X2vHpVuIE-I",
      "song": "Hold On (2020 Remaster) / En Vogue",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "bKMtRAdL9-E",
+     "song": "Last / Micah Tyler",
+     "action": "erase"
     }
    ],
-   "why": "Hold On (2020 Remaster) / En Vogue"
+   "why": "Last / Micah Tyler"
   },
   "iw-f7jtZXgs": {
    "title": "【緊急】ハッピーニューイヤー",
@@ -701,15 +705,21 @@
      "claim": "1I6F2PytmWk",
      "song": "All I Want for Christmas Is You / Dave Thomas Junior",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "1RJJyoE3LYY",
+     "song": "DJ Play A Christmas Song (Extended) / Cher",
+     "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "DJ Play A Christmas Song (Extended) / Cher"
   },
   "4cwHL30x2-0": {
    "title": "日本は一日クリスマスが早い。メリークリスマス🎅",
    "start": "2025-12-25 21:59",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -718,7 +728,7 @@
      "action": "erase"
     }
    ],
-   "why": "Jingle Bell Rock / Bobby Helms"
+   "why": "動画編集が進行中"
   },
   "47fQGDiMHOU": {
    "title": "みんなの感性の結晶が出来てきたな〜",
@@ -732,7 +742,7 @@
    "title": "㊗️チャンネル登録者１,000人超えました",
    "start": "2025-12-16 22:25",
    "state": "editing",
-   "claims_left": 7,
+   "claims_left": 6,
    "history": [
     {
      "date": "2026-10-12",
@@ -745,14 +755,20 @@
      "claim": "TrkyZw9LqLw",
      "song": "Acharuli / Mgzavrebi",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "a3QVr8tEAbU",
+     "song": "Sapexurebi / megi gogitidze",
+     "action": "erase"
     }
    ],
-   "why": "Acharuli / Mgzavrebi"
+   "why": "Sapexurebi / megi gogitidze"
   },
   "kWnLiOQGhFE": {
    "title": "㊗️動画本数500本突破！！！！",
    "start": "2025-12-14 22:29",
-   "state": "error",
+   "state": "editing",
    "claims_left": 7,
    "history": [
     {
@@ -760,14 +776,20 @@
      "claim": "OFapvpvmlTM",
      "song": "Bravado / Lorde",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "QnJinU7B_BU",
+     "song": "Futures (Radio Edit) / Zero 7 feat. José Gonzalez",
+     "action": "erase"
     }
    ],
-   "why": "WebSocketTimeoutException: Connection timed out"
+   "why": "Futures (Radio Edit) / Zero 7 feat. José Gonzalez"
   },
   "B-HpGmWTtgA": {
    "title": "海外でアプリ作ってます",
    "start": "2025-11-11 22:29",
-   "state": "manual",
+   "state": "editing",
    "claims_left": 1,
    "history": [
     {
@@ -775,9 +797,15 @@
      "claim": "CEYWnKdmdew",
      "song": "Let's Twist Again / Chubby Checker",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "EXxHxWnOBgE",
+     "song": "Lily Was Here / David A. Stewart",
+     "action": "mute"
     }
    ],
-   "why": "曲の消去で対応できない申し立て: AUDIO/Lily Was Here"
+   "why": "Lily Was Here / David A. Stewart"
   },
   "5DCVhyPVibM": {
    "title": "大雨に荒れる黒海を見て、スイーツ巡り。",
@@ -828,7 +856,7 @@
    "title": "GWエジプト祭前夜！エジプト🇪🇬ピザ🍕食べました",
    "start": "2025-05-02 22:30",
    "state": "editing",
-   "claims_left": 2,
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -841,9 +869,15 @@
      "claim": "C6K3q_-8ShE",
      "song": "Az-Zukhruf / Mohamed Seddik Al Menshawi",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "faTRv4ic_TQ",
+     "song": "104_AL-HUMAZA / Abu Bakr Al Shateri",
+     "action": "erase"
     }
    ],
-   "why": "Az-Zukhruf / Mohamed Seddik Al Menshawi"
+   "why": "104_AL-HUMAZA / Abu Bakr Al Shateri"
   },
   "xuC2Qbr3wpE": {
    "title": "エジプト🇪🇬料理のコシャリを食べました",
@@ -873,8 +907,15 @@
    "start": "2025-04-05 15:58",
    "state": "editing",
    "claims_left": 2,
-   "history": [],
-   "why": "動画編集が進行中"
+   "history": [
+    {
+     "date": "2026-10-12",
+     "claim": "f4ojpWINw2U",
+     "song": "Let It Happen (Soulwax Remix) / Tame Impala",
+     "action": "erase"
+    }
+   ],
+   "why": "Let It Happen (Soulwax Remix) / Tame Impala"
   },
   "-5Ihju_Nzgc": {
    "title": "後編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃",
@@ -895,7 +936,7 @@
    "title": "ベルギー🇧🇪リエージュからドイツ🇩🇪ケルンに移動します 21:30~",
    "start": "2025-03-27 21:30",
    "state": "editing",
-   "claims_left": 2,
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
@@ -904,36 +945,42 @@
      "action": "erase"
     }
    ],
-   "why": "Circles / Durand Jones & The Indications, Durand Jones"
+   "why": "動画編集が進行中"
   },
   "cIEa-dFtCZU": {
    "title": "ベルギー🇧🇪リエージュ着きましたんで少し。ホステルが綺麗すぎました。",
    "start": "2025-03-21 00:45",
-   "state": "manual",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/Fly Me To The Moon (In Other Words)"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "jCwf-vlnEiM": {
    "title": "グッズ販売開始しました〜パリのホステルで少し。",
    "start": "2025-03-14 22:39",
    "state": "editing",
-   "claims_left": 7,
+   "claims_left": 6,
    "history": [
     {
      "date": "2026-10-12",
      "claim": "-BiqnJf4YtE",
      "song": "Spirits / The Strumbellas",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "3fcnahOBULY",
+     "song": "This Love / Maroon 5",
+     "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "This Love / Maroon 5"
   },
   "mhw2n8CLiOM": {
    "title": "ロンドンついてウキウキしてきたので少し",
    "start": "2025-02-25 22:27",
    "state": "editing",
-   "claims_left": 1,
+   "claims_left": 0,
    "history": [
     {
      "date": "2026-10-12",
@@ -942,15 +989,15 @@
      "action": "erase"
     }
    ],
-   "why": "Apparently Nothin' (Soul River) / Young Disciples"
+   "why": "動画編集が進行中"
   },
   "8Hhmi6vk0QY": {
    "title": "前編【神回】イギリスの温泉街、バースが美しすぎた！ローマ時代の遺跡、世界遺産の街、絶品アフタヌーンティーが最高すぎた。",
    "start": "2025-02-15 18:01",
-   "state": "manual",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/BABYLON"
+   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
   },
   "5eN04y7p0JA": {
    "title": "靴探しにイギリスのアウトレットいきます",
@@ -971,7 +1018,7 @@
      "action": "erase"
     }
    ],
-   "why": "Love Me Like You Care / Honey Dijon"
+   "why": "動画編集が進行中"
   },
   "nKTakrtzWM8": {
    "title": "イギリスの古都チェスターを歩く！城壁に囲まれた、黒白の美しい街並み、絶景リバーサイド散歩！",
@@ -1023,26 +1070,26 @@
   "KBlD-bDbwgA": {
    "title": "【神回】イギリス・ロンドン街歩き配信。船乗って、博物館、美術館、丸亀製麺を見に行こう！",
    "start": "2025-01-10 18:59",
-   "state": "manual",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/IDEA 10"
+   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
   },
   "1OmH1KpsnCY": {
    "title": "【祝PC配信始動】カサ・アヤト竣工式",
    "start": "2025-01-09 23:00",
-   "state": "editing",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "動画編集が進行中"
+   "why": "WebSocketTimeoutException: Connection timed out"
   },
   "GZjeibPxjlQ": {
    "title": "ロンドンホステルで雑談配信でイギリスのスーパーの買い物を紹介しました。",
    "start": "2025-01-06 22:56",
-   "state": "manual",
+   "state": "error",
    "claims_left": 1,
    "history": [],
-   "why": "曲の消去で対応できない申し立て: AUDIO/HOLD ME WHILE YOU WAIT"
+   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
   },
   "fqk0KVAqMps": {
    "title": "【神回】ロンドン街散策！！ノッティングヒルから、アフタヌーンティー、冬のワンダーランドへ！",
@@ -1070,24 +1117,36 @@
      "claim": "wAHiOp-fl58",
      "song": "Little Bit More / Jidenna",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "z0fP_ubJSio",
+     "song": "Blessed / Shenseea, Tyga",
+     "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "Blessed / Shenseea, Tyga"
   },
   "yyFLknDb9oQ": {
    "title": "【あと2日】最後の観光が最高すぎたので、ケバブ語ります",
    "start": "2024-12-23 06:56",
    "state": "editing",
-   "claims_left": 2,
+   "claims_left": 1,
    "history": [
     {
      "date": "2026-10-12",
      "claim": "b1tLyPdVANQ",
      "song": "Wave(s) / Lewis Del Mar",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "r4UO2QGJgQI",
+     "song": "Hold Your Hand (Megatronic & MFWILEY Remix) (Megatronic & MFWILEY Remix) / DJ Matpat, Fawziyya Heart",
+     "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "Hold Your Hand (Megatronic & MFWILEY Remix) (Megatronic & MFWILEY Remix) / DJ Matpat, Fawziyya Heart"
   },
   "KON8im0U6Tk": {
    "title": "遂にWi-Fiが復活したので、積もる話しをしましょう！",
@@ -1100,9 +1159,15 @@
      "claim": "OQFepWDmI2o",
      "song": "Needed Me / Rihanna",
      "action": "erase"
+    },
+    {
+     "date": "2026-10-12",
+     "claim": "novN-Ww79ds",
+     "song": "Feeling Good / Nina Simone",
+     "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "Feeling Good / Nina Simone"
   },
   "aencgvAwwn4": {
    "title": "ハンガリー最終日、別れはいつも突然に😢",

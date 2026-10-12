@@ -304,10 +304,11 @@ def resolve_claim_ui(t, video_id, song, how="erase"):
     song はその行に出ている曲名（claim_summary の title）。how は "erase"（曲だけ消す）か "mute"（区間を全部無音）。
     戻り値は edit_video の返事。**元に戻せない**"""
     t.go(url_of(f"video/{video_id}/claims"), wait=5)
-    title = json.dumps(song)
+    # 画面の曲名は API と大文字小文字が違うことがある（作曲への申し立て: API「BABYLON」/ 画面「Babylon」）
+    title = json.dumps(song.lower())
     row_btn = f"""(() => {{ for (const b of document.querySelectorAll('ytcp-button')) {{
         if (b.innerText.trim() !== '対応する' || b.hasAttribute('disabled')) continue;
-        let r = b; while (r && !(r.innerText || '').includes({title})) r = r.parentElement;
+        let r = b; while (r && !(r.innerText || '').toLowerCase().includes({title})) r = r.parentElement;
         if (r && r.querySelectorAll('ytcp-button').length <= 3) return b; }} return null; }})()"""
     _wait(t, f"!!{row_btn}", 20)
     t.click(row_btn)
