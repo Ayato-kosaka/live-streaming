@@ -92,10 +92,21 @@ done
 
 PORT="$PORT" OUT="$work/og.png" STAMP="$work/og.json" node "$root/tools/sprites/og.mjs"
 code=$?
+# 落ちたときに、**どの島を撮ったか**を一緒に言う。島の色（水も草も）は章で
+# 持ち替わるので（`site/app/css/tokens.css` の `[data-theme]`）、
+# 「きのうまで通っていたのに今晩落ちた」のいちばんありそうな理由がこれ。
+# 2026-10-11 15:00 UTC に章が北マケドニア（`lakeland`）へ移った晩、
+# 水が青から湖の翡翠になり、`ogcheck.py` がその水を陸と数えて5晩落ちた。
+# **ログには「海が 9.1%」としか出ず、島が変わったことはどこにも出ていなかった。**
+isle="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("島") or "?")' \
+  "$work/og.json" 2>/dev/null)"
+[ -n "$isle" ] || isle="?"
 case "$code" in
   0) ;;
-  1) die "撮れましたが、絵が島に見えません（ogcheck が落ちました）。絵は据え置きます" ;;
-  *) die "撮れませんでした（og.mjs が $code）。絵は据え置きます" ;;
+  1) die "撮れましたが、絵が島に見えません（ogcheck が落ちました。島は $isle）。絵は据え置きます。" \
+       "上の「海 …% / 陸 …%」と「左右のふちの色」を見る——ふちが水の色なのに「陸」と読んでいたら、" \
+       "島の大きさではなく tokens.css の [data-theme=\"$isle\"] の水の色を ogcheck.py が知らない" ;;
+  *) die "撮れませんでした（og.mjs が $code。島は $isle）。絵は据え置きます" ;;
 esac
 [ -s "$work/og.png" ] || die "撮ったはずの絵がありません"
 [ -s "$work/og.json" ] || die "撮ったはずの字がありません"

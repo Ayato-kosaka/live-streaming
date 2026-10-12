@@ -46,6 +46,9 @@ import {handleDonors} from "./donors";
 /* LINE スタンプの、住人のことば(#716)。同じ理由で外に置いてある。
    **本人にだけ見せる口**で、パスに id を取らない（`stampLine.ts` 冒頭）。 */
 import {handleStampLine} from "./stampLine";
+/* 締め切った宛先の表(#225)。**島の表（`site/content/themes.ts`）の写し**で、
+   `functions/tools/shutthemes.mjs` が組み立てる。手で直さない。 */
+import {SHUT_THEMES} from "./shutThemes";
 /* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
    **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
    引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
@@ -338,8 +341,39 @@ const POLL_VOTES_PER_DAY = 30;
    テーマの表そのものは Git（`site/content/themes.ts`）にある。
    サーバーは形だけを見て、知らないテーマも受け取る。**表と突き合わせない。**
    突き合わせると、表を1行足すたびに Functions のデプロイが要る
-   （画面だけ先に出ると、その日ぶんの付箋がまるごと 400 で消える）。 */
+   （画面だけ先に出ると、その日ぶんの付箋がまるごと 400 で消える）。
+
+   **断るのは「締め切った宛先」だけ**(#225)。許す表ではなく、断る表を持つ
+   （`SHUT_THEMES`）。上の理屈は「足したものを受ける」ための決めで、
+   「畳んだものを受け続ける」ための決めではない。 */
 const THEME_ID = /^[a-z][a-z0-9-]{1,39}$/;
+/**
+ * **その宛先は、もう締め切られているか。**
+ *
+ * 2026-10-11 に畳んだ宛先（アルバニア・北欧）は画面から消えたが、
+ * サーバーは形しか見ていなかったので、slug を直に投げれば**貼れていた。**
+ * 画面だけ閉じるのは半分しか閉じていない（`docs/island-misses.md` #225）。
+ *
+ * 表は島の側（`site/content/themes.ts`）が正本で、ここは写し
+ * （`src/shutThemes.ts`。`functions/tools/shutthemes.mjs` が組み立てる）。
+ * 値は「**この時刻から書けない**」なので、
+ *
+ *   - `closed: true` の宛先 … `0`。いつでも書けない
+ *   - 企画あての宛先 … その企画が終わった翌日 0時（JST）の epoch ms。
+ *     **日で締まるものも、ここで塞がる**（`isOpenTheme` が見ているのと
+ *     同じ瞬間。島の画面と1秒もずれない）
+ *
+ * **表に無い宛先は、いつでも書ける。** 島の表に1行足した日に Functions を
+ * 配り直さなくても貼れる、という上の決めはそのまま残す。
+ *
+ * @param {string} theme 宛先の id
+ * @param {number} now いま（epoch ms）
+ * @return {boolean} 締め切られていれば true
+ */
+function shutTheme(theme: string, now: number): boolean {
+  const at = SHUT_THEMES[theme];
+  return at !== undefined && now >= at;
+}
 /** 返信。あやとが旅の途中に親指で打つものなので、付箋より少しだけ長い。 */
 const MAX_REPLY_LEN = 300;
 /** 1日に貼れる付箋。企画の提案より軽い行為なので、提案(8)より多くしてある。 */
@@ -3653,6 +3687,28 @@ export const islandApi = onRequest(
         const link = safeLink(sent);
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
+          return;
+        }
+        /* **締め切った宛先には貼れない**(#225)。
+           **409（いまは受け取れない）で、400（形が違う）ではない。**
+           送られた字は正しい——受け取る側がもう閉じている、という話なので、
+           書いた人が直せる間違いと同じ顔をさせない。画面もそう読んで
+           「この話の付箋は、もう締め切りました。」と出す（`Notes.tsx`。
+           400 のままだと「いま貼れなかった。少し待って、もう一度。」になって、
+           **待っても二度と通らない**ことが言えない）。
+
+           **あやと（`byOwner`）も断る。** 立て札を出す窓は締め切った面に
+           出ないので（`Notes.tsx` の `shut` は誰にでも効く）、通しても
+           通り道が無い。通せば「締め切り」が人によって意味の変わるものになり、
+           島の表（`site/content/themes.ts`）が言っていることと食い違う。
+           また立てたくなったら、畳みを外すほうが正しい——あちらの1行で、
+           画面の窓とここの関所が同時に開く。
+
+           **ハート・返信はここで塞がない。** 締め切ったのは「新しく書く」
+           ことで、貼ってある付箋に反応することではない
+           （`POST /stickies/:id/heart` は今までどおり誰でも押せる）。 */
+        if (shutTheme(theme, Date.now())) {
+          res.status(409).json({error: "theme shut"});
           return;
         }
         if (text.length < 2) {

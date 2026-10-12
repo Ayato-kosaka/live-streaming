@@ -2105,9 +2105,11 @@ jobs:
             echo "落ちた理由:"
             echo ""
             echo '```'
-            tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+            tail -n 40 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
             echo '```'
             echo ""
+            echo "最後の1行に**どの島を撮ったか**が入っています。島の色（水も草も）は章で"
+            echo "持ち替わるので、「きのうまで通っていたのに今晩落ちた」のいちばんありそうな理由がそれです。"
             echo "全部は、上の「分かち合う絵を撮り直す」の log に出ています。"
             echo "手元で同じものを回すには:"
             echo ""
@@ -2116,8 +2118,10 @@ jobs:
             echo "DIST=site/.next-og PORT=4519 tools/sprites/ognight.sh"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "---- 撮り直しが落ちた理由（最後の30行）----"
-          tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+          # **40行。** 30 だと、住人の絵が落とせなかった行（毎晩9枚ぶん出る）で
+          # 窓が埋まって、肝心の「海 …% / 陸 …%」と島の名前が押し出される
+          echo "---- 撮り直しが落ちた理由（最後の40行）----"
+          tail -n 40 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
           echo "---------------------------------------------"
           echo "::error::分かち合う絵（og.png）を撮り直せませんでした。絵は据え置きです"
           exit 1
