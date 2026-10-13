@@ -126,7 +126,7 @@ def items(q=""):
 RAW = "https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/master/"
 
 
-def goods(spec_path, dry=False, pub=False):
+def goods(spec_path, dry=False, pub=False, trial=False, only=None):
     """ほしいグッズの付箋（#goods-suzuri）から、1件ずつ品目を決めて作る。
 
     spec は `tools/goods/goods.json`。1件 = 1デザイン × 1品目。絵は `tools/goods/compose.sh` が
@@ -140,7 +140,9 @@ def goods(spec_path, dry=False, pub=False):
     os.makedirs("/tmp/suzuri-sheet", exist_ok=True)
     made = []
     for g in spec:
-        if g["title"] in have:
+        if only and g["key"] not in only:
+            continue
+        if g["title"] in have and not trial:
             print(f"  skip {g['title']!r}: 同じ題がもうある")
             continue
         prod = {"itemId": g["itemId"], "exemplaryItemVariantId": g["variant"], "published": pub, "resizeMode": "contain"}
@@ -159,6 +161,7 @@ def goods(spec_path, dry=False, pub=False):
         pr = (r.get("products") or [{}])[0]
         made.append((g["key"], m["id"], pr))
         print(f"  created {m['id']} {m['title']!r} 公開={pr.get('published')} {pr.get('sampleUrl')}")
+        print(f"    sample {pr.get('sampleImageUrl')}\n    tpl {pr.get('imageUrl')}")
         time.sleep(2)
     for key, mid, pr in made:
         # 見本の絵（表・裏）。公開されている URL なので、ログインなしで取れる
@@ -175,6 +178,12 @@ def goods(spec_path, dry=False, pub=False):
                 print(f"    見本 {key}-{name}.jpg {len(raw)}B")
             else:
                 print(f"    見本が取れなかった {key}-{name}")
+    if trial:
+        # 試作: 見本を取ったら、デザインごと消す（非公開のまま。売り場には1度も出ない）
+        for key, mid, pr in made:
+            st, _ = call("DELETE", f"/materials/{mid}")
+            print(f"  試作を消した {key} {mid} -> {st}")
+        return
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary and made:
         with open(summary, "a") as f:
@@ -485,7 +494,7 @@ def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("materials")
-    c = sub.add_parser("goods"); c.add_argument("spec"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true")
+    c = sub.add_parser("goods"); c.add_argument("spec"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true"); c.add_argument("--trial", action="store_true"); c.add_argument("--only", default="")
     c = sub.add_parser("sample"); c.add_argument("ids", type=int, nargs="+")
     c = sub.add_parser("publish"); c.add_argument("id", type=int)
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
@@ -497,7 +506,7 @@ def main():
     c = sub.add_parser("update"); c.add_argument("id", type=int)
     # 品目は直させない。大きさ無しで品目を送ると、缶バッジ・パネルの大きさが既定に戻りうる
     c.add_argument("--title"); c.add_argument("--description"); c.add_argument("--price", type=int)
-    c = sub.add_parser("delete"); c.add_argument("id", type=int); c.add_argument("--dry-run", action="store_true")
+    c = sub.add_parser("delete"); c.add_argument("id", type=int, nargs="+"); c.add_argument("--dry-run", action="store_true")
     c = sub.add_parser("preview"); c.add_argument("id", type=int)
     c.add_argument("--scale", required=True); c.add_argument("--offset-x", default="0"); c.add_argument("--offset-y", default="0")
     c = sub.add_parser("probe"); c.add_argument("id", type=int); c.add_argument("--item", default="can-badge")
@@ -513,7 +522,7 @@ def main():
     elif a.cmd == "items":
         items(a.q)
     elif a.cmd == "goods":
-        goods(a.spec, a.dry_run, a.publish)
+        goods(a.spec, a.dry_run, a.publish, a.trial, a.only.split(",") if a.only else None)
     elif a.cmd == "sample":
         sample(a.ids)
     elif a.cmd == "publish":
@@ -531,11 +540,15 @@ def main():
         print("PUT", a.id, st, (r.get("error") if st != 200 else r.get("material", {}).get("title")))
         sys.exit(0 if st == 200 else 1)
     elif a.cmd == "delete":
-        if a.dry_run:
-            print("dry-run: DELETE", a.id); return
-        st, r = call("DELETE", f"/materials/{a.id}")
-        print("DELETE", a.id, st, r.get("error", ""))
-        sys.exit(0 if st in (200, 204) else 1)
+        bad = 0
+        for i in a.id:
+            if a.dry_run:
+                print("dry-run: DELETE", i)
+                continue
+            st, r = call("DELETE", f"/materials/{i}")
+            print("DELETE", i, st, r.get("error", ""))
+            bad += st not in (200, 204)
+        sys.exit(1 if bad else 0)
     elif a.cmd == "preview":
         st, r = call("GET", f"/products/{a.id}/placement_preview",
                      query={"scale": a.scale, "offsetX": a.offset_x, "offsetY": a.offset_y})
