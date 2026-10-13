@@ -86,7 +86,7 @@
      紙の地そのもの（--pg-paper-bg）は21面で共通なので触らない。
      inset の塗りは地の上・中身の下に入るので、1枚重ねるのに1行で足りる。
      染めない面では transparent に落ちて、何も起きない。 */
-  box-shadow:inset 0 0 0 999px var(--zk-tint, transparent);
+  box-shadow: inset 0 0 0 999px var(--zk-tint, transparent);
 }
 
 /* 紙の中の区切り。影ではなく1本の罫線 */
@@ -203,11 +203,11 @@
   color: var(--ink);
   background: linear-gradient(var(--paper), var(--paper-2));
   border: 2.5px solid var(--frame-dark);
-  box-shadow:0 var(--pop-d4) 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
 }
-.zk-pick:hover { transform: translateY(-2px); box-shadow:0 var(--pop-d5) 0 var(--frame-deep); }
-.zk-pick:active { transform: translateY(4px); box-shadow:0 var(--pop-d0) 0 var(--frame-deep); }
+.zk-pick:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d5) 0 var(--frame-deep); }
+.zk-pick:active { transform: translateY(4px); box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
 /* 選んでいるものは塗りを変えず、朱の枠だけ（紙の型と同じ示しかた） */
 .zk-pick.is-on { border-color: var(--zk-pick); }
 /* 品数は「読ませる字」。opacity 0.62 で薄めると、描いた画素で 3.31 : 1 しか無く、
@@ -364,7 +364,7 @@
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
     0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
@@ -372,7 +372,7 @@
 a.zk-hero { display: block; }
 a.zk-hero:active .zk-open {
   transform: translateY(6px);
-  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 a.zk-hero .zk-hero-art img { transition: transform 0.2s cubic-bezier(0.34, 1.5, 0.64, 1); }
 a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
@@ -478,7 +478,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   left: calc((var(--w) + var(--g)) * var(--i));
   border-radius: 10px;
   background: color-mix(in srgb, var(--accent-deep) 9%, transparent);
-  box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--accent-deep) 34%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent-deep) 34%, transparent);
   pointer-events: none;
 }
 .wk-days {
@@ -550,7 +550,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-size: var(--fs-note);
   font-weight: 900;
   background: color-mix(in srgb, var(--ty) 20%, var(--paper));
-  box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--ty) 52%, var(--paper));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ty) 52%, var(--paper));
 }
 .wk-free img { width: 24px; height: 24px; flex: none; object-fit: contain; object-position: center bottom; }
 .wk-free em { font-style: normal; font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); margin-left: auto; flex: none; }
@@ -583,7 +583,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
      すると「どこを押しても開く」と言ってしまうので、箱は地面へ落ちる影だけ
      にして、厚みは屋根へ渡した。落ち影は右下・3pxぼけの `--shadow-3` を使う。
      真下・ぼかし0の自前の影を持っていると、厚みと見分けが付かない（5.3）。 */
-  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.85),
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.85),
     var(--shadow-3);
 }
 /* 屋根。型の色をいちばん大きい面で見せる場所。
@@ -599,7 +599,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   /* 押せるのはここ。56px の板なので厚みは 6px（`docs/island-world.md` 3.4）。
      箱が `overflow: hidden` なので、外へ出す影ではなく内側の帯で厚みを出す。
      外へ出すと、閉じているとき（箱＝屋根の高さ）に丸ごと切られて消える。 */
-  box-shadow:inset 0 -6px 0 color-mix(in srgb, var(--ty) 62%, var(--ink));
+  box-shadow: inset 0 -6px 0 color-mix(in srgb, var(--ty) 62%, var(--ink));
   cursor: pointer;
   list-style: none;
 }
@@ -653,7 +653,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 14px;
   padding: var(--sp-2) var(--sp-3);
   background: var(--paper-2);
-  box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--frame) 40%, var(--paper));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--frame) 40%, var(--paper));
 }
 .beat em {
   flex: none;
@@ -698,11 +698,11 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.13s, box-shadow 0.13s;
 }
-.ty-go:hover { transform: translateY(-2px); box-shadow:inset 0 1.5px 0 rgba(255,255,255,.8), 0 var(--pop-d5) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
-.ty-go:active { transform: translateY(3px); box-shadow:0 var(--pop-d0) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
+.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.8), 0 var(--pop-d5) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
+.ty-go:active { transform: translateY(3px); box-shadow: 0 var(--pop-d0) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
 
 /* カードの中の折りたたみ。ここも型の色は持ち込まない */
 /* 折りたたみに厚みは付けない（`ui.css` の `.fold`「影は落とさない」）。
@@ -724,12 +724,12 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   padding: var(--sp-2);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--frame-dark), 0 9px 2px rgba(8, 46, 62, 0.14);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--frame-dark), 0 9px 2px rgba(8, 46, 62, 0.14);
   transition: transform 0.14s, box-shadow 0.14s;
   position: relative;
 }
-.vid:hover { transform: translateY(-3px); box-shadow:inset 0 2px 0 rgba(255,255,255,.7), 0 var(--pop-d5) 0 var(--frame-dark), 0 12px 3px rgba(8,46,62,.16); }
-.vid:active { transform: translateY(3px); box-shadow:0 var(--pop-d0) 0 var(--frame-dark); }
+.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 var(--pop-d5) 0 var(--frame-dark), 0 12px 3px rgba(8,46,62,.16); }
+.vid:active { transform: translateY(3px); box-shadow: 0 var(--pop-d0) 0 var(--frame-dark); }
 .vid-th {
   position: relative;
   flex: none;
@@ -751,7 +751,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 50%;
   color: #4a3216;
   background: rgba(255, 253, 240, 0.92);
-  box-shadow:0 var(--pop-d0) 0 rgba(60, 40, 14, 0.28);
+  box-shadow: 0 var(--pop-d0) 0 rgba(60, 40, 14, 0.28);
   padding-left: 2px;
 }
 .vid-b { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; justify-content: center; flex: 1; }
@@ -776,7 +776,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    持ち上がりを付けない（押せないのに厚みのあるものは `tools/sprites/popcheck.mjs` が拾う）。
    サムネイルは持たないぶん、中身だけで1行ぶん低くなる */
 .vid.is-gone {
-  box-shadow:none;
+  box-shadow: none;
   border-style: dashed;
   background: color-mix(in srgb, var(--paper-2) 82%, var(--frame));
   cursor: default;
@@ -798,7 +798,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-size: var(--fs-note); font-weight: 900;
   color: #fffdf6;
   background: color-mix(in srgb, var(--frame-deep) 72%, var(--ink));
-  box-shadow:inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* 紙の上に置く配信カード。板の厚みを消して、罫線の枠にする */
@@ -806,15 +806,15 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border: 1px solid var(--zk-rule-soft);
   border-radius: 8px;
   background: rgba(255, 253, 236, 0.6);
-  box-shadow:none;
+  box-shadow: none;
 }
-.zk .vid:hover { transform: none; box-shadow:none; border-color: var(--zk-pick); background: rgba(255, 255, 255, 0.72); }
-.zk .vid:active { transform: none; box-shadow:none; }
+.zk .vid:hover { transform: none; box-shadow: none; border-color: var(--zk-pick); background: rgba(255, 255, 255, 0.72); }
+.zk .vid:active { transform: none; box-shadow: none; }
 .zk .vid-th { border-radius: 5px; background: var(--zk-shade); }
 .zk .vid-b b { color: var(--zk-ink); }
 .zk .vid-m { color: var(--zk-ink-2); }
 .zk .vid-m em { background: var(--zk-chip); color: #40390c; border-radius: 4px; }
-.zk .vid-no { background: var(--zk-ink); box-shadow:none; }
+.zk .vid-no { background: var(--zk-ink); box-shadow: none; }
 
 /* =========================================================
    作った料理 — 料理のカタログ（紙の型）
@@ -857,11 +857,11 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--ink);
   background: linear-gradient(var(--paper), var(--paper-2));
   border: 2px solid var(--zk-pick);
-  box-shadow:0 var(--pop-d2) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep));
+  box-shadow: 0 var(--pop-d2) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep));
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.kt-clear:hover { transform: translateY(-2px); box-shadow:0 var(--pop-d4) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
-.kt-clear:active { transform: translateY(2px); box-shadow:0 var(--pop-d0) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
+.kt-clear:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d4) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
+.kt-clear:active { transform: translateY(2px); box-shadow: 0 var(--pop-d0) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
 
 /* いま何ページ目か。数と同じ行に置く（別の行にすると、絞るたびに行が増える） */
 .kt-pageof {
@@ -882,17 +882,17 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--pg-edge);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-note); font-weight: 900;
   color: var(--ink);
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.kt-pager > button:active { transform: translateY(5px); box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+.kt-pager > button:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 /* 端のページ。押せないものから厚みを外す。押せる合図は厚みだけなので、
    薄くなったことがそのまま「ここで止まり」になる（`docs/island-world.md` 2章）。 */
 .kt-pager > button:disabled {
-  box-shadow:none;
+  box-shadow: none;
   border-color: var(--zk-rule-soft);
   background: none;
   color: var(--zk-ink-2);
@@ -1106,7 +1106,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   width: 58px; height: 58px;
   border-radius: 50%;
   background: radial-gradient(100% 100% at 50% 18%, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--frame) 58%, var(--paper)), 0 var(--pop-d1) 0 rgba(120, 90, 50, 0.12);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--frame) 58%, var(--paper)), 0 var(--pop-d1) 0 rgba(120, 90, 50, 0.12);
 }
 @media (min-width: 720px) { .rt-stop { width: 66px; height: 66px; } }
 .rt-stop .art { width: 38px; height: 38px; }
@@ -1119,7 +1119,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   font-size: var(--fs-note); font-weight: 900;
   color: #fffdf6;
   background: var(--frame-deep);
-  box-shadow:inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
 }
 .rt-body { flex: 1; min-width: 0; display: grid; gap: var(--sp-2); padding-top: 2px; }
 .rt-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--sp-2); }
@@ -1131,9 +1131,9 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
 .zk .rt::before { border-left-color: var(--zk-rule-soft); }
 .zk .rt-stop {
   background: rgba(255, 253, 236, 0.72);
-  box-shadow:inset 0 0 0 1px var(--zk-rule-soft);
+  box-shadow: inset 0 0 0 1px var(--zk-rule-soft);
 }
-.zk .rt-n { background: var(--zk-ink); box-shadow:none; }
+.zk .rt-n { background: var(--zk-ink); box-shadow: none; }
 .zk .rt-head b { color: var(--zk-ink); }
 .zk .rt-head time,
 .zk .rt-head .sub { color: var(--zk-ink-2); }

@@ -39,14 +39,14 @@
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
   /* 板の厚み。ぼかさない下向きの影が側面、ぼかしたほうが落ち影 */
-  box-shadow:0 var(--pop-d2) 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 10px var(--cast),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   -webkit-tap-highlight-color: transparent;
 }
 .today-tab:active {
   transform: translateY(4px);
-  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .today-tab:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
@@ -122,7 +122,7 @@
   background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
-  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   animation: todayOpen 0.2s cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
 @keyframes todayOpen {
@@ -173,11 +173,11 @@
   color: var(--ink);
   font-size: 12px;
   font-weight: 900;
-  box-shadow:0 var(--pop-d1) 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 var(--pop-d1) 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .today-go:active {
   transform: translateY(3px);
-  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* 今日ここに来た人。開いた面のいちばん下に、罫1本で区切って小さく置く。
@@ -365,7 +365,7 @@
   background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
-  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* 板の名前。「今日の島」と同じ扱いにして、主役（問い）を邪魔しない */
@@ -413,19 +413,19 @@
   background: var(--paper-out);
   border: 3px solid var(--frame-dark);
   border-radius: 12px;
-  box-shadow:0 var(--pop-d1) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 var(--pop-d1) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   -webkit-tap-highlight-color: transparent;
 }
 .poll-pick:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .poll-pick:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 /* 押し終わったら、もう押すものではない。厚みを抜いて、板の上に寝かせる */
 .poll-pick:disabled {
   cursor: default;
   transform: translateY(3px);
-  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* 票の棒。文字の下を塗る。
