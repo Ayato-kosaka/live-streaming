@@ -24,11 +24,16 @@ name: 図鑑の呼び名を追いつかせる
 #
 # ## 繋ぎかた — cron は保険。本体は `workflow_run`
 #
-# このリポジトリで定時実行が実際に発火した実績があるのは
-# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`（20:30 UTC）
-# の古参2本だけで、しかも**1時間49分〜3時間32分遅れて**走る。
-# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は翌朝まで発火しなかった。
-# **cron を当てにしない**（`CLAUDE.md`、`docs/island-misses.md` #125）。
+# **cron を当てにしない。** 定時実行は、このリポジトリでは**何時間も遅れて**走る。
+# `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`（20:30 UTC）は
+# 数十分〜数時間、01:00〜04:30 UTC に置いた保険は**一度の例外もなく4時間以上**
+# （2026-10-13 の実測。**数はここに書かない**——`python3 python/cron_lag.py` が出す）。
+# 下の cron は**保険**として置いてある。
+#
+# **「発火しない cron がある」は、もう当たらない。** 前はここに
+# 「実績があるのは古参2本だけ」と書いてあったが、2026-10-13 に
+# `event=schedule` の run を数えたら、**cron を持つ14本ぜんぶに実績があった**
+# （`rebake.yml` の 01:00 UTC も33回）。**遅れるのは本当。発火しないのは嘘。**
 #
 # **`conclusion` は見ない。** `Fetch Doneru Donations` は落ちた回にも後段まで
 # 走るし、`Fetch YouTube Chat Data` のほうは「表に無い どねID が投げ銭してきた」
