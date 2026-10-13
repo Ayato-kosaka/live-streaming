@@ -2711,6 +2711,18 @@ export const islandApi = onRequest(
            `mine=true` はトークンの持ち主のチャンネルしか返さないので、
            **「名乗る」という言葉が入口から消える。**
            検算にしないのは、検算を1か所忘れた日に元へ戻るため。 */
+        /* **言い値を送ってきたら、断る。黙って無視しない。**
+           無視するだけでも書かれはしないが、**塞がったことを外から
+           確かめる手がかりが1つも無くなる。** ここが 400 を返すなら、
+           本番に新しいほうが出ていることが、**1バイトも書かずに**分かる
+           （付箋の締め切りを 409 で確かめたのと同じ形）。
+           古い画面（配り替えの前に開いたままのタブ）がここに当たるが、
+           そのときも**いま結んである `channelId` は消えない**——
+           書かないだけなので、読み込み直せば直る。 */
+        if (body.channelId !== undefined) {
+          res.status(400).json({error: "channelId not accepted"});
+          return;
+        }
         const owned = await ownedChannel(body.ytToken);
         const channelId = owned?.channelId ?? "";
         const now = Date.now();

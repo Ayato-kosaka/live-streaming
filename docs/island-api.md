@@ -457,7 +457,16 @@ OAuth アクセストークン）だけで、口が
 **引き直した先が言い値だった**（`island-db.md` の `islandUsers` の節）。
 
 - `body` から読むのは **`nickname` / `showName` / `showPhoto` / `ytToken`** の4つだけ。
-  `channelId` `handle` `title` `thumbnail` は**1つも読まない**
+  `handle` `title` `thumbnail` は**1つも読まない**
+- **`channelId` が body に在ったら、400 `{"error":"channelId not accepted"}`。**
+  黙って無視しても書かれはしないが、**塞がったことを外から確かめる
+  手がかりが1つも残らない。** ここが 400 を返すなら、新しいほうが本番に
+  出ていることが**1バイトも書かずに**分かる（締め切った宛先を 409 で
+  確かめたのと同じ形）。断る判定は**書く前**に置いてある
+- **配る順は Hosting が先、Functions があと。** 逆にすると、古い画面が
+  `channelId` を送って 400 で弾かれる。先に Hosting を出せば、
+  そのあいだ（新しい画面 × 古い口）は結びが1回ぶん増えないだけで、
+  **いま結んである人は何も変わらない**
 - **合言葉が無い回（空の body ＝ `loadMe`）は YouTube を叩かない。**
   島を開くたびに往復すると割り当てを削る。そのとき `channelId` は
   **触らない**（消しもしない）

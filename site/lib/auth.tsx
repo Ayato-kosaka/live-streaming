@@ -417,15 +417,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
          いまは `channels?mine=true` を**サーバーが引く**
          （`functions/src/youtubeOwner.ts`）。
 
-         `channel`（ここで引いた中身）も一緒に送っているのは、
-         **配りの順を守るため。** Hosting と Functions は別々に手で
-         起動するので、新しい画面が古い Functions に当たる時間がある。
-         古いほうは `channelId` を見るので、そのあいだも結びは続く。
-         **新しい Functions が出たら、この行は next の波で落とす。** */
+         **`channelId` は、もう送らない。** 新しい口はこれが body に
+         在るだけで 400 を返す（黙って無視すると、塞がったことを外から
+         確かめられなくなるため）。
+
+         だから**配るのは Hosting が先、Functions があと。**
+         そのあいだ（新しい画面 × 古い口）は、古いほうが `channelId` を
+         見つけられないので**結びが1回ぶん増えないだけ**で、
+         いま結んである人は何も変わらない。**開くほうへは倒れない。**
+
+         `channel` は画面の表示（下の `setProfile`）にだけ使う。 */
       await fetch(`${API_BASE}/me`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ...(channel ?? {}), ytToken: cred?.accessToken ?? undefined }),
+        body: JSON.stringify({ ytToken: cred?.accessToken ?? undefined }),
       }).catch(() => null);
       if (channel) {
         setProfile((p) =>

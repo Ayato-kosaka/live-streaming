@@ -29,13 +29,14 @@
  * ## 対照（`docs/island-standards.md` §13）
  *
  * **毎回いっしょに、わざと緩めた写しで回して、狙った行が赤くなるか**を見る。
- * 緩めるのは5つ:
+ * 緩めるのは6つ:
  *
  *   1. チャンネルIDの形を見なくする → 空の返事が「確かめの取れた値」になる
  *   2. `mine=true` を外す → 他人を引ける URL になる
  *   3. 形の違う合言葉を落とさなくする → ヘッダに何でも入る
  *   4. 合言葉が空でも叩きに行く → 島を開くたびに YouTube の割り当てを削る
  *   5. `POST /me` に `body.channelId` を読む行を戻す → B が赤くなる
+ *   6. 言い値を断らず黙って無視する → 本番で塞がりを確かめる手がかりが消える
  *
  * 回しかた:
  *
@@ -261,9 +262,12 @@ console.log("\n# B. `POST /me` が、body からチャンネルを読まない")
   const code = src
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/\/\/[^\n]*/g, "");
-  check("`body.channelId` を読む行が1本も無い",
-    !/body\.channelId/.test(code),
-    (code.match(/.*body\.channelId.*/) ?? [""])[0].trim());
+  /* `body.channelId` に触れてよいのは**断る行の1本だけ。**
+     値として使う行（`clean(body.channelId, …)` など）は1本も無い。 */
+  const chLines = (code.match(/.*body\.channelId.*/g) ?? []).map((x) => x.trim());
+  check("`body.channelId` に触るのは、断る行の1本だけ",
+    chLines.length === 1 && chLines[0].includes("!== undefined"),
+    chLines.join(" / "));
   check("`body.handle` を読む行が1本も無い",
     !/body\.handle/.test(code),
     (code.match(/.*body\.handle.*/) ?? [""])[0].trim());
@@ -275,6 +279,11 @@ console.log("\n# B. `POST /me` が、body からチャンネルを読まない")
     (code.match(/.*body\.title.*/) ?? [""])[0].trim());
   check("`ownedChannel(` を通っている",
     /ownedChannel\(body\.ytToken\)/.test(code));
+  /* **言い値を送られたら断る。** 黙って無視するだけだと、塞がったことを
+     本番で確かめる手がかりが1つも残らない（`docs/island-api.md` 7章）。 */
+  check("`body.channelId` が在ったら 400 で断る",
+    /body\.channelId !== undefined/.test(code) &&
+      /channelId not accepted/.test(code));
   check("`channelId` に入るのは `owned` から来た値だけ",
     /const channelId = owned\?\.channelId \?\? "";/.test(code));
   /* **言い値を別の名前で受け直していないか。** 上の4つを avoid しても、
@@ -282,7 +291,12 @@ console.log("\n# B. `POST /me` が、body からチャンネルを読まない")
      「どの欄を body から読んでいるか」を数えて、**本人が決めるもの
      （`nickname` / `showName` / `showPhoto`）以外が1つも無い**ことを見る。
      `ytToken` は合言葉で、チャンネルを指す値ではない。 */
-  const inMe = code.slice(code.indexOf('path === "/me"')).slice(0, 3000);
+  /* 断る行（`body.channelId !== undefined`）は**値を読んでいない**ので、
+     数える前に外す。上で「その行が1本だけ在ること」は別に見てある。 */
+  const inMe = code
+    .slice(code.indexOf('path === "/me"'))
+    .slice(0, 3000)
+    .replace(/body\.channelId !== undefined/g, "");
   const MINE_OK = new Set(["nickname", "showName", "showPhoto", "ytToken"]);
   const read = [...inMe.matchAll(/body\.([A-Za-z]+)/g)]
     .map((m) => m[1])
@@ -328,7 +342,14 @@ const BREAKS = [
     "src",
     'const channelId = owned?.channelId ?? "";',
     'const channelId = clean(body.channelId, 64);',
-    "`body.channelId` を読む行が1本も無い",
+    "`body.channelId` に触るのは、断る行の1本だけ",
+  ],
+  [
+    "言い値を断らず、黙って無視する",
+    "src",
+    "if (body.channelId !== undefined) {",
+    "if (false) {",
+    "`body.channelId` が在ったら 400 で断る",
   ],
 ];
 
