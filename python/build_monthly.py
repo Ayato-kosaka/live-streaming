@@ -53,17 +53,18 @@
 置き場は `python/data/monthly_taps.json`（取り置き）。**焼き込みに直接書かない。**
 取る道具（`tools/youtube_taps.py`）が書き戻す先が画面のファイルになると、
 人が直した字と機械が書いた値が同じ場所で混ざる。
-渡っていない月があれば `python/monthly_taps_watch.py` が鳴る。
+渡っていない月があれば `python/monthly_taps_selftest.py` が鳴る（毎 PR）。
 """
 
 import argparse
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from ts_read import read_array  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_TS = ROOT / "site" / "content" / "months.ts"
@@ -229,24 +230,26 @@ def fetch() -> list:
 
 # ---------------------------------------------------------------- 焼く
 
-ICON_RE = re.compile(r'icon:\s*"([^"]+)".*?channel:\s*"([^"]+)"')
-
-
 def icons_by_channel() -> dict:
     """`content/residents.ts` から チャンネルID → 絵の id を引く表を作る。
 
     **ここで名寄せを自作しない。** `residents.ts` は
     `python/build_residents.py` が図鑑（`islandCharacter`）の `channelId` /
     `lookupKeys` で結んだ結果なので、当たっているものをそのまま借りるだけ。
-    載っていない人（直近90日に居ない人）は絵が付かず、頭文字の丸になる。
+    載っていない人（直近90日に居ない人・結べなかった人）は絵が付かず、
+    頭文字の丸になる。
+
+    **自前の正規表現で TS を読まない**（`python/ts_readers_selftest.py`）。
+    読み手は `python/ts_read.py` ひとつ。
 
     Returns:
         `{channelId: icon}`
     """
     if not RESIDENTS_TS.exists():
         return {}
-    return {m.group(2): m.group(1)
-            for m in ICON_RE.finditer(RESIDENTS_TS.read_text(encoding="utf-8"))}
+    got = read_array(RESIDENTS_TS.read_text(encoding="utf-8"), "RESIDENTS",
+                     keys=("icon", "channel"), id_key="icon")
+    return {r["channel"]: r["icon"] for r in got.rows if r["channel"] and r["icon"]}
 
 
 def taps() -> dict:
