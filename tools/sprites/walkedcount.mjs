@@ -63,6 +63,7 @@ import { chromium } from "playwright-core";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { repoPath, fromRoot } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4170";
 const DIST = fromRoot(process.env.DIST || "site/.next-3170");
@@ -74,12 +75,23 @@ const SELFTEST = process.argv.includes("--selftest");
 
 const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
 
+/* 読み方は `tsread.mjs` の1本（#694）。前は**字下げの深さ**（`^    slug:`）と
+   **1行に収まっていること**（`{ slug: …, name: …, entered: … }`）を当てにして
+   いた。どちらも書き方が変わるだけで黙って減る——そして**減ったぶんは
+   「ほしい数」から消える**ので、画面の数と食い違わず緑が出る。 */
+
 /** 歩き終わった国。**`-border` は国ではない**（`python/stays.py` の `is_country`） */
-const DONE = [...src.matchAll(/^    slug: "([^"]+)",$/gm)].map((m) => m[1]).filter((s) => !s.endsWith("-border"));
+const DONE = must(
+  readArray(src, "COUNTRIES", { keys: ["slug"], idKey: "slug" }),
+  "countries.ts の COUNTRIES",
+)
+  .map((r) => r.slug)
+  .filter((s) => !s.endsWith("-border"));
 /** いま歩いている旅の国と、入った日 */
-const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d{4}-\d{2}-\d{2})" \}/g)].map(
-  (m) => ({ slug: m[1], entered: m[2] }),
-);
+const AHEAD = must(
+  readArray(src, "AHEAD_COUNTRIES", { keys: ["slug", "entered"], idKey: "slug" }),
+  "countries.ts の AHEAD_COUNTRIES",
+).map((r) => ({ slug: r.slug, entered: r.entered }));
 
 /**
  * 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。**
@@ -108,13 +120,15 @@ const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d
  */
 function itineraryMatches() {
   const n = readFileSync(repoPath("site/content/nordic.ts"), "utf8");
+  /* 入国する区間は `ROUTE` の1件。前は行を上から舐めて「直前に見た `date:`」を
+     その国の入国日にしていたので、**区間の外の `date:` を拾いえた**
+     （`fare` や `fork` の中に日付が入った日に、静かに別の日を言う）。 */
   const want = new Map();
-  let date = "";
-  for (const line of n.split("\n")) {
-    const d = line.match(/^\s*date: "(\d{4}-\d{2}-\d{2})",/);
-    if (d) date = d[1];
-    const e = line.match(/^\s*enters: "([a-z-]+)",/);
-    if (e && !want.has(e[1])) want.set(e[1], date);
+  for (const leg of must(
+    readArray(n, "ROUTE", { keys: ["date", "enters"], idKey: "id" }),
+    "nordic.ts の ROUTE",
+  )) {
+    if (leg.enters && !want.has(leg.enters)) want.set(leg.enters, leg.date);
   }
   const done = new Set(DONE);
   const bad = [];

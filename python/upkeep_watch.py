@@ -172,7 +172,9 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -207,7 +209,27 @@ CHAPTERS_TS = "site/content/chapters.ts"
 COUNTRIES_TS = "site/content/countries.ts"
 ABOUT_TSX = "site/app/about/page.tsx"
 PLACE_TS = "site/lib/place.ts"
+UPDATES_TS = "site/content/updates.ts"
 LEGENDS_TS = "site/content/legends.ts"
+
+# **視聴者さんから見える変更が入る置き場。**
+#
+# ## なぜ「面と部品」だけなのか
+#
+# | 置き場 | 入れない理由 |
+# | --- | --- |
+# | `site/content/**` | **毎晩、機械が焼き直す**（`rebake.yml`）。入れると毎朝鳴って、「いつも鳴っている札」になる（`docs/island-standards.md` 13章 / 15章） |
+# | `site/public/**` | 同じ。カードも写真もひとりでに増える |
+# | `functions/` `python/` `tools/` `docs/` `.github/` | 中の話。読む人の画面は1画素も変わらない |
+#
+# **代わりに取りこぼすものがある。** 焼き込みだけ・絵だけの変更は鳴らない。
+# それは承知のうえで、**鳴ったら必ず出番がある**ほうを採った——
+# 出番の無い赤が1回混ざると、次から読まれなくなる。
+SHOWN_PATHS = ("site/app", "site/components")
+
+# **あやとの机は、視聴者さんから見えない。** ここを入れると、机を直すたびに
+# 「お知らせに1行足せ」と言われる（読む人には何も起きていない）
+SHOWN_NOT = (":(exclude)site/app/me", ":(exclude)site/components/me")
 
 # 島の便り。**打つのはあやとで、スマホから**（`POST /island-api/current`。
 # 画面は `/me` の「いまどこ」＝`site/components/me/TripTools.tsx`）
@@ -286,6 +308,8 @@ class World:
     legends: list[dict]               # `legends.ts` の伝説（`slug` / `date` / `range`）
     current: dict                     # 島の便り（`/island-api/state` の `current`）
     stale_days: int                   # `site/lib/place.ts` の `PLACE_STALE_DAYS`
+    shown_at: date | None             # 視聴者さんから見える変更が入った、いちばん新しい日
+    updates_at: date | None           # `updates.ts` のいちばん新しい日
 
     def chapter_now(self) -> dict | None:
         """いまの章。**始まっていて、まだ終わっていない本線。**
@@ -406,6 +430,54 @@ def week_days(week, today: date) -> list[date]:
         if got:
             out.append(min(got, key=lambda d: abs((d - today).days)))
     return out
+
+
+def read_updates_on(src: str) -> list[str]:
+    """`updates.ts` の `UPDATES` が持っている `on:` の字を、書いてある順に。
+
+    **日付に直さずに返す。** 読めない字（`"きょう"`）が混ざっていることを
+    呼ぶ側が数えられるようにするため——ここで黙って捨てると、
+    **1行も読めない表が「空の表」と同じ顔**になる。
+
+    `site/content/*.ts` を字で読むのは `ts_read` 1本だけ（このファイルの頭）。
+    """
+    body = ts_read.array_body(ts_read.code_only(src), "UPDATES")
+    return [
+        on for obj in ts_read.objects(body)
+        if (on := ts_read.fields(obj).get("on", ""))
+    ]
+
+
+def last_shown_change(root: Path, paths=SHOWN_PATHS, keep=SHOWN_NOT) -> date | None:
+    """**視聴者さんから見える変更**が入った、いちばん新しい日。無ければ None。
+
+    git の履歴を1行だけ読む。**日本時間で切る**（`format-local` ＋ `TZ`）——
+    `updates.ts` の `on` は「本番に配った日」で、あれは日本時間で書く。
+    UTC で比べると、日本の朝9時より前のコミットが前日に出て、
+    **足してあるのに1日ぶん鳴る。**
+
+    **浅いチェックアウトでは見つからないことがある。** いちばん新しい1本を
+    探すだけなので、`.github/workflows/upkeep_watch.yml` が 300 コミットぶん
+    持ってくれば足りる（master は1日 10〜20 本進む）。見つからなければ
+    None を返して、引き金は**鳴らない**——見えないことを「古い」と読むと、
+    履歴の浅い回で毎度鳴る。
+
+    Args:
+        root: リポジトリの根
+        paths: 見る置き場
+        keep: 外す置き場（`git` の pathspec）
+
+    Returns:
+        いちばん新しい日。読めなければ None
+    """
+    out = subprocess.run(
+        ["git", "-C", str(root), "log", "-1",
+         "--date=format-local:%Y-%m-%d", "--format=%cd", "--",
+         *paths, *keep],
+        capture_output=True, text=True, check=False,
+        env={**os.environ, "TZ": "Asia/Tokyo"},
+    )
+    return _as_date(out.stdout.strip()) if out.returncode == 0 else None
 
 
 @dataclass
@@ -699,6 +771,52 @@ def about_without_chapter(w: World) -> list[Gap]:
                 urgent=False)]
 
 
+def updates_behind(w: World) -> list[Gap]:
+    """**島をなおしたところに、出したぶんが書かれていない**（2026-10-13）。
+
+    視聴者さんから見える変更（`site/app` / `site/components`。あやとの机は
+    除く）が master に入っているのに、`site/content/updates.ts` の
+    いちばん新しい日付がそれより古い。
+
+    ## なぜ要るか
+
+    **手で書く一覧は、必ず古くなる。** 2026-10-13 のひと晩だけで、手で書いた
+    数が11か所古くなっていた（`python/counts.py` の頭）。出したときに1行足す
+    決まりは `/island-ship` の3章に入れてあるが、**手順は忘れられる。**
+    忘れても誰も赤くならないなら、あの紙はいつか「先月で止まっている紙」になる。
+
+    ## なぜ毎 PR の見張りにしないか
+
+    内側だけの変更（`functions/` だけ・`python/` だけ）でも赤くなる作りにすると、
+    **ほとんどの PR で意味もなく赤くなる**——そうなった見張りは外されるか、
+    黙って通される（`docs/island-standards.md` 13章 / 15章）。
+    ここは毎晩1回、人の手入れ待ちを集める札（#664）に1行出すだけ。
+    **PR は止めない。**
+
+    ## 急がない側
+
+    古い紙は嘘を出しているのではなく、**まだ書かれていない**だけ。
+    何をどう言うかは人の頭の中にしかない（`about_without_chapter` と同じ）。
+
+    ## 見えないときは鳴らさない
+
+    履歴が浅くて `site/app` の動いた日が1つも見えない回（`shown_at` が None）は
+    **黙る。** 見えないことを「古い」と読むと、浅いチェックアウトのたびに鳴る。
+    表のほうが1行も読めない回（`updates_at` が None）は `count()` が
+    「数えられない」で先に止めるので、ここには来ない。
+    """
+    if w.shown_at is None or w.updates_at is None:
+        return []
+    if w.updates_at >= w.shown_at:
+        return []
+    return [Gap(f"`{UPDATES_TS}` の `UPDATES`",
+                f"{w.shown_at} に出したぶんの1行。"
+                f"いちばん新しいのは {w.updates_at} で、"
+                f"**その人に何ができるようになったか**を1行で"
+                f"（書きかたは `/island-ship` の3章）",
+                urgent=False)]
+
+
 def _legend_covers(lg: dict, a: date, b: date) -> bool:
     """その伝説が、`a`〜`b`（章の期間）のものか。
 
@@ -779,6 +897,7 @@ TRIGGERS: tuple[Trigger, ...] = (
     Trigger("過ぎた行が落ちていない", True, letter_past_week_left),
     Trigger("年表のいま", False, about_without_chapter),
     Trigger("終わった旅の伝説", False, ended_without_legend),
+    Trigger("島の直したところ", False, updates_behind),
 )
 
 
@@ -863,7 +982,8 @@ def stale_gaps(v, red_names: set[str], books: dict | None = None
 
 
 def count(content_dir: Path, today: date, books: dict | None = None,
-          site: Path | None = None, state: StateRead | None = None) -> Count:
+          site: Path | None = None, state: StateRead | None = None,
+          shown_at: date | None = None, root: Path | None = None) -> Count:
     """**いま空いている欄**を数える。GitHub を1バイトも触らない。
 
     Args:
@@ -876,6 +996,10 @@ def count(content_dir: Path, today: date, books: dict | None = None,
             **仕込みでは必ず渡す**——毎 PR で回る対照を本番の口に繋ぐと、
             本番が返らない日に関係のない PR が赤くなる
             （`python/watch_excuses.py` の `cardgo.mjs` と同じ理由）
+        shown_at: 視聴者さんから見える変更が入った、いちばん新しい日
+            （省略時は**git の履歴を読む**）。**仕込みでは必ず渡す**——
+            本物の履歴に繋ぐと、対照の合否がその日のコミットで入れ替わる
+        root: リポジトリの根（省略時はこのファイルの2つ上）。`git` を回す先
 
     Returns:
         `Count`
@@ -981,9 +1105,33 @@ def count(content_dir: Path, today: date, books: dict | None = None,
     if st.error:
         blind.append(st.error)
 
+    # --- (d) 島をなおしたところ（`updates.ts`）---
+    #
+    # **1行も読めなかったら「数えられない」で止める。** 空を渡すと
+    # 引き金が「古くない」と答えて、毎晩黙って通る（この関数の (c) と同じ）
+    updates_at: date | None = None
+    up = content_dir / "updates.ts"
+    if not up.is_file():
+        blind.append(f"{UPDATES_TS} がありません")
+    else:
+        got_u = read_updates_on(up.read_text(encoding="utf-8"))
+        days = [d for raw in got_u if (d := _as_date(raw))]
+        if not days:
+            blind.append(
+                f"{UPDATES_TS} から `on`（日付）を1つも読めません"
+                f"（`on:` の字 {len(got_u)}個）"
+            )
+        else:
+            # **並び順を当てにしない。** 「上に足す」決めだが、足す人が
+            # 間違えた日に、この見張りが先に嘘をつくことになる
+            updates_at = max(days)
+
     w = World(today=today, rows=rows, countries=countries,
               itineraries=itineraries, about=about, legends=legends,
-              current=st.current, stale_days=stale_days)
+              current=st.current, stale_days=stale_days,
+              shown_at=(last_shown_change(root or REPO_ROOT)
+                        if shown_at is None else shown_at),
+              updates_at=updates_at)
 
     gaps: list[Gap] = []
     for t in TRIGGERS:

@@ -136,13 +136,37 @@ const MARKS = `() => {
   });
 }`;
 
+/**
+ * 代表の札を数える。**落ちかたを2つに分ける。**
+ *
+ * ここは長いこと「見えているのが6枚未満なら赤」の1本だった。それだと
+ * 2つの別のことが同じ赤になる。
+ *
+ *   島に看板が6軒建っていない … `spec.ts` の `sign: true` が減った
+ *   建っているのに札が出ていない … 置き場所が無くて `data-far` で引っ込んだ
+ *
+ * **直す先がまるで違う。** 前者は島の作り（何を看板にするか）、後者は
+ * 札の逃がし方（`plates.ts`）。1本にまとめてあると、赤を見た人がどちらかを
+ * 当てに行くことになる（`docs/island-misses.md` #87「数だけ出して名前を
+ * 出さないと、直す側が推定で当たりを付ける」と同じ形）。
+ *
+ * **数は下げない。** `docs/island-design.md` 3-4／6章が「引きで名前を出すのは
+ * 看板の6つ」「6つを超えない」と決めていて、表紙の `spec.ts` はちょうど
+ * 6軒に `sign: true` を付けている。**6 は島の決まりであって、
+ * 届かないから下げてよい目標ではない。**
+ */
 function checkMarks(marks) {
   const on = marks.filter((m) => m.vis && !m.far);
   const off = marks.filter((m) => !(m.vis && !m.far));
-  console.log(`  [引き] 代表の札: 見えている ${on.length}枚 / DOM に ${marks.length}枚`);
+  console.log(`  [引き] 代表の札: 見えている ${on.length}枚 / DOM に ${marks.length}枚（島の決まりは ${SIGNS}枚）`);
   console.log(`         出ている: ${on.map((m) => m.name).join("・") || "(なし)"}`);
   if (off.length) console.log(`         消えている: ${off.map((m) => `${m.name}（${m.far ? "data-far" : "見えない"}）`).join("・")}`);
-  if (on.length < SIGNS) ng(`[引き] 代表の札が ${on.length}枚しか見えていない（${SIGNS}枚必要）。消えているのは ${off.map((m) => m.name).join("・")}`);
+  /* (1) 島の作り。看板の軒数そのものが決まりと違う */
+  if (marks.length !== SIGNS)
+    ng(`[引き] 島に看板が ${marks.length}軒しか建っていない（島の決まりは ${SIGNS}軒。'spec.ts' の sign）`);
+  /* (2) 札の逃がし方。建っているのに札が出ていない */
+  if (off.length)
+    ng(`[引き] 建っている看板 ${marks.length}軒のうち ${off.length}枚の札が出ていない（${off.map((m) => `${m.name}：${m.far ? "置き場所が無くて引っ込んだ(data-far)" : "見えない"}`).join("・")}）`);
 }
 
 /* ---- 判定 (C) 下半分の地面の空きと、南へ歩けるか -------------------------- */
@@ -257,6 +281,13 @@ for (const s of SIZES) {
   await p.waitForTimeout(2500);
   await p.screenshot({ path: `/tmp/islenav-${s.w}-引き.png` });
   checkCorners("[引き]", await run(p, CORNERS));
+  /* **この見張りが、落ちるべきときに落ちるか。**（`BREAK=far` / `BREAK=sign`）
+     緑を見るだけでは、見張りが生きていることの証拠にならない
+     （`docs/island-misses.md` #79 #83）。当てると必ず赤になる。 */
+  if (process.env.BREAK === "far")
+    await run(p, `() => { document.querySelector(".isle-spot.is-sign").setAttribute("data-far", "1"); }`);
+  if (process.env.BREAK === "sign")
+    await run(p, `() => { document.querySelector(".isle-spot.is-sign").classList.remove("is-sign"); }`);
   checkMarks(await run(p, MARKS));
 
   // 寄りに戻して、地面を押して歩けるかを見る
