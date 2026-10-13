@@ -66,6 +66,7 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
+import { viaCurl } from "./prod.mjs";
 import { PAGES } from "./islepages.mjs";
 
 const PORT = process.env.PORT || "4140";
@@ -95,7 +96,9 @@ function isleOnly() {
 }
 
 /** 手元の静的サーバは拡張子なしの道を返さない */
-const at = (path) => ORIGIN + (path === "/" ? "/index.html" : /\.[a-z]+$/.test(path) ? path : path + ".html");
+/** 本番を見るときは `.html` を足さない（足すのは手元の静的サーバの都合だけ） */
+const LOCAL = /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(ORIGIN);
+const at = (path) => ORIGIN + (!LOCAL ? path : path === "/" ? "/index.html" : /\.[a-z]+$/.test(path) ? path : path + ".html");
 
 /* ---- 測る --------------------------------------------------------------- */
 
@@ -147,7 +150,13 @@ const SAMPLE = `((GRID, MIN_BOX, READ) => {
         if (!r) continue;
         taken++;
         const t = (r.textContent || "").trim().replace(/\\s+/g, "").slice(0, 10);
-        const k = String(r.className || r.tagName).trim().split(/\\s+/)[0] + (t ? "「" + t + "」" : "");
+        /* **留めた札（.isle-going）と、島の上の開いた札を分ける。** どちらも
+           class は isle-mark なので、一緒にすると直す先が分からない */
+        const kind2 = r.closest(".isle-going") ? "留めた札" : String(r.className || r.tagName).trim().split(/\\s+/)[0];
+        const rb = r.getBoundingClientRect();
+        const k = kind2 + (t ? "「" + t + "」" : "") +
+          "[" + Math.round(rb.x) + "," + Math.round(rb.y) + "," + Math.round(rb.width) + "," + Math.round(rb.height) + "]" +
+          (r.closest(".isle-spot") ? "" : "（島の上の札ではない）");
         who[k] = (who[k] || 0) + 1;
       }
       /* **割合だけでは「押せるか」は出ない。** 49x49 の当たりの上 8割に札が
@@ -441,7 +450,7 @@ async function run(ctx, path, w, plant) {
 {
   const w = WIDTHS[0];
   const ctx = await b.newContext({ viewport: { width: w, height: 844 }, deviceScaleFactor: 1, isMobile: w < 700, hasTouch: w < 700 });
-  await offline(ctx);
+  if (LOCAL) await offline(ctx); else await viaCurl(ctx);
   const r = await run(ctx, pages[0], w, true);
   await ctx.close();
   if (!r.ok) {
@@ -481,7 +490,7 @@ async function run(ctx, path, w, plant) {
 console.log(`見るところ: ${ORIGIN}  面 ${pages.length}  幅 ${WIDTHS.join("/")}  1軒あたり最大 ${STOPS + 1}場面`);
 for (const w of WIDTHS) {
   const ctx = await b.newContext({ viewport: { width: w, height: 844 }, deviceScaleFactor: 1, isMobile: w < 700, hasTouch: w < 700 });
-  await offline(ctx);
+  if (LOCAL) await offline(ctx); else await viaCurl(ctx);
   for (const path of pages) {
     const r = await run(ctx, path, w, BREAK);
     if (!r.ok) { console.log(`  ${path} ${w}px  ${r.why}`); continue; }
