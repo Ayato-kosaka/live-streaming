@@ -256,32 +256,43 @@ BUILT = {"functions/lib": "functions/src", "site/.next": None}
 
 
 def _consts(text: str, here: Path) -> dict[str, Path]:
-    """`const X = join(…)` の形を、道に直しておく。
+    """`const X = …` の形を、道に直しておく。
 
     **素直に `join(here, …)` と書いてあるものばかりではない。**
-    `const LIB = join(FUNCTIONS, "lib")` のように**前に出た名前**を
-    踏み台にしているほうが多いので、上から順に解いていく。
+
+      - `const HERE = dirname(fileURLToPath(import.meta.url))`
+      - `const FUNCTIONS = join(HERE, "..")` … **前に出た名前**を踏み台にする
+      - `const LIB = process.env.CARDS_LIB_DIR || join(FUNCTIONS, "lib")`
+        … 逃がし口が頭に付く（`functions/selftest/*` の9本がこの形）
+      - `const SITE = resolve(dirname(fileURLToPath(import.meta.url)), "..")`
+
+    どれも拾えないと、その見張りは「守る実物を特定できない」に落ちる。
+    上から順に解いて、`join` / `resolve` は**式のどこに在っても**拾う。
     """
     out: dict[str, Path] = {}
     for m in re.finditer(r"^\s*const\s+(\w+)\s*=\s*([^;\n]+)", text, re.M):
         name, expr = m.group(1), m.group(2)
-        if "import.meta.url" in expr:
-            out[name] = here
-            continue
-        mm = re.match(r"(?:join|resolve)\(\s*([^)]*)\)", expr.strip())
+        # 入れ子を1つの名前に畳んでから、`join(…)` を素直に探す
+        e = expr.replace("dirname(fileURLToPath(import.meta.url))", "__HERE__")
+        e = e.replace("fileURLToPath(import.meta.url)", "__HERE__")
+        mm = re.search(r"(?:join|resolve)\(\s*([^()]*?)\s*\)", e)
         if not mm:
+            if "__HERE__" in e:
+                out[name] = here
             continue
         base: Path | None = None
         parts: list[str] = []
         for a in [x.strip() for x in mm.group(1).split(",") if x.strip()]:
             if a.startswith(('"', "'")):
                 parts.append(a.strip("\"'"))
+            elif a == "__HERE__" or a in ("here", "HERE"):
+                if parts:
+                    break
+                base = here
             elif a in out:
                 if parts:
                     break
                 base = out[a]
-            elif "import.meta.url" in a or a in ("here", "HERE"):
-                base = here
             else:
                 base = None
                 break
