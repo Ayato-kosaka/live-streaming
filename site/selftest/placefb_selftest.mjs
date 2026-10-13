@@ -70,8 +70,19 @@ function load({ outdated, running, stay }) {
       chapterNow: () => ch,
       chapterRunning: () => running,
       chapterSpan: () => ({ from: Date.parse("2026-09-28T00:00:00+09:00"), to: running ? null : 1 }),
+      /* 島への道。**本物と同じ式**（いまの章なら表紙、ほかは `/island/<slug>`）。
+         `chapters.ts` へ移したとき、差し替えを足し忘れた側がここで落ちた */
+      chapterHref: (c, now) => (c.slug === now?.slug ? "/" : `/island/${c.slug}`),
     },
     "@/content/countries": { COUNTRIES: stay ? [stay] : [] },
+    /* 章の国の数。**この見張りは「いまどこ」の受け皿を見るもの**で、
+       国を数えるところは見ていない（数えるほうは `walkedcount.mjs` の持ち場）。
+       仕込みの章は `countries: []` なので、本物を通すと 0 になって
+       `tripAsPlace` が数ごと落とす枝に入り、**受け皿の確かめと関係ない分岐**を
+       踏む。だから「1カ国は在る」で固定する。
+       2026-10-13 に `stay.ts` がこれを読み始めて、**差し替えを足し忘れた側が
+       CI で落ちた**（手元は通っていた。足し忘れても型は通る） */
+    "@/content/walked": { chapterCountries: () => [{ slug: "albania" }] },
     "@/lib/place": { placeOutdated: () => outdated },
     "@/lib/nightly": { jstNow: () => ({ y: 2026, m: 10, d: 13, date: "2026-10-13" }) },
   };
