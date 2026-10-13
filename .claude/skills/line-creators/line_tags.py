@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EC2 の上で動く。LINE Creators Market のタグを、枠ごとに付ける。
 
-    python3 line_tags.py <スタンプID> <tags.json> [枠 …]
+    python3 line_tags.py <スタンプID> <tags.json> [--exact] [枠 …]
     # tags.json は {"01": ["やっほー", "こんにちは", …], …}（日本語のタグの字。1枠9個まで）
 
 タグは**押したその場で保存される**（画面に「Changes saved」）。外すのも同じ「押す」なので、
@@ -9,6 +9,9 @@
 増えていなければ押し直さずに数えて報告する。
 
 タグは**枠の番号に付く。** 並びを決めてから付ける（SKILL.md の 8）。
+
+`--exact` を付けると、tags.json に無いタグが付いていれば**外す**（並べ直して枠の中身が替わったとき。
+前の絵のタグが残る）。外したかは「n/9」が1つ減ったかで確かめる。
 """
 import json, re, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
@@ -42,7 +45,7 @@ def search(t, word):
     time.sleep(1.5)
 
 
-def one(t, base, sticker, slot, words):
+def one(t, base, sticker, slot, words, exact=False):
     t.go(f"{base}/sticker/{sticker}/tag#/{slot}", wait=1)
     t.call("Page.reload")
     t.wait_ready()
@@ -52,6 +55,16 @@ def one(t, base, sticker, slot, words):
     time.sleep(2)
     have = set(selected(t))
     miss = []
+    if exact:
+        for w in sorted(have - set(words)):
+            n0 = count(t)
+            if not t.js(f"!!({label_js(w)})"):
+                search(t, w)
+            t.click(label_js(w))
+            time.sleep(1.2)
+            if count(t) != n0 - 1:
+                miss.append(w + "(外れない)")
+        have = set(selected(t))
     for w in words[:9]:
         if w in have:
             continue
@@ -73,11 +86,12 @@ def one(t, base, sticker, slot, words):
 if __name__ == "__main__":
     sticker, path = sys.argv[1], sys.argv[2]
     want = json.load(open(path, encoding="utf-8"))
-    only = sys.argv[3:]
+    exact = "--exact" in sys.argv[3:]
+    only = [a for a in sys.argv[3:] if a != "--exact"]
     t = tab("line")
     t.go("https://creator.line.me/my/", wait=4)
     base = t.url().split("/sticker/")[0]
     for slot, words in want.items():
         if only and slot not in only:
             continue
-        print(json.dumps(one(t, base, sticker, slot, words), ensure_ascii=False), flush=True)
+        print(json.dumps(one(t, base, sticker, slot, words, exact), ensure_ascii=False), flush=True)
