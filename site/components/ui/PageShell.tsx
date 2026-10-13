@@ -151,7 +151,9 @@ export function PageHead({
   mark?: ReactNode;
   /** 公式のアプリアイコンなど */
   logo?: string;
-  title: string;
+  /** 面の名前。**パンくずの最後と同じ字にする**（`docs/island-ux.md` 4.3）。
+      折ってよい場所を選びたい面は `Phrase` を渡す（`components/ui/Phrase.tsx`）。 */
+  title: ReactNode;
   /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
       （`app/map/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
       ほとんどの面は文字列のまま渡す。 */

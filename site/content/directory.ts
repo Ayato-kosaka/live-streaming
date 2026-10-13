@@ -3,6 +3,7 @@ import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
+import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -94,6 +95,28 @@ export const SHELVES: Shelf[] = [
       note: t.short,
       q: q(t.name, t.short, t.lead, t.slug),
     })),
+  },
+  {
+    id: "months",
+    title: "月ごとのふりかえり",
+    /* **数も時制も書かない**（`docs/island-standards.md` 16章）。
+       月は毎月1つ増えるので、ここに数を焼くと翌月から嘘になる。
+       数は `/months` の中身が数える。 */
+    note: "ひと月ずつの記録。出席・投げ銭・タップ",
+    items: [
+      {
+        href: "/months",
+        name: "月ごとのふりかえり",
+        note: "ひと月ずつ、ならべて見る",
+        q: q("月ごとのふりかえり months 月末 ふりかえり 振り返り 授賞式 タップ 出席 投げ銭 ランキング"),
+      },
+      ...MONTHS.map((m) => ({
+        href: `/months/${m.key}`,
+        name: `${m.year}年${m.month}月のふりかえり`,
+        note: `${m.streams.length}本・${m.people}人`,
+        q: q(`${m.year}年${m.month}月 ${m.key} ふりかえり 月末 授賞式`),
+      })),
+    ],
   },
   {
     id: "kitchen",
