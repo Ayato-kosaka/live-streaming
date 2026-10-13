@@ -44,9 +44,16 @@ python3 -m py_compile python/*.py         ; echo "py=$?"
 cd site && NEXT_DIST_DIR=.next-verify npx next build
 python3 -m http.server 4321 --directory .next-verify &
 cd ../tools/sprites && node crawl.mjs     # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
+cd ../.. && DIST=site/.next-verify node tools/sprites/orphanpage.mjs   # どこからも入れない面（同じく 0/1/2）
 ```
 
 `bad 0` / リンク切れ 0 が条件。終わったら開発サーバーは落とす（3.7GB まで膨らむ）。
+
+**`orphanpage.mjs` は `crawl.mjs` の裏返し。** あちらは「行き先の無いリンク」、
+こちらは「**リンクの無い行き先**」——面は在って索引にも載っていて、島のどこを
+押しても辿り着けない面。リンクは切れていないし 200 で返るので、巡回では出ない
+（2026-10-13 に1枚あった。`/island/balkans`）。ブラウザは要らず1秒で終わるので、
+巡回を待つあいだに回せる。
 
 ## 2. 本番データを触るなら、先に dry-run
 
