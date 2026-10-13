@@ -26,6 +26,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readArray } from "../../tools/sprites/tsread.mjs";
 
 const SITE = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const LAYOUT = join(SITE, "components/island/layout.ts");
@@ -42,13 +43,21 @@ const check = (name, ok, why = "") => {
   }
 };
 
-/** `layout.ts` から軒を読む。**id と href が対になっているところだけ拾う。** */
+/**
+ * `layout.ts` から軒を読む。**id と href が対になっているところだけ拾う。**
+ *
+ * 読み方は `tools/sprites/tsread.mjs` の1本（#694）。前は
+ * `/id:\s*"…"[\s\S]*?href:\s*"…"/` で、**欄のあいだを跨いで**いた——
+ * `href` を持たない場所が1つ在ると、その id が**次の場所の href と組んで**
+ * 1件になる。組んだ先の面を見に行くので、**嘘の組み合わせが「通った」になる。**
+ */
 function doors(src) {
-  const out = [];
-  const re = /id:\s*"([a-z-]+)"[\s\S]*?href:\s*"(\/[^"]*)"/g;
-  let m;
-  while ((m = re.exec(src))) out.push({ id: m[1], href: m[2] });
-  return out;
+  const got = readArray(src, "PLACES", { keys: ["id", "href"], idKey: "id" });
+  if (got.missed) {
+    console.log(`::error::軒の表を ${got.missed} 件 読み落とした（名乗り ${got.declared}）`);
+    process.exit(2);
+  }
+  return got.rows.filter((r) => r.href).map((r) => ({ id: r.id, href: r.href }));
 }
 
 /**
@@ -80,8 +89,10 @@ function currentOf(src) {
 // ---- 対照。**本物を1つも数える前に** ------------------------------------
 {
   const probe = doors(`
-    { id: "aaa", label: "あ", href: "/aaa" },
-    { id: "bbb", label: "い", href: "/bbb" },
+    export const PLACES: Spot[] = [
+      { id: "aaa", label: "あ", href: "/aaa" },
+      { id: "bbb", label: "い", href: "/bbb" },
+    ];
   `);
   check("対照1 軒を読める", probe.length === 2 && probe[0].id === "aaa" && probe[1].href === "/bbb",
     JSON.stringify(probe));
