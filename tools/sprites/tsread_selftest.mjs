@@ -502,6 +502,12 @@ function mjsFiles() {
 /**
  * **ここに在るものは、寄せずに残したもの。** 数と理由を書く。
  * 数が変わったら赤になるので、**足すときは理由を書かざるを得ない。**
+ *
+ * **鍵は本物の道筋**（`census` が突き合わせるので、上の `who` のように
+ * 拡張子を落とせない）。だから `python/watch_census_selftest.py` は、
+ * ここに並んだ道具を「このファイルが子として起こしている」と読む。
+ * **断りの表（`python/watch_excuses.py`）に在るものをここへ足すときは、
+ * あちらが落ちないかを一緒に見る。**
  */
 const ALLOW = {
   "functions/selftest/fund_superchat_selftest.mjs": [
