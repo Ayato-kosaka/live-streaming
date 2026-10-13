@@ -6,6 +6,7 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
+import { chapterHref } from "@/content/chapters";
 
 /**
  * 過去の島の配信だけを並べる面。
@@ -106,7 +107,10 @@ export default async function ChapterStreams({
     <PageShell
       crumbs={[
         { label: "島の地図", href: "/atlas" },
-        { label: c.name, href: `/island/${c.slug}` },
+        /* **行き先を手で組み立てない。** いまいる章の島はトップそのものなので
+           （`chapterHref`）、`/island/${c.slug}` と書くと、その章が「いまいる章」に
+           なった日だけ**どこからもリンクの来ていない写しの面**へ送ることになる。 */
+        { label: c.name, href: chapterHref(c) },
         { label: "配信" },
       ]}
     >
@@ -156,7 +160,7 @@ export default async function ChapterStreams({
       </div>
 
       <p className="chain-foot">
-        <Link href={`/island/${c.slug}`} prefetch={false}>
+        <Link href={chapterHref(c)} prefetch={false}>
           <Icon name="left" size={14} /> {c.name}の島にもどる
         </Link>
       </p>
