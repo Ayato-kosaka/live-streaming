@@ -199,92 +199,89 @@
 
 /* ---- ステッカー --------------------------------------------------------- */
 
-/* **升目にする**（2026-10-10。3枚が8枚になった）。
-   1枚ずつ横に寝かせていた形は1枚で 150px あり、8枚で 1,200px ——
-   スマホで3画面ぶん送ることになる（`docs/island-standards.md` 7章）。
-   390px で2列、広い画面で4列。**枚数で割らない**ので、足しても減っても
-   ここは触らない */
-.gd-stickers {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-  gap: var(--sp-3);
-  margin: var(--sp-3) 0 0;
-  padding: 0;
-  list-style: none;
-  /* 広い画面で絵が間延びしないところで止める（4列ぶん） */
-  max-width: 680px;
-}
+/* **升目はこの面から出した**（2026-10-13。`/goods/stickers` へ）。
+   索引に残したのは、名簿の頭の数枚と行き先の札だけ。
+   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` / `.gd-get` は、
+   それと一緒に消えている（着るものが1つも無くなったため）。
 
-/* 1マス。**マスぜんぶが押しどころ**（絵・名前・「おとす」でひとかたまり）。
-   押す場所は物そのもの（`docs/island-design.md` 3-1）。
-
-   **1枚ずつに厚みは付けない。** 並びのマスが全部押せるときは、並びそのものが
-   合図になる（同 3-3 の例外。料理32マス・住人22マスと同じ）。
-   **この並びに押せないマスを混ぜてはいけない。** */
-/* **マスは背を揃える。** 縦長の1枚（島にいるあやと 442×640）と丸い1枚が
-   並ぶので、絵の高さに任せると名前と「おとす」が1枚ずつ別の高さに来る。
-   列ごとに段違いになって、並びに見えない（撮って直した） */
-.gd-stickers > li { display: flex; }
-
-.gd-sticker {
-  flex: 1 1 auto;
-  display: flex;
+   並べかたは外の店の札（`.gd-shop`）と同じ形。**絵は切らない**ので、
+   `object-fit` だけ別（丸い1枚の字が欠ける）。 */
+.gd-peek {
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+/* 枚数で割らない。`auto-fit` なので、残す枚数（`PEEK`）を変えても
+   1行に収まるぶんだけ細くなる */
+.gd-peekshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: var(--sp-2);
-  padding: var(--sp-2);
-  border-radius: var(--r-1);
-  text-decoration: none;
-  color: var(--ink);
+  /* 広い画面で、絵が札の幅いっぱいに伸びないところで止める
+     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない） */
+  max-width: 360px;
 }
-.gd-sticker > b {
-  font-size: var(--fs-note);
-  font-weight: 900;
-  line-height: 1.5;
-  text-align: center;
-  color: var(--ink);
-}
-
-.gd-stickerart {
+.gd-peekshots > img {
+  display: block;
   width: 100%;
-  /* **枠は正方形で固定。** 絵の比に任せると、上と同じ段違いが出る。
-     中身は縮めずに収める（`contain`。切ると、丸の字が欠ける） */
-  aspect-ratio: 1 / 1;
   height: auto;
+  aspect-ratio: 1 / 1;
+  /* **切らずに収める。** 丸い1枚は、切るとふちの字が欠ける */
   object-fit: contain;
-  padding: 6px;
+  padding: 5px;
   border-radius: var(--r-0);
-  background: var(--paper);
-  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり） */
   border: 1px solid var(--rule);
+  background: var(--paper);
 }
 
-/* 落とすところ。**マスの中の字**で、ここだけが押しどころではない
-   （マスぜんぶが押せる）。だから厚みは持たせない。
-   色は掲示板の「はりだす」（`app/css/pages.css` の `.bbtn`）と同じ recipe。
-   はじめ `--accent`（桃）の上に `--accent-ink` を置いていたら、描いた画素で
-   **2.85 : 1** だった（`tools/sprites/inkpx.mjs`）。桃は「いま・今日」を
-   言う飾りの色で、字を乗せる地ではない。濃い桃にクリームの字で 4.8 : 1。 */
-.gd-get {
-  display: inline-flex;
+.gd-peekside {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  /* 名前が1行の1枚と2行の1枚が並ぶので、下に寄せて段を揃える */
-  margin-top: auto;
-  min-height: 32px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg,
-    var(--accent-deep) 0%,
-    color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
-  color: var(--paper);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-head);
+  gap: var(--sp-3);
 }
-/* 押した手ごたえは**マスごと**沈む */
-.gd-sticker:active { transform: translateY(3px); }
+.gd-peekside > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gd-peekside > svg { flex: none; }
+
+/* ---- ステッカー帳（`/goods/stickers`）--------------------------------- */
+
+/* 型は住民図鑑（`app/css/live.css` の `.rzk-*`）をそのまま着る。
+   ここに書くのは、**ステッカーだからずれるところだけ。**
+
+   住人は地面に立っているので、図鑑の絵は下寄せで、足もとに台座が敷いてある。
+   ステッカーは貼るものなので、立たせず中央に置いて、下に紙を1枚敷く。 */
+/* 題名の札。**折り返させる。** 住人の名前は短いので図鑑の札は1行
+   （`white-space: nowrap` で、あふれたら「…」）だが、ステッカーの題は
+   「思い出ステッカー（ストックホルム）」まである。**名前が切れた札は、
+   その1枚が何かを言えていない**（390px で実際に「思い出ステッカー（ジ…」
+   と出ていた）。 */
+.gsk .rzk-page > .rzk-tag {
+  white-space: normal;
+  max-width: 92%;
+}
+
+.gsk-art { place-items: center; }
+.gsk-art img {
+  object-position: center;
+  /* 透過の絵がほとんどなので、地が無いと紙の上で浮いて見える。
+     升目（`.gd-peekshots`）と同じ敷き紙を、同じ罫で止める */
+  padding: var(--sp-3);
+  border-radius: var(--r-0);
+  border: 1px solid var(--pap-line);
+  background: var(--paper);
+}
+
+/* 図鑑の押しどころ（`.rzk-get`）は `<button>` 向けに書いてある。
+   ここは落とす先と外の店なので `<a>`。下線だけ外す */
+.gsk .rzk-get { text-decoration: none; }
+.gsk .rzk-get > svg { flex: none; }
+
+/* 押しどころの下に付く一言。欄の `dd > i` は行の右に寄る書き方なので、
+   ここだけ行を分ける（`.rzk-take dd > i` と同じ） */
+.gsk .rzk-fields dd > i { display: block; margin: var(--sp-2) 0 0; }
 
 /* ---- LINEスタンプの10枚 ------------------------------------------------- */
 

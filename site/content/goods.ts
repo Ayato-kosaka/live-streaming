@@ -73,6 +73,32 @@ export type Sticker = {
   /** `art` の寸法。場所を先に取るために要る */
   w: number;
   h: number;
+  /**
+   * この絵の SUZURI のデザイン（`suzuri.jp/ayato_arigato/designs/<これ>`）。
+   * **まだグッズになっていない絵は `null`。**
+   *
+   * あやとの言葉（2026-10-13）:
+   *
+   * > 住人ページ、あやとステッカーページから「グッズを買う」ボタンで
+   * > （略）こんな感じのスズリデザインページへの導線あると良い。
+   *
+   * **面に1つだけ置かない。** 「グッズを買う」を面の下に1つ置くと、
+   * どの絵のグッズへ行くのかが分からない。だから絵1枚ずつが行き先を持つ。
+   *
+   * **`canFlip` と同じで、省略できない。** 1枚足すたびに、どちらかを必ず
+   * 決めてもらう（`null` と書くのも決めたうち）。書き忘れは型で止まり、
+   * 番号のかぶりは `site/selftest/sticker_selftest.mjs` が赤くする。
+   *
+   * 番号の出どころは `.claude/skills/suzuri/ayato.md` の表（デザインを
+   * 作った日に控える番号）。**合っているかは題で確かめる**——
+   * `designs/<番号>` の面の題が「あやと ― <この `name`>」になっている
+   * （2026-10-13 に、在る5枚ぶん引いて見た）。
+   *
+   * **住人の絵にも同じ道が要る**（あやと 2026-10-13「住人ページ…から」）。
+   * あちらは名簿が別（`content/residents.ts`）なので、ここの表は借りられない。
+   * 共通なのは道の組み立てだけなので、それは `suzuriDesignHref` に出してある。
+   */
+  suzuri: number | null;
 };
 
 /**
@@ -117,6 +143,8 @@ export const STICKERS: Sticker[] = [
        絵を描き直した日にステッカーの枠だけ前の形のまま残る** */
     w: AYATO_W,
     h: AYATO_H_PX,
+    /* 題は「あやと ― 島にいるあやと」。2026-10-13 に引いて確かめた */
+    suzuri: 21116647,
   },
   {
     /* **2枚目**（あやと「この子もステッカーに欲しい」2026-10-08）。
@@ -131,6 +159,7 @@ export const STICKERS: Sticker[] = [
     canFlip: true,
     w: 480,
     h: 480,
+    suzuri: 21116648,
   },
   {
     id: "hitch",
@@ -146,6 +175,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 436,
     h: 480,
+    suzuri: 21116653,
   },
   {
     /* **4枚目**。コック帽のあやとが、フォークとスプーンを持っている赤い丸。
@@ -159,6 +189,8 @@ export const STICKERS: Sticker[] = [
     canFlip: true,
     w: 480,
     h: 475,
+    /* まだグッズになっていない。**出ない理由は画面に書かない** */
+    suzuri: null,
   },
   {
     /* **思い出ステッカーの2枚**（ジョージア・ストックホルム）。
@@ -173,6 +205,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 479,
+    suzuri: null,
   },
   {
     id: "stockholm",
@@ -183,6 +216,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 477,
+    suzuri: null,
   },
   {
     /* **看板の2枚。** カラーは**青い四角ごと**が絵で、丸だけにすると形が崩れる
@@ -198,6 +232,8 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    /* カラーとモノクロで別のデザイン。**番号を取り違えない** */
+    suzuri: 21116745,
   },
   {
     id: "sign-mono",
@@ -208,6 +244,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 479,
     h: 480,
+    suzuri: 21116656,
   },
   {
     /* **ここから4枚**（あやと 2026-10-11「無帰国系、看板、ふうせん、飛行機を
@@ -225,6 +262,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    suzuri: null,
   },
   {
     /* 黄色い標識。**右下に、画面を撮ったときの「共有」ボタンが写り込んでいた**。
@@ -238,6 +276,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 471,
     h: 480,
+    suzuri: null,
   },
   {
     id: "balloon",
@@ -249,6 +288,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 407,
+    suzuri: null,
   },
   {
     /* **「背景透明が漏れてる」の本体**（あやと 2026-10-11）。
@@ -262,6 +302,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 319,
+    suzuri: null,
   },
   {
     /* テーマ掲示板に視聴者さんが貼ってくれた絵（作者名は出さない。
@@ -282,6 +323,8 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    /* SUZURI には出さない1枚（#780 Q3: A）。だから永く `null` のまま */
+    suzuri: null,
   },
 ];
 
@@ -528,17 +571,16 @@ export type LineStamp = {
 export const LINE_PENDING = "/goods/line/pending.webp";
 
 /**
- * あやとのぶん。**いま16枚**（`LINE_WANT` もちょうど 16。住人の24枚と足して40）。
+ * あやとのぶん。**いま17枚**（`LINE_WANT` もちょうど 17。住人の23枚と足して40）。
  *
  * 並べ替えない——挨拶 → 気持ち → 知らせ → 相づち → 用事 の順で、
  * 1枚ずつ「なぜそこか」を下の注に書いてある。
  *
- * ## 23枚から7枚を外した（あやと 2026-10-13、#716）
+ * ## 23枚から6枚を外した（あやと 2026-10-13、#716）
  *
  * > あやとの22個から以下の6個を削除することに決定。
  *
- * **そのあと「やばいよやばいよ も消します」で1枚増えて7枚**（あやと 2026-10-13）。
- * これで 23 − 7 ＝ 16 枚になり、住人の24枚と合わせて LINE の1セット（40）に合う。
+ * これで 23 − 6 ＝ 17 枚。住人の23枚と合わせて LINE の1セット（40）に合う。
  *
  * | 外した字 | あやとの理由 |
  * | --- | --- |
@@ -548,7 +590,14 @@ export const LINE_PENDING = "/goods/line/pending.webp";
  * | にわかに信じられへん | 口癖として定着していない |
  * | わーい | 口癖としてあまり使われていない |
  * | パチパチ | 「すごいよ」と用途が重複 |
- * | やばいよやばいよ | （理由は出ていない。あやと 2026-10-13「も消します」） |
+ *
+ * ## 「やばいよやばいよ」は、いちど外して戻した（あやと 2026-10-13、#716）
+ *
+ * 一度は「やばいよやばいよ も消します」で7枚目として外し、16枚になっていた。
+ * そのあと**住人のほうの1枚が使えなくなった**（絵がよその有名なキャラクター
+ * そのものだった）ので、住人を 24 → 23 に減らし、空いた1枠に
+ * 「やばいよやばいよ」を戻した。**合計の40は変わらない。**
+ * 並びも外す前の位置（相づちのかたまり、「ほな」の次）に戻してある。
  *
  * **元の絵は `tools/goods/line-src/` に残してある**（あやと「戻せるように」）。
  * `stampbake.py` は `line-src/` に在るものを全部焼くので、
@@ -560,7 +609,7 @@ export const LINE_PENDING = "/goods/line/pending.webp";
  * 「帳面の絵が、ぜんぶ面に出ているか」ではない）。
  * **戻すのは、ここに1行足すだけ。**
  *
- * 外した7枚ぶんの付箋は、`LINE_WORDS` から字が消えるので
+ * 外した6枚ぶんの付箋は、`LINE_WORDS` から字が消えるので
  * `Notes` の `omitTexts` が効かなくなり、**ふつうの付箋として一覧に戻る。**
  * もう候補ではないので、それでよい（いいねの数は付箋に付いたまま残る）。
  */
@@ -621,6 +670,7 @@ export const LINE_STAMPS: LineStamp[] = [
   { id: "iiyanka", line: "いいやんか", art: "/goods/line/iiyanka.webp" },
   /* 相づちのかたまり。「いいやんか」の次に、締めの一言 */
   { id: "hona", line: "ほな", art: "/goods/line/hona.webp" },
+  { id: "yabai", line: "やばいよやばいよ", art: "/goods/line/yabai.webp" },
   { id: "chottomatte", line: "ちょっとまってよ", art: "/goods/line/chottomatte.webp" },
   /* 返事。間のかたまりに置く（待たせる・応える・迷う） */
   { id: "hai", line: "はいっ", art: "/goods/line/hai.webp" },
@@ -651,14 +701,17 @@ export const LINE_VOTES: string[][] = LINE_STAMPS.map((s) => [
 export const LINE_WORDS = LINE_VOTES.flat();
 
 /**
- * あやとのぶんを、最後に何枚にするか。**16**（あやと 2026-10-13、#716）。
+ * あやとのぶんを、最後に何枚にするか。**17**（あやと 2026-10-13、#716）。
  *
  * > あやとの候補：22個 → **16個** / 住人の候補：**24個（変更なし）** /
  * > **合計：40個**
  *
+ * のあと、同じ日に住人の1枚を外して「やばいよやばいよ」を戻したので
+ * **あやと 17 / 住人 23 / 合計 40**（`LINE_STAMPS` の上の注）。
+ *
  * LINE の1セットは 8 / 16 / 24 / 32 / 40 枚のどれかなので、
- * 住人の24枚と足して40になる 16 がここの行き先。
- * **いま `LINE_STAMPS` もちょうど16枚**で、募集の字は出ていない。
+ * 住人の23枚と足して40になる 17 がここの行き先。
+ * **いま `LINE_STAMPS` もちょうど17枚**で、募集の字は出ていない。
  *
  * **募集している枚数を手で書かない。** 「あと4つ」と面に焼くと、絵が1枚
  * 届いた日から嘘になる（`LINE_STAMPS` は増えるのに、4 は誰も直さない）。
@@ -668,7 +721,7 @@ export const LINE_WORDS = LINE_VOTES.flat();
  * **住人のぶんは、ここには入れない。** この面が集めているのは
  * あやとのセリフだけで、合計が何枚になるかは読む人の用事ではない。
  */
-export const LINE_WANT = 16;
+export const LINE_WANT = 17;
 
 /**
  * SUZURI の商品の写真1枚。店の札にも、グッズ1つずつの札にも使う。
@@ -749,6 +802,22 @@ export const SUZURI = {
 };
 
 /**
+ * SUZURI の**デザインの面**への道（`.../designs/<番号>`）。
+ *
+ * あやとが指した形（2026-10-13）がこれ。品物1つの面ではなく、
+ * **その絵で作ってあるものが全部並ぶ面**なので、絵から送るならここ。
+ *
+ * **店の道（`SUZURI.href`）から組み立てる。** 文字列をもう1本書くと、
+ * 店が引っ越した日に片方だけ残る。
+ *
+ * ステッカーの番号は `STICKERS` の `suzuri`、住人の番号は住人の名簿が持つ
+ * （まだ無い。あやとの注文は住人の面にもあるので、そちらの担当が足す）。
+ * **番号の持ち場は分かれても、道の組み立てはここ1本。**
+ */
+export const suzuriDesignHref = (designId: number): string =>
+  `${SUZURI.href}/designs/${designId}`;
+
+/**
  * SUZURI のデザイン1つ。**押すと、そのデザインの売り場にうつる。**
  */
 export type ShopGoods = {
@@ -763,8 +832,11 @@ export type ShopGoods = {
   shot: ShopShot;
 };
 
-/** デザインの売り場（あやと 2026-10-13 が貼ってきた形） */
-export const shopHref = (id: number) => `https://suzuri.jp/ayato_arigato/designs/${id}`;
+/** デザインの売り場（あやと 2026-10-13 が貼ってきた形）。
+    **道の組み立ては `suzuriDesignHref` 1本。** ここで URL をもう1度
+    書くと、店が引っ越した日に片方だけ残る（2026-10-13 に、
+    別々に書いた2本が1日で合流して実際にそうなりかけた）。 */
+export const shopHref = (id: number) => suzuriDesignHref(id);
 
 /**
  * **ほかのどこからも行けない、SUZURI のグッズ。**
