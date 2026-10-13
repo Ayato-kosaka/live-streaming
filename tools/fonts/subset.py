@@ -318,7 +318,10 @@ def plan(
     names = sorted(fams)
     bit = {f: 1 << i for i, f in enumerate(names)}
     sig: dict[int, set[str]] = collections.defaultdict(set)
-    for c in set().union(*fams.values()):
+    # **集合のまま回さない。** Python の set は字の並びが走るたびに変わる
+    # （文字列のハッシュに種がある）ので、同じ入力で焼いても束の中身が入れ替わって、
+    # **毎回 woff2 の差分が出る。** 並べてから回す
+    for c in sorted(set().union(*fams.values())):
         m = 0
         for f in names:
             if c in fams[f]:
@@ -346,10 +349,12 @@ def plan(
         return v
 
     room = n_buckets - (1 if cold else 0)
-    buckets = [[m, cs] for m, cs in sig.items()]
+    buckets = [[m, cs] for m, cs in sorted(sig.items())]
     # ページ1枚ごとに数えると組み合わせが数百通りになり、総当たりの併合が終わらない。
     # 字数の少ない組は、先に「重なりのいちばん多い大きな組」へ寄せてから総当たりに入る。
-    buckets.sort(key=lambda b: -len(b[1]))
+    # 並べ替えの鍵に mask も入れる。字数が同じ組の前後が走るたびに変わると、
+    # そこから先の併合が全部ずれる
+    buckets.sort(key=lambda b: (-len(b[1]), b[0]))
     print(f"  切り分けの種類 {len(buckets)}")
     if len(buckets) > 200:
         keep, rest = buckets[:200], buckets[200:]
@@ -358,8 +363,11 @@ def plan(
             # 北欧だけの大きな組にトップの数字が吸い込まれて全面が重くなる（実測 655→1076KB）
             near = min(
                 keep,
-                key=lambda g: weight(g[0] | mask) * (size(len(g[1])) + size(len(cs)))
-                - weight(g[0]) * size(len(g[1])),
+                key=lambda g: (
+                    weight(g[0] | mask) * (size(len(g[1])) + size(len(cs)))
+                    - weight(g[0]) * size(len(g[1])),
+                    g[0],  # 同点のときの前後も決めておく（走るたびに変わらないように）
+                ),
             )
             near[0] |= mask
             near[1] |= cs
@@ -377,7 +385,7 @@ def plan(
         buckets[i][0] |= buckets[j][0]
         buckets[i][1] |= buckets[j][1]
         buckets.pop(j)
-    buckets.sort(key=lambda b: -len(b[1]))
+    buckets.sort(key=lambda b: (-len(b[1]), b[0]))
     out = [({names[k] for k in range(len(names)) if m >> k & 1}, cs) for m, cs in buckets]
     if cold:
         out.append((set(), set(cold)))
