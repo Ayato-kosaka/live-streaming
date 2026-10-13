@@ -38,18 +38,35 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readArray } from "./tsread.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
 const CONTENT = path.join(ROOT, "site/content");
 const HERO_DIR = path.join(ROOT, "site/public/sprites/hero");
 
+/** `manifest.mjs` の `HERO_BOOKS` と同じ3冊。読み方は `tsread.mjs` の1本（#694） */
+const HERO_BOOKS = [
+  ["recipes.ts", "RECIPES"],
+  ["legends.ts", "LEGENDS"],
+  ["streamTypes.ts", "STREAM_TYPES"],
+];
+
 /** 主役に指定されている絵の名前。**`manifest.mjs` の `heroNames()` と同じ読み方。** */
 export function heroNames(contentDir = CONTENT) {
   const out = new Set();
-  for (const f of ["recipes.ts", "legends.ts", "streamTypes.ts"]) {
+  for (const [f, name] of HERO_BOOKS) {
     const src = fs.readFileSync(path.join(contentDir, f), "utf8");
-    for (const m of src.matchAll(/^\s*icon: "([^"]+)"/gm)) out.add(m[1]);
+    const got = readArray(src, name, { keys: ["icon"], idKey: "slug" });
+    /* **読み落としを 0件と同じ顔にしない。** 分母が縮むと、焼き忘れの絵が
+       「主役ではない」ことになって、この見張りが黙って通る */
+    if (!got.declared || got.missed) {
+      console.log(
+        `::error::${f} の ${name} を読めませんでした（名乗り ${got.declared} / 読めた ${got.rows.length}）`,
+      );
+      process.exit(2);
+    }
+    for (const r of got.rows) if (r.icon) out.add(r.icon);
   }
   return [...out].sort();
 }
