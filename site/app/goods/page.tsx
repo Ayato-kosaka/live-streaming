@@ -320,10 +320,35 @@ export default function GoodsPage() {
               2通りあると、別の仕掛けに見える。**升目ぜんぶが押せるので、
               1枚ずつに厚みは付けない**（`docs/island-design.md` 3-3 の例外）。
 
-              **最後の1マスが店そのもの。** 住人の100人ぶんもステッカーぶんも
-              あちらに在るので、ここで数えずに店へ送る（数えると、
-              1つ増えた日から嘘になる）。 */}
+              **いちばん前の1マスが店そのもの**（あやと 2026-10-13
+              「ぜんぶ見る → イギリスぶらら を先頭にして」）。住人の100人ぶんも
+              ステッカーぶんもあちらに在るので、ここで数えずに店へ送る
+              （数えると、1つ増えた日から嘘になる）。
+              その次がトート——店でいちばん古いデザインで、新しい順だと
+              後ろに沈むが、**店の顔はこちら**（`content/goods.ts` の並びの注）。 */}
           <ul className="gd-shopgrid">
+            <li>
+              <a
+                className="gd-shopitem gd-shopall"
+                href={SUZURI.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  className="gd-shopart"
+                  src={SUZURI.shot.src}
+                  alt={SUZURI.shot.alt}
+                  width={SUZURI.shot.w}
+                  height={SUZURI.shot.h}
+                  loading="lazy"
+                />
+                <b>{SUZURI.cap}</b>
+                <span className="gd-get">
+                  <Icon name="external" size={16} />
+                  ぜんぶ見る
+                </span>
+              </a>
+            </li>
             {SHOP_GOODS.map((goods) => (
               <li key={goods.id}>
                 <a
@@ -352,28 +377,6 @@ export default function GoodsPage() {
                 </a>
               </li>
             ))}
-            <li>
-              <a
-                className="gd-shopitem gd-shopall"
-                href={SUZURI.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  className="gd-shopart"
-                  src={SUZURI.shot.src}
-                  alt={SUZURI.shot.alt}
-                  width={SUZURI.shot.w}
-                  height={SUZURI.shot.h}
-                  loading="lazy"
-                />
-                <b>{SUZURI.cap}</b>
-                <span className="gd-get">
-                  <Icon name="external" size={16} />
-                  ぜんぶ見る
-                </span>
-              </a>
-            </li>
           </ul>
           {/* あやとの言葉（2026-10-11）:
 
