@@ -1462,9 +1462,8 @@ async function waitingStickies(
  *
  * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} 新しい順
  */
-async function seenStickies(): Promise<
-  FirebaseFirestore.QueryDocumentSnapshot[]
-> {
+async function seenStickies():
+  Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
   const snap = await NOTES.orderBy("createdAt", "desc")
     .limit(WAITING_SCAN)
     .get();
