@@ -37,7 +37,7 @@ on:
       command:
         description: "何をするか"
         type: choice
-        options: [materials, items, goods, publish, characters, create, update, delete, preview, probe, sheet]
+        options: [materials, items, goods, sample, publish, characters, create, update, delete, preview, probe, sheet]
         default: materials
       args:
         description: "コマンドに渡す引数（例: update なら `21116414 --price 300`、probe なら `21116414 --item can-badge --scale 0.8`、sheet なら `21116414 21116420` か `--latest 5`）"

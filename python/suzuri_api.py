@@ -183,6 +183,27 @@ def goods(spec_path, dry=False, pub=False):
                 f.write(f"- {key} → {pr.get('sampleUrl')}（デザイン {mid}、公開={pr.get('published')}）\n")
 
 
+def sample(ids):
+    """デザインごとに見本の絵を、大きく・表裏とも取って /tmp/suzuri-sheet/ に置く（成果物になる）。
+    URL の `{width}x{height}` と `[/angle]` を埋める。取れた大きさと URL を出す（公開の URL なので出してよい）"""
+    os.makedirs("/tmp/suzuri-sheet", exist_ok=True)
+    for mid in ids:
+        st, r = call("GET", "/products", query={"materialId": mid, "limit": 5})
+        for p in (r.get("products") or []) if st == 200 else []:
+            tpl = p.get("imageUrl") or ""
+            sv = p.get("sampleItemVariant") or {}
+            size, color = (sv.get("size") or {}).get("name", "s"), (sv.get("color") or {}).get("name", "white")
+            print(f"{mid} {p['item']['name']} 公開={p.get('published')} {p.get('sampleUrl')}\n  sample {p.get('sampleImageUrl')}\n  tpl {tpl}")
+            for ang in ["", "/front", "/back"]:
+                u = (tpl.replace("{width}", "1200").replace("{height}", "1200").replace("{size}", size)
+                     .replace("{color}", color).replace("[/angle]", ang))
+                raw = _fetch(u, tries=1)
+                name = f"{mid}-{p['item']['name']}{ang.replace('/', '-')}.img"
+                if raw:
+                    open(f"/tmp/suzuri-sheet/{name}", "wb").write(raw)
+                print(f"  {'ok' if raw else '取れない'} {name} {len(raw) if raw else ''}")
+
+
 def publish(material_id):
     """非公開で作ったグッズを公開する。品目は商品の一覧から引き直す（大きさは触らない）"""
     st, r = call("GET", "/products", query={"materialId": material_id, "limit": 50})
@@ -465,6 +486,7 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("materials")
     c = sub.add_parser("goods"); c.add_argument("spec"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true")
+    c = sub.add_parser("sample"); c.add_argument("ids", type=int, nargs="+")
     c = sub.add_parser("publish"); c.add_argument("id", type=int)
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
@@ -492,6 +514,8 @@ def main():
         items(a.q)
     elif a.cmd == "goods":
         goods(a.spec, a.dry_run, a.publish)
+    elif a.cmd == "sample":
+        sample(a.ids)
     elif a.cmd == "publish":
         publish(a.id)
     elif a.cmd == "characters":
