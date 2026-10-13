@@ -324,6 +324,32 @@ const sameAsOld = await one.p.evaluate(async () => {
     g.fill();
     g.restore();
   }
+  /* 白いふち（ダイカットのシールの台紙）。**2026-10-09 に入った**（#713）。
+     ここに写していないと、「分ける前と同じ絵か」の照らし合わせが、
+     ふちのぶん 56,593画素ずれて毎回落ちる（実際に4日落ちていた）。
+     式は `components/nordic/stamp.ts` の `dieCut` と同じ。 */
+  const EDGE = 0.034;
+  const CAST = { blur: 0.062, down: 0.024, ink: "rgba(0,0,0,0.34)" };
+  const EDGE_STEPS = 20;
+  function dieCut(img, src, w, h, r) {
+    const pad = Math.ceil(r) + 1;
+    const cw = Math.max(1, Math.ceil(w) + pad * 2);
+    const ch = Math.max(1, Math.ceil(h) + pad * 2);
+    const cv = document.createElement("canvas");
+    cv.width = cw;
+    cv.height = ch;
+    const g = cv.getContext("2d");
+    for (let i = 0; i < EDGE_STEPS; i++) {
+      const a = (i / EDGE_STEPS) * Math.PI * 2;
+      g.drawImage(img, src.x, src.y, src.w, src.h,
+        pad + Math.cos(a) * r, pad + Math.sin(a) * r, w, h);
+    }
+    g.globalCompositeOperation = "source-in";
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, cw, ch);
+    g.globalCompositeOperation = "source-over";
+    return { cv, pad };
+  }
   function compose(photo, chr) {
     const long = Math.max(photo.naturalWidth, photo.naturalHeight);
     const k = long > OUT_LONG ? OUT_LONG / long : 1;
@@ -338,6 +364,13 @@ const sameAsOld = await one.p.evaluate(async () => {
     const src = opaqueBox(chr);
     const at = stampBox(pw, ph, src.w, src.h, null);
     groundShadow(g, at);
+    const cut = dieCut(chr, src, at.w, at.h, at.w * EDGE);
+    g.save();
+    g.shadowColor = CAST.ink;
+    g.shadowBlur = at.w * CAST.blur;
+    g.shadowOffsetY = at.w * CAST.down;
+    g.drawImage(cut.cv, at.x - cut.pad, at.y - cut.pad);
+    g.restore();
     g.drawImage(chr, src.x, src.y, src.w, src.h, at.x, at.y, at.w, at.h);
     return cv;
   }
@@ -370,7 +403,10 @@ const sameAsOld = await one.p.evaluate(async () => {
   }
   return { ok: true, off, worst, px: a.length / 4 };
 });
-must("既定の絵が、分ける前と1画素も違わない",
+/* **別の道で組んだ1枚と突き合わせる。** 「分ける前と同じか」ではない
+   ——2026-10-09 に白いふちが入って、絵そのものは変わった（#713）。
+   いま見ているのは「画面の組み方が、式のとおりか」。 */
+must("既定の絵が、式どおりに組んだ1枚と1画素も違わない",
   sameAsOld.ok && sameAsOld.off === 0,
   sameAsOld.ok ? `違った画素 ${sameAsOld.off}/${sameAsOld.px}（いちばん大きい差 ${sameAsOld.worst}）` : sameAsOld.why);
 
@@ -393,9 +429,12 @@ console.log(`       覚えた立ち位置: ${JSON.stringify(savedPlace)}`);
 must("覚えた値が 0〜1 に収まっている",
   !!savedPlace && savedPlace.x >= 0 && savedPlace.x <= 1 && savedPlace.y >= 0 && savedPlace.y <= 1);
 
-/* ---- (8) あやとも入れる ---- */
+/* ---- (8) あやとも入れる ----
+   **札は列になっている**（2026-10-08。`content/goods.ts` の `STICKERS`）。
+   1枚目は「入れない」なので、入れるのは 2枚目から。`.akd-mate` を
+   そのまま押すと、Playwright が「14枚あってどれか分からない」で落ちる。 */
 const before = one.posted.length;
-await one.p.locator(".akd-mate").click();
+await one.p.locator(".akd-mate").nth(1).click();
 await one.p.waitForTimeout(800);
 await one.p.screenshot({ path: `${OUT}/4-with-ayato.png` });
 const two = await shotPixels(one.p);
@@ -482,8 +521,11 @@ if (pair.groups.length >= 2) {
     `${a.bottom} と ${c.bottom}（高さ ${pair.h}）`);
 }
 
-/* ---- (7) もとにもどす ---- */
-await one.p.locator(".akd-mate").click();
+/* ---- (7) もとにもどす ----
+   **あやとを降ろしてから**測る。札の1枚目が「入れない」（2026-10-08 から
+   列になった）。入れたままだと、戻すのは手にしている1人ぶんだけなので、
+   あやとが残ったぶん画素が合わない。 */
+await one.p.locator(".akd-mate").nth(0).click();
 await one.p.waitForTimeout(600);
 await one.p.locator(".akd-undo").click();
 await one.p.waitForTimeout(900);
@@ -612,7 +654,7 @@ console.log("\n# PC 幅。マウスでも動く");
   await r5.p.waitForTimeout(600);
   const c = await shotPixels(r5.p);
   must("マウスでも動く", a.sum !== c.sum, `${a.sum} → ${c.sum}`);
-  await r5.p.locator(".akd-mate").click();
+  await r5.p.locator(".akd-mate").nth(1).click();
   await r5.p.waitForTimeout(800);
   await r5.p.screenshot({ path: `${OUT}/3-moved-desktop.png` });
   await r5.ctx.close();
