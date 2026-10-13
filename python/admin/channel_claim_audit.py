@@ -39,11 +39,22 @@ ARGS 例:
 **数だけ。** uid・チャンネルID・名前・ことばは1文字も出さない。
 このリポジトリは公開で、Actions のログも誰でも読める。
 かぶっている相手がいたら、**何件かだけ**を出して、どれかは出さない。
+
+数は `::notice::` でも出す。**Actions のログは別の置き場から配られていて、
+API からは読めない**（`gh` が「他のホストは叩かない」と言って止まる）。
+注記（annotation）なら `check-runs/{id}/annotations` から引けるので、
+走らせた人が画面を開かなくても数だけ持ち帰れる。
 """
 
 from collections import defaultdict
 
 from _fs import args, db, log
+
+
+def notice(msg: str) -> None:
+    """Actions の注記に1行出す。**数だけ。** ログにも同じものを出す。"""
+    log.info("%s", msg)
+    print(f"::notice::{msg}", flush=True)
 
 
 def main() -> None:
@@ -111,12 +122,16 @@ def main() -> None:
 
     # ---- まとめ ----
     log.info("")
+    notice(
+        f"islandUsers {users}件 / channelId を持つ {len(pairs)}件 / "
+        f"結ばれたチャンネル {len(by_channel)}本 / かぶり {len(dup)}本 / "
+        f"ことばの入った書類 {wrote}件（他人が書いた {foreign}件 / "
+        f"比べられない {orphan}件）"
+    )
     if not dup and foreign == 0:
-        log.info("**跡の残る嘘は 0 件。**"
-                 "（読んだだけの回は記録が無いので、ここでは数えられない）")
+        notice("跡の残る嘘は 0 件（読んだだけの回は記録が無いので数えられない）")
     else:
-        log.info("**見つかった: かぶり %d 本 / 他人が書いたことば %d 件。**"
-                 "どれかは出さない。見るときは手で引く", len(dup), foreign)
+        notice(f"見つかった: かぶり {len(dup)}本 / 他人が書いたことば {foreign}件")
 
 
 main()
