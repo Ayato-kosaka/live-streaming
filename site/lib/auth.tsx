@@ -407,11 +407,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cred = GoogleAuthProvider.credentialFromResult(res);
       const channel = cred?.accessToken ? await fetchChannel(cred.accessToken) : null;
       const idToken = await res.user.getIdToken();
-      // サーバー側にも「この人が来た」と伝えておく
+      /* サーバー側にも「この人が来た」と伝えておく。
+         **送るのは合言葉（`ytToken`）で、チャンネルIDではない。**
+         長いあいだ、ここで取った `channelId` をそのまま送って、
+         サーバーはそれを確かめずに `islandUsers` へ書いていた。
+         チャンネルIDは公開の値なので、島にログインできる人なら
+         誰でも他人のIDを名乗れて、名乗った先では他人のカードが読め、
+         他人のスタンプのことばが上書きできた。
+         いまは `channels?mine=true` を**サーバーが引く**
+         （`functions/src/youtubeOwner.ts`）。
+
+         `channel`（ここで引いた中身）も一緒に送っているのは、
+         **配りの順を守るため。** Hosting と Functions は別々に手で
+         起動するので、新しい画面が古い Functions に当たる時間がある。
+         古いほうは `channelId` を見るので、そのあいだも結びは続く。
+         **新しい Functions が出たら、この行は next の波で落とす。** */
       await fetch(`${API_BASE}/me`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
-        body: JSON.stringify(channel ?? {}),
+        body: JSON.stringify({ ...(channel ?? {}), ytToken: cred?.accessToken ?? undefined }),
       }).catch(() => null);
       if (channel) {
         setProfile((p) =>
