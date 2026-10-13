@@ -40,9 +40,21 @@ on:
   workflow_dispatch:
 
 # 同じ枝に続けて push したら、前の run は止めてよい。
-# master は止めない——「master が緑だったか」は1回ずつ残したい
+# master は止めない——「master が緑だったか」は1回ずつ残したい。
+#
+# **`cancel-in-progress: false` だけでは足りなかった。** GitHub は
+# 「走っている run」を止めないだけで、**同じ group で順番待ちしている run は
+# 無条件に差し替える。** master に続けて push した日は、待っていたほうが
+# `cancelled` のまま消える——**緑でも赤でもない、何も言っていない run** になる。
+#
+# 実測（2026-10-13）: master への push 40回のうち **4回（10%）がそれで消えていた。**
+# この見張りを作った理由そのもの（`docs/island-misses.md` #126 の「赤い master が
+# 2日残った」）が、別の道でまた起きる形だった。
+#
+# だから **master は sha ごとに別の group にする。** 順番待ちが起きないので
+# 差し替えられない。PR は今までどおり枝ごとで、続けて push したら前のが止まる。
 concurrency:
-  group: selftest-${{ github.ref }}
+  group: selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
