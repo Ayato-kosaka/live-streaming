@@ -166,6 +166,9 @@ def goods(spec_path, dry=False, pub=False, trial=False, only=None):
     if made:
         time.sleep(20)  # 裏の絵（sub_materials）の見本は、少し遅れて焼かれるかもしれない
     for key, mid, pr in made:
+        print("    prints:", json.dumps(pr.get("prints"), ensure_ascii=False)[:1500])
+        print("    angleImageUrls:", json.dumps(pr.get("angleImageUrls"), ensure_ascii=False)[:800])
+        print("    material:", json.dumps({k: v for k, v in (pr.get("material") or {}).items() if k not in ("user", "description")}, ensure_ascii=False)[:600])
         print(f"    応答の品目: キー={sorted(pr.keys())} 面={pr.get('item', {}).get('availablePrintPlaces')}")
         # 見本の絵（表・裏）。公開されている URL なので、ログインなしで取れる
         tpl = pr.get("imageUrl") or ""
