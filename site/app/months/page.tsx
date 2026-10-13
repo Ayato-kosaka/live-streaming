@@ -38,7 +38,7 @@ export default function MonthsPage() {
   const bars = [...MONTHS].reverse();
 
   return (
-    <PageShell current="streams" crumbs={[{ label: "ふりかえり" }]}>
+    <PageShell crumbs={[{ label: "ふりかえり" }]}>
       <PageHead
         icon="stage-award"
         title="月ごとのふりかえり"

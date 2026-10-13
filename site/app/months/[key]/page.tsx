@@ -65,10 +65,7 @@ export default async function MonthPage({ params }: { params: Promise<{ key: str
   const perfect = m.attend.filter((a) => a.d >= m.denom).length;
 
   return (
-    <PageShell
-      current="streams"
-      crumbs={[{ label: "ふりかえり", href: "/months" }, { label: monthLabel(m) }]}
-    >
+    <PageShell crumbs={[{ label: "ふりかえり", href: "/months" }, { label: monthLabel(m) }]}>
       <PageHead
         icon="stage-award"
         /* 390px で「2026年9月のふりかえ／り」と、1文字だけ2行目に落ちていた。
