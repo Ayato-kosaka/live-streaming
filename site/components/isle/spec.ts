@@ -154,7 +154,17 @@ const inSpan = (date: string, s: [number, number]) => {
   return t >= s[0] && t <= s[1];
 };
 
-/** その章の期間に入っている伝説の企画 */
+/**
+ * その章の期間に入っている伝説の企画。
+ *
+ * **見るのは `date` だけ**（`range` ではない）。だから伝説を1つ足すときは、
+ * `date` をその章の期間の中に置くこと。1日でも外すと、丘（`/legends`）には
+ * 出るのに島には1枚も建たない。
+ *
+ * **終わった章にここが0件になっていないか**は、毎晩 `python/upkeep_watch.py`
+ * の引き金「終わった旅の伝説」が数えて #664 の札に出す。あちらも `date` だけを
+ * 見る——見かたを2つ持つと、札が緑なのに島が空っぽ、が起きる。
+ */
 export const legendsOf = (c: Chapter, today = new Date()) => {
   const s = spanOf(c, today);
   return s ? LEGENDS.filter((l) => inSpan(l.date, s)) : [];
