@@ -119,6 +119,13 @@ service cloud.firestore {
     // あやと島。ブラウザからは触らせない(islandApi 経由のみ)。
     match /island/{docId} { allow read, write: if false; }
     match /islandIdeas/{docId} { allow read, write: if false; }
+    /* 付箋(#160)。**ここを開けない理由が、2026-10-13 に1つ増えた。**
+       書類に `seen`（既読。読んだが返さないと決めた印）と `seenAt` `seenBy` が
+       入るようになった。あれは机の側の覚書で、**貼った人に見せるものではない**
+       ——見えると「読まれたが、返事はされない」が本人に伝わる。
+       口の返事も `seen` を返さない（`islandApi.ts` の `stickyShape`）。
+       **画面だけ閉じてサーバーが開いていた形を、付箋の締め切りで踏んだばかり**
+       （`docs/island-misses.md` #225）。両方で閉じる。 */
     match /islandNotes/{docId} { allow read, write: if false; }
     /* 付箋のハート(#160)。1人1回を守るためだけの入れ物で、
        ドキュメントIDが `<付箋のID>_<端末IDか uid>`。

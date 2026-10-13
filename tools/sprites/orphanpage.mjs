@@ -50,6 +50,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { htmlFiles, norm } from "./crawltargets.mjs";
 import { fromRoot } from "./repo.mjs";
+import { readArray } from "./tsread.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -169,12 +170,12 @@ function nowChapter() {
   } catch (e) {
     die(`章の表を読めなかった: ${e.message}`);
   }
-  const rows = [];
-  for (const m of src.matchAll(
-    /slug:\s*"([a-z0-9-]+)",[\s\S]*?from:\s*"([0-9-]*)",[\s\S]*?to:\s*"([0-9-]*)",/g,
-  )) {
-    rows.push({ slug: m[1], from: m[2], to: m[3] });
-  }
+  /* 読み方は `tsread.mjs` の1本（#694）。前は `[\s\S]*?` で欄のあいだを跨いで
+     いたので、`from` の無い章が**次の章の `from` と組んで**1件になりえた
+     （章が1つ消えても、残りの数が合うので赤くならない）。 */
+  const got = readArray(src, "CHAPTERS", { keys: ["slug", "from", "to"], idKey: "slug" });
+  if (got.missed) die(`章の表を ${got.missed} 章 読み落とした（名乗り ${got.declared}）`);
+  const rows = got.rows;
   if (rows.length < 3) die(`章の表から ${rows.length} 章しか読めなかった`);
   const today = new Date().toISOString().slice(0, 10);
   const live = rows.filter((r) => r.from && r.from <= today && (!r.to || today <= r.to));

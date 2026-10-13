@@ -1501,9 +1501,17 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | `pic` | object \| null | 貼られた絵1枚（2026-10-08）。**ログインした人だけ**（1日6枚）。中身は `url` `w` `h`（開くほう）/ `thumb` `tw` `th`（板に並ぶほう）/ `path` `thumbPath`（置き場の道。**画面には返さない**）/ `at`。無ければ null |
 | `picDroppedAt` / `picDroppedBy` | number / string | あやとが絵を外した印。**置き場の実体も消えている**ので、戻らない |
 | `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
+| `seen` / `seenAt` / `seenBy` | boolean / number / string | **既読**（2026-10-13）。「読んだが、返信はしない」の印で、**まだ返していない数から外れるだけ**。板からは消えないし、ハートも返信欄もそのまま。戻せる（戻すと欄ごと消える）。**口は返さない**——下の注 |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
 | `createdAt` | number | ミリ秒 |
+
+**`seen` は、貼った人に見せない。** あれは机の側の覚書で、見えると
+「読まれたが、返事はされない」が本人に伝わる。閉じるところは2つあって、
+`firestore.rules`（`islandNotes` は入れ物ごと `if false`）と、**口の返事**
+（`stickyShape` が返す欄を名指しで並べている）。**片方だけだと漏れる**
+（`docs/island-misses.md` #225）。両方が効いていることは
+`functions/selftest/sticky_seen_selftest.mjs` が動かして見る。
 
 **企画に貼られた付箋**（旧。移行待ち）: `planId` `text` `cid` `hidden` `createdAt`。
 

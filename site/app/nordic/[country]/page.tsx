@@ -273,7 +273,6 @@ export default async function NordicCountryPage({
 
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },

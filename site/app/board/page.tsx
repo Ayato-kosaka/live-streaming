@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function BoardPage() {
   return (
-    <PageShell current="board" crumbs={[{ label: "やってほしいこと" }]}>
+    <PageShell crumbs={[{ label: "やってほしいこと" }]}>
       <PageHead
         icon="signboard"
         title="やってほしいこと"

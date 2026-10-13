@@ -27,7 +27,7 @@
  * **ただし自分の姿は自分にだけ見える**（それは他の人には届かない）。
  */
 
-import { DOORS, WORLD } from "@/components/island/layout";
+import { WORLD, placeById, spotOfPath } from "@/components/island/layout";
 
 /** Firestore のコレクション名。ここだけルールを開けてある。 */
 export const HERE_COL = "islandHere";
@@ -83,8 +83,12 @@ const clamp = (v: number) => Math.min(WORLD, Math.max(0, v));
  * @param uid その人の uid
  */
 export function hereSpot(path: string, uid: string): { x: number; y: number } {
-  const top = `/${path.split("/")[1] ?? ""}`;
-  const door = DOORS.find((d) => d.href === top);
+  /* **どの軒に居るかは、砂浜の印と同じ式で引く**（`layout.ts` の `spotOfPath`）。
+     ここだけ別に「道のいちばん上の段が軒の名前と同じか」で数えていたので、
+     `/nordic` を読んでいる人は砂浜では「企画」に印が付くのに、
+     島では南の浜に立っていた。同じ問いに答える式を2つ持たない。 */
+  const id = spotOfPath(path);
+  const door = id ? placeById(id) : undefined;
   // 建物の足元そのものではなく、少し手前。建物の絵に埋まらないように
   const base = door ? { x: door.x, y: door.y + 24 } : SHORE;
   let h = 2166136261;

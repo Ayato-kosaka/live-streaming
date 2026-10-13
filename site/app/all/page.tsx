@@ -54,7 +54,7 @@ export const metadata: Metadata = {
  */
 export default function AllPage() {
   return (
-    <PageShell atAll crumbs={[{ label: "島のなか ぜんぶ" }]}>
+    <PageShell crumbs={[{ label: "島のなか ぜんぶ" }]}>
       <PageHead
         mark={<Icon name="signpost" size={64} />}
         title="島のなか ぜんぶ"
