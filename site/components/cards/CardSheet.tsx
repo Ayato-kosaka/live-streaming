@@ -8,10 +8,11 @@ import {
   SCALE_MIN,
   TILT_MAX,
   clampPlace,
-  screenFrame,
   stretchOf,
   wallFileName,
+  wallFrame,
   type Frame,
+  type WallKind,
   composeMany,
   defaultPlaceFor,
   framesOf,
@@ -118,6 +119,23 @@ type Pick = { key: string; icon: string; name: string; place: Place | null };
 type Hold = { place: Place | null; flip: boolean };
 const BLANK: Hold = { place: null, flip: false };
 
+/** 出すかたち。`card` は写真そのまま、あとの2つはかべがみ。 */
+type Shape = "card" | WallKind;
+
+/**
+ * 並べるかたち3つ。**順はやることの順**（そのまま → 手元の電話 → 机の画面）。
+ *
+ * **ここに「ロック画面」と「ホーム画面」を分けて足さない。** どちらも
+ * 同じ比の同じ画素数で、違うのは**上に何が乗るか**だけ。焼く1枚が
+ * 変わらないものを札にすると、押しても何も起きない札が増える。
+ * 乗るもの（とけい・ボタン）は、縦のかたちのときに絵の上へ出している。
+ */
+const SHAPES: { id: Shape; name: string }[] = [
+  { id: "card", name: "カードのまま" },
+  { id: "tall", name: "スマホのかべがみ" },
+  { id: "wide", name: "パソコンのかべがみ" },
+];
+
 /**
  * 最初から人の入っている紙で、「あやとも入れますか」の頭を
  * 胴の下から何 px 覗かせるか。**字が1行ぶん読める高さ。**
@@ -216,23 +234,38 @@ export default function CardSheet({
    */
   const [hand, setHand] = useState<0 | 1>(0);
   /**
-   * 出すかたち。**`false` はカードのまま、`true` はこの端末のかべがみ。**
+   * 出すかたち。**カードのまま／スマホのかべがみ／パソコンのかべがみ。**
    *
    * あやと（2026-10-09）「綺麗な壁紙にできない」。写真は 3:4 で、
    * いまのスマホは 9:19.5。カードのかたちのまま壁紙にすると、
    * **上下に地が出るか、勝手に切られるか**のどちらかになる。
+   *
+   * **見ている端末で決めない。** 机のパソコンでカードを選んで、
+   * 手元の電話に貼る人がいる。端末の画面しか焼けないと、その人には
+   * スマホのかべがみが作れない——2026-10-13 まで、札には
+   * 「スマホのかべがみ」と書いてあるのに、パソコンで押すと
+   * **横長の1枚**が落ちてきていた。
    */
-  const [wall, setWall] = useState(false);
+  const [shape, setShape] = useState<Shape>("card");
+  /** かべがみのかたちか。**覚える・名前・背の決まりが、ここで変わる** */
+  const wall: WallKind | null = shape === "card" ? null : shape;
   /**
-   * もう片方のかたちでの立ち位置。
+   * **いま手にしていない**かたちでの立ち位置。
    *
    * **かたちが変われば、立つところも変わる。** カードのかたちで右下に
    * 置いた人を、縦長の塀へそのまま持っていくと、画面のだいぶ下に落ちる。
    * かたちごとに別に覚えて、戻ってきたらそのまま。
    */
-  const other = useRef<[Hold, Hold]>([BLANK, BLANK]);
-  /** この端末の画面（かべがみの塀）。**窓ではなく画面の画素数** */
-  const [screen, setScreen] = useState<{ want: Frame; out: Frame } | null>(null);
+  const kept = useRef<Record<Shape, [Hold, Hold]>>({
+    card: [BLANK, BLANK],
+    tall: [BLANK, BLANK],
+    wide: [BLANK, BLANK],
+  });
+  /** かべがみの塀。**窓ではなく画面の画素数**（縦と横の2つぶん） */
+  const [walls, setWalls] = useState<Record<
+    WallKind,
+    { want: Frame; out: Frame }
+  > | null>(null);
   /**
    * 焼いた塀の大きさ、元の写真の大きさ、広げた倍率。**隠さずに出すための数。**
    *
@@ -298,13 +331,15 @@ export default function CardSheet({
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  /* この端末の画面を測る。**開いたときに1回。**
+  /* 画面を測る。**開いたときに1回、縦と横の2つぶん。**
      `screen` も `devicePixelRatio` もブラウザにしか無いので、
      書き出し（SSG）の時には触らない。 */
-  useEffect(() => setScreen(screenFrame()), []);
+  useEffect(() => setWalls({ tall: wallFrame("tall"), wide: wallFrame("wide") }), []);
 
+  /** いま焼いている塀。**カードのままなら null** */
+  const sheet = wall && walls ? walls[wall] : null;
   /** 焼く塀。**カードのままなら null**（写真そのままの形。いままでの道） */
-  const frame: Frame | null = wall ? (screen?.out ?? null) : null;
+  const frame: Frame | null = sheet?.out ?? null;
 
   /* 人を選び直したら、動かしたぶんは持ち越さない。立ち位置は人ごとのもの。
      **あやとのぶんも一緒に戻す**——隣に並ぶ相手が変われば、空いている
@@ -312,7 +347,7 @@ export default function CardSheet({
   const who = chosen?.icon ?? "";
   useEffect(() => {
     holdRef.current = [BLANK, BLANK];
-    other.current = [BLANK, BLANK];
+    kept.current = { card: [BLANK, BLANK], tall: [BLANK, BLANK], wide: [BLANK, BLANK] };
     setYouAt(BLANK);
     setMateAt(BLANK);
     setHand(0);
@@ -322,7 +357,11 @@ export default function CardSheet({
      ので、前の絵のために決めた置き場所をそのまま当てると、はみ出す。 */
   useEffect(() => {
     holdRef.current = [holdRef.current[0], BLANK];
-    other.current = [other.current[0], BLANK];
+    kept.current = {
+      card: [kept.current.card[0], BLANK],
+      tall: [kept.current.tall[0], BLANK],
+      wide: [kept.current.wide[0], BLANK],
+    };
     setMateAt(BLANK);
     setHand(0);
   }, [mateId]);
@@ -727,31 +766,33 @@ export default function CardSheet({
    * 「カードでちょうど良かった位置」が壁紙では画面の下に落ちるので、
    * **持っていかずに、戻ってきたらそのまま**にする。
    */
-  const shape = useCallback(
-    (toWall: boolean) => {
-      if (wall === toWall) return;
-      let keep = other.current;
-      /* **はじめてかべがみにしたときだけ、置きどころを決めてやる。**
+  const toShape = useCallback(
+    (to: Shape) => {
+      if (shape === to) return;
+      let keep = kept.current[to];
+      /* **はじめてスマホのかべがみにしたときだけ、置きどころを決めてやる。**
          既定のまま持っていくと、足がスマホのボタンの下に隠れる。
-         1度でも自分で動かしていれば（`place` が入っていれば）触らない。 */
-      if (toWall && !keep[0].place) {
+         1度でも自分で動かしていれば（`place` が入っていれば）触らない。
+         **パソコンのかたちでは上げない**——机の画面の下にボタンは無い。 */
+      if (to === "tall" && !keep[0].place) {
         const list = figures();
         const art0 = list[0];
-        if (art0 && screen) {
+        const 塀 = walls?.tall.out;
+        if (art0 && 塀) {
           const b = opaqueBox(art0.img);
-          const d = defaultPlaceFor(screen.out.w, screen.out.h, b.w, b.h);
+          const d = defaultPlaceFor(塀.w, 塀.h, b.w, b.h);
           keep = [{ place: { ...d, y: Math.max(0.3, d.y - WALL_FOOT) }, flip: false }, BLANK];
         }
       }
-      /* **入れ替えるのは ref、知らせるのは state。** `setWall` の中で
+      /* **入れ替えるのは ref、知らせるのは state。** `setShape` の中で
          ほかの state を触ると、React が更新の式を2度呼ぶ作り（開発時）で
          **入れ替えが2回起きて元に戻る。** 式の外で済ませる。 */
-      other.current = holdRef.current;
+      kept.current = { ...kept.current, [shape]: holdRef.current };
       holdRef.current = keep;
       setYouAt(keep[0]);
       setMateAt(keep[1]);
       setHand(0);
-      setWall(toWall);
+      setShape(to);
       /* **写真の箱の下限を捨てる。** 「焼き直しのあいだ畳ませない」ために
          一度測った高さを下限にしているが、**かたちが変われば背も変わる。**
          かべがみ（44vh）からカードへ戻ると、392px の下限だけが残って
@@ -767,7 +808,7 @@ export default function CardSheet({
       });
       touch();
     },
-    [figures, screen, touch, wall],
+    [figures, shape, touch, walls],
   );
 
 
@@ -1055,7 +1096,7 @@ export default function CardSheet({
 
   const save = useCallback(async () => {
     if (!out) return;
-    const name = wall ? wallFileName(group.day) : stampFileName(group.day);
+    const name = wall ? wallFileName(group.day, wall) : stampFileName(group.day);
     const file = new File([out.blob], name, { type: "image/jpeg" });
     const nav = navigator as Navigator & {
       canShare?: (d: { files: File[] }) => boolean;
@@ -1110,7 +1151,7 @@ export default function CardSheet({
 
         <div className="akd-sheet-body" ref={bodyRef}>
           <div
-            className={`nstudio-shot${wall ? " is-wall" : ""}`}
+            className={`nstudio-shot${wall ? ` is-wall is-${wall}` : ""}`}
             ref={shotRef}
             /* **畳ませない。** 理由は上の `shotH`。まだ1度も出ていないときは
                何も指定しない（待ちの印の高さのままでよい） */
@@ -1152,10 +1193,14 @@ export default function CardSheet({
                     : {})}
                 />
               )}
-              {/* かべがみのとき、**スマホが上に出すもの**の居場所を出す。
+              {/* スマホのかべがみのとき、**電話が上に出すもの**の居場所を出す。
                   とけい（上）とボタン（下）は写真の上に重なるので、
-                  そこへ人を置くと隠れる。**焼く1枚には入らない。** */}
-              {wall && (
+                  そこへ人を置くと隠れる。**焼く1枚には入らない。**
+
+                  **パソコンのかたちでは出さない。** 机の画面にとけいも
+                  ライトのボタンも無い。無いものの帯を出すと、避けなくて
+                  いいところを避けて置くことになる。 */}
+              {wall === "tall" && (
                 <>
                   <span className="akd-safe is-top" aria-hidden>
                     <i>とけい</i>
@@ -1293,30 +1338,26 @@ export default function CardSheet({
           {/* 出すかたち。**人を入れていなくても出る**——素の写真を
               かべがみにしたい日もある。
 
-              かべがみは、**見ている端末の画面の形と画素数**に合わせて焼く
-              （`screen` × `devicePixelRatio`）。写真は塀いっぱいに敷いて、
-              はみ出すぶんは切る。写真は 3:4、いまのスマホは 9:19.5 なので、
-              **使えるのは写真の真ん中の細い帯だけ**になり、そこから画面の
-              画素数まで広げることになる。その倍率は下に出す——隠さない。 */}
+              かべがみは、**貼る先の画面の形と画素数**に合わせて焼く。
+              見ている画面がその向きならその画素数ちょうど、違う向きなら
+              ふつうの画面（9:19.5 / 16:9）。写真は塀いっぱいに敷いて、
+              はみ出すぶんは切る。写真は 3:4 なので、**縦のかべがみでは
+              真ん中の細い帯だけ**を使うことになる。そこから画面の画素数まで
+              広げる倍率は下に出す——隠さない。 */}
           <p className="nstudio-ask">どのかたちで もちかえりますか</p>
           <div className="akd-shapes" role="group" aria-label="どのかたちで もちかえりますか">
-            <button
-              type="button"
-              className={`akd-shape${wall ? "" : " is-on"}`}
-              aria-pressed={!wall}
-              onClick={() => shape(false)}
-            >
-              カードのまま
-            </button>
-            <button
-              type="button"
-              className={`akd-shape${wall ? " is-on" : ""}`}
-              aria-pressed={wall}
-              onClick={() => shape(true)}
-              disabled={!screen}
-            >
-              スマホのかべがみ
-            </button>
+            {SHAPES.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`akd-shape${shape === f.id ? " is-on" : ""}`}
+                aria-pressed={shape === f.id}
+                onClick={() => toShape(f.id)}
+                disabled={f.id !== "card" && !walls}
+              >
+                {f.name}
+              </button>
+            ))}
           </div>
           {/* **焼く大きさと、広げた倍率をそのまま出す。**
               「きれいに焼けます」とは言わない。元が長辺 1600px しか無いので、
@@ -1324,8 +1365,8 @@ export default function CardSheet({
           {wall && outAt && (
             <p className="nstudio-note">
               {outAt.w}×{outAt.h} で焼きます。
-              {screen && (screen.out.w !== screen.want.w || screen.out.h !== screen.want.h) && (
-                <>（この画面は {screen.want.w}×{screen.want.h}。大きすぎるので縮めました）</>
+              {sheet && (sheet.out.w !== sheet.want.w || sheet.out.h !== sheet.want.h) && (
+                <>（この画面は {sheet.want.w}×{sheet.want.h}。大きすぎるので縮めました）</>
               )}
               <br />
               元の写真は {outAt.pw}×{outAt.ph} なので、

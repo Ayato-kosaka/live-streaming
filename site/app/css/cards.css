@@ -509,13 +509,18 @@
 .akd-sheet-body .nstudio-shot img {
   max-height: 36vh;
 }
-/* かべがみのかたちは、塀が 9:19.5 と細長い。36vh（304px）だと横幅が
+/* スマホのかべがみは、塀が 9:19.5 と細長い。36vh（304px）だと横幅が
    140px しか無くて、指で置きどころを決めるには小さすぎる。
    **縦に伸ばして 44vh（372px）**。横は 171px になる。
    そのぶん手の通る帯は 283 → 215px になるが、かべがみのときに触るのは
-   大きさ・かたむき・むきの3つだけなので、そこは帯に収まる。 */
-.akd-sheet-body .nstudio-shot.is-wall img,
-.akd-sheet-body .nstudio-shot.is-wall .akd-stage > canvas {
+   大きさ・かたむき・むきの3つだけなので、そこは帯に収まる。
+
+   **パソコンのかたち（`.is-wide`）は伸ばさない。** あちらは 16:9 で、
+   背ではなく横幅で頭打ちになる（332px 幅なら 187px の背）。
+   伸ばす値を足しても1pxも変わらないうえ、`img` と `canvas` で
+   効き方が違うと**上に焼き上がり・下に canvas の2段**に割れる。 */
+.akd-sheet-body .nstudio-shot.is-tall img,
+.akd-sheet-body .nstudio-shot.is-tall .akd-stage > canvas {
   max-height: 44vh;
 }
 /* 札が3段になる日（11枚以上）だけ、写真を下げて3段目を覗かせる。
@@ -613,8 +618,9 @@
 }
 .akd-stage.is-movable:active { cursor: grabbing; }
 
-/* 出すかたち。カードのまま／スマホのかべがみ。
-   **押すと切り替わる札**なので、あやとの札（`.akd-mate`）と同じ厚み。 */
+/* 出すかたち。カードのまま／スマホのかべがみ／パソコンのかべがみ。
+   **押すと切り替わる札**なので、あやとの札（`.akd-mate`）と同じ厚み。
+   3枚で 390px には1段に入らないので、折り返して2段になる。 */
 .akd-shapes {
   display: flex;
   flex-wrap: wrap;
@@ -641,7 +647,7 @@
 .akd-shape:active { transform: translateY(4px); box-shadow: none; }
 .akd-shape:disabled { opacity: 0.5; box-shadow: none; }
 
-/* かべがみのときだけ出る、**スマホが上に出すものの居場所**。
+/* スマホのかべがみのときだけ出る、**電話が上に出すものの居場所**。
    とけい（上）とボタン（下）は写真に重なるので、そこへ人を置くと隠れる。
    **焼く1枚には入らない**——画面の上に浮かせているだけ。
 
