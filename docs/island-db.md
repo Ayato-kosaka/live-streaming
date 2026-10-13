@@ -397,7 +397,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
 | チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
 | 焼き込み | Git `site/content/*`（自動生成ぶん） | BigQuery ほか | `.github/workflows/rebake.yml`（5.2） |
-| 旧・北欧の写真 | Firestore `nordicPhotos` | `islandStreamEventImage` | 書く口が両方に書いている |
+| ~~旧・北欧の写真~~ | ~~Firestore `nordicPhotos`~~ | — | **写しをやめた**（2026-10-13）。読みも書きも新へ寄せたので、写しが1つも無い。残っている117件は消すときだけ道連れにする |
 
 ### 3.3 同じ事実が2か所にあるもの — **どちらが正か**
 
@@ -406,8 +406,8 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
-| 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
-| 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
+| ~~企画に付く写真~~ | `islandStreamEventImage` | — | **2か所ではなくなった**（2026-10-13）。読み（`GET /nordic/photos`）も書き（`POST /nordic/photos`）も新だけ。**宣言は 10-01 から「新が正」だったのに、公開の面に出ていたのは旧のほうだった** |
+| ~~「その日いた人」~~ | `islandTips`（台帳） | — | **2か所ではなくなった**（2026-10-13）。`nordicDays` は読まれていなかったが、**毎晩2本が書き続けていた**。止めた |
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
 | **「このカードは何日のものか」** | `islandStreamEventImage.day`（写真が自分で持つ） | 付いている企画の `date` | **写真が正**（2026-10-01）。企画は空のことがあるので軸にしない。企画の日付に落ちるのは、`day` を持たない古い画像だけ |
@@ -417,6 +417,41 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 豚の貯金箱の**Doneru の鍵** | Firestore `islandFundConfig/doneru` の `goalKey` | 環境変数 `DONERU_GOAL_KEY`（Functions の逃げ道） | **Firestore が正**（2026-09-24。#639）。**島にひとつ。目標ごとではない**——鍵は Doneru 側の目標ウィジェット1つを指していて、貯金箱の合計はその累計を丸ごと足している。目標に紐づけると、次の目標を1件足しただけで Doneru のぶんが落ちる |
 | 豚の貯金箱の**バーの高さ** | Firestore `islandFundGoals` のいま走っている1件 → `island/state.fund.box.goal.yen` | — | **落ち先を持たない**（2026-09-24。#639）。前は `islandGoal` の `targetAmount` へ落ちていたが、あちらは GAS の表を写した凍った数字で、人が直せる場所ではない。台帳の目標が空なら「目標は無い」（0）が正しい答え |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
+
+### 3.3b 字の長さが、画面とサーバーの2か所に在る（2026-10-13）
+
+**正はサーバー**（`functions/src/islandApi.ts` の `MAX_*`）。
+画面が同じ数字を持っていたところが **15か所**あり、**8か所は
+「サーバー側の◯◯と同じ」とコメントに書いてあった**——人は気づいていて、
+**ずれたら赤くなるものだけが無かった。**
+
+止め金を15本足すのではなく、**2か所であることをやめる。**
+`GET /state` に `limits` を足して、画面はそこから受ける
+（先例は `/stampline/mine`。**15か所のうち、正しい形はそこ1つだけだった**）。
+
+**一度に全部は動かさない。** 動かしたのは3か所:
+
+| 動かした | 画面 | サーバー |
+| --- | --- | --- |
+| ○ | `live/Notes.tsx` 付箋の本文 | `MAX_NOTE_LEN`（120） |
+| ○ | `live/Notes.tsx` 付箋のリンク | `MAX_LINK_LEN`（2048） |
+| ○ | `live/Notes.tsx` 付箋への返信 | `MAX_REPLY_LEN`（300） |
+
+**残っているのは 30か所**（`grep -rn 'maxLength=' site/components site/app`）。
+口は `name` と `planTitle` も返しているので、次の波はそこから:
+
+| 残り | 画面 | サーバー |
+| --- | --- | --- |
+| | `live/Notes.tsx:776` / `live/IslandMe.tsx:113` （20） | `MAX_NAME_LEN` |
+| | `live/NextPlanEditor.tsx:481`（60） | `MAX_PLAN_TITLE` |
+| | `me/FundDesk.tsx` 3か所（31 / 60 / 40） | `WHO_MAX` / `TITLE_MAX` / `LABEL_MAX`（`fundDesk.ts`） |
+| | `me/TripTools.tsx` 3か所・`me/OwnerCare.tsx` 2・`me/DonorLinks.tsx` 3・`me/AlertBoxBox.tsx` 2・`me/RouletteBox.tsx` 2・`me/Characters.tsx` 1・`me/PlanVideos.tsx` 1・`nordic/PhotoPost.tsx` 1・`live/NextPlanEditor.tsx` 6 | **サーバー側が裸の数字**（`clean(…, 60)` のような行が66か所。名前の付いた定数は39か所） |
+
+**下の段は、口に乗せる前にサーバー側で名前を付けるのが先。**
+名前の無い数字を口から配っても、`limits.nanika` のような名無しの欄が増えるだけで、
+どこが正かは読めるようにならない。
+
+---
 
 ### 3.4 キャラクターは誰のものか — **結ぶ材料がどこにあるか**
 
@@ -816,8 +851,8 @@ island/state
 | `name` | string | 島に出す名前。**ハンドル > チャンネル名 > Google の表示名**の順 | ログイン時に自動 |
 | `handle` | string? | YouTube のハンドル（`@…`） | 自動。**引けなかった人は1日1回だけ追いに行く** |
 | `handleAt` | string? | ハンドルを追いに行った日 | 同上 |
-| `channelId` | string | YouTube のチャンネルID | ログイン時に自動 |
-| `photo` | string \| null | YouTube のアイコンURL | ログイン時に自動 |
+| `channelId` | string | YouTube のチャンネルID | **口が YouTube に訊いて確かめたぶんだけ**（下） |
+| `photo` | string \| null | YouTube のアイコンURL | 同上。**確かめの取れた回だけ入れ替える** |
 | `nickname` | string? | 島で出す名前（本名以外にしたいとき） | 本人 |
 | `showName` | boolean | 名前を島に出すか | 本人 |
 | `showPhoto` | boolean | YouTube アイコンを島に出すか | 本人 |
@@ -828,6 +863,43 @@ island/state
 **`channelId` があって、かつ `showName` か `showPhoto` のどちらかが true の人だけ**が
 島の状態の `residents` に載る。何もしていない人の名前は絶対に出ない。
 `showName` が false なら名前は `null`、`showPhoto` が false なら写真は `null` で返る。
+
+#### `channelId` は、名乗りでは入らない（2026-10-13）
+
+**長いあいだ、ここは画面が送ってきた値をそのまま書いていた**
+（`POST /me` の `clean(body.channelId, 64)`）。画面は
+`youtube/v3/channels?mine=true` を自分で叩いて取っていたが、
+**口は一度もそれを確かめていなかった。**
+
+チャンネルIDは公開の値なので、島にログインできる人なら誰でも他人のIDを
+名乗れた。名乗った先で開くのは3つ:
+
+| どこ | 名乗れると何が起きたか |
+| --- | --- |
+| `GET /cards/mine` | その人のカードが全部返る（どの日に投げたか・絵・名乗り） |
+| `POST /stampline/mine` | **`islandStampLine.lines` を上書きできる**（3.1 が「戻らない。人の字」と書いている正本） |
+| `listResidents()` | 島の名札に、その人のキャラクターの絵が出る |
+
+**3つとも「送られた値を信じず `islandUsers` から引き直す」正しい形**で
+書いてあった。引き直した先がこの欄だったので、関所が1段ぶん空回りしていた。
+
+いまは `byOwner` と同じ形で、**画面が送るのは合言葉（Google の OAuth
+アクセストークン）だけ。`channels?mine=true` は口が自分で引く**
+（`functions/src/youtubeOwner.ts` の `ownedChannel()`）。
+`mine=true` はトークンの持ち主のチャンネルしか返さないので、
+**入口から「名乗る」という言葉が消える。**
+
+- **`channelId` に値が入る道は、`ownedChannel()` ただ1本。**
+  `handle` も `photo` も `name` も、同じ返事から取る
+- **`channelId` を body に入れて送ると 400。** 黙って無視せず断るのは、
+  本番で塞がりを確かめる手がかりを残すため（`island-api.md` 7章）
+- **確かめが取れなかった回は、1バイトも書かない。消しもしない。**
+  トークンが腐っていても YouTube が落ちていても同じ（区別しても、
+  することが変わらない）。すでに結んである人はそのまま
+- 見張りは `functions/selftest/me_channel_selftest.mjs`（**対照つき**。
+  `mine=true` を外す・形を見なくする・`body.channelId` を読む行を戻す、で赤くなる）
+- 本番に残った嘘は `python/admin/channel_claim_audit.py` で数える。
+  **数えられるのは跡の残るほうだけ**——読んだだけの回はどこにも記録が無い
 
 **`islandDonors/{viewerPk}`** — どねID と YouTube の対応表（#190）
 
@@ -1422,8 +1494,8 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | --- | --- | --- |
 | `islandIdeas` | 8件。**全部 `hidden: true`** | 中身は #162 で付箋へ移した。**入れ物は残す。書いた人の字なので消さない** |
 | `islandNextPlans` | 2件 | `islandStreamEvent` へ移した残り |
-| `nordicPhotos` | 2件 | 書く口が新旧の両方に書いている。**畳むのは画面が移ってから** |
-| `nordicDays` | 6件 | もう読んでいない。その日いた人は `islandTips` から引く |
+| `nordicPhotos` | 117件 | **もう読まないし書かない**（2026-10-13）。写真を消すときだけ道連れにする。**0件になったら入れ物ごと落としてよい**——そのあとも見張りは緑のまま（`python/admin/nordic_photo_pair.py`） |
+| `nordicDays` | 6件 | **もう読まないし書かない**（2026-10-13。それまで毎晩2本が書いていた）。その日いた人は `islandTips` から引く |
 | `islandDrafts` | **無い**（0件） | 移すものが無かった（#171） |
 | `islandVotes` | **無い** | 前の版のこの文書は「13件残してある」と書いていた。**いま本番に無い** |
 | `islandDayPeople` | **落とす。**#409 で読む口が無くなった | 経緯は [`island-incident-2026-09-14-cards.md`](./island-incident-2026-09-14-cards.md) の6。**同じものをもう一度作る前に、そこを読む** |
@@ -1725,7 +1797,7 @@ YouTube                    Doneru
 
 | スクリプト | 書く先 | 読む元 |
 | --- | --- | --- |
-| `doneru_supporters.py` | `islandDonors`（表に無い どねID を `state: "new"` で）・`nordicDays.people` | `doneru_donations` |
+| `doneru_supporters.py` | `islandDonors`（表に無い どねID を `state: "new"` で）。**`nordicDays` へはもう書かない**（2026-10-13） | `doneru_donations` |
 | `island_tips.py` | `islandTips` | `doneru_donations` ＋ `chat_messages` ＋ **`islandDonors`** |
 | `island_cards.py` | `islandCards` | `islandTips` × `islandStreamEventImage` |
 
@@ -1950,8 +2022,15 @@ Google OAuth なので Actions の中では通せない）。切れると
 5. **`islandUsers.canDraft` が、どこからも読まれないまま残っている**（#171）。
    残す理由（記録）は書いてあるが、**残す期限が無い。**
 
-6. **`nordicPhotos` へ二重書きしている口が、いつ畳まれるか決まっていない。**
-   「画面が移ってから」とだけ書いてあり、移ったかを判定する条件が無い。
+6. ~~**`nordicPhotos` へ二重書きしている口が、いつ畳まれるか決まっていない。**~~
+   → **片づけた**（2026-10-13）。「画面が移ってから」とだけ書いてあり、
+   移ったかを判定する条件が無かった。**判定する条件を探すのをやめて、
+   読む側を新へ移して書くのを止めた**（`GET /nordic/photos` が
+   `islandStreamEventImage` を読むようになった。返す形は1バイトも変えていない
+   ので、画面は触っていない）。
+   **移す前に数えた**: 旧117件 / 新117件 / **旧にしか無い 0件**
+   （`python/admin/nordic_photo_pair.py`。同じ道具が `backup.yml` から
+   毎晩走って、旧にしか無い写真が出たら赤くする）。
    同じことが `islandNextPlans`（2件）と、企画への付箋の旧い口にも当たる。
 
 7. **`islandTips.videoId` は、Doneru のぶんを「時刻を配信の時間帯に当てて」

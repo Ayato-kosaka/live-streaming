@@ -62,8 +62,8 @@
   background: var(--marker);
   color: var(--marker-ink);
 }
-/* 島の外。押すと出ていく、は板のほうの印（`.gd-out`）が言うので、
-   札は一段おとす */
+/* 島の外。押すと出ていくことは、升目のマスの下の字（「お店で見る」）が
+   言うので、札は一段おとす */
 .gd-sec[data-tag="お店"] > .gd-h > .gd-tag {
   background: color-mix(in srgb, var(--rule) 40%, var(--paper));
   color: var(--ink-2);
@@ -125,47 +125,77 @@
 }
 .gd-go > svg { flex: none; }
 
-/* 外の店。**写真は横に並べる。**
-   1枚だけ添えていたころは、その1枚の商品しか無い店に見えていた
-   （あやと 2026-10-08、2回目の指摘）。
-   押すと出ていくことは印（external）が言う。 */
-.gd-shop {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-3);
-}
+/* ---- 外の店（升目） ----------------------------------------------------- */
 
-/* 枚数は決め打ちしない。`auto-fit` なので、`shots` を増やしても
-   1行に収まるぶんだけ細くなる（2枚でも3枚でも同じ書き方で並ぶ） */
-.gd-shopshots {
+/* **ステッカーの升目（`.gd-stickers`）と同じ寸法にそろえる。**
+   同じ面の中に升目が2通りあると、別の仕掛けに見える。
+   390px で2列、広い画面で4列。**数で割らない**ので、`SHOP_GOODS` が
+   増えても減っても、ここは並べるだけ。
+
+   **マスぜんぶが押せるので、1マスずつに厚みは付けない**
+   （`docs/island-design.md` 3-3 の例外）。**この並びに押せないマスを
+   1つでも混ぜてはいけない**——最後の「あやとの店」も押せるマス。 */
+.gd-shopgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: var(--sp-2);
-  /* PC では、写真が板の幅いっぱい（403px角）に伸びて、
-     同じ面のほかの札より大きくなっていた。**店は主役ではない。**
-     スマホ（390px）では板のほうが狭いので、ここは効かない */
-  max-width: 360px;
-}
-.gd-shopshots > img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--r-0);
-  object-fit: cover;
-  background: var(--paper-2);
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 680px;
 }
 
-.gd-shopside {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-.gd-shopside > span {
+/* **マスは背を揃える。** 題が1行のものと3行のものが並ぶので、
+   絵の高さに任せると「お店で見る」が1マスずつ別の高さに来る */
+.gd-shopgrid > li { display: flex; }
+
+.gd-shopitem {
   flex: 1 1 auto;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  border-radius: var(--r-1);
+  text-decoration: none;
+  color: var(--ink);
 }
-.gd-shopside > svg { flex: none; }
+.gd-shopitem > b {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink);
+  /* 題は SUZURI に出ている字そのまま。英字の長い1つ（DON'T BURN OUT …）が
+     マスからはみ出さないように、どこでも折る */
+  overflow-wrap: anywhere;
+}
+/* 押した手ごたえは**マスごと**沈む（ステッカーの升目と同じ） */
+.gd-shopitem:active { transform: translateY(3px); }
+
+.gd-shopart {
+  width: 100%;
+  /* **枠は正方形で固定。** 焼いてある絵も 560角なので、縮めて収める */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: contain;
+  padding: 6px;
+  border-radius: var(--r-0);
+  background: var(--paper);
+  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり） */
+  border: 1px solid var(--rule);
+}
+
+/* 店そのもののマス。**並びのいちばん最後**。
+   ほかのマスは「この1つを見る」、ここだけ「ぜんぶ見る」なので、
+   地を一段おとして、同じ並びの中で用事が違うことを言う。
+   **色は足さない**（罫を紙に混ぜただけ。`data-tag="お店"` の札と同じ作り） */
+.gd-shopall {
+  background: color-mix(in srgb, var(--rule) 22%, var(--paper));
+}
+.gd-shopall > .gd-shopart {
+  background: var(--paper);
+}
 
 /* ---- ステッカー --------------------------------------------------------- */
 

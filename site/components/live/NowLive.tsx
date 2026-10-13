@@ -281,7 +281,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
                 <img className="tile-icon" src="/sprites/signpost-flags.webp" alt="" />
                 <span className="tile-text">
                   <b>{trip.name}の島へ</b>
-                  <i>この旅のこと、旅の6カ国、旅のしおり</i>
+                  <i>{trip.sub}</i>
                 </span>
                 <Icon name="right" size={15} className="tile-go" />
               </Link>

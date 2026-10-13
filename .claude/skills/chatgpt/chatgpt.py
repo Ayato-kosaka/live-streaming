@@ -7,7 +7,7 @@
     from chatgpt import *
     t = fresh()                  # ChatGPT のタブを1枚だけ残して返す
 """
-import json, sys, time, urllib.request
+import json, os, sys, time, urllib.request
 sys.path.insert(0, "/home/ubuntu/cdp")
 from cdp import Tab, up, pages, where, _port
 
@@ -32,8 +32,58 @@ def _bcall(b, method, **params):
             return m.get("result", {})
 
 
-def fresh(url=BASE + "/", wait=6):
-    """新しいタブを1枚作り、ほかのタブは全部閉じて、そのタブを返す"""
+# 同じ Chrome（~/cdp-chatgpt）を、いくつものセッションが使う。fresh() はほかのタブを全部閉じるので、
+# 2つのセッションが同じ時間に使うとタブを閉じ合う（2026-10-13 12:54〜12:59 UTC に、LINE スタンプの
+# セッションと実際にそうなった）。使っているあいだは鍵を置き、fresh() は他人の鍵があれば止まる。
+LOCK = "/home/ubuntu/chatgpt/LOCK"
+# LINE スタンプの一括（#716）が先に使っていた置き場も見る
+OTHER_LOCKS = ["/home/ubuntu/stamp/RUNNING"]
+STALE = 4 * 3600   # これより古い鍵は、置いた人が消し忘れたものとみなす
+
+
+class Busy(RuntimeError):
+    pass
+
+
+def lock(owner, what=""):
+    """ChatGPT の Chrome を使い始める。owner はセッションの名前（あとで unlock に同じものを渡す）"""
+    held = holder()
+    if held and held.get("owner") != owner:
+        raise Busy(f"ほかのセッションが使っている: {held}")
+    os.makedirs(os.path.dirname(LOCK), exist_ok=True)
+    json.dump({"owner": owner, "what": what, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, open(LOCK, "w"), ensure_ascii=False)
+
+
+def unlock(owner):
+    held = holder()
+    if held and held.get("owner") == owner and os.path.exists(LOCK):
+        os.remove(LOCK)
+
+
+def holder():
+    """いま鍵を持っている人（無ければ None）。古すぎる鍵は数えない"""
+    for path in [LOCK] + OTHER_LOCKS:
+        if not os.path.exists(path) or time.time() - os.path.getmtime(path) > STALE:
+            continue
+        try:
+            d = json.load(open(path))
+        except Exception:
+            d = {"owner": path, "what": open(path).read()[:200]}
+        d["path"] = path
+        return d
+    return None
+
+
+def fresh(url=PROJECT, wait=6, owner=None):
+    """新しいタブを1枚作り、ほかのタブは全部閉じて、そのタブを返す。
+    **既定はプロジェクト「あやと島案内鳥」。** chatgpt.com/ を開いて送ると、プロジェクトの外
+    （あやとの履歴の本流）に会話ができる（2026-10-13 に別のセッションがそうなった）。
+    **ほかのセッションが鍵を置いていたら、タブを閉じる前に止まる**（上の LOCK）。
+    自分で鍵を置いたなら owner に同じ名前を渡す（環境変数 CHATGPT_OWNER でもよい）"""
+    owner = owner or os.environ.get("CHATGPT_OWNER")
+    held = holder()
+    if held and held.get("owner") != owner:
+        raise Busy(f"ほかのセッションが ChatGPT の Chrome を使っている。終わるまで触らない: {held}")
     port = up(NAME)
     b = _browser(port)
     old = pages(NAME)
@@ -243,19 +293,67 @@ def ask(t, text, timeout=600, want_images=False):
     return wait_reply(t, n, timeout, want_images=want_images)
 
 
+def in_project(t):
+    """いまの会話がプロジェクト「あやと島案内鳥」の中か（URL が /g/g-p-6acd4f93… で始まる）"""
+    return "/g/g-p-6acd4f935b848191ba03fdbf6c8eedd2" in (t.url() or "")
+
+
+def _menu(t, item):
+    """会話の右上の「More」を開いて、項目を押す（Rename / Move to project / Archive …）"""
+    t.key("Escape")
+    t.click("[...document.querySelectorAll('button[aria-label=More]')].find(b => b.getBoundingClientRect().y < 60)")
+    time.sleep(1.2)
+    t.click(f"[...document.querySelectorAll('[role=menuitem]')].find(e => (e.innerText || '').trim() === {json.dumps(item)})")
+    time.sleep(1.2)
+
+
+def rename(t, title):
+    """会話の題を付け直す。**送って返事が来たあと、毎回呼ぶ**（あやと 2026-10-13「チャット名は毎回わかりやすく」）。
+    ChatGPT が自分で付ける題（「背景透過PNG化」「絵の描き直し依頼」）では、あとから何の会話か分からない。
+    題の形は SKILL.md 1。戻り値は付け直したあとの題"""
+    if "/c/" not in (t.url() or ""):
+        raise RuntimeError("まだ会話ができていない（送って返事が来てから付け直す）")
+    _menu(t, "Rename")
+    # 「Rename chat」のダイアログの「Chat title」欄に、いまの題が選ばれた状態で入っている
+    t.js("""(() => { const e = document.querySelector('[role=dialog] input[aria-label="Chat title"]');
+        e.focus(); e.select(); })()""")
+    t.type(title)
+    time.sleep(0.5)
+    t.click("[...document.querySelectorAll('[role=dialog] button')].find(b => b.innerText.trim() === 'Save')")
+    for _ in range(10):
+        time.sleep(0.8)
+        if t.js("document.title") == title:
+            return title
+    raise RuntimeError(f"題が付け直らない: いまは {t.js('document.title')!r}")
+
+
 def logged_in(t):
     """ログインしているか。未ログインの画面は右上と左下に「Log in」のボタンを出す"""
     return not t.js("[...document.querySelectorAll('button')].some(b => b.innerText.trim() === 'Log in')")
 
 
 if __name__ == "__main__":
-    # python3 chatgpt.py ask <問いを書いたファイル>   … プロジェクトの新しい会話で1往復して、返事を標準出力へ
-    # 問いはファイルで渡す（SSM のコマンドに日本語や引用符を直に入れると崩れる）
-    if len(sys.argv) >= 3 and sys.argv[1] == "ask":
+    # python3 chatgpt.py ask <問いを書いたファイル> <会話の題> [待つ秒]
+    #   … プロジェクトの新しい会話で1往復して、題を付け直し、返事を標準出力へ
+    # 問いと題はファイル・引数で渡す（SSM のコマンドに日本語や引用符を直に入れると崩れる）
+    if len(sys.argv) >= 4 and sys.argv[1] == "ask":
         t = fresh(PROJECT)
-        print(ask(t, open(sys.argv[2], encoding="utf-8").read().strip(), timeout=int(sys.argv[3]) if len(sys.argv) > 3 else 180))
+        if logged_in(t) and not in_project(t):
+            raise SystemExit(f"プロジェクトの外を開いている: {where(t.url())}")
+        a = ask(t, open(sys.argv[2], encoding="utf-8").read().strip(), timeout=int(sys.argv[4]) if len(sys.argv) > 4 else 600)
+        if logged_in(t):
+            rename(t, sys.argv[3])
+        print(a)
+    elif len(sys.argv) >= 3 and sys.argv[1] == "lock":
+        lock(sys.argv[2], " ".join(sys.argv[3:]))
+        print("locked", holder())
+    elif len(sys.argv) >= 3 and sys.argv[1] == "unlock":
+        unlock(sys.argv[2])
+        print("unlocked; now", holder())
+    elif len(sys.argv) >= 2 and sys.argv[1] == "who":
+        print(holder())
     else:
-        print("usage: chatgpt.py ask <file> [timeout]")
+        print("usage: chatgpt.py ask <file> <title> [timeout] | lock <owner> [what] | unlock <owner> | who")
 
 
 def images(t, min_px=256):

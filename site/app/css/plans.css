@@ -234,7 +234,7 @@
      ここだけ金色にして、ほかの押せるものより一段強くする。 */
   background: linear-gradient(color-mix(in srgb, var(--gold) 42%, var(--paper)), var(--gold));
   /* 側面は金の濃いほう。--pop-sm の --frame-dark だと、金の板から浮いて見える。 */
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
   font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-body);
@@ -244,12 +244,12 @@
 /* ふれたら浮く。合図は厚みだけなので、色は変えない（island-design 3章）。 */
 .nextup-card:hover .nextup-go {
   transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
 }
 /* 沈む 2px と、厚みの減る 2px（4px→2px）を揃える。 */
 .nextup-card:active .nextup-go {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 var(--pop-d0) 0 var(--frame-deep), inset 0 2px 0 rgba(255, 255, 255, 0.6);
 }
 
 /* --- そのほかの企画 --- */
@@ -278,7 +278,7 @@
   box-shadow: var(--pop);
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-dark); }
+.nextup-rest a:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d5) 0 var(--frame-dark); }
 .nextup-rest a:active { transform: translateY(6px); box-shadow: none; }
 .nextup-rest a i { font-style: normal; font-size: var(--fs-min); color: var(--ink-2); }
 
@@ -288,7 +288,7 @@
   padding: var(--sp-3);
   border-width: var(--bw-2);
   border-radius: var(--r-3);
-  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-2), var(--np-lip);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep), var(--shadow-2), var(--np-lip);
 }
 .nextup-card.is-small:hover { box-shadow: 0 9px 0 var(--frame-deep), var(--shadow-3), var(--np-lip); }
 .nextup-card.is-small:active { box-shadow: var(--pop-push-lg), var(--shadow-1), var(--np-lip); }
