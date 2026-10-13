@@ -10,14 +10,33 @@
 （`docs/nordic-fund.md`）、出す人は60人しかいないので、
 上位は常連で固定され、320円が1万円の隣に並ぶ。
 
-## この名簿はもう読まれていない（#202）
+## この名簿は読まれていない。**だから、もう書かない**（2026-10-13）
 
 **カードの元は `islandTips` に移った**（`python/island_tips.py`）。
 `nordicDays` を読んでいたのは `functions/src/cards.ts` と
 `listPhotoDays` の2か所で、どちらも台帳を見るようになった。
 
-ここを残してあるのは、**全部が動いたと確かめるまで消さない**ため。
-消すのは #202 のいちばん最後。
+**それでも毎晩2本が書き続けていた**（ここと `python/doneru_supporters.py`。
+どちらも `schedule_fetch_chat.yml` から走る）。読み手0・`firestore.rules` は
+deny・退避の `SKIP` に入っている入れ物へ、毎晩書いていたことになる。
+
+消す前に数えた（2026-10-13）。`nordicDays` という字は、コメントと
+字の中を落とすと **11行**しか残らない:
+
+| 何 | 何本 |
+| --- | ---: |
+| 書く（ここ・`doneru_supporters.py`・`admin/nordic_pull.py`・`admin/nordic_supporter.py`） | 6 |
+| ルールと、その対照（`firestore.rules` / `tools/rules/here.test.mjs`） | 2 |
+| 退避の分類表と、偽のデータ（`backup/plan.py` / `donors_import_selftest.py`） | 2 |
+| ログの字 | 1 |
+
+**読む行は1本も無い。** `functions/src` にも `site/` にも0件。
+
+**数えるのは残した。** 毎晩のログに出る「その日、何人が投げてくれたか」は、
+取り込みが通ったかの目印として読める。Firestore に書くのをやめただけ。
+
+**この step そのものを外すには `schedule_fetch_chat.yml` を触る必要がある**
+（このファイルの持ち主は別）。外せば BigQuery の1クエリぶん軽くなる。
 
 ## 配信日の切り方（**古い決め。台帳とは違う**）
 
@@ -54,7 +73,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
-from google.cloud import bigquery, firestore
+from google.cloud import bigquery
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
@@ -116,31 +135,6 @@ def fetch(d0: str, d1: str) -> Dict[str, List[dict]]:
     return out
 
 
-def merge(old: List[dict], new: List[dict]) -> List[dict]:
-    """手で足したぶんを消さずに、BigQuery のぶんを重ねる。
-
-    Doneru の人は自動で取れないので手で入っている
-    （`python/admin/nordic_supporter.py`）。ここで丸ごと置き換えると、
-    翌日の集計でその人が消える。**同じチャンネルは1人にまとめる。**
-
-    Args:
-        old: いま入っている名簿
-        new: BigQuery から取れたぶん
-
-    Returns:
-        重ねたあとの名簿
-    """
-    out: List[dict] = []
-    seen = set()
-    for p in list(old) + list(new):
-        key = p.get("channelId") or f"icon:{p.get('icon')}"
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        out.append(p)
-    return out
-
-
 def main() -> int:
     """エントリポイント。"""
     ap = argparse.ArgumentParser()
@@ -161,8 +155,9 @@ def main() -> int:
         logger.info("%s〜%s にスパチャはありませんでした", d0, d1)
         return 0
 
-    db = None if a.dry_run else firestore.Client(project=BQ_PROJECT_ID)
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    # **Firestore には1行も書かない**（2026-10-13。この file の頭）。
+    # 数えるのは残す——毎晩のログに「その日、何人が投げてくれたか」が
+    # 出ているのは、取り込みが通ったかの目印として読める。
     for day, people in sorted(found.items()):
         logger.info("%s: %d人", day, len(people))
         # 1人ずつの明細は、公開の場では1行も出さない（`python/logsafe.py`）。
@@ -170,19 +165,10 @@ def main() -> int:
         # チャンネルIDとハンドルが並ぶと「その日スパチャした人の一覧」になる
         for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
             logger.info("%s", line)
-        if db is None:
-            continue
-        ref = db.collection("nordicDays").document(day)
-        cur = ref.get()
-        old = (cur.to_dict() or {}).get("people", []) if cur.exists else []
-        ref.set(
-            {"day": day, "people": merge(old, people), "updatedAt": now},
-            merge=True,
-        )
-    if db is None:
-        logger.info("--dry-run なので書いていません")
-    else:
-        logger.info("Firestore nordicDays を更新しました")
+    logger.info(
+        "数えただけ。**`nordicDays` には書いていない**"
+        "（読む側が0なので。台帳＝`islandTips` が正）"
+    )
     return 0
 
 
