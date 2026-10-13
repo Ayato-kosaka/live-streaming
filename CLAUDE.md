@@ -173,6 +173,10 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - [`docs/island-db.md`](docs/island-db.md) — **データ設計。ERD・用語・責務の表・列の一覧。**
   「何が正で、誰が書いて、誰が読むか」は3章。列を1つ引きに来たら4章
 - [`docs/island-api.md`](docs/island-api.md) — 口（`/island-api/*`）の一覧。誰が叩けるか・1日の上限
+- **数そのものは手引きから読まない。`python3 python/counts.py` が数える**
+  （焼き込み・章・歩いた国・図鑑・料理・伝説・面・行数…）。
+  手で書いた数は、書いた日から古くなる——2026-10-13 に突き合わせたら
+  手引き5か所が全部ずれていた。**0 を答えとして出さない**（置き場が動いたら 2 で落ちる）
 - [`docs/island-audit.md`](docs/island-audit.md) — **いま何が、どこに、いくつあるか。**
   スプシとドライブの残り・責務の割れ具合・同じ形の失敗の残数・退避・見張りの範囲。
   **手を付ける前に、数を見に来るところ**（やることの表ではない）
@@ -198,7 +202,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - `/island-ship` — 直したものを本番に出す（確かめ方・dry-run・PR・デプロイ・出たものの確認）
 - `/monthly-review` — 月末配信の授賞式ページを作る
 - `/island-fresh` — 焼き込みのうち**人の判断が要るもの**を新しくする（料理のスタンプ・引用・他己紹介・歩いた国）。
-  機械だけで決まる4本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`）
+  機械だけで決まる9本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`。
+  下流の `characterBox.ts` が名簿にぶら下がって10本目）
 - `/clip-cut` — 配信からショートにする区間の候補を出す（切るところまで。編集はしない）
 - `/youtube-studio` — YouTube Studio を EC2 の Chrome から読む・操作する土台（一覧・収益化・申し立て・動画の編集）。
   公式の API では申し立てと収益化に触れないので、画面が裏で送る youtubei の要求を使う
@@ -294,8 +299,11 @@ symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に�
 
 **`tools/sprites/_` で始まるものは使い捨てで、git に入っていない**
 （`.gitignore` の `tools/sprites/_*`）。その場で測って捨てる用なので、
-**`docs/` から名指しで呼ばない。** 461本のうち git に在るのは242本で、
-`_` 付きは全部こちら側。手元には残っていても、**clone にも worktree にも無い。**
+**`docs/` から名指しで呼ばない。** `_` 付きは全部こちら側なので、
+手元には残っていても、**clone にも worktree にも無い。**
+**何本あるかはここに書かない**（2026-09-18 に 461本/242本と書いて、
+2026-10-13 には 349本/340本だった）。数えるのは
+`python3 python/counts.py` の「tools/sprites のファイル / うち git に在るもの」。
 
 `docs/` に `_` 付きの名前が出てくるのは「そのとき、こう測った」という
 **記録**であって、手順ではない（`island-atlas.md` の `_abport.mjs`、
@@ -323,7 +331,9 @@ symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に�
 先に落としてから撮る:
 
 ```bash
-python3 tools/sprites/avatars.py     # /tmp/avatars/<icon>.png に22人ぶん
+python3 tools/sprites/avatars.py     # /tmp/avatars/<icon>.png へ、名簿ぜんぶ＋他己紹介＋料理の回
+                                     # （何人ぶんかは python3 python/counts.py が出す。
+                                     #  22人と書いてあった時期があり、実際は129人だった）
 ```
 
 差し替えは `tools/sprites/route.mjs` の `offline(ctx)` を使う。
