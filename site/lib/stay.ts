@@ -226,6 +226,35 @@ export function tripAsPlace(updatedAt: string | undefined, now: Date = new Date(
 }
 
 /**
+ * 人の字が古くなった日に、**国までは機械が受ける。**
+ *
+ * `tripAsPlace` は旅のあいだ（章が走っていて、国が引けない日）しか返さない。
+ * **落ち着いて国に居る日は、受け皿が無かった。** `stayNow()` が国を知って
+ * いるのに、画面の大きい字だけが人の打った古い場所を出しつづける。
+ * 実際に起こりうる形はこう——
+ *
+ *     いまどこ … ジョージア・トビリシ   ← 2週間前に打たれた字
+ *     札       … アルバニアに来て 5日目  ← 機械が数えた、本当のこと
+ *
+ * **同じ面が2つのことを言う。** あやとの言葉（2026-10-13 / #808）
+ * 「機械が知っていることは機械が埋める」。国は知っているので、ここで埋める。
+ *
+ * 街までは知らないので、**人の字が新しいうちは人が勝つ**（そちらが細かい）。
+ * 返すのは、人の字が古くなった日の答えだけ。
+ *
+ * 旅に出ている日は `tripAsPlace` のほうが先（章のほうが細かい）なので `null`。
+ */
+export function stayAsPlace(
+  updatedAt: string | undefined,
+  now: Date = new Date(),
+): { name: string; slug: string } | null {
+  if (tripAsPlace(updatedAt, now)) return null;
+  if (!placeOutdated(updatedAt, now)) return null;
+  const s = stayNow(now);
+  return s ? { name: s.name, slug: s.slug } : null;
+}
+
+/**
  * 「いまどこ」の**言い方**。面がどれでも、同じ日には同じ字が出る。
  *
  * 判定（`tripAsPlace`）は前からここにあったが、**その答えを字にするところは
@@ -242,5 +271,7 @@ export function placeWord(
   now: Date = new Date(),
 ): string {
   const t = tripAsPlace(updatedAt, now);
-  return t ? `${t.name}のとちゅう` : place;
+  if (t) return `${t.name}のとちゅう`;
+  // 旅に出ていない日も、人の字が古ければ国までは機械が知っている
+  return stayAsPlace(updatedAt, now)?.name ?? place;
 }
