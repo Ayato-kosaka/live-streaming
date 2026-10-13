@@ -159,6 +159,12 @@ for (const W of WIDTHS) {
       大きさ: box ? [Math.round(box.width * 10) / 10, Math.round(box.height * 10) / 10] : null,
       はみ出し: Math.round(Math.max(0, grid.right - innerWidth) + Math.max(0, -grid.left)),
       薄め,
+      /* 月の送りの札。**`hitbox.mjs` はここまで来られない**（カレンダーは
+         札を押して開く面なので、面を開いただけでは出ていない） */
+      送りの札: [...document.querySelectorAll(".akd-cal-go")].map((e) => {
+        const b = e.getBoundingClientRect();
+        return [e.textContent.trim(), Math.round(b.width), Math.round(b.height)];
+      }),
       月: document.querySelector(".akd-cal-now")?.textContent ?? "",
       紙: document.querySelector(".akd-day h2")?.textContent ?? "",
     };
@@ -181,6 +187,10 @@ for (const W of WIDTHS) {
   const [w, h] = got.大きさ ?? [0, 0];
   if (h < 48) bad.push(`${W}px: マスの背が ${h}px（48px 要る）`);
   if (W >= 390 && w < 48) bad.push(`${W}px: マスの横が ${w}px（48px 要る）`);
+
+  for (const [字, w, h] of got.送りの札 ?? []) {
+    if (w < 48 || h < 48) bad.push(`${W}px: 月の送り「${字}」が ${w}x${h}（48px 要る）`);
+  }
 
   /* **カードの無い日の字を薄めない。** 52% に薄めてあったとき、紙の
      クリーム（233,220,168）に対して 2.14 しか無かった（下限は 4.5）。

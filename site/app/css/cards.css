@@ -280,9 +280,13 @@
 .akd-cal-go.is-next { justify-self: end; }
 .akd-cal-go:active { transform: translateY(4px); box-shadow: none; }
 
-/* 題と送りのあいだを詰める。**紙の上から曜日まで 109px** あって、
-   そのうち 16px がここだった（390px の実測） */
-.akd-cal > h2 { margin-bottom: var(--sp-2); }
+/* 題と送りのあいだを詰める。**紙の上から曜日の行まで 109px** あって、
+   そのうち 16px がここだった（390px の実測。残りは題の札の下半分 33px・
+   送りの段 48px・段の下 12px で、どれも削れない）。
+
+   **`.panel.paper > h2:first-child`（0,3,1）より強く書く。**
+   `.akd-cal > h2`（0,1,1）では負けて、1pxも動かなかった。 */
+.akd-cal.panel.paper > h2:first-child { margin-bottom: var(--sp-2); }
 /* 7列。**曜日の頭文字と、日のマス。**
 
    **紙の余白のぶん、横へ広げる**（`--pp-x` の負のマージン）。7列で
