@@ -156,6 +156,13 @@ export function useWaiting(): Waiting {
       if (gone || !t) return;
       try {
         const r = await withRead(getWaitingStickies(t));
+        /* **形が違う返事を、数として読まない。** `{}` が返ると
+           `r.waiting` は undefined で、そのまま入れると札が空のバッジを
+           出し、机の1行目が「まだ返していないのが  枚」になる。
+           読めなかったのと同じ顔にする（§15） */
+        if (typeof r.waiting !== "number" || !Array.isArray(r.ids)) {
+          throw new Error("bad shape");
+        }
         if (!gone) setGot({ n: r.waiting, ids: new Set(r.ids) });
       } catch {
         /* **0 を答えとして出さない**（`docs/island-standards.md` §15）。
