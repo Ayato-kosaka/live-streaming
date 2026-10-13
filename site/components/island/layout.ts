@@ -119,7 +119,12 @@ export const PLACES: Place[] = [
     icon: "globe-stand",
     size: 48,
     href: "/now",
-    blurb: "いまいる国と、今週やること",
+    /* **添え書きに「今週」を入れない。** 中身は旅先から打たれる欄で、
+       何日も打ち直せない日がある。島の看板は焼いた字なので、札が
+       「今週」と言い、中身が2週間前、という形が必ずいつか起きる
+       （`docs/island-standards.md` 16章 / `docs/island-misses.md` #228）。
+       「いまどこ」は、いつ読んでも「いま」があるのでよい。 */
+    blurb: "いまいる国と、あやとの島だより",
   },
   {
     id: "friends",

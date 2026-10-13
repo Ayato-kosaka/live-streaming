@@ -14,6 +14,8 @@ import { stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type Travel
 import { BUILT_AT, readNight } from "@/lib/nightly";
 import { weekAhead } from "@/lib/week";
 import Say from "@/components/ui/Say";
+import Phrase from "@/components/ui/Phrase";
+import { LETTER_TODO_NONE, LETTER_TODO_NONE_NOTE, LETTER_TODO_TITLE } from "@/content/voice";
 import { nights } from "@/content/nights";
 
 /** いまの日本時間。端末の時計がどこの国に合っていても、日本を基準に見せる。 */
@@ -47,8 +49,8 @@ function span(mins: number) {
  * この便りを、いつ書いたか。
  *
  * 日付だけ出しても、それが古いのかどうかは読む人が引き算する。
- * 「今週なにをするか」と書いてある紙が2週間前のものだったら、
- * それは今週の話ではない。**古いことは古いと言う。**
+ * 「やること」と書いてある紙が2週間前のものだったら、それはもう今の話ではない。
+ * **古いことは古いと言う。**
  * 静的書き出しなので、画面が出てから数え直す。
  */
 function wroteAgo(updatedAt: string | undefined, now: Date): string | null {
@@ -73,10 +75,10 @@ const SLUG = /^[a-z0-9-]+$/;
  *
  * 開いた人がまず知りたいのは「いまどこ」と「今夜あるのか」の2つ。
  * だから場所とひとことのすぐ下に、今夜の配信までの残り時間を置く。
- * 場所と今週やることは Firestore の current から来る。無ければ焼き込みの値のまま出す。
+ * 場所と書き置きは Firestore の current から来る。無ければ焼き込みの値のまま出す。
  *
  * 上の「いまどこ・今夜あるか」は板の型（押すもの・しらせ）。
- * 下の「今週やること」は紙の型（記録）。本物のUIもこの2つを分けている
+ * 下の書き置きは紙の型（記録）。本物のUIもこの2つを分けている
  * （`docs/ac-reference.md` の 7章）。混ざらないよう、台紙ごと分けて置く。
  *
  * letter を付けるのは「いまどこ」の面だけ。
@@ -172,15 +174,23 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   const here = placeCountry(cur.place);
   const flag = trip ? null : here?.slug ?? null;
 
-  /* **「今週、なにをするんだろう」から、過ぎた日の行を落とす**（`lib/week.ts`）。
+  /* **書き置きから、過ぎた日の行を落とす**（`lib/week.ts`）。
      この欄はあやとが手で打つので、旅のあいだは何日も打ち直せない。実測
-     2026-10-07 の本番は `9/27 ストックホルムを発つ` `9/28 アルバニア着` が
-     10日前のまま並んでいた。**`current` は書き換えない**（島の記録で、
-     本人が `/me/desk` から直す欄）。落とすのは画面の側だけ。
-     全部過ぎていたら、下の箱ごと出ない——見出しだけ残すと「今週やること」と
-     書いてある空の紙になる。
-     画面が出るまでは焼いた日で数える（焼いた HTML と最初の描画をそろえる）。 */
+     2026-10-13 の本番は `9/27 ストックホルムを発つ` `9/28 アルバニア着` が
+     15日前のまま島の便りに入っていた。**過ぎた日は、人が消すものではなく
+     出さないもの**（あやと 2026-10-13 / #808）。`current` は書き換えない
+     （島の記録で、本人が `/me/desk` から直す欄）。落とすのは画面の側と、
+     口（`GET /island-api/state`）の側の2つ。
+
+     画面が出るまでは焼いた日で数える（焼いた HTML と最初の描画をそろえる）。
+     **焼ける中身は `NOW_FALLBACK.week` だけで、あそこには日付を書かない**
+     ので、焼いた HTML に過ぎた日が乗ることはない
+     （`tools/sprites/nextempty.mjs` が毎回それを数える）。 */
   const week = weekAhead(cur.week, now ?? BUILT_AT);
+  /* 1行も残らなかった日に、**黙って箱ごと消さない**（#228 の決め3）。
+     ただし 0件かどうかは便りが届いてから決まるので、**焼いた字にはしない**
+     ——`ready`（返事が来た）が立つのは画面が出たあとだけ。 */
+  const todoNone = ready && week.length === 0;
 
   return (
     <>
@@ -394,28 +404,51 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           <div className="pap">
             <b className="pap-tag">島だより</b>
             <span className="np-stamp">{cur.updatedAt?.replace(/-/g, ".")}</span>
-            {week.length > 0 && (
+            {(week.length > 0 || todoNone) && (
               <section className="pap-sec">
-                <h2 className="pap-h">今週、なにをするんだろう</h2>
-                <ul className="pap-rows">
-                  {week.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
+                {/* **見出しに時制を入れない。** 「今週、なにをするんだろう」と
+                    書いてあったが、中身は旅先から打たれる欄で、何日も打ち直せない
+                    （`content/voice.ts` の `LETTER_TODO_TITLE`）。
+                    いつの話かは、すぐ上の日付印と「◯日前に書いた」の札が言う。 */}
+                <h2 className="pap-h">
+                  <Phrase parts={todoNone ? LETTER_TODO_NONE : LETTER_TODO_TITLE} />
+                </h2>
+                {todoNone ? (
+                  <p className="pap-note">
+                    <Phrase parts={LETTER_TODO_NONE_NOTE} />
+                  </p>
+                ) : (
+                  <ul className="pap-rows">
+                    {week.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                )}
               </section>
             )}
             {children}
           </div>
         </div>
       ) : (
-        week.length > 0 && (
+        (week.length > 0 || todoNone) && (
+          /* 紙を持ち込まない面（島の板の中）。**字は紙の側と1つ**にしてある
+             ——同じ文を2か所に書くと、片方だけ直した日に言うことが変わる
+             （`docs/island-misses.md` #228 の決め5）。 */
           <section className="panel">
-            <h2>今週やること</h2>
-            <ul className="week">
-              {week.map((w, i) => (
-                <li key={i}>{w}</li>
-              ))}
-            </ul>
+            <h2>
+              <Phrase parts={todoNone ? LETTER_TODO_NONE : LETTER_TODO_TITLE} />
+            </h2>
+            {todoNone ? (
+              <p>
+                <Phrase parts={LETTER_TODO_NONE_NOTE} />
+              </p>
+            ) : (
+              <ul className="week">
+                {week.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            )}
           </section>
         )
       )}
