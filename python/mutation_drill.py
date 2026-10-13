@@ -135,6 +135,21 @@ REPO_CASES: list[dict] = [
      "old": 'workflows: ["Fetch Doneru Donations"]',
      "new": 'workflows: ["Fetch Doneru Donationz"]',
      "why": "繋ぎ先の綴りを1文字変える"},
+    # `functions/selftest/cards_*` は、守る実物を**繰り返しの変数**から読む
+    # （`readFileSync(file)`）ので、字からは当てられない。頭の説明に
+    # 何を守っているかが書いてあるので、そちらを写す
+    {"watch": "functions/selftest/cards_bulk_selftest.mjs",
+     "file": "functions/src/cards.ts",
+     "old": "===", "new": "!==", "all": True,
+     "why": "カードを配るところの等しさを全部ひっくり返す"},
+    {"watch": "functions/selftest/cards_mint_selftest.mjs",
+     "file": "functions/src/streamEvents.ts",
+     "old": "===", "new": "!==", "all": True,
+     "why": "カードを焼くところの等しさを全部ひっくり返す"},
+    {"watch": "functions/selftest/cards_public_selftest.mjs",
+     "file": "functions/src/cards.ts",
+     "old": "===", "new": "!==", "all": True,
+     "why": "誰でも読める応答を作るところの等しさを全部ひっくり返す"},
     {"watch": "python/cron_lag_selftest.py",
      "file": "python/cron_lag.py",
      "old": "d = (t - p).total_seconds() / 3600",
@@ -275,7 +290,7 @@ def _consts(text: str, here: Path) -> dict[str, Path]:
         # 入れ子を1つの名前に畳んでから、`join(…)` を素直に探す
         e = expr.replace("dirname(fileURLToPath(import.meta.url))", "__HERE__")
         e = e.replace("fileURLToPath(import.meta.url)", "__HERE__")
-        mm = re.search(r"(?:join|resolve)\(\s*([^()]*?)\s*\)", e)
+        mm = re.search(r"(?:\w+\.)?(?:join|resolve)\(\s*([^()]*?)\s*\)", e)
         if not mm:
             if "__HERE__" in e:
                 out[name] = here
@@ -342,8 +357,10 @@ def mjs_subject(path: Path) -> Path | None:
             into.append(s)
 
     # `import … from "./x.mjs"` — **動かしているもの**
-    for m in re.finditer(r'(?:from|import)\s+"(\.{1,2}/[^"]+)"', text):
-        q = (here / m.group(1)).resolve()
+    for m in re.finditer(
+            r'(?:from|import)\s+"(\.{1,2}/[^"]+)"'
+            r'|import\s*\(\s*"(\.{1,2}/[^"]+)"', text):
+        q = (here / (m.group(1) or m.group(2))).resolve()
         for cand in (q, Path(str(q) + ".mjs"), Path(str(q) + ".js"),
                      Path(str(q) + ".ts")):
             if _as_source(cand):
@@ -351,7 +368,7 @@ def mjs_subject(path: Path) -> Path | None:
                 break
 
     # `join(X, "a", "b.js")` / `join(here, "..", "lib", "x.ts")` — 読んでいるもの
-    for m in re.finditer(r"(?:join|resolve)\(\s*([^()]*?)\s*\)", text):
+    for m in re.finditer(r"(?:\w+\.)?(?:join|resolve)\(\s*([^()]*?)\s*\)", text):
         args = [x.strip() for x in m.group(1).split(",") if x.strip()]
         if not args:
             continue
