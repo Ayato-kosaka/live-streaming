@@ -67,6 +67,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readArray } from "../../tools/sprites/tsread.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SITE = join(HERE, "..");
@@ -165,7 +166,13 @@ if (BREAK === "c") {
 // ---------------------------------------------------------------- 章の表
 
 const chaptersSrc = readFileSync(join(SITE, "content", "chapters.ts"), "utf8");
-const SLUGS = [...chaptersSrc.matchAll(/^\s{4}slug:\s*"([a-z0-9-]+)",/gm)].map((m) => m[1]);
+/* 読み方は `tools/sprites/tsread.mjs` の1本（#694）。前は**字下げが4つ**で
+   あることを当てにしていたので、書き方が変わるだけで章が黙って減る。 */
+const chapterRead = readArray(chaptersSrc, "CHAPTERS", { keys: ["slug"], idKey: "slug" });
+if (chapterRead.missed) {
+  stop(`章の表を ${chapterRead.missed} 章 読み落とした（名乗り ${chapterRead.declared}）`);
+}
+const SLUGS = chapterRead.rows.map((r) => r.slug);
 if (SLUGS.length < 3) stop(`章の表から slug を ${SLUGS.length} 個しか読めなかった`);
 const LIVE = new Set(SLUGS);
 

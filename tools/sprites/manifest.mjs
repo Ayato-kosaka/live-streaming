@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { readArray } from "./tsread.mjs";
 
 /**
  * あやと島で使うスプライトの一覧。
@@ -998,12 +999,23 @@ const SPRITES_BASE = [
 const HERO_PX = 1280;
 const CONTENT = new URL("../../site/content/", import.meta.url);
 
+/* 主役の絵を名指ししている本。**読み方は `tsread.mjs` の1本**（#694）。
+   `heroicon_selftest.mjs` が同じ3冊を読む（あちらは焼き忘れを数える側）。 */
+const HERO_BOOKS = [
+  ["recipes.ts", "RECIPES"],
+  ["legends.ts", "LEGENDS"],
+  ["streamTypes.ts", "STREAM_TYPES"],
+];
+
 const heroNames = () => {
   const out = new Set();
-  for (const f of ["recipes.ts", "legends.ts", "streamTypes.ts"]) {
-    for (const m of fs.readFileSync(new URL(f, CONTENT), "utf8").matchAll(/^\s*icon: "([^"]+)"/gm)) {
-      out.add(m[1]);
+  for (const [f, name] of HERO_BOOKS) {
+    const src = fs.readFileSync(new URL(f, CONTENT), "utf8");
+    const got = readArray(src, name, { keys: ["icon"], idKey: "slug" });
+    if (!got.declared || got.missed) {
+      throw new Error(`${f} の ${name} を読めなかった（名乗り ${got.declared} / 読めた ${got.rows.length}）`);
     }
+    for (const r of got.rows) if (r.icon) out.add(r.icon);
   }
   return [...out].sort();
 };

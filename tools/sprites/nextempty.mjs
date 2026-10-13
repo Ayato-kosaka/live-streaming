@@ -71,6 +71,7 @@ import { join } from "node:path";
 import { tenseOf } from "./navtruth.mjs";
 import { offline } from "./route.mjs";
 import { fromRoot, repoPath } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4150";
 const BASE = `http://127.0.0.1:${SPORT}`;
@@ -88,7 +89,14 @@ const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
  */
 function daysFromPlans() {
   const src = readFileSync(repoPath("site/content/plans.ts"), "utf8");
-  const starts = [...src.matchAll(/^\s*date:\s*"(20\d\d-\d\d-\d\d)"/gm)].map((m) => m[1]).sort();
+  /* 企画の当日は、企画1件の**いちばん外側の `date`**（`tsread.mjs` の1本。#694）。
+     `all` のほうは「どこに在っても日付の形をした字」を掃き寄せるので、
+     ここは構造ではなく字の並びを数えている——入れ子の `reached.when` も
+     終わりの日として要るので、欄を読む側に替えると拾えなくなる。 */
+  const starts = must(readArray(src, "PLANS", { keys: ["date"], idKey: "id" }), "plans.ts の PLANS")
+    .map((r) => r.date)
+    .filter(Boolean)
+    .sort();
   const all = [...src.matchAll(/"(20\d\d-\d\d-\d\d)"/g)].map((m) => m[1]).sort();
   if (!starts.length || !all.length) throw new Error("site/content/plans.ts から日付を1つも拾えませんでした");
   const at = (iso) => `${iso}T11:00:00+09:00`;
