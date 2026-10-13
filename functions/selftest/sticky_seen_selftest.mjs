@@ -655,11 +655,15 @@ const NEVER = [
     nothing("印の立った付箋が1枚も無い（漏れを見るための前提が崩れている）");
   }
 
-  for (const [what, q, token] of [
-    ["公開の一覧（合言葉なし）", {limit: "300"}, undefined],
-    ["じぶんのぶん（視聴者さん）", {mine: "1"}, "hito"],
+  for (const [what, path, q, token] of [
+    ["公開の一覧（合言葉なし）", "/stickies", {limit: "300"}, undefined],
+    ["じぶんのぶん（視聴者さん）", "/stickies", {mine: "1"}, "hito"],
+    /* 企画あての旧い口（`noteShape`）。**こちらも視聴者さんが読む。**
+       返す欄は4つしかないが、**欄を1つ足した日にここが素通りする**ので
+       一緒に見る。 */
+    ["企画あての旧い口（合言葉なし）", "/notes", {}, undefined],
   ]) {
-    const r = await call("GET", "/stickies", q, null, token);
+    const r = await call("GET", path, q, null, token);
     if (r.code !== 200 || !Array.isArray(r.body?.notes)) {
       nothing(`${what} が引けない（code=${r.code}）`);
     }
