@@ -284,6 +284,14 @@ console.log("\n# B. `POST /me` が、body からチャンネルを読まない")
   check("`body.channelId` が在ったら 400 で断る",
     /body\.channelId !== undefined/.test(code) &&
       /channelId not accepted/.test(code));
+  /* **断るのは、合言葉を見るより前。** あとに置くと、確かめるのに本物の
+     ログインが要る＝書く側を叩かないと確かめられない。 */
+  const meHead = code.slice(code.indexOf('path === "/me"')).slice(0, 1200);
+  check("断る判定が、合言葉を見るより前に在る",
+    meHead.indexOf("channelId not accepted") <
+      meHead.indexOf("^Bearer (.+)$"),
+    `断り ${meHead.indexOf("channelId not accepted")} / ` +
+      `合言葉 ${meHead.indexOf("^Bearer (.+)$")}`);
   check("`channelId` に入るのは `owned` から来た値だけ",
     /const channelId = owned\?\.channelId \?\? "";/.test(code));
   /* **言い値を別の名前で受け直していないか。** 上の4つを avoid しても、
