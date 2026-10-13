@@ -10,7 +10,7 @@
 
 タグは**枠の番号に付く。** 並びを決めてから付ける（SKILL.md の 8）。
 
-`--exact` を付けると、tags.json に無いタグが付いていれば**外す**（並べ直して枠の中身が替わったとき。
+`--exact` を付けると、付いているタグを**いったん全部外してから**付け直す（並べ直して枠の中身が替わったとき。
 前の絵のタグが残る）。外したかは「n/9」が1つ減ったかで確かめる。
 """
 import json, re, sys, time
@@ -56,15 +56,21 @@ def one(t, base, sticker, slot, words, exact=False):
     have = set(selected(t))
     miss = []
     if exact:
-        for w in sorted(have - set(words)):
+        # 外すのは上の箱の札の「×」（`label[data-test=selected-tag]` の中の `button.cm-product-image-tag-remove`）。
+        # 一覧の札をもう一度押しても外れない（2026-10-13 に16枠で1つも外れなかった）。
+        # 上の箱の札の語は英語で出たり日本語で出たりするので、語で突き合わせず、いったん全部外してから付け直す
+        rm = ("[...document.querySelectorAll('label[data-test=selected-tag] button.cm-product-image-tag-remove')]"
+              f".filter({VIS})[0]")
+        for _ in range(12):
             n0 = count(t)
-            if not t.js(f"!!({label_js(w)})"):
-                search(t, w)
-            t.click(label_js(w))
+            if n0 <= 0 or not t.js(f"!!({rm})"):
+                break
+            t.click(rm)
             time.sleep(1.2)
             if count(t) != n0 - 1:
-                miss.append(w + "(外れない)")
-        have = set(selected(t))
+                miss.append("(外れない)")
+                break
+        have = set()
     for w in words[:9]:
         if w in have:
             continue
