@@ -485,7 +485,7 @@ Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
 
 | 欄 | 誰が決めるか | 機械は何を知っているか | 人が打たない日、どうなるか |
 | --- | --- | --- | --- |
-| `place` | **人**（街まで） | **国と章は知っている**（`lib/stay.ts` の `stayNow` / `travelNow`。章は `chapters.ts`、滞在は `countries.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる（「北欧周遊のとちゅう」）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`） |
+| `place` | **人**（街まで） | **国と章は知っている**（章は `chapters.ts`、滞在は `countries.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる——旅のあいだは章（`lib/stay.ts` の `tripAsPlace`。「北欧周遊のとちゅう」）、落ち着いていれば国（同 `stayAsPlace`）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`）。受け皿が1つも無い日だけ、人の古い字がそのまま残る |
 | `word` | **人だけ** | 何も知らない。その日どこで何を見たかは、本人の頭の中にしかない | 出ない。**埋めない**——ここに当たりさわりの無い字を置くと、毎日同じ挨拶が「今日のひとこと」として出る |
 | `week` | **中身は人／過ぎた行は機械** | 行の頭の `M/D` が今日より前かどうか | 過ぎた行は、**口と画面の両方が落とす。** 全部落ちたら「やることの書き置きは、いまはありません」 |
 | `theme` | **人**（島の景色の好み） | 何も知らない。章と景色を結ぶ表がどこにも無い（`georgia` / `nordic` / `desert` の3つは**場所ではなく色**） | 前の景色のまま。**字としては出さない**（`NowLive` の `SLUG` で弾く）ので、嘘にはならない |
@@ -517,6 +517,9 @@ Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
 
 見張りは `functions/selftest/week_ahead_selftest.mjs`（口の側）と
 `tools/sprites/nextempty.mjs`（画面の側。時計を進めて撮る）。
+`place` の受け皿は `site/selftest/placefb_selftest.mjs`（4通りぜんぶ通す）。
+**あやとを呼ぶ側**は `python/upkeep_watch.py` の `letter_word_missing`、
+**こちらに鳴る側**は同 `letter_past_week_left`（`docs/island-tickets.md` 4章）。
 
 ## 4. 置き場ごとの詳細
 

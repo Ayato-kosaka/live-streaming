@@ -10,7 +10,7 @@ import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import Link from "next/link";
 import { NoticeBell } from "./art";
-import { stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
+import { stayAsPlace, stayNow, travelNow, tripAsPlace, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
 import { BUILT_AT, readNight } from "@/lib/nightly";
 import { weekAhead } from "@/lib/week";
 import Say from "@/components/ui/Say";
@@ -103,6 +103,8 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   const [stay, setStay] = useState<StayNow | null>(null);
   /** 人の書いた「いまどこ」が古くなった日、かわりに出す旅（`lib/stay.ts`） */
   const [trip, setTrip] = useState<TravelNow | null>(null);
+  /** 旅に出ていない日の受け皿。**人の字が古ければ、国までは機械が知っている** */
+  const [hereFb, setHereFb] = useState<{ name: string; slug: string } | null>(null);
   /** いま歩いている旅。**人の字が勝っている日も、旅は進んでいる**（日数の札に使う） */
   const [travel, setTravel] = useState<TravelNow | null>(null);
   const youtube = LINKS.find((l) => l.id === "youtube")!;
@@ -163,7 +165,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
      待たずに決めると、旅の日は必ず一度テントと旅の札が出て、そのあと便りが
      届いて旗に入れ替わる。**画面が2回作り替わって、そのたびに下がずれる。** */
   useEffect(() => {
-    if (ready) setTrip(tripAsPlace(cur.updatedAt, new Date()));
+    if (!ready) return;
+    const n = new Date();
+    setTrip(tripAsPlace(cur.updatedAt, n));
+    /* **旅に出ていない日も、受け皿を持つ**（#808）。前はここが旅だけで、
+       落ち着いて国に居る日に人の字が古くなると、大きい字が古い場所を出す
+       一方で、すぐ下の札が「◯◯に来て5日目」と別の国を言っていた。 */
+    setHereFb(stayAsPlace(cur.updatedAt, n));
   }, [cur.updatedAt, ready]);
 
   /* 国旗は、**人が書いた場所の字**から引く（`content/place.ts`）。
@@ -172,7 +180,9 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
      景色を替えると旗ごと消えるかの2つしかなかった（実測 2026-09-15）。
      旅を出しているとき（`trip`）はテントの絵が場所を言うので、旗は添えない。 */
   const here = placeCountry(cur.place);
-  const flag = trip ? null : here?.slug ?? null;
+  /* 機械が受けている日は、旗も機械の側から出す。**人の古い字から引いた旗を
+     残すと、名前だけ入れ替わって旗が前の国のまま**になる。 */
+  const flag = trip ? null : hereFb?.slug ?? here?.slug ?? null;
 
   /* **書き置きから、過ぎた日の行を落とす**（`lib/week.ts`）。
      この欄はあやとが手で打つので、旅のあいだは何日も打ち直せない。実測
@@ -216,7 +226,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
           ) : ready ? null : (
             <span className="now-art-skel" aria-hidden />
           )}
-          {trip ? `${trip.name}のとちゅう` : cur.place}
+          {trip ? `${trip.name}のとちゅう` : hereFb ? hereFb.name : cur.place}
         </b>
         {/* 旅を出している日は旅の一言が勝つ（master 側）。人の字を出す日は、
             そこに「毎晩22時」が混ざりうるので `Say` を通す（旅のあいだだけ言い方が変わる）。
@@ -224,9 +234,13 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
             出るまでのあいだは、2行ぶんの板。**字で埋めない**——ここに入るのは
             あやとがその日書いた一言で、何が来るかはこちらに分からない（#143）。 */}
         <p className="np-word">
+          {/* **古いひとことを、いまのことのように出さない。** 機械が場所を
+              受けている日（`hereFb`）は、人の字がもう「いま」ではない。
+              旅の日に旅の一言が勝つのと同じで、ここは黙る——**埋めない**のは、
+              その日どこで何をしたかを知っているのが本人だけだから（#808）。 */}
           {trip ? (
             `${trip.note}。`
-          ) : cur.word ? (
+          ) : hereFb ? null : cur.word ? (
             <Say t={cur.word} />
           ) : ready ? null : (
             <>
