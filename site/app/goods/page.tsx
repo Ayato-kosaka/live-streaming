@@ -34,8 +34,10 @@ import "./goods.css";
  *
  * ## 付箋は、欄の中に置く
  *
- * 宛先は `content/themes.ts` の `GOODS_GROUP` の束（`goods-art` /
- * `goods-calendar` / `goods-linestamp` / `goods-suzuri`）。
+ * 宛先は `content/themes.ts` の `GOODS_GROUP` の束。**ただし
+ * `goods-art`（あやとステッカー）の欄は、この面には無い**——
+ * 2026-10-13 にステッカーが自分の面（`/goods/stickers`）へ出たので、
+ * 書く窓もそちらへ移した。**同じ宛先の窓を2つ置かない。**
  * **数をここに書かない**——欄を1つ足した日に、この説明だけが古くなる。
  * 掲示板（`/board`）へ送らずにここで書けるのは、あやとの
  * 「該当の付箋も読み書きできる」に合わせたもの。
@@ -106,6 +108,14 @@ function Say({ theme, title, lead, omit }: {
 }
 
 /**
+ * 索引に残すステッカーの枚数。**4枚**（390px で2×2、広い画面で1列）。
+ *
+ * **ここで「どれを出すか」を決めない。** 名簿（`STICKERS`）の頭から取る。
+ * 選び直すと、並びの表がこの面と `content/goods.ts` の2つになる。
+ */
+const PEEK = 4;
+
+/**
  * あやとのセリフで、まだ決まっていない数。
  *
  * **手で書かない。** 絵が1枚届いた日に、面の「あと◯つ」だけが古くなる。
@@ -130,7 +140,10 @@ export default function GoodsPage() {
            どれが持って帰れてどれがまだかは、欄の札（無料／検討中）が言っている。
            「無料のは落とせる」とも書かない——カードとキャラクターは、
            落とせる場所がこの面ではなく、それぞれの面のほうにある */
-        say="ステッカーは、押せばその場で落とせるよ。「検討中」のは、ほしい形を書いてって。"
+        /* **「その場で落とせる」とは言わない**（2026-10-13）。ステッカーは
+           自分の面へ出たので、落とすのは押した先。ここで言えるのは
+           「押した先で落とせる」まで */
+        say="ステッカーもカードも、押した先で落とせるよ。「検討中」のは、ほしい形を書いてって。"
       />
 
       <div className="gdbook">
@@ -145,52 +158,40 @@ export default function GoodsPage() {
              （足すたびに直すことになる）。 */
           lead="落として、好きなところに貼ってください。"
         >
-          {/* **1枚ぶんを決め打ちしない。** `STICKERS[0]` と書いていたので、
-              2枚目を足した日に増えたのはデータだけで、面は1枚のままだった。
-              増えても減っても、ここは並べるだけにしておく。
+          {/* **升目はこの面から出した**（2026-10-13）。あやとの言葉:
 
-              **1枚ずつ横に寝かせるのをやめて、升目にした**（2026-10-10。
-              3枚が8枚になった）。横に寝かせた形は1枚で 150px あり、
-              8枚で 1,200px——欄の頭からいちばん下の1枚まで、スマホで
-              3画面ぶん送ることになる（`docs/island-standards.md` 7章
-              「溜まっても背が変わらない形にする」）。升目なら、390px で
-              2列・広い画面で4列に折り返す。
+              > あやとステッカー無料は、増えてきたので、「住んでいる人」みたいに
+              > 個別ページが欲しい。そこで付箋も貼れる。
 
-              **升目ぜんぶが押せるので、1枚ずつに厚みは付けない**
-              （`docs/island-design.md` 3-3 の例外。料理32マス・住人22マスと
-              同じ扱い。並びそのものが「押せる」の合図になる）。
-              押す場所は絵そのもの（3-1）——絵・名前・「おとす」で1つの押しどころ */}
-          <ul className="gd-stickers">
-            {STICKERS.map((sticker) => (
-              <li key={sticker.id}>
-                {/* **落ちてくるのは元絵そのまま。** 面に出しているのは小さく
-                    焼いたほうで、押したときだけ大きいほうを取りにいく
-                    （`content/goods.ts`）。`download` を付けるので、
-                    押すと開かずに手元へ落ちる */}
-                <a className="gd-sticker" href={sticker.file} download={sticker.saveAs}>
-                  {/* 名前はすぐ下に字で出ているので、絵は飾り扱いにする
-                      （読み上げで同じ名前が2回ならぶ） */}
-                  <img
-                    className="gd-stickerart"
-                    src={sticker.art}
-                    alt=""
-                    width={sticker.w}
-                    height={sticker.h}
-                  />
-                  <b>{sticker.name}</b>
-                  <span className="gd-get">
-                    <Icon name="download" size={16} />
-                    おとす
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-          <Say
-            theme="goods-art"
-            title="自分の1枚を出す"
-            lead="描いたもの、撮ったもの。絵も貼れる"
-          />
+              3枚が13枚になって、升目だけで欄の背が 600px を超えていた。
+              この面は**持って帰れるものの索引**で、カードもキャラクターも
+              行き先の札1枚しか置いていない。ステッカーだけが中身を抱えていると、
+              下の5つが升目の下へ沈む（`docs/island-standards.md` 7章）。
+
+              **絵は何枚か残す。** 字の札1枚に替えると、ここだけ絵が消えて
+              索引が急に静かになる。並べるのは名簿の頭から——
+              **どれを出すかを別に決めない**（決めると、並びの表が2つになる）。 */}
+          <Link className="gd-go gd-peek" href="/goods/stickers" prefetch={false}>
+            <span className="gd-peekshots">
+              {STICKERS.slice(0, PEEK).map((sticker) => (
+                <img
+                  key={sticker.id}
+                  src={sticker.art}
+                  alt=""
+                  width={sticker.w}
+                  height={sticker.h}
+                  loading="lazy"
+                />
+              ))}
+            </span>
+            <span className="gd-peekside">
+              <span>
+                <b>あやとステッカー</b>
+                <i>持って帰れる1枚が、ぜんぶ並んでいる</i>
+              </span>
+              <Icon name="right" size={16} />
+            </span>
+          </Link>
         </Sec>
 
         {/* ---- 2. あやと島カード ---------------------------------------- */}
