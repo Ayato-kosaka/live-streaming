@@ -7,7 +7,9 @@ import {
   SCALE_MAX,
   SCALE_MIN,
   TILT_MAX,
+  STAMP,
   clampPlace,
+  stampBox,
   stretchOf,
   wallFileName,
   wallFrame,
@@ -152,6 +154,17 @@ const PEEK = 36;
  * ボタンの帯の上へ置き直す。**そのあと動かすのは押した人。**
  */
 const WALL_FOOT = 0.12;
+
+/**
+ * パソコンのかべがみに**はじめて**したときの、人の大きさ。
+ *
+ * 横長の塀では、人の大きさは**背を基準**に決まる（`place.ts` の
+ * `STAMP.byHeight` ＝ 20%）。縦の写真では横幅の 34% なので十分な大きさに
+ * なるが、1920×1080 に同じ決めを当てると **216px** ——机の画面に貼ると
+ * 隅の小さなシールにしかならない（撮って見た）。
+ * 1.6倍にして 346px。**そのあと変えるのは押した人**（目盛りは 40〜200%）。
+ */
+const WIDE_SCALE = 1.6;
 
 /** 手が止まってから焼くまで。**動かしているあいだは焼かない** */
 const BAKE_MS = 150;
@@ -794,14 +807,32 @@ export default function CardSheet({
          既定のまま持っていくと、足がスマホのボタンの下に隠れる。
          1度でも自分で動かしていれば（`place` が入っていれば）触らない。
          **パソコンのかたちでは上げない**——机の画面の下にボタンは無い。 */
-      if (to === "tall" && !keep[0].place) {
+      if (to !== "card" && !keep[0].place) {
         const list = figures();
         const art0 = list[0];
-        const 塀 = walls?.tall.out;
+        const 塀 = walls?.[to].out;
         if (art0 && 塀) {
           const b = opaqueBox(art0.img);
           const d = defaultPlaceFor(塀.w, 塀.h, b.w, b.h);
-          keep = [{ place: { ...d, y: Math.max(0.3, d.y - WALL_FOOT) }, flip: false }, BLANK];
+          if (to === "tall") {
+            keep = [{ place: { ...d, y: Math.max(0.3, d.y - WALL_FOOT) }, flip: false }, BLANK];
+          } else {
+            /* 横長の塀では人が小さくなるので、大きくして置く（`WIDE_SCALE`）。
+               **右の空きは既定のまま**（大きくしたぶん左へ寄せる。
+               置き直さないと `stampBox` が端に突き当てて、余白が 0 になる） */
+            const 大 = stampBox(塀.w, 塀.h, b.w, b.h, { ...d, scale: WIDE_SCALE });
+            keep = [
+              {
+                place: {
+                  ...d,
+                  scale: WIDE_SCALE,
+                  x: (塀.w * (1 - STAMP.right) - 大.w / 2) / 塀.w,
+                },
+                flip: false,
+              },
+              BLANK,
+            ];
+          }
         }
       }
       /* **入れ替えるのは ref、知らせるのは state。** `setShape` の中で
