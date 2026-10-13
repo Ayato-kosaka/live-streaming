@@ -276,7 +276,10 @@ export function TripPlace() {
           「ここにいる、と出す」が 1,405px＝1.66画面目にあった。
           畳んでも何行あるかは見出しの横に出るので、古くなれば気づく。 */}
       <Fold
-        title="今週やること"
+        /* **「今週」と名乗らない。** 中身は人が書き足すもので、週で入れ替わらない。
+           実際に 9/28 の行が 15日残っていた。島の側（`NowLive`）も札から時制を外したので、
+           打つ側と出る側で呼び名を揃える */
+        title="やること"
         lead={
           read === "down"
             ? undefined
@@ -289,7 +292,7 @@ export function TripPlace() {
           {/* **読めなかったことを、「1行も出ていません」に倒さない。**
               押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
           {read === "down" ? (
-            <ReadAgain what="今週やること" quiet />
+            <ReadAgain what="やること" quiet />
           ) : week === null ? (
             <p className="trip-week-none">読んでいます…</p>
           ) : week.length === 0 ? (
@@ -320,7 +323,7 @@ export function TripPlace() {
               type="text"
               value={weekAdd}
               maxLength={120}
-              placeholder="今週やることを1行"
+              placeholder="やることを1行"
               onChange={(e) => setWeekAdd(e.target.value)}
             />
             <button
@@ -340,7 +343,7 @@ export function TripPlace() {
         </div>
       </Fold>
       {/* 送りの帯。**画面の下に貼り付けてある**（`.trip-send`）。
-          街の札を押したあと、ひとこと・島の景色・今週やることを越えないと
+          街の札を押したあと、ひとこと・島の景色・やることを越えないと
           ここへ届かなかった。街を押すのは日に何度もある動きなので、
           押した指がそのまま届くところに置く。**送った結果もここに出す。**
           出たかどうかを見るために、画面を送り直さなくていい。 */}
