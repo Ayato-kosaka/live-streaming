@@ -50,7 +50,7 @@
   border-radius: var(--r-3);
   background: var(--paper);
   padding: 7px;
-  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 8px 0 var(--frame-deep), var(--shadow-2);
+  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 var(--pop-d5) 0 var(--frame-deep), var(--shadow-2);
   margin-bottom: 18px;
 }
 .amap-stage {
@@ -150,7 +150,7 @@
   border-radius: 50%;
   background: var(--paper);
   /* ピンは押せる。22px の丸なので、48px で6px・38pxで4px の段に乗せると 3px。 */
-  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.4);
+  box-shadow: 0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4);
   display: grid;
   place-items: center;
   font-size: var(--fs-min);
@@ -176,7 +176,7 @@
 .apin.is-here .apin-dot::before { background: var(--accent); }
 /* いま開いている国。塗りは変えず、朱の細い輪だけで示す
    （`docs/ac-reference.md` 7章 6。選択は枠でやる） */
-.apin.is-open .apin-dot { box-shadow: 0 0 0 3px var(--pick), 0 3px 0 rgba(20, 60, 90, 0.4); }
+.apin.is-open .apin-dot { box-shadow: 0 0 0 3px var(--pick), 0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4); }
 .apin.is-open .apin-name { opacity: 1; }
 .apin.is-here::after {
   content: "";
@@ -222,7 +222,7 @@
   font-weight: 900;
   letter-spacing: 0;
   white-space: nowrap;
-  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.4);
+  box-shadow: 0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4);
   transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .apin.is-group:hover .apin-many,
@@ -385,7 +385,7 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 6px 0 var(--pg-edge);
+  box-shadow: var(--pg-lit), 0 var(--pop-d4) 0 var(--pg-edge);
   font-size: var(--fs-body); font-weight: 900;
   color: var(--ink);
   cursor: pointer;
@@ -403,7 +403,7 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: 50%;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  box-shadow: var(--pg-lit), 0 var(--pop-d3) 0 var(--pg-edge);
   color: var(--ink);
   cursor: pointer;
 }
@@ -470,7 +470,7 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  box-shadow: var(--pg-lit), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-body); font-weight: 900;
   color: var(--ink);
 }
@@ -530,14 +530,14 @@
   font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-body, 0.02em);
-  box-shadow: 0 6px 0 var(--frame-dark);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-dark);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease, color 0.2s ease;
 }
 .amap-tab:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
 .amap-tab.is-on {
   background: var(--gold);
   color: #6b4413;
-  box-shadow: 0 6px 0 var(--frame-dark);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-dark);
 }
 
 /* 凡例と縮尺 */
@@ -687,7 +687,7 @@
   margin: 8px 0 14px;
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 6px 0 var(--frame-dark), var(--shadow-1);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-dark), var(--shadow-1);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .atrip-card:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--frame-dark), var(--shadow-2); }
@@ -695,7 +695,7 @@
 /* 進む先の矢印だけは札の高さの真ん中に。旗と同じ上そろえにすると、
    国の名前の右に矢印が並んで、名前の一部に見える。 */
 .atrip-card > .tile-go { align-self: center; }
-.atrip-flag { flex: none; margin-top: 3px; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
+.atrip-flag { flex: none; margin-top: 3px; border-radius: 5px; overflow: hidden; box-shadow: 0 var(--pop-d0) 0 rgba(90, 66, 34, 0.25); line-height: 0; }
 .atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .atrip-name b { font-size: var(--fs-h3); font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
@@ -913,7 +913,7 @@
 .aflags > * {
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 0 rgba(90, 66, 34, 0.22);
+  box-shadow: 0 var(--pop-d0) 0 rgba(90, 66, 34, 0.22);
 }
 
 .acards { display: grid; gap: 12px; grid-template-columns: 1fr; }
@@ -1010,7 +1010,7 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-1);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 5px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d3) 0 var(--frame-deep);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .awork-now:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
@@ -1130,7 +1130,7 @@
   color: #fff;
   font-size: var(--fs-note);
   font-weight: 900;
-  box-shadow: 0 6px 0 #100f0e;
+  box-shadow: 0 var(--pop-d4) 0 #100f0e;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 .abadge:active { transform: translateY(5px); box-shadow: 0 1px 0 #100f0e; }
@@ -1255,7 +1255,7 @@
 /* `.panel.paper` の中身は pages.css が正本。ここには置かない。
 
    前はこのファイルにも同じ規則があり、あとから読まれるぶん atlas 側が勝っていた。
-   `.panel.paper :is(.chip,.stat){box-shadow:none}`（詳細度 0,3,0）が
+   `.panel.paper :is(.chip,.stat){box-shadow: none}`（詳細度 0,3,0）が
    `a.chip`（0,1,1）に勝って、pages.css で付け直した押しものの厚み 6px を
    消していた。見出しのテープ（`> h2::before/::after`）も二重にあった。
    **紙の面の作りを変えたくなったら pages.css を直す。ここには足さない。**
@@ -1298,7 +1298,7 @@
   /* ここは前に「押せないのに厚みがある」として外された場所
      （`docs/island-world.md` 3.4）。いまは地図そのものが押せるので、
      合図を戻す。真下へ、ぼかさない。 */
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   margin-bottom: 6px;
   /* 地図ぜんぶが押しどころ。指の形も、厚みと同じことを言う */
   cursor: pointer;
@@ -1382,7 +1382,7 @@
   color: var(--ink);
   font-size: var(--fs-note);
   font-weight: 900;
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow: 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   cursor: pointer;
 }
 .mzoom-close:active { transform: translateY(6px); box-shadow: none; }

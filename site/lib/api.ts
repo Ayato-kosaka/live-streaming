@@ -108,6 +108,33 @@ export type IslandState = {
    */
   residentDays?: Record<string, number> | null;
   nordic?: NordicFacts;
+  /**
+   * 字の長さの上限。**正はサーバー（`functions/src/islandApi.ts`）。**
+   *
+   * 画面はここの数字を1つも持たない。長いあいだ `Notes.tsx` が
+   * `const MAX = 120;` に「サーバー側の `MAX_NOTE_LEN` と同じ」と
+   * 書き添えて持っていたが、**同じ事実が2か所に在って、ずれても
+   * 赤くなるものが無い**形だった（島じゅうに15か所。`docs/island-db.md`）。
+   *
+   * **まだ届いていないあいだは `undefined`。** そのときは入力欄に
+   * 上限を付けない——**付ける数字をこちらで決めると、2か所に戻る。**
+   * 上限そのものはサーバーが必ずかけるので、ここは親切でしかない。
+   */
+  limits?: Partial<IslandLimits>;
+};
+
+/** 字の長さの上限。**この型は欄の名前を決めるだけで、値は持たない。** */
+export type IslandLimits = {
+  /** 付箋の本文 */
+  note: number;
+  /** 付箋への返信 */
+  reply: number;
+  /** 島に出す名前 */
+  name: number;
+  /** 付箋に貼るリンク */
+  link: number;
+  /** 企画の題 */
+  planTitle: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
