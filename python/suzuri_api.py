@@ -506,7 +506,7 @@ def main():
     c = sub.add_parser("update"); c.add_argument("id", type=int)
     # 品目は直させない。大きさ無しで品目を送ると、缶バッジ・パネルの大きさが既定に戻りうる
     c.add_argument("--title"); c.add_argument("--description"); c.add_argument("--price", type=int)
-    c = sub.add_parser("delete"); c.add_argument("id", type=int); c.add_argument("--dry-run", action="store_true")
+    c = sub.add_parser("delete"); c.add_argument("id", type=int, nargs="+"); c.add_argument("--dry-run", action="store_true")
     c = sub.add_parser("preview"); c.add_argument("id", type=int)
     c.add_argument("--scale", required=True); c.add_argument("--offset-x", default="0"); c.add_argument("--offset-y", default="0")
     c = sub.add_parser("probe"); c.add_argument("id", type=int); c.add_argument("--item", default="can-badge")
@@ -540,11 +540,15 @@ def main():
         print("PUT", a.id, st, (r.get("error") if st != 200 else r.get("material", {}).get("title")))
         sys.exit(0 if st == 200 else 1)
     elif a.cmd == "delete":
-        if a.dry_run:
-            print("dry-run: DELETE", a.id); return
-        st, r = call("DELETE", f"/materials/{a.id}")
-        print("DELETE", a.id, st, r.get("error", ""))
-        sys.exit(0 if st in (200, 204) else 1)
+        bad = 0
+        for i in a.id:
+            if a.dry_run:
+                print("dry-run: DELETE", i)
+                continue
+            st, r = call("DELETE", f"/materials/{i}")
+            print("DELETE", i, st, r.get("error", ""))
+            bad += st not in (200, 204)
+        sys.exit(1 if bad else 0)
     elif a.cmd == "preview":
         st, r = call("GET", f"/products/{a.id}/placement_preview",
                      query={"scale": a.scale, "offsetX": a.offset_x, "offsetY": a.offset_y})
