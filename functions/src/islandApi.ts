@@ -386,6 +386,20 @@ const STICKIES_PER_DAY = 20;
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
 
+/**
+ * 「まだ返していない付箋」を数えるときに、いちど見る枚数の蓋。
+ *
+ * **数えるのに `where` を組めない。** 見たいのは「`reply` の欄が無い」で、
+ * Firestore に「欄が無い」を引く道は無い。`createdAt` の新しい順に
+ * ここまで引いて、手元でふるいにかける（`listStickies` と同じ考え方）。
+ *
+ * **蓋に当たったら、数を黙って小さく出さない。** `GET /cards` の
+ * `CARDS_HARD_CAP` と同じで、当たった回は `logger.error` を鳴らす——
+ * 当たったまま気づかないと、**溜まっているのに「少ない」と出る**
+ * （いちばん言ってはいけない嘘）。本番は 2026-10-13 で 77枚。
+ */
+const NOTES_SCAN_CAP = 3000;
+
 /* ---- 企画(#161) ----
    題だけで出せて、あとから育てられる。**ログインは要らない。** */
 
@@ -1384,6 +1398,91 @@ async function listStickies(q: {
        テーマ横断の新着（`theme` を渡さないとき）で混ざるのを止める。 */
     (d) => !d.get("theme") || (d.get("archived") === true) !== want,
   );
+}
+
+/**
+ * 返す相手のいる付箋か。**数と一覧で、同じ物差しをここ1本で持つ。**
+ *
+ * 外すもの:
+ *
+ *   - **企画に貼られた旧いぶん**（`theme` が無い）。机の相手ではない
+ *   - 隠したもの・しまったもの。片づいている
+ *   - **運営者が立てた付箋**（`byOwner`）。こちらから出した選択肢で、
+ *     返事を待つ質問ではない
+ *   - **あやと自身が貼ったぶん**（あやとの言葉・2026-09-09
+ *     「付箋返しのリストに私の付箋を載せるのはやめてほしい」）。
+ *     **名前では突き合わせない。** 表示名は本人が決めるもので、同じ名前の
+ *     人が2人いた事故がこの島で実際にある。`uid` で見分ける
+ *   - 返事の付いたもの。**`stickyShape` と同じ `cleanText` を通す**——
+ *     空白だけの返事が入っている書類で、一覧と数が食い違わないように
+ *
+ * **「見た」（`seen`）はここで見ない。** 呼ぶ側が、まだのぶんと
+ * 片づけたぶんのどちらを数えるかを決める。
+ * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
+ * @param {string} owner あやとの uid
+ * @return {boolean} 返す相手がいるか
+ */
+function waitingNote(
+  d: FirebaseFirestore.QueryDocumentSnapshot,
+  owner: string,
+): boolean {
+  if (!d.get("theme")) return false;
+  if (d.get("hidden") === true) return false;
+  if (d.get("archived") === true) return false;
+  if (d.get("byOwner") === true) return false;
+  if (d.get("uid") === owner) return false;
+  return !cleanText(d.get("reply"), MAX_REPLY_LEN);
+}
+
+/** 返す山の中身。`n` はふるいに残った全部、`items` はそのうちの新しいぶん。 */
+type Waiting = {n: number; items: StickyShape[]};
+
+/**
+ * まだ返していない付箋（`seen=false`）と、「見た」で片づけたぶん（`true`）。
+ *
+ * **あやとだけが呼ぶ。** 数も一覧も、ここ1か所の `waitingNote` から出る——
+ * 画面の側でもう一度ふるいにかけると、**どちらかを直した日に、札の数と
+ * 並んでいる枚数が食い違う**（`docs/island-standards.md` 8章）。
+ *
+ * `n` は**ふるいに残った全部の数**で、`items` は新しいほうから `limit` 枚。
+ * 300枚を超えても、数のほうは本当のことを言う。
+ * @param {string} owner あやとの uid
+ * @param {boolean} seen 「見た」で片づけたぶんを出すか
+ * @param {number} limit 返す枚数
+ * @return {Promise<Waiting>} 数と、その一部
+ */
+async function listUnanswered(
+  owner: string,
+  seen: boolean,
+  limit: number,
+): Promise<Waiting> {
+  /* **`where` を組まない。** 見たいのは「`reply` の欄が無い」で、
+     Firestore にそれを引く道が無い（`listStickies` と同じ理由で、
+     複合索引も配れない）。新しい順に蓋まで引いて、手元でふるう。 */
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(NOTES_SCAN_CAP + 1)
+    .get();
+  if (snap.size > NOTES_SCAN_CAP) {
+    /* 蓋に当たった。**数が小さく出ている**ので、黙って返さない。
+       書類の中身は1文字も出さない（ログは公開）。 */
+    logger.error(
+      "islandNotes scan cap hit",
+      JSON.stringify({cap: NOTES_SCAN_CAP}),
+    );
+  }
+  const rows = snap.docs
+    .slice(0, NOTES_SCAN_CAP)
+    .filter((d) => waitingNote(d, owner) && (d.get("seen") === true) === seen);
+  /* 「見た」で片づけたぶんは、**貼られた順ではなく押した順**に並べ直す。
+     ここは押し間違えを戻しに来る山なので、**いま間違えた1枚がいちばん上**で
+     ないと意味がない。貼られた順だと、古い付箋を押し間違えたときに
+     何十枚も送らないと見つからない。 */
+  if (seen) {
+    rows.sort(
+      (a, b) => (Number(b.get("seenAt")) || 0) - (Number(a.get("seenAt")) || 0),
+    );
+  }
+  return {n: rows.length, items: rows.slice(0, limit).map(stickyShape)};
 }
 
 /**
@@ -3700,6 +3799,39 @@ export const islandApi = onRequest(
          テーマに貼るもので `theme` を持つ。同じ口にすると、画面を
          切り替えている途中の日に、両方が混ざったものが両方の画面に出る。
          旧来のぶんが移り終わったら（#162）、あちらの口を畳む。 */
+      /* まだ返していない付箋の数と、その一覧。**あやとだけ。**
+         机（`/me/desk`）の付箋の札に出る数字がこれ。
+
+         **数えるのはここ。画面で数え直さない。** 画面に数えさせると、
+         「誰が貼ったか」を知るために一覧と自分のぶんの2本を引いて
+         差し引くことになる（`uid` は公開の口が返さないので、画面には
+         作れない）。札に数を出すためだけに、開いていない道具の中身まで
+         先に引く形になっていた——だから長いこと、札に数が無かった。
+
+         **`?seen=1` は、その裏返し。** 返事のかわりに「見た」で片づけた
+         ぶんが出る。押し間違えたときは、ここから `on=false` で戻す。
+
+         **焼き込まない。** 島は静的書き出し（`output: "export"`）なので、
+         ビルド時に数えた数は必ず古くなる。画面が出てから、ここへ聞く。 */
+      if (method === "GET" && path === "/stickies/unanswered") {
+        const owner = await ownerUid(req.headers.authorization);
+        if (!owner) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const r = await listUnanswered(
+          owner,
+          req.query.seen === "1",
+          clampPage(req.query.limit ?? 300),
+        );
+        /* 呼んだ人にしか意味のない答え。**CDN にも中間にも置かせない。** */
+        res.set("Cache-Control", "no-store");
+        /* **数だけでいいときは `?n=1`。** 机を開いただけの回（付箋の道具を
+           開いていない回）は、札の数字しか要らない。 */
+        res.json(req.query.n === "1" ? {n: r.n} : {n: r.n, notes: r.items});
+        return;
+      }
+
       if (method === "GET" && path === "/stickies") {
         const theme = clean(req.query.theme, 40);
         if (theme && !THEME_ID.test(theme)) {
@@ -4043,6 +4175,54 @@ export const islandApi = onRequest(
           reply: text || null,
           repliedAt: text ? new Date(now).toISOString() : null,
         });
+        return;
+      }
+
+      /* 「見た」。**返さずに、返す山から下ろす。あやとだけ。**
+         `{on: false}` で戻る（押し間違えたとき）。
+
+         ## 貼った人には1文字も見せない
+
+         `seen` は `stickyShape` が返さない欄なので、公開の口にも
+         `?mine=1`（自分のぶん）にも出ない。**自分の付箋が「返事なしで
+         既読にされた」と分かると、次から書かなくなる。** 掲示板での
+         見え方も、ハートも、何ひとつ変わらない——変わるのはあやとの
+         机の、返す山だけ。
+
+         ## しまう（`archive`）とは別のもの
+
+         あちらは**掲示板から下ろす**（貼った人から見ても消える）。
+         こちらは**貼ったまま**で、返す山から外れるだけ。荒れたものを
+         下ろすのが `archive`、読んだけれど返事の要らないものを
+         片づけるのがこちら。 */
+      const seenMatch = path.match(/^\/stickies\/([A-Za-z0-9_-]{6,})\/seen$/);
+      if (method === "POST" && seenMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const on = body.on !== false;
+        const ref = NOTES.doc(seenMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        await ref.set(
+          on ?
+            {seen: true, seenAt: Date.now(), seenBy: uid} :
+            {
+              /* **欄ごと落とす。** `seen: false` を置いて残すと、
+                 「見て、戻した」付箋だけが他と違う形で残る。 */
+              seen: admin.firestore.FieldValue.delete(),
+              seenAt: admin.firestore.FieldValue.delete(),
+              seenBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, seen: on});
         return;
       }
 

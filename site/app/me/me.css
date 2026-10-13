@@ -317,6 +317,42 @@
 .mp-go:active { transform: translateY(4px); box-shadow: none; }
 
 /* --- 島の手入れ（あやとだけ） ----------------------------------------- */
+/* 付箋の山の札（返していない／見たもの／ぜんぶ／しまったもの）。
+   **道具の札（`.mp-tab`）より一回り小さくする**——同じ大きさで入れ子に
+   すると、どちらが上の並びか分からなくなる（`.fd-tabs` と同じ決め）。
+
+   **390px では 2×2 に折る。** 4つを1列に並べると1枚 80px しかなく、
+   「しまったもの」が3行に割れる。折っても4枚とも見えているので、
+   1タップで出ることは変わらない。 */
+.mp-care-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+@media (min-width: 560px) {
+  .mp-care-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.mp-care-tab {
+  min-height: 48px;
+  padding: var(--sp-1);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+/* 選んでいるものは、光らせずに朱の細枠。沈めておくと形で分かる */
+.mp-care-tab.is-on {
+  border-color: var(--pick);
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
 .mp-care-acts {
   display: flex;
   flex-wrap: wrap;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   PLAN_STATUS_NAME,
   archiveNextPlan,
@@ -8,10 +8,11 @@ import {
   dropStickyPic,
   getArchivedPlans,
   getArchivedStickies,
-  getMyStickies,
   getNextPlans,
   getStickies,
+  getUnansweredStickies,
   replySticky,
+  seenSticky,
   setPlanStatus,
   type NextPlan,
   type PlanStatus,
@@ -45,9 +46,17 @@ import NotePic from "@/components/live/NotePic";
  * （`withRead` が12秒で見切る）。落ちたら黙って読み直し（間隔を倍にしながら
  * 30秒まで）、`online`・画面に戻ってきたでも読み直す。**画面を開き直させない。**
  * 骨に戻すのは押されたときだけ（ひとりでに戻すと、灰色と文言が入れ替わる）。
+ *
+ * ## 数は、一覧と一緒に受け取る
+ *
+ * `n` は**口が数えた枚数**で、`items` は新しいほうから300枚まで。
+ * 300枚を超えた日に、**並んでいる枚数を数えて「いま300枚」と言わない**
+ * ようにするため、数のほうを別に持つ（`docs/island-standards.md` 8章）。
  */
-function useCare<T>(read1: () => Promise<T[]>) {
+function useCare<T>(read1: () => Promise<{items: T[]; n: number}>) {
   const [list, setList] = useState<T[] | null>(null);
+  /** 口が数えた枚数。読めるまでは null（0枚と区別する） */
+  const [n, setN] = useState<number | null>(null);
   const [read, setRead] = useState<Read>("wait");
   /** 「もう一度よみこむ」を押されたら増える。**押されたときだけ骨に戻る** */
   const [again, setAgain] = useState(0);
@@ -64,7 +73,8 @@ function useCare<T>(read1: () => Promise<T[]>) {
         if (gone) return;
         ok = true;
         miss = 0;
-        setList(r);
+        setList(r.items);
+        setN(r.n);
         setRead("ok");
       } catch {
         if (gone) return;
@@ -75,6 +85,7 @@ function useCare<T>(read1: () => Promise<T[]>) {
     };
 
     setList(null);
+    setN(null);
     setRead("wait");
     go();
 
@@ -99,11 +110,65 @@ function useCare<T>(read1: () => Promise<T[]>) {
     };
   }, [read1, again]);
 
-  return { list, read, setList, reload: () => setAgain((n) => n + 1) };
+  return { list, n, read, setList, setN, reload: () => setAgain((v) => v + 1) };
 }
 
+/** 付箋の山。**4つを同時に出さない**（`docs/island-standards.md` 7章）。 */
+type Box = "todo" | "seen" | "all" | "bin";
+
+/** 山の札と、その山の1行目・空のときのことば。**並びはここ1か所。** */
+const BOXES: {
+  id: Box;
+  label: string;
+  line: (n: number) => ReactNode;
+  empty: string;
+}[] = [
+  {
+    id: "todo",
+    label: "返していない",
+    line: (n) => (
+      <>
+        まだ返していないのが <b>{n}</b> 枚
+      </>
+    ),
+    empty: "ぜんぶ返しました。",
+  },
+  {
+    id: "seen",
+    label: "見たもの",
+    line: (n) => (
+      <>
+        見たことにしたのが <b>{n}</b> 枚
+      </>
+    ),
+    empty: "ここにはまだありません。",
+  },
+  {
+    id: "all",
+    label: "ぜんぶ",
+    line: (n) => (
+      <>
+        いま <b>{n}</b> 枚
+      </>
+    ),
+    empty: "まだ1枚もありません。",
+  },
+  {
+    id: "bin",
+    label: "しまったもの",
+    line: (n) => (
+      <>
+        しまってあるのが <b>{n}</b> 枚
+      </>
+    ),
+    empty: "しまったものはありません。",
+  },
+];
+
 /**
- * まだ返していない付箋。
+ * 付箋を返す机。
+ *
+ * ## 「まだ返していない」を決めるのはサーバー
  *
  * **運営者が立てた付箋（`byOwner`）は数えない。** あれは返事を待つ
  * 質問ではなく、こちらから出した選択肢なので、返さなくても片づいている。
@@ -112,162 +177,177 @@ function useCare<T>(read1: () => Promise<T[]>) {
  * 「付箋返しのリストに私の付箋を載せるのはやめてほしい」）。自分の付箋に
  * 自分で返す用事は無いのに、返していない数に入って赤いままになっていた。
  *
- * ## 見分けかた
+ * 見分けるのは `uid`。**名前では突き合わせない**——表示名は本人が決める
+ * もので、同じ名前の人が2人いた事故がこの島で実際にある。
+ * ただし一覧の口（`stickyShape`）は uid も cid も返さない（返すと、同じ人の
+ * 付箋を並べて数えられてしまう）。つまり**画面では決められない。**
  *
- * **名前では突き合わせない。** 表示名は本人が決めるもので、同じ名前の人が
- * 2人いた事故がこの島で実際にある。`uid` で見分ける。
+ * 2026-10-13 まで、ここは一覧と `?mine=1` の2本を引いて差し引いていた。
+ * いまは**まだ返していないぶんを返す口が1本**あり（`/stickies/unanswered`）、
+ * 数も一覧もそこから来る。**物差しが1本になったので、机の札の数字と、
+ * ここに並ぶ枚数が食い違わない**（`docs/island-standards.md` 8章）。
  *
- * ただし一覧の口（`stickyShape`）は uid も cid も返さない。返すと、
- * 同じ人の付箋を並べて数えられてしまうので、そこは開けない決めになっている。
- * かわりに**自分のぶんだけを返す口**（`/stickies?mine=1`。サーバー側で
- * uid で絞る）をもう1回引いて、その id を一覧から差し引く。
- * 公開する形は増えないし、名前を突き合わせずに済む。
+ * ## 「見た」は、返さずに片づける道
  *
- * `byOwner` と同じ扱いにする。**消さずに、返す対象から外すだけ**なので、
- * 「ぜんぶ見る」と「しまったもの」には今までどおり出る。自分の付箋を
- * しまう道は残しておく。
+ * 全部に返事を書くわけではない。**読んだ、で済むものがある。**
+ * 「見た」を押すと返す山から下りるが、**貼った人からは何も変わらない**
+ * ——印は口のどの返事にも乗らないので、掲示板でも、その人の
+ * 「じぶんのもの」でも、返事を待っているときと同じ顔のまま。
+ *
+ * 押し間違えたら「見たもの」の山から戻す。**その山は押した順**なので、
+ * いま間違えた1枚がいちばん上にいる。
  */
-export function StickyCare() {
+export function StickyCare({
+  onWaiting,
+}: {
+  /** まだ返していない枚数を、机の札へ知らせる。読めていないあいだは null */
+  onWaiting?: (n: number | null) => void;
+}) {
   const { token } = useAuth();
-  /** あやと自身が貼った付箋の id。引けるまでは null（0枚と区別する） */
-  const [own, setOwn] = useState<Set<string> | null>(null);
-  /** しまったものを見ているか */
-  const [bin, setBin] = useState(false);
-  const [all, setAll] = useState(false);
+  const [box, setBox] = useState<Box>("todo");
 
-  /* 貼ってあるぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
-     そのまま読み直しになる（`bin` が変わると `read1` の顔が変わる）。 */
+  /* 4つの山を、同じ器で読む。**札を切り替えるとそのまま読み直しになる**
+     （`box` が変わると `read1` の顔が変わる）。 */
   const read1 = useCallback(async () => {
-    if (!bin) return (await getStickies({ limit: 300 })).notes;
+    if (box === "all") {
+      const r = await getStickies({ limit: 300 });
+      return { items: r.notes, n: r.notes.length };
+    }
     const t = await withRead(token());
     if (!t) throw new Error("no-token");
-    return (await getArchivedStickies(t)).notes;
-  }, [bin, token]);
-  const { list: notes, read, setList: setNotes, reload } = useCare(read1);
+    if (box === "bin") {
+      const r = await getArchivedStickies(t);
+      return { items: r.notes, n: r.notes.length };
+    }
+    const r = await getUnansweredStickies(t, { seen: box === "seen" });
+    return { items: r.notes ?? [], n: r.n };
+  }, [box, token]);
+  const {
+    list: notes,
+    n,
+    read,
+    setList: setNotes,
+    setN,
+    reload,
+  } = useCare(read1);
 
-  useEffect(() => {
-    let gone = false;
-    (async () => {
-      /* **`withRead` を通す。** ここが返ってこないと `own` が null のままで、
-         付箋のほうが読めていても灰色が残り続ける（下の `reading`）。 */
-      const t = await withRead(token()).catch(() => null);
-      if (gone) return;
-      if (!t) return setOwn(new Set());
-      try {
-        const r = await withRead(getMyStickies(t));
-        if (!gone) setOwn(new Set(r.notes.map((n) => n.id)));
-      } catch {
-        /* 引けなかった日は、差し引かずに出す。**返す道が消えるより、
-           自分のぶんが混ざるほうがまし。** 数は多いほうへ寄るので、
-           「ぜんぶ返しました」と言ってしまうことはない。 */
-        if (!gone) setOwn(new Set());
-      }
-    })();
-    return () => {
-      gone = true;
-    };
+  /** まだ返していない枚数。**どの山を見ていても持ったまま**（札に出す数） */
+  const [waiting, setWaiting] = useState<number | null>(null);
+
+  /* 山を動かしたあとは、**数を口に数え直させる。**
+     手元で ±1 すると、どの山で何を押したかで当たり外れが出る（「ぜんぶ」から
+     返したとき、その1枚がもともと返す山に居たかは画面には分からない）。
+     **数えるのは1か所**、という決めをここでも守る。返るのは数だけなので、
+     一覧は引き直さない。 */
+  const recount = useCallback(async () => {
+    const t = await token();
+    if (!t) return;
+    try {
+      const r = await getUnansweredStickies(t, { countOnly: true });
+      setWaiting(r.n);
+    } catch {
+      /* 数え直せなかった日は、**前の数を消さない。** 消すと札の数字が
+         消えて「ぜんぶ返した」に見える（`island-standards.md` 10章） */
+    }
   }, [token]);
 
-  /** 返す相手のいる付箋か。**数と一覧で同じ物差しを使う**（片方だけ減らさない） */
-  const todo = (n: Sticky) => !n.reply && !n.byOwner && !own?.has(n.id);
-  const shown = (notes ?? []).filter((n) => bin || all || todo(n));
-  const waiting = (notes ?? []).filter(todo).length;
-  /* 自分のぶんを引く前に数を出すと、開いた直後だけ多い数が見えて、
-     すぐ減る。**動く数字を出すくらいなら、出るのを待つ。** */
-  const reading = read === "wait" || own === null;
+  /* 「返していない」の山を読めたら、その数がそのまま札の数字になる。
+     ここだけは数え直しに行かない（いま読んだものが答え）。 */
+  useEffect(() => {
+    if (box === "todo" && read === "ok" && n !== null) setWaiting(n);
+  }, [box, read, n]);
+
+  useEffect(() => {
+    onWaiting?.(waiting);
+  }, [onWaiting, waiting]);
+
+  const cur = BOXES.find((b) => b.id === box) ?? BOXES[0];
   /** **数を言ってよいのは、読めた上でのことだけ。** */
-  const counted = read === "ok" && own !== null;
+  const counted = read === "ok" && n !== null;
 
   return (
     <>
+      {/* **4つを縦に積まない。** 1枚が4段あるものを2山ぶん同時に出すと、
+          それだけで机が 3,600px になる（`island-standards.md` 7章）。 */}
+      <div className="mp-care-tabs" role="tablist" aria-label="付箋の山">
+        {BOXES.map((b) => (
+          <button
+            key={b.id}
+            role="tab"
+            aria-selected={box === b.id}
+            className={`mp-care-tab${box === b.id ? " is-on" : ""}`}
+            onClick={() => setBox(b.id)}
+          >
+            {b.label}
+          </button>
+        ))}
+      </div>
       {/* **読めなかった日に「読んでいます…」と言わない**（面の上と下で
           違うことを言うことになる）。数の行ごと出さず、下の札に任せる。 */}
       {read !== "down" && (
-        <p className="mp-now">
-          {counted ?
-            <>まだ返していないのが <b>{waiting}</b> 枚</> :
-            "読んでいます…"}
-        </p>
+        <p className="mp-now">{counted ? cur.line(n) : "読んでいます…"}</p>
       )}
       {read === "down" ?
         /* 読みに行けなかった。**「ぜんぶ返しました。」とは別の顔にする。**
            あれは読めた上でのことばで、届かなかった日に言ってよい嘘ではない。 */
-        <ReadAgain what={bin ? "しまったもの" : "付箋"} onRetry={reload} /> :
-      reading ? (
+        <ReadAgain what="付箋" onRetry={reload} /> :
+      notes === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
           <span />
         </div>
-      ) : shown.length === 0 ? (
-        <p className="muted">
-          {bin ? "しまったものはありません。" : "ぜんぶ返しました。"}
-        </p>
+      ) : notes.length === 0 ? (
+        <p className="muted">{cur.empty}</p>
       ) : (
         /* 返していない付箋は、返すまで減らない。**上から順に返す道具**なので、
            はじめは4枚だけ出す。1枚が「本文・札・打つ欄・押しどころ2つ」の
            4段（約 350px）あるので、8枚出すと机が 3,600px になる（実測）。
            片づけるのに、6枚目が見えている必要はない。 */
-        <Longer items={shown} first={4} step={12} unit="枚" className="mp-care">
-          {(n) => (
+        <Longer items={notes} first={4} step={12} unit="枚" className="mp-care">
+          {(x) => (
             <StickyRow
-              key={n.id}
-              note={n}
-              stowed={bin}
-              onChanged={(next) =>
+              key={x.id}
+              note={x}
+              pile={box}
+              onChanged={(next) => {
                 setNotes(
-                  (cur) => cur?.map((x) => (x.id === n.id ? next : x)) ?? cur,
-                )
-              }
-              onStowed={() =>
-                setNotes((cur) => cur?.filter((x) => x.id !== n.id) ?? cur)
-              }
+                  (list) => list?.map((y) => (y.id === x.id ? next : y)) ?? list,
+                );
+                recount();
+              }}
+              onGone={() => {
+                setNotes((list) => list?.filter((y) => y.id !== x.id) ?? list);
+                setN((v) => (v === null ? v : Math.max(0, v - 1)));
+                recount();
+              }}
             />
           )}
         </Longer>
       )}
-      <div className="mp-care-acts">
-        {/* 札を切り替えるだけ。読み直しは `useCare` が受け持つ（`bin` が
-            変わると、そのまま次の一覧を取りに行く）。 */}
-        <button
-          className="nt-obtn"
-          onClick={() => {
-            setBin(false);
-            setAll((v) => !v);
-          }}
-        >
-          {all && !bin ? "返していないものだけ" : "ぜんぶ見る"}
-        </button>
-        <button
-          className="nt-obtn"
-          onClick={() => {
-            setBin((v) => !v);
-            setAll(false);
-          }}
-        >
-          {bin ? "貼ってあるものに戻る" : "しまったものを見る"}
-        </button>
-      </div>
     </>
   );
 }
 
-/** 1枚。返す・しまう。**押しどころは、旅の途中でも押せる大きさにする。** */
+/** 1枚。返す・見た・しまう。**押しどころは、旅の途中でも押せる大きさにする。** */
 function StickyRow({
   note,
-  stowed,
+  pile,
   onChanged,
-  onStowed,
+  onGone,
 }: {
   note: Sticky;
-  stowed: boolean;
+  /** いまどの山を見ているか。**出す押しどころがここで決まる** */
+  pile: Box;
   onChanged: (n: Sticky) => void;
-  onStowed: () => void;
+  /** この山から下りた（返した・見た・しまった・戻した） */
+  onGone: () => void;
 }) {
   const { token } = useAuth();
   const [text, setText] = useState(note.reply ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
   const th = themeById(note.theme);
+  const stowed = pile === "bin";
 
   const reply = async () => {
     const t = await token();
@@ -276,6 +356,9 @@ function StickyRow({
     setErr(false);
     try {
       const r = await replySticky(note.id, text.trim(), t);
+      /* 返した1枚は、返す山から下りる。**取り消し（空で送る）は下りない**
+         ——返していない状態に戻ったので、まだこの山の住人。 */
+      if (r.reply && pile === "todo") return onGone();
       onChanged({
         ...note,
         reply: r.reply ?? undefined,
@@ -283,6 +366,22 @@ function StickyRow({
       });
     } catch {
       // 書けなかったら、打った字はそのまま残す
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** 「見た」・「見ていない」。**1タップで山を移る。** */
+  const see = async () => {
+    const t = await token();
+    if (!t) return;
+    setBusy(true);
+    setErr(false);
+    try {
+      await seenSticky(note.id, pile === "todo", t);
+      onGone();
+    } catch {
       setErr(true);
     } finally {
       setBusy(false);
@@ -312,7 +411,7 @@ function StickyRow({
     setErr(false);
     try {
       await archiveSticky(note.id, !stowed, t);
-      onStowed();
+      onGone();
     } catch {
       setErr(true);
     } finally {
@@ -351,6 +450,19 @@ function StickyRow({
         <button className="mp-send is-small" disabled={busy} onClick={reply}>
           {busy ? "送っています…" : note.reply ? "返しなおす" : "返す"}
         </button>
+        {/* 返さずに片づける（`pile === "todo"`）／押し間違えを戻す
+            （`"seen"`）。**「ぜんぶ」と「しまったもの」には出さない**
+            ——あちらは公開の口から読むので、その1枚が「見た」かどうかを
+            画面は知らない。**知らない状態の押しどころを置かない。** */}
+        {(pile === "todo" || pile === "seen") && (
+          <button
+            className="mp-send is-small is-quiet"
+            disabled={busy}
+            onClick={see}
+          >
+            {pile === "todo" ? "見た" : "もどす"}
+          </button>
+        )}
         <button className="mp-send is-small is-quiet" disabled={busy} onClick={stow}>
           {stowed ? "もどす" : "しまう"}
         </button>
@@ -384,10 +496,17 @@ export function PlanCare() {
   /* 出ているぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
      そのまま読み直しになる（`StickyCare` と同じ）。 */
   const read1 = useCallback(async () => {
-    if (!bin) return (await getNextPlans(200)).plans;
-    const t = await withRead(token());
-    if (!t) throw new Error("no-token");
-    return (await getArchivedPlans(t)).plans;
+    /* **数は、並べるものを数えて出す。** 企画の口は数を別に返さないので、
+       ここは一覧の長さがそのまま答え（付箋の「返していない」だけは、
+       画面では決められないので口が数える）。 */
+    const list = !bin ?
+      (await getNextPlans(200)).plans :
+      await (async () => {
+        const t = await withRead(token());
+        if (!t) throw new Error("no-token");
+        return (await getArchivedPlans(t)).plans;
+      })();
+    return { items: list, n: list.length };
   }, [bin, token]);
   const { list: plans, read, setList: setPlans, reload } = useCare(read1);
 

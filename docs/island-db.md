@@ -381,6 +381,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | Doneru の寄付 | BigQuery `doneru_donations` | `python/fetch_doneru_donations.py`（毎晩） | 投げ銭台帳・足代 | Doneru に残っていれば1回流せば戻る |
 | 旅の写真の実体 | Cloud Storage | あやと（写真を貼る口から） | 企画のページ・カード | **戻らない。** 手元にしか原本が無い |
 | 人が書いた企画・付箋 | Firestore `islandStreamEvent` `islandNotes` | 視聴者さん（口経由） | 掲示板・国のページ | **戻らない。** 人の字 |
+| **付箋を片づけた印**（返信・しまった・見た） | Firestore `islandNotes` の `reply` / `archived` / `seen` | あやた（口経由。`ownerUid`） | **あやとの机だけ**（`reply` は掲示板にも出る） | 入れ直せる。**`seen` は貼った人には最初から見えない**（`island-api.md` 4章） |
 | 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
@@ -1448,6 +1449,7 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | `pic` | object \| null | 貼られた絵1枚（2026-10-08）。**ログインした人だけ**（1日6枚）。中身は `url` `w` `h`（開くほう）/ `thumb` `tw` `th`（板に並ぶほう）/ `path` `thumbPath`（置き場の道。**画面には返さない**）/ `at`。無ければ null |
 | `picDroppedAt` / `picDroppedBy` | number / string | あやとが絵を外した印。**置き場の実体も消えている**ので、戻らない |
 | `reply` / `repliedAt` / `repliedBy` | string / number / string | あやとからの返信。1枚に1つ。消す・直すもできる。**改行が残る**（「改行」） |
+| `seen` / `seenAt` / `seenBy` | boolean / number / string | 「見た」（2026-10-13）。**返さずに、あやとの返す山から下ろした印。** 書くのは `POST /stickies/:id/seen`（あやとだけ）、読むのは `GET /stickies/unanswered` だけ。**画面にも、公開の口にも1バイトも返さない**——貼った人に「返事なしで既読にされた」と分かると書く気が失せる。戻すと**欄ごと消える** |
 | `archived` / `archivedAt` / `archivedBy` | boolean / number / string | しまってあるか。**消さずにしまう。戻せる** |
 | `hidden` | boolean | 隠すとき（管理スクリプトから） |
 | `createdAt` | number | ミリ秒 |
@@ -2072,6 +2074,18 @@ script: collections_audit   args: {}
 script: firestore_read      args: {"collection":"islandNotes","keys_only":true}
     → 件数とフィールド名だけ（値もドキュメントIDも出ない）
 ```
+
+付箋が**いま何枚、まだ返されていないか**は専用の1本で数える（読むだけ）。
+
+```
+script: notes_unanswered    args: {}
+    → 件数だけ（ぜんぶ／外した6種／まだ返していない／いちばん古いのが何日前か）
+```
+
+**物差しの正本は口のほう**（`functions/src/islandApi.ts` の `waitingNote`。
+`docs/island-api.md` 4章）。こちらはその写しなので、外すものを足し引き
+したら両方を直す。**食い違いは、数が合わないという形で出る**
+（口の答えは `GET /island-api/stickies/unanswered?n=1`）。
 
 4.2 の表は `collections_audit` の返り。欄の一覧は、次の5本を `keys_only` で
 実際に引いて突き合わせた: `island` `islandChannels` `islandNotes`

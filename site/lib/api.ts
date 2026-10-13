@@ -624,6 +624,51 @@ export const getStickies = (o?: {
 export const getMyStickies = (token: string) =>
   req<{ notes: Sticky[] }>("/stickies?mine=1", { headers: auth(token) });
 
+/**
+ * まだ返していない付箋。**あやとだけ。**
+ *
+ * **数えるのはサーバー。** 「誰が貼ったか」（`uid`）は公開の口が返さないので、
+ * 画面では「あやと自身の付箋を外す」ができない——前はそれを、一覧と
+ * `?mine=1` の2本を引いて差し引いていた。数も一覧も口が1本で返すので、
+ * 札の数字と並んでいる枚数が食い違わない。
+ *
+ * **焼き込まない。** 島は静的書き出しなので、ビルド時の数は必ず古くなる。
+ *
+ * `n` はふるいに残った全部の数で、`notes` は新しいほうから最大300枚。
+ */
+export const getUnansweredStickies = (
+  token: string,
+  o?: {
+    /** 「見た」で片づけたぶんを出す（押し間違えを戻す山） */
+    seen?: boolean;
+    /** 数だけでいいとき。**机の札の数字はこちら** */
+    countOnly?: boolean;
+  },
+) => {
+  const q = new URLSearchParams();
+  if (o?.seen) q.set("seen", "1");
+  if (o?.countOnly) q.set("n", "1");
+  const s = q.toString();
+  return req<{ n: number; notes?: Sticky[] }>(
+    `/stickies/unanswered${s ? `?${s}` : ""}`,
+    { headers: auth(token) },
+  );
+};
+
+/**
+ * 「見た」。**返さずに、返す山から下ろす。あやとだけ。**
+ *
+ * `on=false` で戻る。**貼った人には1文字も見えない**——この印は口の
+ * どの返事にも乗らないので、掲示板でも、その人の「じぶんのもの」でも、
+ * 何ひとつ変わらない。
+ */
+export const seenSticky = (id: string, on: boolean, token: string) =>
+  req<{ id: string; seen: boolean }>(`/stickies/${id}/seen`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ on }),
+  });
+
 /** しまってある付箋を読む。**あやとだけ。** 戻すときにしか使わない。 */
 export const getArchivedStickies = (token: string, theme?: string) =>
   req<{ notes: Sticky[] }>(

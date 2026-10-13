@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-import { useAuth } from "@/lib/auth";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth, withRead } from "@/lib/auth";
+import { getUnansweredStickies } from "@/lib/api";
 import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
@@ -56,15 +57,31 @@ const LAST = "ayato-desk-tool";
  * 毎晩そこで写真を貼るなら、次に開いたときも写真の欄が出ている。
 
  *
- * ## 残っている数は、道具の1行目にある
+ * ## 返していない付箋の数だけ、札に出す
  *
- * 札には出さない。**札に数を出すには、開いていない道具のぶんまで先に
- * 引くことになる**（付箋の「まだ返していない」は、一覧と自分のぶんの
- * 2本を引いて差し引かないと出ない）。開いた道具の1行目で言えば足りる。
+ * あやとの言葉（2026-10-13）「島の手入れで、付箋の未返信数のバッジを
+ * 出して欲しい」。
+ *
+ * **札に数を出せなかったのは、画面では数えられなかったから。**
+ * 「まだ返していない」は、あやと自身が貼ったぶんを外して数えるが、
+ * 誰が貼ったかは公開の口が返さない——だから一覧と自分のぶんの2本を
+ * 引いて差し引いていた。札のために、開いていない道具の中身まで先に
+ * 引く形になる。
+ *
+ * いまは**口が数える**（`GET /stickies/unanswered?n=1`）。返るのは数ひとつ
+ * なので、机を開いたときに1回聞けば足りる。
+ *
+ * **数を出すのはここだけ。** 他の8つは、開いた道具の1行目で言う
+ * （一覧を引かないと数が出ないものばかりで、札のために9本引くことになる）。
+ *
+ * 付箋の道具を開いているあいだは、**そちらが数え直したものが札に乗る**
+ * （返す・見た・しまうを押すたびに動く）。
  */
 export default function Desk() {
-  const { owner, meRead, reloadMe } = useAuth();
+  const { owner, meRead, reloadMe, token } = useAuth();
   const [tool, setTool] = useState<Tool>("photo");
+  /** まだ返していない付箋の数。**読めるまでは null**（0枚と区別する） */
+  const [waiting, setWaiting] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -73,6 +90,36 @@ export default function Desk() {
     } catch {
       /* 端末が localStorage を使えなくても、写真から始まるだけ */
     }
+  }, []);
+
+  /* 机を開いたら、札の数字を1回だけ聞く。**数ひとつしか返らない口**
+     （`?n=1`）なので、付箋の道具を開いていなくても引いてよい。
+
+     **落ちたら黙って 0 にしない**（`docs/island-standards.md` 10章）。
+     読めていない札は「—」のままで、0枚のときは札から数字が消える——
+     **「まだ分からない」と「ぜんぶ返した」が同じ絵にならない。** */
+  useEffect(() => {
+    if (owner !== "yes") return;
+    let gone = false;
+    (async () => {
+      const t = await withRead(token()).catch(() => null);
+      if (gone || !t) return;
+      try {
+        const r = await withRead(getUnansweredStickies(t, { countOnly: true }));
+        if (!gone) setWaiting(r.n);
+      } catch {
+        /* 読めなかった。札は「—」のまま。付箋の道具を開けば読み直す */
+      }
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [owner, token]);
+
+  /* 付箋の道具が数え直したら、札もそれに合わせる。**同じ数を2か所で
+     数えない**ので、押したそばから札が動く。 */
+  const onWaiting = useCallback((n: number | null) => {
+    if (n !== null) setWaiting(n);
   }, []);
 
   const pick = (id: Tool) => {
@@ -126,6 +173,12 @@ export default function Desk() {
             >
               <Icon name={t.icon} size={18} />
               <span className="mp-tab-l">{t.label}</span>
+              {/* 返していない付箋の数。**0枚なら出さない**——用事が無い
+                  ときに数字が残っていると、札を押す理由に見える。
+                  読めていないあいだは「—」（0枚と同じ顔にしない）。 */}
+              {t.id === "sticky" && waiting !== 0 && (
+                <span className="mp-tab-b">{waiting ?? "—"}</span>
+              )}
             </button>
           ))}
         </div>
@@ -137,7 +190,7 @@ export default function Desk() {
           {tool === "photo" && <PhotoPost />}
           {tool === "place" && <TripPlace />}
           {tool === "video" && <PlanVideos />}
-          {tool === "sticky" && <StickyCare />}
+          {tool === "sticky" && <StickyCare onWaiting={onWaiting} />}
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}

@@ -838,6 +838,33 @@
   color: var(--ink);
 }
 .mp-tab:not(.is-on) .mp-tab-n { color: var(--ink-2); }
+/* 机の札（`/me/desk`）の右上に出る、まだ返していない付箋の数。
+   **`.mp-tab-n`（札の下に並ぶ数字）とは別物。** あちらは「中に何枚あるか」を
+   並べて見せるもので、こちらは**1つの札にだけ出る、残っている用事の数。**
+
+   色は `--accent-deep` の地に白。**この組み合わせは測ってある**
+   （`atlas.css` の `.atrip-here` で 5.0 : 1。桃（`--accent`）の上の白は
+   2.60 : 1 で読めない）。
+
+   **厚みを付けない**（`island-design.md` 3-3）。押せるのは札のほうで、
+   この丸は押しどころではない。`pointer-events: none` を足してあるのは
+   見た目のためではなく、**押したときに札が受け取るため**——ここが
+   指を受け取ると、札の当たり判定に穴があく。 */
+.mp-tab-b {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 
 .mp-tab {
   position: relative;
