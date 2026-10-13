@@ -354,8 +354,13 @@ jobs:
           # いるが、次の日から古くなる札」は素通りする（#770。10-12 に焼いた
           # 「いま 1 つ立っています」が、企画の終わった翌日からも配られた）。
           # こちらは**時計を進めて**、札の字が日で変わらないことを見る
+          # **`DIST` も渡す。** 焼いた HTML そのものを読む数えかたが
+          # 入っている（`/now` の紙に日付が焼かれていないこと。#808）。
+          # 渡さないと既定の `site/.next-verify` を見に行って、CI には
+          # それが無いので**本物の赤と区別がつかない嘘の赤**が毎回出る
           rc4=0
-          SPORT=4211 OUT=/tmp/nextempty node tools/sprites/nextempty.mjs || rc4=$?
+          SPORT=4211 OUT=/tmp/nextempty DIST=site/.next-ci \
+            node tools/sprites/nextempty.mjs || rc4=$?
           echo "── nextempty 終了コード ${rc4}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ]
 
