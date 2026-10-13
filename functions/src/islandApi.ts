@@ -139,9 +139,10 @@ const FUND_PAGE = 30;
 const FUND_PAGE_MAX = 60;
 
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
-   **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
-   画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
-   `/nordic` はまだこちらを読んでいるので、消すのは移り終わってから。 */
+   **正は `islandStreamEventImage`**(#202)。
+   2026-10-13 に、残っていた2本のうち**読みと書きを両方やめた。**
+   ここに残るのは**消すときだけ**——旧に在る行を道連れにするため。
+   入れ物そのものを落とすのは、旧の行が0になってから。 */
 const NPHOTOS = db.collection("nordicPhotos");
 /* **`nordicDays` はもう読まない**(#202)。その日いた人は台帳
    (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
@@ -2205,10 +2206,9 @@ function picShape(v: unknown): PicShape | undefined {
 }
 
 /* ---- 企画に付く画像(#202) ----
-   旧 `nordicPhotos`。**書く口は当面2つ動かす。**
-   旅で毎日使っているものを出発直前に作り替えたくないので、
-   `POST /nordic/photos` はそのまま残して、中で両方に書く。
-   画面が新しい口へ移ったら、古いほうを畳む。 */
+   旧 `nordicPhotos` の行き先。**2026-10-13 に1本にした。**
+   `POST /nordic/photos` という口の名前はそのまま（画面を触らずに済む）で、
+   中で触るのは `islandStreamEventImage` だけ。 */
 
 /** 画像に添える一言。旧 `MAX_PHOTO_NOTE` と同じ。 */
 const IMAGE_NOTE = MAX_PHOTO_NOTE;
@@ -2378,12 +2378,19 @@ async function saveEventImage(
     createdAt: at,
     updatedAt: at,
   };
-  /* **古いほうにも同じ書類IDで書く。** 画面が切り替わってから畳む。
-     `path` という欄の名前は旧来のまま（あちらを読む口がまだある）。 */
-  await Promise.all([
-    ref.set(doc),
-    NPHOTOS.doc(ref.id).set({day, path: stored, url, w, h, note, at, uid}),
-  ]);
+  /* **旧 `nordicPhotos` には、もう書かない**（2026-10-13）。
+     読む口が無くなったので、写しを作る理由が無い。
+
+     前はここが `Promise.all` で2つに書いていた。**まとめ書きでも
+     取引でもない**ので、片方だけ失敗したら新旧がずれる——そして
+     **ずれても赤くなるものが1本も無かった。**
+     正を1つにすれば、ずれようがなくなる。
+
+     旧に残っている行は消さない（下の `dropEventImage` が、写真を
+     消すときに両方から消す）。残っていても誰も読まないが、
+     **新に在って旧に無い**行が出ても困らないことは
+     `python/nordic_photo_pair_watch.py` が毎晩見ている。 */
+  await ref.set(doc);
 
   /* **企画が無くてもカードを作る。** 前はここが `if (streamEventId)` で
      囲ってあり、企画の立っていない日に貼った写真は1枚もカードにならな
@@ -2450,7 +2457,18 @@ type PhotoShape = {
  *   （その日いた人は**絵と名前だけ**。誰かを指す値は返さない）
  */
 async function listPhotoDays(): Promise<Json[]> {
-  const snap = await NPHOTOS.orderBy("at", "desc").limit(400).get();
+  /* **読むのは新しいほう**（`islandStreamEventImage`。2026-10-13）。
+     ここは長いあいだ旧 `nordicPhotos` を読んでいた。`island-db.md` の
+     責務の表は 2026-10-01 から「**新が正**」と書いていたのに、
+     **公開の面に出ていたのは旧のほう**で、宣言と実物が逆だった。
+     カードの壁（`/cards`）はこの口を土台にしているので、
+     「写真は旧・カードは新」という、同じ面の上と下が別の入れ物から
+     来る形になっていた（本番では 117 対 117 でたまたま揃っていた）。
+
+     **返す形は1バイトも変えていない。** 新しいほうは旧の持つ欄
+     （`day` `url` `w` `h` `note` `at`）を全部持っているので、
+     画面は触らずに済む。 */
+  const snap = await IMAGES.orderBy("at", "desc").limit(MAX_IMAGES).get();
   const byDay = new Map<string, PhotoShape[]>();
   snap.forEach((d) => {
     const v = d.data() ?? {};

@@ -397,7 +397,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
 | チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
 | 焼き込み | Git `site/content/*`（自動生成ぶん） | BigQuery ほか | `.github/workflows/rebake.yml`（5.2） |
-| 旧・北欧の写真 | Firestore `nordicPhotos` | `islandStreamEventImage` | 書く口が両方に書いている |
+| ~~旧・北欧の写真~~ | ~~Firestore `nordicPhotos`~~ | — | **写しをやめた**（2026-10-13）。読みも書きも新へ寄せたので、写しが1つも無い。残っている117件は消すときだけ道連れにする |
 
 ### 3.3 同じ事実が2か所にあるもの — **どちらが正か**
 
@@ -406,8 +406,8 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
-| 企画に付く写真 | `islandStreamEventImage` | `nordicPhotos`（旧） | **新が正。** 書く口が両方に書いている。書類IDは同じ |
-| 「その日いた人」 | `islandTips`（台帳） | `nordicDays`（旧・6件残っている） | **台帳が正。** `nordicDays` はもう読んでいない |
+| ~~企画に付く写真~~ | `islandStreamEventImage` | — | **2か所ではなくなった**（2026-10-13）。読み（`GET /nordic/photos`）も書き（`POST /nordic/photos`）も新だけ。**宣言は 10-01 から「新が正」だったのに、公開の面に出ていたのは旧のほうだった** |
+| ~~「その日いた人」~~ | `islandTips`（台帳） | — | **2か所ではなくなった**（2026-10-13）。`nordicDays` は読まれていなかったが、**毎晩2本が書き続けていた**。止めた |
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
 | 「このカードは誰の絵か」 | `islandCharacter.channelId` | `islandCards.nameSnapshot` で引く受け皿 | **`channelId` が正**（2.4）。持っていない人だけ名乗りに落ちる |
 | **「このカードは何日のものか」** | `islandStreamEventImage.day`（写真が自分で持つ） | 付いている企画の `date` | **写真が正**（2026-10-01）。企画は空のことがあるので軸にしない。企画の日付に落ちるのは、`day` を持たない古い画像だけ |
@@ -1459,8 +1459,8 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | --- | --- | --- |
 | `islandIdeas` | 8件。**全部 `hidden: true`** | 中身は #162 で付箋へ移した。**入れ物は残す。書いた人の字なので消さない** |
 | `islandNextPlans` | 2件 | `islandStreamEvent` へ移した残り |
-| `nordicPhotos` | 2件 | 書く口が新旧の両方に書いている。**畳むのは画面が移ってから** |
-| `nordicDays` | 6件 | もう読んでいない。その日いた人は `islandTips` から引く |
+| `nordicPhotos` | 117件 | **もう読まないし書かない**（2026-10-13）。写真を消すときだけ道連れにする。**0件になったら入れ物ごと落としてよい**——そのあとも見張りは緑のまま（`python/admin/nordic_photo_pair.py`） |
+| `nordicDays` | 6件 | **もう読まないし書かない**（2026-10-13。それまで毎晩2本が書いていた）。その日いた人は `islandTips` から引く |
 | `islandDrafts` | **無い**（0件） | 移すものが無かった（#171） |
 | `islandVotes` | **無い** | 前の版のこの文書は「13件残してある」と書いていた。**いま本番に無い** |
 | `islandDayPeople` | **落とす。**#409 で読む口が無くなった | 経緯は [`island-incident-2026-09-14-cards.md`](./island-incident-2026-09-14-cards.md) の6。**同じものをもう一度作る前に、そこを読む** |
@@ -1762,7 +1762,7 @@ YouTube                    Doneru
 
 | スクリプト | 書く先 | 読む元 |
 | --- | --- | --- |
-| `doneru_supporters.py` | `islandDonors`（表に無い どねID を `state: "new"` で）・`nordicDays.people` | `doneru_donations` |
+| `doneru_supporters.py` | `islandDonors`（表に無い どねID を `state: "new"` で）。**`nordicDays` へはもう書かない**（2026-10-13） | `doneru_donations` |
 | `island_tips.py` | `islandTips` | `doneru_donations` ＋ `chat_messages` ＋ **`islandDonors`** |
 | `island_cards.py` | `islandCards` | `islandTips` × `islandStreamEventImage` |
 
@@ -1987,8 +1987,15 @@ Google OAuth なので Actions の中では通せない）。切れると
 5. **`islandUsers.canDraft` が、どこからも読まれないまま残っている**（#171）。
    残す理由（記録）は書いてあるが、**残す期限が無い。**
 
-6. **`nordicPhotos` へ二重書きしている口が、いつ畳まれるか決まっていない。**
-   「画面が移ってから」とだけ書いてあり、移ったかを判定する条件が無い。
+6. ~~**`nordicPhotos` へ二重書きしている口が、いつ畳まれるか決まっていない。**~~
+   → **片づけた**（2026-10-13）。「画面が移ってから」とだけ書いてあり、
+   移ったかを判定する条件が無かった。**判定する条件を探すのをやめて、
+   読む側を新へ移して書くのを止めた**（`GET /nordic/photos` が
+   `islandStreamEventImage` を読むようになった。返す形は1バイトも変えていない
+   ので、画面は触っていない）。
+   **移す前に数えた**: 旧117件 / 新117件 / **旧にしか無い 0件**
+   （`python/admin/nordic_photo_pair.py`。同じ道具が `backup.yml` から
+   毎晩走って、旧にしか無い写真が出たら赤くする）。
    同じことが `islandNextPlans`（2件）と、企画への付箋の旧い口にも当たる。
 
 7. **`islandTips.videoId` は、Doneru のぶんを「時刻を配信の時間帯に当てて」
