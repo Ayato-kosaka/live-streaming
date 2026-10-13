@@ -73,6 +73,32 @@ export type Sticker = {
   /** `art` の寸法。場所を先に取るために要る */
   w: number;
   h: number;
+  /**
+   * この絵の SUZURI のデザイン（`suzuri.jp/ayato_arigato/designs/<これ>`）。
+   * **まだグッズになっていない絵は `null`。**
+   *
+   * あやとの言葉（2026-10-13）:
+   *
+   * > 住人ページ、あやとステッカーページから「グッズを買う」ボタンで
+   * > （略）こんな感じのスズリデザインページへの導線あると良い。
+   *
+   * **面に1つだけ置かない。** 「グッズを買う」を面の下に1つ置くと、
+   * どの絵のグッズへ行くのかが分からない。だから絵1枚ずつが行き先を持つ。
+   *
+   * **`canFlip` と同じで、省略できない。** 1枚足すたびに、どちらかを必ず
+   * 決めてもらう（`null` と書くのも決めたうち）。書き忘れは型で止まり、
+   * 番号のかぶりは `site/selftest/sticker_selftest.mjs` が赤くする。
+   *
+   * 番号の出どころは `.claude/skills/suzuri/ayato.md` の表（デザインを
+   * 作った日に控える番号）。**合っているかは題で確かめる**——
+   * `designs/<番号>` の面の題が「あやと ― <この `name`>」になっている
+   * （2026-10-13 に、在る5枚ぶん引いて見た）。
+   *
+   * **住人の絵にも同じ道が要る**（あやと 2026-10-13「住人ページ…から」）。
+   * あちらは名簿が別（`content/residents.ts`）なので、ここの表は借りられない。
+   * 共通なのは道の組み立てだけなので、それは `suzuriDesignHref` に出してある。
+   */
+  suzuri: number | null;
 };
 
 /**
@@ -117,6 +143,8 @@ export const STICKERS: Sticker[] = [
        絵を描き直した日にステッカーの枠だけ前の形のまま残る** */
     w: AYATO_W,
     h: AYATO_H_PX,
+    /* 題は「あやと ― 島にいるあやと」。2026-10-13 に引いて確かめた */
+    suzuri: 21116647,
   },
   {
     /* **2枚目**（あやと「この子もステッカーに欲しい」2026-10-08）。
@@ -131,6 +159,7 @@ export const STICKERS: Sticker[] = [
     canFlip: true,
     w: 480,
     h: 480,
+    suzuri: 21116648,
   },
   {
     id: "hitch",
@@ -146,6 +175,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 436,
     h: 480,
+    suzuri: 21116653,
   },
   {
     /* **4枚目**。コック帽のあやとが、フォークとスプーンを持っている赤い丸。
@@ -159,6 +189,8 @@ export const STICKERS: Sticker[] = [
     canFlip: true,
     w: 480,
     h: 475,
+    /* まだグッズになっていない。**出ない理由は画面に書かない** */
+    suzuri: null,
   },
   {
     /* **思い出ステッカーの2枚**（ジョージア・ストックホルム）。
@@ -173,6 +205,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 479,
+    suzuri: null,
   },
   {
     id: "stockholm",
@@ -183,6 +216,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 477,
+    suzuri: null,
   },
   {
     /* **看板の2枚。** カラーは**青い四角ごと**が絵で、丸だけにすると形が崩れる
@@ -198,6 +232,8 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    /* カラーとモノクロで別のデザイン。**番号を取り違えない** */
+    suzuri: 21116745,
   },
   {
     id: "sign-mono",
@@ -208,6 +244,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 479,
     h: 480,
+    suzuri: 21116656,
   },
   {
     /* **ここから4枚**（あやと 2026-10-11「無帰国系、看板、ふうせん、飛行機を
@@ -225,6 +262,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    suzuri: null,
   },
   {
     /* 黄色い標識。**右下に、画面を撮ったときの「共有」ボタンが写り込んでいた**。
@@ -238,6 +276,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 471,
     h: 480,
+    suzuri: null,
   },
   {
     id: "balloon",
@@ -249,6 +288,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 407,
+    suzuri: null,
   },
   {
     /* **「背景透明が漏れてる」の本体**（あやと 2026-10-11）。
@@ -262,6 +302,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 319,
+    suzuri: null,
   },
   {
     /* テーマ掲示板に視聴者さんが貼ってくれた絵（作者名は出さない。
@@ -282,6 +323,8 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 480,
+    /* SUZURI には出さない1枚（#780 Q3: A）。だから永く `null` のまま */
+    suzuri: null,
   },
 ];
 
@@ -749,6 +792,22 @@ export const SUZURI = {
 };
 
 /**
+ * SUZURI の**デザインの面**への道（`.../designs/<番号>`）。
+ *
+ * あやとが指した形（2026-10-13）がこれ。品物1つの面ではなく、
+ * **その絵で作ってあるものが全部並ぶ面**なので、絵から送るならここ。
+ *
+ * **店の道（`SUZURI.href`）から組み立てる。** 文字列をもう1本書くと、
+ * 店が引っ越した日に片方だけ残る。
+ *
+ * ステッカーの番号は `STICKERS` の `suzuri`、住人の番号は住人の名簿が持つ
+ * （まだ無い。あやとの注文は住人の面にもあるので、そちらの担当が足す）。
+ * **番号の持ち場は分かれても、道の組み立てはここ1本。**
+ */
+export const suzuriDesignHref = (designId: number): string =>
+  `${SUZURI.href}/designs/${designId}`;
+
+/**
  * SUZURI のデザイン1つ。**押すと、そのデザインの売り場にうつる。**
  */
 export type ShopGoods = {
@@ -763,8 +822,11 @@ export type ShopGoods = {
   shot: ShopShot;
 };
 
-/** デザインの売り場（あやと 2026-10-13 が貼ってきた形） */
-export const shopHref = (id: number) => `https://suzuri.jp/ayato_arigato/designs/${id}`;
+/** デザインの売り場（あやと 2026-10-13 が貼ってきた形）。
+    **道の組み立ては `suzuriDesignHref` 1本。** ここで URL をもう1度
+    書くと、店が引っ越した日に片方だけ残る（2026-10-13 に、
+    別々に書いた2本が1日で合流して実際にそうなりかけた）。 */
+export const shopHref = (id: number) => suzuriDesignHref(id);
 
 /**
  * **ほかのどこからも行けない、SUZURI のグッズ。**
