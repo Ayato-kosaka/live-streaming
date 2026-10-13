@@ -34,7 +34,6 @@ export const metadata: Metadata = {
 export default function NordicPhotosPage() {
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },

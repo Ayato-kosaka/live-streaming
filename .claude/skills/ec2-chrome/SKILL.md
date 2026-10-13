@@ -27,8 +27,9 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`・`state`/`start`/`stop` |
+| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`・`state`/`start`/`stop`・`guard`（止め忘れの見張りを入れ直す。2） |
 | `ec2_exec.sh` | 手元 | **起こして → 実行して → 必ず止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ）。実行の前に `cdp.py` を EC2 へ置き直す |
+| `idle_stop.sh` | EC2（`/usr/local/sbin/idle-stop`、root の cron で5分ごと） | 誰も使っていない時間が30分続いたら EC2 を止める（2） |
 | `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
 | `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む・ファイルを渡す（`chatgpt` スキル）。絵を作るのは `chatgpt-image` |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
@@ -84,6 +85,33 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   - **人の返事の待ち（ログインしてもらう・issue で聞いた）は止める。** いつ来るか分からないので、
     1日つけっぱなしで約200円になる。あやとに EC2 で何かしてもらうときは「止めてあるので起こしてから入って」と書く
   - 止める前に、開いた Chrome は `down(名前)` で閉じる（セッションを書き戻させる）
+
+### 止めるのを、手元のセッションに頼らない（見張り `idle_stop.sh`）
+
+**セッションは唐突に切れる**（利用の上限・箱の作り直し）。切れたセッションは `ec2.py stop` を打てない。
+2026-10-13、裏で流したスタンプの一括が 16:36 に終わったあと、こちらのセッションが上限で止まっていて、
+**17:22 まで誰も止めずに起きていた**（あやとが気づいて止めた）。
+
+だから止めるのは、止まらずに残る側（EC2）に持たせてある。`/usr/local/sbin/idle-stop` を root の cron が
+5分ごとに回し、**次のどれも無い時間が30分続いたら止める**:
+
+| 「使っている」とみなすもの | なぜ |
+| --- | --- |
+| 起きてから20分以内 | 起こしたセッションが最初のコマンドを送るまでの間 |
+| SSM のコマンドが走っている | セッションが何かを流している最中 |
+| 鍵のファイルが6時間以内に触られている（`/home/ubuntu/locks/*`・`/home/ubuntu/chatgpt/LOCK`・`/home/ubuntu/stamp/RUNNING`） | 裏で回している一括。**6時間を超える一括は、鍵を触り続ける**（`os.utime`）。消し忘れた鍵で永久に起きっぱなしにならないよう、古い鍵は数えない |
+| Chrome リモートデスクトップの画面に30分以内の入力（`xprintidle`） | あやとが入っている |
+
+- **裏で何かを回すときは、必ず鍵を置く。** 置かずに `nohup` だけで流すと、30分後に止められる
+- 入れ直しは `ec2.py guard`（何度でもよい）。見張りの記録は EC2 の `/var/log/idle-stop.log`
+- **いまは「止めるはずだった」と書くだけ。武装しない。** 中からの shutdown は、インスタンスの
+  「シャットダウン動作」が **停止** なら止まり、**終了** なら EC2 そのものが消える。**このインスタンスは
+  「停止」ではなかった**（あやとがコンソールで見た。2026-10-13）。こちらの権限ではその設定を読めない
+  （`ec2:DescribeInstanceAttribute` も、EC2 の役割からの `StopInstances` も拒否）
+- 武装は `/etc/idle-stop/armed` の**中身が `behavior=stop`** のときだけ効く（空の `touch` では効かない）。
+  **書くのは、あやとがシャットダウン動作を「停止」に変えたと issue で言ってから**
+- それまでは、**自分で起こしたら自分で止める**（`ec2.py stop`。API で止めるので、設定に関係なく停止になる）。
+  セッションが切れて止め忘れたときに拾うものは、いまは無い
 
 ## 3. プロファイル
 

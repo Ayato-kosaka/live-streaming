@@ -326,7 +326,7 @@ export default function AboutPage() {
     .join("、");
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやとのこと" }]}>
+    <PageShell crumbs={[{ label: "あやとのこと" }]}>
       <PageHead
         icon="hut-ayato"
         title="あやとのこと"

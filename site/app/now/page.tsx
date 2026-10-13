@@ -11,7 +11,7 @@ import "./now.css";
 
 export const metadata: Metadata = {
   title: "いま何してる",
-  description: "あやとが今どこにいて、今週なにをするか。",
+  description: "あやとが今どこにいて、島だよりに何を書いていったか。",
 };
 
 /**
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
  * 上半分は「板の型」。いまどこにいるか、今夜あるか、次の企画はいつか。
  * 押すものと、しらせだけを置く。
  *
- * 下半分は「紙の型」の島だより。今週やること、いまいる国、その前にいた国。
+ * 下半分は「紙の型」の島だより。あやとが書いていったやること、いまいる国、その前にいた国。
  * 読むものは紙に刷ってある、という見え方にする（`docs/ac-reference.md` の 7章）。
  * 同じ形の板が延々と積まれるのを避けるため、この2つは必ず台紙ごと分ける。
  *
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
  */
 export default function NowPage() {
   return (
-    <PageShell current="now" crumbs={[{ label: "いまどこ" }]}>
+    <PageShell crumbs={[{ label: "いまどこ" }]}>
       {/* h1 は場所の名前。島の建物・パンくず・上の帯と1つの名前でそろえる
           （`docs/island-design.md` 6章 / `docs/island-world.md` 7.5）。
           「いま何してる」は問いなので、すぐ下の1行で受ける。
