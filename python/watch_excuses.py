@@ -177,6 +177,10 @@ EXCUSES: dict[str, str] = {
         "機械で言える範囲（連れを置いたら機械が動かさない・向き・掴んだ瞬間に"
         "動かない・`pickAt`）は `site/selftest/cardplace_selftest.mjs` の "
         "3d〜3g に切り出して毎 PR で回す",
+    "tools/sprites/deskbadge.mjs":
+        "机の札に出る「まだ返していない数」を、押して確かめる。書き出しと"
+        "ブラウザに加えて、**口を差し替えた上で押す**必要がある"
+        "（`asme.mjs` の `apply`）。机を触ったときに回す（2026-10-13）",
     "tools/sprites/popcheck.mjs":
         "押せないのに厚みがあるものを21面ぶん数える。書き出しとブラウザが要り、"
         "出す前のチェックで回す（2026-09-19）",
