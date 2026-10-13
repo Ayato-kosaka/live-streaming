@@ -60,6 +60,14 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 だから引き金に渡すものを `World` にまとめた。**引き金は自分でファイルも
 口も開かない**——渡されたものを見るだけなので、仕込みで両側を当てられる。
 
+**2026-10-13 にもう1本足した（「終わった旅の伝説」）。** 北欧旅が終わって
+16日、丘（`/legends`）にその旅のものが1枚も立っていなかった。
+`legends.ts` に付いている見かたは `LATEST` の300日（床）だけなので、
+**章が1つまるごと抜けても緑**だった。あやと「伝説の企画に北欧旅を
+載せるべき。最新化する仕組みができてなさそう」。
+「どれを伝説と呼ぶか」は人しか決められないが、**「いつ1つ増えるべきか」は
+数えられる**（`ended_without_legend` と `docs/island-fresh.md` 4章）。
+
 **読めなかったものは、空で渡さない。** 空を渡すと、その引き金が
 「空いていない」と答えて毎晩通る。どれも「数えられない」に積んで、
 区画を書き換えずに止まる。
@@ -179,6 +187,7 @@ COUNTRIES_TS = "site/content/countries.ts"
 ABOUT_TSX = "site/app/about/page.tsx"
 PLACE_TS = "site/lib/place.ts"
 UPDATES_TS = "site/content/updates.ts"
+LEGENDS_TS = "site/content/legends.ts"
 
 # **視聴者さんから見える変更が入る置き場。**
 #
@@ -270,6 +279,7 @@ class World:
     countries: list[dict]             # `countries.ts` の国 → 滞在
     itineraries: set[str]             # 旅程のある章の slug（`site/content/<slug>.ts`）
     about: str                        # `/about` の年表の字（`STORY` の中身）
+    legends: list[dict]               # `legends.ts` の伝説（`slug` / `date` / `range`）
     current: dict                     # 島の便り（`/island-api/state` の `current`）
     stale_days: int                   # `site/lib/place.ts` の `PLACE_STALE_DAYS`
     shown_at: date | None             # 視聴者さんから見える変更が入った、いちばん新しい日
@@ -745,6 +755,71 @@ def updates_behind(w: World) -> list[Gap]:
                 urgent=False)]
 
 
+def _legend_covers(lg: dict, a: date, b: date) -> bool:
+    """その伝説が、`a`〜`b`（章の期間）のものか。
+
+    **見るのは `date` 1つだけ。島と同じ見かたにする。**
+    島にどの記念碑が建つかを決めているのは
+    `site/components/isle/spec.ts` の `legendsOf()` で、あちらが見るのも
+    「`date` が章の期間に入っているか」だけ（`inSpan`）。
+
+    **`range` を足して甘くしない。** 足すと、`range` だけが重なっている
+    伝説でここが黙るのに、**島にはその記念碑が1枚も建たない**——
+    見張りが緑なのに、見張りたかったものが起きている状態になる。
+    同じ答えが要るものは、同じ見かたを通す（`CLAUDE.md`）。
+
+    そのぶん、**伝説の `date` は章の中に置くこと**が決まりになる。
+    北欧旅の `date` が出発の 9/11 ではなく1日目の 9/12 なのはそれが理由で、
+    `content/legends.ts` のその行にも書いてある。
+    """
+    d = _as_date(lg.get("date", ""))
+    return bool(d and a <= d <= b)
+
+
+def ended_without_legend(w: World) -> list[Gap]:
+    """**旅（章）が終わったのに、その章の伝説が1つも無い。**
+
+    `content/legends.ts` は「どれを伝説と呼ぶか」で、**人しか決められない**
+    （`docs/island-fresh.md` 4章）。だから古くなっても誰も鳴らさず、
+    北欧旅は終わってから16日のあいだ、丘に1枚も立たなかった。
+    `legends.ts` に付いている見かたは `LATEST` の300日（床）だけで、
+    **章が1つまるごと抜けても緑**だった。
+
+    数えられる理由は、**いままで例外が無かった**から。終わった5つの章は
+    どれも伝説を1つ以上持っている（ヨーロッパ周遊＝年越し24時間配信、
+    中東周遊＝GWエジプト祭り、コーカサス周遊＝5つ、イランまで歩く＝
+    イランまで歩く、北欧周遊＝北欧ヒッチハイク）。
+    **「大きい企画と大きい日」が1つも無い旅は、まだ1つも無い。**
+
+    鳴るのは `to` の入った章だけ。`to` を入れるのは旅から帰った本人なので、
+    **章が閉じる前に先回りして急かさない**（`to` が空のあいだは
+    「章が終わった」の手入れのほうが先に立つ）。
+
+    急がない側。**島が嘘を出しているのではなく、まだ書かれていない**だけ。
+    何を伝説と呼ぶかは人の頭の中にしかない。
+
+    **この行が「どうやっても消せない」と分かったら、緩めずに見かたを直す。**
+    伝説の無い旅が本当に在るなら、それは `chapters.ts` に書けるようにする
+    （消しようのない赤は、鳴らない見張りと同じだけ悪い。§13 §15）。
+    """
+    out = []
+    for r in w.ended_chapters():
+        a = _as_date(r["from"]) or _as_date(r["opensAt"])
+        b = _as_date(r["to"])
+        if a is None or b is None:
+            # 期間が読めない章は数えない。**空で通さず、ここで黙る**のは
+            # 「着いた日が入っていない」が先に立つから（二重に鳴らさない）
+            continue
+        if any(_legend_covers(lg, a, b) for lg in w.legends):
+            continue
+        out.append(Gap(
+            f"`{LEGENDS_TS}`（`{r['slug']}` の章）",
+            f"その旅の伝説を1つ（`date` は {a}〜{b} の中に）。"
+            f"丘（`/legends`）にも島にも、この旅のものが1枚も立っていない",
+            urgent=False))
+    return out
+
+
 # **引き金の表。1行で足せる。**
 TRIGGERS: tuple[Trigger, ...] = (
     Trigger("着いた日", True, arrived_without_from),
@@ -754,6 +829,7 @@ TRIGGERS: tuple[Trigger, ...] = (
     Trigger("いまの章の滞在", False, running_without_stay),
     Trigger("島の便り", True, state_current_stale),
     Trigger("年表のいま", False, about_without_chapter),
+    Trigger("終わった旅の伝説", False, ended_without_legend),
     Trigger("島の直したところ", False, updates_behind),
 )
 
@@ -923,6 +999,25 @@ def count(content_dir: Path, today: date, books: dict | None = None,
         if not about:
             blind.append(f"{ABOUT_TSX} から年表（`STORY`）を読めません")
 
+    # 伝説。**読めなかったら空で渡さない**——空で渡すと、終わった章ぜんぶが
+    # 「伝説が無い」になって、毎晩ありもしない手入れを並べる
+    legends: list[dict] = []
+    lg = content_dir / "legends.ts"
+    if not lg.is_file():
+        blind.append(f"{LEGENDS_TS} がありません")
+    else:
+        got_l = ts_read.read_array(lg.read_text(encoding="utf-8"), "LEGENDS",
+                                   keys=("slug", "date"))
+        if not got_l.declared:
+            blind.append(f"{LEGENDS_TS} が伝説を1つも名乗っていません")
+        elif got_l.missed:
+            blind.append(
+                f"{LEGENDS_TS} の伝説を {got_l.missed}個 読み落としました"
+                f"（名乗り {got_l.declared} / 読めた {len(got_l.rows)}）"
+            )
+        else:
+            legends = got_l.rows
+
     stale_days = 0
     pl = site / "lib" / "place.ts"
     if not pl.is_file():
@@ -961,7 +1056,7 @@ def count(content_dir: Path, today: date, books: dict | None = None,
             updates_at = max(days)
 
     w = World(today=today, rows=rows, countries=countries,
-              itineraries=itineraries, about=about,
+              itineraries=itineraries, about=about, legends=legends,
               current=st.current, stale_days=stale_days,
               shown_at=(last_shown_change(root or REPO_ROOT)
                         if shown_at is None else shown_at),

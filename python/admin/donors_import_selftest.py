@@ -610,7 +610,9 @@ def case8_readers():
     ck("引いた中身は辞書のまま", isinstance(had_ro, dict), type(had_ro).__name__)
     ck("引いた中身が1文字も変わっていない", had_ro == had_raw, "同じ")
 
-    # nordic_pull:「いま名簿に何人いるか」
+    # 一覧の入った欄を、塞いだ写し越しに引く（`len` が取れるか）。
+    # **入れ物は `nordicDays`**——もう誰も読み書きしないが、ここで見たいのは
+    # 「配列の欄が、塞いだあとも配列のまま返るか」なので、形だけ借りている
     def roster(c):
         return (c.collection("nordicDays").document("2026-09-12")
                 .get().to_dict() or {}).get("people", [])

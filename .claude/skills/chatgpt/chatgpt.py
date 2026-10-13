@@ -7,7 +7,7 @@
     from chatgpt import *
     t = fresh()                  # ChatGPT のタブを1枚だけ残して返す
 """
-import json, sys, time, urllib.request
+import json, os, sys, time, urllib.request
 sys.path.insert(0, "/home/ubuntu/cdp")
 from cdp import Tab, up, pages, where, _port
 
@@ -32,10 +32,58 @@ def _bcall(b, method, **params):
             return m.get("result", {})
 
 
-def fresh(url=PROJECT, wait=6):
+# 同じ Chrome（~/cdp-chatgpt）を、いくつものセッションが使う。fresh() はほかのタブを全部閉じるので、
+# 2つのセッションが同じ時間に使うとタブを閉じ合う（2026-10-13 12:54〜12:59 UTC に、LINE スタンプの
+# セッションと実際にそうなった）。使っているあいだは鍵を置き、fresh() は他人の鍵があれば止まる。
+LOCK = "/home/ubuntu/chatgpt/LOCK"
+# LINE スタンプの一括（#716）が先に使っていた置き場も見る
+OTHER_LOCKS = ["/home/ubuntu/stamp/RUNNING"]
+STALE = 4 * 3600   # これより古い鍵は、置いた人が消し忘れたものとみなす
+
+
+class Busy(RuntimeError):
+    pass
+
+
+def lock(owner, what=""):
+    """ChatGPT の Chrome を使い始める。owner はセッションの名前（あとで unlock に同じものを渡す）"""
+    held = holder()
+    if held and held.get("owner") != owner:
+        raise Busy(f"ほかのセッションが使っている: {held}")
+    os.makedirs(os.path.dirname(LOCK), exist_ok=True)
+    json.dump({"owner": owner, "what": what, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, open(LOCK, "w"), ensure_ascii=False)
+
+
+def unlock(owner):
+    held = holder()
+    if held and held.get("owner") == owner and os.path.exists(LOCK):
+        os.remove(LOCK)
+
+
+def holder():
+    """いま鍵を持っている人（無ければ None）。古すぎる鍵は数えない"""
+    for path in [LOCK] + OTHER_LOCKS:
+        if not os.path.exists(path) or time.time() - os.path.getmtime(path) > STALE:
+            continue
+        try:
+            d = json.load(open(path))
+        except Exception:
+            d = {"owner": path, "what": open(path).read()[:200]}
+        d["path"] = path
+        return d
+    return None
+
+
+def fresh(url=PROJECT, wait=6, owner=None):
     """新しいタブを1枚作り、ほかのタブは全部閉じて、そのタブを返す。
     **既定はプロジェクト「あやと島案内鳥」。** chatgpt.com/ を開いて送ると、プロジェクトの外
-    （あやとの履歴の本流）に会話ができる（2026-10-13 に別のセッションがそうなった）"""
+    （あやとの履歴の本流）に会話ができる（2026-10-13 に別のセッションがそうなった）。
+    **ほかのセッションが鍵を置いていたら、タブを閉じる前に止まる**（上の LOCK）。
+    自分で鍵を置いたなら owner に同じ名前を渡す（環境変数 CHATGPT_OWNER でもよい）"""
+    owner = owner or os.environ.get("CHATGPT_OWNER")
+    held = holder()
+    if held and held.get("owner") != owner:
+        raise Busy(f"ほかのセッションが ChatGPT の Chrome を使っている。終わるまで触らない: {held}")
     port = up(NAME)
     b = _browser(port)
     old = pages(NAME)
@@ -296,8 +344,16 @@ if __name__ == "__main__":
         if logged_in(t):
             rename(t, sys.argv[3])
         print(a)
+    elif len(sys.argv) >= 3 and sys.argv[1] == "lock":
+        lock(sys.argv[2], " ".join(sys.argv[3:]))
+        print("locked", holder())
+    elif len(sys.argv) >= 3 and sys.argv[1] == "unlock":
+        unlock(sys.argv[2])
+        print("unlocked; now", holder())
+    elif len(sys.argv) >= 2 and sys.argv[1] == "who":
+        print(holder())
     else:
-        print("usage: chatgpt.py ask <file> <title> [timeout]")
+        print("usage: chatgpt.py ask <file> <title> [timeout] | lock <owner> [what] | unlock <owner> | who")
 
 
 def images(t, min_px=256):
