@@ -198,7 +198,8 @@ const SAMPLE = `((GRID, MIN_BOX, READ) => {
   });
   const t = document.querySelector("g.ayato")?.getAttribute("transform") || "";
   const m = t.match(/translate\\(([-\\d.]+) ([-\\d.]+)\\)/);
-  return { rows, skip, at: m ? Math.round(+m[1]) + "," + Math.round(+m[2]) : "?" };
+  const cam = isle.getAttribute("data-cam") === "wide" ? "引き" : "寄り";
+  return { rows, skip, cam, at: (m ? Math.round(+m[1]) + "," + Math.round(+m[2]) : "?") };
 })(${GRID}, ${MIN_BOX}, ${JSON.stringify(READ)})`;
 
 /* ---- 仕込み（対照） ------------------------------------------------------ */
@@ -336,7 +337,7 @@ const 押せない = (r) =>
   (Math.round(r.実寸[1]) < TAP && Math.round(r.覆い無し[1]) >= TAP);
 
 /** 覆われ具合のいちばん悪いところを、入口ごとに覚えておく */
-function keep(worst, rows, where) {
+function keep(worst, rows, where, cam) {
   for (const r of rows) {
     const key = `${r.name} ${r.kind}`;
     const rate = r.taken / r.n;
@@ -344,7 +345,7 @@ function keep(worst, rows, where) {
     /* **「いちばん覆われた回」は、割合ではなく押せるかで選ぶ。**
        割合がいちばん大きい回と、押せなくなっている回は別のことがある */
     const 順 = (v) => (押せない(v) ? 1 : 0) * 10 + (v.taken / v.n);
-    const now = { rate, ...r, where };
+    const now = { rate, ...r, where, cam };
     if (!cur || 順(now) > 順(cur)) worst.set(key, now);
   }
 }
@@ -368,7 +369,7 @@ async function run(ctx, path, w, plant) {
   }
   const worst = new Map();
   const first = await p.evaluate(SAMPLE);
-  if (first.rows) { keep(worst, first.rows, first.at); 見た場面++; for (const [k, n] of Object.entries(first.skip)) 測れず[k] = (測れず[k] || 0) + n; }
+  if (first.rows) { keep(worst, first.rows, first.at, first.cam); 見た場面++; for (const [k, n] of Object.entries(first.skip)) 測れず[k] = (測れず[k] || 0) + n; }
   /* 仕込みの回は歩かない。**歩くと仕込みの板だけが画面に貼りついたまま
      島が動く**ので、「ぴったり覆う」が崩れて、対照が対照でなくなる */
   if (!plant) {
@@ -381,7 +382,7 @@ async function run(ctx, path, w, plant) {
         const r = await p.evaluate(SAMPLE).catch(() => ({ skip: "測れなかった" }));
         if (!r.rows) continue;
         見た場面++;
-        keep(worst, r.rows, r.at);
+        keep(worst, r.rows, r.at, r.cam);
         for (const [key, m] of Object.entries(r.skip)) 測れず[key] = (測れず[key] || 0) + m;
       }
     }
@@ -416,7 +417,7 @@ async function run(ctx, path, w, plant) {
       const r = await p.evaluate(SAMPLE).catch(() => ({ skip: "測れなかった" }));
       if (!r.rows) continue;
       見た場面++;
-      keep(worst, r.rows, r.at);
+      keep(worst, r.rows, r.at, r.cam);
       for (const [key, m] of Object.entries(r.skip)) 測れず[key] = (測れず[key] || 0) + m;
     }
 
@@ -434,7 +435,7 @@ async function run(ctx, path, w, plant) {
         const r = await p.evaluate(SAMPLE).catch(() => ({ skip: "測れなかった" }));
         if (r.rows) {
           見た場面++;
-          keep(worst, r.rows, r.at);
+          keep(worst, r.rows, r.at, r.cam);
           for (const [key, m] of Object.entries(r.skip)) 測れず[key] = (測れず[key] || 0) + m;
         }
         await p.waitForTimeout(400);
@@ -509,7 +510,7 @@ for (const w of WIDTHS) {
       console.log(`    ← ${k} が ${v.taken}/${v.n} 点（${Math.round(v.rate * 100)}%）覆われて、押しどころが ` +
         `${v.実寸.map(Math.round).join("x")}px しか残っていない（覆いが無ければ ${v.覆い無し.map(Math.round).join("x")}px）。` +
         `覆っているのは ${Object.entries(v.who).map(([a, n]) => `${a}=${n}点`).join(" ")}` +
-        ` 当たり${JSON.stringify(v.box)} あやと ${v.where}`);
+        ` 当たり${JSON.stringify(v.box)} ${v.cam ?? "?"}・あやと ${v.where}`);
     }
   }
   await ctx.close();
