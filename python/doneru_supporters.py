@@ -360,8 +360,6 @@ def main() -> int:
     """エントリポイント。新規の人がいたら 1 を返す。"""
     from google.cloud import firestore
 
-    from nordic_supporters import merge
-
     ap = argparse.ArgumentParser()
     ap.add_argument("--day", help="この日だけ（YYYY-MM-DD）")
     ap.add_argument("--days", type=int, default=3, help="直近この日数ぶん")
@@ -488,14 +486,10 @@ def main() -> int:
         # 1人ずつの明細は、公開の場では1行も出さない（`python/logsafe.py`）
         for line in detail_lines([(p["channelId"], p["name"]) for p in people]):
             logger.info("%s", line)
-        if a.dry_run or not people:
-            continue
-        ref = db.collection("nordicDays").document(day)
-        cur = ref.get()
-        old = (cur.to_dict() or {}).get("people", []) if cur.exists else []
-        after = merge(old, people)
-        ref.set({"day": day, "people": after, "updatedAt": now}, merge=True)
-        logger.info("  → 名簿は %d人になりました", len(after))
+        # **`nordicDays` には書かない**（2026-10-13）。読む側が0なので。
+        # ここが書いていたのは「その日いた人」で、正は台帳（`islandTips`）。
+        # この回が本当にやるのは下の `islandDonors` の更新と、
+        # **表に無い どねID が投げてきた晩に赤くすること**の2つ。
 
     # 過去に見つけて、まだ紐付いていない人も数える。1回の通知を見逃すと
     # そのまま忘れるので、残っているあいだは毎日赤くする

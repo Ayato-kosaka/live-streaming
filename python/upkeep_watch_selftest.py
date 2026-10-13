@@ -87,6 +87,7 @@ sys.stdout = Tee(REAL_OUT, BUF)
 sys.stderr = Tee(REAL_ERR, BUF)
 
 import stale_content_watch as stale  # noqa: E402
+import ts_read  # noqa: E402
 import upkeep_watch as uw  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -237,7 +238,7 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
                  countries: str | None = None,
                  about: str | None = None,
                  place: str | None = None,
-                 itinerary: str = "") -> Path:
+                 itinerary: str = "", legends: str | None = None) -> Path:
     """`BOOKS` の表どおりに `*.ts` を並べた置き場をこしらえる。
 
     **表に在る本を1本も欠かさない。** 欠けると `judge()` が「置き場にありません」
@@ -282,9 +283,20 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
         "kitchenTalk.ts": "const KITCHEN_TALK = {\n"
                           + "".join(f'  "{k}": {{}},\n' for k in kitchen_keys)
                           + "};\n",
-        "legends.ts": 'export const LEGENDS = [\n  {\n    slug: "first",\n'
-                      '    day: "2026-10-01",\n  },\n];\n',
-        "legendDays.ts": 'const LEGEND_DAYS = {\n  "first": {},\n};\n',
+        # 人が書く本。日で見る（`LATEST`）。**終わった章（`nordic`）の
+        # 伝説も1つ持たせる**——持たせないと引き金「終わった旅の伝説」が
+        # 仕込みのぜんぶで立って、他の確かめの0件がどれも崩れる
+        "legends.ts": LEGENDS_OK if legends is None else legends,
+        # ①b。上流は `legends.ts`。**鍵は伝説の slug そのもの**なので、
+        # 仕込みの伝説から作る。手で並べると、伝説を差し替える確かめ
+        # （`LEGENDS_NONE` ほか）のたびに鍵がずれて、見たいところの手前で
+        # `legendDays.ts` が赤くなる
+        "legendDays.ts": "const LEGEND_DAYS = {\n" + "".join(
+            f'  "{r["slug"]}": {{}},\n'
+            for r in ts_read.read_array(
+                LEGENDS_OK if legends is None else legends, "LEGENDS",
+                keys=("slug",)).rows
+        ) + "};\n",
         # 名簿と、そこから焼かれる箱・セリフ
         "residents.ts": 'export const RESIDENTS = [\n  { icon: "a", n: 1 },\n'
                         '  { icon: "b", n: 2 },\n];\n',
@@ -328,6 +340,58 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
             (d / name).write_text(_ts(["2026-10-01"]), encoding="utf-8")
     return d
 
+
+# 仕込みの伝説。**終わった章（`nordic` / 2026-09-12〜09-27）の中に `date` が在る。**
+# 島に記念碑が建つ条件と同じ（`site/components/isle/spec.ts` の `legendsOf`）
+LEGENDS_OK = """export const LEGENDS: Legend[] = [
+  {
+    slug: "nordic",
+    /* 読みにくい形をわざと残す。本番がこうなっている */
+    title: "北欧ヒッチハイク",
+    date: "2026-09-12",
+    range: ["2026-09-11", "2026-09-27"],
+    day: "2026-10-01",
+  },
+];
+"""
+
+# **終わった旅の伝説が1つも無い**（北欧旅が丘に立たなかった 16日間の形）
+LEGENDS_NONE = """export const LEGENDS: Legend[] = [
+  {
+    slug: "old",
+    title: "むかしの企画",
+    date: "2026-01-05",
+    range: ["2026-01-01", "2026-01-10"],
+    day: "2026-10-01",
+  },
+];
+"""
+
+# **`range` を持たない1日の企画**（年越し・登録1,000人がこの形）。
+# `date` が章の中なので鳴らない
+LEGENDS_DATE_IN = """export const LEGENDS: Legend[] = [
+  {
+    slug: "nordic",
+    title: "北欧ヒッチハイク",
+    date: "2026-09-15",
+    day: "2026-10-01",
+  },
+];
+"""
+
+# **`date` が章の1日前。`range` は章と重なっている。**
+# ここで鳴らないと、**島には記念碑が1枚も建たないのに札は黙る**——
+# 島（`legendsOf`）が見るのは `date` だけなので、`range` で甘くできない
+LEGENDS_OUTSIDE = """export const LEGENDS: Legend[] = [
+  {
+    slug: "nordic",
+    title: "北欧ヒッチハイク",
+    date: "2026-09-11",
+    range: ["2026-09-11", "2026-09-27"],
+    day: "2026-10-01",
+  },
+];
+"""
 
 # 仕込みの章。**本番と同じ形**（`slug:` と `name:` のあいだにコメントを挟む）
 CHAPTERS_OK = """export const CHAPTERS: Chapter[] = [
@@ -947,6 +1011,7 @@ def case14_new_triggers(tmp: Path):
         ("島の便り", make_content(tmp / "c14p"),
          make_state(updatedAt="2026-01-01", week=["9/27 発つ"])),
         ("年表のいま", make_content(tmp / "c14q", about=ABOUT_NO_NOW), None),
+        ("終わった旅の伝説", make_content(tmp / "c14r", legends=LEGENDS_NONE), None),
     )
     real = uw.TRIGGERS
     for name, d, st in broke:
@@ -958,6 +1023,64 @@ def case14_new_triggers(tmp: Path):
             uw.TRIGGERS = real
         ck(f"引き金「{name}」を外すと、空いた欄が見えなくなる",
            before > 0 and after < before, f"{before}件 → {after}件")
+
+
+def case15_legend(tmp: Path):
+    """**終わった旅の伝説を、鳴る側と黙る側の両方から当てる。**
+
+    あやと 2026-10-13「伝説の企画に北欧旅を載せるべき。最新化する仕組みが
+    できてなさそう」。北欧旅は 2026-09-27 に終わって、丘に1枚も立たないまま
+    16日たっていた。`legends.ts` に付いていた見かたは `LATEST` の300日だけで、
+    **章が1つまるごと抜けても緑**だった。
+    """
+    print("\n[15] 終わった旅に、伝説が1つも無い")
+
+    # --- 鳴る側 -----------------------------------------------------------
+    d = make_content(tmp / "c15a", legends=LEGENDS_NONE)
+    c = uw.count(d, TODAY)
+    ck("終わった章の伝説が無い → **急がない**側に1件",
+       len(c.later) == 1 and "legends.ts" in c.later[0], (c.urgent, c.later))
+    ck("どの章のぶんかが出る", "nordic" in c.later[0], c.later[0])
+    ck("その旅の期間が出る（いつからいつまでを書くのか）",
+       "2026-09-12" in c.later[0] and "2026-09-27" in c.later[0], c.later[0])
+
+    # --- 黙る側。**書けば消える**（満たしようのない見張りにしない）---------
+    c = uw.count(make_content(tmp / "c15b"), TODAY)
+    ck("伝説を1つ書けば消える", c.waiting == 0, (c.urgent, c.later))
+
+    # --- 見るのは `date` 1つ。**島と同じ見かた** ---------------------------
+    #
+    # 島にどの記念碑が建つかを決めているのは
+    # `site/components/isle/spec.ts` の `legendsOf()` で、あちらが見るのも
+    # 「`date` が章の期間に入っているか」だけ。
+    #
+    # `range` を持たない1日の企画（年越し・登録1,000人）でも鳴らない
+    c = uw.count(make_content(tmp / "c15c", legends=LEGENDS_DATE_IN), TODAY)
+    ck("`range` が無くても、`date` が章の中なら鳴らない",
+       c.waiting == 0, (c.urgent, c.later))
+
+    # **`range` で甘くしない。** `date` が章の外なら、島には1枚も建たない。
+    # ここで黙ると「見張りは緑、島は空っぽ」になる
+    c = uw.count(make_content(tmp / "c15d", legends=LEGENDS_OUTSIDE), TODAY)
+    ck("`range` が重なっていても、`date` が章の外なら鳴る",
+       c.waiting == 1, (c.urgent, c.later))
+
+    # --- まだ終わっていない章は急かさない ---------------------------------
+    #
+    # `to` を入れるのは旅から帰った本人。入る前に「伝説を書け」と言うと、
+    # 旅のあいだじゅう鳴り続ける
+    ck("いまの章（`to` が空）の伝説は求めない",
+       not any("albania" in x and "legends.ts" in x for x in c.urgent + c.later),
+       "求めない")
+
+    # --- 伝説が1つも読めない回は、数えずに止まる -------------------------
+    #
+    # 空で渡すと、終わった章ぜんぶが「伝説が無い」になって、
+    # ありもしない手入れを毎晩並べる
+    d = make_content(tmp / "c15e", legends="export const LEGENDS = [];\n")
+    c = uw.count(d, TODAY)
+    ck("伝説を1つも名乗っていなければ「数えられない」",
+       not c.countable and any("legends.ts" in b for b in c.blind), c.blind)
 
 
 def case12_real():
@@ -1009,6 +1132,9 @@ def case12_real():
             if (CONTENT / f"{r['slug']}.ts").is_file()},
         about=uw.read_about_steps(
             (ROOT / "site" / "app" / "about" / "page.tsx").read_text(encoding="utf-8")),
+        legends=uw.ts_read.read_array(
+            (CONTENT / "legends.ts").read_text(encoding="utf-8"), "LEGENDS",
+            keys=("slug", "date"), lists=("range",)).rows,
         current=live.current,
         stale_days=uw.read_place_stale_days(
             (ROOT / "site" / "lib" / "place.ts").read_text(encoding="utf-8")),
@@ -1154,6 +1280,7 @@ def main() -> int:
         case10_unreachable(tmp)
         case11_break(tmp)
         case14_new_triggers(tmp)
+        case15_legend(tmp)
     case12_real()
     case13_yaml()
     print("\n[素性の結果]")
