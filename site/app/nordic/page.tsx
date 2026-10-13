@@ -164,7 +164,7 @@ export default async function NordicPage() {
   );
 
   return (
-    <PageShell current="next" crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
+    <PageShell crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
       <TripNow
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}

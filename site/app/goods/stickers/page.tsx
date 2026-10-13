@@ -54,7 +54,6 @@ export const metadata: Metadata = {
 export default function StickersPage() {
   return (
     <PageShell
-      current="goods"
       crumbs={[{ label: "あやとグッズ", href: "/goods" }, { label: "あやとステッカー" }]}
     >
       <PageHead

@@ -40,7 +40,6 @@ export const metadata: Metadata = {
 export default function NewPlanPage() {
   return (
     <PageShell
-      current="board"
       crumbs={[{ label: "やってほしいこと", href: "/board" }, { label: "企画のページを作る" }]}
     >
       <GoTo to="/board" />
