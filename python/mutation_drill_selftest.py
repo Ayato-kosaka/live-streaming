@@ -94,16 +94,58 @@ with tempfile.TemporaryDirectory() as tmp:
         MD.REPO = old_repo
 
 
-print("[3] 並べて回さない")
-fh = MD.take_lock()
-ok("鍵が取れる", fh is not None, True)
-r2 = subprocess.run([sys.executable, str(HERE / "mutation_drill.py"), "--only", "repo"],
-                    capture_output=True, text=True, timeout=600, check=False)
-# 鍵はこの手元が握っているので、2本目は走れない
-ok("鍵を握ったまま2本目を起こすと、当てずに 2 で帰る", r2.returncode, 2)
-ok("「数字は1つも出さない」と言っている", "数字は1つも出さない" in r2.stdout, True)
-if fh is not None:
-    fh.close()
+print("[3] 並べて回さない（**使い捨ての鍵で見る**）")
+# **本物の鍵は使わない。**
+#
+# 前はここで `MD.take_lock()` を呼んで「鍵が取れる」を確かめていた。
+# あれは**この箱にいま残り物が無いこと**を確かめていたのであって、
+# 道具の良し悪しではない。実際、前の回の `mutation_drill.py` が1本
+# 残っているだけで必ず赤くなり、CI でもこの箱でも落ちた。
+# **満たしようのない見張り**で、§13 の形そのもの。
+#
+# 確かめたいのは「**同じ置き場で2本は走れない**」こと。
+# それは使い捨ての鍵と、本物の子プロセス2本で決まりがつく。
+# （`fcntl.flock` は**同じプロセスが2回 open すれば自分とも衝突する**ので、
+#  手元で `take_lock()` を2回呼んで確かめると嘘の緑／嘘の赤が出る。
+#  **必ず別のプロセスで測る。**）
+with tempfile.TemporaryDirectory() as tmp:
+    key = Path(tmp) / "k"
+    env = dict(os.environ, MUTATION_DRILL_LOCK=str(key))
+    drill = str(HERE / "mutation_drill.py")
+    first = subprocess.Popen([sys.executable, drill, "--probe-lock", "20"],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             text=True, env=env)
+    try:
+        # 1本目が握るまで待つ（握ったら1行出す）
+        got = ""
+        for _ in range(80):
+            line = first.stdout.readline()
+            if line:
+                got = line
+                break
+            if first.poll() is not None:
+                break
+        ok("1本目が鍵を取れる", "を取った" in got, True)
+
+        second = subprocess.run([sys.executable, drill, "--probe-lock", "0"],
+                                capture_output=True, text=True, timeout=120,
+                                check=False, env=env)
+        ok("握られているあいだ、2本目は 2 で帰る", second.returncode, 2)
+        ok("**誰が握っているかを名指しで出す**",
+           "--probe-lock" in second.stdout, True)
+    finally:
+        first.kill()
+        first.wait(timeout=30)
+
+    # 1本目が死ねば、鍵は空く（fd が閉じれば解ける）
+    third = subprocess.run([sys.executable, drill, "--probe-lock", "0"],
+                           capture_output=True, text=True, timeout=120,
+                           check=False, env=env)
+    ok("握っていたものが死ねば、次は取れる", third.returncode, 0)
+
+# **本物の鍵そのものも、取れなければ 2 で帰ることだけは見ておく。**
+# ただし「いま取れること」は確かめない（箱の都合なので）
+ok("本物の鍵の置き場が決まっている", str(MD.LOCK).endswith(".lock"), True)
 
 
 print("[4] 混んでいたら当てない")

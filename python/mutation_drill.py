@@ -87,7 +87,12 @@ TIMEOUT_SEC = 600
 # ほかの試験が走っていないかを見るときの、名前の手がかり
 BUSY_HINTS = ("_selftest.py", "_selftest.mjs", "selftest_runner.py")
 
-LOCK = Path(tempfile.gettempdir()) / "island-mutation-drill.lock"
+# **鍵の置き場は env で差し替えられる。**
+# 見張り（`mutation_drill_selftest.py`）は使い捨ての置き場を渡して回る——
+# 本物の鍵を使うと「いま箱に残り物が無いこと」を確かめることになり、
+# **満たしようのない見張り**になる（`docs/island-standards.md` §13）。
+LOCK = Path(os.environ.get("MUTATION_DRILL_LOCK")
+            or Path(tempfile.gettempdir()) / "island-mutation-drill.lock")
 JOURNAL = Path(tempfile.gettempdir()) / "island-mutation-drill.journal"
 
 FLIP = {ast.Eq: ast.NotEq, ast.NotEq: ast.Eq, ast.Lt: ast.GtE, ast.GtE: ast.Lt,
@@ -524,6 +529,27 @@ def busy() -> list[str]:
     return out
 
 
+def holder() -> list[str]:
+    """**鍵を握っているのは誰か。**
+
+    「取れませんでした」だけだと、次に踏んだ人が `/proc` を舐めるところから
+    始めることになる（実際に1度そうなった）。pid と何を回しているかまで出す。
+    """
+    out = []
+    want = str(LOCK)
+    for pid in Path("/proc").glob("[0-9]*"):
+        try:
+            for fd in (pid / "fd").iterdir():
+                if os.readlink(str(fd)) == want:
+                    cmd = (pid / "cmdline").read_bytes().replace(b"\0", b" ")
+                    out.append(f"pid {pid.name}  "
+                               f"{cmd.decode('utf-8', 'replace').strip()[:90]}")
+                    break
+        except OSError:
+            continue
+    return sorted(set(out))
+
+
 def take_lock():
     """鍵を取る。取れなければ None（2本目は走らない）。"""
     try:
@@ -554,6 +580,14 @@ def plan(only: str | None, names: list[str]) -> list[dict]:
     for rel in picked:
         p = REPO / rel
         if not p.is_file():
+            continue
+        # **自分自身には当てられない。** あちらは「鍵が取れること」を
+        # 確かめる見張りで、その鍵はいまこちらが握っている。当てに行くと
+        # 壊す前から赤くなって、「壊れている」と誤って並ぶ（実際に並んだ）
+        if rel == "python/mutation_drill_selftest.py":
+            out.append({"kind": "-", "watch": rel,
+                        "skip": "この道具自身の見張り。鍵をこちらが握っているので"
+                                "当てられない（対照は `--self-drill` が毎回見ている）"})
             continue
         if rel in by_watch and only in (None, "repo"):
             c = by_watch[rel]
@@ -651,7 +685,25 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="当てずに、並べるだけ")
     ap.add_argument("--self-drill", action="store_true",
                     help="この道具自身の対照だけ回して帰る")
+    ap.add_argument("--probe-lock", type=float, default=None, metavar="秒",
+                    help="鍵が取れるかだけを見て帰る（0 ならすぐ、>0 ならその秒だけ握る）")
     a = ap.parse_args()
+
+    # **鍵だけを見る口。** 対照を回すときに、重い下ごしらえを通さずに
+    # 「2本目は走れない」を確かめるためにある。`--self-drill` も `plan()` も
+    # 通らないので、1秒かからない
+    if a.probe_lock is not None:
+        fh = take_lock()
+        if fh is None:
+            print(f"鍵 {LOCK} は取れない。握っているのは:")
+            for h in holder() or ["（特定できなかった）"]:
+                print(f"   {h}")
+            return 2
+        print(f"鍵 {LOCK} を取った")
+        sys.stdout.flush()
+        if a.probe_lock > 0:
+            time.sleep(a.probe_lock)
+        return 0
 
     print("[対照] この道具が、緑のままのものを見つけられるか")
     if not self_drill():
@@ -679,7 +731,10 @@ def main() -> int:
     # 並べて回さない
     fh = take_lock()
     if fh is None:
-        print("✕ もう1本が走っている（鍵が取れない）。**数字は1つも出さない**")
+        print(f"✕ もう1本が走っている（鍵 {LOCK} が取れない）。"
+              "**数字は1つも出さない**")
+        for h in holder() or ["（握っている相手を特定できなかった）"]:
+            print(f"   {h}")
         return 2
     b = busy()
     if b:
