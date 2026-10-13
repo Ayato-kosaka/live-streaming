@@ -381,6 +381,14 @@ function shutTheme(theme: string, now: number): boolean {
 const MAX_REPLY_LEN = 300;
 /** 1日に貼れる付箋。企画の提案より軽い行為なので、提案(8)より多くしてある。 */
 const STICKIES_PER_DAY = 20;
+/**
+ * **まだこちらが何もしていない付箋**を数えるときに、さかのぼる枚数。
+ *
+ * 机の一覧（`GET /stickies` を 300 枚で引く）と**同じ窓**にしてある。
+ * ここだけ広げると、机に出ていない1枚を数えた数が札に出て、
+ * 押しても見つからない。
+ */
+const WAITING_SCAN = 300;
 /* 1日に押せるハート。**押し直し（解除）も1回ぶん使う。**
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
@@ -1291,6 +1299,13 @@ type StickyShape = {
  *
  * **`cid` と `uid` は返さない。** 誰が書いたかは名乗った名前だけで足りる。
  * 端末IDを返すと、同じ人の付箋を並べて数えられる。
+ *
+ * **`seen`（既読の印）も返さない。** あれは机の側の覚書で、貼った人に
+ * 見せるものではない——見えると「読まれたが、返事はされない」が
+ * 本人に伝わる。`firestore.rules` が入れ物ごと閉じているのに加えて、
+ * **口の返事でも閉じる**（片方だけだと漏れる。`docs/island-misses.md` #225）。
+ * ここは拾う欄を名指しで並べる作りなので、**書類に欄が増えても
+ * ひとりでには出ない。** 増やすときは、この注を読んでから増やす。
  * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
  * @return {StickyShape} 付箋
  */
@@ -1382,6 +1397,82 @@ async function listStickies(q: {
     /* テーマの無い付箋（企画に貼られた旧来のぶん）は、この口からは出さない。
        テーマ横断の新着（`theme` を渡さないとき）で混ざるのを止める。 */
     (d) => !d.get("theme") || (d.get("archived") === true) !== want,
+  );
+}
+
+/**
+ * **まだこちらが何もしていない付箋**だけを、新しい順に取る。
+ *
+ * ## 「何もしていない」の物差しは、ここ1本だけ
+ *
+ * 札に出す数（`GET /stickies/waiting` の `waiting`）と、机に並べる一覧の
+ * 絞り込みが、**同じこの関数から出る。** 数だけサーバー、絞り込みは画面、に
+ * 分けていたころの `StickyCare` は、画面の側にも同じ条件（返事がない・
+ * `byOwner` でない・自分のぶんでない）を持っていて、**片方を直すと
+ * 数と中身がずれた。** 返すのは id も込みなので、画面は数えない。
+ *
+ * ## 何を引くか
+ *
+ * | 外すもの | なぜ |
+ * | --- | --- |
+ * | 返事のあるもの | もう返した |
+ * | **既読にしたもの**（`seen`） | 読んだうえで、返さないと決めた |
+ * | 運営者が立てたもの（`byOwner`） | こちらから出した選択肢。返事を待つ問いではない |
+ * | あやと自身が貼ったもの | 自分の付箋に自分で返す用事は無い（あやと 2026-09-09） |
+ * | しまったもの・伏せたもの | 板から下ろしてある |
+ * | 宛先の無いもの | 企画に貼られた旧来のぶん。返す机はテーマ付きだけを見る |
+ *
+ * **名前で突き合わせない。** 表示名は本人が決めるもので、同じ名前の人が
+ * 2人いた事故がこの島で実際にある。`uid` で見分ける。
+ *
+ * @param {string} ownerId あやとの uid（自分の付箋を外すのに使う）
+ * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} 新しい順
+ */
+async function waitingStickies(
+  ownerId: string,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  /* **`where` を足さない。** `theme`/`seen` と `orderBy` を組むと複合索引が
+     要るが、その索引はサービスアカウントに作る権限が無くて配れない(#168)。
+     組んだ日に本番が 500 になる。並べ替えだけ Firestore に任せて、
+     絞り込みは手元でやる（`listStickies` と同じ決め）。 */
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(WAITING_SCAN)
+    .get();
+  return snap.docs.filter(
+    (d) =>
+      !!d.get("theme") &&
+      d.get("hidden") !== true &&
+      d.get("archived") !== true &&
+      d.get("seen") !== true &&
+      d.get("byOwner") !== true &&
+      d.get("uid") !== ownerId &&
+      !cleanText(d.get("reply"), MAX_REPLY_LEN),
+  );
+}
+
+/**
+ * **既読にした付箋**だけを、新しい順に取る。
+ *
+ * 既読は「読んだが、返信はしない」の印で、**消すものではない。**
+ * ここが無いと押し間違いが戻せず、戻せない押しどころは押されなくなる。
+ *
+ * しまったもの（`archived`）は出さない。あちらには戻す道が別にある
+ * （`GET /stickies?archived=1`）ので、2つの棚に同じ1枚を並べない。
+ *
+ * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} 新しい順
+ */
+async function seenStickies(): Promise<
+  FirebaseFirestore.QueryDocumentSnapshot[]
+> {
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(WAITING_SCAN)
+    .get();
+  return snap.docs.filter(
+    (d) =>
+      !!d.get("theme") &&
+      d.get("hidden") !== true &&
+      d.get("archived") !== true &&
+      d.get("seen") === true,
   );
 }
 
@@ -3694,6 +3785,23 @@ export const islandApi = onRequest(
           res.json({notes: rows.map(stickyShape), more: false, next: null});
           return;
         }
+        /* **既読にしたものを見返す**（あやとだけ）。
+           既読は「読んだが、返さない」なので、**消していない。**
+           ここが無いと押し間違いが戻せず、戻せない押しどころは押されなくなる。
+
+           **URL を分けて、`no-store` を付ける。** 呼んだ人ごとに中身の変わる
+           答えを、キャッシュに載る同じ URL で返すと、混ざって配られる
+           （`/nextplans?mine=1` と同じ決め。`docs/island-api.md` 3章）。 */
+        if (req.query.seen === "1") {
+          if (!(await ownerUid(req.headers.authorization))) {
+            res.status(403).json({error: "not allowed"});
+            return;
+          }
+          const rows = await seenStickies();
+          res.set("Cache-Control", "no-store");
+          res.json({notes: rows.map(stickyShape), more: false, next: null});
+          return;
+        }
         /* しまったぶんは、戻す人にしか見せない。ここを開けると
            「消さずにしまう」が「畳んで隠しただけ」になる。 */
         const archived = req.query.archived === "1";
@@ -3717,6 +3825,30 @@ export const islandApi = onRequest(
             "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
         );
         res.json({notes: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* **まだこちらが何もしていない付箋の数。あやとだけ。**
+         机の札（`/me/desk` の「付箋」）に出すためだけの口で、
+         **道具を開く前に1本だけ引く。** 一覧を丸ごと降ろさずに数を出せる。
+
+         返すのは数と id だけ。**本文も名前も1文字も返さない**ので、
+         札に出す用事ではここより軽いものが無い。
+         id を添えるのは、机の一覧が**同じ物差しで**絞り込めるようにするため
+         （`waitingStickies` の注。数と中身を別々に決めると必ずずれる）。
+
+         **視聴者さんには出さない。** 既読の印（`seen`）が入っているかどうかは、
+         貼った人に見せるものではない（見えると「読まれたが返事はされない」が
+         本人に伝わる）。`ownerUid` と `no-store` の両方で閉じる。 */
+      if (method === "GET" && path === "/stickies/waiting") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const rows = await waitingStickies(uid);
+        res.set("Cache-Control", "no-store");
+        res.json({waiting: rows.length, ids: rows.map((d) => d.id)});
         return;
       }
 
@@ -4001,6 +4133,61 @@ export const islandApi = onRequest(
           reply: text || null,
           repliedAt: text ? new Date(now).toISOString() : null,
         });
+        return;
+      }
+
+      /* **既読にする・戻す。あやとだけ。**
+         「読んだが、返信はしない」の印。**付箋は1文字も変わらない。**
+         板からも消えないし、ハートも返信欄も今までどおり。
+         変わるのは「まだ何もしていない」の数から外れることだけ。
+
+         ## なぜ「返信した」と別に要るのか
+         返す相手のいる付箋かどうかは、いままで**返信が入っているか**だけで
+         見ていた（`waitingStickies`）。返す言葉の要らない1枚
+         （「見てます」「ありがとう」）に返信を書かないかぎり、その1枚は
+         永久に数に残る。**数が減らないと、数そのものが読まれなくなる。**
+
+         ## 印を立てる形にした理由
+         「同じ話に運営が付箋を返したか」で当てる手もあったが、採らない。
+         あれは**本文を読んで当てる推測**で、外れたときに直す道が無い
+         （返したのに数が減らない／返していないのに減る、のどちらも起きる）。
+         印なら、押した人が押し間違いに気づいた場に戻せる。
+
+         **戻せること**が要件（あやと 2026-10-13「既読機能みたいな、
+         返信しないで未返信から減らす機能」）。消す機能ではない。
+         `GET /stickies?seen=1` で見返して、ここへ `{on:false}` で戻す。 */
+      const seenMatch = path.match(
+        /^\/stickies\/([A-Za-z0-9_-]{6,})\/seen$/,
+      );
+      if (method === "POST" && seenMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const on = body.on !== false;
+        const ref = NOTES.doc(seenMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        await ref.set(
+          on ?
+            {seen: true, seenAt: Date.now(), seenBy: uid} :
+            {
+              /* **`false` を置かずに消す。** 残しておくと「一度は既読に
+                 した」が書類に居座って、`seen !== true` の絞り込みと
+                 `seen === true` の棚の両方から外れた1枚が生まれる。
+                 戻したら、押す前と同じ書類にする（`archive` と同じ決め）。 */
+              seen: admin.firestore.FieldValue.delete(),
+              seenAt: admin.firestore.FieldValue.delete(),
+              seenBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, seen: on});
         return;
       }
 

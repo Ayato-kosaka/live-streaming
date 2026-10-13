@@ -101,6 +101,28 @@
    掲示板（`/board`）も同じ札で「企画」と「付箋」を切り替えるので、
    じぶんのことの中に置いたままだと、あちらから読めない。 */
 
+/* 待っている数のバッジ（机の「付箋」の札だけ）。
+   **合図ではなく、数そのもの。** 押せることは札の厚みがもう言っているので、
+   ここは光らせない・沈めない・ぼかさない（`docs/island-design.md` 3-3。
+   合図が2つあると、どちらが合図か分からなくなる）。
+   朱は「いまこれ」の色（`island-world.md` 3.2）で、選んでいる札の枠と同じ。
+   札の右上の角に重ねるので、札の当たり（56px）は1pxも削らない。 */
+.mp-tab-b {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--pick);
+  color: var(--paper);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 20px;
+  text-align: center;
+}
+
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
    そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
