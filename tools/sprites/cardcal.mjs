@@ -77,6 +77,15 @@ for (const W of WIDTHS) {
         if (w > 1 && h > 1) 重なり += Math.round(w * h);
       }
     }
+    /** カードの無い日の字が、薄められていないか。**地はクリームの紙** */
+    const 薄め = (() => {
+      const e = cells.find((c) => c.tagName !== "BUTTON");
+      if (!e) return null;
+      const c = getComputedStyle(e).color;
+      const n = (c.match(/[\d.]+/g) || []).map(Number);
+      /* `rgb()` は3つ、`rgba()` / `color(srgb …)` は4つ目が濃さ */
+      return { 色: c, 濃さ: n.length > 3 ? n[3] : 1 };
+    })();
     const 押せる = cells.filter((e) => e.tagName === "BUTTON");
     const 押せない = cells.filter((e) => e.tagName !== "BUTTON");
     const 厚み = 押せない.filter((e) => {
@@ -92,6 +101,7 @@ for (const W of WIDTHS) {
       押せないのに厚み: 厚み,
       大きさ: box ? [Math.round(box.width * 10) / 10, Math.round(box.height * 10) / 10] : null,
       はみ出し: Math.round(Math.max(0, grid.right - innerWidth) + Math.max(0, -grid.left)),
+      薄め,
       月: document.querySelector(".akd-cal h2")?.textContent ?? "",
       紙: document.querySelector(".akd-day h2")?.textContent ?? "",
     };
@@ -114,6 +124,14 @@ for (const W of WIDTHS) {
   const [w, h] = got.大きさ ?? [0, 0];
   if (h < 48) bad.push(`${W}px: マスの背が ${h}px（48px 要る）`);
   if (W >= 390 && w < 48) bad.push(`${W}px: マスの横が ${w}px（48px 要る）`);
+
+  /* **カードの無い日の字を薄めない。** 52% に薄めてあったとき、紙の
+     クリーム（233,220,168）に対して 2.14 しか無かった（下限は 4.5）。
+     地が紙の gradient なので `getComputedStyle` からは地が取れない
+     ——**濃さ（alpha）だけを見る**。素の `--ink-2` で 5.2。 */
+  if (got.薄め && got.薄め.濃さ < 0.99) {
+    bad.push(`${W}px: カードの無い日の字が薄められている（${got.薄め.色}）`);
+  }
 
   /* 月を送る。**送った先にも写真がある**（カードのある月だけを行き来する） */
   const 送り = p.locator(".akd-cal-go");
