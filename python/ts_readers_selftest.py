@@ -496,6 +496,12 @@ ALLOW: dict[str, tuple[int, str]] = {
     "python/bake_order_selftest.py": (5, "焼いた本から数を抜き出して、焼き直しの順を当てる（対照）"),
     "python/build_residents_selftest.py": (1, "焼いた1行の score を読み返す（対照）"),
     "python/dead_stream_watch_selftest.py": (4, "本物と別の読み方で配信IDを数える（対照）"),
+    "python/months_safe_selftest.py": (
+        1,
+        "`months.ts` の `attend` に**欄が増えていないか**を見る見張り。"
+        "欄の名前を数えるのが用で、値は1つも読まない。`ts_read` の口は"
+        "「鍵→字」で返すので、**増えた欄が消える**（欲しいのは増えたほう）",
+    ),
     "python/viewable_streams_selftest.py": (2, "2つの焼き込みの数を突き合わせる（対照）"),
     # --- TS ではないもの ---
     "python/channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),
