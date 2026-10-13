@@ -128,6 +128,15 @@ OBS のページを1枚ずつ作り始めたのは8月からで、その7ヶ月�
 焼き込みは `site/content/months.ts`（`python/build_monthly.py` が焼く）。
 **そこから先へ運ばない**——あのファイルを別の面から読んだ時点で、例外が広がる。
 
+これは気をつけて守るものではないので、数で見ている。
+**`python/months_safe_selftest.py`**（毎 PR）が、
+
+- `content/months.ts` を読んでいるのが `app/months/` と `components/months/` と
+  `content/directory.ts` だけであること
+- 出席が持っている欄が「来た日数」だけで、**個人別のコメント数が増えていない**こと
+
+を数えて、1件でもあれば落とす。
+
 公開の Actions ログに「誰がいくら」を並べない、は `python/logsafe.py` が
 1か所で持っている。**授賞式のランキングだけは例外で、そこに出る順位・呼び名・
 貢献額は、同じ日に公開の面へ出るもの**なので `monthly_tips_run` が出す。
