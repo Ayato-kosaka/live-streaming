@@ -349,6 +349,15 @@
 .akd-cal-day.is-has:active { transform: translateY(2px); box-shadow: none; }
 /* 頭の空き。**押せないし、字も無い** */
 .akd-cal-pad { min-height: 48px; }
+/* 広い画面では、マスが 124px まで太って紙の端から端まで伸びる（1280px で
+   実測）。カレンダーは**ひと月を見渡すもの**で、1マスを大きく見せるもの
+   ではない。7列 × 85px で止めて真ん中へ（紙の余白ぶんの広げも要らない）。 */
+@media (min-width: 720px) {
+  .akd-cal-grid {
+    max-width: 620px;
+    margin-inline: auto;
+  }
+}
 /* **正方にするのは、列が 48px 取れる幅から。**
    7列 × 48px ＋ すきま 24px ＝ 360px 要る。紙の余白ぶん広げてあるので、
    390px の画面でちょうど（実測 48.6px）。
