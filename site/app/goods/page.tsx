@@ -331,12 +331,14 @@ export default function GoodsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {/* 名前はすぐ下に字で出ているので、絵は飾り扱いにする
-                      （読み上げで同じ名前が2回ならぶ。ステッカーの升目と同じ） */}
+                  {/* **ここはステッカーの升目と違って、絵を飾り扱いにしない。**
+                      あちらは名前が絵の説明そのもの（「島にいるあやと」）だが、
+                      こちらの名前は品名で、**何が描いてあるかは名前から分からない。**
+                      消すと、目で見ない人には白いTシャツ2枚の区別が付かなくなる */}
                   <img
                     className="gd-shopart"
                     src={goods.shot.src}
-                    alt=""
+                    alt={goods.shot.alt}
                     width={goods.shot.w}
                     height={goods.shot.h}
                     loading="lazy"
@@ -359,7 +361,7 @@ export default function GoodsPage() {
                 <img
                   className="gd-shopart"
                   src={SUZURI.shot.src}
-                  alt=""
+                  alt={SUZURI.shot.alt}
                   width={SUZURI.shot.w}
                   height={SUZURI.shot.h}
                   loading="lazy"
