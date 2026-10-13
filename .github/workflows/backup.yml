@@ -277,3 +277,54 @@ jobs:
       # 584 枚のうち同じ側を毎晩なぞって、古いところが腐っても当たらない
       - name: 写真を戻してバイト列を突き合わせる
         run: python python/backup/restore.py --photo
+
+  # ----------------------------------------------------------------
+  # 旅の写真の、新旧がずれていないか（2026-10-13）
+  #
+  # 写真は長いあいだ `islandStreamEventImage`（新）と `nordicPhotos`（旧）に
+  # 同じ書類IDで書かれていた。**書くのは `Promise.all` で、まとめ書きでも
+  # 取引でもない。** 片方だけ失敗したらずれるのに、**ずれても赤くなるものが
+  # 1本も無かった。**
+  #
+  # 2026-10-13 に読みも書きも新へ寄せた。残る危なさは1つだけ——
+  # **旧にしか無い写真があったら、その日から画面に出なくなる。**
+  # だから向きを1つだけ見る（旧 ⊆ 新）。新にしか無いのは、寄せたあとの
+  # ふつうの姿なので緑。
+  #
+  # **ここに置いたのは、退避と同じ「毎晩ひとりでに走る」繋ぎに乗るから**
+  # （cron ＋ 取り込みへの `workflow_run`）。新しい cron を足すと、
+  # 発火を1回見るまで当てにできない（`CLAUDE.md`）。
+  #
+  # `take` を待たない。**読むだけ**なので、退避が落ちた晩も見たい。
+  # 下見（`dry_run`）の回も走る——1バイトも書かないので。
+  pair:
+    name: 旅の写真の新旧がずれていないか
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **公開のログに素性が出ない側が効いているか。** 先に見る
+      - name: 素性を出さない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # `continue-on-error` を付けない。**ずれたら赤くする。**
+      # 出すのは数だけ（書類ID・置き場の道・一言・貼った人は1文字も出ない）
+      - name: 数える
+        working-directory: python/admin
+        run: python nordic_photo_pair.py

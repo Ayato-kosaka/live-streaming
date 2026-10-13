@@ -35,6 +35,24 @@
  *     のと同じ絵になる。
  *  5. その字が、**どの幅でも読める行に折れている**（下の「行の折れ方」）。
  *
+ * ## `/now` の島だより（2026-10-13 に足した。#808）
+ *
+ * あやと: 「**過去のものが出るのはシステムとしておかしい**」。
+ * `island/state.current.week` はあやとが旅先から打つ欄で、何日も打ち直せない。
+ * 2026-10-13 の本番は 9/28 に打たれた「9/27 ストックホルムを発つ」を
+ * まだ抱えていた（15日前）。
+ *
+ * ここは `/next` と**同じ形の見張り**なので、道具を分けずにここへ足す。
+ * 口（`/island-api/state`）を差し替えて、**その日から見て過ぎた行・今日の行・
+ * 先の行・日付の無い行**を1つずつ入れた便りを返す。見るのは4つ。
+ *
+ *  6. **過ぎた日の `M/D` が、画面の字に1つも出ない。**
+ *  7. **今日と先の行は出る**（対照。これが無いと 6 は「何も出ていない」でも通る）。
+ *  8. 見出しが**日で1文字も変わらない**。時制も件数も名乗らない。
+ *  9. **ぜんぶ過ぎた日に、黙って箱ごと消えない**（#228 の決め3）。
+ * 10. **焼いた HTML（`DIST` の `now.html`）に `M/D` が1つも無い。**
+ *     焼いた字は動かないので、日付を焼いた時点で負け。
+ *
  * 撮った絵は `OUT` に置く。**数が通っても、目で見る。**
  *
  * ## 行の折れ方（2026-10-12 に足した）
@@ -49,9 +67,11 @@
  */
 import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { tenseOf } from "./navtruth.mjs";
 import { offline } from "./route.mjs";
-import { repoPath } from "./repo.mjs";
+import { fromRoot, repoPath } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4150";
 const BASE = `http://127.0.0.1:${SPORT}`;
@@ -69,7 +89,14 @@ const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
  */
 function daysFromPlans() {
   const src = readFileSync(repoPath("site/content/plans.ts"), "utf8");
-  const starts = [...src.matchAll(/^\s*date:\s*"(20\d\d-\d\d-\d\d)"/gm)].map((m) => m[1]).sort();
+  /* 企画の当日は、企画1件の**いちばん外側の `date`**（`tsread.mjs` の1本。#694）。
+     `all` のほうは「どこに在っても日付の形をした字」を掃き寄せるので、
+     ここは構造ではなく字の並びを数えている——入れ子の `reached.when` も
+     終わりの日として要るので、欄を読む側に替えると拾えなくなる。 */
+  const starts = must(readArray(src, "PLANS", { keys: ["date"], idKey: "id" }), "plans.ts の PLANS")
+    .map((r) => r.date)
+    .filter(Boolean)
+    .sort();
   const all = [...src.matchAll(/"(20\d\d-\d\d-\d\d)"/g)].map((m) => m[1]).sort();
   if (!starts.length || !all.length) throw new Error("site/content/plans.ts から日付を1つも拾えませんでした");
   const at = (iso) => `${iso}T11:00:00+09:00`;
@@ -255,6 +282,179 @@ let wrapRead = 0;
   await ctx.close();
 }
 
+// ------------------------------------------- 6〜10. `/now` の島だより（#808）
+
+/**
+ * 便りに入れる1行ぶん。**日はその場の「今日」から組む。**
+ *
+ * **日を焼かない。** ここに `9/27` と書くと、来年の9月にこの対照が
+ * ひっくり返る（`daysFromPlans()` と同じ理由）。
+ */
+const md = (iso, shift) => {
+  const d = new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) + shift * 86400000);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+};
+
+/** その日の便り。過ぎた行・今日の行・先の行・日付の無い行を1つずつ。 */
+const letterFor = (iso) => ({
+  past: `${md(iso, -6)} もう過ぎた用事`,
+  today: `${md(iso, 0)} 今日の用事`,
+  ahead: `${md(iso, 4)} 先の用事`,
+  plain: "回る先はこれから",
+});
+
+/** 画面の字から `M/D` を拾う。`datesIn` と違い、年を足さずに生のまま見る。 */
+const mdIn = (text) => [...text.matchAll(/(?<![\d/])(\d{1,2})\/(\d{1,2})(?![\d/])/g)]
+  .map((m) => `${Number(m[1])}/${Number(m[2])}`);
+
+const nowBad = [];
+let nowRead = 0;
+/** 0件の字の行の折れ方。**1日ぶんだけ測る**（字は日で変わらないので足りる） */
+let nowWrapDone = false;
+let nowWrapRead = 0;
+/** 日 → 見出しの字（日で変わらないことを見るのに使う） */
+const nowHeads = new Map();
+{
+  console.log(`\n■ /now の島だより`);
+  /* **両側を通る。** `full` は過ぎた行と先の行が混ざった便り、
+     `allpast` は全部過ぎた便り。前者で「先の行は出る」を、後者で
+     「0件の日に黙らない」を見る。片方だけでは何も言っていない（§15）。 */
+  for (const iso of DAYS) {
+    const day = iso.slice(0, 10);
+    const L = letterFor(iso);
+    for (const [kind, week] of [
+      ["full", [L.past, L.today, L.ahead, L.plain]],
+      ["allpast", [L.past, `${md(iso, -20)} ずっと前の用事`]],
+    ]) {
+      const ctx = await b.newContext({
+        viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
+        locale: "ja-JP", timezoneId: "Asia/Tokyo", isMobile: true, hasTouch: true,
+      });
+      await offline(ctx);
+      await ctx.route(/fonts\.googleapis\.com/, (r) =>
+        r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+      /* 口を差し替える。**`place` と `updatedAt` は触る側の本題ではない**ので、
+         その日に打たれた新しい便り（＝人の字が勝つ日）にして、
+         見るものを `week` 1つに絞る。 */
+      await ctx.route(/\/island-api\/state/, (r) => r.fulfill({
+        status: 200, contentType: "application/json",
+        body: JSON.stringify({
+          current: { place: "アルバニア・ティラナ", theme: "georgia",
+            word: "ティラナにいます。", week, updatedAt: day },
+          stats: {}, notes: [], residents: [], nordic: {},
+        }),
+      }));
+      await ctx.addInitScript(clock(iso));
+      const p = await ctx.newPage();
+      const res = await p.goto(`${BASE}/now.html`, { waitUntil: "domcontentloaded" });
+      if (!res || res.status() >= 400) {
+        nowBad.push(`${day} ${kind}: /now.html が ${res?.status()} で返った`);
+        await ctx.close();
+        continue;
+      }
+      await p.waitForTimeout(1800);
+      const got = await p.evaluate(() => {
+        const sec = [...document.querySelectorAll(".pap-sec")]
+          .find((s) => s.querySelector(".pap-rows, .pap-note"));
+        return {
+          head: document.querySelector(".pap .pap-h")?.innerText.replace(/\s+/g, "") ?? "",
+          /* **紙ぜんぶを読む。** 見出しの下だけ見ると、別の節に漏れた
+             日付を見逃す（この面は国の節も日付を持っている） */
+          paper: document.querySelector(".pap")?.innerText ?? "",
+          rows: [...document.querySelectorAll(".pap-rows > li")].map((li) => li.innerText.trim()),
+          note: sec?.querySelector(".pap-note")?.innerText.trim() ?? "",
+        };
+      });
+      nowRead++;
+      if (got.head) {
+        if (!nowHeads.has(got.head)) nowHeads.set(got.head, new Set());
+        nowHeads.get(got.head).add(`${day}/${kind}`);
+      }
+      const shown = got.rows.join(" / ");
+      // 6. 過ぎた行は、どこにも出ない
+      const leaked = mdIn(got.paper).filter((x) => x === md(iso, -6) || x === md(iso, -20));
+      // 7. 先の行は出る（対照）
+      const ahead = kind === "full" && got.rows.some((r) => r.includes(md(iso, 4)));
+      const today = kind === "full" && got.rows.some((r) => r.includes(md(iso, 0)));
+      // 9. ぜんぶ過ぎた日に黙らない
+      const spoke = kind === "allpast" && !!got.note && !!got.head;
+      const ok = !leaked.length && (kind === "full" ? ahead && today : spoke);
+      console.log(`  ${ok ? "○" : "×"} ${day} ${kind.padEnd(7)} 見出し「${got.head}」 行=${shown || "（無し）"}${got.note ? ` 添え「${got.note}」` : ""}`);
+      if (leaked.length) nowBad.push(`${day} ${kind}: 過ぎた日 ${[...new Set(leaked)].join(" ")} が紙に出ている`);
+      if (kind === "full" && !ahead) nowBad.push(`${day}: 先の行（${md(iso, 4)}）が出ていない。対照が片側に寄っている`);
+      if (kind === "full" && !today) nowBad.push(`${day}: 今日の行（${md(iso, 0)}）が落ちている。今日は過ぎていない`);
+      if (kind === "allpast" && !spoke) nowBad.push(`${day}: ぜんぶ過ぎた日に、島だよりが黙って消えた`);
+      const el = await p.$(".pap");
+      await (el ?? p).screenshot({ path: `${OUT}/${day}-now-${kind}.png` });
+      /* **字を替えたら、行の折れ方まで読む**（#228 の最後）。0件の日の字は
+         この面でしか出ないので、`/next` の掃き出しとは別にここで幅を振る。
+         1日ぶんでよい——字は日で変わらないことを上で見ている。 */
+      if (kind === "allpast" && !nowWrapDone) {
+        nowWrapDone = true;
+        for (const [sel, name] of [
+          [".pap .pap-h", "島だよりの0件の見出し"],
+          [".pap .pap-note", "島だよりの0件の添え書き"],
+        ]) {
+          for (const w of SWEEP) {
+            await p.setViewportSize({ width: w, height: 900 });
+            await p.waitForTimeout(150);
+            const lines = await readLines(p, sel);
+            if (!lines) { nowBad.push(`${name} が ${w}px で見つからない`); continue; }
+            nowWrapRead++;
+            const head = lines.slice(1).filter((l) => BADHEAD.test(l));
+            const thin = lines.filter((l) => [...l].length <= 3);
+            console.log(`  ${!head.length && !thin.length ? "○" : "×"} ${String(w).padStart(4)}px ${name}  ${lines.map((l) => `「${l}」`).join(" / ")}`);
+            for (const l of head) nowBad.push(`${name} ${w}px: 行が「${l}」で始まっている`);
+            for (const l of thin) nowBad.push(`${name} ${w}px: 「${l}」だけの行が出ている`);
+          }
+        }
+        await p.setViewportSize({ width: 390, height: 844 });
+      }
+      await ctx.close();
+    }
+  }
+
+  // 8. 見出しが日で変わらない／時制も件数も名乗らない
+  console.log(`\n■ 島だよりの見出し ${nowHeads.size}種類`);
+  for (const [t, where] of nowHeads) {
+    const tense = tenseOf(t);
+    const count = COUNTS.test(t);
+    console.log(`  ${!tense && !count ? "○" : "×"} 「${t}」 ${[...where].join("・")}`);
+    if (tense) nowBad.push(`島だよりの見出し「${t}」が時制を名乗っている（要る: ${tense}）`);
+    if (count) nowBad.push(`島だよりの見出し「${t}」が件数を名乗っている`);
+  }
+  /* **2種類まで。** 「やること」と「いまはありません」の2つ以外に増えていたら、
+     どこかで日によって字が変わっている。 */
+  if (nowHeads.size > 2) {
+    nowBad.push(`島だよりの見出しが ${nowHeads.size}種類ある（日で変わる字が混ざっている）`);
+  }
+
+  // 10. 焼いた HTML に `M/D` が1つも無い
+  const DIST = fromRoot(process.env.DIST || "site/.next-verify");
+  const baked = join(DIST, "server", "app", "now.html");
+  let html = "";
+  try {
+    html = readFileSync(baked, "utf8");
+  } catch {
+    try {
+      html = readFileSync(join(DIST, "now.html"), "utf8");
+    } catch {
+      nowBad.push(`焼いた /now.html を ${DIST} から読めません（DIST を渡してください）`);
+    }
+  }
+  if (html) {
+    /* 読むのは**紙の中だけ。** 面ぜんぶを見ると、スクリプトの中の
+       版の番号やサイズ（`390/844`）まで日付に見える。 */
+    const paper = [...html.matchAll(/<div class="pap"[\s\S]*?<\/div>/g)].map((m) => m[0]).join("");
+    const txt = (paper || html).replace(/<[^>]*>/g, " ");
+    const hit = mdIn(txt);
+    console.log(`\n■ 焼いた /now.html の紙に日付 ${hit.length}件 ${hit.length ? `「${hit.join(" ")}」` : ""}`);
+    if (hit.length) {
+      nowBad.push(`焼いた /now.html に日付 ${hit.join(" ")} が入っている（焼いた字は動かない）`);
+    }
+  }
+}
+
 await b.close();
 
 // ------------------------------------------------------------------ 読む
@@ -266,7 +466,16 @@ if (pagesRead < DAYS.length * PAGES.length) {
   process.exit(2);
 }
 
-const bad = [...wrapBad];
+const bad = [...wrapBad, ...nowBad];
+console.log(`\n見た島だより ${nowRead} / ${DAYS.length * 2}（${DAYS.length}日 × 2通り）`);
+if (nowRead < DAYS.length * 2) {
+  console.error("島だよりを開けなかった日があります。数える前に止めます");
+  process.exit(2);
+}
+if (nowWrapRead < SWEEP.length * 2) {
+  console.error(`島だよりの0件の字を、幅 ${nowWrapRead}/${SWEEP.length * 2} しか読めませんでした`);
+  process.exit(2);
+}
 if (!wrapRead) {
   console.error("行の折れ方を1つも読めませんでした");
   process.exit(2);
