@@ -418,6 +418,41 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 豚の貯金箱の**バーの高さ** | Firestore `islandFundGoals` のいま走っている1件 → `island/state.fund.box.goal.yen` | — | **落ち先を持たない**（2026-09-24。#639）。前は `islandGoal` の `targetAmount` へ落ちていたが、あちらは GAS の表を写した凍った数字で、人が直せる場所ではない。台帳の目標が空なら「目標は無い」（0）が正しい答え |
 | 誰かのアイコン | YouTube | `islandChannels.photo` / `islandUsers.photo` | YouTube が正。1日500人ずつ追いかける |
 
+### 3.3b 字の長さが、画面とサーバーの2か所に在る（2026-10-13）
+
+**正はサーバー**（`functions/src/islandApi.ts` の `MAX_*`）。
+画面が同じ数字を持っていたところが **15か所**あり、**8か所は
+「サーバー側の◯◯と同じ」とコメントに書いてあった**——人は気づいていて、
+**ずれたら赤くなるものだけが無かった。**
+
+止め金を15本足すのではなく、**2か所であることをやめる。**
+`GET /state` に `limits` を足して、画面はそこから受ける
+（先例は `/stampline/mine`。**15か所のうち、正しい形はそこ1つだけだった**）。
+
+**一度に全部は動かさない。** 動かしたのは3か所:
+
+| 動かした | 画面 | サーバー |
+| --- | --- | --- |
+| ○ | `live/Notes.tsx` 付箋の本文 | `MAX_NOTE_LEN`（120） |
+| ○ | `live/Notes.tsx` 付箋のリンク | `MAX_LINK_LEN`（2048） |
+| ○ | `live/Notes.tsx` 付箋への返信 | `MAX_REPLY_LEN`（300） |
+
+**残っているのは 30か所**（`grep -rn 'maxLength=' site/components site/app`）。
+口は `name` と `planTitle` も返しているので、次の波はそこから:
+
+| 残り | 画面 | サーバー |
+| --- | --- | --- |
+| | `live/Notes.tsx:776` / `live/IslandMe.tsx:113` （20） | `MAX_NAME_LEN` |
+| | `live/NextPlanEditor.tsx:481`（60） | `MAX_PLAN_TITLE` |
+| | `me/FundDesk.tsx` 3か所（31 / 60 / 40） | `WHO_MAX` / `TITLE_MAX` / `LABEL_MAX`（`fundDesk.ts`） |
+| | `me/TripTools.tsx` 3か所・`me/OwnerCare.tsx` 2・`me/DonorLinks.tsx` 3・`me/AlertBoxBox.tsx` 2・`me/RouletteBox.tsx` 2・`me/Characters.tsx` 1・`me/PlanVideos.tsx` 1・`nordic/PhotoPost.tsx` 1・`live/NextPlanEditor.tsx` 6 | **サーバー側が裸の数字**（`clean(…, 60)` のような行が66か所。名前の付いた定数は39か所） |
+
+**下の段は、口に乗せる前にサーバー側で名前を付けるのが先。**
+名前の無い数字を口から配っても、`limits.nanika` のような名無しの欄が増えるだけで、
+どこが正かは読めるようにならない。
+
+---
+
 ### 3.4 キャラクターは誰のものか — **結ぶ材料がどこにあるか**
 
 **正は `islandCharacter.channelId`。** 人の同一性はチャンネルID（2.1）なので、

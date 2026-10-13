@@ -3195,6 +3195,30 @@ export const islandApi = onRequest(
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
              (`site/content/plans.ts` の planPhase)。 */
           nordic: state.nordic ?? null,
+          /* **字の長さの上限。ここが正。**（2026-10-13）
+             画面は長いあいだ同じ数字を自分で持っていた
+             （`Notes.tsx` の `const MAX = 120;` に「サーバー側の
+             `MAX_NOTE_LEN` と同じ」と書き添えて）。**同じ事実が2か所に
+             在って、ずれても赤くなるものが無い**形が、島じゅうに15か所あった。
+
+             止め金を15本足すのではなく、**2か所であることをやめる。**
+             先例は `/stampline/mine` で、あちらは返事に `max` と `maxLen` を
+             乗せていて、画面は1つも数字を持っていない。
+
+             `/state` は誰でも叩ける口で CDN にも焼くが、ここに乗るのは
+             **定数だけ**。人を指す値は1つも入らない。 */
+          limits: {
+            /** 付箋の本文（`MAX_NOTE_LEN`） */
+            note: MAX_NOTE_LEN,
+            /** 付箋への返信（`MAX_REPLY_LEN`） */
+            reply: MAX_REPLY_LEN,
+            /** 島に出す名前（`MAX_NAME_LEN`） */
+            name: MAX_NAME_LEN,
+            /** 付箋に貼るリンク（`MAX_LINK_LEN`） */
+            link: MAX_LINK_LEN,
+            /** 企画の題（`MAX_PLAN_TITLE`） */
+            planTitle: MAX_PLAN_TITLE,
+          },
           more: {
             notes: notes.more ? notes.next : null,
           },
