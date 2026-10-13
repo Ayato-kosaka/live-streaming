@@ -196,6 +196,82 @@ const ISLAND_THEMES = ["georgia", "nordic", "desert"];
 const MAX_WEEK_LINE = 120;
 const MAX_WEEK_LINES = 8;
 
+/** 書き置きの行の中の `M/D`。全角のスラッシュも拾う（スマホの入力で混ざる）。 */
+const WEEK_MD = /(\d{1,2})[/／](\d{1,2})/g;
+
+/**
+ * `M/D` を、**今日にいちばん近い年**の日付として読む（`YYYY-MM-DD`）。
+ *
+ * 欄にあるのは `9/27` までで、年は無い。12/30 を 1/3 に読んだら去年の話、
+ * 1/10 を 12/28 に読んだら来年の話。年をまたぐ日にどちらとも読めるので、
+ * 前後1年のうち今日にいちばん近いものを採る。
+ *
+ * **画面側（`site/lib/week.ts` の `readMd`）と同じ読み方。** 片方だけ直すと、
+ * 口が返した行を画面が落とす（またはその逆）という食い違いが出る。
+ *
+ * @param {number} m 月
+ * @param {number} d 日
+ * @param {number} today きょう（UTC の通し番号。ミリ秒）
+ * @return {number|null} 日付（UTC の通し番号）。日付として在りえなければ null
+ */
+function weekMdAt(m: number, d: number, today: number): number | null {
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const y0 = new Date(today).getUTCFullYear();
+  let best: number | null = null;
+  for (const y of [y0 - 1, y0, y0 + 1]) {
+    const t = Date.UTC(y, m - 1, d);
+    // 月をまたいだ日（2/30 など）は、その月に無いので採らない
+    if (new Date(t).getUTCMonth() !== m - 1) continue;
+    if (best === null || Math.abs(t - today) < Math.abs(best - today)) best = t;
+  }
+  return best;
+}
+
+/**
+ * 書き置き（`current.week`）から、**もう過ぎた日の行を落として返す。**
+ *
+ * あやと（2026-10-13 / #808）:
+ * 「これ、わたし打つの面倒なので仕組みを見直してください。
+ *  最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
+ *  おかしい**」
+ *
+ * この欄はあやとが旅先からスマホで打つ。旅のあいだは電波の細いところを
+ * 通るので、何日も打ち直せない日が続く。**けれど「9/27 が過ぎたこと」は
+ * 機械が知っている。** 知っていることを人に消させていたのが間違いだった
+ * （`python/upkeep_watch.py` が毎晩「過ぎた行が2行あります」と
+ *  あやとを呼んでいた）。
+ *
+ * **落とすのは返すときだけ。書類は書き換えない。** `current` は島の記録で、
+ * 本人が `/me` の「いまどこ」から直す欄。こちらが黙って消すと、
+ * 打った本人の控えと島の中身が食い違う。
+ *
+ * **画面の側（`site/lib/week.ts` の `weekAhead`）も同じことをしている。**
+ * 二重だが、どちらも要る——口は CDN に最大5分とどまるので日またぎの数分は
+ * 古い答えを配るし、口が落ちた日は画面が焼き込みの値で動く。
+ * **日付の判断を持つ側が1つだと、その1つが止まった日に過去が出る。**
+ *
+ * 日付を1つも持たない行（「回る先はこれから」）は**残す。**
+ * 1行に日付が2つあるとき（「9/27〜10/2」）は**いちばん遅いほう**で決める。
+ *
+ * @param {unknown} week 書類に入っている書き置き（何が来るか分からない）
+ * @param {string} todayIso きょう（JST の `YYYY-MM-DD`）
+ * @return {string[]|null} まだ過ぎていない行。元が配列でなければ null
+ */
+function weekAhead(week: unknown, todayIso: string): string[] | null {
+  if (!Array.isArray(week)) return null;
+  const today = Date.parse(`${todayIso}T00:00:00Z`);
+  if (Number.isNaN(today)) return week.map((x) => String(x));
+  return week.map((x) => String(x)).filter((row) => {
+    let last: number | null = null;
+    for (const hit of row.matchAll(WEEK_MD)) {
+      const t = weekMdAt(Number(hit[1]), Number(hit[2]), today);
+      if (t === null) continue;
+      if (last === null || t > last) last = t;
+    }
+    return last === null || last >= today;
+  });
+}
+
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
    静的書き出しのページに Doneru の goal key を焼き込むことになるので、
@@ -3179,8 +3255,14 @@ export const islandApi = onRequest(
            `notes` は今までどおり配列で返して、そこに「まだ古いものが
            残っている」を添える。画面はこれを見て `/notes?before=` の
            続きを読める。**黙って切らない**のがこの役目。 */
+        /* **過ぎた日の行は、口が落としてから返す**（#808）。
+           書類は触らない——落とすのは返す字だけ。これで画面も、
+           あやとが打つ画面（`/me` の「いまどこ」）も、見張り
+           （`python/upkeep_watch.py`）も、**同じ答えを見る。** */
+        const cur = (state.current ?? null) as Json | null;
+        const ahead = cur ? weekAhead(cur.week, jstDay(Date.now())) : null;
         res.json({
-          current: state.current ?? null,
+          current: cur && ahead ? {...cur, week: ahead} : cur,
           stats: state.stats ?? null,
           notes: notes.items,
           residents,
