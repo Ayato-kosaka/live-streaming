@@ -356,10 +356,46 @@ export const CAL_SHOT_H = 760;
  * 差し替えは元絵を置き換えて道具を回すだけで、ここは触らない。
  */
 export const CAL_MONTHS: CalMonth[] = [
-  { month: 1, memory: { year: 2026, month: 1 }, picks: [] },
-  { month: 2, memory: { year: 2026, month: 2 }, picks: [] },
-  { month: 3, memory: { year: 2026, month: 3 }, picks: [] },
-  { month: 4, memory: { year: 2026, month: 4 }, picks: [] },
+  {
+    month: 1,
+    memory: { year: 2026, month: 1 },
+    picks: [
+      {
+        src: "/goods/calendar/01-a.webp",
+        alt: "赤い十字の旗と白い衣装の行列が進む石畳を、スマホを掲げて走って追いかけるあやとの後ろ姿。青空と雪の山、まわりに島の住人たち",
+      },
+    ],
+  },
+  {
+    month: 2,
+    memory: { year: 2026, month: 2 },
+    picks: [
+      {
+        src: "/goods/calendar/02-a.webp",
+        alt: "夕日の黒海が見えるホステルの台所で、ポテトを揚げるあやとの後ろ姿。台をのぞく男の子と、テーブルのお母さん、まわりに島の住人たち",
+      },
+    ],
+  },
+  {
+    month: 3,
+    memory: { year: 2026, month: 3 },
+    picks: [
+      {
+        src: "/goods/calendar/03-a.webp",
+        alt: "時計塔と花の咲く旧市街のカフェで、メレンゲが山盛りのクロワッサンにかぶりつくサングラスのあやと。まわりに島の住人たち",
+      },
+    ],
+  },
+  {
+    month: 4,
+    memory: { year: 2026, month: 4 },
+    picks: [
+      {
+        src: "/goods/calendar/04-a.webp",
+        alt: "左は夜の川と光る橋のそばで猫に手を振るあやと、右は昼の湖のほとりで料理を食べるあやと。まわりに島の住人たち",
+      },
+    ],
+  },
   {
     month: 5,
     memory: { year: 2026, month: 5 },
@@ -370,8 +406,30 @@ export const CAL_MONTHS: CalMonth[] = [
       },
     ],
   },
-  { month: 6, memory: { year: 2026, month: 6 }, picks: [] },
-  { month: 7, memory: { year: 2026, month: 7 }, picks: [] },
+  {
+    month: 6,
+    memory: { year: 2026, month: 6 },
+    picks: [
+      {
+        src: "/goods/calendar/06-a.webp",
+        alt: "ゴンドラの中から、緑の街と川と丘の上の像を指さすサングラスのあやと。となりのゴンドラに島の住人たち",
+      },
+    ],
+  },
+  {
+    month: 7,
+    memory: { year: 2026, month: 7 },
+    picks: [
+      {
+        src: "/goods/calendar/07-a.webp",
+        alt: "祭りの屋台で鉢巻きをしてイワシを焼くあやと。冷やし中華とパエリアが並び、まわりに島の住人たち",
+      },
+      {
+        src: "/goods/calendar/07-b.webp",
+        alt: "空に大きなルーレット盤、湖へ飛び込むサングラスのあやと。水面に桃が浮かび、住人たちが乗っている",
+      },
+    ],
+  },
   {
     month: 8,
     memory: { year: 2026, month: 8 },
@@ -402,8 +460,26 @@ export const CAL_MONTHS: CalMonth[] = [
       },
     ],
   },
-  { month: 11, memory: { year: 2025, month: 11 }, picks: [] },
-  { month: 12, memory: { year: 2025, month: 12 }, picks: [] },
+  {
+    month: 11,
+    memory: { year: 2025, month: 11 },
+    picks: [
+      {
+        src: "/goods/calendar/11-a.webp",
+        alt: "オレンジの夕日が沈む小石の浜で、流木に座ってノートPCを開くあやとの後ろ姿。奥に光りはじめた高層ビル、まわりに島の住人たち",
+      },
+    ],
+  },
+  {
+    month: 12,
+    memory: { year: 2025, month: 12 },
+    picks: [
+      {
+        src: "/goods/calendar/12-a.webp",
+        alt: "大雨の夜の広場で、像の柱と花火を背に跳び上がるサングラスのあやと。横一列で一緒に跳ぶ島の住人たち",
+      },
+    ],
+  },
 ];
 
 /** 絵のある月だけ。**面はここだけを並べる**（絵の無い月の箱は出さない） */
