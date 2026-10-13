@@ -234,9 +234,12 @@
 }
 .akd-view:active { transform: translateY(4px); box-shadow: none; }
 
-/* 月の送り。**カードのある月だけ**なので、端では札そのものが出ない
+/* 題（「カレンダー」）のすぐ下。**左に来た月・いまの月・右に行く月**を1行で。
+   月の送りはカードのある月だけなので、端では札そのものが出ない
    （押せない札を置かない。`docs/island-design.md` 3章の3）。
-   題の右に置くと札の上に乗るので、題の下に1段取る。 */
+   札を題の横に並べる手も測ったが、**320px では入らない**
+   （題 142px ＋ 札2枚 180px ＝ 322px に対して、紙の中は 262px）。
+   だから段は分けたまま、**その段の真ん中に月を置いて仕事をさせる。** */
 .akd-cal-nav {
   display: flex;
   align-items: center;
@@ -244,12 +247,23 @@
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
 }
+/* いま見ている月。**押せないので、厚みも枠も付けない**（3章の3） */
+.akd-cal-now {
+  flex: 1 1 auto;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ink);
+}
 .akd-cal-go {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: var(--sp-1);
   min-height: 48px;
-  padding: 0 var(--sp-3);
+  /* 320px で「9月 ＋ いまの月 ＋ 11月」が1行に収まる太さ（実測 250 ≦ 262） */
+  padding: 0 var(--sp-2);
   border: var(--bw-1) solid var(--frame-dark);
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
@@ -261,6 +275,9 @@
 }
 .akd-cal-go:active { transform: translateY(4px); box-shadow: none; }
 
+/* 題と送りのあいだを詰める。**紙の上から曜日まで 109px** あって、
+   そのうち 16px がここだった（390px の実測） */
+.akd-cal > h2 { margin-bottom: var(--sp-2); }
 /* 7列。**曜日の頭文字と、日のマス。**
 
    **紙の余白のぶん、横へ広げる**（`--pp-x` の負のマージン）。7列で

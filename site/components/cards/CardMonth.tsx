@@ -92,11 +92,16 @@ export default function CardMonth({
   return (
     <>
       <section className="panel paper akd-cal">
-        <h2>
-          {年}年{月}月
-        </h2>
+        {/* **題は「カレンダー」で、月は下の段の真ん中。**
+            前は題が「2026年10月」で、下の段には送りの札が片方だけ
+            ぽつんと乗っていた。390px で**紙の上から曜日の行まで 109px**、
+            その 48px が「札1枚と、あとは地」だった（実測）。
+            月をその段の真ん中に置くと、段が仕事をする——
+            **左に来た月・いまの月・右に行く月**が1行で読める。 */}
+        <h2>カレンダー</h2>
         {/* 月の送り。**カードのある月だけ**なので、端では札を出さない
-            （押せない札を置かない。`docs/island-design.md` 3章の3） */}
+            （押せない札を置かない。`docs/island-design.md` 3章の3）。
+            札が片方しか無くても、空の `<span>` で真ん中を保つ。 */}
         <div className="akd-cal-nav">
           {at < months.length - 1 ? (
             <button
@@ -113,6 +118,9 @@ export default function CardMonth({
           ) : (
             <span />
           )}
+          <b className="akd-cal-now">
+            {年}年{月}月
+          </b>
           {at > 0 ? (
             <button
               type="button"

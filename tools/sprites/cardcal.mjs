@@ -20,7 +20,8 @@
  *  5. **月の送りは、カードのある月だけ。** 送った先に必ず写真がある
  */
 import { chromium } from "playwright-core";
-import { mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { apply } from "./asme.mjs";
 import { offline } from "./route.mjs";
@@ -32,6 +33,49 @@ if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 const missing = [];
 const bad = [];
+
+/* ---- 本番の写真を落として、マスに敷く ----
+   **差し込み（`asme.mjs`）の写真は、写真IDを白字で描いた1色の板。**
+   寸法と枚数は測れるが、**撮った絵を人が見て判断できない**
+   （2026-10-13 に「マスに知らない文字列が出ている」と報告が上がった。
+   出ていたのは差し込みが自分で描いた写真IDで、本番では本物の写真）。
+   カレンダーは**小さなマスに写真が写るか**が見どころなので、ここだけは
+   `cardwall.mjs` と同じく本番の写真を curl で落として敷く。
+   **本番には1バイトも書かない**（読むのは公開の `GET /cards` だけ）。
+   落とせなければ差し込みのままで続ける——測るぶんには困らない。 */
+const CACHE = process.env.CACHE || "/tmp/cardwall-photos";
+const PROD = "https://live-streaming-d3cac.web.app/island-api/cards";
+const pool = (() => {
+  try {
+    mkdirSync(CACHE, { recursive: true });
+    const jar = join(CACHE, "cards.json");
+    if (!existsSync(jar)) {
+      execFileSync("curl", ["-sS", "-o", jar, PROD], { stdio: ["ignore", "ignore", "inherit"] });
+    }
+    const got = JSON.parse(readFileSync(jar, "utf8")).cards ?? [];
+    const per = new Map();
+    for (const c of got) {
+      if (c.h <= c.w) continue;
+      if (!per.has(c.photoId)) per.set(c.photoId, c);
+    }
+    const out = [];
+    for (const c of [...per.values()].slice(0, 6)) {
+      const file = join(CACHE, `${c.photoId}.jpeg`);
+      if (!existsSync(file)) {
+        try {
+          execFileSync("curl", ["-sS", "-o", file, c.url], { stdio: ["ignore", "ignore", "inherit"] });
+        } catch {
+          continue;
+        }
+      }
+      if (existsSync(file)) out.push(file);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+})();
+console.log(`本番の写真: ${pool.length}枚${pool.length ? "" : "（落とせず。差し込みの板のまま測ります）"}`);
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
@@ -48,6 +92,19 @@ for (const W of WIDTHS) {
   });
   await offline(ctx);
   await apply(ctx, {});
+  /* **`apply` のあとに登録する**（あとから登録した route が先に効く） */
+  if (pool.length) {
+    await ctx.route(/firebasestorage\.googleapis\.com/, async (r) => {
+      const m = /photos%2F([^.]+)\.jpe?g/.exec(r.request().url());
+      if (!m) return r.fallback();
+      let h = 0;
+      for (const ch of m[1]) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      return r.fulfill({
+        path: pool[h % pool.length],
+        headers: { "access-control-allow-origin": "*", "content-type": "image/jpeg" },
+      });
+    });
+  }
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("ayato-island-arrived", "1"));
   await p.goto(`http://localhost:${PORT}/cards.html`, { waitUntil: "networkidle" });
@@ -102,7 +159,7 @@ for (const W of WIDTHS) {
       大きさ: box ? [Math.round(box.width * 10) / 10, Math.round(box.height * 10) / 10] : null,
       はみ出し: Math.round(Math.max(0, grid.right - innerWidth) + Math.max(0, -grid.left)),
       薄め,
-      月: document.querySelector(".akd-cal h2")?.textContent ?? "",
+      月: document.querySelector(".akd-cal-now")?.textContent ?? "",
       紙: document.querySelector(".akd-day h2")?.textContent ?? "",
     };
   });
@@ -139,7 +196,7 @@ for (const W of WIDTHS) {
     await 送り.first().click();
     await p.waitForTimeout(600);
     const 先 = await p.evaluate(() => ({
-      月: document.querySelector(".akd-cal h2")?.textContent ?? "",
+      月: document.querySelector(".akd-cal-now")?.textContent ?? "",
       写真のある日: document.querySelectorAll(".akd-cal-day.is-has").length,
     }));
     console.log(`  送った先: ${JSON.stringify(先)}`);
