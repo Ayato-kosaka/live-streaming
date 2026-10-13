@@ -38,9 +38,16 @@
 | 5 | **島から人がまとめて抜けた晩は通る** | 正しい縮みを止めている（`characterBox.ts` が踏んだ形） |
 | 6 | **抜けた人と引けなかった人が混ざっても、引けなかったほうで決める** | 片方が片方を薄めている |
 | 7 | **口を叩いた終了コード**（通る＝0 / 止まる＝2）と、**止めた回は1文字も書かない** | 判定は正しいのに、書いてしまっている |
-| 8 | **焼いた形が、`rebake.yml` の `match` が数える形のままか**（グッズ＋`NO_GOODS`＝名簿） | あちらの正規表現が外れて、毎晩止まる／永遠に鳴れない |
 
 1 と 2 は**対**で見る。片方だけだと、何にでも止める関所でも通る。
+
+**焼いた形（`render()` が書く字）は、ここでは見ない。** `rebake.yml` の `match` が
+`suzuriGoods.ts` を字で数える（グッズの行と `NO_GOODS` の行）ので、書き方を変えると
+あちらが黙って0件を読むか、帳尻が合わずに毎晩止まる。**それを見ているのは
+`python/shrink_guard_selftest.py`**——2章が「ルールの正規表現がいまの焼き込みに
+当たるか」、3章が「何も壊していない写しが通るか」を、本番の焼き込みを種に当てる。
+**同じ正規表現の写しをここにも置かない**（`python/ts_read.py` の頭と同じ決め。
+写しが2つあると、片方だけ直した日に見ているものが違う）。
 
 ## 足を1本ずつ抜く（`BREAK`）
 
@@ -73,7 +80,6 @@ from __future__ import annotations
 import json
 import os
 import pathlib
-import re
 import subprocess
 import sys
 import tempfile
@@ -229,19 +235,6 @@ def main() -> int:
         code, after = _run(pairs, roster, baked_src)
         check(f"口を叩いたときの終了コード（{label}）", code, want)
         check(f"口を叩いたあと焼き込みが変わったか（{label}）", after != baked_src, changed)
-
-    # --- 8. 焼いた形が、`rebake.yml` の `match` が数える形のままか ----------
-    # あちらは `suzuriGoods.ts` を**字で**数える（`^\s{2}"[^"]+": "\d+",$` と
-    # `^\s{2}"[^"]+",$`）。`render()` の書き方を変えた日に、**向こうが黙って
-    # 0件を読む**（＝永遠に鳴れない）か、帳尻が合わなくなって**毎晩止まる**。
-    # どちらもこちらの変更で起きるので、こちらで当てる。
-    goods = re.findall(r'^ {2}"[^"]+": "\d+",$', baked_src, re.M)
-    spare = re.findall(r'^ {2}"[^"]+",$', baked_src, re.M)
-    check("関所の正規表現が、焼いたグッズに当たる", len(goods), len(baked))
-    check("関所の正規表現が、まだ無い人に当たる",
-          len(spare), len(roster) - len(baked))
-    check("グッズ＋まだ無い人＝名簿", len(goods) + len(spare), len(roster))
-    print(f"  帳尻: グッズ {len(goods)} ＋ まだ無い人 {len(spare)} ＝ 名簿 {len(roster)}")
 
     # --- 出す -------------------------------------------------------------
     for line in ok:
