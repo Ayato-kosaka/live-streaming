@@ -493,40 +493,59 @@ def attempt(rel: str, target: Path, make, why: str) -> dict:
 
 # ---- 並べて回さない --------------------------------------------------
 
+def _cmdline(pid_dir: Path) -> str:
+    """その pid が何を回しているか。**`ps` は使わない。**
+
+    前は `ps -eo pid,args` を読んでいた。これが CI でだけ外れた——
+    `ps` は**端末でないところへ出すと行を切る**版があり（既定 80 桁）、
+    `/opt/hostedtoolcache/Python/3.11.17/x64/bin/python3 <長い一時の道>` は
+    114 文字あって、見分けに使っている `_selftest.py` が切り落とされていた。
+    `ps` がそもそも入っていない箱もある（そのときは丸ごと空が返って、
+    **「誰も走っていない」と読めてしまう**）。
+
+    `/proc/<pid>/cmdline` は切られないし、外の道具も要らない。
+    """
+    try:
+        raw = (pid_dir / "cmdline").read_bytes()
+    except OSError:
+        return ""
+    return raw.replace(b"\0", b" ").decode("utf-8", "replace").strip()
+
+
 def busy() -> list[str]:
     """**この置き場で**ほかの見張りが走っていないか。走っていたら帰る。
 
     見るのは「同じファイルを読む相手」だけ。**worktree を切って並行で
-    作業するのがこのリポジトリのふつう**なので、`ps` の字だけで判じると
+    作業するのがこのリポジトリのふつう**なので、字だけで判じると
     別の置き場の相手にまで止められる（実際に止められた）。
     `/proc/<pid>/cwd` を見て、**この置き場の中にいる相手だけ**を数える。
     """
-    try:
-        r = subprocess.run(["ps", "-eo", "pid,args"], capture_output=True,
-                           text=True, timeout=30, check=False)
-    except (OSError, subprocess.TimeoutExpired):
-        return []
-    mine = {str(os.getpid()), str(os.getppid())}
     root = REPO.resolve()
+    mine = {os.getpid(), os.getppid()}
     out = []
-    for ln in r.stdout.splitlines()[1:]:
-        pid, _, args = ln.strip().partition(" ")
-        if pid in mine or "mutation_drill" not in args and not any(
-                h in args for h in BUSY_HINTS):
+    for pid_dir in Path("/proc").glob("[0-9]*"):
+        try:
+            pid = int(pid_dir.name)
+        except ValueError:
             continue
-        if "mutation_drill" in args:
+        if pid in mine:
+            continue
+        args = _cmdline(pid_dir)
+        if not args or "mutation_drill" in args:
+            continue
+        if not any(h in args for h in BUSY_HINTS):
             continue
         # 包んでいるシェルは数えない（中の `python` / `node` のほうで出る）
         if args.startswith(("/bin/bash", "/bin/sh", "bash ", "sh ")) \
                 or "shell-snapshots" in args:
             continue
         try:
-            cwd = Path(os.readlink(f"/proc/{pid}/cwd")).resolve()
+            cwd = Path(os.readlink(str(pid_dir / "cwd"))).resolve()
         except OSError:
             continue
         if cwd == root or root in cwd.parents:
-            out.append(f"pid {pid}  {args.strip()[:80]}")
-    return out
+            out.append(f"pid {pid}  {args[:90]}")
+    return sorted(out)
 
 
 def holder() -> list[str]:
@@ -536,14 +555,17 @@ def holder() -> list[str]:
     始めることになる（実際に1度そうなった）。pid と何を回しているかまで出す。
     """
     out = []
-    want = str(LOCK)
+    # **道は解いてから比べる。** `/proc/<pid>/fd/N` の readlink は
+    # 解いた道を返すので、`/tmp` が symlink の箱だと字が食い違う
+    try:
+        want = str(LOCK.resolve())
+    except OSError:
+        want = str(LOCK)
     for pid in Path("/proc").glob("[0-9]*"):
         try:
             for fd in (pid / "fd").iterdir():
                 if os.readlink(str(fd)) == want:
-                    cmd = (pid / "cmdline").read_bytes().replace(b"\0", b" ")
-                    out.append(f"pid {pid.name}  "
-                               f"{cmd.decode('utf-8', 'replace').strip()[:90]}")
+                    out.append(f"pid {pid.name}  {_cmdline(pid)[:90]}")
                     break
         except OSError:
             continue

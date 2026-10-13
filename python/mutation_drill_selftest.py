@@ -53,6 +53,13 @@ if BREAK == "plan":
 
 
 def ok(name: str, got, want) -> None:
+    """1つ確かめる。
+
+    **落ちたら `::error::` を出す。** これが無いと、CI の要約には
+    「`mutation_drill_selftest.py`（終了コード 1）」としか出ず、
+    **どの足が落ちたのかが1文字も読めない**（2026-10-13 に、手元で緑・
+    CI で赤のまま1往復むだにした）。ほかの見張りは出している。
+    """
     global CHECKED
     CHECKED += 1
     if got == want:
@@ -60,6 +67,9 @@ def ok(name: str, got, want) -> None:
         return
     FAILED.append(name)
     print(f"  ✕ {name}: {got}（欲しかったのは {want}）")
+    # 表の区切りと改行は、GitHub の注記では1行に畳む
+    flat = f"{name}: 出た={got!r} / 欲しかったのは={want!r}"
+    print("::error::" + " ".join(str(flat).split())[:900])
 
 
 print("[1] 道具の中身（`--self-drill`）")
@@ -154,7 +164,14 @@ print("[4] 混んでいたら当てない")
 import time  # noqa: E402
 
 with tempfile.TemporaryDirectory() as tmp:
-    probe = Path(tmp) / "_drill_busy_probe_selftest.py"
+    # **名前をわざと長くしてある。**
+    # 前は `ps -eo pid,args` を読んでいて、**端末でないところへ出すと
+    # 80桁で切る**版があった。CI の道（`/opt/hostedtoolcache/…/python3` ＋
+    # 一時の道）は 114 文字あり、見分けに使う `_selftest.py` が切れて
+    # 「誰も走っていない」と読めていた。手元の道は短くて切れないので緑だった。
+    # **どの箱でも 80 桁を超える名前**にして、同じ外し方が戻ってきたら
+    # ここで落ちるようにする
+    probe = Path(tmp) / ("_drill_busy_probe_" + "x" * 90 + "_selftest.py")
     probe.write_text("import time\ntime.sleep(20)\n", encoding="utf-8")
     child = subprocess.Popen([sys.executable, str(probe)], cwd=MD.REPO,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -166,8 +183,16 @@ with tempfile.TemporaryDirectory() as tmp:
             if any("_drill_busy_probe_selftest.py" in s for s in seen):
                 break
             time.sleep(0.25)
-        ok("同じ置き場で走っている見張りを拾える",
-           any("_drill_busy_probe_selftest.py" in s for s in seen), True)
+        hit = any("_drill_busy_probe_" in s for s in seen)
+        if not hit:
+            # 落ちたときに**何が見えていたか**を出す。出さないと、
+            # CI で落ちた人が「拾えない」としか分からない
+            print(f"     （`busy()` が見たもの {len(seen)}件 / "
+                  f"当てた名前の長さ {len(str(probe))} 文字）")
+            for s in seen[:5]:
+                print(f"       {s}")
+        ok("同じ置き場で走っている見張りを拾える（長い名前でも切れない）",
+           hit, True)
         # **別の置き場の相手は拾わない**（worktree を切って並行で作業するので）
         other = subprocess.Popen([sys.executable, str(probe)], cwd=tmp,
                                  stdout=subprocess.DEVNULL,
@@ -194,6 +219,8 @@ print("[6] 本物の置き場で、当てる先を並べられる（分母）")
 rows = MD.plan(None, [])
 if not rows:
     print("✕ 当てる先を1本も並べられなかった。**数字は1つも出さない**")
+    print("::error::当てる先を1本も並べられなかった"
+          "（`selftest_runner.py --list --json` が読めていない）")
     sys.exit(2)
 hit = [r for r in rows if not r.get("skip")]
 print(f"  ○ 並べた {len(rows)}本 / そのうち当てられる {len(hit)}本")
@@ -222,11 +249,14 @@ if not BREAK:
 print()
 if CHECKED == 0:
     print("✕ 1つも数えなかった。**「通りました」とは言わない**")
+    print("::error::対照の道具の見張りが、1つも数えなかった")
     sys.exit(2)
 if FAILED:
     print(f"✕ {CHECKED}件みて、{len(FAILED)}件 落ちた")
     for n in FAILED:
         print(f"   - {n}")
+    print("::error::対照の道具の見張りが "
+          f"{len(FAILED)}件 落ちた: " + " / ".join(FAILED)[:800])
     sys.exit(1)
 print(f"○ {CHECKED}件ぜんぶ通った")
 sys.exit(0)
