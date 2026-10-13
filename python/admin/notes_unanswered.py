@@ -18,11 +18,25 @@
 
 **件数と日数だけ。** このリポジトリは公開で、Actions のログも誰でも読める。
 付箋の本文・名乗り・書類ID・uid・cid は1文字も出さない。
+
+Actions から回したときは、**同じ数を `::notice::` でも出す。**
+生のログは外の置き場から配られていて、手元の道具では読めないことがある
+（`gh` が別ホストへの転送を追わない）。注記は run に残るので、
+**押した人も、あとから数えに来た人も、同じ数を読める。**
 """
 
+import os
 import time
 
 from _fs import args, db, log
+
+
+def notice(line: str) -> None:
+    """Actions の run に残す注記。**数と日数しか渡さない。**"""
+    log.info("%s", line)
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        print(f"::notice::{line}", flush=True)
+
 
 # 口と同じ蓋（`islandApi.ts` の `NOTES_SCAN_CAP`）。当たったら数が小さく出る
 SCAN_CAP = 3000
@@ -90,10 +104,9 @@ def main() -> None:
         if isinstance(at, (int, float)) and (oldest is None or at < oldest):
             oldest = at
 
-    for k, n in out.items():
-        log.info("%-18s %4d", k, n)
+    notice(" / ".join(f"{k} {n}" for k, n in out.items()))
     if oldest:
-        log.info("いちばん古い1枚: %.0f 日前", (now - oldest) / 86400000)
+        notice(f"まだ返していない1枚でいちばん古いのは {(now - oldest) / 86400000:.0f} 日前")
     if a.get("quiet") is not True:
         log.info(
             "口の答えと突き合わせる: GET /island-api/stickies/unanswered?n=1（あやとだけ）",
