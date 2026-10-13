@@ -139,9 +139,10 @@ const FUND_PAGE = 30;
 const FUND_PAGE_MAX = 60;
 
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
-   **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
-   画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
-   `/nordic` はまだこちらを読んでいるので、消すのは移り終わってから。 */
+   **正は `islandStreamEventImage`**(#202)。
+   2026-10-13 に、残っていた2本のうち**読みと書きを両方やめた。**
+   ここに残るのは**消すときだけ**——旧に在る行を道連れにするため。
+   入れ物そのものを落とすのは、旧の行が0になってから。 */
 const NPHOTOS = db.collection("nordicPhotos");
 /* **`nordicDays` はもう読まない**(#202)。その日いた人は台帳
    (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
@@ -194,6 +195,82 @@ const ISLAND_THEMES = ["georgia", "nordic", "desert"];
    別の行まで書き換わる。 */
 const MAX_WEEK_LINE = 120;
 const MAX_WEEK_LINES = 8;
+
+/** 書き置きの行の中の `M/D`。全角のスラッシュも拾う（スマホの入力で混ざる）。 */
+const WEEK_MD = /(\d{1,2})[/／](\d{1,2})/g;
+
+/**
+ * `M/D` を、**今日にいちばん近い年**の日付として読む（`YYYY-MM-DD`）。
+ *
+ * 欄にあるのは `9/27` までで、年は無い。12/30 を 1/3 に読んだら去年の話、
+ * 1/10 を 12/28 に読んだら来年の話。年をまたぐ日にどちらとも読めるので、
+ * 前後1年のうち今日にいちばん近いものを採る。
+ *
+ * **画面側（`site/lib/week.ts` の `readMd`）と同じ読み方。** 片方だけ直すと、
+ * 口が返した行を画面が落とす（またはその逆）という食い違いが出る。
+ *
+ * @param {number} m 月
+ * @param {number} d 日
+ * @param {number} today きょう（UTC の通し番号。ミリ秒）
+ * @return {number|null} 日付（UTC の通し番号）。日付として在りえなければ null
+ */
+function weekMdAt(m: number, d: number, today: number): number | null {
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const y0 = new Date(today).getUTCFullYear();
+  let best: number | null = null;
+  for (const y of [y0 - 1, y0, y0 + 1]) {
+    const t = Date.UTC(y, m - 1, d);
+    // 月をまたいだ日（2/30 など）は、その月に無いので採らない
+    if (new Date(t).getUTCMonth() !== m - 1) continue;
+    if (best === null || Math.abs(t - today) < Math.abs(best - today)) best = t;
+  }
+  return best;
+}
+
+/**
+ * 書き置き（`current.week`）から、**もう過ぎた日の行を落として返す。**
+ *
+ * あやと（2026-10-13 / #808）:
+ * 「これ、わたし打つの面倒なので仕組みを見直してください。
+ *  最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
+ *  おかしい**」
+ *
+ * この欄はあやとが旅先からスマホで打つ。旅のあいだは電波の細いところを
+ * 通るので、何日も打ち直せない日が続く。**けれど「9/27 が過ぎたこと」は
+ * 機械が知っている。** 知っていることを人に消させていたのが間違いだった
+ * （`python/upkeep_watch.py` が毎晩「過ぎた行が2行あります」と
+ *  あやとを呼んでいた）。
+ *
+ * **落とすのは返すときだけ。書類は書き換えない。** `current` は島の記録で、
+ * 本人が `/me` の「いまどこ」から直す欄。こちらが黙って消すと、
+ * 打った本人の控えと島の中身が食い違う。
+ *
+ * **画面の側（`site/lib/week.ts` の `weekAhead`）も同じことをしている。**
+ * 二重だが、どちらも要る——口は CDN に最大5分とどまるので日またぎの数分は
+ * 古い答えを配るし、口が落ちた日は画面が焼き込みの値で動く。
+ * **日付の判断を持つ側が1つだと、その1つが止まった日に過去が出る。**
+ *
+ * 日付を1つも持たない行（「回る先はこれから」）は**残す。**
+ * 1行に日付が2つあるとき（「9/27〜10/2」）は**いちばん遅いほう**で決める。
+ *
+ * @param {unknown} week 書類に入っている書き置き（何が来るか分からない）
+ * @param {string} todayIso きょう（JST の `YYYY-MM-DD`）
+ * @return {string[]|null} まだ過ぎていない行。元が配列でなければ null
+ */
+function weekAhead(week: unknown, todayIso: string): string[] | null {
+  if (!Array.isArray(week)) return null;
+  const today = Date.parse(`${todayIso}T00:00:00Z`);
+  if (Number.isNaN(today)) return week.map((x) => String(x));
+  return week.map((x) => String(x)).filter((row) => {
+    let last: number | null = null;
+    for (const hit of row.matchAll(WEEK_MD)) {
+      const t = weekMdAt(Number(hit[1]), Number(hit[2]), today);
+      if (t === null) continue;
+      if (last === null || t > last) last = t;
+    }
+    return last === null || last >= today;
+  });
+}
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -2205,10 +2282,9 @@ function picShape(v: unknown): PicShape | undefined {
 }
 
 /* ---- 企画に付く画像(#202) ----
-   旧 `nordicPhotos`。**書く口は当面2つ動かす。**
-   旅で毎日使っているものを出発直前に作り替えたくないので、
-   `POST /nordic/photos` はそのまま残して、中で両方に書く。
-   画面が新しい口へ移ったら、古いほうを畳む。 */
+   旧 `nordicPhotos` の行き先。**2026-10-13 に1本にした。**
+   `POST /nordic/photos` という口の名前はそのまま（画面を触らずに済む）で、
+   中で触るのは `islandStreamEventImage` だけ。 */
 
 /** 画像に添える一言。旧 `MAX_PHOTO_NOTE` と同じ。 */
 const IMAGE_NOTE = MAX_PHOTO_NOTE;
@@ -2378,12 +2454,19 @@ async function saveEventImage(
     createdAt: at,
     updatedAt: at,
   };
-  /* **古いほうにも同じ書類IDで書く。** 画面が切り替わってから畳む。
-     `path` という欄の名前は旧来のまま（あちらを読む口がまだある）。 */
-  await Promise.all([
-    ref.set(doc),
-    NPHOTOS.doc(ref.id).set({day, path: stored, url, w, h, note, at, uid}),
-  ]);
+  /* **旧 `nordicPhotos` には、もう書かない**（2026-10-13）。
+     読む口が無くなったので、写しを作る理由が無い。
+
+     前はここが `Promise.all` で2つに書いていた。**まとめ書きでも
+     取引でもない**ので、片方だけ失敗したら新旧がずれる——そして
+     **ずれても赤くなるものが1本も無かった。**
+     正を1つにすれば、ずれようがなくなる。
+
+     旧に残っている行は消さない（下の `dropEventImage` が、写真を
+     消すときに両方から消す）。残っていても誰も読まないが、
+     **新に在って旧に無い**行が出ても困らないことは
+     `python/nordic_photo_pair_watch.py` が毎晩見ている。 */
+  await ref.set(doc);
 
   /* **企画が無くてもカードを作る。** 前はここが `if (streamEventId)` で
      囲ってあり、企画の立っていない日に貼った写真は1枚もカードにならな
@@ -2450,7 +2533,18 @@ type PhotoShape = {
  *   （その日いた人は**絵と名前だけ**。誰かを指す値は返さない）
  */
 async function listPhotoDays(): Promise<Json[]> {
-  const snap = await NPHOTOS.orderBy("at", "desc").limit(400).get();
+  /* **読むのは新しいほう**（`islandStreamEventImage`。2026-10-13）。
+     ここは長いあいだ旧 `nordicPhotos` を読んでいた。`island-db.md` の
+     責務の表は 2026-10-01 から「**新が正**」と書いていたのに、
+     **公開の面に出ていたのは旧のほう**で、宣言と実物が逆だった。
+     カードの壁（`/cards`）はこの口を土台にしているので、
+     「写真は旧・カードは新」という、同じ面の上と下が別の入れ物から
+     来る形になっていた（本番では 117 対 117 でたまたま揃っていた）。
+
+     **返す形は1バイトも変えていない。** 新しいほうは旧の持つ欄
+     （`day` `url` `w` `h` `note` `at`）を全部持っているので、
+     画面は触らずに済む。 */
+  const snap = await IMAGES.orderBy("at", "desc").limit(MAX_IMAGES).get();
   const byDay = new Map<string, PhotoShape[]>();
   snap.forEach((d) => {
     const v = d.data() ?? {};
@@ -3161,8 +3255,14 @@ export const islandApi = onRequest(
            `notes` は今までどおり配列で返して、そこに「まだ古いものが
            残っている」を添える。画面はこれを見て `/notes?before=` の
            続きを読める。**黙って切らない**のがこの役目。 */
+        /* **過ぎた日の行は、口が落としてから返す**（#808）。
+           書類は触らない——落とすのは返す字だけ。これで画面も、
+           あやとが打つ画面（`/me` の「いまどこ」）も、見張り
+           （`python/upkeep_watch.py`）も、**同じ答えを見る。** */
+        const cur = (state.current ?? null) as Json | null;
+        const ahead = cur ? weekAhead(cur.week, jstDay(Date.now())) : null;
         res.json({
-          current: state.current ?? null,
+          current: cur && ahead ? {...cur, week: ahead} : cur,
           stats: state.stats ?? null,
           notes: notes.items,
           residents,
@@ -3177,6 +3277,30 @@ export const islandApi = onRequest(
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
              (`site/content/plans.ts` の planPhase)。 */
           nordic: state.nordic ?? null,
+          /* **字の長さの上限。ここが正。**（2026-10-13）
+             画面は長いあいだ同じ数字を自分で持っていた
+             （`Notes.tsx` の `const MAX = 120;` に「サーバー側の
+             `MAX_NOTE_LEN` と同じ」と書き添えて）。**同じ事実が2か所に
+             在って、ずれても赤くなるものが無い**形が、島じゅうに15か所あった。
+
+             止め金を15本足すのではなく、**2か所であることをやめる。**
+             先例は `/stampline/mine` で、あちらは返事に `max` と `maxLen` を
+             乗せていて、画面は1つも数字を持っていない。
+
+             `/state` は誰でも叩ける口で CDN にも焼くが、ここに乗るのは
+             **定数だけ**。人を指す値は1つも入らない。 */
+          limits: {
+            /** 付箋の本文（`MAX_NOTE_LEN`） */
+            note: MAX_NOTE_LEN,
+            /** 付箋への返信（`MAX_REPLY_LEN`） */
+            reply: MAX_REPLY_LEN,
+            /** 島に出す名前（`MAX_NAME_LEN`） */
+            name: MAX_NAME_LEN,
+            /** 付箋に貼るリンク（`MAX_LINK_LEN`） */
+            link: MAX_LINK_LEN,
+            /** 企画の題（`MAX_PLAN_TITLE`） */
+            planTitle: MAX_PLAN_TITLE,
+          },
           more: {
             notes: notes.more ? notes.next : null,
           },

@@ -18,6 +18,7 @@ import CardPeek from "@/components/cards/CardPeek";
 import ReadAgain from "@/components/me/ReadAgain";
 import Longer from "@/components/ui/Longer";
 import { useCards, type PlanDays } from "@/components/cards/cards";
+import { goodsOf } from "@/content/suzuriGoods";
 import { Pedestal } from "./art";
 
 /**
@@ -404,6 +405,35 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
                 <i>アイコンに使ってもらって大丈夫。</i>
               </dd>
             </div>
+
+            {/* その人のグッズ（あやと 2026-10-13「住人ページから『グッズを買う』
+                ボタンでスズリデザインページへの導線あると良い」）。
+
+                **売り場に在る人にだけ出す。** まだグッズになっていない人には
+                札を出さない——**出ない理由は書かない**（読む人がこれから
+                することが1つも増えない。`docs/island-standards.md` 6章）。
+                島とスズリをつなぐ欄はどこにも無いので、住人グッズの題
+                （「カサ・アヤトの住人 ○」）の印で引く。表は
+                `python/suzuri_residents.py` が焼く。 */}
+            {goodsOf(r.emoji) && (
+              <div className="rzk-wide rzk-take">
+                <dt>グッズ</dt>
+                <dd>
+                  <div className="rzk-gets">
+                    <a
+                      className="rzk-get"
+                      href={goodsOf(r.emoji)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      グッズを買う
+                      <Icon name="external" size={14} />
+                    </a>
+                  </div>
+                  <i>ステッカー・キーホルダー・缶バッジ・マグ・アクリルパネル。</i>
+                </dd>
+              </div>
+            )}
 
             {/* いっしょにいた日数（#91 #115）。**数が分かっている人にだけ出す。**
                 分からない人に「0日」と出すと、こちらが数えられていないことを

@@ -64,16 +64,28 @@ python3 .claude/skills/ec2-chrome/ec2.py put <頼みごとを書いたファイ�
 1〜2分かかるので、**裏で回す**（120秒を超えると Bash が裏に回す。`ec2-chrome` 4）:
 
 ```bash
-python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt_image.py /home/ubuntu/chatgpt/q.txt /home/ubuntu/chatgpt/out /home/ubuntu/chatgpt/in.png') 700
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt_image.py /home/ubuntu/chatgpt/q.txt /home/ubuntu/chatgpt/out "2026-10-13 背景透過：○○（住人の絵）" /home/ubuntu/chatgpt/in.png') 700
 python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/chatgpt/out-0.png <手元>
 ```
 
-最後に JSON で `url`（会話の URL）・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
-（`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭>`）。
+3つ目の引数は**会話の題**（`chatgpt` スキル 0 の形）。返事が来たら付け直す。プロジェクトの外を開いていたら送らずに止まる。
+最後に JSON で `url`（会話の URL）・`title`・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
+（`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭> [題]`）。採用・不採用が決まったら、題の括弧に書き足す。
 
-> `chatgpt_image.py` は、2026-10-12 に1本ずつ確かめた関数（`attach` → `send` → `wait_reply(want_images=True)` →
-> `images` → `save_image`）を1つにまとめたもの。まとめた形で EC2 の上を通したのは、まだ一度もない。
-> 初めて使った日に、ここの1行を「通った」に書き換える。
+> `chatgpt_image.py` は、2026-10-13 にほかのセッションで使って通った（あやと）。
+> 題の付け直し（`rename`）とプロジェクトの確かめ（`in_project`）は、そのあと足した。
+
+### 何十枚も描かせるとき（2026-10-13、LINE スタンプ 72枚 #716 で測った）
+
+- **1枚 1.5〜5分**（Medium、絵を2枚付けて）。2本並べて流しても1本あたりは遅くならなかった
+- **断り・失敗は1割ほど出る**: 「画像生成でエラーが発生しました」（字だけの返事）と、8分待っても書き終わらないもの。
+  **済んだものを飛ばす作り**にしておき、最後に同じものをもう一度流して埋める
+- **`chatgpt.fresh()` はほかのタブを全部閉じる。** 同じ Chrome をほかのセッションが使っていると、お互いの返事待ちが
+  `WebSocketConnectionClosedException` で落ちる。一括は**自分のタブだけを作って閉じる**（`Target.createTarget`）か、
+  鍵（`chatgpt` スキルの1）を置いてから流す
+- **流すあいだは `/home/ubuntu/stamp/RUNNING` か `/home/ubuntu/chatgpt/LOCK` を置き、1枚ごとに触る。**
+  EC2 の見張り（`ec2-chrome` 2）が「使っている」と見る。終わったら消す
+- **字は1枚ずつ読む。** 長音「ー」が下にずれて「_」「、」に見える・頭に余計な「ー」が付く、が72枚で3枚あった
 
 ### 頼みかた
 
