@@ -64,7 +64,7 @@
     color-mix(in srgb, var(--accent) 42%, var(--paper)),
     color-mix(in srgb, var(--accent) 58%, var(--paper))
   );
-  box-shadow: none;
+  box-shadow:none;
   font-size: var(--fs-min);
   font-weight: 900;
   letter-spacing: 0.06em;
@@ -88,7 +88,7 @@
 .nx-clock em + em {
   background: linear-gradient(var(--paper), var(--paper-2));
   border-color: var(--frame);
-  box-shadow: none;
+  box-shadow:none;
 }
 .nx-clock em + em b { font-size: 22px; color: var(--ink); }
 /* 時分まで刻まないものは1枚の札。開いた瞬間に読ませたい数字はこれ1つなので、
@@ -168,12 +168,12 @@
   border-radius: var(--r-2);
   border: 3px solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep);
   color: var(--ink);
   transition: transform 0.15s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.15s;
 }
-.nx-do-b:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--frame-deep); }
-.nx-do-b:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-deep); }
+.nx-do-b:hover { transform: translateY(-2px); box-shadow:0 var(--pop-d4) 0 var(--frame-deep); }
+.nx-do-b:active { transform: translateY(3px); box-shadow:0 1px 0 var(--frame-deep); }
 .nx-do-b .ic { flex: none; }
 .nx-do-b span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .nx-do-b b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.02em; }
@@ -268,7 +268,7 @@
   /* **ぼかしを入れる。** ぼかし0で下へ出る影は「押せる厚み」の合図なので
      （`docs/island-design.md` 3章）、押せない付箋に付けると合図が嘘になる。
      紙が板に落としている影なので、`--shadow-*` と同じ 3px ぼかす。 */
-  box-shadow: 2px 4px 3px rgba(120, 90, 40, 0.16);
+  box-shadow:2px 4px 3px rgba(120, 90, 40, 0.16);
   font-size: var(--fs-body);
   font-weight: 700;
   line-height: 1.8;
@@ -288,7 +288,7 @@
   width: 9em;
   height: 66px;
   background: color-mix(in srgb, var(--ink-3) 20%, transparent);
-  box-shadow: none;
+  box-shadow:none;
   animation: waitfade 1.4s ease-in-out infinite;
 }
 .nx-notes.is-wait > li:nth-child(2) { width: 11em; animation-delay: 0.18s; }
@@ -339,14 +339,14 @@
   border: var(--bw-1) solid var(--frame);
   background: linear-gradient(color-mix(in srgb, var(--gold) 40%, var(--paper)), var(--gold));
   /* 押せる合図は厚み1種類だけ（`docs/island-design.md` 3章）。48px の押しどころで 6px */
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55), 0 6px 0 var(--frame-deep);
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.55), 0 var(--pop-d4) 0 var(--frame-deep);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
-.bd-bridge-go:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
+.bd-bridge-go:active { transform: translateY(6px); box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.55); }
 .bd-count {
   display: inline-flex;
   align-items: baseline;
@@ -375,13 +375,13 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 6px 0 var(--pg-edge);
+  box-shadow:var(--pg-lit), 0 var(--pop-d4) 0 var(--pg-edge);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   text-decoration: none;
 }
-.bd-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+.bd-go:active { transform: translateY(6px); box-shadow:var(--pg-lit); }
 
 
 
@@ -407,7 +407,7 @@
   padding: var(--sp-5) var(--sp-4) var(--sp-5);
   border: 1px solid var(--pap-line);
   border-radius: var(--r-0);
-  box-shadow: none;
+  box-shadow:none;
   background: var(--pg-paper-bg);
   color: var(--pap-ink);
 }
@@ -466,14 +466,13 @@
   border-radius: var(--r-1);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   color: var(--ink);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 .pap-go:active {
   transform: translateY(6px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 .pap-go b { font-size: var(--fs-body); font-weight: 900; }
 .pap-go i { display: block; font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--pap-ink-2); margin-top: 2px; }
@@ -647,12 +646,12 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-note); font-weight: 900;
   color: var(--pap-ink);
   cursor: pointer;
 }
-.rzk-pager > button:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+.rzk-pager > button:active { transform: translateY(5px); box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 
 /* 一覧のマス。押すものなので厚みを付ける。ここが唯一の「押す」
 
@@ -673,10 +672,10 @@
   border: 1px solid var(--pap-line);
   border-radius: 5px;
   background: rgba(255, 253, 240, 0.55);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   cursor: pointer;
 }
-.rzk-cell:active { transform: translateY(2px); box-shadow: none; }
+.rzk-cell:active { transform: translateY(2px); box-shadow:none; }
 /* 枠は 86%。中に描かれた figure をそろえる寄せは `charFit` が付ける。
 
    **正方形にするのに `height: 86%` を使わない。** マスは `aspect-ratio` で
@@ -709,7 +708,7 @@
 .rzk-cell.is-wait {
   border-style: dashed;
   background: rgba(255, 253, 240, 0.3);
-  box-shadow: none;
+  box-shadow:none;
   cursor: default;
 }
 
@@ -744,12 +743,12 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-note); font-weight: 900;
   color: var(--pap-ink);
   cursor: pointer;
 }
-.rzk-get:active { transform: translateY(5px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+.rzk-get:active { transform: translateY(5px); box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 .rzk-get .ic { flex: none; color: var(--pap-ink); }
 /* 押しどころの下に付く一言。欄の `dd > i` は行の右に寄る書き方なので、
    ここだけ行を分ける */
@@ -840,7 +839,7 @@
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-3);
   background: var(--paper);
-  box-shadow: none;
+  box-shadow:none;
 }
 .nextup-none b { font-size: var(--fs-body); font-weight: 900; line-height: var(--lh-body); }
 .nextup-none i {
@@ -860,12 +859,12 @@
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-3);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: 0 5px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d3) 0 var(--frame-deep);
   color: var(--ink);
   transition: transform 0.15s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.15s;
 }
-.nextup-all:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
-.nextup-all:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-deep); }
+.nextup-all:hover { transform: translateY(-2px); box-shadow:0 7px 0 var(--frame-deep); }
+.nextup-all:active { transform: translateY(3px); box-shadow:0 var(--pop-d0) 0 var(--frame-deep); }
 .nextup-all span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .nextup-all b { font-size: var(--fs-body); font-weight: 900; letter-spacing: 0.02em; }
 .nextup-all i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
@@ -982,7 +981,7 @@
   height: 9px;
   border-radius: 50%;
   background: var(--paper);
-  box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--rule) 78%, transparent);
+  box-shadow:inset 0 0 0 2.5px color-mix(in srgb, var(--rule) 78%, transparent);
 }
 /* 水色は「外へ出る」の色（3.2）。この札は同じページの付箋の欄へ降りるだけなので、
    ふちは島の中の行き先と同じ金にそろえる。48px・厚み6px。 */
@@ -996,13 +995,13 @@
   border-radius: var(--r-pill);
   border: var(--bw-1) solid var(--frame);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   transition: transform 0.14s ease;
 }
-.nx-asks > a:active { transform: translateY(6px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+.nx-asks > a:active { transform: translateY(6px); box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 
 /* 島での見え方の下見。設定を並べるだけでは、押した結果が想像できない */
 .me-prev {
@@ -1010,7 +1009,7 @@
   padding: var(--sp-3) var(--sp-3) var(--sp-3);
   border-radius: var(--r-2);
   background: linear-gradient(#bfe8ff, #dff3d6);
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.55);
+  box-shadow:inset 0 0 0 3px rgba(255, 255, 255, 0.55);
 }
 .me-prev-label {
   display: block;
@@ -1042,7 +1041,7 @@
   border-radius: var(--r-pill);
   border: 2.5px solid var(--frame);
   background: var(--paper);
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -1076,7 +1075,7 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   color: var(--ink);
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
@@ -1106,9 +1105,9 @@
    ここが控えめでも、どれを見ているかは分からなくならない。 */
 .nb-tab.is-on {
   transform: translateY(4px);
-  box-shadow: var(--pg-lit);
+  box-shadow:var(--pg-lit);
 }
-.nb-tab:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nb-tab:active { transform: translateY(4px); box-shadow:var(--pg-lit); }
 
 .nb-board { margin-top: var(--sp-5); }
 .nb-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
@@ -1125,12 +1124,12 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  box-shadow:var(--pg-lit), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
 }
-.nb-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+.nb-go:active { transform: translateY(5px); box-shadow:var(--pg-lit); }
 /* 1行に収まる幅でだけ、右端へ寄せる */
 @media (min-width: 620px) {
   .nb-go { margin-left: auto; }
@@ -1256,7 +1255,7 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-1);
   background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -1264,7 +1263,7 @@
      （横あふれを作らない。`crawl.mjs` が見ている） */
   word-break: break-all;
 }
-.nt-link:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-link:active { transform: translateY(4px); box-shadow:var(--pg-lit); }
 
 /* 付箋の足もと。ハートと、あやとの道具が並ぶ */
 .nt-foot {
@@ -1286,7 +1285,7 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: var(--paper);
-  box-shadow: var(--pg-lit), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
   color: var(--ink);
   cursor: pointer;
   transition: transform 0.12s ease;
@@ -1297,10 +1296,10 @@
    ここはまだ押せる場所のまま。** */
 .nt-heart.is-on {
   border-color: var(--pick);
-  box-shadow: 0 0 0 2px var(--pick), 0 6px 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
+  box-shadow:0 0 0 2px var(--pick), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 74%, var(--frame-dark));
 }
 .nt-heart.is-on svg { color: var(--accent-deep); }
-.nt-heart:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+.nt-heart:active { transform: translateY(6px); box-shadow:var(--pg-lit); }
 .nt-heart b { font-size: var(--fs-body); font-weight: 900; }
 
 /* あやとの道具。**あやとにしか出ない。** 1枚につき返信としまうの2つだけ */
@@ -1311,13 +1310,13 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink);
   cursor: pointer;
 }
-.nt-obtn:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-obtn:active { transform: translateY(4px); box-shadow:var(--pg-lit); }
 .nt-obox { display: grid; gap: var(--sp-2); width: 100%; }
 
 /* 書く欄。**紙そのものを付箋にする。**
@@ -1341,7 +1340,7 @@
   padding: var(--sp-5) var(--sp-4) var(--sp-4);
   border-radius: 4px 4px 9px 9px;
   background: linear-gradient(#fff8bf, #fdefa2);
-  box-shadow: 2px 4px 3px rgba(120, 90, 40, 0.16);
+  box-shadow:2px 4px 3px rgba(120, 90, 40, 0.16);
   color: var(--ink);
 }
 /* 広い画面では幅を止める。**面いっぱいに伸ばすと、紙ではなく帯に見える。**
@@ -1383,7 +1382,7 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -1394,10 +1393,10 @@
    朱を足さない。色を増やすより沈めるほうが、どれを選んだかが形で分かる。 */
 .nt-destb.is-on {
   transform: translateY(4px);
-  box-shadow: var(--pg-lit);
+  box-shadow:var(--pg-lit);
   border-color: var(--frame-dark);
 }
-.nt-destb:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-destb:active { transform: translateY(4px); box-shadow:var(--pg-lit); }
 /* 選んだ宛先が「何を書く場所か」を言う一行（`content/themes.ts` の `lead`）。
    仕組みの説明は書かない（`docs/island-standards.md` 6章）。 */
 .nt-lead {
@@ -1445,7 +1444,7 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:var(--pg-lit), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -1453,7 +1452,7 @@
 }
 .nt-open:active,
 .nt-bin:active,
-.nt-shut-go:active { transform: translateY(4px); box-shadow: var(--pg-lit); }
+.nt-shut-go:active { transform: translateY(4px); box-shadow:var(--pg-lit); }
 .nt-shut-go { margin-top: 0; text-decoration: none; }
 
 /* 締め切った宛先の1行（`components/live/Notes.tsx` の `shut`）。
@@ -1503,7 +1502,7 @@
   /* 押せるので厚みを付ける。合図は厚み1種類だけ（`island-design.md` 3-3）。
      ぼかさず真下へ出す——付箋そのものの影（2px 4px 3px でぼかす）と
      向きもぼかしも違えておく */
-  box-shadow: 0 4px 0 rgba(140, 110, 50, 0.45);
+  box-shadow:0 var(--pop-d2) 0 rgba(140, 110, 50, 0.45);
   cursor: pointer;
   /* 閉じているあいだの高さ。付箋の字3行ぶんより低くする */
   --nt-pic-h: 104px;
@@ -1518,7 +1517,7 @@
      入っていないのかが分からない） */
   background: color-mix(in srgb, var(--ink-3) 14%, transparent);
 }
-.nt-pic:active { transform: translateY(4px); box-shadow: none; }
+.nt-pic:active { transform: translateY(4px); box-shadow:none; }
 /* 開いたら、切らずに全部見せる。**その場で開く**ので、
    高さは画面の半分までにして、板を読んでいた場所を画面に残す */
 .nt-pic.is-open > img {
@@ -1543,13 +1542,13 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   cursor: pointer;
 }
-.nt-pick:active { transform: translateY(4px); box-shadow: none; }
+.nt-pick:active { transform: translateY(4px); box-shadow:none; }
 /* 焼いているあいだ。**押しどころを消さない**（押しても何も起きないだけ） */
 .nt-pick.is-busy { opacity: 0.72; }
 /* 本物の口は隠す。押しどころは上の札そのもの */
@@ -1575,13 +1574,13 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: var(--paper);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   cursor: pointer;
 }
-.nt-picoff:active { transform: translateY(4px); box-shadow: none; }
+.nt-picoff:active { transform: translateY(4px); box-shadow:none; }
 
 /* ログインしていない人に出る1行と、入る道。
    **押す前に言う**ので、ここは平ら（押しどころは中の札だけ） */

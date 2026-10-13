@@ -147,8 +147,7 @@
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
   /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 9px var(--cast);
   color: var(--ink);
   white-space: nowrap;
@@ -203,8 +202,7 @@
   gap: 6px;
   border-radius: 13px;
   background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 9px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
 }
@@ -245,7 +243,7 @@
   border-radius: 50%;
   background: linear-gradient(var(--paper-2), var(--gold));
   border: 2px solid var(--frame-dark);
-  box-shadow: none;
+  box-shadow:none;
   font-size: 13px;
 }
 
@@ -260,7 +258,7 @@
   border: 7px solid transparent;
   border-radius: 0;
   background: none;
-  box-shadow: none;
+  box-shadow:none;
 }
 .spot[data-edge="d"] .spot-mark::after {
   left: 50%;
@@ -318,7 +316,7 @@
   margin-left: -4.5px;
   border-radius: 0 0 4px 4px;
   background: linear-gradient(90deg, var(--frame-deep), var(--frame-dark) 42%, var(--frame-deep));
-  box-shadow: 2px 3px 3px var(--cast);
+  box-shadow:2px 3px 3px var(--cast);
 }
 /* 一定の速さで上下させると機械に見える。
    「ためて、跳んで、着地でつぶれる」の3拍にすると、生きものの動きになる。 */
@@ -358,8 +356,7 @@
   gap: 8px;
   border-radius: 19px;
   background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
-  box-shadow:
-    0 5px 0 var(--frame-deep),
+  box-shadow:0 var(--pop-d3) 0 var(--frame-deep),
     4px 11px 13px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
   /* 揺れは2往復で止める。**押す対象が止まらないのは手ざわりとして悪い。**
@@ -396,7 +393,7 @@
   border-radius: 50%;
   background: linear-gradient(var(--paper-2), var(--gold));
   border: 2px solid var(--frame-dark);
-  box-shadow: none;
+  box-shadow:none;
   font-size: 14px;
 }
 .spot.is-on .spot-text {
@@ -429,17 +426,17 @@
   background: linear-gradient(#9c580f, #7d450c);
   border-radius: 999px;
   padding: 4px 9px 4px 10px;
-  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow:0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 /* 押したら沈む。アニメーションが transform を持っているので、
    押しているあいだだけ止めないと沈みが打ち消される。 */
 .spot-mark:active {
   animation: none;
   transform: translate(-50%, calc(-100% + 3px));
-  box-shadow: 0 1px 0 var(--frame-deep), 2px 4px 5px var(--cast);
+  box-shadow:0 1px 0 var(--frame-deep), 2px 4px 5px var(--cast);
 }
 .spot.is-on .spot-mark:active {
-  box-shadow: 0 2px 0 var(--frame-deep), 2px 5px 7px var(--cast),
+  box-shadow:0 var(--pop-d0) 0 var(--frame-deep), 2px 5px 7px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -463,7 +460,7 @@
   border: 2.5px solid var(--paper);
   border-radius: 999px;
   padding: 2px 8px;
-  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
+  box-shadow:0 var(--pop-d1) 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
 }
@@ -481,7 +478,7 @@
   pointer-events: none;
   background: none;
   border-color: transparent;
-  box-shadow: none;
+  box-shadow:none;
 }
 .spot.is-count:not(.is-on) .spot-mark::before,
 .spot.is-count:not(.is-on) .spot-mark::after { display: none; }
@@ -567,7 +564,7 @@
   border-radius: 999px;
   background: rgba(255, 253, 246, 0.92);
   border: 2.5px solid var(--frame-dark);
-  box-shadow: 0 2px 0 var(--frame-deep), 2px 4px 5px var(--cast);
+  box-shadow:0 var(--pop-d0) 0 var(--frame-deep), 2px 4px 5px var(--cast);
   /* 字の下限は 11.5px（`docs/island-world.md` 5.4）。10px は割っていた。
      名前が入る幅は、字を上げたぶん広げる。 */
   font-size: 11.5px;
@@ -644,7 +641,7 @@
   /* ふちは紙。海の上でも草の上でも、丸が地から切り抜ける */
   border: 2.5px solid var(--paper);
   background: var(--paper-2);
-  box-shadow: 2px 4px 5px var(--cast);
+  box-shadow:2px 4px 5px var(--cast);
   overflow: hidden;
 }
 .here-icon img {
@@ -676,7 +673,7 @@
   padding: 1px 7px;
   border-radius: 999px;
   background: rgba(255, 253, 246, 0.92);
-  box-shadow: 2px 4px 5px var(--cast);
+  box-shadow:2px 4px 5px var(--cast);
   font-size: 11.5px;
   font-weight: 900;
   color: var(--ink);
@@ -750,7 +747,7 @@
   /* ふちは紙。海の上でも草の上でも、丸が地から切り抜ける */
   border: 2.5px solid var(--paper);
   background: var(--paper-2);
-  box-shadow: 2px 4px 5px var(--cast);
+  box-shadow:2px 4px 5px var(--cast);
   overflow: hidden;
 }
 .here-icon img {
@@ -782,7 +779,7 @@
   padding: 1px 7px;
   border-radius: 999px;
   background: rgba(255, 253, 246, 0.92);
-  box-shadow: 2px 4px 5px var(--cast);
+  box-shadow:2px 4px 5px var(--cast);
   font-size: 11.5px;
   font-weight: 900;
   color: var(--ink);
@@ -825,8 +822,7 @@
   background:
     radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
     linear-gradient(var(--paper) 0 58%, var(--paper-2));
-  box-shadow:
-    0 3px 0 rgba(154, 101, 50, 0.18),
+  box-shadow:0 var(--pop-d1) 0 rgba(154, 101, 50, 0.18),
     6px 14px 26px var(--cast-far);
   animation: talkIn 0.26s cubic-bezier(0.24, 1.6, 0.4, 1);
   pointer-events: none;
@@ -873,7 +869,7 @@
   background-image: var(--talk-face);
   background-size: cover;
   background-position: center 12%;
-  box-shadow: 0 3px 0 var(--frame-deep), inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+  box-shadow:0 var(--pop-d1) 0 var(--frame-deep), inset 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
 /* 「読み終わったら押してね」の合図。
@@ -1215,7 +1211,7 @@
   border-bottom: 0;
   border-radius: 30px 30px 0 0;
   /* 板の厚みは上ぶちの照り返しで出す。ぼかした影を足すと海が濁る */
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.8), 0 -8px 18px rgba(12, 46, 62, 0.22);
+  box-shadow:inset 0 3px 0 rgba(255, 255, 255, 0.8), 0 -8px 18px rgba(12, 46, 62, 0.22);
   /* backdrop-filter は画面幅ぜんぶを毎フレーム引き伸ばすので外した */
   backdrop-filter: none;
 }
@@ -1248,7 +1244,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 5px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d3) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1257,7 +1253,7 @@
 }
 .stage .bar-toggle:active {
   transform: translateY(5px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .stage .bar-toggle:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 /* 「今日の島」を開くと、その板がちょうどここへ浮いてくる。札は引っ込める */
@@ -1303,7 +1299,7 @@
      中のマスは軽い（/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
   border: 2px solid var(--frame-dark);
   border-radius: 14px;
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1330,7 +1326,7 @@
 }
 .stage .bar-spot:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 /* 「あと◯日」は名前の行に並べると名前を押し出す。マスの右肩に貼ったシールにする。 */
 .stage .bar-spot em {
@@ -1346,7 +1342,7 @@
   padding: 1px 7px;
   border: 2px solid var(--paper);
   border-radius: 999px;
-  box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
+  box-shadow:0 var(--pop-d0) 0 rgba(126, 38, 18, 0.3);
   /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
      濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
   background: linear-gradient(#c4123f, #96072e);
@@ -1398,7 +1394,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1407,7 +1403,7 @@
 }
 .stage-view:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 /* スマホより広い画面では、左上に看板ロゴが出ている。同じ隅を取り合うと
    ロゴの上にボタンが乗る。左下へ下ろす。島の下は空いている。 */
@@ -1553,7 +1549,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1578,7 +1574,7 @@
 }
 .stage-atlas:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .stage-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 .stage.is-talking .stage-atlas { opacity: 0; pointer-events: none; transition: opacity 0.18s; }

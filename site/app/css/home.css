@@ -80,7 +80,7 @@
   background:
     radial-gradient(120% 60% at 20% 0%, color-mix(in srgb, var(--sand-wet) 60%, transparent), transparent 60%),
     linear-gradient(180deg, var(--sand-wet) 0%, var(--sand) 16%, #fdf2cd 62%, var(--sand) 100%);
-  box-shadow: inset 0 -3px 0 var(--sand-edge);
+  box-shadow:inset 0 -3px 0 var(--sand-edge);
 }
 
 .hchap-head {
@@ -173,7 +173,7 @@
   background: linear-gradient(180deg, #fffdf5 0%, #fff6e0 100%);
   /* 名刺は押せない。押せるのは中の数字と3つの口だけなので、
      台紙そのものには厚みを付けない（docs/island-world.md 3.4）。 */
-  box-shadow: inset 0 0 0 4px var(--frame);
+  box-shadow:inset 0 0 0 4px var(--frame);
 }
 
 .mei-top {
@@ -186,7 +186,7 @@
   padding: 6px 6px 8px;
   border-radius: 6px;
   background: #fffdf3;
-  box-shadow: 0 4px 10px -4px rgba(70, 96, 74, 0.4);
+  box-shadow:0 4px 10px -4px rgba(70, 96, 74, 0.4);
   rotate: -1.4deg;
 }
 .mei-face img {
@@ -237,16 +237,15 @@
   padding: 8px 6px;
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow:
-    inset 0 0 0 2.5px var(--frame),
-    0 5px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 2.5px var(--frame),
+    0 var(--pop-d3) 0 var(--frame-dark);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 .mei-num:active {
   transform: translateY(4px);
-  box-shadow: inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
 }
 .mei-num em {
   font-style: normal;
@@ -283,27 +282,24 @@
   padding: 9px 12px;
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow:
-    inset 0 0 0 2.5px var(--frame),
-    0 5px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 2.5px var(--frame),
+    0 var(--pop-d3) 0 var(--frame-dark);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 .mei-go:active {
   transform: translateY(4px);
-  box-shadow: inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 2.5px var(--frame), 0 1px 0 var(--frame-dark);
 }
 /* 今夜の配信だけは外へ出る口。外へ出るものは水色（docs/island-world.md 3.2）。 */
 .mei-go.is-live {
   background: linear-gradient(180deg, #eaf8ff 0%, #d9f0fd 100%);
-  box-shadow:
-    inset 0 0 0 2.5px var(--accent-2),
-    0 5px 0 color-mix(in srgb, var(--accent-2) 68%, #23516c);
+  box-shadow:inset 0 0 0 2.5px var(--accent-2),
+    0 var(--pop-d3) 0 color-mix(in srgb, var(--accent-2) 68%, #23516c);
 }
 .mei-go.is-live:active {
-  box-shadow:
-    inset 0 0 0 2.5px var(--accent-2),
+  box-shadow:inset 0 0 0 2.5px var(--accent-2),
     0 1px 0 color-mix(in srgb, var(--accent-2) 68%, #23516c);
 }
 .mei-go b {
@@ -336,9 +332,8 @@
   padding: 12px 11px 13px;
   border-radius: var(--r-2);
   background: linear-gradient(180deg, #fffdf5 0%, #fff5dd 100%);
-  box-shadow:
-    inset 0 0 0 3px var(--frame),
-    0 6px 0 var(--frame-dark),
+  box-shadow:inset 0 0 0 3px var(--frame),
+    0 var(--pop-d4) 0 var(--frame-dark),
     0 11px 12px -7px rgba(70, 96, 74, 0.26);
   color: var(--ink);
   text-decoration: none;
@@ -346,8 +341,7 @@
 }
 .shelf-box:active {
   transform: translateY(5px);
-  box-shadow:
-    inset 0 0 0 3px var(--frame),
+  box-shadow:inset 0 0 0 3px var(--frame),
     0 1px 0 var(--frame-dark),
     0 4px 7px -5px rgba(70, 96, 74, 0.24);
 }
@@ -442,7 +436,7 @@
    色で分けていいのは配信の型だけ、と決まっている（docs/island-world.md 3.3）。 */
 .shelf-types em {
   --hb: var(--frame);
-  box-shadow: inset 2px 0 0 var(--hb);
+  box-shadow:inset 2px 0 0 var(--hb);
 }
 .shelf-go {
   position: absolute;
@@ -475,16 +469,15 @@
   /* 企画を出す口は、この章でいちばん押してほしいところ。桃は「いま／新しい」の色なので
      使わず（docs/island-world.md 3.2）、金のふちのまま厚みを一段だけ厚くする。 */
   background: linear-gradient(180deg, #fffdf5 0%, #fff4dd 100%);
-  box-shadow:
-    inset 0 0 0 3px var(--frame),
-    0 6px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 3px var(--frame),
+    0 var(--pop-d4) 0 var(--frame-dark);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 .hjoin:active {
   transform: translateY(5px);
-  box-shadow: inset 0 0 0 3px var(--frame), 0 1px 0 var(--frame-dark);
+  box-shadow:inset 0 0 0 3px var(--frame), 0 1px 0 var(--frame-dark);
 }
 .hjoin-art {
   width: 72px;
@@ -528,17 +521,15 @@
   border-radius: var(--r-2);
   background: var(--paper);
   /* 外へ出る口は水色（docs/island-world.md 3.2）。桃は「いま／新しい」なので使わない */
-  box-shadow:
-    inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
-    0 5px 0 color-mix(in srgb, var(--accent-2) 72%, #23516c);
+  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
+    0 var(--pop-d3) 0 color-mix(in srgb, var(--accent-2) 72%, #23516c);
   color: var(--ink);
   text-decoration: none;
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 .hout:active {
   transform: translateY(4px);
-  box-shadow:
-    inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
+  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--accent-2) 62%, #ffffff),
     0 1px 0 color-mix(in srgb, var(--accent-2) 72%, #23516c);
 }
 .hout-logo,

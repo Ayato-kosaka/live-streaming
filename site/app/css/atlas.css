@@ -50,7 +50,7 @@
   border-radius: var(--r-3);
   background: var(--paper);
   padding: 7px;
-  box-shadow: inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 8px 0 var(--frame-deep), var(--shadow-2);
+  box-shadow:inset 0 0 0 var(--bw-3, 5px) var(--frame), 0 var(--pop-d5) 0 var(--frame-deep), var(--shadow-2);
   margin-bottom: 18px;
 }
 .amap-stage {
@@ -150,7 +150,7 @@
   border-radius: 50%;
   background: var(--paper);
   /* ピンは押せる。22px の丸なので、48px で6px・38pxで4px の段に乗せると 3px。 */
-  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.4);
+  box-shadow:0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4);
   display: grid;
   place-items: center;
   font-size: var(--fs-min);
@@ -176,7 +176,7 @@
 .apin.is-here .apin-dot::before { background: var(--accent); }
 /* いま開いている国。塗りは変えず、朱の細い輪だけで示す
    （`docs/ac-reference.md` 7章 6。選択は枠でやる） */
-.apin.is-open .apin-dot { box-shadow: 0 0 0 3px var(--pick), 0 3px 0 rgba(20, 60, 90, 0.4); }
+.apin.is-open .apin-dot { box-shadow:0 0 0 3px var(--pick), 0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4); }
 .apin.is-open .apin-name { opacity: 1; }
 .apin.is-here::after {
   content: "";
@@ -222,7 +222,7 @@
   font-weight: 900;
   letter-spacing: 0;
   white-space: nowrap;
-  box-shadow: 0 3px 0 rgba(20, 60, 90, 0.4);
+  box-shadow:0 var(--pop-d1) 0 rgba(20, 60, 90, 0.4);
   transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 .apin.is-group:hover .apin-many,
@@ -289,7 +289,7 @@
   /* 輪郭は真下へ出さない。真下・ぼかし0の影は「押せる厚み」1つぶんの合図で、
      押せるのはピン（`.apin`）の丸だけ（`docs/island-world.md` 3.4）。
      街の点は地図に刷ってある印なので、まわりを1本の輪で締めて平らに置く。 */
-  box-shadow: 0 0 0 1px rgba(20, 60, 90, 0.4);
+  box-shadow:0 0 0 1px rgba(20, 60, 90, 0.4);
 }
 /* 街の名前。白いにじみで浮かせていたが、海の上では 2.51 : 1 しか無かった。
    にじみは比を上げないので、紙の札を1枚敷く。紙の上の --am-ink で 8.8 : 1。
@@ -385,13 +385,13 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 6px 0 var(--pg-edge);
+  box-shadow:var(--pg-lit), 0 var(--pop-d4) 0 var(--pg-edge);
   font-size: var(--fs-body); font-weight: 900;
   color: var(--ink);
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.atrace-go:active { transform: translateY(6px); box-shadow: var(--pg-lit); }
+.atrace-go:active { transform: translateY(6px); box-shadow:var(--pg-lit); }
 .atrace-step { display: inline-flex; align-items: center; gap: var(--sp-1); margin-left: auto; }
 /* 紙にはムラがあって、いちばん暗いところで --ink-2 は 4.47 : 1 まで落ちる。
    11.5px の字なので --ink にする */
@@ -403,14 +403,14 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: 50%;
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  box-shadow:var(--pg-lit), 0 var(--pop-d3) 0 var(--pg-edge);
   color: var(--ink);
   cursor: pointer;
 }
-.atrace-step > button:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+.atrace-step > button:active { transform: translateY(5px); box-shadow:var(--pg-lit); }
 /* 押せないときは、厚みを抜いて紙に戻す。色を薄くするだけだと、
    押せるのに反応しないように見える */
-.atrace-step > button:disabled { box-shadow: none; opacity: 0.4; cursor: default; }
+.atrace-step > button:disabled { box-shadow:none; opacity: 0.4; cursor: default; }
 /* 動きを減らす設定のときは、地図の寄せも「いまここ」の輪も止める。
    たどりは中身が入れ替わるだけなので残す（動きではなく内容の切りかえ）。 */
 @media (prefers-reduced-motion: reduce) {
@@ -470,11 +470,11 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pg-lit), 0 5px 0 var(--pg-edge);
+  box-shadow:var(--pg-lit), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-body); font-weight: 900;
   color: var(--ink);
 }
-.acard-go:active { transform: translateY(5px); box-shadow: var(--pg-lit); }
+.acard-go:active { transform: translateY(5px); box-shadow:var(--pg-lit); }
 
 @media (min-width: 720px) {
   /* 地図の下は横に広い。1列で積むと、配信のサムネの右が
@@ -530,14 +530,14 @@
   font-size: var(--fs-body);
   font-weight: 900;
   letter-spacing: var(--ls-body, 0.02em);
-  box-shadow: 0 6px 0 var(--frame-dark);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-dark);
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.2s ease, color 0.2s ease;
 }
-.amap-tab:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
+.amap-tab:active { transform: translateY(5px); box-shadow:0 1px 0 var(--frame-dark); }
 .amap-tab.is-on {
   background: var(--gold);
   color: #6b4413;
-  box-shadow: 0 6px 0 var(--frame-dark);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-dark);
 }
 
 /* 凡例と縮尺 */
@@ -609,7 +609,7 @@
      札は不透明にして、字も --ink まで濃くする（9.1 : 1）。 */
   background: var(--paper);
   /* 押すものではないので厚みは付けない。地図から浮かせるのは薄い落ち影1枚だけ */
-  box-shadow: 0 1px 3px rgba(20, 60, 90, 0.2);
+  box-shadow:0 1px 3px rgba(20, 60, 90, 0.2);
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink);
@@ -687,15 +687,15 @@
   margin: 8px 0 14px;
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: 0 6px 0 var(--frame-dark), var(--shadow-1);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-dark), var(--shadow-1);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.atrip-card:hover { transform: translateY(-3px); box-shadow: 0 9px 0 var(--frame-dark), var(--shadow-2); }
-.atrip-card:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--frame-dark); }
+.atrip-card:hover { transform: translateY(-3px); box-shadow:0 9px 0 var(--frame-dark), var(--shadow-2); }
+.atrip-card:active { transform: translateY(5px); box-shadow:0 1px 0 var(--frame-dark); }
 /* 進む先の矢印だけは札の高さの真ん中に。旗と同じ上そろえにすると、
    国の名前の右に矢印が並んで、名前の一部に見える。 */
 .atrip-card > .tile-go { align-self: center; }
-.atrip-flag { flex: none; margin-top: 3px; border-radius: 5px; overflow: hidden; box-shadow: 0 2px 0 rgba(90, 66, 34, 0.25); line-height: 0; }
+.atrip-flag { flex: none; margin-top: 3px; border-radius: 5px; overflow: hidden; box-shadow:0 var(--pop-d0) 0 rgba(90, 66, 34, 0.25); line-height: 0; }
 .atrip-body { min-width: 0; flex: 1; display: grid; gap: 3px; }
 .atrip-name { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .atrip-name b { font-size: var(--fs-h3); font-weight: 900; letter-spacing: var(--ls-body, 0.02em); }
@@ -803,7 +803,7 @@
   border-radius: 50%;
   border: 2.5px solid var(--chip);
   background: color-mix(in srgb, var(--paper) 88%, transparent);
-  box-shadow: inset 0 0 0 2.5px var(--paper), inset 0 0 0 5px var(--chip);
+  box-shadow:inset 0 0 0 2.5px var(--paper), inset 0 0 0 5px var(--chip);
   display: grid;
   place-content: center;
   justify-items: center;
@@ -895,7 +895,7 @@
   height: auto;
   border: 6px solid var(--paper-out);
   border-radius: var(--r-2);
-  box-shadow: var(--shadow-2);
+  box-shadow:var(--shadow-2);
   transform: rotate(-1.4deg);
 }
 .abio-word b { font-size: var(--fs-h3); font-weight: 900; line-height: 1.7; display: block; margin-bottom: 8px; }
@@ -913,7 +913,7 @@
 .aflags > * {
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 0 rgba(90, 66, 34, 0.22);
+  box-shadow:0 var(--pop-d0) 0 rgba(90, 66, 34, 0.22);
 }
 
 .acards { display: grid; gap: 12px; grid-template-columns: 1fr; }
@@ -1010,11 +1010,11 @@
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-1);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 5px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d3) 0 var(--frame-deep);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.awork-now:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--frame-deep); }
-.awork-now:active { transform: translateY(5px); box-shadow: 0 0 0 var(--frame-deep); }
+.awork-now:hover { transform: translateY(-2px); box-shadow:0 7px 0 var(--frame-deep); }
+.awork-now:active { transform: translateY(5px); box-shadow:0 0 0 var(--frame-deep); }
 .awork-now-t { font-size: var(--fs-min); font-weight: 900; letter-spacing: 0.08em; color: var(--ink-2); }
 .awork-now > b { font-size: var(--fs-body); font-weight: 900; line-height: 1.6; color: var(--ink); }
 .awork-now-go {
@@ -1105,7 +1105,7 @@
   height: 72px;
   border-radius: 19px;
   /* 紙の上なので厚みは付けない。物として地面に落ちる影だけ。 */
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
   background: var(--paper-2);
 }
 /* 公式のアイコンが無いアプリは、自前の絵を同じ札に収める */
@@ -1130,10 +1130,10 @@
   color: #fff;
   font-size: var(--fs-note);
   font-weight: 900;
-  box-shadow: 0 6px 0 #100f0e;
+  box-shadow:0 var(--pop-d4) 0 #100f0e;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.abadge:active { transform: translateY(5px); box-shadow: 0 1px 0 #100f0e; }
+.abadge:active { transform: translateY(5px); box-shadow:0 1px 0 #100f0e; }
 .anote { display: grid; gap: var(--sp-3); }
 /* 年の区切り。読ませる字なので --ink-3 は使わない（紙の上で 4.0 : 1 を割る） */
 .anote-year {
@@ -1279,7 +1279,7 @@
   background: var(--paper);
   border-block: 1px solid var(--pg-rule);
   border-radius: 0;
-  box-shadow: none;
+  box-shadow:none;
   padding: var(--sp-2) var(--pp-x, var(--sp-4));
 }
 .panel.paper .amap-stage { border-radius: 6px; }
@@ -1298,7 +1298,7 @@
   /* ここは前に「押せないのに厚みがある」として外された場所
      （`docs/island-world.md` 3.4）。いまは地図そのものが押せるので、
      合図を戻す。真下へ、ぼかさない。 */
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-deep);
   margin-bottom: 6px;
   /* 地図ぜんぶが押しどころ。指の形も、厚みと同じことを言う */
   cursor: pointer;
@@ -1307,7 +1307,7 @@
 /* 押したら沈む。沈むのは札ではなく地図のほう（押しているのは地図なので）。 */
 .mzoom:has(.mzoom-open:active) {
   transform: translateY(6px);
-  box-shadow: none;
+  box-shadow:none;
 }
 .mzoom-still {
   display: block;
@@ -1382,10 +1382,10 @@
   color: var(--ink);
   font-size: var(--fs-note);
   font-weight: 900;
-  box-shadow: 0 6px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow:0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   cursor: pointer;
 }
-.mzoom-close:active { transform: translateY(6px); box-shadow: none; }
+.mzoom-close:active { transform: translateY(6px); box-shadow:none; }
 .mzoom-scroll {
   flex: 1;
   overflow: auto;

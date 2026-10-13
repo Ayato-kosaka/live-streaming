@@ -268,7 +268,7 @@
   border-radius: var(--r-0);
   background: var(--pg-paper-bg);
   background-color: var(--pg-sheet);
-  box-shadow: var(--shadow-2);
+  box-shadow:var(--shadow-2);
 }
 /* 頭。日付と閉じる。**送っても動かない**ので、写真が閉じるボタンの下を
    くぐらない（前は絶対位置で紙の隅に置いてあり、送ると中身が下を通っていた）。 */
@@ -329,9 +329,9 @@
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
-.akd-close:active { transform: translateY(4px); box-shadow: none; }
+.akd-close:active { transform: translateY(4px); box-shadow:none; }
 
 /* 頭の中の日付。**閉じるボタンをよける余白はもう要らない**（横に並んでいる） */
 .akd-sheet-h {
@@ -408,7 +408,7 @@
   border-radius: var(--r-0);
   background: var(--pg-paper-bg);
   background-color: var(--pg-sheet);
-  box-shadow: var(--shadow-2);
+  box-shadow:var(--shadow-2);
 }
 .nstudio-close {
   position: absolute;
@@ -422,9 +422,9 @@
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
-.nstudio-close:active { transform: translateY(4px); box-shadow: none; }
+.nstudio-close:active { transform: translateY(4px); box-shadow:none; }
 
 /* 出ているこの絵が、そのまま焼き上がりの1枚。長押しで保存できる。 */
 .nstudio-shot {
@@ -438,7 +438,7 @@
   max-width: 100%;
   max-height: 42vh;
   border-radius: var(--r-0);
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
 }
 .nstudio-shot .wait { width: 100%; --wait-h: 200px; }
 .nstudio-off,
@@ -575,7 +575,7 @@
   max-width: 100%;
   max-height: 36vh;
   border-radius: var(--r-0);
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
 }
 /* 札が3段になる日（11枚以上）は、写真を下げて3段目を覗かせる。
    **上の `img` と同じ値**にする（片方だけだと、指を離した瞬間に跳ねる） */
@@ -589,7 +589,7 @@
   width: 100%;
   height: 100%;
   border-radius: var(--r-0);
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
 }
 /* 動かしている最中だけ、canvas を前へ。**jpeg は消さない**——
    消すと、指を離すまでのあいだ長押しの相手がいなくなる */
@@ -630,16 +630,16 @@
   color: var(--ink);
   font-size: var(--fs-note);
   font-weight: 800;
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
 .akd-shape.is-on {
   background: var(--accent-soft, var(--paper-2));
   border-color: var(--accent-2);
-  box-shadow: none;
+  box-shadow:none;
   transform: translateY(2px);
 }
-.akd-shape:active { transform: translateY(4px); box-shadow: none; }
-.akd-shape:disabled { opacity: 0.5; box-shadow: none; }
+.akd-shape:active { transform: translateY(4px); box-shadow:none; }
+.akd-shape:disabled { opacity: 0.5; box-shadow:none; }
 
 /* かべがみのときだけ出る、**スマホが上に出すものの居場所**。
    とけい（上）とボタン（下）は写真に重なるので、そこへ人を置くと隠れる。
@@ -732,9 +732,9 @@
   color: var(--ink);
   font-size: var(--fs-note);
   font-weight: 800;
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
-.akd-turn:active { transform: translateY(4px); box-shadow: none; }
+.akd-turn:active { transform: translateY(4px); box-shadow:none; }
 /* あやとも入れる。**押すと切り替わる札**なので、押せる厚みを持たせる */
 .akd-mate {
   display: inline-flex;
@@ -748,7 +748,7 @@
   color: var(--ink);
   font-size: var(--fs-note);
   font-weight: 800;
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
 .akd-mate img {
   width: 30px;
@@ -758,10 +758,10 @@
 .akd-mate.is-on {
   background: var(--accent-soft, var(--paper-2));
   border-color: var(--accent-2);
-  box-shadow: none;
+  box-shadow:none;
   transform: translateY(2px);
 }
-.akd-mate:active { transform: translateY(4px); box-shadow: none; }
+.akd-mate:active { transform: translateY(4px); box-shadow:none; }
 /* 大きさ。札ではなく目盛りなので、厚みは持たせない */
 .akd-zoom {
   display: inline-flex;
@@ -859,10 +859,10 @@
   color: var(--ink);
   font-size: var(--fs-body);
   font-weight: 900;
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.nstudio-go:active { transform: translateY(6px); box-shadow: none; }
+.nstudio-go:active { transform: translateY(6px); box-shadow:none; }
 /* 押せないときの姿（地・字・厚み）は `tokens.css` が1か所で持つ。
    ここには書かない。`opacity: 0.6` で薄めていたときは 3.29 まで落ちていた（実測） */
 /* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
@@ -950,9 +950,9 @@
   border: var(--bw-2) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
 }
-.akd-drop-no:active { transform: translateY(6px); box-shadow: none; }
+.akd-drop-no:active { transform: translateY(6px); box-shadow:none; }
 /* 消すほうは字だけ。押せることは分かるが、指が先に行く形にはしない */
 .akd-drop-yes {
   border: var(--bw-2) solid transparent;
@@ -1203,13 +1203,13 @@
   padding: 0;
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
 /* 押したら沈む。**色は変えない**（`docs/island-design.md` 3章の3）。
    厚みのぶんだけ下がるので、帯は動かない。 */
 .akd-shot.is-tap:active {
   transform: translateY(4px);
-  box-shadow: none;
+  box-shadow:none;
 }
 
 /* --- あやとの札を、顔の札と同じ升目にする（2026-10-08） ----------------
@@ -1245,7 +1245,7 @@
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
-  box-shadow: none;
+  box-shadow:none;
   font-size: var(--fs-min);
   font-weight: 900;
   color: var(--ink-2);

@@ -251,9 +251,9 @@
   border: var(--bw-1) solid var(--frame-dark);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
-.tnow-act:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.tnow-act:active { transform: translateY(2px); box-shadow:var(--pop-push); }
 .tnow-act.is-main { background: linear-gradient(#fff0bb, var(--gold)); }
 
 /* =========================================================
@@ -315,7 +315,7 @@
   justify-self: center;
   height: 24px;
   background: linear-gradient(var(--accent) 0 30%, var(--paper) 30% 70%, var(--accent) 70%);
-  box-shadow: 0 0 0 1.5px var(--pg-rule);
+  box-shadow:0 0 0 1.5px var(--pg-rule);
 }
 .nmap-say {
   margin: var(--sp-3) 0 0;
@@ -381,25 +381,24 @@
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-1);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.8),
-    0 6px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
   color: var(--ink);
   transition: transform 0.14s ease;
 }
 /* 押したら沈む。厚みが減るぶんだけ下げると、板が押し込まれて見える。 */
 .ndayr:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow:0 var(--pop-d0) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
 }
 /* 予備の2日と、着いた朝。**中身のページが無いので、押せない。**
    押せないものは完全に平らにする。厚みも矢印も付けない（island-design 3章）。 */
 .ndayr.is-flat {
   background: none;
   border: 1px solid var(--rule);
-  box-shadow: none;
+  box-shadow:none;
 }
-.ndayr-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
+.ndayr-art { flex: none; border-radius: 10px; box-shadow:var(--shadow-1); }
 .ndayr-body { display: grid; gap: 3px; min-width: 0; flex: 1; }
 .ndayr-top { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1); }
 .ndayr-top b {
@@ -414,7 +413,7 @@
 .ndayr.is-flat .ndayr-top b {
   background: none;
   color: var(--ink-2);
-  box-shadow: inset 0 0 0 1.5px var(--rule);
+  box-shadow:inset 0 0 0 1.5px var(--rule);
 }
 .ndayr-top time { font-size: var(--fs-note); font-weight: 900; color: var(--ink-2); }
 /* 「いま、ここ」。旅が始まってから、今日の1日にだけ出る。
@@ -433,7 +432,7 @@
   padding: 1px var(--sp-2);
   border-radius: var(--r-0);
   background: var(--paper);
-  box-shadow: 0 0 0 1.5px var(--frame-dark);
+  box-shadow:0 0 0 1.5px var(--frame-dark);
   color: var(--ink);
   font-size: var(--fs-min);
   font-weight: 900;
@@ -499,7 +498,7 @@
    入るのは下の番号の札から。厚みを付けないのはそのため
    （`docs/island-design.md` 3章「押せない行は完全に平らにする」）。 */
 .ndayr.is-group {
-  box-shadow: none;
+  box-shadow:none;
   border-style: dashed;
   background: var(--paper);
   align-items: flex-start;
@@ -520,16 +519,15 @@
   border-radius: var(--r-1);
   border: var(--bw-2) solid var(--frame);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
   text-decoration: none;
   transition: transform 0.12s ease;
 }
-.ndayc:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+.ndayc:active { transform: translateY(4px); box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 /* その日の話が書かれた札。**行の印（`.ndayr-log`）と同じオリーブ**にする。
    まとめた中の1日に何か書かれたことが、開かなくても分かるようにする。 */
 .ndayc[data-log] {
@@ -546,9 +544,8 @@
   /* **蛍光の上の字は `--marker-ink`。**（`docs/island-world.md` 3.2 の表）
      `--ink` を乗せると、島の景色を替えたときに比が落ちる組み合わせが出る。 */
   color: var(--marker-ink);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.7),
-    0 4px 0 var(--frame-dark);
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 var(--pop-d2) 0 var(--frame-dark);
 }
 /* 動かせない時刻（発つ便の便名と時刻）。旅程表の最後の行だけが持つ。 */
 .ndayr-fixed {
@@ -561,7 +558,7 @@
 
 /* 区間ひとつ。1日ぶんのページ（`/nordic/day/[n]`）の「この日の道」で使う。 */
 .nday-go { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-3); }
-.nday-art { flex: none; border-radius: 10px; box-shadow: var(--shadow-1); }
+.nday-art { flex: none; border-radius: 10px; box-shadow:var(--shadow-1); }
 .nday-txt { min-width: 0; flex: 1; }
 p.nday-way {
   margin: 0;
@@ -666,10 +663,10 @@ p.nday-log-when {
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
 }
-.nday-shots a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.nday-shots a:active { transform: translateY(2px); box-shadow:var(--pop-push); }
 .nday-shots a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 /* 外から来る絵なので、読める前から高さを取っておく（`docs/island-ux.md` 5.13）。
    地は海の浅いところ。取れなかった日も、板の形は変わらない。 */
@@ -820,7 +817,7 @@ p.fork-q {
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: linear-gradient(var(--paper), var(--paper-2));
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   font: inherit;
   font-size: 12.5px;
   font-weight: 900;
@@ -828,10 +825,10 @@ p.fork-q {
   text-align: left;
   color: var(--ink);
 }
-.fork-pick:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+.fork-pick:active { transform: translateY(4px); box-shadow:var(--pop-push); }
 /* 押したあとは、板を押し込んだままにする。自分の1票がそこにあると分かる。
    押せないものに厚みを残すと、まだ押せるように見える。 */
-.fork-pick:disabled { transform: translateY(4px); box-shadow: var(--pop-push); }
+.fork-pick:disabled { transform: translateY(4px); box-shadow:var(--pop-push); }
 .fork-pick.is-mine { background: var(--marker); color: var(--marker-ink); }
 .fork-pick em {
   flex: none;
@@ -925,12 +922,12 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
   /* 48px のボタンは 6px の厚み（docs/island-design.md 3章） */
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   font-size: 13.5px;
   font-weight: 900;
   color: var(--ink);
 }
-.carry-go:active { transform: translateY(4px); box-shadow: var(--pop-push); }
+.carry-go:active { transform: translateY(4px); box-shadow:var(--pop-push); }
 
 
 /* =========================================================
@@ -956,10 +953,10 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   border: var(--bw-2) solid var(--frame-dark);
   border-radius: var(--r-2);
   background: var(--paper);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
 }
-.ncountry:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.ncountry:active { transform: translateY(2px); box-shadow:var(--pop-push); }
 /* 写真の枠。外から来る絵なので、読める前から高さを取っておく
    （`docs/island-ux.md` 5.13）。地は海の浅いところ。 */
 .ncountry-img {
@@ -989,7 +986,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   font-size: 13.5px;
   font-weight: 900;
   /* 写真の上に載るので、絵と札の境目を1本入れる */
-  box-shadow: 0 0 0 1.5px var(--paper);
+  box-shadow:0 0 0 1.5px var(--paper);
 }
 .ncountry-body {
   display: grid;
@@ -1047,7 +1044,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   border-radius: var(--r-0);
   background: color-mix(in srgb, var(--gold) 15%, var(--paper));
 }
-.ncway-art { flex: none; border-radius: 11px; box-shadow: var(--shadow-1); }
+.ncway-art { flex: none; border-radius: 11px; box-shadow:var(--shadow-1); }
 .ncway-b { display: grid; gap: 2px; min-width: 0; }
 .ncway-b i {
   font-style: normal;
@@ -1078,7 +1075,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
      紙に貼った1枚として、罫を1本まわすだけにする。 */
   border: 1px solid var(--pg-rule);
   border-radius: var(--r-0);
-  box-shadow: none;
+  box-shadow:none;
 }
 /* 写真の上に置く出どころの字。写真の明るさは選べないので、
    帯の下側は色を最後まで濃くする。うすいままだと、明るい写真の上で消える
@@ -1226,10 +1223,10 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   border-radius: var(--r-pill);
   border: var(--bw-2) solid var(--frame-dark);
   background: var(--paper);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
 }
-.nnav a:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.nnav a:active { transform: translateY(2px); box-shadow:var(--pop-push); }
 
 /* =========================================================
    旅のしおり
@@ -1878,11 +1875,11 @@ svg.nmap {
   color: var(--ink);
   font-size: var(--fs-body);
   font-weight: 900;
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.nph-post-go:active { transform: translateY(6px); box-shadow: none; }
-.nph-post-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+.nph-post-go:active { transform: translateY(6px); box-shadow:none; }
+.nph-post-go:disabled { opacity: 0.6; box-shadow:var(--pop-push); }
 /* 電波が届いていないこと・入ったことを、押す前と押したあとに言う（#163）。
    どちらも押せないので平ら。厚みを付けるとボタンが3つ並んでいるように見える。 */
 .nph-off, .nph-ok {
@@ -1975,15 +1972,15 @@ svg.nmap {
   line-height: var(--lh-head);
   text-align: left;
   color: var(--ink);
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.nph-ev-pick:active { transform: translateY(6px); box-shadow: none; }
+.nph-ev-pick:active { transform: translateY(6px); box-shadow:none; }
 /* 選んだものは沈めて朱の細枠（`.mp-tab.is-on` と同じ決め）。光らせない。 */
 .nph-ev-pick.is-on {
   border-color: var(--pick);
   transform: translateY(3px);
-  box-shadow: var(--pop-push);
+  box-shadow:var(--pop-push);
 }
 
 /* =========================================================
@@ -2018,7 +2015,7 @@ svg.nmap {
   border-radius: var(--r-0);
   background: var(--pg-paper-bg);
   background-color: var(--pg-sheet);
-  box-shadow: var(--shadow-2);
+  box-shadow:var(--shadow-2);
 }
 .nstudio-close {
   position: absolute;
@@ -2032,9 +2029,9 @@ svg.nmap {
   border-radius: var(--r-pill);
   background: linear-gradient(var(--paper), var(--paper-2));
   color: var(--ink);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
 }
-.nstudio-close:active { transform: translateY(4px); box-shadow: none; }
+.nstudio-close:active { transform: translateY(4px); box-shadow:none; }
 
 /* 出ているこの絵が、そのまま焼き上がりの1枚。長押しで保存できる。 */
 .nstudio-shot {
@@ -2048,7 +2045,7 @@ svg.nmap {
   max-width: 100%;
   max-height: 52vh;
   border-radius: var(--r-0);
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
 }
 .nstudio-shot .wait { width: 100%; --wait-h: 200px; }
 .nstudio-off,
@@ -2133,11 +2130,11 @@ svg.nmap {
   color: var(--ink);
   font-size: var(--fs-body);
   font-weight: 900;
-  box-shadow: var(--pop);
+  box-shadow:var(--pop);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.nstudio-go:active { transform: translateY(6px); box-shadow: none; }
-.nstudio-go:disabled { opacity: 0.6; box-shadow: var(--pop-push); }
+.nstudio-go:active { transform: translateY(6px); box-shadow:none; }
+.nstudio-go:disabled { opacity: 0.6; box-shadow:var(--pop-push); }
 /* こちらは板にしない。字のリンク1本（旅程表の「その日の配信を見る」と同じ形）。
    板を2つ横に並べると、どちらが本筋か分からなくなる。
    本筋は「ほぞんする」で、こちらは効かなかった人のための逃げ道。 */
@@ -2299,12 +2296,12 @@ p.ndsun-w { margin: 0; font-size: var(--fs-note); line-height: 1.7; font-weight:
   line-height: 1;
   text-decoration: none;
 }
-a.ndsp-n { box-shadow: var(--pop-sm); }
+a.ndsp-n { box-shadow:var(--pop-sm); }
 /* `inset` は**枠の内側（padding box）から**測られる。見た目 28px の丸は
    3px の輪を持っているので中身は 22px しかなく、-10px では 42px にしか
    ならなかった（`hitbox.mjs` の実測）。-14px で 50px。 */
 a.ndsp-n::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
-a.ndsp-n:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--frame-dark); }
+a.ndsp-n:active { transform: translateY(2px); box-shadow:0 1px 0 var(--frame-dark); }
 /* 輪の色は地図の点と同じ並び。**地の砂色の上で読めるほうの濃い色**を使う */
 .ndsp-n.cm-see, .nspot-n.cm-see { border-color: var(--accent-2); }
 .ndsp-n.cm-eat, .nspot-n.cm-eat { border-color: var(--accent-deep); }
@@ -2461,7 +2458,7 @@ p.ndhh-src {
   padding: 1px var(--sp-2);
   border-radius: var(--r-0);
   background: var(--paper);
-  box-shadow: 0 0 0 1.5px var(--pick);
+  box-shadow:0 0 0 1.5px var(--pick);
   color: var(--ink);
   font-size: var(--fs-min);
   font-weight: 900;
@@ -2617,7 +2614,7 @@ p.nday-lead {
   background: var(--sand);
   /* 押せないので**厚みは付けない**（`island-design.md` 3章3）。
      落ち影は右下へずらしてぼかす。厚み（真下・ぼかし無し）と取り違えられない */
-  box-shadow: var(--shadow-1);
+  box-shadow:var(--shadow-1);
   overflow: hidden;
 }
 /* 拡大図は本図のすぐ下。**間を空けすぎない。** 離すと2枚が別の街に見える */
@@ -2780,20 +2777,19 @@ p.nday-lead {
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 .nlog-seed:active {
   transform: translateY(4px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 .trip-cities { margin-top: calc(var(--sp-2) * -1); }
 .nlog-seed.is-on {
   border-color: var(--pick);
   transform: translateY(4px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* 今週やること。**消すためのところ**なので、行と「消す」を横に並べる。 */
@@ -2847,12 +2843,12 @@ p.nday-lead {
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 .trip-week-x:active,
-.trip-week-plus:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
-.trip-week-plus:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
+.trip-week-plus:active { transform: translateY(4px); box-shadow:inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
+.trip-week-plus:disabled { opacity: 0.55; box-shadow:var(--pop-push); }
 .trip-week-add { display: flex; gap: var(--sp-2); align-items: stretch; }
 .trip-week-add input { flex: 1; min-width: 0; min-height: 48px; }
 
@@ -2882,8 +2878,7 @@ p.nday-lead {
     color-mix(in srgb, var(--paper) 88%, var(--frame)) 0%,
     var(--paper) 100%
   );
-  box-shadow:
-    0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
+  box-shadow:0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
     0 8px 18px color-mix(in srgb, var(--frame-deep) 26%, transparent);
 }
 /* 帯の中では、送りが幅いっぱい。押しどころを探させない */
@@ -3028,10 +3023,10 @@ p.nday-lead {
   font-weight: 900;
   letter-spacing: var(--ls-body);
   color: var(--ink);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-deep);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.nfd-copy:active { transform: translateY(6px); box-shadow: none; }
+.nfd-copy:active { transform: translateY(6px); box-shadow:none; }
 
 /* --- 道すじの寄り道（`components/nordic/RoadStops.tsx`） ------------------
    **いちばん大きく出すのは、名前ではなく「幹線から何km外れるか」。**
@@ -3235,11 +3230,11 @@ p.nday-lead {
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-1);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
   text-decoration: none;
 }
-.nsp-go:active { transform: translateY(2px); box-shadow: var(--pop-push); }
+.nsp-go:active { transform: translateY(2px); box-shadow:var(--pop-push); }
 /* `min-width: 0` が無いと、長い現地語の名前が列を押し広げて横にあふれる */
 .nsp-txt { display: grid; gap: 2px; min-width: 0; }
 .nsp-name {
@@ -3435,7 +3430,7 @@ ol.ndrd-l {
   font-size: 15px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.28);
+  box-shadow:inset 0 2px 0 rgba(255, 255, 255, 0.28);
 }
 .ndrd-r:not([data-kind="hitch"]) .ndrd-pin {
   width: 28px;
@@ -3444,7 +3439,7 @@ ol.ndrd-l {
   background: var(--paper);
   color: var(--ink-2);
   border: 2px solid color-mix(in srgb, var(--frame-dark) 60%, var(--paper));
-  box-shadow: none;
+  box-shadow:none;
 }
 
 .ndrd-b {

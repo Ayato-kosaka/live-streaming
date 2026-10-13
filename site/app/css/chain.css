@@ -50,7 +50,7 @@
   /* 押せない板なので、**厚みを付けない。**
      合図は厚み1種類だけ（`docs/island-design.md` 3章）。
      内側の光だけにして、落ち影とも取り違えられないようにする */
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.55);
+  box-shadow:inset 0 3px 0 rgba(255, 255, 255, 0.55);
   overflow: hidden;
   /* 横に払うと島が変わる。縦は面を送りたいだけなので、ブラウザに返す */
   touch-action: pan-y;
@@ -312,7 +312,7 @@
   border: 3px solid var(--frame-deep);
   border-radius: 16px;
   background: linear-gradient(180deg, #ffe9b0 0%, var(--paper) 46%, var(--paper-2) 100%);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-deep);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -334,7 +334,7 @@
   border-radius: 999px;
   background: var(--accent-deep);
 }
-.atl-tag:active { transform: translate(calc(-50% + var(--atl-nudge)), 4px); box-shadow: 0 2px 0 var(--frame-deep); }
+.atl-tag:active { transform: translate(calc(-50% + var(--atl-nudge)), 4px); box-shadow:0 var(--pop-d0) 0 var(--frame-deep); }
 .atl-tag:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 
 /* ---- 矢印 --------------------------------------------------------------
@@ -351,7 +351,7 @@
   border: 3px solid var(--frame-deep);
   border-radius: 50%;
   background: linear-gradient(180deg, #fff6d8 0%, var(--paper) 52%, var(--paper-2) 100%);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow:0 var(--pop-d4) 0 var(--frame-deep);
   color: var(--ink);
   cursor: pointer;
 }
@@ -363,7 +363,7 @@
 .atl-arm.is-right:active { transform: translateY(calc(-50% + 4px)); }
 .atl-arm.is-up:active { transform: translate(-50%, 4px); }
 .atl-arm.is-down:active { transform: translate(-50%, 4px); }
-.atl-arm:active { box-shadow: 0 2px 0 var(--frame-deep); }
+.atl-arm:active { box-shadow:0 var(--pop-d0) 0 var(--frame-deep); }
 .atl-arm:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 
 /* ---- 島から島へ渡る舟 --------------------------------------------------
@@ -798,14 +798,14 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 18px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   text-decoration: none;
 }
 .chap-sail-go.is-next { justify-content: flex-end; text-align: right; }
 .chap-sail-go:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .chap-sail-go:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
 .chap-sail-go i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--ink-2); }
@@ -847,13 +847,13 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 18px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   text-decoration: none;
 }
 .chap-more:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .chap-more:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
 .chap-more b { display: block; font-size: 14px; font-weight: 900; }
@@ -1101,7 +1101,7 @@
   border-radius: 13px;
   background: linear-gradient(180deg, #fff8e4 0%, #f6e6c2 100%);
   color: var(--ink);
-  box-shadow: 0 4px 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
+  box-shadow:0 var(--pop-d2) 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
   pointer-events: auto;
   cursor: pointer;
   text-align: left;
@@ -1220,9 +1220,9 @@
   color: var(--paper, #fffdf6);
   font-size: 11.5px;
   font-weight: 900;
-  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow:0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
-.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow:0 var(--pop-d0) 0 #c9a978; }
 
 /* ---- いま行こうとしている建物の札（`IsleStage` の `dock`）----------------
    **島の上ではなく、画面の下ふちに1枚。**
@@ -1268,7 +1268,7 @@
 .isle-going .isle-mark::after { content: none; }
 .isle-going .isle-text { min-width: 150px; }
 .isle-going .isle-text b { font-size: 14.5px; }
-.isle-going .isle-mark:active { transform: translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+.isle-going .isle-mark:active { transform: translateY(2px); box-shadow:0 var(--pop-d0) 0 #c9a978; }
 /* 同じ札を2枚出さない。留めているあいだ、島の上の札は引っ込む */
 .isle[data-dock] .isle-spot .isle-mark { opacity: 0; pointer-events: none; }
 /* 吹き出しと建物の中を開いているあいだは、下の `.isle.is-talking .isle-mark` が
@@ -1294,7 +1294,7 @@
   background: linear-gradient(#c4123f, #96072e);
   color: var(--paper, #fffdf6);
   border: 2.5px solid var(--paper, #fffdf6);
-  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32);
+  box-shadow:0 var(--pop-d1) 0 rgba(126, 38, 18, 0.32);
   transform: rotate(-7deg);
 }
 /* 近づいた建物は、ふわっと弾ませる（`docs/island-design.md` 3-5 反応を返す） */
@@ -1356,7 +1356,7 @@
   background:
     radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
     linear-gradient(var(--paper) 0 58%, var(--paper-2));
-  box-shadow: 0 3px 0 rgba(154, 101, 50, 0.18), 6px 14px 26px var(--cast-far, rgba(78, 96, 72, 0.34));
+  box-shadow:0 var(--pop-d1) 0 rgba(154, 101, 50, 0.18), 6px 14px 26px var(--cast-far, rgba(78, 96, 72, 0.34));
   pointer-events: none;
 }
 .isle-talk p { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.8; letter-spacing: 0.02em; color: var(--ink); }
@@ -1413,7 +1413,7 @@
   background: linear-gradient(180deg, #fffdf6 0%, #fbf3dd 100%);
   /* **厚みは付けない。** これは押すものではなく、開いた中身の入れ物。
      厚み＝押せる、と決めてある（`docs/island-world.md` 3.4） */
-  box-shadow: 4px 14px 26px rgba(20, 50, 40, 0.34);
+  box-shadow:4px 14px 26px rgba(20, 50, 40, 0.34);
   animation: isleSheetIn 0.22s ease-out both;
 }
 @keyframes isleSheetIn {
@@ -1439,7 +1439,7 @@
      `docs/island-design.md` 3-2 は「指で押せる最小 48px」で、ここは
      実測 40.9x40.9 しか無かった（2026-10-11。`tools/sprites/hitbox.mjs` の
      測りかた＝中心から1pxずつ伸ばす、で測った）。
-     **絵のほうを大きくしない。** 48px にすると厚み（`box-shadow: 0 3px 0`）が
+     **絵のほうを大きくしない。** 48px にすると厚み（`box-shadow:0 3px 0`）が
      40px の札のために決めた値のまま残り、板の見出しの背も変わる。 */
   position: relative;
   width: 40px;
@@ -1449,7 +1449,7 @@
   border-radius: 12px;
   color: var(--ink);
   background: #f0e5c8;
-  box-shadow: 0 3px 0 #d3c09a;
+  box-shadow:0 var(--pop-d1) 0 #d3c09a;
 }
 /* 広げた当たり。**見えないので、厚みも色も付けない**（合図は厚み1種類だけ。3-3） */
 .isle-sheet-x::after {
@@ -1457,7 +1457,7 @@
   position: absolute;
   inset: -4px;
 }
-.isle-sheet-x:active { transform: translateY(2px); box-shadow: 0 1px 0 #d3c09a; }
+.isle-sheet-x:active { transform: translateY(2px); box-shadow:0 1px 0 #d3c09a; }
 
 /* 板の中の掲示板（`components/isle/IsleBoard.tsx`）。
    ---------------------------------------------------------
@@ -1536,10 +1536,10 @@
   padding: 9px 11px;
   border-radius: 13px;
   background: #fffdf6;
-  box-shadow: 0 3px 0 #ddcda6;
+  box-shadow:0 var(--pop-d1) 0 #ddcda6;
   color: var(--ink);
 }
-.isle-list a:active { transform: translateY(2px); box-shadow: 0 1px 0 #ddcda6; }
+.isle-list a:active { transform: translateY(2px); box-shadow:0 1px 0 #ddcda6; }
 .isle-list a:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 2px; }
 .isle-list img { width: 34px; height: 34px; object-fit: contain; flex: none; }
 .isle-list span { flex: 1; min-width: 0; }
@@ -1563,12 +1563,12 @@
   border-radius: 14px;
   background: linear-gradient(#9c580f, #7d450c);
   color: var(--paper, #fffdf6);
-  box-shadow: 0 4px 0 rgba(76, 48, 20, 0.55);
+  box-shadow:0 var(--pop-d2) 0 rgba(76, 48, 20, 0.55);
 }
 .isle-more span { flex: 1; min-width: 0; }
 .isle-more b { display: block; font-size: 14px; font-weight: 900; }
 .isle-more i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.9; }
-.isle-more:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+.isle-more:active { transform: translateY(2px); box-shadow:0 var(--pop-d0) 0 rgba(0, 0, 0, 0.18); }
 
 /* --- 島の隅の道具 --- */
 .isle-sign {
@@ -1614,7 +1614,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   font-size: 12px;
   font-weight: 900;
@@ -1674,7 +1674,7 @@
 .isle-view:active,
 .isle-atlas:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .isle-view:focus-visible,
 .isle-atlas:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
@@ -1885,14 +1885,14 @@
   border-radius: 14px;
   background: var(--paper-2);
   border: 2px solid var(--frame);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
   text-decoration: none;
   transition: transform 0.14s ease;
 }
 .isle-kuni a:active,
 .isle-more:active,
-.isle-app-head:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-dark); }
+.isle-app-head:active { transform: translateY(4px); box-shadow:0 0 0 var(--frame-dark); }
 .isle-kuni-body { display: grid; gap: 1px; min-width: 0; flex: 1; }
 .isle-kuni-body b { font-size: 14px; font-weight: 900; }
 .isle-kuni-body i,
@@ -1917,12 +1917,12 @@
   border-radius: 16px;
   background: var(--paper-2);
   border: 2px solid var(--frame);
-  box-shadow: var(--pop-sm);
+  box-shadow:var(--pop-sm);
   color: var(--ink);
   text-decoration: none;
   transition: transform 0.14s ease;
 }
-.isle-legends a:active { transform: translateY(4px); box-shadow: 0 0 0 var(--frame-dark); }
+.isle-legends a:active { transform: translateY(4px); box-shadow:0 0 0 var(--frame-dark); }
 .isle-legends img { flex: none; width: 56px; height: 56px; object-fit: contain; }
 .isle-legend-body { display: grid; gap: 3px; min-width: 0; }
 .isle-legend-body > b { font-size: 14.5px; font-weight: 900; line-height: 1.35; }

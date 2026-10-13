@@ -169,7 +169,7 @@
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
   /* **厚みは付けない。押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
      落ち影だけ、島のほかの板と同じ向き・同じぼかしで */
-  box-shadow: 3px 8px 9px var(--cast, rgba(78, 96, 72, 0.28));
+  box-shadow:3px 8px 9px var(--cast, rgba(78, 96, 72, 0.28));
   color: var(--ink);
   /* **折り返すときは、行を均す。**
      ここに入る文は `content/nights.ts` から来るので、こちらの都合で長さが
@@ -259,8 +259,7 @@
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow:0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 10px var(--cast),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   color: var(--ink);
@@ -270,7 +269,7 @@
 }
 .htrip:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow:0 0 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 .htrip:focus-visible { outline: 3px solid #fffdf6; outline-offset: 2px; }
 
