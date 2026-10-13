@@ -126,7 +126,15 @@
   font-weight: 900;
   line-height: 20px;
   text-align: center;
+}/* 数が読めていないとき。**朱のままだと「何件か在る」に見える**ので、
+   地の色を落として、急ぎではないことを色でも言う。**消さない**——
+   消すと 0件と同じ顔になる（`docs/island-standards.md` §10）。
+   `--ink-2` に紙色で 5.2（朱と同じ 4.5 の線は越えている） */
+.mp-tab-b.is-unknown {
+  background: var(--ink-2);
+  font-weight: 700;
 }
+
 
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。

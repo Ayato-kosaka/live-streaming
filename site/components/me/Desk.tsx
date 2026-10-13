@@ -149,6 +149,14 @@ export default function Desk() {
                   読んで何も分からない数字になる（`island-design.md` 4章）。
                   光らせない——厚みは札そのものが持っている合図なので、
                   ここは平らな札を1枚重ねるだけにする（同 3章） */}
+              {/* **読めなかった日を、0件と同じ顔にしない**（`docs/island-standards.md` §10）。
+                  札が消えるだけだと「ぜんぶ返した」に見える。読めていないあいだは
+                  「—」を出して、**数が分からないこと**を言う。0件のときだけ消す。 */}
+              {t.id === "sticky" && waiting.n === null && (
+                <span className="mp-tab-b is-unknown" title="いま数えられていません">
+                  —
+                </span>
+              )}
               {t.id === "sticky" && !!waiting.n && (
                 <span className="mp-tab-b">{waiting.n}</span>
               )}
