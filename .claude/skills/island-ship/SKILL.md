@@ -128,7 +128,7 @@ push が network で落ちたら 2s → 4s → 8s → 16s で4回まで。
 いま鳴るかどうかは、その場で見られる:
 
 ```bash
-python3 python/upkeep_watch.py --no-github | grep 島の直したところ
+python3 python/upkeep_watch.py --no-github 2>&1 | grep 島の直したところ
 ```
 
 ## 4. デプロイして、ログの最後まで見る
