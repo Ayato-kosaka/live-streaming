@@ -218,6 +218,13 @@ export default function CardSheet({
   /** どのあやとを入れるか（`STICKERS` の `id`）。**null は入れない。手元だけ。** */
   const [mateId, setMateId] = useState<string | null>(null);
   /**
+   * 動かせる人が立っているか。**住人でも、あやとだけでも立っている。**
+   *
+   * 前は「住人を入れたか」で手を出していたので、あやとだけ入れた紙では
+   * 絵をなぞっても動かず、大きさの目盛りも1本も出なかった。
+   */
+  const movable = !!chosen || !!mateId;
+  /**
    * 1人ぶんの持ちかた。立ち位置と、向き。
    *
    * **`place` が null は「まだ自分で置いていない」**——住人なら覚えてある
@@ -384,7 +391,7 @@ export default function CardSheet({
      人が入っているが、開いて最初に見たいのは写真のほう。 */
   const grew = useRef(!!startIcon);
   useEffect(() => {
-    if (!chosen) {
+    if (!movable) {
       grew.current = false;
       return;
     }
@@ -396,7 +403,7 @@ export default function CardSheet({
       0,
     );
     return () => clearTimeout(t);
-  }, [chosen]);
+  }, [movable]);
 
   /* 紙の底に「まだ下に続く」の合図を出す。
 
@@ -504,10 +511,16 @@ export default function CardSheet({
   const icon = chosen?.icon ?? null;
   /** いま描く立ち位置。動かしていなければ、その人の元の立ち位置 */
   const place = moved ?? chosen?.place ?? null;
-  /** いま入れるあやと。**人を入れていないときは読みに行かない**（2体目だから） */
+  /**
+   * いま入れるあやと。
+   *
+   * **人を入れていなくても入れられる**（あやと 2026-10-13
+   * 「キャラを入れなくてもあやとを入れれるように」）。島の住人の絵を
+   * まだ持っていない人でも、その日の写真にあやとを立てて持って帰れる。
+   */
   const mate = useMemo(
-    () => (icon && mateId ? (STICKERS.find((s) => s.id === mateId) ?? null) : null),
-    [icon, mateId],
+    () => (mateId ? (STICKERS.find((s) => s.id === mateId) ?? null) : null),
+    [mateId],
   );
   const mateSrc = mate?.file ?? null;
   /** 左右を返してよい絵か。**字の入った絵は返さない**（`content/goods.ts`） */
@@ -609,8 +622,15 @@ export default function CardSheet({
        自分で置いていなければ、並べ方（押しのけない・足元をそろえる・
        重ならない）は `place.ts` の `layout` が決める。
        **字の入った絵は左右を返さない**（`canFlip`） */
-    if (chr && m)
-      out.push({ img: m, place: mateAt.place, flip: mateAt.flip, canFlip: mateFlip });
+    /* **住人を入れていないときは、あやとが先頭に立つ。** 立っているのが
+       1人なら、その1人が手の0番——手の番号と並びの番号がずれると、
+       押したのと違う人が動く。持ちかたも `youAt` のほうを使う。 */
+    if (m)
+      out.push(
+        chr
+          ? { img: m, place: mateAt.place, flip: mateAt.flip, canFlip: mateFlip }
+          : { img: m, place, flip: youAt.flip, canFlip: mateFlip },
+      );
     return out;
     /* `art.current` は再描画を起こさないので、読み終わりの合図（`ready` /
        `mateReady`）も鍵に入れる。入れないと、絵が届いても組み直されない */
@@ -942,7 +962,7 @@ export default function CardSheet({
 
   const onDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (!chosen) return;
+      if (!movable) return;
       const el = stageRef.current;
       const cv = cvRef.current;
       if (!el || !cv) return;
@@ -981,7 +1001,7 @@ export default function CardSheet({
       }
       touch();
     },
-    [chosen, figures, hand, poseOf, rebase, touch],
+    [movable, figures, hand, poseOf, rebase, touch],
   );
 
   const onMove = useCallback(
@@ -1167,8 +1187,8 @@ export default function CardSheet({
                 掴めなかった。台なら、どちらが前に出ていても指が届く。 */}
             <div
               ref={stageRef}
-              className={`akd-stage${out || live ? "" : " is-off"}${chosen ? " is-movable" : ""}`}
-              {...(chosen
+              className={`akd-stage${out || live ? "" : " is-off"}${movable ? " is-movable" : ""}`}
+              {...(movable
                 ? {
                     onPointerDown: onDown,
                     onPointerMove: onMove,
@@ -1184,7 +1204,7 @@ export default function CardSheet({
                   alt={group.note || "その日の写真"}
                   /* 入れている人がいるときだけ、矢印キーでも動かせる。
                      いないときは素の写真なので、動かすものが無い */
-                  {...(chosen
+                  {...(movable
                     ? {
                         tabIndex: 0,
                         "aria-label": "キャラクターのいるところ。矢印キーでうごかせます",
@@ -1244,7 +1264,7 @@ export default function CardSheet({
           {/* なぞれること・2本指でできることを、**ここで1行だけ**言う。
               写真のすぐ下に置くのは、下の手まで落ちると窓の外へ出るから
               （候補が11人いる日は札が3段になる）。 */}
-          {chosen && (
+          {movable && (
             <p className="nstudio-tip">
               写真の上をなぞると、うごきます。2本の指でひらくと大きく、ひねるとまわります。
             </p>
@@ -1287,19 +1307,30 @@ export default function CardSheet({
             </>
           )}
 
-          {/* どのあやとを入れるか。**入れた人がいるときだけ出る**——
-              2体目は本人の隣に立つものなので、本人のいない写真には出ようがない。
+          {/* どのあやとを入れるか。**人を入れていなくても出る**
+              （あやと 2026-10-13「キャラを入れなくてもあやとを入れれるように」）。
+              前は本人の隣に立つ2体目だったので、本人のいない紙には出していな
+              かった。住人の絵をまだ持っていない人には、**押せる札が1枚も
+              無い紙**になっていた。
 
               並ぶのは `content/goods.ts` の `STICKERS` そのまま。**ここに
               名簿を作らない**ので、ステッカーが1枚増えた日に勝手に増える。
               増えても折り返すだけなので、紙の背は段ぶんしか伸びない。 */}
-          {chosen && (
-            <>
+          <>
               {/* 顔の札（「だれを入れますか」）と**同じ声で問う。** 札の列の中へ
                   入れてみたが、問いの字のぶん折り返しが1段増えて、かえって
-                  40px 高くなった（実測 104px → 160px）。1行取るほうが短い。 */}
-              <p className="nstudio-ask" ref={askRef}>あやとも入れますか</p>
-              <div className="akd-mates" role="group" aria-label="あやとも入れますか">
+                  40px 高くなった（実測 104px → 160px）。1行取るほうが短い。
+
+                  **1人も立っていない紙では「も」を取る。** 誰も入れていない
+                  のに「あやとも」と聞かれると、何かを入れ忘れたように読める。 */}
+              <p className="nstudio-ask" ref={askRef}>
+                {chosen ? "あやとも入れますか" : "あやとを入れますか"}
+              </p>
+              <div
+                className="akd-mates"
+                role="group"
+                aria-label={chosen ? "あやとも入れますか" : "あやとを入れますか"}
+              >
                 <button
                   type="button"
                   className={`akd-mate${mateId === null ? " is-on" : ""}`}
@@ -1320,6 +1351,7 @@ export default function CardSheet({
                     type="button"
                     className={`akd-mate${mateId === s.id ? " is-on" : ""}`}
                     aria-pressed={mateId === s.id}
+                    aria-label={s.name}
                     onClick={() => {
                       setMateId(s.id);
                       touch();
@@ -1327,13 +1359,17 @@ export default function CardSheet({
                   >
                     {/* 札に出すのは小さいほう（`art`）。**焼くのは元絵（`file`）**で、
                         そちらは押されたときに読みにいく */}
+                    {/* **名前の字は出さない**（あやと 2026-10-13
+                        「入れるあやとのテキスト（島にいるあやと）は非表示で良い」）。
+                        「思い出ステッカー（ストックホルム）」のような長い名前が
+                        3行に折り返して、札の背が隣と 2倍違っていた。
+                        選ぶのは絵で足りる——いま手にしている1人の名前は、
+                        下の手（`.akd-hand`）に出る。読み上げには `aria-label`。 */}
                     <img src={s.art} alt="" width={52} height={52} />
-                    <i>{s.name}</i>
                   </button>
                 ))}
               </div>
-            </>
-          )}
+          </>
 
           {/* 出すかたち。**人を入れていなくても出る**——素の写真を
               かべがみにしたい日もある。
@@ -1386,11 +1422,11 @@ export default function CardSheet({
 
               並びはやることの順（だれを持っているか → 大きさ → かたむき →
               むき → もとへ）。 */}
-          {chosen && (
+          {movable && (
             <div className="akd-tune" ref={tuneRef}>
               {/* 2人いるときだけ、どちらを持っているかを出す。1人しか
                   立っていない紙では、持っているのはその人しかいない */}
-              {mate && (
+              {chosen && mate && (
                 <p className="akd-hand">
                   <img src={hand === 0 ? cardIcon(chosen.icon, 128) : mate.art} alt="" />
                   <b>{hand === 0 ? chosen.name || "この人" : mate.name}</b>
@@ -1430,8 +1466,9 @@ export default function CardSheet({
                 />
               </label>
               {/* 字や標識の入った絵は返らない（`content/goods.ts` の
-                  `canFlip`）ので、**押せない札を出さない** */}
-              {(hand === 0 || mateFlip) && (
+                  `canFlip`）ので、**押せない札を出さない。**
+                  住人のいない紙では、0番に立っているのはあやとのほう。 */}
+              {(chosen ? hand === 0 || mateFlip : mateFlip) && (
                 <button type="button" className="akd-turn" onClick={turn}>
                   むきをかえる
                 </button>

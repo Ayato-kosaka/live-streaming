@@ -988,6 +988,19 @@
    広い画面では3つを横に並べて、点線も横に引く。縦に積んだままだと
    1,200px で道が画面の端から端まで間延びする。
    ========================================================= */
+/* 紙の題は、紙の上ぶちより 32px 上へ出る意匠（`pages.css` の
+   `.panel.paper > h2:first-child`）。**すぐ上に押せるものが来ると、
+   その下辺に乗る。** 実測で「あと◯日ぶんだす」に 10px かぶっていて、
+   押しどころが2つ重なっていた（あやと 2026-10-13）。
+
+   意匠は島じゅうの紙が持っているので残す。**出たぶん（32px）より広く
+   空ける**ほうを選んだ——紙どうしが並ぶときは 32px の空きにちょうど
+   札が収まる形なので、そちらを変えると島の全部の紙が動く。
+   この並び（押しどころ → 紙）は `/cards` と `/nordic/photos` の2面だけ
+   （`tools/sprites/cardhowto.mjs` が数える）。 */
+.longer + .akg {
+  margin-top: calc(var(--sp-6) + var(--sp-4));
+}
 .akg-steps {
   list-style: none;
   margin: var(--sp-3) 0 0;
@@ -1070,17 +1083,34 @@
   color: var(--ink-2);
 }
 /* 行き先。字の押しどころで、高さで 48px を取る（`docs/island-design.md` 3の2）。
-   この面の企画の札（`.akd-day-plan`）と同じ言い方にそろえる。 */
+   この面の企画の札（`.akd-day-plan`）と同じ言い方にそろえる。
+
+   **箱ではなく、字から数えて空きを揃える。** 48px の押しどころの中で
+   字は真ん中にいるので、箱の上下には 14px ずつ見えない余白がある。
+   箱で揃えると（上 0・下 24px）、**読む人には上 18px・下 38px に見える**
+   ——390px の実測がそれで、「じぶんのことを見る」の下だけ空いていた
+   （あやと 2026-10-13「もらい方の余白が変」）。押しどころの高さは
+   削れないので、**外の空きのほうを 14px ぶん差し引いて置く。**
+
+   `inline-flex` をやめたのは、行の高さぶん（4px ほど）が下にだけ付くから。
+   字の行ではなく、1つの塊として置く。 */
 .akg-go {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: var(--sp-1);
   min-height: 48px;
+  margin-top: var(--sp-2);
   font-size: var(--fs-note);
   font-weight: 700;
   color: var(--accent-2);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+/* 紙のいちばん下に来る行き先。**紙の下の余白（24px）と、箱の中の
+   14px が足し算になる**ので、箱のぶんを引き戻す。 */
+.akg-note > .akg-go:last-child {
+  margin-bottom: calc(-1 * var(--sp-3));
 }
 /* 手順のあとの短い注。**手順との境目は罫1本。** 紙の型は区切りに影を
    使わない（`pages.css`）ので、紙のはしまで届く罫を、負のマージンで引く
@@ -1088,7 +1118,9 @@
 .akg-notes {
   display: grid;
   gap: 0;
-  margin: var(--sp-5) calc(-1 * var(--pp-x)) 0;
+  /* 罫までの空きは 12px。**すぐ上は 48px の押しどころ**で、その箱の中に
+     14px の余白が入っているので、24px 取ると字から 38px 離れる（上の注） */
+  margin: var(--sp-3) calc(-1 * var(--pp-x)) 0;
   padding: var(--sp-5) var(--pp-x) 0;
   border-top: 1px solid var(--pg-rule);
 }
@@ -1134,8 +1166,12 @@
   }
   .akg-head { justify-content: center; }
   /* 行き先は、真ん中に寄せた3つの下に置く。左端に置くと1つ目の下だけに付いて見える。
-     `inline-flex` のままでは寄せられないので、幅を中身ぶんに決めてから中央へ。 */
-  .akg > .akg-go { display: flex; width: fit-content; margin-inline: auto; }
+
+     **`margin-inline: auto` で寄せる。** `getComputedStyle` はこれを
+     **解いたあとの px**（1280px で `0 355.125px 0 355.109px`）で答えるので、
+     測ると「数で押し込んだ中央寄せ」に見えるが、書いてあるのは `auto`。
+     幅を変えて測れば、どの幅でも左右が揃うことで分かる。 */
+  .akg > .akg-go { margin-inline: auto; }
   /* **`1fr 1fr` で固定しない。** 注が1つのとき、左半分だけに短い段落が
      残って右が空く。`auto-fit` は空の列を畳むので、1つなら幅いっぱい、
      2つなら横並びになる。 */
