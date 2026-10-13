@@ -30,6 +30,7 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 | --- | --- | --- |
 | `line_pack.py` | どこでも（PIL） | 絵を LINE の寸法に落とす（`sticker` / `main` / `tab` / `check`）。`--outline` で白いフチを足す |
 | `line_form.py` | EC2（`/home/ubuntu/stamp/`） | 新規登録の欄を `meta.json` から埋める。**保存は押さない**（画面を撮って見てから押す） |
+| `line_tags.py` | EC2（`/home/ubuntu/stamp/`） | タグを枠ごとに付ける（`{"01": ["やっほー", …]}`）。押すたびに「n/9」が増えたかで確かめる |
 
 ## 2. ログイン
 
@@ -60,8 +61,9 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
   「Add」を押しても言語が足されなかった
 - **ボタンは `data-test` で探す。** 字で探すと同じ字のボタンが何個もある（「Edit」「Add」「OK」）
 - **保存（Save）の `<input type=submit>` は、`<label class=mdBtnLabel>` の中に幅0で隠れている。** 押すのは label のほう
-- **確かめの小窓は `.MdPOP01Modal` の中。** 「Save this form?」「The number of stickers in this set will be changed」に
-  OK を押す。作者名の小窓は `section.FnEditAuthor .mdPOP01Window`
+- **確かめの小窓は2つの形がある。** 「Save this form?」「The number of stickers in this set will be changed」は
+  `.cm-modal-content` の中の OK。作者名の小窓は `section.FnEditAuthor .mdPOP01Window`（`.MdPOP01Modal` の形）。
+  片方だけで探すと「押したのに保存されない」に見える（2026-10-13 に表示情報の直しで踏んだ）
 - **宣伝の小窓が最初に出る**（刀剣乱舞のスタンプ、など）。「Don't show this again」に印を付けて Close。
   付けないと開くたびにかぶさって、ほかの小窓が見つからない
 - **アカウント設定の振込先タブは、画面の字に銀行名がそのまま出る。** `innerText` を出力しない。
@@ -139,6 +141,12 @@ EC2 には `zip` が無い。python の `zipfile` で固める。
   そのスタンプを候補に出すための札
 - **付けなければ承認後に自動で付くが、自動のタグは見ることも直すこともできない。** なので手で付ける
 - **タグは枠の番号に付く。** 並びを変える前に付けると、絵とタグがずれる。**並びが決まってから付ける**
+- **押したその場で保存される**（「Changes saved」）。外すのも同じ「押す」なので、付いているものを押すと外れる。
+  `line_tags.py` は付いているものを先に読み、押すたびに「n/9」が1つ増えたかで確かめる
+- 同じ語の札が「Recommended tags」と一覧の2か所に出る（どちらを押しても同じタグ）。季節の語（「春」など）は
+  畳まれた見出しの中にあるので、検索欄（`input[type=search]`）に打ってから押す
+- 一覧の言語は `select[name=language]` を `ja` にすると日本語の語で出る
+- 1枠に付けたのは3〜6個（合う語だけ。9個まで埋めない）。最初のセットの割り当ては #716
 
 ## 9. 申請
 
