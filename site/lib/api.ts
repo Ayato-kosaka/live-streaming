@@ -108,6 +108,33 @@ export type IslandState = {
    */
   residentDays?: Record<string, number> | null;
   nordic?: NordicFacts;
+  /**
+   * 字の長さの上限。**正はサーバー（`functions/src/islandApi.ts`）。**
+   *
+   * 画面はここの数字を1つも持たない。長いあいだ `Notes.tsx` が
+   * `const MAX = 120;` に「サーバー側の `MAX_NOTE_LEN` と同じ」と
+   * 書き添えて持っていたが、**同じ事実が2か所に在って、ずれても
+   * 赤くなるものが無い**形だった（島じゅうに15か所。`docs/island-db.md`）。
+   *
+   * **まだ届いていないあいだは `undefined`。** そのときは入力欄に
+   * 上限を付けない——**付ける数字をこちらで決めると、2か所に戻る。**
+   * 上限そのものはサーバーが必ずかけるので、ここは親切でしかない。
+   */
+  limits?: Partial<IslandLimits>;
+};
+
+/** 字の長さの上限。**この型は欄の名前を決めるだけで、値は持たない。** */
+export type IslandLimits = {
+  /** 付箋の本文 */
+  note: number;
+  /** 付箋への返信 */
+  reply: number;
+  /** 島に出す名前 */
+  name: number;
+  /** 付箋に貼るリンク */
+  link: number;
+  /** 企画の題 */
+  planTitle: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -662,6 +689,43 @@ export const dropStickyPic = (id: string, token: string) =>
   req<{ id: string; pic: null }>(`/stickies/${id}/pic`, {
     method: "DELETE",
     headers: auth(token),
+  });
+
+/**
+ * **まだこちらが何もしていない付箋**の数と、その id。**あやとだけ。**
+ *
+ * 机の札（`/me/desk` の「付箋」）に出すためだけの軽い1本。
+ * 本文も名前も返らないので、道具を開く前に引いても重くない。
+ *
+ * **数も絞り込みも、サーバーが決めたものをそのまま使う**
+ * （`functions/src/islandApi.ts` の `waitingStickies`）。画面の側にも
+ * 同じ条件を書くと、片方を直した日に札の数と机の中身がずれる。
+ */
+export const getWaitingStickies = (token: string) =>
+  req<{ waiting: number; ids: string[] }>("/stickies/waiting", {
+    headers: auth(token),
+  });
+
+/**
+ * 既読にした付箋を読む。**あやとだけ。** 戻すときに要る。
+ *
+ * 既読は「読んだが、返信はしない」。**消していない**ので、
+ * ここから見返して戻せる（`seenSticky(id, false, token)`）。
+ */
+export const getSeenStickies = (token: string) =>
+  req<{ notes: Sticky[] }>("/stickies?seen=1", { headers: auth(token) });
+
+/**
+ * 既読にする・戻す。**あやとだけ。付箋は1文字も変わらない。**
+ *
+ * 板からも消えないし、ハートも返信欄も今までどおり。変わるのは
+ * 「まだ何もしていない」の数から外れることだけ。
+ */
+export const seenSticky = (id: string, on: boolean, token: string) =>
+  req<{ id: string; seen: boolean }>(`/stickies/${id}/seen`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ on }),
   });
 
 /** しまう・戻す。**あやとだけ。消えない。** ハートの数はそのまま残る。 */

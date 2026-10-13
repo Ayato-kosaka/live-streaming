@@ -8,10 +8,12 @@ import {
   dropStickyPic,
   getArchivedPlans,
   getArchivedStickies,
-  getMyStickies,
   getNextPlans,
+  getSeenStickies,
   getStickies,
+  getWaitingStickies,
   replySticky,
+  seenSticky,
   setPlanStatus,
   type NextPlan,
   type PlanStatus,
@@ -102,6 +104,84 @@ function useCare<T>(read1: () => Promise<T[]>) {
   return { list, read, setList, reload: () => setAgain((n) => n + 1) };
 }
 
+/** 机に並べる棚。**1つだけ開く。** */
+type View = "todo" | "all" | "seen" | "bin";
+
+/** 棚の札。並びはここ1か所（画面に書き並べない） */
+const VIEWS: { id: View; label: string }[] = [
+  { id: "todo", label: "まだ" },
+  { id: "all", label: "ぜんぶ" },
+  { id: "seen", label: "既読" },
+  { id: "bin", label: "しまった" },
+];
+
+/** まだ何もしていない付箋の、数と id。**引けるまでは null**（0枚と区別する） */
+export type Waiting = {
+  /** 枚数。読めていなければ null */
+  n: number | null;
+  /** その id。読めていなければ null */
+  ids: Set<string> | null;
+  /** 数え直す */
+  reload: () => void;
+};
+
+/**
+ * **まだこちらが何もしていない付箋**を、口に数えてもらう。
+ *
+ * ## なぜ画面で数えないか
+ *
+ * ここは長いあいだ、画面の側で数えていた——一覧を引いて、自分のぶん
+ * （`?mine=1`）をもう1本引いて、`!n.reply && !n.byOwner && !own.has(n.id)`
+ * で絞る。**同じ条件が画面とサーバーの両方に要る形**で、既読を足すと
+ * 3か所目が増える。
+ *
+ * いまは口が1本で数と id の両方を返す（`GET /stickies/waiting`）。
+ * **札の数も、机の絞り込みも、同じ1本から出る。** 物差しが1つなら、
+ * 片方だけ古くなりようがない（`docs/island-standards.md` 8章）。
+ *
+ * 机（`Desk.tsx`）は札のバッジに `n` だけを使う。**道具を開かずに引ける**
+ * のは、この口が本文も名前も返さないから。
+ */
+export function useWaiting(): Waiting {
+  const { token, owner } = useAuth();
+  const [got, setGot] = useState<{ n: number; ids: Set<string> } | null>(null);
+  const [again, setAgain] = useState(0);
+
+  useEffect(() => {
+    /* あやとでないあいだは叩かない。403 が返るだけの往復になる */
+    if (owner !== "yes") return;
+    let gone = false;
+    (async () => {
+      const t = await withRead(token()).catch(() => null);
+      if (gone || !t) return;
+      try {
+        const r = await withRead(getWaitingStickies(t));
+        /* **形が違う返事を、数として読まない。** `{}` が返ると
+           `r.waiting` は undefined で、そのまま入れると札が空のバッジを
+           出し、机の1行目が「まだ返していないのが  枚」になる。
+           読めなかったのと同じ顔にする（§15） */
+        if (typeof r.waiting !== "number" || !Array.isArray(r.ids)) {
+          throw new Error("bad shape");
+        }
+        if (!gone) setGot({ n: r.waiting, ids: new Set(r.ids) });
+      } catch {
+        /* **0 を答えとして出さない**（`docs/island-standards.md` §15）。
+           読めなかった日に札へ 0 を出すと、「ぜんぶ返した」に見える。
+           null のままにして、札はバッジを出さない */
+      }
+    })();
+    return () => {
+      gone = true;
+    };
+  }, [token, owner, again]);
+
+  return {
+    n: got?.n ?? null,
+    ids: got?.ids ?? null,
+    reload: () => setAgain((x) => x + 1),
+  };
+}
+
 /**
  * まだ返していない付箋。
  *
@@ -112,71 +192,63 @@ function useCare<T>(read1: () => Promise<T[]>) {
  * 「付箋返しのリストに私の付箋を載せるのはやめてほしい」）。自分の付箋に
  * 自分で返す用事は無いのに、返していない数に入って赤いままになっていた。
  *
- * ## 見分けかた
+ * **既読にしたものも、ここから外れる**（2026-10-13）。あやとの言葉:
  *
- * **名前では突き合わせない。** 表示名は本人が決めるもので、同じ名前の人が
- * 2人いた事故がこの島で実際にある。`uid` で見分ける。
+ * > 既読機能みたいな、返信しないで未返信から減らす機能も欲しい
  *
- * ただし一覧の口（`stickyShape`）は uid も cid も返さない。返すと、
- * 同じ人の付箋を並べて数えられてしまうので、そこは開けない決めになっている。
- * かわりに**自分のぶんだけを返す口**（`/stickies?mine=1`。サーバー側で
- * uid で絞る）をもう1回引いて、その id を一覧から差し引く。
- * 公開する形は増えないし、名前を突き合わせずに済む。
+ * 返す言葉の要らない1枚（「見てます」「ありがとう」）に返信を書かないかぎり、
+ * その1枚は永久に数に残っていた。**数が減らないと、数そのものが読まれなくなる。**
  *
- * `byOwner` と同じ扱いにする。**消さずに、返す対象から外すだけ**なので、
- * 「ぜんぶ見る」と「しまったもの」には今までどおり出る。自分の付箋を
- * しまう道は残しておく。
+ * ## 見分けかたは、口が持っている
+ *
+ * 名前では突き合わせない（表示名は本人が決めるもので、同じ名前の人が2人いた
+ * 事故がこの島で実際にある）。`uid` で見分けるが、一覧の口（`stickyShape`）は
+ * uid も cid も返さない——返すと、同じ人の付箋を並べて数えられてしまう。
+ *
+ * だから**絞り込みごと口に任せた**（`useWaiting`）。公開する形は1つも増えず、
+ * 札の数と机の中身が同じ1本から出る。
+ *
+ * ## 棚は4つ。**1つだけ開く**
+ *
+ * まだ／ぜんぶ／既読／しまった。既読としまったを**別の棚にする**のは、
+ * 既読が「読んだが返さない」で、しまったが「板から下ろした」だから。
+ * 同じ棚に混ぜると、戻すときにどちらを戻すのか分からない。
  */
-export function StickyCare() {
+export function StickyCare({ waiting }: { waiting: Waiting }) {
   const { token } = useAuth();
-  /** あやと自身が貼った付箋の id。引けるまでは null（0枚と区別する） */
-  const [own, setOwn] = useState<Set<string> | null>(null);
-  /** しまったものを見ているか */
-  const [bin, setBin] = useState(false);
-  const [all, setAll] = useState(false);
+  const [view, setView] = useState<View>("todo");
 
-  /* 貼ってあるぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
-     そのまま読み直しになる（`bin` が変わると `read1` の顔が変わる）。 */
+  /* 棚ごとに引く先が違う。**同じ器で読む**ので、札を切り替えると
+     そのまま読み直しになる（`view` が変わると `read1` の顔が変わる）。 */
   const read1 = useCallback(async () => {
-    if (!bin) return (await getStickies({ limit: 300 })).notes;
+    if (view === "todo" || view === "all") {
+      return (await getStickies({ limit: 300 })).notes;
+    }
     const t = await withRead(token());
     if (!t) throw new Error("no-token");
-    return (await getArchivedStickies(t)).notes;
-  }, [bin, token]);
+    return view === "seen" ?
+        (await getSeenStickies(t)).notes :
+        (await getArchivedStickies(t)).notes;
+  }, [view, token]);
   const { list: notes, read, setList: setNotes, reload } = useCare(read1);
 
-  useEffect(() => {
-    let gone = false;
-    (async () => {
-      /* **`withRead` を通す。** ここが返ってこないと `own` が null のままで、
-         付箋のほうが読めていても灰色が残り続ける（下の `reading`）。 */
-      const t = await withRead(token()).catch(() => null);
-      if (gone) return;
-      if (!t) return setOwn(new Set());
-      try {
-        const r = await withRead(getMyStickies(t));
-        if (!gone) setOwn(new Set(r.notes.map((n) => n.id)));
-      } catch {
-        /* 引けなかった日は、差し引かずに出す。**返す道が消えるより、
-           自分のぶんが混ざるほうがまし。** 数は多いほうへ寄るので、
-           「ぜんぶ返しました」と言ってしまうことはない。 */
-        if (!gone) setOwn(new Set());
-      }
-    })();
-    return () => {
-      gone = true;
-    };
-  }, [token]);
-
-  /** 返す相手のいる付箋か。**数と一覧で同じ物差しを使う**（片方だけ減らさない） */
-  const todo = (n: Sticky) => !n.reply && !n.byOwner && !own?.has(n.id);
-  const shown = (notes ?? []).filter((n) => bin || all || todo(n));
-  const waiting = (notes ?? []).filter(todo).length;
-  /* 自分のぶんを引く前に数を出すと、開いた直後だけ多い数が見えて、
-     すぐ減る。**動く数字を出すくらいなら、出るのを待つ。** */
-  const reading = read === "wait" || own === null;
+  /* **「まだ」の棚だけ、口が選んだ id で絞る。** 画面でもう一度条件を
+     書くと、口と画面で物差しが2つになる（この関数の注）。 */
+  const shown =
+    view === "todo" ?
+      (notes ?? []).filter((n) => waiting.ids?.has(n.id)) :
+      (notes ?? []);
+  /* 札の数が出る前に一覧を出すと、開いた直後だけ全部が見えて、すぐ減る。
+     **動く数字を出すくらいなら、出るのを待つ。** */
+  const reading = read === "wait" || (view === "todo" && waiting.ids === null);
   /** **数を言ってよいのは、読めた上でのことだけ。** */
-  const counted = read === "ok" && own !== null;
+  const counted = read === "ok" && waiting.n !== null;
+
+  /** 1枚ぶんの印を変えたら、札の数も数え直す。**別々に動かさない。** */
+  const drop = (id: string) => {
+    setNotes((cur) => cur?.filter((x) => x.id !== id) ?? cur);
+    waiting.reload();
+  };
 
   return (
     <>
@@ -185,14 +257,30 @@ export function StickyCare() {
       {read !== "down" && (
         <p className="mp-now">
           {counted ?
-            <>まだ返していないのが <b>{waiting}</b> 枚</> :
+            <>まだ返していないのが <b>{waiting.n}</b> 枚</> :
             "読んでいます…"}
         </p>
       )}
+      {/* 棚の札。**机の道具の札（`.mp-tab`）と同じ形にそろえる**——同じ面の
+          中で同じ仕事（1つだけ開く）の見た目が2通りあると、別の仕掛けに見える。
+          4つなので `is-4`（390px でも折らない） */}
+      <div className="mp-tabs is-4" role="tablist" aria-label="付箋の棚">
+        {VIEWS.map((v) => (
+          <button
+            key={v.id}
+            role="tab"
+            aria-selected={view === v.id}
+            className={`mp-tab${view === v.id ? " is-on" : ""}`}
+            onClick={() => setView(v.id)}
+          >
+            <span className="mp-tab-l">{v.label}</span>
+          </button>
+        ))}
+      </div>
       {read === "down" ?
         /* 読みに行けなかった。**「ぜんぶ返しました。」とは別の顔にする。**
            あれは読めた上でのことばで、届かなかった日に言ってよい嘘ではない。 */
-        <ReadAgain what={bin ? "しまったもの" : "付箋"} onRetry={reload} /> :
+        <ReadAgain what={VIEWS.find((v) => v.id === view)?.label ?? "付箋"} onRetry={reload} /> :
       reading ? (
         <div className="wait is-row" aria-hidden>
           <span />
@@ -200,7 +288,9 @@ export function StickyCare() {
         </div>
       ) : shown.length === 0 ? (
         <p className="muted">
-          {bin ? "しまったものはありません。" : "ぜんぶ返しました。"}
+          {view === "bin" ? "しまったものはありません。" :
+            view === "seen" ? "既読にしたものはありません。" :
+              "ぜんぶ返しました。"}
         </p>
       ) : (
         /* 返していない付箋は、返すまで減らない。**上から順に返す道具**なので、
@@ -212,56 +302,40 @@ export function StickyCare() {
             <StickyRow
               key={n.id}
               note={n}
-              stowed={bin}
-              onChanged={(next) =>
+              view={view}
+              onChanged={(next) => {
                 setNotes(
                   (cur) => cur?.map((x) => (x.id === n.id ? next : x)) ?? cur,
-                )
-              }
-              onStowed={() =>
-                setNotes((cur) => cur?.filter((x) => x.id !== n.id) ?? cur)
-              }
+                );
+                /* 返事を書けば「まだ」から外れる。取り消せば戻る。
+                   **札の数を、画面の側で足し引きしない** */
+                waiting.reload();
+              }}
+              onGone={() => drop(n.id)}
             />
           )}
         </Longer>
       )}
-      <div className="mp-care-acts">
-        {/* 札を切り替えるだけ。読み直しは `useCare` が受け持つ（`bin` が
-            変わると、そのまま次の一覧を取りに行く）。 */}
-        <button
-          className="nt-obtn"
-          onClick={() => {
-            setBin(false);
-            setAll((v) => !v);
-          }}
-        >
-          {all && !bin ? "返していないものだけ" : "ぜんぶ見る"}
-        </button>
-        <button
-          className="nt-obtn"
-          onClick={() => {
-            setBin((v) => !v);
-            setAll(false);
-          }}
-        >
-          {bin ? "貼ってあるものに戻る" : "しまったものを見る"}
-        </button>
-      </div>
     </>
   );
 }
 
-/** 1枚。返す・しまう。**押しどころは、旅の途中でも押せる大きさにする。** */
+/**
+ * 1枚。返す・既読にする・しまう。
+ * **押しどころは、旅の途中でも押せる大きさにする。**
+ */
 function StickyRow({
   note,
-  stowed,
+  view,
   onChanged,
-  onStowed,
+  onGone,
 }: {
   note: Sticky;
-  stowed: boolean;
+  /** いまどの棚にいるか。**押しどころの向きが棚で変わる**（既読にする／もどす） */
+  view: View;
   onChanged: (n: Sticky) => void;
-  onStowed: () => void;
+  /** この棚から外れた（しまった・既読にした・戻した） */
+  onGone: () => void;
 }) {
   const { token } = useAuth();
   const [text, setText] = useState(note.reply ?? "");
@@ -311,8 +385,32 @@ function StickyRow({
     setBusy(true);
     setErr(false);
     try {
-      await archiveSticky(note.id, !stowed, t);
-      onStowed();
+      await archiveSticky(note.id, view !== "bin", t);
+      onGone();
+    } catch {
+      setErr(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * 既読にする・もどす。**付箋は1文字も変わらない。**
+   *
+   * 板からも消えないし、ハートも返信欄も今までどおり。変わるのは
+   * 「まだ返していない」の数から外れることだけ。
+   *
+   * **戻せる**ので押せる。消す押しどころだったら、押し間違いが怖くて
+   * 誰も押さない（`/stickies/:id/seen` の注）。
+   */
+  const mark = async () => {
+    const t = await token();
+    if (!t) return;
+    setBusy(true);
+    setErr(false);
+    try {
+      await seenSticky(note.id, view !== "seen", t);
+      onGone();
     } catch {
       setErr(true);
     } finally {
@@ -351,8 +449,17 @@ function StickyRow({
         <button className="mp-send is-small" disabled={busy} onClick={reply}>
           {busy ? "送っています…" : note.reply ? "返しなおす" : "返す"}
         </button>
+        {/* **読んだが、返さないと決めた1枚。** 返す言葉の要らない便りに
+            返事を書かないかぎり、その1枚は永久に数に残る。
+            しまった棚には出さない——あちらは板から下ろしてあるので、
+            まだ返していない数にもう入っていない */}
+        {view !== "bin" && (
+          <button className="mp-send is-small is-quiet" disabled={busy} onClick={mark}>
+            {view === "seen" ? "まだに もどす" : "読んだ"}
+          </button>
+        )}
         <button className="mp-send is-small is-quiet" disabled={busy} onClick={stow}>
-          {stowed ? "もどす" : "しまう"}
+          {view === "bin" ? "もどす" : "しまう"}
         </button>
         {/* 絵が貼ってある1枚にだけ出る。**付箋ごと下ろさずに、絵だけ外す** */}
         {note.pic && (

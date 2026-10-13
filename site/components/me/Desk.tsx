@@ -8,7 +8,7 @@ import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
 import { TripPlace } from "./TripTools";
-import { PlanCare, StickyCare } from "./OwnerCare";
+import { PlanCare, StickyCare, useWaiting } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 import { TOOLS, type Tool } from "./tools";
 
@@ -59,12 +59,30 @@ const LAST = "ayato-desk-tool";
  * ## 残っている数は、道具の1行目にある
  *
  * 札には出さない。**札に数を出すには、開いていない道具のぶんまで先に
- * 引くことになる**（付箋の「まだ返していない」は、一覧と自分のぶんの
- * 2本を引いて差し引かないと出ない）。開いた道具の1行目で言えば足りる。
+ * 引くことになる**（企画の「いま◯件」は一覧を丸ごと降ろさないと出ない）。
+ * 開いた道具の1行目で言えば足りる。
+ *
+ * ### 付箋だけは、札にも出す（2026-10-13）
+ *
+ * あやとの言葉:
+ *
+ * > 島の手入れで、付箋の未返信数のバッジを出して欲しい
+ *
+ * 上の決まりの理由は「**先に引くのが重いから**」で、重くないなら当たらない。
+ * 付箋の「まだ返していない」は、いま**数と id だけを返す1本**で出る
+ * （`GET /stickies/waiting`。本文も名前も返らない）。前は一覧と自分のぶんの
+ * 2本を引いて差し引く形だったので、札には出せなかった。
+ *
+ * **ほかの8つには付けない。** どれも一覧を丸ごと降ろさないと数が出ないし、
+ * 9つ全部にバッジが付けば、どれが待っているのかは結局読めない。
  */
 export default function Desk() {
   const { owner, meRead, reloadMe } = useAuth();
   const [tool, setTool] = useState<Tool>("photo");
+  /* まだ返していない付箋の数。**机を開いた時点で1本だけ引く**ので、
+     「付箋」を開かなくても札にバッジが出る。読めなかった日は null のまま
+     ——0 を出すと「ぜんぶ返した」に見える（§15） */
+  const waiting = useWaiting();
 
   useEffect(() => {
     try {
@@ -126,6 +144,22 @@ export default function Desk() {
             >
               <Icon name={t.icon} size={18} />
               <span className="mp-tab-l">{t.label}</span>
+              {/* **待っている数だけ。0 と「読めなかった」は出さない。**
+                  0 のバッジは「片づいている」を言うための飾りで、
+                  読んで何も分からない数字になる（`island-design.md` 4章）。
+                  光らせない——厚みは札そのものが持っている合図なので、
+                  ここは平らな札を1枚重ねるだけにする（同 3章） */}
+              {/* **読めなかった日を、0件と同じ顔にしない**（`docs/island-standards.md` §10）。
+                  札が消えるだけだと「ぜんぶ返した」に見える。読めていないあいだは
+                  「—」を出して、**数が分からないこと**を言う。0件のときだけ消す。 */}
+              {t.id === "sticky" && waiting.n === null && (
+                <span className="mp-tab-b is-unknown" title="いま数えられていません">
+                  —
+                </span>
+              )}
+              {t.id === "sticky" && !!waiting.n && (
+                <span className="mp-tab-b">{waiting.n}</span>
+              )}
             </button>
           ))}
         </div>
@@ -137,7 +171,7 @@ export default function Desk() {
           {tool === "photo" && <PhotoPost />}
           {tool === "place" && <TripPlace />}
           {tool === "video" && <PlanVideos />}
-          {tool === "sticky" && <StickyCare />}
+          {tool === "sticky" && <StickyCare waiting={waiting} />}
           {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}

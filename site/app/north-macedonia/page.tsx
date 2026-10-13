@@ -146,7 +146,7 @@ function Spots({ items }: { items: NmSpot[] }) {
 
 export default function NorthMacedoniaPage() {
   return (
-    <PageShell current="next" crumbs={[crumbOf("next"), { label: "北マケドニア" }]}>
+    <PageShell crumbs={[crumbOf("next"), { label: "北マケドニア" }]}>
       <PageHead
         mark={<Icon name="mountain" size={44} />}
         title="北マケドニア"

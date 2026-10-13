@@ -34,7 +34,8 @@
  *     元絵があるのに**焼いた絵が無い**ものも落とす（回し忘れ）
  *  7. `CAL_SHOWN` が「絵のある月」そのもの（手で並べ直していない）
  *  8. **焼く道具の対照**（`tools/goods/calbake.py --drill`）が通り、表を1日ずらす
- *     （`BREAK=shift`）と 1 で落ちる。2027-01-01 が金曜、など12か月の曜日の答えは
+ *     （`BREAK=shift`）と 1 で落ちる。絵の右下の一言を重ねない（`BREAK=sign`）・地に溶かす（`BREAK=signdim`）と
+ *     1 で落ちる。2027-01-01 が金曜、など12か月の曜日の答えは
  *     道具の側が持っている。元絵が無くても回る（2.2秒）
  *  9. **いいねの仕掛けが1本しか無い。** 付箋の口（`heartSticky` ほか）を呼ぶのも、
  *     ハートの形を持つのも `components/goods/wordVotes.tsx` だけで、
@@ -555,6 +556,16 @@ check("calbake.py --drill が通る（2027年の12か月の曜日を含む）", 
 const shifted = drill({ BREAK: "shift" });
 check("表を1日ずらすと calbake.py --drill が 1 で落ちる", shifted.code === 1,
   `終了コード ${shifted.code}`);
+/* 絵の右下の一言（#786）。**重ねたことにして重ねない回**が落ちることを見る——
+   一言を描く道が黙って空振りしても、通る回だけでは区別がつかない */
+const unsigned = drill({ BREAK: "sign" });
+check("一言を重ねないと calbake.py --drill が 1 で落ちる", unsigned.code === 1,
+  `終了コード ${unsigned.code}`);
+/* 一言はふちの無い細い字なので、**地に溶けても重ねたことにはなる**（画素は動く）。
+   影を消して字を薄めた回が、字と地の比で落ちることを見る */
+const dimmed = drill({ BREAK: "signdim" });
+check("一言が地に溶けると calbake.py --drill が 1 で落ちる", dimmed.code === 1,
+  `終了コード ${dimmed.code}`);
 
 // ---- 9. いいねの仕掛けが1本しか無いか --------------------------------------
 console.log("\n# 9. いいねの仕掛けが1本しか無いか（LINEスタンプの守り）");

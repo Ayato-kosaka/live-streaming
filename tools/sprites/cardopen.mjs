@@ -164,7 +164,11 @@ if (押せる >= 1 && !BEFORE) {
     ),
     候補: document.querySelectorAll(".akd-modal .npick").length,
     あやとの札: document.querySelectorAll(".akd-modal .akd-mate").length,
-    なぞれる: document.querySelectorAll(".akd-modal .akd-stage > img.is-movable").length,
+    /* **`is-movable` は台（`.akd-stage`）に付く。** 2026-10-09 までは
+       焼き上がり（`<img>`）に付けていたが、焼き直している 150ms のあいだ
+       `<img>` は居らず、その隙に指を置くと掴めなかった（#717）。
+       古い綴りのままだと、動くのに「動かせない」と出る。 */
+    なぞれる: document.querySelectorAll(".akd-modal .akd-stage.is-movable").length,
     ほぞんする: document.querySelector(".nstudio-go")?.disabled === false,
     横あふれ: document.documentElement.scrollWidth > window.innerWidth + 1,
   }));
