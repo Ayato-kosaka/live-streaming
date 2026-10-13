@@ -311,18 +311,35 @@ def _as_source(p: Path) -> Path | None:
 
 
 def mjs_subject(path: Path) -> Path | None:
-    """`X_selftest.mjs` が読んでいる実物を、字から当てる。"""
+    """`X_selftest.mjs` が守っている実物を、字から当てる。
+
+    **`import` しているものを先に採る。** `readFileSync` で読んでいるだけの
+    ファイルは、**字として当てているだけで動かしていない**ことがある——
+    `tools/sprites/*_selftest.mjs` がそれで、道具の字に決まった形があるかを
+    見つつ、**判定そのものは別の小さな `*rate.mjs` から `import` している。**
+    動かしていないほうを壊しても何も起きないので、「対照が無い」に見える。
+    """
     text = path.read_text(encoding="utf-8", errors="replace")
     here = path.parent
     consts = _consts(text, here)
-    cands: list[Path] = []
+    imported: list[Path] = []
+    read: list[Path] = []
 
-    def add(p: Path) -> None:
-        s = _as_source(p)
-        if s and s != path and s not in cands:
-            cands.append(s)
+    def add(into: list[Path], q: Path) -> None:
+        s = _as_source(q)
+        if s and s != path and s not in into:
+            into.append(s)
 
-    # `join(X, "a", "b.js")` / `join(here, "..", "lib", "x.ts")`
+    # `import … from "./x.mjs"` — **動かしているもの**
+    for m in re.finditer(r'(?:from|import)\s+"(\.{1,2}/[^"]+)"', text):
+        q = (here / m.group(1)).resolve()
+        for cand in (q, Path(str(q) + ".mjs"), Path(str(q) + ".js"),
+                     Path(str(q) + ".ts")):
+            if _as_source(cand):
+                add(imported, cand)
+                break
+
+    # `join(X, "a", "b.js")` / `join(here, "..", "lib", "x.ts")` — 読んでいるもの
     for m in re.finditer(r"(?:join|resolve)\(\s*([^()]*?)\s*\)", text):
         args = [x.strip() for x in m.group(1).split(",") if x.strip()]
         if not args:
@@ -333,19 +350,31 @@ def mjs_subject(path: Path) -> Path | None:
         base = consts.get(head) or (here if head in ("here", "HERE") else None)
         if base is None:
             continue
-        add(base.joinpath(*[a.strip("\"'") for a in rest]))
+        add(read, base.joinpath(*[a.strip("\"'") for a in rest]))
 
     # `readFileSync(CONST, …)` — 定数そのものがファイルを指している形
     for m in re.finditer(r"readFileSync\(\s*(\w+)\s*[,)]", text):
         if m.group(1) in consts:
-            add(consts[m.group(1)])
+            add(read, consts[m.group(1)])
 
+    cands = imported + [q for q in read if q not in imported]
     if not cands:
         return None
-    # いちばん「守っていそう」なもの——`src` か `lib` の下を先に採る
-    cands.sort(key=lambda p: (0 if "/src/" in p.as_posix()
-                              or "/lib/" in p.as_posix() else 1,
-                              len(p.as_posix())))
+
+    # **名前が似ているものを先に採る。** いちばん短い道を採ると、
+    # 関係のない定数の表を掴む（`calendar_selftest` が実際に掴んだ）
+    stem = path.name.replace("_selftest.mjs", "").replace("_", "").lower()
+    imp = set(imported)
+
+    def near(q: Path) -> int:
+        s = q.stem.replace("_", "").lower()
+        return 0 if s == stem else (1 if stem in s or s in stem else 2)
+
+    cands.sort(key=lambda q: (0 if q in imp else 1,
+                              near(q),
+                              0 if "/src/" in q.as_posix()
+                              or "/lib/" in q.as_posix() else 1,
+                              len(q.as_posix())))
     return cands[0]
 
 
@@ -500,6 +529,12 @@ def plan(only: str | None, names: list[str]) -> list[dict]:
             continue
         if rel in by_watch and only in (None, "repo"):
             c = by_watch[rel]
+            # **書いてある当て先が、この枝に無いことがある**（まだ出していない
+            # ものを指しているとき）。黙って飛ばさず、理由を出す
+            if not (REPO / c["file"]).is_file():
+                out.append({"kind": "-", "watch": rel,
+                            "skip": f"当て先の {c['file']} がこの枝に無い"})
+                continue
             out.append({"kind": "repo", "watch": rel,
                         "target": REPO / c["file"], "case": c})
             continue
