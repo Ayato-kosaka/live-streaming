@@ -64,16 +64,16 @@ python3 .claude/skills/ec2-chrome/ec2.py put <頼みごとを書いたファイ�
 1〜2分かかるので、**裏で回す**（120秒を超えると Bash が裏に回す。`ec2-chrome` 4）:
 
 ```bash
-python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt_image.py /home/ubuntu/chatgpt/q.txt /home/ubuntu/chatgpt/out /home/ubuntu/chatgpt/in.png') 700
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt_image.py /home/ubuntu/chatgpt/q.txt /home/ubuntu/chatgpt/out "2026-10-13 背景透過：○○（住人の絵）" /home/ubuntu/chatgpt/in.png') 700
 python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/chatgpt/out-0.png <手元>
 ```
 
-最後に JSON で `url`（会話の URL）・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
-（`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭>`）。
+3つ目の引数は**会話の題**（`chatgpt` スキル 0 の形）。返事が来たら付け直す。プロジェクトの外を開いていたら送らずに止まる。
+最後に JSON で `url`（会話の URL）・`title`・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
+（`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭> [題]`）。採用・不採用が決まったら、題の括弧に書き足す。
 
-> `chatgpt_image.py` は、2026-10-12 に1本ずつ確かめた関数（`attach` → `send` → `wait_reply(want_images=True)` →
-> `images` → `save_image`）を1つにまとめたもの。まとめた形で EC2 の上を通したのは、まだ一度もない。
-> 初めて使った日に、ここの1行を「通った」に書き換える。
+> `chatgpt_image.py` は、2026-10-13 にほかのセッションで使って通った（あやと）。
+> 題の付け直し（`rename`）とプロジェクトの確かめ（`in_project`）は、そのあと足した。
 
 ### 頼みかた
 

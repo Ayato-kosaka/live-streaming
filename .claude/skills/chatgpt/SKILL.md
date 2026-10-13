@@ -16,8 +16,32 @@ description: ChatGPT（chatgpt.com）を、EC2 のログイン済み Chrome か�
 | | 決め | 理由 |
 | --- | --- | --- |
 | アカウント | **あやとの ChatGPT**（Plus）。ログインは `~/cdp-chatgpt` の Chrome に入っている。**複製し直さない**（5） | Q1: A |
-| 会話の残し場所 | **専用のプロジェクト「あやと島案内鳥」**（`chatgpt.py` の `PROJECT`）に入れる。一時チャットは使わない。会話は消さない | Q2: C。あやとの履歴・メモリに島の作業を混ぜない。長い待ちのあとでも取りに戻れる |
+| 会話の残し場所 | **専用のプロジェクト「あやと島案内鳥」**（`chatgpt.py` の `PROJECT`）に入れる。一時チャットは使わない。会話は消さない。**`chatgpt.com/` から始めない**（下） | Q2: C。あやとの履歴・メモリに島の作業を混ぜない。長い待ちのあとでも取りに戻れる |
+| 会話の題 | **返事が来たら毎回付け直す**（`rename()`）。形は下 | あやと 2026-10-13「チャット名は毎回わかりやすく」 |
 | 名乗り | ChatGPT への頼みごとの中で `Claude` と名乗らない（視聴者さんに出る字に混ざりうる） | CLAUDE.md |
+
+### プロジェクトの外に作らない
+
+**`fresh()` の既定はプロジェクト**（`PROJECT`）。`fresh("https://chatgpt.com/")` や、手で `chatgpt.com/` を開いて送ると、
+あやとの履歴の本流に会話ができる（2026-10-13 に別のセッションがそうなった。あやとが見つけた）。
+送る前に `in_project(t)` が True かを見る（`chatgpt.py ask` と `chatgpt_image.py` は見てから送る）。
+外に作ってしまったら、会話の右上の「More」→「Move to project」→「あやと島案内鳥」で戻す。
+
+### 会話の題
+
+ChatGPT が自分で付ける題は「イラスト作成」「絵の描き直し依頼」ばかりで、あとから何の会話か分からない
+（2026-10-13 にプロジェクトを見ると、38本のほとんどがそれだった）。**返事が来たら `rename(t, 題)` で付け直す。**
+
+```
+<日付> <用事>：<何を>（<どこで使うか・どうなったか>）
+2026-10-12 背景透過：🃏 住人の絵（試し・手元版を採用）
+2026-10-12 描き直し：地球をめぐるあやと（ステッカー・採用）
+```
+
+- 日付は頼んだ日（JST）。並べたときに順に並ぶ
+- 用事は「背景透過」「描き直し」「新しく描く」「調べもの」など、動詞1つ
+- 視聴者さんの名前・ハンドルは入れない（あやとの画面に並ぶだけだが、念のため）
+- 採用・不採用が決まったら、括弧の中を書き足して付け直す
 
 ## 1. 使いかた
 
@@ -32,16 +56,17 @@ python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/chatgpt/chatgpt.py /
 
 ```bash
 python3 .claude/skills/ec2-chrome/ec2.py put /tmp/…/q.txt /home/ubuntu/chatgpt/q.txt
-python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt.py ask /home/ubuntu/chatgpt/q.txt') 200
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt.py ask /home/ubuntu/chatgpt/q.txt "2026-10-13 調べもの：○○"') 700
 ```
 
 続けて何往復かするときは python で:
 
 ```python
 from chatgpt import *
-t = fresh(PROJECT)          # タブを1枚だけ残して、プロジェクトの中の新しい会話を開く
-print(logged_in(t))         # False なら止まる（下の 3）
+t = fresh()                 # タブを1枚だけ残して、プロジェクトの中の新しい会話を開く（既定が PROJECT）
+print(logged_in(t), in_project(t))   # どちらかが False なら止まる（下の 3・上の 0）
 a = ask(t, "……")            # 返事の本文（Markdown）。同じ t で続けて呼べば同じ会話の続き
+rename(t, "2026-10-13 調べもの：○○")  # 返事が来たら毎回（上の 0）
 print(turns(t))             # [(role, 本文, 書き終わったか), …]
 print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで fresh(url) で戻れる
 ```
@@ -52,7 +77,8 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | `send(t, text)` / `wait_reply(t, n)` / `ask(t, text)` | 送る・書き終わりを待つ・その両方 |
 | `turns(t)` | 会話を読む。返事は DOM から Markdown に戻す（コードブロック・表・箇条書き） |
 | `busy(t)` | 書いている途中か |
-| `logged_in(t)` | ログインしているか |
+| `logged_in(t)` / `in_project(t)` | ログインしているか・プロジェクトの中か |
+| `rename(t, 題)` | 会話の題を付け直す（右上の「More」→「Rename」→「Chat title」→「Save」） |
 | `attach(t, [EC2のパス])` | ファイルを入力欄に付ける（無いパスは先に弾く） |
 | `images(t)` / `save_image(t, src, out)` | いちばん後ろの返事の絵を並べる・ページの中から取ってファイルに書く（絵を作るのは `chatgpt-image`） |
 
@@ -83,6 +109,8 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 - **絵を付けた直後の1回目の「送る」は、黙って無視されることがある**（2回に2回。ボタンは押せる見た目のまま）。
   `send()` は入力欄が空になるまで押し直し、何回目で通ったかを返す
 - **送りそこねた問いは下書きとして残る。** 開き直しても戻ってくるので、`send()` は入れる前に入力欄を空にする
+- **別の会話へ移るときは `fresh(url)`。同じタブで `t.go(url)` しない。** 会話をまたぐとタブの中身が
+  別のプロセスに替わり、CDP の接続が切れる（`socket is already closed`。2026-10-13 に一覧を回して踏んだ）
 - 中の API（`/backend-api/…`）は、ページの中の `fetch` でも **Bearer の札が要る**（cookie だけだと 401）。
   画面の操作で足りるうちは叩かない
 
