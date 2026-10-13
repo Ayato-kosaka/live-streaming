@@ -163,12 +163,15 @@ def goods(spec_path, dry=False, pub=False, trial=False, only=None):
         print(f"  created {m['id']} {m['title']!r} 公開={pr.get('published')} {pr.get('sampleUrl')}")
         print(f"    sample {pr.get('sampleImageUrl')}\n    tpl {pr.get('imageUrl')}")
         time.sleep(2)
+    if made:
+        time.sleep(20)  # 裏の絵（sub_materials）の見本は、少し遅れて焼かれるかもしれない
     for key, mid, pr in made:
+        print(f"    応答の品目: キー={sorted(pr.keys())} 面={pr.get('item', {}).get('availablePrintPlaces')}")
         # 見本の絵（表・裏）。公開されている URL なので、ログインなしで取れる
         tpl = pr.get("imageUrl") or ""
         urls = {"sample": pr.get("sampleImageUrl")}
         if "{width}" in tpl:
-            base = tpl.replace("{width}", "1000").replace("{height}", "1000").replace("{size}", "s").replace("{color}", "white")
+            base = tpl.replace("{width}", "1530").replace("{height}", "1530").replace("{size}", "s").replace("{color}", "white")
             for ang in ("front", "back"):
                 urls[ang] = base.replace("[/angle]", f"/{ang}")
         for name, u in urls.items():
@@ -204,7 +207,7 @@ def sample(ids):
             size, color = (sv.get("size") or {}).get("name", "s"), (sv.get("color") or {}).get("name", "white")
             print(f"{mid} {p['item']['name']} 公開={p.get('published')} {p.get('sampleUrl')}\n  sample {p.get('sampleImageUrl')}\n  tpl {tpl}")
             for ang in ["", "/front", "/back"]:
-                u = (tpl.replace("{width}", "1200").replace("{height}", "1200").replace("{size}", size)
+                u = (tpl.replace("{width}", "1530").replace("{height}", "1530").replace("{size}", size)
                      .replace("{color}", color).replace("[/angle]", ang))
                 raw = _fetch(u, tries=1)
                 name = f"{mid}-{p['item']['name']}{ang.replace('/', '-')}.img"
