@@ -121,7 +121,7 @@ const CAL_LEFT = CAL_MONTHS.length - CAL_SHOWN.length;
 
 export default function GoodsPage() {
   return (
-    <PageShell current="goods" crumbs={[{ label: "あやとグッズ" }]}>
+    <PageShell crumbs={[{ label: "あやとグッズ" }]}>
       <PageHead
         mark={<Icon name="gift" size={44} />}
         title="あやとグッズ"

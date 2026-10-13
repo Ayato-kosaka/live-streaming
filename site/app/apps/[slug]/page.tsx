@@ -63,7 +63,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   const released = a.milestones.find((m) => m.kind === "release");
 
   return (
-    <PageShell current="apps" crumbs={[{ label: "アプリ", href: "/apps" }, { label: a.name }]}>
+    <PageShell crumbs={[{ label: "アプリ", href: "/apps" }, { label: a.name }]}>
       <PageHead
         logo={a.logo}
         mark={a.slug === "nanikore" ? <HeadphoneArt size={62} /> : <DishArt size={62} />}

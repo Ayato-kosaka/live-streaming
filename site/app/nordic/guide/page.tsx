@@ -106,7 +106,6 @@ function Chapter({
 export default function NordicGuidePage() {
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },
