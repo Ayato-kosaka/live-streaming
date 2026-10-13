@@ -250,7 +250,10 @@ const WANT = {
   "middle-east": "countries streams shorts legends apps facts pier",
   caucasus: "countries streams shorts legends apps facts pier",
   "iran-walk": "countries streams shorts legends facts pier",
-  nordic: "countries streams shorts facts pier",
+  /* **2026-10-13 に `legends` が増えた。** 北欧旅を `content/legends.ts` に
+     足したので、この島にも「この島の代表的な企画」が建つ。増えても減っても
+     赤くなる形なので、増えたことをここに写して通す。 */
+  nordic: "countries streams shorts legends facts pier",
   /* バルカン諸国周遊（2026-10-12 にアルバニアと北マケドニアを統合）。
 
      **焼き直して `chapterStats` の鍵が `balkans` になったので、
