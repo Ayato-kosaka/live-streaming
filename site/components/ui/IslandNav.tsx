@@ -28,6 +28,9 @@ export default function IslandNav() {
           href={s.href}
           prefetch={false}
           className={`ih-link${current === s.id ? " is-on" : ""}`}
+          /* 砂浜の印と同じことを、読み上げにも言う。朱枠は 900px から下では
+             出ない（`display: none`）ので、そこでは帯ごと読み上げに出てこない */
+          aria-current={current === s.id ? "page" : undefined}
         >
           <img src={`/sprites/${s.icon}.webp`} alt="" />
           {s.label}

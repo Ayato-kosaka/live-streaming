@@ -21,7 +21,7 @@
  * | 静かに壊れる形 | 画面で起きること | ここが拾う |
  * | --- | --- | --- |
  * | 面がまた `current=` を渡しはじめる | 渡した面だけ合って、忘れた面は無印に戻る | 2 |
- * | `spotOfPath` が軒を引けなくなる | 141面ぜんぶで印が消える（型も巡回も通る） | 1 |
+ * | `spotOfPath` が軒を引けなくなる | 島の面ぜんぶで印が消える（型も巡回も通る） | 1 |
  * | 軒の道の外に面を建てた | その枝だけ無印。誰も気づかない | 3 |
  * | 砂浜が道を読むのをやめた | 同上 | 4 |
  * | 印の見た目が消えた | `is-here` は付くが、見ために何も変わらない | 5 |
@@ -33,8 +33,8 @@
  *
  * ## 対照（`docs/island-standards.md` §15）
  *
- * 足は5本（軒を引く式・道の均し・いちばん長いものが勝つ・面を歩く・
- * 渡している面を見つける）。**本物を1つも数える前に、1本ずつ折って落ちる
+ * 足は6本（軒を引く式・道の均し・いちばん長いものが勝つ・面を歩く・
+ * 渡している面を見つける・但し書きと中身を見分ける）。**本物を1つも数える前に、1本ずつ折って落ちる
  * ことを見る。** 折れなければ、本物の数字を出さずに 2 で帰る。
  */
 import { execFileSync } from "node:child_process";
@@ -129,7 +129,12 @@ export function tagProps(src, tag) {
 export const stripComments = (src) =>
   src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 
-/** その面が、砂浜（`.ifoot-doors`）を出しているか。 */
+/**
+ * その面が、砂浜（`.ifoot-doors`）を出しているか。
+ *
+ * **但し書きを落としてから渡すこと。** 古い書き方を注に残している面が
+ * あると、字だけで数えて嘘の赤になる。
+ */
 export const hasBeach = (src) => /<(PageShell|IslandFooter)\b/.test(src);
 
 /**
@@ -285,7 +290,8 @@ if (pages.length < 20) nothing(`site/app で面が ${pages.length} 枚しか見�
 {
   const bad = [];
   for (const { route, file } of pages) {
-    for (const hit of handedHere(readFileSync(file, "utf8"))) bad.push(`${route}（${hit}）`);
+    const src = stripComments(readFileSync(file, "utf8"));
+    for (const hit of handedHere(src)) bad.push(`${route}（${hit}）`);
   }
   check(`面 ${pages.length} 枚が「いま居る場所」を名乗っていない`, bad.length === 0,
     bad.join(" / "));
@@ -297,7 +303,7 @@ let marked = 0;
 {
   const unknown = [];
   for (const { route, file } of pages) {
-    if (!hasBeach(readFileSync(file, "utf8"))) continue;
+    if (!hasBeach(stripComments(readFileSync(file, "utf8")))) continue;
     beaches += 1;
     if (spotOfPath(route)) {
       marked += 1;
