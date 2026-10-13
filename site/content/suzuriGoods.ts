@@ -110,6 +110,18 @@ export const GOODS_BY_EMOJI: Record<string, string> = {
   "🫘": "21116532",
 };
 
+/**
+ * まだグッズの無い人の印。**島はここを読まない**（札は出さないだけ）。
+ *
+ * 置いてあるのは、毎晩の関所が「グッズ＋ここ＝名簿」で帳尻を合わせるため
+ * （`.github/workflows/rebake.yml` の `suzuriGoods.ts` の `match`）。
+ * 書かないと、グッズの無い人が1人いるだけで毎晩止まる。
+ */
+export const NO_GOODS: string[] = [
+  "🦔",
+  "🧘",
+];
+
 /** 印の揺れ（異体字セレクタ・結合子）を落とす。**焼くほうと同じ式。** */
 const norm = (e: string) =>
   [...(e || "")].filter((c) => !"\ufe0f\u200d♂♀ ".includes(c)).join("");

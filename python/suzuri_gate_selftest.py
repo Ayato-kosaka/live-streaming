@@ -14,9 +14,14 @@
 ## なぜ要るか
 
 `python/suzuri_residents.py` の関所は、**鍵が無いときの出どころ（公開の
-検索の面）が変わった晩に、島の99人ぶんの「グッズを買う」札がいっぺんに
-消えるのを止める唯一のもの**。札は「無ければ出さない」作りなので、
+検索の面）が変わった晩に、島じゅうの「グッズを買う」札がいっぺんに
+消えるのを止めるもの**。札は「無ければ出さない」作りなので、
 消えても画面は壊れない——**誰も赤くならないまま、札だけが無くなる。**
+
+`rebake.yml` の「中の数が縮んでいないか」とは**層が違う**（`suzuri_residents.py`
+の頭の表）。あちらは `commit` を止めるので、空の表を焼いてしまうと
+**同じ晩に焼けた他の9本まで master に入らない**（`docs/island-misses.md` #105）。
+ここが止めるのは**書くこと**で、書かなければ表は前のまま・他の9本は配られる。
 
 `python/shrink_guard_selftest.py` が `rebake.yml` の関所にやっているのと
 同じことを、こちらの関所にやる。
@@ -33,6 +38,7 @@
 | 5 | **島から人がまとめて抜けた晩は通る** | 正しい縮みを止めている（`characterBox.ts` が踏んだ形） |
 | 6 | **抜けた人と引けなかった人が混ざっても、引けなかったほうで決める** | 片方が片方を薄めている |
 | 7 | **口を叩いた終了コード**（通る＝0 / 止まる＝2）と、**止めた回は1文字も書かない** | 判定は正しいのに、書いてしまっている |
+| 8 | **焼いた形が、`rebake.yml` の `match` が数える形のままか**（グッズ＋`NO_GOODS`＝名簿） | あちらの正規表現が外れて、毎晩止まる／永遠に鳴れない |
 
 1 と 2 は**対**で見る。片方だけだと、何にでも止める関所でも通る。
 
@@ -67,6 +73,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -222,6 +229,19 @@ def main() -> int:
         code, after = _run(pairs, roster, baked_src)
         check(f"口を叩いたときの終了コード（{label}）", code, want)
         check(f"口を叩いたあと焼き込みが変わったか（{label}）", after != baked_src, changed)
+
+    # --- 8. 焼いた形が、`rebake.yml` の `match` が数える形のままか ----------
+    # あちらは `suzuriGoods.ts` を**字で**数える（`^\s{2}"[^"]+": "\d+",$` と
+    # `^\s{2}"[^"]+",$`）。`render()` の書き方を変えた日に、**向こうが黙って
+    # 0件を読む**（＝永遠に鳴れない）か、帳尻が合わなくなって**毎晩止まる**。
+    # どちらもこちらの変更で起きるので、こちらで当てる。
+    goods = re.findall(r'^ {2}"[^"]+": "\d+",$', baked_src, re.M)
+    spare = re.findall(r'^ {2}"[^"]+",$', baked_src, re.M)
+    check("関所の正規表現が、焼いたグッズに当たる", len(goods), len(baked))
+    check("関所の正規表現が、まだ無い人に当たる",
+          len(spare), len(roster) - len(baked))
+    check("グッズ＋まだ無い人＝名簿", len(goods) + len(spare), len(roster))
+    print(f"  帳尻: グッズ {len(goods)} ＋ まだ無い人 {len(spare)} ＝ 名簿 {len(roster)}")
 
     # --- 出す -------------------------------------------------------------
     for line in ok:

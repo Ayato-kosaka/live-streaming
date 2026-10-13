@@ -28,10 +28,18 @@
 
 ## 焼いたものは手で直さない
 
-`site/content/suzuriGoods.ts` は**この script の出力**。グッズが増えるのは
-毎晩の `SUZURI API` ワークフローなので、**焼き直しもそこに繋いである**
-（`.github/workflows/suzuri_api.yml` の step「住人グッズの売り場を焼き直す」）。
-手で足すと、次に焼いたとき黙って消える。
+`site/content/suzuriGoods.ts` は**この script の出力**。毎晩の焼き直し
+（`.github/workflows/rebake.yml`）の10本目として回る。手で足すと、次に焼いたとき黙って消える。
+
+**グッズを作っているのは別のワークフロー**（`SUZURI API` の `characters`）だが、
+焼き直しはそちらに相乗りさせていない。`rebake.yml` は commit と push、Hosting の
+起動、やせたときの関所、凍りの見張りを**もう全部持っている**ので、そこへ1行
+足すだけで同じ守りが効く。作った晩と焼く晩がずれるぶん（どちらも取り込みの
+完了から起きるので、同じ晩のうち）は、札が1日遅れて出るだけ。
+
+**名簿を焼いたあとに焼く。** `ALL` のいちばん後ろに置いてあるのは、
+`rebake.yml` の関所が名簿（`residents.ts`）と帳尻を合わせる（`match`）ため——
+先に焼くと、**前の晩の名簿と今晩のグッズ**を突き合わせることになる。
 
 ## やせたら焼かない（関所）
 
@@ -87,6 +95,31 @@
 同じ字になるので、数えるものが無い側と混ぜない（`docs/island-standards.md` §15）。
 
 対照は `python/suzuri_gate_selftest.py`（ネットも鍵も要らない）。
+
+### `rebake.yml` の「中の数が縮んでいないか」と、**二重ではない。層が違う**
+
+`site.ts` と同じ形（`rebake.yml` の `site.ts` の注）。
+
+| | 何を見るか | 止めるもの |
+| --- | --- | --- |
+| ここ（`gate()`） | **売り場から引けた数**が、名簿を踏まえて説明のつく減り方か | **書くこと** |
+| あちら（`match`） | **焼いた結果**が、名簿（`residents.ts`）と帳尻が合っているか | **commit** |
+
+ここが無いと、売り場が0件を返した晩に**空の表が書かれ**、あちらが commit を
+止める。止まるのは正しいが、**同じ晩に焼けた他の9本まで master に入らなくなる**
+（`docs/island-misses.md` #105「1本が落ちても後ろを止めない」）。しかも次の晩も
+同じ0件が焼けるので、**人が来るまで毎晩止まる。**
+ここで書かずに引き下がれば、表は前のまま・他の9本は配られ、run の最後だけが赤くなる。
+
+## まだグッズの無い人を、名指しで書く（`NO_GOODS`）
+
+`rebake.yml` の関所が「グッズ＋まだ作っていない人＝名簿」で帳尻を合わせるので、
+**作っていない人を名指しで置いておかないと、1人いるだけで永久に止まる。**
+`characterBox.ts` の `noArt` と同じ形。
+
+島はこの並びを読まない（札は `goodsOf()` が `null` を返せば出ない）。
+**出ない理由を画面に書かないため**で、ここに在るのは見張りのための数え先
+（`docs/island-standards.md` 6章）。
 """
 from __future__ import annotations
 
@@ -182,6 +215,9 @@ def island() -> list[dict]:
 
 def render(pairs: dict[str, str], 島: int, 無: list[str]) -> str:
     rows = "\n".join(f'  "{e}": "{i}",' for e, i in sorted(pairs.items()))
+    # **まだグッズの無い人。** 2字下げの `"印",` だけの行にする——`rebake.yml` の
+    # 関所が上の行（`"印": "番号",`）と見分けてそれぞれ数えるので、形を変えない
+    none = "\n".join(f'  "{e}",' for e in sorted(無))
     return f'''/**
  * 住人の印 → SUZURI のデザイン番号。**`python/suzuri_residents.py` が焼く。**
  *
@@ -195,6 +231,17 @@ def render(pairs: dict[str, str], 島: int, 無: list[str]) -> str:
 export const GOODS_BY_EMOJI: Record<string, string> = {{
 {rows}
 }};
+
+/**
+ * まだグッズの無い人の印。**島はここを読まない**（札は出さないだけ）。
+ *
+ * 置いてあるのは、毎晩の関所が「グッズ＋ここ＝名簿」で帳尻を合わせるため
+ * （`.github/workflows/rebake.yml` の `suzuriGoods.ts` の `match`）。
+ * 書かないと、グッズの無い人が1人いるだけで毎晩止まる。
+ */
+export const NO_GOODS: string[] = [
+{none}
+];
 
 /** 印の揺れ（異体字セレクタ・結合子）を落とす。**焼くほうと同じ式。** */
 const norm = (e: string) =>

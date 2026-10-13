@@ -67,8 +67,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  # 毎晩の回が、焼き直した `site/content/suzuriGoods.ts` を master に押し戻す
-  contents: write
+  contents: read
 
 jobs:
   suzuri:
@@ -117,71 +116,6 @@ jobs:
       - name: 毎晩の回（島に新しく入ったキャラクターの住人グッズ）
         if: steps.key.outputs.ok == '1' && github.event_name != 'workflow_dispatch'
         run: python3 python/suzuri_api.py characters
-
-      # 島の住人ページの「グッズを買う」札は、`site/content/suzuriGoods.ts` の
-      # 写しから出ている（`python/suzuri_residents.py` が焼く）。焼き込みは
-      # 配り直しても動かないので、**置いたままだと、新しく入った住人の札だけが
-      # いつまでも出ない。** グッズが増えるのはひとつ上の step なので、同じ回で焼く。
-      #
-      # **`鍵があるか` に縛り付けない。** 焼くのに `SUZURI_API_KEY` は要らない
-      # （無ければ公開の検索の面から引く作り）。縛ると、鍵が Secret に入るまで
-      # 札が増えない——鍵はあやたの操作待ちで、こちらからは動かせない（#736）。
-      - name: 住人グッズの売り場を焼き直す
-        id: bake
-        if: github.event_name != 'workflow_dispatch'
-        env:
-          # 焼くほうに鍵を渡さない。**渡すと公式の API（`materials`）の側を
-          # 引きにいく**ので、鍵が Secret に入った日から出どころが変わる。
-          # あちらは**非公開のデザインまで返す**ので、売り場で開けない番号が
-          # 札になりうる。焼きたいのは「公開の売り場に出ている番号」だけ
-          SUZURI_API_KEY: ""
-        run: |
-          set -euo pipefail
-          # やせていたら、ここで 2 を返して1文字も書かない（`gate()`）
-          python3 python/suzuri_residents.py
-
-          if git diff --quiet -- site/content/suzuriGoods.ts; then
-            echo "変わっていません。commit しません"
-            echo "changed=0" >> "$GITHUB_OUTPUT"
-            echo "住人グッズの売り場は前の晩と同じでした。" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-
-          # **取り直した master の上に、焼いた1枚だけを載せ直す。**
-          # ここのチェックアウトは浅い（`fetch-depth` 既定の1）ので、
-          # `rebake.yml` のような `git pull --rebase` は共通の祖先が見えずに
-          # 落ちる。毎晩ひとりでに走る回なので、押し直してくれる人はいない。
-          # 深く取り直す代わりに、**1枚を持ち出して master の先端に置く。**
-          cp site/content/suzuriGoods.ts "$RUNNER_TEMP/suzuriGoods.ts"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # 焼いているあいだに誰かが master へ入れていることがある。
-          # 取り直してから載せ、押せなければもう一度取り直す（3回まで）
-          ok=0
-          for i in 1 2 3; do
-            git fetch --no-tags --depth=1 origin master
-            git checkout -f -B nightly-suzuri FETCH_HEAD
-            cp "$RUNNER_TEMP/suzuriGoods.ts" site/content/suzuriGoods.ts
-            if git diff --quiet -- site/content/suzuriGoods.ts; then
-              echo "取り直した master には、もう同じものが入っていました"
-              echo "changed=0" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            # **名指しで add する。** `git add -A` だと、この回で散らかった
-            # ものまで master に入る（見本の絵・`__pycache__`）
-            git add -- site/content/suzuriGoods.ts
-            git commit \
-              -m "住人グッズの売り場を焼き直す" \
-              -m "グッズが増えるのは毎晩のこの回で、焼き込みは配り直しても動かない。置いたままだと、島に新しく入った住人の「グッズを買う」札だけがいつまでも出ない。"
-            if git push origin HEAD:master; then ok=1; break; fi
-            echo "$i 回目の push が落ちました。master を取り直します"
-          done
-          [ "$ok" = "1" ]
-          echo "changed=1" >> "$GITHUB_OUTPUT"
-          echo "**住人グッズの売り場を master に入れました。**" >> "$GITHUB_STEP_SUMMARY"
-          echo "画面に出るのは、次に Hosting を配ったときです。" >> "$GITHUB_STEP_SUMMARY"
 
       # 見本の一覧（sheet）ができていれば成果物に置く。こちらは MCP の download_workflow_run_artifact で
       # 取りに行って目で見る（#741）。中身は売り場に出ている見本の絵だけなので、公開されて困るものは無い
