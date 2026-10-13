@@ -669,6 +669,33 @@ LINE スタンプに乗せる1行を、本人に決めてもらう口。中身�
 
 ## 確かめかた
 
+### 配ったあと、本番で見るところ（2026-10-13 の3件）
+
+**どれも GET か、書く前に断られる側。1バイトも書かない。**
+左が配る前に実測した値で、右が配ったあとに見たい値。
+
+```bash
+B=https://live-streaming-d3cac.web.app/island-api
+
+# 1. チャンネルを名乗れないこと（**書く側を叩かない。断られる側だけ**）
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/me" \
+  -H 'content-type: application/json' -d '{"channelId":"UCbbbbbbbbbbbbbbbbbbbbbb"}'
+#   配る前 401（no token。言い値はそこまで見られていない）→ 配ったあと **400**
+
+# 2. 旅の写真が、新しい入れ物から出ていること（枚数が変わらないこと）
+curl -s "$B/nordic/photos" | python3 -c \
+  'import json,sys;d=json.load(sys.stdin)["days"];print(len(d),sum(len(x["photos"]) for x in d))'
+#   配る前 **27 117** → 配ったあとも **27 117**（減ったら旧にしか無い写真があった）
+
+# 3. 字の長さが口から出ていること
+curl -s "$B/state" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("limits"))'
+#   配る前 None → 配ったあと {"note":120,"reply":300,"name":20,"link":2048,"planTitle":60}
+```
+
+**配る順は Hosting が先、Functions があと**（1の理由。上の7章）。
+
+---
+
 この文書の口の一覧は、**コードの照合式そのもの**から起こしてある（2026-09-11）。
 
 ```bash
