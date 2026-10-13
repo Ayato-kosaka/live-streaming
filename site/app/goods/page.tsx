@@ -13,6 +13,8 @@ import {
   LINE_STAMPS,
   LINE_WANT,
   LINE_WORDS,
+  SHOP_GOODS,
+  shopHref,
   STICKERS,
   SUZURI,
 } from "@/content/goods";
@@ -307,35 +309,71 @@ export default function GoodsPage() {
               `prefetch` の見張り（`prefetch_selftest.mjs`）は `<Link>` を
               数えているので、外へ出るものは素の `<a>` のままにする。
 
-              **写真は横に並べて、題は店の名前。** 1枚だけ・題が商品名だと、
-              その商品1つしか無い店に見える（あやと 2026-10-08、2回目の指摘）。
-              枚数は決め打ちしない——`shots` に1行足せば並ぶ */}
-          <a
-            className="gd-go gd-out gd-shop"
-            href={SUZURI.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <span className="gd-shopshots">
-              {SUZURI.shots.map((shot) => (
+              **店の入口1つだったところを、升目にした**（あやと 2026-10-13）。
+              前は外部リンクが1本あるだけで、押した先の店は JS で描かれる
+              一覧なので、**どこに何が在るのかは押してから探すしかなかった。**
+              住人グッズとあやとステッカーはそれぞれの面から行けるようになり、
+              **どちらからも行けないものだけ**がここに残る（`SHOP_GOODS`）。
+
+              **ステッカーの升目と同じ形にそろえる。** 同じ面の中に升目が
+              2通りあると、別の仕掛けに見える。**升目ぜんぶが押せるので、
+              1枚ずつに厚みは付けない**（`docs/island-design.md` 3-3 の例外）。
+
+              **最後の1マスが店そのもの。** 住人の100人ぶんもステッカーぶんも
+              あちらに在るので、ここで数えずに店へ送る（数えると、
+              1つ増えた日から嘘になる）。 */}
+          <ul className="gd-shopgrid">
+            {SHOP_GOODS.map((goods) => (
+              <li key={goods.id}>
+                <a
+                  className="gd-shopitem"
+                  href={shopHref(goods.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {/* **ここはステッカーの升目と違って、絵を飾り扱いにしない。**
+                      あちらは名前が絵の説明そのもの（「島にいるあやと」）だが、
+                      こちらの名前は品名で、**何が描いてあるかは名前から分からない。**
+                      消すと、目で見ない人には白いTシャツ2枚の区別が付かなくなる */}
+                  <img
+                    className="gd-shopart"
+                    src={goods.shot.src}
+                    alt={goods.shot.alt}
+                    width={goods.shot.w}
+                    height={goods.shot.h}
+                    loading="lazy"
+                  />
+                  <b>{goods.name}</b>
+                  <span className="gd-get">
+                    <Icon name="external" size={16} />
+                    お店で見る
+                  </span>
+                </a>
+              </li>
+            ))}
+            <li>
+              <a
+                className="gd-shopitem gd-shopall"
+                href={SUZURI.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <img
-                  key={shot.src}
-                  src={shot.src}
-                  alt={shot.alt}
-                  width={shot.w}
-                  height={shot.h}
+                  className="gd-shopart"
+                  src={SUZURI.shot.src}
+                  alt={SUZURI.shot.alt}
+                  width={SUZURI.shot.w}
+                  height={SUZURI.shot.h}
                   loading="lazy"
                 />
-              ))}
-            </span>
-            <span className="gd-shopside">
-              <span>
                 <b>{SUZURI.cap}</b>
-                <i>{SUZURI.note}</i>
-              </span>
-              <Icon name="external" size={16} />
-            </span>
-          </a>
+                <span className="gd-get">
+                  <Icon name="external" size={16} />
+                  ぜんぶ見る
+                </span>
+              </a>
+            </li>
+          </ul>
           {/* あやとの言葉（2026-10-11）:
 
               > こんなスズリグッズが欲しい！ を書けるように付箋作って

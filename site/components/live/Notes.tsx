@@ -25,6 +25,7 @@ import {
   type Theme,
 } from "@/content/themes";
 import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
+import { useLimits } from "@/lib/liveStats";
 import ReadAgain from "@/components/me/ReadAgain";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
@@ -130,10 +131,18 @@ const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 const SHOW = 6;
 const STEP = 12;
 
-/** 付箋の長さ。サーバー側の `MAX_NOTE_LEN` と同じ。 */
-const MAX = 120;
-/** リンクの長さ。サーバー側の `MAX_LINK_LEN` と同じ。 */
-const MAX_LINK = 2048;
+/* **字の長さは、ここに持たない**（2026-10-13）。
+   前はここに `const MAX = 120;`（「サーバー側の `MAX_NOTE_LEN` と同じ」）と
+   `const MAX_LINK = 2048;` が在った。**同じ数字が2か所に在って、ずれても
+   赤くなるものが1本も無い**形で、島じゅうに15か所あった（`docs/island-db.md`）。
+
+   止め金を15本足すのではなく、**2か所であることをやめた。**
+   いまは `GET /state` の `limits` から受ける（`lib/liveStats.tsx` の
+   `useLimits`）。先例は `/stampline/mine` で、あちらは返事に `maxLen` を
+   乗せていて、画面は数字を1つも持っていない。
+
+   **届くまでは上限が付かない。** そこへ既定の数字を置くと2か所に戻るので、
+   置かない。上限そのものはサーバーが必ずかける（`cleanText`）。 */
 
 /**
  * 締め切った宛先で出す1行。**2か所で同じ字を出すので、ここ1つから取る。**
@@ -248,6 +257,9 @@ export default function Notes({
   writeOpen = false,
   omitTexts: omit = NOTHING,
 }: Props) {
+  /* 字の長さの上限。**サーバーが持っている**（`GET /state` の `limits`）。
+     `useLiveStats` と同じ `load()` を通るので、往復は増えない。 */
+  const limits = useLimits();
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -774,7 +786,7 @@ export default function Notes({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={3}
-              maxLength={MAX}
+              maxLength={limits.note}
               placeholder={dest.placeholder}
             />
           </label>
@@ -789,7 +801,7 @@ export default function Notes({
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              maxLength={MAX_LINK}
+              maxLength={limits.link}
               placeholder="https://"
             />
           </label>
@@ -1116,6 +1128,7 @@ function OwnerTools({
   const [text, setText] = useState(note.reply ?? "");
   const [busy, setBusy] = useState(false);
   const { token } = useAuth();
+  const limits = useLimits();
 
   const save = async () => {
     const t = await token();
@@ -1167,7 +1180,7 @@ function OwnerTools({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            maxLength={300}
+            maxLength={limits.reply}
             placeholder="ここに返す。空にすると取り消し"
           />
           <button className="bbtn" onClick={save} disabled={busy}>

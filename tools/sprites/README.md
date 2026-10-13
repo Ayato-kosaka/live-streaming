@@ -96,11 +96,52 @@ python3 tools/sprites/inkpx.py mefoot360 _mefoot
 
 ## スプライトを焼く
 
+**焼く前に、元の素材と three を落とす。** どちらも `.gitignore` に入っていて
+clone にも worktree にも無い（`tools/sprites/models/` と `tools/sprites/vendor/`）。
+`.gitignore` は「README.md の手順で取得する」と書いているのに、**その手順が
+どこにも無かった**（2026-10-13 に書いた。無いあいだは、絵を1枚足すだけで
+行き止まりになる）。
+
+```bash
+cd tools/sprites
+# three（r155 以降なら動く。実際に焼いて確かめたのは 0.168.0）
+mkdir -p vendor/jsm/loaders vendor/jsm/utils
+V=0.168.0
+curl -sS -o vendor/three.module.js            "https://unpkg.com/three@$V/build/three.module.js"
+curl -sS -o vendor/jsm/loaders/GLTFLoader.js  "https://unpkg.com/three@$V/examples/jsm/loaders/GLTFLoader.js"
+curl -sS -o vendor/jsm/utils/BufferGeometryUtils.js \
+  "https://unpkg.com/three@$V/examples/jsm/utils/BufferGeometryUtils.js"
+
+# Kenney のキット5つ（CC0）。zip の在りかは各ページの中に書いてある
+#   https://kenney.nl/assets/{nature-kit,holiday-kit,building-kit,food-kit,mini-characters}
+#   curl -sS "https://kenney.nl/assets/nature-kit" | grep -oE 'https://[^\x27]*\.zip'
+# 置き場（`manifest.mjs` の NK / HK / BK / FK と同じ）
+#   models/gltf/   ← nature-kit の「GLTF format」
+#   models/holiday/← holiday-kit の「GLB format」
+#   models/        ← building-kit と mini-characters の「GLB format」
+#   models/food/   ← food-kit の「GLB format」
+```
+
+**いま配られているキットは、この manifest を書いたときのものより新しい。**
+building-kit は部品の名前が変わっていて、`wall-window-small.glb` がもう無い
+（`legend-kazbegi` の礼拝堂がそれを呼ぶ）。**いま在る絵をそのまま焼き直すと
+落ちるものがある。** 1枚足すぶんには、落としたキットに在る部品だけで組めばよい。
+
+焼けることの確かめは、**すでに在る絵を1枚、別の場所へ焼いて見比べる**のが早い
+（`legend-newyear-24h` は箱と円盤だけなのでキットが要らない）。
+
 ```bash
 cd tools/sprites
 (nohup python3 -m http.server 8904 > /dev/null 2>&1 &)
-node bake.mjs && python3 meta.py
+node bake.mjs /tmp/bake-test legend-newyear-24h   # 1枚だけ焼いて見比べる
+node bake.mjs && python3 meta.py                  # ぜんぶ焼く
 ```
+
+**1枚だけ足すときも `meta.py` まで通す。** webp に直して
+`site/content/sprites.json` に寸法を書くのがあちらで、通さないと画面に出ない。
+図鑑の主役（`recipes.ts` / `legends.ts` / `streamTypes.ts` の `icon`）は
+`hero/` にも要る——`bake.mjs` がその2枚を焼き、
+`node tools/sprites/heroicon_selftest.mjs` が通し忘れを捕まえる。
 
 ## 配信で使う3面（`/roulette` `/me/remote` `/me/roulette`）を数える
 
