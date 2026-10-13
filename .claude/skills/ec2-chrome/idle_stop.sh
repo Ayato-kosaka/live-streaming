@@ -11,11 +11,12 @@
 #   - 鍵のファイルが STALE_H 時間以内に触られている（裏で回している一括。長い一括は鍵を触り続ける）
 #   - Chrome リモートデスクトップの画面に、IDLE_MIN 分以内に人の入力がある（あやとが入っている）
 #
-# **既定は「止めるはずだった」と書くだけ。** /etc/idle-stop/armed があるときだけ本当に止める。
-# 中から shutdown したときの動きは、インスタンスの「シャットダウン動作」の設定で決まる
-# （停止 / 終了）。終了だと EC2 そのものが消えるので、設定を目で見るまでは武装しない。
-# こちらの権限では、その設定を読めない（ec2:DescribeInstanceAttribute も、
-# EC2 の役割からの StopInstances も拒否された。2026-10-13）。
+# **既定は「止めるはずだった」と書くだけ。** 中から shutdown したときの動きは、インスタンスの
+# 「シャットダウン動作」の設定で決まる（停止 / 終了）。**このインスタンスは「停止」ではない**
+# （あやとがコンソールで見た。2026-10-13）。つまり**いま中から止めると EC2 そのものが消える。**
+# こちらの権限では設定を読めない（ec2:DescribeInstanceAttribute も、EC2 の役割からの
+# StopInstances も拒否）ので、武装は /etc/idle-stop/armed の中身が `behavior=stop` のときだけ。
+# 空の armed を touch しただけでは止めない（うっかり武装して EC2 を消す道を残さない）。
 set -u
 IDLE_MIN=${IDLE_MIN:-30}
 GRACE_MIN=${GRACE_MIN:-20}
@@ -59,7 +60,7 @@ last=$(cat "$STATE/last" 2>/dev/null || echo "$now")
 idle=$(( (now - last) / 60 ))
 [ "$idle" -lt "$IDLE_MIN" ] && exit 0
 
-if [ -f /etc/idle-stop/armed ]; then
+if [ "$(cat /etc/idle-stop/armed 2>/dev/null)" = "behavior=stop" ]; then
   echo "$(date -u +%FT%TZ) idle ${idle}min -> shutdown" >> "$LOG"
   # 止める前に、開いている Chrome にセッションを書き戻させる（pkill だけだとログインが残らないことがある）
   pkill -TERM -u ubuntu -f 'user-data-dir=/home/ubuntu/cdp-' 2>/dev/null
