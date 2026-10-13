@@ -549,6 +549,40 @@ const PHOTO_DAYS = (() => {
   return [...at.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
 })();
 
+/* まだ返していない付箋（あやとの机の札に出る数。2026-10-13）。
+
+   **本番の数で撮れるようにする。** `UNANS=32` を渡すと、口がその枚数を
+   返す——札が本当にその数を出すかは、本番の数を入れてみないと言えない
+   （`docs/island-standards.md` 4章）。渡さなければ `ALL` から
+   「返事つき」と「立て札」を外したぶん。
+
+   「見た」はこの箱の中だけで覚える。押すと減り、戻すと増えるところまで
+   撮れる。**並びは押した順**（本番の `?seen=1` と同じ）。 */
+const UNANS = Number(process.env.UNANS || 0);
+/** 「見た」で片づけた id。**押した順**に積む */
+let SEEN_IDS = [];
+const UNANS_BASE = () =>
+  UNANS > 0 ?
+    Array.from({ length: UNANS }, (_, i) => ({
+      id: `u${i + 1}`,
+      theme: THEMES_SEED[i % THEMES_SEED.length],
+      text:
+        NOTE_TEXTS[i % NOTE_TEXTS.length] +
+        (i >= NOTE_TEXTS.length ? `（${Math.floor(i / NOTE_TEXTS.length) + 1}回目）` : ""),
+      by: ["まこも", "のり", "ひめひめ", "", "KURA"][i % 5],
+      hearts: [1, 9, 0, 3, 22, 0, 5, 2, 0, 11][i % 10],
+      byOwner: false,
+      createdAt: ago(i + 1),
+    })) :
+    ALL.notes.filter((n) => !n.reply && !n.byOwner);
+/** いま返す山（押した「見た」を外したぶん） */
+const UNANS_TODO = () => UNANS_BASE().filter((n) => !SEEN_IDS.includes(n.id));
+/** 「見たもの」の山。**押した順**（いま押した1枚がいちばん上） */
+const UNANS_SEEN = () => {
+  const by = new Map(UNANS_BASE().map((n) => [n.id, n]));
+  return SEEN_IDS.map((id) => by.get(id)).filter(Boolean);
+};
+
 export async function apply(ctx, opts = {}) {
   const admin = opts.admin ?? process.env.ADMIN === "1";
   /* 島のキャラクターが割り当たっていない人。**あやと自身がこれ。**
@@ -654,6 +688,26 @@ export async function apply(ctx, opts = {}) {
         channelPhoto: YT_PHOTO,
         nickname: null, showName: true, showPhoto: true, admin,
       });
+    }
+    /* まだ返していない数と、その一覧（あやとだけ）。**`?n=1` は数だけ。**
+       ここを差し替えないと、机の札も付箋の道具も「読めませんでした」で
+       写る——**直っているものが壊れて見える。** */
+    if (path === "/stickies/unanswered") {
+      const list = u.searchParams.get("seen") === "1" ? UNANS_SEEN() : UNANS_TODO();
+      if (u.searchParams.get("n") === "1") return json(r, { n: list.length });
+      return json(r, { n: list.length, notes: list.slice(0, 300) });
+    }
+    /* 「見た」。押した順に覚えて、戻すと外す（本番と同じ振る舞い）。 */
+    const seenAt = /^\/stickies\/([^/]+)\/seen$/.exec(path);
+    if (seenAt) {
+      const id = decodeURIComponent(seenAt[1]);
+      let body = {};
+      try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
+      const on = body.on !== false;
+      SEEN_IDS = on ?
+        [id, ...SEEN_IDS.filter((x) => x !== id)] :
+        SEEN_IDS.filter((x) => x !== id);
+      return json(r, { id, seen: on });
     }
     if (path === "/stickies") {
       return json(r, u.searchParams.get("mine") === "1" ? MINE : ALL);

@@ -290,7 +290,7 @@ export function StickyCare({
       {read === "down" ?
         /* 読みに行けなかった。**「ぜんぶ返しました。」とは別の顔にする。**
            あれは読めた上でのことばで、届かなかった日に言ってよい嘘ではない。 */
-        <ReadAgain what="付箋" onRetry={reload} /> :
+        <ReadAgain what={box === "bin" ? "しまったもの" : "付箋"} onRetry={reload} /> :
       notes === null ? (
         <div className="wait is-row" aria-hidden>
           <span />
