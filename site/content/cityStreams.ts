@@ -1861,6 +1861,20 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-10-11"
       }
     ]
+  },
+  "north-macedonia": {
+    "北マケドニア": [
+      {
+        "videoId": "yk-by7R7iPA",
+        "title": "北マケドニア共和国いこかー！？",
+        "date": "2026-10-12"
+      },
+      {
+        "videoId": "NY9pzYrA-5o",
+        "title": "北マケドニア共和国ついたでーーー",
+        "date": "2026-10-12"
+      }
+    ]
   }
 };
 
