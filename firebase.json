@@ -28,6 +28,41 @@
         "type": 301
       },
       {
+        "source": "/nordic/day/10",
+        "destination": "/nordic#day-10",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/11",
+        "destination": "/nordic#day-11",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/12",
+        "destination": "/nordic#day-12",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/13",
+        "destination": "/nordic#day-13",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/14",
+        "destination": "/nordic#day-14",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/15",
+        "destination": "/nordic#day-15",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/16",
+        "destination": "/nordic#day-16",
+        "type": 301
+      },
+      {
         "source": "/nordic_review.html",
         "destination": "/nordic/review",
         "type": 301

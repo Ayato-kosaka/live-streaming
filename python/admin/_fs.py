@@ -57,7 +57,7 @@ def show(v) -> str:
     """ログ用に短く整形する。**公開の場では値を1文字も通さない。**
 
     ここは `firestore_read` / `firestore_write` / `notes_theme` /
-    `nordic_supporter` / `streamevents_import` ほか、Firestore の書類を
+    `streamevents_import` ほか、Firestore の書類を
     ログに出すところ全部が通る1か所。**塞ぐならここ。**
     呼ぶ側それぞれに「この入れ物は人に結びつくか」を判断させると、
     判断し忘れた1か所から漏れる（実際に `streamChatMessages` で漏れた）。

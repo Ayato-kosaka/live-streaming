@@ -7,7 +7,7 @@ name: 退避（失ったら戻らないものを取る）
 # ## なぜ 02:00 UTC なのか
 #
 # **取り込みより後ろに置く。** `schedule_fetch_chat.yml` の cron は 20:00 UTC と
-# 書いてあるが、実際に走り出すのは 21:49〜23:32 UTC（rebake.yml の実測）。
+# 書いてあるが、実際に走り出すのはもっと後ろ（`python3 python/cron_lag.py`）。
 # 焼き直し（rebake）が 01:00 UTC なので、そのさらに後ろ。
 # GitHub の定時実行は2時間ほど遅れるが、02:00 が 04:00 になっても
 # 取り込みの後ろのまま。**1日ぶん古いものを退避し続ける形にしない。**
@@ -36,8 +36,22 @@ name: 退避（失ったら戻らないものを取る）
 # 溜まったぶんを早く流し込みたいときは `photo_budget_mb` を押し上げる。
 
 on:
+  # **保険。取り込みがいちばん遅く終わった晩より、さらに後ろに置く。**
+  #
+  # 2026-10-13 に測り直したら、ここに書いてあった「取り込みの実測
+  # 21:49〜23:32 UTC」が**古くなっていた**。10月の実測では、取り込みが
+  # 終わるのは中央値 23:40 UTC・**いちばん遅い晩で 02:12 UTC**。
+  # つまり 01:00〜02:30 に置いた保険は、**予定どおりに発火したら
+  # 取り込みより先に走る。**
+  #
+  # いまそうなっていないのは、GitHub の待ち行列が 01:00〜04:30 UTC 帯で
+  # **4〜7時間遅れている**から。**遅いおかげで順番が合っている**だけで、
+  # 速くなったら壊れる（2026-03 の実測は 0.1時間だった。戻りうる）。
+  #
+  # だから、**遅れが 0 でも取り込みの後ろに入る時刻**へ移した。
+  # いまの数は `python3 python/cron_lag.py` が出す。**ここに書かない。**
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "30 3 * * *"
 
   # **cron だけを当てにしない。取り込みの後ろに繋いでも走る。**
   #
@@ -263,3 +277,54 @@ jobs:
       # 584 枚のうち同じ側を毎晩なぞって、古いところが腐っても当たらない
       - name: 写真を戻してバイト列を突き合わせる
         run: python python/backup/restore.py --photo
+
+  # ----------------------------------------------------------------
+  # 旅の写真の、新旧がずれていないか（2026-10-13）
+  #
+  # 写真は長いあいだ `islandStreamEventImage`（新）と `nordicPhotos`（旧）に
+  # 同じ書類IDで書かれていた。**書くのは `Promise.all` で、まとめ書きでも
+  # 取引でもない。** 片方だけ失敗したらずれるのに、**ずれても赤くなるものが
+  # 1本も無かった。**
+  #
+  # 2026-10-13 に読みも書きも新へ寄せた。残る危なさは1つだけ——
+  # **旧にしか無い写真があったら、その日から画面に出なくなる。**
+  # だから向きを1つだけ見る（旧 ⊆ 新）。新にしか無いのは、寄せたあとの
+  # ふつうの姿なので緑。
+  #
+  # **ここに置いたのは、退避と同じ「毎晩ひとりでに走る」繋ぎに乗るから**
+  # （cron ＋ 取り込みへの `workflow_run`）。新しい cron を足すと、
+  # 発火を1回見るまで当てにできない（`CLAUDE.md`）。
+  #
+  # `take` を待たない。**読むだけ**なので、退避が落ちた晩も見たい。
+  # 下見（`dry_run`）の回も走る——1バイトも書かないので。
+  pair:
+    name: 旅の写真の新旧がずれていないか
+    runs-on: ubuntu-latest
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージのインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r python/requirements.txt
+
+      # **公開のログに素性が出ない側が効いているか。** 先に見る
+      - name: 素性を出さない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # `continue-on-error` を付けない。**ずれたら赤くする。**
+      # 出すのは数だけ（書類ID・置き場の道・一言・貼った人は1文字も出ない）
+      - name: 数える
+        working-directory: python/admin
+        run: python nordic_photo_pair.py

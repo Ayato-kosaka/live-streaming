@@ -11,7 +11,7 @@ import { ACTIVE_FRIENDS } from "@/content/residents";
 import CardStrip from "@/components/cards/CardStrip";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/countries";
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
-import { CHAPTERS } from "@/content/chapters";
+import { CHAPTERS, chapterHref, chapterOf } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import Walked from "@/components/atlas/Walked";
@@ -76,8 +76,13 @@ const on = (slug: string, i = 0) => countryBySlug(slug)?.stays[i]?.from ?? "";
  * 空なら予定の欄（`opensAt`）の日付を使う（`content/chapters.ts` の `began()` と同じ見かた）。
  */
 const chapterFrom = (slug: string) => {
-  const c = CHAPTERS.find((x) => x.slug === slug);
-  return c ? c.from || c.opensAt?.slice(0, 10) || "" : "";
+  /* **知らない slug は `chapterOf` が投げる。** ここで `""` を返していたせいで、
+     #224（アルバニア＋北マケドニア → バルカン諸国周遊）の日に
+     `chapterFrom("albania")` が空を返し、下の `filter((x) => x.date)` が
+     **年表の最新行を黙って捨てた。** 型もビルドも巡回も通るので、
+     9/28 に直したのと同じ不具合が14日で戻っていた。 */
+  const c = chapterOf(slug);
+  return c.from || c.opensAt?.slice(0, 10) || "";
 };
 /** そのアプリで、その種類の節目がはじめて来た日。並び順の番号で指すと、間に1行入るとずれる。 */
 const appOn = (slug: string, kind: string) =>
@@ -217,13 +222,28 @@ const STORY: Step[] = [
        着いた日が1日ずれたら、島の連なりとこの年表が別の日を言うことになる。
        中身は**出る前・最中・帰ったあとのどれで読んでも合う字**にする
        （すぐ上の北欧の行と同じ決まり）。だから「いまここ」と書かない。
-       「いま」を言うのは `/now` の面の仕事で、年表の仕事ではない。 */
-    date: chapterFrom("albania"),
+       「いま」を言うのは `/now` の面の仕事で、年表の仕事ではない。
+
+       **そしてこの行は、いちど消えた。** 2026-10-12 の #224 で章が
+       `albania` → `balkans` に統合されたとき、鍵がここだけ `albania` のまま
+       残って `chapterFrom` が `""` を返し、**年表がまた 9/11 で止まった。**
+       9/28 に直した不具合が14日で戻っている。
+
+       だから鍵・名前・行き先の3つとも、章から引く:
+       - 鍵は `chapterOf` を通す（無い slug なら `next build` が止まる）
+       - **島の名前を書き写さない。** 統合でまた変わる
+       - **行き先を手で組み立てない。** いまいる島は `/island/<章>` ではなく
+         トップそのもの（`chapterHref`）。`/island/balkans` と書くと、
+         **どこからもリンクの来ていない写しの面**へ送ることになる
+
+       `what` と `note` は 9/28 に起きた事実（ストックホルムから飛んで
+       アルバニアに着いた）なので、章の名前が変わっても古くならない。 */
+    date: chapterFrom("balkans"),
     kind: "travel",
     what: "北欧の旅を終えて、アルバニアへ",
     note: "ストックホルムから飛んで、アドリア海をはさんだイタリアの向かいへ",
-    href: "/island/albania",
-    go: "アルバニアの島へ",
+    href: chapterHref(chapterOf("balkans")),
+    go: `${chapterOf("balkans").name}の島へ`,
   },
 ];
 
