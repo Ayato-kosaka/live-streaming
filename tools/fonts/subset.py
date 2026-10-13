@@ -141,7 +141,30 @@ FAMILY = "Maru Island"
 #      **あの面のために増やす意味が無い**
 #
 # 2 を測ったら、16 まで上げて合計をもう 3.5MB 落とせる。
+#
+# `COLD_CHUNK` で冷たい束を割ると、焼けるファイルはこれより増える
+# （**どの面も先には取りに行かない**ぶん）。いまは割っていない。
 BUCKETS = 12
+
+# 冷たい束（どの面も先に取りに行かない束）を、何字ずつに割るか。**0 なら割らない。**
+#
+# 「1本にまとめると、1字当たっただけで全部払う」（400 の冷たい束は 1,045字 /
+# 201KB）ので、200字ずつに割って測った。**割る / 割らないを、同じ書き出しに
+# 対して焼き比べた実測**（2026-10-13。141面のうち動いた面）:
+#
+#   面                   割らない    割る(200字)
+#   /nordic/photos        341.6KB   →  220.6KB   当たりが1〜2字の面は**安くなる**
+#   /streams/monthly      390.1KB   →  221.0KB
+#   /island/caucasus      802.5KB   →  774.7KB
+#   /island/europe        475.7KB   →  **720.1KB**  **全部の塊を引く面は高くなる**
+#   /island/iran-walk     684.7KB   →  698.9KB
+#
+# **冷たい束を広く引く面では、割ると表のぶんだけ損をする。** 島の章の面
+# （`/island/*`）がそれで、**DOM から数えられない 400 の字**を持っている
+# （#692 のコメント参照。別の仕事として切り出し）。原因が分かるまでは、
+# 当たる面が「1〜2字」なのか「ほぼ全部」なのかを決められないので、
+# **割らないほうに倒してある。** 原因が分かって、当たりが数字だと分かったら 200 にする。
+COLD_CHUNK = 0
 
 # データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
 # 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
@@ -327,6 +350,23 @@ def plan(
 
     面の組はビットで持つ。文字列の集合で持っていると、併合の値踏み（毎回 C(k,2) 通り）
     で集合の和を取り直すのに時間がかかって、太さ3本ぶん回すと十数分かかる。
+
+    ## **この貪欲法は、入力が1字変わると答えが大きく動く**（2026-10-13 の実測）
+
+    同じ書き出しに対しては1バイトも違わない（上の「並べてから回す」）。
+    ところが**書き出しを取り直すと、入っている字が1字変わるだけで**併合の順番が
+    変わり、束の中身がまるごと入れ替わる。実測で、画面に出す字が1字も変わって
+    いないのに面ごとの払う量がこれだけ動いた:
+
+        /island/caucasus    475.1KB → 802.5KB
+        /island/middle-east 455.0KB → 564.2KB
+        /island/iran-walk   665.1KB → 684.7KB
+
+    書き出しに日付が焼き込まれている（`output: "export"`）ので、**ビルドし直すと
+    字が変わりうる**。つまり「焼き直したら別の面が太る」が普通に起きる。
+
+    **焼き直したら、出す前に `tools/sprites/fontbudget_selftest.mjs` を見ること。**
+    合計と、いちばん重い面を数えてある。ここが赤くなければ、入れ替わっても害は無い。
     """
     names = sorted(fams)
     bit = {f: 1 << i for i, f in enumerate(names)}
@@ -401,7 +441,12 @@ def plan(
     buckets.sort(key=lambda b: (-len(b[1]), b[0]))
     out = [({names[k] for k in range(len(names)) if m >> k & 1}, cs) for m, cs in buckets]
     if cold:
-        out.append((set(), set(cold)))
+        # 冷たい束は `COLD_CHUNK` 字ずつに割る（0 なら1本のまま。上の表）。
+        # 並べてから切るので、焼き直しても同じところで切れる。
+        rest = sorted(cold, key=ord)
+        step = COLD_CHUNK or len(rest)
+        for i in range(0, len(rest), step):
+            out.append((set(), set(rest[i : i + step])))
     return out
 
 
@@ -597,7 +642,8 @@ def main() -> None:
         n = sum(sz for w in WEIGHTS for mask, chars, sz in baked[w]
                 if shown[w].get(f) and (shown[w][f] | core) & chars)
         print(f"  {f:16} {n // 1024:5}KB")
-    print(f"全部で {total // 1024}KB / {len(WEIGHTS) * args.buckets} 本")
+    print(f"全部で {total // 1024}KB / {sum(len(v) for v in baked.values())} 本"
+          f"（うち冷たい束 {sum(1 for v in baked.values() for mask, _, _ in v if not mask)} 本。先には取りに行かれない）")
     print(f"書いた: {OUT_CSS.relative_to(ROOT)}, {REPORT.relative_to(ROOT)}")
 
 
