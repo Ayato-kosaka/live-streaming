@@ -27,6 +27,26 @@ description: ChatGPT（chatgpt.com）を、EC2 のログイン済み Chrome か�
 送る前に `in_project(t)` が True かを見る（`chatgpt.py ask` と `chatgpt_image.py` は見てから送る）。
 外に作ってしまったら、会話の右上の「More」→「Move to project」→「あやと島案内鳥」で戻す。
 
+### ほかのセッションと同じ時間に使わない（鍵）
+
+ChatGPT の Chrome（`~/cdp-chatgpt`）は1つで、`fresh()` はほかのタブを全部閉じる。2つのセッションが
+同じ時間に使うと、**お互いのタブを閉じ合う**（2026-10-13 12:54〜12:59 UTC、LINE スタンプのセッションと実際にそうなった）。
+
+- **何回にも分けて使うとき**（一括・送ったら抜けて後で取りに来る・数十分かかる）は、始める前に鍵を置き、終わったら外す:
+
+  ```bash
+  python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt.py lock <セッション名> <用事>') 30
+  # 送るスクリプトでは export CHATGPT_OWNER=<セッション名>（または fresh(owner=…)）
+  python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && python3 chatgpt.py unlock <セッション名>') 30
+  ```
+
+- **`fresh()` は、ほかの人の鍵があればタブを閉じる前に止まる**（`Busy`）。止まったら待つ。誰が持っているかは `chatgpt.py who`
+- `/home/ubuntu/stamp/RUNNING`（LINE スタンプの一括 #716 の置き場）も鍵として見る
+- 4時間より古い鍵は、消し忘れとみなして数えない
+- 1回の SSM で頼んで持ち帰りまで終わるもの（`chatgpt_image.py` 1本）は、鍵を置かなくてよい。SSM は同じ箱へ1本ずつしか流れないので、
+  その1本のあいだに割り込まれることは無い。割り込まれるのは**コマンドとコマンドのあいだ**
+- 使い終わって EC2 を止めるときは、ほかのセッションが待っていないかを確かめてから（`ec2-chrome` 2）
+
 ### 会話の題
 
 ChatGPT が自分で付ける題は「イラスト作成」「絵の描き直し依頼」ばかりで、あとから何の会話か分からない
@@ -78,6 +98,7 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | `turns(t)` | 会話を読む。返事は DOM から Markdown に戻す（コードブロック・表・箇条書き） |
 | `busy(t)` | 書いている途中か |
 | `logged_in(t)` / `in_project(t)` | ログインしているか・プロジェクトの中か |
+| `lock(名前, 用事)` / `unlock(名前)` / `holder()` | 鍵を置く・外す・いま誰が持っているか（上の「鍵」） |
 | `rename(t, 題)` | 会話の題を付け直す（右上の「More」→「Rename」→「Chat title」→「Save」） |
 | `attach(t, [EC2のパス])` | ファイルを入力欄に付ける（無いパスは先に弾く） |
 | `images(t)` / `save_image(t, src, out)` | いちばん後ろの返事の絵を並べる・ページの中から取ってファイルに書く（絵を作るのは `chatgpt-image`） |
