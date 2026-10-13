@@ -97,6 +97,14 @@ jobs:
     steps:
       - name: リポジトリのチェックアウト
         uses: actions/checkout@v5
+        with:
+          # **履歴が要る。** 引き金「島の直したところ」が、`site/app` /
+          # `site/components` の動いた**いちばん新しい日**を git から読む
+          # （`upkeep_watch.last_shown_change`）。既定の1コミットだと、
+          # 見える履歴に面の変更が1つも無くて、**毎晩黙って通る。**
+          # 300 あれば足りる（master は1日 10〜20 本進む）。全部（0）に
+          # しないのは、この箱で毎晩1回走るものに全履歴を引かせないため
+          fetch-depth: 300
 
       - name: Python 環境のセットアップ
         uses: actions/setup-python@v6

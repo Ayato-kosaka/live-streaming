@@ -22,6 +22,10 @@
  11. **わざと壊すと赤くなる**（振り分けを潰す・引き金を外す・印を変える）
  12. **本番の `site/content` を食わせて、いま何件出るかを印字する**
  13. **ワークフローの YAML と突き合わせる**（繋ぎ先の名前・権限・見張りの置き場）
+ 14. 新しい引き金4つ（閉じた章の滞在・いまの章の滞在・島の便り・年表のいま）
+ 15. **島をなおしたところ**（`/updates`）が、出したぶんに追いついているか。
+     古ければ鳴る／そろっていれば鳴らない／履歴が見えないときは鳴らない、の3方向と、
+     `/island-ship` が名指ししている置き場と食い違っていないこと
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
 
@@ -112,6 +116,16 @@ FAKE_REPO = "example-owner/example-repo"
 FAKE_TOKEN = "fake-token-for-selftest"
 
 TODAY = date(2026, 10, 3)
+
+# **視聴者さんから見える変更が入った日を、本物の git から読ませない。**
+# 毎 PR で回る対照を本番の履歴に繋ぐと、**その日のコミット次第で合否が
+# 入れ替わる**（`count()` の `state` を本番の口に繋がないのと同じ理由）。
+# ここを差し替えておくと、引き金は渡された日だけを見る。
+SHOWN: list = [date(2026, 9, 30)]
+# **本物は取っておく。** 12（本番のデータを食わせる回）だけは、本物の履歴で
+# 「いま立つか」を印字する
+_real_shown = uw.last_shown_change
+uw.last_shown_change = lambda *a, **k: SHOWN[0]
 
 # 人が手で書いた本文。**ここが1文字でも動いたら落とす**
 HAND = """## このチケットは閉じない
@@ -237,6 +251,7 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
                  countries: str | None = None,
                  about: str | None = None,
                  place: str | None = None,
+                 updates: str = "2026-10-01",
                  itinerary: str = "") -> Path:
     """`BOOKS` の表どおりに `*.ts` を並べた置き場をこしらえる。
 
@@ -291,6 +306,12 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
         "characterBox.ts": 'const BOX = {\n  "a": [0],\n  "b": [0],\n};\n',
         "chatter.ts": 'export const VOICES = [\n  {\n    icon: "a",\n  },\n'
                       '  {\n    icon: "b",\n  },\n];\n',
+        # 島をなおしたところ。**`on:` を持った形でないと読めない**ので、
+        # `_ts` の落ちどころには任せない（任せると全部の確かめが
+        # 「`on` を1つも読めません」で数えられなくなる）
+        "updates.ts": 'export const UPDATES: Update[] = [\n'
+                      f'  {{\n    on: "{updates}",\n'
+                      '    text: "島のどこかを、なおしました。",\n  }},\n];\n',
         "chapters.ts": CHAPTERS_OK if chapters is None else chapters,
         "countries.ts": COUNTRIES_OK if countries is None else countries,
         # 先ぶんの表。章 `nordic` が終わっているので、最終日まで在れば緑。
@@ -960,6 +981,103 @@ def case14_new_triggers(tmp: Path):
            before > 0 and after < before, f"{before}件 → {after}件")
 
 
+def case15_updates(tmp: Path):
+    """**島をなおしたところが、出したぶんに追いついているか。**
+
+    対照を両側から当てる。片側だけだと、**いつでも鳴る作り**でも
+    **一度も鳴らない作り**でも緑になる（`docs/island-standards.md` §15）。
+
+      1. 面が動いた日より表が古い → **鳴る**（急がない側）
+      2. 同じ日 → 黙る（出したその日に足したぶん）
+      3. 表のほうが新しい → 黙る
+      4. 履歴に面の変更が1つも見えない → **黙る**（浅い checkout で毎晩鳴らない）
+      5. 表の `on` を1つも読めない → **数えられない**（空で通さない）
+      6. 引き金を外すと、鳴っていたものが消える
+    """
+    print("\n[15] 島をなおしたところが、出したぶんに追いついているか")
+    keep = SHOWN[0]
+    try:
+        # 1) 古い → 鳴る
+        SHOWN[0] = date(2026, 10, 2)
+        d = make_content(tmp / "c15a", updates="2026-09-20")
+        c = uw.count(d, TODAY)
+        ck("数えられた", c.countable, c.blind or "0本")
+        ck("急がない側に出る", any("updates.ts" in x for x in c.later), c.later)
+        ck("急ぐ側には出ない", not any("updates.ts" in x for x in c.urgent), c.urgent)
+        ck("出したぶんの日が本文に出る", "2026-10-02" in "".join(c.later), "出る")
+
+        gh = FakeGh()
+        act(gh, apply=True, d=d)
+        ck("区画に出ている", "updates.ts" in gh.inside(), "出ている")
+
+        # 2) 同じ日 → 黙る
+        d2 = make_content(tmp / "c15b", updates="2026-10-02")
+        c2 = uw.count(d2, TODAY)
+        ck("同じ日なら鳴らない",
+           not any("updates.ts" in x for x in c2.urgent + c2.later), c2.later)
+
+        # 3) 表のほうが新しい → 黙る
+        d3 = make_content(tmp / "c15c", updates="2026-10-03")
+        c3 = uw.count(d3, TODAY)
+        ck("表のほうが新しければ鳴らない",
+           not any("updates.ts" in x for x in c3.urgent + c3.later), c3.later)
+
+        # 4) 履歴に見えない → 黙る
+        SHOWN[0] = None
+        c4 = uw.count(d, TODAY)
+        ck("面の動いた日が見えないときは鳴らない",
+           not any("updates.ts" in x for x in c4.urgent + c4.later), c4.later)
+        ck("そのとき「数えられない」にも落ちない", c4.countable, c4.blind or "0本")
+
+        # 5) `on` が1つも読めない → 数えられない
+        SHOWN[0] = date(2026, 10, 2)
+        d5 = make_content(tmp / "c15e")
+        (d5 / "updates.ts").write_text(
+            "export const UPDATES: Update[] = [];\n", encoding="utf-8")
+        c5 = uw.count(d5, TODAY)
+        ck("`on` を1つも読めないと、数えられない",
+           not c5.countable and any("updates.ts" in b for b in c5.blind), c5.blind)
+
+        # 6) 引き金を外すと見えなくなる
+        real = uw.TRIGGERS
+        before = uw.count(d, TODAY).waiting
+        try:
+            uw.TRIGGERS = tuple(t for t in real if t.name != "島の直したところ")
+            after = uw.count(d, TODAY).waiting
+        finally:
+            uw.TRIGGERS = real
+        ck("引き金「島の直したところ」を外すと、遅れが見えなくなる",
+           before > 0 and after < before, f"{before}件 → {after}件")
+    finally:
+        SHOWN[0] = keep
+
+    # --- 置き場の決めかたが、本番の字と合っているか ---------------------
+    #
+    # **`SHOWN_PATHS` を手で書き写さない。** 見張りが見る置き場と、
+    # `/island-ship` が「ここを触ったら1行足す」と言う置き場が食い違うと、
+    # 書いたとおりにしても鳴る（または、鳴らないまま古くなる）
+    ship = (ROOT / ".claude" / "skills" / "island-ship" / "SKILL.md").read_text(
+        encoding="utf-8")
+    for path in uw.SHOWN_PATHS:
+        ck(f"`/island-ship` が `{path}` を名指ししている", path in ship, "ある")
+    ck("`/island-ship` が `updates.ts` を名指ししている",
+       uw.UPDATES_TS in ship, "ある")
+    # **毎晩機械が焼き直す置き場を混ぜない**（混ぜると毎朝鳴る）
+    ck("焼き込みの置き場（`site/content`）を見ていない",
+       not any(p.startswith("site/content") for p in uw.SHOWN_PATHS),
+       uw.SHOWN_PATHS)
+    ck("あやとの机（`site/app/me`）を外してある",
+       any("site/app/me" in x for x in uw.SHOWN_NOT), uw.SHOWN_NOT)
+
+    # --- 本物の git から読める形か（読める、だけを見る）-------------------
+    #
+    # 上は全部 `SHOWN` を差し替えて回しているので、**本物の `git log` の
+    # 書きかたが外れていても緑になる。** ここで1回だけ本物を回す。
+    # 日そのものは合否にしない（その日のコミットで変わる）
+    got = _real_shown(ROOT)
+    ck("本物の git から、面の動いた日を読める", got is not None, got)
+
+
 def case12_real():
     """**本番の `site/content` を食わせて、いま何件出るかを印字する。**
 
@@ -1012,6 +1130,16 @@ def case12_real():
         current=live.current,
         stale_days=uw.read_place_stale_days(
             (ROOT / "site" / "lib" / "place.ts").read_text(encoding="utf-8")),
+        # **ここだけは本物の git を読む。** 12 は「本番のデータで、いま何が
+        # 立つか」を印字する回で、合否にしていない（人が欄を埋めれば減るのが
+        # 正しい）。立ちかたの表に「島の直したところ」が出てこないと、
+        # 引き金を足したのに本番では一度も動かしていない、が起きる
+        shown_at=_real_shown(ROOT),
+        updates_at=max(
+            (d for raw in uw.read_updates_on(
+                (CONTENT / "updates.ts").read_text(encoding="utf-8"))
+             if (d := uw._as_date(raw))),
+            default=None),
     )
     print(f"    引き金 {len(uw.TRIGGERS)}本の、いまの本番での立ちかた:")
     for t in uw.TRIGGERS:
@@ -1154,6 +1282,7 @@ def main() -> int:
         case10_unreachable(tmp)
         case11_break(tmp)
         case14_new_triggers(tmp)
+    case15_updates(tmp)
     case12_real()
     case13_yaml()
     print("\n[素性の結果]")
