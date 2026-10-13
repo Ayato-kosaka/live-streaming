@@ -166,7 +166,28 @@
 | `residents` | 名前かアイコンを出してよいと言った人だけ。**チャンネルIDも uid も返さない**（下） |
 | `residentDays` | **キャラクターの書類ID** → 一緒にいた日数。読めなかったときは `null` |
 | `nordic` | `arrivedOn` / `endedOn` |
+| `limits` | **字の長さの上限**（下） |
 | `more.notes` | まだ古い付箋が残っていれば、その続きの位置 |
+
+#### `limits` — 字の長さは、ここが正（2026-10-13）
+
+`{note, reply, name, link, planTitle}`。**定数だけで、人を指す値は1つも入らない**
+（だから CDN にも焼いてよい）。
+
+画面は長いあいだ同じ数字を自分で持っていた——`site/components/live/Notes.tsx` の
+`const MAX = 120;` に「**サーバー側の `MAX_NOTE_LEN` と同じ**」と書き添えて。
+**書いた人は気づいていて、止め金だけが無かった。** 同じ形が島じゅうに
+**15か所**ある（`docs/island-db.md` の「同じことが2か所」）。
+
+止め金を15本足すのではなく、**2か所であることをやめる。**
+先例は `/stampline/mine` で、あちらは返事に `max` と `maxLen` を乗せていて、
+画面は数字を1つも持っていない。**15か所のうち、正しい形はそこ1つだけだった。**
+
+**届くまでは上限が付かない。** 画面側に既定の数字を置くと2か所に戻るので、
+置かない。上限そのものはサーバーが必ずかける（`cleanText`）。
+
+**一度に全部は動かしていない**（2026-10-13 に3か所）。どれを動かしてどれが
+残っているかは `docs/island-db.md`。
 
 **`residents[]` は、チャンネルIDも uid も返さない**（#133）。返す欄は4つ。
 
@@ -268,15 +289,26 @@ localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 | `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。**貼った時点でカードも作る**（1日120枚）。**企画が1本も立っていない日でも作る**（カードの軸は写真の日） |
 | `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。`videoIds`（11文字・40本まで）も受ける＝**この写真はこの配信のもの**と名乗らせる（0時またぎの逃げ道。**画面はまだ無い**）。カードも作り直す |
 | `DELETE` | `/streamevents/images/:id` | あやとだけ | 画像を消す。**カードも実体も消える** |
-| `GET` | `/nordic/photos` | 誰でも | 旧・日付から入る道。`days[].people[]` は**絵と名前だけ**（`channelId` は返さない） |
-| `POST` | `/nordic/photos` | あやとだけ | 旧・日付から貼る。**中で新旧どちらの入れ物にも書く** |
-| `DELETE` | `/nordic/photos/:id` | あやとだけ | 旧・消す |
+| `GET` | `/nordic/photos` | 誰でも | 日付から入る道。`days[].people[]` は**絵と名前だけ**（`channelId` は返さない）。**読むのは `islandStreamEventImage`**（2026-10-13。それまで旧 `nordicPhotos` を読んでいた） |
+| `POST` | `/nordic/photos` | あやとだけ | 日付から貼る。**書く先は1つだけ**（2026-10-13。それまで新旧の両方に書いていた） |
+| `DELETE` | `/nordic/photos/:id` | あやとだけ | 消す。**旧に残っている行も道連れにする** |
 | `GET` | `/cards` | 誰でも | 配られたカード。**上限で切らない**（2万枚の栓だけ。鳴ったら `logger.error`）。**`channelId` を返さない**。名前は出してよいと言った人ぶんだけ |
 | `GET` | `/cards/mine` | ログイン済み | **自分のカードだけ。** 未ログインは 401。`Cache-Control: no-store` |
 | `POST` | `/cards/:cardId` | 本人 | 自分のカードを動かす（`cardId` は `<画像のID>__<チャンネルID>`。**`/cards/mine` から取る**） |
 
-**書く口を当分2つ動かしているのは、旅で毎日使っているものを出発直前に
-作り替えないため**（#202 の順番）。`POST /nordic/photos` は中で新旧の両方に書く。
+**口の名前は旧のまま、中身だけ新に寄せた**（2026-10-13）。
+`/nordic/photos` という道はそのまま使えるので、画面は1行も触っていない。
+
+長いあいだ、ここは**書くのは新旧の両方・読むのは旧**だった。
+`island-db.md` の責務の表は 2026-10-01 から「**新が正**」と書いていたのに、
+**公開の面に出ていたのは旧のほう。** しかも書くのは `Promise.all` で
+まとめ書きでも取引でもないので、片方だけ失敗したらずれる——**ずれても
+赤くなるものが1本も無かった。**
+
+寄せる前に数えた（2026-10-13）: 旧 **117件** / 新 **117件** /
+**旧にしか無い 0件**。道具は `python/admin/nordic_photo_pair.py` で、
+同じものが `backup.yml` から毎晩走る。**向きは1つだけ見る**（旧 ⊆ 新）——
+新にしか無いのは、寄せたあとのふつうの姿なので緑。
 
 **カードを読む口が2つあるのは、`/cards` が「誰が、いつ投げ銭したか」に
 なってしまうから。** カードは投げ銭の台帳からしか作られないので、
@@ -339,10 +371,12 @@ localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 | --- | --- | --- | --- |
 | `GET` | `/notes` | 誰でも | **企画に**貼られた付箋（旧。移行待ち） |
 | `POST` | `/notes` | 誰でも | 企画に付箋を貼る（120字まで／1日20件） |
-| `GET` | `/stickies` | 誰でも | **テーマに**貼られた付箋。`?theme=` で1つ、無ければ横断の新着。`?archived=1` は**あやとだけ** |
+| `GET` | `/stickies` | 誰でも | **テーマに**貼られた付箋。`?theme=` で1つ、無ければ横断の新着。`?archived=1` と `?seen=1` は**あやとだけ** |
+| `GET` | `/stickies/waiting` | あやとだけ | **まだ何もしていない**付箋の数と、その id。本文も名前も返らない（机の札のバッジ） |
 | `POST` | `/stickies` | 誰でも | テーマに付箋を貼る（1日20件）。**絵を付けるならログイン**（下）。**締め切った宛先は 409**（下） |
 | `POST` | `/stickies/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
 | `POST` | `/stickies/:id/reply` | あやとだけ | 返信する。空で送ると取り消し |
+| `POST` | `/stickies/:id/seen` | あやとだけ | **既読にする・戻す**（読んだが返さない）。付箋は1文字も変わらない |
 | `POST` | `/stickies/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
 | `DELETE` | `/stickies/:id/pic` | あやとだけ | 貼られた絵だけを外す。**置き場の実体も消える**（字は残る） |
 
@@ -435,11 +469,54 @@ Functions を配り直さなくても貼れるようにしてある（`THEME_ID`
 
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
-| `POST` | `/me` | ログイン済み | 島での見え方を保存する（`nickname` / `showName` / `showPhoto`） |
+| `POST` | `/me` | ログイン済み | 島での見え方を保存する（`nickname` / `showName` / `showPhoto`）＋**チャンネルを結ぶ**（`ytToken`） |
 
 **キャラクターは本人に選ばせない。** 誰にどの絵かはあやとの表が決めていて
 `site/content/residents.ts` に焼いてある。本人に選ばせると、他人の絵を
 自分のものにできてしまう。
+
+### チャンネルを名乗らせない（2026-10-13）
+
+**`body.channelId` はもう見ない。** 受け取るのは `ytToken`（Google の
+OAuth アクセストークン）だけで、口が
+`youtube/v3/channels?part=snippet&mine=true` を自分で引く
+（`functions/src/youtubeOwner.ts`）。`mine=true` はトークンの持ち主の
+チャンネルしか返さないので、**他人のIDを送っても1バイトも書かれない。**
+
+前は送られてきた `channelId` をそのまま `islandUsers` に書いていた。
+あれは公開の値なので、ログインできる人なら誰でも他人を名乗れて、
+`GET /cards/mine` で他人のカードが読め、`POST /stampline/mine` で
+他人の「戻らないことば」が上書きできた。3つとも
+「送られた値を信じず `islandUsers` から引き直す」形で書いてあったが、
+**引き直した先が言い値だった**（`island-db.md` の `islandUsers` の節）。
+
+- `body` から読むのは **`nickname` / `showName` / `showPhoto` / `ytToken`** の4つだけ。
+  `handle` `title` `thumbnail` は**1つも読まない**
+- **`channelId` が body に在ったら、400 `{"error":"channelId not accepted"}`。**
+  黙って無視しても書かれはしないが、**塞がったことを外から確かめる
+  手がかりが1つも残らない。** ここが 400 を返すなら、新しいほうが本番に
+  出ていることが**1バイトも書かずに**分かる（締め切った宛先を 409 で
+  確かめたのと同じ形）。**断る判定は合言葉を見るより前**に置いてある——
+  あとに置くと、確かめるのに本物のログインが要る（＝書く側を叩かないと
+  確かめられない）。合言葉を持っていない人に新しく分かることは1つも無い:
+
+  ```bash
+  curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+    https://live-streaming-d3cac.web.app/island-api/me \
+    -H 'content-type: application/json' -d '{"channelId":"UCbbbbbbbbbbbbbbbbbbbbbb"}'
+  # 400 … 新しいほうが出ている（1バイトも書いていない）
+  # 401 … まだ古い（`no token`。言い値はここまで見られていない）
+  ```
+- **配る順は Hosting が先、Functions があと。** 逆にすると、古い画面が
+  `channelId` を送って 400 で弾かれる。先に Hosting を出せば、
+  そのあいだ（新しい画面 × 古い口）は結びが1回ぶん増えないだけで、
+  **いま結んである人は何も変わらない**
+- **合言葉が無い回（空の body ＝ `loadMe`）は YouTube を叩かない。**
+  島を開くたびに往復すると割り当てを削る。そのとき `channelId` は
+  **触らない**（消しもしない）
+- 確かめが取れなかった回（トークンが腐っている／YouTube が落ちている）も同じ。
+  **区別しない**——どちらでも「確かめられなかった」だけなので、書けば嘘になる
+- 見張り: `functions/selftest/me_channel_selftest.mjs`（対照つき）
 
 ## 8. どねID の紐付け（#190）
 
@@ -593,6 +670,33 @@ LINE スタンプに乗せる1行を、本人に決めてもらう口。中身�
 ---
 
 ## 確かめかた
+
+### 配ったあと、本番で見るところ（2026-10-13 の3件）
+
+**どれも GET か、書く前に断られる側。1バイトも書かない。**
+左が配る前に実測した値で、右が配ったあとに見たい値。
+
+```bash
+B=https://live-streaming-d3cac.web.app/island-api
+
+# 1. チャンネルを名乗れないこと（**書く側を叩かない。断られる側だけ**）
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/me" \
+  -H 'content-type: application/json' -d '{"channelId":"UCbbbbbbbbbbbbbbbbbbbbbb"}'
+#   配る前 401（no token。言い値はそこまで見られていない）→ 配ったあと **400**
+
+# 2. 旅の写真が、新しい入れ物から出ていること（枚数が変わらないこと）
+curl -s "$B/nordic/photos" | python3 -c \
+  'import json,sys;d=json.load(sys.stdin)["days"];print(len(d),sum(len(x["photos"]) for x in d))'
+#   配る前 **27 117** → 配ったあとも **27 117**（減ったら旧にしか無い写真があった）
+
+# 3. 字の長さが口から出ていること
+curl -s "$B/state" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("limits"))'
+#   配る前 None → 配ったあと {"note":120,"reply":300,"name":20,"link":2048,"planTitle":60}
+```
+
+**配る順は Hosting が先、Functions があと**（1の理由。上の7章）。
+
+---
 
 この文書の口の一覧は、**コードの照合式そのもの**から起こしてある（2026-09-11）。
 

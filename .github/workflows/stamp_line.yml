@@ -148,11 +148,15 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          # 伏せるのは4つ。名簿（`picks`）・**手で直したことば
+          # 伏せるのは5つ（下の drop を入れて）。名簿（`picks`）・**手で直したことば
           # （`fix[].id` `fix[].name` `fix[].lines[]`）**・**採点表
           # （`check[]`。あやとが「この字が名セリフだ」と挙げた、名前と
           # ことばの組）**・**深掘りの相手（`who[]`。名前と探す語）**。
           # あとから足したものを入れ忘れると、そこだけ素通りする道ができる。
+          #
+          # **`drop[].name` も同じ。** 「候補から外す」も名前で指すので、
+          # 2026-10-13 に 🤤 を外したとき、ここに入っていないのが分かった
+          # （そのときはスクリプトが名前を1字も出さないので漏れなかった）
           #
           # **`fix[].name` を入れ忘れない。** 2026-10-12 に「書類IDの
           # 代わりに名前で指せる」道を足したので、`fix` の中に名前が
@@ -165,7 +169,8 @@ jobs:
               ((.client_payload.check // [])[]
                  | (.name, ((.lines // [])[]), ((.words // [])[]))),
               ((.client_payload.who // [])[]
-                 | (.name, ((.words // [])[]))) ]
+                 | (.name, ((.words // [])[]))),
+              ((.client_payload.drop // [])[] | (.name, .id)) ]
             | map(select(type == "string"))
             | .[]
           ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then

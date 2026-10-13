@@ -1,0 +1,282 @@
+name: 答えが来たら待ち札を裏返す
+
+# **あやとが `待ち-あやと` の issue にコメントしたら、その場で `待ち-システム` に裏返す。**
+#
+# あやとの言葉（2026-10-13）:
+#
+# > あと、返信したのに「あやと待ち」にするのはやめて欲しい
+#
+# ## なぜ要るか
+#
+# 2026-10-13 まで、このリポジトリに **`待ち-あやと` を外すものが1つも無かった。**
+# 札は付くだけで、外れない。あやとが答えても、セッションが気づいて手で外すまで
+# 「あやと待ち」のまま並ぶ。#808 と #809 が実際にそうなっていた。
+# **人の記憶に頼っている時点で、仕組みが無いのと同じ**（`docs/island-tickets.md`）。
+#
+# ## 判定はここに持たない
+#
+# 見分けは `python/ticket_labels.py` の `flip_verdict()` ひとつ。
+# ここがするのは「受け取りを読む」「返ってきた札を PUT する」だけ。
+# **札の名前も、署名も、著者も、この yaml には1文字も書かない**——書くと、
+# 片方を直した日にもう片方が黙って置いていかれる。
+#
+# 同じ理由で、job の `if:` に
+# `contains(github.event.issue.labels.*.name, '待ち-あやと')` を**置いていない。**
+# 速くはなるが、札の名前がこの yaml にも住むことになり、変えた日に
+# **赤くならずに走らなくなる。** コメント1本ぶんのランナーは安い。
+#
+# ## 見分けの肝: 著者では分からない
+#
+# **セッションが書くコメントも、GitHub 上の著者は `Ayato-kosaka`**
+# （セッションはあやと本人のトークンで書いている）。見分けの印は
+# **末尾の署名**1行だけ。直近100本の実測（2026-10-13）で、
+# セッション55本・機械26本・あやと本人19本に分かれ、**100本とも当たった。**
+#
+# 壊れたときにどちらへ転ぶかは先に決めてある——**疑わしいものは裏返す。**
+# 裏返らなかったのは静かな失敗で、あやとの目には「答えたのに、まだあやと待ち」
+# としか映らない（いま直している不具合そのもの）。間違って裏返ったほうは、
+# 札がシステム側に移るだけで、読むのはシステム自身。理由は
+# `python/ticket_labels.py` の頭の表に書いてある。
+#
+# ## 何も書かない
+#
+# 裏返すだけ。コメントは1本も足さない。毎回鳴るものは、そのうち読まれなくなる。
+#
+# ## 取りこぼしは、翌日ひとりでに拾う（`sweep`）
+#
+# `issue_comment` が届かなかった日・あやとが札より先に答えた issue・
+# 口が断った回は、どんな判定を書いても裏返らない。**しかも誰も赤くならない。**
+# 「`待ち-あやと` なのに、いちばん新しいコメントがあやと本人」は札とコメント
+# だけで数えられるので（`ticket_labels.missed_flips()`）、見回りが毎日当てる。
+# その場の判定と同じ関数を通すので、見分けは1か所のまま。
+#
+# **遡るのは1週間ぶん。** 見回りの仕事は「届かなかったぶんを翌日までに拾う」
+# ことで、昔のコメントを読み直して札を付け替えることではない。窓を外して
+# 本番に当てたら、2026-09-22 の備忘1行（#147。答えではなく控え）で、
+# 審査待ちの issue が「システムの番」になった。
+#
+# 見回りは **cron を当てにしない**（このリポジトリの定時実行は何時間も遅れる。
+# 数は `python3 python/cron_lag.py` が出す）。発火の実績がある2本の完了に
+# 繋いである。**`conclusion` は見ない**——`Fetch YouTube Chat Data` は
+# 「表に無い どねID が投げ銭してきた」晩に `exit 1` で終わるが、あれは
+# 失敗ではなく呼び出し。**繋ぎはワークフローの `name:` で解決される**ので、
+# あちらの名前を変えると黙って切れる（`python/workflow_link_selftest.py` が毎 PR 見る）。
+#
+# ## 公開のログに素性を出さない
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# **本文も題名も、1文字もログへ出さない。** 受け取りは
+# `$GITHUB_EVENT_PATH`（ファイル）から読む——`${{ github.event.comment.body }}` を
+# 差し込むと、ログに出るうえに中身がそのままシェルの字になる。
+# 要約に出すのは issue の**番号**と、`VERDICT_WHY` の短い訳だけ。
+
+run-name: >-
+  ${{ github.event_name == 'issue_comment'
+      && format('#{0} へのコメント', github.event.issue.number)
+      || '裏返し損ねの見回り' }}
+
+on:
+  # **その場で起きる。** cron は使わない（4〜7時間遅れる）
+  issue_comment:
+    types: [created]
+
+  # 以下は取りこぼしの見回りだけ。発火の実績がある2本のうしろに繋ぐ
+  workflow_run:
+    workflows: ["Fetch Doneru Donations", "Fetch YouTube Chat Data"]
+    types: [completed]
+
+  schedule:
+    # 保険。繋ぎが両方切れても、1日1回は数える
+    - cron: "41 5 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "裏返し損ねを実際に直す（off なら数えるだけ）"
+        required: false
+        default: false
+        type: boolean
+
+# 同じ issue に続けてコメントが来たとき、札の PUT を奪い合わせない。
+# 見回りは何本来ても1本ずつ
+concurrency:
+  group: >-
+    wait-flip-${{ github.event_name == 'issue_comment'
+                  && github.event.issue.number || 'sweep' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # 札を張り替えるぶんだけ。issue の本文にもコメントにも書かない
+  issues: write
+
+jobs:
+  # ---- その場で裏返す ---------------------------------------------------
+  flip:
+    if: github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      # **判定の1ファイルだけ取る。** 対象外のコメントでも走るので、
+      # ここは軽いほどよい
+      - name: 判定だけチェックアウト
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: python/ticket_labels.py
+          sparse-checkout-cone-mode: false
+
+      # **ここまでで GitHub の口は1回も叩いていない。**
+      # 対象外のコメント（署名つき・機械・札が無い）は、ここで答えが出て終わる
+      - name: 裏返すかどうかを決める
+        id: judge
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, "python")
+          from ticket_labels import FLIP, VERDICT_WHY, flip_from_event, flipped_labels
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as f:
+              event = json.load(f)
+          verdict, number, labels = flip_from_event(event)
+          flip = verdict == FLIP
+
+          # **本文も題名も出さない。** 出すのは番号と訳だけ
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("flip=%s\n" % ("true" if flip else "false"))
+              f.write("issue=%s\n" % (number or ""))
+              f.write("labels=%s\n" % json.dumps(flipped_labels(labels),
+                                                 ensure_ascii=False))
+
+          # **0件の回も「何を見たか」を出す**（`docs/island-standards.md` §15）。
+          # 「裏返さなかった」と「そもそも走っていない」を見分けられるように
+          line = "コメント 1件を見て、%d件 裏返しました（#%s・%s）" % (
+              1 if flip else 0, number, VERDICT_WHY.get(verdict, verdict))
+          print(line)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(line + "\n")
+          PY
+
+      # 札を丸ごと入れ替える（`PUT`）。1本ずつ消して付けるより口が1回で済み、
+      # **日本語の札の名前を URL の道に入れずに済む。**
+      # 渡す並びは `flipped_labels()` が作ったもので、**他の札は残っている**
+      - name: 札を裏返す
+        if: steps.judge.outputs.flip == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ steps.judge.outputs.issue }}
+          LABELS: ${{ steps.judge.outputs.labels }}
+        run: |
+          set -euo pipefail
+          printf '{"labels":%s}' "$LABELS" \
+            | gh api --silent --method PUT \
+                "repos/${GITHUB_REPOSITORY}/issues/${NUMBER}/labels" --input -
+          echo "#${NUMBER} を 待ち-システム にしました" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---- 裏返し損ねを拾う -------------------------------------------------
+  sweep:
+    if: github.event_name != 'issue_comment'
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v5
+
+      # **本番の札を触る前に、見分けが生きているかを見る。**
+      # ここが壊れたまま走ると、答えていない issue の札まで裏返る。
+      # その場で裏返す側（`flip`）に置いていないのは、あちらがコメント1本ごとに
+      # 走るから。**判定は PR のたびに `Selftests` が見ている**ので、
+      # コメント1本ごとに数え直す意味は無い
+      - name: 見分けを、口を開く前に回す
+        run: python3 python/wait_flip_selftest.py
+
+      - name: 裏返し損ねているものを数えて、直す
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 手で押したときだけ既定が「数えるだけ」。
+          # cron と繋いで来たぶんは**読む人がいない**ので直す
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          sys.path.insert(0, "python")
+          from ticket_labels import (SWEEP_WINDOW_DAYS, WAIT_AYATO,
+                                     flipped_labels, missed_flips)
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          apply = os.environ.get("APPLY") == "true"
+
+          def gh(*args, body=None):
+              """`gh api` を呼んで JSON で返す。**本文は1文字もログに出さない。**"""
+              r = subprocess.run(["gh", "api", *args], input=body, text=True,
+                                 capture_output=True, check=True)
+              return json.loads(r.stdout) if r.stdout.strip() else None
+
+          issues = gh("--paginate", "--method", "GET", "repos/%s/issues" % repo,
+                      "-f", "state=open", "-f", "labels=%s" % WAIT_AYATO,
+                      "-F", "per_page=100")
+          rows = []
+          for it in issues or []:
+              if it.get("pull_request"):
+                  continue
+              n = it["number"]
+              # GitHub は古い順に返す。`missed_flips()` は最後の1本を見る
+              cs = gh("--paginate", "repos/%s/issues/%d/comments" % (repo, n))
+              rows.append({
+                  "number": n,
+                  "labels": it.get("labels"),
+                  "comments": [{"login": (c.get("user") or {}).get("login"),
+                                "type": (c.get("user") or {}).get("type"),
+                                "body": c.get("body"),
+                                "at": c.get("created_at")} for c in (cs or [])],
+              })
+
+          # 遡るのは `SWEEP_WINDOW_DAYS`（1週間）ぶん。
+          # **窓を決めるのもあちら**——ここは日数を1文字も持たない
+          targets = missed_flips(rows)
+
+          # **「0件」は、何件見たかと一緒に出す**（`docs/island-standards.md` §15）
+          lines = ["### 裏返し損ねの見回り",
+                   "",
+                   "あやと待ちの issue **%d本**を見て、"
+                   "裏返し損ねていたもの **%d本**"
+                   "（遡るのは %d日ぶん）。" % (len(rows), len(targets),
+                                               SWEEP_WINDOW_DAYS)]
+          if targets:
+              lines.append("")
+              lines.append(" ".join("#%d" % n for n in targets))
+          if targets and not apply:
+              lines.append("")
+              lines.append("（数えただけ。直すには `apply` を on にして押す）")
+          print("\n".join(lines))
+
+          if apply:
+              for it in rows:
+                  if it["number"] in targets:
+                      gh("--silent", "--method", "PUT",
+                         "repos/%s/issues/%d/labels" % (repo, it["number"]),
+                         "--input", "-",
+                         body=json.dumps({"labels": flipped_labels(it["labels"])},
+                                         ensure_ascii=False))
+              if targets:
+                  lines.append("")
+                  lines.append("**裏返しました。**")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n")
+          PY
+
+      # **黙って赤くならない。** 毎日ひとりでに走るものは、落ちたことに
+      # 誰も気づかない。せめてどこで落ちたかを残す
+      - name: 落ちたときに、どこで落ちたかを残す
+        if: failure()
+        run: |
+          {
+            echo "### 裏返し損ねを拾えませんでした"
+            echo ""
+            echo '**あやと待ちが溜まっているという意味ではありません。**'
+            echo 'この見回りのほう（見分け・GitHub の口のどちらか）が動いていません。'
+            echo 'その場で裏返す側（`issue_comment`）は、これとは別に動いています。'
+            echo ""
+            echo '`python3 python/wait_flip_selftest.py` を手元で回すと、'
+            echo 'どちらかが分かります。'
+          } >> "$GITHUB_STEP_SUMMARY"

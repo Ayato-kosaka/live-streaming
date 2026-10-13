@@ -40,9 +40,21 @@ on:
   workflow_dispatch:
 
 # 同じ枝に続けて push したら、前の run は止めてよい。
-# master は止めない——「master が緑だったか」は1回ずつ残したい
+# master は止めない——「master が緑だったか」は1回ずつ残したい。
+#
+# **`cancel-in-progress: false` だけでは足りなかった。** GitHub は
+# 「走っている run」を止めないだけで、**同じ group で順番待ちしている run は
+# 無条件に差し替える。** master に続けて push した日は、待っていたほうが
+# `cancelled` のまま消える——**緑でも赤でもない、何も言っていない run** になる。
+#
+# 実測（2026-10-13）: master への push 40回のうち **4回（10%）がそれで消えていた。**
+# この見張りを作った理由そのもの（`docs/island-misses.md` #126 の「赤い master が
+# 2日残った」）が、別の道でまた起きる形だった。
+#
+# だから **master は sha ごとに別の group にする。** 順番待ちが起きないので
+# 差し替えられない。PR は今までどおり枝ごとで、続けて push したら前のが止まる。
 concurrency:
-  group: selftest-${{ github.ref }}
+  group: selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
@@ -216,7 +228,8 @@ jobs:
   #     絵を落とすところが 1秒未満になる
   browserwatch:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v5
@@ -341,10 +354,67 @@ jobs:
           # いるが、次の日から古くなる札」は素通りする（#770。10-12 に焼いた
           # 「いま 1 つ立っています」が、企画の終わった翌日からも配られた）。
           # こちらは**時計を進めて**、札の字が日で変わらないことを見る
+          # **`DIST` も渡す。** 焼いた HTML そのものを読む数えかたが
+          # 入っている（`/now` の紙に日付が焼かれていないこと。#808）。
+          # 渡さないと既定の `site/.next-verify` を見に行って、CI には
+          # それが無いので**本物の赤と区別がつかない嘘の赤**が毎回出る
           rc4=0
-          SPORT=4211 OUT=/tmp/nextempty node tools/sprites/nextempty.mjs || rc4=$?
+          SPORT=4211 OUT=/tmp/nextempty DIST=site/.next-ci \
+            node tools/sprites/nextempty.mjs || rc4=$?
           echo "── nextempty 終了コード ${rc4}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ]
+
+      # **JS が動く前の字に、言い切りが混ざっていないか**（`tools/sprites/preclaim.mjs`）。
+      #
+      # ## なぜここに足したか（2026-10-13）
+      #
+      # この道具は 2026-09-18 に作られてから、**どのワークフローからも走って
+      # いなかった。** 走っていたのは判定だけを見る `preclaim_selftest.mjs` で、
+      # あれは**焼いた HTML を1枚も読まない**（`selftest_runner.py` の 133-138 行に
+      # そう書いてある）。道具は在って、繋いでいないだけだった。
+      #
+      # そのあいだ `/nordic.html` が「7泊したあと、ストックホルムを発ちます」を
+      # 出し続けた。旅は 2026-09-27 に終わっている。**JS が入れば正しくなる**ので、
+      # ブラウザで開いても分からない——`crawl.mjs` も撮る道具も `navtruth` も、
+      # 全部 JS が動いたあとの姿を見ている（`docs/island-misses.md` #143）。
+      #
+      # ## なぜ夜ではなくここか
+      #
+      # 判定は**今日に依らない**（JS 前と後の引き算なので、焼いた日がいつでも
+      # 同じ答えが出る）。だから夜まで待つ理由が無く、**マージの前に止めるほうが
+      # 安い**（`docs/island-standards.md` §13）。
+      #
+      # そのうえで**毎晩も走る。** このワークフローは `push: [master]` でも走り、
+      # 毎晩の焼き直し（`rebake.yml`）は master へ push するので、
+      # **焼き直しが入った晩はここも必ず回る。**
+      # `workflow_run` を1本も足していないので、**名前の書き換えで黙って切れる
+      # 繋ぎが増えない**（`CLAUDE.md`「繋ぎはワークフローの `name:` で解決される」）。
+      #
+      # ## 1件でも出たら赤くする。逃がす表は置かない
+      #
+      # 終了コード1は「**候補があった**」であって「壊れている」ではない
+      # （どれが嘘かは人が読んで決める）。それでもここを赤にしてよいのは、
+      # **直しかたが必ず在る**から——JS が入る前に出る字を、
+      # **旅の前に読んでも、旅のあとに読んでも本当のこと**に書き替えればよい
+      # （`site/components/nordic/GoalRow.tsx` の `useTripDate` の上に書いてある）。
+      # 逃がす表を置くと、そこに積むのがいちばん楽になる。
+      #
+      # **開発サーバーには当てない。** 書き出したものを静的に配る（`CLAUDE.md`）。
+      # 上の step とポートを分けてあるのは、落ちた理由を混ぜないため
+      - name: JS が動く前の字に、言い切りが混ざっていないか
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4212 --directory site/.next-ci >/tmp/serve-pc.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4212/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci SPORT=4212 node tools/sprites/preclaim.mjs || rc=$?
+          echo "── preclaim 終了コード ${rc}"
+          exit "$rc"
 
       # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
       # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。

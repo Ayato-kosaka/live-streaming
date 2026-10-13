@@ -39,7 +39,7 @@ const fmt = (d: string) => d.replace(/-/g, "/");
 
 export default function AppsPage() {
   return (
-    <PageShell current="apps" crumbs={[{ label: "アプリ" }]}>
+    <PageShell crumbs={[{ label: "アプリ" }]}>
       <PageHead
         mark={<AnvilArt size={74} />}
         title="アプリ"

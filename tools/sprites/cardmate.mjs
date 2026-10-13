@@ -177,8 +177,12 @@ async function shoot(名前, 押す) {
 
 /* 札の形を見分ける。**新しい版は「入れない」を持った丸い札の列**、
    前の版は `.akd-mate` 1つの入り切り。 */
+/* **字は札に出ていない**（2026-10-13。あやと「入れるあやとのテキストは
+   非表示で良い」）ので、読み上げ用の名前から引く。「入れない」だけは字を持つ。 */
 const 札 = await p.evaluate(() =>
-  [...document.querySelectorAll(".akd-mate")].map((el) => el.textContent?.trim() ?? ""),
+  [...document.querySelectorAll(".akd-mate")].map(
+    (el) => el.getAttribute("aria-label") || el.textContent?.trim() || "",
+  ),
 );
 const 選べる = 札.length > 1;
 console.log("あやとの札:", JSON.stringify({ 形: 選べる ? "選ぶ" : "入り切り", 札 }));
@@ -217,7 +221,39 @@ for (let i = 0; i < 名.length; i++) {
   await p.waitForTimeout(500);
 }
 
+/* ---- 住人を入れずに、あやとだけ（2026-10-13） ----
+   あやと「キャラを入れなくてもあやとを入れれるように」。**顔の札を
+   「入れない」にしたまま**あやとを入れて、素の写真と違う絵が焼けること、
+   そのあやとが**指で動かせる**ことを見る。前は「住人を入れたときだけ」
+   あやとの札を出していたので、住人の絵をまだ持っていない人には
+   押せる札が1枚も無い紙だった。 */
+await 入れない();
+await p.waitForTimeout(400);
+await shoot("住人なし・素の写真", async () => {
+  await p.locator(".npick").first().click();
+});
+await shoot("住人なし・あやとだけ", async () => 入れる(0));
+const 手 = await p.evaluate(() => ({
+  目盛り: !!document.querySelector('input[data-tune="scale"]'),
+  動かせる: !!document.querySelector(".akd-stage.is-movable"),
+  札: document.querySelectorAll(".akd-mate").length,
+  問い: document.querySelector(".akd-mates")?.getAttribute("aria-label") ?? null,
+}));
+console.log("住人なしであやとを入れたとき:", JSON.stringify(手));
+if (SHOTS) await p.screenshot({ path: `${SHOTS}/あやとだけ.png` });
+
 await b.close();
+
+/* ---- 住人なしの判定 ---- */
+const 素のみ = got["住人なし・素の写真"];
+const あやとのみ = got["住人なし・あやとだけ"];
+need(
+  "住人を入れずに、あやとだけ入れた絵が焼ける",
+  !!あやとのみ?.画素 && !!素のみ?.画素 && あやとのみ.画素 !== 素のみ.画素,
+  JSON.stringify({ 素のみ, あやとのみ }),
+);
+need("住人なしでも、大きさの目盛りが出る", 手.目盛り, JSON.stringify(手));
+need("住人なしでも、絵が指で動かせる", 手.動かせる, JSON.stringify(手));
 
 /* ---- 対照を当てる。**本物の数字を1つも出す前に** ---- */
 const 撮れた = Object.entries(got).filter(([, v]) => v.画素);
