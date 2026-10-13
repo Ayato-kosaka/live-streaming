@@ -96,7 +96,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const days = closedDays(c.stays);
 
   return (
-    <PageShell current="map" crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
+    <PageShell crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />

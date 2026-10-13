@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  */
 export default function NextPage() {
   return (
-    <PageShell current="next" crumbs={[{ label: "企画" }]}>
+    <PageShell crumbs={[{ label: "企画" }]}>
       <PageHead
         icon="tent"
         /* **時制を題にしない。** これから分は 0 件になる日がある
