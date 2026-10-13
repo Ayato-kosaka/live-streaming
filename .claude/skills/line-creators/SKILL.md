@@ -23,6 +23,8 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 | 販売開始 | 承認されたら自動 | あやと「公開して」 |
 | AI の使用 | 「使った」と申告する | 住人の絵は ChatGPT で描いている |
 | 作者名 | あやと / Ayato（アイテム全部で共通） | |
+| メイン・タブ | 「すぐもどる」（タブはその顔） | あやと（#716） |
+| 並び | あやとの17枚 → 住人23人。それぞれの中は用途順（あいさつ → 返事・お礼 → … → 夜・別れ） | あやと（#716） |
 
 ## 1. 道具
 
@@ -52,7 +54,7 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 | タグ | `/sticker/<スタンプID>/tag#/01`（枠ごと） |
 | アカウント設定 | `/seller/edit_basic`（基本情報 / メール / 振込先のタブ） |
 
-最初のセットは **スタンプ ID 48307603**。
+最初のセットは **スタンプ ID 48307603**（「ちゃす！集まれ、あやと島の仲間たち」、2026-10-13 に申請）。
 
 ## 4. 画面の癖（2026-10-13 に踏んだもの）
 
@@ -150,9 +152,16 @@ EC2 には `zip` が無い。python の `zipfile` で固める。
 
 ## 9. 申請
 
-- 管理画面の上の「Request」。上に「Requests Remaining Today: 0/30」と出る（0 が「残り」か「出した数」かは、申請するまで分からなかった。分かったらここを直す）
-- 申請すると状態が Waiting for Review → In Review → Approved。自動販売にしてあれば、承認でそのまま売り出される
+- 管理画面の上の「Request」は `[data-test=detail-btn-request] a`（字が「Request」の `button` は無い。
+  `span` の中の `a`）。「Preview」も同じ形
+- 押すと「Request Review」の小窓（`.cm-modal-content`）。権利・透過・タグの注意と、**写真や人物の肖像についての同意文**。
+  「I Agree」に印を付けて OK。下の「Get exclusive news from the LINE Creators Market official account」は
+  **最初から印が付いている**ので外す（あやとのアカウントの受信設定を勝手に増やさない）
+- 送ると「Review request sent.」。状態が **Waiting for Review** → In Review → Approved。自動販売なら承認でそのまま売り出される
+- 「Requests Remaining Today: n/30」は**その日に出した申請の数／上限**（申請で 0/30 → 1/30 になった）
+- 審査待ちのあいだは「Revert to Edit」で編集中に戻せる（戻すと審査の順番はやり直し）
 - **審査中は作者名も変えられない**（作者名の説明に書いてある）
+- 同意文の「人物の肖像」は、絵の中の実在の人のこと。最初のセットで描いた人物はあやと本人だけで、住人はキャラクター
 
 ## 10. 出したあと
 
