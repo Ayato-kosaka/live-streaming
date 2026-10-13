@@ -41,7 +41,7 @@ const NUM: Record<string, { n: React.ReactNode; cap: string }> = {
 export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信" }]}>
+    <PageShell crumbs={[{ label: "配信" }]}>
       {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
           「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead

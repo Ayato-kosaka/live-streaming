@@ -207,7 +207,7 @@ export default function MapPage() {
   const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
   return (
-    <PageShell current="map" crumbs={[{ label: "歩いた国" }]}>
+    <PageShell crumbs={[{ label: "歩いた国" }]}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
           カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。
