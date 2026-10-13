@@ -360,16 +360,7 @@ export const CAL_MONTHS: CalMonth[] = [
   { month: 2, memory: { year: 2026, month: 2 }, picks: [] },
   { month: 3, memory: { year: 2026, month: 3 }, picks: [] },
   { month: 4, memory: { year: 2026, month: 4 }, picks: [] },
-  {
-    month: 5,
-    memory: { year: 2026, month: 5 },
-    picks: [
-      {
-        src: "/goods/calendar/05-a.webp",
-        alt: "イランへ向かう道のわきで「To IRAN」の札を置き、親指を立てるあやと。奥に青いドームのモスクと雪の山、夕焼け",
-      },
-    ],
-  },
+  { month: 5, memory: { year: 2026, month: 5 }, picks: [] },
   { month: 6, memory: { year: 2026, month: 6 }, picks: [] },
   { month: 7, memory: { year: 2026, month: 7 }, picks: [] },
   {
