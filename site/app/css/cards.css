@@ -200,6 +200,170 @@
   gap: var(--sp-2);
   margin-top: var(--sp-3);
 }
+/* --- 見かたの札（並び／カレンダー）と、カレンダー ----------------------
+   あやと（2026-10-13）「あやと島カードはカレンダーから選べることも
+   できたらもっと見やすいかも？」。**「も」なので並びは残す。**
+
+   札は、紙の中の「どのかたちで もちかえりますか」（`.akd-shape`）と
+   同じ形にそろえる。同じ面で押して切り替えるものが2種類あると、
+   どちらが選ばれているのかを2回おぼえることになる。 */
+.akd-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+}
+.akd-view {
+  flex: 1 1 auto;
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+  cursor: pointer;
+}
+.akd-view.is-on {
+  background: var(--accent-soft, var(--paper-2));
+  border-color: var(--accent-2);
+  box-shadow: none;
+  transform: translateY(2px);
+}
+.akd-view:active { transform: translateY(4px); box-shadow: none; }
+
+/* 月の送り。**カードのある月だけ**なので、端では札そのものが出ない
+   （押せない札を置かない。`docs/island-design.md` 3章の3）。
+   題の右に置くと札の上に乗るので、題の下に1段取る。 */
+.akd-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.akd-cal-go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-note);
+  font-weight: 800;
+  box-shadow: var(--pop-sm);
+  cursor: pointer;
+}
+.akd-cal-go:active { transform: translateY(4px); box-shadow: none; }
+
+/* 7列。**曜日の頭文字と、日のマス。**
+
+   **紙の余白のぶん、横へ広げる**（`--pp-x` の負のマージン）。7列で
+   48px の押しどころを取るには 336px 要るが、390px のスマホで紙の中は
+   332px しかない。広げると 364px になって、1マス 48.6px になる。
+
+   **320px の画面では、どう組んでも 7列 × 48px は入らない**（7×48＝336）。
+   そこだけは 38.6px になる。カレンダーを出さない・列を減らすほうが
+   悪いので、**背だけは 48px を保って**出す。 */
+.akd-cal-grid {
+  display: grid;
+  /* **`minmax(0, 1fr)`。** ただの `1fr` だと、列の最小が中身の最小
+     （マスの `min-height` と `aspect-ratio` から出る 48px）になって、
+     320px では 7列で 360px に太り、紙からはみ出して土曜が消える。 */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--sp-1);
+  margin: 0 calc(-1 * var(--pp-x));
+}
+.akd-cal-w {
+  padding-bottom: 2px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-2);
+}
+/* カードの無い日。**完全に平ら**——枠も地も影も付けない
+   （`docs/island-design.md` 3章の3。押せるものと押せないものが
+   必ず混ざる並びなので、「全部押せるときは厚みを省く」の例外は使えない）。 */
+.akd-cal-day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 背は押しどころぶん。**正方にするのは下の `@media` で、広い画面だけ。** */
+  min-height: 48px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1;
+  color: color-mix(in srgb, var(--ink-2) 52%, transparent);
+}
+/* 写真のある日。**押せるので厚みがある。** 絵はその日の1枚目。 */
+.akd-cal-day.is-has {
+  overflow: hidden;
+  border: 1px solid var(--pg-rule);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--pg-sheet) 62%, var(--paper));
+  color: var(--ink);
+  box-shadow: var(--pop-sm);
+  cursor: pointer;
+}
+.akd-cal-day.is-has img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 日にちの数字。**絵の上でも読めるように、暗い札を敷く**
+   （地が明るい写真でも暗い写真でも 4.5 を割らない）。 */
+.akd-cal-day.is-has i {
+  position: relative;
+  z-index: 1;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.62);
+  font-size: var(--fs-min);
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1.3;
+  text-align: center;
+  color: #fff;
+}
+/* いま開いている日。**朱で言う**（この面の「選んでいる」は朱） */
+.akd-cal-day.is-has.is-on {
+  border-color: var(--pg-pick);
+  box-shadow: none;
+  transform: translateY(2px);
+}
+.akd-cal-day.is-has.is-on i { background: var(--pick); }
+.akd-cal-day.is-has:active { transform: translateY(2px); box-shadow: none; }
+/* 頭の空き。**押せないし、字も無い** */
+.akd-cal-pad { min-height: 48px; }
+/* **正方にするのは、列が 48px 取れる幅から。**
+   7列 × 48px ＋ すきま 24px ＝ 360px 要る。紙の余白ぶん広げてあるので、
+   390px の画面でちょうど（実測 48.6px）。
+
+   それより狭い画面で `aspect-ratio` を効かせてはいけない。背（48px）から
+   横を決めてしまうので、**38.6px の列に 48px のマスが載って、隣のマスに
+   重なる**（320px で実際にそうなった）。狭いところでは、横は列なり・
+   背は 48px の長方形にする。 */
+@media (min-width: 390px) {
+  .akd-cal-day,
+  .akd-cal-pad {
+    aspect-ratio: 1;
+  }
+}
+
 /* 写真1枚のマス。**全部押せるので、1枚ずつに厚みは付けない**
    （`docs/island-design.md` 3章の3の例外）。旅の写真の一覧（`.nph`）と
    同じ作りにしてある。押す相手が同じ「その日の写真」なので、
