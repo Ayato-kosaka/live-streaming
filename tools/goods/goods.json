@@ -40,13 +40,5 @@
     "itemId": 393,
     "variant": 3416,
     "front": "tools/goods/art/out/towel.png"
-  },
-  {
-    "key": "pouch-grid",
-    "title": "（試作・格子）ポーチ",
-    "description": "試作",
-    "itemId": 885,
-    "variant": 5432,
-    "front": "tools/goods/art/out/test-grid.png"
   }
 ]
