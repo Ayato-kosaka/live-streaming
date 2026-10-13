@@ -435,11 +435,54 @@ Functions を配り直さなくても貼れるようにしてある（`THEME_ID`
 
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
-| `POST` | `/me` | ログイン済み | 島での見え方を保存する（`nickname` / `showName` / `showPhoto`） |
+| `POST` | `/me` | ログイン済み | 島での見え方を保存する（`nickname` / `showName` / `showPhoto`）＋**チャンネルを結ぶ**（`ytToken`） |
 
 **キャラクターは本人に選ばせない。** 誰にどの絵かはあやとの表が決めていて
 `site/content/residents.ts` に焼いてある。本人に選ばせると、他人の絵を
 自分のものにできてしまう。
+
+### チャンネルを名乗らせない（2026-10-13）
+
+**`body.channelId` はもう見ない。** 受け取るのは `ytToken`（Google の
+OAuth アクセストークン）だけで、口が
+`youtube/v3/channels?part=snippet&mine=true` を自分で引く
+（`functions/src/youtubeOwner.ts`）。`mine=true` はトークンの持ち主の
+チャンネルしか返さないので、**他人のIDを送っても1バイトも書かれない。**
+
+前は送られてきた `channelId` をそのまま `islandUsers` に書いていた。
+あれは公開の値なので、ログインできる人なら誰でも他人を名乗れて、
+`GET /cards/mine` で他人のカードが読め、`POST /stampline/mine` で
+他人の「戻らないことば」が上書きできた。3つとも
+「送られた値を信じず `islandUsers` から引き直す」形で書いてあったが、
+**引き直した先が言い値だった**（`island-db.md` の `islandUsers` の節）。
+
+- `body` から読むのは **`nickname` / `showName` / `showPhoto` / `ytToken`** の4つだけ。
+  `handle` `title` `thumbnail` は**1つも読まない**
+- **`channelId` が body に在ったら、400 `{"error":"channelId not accepted"}`。**
+  黙って無視しても書かれはしないが、**塞がったことを外から確かめる
+  手がかりが1つも残らない。** ここが 400 を返すなら、新しいほうが本番に
+  出ていることが**1バイトも書かずに**分かる（締め切った宛先を 409 で
+  確かめたのと同じ形）。**断る判定は合言葉を見るより前**に置いてある——
+  あとに置くと、確かめるのに本物のログインが要る（＝書く側を叩かないと
+  確かめられない）。合言葉を持っていない人に新しく分かることは1つも無い:
+
+  ```bash
+  curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+    https://live-streaming-d3cac.web.app/island-api/me \
+    -H 'content-type: application/json' -d '{"channelId":"UCbbbbbbbbbbbbbbbbbbbbbb"}'
+  # 400 … 新しいほうが出ている（1バイトも書いていない）
+  # 401 … まだ古い（`no token`。言い値はここまで見られていない）
+  ```
+- **配る順は Hosting が先、Functions があと。** 逆にすると、古い画面が
+  `channelId` を送って 400 で弾かれる。先に Hosting を出せば、
+  そのあいだ（新しい画面 × 古い口）は結びが1回ぶん増えないだけで、
+  **いま結んである人は何も変わらない**
+- **合言葉が無い回（空の body ＝ `loadMe`）は YouTube を叩かない。**
+  島を開くたびに往復すると割り当てを削る。そのとき `channelId` は
+  **触らない**（消しもしない）
+- 確かめが取れなかった回（トークンが腐っている／YouTube が落ちている）も同じ。
+  **区別しない**——どちらでも「確かめられなかった」だけなので、書けば嘘になる
+- 見張り: `functions/selftest/me_channel_selftest.mjs`（対照つき）
 
 ## 8. どねID の紐付け（#190）
 

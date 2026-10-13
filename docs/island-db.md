@@ -816,8 +816,8 @@ island/state
 | `name` | string | 島に出す名前。**ハンドル > チャンネル名 > Google の表示名**の順 | ログイン時に自動 |
 | `handle` | string? | YouTube のハンドル（`@…`） | 自動。**引けなかった人は1日1回だけ追いに行く** |
 | `handleAt` | string? | ハンドルを追いに行った日 | 同上 |
-| `channelId` | string | YouTube のチャンネルID | ログイン時に自動 |
-| `photo` | string \| null | YouTube のアイコンURL | ログイン時に自動 |
+| `channelId` | string | YouTube のチャンネルID | **口が YouTube に訊いて確かめたぶんだけ**（下） |
+| `photo` | string \| null | YouTube のアイコンURL | 同上。**確かめの取れた回だけ入れ替える** |
 | `nickname` | string? | 島で出す名前（本名以外にしたいとき） | 本人 |
 | `showName` | boolean | 名前を島に出すか | 本人 |
 | `showPhoto` | boolean | YouTube アイコンを島に出すか | 本人 |
@@ -828,6 +828,43 @@ island/state
 **`channelId` があって、かつ `showName` か `showPhoto` のどちらかが true の人だけ**が
 島の状態の `residents` に載る。何もしていない人の名前は絶対に出ない。
 `showName` が false なら名前は `null`、`showPhoto` が false なら写真は `null` で返る。
+
+#### `channelId` は、名乗りでは入らない（2026-10-13）
+
+**長いあいだ、ここは画面が送ってきた値をそのまま書いていた**
+（`POST /me` の `clean(body.channelId, 64)`）。画面は
+`youtube/v3/channels?mine=true` を自分で叩いて取っていたが、
+**口は一度もそれを確かめていなかった。**
+
+チャンネルIDは公開の値なので、島にログインできる人なら誰でも他人のIDを
+名乗れた。名乗った先で開くのは3つ:
+
+| どこ | 名乗れると何が起きたか |
+| --- | --- |
+| `GET /cards/mine` | その人のカードが全部返る（どの日に投げたか・絵・名乗り） |
+| `POST /stampline/mine` | **`islandStampLine.lines` を上書きできる**（3.1 が「戻らない。人の字」と書いている正本） |
+| `listResidents()` | 島の名札に、その人のキャラクターの絵が出る |
+
+**3つとも「送られた値を信じず `islandUsers` から引き直す」正しい形**で
+書いてあった。引き直した先がこの欄だったので、関所が1段ぶん空回りしていた。
+
+いまは `byOwner` と同じ形で、**画面が送るのは合言葉（Google の OAuth
+アクセストークン）だけ。`channels?mine=true` は口が自分で引く**
+（`functions/src/youtubeOwner.ts` の `ownedChannel()`）。
+`mine=true` はトークンの持ち主のチャンネルしか返さないので、
+**入口から「名乗る」という言葉が消える。**
+
+- **`channelId` に値が入る道は、`ownedChannel()` ただ1本。**
+  `handle` も `photo` も `name` も、同じ返事から取る
+- **`channelId` を body に入れて送ると 400。** 黙って無視せず断るのは、
+  本番で塞がりを確かめる手がかりを残すため（`island-api.md` 7章）
+- **確かめが取れなかった回は、1バイトも書かない。消しもしない。**
+  トークンが腐っていても YouTube が落ちていても同じ（区別しても、
+  することが変わらない）。すでに結んである人はそのまま
+- 見張りは `functions/selftest/me_channel_selftest.mjs`（**対照つき**。
+  `mine=true` を外す・形を見なくする・`body.channelId` を読む行を戻す、で赤くなる）
+- 本番に残った嘘は `python/admin/channel_claim_audit.py` で数える。
+  **数えられるのは跡の残るほうだけ**——読んだだけの回はどこにも記録が無い
 
 **`islandDonors/{viewerPk}`** — どねID と YouTube の対応表（#190）
 
