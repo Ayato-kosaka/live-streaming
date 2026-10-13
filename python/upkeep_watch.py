@@ -4,8 +4,9 @@
     python3 python/upkeep_watch.py --apply    # issue の区画を書き換える
     python3 python/upkeep_watch.py --dir /tmp/写し --today 2026-10-03   # 仕込みで回す
 
-終了コード **0=数えられた（手入れ待ちが在っても 0）/ 1=GitHub に届かない・
-書く先が違う / 2=数えられない**（`docs/island-standards.md` §15）。
+終了コード **0=数えられた（あやと待ちが在っても 0）/ 1=GitHub に届かない・
+書く先が違う・**こちらが埋め損ねている**（`Count.ours`）/ 2=数えられない**
+（`docs/island-standards.md` §15）。
 
 ## なぜ要るか
 
@@ -44,6 +45,28 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 | 焼き込みが古い（`site/content/*.ts`） | `python/stale_content_watch.py` の `BOOKS` |
 | 旅が進んで欄が空いた | この下の `TRIGGERS` |
 
+## **呼ぶ相手は3人いる**（2026-10-13 / #808）
+
+あやとの言葉:
+
+> これ、わたし打つの面倒なので仕組みを見直してください。
+> 最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
+> おかしい**
+
+ここは島の便り（`island/state.current`）について、**機械が知っていることまで
+あやとに打たせていた。** 「9/27 ストックホルムを発つ」が過ぎたことも、
+いまどの国にいるかも、こちらが知っている。知っているものを人に消させるのは、
+見張りの向きが逆。
+
+| 持ち主 | どこへ出るか | 何が入るか |
+| --- | --- | --- |
+| **あやと**（`UPKEEP`） | issue #664 の区画 | 人しか書けないものだけ。ひとこと・着いた日・歩いた国 |
+| **こちら**（`SYSTEM` / `Count.ours`） | **区画に出さない。この見張りを赤くする** | 機械が埋めるはずのものが埋まっていない。配り忘れ・不具合 |
+| **焼くほう**（`Count.system`） | `bake_down` の側 | 焼き込みが古い。焼き直しが動いていない |
+
+**区画に出すのは1列目だけ。** 2列目を混ぜると「読んでも自分の出番が無い
+一覧」に戻る——この係を作った理由そのもの。
+
 ## 引き金が見るのは、`chapters.ts` だけではない
 
 ここは長いあいだ `chapters.ts` の欄（着いた日・歩いた国・滞在日数）しか
@@ -54,7 +77,7 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 | --- | --- | --- |
 | 閉じた章の滞在 | `countries.ts` の `sweden` の `to` | **アルバニアの配信11本が「スウェーデン」として焼かれた** |
 | いまの章の滞在 | `countries.ts` に `albania` の滞在が無い | 同じことの根っこ |
-| 島の便り | `/island-api/state` の `current` が8日前 | **`/now` が「9/27 ストックホルムを発つ」を今週の予定として出していた** |
+| 島の便り | `/island-api/state` の `current` が8日前 | **`/now` が「9/27 ストックホルムを発つ」を今週の予定として出していた**（この引き金はそのあと2つに割れた。上の「呼ぶ相手は3人いる」） |
 | 年表のいま | `/about` の `STORY` にいまの章の行が無い | 「ここまでと、いま」が24日止まっていた |
 
 だから引き金に渡すものを `World` にまとめた。**引き金は自分でファイルも
@@ -235,6 +258,9 @@ class Gap:
     where: str      # 「`site/content/chapters.ts` の `albania` の `from`」
     what: str       # 「島に着いた日（YYYY-MM-DD）」
     urgent: bool    # 急ぐか（島がいま間違ったものを出しているか）
+    # 誰が埋めるか。既定は人（あやと）。**機械が知っていることは `SYSTEM`**
+    # ——あやとの札には1行も出さず、こちらに鳴らす（下の `TRIGGERS` の注）
+    owner: str = UPKEEP
 
     def line(self) -> str:
         return f"- {self.where} ← {self.what}"
@@ -548,13 +574,27 @@ def running_without_stay(w: World) -> list[Gap]:
                 urgent=False)]
 
 
-def state_current_stale(w: World) -> list[Gap]:
-    """**島の便り（`/island-api/state` の `current`）が、もう「いま」ではない。**
+def letter_word_missing(w: World) -> list[Gap]:
+    """**島の便りのうち、人しか書けない欄が空いている。**
 
-    `current` は `place` `word` `week` をまとめて持つ1つの箱で、`/now` は
-    これを「**いまいる国と、今週やること**」として出している。
-    あやとがスマホから打つ欄（`POST /island-api/current`）なので、
-    **機械では新しくならない。** 整備の側。
+    あやとの言葉（2026-10-13 / #808）:
+
+    > これ、わたし打つの面倒なので仕組みを見直してください。
+    > 最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
+    > おかしい**
+
+    ここは長いあいだ `place` と `week` も一緒に呼んでいた。**どちらも機械が
+    知っている。**
+
+    | 欄 | 誰が埋めるか |
+    | --- | --- |
+    | `place`（いまいる国） | **機械。** 人の字が古くなったら章か国で受ける（`site/lib/stay.ts` の `tripAsPlace` / `stayAsPlace`） |
+    | `week` の過ぎた行 | **機械。** 口が落としてから返す（`functions/src/islandApi.ts` の `weekAhead`） |
+    | `word`（ひとこと） | **人だけ。** その日どこで何を見たかは本人の頭の中にしかない |
+    | `theme`（島の景色） | 人。ただし**字としては出さない**ので、古くても嘘にならない |
+
+    だからここが呼ぶのは **`word` ひとつ**。仕分けの表は
+    `docs/island-db.md` の 3.5。
 
     見るのは2つ。**片方だけでは、いつでも通る判定になる。**
 
@@ -564,45 +604,67 @@ def state_current_stale(w: World) -> list[Gap]:
        画面は日本時間の暦日で切っていて、こちらは走った箱の暦日なので、
        **ちょうど境目の1日だけは、画面と答えが1日ずれることがある。**
        7日の境目に対して1日なので、札の読み手には効かない
-    2. **`week` の行の頭の日付が、もう過ぎている**
+    2. **`word` が空**（打たれた日が新しくても、ひとことが無ければ出ない）
 
-    2 が要るのは、1 だけだと**章が始まった日に打てば、その章が何ヶ月
-    続いても永久に「新しい」**から。実際に 2026-10-06、本番の `/now` は
-    「9/27 ストックホルムを発つ」を**今週の予定**として出していた
-    （章 `albania` の始まりも `updatedAt` も 2026-09-28）。
+    1 だけでは、章が始まった日に打てば**その章が何ヶ月続いても永久に
+    「新しい」**。2 だけでは、2週間前のひとことが「いま」として出つづける。
 
-    急ぐ側。**島がいま間違ったものを出している。**
+    急ぐ側。**島がいま、人の言葉を1つも出せていない。**
 
-    **中身を印字しない。** 出すのは日付と件数だけ（`week` の字は
-    あやとの言葉で、ここは公開の issue に出る）。
+    **中身を印字しない。** 出すのは日付だけ（`word` はあやとの言葉で、
+    ここは公開の issue に出る）。
     """
     out = []
     cur = w.current
     said = _as_date(str(cur.get("updatedAt") or ""))
     now = w.chapter_now()
     began = (_as_date(now["from"]) or _as_date(now["opensAt"])) if now else None
+    where = f"`{STATE_WHERE}` の `word`"
 
     if said is None:
-        out.append(Gap(f"`{STATE_WHERE}` の `place` と `word`",
-                       "いまいる国と、ひとこと（**打たれた日が読めません**）",
-                       urgent=True))
-    else:
-        age = (w.today - said).days
-        if age > w.stale_days or (began is not None and said < began):
-            out.append(Gap(
-                f"`{STATE_WHERE}` の `place` と `word`",
-                f"いまいる国と、ひとこと（いまの便りは {said}＝{age}日前。"
-                f"{w.stale_days}日を超えたら「いま」ではない）",
-                urgent=True))
+        out.append(Gap(where, "ひとこと（**打たれた日が読めません**）", urgent=True))
+        return out
 
-    past = [d for d in week_days(cur.get("week"), w.today) if d < w.today]
-    if past:
+    age = (w.today - said).days
+    if age > w.stale_days or (began is not None and said < began):
         out.append(Gap(
-            f"`{STATE_WHERE}` の `week`",
-            f"今週やること（**過ぎた日の行が {len(past)}行**。"
-            f"いちばん古いのが {min(past)}）",
+            where,
+            f"ひとこと（いまの便りは {said}＝{age}日前。"
+            f"{w.stale_days}日を超えたら「いま」ではない）。"
+            f"**いまいる国は書かなくていい**——古くなったら機械が受けます",
             urgent=True))
+    elif not str(cur.get("word") or "").strip():
+        out.append(Gap(where, "ひとこと（日付は新しいのに、字が入っていません）",
+                       urgent=True))
     return out
+
+
+def letter_past_week_left(w: World) -> list[Gap]:
+    """**過ぎた日の行が、口からまだ返ってきている。こちらの落ち。**
+
+    `week` の行が過ぎたかどうかは**機械が知っている。** 知っていることを
+    人に消させていたのが #808 の指摘で、いまは
+    `GET /island-api/state` が落としてから返す
+    （`functions/src/islandApi.ts` の `weekAhead`）。
+
+    **それでもここが拾うなら、落とすほうが動いていない。** 考えられるのは
+    Functions を配り忘れた（`firebase-functions-deploy.yml`）か、日付の
+    読み方を片側だけ直したか。どちらも**あやとには1ミリも関係がない**ので、
+    札には出さず、この見張りを赤くしてこちらに鳴らす（`Count.ours`）。
+
+    持ち主は `SYSTEM`。**あやとを呼ばない。**
+
+    **中身を印字しない。** 出すのは日付と件数だけ。
+    """
+    past = [d for d in week_days(w.current.get("week"), w.today) if d < w.today]
+    if not past:
+        return []
+    return [Gap(
+        "`functions/src/islandApi.ts` の `weekAhead`（`GET /island-api/state`）",
+        f"過ぎた日の行が **{len(past)}行** 返ってきています"
+        f"（いちばん古いのが {min(past)}）。落とすほうが動いていません"
+        f"——Functions を配り忘れていないか見てください",
+        urgent=True, owner=SYSTEM)]
 
 
 def about_without_chapter(w: World) -> list[Gap]:
@@ -709,7 +771,12 @@ TRIGGERS: tuple[Trigger, ...] = (
     Trigger("滞在日数", False, running_without_days),
     Trigger("閉じた章の滞在", True, ended_with_open_stay),
     Trigger("いまの章の滞在", False, running_without_stay),
-    Trigger("島の便り", True, state_current_stale),
+    # **人しか書けない欄だけを呼ぶ**（#808）。`place` と `week` の過ぎた行は
+    # 機械が受けるので、ここからは外した
+    Trigger("島の便りのひとこと", True, letter_word_missing),
+    # **こちら側。** 機械が落とすはずのものが落ちていない＝配り忘れか不具合。
+    # 札には出さず、この見張りを赤くする（`Count.ours`）
+    Trigger("過ぎた行が落ちていない", True, letter_past_week_left),
     Trigger("年表のいま", False, about_without_chapter),
     Trigger("終わった旅の伝説", False, ended_without_legend),
 )
@@ -745,9 +812,13 @@ class Count:
 
     urgent: list[str]      # 急ぐ行（本文に出る字そのもの）
     later: list[str]       # 急がない行
-    system: list[str]      # 仕組みの側へ回した行（**区画に出さない**。ログだけ）
+    system: list[str]      # 焼くほうの不具合（**区画に出さない**。`bake_down` の側）
     blind: list[str]       # 数えられなかった理由
     today: date
+    # **こちらが埋め損ねたもの**（#808）。札には1行も出さず、この見張りを
+    # 赤くする側。`system` と分けてあるのは持ち主が違うから——あちらは
+    # 焼き直し（`bake_down`）が直すもので、こちらはこの係が直すもの
+    ours: list[str] = field(default_factory=list)
 
     @property
     def waiting(self) -> int:
@@ -815,7 +886,7 @@ def count(content_dir: Path, today: date, books: dict | None = None,
     # --- (a) 焼き込みが古い。**判定はあちらに乗る** ---
     seen = stale.scan_dir(content_dir)
     if not seen:
-        return Count([], [], [], [f"{content_dir} に `*.ts` が1本もありません"], today)
+        return Count([], [], [], [f"{content_dir} に `*.ts` が1本もありません"], today, [])
     v = stale.judge(seen, today, books)
     blind += v.blind
     red_names = {r.name for r in v.results if r.status == "赤"}
@@ -920,9 +991,13 @@ def count(content_dir: Path, today: date, books: dict | None = None,
         logger.info("引き金「%s」… %d件", t.name, len(found))
         gaps += found
 
-    urgent = mine + [g.line() for g in gaps if g.urgent]
-    later = [g.line() for g in gaps if not g.urgent]
-    return Count(urgent, later, theirs, blind, today)
+    # **持ち主で先に分ける。** 機械が埋めるものをあやとの札に出すと、
+    # 「読んでも自分の出番が無い一覧」に戻る（この係を作った理由そのもの）
+    ours = [g.line() for g in gaps if g.owner == SYSTEM]
+    human = [g for g in gaps if g.owner != SYSTEM]
+    urgent = mine + [g.line() for g in human if g.urgent]
+    later = [g.line() for g in human if not g.urgent]
+    return Count(urgent, later, theirs, blind, today, ours)
 
 
 def section(c: Count) -> str:
@@ -1051,16 +1126,22 @@ def say(c: Count) -> None:
     （`docs/island-standards.md` §15）。
     """
     print(f"きょうは {c.today}。"
-          f"手入れ待ち {c.waiting}件（急ぐ {len(c.urgent)} / 急がない {len(c.later)}）、"
-          f"仕組みの側へ回したのが {len(c.system)}件")
+          f"あやと待ち {c.waiting}件（急ぐ {len(c.urgent)} / 急がない {len(c.later)}）、"
+          f"こちら待ち {len(c.ours)}件、"
+          f"焼くほうへ回したのが {len(c.system)}件")
     print()
     for head, lines in (("急ぐ", c.urgent), ("急がない", c.later)):
         print(f"  [{head}] {len(lines)}件")
         for line in lines:
             print(f"    {line}")
-    print(f"  [仕組みの側（この札には出さない）] {len(c.system)}件")
+    print(f"  [焼くほう（この札には出さない）] {len(c.system)}件")
     for line in c.system:
         print(f"    {line}")
+    # **こちらが埋め損ねたものは、警告ではなく赤。** 札に出しても
+    # あやとには直せない（`act()` が終了コード1で返す）
+    print(f"  [こちらが埋め損ねたもの] {len(c.ours)}件")
+    for line in c.ours:
+        print(f"::error::こちらが埋め損ねています: {line}")
     for line in c.blind:
         print(f"::error::数えられません: {line}")
 
@@ -1068,7 +1149,16 @@ def say(c: Count) -> None:
 def act(apply: bool, content_dir: Path, today: date) -> int:
     """数えて、issue に当てて、**終了コードを返す。**
 
-    *手入れが溜まっている*は赤くしない。*測れない*と*届かない*は赤くする。
+    *あやとの手入れが溜まっている*は赤くしない——赤で知らせるのをやめる
+    ために作ったものが、自分で赤を積んだら元に戻る。
+
+    赤くするのは3つ。**どれも「この仕組みが動いていない」。**
+
+    - *測れない*（`blind`）
+    - *GitHub に届かない*（`run_watch.act` の返り）
+    - ***こちらが埋め損ねている***（`ours`。#808）。機械が落とすはずの
+      過ぎた行が口からまだ返っている、など。**あやとには直せないので
+      札には出さない。** 出さないまま黙ると誰も気づかないので、ここで赤くする
     """
     c = count(content_dir, today)
     say(c)
@@ -1080,7 +1170,9 @@ def act(apply: bool, content_dir: Path, today: date) -> int:
                          lambda repo, token: Gh(repo, token), log=logger)
     if code:
         return code
-    return 2 if not c.countable else 0
+    if not c.countable:
+        return 2
+    return 1 if c.ours else 0
 
 
 def main() -> int:
@@ -1108,7 +1200,11 @@ def main() -> int:
         say(c)
         print()
         print(section(c))
-        return 2 if not c.countable else 0
+        # **終了コードの決め方を `act()` と揃える。** 手元で回したときだけ
+        # 緑に見えると、`--no-github` で確かめた人が「直っている」と読む
+        if not c.countable:
+            return 2
+        return 1 if c.ours else 0
 
     return act(a.apply, d, today)
 
