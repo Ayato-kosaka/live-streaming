@@ -198,7 +198,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - `/island-ship` — 直したものを本番に出す（確かめ方・dry-run・PR・デプロイ・出たものの確認）
 - `/monthly-review` — 月末配信の授賞式ページを作る
 - `/island-fresh` — 焼き込みのうち**人の判断が要るもの**を新しくする（料理のスタンプ・引用・他己紹介・歩いた国）。
-  機械だけで決まる4本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`）
+  機械だけで決まる9本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`。
+  下流の `characterBox.ts` が名簿にぶら下がって10本目）
 - `/clip-cut` — 配信からショートにする区間の候補を出す（切るところまで。編集はしない）
 - `/youtube-studio` — YouTube Studio を EC2 の Chrome から読む・操作する土台（一覧・収益化・申し立て・動画の編集）。
   公式の API では申し立てと収益化に触れないので、画面が裏で送る youtubei の要求を使う
@@ -294,7 +295,7 @@ symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に�
 
 **`tools/sprites/_` で始まるものは使い捨てで、git に入っていない**
 （`.gitignore` の `tools/sprites/_*`）。その場で測って捨てる用なので、
-**`docs/` から名指しで呼ばない。** 461本のうち git に在るのは242本で、
+**`docs/` から名指しで呼ばない。** 349本のうち git に在るのは340本で、
 `_` 付きは全部こちら側。手元には残っていても、**clone にも worktree にも無い。**
 
 `docs/` に `_` 付きの名前が出てくるのは「そのとき、こう測った」という
@@ -323,7 +324,7 @@ symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に�
 先に落としてから撮る:
 
 ```bash
-python3 tools/sprites/avatars.py     # /tmp/avatars/<icon>.png に22人ぶん
+python3 tools/sprites/avatars.py     # /tmp/avatars/<icon>.png に129人ぶん
 ```
 
 差し替えは `tools/sprites/route.mjs` の `offline(ctx)` を使う。
