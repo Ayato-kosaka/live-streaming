@@ -25,6 +25,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { must, readArray } from "./tsread.mjs";
 
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
@@ -44,10 +45,11 @@ const ICON_OF = (() => {
   const here = dirname(fileURLToPath(import.meta.url));
   const src = readFileSync(join(here, "../../site/content/residents.ts"), "utf8");
   const out = new Map();
-  for (const m of src.matchAll(/\{[^{}]*\}/g)) {
-    const icon = /icon:\s*"([^"]+)"/.exec(m[0])?.[1];
-    const ch = /channel:\s*"([^"]+)"/.exec(m[0])?.[1];
-    if (icon && ch) out.set(ch, icon);
+  for (const r of must(
+    readArray(src, "RESIDENTS", { keys: ["icon", "channel"], idKey: "icon" }),
+    "residents.ts の RESIDENTS",
+  )) {
+    if (r.channel) out.set(r.channel, r.icon);
   }
   return out;
 })();
@@ -140,9 +142,16 @@ const headTheme = () => {
     join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "content", "themes.ts"),
     "utf8",
   );
-  const m = src.slice(src.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/);
-  if (!m) throw new Error("content/themes.ts から1件目の宛先の id が読めなかった");
-  return m[1];
+  /* 読み方は `tsread.mjs` の1本（#694）。前は「`export const THEMES` から先で
+     最初に当たった `id:`」という切り方で、表の外の字でも当たりえた。 */
+  const got = readArray(src, "THEMES", { keys: ["id"], idKey: "id" });
+  if (!got.rows.length || got.missed) {
+    throw new Error(
+      `content/themes.ts から1件目の宛先の id が読めなかった` +
+        `（名乗り ${got.declared} / 読めた ${got.rows.length}）`,
+    );
+  }
+  return got.rows[0].id;
 };
 const THEMES_SEED = [headTheme(), "island", "hello", headTheme(), "island"];
 /* 何枚あるところを測るか。**0 / 3 / 40 / 200 を差し替えて撮る**
