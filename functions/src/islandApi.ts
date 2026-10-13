@@ -86,6 +86,9 @@ import {
   resyncCardsOfImage,
   type ImageRole,
 } from "./streamEvents";
+/* **チャンネルの持ち主を確かめる唯一の道。** ここ以外から
+   `islandUsers.channelId` に値が入らないようにしてある（`POST /me` の注）。 */
+import {ownedChannel} from "./youtubeOwner";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -2680,6 +2683,24 @@ export const islandApi = onRequest(
       /* ---------------- ログイン ---------------- */
       // ログインした直後に呼ばれる。誰が来たかを覚えておくだけ。
       if (method === "POST" && path === "/me") {
+        /* **言い値を送ってきたら、断る。黙って無視しない。**
+           無視するだけでも書かれはしないが、**塞がったことを外から
+           確かめる手がかりが1つも無くなる。** ここが 400 を返すなら、
+           本番に新しいほうが出ていることが、**1バイトも書かずに**分かる
+           （付箋の締め切りを 409 で確かめたのと同じ形）。
+
+           **合言葉を見るより前に置いてある。** あとに置くと、確かめるのに
+           本物のログインが要る——つまり**書く側を叩かないと確かめられない。**
+           ここで出るのは「この欄はもう受け取らない」だけで、
+           合言葉を持っていない人に新しく分かることは1つも無い。
+
+           古い画面（配り替えの前に開いたままのタブ）もここに当たるが、
+           そのときも**いま結んである `channelId` は消えない**——
+           書かないだけなので、読み込み直せば直る。 */
+        if (body.channelId !== undefined) {
+          res.status(400).json({error: "channelId not accepted"});
+          return;
+        }
         const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
         if (!m) {
           res.status(401).json({error: "no token"});
@@ -2692,7 +2713,24 @@ export const islandApi = onRequest(
           res.status(401).json({error: "bad token"});
           return;
         }
-        const channelId = clean(body.channelId, 64);
+        /* **チャンネルは、画面の言い値を使わない。**
+           長いあいだここは `clean(body.channelId, 64)` で、送られてきた値を
+           そのまま書いていた。チャンネルIDは公開の値なので、島にログイン
+           できる人なら誰でも他人のIDを名乗れて、名乗った先では
+           `GET /cards/mine` がその人のカードを返し、
+           `POST /stampline/mine` がその人の**戻らないことば**を上書きできた。
+
+           `/cards/mine` も `/stampline/mine` も「送られた値を信じず
+           `islandUsers` から引き直す」正しい形で書いてあったが、
+           **引き直した先がこの行**だったので、1段ぶん空回りしていた。
+
+           いまは `byOwner` と同じ形にしてある——画面には合言葉だけ送らせて、
+           `channels?mine=true` は**こちらが引く**（`youtubeOwner.ts`）。
+           `mine=true` はトークンの持ち主のチャンネルしか返さないので、
+           **「名乗る」という言葉が入口から消える。**
+           検算にしないのは、検算を1か所忘れた日に元へ戻るため。 */
+        const owned = await ownedChannel(body.ytToken);
+        const channelId = owned?.channelId ?? "";
         const now = Date.now();
         const ref = USERS.doc(t.uid);
         const prev = await ref.get();
@@ -2705,8 +2743,14 @@ export const islandApi = onRequest(
            ブラウザからハンドルが取れるのはログインを押した瞬間だけなので、
            それを逃した人はここでしか直らない。**1日に1回まで。**
            引けなかったときに毎回叩きにいくと、その人が来るたび
-           YouTube の割り当てを削ることになる。 */
-        let handle = clean(body.handle, MAX_HANDLE_LEN);
+           YouTube の割り当てを削ることになる。
+
+           **ハンドルも、確かめの取れたチャンネルから取る。**
+           `body.handle` を見ていたころは、チャンネルIDを名乗った人が
+           名前まで名乗れた（島の名札に出る字がこれ）。
+           ここで引き直す `fetchHandle` の相手は**保存してある
+           `channelId`** で、そちらはもう確かめの取れた値しか入らない。 */
+        let handle = owned?.handle ?? "";
         const known = channelId || (was.channelId as string) || "";
         if (!handle && !was.handle && known && was.handleAt !== today()) {
           patch.handleAt = today();
@@ -2718,14 +2762,15 @@ export const islandApi = onRequest(
            画面を開くたびに Google アカウントの表示名で塗り戻していた。 */
         const name =
           handle ||
-          clean(body.title, MAX_NAME_LEN) ||
+          clean(owned?.title, MAX_NAME_LEN) ||
           clean(was.name ?? t.name ?? "", MAX_NAME_LEN);
         if (handle) patch.handle = handle;
         if (name) patch.name = name;
         if (channelId) patch.channelId = channelId;
-        if (body.thumbnail !== undefined) {
-          patch.photo = clean(body.thumbnail, 300) || null;
-        }
+        /* 顔も、確かめの取れたチャンネルのもの。**`body.thumbnail` は見ない。**
+           ここだけ言い値のままにすると、他人の顔で島に立てる。
+           取れなかった回は触らない（いまの顔がそのまま残る）。 */
+        if (owned && owned.thumbnail) patch.photo = owned.thumbnail;
         // 島での見え方。出すか出さないかは、本人が決める。
         if (body.nickname !== undefined) {
           patch.nickname = clean(body.nickname, MAX_NAME_LEN) || null;

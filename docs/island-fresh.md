@@ -419,7 +419,8 @@ Overpass は混むと空を返すので、失敗を 0 として焼くと、画�
 | `python/data/dead_streams.json` | `python/build_dead_streams.py` | 配信が消える／録画が残らない |
 | `python/data/dead_watch_seen.json` | 同上（同じ1回の測りから書く） | 見られなくなった／あやとが公開に戻した |
 
-島は 800本を超える配信を名指ししている（2026-09-19 に数えて **813本 / 焼き込み15ファイル**。
+島は 800本を超える配信を名指ししている（2026-09-19 に数えて 813本、2026-10-13 に **844本**
+／どちらも焼き込み15ファイル。**ここの数を当てにしない。下のコマンドで数え直す。**
 `videoId:` のような**名前で分かる書きかた**だけを見ていた 2026-09-19 まではここが 700本で、
 `chapterStreams.ts` の717本・`shorts.ts` の83本・`streamPeaks.ts` の267本が
 **1本も数えられていなかった**。`docs/island-misses.md` #168）。
@@ -550,10 +551,11 @@ python3 python/build_dead_streams.py --no-deep   # 1段目だけ（4分）。**�
 突き合わせる相手は BigQuery の `videos` の最新日。
 引き方は `/island-fresh` の1章にある。
 
-## 6. 焼き込み35本ぜんぶの仕分けと、古くなったら鳴る見張り
+## 6. 焼き込み38本ぜんぶの仕分けと、古くなったら鳴る見張り
 
-`site/content/*.ts` は **35本**ある（2026-09-17 の実測。それまでここには数を
-書いていなかった）。そのうち **`rebake.yml` の step「凍っていないか」が日数を
+`site/content/*.ts` は **38本**ある（2026-10-13 の実測。2026-09-17 には 35本だった。
+**数は増えるので、書き写さずに `python3 python/stale_content_watch.py` の1行目を読む**
+——あれは数えた本数と、判定した本数と、見ないと決めた本数を毎回その場で出す）。そのうち **`rebake.yml` の step「凍っていないか」が日数を
 持っているのは6本だけ。** あの `WATCH` には9本並んでいるが、
 `chapterStreams.ts` / `kitchenTalk.ts` / `shorts.ts` の3本は **0＝見ない**。
 
@@ -645,7 +647,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 （`to` → `plannedDays` → 次の章の前日）。**`to` は旅から帰った本人が手で入れる欄**
 なので、そこだけを見ると永久に閉じない。
 
-### 35本の仕分け（2026-09-17）
+### 38本の仕分け（しきい値は 2026-09-17、本の並びは 2026-10-13）
 
 しきい値は**本ごとに変える。** 毎晩焼けるものと、あやとしか足せないものを
 同じ日数で測ると、どちらかが必ず狼少年か寝た子になる。
@@ -681,6 +683,9 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `nordicFood.ts` | 人（読みもの） | — | 見ない | 日付を持たない |
 | `themes.ts` `voice.ts` `nights.ts` `roulette.ts` | 人（画面に出る言葉） | — | 見ない | 日付を持たない |
 | `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
+| `walked.ts` | 導出 | — | 見ない | 歩いた国の数。`countries.ts` から**画面が出てから**数える。自分では日付を持たない |
+| `northMacedonia.ts` | 人（読みもの） | — | 見ない | いまいる国の案内。今日がいつかを知らないと決められない字を置いていない |
+| `goods.ts` | 人（品ぞろえ） | — | 見ない | 日付を1つも持たない。LINEスタンプの絵が届いたら `art` に1行足すだけ |
 
 ### `site.ts` を②から①へ移した（2026-10-07）
 

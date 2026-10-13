@@ -205,7 +205,7 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
           <img src="/sprites/tent.webp" alt="" />
           <span>
             <b>{trip.name}の島へ</b>
-            <i>この旅のこと、旅の6カ国、旅のしおり</i>
+            <i>{trip.sub}</i>
           </span>
           <Icon name="right" size={14} />
         </Link>

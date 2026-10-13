@@ -27,12 +27,14 @@
 import {
   CHAPTERS,
   chapterDayNo,
+  chapterHref,
   chapterNow,
   chapterRunning,
   chapterSpan,
   type Chapter,
 } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
+import { chapterCountries } from "@/content/walked";
 /* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
    （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
    ここに置いたままだと国の表まで面の JS に付いてくる（実測 8kB）。
@@ -64,8 +66,15 @@ export type TravelNow = {
   /** 章の名前。そのまま「いまどこ」になる */
   name: string;
   slug: string;
-  /** その旅の島 */
+  /** その旅の島。**いまいる章の島はトップそのもの**（`chapterHref`） */
   href: string;
+  /**
+   * 入口の札に添える1行。**押した先に何が在るか。**
+   *
+   * **呼ぶ側で書かない。** 面ごとに書いてあったせいで、章が変わった日に
+   * 見出しだけ新しくなって中身が前の旅のまま残った（`travelNow` の注）。
+   */
+  sub: string;
   /** 章の一行（`content/chapters.ts` の note） */
   note: string;
   /**
@@ -173,10 +182,32 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
   if (stayNow(now)) return null;
   const c = chapterNow(now);
   if (!c || !chapterRunning(c, now)) return null;
+  /* **行き先を手で組み立てない。** ここは `/island/${c.slug}` と書いていた。
+     いまいる章の島はトップそのものなので（`chapterHref`）、その写しの面
+     ——**141面で唯一どこからもリンクの来ていない面**——へ送っていた。
+     `chapterHref` に決めさせる。 */
+  const href = chapterHref(c, chapterNow(now));
+  /* **「旅の◯カ国」を字に焼かない。** 下の `sub` を作る前は、呼ぶ側2か所
+     （`app/now/parts.tsx` と `components/live/NowLive.tsx`）が
+     「この旅のこと、旅の6カ国、旅のしおり」を**それぞれベタ書き**していた。
+     見出し（`{trip.name}の島へ`）は章から引いていたので、#224 で章が
+     バルカン諸国周遊に変わった日に**見出しだけ変わって、中身が北欧のまま**
+     残った。バルカンは2カ国で、旅のしおりは北欧の面にしか無い。
+
+     数は `chapterCountries` から引く。**章の `countries` だけでは足りない**
+     ——あれは歩き終わった国の欄で、歩いている最中の国はまだ入らない
+     （`content/walked.ts` にその理由が書いてある）。
+
+     **0カ国とは書かない。** まだ1国も記録の無い章では、数ごと落とす
+     （`docs/island-standards.md` 16章「0件になりうる数を札に入れない」）。
+     **「旅のしおり」も書かない。** あれは北欧の面が持っているもので、
+     章ぜんぶに在るものではない。島に建っているものは、押した先が並べる。 */
+  const kuni = chapterCountries(c, now).length;
   return {
     name: c.name,
     slug: c.slug,
-    href: `/island/${c.slug}`,
+    href,
+    sub: kuni > 0 ? `この旅のこと、旅の${kuni}カ国` : "この旅のこと",
     note: c.note,
     days: chapterDayNo(c, now),
   };
