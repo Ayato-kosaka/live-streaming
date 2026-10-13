@@ -3,11 +3,16 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Isles from "@/components/chain/Isles";
 import { atlasIsles } from "@/components/chain/isles";
+import { CHAPTERS } from "@/content/chapters";
 
 export const metadata: Metadata = {
   title: "島の地図",
-  description:
-    "ヨーロッパ、中東、コーカサス、そして北欧。旅の章ごとに、島が1つ建っています。",
+  /* **章の名前を手で並べない。** ここは「ヨーロッパ、中東、コーカサス、そして北欧。」と
+     書いてあった。そのあいだに章が2つ増えていて（イランまで歩く・バルカン諸国周遊）、
+     **いま立っている島がこの1文に入っていなかった。**
+     `CHAPTERS` が章の唯一の出どころなので、そこから作る
+     （`docs/island-misses.md` の決めごと3 / `docs/island-standards.md` §8）。 */
+  description: `${CHAPTERS.map((c) => c.name).join("、")}。旅の章ごとに、島が1つ建っています。`,
 };
 
 /**
