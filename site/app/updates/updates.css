@@ -1,0 +1,44 @@
+/* 島をなおしたところ（`app/updates/page.tsx`）。
+
+   **静かな並び。** 1行ずつを板にしない——押せないものに厚みを付けると、
+   押せる合図と見分けが付かなくなる（`docs/island-design.md` 3-3）。
+   区切りは罫だけ。「島のなか ぜんぶ」の `.dxl` と同じ作り方で、
+   あちらが全部押せる並び、こちらは1つも押せない並び。 */
+.upd {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.upd > li {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: var(--sp-2) 0;
+  border-top: var(--bw-1) solid var(--rule);
+}
+.upd > li:first-child { border-top: 0; padding-top: 0; }
+
+/* 日付は添え。**本文より先に目が行かないように**、小さく薄く置く。
+   読みに来たのは「何が変わったか」であって、いつかではない。 */
+.upd-on {
+  font-size: var(--fs-min);
+  font-weight: 700;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.upd-t {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* 広い画面では、日付を左の列に出す。縦に送る距離が行数ぶん縮む。
+   **幅は固定**（`tabular-nums` と合わせて、日付の桁がそろう） */
+@media (min-width: 560px) {
+  .upd > li {
+    grid-template-columns: 5.5rem 1fr;
+    gap: var(--sp-2);
+    align-items: baseline;
+  }
+}

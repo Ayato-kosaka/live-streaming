@@ -101,6 +101,41 @@
    掲示板（`/board`）も同じ札で「企画」と「付箋」を切り替えるので、
    じぶんのことの中に置いたままだと、あちらから読めない。 */
 
+/* 待っている数のバッジ（机の「付箋」の札だけ）。
+   **合図ではなく、数そのもの。** 押せることは札の厚みがもう言っているので、
+   ここは光らせない・沈めない・ぼかさない（`docs/island-design.md` 3-3。
+   合図が2つあると、どちらが合図か分からなくなる）。
+   朱は「いまこれ」の色（`island-world.md` 3.2）で、選んでいる札の枠と同じ。
+   札の右上の角に重ねるので、札の当たり（56px）は1pxも削らない。 */
+.mp-tab-b {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  /* **朱をそのまま敷かない。** `--pick` の上に紙色の字を置くと 3.62 しかなく、
+     4.5 を割る（`tools/sprites/inkpx.mjs` が実測で挙げた）。
+     `--ink` を混ぜて沈めると 5.3 になる。黒ではなく `--ink` を混ぜるのは、
+     濁らせずに暗くするため（島の影が黒と紺をやめているのと同じ。
+     `app/css/tokens.css` の影の注） */
+  background: color-mix(in srgb, var(--pick) 60%, var(--ink));
+  color: var(--paper);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 20px;
+  text-align: center;
+}/* 数が読めていないとき。**朱のままだと「何件か在る」に見える**ので、
+   地の色を落として、急ぎではないことを色でも言う。**消さない**——
+   消すと 0件と同じ顔になる（`docs/island-standards.md` §10）。
+   `--ink-2` に紙色で 5.2（朱と同じ 4.5 の線は越えている） */
+.mp-tab-b.is-unknown {
+  background: var(--ink-2);
+  font-weight: 700;
+}
+
+
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
    そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
