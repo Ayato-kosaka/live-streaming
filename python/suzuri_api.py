@@ -171,12 +171,15 @@ def goods(spec_path, dry=False, pub=False, trial=False, only=None):
         print("    material:", json.dumps({k: v for k, v in (pr.get("material") or {}).items() if k not in ("user", "description")}, ensure_ascii=False)[:600])
         print(f"    応答の品目: キー={sorted(pr.keys())} 面={pr.get('item', {}).get('availablePrintPlaces')}")
         # 見本の絵（表・裏）。公開されている URL なので、ログインなしで取れる
-        tpl = pr.get("imageUrl") or ""
         urls = {"sample": pr.get("sampleImageUrl")}
-        if "{width}" in tpl:
-            base = tpl.replace("{width}", "1530").replace("{height}", "1530").replace("{size}", "s").replace("{color}", "white")
-            for ang in ("front", "back"):
-                urls[ang] = base.replace("[/angle]", f"/{ang}")
+        sv = pr.get("sampleItemVariant") or {}
+        size, color = (sv.get("size") or {}).get("name", "s"), (sv.get("color") or {}).get("name", "white")
+        # 表と裏は別のファイル（裏の絵は sub_materials として別に登録される）なので、angleImageUrls を使う
+        for ang in ("front", "back"):
+            t = (pr.get("angleImageUrls") or {}).get(ang)
+            if t:
+                urls[ang] = (t.replace("{width}", "1530").replace("{height}", "1530")
+                             .replace("{size}", size).replace("{color}", color))
         for name, u in urls.items():
             raw = _fetch(u) if u else None
             if raw:
