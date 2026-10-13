@@ -32,7 +32,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { AIR, MAX_LEAD, TAP, TAP_FIT, around, fitHit, hits, lead, nooks, type Box } from "./plates";
+import { AIR, MAX_LEAD, MAX_LEAD_NEAR, TAP, TAP_FIT, around, fitHit, hits, lead, nooks, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -258,6 +258,20 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
      「いちばん近い建物」が勝って、札が一瞬よそへ入れ替わる */
   const dockRef = useRef(dock);
   dockRef.current = dock;
+  /**
+   * 留めている札（`.isle-going`）を、下ふちの定位置からどれだけ寄せたか。
+   *
+   * **定位置のままだと、入口の上に乗ることがある。** 島はカメラがあやとを
+   * 追って動くので、島の中のどの帯にも、いつかどれかの建物が下りてくる
+   * （`docs/island-design.md` 6章「島の上に置く板は、入口の立っていない帯に
+   * 1枚だけ」）。実測（2026-10-13・幅390・表紙）で、別の建物を押して歩いて
+   * いるあいだ、留めた札が「となりの島へ」の当たり（49x49）を 110/121 点
+   * 覆って、**その入口が押せなくなっていた**（#726）。
+   *
+   * 札のほうを寄せる。**空いているあいだは動かさない**（下の `goingFree`）
+   * ので、ふだんは「押した札が 1px も動かない」ままになる。
+   */
+  const goOff = useRef({ dx: 0, dy: 0 });
   /** 留めを解く。別のことをしたときだけ呼ぶ */
   const undock = useCallback(() => {
     dockRef.current = null;
@@ -936,6 +950,11 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             });
           }
         }
+        /* 留めている札を、入口の上に残さない。**当たりが決まったあとに置く。**
+           先に置くと、札のほうが場所を取って建物の当たりが引っ込む——
+           入口のほうが主役なので、順番は「入口 → おまけの札」
+           （`docs/island-design.md` 3-7）。 */
+        if (hb) placeGoing(hostRef.current, hb, b, hitsNow.concat(tapBoxes.current), goOff.current);
         blockers.current = won0;
       }
       /* --- 住人の押しどころの取り合い ---
@@ -1594,6 +1613,91 @@ function Buildsite({ world, opensAt }: { world: IsleWorld; opensAt: string }) {
    名前は読めていなければならない。**建物の当たりは動かさない。**
    ずらすのは札だけで、杭は「そっちに建っている」を指す矢に変わる。
    ------------------------------------------------------------------------ */
+/**
+ * **留めている札（`.isle-going`）を、島の入口の上に残さない。**
+ *
+ * 建物を押すと、その札は島の上ではなく画面の下ふちに1枚だけ出る
+ * （`chain.css` の `.isle-going`。「押した → 行き先が手元に出る →
+ * 歩きながら入れる」）。置き場所を下ふちに固定してあるのは、
+ * **歩いているあいだ 1px も動かないため。**
+ *
+ * ところが島はカメラがあやとを追って動くので、**固定した帯にも、いつか
+ * どれかの建物が下りてくる。** 実測（2026-10-13・幅390・表紙）で、
+ * 「住んでる人」を押して歩いているあいだ、留めた札が島の南はしの
+ * 「となりの島へ」の当たり（49x49）に乗って、**その入口が押せなく
+ * なっていた**（#726）。`docs/island-design.md` 6章が「島の上に置く板は、
+ * 入口の立っていない帯に1枚だけ」と書いているのは、まさにこれ。
+ *
+ * **どちらを動かすかは決まっている。入口は動かせない**（押す場所は物そのもの。
+ * 3-1）ので、**札のほうを寄せる。**
+ *
+ * - 定位置が空いているなら、**何もしない**（ふだんはここ。札は動かない）
+ * - いま寄せている先がまだ空いているなら、**そのまま**（歩いているあいだに
+ *   札が行ったり来たりしない）
+ * - どちらも埋まったら、**いちばん動かさずに済む空き**へ寄せる
+ *   （`plates.ts` の `nooks`。隙間の縁に合わせて候補を作るので、
+ *   空きが1つでもあれば必ず見つかる）
+ * - 空きが1つも無ければ定位置に戻す。**札を消さない**——寄りの札は
+ *   「いま向かっている1軒」の名前なので、消すと行き先が読めなくなる
+ *
+ * @param host 島（`.isle`）
+ * @param hb   島の画面上の箱
+ * @param b    島の大きさ
+ * @param tkn  避ける相手（建物の当たり・島の隅の道具・今日の板）
+ * @param off  いま寄せている量。**呼ぶ側が持つ**（次のフレームで定位置を出すのに要る）
+ */
+function placeGoing(
+  host: HTMLElement | null,
+  hb: DOMRect,
+  b: { w: number; h: number },
+  tkn: Box[],
+  off: { dx: number; dy: number },
+) {
+  const el = host?.querySelector<HTMLElement>(".isle-going");
+  if (!el) {
+    off.dx = 0;
+    off.dy = 0;
+    return;
+  }
+  const card = el.querySelector<HTMLElement>(".isle-mark");
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  if (r.width < 4) return;
+  /* **定位置は、いま寄せているぶんを引いて出す。** 読んだ箱は寄せたあとの
+     場所なので、そのまま使うと「寄せた先が定位置」になって、札が少しずつ
+     流れていく（寄せるたびに原点がずれる） */
+  const home: Box = {
+    x: r.left - hb.left - off.dx,
+    y: r.top - hb.top - off.dy,
+    w: r.width,
+    h: r.height,
+  };
+  const pad = 8;
+  const bounds: Box = { x: pad, y: 30, w: b.w - pad * 2, h: b.h - 30 - 10 };
+  const free = (c: Box) =>
+    c.x >= bounds.x &&
+    c.x + c.w <= bounds.x + bounds.w &&
+    c.y >= bounds.y &&
+    c.y + c.h <= bounds.y + bounds.h &&
+    !tkn.some((q) => hits(c, q));
+  const put = (dx: number, dy: number) => {
+    if (off.dx === dx && off.dy === dy) return;
+    off.dx = dx;
+    off.dy = dy;
+    el.style.transform = dx || dy ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : "";
+  };
+  if (free(home)) return put(0, 0);
+  const now = { ...home, x: home.x + off.dx, y: home.y + off.dy };
+  if ((off.dx || off.dy) && free(now)) return;
+  const cx = home.x + home.w / 2;
+  const cy = home.y + home.h / 2;
+  /* 建物に紐づく札ではないので、`MAX_LEAD`（建物のそばに置く上限）は効かせない。
+     ここでの「近く」は**定位置からの近さ**で、`nooks` はそれで並べて返す */
+  const spot = nooks(home, cx, cy, tkn, bounds, Math.hypot(b.w, b.h)).find(free);
+  if (spot) put(spot.x - home.x, spot.y - home.y);
+  else put(0, 0);
+}
+
 function placePlates(
   places: Placed[],
   o: {
@@ -1962,12 +2066,25 @@ function placePlates(
          ときだけ——ふだんは1つめで決まるので、重さは前と変わらない。 */
       const spot =
         around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ??
-        nooks(rect, pl.fx, pl.fy, tkn, {
-          x: pad,
-          y: padTop,
-          w: o.b.w - pad * 2,
-          h: o.b.h - padTop - padBottom,
-        }).find(free);
+        nooks(
+          rect,
+          pl.fx,
+          pl.fy,
+          tkn,
+          {
+            x: pad,
+            y: padTop,
+            w: o.b.w - pad * 2,
+            h: o.b.h - padTop - padBottom,
+          },
+          /* **どこまで離れてよいかは、寄りと引きで違う**（`plates.ts` の
+             `MAX_LEAD_NEAR`）。引きは離れすぎたら札を落とすので 108px で
+             打ち切ってよいが、**寄りは落とさない**ので、打ち切ったぶんは
+             「ほかの建物の当たりの上に残る」に化ける。実測（幅390・表紙）で
+             「配信」の開いた札が「あやとグッズ」の当たりを 66/121 点覆って、
+             押しどころを 0x0 にしていた。108px の外には空きがあった。 */
+          o.wide ? MAX_LEAD : MAX_LEAD_NEAR,
+        ).find(free);
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
