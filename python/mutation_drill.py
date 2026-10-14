@@ -512,6 +512,24 @@ def _cmdline(pid_dir: Path) -> str:
     return raw.replace(b"\0", b" ").decode("utf-8", "replace").strip()
 
 
+def _short(line: str, cap: int = 150) -> str:
+    """長い命令を1行に収める。**切るなら頭、残すのは終わり。**
+
+    見分けに使うのは**終わりに付いている旗**（`--probe-lock` `--self-drill`）で、
+    頭にあるのは道だけ。`line[:90]` のように後ろを落とすと、
+    手元では通って CI でだけ落ちる——手元は
+
+        /usr/bin/python3 …/python/mutation_drill.py --probe-lock 20   89文字
+
+    で、**90 に1文字だけ収まっていた。** CI は道が長いので 140文字あって、
+    旗が切れていた。`ps` の 80桁切りと**同じ外しかた**（上の `_cmdline` の
+    説明がそれ）。道が伸びれば静かに戻るので、頭を落とす形にしておく。
+    """
+    if len(line) <= cap:
+        return line
+    return "… " + line[-(cap - 2):]
+
+
 def busy() -> list[str]:
     """**この置き場で**ほかの見張りが走っていないか。走っていたら帰る。
 
@@ -565,7 +583,7 @@ def holder() -> list[str]:
         try:
             for fd in (pid / "fd").iterdir():
                 if os.readlink(str(fd)) == want:
-                    out.append(f"pid {pid.name}  {_cmdline(pid)[:90]}")
+                    out.append(f"pid {pid.name}  {_short(_cmdline(pid))}")
                     break
         except OSError:
             continue

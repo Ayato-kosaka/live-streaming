@@ -122,7 +122,20 @@ with tempfile.TemporaryDirectory() as tmp:
     key = Path(tmp) / "k"
     env = dict(os.environ, MUTATION_DRILL_LOCK=str(key))
     drill = str(HERE / "mutation_drill.py")
-    first = subprocess.Popen([sys.executable, drill, "--probe-lock", "20"],
+    # **わざと長い道から起こす。**
+    # 「誰が握っているか」の行は旗（`--probe-lock`）で見分けている。
+    # 手元の命令は 89文字で、`holder()` の切り落とし 90文字に**1文字だけ**
+    # 収まっていたので、CI（道が長くて 140文字）でだけ落ちていた。
+    # ここで道を伸ばしておけば、同じ切り落としを入れた人は**手元で落ちる**。
+    longdir = Path(tmp) / ("x" * 60)
+    longdir.mkdir()
+    longpy = longdir / "python3"
+    try:
+        longpy.symlink_to(sys.executable)
+        runner = str(longpy)
+    except OSError:
+        runner = sys.executable  # symlink を張れない箱では諦める（短いまま）
+    first = subprocess.Popen([runner, drill, "--probe-lock", "20"],
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                              text=True, env=env)
     try:
