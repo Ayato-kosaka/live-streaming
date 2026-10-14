@@ -150,7 +150,13 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
             <ol className="lgd" style={{ marginTop: "var(--sp-3)" }}>
               {l.pages.map((pg) => (
                 <li key={pg.href}>
-                  <Link className="lgd-row" href={pg.href}>
+                  <Link
+                    className="lgd-row"
+                    href={pg.href}
+                    /* **先読みしない。** 伝説の面に来ただけの人に、企画の面まで
+                       取らせない（下の前後送りと同じ決まり）。 */
+                    prefetch={false}
+                  >
                     {/* **説明を `<em>` に入れない。** あちらは「いちばん人が
                         集まった日」のような短い札で、`.lgd-t em` が丸い地を
                         敷く。長い字を入れると札の中で折り返して、押せる札に
