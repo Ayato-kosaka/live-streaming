@@ -834,6 +834,52 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    折り返すとチップが2〜3行になって `.kt-tools` が 100px ほど伸びるが、
    `/kitchen` は 2,887px（3.4画面）なので収まる。
    見えない棚があるより、100px 長いほうがよい。 */
+/* 絞り込みを出す押しどころ。**閉じているのが既定**（`KitchenCatalog.tsx` の注）。
+
+   焼いた HTML が閉じた姿なので、JS が入っても背は1pxも動かない
+   （`docs/island-standards.md` 7章の「出るときに背が変わる」を作らない）。 */
+.kt-sift-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-3);
+  border: 2.5px solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.kt-sift-sum:active { transform: translateY(4px); box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
+.kt-sift-sum > img,
+.kt-sift-sum > svg:first-child { flex: none; }
+.kt-sift-sum > b {
+  flex: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+/* いま何でしぼっているか。**1行で止める**——国名と種類と並びで3つ出るので、
+   狭い画面で折り返すと札が2段になって、畳んだ意味が薄くなる */
+.kt-sift-now {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.kt-sift-arw { flex: none; transition: transform 0.15s ease; }
+.kt-sift-arw.is-up { transform: rotate(180deg); }
+.kt-sift-sum[aria-expanded="true"] { margin-bottom: var(--sp-3); }
+
 .kt-tools { display: grid; gap: var(--sp-2); }
 /* 行の先頭の見出し（どこで / なにを）は、折り返した2行目以降の
    チップと高さがそろうように上に寄せる。真ん中だと宙に浮く。 */
