@@ -123,6 +123,47 @@ def items(q=""):
     print(f"{n} 品目")
 
 
+def item(item_id):
+    """品目1つの素性（刷れる面・型ごとの面・見本の URL の型）。面が12ある卓上カレンダーのように、
+    `items` の1行では面の渡し方が分からない品目を調べるとき用。型は見本にできるものだけ出す"""
+    st, r = call("GET", "/items")
+    if st != 200:
+        sys.exit(f"GET /items {st}: {r}")
+    it = next((x for x in r.get("items", []) if x["id"] == item_id), None)
+    if not it:
+        sys.exit(f"品目 {item_id} が無い")
+    vs = it.pop("variants", None) or []
+    print(json.dumps(it, ensure_ascii=False, indent=1)[:6000])
+    for v in vs:
+        if v.get("enabled") is False:
+            continue
+        print(f"型 {v['id']} {(v.get('color') or {}).get('name')}/{(v.get('size') or {}).get('name')} 見本={v.get('exemplary')} "
+              f"税込{v.get('priceWithTax')} 面={[(p.get('place'), p.get('price')) for p in v.get('printPlaces') or []]}")
+
+
+def schema(words):
+    """`GET /schema`（API の JSON スキーマ）から、字を含む定義だけを出す。
+    ドキュメントに無い欄（`sub_materials` の `printSide` など）の許す値を確かめるとき用"""
+    st, r = call("GET", "/schema")
+    if st != 200:
+        sys.exit(f"GET /schema {st}: {str(r)[:300]}")
+    text = json.dumps(r, ensure_ascii=False)
+    print(f"schema {len(text):,} 字")
+
+    def walk(node, path):
+        if isinstance(node, dict):
+            s = json.dumps(node, ensure_ascii=False)
+            if any(w in s for w in words) and len(s) < 4000:
+                print(f"--- {path}\n{s}")
+                return
+            for k, v in node.items():
+                walk(v, f"{path}/{k}")
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, f"{path}[{i}]")
+    walk(r, "")
+
+
 RAW = "https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/master/"
 
 
@@ -507,6 +548,8 @@ def main():
     c = sub.add_parser("sample"); c.add_argument("ids", type=int, nargs="+")
     c = sub.add_parser("publish"); c.add_argument("id", type=int)
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
+    c = sub.add_parser("item"); c.add_argument("id", type=int)
+    c = sub.add_parser("schema"); c.add_argument("words", nargs="+")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
     c.add_argument("--title", required=True); c.add_argument("--description", default=""); c.add_argument("--price", type=int, default=300)
@@ -530,6 +573,10 @@ def main():
             print(m["id"], "公開" if m.get("published") else "非公開", m.get("price"), m.get("title") or "（題なし）")
     elif a.cmd == "items":
         items(a.q)
+    elif a.cmd == "item":
+        item(a.id)
+    elif a.cmd == "schema":
+        schema(a.words)
     elif a.cmd == "goods":
         goods(a.spec, a.dry_run, a.publish, a.trial, a.only.split(",") if a.only else None)
     elif a.cmd == "sample":
