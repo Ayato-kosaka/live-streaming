@@ -192,7 +192,6 @@ const KNOWN_ROUTES = [
   "remote.ts q.method === 'GET' && q.path === '/remote'",
   "remote.ts q.method === 'POST' && q.path === '/remote'",
   "remote.ts q.method === 'POST' && q.path === '/remote/session'",
-  "stampLine.ts q.method === 'GET'",
 ];
 
 if (process.argv.includes("--routes")) {
@@ -612,10 +611,17 @@ console.log("\n# 0. 正しい値なら通って、ちゃんと書かれる（先
     `${e.code} / 書き込み ${e.wrote}`);
   if (e.code === 200) passed += 1;
 
+  /* **畳んだ口（#860。2026-10-14）。** 開いていたころは「入っている人に
+     1件だけ返す」を見ていた。いまは誰が叩いても 410 で、**1バイトも
+     読まない。** 「通る」の本数には数えない——ここは断る側。 */
   const f = await call({method: "GET", path: "/stampline/mine", token: "tok-b"});
-  check("`GET /stampline/mine` が、入っている人に返る",
-    f.code === 200 && f.body?.picked !== false, `${f.code}`);
-  if (f.code === 200) passed += 1;
+  check("`GET /stampline/mine` は畳んである（410・書き込み0）",
+    f.code === 410 && f.wrote === 0, `${f.code} / 書き込み ${f.wrote}`);
+
+  const g = await call({method: "GET", path: "/cards/mine", token: "tok-b"});
+  check("`GET /cards/mine` が、結んである人に返る",
+    g.code === 200 && Array.isArray(g.body?.cards), `${g.code}`);
+  if (g.code === 200) passed += 1;
 }
 if (passed < 4) {
   blind(`通った口が ${passed} 本しかない。断りの数は読めない（§15）`);
@@ -648,10 +654,18 @@ const IMPERSONATE = [
     want: 403,
   },
   {
-    name: "`POST /stampline/mine` が、名簿に無い人には書けない",
+    /* **畳んだ口**（#860）。合言葉があっても無くても 410。
+       **閉じた口は、閉じたことを確かめる。** 開いているつもりの
+       行を残すと、開き直した日に誰も気づかない。 */
+    name: "`POST /stampline/mine` は畳んである",
     c: {method: "POST", path: "/stampline/mine", token: "tok-a",
       body: {lines: ["よこどり"]}},
-    want: 403,
+    want: 410,
+  },
+  {
+    name: "`POST /stampline/mine` は丸腰でも畳んである",
+    c: {method: "POST", path: "/stampline/mine", body: {lines: ["よこどり"]}},
+    want: 410,
   },
   {
     name: "`GET /stickies?mine=1` に合言葉が無い",
@@ -706,13 +720,12 @@ for (const t of IMPERSONATE) {
 console.log("\n# 1b. 名乗っても、他人のぶんは1件も出てこない");
 {
   setup();
-  /* **入っていない人は `picked: false`。** 他人のチャンネルを `islandUsers`
-     から引き直す形なので、合言葉で決まる。先に「ふたりめなら出る」ことを
-     0章で見てある（空の入れ物でも 0件になる・`island-misses.md` #19）。 */
+  /* **畳んだ口でも、中身が1文字も出ないことは見る**（#860）。
+     410 を返すだけの作りでも、入れ物には他人のことばが入ったままなので、
+     「閉じた」と「空を返す」を取り違えていないかを字で確かめる。 */
   const r = await call({method: "GET", path: "/stampline/mine", token: "tok-a"});
-  check("`GET /stampline/mine` に、他人のことばが乗らない",
-    r.code === 200 && r.body?.picked === false &&
-      !JSON.stringify(r.body).includes("ふたりめのことば"),
+  check("畳んだ `/stampline/mine` に、他人のことばが1文字も乗らない",
+    r.code === 410 && !JSON.stringify(r.body).includes("ふたりめのことば"),
     `${r.code} / ${JSON.stringify(r.body).slice(0, 90)}`);
 
   const m = await call({method: "GET", path: "/cards/mine", token: "tok-a"});
@@ -1263,11 +1276,11 @@ const BREAKS = [
     "`POST /cards/{他人のカード}` を動かす → 403・書き込み0",
   ],
   [
-    "ことばを、名簿に無い人にも書かせる",
+    "畳んだ口を、開け直す",
     "stampLine.js",
-    "if (!had) {",
-    "if (false) {",
-    "`POST /stampline/mine` が、名簿に無い人には書けない → 403・書き込み0",
+    'res.status(410).json({ error: "closed" });',
+    'res.status(200).json({ picked: false });',
+    "`POST /stampline/mine` は畳んである → 410・書き込み0",
   ],
   [
     "台帳の額の上限を外す",

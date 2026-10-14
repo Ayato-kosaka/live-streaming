@@ -694,10 +694,15 @@ node functions/selftest/api_trust_selftest.mjs --routes
 見張りの外に落ちる）。増やしたら、見張りの `KNOWN_ROUTES` と
 `OWNER_ONLY` と、下の表を同じ回に直す。
 
-照合式を持たない枝が5本ある（`POST /characters`・`POST /characters/{id}`
-は `||` でまとめてあり、`POST /stampline/mine`・`POST /public-purge`・
-`POST /donors/{どねID}` は上の `GET` を抜けた先の落ち口）。
+照合式を持たない枝が4本ある（`POST /characters`・`POST /characters/{id}`
+は `||` でまとめてあり、`POST /public-purge`・`POST /donors/{どねID}` は
+上の `GET` を抜けた先の落ち口）。
 **数には入らないが、関所は枝の入口で通っている。**
+
+**`/stampline/mine` は 2026-10-14 に畳んだ**（#860。11章）ので、
+いまは照合式を1本も持たず、GET でも POST でも 410 を返す。
+見張りは**閉じたままであること**を見る——開いているつもりの行を残すと、
+開き直した日に誰も気づかない。
 
 ### 誰のぶんかの決め方（1の答え）
 
@@ -708,7 +713,7 @@ node functions/selftest/api_trust_selftest.mjs --routes
 | --- | --- |
 | `GET /cards/mine` | `islandUsers/{uid}.channelId`。**送られてきた値は見ない** |
 | `POST /cards/{カードID}` | 同じ。カードの `channelId` と突き合わせて、違えば 403 |
-| `GET/POST /stampline/mine` | 同じ。**パスに id を取らない**（11章） |
+| `GET/POST /stampline/mine` | — **畳んだ**（#860。誰が叩いても 410） |
 | `GET /stickies?mine=1`<br>`GET /nextplans?mine=1` | `where("uid","==",合言葉の uid)` |
 | `POST /nextplans/{id}` | 書類の `uid`。ログインせずに出したぶんだけ `cid`（24字以上の強い端末ID）＋24時間 |
 | `POST /me` | 合言葉で `youtube/v3/channels?mine=true` を**こちらが引く**（7章） |
@@ -859,7 +864,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/alertbox/$(python3 -c 'prin
 一覧を書き出し、**1本でも増減すると `api_trust_selftest.mjs` が赤くなる**（12章）。
 
 ```bash
-# 口の一覧を、照合式から起こす（78本）
+# 口の一覧を、照合式から起こす（77本）
 node functions/selftest/api_trust_selftest.mjs --routes
 
 # 信じてはいけない値を送ったら拒まれるか（**本物のルータを偽の置き場で動かす**）
