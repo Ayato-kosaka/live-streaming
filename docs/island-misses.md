@@ -15661,7 +15661,7 @@ CI で `python/mutation_drill_selftest.py` が落ちた。落ちたのは
    `class D extends Date` だと Next の書き出しが
    `TypeError: Date.parse is not a function` で落ちるので、ふつうの関数にして
    `parse` と `UTC` を手で移す
-## #256 **「下に進めない」を、2回とも症状のほうで塞いでいた。原因はカメラが主人公を引き戻していたこと**（2026-10-14。`site/components/isle/IsleStage.tsx` の `camWant`。あやとの指摘）
+## #255 **「下に進めない」を、2回とも症状のほうで塞いでいた。原因はカメラが主人公を引き戻していたこと**（2026-10-14。`site/components/isle/IsleStage.tsx` の `camWant`。あやとの指摘）
 
 あやとの言葉（2026-10-14・本番のスマホ）:
 
