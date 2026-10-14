@@ -1249,11 +1249,26 @@
    先に居るもの——看板（表紙）・隅の道具・島の名前——のいちばん下のすぐ下。
    **数を書き写さない。** 看板は寄り引きで絵が差し替わるし、島の名前は
    面によって在ったり無かったりする。 */
+/* 字の出る場所は、札も吹き出しも**同じ1か所**（`islewalk.mjs` の (D)）。
+   その高さを1本の値で持つ。**スマホは看板に被せて、いちばん上へ。**
+   あやとの言葉（2026-10-14、本番のスマホを見ながら）:
+   「『作った料理』とか、『毎晩22時、世界の』に被って良いのでもっと上に
+   して欲しい。触れるスペース確保。」
+   `--isle-top`（看板の下ふち）に合わせると、看板のぶんだけ字が下りてきて、
+   その下の地面が押せない。縦に細い画面では、譲るのは地面ではなく看板のほう。
+   PC は `--isle-top` のまま（下の 640px の段）。横幅があるので地面は残るし、
+   「今日の島」の板が右上の隅にいる。 */
+.isle {
+  --isle-say-top: calc(10px + env(safe-area-inset-top));
+}
+@media (min-width: 640px) {
+  .isle { --isle-say-top: var(--isle-top, 12px); }
+}
 .isle-going {
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--isle-top, 12px);
+  top: var(--isle-say-top, 12px);
   z-index: 5;
   display: flex;
   justify-content: center;
@@ -1411,7 +1426,7 @@
   position: absolute;
   left: 10px;
   right: 10px;
-  top: calc(10px + env(safe-area-inset-top));
+  top: var(--isle-say-top, 12px);
   bottom: auto;
   z-index: 9;
   padding: 20px 22px 30px;
@@ -1479,10 +1494,6 @@
     right: auto;
     transform: translateX(-50%);
     width: min(520px, 58vw);
-    /* **看板へ被せるのはスマホだけ。** 地面が足りないのは縦に細い画面の
-       話で、PC は `--isle-top`（上半分に居るもののいちばん下）に出しても
-       歩くところが残る。 */
-    top: var(--isle-top, 12px);
   }
 }
 
