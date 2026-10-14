@@ -43,6 +43,7 @@
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {keysOf} from "./islandCharacter";
+import {capHit} from "./capWatch";
 import {
   CARDS,
   IMAGES,
@@ -328,6 +329,9 @@ async function characterBook(): Promise<Book> {
   const now = Date.now();
   if (cached && now - cached.at < KEYS_TTL) return cached.book;
   const snap = await CHARACTERS.limit(MAX_CHARACTERS).get();
+  /* **埋まると、カードの絵が黙って既定に落ちる。** 引けなかった人は
+     「図鑑に居ない人」と同じ扱いになるので、落ちたことが絵に出ない。 */
+  capHit("charactersByChannel / MAX_CHARACTERS", snap.size, MAX_CHARACTERS);
   const byChannel: Keys = new Map();
   const byKey: Keys = new Map();
   /* **同じ値が2人に付いていたら、どちらも使わない。** 当てずっぽうに1人

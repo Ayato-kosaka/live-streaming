@@ -130,12 +130,16 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
   return {
     id: "trip",
     label: "この島のこと",
+    /* **数は焼かない。** 字にしてから渡すと、表紙の札がデプロイした日の数で
+       止まる（`since` と `ChapDays.tsx`）。表紙は島がまるごとブラウザへ渡る
+       ので、`blurb` が焼いた字のまま配られていた。 */
     blurb: `${days.toLocaleString()}日目`,
+    since: { chapter: c.slug, tail: "日目" },
     icon: "statue",
     size: 54,
     note: c.note,
     facts: [
-      { n: String(days), unit: "日", cap: "この島にいる" },
+      { n: String(days), unit: "日", cap: "この島にいる", since: c.slug },
       ...(st ? [{ n: String(st.streams), unit: "本", cap: "配信した" }] : []),
       ...(st ? [{ n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" }] : []),
       ...(countries ? [{ n: String(countries), unit: "カ国", cap: "歩いた" }] : []),

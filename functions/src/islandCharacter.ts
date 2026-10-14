@@ -62,6 +62,7 @@
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {randomUUID} from "crypto";
+import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -823,6 +824,10 @@ export async function handleCharacters(
     res.set("Cache-Control", "no-store");
     try {
       const snap = await CHARACTERS.limit(MAX_CHARACTERS).get();
+      /* **埋まると、OBS の当てが黙って外れる。** 名簿に居る人が
+         「図鑑に居ない人」として扱われて、絵の出ないアラートになる。 */
+      capHit("GET /alertbox/:id/characters / MAX_CHARACTERS", snap.size,
+        MAX_CHARACTERS);
       const characters: Json[] = [];
       snap.forEach((d) => characters.push(shapeFull(d.id, d.data() ?? {})));
       res.json({characters});
@@ -996,6 +1001,8 @@ export async function handleCharacters(
     );
     try {
       const snap = await CHARACTERS.limit(MAX_CHARACTERS).get();
+      /* **`total` も一緒に返す口なので、埋まると数まで嘘になる。** */
+      capHit("GET /characters / MAX_CHARACTERS", snap.size, MAX_CHARACTERS);
       const characters: Json[] = [];
       snap.forEach((d) =>
         characters.push(
