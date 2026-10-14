@@ -686,6 +686,17 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     };
     x = hold(x, s / 2, world.cx, ext.rx + SEA_RIM, "l", "r");
     y = hold(y, vh / 2, world.cy, ext.ry + SEA_RIM * world.squash, "u", "d");
+    /* **端で止めても、主人公を UI の下に押し込まない。**
+       島の端でカメラを止めると、そのぶんあやとが枠の端へ寄る（それが決め）。
+       ただし枠の上ふちには看板と字の帯、下ふちには「今日の島」の板がいる。
+       実測（390px・表紙の北の端）で足元が枠の 31%（228px）まで上がり、
+       **あやとの頭が看板の板の下に入っていた。** 主人公が UI に隠れるのは、
+       どんな理由でも通さない。
+       海をもっと見せれば（`SEA_RIM` を 281 以上に）こうはならないが、
+       そのときは端で海が画面の7割を占める。**寄せる量に上限を置くほうを取る。**
+       ここが効くのは端で止めているあいだだけなので、ふだんの `FOOT` は動かない。 */
+    const foot = (f: number) => avatar.current.y - (f - 0.5) * vh;
+    y = Math.min(Math.max(y, foot(0.88)), foot(0.4));
     return { x, y, rim };
   }, [ext, spanOf, world]);
 
