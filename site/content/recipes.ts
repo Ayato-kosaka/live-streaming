@@ -515,6 +515,33 @@ export const RECIPES: Recipe[] = [
     note: "片栗粉も小麦粉も無いまま揚げたので、チャットでは「唐揚げもとい揚げ鳥」と呼ばれた。ジョージア最後のクッキングで、きゅうりのキューちゃんも一緒に漬けた。",
     streams: [{ label: "調理", date: "2026-09-10", videoId: "MLFOSFG_Y80", title: "北欧旅まであと1日！最後のクッキング！！" }],
   },
+  {
+    slug: "assassins-pasta",
+    name: "暗殺者のパスタ",
+    emoji: "🍝",
+    icon: "food-frying-pan",
+    country: "albania",
+    kind: "rice",
+    date: "2026-10-06",
+    note: "フライパン1つで、トマトのスープを少しずつ足しながら麺を焼きつける。IH の火力が足りずお湯はケトルで沸かした。作りかたは、見ている人が代わるがわる教えてくれた。",
+    streams: [
+      { label: "調理", date: "2026-10-06", videoId: "GRd0d7d7Ngg", title: "遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に遂に暗殺者のパスタ" },
+    ],
+  },
+  {
+    slug: "choco-cheesecake",
+    name: "チョコチーズケーキ",
+    emoji: "🍰",
+    icon: "food-cake",
+    country: "albania",
+    kind: "sweet",
+    date: "2026-10-09",
+    note: "前の日の買い出しではクリームチーズが見つからず、店を変えて手に入れた。泡立て器が無いのでスプーンで混ぜ、土台のビスケットは袋に入れて叩いて砕いた。焼いたのは電子レンジ。",
+    streams: [
+      { label: "買い出し", date: "2026-10-08", videoId: "0BqO781Gq2Q", title: "アルバニアでチーズケーキの材料買いに行こー！！" },
+      { label: "調理", date: "2026-10-09", videoId: "yGEacTlskmY", title: "アルバニアでチーズケーキつくろか！" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);

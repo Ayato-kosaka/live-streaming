@@ -52,6 +52,17 @@ export default function StickerBook() {
   return (
     <div className="rzk gsk">
       <div className="rzk-page">
+        {/* **いま何枚目を見ているか**を、絵の上に出す。
+
+            帳面の送り（`.rzk-pager`）が同じことを言っているが、あちらは
+            一覧の升目のすぐ上——390px では画面を1つ送らないと出てこない。
+            **一覧の面は「何がどれだけあって、いまどこを見ているか」が
+            送らずに分かること**（`docs/island-standards.md` 7章・15章の読み方）。
+            言い方は送りと1文字もそろえる（`◯ / 全部の数`）。 */}
+        <p className="rzk-at">
+          <b>{at + 1}</b> / {STICKERS.length}
+        </p>
+
         {/* 題名の札は絵の上。テープで貼ったように少し傾ける（図鑑の型） */}
         <p className="rzk-tag" ref={head}>
           {s.name}

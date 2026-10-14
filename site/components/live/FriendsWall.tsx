@@ -347,6 +347,17 @@ export default function FriendsWall({ plans }: { plans: PlanDays }) {
               このサイトは UI にもコンテンツにも絵文字を1文字も置かない
               （`docs/island-design.md` 1章。例外はない）。
               顔の代わりは、すぐ下にその人の絵そのものがある。 */}
+          {/* **いま何枚目を見ているか**を、絵の上に出す。
+
+              帳面の送り（`.rzk-pager`）が同じことを言っているが、あちらは
+              一覧の升目のすぐ上——390px では画面を1つ送らないと出てこない。
+              **一覧の面は「何がどれだけあって、いまどこを見ているか」が
+              送らずに分かること**（`docs/island-standards.md` 7章・15章の読み方）。
+              言い方は送りと1文字もそろえる（`◯ / 全部の数`）。 */}
+          <p className="rzk-at">
+            <b>{at + 1}</b> / {list.length}
+          </p>
+
           <p className="rzk-tag" ref={head}>
             {name ?? `No.${at + 1}`}
           </p>
