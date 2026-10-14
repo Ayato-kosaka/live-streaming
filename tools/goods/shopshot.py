@@ -23,7 +23,7 @@
 | マス | 何 | SUZURI のデザイン |
 | --- | --- | --- |
 | 左上 | トート「あやとのイギリスぶらぶら」 | 17391744（升目のトートと同じ1枚を使う） |
-| 右上 | 卓上カレンダー | **出品中。id と写真はまだ無い**（`CELLS` の `calendar`） |
+| 右上 | 卓上カレンダー「あやと 旅の思い出カレンダー 2027」（1月のページ） | 21154506 |
 | 左下 | アクリルキーホルダー「カサ・アヤトの住人 🍌」 | 17392036 |
 | 右下 | アクリルキーホルダー「あやと ― 歩いているあやと」 | 21116648 |
 
@@ -34,14 +34,14 @@
 
 ## 写真の無いマスがあるうちは、本番の置き場に焼かない
 
-`CELLS` の `src` が `None` のマス（いまはカレンダー）があると、焼かずに止まる。
+`CELLS` の `src` が `None` のマスがあると、焼かずに止まる。
 仮の絵（`--stand-in`）を入れた回は、`site/public/goods/suzuri-goods.webp` には
 **書かずに 2 で帰る**——**見た目を確かめるための回**で、配る絵ではない。
 `--out` で別の置き場を渡したときだけ焼く。
+（カレンダーの写真が出品前に無かったあいだ、2026-10-14 にこれで組みを見た）
 
-カレンダーの写真が来たら、`calendar` の `src` に見本の URL を書いて回す。
-焼いたら `site/content/goods.ts` の `SUZURI.shot.alt` を下の `ALT` に替える
-（絵と字が食い違う日を作らない）。
+マスを替えて焼いたら `site/content/goods.ts` の `SUZURI.shot.alt` を下の `ALT` に
+替える（絵と字が食い違う日を作らない）。
 
 ## 字も値段も焼かない
 
@@ -61,11 +61,15 @@
 こちらでは作れない。** 絵を差し替えたら取り直す。寸法は署名に入っていないので、
 1530 で取れる（ワークフローが同じ署名で 1530 を取れている）。
 
+カレンダーは見本の絵の出どころが別で、`lens2.suzuri.jp/render/desk-calendar`
+（`angle=january` で1月のページ）。こちらも `token=` は向こうの署名。
+
 **この箱からは `lens.suzuri.jp` に届かない日がある**（2026-10-14 は proxy が
-CONNECT を 403 で断った）。そのときは、`sample` の成果物（`suzuri-sheet`。
-同じ見本の絵が `<id>-<品目>-front.img` の名前で入っている）を
-`.claude/skills/suzuri/fetch_artifact.sh` で持ち帰って、`--src` にその置き場を渡す。
-`CELLS` の `artifact` がその名前で、在ればそちらを先に使う。
+CONNECT を 403 で断った）。そのときは、届く所で落とした絵を1つの置き場に
+集めて `--src` に渡す。`CELLS` の `local` に書いた名前のどれかが在れば、
+取りに行かずにそちらを使う——`sample` の成果物（`suzuri-sheet`。
+`.claude/skills/suzuri/fetch_artifact.sh` で持ち帰る）の `<id>-<品目>-front.img` と、
+EC2 で落とした写真の名前（2026-10-15 に焼いたときの名前）の両方を並べてある。
 
 ## 大きさと重さ
 
@@ -91,7 +95,7 @@ LENS = "https://lens.suzuri.jp/v3/1530x1530"
 # 4マス。**並びは 左上 → 右上 → 左下 → 右下**（あやと 2026-10-14 の指定の順）。
 #
 # - `src`: 見本の絵の URL か、リポジトリの中の道。**`None` はまだ写真が無いマス**
-# - `artifact`: `sample` の成果物の中での名前（届かない日に `--src` から拾う）
+# - `local`: 届かない日に `--src` から拾う名前（先に在ったものを使う）
 # - `box`: そのマスの中で絵を何px角に収めるか。品目ごとに形が違うので
 #   （キーホルダーは輪のぶん縦に長い、トートは持ち手のぶん縦に長い）、
 #   同じ数にすると見た目の重さが揃わない。**揃えるのは箱ではなく、見えかたのほう。**
@@ -101,23 +105,28 @@ CELLS = [
         # 升目のトートの札と**同じ1枚**（`shopgoods.py` の頭。同じ絵を2つ持たない）。
         # もう白地に焼いてあるので、絵のあるところだけ切り出して縮める
         "src": "site/public/goods/suzuri-tote.webp",
-        "artifact": None,
+        "local": [],
         "box": 240,
     },
     {
         "name": "calendar",
-        # **出品中**（2026-10-14）。デザイン id が出たら `sample` を押して、
-        # 卓上カレンダーの見本の URL をここに書く（`artifact` も同じ名前の決まりで）
-        "src": None,
-        "artifact": None,
-        "box": 240,
+        # デザイン 21154506（あやと 旅の思い出カレンダー 2027）。1月のページ。
+        # 横に長い（暦と絵が左右に並ぶ）ので、箱を少し大きくして重さをそろえる
+        "src": "https://lens2.suzuri.jp/render/desk-calendar?color=white&size=2027"
+        "&image_size=1530x1530&original_image_size=1254x1254"
+        "&source_path=materials%2Ftextures%2F21154506%2F1791991945-1254x1254.png"
+        "&source_version=1791991945&angle=january&adjustment=.0.5893%2B0.0%2B0.0"
+        "&output_format=jpg&token=eyJhbGciOiJIUzI1NiJ9.eyJsYXlvdXQiOnsic2hvdCI6eyJpdGVtIjoiZGVzay1jYWxlbmRhciIsImNvbG9yIjoiIiwic2l6ZSI6IiIsImFuZ2xlIjoiIn0sImFkanVzdG1lbnQiOnsic2NhbGUiOjEsIm9mZnNldF94IjowLCJvZmZzZXRfeSI6MH0sIm9yaWdpbmFsX3NpemUiOnsid2lkdGgiOjAsImhlaWdodCI6MH0sIm91dHB1dF9zaXplIjp7IndpZHRoIjowLCJoZWlnaHQiOjB9fSwic291cmNlX3BhdGgiOiIiLCJzb3VyY2VfdmVyc2lvbiI6MCwidmlvbGF0aW9uIjpmYWxzZSwib3V0cHV0X2Zvcm1hdCI6IiJ9"
+        ".dBrZVnUn9-CThPGqgOmHZEsa1bpETwKxKU_dJjczdVU",
+        "local": ["calendar-2027-january-1530.jpg"],
+        "box": 252,
     },
     {
         "name": "banana-key",
         "src": f"{LENS}/acrylic-keychain/50x50mm/clear/front/17392036/"
         "1791579090-920x920.png.webp"
         "?h=60dd00e3bddce7acd9f7c288bfbba49b614b93e2&printed=true",
-        "artifact": "17392036-acrylic-keychain-front.img",
+        "local": ["17392036-acrylic-keychain-front.img", "keychain-banana-17392036-1530.webp"],
         "box": 250,
     },
     {
@@ -125,7 +134,10 @@ CELLS = [
         "src": f"{LENS}/acrylic-keychain/50x50mm/clear/front/21116648/"
         "1791584788-1549x1549.png.webp"
         "?h=e6a16b8acb91bf1118441442973169bc3cfb594f&printed=true",
-        "artifact": "21116648-acrylic-keychain-front.img",
+        "local": [
+            "21116648-acrylic-keychain-front.img",
+            "keychain-walking-ayato-21116648-1530.webp",
+        ],
         "box": 250,
     },
 ]
@@ -207,8 +219,9 @@ def source_of(cell: dict, src_dir: pathlib.Path, stand_in: dict) -> tuple[pathli
         )
     if not src.startswith("http"):
         return ROOT / src, False
-    if cell["artifact"] and (src_dir / cell["artifact"]).exists():
-        return src_dir / cell["artifact"], False
+    for local in cell["local"]:
+        if (src_dir / local).exists():
+            return src_dir / local, False
     f = src_dir / f"{name}.webp"
     if not f.exists():
         fetch(src, f)

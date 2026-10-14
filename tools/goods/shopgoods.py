@@ -1,6 +1,6 @@
 """SUZURI の「住人でもステッカーでもないグッズ」の札に出す1枚を焼く。
 
-    python3 tools/goods/shopgoods.py            # 5枚とも焼いて site/public/goods/ に置く
+    python3 tools/goods/shopgoods.py            # ぜんぶ焼いて site/public/goods/ に置く
     python3 tools/goods/shopgoods.py --only towel --out /tmp       # 1枚だけ試す
 
 ## なぜ要るのか
@@ -10,7 +10,8 @@
 住人グッズ（100）とあやとステッカー（5）は、それぞれの面から行けるように
 なったが、**どちらからも行けないものが6つ残った**（あやと 2026-10-13）。
 
-ここで焼くのは、そのうちの5つ。残る1つ（イギリスのトート）は
+ここで焼くのは、そのうちの5つと、あとから出たカレンダー（2026-10-15）。
+残る1つ（イギリスのトート）は
 `suzuri-tote.webp` としてもう置いてある（`shopshot.py` が置いた1枚）ので
 焼き直さない。**同じ絵を2つ持たない。**
 
@@ -81,6 +82,19 @@ SHOTS = [
         f"{LENS}/fairtrade-cotton-canvas-zip-pouch-m-for-shop/m/natural/21142561/"
         "1791850972-1062x826.png.contain.webp"
         "?h=5625c74651d229fe7447b237d095bd9f858b1b90&printed=true",
+    ),
+    # 卓上カレンダー（21154506。2026-10-15 公開）。1月のページを正面から。
+    # 見本の出どころは `lens2.suzuri.jp/render/desk-calendar`（`shopshot.py` の右上と同じ1枚）。
+    # この箱から届かない日は、落とした写真を `--src` に `suzuri-calendar.webp` の名前で置く
+    # （中身が jpg でも Pillow は中身で読む）
+    (
+        "suzuri-calendar",
+        "https://lens2.suzuri.jp/render/desk-calendar?color=white&size=2027"
+        "&image_size=1530x1530&original_image_size=1254x1254"
+        "&source_path=materials%2Ftextures%2F21154506%2F1791991945-1254x1254.png"
+        "&source_version=1791991945&angle=january&adjustment=.0.5893%2B0.0%2B0.0"
+        "&output_format=jpg&token=eyJhbGciOiJIUzI1NiJ9.eyJsYXlvdXQiOnsic2hvdCI6eyJpdGVtIjoiZGVzay1jYWxlbmRhciIsImNvbG9yIjoiIiwic2l6ZSI6IiIsImFuZ2xlIjoiIn0sImFkanVzdG1lbnQiOnsic2NhbGUiOjEsIm9mZnNldF94IjowLCJvZmZzZXRfeSI6MH0sIm9yaWdpbmFsX3NpemUiOnsid2lkdGgiOjAsImhlaWdodCI6MH0sIm91dHB1dF9zaXplIjp7IndpZHRoIjowLCJoZWlnaHQiOjB9fSwic291cmNlX3BhdGgiOiIiLCJzb3VyY2VfdmVyc2lvbiI6MCwidmlvbGF0aW9uIjpmYWxzZSwib3V0cHV0X2Zvcm1hdCI6IiJ9"
+        ".dBrZVnUn9-CThPGqgOmHZEsa1bpETwKxKU_dJjczdVU",
     ),
     # Tシャツ2枚は背中。id は裏のデザイン（21142560 / 21142557）
     (

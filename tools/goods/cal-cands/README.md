@@ -1,6 +1,6 @@
 # カレンダーの絵の候補（選ばなかったものも含む）
 
-月ごとに ChatGPT で3枚ずつ作った候補（7月は2テーマ × 3枚）。面に出しているのは
+月ごとに ChatGPT で3枚ずつ作った候補（7月は2テーマ × 3枚）。カレンダーに刷るのは
 `../cal-src/` に置いた1枚だけで、ここは**差し替えるときの手元**。
 
 - `<MM>-<a〜f>.webp` … 候補そのもの（1254px の正方形）。MM は暦の月（2025年11月の思い出 → `11`）
@@ -13,7 +13,10 @@ python3 -c "from PIL import Image; Image.open('tools/goods/cal-cands/12-a.webp')
 python3 tools/goods/calbake.py
 ```
 
-面の字（`site/content/goods.ts` の `CAL_MONTHS` の `alt`）は、写っているものが変わったら直す。
+差し替えた月が1月なら、`/goods` の SUZURI の升目に出している写真（1月のページ）も
+撮り直しになる（`site/content/goods.ts` の `SHOP_GOODS` のカレンダーの `alt` と、
+`tools/goods/shopgoods.py` / `shopshot.py`）。月ごとの絵を面に並べていた表
+（`CAL_MONTHS`）は、SUZURI に出した 2026-10-15 に欄ごと畳んだので、もう無い。
 
 ## `hidden/` — 8位以降の住人を景色に溶かした版（2026-10-14、採用した）
 
