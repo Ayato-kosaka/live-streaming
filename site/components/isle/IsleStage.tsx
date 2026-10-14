@@ -11,6 +11,7 @@ import { hasVoice, linesOf } from "@/content/chatter";
 import { UI } from "@/content/voice";
 import { charPlace } from "@/content/characterBox";
 import { AYATO_ASPECT, AYATO_SRC } from "@/lib/ayatoArt";
+import { useSinceWord } from "./ChapDays";
 import IsleGround, { Building } from "./IsleGround";
 import IsleSheet from "./IsleSheet";
 import {
@@ -1550,6 +1551,11 @@ function PlaceMark({
   left: number | null;
   onOpen: () => void;
 }) {
+  /* **日数は焼いた字を出しっぱなしにしない。** `since` を持つ札は画面が出て
+     から数え直す（`components/isle/ChapDays.tsx`）。島に建てるものの表は
+     丸ごと焼かれてブラウザへ渡るので、ここが字を持ったままだと
+     「この島のこと 17日目」がデプロイした日で止まる。 */
+  const blurb = useSinceWord(place.since, place.blurb);
   return (
     <button
       data-ui
@@ -1566,7 +1572,7 @@ function PlaceMark({
       )}
       <span className="isle-text">
         <b>{place.label}</b>
-        <i><Say t={place.blurb} /></i>
+        <i><Say t={blurb} /></i>
       </span>
       <span className="isle-go">
         みる
