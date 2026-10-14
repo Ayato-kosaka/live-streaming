@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 
 import Icon from "@/components/ui/Icon";
@@ -45,11 +46,13 @@ import "../goods.css";
  * 書いた人がどちらに貼ったか分からなくなる。
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "goods",
   title: "あやとステッカー",
   /* 数は手で書かない。名簿から出す（`/goods` と同じ決まり） */
   description: `島から持って帰れるステッカー${STICKERS.length}枚。落として、好きなところに貼ってください。`,
-};
+  path: "/goods/stickers",
+});
 
 export default function StickersPage() {
   return (

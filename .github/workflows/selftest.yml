@@ -393,7 +393,13 @@ jobs:
           SPORT=4211 OUT=/tmp/nextempty DIST=site/.next-ci \
             node tools/sprites/nextempty.mjs || rc4=$?
           echo "── nextempty 終了コード ${rc4}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ]
+          # 貼られたときの顔（og:*）。**2026-10-14 まで、137面とも絵が同じ1枚で、
+          # og:url は1面も無かった。** 面を足した人が lib/share.ts を通さなければ
+          # 黙って器の1枚に戻る——赤くならずに戻るので、焼いた HTML を毎回数える
+          rc5=0
+          DIST=site/.next-ci node tools/sprites/ogmeta.mjs || rc5=$?
+          echo "── ogmeta 終了コード ${rc5}"
+          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] && [ "$rc5" = 0 ]
       # **歩ける島の基本原則4つ**（`tools/sprites/islewalk.mjs`）。
       #
       # ## なぜ毎 PR で回すか（2026-10-14）
@@ -521,3 +527,102 @@ jobs:
           node tools/sprites/deckctrl.mjs || rc2=$?
           echo "── deckctrl 終了コード ${rc2}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ]
+
+  # **押せるはずのものに、指が届くか**を、面ぜんぶで数える
+  # （`tools/sprites/reachwatch.mjs`）。
+  #
+  # ## なぜ足したか（2026-10-14）
+  #
+  # 押しどころを測る道具は3本あった。**全面を見て終了コードを返すものが
+  # 1本も無かった。**
+  #
+  #   `pchit.mjs`     136面を4幅で回るが、**必ず 0 で帰る**。読む人が目で数える
+  #   `hitbox.mjs`    終了コードを持つが、`PAGES=` で渡した面しか見ない
+  #   `islecover.mjs` 覆いを数えるが、島の立っている面だけ（11面）
+  #
+  # つまり「図鑑の札が隣に食われた」「`/goods` の口が帯の下に入った」は、
+  # **人が `pchit` の出力を読んだ回にしか見つからない。** 読まなかった回は
+  # 緑に見える——`docs/island-misses.md` #171「道具は在って、繋いでいないだけ」
+  # と同じ形。ここは繋ぐために足した。
+  #
+  # 数えるのは2つ。**覆い**（押しどころの真ん中を別の何かに取られている）と
+  # **48px割れ**（当たりの実寸が `docs/island-design.md` 3-2 に届かない。
+  # 隣に食われて削れたぶんもここに出る）。3つめ「押せないのに厚みがある」は
+  # `popcheck.mjs` が数えているので、**ここに写さない**（#83）。
+  #
+  # **島の中（`.isle`）は数えない。** あやとが歩きカメラが寄るので、止めて
+  # 1回測ると立ち位置1つぶんしか見えず、同じ `/` が回ごとに 1件 と 0件 を出す。
+  # 島は `islecover.mjs` / `islereach.mjs` / `islenav.mjs` が歩きながら見る。
+  # 断りは道具が**毎回印字する**ので、黙って落ちることはない。
+  #
+  # ## 別の job にしてある
+  #
+  # 136面 × 2幅を測るぶん、上の2つを待たせない。並んで走る。
+  # **3枚ずつ同時に開く**（`JOBS`）。測っているのは `elementFromPoint`
+  # ——版組みの話で時刻の話ではないので、同時に開いても答えは変わらない。
+  #
+  # 住人の絵は落とさない。**押しどころの大きさは絵の中身で変わらない**ので、
+  # `route.mjs` の `offline` が返す差し替えで足りる（上の job は図鑑の絵の
+  # はみ出しを見るので要る）。そのぶんここは 345秒ぶん安い。
+  reachwatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      # **開発サーバーでは測らない。** 先読みも束ね方も本番と違う（`CLAUDE.md`）
+      - name: 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: npx next build
+
+      - name: 確認用の道具の依存を入れる（playwright-core）
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            exit 2
+          fi
+
+      # 終了コードで読む（0=通った / 1=見つかった / 2=数えるものが無い）。
+      # **`| tail` を挟まない。** 挟むと終了コードが消える（#124）
+      - name: 指が届かない押しどころを数える
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-rw.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci PORT=4213 JOBS=3 node tools/sprites/reachwatch.mjs || rc=$?
+          echo "── reachwatch 終了コード ${rc}"
+          exit "$rc"
