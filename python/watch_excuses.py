@@ -74,6 +74,15 @@
 from __future__ import annotations
 
 EXCUSES: dict[str, str] = {
+    # ---- 島のほうがまだ緑でないので、繋ぐのを待っているもの ----
+    "tools/sprites/reachkeys.mjs":
+        "キーボードで一周できるか・読み上げで意味が通るかを数える。道具も対照も"
+        "出来ている（台15枚と BREAK 9とおり）が、島に「同じ字のリンクが別の先を"
+        "指している」が14面残っている（2026-10-14 の実測。配信の題名が同じ日に"
+        "2本立つ形）。いま繋ぐと初日から赤く、いつもの赤に化けて本物の赤が"
+        "埋まる。残りを直したら `selftest.yml` の browserwatch に3行足して、"
+        "ここから外す（PR #870）",
+
     # ---- 鍵が要る・外に出る（回し役の SKIP と同じ理由） ----
     "python/admin/character_days_probe.py":
         "BigQuery と Firestore を読む下見。鍵が要るので PR では回せない"

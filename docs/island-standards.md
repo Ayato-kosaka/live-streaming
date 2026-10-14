@@ -565,8 +565,9 @@ PORT=4150 ONLY=hit node tools/sprites/tapink.mjs    # 1本ずつ（hit / shots /
 
 - [ ] **キーボードだけで一周できて、読み上げで意味が通る**
       （`tools/sprites/reachkeys.mjs`。0＝通った / 1＝見つかった /
-      2＝数えるものが無い。**毎 PR で走る**ので、ふだんは回さなくてよい——
-      `selftest.yml` の `browserwatch`）。数えるのは8つ:
+      2＝数えるものが無い。**まだ CI に繋いでいない**——島のほうが
+      緑になっていない。理由と残りは `selftest.yml` の browserwatch に
+      書いてある）。数えるのは8つ:
       押せるのに Tab で届かない／止まったのに見た目が変わらない／
       `tabindex` が並びを書き換える／ダイアログが Esc で閉じない／
       読み上げる名前が無い／`alt` が中身を言っていない／見出しの段が飛ぶ／
