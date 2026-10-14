@@ -1249,11 +1249,26 @@
    先に居るもの——看板（表紙）・隅の道具・島の名前——のいちばん下のすぐ下。
    **数を書き写さない。** 看板は寄り引きで絵が差し替わるし、島の名前は
    面によって在ったり無かったりする。 */
+/* 字の出る場所は、札も吹き出しも**同じ1か所**（`islewalk.mjs` の (D)）。
+   その高さを1本の値で持つ。**スマホは看板に被せて、いちばん上へ。**
+   あやとの言葉（2026-10-14、本番のスマホを見ながら）:
+   「『作った料理』とか、『毎晩22時、世界の』に被って良いのでもっと上に
+   して欲しい。触れるスペース確保。」
+   `--isle-top`（看板の下ふち）に合わせると、看板のぶんだけ字が下りてきて、
+   その下の地面が押せない。縦に細い画面では、譲るのは地面ではなく看板のほう。
+   PC は `--isle-top` のまま（下の 640px の段）。横幅があるので地面は残るし、
+   「今日の島」の板が右上の隅にいる。 */
+.isle {
+  --isle-say-top: calc(10px + env(safe-area-inset-top));
+}
+@media (min-width: 640px) {
+  .isle { --isle-say-top: var(--isle-top, 12px); }
+}
 .isle-going {
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--isle-top, 12px);
+  top: var(--isle-say-top, 12px);
   z-index: 5;
   display: flex;
   justify-content: center;
@@ -1389,40 +1404,73 @@
    同じ役目のものが面ごとに違う顔をしているのがいちばん困る
    （`docs/island-world.md` 7.3）。
    **押せない。** どこを押しても閉じるので、当たりは島のほうが受ける */
-/* **島の上に出す。建物の札と同じ場所に。**
+/* **島のいちばん上に出す。看板にも吊り板にも被せてよい。**
    -----------------------------------------------------------------
    字の出る場所は1か所に固定する（上の `.isle-going`）。会話もそこ。
-   ポケットキャンプの会話も常に上（`14.jpg`）。
+   ポケットキャンプの会話も常に上。
 
-   いちど下ふちへ移したことがある。理由は「上は看板ロゴの場所で、
-   実測 366x70 の吹き出しがロゴの箱に 8,184px² 食い込んでいた」から。
-   **それは置き場所を数字で決め打ちしていたせい。** いまは `--isle-top` が
-   看板の下ふちを測って返すので、ロゴには乗らない。
+   #877 で上へ戻したとき、置き場所は `--isle-top`（看板の下ふちを測って
+   返す）にした。**スマホではそれでもまだ低い。** 測ると吹き出しは
+   y=`--isle-top`〜 に出て、その下の地面がそのぶん押せない。
+   あやとの言葉（2026-10-14、本番のスマホを見ながら）:
+   「『作った料理』とか、『毎晩22時、世界の』に被って良いのでもっと上に
+   して欲しい。触れるスペース確保。」
+   **譲るのは地面ではなく看板のほう**なので、スマホは `--isle-top` を使わず
+   画面の上ふちへ置く。看板（`.hero-ui` は z-index 6）より上に出すので 9。
+   PC は `--isle-top` のまま（下の 640px の段）。あちらは「今日の島」の板が
+   右上の隅にいて、縦に余裕もある。
 
-   下にあると困るのは、**上の札と下の吹き出しで字が2か所に散る**こと。
-   どちらも「いま目の前にあるもの」の説明なので、同じ場所に出る。
    建物の札とは同時に出ない（話しているあいだ札は引っ込む。下の
    `.isle.is-talking .isle-mark`）。 */
 .isle-talk {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  top: var(--isle-top, 12px);
-  z-index: 8;
-  padding: 17px 20px 26px;
-  /* 上下左右で丸みを変える。均一な角丸だと「入力欄」に見える */
-  border-radius: 30px 36px 28px 34px / 34px 28px 36px 30px;
+  left: 10px;
+  right: 10px;
+  top: var(--isle-say-top, 12px);
+  bottom: auto;
+  z-index: 9;
+  padding: 20px 22px 30px;
+  /* --- モコモコ（どうぶつの森／ポケ森のセリフ窓）---
+     角丸をいくつ書いても「丸い四角」にしかならない。ふちが雲のように
+     波打って見えるのは、**半円が並んでいる**から。四辺に半円の列を敷き、
+     中の地を四辺とも半円のぶん内側へ寄せて重ねる。
+     列は `round`。`repeat` だと端の半円が途中で切れるが、`round` は
+     タイルの大きさのほうを詰めて整数個に合わせるので切れない。
+     **島の SVG の中ではない**（ここは HTML の層）。形が毎フレーム
+     焼き直される話（`CLAUDE.md`）には当たらない。動きも持たせていない。 */
+  --bump: 13px;
+  --bump-w: 26px;
   background:
-    radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
-    linear-gradient(var(--paper) 0 58%, var(--paper-2));
-  box-shadow: 0 var(--pop-d1) 0 rgba(154, 101, 50, 0.18), 6px 14px 26px var(--cast-far, rgba(78, 96, 72, 0.34));
+    /* 上のふち */
+    radial-gradient(circle at 50% 100%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top left / var(--bump-w) var(--bump) round no-repeat,
+    /* 下のふち */
+    radial-gradient(circle at 50% 0%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      bottom left / var(--bump-w) var(--bump) round no-repeat,
+    /* 左のふち */
+    radial-gradient(circle at 100% 50%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top left / var(--bump) var(--bump-w) no-repeat round,
+    /* 右のふち */
+    radial-gradient(circle at 0% 50%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top right / var(--bump) var(--bump-w) no-repeat round,
+    /* 中の地。四辺とも半円のぶん内側へ寄せる。**全面に敷かない。**
+       全面（や縦いっぱいの帯）を敷くと、その上に半円が隠れてただの
+       角丸の四角に戻る（一度そう出した）。つなぎ目が出ないよう 1px 重ねる */
+    linear-gradient(var(--paper), var(--paper))
+      center / calc(100% - 2 * var(--bump) + 2px) calc(100% - 2 * var(--bump) + 2px) no-repeat;
+  /* ふちが四角くないので、影は形に沿うものを使う。
+     `box-shadow` は**箱**に付くので、雲の外に四角い影が出る。 */
+  filter:
+    drop-shadow(0 var(--pop-d1, 3px) 0 rgba(154, 101, 50, 0.2))
+    drop-shadow(4px 10px 18px var(--cast-far, rgba(78, 96, 72, 0.34)));
   pointer-events: none;
 }
 .isle-talk p { margin: 0; font-size: 15px; font-weight: 800; line-height: 1.8; letter-spacing: 0.02em; color: var(--ink); }
+/* 半円の列（下ふち 13px）に字を乗せない。地の上まで引き上げる */
 .isle-talk-tap {
   position: absolute;
-  right: 14px;
-  bottom: 8px;
+  right: 22px;
+  bottom: 14px;
   font-size: 11.5px;
   font-weight: 800;
   color: #7a6a4c;
