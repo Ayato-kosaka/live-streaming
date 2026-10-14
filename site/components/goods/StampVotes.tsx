@@ -1,7 +1,23 @@
 "use client";
 
 import { LINE_PENDING, LINE_STAMPS, LINE_VOTES } from "@/content/goods";
-import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes";
+import { shutDest, themeById } from "@/content/themes";
+import {
+  useWordVotes,
+  VoteFoot,
+  VoteHeart,
+  VoteTally,
+} from "@/components/goods/wordVotes";
+
+/** いいねを置いている付箋の宛先 */
+const THEME = "goods-linestamp";
+
+/**
+ * **締め切った宛先か。** 判定は島の表の1本（`content/themes.ts` の `shutDest`）。
+ * ここで `closed` を直に見ない——企画あてのように日で締まる形に変わった日に、
+ * 判定が2か所になる。宛先は日付を持たないので、焼いた時点で決まる。
+ */
+const SHUT = shutDest(themeById(THEME), null);
 
 /**
  * あやとのスタンプの候補に、いいねを押す。
@@ -19,13 +35,20 @@ import { useWordVotes, VoteFoot, VoteHeart } from "@/components/goods/wordVotes"
  * （カレンダーの試作が2026-10-12 まで同じ1本を使っていた）。
  *
  * ここに残っているのは、この欄にしか無いもの——**スタンプの絵の並べ方**だけ。
+ *
+ * ## 締め切ったあと（2026-10-14）
+ *
+ * 40種類を LINE に申請して、宛先 `goods-linestamp` は畳んだ。
+ * **押しどころは1つも残さない**——まだ札の無い字を押すと、立てるところで
+ * 断られる（押して失敗するボタンになる）。付いた数は `VoteTally` で
+ * 押せない形のまま見せる（締め切った宛先の付箋と同じ扱い）。
  */
 export default function StampVotes() {
   /* 鍵にする字はセリフそのもの。**`LINE_VOTES` を渡す**——
      その場で `map` すると、毎回新しい配列に見えて数え直しが止まらない。
      1枚につき「絵のとおりの字 ＋ 同じスタンプを指すほかの字」で、
      **押すのも枠に出るのも先頭**（`content/goods.ts` の `also`） */
-  const votes = useWordVotes("goods-linestamp", LINE_VOTES);
+  const votes = useWordVotes(THEME, LINE_VOTES);
 
   return (
     <div className="gd-stamps">
@@ -52,7 +75,11 @@ export default function StampVotes() {
                 並びの行がガタつく。マスの背は grid がそろえてくれるので、
                 下に寄せるのはここ1行で足りる */}
             <span style={{ marginTop: "auto" }}>
-              <VoteHeart word={s.line} votes={votes} />
+              {SHUT ? (
+                <VoteTally word={s.line} votes={votes} />
+              ) : (
+                <VoteHeart word={s.line} votes={votes} />
+              )}
             </span>
           </li>
         ))}
