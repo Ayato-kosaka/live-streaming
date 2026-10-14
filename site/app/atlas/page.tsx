@@ -14,7 +14,7 @@ export const metadata: Metadata = share({
      **いま立っている島がこの1文に入っていなかった。**
      `CHAPTERS` が章の唯一の出どころなので、そこから作る
      （`docs/island-misses.md` の決めごと3 / `docs/island-standards.md` §8）。 */
-  description: `${CHAPTERS.map((c) => c.name).join("、")}。旅の章ごとに、島が1つ建っています。`,
+  description: `${CHAPTERS.map((c) => c.name).join("、")}。これまで渡ってきた島、ぜんぶ。`,
   path: "/atlas",
 });
 
@@ -50,7 +50,7 @@ export default function AtlasPage() {
       <PageHead
         icon="signpost-flags"
         title="島の地図"
-        lead="旅の章ごとに、島が1つ建っています。"
+        lead="これまで渡ってきた島、ぜんぶ。"
         /* **島の名前を焼き込まない。** 「いまいるのはコーカサスの島」と書いてあると、
            北欧へ出発した日から嘘になる（いまいる島は日付で決まる）。
            かわりに、ここでしか言えないこと——**この画面の遊びかた**——を言う。 */

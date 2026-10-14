@@ -108,7 +108,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       {read && days !== null && days.length === 0 && (
         <div className="blank">
           <b>まだ1枚もありません</b>
-          <p>旅に出た日の夜から、その日に撮った写真がここに並びます。</p>
+          <p>配信のあった日に撮った写真が、ここに並びます。</p>
           <Link prefetch={false} className="blank-go" href="/nordic">
             旅のよていを見る
             <Icon name="right" size={15} />

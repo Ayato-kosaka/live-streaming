@@ -9,7 +9,7 @@ export const metadata: Metadata = share({
   key: "updates",
   title: "島をなおしたところ",
   description:
-    "あやと島のどこが変わったかを、新しい順に並べました。こうしてほしいところも、ここから。",
+    "あやと島のどこが変わったか。こうしてほしいところも、ここから。",
   path: "/updates",
 });
 
