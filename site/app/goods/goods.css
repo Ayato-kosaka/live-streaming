@@ -58,7 +58,10 @@
 /* まだ何も決まっていないもの。**色を1つ足さない**——蛍光ペンの帯
    （`--marker`）は島のほかの面でも「ここが今の話」を表す印なので、
    そのまま借りる */
-.gd-sec[data-tag="検討中"] > .gd-h > .gd-tag {
+/* 審査中（LINEスタンプ。2026-10-14）も同じ帯。まだ手に入らず、
+   いま動いている話なのは同じで、違いは札の字が言う */
+.gd-sec[data-tag="検討中"] > .gd-h > .gd-tag,
+.gd-sec[data-tag="審査中"] > .gd-h > .gd-tag {
   background: var(--marker);
   color: var(--marker-ink);
 }
@@ -408,6 +411,21 @@
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--rule) 30%, transparent);
 }
+
+/* 締め切ったあとの、押せないハート（`wordVotes.tsx` の `VoteTally`）。
+   **枠も厚みも付けない**——厚みは押せる合図（`docs/island-design.md` 3-3）。
+   ハートの絵と数は `.nt-heart` と同じ大きさにして、同じものの数だと分かるようにする */
+.gd-votetally {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 32px;
+  color: var(--ink);
+}
+.gd-votetally svg { width: 17px; height: 16px; color: var(--accent); }
+.gd-votetally b { font-size: var(--fs-body); font-weight: 900; }
+/* 読んでいるあいだの場所取り。**押せないハートと同じ背**にそろえる */
+.gd-votewait.is-still { width: 44px; height: 32px; }
 
 /* ---- カレンダー（月ごとの1枚） ------------------------------------------- */
 

@@ -693,42 +693,14 @@ export async function apply(ctx, opts = {}) {
        ここを差し替えないと、撮ったときだけ「カードが読めなかった」の顔に
        なって、直っていないものが壊れて見える。 */
     if (path === "/cards/mine") return json(r, { cards: MY_CARDS });
-    /* スタンプのことば（#716）。**本人だけの口**なので、ここを差し替えないと
-       `/me` の1枚がまるごと写らない（＝測れない）。
-       `STAMP=` で3つの姿を出し分ける:
-
-         fresh（既定） … 提案3本・まだ決めていない
-         bare          … **提案が1本も出なかった人**（本番に6人いる）
-         set           … 本人がもう4本決めている（**いちばん背が高い姿**）
-         none          … 選ばれていない（**余計なものが1つも出ないことを見る**）
-
-       **ことばは作り物。** 本番の誰かの口ぐせをこの箱に落とさない。 */
+    /* スタンプのことば（#716）。**2026-10-14 に閉じた**（#860）。
+       `/me` はもう呼ばないが、本番と同じ返事（誰にでも 410）を返しておく。
+       古い姿を残すと、呼ぶ道が戻ったときに撮った絵だけ欄が出て、
+       本番との食い違いに気づけない。 */
     if (path === "/stampline/mine") {
-      const how = process.env.STAMP || "fresh";
-      if (how === "none") return json(r, { picked: false });
-      /* **提案が1本も出なかった人**（本番で25人中6人）。
-         その人の画面に「このことばが入ります」と出ていないかを見る */
-      if (how === "bare") {
-        return json(r, {
-          picked: true, suggested: [], lines: [], max: 4, maxLen: 20,
-        });
-      }
-      const base = {
-        picked: true,
-        suggested: ["いやぁまいったね", "ねむい", "そうきたか"],
-        max: 4,
-        maxLen: 20,
-      };
-      if (r.request().method() === "POST") {
-        let body = {};
-        try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
-        return json(r, { ...base, lines: (body.lines || []).slice(0, 4) });
-      }
-      return json(r, {
-        ...base,
-        lines: how === "set" ?
-            ["いやぁまいったね", "ねむい", "そうきたか", "あしたもがんばる"] :
-            [],
+      return r.fulfill({
+        status: 410, contentType: "application/json",
+        body: JSON.stringify({ error: "closed" }),
       });
     }
     if (path.startsWith("/donors")) {

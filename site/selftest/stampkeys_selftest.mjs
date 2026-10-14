@@ -1,14 +1,14 @@
 /**
- * **スタンプまわりの確かめ2本立て。**
+ * **LINEスタンプのいいねの鍵**の確かめ（`content/goods.ts`。2026-10-11）
  *
- *  - 前半: `components/me/stampShow.ts`（`/me` に出すか出さないか。#716）
- *  - 後半: `content/goods.ts` の **LINEスタンプのいいねの鍵**（2026-10-11）
+ *     node site/selftest/stampkeys_selftest.mjs
  *
- *     node site/selftest/stampshow_selftest.mjs
+ * 前は `/me` の「スタンプのことば」（`components/me/stampShow.ts`。#716）と
+ * 2本立てだった。あちらは欄ごと消したので（#860）、この1本だけ残っている。
  *
  * ---
  *
- * # 後半 — いいねの鍵（`LINE_STAMPS` の `line` と `also`）
+ * # いいねの鍵（`LINE_STAMPS` の `line` と `also`）
  *
  * いいねは**付箋の字**に当たっている（`components/goods/wordVotes.tsx`）。
  * 字が鍵なので、**言い方が変わると、すでに付いているいいねが迷子になる。**
@@ -33,50 +33,21 @@
  * # 1. 1つの字が2枚を指す（`also` を、ほかの枚のセリフと同じにする）
  * sed 's/also: \["サプラ〜イズ！！"\]/also: ["ほな"]/' \
  *   site/content/goods.ts > /tmp/stamp-clash.ts
- * STAMP_GOODS_TS=/tmp/stamp-clash.ts node site/selftest/stampshow_selftest.mjs   # → 1
+ * STAMP_GOODS_TS=/tmp/stamp-clash.ts node site/selftest/stampkeys_selftest.mjs   # → 1
  *
  * # 2. `LINE_WORDS` から `also` を落とす（一覧に二重に出る側）
  * sed 's/^export const LINE_WORDS = LINE_VOTES.flat();/export const LINE_WORDS = LINE_STAMPS.map((s) => s.line);/' \
  *   site/content/goods.ts > /tmp/stamp-drop.ts
- * STAMP_GOODS_TS=/tmp/stamp-drop.ts node site/selftest/stampshow_selftest.mjs   # → 1
+ * STAMP_GOODS_TS=/tmp/stamp-drop.ts node site/selftest/stampkeys_selftest.mjs   # → 1
  *
  * # 3. 鍵の前後に空白（付箋の字と永久に一致しない。いいねが 0 のまま動かない）
  * sed 's/line: "悲報なんやけど"/line: "悲報なんやけど "/' \
  *   site/content/goods.ts > /tmp/stamp-space.ts
- * STAMP_GOODS_TS=/tmp/stamp-space.ts node site/selftest/stampshow_selftest.mjs   # → 1
+ * STAMP_GOODS_TS=/tmp/stamp-space.ts node site/selftest/stampkeys_selftest.mjs   # → 1
  * ```
  *
  * **読めなかった写しは 1 ではなく 2。** 1 で落とすと「鍵が食い違った」に
  * 見えるが、鍵は1つも読めていない。
- *
- * ---
- *
- * # 前半 — `components/me/stampShow.ts`（#716）
- *
- * ## なぜ要るか
- *
- * `/me` は**ログインしないと1行も描かない。** だからこの箱のブラウザでは
- * 「選ばれていない人の画面」を開けず、**余計なものが出ていても誰も見ない
- * まま出せてしまう。**
- *
- * そして出てしまったら取り返しがつかない。25人は投げ銭の順位そのもので
- * （`docs/island-money.md`）、「あなたは選ばれていません」を1度見せたら、
- * その人はもう知っている。
- *
- * ## 何を見ているか
- *
- * 出すか出さないかの判断を、**起こりうる組み合わせぜんぶ**に当てる。
- *
- *   1. **選ばれていない人には、どの段でも何も出ない**（待ち・読めた・落ちた）
- *   2. 読み込み中は、選ばれている人にも出さない（灰色の骨も出さない）
- *   3. 読めなかったとき、**一度も見えたことのない端末には何も出さない**
- *   4. 一度でも見えた端末だけ「もう一度よみこむ」が出る（§10）
- *   5. 欄には必ず1つ以上入る（提案が0本でも、空の欄1つ）
- *
- * ## 探し方が当たることを、先に見る（`docs/island-misses.md` #19）
- *
- * 「何も出ない」は、**判断がいつも `nothing` を返しても通る。**
- * だから先に「選ばれた人には出る」ことを見てから、出ないほうを見る。
  *
  * 終了コード: 0=通った / 1=食い違った / 2=数えるものが無い
  */
@@ -107,35 +78,8 @@ function loadTs(file, req) {
   return mod.exports;
 }
 
-const src = join(here, "..", "components", "me", "stampShow.ts");
-const { phase, startLines, leadKey } = loadTs(src);
-
-if (typeof phase !== "function" || typeof startLines !== "function" ||
-    typeof leadKey !== "function") {
-  console.error("stampShow.ts から phase / startLines / leadKey を取り出せなかった");
-  process.exit(2);
-}
-
 let bad = 0;
 let seen = 0;
-
-/**
- * 1件の確かめ。
- * @param {string} name 何を見ているか
- * @param {unknown} got 出たもの
- * @param {unknown} want ほしいもの
- */
-function eq(name, got, want) {
-  seen += 1;
-  const a = JSON.stringify(got);
-  const b = JSON.stringify(want);
-  if (a === b) {
-    console.log(`  ok   ${name}`);
-    return;
-  }
-  bad += 1;
-  console.log(`  NG   ${name} — ${a} ≠ ${b}`);
-}
 
 /**
  * 1件の確かめ（○×のほう）。
@@ -158,75 +102,6 @@ function give(why) {
   console.log(why);
   process.exit(2);
 }
-
-/* ---------------- 0. 探し方が当たるか（先に見る） ---------------- */
-
-console.log("# 0. 選ばれた人には、ちゃんと出る（0件が空振りでない）");
-eq("読めて、入っている → 1枚出る", phase("ok", true, false), "panel");
-eq("控えが在っても、読めていれば1枚", phase("ok", true, true), "panel");
-
-/* ---------------- 1. 選ばれていない人 ---------------- */
-
-console.log("\n# 1. 選ばれていない人には、どの段でも何も出ない");
-for (const st of ["wait", "ok", "down"]) {
-  for (const seenHere of [false, true]) {
-    /* **`seen` が立っていても出さない。** 控えは「自分が入っている」と
-       分かった端末にしか立たないので、立っていてここが `ok` で
-       `picked: false` なら、入れ物から外れたということ。
-       そのときに札を出すと「外された」と言うことになる */
-    const want = st === "down" && seenHere ? "readagain" : "nothing";
-    eq(`${st} / 控え ${seenHere} → ${want}`, phase(st, false, seenHere), want);
-  }
-}
-eq("読めて、入っていない → 何も出さない", phase("ok", false, false), "nothing");
-eq("読めて、入っていない（控えあり）→ 何も出さない",
-  phase("ok", false, true), "nothing");
-
-/* ---------------- 2. 読み込み中 ---------------- */
-
-console.log("\n# 2. 読み込み中は、誰の画面にも出さない");
-eq("待ち / 入っている", phase("wait", true, false), "nothing");
-eq("待ち / 入っている（控えあり）", phase("wait", true, true), "nothing");
-eq("待ち / 入っていない", phase("wait", false, true), "nothing");
-
-/* ---------------- 3. 読めなかったとき ---------------- */
-
-console.log("\n# 3. 読めなかったとき");
-eq("一度も見えていない端末 → 何も出さない",
-  phase("down", true, false), "nothing");
-eq("一度でも見えた端末 → もう一度よみこむ",
-  phase("down", true, true), "readagain");
-/* **`picked` は見ていない。** 落ちた回は入れ物を引けていないので、
-   そこで `picked` を当てにすると「読めていない値」で画面を決めることになる */
-eq("落ちた回は picked を見ない（控えだけで決まる）",
-  phase("down", false, true), phase("down", true, true));
-
-/* ---------------- 4. 欄に入れることば ---------------- */
-
-console.log("\n# 4. 欄には必ず1つ以上入る");
-eq("決めてあるものが勝つ",
-  startLines(["きめた"], ["ていあん"]), ["きめた"]);
-eq("決めていなければ、提案の1本目",
-  startLines([], ["ていあん1", "ていあん2"]), ["ていあん1"]);
-eq("提案が0本でも、空の欄が1つ", startLines([], []), [""]);
-eq("空白だけの提案は飛ばす", startLines([], ["  ", "ほんもの"]), ["ほんもの"]);
-eq("提案が空白だけなら、空の欄が1つ", startLines([], ["   "]), [""]);
-eq("決めてあるものは何本でもそのまま",
-  startLines(["あ", "い", "う", "え"], ["ていあん"]),
-  ["あ", "い", "う", "え"]);
-
-/* ---------------- 5. 頭の1行 ---------------- */
-
-console.log("\n# 5. 頭の1行");
-/* **本番で25人中6人に提案が出なかった**（口ぐせが見つからなかっただけ）。
-   その人に「このことばが入ります」と言うと、何も無いところを指す */
-eq("提案が在る → 書きなおす話", leadKey(["ていあん"], [""]), "rewrite");
-eq("もう書いてある → 書きなおす話", leadKey([], ["かいた"]), "rewrite");
-eq("どちらも無い → 書く話", leadKey([], [""]), "write");
-eq("どちらも空白だけ → 書く話", leadKey(["  "], ["   "]), "write");
-eq("提案が空の配列、欄も空 → 書く話", leadKey([], []), "write");
-
-/* ================ 後半: LINEスタンプのいいねの鍵 ================ */
 
 /**
  * 鍵の食い違いを並べる。**空なら通った。**
@@ -326,7 +201,7 @@ if (!Array.isArray(LINE_WORDS) || LINE_WORDS.length === 0) {
 }
 
 console.log(
-  `\n# 6. いいねの鍵（スタンプ ${LINE_STAMPS.length}枚 / 鍵 ${LINE_WORDS.length}本。` +
+  `\n# 1. いいねの鍵（スタンプ ${LINE_STAMPS.length}枚 / 鍵 ${LINE_WORDS.length}本。` +
   `うち ${LINE_WORDS.length - LINE_STAMPS.length}本が「同じスタンプを指すほかの字」）`,
 );
 const trouble = keyTrouble(LINE_STAMPS, LINE_WORDS);

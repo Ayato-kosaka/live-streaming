@@ -261,6 +261,21 @@ python3 -m http.server 4130 --directory site/.next-3130 &
 
 `.next` は 600MB を超える。使い終わったら消す。
 
+**見張りを足した・書き換えたら、その見張りが「落ちるときに落ちる」かを見る。**
+
+```bash
+python3 python/selftest_runner.py        # 見張りを全部回す（緑かどうか）
+python3 python/mutation_drill.py --list  # 対照を、何に当てられるか
+python3 python/mutation_drill.py         # 守っている実物を壊して、赤くなるかを見る
+```
+
+**緑は2通りに読める**——「守れている」と「何も見ていない」。
+見分けるには守っている実物をわざと壊すしかない（`docs/island-standards.md` §15）。
+`mutation_drill.py` は**壊したものを `git checkout --` で必ず戻す**が、
+**実物を壊すあいだ、ほかの見張りを同じ置き場で回さない**こと
+（混ざると嘘の赤が出る。道具の側でも鍵と `ps` で止めてある）。
+本番では手で押す（Actions の「見張りの対照を当てる」）。
+
 ページを触ったら、書き出したものを一通り回して確認する:
 
 ```bash

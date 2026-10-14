@@ -384,7 +384,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
-| **スタンプに乗せることば** | Firestore `islandStampLine.lines` | **本人**（`POST /stampline/mine`） | LINE スタンプを作るとき（公開の面には出さない） | **戻らない。** 人の字 |
+| **スタンプに乗せることば** | Firestore `islandStampLine.lines` | 本人（`POST /stampline/mine`）だった。**2026-10-14 に口を閉じた**（#860）。いまは管理の道具（`python/admin/stamp_line_*.py`）だけ | LINE スタンプを作るとき（2026-10-13 に申請済み。公開の面には出さない） | **戻らない。** 人の字。**閉じたあとも記録として残す** |
 | いまいる場所・書き置き | Firestore `island/state.current` | **あやと（`word` と `week` だけ）**。`place` は機械の受け皿あり、過ぎた行は機械が落とす（3.5） | 島の看板 | 入れ直せる |
 
 ### 3.2 写し（正から作り直せる。壊れても焼き直せばよい）
@@ -427,7 +427,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 
 止め金を15本足すのではなく、**2か所であることをやめる。**
 `GET /state` に `limits` を足して、画面はそこから受ける
-（先例は `/stampline/mine`。**15か所のうち、正しい形はそこ1つだけだった**）。
+（先例は `/stampline/mine`（2026-10-14 に閉じた）。**15か所のうち、正しい形はそこ1つだけだった**）。
 
 **一度に全部は動かさない。** 動かしたのは3か所:
 
@@ -819,9 +819,9 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 **`islandGoal` と `islandGoalHealth` は在るが、もう誰も読まない**（#639）。
 `nordicLog` は**読み書きの口を外した**ので、コードからは誰も触らない
 （書類は残してある。下の表を見る）。
-**`islandStampLine` もこれから作る**（#716・下の a）。LINE スタンプに乗せる
-ことばを1人1書類。**書類が在ること自体が「選ばれた」という意味**なので、
-閉じたままにする。
+**`islandStampLine`** は #716 で作り、**2026-10-14 に島の口を閉じた**（#860・下の a）。
+LINE スタンプに乗せることばを1人1書類。**書類が在ること自体が「選ばれた」という意味**
+なので、閉じたままにする。書類は記録として残す。
 **`islandDoneruHealth` もこれから作る**（#294）。Doneru のぶんが最後に
 BigQuery へ入った日を1枚だけ持つ札で、`python/doneru_health.py` が
 取り込みのあとに写す。3日以上古いと `/nordic` の応援の区画に
@@ -930,7 +930,7 @@ island/state
 | どこ | 名乗れると何が起きたか |
 | --- | --- |
 | `GET /cards/mine` | その人のカードが全部返る（どの日に投げたか・絵・名乗り） |
-| `POST /stampline/mine` | **`islandStampLine.lines` を上書きできる**（3.1 が「戻らない。人の字」と書いている正本） |
+| `POST /stampline/mine` | **`islandStampLine.lines` を上書きできる**（3.1 が「戻らない。人の字」と書いている正本。2026-10-14 に口ごと閉じた） |
 | `listResidents()` | 島の名札に、その人のキャラクターの絵が出る |
 
 **3つとも「送られた値を信じず `islandUsers` から引き直す」正しい形**で
@@ -1011,8 +1011,11 @@ island/state
 （`docs/island-money.md`「実額は視聴者には一切見せない」）。だから
 
 - `firestore.rules` で**名指しで閉じてある**（ブラウザからは読み書きできない）
-- 読み書きの口は `/stampline/mine` だけで、**パスに id を取らない。**
-  他人を名指しする道が1本も無い（`docs/island-api.md` 11章）
+- 島の口（`/stampline/mine`）は**2026-10-14 に閉じた**（#860。スタンプは
+  2026-10-13 に申請済みで、書き直しても入らない）。**誰が送っても 410** で、
+  口からは読みも書きもしない（`docs/island-api.md` 11章）。開いていた頃も
+  **パスに id を取らず**、他人を名指しする道は1本も無かった。
+  `/me` の欄も全員ぶん消した
 - **焼き込み（`site/content/*.ts`）にも git にも入れない。**
   種をまくのは `python/admin/stamp_line_seed.py`（名簿は Actions の
   `repository_dispatch` で渡して、ジョブの頭で伏せ字にする）
@@ -1561,6 +1564,7 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | `islandVotes` | **無い** | 前の版のこの文書は「13件残してある」と書いていた。**いま本番に無い** |
 | `islandDayPeople` | **落とす。**#409 で読む口が無くなった | 経緯は [`island-incident-2026-09-14-cards.md`](./island-incident-2026-09-14-cards.md) の6。**同じものをもう一度作る前に、そこを読む** |
 | `nordicLog` | 1件（`day-depart`） | **口は外した。**日記は `site/content/nordic.ts` の `NORDIC_LOG` に焼く。入れ物と中身は残してある |
+| `islandStampLine` | 25件（申請したのは23人。2人は `dropped`） | **島の口は閉じた**（2026-10-14・#860。誰が送っても 410）。**消さない**——本人が書いた字は戻らない。触るのは管理の道具（`python/admin/stamp_line_*.py`）だけ |
 
 `islandIdeas` に入っている欄（もう書かれない）:
 `text`（提案・200字）/ `name`（名乗った名前）/ `uid` / `cid` /
