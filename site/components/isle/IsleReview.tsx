@@ -199,8 +199,15 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
       {st && st.residents.length > 0 && (
         <Zone>
           <H note={`${st.people.toLocaleString()}人`}>この島にいた人</H>
+          {/* **「よく来てくれた人ほど、島にいる日が多い」を外した**（2026-10-14）。
+              あれは**こちらが何順で並べているか**の説明で、読む人には要らない
+              （`CLAUDE.md`「画面で、システムの仕様を説明しない」）。
+              ただし下のマスには数字だけが出ていて、**何の数かは画面のどこにも
+              無かった**——説明を消すだけだと読めなくなる。だから決めごとではなく
+              **数字の名前**を置く（`components/live/FriendsWall.tsx` と同じ
+              「いっしょにいた日数」）。 */}
           <p className="isle-note">
-            島を歩いているのが、この人たち。よく来てくれた人ほど、島にいる日が多い。
+            島を歩いているのが、この人たち。数字は、いっしょにいた日数。
           </p>
           <ul className="isle-folks">
             {st.residents.map((r) => (

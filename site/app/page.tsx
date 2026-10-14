@@ -133,7 +133,10 @@ export default function Home() {
               />
               {/* 寄りの印はスマホの1画面目に出るので、こちらは先に取る。
                   こちらも帯から下は切る（`height` が切ったあとの寸法）。
-                  124px の絵に22文字＝約5px で、dpr2 でも読めなかった */}
+                  124px の絵に22文字＝約5px で、dpr2 でも読めなかった。
+                  **元の絵は 520px で 33.9KB あった。** 枠は 124px なので
+                  dpr3 でも 372px あれば足りる。390px に焼き直して 18.1KB。
+                  ここはスマホの1画面目に必ず乗るので、15.8KB は全員が払う */}
               <img
                 className="hero-logo-mark"
                 src="/logos/ayato-island-mark.webp"

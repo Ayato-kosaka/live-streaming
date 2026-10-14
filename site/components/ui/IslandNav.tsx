@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { CSSProperties } from "react";
 import { SPOTS, spotOfPath } from "../island/layout";
 
 /**
@@ -17,6 +18,27 @@ import { SPOTS, spotOfPath } from "../island/layout";
  *
  * 札を別ファイルにしたのは、ここだけ画面側で道を読むから。看板の残り
  * （島へ戻る板・いまどこ・自分のアイコン）は焼いたまま出す。
+ *
+ * ## 絵は `<img>` ではなく、CSS の地にする（2026-10-14）
+ *
+ * この帯は **900px から下では `display: none`**（`app/css/pages.css`）。
+ * それでも `<img src>` は**消えている札のぶんまで落ちてくる。**
+ * `display: none` は絵の取り寄せを止めない。
+ *
+ * そのうえ React は、最初に書き出した `<img>` を見て `<head>` に
+ * `<link rel="preload" as="image">` を**6本**足す。先読みは CSS より先に
+ * 走るので、「どうせ隠れる」ことが決まる前に、いちばん高い優先度で取りに行く。
+ *
+ * 実測（幅390・dpr2・送らずに静まるまで。`tools/sprites/firstload.mjs`）:
+ * tent 6,510 / hut-ayato 7,700 / tower-studio 5,534 / hut-workshop 11,360 /
+ * signpost-flags 7,390 / signboard 8,466 = **45.9KB**。
+ * これが**島の面ぜんぶ（136面）**の最初の1画面に乗っていた。
+ * スマホの人は1枚も見ないのに払っている。
+ *
+ * CSS の地（`background-image`）にすると、**箱が作られないかぎり取りに行かない。**
+ * `display: none` の中では箱が作られないので、390px では0バイト。
+ * 900px から上では今までどおり出る。絵は `alt=""` の飾りだったので、
+ * 読み上げに出していたものも変わらない。
  */
 export default function IslandNav() {
   const current = spotOfPath(usePathname());
@@ -32,7 +54,13 @@ export default function IslandNav() {
              出ない（`display: none`）ので、そこでは帯ごと読み上げに出てこない */
           aria-current={current === s.id ? "page" : undefined}
         >
-          <img src={`/sprites/${s.icon}.webp`} alt="" />
+          {/* 飾りの絵。地にしてあるのは、隠れている幅で取り寄せさせないため
+              （この上の但し書き）。名前は隣の字が言うので、ここは空のまま */}
+          <i
+            className="ih-ic"
+            aria-hidden
+            style={{ "--ih-ic": `url(/sprites/${s.icon}.webp)` } as CSSProperties}
+          />
           {s.label}
         </Link>
       ))}

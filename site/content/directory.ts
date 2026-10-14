@@ -240,9 +240,9 @@ export const SHELVES: Shelf[] = [
   {
     id: "atlas",
     title: "島の連なり",
-    note: "旅の章ごとに島が1つ建っている",
+    note: "これまで渡ってきた島、ぜんぶ",
     items: [
-      { href: "/atlas", name: "島の地図", note: "章ごとの島が、日付順に並ぶ", q: q("島の地図 atlas 連なり 章") },
+      { href: "/atlas", name: "島の地図", note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas 連なり 章") },
       ...ISLE_CHAPTERS.map((c) => ({
         href: `/island/${c.slug}`,
         name: c.name,
