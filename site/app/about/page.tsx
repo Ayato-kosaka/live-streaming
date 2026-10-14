@@ -344,7 +344,9 @@ export default function AboutPage() {
           {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
               生成りの縁を付けて、わずかに傾ける。写真そのものを裸で置かない。 */}
           <span className="abio-art">
-            <img src="/characters/ayato-clay.jpg" alt="鍋をかきまぜているあやと" width={300} height={169} />
+            {/* 760px の webp。枠は 300px なので、これで dpr2 も dpr3 も足りる
+                （前は 1080px の jpg で 72.7KB 運ばせていた） */}
+            <img src="/characters/ayato-clay.webp" alt="鍋をかきまぜているあやと" width={300} height={169} />
           </span>
           <div className="abio-word">
             <b>{PROFILE.lead}</b>

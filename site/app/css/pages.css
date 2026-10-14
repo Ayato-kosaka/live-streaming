@@ -341,9 +341,18 @@
   overflow: hidden;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.ih-link img {
+/* 札の絵。**`<img>` ではなく地（`background-image`）で置く。**
+   帯は 900px から下では `display: none` だが、`<img src>` はそれでも
+   落ちてくるし、React が `<head>` に `preload` まで足す。6枚で 45.9KB を
+   **島の面ぜんぶ**が払っていた（`components/ui/IslandNav.tsx` の但し書き）。
+   地にすると、箱が作られない＝隠れている幅では1バイトも取りに行かない。
+   どの絵かは札ごとに `--ih-ic` で差す。 */
+.ih-link .ih-ic {
   width: 20px; height: 20px; flex: none;
-  object-fit: contain; object-position: center bottom;
+  background-image: var(--ih-ic);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
 }
 /* 看板に並ぶのは6つの札だけ。「ぜんぶ」（`/all`）はここには出さない
    （砂浜の `.ifoot-door.is-all` が持っている。`way.css` の但し書き）。 */
