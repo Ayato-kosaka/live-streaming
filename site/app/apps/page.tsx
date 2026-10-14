@@ -130,7 +130,17 @@ export default function AppsPage() {
 
               <div className="aapp-badges">
                 {a.links.map((l) => (
-                  <a key={l.href} className="abadge" href={l.href} target="_blank" rel="noopener noreferrer">
+                  /* ここはアプリが縦に並ぶので、同じ「App Store」が2つ出る。
+                     読み上げがリンクだけを並べて読むと、どちらの店か分からない。
+                     **見える字は変えずに**、読み上げる名前にアプリの名を足す */
+                  <a
+                    key={l.href}
+                    className="abadge"
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${a.name} を ${l.label} で見る`}
+                  >
                     <Icon
                       name={l.label.includes("Google") ? "googleplay" : "appstore"}
                       size={18}

@@ -1109,7 +1109,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
 /* 街の中の「見たい・食べたい・やりたい・買いたい」。
    押せないので、厚みも枠も付けない。字の太さと件数だけで段を分ける。 */
 .ncat { margin-top: var(--sp-3); }
-.ncat > h4 {
+.ncat > :is(h3, h4) {
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
@@ -1120,7 +1120,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   line-height: var(--lh-head);
   color: var(--ink);
 }
-.ncat > h4 em {
+.ncat > :is(h3, h4) em {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
