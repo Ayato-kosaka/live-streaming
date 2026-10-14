@@ -43,8 +43,8 @@ import {
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
-/* LINE スタンプの、住人のことば(#716)。同じ理由で外に置いてある。
-   **本人にだけ見せる口**で、パスに id を取らない（`stampLine.ts` 冒頭）。 */
+/* LINE スタンプの、住人のことば(#716)。**閉じた口**(#860)で、
+   410 を返すだけ（`stampLine.ts` 冒頭）。 */
 import {handleStampLine} from "./stampLine";
 /* 締め切った宛先の表(#225)。**島の表（`site/content/themes.ts`）の写し**で、
    `functions/tools/shutthemes.mjs` が組み立てる。手で直さない。 */
@@ -2798,16 +2798,9 @@ export const islandApi = onRequest(
       }
 
       /* ---------------- スタンプのことば(#716) ----------------
-         中身は `stampLine.ts`。ここは取り付けだけ。扱ったら true が返る。
-         **ログインした本人に、自分のぶんだけ。** 「誰か」を見るところと
-         1日の上限を数えるところを増やさないよう、どちらも関数で渡す。 */
-      if (
-        await handleStampLine(
-          {method, path, auth: req.headers.authorization, body},
-          res,
-          {whoIs, takeQuota},
-        )
-      ) {
+         **閉じてある**(#860)。中身は `stampLine.ts`。扱ったら true が返る。
+         合言葉を見ずに 410 を返すので、「誰か」も上限も渡さない。 */
+      if (handleStampLine({method, path}, res)) {
         return;
       }
 
@@ -3390,8 +3383,9 @@ export const islandApi = onRequest(
              在って、ずれても赤くなるものが無い**形が、島じゅうに15か所あった。
 
              止め金を15本足すのではなく、**2か所であることをやめる。**
-             先例は `/stampline/mine` で、あちらは返事に `max` と `maxLen` を
-             乗せていて、画面は1つも数字を持っていない。
+             先例は `/stampline/mine`（2026-10-14 に閉じた。#860）で、
+             あちらは返事に `max` と `maxLen` を乗せていて、画面は1つも
+             数字を持っていなかった。
 
              `/state` は誰でも叩ける口で CDN にも焼くが、ここに乗るのは
              **定数だけ**。人を指す値は1つも入らない。 */
