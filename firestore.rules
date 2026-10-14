@@ -143,7 +143,7 @@ service cloud.firestore {
        いない問いも読める。**
        `GET /fork` が一覧で返さないのは「端末IDを作り直しながら投げれば
        知らない id の札を並べられる」からで、**ここを開けるとその用心が
-       まるごと無駄になる**(rouletteSessions・islandRemote と同じ形)。
+       まるごと無駄になる**(rouletteSessions と同じ形)。
 
        書くのは投票の中(`POST /poll/:id/vote` `POST /fork/:id/vote`)だけ。
        票数はトランザクションで1ずつ増やしていて、**1日の上限と1人1票が
@@ -224,13 +224,16 @@ service cloud.firestore {
        書くほうは、当たりをサーバーで決める仕掛けそのものなので開けない。 */
     match /rouletteSessions/{docId} { allow read, write: if false; }
 
-    /* 島の遠隔操作(#165)。コントローラー(あやとの手元)と、配信に映して
-       いる島を繋ぐ入れ物。**ここを開けない。**
-       表示側(OBS)はログインできないので読ませる道が要るが、それは
-       islandApi の `GET /remote?sessionId=…` に絞る。ここを
-       「読むのは誰でも」にすると collection ごと引けるようになって、
-       **推測できない sessionId にした意味が無くなる**(1つ知られると全部読める)。
-       書くほうは、押せるのがあやとだけという仕掛けそのものなので開けない。 */
+    /* 島の遠隔操作の入れ物(islandRemote)。**面も口も消した**(2026-10-14)ので、
+       書く者も読む者もいない。残った書類は `python/admin/firestore_delete.py`
+       が片づける。**規則の行は残す**——collection が空になるまでのあいだ、
+       ここを閉じているのはこの1行だけ。 */
+    /* 付箋を貼れる先のうち、机から足したぶん(2026-10-14)。**ここを開けない。**
+       読む道は islandApi の `GET /notes/themes` に絞る。足す・締め切る・消すは
+       あやとだけという仕掛けが Functions の中にしかないので、直に書ける口を
+       開けると、誰でも棚を増やせる。 */
+    match /islandNoteThemes/{docId} { allow read, write: if false; }
+
     match /islandRemote/{docId} { allow read, write: if false; }
 
     /* あやと島カード(#173)。#202 で**配ってある**形になった。

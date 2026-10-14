@@ -29,7 +29,6 @@ import {
 } from "./doneruYoutube";
 /* 島の遠隔操作(#165)。このファイルはもう長いので、丸ごと新しい機能は
    外に置いて、ここには取り付けだけを足す。 */
-import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
 import {
@@ -96,6 +95,12 @@ const db = admin.firestore();
 
 const STATE_DOC = db.collection("island").doc("state");
 const NOTES = db.collection("islandNotes");
+/* 付箋を貼れる先のうち、机から足したぶん（2026-10-14）。
+   焼き込みの表（`site/content/themes.ts`）と**足し合わせて**使う。
+   あちらは Git を出さないと増えないので、配信の最中には間に合わない。 */
+const NOTE_THEMES = db.collection("islandNoteThemes");
+/** 足せる貼り先の数。札の並びが指で届かなくなる前に止める。 */
+const NOTE_THEMES_MAX = 40;
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const CHANNELS = db.collection("islandChannels");
@@ -2832,25 +2837,6 @@ export const islandApi = onRequest(
       typeof raw === "object" && raw ? (raw as Json) : ({} as Json);
 
     try {
-      /* ---------------- 島の遠隔操作(#165) ----------------
-         中身は `remote.ts`。ここは取り付けだけ。扱ったら true が返る。 */
-      const sid = req.query?.sessionId;
-      if (
-        await handleRemote(
-          {
-            method,
-            path,
-            auth: req.headers.authorization,
-            sessionId: typeof sid === "string" ? sid : "",
-            body,
-          },
-          res,
-          ownerUid,
-        )
-      ) {
-        return;
-      }
-
       /* ---------------- あやと島カード(#173) ----------------
          中身は `cards.ts`。ここは取り付けだけ。扱ったら true が返る。
          「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
@@ -3672,6 +3658,104 @@ export const islandApi = onRequest(
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
         res.json({notes: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* ---------------- 付箋を貼れる先(2026-10-14) ----------------
+         焼き込みの表(`site/content/themes.ts`)に**足す**ぶん。
+         読むのは誰でも、足す・締め切る・消すのはあやとだけ。
+
+         **`where` も `orderBy` も使わない**(#168)。索引を作る権限が
+         サービスアカウントに無いので、引いてから手元で並べる。
+         多くても `NOTE_THEMES_MAX` 件しかない。 */
+      if (method === "GET" && path === "/notes/themes") {
+        const snap = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+        const themes = snap.docs
+          .map((d) => ({
+            id: d.id,
+            name: String(d.get("name") ?? ""),
+            lead: String(d.get("lead") ?? ""),
+            placeholder: String(d.get("placeholder") ?? ""),
+            closed: d.get("closed") === true,
+            at: Number(d.get("createdAt")) || 0,
+          }))
+          .sort((a, b) => a.at - b.at)
+          .map(({at: _at, ...t}) => t);
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({themes});
+        return;
+      }
+
+      if (method === "POST" && path === "/notes/themes") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(body.id, 40);
+        const name = clean(body.name, 24);
+        const lead = cleanText(body.lead, 80);
+        const placeholder = cleanText(body.placeholder, 80);
+        /* 鍵は付箋の `theme` 欄にそのまま入る。**打った字を信じない。**
+           形が違うものを通すと、`GET /stickies?theme=` が弾く鍵の
+           貼り先ができて、貼れるのに読めない棚になる。 */
+        if (!THEME_ID.test(id) || name.length < 2) {
+          res.status(400).json({error: "bad input"});
+          return;
+        }
+        const ref = NOTE_THEMES.doc(id);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          const all = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+          if (all.size >= NOTE_THEMES_MAX) {
+            res.status(409).json({error: "いっぱいです"});
+            return;
+          }
+        }
+        const now = Date.now();
+        await ref.set(
+          {
+            name,
+            lead,
+            placeholder,
+            closed: body.closed === true,
+            createdAt: cur.exists ? Number(cur.get("createdAt")) || now : now,
+            updatedAt: now,
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+          theme: {id, name, lead, placeholder, closed: body.closed === true},
+        });
+        return;
+      }
+
+      if (method === "DELETE" && path.startsWith("/notes/themes/")) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(path.slice("/notes/themes/".length), 40);
+        if (!THEME_ID.test(id)) {
+          res.status(400).json({error: "bad id"});
+          return;
+        }
+        /* **1枚でも貼ってあったら消さない。** 消すと、貼った人の字が
+           どこからも読めなくなる(消えてはいないが、届かない)。
+           そのときは締め切る(`closed`)——棚は残って、読むほうは今までどおり。 */
+        const used = await NOTES.where("theme", "==", id).limit(1).get();
+        if (!used.empty) {
+          res.status(409).json({error: "付箋が貼ってあります"});
+          return;
+        }
+        await NOTE_THEMES.doc(id).delete();
+        res.set("Cache-Control", "no-store");
+        res.json({ok: true});
         return;
       }
 
