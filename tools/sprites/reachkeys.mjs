@@ -534,17 +534,26 @@ async function visit(p, base, path) {
      出ているものを見る。出ていなければ、**押すと出るもの**を探す
      （行き先へ飛ばない `button` / `role=button` だけに Enter を当てる） */
   const dialogs = [];
+  /* Esc を押して、**閉じるまで待つ。**
+     閉じるのは React が描き直してからなので、決め打ちの待ちだと混んだ箱で
+     「閉じない」に化ける（`MapZoom` は Esc の手当てを持っているのに、
+     load average 40 の回だけ7面で赤くなった。`docs/island-standards.md` §13）。 */
   const check = async (d) => {
     await p.keyboard.press("Escape");
-    await p.waitForTimeout(250);
-    const gone = await p.evaluate((rk) => {
-      const el = document.querySelector(`[data-rk="${rk}"]`);
-      if (!el || !el.isConnected) return true;
-      const cs = getComputedStyle(el);
-      if (cs.display === "none" || cs.visibility === "hidden") return true;
-      const r = el.getBoundingClientRect();
-      return r.width === 0 || r.height === 0;
-    }, d.rk);
+    const closed = () =>
+      p.evaluate((rk) => {
+        const el = document.querySelector(`[data-rk="${rk}"]`);
+        if (!el || !el.isConnected) return true;
+        const cs = getComputedStyle(el);
+        if (cs.display === "none" || cs.visibility === "hidden") return true;
+        const r = el.getBoundingClientRect();
+        return r.width === 0 || r.height === 0;
+      }, d.rk);
+    let gone = false;
+    for (let i = 0; i < 10 && !gone; i++) {
+      await p.waitForTimeout(150);
+      gone = await closed();
+    }
     dialogs.push({ at: d.at, gone });
   };
   for (const d of got.dialogs) await check(d);
