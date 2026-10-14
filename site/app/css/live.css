@@ -525,6 +525,22 @@
 }
 /* 題名の札。**絵の上**に来るのが実測（シーラカンスの面）。
    白い紙をテープで貼ったように、わずかに傾ける。 */
+/* いま何枚目か。**題名の札の上に、小さく。**
+   送り（`.rzk-pager`）と同じ字だが、あちらは一覧の升目のすぐ上にあって、
+   390px では画面を1つ送らないと出てこない。開いてすぐ分かる場所へもう一度置く。
+   押すものではないので、板にも札にもしない（`docs/island-design.md` 3-3）。 */
+.rzk-at {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 var(--sp-1);
+  text-align: center;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: var(--pap-ink-2);
+}
+.rzk-at > b { font-size: var(--fs-note); color: var(--pap-ink); }
+
 .rzk-page > .rzk-tag {
   position: relative;
   z-index: 2;
