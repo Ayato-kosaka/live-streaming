@@ -59,6 +59,11 @@ concurrency:
 
 permissions:
   contents: read
+  # **繋ぎ（`workflow_run`）が実際に走っているかを数えるのに要る。**
+  # 名前が合っていても、繋ぎ先が止まれば黙って動かなくなる——そこは
+  # YAML を読むだけでは分からず、run の実績を引くしかない
+  # （`python/chain_alive_watch.py`）。**読むだけ。1バイトも書かない**
+  actions: read
 
 jobs:
   selftest:
@@ -194,6 +199,26 @@ jobs:
       # 外してから数える（周りに何が置いてあっても同じ数が出るように）
       - name: ログを数える道具の探し方が効いているか（0.1秒）
         run: python3 tools/logident.py --selftest
+
+      # **繋ぎ（`workflow_run`）が生きているかを、本物の run で当てる。**
+      #
+      # `python/workflow_link_selftest.py`（上の回し役が拾う）が見ているのは
+      # **名前だけ**で、繋ぎ先が実在する `name:` を指しているかで止まる。
+      # 名前が合っていても死ぬ道が3つある——繋ぎ先が走らなくなった／こちらが
+      # 一度も繋ぎで起きていない／`conclusion` で絞って赤い晩だけ落ちる。
+      # そこは GitHub の run を引かないと分からないので、**ここだけ外に出る。**
+      #
+      # だから回し役からは外してある（あちらは「ネットにも鍵にも触らない」を
+      # 守っている場所）。落ちられるかは `chain_alive_watch_selftest.py` が
+      # 作り物の表で毎回確かめていて、そちらは回し役が拾う。
+      #
+      # 境目の3日は実測から決めた（2026-10-14。繋ぎ先5本の連続する run の
+      # 間隔はいちばん空いて **1.22日**、繋ぎで起きた回の間隔は **1.10日**。
+      # 定時そのものの遅れは最長 8.0時間）。**3日はその 2.5倍。**
+      - name: 繋ぎ（workflow_run）が生きているか（API を読む。この箱で12秒）
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 python/chain_alive_watch.py --days 3
 
   # **書き出しとブラウザが要る判定器を、ここで回す。**
   #
