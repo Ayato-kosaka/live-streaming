@@ -545,6 +545,13 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
        終わったころにもう一度測る（毎フレーム測ると layout を起こす）。
        **「今日の島」の板が出てくるのもこのころ**（今日の1行を読んでから出る）。 */
     const t = window.setTimeout(measure, 900);
+    /* **もう一度、遅れて測る。** 「今日の島」の板は今日の1行を読んでから出るので、
+       900ms に間に合わないことがある。間に合わなかった回は、板が `taps` に
+       入らないまま建物の当たりが置かれ、**板の下に船着き場の当たりが残る**
+       （実測・幅390の表紙で、3回に1回「となりの島へ」が 72x32 になった。
+       48px を割る）。出たあとは `ResizeObserver` が拾うので、要るのは
+       「出てきたことに気づく」1回だけ */
+    const t2 = window.setTimeout(measure, 2600);
     /* **測った箱が変わったら、測り直す。**
        ここで測っているものは、どれもカメラで姿が変わる。
        `.isle-view` / `.isle-atlas` は寄りでは絵だけの 48px、引きでは名前が
@@ -569,6 +576,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
     }
     return () => {
       window.clearTimeout(t);
+      window.clearTimeout(t2);
       ro?.disconnect();
       ro = null;
     };

@@ -1291,10 +1291,19 @@
    指を取るのを「みる」1つに絞ると、板の残りは島の地面へ指を通す
    （押せば、その方向へ歩く）。`pointer-events: none` の `<button>` でも、
    中の `<span>` から上がってきた click は受け取る。 */
-.isle-going .isle-mark { pointer-events: none; }
+.isle-going .isle-mark {
+  pointer-events: none;
+  /* **押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+     厚みを残すと「押せるのに何も起きない板」になる。落ち影だけ、
+     看板の板（`hero.css` の `.hero-say`）と同じ向き・同じぼかしで置く */
+  box-shadow: 3px 8px 9px var(--cast, rgba(78, 96, 72, 0.28));
+}
 .isle-going .isle-go {
   pointer-events: auto;
   position: relative;
+  /* **この札で押せるのはここだけ。** 合図は厚み1種類だけなので、
+     厚みもここだけに付ける（30px の札は 4px。`docs/island-design.md` 3-3） */
+  box-shadow: 0 var(--pop-d2) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   /* 指で押せる最小（`docs/island-design.md` 3-2）。見た目は小さいままでよいので、
      見えない当たりを外へ広げる（島の札の `::before` と同じ作り・同じ 49px） */
 }
@@ -1308,8 +1317,11 @@
   transform: translate(-50%, -50%);
   border-radius: 999px;
 }
-.isle-going .isle-mark:active .isle-go,
-.isle-going .isle-go:active { transform: translateY(2px); }
+/* 押したら沈む（`docs/island-design.md` 3-5）。厚みも一緒に薄くする */
+.isle-going .isle-go:active {
+  transform: translateY(2px);
+  box-shadow: 0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
 /* 同じ札を2枚出さない。留めているあいだ、島の上の札は引っ込む */
 .isle[data-dock] .isle-spot .isle-mark { opacity: 0; pointer-events: none; }
 /* 吹き出しと建物の中を開いているあいだは、下の `.isle.is-talking .isle-mark` が
