@@ -280,6 +280,34 @@ export function VoteHeart({ word, votes }: { word: string; votes: WordVotes }) {
 }
 
 /**
+ * **押せないハート。** 宛先を締め切ったあとに、付いた数だけを見せる。
+ *
+ * 締め切った宛先には、もう1枚も立てられない（`POST /stickies` が 409 で断る）。
+ * `VoteHeart` を残すと、まだ札の無い字を押した人が**押して失敗する**。
+ * かといって数を消すと、締め切った宛先の付箋は数もハートも今までどおり出る
+ * （`Notes.tsx` の `shut`）のと食い違う。だから**数は出して、押しどころは出さない。**
+ *
+ * **厚みを付けない**（`docs/island-design.md` 3-3。厚みは押せる合図）。
+ * 読めていないあいだの扱いは `VoteHeart` と同じ（0 と同じ絵にしない）。
+ */
+export function VoteTally({ word, votes }: { word: string; votes: WordVotes }) {
+  if (votes.read === "wait") return <span className="gd-votewait is-still" aria-hidden />;
+  if (votes.read !== "ok") return null;
+  const n = votes.hearts(word) ?? 0;
+  return (
+    <span className="gd-votetally" aria-label={`「${word}」へのいいね ${n}`}>
+      <svg viewBox="0 0 24 22" aria-hidden>
+        <path
+          d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
+          fill="currentColor"
+        />
+      </svg>
+      <b>{n}</b>
+    </span>
+  );
+}
+
+/**
  * 欄のしまい。**押せなかった1行と、読めなかった札。**
  *
  * この2つは別のこと——押せなかったのは「立てるところで断られた」で、

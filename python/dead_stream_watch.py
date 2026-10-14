@@ -235,6 +235,7 @@ PAGES: dict[str, str] = {
     "legendDays.ts": "語り継がれている企画の、日ごとの配信（/legends/<名前>）",
     "shorts.ts": "ショート動画の棚（/map, 島の棚）",
     "streamPeaks.ts": "コメントがいちばん重なった秒（配信カードの押しどころ）",
+    "months.ts": "月ごとのふりかえりの、その月の配信ぜんぶ（/months/<年-月>）",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -247,8 +248,14 @@ PAGES: dict[str, str] = {
 # 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts")
+# `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
+# 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
+# ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、
+# そこが死んだら面の上の絵が1つ消える——件数の重みは一覧として数えつつ、
+# 死んだときに見るのはその1枚かどうか
 SIDE = ("streamTypes.ts", "cityStreams.ts", "onThisDay.ts", "kitchenTalk.ts",
-        "chapterStreams.ts", "legendDays.ts", "shorts.ts", "streamPeaks.ts")
+        "chapterStreams.ts", "legendDays.ts", "shorts.ts", "streamPeaks.ts",
+        "months.ts")
 
 # 対照の生きた側。**あやとの配信から選んだ、いまのところ公開のもの。**
 # 3本並べてあるのは、1本が非公開になった日に見張りごと止まらないため。

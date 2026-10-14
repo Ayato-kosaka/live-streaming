@@ -1440,6 +1440,24 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--chip-ink);
   vertical-align: 2px;
 }
+/*
+ * 行の2段目に置く、ふつうの説明。
+ *
+ * **`.lgd-t em`（札）に長い字を入れない。** あちらは「いちばん人が集まった日」
+ * のような短い印で、丸い地を敷く。説明を入れると札の中で折り返して、
+ * **押せる札が2つ並んでいるように見える**（2026-10-14 に撮って気づいた。
+ * `docs/island-misses.md` #237「借りた型は、自分の中身でいちばん長いものを
+ * 入れて1度撮る」と同じ形）。
+ */
+.lgd-t small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-note);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
+}
 /* 何人が書いたか。数えたものなので押せない札の色（オリーブ）で平らに */
 .lgd-n {
   flex: none;

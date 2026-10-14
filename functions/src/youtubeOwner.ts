@@ -15,7 +15,7 @@
  * - `cards.ts` の `GET /cards/mine` … その人のカードが全部返る
  *   （どの日に投げたか・絵・名乗り）
  * - `stampLine.ts` の `POST /stampline/mine` …
- *   **`islandStampLine.lines` を上書きできる。**
+ *   **`islandStampLine.lines` を上書きできる**（2026-10-14 に口ごと閉じた。#860）。
  *   `island-db.md` 3.1 が「戻らない。人の字」と書いている正本
  * - `islandApi.ts` の `listResidents()` …
  *   島の名札に、その人のキャラクターの絵が出る

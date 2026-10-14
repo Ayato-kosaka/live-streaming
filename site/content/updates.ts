@@ -62,6 +62,12 @@ export type Update = {
  */
 export const UPDATES: Update[] = [
   {
+    on: "2026-10-14",
+    text:
+      "LINEスタンプを申請したので、グッズの欄を「審査中」にしました。" +
+      "セリフの付箋は締め切りました。",
+  },
+  {
     on: "2026-10-13",
     /* この紙そのもの。**「下の付箋へ」を書かない**——面の添え書きが
        すぐ上でもう言っている（`docs/island-standards.md` 6章。
