@@ -1,0 +1,422 @@
+/*
+ * 月ごとのふりかえり（`/months`）。
+ *
+ * 紙（`.zk`）の中に置く部品だけをここに書く。紙そのもの・見出し・記録の欄・
+ * タイルは `streams.css` と `pages.css` のものをそのまま使う。
+ * **ここで紙を作り直さない。** 同じサイトの中に紙が2種類できる。
+ *
+ * 押せるものには厚み、押せないものは完全に平ら（`docs/island-design.md` 3-3）。
+ * ただし**一面に並ぶマスが全部押せるとき**は1枚ずつに厚みを付けない（同 3-3 の例外）。
+ * 月のマス（`.mcards`）と棒（`.mbars`）がそれ。
+ */
+
+/* ---------------------------------------------------------------- 顔 */
+
+.mface {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--zk-chip-soft);
+}
+/* 絵の取れない人。頭文字の丸に落とす（島のどこでも同じ落とし方） */
+.mface.is-none {
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: var(--fs-min);
+  color: var(--zk-ink-2);
+}
+
+/* ---------------------------------------------------------------- 表彰台 */
+
+.mpod {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mpod-i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-2) var(--sp-3);
+  border: 1px solid var(--zk-rule-soft);
+  border-radius: var(--r-2);
+  /* 押せない札なので厚みは付けない。地の明るさの差だけで浮かせる */
+  background: color-mix(in srgb, var(--paper) 70%, #fff);
+  text-align: center;
+}
+.mpod-i.is-r1 { background: color-mix(in srgb, var(--gold) 16%, #fff); border-color: color-mix(in srgb, var(--gold) 45%, var(--rule)); }
+.mpod-i.is-r2 { background: color-mix(in srgb, var(--roof-sky) 12%, #fff); }
+.mpod-i.is-r3 { background: color-mix(in srgb, var(--roof-coral) 12%, #fff); }
+
+.mpod-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  color: var(--zk-ink);
+}
+.mpod-no b { font-size: var(--fs-h3); line-height: 1; }
+.mpod-n {
+  font-size: var(--fs-note);
+  font-weight: 900;
+  line-height: 1.4;
+  /* 長い呼び名でマスの幅が崩れないように。切らずに折る */
+  overflow-wrap: anywhere;
+}
+.mpod-v { font-size: var(--fs-h3); font-weight: 900; line-height: 1; color: var(--zk-ink); }
+.mpod-v i { font-style: normal; font-size: var(--fs-min); margin-left: 2px; }
+
+/* ---------------------------------------------------------------- 4位から下 */
+
+.mrank {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--zk-rule-soft);
+}
+.mrank > li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--zk-rule-soft);
+}
+.mrank-no {
+  flex: none;
+  width: 24px;
+  text-align: right;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--zk-ink-2);
+}
+.mrank > li > b {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.mrank-v { flex: none; font-size: var(--fs-note); font-weight: 900; }
+.mrank-v i { font-style: normal; font-size: var(--fs-min); margin-left: 1px; color: var(--zk-ink-2); }
+
+.mnote {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-min);
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--zk-ink-2);
+}
+
+/* ---------------------------------------------------------------- 皆勤賞 */
+
+.mkin {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+.mkin > li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-3) var(--sp-2);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, var(--rule));
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 14%, #fff);
+  text-align: center;
+}
+.mkin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gold) 55%, #fff);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+}
+.mkin > li > b { font-size: var(--fs-note); font-weight: 900; overflow-wrap: anywhere; line-height: 1.4; }
+.mkin-d { font-size: var(--fs-h3); font-weight: 900; line-height: 1; }
+.mkin-d i { font-style: normal; font-size: var(--fs-min); color: var(--zk-ink-2); }
+
+/* ---------------------------------------------------------------- 出席日数 */
+
+.matt {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--zk-rule-soft);
+}
+.matt > li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--zk-rule-soft);
+}
+.matt > li > b {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-note);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+/* 日数は棒と数で出す。**コメント数ではない**（`/monthly-review` 3章） */
+.matt-d {
+  position: relative;
+  flex: none;
+  width: 92px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--rule) 30%, transparent);
+  overflow: hidden;
+}
+.matt-d::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w, 0%);
+  background: color-mix(in srgb, var(--grass) 55%, #fff);
+}
+.matt-d i {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- タップ */
+
+.mtap { margin-top: var(--sp-4); }
+.mtap-n { display: flex; align-items: baseline; gap: 4px; }
+.mtap-n b { font-size: clamp(30px, 10vw, 46px); font-weight: 900; line-height: 1; }
+.mtap-n i { font-style: normal; font-size: var(--fs-note); font-weight: 900; color: var(--zk-ink-2); }
+.mtap-bar {
+  position: relative;
+  height: 16px;
+  margin-top: var(--sp-3);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--rule) 30%, transparent);
+  overflow: hidden;
+}
+.mtap-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--roof-sky) 70%, #fff), color-mix(in srgb, var(--gold) 75%, #fff));
+}
+/* 5万のしるし。棒をまたぐ縦の線。
+   **棒の中に収めない。** グラデーションの上では破線が沈んで見えなかった */
+.mtap-goal {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 0;
+  border-left: 3px solid var(--ink);
+  border-radius: 2px;
+}
+.mtap-bar { overflow: visible; }
+.mtap-fill { overflow: hidden; }
+.mtap-note { margin: var(--sp-2) 0 0; font-size: var(--fs-note); font-weight: 800; color: var(--zk-ink-2); }
+
+/* ---------------------------------------------------------------- 棒ならび（一覧） */
+
+.mbars { position: relative; margin-top: var(--sp-4); }
+.mbars-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  align-items: end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mbars-row > li { position: relative; min-width: 0; }
+/* 5万のしるし。棒の柱（150px）の中に引く。
+   **ここを li にすると、格子が列を1つ余計に作る**（実際に作って、
+   点線が9月の右どなりに短く出ていた）。帯の外から重ねる。 */
+.mbars-goal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* 下の2行（数字と月）のぶん。柱の下端をここに合わせてある */
+  margin-bottom: 34px;
+  height: 0;
+  border-top: 2px dashed color-mix(in srgb, var(--ink) 50%, transparent);
+  pointer-events: none;
+}
+/* **押せない。** 平らなまま（`docs/island-design.md` 3-3） */
+.mbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.mbar-col {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 150px;
+}
+.mbar-fill {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  border-radius: var(--r-1) var(--r-1) 0 0;
+  background: color-mix(in srgb, var(--roof-sky) 55%, #fff);
+}
+.mbar-fill.is-hit { background: color-mix(in srgb, var(--gold) 72%, #fff); }
+.mbar-v {
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--zk-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.mbar-m { font-size: var(--fs-min); font-weight: 900; line-height: 1.3; }
+
+/* ---------------------------------------------------------------- 月のマス */
+
+.mcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  border-top: 1px solid var(--zk-rule-soft);
+}
+.mcard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3);
+  border-right: 1px solid var(--zk-rule-soft);
+  border-bottom: 1px solid var(--zk-rule-soft);
+  text-decoration: none;
+  color: inherit;
+  /* 一面ぜんぶが押せるマスなので、1枚ずつに厚みは付けない */
+}
+.mcard:hover { background: color-mix(in srgb, var(--marker) 22%, transparent); }
+.mcard-h {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 54px;
+  padding: 6px 0 4px;
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--roof-gold) 20%, #fff);
+}
+.mcard-h b { font-size: 27px; font-weight: 900; line-height: 1; }
+.mcard-h b i { font-style: normal; font-size: var(--fs-min); margin-left: 1px; }
+.mcard-y { font-size: 10.5px; font-weight: 900; color: var(--zk-ink-2); }
+.mcard-b { flex: 1 1 auto; min-width: 0; }
+.mcard-b > time { display: block; font-size: var(--fs-min); font-weight: 800; color: var(--zk-ink-2); }
+.mcard-f { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: 3px; }
+.mcard-f > span { font-size: var(--fs-note); font-weight: 900; }
+.mcard-f i { font-style: normal; font-size: var(--fs-min); margin-left: 1px; color: var(--zk-ink-2); }
+.mcard-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-min);
+}
+.mcard-top em { font-style: normal; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcard-top > b { flex: none; font-weight: 900; }
+.mcard-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: var(--sp-2); }
+.mcard-tags .zk-chip { gap: 3px; }
+.mcard-go { flex: none; align-self: center; color: var(--zk-ink-2); }
+
+/* ---------------------------------------------------------------- その月の流れ */
+
+.mpeak { margin-top: var(--sp-3); }
+
+.mflow {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mflow > li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--zk-rule-soft);
+}
+.mflow > li:first-child { border-top: 1px solid var(--zk-rule-soft); }
+.mflow-d {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  width: 58px;
+  padding-top: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.mflow-d b { font-size: var(--fs-note); font-weight: 900; }
+.mflow-d i { font-style: normal; font-size: var(--fs-min); color: var(--zk-ink-2); }
+.mflow-b { flex: 1 1 auto; min-width: 0; display: block; }
+.mflow-t {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  /* 指で押せる最小 48px（`docs/island-design.md` 3-2）。
+     1行の題名は字が 20px しかないので、上下 15px ずつ取る。
+     7px だと 34px で、実測で64件とも割れていた。**14px でも足りない**——
+     同じ日に2本あるとき、あいだの破線1pxを引かれて 47.1px になる */
+  padding: 15px 0;
+  text-decoration: none;
+  color: inherit;
+}
+.mflow-t > b { font-size: var(--fs-note); font-weight: 800; line-height: 1.6; overflow-wrap: anywhere; }
+.mflow-t:hover > b { text-decoration: underline; }
+.mflow-go { flex: none; margin-top: 4px; color: var(--zk-ink-2); }
+/* 1日に2本あるときは、題名と題名のあいだを詰めすぎない */
+.mflow-t + .mflow-t { border-top: 1px dashed color-mix(in srgb, var(--rule) 45%, transparent); }
+
+/* ---------------------------------------------------------------- 授賞式へ */
+
+.mreview {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, var(--rule));
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--gold) 16%, #fff);
+  /* 外へ出ていく口なので、押せる合図の厚みを付ける（真下・ぼかさない） */
+  box-shadow: var(--pop-sm);
+  text-decoration: none;
+  color: inherit;
+}
+.mreview:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--frame-deep); }
+.mreview-b { flex: 1 1 auto; min-width: 0; }
+.mreview-b b { display: block; font-size: var(--fs-body); font-weight: 900; }
+.mreview-b i { display: block; margin-top: 2px; font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--zk-ink-2); }
+.mreview-go { flex: none; }
+
+/* 皆勤が何ヶ月続いているか。出席日数のすぐ下。
+   **1ヶ月目は別の言葉・別の色**（`/monthly-review` 3章）。
+   連続は2つ目から数えるもので、初めての人に「1ヶ月連続」は言わない。 */
+.mkin-k {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gold) 62%, #fff);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  color: var(--ink);
+}
+.mkin-k.is-first { background: color-mix(in srgb, var(--roof-mint) 55%, #fff); }

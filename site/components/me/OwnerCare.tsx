@@ -115,12 +115,22 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "bin", label: "しまった" },
 ];
 
-/** まだ何もしていない付箋の、数と id。**引けるまでは null**（0枚と区別する） */
+/**
+ * まだ何もしていない付箋の、数と id。**引けるまでは null**（0枚と区別する）。
+ *
+ * **`state` を持たせたのは 2026-10-13。** それまで「まだ取れていない」と
+ * 「取れなかった」を同じ `null` で表していて、**一度失敗すると「まだ」の棚が
+ * 永久に「読んでいます…」のまま**だった（あやとが本番で踏んだ。
+ * 画面を先に配って口を後に配ったので、そのあいだに机を開くと 404 を受ける）。
+ * 読み直しの手も無かったので、画面を送り直すしか戻る道が無かった。
+ */
 export type Waiting = {
   /** 枚数。読めていなければ null */
   n: number | null;
   /** その id。読めていなければ null */
   ids: Set<string> | null;
+  /** いまどこに居るか。**`null` を2通りに読ませない** */
+  state: "reading" | "ok" | "down";
   /** 数え直す */
   reload: () => void;
 };
@@ -145,15 +155,37 @@ export type Waiting = {
 export function useWaiting(): Waiting {
   const { token, owner } = useAuth();
   const [got, setGot] = useState<{ n: number; ids: Set<string> } | null>(null);
+  const [down, setDown] = useState(false);
   const [again, setAgain] = useState(0);
+
+  /* **繋がり直したら、ひとりでに数え直す。** 隣の `useCare` が同じ形を
+     持っている（17日ぶん黙ったことがあって足したもの）。読み直しの手を
+     画面に出しても、押す人が机を開いたままとは限らない。 */
+  useEffect(() => {
+    if (owner !== "yes") return;
+    const wake = () => {
+      if (document.visibilityState === "visible") setAgain((x) => x + 1);
+    };
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", wake);
+    return () => {
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", wake);
+    };
+  }, [owner]);
 
   useEffect(() => {
     /* あやとでないあいだは叩かない。403 が返るだけの往復になる */
     if (owner !== "yes") return;
     let gone = false;
+    setDown(false);
     (async () => {
       const t = await withRead(token()).catch(() => null);
-      if (gone || !t) return;
+      if (gone) return;
+      if (!t) {
+        setDown(true);
+        return;
+      }
       try {
         const r = await withRead(getWaitingStickies(t));
         /* **形が違う返事を、数として読まない。** `{}` が返ると
@@ -167,7 +199,9 @@ export function useWaiting(): Waiting {
       } catch {
         /* **0 を答えとして出さない**（`docs/island-standards.md` §15）。
            読めなかった日に札へ 0 を出すと、「ぜんぶ返した」に見える。
-           null のままにして、札はバッジを出さない */
+           数は null のままにして、**落ちたことは `down` で別に言う**——
+           同じ null で「まだ」と「駄目だった」を表すと、棚が永久に回る */
+        if (!gone) setDown(true);
       }
     })();
     return () => {
@@ -178,6 +212,7 @@ export function useWaiting(): Waiting {
   return {
     n: got?.n ?? null,
     ids: got?.ids ?? null,
+    state: got ? "ok" : down ? "down" : "reading",
     reload: () => setAgain((x) => x + 1),
   };
 }
@@ -240,7 +275,11 @@ export function StickyCare({ waiting }: { waiting: Waiting }) {
       (notes ?? []);
   /* 札の数が出る前に一覧を出すと、開いた直後だけ全部が見えて、すぐ減る。
      **動く数字を出すくらいなら、出るのを待つ。** */
-  const reading = read === "wait" || (view === "todo" && waiting.ids === null);
+  /* **「まだ取れていない」だけを待つ。** 取れなかった日まで待つと、棚が
+     永久に回る（2026-10-13 に本番で踏んだ）。落ちた日は下の読み直しに渡す。 */
+  const reading = read === "wait" || (view === "todo" && waiting.state === "reading");
+  /** 「まだ」の棚だけ、数が引けないと中身を絞れない。**黙らずに読み直しを出す** */
+  const waitDown = view === "todo" && waiting.state === "down";
   /** **数を言ってよいのは、読めた上でのことだけ。** */
   const counted = read === "ok" && waiting.n !== null;
 
@@ -281,6 +320,12 @@ export function StickyCare({ waiting }: { waiting: Waiting }) {
         /* 読みに行けなかった。**「ぜんぶ返しました。」とは別の顔にする。**
            あれは読めた上でのことばで、届かなかった日に言ってよい嘘ではない。 */
         <ReadAgain what={VIEWS.find((v) => v.id === view)?.label ?? "付箋"} onRetry={reload} /> :
+      waitDown ?
+        /* 付箋そのものは読めたが、**どれが「まだ」かを数える口が落ちた。**
+           絞り込めないので一覧は出せない。前はここで「読んでいます…」を
+           回し続けていて、送り直すまで戻れなかった（2026-10-13）。
+           **読み直しは数のほうに向ける。** */
+        <ReadAgain what="まだ返していないもの" onRetry={waiting.reload} /> :
       reading ? (
         <div className="wait is-row" aria-hidden>
           <span />

@@ -34,8 +34,8 @@
  *     元絵があるのに**焼いた絵が無い**ものも落とす（回し忘れ）
  *  7. `CAL_SHOWN` が「絵のある月」そのもの（手で並べ直していない）
  *  8. **焼く道具の対照**（`tools/goods/calbake.py --drill`）が通り、表を1日ずらす
- *     （`BREAK=shift`）と 1 で落ちる。絵の右下の一言を重ねない（`BREAK=sign`）・地に溶かす（`BREAK=signdim`）と
- *     1 で落ちる。2027-01-01 が金曜、など12か月の曜日の答えは
+ *     （`BREAK=shift`）と 1 で落ちる。絵の右下の一言を重ねない（`BREAK=sign`）・地に溶かす（`BREAK=signdim`）・
+ *     2行に戻す（`BREAK=signrows`）と 1 で落ちる。2027-01-01 が金曜、など12か月の曜日の答えは
  *     道具の側が持っている。元絵が無くても回る（2.2秒）
  *  9. **いいねの仕掛けが1本しか無い。** 付箋の口（`heartSticky` ほか）を呼ぶのも、
  *     ハートの形を持つのも `components/goods/wordVotes.tsx` だけで、
@@ -566,6 +566,13 @@ check("一言を重ねないと calbake.py --drill が 1 で落ちる", unsigned
 const dimmed = drill({ BREAK: "signdim" });
 check("一言が地に溶けると calbake.py --drill が 1 で落ちる", dimmed.code === 1,
   `終了コード ${dimmed.code}`);
+/* 一言は1行（あやと 2026-10-13「1行にしたい」）。**12月を改行で2行に戻した回**が、
+   表の決まりで落ちることを見る。字の出す道が投げて 1 になったのを「拾えた」と読まないように、
+   落ちた理由の字まで見る */
+const tworows = drill({ BREAK: "signrows" });
+check("一言を2行に戻すと calbake.py --drill が 1 で落ちる（1行の決まり）",
+  tworows.code === 1 && tworows.out.includes("暦12月の一言に改行がある"),
+  `終了コード ${tworows.code}\n${tworows.out.slice(-400)}`);
 
 // ---- 9. いいねの仕掛けが1本しか無いか --------------------------------------
 console.log("\n# 9. いいねの仕掛けが1本しか無いか（LINEスタンプの守り）");

@@ -159,6 +159,9 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-06-28", videoId: "anL82TSPG4c", title: "６月末配信！なかなか素晴らしい1ヶ月やったんちゃう？" },
       { date: "2026-05-31", videoId: "zLIQ9yySAas", title: "5月の月末配信！良い1ヶ月だった！" },
     ],
+    /* 授賞式そのものは配信の中で終わるが、そこで数えたものは島に残してある。
+       この型だけ、中身が月ごとの面としてまるごと置いてある（#809）。 */
+    deeper: { label: "月ごとのふりかえりを見る", href: "/months" },
   },
 ];
 
