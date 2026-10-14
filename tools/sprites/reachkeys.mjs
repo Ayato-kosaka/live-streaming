@@ -103,7 +103,7 @@ const ONLY = (process.env.ONLY || "").split(",").filter(Boolean);
  */
 const MAXTAB = parseInt(process.env.MAXTAB || "900", 10);
 /** ダイアログを開かせるために Enter を押してみるボタンの上限（面ごと） */
-const MAXOPEN = parseInt(process.env.MAXOPEN || "10", 10);
+const MAXOPEN = parseInt(process.env.MAXOPEN || "8", 10);
 
 const skip = {
   press: BREAK === "nopress",
@@ -309,8 +309,15 @@ const OPENFOLDS = () => {
   }
   const st = document.createElement("style");
   st.id = "rk-unfold";
-  st.textContent = "*{content-visibility:visible !important;}";
+  /* ついでに**動きを止める。** 島は毎フレーム描き直しているので、
+     測っているあいだ絵が走り続けると、4コアの箱では面を1枚開くだけで
+     何秒も持っていかれる（並列で作業していると load average が40を超える）。
+     止めても、届くかどうか・名前があるかどうかは1つも変わらない。
+     CSS だけでは足りない——島は rAF で動かしているので、そちらも止める
+     （`CLAUDE.md`「島を止めてから撮る」と同じ手） */
+  st.textContent = "*{content-visibility:visible !important;animation:none !important;transition:none !important;}";
   document.head.appendChild(st);
+  window.requestAnimationFrame = () => 0;
   window.scrollTo(0, 0);
   return n;
 };
@@ -450,25 +457,40 @@ async function visit(p, base, path) {
      決まった時間を待つのではなく、**数が2回つづけて同じになるまで**待つ。
      Next の面かどうかは `self.__next_f` で分かる（対照の台には無い）ので、
      素の HTML はそのまま通す。終わらなければ**面ごと「見ていない」に送る。** */
+  /* 見るのは2段。**軽いほうを何度も、重いほうを2度だけ。**
+     全要素をなめる数えかたを30回まわすと、絵が500枚ある面では数えるだけで
+     何秒もかかる。`<body>` に React の印が付くのは根が水あわせを終えた
+     合図なので（実測: 300ms で付かず、700ms で付く）、そこまでは軽いほうで
+     待って、**そのあとに全部を2回数えて同じ数になることを見る。** */
+  const MARK = () => ({
+    next: Array.isArray(self.__next_f),
+    body: Object.keys(document.body).some((k) => k.startsWith("__react")),
+  });
   const HYD = () => {
     let n = 0;
     for (const el of document.querySelectorAll("*"))
       for (const k of Object.keys(el)) { if (k.startsWith("__reactProps$")) { n++; break; } }
-    return { n, next: Array.isArray(self.__next_f), body: Object.keys(document.body).some((k) => k.startsWith("__react")) };
+    return n;
   };
-  let hyd = await p.evaluate(`(${HYD.toString()})()`);
-  if (hyd.next) {
-    let prev = -1;
-    let ok = false;
-    for (let i = 0; i < 30; i++) {
-      if (hyd.n > 0 && hyd.n === prev && hyd.body) { ok = true; break; }
-      prev = hyd.n;
-      await p.waitForTimeout(200);
-      hyd = await p.evaluate(`(${HYD.toString()})()`);
+  const mark = await p.evaluate(`(${MARK.toString()})()`);
+  if (mark.next) {
+    let rooted = mark.body;
+    for (let i = 0; i < 40 && !rooted; i++) {
+      await p.waitForTimeout(150);
+      rooted = (await p.evaluate(`(${MARK.toString()})()`)).body;
     }
-    if (!ok) return { open: false, why: `水あわせが終わらない（React の手当て ${hyd.n}個のまま）` };
+    if (!rooted) return { open: false, why: "水あわせが始まらない（<body> に React の印が付かない）" };
+    let n = await p.evaluate(`(${HYD.toString()})()`);
+    let ok = false;
+    for (let i = 0; i < 12; i++) {
+      await p.waitForTimeout(200);
+      const m = await p.evaluate(`(${HYD.toString()})()`);
+      if (m > 0 && m === n) { ok = true; break; }
+      n = m;
+    }
+    if (!ok) return { open: false, why: `水あわせが終わらない（React の手当て ${n}個のまま）` };
   }
-  await p.waitForTimeout(250);
+  await p.waitForTimeout(200);
 
   await p.evaluate(`(${LIB.toString()})()`);
   const folds = skip.fold ? 0 : await p.evaluate(`(${OPENFOLDS.toString()})()`);
@@ -537,7 +559,7 @@ async function visit(p, base, path) {
       }, s.rk);
       if (!ok) continue;
       await p.keyboard.press("Enter");
-      await p.waitForTimeout(120);
+      await p.waitForTimeout(100);
       if (!p.url().endsWith(path)) {
         await p.goto(base + path, { waitUntil: "domcontentloaded", timeout: 30000 });
         await p.waitForTimeout(500);
@@ -694,6 +716,12 @@ const UNREACHED = (reached) => {
 };
 
 /* ── 回す ─────────────────────────────────────────────────────────── */
+/** 1x1 の透明な PNG。絵の代わりに返す（生死は見ないので中身は何でもよい） */
+const PX = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
@@ -706,7 +734,14 @@ function fail(msg) {
 
 async function sweep(base, pages, { quiet = false } = {}) {
   const ctx = await b.newContext({ viewport: { width: WIDTH, height: HEIGHT } });
-  await ctx.route(STUB, (r) => r.fulfill({ path: fromRoot("site/public/og.png") }));
+  /* **絵は、いちばん小さいもの1枚で返す。**
+     ここが見るのは `alt` の字と、Tab で届くかどうか。絵が描けているかを
+     見るのは `crawl.mjs` の仕事で、こちらは1枚も判定しない。
+     `/island/<章>/streams` には `<img>` が497枚あって、本物を配ると
+     面を開くだけで何秒もかかる（この箱は4コアで、いつも誰かが使っている）。
+     箱の大きさは `width`/`height` が持っているので、並びは崩れない。 */
+  await ctx.route(/\.(png|jpe?g|webp|gif|avif|ico|bmp)(\?|$)/i, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PX }));
+  await ctx.route(STUB, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PX }));
   await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   const p = await ctx.newPage();
   const per = new Map();
