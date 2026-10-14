@@ -37,6 +37,12 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/* **TS を自前の正規表現で読まない**（`tools/sprites/tsread_selftest.mjs` が
+   見ている。`docs/island-misses.md` #248 で、読み手を1本に寄せたのに
+   `.mjs` 側に自前の読み手が20か所あった、という前がある）。
+   最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
+import { fields, nestedBody, objectBody } from "../../tools/sprites/tsread.mjs";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
 const SITEMAP = join(APP, "sitemap.ts");
@@ -50,13 +56,12 @@ const SITEMAP = join(APP, "sitemap.ts");
  * 言っていた**（索引に無いのが正しい）。
  *
  * **面はもう答えを持っている。** 手で写した表は、面が増えた日に古くなる。
- * だから読むのは面のほう——`robots` に `index: false` と書いてあれば、
- * 索引に無くてよい。書いていなければ、索引に出ていないといけない。
+ * だから読むのは面のほう——`metadata` の `robots` に `index: false` と
+ * 書いてあれば、索引に無くてよい。書いていなければ、索引に出ていないといけない。
  *
  * この見張りを入れた日に、`/updates` が**どちらでもなかった**
  * （`index: false` を持たず、索引にも無い）。索引に足した。
  */
-const INDEXABLE_OUT = /robots:\s*\{[^}]*index:\s*false/;
 
 let bad = 0;
 const ok = (name, got, want) => {
@@ -94,13 +99,24 @@ if (!src.includes("MetadataRoute")) {
   process.exit(2);
 }
 
-/** その面が「検索に出さない」と自分で言っているか */
+/**
+ * その面が「検索に出さない」と自分で言っているか。
+ *
+ * `export const metadata = { …, robots: { index: false, follow: false } }` の
+ * `robots` の中の `index` を読む。**読み手は `tsread.mjs` 1本**。
+ */
 const hidden = (r) => {
+  let src;
   try {
-    return INDEXABLE_OUT.test(readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8"));
+    src = readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8");
   } catch {
     return false;
   }
+  const meta = objectBody(src, "metadata");
+  if (!meta) return false;
+  // `nestedBody` も `fields` も、**中身だけ**（外の `{}` を付けない）を取る
+  const robots = nestedBody(meta, "robots");
+  return !!robots && fields(robots).index === "false";
 };
 const open = found.filter((r) => !hidden(r));
 
