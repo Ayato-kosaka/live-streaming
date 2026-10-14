@@ -818,7 +818,8 @@ L=$(python3 -c 'print("https://x.invalid/" + "a"*2048)')
 curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/stickies" \
   -H 'content-type: application/json' \
   -d "{\"theme\":\"zatsudan\",\"text\":\"かくにん\",\"cid\":\"$(python3 -c 'print("c"*36)')\",\"link\":\"$L\"}"
-#   配る前 200（**2,048字の別の URL が貼られる**）→ 配ったあと **400**（bad link）
+#   **配ったあとにだけ叩く。** 配る前は 200 が返って、掲示板に1枚貼られる
+#   （それが直した中身そのもの）。配ったあとは **400**（bad link）で、1バイトも書かない
 #   ※ 200 が返ってしまったら、貼られた1枚を `POST /stickies/{id}/archive` で下ろす
 
 # 5. 台帳に 1,000万円超が入らないこと（**合言葉が要るので 404 で止まる**）
