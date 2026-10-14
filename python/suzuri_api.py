@@ -265,7 +265,46 @@ def cal_description():
             "\n\n机の上で、1か月ずつ旅をふりかえってください🏝️✨")
 
 
-def calendar(folder, dry=False, pub=False, trial=False):
+def cal_probe(urls):
+    """POST に品目 733 を載せると 403「このアイテムは使用できません」が返った（2026-10-14）。
+    どの形なら通るかを、非公開の試し用で順に当てる。作れたものは全部その場で消す"""
+    subs = [{"texture": urls[i], "printSide": MONTHS[i], "enabled": True} for i in range(1, 12)]
+    base = {"itemId": CAL_ITEM, "exemplaryItemVariantId": CAL_VARIANT, "published": False}
+    made = []
+
+    def post(label, products):
+        body = {"title": "（試し・すぐ消します）", "description": "", "price": 300, "texture": urls[0]}
+        if products is not None:
+            body["products"] = products
+        st, r = call("POST", "/materials", body)
+        mid = (r.get("material") or {}).get("id") if st == 200 else None
+        print(f"  POST {label} -> {st} {r.get('error', '') if st != 200 else [p['item']['name'] for p in r.get('products', [])]}")
+        if mid:
+            made.append(mid)
+        return mid
+
+    def put(mid, label, products):
+        st, r = call("PUT", f"/materials/{mid}", {"products": products})
+        print(f"  PUT {label} -> {st} {r.get('error', '') if st != 200 else [p['item']['name'] for p in r.get('products', [])]}")
+        return st
+
+    try:
+        post("733 だけ（裏の面なし）", [dict(base)])
+        post("733 ＋ resizeMode なし・sub_materials", [dict(base, sub_materials=subs)])
+        mid = post("品目なし", None)
+        if mid:
+            put(mid, "あとから 733 ＋ sub_materials", [dict(base, resizeMode="contain", sub_materials=subs)])
+            put(mid, "あとから 733 だけ", [dict(base)])
+        mid = post("ステッカー（通る品目で対照）", [{"itemId": ITEM_IDS["sticker"], "exemplaryItemVariantId": SAMPLE_VARIANT["sticker"], "published": False}])
+        if mid:
+            put(mid, "ステッカー ＋ 733", [{"itemId": ITEM_IDS["sticker"], "exemplaryItemVariantId": SAMPLE_VARIANT["sticker"], "published": False}, dict(base)])
+    finally:
+        for mid in made:
+            st, _ = call("DELETE", f"/materials/{mid}")
+            print(f"  試し用を消した {mid} -> {st}")
+
+
+def calendar(folder, dry=False, pub=False, trial=False, probe_only=False):
     """卓上カレンダーを1つ作る。絵は `calbake.py --print <folder>` が書いた `<MM>-a.png` の12枚。
 
     絵は公開の URL で渡す。**URL はこの回が checkout した commit に固定する**（`GITHUB_SHA`）——
@@ -282,6 +321,8 @@ def calendar(folder, dry=False, pub=False, trial=False):
                 print(f"  絵 {u.rsplit('/', 1)[1]} {r.status} {r.headers.get('Content-Length')}B")
         except Exception as e:
             sys.exit(f"絵が取れない（作らない）: {u} {e}")
+    if probe_only:
+        return cal_probe(urls)
     if not trial and CAL_TITLE in {(m.get("title") or "") for m in materials()}:
         sys.exit(f"{CAL_TITLE!r} はもうある。作り直すなら先に消す")
     prod = {"itemId": CAL_ITEM, "exemplaryItemVariantId": CAL_VARIANT, "published": pub, "resizeMode": "contain",
@@ -626,6 +667,7 @@ def main():
     c = sub.add_parser("schema"); c.add_argument("words", nargs="+")
     c = sub.add_parser("calendar"); c.add_argument("--dir", default="tools/goods/cal-print")
     c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true"); c.add_argument("--trial", action="store_true")
+    c.add_argument("--probe", action="store_true", help="どの形なら品目 733 が通るかを試し用で当てる（全部消す）")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
     c.add_argument("--title", required=True); c.add_argument("--description", default=""); c.add_argument("--price", type=int, default=300)
@@ -654,7 +696,7 @@ def main():
     elif a.cmd == "schema":
         schema(a.words)
     elif a.cmd == "calendar":
-        calendar(a.dir, a.dry_run, a.publish, a.trial)
+        calendar(a.dir, a.dry_run, a.publish, a.trial, a.probe)
     elif a.cmd == "goods":
         goods(a.spec, a.dry_run, a.publish, a.trial, a.only.split(",") if a.only else None)
     elif a.cmd == "sample":
