@@ -38,14 +38,17 @@
 
 ## 絵の右下の一言（あやと 2026-10-13、#786）
 
-絵の右下に、**その月にしたことを2行**。**画家が絵の隅に入れるサインのように**、
+絵の右下に、**その月にしたことを1行**。**画家が絵の隅に入れるサインのように**、
 細い筆ペンの字で小さく置く。**名前（ayato）も年月も入れない。**
 
 最初は太い丸文字・こげ茶の太いふち・下に年月、で重ねていた。あやと
 「文字が悪目立ちしてますね」「絵画にサインしてる感じ。文字も絵になると
 邪魔にならない」「日付はいらないかな」——それで、ふちを外して細く小さくし、年月の行を消した。
+次に2行を1行にした（あやと「フォントは良い感じ。1行にしたい。4月だけ『トビリシにさよなら、
+アルメニアへ』と『、』を入れる。それ以外いれない」）。2行をそのままつないで、間に何も入れない。
 
-- 一言の表は `SIGNS` の1本だけ
+- 一言の表は `SIGNS` の1本だけ。**1か月1本の文字列**（タプルや改行で2行に戻したら落とす）
+- **読点・句点・空白は入れない。** 入れてよいのは `SIGN_PAUSE` の月の、その字だけ（2027年版は4月の「、」）
 - 字は **Zen Kurenaido**（`tools/goods/fonts/`、OFL。利用許諾は同じ置き場の `OFL.txt`）。
   Klee One / Zen Kurenaido / Yomogi / Yuji Syuku を同じ3か月に重ねて並べて選んだ。
   細い筆ペンの崩しで「サイン」に見えたのはこれだけだった（Klee One は鉛筆の楷書で
@@ -55,11 +58,12 @@
   ふちに戻さず、影の濃さか置き場で直す
 - 寸法は全部**絵の幅に対する割合**（字 0.026・右下から 2.2% 内側・2.5度だけ右上がり）。
   見本の絵（あやとが持ってきた、右下に細い白の筆記体）のサインと同じくらい
-- 角に住人が座っていて字が体を横切る月だけ、置き場を左へずらす（`SIGN_NUDGE`。2027年版は4月）。
-  **絵が替わったら、右下を1枚ずつ目で見る**（住人に字が掛かっていないか）
+- 住人がいて字が体を横切る月だけ、置き場をずらす（`SIGN_NUDGE`。2027年版は4月を左へ、9・10月を下へ）。
+  **絵や一言が替わったら、右下を1枚ずつ等倍で目で見る**（住人に字が掛かっていないか）。
+  1行は長いので、角から離れた住人の足もとにも届く（2行から1行にした日に、9・10月が新しく掛かった）
 - **読めるかは画素で測る**（`sign_ink`）。影だけの絵と字ありの絵を作り、
   字の画素どうしの比の**中央値**が `MIN_CONTRAST` を割ったら落とす。
-  2026-10-13 の12枚でいちばん低いのは7月（提灯の光の上）で、刷る絵で 7.8・`/goods` の webp で 5.8
+  1行にした 2026-10-14 の12枚でいちばん低いのは7月（提灯の光の上）で、刷る絵で 8.3・`/goods` の webp で 5.6
 - **表の字が字体に無かったら落とす**（`sign_glyph_faults`。豆腐の箱を刷らない）。
   字体は削らずに丸ごと置いてあるので来年の一言もたいてい通るが、珍しい漢字は無いことがある
 - **重ねるのは元絵を読んだあと、`compose` に入る前。元絵のファイルは書き換えない。**
@@ -161,11 +165,13 @@ SUZURI の卓上カレンダーの面付けを実物で見て、こう直した�
 | `frame` | 2つめの月だけ紙の色を変える | `frame_faults`（左の正方形いがいが、月をまたいで同じ画素か） |
 | `sign` | 一言を重ねたことにして重ねない | `sign_faults`（右下の画素が重ねる前と違うか・字の比）と、紙に貼った絵の右下 |
 | `signdim` | 影を消し、字を地にほぼ溶かす | `sign_faults`（字の画素の比の中央値） |
-| `signrows` | 12月の一言を3行にする | `sign_table_faults`（2行まで） |
+| `signrows` | 12月の一言を改行で2行に戻す | `sign_table_faults`（1行）と `signed`（1行でない月は重ねずに違反） |
 | `signmiss` | 12月の一言を表から抜く | `sign_table_faults`（12か月そろう）と `signed`（表に無い月） |
 
-一言の表の見張りは、`BREAK=` とは別に**いつも**壊した表5つ（12月が無い・3行・
-ayato 入り・空の行・13月）と、字体に無い字を混ぜた表を当てて、それぞれの理由で落ちることを見る。
+一言の表の見張りは、`BREAK=` とは別に**いつも**壊した表11（12月が無い・改行で2行・
+タプルで2行・ayato 入り・空・9月に読点／句点／空白／全角の空白・4月の読点を句点に・13月）と、
+字体に無い字を混ぜた表を当てて、それぞれの理由で落ちることを見る。2行に戻った月を
+本物と同じ道（`signed`）に通して、**重ねずに違反に出る**ことも見る。
 
 ## 字の濃さは、焼いた画素から測る
 
@@ -348,25 +354,34 @@ def memory_of(month: int) -> tuple[int, int]:
 
 
 # --- 右下の一言 ---------------------------------------------------------------
-#: 絵の右下に、**その月にしたことを手書きサイン風に**（あやと 2026-10-13、#786）。
-#: 暦の月 → 2行。11・12月は 2025年の思い出、ほかは 2026年（`memory_of`）。
+#: 絵の右下に、**その月にしたことを手書きサイン風に1行で**（あやと 2026-10-13、#786）。
+#: 暦の月 → 1行。11・12月は 2025年の思い出、ほかは 2026年（`memory_of`）。
 #: **この表が一言の置き場の1本。** 面の alt は持たない（絵の中の字なので）。
-SIGNS: dict[int, tuple[str, ...]] = {
-    1: ("バトゥミで", "アリロの行列を追いかけた"),
-    2: ("半年住んだバトゥミと", "ケバブでお別れ会"),
-    3: ("トビリシの春に", "メレンゲクロワッサン"),
-    4: ("トビリシにさよなら", "アルメニアへ"),
-    5: ("イランの国境まで", "380km歩いた"),
-    6: ("トビリシの空を", "ロープウェイで散歩"),
-    7: ("ジョージアで", "イワシ祭り"),
-    8: ("カズベキの山ごもりから", "トビリシに帰ってきた"),
-    9: ("スウェーデンまで", "北欧ヒッチハイク旅"),
-    10: ("北欧から", "バルカン半島へ"),
-    11: ("黒海の夕日を見ながら", "アプリ作り"),
-    12: ("大雨のバトゥミで", "W年越しジャンプ"),
+#:
+#: 最初は2行（「バトゥミで／アリロの行列を追いかけた」）に割っていた。あやと
+#: 「フォントは良い感じ。1行にしたい」——サインは1本の線で書くもので、2行だと
+#: 字の塊が角に積もって「添え書き」に見える。2行をそのままつないで、間に何も入れない。
+SIGNS: dict[int, str] = {
+    1: "バトゥミでアリロの行列を追いかけた",
+    2: "半年住んだバトゥミとケバブでお別れ会",
+    3: "トビリシの春にメレンゲクロワッサン",
+    4: "トビリシにさよなら、アルメニアへ",
+    5: "イランの国境まで380km歩いた",
+    6: "トビリシの空をロープウェイで散歩",
+    7: "ジョージアでイワシ祭り",
+    8: "カズベキの山ごもりからトビリシに帰ってきた",
+    9: "スウェーデンまで北欧ヒッチハイク旅",
+    10: "北欧からバルカン半島へ",
+    11: "黒海の夕日を見ながらアプリ作り",
+    12: "大雨のバトゥミでW年越しジャンプ",
 }
-#: 一言は2行まで。3行にすると右下に収まらず、顔や主役に掛かる。
-SIGN_ROWS = 2
+#: 区切りの記号と空白。**入れてよいのは下の `SIGN_PAUSE` の月の、その字だけ。**
+#: 1行にすると切れ目が無くなるので、つい読点や空白を足したくなる。あやと
+#: 「4月だけ『、』を入れる。それ以外いれない」——足していいかは、こちらが決めない。
+SIGN_PUNCT = "、。，．,.､｡・"
+#: 区切りを入れてよい月と、その字。4月は「さよなら」と「アルメニアへ」で
+#: 気持ちが切り替わるので、そこだけ息つぎを入れる（あやと 2026-10-13）。
+SIGN_PAUSE: dict[int, str] = {4: "、"}
 #: 名前は入れない（あやと 2026-10-13）。試作に入っていたので、戻ってきたら落とす。
 SIGN_NG = ("ayato",)
 
@@ -378,15 +393,24 @@ SIGN_FONT = HERE / "fonts" / "ZenKurenaido-Regular.ttf"
 #: 0.026 は、見本の絵（右下に細い白の筆記体）のサインと同じくらいの背。
 #: 前の丸文字は 0.046 で、絵の右下を半分近く占めて悪目立ちした。
 SIGN_SIZE = 0.026          # 字の大きさ
-SIGN_LEAD = 1.25           # 行送り（字の大きさの何倍）
 SIGN_PAD = 0.02            # 字のまわりに取る余白（影が切れないように）
 SIGN_INSET = 0.022         # 右下の角からどれだけ内側に置くか
 SIGN_TILT = 2.5            # 傾き（度。右上がり）。サインらしさのぶんだけ、ほんの少し
-#: 月ごとの置き場のずらし（絵の幅に対する割合。左へは負）。**住人の顔や体に字が掛かる月だけ。**
-#: 4月は右下の角にハリネズミの住人が座っていて、角に寄せると字が体を横切る
-#: （2026-10-13、目で見て決めた）。左へずらして、敷物の上に置く。
+#: 月ごとの置き場のずらし（絵の幅に対する割合。左へは負・下へは正）。**住人の顔や体に字が掛かる月だけ。**
+#: 1行にすると字が左へ長く伸びるので、角から離れた住人の足もとにも届く（2026-10-14、12枚を等倍で見て決めた）。
+#:
+#: - 4月: 右下の角にハリネズミの住人が座っていて、角に寄せると字が体を横切る。
+#:   左へずらして、住人の手前（椅子と敷物の上）に置く。1行でも住人の左に（元絵 1254px で）30px あまり空く
+#: - 9月: 字の頭（「ス」）が柴犬の住人の前足に掛かる。左へは逃げられない（住人が左にいる）ので、
+#:   少し下げて岸壁の石の上に置く
+#: - 10月: 字の頭（「北欧から」）が、石段に座る女の子の住人の草履に掛かる。右へは寄せきっているので、
+#:   下げて石垣の上に置く
+#:
+#: 下げても絵からははみ出さない（いちばん下の10月で、置き場の下端が絵の幅の 0.995）。
 SIGN_NUDGE: dict[int, tuple[float, float]] = {
     4: (-0.11, 0.0),
+    9: (0.0, 0.012),
+    10: (0.0, 0.018),
 }
 #: 字は生成りの白。**ふちは付けない**（太いふちが「貼った字」に見えた）。
 SIGN_INK = (250, 246, 236)
@@ -405,26 +429,53 @@ SIGN_MOVED_MIN = 0.10
 NO_GLYPH = ("\ue000", "\U000f0000")
 
 
-def sign_table_faults(table: dict[int, tuple[str, ...]] = SIGNS) -> list[str]:
-    """一言の表そのものの決まり。**12か月そろって、1か月2行まで、名前が無い。**"""
+def line_faults(m: int, line) -> list[str]:
+    """1か月ぶんの一言が**1行で描ける1本の文字列か。** 違えば理由を返す。
+
+    表の決まり（`sign_table_faults`）と、描く手前（`signed`）の両方がこれを読む。
+    タプルや改行のまま描く道へ入れると、2行に戻るか PIL が投げるかのどちらかになる。
+    """
+    if not isinstance(line, str):
+        n = len(line) if isinstance(line, (tuple, list)) else "?"
+        return [f"暦{m}月の一言が1本の文字列でない（{type(line).__name__} で {n}行。1行で書く）"]
+    if "\n" in line or "\r" in line:
+        return [f"暦{m}月の一言に改行がある（{len(line.splitlines())}行。1行で書く）"]
+    return []
+
+
+def sign_table_faults(table: dict[int, str] = SIGNS) -> list[str]:
+    """一言の表そのものの決まり。**12か月そろって、1か月1行、区切りは4月の「、」だけ、名前が無い。**"""
     out: list[str] = []
     for m in range(1, 13):
         if m not in table:
             out.append(f"一言の表に暦{m}月が無い")
-    for m, rows in table.items():
+    for m, line in table.items():
         if m not in range(1, 13):
             out.append(f"一言の表に暦{m}月という月がある")
             continue
-        if not 1 <= len(rows) <= SIGN_ROWS:
-            out.append(f"暦{m}月の一言が {len(rows)}行（{SIGN_ROWS}行まで）")
-        if any(not r.strip() for r in rows):
-            out.append(f"暦{m}月の一言に空の行がある")
+        bad = line_faults(m, line)
+        if bad:
+            out += bad
+            continue
+        if not line.strip():
+            out.append(f"暦{m}月の一言が空")
+            continue
+        allowed = SIGN_PAUSE.get(m, "")
+        if any(ch.isspace() for ch in line):
+            out.append(f"暦{m}月の一言に空白が入っている（「{line}」。間に何も入れない）")
+        stray = sorted({ch for ch in line if ch in SIGN_PUNCT and ch not in allowed})
+        if stray:
+            out.append(f"暦{m}月の一言に読点・句点 {' '.join(stray)} が入っている"
+                       f"（「{line}」。入れてよいのは SIGN_PAUSE の月だけ）")
         for ng in SIGN_NG:
-            if any(ng in r.lower() for r in rows):
+            if ng in line.lower():
                 out.append(f"暦{m}月の一言に {ng} が入っている（名前は入れない）")
     for m in SIGN_NUDGE:
         if m not in range(1, 13):
             out.append(f"一言のずらし（SIGN_NUDGE）に暦{m}月という月がある")
+    for m in SIGN_PAUSE:
+        if m not in range(1, 13):
+            out.append(f"区切りを許す月（SIGN_PAUSE）に暦{m}月という月がある")
     return out
 
 
@@ -447,49 +498,46 @@ def missing_glyphs(text: str, path: Path = SIGN_FONT) -> list[str]:
     return sorted({ch for ch in text if ch.strip() and shape(ch) in blanks})
 
 
-def sign_glyph_faults(table: dict[int, tuple[str, ...]], path: Path = SIGN_FONT) -> list[str]:
+def sign_glyph_faults(table: dict[int, str], path: Path = SIGN_FONT) -> list[str]:
     """表の字が、全部**一言の字体にあるか。**"""
     out: list[str] = []
-    for m, rows in sorted(table.items()):
-        lost = missing_glyphs("".join(rows), path)
+    for m, line in sorted(table.items()):
+        lost = missing_glyphs(line if isinstance(line, str) else "".join(line), path)
         if lost:
             out.append(f"暦{m}月の一言の {' '.join(lost)} が字体 {path.name} に無い"
                        "（刷ると箱になる。言い換えるか、字のある字体にする）")
     return out
 
 
-def signs() -> dict[int, tuple[str, ...]]:
+def signs() -> dict[int, str]:
     """焼くときに使う表。**対照のときだけ、ここで壊す**（`BREAK=signrows|signmiss`）。"""
     table = dict(SIGNS)
     if BREAK == "signrows":
-        table[12] = table[12] + ("3行目",)       # 対照: 12月だけ3行にする
+        table[12] = "大雨のバトゥミで\nW年越しジャンプ"   # 対照: 12月だけ2行に戻す
     if BREAK == "signmiss":
         table.pop(12)                            # 対照: 12月の一言を抜く
     return table
 
 
-def sign(im: Image.Image, rows: tuple[str, ...], ink: bool = True,
+def sign(im: Image.Image, line: str, ink: bool = True,
          nudge: tuple[float, float] = (0.0, 0.0)):
-    """絵の右下に一言を重ねた**新しい絵**、重ねた場所 `(x0, y0, x1, y1)`、字の覆い（絵の座標）。
+    """絵の右下に一言を**1行で**重ねた**新しい絵**、重ねた場所 `(x0, y0, x1, y1)`、字の覆い（絵の座標）。
 
     **元の絵は書き換えない。** `ink=False` なら影だけを重ねる——字の濃さを測るとき、
     これが「その字が乗っている地そのもの」になる（`sign_ink`）。
+    1行かどうかは呼ぶ側（`signed`）が先に見る。
     """
     out = im.convert("RGBA")
     W = out.width
     font = ImageFont.truetype(str(SIGN_FONT), round(W * SIGN_SIZE))
-    probe = ImageDraw.Draw(out)
-    widths = [probe.textlength(t, font=font) for t in rows]
-    lead = round(font.size * SIGN_LEAD)
+    width = ImageDraw.Draw(out).textlength(line, font=font)
     pad = round(W * SIGN_PAD)
-    bw = math.ceil(max(widths)) + pad * 2
-    bh = lead * (len(rows) - 1) + round(font.size * 1.3) + pad * 2
+    bw = math.ceil(width) + pad * 2
+    bh = round(font.size * 1.3) + pad * 2
 
-    # 字の形だけの覆い。右寄せで2行
+    # 字の形だけの覆い。1行を右寄せで
     mask = Image.new("L", (bw, bh), 0)
-    d = ImageDraw.Draw(mask)
-    for i, (t, w) in enumerate(zip(rows, widths)):
-        d.text((bw - pad - w, pad + i * lead), t, font=font, fill=255)
+    ImageDraw.Draw(mask).text((bw - pad - width, pad), line, font=font, fill=255)
 
     reach = max(1, round(W * SIGN_SPREAD))
     shade = mask.filter(ImageFilter.MaxFilter(reach * 2 + 1)).filter(
@@ -577,20 +625,24 @@ def sign_faults(name: str, before: Image.Image, after: Image.Image, box,
 
 
 def signed(name: str, month: int, im: Image.Image,
-           table: dict[int, tuple[str, ...]] | None = None):
+           table: dict[int, str] | None = None):
     """元絵に一言を重ねた絵、違反、字の比 `(画素, 中央値)`。
     **本物も対照も `--print` も、この1本を通る。**
 
     表に無い月は**重ねずに返す**——そのうえで違反に出す（黙って一言の無い月を
-    焼くと、12枚のうち1枚だけ字の無いページが刷られる）。
+    焼くと、12枚のうち1枚だけ字の無いページが刷られる）。1行でない月も同じ
+    （2行に戻ったものを、黙って1行に繋いだり割ったりして刷らない）。
     """
     table = signs() if table is None else table
-    rows = table.get(month)
-    if not rows:
+    line = table.get(month)
+    if not line:
         return im.convert("RGB"), [f"{name}: 暦{month}月の一言が表に無い（重ねずに焼いた）"], (0, 0.0)
+    bad = line_faults(month, line)
+    if bad:
+        return im.convert("RGB"), [f"{name}: {b}（重ねずに焼いた）" for b in bad], (0, 0.0)
     nudge = SIGN_NUDGE.get(month, (0.0, 0.0))
-    after, box, cover = sign(im, rows, nudge=nudge)
-    ground, _, _ = sign(im, rows, ink=False, nudge=nudge)
+    after, box, cover = sign(im, line, nudge=nudge)
+    ground, _, _ = sign(im, line, ink=False, nudge=nudge)
     ink = sign_ink(after, ground, cover)
     return after, sign_faults(name, im, after, box, ink), ink
 
@@ -1169,10 +1221,17 @@ def drill() -> list[str]:
     bad += sign_table_faults(signs())
     for why, broken, mark in (
         ("12月を抜いた表", {m: r for m, r in SIGNS.items() if m != 12}, "暦12月が無い"),
-        ("9月を3行にした表", {**SIGNS, 9: SIGNS[9] + ("3行目",)}, "3行"),
-        ("ayato を入れた表", {**SIGNS, 9: (SIGNS[9][0], SIGNS[9][1] + " ayato")}, "ayato"),
-        ("空の行がある表", {**SIGNS, 9: (SIGNS[9][0], " ")}, "空の行"),
-        ("13月がある表", {**SIGNS, 13: ("どこか",)}, "暦13月"),
+        ("9月に改行を入れて2行にした表", {**SIGNS, 9: "スウェーデンまで\n北欧ヒッチハイク旅"}, "改行"),
+        ("9月を2行のタプルに戻した表", {**SIGNS, 9: ("スウェーデンまで", "北欧ヒッチハイク旅")},
+         "1本の文字列でない"),
+        ("ayato を入れた表", {**SIGNS, 9: SIGNS[9] + "ayato"}, "ayato"),
+        ("9月が空の表", {**SIGNS, 9: ""}, "空"),
+        ("9月に読点を入れた表", {**SIGNS, 9: "スウェーデンまで、北欧ヒッチハイク旅"}, "、"),
+        ("9月に句点を入れた表", {**SIGNS, 9: "スウェーデンまで北欧ヒッチハイク旅。"}, "。"),
+        ("9月に空白を入れた表", {**SIGNS, 9: "スウェーデンまで 北欧ヒッチハイク旅"}, "空白"),
+        ("9月に全角の空白を入れた表", {**SIGNS, 9: "スウェーデンまで　北欧ヒッチハイク旅"}, "空白"),
+        ("4月の読点を句点にした表", {**SIGNS, 4: "トビリシにさよなら。アルメニアへ"}, "。"),
+        ("13月がある表", {**SIGNS, 13: "どこか"}, "暦13月"),
     ):
         got = sign_table_faults(broken)
         if not any(mark in g for g in got):
@@ -1186,7 +1245,7 @@ def drill() -> list[str]:
         bad += sign_glyph_faults(signs())
         if missing_glyphs("あ祭") or missing_glyphs("\ue001") != ["\ue001"]:
             bad.append("字体に無い字の見分けが外れた（「あ祭」を無いと言った、か私用領域の字をあると言った）")
-        got = sign_glyph_faults({**SIGNS, 9: (SIGNS[9][0], SIGNS[9][1] + "\ue001")})
+        got = sign_glyph_faults({**SIGNS, 9: SIGNS[9] + "\ue001"})
         if not any("暦9月" in g and "無い" in g for g in got):
             bad.append(f"字体に無い字を混ぜた表を拾わなかった（{got or '0件'}）")
     except ValueError as e:
@@ -1199,6 +1258,14 @@ def drill() -> list[str]:
         bad.append("表に無い月の絵に、何か重ねた")
     if not any("表に無い" in x for x in f):
         bad.append("表に無い月を焼いたのに、違反に出なかった")
+    # (3c'') 2行に戻った月も、黙って描かない（改行のまま PIL に渡すと投げる。タプルなら2行に描く道が無い）
+    for why, two in (("改行", "スウェーデンまで\n北欧ヒッチハイク旅"),
+                     ("タプル", ("スウェーデンまで", "北欧ヒッチハイク旅"))):
+        kept, f, _ = signed(f"toy 2行（{why}）", 9, plain_toy, {**SIGNS, 9: two})
+        if kept.tobytes() != plain_toy.tobytes():
+            bad.append(f"2行（{why}）の一言を、そのまま絵に重ねた")
+        if not f:
+            bad.append(f"2行（{why}）の一言を焼いたのに、違反に出なかった")
     # (3c') 字の濃さの判定を、落ちる側から。字の画素を**字ありの絵どうし**で測ると
     #       比はちょうど 1 になる。それを渡したら、**字と地の比で**落ちること
     #       （置き場や動いた画素で落ちたのを、拾えたと読まない）。
@@ -1281,7 +1348,7 @@ def bake() -> tuple[int, int, list[str]]:
         made[name] = shot
         plains[name] = (plain_png, plain)
         print(f"{line}  ← {path.name} {im.width}×{im.height}（暦{month}月 / {y}年{m}月の思い出）"
-              f"  「{'／'.join(signs().get(month, ()))}」 一言の比 {med:.2f}（{n:,}px）")
+              f"  「{signs().get(month, '')}」 一言の比 {med:.2f}（{n:,}px）")
     faults += frame_faults(plains)
 
     if not faults:
@@ -1363,7 +1430,7 @@ def main() -> int:
         print("対照が外れた。本物は1枚も焼いていない")
         return 2
     print("# 対照 通った（名前 12通り / 思い出の年月 5か月 / 正方形 4通り / "
-          "一言の表 本物1つと壊した5つ・字体に無い字・表に無い月・置き場3通り・字の濃さ / "
+          "一言の表 本物1つと壊した11・字体に無い字・表に無い月・2行に戻った月・置き場3通り・字の濃さ / "
           "2027年の12か月を答えと datetime の両方で / 大きさの違う絵を2つの月に貼って組む）")
     if "--drill" in sys.argv:
         return 0
