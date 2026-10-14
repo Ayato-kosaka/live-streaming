@@ -1,5 +1,6 @@
 import { placeById } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
@@ -9,10 +10,12 @@ import Link from "next/link";
 import { NowCountry, NowTrail } from "./parts";
 import "./now.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "now",
   title: "いま何してる",
   description: "あやとが今どこにいて、島だよりに何を書いていったか。",
-};
+  path: "/now",
+});
 
 /**
  * いまどこ。

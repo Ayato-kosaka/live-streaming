@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
@@ -12,10 +13,12 @@ import { H, Sheet, Zone } from "@/components/streams/Sheet";
 import KitchenNext from "@/components/live/KitchenNext";
 import { ArtStamp } from "@/components/streams/Art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "kitchen",
   title: "クッキング・スタンプ帳",
   description: "旅先のキッチンで作ってきた料理のスタンプ帳。企画会議→買い出し→調理の3日がかりで作っています。",
-};
+  path: "/kitchen",
+});
 
 export default function KitchenPage() {
   const byCountry = new Map<string, number>();

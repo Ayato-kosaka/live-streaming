@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { SayRoom } from "@/components/ui/Say";
@@ -17,10 +18,12 @@ import { Vid } from "@/components/streams/Vid";
 import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "streams",
   title: "配信",
   description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
-};
+  path: "/streams",
+});
 
 /**
  * 型ごとに1つだけ出す数字。

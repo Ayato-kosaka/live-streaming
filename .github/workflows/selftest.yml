@@ -393,7 +393,13 @@ jobs:
           SPORT=4211 OUT=/tmp/nextempty DIST=site/.next-ci \
             node tools/sprites/nextempty.mjs || rc4=$?
           echo "── nextempty 終了コード ${rc4}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ]
+          # 貼られたときの顔（og:*）。**2026-10-14 まで、137面とも絵が同じ1枚で、
+          # og:url は1面も無かった。** 面を足した人が lib/share.ts を通さなければ
+          # 黙って器の1枚に戻る——赤くならずに戻るので、焼いた HTML を毎回数える
+          rc5=0
+          DIST=site/.next-ci node tools/sprites/ogmeta.mjs || rc5=$?
+          echo "── ogmeta 終了コード ${rc5}"
+          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] && [ "$rc5" = 0 ]
 
       # **JS が動く前の字に、言い切りが混ざっていないか**（`tools/sprites/preclaim.mjs`）。
       #

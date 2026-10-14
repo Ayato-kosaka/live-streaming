@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const t = streamTypeBySlug(slug);
   if (!t) return {};
-  return { title: t.name, description: t.lead };
+  return share({ key: "streams", title: t.name, description: t.lead, path: `/streams/${slug}` });
 }
 
 /**

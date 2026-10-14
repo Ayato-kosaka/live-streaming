@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
@@ -22,11 +23,13 @@ import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
 /* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
    国の名前を書くと、国境を越えた日から次のビルドまで嘘になる（前は
    「いまいるジョージアまで」だった）。 */
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "map",
   title: "歩いた国",
   description:
     "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
-};
+  path: "/map",
+});
 
 /**
  * 歩いた国。

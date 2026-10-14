@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Desk from "@/components/me/Desk";
 import "../me.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "島の手入れ",
   description: "島を手入れする道具を、1つずつ出す机。",
   /* あやとしか開けない面。索引に載せない（`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
-};
+  path: "/me/desk",
+});
 
 /**
  * 島の手入れ（机）。**あやとだけ。**

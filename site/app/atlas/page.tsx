@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Isles from "@/components/chain/Isles";
 import { atlasIsles } from "@/components/chain/isles";
 import { CHAPTERS } from "@/content/chapters";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "atlas",
   title: "島の地図",
   /* **章の名前を手で並べない。** ここは「ヨーロッパ、中東、コーカサス、そして北欧。」と
      書いてあった。そのあいだに章が2つ増えていて（イランまで歩く・バルカン諸国周遊）、
@@ -13,7 +15,8 @@ export const metadata: Metadata = {
      `CHAPTERS` が章の唯一の出どころなので、そこから作る
      （`docs/island-misses.md` の決めごと3 / `docs/island-standards.md` §8）。 */
   description: `${CHAPTERS.map((c) => c.name).join("、")}。旅の章ごとに、島が1つ建っています。`,
-};
+  path: "/atlas",
+});
 
 /**
  * 島の地図。**旅そのものを見せる、たった1枚の画面**（`docs/island-atlas.md`）。

@@ -110,6 +110,12 @@ EXCUSES: dict[str, str] = {
     "tools/sprites/cardshot.mjs":
         "カードの一覧を撮って人が見る道具。撮れたことは出せることではないので、"
         "機械で合否を出さない（2026-09-19）",
+    "tools/sprites/ogcards.mjs":
+        "区画ごとの共有画像（site/public/og/*.png）を焼く道具。焼くのは絵を"
+        "差し替えるときだけで、毎回回すものではない（17枚で 64秒。2026-10-14 実測。"
+        "ブラウザと Pillow が要る）。**焼いた結果の側は毎 PR で見ている**——"
+        "寸法と置き忘れは `ogmeta_selftest.mjs` が、配った HTML との食い違いは"
+        "`ogmeta.mjs` が browserwatch で数える（2026-10-14）",
     "tools/sprites/og.mjs":
         "共有画像の下絵を島から撮る道具。絵として出せるかは人が見る。"
         "画素で言える範囲は `ogcheck.py` に切り出して毎 PR で回している（2026-09-19）",

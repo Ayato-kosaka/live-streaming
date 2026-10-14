@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import NextPlans from "@/components/live/NextPlans";
@@ -8,10 +9,12 @@ import Icon from "@/components/ui/Icon";
 import { LEGENDS } from "@/content/legends";
 import "./next.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "next",
   title: "企画",
   description: "日にちが決まった企画と、終わった企画。付箋でみんなの知恵を貼れます。",
-};
+  path: "/next",
+});
 
 /**
  * これから。
