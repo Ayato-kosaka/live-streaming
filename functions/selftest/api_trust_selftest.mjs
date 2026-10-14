@@ -202,6 +202,8 @@ if (process.argv.includes("--routes")) {
 
 let ok = 0;
 let bad = 0;
+/** 落ちた行の名前。**最後の1行に出す**（回し役はそこしか見せない） */
+const fell = [];
 
 /**
  * 1件の確かめ。
@@ -216,6 +218,7 @@ function check(name, good, why = "") {
     return;
   }
   bad += 1;
+  fell.push(name);
   console.log(`  NG   ${name}${why ? ` — ${why}` : ""}`);
 }
 
@@ -1361,6 +1364,11 @@ if (CONTROL) {
   }
 }
 
-console.log(`\n通った ${ok}件 / 落ちた ${bad}件`);
+/* **落ちた行の名前を、最後の1行に並べる。** 回し役（`selftest_runner.py`）は
+   落ちた見張りの**最後の1行だけ**を出すので、件数だけ出していると
+   CI のログからは「何が落ちたか」が分からない（2026-10-14 に実際に
+   困った。手元では通って CI で6件落ち、そのうち名前が1つも出なかった）。 */
+console.log(`\n通った ${ok}件 / 落ちた ${bad}件` +
+  (bad ? ` — ${fell.join(" / ")}` : ""));
 if (ok === 0) blind("数えるものが1件も無かった");
 process.exit(bad ? 1 : 0);

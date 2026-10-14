@@ -679,7 +679,7 @@ IDを `channelId` に入れる。ふつうの表示名が来たときは引か�
 | --- | --- | --- |
 | 1 | 本人のものかを確かめずに、送られた id で書く／読む | **0件**（下の「誰のぶんかの決め方」） |
 | 2 | 長さ・型・値域を確かめていない | **2件**（リンクの切り落とし・台帳の額） |
-| 3 | 数の上限に当たったことが分からない | **14か所**（窓が黙って切れる） |
+| 3 | 数の上限に当たったことが分からない | **12か所**（窓が黙って切れる。残り2か所は下の断り） |
 | 4 | 人の素性が、返ってはいけないところから出る | **2件**（どちらも**ログ**。応答は0件） |
 
 ### 口の一覧は、照合式そのものから起こす
@@ -733,7 +733,7 @@ node functions/selftest/api_trust_selftest.mjs --routes
 
 `.limit(N)` は、N 件を超えた日に**黙って N 件で返す。** 返した側は
 「これで全部」の顔をする。鳴らす口を1本（`functions/src/capWatch.ts`）に
-まとめて、**14か所**に付けた（下の表は13行。いちばん下だけ2か所）。
+まとめて、**12か所**に付けた。
 
 | 窓 | 大きさ | 埋まると |
 | --- | --- | --- |
@@ -749,7 +749,13 @@ node functions/selftest/api_trust_selftest.mjs --routes
 | `GET /alertbox/{合言葉}/characters` | 500 | OBS の当てが外れて、絵の出ないアラートになる |
 | `charactersByChannel`（カードの絵） | 500 | カードの絵が既定に落ちる |
 | `GET /donors` | 300 | 結べていない行が表から消える |
-| `resyncCardsOfImage` / `dropCardsOfImage` | 1,000 | **消し残る**（`/cards` が実体の無い URL を返し続ける） |
+
+**`streamEvents.ts` の2か所（`resyncCardsOfImage` / `dropCardsOfImage`、
+どちらも 1,000）だけ付けていない。** あのファイルは島の見張り
+（`site/selftest/cardplace_selftest.mjs`）が**単独で `tsc --noResolve` に通して**
+偽の `require` で読み込む作りなので、`import` を1本足すと**あちらが
+読み込めずに落ちる**（当ててみて落ちた）。鳴らすなら、あちらの偽の
+`require` に `./capWatch` を足すのが先——`site/` を触る回に合わせる。
 
 **鳴ったら窓を広げるのではなく、送り（ページング）を入れる**
 （`/cards` の `CARDS_HARD_CAP` と同じ決め）。`>=` で見るのは、`.limit(N)` に

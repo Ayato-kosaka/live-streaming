@@ -46,7 +46,6 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
-import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -71,6 +70,13 @@ export const MAX_IMAGES = 600;
  * 数十。ここが埋まるのは、同じ写真に数百人ぶん付いた日だけ。
  * **消す側の窓なので、黙って切れると消し残りが出る**（`/cards` が
  * 実体の無い URL を返し続ける）。
+ *
+ * **このファイルだけ `capWatch.ts` を呼んでいない**（2026-10-14）。
+ * 島の見張り（`site/selftest/cardplace_selftest.mjs`）が、この1本を
+ * **単独で `tsc --noResolve` に通して**偽の `require` で読み込む作りなので、
+ * ここに新しい `import` を1本足すと**あちらが読み込めずに落ちる。**
+ * 残りの12か所は鳴る。ここを鳴らすなら、あちらの偽の `require` に
+ * `./capWatch` を足すのが先——`site/` を触る回に合わせる。
  */
 const CARDS_OF_IMAGE_SCAN = 1000;
 /** 1回の問い合わせに入れる `in` の値の数。Firestore の上限は30。 */
@@ -744,10 +750,6 @@ export async function resyncCardsOfImage(
   const had = await CARDS.where("streamEventImageId", "==", image.id)
     .limit(CARDS_OF_IMAGE_SCAN)
     .get();
-  /* **消す側の窓。** 埋まると、渡らなくなったカードが消し残る
-     ——`/cards` が実体の無い URL を返し続ける形になる。 */
-  capHit("resyncCardsOfImage / CARDS_OF_IMAGE_SCAN", had.size,
-    CARDS_OF_IMAGE_SCAN);
   const gone = had.docs.filter((d) => !keep.has(d.id));
   if (gone.length) {
     const batch = db.batch();
@@ -940,8 +942,6 @@ export async function dropCardsOfImage(imageId: string): Promise<number> {
   const snap = await CARDS.where("streamEventImageId", "==", imageId)
     .limit(CARDS_OF_IMAGE_SCAN)
     .get();
-  capHit("dropCardsOfImage / CARDS_OF_IMAGE_SCAN", snap.size,
-    CARDS_OF_IMAGE_SCAN);
   if (snap.empty) return 0;
   let n = 0;
   let batch = db.batch();
