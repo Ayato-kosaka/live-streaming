@@ -262,7 +262,8 @@ const unent = (s) =>
  * まるごと積むので、落とさないと**同じ字を2回数えるうえ、`\n` 入りの塊**になって
  * どの族にも当たらなくなる（`preclaim.mjs` が同じところで踏んでいる）。
  *
- * 読み上げにしか出ない字（`aria-label` / `title` / `alt` / `placeholder`）も足す。
+ * 読み上げにしか出ない字（`aria-label` / `title` / `alt` / `placeholder`）と、
+ * **分かち合ったときに出る字**（`<meta name="description">` と og / twitter）も足す。
  * **目に見えない字でも、仕様の説明は仕様の説明。**
  *
  * @param {string} html
@@ -286,6 +287,17 @@ export function textOf(html) {
     const v = unent(m[1]).replace(/[\s　]+/g, " ").trim();
     if (v) out.push(v);
   }
+  /* **分かち合ったときに出る字**（`<meta name="description">` と og / twitter）。
+     面の中には出ないが、検索の結果にも LINE の吹き出しにも**そのまま出る。**
+     実際に `/updates` の description が「新しい順に並べました」と言っていた。 */
+  for (const m of s.matchAll(/<meta\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/(?:name|property)="[^"]*description"/i.test(tag)) continue;
+    const c = /content="([^"]*)"/i.exec(tag);
+    if (!c) continue;
+    const v = unent(c[1]).replace(/[\s　]+/g, " ").trim();
+    if (v) out.push(v);
+  }
   /* 段の切れ目で割る。割らないと、隣の段の字が1文につながって
      「〜すると、ここに出る」が勝手にできあがる */
   s = s.replace(/<\/?(?:p|div|li|br|h[1-6]|section|tr|td|th|ul|ol|dl|dt|dd|main|header|footer|nav|article|aside|figure|figcaption|label|button|a|option)\b[^>]*>/gi, "\n");
@@ -300,7 +312,7 @@ export function textOf(html) {
 /* ---------------------------------------------------------- 対照 -- */
 
 /** わざと仕様の説明を置いた面。**全部拾えないといけない** */
-const PLANT = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>仕込み</title></head>
+const PLANT = `<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>仕込み</title><meta name="description" content="島のできごとを、新しい順に並べました。"/></head>
 <body><main><h1>仕込みの面</h1>
 <p>毎晩ひとりでに数え直しています。</p>
 <p>保存しました。島に反映されます。</p>
@@ -326,6 +338,7 @@ const PLANT_WANT = [
   "配信のある日は、22時までの残りもここに出る。",
   "旅の章ごとに、島が1つ建っています。",
   "直近5件だけ出している図",
+  "島のできごとを、新しい順に並べました。",
 ];
 
 /**

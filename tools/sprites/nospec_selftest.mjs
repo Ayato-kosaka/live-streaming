@@ -167,6 +167,19 @@ console.log("── 3. 焼いた HTML の読み方");
   check("alt の字を拾えなかった", got.some((t) => t === "直近5件だけ出している図"), got.join(" | "));
 }
 {
+  /* 分かち合ったときに出る字。面の中には出ないが、検索の結果にはそのまま出る */
+  const got = textOf(
+    `<!doctype html><html><head><meta name="description" content="新しい順に並べました。"/>`
+    + `</head><body><p>ふつう</p></body></html>`,
+  );
+  check("meta の description を拾えなかった", got.some((t) => t === "新しい順に並べました。"), got.join(" | "));
+}
+{
+  /* `content` を持たない meta で落ちないこと */
+  const got = textOf(`<!doctype html><html><head><meta charset="utf-8"/></head><body><p>ふつう</p></body></html>`);
+  check("meta で落ちた", got.some((t) => t === "ふつう"), got.join(" | "));
+}
+{
   /* **段をまたいで1文に繋がないこと。** 繋ぐと、隣どうしの無関係な字から
      「〜すると、ここに出る」が勝手にできあがる */
   const got = textOf(`<!doctype html><body><p>日にちが決まったら</p><p>ここに出る</p></body>`);
