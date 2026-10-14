@@ -7,11 +7,13 @@ import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import CalendarMonths from "@/components/goods/CalendarMonths";
 import StampVotes from "@/components/goods/StampVotes";
+import { shutDest, themeById } from "@/content/themes";
 import {
   CAL_MONTHS,
   CAL_SHOWN,
+  LINE_PRICE,
+  LINE_RESIDENTS,
   LINE_STAMPS,
-  LINE_WANT,
   LINE_WORDS,
   SHOP_GOODS,
   shopHref,
@@ -30,7 +32,8 @@ import "./goods.css";
  * ## 「もう在る」と「まだ決めていない」を、形で分ける
  *
  * 6つのうち、ステッカー・カード・キャラクターは**もう手に入る**。
- * カレンダーと LINEスタンプは**まだ形が決まりきっていない**。
+ * カレンダーは**まだ形が決まりきっていない**。LINEスタンプは
+ * 2026-10-14 に申請を終えて**審査中**（形は決まったが、まだ手に入らない）。
  * 同じ顔で並べると、押して初めて「まだ無い」と分かる欄ができる。
  * 札（`.gd-tag`）と地の色で、開く前に見分けがつくようにした。
  *
@@ -57,7 +60,7 @@ import "./goods.css";
 export const metadata: Metadata = {
   title: "あやとグッズ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
-  description: `島から持って帰れるものと、これからいっしょに決めるもの。ステッカー${STICKERS.length}枚、LINEスタンプの一言${LINE_STAMPS.length}。`,
+  description: `島から持って帰れるものと、これからいっしょに決めるもの。ステッカー${STICKERS.length}枚、LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類。`,
 };
 
 /** 欄ひとつ。**絵と札は、ここ1か所で決める** */
@@ -72,7 +75,7 @@ function Sec({
   id: string;
   icon: IconName;
   title: string;
-  /** 開く前に分かる1語。「無料」か「検討中」 */
+  /** 開く前に分かる1語。「無料」「検討中」「審査中」「お店」 */
   tag: string;
   lead: string;
   children: React.ReactNode;
@@ -97,7 +100,8 @@ function Sec({
 function Say({ theme, title, lead, omit }: {
   theme: string;
   title: string;
-  lead: string;
+  /** 畳んだままで見える一行。締め切った宛先では書く話をしないので、無くてよい */
+  lead?: string;
   omit?: string[];
 }) {
   return (
@@ -118,12 +122,13 @@ function Say({ theme, title, lead, omit }: {
 const PEEK = 4;
 
 /**
- * あやとのセリフで、まだ決まっていない数。
+ * LINEスタンプの付箋が締め切られているか（2026-10-14 に畳んだ）。
  *
- * **手で書かない。** 絵が1枚届いた日に、面の「あと◯つ」だけが古くなる。
- * 埋まったら 0 になって、募集の字そのものが消える。
+ * **判定は島の表の1本**（`content/themes.ts` の `shutDest`）。畳んだ日に
+ * 畳みの題（「ほかのセリフを出す」→ 読むだけの題）もここで切り替わる。
+ * 付箋の窓の中身（書く段を出さない・締め切りの1行）は `Notes` が同じ判定で決める。
  */
-const LINE_LEFT = Math.max(0, LINE_WANT - LINE_STAMPS.length);
+const LINE_SHUT = shutDest(themeById("goods-linestamp"), null);
 
 /**
  * カレンダーの、まだ絵の載っていない月の数。**これも手で書かない。**
@@ -271,27 +276,26 @@ export default function GoodsPage() {
           id="linestamp"
           icon="talk"
           title="LINEスタンプ"
-          tag="検討中"
-          /* **「絵はこれから」と書かない。** 絵が届いたので、書いたままだと
-             その日から嘘になる。数は `LINE_STAMPS` から出す（足した日に直し忘れない）。
+          tag="審査中"
+          /* **言うのは、何が起きたかと、これから何が起きるかだけ**
+             （`docs/island-standards.md` 6章）。「いま審査中」は札が言っているので
+             ここでは繰り返さない。
 
-             **何を集めている欄なのかを、頭で言う。** 「あやとの11枚。どれがいいか」
-             だけだと、11枚から選ぶ話にしか読めない。集めているのは、まだ決まって
-             いないぶんのセリフのほう（あやと #701）。
-             残りの数も手で書かない（`content/goods.ts` の `LINE_WANT`）。
-             埋まったら募集の字は出さない——0枚を募る字が残らないように */
-          lead={
-            LINE_LEFT > 0
-              ? `あと${LINE_LEFT}つ、セリフが決まっていません。いいと思ったものを押して、ほしい一言を出してください。`
-              : `あやとの${LINE_STAMPS.length}枚。いいと思ったものを押して教えてください。`
-          }
+             **住人の名前も顔ぶれも、選びかたも書かない**（#716。名簿は投げ銭の
+             順位そのもの）。出してよいのは数まで。数は手で書かず、
+             `LINE_STAMPS`（あやとのぶん）と `LINE_RESIDENTS` から出す。
+             値段の決めかたも書かない。値段そのものは書いてよい（あやと 2026-10-14） */
+          lead={`あやとと島の住人${LINE_RESIDENTS}人の、${LINE_STAMPS.length + LINE_RESIDENTS}種類のスタンプを LINE に申請しました。出たら、ここからお店に行けるようにします。1セット${LINE_PRICE}円です。`}
         >
           <StampVotes />
+          {/* **締め切ったら、書く話をしない。** 題が「ほかのセリフを出す」のままだと、
+              開いた先に窓が無い（`Notes` の `shut`）。開く前の字と開いた中身を
+              同じことにそろえる。貼られた付箋は今までどおり読める */}
           <Say
             theme="goods-linestamp"
-            title="ほかのセリフを出す"
-            lead="候補の絵も貼れる"
-            /* 10枚の枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
+            title={LINE_SHUT ? "みんなが出したセリフ" : "ほかのセリフを出す"}
+            lead={LINE_SHUT ? undefined : "候補の絵も貼れる"}
+            /* 17枚の枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
             omit={LINE_WORDS}
           />
         </Sec>
@@ -320,10 +324,35 @@ export default function GoodsPage() {
               2通りあると、別の仕掛けに見える。**升目ぜんぶが押せるので、
               1枚ずつに厚みは付けない**（`docs/island-design.md` 3-3 の例外）。
 
-              **最後の1マスが店そのもの。** 住人の100人ぶんもステッカーぶんも
-              あちらに在るので、ここで数えずに店へ送る（数えると、
-              1つ増えた日から嘘になる）。 */}
+              **いちばん前の1マスが店そのもの**（あやと 2026-10-13
+              「ぜんぶ見る → イギリスぶらら を先頭にして」）。住人の100人ぶんも
+              ステッカーぶんもあちらに在るので、ここで数えずに店へ送る
+              （数えると、1つ増えた日から嘘になる）。
+              その次がトート——店でいちばん古いデザインで、新しい順だと
+              後ろに沈むが、**店の顔はこちら**（`content/goods.ts` の並びの注）。 */}
           <ul className="gd-shopgrid">
+            <li>
+              <a
+                className="gd-shopitem gd-shopall"
+                href={SUZURI.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  className="gd-shopart"
+                  src={SUZURI.shot.src}
+                  alt={SUZURI.shot.alt}
+                  width={SUZURI.shot.w}
+                  height={SUZURI.shot.h}
+                  loading="lazy"
+                />
+                <b>{SUZURI.cap}</b>
+                <span className="gd-get">
+                  <Icon name="external" size={16} />
+                  ぜんぶ見る
+                </span>
+              </a>
+            </li>
             {SHOP_GOODS.map((goods) => (
               <li key={goods.id}>
                 <a
@@ -352,28 +381,6 @@ export default function GoodsPage() {
                 </a>
               </li>
             ))}
-            <li>
-              <a
-                className="gd-shopitem gd-shopall"
-                href={SUZURI.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  className="gd-shopart"
-                  src={SUZURI.shot.src}
-                  alt={SUZURI.shot.alt}
-                  width={SUZURI.shot.w}
-                  height={SUZURI.shot.h}
-                  loading="lazy"
-                />
-                <b>{SUZURI.cap}</b>
-                <span className="gd-get">
-                  <Icon name="external" size={16} />
-                  ぜんぶ見る
-                </span>
-              </a>
-            </li>
           </ul>
           {/* あやとの言葉（2026-10-11）:
 

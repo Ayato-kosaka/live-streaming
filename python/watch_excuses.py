@@ -99,6 +99,14 @@ EXCUSES: dict[str, str] = {
     # `site/selftest/calendar_selftest.mjs` が毎 PR で起こすようになったので外した**
     # （2026-10-12。2027年の曜日の答えを、道具そのものに当てるため）。
 
+    # ---- 外に出る（EC2 のログイン済み Chrome が要る）----
+    "tools/youtube_taps.py":
+        "月末配信アーカイブのリアクション数（タップタップ）を取ってくる道具。"
+        "**この箱から YouTube Studio には届かない**ので、EC2 のログイン済み"
+        "Chrome を SSM ごしに起こして回す（起こすだけで数分。2026-10-13）。"
+        "外に出るうえに本番のアカウントを使うので、PR ごとには回さない。"
+        "渡っていない月が無いかは `python/monthly_taps_selftest.py` が毎 PR で見る",
+
     "tools/sprites/cardshot.mjs":
         "カードの一覧を撮って人が見る道具。撮れたことは出せることではないので、"
         "機械で合否を出さない（2026-09-19）",
