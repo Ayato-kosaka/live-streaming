@@ -1110,7 +1110,7 @@ a.chip:active, button.chip:active, .chip.link:active {
    撮って画素で測ったら 1.27〜1.40 : 1 だった（飾りの線は 3:1 要る）。
    島（`island.css`）が濃い地の上で生成りの枠にしているのと同じにそろえる。
    測りかたは「焦点を当てた1枚」と「外した1枚」の差の画素
-   （`docs/island-misses.md` #252） */
+   （`docs/island-misses.md` #253） */
 .ifoot :focus-visible { outline-color: var(--paper); }
 .ifoot-back {
   display: inline-flex; align-items: center; gap: var(--sp-2);
