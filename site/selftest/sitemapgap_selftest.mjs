@@ -41,7 +41,7 @@ import { fileURLToPath } from "node:url";
    見ている。`docs/island-misses.md` #248 で、読み手を1本に寄せたのに
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
-import { fields, nestedBody, objectBody } from "../../tools/sprites/tsread.mjs";
+import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
@@ -100,6 +100,30 @@ if (!src.includes("MetadataRoute")) {
 }
 
 /**
+ * `export const metadata` が持っている `{…}` の中身。
+ *
+ * **`objectBody` では取れない面がある。** あれは `= {` の形しか見ないが、
+ * 2026-10-14 の #866 で39面が
+ *
+ *     export const metadata: Metadata = share({ …, robots: {…}, path: "/design" });
+ *
+ * という**関数に包んだ形**になった。`objectBody` は空を返し、
+ * この見張りは「8面が、索引にも無いし『出さない』とも言っていない」と
+ * **master を赤くした**（自分で足した見張りに、自分で引っかかった）。
+ *
+ * 包みかたは今後も変わりうるので、**`metadata` のあとに出てくる最初の `{` から、
+ * 対応する `}` まで**を中身とする。囲いの追いかけは `tsread.mjs` の `closeAt`。
+ */
+function metaBody(src) {
+  const at = src.indexOf("export const metadata");
+  if (at < 0) return "";
+  const open = src.indexOf("{", at);
+  if (open < 0) return "";
+  const close = closeAt(src, open);
+  return close > open ? src.slice(open + 1, close) : "";
+}
+
+/**
  * その面が「検索に出さない」と自分で言っているか。
  *
  * `export const metadata = { …, robots: { index: false, follow: false } }` の
@@ -112,7 +136,7 @@ const hidden = (r) => {
   } catch {
     return false;
   }
-  const meta = objectBody(src, "metadata");
+  const meta = metaBody(src);
   if (!meta) return false;
   // `nestedBody` も `fields` も、**中身だけ**（外の `{}` を付けない）を取る
   const robots = nestedBody(meta, "robots");
