@@ -163,7 +163,15 @@
   text-decoration: none;
   color: var(--ink);
 }
+/* **題は、そこで伸びる側。** 下の「お店で見る」を枠の底へ押しやるのは
+   ここ1行（マスの背は `li { display: flex }` がそろえている）。
+   入れていなかったあいだ、題が1行のマスと2行のマスで**「お店で見る」の
+   高さが 35px ずれて**いて、行ごとに段差ができていた
+   （すぐ上の注が言っている「背を揃える」は、**枠の背**しか揃っていなかった）。 */
 .gd-shopitem > b {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
   font-size: var(--fs-note);
   font-weight: 900;
   line-height: 1.5;
@@ -189,7 +197,22 @@
   border: 1px solid var(--rule);
 }
 
-/* 店そのもののマス。**並びのいちばん最後**。
+/* マスの行き先の行（「お店で見る」「ぜんぶ見る」）。
+
+   **ここには色も厚みも足さない。** 升目は1マスまるごとが押しどころなので、
+   中にもう1つ押せそうなものを置くと、どちらを押すのか読ませることになる
+   （`docs/island-design.md` 3-3）。並びを決めるためだけの1行。
+   字の色は `.gd-shopitem` から受け継ぐ（`--ink`。薄めない）。 */
+.gd-get {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-min);
+  font-weight: 900;
+}
+.gd-get > svg { flex: none; }
+
+/* 店そのもののマス。**並びのいちばん先頭**（あやと 2026-10-13）。
    ほかのマスは「この1つを見る」、ここだけ「ぜんぶ見る」なので、
    地を一段おとして、同じ並びの中で用事が違うことを言う。
    **色は足さない**（罫を紙に混ぜただけ。`data-tag="お店"` の札と同じ作り） */
@@ -204,8 +227,9 @@
 
 /* **升目はこの面から出した**（2026-10-13。`/goods/stickers` へ）。
    索引に残したのは、名簿の頭の数枚と行き先の札だけ。
-   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` / `.gd-get` は、
-   それと一緒に消えている（着るものが1つも無くなったため）。
+   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` は、それと一緒に
+   消えている（着るものが1つも無くなったため）。`.gd-get` は残っている——
+   外の店の升目（`.gd-shopgrid`）がいまも着ている。
 
    並べかたは外の店の札（`.gd-shop`）と同じ形。**絵は切らない**ので、
    `object-fit` だけ別（丸い1枚の字が欠ける）。 */
@@ -216,14 +240,25 @@
 }
 
 /* 枚数で割らない。`auto-fit` なので、残す枚数（`PEEK`）を変えても
-   1行に収まるぶんだけ細くなる */
+   1行に収まるぶんだけ細くなる。
+
+   **狭い画面は2つずつ、広い画面は4つ横に。** `minmax(0, 1fr)` だと
+   枚数ぶんの列がいつでも立つので、390px では1枚 70x70 まで痩せていた。
+   この面は6つの欄が縦に並ぶ索引で、**1画面目に出る絵はここの数枚しかない**
+   ——実測で1画面目の絵は面積の 8.7%、いちばん大きいのがその 70px だった
+   （`docs/island-standards.md` 1章。図鑑とスタンプ帳と同じで、
+   棚の面は絵が主役）。2つずつなら 1枚 160px になる。
+
+   **`min(140px, 100%)` の `min()` は要る。** 素の `minmax(140px, 1fr)` は
+   紙より狭い入れ物に入ったときに格子のほうがはみ出す。 */
 .gd-peekshots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: var(--sp-2);
   /* 広い画面で、絵が札の幅いっぱいに伸びないところで止める
-     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない） */
-  max-width: 360px;
+     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない）。
+     4つ横に並ぶぶんだけ空ける */
+  max-width: 620px;
 }
 .gd-peekshots > img {
   display: block;
@@ -290,18 +325,25 @@
 
 .gd-stamps { margin-top: var(--sp-3); }
 
+/* **列の数を幅ごとに決め打ちする。** `auto-fill` に任せていたら、
+   はじめに出す6枚（`StampVotes.tsx` の `Longer`）が PC で
+   **5枚＋1枚**に割れて、2段目に1枚だけ残っていた
+   （`docs/island-standards.md` の「同じ役の箱は同じ位置に」）。
+   2・3・6 はどれも6を割り切るので、畳んでいるあいだは必ず行が埋まる。
+
+   **1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと1枚が
+   60px まで痩せて、焼いた透かしが読めなくなる。6列で1枚 104px。 */
 .gd-grid {
   display: grid;
-  /* 390px では3枚ならび（4段）、広い画面では5枚ならび（2段）。
-     **10枚が1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと
-     1枚が 60px まで痩せて、焼いた透かしが読めなくなる */
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
-  max-width: 608px;
+  max-width: 700px;
 }
+@media (min-width: 560px) { .gd-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 860px) { .gd-grid { grid-template-columns: repeat(6, 1fr); } }
 
 .gd-grid > li {
   display: flex;
