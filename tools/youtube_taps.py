@@ -50,8 +50,12 @@ EC2 = ROOT / ".claude" / "skills" / "ec2-chrome" / "ec2.py"
 CDP = ROOT / ".claude" / "skills" / "ec2-chrome" / "cdp.py"
 STUDIO = ROOT / ".claude" / "skills" / "youtube-studio" / "yt_studio.py"
 TAPS = ROOT / ".claude" / "skills" / "youtube-studio" / "yt_taps.py"
-REMOTE = "/home/ubuntu/cdp"
-OUT = "/home/ubuntu/shots/taps.json"
+# **ここから下の2つは EC2 の中の道で、手元には無い。** `repo_path()` は
+# このリポジトリの中しか指せないので、よその機械の道は書き下すしかない。
+# 正は `.claude/skills/ec2-chrome/cdp.py` の `HOME = "/home/ubuntu"`。
+# あちらを変えたらここも変える（直書き点検: 記録）
+REMOTE = "/home/ubuntu/cdp"  # 直書き点検: 記録（EC2 の中。手元の道ではない）
+OUT = "/home/ubuntu/shots/taps.json"  # 直書き点検: 記録（EC2 の中。手元の道ではない）
 
 
 def finals() -> dict:
