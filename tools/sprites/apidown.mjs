@@ -47,7 +47,7 @@ const ME = process.env.ME === "1";
 /* `ADMIN=1` であやととして見る。**旅の道具はここにしか出ない。**
    道にいるのはあやとなので、口が落ちて困るのはむしろこちら側 */
 const ADMIN = process.env.ADMIN === "1";
-const MEPAGES = ["/me", "/me/desk", "/me/remote", "/me/roulette"];
+const MEPAGES = ["/me", "/me/desk", "/me/roulette"];
 
 const PAGES = ME ? MEPAGES : process.env.PAGELIST
   ? readFileSync(process.env.PAGELIST, "utf8").trim().split("\n").filter(Boolean)

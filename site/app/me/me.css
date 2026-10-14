@@ -1509,3 +1509,22 @@
 
 /* 打ち間違えた目標を消す。**終わらせる道ではない**ので、離して置く。 */
 .fd-drop { margin-top: var(--sp-4); }
+
+/* 付箋の貼り先（`components/me/NoteThemes.tsx`）。
+   1行に「名前＋一行」と、締め切る／消すの2つ。**板を横に並べない**——
+   390px で2つ並べると1つ 48px を割る。字の下に回して幅をいっぱい使う。 */
+.nt-dests { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0 0; padding: 0; list-style: none; }
+.nt-dest {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  border: var(--bw-1) solid var(--frame);
+  border-radius: var(--r-1);
+  background: var(--paper);
+}
+.nt-dest-t { display: grid; gap: 2px; }
+.nt-dest-t b { font-weight: 900; }
+.nt-dest-t i { font-style: normal; font-size: var(--fs-min); color: var(--ink-2); }
+/* 押しどころは2つとも 48px（`docs/island-design.md` 3-2） */
+.nt-dest-go { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nt-dest-go .trip-week-x { min-height: 48px; }
