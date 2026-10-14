@@ -9,6 +9,9 @@
     python3 python/suzuri_api.py preview <商品id> --scale 0.8 [--offset-x 0] [--offset-y 0]
     python3 python/suzuri_api.py probe   0 --item can-badge --scale 0.8   # 大きさを保存できるか試す（0 = 試し用を作って消す）
     python3 python/suzuri_api.py sheet   <デザインid…> | --latest 5         # 5品目の見本を1枚に並べる（目で見る用）
+    python3 python/suzuri_api.py calendar [--dir tools/goods/cal-print] [--trial] [--publish] [--dry-run]
+                                                               # 卓上カレンダー（12ページ）。絵は calbake.py --print の12枚
+    python3 python/suzuri_api.py item 733 / schema printSide   # 品目1つの面と型 / API のスキーマから欄を引く
 
 鍵は環境変数 `SUZURI_API_KEY`（あやとの API キー。SUZURI の開発者画面の「API Key」）。
 
@@ -242,6 +245,72 @@ def goods(spec_path, dry=False, pub=False, trial=False, only=None):
                 f.write(f"- {key} → {pr.get('sampleUrl')}（デザイン {mid}、公開={pr.get('published')}）\n")
 
 
+# 卓上カレンダー（2027年版。docs/goods-calendar.md）。品目 733 の面は january〜december の12で、
+# 既定の面（defaultPrintPlace）は january。**1月は texture、2〜12月は sub_materials の printSide に月の名前で渡す**
+# （Tシャツの裏を printSide=back で渡すのと同じ形。`item 733` で面と型を読んだ）。
+CAL_ITEM, CAL_VARIANT = 733, 9140      # desk-calendar / white・2027
+MONTHS = ["january", "february", "march", "april", "may", "june",
+          "july", "august", "september", "october", "november", "december"]
+CAL_TITLE = "あやと 旅の思い出カレンダー 2027"
+
+
+def cal_description():
+    """本文。月ごとの一言は `calbake.py` の `SIGNS`（絵の右下に刷った字）から引く。**ここに写さない**"""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tools", "goods"))
+    from calbake import SIGNS, memory_of
+    lines = [f"{m}月　{SIGNS[m]}（{memory_of(m)[0]}年{m}月）" for m in range(1, 13)]
+    return ("あやと（YouTube@あやとグルメアプリ）のライブ配信「あやと島」から、1年ぶんの旅の思い出を卓上カレンダーにしました。\n"
+            "暦の各月のページに、配信で旅した同じ月の景色を1枚ずつ。島の住人たちも、景色のどこかに小さく隠れています。\n\n"
+            + "\n".join(lines) +
+            "\n\n机の上で、1か月ずつ旅をふりかえってください🏝️✨")
+
+
+def calendar(folder, dry=False, pub=False, trial=False):
+    """卓上カレンダーを1つ作る。絵は `calbake.py --print <folder>` が書いた `<MM>-a.png` の12枚。
+
+    絵は公開の URL で渡す。**URL はこの回が checkout した commit に固定する**（`GITHUB_SHA`）——
+    master でなくブランチから押しても、その commit にある絵がそのまま渡る。
+    1枚でも取れなければ作らない（11か月ぶんだけのカレンダーを作らない）。
+    同じ題がもうあれば作らない（押し直しても2つにならない）。`--trial` は作って見本を取って消す"""
+    sha = os.environ.get("GITHUB_SHA") or "master"
+    base = f"https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/{sha}/{folder.strip('/')}/"
+    urls = [base + f"{m:02d}-a.png" for m in range(1, 13)]
+    for u in urls:
+        try:
+            req = urllib.request.Request(u, method="HEAD", headers={"User-Agent": "ayato-island/1.0"})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                print(f"  絵 {u.rsplit('/', 1)[1]} {r.status} {r.headers.get('Content-Length')}B")
+        except Exception as e:
+            sys.exit(f"絵が取れない（作らない）: {u} {e}")
+    if not trial and CAL_TITLE in {(m.get("title") or "") for m in materials()}:
+        sys.exit(f"{CAL_TITLE!r} はもうある。作り直すなら先に消す")
+    prod = {"itemId": CAL_ITEM, "exemplaryItemVariantId": CAL_VARIANT, "published": pub, "resizeMode": "contain",
+            "sub_materials": [{"texture": urls[i], "printSide": MONTHS[i], "enabled": True} for i in range(1, 12)]}
+    body = {"title": CAL_TITLE, "description": cal_description(), "price": 300, "texture": urls[0], "products": [prod]}
+    print(body["description"])
+    if dry:
+        print(f"  dry-run: POST /materials {CAL_TITLE!r} item={CAL_ITEM} 型={CAL_VARIANT} 公開={pub} 面={[s['printSide'] for s in prod['sub_materials']]}")
+        return None
+    st, r = call("POST", "/materials", body)
+    if st != 200:
+        sys.exit(f"POST /materials {st}: {r}")
+    m = r["material"]
+    pr = (r.get("products") or [{}])[0]
+    print(f"  created {m['id']} {m['title']!r} 公開={pr.get('published')} {pr.get('sampleUrl')}")
+    print("    angleImageUrls のキー:", sorted((pr.get("angleImageUrls") or {}).keys()))
+    time.sleep(20)  # 2〜12月（sub_materials）の見本は少し遅れて焼かれるかもしれない
+    sample([m["id"]])
+    if trial:
+        st, _ = call("DELETE", f"/materials/{m['id']}")
+        print(f"  試作を消した {m['id']} -> {st}")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a") as f:
+            f.write(f"### 卓上カレンダー\n\n- {pr.get('sampleUrl')}（デザイン {m['id']}、公開={pr.get('published')}"
+                    f"{'、試作なので消した' if trial else ''}）\n")
+    return m["id"]
+
+
 def sample(ids):
     """デザインごとに見本の絵を、大きく・表裏とも取って /tmp/suzuri-sheet/ に置く（成果物になる）。
     URL の `{width}x{height}` と `[/angle]` を埋める。取れた大きさと URL を出す（公開の URL なので出してよい）"""
@@ -253,14 +322,19 @@ def sample(ids):
             sv = p.get("sampleItemVariant") or {}
             size, color = (sv.get("size") or {}).get("name", "s"), (sv.get("color") or {}).get("name", "white")
             print(f"{mid} {p['item']['name']} 公開={p.get('published')} {p.get('sampleUrl')}\n  sample {p.get('sampleImageUrl')}\n  tpl {tpl}")
-            for ang in ["", "/front", "/back"]:
+            # 面の多い品目（卓上カレンダーは january〜december と面付けの imposition_1-6 / 7-12）は、
+            # 品目が持つ角度の名前で全部取る。ほかは今までどおり表と裏
+            extra = ((p.get("item") or {}).get("printPlaceForExtraAngles") or {}).get(p["item"]["name"]) \
+                or ["front", *MONTHS, "imposition_1-6", "imposition_7-12"]
+            angles = ([""] + [f"/{a}" for a in extra]) if p["item"]["name"] == "desk-calendar" else ["", "/front", "/back"]
+            for ang in angles:
                 u = (tpl.replace("{width}", "1530").replace("{height}", "1530").replace("{size}", size)
                      .replace("{color}", color).replace("[/angle]", ang))
                 raw = _fetch(u, tries=1)
                 name = f"{mid}-{p['item']['name']}{ang.replace('/', '-')}.img"
                 if raw:
                     open(f"/tmp/suzuri-sheet/{name}", "wb").write(raw)
-                print(f"  {'ok' if raw else '取れない'} {name} {len(raw) if raw else ''}")
+                print(f"  {'ok' if raw else '取れない'} {name} {len(raw) if raw else ''}" + (f"\n    {u}" if raw and ang else ""))
 
 
 def publish(material_id):
@@ -550,6 +624,8 @@ def main():
     c = sub.add_parser("items"); c.add_argument("--q", default="", help="品目名（英字・日本語）に含まれる字。空なら全部")
     c = sub.add_parser("item"); c.add_argument("id", type=int)
     c = sub.add_parser("schema"); c.add_argument("words", nargs="+")
+    c = sub.add_parser("calendar"); c.add_argument("--dir", default="tools/goods/cal-print")
+    c.add_argument("--dry-run", action="store_true"); c.add_argument("--publish", action="store_true"); c.add_argument("--trial", action="store_true")
     c = sub.add_parser("characters"); c.add_argument("--dry-run", action="store_true"); c.add_argument("--items", default=",".join(SAFE_ITEMS))
     c = sub.add_parser("create")
     c.add_argument("--title", required=True); c.add_argument("--description", default=""); c.add_argument("--price", type=int, default=300)
@@ -577,6 +653,8 @@ def main():
         item(a.id)
     elif a.cmd == "schema":
         schema(a.words)
+    elif a.cmd == "calendar":
+        calendar(a.dir, a.dry_run, a.publish, a.trial)
     elif a.cmd == "goods":
         goods(a.spec, a.dry_run, a.publish, a.trial, a.only.split(",") if a.only else None)
     elif a.cmd == "sample":
