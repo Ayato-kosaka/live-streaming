@@ -16,15 +16,27 @@
 ありえない桁。** これはライブ中に視聴者が連打する**ライブのリアクション**で、
 配信では「タップタップ」と呼んでいる。
 
-Studio では **動画 → アナリティクス → エンゲージメント**のカードに出る。
-`creator/list_creator_videos` の mask には**入っていない**（あれは一覧の列で、
-高評価もリアクションも持たない）。アナリティクス側の口から取る。
+Studio では **動画 → アナリティクス → 概要**（`tab-overview`）の、
+**ライブ配信のカード**に出る。画面の字は
 
-## 口の名前を決め打ちにしない
+    ライブ配信中 / 1,010 / チャット メッセージ / 84,893 / リアクション / 0:00
 
-アナリティクスの youtubei は、Studio の版で名前も形も変わる。
-だから**先に `capture()` で拾って、返事の中からリアクションらしい数を探す。**
-見つからなければ**数を出さずに、拾った候補を並べて 2 で帰る。**
+の順で、**数がラベルの前**にある。**エンゲージメント（`tab-engagement`）には出ない。**
+最初はそちらを開いていて、一度も数が取れなかった（#847）。
+`creator/list_creator_videos` の mask にも**入っていない**（あれは一覧の列で、
+高評価もリアクションも持たない）。
+
+## 2つの道で読んで、食い違ったら出さない
+
+1. **画面の字**: 行に割って、「数の行 → 次の行が `リアクション`」を拾う
+2. **口の返事**: 概要を開いたときに飛ぶ `yta_web/get_cards` が
+   `topLiveReactionsCardData.topReactions[{numberOfReactions, reactionType}]`
+   を持っている（種類ごとの内訳）。これを足す
+
+**両方取れて食い違ったら、数を出さない。** 内訳が「上位いくつか」だけで
+全部の種類を持っていないかもしれないし、画面の読み違いかもしれない。
+どちらが正しいかをこちらで決めずに、両方の値を `how` に並べて 2 で帰る。
+片方しか取れなければその片方を使い、どちらで取ったかを `how` に書く。
 
 **当てずっぽうの数を台帳へ入れない。** 台帳はそのまま島の面に出るので、
 間違った数が「その月の記録」として何年も残る。
@@ -45,9 +57,10 @@ sys.path.insert(0, "/home/ubuntu/cdp")
 
 from yt_studio import LIVE_FILTER, api, capture, dump, list_videos, studio, url_of  # noqa: E402
 
-# リアクションらしい値の見分け方。**日本語の画面と、英語の鍵の両方を見る。**
-# Studio の言語はプロファイル次第で変わるので、片方だけだと取りこぼす。
-WORDS = re.compile(r"リアクション|reaction", re.I)
+# 画面でリアクション数の**次の行**に来るラベル。
+# Studio の言語はプロファイル次第で変わるので、英語の画面も受ける
+LABELS = {"リアクション", "ライブのリアクション", "Reactions", "Live reactions"}
+NUM = re.compile(r"^[\d,]+$")
 
 # 1日ぶんのライブを探すときに、一覧をどこまで遡るか。
 # 月末配信は月に1回なので、50本もあれば1年半ぶん届く
@@ -92,75 +105,94 @@ def videos_on(t, day: str) -> list:
     return out
 
 
-def _numbers_near(obj, found: list, path: str = "") -> None:
-    """JSON を歩いて、**リアクションらしい言葉の近くにある数**を集める。
+def _from_screen(txt: str) -> list:
+    """画面の字から、`リアクション` の直前の行にある数を全部拾う。
+
+    **行で見る。** 字を1本につなげて正規表現で探すと、ラベルの後ろの
+    別の数（配信の長さの `0:00` や次のカードの数）を拾う。
 
     Args:
-        obj: 返事（辞書・配列・値）
-        found: 見つけたものを足していく先（`{"path", "n", "why"}`）
-        path: いまいる場所
+        txt: `document.body.innerText`
+
+    Returns:
+        見つけた数の並び（重複はそのまま）
     """
+    lines = [x.strip() for x in txt.splitlines() if x.strip()]
+    return [int(lines[i - 1].replace(",", "")) for i in range(1, len(lines))
+            if lines[i] in LABELS and NUM.match(lines[i - 1])]
+
+
+def _cards(obj, out: list) -> None:
+    """返事を歩いて、`topLiveReactionsCardData` を全部集める。"""
     if isinstance(obj, dict):
-        hit = any(WORDS.search(str(k)) for k in obj) or WORDS.search(json.dumps(
-            {k: v for k, v in obj.items() if isinstance(v, str)}, ensure_ascii=False))
-        if hit:
-            for k, v in obj.items():
-                n = _as_int(v)
-                if n is not None and n > 0:
-                    found.append({"path": f"{path}.{k}", "n": n, "why": "リアクションの近く"})
-        for k, v in obj.items():
-            _numbers_near(v, found, f"{path}.{k}")
+        if isinstance(obj.get("topLiveReactionsCardData"), dict):
+            out.append(obj["topLiveReactionsCardData"])
+        for v in obj.values():
+            _cards(v, out)
     elif isinstance(obj, list):
-        for i, v in enumerate(obj[:200]):
-            _numbers_near(v, found, f"{path}[{i}]")
+        for v in obj:
+            _cards(v, out)
 
 
-def _as_int(v):
-    """数として読めれば int、読めなければ None。"""
-    if isinstance(v, bool):
-        return None
-    if isinstance(v, int):
-        return v
-    if isinstance(v, str) and v.isdigit():
-        return int(v)
-    return None
+def _from_api(got: list) -> tuple:
+    """口の返事から、リアクションの内訳を足した数。
+
+    Args:
+        got: `capture()` の返り（返事は `resp`）
+
+    Returns:
+        `(合計の並び, 内訳)`。合計はカード1枚につき1つ。内訳は最初のカードの
+        `[(種類, 数)]`
+    """
+    found = []
+    for r in got:
+        _cards(r.get("resp"), found)
+    sums, parts = [], []
+    for c in found:
+        top = c.get("topReactions") or []
+        try:
+            kinds = [(x.get("reactionType", "?"), int(x["numberOfReactions"])) for x in top]
+        except (KeyError, TypeError, ValueError):
+            continue
+        if kinds:
+            sums.append(sum(n for _, n in kinds))
+            parts = parts or kinds
+    return sums, parts
+
+
+def _one(vals: list):
+    """同じ道で複数取れたときは、全部同じ値のときだけ採る。"""
+    return vals[0] if vals and len(set(vals)) == 1 else None
 
 
 def reactions(t, video_id: str) -> dict:
     """1本ぶんのリアクション数。
 
-    **決め打ちの口を叩かない。** アナリティクスのエンゲージメントを開いて、
-    そのとき飛んだ youtubei をぜんぶ拾い、リアクションらしい数を探す。
+    概要タブを開いて、**画面の字**と**口の返事の内訳の合計**の両方で読む。
 
     Args:
         t: `studio()` で開いたタブ
         video_id: 動画 id
 
     Returns:
-        `{"id", "n", "how", "candidates"}`。
-        決められなければ `n` は None で、`candidates` に拾ったものが入る
+        `{"id", "n", "how", "screen", "api", "kinds"}`。
+        決められなければ `n` は None で、`how` に理由と両方の値が入る
     """
-    url = url_of(f"video/{video_id}/analytics/tab-engagement/period-default")
+    url = url_of(f"video/{video_id}/analytics/tab-overview/period-default")
     got = capture(t, url=url, wait=14)
-    found = []
-    for r in got:
-        try:
-            body = r.get("body")
-            _numbers_near(json.loads(body) if isinstance(body, str) else body, found,
-                          r.get("url", "")[-48:])
-        except (TypeError, ValueError):
-            continue
-    # 画面の字からも読む。カードに「ライブのリアクション 84,893」と出ている
-    txt = t.js("document.body.innerText") or ""
-    m = re.search(r"(?:ライブの)?リアクション[^\d]{0,24}([\d,]{3,})", txt)
-    if m:
-        n = int(m.group(1).replace(",", ""))
-        return {"id": video_id, "n": n, "how": "画面の字", "candidates": found[:20]}
-    # 口の返事だけで決まるのは、候補がちょうど1つに絞れたときだけ
-    uniq = sorted({f["n"] for f in found})
-    if len(uniq) == 1:
-        return {"id": video_id, "n": uniq[0], "how": found[0]["path"], "candidates": found[:20]}
-    return {"id": video_id, "n": None, "how": "決められない", "candidates": found[:20]}
+    screen = _from_screen(t.js("document.body.innerText") or "")
+    sums, kinds = _from_api(got)
+    a, b = _one(screen), _one(sums)
+    base = {"id": video_id, "screen": screen, "api": sums, "kinds": kinds}
+    if a is not None and b is not None:
+        if a == b:
+            return dict(base, n=a, how="画面の字と内訳の合計が一致")
+        return dict(base, n=None, how=f"食い違い: 画面の字 {a} / 内訳の合計 {b}")
+    if a is not None:
+        return dict(base, n=a, how="画面の字（内訳は取れず: %s）" % (sums or "無し"))
+    if b is not None:
+        return dict(base, n=b, how="内訳の合計（画面の字は取れず: %s）" % (screen or "無し"))
+    return dict(base, n=None, how=f"決められない: 画面の字 {screen or '無し'} / 内訳の合計 {sums or '無し'}")
 
 
 def taps_for_day(day: str) -> dict:
