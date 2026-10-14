@@ -1,0 +1,97 @@
+<!doctype html><html lang="ja"><meta charset="utf-8">
+<title>対照: 指が届くか</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  `reachwatch.mjs` の対照を載せる台。
+
+  **本物の面を台にしない。** 書き出しを忘れた回に台ごと消えて、
+  「対照も本物も無いまま 0件」になる（`docs/island-standards.md` §15）。
+  ここは書き出しと関係なく必ず立つ。
+
+  並べてあるのは14件。**挙げてほしい5件**と**挙げてはいけない9件**を
+  同じ表で見る。片側だけだと、しきい値をゆるめた道具（なんでも緑）も、
+  きつくした道具（なんでも赤）も通ってしまう（`docs/island-misses.md` #125）。
+
+  字（textContent）がそのまま突き合わせの鍵になるので、**重複させない。**
+-->
+<style>
+  body { margin: 0; font: 14px/1.4 sans-serif; background: #fff; color: #222 }
+  main { padding: 8px }
+  .cell { position: relative; margin: 12px 0; width: 300px; height: 70px }
+  .tap { display: block; background: #0a6; color: #fff; font-size: 10px; overflow: hidden }
+  .big { width: 60px; height: 60px; line-height: 60px }
+  .tiny { width: 30px; height: 30px; line-height: 30px }
+  /* 覆い。上に乗って指を取る（pointer-events は既定のまま） */
+  .lid { position: absolute; left: 0; top: 0; width: 120px; height: 120px; background: #c33 }
+  /* 透ける覆い。見た目は乗っているが指は通る */
+  .ghost { position: absolute; left: 0; top: 0; width: 120px; height: 120px;
+           background: rgba(200,50,50,.35); pointer-events: none }
+  /* 横へ送る道。`scroll-snap` が効いていると、`scrollIntoView` の既定
+     （inline: nearest）は**見えてさえいれば止まる**ので、止まった先で
+     中心が道のふちの外に落ちることがある。`/about` の年表がそれだった。 */
+  .rail { overflow-x: auto; scroll-snap-type: x proximity; width: 240px;
+          border: 1px solid #999; white-space: nowrap }
+  .rail > * { scroll-snap-align: start; display: inline-block; vertical-align: top }
+  .rail .tap { width: 160px; height: 60px; line-height: 60px }
+</style>
+<body><main>
+<h1>指が届くかの対照</h1>
+
+<!-- ① 挙げてほしい: まるごと覆われている 60px -->
+<div class="cell"><a class="tap big" href="/fix.html">ふた下</a><i class="lid"></i></div>
+
+<!-- ② 挙げてほしい: 覆いは無いが 30px しかない -->
+<div class="cell"><a class="tap tiny" href="/fix.html">ちび</a></div>
+
+<!-- ③ 挙げてほしい: 閉じた畳みの中の 30px（開いてはじめて挙がる） -->
+<details><summary style="min-height:56px">畳み（閉じている）</summary>
+  <div class="cell"><a class="tap tiny" href="/fix.html">畳ちび</a></div>
+  <!-- ④ 挙げてはいけない: 畳みの中の 60px（開いて測れば足りている） -->
+  <div class="cell"><a class="tap big" href="/fix.html">畳大</a></div>
+  <!-- ⑤ 挙げてほしい: 畳みの中で覆われている 60px -->
+  <div class="cell"><a class="tap big" href="/fix.html">畳ふた</a><i class="lid"></i></div>
+</details>
+
+<!-- ⑥ 挙げてはいけない: 覆いが透けている（指は通る） -->
+<div class="cell"><a class="tap big" href="/fix.html">透け下</a><i class="ghost"></i></div>
+
+<!-- ⑦ 挙げてはいけない: 足りている 60px -->
+<div class="cell"><a class="tap big" href="/fix.html">足大</a></div>
+
+<!-- ⑧ 挙げてはいけない: 見えていない（display:none）。押しどころではない -->
+<div class="cell"><a class="tap tiny" href="/fix.html" style="display:none">隠ちび</a></div>
+
+<!-- ⑨ 挙げてはいけない: 1px に畳んである読み上げ用（画面に出ていない） -->
+<div style="width:1px;height:1px;overflow:hidden"><a class="tap tiny" href="/fix.html">読上</a></div>
+
+<!-- ⑪ 挙げてはいけない: 横へ送る道の中。引き出せば押せる（60x160） -->
+<div class="rail">
+  <a class="tap" href="/fix.html">道1</a><a class="tap" href="/fix.html">道2</a>
+  <a class="tap" href="/fix.html">道3</a><a class="tap" href="/fix.html">道4</a>
+</div>
+
+<!-- ⑫ 挙げてほしい: 横へ送る道の中だが、ふたに取られている -->
+<div style="position:relative">
+  <div class="rail">
+    <a class="tap" href="/fix.html">道ふた</a><a class="tap" href="/fix.html">道脇1</a>
+    <a class="tap" href="/fix.html">道脇2</a><a class="tap" href="/fix.html">道脇3</a>
+  </div>
+  <i class="lid" style="width:240px;height:64px"></i>
+</div>
+
+<!-- ⑬ 挙げてはいけない: 道より広い札。横を真ん中まで引き出さないと、
+     中心が道のふちの外に落ちる（`/about` の年表で出たのと同じ形） -->
+<div class="rail">
+  <a class="tap" href="/fix.html" style="width:500px">道広</a>
+  <a class="tap" href="/fix.html">道後1</a><a class="tap" href="/fix.html">道後2</a>
+</div>
+
+<!-- ⑭ 挙げてはいけない: 画面の外に置いてあって、送っても入らない。
+     これは「覆われている」ではない（混ぜると `画面の外` まで赤になる） -->
+<a class="tap big" href="/fix.html" style="position:fixed;left:-500px;top:10px">外出</a>
+
+<!-- ⑩ 挙げてはいけない: 入力の脇にどけた素の input。指が押すのは label のほう -->
+<div class="cell"><label style="display:block;width:200px;height:60px;line-height:60px;background:#07a;color:#fff">
+  <input type="checkbox" style="opacity:0;position:absolute">札つき
+</label></div>
+</main></body></html>

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { M_PLUS_Rounded_1c } from "next/font/google";
 import Display from "@/components/roulette/Display";
 import "./roulette.css";
@@ -25,13 +26,15 @@ const game = M_PLUS_Rounded_1c({
   fallback: ["Arial Rounded MT Bold", "Hiragino Maru Gothic ProN", "sans-serif"],
 });
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "ルーレット",
   description: "配信で回すルーレット。",
   /* 配信の画面。人が読みに来る面ではないので、索引に載せない
      （`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
-};
+  path: "/roulette",
+});
 
 /**
  * ルーレットの表示側（#164）。**スマホ版 OBS が、これを1枚開く。**

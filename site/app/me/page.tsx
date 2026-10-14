@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import MyPage from "@/components/me/MyPage";
 import { PLAN_BY_DAY } from "@/content/planDays";
 import "./me.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "じぶんのこと",
   description: "貼った付箋、出した企画、島にいるじぶん。ログインした人のところ。",
   /* 検索から来ても、他人の画面には何も出ない面。索引に載せない
      （`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
-};
+  path: "/me",
+});
 
 /**
  * じぶんのこと（#163）。

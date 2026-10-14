@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import VoiceBubble from "@/components/ui/Voice";
@@ -25,11 +26,13 @@ import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "about",
   title: "あやとのこと",
   description:
     "アプリを作りたくて日本を出た人の、ここまで。旅と配信とアプリの年表と、視聴者さんから見たあやと。",
-};
+  path: "/about",
+});
 
 /**
  * あやとのこと。

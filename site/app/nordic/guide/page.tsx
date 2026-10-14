@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
@@ -8,11 +9,13 @@ import Flag from "@/components/ui/Flag";
 import GuideNow from "@/components/nordic/GuideNow";
 import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "nordic",
   title: "旅のしおり — 北欧ヒッチハイク",
   // 品数は手で書かない（おみやげは13品なのに「20品」と書いてあった）。しおりから数える
   description: `お金、通信、服装、サウナの入り方、食べもの${G.food.length}品、おみやげ${G.souvenir.length}品、困ったとき。北欧とバルト三国を旅する前に読むもの。`,
-};
+  path: "/nordic/guide",
+});
 
 /**
  * 旅のしおり。

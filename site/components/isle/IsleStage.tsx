@@ -33,7 +33,7 @@ import { useFund } from "@/components/nordic/fund";
 import { FUND_GOAL_YEN } from "@/content/chapters";
 import type { IsleSpec } from "./spec";
 import { buildWorld, clampTo, type IsleWorld, type Placed } from "./world";
-import { AIR, MAX_LEAD, MAX_LEAD_NEAR, TAP, TAP_FIT, around, fitHit, hits, lead, nooks, type Box } from "./plates";
+import { AIR, MAX_LEAD, MAX_LEAD_NEAR, TAP, TAP_FIT, around, cuts, fitHit, hits, lead, nooks, type Box } from "./plates";
 import Say from "@/components/ui/Say";
 import { charImg } from "@/lib/charImg";
 
@@ -2060,19 +2060,42 @@ function placePlates(
       /* **`tkn` で見る（`placed` ではない）。** `tkn` には建物の当たり
          （48px）も入っている。`placed` だけで見ると、回した先が隣の建物の
          見えない当たりの下になって、札の押しどころが削られる */
+      /* 逃がし先を探すときの下の余白。**寄りだけ広く取る。**
+         `padBottom`（52px）は「今日の島」の板1枚ぶんを空けておくための数だが、
+         その板は `tkn`（島の隅の道具）にも入っているので、**同じ場所を二重に
+         禁じていた。** 引きの札は落とせるので二重でも困らないが、寄りの札は
+         落とせないので、禁じたぶんがそのまま「ほかの入口の上に残る」に化ける。 */
+      const bot = o.wide ? padBottom : 10;
       const free = (c: Box) =>
         c.x >= pad &&
         c.x + c.w <= o.b.w - pad &&
         c.y >= padTop &&
-        c.y + c.h <= o.b.h - padBottom &&
+        c.y + c.h <= o.b.h - bot &&
         !tkn.some((q) => hits(c, q));
       /* 8か所が全部ふさがっていたら、**隙間の縁に合わせて探す**（`./plates.ts`
          の `nooks`）。候補はどれも `MAX_LEAD` の中なので、ここで見つかった
          場所は「建物のそば」の決まりを満たしている。作るのは8か所が全滅した
          ときだけ——ふだんは1つめで決まるので、重さは前と変わらない。 */
-      const spot =
-        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ??
-        nooks(
+      /** 板の中に収まっているか（相手は見ない） */
+      const inBoard = (c: Box) =>
+        c.x >= pad &&
+        c.x + c.w <= o.b.w - pad &&
+        c.y >= padTop &&
+        c.y + c.h <= o.b.h - bot;
+      /**
+       * ここに置いたら、**入口をいくつ殺すか。**
+       *
+       * 「重なっているか」では細かすぎる。建物の当たりは 48px まで広げて
+       * あるので、札が端をかすめても、残りで 48px を取り直せることが多い。
+       * 数えるのは**取り直せなくなったもの**だけ——`plates.ts` の `cuts` が
+       * 返す残りに、48px 四方が1つも無いとき（`fitHit` が引っ込める条件）。
+       */
+      const kill = (c: Box) =>
+        other(pl.i).reduce(
+          (n, q) => n + (hits(c, q) && !cuts(q, c).some((k) => k.w >= TAP && k.h >= TAP) ? 1 : 0),
+          0,
+        );
+      const nook = nooks(
           rect,
           pl.fx,
           pl.fy,
@@ -2081,7 +2104,7 @@ function placePlates(
             x: pad,
             y: padTop,
             w: o.b.w - pad * 2,
-            h: o.b.h - padTop - padBottom,
+            h: o.b.h - padTop - bot,
           },
           /* **どこまで離れてよいかは、寄りと引きで違う**（`plates.ts` の
              `MAX_LEAD_NEAR`）。引きは離れすぎたら札を落とすので 108px で
@@ -2090,7 +2113,28 @@ function placePlates(
              「配信」の開いた札が「あやとグッズ」の当たりを 66/121 点覆って、
              押しどころを 0x0 にしていた。108px の外には空きがあった。 */
           o.wide ? MAX_LEAD : MAX_LEAD_NEAR,
-        ).find(free);
+        );
+      /* **空いている場所が1つも無いときに、どこへ置くか。**
+         寄りの札は落とせない（落とすと、降り立った人が読む名前が消える）ので、
+         どこかには置くことになる。そこで**殺す入口がいちばん少ない場所**を採る。
+
+         札は建物の当たりに少しかかってもよい——当たりは 48px まで広げて
+         あるので、残りで取り直せる（`plates.ts` の `cuts`）。駄目なのは
+         **取り直せなくなる**置き方だけ。ここを「重なっているか」だけで
+         切っていたので、候補が1つも残らず元の位置（＝隣の建物の真上）に
+         残って、その入口が 0x0 になっていた。実測（2026-10-13・幅390・
+         `/island/middle-east` の寄り）で「となりの島へ」の開いた札が
+         「この島で歩いた国」の当たりを 99/121 点覆っていた。
+
+         `nooks` は**動かさずに済む順**に返すので、同じ被害なら近いほうが勝つ。 */
+      const least =
+        !o.wide && nook.length
+          ? nook.filter(inBoard).reduce((a, c) => (kill(c) < kill(a) ? c : a), nook[0])
+          : undefined;
+      const spot =
+        around(rect, pl.fx, pl.fy, pl.artW, pl.mh).find(free) ??
+        nook.find(free) ??
+        (least && kill(least) === 0 ? least : undefined);
       if (spot) {
         dx = spot.x - rect.x;
         dy = spot.y - rect.y;
@@ -2173,8 +2217,11 @@ function placePlates(
            板の中へ収めた3つ（上・下・元）から、**建物に乗る数がいちばん
            少ないもの**を取る。同じなら動きの小さいほうを取る。 */
         const fit = (t: number) => Math.min(Math.max(t, padTop), Math.max(padTop, o.b.h - padBottom - rect.h));
-        const onArt = (t: number) =>
-          other(pl.i).reduce((n, q) => n + (hits({ x: left, y: t, w: rect.w, h: rect.h }, q) ? 1 : 0), 0);
+        /* **数えるのは「乗った建物の数」ではなく「殺した入口の数」。**
+           当たりは 48px まで広げてあるので、端をかすめただけなら残りで
+           取り直せる（上の `kill`）。取り直せる相手と取り直せない相手を
+           同じ1件として数えていたので、**殺すほうの置き方が選ばれる**回があった */
+        const onArt = (t: number) => kill({ x: left, y: t, w: rect.w, h: rect.h });
         t0 = [fit(up), fit(down), fit(top)].reduce((best, c) => {
           const d = onArt(c) - onArt(best);
           return d < 0 || (d === 0 && Math.abs(c - top) < Math.abs(best - top)) ? c : best;
@@ -2182,7 +2229,19 @@ function placePlates(
       }
       dy += t0 - top;
       top = t0;
-      const box = { x: left, y: top, w: rect.w, h: rect.h };
+      let box = { x: left, y: top, w: rect.w, h: rect.h };
+      /* **上下へ逃がした先より、隙間の縁に合わせた候補のほうが被害が小さいなら、
+         そちらを採る。** 上下へ逃がすのは横を動かさない逃げ方なので、
+         島が横に混んでいるとどこへ動かしても同じ建物の上に残る。
+         `nooks` は横も見ている（`least`）。**殺す入口の数で選ぶ。**
+         落とすのは引きだけなので、ここで効くのは寄りだけ（`least` が寄り限定）。 */
+      if (least && kill(least) < kill(box)) {
+        dx += least.x - box.x;
+        dy += least.y - box.y;
+        left = least.x;
+        top = least.y;
+        box = { x: left, y: top, w: rect.w, h: rect.h };
+      }
       /* **建物から離れすぎたら、その札は出さない。**
          差し棒が何も指していない札は、名前が読めても行き先になっていない
          （`docs/island-design.md` 3-1）。建物そのものは押せるまま残るので、

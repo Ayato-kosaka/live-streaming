@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
@@ -9,11 +10,13 @@ import { FriendsMark } from "@/components/live/art";
 import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "friends",
   title: "愉快な仲間達",
   /* `<meta>` は焼かれたまま出るので、時刻を書かない（`content/site.ts` と同じ理由） */
   description: "配信に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
-};
+  path: "/friends",
+});
 
 /**
  * 愉快な仲間達。
