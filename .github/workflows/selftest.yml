@@ -215,7 +215,13 @@ jobs:
       # 境目の3日は実測から決めた（2026-10-14。繋ぎ先5本の連続する run の
       # 間隔はいちばん空いて **1.22日**、繋ぎで起きた回の間隔は **1.10日**。
       # 定時そのものの遅れは最長 8.0時間）。**3日はその 2.5倍。**
+      #
+      # **前の step が落ちても回す。** 繋ぎの図は「他のどこかが赤い日」にこそ
+      # 読みたい——名前を変えた PR は上の回し役（`workflow_link_selftest.py`）で
+      # 先に落ちるので、`always` が無いとこの報告が**いちばん要る日に出ない。**
+      # 落ちたらこの step も赤くなるので、見逃しにはならない
       - name: 繋ぎ（workflow_run）が生きているか（API を読む。この箱で12秒）
+        if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 python/chain_alive_watch.py --days 3

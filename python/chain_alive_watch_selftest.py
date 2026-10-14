@@ -180,20 +180,29 @@ def main() -> int:
               "**空の答えが『ぜんぶ切れている』に化ける**")
         ng += 1
 
-    # [6] `conclusion` で絞る `if:` を1本だけ足す。**その1本だけ**が挙がること
-    now_gated = [p for p in linked if conclusion_gates(docs[p])]
-    g_victim = linked[-1]
+    # [6] `conclusion` で絞る `if:` を1本だけ足す。**その1本だけ**が増えること
+    #
+    # **いま絞っているものが在るかどうかは、ここでは問わない。** それは本体の
+    # [2] が見ている。ここが見るのは「足したら気づくか」だけで、両方を
+    # 1つの足に持たせると、本物が1本見つかった日に**この足も道連れで落ちて**、
+    # 検出が壊れたのか対象が増えたのかが読めなくなる（#128）
+    now_gated = {p for p in linked if conclusion_gates(docs[p])}
+    g_victim = next((p for p in reversed(linked) if p not in now_gated), None)
+    if g_victim is None:
+        print("[6] !! 絞っていない繋ぎが1本も無い。足す先が作れない")
+        return 2
     d6 = copy.deepcopy(docs)
     jobs = d6[g_victim].get("jobs")
     jname = sorted(jobs)[0]
     jobs[jname]["if"] = "${{ github.event.workflow_run.conclusion == 'success' }}"
-    got6 = [p for p in sorted(d6) if conclusion_gates(d6[p])]
-    if got6 == sorted(set(now_gated) | {g_victim}) and not now_gated:
-        print(f"[6] ○ {g_victim} の job に conclusion の if: を足すと、そこだけが挙がる"
-              f"（{conclusion_gates(d6[g_victim])[0]}）")
+    got6 = {p for p in d6 if conclusion_gates(d6[p])}
+    if got6 == now_gated | {g_victim}:
+        print(f"[6] ○ {g_victim} の job に conclusion の if: を足すと、そこだけが増える"
+              f"（{conclusion_gates(d6[g_victim])[0]}）"
+              + (f"／元から絞っているもの {len(now_gated)}本" if now_gated else ""))
     else:
-        print(f"[6] ✕ conclusion の if: を1本足したのに挙がったのは {got6}"
-              f"（いま絞っているのは {now_gated}）")
+        print(f"[6] ✕ conclusion の if: を1本足したのに挙がったのは {sorted(got6)}"
+              f"（元から絞っているのは {sorted(now_gated)}）")
         ng += 1
 
     # [7] 借り物（名前の突き合わせ）が効いているか。
