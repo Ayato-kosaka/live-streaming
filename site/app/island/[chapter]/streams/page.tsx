@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { StreamCard } from "@/components/ui/Bits";
@@ -79,10 +80,12 @@ export async function generateMetadata({
   const c = ISLE_STREAM_CHAPTERS.find((x) => x.slug === chapter);
   if (!c) return {};
   const n = CHAPTER_STREAMS[c.slug]?.length ?? 0;
-  return {
+  return share({
+    key: "atlas",
     title: `${c.name}の配信`,
     description: `${c.from} から ${c.to} まで、${c.name}のあいだに配信した${n}本。`,
-  };
+    path: `/island/${chapter}/streams`,
+  });
 }
 
 export default async function ChapterStreams({

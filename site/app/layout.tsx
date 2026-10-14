@@ -46,11 +46,22 @@ export const metadata: Metadata = {
   /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、旅に出た日から
      次のビルドまで直せない。いつ読んでも本当のことだけにする（`content/site.ts`）。 */
   description: SITE.description,
+  /* **ここは表紙（`/`）と、面を持たない 404 のぶん。**
+     ほかの面は `lib/share.ts` が面ごとに出す。Next は `openGraph` を親と
+     混ぜないので、面が1つでも書けばここは丸ごと置き換わる。
+     `url` を置いてあるのは、2026-10-14 まで **137面すべてに `og:url` が
+     無かった**ため（`lib/share.ts` の頭に経緯）。
+
+     **題と一文はここに書かない。** 書くと、`share()` を通していない面が
+     ここの字を**黙って受け継いで**、島ぜんぶの説明を自分のことのように名乗る
+     （実際に `/months` の10面がそうなった。`tools/sprites/ogmeta.mjs` の dup）。
+     書かなければ Next が面ごとの `title` / `description` から埋める。 */
   openGraph: {
     type: "website",
-    siteName: "あやと島",
+    siteName: SITE.name,
     locale: "ja_JP",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "あやと島" }],
+    url: "/",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "空から見たあやと島" }],
   },
   twitter: { card: "summary_large_image", images: ["/og.png"] },
   // Google Search Console でのドメイン所有権確認。YouTubeログインのOAuth審査に、

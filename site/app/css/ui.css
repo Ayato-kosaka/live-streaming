@@ -880,3 +880,29 @@
 .mp-tab.is-on .mp-tab-s { color: var(--ink); }
 
 /* 出ていないほうの面は、背も持たない */
+
+/* 視聴者さんが打った字の中の URL（`components/ui/Wrote.tsx`）。
+   あやと 2026-10-14「付箋に url が貼られた場合は別タブ起動できるようにして欲しい」。
+
+   **文の途中に出るので、板にはしない。** 行き先を入れる別欄（`.nt-link`）は
+   48px の板だが、あちらは1枚に1つで行ぜんぶを取れる。こちらは
+   「これ見て https://… すごいよ」のように**前後の字と地続き**なので、
+   板にすると文が切れる。下線と色で「押せる」を出す。
+
+   `break-all` は、120字の付箋に 60字の URL が来ても紙からはみ出さないため
+   （`crawl.mjs` が横あふれを見ている）。`Wrote` の `overflow-wrap: anywhere`
+   だけだと、`/` の無い長い1語がまれに溢れる。 */
+.wr-url {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  /* **下線を切らない。** 既定（`auto`）は `/` や `p` の下に隙間を空けるので、
+     スラッシュだらけの URL では線が点々に割れて、下線に見えなくなる
+     （390幅で撮って見た）。 */
+  text-decoration-skip-ink: none;
+  font-weight: 700;
+  word-break: break-all;
+}
+.wr-url:active { opacity: 0.7; }

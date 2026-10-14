@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import CardWall from "@/components/cards/CardWall";
 import HowToGet from "@/components/cards/HowToGet";
 import { PLAN_BY_DAY } from "@/content/planDays";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "cards",
   title: "あやと島カード",
   /* **「好きなキャラクター」と書かない。** 写真に入れられるのは、その日
      投げ銭してくれた人だけ（`docs/island-cards.md` 1章）。誰でも好きに選べる
@@ -12,7 +14,8 @@ export const metadata: Metadata = {
      面の中のリード文と同じことだけを言う。 */
   description:
     "その日の配信で撮った写真。キャラクターを1人だけ入れて、そのまま持って帰れます。入れずに写真だけでも持って帰れます。",
-};
+  path: "/cards",
+});
 
 /**
  * あやと島カード（#173）。**旅の写真（`/nordic/photos`）を寄せた先。**

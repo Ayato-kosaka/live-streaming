@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import RouletteBox from "@/components/me/RouletteBox";
 import "../me.css";
 import "./control.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "ルーレット",
   description: "配信のルーレットを、コメントから選んで回すところ。",
   /* あやとしか開けない面。索引に載せない（`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
-};
+  path: "/me/roulette",
+});
 
 /**
  * ルーレットのコントローラー（#164）。**あやとだけ。**

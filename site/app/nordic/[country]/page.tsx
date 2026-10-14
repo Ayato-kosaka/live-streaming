@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -39,11 +40,13 @@ export async function generateMetadata({
   const c = nordicCountry(country);
   if (!c) return {};
   const go = visitCitiesOf(c.slug);
-  return {
+  return share({
+    key: "nordic",
     title: `${c.name} — 北欧ヒッチハイク`,
     // 降りる街を先に言う。国の名前だけだと、国じゅうを回るように読める。
     description: `${c.catch} 行くのは${go.join("・")}。見どころ${c.spots}件と、この国であやとにやってほしいこと。`,
-  };
+    path: `/nordic/${country}`,
+  });
 }
 
 /**

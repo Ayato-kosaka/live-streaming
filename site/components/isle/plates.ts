@@ -65,7 +65,7 @@ export const MAX_LEAD = 108;
  * 240 は、390px の島で**開いた札1枚ぶん（237px）動かせる**大きさ。
  * これより広げると、札が島の反対側まで飛ぶ。
  */
-export const MAX_LEAD_NEAR = 240;
+export const MAX_LEAD_NEAR = 320;
 
 /** 箱どうしが重なっているか */
 export function hits(a: Box, b: Box): boolean {
