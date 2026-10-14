@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { RECIPES, kindLabel, recipeBySlug, recipeNo, type RecipeStream } from "@/content/recipes";
-import { countryBySlug } from "@/content/countries";
+import { countryNameBySlug } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import { Vid } from "@/components/streams/Vid";
@@ -39,7 +39,9 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) notFound();
-  const c = countryBySlug(r.country);
+  /* 名前しか要らないので、いま歩いている国も引けるほうを使う
+     （アルバニアは `COUNTRIES` にまだ居ない。歩き終わってから入る） */
+  const c = countryNameBySlug(r.country);
   const sorted = [...RECIPES].sort((a, b) => (a.date < b.date ? 1 : -1));
   const i = sorted.findIndex((x) => x.slug === r.slug);
   const prev = sorted[i - 1];
