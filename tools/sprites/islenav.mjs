@@ -53,8 +53,21 @@ const SIZES = PICK.length ? ALL.filter((s) => PICK.includes(s.w)) : ALL;
 const SIGNS = Number(process.env.SIGNS || 6);
 /** 島の下半分で、地面に届く点がこれを切ったら落とす */
 const FREE = Number(process.env.FREE || 0.3);
-/** 南へ進んだと認める量（島の座標）。カメラの揺り戻しを拾わない大きさ */
-const SOUTH = Number(process.env.SOUTH || 60);
+/**
+ * 南へ進んだと認める量。**島の座標ではなく、画面のpxで持つ。**
+ *
+ * 2026-10-14 まで「島の座標で 60」だった。寄りの倍率を 340 → 232 ワールド単位へ
+ * 上げたら、**1タップで進める最大が 1280px で 81、押している点までは 48** になり、
+ * 歩けているのに落ちた（実測 +54 / +33 / +16。合計 98 は進んでいる）。
+ *
+ * 数が倍率に貼り付いていたのが原因なので、**押した点までどれだけ詰めたか**で見る。
+ * 押した点より手前で止まっていたら落ちる、という読み方は倍率が変わっても同じ。
+ * あやとの絵は 60 ワールド単位（`IsleStage` の `AYATO_H`）なので、
+ * 画面での背丈からワールド↔px の倍率が出る。
+ */
+const SOUTH_PART = Number(process.env.SOUTH_PART || 0.6);
+/** それでも、これだけは進んでいること（島の座標。カメラの揺り戻しを拾わない大きさ） */
+const SOUTH_MIN = Number(process.env.SOUTH || 20);
 /** 島は curl 経由で1本ずつ取るので、描き終わるまで待つ */
 const DRAW = 9000;
 
@@ -202,6 +215,13 @@ const AYATO = `() => {
   const t = document.querySelector("g.ayato")?.getAttribute("transform") || "";
   return Number(t.match(/translate\\(([-\\d.]+) ([-\\d.]+)\\)/)?.[2] ?? NaN);
 }`;
+/** あやとの、画面での足元の y と背丈（px）。倍率を出すのに使う */
+const AYATO_BOX = `() => {
+  const g = document.querySelector("g.ayato");
+  if (!g) return null;
+  const b = g.getBoundingClientRect();
+  return { foot: b.bottom, h: b.height };
+}`;
 
 async function checkGround(p) {
   const g = await run(p, GROUND);
@@ -226,19 +246,25 @@ async function checkGround(p) {
   const log = [];
   for (const [x, y] of tries) {
     await shut();
+    const box = await run(p, AYATO_BOX);
     const before = await run(p, AYATO);
     await p.mouse.click(x, y);
     await p.waitForTimeout(2500);
     const after = await run(p, AYATO);
     const d = after - before;
-    log.push(`(${x},${y}) y ${before.toFixed(0)}→${after.toFixed(0)}（${d >= 0 ? "+" : ""}${d.toFixed(0)}）`);
-    if (d >= SOUTH) {
+    /* 押した点までは、島の座標でどれだけあるか。あやとの背丈（60）から倍率を出す */
+    const perPx = box && box.h > 4 ? 60 / box.h : 0;
+    const want = box ? Math.max(SOUTH_MIN, (y - box.foot) * perPx * SOUTH_PART) : SOUTH_MIN;
+    log.push(
+      `(${x},${y}) y ${before.toFixed(0)}→${after.toFixed(0)}（${d >= 0 ? "+" : ""}${d.toFixed(0)} / 要 ${want.toFixed(0)}）`,
+    );
+    if (d >= want) {
       console.log(`  [寄り] 南へ歩けた: ${log.join(" / ")}`);
       return;
     }
   }
   console.log(`  [寄り] 押した記録: ${log.join(" / ")}`);
-  ng(`[寄り] 下半分を ${tries.length}点押しても、あやとが南へ ${SOUTH} 進まない（${log.join(" / ")}）。指が地面に届いていない`);
+  ng(`[寄り] 下半分を ${tries.length}点押しても、押した点まで南へ詰めない（${log.join(" / ")}）。指が地面に届いていない`);
 }
 
 /* ---- 回す ---------------------------------------------------------------- */
