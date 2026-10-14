@@ -1,4 +1,6 @@
-import type { CSSProperties, ElementType } from "react";
+import type { CSSProperties, ElementType, ReactNode } from "react";
+
+import { cutLinks } from "@/lib/noteUrl";
 
 /**
  * 視聴者さんが打った字を、**打ったまま**出す。
@@ -32,6 +34,27 @@ import type { CSSProperties, ElementType } from "react";
  * **行の中の空白は1つも触らない。** 字下げも、語のあいだの全角空白も、
  * 書いた人が置いたもの。読みにくいと思っても、こちらが直すものではない。
  *
+ * ## 打たれた URL は、押せるようにする
+ *
+ * あやと（2026-10-14）: 「付箋に url が貼られた場合は別タブ起動できるようにして欲しい」
+ *
+ * 付箋には**行き先を入れる欄が別にある**（`n.link`）。あちらは前から
+ * 新しいタブで開く。**押せなかったのは本文のほう。** 欄があることを
+ * 知らずに本文へ貼る人のほうが多くて、その字はただの黒い字だった。
+ * 相手は押せると思って押し、何も起きない。
+ *
+ * 通すのは `http://` と `https://` だけ。`javascript:` や `data:` は
+ * **頭で切って判じない**（空白やタブで姿を変えられる）。`new URL()` に
+ * 解かせて `protocol` だけを見る——`Notes.tsx` の `okLink` と同じ考え。
+ * 基準（第2引数）は渡さない。渡すと `/foo` が本物の URL に化ける。
+ *
+ * 札に付けるのは `noopener noreferrer`（開いた先からこちらを触らせない）と
+ * `nofollow ugc`（**ここは誰でも書ける**ので、島を検索よけの踏み台にさせない）。
+ *
+ * **字は書き換えない。** URL をそのまま出す。`linkLabel` のように
+ * 行き先の名前へ縮めるのは、行き先の欄（1枚に1つ、2048字まで）の話で、
+ * 本文は120字しか入らないうえ、**前後の文と地続き**なので縮めると意味が切れる。
+ *
  * ## 色と大きさは持たない
  *
  * 当てるのは「改行を残す」「長い1語を折る」の2つだけ。
@@ -50,6 +73,7 @@ export function asWritten(t: string): string {
     .trim();
 }
 
+
 export default function Wrote({
   t,
   as,
@@ -64,9 +88,26 @@ export default function Wrote({
   const s = asWritten(String(t ?? ""));
   if (!s) return null;
   const Tag = (as ?? "span") as ElementType;
+  const parts = cutLinks(s);
   return (
     <Tag className={className} style={KEEP}>
-      {s}
+      {parts.map((p, i): ReactNode =>
+        typeof p === "string" ? (
+          p
+        ) : (
+          <a
+            key={i}
+            className="wr-url"
+            href={p.href}
+            target="_blank"
+            /* `ugc` と `nofollow` は、ここが**誰でも書ける**ところだから。
+               島を検索よけの踏み台にさせない */
+            rel="noopener noreferrer nofollow ugc"
+          >
+            {p.href}
+          </a>
+        ),
+      )}
     </Tag>
   );
 }

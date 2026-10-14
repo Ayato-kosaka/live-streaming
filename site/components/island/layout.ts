@@ -165,6 +165,10 @@ export const PLACES: Place[] = [
     href: "/streams",
     blurb: say("types"),
     sign: true,
+    /* 月ごとのふりかえり（`/months`）。道の名前が軒とそろっていないが、
+       降りてくるのは `/streams/monthly` からで、パンくずも配信から生えている。
+       砂浜だけ別のことを言うと、同じ面の上と下で食い違う（`/next/new` と同じ形）。 */
+    under: ["/months"],
   },
   {
     id: "goods",

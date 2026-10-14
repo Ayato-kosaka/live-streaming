@@ -300,8 +300,8 @@ service cloud.firestore {
        選ばれかたが「協力してくれた人」なので、それはそのまま投げ銭の
        順位表になる（`docs/island-money.md`「実額は視聴者には一切見せない」）。
        中には `channelId` も入っているので、名簿としてもそのまま読める。
-       読み書きは islandApi の `/stampline/mine` だけで、**その口は
-       ログインした本人のぶんしか返さない。** */
+       島の口（`/stampline/mine`）も 2026-10-14 に閉じた(#860)。
+       書類は記録として残し、触るのは管理の道具（`python/admin/`）だけ。 */
     match /islandStampLine/{docId} { allow read, write: if false; }
 
     // それ以外は禁止

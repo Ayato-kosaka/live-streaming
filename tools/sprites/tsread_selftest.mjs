@@ -515,6 +515,10 @@ const ALLOW = {
     "`functions/src` の TS を**1行だけ当てて書き替える**仕込み（字面の手術）。焼き込みは読まない",
   ],
   "site/selftest/popdepth_selftest.mjs": [1, "CSS の変数を読む（TS ではない）"],
+  "tools/sprites/fontbudget_selftest.mjs": [
+    1,
+    "`app/css/fonts.css` の `@font-face` を読む（`font-weight` / `url` / `unicode-range`）。**焼き込みの TS ではない。** `font-weight:\\s*(\\d+)` が欄読みの形に見えるだけ",
+  ],
   "tools/sprites/deckctrl.mjs": [
     1,
     "`public/nordic/review.html` の中のクイズを読む（焼き込みではなく、焼いた HTML）",
