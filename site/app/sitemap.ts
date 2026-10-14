@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
+import { MONTHS } from "@/content/months";
 import { APPS, PAST_APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -19,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 検索の側から見ても島の索引になる。
     "/all",
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    // 月ごとのふりかえり（#844）。**足し忘れて、配ったあとの見回りが赤くなった**（#872）
+    "/months",
+    /* あやと島案内鳥からのお知らせ（#851）。あやとの「気にしてる人少ないので、
+       さりげなく」は**島の中での出しかた**の話で、検索から探せなくてよい、
+       ではない。`robots` も `index: false` を持っていない。 */
+    "/updates",
     // その日いてくれた人に渡る1枚（#173）。誰でも見られる面
     "/cards",
     // 「企画のページを作る」（`/next/new`）は並べない（2026-10-01）。
@@ -59,6 +66,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
        1件直したら横を見に行く（`docs/island-misses.md` #73・#76）。 */
     ...[...APPS, ...PAST_APPS].map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
     ...LEGENDS.map((l) => ({ url: url(`/legends/${l.slug}`), lastModified: now, priority: 0.6 })),
+    // 月ごとのふりかえり、1か月ぶん
+    ...MONTHS.map((m) => ({ url: url(`/months/${m.key}`), lastModified: now, priority: 0.5 })),
     ...NORDIC_COUNTRIES.map((c) => ({ url: url(`/nordic/${c.slug}`), lastModified: now, priority: 0.6 })),
     // 旅の1日ぶん。出発の日と1日目から7日目まで。
     ...DAY_PAGES.map((d) => ({ url: url(dayHref(d)), lastModified: now, priority: 0.6 })),

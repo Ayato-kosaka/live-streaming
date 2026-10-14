@@ -51,9 +51,29 @@ SITE = REPO / "site"
 ATTEND_KEYS = {"n", "d", "i"}
 
 # `content/months.ts` を読んでよいところ。**ここだけ額を出してよい**
-# （`docs/island-money.md` 2.1）。`directory.ts` は索引に月を並べるだけで、
-# 額は1つも読まない
-ALLOWED_READERS = ("app/months/", "components/months/", "content/directory.ts")
+# （`docs/island-money.md` 2.1）。
+ALLOWED_READERS = ("app/months/", "components/months/", "content/directory.ts", "app/sitemap.ts")
+
+# このうち **額を出さないと約束しているもの**。索引に月を並べるだけで、
+# 読むのは `key` だけ。**約束を字で持つのではなく、下で機械に確かめさせる**
+# （`app/months/` と `components/months/` は額を出してよい面なので、ここには入れない）。
+#
+# `sitemap.ts` を足した日（2026-10-14、#872）:
+# `/months` の10面が索引から漏れて、配ったあとの見回りが赤くなった。
+# 索引に出すには月の `key` が要る。`directory.ts` が同じ形で先に許されていたが、
+# **「額を読まない」が人の目でしか見られていなかった。** 機械で見るようにした。
+INDEX_ONLY = ("content/directory.ts", "app/sitemap.ts")
+
+# **額と順位の欄。索引に並べるだけの面が触ってはいけないもの。**
+#
+# 人の数（`people` `newcomers` `once` `taps`）は**入れない**。あれは額ではなく、
+# もとから `/months` の索引に「◯本・◯人」と出している（`directory.ts`）。
+# 禁じているのは**実額と順位**で、`docs/island-money.md` 2章の表がそれ。
+#
+# 当てかたは「**何かの点のあと**にこの名前が来る」。`...top.map(` の `...top` を
+# `.top` として拾ってしまい、索引を1つ誤って止めた（書いている途中に出た）。
+MONEY_KEYS = ("tipTotal", "tips", "rank", "amount", "yen", "prize", "top")
+MONEY_RE = re.compile(r"(?<![.\w$])[A-Za-z_$][\w$]*\.(" + "|".join(MONEY_KEYS) + r")\b")
 
 IMPORT_RE = re.compile(r'from\s+"@/content/months"')
 
@@ -166,6 +186,22 @@ def main() -> int:
         print("NG %s が content/months.ts を読んでいます" % r)
         print("   額つきの順位を出してよいのは月ごとの面だけ（docs/island-money.md 2.1）")
         ng += 1
+
+    # **「索引に並べるだけ」を、字の約束で終わらせない。**
+    # `INDEX_ONLY` は月の `key` しか読まないはずなので、額や人数の欄に
+    # 触っていないことを機械で見る。触っていたら、そこは索引ではなく面。
+    for rel in INDEX_ONLY:
+        f = SITE / rel
+        if not f.exists():
+            print("NG 索引だけのはずの %s が無い（表が古い）" % rel)
+            ng += 1
+            continue
+        body = code_only(f.read_text(encoding="utf-8"))
+        touched = sorted(set(MONEY_RE.findall(body)))
+        if touched:
+            print("NG %s が額・人数の欄に触っています: %s" % (rel, "・".join(touched)))
+            print("   索引に月を並べるだけの面は、key のほかを読まない（docs/island-money.md 2.1）")
+            ng += 1
 
     print("出席の欄 %s / months.ts を読んでいる面 %d（許した場所のみ）"
           % ("・".join(sorted(keys)), len(ALLOWED_READERS)))
