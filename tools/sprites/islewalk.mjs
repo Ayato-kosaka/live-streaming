@@ -24,6 +24,9 @@
  *       （`location.pathname`）も板（`.isle-sheet`）も変わらないこと
  *   (D) **字は画面の上にだけ出る。** 札（`.isle-going`）と吹き出し
  *       （`.isle-talk`）の上辺が、出ているあいだ**1か所から動かない**こと
+ *   (E) **札が、左上の道具を覆わない。** 札は画面の幅いっぱいに置くので、
+ *       上へ寄せすぎると「島をながめる」「島の地図」をまるごと隠す。
+ *       **札は指を取る**ので、覆ったら押せない。2026-10-14 に実際にそうした
  *
  * ## ほかの道具と仕事が重ならないか
  *
@@ -106,6 +109,38 @@ const READ = `(() => {
     sheet: !!document.querySelector(".isle-sheet"),
     going: say(".isle-going .isle-mark"),
     talk: say(".isle-talk"),
+    /* (E) 左上の道具（島をながめる／島の地図）が、札に隠れていないか。
+       札（.isle-going）は画面の幅いっぱいに置くので、上へ寄せすぎると
+       道具をまるごう覆う。2026-10-14 に実際にそうした
+       （札 上10〜60 / 道具 上12〜60 でちょうど重なった）。
+       あやとの指摘:「あなたの対応だと、左上のボタンが押せなくなって困るのよ」。
+
+       当たりでは拾えない。札は指を通す設定（pointer-events:none）なので
+       elementFromPoint は道具を返す——押せてはいる。隠れているだけ。
+       見えないものは押せないので、絵の重なりで見る。 */
+    tools: (() => {
+      const card = document.querySelector(".isle-going .isle-mark");
+      if (!card) return [];
+      const cs = getComputedStyle(card);
+      if (cs.visibility === "hidden" || Number(cs.opacity) < 0.05) return [];
+      const c = card.getBoundingClientRect();
+      if (c.width < 4 || c.height < 4) return [];
+      const zOf = (x) => { let n = x, z = 0; while (n && n !== document.body) {
+        const v = getComputedStyle(n).zIndex; if (v !== "auto") { z = Number(v); break; } n = n.parentElement; } return z; };
+      const zc = zOf(card);
+      return [[".isle-view", "島をながめる"], [".isle-atlas", "島の地図"]].map((pair) => {
+        const el = document.querySelector(pair[0]);
+        if (!el) return null;
+        const b = el.getBoundingClientRect();
+        if (b.width < 4 || b.height < 4) return null;
+        const ix = Math.min(c.right, b.right) - Math.max(c.left, b.left);
+        const iy = Math.min(c.bottom, b.bottom) - Math.max(c.top, b.top);
+        if (ix <= 0 || iy <= 0) return null;
+        if (zc <= zOf(el)) return null;
+        const 割 = Math.round((ix * iy) / (b.width * b.height) * 100);
+        return pair[1] + " の " + 割 + "% を札が隠している";
+      }).filter(Boolean);
+    })(),
     /** 島の上に浮いている札。**寄りでは1枚も出ない約束**（字は上の帯だけ） */
     onIsle: [...document.querySelectorAll(".isle-spot .isle-mark")].filter((el) => {
       const cs = getComputedStyle(el);
@@ -175,7 +210,10 @@ const PLANT = `(() => {
     "@keyframes isleWalkPlant { from { transform: translateY(0) } to { transform: translateY(90px) } }" +
     ".isle-svg { animation: isleWalkPlant 0.9s linear infinite alternate !important }" +
     /* (D) 字が下に出る */
-    ".isle-going, .isle-talk { top: auto !important; bottom: 20px !important }";
+    ".isle-going, .isle-talk { top: auto !important; bottom: 20px !important }" +
+    /* (E) 札が左上の道具を覆う（上へ寄せすぎた日の姿） */
+    ".isle-going { top: 10px !important; bottom: auto !important }" +
+    ".isle-going .isle-mark { max-width: none !important; width: 94vw !important }";
   document.head.appendChild(st);
   /* (C) 建物を押すと面が変わる */
   document.querySelectorAll(".isle-hit").forEach((b) => {
@@ -331,6 +369,8 @@ async function run(ctx, path) {
   const foot = free.map((s) => s.footY);
   const midx = free.map((s) => s.midX);
   const says = samples.flatMap((s) => [s.going, s.talk].filter(Boolean));
+  /* (E) どの場面でも、取られていたら挙げる */
+  const toolsBad = samples.flatMap((s) => s.tools || []);
   const sayTops = says.map((q) => q.top);
   const isleH = samples[0]?.isleH ?? 0;
   const isleW = samples[0]?.isleW ?? 0;
@@ -345,6 +385,7 @@ async function run(ctx, path) {
     pinned: pinned.length,
     pinnedFoot: pinned.length ? { lo: Math.min(...pinned.map((s) => s.footY)), hi: Math.max(...pinned.map((s) => s.footY)) } : null,
     say: sayTops.length ? { n: sayTops.length, lo: Math.min(...sayTops), hi: Math.max(...sayTops) } : null,
+    tools: toolsBad,
     onIsle: Math.max(0, ...samples.map((s) => s.onIsle)),
     keep,
     went,
@@ -393,6 +434,8 @@ for (const path of PAGES) {
   if (r.say && r.say.hi - r.say.lo > SAY_TOL) 言.push(`字の出る場所が動く ${r.say.lo}〜${r.say.hi}px`);
   if (r.say && r.say.hi > r.isleH * 0.45) 言.push(`字が上に無い（上辺 ${r.say.hi}px / 島 ${r.isleH}px）`);
   if (r.onIsle) 言.push(`寄りなのに島の上に札が ${r.onIsle}枚`);
+  // (E) 左上の道具。**札を出したあとの回で1度でも取られていたら赤**
+  if (r.tools && r.tools.length) 言.push(`左上の道具が札に隠れている ${[...new Set(r.tools)].join("・")}`);
   // 裏返し。**「みる」で入れなくなっていたら、(C) の緑は意味が無い**
   if (!r.went.length) 言.push("「みる」を1回も押せていない（札が出ていない）");
   else {
@@ -409,6 +452,7 @@ for (const path of PAGES) {
       `  定位置 ${r.hold ? `縦${r.hold.loY}〜${r.hold.hiY} 横${r.hold.loX}〜${r.hold.hiX}` : "-"}` +
       `  端で止めた${r.pinned}回${r.pinnedFoot ? `（足元 ${r.pinnedFoot.lo}〜${r.pinnedFoot.hi}）` : ""}` +
       `  字 ${r.say ? `上辺${r.say.lo}〜${r.say.hi}px ${r.say.n}回` : "出なかった"}` +
+      `  左上の道具 ${r.tools.length ? "**" + r.tools.length + "件 隠れている**" : "ぜんぶ見えている"}` +
       `  建物${r.keep.length}軒 面が変わった${出た.length}軒` +
       `  みるで入れた${r.went.filter((k) => k.in).length}/${r.went.length}軒` +
       `  ${r.looked}回見た`,
