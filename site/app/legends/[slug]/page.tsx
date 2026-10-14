@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const l = legendBySlug(slug);
   if (!l) return {};
-  return { title: l.title, description: l.lead };
+  return share({ key: "legends", title: l.title, description: l.lead, path: `/legends/${slug}` });
 }
 
 export default async function LegendPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const a = appBySlug(slug);
   if (!a) return {};
-  return { title: a.name, description: a.summary };
+  return share({ key: "apps", title: a.name, description: a.summary, path: `/apps/${slug}` });
 }
 
 /**

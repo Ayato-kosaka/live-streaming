@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
 import { SITE } from "@/content/site";
 import "./privacy.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "プライバシーポリシー",
   description: "あやと島が YouTube のログインで何を取得し、どう使うか。",
-};
+  path: "/privacy",
+});
 
 /**
  * プライバシーポリシー。

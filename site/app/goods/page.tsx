@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 
 import Fold from "@/components/ui/Fold";
@@ -54,11 +55,13 @@ import "./goods.css";
  * 「投げ銭の多い人から」と書けば、出ている人がそのまま順位表になる。
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "goods",
   title: "あやとグッズ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
   description: `島から持って帰れるものと、これからいっしょに決めるもの。ステッカー${STICKERS.length}枚、LINEスタンプの一言${LINE_STAMPS.length}。`,
-};
+  path: "/goods",
+});
 
 /** 欄ひとつ。**絵と札は、ここ1か所で決める** */
 function Sec({

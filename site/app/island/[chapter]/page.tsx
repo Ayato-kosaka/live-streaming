@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
@@ -48,10 +49,12 @@ export async function generateMetadata({
   const { chapter } = await params;
   const c = ISLE_CHAPTERS.find((x) => x.slug === chapter);
   if (!c) return {};
-  return {
+  return share({
+    key: "atlas",
     title: c.name,
     description: c.from ? `${c.from} から ${c.to || "いま"} まで。${c.note}` : c.note,
-  };
+    path: `/island/${chapter}`,
+  });
 }
 
 const near = (c?: Chapter): Neighbour | undefined =>

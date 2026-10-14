@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) return {};
-  return { title: r.name, description: r.note };
+  return share({ key: "kitchen", title: r.name, description: r.note, path: `/kitchen/${slug}` });
 }
 
 /** その日が何の日だったか。マスの絵と、ひとことの説明。 */
