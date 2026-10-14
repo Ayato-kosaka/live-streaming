@@ -224,7 +224,7 @@ export default function GoodsPage() {
           <Link className="gd-go" href="/friends" prefetch={false}>
             <span>
               <b>住んでる人</b>
-              <i>島のみんなの絵が、作った順に並んでいる</i>
+              <i>島のみんなの絵が、ぜんぶ並んでいる</i>
             </span>
             <Icon name="right" size={16} />
           </Link>
