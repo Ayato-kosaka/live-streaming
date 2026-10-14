@@ -53,7 +53,10 @@ export async function generateMetadata({
     key: "atlas",
     title: c.name,
     description: c.from ? `${c.from} から ${c.to || "いま"} まで。${c.note}` : c.note,
-    path: `/island/${chapter}`,
+    /* **手で `/island/<章>` と組まない。** いまいる章の島はトップそのものなので、
+       手で組むと `og:url` と canonical が**どこからもリンクの来ていない写しの面**を
+       指す（`site/selftest/chapterkey_selftest.mjs` が数えている） */
+    path: chapterHref(c),
   });
 }
 

@@ -39,6 +39,7 @@
  * | `size` | 絵が配ったものの中に在って、1200×630 か |
  * | `same` | 面が2つ以上あるのに、絵が1種類しかない |
  * | `dup` | 同じ一文が2面以上に出ていないか |
+ * | `self` | `og:url` がその面自身（か、その面が名乗る canonical）を指しているか |
  * | `label` | 絵に焼いた呼び名が、その絵を使う面の題に在るか |
  *
  * **絵が届くかは curl で見る側の仕事**（この箱のブラウザは本番に出られない）。
@@ -73,6 +74,7 @@ export function headOf(html) {
     ogUrl: meta("og:url", "property"),
     twCard: meta("twitter:card", "name"),
     twImage: meta("twitter:image", "name"),
+    canonical: (/<link rel="canonical" href="([^"]*)"/.exec(head) || [])[1] ?? null,
   };
 }
 
@@ -149,6 +151,20 @@ export function judge(pages, cards, look, skip = []) {
     }
   }
 
+  /* **`share()` を通さなかった面を、ここで捕まえる。**
+     器（`app/layout.tsx`）は `og:url` に `/` を持っているので、通さなかった面は
+     **表紙を指したまま**出る。抜けではないので `empty` では出ない。
+     いまいる章の島のように、わざと別の面を正とするものは canonical で名乗る。 */
+  if (on("self")) {
+    for (const { path, head } of pages) {
+      if (path === "/404" || !head.ogUrl) continue;
+      const here = head.ogUrl.replace(ORIGIN, "") || "/";
+      const canon = (head.canonical || "").replace(ORIGIN, "") || null;
+      if (here !== path && here !== canon)
+        say(path, `og:url が自分（も canonical）も指していない（${here}）`);
+    }
+  }
+
   if (on("label")) {
     for (const [key, card] of Object.entries(cards)) {
       const url = `${ORIGIN}${card.file}`;
@@ -177,7 +193,7 @@ const page = (path, label, file, desc) => ({
   path,
   head: {
     title: `${label}｜あやと島`, ogTitle: `${label}｜あやと島`, ogDesc: desc,
-    ogImage: `${ORIGIN}${file}`, ogUrl: `${ORIGIN}${path}`,
+    ogImage: `${ORIGIN}${file}`, ogUrl: `${ORIGIN}${path}`, canonical: `${ORIGIN}${path}`,
     twCard: "summary_large_image", twImage: `${ORIGIN}${file}`,
   },
 });
@@ -223,6 +239,7 @@ export const CONTROLS = [
   },
   { name: "一文が2面で同じ", leg: "dup", pages: broke(2, { ogDesc: "台所の一文" }) },
   { name: "焼いた呼び名が題に無い", leg: "label", pages: broke(0, { ogTitle: "別のなまえ｜あやと島" }) },
+  { name: "og:url が表紙のまま（share() を通していない）", leg: "self", pages: broke(2, { ogUrl: `${ORIGIN}/` }) },
 ];
 
 /** 対照を回す。**1つでも外れたら、本物の数字を1つも出さずに 2** */

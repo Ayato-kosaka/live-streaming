@@ -40,7 +40,7 @@ const check = (label, got, want) =>
 check("足を全部つけた対照", runControls().length, 0);
 
 /* 2. 足を1本ずつ抜く。**抜いた足が捕まえていた台が、通ってしまうこと**を見る */
-const LEGS = ["empty", "abs", "size", "same", "dup", "label"];
+const LEGS = ["empty", "abs", "size", "same", "dup", "self", "label"];
 for (const leg of LEGS) {
   const caught = CONTROLS.filter((c) => c.leg === leg);
   check(`足「${leg}」が捕まえている台の数`, caught.length > 0, true);
@@ -92,7 +92,10 @@ const lost = Object.entries(cards)
   .map(([k]) => k);
 check("絵の無い札", lost.join(" ") || "なし", "なし");
 // 焼いた札は 1200×630。**器の 1枚（/og.png）も同じ決まりで見る**
+// **無い絵はここで投げない。** 投げると「絵の無い札」の行が出る前に落ちて、
+// 何が足りないのかが出ないまま終わる（実際にそうなった）
 const wrong = Object.entries(cards)
+  .filter(([, c]) => existsSync(join(repoPath("site/public"), c.file)))
   .map(([k, c]) => [k, pixelsOf(readFileSync(join(repoPath("site/public"), c.file)))])
   .filter(([, px]) => !px || px.w !== 1200 || px.h !== 630)
   .map(([k]) => k);

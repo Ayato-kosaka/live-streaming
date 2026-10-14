@@ -32,6 +32,11 @@
       "label": "伝説の企画",
       "alt": "島の表彰台"
     },
+    "months": {
+      "file": "/og/months.png",
+      "label": "ふりかえり",
+      "alt": "島の広場の噴水とベンチ"
+    },
     "friends": {
       "file": "/og/friends.png",
       "label": "愉快な仲間達",

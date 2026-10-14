@@ -50,22 +50,20 @@ export const metadata: Metadata = {
      ほかの面は `lib/share.ts` が面ごとに出す。Next は `openGraph` を親と
      混ぜないので、面が1つでも書けばここは丸ごと置き換わる。
      `url` を置いてあるのは、2026-10-14 まで **137面すべてに `og:url` が
-     無かった**ため（`lib/share.ts` の頭に経緯）。 */
+     無かった**ため（`lib/share.ts` の頭に経緯）。
+
+     **題と一文はここに書かない。** 書くと、`share()` を通していない面が
+     ここの字を**黙って受け継いで**、島ぜんぶの説明を自分のことのように名乗る
+     （実際に `/months` の10面がそうなった。`tools/sprites/ogmeta.mjs` の dup）。
+     書かなければ Next が面ごとの `title` / `description` から埋める。 */
   openGraph: {
     type: "website",
     siteName: SITE.name,
     locale: "ja_JP",
-    title: `${SITE.name} — ${SITE.tagline}`,
-    description: SITE.description,
     url: "/",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "空から見たあやと島" }],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: `${SITE.name} — ${SITE.tagline}`,
-    description: SITE.description,
-    images: ["/og.png"],
-  },
+  twitter: { card: "summary_large_image", images: ["/og.png"] },
   // Google Search Console でのドメイン所有権確認。YouTubeログインのOAuth審査に、
   // ホームページURLの所有証明として要る（`docs/`には置かない。すぐ終わる1回きりの確認）。
   verification: { google: "6p-lWEfzAS0TNvI5F0bf-huSu1JuO_6eLE7UraOscYI" },

@@ -95,6 +95,11 @@ const CAST = {
     { s: "flower-yellow-tall", h: 180, cx: 1057, y: 90 },
     { s: "stone-tall", h: 170, cx: 696, y: 84 },
   ],
+  months: [
+    { s: "watermill", h: 310, cx: 880, y: 142 },
+    { s: "bench-short", h: 200, cx: 700, y: 110 },
+    { s: "flower-yellow-tall", h: 170, cx: 1062, y: 98 },
+  ],
   friends: [
     { s: "villager-female-a", h: 250, cx: 740, y: 120 },
     { s: "villager-male-d", h: 290, cx: 880, y: 96 },
@@ -171,7 +176,7 @@ const GARNISH = [
   { s: "grass", h: 56, cx: 914, y: 278 },
   { s: "bush-small", h: 66, cx: 1096, y: 252 },
   { s: "flower-yellow", h: 62, cx: 1140, y: 58 },
-  { s: "grass-large", h: 68, cx: 1156, y: 302 },
+  { s: "grass-large", h: 68, cx: 1142, y: 302 },
 ];
 
 /**
