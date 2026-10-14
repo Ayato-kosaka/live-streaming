@@ -46,6 +46,24 @@ export type Legend = {
    * 画面は押せない札として出す（`components/streams/Vid.tsx` の `VidGone`）。
    */
   streams: { date: string; videoId?: string; title: string }[];
+  /**
+   * **その企画のために作った、島の中の面。**
+   *
+   * あやと（2026-10-14）:
+   *
+   * > この時の作ったページを良い感じにリンクして欲しいの。
+   * > せっかくみんなで意見出してページ作ったから導線作りたい。
+   *
+   * 配信（`streams`）は**その日に何があったか**の記録で、こちらは
+   * **企画のために作って、いまも読めるもの**。別のものなので欄を分けてある。
+   *
+   * **島の中の道だけを書く。** 外の店や SNS はここに置かない
+   * （押した先で島から出たことに気づけない）。
+   *
+   * 無い企画のほうが多いので省略できる。**無いときは欄ごと出さない**
+   * ——「作ったページはありません」とは書かない（`docs/island-standards.md` 6章）。
+   */
+  pages?: { href: string; title: string; note: string }[];
 };
 
 export const LEGENDS: Legend[] = [
@@ -273,6 +291,18 @@ export const LEGENDS: Legend[] = [
       { date: "2026-09-20", videoId: "GBYHxJQGlCY", title: "【到着】ストックホルム" },
       { date: "2026-09-22", videoId: "zNpq6Z-uN3Y", title: "北欧旅の振り返り" },
       { date: "2026-09-27", videoId: "IQvqpxcbf0c", title: "バイバイスウェーデン、バイバイ北欧旅" },
+    ],
+    pages: [
+      {
+        href: "/nordic/guide",
+        title: "旅のしおり",
+        note: "島のみんなが教えてくれたことを、行く前に読むところと歩きながら引くところに分けて1枚に。",
+      },
+      {
+        href: "/nordic",
+        title: "北欧ヒッチハイク",
+        note: "16日の旅程。どの街で誰に乗せてもらったかが日ごとに残っている。",
+      },
     ],
   },
 ];
