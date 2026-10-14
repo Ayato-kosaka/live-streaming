@@ -1122,7 +1122,28 @@
 .resident { animation: bob 1.5s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-.ayato { transform-box: fill-box; }
+/* **あやとの `transform` 属性を、そのまま効かせる。**
+   -----------------------------------------------------------------
+   ここは `transform-box: fill-box` だった。島は `transform="translate(x y)
+   scale(±1 1)"` で主人公を置いていて（右を向くとき左右を反転する）、
+   SVG2 ではこの属性が CSS の transform として扱われるので、
+   **`transform-box` を変えると原点も一緒に変わる。** fill-box だと反転の軸が
+   絵のまん中ではなく絵の端になり、**右を向いた瞬間、絵が自分の横幅ぶん
+   左へ跳ぶ。**
+
+   実測（絵の中心と、足元の影の中心のずれ。影は反転しないので真の位置）:
+
+       歩ける島（寄り 232）  左向き 0px  → 右向き **-70px**
+       手で作った島（寄り 340）左向き 0px  → 右向き **-48px**
+
+   **影だけが正しい場所に残る**ので、絵と影が別々の場所に描かれていた。
+   あやとの「主人公の場所は固定して背景が動くべき」（2026-10-14）に、
+   カメラとは別口でこれも効いている。
+
+   `view-box` ＋ `0 0` にすると、属性に書いた行列がそのまま当たる（実測 0px）。
+   弾む動き（下の `hop`）は**絵のほう**に付いていて、あちらが自分で
+   `fill-box` を持っているので、ここを変えても効き方は変わらない。 */
+.ayato { transform-box: view-box; transform-origin: 0 0; }
 .ayato.walking image { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
 @keyframes hop {
   0%, 100% { transform: translateY(0) rotate(0deg); }

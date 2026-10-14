@@ -433,6 +433,52 @@ jobs:
           DIST=site/.next-ci node tools/sprites/ogmeta.mjs || rc5=$?
           echo "── ogmeta 終了コード ${rc5}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] && [ "$rc5" = 0 ]
+      # **歩ける島の基本原則4つ**（`tools/sprites/islewalk.mjs`）。
+      #
+      # ## なぜ毎 PR で回すか（2026-10-14）
+      #
+      # あやとの言葉（本番のスマホ）:「あやと島の寄りの時の歩く操作性が
+      # とても悪い。…基本原則が守られてない印象」。挙がった4つ——四方に
+      # 歩ける・主人公が画面の決まった場所に居る・建物を押しても面が
+      # 変わらない・字が上に固定——は、**どれも止まった1枚には写らない。**
+      # 撮る道具も `crawl.mjs` も「押す前の姿」しか見ていない。
+      #
+      # 「下に進めない」は 2026-09-15 にも言われていて、そのとき塞いだのは
+      # 症状のほうだった（カメラの引き戻しを残したまま、あやとが立ってよい帯を
+      # 足した）。**同じ所を3回言われている**ので、数で落ちる場所を作る。
+      #
+      # ## 仕込みを先に当てる
+      #
+      # `islecover.mjs` と同じ考え方で、**4つとも赤くなることを確かめてから**
+      # 本物を測る。仕込みの回で1つでも緑が残ったら、その判定は何も見ていない
+      # （`docs/island-standards.md` §15）。仕込みは表紙1面ぶんで 47秒。
+      #
+      # 値段（手元の箱・2026-10-14 実測）: 表紙＋章の島4つで約3分、
+      # 仕込みの回が 47秒。
+      - name: 歩ける島の基本原則（四方・定位置・面が変わらない・字は上）
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-iw.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          # 対照が先。**ここが緑で帰ってきたら、本物の数字は出さない**
+          rc0=0
+          BREAK=1 PAGES=/ ORIGIN=http://127.0.0.1:4213 \
+            node tools/sprites/islewalk.mjs || rc0=$?
+          echo "── islewalk 対照 終了コード ${rc0}"
+          if [ "$rc0" != 0 ]; then
+            echo "::error::仕込みを当てても赤くならない。道具のほうが壊れている"
+            exit 2
+          fi
+          rc=0
+          ORIGIN=http://127.0.0.1:4213 node tools/sprites/islewalk.mjs || rc=$?
+          echo "── islewalk 終了コード ${rc}"
+          exit "$rc"
+
 
       # **JS が動く前の字に、言い切りが混ざっていないか**（`tools/sprites/preclaim.mjs`）。
       #
