@@ -228,8 +228,10 @@ jobs:
   #     絵を落とすところが 1秒未満になる
   browserwatch:
     runs-on: ubuntu-latest
-    # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35
-    timeout-minutes: 35
+    # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35。
+    # そこへ、141面を Tab で一周するぶん（`reachkeys`）を足して 35 → 50。
+    # 手元の箱（load average 40 で並列作業中）では1面 5〜6秒だった
+    timeout-minutes: 50
 
     steps:
       - uses: actions/checkout@v5
