@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
@@ -21,10 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ key: stri
   const { key } = await params;
   const m = MONTHS.find((x) => x.key === key);
   if (!m) return {};
-  return {
+  return share({
+    key: "months",
     title: `${monthLabel(m)}のふりかえり`,
     description: `${md(m.from)}〜${md(m.to)} の${m.streams.length}本。出席ランキング、投げ銭ありがとう、タップタップ。`,
-  };
+    path: `/months/${key}`,
+  });
 }
 
 /**

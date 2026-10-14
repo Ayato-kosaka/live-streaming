@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const c = countryBySlug(slug);
   if (!c) return {};
-  return { title: c.name, description: c.summary };
+  return share({ key: "map", title: c.name, description: c.summary, path: `/map/${slug}` });
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");

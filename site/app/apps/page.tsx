@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
@@ -6,11 +7,13 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import Icon from "@/components/ui/Icon";
 import { AnvilArt, DishArt, HeadphoneArt } from "@/components/atlas/art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "apps",
   title: "アプリ",
   description:
     "旅先で作っている自作アプリ「なに食べよ」と「なにこれオーディオガイド」、そして日本を出るきっかけになった「スペリーブ」。",
-};
+  path: "/apps",
+});
 
 /**
  * アプリ。**いま動いている2本を見くらべる作業台と、その前に1本。**

@@ -139,13 +139,24 @@ export async function openFolds(p, { waitMs = 250, rounds = 8, scroll = "auto" }
  *
  * **既定は false。** これまでの5本（`pchit` `foldsweep` `mesweep`
  * `livecheck` `hitab`）の数え方は1つも変えない。
+ *
+ * `inline` は、**横へ送る道（`overflow-x: auto`）の中にいるもの**を
+ * どこまで引き出してから測るか。既定の `"nearest"` は
+ * `scrollIntoView({block:"center"})` の既定どおりで、**見えてさえいれば止まる**
+ * ——`scroll-snap` が効いている道では、止まった先で中心が道のふちの外に
+ * 落ちることがある。`/about` の年表がそれで、218x237 の石が
+ * 「`SECTION.panel` が上にいる（＝押せない）」と出た。**石は押せる。**
+ * 止めた位置が悪かっただけ（`docs/island-standards.md` §13
+ * 「不具合だと言う前に、まずその判定そのものを疑う」）。
+ * `"center"` を渡すと横も真ん中まで引き出してから測る。
+ * **それでも中心が外に落ちるなら、そこは本当に出しきれない。**
  */
 export async function measure(
   p,
-  { sel = SEL_ALL, min = 48, maxGrow = 80, fold = "open", clear = false } = {},
+  { sel = SEL_ALL, min = 48, maxGrow = 80, fold = "open", clear = false, inline = "nearest" } = {},
 ) {
   return p.evaluate(
-    ({ sel, min, maxGrow, fold, clear }) => {
+    ({ sel, min, maxGrow, fold, clear, inline }) => {
       const nm = (e) =>
         e
           ? e.tagName +
@@ -242,7 +253,7 @@ export async function measure(
           if (det && !det.open && !det.querySelector("summary")?.contains(el)) { drop("閉じた畳みの中(FOLD=skip)"); continue; }
         }
 
-        target.scrollIntoView({ block: "center" });
+        target.scrollIntoView({ block: "center", inline });
         if (clear) {
           /* **覆いの下から出す。** 上端か下端が自分でないものに取られて
              いるあいだ、送る箱を少しずつ動かす。動かす向きは取られた側で
@@ -373,7 +384,7 @@ export async function measure(
       }
       return { rows, skipped, excluded };
     },
-    { sel, min, maxGrow, fold, clear },
+    { sel, min, maxGrow, fold, clear, inline },
   );
 }
 

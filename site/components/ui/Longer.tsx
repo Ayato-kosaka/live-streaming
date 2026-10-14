@@ -45,8 +45,8 @@ export default function Longer<T>({
   step?: number;
   /** 残りの数に付ける単位。「枚」「件」「人」 */
   unit: string;
-  /** 入れ物。並びなら ul、マスの格子なら div */
-  as?: "ul" | "div";
+  /** 入れ物。並びなら ul、順のある並びなら ol、マスの格子なら div */
+  as?: "ul" | "ol" | "div";
   className?: string;
   children: (item: T, i: number) => ReactNode;
 }) {

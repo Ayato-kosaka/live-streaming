@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import RemoteBox from "@/components/me/RemoteBox";
 import "../me.css";
 import "./remote.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "島の遠隔操作",
   description: "配信に映している島を、手元から動かすところ。",
   /* あやとしか開けない面。索引に載せない（`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
-};
+  path: "/me/remote",
+});
 
 /**
  * 島の遠隔操作のコントローラー（#165）。**あやとだけ。**

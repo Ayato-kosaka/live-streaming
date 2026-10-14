@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -9,10 +10,12 @@ import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
 import Ask from "@/components/live/Ask";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "legends",
   title: "伝説の企画",
   description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。語り継がれている企画たち。",
-};
+  path: "/legends",
+});
 
 export default function LegendsPage() {
   const [top, ...rest] = LEGENDS;
