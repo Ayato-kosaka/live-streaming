@@ -6,7 +6,28 @@ import Flag from "@/components/ui/Flag";
 import IsleBoard from "./IsleBoard";
 import Icon from "@/components/ui/IconCore";
 import { shortHref, shortThumb } from "@/content/shorts";
-import type { IslePlaceSpec } from "./spec";
+import { useChapterDays } from "./ChapDays";
+import type { IsleFact, IslePlaceSpec } from "./spec";
+
+/**
+ * 板の中の1つぶん。**日数の欄は、画面が出てから数え直す。**
+ *
+ * `since` を持つ欄（「この島にいた 17日」）は、焼いた数をそのまま出すと
+ * デプロイした日で止まる。札の添え字（`useSinceWord`）と同じ出どころで数える。
+ * 欄ごとに hook を呼ぶので、`map` の中ではなく部品に切ってある。
+ */
+function Fact({ f }: { f: IsleFact }) {
+  const n = useChapterDays(f.since, NaN);
+  return (
+    <li>
+      <b>
+        {f.since && Number.isFinite(n) ? n.toLocaleString() : f.n}
+        {f.unit && <span>{f.unit}</span>}
+      </b>
+      <i>{f.cap}</i>
+    </li>
+  );
+}
 
 /**
  * 建物の中。
@@ -59,13 +80,7 @@ export default function IsleSheet({
         {place.facts && (
           <ul className="isle-facts">
             {place.facts.map((f) => (
-              <li key={f.cap}>
-                <b>
-                  {f.n}
-                  {f.unit && <span>{f.unit}</span>}
-                </b>
-                <i>{f.cap}</i>
-              </li>
+              <Fact key={f.cap} f={f} />
             ))}
           </ul>
         )}
