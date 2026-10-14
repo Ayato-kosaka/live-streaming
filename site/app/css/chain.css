@@ -1259,7 +1259,23 @@
    PC は `--isle-top` のまま（下の 640px の段）。横幅があるので地面は残るし、
    「今日の島」の板が右上の隅にいる。 */
 .isle {
-  --isle-say-top: calc(10px + env(safe-area-inset-top));
+  /* **左上の道具（`.isle-tools`）の下。帯の字に重ねる。**
+     あやとの言葉（2026-10-14、2度）:
+     「『毎晩22時...』の上に被るように表示してください」
+     「『毎晩22時』の文字の上に重ねてって言ってるでしょ」
+
+     はじめ 10px に置いて、**左上の丸ボタン2つ（島をながめる／島の地図、
+     上12〜60）を札がまるごと覆った。** 札は指を取るので、押せなくなる。
+     あやとの指摘:「あなたの対応だと、左上のボタンが押せなくなって困るのよ」。
+
+     道具は `top: 12px + safe-area` で高さ 48px なので、下ふちは 60px。
+     その 8px 下＝68px から札を置くと、札（高さ50px）は 68〜118px に来て、
+     **帯の字（78〜97px）にちょうど重なり、ボタンには掛からない。**
+     数字を書き写さず、道具の置き方と高さから組み立てる——道具が動いたら
+     札も動く。 */
+  --isle-tools-top: calc(12px + env(safe-area-inset-top));
+  --isle-tools-h: 48px;
+  --isle-say-top: calc(var(--isle-tools-top) + var(--isle-tools-h) + 8px);
 }
 @media (min-width: 640px) {
   .isle { --isle-say-top: var(--isle-top, 12px); }
@@ -1269,7 +1285,15 @@
   left: 0;
   right: 0;
   top: var(--isle-say-top, 12px);
-  z-index: 5;
+  /* **看板（`.hero-ui` は z-index 6）より上。**
+     あやとの言葉（2026-10-14、本番のスマホを見ながら）:
+     「やぐらの『見る』がおせない。『毎晩22時…』の上に被るように表示してください」。
+
+     前は 5 で、看板の**下**に潜っていた。上へ寄せた日（#887）に吹き出しだけ
+     9 に上げて、**札を 5 のまま置き忘れた。** 札は看板と同じ高さに来たので、
+     「みる」がロゴの下に入って**押せなくなった**（見えてはいるので気づきにくい）。
+     吹き出しと同じ 9 にそろえる——字の出る場所が1か所なら、重なり順も1つ。 */
+  z-index: 9;
   display: flex;
   justify-content: center;
   padding: 0 12px;
@@ -1755,7 +1779,8 @@
   position: absolute;
   z-index: 4;
   left: 12px;
-  top: calc(12px + env(safe-area-inset-top));
+  /* 札（`.isle-going`）がこの下に来る。**数字は1か所** */
+  top: var(--isle-tools-top, calc(12px + env(safe-area-inset-top)));
   display: flex;
   align-items: flex-start;
   gap: 8px;
