@@ -432,7 +432,6 @@ jobs:
           rc5=0
           DIST=site/.next-ci node tools/sprites/ogmeta.mjs || rc5=$?
           echo "── ogmeta 終了コード ${rc5}"
-<<<<<<< HEAD
           # スマホ（幅390）で最初の1画面が出るまでに運ばせる量。**面ごとに上限。**
           # 増えるときは1行で増える（絵を1枚足す・畳みを開く・`<img>` を
           # 1つ足す）ので、増えた日に赤くなる場所をここに置く。
@@ -445,8 +444,6 @@ jobs:
           echo "── firstload 終了コード ${rc6}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] \
             && [ "$rc5" = 0 ] && [ "$rc6" = 0 ]
-=======
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] && [ "$rc5" = 0 ]
       # **歩ける島の基本原則4つ**（`tools/sprites/islewalk.mjs`）。
       #
       # ## なぜ毎 PR で回すか（2026-10-14）
@@ -493,7 +490,6 @@ jobs:
           echo "── islewalk 終了コード ${rc}"
           exit "$rc"
 
->>>>>>> origin/master
 
       # **JS が動く前の字に、言い切りが混ざっていないか**（`tools/sprites/preclaim.mjs`）。
       #
