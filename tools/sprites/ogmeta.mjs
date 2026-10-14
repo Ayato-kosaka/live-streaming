@@ -158,8 +158,13 @@ export function judge(pages, cards, look, skip = []) {
   if (on("self")) {
     for (const { path, head } of pages) {
       if (path === "/404" || !head.ogUrl) continue;
-      const here = head.ogUrl.replace(ORIGIN, "") || "/";
-      const canon = (head.canonical || "").replace(ORIGIN, "") || null;
+      /* **原点だけの URL は `/`。** Next は表紙を
+         `https://…web.app`（末尾のスラッシュ無し）で出すので、
+         剥がすと空文字になる。`|| null` に落とすと「canonical が無い」に
+         化けて、正しい面が落ちる（当てて気づいた） */
+      const trim = (u) => (u ? u.replace(ORIGIN, "") || "/" : null);
+      const here = trim(head.ogUrl);
+      const canon = trim(head.canonical);
       if (here !== path && here !== canon)
         say(path, `og:url が自分（も canonical）も指していない（${here}）`);
     }
@@ -240,6 +245,13 @@ export const CONTROLS = [
   { name: "一文が2面で同じ", leg: "dup", pages: broke(2, { ogDesc: "台所の一文" }) },
   { name: "焼いた呼び名が題に無い", leg: "label", pages: broke(0, { ogTitle: "別のなまえ｜あやと島" }) },
   { name: "og:url が表紙のまま（share() を通していない）", leg: "self", pages: broke(2, { ogUrl: `${ORIGIN}/` }) },
+  /* **原点だけの canonical を持つ面は、落ちてはいけない。** いまいる章の島は
+     トップそのものなので、`og:url` も canonical も `https://…web.app`（末尾なし）。
+     剥がすと空文字になるところを「canonical 無し」と読んで、実際に落とした */
+  {
+    name: "いまいる章の島（canonical が原点だけ）", leg: null,
+    pages: broke(2, { ogUrl: ORIGIN, canonical: ORIGIN }),
+  },
 ];
 
 /** 対照を回す。**1つでも外れたら、本物の数字を1つも出さずに 2** */
