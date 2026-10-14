@@ -17,7 +17,8 @@ description: SUZURI（suzuri.jp/ayato_arigato）のグッズを、EC2 のログ�
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `suzuri_ops.py` | EC2（`/home/ubuntu/cdp/`） | 読む・書く・上げる・消す・大きさを決める・見本を並べて焼く |
+| `suzuri_ops.py` | EC2（`/home/ubuntu/cdp/`） | 読む・書く・上げる・消す・大きさを決める・見本を並べて焼く・**非公開で用意したものを決めた時刻に公開する（`publish`）** |
+| `suzuri_calendar.py` | EC2（`/home/ubuntu/cdp/`） | 卓上カレンダー（API では作れない品目 733）を非公開で組む・12か月の見本を 1530px で取る（`ops.md` の「卓上カレンダー」） |
 | `login.py` ＋ `login_ec2.sh` | EC2 ＋ 手元 | ログインの確かめ（`check`）と、切れていたときの Google ログイン（確認コードはあやとから） |
 | `characters.py` | EC2（`/home/ubuntu/cdp/`） | 島のキャラと SUZURI を突き合わせ、「作る／差し替える／島に居ない／透過なし」を出す |
 | `python/suzuri_common.py` | どちらでも | 大きさ・下ごしらえ・透過・題と本文。**EC2 のスキルと Actions が同じものを読む** |

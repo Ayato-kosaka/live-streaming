@@ -34,10 +34,11 @@
 | 4 | **住人の見本を作る**（番号だけ・名前なし） | `tools/goods/calcast/sheet.py` |
 | 5 | **ChatGPT で描く。** 見本の絵（タッチ）と住人の見本を毎回添付。1枚ずつ頼む。候補は月3枚 | `/chatgpt-image`、頼みの文の形は `tools/goods/calcast/swap-prompt.txt` |
 | 6 | **1枚ずつ自分の目で見る**（下の 3） | |
-| 7 | 元絵を `tools/goods/cal-src/<MM>-a.png` に置いて焼く。一言は焼くときに重なる | `tools/goods/calbake.py`（一言の表は `SIGNS`） |
-| 8 | 焼いた絵を並べてレビューを回す（2026 は `/goods` に欄を作って出した。出品の日に欄は畳む）。選ばなかった候補は `tools/goods/cal-cands/` に残す | `/island-ship` |
-| 9 | SUZURI に上げる正方形を書き出す | `python3 tools/goods/calbake.py --print <置き場>` → `/suzuri` |
-| 10 | `/goods` の SUZURI の升目に1マス足す（写真を焼く・`SHOP_GOODS` に1件・台帳を取り直す。トートの次に置く） | `tools/goods/shopgoods.py`、`site/content/goods.ts` の `SHOP_GOODS` の注 |
+| 7 | **8位以降も小さく隠して描く**（2026 で足した。図鑑に絵のある人を「ウォーリーをさがせ」の大きさで）。ChatGPT は絵ぜんぶを描き直すので、返ってきた絵は使わず、**足された住人の画素だけを決まった元絵へ移す** | `/chatgpt-image`、やり方と見比べは `tools/goods/cal-cands/README.md` の `hidden/` |
+| 8 | 元絵を `tools/goods/cal-src/<MM>-a.png` に置いて焼く。一言は焼くときに重なる | `tools/goods/calbake.py`（一言の表は `SIGNS`） |
+| 9 | 焼いた絵を並べてレビューを回す（2026 は `/goods` に欄を作って出した。出品の日に欄は畳む）。選ばなかった候補は `tools/goods/cal-cands/` に残す | `/island-ship` |
+| 10 | SUZURI に上げる正方形を書き出す | `python3 tools/goods/calbake.py --print <置き場>` → `/suzuri` |
+| 11 | `/goods` の SUZURI の升目に1マス足す（写真を焼く・`SHOP_GOODS` に1件・台帳を取り直す。トートの次に置く） | `tools/goods/shopgoods.py`、`site/content/goods.ts` の `SHOP_GOODS` の注 |
 
 ## 3. 絵を通す前に見ること
 
