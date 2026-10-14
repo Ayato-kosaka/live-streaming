@@ -25,6 +25,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { must, readArray } from "./tsread.mjs";
 
 const KEY = "AIzaSyDts2gpO2fepPYOdiMyiz5ydTIQHNtY5kM";
 const UID = "fakeuid0001";
@@ -44,10 +45,11 @@ const ICON_OF = (() => {
   const here = dirname(fileURLToPath(import.meta.url));
   const src = readFileSync(join(here, "../../site/content/residents.ts"), "utf8");
   const out = new Map();
-  for (const m of src.matchAll(/\{[^{}]*\}/g)) {
-    const icon = /icon:\s*"([^"]+)"/.exec(m[0])?.[1];
-    const ch = /channel:\s*"([^"]+)"/.exec(m[0])?.[1];
-    if (icon && ch) out.set(ch, icon);
+  for (const r of must(
+    readArray(src, "RESIDENTS", { keys: ["icon", "channel"], idKey: "icon" }),
+    "residents.ts の RESIDENTS",
+  )) {
+    if (r.channel) out.set(r.channel, r.icon);
   }
   return out;
 })();
@@ -140,9 +142,16 @@ const headTheme = () => {
     join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "content", "themes.ts"),
     "utf8",
   );
-  const m = src.slice(src.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/);
-  if (!m) throw new Error("content/themes.ts から1件目の宛先の id が読めなかった");
-  return m[1];
+  /* 読み方は `tsread.mjs` の1本（#694）。前は「`export const THEMES` から先で
+     最初に当たった `id:`」という切り方で、表の外の字でも当たりえた。 */
+  const got = readArray(src, "THEMES", { keys: ["id"], idKey: "id" });
+  if (!got.rows.length || got.missed) {
+    throw new Error(
+      `content/themes.ts から1件目の宛先の id が読めなかった` +
+        `（名乗り ${got.declared} / 読めた ${got.rows.length}）`,
+    );
+  }
+  return got.rows[0].id;
 };
 const THEMES_SEED = [headTheme(), "island", "hello", headTheme(), "island"];
 /* 何枚あるところを測るか。**0 / 3 / 40 / 200 を差し替えて撮る**
@@ -655,8 +664,24 @@ export async function apply(ctx, opts = {}) {
         nickname: null, showName: true, showPhoto: true, admin,
       });
     }
+    /* **既読にしたもの**（あやとだけの棚。2026-10-13）。
+       ここを返さないと、机の「既読」の札が「読んでいます…」のまま写る。
+       1枚だけ返す——空だと、戻す押しどころが1つも測れない */
+    if (path === "/stickies" && u.searchParams.get("seen") === "1") {
+      return json(r, { notes: ALL.notes.slice(0, 1), more: false, next: null });
+    }
     if (path === "/stickies") {
       return json(r, u.searchParams.get("mine") === "1" ? MINE : ALL);
+    }
+    /* **まだ返していない数と、その id**（`/me/desk` の札のバッジ）。
+       **数は id から出す。** ここで別の数を置くと、札のバッジと机の中身が
+       食い違ったまま写って、直っていないものが直って見える
+       （口の側は `waitingStickies` が1本で出している）。 */
+    if (path === "/stickies/waiting") {
+      const ids = ALL.notes
+        .filter((n) => !n.reply && !n.byOwner)
+        .map((n) => n.id);
+      return json(r, { waiting: ids.length, ids });
     }
     if (path === "/nextplans") return json(r, PLANS);
     /* **公開の口は、人を指す値を落としてから返す**（本番と同じ）。
@@ -668,42 +693,14 @@ export async function apply(ctx, opts = {}) {
        ここを差し替えないと、撮ったときだけ「カードが読めなかった」の顔に
        なって、直っていないものが壊れて見える。 */
     if (path === "/cards/mine") return json(r, { cards: MY_CARDS });
-    /* スタンプのことば（#716）。**本人だけの口**なので、ここを差し替えないと
-       `/me` の1枚がまるごと写らない（＝測れない）。
-       `STAMP=` で3つの姿を出し分ける:
-
-         fresh（既定） … 提案3本・まだ決めていない
-         bare          … **提案が1本も出なかった人**（本番に6人いる）
-         set           … 本人がもう4本決めている（**いちばん背が高い姿**）
-         none          … 選ばれていない（**余計なものが1つも出ないことを見る**）
-
-       **ことばは作り物。** 本番の誰かの口ぐせをこの箱に落とさない。 */
+    /* スタンプのことば（#716）。**2026-10-14 に閉じた**（#860）。
+       `/me` はもう呼ばないが、本番と同じ返事（誰にでも 410）を返しておく。
+       古い姿を残すと、呼ぶ道が戻ったときに撮った絵だけ欄が出て、
+       本番との食い違いに気づけない。 */
     if (path === "/stampline/mine") {
-      const how = process.env.STAMP || "fresh";
-      if (how === "none") return json(r, { picked: false });
-      /* **提案が1本も出なかった人**（本番で25人中6人）。
-         その人の画面に「このことばが入ります」と出ていないかを見る */
-      if (how === "bare") {
-        return json(r, {
-          picked: true, suggested: [], lines: [], max: 4, maxLen: 20,
-        });
-      }
-      const base = {
-        picked: true,
-        suggested: ["いやぁまいったね", "ねむい", "そうきたか"],
-        max: 4,
-        maxLen: 20,
-      };
-      if (r.request().method() === "POST") {
-        let body = {};
-        try { body = JSON.parse(r.request().postData() || "{}"); } catch {}
-        return json(r, { ...base, lines: (body.lines || []).slice(0, 4) });
-      }
-      return json(r, {
-        ...base,
-        lines: how === "set" ?
-            ["いやぁまいったね", "ねむい", "そうきたか", "あしたもがんばる"] :
-            [],
+      return r.fulfill({
+        status: 410, contentType: "application/json",
+        body: JSON.stringify({ error: "closed" }),
       });
     }
     if (path.startsWith("/donors")) {

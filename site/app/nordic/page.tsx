@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
@@ -39,7 +40,8 @@ import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
 import "./themes.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "nordic",
   title: "スウェーデンまでヒッチハイクで",
   /* 距離は `HITCH_KM` から出す。**手で書かない。**
      ここは「1,542km」で焼いてあって、画面が出す 1,377km と食い違っていた。
@@ -52,7 +54,8 @@ export const metadata: Metadata = {
      書いてあって、**9月27日にまるごと嘘になる字**だった。旅の日付は面の中に
      `DEPART` / `ARRIVE` / `LEAVE` から出ているので、ここで言い直さない。 */
   description: `スウェーデンに、会いたい人がいます。スウェーデン行きの飛行機が高いので、安いポーランド行きで飛んで、そこから${HITCH_KM.toLocaleString()}kmは人の車で北へ。旅のよてい、ルート地図、国ごとの見どころ、旅のしおり。`,
-};
+  path: "/nordic",
+});
 
 const MOVE: Record<string, string> = {
   fly: "飛行機",
@@ -164,7 +167,7 @@ export default async function NordicPage() {
   );
 
   return (
-    <PageShell current="next" crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
+    <PageShell crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
       <TripNow
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}

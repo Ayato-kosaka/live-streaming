@@ -15,10 +15,10 @@ import ReadAgain from "@/components/me/ReadAgain";
 /**
  * **「字1つに、いいねを1つ」の仕掛け。ここ1本だけ。**
  *
- * グッズの面には、まだ決まっていないものが2つある（LINEスタンプの候補、
- * カレンダーの型）。どちらも用事は同じ——**候補を並べて、どれがいいか
- * 押してもらう**。同じ用事に仕掛けを2つ置くと、**片方だけ直す日が必ず来る**
- * ので、読む・押す・立てる・楽観更新・読めなかった日の扱いを、全部ここに置く。
+ * 用事は**候補を並べて、どれがいいか押してもらう**こと。いま使っているのは
+ * LINEスタンプの候補だけ（カレンダーの型も 2026-10-12 まで使っていた）。
+ * 同じ用事に仕掛けを2つ置くと、**片方だけ直す日が必ず来る**ので、
+ * 読む・押す・立てる・楽観更新・読めなかった日の扱いを、全部ここに置く。
  *
  * ## 新しい入れ物を作っていない
  *
@@ -49,7 +49,7 @@ import ReadAgain from "@/components/me/ReadAgain";
  *   - いいねの数は、**並びぜんぶを足して**出す（同じ字が2枚立った回のために
  *     足していたのと同じ形。足す相手が増えるだけ）
  *   - 押して立つ／切り替わるのは**先頭の付箋だけ。** 後ろのほうは読むだけ
- *   - 字1つだけの候補は、これまでどおり字で渡してよい（カレンダー側がそう）
+ *   - 字1つだけの候補は、これまでどおり字で渡してよい
  *
  * ## 読めなかった日に「0いいね」と言わない
  *
@@ -245,8 +245,7 @@ export function useWordVotes(theme: string, words: VoteWord[]): WordVotes {
 /**
  * ハート1つ。**形も押し心地も、付箋のハート（`.nt-heart`）そのまま。**
  *
- * 2か所（LINEスタンプ・カレンダー）で同じものが出るように、絵も札も
- * ここ1か所から出す。押しどころの背は 48px（`live.css` の `.nt-heart`）。
+ * 使う欄が増えても同じものが出るように、絵も札もここ1か所から出す。押しどころの背は 48px（`live.css` の `.nt-heart`）。
  */
 export function VoteHeart({ word, votes }: { word: string; votes: WordVotes }) {
   /* 読めていないあいだは押しどころを出さない。
@@ -277,6 +276,34 @@ export function VoteHeart({ word, votes }: { word: string; votes: WordVotes }) {
       </svg>
       <b>{votes.hearts(word) ?? 0}</b>
     </button>
+  );
+}
+
+/**
+ * **押せないハート。** 宛先を締め切ったあとに、付いた数だけを見せる。
+ *
+ * 締め切った宛先には、もう1枚も立てられない（`POST /stickies` が 409 で断る）。
+ * `VoteHeart` を残すと、まだ札の無い字を押した人が**押して失敗する**。
+ * かといって数を消すと、締め切った宛先の付箋は数もハートも今までどおり出る
+ * （`Notes.tsx` の `shut`）のと食い違う。だから**数は出して、押しどころは出さない。**
+ *
+ * **厚みを付けない**（`docs/island-design.md` 3-3。厚みは押せる合図）。
+ * 読めていないあいだの扱いは `VoteHeart` と同じ（0 と同じ絵にしない）。
+ */
+export function VoteTally({ word, votes }: { word: string; votes: WordVotes }) {
+  if (votes.read === "wait") return <span className="gd-votewait is-still" aria-hidden />;
+  if (votes.read !== "ok") return null;
+  const n = votes.hearts(word) ?? 0;
+  return (
+    <span className="gd-votetally" aria-label={`「${word}」へのいいね ${n}`}>
+      <svg viewBox="0 0 24 22" aria-hidden>
+        <path
+          d="M12 20.6C6.2 16.6 2 13 2 8.6 2 5.5 4.4 3 7.5 3c1.8 0 3.5.9 4.5 2.3C13 3.9 14.7 3 16.5 3 19.6 3 22 5.5 22 8.6c0 4.4-4.2 8-10 12z"
+          fill="currentColor"
+        />
+      </svg>
+      <b>{n}</b>
+    </span>
   );
 }
 

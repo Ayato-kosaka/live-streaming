@@ -122,6 +122,7 @@ import { offline } from "./route.mjs";
 import { repoPath } from "./repo.mjs";
 import { blocked, redirects, thin, viaCurl } from "./prod.mjs";
 import { INK, MEASURE, bakedSame, judge } from "./fitmeasure.mjs";
+import { fields, listField, readMap } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4300";
 /** 渡されたら本番モード。空なら今までどおり localhost の書き出しを見る */
@@ -169,9 +170,12 @@ note.push(baked.note);
  */
 const TALK = readFileSync(repoPath("site/content/kitchenTalk.ts"), "utf8");
 const PAGES = [];
-for (const m of TALK.matchAll(/^\s*"([a-z0-9-]+)":\s*\{\s*people:\s*(\d+),[^\n]*?there:\s*\[([^\]]*)\]/gm)) {
-  const there = [...m[3].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
-  if (Number(m[2]) > 0 && there.length) PAGES.push({ slug: m[1], there });
+/* 読み方は `tsread.mjs` の1本（#694）。前は `people:` と `there:` が
+   **同じ行で隣り合っていること**を当てにしていて、焼き方が1行変わると
+   その面が分母から黙って消えた。 */
+for (const [slug, body] of readMap(TALK, "KITCHEN_TALK")) {
+  const there = listField(body, "there");
+  if (Number(fields(body).people) > 0 && there.length) PAGES.push({ slug, there });
 }
 const WANT = PAGES.reduce((a, p) => a + p.there.length, 0);
 if (!PAGES.length) {

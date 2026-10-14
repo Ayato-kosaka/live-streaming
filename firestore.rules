@@ -119,6 +119,13 @@ service cloud.firestore {
     // あやと島。ブラウザからは触らせない(islandApi 経由のみ)。
     match /island/{docId} { allow read, write: if false; }
     match /islandIdeas/{docId} { allow read, write: if false; }
+    /* 付箋(#160)。**ここを開けない理由が、2026-10-13 に1つ増えた。**
+       書類に `seen`（既読。読んだが返さないと決めた印）と `seenAt` `seenBy` が
+       入るようになった。あれは机の側の覚書で、**貼った人に見せるものではない**
+       ——見えると「読まれたが、返事はされない」が本人に伝わる。
+       口の返事も `seen` を返さない（`islandApi.ts` の `stickyShape`）。
+       **画面だけ閉じてサーバーが開いていた形を、付箋の締め切りで踏んだばかり**
+       （`docs/island-misses.md` #225）。両方で閉じる。 */
     match /islandNotes/{docId} { allow read, write: if false; }
     /* 付箋のハート(#160)。1人1回を守るためだけの入れ物で、
        ドキュメントIDが `<付箋のID>_<端末IDか uid>`。
@@ -136,7 +143,7 @@ service cloud.firestore {
        いない問いも読める。**
        `GET /fork` が一覧で返さないのは「端末IDを作り直しながら投げれば
        知らない id の札を並べられる」からで、**ここを開けるとその用心が
-       まるごと無駄になる**(rouletteSessions・islandRemote と同じ形)。
+       まるごと無駄になる**(rouletteSessions と同じ形)。
 
        書くのは投票の中(`POST /poll/:id/vote` `POST /fork/:id/vote`)だけ。
        票数はトランザクションで1ずつ増やしていて、**1日の上限と1人1票が
@@ -217,13 +224,16 @@ service cloud.firestore {
        書くほうは、当たりをサーバーで決める仕掛けそのものなので開けない。 */
     match /rouletteSessions/{docId} { allow read, write: if false; }
 
-    /* 島の遠隔操作(#165)。コントローラー(あやとの手元)と、配信に映して
-       いる島を繋ぐ入れ物。**ここを開けない。**
-       表示側(OBS)はログインできないので読ませる道が要るが、それは
-       islandApi の `GET /remote?sessionId=…` に絞る。ここを
-       「読むのは誰でも」にすると collection ごと引けるようになって、
-       **推測できない sessionId にした意味が無くなる**(1つ知られると全部読める)。
-       書くほうは、押せるのがあやとだけという仕掛けそのものなので開けない。 */
+    /* 島の遠隔操作の入れ物(islandRemote)。**面も口も消した**(2026-10-14)ので、
+       書く者も読む者もいない。残った書類は `python/admin/firestore_delete.py`
+       が片づける。**規則の行は残す**——collection が空になるまでのあいだ、
+       ここを閉じているのはこの1行だけ。 */
+    /* 付箋を貼れる先のうち、机から足したぶん(2026-10-14)。**ここを開けない。**
+       読む道は islandApi の `GET /notes/themes` に絞る。足す・締め切る・消すは
+       あやとだけという仕掛けが Functions の中にしかないので、直に書ける口を
+       開けると、誰でも棚を増やせる。 */
+    match /islandNoteThemes/{docId} { allow read, write: if false; }
+
     match /islandRemote/{docId} { allow read, write: if false; }
 
     /* あやと島カード(#173)。#202 で**配ってある**形になった。
@@ -293,8 +303,8 @@ service cloud.firestore {
        選ばれかたが「協力してくれた人」なので、それはそのまま投げ銭の
        順位表になる（`docs/island-money.md`「実額は視聴者には一切見せない」）。
        中には `channelId` も入っているので、名簿としてもそのまま読める。
-       読み書きは islandApi の `/stampline/mine` だけで、**その口は
-       ログインした本人のぶんしか返さない。** */
+       島の口（`/stampline/mine`）も 2026-10-14 に閉じた(#860)。
+       書類は記録として残し、触るのは管理の道具（`python/admin/`）だけ。 */
     match /islandStampLine/{docId} { allow read, write: if false; }
 
     // それ以外は禁止

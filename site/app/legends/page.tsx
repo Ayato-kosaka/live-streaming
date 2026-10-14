@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -9,10 +10,12 @@ import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
 import Ask from "@/components/live/Ask";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "legends",
   title: "伝説の企画",
   description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。語り継がれている企画たち。",
-};
+  path: "/legends",
+});
 
 export default function LegendsPage() {
   const [top, ...rest] = LEGENDS;
@@ -36,6 +39,10 @@ export default function LegendsPage() {
    * 通り過ぎた出来事なので、選択肢に入れない。押しても叶わないものを混ぜると、
    * 押した先に現実が無くなる。
    *
+   * 「北欧ヒッチハイク」も入れない。**会いに行って、会えた旅**なので、
+   * 同じものをもう一度やる先が無い（`content/nordic.ts` の `WHY`）。
+   * 似た旅をやりたいという案は、下の掲示板へ送る側の話。
+   *
    * 札の字は `content/legends.ts` から取る。ここで書き写すと、
    * 題名が変わったときにこちらだけ古い字が残る。
    */
@@ -50,7 +57,7 @@ export default function LegendsPage() {
     .filter((l) => l.date < awhile);
 
   return (
-    <PageShell current="legends" crumbs={[{ label: "伝説の企画" }]}>
+    <PageShell crumbs={[{ label: "伝説の企画" }]}>
       {/* カモメは遊び方のある面だけに出す（`docs/island-ux.md` 5.2）。
           ここは読む面なので出さない。読みかた（数字だけ追えば分かる）は
           「丘に立っているもの」の1行が受け持つ。 */}

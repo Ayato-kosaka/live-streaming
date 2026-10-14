@@ -108,6 +108,33 @@ export type IslandState = {
    */
   residentDays?: Record<string, number> | null;
   nordic?: NordicFacts;
+  /**
+   * 字の長さの上限。**正はサーバー（`functions/src/islandApi.ts`）。**
+   *
+   * 画面はここの数字を1つも持たない。長いあいだ `Notes.tsx` が
+   * `const MAX = 120;` に「サーバー側の `MAX_NOTE_LEN` と同じ」と
+   * 書き添えて持っていたが、**同じ事実が2か所に在って、ずれても
+   * 赤くなるものが無い**形だった（島じゅうに15か所。`docs/island-db.md`）。
+   *
+   * **まだ届いていないあいだは `undefined`。** そのときは入力欄に
+   * 上限を付けない——**付ける数字をこちらで決めると、2か所に戻る。**
+   * 上限そのものはサーバーが必ずかけるので、ここは親切でしかない。
+   */
+  limits?: Partial<IslandLimits>;
+};
+
+/** 字の長さの上限。**この型は欄の名前を決めるだけで、値は持たない。** */
+export type IslandLimits = {
+  /** 付箋の本文 */
+  note: number;
+  /** 付箋への返信 */
+  reply: number;
+  /** 島に出す名前 */
+  name: number;
+  /** 付箋に貼るリンク */
+  link: number;
+  /** 企画の題 */
+  planTitle: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -664,6 +691,43 @@ export const dropStickyPic = (id: string, token: string) =>
     headers: auth(token),
   });
 
+/**
+ * **まだこちらが何もしていない付箋**の数と、その id。**あやとだけ。**
+ *
+ * 机の札（`/me/desk` の「付箋」）に出すためだけの軽い1本。
+ * 本文も名前も返らないので、道具を開く前に引いても重くない。
+ *
+ * **数も絞り込みも、サーバーが決めたものをそのまま使う**
+ * （`functions/src/islandApi.ts` の `waitingStickies`）。画面の側にも
+ * 同じ条件を書くと、片方を直した日に札の数と机の中身がずれる。
+ */
+export const getWaitingStickies = (token: string) =>
+  req<{ waiting: number; ids: string[] }>("/stickies/waiting", {
+    headers: auth(token),
+  });
+
+/**
+ * 既読にした付箋を読む。**あやとだけ。** 戻すときに要る。
+ *
+ * 既読は「読んだが、返信はしない」。**消していない**ので、
+ * ここから見返して戻せる（`seenSticky(id, false, token)`）。
+ */
+export const getSeenStickies = (token: string) =>
+  req<{ notes: Sticky[] }>("/stickies?seen=1", { headers: auth(token) });
+
+/**
+ * 既読にする・戻す。**あやとだけ。付箋は1文字も変わらない。**
+ *
+ * 板からも消えないし、ハートも返信欄も今までどおり。変わるのは
+ * 「まだ何もしていない」の数から外れることだけ。
+ */
+export const seenSticky = (id: string, on: boolean, token: string) =>
+  req<{ id: string; seen: boolean }>(`/stickies/${id}/seen`, {
+    method: "POST",
+    headers: auth(token),
+    body: JSON.stringify({ on }),
+  });
+
 /** しまう・戻す。**あやとだけ。消えない。** ハートの数はそのまま残る。 */
 export const archiveSticky = (id: string, on: boolean, token: string) =>
   req<{ id: string; archived: boolean }>(`/stickies/${id}/archive`, {
@@ -1121,43 +1185,6 @@ export const getCards = () => req<{ cards: IslandCard[] }>("/cards");
  */
 export const getMyCards = (token: string) =>
   req<{ cards: IslandCard[] }>("/cards/mine", { headers: auth(token) });
-
-/* ---------------- スタンプのことば（#716） ----------------
-
-   LINE スタンプに乗せる1行を、本人に決めてもらう。
-
-   **選ばれた人にしか書類が無い。** 名簿を公開の面に並べると、選ばれかたが
-   「協力してくれた人」なので、そのまま投げ銭の順位表になる
-   （`docs/island-money.md`）。だから口は本人のぶんしか返さず、この型は
-   **「入っていない」を欄の有無ではなく `picked` で言う**——空の `suggested`
-   を返すと、画面が「在るが空」と「無い」を見分けられない。 */
-
-/** じぶんのスタンプのことば。**入っていない人は `picked: false` だけ。** */
-export type MyStampLine =
-  | { picked: false }
-  | {
-      picked: true;
-      /** 提案（本人の言い回しから引いたもの） */
-      suggested: string[];
-      /** 本人が決めたことば。空なら、まだ決めていない */
-      lines: string[];
-      /** 置ける本数 */
-      max: number;
-      /** 1本の字数 */
-      maxLen: number;
-    };
-
-/** じぶんのぶんを引く。**他人のぶんは、口に頼む道が無い。** */
-export const getMyStampLine = (token: string) =>
-  req<MyStampLine>("/stampline/mine", { headers: auth(token) });
-
-/** じぶんのぶんを書く。**送るのはことばだけ**（誰のぶんかは口が決める）。 */
-export const saveMyStampLine = (token: string, lines: string[]) =>
-  req<MyStampLine>("/stampline/mine", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ lines }),
-  });
 
 /** カードの置き方。0〜1 の割合と、傾きと、大きさ。 */
 export type CardPlace = { x: number; y: number; rot: number; scale: number };

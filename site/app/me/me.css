@@ -101,6 +101,41 @@
    掲示板（`/board`）も同じ札で「企画」と「付箋」を切り替えるので、
    じぶんのことの中に置いたままだと、あちらから読めない。 */
 
+/* 待っている数のバッジ（机の「付箋」の札だけ）。
+   **合図ではなく、数そのもの。** 押せることは札の厚みがもう言っているので、
+   ここは光らせない・沈めない・ぼかさない（`docs/island-design.md` 3-3。
+   合図が2つあると、どちらが合図か分からなくなる）。
+   朱は「いまこれ」の色（`island-world.md` 3.2）で、選んでいる札の枠と同じ。
+   札の右上の角に重ねるので、札の当たり（56px）は1pxも削らない。 */
+.mp-tab-b {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  /* **朱をそのまま敷かない。** `--pick` の上に紙色の字を置くと 3.62 しかなく、
+     4.5 を割る（`tools/sprites/inkpx.mjs` が実測で挙げた）。
+     `--ink` を混ぜて沈めると 5.3 になる。黒ではなく `--ink` を混ぜるのは、
+     濁らせずに暗くするため（島の影が黒と紺をやめているのと同じ。
+     `app/css/tokens.css` の影の注） */
+  background: color-mix(in srgb, var(--pick) 60%, var(--ink));
+  color: var(--paper);
+  font-size: var(--fs-min);
+  font-weight: 900;
+  line-height: 20px;
+  text-align: center;
+}/* 数が読めていないとき。**朱のままだと「何件か在る」に見える**ので、
+   地の色を落として、急ぎではないことを色でも言う。**消さない**——
+   消すと 0件と同じ顔になる（`docs/island-standards.md` §10）。
+   `--ink-2` に紙色で 5.2（朱と同じ 4.5 の線は越えている） */
+.mp-tab-b.is-unknown {
+  background: var(--ink-2);
+  font-weight: 700;
+}
+
+
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
    そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
@@ -1475,144 +1510,21 @@
 /* 打ち間違えた目標を消す。**終わらせる道ではない**ので、離して置く。 */
 .fd-drop { margin-top: var(--sp-4); }
 
-/* =========================================================
-   スタンプのことば（components/me/StampLine.tsx・#716）
-   ---------------------------------------------------------
-   **選ばれた本人にだけ出る1枚。** 置けるのは4本までなので、溜まっても
-   背は変わらない（`docs/island-standards.md` 7）。4本のときに
-   390px 幅で 1画面に収まる高さにしてある。
-
-   押しどころは3種類あって、**役目が違うものを同じ厚みにしない**
-   （`docs/island-design.md` 3-3）。
-
-     これでいく（`.me-save`）… 進める。金の板・厚み6px（既存のものを使う）
-     じぶんで書く / ほかの言いかた … 足す。紙の板・厚み4px
-     けす                        … 1本だけ減らす。**厚みを付けない**
-
-   「けす」に厚みを付けないのは、**足す側と見分けるため。** 同じ面に
-   「押せば増える」と「押せば減る」が並ぶので、合図が1種類だと取り違える。
-   平らだが、当たりは 48px ある（下の `min-height`）。
-   ========================================================= */
-.slp-lead { margin-bottom: var(--sp-3); }
-
-.slp-list { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
-.slp-list > li { display: flex; align-items: center; gap: var(--sp-2); }
-
-/* 1行ぶん。番号・入力・字数を1つの枠に入れる。
-   **枠そのものは押せない**（押すところは中の入力）ので厚みは付けない。 */
-.slp-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0 var(--sp-2);
-  border: var(--bw-2) solid var(--frame-dark);
+/* 付箋の貼り先（`components/me/NoteThemes.tsx`）。
+   1行に「名前＋一行」と、締め切る／消すの2つ。**板を横に並べない**——
+   390px で2つ並べると1つ 48px を割る。字の下に回して幅をいっぱい使う。 */
+.nt-dests { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0 0; padding: 0; list-style: none; }
+.nt-dest {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-1);
   background: var(--paper);
 }
-.slp-no {
-  flex: 0 0 auto;
-  width: 20px;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-.slp-row input {
-  flex: 1 1 auto;
-  min-width: 0;
-  /* 枠は外側が持っているので、ここは素のまま。**高さは枠が 48px を保つ** */
-  min-height: 44px;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  font-size: var(--fs-body);
-  font-weight: 800;
-  color: var(--ink);
-}
-.slp-row input:focus { outline: none; }
-/* 置いておく字（placeholder）は、ブラウザの既定の灰色にしない。
-   既定は紙の上で 4.5 を割る。**地は `--paper` なので `--ink-2` で 6.82**
-   （`inkpx.mjs` は欄の中の字を測らないので、ここは手で合わせてある）。 */
-.slp-row input::placeholder { color: var(--ink-2); font-weight: 700; opacity: 1; }
-/* 字を打っているあいだ、どの行を触っているかを枠で言う。
-   **光らせない。** 選んでいるものは朱の細枠（`.me-pick.is-on` と同じ決め） */
-.slp-row:focus-within { border-color: var(--pick); box-shadow: 0 0 0 2px var(--pick); }
-.slp-len {
-  flex: 0 0 auto;
-  font-size: var(--fs-min);
-  font-weight: 800;
-  font-style: normal;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
-}
-
-/* 減らす側。**厚みを付けない**（上の長い注）。当たりは 48px */
-.slp-drop {
-  flex: 0 0 auto;
-  min-width: 48px;
-  min-height: 48px;
-  padding: 0 var(--sp-2);
-  border: var(--bw-1) solid var(--frame);
-  border-radius: var(--r-1);
-  background: transparent;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-.slp-drop:active { background: color-mix(in srgb, var(--frame) 22%, transparent); }
-
-.slp-more { margin-top: var(--sp-4); }
-.slp-more-t {
-  display: block;
-  margin-bottom: var(--sp-2);
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-/* 提案。**字そのものが押しどころ。** 縦に積まずに折り返す（最大3枚） */
-.slp-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.slp-chip,
-.slp-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 48px;
-  padding: 0 var(--sp-3);
-  border: var(--bw-2) solid var(--frame-dark);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 72%, var(--paper-2)) 0%, var(--paper-2) 100%);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  box-shadow: var(--pop-sm);
-}
-.slp-chip:active,
-.slp-add:active { transform: translateY(4px); box-shadow: none; }
-
-/* 足す側と進める側を1行に並べる。**狭いときは折り返す**（390px で2段） */
-.slp-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
-  margin-top: var(--sp-4);
-}
-/* `.me-save` は上に余白を持っているので、ここでは行に合わせて外す */
-.slp-foot .me-save { margin-top: 0; }
-
-/* まだ1文字も無いときの「これでいく」。**押せないものは完全に平ら**
-   （`docs/island-design.md` 3-3）。厚みを残すと、押せるのに効かないものに
-   見える。
-
-   **薄くはしない。** いちど `opacity: 0.55` にしたら、字の濃さが
-   2.64 まで落ちた（`inkpx.mjs` が拾った。金の地の上の `--ink`）。
-   読めない字を置くくらいなら、合図は厚みだけで足りる——
-   地を金から紙へ落として、厚みを外す（字は `--ink` のまま 8.61）。 */
-.slp-foot .me-save:disabled {
-  box-shadow: none;
-  background: var(--paper-2);
-  border-color: var(--frame);
-}
+.nt-dest-t { display: grid; gap: 2px; }
+.nt-dest-t b { font-weight: 900; }
+.nt-dest-t i { font-style: normal; font-size: var(--fs-min); color: var(--ink-2); }
+/* 押しどころは2つとも 48px（`docs/island-design.md` 3-2） */
+.nt-dest-go { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nt-dest-go .trip-week-x { min-height: 48px; }

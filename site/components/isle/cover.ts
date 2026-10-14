@@ -6,6 +6,7 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { pier } from "./pier";
+import { chapterCountries } from "@/content/walked";
 /* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
    表紙の束に配信の一覧や伝説が付いてくることはない（`spec.ts` の `nordicSpec`
    の注と同じ心配をしたが、ここは島を組む側＝サーバだけが通る道。
@@ -67,7 +68,7 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
 const COVER_R = 410;
 
 /** その旅そのものの入口。中身は章によって変わる */
-function tripPlace(c: Chapter, days: number): IslePlaceSpec {
+function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
   /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
   if (c.slug === "nordic") {
@@ -122,17 +123,23 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
      行き先を減らさずに軒数を増やさない形が、この板の中。
      **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
   const st = CHAPTER_STATS[c.slug];
-  const countries = c.countries.length;
+  /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
+     章の `countries` は歩き終わってからしか埋まらない。 */
+  const countries = chapterCountries(c, today).length;
   const g = guideOf(c.slug);
   return {
     id: "trip",
     label: "この島のこと",
+    /* **数は焼かない。** 字にしてから渡すと、表紙の札がデプロイした日の数で
+       止まる（`since` と `ChapDays.tsx`）。表紙は島がまるごとブラウザへ渡る
+       ので、`blurb` が焼いた字のまま配られていた。 */
     blurb: `${days.toLocaleString()}日目`,
+    since: { chapter: c.slug, tail: "日目" },
     icon: "statue",
     size: 54,
     note: c.note,
     facts: [
-      { n: String(days), unit: "日", cap: "この島にいる" },
+      { n: String(days), unit: "日", cap: "この島にいる", since: c.slug },
       ...(st ? [{ n: String(st.streams), unit: "本", cap: "配信した" }] : []),
       ...(st ? [{ n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" }] : []),
       ...(countries ? [{ n: String(countries), unit: "カ国", cap: "歩いた" }] : []),
@@ -182,7 +189,7 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
     /* **島に建てるものは増やさない**（`COVER_R` の注）。いまいる国の案内は
        「この島のこと」の板の中（`tripPlace`）。 */
-    places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
+    places: [tripPlace(c, days, today), ...HOME_PLACES, { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**
 

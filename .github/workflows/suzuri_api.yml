@@ -29,15 +29,29 @@ on:
   workflow_run:
     workflows: ["Fetch YouTube Chat Data"]
     types: [completed]
+  # 取り込みが発火しなかった晩の受け皿。
+  # **保険。取り込みがいちばん遅く終わった晩より、さらに後ろに置く。**
+  #
+  # 2026-10-13 に測り直したら、ここに書いてあった「取り込みの実測
+  # 21:49〜23:32 UTC」が**古くなっていた**。10月の実測では、取り込みが
+  # 終わるのは中央値 23:40 UTC・**いちばん遅い晩で 02:12 UTC**。
+  # つまり 01:00〜02:30 に置いた保険は、**予定どおりに発火したら
+  # 取り込みより先に走る。**
+  #
+  # いまそうなっていないのは、GitHub の待ち行列が 01:00〜04:30 UTC 帯で
+  # **4〜7時間遅れている**から。**遅いおかげで順番が合っている**だけで、
+  # 速くなったら壊れる（2026-03 の実測は 0.1時間だった。戻りうる）。
+  #
+  # だから、**遅れが 0 でも取り込みの後ろに入る時刻**へ移した。
+  # いまの数は `python3 python/cron_lag.py` が出す。**ここに書かない。**
   schedule:
-    # 保険。取り込みが発火しなかった晩の受け皿（日本時間の朝 11 時ごろ）
-    - cron: "7 2 * * *"
+    - cron: "40 3 * * *"
   workflow_dispatch:
     inputs:
       command:
         description: "何をするか"
         type: choice
-        options: [materials, characters, create, update, delete, preview, probe, sheet]
+        options: [materials, items, goods, sample, publish, characters, create, update, delete, preview, probe, sheet]
         default: materials
       args:
         description: "コマンドに渡す引数（例: update なら `21116414 --price 300`、probe なら `21116414 --item can-badge --scale 0.8`、sheet なら `21116414 21116420` か `--latest 5`）"
@@ -89,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           extra=""
-          case "$CMD" in characters|create|delete) [ "$DRY" = "true" ] && extra="--dry-run" ;; esac
+          case "$CMD" in characters|create|delete|goods) [ "$DRY" = "true" ] && extra="--dry-run" ;; esac
           # ARGS は人が打った字。シェルに通さず、python の shlex で分ける
           python3 - "$CMD" "$extra" <<'PY'
           import os, shlex, subprocess, sys

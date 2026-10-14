@@ -43,7 +43,6 @@ const SCENES = [
   { id: "rl-cand-1280", url: `/roulette.html?candidates=${CAND}`, w: 1280, h: 720, dpr: 2 },
   { id: "rl-sess-1920", url: "/roulette.html?s=0123456789abcdef0123456789abcdef", seed: {}, w: 1920, h: 1080, dpr: 2 },
   { id: "rl-spin-1920", url: "/roulette.html?s=0123456789abcdef0123456789abcdef", seed: { spin: true }, wait: 19000, w: 1920, h: 1080, dpr: 2 },
-  { id: "me-remote", url: "/me/remote.html", seed: { admin: true }, open: true, w: 390, h: 844, dpr: 3 },
   { id: "me-roulette", url: "/me/roulette.html", seed: { admin: true }, open: true, w: 390, h: 844, dpr: 3 },
   /* **押せるほうの「足す」も測る。** 何も打っていない `.rc-add button` は
      `disabled`（`opacity: .55`）なので、そのまま測ると薄くて当たり前の

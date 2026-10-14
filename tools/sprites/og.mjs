@@ -95,6 +95,25 @@ const W = 1200, H = 630;
 const LAND_W = Number(process.env.OG_LAND || FRAME_LAND_W);
 /** 測るための、最初の高さ。ここから比で伸ばすので、値そのものに意味は無い */
 const PROBE = 780;
+/**
+ * **撮りかたの版。撮りかたを変えたら1つ上げる。**
+ *
+ * 毎晩の差し替えは「**絵に写るべき字**が変わったか」で決めている（下の `STAMP=`）。
+ * 字で見るのは正しい——絵のバイト列は毎晩4%入れ替わるので、そちらでは毎晩
+ * 意味のないコミットが積まる。
+ *
+ * **ただし、字が変わらないまま絵だけ変わることがある**——撮りかたを直したとき。
+ * 2026-10-12 に枠のへりのつなぎ目を直したが、字は1文字も変わらないので
+ * `ognight.sh` は「字は前のままです。絵は据え置きます」で終わり、
+ * **直した絵は永遠に配られないところだった**（`docs/island-misses.md` #226）。
+ *
+ * だから版を字と一緒に書き出して、同じ物差しで突き合わせる。
+ * **上げ忘れると、その直しは配られない。**
+ *
+ * 1 … 字で差し替えるようにした（2026-10-11）
+ * 2 … 枠のへりに島の水を敷き、波打ちぎわの帯を消した（2026-10-12。#226）
+ */
+const SHOT = 2;
 
 /** 枠ごと送られたぶんを、上の箱まで全部ゼロに戻す（ブラウザの中で走る） */
 const unscroll = () => {
@@ -184,6 +203,51 @@ await p.waitForTimeout(300);
 
 // 隅の道具・案内・吹き出しは共有画像には要らない（島ごとに名前が違う。`stage.mjs`）
 await p.addStyleTag({ content: `${S.chrome}{display:none!important}` });
+
+/* **枠のうしろに、島と同じ水の色を敷く。**
+
+   島の開いた水は、絵ではなく**島の層そのものの地の色**（`chain.css` の
+   `.isle { background: var(--sea-deep) }`）。中の `<svg>` は陸と波打ちぎわ
+   しか描いていないので、島の層が無いところには**何も塗られない。**
+
+   いっぽう、この枠は島を左右にずらして撮る（`--og-shift-x`。陸をまん中へ
+   寄せるため、最大 110px）。島の層は `overflow: hidden` なので、
+   **ずらすと切り口も一緒に動いて、枠のへりに島の層の外側が出る。**
+   実測（1200×630・引き・`dx = -101`）:
+
+   | | 生きている面 | 撮るとき |
+   | --- | --- | --- |
+   | 島の層（`.isle`） | x 0 → 1200 | x **-101 → 1099** |
+   | 島の絵（`.isle-svg`） | x -140 → 1340 | x -241 → 1239（1099 で切られる） |
+   | 枠の右はし（1150, 300）に居るもの | `svg.isle-svg` | **`SECTION.hero`** |
+
+   出ていたのは `--page-bg`（濃い青）で、**島の水が青かったあいだは
+   見えなかった。** 水が翡翠になった日から、右 8% が青い帯として写った。
+
+   `overflow: visible` にしても直らない（試した）——`<svg>` に地は無いので、
+   広げても透けるだけ。**塗るしかない。** 色は島の層から読む——
+   `var(--sea-deep)` と書くと、島の色を持っているのは `.isle` のほうなので
+   （`data-theme`）、枠では既定の青（#0d87de）に解決される。実際それで
+   「青が青に変わる」だけだった。
+
+   波打ちぎわの帯（`.isle-shore`）も消す。あれは**島の水をページの地へ
+   溶かす**ためのもので、1枚の絵には「下のページ」が無い。残すと、
+   底の 27px だけが青へ寄って、やはり島の層のへりで切れる。 */
+const water = await p.evaluate((sel) => {
+  const n = document.querySelector(sel);
+  const bg = getComputedStyle(n).backgroundColor;
+  // 透明なら、島が持っている水の色を直に聞く（島の作りが変わったときの逃げ道）
+  if (bg && !/^rgba\(0, 0, 0, 0\)$|^transparent$/.test(bg)) return bg;
+  return getComputedStyle(n).getPropertyValue("--sea-deep").trim();
+}, S.root);
+if (water) {
+  await p.addStyleTag({
+    content: `html[data-og] .hero{background:${water}!important}` +
+      (S.shore ? `html[data-og] ${S.shore}{display:none!important}` : ""),
+  });
+} else {
+  console.error("島の水の色が読めませんでした。枠のへりに地が出るかもしれません");
+}
 await p.waitForTimeout(1200);
 
 /* 島の陸を測る。**座標も倍率も書かない。**
@@ -336,7 +400,8 @@ if (STAMP) {
     STAMP,
     JSON.stringify(
       {
-        これは: "いま配ってある site/public/og.png に写っている字。毎晩 rebake.yml が撮り直した字と突き合わせて、変わっていたら絵を差し替える。手で書き換えない（tools/sprites/og.mjs が書く）",
+        これは: "いま配ってある site/public/og.png に写っている字と、撮りかたの版。毎晩 rebake.yml がこれと突き合わせて、変わっていたら絵を差し替える。手で書き換えない（tools/sprites/og.mjs が書く）",
+        撮りかた: SHOT,
         ...stamp,
       },
       null,

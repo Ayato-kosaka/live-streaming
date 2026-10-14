@@ -53,7 +53,7 @@
  *    `/island/<章>/streams` の4面を足した）
  * 2. **リポジトリの `site/app` の下の `page.tsx` ぜんぶ** — `[` を含む道（動く段）を除いた
  *    静的な道。sitemap に載っていない7面がここで出る:
- *    `/design` `/me` `/me/desk` `/me/remote` `/me/roulette` `/next/new`
+ *    `/design` `/me` `/me/desk` `/me/roulette` `/next/new`
  *    `/nordic/photos` `/roulette`
  * 3. **本番の `/all`（島のなか ぜんぶ）に並んでいる行き先** — 121面。
  *    **動く段の面は、ここからしか出ない。**
@@ -311,8 +311,6 @@ export const ABSENCES = [
     why: "ログインした本人にしか中身が無い面。誰でも読める紙ではないので、どちらの索引にも並べない（2026-09-19）" },
   { path: "/me/desk", lists: ["sitemap", "all"],
     why: "ログインした本人の机。誰でも読める紙ではないので、どちらの索引にも並べない（2026-09-19）" },
-  { path: "/me/remote", lists: ["sitemap", "all"],
-    why: "ログインした本人がルーレットを回す手元。誰でも読める紙ではない（2026-09-19）" },
   { path: "/me/roulette", lists: ["sitemap", "all"],
     why: "ログインした本人のルーレットの盤。誰でも読める紙ではない（2026-09-19）" },
   { path: "/roulette", lists: ["sitemap", "all"],

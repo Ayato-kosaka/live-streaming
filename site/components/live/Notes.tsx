@@ -25,6 +25,7 @@ import {
   type Theme,
 } from "@/content/themes";
 import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
+import { useLimits } from "@/lib/liveStats";
 import ReadAgain from "@/components/me/ReadAgain";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
@@ -130,10 +131,28 @@ const PINS = ["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"];
 const SHOW = 6;
 const STEP = 12;
 
-/** 付箋の長さ。サーバー側の `MAX_NOTE_LEN` と同じ。 */
-const MAX = 120;
-/** リンクの長さ。サーバー側の `MAX_LINK_LEN` と同じ。 */
-const MAX_LINK = 2048;
+/* **字の長さは、ここに持たない**（2026-10-13）。
+   前はここに `const MAX = 120;`（「サーバー側の `MAX_NOTE_LEN` と同じ」）と
+   `const MAX_LINK = 2048;` が在った。**同じ数字が2か所に在って、ずれても
+   赤くなるものが1本も無い**形で、島じゅうに15か所あった（`docs/island-db.md`）。
+
+   止め金を15本足すのではなく、**2か所であることをやめた。**
+   いまは `GET /state` の `limits` から受ける（`lib/liveStats.tsx` の
+   `useLimits`）。先例は `/stampline/mine`（2026-10-14 に閉じた。#860）で、
+   あちらは返事に `maxLen` を乗せていて、画面は数字を1つも持っていなかった。
+
+   **届くまでは上限が付かない。** そこへ既定の数字を置くと2か所に戻るので、
+   置かない。上限そのものはサーバーが必ずかける（`cleanText`）。 */
+
+/**
+ * 締め切った宛先で出す1行。**2か所で同じ字を出すので、ここ1つから取る。**
+ *
+ *   1. 締め切った面の、書く段のかわり（`nt-shut`）
+ *   2. 送ってから 409 で断られたとき（開いたまま日付をまたいだ人）
+ *
+ * 2つが別の字だと、同じ締め切りが**人によって違う出来事**に見える。
+ */
+const SHUT_SAY = "この話の付箋は、もう締め切りました。";
 
 /**
  * 貼ってよいリンクか。**サーバー側の `safeLink` と同じ規則を、わざと両方に置く。**
@@ -238,6 +257,9 @@ export default function Notes({
   writeOpen = false,
   omitTexts: omit = NOTHING,
 }: Props) {
+  /* 字の長さの上限。**サーバーが持っている**（`GET /state` の `limits`）。
+     `useLiveStats` と同じ `load()` を通るので、往復は増えない。 */
+  const limits = useLimits();
   const fixed = themeById(theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
   const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
@@ -513,13 +535,20 @@ export default function Notes({
       setErr(
         s.includes("429") ?
           "今日はたくさん貼ってくれた。また明日おねがい。" :
-          s.includes("401") ?
-            "絵を貼るには、ログインしてね。" :
-            /* 400 は、こちらで直せる間違い。**電波の話にしない**
-               （貼った絵が通らなかっただけで、板は読めている） */
-            s.includes("400") && pic ?
-              "この絵は貼れなかった。ほかの絵でためしてみて。" :
-              "いま貼れなかった。少し待って、もう一度。",
+          /* **409 は「もう締め切った」**（サーバー側の `shutTheme`）。
+             畳んだ宛先には書く段そのものが出ないので、ここへ来るのは
+             **開いたまま日をまたいだ人**——企画あての宛先は、その日が
+             来れば締まる。「少し待って、もう一度」と言うと、
+             待っても二度と通らないことが言えない。 */
+          s.includes("409") ?
+            SHUT_SAY :
+            s.includes("401") ?
+              "絵を貼るには、ログインしてね。" :
+              /* 400 は、こちらで直せる間違い。**電波の話にしない**
+                 （貼った絵が通らなかっただけで、板は読めている） */
+              s.includes("400") && pic ?
+                "この絵は貼れなかった。ほかの絵でためしてみて。" :
+                "いま貼れなかった。少し待って、もう一度。",
       );
     } finally {
       setSending(false);
@@ -579,10 +608,17 @@ export default function Notes({
     }
   };
 
+  /* 下の板の見出しの段は、**この部品が h2 を出したかで決まる。**
+     `title={null}` の面（`/board`）では h2 が出ないので、板の見出しが
+     h1 のすぐ下に来る。固定で h3 にしていたころ、読み上げの目次は
+     `/board` で h1 → h3 と飛んでいた（`docs/island-ux.md` 12章）。 */
+  const headed = !bare && title !== null;
+  const Sub = headed ? "h3" : "h2";
+
   const inner = (
     <>
       {/* `title={null}` で見出しを出さない（面の題と同じ字を2つ並べないため） */}
-      {!bare && title !== null && <h2>{title ?? "みんなの付箋"}</h2>}
+      {headed && <h2>{title ?? "みんなの付箋"}</h2>}
       {/* 宛先が決まって来た人にだけ、その宛先の一行を出す。
           選ぶ人には、選んだ宛先の一行を**書く欄の中**で出す（下の `.nt-lead`）。
           上にも出すと、同じことを2回言うことになる。 */}
@@ -628,7 +664,7 @@ export default function Notes({
               その名前をもう言っている（「フィンランドでこれやって」
               「クタイシ → カトヴィツェに、貼る」）。名前を入れると、
               同じ字が20px のあいだに2回ならぶ（`docs/island-standards.md` 6章）。 */}
-          <span>この話の付箋は、もう締め切りました。</span>
+          <span>{SHUT_SAY}</span>
           <Link className="nt-shut-go" href="/board" prefetch={false}>
             いま書けるところへ
             <Icon name="right" size={13} />
@@ -757,7 +793,7 @@ export default function Notes({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={3}
-              maxLength={MAX}
+              maxLength={limits.note}
               placeholder={dest.placeholder}
             />
           </label>
@@ -772,7 +808,7 @@ export default function Notes({
               inputMode="url"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              maxLength={MAX_LINK}
+              maxLength={limits.link}
               placeholder="https://"
             />
           </label>
@@ -884,7 +920,7 @@ export default function Notes({
       <div className="nb-board">
         {!fixed && (
           <div className="nb-head">
-            <h3 className="sub">{here.name}</h3>
+            <Sub className="sub">{here.name}</Sub>
             {list.length > 0 && (
               <span className="bd-count">
                 <b>{list.length}</b>枚
@@ -1099,6 +1135,7 @@ function OwnerTools({
   const [text, setText] = useState(note.reply ?? "");
   const [busy, setBusy] = useState(false);
   const { token } = useAuth();
+  const limits = useLimits();
 
   const save = async () => {
     const t = await token();
@@ -1150,7 +1187,7 @@ function OwnerTools({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={2}
-            maxLength={300}
+            maxLength={limits.reply}
             placeholder="ここに返す。空にすると取り消し"
           />
           <button className="bbtn" onClick={save} disabled={busy}>

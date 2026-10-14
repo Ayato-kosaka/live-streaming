@@ -1,16 +1,19 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import GoTo from "@/components/ui/GoTo";
 import Icon from "@/components/ui/Icon";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "cards",
   title: "旅の写真",
   description: "旅のその日の写真は、あやと島カードにまとまりました。",
-  alternates: { canonical: "/cards" },
+  canonical: "/cards",
   robots: { index: false, follow: true },
-};
+  path: "/nordic/photos",
+});
 
 /**
  * 旅の写真。**あやと島カード（`/cards`）へ寄せたので、ここは送るだけ。**
@@ -34,7 +37,6 @@ export const metadata: Metadata = {
 export default function NordicPhotosPage() {
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },

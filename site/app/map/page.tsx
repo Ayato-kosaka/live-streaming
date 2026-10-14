@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import Walked from "@/components/atlas/Walked";
-import { WALKED_DONE } from "@/content/walked";
+import { WALKED_DONE, walkingCountries } from "@/content/walked";
 import { isWalkedCountry } from "@/content/countries";
-import { AHEAD_COUNTRIES, BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
+import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
@@ -22,11 +23,13 @@ import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
 /* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
    国の名前を書くと、国境を越えた日から次のビルドまで嘘になる（前は
    「いまいるジョージアまで」だった）。 */
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "map",
   title: "歩いた国",
   description:
     "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
-};
+  path: "/map",
+});
 
 /**
  * 歩いた国。
@@ -118,14 +121,22 @@ const ITINERARY = (() => {
  * 並べるものと数えるものを別の出どころから引くと、また食い違う。
  *
  * 日付は、旅程があればそちらが正（区間の日付）。無ければ `entered` を使う。
- * 街と出た日は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ * 街は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ *
+ * **出た日だけは、旅程が無くても埋まる。** つぎの国に入った日が分かっていれば、
+ * 前の国を出たのはその前日——人は2つの国に同時には居ない。`python/stays.py` の
+ * `chapter_stays()` が焼き込みをそう区切っている（`_prev_day`）ので、
+ * ここで空のままにすると**画面だけが前の国を開いたまま**にする。
+ * 2026-10-12 に北マケドニアへ移った日がそれで、アルバニアと北マケドニアが
+ * 2行とも「◯◯/◯◯ –」と出る。どちらにも居るように読める。
  *
  * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
  * 画面が出てから（`./parts.tsx` の `TripCountries`）。
  */
-const TRIP_STEPS: TripStep[] = AHEAD_COUNTRIES
-  // 歩き終わって `COUNTRIES` へ移された国は、こちらから外す（二重に出さない）
-  .filter((c) => isWalkedCountry(c.slug) && !COUNTRIES.some((d) => d.slug === c.slug))
+/* 歩いている最中の国と、その切れ目は `content/walked.ts` が持っている。
+   **ここで組み直さない**——島の札（`components/isle/spec.ts`）も同じものを
+   読んでいるので、式が2本あると片方だけ直した日に数が割れる。 */
+const TRIP_STEPS: TripStep[] = walkingCountries()
   .map((c) => {
     const it = ITINERARY.get(c.slug);
     const from = it?.from || c.entered;
@@ -140,7 +151,9 @@ const TRIP_STEPS: TripStep[] = AHEAD_COUNTRIES
       name: it?.name ?? c.name,
       en: it?.en,
       from,
-      to: it?.to ?? "",
+      /* 旅程が終わりを持っていればそれが正。無ければ、つぎの国に入った前日まで
+         （`walkingCountries()` の `left`）。いまいる国なら開いたままが事実 */
+      to: it?.to || c.left,
       towns: it?.towns ?? [],
       chapter: ch.slug,
       chapterName: ch.name,
@@ -197,7 +210,7 @@ export default function MapPage() {
   const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
   return (
-    <PageShell current="map" crumbs={[{ label: "歩いた国" }]}>
+    <PageShell crumbs={[{ label: "歩いた国" }]}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
           カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。

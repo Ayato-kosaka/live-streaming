@@ -381,16 +381,15 @@
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-1);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.8),
-    0 6px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
   color: var(--ink);
   transition: transform 0.14s ease;
 }
 /* 押したら沈む。厚みが減るぶんだけ下げると、板が押し込まれて見える。 */
 .ndayr:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow: 0 var(--pop-d0) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
 }
 /* 予備の2日と、着いた朝。**中身のページが無いので、押せない。**
    押せないものは完全に平らにする。厚みも矢印も付けない（island-design 3章）。 */
@@ -520,9 +519,8 @@
   border-radius: var(--r-1);
   border: var(--bw-2) solid var(--frame);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 66%, var(--ink));
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
@@ -530,6 +528,17 @@
   transition: transform 0.12s ease;
 }
 .ndayc:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
+/* 面の無い日の札。**押せないので完全に平ら**（`docs/island-design.md` 3-3）。
+   厚みを残すと「押せるのに反応しない」に見える。日誌の入らなかった
+   ストックホルムの7泊がここに落ちる（`content/nordic.ts` の `DAY_PAGES`）。
+   行そのものは残す——旅程に何日あったかは、読む人に要る。 */
+.ndayc.is-flat {
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  background: color-mix(in srgb, var(--paper) 82%, var(--frame));
+  border-color: color-mix(in srgb, var(--frame) 70%, var(--paper));
+  color: var(--ink-2);
+  cursor: default;
+}
 /* その日の話が書かれた札。**行の印（`.ndayr-log`）と同じオリーブ**にする。
    まとめた中の1日に何か書かれたことが、開かなくても分かるようにする。 */
 .ndayc[data-log] {
@@ -546,9 +555,8 @@
   /* **蛍光の上の字は `--marker-ink`。**（`docs/island-world.md` 3.2 の表）
      `--ink` を乗せると、島の景色を替えたときに比が落ちる組み合わせが出る。 */
   color: var(--marker-ink);
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.7),
-    0 4px 0 var(--frame-dark);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7),
+    0 var(--pop-d2) 0 var(--frame-dark);
 }
 /* 動かせない時刻（発つ便の便名と時刻）。旅程表の最後の行だけが持つ。 */
 .ndayr-fixed {
@@ -1101,7 +1109,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
 /* 街の中の「見たい・食べたい・やりたい・買いたい」。
    押せないので、厚みも枠も付けない。字の太さと件数だけで段を分ける。 */
 .ncat { margin-top: var(--sp-3); }
-.ncat > h4 {
+.ncat > :is(h3, h4) {
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
@@ -1112,7 +1120,7 @@ p.nback-asof b { font-weight: 900; color: var(--ink); font-variant-numeric: tabu
   line-height: var(--lh-head);
   color: var(--ink);
 }
-.ncat > h4 em {
+.ncat > :is(h3, h4) em {
   font-style: normal;
   font-size: var(--fs-min);
   font-weight: 800;
@@ -2780,9 +2788,8 @@ p.nday-lead {
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 .nlog-seed:active {
@@ -2847,7 +2854,7 @@ p.nday-lead {
   font-size: var(--fs-note);
   font-weight: 900;
   color: var(--ink);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 4px 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 .trip-week-x:active,
@@ -2882,8 +2889,7 @@ p.nday-lead {
     color-mix(in srgb, var(--paper) 88%, var(--frame)) 0%,
     var(--paper) 100%
   );
-  box-shadow:
-    0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
+  box-shadow: 0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
     0 8px 18px color-mix(in srgb, var(--frame-deep) 26%, transparent);
 }
 /* 帯の中では、送りが幅いっぱい。押しどころを探させない */
@@ -3028,7 +3034,7 @@ p.nday-lead {
   font-weight: 900;
   letter-spacing: var(--ls-body);
   color: var(--ink);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
 .nfd-copy:active { transform: translateY(6px); box-shadow: none; }

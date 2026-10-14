@@ -26,7 +26,19 @@ export type FreeKind = { slug: string; name: string; monthend: boolean };
  *
  * **焼かない。** 今日も、旅の途中かどうかも、画面が出てから決める。
  */
-export default function Tonight({ week, free }: { week: WeekKind[]; free: FreeKind[] }) {
+export default function Tonight({
+  week,
+  free,
+  monthendDays,
+}: {
+  week: WeekKind[];
+  free: FreeKind[];
+  /**
+   * 月末配信が立っている日（`YYYY-MM-DD`。`content/plans.ts` の `streamPlanDays`）。
+   * **ここに今日が無ければ、月末配信のことは言わない。**
+   */
+  monthendDays: string[];
+}) {
   const [now, setNow] = useState<Date | null>(null);
   const [trip, setTrip] = useState<TripDest | null>(null);
   useEffect(() => {
@@ -51,17 +63,27 @@ export default function Tonight({ week, free }: { week: WeekKind[]; free: FreeKi
 
   const j = jstNow(now);
   const dow = (new Date(Date.UTC(j.y, j.m - 1, j.d)).getUTCDay() + 6) % 7;
-  const last = new Date(Date.UTC(j.y, j.m, 0)).getUTCDate();
   const monthend = free.find((f) => f.monthend);
   const anytime = free.find((f) => !f.monthend);
   const hit = week.filter((k) => dow >= k.from && dow <= k.to);
   const day = DAYS[dow];
 
-  /* 月末は曜日より強い。その日は月末配信をやると決まっている */
-  if (j.d === last && monthend)
+  /* 月末配信は曜日より強い。**ただし「その月の最終日」で当てない。**
+
+     ここは `j.d === last`（月の最終日）で「今夜は◯月の最後の日。月末配信の日。」
+     と言っていた。実測（焼き込みの配信）では 9/26・8/29・7/26・6/28・5/31 で、
+     **最終日だったのは 5/31 の1回だけ。** 11月は最終日の 11/30 が月曜なので、
+     そのまま置くと**その晩に嘘になる**（`docs/island-standards.md` 16章・
+     `island-misses.md` #228 と同じ根っこ）。曜日に賭けても当たらない
+     （土3回・日2回で割れている）。
+
+     **日付を持っているものから引く。** 企画として立っている日だけ言って、
+     立っていない夜は曜日の答え（下）に落ちる。日付の計算が1つも残らないので、
+     次に日が進んでも古くならない。 */
+  if (monthend && monthendDays.includes(j.date))
     return (
       <p className="wk-now">
-        今夜は{j.m}月の最後の日。<b>{monthend.name}</b>の日。
+        今夜は<b>{monthend.name}</b>の日。
       </p>
     );
 

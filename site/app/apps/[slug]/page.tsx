@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const a = appBySlug(slug);
   if (!a) return {};
-  return { title: a.name, description: a.summary };
+  return share({ key: "apps", title: a.name, description: a.summary, path: `/apps/${slug}` });
 }
 
 /**
@@ -63,7 +64,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   const released = a.milestones.find((m) => m.kind === "release");
 
   return (
-    <PageShell current="apps" crumbs={[{ label: "アプリ", href: "/apps" }, { label: a.name }]}>
+    <PageShell crumbs={[{ label: "アプリ", href: "/apps" }, { label: a.name }]}>
       <PageHead
         logo={a.logo}
         mark={a.slug === "nanikore" ? <HeadphoneArt size={62} /> : <DishArt size={62} />}
@@ -107,7 +108,17 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
         {a.links.length > 0 && (
           <div className="aapp-badges">
             {a.links.map((l) => (
-              <a key={l.href} className="abadge" href={l.href} target="_blank" rel="noopener noreferrer">
+              /* 札は店の名前しか言わない。この面は1本ぶんなので迷わないが、
+                 一覧（`/apps`）では同じ「App Store」が2つ並ぶ。
+                 どちらも同じ作りにしておく */
+              <a
+                key={l.href}
+                className="abadge"
+                href={l.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${a.name} を ${l.label} で見る`}
+              >
                 <Icon name={l.label.includes("Google") ? "googleplay" : "appstore"} size={18} tone="color" />
                 {l.label}
               </a>
@@ -138,7 +149,15 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
                     <b>{m.title}</b>
                     {m.note && <i>{m.note}</i>}
                     {m.videoId && (
-                      <a href={`https://www.youtube.com/watch?v=${m.videoId}`} target="_blank" rel="noopener noreferrer">
+                      /* 読み上げは、リンクの字だけを順に並べて読むことがある。
+                         「この日の配信」が21本つづくと、どれがどの日か分からない。
+                         **見える字は変えずに**、読み上げる名前だけ節目で名乗らせる */
+                      <a
+                        href={`https://www.youtube.com/watch?v=${m.videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${m.date.replace(/-/g, "/")}「${m.title}」の配信`}
+                      >
                         この日の配信
                         <Icon name="external" size={12} />
                       </a>

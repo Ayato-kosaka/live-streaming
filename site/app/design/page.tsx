@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { GROUPS } from "@/components/ui/icons";
 import Flag from "@/components/ui/Flag";
 import VoiceBubble from "@/components/ui/Voice";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "home",
   title: "デザインの見本",
+  /* 索引に出さない面でも、一文は置く。**無いと器の一文（島ぜんぶの説明）に
+     落ちて、別の面が同じことを名乗る**（`tools/sprites/ogmeta.mjs` の dup） */
+  description: "島で使っている色・字・部品を、1枚に並べたもの。作るとき用。",
   robots: { index: false, follow: false },
-};
+  path: "/design",
+});
 
 const FLAGS = [
   "france", "netherlands", "belgium", "germany", "austria", "czech", "slovakia",

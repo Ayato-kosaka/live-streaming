@@ -7,8 +7,8 @@ import Icon from "@/components/ui/Icon";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { chapterDays, type Chapter } from "@/content/chapters";
-import { COUNTRIES } from "@/content/countries";
 import { shortsOf } from "@/content/shorts";
+import { chapterCountries } from "@/content/walked";
 import ChapDays from "./ChapDays";
 import IsleSpan from "./IsleSpan";
 import { MarkList, ShortGrid } from "./IsleLists";
@@ -55,9 +55,10 @@ import { charImg } from "@/lib/charImg";
 export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
   const days = chapterDays(c);
   const st = CHAPTER_STATS[c.slug];
-  const countries = c.countries
-    .map((s) => COUNTRIES.find((x) => x.slug === s))
-    .filter((x): x is NonNullable<typeof x> => Boolean(x));
+  /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
+     章の `countries` は歩き終わってからしか埋まらないので、ここだけ見ていると
+     歩いている島が「0カ国 歩いた」と言う。 */
+  const countries = chapterCountries(c);
   const legends = legendsOf(c);
   const apps = appsOf(c);
   /* 配信。**人の集まった順**に出す。新しい順にすると、440本のうち
@@ -103,12 +104,13 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
               const cities = k.stays.flatMap((s) => s.cities);
               return (
                 <li key={k.slug}>
-                  <Link href={`/map/${k.slug}`} prefetch={false}>
+                  <Link href={k.href} prefetch={false}>
                     <Flag slug={k.slug} size={30} />
                     <span className="isle-kuni-body">
                       <b>{k.name}</b>
                       <i>{stayText(k.stays, stayClosedOn(k.slug))}</i>
-                      <em>{cities.slice(0, 4).join("・")}</em>
+                      {/* 歩いている最中の国には街がまだ無い。**空の行を置かない** */}
+                      {cities.length > 0 && <em>{cities.slice(0, 4).join("・")}</em>}
                     </span>
                     <Icon name="right" size={14} />
                   </Link>
@@ -197,8 +199,15 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
       {st && st.residents.length > 0 && (
         <Zone>
           <H note={`${st.people.toLocaleString()}人`}>この島にいた人</H>
+          {/* **「よく来てくれた人ほど、島にいる日が多い」を外した**（2026-10-14）。
+              あれは**こちらが何順で並べているか**の説明で、読む人には要らない
+              （`CLAUDE.md`「画面で、システムの仕様を説明しない」）。
+              ただし下のマスには数字だけが出ていて、**何の数かは画面のどこにも
+              無かった**——説明を消すだけだと読めなくなる。だから決めごとではなく
+              **数字の名前**を置く（`components/live/FriendsWall.tsx` と同じ
+              「いっしょにいた日数」）。 */}
           <p className="isle-note">
-            島を歩いているのが、この人たち。よく来てくれた人ほど、島にいる日が多い。
+            島を歩いているのが、この人たち。数字は、いっしょにいた日数。
           </p>
           <ul className="isle-folks">
             {st.residents.map((r) => (

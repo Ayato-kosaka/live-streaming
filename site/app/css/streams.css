@@ -203,11 +203,11 @@
   color: var(--ink);
   background: linear-gradient(var(--paper), var(--paper-2));
   border: 2.5px solid var(--frame-dark);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s;
 }
-.zk-pick:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-deep); }
-.zk-pick:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--frame-deep); }
+.zk-pick:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d5) 0 var(--frame-deep); }
+.zk-pick:active { transform: translateY(4px); box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
 /* 選んでいるものは塗りを変えず、朱の枠だけ（紙の型と同じ示しかた） */
 .zk-pick.is-on { border-color: var(--zk-pick); }
 /* 品数は「読ませる字」。opacity 0.62 で薄めると、描いた画素で 3.31 : 1 しか無く、
@@ -364,9 +364,8 @@
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
+    0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.12s ease;
 }
 /* 紙まるごとがリンクのとき。押した手応えは、板が沈む量で返す */
@@ -584,8 +583,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
      すると「どこを押しても開く」と言ってしまうので、箱は地面へ落ちる影だけ
      にして、厚みは屋根へ渡した。落ち影は右下・3pxぼけの `--shadow-3` を使う。
      真下・ぼかし0の自前の影を持っていると、厚みと見分けが付かない（5.3）。 */
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.85),
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.85),
     var(--shadow-3);
 }
 /* 屋根。型の色をいちばん大きい面で見せる場所。
@@ -700,11 +698,11 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--ink);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 6px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d4) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.13s, box-shadow 0.13s;
 }
-.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.8), 0 8px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
-.ty-go:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
+.ty-go:hover { transform: translateY(-2px); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.8), 0 var(--pop-d5) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
+.ty-go:active { transform: translateY(3px); box-shadow: 0 var(--pop-d0) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark)); }
 
 /* カードの中の折りたたみ。ここも型の色は持ち込まない */
 /* 折りたたみに厚みは付けない（`ui.css` の `.fold`「影は落とさない」）。
@@ -726,12 +724,12 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   padding: var(--sp-2);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--frame-dark), 0 9px 2px rgba(8, 46, 62, 0.14);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--frame-dark), 0 9px 2px rgba(8, 46, 62, 0.14);
   transition: transform 0.14s, box-shadow 0.14s;
   position: relative;
 }
-.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 8px 0 var(--frame-dark), 0 12px 3px rgba(8,46,62,.16); }
-.vid:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--frame-dark); }
+.vid:hover { transform: translateY(-3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.7), 0 var(--pop-d5) 0 var(--frame-dark), 0 12px 3px rgba(8,46,62,.16); }
+.vid:active { transform: translateY(3px); box-shadow: 0 var(--pop-d0) 0 var(--frame-dark); }
 .vid-th {
   position: relative;
   flex: none;
@@ -753,7 +751,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border-radius: 50%;
   color: #4a3216;
   background: rgba(255, 253, 240, 0.92);
-  box-shadow: 0 2px 0 rgba(60, 40, 14, 0.28);
+  box-shadow: 0 var(--pop-d0) 0 rgba(60, 40, 14, 0.28);
   padding-left: 2px;
 }
 .vid-b { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; justify-content: center; flex: 1; }
@@ -836,6 +834,52 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
    折り返すとチップが2〜3行になって `.kt-tools` が 100px ほど伸びるが、
    `/kitchen` は 2,887px（3.4画面）なので収まる。
    見えない棚があるより、100px 長いほうがよい。 */
+/* 絞り込みを出す押しどころ。**閉じているのが既定**（`KitchenCatalog.tsx` の注）。
+
+   焼いた HTML が閉じた姿なので、JS が入っても背は1pxも動かない
+   （`docs/island-standards.md` 7章の「出るときに背が変わる」を作らない）。 */
+.kt-sift-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: var(--sp-1) var(--sp-3);
+  border: 2.5px solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.kt-sift-sum:active { transform: translateY(4px); box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
+.kt-sift-sum > img,
+.kt-sift-sum > svg:first-child { flex: none; }
+.kt-sift-sum > b {
+  flex: none;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+/* いま何でしぼっているか。**1行で止める**——国名と種類と並びで3つ出るので、
+   狭い画面で折り返すと札が2段になって、畳んだ意味が薄くなる */
+.kt-sift-now {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+.kt-sift-arw { flex: none; transition: transform 0.15s ease; }
+.kt-sift-arw.is-up { transform: rotate(180deg); }
+.kt-sift-sum[aria-expanded="true"] { margin-bottom: var(--sp-3); }
+
 .kt-tools { display: grid; gap: var(--sp-2); }
 /* 行の先頭の見出し（どこで / なにを）は、折り返した2行目以降の
    チップと高さがそろうように上に寄せる。真ん中だと宙に浮く。 */
@@ -859,11 +903,11 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   color: var(--ink);
   background: linear-gradient(var(--paper), var(--paper-2));
   border: 2px solid var(--zk-pick);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep));
+  box-shadow: 0 var(--pop-d2) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep));
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.kt-clear:hover { transform: translateY(-2px); box-shadow: 0 6px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
-.kt-clear:active { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
+.kt-clear:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d4) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
+.kt-clear:active { transform: translateY(2px); box-shadow: 0 var(--pop-d0) 0 color-mix(in srgb, var(--zk-pick) 62%, var(--frame-deep)); }
 
 /* いま何ページ目か。数と同じ行に置く（別の行にすると、絞るたびに行が増える） */
 .kt-pageof {
@@ -884,7 +928,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   border: var(--bw-2) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 5px 0 var(--pg-edge);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 var(--pop-d3) 0 var(--pg-edge);
   font-size: var(--fs-note); font-weight: 900;
   color: var(--ink);
   cursor: pointer;
@@ -1108,7 +1152,7 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   width: 58px; height: 58px;
   border-radius: 50%;
   background: radial-gradient(100% 100% at 50% 18%, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--frame) 58%, var(--paper)), 0 3px 0 rgba(120, 90, 50, 0.12);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--frame) 58%, var(--paper)), 0 var(--pop-d1) 0 rgba(120, 90, 50, 0.12);
 }
 @media (min-width: 720px) { .rt-stop { width: 66px; height: 66px; } }
 .rt-stop .art { width: 38px; height: 38px; }
@@ -1441,6 +1485,24 @@ a.zk-hero:hover .zk-hero-art img { transform: translateY(-5px); }
   letter-spacing: var(--ls-body);
   color: var(--chip-ink);
   vertical-align: 2px;
+}
+/*
+ * 行の2段目に置く、ふつうの説明。
+ *
+ * **`.lgd-t em`（札）に長い字を入れない。** あちらは「いちばん人が集まった日」
+ * のような短い印で、丸い地を敷く。説明を入れると札の中で折り返して、
+ * **押せる札が2つ並んでいるように見える**（2026-10-14 に撮って気づいた。
+ * `docs/island-misses.md` #237「借りた型は、自分の中身でいちばん長いものを
+ * 入れて1度撮る」と同じ形）。
+ */
+.lgd-t small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-note);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: var(--ls-body);
+  color: var(--ink-2);
 }
 /* 何人が書いたか。数えたものなので押せない札の色（オリーブ）で平らに */
 .lgd-n {

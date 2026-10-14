@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { StreamCard } from "@/components/ui/Bits";
@@ -6,6 +7,7 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
+import { chapterHref } from "@/content/chapters";
 
 /**
  * 過去の島の配信だけを並べる面。
@@ -78,10 +80,12 @@ export async function generateMetadata({
   const c = ISLE_STREAM_CHAPTERS.find((x) => x.slug === chapter);
   if (!c) return {};
   const n = CHAPTER_STREAMS[c.slug]?.length ?? 0;
-  return {
+  return share({
+    key: "atlas",
     title: `${c.name}の配信`,
     description: `${c.from} から ${c.to} まで、${c.name}のあいだに配信した${n}本。`,
-  };
+    path: `/island/${chapter}/streams`,
+  });
 }
 
 export default async function ChapterStreams({
@@ -92,6 +96,23 @@ export default async function ChapterStreams({
   const { chapter } = await params;
   const c = ISLE_STREAM_CHAPTERS.find((x) => x.slug === chapter)!;
   const streams = CHAPTER_STREAMS[c.slug] ?? [];
+
+  /* 同じ日に同じ題名が2本あるぶんだけ、「その日の何本目か」を控える。
+     読み上げはリンクの字だけを並べて読むので、題名も日付も人数も同じ2枚は
+     1文字も違わずに読まれる（2025-05-10 のエジプト・シワ。止まって
+     立て直した回）。題名は YouTube に実在するものなので直せない
+     （`docs/island-design.md` 1章の唯一の例外）。
+     **ぶつかっていない配信には何も足さない。** どれにも「1本目」が付くと、
+     読み上げがうるさいだけで見分けの役に立たない。 */
+  const sameDay = new Map<string, string[]>();
+  for (const [date, videoId, title] of streams) {
+    const key = `${date}\u0000${title}`;
+    sameDay.set(key, [...(sameDay.get(key) ?? []), videoId]);
+  }
+  const nthOf = (date: string, videoId: string, title: string) => {
+    const ids = sameDay.get(`${date}\u0000${title}`);
+    return ids && ids.length > 1 ? ids.indexOf(videoId) + 1 : undefined;
+  };
 
   // 月ごとにまとめる。焼いてある表はもう新しい順なので、並べ替えない
   const months: { key: string; label: string; rows: typeof streams }[] = [];
@@ -106,7 +127,10 @@ export default async function ChapterStreams({
     <PageShell
       crumbs={[
         { label: "島の地図", href: "/atlas" },
-        { label: c.name, href: `/island/${c.slug}` },
+        /* **行き先を手で組み立てない。** いまいる章の島はトップそのものなので
+           （`chapterHref`）、`/island/${c.slug}` と書くと、その章が「いまいる章」に
+           なった日だけ**どこからもリンクの来ていない写しの面**へ送ることになる。 */
+        { label: c.name, href: chapterHref(c) },
         { label: "配信" },
       ]}
     >
@@ -129,7 +153,14 @@ export default async function ChapterStreams({
       {/* 着いた時点で見えるぶん。**数を固定する**ので、月に何本あっても背は変わらない */}
       <div className="scards">
         {streams.slice(0, NEWEST).map(([date, videoId, title, people]) => (
-          <StreamCard key={videoId} videoId={videoId} title={title} date={date} tag={card(people)} />
+          <StreamCard
+            key={videoId}
+            videoId={videoId}
+            title={title}
+            date={date}
+            tag={card(people)}
+            nth={nthOf(date, videoId, title)}
+          />
         ))}
       </div>
 
@@ -146,6 +177,7 @@ export default async function ChapterStreams({
                       title={title}
                       date={date}
                       tag={card(people)}
+                      nth={nthOf(date, videoId, title)}
                     />
                   ))}
                 </div>
@@ -156,7 +188,7 @@ export default async function ChapterStreams({
       </div>
 
       <p className="chain-foot">
-        <Link href={`/island/${c.slug}`} prefetch={false}>
+        <Link href={chapterHref(c)} prefetch={false}>
           <Icon name="left" size={14} /> {c.name}の島にもどる
         </Link>
       </p>

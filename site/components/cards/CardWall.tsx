@@ -7,8 +7,10 @@ import Longer from "@/components/ui/Longer";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import ReadAgain from "@/components/me/ReadAgain";
 import { useOwner } from "@/lib/auth";
+import CardMonth from "./CardMonth";
 import CardSheet from "./CardSheet";
-import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
+import DayPanel from "./DayPanel";
+import { useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 
 /**
  * あやと島カード。**1日ぶんが1枚の紙で、並ぶのは写真。**
@@ -49,6 +51,12 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
  * 一覧のマスは**素の写真**で、キャラクターを入れるのは開いた先だけ。
  * 開いた先も、はじめは誰も入っていない（`CardSheet`）。
  *
+ * ## 見かたは2つ。**並びと、カレンダー**（2026-10-13）
+ *
+ * あやと:「あやと島カードはカレンダーから選べることもできたらもっと
+ * 見やすいかも？」**「も」なので、並びは消さない。** 札2枚で切り替える。
+ * どちらの見かたでも、1日ぶんの紙は同じもの（`DayPanel`）を出す。
+ *
  * ## マスに厚みを付けない
  *
  * 並びのマスが**全部押せる**ので、1枚ずつには付けない（`docs/island-design.md`
@@ -57,6 +65,8 @@ import { cardWhen, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 export default function CardWall({ plans }: { plans: PlanDays }) {
   const { days, photosRead, cardsRead, add, drop, reload } = useCardWall();
   const [open, setOpen] = useState<PhotoGroup | null>(null);
+  /** 見かた。**並び（いままで）か、カレンダーか** */
+  const [cal, setCal] = useState(false);
   /* 貼る道具は、あやとにだけ出す。判定は1か所に置いてある
      （`lib/auth.tsx` の `useOwner`）。 */
   const owner = useOwner();
@@ -98,7 +108,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       {read && days !== null && days.length === 0 && (
         <div className="blank">
           <b>まだ1枚もありません</b>
-          <p>旅に出た日の夜から、その日に撮った写真がここに並びます。</p>
+          <p>配信のあった日に撮った写真が、ここに並びます。</p>
           <Link prefetch={false} className="blank-go" href="/nordic">
             旅のよていを見る
             <Icon name="right" size={15} />
@@ -106,58 +116,40 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
         </div>
       )}
 
+      {/* 見かたの札。**カードが1枚でもあるときだけ出す**——0枚の紙に
+          切り替えを出しても、どちらを押しても同じ空っぽが出る。 */}
+      {days !== null && days.length > 0 && (
+        <div className="akd-views" role="group" aria-label="どの見かたで さがしますか">
+          <button
+            type="button"
+            className={`akd-view${cal ? "" : " is-on"}`}
+            aria-pressed={!cal}
+            onClick={() => setCal(false)}
+          >
+            日づけでならべる
+          </button>
+          <button
+            type="button"
+            className={`akd-view${cal ? " is-on" : ""}`}
+            aria-pressed={cal}
+            onClick={() => setCal(true)}
+          >
+            カレンダーでさがす
+          </button>
+        </div>
+      )}
+
+      {cal && days !== null && days.length > 0 && (
+        <CardMonth days={days} plans={plans} onOpen={setOpen} />
+      )}
+
       {/* 1日ぶんが1枚の紙。**旅の日数ぶんだけ増える**ので、はじめは3日ぶん
           （#225）。 */}
-      <Longer items={days ?? []} first={3} step={6} unit="日ぶん" as="div">
-        {(d) => (
-          <section className="panel paper akd-day" key={d.day}>
-            <h2>{cardWhen(d.day)}</h2>
-            {/* その日の企画（あやとの「フードワインフェスの企画に紐つけて欲しい」）。
-                **1日に企画は何本でも立つ。** 9月11日はそれが4本ある。
-                1本に絞ると、残りは黙って消える。 */}
-            {plans[d.day] && plans[d.day].length > 0 && (
-              <div className="akd-day-plans">
-                {plans[d.day].map((p) => (
-                  <Link key={p.href} className="akd-day-plan" href={p.href} prefetch={false}>
-                    {p.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-            {/* その日の写真も畳む。**日を畳むだけでは足りない**
-                （`docs/island-standards.md` 7「増えるものを縦に積まない」）。
-                1つの企画にカード画像は何枚でも貼れるので（`PHOTOS_PER_DAY`
-                は1日120枚）、日の側だけ畳んでも**1枚の紙が伸びきる。**
-                390px では2列なので、30枚貼ると紙1枚が 2,676px（スマホ3画面）
-                になり、次の日へ行くまでに送りつづけることになる。
-
-                はじめの6枚は「1件の背」で決めてある。390px で2列 × 3段、
-                1200px で6列 × 1段。**本番でいちばん多い日（5枚）は畳まれない**
-                ので、いまの見た目は変わらない。 */}
-            <Longer items={d.photos} first={6} step={12} unit="枚" as="div" className="akd-shelf">
-              {(g) => (
-                <button
-                  key={g.photoId}
-                  type="button"
-                  className="akd-tile"
-                  onClick={() => setOpen(g)}
-                  aria-label={g.note || "その日の写真をひらく"}
-                >
-                  {/* **crossOrigin を付ける。** 開いた先の canvas が同じ URL を
-                      読む。片方を素で先に読むと、CORS のヘッダを持たない絵が
-                      キャッシュに残る端末があり、あとから焼こうとすると
-                      汚れて落ちる。 */}
-                  {/* **`width`/`height` の欄を書かない。** 書くと `height` が
-                      そのまま効いて（HTML の欄は CSS の height になる）、
-                      `aspect-ratio: 1` が無視される。1600 の写真がマスの中で
-                      1,639px の背になっていた。形はマスの側が決める */}
-                  <img src={g.url} alt="" loading="lazy" crossOrigin="anonymous" />
-                </button>
-              )}
-            </Longer>
-          </section>
-        )}
-      </Longer>
+      {!cal && (
+        <Longer items={days ?? []} first={3} step={6} unit="日ぶん" as="div">
+          {(d) => <DayPanel key={d.day} day={d} plans={plans[d.day]} onOpen={setOpen} />}
+        </Longer>
+      )}
 
       {open && (
         <CardSheet

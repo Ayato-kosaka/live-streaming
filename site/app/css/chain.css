@@ -312,7 +312,7 @@
   border: 3px solid var(--frame-deep);
   border-radius: 16px;
   background: linear-gradient(180deg, #ffe9b0 0%, var(--paper) 46%, var(--paper-2) 100%);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -334,7 +334,7 @@
   border-radius: 999px;
   background: var(--accent-deep);
 }
-.atl-tag:active { transform: translate(calc(-50% + var(--atl-nudge)), 4px); box-shadow: 0 2px 0 var(--frame-deep); }
+.atl-tag:active { transform: translate(calc(-50% + var(--atl-nudge)), 4px); box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
 .atl-tag:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 
 /* ---- 矢印 --------------------------------------------------------------
@@ -351,7 +351,7 @@
   border: 3px solid var(--frame-deep);
   border-radius: 50%;
   background: linear-gradient(180deg, #fff6d8 0%, var(--paper) 52%, var(--paper-2) 100%);
-  box-shadow: 0 6px 0 var(--frame-deep);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep);
   color: var(--ink);
   cursor: pointer;
 }
@@ -363,7 +363,7 @@
 .atl-arm.is-right:active { transform: translateY(calc(-50% + 4px)); }
 .atl-arm.is-up:active { transform: translate(-50%, 4px); }
 .atl-arm.is-down:active { transform: translate(-50%, 4px); }
-.atl-arm:active { box-shadow: 0 2px 0 var(--frame-deep); }
+.atl-arm:active { box-shadow: 0 var(--pop-d0) 0 var(--frame-deep); }
 .atl-arm:focus-visible { outline: 3px solid var(--frame-deep); outline-offset: 3px; }
 
 /* ---- 島から島へ渡る舟 --------------------------------------------------
@@ -798,7 +798,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 18px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   text-decoration: none;
 }
@@ -847,7 +847,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 18px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   text-decoration: none;
 }
@@ -1101,7 +1101,7 @@
   border-radius: 13px;
   background: linear-gradient(180deg, #fff8e4 0%, #f6e6c2 100%);
   color: var(--ink);
-  box-shadow: 0 4px 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
+  box-shadow: 0 var(--pop-d2) 0 #c9a978, 1px 6px 6px rgba(30, 60, 40, 0.22);
   pointer-events: auto;
   cursor: pointer;
   text-align: left;
@@ -1220,30 +1220,40 @@
   color: var(--paper, #fffdf6);
   font-size: 11.5px;
   font-weight: 900;
-  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
-.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+.isle-mark:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 var(--pop-d0) 0 #c9a978; }
 
-/* ---- いま行こうとしている建物の札（`IsleStage` の `dock`）----------------
-   **島の上ではなく、画面の下ふちに1枚。**
+/* ---- 寄りの札は、画面の上に1枚だけ（`IsleStage` の `dock` / `openSpot`）----
+   **字の出る場所は、画面の上に固定する。上にも下にも入れ替えない。**
 
-   島の上に置くと、カメラがあやとを追って 1.5秒かけて寄るあいだ、札は画面の
-   上を滑り続ける。実測（390px）で、1タップ目のあと 100ms ごとに追うと
-   最大 244px 動き、別の建物の札に3回入れ替わっていた。**滑った先を押すと
-   別の建物の当たりを踏む**ので、3回測って3回とも「押した先とは違う所」
-   （`/index.html`＝どこへも行かない）に着いていた。
+   あやとの言葉（2026-10-14・本番のスマホ）:
+   「上や下に文字を出すのではなく文字を出す場所は上に固定」。
+   比べる相手のポケットキャンプも、会話は常に画面の上（`14.jpg`。上から
+   14.5%〜28%。下に出ることは一度も無い）。
 
-   ここに出せば 1px も動かないし、**着くのを待たずに「みる」が押せる。**
-   「押した → 行き先が手元に出る → 歩きながら入れる」というゲームの運びになる。
+   島の上に札を置いていたときに起きていたこと:
 
-   置き場所は下ふちのまん中。「今日の島」の板（スマホは下ふち、タブレットは
-   右下。どちらも下から 10〜18px で背は 50px ほど）の**上**に置く。
-   隅の道具は左下（640px から上）なので、まん中は空いている。 */
+   - カメラがあやとを追って 1.5秒かけて寄るあいだ、札は画面の上を滑る。
+     実測（390px）で1タップ目のあと最大 244px 動き、別の建物の札に3回
+     入れ替わった。**滑った先を押すと別の建物の当たりを踏む**ので、
+     3回測って3回とも「押した先とは違う所」に着いた
+   - 置き場所が無いと、ほかの建物の当たりの上に残る（#726）
+   - 建物の真上・下・左・右と回るので、**同じ札が毎回ちがう場所に出る**
+
+   いちど下ふちへ逃がしたが、下は「今日の島」の板と吹き出しの場所で、
+   しかも**近づいたときの名前は島の上のまま**だったので、「上にも下にも字が出る」
+   が残った。いまは寄りの字を**ぜんぶここ1か所**に集めてある。
+
+   高さは `--isle-top`（`IsleStage` の `measure()` が決める）。島の上ふちに
+   先に居るもの——看板（表紙）・隅の道具・島の名前——のいちばん下のすぐ下。
+   **数を書き写さない。** 看板は寄り引きで絵が差し替わるし、島の名前は
+   面によって在ったり無かったりする。 */
 .isle-going {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(76px + env(safe-area-inset-bottom));
+  top: var(--isle-top, 12px);
   z-index: 5;
   display: flex;
   justify-content: center;
@@ -1268,7 +1278,50 @@
 .isle-going .isle-mark::after { content: none; }
 .isle-going .isle-text { min-width: 150px; }
 .isle-going .isle-text b { font-size: 14.5px; }
-.isle-going .isle-mark:active { transform: translateY(2px); box-shadow: 0 2px 0 #c9a978; }
+/* **札そのものは指を取らない。押せるのは「みる」だけ。**
+   -----------------------------------------------------------------
+   あやとの言葉（2026-10-14）:「掲示板自体をタップしたら画面切り替えじゃなく
+   「みる」押したらにする（歩きたいタップが被って UX が悪い）」。
+   島の上の建物にも同じ決めを当てたが（建物を押しても歩くだけ）、
+   **この札も 300x64px の板で、画面の上ふちを横切っている。**
+   板ぜんぶが押せると、その下の入口が押せなくなる——実測（`islecover.mjs`・
+   幅390・表紙）で「あやとグッズ」の当たりが 55/121 点取られて 0x0 に
+   引っ込んでいた。
+
+   指を取るのを「みる」1つに絞ると、板の残りは島の地面へ指を通す
+   （押せば、その方向へ歩く）。`pointer-events: none` の `<button>` でも、
+   中の `<span>` から上がってきた click は受け取る。 */
+.isle-going .isle-mark {
+  pointer-events: none;
+  /* **押せないものは完全に平ら**（`docs/island-design.md` 3-3）。
+     厚みを残すと「押せるのに何も起きない板」になる。落ち影だけ、
+     看板の板（`hero.css` の `.hero-say`）と同じ向き・同じぼかしで置く */
+  box-shadow: 3px 8px 9px var(--cast, rgba(78, 96, 72, 0.28));
+}
+.isle-going .isle-go {
+  pointer-events: auto;
+  position: relative;
+  /* **この札で押せるのはここだけ。** 合図は厚み1種類だけなので、
+     厚みもここだけに付ける（30px の札は 4px。`docs/island-design.md` 3-3） */
+  box-shadow: 0 var(--pop-d2) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  /* 指で押せる最小（`docs/island-design.md` 3-2）。見た目は小さいままでよいので、
+     見えない当たりを外へ広げる（島の札の `::before` と同じ作り・同じ 49px） */
+}
+.isle-going .isle-go::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 49px);
+  height: max(100%, 49px);
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+}
+/* 押したら沈む（`docs/island-design.md` 3-5）。厚みも一緒に薄くする */
+.isle-going .isle-go:active {
+  transform: translateY(2px);
+  box-shadow: 0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
 /* 同じ札を2枚出さない。留めているあいだ、島の上の札は引っ込む */
 .isle[data-dock] .isle-spot .isle-mark { opacity: 0; pointer-events: none; }
 /* 吹き出しと建物の中を開いているあいだは、下の `.isle.is-talking .isle-mark` が
@@ -1294,7 +1347,7 @@
   background: linear-gradient(#c4123f, #96072e);
   color: var(--paper, #fffdf6);
   border: 2.5px solid var(--paper, #fffdf6);
-  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32);
+  box-shadow: 0 var(--pop-d1) 0 rgba(126, 38, 18, 0.32);
   transform: rotate(-7deg);
 }
 /* 近づいた建物は、ふわっと弾ませる（`docs/island-design.md` 3-5 反応を返す） */
@@ -1336,16 +1389,24 @@
    同じ役目のものが面ごとに違う顔をしているのがいちばん困る
    （`docs/island-world.md` 7.3）。
    **押せない。** どこを押しても閉じるので、当たりは島のほうが受ける */
-/* **スマホでは、島のいちばん上に出す。看板にも吊り板にも被せてよい。**
-   前はここを下ふち（「今日の島」の板の上）に置いていた。理由は
-   「看板と吊り板を塞がないため」だったが、代わりに**指で歩く手前の地面**を
-   塞いでいた。実測（幅390・住人を押して開いた状態）で吹き出しは y=555〜652、
-   板の上ふちまで**12px しか空いていない。** 島に降りた人が最初にやることは
-   「押して歩く」なので、塞いではいけないのは看板ではなく地面のほう。
+/* **島のいちばん上に出す。看板にも吊り板にも被せてよい。**
+   -----------------------------------------------------------------
+   字の出る場所は1か所に固定する（上の `.isle-going`）。会話もそこ。
+   ポケットキャンプの会話も常に上。
+
+   #877 で上へ戻したとき、置き場所は `--isle-top`（看板の下ふちを測って
+   返す）にした。**スマホではそれでもまだ低い。** 測ると吹き出しは
+   y=`--isle-top`〜 に出て、その下の地面がそのぶん押せない。
    あやとの言葉（2026-10-14、本番のスマホを見ながら）:
    「『作った料理』とか、『毎晩22時、世界の』に被って良いのでもっと上に
    して欲しい。触れるスペース確保。」
-   看板（`.hero-ui` は z-index 6）より上に出すので 9 を持つ。 */
+   **譲るのは地面ではなく看板のほう**なので、スマホは `--isle-top` を使わず
+   画面の上ふちへ置く。看板（`.hero-ui` は z-index 6）より上に出すので 9。
+   PC は `--isle-top` のまま（下の 640px の段）。あちらは「今日の島」の板が
+   右上の隅にいて、縦に余裕もある。
+
+   建物の札とは同時に出ない（話しているあいだ札は引っ込む。下の
+   `.isle.is-talking .isle-mark`）。 */
 .isle-talk {
   position: absolute;
   left: 10px;
@@ -1354,13 +1415,12 @@
   bottom: auto;
   z-index: 9;
   padding: 20px 22px 30px;
-  /* --- モコモコ（どうぶつの森のセリフ窓）---
+  /* --- モコモコ（どうぶつの森／ポケ森のセリフ窓）---
      角丸をいくつ書いても「丸い四角」にしかならない。ふちが雲のように
      波打って見えるのは、**半円が並んでいる**から。四辺に半円の列を敷き、
-     中を十字で埋めて1枚の雲にする。
-     列は `round` にしてある。`repeat` だと端の半円が途中で切れるが、
-     `round` はタイルの大きさのほうを詰めて整数個に合わせるので、
-     幅が変わっても切れた半円が出ない。
+     中の地を四辺とも半円のぶん内側へ寄せて重ねる。
+     列は `round`。`repeat` だと端の半円が途中で切れるが、`round` は
+     タイルの大きさのほうを詰めて整数個に合わせるので切れない。
      **島の SVG の中ではない**（ここは HTML の層）。形が毎フレーム
      焼き直される話（`CLAUDE.md`）には当たらない。動きも持たせていない。 */
   --bump: 13px;
@@ -1378,15 +1438,15 @@
     /* 右のふち */
     radial-gradient(circle at 0% 50%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
       top right / var(--bump) var(--bump-w) no-repeat round,
-    /* 中の地。四辺を半円のぶんだけ内側へ寄せる。**全面に敷かない。**
-       全面（または縦いっぱいの帯）を敷くと、その上に半円が隠れて
-       ただの角丸の四角に戻る（一度そう出した）。つなぎ目が出ないよう 1px 重ねる */
+    /* 中の地。四辺とも半円のぶん内側へ寄せる。**全面に敷かない。**
+       全面（や縦いっぱいの帯）を敷くと、その上に半円が隠れてただの
+       角丸の四角に戻る（一度そう出した）。つなぎ目が出ないよう 1px 重ねる */
     linear-gradient(var(--paper), var(--paper))
       center / calc(100% - 2 * var(--bump) + 2px) calc(100% - 2 * var(--bump) + 2px) no-repeat;
   /* ふちが四角くないので、影は形に沿うものを使う。
      `box-shadow` は**箱**に付くので、雲の外に四角い影が出る。 */
   filter:
-    drop-shadow(0 3px 0 rgba(154, 101, 50, 0.2))
+    drop-shadow(0 var(--pop-d1, 3px) 0 rgba(154, 101, 50, 0.2))
     drop-shadow(4px 10px 18px var(--cast-far, rgba(78, 96, 72, 0.34)));
   pointer-events: none;
 }
@@ -1408,21 +1468,21 @@
 .isle.is-sheet .isle-sign { opacity: 0; transition: opacity 0.18s; }
 .isle.is-talking .isle-hit,
 .isle.is-talking .isle-who-hit { pointer-events: none; }
-/* 640px から上は「今日の島」の板が右上の隅にいる。**そこへは戻さない。**
-   前はここで右上へ寄せていて、板と 17,646px² 重なっていた（PC で実測）。
-   島の下は隅の道具（`.isle-view` / `.isle-atlas`）が左端にいるだけなので、
-   まん中に置けばどれとも当たらない。 */
+/* 640px から上は「今日の島」の板が右上の隅にいる。**避けるのは高さで。**
+   `--isle-top` は上半分に居るものの、いちばん下を測って返すので、
+   板がいる幅では吹き出しがその下に出る（数字を書き写さない）。
+   横はまん中に寄せる。島の下の隅には道具（`.isle-view` / `.isle-atlas`）が
+   いるだけなので、幅を絞って中央に置けばどれとも当たらない。 */
 @media (min-width: 640px) {
   .isle-talk {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
     width: min(520px, 58vw);
-    /* **上へ寄せるのはスマホだけ。** 地面が塞がるのは縦に細い画面の話で、
-       PC は吹き出しを下に置いても歩くところが残る。`top` を戻さないと
-       上下が両方効いて、吹き出しが画面の高さまで伸びる。 */
-    top: auto;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    /* **看板へ被せるのはスマホだけ。** 地面が足りないのは縦に細い画面の
+       話で、PC は `--isle-top`（上半分に居るもののいちばん下）に出しても
+       歩くところが残る。 */
+    top: var(--isle-top, 12px);
   }
 }
 
@@ -1485,7 +1545,7 @@
   border-radius: 12px;
   color: var(--ink);
   background: #f0e5c8;
-  box-shadow: 0 3px 0 #d3c09a;
+  box-shadow: 0 var(--pop-d1) 0 #d3c09a;
 }
 /* 広げた当たり。**見えないので、厚みも色も付けない**（合図は厚み1種類だけ。3-3） */
 .isle-sheet-x::after {
@@ -1572,7 +1632,7 @@
   padding: 9px 11px;
   border-radius: 13px;
   background: #fffdf6;
-  box-shadow: 0 3px 0 #ddcda6;
+  box-shadow: 0 var(--pop-d1) 0 #ddcda6;
   color: var(--ink);
 }
 .isle-list a:active { transform: translateY(2px); box-shadow: 0 1px 0 #ddcda6; }
@@ -1599,12 +1659,12 @@
   border-radius: 14px;
   background: linear-gradient(#9c580f, #7d450c);
   color: var(--paper, #fffdf6);
-  box-shadow: 0 4px 0 rgba(76, 48, 20, 0.55);
+  box-shadow: 0 var(--pop-d2) 0 rgba(76, 48, 20, 0.55);
 }
 .isle-more span { flex: 1; min-width: 0; }
 .isle-more b { display: block; font-size: 14px; font-weight: 900; }
 .isle-more i { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; opacity: 0.9; }
-.isle-more:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18); }
+.isle-more:active { transform: translateY(2px); box-shadow: 0 var(--pop-d0) 0 rgba(0, 0, 0, 0.18); }
 
 /* --- 島の隅の道具 --- */
 .isle-sign {
@@ -1650,7 +1710,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   color: var(--ink);
   font-size: 12px;
   font-weight: 900;
@@ -1764,9 +1824,17 @@
 .isle-hint {
   position: absolute;
   left: 14px;
-  /* 左上は道具の1段（48px）、その下が島の名前（2行で約70px）。
-     さらに下から始める。数秒で消えるものなので、低い位置でよい */
-  top: calc(146px + env(safe-area-inset-top));
+  /* **画面の下ふち側へ置く。上ふちは字の帯の場所。**
+     ---------------------------------------------------------
+     前はここが `top: 146px`（島の名前の下）だった。2026-10-14 に寄りの字を
+     画面の上1か所へ集めたので（`.isle-going` / `.isle-talk`）、そこに案内が
+     居ると、**案内が消えた瞬間に札が 88px 上へ跳ぶ**（帯の高さは上に居る
+     ものの下ふちから決まる）。固定にした意味が無くなる。
+
+     下ふちは、札が降りてきた前の置き場所。いまは空いている。
+     「今日の島」の板（下ふち 10px ＋ 背 52px）の上に置く。
+     640px から上は、もとどおり隅の道具の真上（下の媒体問合せ）。 */
+  bottom: calc(76px + env(safe-area-inset-bottom));
   z-index: 5;
   margin: 0;
   max-width: min(70vw, 340px);
@@ -1781,18 +1849,9 @@
   pointer-events: none;
   animation: hintIn 0.3s ease-out both, hintOut 0.9s ease-in 4.7s both;
 }
-/* スマホでは島の名前が3行になることがある（360px の「アルバニア」で 86px）。
-   146px から始めると、その3行目が案内の暗い帯の下に入る。
-   **いちばん高い名前（68 + 86）の下**から始める。
-   640px から上は名前が2行までに収まる（幅が広いぶん折り返さない）ので、
-   そちらは動かさない。 */
-@media (max-width: 639px) {
-  .isle-hint { top: calc(162px + env(safe-area-inset-top)); }
-}
-
 /* 640px から上は、隅の道具の真上へ降ろす。
    ---------------------------------------------------------
-   **上の 146px は、島の名前（`.isle-sign`、2行ぶん）がいる前提の数字。**
+   **かつてここは `top: 146px`（島の名前の2行ぶんの下）だった。**
    表紙にはその名前が無く、代わりに同じ場所へ看板ロゴ（`.hero-copy`）が来る。
    こちらは `.isle` の兄弟として**あとに**書かれていて、どちらも z-index: 5
    なので、後ろに書かれたほうが勝つ。

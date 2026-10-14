@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import VoiceBubble from "@/components/ui/Voice";
@@ -11,7 +12,7 @@ import { ACTIVE_FRIENDS } from "@/content/residents";
 import CardStrip from "@/components/cards/CardStrip";
 import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/countries";
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
-import { CHAPTERS } from "@/content/chapters";
+import { CHAPTERS, chapterHref, chapterOf } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
 import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import Walked from "@/components/atlas/Walked";
@@ -25,11 +26,13 @@ import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "about",
   title: "あやとのこと",
   description:
     "アプリを作りたくて日本を出た人の、ここまで。旅と配信とアプリの年表と、視聴者さんから見たあやと。",
-};
+  path: "/about",
+});
 
 /**
  * あやとのこと。
@@ -76,8 +79,13 @@ const on = (slug: string, i = 0) => countryBySlug(slug)?.stays[i]?.from ?? "";
  * 空なら予定の欄（`opensAt`）の日付を使う（`content/chapters.ts` の `began()` と同じ見かた）。
  */
 const chapterFrom = (slug: string) => {
-  const c = CHAPTERS.find((x) => x.slug === slug);
-  return c ? c.from || c.opensAt?.slice(0, 10) || "" : "";
+  /* **知らない slug は `chapterOf` が投げる。** ここで `""` を返していたせいで、
+     #224（アルバニア＋北マケドニア → バルカン諸国周遊）の日に
+     `chapterFrom("albania")` が空を返し、下の `filter((x) => x.date)` が
+     **年表の最新行を黙って捨てた。** 型もビルドも巡回も通るので、
+     9/28 に直したのと同じ不具合が14日で戻っていた。 */
+  const c = chapterOf(slug);
+  return c.from || c.opensAt?.slice(0, 10) || "";
 };
 /** そのアプリで、その種類の節目がはじめて来た日。並び順の番号で指すと、間に1行入るとずれる。 */
 const appOn = (slug: string, kind: string) =>
@@ -217,13 +225,28 @@ const STORY: Step[] = [
        着いた日が1日ずれたら、島の連なりとこの年表が別の日を言うことになる。
        中身は**出る前・最中・帰ったあとのどれで読んでも合う字**にする
        （すぐ上の北欧の行と同じ決まり）。だから「いまここ」と書かない。
-       「いま」を言うのは `/now` の面の仕事で、年表の仕事ではない。 */
-    date: chapterFrom("albania"),
+       「いま」を言うのは `/now` の面の仕事で、年表の仕事ではない。
+
+       **そしてこの行は、いちど消えた。** 2026-10-12 の #224 で章が
+       `albania` → `balkans` に統合されたとき、鍵がここだけ `albania` のまま
+       残って `chapterFrom` が `""` を返し、**年表がまた 9/11 で止まった。**
+       9/28 に直した不具合が14日で戻っている。
+
+       だから鍵・名前・行き先の3つとも、章から引く:
+       - 鍵は `chapterOf` を通す（無い slug なら `next build` が止まる）
+       - **島の名前を書き写さない。** 統合でまた変わる
+       - **行き先を手で組み立てない。** いまいる島は `/island/<章>` ではなく
+         トップそのもの（`chapterHref`）。`/island/balkans` と書くと、
+         **どこからもリンクの来ていない写しの面**へ送ることになる
+
+       `what` と `note` は 9/28 に起きた事実（ストックホルムから飛んで
+       アルバニアに着いた）なので、章の名前が変わっても古くならない。 */
+    date: chapterFrom("balkans"),
     kind: "travel",
     what: "北欧の旅を終えて、アルバニアへ",
     note: "ストックホルムから飛んで、アドリア海をはさんだイタリアの向かいへ",
-    href: "/island/albania",
-    go: "アルバニアの島へ",
+    href: chapterHref(chapterOf("balkans")),
+    go: `${chapterOf("balkans").name}の島へ`,
   },
 ];
 
@@ -306,7 +329,7 @@ export default function AboutPage() {
     .join("、");
 
   return (
-    <PageShell current="friends" crumbs={[{ label: "あやとのこと" }]}>
+    <PageShell crumbs={[{ label: "あやとのこと" }]}>
       <PageHead
         icon="hut-ayato"
         title="あやとのこと"
@@ -321,7 +344,9 @@ export default function AboutPage() {
           {/* 写真は「誰かが紙に貼ったもの」として置く（docs/island-world.md 6.2-3）。
               生成りの縁を付けて、わずかに傾ける。写真そのものを裸で置かない。 */}
           <span className="abio-art">
-            <img src="/characters/ayato-clay.jpg" alt="鍋をかきまぜているあやと" width={300} height={169} />
+            {/* 760px の webp。枠は 300px なので、これで dpr2 も dpr3 も足りる
+                （前は 1080px の jpg で 72.7KB 運ばせていた） */}
+            <img src="/characters/ayato-clay.webp" alt="鍋をかきまぜているあやと" width={300} height={169} />
           </span>
           <div className="abio-word">
             <b>{PROFILE.lead}</b>

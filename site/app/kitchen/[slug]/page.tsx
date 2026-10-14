@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import { RECIPES, kindLabel, recipeBySlug, recipeNo, type RecipeStream } from "@/content/recipes";
-import { countryBySlug } from "@/content/countries";
+import { countryNameBySlug } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import { Vid } from "@/components/streams/Vid";
@@ -23,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) return {};
-  return { title: r.name, description: r.note };
+  return share({ key: "kitchen", title: r.name, description: r.note, path: `/kitchen/${slug}` });
 }
 
 /** その日が何の日だったか。マスの絵と、ひとことの説明。 */
@@ -39,7 +40,9 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) notFound();
-  const c = countryBySlug(r.country);
+  /* 名前しか要らないので、いま歩いている国も引けるほうを使う
+     （アルバニアは `COUNTRIES` にまだ居ない。歩き終わってから入る） */
+  const c = countryNameBySlug(r.country);
   const sorted = [...RECIPES].sort((a, b) => (a.date < b.date ? 1 : -1));
   const i = sorted.findIndex((x) => x.slug === r.slug);
   const prev = sorted[i - 1];
@@ -61,7 +64,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const stepOf = new Map(r.streams.map((s) => [s.videoId, s.label]));
 
   return (
-    <PageShell current="kitchen"
+    <PageShell
       crumbs={[
         { label: "作った料理", href: "/kitchen" },
         { label: r.name },

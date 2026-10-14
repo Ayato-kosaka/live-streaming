@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Isles from "@/components/chain/Isles";
 import { atlasIsles } from "@/components/chain/isles";
+import { CHAPTERS } from "@/content/chapters";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "atlas",
   title: "島の地図",
-  description:
-    "ヨーロッパ、中東、コーカサス、そして北欧。旅の章ごとに、島が1つ建っています。",
-};
+  /* **章の名前を手で並べない。** ここは「ヨーロッパ、中東、コーカサス、そして北欧。」と
+     書いてあった。そのあいだに章が2つ増えていて（イランまで歩く・バルカン諸国周遊）、
+     **いま立っている島がこの1文に入っていなかった。**
+     `CHAPTERS` が章の唯一の出どころなので、そこから作る
+     （`docs/island-misses.md` の決めごと3 / `docs/island-standards.md` §8）。 */
+  description: `${CHAPTERS.map((c) => c.name).join("、")}。これまで渡ってきた島、ぜんぶ。`,
+  path: "/atlas",
+});
 
 /**
  * 島の地図。**旅そのものを見せる、たった1枚の画面**（`docs/island-atlas.md`）。
@@ -42,7 +50,7 @@ export default function AtlasPage() {
       <PageHead
         icon="signpost-flags"
         title="島の地図"
-        lead="旅の章ごとに、島が1つ建っています。"
+        lead="これまで渡ってきた島、ぜんぶ。"
         /* **島の名前を焼き込まない。** 「いまいるのはコーカサスの島」と書いてあると、
            北欧へ出発した日から嘘になる（いまいる島は日付で決まる）。
            かわりに、ここでしか言えないこと——**この画面の遊びかた**——を言う。 */

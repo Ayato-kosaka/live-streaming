@@ -41,6 +41,19 @@
 同じことを3回やられたので（`chapters.ts` が3通り → 1本 → `stays.py` に4本目）、
 **数を見張る。** `python/` の中で「TS の欄を字で読んでいそうな正規表現」を数えて、
 `ALLOW` に書いた数と1つでも違えば赤。**増やすなら理由を書かせる。**
+
+## ここが数えるのは `*.py` だけ。`.mjs` の相方は別に在る
+
+**同じ焼き込みを `.mjs` も読む。** ここは `*.py` しか数えないので、
+2026-10-13 に数えたら `site/content/*.ts` を自前の正規表現で読む `.mjs` が
+**14本・20か所**あった（#694 / `docs/island-misses.md`）。
+`tools/sprites/` には `.py` と `.mjs` が混ざって置いてあるのに、
+**同じ置き場の半分だけ**を数えていたことになる。
+
+`.mjs` 側は `tools/sprites/tsread.mjs`（読み口）と
+`tools/sprites/tsread_selftest.mjs`（見張り）。**あちらは本番の焼き込み11冊を
+`ts_read.py` にも読ませて、鍵が1つでも違えば赤くする**ので、
+ここを直して向こうを直さなければ（逆も）、その回に落ちる。
 """
 
 from __future__ import annotations
@@ -496,6 +509,12 @@ ALLOW: dict[str, tuple[int, str]] = {
     "python/bake_order_selftest.py": (5, "焼いた本から数を抜き出して、焼き直しの順を当てる（対照）"),
     "python/build_residents_selftest.py": (1, "焼いた1行の score を読み返す（対照）"),
     "python/dead_stream_watch_selftest.py": (4, "本物と別の読み方で配信IDを数える（対照）"),
+    "python/months_safe_selftest.py": (
+        1,
+        "`months.ts` の `attend` に**欄が増えていないか**を見る見張り。"
+        "欄の名前を数えるのが用で、値は1つも読まない。`ts_read` の口は"
+        "「鍵→字」で返すので、**増えた欄が消える**（欲しいのは増えたほう）",
+    ),
     "python/viewable_streams_selftest.py": (2, "2つの焼き込みの数を突き合わせる（対照）"),
     # --- TS ではないもの ---
     "python/channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),

@@ -560,6 +560,25 @@ export const BEFORE_STREAM_DAYS = 47;
 export const countryBySlug = (slug: string) => COUNTRIES.find((c) => c.slug === slug);
 
 /**
+ * 名前だけでよいときの引き。**歩き終わった国と、いま歩いている国の両方**から探す。
+ *
+ * `countryBySlug` は `COUNTRIES`（歩き終わった国）しか見ない。街と滞在と
+ * 見どころが要る面はそれでよいが、**名前と旗しか要らない面**がそれを使うと、
+ * いま歩いている国だけ名前が消える。
+ *
+ * 実際に出た（2026-10-14）: アルバニアで作った料理をスタンプ帳に入れた日、
+ * 料理の面の「借りたキッチン」が**旗だけで名前が出ず**、スタンプ帳の
+ * しぼり込みにも**アルバニアの札が出なかった**。見出しは
+ * 「6カ国の宿のキッチンで作った」と数えているのに、押せるのは5カ国。
+ * **数える側と、押せる側の出どころが違った。**
+ *
+ * `AHEAD_COUNTRIES` は `entered` しか持たないので、返すのは
+ * `{ slug, name }` だけ。滞在や街が要る面は `countryBySlug` のままにする。
+ */
+export const countryNameBySlug = (slug: string): { slug: string; name: string } | undefined =>
+  COUNTRIES.find((c) => c.slug === slug) ?? AHEAD_COUNTRIES.find((c) => c.slug === slug);
+
+/**
  * これから歩く国。**`COUNTRIES` には入れない。**
  *
  * `COUNTRIES` は「歩いた国」の一覧で、`/map` の17カ国も、世界地図の焼き込み
@@ -589,6 +608,19 @@ export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] 
      `entered` を入れた日から「歩いた国」の数に1つ足される
      （`content/walked.ts`）。着いた日なので、そこは合っている。 */
   { slug: "albania", name: "アルバニア", entered: "2026-09-28" },
+  /* 北マケドニア。あやとが 2026-10-12 に着いた（本人の知らせ。`content/plans.ts` の
+     `north-macedonia` の `date` と同じ日）。アルバニアと**同じ島（`balkans`）のまま**で、
+     章は足さない決まりなので（`content/chapters.ts` の `balkans`）、
+     国が増えたことを知っているのはここだけになる。**ここに足さないと、
+     国境を越えても「歩いた国」の数が止まる。**
+
+     **`COUNTRIES` のほうには足さない。** あちらは歩き終わった国の表で、
+     街（`cities`）と滞在（`stays`）と見どころが要る。まだ滞在の最中なので、
+     書けるのは名前と旗の鍵と着いた日までしかない（アルバニアも同じ理由で待ち。#664）。
+
+     `entered` が入った日から、`content/walked.ts` が1つ足して数える。
+     `/map` の年表もここから並ぶので、**数と並びが同じ出どころ**になる。 */
+  { slug: "north-macedonia", name: "北マケドニア", entered: "2026-10-12" },
 ];
 
 /**

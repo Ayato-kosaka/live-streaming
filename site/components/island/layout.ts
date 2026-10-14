@@ -71,6 +71,19 @@ export type Place = {
   sign?: true;
   /** 出発までの日数を出す入口。いちばん気にされるところなので目立たせる。 */
   countdown?: true;
+  /**
+   * その軒の中だが、**道の名前が軒とそろっていない面**の頭。
+   *
+   * 砂浜の「いま居る場所」は、いま開いている道から決める（`spotOfPath`）。
+   * `/kitchen/…` `/map/…` のように軒の道の下に居る面は、それだけで決まる。
+   * 決まらないのは「中身としてはその軒のものなのに、別の道に立っている面」——
+   * 北欧ヒッチハイクと北マケドニアは企画だが `/nordic` `/north-macedonia` に
+   * 立っている。**そこだけここに書く。**
+   *
+   * **長いほうが勝つ。** `/next/new` は `/next` の下にあるが、中身は
+   * 掲示板へ送るだけの1枚なので、掲示板の側に書いてそちらが取る。
+   */
+  under?: string[];
 };
 
 /**
@@ -108,6 +121,9 @@ export const PLACES: Place[] = [
     blurb: "日にちの決まった企画と、その記録",
     sign: true,
     countdown: true,
+    /* 企画そのものの面。道の名前は企画ごとに違うので、ここで引き受ける。
+       増やすのは「企画1つにつき面を1枚作った」ときだけ。 */
+    under: ["/nordic", "/north-macedonia"],
   },
   {
     id: "now",
@@ -119,7 +135,12 @@ export const PLACES: Place[] = [
     icon: "globe-stand",
     size: 48,
     href: "/now",
-    blurb: "いまいる国と、今週やること",
+    /* **添え書きに「今週」を入れない。** 中身は旅先から打たれる欄で、
+       何日も打ち直せない日がある。島の看板は焼いた字なので、札が
+       「今週」と言い、中身が2週間前、という形が必ずいつか起きる
+       （`docs/island-standards.md` 16章 / `docs/island-misses.md` #228）。
+       「いまどこ」は、いつ読んでも「いま」があるのでよい。 */
+    blurb: "いまいる国と、あやとの島だより",
   },
   {
     id: "friends",
@@ -144,6 +165,10 @@ export const PLACES: Place[] = [
     href: "/streams",
     blurb: say("types"),
     sign: true,
+    /* 月ごとのふりかえり（`/months`）。道の名前が軒とそろっていないが、
+       降りてくるのは `/streams/monthly` からで、パンくずも配信から生えている。
+       砂浜だけ別のことを言うと、同じ面の上と下で食い違う（`/next/new` と同じ形）。 */
+    under: ["/months"],
   },
   {
     id: "goods",
@@ -236,6 +261,10 @@ export const PLACES: Place[] = [
     href: "/board",
     blurb: "誰でも出せる。通ったらやる",
     sign: true,
+    /* `/next/new` は企画の道の下にあるが、中身は掲示板へ送るだけの1枚で、
+       パンくずも掲示板から生えている（`app/next/new/page.tsx`）。
+       砂浜だけ「企画」と言うと、同じ面の上と下で違うことを言う。 */
+    under: ["/next/new"],
   },
 ];
 
@@ -259,6 +288,59 @@ export const DOORS: Spot[] = PLACES;
 export const SPOTS: Spot[] = PLACES.filter((p) => p.sign);
 
 export const placeById = (id: SpotId) => PLACES.find((p) => p.id === id)!;
+
+/**
+ * 道を、島のかたちにそろえる。
+ *
+ * **`.html` と終わりのスラッシュを落とす。** 本番は `/nordic` で配るが
+ * （`firebase.json` の `trailingSlash: false`）、書き出したものを手元で
+ * そのまま配ると `/nordic.html` になる。落とさずに比べると、
+ * **手元でだけ印が消えて「直っていない」と読む**（`TripDoor` が同じ所で
+ * 1度つまずいている）。
+ */
+export const tidyPath = (path: string | null | undefined) =>
+  (path ?? "").replace(/\.html$/, "").replace(/\/+$/, "") || "/";
+
+/**
+ * **いま開いている道が、島のどの軒か。** 軒の外なら `undefined`。
+ *
+ * ## なぜ、面に名乗らせないのか
+ *
+ * 砂浜（`components/ui/PlaceList.tsx`）は島の面ぜんぶの終わりに出て、
+ * 軒を全部ならべる（数は `PLACES` が持っている。**ここに書き写さない**）。
+ * **いま居る軒に印が付かないと、板はどの面でも同じ絵**で、自分がどこに
+ * 立っているか読めない。そのうえ、いま居る軒の板は
+ * 押しても同じ紙が出てくる——厚みが「どこかへ行ける」と嘘をつく
+ * （`docs/island-design.md` 3-3）。
+ *
+ * 印そのものは前からあった（`.ifoot-door.is-here`）。**渡す側が無かった。**
+ * 2026-10-09 に数えたら**軒の半分以上**が渡しておらず、面を1枚ずつ直しても
+ * **次に面を建てた人がまた忘れる**（島に建てるのは `PLACES` の1か所で済むのに、
+ * 印は面の側が渡すものだったから）。だから**砂浜が自分で引く。**
+ * 渡す口を消したので、渡し忘れようがない。
+ *
+ * ## 決めかた
+ *
+ * その軒の道と同じか、その下に居れば、その軒。**いちばん長く一致した軒が勝つ**
+ * （`/next/new` は `/next` と `/next/new` の両方に当たるので、後者）。
+ * 道の名前が軒とそろっていない面は `Place.under` が引き受ける。
+ *
+ * @param path いま開いている道（`usePathname()` の値）
+ */
+export function spotOfPath(path: string | null | undefined): SpotId | undefined {
+  const here = tidyPath(path);
+  let best: SpotId | undefined;
+  let bestLen = 0;
+  for (const p of PLACES) {
+    for (const root of [p.href, ...(p.under ?? [])]) {
+      if (here !== root && !here.startsWith(`${root}/`)) continue;
+      if (root.length <= bestLen) continue;
+      best = p.id;
+      bestLen = root.length;
+    }
+  }
+  return best;
+}
 
 /**
  * パンくずの1段。**札を手で書き写さない。**

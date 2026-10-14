@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -106,10 +107,14 @@ export async function generateMetadata({
     (legs.length > 0
       ? `${cityName(legs[0].from)}から${cityName(legs[legs.length - 1].to)}`
       : `${day.city}で休む`);
-  return {
+  return share({
+    key: "nordic",
     title: `${dayName(day)} ${way} — 北欧ヒッチハイク`,
-    description: day.lead,
-  };
+    /* 一文の無い日がある（`lead?`）。**器の一文に落とさない**——落ちると
+       その日の面が、島ぜんぶと同じことを名乗る。日付と道のりから作る */
+    description: day.lead ?? `${dayName(day)}、${way}。`,
+    path: `/nordic/day/${n}`,
+  });
 }
 
 const MOVE: Record<Leg["move"], string> = {
@@ -534,7 +539,6 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
 
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },

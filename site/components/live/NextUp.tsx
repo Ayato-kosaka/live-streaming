@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BUILT_AT, livePlans, planDaysLeft, planPhase, type Plan } from "@/content/plans";
-import { leadPlan, planAheadCount, planBoard } from "@/lib/leadPlan";
-import { HOME } from "@/content/voice";
+import { leadPlan, planBoard } from "@/lib/leadPlan";
+import { HOME, NO_PLAN_TITLE } from "@/content/voice";
+import Phrase from "@/components/ui/Phrase";
 import { loadState } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import { NoticeBell } from "./art";
@@ -83,11 +84,22 @@ export default function NextUp() {
             在る日の見出しなので、そのまま置いてある）。 */}
         <p className="nextup-eyebrow">企画</p>
         <div className="nextup-none">
-          <b>日にちの決まった企画は、いまはありません</b>
+          {/* 字は `/next` の0件の段（`components/live/NextPlans.tsx`）と同じものを読む。
+              `Phrase` は折ってよい場所を1つに絞る——360px で「ん」1文字だけが
+              2行目に落ちていた。 */}
+          <b>
+            <Phrase parts={NO_PLAN_TITLE} />
+          </b>
+          {/* **島が止まったわけではない、と読める1行を置く。** 日にちの決まった
+              企画が無いのはふつうの状態で、配信はその晩も立つ。これが無いと
+              「ありません」だけが残って、島ごと止まって見える。
+              **時刻は書かない**（`content/nights.ts`。旅のあいだは言えない）。 */}
+          <i>配信は、いつもどおりあります</i>
           {/* **0 を、何件見てそうなったかと並べる**（§15）。「ありません」だけだと、
               読めていないのと同じ絵になる。 */}
           <i>行ってきた企画が{done}つ</i>
         </div>
+        {/* 字は、企画が在る日とまったく同じ（下の枝）。**札は日で変わらない。** */}
         <Link prefetch={false} className="nextup-all" href="/next">
           <span>
             <b>企画を、ぜんぶ見る</b>
@@ -108,11 +120,6 @@ export default function NextUp() {
   const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? BUILT_AT) ?? -1) >= 0);
   const big = rest.find((p) => p.big);
   const others = rest.filter((p) => p !== big);
-  /* **これから分は、企画の状態から数える。**「あと何日」で数えてはいけない。
-     いま行っている企画（旅）は始まる日を過ぎているので日数がマイナスで、
-     日数で絞ると旅の最中ずっと 0 件になる（`planPhase` が3つに分けている理由）。
-     0 件の日はここには来ない（上で返している）ので、`ahead` は必ず1以上。 */
-  const ahead = planAheadCount(today ?? BUILT_AT, facts);
 
   return (
     <section className="nextup">
@@ -144,16 +151,18 @@ export default function NextUp() {
         </div>
       )}
       {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
-          「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。 */}
+          「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。
+
+          **時制も件数も名乗らない**（`docs/island-standards.md` 16章の決めごと1）。
+          0件の日にこの枝へ来ないことは合っていたが、合っているのは**開いた人の
+          画面だけ**で、焼いた HTML は出した日の字のまま配られ続ける。
+          10-12 に焼いた「これからの予定を、ぜんぶ見る／1件」が、企画の終わった
+          あとも出たままになった（#770）。**札は日で変わらない字にする。** */}
       <Link prefetch={false} className="nextup-all" href="/next">
-        {/* **0件のときに「これからの予定」と言わない。** 0件の日はこの枝に
-            来ない（上で別の絵を返している）ので、ここは言い切ってよい
-            （`docs/island-standards.md` 16章）。 */}
         <span>
-          <b>これからの予定を、ぜんぶ見る</b>
+          <b>企画を、ぜんぶ見る</b>
           <i>付箋を貼って、行き先に口を出せます</i>
         </span>
-        <em>{ahead}件</em>
       </Link>
     </section>
   );

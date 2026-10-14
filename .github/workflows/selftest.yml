@@ -40,13 +40,30 @@ on:
   workflow_dispatch:
 
 # 同じ枝に続けて push したら、前の run は止めてよい。
-# master は止めない——「master が緑だったか」は1回ずつ残したい
+# master は止めない——「master が緑だったか」は1回ずつ残したい。
+#
+# **`cancel-in-progress: false` だけでは足りなかった。** GitHub は
+# 「走っている run」を止めないだけで、**同じ group で順番待ちしている run は
+# 無条件に差し替える。** master に続けて push した日は、待っていたほうが
+# `cancelled` のまま消える——**緑でも赤でもない、何も言っていない run** になる。
+#
+# 実測（2026-10-13）: master への push 40回のうち **4回（10%）がそれで消えていた。**
+# この見張りを作った理由そのもの（`docs/island-misses.md` #126 の「赤い master が
+# 2日残った」）が、別の道でまた起きる形だった。
+#
+# だから **master は sha ごとに別の group にする。** 順番待ちが起きないので
+# 差し替えられない。PR は今までどおり枝ごとで、続けて push したら前のが止まる。
 concurrency:
-  group: selftest-${{ github.ref }}
+  group: selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+  # **繋ぎ（`workflow_run`）が実際に走っているかを数えるのに要る。**
+  # 名前が合っていても、繋ぎ先が止まれば黙って動かなくなる——そこは
+  # YAML を読むだけでは分からず、run の実績を引くしかない
+  # （`python/chain_alive_watch.py`）。**読むだけ。1バイトも書かない**
+  actions: read
 
 jobs:
   selftest:
@@ -183,6 +200,32 @@ jobs:
       - name: ログを数える道具の探し方が効いているか（0.1秒）
         run: python3 tools/logident.py --selftest
 
+      # **繋ぎ（`workflow_run`）が生きているかを、本物の run で当てる。**
+      #
+      # `python/workflow_link_selftest.py`（上の回し役が拾う）が見ているのは
+      # **名前だけ**で、繋ぎ先が実在する `name:` を指しているかで止まる。
+      # 名前が合っていても死ぬ道が3つある——繋ぎ先が走らなくなった／こちらが
+      # 一度も繋ぎで起きていない／`conclusion` で絞って赤い晩だけ落ちる。
+      # そこは GitHub の run を引かないと分からないので、**ここだけ外に出る。**
+      #
+      # だから回し役からは外してある（あちらは「ネットにも鍵にも触らない」を
+      # 守っている場所）。落ちられるかは `chain_alive_watch_selftest.py` が
+      # 作り物の表で毎回確かめていて、そちらは回し役が拾う。
+      #
+      # 境目の3日は実測から決めた（2026-10-14。繋ぎ先5本の連続する run の
+      # 間隔はいちばん空いて **1.22日**、繋ぎで起きた回の間隔は **1.10日**。
+      # 定時そのものの遅れは最長 8.0時間）。**3日はその 2.5倍。**
+      #
+      # **前の step が落ちても回す。** 繋ぎの図は「他のどこかが赤い日」にこそ
+      # 読みたい——名前を変えた PR は上の回し役（`workflow_link_selftest.py`）で
+      # 先に落ちるので、`always` が無いとこの報告が**いちばん要る日に出ない。**
+      # 落ちたらこの step も赤くなるので、見逃しにはならない
+      - name: 繋ぎ（workflow_run）が生きているか（API を読む。この箱で12秒）
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 python/chain_alive_watch.py --days 3
+
   # **書き出しとブラウザが要る判定器を、ここで回す。**
   #
   # 2026-09-19 まで、`tools/sprites/*.mjs` は1本も CI に乗っていなかった。
@@ -216,7 +259,10 @@ jobs:
   #     絵を落とすところが 1秒未満になる
   browserwatch:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35。
+    # 日を進めた2枚めの書き出し（`datebake`）で 35 → 40（手元で書き出し 1分17秒
+    # ＋ 突き合わせ 53秒。2026-10-14 実測）
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v5
@@ -240,6 +286,37 @@ jobs:
         env:
           NEXT_DIST_DIR: .next-ci
         run: npx next build
+
+      # **もう1枚、日を進めて書き出す。** `datebake.mjs` が「焼き込まれた
+      # 日付の字」を見分けるのに要る。**1枚の書き出しからは見分けられない**
+      # ——焼いた HTML の中では「17日目」も「17人」も同じ3文字で、
+      # どちらが日で変わる字なのかを言う材料がない。日を変えて2回焼けば、
+      # 変わったところがそのまま答えになる（意味を読まないので、言い回しの
+      # 表も逃がす表も要らない）。
+      #
+      # **`NEXT_PUBLIC_BUILT_AT` だけでは足りない。** 焼いた日を読むべき
+      # ところが素の `new Date()` を見ていたら、環境変数を変えてもその字は
+      # 動かない——**いちばん見つけたい焼き込みが、2回とも同じ字になって
+      # 消える。** 壁の時計ごと進める（`tools/sprites/buildclock.cjs`）。
+      #
+      # **進める日を焼かない。** 走った日から数える（#770 の決めごと5。
+      # 日を書き込むと、その日を追い越した回に対照が片側へ寄って黙って崩れる）。
+      # 400日にしてあるのは、曜日も月も年も全部変わるから——7の倍数だと
+      # 曜日で分かれる字が「変わらなかった」側に残る。
+      #
+      # 手元の箱で 1分17秒（2026-10-14 実測）。CI の1枚目が 42秒なので、
+      # ここも同じくらい
+      - name: 先の日で、もう1枚書き出す（datebake の突き合わせ先）
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci-b
+        run: |
+          set -euo pipefail
+          at="$(date -u -d '+400 days' +%Y-%m-%dT00:00:00Z)"
+          echo "先の日 ${at}"
+          FAKE_NOW="$at" NEXT_PUBLIC_BUILT_AT="$at" \
+            NODE_OPTIONS="--require ${GITHUB_WORKSPACE}/tools/sprites/buildclock.cjs" \
+            npx next build
 
       - name: 確認用の道具の依存を入れる（playwright-core）
         working-directory: tools/sprites
@@ -337,7 +414,214 @@ jobs:
           BASE=http://127.0.0.1:4211 DIST=site/.next-ci \
             node tools/sprites/navtruth.mjs || rc3=$?
           echo "── navtruth 終了コード ${rc3}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ]
+          # navtruth は**焼きたての書き出し**を見るので、「焼いた日は合って
+          # いるが、次の日から古くなる札」は素通りする（#770。10-12 に焼いた
+          # 「いま 1 つ立っています」が、企画の終わった翌日からも配られた）。
+          # こちらは**時計を進めて**、札の字が日で変わらないことを見る
+          # **`DIST` も渡す。** 焼いた HTML そのものを読む数えかたが
+          # 入っている（`/now` の紙に日付が焼かれていないこと。#808）。
+          # 渡さないと既定の `site/.next-verify` を見に行って、CI には
+          # それが無いので**本物の赤と区別がつかない嘘の赤**が毎回出る
+          rc4=0
+          SPORT=4211 OUT=/tmp/nextempty DIST=site/.next-ci \
+            node tools/sprites/nextempty.mjs || rc4=$?
+          echo "── nextempty 終了コード ${rc4}"
+          # 貼られたときの顔（og:*）。**2026-10-14 まで、137面とも絵が同じ1枚で、
+          # og:url は1面も無かった。** 面を足した人が lib/share.ts を通さなければ
+          # 黙って器の1枚に戻る——赤くならずに戻るので、焼いた HTML を毎回数える
+          rc5=0
+          DIST=site/.next-ci node tools/sprites/ogmeta.mjs || rc5=$?
+          echo "── ogmeta 終了コード ${rc5}"
+          # スマホ（幅390）で最初の1画面が出るまでに運ばせる量。**面ごとに上限。**
+          # 増えるときは1行で増える（絵を1枚足す・畳みを開く・`<img>` を
+          # 1つ足す）ので、増えた日に赤くなる場所をここに置く。
+          # 上限 980KB の根拠（146面の実測）は firstload.mjs の `MAX_DEFAULT` の隣。
+          # **本物の面を1枚も測る前に、自分の判定の足3本を折ってみる**
+          # （折れなければ数字を出さずに 2）。配り先が別のビルドを配っていたら
+          # そこでも 2 で落ちる——1度それで嘘の表を出した
+          rc6=0
+          SPORT=4211 DIST=site/.next-ci node tools/sprites/firstload.mjs || rc6=$?
+          echo "── firstload 終了コード ${rc6}"
+          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ] && [ "$rc4" = 0 ] \
+            && [ "$rc5" = 0 ] && [ "$rc6" = 0 ]
+      # **歩ける島の基本原則4つ**（`tools/sprites/islewalk.mjs`）。
+      #
+      # ## なぜ毎 PR で回すか（2026-10-14）
+      #
+      # あやとの言葉（本番のスマホ）:「あやと島の寄りの時の歩く操作性が
+      # とても悪い。…基本原則が守られてない印象」。挙がった4つ——四方に
+      # 歩ける・主人公が画面の決まった場所に居る・建物を押しても面が
+      # 変わらない・字が上に固定——は、**どれも止まった1枚には写らない。**
+      # 撮る道具も `crawl.mjs` も「押す前の姿」しか見ていない。
+      #
+      # 「下に進めない」は 2026-09-15 にも言われていて、そのとき塞いだのは
+      # 症状のほうだった（カメラの引き戻しを残したまま、あやとが立ってよい帯を
+      # 足した）。**同じ所を3回言われている**ので、数で落ちる場所を作る。
+      #
+      # ## 仕込みを先に当てる
+      #
+      # `islecover.mjs` と同じ考え方で、**4つとも赤くなることを確かめてから**
+      # 本物を測る。仕込みの回で1つでも緑が残ったら、その判定は何も見ていない
+      # （`docs/island-standards.md` §15）。仕込みは表紙1面ぶんで 47秒。
+      #
+      # 値段（手元の箱・2026-10-14 実測）: 表紙＋章の島4つで約3分、
+      # 仕込みの回が 47秒。
+      - name: 歩ける島の基本原則（四方・定位置・面が変わらない・字は上）
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-iw.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          # 対照が先。**ここが緑で帰ってきたら、本物の数字は出さない**
+          rc0=0
+          BREAK=1 PAGES=/ ORIGIN=http://127.0.0.1:4213 \
+            node tools/sprites/islewalk.mjs || rc0=$?
+          echo "── islewalk 対照 終了コード ${rc0}"
+          if [ "$rc0" != 0 ]; then
+            echo "::error::仕込みを当てても赤くならない。道具のほうが壊れている"
+            exit 2
+          fi
+          rc=0
+          ORIGIN=http://127.0.0.1:4213 node tools/sprites/islewalk.mjs || rc=$?
+          echo "── islewalk 終了コード ${rc}"
+          exit "$rc"
+
+
+      # **JS が動く前の字に、言い切りが混ざっていないか**（`tools/sprites/preclaim.mjs`）。
+      #
+      # ## なぜここに足したか（2026-10-13）
+      #
+      # この道具は 2026-09-18 に作られてから、**どのワークフローからも走って
+      # いなかった。** 走っていたのは判定だけを見る `preclaim_selftest.mjs` で、
+      # あれは**焼いた HTML を1枚も読まない**（`selftest_runner.py` の 133-138 行に
+      # そう書いてある）。道具は在って、繋いでいないだけだった。
+      #
+      # そのあいだ `/nordic.html` が「7泊したあと、ストックホルムを発ちます」を
+      # 出し続けた。旅は 2026-09-27 に終わっている。**JS が入れば正しくなる**ので、
+      # ブラウザで開いても分からない——`crawl.mjs` も撮る道具も `navtruth` も、
+      # 全部 JS が動いたあとの姿を見ている（`docs/island-misses.md` #143）。
+      #
+      # ## なぜ夜ではなくここか
+      #
+      # 判定は**今日に依らない**（JS 前と後の引き算なので、焼いた日がいつでも
+      # 同じ答えが出る）。だから夜まで待つ理由が無く、**マージの前に止めるほうが
+      # 安い**（`docs/island-standards.md` §13）。
+      #
+      # そのうえで**毎晩も走る。** このワークフローは `push: [master]` でも走り、
+      # 毎晩の焼き直し（`rebake.yml`）は master へ push するので、
+      # **焼き直しが入った晩はここも必ず回る。**
+      # `workflow_run` を1本も足していないので、**名前の書き換えで黙って切れる
+      # 繋ぎが増えない**（`CLAUDE.md`「繋ぎはワークフローの `name:` で解決される」）。
+      #
+      # ## 1件でも出たら赤くする。逃がす表は置かない
+      #
+      # 終了コード1は「**候補があった**」であって「壊れている」ではない
+      # （どれが嘘かは人が読んで決める）。それでもここを赤にしてよいのは、
+      # **直しかたが必ず在る**から——JS が入る前に出る字を、
+      # **旅の前に読んでも、旅のあとに読んでも本当のこと**に書き替えればよい
+      # （`site/components/nordic/GoalRow.tsx` の `useTripDate` の上に書いてある）。
+      # 逃がす表を置くと、そこに積むのがいちばん楽になる。
+      #
+      # **開発サーバーには当てない。** 書き出したものを静的に配る（`CLAUDE.md`）。
+      # 上の step とポートを分けてあるのは、落ちた理由を混ぜないため
+      - name: JS が動く前の字に、言い切りが混ざっていないか
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4212 --directory site/.next-ci >/tmp/serve-pc.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4212/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci SPORT=4212 node tools/sprites/preclaim.mjs || rc=$?
+          echo "── preclaim 終了コード ${rc}"
+          exit "$rc"
+
+      # **焼き込まれた日付の字が、画面が出てから数え直されているか**
+      # （`tools/sprites/datebake.mjs`）。
+      #
+      # ## なぜ要るか（2026-10-14）
+      #
+      # 島は `output: "export"` なので、**ビルドした日の答えが HTML に焼かれて、
+      # 次に配り直すまでそのまま配られる。** 日で変わる字を画面が出てから
+      # 数え直していないと、その日から毎日1ずつ嘘になる。
+      # 本番の表紙が「この島のこと 17日目」、`/island/balkans` が
+      # 「17日いた」で止まっていた——**紙の側（`IsleReview`）だけが数え直して
+      # いて、島の札は焼いた字のままだった。**
+      #
+      # `preclaim` は「JS が動く前の字」、`nextempty` は「`/next` を指す札」を
+      # 見る。こちらは**どの面のどの字でも、日で変わるなら数え直しているか**を
+      # 見る。見分けるのに2枚めの書き出しが要るのは、上の step の注のとおり。
+      #
+      # ## 対照は、毎回その場で通る
+      #
+      # 本物の数字を出す前に、**A を A の日の時計でも開いて**、候補が全部
+      # 焼いた字どおりに出ることを見る。出なければ測りかたのほうが壊れている
+      # ので、数字を1つも出さずに 2（`docs/island-standards.md` §15）。
+      # 手で当てる対照は2つ: `BREAK=noclock`（時計を刺さない → 全部が
+      # 「焼いたまま」で 1）と `BREAK=sameday`（同じ書き出しを突き合わせる
+      # → 候補 0件で 2）。
+      #
+      # 手元の箱で 53秒（2026-10-14 実測。136面を読んで、字の違った5面だけを
+      # 2つの時計で開く）
+      - name: 焼き込まれた日付の字が、画面が出てから数え直されているか
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-db.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci B=site/.next-ci-b SPORT=4213 \
+            node tools/sprites/datebake.mjs || rc=$?
+          echo "── datebake 終了コード ${rc}"
+          exit "$rc"
+      # **キーボードだけで島を一周できるか／読み上げで意味が通るか**
+      # （`tools/sprites/reachkeys.mjs`）は、**まだここに繋いでいない。**
+      #
+      # 道具そのものは出来ていて、対照も両側そろっている（台15枚と、足を
+      # 1本ずつ抜く `BREAK=` 9とおり）。繋いでいないのは、**島のほうが
+      # まだ緑ではない**から——「同じ字のリンクが別の先を指している」が
+      # 2026-10-14 の実測で 14面に残っている（`/map/<国>` `/streams`
+      # `/next` `/nordic/day/8` ほか。配信の題名が同じ日に2本立つ形）。
+      #
+      # ここに繋ぐと**初日から赤い**ので、「いつもの赤」に化けて、
+      # 本当に新しく壊れた日に見分けがつかなくなる
+      # （`docs/island-standards.md` の dead_stream_watch と同じ形）。
+      # **残りを直してから、この下の3行を足す**（PR #870 の本文に、
+      # 何が何件残っているかを面ごとに置いてある）:
+      #
+      #   DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs
+      #
+      # 手で回すときは `tools/build.sh` → 静的に配る → 上の1行
+      # （0＝通った / 1＝見つかった / 2＝数えるものが無い）。
+      # **画面に、システムの仕様を説明している字が無いか**（`tools/sprites/nospec.mjs`）。
+      #
+      # `CLAUDE.md`「画面で、システムの仕様を説明しない」。あやとに言われたのは
+      # 1件（「名前が出ているのは、島に名前を出してよいと言ってくれた人です」）だが、
+      # **同じ形は面を足すたびに生える**——2026-10-14 に洗ったら、`/now` `/atlas`
+      # `/next` `/goods` `/all` に5件そろって出ていた（`docs/island-misses.md` #230）。
+      # 人が覚えている決めごとは、セッションが変わると消える。
+      #
+      # **書き出しだけで回る**（ブラウザも配り先も要らない。141面で 0.4秒）。
+      # それでもここに置くのは、`next build` を通っている job がここしかないから。
+      # 判定の側は `tools/sprites/nospec_selftest.mjs` が**毎 PR で**見ている
+      # （`python/selftest_runner.py` が拾う。上の job で走る）。
+      #
+      # 1件でも出たら赤。**逃がす表は置かない**——直しかたが必ず在る
+      # （消す／その人の言葉に書き直す／画面のほうを直す）。外す面は
+      # 道具の `SKIP` に**理由つきで**並べてあって、回るたびに印字される
+      - name: 画面が、システムの仕様を説明していないか
+        run: DIST=site/.next-ci node tools/sprites/nospec.mjs
 
       # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
       # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。
@@ -367,3 +651,102 @@ jobs:
           node tools/sprites/deckctrl.mjs || rc2=$?
           echo "── deckctrl 終了コード ${rc2}"
           [ "$rc1" = 0 ] && [ "$rc2" = 0 ]
+
+  # **押せるはずのものに、指が届くか**を、面ぜんぶで数える
+  # （`tools/sprites/reachwatch.mjs`）。
+  #
+  # ## なぜ足したか（2026-10-14）
+  #
+  # 押しどころを測る道具は3本あった。**全面を見て終了コードを返すものが
+  # 1本も無かった。**
+  #
+  #   `pchit.mjs`     136面を4幅で回るが、**必ず 0 で帰る**。読む人が目で数える
+  #   `hitbox.mjs`    終了コードを持つが、`PAGES=` で渡した面しか見ない
+  #   `islecover.mjs` 覆いを数えるが、島の立っている面だけ（11面）
+  #
+  # つまり「図鑑の札が隣に食われた」「`/goods` の口が帯の下に入った」は、
+  # **人が `pchit` の出力を読んだ回にしか見つからない。** 読まなかった回は
+  # 緑に見える——`docs/island-misses.md` #171「道具は在って、繋いでいないだけ」
+  # と同じ形。ここは繋ぐために足した。
+  #
+  # 数えるのは2つ。**覆い**（押しどころの真ん中を別の何かに取られている）と
+  # **48px割れ**（当たりの実寸が `docs/island-design.md` 3-2 に届かない。
+  # 隣に食われて削れたぶんもここに出る）。3つめ「押せないのに厚みがある」は
+  # `popcheck.mjs` が数えているので、**ここに写さない**（#83）。
+  #
+  # **島の中（`.isle`）は数えない。** あやとが歩きカメラが寄るので、止めて
+  # 1回測ると立ち位置1つぶんしか見えず、同じ `/` が回ごとに 1件 と 0件 を出す。
+  # 島は `islecover.mjs` / `islereach.mjs` / `islenav.mjs` が歩きながら見る。
+  # 断りは道具が**毎回印字する**ので、黙って落ちることはない。
+  #
+  # ## 別の job にしてある
+  #
+  # 136面 × 2幅を測るぶん、上の2つを待たせない。並んで走る。
+  # **3枚ずつ同時に開く**（`JOBS`）。測っているのは `elementFromPoint`
+  # ——版組みの話で時刻の話ではないので、同時に開いても答えは変わらない。
+  #
+  # 住人の絵は落とさない。**押しどころの大きさは絵の中身で変わらない**ので、
+  # `route.mjs` の `offline` が返す差し替えで足りる（上の job は図鑑の絵の
+  # はみ出しを見るので要る）。そのぶんここは 345秒ぶん安い。
+  reachwatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      # **開発サーバーでは測らない。** 先読みも束ね方も本番と違う（`CLAUDE.md`）
+      - name: 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: npx next build
+
+      - name: 確認用の道具の依存を入れる（playwright-core）
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            exit 2
+          fi
+
+      # 終了コードで読む（0=通った / 1=見つかった / 2=数えるものが無い）。
+      # **`| tail` を挟まない。** 挟むと終了コードが消える（#124）
+      - name: 指が届かない押しどころを数える
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-rw.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci PORT=4213 JOBS=3 node tools/sprites/reachwatch.mjs || rc=$?
+          echo "── reachwatch 終了コード ${rc}"
+          exit "$rc"
