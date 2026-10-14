@@ -46,6 +46,7 @@
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
+import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -63,6 +64,15 @@ export const CARDS = db.collection("islandCards");
 export const MAX_EVENTS = 500;
 /** 一度に読む画像の数。旅は10日で、1日に何枚でも貼れる。 */
 export const MAX_IMAGES = 600;
+/**
+ * **写真1枚に付いているカードを、1回で引き切る枚数。**
+ *
+ * カードは「写真1枚 × その日投げてくれた人」なので、1枚ぶんは多くても
+ * 数十。ここが埋まるのは、同じ写真に数百人ぶん付いた日だけ。
+ * **消す側の窓なので、黙って切れると消し残りが出る**（`/cards` が
+ * 実体の無い URL を返し続ける）。
+ */
+const CARDS_OF_IMAGE_SCAN = 1000;
 /** 1回の問い合わせに入れる `in` の値の数。Firestore の上限は30。 */
 const IN_CHUNK = 30;
 
@@ -732,8 +742,12 @@ export async function resyncCardsOfImage(
     tips.map((t) => cardId(image.id, whoKey(t.channelId))),
   );
   const had = await CARDS.where("streamEventImageId", "==", image.id)
-    .limit(1000)
+    .limit(CARDS_OF_IMAGE_SCAN)
     .get();
+  /* **消す側の窓。** 埋まると、渡らなくなったカードが消し残る
+     ——`/cards` が実体の無い URL を返し続ける形になる。 */
+  capHit("resyncCardsOfImage / CARDS_OF_IMAGE_SCAN", had.size,
+    CARDS_OF_IMAGE_SCAN);
   const gone = had.docs.filter((d) => !keep.has(d.id));
   if (gone.length) {
     const batch = db.batch();
@@ -924,8 +938,10 @@ export async function channelsOfDay(
  */
 export async function dropCardsOfImage(imageId: string): Promise<number> {
   const snap = await CARDS.where("streamEventImageId", "==", imageId)
-    .limit(1000)
+    .limit(CARDS_OF_IMAGE_SCAN)
     .get();
+  capHit("dropCardsOfImage / CARDS_OF_IMAGE_SCAN", snap.size,
+    CARDS_OF_IMAGE_SCAN);
   if (snap.empty) return 0;
   let n = 0;
   let batch = db.batch();
