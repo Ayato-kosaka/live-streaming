@@ -50,7 +50,19 @@ export type IsleItem = {
   ext?: boolean;
 };
 
-export type IsleFact = { n: string; unit?: string; cap: string };
+export type IsleFact = {
+  n: string;
+  unit?: string;
+  cap: string;
+  /**
+   * 日数を名乗っている欄。**章の slug を渡すと、画面が出てから数え直す。**
+   *
+   * `n` は焼いたときの答え（最初の1枚ぶん）。いま歩いている島はここが
+   * 毎日1ずつ増えるので、渡さないとデプロイした日で止まる
+   * （`components/isle/ChapDays.tsx`）。
+   */
+  since?: string;
+};
 
 export type IslePlaceSpec = {
   id: string;
@@ -78,6 +90,15 @@ export type IslePlaceSpec = {
   board?: IsleBoardSpec;
   /** 出発までの日数を出す。**画面が出てから数える**（焼き込まない） */
   countdown?: string;
+  /**
+   * 添え字が日数を名乗っているとき、**数え直す材料**。
+   *
+   * `blurb` に「17日目」と字で入れてしまうと、焼いた HTML がその数を
+   * 配り続ける（`output: "export"`）。札は字を持ち、数は持たない——
+   * どの章を、どういう言い方で数えるかだけを渡して、数は画面が出てから
+   * 作る（`components/isle/ChapDays.tsx` の `useSinceWord`）。
+   */
+  since?: { chapter: string; tail: string };
   /** 島の「！」の札に出す6つ。いまは全部が出る（島に建つのが最大6つなので） */
   sign?: true;
 };
@@ -351,13 +372,16 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
     places.push({
       id: "facts",
       label: "この島のこと",
+      /* **数は焼かない。** 字にしてから渡すと、いま歩いている島の札が
+         デプロイした日の数で止まる（`since` と `ChapDays.tsx`）。 */
       blurb: `${days.toLocaleString()}日いた`,
+      since: { chapter: c.slug, tail: "日いた" },
       icon: isleIcon(c.slug, "facts", "statue"),
       size: 54,
       sign: true,
       note: c.note,
       facts: [
-        { n: String(days), unit: "日", cap: "この島にいた" },
+        { n: String(days), unit: "日", cap: "この島にいた", since: c.slug },
         { n: String(st.streams), unit: "本", cap: "配信した" },
         { n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" },
         { n: String(countries.length), unit: "カ国", cap: "歩いた" },

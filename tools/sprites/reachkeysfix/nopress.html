@@ -1,0 +1,11 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>対照: 押せるのに Tab で届かない</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<body style="margin:0">
+<h1>押せるのに Tab で届かない台</h1>
+<h2>届かない押しどころ</h2>
+<!-- role は押せると名乗っているのに tabindex="-1" で Tab の列から外れている -->
+<div role="button" tabindex="-1" onclick="document.title='押した'">ここを押すと何か起きる</div>
+<h2>こちらは届く</h2>
+<p><a href="/ok.html">戻る</a></p>
+<img src="pix.png" width="16" height="16" alt="16px 四方の見本の絵">
+</body></html>

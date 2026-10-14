@@ -1127,7 +1127,10 @@
 
 .nb-board { margin-top: var(--sp-5); }
 .nb-head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); }
-.nb-head > h3 { margin: 0; }
+/* 段は面によって変わる（`Notes.tsx` の `Sub`）。`title={null}` の面では
+   上に h2 が出ないので、ここが h2 になる。`h3` だけで押さえていると、
+   その面だけ余白が戻って行がずれる */
+.nb-head > :is(h2, h3) { margin: 0; }
 /* 貼ってある場所へ。押せるので板・厚み5px・48px。
    スマホ幅では折り返して段が変わるので、右端に飛ばさない。
    飛ばすと、棚の名前と切り離された札が1つ宙に浮いて見える。 */
