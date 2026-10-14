@@ -194,3 +194,17 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 - GitHub Actions `firebase-hosting-deploy-prod.yml` を workflow_dispatch で起動(`npm run build:web` が public/ を dist にコピーする)。masterマージ後に master で起動するのが基本。
 - 反映確認: `https://live-streaming-d3cac.web.app/2026MM_monthly_review.html` が200+新版内容。
 - ユーザーへの案内: OBS用 `?role=view` / 操作スマホ用 `?role=ctrl` / 1台運用は無指定。数字キーでコーナー頭出し(リハーサル用)。
+
+## 10. 配信のあと: タップ数を取る
+
+月末配信が終わってアーカイブになったら、**その月のタップ数（ライブのリアクション）を取って台帳に入れる。**
+あやとに数字を貼ってもらう形には戻さない（#847）。EC2 の Chrome から Studio を読む:
+
+```bash
+python3 .claude/skills/ec2-chrome/ec2.py state     # stopped なら start し、終わったら stop
+python3 tools/youtube_taps.py --missing            # 渡っていない月を全部取って python/data/monthly_taps.json へ
+python3 python/build_monthly.py --build            # /months に焼き直す
+```
+
+数はアナリティクスの**概要タブ・ライブ配信のカード**の「リアクション」（2026-09 で 84,893 と一致を確認）。
+決められないときは台帳に書かずに落ちる。そのときは手で埋めず、`yt_taps.py` の読みどころを直す。
