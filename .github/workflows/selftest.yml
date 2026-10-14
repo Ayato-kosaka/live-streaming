@@ -416,6 +416,50 @@ jobs:
           echo "── preclaim 終了コード ${rc}"
           exit "$rc"
 
+      # **キーボードだけで島を一周できるか／読み上げで意味が通るか**
+      # （`tools/sprites/reachkeys.mjs`）。
+      #
+      # ## なぜ足したか（2026-10-14）
+      #
+      # **誰も指摘していない面だった。** 出す前のチェックには押しどころの
+      # 大きさ（48px）も字の濃さ（4.5）も入っているが、**指以外で島を回る
+      # 人のことを数える目が1つも無かった。** `docs/island-ux.md` 12章に
+      # 「キーボードだけで島から出られない」「見出しが h1 → h3 に飛ぶ面が
+      # ある」と書いてあって、**書いたまま半月以上動いていない。**
+      # 書いてあることと、赤くなることは別（`docs/island-standards.md` §16）。
+      #
+      # 数えるのは8つ——押せるのに Tab で届かない／止まったのに見た目が
+      # 変わらない／`tabindex` が並びを書き換える／ダイアログが Esc で
+      # 閉じない／読み上げる名前が無い／`alt` が中身を言っていない／
+      # 見出しの段が飛ぶ／同じ字のリンクが別の先を指す。
+      #
+      # ## 0件で通さない
+      #
+      # 押せるものの大半は React の手当てなので、**水あわせが終わる前に
+      # 数えると「とどかない 0件」が黙って出る**（`/all` を 700ms で数えた
+      # 回は押せるもの143個、箱が混んでいた回は**1個**だった）。道具は
+      # 水あわせの終わりを待ち、React の印が1つも見えなければ数字を出さずに
+      # 2 で落ちる。一周しなかった面が1枚でもあれば、そこも 2
+      # （`docs/island-standards.md` §15）。
+      #
+      # 手元の箱で、対照15枚＋141面。**開発サーバーには当てない**
+      # （`CLAUDE.md`）。上の step とポートを分けてあるのは、落ちた理由を
+      # 混ぜないため
+      - name: キーボードで一周できるか・読み上げで意味が通るか
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-rk.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs || rc=$?
+          echo "── reachkeys 終了コード ${rc}"
+          exit "$rc"
+
       # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
       # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。
       # ここで歩かせる。書き出し（site/.next-ci）は要らない——資料は public/ に
