@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Notes from "@/components/live/Notes";
 import { UPDATES } from "@/content/updates";
 import "./updates.css";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "updates",
   title: "島をなおしたところ",
   description:
-    "あやと島のどこが変わったかを、新しい順に並べました。こうしてほしいところも、ここから。",
-};
+    "あやと島のどこが変わったか。こうしてほしいところも、ここから。",
+  path: "/updates",
+});
 
 /**
  * 日付を、読む形に。**年を落とさない。**

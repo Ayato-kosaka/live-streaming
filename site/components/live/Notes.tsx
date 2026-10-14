@@ -138,8 +138,8 @@ const STEP = 12;
 
    止め金を15本足すのではなく、**2か所であることをやめた。**
    いまは `GET /state` の `limits` から受ける（`lib/liveStats.tsx` の
-   `useLimits`）。先例は `/stampline/mine` で、あちらは返事に `maxLen` を
-   乗せていて、画面は数字を1つも持っていない。
+   `useLimits`）。先例は `/stampline/mine`（2026-10-14 に閉じた。#860）で、
+   あちらは返事に `maxLen` を乗せていて、画面は数字を1つも持っていなかった。
 
    **届くまでは上限が付かない。** そこへ既定の数字を置くと2か所に戻るので、
    置かない。上限そのものはサーバーが必ずかける（`cleanText`）。 */
@@ -608,10 +608,17 @@ export default function Notes({
     }
   };
 
+  /* 下の板の見出しの段は、**この部品が h2 を出したかで決まる。**
+     `title={null}` の面（`/board`）では h2 が出ないので、板の見出しが
+     h1 のすぐ下に来る。固定で h3 にしていたころ、読み上げの目次は
+     `/board` で h1 → h3 と飛んでいた（`docs/island-ux.md` 12章）。 */
+  const headed = !bare && title !== null;
+  const Sub = headed ? "h3" : "h2";
+
   const inner = (
     <>
       {/* `title={null}` で見出しを出さない（面の題と同じ字を2つ並べないため） */}
-      {!bare && title !== null && <h2>{title ?? "みんなの付箋"}</h2>}
+      {headed && <h2>{title ?? "みんなの付箋"}</h2>}
       {/* 宛先が決まって来た人にだけ、その宛先の一行を出す。
           選ぶ人には、選んだ宛先の一行を**書く欄の中**で出す（下の `.nt-lead`）。
           上にも出すと、同じことを2回言うことになる。 */}
@@ -913,7 +920,7 @@ export default function Notes({
       <div className="nb-board">
         {!fixed && (
           <div className="nb-head">
-            <h3 className="sub">{here.name}</h3>
+            <Sub className="sub">{here.name}</Sub>
             {list.length > 0 && (
               <span className="bd-count">
                 <b>{list.length}</b>枚

@@ -29,7 +29,6 @@ import {
 } from "./doneruYoutube";
 /* 島の遠隔操作(#165)。このファイルはもう長いので、丸ごと新しい機能は
    外に置いて、ここには取り付けだけを足す。 */
-import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
 import {
@@ -43,8 +42,8 @@ import {
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
-/* LINE スタンプの、住人のことば(#716)。同じ理由で外に置いてある。
-   **本人にだけ見せる口**で、パスに id を取らない（`stampLine.ts` 冒頭）。 */
+/* LINE スタンプの、住人のことば(#716)。**閉じた口**(#860)で、
+   410 を返すだけ（`stampLine.ts` 冒頭）。 */
 import {handleStampLine} from "./stampLine";
 /* 締め切った宛先の表(#225)。**島の表（`site/content/themes.ts`）の写し**で、
    `functions/tools/shutthemes.mjs` が組み立てる。手で直さない。 */
@@ -64,7 +63,7 @@ import {handlePublicPurge} from "./publicPurge";
    **出費と目標は、いままで GitHub Actions からしか入らなかった。**
    額が動く口なので、書類IDを中身から決めて2回入れても増えない形にして、
    書いたあとに `island/state.fund.box` を焼き直す(`fundDesk.ts` 冒頭)。 */
-import {MAX_FUND_TEXT, handleFundDesk, replayFor} from "./fundDesk";
+import {MAX_FUND_TEXT, YEN_MAX, handleFundDesk, replayFor} from "./fundDesk";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    当たりの軸は**写真の日**（企画の日ではない。企画の立っていない日にも
@@ -89,12 +88,19 @@ import {
 /* **チャンネルの持ち主を確かめる唯一の道。** ここ以外から
    `islandUsers.channelId` に値が入らないようにしてある（`POST /me` の注）。 */
 import {ownedChannel} from "./youtubeOwner";
+import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 const STATE_DOC = db.collection("island").doc("state");
 const NOTES = db.collection("islandNotes");
+/* 付箋を貼れる先のうち、机から足したぶん（2026-10-14）。
+   焼き込みの表（`site/content/themes.ts`）と**足し合わせて**使う。
+   あちらは Git を出さないと増えないので、配信の最中には間に合わない。 */
+const NOTE_THEMES = db.collection("islandNoteThemes");
+/** 足せる貼り先の数。札の並びが指で届かなくなる前に止める。 */
+const NOTE_THEMES_MAX = 40;
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const CHANNELS = db.collection("islandChannels");
@@ -474,6 +480,34 @@ const STICKIES_PER_DAY = 20;
  *  届いたその日に1回だけ鳴る）。
  */
 const WAITING_SCAN = 3000;
+/**
+ * **テーマ1つぶんを、1回で引き切る枚数。**
+ *
+ * この枝は `more: false` / `next: null` を返す——続きの位置を持たない作り
+ * なので、画面は返ってきたものを「これで全部」と読む。だから埋まったら
+ * **嘘になる**（`capHit` が鳴る）。
+ *
+ * 数を直に書いていたのを名前にしたのは、**鳴らす側と引く側に同じ数を
+ * 2回書かない**ため。片方だけ直した日に、黙って切れる形へ戻る。
+ */
+const STICKY_THEME_SCAN = 300;
+/**
+ * **「じぶんが出したもの」を1回で引き切る枚数**（付箋・企画で共通）。
+ *
+ * 1人ぶんなので届く気配は無いが、ここも `more: false` を返す枝。
+ * 付箋と企画で別の数にすると、片方だけ鳴る形になる。
+ */
+const MINE_SCAN = 300;
+/**
+ * **名簿（`islandUsers`）を1回で引き切る人数。**
+ *
+ * 埋まると、島に立てる人・カードに名前の出る人が**黙って減る。**
+ * 実測（2026-10-14）で `/state` の `residents` は1人なので遠いが、
+ * ここは「増えたら必ず届く」側の窓。
+ */
+const RESIDENT_SCAN = 500;
+/** **その日に立っている企画**を1回で引き切る本数。1日に何本でも立つ。 */
+const DAY_EVENT_SCAN = 30;
 /* 1日に押せるハート。**押し直し（解除）も1回ぶん使う。**
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
@@ -729,9 +763,12 @@ async function listResidents(): Promise<Json[]> {
   /* 図鑑は日数（`residentDays`）と同じ5分の控えに載る。**温まっていれば
      ここで1件も読まない**ので、絵を引くために往復が増えることはない。 */
   const [snap, byChannel] = await Promise.all([
-    USERS.where("channelId", "!=", null).limit(500).get(),
+    USERS.where("channelId", "!=", null).limit(RESIDENT_SCAN).get(),
     charactersByChannel(),
   ]);
+  /* **埋まると、島に立てる人が黙って減る。** `/state` も `/cards` の
+     名前も、ここが返した名簿から引いている。 */
+  capHit("listResidents / RESIDENT_SCAN", snap.size, RESIDENT_SCAN);
   const out: Json[] = [];
   snap.forEach((d) => {
     const u = d.data() ?? {};
@@ -977,10 +1014,23 @@ const MAX_LINK_LEN = 2048;
  *
  * **空は 400 にしない。** リンクは書かなくてよい欄なので、
  * 「貼らなかった」と「貼れない字だった」を呼ぶ側で分ける。
+ *
+ * ## 長すぎる字は、切らずに落とす（2026-10-14）
+ *
+ * ほかの欄は `clean` で切ってよい——題や本文は、切れても**その人が
+ * 書いたものの一部**だから。リンクは違う。2,049字の URL を 2,048字に
+ * 切ると、**貼った先とは別の場所へ飛ぶ1本**ができる。しかも切った先が
+ * たまたま解析できてしまうので、`safeLink` は通し、画面は何事もなく
+ * `<a href>` にする。**貼った人にも読む人にも、ずれたことが分からない。**
+ *
+ * だから、切る前の長さで落とす。呼ぶ側（`POST /stickies`）は
+ * 「字が入っていたのに通らなかった」を 400 で返すので、
+ * **黙って別の場所へ飛ばすかわりに、貼った人がやり直せる。**
  * @param {unknown} v 送られてきた字
  * @return {string} `http(s)` のリンク。通せなければ空
  */
 function safeLink(v: unknown): string {
+  if (typeof v === "string" && v.length > MAX_LINK_LEN) return "";
   const s = clean(v, MAX_LINK_LEN);
   if (!s) return "";
   try {
@@ -1066,12 +1116,19 @@ type FundChat = {doc: string; rec: Json};
 /**
  * 通知1件を、台帳に入れられる形にする。**入れないものは null。**
  *
- * 落とすのは4つ。どれも**額が狂う側**に倒れるものだけを見ている。
+ * 落とすのは5つ。どれも**額が狂う側**に倒れるものだけを見ている。
  *
  *   1. 通知のテスト（`test: true`）… 出ていないお金
  *   2. 円以外 … 毎晩の掃除が見ないので、入れると出どころが2通りになる
  *   3. 0円以下 … 額として意味が無い
- *   4. ほどけないID … 書類IDが決まらないと、2回投げたぶんが2件になる
+ *   4. **1,000万円超** … 机（`POST /fund/chats`）が断っている線
+ *   5. ほどけないID … 書類IDが決まらないと、2回投げたぶんが2件になる
+ *
+ * **4 はいままで見ていなかった。** 同じ台帳（`islandFundSuperChats`）に
+ * 書く口が2つあって、机の側だけが線を持っていた——つまり
+ * **口を1つ替えるだけで、桁ずれが1行そのまま貯金箱に入った。**
+ * 線は `fundDesk.ts` の `YEN_MAX` を借りる（**2か所に別の数を置かない。**
+ * `MAX_FUND_TEXT` をすでに同じ理由で借りている）。
  *
  * **落としたものを 200 で黙って飲まない。** 呼ぶ側（OBS）はしくじりを
  * ログにだけ残して先へ進む作りなので、ここで黙ると「入っているつもりで
@@ -1084,7 +1141,7 @@ const fundChatOf = (b: Json, now: number): FundChat | null => {
   if (b.test === true) return null;
   if (!FUND_YEN.has(String(b.currency ?? ""))) return null;
   const yen = Math.trunc(Number(b.jpy));
-  if (!Number.isFinite(yen) || yen <= 0) return null;
+  if (!Number.isFinite(yen) || yen <= 0 || yen > YEN_MAX) return null;
   const doc = itemIdFromLcc(b.id);
   if (!doc) return null;
   const {day, at} = fundJst(now);
@@ -1176,8 +1233,15 @@ async function fetchHandle(channelId: string): Promise<string> {
     });
     return handleOf(r.data.items?.[0]?.snippet?.customUrl);
   } catch (e) {
-    // 取れなくてもログインは通す。名前が古いままなだけなので
-    logger.warn("handle lookup failed", channelId, String(e));
+    /* 取れなくてもログインは通す。名前が古いままなだけなので。
+
+       **チャンネルIDは出さない**（2026-10-14）。ここは島にログインした人の
+       ぶんを引く道なので、落ちた回のログに**その人のチャンネルIDが
+       1件ずつ並ぶ。** `youtube.com/channel/UC…` を開けば顔と名前に
+       直結する字で、Cloud Functions のログは公開のリポジトリと同じ扱い
+       （`cards.ts` の「視聴者さんの素性をログに出さない」と同じ決め）。
+       どの口で落ちたかは出すので、追うのに足りる。 */
+    logger.warn("handle lookup failed", String(e));
     return "";
   }
 }
@@ -1459,7 +1523,11 @@ async function listStickies(q: {
      続きの位置（before）も持たない。位置は createdAt で書いてあるが、
      1テーマを1回で引き切るので送る先が無い。 */
   if (q.theme) {
-    const snap = await base.limit(300).get();
+    const snap = await base.limit(STICKY_THEME_SCAN).get();
+    /* **`more: false` を返す枝なので、切れたら嘘になる。** 続きの位置を
+       持たない作りなので、画面は「これで全部」と読む。 */
+    capHit("listStickies(theme) / STICKY_THEME_SCAN", snap.size,
+      STICKY_THEME_SCAN);
     const rows = snap.docs
       .filter((d) => d.get("hidden") !== true)
       .filter((d) => (d.get("archived") === true) === want);
@@ -1524,13 +1592,10 @@ async function waitingStickies(
     .limit(WAITING_SCAN)
     .get();
   /* **蓋に当たったら鳴らす。** ここから先は数えていないので、
-     返す数は「本当の数以下」でしかない。黙ると札が小さい数を言い続ける。 */
-  if (snap.size >= WAITING_SCAN) {
-    logger.error(
-      `付箋を数える窓（${WAITING_SCAN}枚）が埋まりました。` +
-        "ここから古いぶんは数に入っていません。WAITING_SCAN を広げてください",
-    );
-  }
+     返す数は「本当の数以下」でしかない。黙ると札が小さい数を言い続ける。
+     **鳴らしかたは `capWatch.ts` に寄せた**（2026-10-14）。同じ形の窓が
+     島に12か所あって、ここだけ自前の字で鳴っていた。 */
+  capHit("waitingStickies / WAITING_SCAN", snap.size, WAITING_SCAN);
   return snap.docs.filter(
     (d) =>
       !!d.get("theme") &&
@@ -1559,6 +1624,9 @@ async function seenStickies():
   const snap = await NOTES.orderBy("createdAt", "desc")
     .limit(WAITING_SCAN)
     .get();
+  /* **兄弟（`waitingStickies`）だけが鳴っていた。** 同じ窓を同じ大きさで
+     開けているのに、こちらは黙って切れる形のまま残っていた。 */
+  capHit("seenStickies / WAITING_SCAN", snap.size, WAITING_SCAN);
   return snap.docs.filter(
     (d) =>
       !!d.get("theme") &&
@@ -2411,7 +2479,11 @@ type EventBrief = {id: string; title: string; date: string};
  */
 async function eventsOnDay(day: string): Promise<EventBrief[]> {
   if (!isDay(day)) return [];
-  const snap = await STREAM_EVENTS.where("date", "==", day).limit(30).get();
+  const snap = await STREAM_EVENTS.where("date", "==", day)
+    .limit(DAY_EVENT_SCAN)
+    .get();
+  // 1日に30本も立たないが、立った日に黙って落ちる形にはしない
+  capHit("eventsOnDay / DAY_EVENT_SCAN", snap.size, DAY_EVENT_SCAN);
   const rows = snap.docs
     .filter((d) => d.get("hidden") !== true && d.get("archived") !== true)
     .map((d) => ({
@@ -2765,25 +2837,6 @@ export const islandApi = onRequest(
       typeof raw === "object" && raw ? (raw as Json) : ({} as Json);
 
     try {
-      /* ---------------- 島の遠隔操作(#165) ----------------
-         中身は `remote.ts`。ここは取り付けだけ。扱ったら true が返る。 */
-      const sid = req.query?.sessionId;
-      if (
-        await handleRemote(
-          {
-            method,
-            path,
-            auth: req.headers.authorization,
-            sessionId: typeof sid === "string" ? sid : "",
-            body,
-          },
-          res,
-          ownerUid,
-        )
-      ) {
-        return;
-      }
-
       /* ---------------- あやと島カード(#173) ----------------
          中身は `cards.ts`。ここは取り付けだけ。扱ったら true が返る。
          「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
@@ -2798,16 +2851,9 @@ export const islandApi = onRequest(
       }
 
       /* ---------------- スタンプのことば(#716) ----------------
-         中身は `stampLine.ts`。ここは取り付けだけ。扱ったら true が返る。
-         **ログインした本人に、自分のぶんだけ。** 「誰か」を見るところと
-         1日の上限を数えるところを増やさないよう、どちらも関数で渡す。 */
-      if (
-        await handleStampLine(
-          {method, path, auth: req.headers.authorization, body},
-          res,
-          {whoIs, takeQuota},
-        )
-      ) {
+         **閉じてある**(#860)。中身は `stampLine.ts`。扱ったら true が返る。
+         合言葉を見ずに 410 を返すので、「誰か」も上限も渡さない。 */
+      if (handleStampLine({method, path}, res)) {
         return;
       }
 
@@ -3128,6 +3174,8 @@ export const islandApi = onRequest(
           .where("streamEventId", "==", eventImages[1])
           .limit(MAX_IMAGES)
           .get();
+        capHit("GET /streamevents/:id/images / MAX_IMAGES", snap.size,
+          MAX_IMAGES);
         const images = snap.docs
           .map((d) => imageRef(d.id, d.data() ?? {}))
           .sort((a, b) => a.at - b.at);
@@ -3390,8 +3438,9 @@ export const islandApi = onRequest(
              在って、ずれても赤くなるものが無い**形が、島じゅうに15か所あった。
 
              止め金を15本足すのではなく、**2か所であることをやめる。**
-             先例は `/stampline/mine` で、あちらは返事に `max` と `maxLen` を
-             乗せていて、画面は1つも数字を持っていない。
+             先例は `/stampline/mine`（2026-10-14 に閉じた。#860）で、
+             あちらは返事に `max` と `maxLen` を乗せていて、画面は1つも
+             数字を持っていなかった。
 
              `/state` は誰でも叩ける口で CDN にも焼くが、ここに乗るのは
              **定数だけ**。人を指す値は1つも入らない。 */
@@ -3609,6 +3658,104 @@ export const islandApi = onRequest(
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
         res.json({notes: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* ---------------- 付箋を貼れる先(2026-10-14) ----------------
+         焼き込みの表(`site/content/themes.ts`)に**足す**ぶん。
+         読むのは誰でも、足す・締め切る・消すのはあやとだけ。
+
+         **`where` も `orderBy` も使わない**(#168)。索引を作る権限が
+         サービスアカウントに無いので、引いてから手元で並べる。
+         多くても `NOTE_THEMES_MAX` 件しかない。 */
+      if (method === "GET" && path === "/notes/themes") {
+        const snap = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+        const themes = snap.docs
+          .map((d) => ({
+            id: d.id,
+            name: String(d.get("name") ?? ""),
+            lead: String(d.get("lead") ?? ""),
+            placeholder: String(d.get("placeholder") ?? ""),
+            closed: d.get("closed") === true,
+            at: Number(d.get("createdAt")) || 0,
+          }))
+          .sort((a, b) => a.at - b.at)
+          .map(({at: _at, ...t}) => t);
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({themes});
+        return;
+      }
+
+      if (method === "POST" && path === "/notes/themes") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(body.id, 40);
+        const name = clean(body.name, 24);
+        const lead = cleanText(body.lead, 80);
+        const placeholder = cleanText(body.placeholder, 80);
+        /* 鍵は付箋の `theme` 欄にそのまま入る。**打った字を信じない。**
+           形が違うものを通すと、`GET /stickies?theme=` が弾く鍵の
+           貼り先ができて、貼れるのに読めない棚になる。 */
+        if (!THEME_ID.test(id) || name.length < 2) {
+          res.status(400).json({error: "bad input"});
+          return;
+        }
+        const ref = NOTE_THEMES.doc(id);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          const all = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+          if (all.size >= NOTE_THEMES_MAX) {
+            res.status(409).json({error: "いっぱいです"});
+            return;
+          }
+        }
+        const now = Date.now();
+        await ref.set(
+          {
+            name,
+            lead,
+            placeholder,
+            closed: body.closed === true,
+            createdAt: cur.exists ? Number(cur.get("createdAt")) || now : now,
+            updatedAt: now,
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+          theme: {id, name, lead, placeholder, closed: body.closed === true},
+        });
+        return;
+      }
+
+      if (method === "DELETE" && path.startsWith("/notes/themes/")) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(path.slice("/notes/themes/".length), 40);
+        if (!THEME_ID.test(id)) {
+          res.status(400).json({error: "bad id"});
+          return;
+        }
+        /* **1枚でも貼ってあったら消さない。** 消すと、貼った人の字が
+           どこからも読めなくなる(消えてはいないが、届かない)。
+           そのときは締め切る(`closed`)——棚は残って、読むほうは今までどおり。 */
+        const used = await NOTES.where("theme", "==", id).limit(1).get();
+        if (!used.empty) {
+          res.status(409).json({error: "付箋が貼ってあります"});
+          return;
+        }
+        await NOTE_THEMES.doc(id).delete();
+        res.set("Cache-Control", "no-store");
+        res.json({ok: true});
         return;
       }
 
@@ -3911,7 +4058,11 @@ export const islandApi = onRequest(
             res.status(401).json({error: "no token"});
             return;
           }
-          const snap = await NOTES.where("uid", "==", who.uid).limit(300).get();
+          const snap = await NOTES.where("uid", "==", who.uid)
+            .limit(MINE_SCAN)
+            .get();
+          // `more: false` で返す枝（上のテーマ1つぶんと同じ理由）
+          capHit("GET /stickies?mine=1 / MINE_SCAN", snap.size, MINE_SCAN);
           const rows = snap.docs
             .filter((d) => d.get("hidden") !== true)
             .filter((d) => d.get("archived") !== true)
@@ -4000,7 +4151,10 @@ export const islandApi = onRequest(
            空は 400 にしない。字が入っていたのに通らなかったときだけ断る
            ——黙って捨てると、貼った人の画面からリンクが消えて理由が無い */
         const sent = clean(body.link, MAX_LINK_LEN);
-        const link = safeLink(sent);
+        /* **生の値を渡す。** 切ったあとの字を渡していたので、`safeLink` の
+           「長すぎたら落とす」が効かなかった——2,049字の URL は
+           2,048字の**別の URL**として通っていた（2026-10-14）。 */
+        const link = safeLink(body.link);
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
           return;
@@ -4402,8 +4556,10 @@ export const islandApi = onRequest(
             return;
           }
           const snap = await STREAM_EVENTS.where("uid", "==", who.uid)
-            .limit(300)
+            .limit(MINE_SCAN)
             .get();
+          // `more: false` で返す枝（付箋の `?mine=1` と同じ理由）
+          capHit("GET /nextplans?mine=1 / MINE_SCAN", snap.size, MINE_SCAN);
           const rows = snap.docs
             .filter((d) => d.get("hidden") !== true)
             .filter((d) => d.get("archived") !== true)
@@ -5318,8 +5474,14 @@ export const islandApi = onRequest(
 
       res.status(404).json({error: "not found", path});
     } catch (e) {
+      /* **道に素性が混ざっていることがある。** `POST /cards/{カードID}` の
+         カードIDは `<画像のID>__<チャンネルID>` なので、ここで道をそのまま
+         書くと、500 が出た回だけチャンネルIDがログに残る
+         （2026-10-14。`/cards` の応答からは #173 で落としてあったのに、
+         落ちた回の**道**からは出ていた）。どの口で落ちたかは、
+         潰したあとの道でも分かる。 */
       logger.error("islandApi failed", {
-        path,
+        path: path.replace(/UC[A-Za-z0-9_-]{22}/g, "UC…"),
         method,
         error: String(e),
       });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
@@ -6,16 +7,18 @@ import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import { KINDS, RECIPES } from "@/content/recipes";
-import { COUNTRIES } from "@/content/countries";
+import { AHEAD_COUNTRIES, COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
 import { H, Sheet, Zone } from "@/components/streams/Sheet";
 import KitchenNext from "@/components/live/KitchenNext";
 import { ArtStamp } from "@/components/streams/Art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "kitchen",
   title: "クッキング・スタンプ帳",
   description: "旅先のキッチンで作ってきた料理のスタンプ帳。企画会議→買い出し→調理の3日がかりで作っています。",
-};
+  path: "/kitchen",
+});
 
 export default function KitchenPage() {
   const byCountry = new Map<string, number>();
@@ -85,7 +88,7 @@ export default function KitchenPage() {
             記録の4つ（32品・5カ国…）は h1 の下の1行と同じことを言っていて、
             開いた瞬間に同じ数字を2回読ませていた。数えたものと国別・月別のグラフは
             どちらも「読み物」なので、カタログの下にまとめる（`docs/island-ux.md` 5.6）。 */}
-        <KitchenCatalog recipes={RECIPES} countries={COUNTRIES.map((c) => ({ slug: c.slug, name: c.name }))} />
+        <KitchenCatalog recipes={RECIPES} countries={[...COUNTRIES, ...AHEAD_COUNTRIES].map((c) => ({ slug: c.slug, name: c.name }))} />
 
         {/* スタンプ帳のいちばん強いところは、押した数ではなく**空いているマス**
             （`docs/island-play.md` C・仕掛け11）。その空きマスに、書かずに

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -61,11 +62,13 @@ import "./goods.css";
  * 「投げ銭の多い人から」と書けば、出ている人がそのまま順位表になる。
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "goods",
   title: "あやとグッズ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
   description: `島から持って帰れるものと、お店で買えるもの。ステッカー${STICKERS.length}枚、LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類。`,
-};
+  path: "/goods",
+});
 
 /** 欄ひとつ。**絵と札は、ここ1か所で決める** */
 function Sec({
@@ -265,7 +268,7 @@ export default function GoodsPage() {
           <Link className="gd-go" href="/friends" prefetch={false}>
             <span>
               <b>住んでる人</b>
-              <i>島のみんなの絵が、作った順に並んでいる</i>
+              <i>島のみんなの絵が、ぜんぶ並んでいる</i>
             </span>
             <Icon name="right" size={16} />
           </Link>

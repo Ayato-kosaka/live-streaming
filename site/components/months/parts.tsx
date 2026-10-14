@@ -242,6 +242,26 @@ export function Flow({ m }: { m: Month }) {
     if (last && last.d === s.d) last.items.push(s);
     else days.push({ d: s.d, items: [s] });
   }
+
+  /* 日づけは隣の `<span>` にあって、リンクの中には入っていない。
+     読み上げがリンクの字だけを並べて読むと、**同じ題名の枠は1文字も
+     違わない行**になる——1か月に5本そうなった月がある（2026-05）。
+     題名は YouTube に実在するものなので直せない
+     （`docs/island-design.md` 1章の唯一の例外）ので、
+     **読み上げる名前のほうに日づけを足す。** 同じ日に2本あるぶんは
+     さらに何本目かを足す。
+     **ぶつかっていない枠には何も足さない**——どれにも日づけが付くと、
+     読み上げがうるさいだけで見分けの役に立たない。 */
+  const byTitle = new Map<string, typeof m.streams>();
+  for (const s of m.streams) byTitle.set(s.title, [...(byTitle.get(s.title) ?? []), s]);
+  const label = (s: Month["streams"][number]) => {
+    const all = byTitle.get(s.title) ?? [];
+    if (all.length < 2) return undefined;
+    const sameDay = all.filter((x) => x.d === s.d);
+    const nth = sameDay.length > 1 ? `（この日の${sameDay.indexOf(s) + 1}本目）` : "";
+    return `${md(s.d)} ${s.title}${nth}`;
+  };
+
   return (
     <ol className="mflow">
       {days.map((day) => (
@@ -252,17 +272,18 @@ export function Flow({ m }: { m: Month }) {
           </span>
           <span className="mflow-b">
             {day.items.map((s) => (
-              <a
-                key={s.v}
-                className="mflow-t"
-                href={`https://www.youtube.com/watch?v=${s.v}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {/* 実在する題名の引用。島の決まりで絵文字を落とさない */}
-                <b data-quote="title">{s.title}</b>
-                <Icon name="external" size={13} className="mflow-go" />
-              </a>
+                <a
+                  key={s.v}
+                  className="mflow-t"
+                  href={`https://www.youtube.com/watch?v=${s.v}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label(s)}
+                >
+                  {/* 実在する題名の引用。島の決まりで絵文字を落とさない */}
+                  <b data-quote="title">{s.title}</b>
+                  <Icon name="external" size={13} className="mflow-go" />
+                </a>
             ))}
           </span>
         </li>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
@@ -7,11 +8,13 @@ import Icon from "@/components/ui/Icon";
 import { MONTHS, TAP_GOAL } from "@/content/months";
 import { Face, man, md, yen } from "@/components/months/parts";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "months",
   title: "月ごとのふりかえり",
   description:
     "ひと月ずつの記録。その月の流れ、出席ランキング、投げ銭ありがとう、タップタップ。月末配信の日で区切ってある。",
-};
+  path: "/months",
+});
 
 /**
  * 月ごとのふりかえりの棚。

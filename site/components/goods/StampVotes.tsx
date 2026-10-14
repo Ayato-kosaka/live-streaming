@@ -1,6 +1,7 @@
 "use client";
 
 import { LINE_PENDING, LINE_STAMPS, LINE_VOTES } from "@/content/goods";
+import Longer from "@/components/ui/Longer";
 import { shutDest, themeById } from "@/content/themes";
 import {
   useWordVotes,
@@ -52,8 +53,19 @@ export default function StampVotes() {
 
   return (
     <div className="gd-stamps">
-      <ol className="gd-grid">
-        {LINE_STAMPS.map((s) => (
+      {/* **一度に全部は出さない**（`docs/island-standards.md` 7章）。
+
+          17枚を並べると、390px でこの欄だけ 2,418px——面ぜんぶ（6,206px）の
+          4割を1つの欄が持っていって、下の SUZURI が5画面目に沈んでいた。
+          セリフは**増える**ので、枚数が変わっても背が変わらない形にする。
+
+          畳み方は島に1つ（`components/ui/Longer.tsx`）。カードの
+          「あと◯日ぶんだす」・付箋の「あと◯枚だす」と同じ押しどころ・
+          同じ言い方になる。**上限で切らない**——押せば最後まで出る。
+          はじめに出すのは6枚（2列×3段）。1枚が絵・セリフ・ハートの3段なので、
+          数を増やすと1押しで画面3つぶん伸びる。 */}
+      <Longer items={LINE_STAMPS} first={6} unit="枚" as="ol" className="gd-grid">
+        {(s) => (
           <li key={s.id}>
             {/* 絵が届いていないあいだ、枠に出しているのは**透かしだけの板**で、
                 絵が入る場所がそのまま見える（`tools/goods/stampbake.py`）。
@@ -82,8 +94,8 @@ export default function StampVotes() {
               )}
             </span>
           </li>
-        ))}
-      </ol>
+        )}
+      </Longer>
       <VoteFoot votes={votes} />
     </div>
   );

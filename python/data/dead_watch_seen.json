@@ -7,7 +7,10 @@
  "ids": {
   "Aea0S3WIZLU": {
    "kind": "GONE",
-   "since": "2026-09-18"
+   "since": "2026-09-18",
+   "files": [
+    "months.ts"
+   ]
   },
   "BL93jNWDgk0": {
    "kind": "NO_REC",
@@ -15,7 +18,10 @@
   },
   "JXEHbJX9Szw": {
    "kind": "GONE",
-   "since": "2026-09-18"
+   "since": "2026-09-18",
+   "files": [
+    "months.ts"
+   ]
   },
   "LfUJ25h2f44": {
    "kind": "NO_REC",
@@ -32,25 +38,33 @@
     "chapterStreams.ts",
     "cityStreams.ts",
     "legendDays.ts",
+    "months.ts",
     "onThisDay.ts",
     "streamPeaks.ts"
    ]
   },
   "gpecGbzVBHU": {
    "kind": "GONE",
-   "since": "2026-09-18"
+   "since": "2026-09-18",
+   "files": [
+    "months.ts"
+   ]
   },
   "lxnJu5iQ_rU": {
    "kind": "LOGIN",
    "since": "2026-09-18",
    "files": [
     "chapterStreams.ts",
+    "months.ts",
     "onThisDay.ts"
    ]
   },
   "p1-bliAqLJo": {
    "kind": "GONE",
-   "since": "2026-09-18"
+   "since": "2026-09-18",
+   "files": [
+    "months.ts"
+   ]
   }
  },
  "deep": {

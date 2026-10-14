@@ -217,8 +217,9 @@
 
 /* **升目はこの面から出した**（2026-10-13。`/goods/stickers` へ）。
    索引に残したのは、名簿の頭の数枚と行き先の札だけ。
-   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` / `.gd-get` は、
-   それと一緒に消えている（着るものが1つも無くなったため）。
+   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` は、それと一緒に
+   消えている（着るものが1つも無くなったため）。`.gd-get` も 2026-10-14 に
+   消えた——外の店の升目の「お店で見る」の行が、あやとの指示で無くなった。
 
    並べかたは外の店の札（`.gd-shop`）と同じ形。**絵は切らない**ので、
    `object-fit` だけ別（丸い1枚の字が欠ける）。 */
@@ -229,14 +230,25 @@
 }
 
 /* 枚数で割らない。`auto-fit` なので、残す枚数（`PEEK`）を変えても
-   1行に収まるぶんだけ細くなる */
+   1行に収まるぶんだけ細くなる。
+
+   **狭い画面は2つずつ、広い画面は4つ横に。** `minmax(0, 1fr)` だと
+   枚数ぶんの列がいつでも立つので、390px では1枚 70x70 まで痩せていた。
+   この面は6つの欄が縦に並ぶ索引で、**1画面目に出る絵はここの数枚しかない**
+   ——実測で1画面目の絵は面積の 8.7%、いちばん大きいのがその 70px だった
+   （`docs/island-standards.md` 1章。図鑑とスタンプ帳と同じで、
+   棚の面は絵が主役）。2つずつなら 1枚 160px になる。
+
+   **`min(140px, 100%)` の `min()` は要る。** 素の `minmax(140px, 1fr)` は
+   紙より狭い入れ物に入ったときに格子のほうがはみ出す。 */
 .gd-peekshots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
   gap: var(--sp-2);
   /* 広い画面で、絵が札の幅いっぱいに伸びないところで止める
-     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない） */
-  max-width: 360px;
+     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない）。
+     4つ横に並ぶぶんだけ空ける */
+  max-width: 620px;
 }
 .gd-peekshots > img {
   display: block;
@@ -303,18 +315,25 @@
 
 .gd-stamps { margin-top: var(--sp-3); }
 
+/* **列の数を幅ごとに決め打ちする。** `auto-fill` に任せていたら、
+   はじめに出す6枚（`StampVotes.tsx` の `Longer`）が PC で
+   **5枚＋1枚**に割れて、2段目に1枚だけ残っていた
+   （`docs/island-standards.md` の「同じ役の箱は同じ位置に」）。
+   2・3・6 はどれも6を割り切るので、畳んでいるあいだは必ず行が埋まる。
+
+   **1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと1枚が
+   60px まで痩せて、焼いた透かしが読めなくなる。6列で1枚 104px。 */
 .gd-grid {
   display: grid;
-  /* 390px では3枚ならび（4段）、広い画面では5枚ならび（2段）。
-     **10枚が1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと
-     1枚が 60px まで痩せて、焼いた透かしが読めなくなる */
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
-  max-width: 608px;
+  max-width: 700px;
 }
+@media (min-width: 560px) { .gd-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 860px) { .gd-grid { grid-template-columns: repeat(6, 1fr); } }
 
 .gd-grid > li {
   display: flex;
