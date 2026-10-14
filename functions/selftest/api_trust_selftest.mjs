@@ -144,6 +144,7 @@ const KNOWN_ROUTES = [
   "islandApi.ts method === 'GET' && path === '/nextplans'",
   "islandApi.ts method === 'GET' && path === '/nordic/photos'",
   "islandApi.ts method === 'GET' && path === '/notes'",
+  "islandApi.ts method === 'GET' && path === '/notes/themes'",
   "islandApi.ts method === 'GET' && path === '/poll'",
   "islandApi.ts method === 'GET' && path === '/state'",
   "islandApi.ts method === 'GET' && path === '/stickies'",
@@ -165,6 +166,7 @@ const KNOWN_ROUTES = [
   "islandApi.ts method === 'POST' && path === '/nextplans'",
   "islandApi.ts method === 'POST' && path === '/nordic/photos'",
   "islandApi.ts method === 'POST' && path === '/notes'",
+  "islandApi.ts method === 'POST' && path === '/notes/themes'",
   "islandApi.ts method === 'POST' && path === '/roulette/doneru'",
   "islandApi.ts method === 'POST' && path === '/roulette/start'",
   "islandApi.ts method === 'POST' && path === '/roulette/yt-token'",
@@ -189,9 +191,6 @@ const KNOWN_ROUTES = [
   "islandCharacter.ts q.method === 'GET' && q.path === '/characters'",
   "islandCharacter.ts q.method === 'GET' && q.path === '/characters/lookup'",
   "publicPurge.ts q.method === 'GET'",
-  "remote.ts q.method === 'GET' && q.path === '/remote'",
-  "remote.ts q.method === 'POST' && q.path === '/remote'",
-  "remote.ts q.method === 'POST' && q.path === '/remote/session'",
 ];
 
 if (process.argv.includes("--routes")) {
@@ -684,12 +683,6 @@ const IMPERSONATE = [
     want: 403,
   },
   {
-    name: "`POST /remote` に他人の席を指す",
-    c: {method: "POST", path: "/remote", token: "tok-ayato",
-      body: {sessionId: "e".repeat(32), at: ""}},
-    want: 404,
-  },
-  {
     name: "`POST /roulette/{知らない席}/spin`",
     c: {method: "POST", path: `/roulette/${"f".repeat(32)}/spin`,
       token: "tok-ayato", body: {}},
@@ -827,10 +820,13 @@ const RANGE = [
     want: 400,
   },
   {
-    name: "表に無い行き先（`POST /remote`）",
-    c: {method: "POST", path: "/remote", token: "tok-ayato",
-      body: {sessionId: "b".repeat(32), at: "どこでもない"}},
-    want: 400,
+    /* `/remote`（島の遠隔操作）を使っていたが、2026-10-14 に口ごと消した
+       （あやと「使い物にならなかったのでリバーとして欲しい。完全削除」）。
+       **この試しは残す**——「表に無い行き先は断る」は口が1つ減っても要る。
+       消えた道だと 404 が返るので、**はじめから存在しない道**に差し替えた。 */
+    name: "表に無い行き先（`POST /そんな道はない`）",
+    c: {method: "POST", path: "/そんな道はない", token: "tok-ayato", body: {}},
+    want: 404,
   },
   {
     name: "題が4字に満たない企画",
@@ -905,6 +901,10 @@ for (const [name, body, want] of [
  * ここに無い口が増えたら、下の「口の数」が合わなくなって気づく。
  */
 const OWNER_ONLY = [
+  /* 付箋の貼り先（2026-10-14、#880）。足す・消すはあやとだけ。
+     **`GET` は誰でも**（付箋を貼る人が貼り先を選ぶため）なのでここには入れない。 */
+  ["POST", "/notes/themes"],
+  ["DELETE", "/notes/themes/theme-aaaaaa"],
   ["POST", "/current"],
   ["POST", "/nordic/arrived"],
   ["POST", "/nordic/ended"],
@@ -929,8 +929,6 @@ const OWNER_ONLY = [
   ["POST", `/roulette/${"d".repeat(32)}/spin`],
   ["POST", `/roulette/${"d".repeat(32)}/say`],
   ["POST", "/alertbox/session"],
-  ["POST", "/remote/session"],
-  ["POST", "/remote"],
   ["GET", "/fund/history"],
   ["GET", "/fund/desk"],
   ["GET", "/fund/feed"],
