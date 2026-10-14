@@ -31,10 +31,9 @@
  *   それ以上  -> 900     （800 は 900）
  * ここを間違えると、焼かない字が出て**端末の書体に落ちる**（見た目が変わる）。
  */
-import { readdirSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { chromium } from "playwright-core";
 import { fromRoot } from "./repo.mjs";
 
 const SPORT = process.env.SPORT || "4250";
@@ -111,17 +110,31 @@ const COLLECT = (nearSrc) => {
 };
 
 /* 対照（`fontbudget_selftest.mjs`）はこのファイルから `NEAR` だけを読む。
-   名指しで起こされたときだけ、ブラウザを立てて数えにいく。 */
+   名指しで起こされたときだけ、ブラウザを立てて数えにいく。
+
+   **`playwright-core` は、ここで初めて読む。** 上で `import` すると、
+   読み込まれただけでも解決しにいく。見張りを回す側（`selftest.yml`）は
+   `tools/sprites/node_modules` を入れていないので、`NEAR` を1つ読みたい
+   だけの対照が `ERR_MODULE_NOT_FOUND` で落ちていた。**赤いのは書体ではなく、
+   道具の立てかた**で、しかも落ちかたが「書体が太った」と見分けにくい。 */
 if (!process.argv[1] || import.meta.url !== pathToFileURL(process.argv[1]).href) {
   // 読み込まれただけ。何もしない
 } else {
 
+/* **書き出しが無いときは、例外ではなく終了コード 2 で止める。**
+   すぐ下に「面が無い」の案内があるのに、`walk()` のほうが先に
+   `ENOENT` を投げていたので、読む人には Node のスタックしか出ていなかった。 */
+if (!existsSync(DIST)) {
+  console.error(`${DIST} が無い。先に書き出してください（tools/build.sh）。`);
+  process.exit(2);
+}
 const pages = walk(DIST).sort().filter((p) => !ONLY.length || ONLY.includes(p));
 if (!pages.length) {
   console.error(`${DIST} に面が無い。先に書き出してください（tools/build.sh）。`);
   process.exit(2);
 }
 
+const { chromium } = await import("playwright-core");
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
