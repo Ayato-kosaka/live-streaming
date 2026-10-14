@@ -194,10 +194,12 @@ function Cats({ list, keys, hero }: { list: NordicSpot[]; keys?: Record<string, 
         .filter((g) => g.list.length > 0)
         .map((g) => (
           <div key={g.label} className="ncat">
-            <h4>
+            {/* 上は h2（`<Zone>` の見出し）。h4 にすると読み上げの目次で
+                段が1つ飛ぶので h3（`docs/island-misses.md` #253） */}
+            <h3>
               {g.label}
               <em>{g.list.length}件</em>
-            </h4>
+            </h3>
             <div className="folds">
               {g.list.map((s) => (
                 <Spot key={s.id} s={s} k={keys?.[s.id]} thumb={s.big && s.big === hero ? s.big : undefined} />
