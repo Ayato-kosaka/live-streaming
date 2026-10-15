@@ -58,14 +58,13 @@
 /* まだ何も決まっていないもの。**色を1つ足さない**——蛍光ペンの帯
    （`--marker`）は島のほかの面でも「ここが今の話」を表す印なので、
    そのまま借りる */
-/* 審査中（LINEスタンプ。2026-10-14）も同じ帯。まだ手に入らず、
-   いま動いている話なのは同じで、違いは札の字が言う */
-.gd-sec[data-tag="検討中"] > .gd-h > .gd-tag,
+/* 審査中（LINEスタンプ。2026-10-14）。まだ手に入らず、いま動いている話。
+   「検討中」の札を持っていたカレンダーの欄は 2026-10-14 に消した */
 .gd-sec[data-tag="審査中"] > .gd-h > .gd-tag {
   background: var(--marker);
   color: var(--marker-ink);
 }
-/* 島の外。押すと出ていくことは、升目のマスの下の字（「お店で見る」）が
+/* 島の外。押すと出ていくことは、欄の一行と升目の題の右の印（`external`）が
    言うので、札は一段おとす */
 .gd-sec[data-tag="お店"] > .gd-h > .gd-tag {
   background: color-mix(in srgb, var(--rule) 40%, var(--paper));
@@ -137,7 +136,7 @@
 
    **マスぜんぶが押せるので、1マスずつに厚みは付けない**
    （`docs/island-design.md` 3-3 の例外）。**この並びに押せないマスを
-   1つでも混ぜてはいけない**——最後の「あやとの店」も押せるマス。 */
+   1つでも混ぜてはいけない**——先頭の「全部見る」も押せるマス。 */
 .gd-shopgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
@@ -149,7 +148,7 @@
 }
 
 /* **マスは背を揃える。** 題が1行のものと3行のものが並ぶので、
-   絵の高さに任せると「お店で見る」が1マスずつ別の高さに来る */
+   絵の高さに任せると、押せる箱の下端が1マスずつ別の高さに来る */
 .gd-shopgrid > li { display: flex; }
 
 .gd-shopitem {
@@ -163,23 +162,29 @@
   text-decoration: none;
   color: var(--ink);
 }
-/* **題は、そこで伸びる側。** 下の「お店で見る」を枠の底へ押しやるのは
-   ここ1行（マスの背は `li { display: flex }` がそろえている）。
-   入れていなかったあいだ、題が1行のマスと2行のマスで**「お店で見る」の
-   高さが 35px ずれて**いて、行ごとに段差ができていた
-   （すぐ上の注が言っている「背を揃える」は、**枠の背**しか揃っていなかった）。 */
-.gd-shopitem > b {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
+.gd-shopname {
+  /* 題と、外へ出る印。**印は題の終わりに1つ**（字の「お店で見る」は消した。
+     あやと 2026-10-14）。印は最後の1字とくっつけて置く（`ShopName`） */
   font-size: var(--fs-note);
   font-weight: 900;
   line-height: 1.5;
   text-align: center;
   color: var(--ink);
-  /* 題は SUZURI に出ている字そのまま。英字の長い1つ（DON'T BURN OUT …）が
-     マスからはみ出さないように、どこでも折る */
+  /* 題は SUZURI に出ている字そのまま。**折るのは空白と、渡した切れ目で**
+     （「TRAVELING NOW／Tシャツ」「あやとの／イギリスぶらぶら」。切れ目は
+     `content/goods.ts` の `nameParts`）。`auto-phrase` は使わない——
+     「あやとのイギリスぶら／ぶら」で折った（Chromium 141、390px）。
+     それでも収まらない題は、マスからはみ出さないように最後はどこでも折る */
+  word-break: keep-all;
   overflow-wrap: anywhere;
+}
+.gd-shoptail { white-space: nowrap; }
+/* 印は題より一段うすく。**押せる合図ではない**（合図は厚みだけ。
+   `island-design.md` 3-3）。行き先が島の外だという添え書き */
+.gd-shoptail > svg {
+  margin-left: 3px;
+  vertical-align: -2px;
+  color: var(--ink-2);
 }
 /* 押した手ごたえは**マスごと**沈む（ステッカーの升目と同じ） */
 .gd-shopitem:active { transform: translateY(3px); }
@@ -197,22 +202,7 @@
   border: 1px solid var(--rule);
 }
 
-/* マスの行き先の行（「お店で見る」「ぜんぶ見る」）。
-
-   **ここには色も厚みも足さない。** 升目は1マスまるごとが押しどころなので、
-   中にもう1つ押せそうなものを置くと、どちらを押すのか読ませることになる
-   （`docs/island-design.md` 3-3）。並びを決めるためだけの1行。
-   字の色は `.gd-shopitem` から受け継ぐ（`--ink`。薄めない）。 */
-.gd-get {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--fs-min);
-  font-weight: 900;
-}
-.gd-get > svg { flex: none; }
-
-/* 店そのもののマス。**並びのいちばん先頭**（あやと 2026-10-13）。
+/* 店そのもののマス。**並びのいちばん前**（題は「全部見る」）。
    ほかのマスは「この1つを見る」、ここだけ「ぜんぶ見る」なので、
    地を一段おとして、同じ並びの中で用事が違うことを言う。
    **色は足さない**（罫を紙に混ぜただけ。`data-tag="お店"` の札と同じ作り） */
@@ -228,8 +218,8 @@
 /* **升目はこの面から出した**（2026-10-13。`/goods/stickers` へ）。
    索引に残したのは、名簿の頭の数枚と行き先の札だけ。
    `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` は、それと一緒に
-   消えている（着るものが1つも無くなったため）。`.gd-get` は残っている——
-   外の店の升目（`.gd-shopgrid`）がいまも着ている。
+   消えている（着るものが1つも無くなったため）。`.gd-get` も 2026-10-14 に
+   消えた——外の店の升目の「お店で見る」の行が、あやとの指示で無くなった。
 
    並べかたは外の店の札（`.gd-shop`）と同じ形。**絵は切らない**ので、
    `object-fit` だけ別（丸い1枚の字が欠ける）。 */
@@ -426,84 +416,6 @@
 .gd-votetally b { font-size: var(--fs-body); font-weight: 900; }
 /* 読んでいるあいだの場所取り。**押せないハートと同じ背**にそろえる */
 .gd-votewait.is-still { width: 44px; height: 32px; }
-
-/* ---- カレンダー（月ごとの1枚） ------------------------------------------- */
-
-/* **止める幅は絵の原寸**（`--cal-w`。`CalendarMonths` が `content/goods.ts` の
-   `CAL_SHOT_W` から入れる）。これより広げると絵が伸びてぼやける。
-   この面の紙は 900px に届かないので、実際に効くのは紙の幅のほう */
-.gd-cals {
-  max-width: var(--cal-w);
-  margin-top: var(--sp-3);
-}
-
-/* 月の札。**札そのものは `.mp-tab`**（じぶんのこと・掲示板と同じ。`app/css/ui.css`）。
-   ここで決めるのは並べ方だけ——札は2〜3文字なので、`.mp-tabs` の2列では
-   12か月で6段（380px）になる。**1枚 56px 以上を守ったまま、入るだけ横に並べる。**
-   390px で6列×2段、広い画面は1段。絵のある月だけなので、並びの右が空くことがある */
-.gd-calmonths.mp-tabs {
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
-  margin-top: 0;
-  margin-bottom: var(--sp-3);
-}
-
-/* 見出し。**大きく「5月」、小さく「2026年5月の思い出」**。
-   暦の何月のページかと、何の思い出かを、この1行で言う */
-.gd-calh {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px var(--sp-2);
-  margin: 0;
-}
-.gd-calh > b {
-  font-size: var(--fs-h2);
-  font-weight: 900;
-  line-height: 1.1;
-  color: var(--ink);
-}
-.gd-calh > small {
-  font-size: var(--fs-note);
-  font-weight: 800;
-  color: var(--ink-2);
-}
-
-/* 絵。1枚の月は板の幅いっぱい。**候補が2〜3枚の月は、広い画面でだけ横に並べる**
-   （390px で横に並べると、暦の字も絵も小指の爪になる） */
-.gd-calshots {
-  display: grid;
-  gap: var(--sp-3);
-  margin: var(--sp-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-@media (min-width: 720px) {
-  .gd-calshots.is-many { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* 候補の呼び名（A案・B案）。**押せないので平ら**（`island-design.md` 3-3）。
-   付箋で「Bがいい」と書くときの呼び名なので、絵の上ではなく外に置く */
-.gd-calpick {
-  display: block;
-  margin-bottom: var(--sp-1);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-}
-
-.gd-calshots img {
-  display: block;
-  width: 100%;
-  /* 縦横比は `content/goods.ts` の1本から（`style` で入る）。
-     **ここに数を書かない**——焼き直した日に、ここだけ古くなる */
-  height: auto;
-  border-radius: var(--r-0);
-  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり）。
-     **押せないので厚みは付けない**（`island-design.md` 3-3） */
-  border: 1px solid var(--rule);
-  background: var(--paper-2);
-  object-fit: cover;
-}
 
 /* 押したのに動かなかったときの1行。**読めなかったときの札とは別の顔**にする
    （あちらは灰色の「もうすぐ出る」ではなく、もう一度読みに行く押しどころを持つ） */

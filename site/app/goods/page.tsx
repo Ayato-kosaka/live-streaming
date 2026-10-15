@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
-import CalendarMonths from "@/components/goods/CalendarMonths";
+import Phrase from "@/components/ui/Phrase";
 import StampVotes from "@/components/goods/StampVotes";
 import { shutDest, themeById } from "@/content/themes";
 import {
-  CAL_MONTHS,
-  CAL_SHOWN,
   LINE_PRICE,
   LINE_RESIDENTS,
   LINE_STAMPS,
@@ -32,11 +31,16 @@ import "./goods.css";
  *
  * ## 「もう在る」と「まだ決めていない」を、形で分ける
  *
- * 6つのうち、ステッカー・カード・キャラクターは**もう手に入る**。
- * カレンダーは**まだ形が決まりきっていない**。LINEスタンプは
+ * ステッカー・カード・キャラクターは**もう手に入る**。LINEスタンプは
  * 2026-10-14 に申請を終えて**審査中**（形は決まったが、まだ手に入らない）。
  * 同じ顔で並べると、押して初めて「まだ無い」と分かる欄ができる。
  * 札（`.gd-tag`）と地の色で、開く前に見分けがつくようにした。
+ *
+ * **カレンダーの欄は 2026-10-14 に消した**（あやと「カレンダー検討中の項目は
+ * 削除して、付箋も閉じて」）。SUZURI に出品したので、カレンダーは
+ * **SUZURI の升目の1マス**になる（`content/goods.ts` の `SHOP_GOODS`）。
+ * 同じ品の入口を2つ置かない。月ごとの絵（`public/goods/calendar/`）と
+ * 焼く道具（`tools/goods/calbake.py`）は、出品と来年のために残してある。
  *
  * ## 付箋は、欄の中に置く
  *
@@ -62,7 +66,7 @@ export const metadata: Metadata = share({
   key: "goods",
   title: "あやとグッズ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
-  description: `島から持って帰れるものと、これからいっしょに決めるもの。ステッカー${STICKERS.length}枚、LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類。`,
+  description: `島から持って帰れるものと、お店で買えるもの。ステッカー${STICKERS.length}枚、LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類。`,
   path: "/goods",
 });
 
@@ -78,7 +82,7 @@ function Sec({
   id: string;
   icon: IconName;
   title: string;
-  /** 開く前に分かる1語。「無料」「検討中」「審査中」「お店」 */
+  /** 開く前に分かる1語。「無料」「審査中」「お店」 */
   tag: string;
   lead: string;
   children: React.ReactNode;
@@ -117,6 +121,37 @@ function Say({ theme, title, lead, omit }: {
 }
 
 /**
+ * SUZURI の升目の題と、外へ出る印。
+ *
+ * **印は題の終わりに字と同じ行で付ける。** 題の横に別の柱として立てると、
+ * 印のぶん題の幅が削れて「Tシ／ャツ」「ぶら／ぶら」のように折れる
+ * （2026-10-14 に 390px で撮って見た）。**最後の1字と印を離さない**——
+ * 離せる形だと、印だけが次の行に落ちる日が来る。
+ */
+function ShopName({ name, parts }: { name: string; parts?: string[] }) {
+  /* 切れ目（`ShopGoods.nameParts`）は、つなぐと題と同じ字のときだけ使う。
+     食い違った切れ目で題の字が変わると、押した先の店の題と合わなくなる */
+  const segs = parts && parts.join("") === name ? [...parts] : [name];
+  const tail = Array.from(segs.pop() ?? "");
+  const last = tail.pop() ?? "";
+  return (
+    <b className="gd-shopname">
+      {segs.map((seg) => (
+        <Fragment key={seg}>
+          {seg}
+          <wbr />
+        </Fragment>
+      ))}
+      {tail.join("")}
+      <span className="gd-shoptail">
+        {last}
+        <Icon name="external" size={14} />
+      </span>
+    </b>
+  );
+}
+
+/**
  * 索引に残すステッカーの枚数。**4枚**（390px で2×2、広い画面で1列）。
  *
  * **ここで「どれを出すか」を決めない。** 名簿（`STICKERS`）の頭から取る。
@@ -139,27 +174,28 @@ const PEEK = 4;
    `content/themes.ts` の1行を変えて焼き直すほうが筋が通る。 */
 const LINE_SHUT = shutDest(themeById("goods-linestamp"), null);
 
-/**
- * カレンダーの、まだ絵の載っていない月の数。**これも手で書かない。**
- * 12か月そろったら 0 になって、「できたものから載せます」の1行が消える。
- */
-const CAL_LEFT = CAL_MONTHS.length - CAL_SHOWN.length;
-
 export default function GoodsPage() {
   return (
     <PageShell crumbs={[{ label: "あやとグッズ" }]}>
       <PageHead
         mark={<Icon name="gift" size={44} />}
         title="あやとグッズ"
-        lead="島から持って帰れるものと、まだ形の決まっていないもの。"
+        /* 「まだ形の決まっていないもの」は外した（2026-10-14）。そう呼べたのは
+           カレンダーの欄で、出品して欄ごと消えた。
+           **読点で折る**（`Phrase`）。何もしないと 390px で「…お店で買える／もの。」と
+           「もの。」だけが2行目に落ちた */
+        lead={<Phrase parts={["島から持って帰れるものと、", "お店で買えるもの。"]} />}
         /* **数を言わない。** 「上の3つ」と書くと、1つ足した日から嘘になる。
-           どれが持って帰れてどれがまだかは、欄の札（無料／検討中）が言っている。
+           どれが持って帰れてどれがまだかは、欄の札（無料／審査中）が言っている。
            「無料のは落とせる」とも書かない——カードとキャラクターは、
            落とせる場所がこの面ではなく、それぞれの面のほうにある */
         /* **「その場で落とせる」とは言わない**（2026-10-13）。ステッカーは
            自分の面へ出たので、落とすのは押した先。ここで言えるのは
            「押した先で落とせる」まで */
-        say="ステッカーもカードも、押した先で落とせるよ。「検討中」のは、ほしい形を書いてって。"
+        /* **「検討中」を名指ししない**（2026-10-14）。その札を持っていた
+           カレンダーの欄を消したので、指す先が無くなった。ほしい形を書く窓は
+           いま SUZURI の欄の付箋だけなので、そちらを言う */
+        say="ステッカーもカードも、押した先で落とせるよ。ほしいグッズは、お店の欄に書いてって。"
       />
 
       <div className="gdbook">
@@ -254,38 +290,7 @@ export default function GoodsPage() {
           <p className="gd-note">グッズになるキャラクターは、これから決めます。</p>
         </Sec>
 
-        {/* ---- 4. カレンダー -------------------------------------------- */}
-        <Sec
-          id="calendar"
-          icon="calendar"
-          title="カレンダー"
-          tag="検討中"
-          /* **「どの絵がいいか押して」はもう言わない**（あやと 2026-10-12、#759。
-             イラストで行くと決まった）。言うのは、このカレンダーが何か——
-             1年ぶんの思い出が、月ごとに1枚ずつ載る——だけ。
-             「2026年の」と書かない（暦11・12月は 2025年の思い出）。
-             値段も寸法も書かない（`island-standards.md` 16章）。
-             仕組みの説明も1文字も置かない（同 6章） */
-          lead="この1年の思い出を、月ごとに1枚の絵に。"
-        >
-          <CalendarMonths />
-          {/* まだの月を**並べない・名指ししない**。言うのは「これから増える」だけ。
-              0か月のときは「ほか」が無いので言い方を変える。そろったら出さない */}
-          {CAL_LEFT > 0 && (
-            <p className="gd-note">
-              {CAL_SHOWN.length > 0
-                ? "ほかの月は、できたものから載せます。"
-                : "できた月から、ここに載せます。"}
-            </p>
-          )}
-          <Say
-            theme="goods-calendar"
-            title="ほかの絵を出す"
-            lead="こんな絵がいい、を一言でも。写真も貼れる"
-          />
-        </Sec>
-
-        {/* ---- 5. LINEスタンプ ------------------------------------------ */}
+        {/* ---- 4. LINEスタンプ ------------------------------------------ */}
         <Sec
           id="linestamp"
           icon="talk"
@@ -314,7 +319,7 @@ export default function GoodsPage() {
           />
         </Sec>
 
-        {/* ---- 6. SUZURI ------------------------------------------------ */}
+        {/* ---- 5. SUZURI ------------------------------------------------ */}
         <Sec
           id="suzuri"
           icon="shirt"
@@ -323,6 +328,12 @@ export default function GoodsPage() {
           lead={`ここだけ、島の外のお店です。${SUZURI.what}`}
         >
           {/* **外に出ることが分かる印を付ける**（`Icon` の `external`）。
+              **字は付けない**（あやと 2026-10-14「『お店でみる』などの文言は
+              消して」）。前はマスの下に「お店で見る」「ぜんぶ見る」を1行ずつ
+              置いていたが、**升目のマスは全部同じ動き**をするので、同じ字が
+              7回ならぶだけだった。島の外へ出ることは欄の一行（「ここだけ、
+              島の外のお店です」）と、題の右の印が言う。印は題に寄せる——
+              絵の上に載せると、商品の写真の一部に見える。
               新しいタブで開いて、こちらの窓への参照は渡さない
               （`noopener`。`noreferrer` で、どこから来たかも渡さない）。
               `prefetch` の見張り（`prefetch_selftest.mjs`）は `<Link>` を
@@ -339,11 +350,13 @@ export default function GoodsPage() {
               1枚ずつに厚みは付けない**（`docs/island-design.md` 3-3 の例外）。
 
               **いちばん前の1マスが店そのもの**（あやと 2026-10-13
-              「ぜんぶ見る → イギリスぶらら を先頭にして」）。住人の100人ぶんも
+              「ぜんぶ見る → イギリスぶらら を先頭にして」。題は 2026-10-14 に
+              「あやとの店」から「全部見る」へ）。住人の100人ぶんも
               ステッカーぶんもあちらに在るので、ここで数えずに店へ送る
               （数えると、1つ増えた日から嘘になる）。
               その次がトート——店でいちばん古いデザインで、新しい順だと
-              後ろに沈むが、**店の顔はこちら**（`content/goods.ts` の並びの注）。 */}
+              後ろに沈むが、**店の顔はこちら**（`content/goods.ts` の並びの注）。
+              3つ目がカレンダー（あやと 2026-10-14）。 */}
           <ul className="gd-shopgrid">
             <li>
               <a
@@ -360,11 +373,7 @@ export default function GoodsPage() {
                   height={SUZURI.shot.h}
                   loading="lazy"
                 />
-                <b>{SUZURI.cap}</b>
-                <span className="gd-get">
-                  <Icon name="external" size={16} />
-                  ぜんぶ見る
-                </span>
+                <ShopName name={SUZURI.cap} />
               </a>
             </li>
             {SHOP_GOODS.map((goods) => (
@@ -387,11 +396,7 @@ export default function GoodsPage() {
                     height={goods.shot.h}
                     loading="lazy"
                   />
-                  <b>{goods.name}</b>
-                  <span className="gd-get">
-                    <Icon name="external" size={16} />
-                    お店で見る
-                  </span>
+                  <ShopName name={goods.name} parts={goods.nameParts} />
                 </a>
               </li>
             ))}
@@ -400,7 +405,7 @@ export default function GoodsPage() {
 
               > こんなスズリグッズが欲しい！ を書けるように付箋作って
 
-              **ほかの3つと同じ `Say`（畳んだ付箋）にそろえる。** この面の中で
+              **LINEスタンプの欄と同じ `Say`（畳んだ付箋）にそろえる。** この面の中で
               「ほしい形を書く」の置き方が2通りあると、別の仕掛けに見える。
 
               **ここに品ぞろえ・値段・個数を1文字も足さない**（`content/goods.ts`
