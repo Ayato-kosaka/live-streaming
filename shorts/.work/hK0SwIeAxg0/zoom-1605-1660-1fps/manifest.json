@@ -1,0 +1,40 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "hK0SwIeAxg0__zoom-1605-1660-1fps",
+ "mode": "zoom",
+ "dest": "hK0SwIeAxg0/zoom-1605-1660-1fps",
+ "video": "hK0SwIeAxg0",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15j-zoom16-hk.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 14,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 2,
+  "channel_entries": 0,
+  "files": 22
+ },
+ "bytes": {
+  "plain": 3094513,
+  "tar_gz": 2986794,
+  "encrypted": 2986800
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2986800,
+   "sha256": "e9818e2c2bbfd3fda6559ae756eac27d455b28604b3380cbb42176c9ebf99828"
+  }
+ ],
+ "hmac_sha256": "4950516605faab34b27dbb1ec275b36028692513944a1294dbbaf56a4028a617",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38754517113",
+ "created_at": "2026-10-15T15:11:36+00:00"
+}
