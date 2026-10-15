@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Dxk4lRA1bSc__reference",
+ "mode": "reference",
+ "dest": "Dxk4lRA1bSc/reference",
+ "video": "Dxk4lRA1bSc",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 3,
+  "transcript_segments": 1,
+  "cuts": 2,
+  "channel_entries": 0,
+  "files": 16
+ },
+ "bytes": {
+  "plain": 497474,
+  "tar_gz": 470782,
+  "encrypted": 470784
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 470784,
+   "sha256": "cea6bea129304b23cd175b002b0184b6e9d734c1c19a15a846e43454a6f34f62"
+  }
+ ],
+ "hmac_sha256": "f3bcee8d55df32a9f1b97b9838e0e874f7c972be8b1e9cc14f5031f8009b4c8f",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:42:46+00:00"
+}
