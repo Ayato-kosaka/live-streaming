@@ -210,6 +210,10 @@ def fetch_channel(it: dict, d: Path, client: str) -> dict:
 
 def main() -> int:
     items = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["include"]
+    # **一覧（channel）は最後。** 1本ずつ引き直すので1チャンネル7分かかる（2026-10-15 に
+    # 実測 60本で412秒）。時間帯に掛かって途中で止めるなら、動画のほうを先に取っておく
+    order = {"archive": 0, "zoom": 1, "reference": 2, "channel": 3}
+    items.sort(key=lambda it: order.get(it["mode"], 9))
     media = Path(sys.argv[2])
     media.mkdir(parents=True, exist_ok=True)
     good: str | None = None

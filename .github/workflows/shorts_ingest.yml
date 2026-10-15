@@ -252,9 +252,20 @@ jobs:
       actions: write
     steps:
       - name: 受け渡しのキャッシュを消す
-        # 動画の実物を10GBの枠に置いたままにしない（ほかのワークフローのキャッシュが押し出される）
+        # 動画の実物を10GBの枠に置いたままにしない（ほかのワークフローのキャッシュが押し出される）。
+        # **自分の回のぶんだけでなく、もう終わった回のぶんも掃く。** 取り消した回は
+        # ここまで来ないので、2.2GB が残った（2026-10-15 に実測）
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/caches?key=shorts-media-$GITHUB_RUN_ID" \
-            > /dev/null && echo "消した" || echo "消すものが無かった"
+          gh api "repos/$GITHUB_REPOSITORY/actions/caches?key=shorts-media-&per_page=100" \
+            --jq '.actions_caches[] | "\(.id) \(.key)"' | while read -r id key; do
+            rid="${key#shorts-media-}"
+            st=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$rid" --jq .status 2>/dev/null || echo gone)
+            if [ "$rid" = "$GITHUB_RUN_ID" ] || [ "$st" = "completed" ] || [ "$st" = "gone" ]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/caches/$id" > /dev/null \
+                && echo "消した: $key（$st）"
+            else
+              echo "残す: $key（$st。まだ走っている回のもの）"
+            fi
+          done

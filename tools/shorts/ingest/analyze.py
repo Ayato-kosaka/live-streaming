@@ -32,10 +32,14 @@ from common import Stages, hms, now_iso, read_json, write_json  # noqa: E402
 # 大きさから決めた。Read は長辺 1568px・約115万画素に縮めて見せるので、1枚に
 # 20コマ（5×4）なら1コマあたり実効 約180×320、12コマ（4×3）なら約230×410 になる。
 # 配信の通し見は 5×4（200秒/枚）、ショートと zoom は字幕も読みたいので 4×3。
+# 配信の通しは枚数が多い（3時間半で63枚）ので JPEG を少し強く絞る（1本20MB の目安に収める）。
 PLAN = {
-    "archive": {"stats_fps": 5, "sheet_fps": 0.1, "long": 384, "grid": (5, 4), "gap": 1.0},
-    "reference": {"stats_fps": 30, "sheet_fps": 1, "long": 480, "grid": (4, 3), "gap": 0.3},
-    "zoom": {"stats_fps": 10, "sheet_fps": None, "long": 480, "grid": (4, 3), "gap": 0.3},
+    "archive": {"stats_fps": 5, "sheet_fps": 0.1, "long": 384, "grid": (5, 4), "gap": 1.0,
+                "q": 74},
+    "reference": {"stats_fps": 30, "sheet_fps": 1, "long": 480, "grid": (4, 3), "gap": 0.3,
+                  "q": 80},
+    "zoom": {"stats_fps": 10, "sheet_fps": None, "long": 480, "grid": (4, 3), "gap": 0.3,
+             "q": 80},
 }
 
 
@@ -236,7 +240,7 @@ def build_visual(it: dict, mdir: Path, out: Path, ctx: dict, work: Path) -> dict
     times = [offset + t for t in vp["frame_times"]]
     step = f"{1 / sheet_fps:g}s/frame" if sheet_fps < 1 else f"{sheet_fps:g} fps"
     sheets = make_sheets(vp["frames"], times, out / "sheets", grid=grid, tile=tile,
-                         title=f"{it.get('video')} {mode}", step_label=step)
+                         title=f"{it.get('video')} {mode}", step_label=step, quality=pl["q"])
     write_csv(out / "sheets.csv", sheets, ["file", "from_hms", "to_hms", "from", "to", "frames", "bytes"])
     shutil.rmtree(work / "_frames", ignore_errors=True)
     ctx.update(visual=rows, cuts=cuts, sheets=sheets, stats_fps=stats_fps,
