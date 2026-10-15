@@ -2,7 +2,7 @@
 # 暗号化したものだけを、依頼を push した作業枝の shorts/.work/<dest>/ に置く。
 #
 # 並んだ解析の job が同じ枝へ同時に push するので、断られたら
-# 枝の先を取り直して置き直す（2/4/8/16/32 秒あけて5回）。
+# 枝の先を取り直して置き直す（ばらつかせた間をあけて8回）。
 # rebase にしないのは、置き場が job ごとに別で、取り直して上に積めば済むから。
 #
 # **平文を置かないことをここでも見る。** sealed に manifest.json / key.enc /
@@ -30,7 +30,7 @@ git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 target="shorts/.work/$DEST"
 
-for i in 1 2 3 4 5; do
+for i in 1 2 3 4 5 6 7 8; do
   git fetch --quiet --depth=1 origin "$BRANCH"
   git checkout --quiet -B shorts-ingest-out FETCH_HEAD
   rm -rf "$target"
@@ -52,8 +52,11 @@ EOF
     echo "置いた: $target"
     exit 0
   fi
-  echo "push を断られた。$((2 ** i))秒あけて取り直す"
-  sleep $((2 ** i))
+  # 37本を12本ずつ並べると、同じ秒に何本も積みに来る。待ちを揃えると
+  # 揃ってまたぶつかるので、ばらつかせる
+  w=$(( (RANDOM % 8) + 2 * i ))
+  echo "push を断られた。${w}秒あけて取り直す"
+  sleep "$w"
 done
-echo "!! 5回とも push できなかった"
+echo "!! 8回とも push できなかった"
 exit 1
