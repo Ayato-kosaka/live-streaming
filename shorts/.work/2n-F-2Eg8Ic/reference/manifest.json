@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "2n-F-2Eg8Ic__reference",
+ "mode": "reference",
+ "dest": "2n-F-2Eg8Ic/reference",
+ "video": "2n-F-2Eg8Ic",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "skipped",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 1,
+  "cuts": 10,
+  "channel_entries": 0,
+  "files": 15
+ },
+ "bytes": {
+  "plain": 677150,
+  "tar_gz": 640158,
+  "encrypted": 640160
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 640160,
+   "sha256": "b01ed21fc84115160f7ced8a1d233a5045ede262766ec0e41d43054bf24a34c6"
+  }
+ ],
+ "hmac_sha256": "68727386cc9961813960eee55a3cc95393bc41ff7b68e750972da42e785a0c8c",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:40:28+00:00"
+}
