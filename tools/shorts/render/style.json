@@ -1,0 +1,63 @@
+{
+  "_note": "全ショートで使い回すテロップの様式。座標は 1080x1920 の画素。安全領域の出典は README.md の「安全領域」。",
+  "canvas": { "width": 1080, "height": 1920, "fps": 30 },
+  "fonts": {
+    "_note": "どちらも OFL。tools/shorts/render/fetch_fonts.sh が google/fonts から落とす",
+    "title": "MPLUSRounded1c-ExtraBold.ttf",
+    "caption": "MPLUSRounded1c-Black.ttf"
+  },
+  "safe": {
+    "_note": "UI に隠れない範囲。上はショートの上部タブ、下は説明文・チャンネル名、右はボタン列",
+    "top": 360,
+    "bottom": 1248,
+    "left": 120,
+    "right": 960,
+    "right_column_from_y": 840,
+    "right_column_x": 888
+  },
+  "title": {
+    "font": "title",
+    "size": 76,
+    "color": "#141414",
+    "bg": "#F9D342",
+    "pad_x": 32,
+    "pad_y": 18,
+    "radius": 28,
+    "line_gap": 10,
+    "max_width": 840,
+    "max_lines": 2,
+    "top": 380
+  },
+  "caption": {
+    "font": "caption",
+    "size": 66,
+    "color": "#FFFFFF",
+    "stroke": 7,
+    "stroke_color": "#000000",
+    "bg": "#000000",
+    "bg_alpha": 0.62,
+    "pad_x": 26,
+    "pad_y": 16,
+    "radius": 18,
+    "line_gap": 8,
+    "max_width": 696,
+    "max_lines": 2,
+    "center_y": 1000,
+    "hold_frames": 6
+  },
+  "audio": {
+    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」",
+    "narration_rms_dbfs": -16,
+    "bgm_rms_dbfs": -22,
+    "duck_db": -12,
+    "attack_s": 0.12,
+    "release_s": 0.35,
+    "bgm_fade_out_s": 1.2,
+    "source_db": -20
+  },
+  "encode": {
+    "crf": 20,
+    "preset": "medium",
+    "audio_bitrate": "192k"
+  }
+}
