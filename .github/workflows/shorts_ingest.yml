@@ -160,7 +160,9 @@ jobs:
 
   analyze:
     needs: [plan, fetch]
-    if: always() && needs.plan.result == 'success' && needs.plan.outputs.count != '0'
+    # fetch が落ちても走る（取れなかったものは「取れなかった」manifest を置く）。
+    # ただし回ごと取り消したときは走らない（`always()` だと取り消しても7本とも走った）
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
     name: ${{ matrix.key }}
     runs-on: ubuntu-latest
     timeout-minutes: 330
