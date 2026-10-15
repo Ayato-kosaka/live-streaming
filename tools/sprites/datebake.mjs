@@ -175,7 +175,14 @@ const sm = checkAgainstSitemap();
 if (!sm.ok) cannotCount(`sitemap.xml と一覧が合わない: ${sm.why || sm.missing.join(" ")}`);
 if (!PAGES.length) cannotCount(`${DIST_A} に面が1つも無い`);
 
-/** 面 → [{i, a, b}]。焼いた字が A と B で違ったところ */
+/**
+ * 面 → [{i, j, a, b}]。焼いた字が A と B で違ったところ。
+ *
+ * **B の側の番号（`j`）も持つ。** 画面が B の姿に組み替わる面があるので
+ * （`/next` は企画が「これから」から「もう行ってきた」へ移って、札が1枚
+ * 増え、主役の札がまるごと消える）、A の並びだけを足がかりにすると
+ * 位置が取れずに 2 で落ちる。そのときは B の並びで引き直す。
+ */
 const cand = new Map();
 let read = 0;
 let nCand = 0;
@@ -188,12 +195,12 @@ for (const p of PAGES) {
     // 字の数が変わる面もある（「いまここ」が出たり消えたり）。位置を合わせて拾う
     const m = align(a, b);
     const hits = [];
-    for (const [i, j] of m) if (a[i] !== b[j]) hits.push({ i, a: a[i], b: b[j] });
+    for (const [i, j] of m) if (a[i] !== b[j]) hits.push({ i, j, a: a[i], b: b[j] });
     if (hits.length) { cand.set(p, hits); nCand += hits.length; }
     continue;
   }
   const hits = [];
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) hits.push({ i, a: a[i], b: b[i] });
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) hits.push({ i, j: i, a: a[i], b: b[i] });
   if (hits.length) { cand.set(p, hits); nCand += hits.length; }
 }
 console.log(`\n見た面 ${read} / ${PAGES.length}（sitemap ${sm.locs}件・検索に出さない面 ${sm.noindex.length}）`);
@@ -320,9 +327,17 @@ for (const [p, hits] of cand) {
   const a = baked(DIST_A, p);
   const r = live.get(p) || [];
   const m = align(a, r);
+  /* **A の並びで取れなければ、B の並びで引き直す。** 画面が B の姿に
+     組み替わった面（`cand` の注の `/next`）では、A を足がかりにすると
+     主役の札ぶんだけずれて位置が取れない。ここで諦めると、
+     **数え直していたものが「測れなかった」になって 2 で落ちる。**
+     対照（`BREAK=noclock`）は A の姿のまま出るので A の並びで取れて、
+     焼いたままとして 1 で落ちる——**この逃がし口は対照を甘くしない。** */
+  const mb = align(baked(DIST_B, p) || [], r);
   for (const h of hits) {
     const j = m.get(h.i);
-    const got = j == null ? null : r[j];
+    const jb = mb.get(h.j);
+    const got = j != null ? r[j] : jb != null ? r[jb] : null;
     if (got === h.b) { ok++; console.log(`  ○ ${p}  「${h.a}」→「${got}」`); }
     else if (got === h.a) { frozen.push(`${p}  「${h.a}」のまま（この日は「${h.b}」）`); console.log(`  × ${p}  「${h.a}」のまま（この日は「${h.b}」）`); }
     else { lost.push(`${p} [${h.i}] 位置が取れなかった（画面は「${got}」）`); console.log(`  ? ${p} [${h.i}] 位置が取れなかった（画面は「${got}」）`); }
