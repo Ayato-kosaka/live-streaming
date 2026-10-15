@@ -52,12 +52,8 @@
  * 足は3本あるので、対照も3つ。1本ずつ当てて、**そのたび落ちること**を
  * 見てから本物を読む。1つでも素通りしたら、本物の数字は出さずに 2 で落ちる。
  */
-import { readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { fromRoot } from "./repo.mjs";
-
-const CSS = fromRoot("site/app/css/fonts.css");
-const FONTS = fromRoot("site/public/fonts");
+import { readFileSync } from "node:fs";
+import { CSS, faces, holdsSpace, isStrut } from "./fontfaces.mjs";
 
 /* 行の高さのための1本の上限。実測 692〜708B（空白＋詰め物1字）。
    表のぶんを見込んで 3KB まで。ここを超えたら、空白の束にほかの字が
@@ -67,40 +63,10 @@ const MAX_B = 3 * 1024;
    （上の見出し）。実測の 692B と 612B のあいだに置く。 */
 const MIN_B = 650;
 
-/** `fonts.css` を読んで、束を並べる。 */
-function faces(css) {
-  const out = [];
-  for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
-    const body = m[1];
-    const w = +(body.match(/font-weight:\s*(\d+)/) || [])[1];
-    const url = (body.match(/url\("([^"]+)"\)/) || [])[1];
-    const ur = (body.match(/unicode-range:\s*([^;]+);/) || [])[1];
-    if (!w || !url || !ur) continue;
-    const ranges = ur.split(",").map((r) => {
-      const [a, b] = r.trim().replace(/^U\+/i, "").split("-");
-      return [parseInt(a, 16), parseInt(b ?? a, 16)];
-    });
-    let bytes = null;
-    try { bytes = statSync(join(FONTS, url.replace("/fonts/", ""))).size; } catch { /* 焼いていない */ }
-    out.push({ w, url, ranges, bytes });
-  }
-  return out;
-}
-
-/* ブラウザが DOM に無いまま描く字。**空白**（行の高さの代表）と
-   **…**（`text-overflow: ellipsis` の三点）。`subset.py` の `STRUT` と同じ並び。 */
+/* ブラウザが DOM に無いまま描く字（`fontfaces.mjs` の `STRUT_CPS`）。
+   **空白**＝行の高さの代表、**…**＝`text-overflow: ellipsis` の三点。 */
 const SPACE = 0x20;
-const OWN = [0x20, 0x2026];
-const cover = (f) => {
-  const out = new Set();
-  for (const [a, b] of f.ranges) for (let c = a; c <= b && out.size < 4096; c++) out.add(c);
-  return out;
-};
-const holdsSpace = (f) => f.ranges.some(([a, b]) => a <= SPACE && SPACE <= b);
-const onlyOwn = (f) => {
-  const s = cover(f);
-  return s.size === OWN.length && OWN.every((c) => s.has(c));
-};
+const onlyOwn = isStrut;
 
 /**
  * 見張りの本体。落ちた理由を並べて返す（空なら通った）。
