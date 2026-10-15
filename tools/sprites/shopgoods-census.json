@@ -1,8 +1,81 @@
 {
  "_": "SUZURI（suzuri.jp/ayato_arigato）に在るデザインの台帳。tools/sprites/shopgoods_selftest.mjs が読む。手で書き換えない——取り直しかたは同じファイルの頭に書いてある",
- "takenAt": "2026-10-13",
+ "takenAt": "2026-10-14",
  "takenBy": "SUZURI API ワークフロー（suzuri_api.yml / command: materials）",
  "designs": [
+  {
+   "id": 21154518,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154517,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154516,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154515,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154514,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154513,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154512,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154511,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154510,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154509,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154508,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154506,
+   "title": "あやと 旅の思い出カレンダー 2027",
+   "published": true,
+   "route": "shop",
+   "note": "2026-10-14 の materials（run 38594639807）では非公開。2026-10-15 21:00 JST に公開する（#890）。この台帳は公開と同じ日に出る島に合わせて、公開した形で書いてある。21154508〜21154518 の題なし11件は同じ日に作った非公開のもの"
+  },
   {
    "id": 21142972,
    "title": "カサ・アヤトの住人 🐾",

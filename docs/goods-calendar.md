@@ -16,7 +16,10 @@
   最初は太い丸文字にふちと年月を付けていたが、悪目立ちした（あやと「絵画にサインしてる感じ。文字も絵になると邪魔にならない」）。
   次に2行を1行にした（あやと「フォントは良い感じ。1行にしたい」）。2行をそのままつなぎ、**読点・句点・空白は入れない。**
   4月だけ「トビリシにさよなら、アルメニアへ」と読点を入れる（あやとの指定）
-- `/goods` の「カレンダー」に、月のタブで並べている
+- できあがるまでは `/goods` の「カレンダー」の欄に月のタブで並べ、付箋で場面の注文を受けていた。
+  **出品した 2026-10-14 に欄ごと消して、付箋も閉じた**（あやと「カレンダー検討中の項目は削除して、付箋も閉じて」）。
+  いまは `/goods` の SUZURI の升目の3つ目（全部見る → トート → カレンダー）が入口。
+  焼いた絵（`site/public/goods/calendar/`）は SUZURI に上げる元と来年の見本として残してあり、面からは指していない
 
 **最初に「いいねで型を選ぶ」試作（イラスト／海外の風景／配信のスクショ）を出したが、
 あやとが見本の絵を作ってきて、イラストに決まった。** 来年は型選びから始めなくてよい。
@@ -31,9 +34,11 @@
 | 4 | **住人の見本を作る**（番号だけ・名前なし） | `tools/goods/calcast/sheet.py` |
 | 5 | **ChatGPT で描く。** 見本の絵（タッチ）と住人の見本を毎回添付。1枚ずつ頼む。候補は月3枚 | `/chatgpt-image`、頼みの文の形は `tools/goods/calcast/swap-prompt.txt` |
 | 6 | **1枚ずつ自分の目で見る**（下の 3） | |
-| 7 | 元絵を `tools/goods/cal-src/<MM>-a.png` に置いて焼く。一言は焼くときに重なる | `tools/goods/calbake.py`（一言の表は `SIGNS`） |
-| 8 | `/goods` に出してレビューを回す。選ばなかった候補は `tools/goods/cal-cands/` に残す | `/island-ship` |
-| 9 | SUZURI に上げる正方形を書き出す | `python3 tools/goods/calbake.py --print <置き場>` → `/suzuri` |
+| 7 | **8位以降も小さく隠して描く**（2026 で足した。図鑑に絵のある人を「ウォーリーをさがせ」の大きさで）。ChatGPT は絵ぜんぶを描き直すので、返ってきた絵は使わず、**足された住人の画素だけを決まった元絵へ移す** | `/chatgpt-image`、やり方と見比べは `tools/goods/cal-cands/README.md` の `hidden/` |
+| 8 | 元絵を `tools/goods/cal-src/<MM>-a.png` に置いて焼く。一言は焼くときに重なる | `tools/goods/calbake.py`（一言の表は `SIGNS`） |
+| 9 | 焼いた絵を並べてレビューを回す（2026 は `/goods` に欄を作って出した。出品の日に欄は畳む）。選ばなかった候補は `tools/goods/cal-cands/` に残す | `/island-ship` |
+| 10 | SUZURI に上げる正方形を書き出す | `python3 tools/goods/calbake.py --print <置き場>` → `/suzuri` |
+| 11 | `/goods` の SUZURI の升目に1マス足す（写真を焼く・`SHOP_GOODS` に1件・台帳を取り直す。トートの次に置く） | `tools/goods/shopgoods.py`、`site/content/goods.ts` の `SHOP_GOODS` の注 |
 
 ## 3. 絵を通す前に見ること
 

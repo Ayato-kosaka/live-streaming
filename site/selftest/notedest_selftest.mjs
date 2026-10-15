@@ -540,15 +540,24 @@ for (const d of DAYS) {
    そちらへ移った日に、**正しい実装のほうが落ちた。**
    見たいのは「窓がどこかに在るか」であって、1枚の面の名前ではないので、
    `app/goods/` の下の面をまとめて数える。**下に面を足しても、
-   そこへ宛先を移しても、この足は鳴り続ける。** */
+   そこへ宛先を移しても、この足は鳴り続ける。**
+
+   **見るのは、いま書ける宛先だけ**（2026-10-14）。カレンダー（`goods-calendar`）は
+   出品して欄ごと消し、宛先も畳んだ（あやと「カレンダー検討中の項目は削除して、
+   付箋も閉じて」）。畳んだ宛先は書けないので、棚から押して来た人が
+   「書く欄の無い面」に着いて困ることが無い。**貼られた付箋は掲示板の
+   畳んだ棚から読める**（`Notes.tsx` の `closedThemes`。北欧の国の宛先と同じ）。
+   畳んだ宛先を面に置いておくのは構わない（LINEスタンプがそう）——
+   置かないことも許す、というだけで、書ける宛先の足は前と同じに鳴る。 */
 const GOODS_PAGES = [...PINNED.keys()].filter((rel) => rel.startsWith("app/goods/"));
 if (GOODS_PAGES.length === 0) nothing("`app/goods/` の下に、宛先を決め打ちしている面が1つも無い");
 const onGoods = new Set(GOODS_PAGES.flatMap((rel) => [...PINNED.get(rel)]));
-const notOnGoods = goods.filter((t) => !onGoods.has(t.id));
+const openGoods = goods.filter((t) => isOpenTheme(t, new Date()));
+const notOnGoods = openGoods.filter((t) => !onGoods.has(t.id));
 check(
-  `グッズの宛先が全部 \`/goods\` の面に出ている（${goods.length}件 / 面 ${GOODS_PAGES.length}枚: ${GOODS_PAGES.join(" ")}）`,
-  notOnGoods.length === 0,
-  notOnGoods.map((t) => t.id).join(" "),
+  `グッズの書ける宛先が全部 \`/goods\` の面に出ている（${openGoods.length}件 / 畳んだ ${goods.length - openGoods.length}件は見ない / 面 ${GOODS_PAGES.length}枚: ${GOODS_PAGES.join(" ")}）`,
+  openGoods.length > 0 && notOnGoods.length === 0,
+  notOnGoods.map((t) => t.id).join(" ") || (openGoods.length === 0 ? "書ける宛先が0件" : ""),
 );
 
 /* **同じ宛先の窓を、2つの面に置かない。** 書いた人が、どちらに貼ったかを

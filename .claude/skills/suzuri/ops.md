@@ -232,3 +232,39 @@ inputs: {"command": "update", "args": "21116414 --price 300", "dry_run": "false"
   （作って、見本を表裏とも 1530px で取り、デザインごと消す）。見本は成果物 `suzuri-sheet`
 - フェイスタオルは吊るして使う。絵は左へ90°倒して右端へ寄せると、吊るしたとき字が読める向きになる
 - 付箋の題が他社の書名のとき（「地球の歩き方」）、商品名・本文・返信に使わない
+
+## 卓上カレンダー（2026-10-14・2027年版）
+
+**公式の API では作れない**（品目 733 desk-calendar を POST でも PUT でも 403）。画面の ✏️（お手入れ）が裏で送る
+GraphQL を、EC2 のページの中から送って組む。道具は `suzuri_calendar.py`、手順の全体は `docs/goods-calendar.md`。
+
+```bash
+# 刷る正方形12枚（calbake.py --print の出力）と text.json（title・description）を EC2 の <置き場> に置いてから
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && sudo -u ubuntu python3 suzuri_calendar.py build /home/ubuntu/suzuri/cal2') 900
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && sudo -u ubuntu python3 suzuri_calendar.py shots <デザインid> /home/ubuntu/suzuri/cal2') 400
+```
+
+- 1月の絵で**デザイン**を作り（題・本文・利益300・**非公開**）、2〜12月は**題の無い素材**として上げ、
+  `CreateProduct(itemId: 733, prints: 12面)` で一度に組む。2〜12月の素材は一覧に「題なし・非公開」で並ぶ
+- 型は 9140（white / 2027）の1つしかなく、作れば自動でそれになる。値段は 1,354円 ＋ トリブン 300円 = 1,654円
+- **非公開の商品の売り場（`/ayato_arigato/<id>/desk-calendar/2027/white`）は、持ち主のログインでも 404**。
+  出す前に見るのは見本の絵だけ
+- 見本の URL は署名に大きさが入っていて 400〜500px までしか取れない。`shots` は品目の型
+  （`item.productImageUrlTemplates`）に値を埋めて大きく取る。**`{lens2Adjustment}` は `.0.5893+0.0+0.0` の形**
+  （先頭に `.`）。JSON で渡すと黙って無視され、四辺の切れた見本が返る——**本物の絵が切れたと誤読しかけた**。
+  署名つきの 500px と画素で突き合わせて 0.0 になるのを確かめてある。ログインなしで開けて透かしも無いので、
+  島の `/goods` の商品写真にそのまま使える（`og.suzuri.jp` は透かし入り）
+- 面付け（`imposition_1-6` / `imposition_7-12`）と、`turn-over` `box-*` `print` `ring` などの角度は
+  SUZURI の見本写真（富士山の絵）で、こちらの絵は載らない。12か月が並ぶのを見るのは面付けの2枚
+
+### 決めた時刻に公開する
+
+```bash
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && sudo -u ubuntu python3 suzuri_ops.py publish <デザインid> --dry-run') 300   # 空打ち
+python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && sudo -u ubuntu python3 suzuri_ops.py publish <デザインid>') 300             # 本番
+```
+
+デザインの公開と、作ってある品目ぜんぶの公開を入れて、売り場を**ログインなしで**開いて 200 まで待つ。
+最後の行が `RESULT OK` なら出ている。**空打ちは同じ2つの要求を `published: false` のまま送る**ので、
+向こうが受け付けるかまでは確かめられる（中身は変わらない。変わったら NG を返す）。
+卓上カレンダーは12か月の絵が揃っていないと公開しない（画面の `hasAllDeskCalendarMonthImages` と同じ見張り）。

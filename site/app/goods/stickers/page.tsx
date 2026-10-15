@@ -98,7 +98,7 @@ export default function StickersPage() {
                 <img src="/sprites/signboard.webp" alt="" />
                 <span>
                   <b>あやとグッズ</b>
-                  <i>カード・キャラクター・カレンダー・LINEスタンプ・お店</i>
+                  <i>カード・キャラクター・LINEスタンプ・お店</i>
                 </span>
                 <Icon name="right" size={14} />
               </Link>
