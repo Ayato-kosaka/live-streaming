@@ -571,7 +571,15 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
 
       {hasBody(plan, 1) && (
         <div style={{ margin: "var(--sp-4) 0" }}>
-          <Fold title="どんなところなんだろう" lead={plan.place?.area ?? plan.tags.join(" / ")}>
+          {/* **畳みの題は、中身が何の話かで決める。** 企画はずっと「行く場所」
+              だったので「どんなところなんだろう」で足りていたが、配信の回そのものが
+              企画になると（`content/plans.ts` の `streamType`）、場所の話は1行も
+              入っていない。読む人の頭の中の問いに合わせる
+              （`docs/island-design.md` 5章の3）。 */}
+          <Fold
+            title={plan.streamType ? "どんな夜になるんだろう" : "どんなところなんだろう"}
+            lead={plan.place?.area ?? plan.tags.join(" / ")}
+          >
             <PlanBody plan={plan} from={1} />
           </Fold>
         </div>
