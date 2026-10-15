@@ -10,7 +10,7 @@
 | 素材 | 絵コンテが指す元動画の時刻を、前後に余白（区間 −2〜+3秒、1点なら −2〜+8秒）を付けて並べ、重なりはまとめて1本の依頼にする | `shorts_ingest` の `clips`（`tools/shorts/ingest/README.md`） | 区間ごとの mp4（元の縦横・fps・音）と `index.json`。手元で復号 |
 | 声 | 原稿を1文ずつ。数字・英字・外の言葉は**かなに直して渡し、字幕は原稿のまま** | `tools/shorts/voice/`（EC2 の Chrome で Fish Audio） | 1文1ファイルの wav と `lines.json`（長さ・聞き取り直した字） |
 | 編集指示書 | 企画の spec と素材の index と声の長さから組む。場面の差し替えは上書きファイルに理由つきで書く | `tools/shorts/plan/build_edit.py` | `edit_<案>.json`（人が直せる編集データ） |
-| 書き出し | YouTube 用（BGM 入り）と TikTok 用（BGM なし。曲は投稿の画面で付ける）を同じ画で | `tools/shorts/render/render.py` | mp4 と `plan.json`・音の stem・字なしの版 |
+| 書き出し | BGM を入れた1本（YouTube・TikTok で同じもの。曲はあやとが選ぶ。#909） | `tools/shorts/render/render.py` | mp4 と `plan.json`・音の stem・字なしの版 |
 | 機械の検査 | 13項目。顔は「人が見る」で出る。強調の字の言い直しは `text_dup` が落とす | `tools/shorts/qa/check.py` | 項目ごとの合否と数 |
 | **人の目の検査** | 下の 3 を全部。機械は「弱い画」を言い切れず、言葉の重なりも一部しか拾えない | 帯の絵 `tools/shorts/qa/strips.py`（下の 3） | 直しの一覧 → 書き出しに戻す |
 | 見せる | あやとだけが開ける場所に置く（推測できない URL でも公開と同じに扱う） | EC2 の Chrome で、あやとの Google ドライブへ | Gate 2 の提出（`gate.py submission --gate video --options …`） |
