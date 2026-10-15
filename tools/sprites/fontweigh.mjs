@@ -69,6 +69,27 @@ function walk(d, base = "") {
   return out;
 }
 
+/** 書き出した面の綴り（`/legends/nordic.html`）から、表の見出し（`legends/nordic`）へ。 */
+export const keyOf = (p) => p.replace(/\.html$/, "").replace(/^\//, "") || "index";
+
+/**
+ * **その書き出しに在る面ぜんぶ**を、表（`weights.json`）と同じ見出しで並べる。
+ * 書き出しが無ければ**空**（投げない。呼ぶ側が「0面を数えて合格」にしないこと）。
+ *
+ * `fontbudget_selftest.mjs` が「表に無い面が在るか」を見るのに使う。
+ * **あちらに歩き方を写さない**——写すと、こちらの飛ばし方を直した日に
+ * 向こうだけ古くなって、**新しい面を数えないまま緑**になる
+ * （`islepages.mjs` の26面と同じ形）。表を書くのはここなので、
+ * 「表に何が載るはずか」もここが答える。
+ *
+ * @param {string} [dist] 書き出したものの置き場
+ * @returns {string[]} `legends/nordic` のような見出し、並べ替え済み
+ */
+export function pageKeys(dist = DIST) {
+  if (!existsSync(dist)) return [];
+  return walk(dist).map(keyOf).sort();
+}
+
 /* その面に出る字を、太さごとに集める。
    隠れているもの（閉じた畳みの中・画面の外）も数える。**読む人は下まで送るし、
    畳みも開く。** いま描かれているものだけを数えると、束の切り分けが
@@ -187,7 +208,7 @@ async function one(path, slot) {
     await p.waitForTimeout(FAST ? 500 : 1200);
     const chars = await p.evaluate(COLLECT, NEAR);
     const bytes = [...got.values()].reduce((a, v) => a + v, 0);
-    const key = path.replace(/\.html$/, "").replace(/^\//, "") || "index";
+    const key = keyOf(path);
     out[key] = chars;
     paid[key] = { bytes, files: got.size };
     total += bytes;
