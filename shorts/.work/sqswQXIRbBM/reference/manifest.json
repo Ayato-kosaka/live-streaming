@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "sqswQXIRbBM__reference",
+ "mode": "reference",
+ "dest": "sqswQXIRbBM/reference",
+ "video": "sqswQXIRbBM",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 17,
+  "transcript_segments": 3,
+  "cuts": 12,
+  "channel_entries": 0,
+  "files": 19
+ },
+ "bytes": {
+  "plain": 1786799,
+  "tar_gz": 1723054,
+  "encrypted": 1723056
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1723056,
+   "sha256": "1f8ecaddcb82adba34bc34691f6e753cdf23bfbc9d4522a42afb2d803ac1556a"
+  }
+ ],
+ "hmac_sha256": "7b3356461bfd2f7eb22b3de885ba9dde518de50a3ce7f65310d6f134bfeebb59",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:40:35+00:00"
+}
