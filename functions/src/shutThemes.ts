@@ -42,6 +42,8 @@ export const SHUT_THEMES: Readonly<Record<string, number>> = {
   "georgia-bye": 1789138800000,
   /* 海外出発二周年 — 2026-09-12 00:00 JST から */
   "japan-2years": 1789138800000,
+  /* 10月の月末配信 — 2026-11-01 00:00 JST から */
+  "monthly-2026-10": 1793458800000,
   /* カレンダー — 畳んである（closed） */
   "goods-calendar": 0,
   /* LINEスタンプ — 畳んである（closed） */
