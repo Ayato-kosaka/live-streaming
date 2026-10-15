@@ -537,13 +537,26 @@ async function visit(p, base, path) {
   /* Esc を押して、**閉じるまで待つ。**
      閉じるのは React が描き直してからなので、決め打ちの待ちだと混んだ箱で
      「閉じない」に化ける（`MapZoom` は Esc の手当てを持っているのに、
-     load average 40 の回だけ7面で赤くなった。`docs/island-standards.md` §13）。 */
+     load average 40 の回だけ7面で赤くなった。`docs/island-standards.md` §13）。
+
+     **「節点が消えたか」で見ない。「まだダイアログか」で見る。**
+     React は開いた姿と閉じた姿が同じ札（どちらも `<div>`）なら、
+     **同じ DOM の節点を使い回して属性だけ書き替える**（`MapZoom` が
+     `div.mzoom-sheet` → `div.mzoom`）。消えるのを待つと、閉じているのに
+     「残っている・大きさもある」と読めて、**Esc が効いている7面が
+     赤くなっていた**（2026-10-15 の実測。これが2度目の同じ誤り）。
+     `role` / `aria-modal` / `<dialog open>` が落ちていれば、閉じている。 */
   const check = async (d) => {
     await p.keyboard.press("Escape");
     const closed = () =>
       p.evaluate((rk) => {
         const el = document.querySelector(`[data-rk="${rk}"]`);
         if (!el || !el.isConnected) return true;
+        const isDialog =
+          (el.getAttribute("role") || "").toLowerCase() === "dialog" ||
+          el.getAttribute("aria-modal") === "true" ||
+          (el.tagName === "DIALOG" && el.hasAttribute("open"));
+        if (!isDialog) return true;
         const cs = getComputedStyle(el);
         if (cs.display === "none" || cs.visibility === "hidden") return true;
         const r = el.getBoundingClientRect();
@@ -788,6 +801,9 @@ const FIXTURES = [
   ["/blind.html", ["わからない"]],
   ["/order.html", ["じゅんばん"]],
   ["/esc.html", ["とじこめ"]],
+  /* 閉じても**同じ節点が残る**ダイアログ（React の使い回し）。**拾ってはいけない。**
+     消えるのを待つ測りかただと、Esc の効いている `MapZoom` の7面が赤くなる */
+  ["/escswap.html", []],
   ["/noname.html", ["なまえ"]],
   ["/badalt.html", ["え"]],
   ["/skiphead.html", ["みだし"]],

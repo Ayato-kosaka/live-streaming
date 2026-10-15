@@ -150,9 +150,13 @@ export default function StreamsPage() {
                     ))}
                   </div>
                 </Fold>
-                {/* 5つの型ぶんを画面に入った時点で先読みしない。指が乗ってから読む */}
+                {/* 5つの型ぶんを画面に入った時点で先読みしない。指が乗ってから読む。
+                    **札に型の名前を入れる。** 「この型だけ見る」だと5枚とも
+                    同じ字で、読み上げでも Tab でも、どの型へ行く札か分からない
+                    （`docs/island-misses.md` #262）。「この」が指している屋根は、
+                    畳みを閉じれば目でも追えない。 */}
                 <Link className="ty-go" href={`/streams/${t.slug}`} prefetch={false}>
-                  この型だけ見る
+                  {t.name}だけ見る
                   <Icon name="right" size={15} />
                 </Link>
               </div>
