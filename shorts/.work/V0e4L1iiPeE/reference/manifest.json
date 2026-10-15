@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "V0e4L1iiPeE__reference",
+ "mode": "reference",
+ "dest": "V0e4L1iiPeE/reference",
+ "video": "V0e4L1iiPeE",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 10,
+  "transcript_segments": 1,
+  "cuts": 9,
+  "channel_entries": 0,
+  "files": 16
+ },
+ "bytes": {
+  "plain": 480815,
+  "tar_gz": 453358,
+  "encrypted": 453360
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 453360,
+   "sha256": "05e9e684f47b66630e83a5fdcc824b3febceddbff4b21bc46629753a653fa246"
+  }
+ ],
+ "hmac_sha256": "4b3a80b812d9834133168e1adb77a7999029a0052132a1a6e321d2f15aa737e8",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:42:51+00:00"
+}
