@@ -24,6 +24,11 @@ name: ショートの材料を作る
 # 取ったものは Actions のキャッシュで解析の job へ渡し、最後に消す。
 # artifact にしないのは、公開リポジトリの artifact は誰でも落とせるから
 # （他人のショートの実物をそこに置かない）。
+#
+# **clips だけは材料ではなく編集の素材**（頼んだ区間ごとの mp4。元の縦横・fps・音つき）。
+# 区間ごとに取らず、配信を1本まるごと元の画質で取ってから、解析の job で1コマ単位に
+# 切る（区間取りは頭がキーフレームに寄り、配信の何秒から始まるかが確かめられない）。
+# 数百MB になるので、暗号文は 45MB ずつに切って置く（seal.py）。
 
 on:
   push:
@@ -33,16 +38,16 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "archive / reference / zoom / channel"
+        description: "archive / reference / zoom / channel / clips"
         required: true
         type: choice
-        options: [archive, reference, zoom, channel]
+        options: [archive, reference, zoom, channel, clips]
         default: archive
       videos:
         description: "動画ID（channel のときは @ハンドル か UC…）。カンマ区切り"
         required: true
       range:
-        description: "zoom の区間（例 0:12:00-0:14:00）"
+        description: "zoom / clips の区間（例 0:12:00-0:14:00。clips はカンマ区切りで何区間でも）"
         required: false
         default: ""
       fps:
@@ -189,9 +194,10 @@ jobs:
           sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
           ffmpeg -version > /dev/null
           python3 -m pip install --quiet numpy pillow
-          if [ "$MODE" != "zoom" ]; then
-            python3 -m pip install --quiet "faster-whisper==1.2.1"
-          fi
+          # whisper を使うのは archive と reference だけ（zoom と clips は書き起こさない）
+          case "$MODE" in
+            archive|reference) python3 -m pip install --quiet "faster-whisper==1.2.1" ;;
+          esac
 
       # whisper のモデル（large-v3-turbo で 1.6GB）を毎回 HF から落とさない
       - name: whisper のモデル

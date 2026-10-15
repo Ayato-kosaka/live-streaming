@@ -15,8 +15,8 @@
 
 | 関所 | AI が出すもの | あやとが書くもの | 後段が止まるところ |
 | --- | --- | --- | --- |
-| Gate 1 企画 | 3案（A/B/C）の原稿・絵コンテ | `/approve plan p2 B` | 本編集の前 |
-| Gate 2 完成動画 | mp4・投稿タイトル・説明文 | `/approve video v3` | 投稿の前 |
+| Gate 1 企画 | 3案（A/B/C）の原稿・絵コンテ | `/approve plan p2 B`（3案とも作るなら `全部`） | 本編集の前 |
+| Gate 2 完成動画 | mp4・投稿タイトル・説明文（案ごとに作ったなら、案の数だけ） | `/approve video v3`（案ごとなら `B`・`B C`・`全部`） | 投稿の前 |
 | Gate 3 投稿 | — | — | 投稿の直前。**Gate 2 で承認したその版だけ**。1バイトでも変われば止まる |
 
 流れ:
@@ -31,7 +31,9 @@
 | 書くこと | 例 |
 | --- | --- |
 | 企画を承認（案を1つ選ぶ） | `/approve plan p2 B` |
+| 企画を承認（3案とも作る） | `/approve plan p2 全部`（`all` `ぜんぶ` `全` `全案` `すべて` でも同じ。`A C` のような2案は数えない） |
 | 完成動画を承認 | `/approve video v3` |
+| 案ごとの動画から、出すものを選ぶ | `/approve video v3 B`・いくつかなら `/approve video v3 B C`・全部なら `/approve video v3 全部` |
 | 差し戻す | `/reject video v3 音が大きい` |
 | 直してほしい点を伝える | `/revise 冒頭をもっと短く`（版を書かなければ、いちばん新しい提出への依頼） |
 | 版を名指しで直しを頼む | `/revise video v3 冒頭をもっと短く` |
@@ -42,7 +44,16 @@
 - 大文字小文字（自動で `/Approve` になっても通る）
 - 日本語の言いかた: `/承認` `/却下` `/差し戻し` `/修正` `/直して`、`企画` `動画`
 - 版は数字だけでもよい（`/承認 企画 2 B` は `p2`）。案は `B案` `案B` でもよい
+- 動画の案は `B,C` `B・C` `B、C` でもよい
 - 1行目だけが命令。2行目から下は自由に書いてよい
+- **案を選ぶ承認（企画・案ごとの動画）は、1行目に案だけを書く。** ひとことは2行目から。
+  1行目に案でない字があると数えない（`/approve video v3 B a nice one` の `a` を案 A と読んで、
+  承認を広げないため）。案の無い動画の承認は、いままでどおり1行目に書き足してよい
+
+**案ごとの動画**（企画を `全部` で承認して、案の数だけ作った動画）は、出す案を書かないと数えない。
+案を書かない `/approve video v3` は「どの案があるか」を添えて断る。出せるのは**企画で承認した案だけ**
+（企画を `B` で承認したなら `B` だけ。`全部` なら企画の案はどれでも）。
+同じ版をもう一度承認すると、**あとのほうに置き換わる**（足したいときは、出す案を全部1行に書く）。
 
 **承認のコメントは書き換えない。** 書き換えたコメントは数えない（あとから書き換えても、
 その承認は消える）。間違えたら新しいコメントで書き直す。
@@ -65,6 +76,8 @@
 # 版は issue のコメントを読んで採番する（p1, p2, … / v1, v2, …）
 python3 tools/shorts/gate.py submission --issue 950 --gate plan --options A,B,C work/plan.md
 python3 tools/shorts/gate.py submission --issue 950 --gate video out/short.mp4 out/post.json
+# 案ごとに作った動画は、まとめて1つの版で出し、案を並べる（Gate 2 で出すものを選んでもらう）
+python3 tools/shorts/gate.py submission --issue 950 --gate video --options A,B,C out/A.mp4 out/A.post.json …
 ```
 
 Python から:
@@ -90,9 +103,16 @@ python3 tools/shorts/gate.py require --issue 950 --gate plan  --files work/plan.
 python3 tools/shorts/gate.py require --issue 950 --gate video --files out/short.mp4 out/post.json
 ```
 
-終了コード **0=通った**（承認の中身を JSON で出す。企画なら選ばれた案 `option`）/
+終了コード **0=通った**（承認の中身を JSON で出す）/
 **1=止めた**（理由を1行）/ **2=読めなかった**（GitHub に届かない・引数が足りない）。
 **0 のときだけ進む。** 2 を「たぶん大丈夫」と読まない。
+
+JSON の `options` が、**作ってよい・出してよい案の並び**。後段はここに並んだ案だけを扱う。
+
+| 関所 | `option` | `options` |
+| --- | --- | --- |
+| 企画 | 選ばれた案（`B`）か、全部なら `ALL`（前からの形のまま） | 作ってよい案（`["B"]`、全部なら `["A","B","C"]`） |
+| 動画 | `null` | 出してよい案（`["B","C"]`）。案の無い動画なら `null`（1本だけ） |
 
 ```python
 d = gate.require_approval(950, "video", gate.bundle(paths)["sha256"])   # 止まれば gate.Refused
@@ -111,6 +131,8 @@ d = gate.require_approval(950, "video", gate.bundle(paths)["sha256"])   # 止ま
 ```
 
 対象 issue・関所・版・sha256・選んだ案・承認者・元コメントの id と URL・時刻が入る。
+企画を全部で承認したら `"option":"ALL"`。案ごとの動画の承認には `"options":["B","C"]`（出してよい案）が
+足される。企画の記録と、案の無い動画の記録の形は前と同じ（前に書いた記録もそのまま導き直せる）。
 数えなかったときは `<!-- shorts-gate-refused {"reason":…} -->` で返す（後段はこれを読まない）。
 
 ## 守れること
@@ -128,6 +150,9 @@ d = gate.require_approval(950, "video", gate.bundle(paths)["sha256"])   # 止ま
 - 外の人の偽の提出で、本物の版を「古い版」にされない
 - **差し戻しを消して承認を生き返らせる、を止める。** 承認のあとに差し戻し・直しの依頼の
   コメントがあれば、記録が無くても・書き換えられていても止まる（止まる向きに倒す）
+- **案ごとの動画で、企画で選ばなかった案は出せない。** 動画を承認するときと、後段が確かめるときの両方で見る
+  （動画のあとで企画の承認が別の案に変わっても止まる）。記録の「出してよい案」を水増ししても、
+  元のコメントから導き直すので通らない
 
 ## 守れないこと
 
@@ -162,14 +187,14 @@ d = gate.require_approval(950, "video", gate.bundle(paths)["sha256"])   # 止ま
 ## 見張り
 
 ```bash
-python3 tools/shorts/gate_selftest.py              # 足71件 ＋ 守りを1本ずつ外す対照20通り
+python3 tools/shorts/gate_selftest.py              # 足を全部 ＋ 守りを1本ずつ外す対照
 python3 tools/shorts/gate_selftest.py --no-drill   # 足だけ
 BREAK=sha python3 tools/shorts/gate_selftest.py    # 守りを1本外す（sha の足だけ落ちる）
 ```
 
 終了コード 0=通った / 1=落ちた / 2=実物の形が読めない・対照が外れた。
 対照は**何も外さない子が同じ件数を見て0本落とす**ことを先に確かめ、それから
-`BREAK=` を20通り当てて、**外した守りの足だけ**が落ちることを見る。守りの表は
+`BREAK=` を全部当てて、**外した守りの足だけ**が落ちることを見る（件数は回したときに出る）。守りの表は
 `gate_selftest.py` の頭にある。守りを足したら、`BREAKS` と足を1本ずつ足す。
 
 ## 本番で確かめる手順（master に入ったあと）

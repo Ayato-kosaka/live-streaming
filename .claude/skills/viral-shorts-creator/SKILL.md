@@ -86,6 +86,7 @@ python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> s
 3. 札 `待ち-あやと` を付け、`call_ayato.yml` で通知する（`ask-ayato` スキル。**自分のアカウントの @ は飛ばない**）
 4. **承認が来るまで本編集に進まない。** 待つあいだは別の段（取り込み・調べ）を進める
 5. `/revise` が来たら、直して次の版（p2）として出し直す。前の版の承認は効かない
+6. 企画の承認は `全部` もある（3案とも作る）。そのときの Gate 2 は3本を**1つの提出**にまとめ（`gate.py submission --gate video --options A,B,C …`）、あやとが `/approve video v1 B` で出すものを選ぶ（`B C`・`全部` も可。**1行目は案だけ**）。後段は `gate.py require` の `options` に並んだ案だけを扱う
 
 ## 6. 学びの置き場
 

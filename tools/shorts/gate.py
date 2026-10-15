@@ -7,6 +7,7 @@
 
     # 提出コメントの機械可読ブロックを作る（版は issue を読んで採番する）
     python3 tools/shorts/gate.py submission --issue 950 --gate plan --options A,B,C work/plan.md
+    python3 tools/shorts/gate.py submission --issue 950 --gate video --options A,B,C out/*.mp4 …  # 案ごとの動画
     python3 tools/shorts/gate.py sha256 out/v3.mp4 out/v3.post.json   # 提出物の sha256
 
     # ワークフロー（.github/workflows/shorts_gate.yml）から
@@ -20,8 +21,8 @@
 
 | 関所 | 何を承認するか | 後段がここで止まる |
 | --- | --- | --- |
-| Gate 1 | 企画（3案から1案）`/approve plan p2 B` | 本編集の前 |
-| Gate 2 | 完成動画と投稿文 `/approve video v3` | 投稿の前 |
+| Gate 1 | 企画（3案から1案、または全部）`/approve plan p2 B`・`/approve plan p2 全部` | 本編集の前 |
+| Gate 2 | 完成動画と投稿文 `/approve video v3`（案ごとの動画なら `B`・`B C`・`全部`） | 投稿の前 |
 | Gate 3 | Gate 2 で承認された**その版だけ**を投稿する | 投稿の直前（sha256 が1バイトでも違えば止まる） |
 
 ## 見分けの肝: 著者の名前では分からない
@@ -45,7 +46,8 @@ AI のコメントも `user.login` は `Ayato-kosaka`、`author_association` は
 
 - 元の人間のコメントが**まだ在り**、**書き換えられておらず**（`updated_at == created_at`）、
   いまの基準で**同じ判定を通る**こと
-- 記録の版・sha256・案・承認者・元コメントの id が、導き直したものと一致すること
+- 記録の版・sha256・案（動画は出してよい案の並びも）・承認者・元コメントの id が、
+  導き直したものと一致すること
 - 承認された版が、その関所の**いちばん新しい提出**のままであること
 - 承認のあとに、差し戻し・直しの依頼・読めない記録が**無い**こと
   （差し戻しの記録を消したり書き換えたりして承認を生き返らせる、を止める）
@@ -110,8 +112,14 @@ CMD_WORDS = {
 }
 GATE_WORDS = {"plan": "plan", "企画": "plan", "video": "video", "動画": "video"}
 
-# 記録と、導き直した判定を突き合わせる欄。時刻と URL は比べない（同じものを指す別の書きかた）
-MATCH_KEYS = ("kind", "gate", "version", "sha256", "option", "submission_id",
+# 「全部」の印。企画で3案とも作る・動画で全部の案を出す、を1語で書けるように（#926）。
+# 記録には `ALL` と書く（案の字は A〜Z の1文字なので、ぶつからない）
+ALL = "ALL"
+ALL_WORDS = frozenset({"all", "全部", "ぜんぶ", "全", "全案", "すべて", "全て"})
+
+# 記録と、導き直した判定を突き合わせる欄。時刻と URL は比べない（同じものを指す別の書きかた）。
+# `options` は動画の記録にだけある（企画の記録の形は変えない。前に書いた記録も導き直せるように）
+MATCH_KEYS = ("kind", "gate", "version", "sha256", "option", "options", "submission_id",
               "approver", "comment_id", "issue")
 
 
@@ -136,7 +144,9 @@ class Command:
     kind: str                      # approve / reject / revise
     gate: str | None = None
     version: str | None = None
-    option: str | None = None
+    option: str | None = None      # 企画の案（1文字か ALL）
+    options: list = field(default_factory=list)   # 1行目に書かれた案（書かれた順。ALL も入りうる）
+    extra: bool = False            # 1行目の案のうしろに、案でない字がある
     error: str = ""                # 書式が読めないときの理由の名前
 
 
@@ -161,6 +171,9 @@ class Decision:
     gate: str = ""
     version: str = ""
     option: str | None = None
+    # 承認された案の並び。企画は作ってよい案（ALL なら提出の案ぜんぶ）、動画は出してよい案。
+    # 案の無い動画の提出なら None（いままでどおり1本）
+    options: list | None = None
     sha256: str = ""
     submission_id: int = 0
     submission_url: str = ""
@@ -278,6 +291,36 @@ def _option_ok(option: str, sub: Sub) -> bool:
     return option in (sub.options or [])
 
 
+def _choice_given(options: list, sub: Sub) -> bool:
+    """案ごとの動画（提出に options がある）なら、どれを出すかが書いてある。
+    案を書かない `/approve video v1` を「全部」と読まない。出す案は人が決める。"""
+    return bool(options) or sub.options is None
+
+
+def _line_clean(cmd: "Command") -> bool:
+    """案を選ぶ承認（企画・案ごとの動画）の1行目が、案だけでできている。
+    `/approve video v1 B a nice one` の `a` を案 A と読んで、承認を黙って広げない。
+    ひとことは2行目から書ける。"""
+    return not cmd.extra
+
+
+def _one_plan_option(cmd: "Command") -> bool:
+    """企画の承認は案1つか全部。`/approve plan p1 A C` を、A だけに黙って縮めない。"""
+    return len(set(cmd.options)) <= 1
+
+
+def _plan_covers(plan: "Decision | None", option: str) -> bool:
+    """動画の案が、いま有効な企画の承認に入っている（企画が `全部` なら企画の案はどれも入る）。
+    企画で選ばなかった案の動画を、動画の承認ひとつで出させない。"""
+    return plan is not None and option in (plan.options or [])
+
+
+def _video_options_ok(opts) -> bool:
+    """動画の提出の案の並び。無い（案ごとでない動画）か、企画と同じ形（A〜Z の1文字・重ならない）。
+    `ALL` や重なった字を案として並べると、何を承認したかが読めなくなる。"""
+    return opts is None or _options_valid(opts)
+
+
 def _manifest_ok(files: list, sha: str) -> bool:
     return manifest_sha(files) == sha
 
@@ -336,13 +379,17 @@ def _no_later_objection(comments: list[dict], d: Decision, gate: str,
     return True
 
 
+def _approved_plan(comments: list[dict], approvers: list[str]) -> "Decision | None":
+    """いまの最新の企画の、有効な承認。無ければ None。動画の案が企画に入っているかを見るのに使う。"""
+    try:
+        return evaluate(comments, "plan", approvers)
+    except Refused:
+        return None
+
+
 def _plan_approved(comments: list[dict], approvers: list[str]) -> bool:
     """企画が、いまの最新の版で承認されている。動画は企画の承認のあとでないと承認しない。"""
-    try:
-        evaluate(comments, "plan", approvers)
-        return True
-    except Refused:
-        return False
+    return _approved_plan(comments, approvers) is not None
 
 
 # ---------------------------------------------------------------- 機械可読ブロック
@@ -435,6 +482,11 @@ def submission_block(gate: str, version: str, files: list,
         if not _options_valid(opts):
             raise ValueError(f"案は A〜Z の1文字で、重ならないこと: {opts}")
         data["options"] = list(opts)
+    elif options is not None:
+        # 案ごとに作った動画（企画を「全部」で承認したとき）。どれを出すかは Gate 2 で選ぶ
+        if not _options_valid(options):
+            raise ValueError(f"案は A〜Z の1文字で、重ならないこと: {options}")
+        data["options"] = list(options)
     return dump_block(SUBMISSION_TAG, data)
 
 
@@ -470,6 +522,8 @@ def parse_submission(c: dict) -> Sub | None:
         sub.broken = "sha256 が files の中身と合いません"
     elif gate == "plan" and not _options_valid(sub.options):
         sub.broken = "案の並び（options）が読めません"
+    elif gate == "video" and not _video_options_ok(sub.options):
+        sub.broken = "案の並び（options）が読めません"
     return sub
 
 
@@ -502,6 +556,23 @@ def _version(gate: str, tok: str) -> str | None:
 def _option(tok: str) -> str | None:
     t = tok.replace("案", "").strip().upper()
     return t if re.fullmatch(r"[A-Z]", t) else None
+
+
+def _choice(tok: str) -> str | None:
+    """案1つ、または「全部」（`ALL`）。"""
+    return ALL if tok.strip().lower() in ALL_WORDS else _option(tok)
+
+
+def _choices(toks: list[str]) -> tuple[list[str], bool]:
+    """版のうしろの案と、「案でない字が残ったか」。案でない字が出たらそこで読むのをやめる。
+    `B,C` `B・C` `B、C` `B ・ C` も分けて読む（区切りだけの字は飛ばす）。"""
+    out: list[str] = []
+    for tok in toks:
+        got = [_choice(p) for p in re.split(r"[,、・]", tok) if p]
+        if None in got:
+            return out, True
+        out += got
+    return out, False
 
 
 def parse_command(body: str) -> Command | None:
@@ -541,8 +612,12 @@ def parse_command(body: str) -> Command | None:
     if cmd.version is None:
         cmd.error = "bad_version"
         return cmd
+    if kind == "approve":
+        # 案が2つ以上・案でない字が残った、はここでは咎めない（judge が断る。守りを1本ずつ外せるように）。
+        # 案の無い動画の提出なら、いままでどおり読み流す
+        cmd.options, cmd.extra = _choices(rest[2:])
     if kind == "approve" and gate == "plan":
-        cmd.option = _option(rest[2]) if len(rest) >= 3 else None
+        cmd.option = cmd.options[0] if cmd.options else None
         if cmd.option is None:
             cmd.error = "no_option"
     return cmd
@@ -608,22 +683,50 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
         return no("submission_edited", version=cmd.version)
     if target.broken:
         return no("submission_broken", version=cmd.version, why=target.broken)
-    if cmd.kind == "approve":
-        if cmd.gate == "plan" and not _option_ok(cmd.option or "", target):
+    chosen: list[str] | None = None
+    if cmd.kind == "approve" and cmd.gate == "plan":
+        if not _line_clean(cmd):
+            return no("extra_text", version=cmd.version)
+        if not _one_plan_option(cmd):
+            return no("plan_multi", version=cmd.version)
+        if cmd.option != ALL and not _option_ok(cmd.option or "", target):
             return no("bad_option", version=cmd.version, option=cmd.option,
                       options="・".join(target.options or []))
-        if cmd.gate == "video" and not _plan_approved(prior, approvers):
+        chosen = sorted(target.options or []) if cmd.option == ALL else [cmd.option]
+    if cmd.kind == "approve" and cmd.gate == "video":
+        if not _plan_approved(prior, approvers):
             return no("plan_first")
+        if not _choice_given(cmd.options, target):
+            return no("choose_option", version=cmd.version,
+                      options="・".join(target.options or []))
+        if target.options is not None:
+            if not _line_clean(cmd):
+                return no("extra_text", version=cmd.version)
+            chosen = sorted(set(target.options if ALL in cmd.options else cmd.options))
+            bad = next((o for o in chosen if not _option_ok(o, target)), None)
+            if bad is not None:
+                return no("bad_option", version=cmd.version, option=bad,
+                          options="・".join(target.options))
+            plan = _approved_plan(prior, approvers)
+            miss = [o for o in chosen if not _plan_covers(plan, o)]
+            if miss:
+                return no("not_in_plan", version=cmd.version, **_cover_detail(miss, plan))
 
     return Decision(
         ok=True, kind=cmd.kind, gate=cmd.gate, version=cmd.version,
         option=cmd.option if (cmd.kind == "approve" and cmd.gate == "plan") else None,
+        options=chosen,
         sha256=target.sha256, submission_id=_cid(target.comment),
         submission_url=str(target.comment.get("html_url") or ""),
         approver=_login(c), approver_id=int((c.get("user") or {}).get("id") or 0),
         comment_id=_cid(c), comment_url=str(c.get("html_url") or ""),
         comment_created_at=str(c.get("created_at") or ""), issue=_issue_number(c),
     )
+
+
+def _cover_detail(miss: list[str], plan: Decision | None) -> dict:
+    return {"option": "・".join(miss), "plan": plan.version if plan else "",
+            "covered": "・".join(plan.options or []) if plan else ""}
 
 
 def records(comments: list[dict]) -> list[tuple[dict, dict]]:
@@ -694,6 +797,12 @@ def evaluate(comments: list[dict], gate: str, approvers: list[str]) -> Decision:
         raise Refused("objection", gate=gate, version=d.version)
     if gate == "video" and not _plan_approved(comments, approvers):
         raise Refused("plan_first", gate=gate)
+    if gate == "video" and d.options is not None:
+        # 動画を承認したあとで企画の承認が別の案に変わっていたら、出す前に止める
+        plan = _approved_plan(comments, approvers)
+        miss = [o for o in d.options if not _plan_covers(plan, o)]
+        if miss:
+            raise Refused("not_in_plan", gate=gate, version=d.version, **_cover_detail(miss, plan))
     return d
 
 
@@ -732,8 +841,21 @@ def explain(reason: str, d: dict) -> str:
         "edited": "書き換えたコメントは数えません。新しいコメントで書き直してください。",
         "syntax": f"書式が読めませんでした。例: {EXAMPLES}",
         "bad_version": "版が読めませんでした。企画は p（例 `p2`）、動画は v（例 `v3`）で始まります。",
-        "no_option": f"案を1つ選んでください。例: `/approve plan {v or 'p2'} B`",
+        "no_option": (f"案を1つ選んでください（全部作るなら `全部`）。"
+                      f"例: `/approve plan {v or 'p2'} B`・`/approve plan {v or 'p2'} 全部`"),
         "bad_option": f"{d.get('option')} は {v} の案にありません（{d.get('options')} から選んでください）。",
+        "extra_text": (f"1行目は案だけを書いてください（例 `"
+                       + (f"/approve video {v or 'v1'} B C" if d.get("gate") == "video"
+                          else f"/approve plan {v or 'p1'} B")
+                       + "`）。ひとことは2行目から書けます。"),
+        "plan_multi": (f"企画の承認は、案1つか全部です"
+                       f"（例 `/approve plan {v or 'p1'} B`・`/approve plan {v or 'p1'} 全部`）。"),
+        "choose_option": (f"{v} は案ごとに作った動画です（{d.get('options')}）。出す案を書いてください。"
+                          f"例: `/approve video {v or 'v3'} B`・いくつかなら `/approve video {v or 'v3'} B C`"
+                          f"・全部なら `/approve video {v or 'v3'} 全部`"),
+        "not_in_plan": (f"{d.get('option')} は、企画{' ' + d['plan'] + ' ' if d.get('plan') else ''}で"
+                        f"承認した案（{d.get('covered') or 'なし'}）に入っていません。"
+                        f"{d.get('covered') or '企画で承認した案'} から選ぶか、先に企画を承認し直してください。"),
         "not_found": f"{v} の提出が見つかりません。いまの最新は {d.get('latest')} です。",
         "duplicate": f"{v} の提出が2つあります。出し直しを待ってください。",
         "stale": f"{v} は古い版です。最新の {d.get('latest')} を見てから書いてください。",
@@ -761,13 +883,39 @@ def explain(reason: str, d: dict) -> str:
 
 
 def record_fields(d: Decision) -> dict:
-    return {
+    out = {
         "schema": SCHEMA, "kind": d.kind, "gate": d.gate, "version": d.version,
         "sha256": d.sha256, "option": d.option, "submission_id": d.submission_id,
         "approver": d.approver, "approver_id": d.approver_id,
         "comment_id": d.comment_id, "comment_url": d.comment_url,
         "comment_created_at": d.comment_created_at, "issue": d.issue,
     }
+    # 出してよい案は動画の記録にだけ書く。企画は `option`（1文字か ALL）で足り、
+    # 案の無い動画の記録も、いままでと同じ形のままにする
+    if d.gate == "video" and d.options is not None:
+        out["options"] = list(d.options)
+    return out
+
+
+def _chosen_text(d: Decision) -> str:
+    """記録の見出しに出す、選ばれた案。案の無いものは空。"""
+    if d.gate == "plan" and d.option == ALL:
+        return f"全部の案（{'・'.join(d.options or [])}）"
+    if d.gate == "plan" and d.option:
+        return f"{d.option}案"
+    if d.options:
+        return "・".join(f"{o}案" for o in d.options)
+    return ""
+
+
+# `require` が出す欄。後段（投稿）は `options` に並んだ案だけを出す。
+# 企画の `option` は前からの形（1文字か ALL）のまま残す
+REQUIRE_KEYS = ("gate", "version", "option", "options", "sha256", "approver", "comment_url",
+                "record_url", "issue")
+
+
+def approval_summary(d: Decision) -> dict:
+    return {k: v for k, v in asdict(d).items() if k in REQUIRE_KEYS}
 
 
 def now_iso() -> str:
@@ -776,9 +924,11 @@ def now_iso() -> str:
 
 def record_body(d: Decision, recorded_at: str) -> str:
     g = GATES[d.gate]["ja"]
+    chosen = _chosen_text(d)
+    sep = " " if chosen[:1].isascii() else ""      # 「の B案」「の全部の案」
     head = {
-        "approve": (f"**{g} {d.version} の {d.option}案を、承認として記録しました。**"
-                    if d.option else f"**{g} {d.version} を、承認として記録しました。**"),
+        "approve": (f"**{g} {d.version} の{sep}{chosen}を、承認として記録しました。**"
+                    if chosen else f"**{g} {d.version} を、承認として記録しました。**"),
         "reject": f"**{g} {d.version} の差し戻しを記録しました。**",
         "revise": f"**{g} {d.version} への直しの依頼を記録しました。**",
     }[d.kind]
@@ -786,6 +936,8 @@ def record_body(d: Decision, recorded_at: str) -> str:
              head, "",
              f"- 書いた人: {d.approver}（[元のコメント]({d.comment_url})）",
              f"- 提出: [{d.version}]({d.submission_url})・sha256 `{d.sha256[:12]}`"]
+    if d.kind == "approve" and d.gate == "video" and d.options:
+        lines.append(f"- 投稿してよいのは {chosen}だけです。")
     if d.kind == "approve":
         lines.append("- この版から1バイトでも変わったら、もう一度承認が要ります。")
     return "\n".join(lines)
@@ -990,7 +1142,8 @@ def main(argv: list[str] | None = None) -> int:
     s = sp.add_parser("submission", help="提出コメントの1行目に置くブロックを作る")
     s.add_argument("--issue", type=int, required=True)
     s.add_argument("--gate", choices=sorted(GATES), required=True)
-    s.add_argument("--options", default="A,B,C", help="企画の案（既定 A,B,C）")
+    s.add_argument("--options", default=None,
+                   help="案。企画は既定 A,B,C。動画は案ごとに作ったときだけ付ける（例 A,B,C）")
     s.add_argument("files", nargs="+")
 
     h = sp.add_parser("sha256", help="提出物の sha256（manifest）を出す")
@@ -1008,9 +1161,9 @@ def main(argv: list[str] | None = None) -> int:
             b = bundle(a.files)
             comments = GitHub().list_comments(a.issue)
             version = next_version(comments, a.gate)
-            opts = [o.strip().upper() for o in a.options.split(",") if o.strip()]
-            print(submission_block(a.gate, version, b["files"],
-                                   opts if a.gate == "plan" else None))
+            opts = (None if a.options is None
+                    else [o.strip().upper() for o in a.options.split(",") if o.strip()])
+            print(submission_block(a.gate, version, b["files"], opts))
             return 0
         if a.cmd == "require":
             sha = a.sha256 or bundle(a.files)["sha256"]
@@ -1019,10 +1172,7 @@ def main(argv: list[str] | None = None) -> int:
             except Refused as x:
                 print(f"止めました（{x.reason}）: {x}")
                 return 1
-            keep = ("gate", "version", "option", "sha256", "approver", "comment_url",
-                    "record_url", "issue")
-            print(json.dumps({k: v for k, v in asdict(d).items() if k in keep},
-                             ensure_ascii=False, indent=1))
+            print(json.dumps(approval_summary(d), ensure_ascii=False, indent=1))
             return 0
         if a.cmd == "record":
             with open(a.event, encoding="utf-8") as f:

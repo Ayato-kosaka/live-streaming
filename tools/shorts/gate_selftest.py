@@ -33,13 +33,19 @@
 | `revoked` | 承認のあとの差し戻しが承認を消す | `revoked` |
 | `tamper` | 差し戻しの記録が壊れていても、前の承認を生き返らせない | `tamper` |
 | `planfirst` | 動画は企画の承認のあと | `planfirst` |
-| `option` | 案は提出に並んでいるものから | `option` |
+| `option` | 案は提出に並んでいるものから（企画も、案ごとの動画も） | `option` |
+| `bare` | 案ごとの動画は、出す案を書かないと承認しない | `bare` |
+| `cover` | 動画の案は、企画で承認した案に入っているものだけ（承認のときも、後段でも） | `cover` |
+| `optlist` | 動画の提出の案の並びが読めなければ承認しない | `optlist` |
+| `optmatch` | 記録の「出してよい案」も、元のコメントから導き直したものと突き合わせる | `forged` |
+| `extra` | 案を選ぶ承認の1行目は案だけ（案でない字があれば断る。黙って広げない） | `extra` |
+| `multi` | 企画の承認は案1つか全部（`A C` を A に黙って縮めない） | `plan_multi` |
 | `outsider` | 外の人の提出を数えない | `outsider` |
 | `dup` | 同じ版が2つある提出は承認しない | `dup` |
 | `manifest` | 提出の sha256 が files の中身と合わなければ承認しない | `manifest` |
 | `head` | 機械可読ブロックは本文の1行目だけ | `head` |
 
-外さない足もある: `ok_plan` `ok_video` `phone` `quiet` `limit_pat` `config`。
+外さない足もある: `ok_plan` `ok_video` `ok_all` `ok_choice` `phone` `quiet` `limit_pat` `config`。
 どの `BREAK` でも、これらは**通ったまま**でないといけない（守りを外したら関係ない足まで
 落ちる、は守りが混ざっている印）。
 
@@ -50,8 +56,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import copy
 import hashlib
+import io
 import json
 import os
 import subprocess
@@ -81,7 +89,10 @@ BREAKS: dict[str, str] = {
     "forged": "forged", "recedit": "recedit", "subedit": "subedit", "newer": "newer",
     "revoked": "revoked", "tamper": "tamper", "planfirst": "planfirst",
     "option": "option", "outsider": "outsider", "dup": "dup", "manifest": "manifest",
-    "head": "head",
+    "head": "head", "bare": "bare", "cover": "cover", "optlist": "optlist",
+    # 記録の突き合わせから「出してよい案」だけを抜く。落ちるのは偽の記録の足（forged）
+    "optmatch": "forged",
+    "extra": "extra", "multi": "plan_multi",
 }
 
 
@@ -118,7 +129,7 @@ def apply_break(name: str) -> None:
             c = real(by_id, rec)
             if c is not None:
                 return c
-            opt = rec.get("option") or ""
+            opt = rec.get("option") or " ".join(rec.get("options") or [])
             return {"id": rec["comment_id"], "body": f"/{rec['kind']} {rec['gate']} {rec['version']} {opt}",
                     "user": {"login": rec["approver"], "type": "User", "id": rec["approver_id"]},
                     "author_association": "OWNER", "performed_via_github_app": None,
@@ -157,6 +168,18 @@ def apply_break(name: str) -> None:
             m = re.search(rf"<!--\s*{re.escape(tag)}\s+(.*?)\s*-->", body or "", re.S)
             return m.group(1) if m else None
         G.find_block = anywhere
+    elif name == "bare":
+        G._choice_given = lambda opts, sub: True
+    elif name == "cover":
+        G._plan_covers = lambda plan, o: True
+    elif name == "optlist":
+        G._video_options_ok = lambda opts: True
+    elif name == "optmatch":
+        G.MATCH_KEYS = tuple(k for k in G.MATCH_KEYS if k != "options")
+    elif name == "extra":
+        G._line_clean = lambda cmd: True
+    elif name == "multi":
+        G._one_plan_option = lambda cmd: True
 
 
 # ---------------------------------------------------------------- こしらえる材料
@@ -231,8 +254,10 @@ class Thread:
     def bots(self) -> list[dict]:
         return [c for c in self.comments if c["user"]["login"] == G.BOT_LOGIN]
 
-    def submit(self, gate: str, version: str, fs: list[dict], shape: str = "claude_app") -> dict:
-        body = G.submission_block(gate, version, fs) + f"\n\n## {version} を出します\n（人が読む本文）"
+    def submit(self, gate: str, version: str, fs: list[dict], shape: str = "claude_app",
+               options: list[str] | None = None) -> dict:
+        body = (G.submission_block(gate, version, fs, options)
+                + f"\n\n## {version} を出します\n（人が読む本文）")
         c = self.add(shape, body)
         self.api.feed(c)
         return c
@@ -315,6 +340,41 @@ def approved_video() -> tuple[Thread, dict]:
     return t, c
 
 
+def choice_video(plan_option: str = "全部") -> Thread:
+    """企画 p1 を `plan_option` で承認し、案ごとの動画 v1（A・B・C）を出した issue（#926 の形）。"""
+    t, _ = approved_plan(option=plan_option)
+    t.submit("video", "v1", VIDEO["v1"], options=["A", "B", "C"])
+    return t
+
+
+def cli(t: Thread, *argv: str) -> tuple[int, str]:
+    """`gate.py` の CLI を、GitHub の代わりにこの issue を読ませて回す（後段が実際に呼ぶ口）。"""
+    class Local:
+        def __init__(self, *a, **k):
+            pass
+
+        def list_comments(self, issue):
+            return copy.deepcopy(t.comments)
+
+    saved = G.GitHub, G.load_approvers
+    G.GitHub, G.load_approvers = Local, (lambda *a, **k: list(AP))
+    out = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out):
+            code = G.main(list(argv))
+    finally:
+        G.GitHub, G.load_approvers = saved
+    return code, out.getvalue()
+
+
+def require_json(t: Thread, gate: str, sha256: str) -> tuple[int, dict | None]:
+    code, text = cli(t, "require", "--issue", str(t.number), "--gate", gate, "--sha256", sha256)
+    try:
+        return code, json.loads(text)
+    except ValueError:
+        return code, None
+
+
 # ---------------------------------------------------------------- 足（通る側）
 
 def leg_ok_plan() -> None:
@@ -349,8 +409,111 @@ def leg_ok_video() -> None:
         got = G.bundle([b, a])
         ok(leg, got["sha256"] == sha(VIDEO["v1"]),
            "ファイルから出した sha256 が、提出に書いたものと一致する（渡す順に依らない）")
+    rec = record_of(t.bots()[-1]) or {}
+    ok(leg, rec.get("gate") == "video" and rec.get("option") is None and "options" not in rec,
+       "案の無い動画の記録は、いままでと同じ形（options を持たない）")
+    code, got = require_json(t, "video", sha(VIDEO["v1"]))
+    ok(leg, code == 0 and got is not None and got.get("version") == "v1" and got.get("options") is None,
+       f"案の無い動画の require は 0 で、options は null（1本だけ。終了コード {code}）")
+    u, _ = approved_plan()
+    u.submit("video", "v1", VIDEO["v1"])
+    u.say("/approve video v1 B いいね")
+    why, d = req(u, "video", sha(VIDEO["v1"]))
+    ok(leg, why == "ok" and d.options is None,
+       f"案の無い動画では、うしろに書いた字をいままでどおり読み流す（{why}）")
+    u.say("/approve video v1 いいですね、これで出してください")
+    why, d = req(u, "video", sha(VIDEO["v1"]))
+    ok(leg, record_of(u.bots()[-1]) is not None and why == "ok" and d.options is None,
+       f"案の無い動画は、1行目にひとことを書いた承認もいままでどおり通る（{why}）")
     t.submit("video", "v2", VIDEO["v2"])
     ok(leg, "gate2-approved" not in t.api.labels, "新しい版が出たら gate2-approved が外れる")
+
+
+def leg_ok_all() -> None:
+    leg = "ok_all"
+    t, c = approved_plan(option="全部")
+    bot = t.bots()[-1]
+    rec = record_of(bot) or {}
+    ok(leg, rec.get("kind") == "approve" and rec.get("option") == "ALL"
+       and rec.get("comment_id") == c["id"] and "options" not in rec,
+       "あやとの `/approve plan p1 全部` を、案 ALL の承認として記録する（企画の記録の形は前のまま）")
+    ok(leg, "企画 p1 の全部の案（A・B・C）を" in bot["body"], "記録の見出しに、作る案（A・B・C）が出る")
+    ok(leg, "gate1-approved" in t.api.labels, "全部の承認でも gate1-approved が付く")
+    why, d = req(t, "plan", sha(PLAN["p1"]))
+    ok(leg, why == "ok" and d.option == "ALL" and d.options == ["A", "B", "C"],
+       f"後段の確かめが通り、ALL と、作ってよい案 A・B・C が返る（{why}）")
+    code, got = require_json(t, "plan", sha(PLAN["p1"]))
+    ok(leg, code == 0 and got is not None and got.get("option") == "ALL"
+       and got.get("options") == ["A", "B", "C"],
+       "require の JSON: 企画の option は字のまま ALL、options は A・B・C")
+    u, _ = approved_plan(option="B")
+    code, got = require_json(u, "plan", sha(PLAN["p1"]))
+    ok(leg, code == 0 and got is not None and got.get("option") == "B" and got.get("options") == ["B"],
+       "1文字の承認なら option は B のまま、options は B だけ（前の形を崩さない）")
+    for word in ("all", "ALL", "All", "ぜんぶ", "全", "全案", "すべて", "全て", "ＡＬＬ"):
+        v, _ = approved_plan(option=word)
+        ok(leg, (record_of(v.bots()[-1]) or {}).get("option") == "ALL",
+           f"`/approve plan p1 {word}` も全部（ALL）として記録する")
+    w = Thread()
+    w.submit("plan", "p1", PLAN["p1"])
+    w.say("／承認　企画　１　全部")
+    ok(leg, (record_of(w.bots()[-1]) or {}).get("option") == "ALL",
+       "日本語・全角の `／承認　企画　１　全部` も同じ")
+
+
+def leg_ok_choice() -> None:
+    leg = "ok_choice"
+    t = choice_video()
+    sub = G.parse_submission(t.comments[-1])
+    ok(leg, sub is not None and sub.options == ["A", "B", "C"] and not sub.broken,
+       "案ごとの動画の提出は、案 A・B・C を持って読める")
+    for text, want in (("/approve video v1 B", ["B"]),
+                       ("/approve video v1 B C", ["B", "C"]),
+                       ("/approve video v1 C,A\nよろしくお願いします", ["A", "C"]),
+                       ("/approve video v1 B・C", ["B", "C"]),
+                       ("/approve video v1 B ・ C、", ["B", "C"]),
+                       ("/Approve Video V1 b案 c案", ["B", "C"]),
+                       ("/approve video v1 全部", ["A", "B", "C"]),
+                       ("／承認　動画　１　ぜんぶ", ["A", "B", "C"])):
+        u = choice_video()
+        u.say(text)
+        rec = record_of(u.bots()[-1]) or {}
+        why, d = req(u, "video", sha(VIDEO["v1"]))
+        ok(leg, rec.get("options") == want and rec.get("option") is None and why == "ok"
+           and d.options == want and "gate2-approved" in u.api.labels,
+           f"{text!r} は {'・'.join(want)} を出してよいと記録し、後段もそれで通る（{why}）")
+    u = choice_video()
+    u.say("/approve video v1 B C")
+    body = u.bots()[-1]["body"]
+    ok(leg, "動画 v1 の B案・C案を、承認として記録しました" in body and "投稿してよいのは B案・C案だけ" in body,
+       "記録の見出しに、出してよい案（B案・C案）が出る")
+    code, got = require_json(u, "video", sha(VIDEO["v1"]))
+    ok(leg, code == 0 and got is not None and set(got) == set(G.REQUIRE_KEYS)
+       and got["options"] == ["B", "C"] and got["option"] is None and got["version"] == "v1"
+       and got["sha256"] == sha(VIDEO["v1"]) and got["approver"] == "Ayato-kosaka"
+       and got["issue"] == u.number and bool(got["record_url"]),
+       f"require の JSON: 出してよい案 options が B・C、版・sha256・承認者・記録の URL も入る（{code}）")
+    # 提出のブロックを作る口（後段の担当が呼ぶ）
+    with tempfile.TemporaryDirectory() as tmp:
+        a, b, m = Path(tmp, "short.mp4"), Path(tmp, "post.json"), Path(tmp, "plan.md")
+        a.write_bytes(b"mp4 v1")
+        b.write_bytes(b'{"title":"v1"}')
+        m.write_bytes("企画 p1".encode())
+        w = Thread()
+        code, text = cli(w, "submission", "--issue", "950", "--gate", "video", "--options", "a,b,c",
+                         str(a), str(b))
+        blk = G.load_block(G.find_block(text, G.SUBMISSION_TAG)) or {}
+        ok(leg, code == 0 and blk.get("options") == ["A", "B", "C"] and blk.get("version") == "v1"
+           and blk.get("sha256") == sha(VIDEO["v1"]),
+           "`gate.py submission --gate video --options A,B,C` が、案つきの動画のブロックを作る")
+        code, text = cli(w, "submission", "--issue", "950", "--gate", "video", str(a), str(b))
+        blk = G.load_block(G.find_block(text, G.SUBMISSION_TAG)) or {}
+        ok(leg, code == 0 and blk.get("gate") == "video" and "options" not in blk,
+           "`--options` を付けなければ、いままでどおり案の無い動画のブロック")
+        code, text = cli(w, "submission", "--issue", "950", "--gate", "plan", str(m))
+        blk = G.load_block(G.find_block(text, G.SUBMISSION_TAG)) or {}
+        ok(leg, code == 0 and blk.get("options") == ["A", "B", "C"],
+           "企画は `--options` を付けなければ、いままでどおり A・B・C")
 
 
 def leg_phone() -> None:
@@ -559,6 +722,23 @@ def leg_forged() -> None:
     why, _ = req(t, "plan", other)
     ok(leg, why == "record_mismatch",
        f"本物の承認コメントを指していても、sha256 が提出と違う bot の記録は通さない（{why}）")
+    u = choice_video()
+    c = u.add("human", "/approve video v1 B")          # 記録はまだ無い
+    d = G.judge(c, G.before(u.comments, c), AP)
+    d.options = ["A", "B", "C"]                         # B だけの承認を、全部に水増しした記録
+    u.add("bot", G.record_body(d, u.stamp()))
+    why, _ = req(u, "video", sha(VIDEO["v1"]))
+    ok(leg, d.ok and why == "record_mismatch",
+       f"B だけを承認したコメントを指して、A・B・C を出してよいと書いた bot の記録は通さない（{why}）")
+    w = Thread()
+    w.submit("plan", "p1", PLAN["p1"])
+    c = w.add("human", "/approve plan p1 A")
+    d = G.judge(c, G.before(w.comments, c), AP)
+    d.option, d.options = G.ALL, ["A", "B", "C"]        # A だけの承認を「全部」にした記録
+    w.add("bot", G.record_body(d, w.stamp()))
+    why, _ = req(w, "plan", sha(PLAN["p1"]))
+    ok(leg, d.ok and why == "record_mismatch",
+       f"A だけを承認したコメントを指して、全部（ALL）と書いた bot の記録は通さない（{why}）")
 
 
 def leg_recedit() -> None:
@@ -634,6 +814,14 @@ def leg_option() -> None:
     t.submit("plan", "p1", PLAN["p1"])
     t.say("/approve plan p1 D")
     ok(leg, refused_reason(t.bots()[-1]) == "bad_option", "提出に無い案 D は断る")
+    u = Thread()
+    u.submit("plan", "p1", PLAN["p1"], options=["A", "B", "C", "D"])
+    u.say("/approve plan p1 全部")
+    u.submit("video", "v1", VIDEO["v1"], options=["A", "B", "C"])     # D は作らなかった
+    u.say("/approve video v1 D")
+    reply = u.bots()[-1]
+    ok(leg, refused_reason(reply) == "bad_option" and "A・B・C" in reply["body"],
+       "企画では D も承認していても、動画の提出に無い案 D は、ある案を添えて断る")
 
 
 def leg_outsider() -> None:
@@ -685,10 +873,102 @@ def leg_head() -> None:
        "本文の途中に埋まった提出も、提出として数えない")
 
 
-LEGS = [leg_ok_plan, leg_ok_video, leg_phone, leg_quiet, leg_limit_pat, leg_config,
+def leg_bare() -> None:
+    leg = "bare"
+    t = choice_video()
+    t.say("/approve video v1")
+    reply = t.bots()[-1]
+    ok(leg, refused_reason(reply) == "choose_option" and "A・B・C" in reply["body"]
+       and "/approve video v1 B" in reply["body"] and "全部" in reply["body"],
+       "案ごとの動画に案を書かない `/approve video v1` は、ある案と書き方を添えて断る")
+    t.say("/approve video v1 いいね！")
+    ok(leg, refused_reason(t.bots()[-1]) == "choose_option",
+       "案でない字だけを書いた承認も、全部とは読まない")
+    ok(leg, "gate2-approved" not in t.api.labels, "札も付かない")
+    code, _ = cli(t, "require", "--issue", str(t.number), "--gate", "video", "--sha256", sha(VIDEO["v1"]))
+    ok(leg, req(t, "video", sha(VIDEO["v1"]))[0] != "ok" and code == 1,
+       f"後段も通らない（require は {code}）")
+
+
+def leg_cover() -> None:
+    leg = "cover"
+    t = choice_video(plan_option="A")                   # 企画は A だけを承認した
+    for text in ("/approve video v1 B", "/approve video v1 A C", "/approve video v1 全部"):
+        t.say(text)
+        reply = t.bots()[-1]
+        ok(leg, refused_reason(reply) == "not_in_plan" and "企画 p1 で承認した案（A）" in reply["body"],
+           f"企画で A だけを承認したのに {text!r} は、企画で承認した案を添えて断る")
+    ok(leg, "gate2-approved" not in t.api.labels and req(t, "video", sha(VIDEO["v1"]))[0] != "ok",
+       "札も付かず、後段も通らない")
+    t.say("/approve video v1 A")
+    why, d = req(t, "video", sha(VIDEO["v1"]))
+    ok(leg, why == "ok" and d.options == ["A"],
+       f"企画で選んだ A の動画は承認できる（1文字の企画の承認は、その案を覆う。{why}）")
+    t.say("/approve plan p1 B")                         # あとから企画の承認を B に変えた
+    why, e = req(t, "video", sha(VIDEO["v1"]))
+    ok(leg, why == "not_in_plan",
+       f"動画 A を承認したあとで企画の承認が B に変わったら、後段で止める（{why}）")
+
+
+def leg_optlist() -> None:
+    leg = "optlist"
+    for opts in (["A", "A"], ["ALL"], "ABC", ["a"], []):
+        t, _ = approved_plan(option="全部")
+        data = {"schema": 1, "gate": "video", "version": "v1", "sha256": sha(VIDEO["v1"]),
+                "files": VIDEO["v1"], "options": opts}
+        t.add("claude_app", G.dump_block(G.SUBMISSION_TAG, data) + "\n本文")
+        t.api.feed(t.comments[-1])
+        first = refused_reason(t.bots()[-1])
+        t.say("/approve video v1 全部")
+        ok(leg, first == "submission_broken" and refused_reason(t.bots()[-1]) == "submission_broken",
+           f"案の並びが {opts!r} の動画の提出は、読めないと返し、承認もしない")
+    try:
+        G.submission_block("video", "v1", VIDEO["v1"], ["A", "A"])
+        made = True
+    except ValueError:
+        made = False
+    ok(leg, not made, "重なった案の動画のブロックは、作る口が作らない")
+
+
+def leg_extra() -> None:
+    leg = "extra"
+    t = choice_video()
+    for text in ("/approve video v1 B a nice one", "/approve video v1 B C いいね", "/approve video v1 全部 おねがいします"):
+        t.say(text)
+        reply = t.bots()[-1]
+        ok(leg, refused_reason(reply) == "extra_text" and "1行目は案だけ" in reply["body"]
+           and "2行目から" in reply["body"] and "/approve video v1 B C" in reply["body"],
+           f"案ごとの動画で {text!r} は、案を広げも縮めもせず「1行目は案だけ」と断る")
+    ok(leg, "gate2-approved" not in t.api.labels and req(t, "video", sha(VIDEO["v1"]))[0] != "ok",
+       "札も付かず、後段も通らない")
+    u = Thread()
+    u.submit("plan", "p1", PLAN["p1"])
+    u.say("/approve plan p1 B よろしく")
+    reply = u.bots()[-1]
+    ok(leg, refused_reason(reply) == "extra_text" and "/approve plan p1 B" in reply["body"],
+       "企画も、1行目の案のうしろにひとことがあれば断る（例は企画の書き方）")
+    ok(leg, "gate1-approved" not in u.api.labels and req(u, "plan", sha(PLAN["p1"]))[0] != "ok",
+       "札も付かず、後段も通らない")
+
+
+def leg_plan_multi() -> None:
+    leg = "plan_multi"
+    for text in ("/approve plan p1 A C", "/approve plan p1 A,C", "/approve plan p1 全部 A"):
+        t = Thread()
+        t.submit("plan", "p1", PLAN["p1"])
+        t.say(text)
+        reply = t.bots()[-1]
+        ok(leg, refused_reason(reply) == "plan_multi" and "案1つか全部" in reply["body"]
+           and "gate1-approved" not in t.api.labels and req(t, "plan", sha(PLAN["p1"]))[0] != "ok",
+           f"{text!r} は、1案に黙って縮めず「案1つか全部」と断る")
+
+
+LEGS = [leg_ok_plan, leg_ok_video, leg_ok_all, leg_ok_choice, leg_phone, leg_quiet,
+        leg_limit_pat, leg_config,
         leg_app, leg_approver, leg_assoc, leg_edited, leg_stale, leg_sha, leg_deleted,
         leg_fake, leg_forged, leg_recedit, leg_subedit, leg_newer, leg_revoked, leg_tamper,
-        leg_planfirst, leg_option, leg_outsider, leg_dup, leg_manifest, leg_head]
+        leg_planfirst, leg_option, leg_outsider, leg_dup, leg_manifest, leg_head,
+        leg_bare, leg_cover, leg_optlist, leg_extra, leg_plan_multi]
 
 
 def run_legs() -> None:
