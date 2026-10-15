@@ -14,12 +14,19 @@ analyze.py → seal.py → decrypt.py を通す。whisper はモデルを落と�
 3. シートの1コマ目の時刻の帯が 0:00:00 で、2コマ目が 0:00:10
 4. 復号して出てきたファイルの一覧と中身が、暗号化する前と1バイトも違わない
 5. 鍵を取り違えると開かない・暗号文を1バイト壊すと開かない
+6. clips: コマ番号を縞で焼いた動画（キーフレーム5秒おき）から区間を切り、
+   **各 mp4 の1コマ目が「頼んだ秒のコマ」で、そこから1コマも抜けず・重ならずに続く**。
+   縦横・fps・音・長さ・index.json の sha256 が合う。動画の外の区間は NG になり、
+   残りは使える（段は failed、manifest は partial）
+7. clips の暗号文を小さく切っても（payload.enc.000 …）、つないで元に戻る。
+   切れ端が1つ欠けたら開かない
 """
 
 from __future__ import annotations
 
 import filecmp
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -60,6 +67,127 @@ def make_media(d: Path) -> None:
         {"tStartMs": 3500, "dDurationMs": 4000, "segs": [{"utf8": "二行目"}]}]}))
     (d / "fetch.json").write_text(json.dumps({"ok": True, "sec": 0, "finished_at": "x",
                                               "tries": [{"client": "dryrun"}]}))
+
+
+# clips の確かめに使う「コマ番号の縞」。1本の幅をマクロブロック（16px）に揃え、
+# 白=1・黒=0 の12本でコマ番号（4096まで）を焼く。CRF 18 で符号化し直しても
+# 縞の真ん中は潰れないので、切った mp4 の各コマが元の何コマ目かを読み戻せる
+BAR, BITS, CH = 16, 12, 320
+CW = BAR * BITS
+
+
+def make_counter(d: Path, sec: int = 40) -> None:
+    """コマ番号を縞で焼いた動画を src.mkv として置く（download.py の clips と同じ形）。
+
+    キーフレームは5秒おき・B フレームあり。YouTube の配信と同じく疎らにして、
+    頭を合わせるのに「手前のキーフレームから復号して、頼んだ秒より前を捨てる」道を通らせる。
+    音は PCM（AAC のように頭に詰め物が入らず、時刻の起点が映像と揃う）。
+    """
+    d.mkdir(parents=True, exist_ok=True)
+    p = subprocess.Popen(
+        ["ffmpeg", "-v", "error", "-y",
+         "-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", f"{CW}x{CH}", "-r", "30", "-i", "-",
+         "-f", "lavfi", "-i", f"sine=f=440:d={sec}",
+         "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "veryfast", "-crf", "12",
+         "-g", "150", "-bf", "2", "-c:a", "pcm_s16le", str(d / "src.mkv")],
+        stdin=subprocess.PIPE)
+    chroma = bytes([128]) * ((CW // 2) * (CH // 2) * 2)
+    for k in range(sec * 30):
+        row = b"".join(bytes([235 if (k >> b) & 1 else 16]) * BAR for b in range(BITS))
+        p.stdin.write(row * CH + chroma)
+    p.stdin.close()
+    if p.wait() != 0:
+        raise RuntimeError("縞の動画が作れない")
+    (d / "src.info.json").write_text(json.dumps({"id": "dryrun00000", "duration": sec,
+                                                 "format_id": "dryrun"}))
+    (d / "fetch.json").write_text(json.dumps({"ok": True, "sec": 0, "finished_at": "x",
+                                              "tries": [{"client": "dryrun"}]}))
+
+
+def read_counter(mp4: Path) -> list[int]:
+    """mp4 の全部のコマから、焼いたコマ番号を読み戻す（縞の真ん中の行・各縞の中央の画素）。"""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), "-map", "0:v:0",
+                          "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "yuv420p",
+                          "-"], capture_output=True, check=True).stdout
+    size = CW * CH * 3 // 2
+    ids = []
+    for i in range(len(raw) // size):
+        mid = raw[i * size + (CH // 2) * CW: i * size + (CH // 2 + 1) * CW]
+        ids.append(sum(1 << b for b in range(BITS) if mid[b * BAR + BAR // 2] > 125))
+    return ids
+
+
+def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) -> None:
+    """clips を一周させる（6・7）。"""
+    import seal as seal_mod
+    from plan import items_of
+
+    req = {"mode": "clips", "videos": ["dryrun00000"], "pubkey": pub.read_text(),
+           "ranges": ["0:00:02.5-0:00:07", "0:00:10-0:00:12.4", "0:00:33.3-0:00:36.9",
+                      "0:00:05-0:00:08",  # 1本目と重なる区間も、それぞれ1本として切る
+                      "0:00:38-0:00:45"]}  # 動画（40秒）の外にはみ出す → NG
+    items = items_of(req, "dryrun")
+    if len(items) != 1 or items[0]["dest"] != "dryrun00000/clips":
+        fails.append(f"clips の依頼が1本の job にならない: {[i['key'] for i in items]}")
+        return
+    it = items[0]
+    make_counter(media / it["key"])
+    (root / "kitem.json").write_text(json.dumps(it))
+    kout = root / "kout"
+    subprocess.run([PY, str(HERE / "analyze.py"), str(root / "kitem.json"), str(media),
+                    str(kout)], env={**os.environ, "RUNNER_TEMP": str(root)})
+    st = json.loads((root / f"stages-{it['key']}.json").read_text())
+    if st["stages"].get("clips") != "failed" or st["counts"].get("clips_ok") != 4:
+        fails.append(f"clips の段（はみ出し1本で failed・合格4本のはず）: {st}")
+    idx = json.loads((kout / "index.json").read_text())
+    if [c["ok"] for c in idx["clips"]] != [True, True, True, True, False]:
+        fails.append(f"clips の合否が違う: {[(c['n'], c['ok'], c.get('why')) for c in idx['clips']]}")
+    for c in idx["clips"][:4]:
+        p = kout / c["file"]
+        if not p.exists():
+            fails.append(f"clips {c['n']:02d} の mp4 が無い: {c['file']}")
+            continue
+        n0, want = round(c["start"] * 30), round((c["end"] - c["start"]) * 30)
+        ids = read_counter(p)
+        # 1コマ目が頼んだ秒のコマで、そこから1コマずつ続く（抜け・重なりが無い）
+        if not ids or ids[0] != n0 or ids != list(range(n0, n0 + len(ids))) \
+                or abs(len(ids) - want) > 1:
+            fails.append(f"clips {c['n']:02d} のコマが違う: 頭 {ids[:3]}… {len(ids)}コマ"
+                         f"（欲しいのは {n0} から {want}コマ）")
+        if (c["width"], c["height"]) != (CW, CH) or abs(c["fps"] - 30) > 0.01 \
+                or not c.get("audio_duration") or abs(c["duration"] - c["want_sec"]) > 0.1:
+            fails.append(f"clips {c['n']:02d} の形が違う: {c}")
+        if c["sha256"] != seal_mod.sha256_file(p):
+            fails.append(f"clips {c['n']:02d} の sha256 が index.json と合わない")
+
+    # 7. 小さく切って封をし、つないで開く。切れ端が欠けたら開かない
+    seal_mod.PART = 256 * 1024
+    ksealed = root / "ksealed" / it["dest"]
+    man = seal_mod.seal(it, kout, ksealed, st)
+    names = [f["name"] for f in man["encrypted_files"]]
+    # 切れ端の数は暗号文の大きさから決まる（合成の素材は小さいので2つで済むこともある）
+    want_parts = -(-sum(f["bytes"] for f in man["encrypted_files"]) // seal_mod.PART)
+    if len(names) < 2 or len(names) != want_parts or names[0] != "payload.enc.000" \
+            or man["status"] != "partial" \
+            or any(f["bytes"] > seal_mod.PART for f in man["encrypted_files"]):
+        fails.append(f"clips の封の切り方が違う: {names} status={man['status']}")
+    if ".mp4" in (ksealed / "manifest.json").read_text():
+        fails.append("manifest.json に clips のファイル名が平文で出ている")
+    r = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--out",
+                        str(root / "kopened"), str(ksealed)], capture_output=True, text=True)
+    print(r.stdout.strip())
+    got = root / "kopened" / it["dest"]
+    same = r.returncode == 0 and all(
+        (got / q.relative_to(kout)).is_file()
+        and (got / q.relative_to(kout)).read_bytes() == q.read_bytes()
+        for q in kout.rglob("*") if q.is_file())
+    if not same:
+        fails.append("clips を切れ端から開いたものが元と違う")
+    (ksealed / names[1]).unlink()
+    r5 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--out",
+                         str(root / "kopened2"), str(ksealed)], capture_output=True, text=True)
+    if r5.returncode == 0:
+        fails.append("切れ端が1つ欠けたのに開いてしまった")
 
 
 def main() -> int:
@@ -181,6 +309,8 @@ def main() -> int:
     rows = list(csv.DictReader(open(root / "cout" / "channel.csv")))
     if [r["id"][0] for r in rows] != ["b", "c", "a"] or rows[0]["view_count"] != "5123":
         fails.append(f"channel の並びか数が違う: {[(r['id'], r['view_count']) for r in rows]}")
+
+    clips_leg(root, media, keys / "pub.pem", keys / "priv.pem", fails)
 
     man = json.loads((sealed / item["dest"] / "manifest.json").read_text())
     print(json.dumps({k: man[k] for k in ("status", "stages", "counts", "bytes")},

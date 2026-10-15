@@ -8,6 +8,10 @@
 - **数値の時系列** — 1秒ごとの動き・明るさ・彩度・音量（RMS / LUFS）、場面の変わりめ、
   10秒ごとの要約（YouTube の「よく再生された部分」つき）
 
+もう1つ、企画が決まったあとの**編集の素材**も同じ道で取る（`clips`）。頼んだ区間を
+1本ずつ、元の縦横・fps・音つきの mp4 に切ったもの。書き出し（`tools/shorts/render/`）が
+これを読む。
+
 **このリポジトリは公開。** 出来たものは全部、依頼ファイルに入れた公開鍵で暗号化して
 作業枝の `shorts/.work/` に置く。平文で置くのは「何がいくつ・何バイト・成否」だけの
 `manifest.json`。`shorts/.work/` は作業用の一時置き場で、master には入れない。
@@ -43,14 +47,16 @@ push の前後を GitHub の compare で比べて拾う）。同じものをも�
                       "fps": 1, "grid": "2x2", "tile": 720, "pubkey": "…"}
 {"mode": "channel",   "channels": ["@cheethann3", "UCCwutAH6ieHNvdyJAfSld7w"], "tab": "shorts",
                       "limit": 200, "details": 60, "pubkey": "…"}
+{"mode": "clips",     "videos": ["yk-by7R7iPA"], "ranges": ["0:13:29-0:14:05", "0:14:10-0:14:38"],
+                      "pubkey": "…"}
 ```
 
 | 欄 | 意味 | 既定 |
 | --- | --- | --- |
-| `mode` | `archive`（長い配信）/ `reference`（他人のショート）/ `zoom`（区間を細かく）/ `channel`（一覧） | 必須 |
+| `mode` | `archive`（長い配信）/ `reference`（他人のショート）/ `zoom`（区間を細かく）/ `channel`（一覧）/ `clips`（編集の素材。区間ごとの mp4） | 必須 |
 | `videos` / `video` | 動画ID（11字） | 必須（channel 以外） |
 | `pubkey` | RSA 2048bit 以上の公開鍵。`openssl pkey -in priv.pem -pubout` の形。改行が空白に化けてもよい | 必須 |
-| `range` / `ranges` | zoom の区間 `H:MM:SS-H:MM:SS`（1区間15分まで）。`ranges` で並べると1区間1本の job になる | zoom で必須 |
+| `range` / `ranges` | zoom の区間 `H:MM:SS-H:MM:SS`（1区間15分まで）。`ranges` で並べると1区間1本の job になる。**clips では、並べた区間が全部1本の job**（配信は1回だけ取って、そこから全部切る）。1区間10分・合計30分・60区間まで。秒に端数を書いてよい（`0:13:29.5`）。並べた順が mp4 の番号になり、重なっていてもそれぞれ1本 | zoom・clips で必須 |
 | `fps` | zoom で1秒に何コマ取るか（0〜5）。区間×fps は1200コマまで | 1 |
 | `grid` / `tile` | zoom のシートの格子（縦長のときの「横x縦」。横長なら入れ替わる）とコマの長辺（240〜1280）。**看板・メニュー・予約画面の字を読みたいときは `"2x2"` と `720`**（Read で 1コマ約385×685 に見える）。それでも小さければ数秒だけ `"1x1"` と `1280` で頼む（元を 1080p で取る） | `4x3` / 480 |
 | `whisper` | `{"model": "large-v3-turbo", "batch": 8, "beam": 5, "language": "ja"}`。`language: "auto"` で言語も当てさせる | 左のとおり |
@@ -61,7 +67,8 @@ push の前後を GitHub の compare で比べて拾う）。同じものをも�
 | `details` | 一覧のうち再生数の多い順に何本、1本ずつのページから長さ・投稿日・高評価数・正確な再生数を引き直すか（200まで） | 50 |
 
 `workflow_dispatch` でも同じ入力で回せる（master に入ってから。`videos` 欄に、channel のときは
-チャンネルを並べる。`branch` は結果を置く枝で、`claude/` で始まる名前しか受けない）。
+チャンネルを並べる。clips の区間は `range` 欄にカンマ区切りで並べる。`branch` は結果を置く枝で、
+`claude/` で始まる名前しか受けない）。
 
 ### 鍵の作りかた（セッションごとに作り直す）
 
@@ -75,15 +82,19 @@ openssl pkey -in <スクラッチパッド>/keys/priv.pem -pubout -out <スク�
 ## 置かれるもの（平文）
 
 ```
-shorts/.work/<videoId>/archive/            …/reference/   …/zoom-<開始秒>-<終了秒>-<fps>fps/
+shorts/.work/<videoId>/archive/            …/reference/   …/zoom-<開始秒>-<終了秒>-<fps>fps/   …/clips/
 shorts/.work/channels/<@を外した名前>/<tab>/
     manifest.json   平文。状態と数だけ
     key.enc         RSA-OAEP(SHA-256) で包んだ AES 鍵・HMAC 鍵・IV（80バイト）
     payload.enc     中身の tar.gz を AES-256-CBC で暗号化したもの（45MB を超えたら .000 .001 … に切る）
 ```
 
+**45MB で切るのは、GitHub が 100MB を超えるファイルの push を断る（50MB から警告）から。**
+clips は暗号文が数百MB になるので、ほぼ必ず切れる。切った順につなぐと元の暗号文で、
+HMAC はつないだ全体に掛けてある。`push.sh` は 90MB 以上のファイルが混ざっていたら置かずに落ちる。
+
 `manifest.json` の欄: `status`（ok / partial / failed）・`stages`（段ごとの ok / failed / skipped）・
-`counts`（シートの枚数・字幕と書き起こしの区間数・変わりめの数・一覧の本数・ファイル数）・
+`counts`（シートの枚数・字幕と書き起こしの区間数・変わりめの数・一覧の本数・clips の本数と合格した本数と秒・ファイル数）・
 `bytes`（平文 / tar.gz / 暗号文）・`encrypted_files`（名前・バイト・sha256）・`hmac_sha256`・
 `pubkey_sha256`（どの鍵で包んだか）・`run`（Actions の run の URL）。
 **題名・字幕・理由の文面は入れない**（理由は暗号化した `run.json` の中）。
@@ -98,6 +109,10 @@ python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/pri
 
 `<out>/<置き場>/` に開く（例 `<out>/yk-by7R7iPA/archive/`、`<out>/channels/cheethann3/shorts/`）。
 **展開先がリポジトリの中なら断る。** 鍵違い・暗号文の破損（HMAC 不一致）も開かない。
+切った暗号文（`payload.enc.000` …）は manifest の並びの順につないで開く。1つでも欠けている・
+sha256 が合わないときは開かない（git の取り込みが途中なら、取り込み直す）。
+clips は数百MB になるので、全体をメモリに載せずに 1MB ずつ流して開く
+（復号した tar.gz は展開先の隣に一時ファイルで受けて、展開したら消す）。
 
 ## 中身（暗号化の中）
 
@@ -129,6 +144,30 @@ python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/pri
   本当の切れ目はその1コマ前との間にある
 - `rms_db` / `peak_db` は dBFS（0 が最大）。`lufs_m` はその秒の momentary（0.4秒窓）の最大、`lufs_s` は short-term（3秒窓）
 - `heat` は YouTube の「よく再生された部分」（0〜1）。再生の少ない動画には無い
+
+### clips の中身
+
+| ファイル | 中身 |
+| --- | --- |
+| `NN_H-MM-SS_H-MM-SS.mp4` | 依頼に並べた区間を1本ずつ（`NN` は並べた順）。**0秒が配信の区間の頭のコマ。** 元の縦横・fps（CFR に揃える）・音つき。H.264（x264 CRF 18・preset slow・yuv420p）＋ AAC 192k ステレオ |
+| `index.json` | `clips[]` = n / range / start / end（配信の秒）/ file / duration / video_duration / audio_duration / width / height / fps / frames / bytes / sha256 / ok / why。`source`（取った形式・縦横・fps・符号化）と `encode`（切りかた） |
+| `meta.json` | 上の表と同じ（題名・長さ・`original_max`＝YouTube にある最大の縦横）に、`ranges` を足したもの |
+| `run.json` / `logs/` | 段の成否と、yt-dlp・ffmpeg（`ffmpeg_clips.log`）のログ |
+
+**なぜ区間ごとに取らず、配信を丸ごと取ってから切るか。** yt-dlp の区間取り
+（`--download-sections`）は ffmpeg の `-ss … -c copy` で落とすので、頭が区間の手前の
+キーフレームに寄り、そのファイルの 0秒が配信の何秒かを確かめる手が無い。clips は
+配信と同じ時間軸のファイルを1本持ち、`-ss` を入力の前に置いて符号化し直す
+（ffmpeg が手前のキーフレームから復号して、頼んだ秒より前のコマを捨ててから書く）。
+`dryrun.py` が、コマ番号を縞で焼いた動画（キーフレーム5秒おき）でこれを当てている。
+
+**合否は1本ずつ。** 長さが頼んだ秒から ±0.5秒・映像と音がある・縦横が元と同じ・
+fps が元と同じ、のどれかが外れた mp4 は `ok:false` と `why` が付き、段 `clips` が failed
+（manifest は partial）になる。合格したぶんはそのまま使える。
+
+映像は「縦横 → fps → 符号化」の順に選ぶ（`-S res,fps,vcodec:avc`）。同じ縦横なら avc1 を取る
+（YouTube は avc1 にいちばん多くビットを割き、zoom と同じ元になるのでコマを突き合わせられる）。
+音は既定の並びでいちばん良いもの（ふつうは opus）。
 
 ## どれくらいかかるか（2026-10-15 の実測。ランナーは 4 vCPU / 16GB・GPU 無し）
 
@@ -168,6 +207,18 @@ ffmpeg で場面の変わりめが分かっている縦長の動画を作り、�
 変わりめの時刻・シートの枚数と焼いた秒・zoom の秒の足し込み・channel の並び・
 復号したものが元と1バイトも違わないこと・鍵違い／暗号文の破損／リポジトリの中への展開を
 断ることを見る。whisper はモデルを落とせない箱でも回るように外してある（`whisper: failed` は正常）。
+
+clips は、コマ番号を2進の縞で焼いた動画（キーフレーム5秒おき・B フレームあり）から
+区間を切り、**切った mp4 の1コマ目が頼んだ秒のコマで、そこから1コマも抜けず重ならずに
+続くこと**を縞を読み戻して見る。動画の外にはみ出す区間が NG になって残りが使えること、
+暗号文を小さく切ってもつないで開けること・切れ端が1つ欠けたら開かないことも見る。
+
+毎回の PR では、ffmpeg の要らない2本が回し役（`python3 python/selftest_runner.py`）から走る。
+
+- `plan_selftest.py` — 依頼の読みかた。clips の18区間が1本の job・頼んだ順のまま・上限で断る、
+  zoom と archive が変わっていない
+- `decrypt_selftest.py` — 切った暗号文の封と開け。つないで1バイトも違わない・切らない形も開く・
+  壊れた／書き換えた／欠けた／入れ替えた切れ端・違う鍵・git の中への展開を断る
 
 ## 落ちたときの見方
 
@@ -210,7 +261,8 @@ ffmpeg で場面の変わりめが分かっている縦長の動画を作り、�
 - `YOUTUBE_COOKIES` は**読むだけ**。`cookies/update` は使わない。`/tmp` の写しは job の最後で消す
 - 21:15〜23:59 UTC は取り始めない（plan と download.py の両方で見る）
 - ログに出すのは段・状態・秒・個数・バイト数だけ。題名・字幕・フレームは出さない
-- 動画の実物（mp4 / mkv / m4a）は commit しない。キャッシュで受け渡して、最後に消す
+- 動画の実物（mp4 / mkv / m4a）は平文で commit しない。取ったものはキャッシュで受け渡して、
+  最後に消す。clips の mp4 も暗号文の中にだけ入る
 - チャット（視聴者の名前）は取らない（字幕は `ja-orig,ja` だけを頼む）
 - 置くのは `claude/` で始まる枝だけ。`push.sh` が `manifest.json / key.enc / payload.enc*`
-  以外が混ざっていないことを見てから置く
+  以外が混ざっていないこと・90MB 以上のファイルが無いことを見てから置く

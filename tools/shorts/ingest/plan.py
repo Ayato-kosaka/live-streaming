@@ -12,6 +12,7 @@ workflow_dispatch のときは入力から依頼を1件こしらえる（形は�
 ## ここで落とすもの
 
 - 動画IDの形が違う・mode が知らない語・区間が読めない
+- clips の区間が多すぎる・長すぎる（暗号文は作業枝に積もるので、量に上限を置く）
 - 公開鍵が RSA 2048bit 以上の `PUBLIC KEY` として読めない
   （**鍵が読めないまま落としに行くと、1時間計算したあとで暗号化できずに捨てる**）
 - 毎晩の取り込みの時間帯（common.in_no_go）
@@ -38,7 +39,7 @@ from common import VIDEO_ID, in_no_go, secs  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 REQ_DIR = "shorts/requests/"
-MODES = ("archive", "reference", "zoom", "channel")
+MODES = ("archive", "reference", "zoom", "channel", "clips")
 TABS = ("shorts", "videos", "streams")
 # @ハンドルか UC で始まるチャンネルID。置き場の道にそのまま使うので ASCII に絞る
 CHANNEL = re.compile(r"^(@[A-Za-z0-9._-]{3,30}|UC[A-Za-z0-9_-]{22})$")
@@ -50,6 +51,12 @@ MODELS = ("tiny", "base", "small", "medium", "large-v3", "large-v3-turbo", "turb
 MAX_ITEMS = 40
 ZOOM_MAX_SEC = 900
 ZOOM_MAX_FRAMES = 1200
+# clips は「編集に使う実物」を切り出す。1区間はショート1本の素材として長くて数分、
+# 合計は暗号文が作業枝に積もる量で決めた（720x1280・CRF 18 で 1秒 0.5MB 前後。
+# 1800秒なら 1GB 近くになり、1回の push と手元の復号がそのあたりで重くなる）
+CLIPS_MAX_SEC = 600
+CLIPS_MAX_TOTAL = 1800
+CLIPS_MAX_COUNT = 60
 
 
 class Bad(Exception):
@@ -134,14 +141,25 @@ def items_of(req: dict, origin: str) -> list[dict]:
         bench = {"range": [bs, be], "models": models[:4]}
 
     # zoom は区間を1つ（range）でも、いくつも（ranges）でも受ける。1区間が1本の job
+    # clips も同じ読みかた。`range` に1行で「a-b,c-d,…」と並べてもよい
+    # （workflow_dispatch の入力欄は1つなので）。空なら parse_range が断る
     ranges = [None]
-    if mode == "zoom":
-        rs = req.get("ranges") or [req.get("range", "")]
+    if mode in ("zoom", "clips"):
+        rs = req.get("ranges") or req.get("range", "")
         if isinstance(rs, str):
-            rs = [x for x in re.split(r"\s*[,/]\s*", rs) if x.strip()]
+            rs = [x for x in re.split(r"\s*[,/]\s*", rs) if x.strip()] or [""]
         ranges = [parse_range(r) for r in rs]
     out = []
     for v in vids:
+        if mode == "clips":
+            # **clips は動画1本で1つの job。** 区間ごとに job を分けると、同じ配信を
+            # 区間の数だけ取り直すことになる（取るのは Cookie を握る1本の列なので遅い）。
+            # 1回取って、そこから全部の区間を切る
+            out.append({"video": v, "mode": "clips", "req": origin, "pubkey": pem,
+                        "pubkey_sha256": fp, "whisper": w, "bench": None,
+                        "ranges": clips_ranges(ranges, origin),
+                        "dir": "clips", "key": f"{v}__clips", "dest": f"{v}/clips"})
+            continue
         for rg in ranges:
             it = {"video": v, "mode": mode, "req": origin, "pubkey": pem, "pubkey_sha256": fp,
                   "whisper": w, "bench": bench if mode == "archive" else None}
@@ -161,6 +179,28 @@ def items_of(req: dict, origin: str) -> list[dict]:
             it["dest"] = f"{v}/{sub}"
             out.append(it)
     return out
+
+
+def clips_ranges(ranges: list, origin: str) -> list[list[float]]:
+    """clips の区間を確かめて、頼まれた順のまま返す。
+
+    **並べ替えない・まとめない。** 出来た mp4 の番号（01, 02 …）は依頼に書いた順で、
+    企画の絵コンテはその順で素材を指す。重なっていても、それぞれ1本として切る
+    （同じ場面を別の長さで使いたいことがある）。
+    """
+    if not ranges:
+        raise Bad(f"{origin}: clips は ranges（H:MM:SS-H:MM:SS を並べたもの）が要る")
+    if len(ranges) > CLIPS_MAX_COUNT:
+        raise Bad(f"{origin}: clips は {CLIPS_MAX_COUNT}区間まで（来たのは {len(ranges)}）")
+    total = 0.0
+    for s, e in ranges:
+        if e - s > CLIPS_MAX_SEC:
+            raise Bad(f"{origin}: clips の1区間は {CLIPS_MAX_SEC}秒まで（{s:g}-{e:g}）")
+        total += e - s
+    if total > CLIPS_MAX_TOTAL:
+        raise Bad(f"{origin}: clips の合計は {CLIPS_MAX_TOTAL}秒まで（来たのは {total:g}秒）。"
+                  "依頼を分ける")
+    return [[s, e] for s, e in ranges]
 
 
 def zoom_look(req: dict, origin: str) -> dict:

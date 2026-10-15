@@ -36,8 +36,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import now_iso, read_json, write_json  # noqa: E402
 
+# 1ファイルの上限。GitHub は 100MB を超えるファイルの push を断り、50MB を超えると
+# 警告を出す。45MB で切れば、clips のように数百MB になる回でもどのファイルも
+# 警告の手前に収まる。切った順につなぐと元の暗号文に戻る（HMAC はつないだ全体に掛ける）
 PART = 45 * 1024 * 1024
 FORMAT = "shorts-ingest/1"
+# mp4 は gzip でほとんど縮まない。clips で圧縮に時間をかけても運ぶ量は変わらない
+LEVEL = {"clips": 1}
 
 
 def sha256_file(p: Path) -> str:
@@ -58,7 +63,7 @@ def seal(item: dict, out: Path, dest: Path, stages: dict | None = None) -> dict:
         pub.write_text(item["pubkey"], encoding="utf-8")
         tgz = td / "payload.tar.gz"
         n_files = plain = 0
-        with tarfile.open(tgz, "w:gz", compresslevel=6) as tf:
+        with tarfile.open(tgz, "w:gz", compresslevel=LEVEL.get(item.get("mode"), 6)) as tf:
             for p in sorted(out.rglob("*")):
                 if p.is_file():
                     tf.add(p, arcname=str(p.relative_to(out)))
@@ -70,7 +75,12 @@ def seal(item: dict, out: Path, dest: Path, stages: dict | None = None) -> dict:
         # この行は `set -x` もログにも出さない
         subprocess.run(["openssl", "enc", "-aes-256-cbc", "-K", key.hex(), "-iv", iv.hex(),
                         "-in", str(tgz), "-out", str(enc)], check=True)
-        mac = hmac.new(mkey, enc.read_bytes(), hashlib.sha256).hexdigest()
+        # 1MB ずつ読んで掛ける。clips は暗号文が数百MB になり、丸ごと読むとその分メモリを食う
+        hm = hmac.new(mkey, digestmod=hashlib.sha256)
+        with open(enc, "rb") as f:
+            for b in iter(lambda: f.read(1 << 20), b""):
+                hm.update(b)
+        mac = hm.hexdigest()
         wrapped = subprocess.run(
             ["openssl", "pkeyutl", "-encrypt", "-pubin", "-inkey", str(pub),
              "-pkeyopt", "rsa_padding_mode:oaep", "-pkeyopt", "rsa_oaep_md:sha256",

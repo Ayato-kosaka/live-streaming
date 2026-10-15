@@ -24,6 +24,12 @@ for f in "$src"/*; do
     manifest.json|key.enc|payload.enc|payload.enc.[0-9][0-9][0-9]) ;;
     *) echo "!! 置かないはずのものが混ざっている: $(basename "$f")"; exit 1 ;;
   esac
+  # GitHub は 100MB を超えるファイルの push を断る。断られてから8回粘るより、
+  # 置く前に止める（seal.py は 45MB で切るので、ここに掛かるのは切り忘れ）
+  if [ "$(stat -c %s "$f")" -ge $((90 * 1024 * 1024)) ]; then
+    echo "!! 90MB 以上のファイルがある: $(basename "$f")（seal.py の切り方を見る）"
+    exit 1
+  fi
 done
 
 git config user.name "github-actions[bot]"

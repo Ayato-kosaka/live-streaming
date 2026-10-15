@@ -146,6 +146,22 @@ def fetch_video(it: dict, d: Path, client: str) -> dict:
         fmt = ["-f", "bv*", "-S", f"res:{res},+vcodec:avc",
                "--download-sections", f"*{s}-{e}", "--write-info-json"]
         want, timeout = e - s, 900
+    elif it["mode"] == "clips":
+        # **区間ごとに `--download-sections` で取らず、1本まるごと元の画質で取る。**
+        # 区間取りは yt-dlp が ffmpeg の `-ss … -c copy` で落とすので、頭が
+        # 区間の手前のキーフレームに寄り、そのファイルの 0秒が配信の何秒かが
+        # 確かめられない（zoom の秒の足し込みはそこを信じている）。編集の素材は
+        # 1コマ単位で頭を合わせたいので、配信と同じ時間軸のファイルを1本持ち、
+        # 切るのは解析の job（Cookie 無し）で ffmpeg に任せる。
+        # 並べ方は「縦横 → fps → 符号化」。縦横と fps を落とさないのが先で、
+        # 同じ縦横・fps なら avc1 を選ぶ（`vcodec:avc` は「h264 より上の符号化は
+        # 後回し」の意味）。YouTube は同じ縦横なら avc1 にいちばん多くビットを割くうえ、
+        # zoom（`+vcodec:avc`）と同じ元になるのでコマを突き合わせられる。
+        # avc1 が最大の縦横に無い動画では、縦横を優先して別の符号化を取る。
+        # 音は既定の並び（opus が aac より先）でいちばん良いもの
+        fmt = ["-f", "bv*+ba/b", "-S", "res,fps,vcodec:avc",
+               "--merge-output-format", "mkv", "--write-info-json"]
+        want, timeout = None, 3000
     else:
         # **短いほうの辺で 480 まで**（`-S res:`）。縦の配信を `height<=480` で絞ると
         # 270x480 まで落ちる（tools/clip/fetch.py の grab() の説明）。
@@ -232,7 +248,7 @@ def main() -> int:
     items = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["include"]
     # **一覧（channel）は最後。** 1本ずつ引き直すので1チャンネル7分かかる（2026-10-15 に
     # 実測 60本で412秒）。時間帯に掛かって途中で止めるなら、動画のほうを先に取っておく
-    order = {"archive": 0, "zoom": 1, "reference": 2, "channel": 3}
+    order = {"archive": 0, "zoom": 1, "clips": 1, "reference": 2, "channel": 3}
     items.sort(key=lambda it: order.get(it["mode"], 9))
     media = Path(sys.argv[2])
     media.mkdir(parents=True, exist_ok=True)

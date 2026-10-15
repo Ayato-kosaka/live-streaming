@@ -11,6 +11,9 @@ ITEM.json は plan.py が作る matrix の1件。MEDIA_DIR は download.py が�
 
 段は1つ落ちても次へ進む（common.Stages）。何が落ちたかは run.json に残り、
 manifest.json の `stages` に状態の語だけが出る。
+
+clips だけは材料ではなく**編集に使う実物**（頼んだ区間ごとの mp4）を作る。
+読むための縮んだ画ではなく、元の縦横・fps・音つきのまま切る（build_clips）。
 """
 
 from __future__ import annotations
@@ -115,6 +118,9 @@ def build_meta(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
     if it["mode"] == "zoom":
         s, e = it["range"]
         meta.update(range=[s, e], range_hms=[hms(s), hms(e)], zoom_fps=it["fps"])
+    if it["mode"] == "clips":
+        meta.update(ranges=it["ranges"],
+                    ranges_hms=[f"{hms(s)}-{hms(e)}" for s, e in it["ranges"]])
     write_json(out / "meta.json", meta)
     ctx["meta"] = meta
     return {"heatmap": bool(meta["heatmap"])}
@@ -542,6 +548,204 @@ def build_channel(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
     return {"entries": len(rows), "details": sum(1 for r in rows if r["detail"])}
 
 
+# ---------------------------------------------------------------- clips
+
+# 切り出しの符号化。**編集の素材なので、画を落とさない側に倒す。** 書き出し
+# （tools/shorts/render/）でもう一度符号化するので、ここで粗くすると2回ぶん崩れる。
+# CRF 18 は x264 で「見た目では元と見分けがつかない」とされるところ。preset slow は
+# 同じ CRF のままファイルを小さくする（暗号文が作業枝に積もるので効く）。
+CLIP_CRF = 18
+CLIP_PRESET = "slow"
+CLIP_AUDIO = "192k"
+# 長さの合否。頼んだ長さから ±0.5秒まで
+CLIP_DUR_TOL = 0.5
+
+
+def _rate(fr: str | None) -> float:
+    try:
+        a, b = (fr or "0/1").split("/")
+        return float(a) / float(b) if float(b) else 0.0
+    except ValueError:
+        return 0.0
+
+
+def clip_probe(path: Path) -> dict:
+    """合否に要るぶんだけを読む（映像・音それぞれの有無と長さ、縦横、fps、コマ数）。
+
+    media.probe は映像・音の「最初の1本」しか見ず長さも全体のものだけなので、
+    「音が途中で切れている」を見分けられない。clips はここで streams を全部読む。
+    """
+    p = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries",
+         "format=duration,size:stream=codec_type,codec_name,width,height,avg_frame_rate,"
+         "r_frame_rate,nb_frames,duration,sample_rate,channels",
+         "-of", "json", str(path)], capture_output=True, text=True)
+    d = json.loads(p.stdout or "{}")
+    vs = next((s for s in d.get("streams") or [] if s.get("codec_type") == "video"), None)
+    au = next((s for s in d.get("streams") or [] if s.get("codec_type") == "audio"), None)
+    fmt = d.get("format") or {}
+
+    def f(x):
+        try:
+            return round(float(x), 3)
+        except (TypeError, ValueError):
+            return None
+
+    return {
+        "duration": f(fmt.get("duration")), "bytes": int(fmt.get("size") or 0),
+        "video": None if not vs else {
+            "codec": vs.get("codec_name"), "width": vs.get("width"), "height": vs.get("height"),
+            "fps": round(_rate(vs.get("avg_frame_rate")), 3),
+            "avg_frame_rate": vs.get("avg_frame_rate"), "r_frame_rate": vs.get("r_frame_rate"),
+            "frames": int(vs["nb_frames"]) if str(vs.get("nb_frames") or "").isdigit() else None,
+            "duration": f(vs.get("duration"))},
+        "audio": None if not au else {
+            "codec": au.get("codec_name"), "sample_rate": int(au.get("sample_rate") or 0),
+            "channels": au.get("channels"), "duration": f(au.get("duration"))},
+    }
+
+
+def _tag(t: float) -> str:
+    """ファイル名に入れる時刻。`0:13:29` → `0-13-29`（端数があれば `0-13-29.5`）。"""
+    s = int(t)
+    base = f"{s // 3600}-{s % 3600 // 60:02d}-{s % 60:02d}"
+    frac = round(t - s, 3)
+    return base + (f"{frac:.3f}".lstrip("0").rstrip("0") if frac else "")
+
+
+def _sha256(p: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(p, "rb") as fh:
+        for b in iter(lambda: fh.read(1 << 20), b""):
+            h.update(b)
+    return h.hexdigest()
+
+
+def build_clips(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
+    """配信1本から、頼まれた区間を1本ずつ mp4 に切る。
+
+    **頭は1コマ単位で合わせる。** `-ss` を入力の前に置いて符号化し直すと、ffmpeg は
+    手前のキーフレームから復号して、頼んだ秒より前のコマを捨ててから書き始める
+    （コピーで切るとキーフレームまで頭が戻り、何秒ずれたか分からない）。
+    元は配信と同じ時間軸のファイル1本なので（download.py の clips）、切った mp4 の
+    0秒は配信の「頼んだ秒」になる。
+
+    fps は元のまま固定（CFR）にする。配信の書き出しは時刻が揺れていることがあり、
+    揺れたまま渡すと編集の側で「何コマ目が何秒か」が合わなくなる。
+
+    1本でも合格しなかったら、この段を failed にする（manifest は partial になる）。
+    出来たものと index.json は残すので、合格したぶんは使える。
+    """
+    src = src_video(mdir)
+    if not src:
+        raise RuntimeError("元の動画が無い")
+    sp = clip_probe(src)
+    sv, sa = sp.get("video"), sp.get("audio")
+    if not sv or not sa:
+        raise RuntimeError(f"元に映像か音が無い（映像 {bool(sv)}・音 {bool(sa)}）")
+    # 刻みは ffprobe の r_frame_rate（元の刻み）を先に使う。avg_frame_rate は
+    # 「コマ数÷長さ」で、配信は途中でコマが落ちて 29.9x になることがある。
+    # ただし mkv の r は時刻から推し量った値で、倍の 60 と出ることもあるので、
+    # YouTube が名乗る fps（info.json）と0.1以上違えば avg、それも違えば名乗る値を使う
+    info = read_json(mdir / "src.info.json", {}) or {}
+    yt_fps = float(info.get("fps") or 0)
+    rate = sv.get("r_frame_rate") or ""
+    if yt_fps and abs(_rate(rate) - yt_fps) > 0.1:
+        avg = sv.get("avg_frame_rate") or ""
+        rate = avg if abs(_rate(avg) - yt_fps) <= 0.1 else f"{round(yt_fps * 1000)}/1000"
+    if not 1 <= _rate(rate) <= 120:
+        rate = "30/1"
+    src_dur = sp.get("duration") or 0.0
+    log = out / "logs" / "ffmpeg_clips.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
+
+    rows, bad = [], []
+    for n, (s, e) in enumerate(it["ranges"], 1):
+        s, e = float(s), float(e)
+        name = f"{n:02d}_{_tag(s)}_{_tag(e)}.mp4"
+        row = {"n": n, "range": f"{hms(s)}-{hms(e)}", "start": s, "end": e,
+               "want_sec": round(e - s, 3), "file": name}
+        t0 = time.time()
+        if e > src_dur + CLIP_DUR_TOL:
+            row.update(ok=False, why=f"区間の終わりが動画の長さ（{src_dur:g}秒）を越えている")
+        else:
+            cmd = ["ffmpeg", "-nostdin", "-v", "error", "-y",
+                   "-ss", f"{s:.3f}", "-i", str(src), "-t", f"{e - s:.3f}",
+                   "-map", "0:v:0", "-map", "0:a:0",
+                   "-c:v", "libx264", "-preset", CLIP_PRESET, "-crf", str(CLIP_CRF),
+                   "-pix_fmt", "yuv420p", "-profile:v", "high",
+                   "-r", rate, "-fps_mode", "cfr",
+                   "-c:a", "aac", "-b:a", CLIP_AUDIO, "-ac", "2",
+                   "-movflags", "+faststart", str(out / name)]
+            with open(log, "a", encoding="utf-8") as lf:
+                lf.write(f"\n$ ffmpeg {' '.join(cmd[1:])}\n")
+                lf.flush()
+                rc = subprocess.run(cmd, stdout=lf, stderr=subprocess.STDOUT).returncode
+            pr = clip_probe(out / name) if (out / name).exists() else {}
+            v, a = pr.get("video") or {}, pr.get("audio") or {}
+            dur = pr.get("duration") or 0.0
+            why = []
+            if rc != 0:
+                why.append(f"ffmpeg が {rc} で終わった")
+            if not v or not a:
+                why.append(f"映像 {bool(v)}・音 {bool(a)}")
+            if abs(dur - (e - s)) > CLIP_DUR_TOL:
+                why.append(f"長さ {dur:g}秒（頼んだのは {e - s:g}秒）")
+            if v and (v.get("width"), v.get("height")) != (sv.get("width"), sv.get("height")):
+                why.append(f"縦横 {v.get('width')}x{v.get('height')}（元は "
+                           f"{sv.get('width')}x{sv.get('height')}）")
+            if v and abs((v.get("fps") or 0) - _rate(rate)) > 0.5:
+                why.append(f"fps {v.get('fps')}（元は {rate}）")
+            row.update(
+                ok=not why, why="・".join(why) or None, duration=dur,
+                video_duration=v.get("duration"), audio_duration=a.get("duration"),
+                width=v.get("width"), height=v.get("height"), fps=v.get("fps"),
+                frames=v.get("frames"), vcodec=v.get("codec"), acodec=a.get("codec"),
+                sample_rate=a.get("sample_rate"), channels=a.get("channels"),
+                bytes=pr.get("bytes"),
+                sha256=_sha256(out / name) if (out / name).exists() else None)
+        row["encode_sec"] = round(time.time() - t0, 1)
+        rows.append(row)
+        if not row["ok"]:
+            bad.append(row)
+        # 公開のログには番号・長さ・縦横・バイト数だけ（区間は依頼ファイルに平文で在る）
+        print(f"   {n:02d}  {row['want_sec']:g}秒 → {row.get('duration')}秒  "
+              f"{row.get('width')}x{row.get('height')}  {row.get('fps')}fps  "
+              f"{(row.get('bytes') or 0) / 1e6:.1f}MB  {row['encode_sec']}秒  "
+              f"{'OK' if row['ok'] else 'NG'}", flush=True)
+
+    rf = info.get("requested_formats") or [info]
+    write_json(out / "index.json", {
+        "video": it.get("video"), "url": f"https://www.youtube.com/watch?v={it.get('video')}",
+        "created_at": now_iso(),
+        "source": {
+            "format_id": info.get("format_id"),
+            "formats": [{k: f.get(k) for k in ("format_id", "vcodec", "acodec", "width", "height",
+                                                "fps", "tbr", "asr")} for f in rf],
+            "original_max": (ctx.get("meta") or {}).get("original_max"),
+            "duration": src_dur, "width": sv.get("width"), "height": sv.get("height"),
+            "r_frame_rate": sv.get("r_frame_rate"), "fps_avg": sv.get("fps"),
+            "vcodec": sv.get("codec"), "acodec": sa.get("codec"),
+            "sample_rate": sa.get("sample_rate"),
+        },
+        "encode": {"vcodec": "libx264", "crf": CLIP_CRF, "preset": CLIP_PRESET,
+                   "pix_fmt": "yuv420p", "rate": rate, "fps_mode": "cfr",
+                   "acodec": "aac", "audio_bitrate": CLIP_AUDIO, "channels": 2,
+                   "seek": "-ss before -i + re-encode (frame-accurate start)",
+                   "duration_tolerance_sec": CLIP_DUR_TOL},
+        "count": len(rows), "ok": len(rows) - len(bad),
+        "total_sec": round(sum(r.get("duration") or 0 for r in rows), 3),
+        "clips": rows,
+    })
+    ctx["clips"] = rows
+    if bad:
+        raise RuntimeError(f"{len(bad)}/{len(rows)}本が合格しなかった: " + " / ".join(
+            f"{r['n']:02d} {r['why']}" for r in bad))
+    return {"clips": len(rows)}
+
+
 # ---------------------------------------------------------------- index / run
 
 FILES = {
@@ -577,6 +781,10 @@ FILES = {
                     "view_count_from（detail＝1本ずつ引いた正確な数、list＝一覧の丸めた数）/ "
                     "like_count / duration / upload_date / date_from / rank_views）",
     "channel.csv": "上を再生数の多い順に並べた表",
+    "index.json": "clips の一覧。clips[] = n / range（H:MM:SS-H:MM:SS）/ start / end（配信の秒）/ "
+                  "file / duration / video_duration / audio_duration / width / height / fps / "
+                  "frames / bytes / sha256 / ok / why。source（元の形式・縦横・fps）と "
+                  "encode（CRF・preset・音のビットレート）",
     "run.json": "段ごとのかかった秒・成否・落ちた理由、道具の版、ランナー",
     "logs/": "yt-dlp と ffmpeg のログ（落ちたときに見る）",
 }
@@ -588,6 +796,10 @@ def write_index(it: dict, out: Path, ctx: dict, stages: Stages) -> None:
         p = out / name.split("/")[0] if "/" in name else out / name
         if p.exists():
             present.append(f"- `{name}` — {desc}")
+    if ctx.get("clips"):
+        ok = sum(1 for r in ctx["clips"] if r.get("ok"))
+        present.append(f"- `NN_H-MM-SS_H-MM-SS.mp4`（{len(ctx['clips'])}本・合格 {ok}本）— "
+                       "頼んだ区間を1本ずつ。元の縦横・fps・音つき。0秒が配信の区間の頭")
     meta = ctx.get("meta") or {}
     who, sub = it.get("video") or it.get("channel"), it["dir"]
     head = [f"# {who} / {sub}", ""]
@@ -643,10 +855,13 @@ def main() -> int:
             st.run("channel", build_channel, it, mdir, out, ctx)
         else:
             st.run("meta", build_meta, it, mdir, out, ctx)
+            if mode == "clips":
+                st.run("clips", build_clips, it, mdir, out, ctx)
             if mode in ("archive", "reference"):
                 st.run("captions", build_captions, it, mdir, out, ctx)
                 st.run("audio", build_audio, it, mdir, out, ctx, work)
-            st.run("visual", build_visual, it, mdir, out, ctx, work)
+            if mode != "clips":
+                st.run("visual", build_visual, it, mdir, out, ctx, work)
             if mode in ("archive", "reference"):
                 st.run("whisper", build_whisper, it, out, ctx)
             if mode == "archive":
@@ -681,6 +896,11 @@ def main() -> int:
                    "caption_segments": len(ctx.get("captions") or []),
                    "transcript_segments": len((ctx.get("whisper") or {}).get("segments", [])),
                    "cuts": len(ctx.get("cuts") or []),
+                   # clips は本数と合格した本数・秒だけ（区間そのものは依頼ファイルに在る）
+                   "clips": len(ctx.get("clips") or []),
+                   "clips_ok": sum(1 for r in ctx.get("clips") or [] if r.get("ok")),
+                   "clip_seconds": round(sum(r.get("duration") or 0
+                                             for r in ctx.get("clips") or []), 1),
                    "channel_entries": len((read_json(out / "channel.json", {}) or {})
                                           .get("entries", []))},
     })
