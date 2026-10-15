@@ -254,8 +254,8 @@ python3 python/audit_counts_selftest.py
 
 ## 2-6. `listResidents()` の上限
 
-`USERS.where("channelId","!=",null).limit(500)`。
-**同意を出した人が501人を超えると、そこから先は名簿に出ない。**
+`USERS.where("channelId","!=",null).limit(RESIDENT_SCAN)`（いまは 500）。
+**同意を出した人がそこを超えると、超えたぶんは名簿に出ない。**
 
 **2026-09-19 からここは変わった。** いまは `capHit()` が通っていて、
 上限に当たると Functions のログに「窓が埋まりました」と出る（#864）。
@@ -339,12 +339,18 @@ SPORT=4711 OUT=/tmp/lie-all PART=cases ONLY=503-ぜんぶ node tools/sprites/lie
 当たっても何も言わない」だったが、#864 で `capHit()` が入って、
 **埋まったらログに出る**ようになった。
 
-| どこ | 上限 | 溜まったらどうなるか |
+**上限の値はここに書かない。** 名前が付いているものは、その名前で引く
+（`functions/src` の `const`。値を写すと、変えた日にこちらだけ古くなる）。
+
+| どこ | 名前 | 溜まったらどうなるか |
 | --- | --- | --- |
-| `listResidents()` | 500 | 同意した人がそれを超えると名簿に出ない（2-6）。ログには出る |
-| `listPhotoDays()` | 400 | 旅の写真。`desc` なので古いほうから落ちる（落ち方は正しい） |
-| `streamEvents.ts` の `MAX_EVENTS` / `MAX_IMAGES` | 500 / 600 | 企画と写真 |
-| `GET /nordic/log` | 60 | **`asc` なので超えたぶんは「新しいほう」が落ちる。** 旅程が倍になった日に、その日の日記だけ出なくなる |
+| 名簿（`listResidents()`） | `RESIDENT_SCAN` | 同意した人がそれを超えると名簿に出ない（2-6）。ログには出る |
+| 付箋（お題ごと・待ち・見た・自分の） | `STICKY_THEME_SCAN` / `WAITING_SCAN` / `MINE_SCAN` | 続きが取れるのは付箋の一覧だけ |
+| 企画とその画像 | `MAX_EVENTS` / `MAX_IMAGES` / `DAY_EVENT_SCAN` | 画像は `at` の降順なので、落ちるのは古いほう（落ち方は正しい） |
+| キャラクター帳・投げ銭の台帳 | `MAX_CHARACTERS` / `MAX_DONORS` | 増えるほうなので、いつか必ず当たる |
+
+**名前の付いていない上限もある**（`.limit(12)` `.limit(5)` のような直書き）。
+数の差（`fn_limits` − `cap_hits`）がそれを含んでいて、**当たっても誰も気づかない側。**
 
 `pageOf<T>()` が既に汎用なので掛け替えるだけだが、**画面側が `{items, more, next}` を
 受けられる必要がある**（付箋以外は素の配列を受けている）。サーバーと画面を同時に出す。
