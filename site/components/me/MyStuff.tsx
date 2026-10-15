@@ -7,7 +7,7 @@ import {
   type NextPlan,
   type Sticky,
 } from "@/lib/api";
-import { themeById } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
 import { jstDay } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
@@ -131,6 +131,10 @@ function Notes({
   onRetry: () => void;
   quiet: boolean;
 }) {
+  /* 貼り先の名前は、机で直したぶんが勝つ（`lib/dests.ts`）。焼き込みだけを
+     引いていると、名前を直した日から**ここだけ**古い名前を出し続ける。
+     読めなかった日は焼き込みの名前に落ちるので、空にはならない。 */
+  const { dests } = useDests();
   if (notes.st === "wait") return <Waiting />;
   if (notes.st === "down") return <ReadAgain what="付箋" onRetry={onRetry} quiet={quiet} />;
   if (notes.list.length === 0)
@@ -147,7 +151,7 @@ function Notes({
   return (
     <Longer items={notes.list} first={3} step={8} unit="枚" className="mp-notes">
       {(n, i) => {
-        const th = themeById(n.theme);
+        const th = destById(dests, n.theme);
         return (
           <li key={n.id}>
             <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />

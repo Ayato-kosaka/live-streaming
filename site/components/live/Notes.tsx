@@ -16,14 +16,13 @@ import {
 } from "@/lib/api";
 import {
   isOpenTheme,
-  openThemes,
   shelves,
   shutDest,
   THEMES,
-  themeById,
   writeShelves,
   type Theme,
 } from "@/content/themes";
+import { destById, overlayShelf, useDests } from "@/lib/dests";
 import { useAuth, useOwner, withRead, type Read } from "@/lib/auth";
 import { useLimits } from "@/lib/liveStats";
 import ReadAgain from "@/components/me/ReadAgain";
@@ -260,11 +259,24 @@ export default function Notes({
   /* 字の長さの上限。**サーバーが持っている**（`GET /state` の `limits`）。
      `useLiveStats` と同じ `load()` を通るので、往復は増えない。 */
   const limits = useLimits();
-  const fixed = themeById(theme ?? "");
+  /**
+   * 貼り先は**焼き込みと、机から足したぶんを重ねたもの**（`lib/dests.ts`）。
+   *
+   * 焼き込みだけを読んでいたころ、机から足した貼り先は**島のどこにも
+   * 出なかった**（足す口だけが 2026-10-14 に入っていた）。重ねるのは
+   * 1か所にする——2か所で重ねると、片方だけ古い規則で重なる日が来る。
+   *
+   * 口が落ちていたら焼き込みがそのまま出るので、**貼り先が空になることはない。**
+   */
+  const { dests: all } = useDests();
+  const fixed = destById(all, theme ?? "");
   /** 札に並べるテーマ。決め打ちのときは1つも並べない */
-  const shelf = useMemo(() => themes ?? (fixed ? [] : THEMES), [themes, fixed]);
+  const shelf = useMemo(
+    () => (themes ? overlayShelf(themes, all) : fixed ? [] : all),
+    [themes, all, fixed],
+  );
   const [pick, setPick] = useState(
-    () => fixed?.id ?? themes?.[0]?.id ?? THEMES[0].id,
+    () => theme ?? themes?.[0]?.id ?? THEMES[0].id,
   );
   /** 取りに行っている最中は null。0枚と区別する */
   const [notes, setNotes] = useState<Sticky[] | null>(null);
@@ -296,7 +308,7 @@ export default function Notes({
   const owner = useOwner();
 
   /** いま読んでいる棚。**書く宛先とは別**（畳んだ宛先の棚も読めるため） */
-  const here = fixed ?? themeById(pick) ?? THEMES[0];
+  const here = fixed ?? destById(all, pick) ?? all[0];
 
   /* 札を並べ直すのに使う今日。**画面が出てから入れる。**
      静的書き出しなので、ここで `new Date()` を直に呼ぶとビルドした日が
@@ -324,7 +336,10 @@ export default function Notes({
   /** 畳みの中の見出しごとの束（「北欧の旅」「行ってきた企画」など） */
   const groups = useMemo(() => shelves(closedThemes, today), [closedThemes, today]);
   /**
-   * いま**書ける**宛先だけ（`content/themes.ts` の `openThemes`）。
+   * いま**書ける**宛先だけ（判定は `content/themes.ts` の `isOpenTheme`）。
+   *
+   * **棚（`shelf`）から絞る。** 焼き込みの表を直に引くと、机から足した
+   * 貼り先が1つも出ない（`lib/dests.ts`）。
    *
    * 棚（読む側）は13〜15あるが、そのうち生きているのは4つで、残りは
    * 終わった北欧の国べつ7つと終わった企画3つ。**死んだ札の上に生きた札が
@@ -332,7 +347,7 @@ export default function Notes({
    * 言われた（2026-09-30）。書く先の選び札は、書ける宛先だけにする。
    */
   const writable = useMemo(
-    () => openThemes(today).filter((t) => shelf.some((x) => x.id === t.id)),
+    () => shelf.filter((t) => isOpenTheme(t, today)),
     [shelf, today],
   );
   /**
