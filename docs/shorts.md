@@ -26,7 +26,7 @@
 | **Actions** で YouTube を落とす・重い処理 | この箱からは YouTube に届かない（プロキシが 403）。Cookie なしの YouTube はボット確認で全滅、`YOUTUBE_COOKIES`（yt-dlp 専用アカウント）を読むだけで通る。4 vCPU・無料（公開リポジトリ） |
 | 途中の結果は**暗号化して作業枝**に置く | artifact の実体（blob.core.windows.net）はこの箱から取れない。リポジトリが公開なので、フレームや文字起こしを平文で置くと公開になる。鍵はセッションごとに作り、依頼ファイルで公開鍵だけを渡す（秘密鍵はセッションの外に出ない） |
 | **issue** で承認 | スマホから1行で返せる。記録が残る。誰が・どの版を・いつ承認したかを github-actions[bot] が書く |
-| **EC2 の Chrome** | 投稿（YouTube・TikTok）・数字取り（Studio・TikTok の分析）・ナレーションの生成（Fish Audio の画面）。あやとの依頼で、あやとのアカウントを操作する。運用実績のある道（`youtube-studio` など）なので、規約の文言のグレーを理由に API に寄せない（#911、`docs/island-misses.md` #270） |
+| **EC2 の Chrome** | 投稿（YouTube・TikTok）・数字取り（Studio・TikTok の分析）・ナレーションの生成（Fish Audio の画面）。あやとの依頼で、あやとのアカウントを操作する。運用実績のある道（`youtube-studio` など）なので、規約の文言のグレーを理由に API に寄せない（#911、`docs/island-misses.md` #273） |
 | **BigQuery** に数字 | 公開後の数字は非公開の置き場に置く。リポジトリ（公開）には集計した学びだけ |
 
 ## 2. 段と、どこまで終わったかの見分け
