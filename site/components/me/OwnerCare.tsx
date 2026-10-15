@@ -20,7 +20,7 @@ import {
   type Sticky,
 } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
-import { themeById } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
 import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
@@ -386,7 +386,10 @@ function StickyRow({
   const [text, setText] = useState(note.reply ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
-  const th = themeById(note.theme);
+  /* 名前は机で直したぶんが勝つ（`lib/dests.ts`）。貼り先の名前を直したのに
+     ここだけ古い名前が残ると、同じ棚が2つ在るように読める。 */
+  const { dests } = useDests();
+  const th = destById(dests, note.theme);
 
   const reply = async () => {
     const t = await token();

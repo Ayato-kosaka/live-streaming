@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
-import { shutDest, themeById } from "@/content/themes";
+import { shutDest } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
 import { LINKS } from "@/content/site";
 import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
@@ -366,7 +367,13 @@ function Reached({ plan }: { plan: Plan }) {
 function useCanNote(plan: Plan): boolean {
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => setToday(new Date()), []);
-  const theme = themeById(plan.id);
+  /* **重ねた側で見る**（`lib/dests.ts`）。ここは字を出しているのではなく
+     「付箋を貼る」の札を出すかどうかを決めているので、机で締め切った日に
+     焼き込みだけを見ていると、**押せるのに窓の無いところへ飛ばす。**
+     行き先（`NextPlans.tsx` の `PlanNotes`）も同じ一覧を見ている——
+     札と行き先は、必ず同じものから決める。 */
+  const { dests } = useDests();
+  const theme = destById(dests, plan.id);
   return !!theme && !shutDest(theme, today);
 }
 
