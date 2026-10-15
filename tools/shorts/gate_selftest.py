@@ -38,6 +38,8 @@
 | `cover` | 動画の案は、企画で承認した案に入っているものだけ（承認のときも、後段でも） | `cover` |
 | `optlist` | 動画の提出の案の並びが読めなければ承認しない | `optlist` |
 | `optmatch` | 記録の「出してよい案」も、元のコメントから導き直したものと突き合わせる | `forged` |
+| `extra` | 案を選ぶ承認の1行目は案だけ（案でない字があれば断る。黙って広げない） | `extra` |
+| `multi` | 企画の承認は案1つか全部（`A C` を A に黙って縮めない） | `plan_multi` |
 | `outsider` | 外の人の提出を数えない | `outsider` |
 | `dup` | 同じ版が2つある提出は承認しない | `dup` |
 | `manifest` | 提出の sha256 が files の中身と合わなければ承認しない | `manifest` |
@@ -90,6 +92,7 @@ BREAKS: dict[str, str] = {
     "head": "head", "bare": "bare", "cover": "cover", "optlist": "optlist",
     # 記録の突き合わせから「出してよい案」だけを抜く。落ちるのは偽の記録の足（forged）
     "optmatch": "forged",
+    "extra": "extra", "multi": "plan_multi",
 }
 
 
@@ -173,6 +176,10 @@ def apply_break(name: str) -> None:
         G._video_options_ok = lambda opts: True
     elif name == "optmatch":
         G.MATCH_KEYS = tuple(k for k in G.MATCH_KEYS if k != "options")
+    elif name == "extra":
+        G._line_clean = lambda cmd: True
+    elif name == "multi":
+        G._one_plan_option = lambda cmd: True
 
 
 # ---------------------------------------------------------------- こしらえる材料
@@ -414,6 +421,10 @@ def leg_ok_video() -> None:
     why, d = req(u, "video", sha(VIDEO["v1"]))
     ok(leg, why == "ok" and d.options is None,
        f"案の無い動画では、うしろに書いた字をいままでどおり読み流す（{why}）")
+    u.say("/approve video v1 いいですね、これで出してください")
+    why, d = req(u, "video", sha(VIDEO["v1"]))
+    ok(leg, record_of(u.bots()[-1]) is not None and why == "ok" and d.options is None,
+       f"案の無い動画は、1行目にひとことを書いた承認もいままでどおり通る（{why}）")
     t.submit("video", "v2", VIDEO["v2"])
     ok(leg, "gate2-approved" not in t.api.labels, "新しい版が出たら gate2-approved が外れる")
 
@@ -458,8 +469,9 @@ def leg_ok_choice() -> None:
        "案ごとの動画の提出は、案 A・B・C を持って読める")
     for text, want in (("/approve video v1 B", ["B"]),
                        ("/approve video v1 B C", ["B", "C"]),
-                       ("/approve video v1 C,A よろしく", ["A", "C"]),
+                       ("/approve video v1 C,A\nよろしくお願いします", ["A", "C"]),
                        ("/approve video v1 B・C", ["B", "C"]),
+                       ("/approve video v1 B ・ C、", ["B", "C"]),
                        ("/Approve Video V1 b案 c案", ["B", "C"]),
                        ("/approve video v1 全部", ["A", "B", "C"]),
                        ("／承認　動画　１　ぜんぶ", ["A", "B", "C"])):
@@ -918,12 +930,45 @@ def leg_optlist() -> None:
     ok(leg, not made, "重なった案の動画のブロックは、作る口が作らない")
 
 
+def leg_extra() -> None:
+    leg = "extra"
+    t = choice_video()
+    for text in ("/approve video v1 B a nice one", "/approve video v1 B C いいね", "/approve video v1 全部 おねがいします"):
+        t.say(text)
+        reply = t.bots()[-1]
+        ok(leg, refused_reason(reply) == "extra_text" and "1行目は案だけ" in reply["body"]
+           and "2行目から" in reply["body"] and "/approve video v1 B C" in reply["body"],
+           f"案ごとの動画で {text!r} は、案を広げも縮めもせず「1行目は案だけ」と断る")
+    ok(leg, "gate2-approved" not in t.api.labels and req(t, "video", sha(VIDEO["v1"]))[0] != "ok",
+       "札も付かず、後段も通らない")
+    u = Thread()
+    u.submit("plan", "p1", PLAN["p1"])
+    u.say("/approve plan p1 B よろしく")
+    reply = u.bots()[-1]
+    ok(leg, refused_reason(reply) == "extra_text" and "/approve plan p1 B" in reply["body"],
+       "企画も、1行目の案のうしろにひとことがあれば断る（例は企画の書き方）")
+    ok(leg, "gate1-approved" not in u.api.labels and req(u, "plan", sha(PLAN["p1"]))[0] != "ok",
+       "札も付かず、後段も通らない")
+
+
+def leg_plan_multi() -> None:
+    leg = "plan_multi"
+    for text in ("/approve plan p1 A C", "/approve plan p1 A,C", "/approve plan p1 全部 A"):
+        t = Thread()
+        t.submit("plan", "p1", PLAN["p1"])
+        t.say(text)
+        reply = t.bots()[-1]
+        ok(leg, refused_reason(reply) == "plan_multi" and "案1つか全部" in reply["body"]
+           and "gate1-approved" not in t.api.labels and req(t, "plan", sha(PLAN["p1"]))[0] != "ok",
+           f"{text!r} は、1案に黙って縮めず「案1つか全部」と断る")
+
+
 LEGS = [leg_ok_plan, leg_ok_video, leg_ok_all, leg_ok_choice, leg_phone, leg_quiet,
         leg_limit_pat, leg_config,
         leg_app, leg_approver, leg_assoc, leg_edited, leg_stale, leg_sha, leg_deleted,
         leg_fake, leg_forged, leg_recedit, leg_subedit, leg_newer, leg_revoked, leg_tamper,
         leg_planfirst, leg_option, leg_outsider, leg_dup, leg_manifest, leg_head,
-        leg_bare, leg_cover, leg_optlist]
+        leg_bare, leg_cover, leg_optlist, leg_extra, leg_plan_multi]
 
 
 def run_legs() -> None:

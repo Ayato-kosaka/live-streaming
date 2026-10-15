@@ -145,7 +145,8 @@ class Command:
     gate: str | None = None
     version: str | None = None
     option: str | None = None      # 企画の案（1文字か ALL）
-    options: list = field(default_factory=list)   # 動画の案（書かれた順。ALL も入りうる）
+    options: list = field(default_factory=list)   # 1行目に書かれた案（書かれた順。ALL も入りうる）
+    extra: bool = False            # 1行目の案のうしろに、案でない字がある
     error: str = ""                # 書式が読めないときの理由の名前
 
 
@@ -294,6 +295,18 @@ def _choice_given(options: list, sub: Sub) -> bool:
     """案ごとの動画（提出に options がある）なら、どれを出すかが書いてある。
     案を書かない `/approve video v1` を「全部」と読まない。出す案は人が決める。"""
     return bool(options) or sub.options is None
+
+
+def _line_clean(cmd: "Command") -> bool:
+    """案を選ぶ承認（企画・案ごとの動画）の1行目が、案だけでできている。
+    `/approve video v1 B a nice one` の `a` を案 A と読んで、承認を黙って広げない。
+    ひとことは2行目から書ける。"""
+    return not cmd.extra
+
+
+def _one_plan_option(cmd: "Command") -> bool:
+    """企画の承認は案1つか全部。`/approve plan p1 A C` を、A だけに黙って縮めない。"""
+    return len(set(cmd.options)) <= 1
 
 
 def _plan_covers(plan: "Decision | None", option: str) -> bool:
@@ -550,16 +563,16 @@ def _choice(tok: str) -> str | None:
     return ALL if tok.strip().lower() in ALL_WORDS else _option(tok)
 
 
-def _choices(toks: list[str]) -> list[str]:
-    """`/approve video v1` のうしろの案。案が続くあいだだけ読み、案でない字が出たらそこで止める
-    （そのあとは自由に書いてよい）。`B,C` `B・C` `B、C` も分けて読む。"""
+def _choices(toks: list[str]) -> tuple[list[str], bool]:
+    """版のうしろの案と、「案でない字が残ったか」。案でない字が出たらそこで読むのをやめる。
+    `B,C` `B・C` `B、C` `B ・ C` も分けて読む（区切りだけの字は飛ばす）。"""
     out: list[str] = []
     for tok in toks:
         got = [_choice(p) for p in re.split(r"[,、・]", tok) if p]
-        if not got or None in got:
-            break
+        if None in got:
+            return out, True
         out += got
-    return out
+    return out, False
 
 
 def parse_command(body: str) -> Command | None:
@@ -599,13 +612,14 @@ def parse_command(body: str) -> Command | None:
     if cmd.version is None:
         cmd.error = "bad_version"
         return cmd
+    if kind == "approve":
+        # 案が2つ以上・案でない字が残った、はここでは咎めない（judge が断る。守りを1本ずつ外せるように）。
+        # 案の無い動画の提出なら、いままでどおり読み流す
+        cmd.options, cmd.extra = _choices(rest[2:])
     if kind == "approve" and gate == "plan":
-        cmd.option = _choice(rest[2]) if len(rest) >= 3 else None
+        cmd.option = cmd.options[0] if cmd.options else None
         if cmd.option is None:
             cmd.error = "no_option"
-    elif kind == "approve" and gate == "video":
-        # 案を書いたかどうかは、ここでは咎めない。案の無い提出なら、いままでどおり読み流す
-        cmd.options = _choices(rest[2:])
     return cmd
 
 
@@ -671,6 +685,10 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
         return no("submission_broken", version=cmd.version, why=target.broken)
     chosen: list[str] | None = None
     if cmd.kind == "approve" and cmd.gate == "plan":
+        if not _line_clean(cmd):
+            return no("extra_text", version=cmd.version)
+        if not _one_plan_option(cmd):
+            return no("plan_multi", version=cmd.version)
         if cmd.option != ALL and not _option_ok(cmd.option or "", target):
             return no("bad_option", version=cmd.version, option=cmd.option,
                       options="・".join(target.options or []))
@@ -682,6 +700,8 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
             return no("choose_option", version=cmd.version,
                       options="・".join(target.options or []))
         if target.options is not None:
+            if not _line_clean(cmd):
+                return no("extra_text", version=cmd.version)
             chosen = sorted(set(target.options if ALL in cmd.options else cmd.options))
             bad = next((o for o in chosen if not _option_ok(o, target)), None)
             if bad is not None:
@@ -824,6 +844,12 @@ def explain(reason: str, d: dict) -> str:
         "no_option": (f"案を1つ選んでください（全部作るなら `全部`）。"
                       f"例: `/approve plan {v or 'p2'} B`・`/approve plan {v or 'p2'} 全部`"),
         "bad_option": f"{d.get('option')} は {v} の案にありません（{d.get('options')} から選んでください）。",
+        "extra_text": (f"1行目は案だけを書いてください（例 `"
+                       + (f"/approve video {v or 'v1'} B C" if d.get("gate") == "video"
+                          else f"/approve plan {v or 'p1'} B")
+                       + "`）。ひとことは2行目から書けます。"),
+        "plan_multi": (f"企画の承認は、案1つか全部です"
+                       f"（例 `/approve plan {v or 'p1'} B`・`/approve plan {v or 'p1'} 全部`）。"),
         "choose_option": (f"{v} は案ごとに作った動画です（{d.get('options')}）。出す案を書いてください。"
                           f"例: `/approve video {v or 'v3'} B`・いくつかなら `/approve video {v or 'v3'} B C`"
                           f"・全部なら `/approve video {v or 'v3'} 全部`"),
