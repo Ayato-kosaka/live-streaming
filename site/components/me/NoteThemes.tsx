@@ -349,7 +349,11 @@ export default function NoteThemes() {
         ))}
 
       {/* 足す。**鍵（書類ID）も打たせる。** 島の道（`/board` の札）と
-          焼き込みの表が同じ鍵で結ばれているので、こちらで作る必要がある。 */}
+          焼き込みの表が同じ鍵で結ばれているので、こちらで作る必要がある。
+
+          **見本に、もう在る貼り先を書かない。** 「北マケドニアでこれやって」は
+          上の一覧に並んでいる行なので、見本のまま打つと「その鍵は、もう
+          使われています」で止まる。見本は、これから作りそうなものにする。 */}
       <h4 className="nd-glabel nd-addl">貼り先をふやす</h4>
       <label className="nph-post-row">
         <span>名前</span>
@@ -357,7 +361,7 @@ export default function NoteThemes() {
           type="text"
           value={name}
           maxLength={24}
-          placeholder="北マケドニアでこれやって"
+          placeholder="オフリド湖でこれやって"
           onChange={(e) => setName(e.target.value)}
         />
       </label>
@@ -367,7 +371,7 @@ export default function NoteThemes() {
           type="text"
           value={id}
           maxLength={40}
-          placeholder="north-macedonia"
+          placeholder="ohrid-lake"
           onChange={(e) => setId(e.target.value.toLowerCase())}
         />
       </label>
@@ -377,7 +381,7 @@ export default function NoteThemes() {
           type="text"
           value={lead}
           maxLength={80}
-          placeholder="北マケドニアでやってほしいこと。"
+          placeholder="オフリド湖のまわりでやってほしいこと。"
           onChange={(e) => setLead(e.target.value)}
         />
       </label>
