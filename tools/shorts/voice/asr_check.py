@@ -1,6 +1,6 @@
 """作った声を聞き取り直して、原稿どおりに読めているかを見る（EC2 の上の venv で動く）。
 
-    /home/ubuntu/voice/asr-venv/bin/python asr_check.py <音声のフォルダ> <書き出す.json> [--model large-v3-turbo]
+    ~/voice/asr-venv/bin/python asr_check.py   # EC2 の ubuntu のホームで <音声のフォルダ> <書き出す.json> [--model large-v3-turbo]
 
 フォルダの下の `*.mp3` `*.wav` を全部聞いて、`{相対パス: {"text", "duration"}}` を書く。
 比べるのは手元の `collect.py`（字幕の字と並べて、数・名前の食い違いを拾う）。

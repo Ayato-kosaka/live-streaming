@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Fish Audio の画面（EC2 のログイン済み Chrome）で、ナレーションを1文ずつ作って持ち帰る（EC2 の上で動く）。
 
-    python3 fish_web.py gen   --model <声のID> --lines lines.json --out /home/ubuntu/voice/out/<動画> [--only A/04,B/03]
+    python3 fish_web.py gen   --model <声のID> --lines lines.json --out ~/voice/out/<動画> [--only A/04,B/03]
                               [--budget-credits 4500] [--attempt-limit 2]
     python3 fish_web.py adopt --model <声のID> --key A/01 --text '<送った字>' --out ...   # 画面で手で作った分を記録に取り込む
     python3 fish_web.py state --model <声のID>        # ログイン・声・モデル・速度・残りのクレジットを見るだけ（作らない）
     python3 fish_web.py restore --backup <下書きの写し.json>   # 入力欄を元の下書き（声と字）に戻す
 
-置き場所は `/home/ubuntu/cdp/`（`cdp.py` と並べる）。Chrome は `up("fish")`（`~/cdp-fish`）。
+置き場所は EC2 の `~/cdp/`（ubuntu のホーム。`cdp.py` と並べる）。Chrome は `up("fish")`（`~/cdp-fish`）。
 使いかたの全体と、なぜこの形かは `tools/shorts/voice/README.md`。
 
 ## 何をしているか（画面の上で）
@@ -38,14 +38,16 @@ import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, "/home/ubuntu/cdp")
+# EC2 の ubuntu のホーム。SSM のコマンドは root で走るので `~` に頼らず、ここから組む
+EC2_HOME = "/home/ubuntu"
+sys.path.insert(0, f"{EC2_HOME}/cdp")
 from cdp import Tab, _port, pages, up  # noqa: E402
 
 NAME = "fish"
 PLAY = "https://fish.audio/ja/text-to-speech/?modelId={model}"
 ED = "document.querySelector('div.tiptap.ProseMirror[contenteditable=true]')"
 GEN = "[...document.querySelectorAll('button')].find(b => /音声を生成/.test(b.innerText || ''))"
-LOCK = "/home/ubuntu/locks/fish-voice"
+LOCK = f"{EC2_HOME}/locks/fish-voice"
 LIMIT_BYTES = 500
 TASK_RE = re.compile(r"^https://api\.fish\.audio/task/([0-9a-f]{32})$")
 
