@@ -1,0 +1,15 @@
+{
+ "_note": "make_logo_template.py が書く。scale は「元の配信（720x1280）の画素 → 型の画素」の倍率",
+ "scale": 0.56181,
+ "box_in_source": [
+  397,
+  1196,
+  285,
+  52
+ ],
+ "frames_used": 688,
+ "size": [
+  160,
+  29
+ ]
+}

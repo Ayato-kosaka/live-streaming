@@ -173,9 +173,22 @@ SUMMARY_PATH = os.environ.pop("GITHUB_STEP_SUMMARY", None)
 # ここに書いてよいのは「外に出る・鍵が要る・遅い」の3つだけ。
 # 「たぶん落ちるから」で外さない——落ちるなら、それは見つけた不具合。
 SKIP: dict[str, str] = {
-    # 2026-09-18 現在、外すものは1本も無い。Python の見張り26本は
-    # どれも「ネットにも鍵にも触らない」と自分の頭に書いてあり、
-    # 実際に全部この箱で回った（いちばん遅い1本で5秒、26本で18秒）
+    # 2026-09-18 から 2026-10-15 まで、外すものは1本も無かった。
+    #
+    # ショートの品質チェックの見張り2本は「遅い」で外す。本物の render.py で書き出した
+    # 1本を14通りに壊して当てるので、2本で4〜5分かかり、ffmpeg と OpenCV 4 が要る。
+    # Selftests は全部の PR で走り、その多くは島（site/）の直しでショートに触らない。
+    # **外しただけでは走らなくなる**ので、ショートを触った PR では
+    # `.github/workflows/shorts_selftest.yml` が名指しで回す（棚卸し
+    # `python/watch_census_selftest.py` は、あちらの `run:` で「走っている」と数える）。
+    # 手元では `python3 python/selftest_runner.py tools/shorts/qa/qa_selftest.py
+    # tools/shorts/qa/qa_video_selftest.py`（名指しすれば、ここに載っていても回る）
+    "tools/shorts/qa/qa_selftest.py":
+        "遅い（書き出して壊す対照。2本で4〜5分・ffmpeg と OpenCV 4 が要る）。"
+        "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
+    "tools/shorts/qa/qa_video_selftest.py":
+        "遅い（書き出して壊す対照。2本で4〜5分・ffmpeg と OpenCV 4 が要る）。"
+        "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

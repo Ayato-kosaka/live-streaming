@@ -1,0 +1,91 @@
+# **ショート動画の道具の見張りを、ショートを触った PR だけで回す。**
+#
+# 品質チェック（`tools/shorts/qa/check.py`）の見張り2本は、本物の `render.py` で
+# 書き出した1本を14通りに壊し、**壊したところを見る検査だけが落ちる**ことを当てる。
+# 書き出しと顔・透かしの検出で、2本あわせて4〜5分かかり、ffmpeg と OpenCV 4 が要る。
+#
+# ## なぜ Selftests（`selftest.yml`）に入れないか
+#
+# あちらは全部の PR で走る。PR の多くは島（`site/`）の直しで、ショートには触らない。
+# そこに毎回4〜5分と ffmpeg の取り付けを足すと、ショートと関係ない PR まで遅くなる。
+# だから回し役（`python/selftest_runner.py`）の `SKIP` に理由つきで載せて
+# あちらでは外し、**ここで名指しで回す**。名指しにしてあるのは、見張りの棚卸し
+# （`python/watch_census_selftest.py`）が「どこからも走っていない見張り」を
+# ワークフローの `run:` の名前で数えるから——`find` で拾うと、数えられずに孤児になる。
+#
+# ## いつ走るか
+#
+# `tools/shorts/` の下と、このファイルを変えた PR・master への push。
+# 品質チェックの線は `render.py`・`style.json`（どちらも `tools/shorts/render/`）に
+# ぶら下がるので、書き出しを直した PR でも走る。手で回すときは workflow_dispatch。
+name: ショートの道具の見張り
+
+on:
+  pull_request:
+    paths:
+      - "tools/shorts/**"
+      - ".github/workflows/shorts_selftest.yml"
+  push:
+    branches: [master]
+    paths:
+      - "tools/shorts/**"
+      - ".github/workflows/shorts_selftest.yml"
+  workflow_dispatch:
+
+# Selftests と同じ。PR は枝ごとに前の run を止めてよい。master は sha ごとに別の group にして、
+# 順番待ちの run が黙って差し替えられないようにする（`selftest.yml` の頭に経緯）
+concurrency:
+  group: shorts-selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  shorts-selftest:
+    runs-on: ubuntu-latest
+    # 2本で4〜5分（4コアの箱で 166秒と 154秒）。道具を入れるのに1分ほど。倍以上の余裕を見る
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # ffmpeg はランナーに入っていない。書体は M PLUS（書き出しの本物）を落とさず、
+      # DejaVu を見張りが同じ名前で置き直して使う（検査は字の形を見ない。和文は豆腐になる）。
+      # OpenCV は **5 未満**に止める。顔の検出に使う Haar の型が OpenCV 5 で削られた
+      # （5.0.0 の wheel に `cv2.data.haarcascades` の中身も `CascadeClassifier` も無い）。
+      # budoux は書き出しの字幕の折り返しが本番と同じになるように（無くても回る）
+      - name: 道具を入れる（ffmpeg・OpenCV 4）
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+          ffmpeg -version > /dev/null
+          python -m pip install --upgrade pip
+          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow budoux
+
+      # 落ちた1本で止めない（`!cancelled()`）。3つとも回してから、まとめて落ちる
+      - name: 品質チェックの見張り（音・字・形式）
+        run: python3 tools/shorts/qa/qa_selftest.py
+
+      - name: 品質チェックの見張り（絵・長さ）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/qa/qa_video_selftest.py
+
+      # 承認の関所・取り込みの見張りは Selftests でも走るが、ショートを触った PR では
+      # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
+      # 上の2本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
+      - name: ほかのショートの見張り（承認の関所・取り込み）
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
+            ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
+            -print0 | sort -z)
+          if [ "${#found[@]}" -eq 0 ]; then
+            echo "::error::tools/shorts の見張りを1本も拾えなかった"
+            exit 2
+          fi
+          python3 python/selftest_runner.py "${found[@]}"

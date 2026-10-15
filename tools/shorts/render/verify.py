@@ -17,6 +17,10 @@
 
 合成素材（tools/shorts/render/make_assets.py）にしか効かない検査（2 と 3）がある。
 本番の配信アーカイブには箱が無いので、2 は「合成素材で道具を確かめる」用。
+
+**出す前の検査はここではなく `tools/shorts/qa/check.py`。** こちらは「書き出しの道具が
+指示書どおりに書けているか」（カット位置の照合・2本のバイト一致）を見る道具で、
+qa は「できあがりが媒体に出してよい形か」（音量・安全領域・透かし・顔…）を見る。
 """
 from __future__ import annotations
 
@@ -172,10 +176,12 @@ def check_audio(out: Path, work: Path, plan: dict) -> dict:
         res["bgm_rms_dbfs_without_narration"] = round(rms_db(bgm[outside]), 2)
         res["speech_over_bgm_db"] = round(res["narration_rms_dbfs_during"] - res["bgm_rms_dbfs_during_narration"], 2)
         res["duck_depth_db"] = round(res["bgm_rms_dbfs_without_narration"] - res["bgm_rms_dbfs_during_narration"], 2)
-    # 仕上がりの mp4 からも測る（どの書き出し道具でも同じ物差しで比べられるように）
+    # 仕上がりの mp4 からも測る（どの書き出し道具でも同じ物差しで比べられるように）。
+    # 2ch のまま読んで自分で平均する。ffmpeg に -ac 1 で混ぜさせると左右を足して √2 倍にするので、
+    # 左右同じ音が +3dB に読めていた（束の -16dBFS が、仕上がりで -13.3 に見えた）
     raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(out), "-vn",
-                          "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], check=True, capture_output=True).stdout
-    mix = np.frombuffer(raw, dtype="<f4")
+                          "-f", "f32le", "-ac", "2", "-ar", str(SR), "-"], check=True, capture_output=True).stdout
+    mix = np.frombuffer(raw, dtype="<f4").reshape(-1, 2).mean(axis=1)
     inside, outside = windows(plan, len(mix))
     res["mix_rms_dbfs_during_narration"] = round(rms_db(mix[inside]), 2)
     res["mix_rms_dbfs_bgm_only"] = round(rms_db(mix[outside]), 2)
@@ -184,8 +190,8 @@ def check_audio(out: Path, work: Path, plan: dict) -> dict:
     # （本番の BGM には効かない。合成素材でダッキングが仕上がりまで届いているかを見る用）
     raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(out), "-vn",
                           "-af", "lowpass=f=70,lowpass=f=70,lowpass=f=70,lowpass=f=70",
-                          "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], check=True, capture_output=True).stdout
-    low = np.frombuffer(raw, dtype="<f4")
+                          "-f", "f32le", "-ac", "2", "-ar", str(SR), "-"], check=True, capture_output=True).stdout
+    low = np.frombuffer(raw, dtype="<f4").reshape(-1, 2).mean(axis=1)
     res["mix_bgm_band_duck_db"] = round(rms_db(low[outside[:len(low)]]) - rms_db(low[inside[:len(low)]]), 2)
     ebu = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(out), "-vn",
                           "-af", "ebur128=peak=true", "-f", "null", "-"], capture_output=True, text=True).stderr
