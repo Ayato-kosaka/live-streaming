@@ -621,9 +621,14 @@ def main() -> int:
 
     logs = out / "logs"
     logs.mkdir(exist_ok=True)
-    for src in [mdir / "ytdlp.log", work / "_ffmpeg_video.log"]:
-        if src.exists():
-            shutil.copy(src, logs / src.name)
+    if (mdir / "ytdlp.log").exists():
+        shutil.copy(mdir / "ytdlp.log", logs / "ytdlp.log")
+    fv = work / "_ffmpeg_video.log"
+    if fv.exists():
+        # showinfo の1コマ1行（時刻を拾うためのもの）は落とす。3時間半で 1MB を超える
+        (logs / "ffmpeg_video.log").write_text("".join(
+            ln for ln in fv.read_text(errors="ignore").splitlines(keepends=True)
+            if "Parsed_showinfo" not in ln), encoding="utf-8")
     write_index(it, out, ctx, st)
     item_public = {k: v for k, v in it.items() if k != "pubkey"}
     files = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file())
