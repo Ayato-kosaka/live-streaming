@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { BUILT_AT, livePlans, planPhase, type Plan } from "@/content/plans";
-import { themeById } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
 import { nights } from "@/content/nights";
 import { NO_PLAN_TITLE } from "@/content/voice";
 import Phrase from "@/components/ui/Phrase";
@@ -34,7 +34,11 @@ const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? 
  * `content/themes.ts` に1行足す。
  */
 function PlanNotes({ plan }: { plan: Plan }) {
-  const theme = themeById(plan.id);
+  /* **札を出す側（`PlanCard.tsx` の `useCanNote`）と同じ一覧から決める。**
+     片方だけ重ねると、札は出るのに降りた先が無い——`PlanCard` の
+     「行き先の有無を、札の有無に写す」が、その日から嘘になる。 */
+  const { dests } = useDests();
+  const theme = destById(dests, plan.id);
   if (!theme) return null;
   return (
     <div
