@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 
 import Icon from "@/components/ui/IconCore";
-import { STICKERS, suzuriDesignHref } from "@/content/goods";
+import { STICKERS, stickerThumb, suzuriDesignHref } from "@/content/goods";
 
 /**
  * あやとステッカーの図鑑（`/goods/stickers`）。
@@ -157,21 +157,31 @@ export default function StickerBook() {
       {/* 一覧のマス。押すと上の紙が差し替わる。
           選んでいるものは塗りを変えず、細い枠だけで示す（ac-reference 7章 6）。 */}
       <div className="rzk-grid" role="tablist" aria-label="あやとステッカー">
-        {STICKERS.map((x, i) => (
-          <button
-            type="button"
-            role="tab"
-            aria-selected={i === at}
-            aria-label={x.name}
-            className={`rzk-cell${i === at ? " is-on" : ""}`}
-            key={x.id}
-            onClick={() => go(i)}
-          >
-            <span className="rzk-cell-no">{i + 1}</span>
-            {/* 名前は札（`aria-label`）が持っているので、絵は飾り扱いにする */}
-            <img src={x.art} alt="" loading="lazy" width={x.w} height={x.h} />
-          </button>
-        ))}
+        {STICKERS.map((x, i) => {
+          /* **マスに出すのは小さい写し**（長辺160）。マスの中の絵は 390px の
+             画面で 40.1px しかないのに、ここは上の紙と同じ 480px を出していた。
+             13枚で 623.8KB——この面がスマホの最初の1画面で運ぶ量（903.3KB）の
+             69% が升目だった（2026-10-15 実測）。
+
+             住民図鑑も前からこの形（`FriendsWall.tsx` は一覧 128px /
+             開いた1枚 640px）。**ステッカーだけが両方 480px だった。** */
+          const t = stickerThumb(x);
+          return (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={i === at}
+              aria-label={x.name}
+              className={`rzk-cell${i === at ? " is-on" : ""}`}
+              key={x.id}
+              onClick={() => go(i)}
+            >
+              <span className="rzk-cell-no">{i + 1}</span>
+              {/* 名前は札（`aria-label`）が持っているので、絵は飾り扱いにする */}
+              <img src={t.src} alt="" loading="lazy" width={t.w} height={t.h} />
+            </button>
+          );
+        })}
       </div>
     </div>
   );
