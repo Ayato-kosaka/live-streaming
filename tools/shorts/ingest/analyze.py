@@ -87,6 +87,8 @@ def build_meta(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
         "timestamp": _iso(info.get("timestamp")),
         "release_timestamp": _iso(info.get("release_timestamp")),
         "live_status": info.get("live_status"), "was_live": info.get("was_live"),
+        # 投稿者が付けた言語。ja でなければ、ja の自動字幕は機械翻訳のことがある
+        "language": info.get("language"),
         "view_count": info.get("view_count"), "like_count": info.get("like_count"),
         "comment_count": info.get("comment_count"),
         # **数は取った時刻つきで。** 再生数は日ごとに動くので、時刻の無い数は比べられない
@@ -396,6 +398,34 @@ def build_timeline10(it: dict, out: Path, ctx: dict) -> dict:
     return {"rows": len(B)}
 
 
+def speech_seconds(segs: list[dict], dur: float, join: float = 0.3) -> float:
+    """喋っている秒。**区間ではなく単語の時刻を繋いで数える。**
+
+    まとめて通した whisper の1区間は VAD の塊（20〜30秒）で、間の沈黙も含む。
+    区間の長さを足すと、1分のショートで「喋っている割合 1.009」が出た（2026-10-15）。
+    0.3秒より短い間は繋ぎ、長さを超えないように切る。
+    """
+    spans = []
+    for s in segs:
+        ws = [w for w in s.get("words") or [] if w.get("start") is not None and w.get("end")]
+        if ws:
+            spans += [(w["start"], w["end"]) for w in ws]
+        elif s.get("end"):
+            spans.append((s["start"], s["end"]))
+    spans.sort()
+    total, cur = 0.0, None
+    for a, b in spans:
+        if cur and a <= cur[1] + join:
+            cur = (cur[0], max(cur[1], b))
+        else:
+            if cur:
+                total += cur[1] - cur[0]
+            cur = (a, b)
+    if cur:
+        total += cur[1] - cur[0]
+    return min(total, dur) if dur else total
+
+
 def build_structure(it: dict, out: Path, ctx: dict) -> dict:
     """参考ショートの「作り」を数にする。カットの間隔・喋りの密度・頭3秒。"""
     meta = ctx.get("meta") or {}
@@ -406,7 +436,7 @@ def build_structure(it: dict, out: Path, ctx: dict) -> dict:
     shots_sorted = sorted(shots)
     segs = (ctx.get("whisper") or {}).get("segments", [])
     wchars = sum(len(s["text"].replace(" ", "")) for s in segs)
-    speech = sum(max(0.0, (s["end"] or 0) - (s["start"] or 0)) for s in segs)
+    speech = speech_seconds(segs, dur)
     caps = ctx.get("captions") or []
     cchars = sum(len(c["text"].replace(" ", "")) for c in caps)
     vis = ctx.get("visual") or []
@@ -660,5 +690,45 @@ def main() -> int:
     return 1 if bad else 0
 
 
+def restructure(d: Path) -> int:
+    """復号した reference の置き場で、structure.json と transcript.txt を作り直す（手元用）。
+
+        python3 tools/shorts/ingest/analyze.py --restructure <out>/<videoId>/reference
+
+    数え方を直したとき、取り直さずに手元で揃えるため。読むのは置き場のファイルだけ。
+    """
+    import csv
+
+    from asr import to_text
+
+    def num(x):
+        try:
+            return float(x)
+        except (TypeError, ValueError):
+            return None
+
+    def rows(name):
+        p = d / name
+        if not p.exists():
+            return []
+        return [{k: (v if k == "hms" else num(v)) for k, v in r.items()}
+                for r in csv.DictReader(open(p, encoding="utf-8"))]
+
+    old = read_json(d / "structure.json", {}) or {}
+    tr = read_json(d / "transcript.json", {}) or {}
+    ctx = {"meta": read_json(d / "meta.json", {}) or {},
+           "cuts": [{"t": r["t"]} for r in rows("scenes.csv")],
+           "whisper": tr,
+           "captions": (read_json(d / "captions.json", {}) or {}).get("segments", []),
+           "visual": rows("visual.csv"), "audio": rows("audio.csv"),
+           "audio_summary": old.get("audio") or {}}
+    build_structure({}, d, ctx)
+    if tr.get("segments"):
+        (d / "transcript.txt").write_text(to_text(tr["segments"]), encoding="utf-8")
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) >= 3 and sys.argv[1] == "--restructure":
+        sys.exit(max(restructure(Path(p)) for p in sys.argv[2:]))
     sys.exit(main())

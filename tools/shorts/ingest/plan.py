@@ -117,7 +117,9 @@ def items_of(req: dict, origin: str) -> list[dict]:
     w.setdefault("model", "large-v3-turbo")
     w.setdefault("batch", 8)
     w.setdefault("beam", 5)
-    w.setdefault("language", "ja")
+    # 配信はあやとの日本語なので ja に決め打つ。参考ショートは英語の話者も混ざる
+    # （ja に決め打ったら英語の声を「見るのを見るのを…」と繰り返して返した。2026-10-15）
+    w.setdefault("language", "ja" if mode == "archive" else "auto")
     if w["model"] not in MODELS:
         raise Bad(f"{origin}: whisper.model は {MODELS} のどれか")
     w["batch"] = max(1, min(int(w["batch"]), 16))
