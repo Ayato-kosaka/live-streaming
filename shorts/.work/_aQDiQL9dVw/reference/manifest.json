@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "_aQDiQL9dVw__reference",
+ "mode": "reference",
+ "dest": "_aQDiQL9dVw/reference",
+ "video": "_aQDiQL9dVw",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 3,
+  "caption_segments": 14,
+  "transcript_segments": 2,
+  "cuts": 9,
+  "channel_entries": 0,
+  "files": 17
+ },
+ "bytes": {
+  "plain": 884705,
+  "tar_gz": 848714,
+  "encrypted": 848720
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 848720,
+   "sha256": "550e6a25b0d3e77c43a167e1e2b2e763b13175623fdb56a89568f7128bc3239f"
+  }
+ ],
+ "hmac_sha256": "1638775888beba46fb3ed5b16a5bf1820f729e548164b2eb9760fda9be5e4170",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:40:39+00:00"
+}
