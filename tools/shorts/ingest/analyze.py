@@ -260,9 +260,18 @@ def build_whisper(it: dict, out: Path, ctx: dict) -> dict:
 
     if "wav" not in ctx:
         return {"_skip": "音が無い（audio の段が落ちた）"}
+    from media import read_wav
+
     w = it["whisper"]
-    res = transcribe(str(ctx["wav"]), model=w["model"], language=_lang(w), batch=w["batch"],
-                     beam=w["beam"], label=f"whisper {w['model']}")
+    # **道（ファイル名）ではなく波形を渡す。** 道を渡すと faster-whisper が PyAV で
+    # 読み直すが、いまの PyAV は faster-whisper 1.2.1 が渡す引数（metadata_errors）を
+    # 受け付けず、10秒で落ちた（2026-10-15 run 38743396219）。16kHz に直した wav は
+    # もう手元にあるので、こちらで読んで渡せば PyAV を通らない
+    audio = read_wav(ctx["wav"]).astype("float32") / 32768.0
+    res = transcribe(audio, model=w["model"], language=_lang(w), batch=w["batch"],
+                     beam=w["beam"], duration_hint=len(audio) / 16000,
+                     label=f"whisper {w['model']}")
+    del audio
     write_json(out / "transcript.json", res)
     (out / "transcript.txt").write_text(to_text(res["segments"]), encoding="utf-8")
     ctx["whisper"] = res
