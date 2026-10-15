@@ -2,13 +2,37 @@
 # https://github.com/firebase/firebase-tools
 
 name: Firebase Hosting Deploy
+
+# **run の名前で、配った回と「繋ぎだけ確かめた回」を分ける。**
+# `wake_only` の回は1バイトも配っていないので、`python/ship_down.py` が
+# 配りの結果として読んではいけない。あちらはこの字（`ship_down.PROBE_MARK`）で
+# 弾いていて、両者が揃っているかは `python/ship_down_selftest.py` が見ている。
+# 字を変えるなら、両方いっしょに。
+run-name: ${{ inputs.wake_only && '繋ぎだけ確かめる（配っていません）' || '本番へ配る' }}
+
 on:
   workflow_dispatch:
+    inputs:
+      wake_only:
+        # **本番を1バイトも汚さずに、「配り → 配りが赤い」の繋ぎだけを試す。**
+        # `Fetch Doneru Donations` の `probe: true` と同じ役まわり（`CLAUDE.md`）。
+        # あちらを押すと、繋ぎをたどって**本番への配りが1回出てしまう**ので、
+        # 配りの側の繋ぎを確かめる道具にはならなかった。
+        #
+        # on にすると書き出しも配りも丸ごと skip して、下の `wake_ship_down`
+        # だけが走る。起こされた `配りが赤いを issue に映す` は `apply: false`
+        # （見るだけ）で動くので、issue も1文字も動かない
+        description: "配らずに、下流（配りが赤いを issue に映す）を起こせるかだけ見る"
+        required: false
+        default: false
+        type: boolean
   # push:
   #   branches:
   #     - master
 jobs:
   build_and_deploy:
+    # `wake_only` のときは、ここを丸ごと飛ばす（配らない）
+    if: ${{ !inputs.wake_only }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -257,3 +281,99 @@ jobs:
             exit 0
           fi
           exit "$code"
+
+  # ------------------------------------------------------------------
+  # **配り終わったことを、下流（`配りが赤いを issue に映す`）に自分で伝える。**
+  #
+  # ## なぜ `workflow_run` では届かないか（#865。実測つき）
+  #
+  # `ship_down.yml` は `workflow_run` で「Firebase Hosting Deploy」の完了に
+  # 繋いである。**その繋ぎは、毎晩の配りに対しては一度も発火していない。**
+  #
+  # 毎晩の配りは `rebake.yml` の最後の step が `secrets.GITHUB_TOKEN` で
+  # `gh workflow run` して起こしている。**GITHUB_TOKEN が起こした run の完了は、
+  # さらに別のワークフローを起こさない**（GitHub の再帰よけ）。
+  #
+  # 2026-10-15 に、`ship_down.yml` が在った期間（2026-09-19 以降）の配りを
+  # 1本ずつ、完了時刻と `ship_down` の `workflow_run` 起動とで寄せて数えた
+  # （3分窓・1対1。帰属不明 0件）:
+  #
+  # | 誰が押した配りか | 下流を起こした | 起こさなかった |
+  # | --- | ---: | ---: |
+  # | `Ayato-kosaka`（手で押した） | **90回** | 0回 |
+  # | `github-actions[bot]`（毎晩のぶん） | **0回** | **72回** |
+  #
+  # つまり**毎晩の配りが赤い日は、保険の cron（実測で中央 10:42 UTC）まで
+  # 誰も気づかない。**
+  #
+  # ## なぜ `workflow_dispatch` なら届くのか
+  #
+  # 再帰よけの外にあるのが `workflow_dispatch` と `repository_dispatch`。
+  # **このリポジトリでその証拠が毎晩出ている**——`rebake.yml` が
+  # GITHUB_TOKEN で押した配りは、ちゃんと走っている（直近 300回のうち 104回）。
+  # 同じやり方で、こちらから下流を名指しで押す。
+  #
+  # **`workflow_run` のほうは外さない。** あれは受け皿で、この job が
+  # 丸ごと落ちた回（ランナーが死ぬ・権限が消える）に人が押した配りを拾う。
+  #
+  # ## 黙って死なない形にする
+  #
+  # `gh workflow run` は**ファイル名**で押すので、`name:` の書き換えでは切れない
+  # （消えたら 404 で赤くなる）。そのうえで、**押したあとに本当に run が
+  # 増えたかまで見て**、増えていなければ赤くする。ここが「配りが赤い」を
+  # 毎晩知らせる唯一の道なので、**静かに走らなくなるのがいちばん困る。**
+  #
+  # 配りそのものが赤くても、この job は走る（`always()`）。
+  # **赤い回こそ下流に伝えたい。**
+  wake_ship_down:
+    needs: build_and_deploy
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    permissions:
+      # 下流を押すのに要るのはこれだけ
+      actions: write
+    steps:
+      - name: 配りが赤いを issue に映す、を起こす
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # **自分と同じ枝で押す。** 本番ではいつも master だが、枝で
+          # 確かめるときに master の版が走ると、確かめにならない
+          REF: ${{ github.ref_name }}
+          # `wake_only`（繋ぎを見るだけ）のときは **issue を1文字も動かさない**
+          APPLY: ${{ inputs.wake_only && 'false' || 'true' }}
+          # 下流は「終わった run」しか読まない。この run はまだ終わっていないので、
+          # 終わるまで待ってもらう
+          FOR_RUN: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          api="repos/$REPO/actions/workflows/ship_down.yml/runs?per_page=1"
+          before="$(gh api "$api" --jq '.workflow_runs[0].id // 0')"
+          gh workflow run ship_down.yml --repo "$REPO" --ref "$REF" \
+            -f apply="$APPLY" -f for_run="$FOR_RUN"
+
+          # **押しただけでは足りない。** 本当に run が増えたかを見る。
+          # ここを省くと、押せなくなった日に**緑のまま静かに止まる**——
+          # それがこの job を足した理由そのもの
+          got=0
+          for _ in $(seq 1 30); do
+            sleep 3
+            after="$(gh api "$api" --jq '.workflow_runs[0].id // 0')"
+            if [ "$after" -gt "$before" ]; then
+              got="$after"
+              break
+            fi
+          done
+          if [ "$got" = "0" ]; then
+            echo "::error::配りが赤いを issue に映す、を押したのに run が増えませんでした"
+            exit 1
+          fi
+          {
+            echo "### 配りが赤いを issue に映す、を起こしました"
+            echo ""
+            echo "- run: https://github.com/$REPO/actions/runs/$got"
+            echo "- この run（\`$FOR_RUN\`）の終わりを待ってから読みます"
+            if [ "$APPLY" != "true" ]; then
+              echo "- **見るだけ**（\`wake_only\` なので issue は動きません）"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

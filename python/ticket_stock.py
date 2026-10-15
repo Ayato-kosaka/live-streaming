@@ -68,8 +68,25 @@
 | --- | --- | --- |
 | `nostale` | 30日の線 | 動いていないものが1本も名指しされない |
 | `nolabel` | 札を読むところ | 待ちの相手が1つも出ない／メンションも消える |
+| `noevery` | **週1に間引く関所** | 前に書いた翌日でも書いてしまう |
 
-**2つは別々に落ちる。** 片方を外してももう片方は通ることまで見る。
+**3つは別々に落ちる。** 1つを外しても残りは通ることまで見る。
+
+## 週1に間引くのは、こちら側（カレンダーではなく状態）
+
+前はワークフローの側で**曜日**を見ていた（`date -u +%u` が 1 か）。
+繋ぎ先（毎晩の取り込み2本）が終わるのは 23:00〜02:00 UTC で揺れるので、
+**月曜に着くかどうかが運**になる。数えたら `workflow_run` の **57回中55回が
+関所で落ちていて**、自分で「当てにするな」と書いた cron が週1を1本で
+背負っていた（`STOCK_EVERY_DAYS` に表がある）。
+
+いまは**「前に書いてから7日たったか」**で見る。前に書いた日は、まとめの
+本文に埋めた `DAY_MARK` が持っている。**控えをよそに置かない。**
+
+そして**走るたびに「前に書いたのはいつか」を言う。** 言わないと、
+関所で落ち続けている回と、正常に書いた回が run の一覧で同じ顔になる
+——それが 55/57 を3週間だれも見つけなかった理由。
+`STOCK_OVERDUE_DAYS` を超えたら **1 で落ちる。**
 """
 
 import argparse
@@ -100,6 +117,13 @@ MARK = "<!-- ticket-stock -->"
 # 鳴らしたコメントに埋める印。**日付ごと**入れて、続けて鳴らさないために使う
 PING_MARK = "<!-- ticket-stock-ping"
 
+# **最後に書いた日**を本文に埋める印。
+#
+# 週1に間引く関所を、**カレンダーではなく状態で**作るために要る。
+# 控えを別に持たない（控えだけ消えた週に、毎晩書き換えることになる）。
+# 鳴らしかたの `PING_MARK` と同じ作り
+DAY_MARK = "<!-- ticket-stock-day"
+
 # 固定のラベル。印と両方で引く
 LABEL = "ticket-stock"
 LABEL_COLOR = "bfd4f2"
@@ -121,6 +145,38 @@ STALE_DAYS = 30
 # 6日にしてあるのは、週に1回の鳴りを落とさないため（7日だと、走る時刻が
 # 前の週より数分早い週に「まだ6日23時間」で黙る）
 PING_COOLDOWN_DAYS = 6
+
+# **何日あけて書くか。** 「週1」の中身。
+#
+# 前はこれを**ワークフローの側で曜日**（`date -u +%u` が 1 か）で決めていた。
+# 繋ぎ先（毎晩の取り込み2本）は 23:00〜02:00 UTC のどこかで終わるので、
+# **月曜に着くかどうかが運**になる。直近の run を数えたら（2026-10-15）:
+#
+# | 起こしたもの | 回数 | 関所を通った |
+# | --- | ---: | ---: |
+# | `workflow_run`（yml が「本命」と書いていたほう） | **57** | **2** |
+# | `schedule`（yml が「当てにしない」と書いていたほう） | 4 | 4 |
+#
+# **57回中55回が落ちていて、直近3週はゼロ。** 自分で「当てにするな」と
+# 書いた cron が、週1を1本で背負っていた。**どこも赤くならない。**
+#
+# 着地の曜日（UTC）は 月2 / 火13 / 水8 / 木7 / 金9 / 土10 / 日8。
+# ほぼ一様で、**月曜に当たる確率がだいたい 1/7。** 賭けである。
+#
+# だから「今日は月曜か」をやめて「**前に書いてから7日たったか**」で見る。
+# ぶれる時計に強いし、遅れた週が丸ごと抜けることもない
+STOCK_EVERY_DAYS = 7
+
+# **これを超えたら、週1で回っていない。** 赤くする。
+#
+# 溜まっていることでは赤くしないが、**棚卸しそのものが止まっているのは
+# 「この仕組みが動いていない」側**（`ingest_down.py` と同じ決め）。
+#
+# 10日にしたのは、7日の関所に定時の遅れ（このリポジトリで最長8時間）と、
+# 繋ぎが1晩落ちるぶんを足しても届かない線だから。
+# **ここが無いと、関所で落ち続けている回と、正常に週1で回っている回が、
+# run の一覧で同じ顔になる**（それが 55/57 を3週間だれも見つけなかった理由）
+STOCK_OVERDUE_DAYS = 10
 
 # 1回に読む件数。開いている issue は25本なので1枚で足りるが、
 # **増えた日に黙って切り捨てない**ように次の枚も読む
@@ -264,7 +320,7 @@ def body(s: dict) -> str:
     Returns:
         本文。頭に見えない印が入る
     """
-    lines = [MARK, "",
+    lines = [MARK, f"{DAY_MARK} {s['today']} -->", "",
              f"開いたままの issue が **{s['total']}本** あります"
              f"（{s['today']} に数えました）。", ""]
 
@@ -362,6 +418,67 @@ def last_ping_day(comments: list):
         except ValueError:
             continue
     return max(days) if days else None
+
+
+def last_stock_day(issue):
+    """**最後に棚卸しを書いた日**を、まとめの本文から拾う。
+
+    控えをよそに置かない。置くと、控えだけ消えた週から毎晩書き換えることに
+    なる（`last_ping_day()` と同じ理由）。
+
+    Args:
+        issue: `find_issue()` が選んだ1本か None
+
+    Returns:
+        `YYYY-MM-DD` か None（まだ1本も無い／印が読めない）
+    """
+    b = (issue or {}).get("body") or ""
+    if DAY_MARK not in b:
+        return None
+    tail = b.split(DAY_MARK, 1)[1].strip()
+    token = tail.split()[0] if tail.split() else ""
+    try:
+        return date.fromisoformat(token).isoformat()
+    except ValueError:
+        return None
+
+
+def stock_due(last, today: str, every: int = STOCK_EVERY_DAYS,
+              breaks=()) -> bool:
+    """**今週ぶんを、もう書いたか。**
+
+    「今日は月曜か」ではなく「前に書いてから何日たったか」で見る。
+    繋ぎ先が終わる時刻は 23:00〜02:00 UTC で揺れるので、曜日で切ると
+    **着地が月曜になるかどうかの賭け**になる（実測 2/57。上の `STOCK_EVERY_DAYS`）。
+
+    Args:
+        last: 最後に書いた日（`last_stock_day()`）か None
+        today: 今日
+        every: 何日あけるか
+        breaks: `noevery` を渡すと関所を外す（対照用）
+
+    Returns:
+        書いてよければ True
+    """
+    if "noevery" in breaks:
+        return True
+    if not last:
+        return True
+    try:
+        return (date.fromisoformat(today) - date.fromisoformat(last)).days >= every
+    except ValueError:
+        # **読めない日付で黙らない。** 読めなければ書く側に倒す
+        return True
+
+
+def overdue_days(last, today: str):
+    """**前に書いてから何日たったか。** 読めなければ None。"""
+    if not last:
+        return None
+    try:
+        return (date.fromisoformat(today) - date.fromisoformat(last)).days
+    except ValueError:
+        return None
 
 
 def ping_due(last: str, today: str) -> bool:
@@ -494,7 +611,8 @@ def decide(issue, want: str) -> str:
     return "noop"
 
 
-def run(gh, today: str, apply: bool = False, breaks=()) -> dict:
+def run(gh, today: str, apply: bool = False, breaks=(),
+        force: bool = False) -> dict:
     """読んで、まとめを合わせる。**読むのは毎回。書くのは `apply` のときだけ。**
 
     `apply` でなくても読みには行く。あやと待ちが0本の週が続いても、
@@ -506,9 +624,11 @@ def run(gh, today: str, apply: bool = False, breaks=()) -> dict:
         today: 今日（UTC の `YYYY-MM-DD`）
         apply: 本当に書くか
         breaks: 外す守り
+        force: 週1の関所を飛ばして、いま書く（手で押したとき）
 
     Returns:
-        `{"action", "number", "body", "summary", "pinged"}`
+        `{"action", "number", "body", "summary", "pinged", "last", "gap", "due"}`
+        `action` が `"wait"` なら、**今週ぶんはもう書いてあるので何もしていない**
     """
     issues = gh.open_issues()
     logger.info("開いている issue を %d本 読めました", len(issues))
@@ -535,11 +655,32 @@ def run(gh, today: str, apply: bool = False, breaks=()) -> dict:
     mine = find_issue(list(pool.values()))
     what = decide(mine, want)
 
+    # **週1に間引く関所。** ここが「今日は月曜か」ではなく「前に書いてから
+    # 何日たったか」なのが肝（`STOCK_EVERY_DAYS`）。繋ぎ先は毎晩終わるので、
+    # これが無いと毎晩書き換える
+    last = last_stock_day(mine)
+    gap = overdue_days(last, today)
+    logger.info("前に棚卸しを書いたのは %s（%s）",
+                last or "まだ1度も無い",
+                f"{gap}日前" if gap is not None else "—")
+
     if not apply:
         logger.info("--apply を付けていないので GitHub には書きません（%s）", what)
         return {"action": "dry", "planned": what,
                 "number": mine["number"] if mine else None,
-                "body": want, "summary": s, "pinged": False}
+                "body": want, "summary": s, "pinged": False,
+                "last": last, "gap": gap, "due": stock_due(last, today,
+                                                           breaks=breaks)}
+
+    if not force and not stock_due(last, today, breaks=breaks):
+        # **まだ今週ぶんを書いたばかり。** 1バイトも書かずに終わる。
+        # 「落ちた」ではないので緑。何日あいているかは上のログに出ている
+        logger.info("前に書いてから %s日。%d日あくまで書きません",
+                    gap, STOCK_EVERY_DAYS)
+        return {"action": "wait", "planned": what,
+                "number": mine["number"] if mine else None,
+                "body": want, "summary": s, "pinged": False,
+                "last": last, "gap": gap, "due": False}
 
     if what == "create":
         made = gh.create(TITLE, want, LABEL)
@@ -547,7 +688,8 @@ def run(gh, today: str, apply: bool = False, breaks=()) -> dict:
         logger.info("棚卸しの issue #%s を開きました", num)
         # 開いた回は、**本文のメンションで飛ぶ。** コメントは足さない
         return {"action": what, "planned": what, "number": num,
-                "body": want, "summary": s, "pinged": False}
+                "body": want, "summary": s, "pinged": False,
+                "last": last, "gap": gap, "due": True}
 
     num = mine["number"]
     if what in ("reopen", "update"):
@@ -575,7 +717,8 @@ def run(gh, today: str, apply: bool = False, breaks=()) -> dict:
         logger.info("あやと待ちは0本なので、呼びません")
 
     return {"action": what, "planned": what, "number": num,
-            "body": want, "summary": s, "pinged": pinged}
+            "body": want, "summary": s, "pinged": pinged,
+            "last": last, "gap": gap, "due": True}
 
 
 def say(s: dict) -> None:
@@ -587,16 +730,19 @@ def say(s: dict) -> None:
                 ", ".join(f"#{r['number']}" for r in s["stale"]) or "なし")
 
 
-def act(today: str, apply: bool, out: str, breaks) -> int:
+def act(today: str, apply: bool, out: str, breaks, force: bool = False) -> int:
     """GitHub に当たって、**終了コードを返す。**
 
     届かなかったら 1。溜まっていることでは赤くしない。
+    **週1で回っていないときも 1**（`STOCK_OVERDUE_DAYS`）——あれは
+    「溜まっている」ではなく「この仕組みが動いていない」側。
 
     Args:
         today: 今日
         apply: 本当に書くか
         out: 本文を書き出す先（空なら書き出さない）
         breaks: 外す守り
+        force: 週1の関所を飛ばす
 
     Returns:
         終了コード
@@ -608,7 +754,8 @@ def act(today: str, apply: bool, out: str, breaks) -> int:
         return 1
 
     try:
-        got = run(Gh(repo, token), today, apply=apply, breaks=breaks)
+        got = run(Gh(repo, token), today, apply=apply, breaks=breaks,
+                  force=force)
     except urllib.error.HTTPError as e:
         # 返ってきた本文は出さない（URL や名前が混じる。ログは公開）
         logger.error("GitHub の issue を読み書きできませんでした（HTTP %s %s）"
@@ -632,6 +779,22 @@ def act(today: str, apply: bool, out: str, breaks) -> int:
     if s["total"] == 0:
         logger.error("開いている issue を1本も読めませんでした（数えるものが無い）")
         return 2
+
+    # **週1で回っているかを、走るたびに言う。** 言わないと、関所で落ち続けて
+    # いる回と、正常に書いた回が run の一覧で同じ顔になる。
+    # 実際そうなっていて、3週間だれも気づかなかった（`STOCK_EVERY_DAYS` の表）
+    gap = got.get("gap")
+    logger.info("棚卸しは %s（前に書いたのは %s／%s）",
+                {"wait": "今週ぶんはもう書いてある",
+                 "noop": "変わっていないので触らなかった",
+                 "dry": "読んだだけ"}.get(got["action"], "書いた"),
+                got.get("last") or "まだ1度も無い",
+                f"{gap}日前" if gap is not None else "—")
+    if apply and gap is not None and gap > STOCK_OVERDUE_DAYS:
+        logger.error("前に書いてから %d日たっています（%d日まで）。"
+                     "**週に1回、回っていません。**関所か、起こす繋ぎを見てください",
+                     gap, STOCK_OVERDUE_DAYS)
+        return 1
     return 0
 
 
@@ -646,6 +809,8 @@ def main() -> int:
                     help="今日（UTC の YYYY-MM-DD）。既定はいまの日付")
     ap.add_argument("--from-json", default="",
                     help="GitHub を読まずに、この JSON（issue の一覧）で回す")
+    ap.add_argument("--force", action="store_true",
+                    help=f"{STOCK_EVERY_DAYS}日の関所を飛ばして、いま書く")
     a = ap.parse_args()
 
     today = a.today or datetime.now(timezone.utc).date().isoformat()
@@ -676,7 +841,7 @@ def main() -> int:
             return 1
         return 0
 
-    return act(today, a.apply, a.out, breaks)
+    return act(today, a.apply, a.out, breaks, force=a.force)
 
 
 if __name__ == "__main__":

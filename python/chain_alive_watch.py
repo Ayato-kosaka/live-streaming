@@ -1,6 +1,6 @@
 """**繋ぎ（`workflow_run`）が生きているかを、名前と実績の両方から当てる。**
 
-    python3 python/chain_alive_watch.py             # 4つぜんぶ（GitHub の API を読む）
+    python3 python/chain_alive_watch.py             # 5つぜんぶ（GitHub の API を読む）
     python3 python/chain_alive_watch.py --offline   # ネットに出ない2つだけ
     python3 python/chain_alive_watch.py --days 3    # 「走っていない」と言うまでの日数
 
@@ -23,6 +23,7 @@
 | 繋ぎ先そのものが**走らなくなった**（止めた・消した・鍵が切れた） | ✕ 名前は在る | ○ [3] |
 | 繋ぎは在るのに、こちらが**一度も起きていない** | ✕ | ○ [4] |
 | `conclusion` で絞ってしまい、**赤い晩だけ落ちる** | ✕ | ○ [2] |
+| **受け皿は起きるので、1本目の繋ぎが死んでも緑に見える** | ✕ | ○ [5] |
 
 4つ目がいちばん見つからない。繋ぎ先は毎晩走り、こちらも**ほとんどの晩は**
 起きるので、一覧を見ても何もおかしくない。`schedule_fetch_chat.yml` は
@@ -49,21 +50,36 @@
 **最低5時間**みる決まりで（`CLAUDE.md`）、2日にすると
 「遅れている晩」と「切れている」の区別がつかなくなる。
 
-## 届かないところ（先に書いておく）
+## [5] 繋ぎ1本ずつ（2026-10-15 に足した。#865）
 
-**見るのはワークフロー1本ずつで、繋ぎ1本ずつではない。** [4] は「このファイルが
-**何かの**繋ぎで起きたか」しか見ないので、**受け皿を持つものは、1本目の繋ぎが
-死んでいても緑になる。**
+[4] は「このファイルが**何かの**繋ぎで起きたか」しか見ない。だから
+**受け皿を持つものは、1本目の繋ぎが死んでいても緑になる。**
 
-実例が在る（#865）。`ship_down.yml` の1本目は `Firebase Hosting Deploy` で、
-コメントにも「読む元は1本目の run」と書いてあるのに、**毎晩の配りに対しては
-死んでいる**——毎晩の配りは `rebake.yml` の中から `GITHUB_TOKEN` で押していて、
-GitHub の再帰よけでその完了が次を起こさないから（人が押した配りは 84/202 で
-`ship_down` を起こすが、bot が押した配りは **3/98**。2026-10-14 実測）。
-それでもチャットとどねるの受け皿が毎晩起こすので、ここは [4] を通る。
+実例がこの issue（#865）。`ship_down.yml` の1本目は `Firebase Hosting Deploy`
+で、コメントにも「読む元は1本目の run」と書いてあるのに、**毎晩の配りに
+対しては一度も発火していなかった**——毎晩の配りは `rebake.yml` の中から
+`GITHUB_TOKEN` で押していて、GitHub の再帰よけでその完了が次を起こさないから。
+それでもチャットとどねるの受け皿が毎晩起こすので、[4] は通ってしまう。
 
-繋ぎ1本ずつを見るには、**どの上流の完了と時刻がそろったか**を寄せるしかない。
-足すならこの下の `judge()` に、上流の run 一覧を渡す形で。
+[5] は**どの上流の完了と時刻がそろったか**を寄せる。見るのは
+**無人で終わった上流だけ**——そこが #865 の芯で、2026-10-15 に run を
+1本ずつ寄せたら（`ship_down.yml` が在った期間・3分窓・1対1・帰属不明0件）
+
+| 誰が押した配りか | 下流を起こした | 起こさなかった |
+| --- | ---: | ---: |
+| `Ayato-kosaka`（手で押した） | **90回** | 0回 |
+| `github-actions[bot]`（毎晩のぶん） | **0回** | **72回** |
+
+だった。**手押しを混ぜて平均すると、半分が生きているので生きて見える。**
+
+上流が `PAIR_MIN` 本に満たない繋ぎは判定しない（0/0 を「死んでいる」と
+読むのがいちばん悪い嘘。§15）。1本も判定できなければ **2 に倒す。**
+
+**赤くするのは 0件のときだけ。そのために窓を詰めてある。** 窓を 10分 に
+すると、死んでいる繋ぎでも受け皿が起こした下流がたまたま入って **4/12** に
+なり、0件の判定をすり抜ける。窓を 3分 に詰めると **0/12** まで落ちて、
+健全な 22本は満点のまま（上の `PAIR_AFTER` の表）。
+**窓の幅が、この判定の足そのもの。**
 
 ## 対照
 
@@ -102,6 +118,53 @@ DAYS = 3
 
 # 繋ぎ先1本につき API を2回まで。13本＋5本で 36回に届かない
 PER_PAGE = 1
+
+# [5]（繋ぎ1本ずつ）で使う窓。**上流が終わってから下流が出来るまで。**
+#
+# 前にもはみ出させてあるのは、**下流が先に出来ることが実際にあるから**。
+# 配りは `workflow_run` では毎晩のぶんが届かないので、自分の最後の job から
+# `gh workflow run` で押している（#865）。押した時点では配りはまだ走っていて、
+# 下流のほうが**2分ほど先に**出来る（押したあと run が増えたかを見ている）。
+#
+# **うしろの幅は実測で決めた**（2026-10-15。直近3日の本物の run に、幅を
+# 1/2/3/5/10/15分 と振って当てた）:
+#
+# | うしろの幅 | 満点の繋ぎ | 欠けた繋ぎ |
+# | --- | ---: | --- |
+# | 1・2・3分 | **22本** | 配り → `ship_down` が **0/12** |
+# | 5分 | 22本 | 1/12 |
+# | 10・15分 | 22本 | **4/12** |
+#
+# 健全な繋ぎは `workflow_run` が数秒で run を作るので、**3分でも満点のまま。**
+# 広げると、受け皿（チャット・どねる）が起こした下流がたまたま窓に入って、
+# **死んでいる繋ぎが 4/12 に見える。** 広い窓は、見たいものを隠す側に倒れる。
+PAIR_BEFORE = timedelta(minutes=3)
+PAIR_AFTER = timedelta(minutes=3)
+
+# 1本の繋ぎを判定するのに要る、上流の完了の数。
+# **0本や1本で「死んでいる」と言わない**（`docs/island-standards.md` §15）
+PAIR_MIN = 2
+
+# **赤くするのは 0件のときだけ。** 1回でも起きていれば緑。
+#
+# 「満点でなければ赤」にしない理由は2つ。
+#
+# 1. **直した翌朝に、master が赤いまま残る。** 窓は3日あるので、繋ぎ直しても
+#    古い取りこぼしが2日ぶら下がる。**毎回出る赤は、本物の赤を埋める**
+# 2. **半端に効かない壊れ方は、ここより先に出る。** 配りは下流を押したあと
+#    run が増えたかまで見て、増えなければ**その場で赤くなる**。ここが受け持つ
+#    のは「**静かに、まるごと走らなくなった**」ほうだけ
+#
+# 割合そのものは `seen["rates"]` に残して毎回印字する。満点を割った繋ぎは
+# 目で見える（実測では、健全な 22本がぜんぶ満点だった）
+PAIR_DEAD = 0
+
+# [5] で一度に引く run の本数。3日ぶんを覆えればよい
+PAIR_PAGE = 100
+
+# **「無人で終わった」上流とみなす event。** `ship_down.py` と同じ決め
+BOT = "github-actions[bot]"
+UNATTENDED_EVENTS = ("schedule", "workflow_run")
 
 
 def repo_name() -> str:
@@ -195,6 +258,17 @@ class Gh:
         runs = got.get("workflow_runs") or [] if isinstance(got, dict) else []
         return runs[0] if runs else None
 
+    def recent(self, wf_file: str) -> list[dict]:
+        """そのワークフローの run を、新しい順に `PAIR_PAGE` 本。
+
+        [5] は**時刻を寄せる**ので、1本では足りない。引くのは
+        `created_at` / `updated_at` / `status` / `event` / 押した主だけ。
+        """
+        f = urllib.parse.quote(Path(wf_file).name)
+        got = self._get(f"/repos/{self.repo}/actions/workflows/{f}"
+                        f"/runs?per_page={PAIR_PAGE}")
+        return got.get("workflow_runs") or [] if isinstance(got, dict) else []
+
     def made_on(self) -> dict[str, str]:
         """**ワークフローが GitHub に出来た日を、1回で全部**。新顔を赤くしないため。
 
@@ -236,6 +310,125 @@ def live_table(docs: dict[str, dict], gh: Gh) -> dict[str, dict]:
         row["by_chain"] = bychain.get("created_at") if bychain else None
         row["created"] = made.get(path)
     return table
+
+
+def unattended_run(r: dict) -> bool:
+    """その run を起こしたのに、**押した人がいなかったか。**
+
+    `ship_down.py` と同じ決め。event で分かるものと、`github-actions[bot]` が
+    押したもの。**配りには `workflow_dispatch` しか無い**ので、event だけ見ると
+    毎晩のぶんが全部「手押し」に化ける。
+    """
+    if r.get("event") in UNATTENDED_EVENTS:
+        return True
+    who = (r.get("triggering_actor") or r.get("actor") or {}).get("login")
+    return who == BOT
+
+
+def live_pairs(docs: dict[str, dict], gh: Gh) -> dict:
+    """[5] のために、**上流の完了**と**下流の run 作成**を引いてくる。
+
+    返すのは
+    `{"ups": {繋ぎ先の name: [{"end":…, "nobody": bool}]},
+      "downs": {下流のファイル: {"at": [...], "oldest": …}}}`。
+    **ここだけが外に出る。** `judge_pairs()` は表を受け取るだけ。
+    """
+    linked = sorted(p for p in docs if wanted(docs[p]))
+    names = {name_of(p, d): p for p, d in docs.items()}
+    targets = sorted({w for p in linked for w in wanted(docs[p]) if w in names})
+
+    ups: dict[str, list[dict]] = {}
+    for want in targets:
+        rows = []
+        for r in gh.recent(names[want]):
+            if r.get("status") != "completed":
+                continue
+            end = r.get("updated_at")
+            if end:
+                rows.append({"end": end, "nobody": unattended_run(r)})
+        ups[want] = rows
+
+    downs: dict[str, dict] = {}
+    for p in linked:
+        at = [r.get("created_at") for r in gh.recent(p) if r.get("created_at")]
+        downs[p] = {"at": at, "oldest": min(at) if at else None}
+    return {"ups": ups, "downs": downs}
+
+
+def judge_pairs(docs: dict[str, dict], pairs: dict, days: int,
+                now: datetime) -> tuple[list[str], dict]:
+    """**繋ぎ1本ずつ**が生きているかを、時刻を寄せて当てる。→ (挙がった行, 数)
+
+    [4]（このファイルが**何かの**繋ぎで起きたか）では届かないところを埋める。
+    受け皿を持つものは、1本目が死んでいても受け皿が毎晩起こすので
+    [4] は緑になる——`ship_down.yml` が実際にそうだった（#865）。
+
+    **判定するのは「無人で終わった上流」だけ。** 手で押した回は、押した人が
+    その場で見ている。そして #865 の芯がまさにそこで、**人が押した配りは
+    90/90 で下流を起こし、bot が押した配りは 0/72** だった。
+    手押しを混ぜて平均すると、**半分が生きているので生きて見える。**
+
+    数が足りない繋ぎ（上流が `PAIR_MIN` 本に満たない）は**判定しない。**
+    0/0 を「死んでいる」と読むのがいちばん悪い嘘（§15）。
+
+    Args:
+        docs: ワークフローの YAML
+        pairs: `live_pairs()` の形の表
+        days: さかのぼる日数
+        now: いまの時刻
+
+    Returns:
+        (挙がった1行たち, {"judged": 判定した繋ぎ, "thin": 数が足りず判定しなかった繋ぎ,
+                          "missing": 答えの返らなかった繋ぎ, "ok": 生きていた繋ぎ,
+                          "rates": [(下流, 上流, 起きた数, 上流の数)]})
+    """
+    rows: list[str] = []
+    seen = {"judged": 0, "thin": 0, "missing": 0, "ok": 0, "rates": []}
+    limit = now - timedelta(days=days)
+    ups_t = (pairs or {}).get("ups") or {}
+    downs_t = (pairs or {}).get("downs") or {}
+    linked = sorted(p for p in docs if wanted(docs[p]))
+    names = {name_of(p, d): p for p, d in docs.items()}
+
+    for p in linked:
+        down = downs_t.get(p)
+        for want in wanted(docs[p]):
+            if want not in names:
+                continue          # 名前の切れは [1] の仕事
+            up = ups_t.get(want)
+            # **表に行が無いのと、行が在って run が 0本なのは別物。**
+            # GitHub が空を返した朝に「ぜんぶ切れている」と言わない
+            if up is None or down is None:
+                seen["missing"] += 1
+                continue
+
+            # 下流の引きが3日ぶんを覆っていなければ、覆っているところまでで見る
+            # （100本で足りない繋ぎが出ても、黙って 0/0 にしない）
+            floor = limit
+            oldest = down.get("oldest")
+            if oldest and ts(oldest) > floor:
+                floor = ts(oldest)
+
+            ends = [ts(u["end"]) for u in up
+                    if u.get("nobody") and floor <= ts(u["end"]) <= now]
+            if len(ends) < PAIR_MIN:
+                seen["thin"] += 1
+                continue
+
+            at = sorted(ts(x) for x in down.get("at") or [])
+            hit = sum(1 for e in ends
+                      if any(e - PAIR_BEFORE <= d <= e + PAIR_AFTER for d in at))
+            seen["judged"] += 1
+            seen["rates"].append((p, want, hit, len(ends)))
+            if hit <= PAIR_DEAD:
+                rows.append(
+                    f"繋ぎ「{want}」→ {p} は、無人の上流が {len(ends)}回 終わって"
+                    f"**一度も起きていない**（{days}日）。`workflow_run` は"
+                    f"GITHUB_TOKEN が起こした run からは連鎖しない"
+                    f"——そこが切れていないか")
+            else:
+                seen["ok"] += 1
+    return rows, seen
 
 
 def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
@@ -428,6 +621,35 @@ def main() -> int:
                 print(f"      {p}: {by}（{age:.2f}日前）{fresh}")
             else:
                 print(f"      {p}: 繋ぎで起きた run はまだ無い{fresh}")
+
+    # [5] **繋ぎ1本ずつ。** [4] は受け皿に隠れる（#865 がそれ）
+    try:
+        pairs = live_pairs(docs, gh)
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError) as e:
+        print(f"!! GitHub が読めない: {e}。**繋ぎ1本ずつを数えられない**")
+        return 2
+    try:
+        prows, pseen = judge_pairs(docs, pairs, args.days, now)
+    except ValueError as e:
+        print(f"!! GitHub が返した時刻が読めない: {e}。**繋ぎ1本ずつを数えられない**")
+        return 2
+    if pseen["judged"] == 0:
+        print(f"!! 繋ぎ1本ずつを1本も判定できなかった"
+              f"（数が足りない {pseen['thin']}本 / 答えの返らなかったもの "
+              f"{pseen['missing']}本）。**0件を通さない**")
+        return 2
+    if prows:
+        print(f"[5] ✕ 無人の上流に対して死んでいる繋ぎが {len(prows)}件")
+        for r in prows:
+            print(f"      {r}")
+        ng += 1
+    else:
+        print(f"[5] ○ 繋ぎ {pseen['judged']}本、無人の上流が終わったあとに"
+              f"ちゃんと起きている"
+              + (f"（数が足りず見ていない {pseen['thin']}本）"
+                 if pseen["thin"] else ""))
+    for p, want, hit, tot in sorted(pseen["rates"]):
+        print(f"      {want} → {p}: {hit}/{tot}")
 
     print()
     if ng:

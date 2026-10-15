@@ -26,6 +26,19 @@
 | 6 | `conclusion` で絞る `if:` を1本足した写し | **その1本だけ**が挙がる |
 | 7 | どこかの `name:` を1文字変えた写し | **そこを指す繋ぎだけ**が挙がる（借り物が効いているか） |
 | 8 | GitHub が返す**2通りの**時刻 | どちらも読める |
+| 9 | **繋ぎ1本ずつ**（[5]）。ぜんぶ上流の直後に起きた表 | 挙がらない |
+| 10 | 下流を**1本だけ**、上流とそろわない時刻にずらす | **その下流の繋ぎだけ**が挙がる |
+| 11 | 同じ表で、上流を全部「**人が押した**」に替える | 判定しない（手押しで薄めない） |
+| 12 | 上流を `PAIR_MIN` 本未満にする | 判定しない（0/0 を赤にしない） |
+| 13 | [5] の表が空 | 判定 0 ＝ **2 に倒す側** |
+| 14 | 下流の引きが窓を覆っていない | 判定しない（覆えない所を0と読まない） |
+| 15 | 1回だけ上流とそろう | 挙がらない。**割合は残る** |
+| 16 | 1回もそろわない | やはり挙がる（15 がゆるめ過ぎていないか） |
+
+9〜16 を足したのは #865。**[4] では届かない**——受け皿を持つ下流は、
+1本目の繋ぎが死んでいても受け皿が毎晩起こすので、ワークフロー単位では
+生きて見える。11 がとくに効く足で、**手で押した上流を混ぜると、
+死んでいる繋ぎが「半分は生きている」に化ける**（実測で 90/90 と 0/72）。
 
 2・3・6・7 は「落ちること」だけでなく、**落ちる先が狙ったぶんだけ**かを見る。
 道連れで他まで落ちる対照は、死んだ足を隠す（`docs/island-misses.md` #128）。
@@ -50,7 +63,8 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from chain_alive_watch import (  # noqa: E402
-    DAYS, WFDIR, conclusion_gates, judge, load_docs, ts,
+    DAYS, PAIR_MIN, WFDIR, conclusion_gates, judge, judge_pairs,
+    load_docs, ts,
 )
 from workflow_link_selftest import audit, name_of, wanted  # noqa: E402
 
@@ -76,6 +90,24 @@ def all_fresh(docs: dict[str, dict]) -> dict[str, dict]:
         row["by_chain"] = iso(1)
         row["created"] = iso(200)       # ぜんぶ古株（新顔の足は [4] で別に見る）
     return table
+
+
+def all_paired(docs: dict[str, dict]) -> dict:
+    """[5] 用。「**どの繋ぎも、無人の上流のたびに起きている**」表。
+
+    上流は `PAIR_MIN` 本ちょうどでは足りない日が出るので、余裕を見て4本。
+    下流は、その4本の**直後**に出来たことにする。
+    """
+    linked = sorted(p for p in docs if wanted(docs[p]))
+    names = {name_of(p, d): p for p, d in docs.items()}
+    targets = sorted({w for p in linked for w in wanted(docs[p]) if w in names})
+    # 1.0 / 1.5 / 2.0 / 2.5 日前に、無人で終わった
+    when = [1.0, 1.5, 2.0, 2.5]
+    ups = {w: [{"end": iso(d), "nobody": True} for d in when] for w in targets}
+    # 下流は、そのたび「1分あと」に出来た
+    at = [iso(d - 1.0 / 1440) for d in when]
+    downs = {p: {"at": list(at), "oldest": min(at)} for p in linked}
+    return {"ups": ups, "downs": downs}
 
 
 def target_of(docs: dict[str, dict], want: str) -> str:
@@ -232,6 +264,124 @@ def main() -> int:
     if ok8:
         print("[8] ○ `…Z` も `…+02:00` も読めて、UTC に揃う")
     else:
+        ng += 1
+
+    # ---------------------------------------------------------------- [5]
+    #
+    # **繋ぎ1本ずつ**（`judge_pairs`）。[2]〜[4] と同じ作法で、作り物の表を差す。
+    # ここで見たいのは、**#865 そのものが捕まるか**——受け皿のおかげで
+    # ワークフロー単位では生きて見える繋ぎが、1本ずつ見ると死んでいること。
+    base5 = all_paired(docs)
+    rowsA, seenA = judge_pairs(docs, base5, DAYS, NOW)
+    if not rowsA and seenA["judged"] > 0 and seenA["judged"] == seenA["ok"]:
+        print(f"[9] ○ ぜんぶ起きている表では挙がらない（繋ぎ {seenA['judged']}本を"
+              f"1本ずつ数えた）")
+    else:
+        print(f"[9] ✕ ぜんぶ起きている表で {len(rowsA)}件 挙がった／{seenA}")
+        for r in rowsA:
+            print(f"      {r}")
+        ng += 1
+
+    # [10] **#865 の形。** 下流を1本だけ「上流の完了とそろわない」ようにする。
+    #      その下流が持つ繋ぎ**だけ**が挙がること
+    victim5 = linked[0]
+    t10 = copy.deepcopy(base5)
+    # 時刻を6時間ずらす（run は在るのに、どの完了ともそろわない）
+    t10["downs"][victim5]["at"] = [iso(d - 0.25) for d in (1.0, 1.5, 2.0, 2.5)]
+    t10["downs"][victim5]["oldest"] = min(t10["downs"][victim5]["at"])
+    rows10, seen10 = judge_pairs(docs, t10, DAYS, NOW)
+    want10 = len(wanted(docs[victim5]))
+    if (len(rows10) == want10 and all(victim5 in r for r in rows10)
+            and seen10["judged"] == seenA["judged"]):
+        print(f"[10] ○ {victim5} が上流とそろわないと、その繋ぎ {want10}本だけが挙がる")
+        for r in rows10:
+            print(f"      {r}")
+    else:
+        print(f"[10] ✕ 1本だけ潰したのに {len(rows10)}件 挙がった"
+              f"（{want10}件のはず）／数えた数 {seen10['judged']}"
+              f"（{seenA['judged']} のはず）")
+        for r in rows10:
+            print(f"      {r}")
+        ng += 1
+
+    # [11] **手押しを混ぜると生きて見える**、を混ぜないこと。
+    #      上流を「人が押した」に替えると、下流がそろっていても**数えない**
+    #      （判定できる本数が減る）。#865 で 84/202 と 3/98 を足して
+    #      「半分は生きている」と読まないための足
+    t11 = copy.deepcopy(t10)
+    for w in t11["ups"]:
+        for u in t11["ups"][w]:
+            u["nobody"] = False
+    rows11, seen11 = judge_pairs(docs, t11, DAYS, NOW)
+    if not rows11 and seen11["judged"] == 0 and seen11["thin"] > 0:
+        print(f"[11] ○ 上流が全部「人が押した」なら、1本も判定しない"
+              f"（数が足りない {seen11['thin']}本。本体はそこで 2 を返す）")
+    else:
+        print(f"[11] ✕ 手押しだけの表で {len(rows11)}件 挙げ、{seen11['judged']}本 判定した")
+        ng += 1
+
+    # [12] **数が足りない繋ぎは判定しない。** 上流を `PAIR_MIN` 本未満にすると、
+    #      死んでいる表でも挙がらず、数えからも外れる（0/0 を赤にしない）
+    t12 = copy.deepcopy(t10)
+    for w in t12["ups"]:
+        t12["ups"][w] = t12["ups"][w][: PAIR_MIN - 1]
+    rows12, seen12 = judge_pairs(docs, t12, DAYS, NOW)
+    if not rows12 and seen12["judged"] == 0 and seen12["thin"] == seenA["judged"]:
+        print(f"[12] ○ 上流が {PAIR_MIN - 1}本しか無ければ判定しない"
+              f"（数が足りない {seen12['thin']}本）")
+    else:
+        print(f"[12] ✕ {PAIR_MIN - 1}本しか無いのに {len(rows12)}件 挙げ、"
+              f"{seen12['judged']}本 判定した")
+        ng += 1
+
+    # [13] 表が空。**「ぜんぶ切れている」ではなく「数えられなかった」**に倒れること
+    rows13, seen13 = judge_pairs(docs, {}, DAYS, NOW)
+    if not rows13 and seen13["judged"] == 0 and seen13["missing"] > 0:
+        print(f"[13] ○ 表が空なら判定 0 で、答えの返らなかったもの "
+              f"{seen13['missing']}本（本体はそこで 2 を返す）")
+    else:
+        print(f"[13] ✕ 表が空なのに {seen13} を数え、{len(rows13)}件 挙げた")
+        ng += 1
+
+    # [14] **下流の引きが3日ぶんを覆っていないとき**、覆っていないところを
+    #      0件と読まないこと。古い上流しか無ければ、判定しない側に倒れる
+    t14 = copy.deepcopy(base5)
+    for p in t14["downs"]:
+        t14["downs"][p] = {"at": [iso(0.5)], "oldest": iso(0.5)}
+    rows14, seen14 = judge_pairs(docs, t14, DAYS, NOW)
+    if not rows14 and seen14["judged"] == 0 and seen14["thin"] == seenA["judged"]:
+        print(f"[14] ○ 下流の引きが半日ぶんしか無ければ、そこは判定しない"
+              f"（数が足りない {seen14['thin']}本）")
+    else:
+        print(f"[14] ✕ 覆えていない窓で {len(rows14)}件 挙げ、"
+              f"{seen14['judged']}本 判定した")
+        for r in rows14:
+            print(f"      {r}")
+        ng += 1
+
+    # [15] **1回でも起きたら緑に戻ること**（`PAIR_DEAD`）。
+    #      ここを「満点でなければ赤」にすると、繋ぎ直した翌朝も master が
+    #      2日ぶん赤いまま残る。**毎回出る赤は、本物の赤を埋める。**
+    #      割合は消えずに残ること（目で見えないと、半端な壊れが隠れる）
+    t15 = copy.deepcopy(t10)          # victim5 の下流が6時間ずれた表
+    t15["downs"][victim5]["at"].append(iso(1.5 - 1.0 / 1440))
+    t15["downs"][victim5]["oldest"] = min(t15["downs"][victim5]["at"])
+    rows15, seen15 = judge_pairs(docs, t15, DAYS, NOW)
+    part = [(h, t) for p, w, h, t in seen15["rates"] if p == victim5]
+    if (not [r for r in rows15 if victim5 in r] and part
+            and all(0 < h < t for h, t in part)):
+        print(f"[15] ○ 1回でも起きていれば挙げない。割合は残る（{part}）")
+    else:
+        print(f"[15] ✕ 1回起きた繋ぎで {len(rows15)}件 挙げた／割合 {part}")
+        ng += 1
+
+    # [16] **1回も起きていなければ、やはり赤**（[15] がゆるめ過ぎていないか）
+    rows16, _ = judge_pairs(docs, t10, DAYS, NOW)
+    if len([r for r in rows16 if victim5 in r]) == want10:
+        print(f"[16] ○ 0回なら、やはり {want10}本 挙がる")
+    else:
+        print(f"[16] ✕ 0回なのに {len([r for r in rows16 if victim5 in r])}件"
+              f"（{want10}件のはず）")
         ng += 1
 
     print()
