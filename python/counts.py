@@ -114,11 +114,13 @@ SCAN_ROOTS = (
 def _scan_files() -> list[Path]:
     """grep の分母。**置き場が1つでも消えていたら投げる**（0 を答えにしない）。
 
-    **この道具そのものは数えない。** 探す字（`script.google.com/…`）を
-    下に書いてあるので、入れると自分を1件ずつ数えて、
-    **剥がし終わった日も 0 にならない**（実際に GAS が 4→5、ドライブが 8→10 に見えた）。
+    **この道具と、その対照は数えない。** 探す字（`script.google.com/…`）を
+    自分の中に書いているので、入れると自分を1件ずつ数えて、
+    **剥がし終わった日も 0 にならない**（実際に GAS が 4→5、
+    対照に仕込みを足した日にさらに 6 まで増えた。ドライブの絵も 8→10 だった）。
     """
-    me = Path(__file__).resolve()
+    me = {Path(__file__).resolve(),
+          (ROOT / "python/counts_selftest.py").resolve()}
     out: list[Path] = []
     for rel in SCAN_ROOTS:
         base = ROOT / rel
@@ -126,7 +128,7 @@ def _scan_files() -> list[Path]:
             raise ValueError(f"置き場が無い: {rel}（数えかたが腐っている）")
         for p in base.rglob("*"):
             if p.is_file() and p.suffix in CODE_EXT and not (SKIP_DIR & set(p.parts)):
-                if p.resolve() != me:
+                if p.resolve() not in me:
                     out.append(p)
     return out
 
@@ -502,7 +504,7 @@ COUNTS: dict[str, tuple[str, object, str]] = {
     "outside_text_watch": (
         "text_expires_watch の範囲外",
         n_outside_text_watch,
-        "docs/island-audit.md 5章",
+        "docs/island-audit.md 5-1",
     ),
     "pages": ("書き出した面（html）", n_pages, "docs/island-standards.md 15章"),
     # ---- 棚おろし（`docs/island-audit.md`）。紙には数を書かず、この鍵を名指しする
