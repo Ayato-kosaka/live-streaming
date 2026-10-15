@@ -26,11 +26,6 @@ on:
         required: false
         default: false
         type: boolean
-      chain_test:
-        description: "（確かめ用。いったん自分を bot で押し直してから下流を起こす）"
-        required: false
-        default: false
-        type: boolean
   # push:
   #   branches:
   #     - master
@@ -350,15 +345,8 @@ jobs:
           # 下流は「終わった run」しか読まない。この run はまだ終わっていないので、
           # 終わるまで待ってもらう
           FOR_RUN: ${{ github.run_id }}
-          CHAIN_TEST: ${{ inputs.chain_test }}
         run: |
           set -euo pipefail
-          if [ "${CHAIN_TEST:-false}" = "true" ]; then
-            gh workflow run firebase-hosting-deploy-prod.yml --repo "$REPO" \
-              --ref "$REF" -f wake_only=true -f chain_test=false
-            echo "chain_test: bot で自分を押し直しました"
-            exit 0
-          fi
           api="repos/$REPO/actions/workflows/ship_down.yml/runs?per_page=1"
           before="$(gh api "$api" --jq '.workflow_runs[0].id // 0')"
           gh workflow run ship_down.yml --repo "$REPO" --ref "$REF" \
