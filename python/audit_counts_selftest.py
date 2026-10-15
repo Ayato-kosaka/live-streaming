@@ -152,19 +152,30 @@ def run(text: str, keys: dict[str, tuple], ban: frozenset[str]) -> tuple[int, li
 
 
 def drill() -> list[str]:
-    """写しをこしらえて、**落ちるときに落ちるか**を見る。→ 外れたものの名前"""
+    """**こしらえた紙と欄**で、落ちるときに落ちるかを見る。→ 外れたものの名前
+
+    **本物の紙と `counts.py` は使わない。** 使うと、本物のほうが切れている日に
+    「対照が外れた」に倒れて、**本当の理由（どの鍵が無いか）が出なくなる。**
+    実際に鍵を1つ改名して当ててみたら、そうなった（2026-10-15）。
+    対照は対照だけで閉じる。
+    """
     ng: list[str] = []
-    real = DOC.read_text(encoding="utf-8")
-    keys = dict(counts.COUNTS)
-    any_key = sorted(mine(keys))[0]
+    real = "# 試しの紙\n\n| 見張り | `counts.py: alpha` |\n"
+    keys: dict[str, tuple] = {
+        # 棚おろし向きの欄（紙から名指しされていないと落ちる）
+        "alpha": ("あ", lambda: 1, MINE + " 1-1"),
+        # よその紙が持っている欄（ここに出てこなくてよい）
+        "beta": ("い", lambda: 2, "CLAUDE.md"),
+    }
+    any_key = "alpha"
 
     def want(name: str, got: int, need: int) -> None:
         print(f"  {'○' if got == need else '✕'} {name} → 終了コード {got}（欲しいのは {need}）")
         if got != need:
             ng.append(name)
 
-    # [1] いまの紙。繋がっているはず
-    want("いまの紙", run(real, keys, frozenset())[0], 0)
+    # [1] 繋がっている紙。**よその紙が持つ欄（`beta`）は、無くても落ちない**
+    want("繋がっている紙", run(real, keys, frozenset())[0], 0)
 
     # [2] 居ない鍵を指す写し
     lost = real + "\n| 試し | `counts.py: no_such_count` |\n"
