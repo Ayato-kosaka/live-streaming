@@ -179,8 +179,14 @@ BREAK=sha python3 tools/shorts/gate_selftest.py    # 守りを1本外す（sha �
 1. 札 `shorts` を付けた試しの issue を立てる
 2. AI が `gate.py submission` で作ったブロックつきの提出（企画 p1）を書く
    → 何も返らない（正しい提出には書かない）こと、Actions の要約に「提出を受けた」が出ること
-3. **AI が Claude の App で `/approve plan p1 A` を書く** → bot が
-   「Claude の App から書かれたコメントは承認として数えません」と返し、札が付かないこと
+3. **AI が Claude の App で `/approve plan p1 A` を書く** → 札が付かないこと。
+   2026-10-15（#925）に試したら、**書き込みの経路が行頭の `/approve` を `·/·a·pprove` に崩して
+   届けた**ので、関所は命令として読まず「対象外」で終わった（bot の返事も無い）。
+   これは経路の側の振る舞いで、こちらの守りではない（いつ変わるか分からない）。
+   **頼るのは App の判定のほう**なので、そちらは本物の payload で当てる:
+   `gh api repos/…/issues/N/comments` で取ったコメントの本文だけを `/approve plan p1 A` に戻して
+   `gate.judge()` に渡し、理由が `app` で拒否されること・`require_approval` が止まることを見る
+   （#913 に結果）。囲いの中の `` `/approve …` `` は崩されない（提出の手順の字はそのまま届く）
 4. `gate.py require --issue N --gate plan --files …` → 終了コード 1（`no_record`）
 5. あやとがスマホで `/approve plan p1 A` を書く → bot が記録し、`gate1-approved` が付くこと。
    記録の `comment_id` があやとのコメントの id と一致すること
