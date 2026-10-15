@@ -519,6 +519,10 @@ const ALLOW = {
     1,
     "`app/css/fonts.css` の `@font-face` を読む（`font-weight` / `url` / `unicode-range`）。**焼き込みの TS ではない。** `font-weight:\\s*(\\d+)` が欄読みの形に見えるだけ",
   ],
+  "tools/sprites/fontfaces.mjs": [
+    1,
+    "`app/css/fonts.css` の `@font-face` を読む口。書体の空振りを数える側は、自前に読まずにここを読む。**焼き込みの TS ではない。** `fontbudget_selftest.mjs` と同じ形",
+  ],
   "tools/sprites/deckctrl.mjs": [
     1,
     "`public/nordic/review.html` の中のクイズを読む（焼き込みではなく、焼いた HTML）",

@@ -166,6 +166,47 @@ BUCKETS = 12
 # **割らないほうに倒してある。** 原因が分かって、当たりが数字だと分かったら 200 にする。
 COLD_CHUNK = 0
 
+# ── 行の高さのためだけに引かれる1本（strut） ─────────────────────────
+#
+# ブラウザは、**字を1つも描かない段でも**行の高さを決めるためにその段の書体を
+# 要る。Chrome はその代表として **U+0020（空白）**を引く。つまり
+#
+#   「太さ 400 の段があって、そこに 400 で描く字が1つも無い」面でも、
+#   U+0020 を持つ 400 の束が必ず1本引かれる。**止められない。**
+#
+# `/island/iran-walk` の実測（2026-10-15。絵を出した状態・141面の書き出し）が
+# それで、`weights.json` 上は「400 で描く字 0」なのに `maru-400-0` を
+# **26.6KB** 引いていた。引き金の字は**1字ずつ別の URL に割って**確かめて
+# **U+0020 だけ**（#848）。
+#
+# 止められないので、**安くする。** この字だけの束を太さごとに1本焼いて、
+# ほかの束からは抜く。引かれる1本が 26.6KB から 0.8KB に落ちる。
+# 見た目は変わらない（同じ書体の同じ字を、別のファイルから出すだけ）。
+#
+# **U+2026（…）も入れる。** `text-overflow: ellipsis` の「…」も DOM に無く、
+# ブラウザが**その段の代表の書体**で足す。代表がこの束になるので、ここに
+# 「…」が無いと**切り詰めの三点だけ端末の書体**になる。
+#
+# ここを空にすると元に戻る。戻したことは
+# `tools/sprites/fontstrut_selftest.mjs` が赤くする。
+STRUT = {" ", "…"}
+
+# **空白だけで焼くと、ブラウザがその woff2 を蹴る。**
+#
+# `.notdef` と `space` しか無い font は、どちらも輪郭を持たない＝ `glyf` が空で、
+# Chrome の検査（OTS）が通さない。実測（2026-10-15）:
+#
+#   空白1字で焼いた maru-400-12（612B） … `document.fonts` が **status=error**。
+#     `document.fonts.check("16px …", " ")` も false。空白は端末の書体に落ちて、
+#     送り幅が **4.4844px → 4.4531px**（16px のとき）に変わる。わずかだが、
+#     **行の折れ方が変わる**（`/kitchen/karaage` の背が 2px 縮んだ）
+#   空白＋「0」で焼いたもの（692B） … status=loaded、送り幅は 4.4844px で**元と同じ**
+#
+# なので**焼くときだけ**詰め物を1字入れる。`unicode-range` は `STRUT` から作るので、
+# ブラウザがこの束から取るのは空白と「…」だけ——詰め物は誰にも使われない（80B の重し）。
+# 詰め物を抜くと、**見た目が変わったまま赤くならない。**
+STRUT_FILL = {"0"}
+
 # データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
 # 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
 PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "map"}
@@ -447,6 +488,15 @@ def plan(
         step = COLD_CHUNK or len(rest)
         for i in range(0, len(rest), step):
             out.append((set(), set(rest[i : i + step])))
+    # 行の高さのための1本を、いちばん後ろに切り出す（上の `STRUT`）。
+    # **併合が終わってから抜く。** 先に抜くと貪欲法の入力が1字変わって、
+    # 束の中身がまるごと入れ替わる（この関数の見出しの実測）。
+    if STRUT:
+        for mask, cs in out:
+            cs -= STRUT
+        # 空になった束は焼かない（fontTools が落ちる）
+        out = [(mask, cs) for mask, cs in out if cs]
+        out.append((set(fams), set(STRUT)))
     return out
 
 
@@ -586,7 +636,10 @@ def main() -> None:
         buckets = plan(per[w], args.buckets, cold[w])
         baked[w] = []
         for i, (mask, chars) in enumerate(buckets):
-            size = guess(chars) if args.dry else bake(w, i, chars)
+            # 行の高さのための束だけ、**焼くときに**詰め物を足す（上の `STRUT_FILL`）。
+            # `unicode-range` は下で `chars` から作るので、詰め物は表に出ない
+            baking = chars | STRUT_FILL if STRUT and chars == STRUT else chars
+            size = guess(baking) if args.dry else bake(w, i, baking)
             baked[w].append((mask, chars, size))
             total += size
             print(f"  束{i}  {len(chars):5}字  {size // 1024:4}KB  <- {len(mask)}面"
