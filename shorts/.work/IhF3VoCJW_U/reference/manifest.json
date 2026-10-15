@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "IhF3VoCJW_U__reference",
+ "mode": "reference",
+ "dest": "IhF3VoCJW_U/reference",
+ "video": "IhF3VoCJW_U",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 6,
+  "caption_segments": 27,
+  "transcript_segments": 3,
+  "cuts": 39,
+  "channel_entries": 0,
+  "files": 20
+ },
+ "bytes": {
+  "plain": 2608681,
+  "tar_gz": 2523348,
+  "encrypted": 2523360
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2523360,
+   "sha256": "8fce986a49b9f40e35b38117d1c3e6256c400a9f206f03d89995c4f65e7dd212"
+  }
+ ],
+ "hmac_sha256": "9f612fa3bc71a706f73529a3570ece3ead2632d58d5f434fa573f8950872e932",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:39:13+00:00"
+}
