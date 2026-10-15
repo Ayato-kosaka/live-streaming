@@ -179,14 +179,38 @@ def channel_items(req: dict, origin: str) -> list[dict]:
     return out
 
 
+def compare_files(base: str, head: str) -> list[str]:
+    """既定の枝と比べて、足された・書き換えられたファイル（GitHub の compare）。"""
+    import urllib.request
+
+    url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/compare/{base}...{head}"
+    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json"})
+    tok = os.environ.get("GH_TOKEN")
+    if tok:
+        req.add_header("Authorization", f"Bearer {tok}")
+    with urllib.request.urlopen(req, timeout=30) as r:
+        d = json.load(r)
+    return [f["filename"] for f in d.get("files") or []
+            if f.get("status") in ("added", "modified", "renamed", "copied")]
+
+
 def changed_requests() -> list[str]:
     """この push で足された・書き換えられた依頼ファイル。"""
     ev = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
-    seen: list[str] = []
+    files: list[str] = []
     for c in ev.get("commits") or []:
-        for f in (c.get("added") or []) + (c.get("modified") or []):
-            if f.startswith(REQ_DIR) and f.endswith(".json") and f not in seen:
-                seen.append(f)
+        files += (c.get("added") or []) + (c.get("modified") or [])
+    if not ev.get("commits"):
+        # **枝を作った push は commits が空で来る**（2026-10-15 に実測。依頼を5件
+        # 載せて作った枝で「0件」になった）。そのときは既定の枝と比べる
+        base = (ev.get("repository") or {}).get("default_branch") or "master"
+        head = ev.get("after") or os.environ.get("GITHUB_SHA", "")
+        print(f"commits が空（枝を作った push）。{base} と比べる")
+        files = compare_files(base, head)
+    seen: list[str] = []
+    for f in files:
+        if f.startswith(REQ_DIR) and f.endswith(".json") and f not in seen:
+            seen.append(f)
     return [f for f in seen if (ROOT / f).is_file()]
 
 

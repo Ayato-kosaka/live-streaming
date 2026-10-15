@@ -80,6 +80,8 @@ jobs:
           IN_FPS: ${{ inputs.fps }}
           IN_PUBKEY: ${{ inputs.pubkey }}
           IN_BRANCH: ${{ inputs.branch }}
+          # 枝を作った push は commits が空で来るので、既定の枝との compare を引くのに使う
+          GH_TOKEN: ${{ github.token }}
         run: python3 tools/shorts/ingest/plan.py
 
   fetch:
