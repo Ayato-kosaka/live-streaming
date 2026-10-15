@@ -7,7 +7,8 @@
     from _handoff import fetch
     tok = fetch()          # {"id": …, "fs": …, "exp": …}
 
-    python3 python/admin/_handoff.py    # 札が本当に通るかを見るだけ（読むだけ）
+    # 札が本当に通るかを見るだけ（読むだけ・本番に1バイトも書かない）
+    BQ_PROJECT_ID=live-streaming-d3cac python3 python/admin/_handoff.py
 
 ## なぜ手元に札が要るのか
 

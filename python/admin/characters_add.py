@@ -2,10 +2,11 @@
 
 **これは手元から回す道具。** Actions からは回らない（下の「回しかた」）。
 
-    ARGS='{}'                python3 python/admin/characters_add.py  … 下見。**1バイトも書かない**
-    ARGS='{"apply": true}'   python3 python/admin/characters_add.py  … 口に頼んで置き場と Firestore に書く
-    ARGS='{"dir": "/…/x"}'   … 置き場所を変える（**絶対パスだけ**）
-    ARGS='{"apply": true, "keep": true}'  … 足したあとも手元の絵を残す
+    export BQ_PROJECT_ID=live-streaming-d3cac      # 手元では自分で渡す
+    ARGS='{}'               python3 python/admin/characters_add.py  … 下見。**1バイトも書かない**
+    ARGS='{"apply":true}'   python3 python/admin/characters_add.py  … 置き場と Firestore に書く
+    ARGS='{"dir":"/…/x"}'   … 置き場所を変える（**絶対パスだけ。git の外**）
+    ARGS='{"apply":true,"keep":true}'  … 足したあとも手元の絵を残す
 
 ## なぜ移行の道具と別に要るか
 
