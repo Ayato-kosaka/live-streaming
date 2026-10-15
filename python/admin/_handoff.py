@@ -174,18 +174,27 @@ def firestore(tok: dict):
 
 
 def _probe() -> None:
-    """札が本当に通るかを見る。**どちらも読むだけ。**"""
+    """札が本当に通るかを見る。**どちらも読むだけ。1バイトも書かない。**
+
+    口のほうは `GET /stickies/waiting` で見る。**オーナーでないと 403** を
+    返す口のうち、読むだけで済むのはこれだけ（`ownerUid` を通る）。
+    身分（Identity Toolkit）に聞くだけでは「札が本物か」までしか分からず、
+    **島の口がそれをオーナーとして受けるか**は分からない。
+    """
     import requests
 
-    from _owner import WEB_API_KEY
+    from _owner import API_BASE
 
     tok = fetch()
-    res = requests.post(
-        "https://identitytoolkit.googleapis.com/v1/accounts:lookup",
-        params={"key": WEB_API_KEY}, json={"idToken": tok["id"]}, timeout=30,
+    res = requests.get(
+        f"{API_BASE}/stickies/waiting",
+        headers={"authorization": f"Bearer {tok['id']}"}, timeout=60,
     )
-    # **uid は出さない。** 通ったかどうかだけ
-    log.info("口の札: %s", "通りました" if res.status_code == 200 else f"HTTP {res.status_code}")
+    # **中身は出さない**（書類IDが入っている）。通ったかと、件数だけ
+    log.info(
+        "口の札: HTTP %s%s", res.status_code,
+        "（オーナーとして通りました）" if res.status_code == 200 else "",
+    )
     n = len(list(firestore(tok).collection("islandCharacter").limit(3).stream()))
     log.info("Firestore の札: %d件 読めました", n)
 
