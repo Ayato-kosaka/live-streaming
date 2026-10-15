@@ -182,6 +182,11 @@ export default function GoodsPage() {
               索引が急に静かになる。並べるのは名簿の頭から——
               **どれを出すかを別に決めない**（決めると、並びの表が2つになる）。 */}
           <Link className="gd-go gd-peek" href="/goods/stickers" prefetch={false}>
+            {/* **ここは升目用の小さい写し（`stickerThumb`。長辺160）に替えない。**
+                図鑑のマスは 390px の画面で 40.1px だが、ここの4枚は 148px
+                （実測。`.gd-peekshots` は 140px 下限の2列）。dpr2 で 296px、
+                dpr3 で 444px 要るので、長辺480 の `art` がちょうど。
+                160 に落とすと、索引のほうだけ粗くなる（#885） */}
             <span className="gd-peekshots">
               {STICKERS.slice(0, PEEK).map((sticker) => (
                 <img

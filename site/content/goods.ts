@@ -107,6 +107,49 @@ export type Sticker = {
 };
 
 /**
+ * 升目に出すほうの絵の長辺（px）。**焼いているのは
+ * `tools/goods/stickerthumb.py`**で、あちらの `THUMB_LONG` と同じ数。
+ *
+ * 40px のマスに 480px の絵を出していた（縦横で12倍）。13枚で 623.8KB、
+ * `/goods/stickers` がスマホの最初の1画面で運ぶ量（903.3KB）の**69%**が
+ * これだった（2026-10-15 実測。`tools/sprites/firstload.mjs`）。
+ *
+ * **160 の根拠は、手に持つ画面でいちばん大きい枠 × dpr3。** 枠は実測で、
+ * 図鑑のマスの中の絵が 390px の画面で 40.1px（マス 48.7px の 86%。
+ * `.rzk-cell img`）、430px で 45.9px。あやと島カードの選び札（`.akd-mate`）が
+ * 52px。**52 × 3 = 156** なので、160 あれば縦でも横でも引き伸ばさない。
+ *
+ * **広い画面では足りていない。** 820px 幅までいくとマスの絵は 69.9px まで
+ * 育つので、dpr3 だと 210px 要る（1.31倍に伸びる）。そこは**住民図鑑と
+ * 同じ扱い**——あちらは同じ `.rzk-cell` に 128px を出している（`FriendsWall`）
+ * ので、160 はそれより厚い。820px・dpr3 で撮って引き比べ、粗は出ていない。
+ */
+export const THUMB_LONG = 160;
+
+/**
+ * 升目に出す1枚（小さい写し）。**道は `id` から組み立てる。**
+ *
+ * 名簿に欄を足して1枚ずつ書かせない——書き忘れても型は通るし、
+ * `art` を焼き直した日に片方だけ古くなる。焼く側（`stickerthumb.py`）も
+ * 同じ `id` から道を作るので、**名簿に1枚足して焼けば、それで繋がる。**
+ *
+ * 寸法は `art` の比をそのまま縮めたもの。**式は焼く側と1文字そろえる**
+ * （食い違うと、場所を先に取る寸法と絵の実寸がずれる。
+ * `site/selftest/sticker_selftest.mjs` の7章が実寸と突き合わせる）。
+ */
+export function stickerThumb(s: Sticker): { src: string; w: number; h: number } {
+  const longest = Math.max(s.w, s.h);
+  /* **伸ばさない。** いまの13枚はどれも 480px 近いので通らない道だが、
+     小さい1枚が名簿に入った日に黙ってぼやけるのを止めておく */
+  const r = longest <= THUMB_LONG ? 1 : THUMB_LONG / longest;
+  return {
+    src: `/goods/thumb/${s.id}.webp`,
+    w: r === 1 ? s.w : Math.max(1, Math.round(s.w * r)),
+    h: r === 1 ? s.h : Math.max(1, Math.round(s.h * r)),
+  };
+}
+
+/**
  * いまあるステッカー。**並びはあやとが決めたとおり。**
  *
  * 1枚目は**島でほんとうに歩いているあの絵**そのもの
