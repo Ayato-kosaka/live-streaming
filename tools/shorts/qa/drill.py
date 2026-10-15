@@ -11,8 +11,8 @@
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**12の検査が全部 pass**。壊した1本ごとに、
-**壊したところを見る検査だけが落ち、ほかの11は pass のまま**であること。
+壊れていない1本（clean）は**13の検査が全部 pass**。壊した1本ごとに、
+**壊したところを見る検査だけが落ち、ほかの12は pass のまま**であること。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
 関係ない検査まで落ちるなら、検査が混ざっている。
 
@@ -32,7 +32,15 @@
 | ぼかした顔を2秒貼る | どれも落ちない（検出はされ、ぼかし済みと判定されること） | qa_video |
 | 2秒を真っ黒にする | black | qa_video |
 | 2秒を止める | frozen | qa_video |
-| （動画ではなく1コマ）強い模様の隣の一色の地 | 透かしの守り（平らな地を測らない）を外すと 0.47 以上に化け、守りがあれば化けないこと | qa_video |
+| （動画ではなく1コマ）強い模様の隣の一色の地 | 透かしの守り（平らな地を測らない）を外すと 0.40 以上に化け、守りがあれば化けないこと | qa_video |
+| （時間割だけ）2行目の字幕をそのまま強調の字にする | text_dup | qa |
+| （時間割だけ）字幕にもタイトルにも無い強調の字（「Pulë ＝ 鶏」） | text_dup は pass | qa |
+| （時間割だけ）はじめの3秒、タイトル・強調・字幕の3つに「ショート」 | text_dup（3つ並びの線だけで落ちる） | qa |
+| 合成の6秒（前半は形のある画、後半は細かい粒だけの灰色） | strips.py の弱い画の印が後半にだけ付く | qa_video |
+| clean を strips.py に通す | 行の帯が行の数だけ・絵と JSON が書ける | qa_video |
+
+時間割だけの足は、いまの render.py が強調の字（テロップ）を描かないので、clean の時間割に強調の字を
+足した写しで text_dup だけを回す（絵には字が無いので、ほかの検査は回さない）。
 
 ## 素材と書き出し
 
@@ -340,6 +348,101 @@ def flat_control() -> tuple[bool, str]:
     return broken >= watermark.HUMAN_SCORE and guarded < watermark.HUMAN_SCORE, msg
 
 
+def text_dup_legs(C, clean: Path, cwork: Path, box: Path) -> list[tuple[str, str, str, str]]:
+    """字の重なり（text_dup）の足。**時間割だけを書き換えて当てる。**
+
+    いまの render.py（tools/shorts/render/）は強調の字（テロップ）を描かない（描く版は書き出し担当が
+    作っている途中）。text_dup は時間割の字しか読まないので、clean の時間割に強調の字を1つ足した
+    写しを作って、text_dup だけを回す（絵には字が無いので、ほかの検査は回さない）。
+    """
+    import shutil as _sh
+    base = json.loads((cwork / "plan.json").read_text())
+    fps = base["fps"]
+    cap1 = next(o for o in base["overlays"] if o.get("kind") == "caption" and o.get("line") == 1) \
+        if base.get("overlays") else next(c for c in base["captions"] if c.get("line") == 1)
+    cap1_text = cap1.get("text") or "／".join(cap1.get("lines") or [])
+
+    def telop(text, a, b):
+        return {"kind": "telop", "text": text, "from": a, "to": b, "x": 200, "y": 700, "w": 680, "h": 120,
+                "png": ""}
+
+    legs = [
+        # 2行目の字幕をそのまま強調にした（1本目の「あと20分」と同じ形）
+        ("text_dup_repeat", "fail", [telop(cap1_text.replace("／", ""), cap1["from"], cap1["to"])], None),
+        # 字幕にもタイトルにも無いことを足した（1本目の「Pulë ＝ 鶏」と同じ形）
+        ("text_dup_adds", "pass", [telop("Pulë ＝ 鶏", cap1["from"], cap1["to"])], None),
+        # はじめの3秒に、タイトル・強調・字幕の3つに同じ並び（強調と字幕の重なりは 6割未満）
+        ("text_dup_triple", "fail", [telop("ショート45秒の巻", 6, int(1.9 * fps))], "島のショートの／練習問題"),
+    ]
+    out = []
+    for name, want, add, title in legs:
+        work = box / f"{name}.work"
+        if work.exists():
+            _sh.rmtree(work)
+        work.mkdir()
+        plan = copy.deepcopy(base)
+        # 時間割の形は2通りある（overlays を書く書き出し・書かない書き出し）。どちらにも足す
+        if plan.get("overlays"):
+            plan["overlays"] += add
+            if title:
+                for o in plan["overlays"]:
+                    if o.get("kind") == "title":
+                        o["text"] = title
+        else:
+            plan.setdefault("telops", []).extend(add)
+            if title:
+                for t in plan.get("titles", []):
+                    t["lines"] = title.split("／")
+        (work / "plan.json").write_text(json.dumps(plan, ensure_ascii=False))
+        ctx = C.make_ctx(clean, work, crops=box / f"{name}.qa")
+        rep = C.run_checks(ctx, only=["text_dup"])
+        r = rep["checks"][0]
+        out.append((name, want, r["status"], r["summary"] + (f"／{r['problems'][0]}" if r["problems"] else "")))
+    return out
+
+
+def strips_legs(box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool, str]]:
+    """帯の絵（strips.py）の足。
+
+    - 合成の6秒（前半3秒は中くらいの大きさの形が画面いっぱい、後半3秒は細かい粒だけの灰色）で、
+      後半にだけ弱い画の印が付くこと（1本目の歩道＝細かい模様だけ、串・棚＝形がある、の作り直し）
+    - clean（時間割つき）で、ナレーションの行ごとの帯が行の数だけ出て、絵と JSON が書けること
+    実物の4区間（カウンター・歩道・串・棚）での値は README と strips.py の頭（この箱から CI へは
+    持ち出せない動画なので、ここでは当てない）。
+    """
+    import numpy as np
+    import strips
+    p = box / "strips_synth.mp4"
+    rate = 10  # strips.py は 4コマ/秒で見るので、10コマ/秒あれば足りる（30 だと 1GB を流すことになる）
+    n = 6 * rate
+    proc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo",
+                             "-pix_fmt", "rgb24", "-s", "1080x1920", "-r", str(rate), "-i", "-",
+                             "-c:v", "libx264", "-preset", "ultrafast", "-crf", "18", "-pix_fmt", "yuv420p", str(p)],
+                            stdin=subprocess.PIPE)
+    rng = np.random.default_rng(1)
+    from PIL import Image as _Im
+    for k in range(n):
+        if k < n // 2:
+            # 16px 四方の色の粒を滑らかにつないだ画（e8 0.95 前後。棚の 0.92〜0.95 と同じくらい）
+            small = (rng.random((120, 68, 3)) * 255).astype(np.uint8)
+            fr = np.asarray(_Im.fromarray(small).resize((1080, 1920), _Im.BICUBIC))
+        else:
+            fr = np.clip(128 + rng.normal(0, 10, (1920, 1080, 1)), 0, 255).astype(np.uint8).repeat(3, axis=2)
+        proc.stdin.write(np.ascontiguousarray(fr).tobytes())
+    proc.stdin.close()
+    proc.wait()
+    rep = strips.make(p, None, box / "strips_synth")
+    weak = rep["weak"]
+    in_strong = [w for w in weak if w["from_s"] < 2.5]
+    in_weak = [w for w in weak if w["from_s"] < 6.0 and w["to_s"] > 3.5]
+    ok1 = bool(in_weak) and not in_strong
+    msg1 = f"弱い画の印 {weak}（3〜6秒にだけ付くはず）"
+    rep2 = strips.make(clean, cwork, box / "strips_clean")
+    ok2 = len(rep2["rows"]) == len(LINES) and (box / "strips_clean.jpg").exists() and (box / "strips_clean.json").exists()
+    msg2 = f"行の帯 {len(rep2['rows'])} 本（{len(LINES)} 本のはず）・はじめの帯 {len(rep2['opening_s'])} 枚"
+    return [("strips_weak", ok1, msg1), ("strips_rows", ok2, msg2)]
+
+
 # ---------------------------------------------------------------- 当てる
 
 # 名前 → （どちらの見張りか, 落ちるはずの検査, その判定）。None は「どれも落ちない」
@@ -560,6 +663,19 @@ def run(half: str, keep: Path | None = None) -> int:
             fs = {r["id"]: r for r in reports["face"]["checks"]}["faces"]
             if not fs["artifacts"]:
                 bad.append(("face", ["人に見せる顔の切り抜きが出ていない"]))
+        if half in ("qa", "all"):
+            for name, want, got, summ in text_dup_legs(C, clean, cwork, box):
+                ok = got == want
+                rows.append(("○" if ok else "✕", name, f"text_dup（{want}）", f"text_dup: {got}", 0.0,
+                             "時間割だけの足"))
+                extra.append(f"{name}: {summ}")
+                if not ok:
+                    bad.append((name, [f"text_dup: {got}（欲しいのは {want}）"]))
+        if half in ("qa_video", "all"):
+            for name, ok, msg in strips_legs(box, clean, cwork):
+                rows.append(("○" if ok else "✕", name, "strips の弱い画", msg, 0.0, "帯の絵"))
+                if not ok:
+                    bad.append((name, [msg]))
 
         print()
         print("| | 壊し方 | 落ちるはずの検査 | 落ちた検査 | 秒 | |")
@@ -578,7 +694,7 @@ def run(half: str, keep: Path | None = None) -> int:
                 for w in ws:
                     print(f"  {name}: {w}")
             return 1
-        print(f"○ {len(names)}通り、思ったとおり（clean は12本とも pass、壊した版は壊したところだけが落ちる）")
+        print(f"○ {len(names)}通り、思ったとおり（clean は13本とも pass、壊した版は壊したところだけが落ちる）")
         return 0
     finally:
         if tmp is not None:
