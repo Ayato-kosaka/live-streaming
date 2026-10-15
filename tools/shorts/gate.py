@@ -21,9 +21,22 @@
 
 | 関所 | 何を承認するか | 後段がここで止まる |
 | --- | --- | --- |
-| Gate 1 | 企画（3案から1案、または全部）`/approve plan p2 B`・`/approve plan p2 全部` | 本編集の前 |
-| Gate 2 | 完成動画と投稿文 `/approve video v3`（案ごとの動画なら `B`・`B C`・`全部`） | 投稿の前 |
+| Gate 1 | 企画（3案から1案、または全部）。返事は `B`・`全部` | 止めない（記録だけ。チャットで決まれば、それで進む） |
+| Gate 2 | 完成動画と投稿文。返事は `B`・`B C`・`全部`（案の無い動画は `/approve video v3`） | 投稿の前 |
 | Gate 3 | Gate 2 で承認された**その版だけ**を投稿する | 投稿の直前（sha256 が1バイトでも違えば止まる） |
+
+守っているのは「あやとが Gate 2 で承認したその中身しか、外に出ない」こと。企画の承認は
+動画の承認の条件にしない（あやとはチャットで企画を決めることが多く、issue で同じことを
+もう一度書かせることになる。2026-10-15「なにこのめんどくさい仕様。要らないんだけど。」）。
+
+## 短い返事
+
+1行目が案だけ（`B`・`B案`・`B C`・`B・C`・`全部`）か、案に決めの言いかたを1つ付けたもの
+（`Bで`・`Bでお願いします`・`B Cでいいよ`・`B。`。表は `SHORT_ENDINGS`）のコメントは、その issue の
+**いちばん新しい提出**（企画でも動画でも）への `/approve` として読む。次のときは命令として
+読まず、返事もしない: 承認者の名前でない・表に無い言いかた（`B？`・`Bではなく`・`B いいね`）・
+いちばん新しい提出が案を持たない・札の無い issue。App の判定・書き換え・版・sha256 は
+`/approve` と同じに通す。`/approve` の1行目は、いままでどおり案だけ。
 
 ## 見分けの肝: 著者の名前では分からない
 
@@ -117,6 +130,21 @@ GATE_WORDS = {"plan": "plan", "企画": "plan", "video": "video", "動画": "vid
 ALL = "ALL"
 ALL_WORDS = frozenset({"all", "全部", "ぜんぶ", "全", "全案", "すべて", "全て"})
 
+# 短い返事で、案のうしろに付けてよい言いかた。**決めた、と読めるものだけ**を表にする。
+# 問い（`B？`）・打ち消し（`Bではなく`）・条件つき（`Bでいいけど…`）は表に入れない——
+# 表に無いものは命令として読まない（承認には倒れない）。小文字にして比べる
+SHORT_ENDINGS = frozenset({
+    "で", "です", "でお願いします", "でお願い", "でおねがいします", "でおねがい",
+    "でいい", "でいいよ", "でいいです", "がいい", "にする", "にします",
+    "で行こう", "でいこう", "でok",
+})
+# 言いかたのうしろに付いてよい字（全角は NFKC で半角になってから見る）。`?` は入れない
+SHORT_TAIL = re.compile(r"[\s。!〜~w]+\Z")
+# 1行目の頭の案の並び。1文字の案は、すぐうしろに英字が続かないこと（`Bad` を B・A・D と読まない）
+_SHORT_WORD = r"(?:all(?![a-z])|全部|全案|全て|全|ぜんぶ|すべて|案?[a-z](?![a-z])案?)"
+SHORT_HEAD = re.compile(rf"\A(?P<opts>{_SHORT_WORD}(?:[\s,、・]*{_SHORT_WORD})*)(?P<end>.*)\Z",
+                        re.I | re.S)
+
 # 記録と、導き直した判定を突き合わせる欄。時刻と URL は比べない（同じものを指す別の書きかた）。
 # `options` は動画の記録にだけある（企画の記録の形は変えない。前に書いた記録も導き直せるように）
 MATCH_KEYS = ("kind", "gate", "version", "sha256", "option", "options", "submission_id",
@@ -147,6 +175,7 @@ class Command:
     option: str | None = None      # 企画の案（1文字か ALL）
     options: list = field(default_factory=list)   # 1行目に書かれた案（書かれた順。ALL も入りうる）
     extra: bool = False            # 1行目の案のうしろに、案でない字がある
+    short: bool = False            # `/approve` を書かない短い返事（`B`・`全部`）。関所と版は judge が決める
     error: str = ""                # 書式が読めないときの理由の名前
 
 
@@ -298,21 +327,39 @@ def _choice_given(options: list, sub: Sub) -> bool:
 
 
 def _line_clean(cmd: "Command") -> bool:
-    """案を選ぶ承認（企画・案ごとの動画）の1行目が、案だけでできている。
+    """`/approve` で案を選ぶ承認（企画・案ごとの動画）の1行目が、案だけでできている。
     `/approve video v1 B a nice one` の `a` を案 A と読んで、承認を黙って広げない。
     ひとことは2行目から書ける。"""
     return not cmd.extra
 
 
+def _ending_ok(ending: str) -> bool:
+    """短い返事の案のうしろが、決めの言いかたの表にある（`で`・`でお願いします`…）。
+    `Bではなく`・`B？`・`Bでいいけど字幕を直して` を、B の承認と読まない。"""
+    return ending.lower() in SHORT_ENDINGS
+
+
+def _short_author(c: dict, approvers: list[str]) -> bool:
+    """短い返事を命令として読む書き手。承認者の名前のときだけ（App の判定はこのあと）。
+    外の人の `A` は会話として黙って流す（返事をすると、外から bot を喋らせられる）。"""
+    return _named(c, approvers)
+
+
+def _short_target(sub: "Sub | None") -> bool:
+    """短い返事が指せる提出。いちばん新しい提出が案を持つときだけ。
+    案の無い動画のあとの `B` を、その動画の承認とは読まない。"""
+    return sub is not None and sub.options is not None
+
+
+def _answers_unlabeled(cmd: "Command") -> bool:
+    """札の無い issue で「数えません」と返す命令か。短い返事には返さない
+    （あやとは、ほかの issue の問いにも `B` と答える）。"""
+    return not cmd.short
+
+
 def _one_plan_option(cmd: "Command") -> bool:
     """企画の承認は案1つか全部。`/approve plan p1 A C` を、A だけに黙って縮めない。"""
     return len(set(cmd.options)) <= 1
-
-
-def _plan_covers(plan: "Decision | None", option: str) -> bool:
-    """動画の案が、いま有効な企画の承認に入っている（企画が `全部` なら企画の案はどれも入る）。
-    企画で選ばなかった案の動画を、動画の承認ひとつで出させない。"""
-    return plan is not None and option in (plan.options or [])
 
 
 def _video_options_ok(opts) -> bool:
@@ -377,19 +424,6 @@ def _no_later_objection(comments: list[dict], d: Decision, gate: str,
         if target in (gate, None):
             return False
     return True
-
-
-def _approved_plan(comments: list[dict], approvers: list[str]) -> "Decision | None":
-    """いまの最新の企画の、有効な承認。無ければ None。動画の案が企画に入っているかを見るのに使う。"""
-    try:
-        return evaluate(comments, "plan", approvers)
-    except Refused:
-        return None
-
-
-def _plan_approved(comments: list[dict], approvers: list[str]) -> bool:
-    """企画が、いまの最新の版で承認されている。動画は企画の承認のあとでないと承認しない。"""
-    return _approved_plan(comments, approvers) is not None
 
 
 # ---------------------------------------------------------------- 機械可読ブロック
@@ -575,8 +609,24 @@ def _choices(toks: list[str]) -> tuple[list[str], bool]:
     return out, False
 
 
+def _short_reply(line: str) -> Command | None:
+    """短い返事（`B`・`B C`・`全部`・`Bで`・`Bでお願いします！`）。読めなければ命令ではない。
+
+    案の並びのうしろは、空か、表にある言いかた1つだけ（そのうしろの `。` `!` `〜` `w` は飛ばす）。
+    どの提出への返事かは、前のコメントを見る judge が決める。
+    """
+    m = SHORT_HEAD.match(SHORT_TAIL.sub("", line))
+    if not m:
+        return None
+    opts, extra = _choices(m.group("opts").split())
+    ending = m.group("end").strip()
+    if not opts or extra or (ending and not _ending_ok(ending)):
+        return None
+    return Command(kind="approve", options=opts, short=True)
+
+
 def parse_command(body: str) -> Command | None:
-    """1行目が `/approve` `/reject` `/revise`（とその日本語）で始まるか。違えば None。
+    """1行目が `/approve` `/reject` `/revise`（とその日本語）か、案だけの短い返事か。違えば None。
 
     全角のスラッシュ・全角スペース・全角英数字は NFKC で半角に揃える。大文字小文字も問わない
     （スマホの自動大文字で `/Approve` になっても通る）。2行目からは自由に書いてよい。
@@ -587,7 +637,7 @@ def parse_command(body: str) -> Command | None:
             line = unicodedata.normalize("NFKC", raw).strip()
             break
     if not line.startswith("/"):
-        return None
+        return _short_reply(line)
     toks = line[1:].split()
     if not toks:
         return None
@@ -645,8 +695,20 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
     cmd = parse_command(c.get("body") or "")
     if cmd is None:
         return Decision(ok=False, reason="not_command")
+    subs = submissions(prior, approvers)
+    if cmd.short:
+        # 短い返事は、いちばん新しい提出への `/approve` として、このあと同じ道を通す。
+        # 読めないものは命令ではない（返事もしない）——どれも承認には倒れない
+        last = _latest_any(subs)
+        if not (_short_author(c, approvers) and _short_target(last)):
+            return Decision(ok=False, reason="not_command")
+        cmd.gate, cmd.version = last.gate, last.version
+        if cmd.gate == "plan":
+            cmd.option = cmd.options[0]
 
     def no(reason: str, **detail) -> Decision:
+        if cmd.short:
+            detail["short"] = True          # 断りの例を、書いた形（短い返事）で出す
         return Decision(ok=False, reason=reason, detail=detail, kind=cmd.kind,
                         gate=cmd.gate or "", version=cmd.version or "",
                         comment_id=_cid(c))
@@ -663,7 +725,6 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
     if cmd.error:
         return no(cmd.error, version=cmd.version or "")
 
-    subs = submissions(prior, approvers)
     if cmd.gate is None:            # 版を書かない `/revise`
         last = _latest_any(subs)
         if last is None:
@@ -694,8 +755,7 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
                       options="・".join(target.options or []))
         chosen = sorted(target.options or []) if cmd.option == ALL else [cmd.option]
     if cmd.kind == "approve" and cmd.gate == "video":
-        if not _plan_approved(prior, approvers):
-            return no("plan_first")
+        # 企画の承認は条件にしない。守るのは「Gate 2 で承認したその中身だけが出る」こと
         if not _choice_given(cmd.options, target):
             return no("choose_option", version=cmd.version,
                       options="・".join(target.options or []))
@@ -707,10 +767,6 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
             if bad is not None:
                 return no("bad_option", version=cmd.version, option=bad,
                           options="・".join(target.options))
-            plan = _approved_plan(prior, approvers)
-            miss = [o for o in chosen if not _plan_covers(plan, o)]
-            if miss:
-                return no("not_in_plan", version=cmd.version, **_cover_detail(miss, plan))
 
     return Decision(
         ok=True, kind=cmd.kind, gate=cmd.gate, version=cmd.version,
@@ -722,11 +778,6 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
         comment_id=_cid(c), comment_url=str(c.get("html_url") or ""),
         comment_created_at=str(c.get("created_at") or ""), issue=_issue_number(c),
     )
-
-
-def _cover_detail(miss: list[str], plan: Decision | None) -> dict:
-    return {"option": "・".join(miss), "plan": plan.version if plan else "",
-            "covered": "・".join(plan.options or []) if plan else ""}
 
 
 def records(comments: list[dict]) -> list[tuple[dict, dict]]:
@@ -795,14 +846,6 @@ def evaluate(comments: list[dict], gate: str, approvers: list[str]) -> Decision:
         raise Refused("newer", gate=gate, approved=d.version, latest=latest.version)
     if not _no_later_objection(comments, d, gate, approvers, problems):
         raise Refused("objection", gate=gate, version=d.version)
-    if gate == "video" and not _plan_approved(comments, approvers):
-        raise Refused("plan_first", gate=gate)
-    if gate == "video" and d.options is not None:
-        # 動画を承認したあとで企画の承認が別の案に変わっていたら、出す前に止める
-        plan = _approved_plan(comments, approvers)
-        miss = [o for o in d.options if not _plan_covers(plan, o)]
-        if miss:
-            raise Refused("not_in_plan", gate=gate, version=d.version, **_cover_detail(miss, plan))
     return d
 
 
@@ -826,52 +869,48 @@ def require_approval(issue: int, gate: str, sha256: str, *, comments: list[dict]
 
 # ---------------------------------------------------------------- 文（短く、何をすればよいかだけ）
 
-EXAMPLES = "`/approve plan p2 B`・`/approve video v3`・`/reject video v3 理由`・`/revise 直してほしい点`"
+EXAMPLES = "`B`・`全部`・`/approve video v3`・`/reject video v3 理由`・`/revise 直してほしい点`"
 
 
 def explain(reason: str, d: dict) -> str:
     g = GATES.get(d.get("gate") or "", {}).get("ja", "")
     v = d.get("version") or ""
+    gate = d.get("gate") or "video"
+
+    def form(opts: str) -> str:
+        # 例は、書いた人が使った形で出す（短い返事なら短く）
+        return f"`{opts}`" if d.get("short") else f"`/approve {gate} {v or 'v1'} {opts}`"
+
     texts = {
         # ---- 書かれた直後（ワークフローが返す）
-        "app": "Claude の App から書かれたコメントは承認として数えません。"
-               "あやとが GitHub の画面（web・スマホ）から書いてください。",
-        "not_approver": "承認・差し戻しができるのは `shorts/config/approvers.json` に載っている人だけです。",
-        "association": "このリポジトリのオーナー・メンバー・共同作業者のコメントだけを数えます。",
+        "app": "Claude の App からの書き込みは数えません。あやとが GitHub の画面から書いてください。",
+        "not_approver": "承認できる人の書き込みではないので、数えません。",
+        "association": "このリポジトリの共同作業者の書き込みではないので、数えません。",
         "edited": "書き換えたコメントは数えません。新しいコメントで書き直してください。",
-        "syntax": f"書式が読めませんでした。例: {EXAMPLES}",
-        "bad_version": "版が読めませんでした。企画は p（例 `p2`）、動画は v（例 `v3`）で始まります。",
-        "no_option": (f"案を1つ選んでください（全部作るなら `全部`）。"
-                      f"例: `/approve plan {v or 'p2'} B`・`/approve plan {v or 'p2'} 全部`"),
+        "syntax": f"書き方の例: {EXAMPLES}",
+        "bad_version": "版が読めませんでした（企画は `p2`、動画は `v3` の形）。",
+        "no_option": f"案を書いてください（例 {form('B')}・{form('全部')}）。",
         "bad_option": f"{d.get('option')} は {v} の案にありません（{d.get('options')} から選んでください）。",
-        "extra_text": (f"1行目は案だけを書いてください（例 `"
-                       + (f"/approve video {v or 'v1'} B C" if d.get("gate") == "video"
-                          else f"/approve plan {v or 'p1'} B")
-                       + "`）。ひとことは2行目から書けます。"),
-        "plan_multi": (f"企画の承認は、案1つか全部です"
-                       f"（例 `/approve plan {v or 'p1'} B`・`/approve plan {v or 'p1'} 全部`）。"),
-        "choose_option": (f"{v} は案ごとに作った動画です（{d.get('options')}）。出す案を書いてください。"
-                          f"例: `/approve video {v or 'v3'} B`・いくつかなら `/approve video {v or 'v3'} B C`"
-                          f"・全部なら `/approve video {v or 'v3'} 全部`"),
-        "not_in_plan": (f"{d.get('option')} は、企画{' ' + d['plan'] + ' ' if d.get('plan') else ''}で"
-                        f"承認した案（{d.get('covered') or 'なし'}）に入っていません。"
-                        f"{d.get('covered') or '企画で承認した案'} から選ぶか、先に企画を承認し直してください。"),
+        "extra_text": (f"1行目は案だけを書いてください（例 {form('B C' if gate == 'video' else 'B')}）。"
+                       "ひとことは2行目から書けます。"),
+        "plan_multi": f"企画は案1つか全部です（例 {form('B')}・{form('全部')}）。",
+        "choose_option": (f"出す案を書いてください（{d.get('options')}。"
+                          f"例 {form('B')}・{form('B C')}・{form('全部')}）。"),
         "not_found": f"{v} の提出が見つかりません。いまの最新は {d.get('latest')} です。",
         "duplicate": f"{v} の提出が2つあります。出し直しを待ってください。",
         "stale": f"{v} は古い版です。最新の {d.get('latest')} を見てから書いてください。",
         "submission_edited": f"{v} の提出が書き換えられています。出し直しを待ってください。",
         "submission_broken": f"{v} の提出が読めません（{d.get('why')}）。出し直しを待ってください。",
-        "plan_first": "企画の承認がまだです（または企画の新しい版が出ています）。先に企画を承認してください。",
         "no_submission": f"{g + 'の' if g else ''}提出がまだありません。",
-        "no_label": f"この issue には `{LABEL}` の札が無いので、数えません。",
-        # ---- 後段が確かめるとき
-        "no_record": f"{g}の承認の記録がありません（最新は {d.get('latest')}）。あやとの `/approve` を待ってください。",
-        "fake_record": "github-actions 以外が書いた承認の記録しかありません。あやとの `/approve` を待ってください。",
-        "record_edited": "承認の記録が書き換えられています。もう一度 `/approve` してもらってください。",
-        "source_deleted": "承認した元のコメントが消えています。もう一度 `/approve` してもらってください。",
-        "source_edited": "承認した元のコメントが書き換えられています。もう一度 `/approve` してもらってください。",
+        "no_label": "この issue では数えません。ショートの制作 issue に書いてください。",
+        # ---- 後段が確かめるとき（読むのは後段の担当）
+        "no_record": f"{g}の承認の記録がありません（最新は {d.get('latest')}）。あやとの承認を待ってください。",
+        "fake_record": "github-actions 以外が書いた承認の記録しかありません。あやとの承認を待ってください。",
+        "record_edited": "承認の記録が書き換えられています。もう一度承認してもらってください。",
+        "source_deleted": "承認した元のコメントが消えています。もう一度承認してもらってください。",
+        "source_edited": "承認した元のコメントが書き換えられています。もう一度承認してもらってください。",
         "source_invalid": f"元のコメントが、いまは承認になりません（{d.get('why')}）。",
-        "record_mismatch": "承認の記録が、元のコメントと提出の中身に合いません。もう一度 `/approve` してもらってください。",
+        "record_mismatch": "承認の記録が、元のコメントと提出の中身に合いません。もう一度承認してもらってください。",
         "rejected": f"{g} {v} は差し戻されています。出し直してください。",
         "revise_requested": f"{g} {v} に直しの依頼が出ています。直して出し直してください。",
         "newer": f"{d.get('approved')} のあとに {d.get('latest')} が出ています。{d.get('latest')} の承認を待ってください。",
@@ -897,15 +936,20 @@ def record_fields(d: Decision) -> dict:
     return out
 
 
-def _chosen_text(d: Decision) -> str:
-    """記録の見出しに出す、選ばれた案。案の無いものは空。"""
+def record_sentence(d: Decision) -> str:
+    """記録コメントに出す1文。**何を記録したかだけ**を、読み違いがすぐ分かる形で書く。"""
+    g = GATES[d.gate]["ja"]
+    if d.kind == "reject":
+        return f"{g} {d.version} の差し戻しを記録しました。"
+    if d.kind == "revise":
+        return f"{g} {d.version} への直しの依頼を記録しました。"
     if d.gate == "plan" and d.option == ALL:
-        return f"全部の案（{'・'.join(d.options or [])}）"
-    if d.gate == "plan" and d.option:
-        return f"{d.option}案"
+        return f"{g} {d.version} は、全部の案（{'・'.join(d.options or [])}）を作ると記録しました。"
+    if d.gate == "plan":
+        return f"{g} {d.version} は、{d.option}案で作ると記録しました。"
     if d.options:
-        return "・".join(f"{o}案" for o in d.options)
-    return ""
+        return f"{g} {d.version} の {'・'.join(o + '案' for o in d.options)}を、投稿してよいと記録しました。"
+    return f"{g} {d.version} を、投稿してよいと記録しました。"
 
 
 # `require` が出す欄。後段（投稿）は `options` に並んだ案だけを出す。
@@ -923,24 +967,9 @@ def now_iso() -> str:
 
 
 def record_body(d: Decision, recorded_at: str) -> str:
-    g = GATES[d.gate]["ja"]
-    chosen = _chosen_text(d)
-    sep = " " if chosen[:1].isascii() else ""      # 「の B案」「の全部の案」
-    head = {
-        "approve": (f"**{g} {d.version} の{sep}{chosen}を、承認として記録しました。**"
-                    if chosen else f"**{g} {d.version} を、承認として記録しました。**"),
-        "reject": f"**{g} {d.version} の差し戻しを記録しました。**",
-        "revise": f"**{g} {d.version} への直しの依頼を記録しました。**",
-    }[d.kind]
-    lines = [dump_block(RECORD_TAG, {**record_fields(d), "recorded_at": recorded_at}),
-             head, "",
-             f"- 書いた人: {d.approver}（[元のコメント]({d.comment_url})）",
-             f"- 提出: [{d.version}]({d.submission_url})・sha256 `{d.sha256[:12]}`"]
-    if d.kind == "approve" and d.gate == "video" and d.options:
-        lines.append(f"- 投稿してよいのは {chosen}だけです。")
-    if d.kind == "approve":
-        lines.append("- この版から1バイトでも変わったら、もう一度承認が要ります。")
-    return "\n".join(lines)
+    # 元のコメント・提出・sha256 は1行目のブロックに入っている。人に見せるのは1文だけ
+    return "\n".join([dump_block(RECORD_TAG, {**record_fields(d), "recorded_at": recorded_at}),
+                      f"**{record_sentence(d)}**"])
 
 
 def refusal_body(reason: str, detail: dict, comment_id: int, **extra) -> str:
@@ -1052,12 +1081,15 @@ def handle_event(event: dict, api, approvers, recorded_at: str | None = None) ->
 
     labels = {str((x or {}).get("name") or "") for x in issue.get("labels") or []}
     if LABEL not in labels:
-        # 札の無い issue で返事をするのは、承認者の名前で書かれた命令にだけ。
+        # 札の無い issue で返事をするのは、承認者の名前で書かれた `/` の命令にだけ。
         # 外の人の `/approve` に毎回返すと、外から bot を喋らせられる
-        if cmd is None or not _named(comment, approvers):
+        if cmd is None or not _named(comment, approvers) or not _answers_unlabeled(cmd):
             return f"対象外（#{number} は {LABEL} の札なし）"
         api.post_comment(number, refusal_body("no_label", {}, cid))
         return f"#{number} コメント {cid}: 断った（no_label）"
+    if cmd is not None and cmd.short and not _short_author(comment, approvers):
+        # 承認者の名前でない短い返事は、ただの会話。GitHub も読みに行かない
+        return f"対象外（#{number} コメント {cid}）"
 
     # **受け取りの中身ではなく、いまの姿を読み直して判定する。**
     # 書かれてから走るまでのあいだに書き換え・削除があれば、ここで分かる
@@ -1073,6 +1105,8 @@ def handle_event(event: dict, api, approvers, recorded_at: str | None = None) ->
         return _handle_submission(fresh, prior, number, api, approvers)
 
     d = judge(fresh, prior, approvers)
+    if not d.ok and d.reason == "not_command":
+        return f"対象外（#{number} コメント {cid}）"
     if not d.ok:
         api.post_comment(number, refusal_body(d.reason, {**d.detail, "gate": d.gate}, cid,
                                               gate=d.gate or None, version=d.version or None))
@@ -1083,8 +1117,6 @@ def handle_event(event: dict, api, approvers, recorded_at: str | None = None) ->
         api.add_labels(number, [label])
     else:
         api.remove_label(number, label)
-    if d.gate == "plan" and d.kind != "approve":
-        api.remove_label(number, GATES["video"]["label"])
     return f"#{number} コメント {cid}: 記録した（{d.gate} {d.version} {d.kind}）"
 
 
@@ -1111,10 +1143,8 @@ def _handle_submission(c: dict, prior: list[dict], number: int, api,
             "duplicate", {"version": sub.version}, cid,
             kind="submission", gate=sub.gate, version=sub.version))
         return f"#{number} コメント {cid}: 同じ版がもうある（{sub.gate} {sub.version}）"
+    # 動画の承認は企画に乗っていないので、企画の提出で動画の札は外さない
     api.remove_label(number, GATES[sub.gate]["label"])
-    if sub.gate == "plan":
-        # 企画が変われば、動画の承認も前の企画に乗ったものになる
-        api.remove_label(number, GATES["video"]["label"])
     return f"#{number} コメント {cid}: 提出を受けた（{sub.gate} {sub.version}）"
 
 

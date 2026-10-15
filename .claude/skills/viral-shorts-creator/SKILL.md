@@ -17,7 +17,7 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 - **この箱からは YouTube・TikTok・fish.audio に届かない。** YouTube を落とすのは Actions（`shorts_ingest.yml`）
 - **リポジトリは公開。** 途中の結果（フレーム・文字起こし）は暗号化して作業枝に置き、手元で復号して読む。平文をリポジトリに書かない
 - **承認は AI と人を名前で見分けられない**（このセッションはあやとのアカウントで書く）。承認は `shorts_gate.yml` が記録したものだけを数える（`tools/shorts/gate.md`）
-- **やってはいけない:** `YOUTUBE_COOKIES` を書き換える／21:30〜23:59 UTC に取り込む（毎晩の取り込みとぶつかる）／承認の前に本編集・投稿をする／承認のコメントを AI が書く
+- **やってはいけない:** `YOUTUBE_COOKIES` を書き換える／21:30〜23:59 UTC に取り込む（毎晩の取り込みとぶつかる）／あやとが企画を決める前に本編集をする（決まるのは issue の返事かチャット）／Gate 2 の承認の前に投稿する／承認のコメントを AI が書く
 
 ## 1. 段と、どこまで終わったかの見分け
 
@@ -26,7 +26,7 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 | 1 取り込み | 依頼ファイルを作業枝に push（`archive`）→ Actions → 復号 | `shorts/.work/<id>/archive/manifest.json` が ok、手元に `captions.txt`・`transcript.txt`・`sheets/` | `tools/shorts/ingest/README.md` |
 | 2 見どころ | 字幕・コマ・音・チャットを重ねて候補を8本以上。上位は zoom で1秒刻みに確かめる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
 | 3 企画 | 体験の違う3案。原稿・絵コンテ・尺の確認・自己評価・事実の表 | `shorts/videos/<id>/p1/plan.md` と絵コンテの絵 | `references/planning.md` |
-| 4 Gate 1 | 制作 issue に提出（`gate.py submission`）→ あやとの `/approve plan p1 A` を待つ | bot の承認記録・札 `gate1-approved` | `tools/shorts/gate.md` |
+| 4 Gate 1 | 制作 issue に提出（`gate.py submission`）→ あやとの返事（`A`・`全部`）を待つ。チャットで決まったら待たない | bot の承認記録、またはチャットで決まったことの書き置き | `tools/shorts/gate.md` |
 | 5 本編集 | （これから: ナレーション #916・書き出し #917・品質チェック #918） | — | — |
 | 6 Gate 2 | （これから: #919） | — | — |
 | 7 投稿 | （これから: #920） | — | — |
@@ -84,9 +84,10 @@ python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> s
 1. 制作 issue を立てる（札 `shorts`）。題は「【ショート制作】<回の名前>（<videoId>）」
 2. 提出コメントは `gate.py submission` で1行目のブロックを作り、そのあとに plan.md の中身を貼る（絵は raw.githubusercontent.com のコミット固定の URL）
 3. 札 `待ち-あやと` を付け、`call_ayato.yml` で通知する（`ask-ayato` スキル。**自分のアカウントの @ は飛ばない**）
-4. **承認が来るまで本編集に進まない。** 待つあいだは別の段（取り込み・調べ）を進める
+4. **あやとが決めるまで本編集に進まない。** 決まるのは issue の返事（`A`・`全部`）かチャット。チャットで決まったら、その言葉を issue に書き置いて進む——**issue で書き直してもらわない**（書き置きの1行目は案の字で始めない）。待つあいだは別の段（取り込み・調べ）を進める
 5. `/revise` が来たら、直して次の版（p2）として出し直す。前の版の承認は効かない
-6. 企画の承認は `全部` もある（3案とも作る）。そのときの Gate 2 は3本を**1つの提出**にまとめ（`gate.py submission --gate video --options A,B,C …`）、あやとが `/approve video v1 B` で出すものを選ぶ（`B C`・`全部` も可。**1行目は案だけ**）。後段は `gate.py require` の `options` に並んだ案だけを扱う
+6. 3案とも作るとき（`全部`）の Gate 2 は、3本を**1つの提出**にまとめ（`gate.py submission --gate video --options A,B,C …`）、あやとは `B` と返事して出すものを選ぶ（`B C`・`全部`・`Bでお願いします` も可）。後段は `gate.py require` の `options` に並んだ案だけを扱う
+7. **制作 issue（札 `shorts`）では、あやとにほかの A/B の問いを出さない**（声・BGM の選択なども）。問いは別の issue で立てる——制作 issue の `B` は、いちばん新しい提出の承認として読まれる
 
 ## 6. 学びの置き場
 
