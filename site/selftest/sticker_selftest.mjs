@@ -39,6 +39,12 @@
  *     あわせて、**写り込んだ丸いボタン**も残っていない（`--audit`）。
  *     「目で見て気づく」に任せない——`plane.jpg` の格子は 34,842画素あって、
  *     抜き忘れても**絵としては成立して見える**
+ *  8. **升目に出す小さい写し（`stickerThumb`）が、1枚ずつ在って実寸が合う**。
+ *     焼くのは `tools/goods/stickerthumb.py`。**名簿に1枚足して焼き忘れると、
+ *     升目のマスが空で並ぶ**（`art` と同じで、落ちた絵は alt も出ない）。
+ *     寸法がずれると、絵が届いた瞬間に升目ぜんぶが飛ぶ。
+ *     面の式（`content/goods.ts`）と焼く側の式が**別々に腐る**ので、
+ *     ここは**焼いた絵の実寸**と面の式を突き合わせる
  *
  * ## わざと壊して、赤くなることを見る
  *
@@ -86,10 +92,19 @@
  * # 9. 番号のつもりで 0 を書く → 「walk: デザインの番号が正の整数 — 0」
  * sed 's/    suzuri: 21116648,/    suzuri: 0,/' site/content/goods.ts > /tmp/brk/suz0.ts
  * STK_GOODS_TS=/tmp/brk/suz0.ts node site/selftest/sticker_selftest.mjs  # → 1
+ *
+ * # 10. 升目の小さい写しを焼き忘れる → 「isle: 写しが 111×160 — 写しが無い」
+ * rm /tmp/brk/pub/goods/thumb/isle.webp
+ * STK_PUBLIC=/tmp/brk/pub node site/selftest/sticker_selftest.mjs        # → 1
+ *
+ * # 11. 写しを縮め忘れる（art をそのまま置く）→ 「globe: 写しが 160×160 — 絵は 480×480」
+ * cp /tmp/brk/pub/goods/globe.webp /tmp/brk/pub/goods/thumb/globe.webp
+ * STK_PUBLIC=/tmp/brk/pub node site/selftest/sticker_selftest.mjs        # → 1
  * ```
  *
- * **7つとも当てて、赤くなるところまで見てある**（5つは 2026-10-10、
- * 6と7は 2026-10-11）。
+ * **どれも当てて、赤くなるところまで見てある**（1〜5 は 2026-10-10、
+ * 6と7は 2026-10-11、10と11は 2026-10-15）。**ここに「ぜんぶで何通り」と
+ * 書かない**——足すたびにずれて、古い数のほうが小さく出る。
  *
  * 3と4は同じ足ではない——3は「置き忘れ」、4は「置いたが抜いていない」で、
  * 4は**ファイルが在るので、実在を見るだけの見張りには一生かからない。**
@@ -334,7 +349,8 @@ try {
 } catch {
   give(2, `${relative(REPO, GOODS_TS)} を組み立てられなかった（上の tsc を見る）`);
 }
-const { STICKERS, suzuriDesignHref } = createRequire(import.meta.url)(join(OUT, "goods.js"));
+const { STICKERS, stickerThumb, suzuriDesignHref, THUMB_LONG } =
+  createRequire(import.meta.url)(join(OUT, "goods.js"));
 if (!Array.isArray(STICKERS) || STICKERS.length === 0) {
   give(2, `${relative(REPO, GOODS_TS)} から STICKERS を読めなかった`);
 }
@@ -463,6 +479,50 @@ console.log("\n# 6. SUZURI のデザインの番号");
   for (const s of live) {
     check(`${s.id}: 行き先が店のデザインの面（${suzuriDesignHref(s.suzuri)}）`,
       suzuriDesignHref(s.suzuri) === `https://suzuri.jp/ayato_arigato/designs/${s.suzuri}`);
+  }
+}
+
+// ---- 7. 升目に出す小さい写し ------------------------------------------------
+/* 升目のマスの中の絵は 390px の画面で 40.1px、あやと島カードの選び札は 52px
+   （実測）。そこへ長辺480の絵を出していた（2026-10-15 まで）。13枚で
+   623.8KB——`/goods/stickers` が最初の1画面で運ぶ量（903.3KB）の 69% がこれ。
+
+   **焼き忘れと寸法ずれは、どちらも型を通る。** 道は `id` から組み立てる
+   （`stickerThumb`）ので、名簿に1枚足して焼かなければマスが空で並ぶ。 */
+console.log("\n# 7. 升目に出す小さい写し（長辺 " + THUMB_LONG + "）");
+{
+  /* 手に持つ画面でいちばん大きい枠は、カードの選び札の 52px（実測）。
+     広い画面のマス（820px 幅で 69.9px）は住民図鑑と同じ扱いで、ここでは見ない */
+  check("長辺が、手に持つ画面でいちばん大きい枠（札 52px）の dpr3 に足りている",
+    THUMB_LONG >= 52 * 3, `THUMB_LONG=${THUMB_LONG}`);
+  const dupThumb = clashes(STICKERS.map((s) => stickerThumb(s).src));
+  check("写しの道がかぶっていない", dupThumb.length === 0, dupThumb.join(" / "));
+  for (const s of STICKERS) {
+    const t = stickerThumb(s);
+    let size = null;
+    let why = "";
+    try {
+      size = webpSize(readFileSync(at(t.src)));
+      if (!size) why = "webp の頭から寸法が読めない";
+    } catch {
+      why = `写しが無い（${t.src}）。tools/goods/stickerthumb.py を回す`;
+    }
+    check(
+      `${s.id}: 写しが ${t.w}×${t.h}`,
+      !!size && size.w === t.w && size.h === t.h,
+      why || `絵は ${size.w}×${size.h}`,
+    );
+    /* **元絵より軽いこと**も見る。寸法だけ合わせて、画素を間引いていない
+       （quality を上げすぎた）写しを置かれると、直した意味が消える */
+    if (!why) {
+      let heavy = false;
+      try {
+        heavy = statSync(at(t.src)).size >= statSync(at(s.art)).size;
+      } catch {
+        heavy = false;
+      }
+      check(`${s.id}: 写しが art より軽い`, !heavy, "写しのほうが重い");
+    }
   }
 }
 
