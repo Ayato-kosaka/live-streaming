@@ -29,6 +29,17 @@
  *     ファイルの比＝絵の中の人の比。ここが崩れると、比は合っているのに
  *     島のあやただけ小さく描かれる。**比は webp の頭からしか読めない**ので、
  *     ここは焼くところの対照（`--drill`）を子として起こして見る
+ *  6. **歩くときのシート**（`ayato-walk.webp`。3向き×4コマ。#895）の寸法が
+ *     `AYATO_WALK_FW × AYATO_WALK_FRAMES` × `AYATO_WALK_FH × AYATO_WALK_ROWS` と同じ。
+ *     段の並び（`AYATO_WALK_ROW`）が 0 から段の数まで1つずつ、立つコマ
+ *     （`AYATO_WALK_REST`）が段の中にある、立った背（`AYATO_WALK_BODY_H`）が枠に収まる。
+ *     **シートが無ければ落とす**（島は黙って1枚に倒れるので、無いことに誰も気づかない）
+ *  7. **島の2枚が、絵を `AyatoSprite` から描いている。** `<image href={AYATO_SRC}` を
+ *     直に書いていない・`.walking` を直に付け外ししていない（そうするとシートを
+ *     読む合図が出ず、島によって歩きかたが変わる）・左右反転を `ayatoFlip` から取っている
+ *     （正面・背中を反転すると、持っているものが逆の手に移る）
+ *  8. 部品（`AyatoSprite.tsx`）が、シートの道を写していない・**シートの `<image>` に
+ *     最初から `href` を持たせていない**（持たせると島を開いただけで読む。#876）
  *
  * ## わざと壊して、赤くなることを見る
  *
@@ -45,6 +56,24 @@
  * sed -e 's/w: AYATO_W,/w: 442,/' -e 's/h: AYATO_H_PX,/h: 640,/' \
  *   site/content/goods.ts > /tmp/broken-goods.ts
  * GOODS_TS=/tmp/broken-goods.ts node site/selftest/ayatoart_selftest.mjs   # → 1
+ *
+ * # 4. シートの寸法を1段ぶんに戻す（3段 → 1段の数え方）
+ * sed -e 's/AYATO_WALK_ROWS = 3/AYATO_WALK_ROWS = 1/' site/lib/ayatoArt.ts > /tmp/broken-ayato.ts
+ * AYATO_TS=/tmp/broken-ayato.ts node site/selftest/ayatoart_selftest.mjs   # → 1
+ *
+ * # 5. シートを止まった1枚に差し替える（定数はそのまま）
+ * WALK_WEBP=site/public/characters/ayato.webp node site/selftest/ayatoart_selftest.mjs  # → 1
+ *
+ * # 6. 島の1枚を、いまの1枚＋直の付け外しに戻す
+ * sed -e 's|<AyatoSprite h={AYATO_H} />|<image href={AYATO_SRC} />|' \
+ *     -e 's|setAyatoWalking(ayatoRef.current, moving);|ayatoRef.current?.classList.toggle("walking", moving);|' \
+ *   site/components/isle/IsleStage.tsx > /tmp/broken-stage.tsx
+ * ISLE_TSX=/tmp/broken-stage.tsx node site/selftest/ayatoart_selftest.mjs   # → 1
+ *
+ * # 7. 部品のシートに、最初から href を持たせる
+ * sed -e 's|className="ayato-walk-sheet"|className="ayato-walk-sheet"\n            href={AYATO_WALK_SRC}|' \
+ *   site/components/isle/AyatoSprite.tsx > /tmp/broken-sprite.tsx
+ * SPRITE_TSX=/tmp/broken-sprite.tsx node site/selftest/ayatoart_selftest.mjs   # → 1
  * ```
  *
  * 1 と 3 は**数が合っていても落ちる**ことが大事。寸法だけ見ていると、
@@ -65,10 +94,12 @@ const REPO = join(SITE, "..");
 const ART_TS = process.env.AYATO_TS || join(SITE, "lib", "ayatoArt.ts");
 const GOODS_TS = process.env.GOODS_TS || join(SITE, "content", "goods.ts");
 const WEBP = process.env.AYATO_WEBP || join(SITE, "public", "characters", "ayato.webp");
+const WALK_WEBP = process.env.WALK_WEBP || join(SITE, "public", "characters", "ayato-walk.webp");
+const SPRITE = process.env.SPRITE_TSX || join(SITE, "components", "isle", "AyatoSprite.tsx");
 const BAKER = join(REPO, "tools", "characters", "charbake.py");
 const STAGES = [
-  join(SITE, "components", "isle", "IsleStage.tsx"),
-  join(SITE, "components", "island", "IslandStage.tsx"),
+  process.env.ISLE_TSX || join(SITE, "components", "isle", "IsleStage.tsx"),
+  process.env.ISLAND_TSX || join(SITE, "components", "island", "IslandStage.tsx"),
 ];
 
 let BAD = 0;
@@ -245,6 +276,80 @@ for (const f of STAGES) {
   const hard = [...src.matchAll(/AYATO_H\s*\*\s*0?\.\d+/g)].map((m) => m[0]);
   check(`${name} が、比を直に書いていない`, hard.length === 0, hard.join(" / "));
   check(`${name} が、絵の道を直に書いていない`, !src.includes('"/characters/ayato.webp"'));
+  /* 7. 絵は部品から。直に `<image href={AYATO_SRC}` を書くと、その島だけ歩きかたが古いまま */
+  check(
+    `${name} が、あやとを AyatoSprite で描いている`,
+    /from "@\/components\/isle\/AyatoSprite"/.test(src) && /<AyatoSprite\b/.test(src),
+  );
+  check(`${name} が、<image href={AYATO_SRC} を直に書いていない`, !/href=\{AYATO_SRC\}/.test(src));
+  check(
+    `${name} が、.walking を直に付け外ししていない（setAyatoWalking を通す）`,
+    !/classList\.toggle\(\s*["']walking["']/.test(src) && /setAyatoWalking\(/.test(src),
+    "直に付け外しすると、シートを読む合図が出ない",
+  );
+  check(
+    `${name} が、向きを書いて（setAyatoDir）、左右反転を ayatoFlip から取っている`,
+    /setAyatoDir\(/.test(src) && /scale\(\$\{ayatoFlip\(/.test(src) && !/scale\(\$\{facing\.current\}/.test(src),
+    "正面・背中まで facing で反転すると、持ち物が逆の手に移る",
+  );
+}
+
+// ---- 6. 歩くときのシート --------------------------------------------------
+{
+  let wbuf = null;
+  try {
+    wbuf = readFileSync(WALK_WEBP);
+  } catch {}
+  const ws = wbuf ? webpSize(wbuf) : null;
+  const wantW = art.AYATO_WALK_FW * art.AYATO_WALK_FRAMES;
+  const wantH = art.AYATO_WALK_FH * art.AYATO_WALK_ROWS;
+  console.log(
+    `# 見たシート: ${relative(REPO, WALK_WEBP)}（${ws ? `${ws.w}×${ws.h} / ${(wbuf.length / 1024).toFixed(1)}KB` : "読めない"}）` +
+      `  コード: ${art.AYATO_WALK_FW}×${art.AYATO_WALK_FH} のコマが ${art.AYATO_WALK_FRAMES}×${art.AYATO_WALK_ROWS}`,
+  );
+  check(
+    `歩くときのシートが在って、webp として読める`,
+    !!ws,
+    wbuf ? "webp の頭が読めない" : "ファイルが無い（島は黙って1枚に倒れる）",
+  );
+  check(
+    `シートの寸法が FW×FRAMES × FH×ROWS と同じ（${wantW}×${wantH}）`,
+    !!ws && ws.w === wantW && ws.h === wantH,
+    ws ? `シートは ${ws.w}×${ws.h}` : "",
+  );
+  check("AYATO_WALK_SRC が、見たシートを指している", art.AYATO_WALK_SRC === "/characters/ayato-walk.webp", art.AYATO_WALK_SRC);
+  const rows = Object.values(art.AYATO_WALK_ROW ?? {}).sort((a, b) => a - b);
+  check(
+    `段の並び（横・正面・背中）が 0〜${art.AYATO_WALK_ROWS - 1} に1つずつ`,
+    ["side", "front", "back"].every((k) => k in (art.AYATO_WALK_ROW ?? {})) &&
+      rows.length === art.AYATO_WALK_ROWS &&
+      rows.every((v, i) => v === i),
+    JSON.stringify(art.AYATO_WALK_ROW),
+  );
+  check(
+    `立つコマ（AYATO_WALK_REST=${art.AYATO_WALK_REST}）が段の中にある`,
+    Number.isInteger(art.AYATO_WALK_REST) && art.AYATO_WALK_REST >= 0 && art.AYATO_WALK_REST < art.AYATO_WALK_FRAMES,
+  );
+  check(
+    `立った背（AYATO_WALK_BODY_H=${art.AYATO_WALK_BODY_H}）が枠の高さに収まる`,
+    art.AYATO_WALK_BODY_H > 0 && art.AYATO_WALK_BODY_H <= art.AYATO_WALK_FH,
+  );
+}
+
+// ---- 8. 部品 ---------------------------------------------------------------
+{
+  const src = readFileSync(SPRITE, "utf8");
+  const name = relative(SITE, SPRITE);
+  check(`${name} が、シートの道を写していない`, !src.includes('"/characters/ayato-walk.webp"'));
+  /* シートの `<image ... />` を切り出して、`href` を持っていないことを見る。
+     **最初から持たせると、島を開いただけで 1枚読む**（#876 で削った量に足される） */
+  const at = src.indexOf('className="ayato-walk-sheet"');
+  const open = src.lastIndexOf("<image", at);
+  const close = src.indexOf("/>", at);
+  const tag = at > 0 && open >= 0 && close > at ? src.slice(open, close) : "";
+  check(`${name} のシートの <image> が見つかる`, !!tag);
+  check(`${name} のシートの <image> が、最初は href を持たない`, !!tag && !/\bhref=/.test(tag));
+  check(`${name} が、シートを初めて歩いたときに読む（new Image）`, /new Image\(\)/.test(src) && /\.decode\(\)/.test(src));
 }
 
 console.log(`\n通った ${OK} / 落ちた ${BAD}`);

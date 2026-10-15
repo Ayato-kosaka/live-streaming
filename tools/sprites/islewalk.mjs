@@ -55,6 +55,7 @@ import { chromium } from "playwright-core";
 import { at, net } from "./islereachsite.mjs";
 import { ORIGIN } from "./prod.mjs";
 import { offline } from "./route.mjs";
+import { AYATO_BOX_FN } from "./ayatobox.mjs";
 
 const W = Number(process.env.W || 390);
 const H = Number(process.env.H || 844);
@@ -78,13 +79,15 @@ const BREAK = process.env.BREAK === "1";
 
 /** あやとの world 座標・画面での居場所・字の箱・端で止めているか、を1回ぶん */
 const READ = `(() => {
+  ${AYATO_BOX_FN}
   const isle = document.querySelector(".isle");
   if (!isle) return null;
   const ib = isle.getBoundingClientRect();
   const g = document.querySelector("g.ayato");
   if (!g) return null;
   const m = /translate\\(([-\\d.]+) ([-\\d.]+)\\)/.exec(g.getAttribute("transform") || "");
-  const mb = g.getBoundingClientRect();
+  /* 見えている箱。g の箱は、歩くときの窓の外（シートの残り11コマ）まで含む（ayatobox.mjs） */
+  const mb = ayatoBox(g);
   const say = (sel) => {
     const el = document.querySelector(sel);
     if (!el) return null;

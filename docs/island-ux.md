@@ -1139,8 +1139,10 @@ h1 と lead の2つで、**その2つが同じことを2回言っている面が
 押せるのに Tab で届かない／止まったのに見た目が変わらない／`tabindex` が
 並びを書き換える／ダイアログが Esc で閉じない／読み上げる名前が無い／
 `alt` が中身を言っていない／見出しの段が飛ぶ／同じ字のリンクが別の先を指す。
-`.github/workflows/selftest.yml` の `browserwatch` に繋いである
-（`docs/island-standards.md` の出す前のチェック・`island-misses.md` #253）。
+`.github/workflows/selftest.yml` の `reachkeys` job に繋いである
+（2026-10-15。繋ぐまでの1日で、残っていた17件に**道具の側の嘘が7件**
+積み上がっていた。`docs/island-standards.md` の出す前のチェック・
+`island-misses.md` #253 #265）。
 
 **この表のうち、機械が見ているのは下3行だけ。** 上4行（島の札・閉じた札の
 読み上げ・島の絵ぜんぶ・行き先の一覧）は**まだ提案のまま**で、

@@ -35,6 +35,9 @@ import { existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fromRoot } from "./repo.mjs";
+/* 絵の差し替え。`playwright-core` を連れてこないので、`NEAR` を1つ読みたい
+   だけの対照（`fontbudget_selftest.mjs`）から import されても落ちない */
+import { offline } from "./route.mjs";
 
 const SPORT = process.env.SPORT || "4250";
 const BASE = `http://localhost:${SPORT}`;
@@ -66,6 +69,27 @@ function walk(d, base = "") {
   return out;
 }
 
+/** 書き出した面の綴り（`/legends/nordic.html`）から、表の見出し（`legends/nordic`）へ。 */
+export const keyOf = (p) => p.replace(/\.html$/, "").replace(/^\//, "") || "index";
+
+/**
+ * **その書き出しに在る面ぜんぶ**を、表（`weights.json`）と同じ見出しで並べる。
+ * 書き出しが無ければ**空**（投げない。呼ぶ側が「0面を数えて合格」にしないこと）。
+ *
+ * `fontbudget_selftest.mjs` が「表に無い面が在るか」を見るのに使う。
+ * **あちらに歩き方を写さない**——写すと、こちらの飛ばし方を直した日に
+ * 向こうだけ古くなって、**新しい面を数えないまま緑**になる
+ * （`islepages.mjs` の26面と同じ形）。表を書くのはここなので、
+ * 「表に何が載るはずか」もここが答える。
+ *
+ * @param {string} [dist] 書き出したものの置き場
+ * @returns {string[]} `legends/nordic` のような見出し、並べ替え済み
+ */
+export function pageKeys(dist = DIST) {
+  if (!existsSync(dist)) return [];
+  return walk(dist).map(keyOf).sort();
+}
+
 /* その面に出る字を、太さごとに集める。
    隠れているもの（閉じた畳みの中・画面の外）も数える。**読む人は下まで送るし、
    畳みも開く。** いま描かれているものだけを数えると、束の切り分けが
@@ -76,7 +100,10 @@ function walk(d, base = "") {
    字のまま渡して向こうで組み立てる。**定義が1つなら、対照はこれを見ればよい。** */
 export const NEAR = "(w) => (w <= 500 ? 400 : w <= 700 ? 700 : 900)";
 
-const COLLECT = (nearSrc) => {
+/* `fontwaste.mjs` も同じ数え方で「描いた字」を拾う。**数え方を写すと、
+   片方を直した日にもう片方が黙って古くなる**（`islepages.mjs` の26面と同じ形）。
+   だからここから出して、向こうは読むだけにする。 */
+export const COLLECT = (nearSrc) => {
   const bucket = { 400: new Set(), 700: new Set(), 900: new Set() };
   const near = eval(nearSrc);
   const add = (w, s) => {
@@ -149,6 +176,13 @@ let done = 0;
 async function one(path, slot) {
   // 面ごとに作り直さないと、2枚目から書体がキャッシュに当たって 0 本に見える
   const ctx = (FAST && reuse) || await b.newContext({ viewport: { width: W, height: 844 }, isMobile: W < 640 });
+  /* **絵を出してから測る。** この箱からは `i.ytimg.com` にも
+     `lh3.googleusercontent.com` にも出られない。絵が落ちると Chrome は
+     `alt` の字を**自分の影の中**に組んで描く——その影は JS から読めないので、
+     下の `COLLECT` には1字も出ないのに、**書体だけは取りに行く。**
+     実測 `/island/iran-walk` で 400 の束を 11本・370KB 余計に引いていた
+     （#848）。差し替えずに測ると、面ごとの払う量がその分だけ嘘になる。 */
+  if (!(FAST && reuse)) await offline(ctx);
   if (FAST && !reuse) reuse = ctx;
   const p = await ctx.newPage();
   const got = new Map();
@@ -174,7 +208,7 @@ async function one(path, slot) {
     await p.waitForTimeout(FAST ? 500 : 1200);
     const chars = await p.evaluate(COLLECT, NEAR);
     const bytes = [...got.values()].reduce((a, v) => a + v, 0);
-    const key = path.replace(/\.html$/, "").replace(/^\//, "") || "index";
+    const key = keyOf(path);
     out[key] = chars;
     paid[key] = { bytes, files: got.size };
     total += bytes;

@@ -746,7 +746,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
             {goCities.map((c) => (
               <Fold key={c.city} title={`${c.city}で見たいもの`} note={`${c.items.length}件`}>
                 <CityMap city={c.city} />
-                <WantList items={c.items} />
+                <WantList items={c.items} city={c.city} />
                 {c.country && c.list.length > 0 && (
                   <Link prefetch={false}
                     className="chip link"
@@ -765,7 +765,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 title={`${c.city}に、寄るかもしれなかった`}
                 lead={`通り道にある${c.items.length}件`}
               >
-                <WantList items={c.items} />
+                <WantList items={c.items} city={c.city} />
                 {c.country && c.list.length > 0 && (
                   <Link prefetch={false}
                     className="chip link"

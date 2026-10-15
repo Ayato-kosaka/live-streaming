@@ -27,7 +27,7 @@ import {
   type Figure,
   type Place,
 } from "@/components/nordic/stamp";
-import { STICKERS } from "@/content/goods";
+import { STICKERS, stickerThumb } from "@/content/goods";
 import { moveCard } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import DropPhoto from "./DropPhoto";
@@ -1388,15 +1388,18 @@ export default function CardSheet({
                       touch();
                     }}
                   >
-                    {/* 札に出すのは小さいほう（`art`）。**焼くのは元絵（`file`）**で、
-                        そちらは押されたときに読みにいく */}
+                    {/* 札に出すのは**升目用の小さい写し**（長辺160。
+                        `stickerThumb`）。札は 52px しかないので、
+                        面に並べるほう（`art`。長辺480）でも9倍重い。
+                        **焼くのは元絵（`file`）**で、そちらは押されたときに
+                        読みにいく */}
                     {/* **名前の字は出さない**（あやと 2026-10-13
                         「入れるあやとのテキスト（島にいるあやと）は非表示で良い」）。
                         「思い出ステッカー（ストックホルム）」のような長い名前が
                         3行に折り返して、札の背が隣と 2倍違っていた。
                         選ぶのは絵で足りる——いま手にしている1人の名前は、
                         下の手（`.akd-hand`）に出る。読み上げには `aria-label`。 */}
-                    <img src={s.art} alt="" width={52} height={52} />
+                    <img src={stickerThumb(s).src} alt="" width={52} height={52} />
                   </button>
                 ))}
               </div>
@@ -1459,7 +1462,10 @@ export default function CardSheet({
                   立っていない紙では、持っているのはその人しかいない */}
               {chosen && mate && (
                 <p className="akd-hand">
-                  <img src={hand === 0 ? cardIcon(chosen.icon, 128) : mate.art} alt="" />
+                  {/* 28px の丸。顔は 128px で取っているので、あやとも
+                      升目用の小さい写し（長辺160）でそろえる。
+                      **紙に焼くのは元絵（`mateSrc`）**で、こちらは別もの */}
+                  <img src={hand === 0 ? cardIcon(chosen.icon, 128) : stickerThumb(mate).src} alt="" />
                   <b>{hand === 0 ? chosen.name || "この人" : mate.name}</b>
                 </p>
               )}

@@ -166,6 +166,12 @@ const PEEK = 4;
  * 畳みの題（「ほかのセリフを出す」→ 読むだけの題）もここで切り替わる。
  * 付箋の窓の中身（書く段を出さない・締め切りの1行）は `Notes` が同じ判定で決める。
  */
+/* **ここは机から足したぶんを重ねない**（2026-10-15）。貼り先は机から締め切れる
+   ようになったが、この定数が決めるのは**畳みの題と一行だけ**で、書く窓そのものは
+   `Notes` が重ねた側（`lib/dests.ts`）で判断する——机で締め切れば窓は閉じる。
+   題のほうは読み込み時に1回決まる定数で、`output: "export"` なので焼いた字が
+   そのまま配られる。**焼き込みの貼り先1つを名指しした字**なので、変えるなら
+   `content/themes.ts` の1行を変えて焼き直すほうが筋が通る。 */
 const LINE_SHUT = shutDest(themeById("goods-linestamp"), null);
 
 export default function GoodsPage() {
@@ -218,6 +224,11 @@ export default function GoodsPage() {
               索引が急に静かになる。並べるのは名簿の頭から——
               **どれを出すかを別に決めない**（決めると、並びの表が2つになる）。 */}
           <Link className="gd-go gd-peek" href="/goods/stickers" prefetch={false}>
+            {/* **ここは升目用の小さい写し（`stickerThumb`。長辺160）に替えない。**
+                図鑑のマスは 390px の画面で 40.1px だが、ここの4枚は 148px
+                （実測。`.gd-peekshots` は 140px 下限の2列）。dpr2 で 296px、
+                dpr3 で 444px 要るので、長辺480 の `art` がちょうど。
+                160 に落とすと、索引のほうだけ粗くなる（#885） */}
             <span className="gd-peekshots">
               {STICKERS.slice(0, PEEK).map((sticker) => (
                 <img
