@@ -278,13 +278,32 @@ class Gh:
         return got.get("workflow_runs", []) if isinstance(got, dict) else []
 
     def steps_of(self, run_id: int) -> list:
-        """その run の step を、job をまたいで平らに並べて返す。"""
+        """その run の step を、job をまたいで平らに並べて返す。
+
+        **`number` は、通し番号に振り直す。**
+
+        GitHub が返す `number` は **job の中での番号**なので、job が2つ以上
+        ある run では 1 が2回出る。`ship_down.where_broke()` は「配る step
+        より前か後か」を番号で決めているので、そのままでは**2本目の job で
+        落ちた回が『配る前に止まった＝まだ出ていない』に化ける。**
+        本番にはもう出ているのに「出ていません」と言う、いちばん悪い形。
+
+        長いあいだ気づかなかったのは、配りの job が1つしか無かったから。
+        2026-10-15 に配りへ `wake_ship_down`（下流を起こす係）を足して、
+        はじめて2つになった（#865）。
+
+        job の並びは GitHub が返した順（`id` の昇順＝出来た順）をそのまま
+        使う。`needs:` でつないだ job は、待っていた job が終わってから
+        出来るので、あとに並ぶ。どの job のものかは `job` に残す
+        （読む側が使わなくても、ログに出たときに分かる）。
+        """
         got = self._call(
             "GET", f"/repos/{self.repo}/actions/runs/{run_id}/jobs?per_page={PER_PAGE}"
         )
-        out = []
+        out: list = []
         for j in (got.get("jobs", []) if isinstance(got, dict) else []):
-            out += j.get("steps") or []
+            for s in (j.get("steps") or []):
+                out.append({**s, "number": len(out) + 1, "job": j.get("name")})
         return out
 
     def list_issues(self, label: str) -> list:

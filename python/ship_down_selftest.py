@@ -6,7 +6,7 @@
 要らない（`ship_down.py` が外に出る口は `Gh` の5つだけなので、そこを偽物に
 差し替える）。
 
-確かめるのは12:
+確かめるのは16:
 
   1. **もう出ているのに赤い**回に issue が1本開く（本文の**1行目が「出ている」**）
   2. **出る前に止まった**回にも開く。**1行目が 1 と違う**（本番は無事なので）
@@ -23,6 +23,8 @@
  12. **ワークフローの YAML と突き合わせる**（繋ぎ先の名前・配る step・見る step）
  13. **本番の run（#114）をそのまま食わせて**、同じ見立てになる
  14. **待ちの札が入れ替わり、変わり目でだけコメントで鳴る**
+ 15. **繋ぎだけ確かめた回（`wake_only`）を、配りの結果として読まない**
+ 16. **job が2つある run で、2本目の赤を「配る前」と読み違えない**
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
 
@@ -1076,6 +1078,65 @@ def case15_probe():
        len(ship_down.real_runs(nameless)))
 
 
+def case16_two_jobs():
+    """**job が2つある run で、2本目の赤を「配る前」と読まないこと。**
+
+    GitHub が返す step の `number` は **job の中での番号**なので、
+    job が2つあると 1 が2回出る。`where_broke()` は番号で「配る step より
+    前か後か」を決めているので、**2本目の job で落ちた回が
+    『まだ出ていません』に化ける。** 本番にはもう出ているのに、である。
+
+    長いあいだ当たらなかったのは、配りの job が1つしか無かったから。
+    2026-10-15 に `wake_ship_down` を足して2つになった（#865）。
+    `run_watch.Gh.steps_of` が通し番号へ振り直す。
+
+    ここは**本物の `Gh`**（口だけ偽物）で回す。偽の `FakeGh` は平らな並びを
+    そのまま返すので、振り直しを1行も通らない。
+    """
+    print("\n[16] job が2つある run で、2本目の赤を読み違えない")
+
+    # 本番と同じ形。`/actions/runs/<id>/jobs` は job ごとに 1 から数える
+    jobs = {"jobs": [
+        {"name": "build_and_deploy", "steps": [
+            {"name": "Set up job", "number": 1, "conclusion": "success"},
+            {"name": "Run npm ci && npm run build:web", "number": 2,
+             "conclusion": "success"},
+            {"name": "Run FirebaseExtended/action-hosting-deploy@v0", "number": 3,
+             "conclusion": "success"},
+            {"name": "配った面が、面として配られているか", "number": 4,
+             "conclusion": "success"},
+        ]},
+        {"name": "wake_ship_down", "steps": [
+            {"name": "Set up job", "number": 1, "conclusion": "success"},
+            {"name": "配りが赤いを issue に映す、を起こす", "number": 2,
+             "conclusion": "failure"},
+        ]},
+    ]}
+
+    gh = ship_down.Gh(FAKE_REPO, FAKE_TOKEN)
+    gh._call = lambda method, path, data=None: jobs   # 口だけ偽物
+    steps = gh.steps_of(1)
+    ck("通し番号に振り直されている",
+       [s["number"] for s in steps] == [1, 2, 3, 4, 5, 6],
+       [s["number"] for s in steps])
+
+    a = ship_down.assess(row(50, "failure"), steps)
+    ck("もう出ている側に読む", a["out"] is True, (a["out"], a["what"]))
+    ck("何を直すかは「知らせる係」", a["what"] == "wake", a["what"])
+    text = ship_down.body(a)
+    ck("本文が『島は無事』と言う", "島は無事に出ています" in text, "言う")
+    # **島は出ていて、視聴者さんに見えるものは壊れていない。** 呼ばない
+    ck("あやとを呼ばない", ship_down.OWNER not in text, "呼ばない")
+
+    # ---- 歯止めを外す。**振り直しをやめると、読み違えること**
+    flat = []
+    for j in jobs["jobs"]:
+        flat += j["steps"]
+    bad = ship_down.assess(row(50, "failure"), flat)
+    ck("振り直さないと「まだ出ていません」に化ける", bad["out"] is False,
+       (bad["out"], bad["what"]))
+
+
 def main() -> int:
     # **毎回これが走るのは Actions の中。** 公開のログに積まれるのはそのときの
     # 字なので、同じ条件で回して、その出力を最後に数える
@@ -1097,6 +1158,7 @@ def main() -> int:
     case13_real()
     case14_wait_and_ping()
     case15_probe()
+    case16_two_jobs()
     print("\n[素性の結果]")
     case_grep()
 
