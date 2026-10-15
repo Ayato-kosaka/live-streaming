@@ -544,7 +544,7 @@ async function visit(p, base, path) {
      **同じ DOM の節点を使い回して属性だけ書き替える**（`MapZoom` が
      `div.mzoom-sheet` → `div.mzoom`）。消えるのを待つと、閉じているのに
      「残っている・大きさもある」と読めて、**Esc が効いている7面が
-     赤くなっていた**（2026-10-15 の実測。これが2度目の同じ誤り）。
+     赤くなっていた**（2026-10-15 の実測。`docs/island-misses.md` #265。これが2度目の同じ誤り）。
      `role` / `aria-modal` / `<dialog open>` が落ちていれば、閉じている。 */
   const check = async (d) => {
     await p.keyboard.press("Escape");

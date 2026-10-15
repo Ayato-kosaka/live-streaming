@@ -68,7 +68,7 @@ const CAT: Record<string, string> = { see: "見る", eat: "食べる", do: "や�
  * @param city この一覧が載っている街の名前。**番号の札の読み上げに入れる。**
  *   1日に2つの街へ寄る日は、同じ面に地図が2枚並ぶ（9/19 はヘルシンキと
  *   ストックホルム）。「地図の1番を見る」だけだと、どちらの地図の1番なのかが
- *   読み上げでも Tab でも分からない（`docs/island-misses.md` #262）。
+ *   読み上げでも Tab でも分からない（`docs/island-misses.md` #265）。
  */
 export default function WantList({ items, city }: { items: WantItem[]; city?: string }) {
   /* **地図に番号を打ったものは、畳みの向こうへ入れない。**

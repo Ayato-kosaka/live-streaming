@@ -308,7 +308,7 @@ function Links({ plan, mapDone }: { plan: Plan; mapDone?: boolean }) {
     <div className="chips" style={{ marginTop: "var(--sp-3)" }}>
       {/* **行き先の名前を札に入れる。** この面には企画が何件も並ぶので、
           「地図で見る」だけだと別々の場所へ飛ぶ札が同じ字で2つ3つ並ぶ
-          （`docs/island-misses.md` #262）。`place.name` は地図が指す場所
+          （`docs/island-misses.md` #265）。`place.name` は地図が指す場所
           そのものなので、ここで足しても二重に持つことにはならない。 */}
       {plan.place?.map && !mapDone && (
         <a className="chip link" href={plan.place.map} target="_blank" rel="noopener noreferrer">
@@ -411,7 +411,7 @@ function Doing({ plan }: { plan: Plan }) {
             ルート・行き先・見どころ」と固定の字で、行き先は企画ごとに
             `/nordic` `/map/georgia` `/about` と別だった。読み上げで見分けが
             つかないだけでなく、「ルート・行き先」はそのうち1つにしか
-            当てはまっていない（`docs/island-misses.md` #262）。 */}
+            当てはまっていない（`docs/island-misses.md` #265）。 */}
         {plan.href && (
           <Link className="nx-do-b" href={plan.href} prefetch={false}>
             <Icon name="signpost" size={26} />
