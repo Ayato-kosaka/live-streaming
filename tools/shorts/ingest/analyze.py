@@ -32,10 +32,14 @@ from common import Stages, hms, now_iso, read_json, write_json  # noqa: E402
 # 大きさから決めた。Read は長辺 1568px・約115万画素に縮めて見せるので、1枚に
 # 20コマ（5×4）なら1コマあたり実効 約180×320、12コマ（4×3）なら約230×410 になる。
 # 配信の通し見は 5×4（200秒/枚）、ショートと zoom は字幕も読みたいので 4×3。
-# 配信の通しは枚数が多い（3時間半で63枚）ので JPEG を少し強く絞る（1本20MB の目安に収める）。
+# 配信の通しは枚数が多い（3時間半で63枚）。1コマの長辺 384・JPEG 80 だと
+# hK0SwIeAxg0 が暗号化して 26.5MB になった（1本20MB の目安を越える）。
+# Read は1枚を約115万画素まで縮めて見せるので、5×4 なら長辺 384 で作っても
+# 見えるのは 1コマ 約170×300。長辺 320 にしても Read で見える大きさは同じで、
+# 運ぶ量だけが減る。
 PLAN = {
-    "archive": {"stats_fps": 5, "sheet_fps": 0.1, "long": 384, "grid": (5, 4), "gap": 1.0,
-                "q": 74},
+    "archive": {"stats_fps": 5, "sheet_fps": 0.1, "long": 320, "grid": (5, 4), "gap": 1.0,
+                "q": 76},
     "reference": {"stats_fps": 30, "sheet_fps": 1, "long": 480, "grid": (4, 3), "gap": 0.3,
                   "q": 80},
     "zoom": {"stats_fps": 10, "sheet_fps": None, "long": 480, "grid": (4, 3), "gap": 0.3,
