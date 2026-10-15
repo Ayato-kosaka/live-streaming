@@ -36,7 +36,8 @@
 | `bare` | 案ごとの動画は、出す案を書かないと承認しない | `bare` |
 | `optlist` | 動画の提出の案の並びが読めなければ承認しない | `optlist` |
 | `optmatch` | 記録の「出してよい案」も、元のコメントから導き直したものと突き合わせる | `forged` |
-| `extra` | 案を選ぶ承認の1行目は案だけ（`/approve` は断り、短い返事は命令として読まない。黙って広げない） | `extra` |
+| `extra` | `/approve` で案を選ぶ承認の1行目は案だけ（案でない字があれば断る。黙って広げない） | `extra` |
+| `ending` | 短い返事の案のうしろは、決めの言いかたの表にあるものだけ（`B？`・`Bではなく` を承認と読まない） | `short_ending` |
 | `shortopts` | 短い返事が指すのは、いちばん新しい提出が案を持つときだけ | `short_noopts` |
 | `shortname` | 承認者の名前でない短い返事は、会話として黙って流す | `short_quiet` |
 | `shortlabel` | 札の無い issue の短い返事には返事をしない | `short_quiet` |
@@ -96,6 +97,7 @@ BREAKS: dict[str, str] = {
     "optmatch": "forged",
     "extra": "extra", "multi": "plan_multi",
     "shortopts": "short_noopts", "shortname": "short_quiet", "shortlabel": "short_quiet",
+    "ending": "short_ending",
 }
 
 
@@ -185,6 +187,8 @@ def apply_break(name: str) -> None:
         G._short_author = lambda c, a: True
     elif name == "shortlabel":
         G._answers_unlabeled = lambda cmd: True
+    elif name == "ending":
+        G._ending_ok = lambda ending: True
 
 
 # ---------------------------------------------------------------- こしらえる材料
@@ -565,6 +569,23 @@ def leg_ok_short() -> None:
     u.say("B")
     ok(leg, req(u, "plan", sha(PLAN["p1"]))[0] == "no_record",
        "短い返事は、いちばん新しい提出（動画）にだけ効く（ひとつ前の企画は承認しない）")
+    for text, want in (("Bで", ["B"]), ("B案で！", ["B"]), ("B。", ["B"]), ("Bでお願いします", ["B"]),
+                       ("全部で", ["A", "B", "C"]), ("B Cでいいよ", ["B", "C"]),
+                       ("Ｂでおねがいします〜", ["B"]), ("bでOK", ["B"]), ("Cにします", ["C"]),
+                       ("Aがいい!", ["A"]), ("Bで行こうw", ["B"]), ("B、Cでいいです。", ["B", "C"]),
+                       ("B でお願いします\n字幕はこのままで", ["B"])):
+        w = choice_video()
+        w.say(text)
+        rec = record_of(w.bots()[-1]) or {}
+        why, d = req(w, "video", sha(VIDEO["v1"]))
+        ok(leg, rec.get("options") == want and why == "ok" and d.options == want,
+           f"決めの言いかたを付けた {text.splitlines()[0]!r} も、{'・'.join(want)} の承認として記録する（{why}）")
+    t = Thread()
+    t.submit("plan", "p1", PLAN["p1"])
+    t.say("Bでお願いします！")
+    ok(leg, (record_of(t.bots()[-1]) or {}).get("option") == "B"
+       and "企画 p1 は、B案で作ると記録しました" in t.bots()[-1]["body"],
+       "企画への `Bでお願いします！` も、B案として記録する")
 
 
 def leg_ok_noplan() -> None:
@@ -1001,11 +1022,6 @@ def leg_extra() -> None:
        "企画も、1行目の案のうしろにひとことがあれば断る（例は企画の書き方）")
     ok(leg, "gate1-approved" not in u.api.labels and req(u, "plan", sha(PLAN["p1"]))[0] != "ok",
        "札も付かず、後段も通らない")
-    for text in ("B いいね", "B a nice one", "全部 おねがいします", "A案の台本、もう少し短く"):
-        w = choice_video()
-        posted, _ = silent(w, text)
-        ok(leg, posted == 0 and req(w, "video", sha(VIDEO["v1"]))[0] != "ok",
-           f"短い返事でも1行目に案でない字がある {text!r} は、命令として読まない（返事も記録もしない）")
 
 
 def leg_plan_multi() -> None:
@@ -1025,6 +1041,23 @@ def leg_plan_multi() -> None:
     ok(leg, refused_reason(reply) == "plan_multi" and "`B`" in reply["body"] and "`全部`" in reply["body"]
        and req(t, "plan", sha(PLAN["p1"]))[0] != "ok",
        "企画への短い返事 `B C` も、短い形の例（`B`・`全部`）を添えて断る")
+
+
+def leg_short_ending() -> None:
+    leg = "short_ending"
+    for text in ("Bではなく", "B以外", "Bはやめて", "Bかな？", "B？", "Bで？", "Bでいい？",
+                 "B いいね", "Bでいいけど字幕を直して", "BではなくCで", "Bがいいかな",
+                 "B a nice one", "全部 おねがいします", "A案の台本、もう少し短く"):
+        t = choice_video()
+        posted, calls = silent(t, text)
+        why, _ = req(t, "video", sha(VIDEO["v1"]))
+        ok(leg, posted == 0 and calls == 0 and why != "ok",
+           f"{text!r} は決めの言いかたではないので、命令として読まない（返事も記録もしない）")
+    t = Thread()
+    t.submit("plan", "p1", PLAN["p1"])
+    posted, _ = silent(t, "Bではなく")
+    ok(leg, posted == 0 and req(t, "plan", sha(PLAN["p1"]))[0] != "ok",
+       "企画への `Bではなく` も、B の承認と読まない")
 
 
 def leg_short_noopts() -> None:
@@ -1064,7 +1097,8 @@ LEGS = [leg_ok_plan, leg_ok_video, leg_ok_all, leg_ok_choice, leg_ok_short, leg_
         leg_app, leg_approver, leg_assoc, leg_edited, leg_stale, leg_sha, leg_deleted,
         leg_fake, leg_forged, leg_recedit, leg_subedit, leg_newer, leg_revoked, leg_tamper,
         leg_option, leg_outsider, leg_dup, leg_manifest, leg_head,
-        leg_bare, leg_optlist, leg_extra, leg_plan_multi, leg_short_noopts, leg_short_quiet]
+        leg_bare, leg_optlist, leg_extra, leg_plan_multi, leg_short_ending, leg_short_noopts,
+        leg_short_quiet]
 
 
 def run_legs() -> None:

@@ -31,10 +31,12 @@
 
 ## 短い返事
 
-1行目が案だけ（`B`・`B案`・`B C`・`B・C`・`全部`）のコメントは、その issue の
+1行目が案だけ（`B`・`B案`・`B C`・`B・C`・`全部`）か、案に決めの言いかたを1つ付けたもの
+（`Bで`・`Bでお願いします`・`B Cでいいよ`・`B。`。表は `SHORT_ENDINGS`）のコメントは、その issue の
 **いちばん新しい提出**（企画でも動画でも）への `/approve` として読む。次のときは命令として
-読まず、返事もしない: 承認者の名前でない・1行目に案でない字がある・いちばん新しい提出が
-案を持たない・札の無い issue。App の判定・書き換え・版・sha256 は `/approve` と同じに通す。
+読まず、返事もしない: 承認者の名前でない・表に無い言いかた（`B？`・`Bではなく`・`B いいね`）・
+いちばん新しい提出が案を持たない・札の無い issue。App の判定・書き換え・版・sha256 は
+`/approve` と同じに通す。`/approve` の1行目は、いままでどおり案だけ。
 
 ## 見分けの肝: 著者の名前では分からない
 
@@ -127,6 +129,21 @@ GATE_WORDS = {"plan": "plan", "企画": "plan", "video": "video", "動画": "vid
 # 記録には `ALL` と書く（案の字は A〜Z の1文字なので、ぶつからない）
 ALL = "ALL"
 ALL_WORDS = frozenset({"all", "全部", "ぜんぶ", "全", "全案", "すべて", "全て"})
+
+# 短い返事で、案のうしろに付けてよい言いかた。**決めた、と読めるものだけ**を表にする。
+# 問い（`B？`）・打ち消し（`Bではなく`）・条件つき（`Bでいいけど…`）は表に入れない——
+# 表に無いものは命令として読まない（承認には倒れない）。小文字にして比べる
+SHORT_ENDINGS = frozenset({
+    "で", "です", "でお願いします", "でお願い", "でおねがいします", "でおねがい",
+    "でいい", "でいいよ", "でいいです", "がいい", "にする", "にします",
+    "で行こう", "でいこう", "でok",
+})
+# 言いかたのうしろに付いてよい字（全角は NFKC で半角になってから見る）。`?` は入れない
+SHORT_TAIL = re.compile(r"[\s。!〜~w]+\Z")
+# 1行目の頭の案の並び。1文字の案は、すぐうしろに英字が続かないこと（`Bad` を B・A・D と読まない）
+_SHORT_WORD = r"(?:all(?![a-z])|全部|全案|全て|全|ぜんぶ|すべて|案?[a-z](?![a-z])案?)"
+SHORT_HEAD = re.compile(rf"\A(?P<opts>{_SHORT_WORD}(?:[\s,、・]*{_SHORT_WORD})*)(?P<end>.*)\Z",
+                        re.I | re.S)
 
 # 記録と、導き直した判定を突き合わせる欄。時刻と URL は比べない（同じものを指す別の書きかた）。
 # `options` は動画の記録にだけある（企画の記録の形は変えない。前に書いた記録も導き直せるように）
@@ -310,10 +327,16 @@ def _choice_given(options: list, sub: Sub) -> bool:
 
 
 def _line_clean(cmd: "Command") -> bool:
-    """案を選ぶ承認（企画・案ごとの動画・短い返事）の1行目が、案だけでできている。
+    """`/approve` で案を選ぶ承認（企画・案ごとの動画）の1行目が、案だけでできている。
     `/approve video v1 B a nice one` の `a` を案 A と読んで、承認を黙って広げない。
     ひとことは2行目から書ける。"""
     return not cmd.extra
+
+
+def _ending_ok(ending: str) -> bool:
+    """短い返事の案のうしろが、決めの言いかたの表にある（`で`・`でお願いします`…）。
+    `Bではなく`・`B？`・`Bでいいけど字幕を直して` を、B の承認と読まない。"""
+    return ending.lower() in SHORT_ENDINGS
 
 
 def _short_author(c: dict, approvers: list[str]) -> bool:
@@ -587,12 +610,19 @@ def _choices(toks: list[str]) -> tuple[list[str], bool]:
 
 
 def _short_reply(line: str) -> Command | None:
-    """1行目が案で始まる短い返事（`B`・`B案`・`B C`・`全部`）。案で始まらなければ命令ではない。
-    どの提出への返事か・案のうしろに字が残っていないかは、前のコメントを見る judge が決める。"""
-    opts, extra = _choices(line.split())
-    if not opts:
+    """短い返事（`B`・`B C`・`全部`・`Bで`・`Bでお願いします！`）。読めなければ命令ではない。
+
+    案の並びのうしろは、空か、表にある言いかた1つだけ（そのうしろの `。` `!` `〜` `w` は飛ばす）。
+    どの提出への返事かは、前のコメントを見る judge が決める。
+    """
+    m = SHORT_HEAD.match(SHORT_TAIL.sub("", line))
+    if not m:
         return None
-    return Command(kind="approve", options=opts, extra=extra, short=True)
+    opts, extra = _choices(m.group("opts").split())
+    ending = m.group("end").strip()
+    if not opts or extra or (ending and not _ending_ok(ending)):
+        return None
+    return Command(kind="approve", options=opts, short=True)
 
 
 def parse_command(body: str) -> Command | None:
@@ -670,7 +700,7 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
         # 短い返事は、いちばん新しい提出への `/approve` として、このあと同じ道を通す。
         # 読めないものは命令ではない（返事もしない）——どれも承認には倒れない
         last = _latest_any(subs)
-        if not (_short_author(c, approvers) and _line_clean(cmd) and _short_target(last)):
+        if not (_short_author(c, approvers) and _short_target(last)):
             return Decision(ok=False, reason="not_command")
         cmd.gate, cmd.version = last.gate, last.version
         if cmd.gate == "plan":
@@ -1057,8 +1087,8 @@ def handle_event(event: dict, api, approvers, recorded_at: str | None = None) ->
             return f"対象外（#{number} は {LABEL} の札なし）"
         api.post_comment(number, refusal_body("no_label", {}, cid))
         return f"#{number} コメント {cid}: 断った（no_label）"
-    if cmd is not None and cmd.short and not (_short_author(comment, approvers) and _line_clean(cmd)):
-        # 承認者の名前でない・案のうしろに字がある短い返事は、ただの会話。GitHub も読みに行かない
+    if cmd is not None and cmd.short and not _short_author(comment, approvers):
+        # 承認者の名前でない短い返事は、ただの会話。GitHub も読みに行かない
         return f"対象外（#{number} コメント {cid}）"
 
     # **受け取りの中身ではなく、いまの姿を読み直して判定する。**
