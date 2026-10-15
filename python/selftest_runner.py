@@ -137,10 +137,18 @@ REPO = HERE.parent
 # `tools/sprites/node_modules` は CI に入らないので、**`playwright-core` を
 # import しないこと**が、ここに置ける条件（`preclaim.mjs` は回すときに初めて読む）。
 # 値段は測った（2026-09-18。この箱）: **0.9秒**（子を8つ起こすぶんがほとんど）。
+#
+# **名前は MJS だが、`discover()` は py も拾う**（`tools/sprites/charbox_selftest.py` がそれで回っている）。
+# `tools/shorts/` はショート動画の置き場（2026-10-15 から）。承認ゲートの見張り
+# （`gate_selftest.py`）は、人の承認を通さずに投稿へ進む穴を見るもので、
+# **マージする前に**赤くならないと意味がない。下の階（`ingest/` `render/` …）の
+# 見張りも、ここに置けば書き足さずに繋がる（rglob で降りる）。
+# 値段は測った（2026-10-15。この箱）: 足71件と、守りを1本ずつ外す対照20通りで **約4秒**。
 MJS_ROOTS = (
     REPO / "site" / "selftest",
     REPO / "functions" / "selftest",
     REPO / "tools" / "sprites",
+    REPO / "tools" / "shorts",
 )
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
