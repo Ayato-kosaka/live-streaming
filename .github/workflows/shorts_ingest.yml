@@ -260,8 +260,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/caches?key=shorts-media-&per_page=100" \
-            --jq '.actions_caches[] | "\(.id) \(.key)"' | while read -r id key; do
+          gh api "repos/$GITHUB_REPOSITORY/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | select(.key | startswith("shorts-media-")) | "\(.id) \(.key)"' \
+            > "$RUNNER_TEMP/caches.txt"
+          echo "受け渡しのキャッシュ: $(wc -l < "$RUNNER_TEMP/caches.txt") 個"
+          while read -r id key; do
             rid="${key#shorts-media-}"
             st=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$rid" --jq .status 2>/dev/null || echo gone)
             if [ "$rid" = "$GITHUB_RUN_ID" ] || [ "$st" = "completed" ] || [ "$st" = "gone" ]; then
@@ -270,4 +273,4 @@ jobs:
             else
               echo "残す: $key（$st。まだ走っている回のもの）"
             fi
-          done
+          done < "$RUNNER_TEMP/caches.txt"
