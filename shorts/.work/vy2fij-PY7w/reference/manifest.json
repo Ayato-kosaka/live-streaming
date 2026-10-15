@@ -1,0 +1,44 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "vy2fij-PY7w__reference",
+ "mode": "reference",
+ "dest": "vy2fij-PY7w/reference",
+ "video": "vy2fij-PY7w",
+ "channel": null,
+ "request": "shorts/requests/2026-10-15h-reference37.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 16,
+  "transcript_segments": 2,
+  "cuts": 0,
+  "channel_entries": 0,
+  "files": 19
+ },
+ "bytes": {
+  "plain": 1758488,
+  "tar_gz": 1697869,
+  "encrypted": 1697872
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1697872,
+   "sha256": "96b5eff14f7032d57ca7607944d662d3a3dcd22ce8a05a8da62ac183a604b9a5"
+  }
+ ],
+ "hmac_sha256": "f47e60f75b04d82a2c5bb6bad792c7bb5c71a26f1e1cf2b02662c4c46859c235",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
+ "created_at": "2026-10-15T14:40:21+00:00"
+}
