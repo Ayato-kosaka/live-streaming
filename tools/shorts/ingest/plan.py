@@ -47,7 +47,7 @@ BRANCH_OK = re.compile(r"^claude/[A-Za-z0-9._/-]+$")
 # （typo で別人の重いモデルを数GB落としに行くのを防ぐ）
 MODELS = ("tiny", "base", "small", "medium", "large-v3", "large-v3-turbo", "turbo",
           "distil-large-v3", "distil-large-v3.5")
-MAX_ITEMS = 12
+MAX_ITEMS = 40
 ZOOM_MAX_SEC = 900
 ZOOM_MAX_FRAMES = 1200
 
@@ -274,6 +274,9 @@ def main() -> int:
     if gh_out:
         with open(gh_out, "a", encoding="utf-8") as f:
             f.write(f"matrix={json.dumps({'include': items}, ensure_ascii=False)}\n")
+            # 取る job には鍵を渡さない（使わないうえ、env の見出しに37本ぶん並ぶ）
+            light = [{k: v for k, v in it.items() if k != "pubkey"} for it in items]
+            f.write(f"fetch={json.dumps({'include': light}, ensure_ascii=False)}\n")
             f.write(f"count={len(items)}\n")
             f.write(f"branch={branch}\n")
     return 0

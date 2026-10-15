@@ -65,6 +65,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      fetch: ${{ steps.plan.outputs.fetch }}
       count: ${{ steps.plan.outputs.count }}
       branch: ${{ steps.plan.outputs.branch }}
     steps:
@@ -141,7 +142,7 @@ jobs:
       - name: 1本ずつ取る
         env:
           BGUTIL_HOME: /tmp/bgutil/server
-          ITEMS: ${{ needs.plan.outputs.matrix }}
+          ITEMS: ${{ needs.plan.outputs.fetch }}
         run: |
           printf '%s' "$ITEMS" > "$RUNNER_TEMP/items.json"
           python3 tools/shorts/ingest/download.py "$RUNNER_TEMP/items.json" "$HOME/shorts-media"
@@ -170,7 +171,7 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 12
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v5

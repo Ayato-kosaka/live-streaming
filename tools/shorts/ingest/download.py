@@ -85,7 +85,14 @@ def find_client(url: str, first: str | None, rounds: int = 3, pause: int = 60) -
     return None
 
 
+REF_MAX_SEC = 240
+# 取り直しても変わらない理由。これで落ちたら口を当たり直さずに次の動画へ進む
+FINAL = ("長尺", "動画が見られない")
+
+
 def why_failed(log: str) -> str:
+    if "does not pass filter" in log:
+        return f"長尺（{REF_MAX_SEC}秒超）なので取らなかった"
     if clip.BOT in log:
         return "ボット確認"
     if "HTTP Error 429" in log:
@@ -138,6 +145,10 @@ def fetch_video(it: dict, d: Path, client: str) -> dict:
                "--write-subs", "--write-auto-subs", "--sub-langs", "ja-orig,ja",
                "--sub-format", "json3/vtt/best", "--ignore-errors"]
         want, timeout = None, 3000
+        if it["mode"] == "reference":
+            # 参考は60秒〜3分のショートのつもりで頼む。長尺が混ざっていたら取らずに飛ばす
+            # （1時間の動画を1秒1コマで並べると3600コマになる）
+            fmt += ["--match-filter", f"duration <= {REF_MAX_SEC}"]
     rc = run_ytdlp(yt_args(client) + fmt + ["-o", str(d / "src.%(ext)s"), url], log, timeout)
     info = read_json(d / "src.info.json", {}) or {}
     if want is None:
@@ -247,6 +258,10 @@ def main() -> int:
             st["tries"].append(r)
             if r["ok"]:
                 good = client
+                break
+            if (r.get("why") or "").startswith(FINAL):
+                good = client
+                print(f"   取らない（{r['why']}）", flush=True)
                 break
             good = None
             print(f"   取れなかった（{r['why']}）。30秒あけて口から当たり直す", flush=True)

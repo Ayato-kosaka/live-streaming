@@ -74,5 +74,47 @@ def transcribe(audio, *, model: str, language: str | None, batch: int, beam: int
     return res
 
 
-def to_text(segments: list[dict], offset: float = 0.0) -> str:
-    return "".join(f"[{hms(s['start'] + offset)}] {s['text']}\n" for s in segments)
+END_MARKS = ("。", "！", "？", "!", "?")
+
+
+def to_text(segments: list[dict], offset: float = 0.0, max_chars: int = 30,
+            gap: float = 0.6) -> str:
+    """読む用の `[H:MM:SS] 文` を、**単語の時刻で**刻み直して作る。
+
+    まとめて8本通すと、1区間が VAD の塊（20〜30秒）になる。1分のショートが
+    3行にしかならず、どの秒に何を言ったかが読めなかった（2026-10-15）。
+    句点・0.6秒以上の間・30字のどれかで行を切る。
+    """
+    rows: list[tuple[float, str]] = []
+    for s in segments:
+        words = s.get("words") or []
+        if not words:
+            rows.append((s["start"], s["text"]))
+            continue
+        cur, t0, prev_end = "", None, None
+        for w in words:
+            st = w["start"] if w["start"] is not None else s["start"]
+            if cur and ((prev_end is not None and st - prev_end > gap) or len(cur) >= max_chars):
+                rows.append((t0, cur.strip()))
+                cur, t0 = "", None
+            if t0 is None:
+                t0 = st
+            cur += w["word"]
+            prev_end = w["end"] if w["end"] is not None else st
+            if w["word"].strip().endswith(END_MARKS):
+                rows.append((t0, cur.strip()))
+                cur, t0 = "", None
+        if cur.strip():
+            rows.append((t0, cur.strip()))
+    return "".join(f"[{hms(t + offset)}] {txt}\n" for t, txt in rows if txt)
+
+
+if __name__ == "__main__":
+    # 復号した transcript.json から読む用の文を作り直す（前の版で作ったものを読みやすくする）
+    #   python3 tools/shorts/ingest/asr.py text <transcript.json>
+    import json
+    import sys
+
+    if len(sys.argv) == 3 and sys.argv[1] == "text":
+        d = json.loads(open(sys.argv[2], encoding="utf-8").read())
+        sys.stdout.write(to_text(d["segments"]))
