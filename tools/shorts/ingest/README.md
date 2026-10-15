@@ -31,13 +31,16 @@ huggingface.co にも、artifact の実体（`*.blob.core.windows.net`）にも�
 
 ## 依頼ファイル（`shorts/requests/<好きな名前>.json`）
 
-**その push で足した・書き換えた依頼だけ**が走る（置いてある依頼が全部走り直すことはない）。
-同じものをもう一度回したいときは、名前を変えて置き直す。
+**その push で足した・書き換えた依頼だけ**が走る（置いてある依頼が全部走り直すことはない。
+push の前後を GitHub の compare で比べて拾う）。同じものをもう一度回したいときは、名前を変えて置き直す。
+1回の push で40本まで（`plan.py` の `MAX_ITEMS`）。
 
 ```json
 {"mode": "archive",   "videos": ["yk-by7R7iPA", "hK0SwIeAxg0"], "pubkey": "-----BEGIN PUBLIC KEY-----\n…"}
 {"mode": "reference", "videos": ["_IhNSDR6eVk", "OEFJIhPunJ0"], "pubkey": "…"}
 {"mode": "zoom",      "video": "yk-by7R7iPA", "range": "0:12:00-0:14:00", "fps": 1, "pubkey": "…"}
+{"mode": "zoom",      "video": "yk-by7R7iPA", "ranges": ["0:48:10-0:49:10", "0:50:25-0:51:45"],
+                      "fps": 1, "grid": "2x2", "tile": 720, "pubkey": "…"}
 {"mode": "channel",   "channels": ["@cheethann3", "UCCwutAH6ieHNvdyJAfSld7w"], "tab": "shorts",
                       "limit": 200, "details": 60, "pubkey": "…"}
 ```
@@ -47,8 +50,9 @@ huggingface.co にも、artifact の実体（`*.blob.core.windows.net`）にも�
 | `mode` | `archive`（長い配信）/ `reference`（他人のショート）/ `zoom`（区間を細かく）/ `channel`（一覧） | 必須 |
 | `videos` / `video` | 動画ID（11字） | 必須（channel 以外） |
 | `pubkey` | RSA 2048bit 以上の公開鍵。`openssl pkey -in priv.pem -pubout` の形。改行が空白に化けてもよい | 必須 |
-| `range` | zoom の区間 `H:MM:SS-H:MM:SS`。15分まで | zoom で必須 |
+| `range` / `ranges` | zoom の区間 `H:MM:SS-H:MM:SS`（1区間15分まで）。`ranges` で並べると1区間1本の job になる | zoom で必須 |
 | `fps` | zoom で1秒に何コマ取るか（0〜5）。区間×fps は1200コマまで | 1 |
+| `grid` / `tile` | zoom のシートの格子（縦長のときの「横x縦」。横長なら入れ替わる）とコマの長辺（240〜1280）。**看板・メニュー・予約画面の字を読みたいときは `"2x2"` と `720`**（Read で 1コマ約385×685 に見える）。それでも小さければ数秒だけ `"1x1"` と `1280` で頼む（元を 1080p で取る） | `4x3` / 480 |
 | `whisper` | `{"model": "large-v3-turbo", "batch": 8, "beam": 5, "language": "ja"}`。`language: "auto"` で言語も当てさせる | 左のとおり |
 | `bench` | archive だけ。`{"range": "0:20:00-0:25:00", "models": ["small", "medium", "large-v3"]}` 同じ区間を別のモデルでも書き起こして、秒と中身を並べる | 無し |
 | `channels` | `@ハンドル` か `UC…`（24字） | channel で必須 |
@@ -103,8 +107,8 @@ python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/pri
 | --- | :-: | :-: | :-: | :-: | --- |
 | `meta.json` | ○ | ○ | ○ | | 題名・チャンネル・長さ・公開日時・再生数/高評価数（`counts_fetched_at` の時点）・縦横・fps・yt-dlp の版・`heatmap`（よく再生された部分）・chapters |
 | `captions.json` / `.txt` | ○ | ○ | | | YouTube の字幕（ja）。`source` が auto / manual。取れなければ `ok:false` と `why` |
-| `transcript.json` / `.txt` | ○ | ○ | | | faster-whisper。区間ごとに start / end / text と単語ごとの時刻。頭にモデル・かかった秒・RTF |
-| `sheets/NNNN.jpg` + `sheets.csv` | 10秒に1コマ・5×4（200秒/枚） | 1秒に1コマ・4×3 | 指定 fps・4×3 | | 各コマの下の帯がそのコマの**本当の時刻** |
+| `transcript.json` / `.txt` | ○ | ○ | | | faster-whisper。区間ごとに start / end / text と単語ごとの時刻。頭にモデル・かかった秒・RTF。`.txt` は単語の時刻で句点・0.6秒の間・30字ごとに切った読む用（前の版で作った `.txt` は `python3 tools/shorts/ingest/asr.py text transcript.json` で作り直せる） |
+| `sheets/NNNN.jpg` + `sheets.csv` | 10秒に1コマ・5×4（200秒/枚）・長辺320 | 1秒に1コマ・4×3・長辺480 | 指定 fps・既定 4×3・長辺480（`grid` / `tile` で変える） | | 各コマの下の帯がそのコマの**本当の時刻** |
 | `scenes.csv` | ○ | ○ | ○ | | 場面の変わりめ（t / hms / score / ratio） |
 | `visual.csv` | ○ | ○ | ○ | | 1秒ごと: motion_mean / motion_max / bright / sat / score_max / cut |
 | `audio.csv` | ○ | ○ | | | 1秒ごと: rms_db / peak_db / lufs_m / lufs_s |
@@ -125,6 +129,34 @@ python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/pri
   本当の切れ目はその1コマ前との間にある
 - `rms_db` / `peak_db` は dBFS（0 が最大）。`lufs_m` はその秒の momentary（0.4秒窓）の最大、`lufs_s` は short-term（3秒窓）
 - `heat` は YouTube の「よく再生された部分」（0〜1）。再生の少ない動画には無い
+
+## どれくらいかかるか（2026-10-15 の実測。ランナーは 4 vCPU / 16GB・GPU 無し）
+
+| | yk-by7R7iPA（1:42:49） | hK0SwIeAxg0（3:29:53） | 参考ショート（15〜170秒） |
+| --- | --- | --- | --- |
+| 取る（480p avc1 + m4a、字幕・info つき） | 66〜166秒 / 670MB | 118〜252秒 / 1.5GB | 1本 8〜24秒（37本で12分） |
+| 音（16kHz wav・RMS・EBU R128） | 44秒 | 61秒 | — |
+| 映像（1回読み・5コマ/秒の数値・10秒1コマのシート） | 127秒 | 208秒 | — |
+| whisper large-v3-turbo（int8・8本まとめて・beam 5・VAD） | 読み込み18秒 + **1068秒（RTF 0.173）** | 読み込み14秒 + **1518秒（RTF 0.121）** | 読み込み15〜18秒 + 21〜26秒 |
+| 解析の job 全体 | 25分（bench 4分を含む） | 30分 | 1本 約2分 |
+| 暗号化して置いたもの | 6.8MB（シート31枚 6.5MB） | 18.3MB（シート63枚 17.8MB） | 1〜3MB |
+
+VAD は yk の 6,169秒のうち 3,080秒、hK の 12,593秒のうち 7,329秒を「声がある」として残した。
+
+同じ5分（yk の 0:20:00〜0:25:00）をモデル違いで書き起こした秒（`bench/bench.md`）:
+
+| モデル | 書き起こし秒 | RTF | 所感 |
+| --- | --- | --- | --- |
+| small | 26.7 | 0.089 | 固有名詞が崩れる（鬼滅の刃→キミツネイバ、画質→合室、投げ銭→投げ戦） |
+| medium | 76.3 | 0.254 | 鬼滅の刃・画質・SIM は通る。祝日→スクリーツ、投げ銭→投げ戦 |
+| large-v3 | 127.8 | 0.426 | 鬼滅の刃・祝日・SIM・画質・投げ銭が通る |
+| **large-v3-turbo（本番）** | 全体で RTF 0.17 | — | large-v3 とほぼ同じ字面（鬼滅の刃・祝日・画質・投げ銭）で、速さは約2.5倍。SIM を1か所「新聞」と聞き違えた |
+
+**自動字幕（YouTube）と whisper はどちらも要る。** whisper は固有名詞に強い（鬼滅の刃・祝日・
+スカンデルベグを自動字幕より多く正しく拾う）が、VAD で小声を落とすので字数は自動字幕の8割
+（yk 13,235字 / 16,655字）。数字は自動字幕のほうが残ることがある（hK 1:52 の「23.900ユロ」を
+whisper は「900ユーロ」と頭を落とした）。BGM だけの終わりに「ご視聴ありがとうございました」を
+足すことがある（参考ショートで実際に出た。配信2本では0回）。
 
 ## 手元で確かめる（YouTube に行かずに一周）
 
@@ -155,6 +187,23 @@ ffmpeg で場面の変わりめが分かっている縦長の動画を作り、�
 `fetch` の job は**同じ ref の毎晩の取り込みと同じ枠**（`fetch-chat-${{ github.ref }}`）。
 1つの枠に「走っている1本＋待っている1本」までしか並ばず、3本目が来ると待っていた
 1本が取り消される。**依頼は1回の push にまとめるか、前の fetch が終わってから次を push する。**
+作業枝から push で走るときは ref が master と違うので、毎晩の取り込みとは枠が別になる
+（そちらと重ならないことは、時間帯の見張りが受け持つ）。
+
+**取り直しても変わらない理由では粘らない。** `長尺（240秒超）なので取らなかった`（reference だけ。
+`--match-filter`）と、どの口でも `Video unavailable`（消された・非公開）は1回で見切る。
+1つの口だけが `Video unavailable` と言うことはある（default が言って mweb で取れた）。
+
+### これまでに踏んだこと
+
+- **枝を作った push / ふつうの push で依頼が0件になる** — Actions に届く push の `commits[]` から
+  added / modified が読めなかった。いまは push の前後を compare で引いている
+- **whisper が10秒で落ちる** — faster-whisper 1.2.1 がファイルの道を渡されると PyAV で読み直し、
+  いまの PyAV が `metadata_errors` を受け付けない。手元の 16kHz wav を読んで波形で渡している
+- **回ごと取り消したのに解析が走る** — `if: always()` だった。いまは `!cancelled()`
+- **10秒刻みのコマと焼いた秒が5〜10秒ずれる** — `fps` フィルタの丸め。`select` で取り、
+  showinfo の本当の時刻を焼いている（`media.py` の頭）
+- **37本を並べると push がぶつかる** — 取り直しを8回・ばらつかせた待ちにした
 
 ## 守っていること
 
