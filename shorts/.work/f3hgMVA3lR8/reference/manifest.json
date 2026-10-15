@@ -5,7 +5,7 @@
  "dest": "f3hgMVA3lR8/reference",
  "video": "f3hgMVA3lR8",
  "channel": null,
- "request": "shorts/requests/2026-10-15h-reference37.json",
+ "request": "shorts/requests/2026-10-15k-reference-auto-lang.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -25,20 +25,20 @@
   "files": 17
  },
  "bytes": {
-  "plain": 1150674,
-  "tar_gz": 1096786,
-  "encrypted": 1096800
+  "plain": 1150703,
+  "tar_gz": 1096815,
+  "encrypted": 1096816
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1096800,
-   "sha256": "dab4b659ec8aa1dafba9dcb3c967ffe65098c9122f3cae0135a92a590283ee9c"
+   "bytes": 1096816,
+   "sha256": "36ececa2b52b3f2f08878ee33473cb4d3196e8967d9b21a631bde2d4092441cc"
   }
  ],
- "hmac_sha256": "b28e94d4e3a0c8785f69c409e73d7c34b88e4cd13d8d443ff750c1d349abee81",
+ "hmac_sha256": "16ceb27fe59f9436eb936b24ebff382452441bd92387ea8e7f8a9423ef48f68b",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38751074116",
- "created_at": "2026-10-15T14:40:27+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38756273624",
+ "created_at": "2026-10-15T15:14:23+00:00"
 }
