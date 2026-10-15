@@ -236,7 +236,6 @@ PAGES: dict[str, str] = {
     "shorts.ts": "ショート動画の棚（/map, 島の棚）",
     "streamPeaks.ts": "コメントがいちばん重なった秒（配信カードの押しどころ）",
     "months.ts": "月ごとのふりかえりの、その月の配信ぜんぶ（/months/<年-月>）",
-    "plans.ts": "企画の札に貼った、その回の配信1本（/next、表紙の「いちばん近い企画」）",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -247,12 +246,8 @@ PAGES: dict[str, str] = {
 # 一覧（`SIDE`）は「並んでいるうちの1枚」で、隣に生きた配信がある
 # `countryStats.ts` と `nordic.ts` は**1件を選んで押し出す側**。
 # 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
-# `plans.ts` は押し出す側（2026-10-15 に入った）。企画の札に貼る埋め込みは
-# **その企画につき1本**で、隣に代わりの配信は並んでいない。見られなくなると、
-# 札の中に英語の「この動画は再生できません」の枠だけが残る
-# （`content/plans.ts` の `embeds`。消えた Instagram の投稿で一度やっている）
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts", "plans.ts")
+         "countryStats.ts", "nordic.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、
