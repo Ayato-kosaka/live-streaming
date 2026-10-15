@@ -149,8 +149,11 @@ def fetch(ref: str | None = None, wait: int = WAIT) -> dict:
                 blob = join(annotations(r["id"]))
                 plain = unseal(unpack(blob), pem)
             except Exception as e:  # noqa: BLE001
+                # 誰かの実行か、**自分の実行が封を出す前に落ちたか**。
+                # どちらか決められないので消さない。落ちたほうなら、
+                # 入力（公開鍵）しか載っていないが、人の手で消す
                 seen.add(r["id"])
-                log.info("実行 %s は自分のものではありませんでした（%s）",
+                log.info("実行 %s は封を出していません（他人のか、落ちたか）: %s",
                          r["id"], type(e).__name__)
                 continue
             drop(r["id"])
@@ -159,7 +162,10 @@ def fetch(ref: str | None = None, wait: int = WAIT) -> dict:
             log.info("札を受け取りました（あと %d 分）", max(0, left // 60))
             return tok
         log.info("まだ終わっていません（あと %d 秒まで待ちます）", int(end - time.time()))
-    raise SystemExit("札が返ってきませんでした（実行が終わらない）")
+    raise SystemExit(
+        f"札が返ってきませんでした。枝 {ref} の「管理スクリプトを実行」で、"
+        f"{since:%H:%M} 以降に始まった実行を見て、残っていたら消してください"
+    )
 
 
 def firestore(tok: dict):
