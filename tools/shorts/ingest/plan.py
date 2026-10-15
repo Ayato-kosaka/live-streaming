@@ -196,17 +196,18 @@ def compare_files(base: str, head: str) -> list[str]:
 
 def changed_requests() -> list[str]:
     """この push で足された・書き換えられた依頼ファイル。"""
+    # **push の `commits[]` から added / modified を読まない。** Actions に届く
+    # push のペイロードでは、そこから依頼が1件も拾えなかった（2026-10-15 に2回実測。
+    # 枝を作った push では commits そのものが空、ふつうの push でも 0件）。
+    # だから毎回 compare（push の前 → 後）で引く。枝を作った push は「前」が
+    # 0000… なので、既定の枝と比べる
     ev = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
-    files: list[str] = []
-    for c in ev.get("commits") or []:
-        files += (c.get("added") or []) + (c.get("modified") or [])
-    if not ev.get("commits"):
-        # **枝を作った push は commits が空で来る**（2026-10-15 に実測。依頼を5件
-        # 載せて作った枝で「0件」になった）。そのときは既定の枝と比べる
-        base = (ev.get("repository") or {}).get("default_branch") or "master"
-        head = ev.get("after") or os.environ.get("GITHUB_SHA", "")
-        print(f"commits が空（枝を作った push）。{base} と比べる")
-        files = compare_files(base, head)
+    before = ev.get("before") or ""
+    head = ev.get("after") or os.environ.get("GITHUB_SHA", "")
+    if not before.strip("0"):
+        before = (ev.get("repository") or {}).get("default_branch") or "master"
+        print(f"枝を作った push。{before} と比べる")
+    files = compare_files(before, head)
     seen: list[str] = []
     for f in files:
         if f.startswith(REQ_DIR) and f.endswith(".json") and f not in seen:
