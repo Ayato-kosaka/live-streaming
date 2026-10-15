@@ -69,20 +69,27 @@ def yt_args(client: str) -> list[str]:
     return a
 
 
-def find_client(url: str, first: str | None, rounds: int = 3, pause: int = 60) -> str | None:
+def find_client(url: str, first: str | None, rounds: int = 3, pause: int = 60) -> tuple[str | None, str]:
     order = ([first] if first else []) + [c for c in clip.CLIENTS if c != first]
     for r in range(rounds):
+        whys = []
         for c in order:
             ok, why, dt = clip.probe_client(url, c)
             # 断り文句は「ボット確認」などの決まった語か yt-dlp の1行。題名は入らない
             print(f"   [{'見えた' if ok else '駄目  '}] {r + 1}周目 {c:<13} {dt:5.1f}秒"
                   f"{'' if ok else '  ' + why[:80]}", flush=True)
             if ok:
-                return c
+                return c, ""
+            whys.append(why)
+        # **全部の口が「Video unavailable」なら、粘っても出てこない**（消された・非公開）。
+        # 1つの口だけがそう言うことはある（2026-10-15 に default が言って mweb で取れた）
+        if whys and all("Video unavailable" in w for w in whys):
+            print("   どの口でも Video unavailable。粘らない", flush=True)
+            return None, "動画が見られない（どの口でも Video unavailable）"
         if r < rounds - 1:
             print(f"   全部断られた。{pause}秒あける", flush=True)
             time.sleep(pause)
-    return None
+    return None, "どの口も通らなかった"
 
 
 REF_MAX_SEC = 240
@@ -249,9 +256,9 @@ def main() -> int:
         probe_url = (f"https://www.youtube.com/watch?v={it['video']}" if it.get("video")
                      else "https://www.youtube.com/watch?v=jNQXAC9IVRw")
         for attempt in range(3):
-            client = find_client(probe_url, good)
+            client, nowhy = find_client(probe_url, good)
             if not client:
-                st["tries"].append({"ok": False, "why": "どの口も通らなかった"})
+                st["tries"].append({"ok": False, "why": nowhy})
                 break
             try:
                 r = (fetch_channel if it["mode"] == "channel" else fetch_video)(it, d, client)
