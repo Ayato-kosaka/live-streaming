@@ -134,7 +134,9 @@ def fetch_video(it: dict, d: Path, client: str) -> dict:
     log = d / "ytdlp.log"
     if it["mode"] == "zoom":
         s, e = it["range"]
-        fmt = ["-f", "bv*", "-S", "res:720,+vcodec:avc",
+        # コマを大きく頼まれたら、元もそれに見合う大きさで取る（短いほうの辺で 720 か 1080）
+        res = 1080 if int(it.get("tile") or 0) > 1280 * 0.75 else 720
+        fmt = ["-f", "bv*", "-S", f"res:{res},+vcodec:avc",
                "--download-sections", f"*{s}-{e}", "--write-info-json"]
         want, timeout = e - s, 900
     else:

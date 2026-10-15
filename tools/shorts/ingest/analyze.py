@@ -229,8 +229,10 @@ def build_visual(it: dict, mdir: Path, out: Path, ctx: dict, work: Path) -> dict
     src_fps = float(v.get("fps") or 30)
     stats_fps = min(pl["stats_fps"], max(1.0, round(src_fps)))
     sheet_fps = pl["sheet_fps"] or float(it["fps"])
-    tile = tile_size(w, h, pl["long"])
-    grid = pl["grid"] if h >= w else (pl["grid"][1], pl["grid"][0])
+    # zoom は依頼で格子とコマの大きさを変えられる（看板やメニューの字を読むとき）
+    tile = tile_size(w, h, int(it.get("tile") or pl["long"]))
+    g = tuple(it.get("grid") or pl["grid"])
+    grid = g if h >= w else (g[1], g[0])
     offset = float(it["range"][0]) if mode == "zoom" else 0.0
     vp = video_pass(src, work, stats_fps=stats_fps, sheet_fps=sheet_fps, tile=tile)
     cuts = detect_cuts(vp["score"], stats_fps, min_gap=pl["gap"])

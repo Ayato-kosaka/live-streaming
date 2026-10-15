@@ -131,25 +131,53 @@ def items_of(req: dict, origin: str) -> list[dict]:
         models = [m for m in bench.get("models", []) if m in MODELS]
         bench = {"range": [bs, be], "models": models[:4]}
 
+    # zoom は区間を1つ（range）でも、いくつも（ranges）でも受ける。1区間が1本の job
+    ranges = [None]
+    if mode == "zoom":
+        rs = req.get("ranges") or [req.get("range", "")]
+        if isinstance(rs, str):
+            rs = [x for x in re.split(r"\s*[,/]\s*", rs) if x.strip()]
+        ranges = [parse_range(r) for r in rs]
     out = []
     for v in vids:
-        it = {"video": v, "mode": mode, "req": origin, "pubkey": pem, "pubkey_sha256": fp,
-              "whisper": w, "bench": bench if mode == "archive" else None}
-        if mode == "zoom":
-            s, e = parse_range(req.get("range", ""))
-            fps = float(req.get("fps", 1))
-            if not (0 < fps <= 5):
-                raise Bad(f"{origin}: fps は 0〜5")
-            if e - s > ZOOM_MAX_SEC or (e - s) * fps > ZOOM_MAX_FRAMES:
-                raise Bad(f"{origin}: zoom は {ZOOM_MAX_SEC}秒・{ZOOM_MAX_FRAMES}コマまで")
-            it.update(range=[s, e], fps=fps,
-                      dir=f"zoom-{int(s)}-{int(e)}-{fps:g}fps")
-        else:
-            it["dir"] = mode
-        sub = it["dir"]
-        it["key"] = f"{v}__{sub}"
-        it["dest"] = f"{v}/{sub}"
-        out.append(it)
+        for rg in ranges:
+            it = {"video": v, "mode": mode, "req": origin, "pubkey": pem, "pubkey_sha256": fp,
+                  "whisper": w, "bench": bench if mode == "archive" else None}
+            if mode == "zoom":
+                s, e = rg
+                fps = float(req.get("fps", 1))
+                if not (0 < fps <= 5):
+                    raise Bad(f"{origin}: fps は 0〜5")
+                if e - s > ZOOM_MAX_SEC or (e - s) * fps > ZOOM_MAX_FRAMES:
+                    raise Bad(f"{origin}: zoom は {ZOOM_MAX_SEC}秒・{ZOOM_MAX_FRAMES}コマまで")
+                it.update(range=[s, e], fps=fps, dir=f"zoom-{int(s)}-{int(e)}-{fps:g}fps",
+                          **zoom_look(req, origin))
+            else:
+                it["dir"] = mode
+            sub = it["dir"]
+            it["key"] = f"{v}__{sub}"
+            it["dest"] = f"{v}/{sub}"
+            out.append(it)
+    return out
+
+
+def zoom_look(req: dict, origin: str) -> dict:
+    """zoom のシートの格子とコマの大きさ。看板やメニューの字を読みたいときに大きくする。
+
+    `grid` は縦長のときの「横×縦」（横長なら入れ替える）。`tile` はコマの長辺の画素。
+    既定は 4×3・長辺480（ショートの字幕が読める大きさ）。
+    """
+    out = {}
+    if req.get("grid"):
+        m = re.match(r"^(\d)x(\d)$", str(req["grid"]))
+        if not m or not (1 <= int(m.group(1)) <= 6 and 1 <= int(m.group(2)) <= 6):
+            raise Bad(f"{origin}: grid は 2x2 のような形（1〜6）")
+        out["grid"] = [int(m.group(1)), int(m.group(2))]
+    if req.get("tile"):
+        t = int(req["tile"])
+        if not 240 <= t <= 1280:
+            raise Bad(f"{origin}: tile（コマの長辺）は 240〜1280")
+        out["tile"] = t
     return out
 
 
