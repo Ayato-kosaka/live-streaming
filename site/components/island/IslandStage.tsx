@@ -13,7 +13,8 @@ import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { rememberVisit, VISITED } from "@/components/today/visit";
 import { jstNow, readNight } from "@/lib/nightly";
-import { AYATO_ASPECT, AYATO_SRC } from "@/lib/ayatoArt";
+import { AYATO_ASPECT } from "@/lib/ayatoArt";
+import AyatoSprite, { ayatoFlip, ayatoTurn, newAyatoTurn, setAyatoDir, setAyatoWalking } from "@/components/isle/AyatoSprite";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
@@ -386,6 +387,8 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
 
   const avatar = useRef({ ...AYATO_HOME });
   const facing = useRef(1);
+  /** 歩いている向き（横・正面・背中）。止まっても最後の向きを持つ（`AyatoSprite.tsx`） */
+  const turn = useRef(newAyatoTurn());
   const walkingNow = useRef(false);
   const target = useRef<{ x: number; y: number } | null>(null);
   const walkingTo = useRef<number | null>(null);
@@ -861,11 +864,13 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
         me.y = ny;
         // ayato.png は左を向いている絵。右へ歩くときに左右を反転する
         if (vx !== 0) facing.current = vx > 0 ? -1 : 1;
+        ayatoTurn(turn.current, vx, vy, dt);
       }
       if (moving !== walkingNow.current) {
         walkingNow.current = moving;
-        ayatoRef.current?.classList.toggle("walking", moving);
+        setAyatoWalking(ayatoRef.current, moving);
       }
+      setAyatoDir(ayatoRef.current, turn.current.dir);
 
       /* --- 向こうから口を開く ---
          そばに来た人に、住人のほうから声をかける（`docs/island-play.md` 3つの原理の3番）。
@@ -976,7 +981,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       // --- あやと ---
       // 立ち止まっているあいだも毎フレーム書いていた。同じ値でも属性に書けば、
       // その要素のぶんだけ島が描き直される。文字にして同じなら触らない。
-      const meTf = `translate(${me.x.toFixed(1)} ${me.y.toFixed(1)}) scale(${facing.current} 1)`;
+      const meTf = `translate(${me.x.toFixed(1)} ${me.y.toFixed(1)}) scale(${ayatoFlip(ayatoRef.current, turn.current.dir, facing.current)} 1)`;
       if (meTf !== lastMe) {
         lastMe = meTf;
         ayatoRef.current?.setAttribute("transform", meTf);
@@ -1663,17 +1668,10 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               <ellipse ref={ayatoShadowRef} cx={avatar.current.x} cy={avatar.current.y + 1} rx={22} ry={8} fill="#134a2c" opacity={0.22} />
               <g
                 ref={ayatoRef}
-                transform={`translate(${avatar.current.x} ${avatar.current.y}) scale(${facing.current} 1)`}
+                transform={`translate(${avatar.current.x} ${avatar.current.y}) scale(${ayatoFlip(ayatoRef.current, turn.current.dir, facing.current)} 1)`}
                 className="ayato"
               >
-                <image
-                  href={AYATO_SRC}
-                  x={-AYATO_W / 2}
-                  y={-AYATO_H}
-                  width={AYATO_W}
-                  height={AYATO_H}
-                  preserveAspectRatio="xMidYMax meet"
-                />
+                <AyatoSprite h={AYATO_H} />
               </g>
             </g>
           );
