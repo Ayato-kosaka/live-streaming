@@ -1,0 +1,38 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__UCCwutAH6ieHNvdyJAfSld7w__shorts",
+ "mode": "channel",
+ "dest": "channels/UCCwutAH6ieHNvdyJAfSld7w/shorts",
+ "video": null,
+ "channel": "UCCwutAH6ieHNvdyJAfSld7w",
+ "request": "shorts/requests/2026-10-15c-channel.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "channel_entries": 0,
+  "files": 3
+ },
+ "bytes": {
+  "plain": 3066,
+  "tar_gz": 1312,
+  "encrypted": 1328
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1328,
+   "sha256": "221c88f9e7d426aafa50d35c168ae0c44e4550fb0dfe39b01a08d8041f9c572d"
+  }
+ ],
+ "hmac_sha256": "bff0e38bd4943752efa7259f1ee889962c0c4c0a28088af9373eb38dbbc2988e",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38743396219",
+ "created_at": "2026-10-15T13:53:56+00:00"
+}
