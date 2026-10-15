@@ -586,24 +586,9 @@ jobs:
           echo "── datebake 終了コード ${rc}"
           exit "$rc"
       # **キーボードだけで島を一周できるか／読み上げで意味が通るか**
-      # （`tools/sprites/reachkeys.mjs`）は、**まだここに繋いでいない。**
+      # （`tools/sprites/reachkeys.mjs`）は、下の `reachkeys` job で回している。
+      # 1面ずつ Tab で一周するので、この job に相乗りさせると40分に収まらない。
       #
-      # 道具そのものは出来ていて、対照も両側そろっている（台15枚と、足を
-      # 1本ずつ抜く `BREAK=` 9とおり）。繋いでいないのは、**島のほうが
-      # まだ緑ではない**から——「同じ字のリンクが別の先を指している」が
-      # 2026-10-14 の実測で 14面に残っている（`/map/<国>` `/streams`
-      # `/next` `/nordic/day/8` ほか。配信の題名が同じ日に2本立つ形）。
-      #
-      # ここに繋ぐと**初日から赤い**ので、「いつもの赤」に化けて、
-      # 本当に新しく壊れた日に見分けがつかなくなる
-      # （`docs/island-standards.md` の dead_stream_watch と同じ形）。
-      # **残りを直してから、この下の3行を足す**（PR #870 の本文に、
-      # 何が何件残っているかを面ごとに置いてある）:
-      #
-      #   DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs
-      #
-      # 手で回すときは `tools/build.sh` → 静的に配る → 上の1行
-      # （0＝通った / 1＝見つかった / 2＝数えるものが無い）。
       # **画面に、システムの仕様を説明している字が無いか**（`tools/sprites/nospec.mjs`）。
       #
       # `CLAUDE.md`「画面で、システムの仕様を説明しない」。あやとに言われたのは
@@ -749,4 +734,95 @@ jobs:
           rc=0
           DIST=site/.next-ci PORT=4213 JOBS=3 node tools/sprites/reachwatch.mjs || rc=$?
           echo "── reachwatch 終了コード ${rc}"
+          exit "$rc"
+
+  # **キーボードだけで島を一周できるか／読み上げで意味が通るか**を、
+  # 書き出した面ぜんぶで数える（`tools/sprites/reachkeys.mjs`）。
+  #
+  # ## なぜ別の job なのか
+  #
+  # 面を1枚ずつ開いて、**実際に Tab を押して一周する**（147面で Tab 7,137回）。
+  # 手元の4コアの箱で**308秒**（2026-10-15 実測）。`browserwatch` は書き出しを2枚焼いたうえで
+  # 5本の道具を回していて40分の枠をほぼ使い切るので、相乗りさせると
+  # **先に時間で切られる。** `reachwatch` を別に立てたのと同じ理由。
+  #
+  # ## なぜいま繋げたか（2026-10-15 / #883）
+  #
+  # 道具は 2026-10-14 に出来ていたが、**島のほうが緑でなかった**ので
+  # 繋いでいなかった。初日から赤い見張りは「いつもの赤」に化けて、
+  # 本当に新しく壊れた日に見分けがつかなくなる
+  # （`docs/island-standards.md` §13。`dead_stream_watch` と同じ形）。
+  #
+  # 残っていたのは「同じ字のリンクが別の先を指している」17件（9面）と、
+  # **道具の側の嘘7件**（React が開いた姿と閉じた姿で同じ節点を使い回すのを
+  # 「Esc で閉じない」と読んでいた）。両方を片づけて 0件 にしてから繋いだ。
+  #
+  # ## 読みかた
+  #
+  # 終了コードで読む（0=通った / 1=見つかった / 2=数えるものが無い）。
+  # **`| tail` を挟まない。** 挟むと終了コードが消える（#124）。
+  # 「違反0件」は、**見た面・押せるもの・Tab で止まれたところ・絵・見出し・
+  # リンク・React の手当て**の分母と一緒に読む（§15）。どれかが 0 なら、
+  # 道具は数字を出さずに 2 で落ちる。対照（台16枚）が1枚でも外れても 2。
+  reachkeys:
+    runs-on: ubuntu-latest
+    # 道具そのものが手元で 308秒。書き出しと支度に3分。CI の2コアで倍に
+    # 伸びても収まる枠にしてある
+    timeout-minutes: 35
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      # **開発サーバーでは測らない。** 先読みも束ね方も本番と違う（`CLAUDE.md`）
+      - name: 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: npx next build
+
+      - name: 確認用の道具の依存を入れる（playwright-core）
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            exit 2
+          fi
+
+      - name: キーボードで一周できるか・読み上げで意味が通るか
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-rk.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
+            sleep 1
+          done
+          rc=0
+          DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs || rc=$?
+          echo "── reachkeys 終了コード ${rc}"
           exit "$rc"

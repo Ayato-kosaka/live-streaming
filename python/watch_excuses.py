@@ -68,20 +68,16 @@
 その PR の1回目は必ず落とし直す。
 
 書き出しとブラウザが要る道具は、**この土台の上でしか回らない。**
-土台は `browserwatch` に在るので、次に載せるならそこへ足す。
+土台は `browserwatch` に在る。ただし40分の枠をほぼ使い切っているので、
+面を1枚ずつ歩くような重いものは別の job を立てる（`reachwatch` `reachkeys`）。
 """
 
 from __future__ import annotations
 
 EXCUSES: dict[str, str] = {
-    # ---- 島のほうがまだ緑でないので、繋ぐのを待っているもの ----
-    "tools/sprites/reachkeys.mjs":
-        "キーボードで一周できるか・読み上げで意味が通るかを数える。道具も対照も"
-        "出来ている（台15枚と BREAK 9とおり）が、島に「同じ字のリンクが別の先を"
-        "指している」が14面残っている（2026-10-14 の実測。配信の題名が同じ日に"
-        "2本立つ形）。いま繋ぐと初日から赤く、いつもの赤に化けて本物の赤が"
-        "埋まる。残りを直したら `selftest.yml` の browserwatch に3行足して、"
-        "ここから外す（PR #870）",
+    # `tools/sprites/reachkeys.mjs` の断りは 2026-10-15 に外した（#883）。
+    # 残っていた17件（同じ字のリンクが別の先）と、道具の側の嘘7件を片づけて、
+    # `selftest.yml` の `reachkeys` job から毎 PR で回っている。
 
     # ---- 鍵が要る・外に出る（回し役の SKIP と同じ理由） ----
     "python/admin/character_days_probe.py":
