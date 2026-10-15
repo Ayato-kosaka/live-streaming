@@ -1613,3 +1613,69 @@
   line-height: var(--lh-body);
   color: var(--ink-2);
 }
+
+/* ---- 貼り先の手入れ（`.nd-*`。`/me` の「貼る先」） ----------------------
+   在る貼り先を全部並べて、1行ずつ字を直す道具（`components/me/NoteThemes.tsx`）。
+
+   **`.nt-dest*` を使い回さない。** あちらは掲示板で**押して選ぶ丸札**で、
+   `display: flex; flex-wrap: wrap` の横並び。こちらは**縦に積む行**なので、
+   同じ名前に2つの並べかたを持たせると、片方を直した日にもう片方が崩れる
+   （この道具は 2026-10-14 からその札を借りていて、行が横に流れていた）。 */
+.nd-group { display: grid; gap: var(--sp-2); margin-top: var(--sp-4); }
+/* 見出しの字は、掲示板の束（`.nb-glabel`）とそろえる */
+.nd-glabel {
+  margin: 0;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+/* 1行ぶんは**畳み**（`docs/island-standards.md` 7章）。19件を開いたまま
+   縦に積むと 390px で 5,200px——スマホ6画面ぶんになる。形は島の紙の畳み
+   （`app/css/ui.css` の `.folds` / `.fold`）をそのまま借りる。 */
+.nd-body { display: grid; gap: var(--sp-2); }
+/* 締め切った先は沈めておく。**消してはいない**ので、字は読めるまま */
+.nd-row.is-shut > summary { background: color-mix(in srgb, var(--rule) 18%, transparent); }
+.nd-shut {
+  flex: none;
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-pill);
+  background: var(--frame);
+  font-style: normal;
+  font-size: var(--fs-min);
+  font-weight: 900;
+  /* 地が `--frame` なので `--ink-2` では 3.78 しか出ない（4.5 割れ）。
+     濃いほうを使って 5.13 にする（`docs/island-standards.md` の出す前のチェック） */
+  color: var(--ink);
+}
+/* 押しどころを横に並べる。**折り返す**——390px では3つ入らない */
+.nd-go { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* 保存だけは重さを変える。同じ見た目の札が4枚並ぶと、
+   どれが「送る」なのかが形で分からない */
+.nd-keep {
+  min-height: 48px;
+  padding: 0 var(--sp-4);
+  border: var(--bw-1) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-deep) 100%);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-dark);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--paper);
+  cursor: pointer;
+}
+.nd-keep:active { transform: translateY(4px); box-shadow: none; }
+/* 足す欄の送り。**画面の下に貼り付けない**（`.trip-send` を借りない）。
+   あの帯は「台の最後に置いてあるので、この下に隠れる欄は無い」という前提で
+   浮かせてあるが、こちらは**上に貼り先が19件ならぶ。** 借りた日、帯が
+   行の押しどころに重なっていた（`docs/island-misses.md` #260 と同じ形）。 */
+.nd-send { display: grid; gap: var(--sp-2); margin-top: var(--sp-3); }
+.nd-send .mp-send { width: 100%; }
+.nd-send .nph-ok,
+.nd-send .err { margin: 0; }
+/* 足す欄は、手入れの一覧とは別の用事。罫線1本で切る */
+.nd-addl {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--rule);
+}
