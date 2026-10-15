@@ -272,12 +272,12 @@ export const SHELVES: Shelf[] = [
     title: "グッズ",
     /* **時点を言わない**（`docs/island-standards.md` 16章）。
        「いま3つ」と書くと、1つ増えた日から嘘になる。 */
-    note: "島から持って帰れるものと、いっしょに決めるもの",
+    note: "島から持って帰れるものと、お店で買えるもの",
     items: [
       {
         href: "/goods",
         name: "あやとグッズ",
-        note: "ステッカー・カード・キャラクター・カレンダー・LINEスタンプ・SUZURI",
+        note: "ステッカー・カード・キャラクター・LINEスタンプ・SUZURI",
         q: q(
           "あやとグッズ goods グッズ ステッカー sticker シール LINEスタンプ line stamp " +
             "スタンプ カレンダー calendar SUZURI suzuri トートバッグ tシャツ 透かし 無料",
