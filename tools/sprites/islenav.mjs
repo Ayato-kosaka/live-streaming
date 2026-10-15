@@ -39,6 +39,7 @@ import { chromium } from "playwright-core";
 import { viaCurl, ORIGIN } from "./prod.mjs";
 import { apply } from "./asme.mjs";
 import { offline } from "./route.mjs";
+import { AYATO_BOX_FN } from "./ayatobox.mjs";
 
 /** 見る幅。スマホ・タブレット・PC で島の組み替わりかたが違う。
     直している最中は `WIDTHS=390` で1幅だけに絞れる（3幅で1分半かかる） */
@@ -217,9 +218,11 @@ const AYATO = `() => {
 }`;
 /** あやとの、画面での足元の y と背丈（px）。倍率を出すのに使う */
 const AYATO_BOX = `() => {
+  ${AYATO_BOX_FN}
   const g = document.querySelector("g.ayato");
   if (!g) return null;
-  const b = g.getBoundingClientRect();
+  /* 見えている箱。g の箱は、歩くときの窓の外（シートの残り11コマ）まで含む（ayatobox.mjs） */
+  const b = ayatoBox(g);
   return { foot: b.bottom, h: b.height };
 }`;
 

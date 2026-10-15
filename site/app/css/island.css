@@ -1154,10 +1154,56 @@
    弾む動き（下の `hop`）は**絵のほう**に付いていて、あちらが自分で
    `fill-box` を持っているので、ここを変えても効き方は変わらない。 */
 .ayato { transform-box: view-box; transform-origin: 0 0; }
-.ayato.walking image { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+.ayato.walking .ayato-still { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
 @keyframes hop {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-7px) rotate(-2deg); }
+}
+
+/* **歩き出したら、3向き×4コマのぱらぱら漫画にする**（`components/isle/AyatoSprite.tsx`。#895）。
+   -----------------------------------------------------------------
+   1枚絵を `hop` で弾ませるだけだと、足が動かないので「滑っている」に見えるし、
+   上へ歩いても横を向いたまま。シート（`/characters/ayato-walk.webp`）は
+   段が向き（横・正面・背中）、段の中の4コマが足の運び。
+   **初めて歩いたときに読む**ので、`.walk-ready` が付くまで（＝読み終わるまで）は、
+   上の1枚＋ `hop` のまま歩く。島を開いただけの人には1バイトも足さない（#876）。
+
+   - **`.walk-ready` が付いたら、止まっても1枚に戻さない。** 1枚は横向きしか
+     無いので、下へ歩いて止まった人がいきなり横を向く。止まったら、
+     最後に歩いた向きの段の「立つコマ」（`--ayato-rest`）で動かずに立つ
+   - **ここでするのは表示の付け外しと、立つコマだけ。** コマ送りは部品が
+     Web Animations で回す（CSS の animation だと、島が奥行きの並べ替えで
+     あやとの <g> を抜き差しするたびに1コマ目へ巻き戻る。部品の `play` に実測）。
+     毎フレーム動くのは、窓（入れ子の svg）の中のシートの transform 1つ。
+     窓は1コマぶんの大きさなので、描き直しもそのぶんで済む
+     （島をまたぐ大きさのものだけが高い。上の「水面」の注記）
+   - **`hop` はコマ送りのあいだ外す。** 代わりに部品が、両足のそろったコマでだけ
+     窓ごと少し持ち上げる（`AYATO_WALK_LIFT`。コマ送りと同じ時計）。`hop` は
+     コマと関係なく 0.42秒で揺れるので、重ねると足と体がばらばらに跳ねる
+     （1枚のほうを `display: none` にするので、`hop` も一緒に止まる）
+   - シートは `translateX(-100%)` まで送って、**段数はコマの数**
+     （`steps(N)`。N・1周の秒数・立つコマは、部品が `lib/ayatoArt.ts` から組む。
+     ここに 4 を写さない）。`steps` の既定は jump-end なので
+     0 / -25% / -50% / -75% の4つで止まり、-100%（何も無い5コマ目）は出ない。
+     `%` はシートの横幅に対して（`fill-box`）。**この `transform-box` は中の
+     `<image>` に付ける。** 外の `.ayato` に付けると反転の軸が絵の端に
+     なって、右を向くたびに跳ぶ（#256。上の注記）。`<image>` は
+     `transform` 属性を持たず x=0 / y=0 に置いてあるので、ここで変えても
+     置き場所はずれない
+   - **段（向き）は、ここでは選ばない。** `<image>` の外の `<g>` の `transform`
+     属性を、部品が向きの変わったときだけ書く。同じ `<image>` に載せると、
+     コマ送りの animation が段のずらしを上書きして1段目に戻る */
+.ayato-walk { display: none; }
+.ayato.walk-ready .ayato-still { display: none; }
+.ayato.walk-ready .ayato-walk { display: inline; }
+.ayato-walk-sheet {
+  transform-box: fill-box;
+  transform: translateX(var(--ayato-rest, 0));
+}
+/* 動きを減らす設定では、コマも送らず弾みもしない。部品の側でシートを
+   読まず、コマ送りも始めないので、止まった1枚のまま滑る */
+@media (prefers-reduced-motion: reduce) {
+  .ayato.walking .ayato-still { animation: none; }
 }
 
 /* =========================================================
