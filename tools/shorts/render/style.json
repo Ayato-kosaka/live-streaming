@@ -75,7 +75,10 @@
     "duck_db": -12,
     "attack_s": 0.12,
     "release_s": 0.35,
-    "bgm_fade_out_s": 1.2
+    "bgm_fade_out_s": 1.2,
+    "bgm_fade_in_s": 0.6,
+    "master_lufs": -14.0,
+    "master_tp_dbtp": -1.5
   },
   "encode": {
     "crf": 20,

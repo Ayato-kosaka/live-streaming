@@ -110,9 +110,52 @@ def resolve(base: Path, p: str) -> Path:
 
 # 声の後処理。前後の無音を詰め（字幕の出だしが声より先に出ないように）、80Hz より下を落とす
 # （open_jtalk の声は 70Hz 以下にも -28dB ほど鳴っていて、BGM の低音と混ざる。声には要らない帯）
-NARR_FILTER = ("highpass=f=80,highpass=f=80,"
-               "silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
-               "silenceremove=start_periods=1:start_threshold=-45dB,areverse")
+NARR_FILTER = "highpass=f=80,highpass=f=80"
+
+# 頭と尻の詰め方（声の大きさに対する比で決める）。
+# 前は ffmpeg の silenceremove（-45dBFS より小さい所を落とす）で詰めていたが、Fish Audio の声は
+# 頭に息や部屋鳴りが -45dBFS より大きく入っていて、詰め残した分だけ字幕が声より先に出た。
+# 声の出だしは「その行のいちばん大きい所から -30dB を越えた最初のサンプル（2.5ms の後ろ向き RMS）」
+# とし（品質チェックの測り方と同じ）、その 20ms 前から使う。20ms は1コマ（33ms）より短いので、
+# 字幕を行の頭のコマに出せば、声の出だしも同じコマに入る。
+TRIM_ONSET_DB = -30.0
+TRIM_TAIL_DB = -40.0
+TRIM_PRE_S = 0.020
+TRIM_POST_S = 0.080
+TRIM_VER = f"trim1|{TRIM_ONSET_DB}|{TRIM_TAIL_DB}|{TRIM_PRE_S}|{TRIM_POST_S}"
+
+
+def trim_voice(x: np.ndarray) -> np.ndarray:
+    """声の頭と尻の、息・部屋鳴り・無音を落とす（上の TRIM_* の説明）。"""
+    if len(x) < 240:
+        return x
+    w = int(SR * 0.0025)
+    c = np.concatenate([[0.0], np.cumsum(x.astype(np.float64) ** 2)])
+    idx = np.arange(len(x))
+    lo = np.maximum(0, idx + 1 - w)
+    r = np.sqrt((c[idx + 1] - c[lo]) / (idx + 1 - lo))
+    peak = r.max()
+    if peak <= 0:
+        return x
+    on = int(np.argmax(r >= peak * db(TRIM_ONSET_DB)))
+    above = np.nonzero(r >= peak * db(TRIM_TAIL_DB))[0]
+    off = int(above[-1]) if len(above) else len(x) - 1
+    s = max(0, on - int(SR * TRIM_PRE_S))
+    e = min(len(x), off + 1 + int(SR * TRIM_POST_S))
+    y = x[s:e].astype(np.float32).copy()
+    fi, fo = int(SR * 0.003), int(SR * 0.015)
+    if len(y) > fi + fo:
+        y[:fi] *= np.linspace(0, 1, fi, dtype=np.float32)
+        y[-fo:] *= np.linspace(1, 0, fo, dtype=np.float32)
+    return y
+
+
+def trimmed_wav(src: Path, out: Path) -> Path:
+    """src を 48kHz・1ch に直し、80Hz より下を落とし、頭と尻を詰めて out に書く。"""
+    raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(src), "-af", NARR_FILTER,
+                          "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], check=True, capture_output=True).stdout
+    x = np.frombuffer(raw, dtype="<f4")
+    return write_wav(trim_voice(x)[:, None], out)
 
 
 def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
@@ -128,12 +171,11 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     engine = narr.get("engine", "open_jtalk")
     if line.get("audio"):
         src = resolve(base, line["audio"])
-        key = hashlib.sha256(src.read_bytes() + NARR_FILTER.encode()).hexdigest()[:16]
+        key = hashlib.sha256(src.read_bytes() + f"{NARR_FILTER}|{TRIM_VER}".encode()).hexdigest()[:16]
         out = work / "narration" / f"{key}.wav"
         if not out.exists():
             out.parent.mkdir(parents=True, exist_ok=True)
-            sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src), "-af", NARR_FILTER,
-                "-ar", str(SR), "-ac", "1", "-c:a", "pcm_s16le", "-bitexact", str(out)])
+            trimmed_wav(src, out)
         return out
     if engine == "files":
         sys.exit(f"engine が files なのに audio が無い行: {line.get('text')}")
@@ -141,7 +183,7 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
         sys.exit(f"未対応のナレーション: {engine}")
     speed = narr.get("speed", 1.0)
     text = line.get("tts_text") or line["text"]
-    key = hashlib.sha256(f"{engine}|{speed}|{text}|{NARR_FILTER}".encode()).hexdigest()[:16]
+    key = hashlib.sha256(f"{engine}|{speed}|{text}|{NARR_FILTER}|{TRIM_VER}".encode()).hexdigest()[:16]
     out = work / "narration" / f"{key}.wav"
     if out.exists():
         return out
@@ -150,8 +192,7 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     txt.write_text(text)
     raw = out.with_suffix(".raw.wav")
     sh(["open_jtalk", "-m", JTALK_VOICE, "-x", JTALK_DIC, "-r", str(speed), "-ow", str(raw), str(txt)])
-    sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(raw), "-af", NARR_FILTER,
-        "-ar", str(SR), "-ac", "1", str(out)])
+    trimmed_wav(raw, out)
     raw.unlink()
     txt.unlink()
     return out
@@ -699,6 +740,19 @@ def pick(item: dict, f: int, n_pop: int) -> int:
 
 # ---------------------------------------------------------------- 音
 
+def speech_rms(x: np.ndarray) -> float:
+    """話している間の RMS。50ms ごとの RMS のうち、いちばん大きい窓から 20dB 以内の窓だけで測る
+    （文の中の息継ぎや、頭と尻に残った無音で、短い行ほど小さく出るのを避ける）。"""
+    w = SR // 20
+    k = len(x) // w
+    if k == 0:
+        return float(np.sqrt(np.mean(np.square(x.astype(np.float64))))) if len(x) else 0.0
+    fr = x[: k * w].reshape(k, w).astype(np.float64)
+    r = np.sqrt(np.mean(fr ** 2, axis=1))
+    keep = r >= r.max() * db(-20)
+    return float(np.sqrt(np.mean(fr[keep] ** 2)))
+
+
 def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Path, Path]:
     """ナレーションの束・ダッキング済みの BGM・元の音（使うカットだけ）を、サンプル単位で作る。
 
@@ -711,14 +765,14 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     n = p["frames"] * spf
     t = np.arange(n) / SR
     narr = np.zeros((n, 2), dtype=np.float32)
-    # 声の大きさは「話している間の RMS」で揃える。TTS の版や話者が変わっても
-    # 仕上がりの音量が動かないように、ファイルの音量ではなく目標値から決める。
+    # 声の大きさは**1行ずつ**「話している間の RMS」で揃える。Fish Audio の声は1文ずつ作るので、
+    # 行ごとに -28〜-21 LUFS とばらつき、全体で1つの倍率を掛けると行の変わり目で音量が跳ねた。
+    # ファイルの音量ではなく目標値から決めるので、声の版や話者が変わっても仕上がりは動かない。
     clips = [decode_audio(Path(ln["file"]), 1)[:, 0] for ln in p["narration"]]
-    if clips:
-        cat = np.concatenate(clips)
-        g_n = db(au["narration_rms_dbfs"]) / max(float(np.sqrt(np.mean(cat.astype(np.float64) ** 2))), 1e-9)
     for i, (ln, x) in enumerate(zip(p["narration"], clips)):
-        x = x * g_n
+        g_line = db(au["narration_rms_dbfs"]) / max(speech_rms(x), 1e-9)
+        ln["gain_db"] = round(20 * math.log10(g_line), 2)
+        x = x * g_line
         # 音量を揃えた1行ぶんも残す（Remotion・CapCut の下書きなど、ほかの書き出し先が使う）
         ln["norm_file"] = str(write_wav(x[:, None], work / f"narr_norm_{i:02d}.wav"))
         s = ln["at"] * spf
@@ -752,10 +806,14 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
         p["bgm"]["attack_s"] = au["attack_s"]
         p["bgm"]["release_s"] = au["release_s"]
         p["bgm"]["fade_out_s"] = au.get("bgm_fade_out_s", 0)
+        p["bgm"]["fade_in_s"] = au.get("bgm_fade_in_s", 0)
         g = base_g * duck
         fo = au.get("bgm_fade_out_s", 0)
         if fo:
             g = g * np.clip((n / SR - t) / fo, 0, 1)
+        fi = au.get("bgm_fade_in_s", 0)
+        if fi:
+            g = g * np.clip(t / fi, 0, 1)
         bgm = (bgm * g[:, None]).astype(np.float32)
 
     # 元の音は既定で消す。カットに audio_db があるときだけ、その dB で入れる
@@ -1054,7 +1112,100 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
     sys.exit(f"未対応の fit: {c['fit']}")
 
 
-def render(edit_path: Path, out: Path, work: Path, text: bool = True) -> dict:
+def loudness(inp: list[str]) -> tuple[float, float]:
+    """（積分ラウドネス LUFS, トゥルーピーク dBTP）。ffmpeg の ebur128 で測る。"""
+    e = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", *inp, "-vn", "-af", "ebur128=peak=true",
+                        "-f", "null", "-"], capture_output=True, text=True).stderr
+    i = re.search(r"Integrated loudness:\s+I:\s+(-?[\d.]+|-inf) LUFS", e)
+    tp = re.search(r"True peak:\s+Peak:\s+(-?[\d.]+|-inf) dBFS", e)
+    if not i or not tp:
+        sys.exit("ラウドネスを測れなかった")
+    f = lambda s: -120.0 if s == "-inf" else float(s)  # noqa: E731
+    return f(i.group(1)), f(tp.group(1))
+
+
+def master(stems: list[Path], work: Path, name: str, au: dict, enc: dict) -> dict:
+    """音の束を足して、一定の音量＋リミッターで仕上げ、AAC にする。
+
+    媒体は再生のときに大きすぎる音を下げる（YouTube はだいたい -14 LUFS）。小さく作ると前後の動画より
+    小さく鳴るので、-14 LUFS に合わせる。音量は一定の倍率で上げ下げし（loudnorm の動的な合わせ方は、
+    声と BGM の差を時間で変えてしまう）、山だけをリミッターで抑える。リミッターは4倍に上げてから
+    掛ける（標本の間の山＝トゥルーピークを抑えるため）。AAC にすると山が 0.5〜1dB 上に出るので、
+    符号化したものを測り、トゥルーピークと音量が線に入るまで、天井と倍率を直して作り直す。
+    """
+    mix = None
+    for s in stems:
+        x = np.fromfile(s, dtype="<f4")
+        mix = x.astype(np.float64) if mix is None else mix + x
+    raw = work / f"mix_{name}.f32"
+    mix.astype("<f4").tofile(raw)
+    inp = ["-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", str(raw)]
+    target, tp_max = au.get("master_lufs", -14.0), au.get("master_tp_dbtp", -1.5)
+    i0, tp0 = loudness(inp)
+    gain, ceil = target - i0, tp_max - 0.5
+    out = work / f"master_{name}.m4a"
+    for k in range(8):
+        af = (f"volume={gain:.3f}dB,aresample={4 * SR},"
+              f"alimiter=limit={db(ceil):.6f}:attack=1:release=60:level=false:latency=1,aresample={SR}")
+        sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *inp, "-af", af,
+            "-c:a", "aac", "-b:a", enc["audio_bitrate"], "-ar", str(SR),
+            "-fflags", "+bitexact", "-flags:a", "+bitexact", "-map_metadata", "-1", str(out)])
+        lufs, tp = loudness(["-i", str(out)])
+        ok_tp, ok_i = tp <= tp_max - 0.1, abs(lufs - target) <= 0.4
+        if ok_tp and ok_i:
+            break
+        if not ok_tp:
+            ceil -= tp - (tp_max - 0.3)
+        if not ok_i:
+            gain += target - lufs
+    return {"file": str(out), "stems": [Path(s).name for s in stems], "input_lufs": i0, "input_tp_dbtp": tp0,
+            "gain_db": round(gain, 3), "ceiling_db": round(ceil, 3), "lufs": lufs, "true_peak_dbtp": tp,
+            "passes": k + 1, "target_lufs": target, "max_tp_dbtp": tp_max}
+
+
+def out_affine(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, float]:
+    """元素材の画素 → 書き出しの画素（X = ax*x + bx, Y = ay*y + by）。frame_of と同じ式。"""
+    z = zoom_at(c, j)
+    if c["fit"] == "cover":
+        kx, ky, tx, ty = cover_affine(c, W, H)
+        px, py = zoom_point(c, kx, ky, tx, ty, W, H)
+        return z * kx, z * tx + px * (1 - z), z * ky, z * ty + py * (1 - z)
+    cx, cy, cw, ch = c["crop"]
+    s2 = min(W / cw, H / ch)
+    fw, fh = 2 * round(cw * s2 / 2), 2 * round(ch * s2 / 2)
+    x0, y0 = (W - fw) // 2, (H - fh) // 2
+    ax, ay = fw / cw, fh / ch
+    bx, by = x0 - cx * ax, y0 - cy * ay
+    return z * ax, z * bx + W / 2 * (1 - z), z * ay, z * by + H / 2 * (1 - z)
+
+
+def blur_out(p: dict, W: int, H: int, step: int = 3) -> list[dict]:
+    """ぼかしの箱を、書き出しのコマと画素で（品質チェックの顔の検査が「ぼかした所」を知るため）。"""
+    out = []
+    for k, c in enumerate(p["cuts"]):
+        for r_i, reg in enumerate(c.get("blur", [])):
+            keys = []
+            js = list(range(0, c["frames"], step))
+            if js[-1] != c["frames"] - 1:
+                js.append(c["frames"] - 1)
+            for j in js:
+                rect = interp_rect(reg, c["in"] + j)
+                if not rect:
+                    continue
+                ax, bx, ay, by = out_affine(c, j, W, H)
+                x0, y0 = ax * rect[0] + bx, ay * rect[1] + by
+                x1, y1 = ax * (rect[0] + rect[2]) + bx, ay * (rect[1] + rect[3]) + by
+                x0, y0, x1, y1 = max(0, x0), max(0, y0), min(W, x1), min(H, y1)
+                if x1 > x0 and y1 > y0:
+                    keys.append({"f": c["at"] + j, "rect": [round(x0), round(y0), round(x1 - x0), round(y1 - y0)]})
+            if keys:
+                out.append({"cut": k, "region": r_i, "note": reg.get("note", ""),
+                            "from": keys[0]["f"], "to": keys[-1]["f"] + 1, "keys": keys})
+    return out
+
+
+def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out: Path | None = None,
+           no_bgm_work: Path | None = None) -> dict:
     t0 = time.time()
     cv2 = cv()
     edit, style, base = load(edit_path)
@@ -1069,6 +1220,9 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True) -> dict:
     # コマごとに、重ねる字の絵を引けるようにする（タイトル → テロップ → 字幕 の順に重ねる）
     order = {"title": 0, "telop": 1, "caption": 2}
     timeline: list[list[Overlay]] = [[] for _ in range(p["frames"])]
+    p["overlays"] = []
+    kind_count: dict[str, int] = {}
+    saved: set = set()
     if text:
         for ly in sorted(layers, key=lambda z: order[z["kind"]]):
             it = ly["item"]
@@ -1079,17 +1233,45 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True) -> dict:
             for f in range(max(0, it["from"]), min(p["frames"], it["to"])):
                 timeline[f].append(ovs[pick(it, f, n_pop) if ly["kind"] == "telop" else 0])
 
-    args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0"]
-    for stem in (narr_p, bgm_p, src_p):
-        args += ["-f", "f32le", "-ar", str(SR), "-ac", "2", "-i", str(stem)]
-    fc = ["[0:v]scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,"
-          "format=yuv420p[vout]",
-          "[1:a][2:a][3:a]amix=inputs=3:normalize=0:duration=first,"
-          "alimiter=limit=0.89:level=false:latency=1[aout]"]
+            # 品質チェックが「重ねた物の全部」を読めるように、コマの範囲ごとに1つずつ書き出す
+            # （テロップの「ポン」は数コマごとに絵が変わるので、絵ごとに1件）
+            seq = [(f, pick(it, f, n_pop) if ly["kind"] == "telop" else 0)
+                   for f in range(max(0, it["from"]), min(p["frames"], it["to"]))]
+            nth = kind_count.get(ly["kind"], 0)
+            kind_count[ly["kind"]] = nth + 1
+            k0 = 0
+            while k0 < len(seq):
+                k1 = k0
+                while k1 + 1 < len(seq) and seq[k1 + 1][1] == seq[k0][1]:
+                    k1 += 1
+                ov, gi = ovs[seq[k0][1]], seq[k0][1]
+                png = work / f"ov_{ly['kind']}_{nth:02d}_{gi}.png"
+                if (ly["kind"], nth, gi) not in saved:
+                    ly["imgs"][gi].save(png)
+                    saved.add((ly["kind"], nth, gi))
+                o = {"kind": ly["kind"], "png": str(png), "x": ov.x, "y": ov.y, "w": ov.w, "h": ov.h,
+                     "from": seq[k0][0], "to": seq[k1][0] + 1, "text": it.get("text") or "／".join(it["lines"])}
+                if "line" in it:
+                    o["line"] = it["line"]
+                p["overlays"].append(o)
+                k0 = k1 + 1
+    p["style"] = style
+    p["blur_out"] = blur_out(p, W, H)
+
     enc = style["encode"]
+    au = style["audio"]
+    # 音の仕上げ（一定の音量＋リミッター）。BGM 入りと、BGM 抜き（TikTok 向け）を別々に作る
+    p["master"] = {"with_bgm": master([narr_p, bgm_p, src_p], work, "with_bgm", au, enc)}
+    if no_bgm_out:
+        p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
+
+    args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0",
+            "-i", p["master"]["with_bgm"]["file"]]
+    fc = ["[0:v]scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,"
+          "format=yuv420p[vout]"]
     args += [
-        "-filter_complex", ";".join(fc), "-map", "[vout]", "-map", "[aout]",
+        "-filter_complex", ";".join(fc), "-map", "[vout]", "-map", "1:a",
         "-frames:v", str(p["frames"]), "-r", str(fps),
         "-c:v", "libx264", "-preset", enc["preset"], "-crf", str(enc["crf"]),
         "-profile:v", "high", "-pix_fmt", "yuv420p", "-threads", "4",
@@ -1099,7 +1281,8 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True) -> dict:
         # 「同じ指示書から同じ動画」を取る。
         "-x264-params", "sliced-threads=1",
         "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
-        "-c:a", "aac", "-b:a", enc["audio_bitrate"], "-ar", str(SR),
+        # 音は仕上げた AAC をそのまま入れる（測って合わせたものを、もう一度符号化して変えない）
+        "-c:a", "copy",
         # 同じ指示書から同じバイト列を出すため、版や日時を書き込ませない
         "-fflags", "+bitexact", "-flags:v", "+bitexact", "-flags:a", "+bitexact",
         "-map_metadata", "-1", "-movflags", "+faststart", str(out),
@@ -1142,8 +1325,28 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True) -> dict:
         rc = enc_proc.wait()
     if err or rc != 0:
         sys.exit(f"ffmpeg の符号化が落ちた（{rc} {err[:1]}）")
+    if no_bgm_out:
+        # BGM 抜きの版（TikTok は投稿のときに媒体の音源から曲を付けるので、ファイルに曲を入れない）。
+        # 映像は書いたものをそのまま写す（同じ絵を2回符号化しない。2本の絵が1画素も違わない）
+        sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", str(out),
+            "-i", p["master"]["no_bgm"]["file"], "-map", "0:v", "-map", "1:a", "-c", "copy",
+            "-fflags", "+bitexact", "-map_metadata", "-1", "-movflags", "+faststart", str(no_bgm_out)])
+        p["variants"] = {"with_bgm": str(out), "no_bgm": str(no_bgm_out)}
     p["render_seconds"] = round(time.time() - t0, 2)
     (work / "plan.json").write_text(json.dumps(p, ensure_ascii=False, indent=1))
+    if no_bgm_out:
+        # BGM 抜きの版にも、その版の時間割と音の束を置く（品質チェックは work の束と仕上がりを
+        # 突き合わせる。BGM 入りの束で BGM 抜きを測ると、BGM の段が合わない）
+        w2 = no_bgm_work or Path(str(work.with_suffix("")) + "_nobgm.work")
+        w2.mkdir(parents=True, exist_ok=True)
+        for name in ("stem_narration.f32", "stem_source.f32"):
+            shutil.copyfile(work / name, w2 / name)
+        np.zeros(p["frames"] * (SR // fps) * 2, dtype="<f4").tofile(w2 / "stem_bgm.f32")
+        p2 = {**p, "bgm": None, "variant": "no_bgm", "out": str(no_bgm_out),
+              "master": {"no_bgm": p["master"]["no_bgm"]}}
+        (w2 / "plan.json").write_text(json.dumps(p2, ensure_ascii=False, indent=1))
+        p["variants"]["no_bgm_work"] = str(w2)
+        (work / "plan.json").write_text(json.dumps(p, ensure_ascii=False, indent=1))
     return p
 
 
@@ -1152,6 +1355,10 @@ def main():
     ap.add_argument("edit", type=Path)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--work", type=Path, help="途中のファイル（既定: 出力の横に <名前>.work）")
+    ap.add_argument("--no-bgm-out", type=Path,
+                    help="BGM を抜いた版も書く（映像は同じものを写す。TikTok 向け）")
+    ap.add_argument("--no-bgm-work", type=Path,
+                    help="BGM 抜きの版の時間割と音の束の置き場（既定: <work から拡張子を外した名前>_nobgm.work）")
     ap.add_argument("--no-text", action="store_true",
                     help="字を重ねずに書く（字の画素を、書き出したコマどうしの差で測るときの比べる相手）")
     a = ap.parse_args()
@@ -1159,7 +1366,7 @@ def main():
         if not shutil.which(tool):
             sys.exit(f"{tool} が無い")
     work = a.work or a.out.with_suffix(".work")
-    p = render(a.edit, a.out, work, text=not a.no_text)
+    p = render(a.edit, a.out, work, text=not a.no_text, no_bgm_out=a.no_bgm_out, no_bgm_work=a.no_bgm_work)
     print(json.dumps({"out": str(a.out), "frames": p["frames"], "seconds": p["frames"] / p["fps"],
                       "captions": len(p["captions"]), "telops": len(p["telops"]),
                       "render_seconds": p["render_seconds"]}, ensure_ascii=False))

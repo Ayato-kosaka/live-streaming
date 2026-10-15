@@ -27,14 +27,45 @@ python3 tools/shorts/plan/build_edit.py shorts/videos/<id>/p1/spec_A.json \
   --clips <clips>/index.json --voice <voice>/lines.json --bgm <bgm>.mp3 \
   --overrides ov_A.json --blur blur_<id>.json --video <id> --out edit_A.json
 python3 tools/shorts/render/faces.py edit_A.json faces_A/          # 顔の見落としを探す（決めるのは人）
-python3 tools/shorts/render/render.py edit_A.json --out A.mp4 --work A.work
-python3 tools/shorts/render/sheet.py A.mp4 A.work A_sheet.jpg      # 行ごとの真ん中の1コマを並べた1枚
+python3 tools/shorts/render/render.py edit_A.json --out A_yt.mp4 --work A.work --no-bgm-out A_tt.mp4
+python3 tools/shorts/render/sheet.py A_yt.mp4 A.work A_sheet.jpg   # 行ごとの真ん中の1コマを並べた1枚
 python3 tools/shorts/render/render.py edit_A.json --out A_bare.mp4 --work A_bare.work --no-text
 python3 tools/shorts/render/safearea.py A.mp4 A_bare.mp4           # 字の画素が安全領域の外に無いか
 ```
 
 `verify.py` のカット照合は合成素材の箱を読むので、本番の素材では使えない（字幕の出入り・音量・
 `--twin` は本番でも意味がある）。
+
+**`--no-bgm-out` で BGM 抜きの版も書く。** TikTok は投稿のときに媒体の音源から曲を付けるので、
+ファイルに曲を入れない（`docs/shorts.md` の「BGM」）。映像は書いたものをそのまま写すので、2本の絵は1画素も違わない。
+YouTube 向け（BGM 入り）は頭 0.6秒で BGM を上げ、終わり 1.2秒で下げる。
+
+**声は1行ずつ揃える。** Fish Audio の声は1文ずつ作るので、行ごとに −28〜−21 LUFS とばらつく。
+行ごとに「話している間の RMS」（50ms の窓のうち、いちばん大きい窓から 20dB 以内）を −16 dBFS に合わせる。
+全体で1つの倍率だと、行の変わり目で音量が跳ねた。
+
+**声の頭と尻は、声の大きさに対する比で詰める。** 出だしは「その行のいちばん大きい所から −30dB を越えた
+最初のサンプル（2.5ms の後ろ向き RMS）」で、その 20ms 前から使う（品質チェック `tools/shorts/qa/` の
+測り方と同じ）。20ms は1コマより短いので、行の頭のコマに字幕を出せば声も同じコマで始まる。
+前は ffmpeg の silenceremove（−45dBFS）で詰めていたが、Fish Audio の声は頭に息や部屋鳴りが
+それより大きく入っていて、詰め残した分だけ字幕が声より先に出た。
+
+**最後に音量を仕上げる。** 束を足したものを、一定の倍率で **−14 LUFS** に合わせ、4倍に上げてから
+リミッターで山を抑えて AAC にする。符号化したものを測り、**トゥルーピーク −1.5 dBTP 以下**と
+音量 ±0.4 に入るまで、天井と倍率を直して作り直す（AAC は山が 0.5〜1dB 上に出るので）。
+loudnorm の動的な合わせ方は、声と BGM の差を時間で変えてしまうので使わない。
+倍率・天井・測った値は `plan.json` の `master` に残る。
+
+**品質チェックのための控え。** `plan.json` には、使った様式（`style`）・重ねた字の絵の全部
+（`overlays`。テロップの「ポン」の数コマも1件ずつ、x/y/w/h/from/to と PNG）・書き出しの画素での
+ぼかしの箱（`blur_out`）も入る。字なしの書き出しは、時間割を上書きしないように work を分けて書く:
+
+```bash
+python3 tools/shorts/render/render.py edit_A.json --no-text --out A.work/no_text.mp4 --work A_plate.work
+```
+
+`--no-bgm-out` のときは、BGM 抜きの版の時間割と束（BGM の束は 0）を `--no-bgm-work`
+（既定 `<work から拡張子を外した名前>_nobgm.work`）に置く。
 
 ### 道具が壊れていないかを確かめる（合成素材で）
 
