@@ -156,7 +156,7 @@ export default function StreamsPage() {
                     （`docs/island-misses.md` #265）。「この」が指している屋根は、
                     畳みを閉じれば目でも追えない。 */}
                 <Link className="ty-go" href={`/streams/${t.slug}`} prefetch={false}>
-                  {t.name}だけ見る
+                  この型だけ見る
                   <Icon name="right" size={15} />
                 </Link>
               </div>
