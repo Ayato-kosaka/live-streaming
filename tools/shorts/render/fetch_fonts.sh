@@ -10,3 +10,13 @@ for f in MPLUSRounded1c-ExtraBold.ttf MPLUSRounded1c-Black.ttf; do
 done
 # 版の中身が変わったら、書き出しの見た目も変わる。変わったことに気づけるように控える。
 (cd "$dir" && sha256sum MPLUSRounded1c-*.ttf)
+
+# 顔の見つけ役（faces.py）が使う YuNet（OpenCV Zoo、MIT）。git には入れない。
+# raw.githubusercontent.com は LFS の札（131バイト）しか返さないので、media の側から取る。
+# 中身が札でないことを、LFS の札に書かれた sha256 で確かめる。
+mdir="$(cd "$(dirname "$0")" && pwd)/models"
+mkdir -p "$mdir"
+yunet="$mdir/face_detection_yunet_2023mar.onnx"
+[ -s "$yunet" ] || curl -sSfL -o "$yunet" \
+  https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx
+echo "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4  $yunet" | sha256sum -c -

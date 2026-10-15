@@ -8,7 +8,7 @@
                                 "cuts": {"<番号>": {"in": N, "out": M}}}}
 
 - 字幕の文字は、ナレーションの行に `caption` として書く（声はそのまま、字幕だけ変える）
-- カットの長さが変わったら、そのカットより後ろのナレーションを同じだけずらす
+- カットの長さが変わったら、そのカットより後ろのナレーションとテロップを同じだけずらす
   （画面でも同じ詰め方で下見している。ずらさないと声と映像がずれる）
 """
 import argparse
@@ -48,6 +48,10 @@ def apply(edit: dict, body: dict) -> dict:
         at += c["out"] - c["in"]
     for ln in lines:
         ln["at"] += sum(d for start, d in shifts if ln["at"] >= start)
+    # テロップも同じだけずらす（行の頭から終わりまで出しているので、両端を動かす）
+    for tp in edit.get("telops", []):
+        tp["from"] += sum(d for start, d in shifts if tp["from"] >= start)
+        tp["to"] += sum(d for start, d in shifts if tp["to"] >= start)
     return edit
 
 
