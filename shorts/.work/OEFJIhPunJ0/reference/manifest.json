@@ -5,40 +5,40 @@
  "dest": "OEFJIhPunJ0/reference",
  "video": "OEFJIhPunJ0",
  "channel": null,
- "request": "shorts/requests/2026-10-15e-reference.json",
- "status": "partial",
+ "request": "shorts/requests/2026-10-15g-reference.json",
+ "status": "ok",
  "stages": {
   "download": "ok",
   "meta": "ok",
   "captions": "ok",
   "audio": "ok",
   "visual": "ok",
-  "whisper": "failed",
+  "whisper": "ok",
   "structure": "ok"
  },
  "counts": {
   "sheets": 6,
   "caption_segments": 34,
-  "transcript_segments": 0,
+  "transcript_segments": 3,
   "cuts": 28,
   "channel_entries": 0,
-  "files": 18
+  "files": 20
  },
  "bytes": {
-  "plain": 2598702,
-  "tar_gz": 2512508,
-  "encrypted": 2512512
+  "plain": 2609456,
+  "tar_gz": 2515251,
+  "encrypted": 2515264
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 2512512,
-   "sha256": "d3c68e4c453a6d1e0b0122f8aaffc420f333c40de5a1375dbe588a1eb272887a"
+   "bytes": 2515264,
+   "sha256": "b63dd7e0a699d126dfd9d3131ece9caf7c02aac45cb936a0e8f8bb998eef5ba5"
   }
  ],
- "hmac_sha256": "d0d1c0ddf10b45ebdb3064d3c0042392e402cc7967d50bcd0f07425432ede8ac",
+ "hmac_sha256": "27adbba2eb47beb97c0e1baa182aee072845c46492f115e427fa35cc629018c6",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38747018500",
- "created_at": "2026-10-15T14:07:57+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38749151725",
+ "created_at": "2026-10-15T14:18:45+00:00"
 }
