@@ -27,8 +27,8 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 | 2 見どころ | 字幕・コマ・音・チャットを重ねて候補を8本以上。上位は zoom で1秒刻みに確かめる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
 | 3 企画 | 体験の違う3案。原稿・絵コンテ・尺の確認・自己評価・事実の表 | `shorts/videos/<id>/p1/plan.md` と絵コンテの絵 | `references/planning.md` |
 | 4 Gate 1 | 制作 issue に提出（`gate.py submission`）→ あやとの返事（`A`・`全部`）を待つ。チャットで決まったら待たない | bot の承認記録、またはチャットで決まったことの書き置き | `tools/shorts/gate.md` |
-| 5 本編集 | （これから: ナレーション #916・書き出し #917・品質チェック #918） | — | — |
-| 6 Gate 2 | （これから: #919） | — | — |
+| 5 本編集 | 素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube 用・TikTok 用を書き出す → 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | `references/production.md` |
+| 6 Gate 2 | あやとだけが開ける場所に置き、mp4 と投稿文を1つの提出にまとめる。返事は `B`・`全部` | bot の承認記録（案と sha256） | `references/production.md`・`tools/shorts/gate.md` |
 | 7 投稿 | （これから: #920） | — | — |
 | 8 数字・改善 | （これから: #921 #922） | — | `references/playbook.md` |
 
@@ -92,5 +92,6 @@ python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> s
 ## 6. 学びの置き場
 
 - 動画ごとの制作記録: `shorts/videos/<videoId>/`（企画・原稿・絵コンテ・編集指示書・投稿の URL・確かめる仮説）
+- **作り方の学び（本編集〜Gate 2）: `references/production.md`。直しが出るたびに、決めたことと人の目の検査の表に足す**
 - 仮説とベストプラクティス: `references/playbook.md`。**複数の動画で支持されたものだけを上げる。** 矛盾したら規則のほうを疑う
 - 参考ショートの分析（日付つきの記録。あとから直さない）: `references/reference_shorts_2026-10.md`
