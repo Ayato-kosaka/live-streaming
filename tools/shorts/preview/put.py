@@ -30,8 +30,9 @@
 
 ## 守っていること
 
-- **見る URL は、持っている人なら誰でも開ける鍵。** 公開の issue・PR・コミット・ログに書かない。
-  あやとにはチャットで渡す。ここでも標準出力には出さない（`--urls` のファイルにだけ書く）
+- **見る URL は、持っている人なら誰でも開ける鍵。** 下見は issue（Gate 2 の提出）に貼ってよい
+  （あやと 2026-10-16「動画のレビューは非公開に無理にする必要ない」）。ただしリポジトリには
+  平文で入れない（作業枝には暗号文だけ）。ここでも標準出力には出さず、`--urls` のファイルに書く
 - 開いた結果（URL・チャンネル名・スマホ幅の絵）は `--out` の下にだけ置く。リポジトリの中なら断る
 - 落とし直した sha256 が1本でも合わなければ、URL の一覧を書かずに落ちる
 """
@@ -180,7 +181,8 @@ def expires_jst(body: dict) -> dt.datetime:
 def write_urls(path: Path, body: dict, rows: list[dict]) -> None:
     exp = expires_jst(body)
     lines = [f"# ショートの下見 {body['name']}（見られるのは {exp:%Y-%m-%d %H:%M} JST まで）",
-             "# この URL は持っている人なら誰でも開ける。公開の issue・PR・コミットに貼らない", ""]
+             "# この URL は持っている人なら誰でも開ける。issue には貼ってよい（あやと 2026-10-16）。"
+             "コミットには入れない", ""]
     if body.get("page"):
         lines += [f"まとめて見る  {body['page']}", ""]
     for r in rows:
@@ -338,15 +340,15 @@ def cmd_up(a) -> int:
     for f in files:
         if not f.is_file():
             print(f"!! ファイルが無い: {f}")
-            return 2
+            return 1
     if len({f.name for f in files}) != len(files):
         print("!! 同じ名前のファイルが2つある（置き場ではファイル名で並べる）")
-        return 2
+        return 1
     for p in (Path(a.out), Path(a.urls)):
         g = decrypt.inside_git(p if p.exists() else p.parent)
         if g:
             print(f"!! {p} はリポジトリ（{g}）の中。URL を置かないので断る")
-            return 2
+            return 1
     Path(a.out).mkdir(parents=True, exist_ok=True)
     titles = dict(t.split("=", 1) for t in a.label or [])
     T: dict[str, float] = {}
@@ -413,7 +415,7 @@ def cmd_delete(a) -> int:
         # チャンネル名そのものは依頼（公開）に書かない。sha256 で指して、ランナーが一覧から探す
         if not a.key:
             print("!! hosting を消すには --key が要る（結果を開くため）")
-            return 2
+            return 1
         nonce = secrets.token_hex(12)
         request(a, {"name": a.name, "place": "hosting", "action": "delete", "files": [],
                     "channel_sha256": body["channel_sha256"],
@@ -463,7 +465,7 @@ def main() -> int:
     a = ap.parse_args()
     if a.cmd in ("up", "delete") and not a.branch.startswith("claude/"):
         print("!! 作業枝は claude/ で始まる名前にする")
-        return 2
+        return 1
     return {"up": cmd_up, "check": cmd_check, "delete": cmd_delete}[a.cmd](a)
 
 

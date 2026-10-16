@@ -96,6 +96,8 @@ jobs:
         # 結果の push は branch.py が shorts/.work/ の下と依頼ファイルだけを積む
         # （auth が作業ツリーに置いた gha-creds-*.json は積まない）
         env:
+          # 荷物を待つあいだも、段ごとの1行がその場でログに出るように
+          PYTHONUNBUFFERED: "1"
           IN_NAME: ${{ inputs.name }}
           IN_PLACE: ${{ inputs.place }}
           IN_ACTION: ${{ inputs.action }}

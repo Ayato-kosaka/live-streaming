@@ -39,7 +39,20 @@ def git(*a: str, env: dict | None = None, data: bytes | None = None) -> str:
 
 
 def fetch(branch: str) -> str:
-    git("fetch", "--quiet", "--depth=1", "origin", branch)
+    # **作業箱では --depth を付けない。** 共有の clone で `fetch --depth=1` を回すと、
+    # 取った先が .git/shallow に境目として書き足され、手元にある履歴まで見えなくなる
+    # （2026-10-16 に実際に踏んだ。HEAD から31件しか辿れなくなった）。浅く取るのは
+    # 使い捨てのランナーの中だけ。ほかのセッションの fetch と shallow.lock を取り合ったら待って取り直す
+    args = ["fetch", "--quiet"] + (["--depth=1"] if os.environ.get("GITHUB_ACTIONS") == "true"
+                                   else []) + ["origin", branch]
+    for i in range(6):
+        try:
+            git(*args)
+            break
+        except RuntimeError as e:
+            if ".lock" not in str(e) or i == 5:
+                raise
+            time.sleep(2 + 2 * i)
     return git("rev-parse", "FETCH_HEAD").strip()
 
 

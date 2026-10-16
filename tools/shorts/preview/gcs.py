@@ -29,8 +29,10 @@ from req import Bad
 
 PROJECT = "live-streaming-d3cac"
 BUCKET = f"{PROJECT}-shorts-preview"
-# あやとが見るのは日本から。作業箱・ランナーとの往復より、スマホで開く速さを取る
-LOCATION = "asia-northeast1"
+# 米国の1リージョン。書き出し（第2段）で素材を何百MB も読むのは米国のランナーで、
+# Cloud Storage の無料枠（保存5GB・北米からの転送100GB/月）も米国のリージョンにしか付かない。
+# あやとが日本から30MB の動画を開く分には、遠さで困らない
+LOCATION = "us-central1"
 KEEP_DAYS = 14
 PUT_TTL = dt.timedelta(hours=1)
 # V4 署名の上限（604800秒）。これより長くは作れない

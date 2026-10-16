@@ -5,8 +5,9 @@
 GCS の署名付き URL が本命だが、Actions のサービスアカウントに Storage の権限が無い
 （`gcs.py` の頭）。**Hosting のチャンネルへ配る権限はある**（本番の配りに同じ鍵を使っている）。
 プレビューチャンネルは**決めた日数で消える**（ここでは7日）。URL を知っていれば誰でも見られるが、
-あやとは「パブリックバケットでもよい」（2026-10-16）。チャンネル名に乱数（80bit）を使い、
-noindex を付け、URL はログ・issue・リポジトリに出さずに暗号化して返す。
+あやとは「パブリックバケットでもよい」「動画のレビューは非公開に無理にする必要ない」（2026-10-16）。
+チャンネル名に乱数（80bit）を使い、noindex を付ける。URL は暗号化して作業枝に返し
+（リポジトリに平文で積まない）、ログにも出さない。issue（Gate 2 の提出）には貼ってよい。
 
 **本番のサイト（live チャンネル）には触らない。** 配るのは `hosting:channel:deploy` だけで、
 チャンネル名は `sp-<乱数>` の形しか通さない。本番の firebase.json・public は使わず、
@@ -339,6 +340,15 @@ def delete(req: dict, tmp: Path) -> tuple[dict, list[Path]]:
         raise Bad("下見のチャンネルの形ではないので消さない")
     firebase(tools, ["hosting:channel:delete", cid, "--site", SITE, "--force"], site,
              tmp / "delete.log")
-    print("  チャンネルを消した")
+    # 消したあと、ページが本当に開けなくなったかを見る（CDN に残っているあいだは 200 が返りうる）
+    import requests
+
+    st, t0 = 0, time.time()
+    while url and time.time() - t0 < 120:
+        st = requests.get(url, timeout=30).status_code
+        if st == 404:
+            break
+        time.sleep(10)
+    print(f"  チャンネルを消した（そのあとページは HTTP {st}・{time.time() - t0:.0f}秒）")
     return {"format": "shorts-preview/1", "place": "hosting", "name": req["name"],
-            "deleted": True, "gone": True, "page": url}, []
+            "deleted": True, "gone": st == 404, "after_status": st, "page": url}, []
