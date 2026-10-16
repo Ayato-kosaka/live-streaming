@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import difflib
 import json
+import math
 import os
 import re
 import shutil
@@ -93,6 +94,44 @@ def silences(path: str, dur: float) -> dict:
     return {"head_s": round(head, 2), "tail_s": round(tail, 2), "inner_s": round(inner, 2)}
 
 
+QUESTION = re.compile(r"[？?][」』）)]*$")
+RISE_MIN = 1.0   # これより上がっていない問いに印を付ける（半音）
+
+
+def rise_st(path: str):
+    """語尾の上がり（半音）。声の出ている最後のフレームを終わりとして、最後の0.2秒の F0 の中央値と、
+    その前 0.2〜0.6秒の中央値の差を返す。測れなければ None。
+
+    ピッチは Praat（parselmouth）の既定（75〜600Hz）。聞き取りでは「問いを平叙で読んだ」が分からないので、
+    人が聞く前に機械で拾うために測る。オクターブの取り違えで ±12 前後に振れることがあるので目安として読む"""
+    try:
+        import parselmouth
+    except ImportError:
+        return None
+    with tempfile.TemporaryDirectory() as d:
+        w = os.path.join(d, "a.wav")
+        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", path, "-ac", "1", "-ar", "48000", w],
+                       check=True)
+        p = parselmouth.Sound(w).to_pitch()
+    v = [(t, f) for t, f in zip(p.xs(), p.selected_array["frequency"]) if f > 0]
+    if len(v) < 5:
+        return None
+    # 終わりの声がかすれる・息になるところ（きしみ声）は、ピッチが急に半分以下へ落ちて拾われる。
+    # 「揚げるん！？」は 430Hz まで上がってから最後の0.1秒で 77Hz に落ち、そのまま測ると上がった問いが −4.9 に出た。
+    # 文全体の中央値の 0.65倍より低い末尾のフレームは、抑揚ではないので落としてから測る
+    fs = sorted(f for _, f in v)
+    m = fs[len(fs) // 2]
+    while len(v) > 5 and v[-1][1] < 0.65 * m:
+        v = v[:-1]
+    end = v[-1][0]
+    last = sorted(f for t, f in v if t > end - 0.2)
+    prev = sorted(f for t, f in v if end - 0.6 < t <= end - 0.2)
+    if len(last) < 2 or len(prev) < 2:
+        return None
+    med = lambda xs: (xs[len(xs) // 2] + xs[(len(xs) - 1) // 2]) / 2
+    return round(12 * math.log2(med(last) / med(prev)), 1)
+
+
 def flag_rates(rows: list[dict]):
     """読み（カナ）の数 ÷ 喋っている秒数（頭とお尻の無音を除く）が、同じ回の中央値から外れる文に印を付ける"""
     rates = sorted(r["rate_cps"] for r in rows if r.get("rate_cps"))
@@ -151,21 +190,27 @@ def main() -> int:
         key = ln["key"]
         mine = [x for x in att if x["key"] == key]
         takes = []
+        question = bool(QUESTION.search(ln["caption"].strip()))
         for x in (x for x in mine if x.get("status") == "ok"):
             heard = (asr.get(x["file"]) or {}).get("text")
-            takes.append({**x, "asr_text": heard, **compare(ln["caption"], x["tts_text"], heard)})
+            rise = rise_st(os.path.join(a.raw, x["file"])) if question else None
+            takes.append({**x, "asr_text": heard, "rise_st": rise, **compare(ln["caption"], x["tts_text"], heard)})
         row = {"key": key, "plan": ln["plan"], "n": ln["n"], "caption": ln["caption"],
                # 作った回（タスクのある回）。1回で2本のテイクができる
                "attempts": len({x["group_id"] for x in mine if x.get("task_id")}),
-               "takes": [{k: x.get(k) for k in ("attempt", "take", "tts_text", "credit_count", "duration_s", "file", "asr_text", "match")}
-                         for x in takes],
+               "takes": [{k: x.get(k) for k in ("attempt", "take", "tts_text", "credit_count", "duration_s", "file", "asr_text",
+                                                "match", "rise_st")} for x in takes],
                "errors": [x.get("error") for x in mine if x.get("status") != "ok"]}
         if key in pick:
             at, tk = (int(v) for v in pick[key].split("."))
             cand = [x for x in takes if x["attempt"] == at and x["take"] == tk]
         else:
-            # 聞き取りが合うもの → 新しい試し → テイク1 の順
-            cand = sorted(takes, key=lambda x: (not x["ok"], -x["attempt"], x["take"]))
+            # 聞き取りが合うもの → （「？」で終わる文なら）語尾が上がっているもの・よく上がっているもの → 新しい試し → テイク1。
+            # 上がり方は半音の整数に丸めて比べる（6.6 と 6.8 のような測りの揺れでテイクを替えない）
+            def up(x):
+                r = x["rise_st"]
+                return (r is None or r < RISE_MIN, -round(r) if r is not None else 0) if question else (False, 0)
+            cand = sorted(takes, key=lambda x: (not x["ok"], up(x), -x["attempt"], x["take"]))
         if not cand:
             row.update({"file": None, "match": "no: 音声が無い"})
             rows.append(row)
@@ -186,6 +231,9 @@ def main() -> int:
                     "silence": silences(wav, probe(wav)),
                     "asr_text": use["asr_text"], "match": use["match"], "reading_tts": use.get("reading_tts"),
                     "reading_asr": use.get("reading_asr"), "similarity": use.get("similarity")})
+        if question:
+            row["intonation_rise_st"] = use["rise_st"]
+            row["intonation_flag"] = use["rise_st"] is None or use["rise_st"] < RISE_MIN
         if key in accept and row["match"] != "yes":
             row["match_auto"] = row["match"]
             row["match"] = f"yes（確かめて合格: {accept[key]}）"
@@ -200,8 +248,9 @@ def main() -> int:
     os.makedirs(a.out, exist_ok=True)
     json.dump(rows, open(os.path.join(a.out, "lines.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     for r in rows:
+        into = "" if "intonation_rise_st" not in r else f"上がり {r['intonation_rise_st']}st" + (" ⚑" if r["intonation_flag"] else "")
         print(f"{r['key']}\t{r.get('duration_s')}\t{r.get('rate_cps')}\t{r['attempts']}\t{r.get('used')}\t{r['match']}\t"
-              f"{r.get('duration_flag') or ''}\t{r.get('asr_text')}")
+              f"{r.get('duration_flag') or ''}\t{into}\t{r.get('asr_text')}")
     return 0
 
 
