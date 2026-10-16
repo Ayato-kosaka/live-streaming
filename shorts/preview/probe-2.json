@@ -1,9 +1,0 @@
-{
- "name": "probe-2",
- "place": "hosting",
- "action": "delete",
- "files": [],
- "channel_sha256": "bfa64eed0069816f781ba1d75f44571990f0c3e48138e6619a6de1c371536933",
- "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtEvgLsVXVjIhViLdWffR\nn0W3pIBU562Me1uGj0UeA7Z439yxhhsgGuA/4eQtLk0p3xrWBD8pPW+X1yEBvEd1\nKwNvPQIRJVJKPlxkSK70+yiEyeZadqXdopyTK3L+4PakgSas5fl/8NdnLSYDm2te\nFT3KilgAYoEU0QUP7B+h9K5vh/g918XQXlm3KNjkGTiLzp+znQyOIbn3xl8d4xjK\nFzuMJaJs0ZWolJxomHPWB0C4zrz5HtKyOnRiQp+4l9v4QYM6tLfwsbKVqGplezrx\nb+VMigLLgRrkrTvW/MsR5TFWzM8TJJ30s7aunkvMJYOC10NmNZUN2f2nW+59IO3s\nK8QK9qNOwkkl8pGKJrjXi4EgbFmf9PoU11rpeZaJlI1kdQQLLvMsil9XI4VSiaYv\nIUnzZ38CKcoRcvWCsX9d8LocLuuewugkG78dW+GjxkoITezvZjZWcNWI87Im8NyT\no45KJW44QkwjdRa5G0DHt0mlPpQPiNF3pFt/bzj7XFFdAgMBAAE=\n-----END PUBLIC KEY-----\n",
- "nonce": "e6e386ec28055a2d3ebb1a32"
-}
