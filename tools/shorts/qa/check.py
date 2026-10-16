@@ -30,6 +30,7 @@ import audio  # noqa: E402
 import container  # noqa: E402
 import faces  # noqa: E402
 import text  # noqa: E402
+import textdup  # noqa: E402
 import video  # noqa: E402
 import watermark  # noqa: E402
 from common import FAIL, HUMAN, NA, PASS, SEVERITY, Ctx, ffprobe, load_plan, load_style, rate  # noqa: E402
@@ -40,6 +41,7 @@ CHECKS = {
     "loudness": audio.check_loudness,
     "voice_vs_bgm": audio.check_voice_vs_bgm,
     "subtitle_sync": text.check_subtitle_sync,
+    "text_dup": textdup.check,
     "safe_area": text.check_safe_area,
     "watermark": watermark.check,
     "faces": faces.check,

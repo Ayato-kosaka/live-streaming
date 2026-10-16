@@ -28,32 +28,61 @@
     "max_lines": 2,
     "top": 380
   },
+  "telop": {
+    "_note": "強調の字（絵コンテの「中央: …」）。黄色い字に黒の縁、数字だけ大きく。タイトルの下端と字幕2行ぶんの上端の間に、同時に1つだけ。pop は出だしの数コマの大きさ（ポンと出す）",
+    "font": "caption",
+    "size": 100,
+    "min_size": 52,
+    "min_size_1line": 72,
+    "color": "#F9D342",
+    "stroke": 12,
+    "stroke_color": "#141414",
+    "digit_scale": 1.3,
+    "line_gap": 4,
+    "pad": 2,
+    "shadow_dy": 8,
+    "shadow_alpha": 0.45,
+    "gap": 20,
+    "pop": [0.7, 0.92, 1.06, 1.02, 1.0]
+  },
   "caption": {
+    "_note": "白い字に黒の縁（依頼の「セリフは中央配置で文字枠あり」の文字枠＝縁取り）。箱は敷かない（bg_alpha 0）。強調（行の highlight）はタイトルの箱と同じ黄色で少し大きく",
+    "highlight_color": "#F9D342",
+    "highlight_scale": 1.12,
     "font": "caption",
     "size": 66,
     "color": "#FFFFFF",
-    "stroke": 7,
+    "stroke": 8,
     "stroke_color": "#000000",
     "bg": "#000000",
-    "bg_alpha": 0.62,
-    "pad_x": 26,
-    "pad_y": 16,
+    "bg_alpha": 0,
+    "pad_x": 6,
+    "pad_y": 6,
     "radius": 18,
     "line_gap": 8,
     "max_width": 696,
     "max_lines": 2,
     "center_y": 1000,
-    "hold_frames": 6
+    "hold_frames": 6,
+    "bridge_frames": 12
+  },
+  "watermarks": {
+    "_note": "配信アーカイブに焼き込まれた透かし。rect は size の元素材での画素 [x, y, w, h]（yk-by7R7iPA の18窓・273コマの、どの場面でも明るい画素の外枠）。crop はその帯より上だけを使う（跡が残らない）、inpaint は周りから描き埋める",
+    "prism_live": { "size": [720, 1280], "rect": [405, 1204, 270, 39], "margin": 12, "mode": "crop" }
   },
   "audio": {
-    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」",
+    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」。BGM の duck_hi_hz より高い側（子音の帯域）は、さらに duck_hi_db 下げる。元の音は既定で消し、カットの audio_db で入れたものも duck_db だけ下げる",
     "narration_rms_dbfs": -16,
     "bgm_rms_dbfs": -22,
     "duck_db": -12,
     "attack_s": 0.12,
     "release_s": 0.35,
     "bgm_fade_out_s": 1.2,
-    "source_db": -20
+    "bgm_fade_in_s": 0.3,
+    "duck_hi_db": -6,
+    "duck_hi_hz": [1500, 2500],
+    "master_lufs": -14.0,
+    "master_tp_dbtp": -1.5
   },
   "encode": {
     "crf": 20,
