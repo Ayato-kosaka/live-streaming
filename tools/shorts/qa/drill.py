@@ -668,7 +668,7 @@ def run(half: str, keep: Path | None = None) -> int:
         if "text_face" in reports:
             tf = {r["id"]: r for r in reports["text_face"]["checks"]}["text_on_face"]["measured"]
             extra.append(f"字と顔: 貼った顔に被った行 {len(tf.get('lines_on_face', []))}・顔のあるコマ {tf.get('frames_with_face', 0)}"
-                         f"（1〜2コマで捨てた箱 {tf.get('dropped_short', 0)}）")
+                         f"（続かずに捨てた箱 {tf.get("dropped_short", 0)}）")
         for what, got_n, need_n in floor:
             if got_n < need_n:
                 bad.append(("clean", [f"{what} が {got_n}（{need_n} 以上のはず）"]))

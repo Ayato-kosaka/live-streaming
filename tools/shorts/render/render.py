@@ -1800,14 +1800,29 @@ def cover_affine(c: dict, W: int, H: int) -> tuple[float, float, float, float]:
     return kx, ky, (0.5 - cx) * kx - 0.5 - ox, (0.5 - cy) * ky - 0.5 - oy
 
 
+def zoom_u(c: dict, j: int) -> float:
+    """カットの中の進み（0〜1。ease: out なら終わりでゆっくり）。"""
+    u = j / max(1, c["frames"] - 1)
+    if (c.get("zoom") or {}).get("ease") == "out":
+        u = 1 - (1 - u) ** 2
+    return u
+
+
 def zoom_at(c: dict, j: int) -> float:
     z = c.get("zoom")
     if not z:
         return 1.0
-    u = j / max(1, c["frames"] - 1)
-    if z.get("ease") == "out":
-        u = 1 - (1 - u) ** 2
+    u = zoom_u(c, j)
     return z.get("from", 1.0) + (z.get("to", 1.0) - z.get("from", 1.0)) * u
+
+
+def zoom_xy(c: dict, j: int, key: str) -> float:
+    """寄る先の x か y（元素材の 0〜1）。[始め, 終わり] と書けば、カットの間に動かす
+    （手持ちで画が流れる所で、見せたい物を追う。A6 の揚がったポテトの箱は 1.2秒で幅の 2割流れた）。"""
+    v = (c.get("zoom") or {}).get(key, 0.5)
+    if isinstance(v, (list, tuple)):
+        return v[0] + (v[1] - v[0]) * zoom_u(c, j)
+    return v
 
 
 def cover_map(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, float]:
@@ -1821,10 +1836,10 @@ def cover_map(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, flo
     kx, ky, tx, ty = cover_affine(c, W, H)
     zz = c.get("zoom") or {}
     if "sx" not in zz and "sy" not in zz:
-        px, py = zoom_point(c, kx, ky, tx, ty, W, H)
+        px, py = zoom_point(c, kx, ky, tx, ty, W, H, j)
         return z * kx, z * tx + px * (1 - z), z * ky, z * ty + py * (1 - z)
     ax, ay = z * kx, z * ky
-    xp, yp = zz.get("x", 0.5) * c["w"], zz.get("y", 0.5) * c["h"]
+    xp, yp = zoom_xy(c, j, "x") * c["w"], zoom_xy(c, j, "y") * c["h"]
     bx = zz.get("sx", 0.5) * W - ax * xp
     by = zz.get("sy", 0.5) * H - ay * yp
     cx, cy, cw, ch = c["crop"]
@@ -1834,14 +1849,13 @@ def cover_map(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, flo
     return ax, bx, ay, by
 
 
-def zoom_point(c: dict, kx, ky, tx, ty, W, H) -> tuple[float, float]:
+def zoom_point(c: dict, kx, ky, tx, ty, W, H, j: int = 0) -> tuple[float, float]:
     """寄る先（元素材の 0〜1 の位置）が、画面のどこに来るか。そこを動かさずに拡大する。
 
     画面の内側の1点を中心に 1 倍以上へ拡大するので、元素材の外（黒い縁）は決して見えない。
     """
-    z = c.get("zoom") or {}
-    px = z.get("x", 0.5) * c["w"] * kx + tx
-    py = z.get("y", 0.5) * c["h"] * ky + ty
+    px = zoom_xy(c, j, "x") * c["w"] * kx + tx
+    py = zoom_xy(c, j, "y") * c["h"] * ky + ty
     return min(max(px, 0), W), min(max(py, 0), H)
 
 
