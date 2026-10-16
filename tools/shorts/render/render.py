@@ -377,12 +377,62 @@ def hex_rgba(h: str, alpha: float = 1.0) -> tuple:
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), round(alpha * 255))
 
 
-def card(lines: list[str], st: dict, font: ImageFont.FreeTypeFont) -> Image.Image:
-    """角丸の箱に、行ごとに中央揃えで字を置いた絵（RGBA、箱ぶんの大きさ）。箱の濃さが 0 なら字だけ。"""
+_HL_SKIP = "、。，．,. 　"
+
+
+def highlight_marks(lines: list[str], phrases: list[str]) -> list[list[bool]]:
+    """字幕の各字が、強調する言葉（phrases）の一部かどうか。
+
+    折り返しで行末の「、」「。」が落ちるので、句読点と空白を除いた並びで探す（行をまたいでも当たる）。
+    """
+    marks = [[False] * len(ln) for ln in lines]
+    pos = [(i, j) for i, ln in enumerate(lines) for j, ch in enumerate(ln) if ch not in _HL_SKIP]
+    flat = "".join(lines[i][j] for i, j in pos)
+    for ph in phrases or []:
+        key = "".join(ch for ch in ph if ch not in _HL_SKIP)
+        if not key:
+            continue
+        k = flat.find(key)
+        while k >= 0:
+            for i, j in pos[k:k + len(key)]:
+                marks[i][j] = True
+            k = flat.find(key, k + len(key))
+    return marks
+
+
+def card(lines: list[str], st: dict, font: ImageFont.FreeTypeFont, hl: list[str] | None = None) -> Image.Image:
+    """角丸の箱に、行ごとに中央揃えで字を置いた絵（RGBA、箱ぶんの大きさ）。箱の濃さが 0 なら字だけ。
+
+    hl があれば、その言葉だけタイトルの箱と同じ黄色にし、少し大きくする（数字・値段を目に入れる）。
+    大きくして max_width を越える行が出るなら、色だけ変える。
+    """
     stroke = st.get("stroke", 0)
-    asc, desc = font.getmetrics()
+    marks = highlight_marks(lines, hl) if hl else [[False] * len(ln) for ln in lines]
+    scale = st.get("highlight_scale", 1.0) if any(any(m) for m in marks) else 1.0
+    path = getattr(font, "path", None)
+    big = ImageFont.truetype(path, round(font.size * scale)) if scale != 1.0 and path else font
+
+    def runs(ln, mk, f_big):
+        out, k = [], 0
+        while k < len(ln):
+            j = k
+            while j < len(ln) and mk[j] == mk[k]:
+                j += 1
+            out.append((ln[k:j], f_big if mk[k] else font, mk[k]))
+            k = j
+        return out
+
+    def measure(f_big):
+        rs = [runs(ln, mk, f_big) for ln, mk in zip(lines, marks)]
+        return rs, [sum(f.getlength(t) for t, f, _ in r) for r in rs]
+
+    rows, widths = measure(big)
+    if big is not font and max(widths) > st["max_width"] - 2 * st["pad_x"] - 2 * stroke:
+        big = font
+        rows, widths = measure(big)
+    asc = max(font.getmetrics()[0], big.getmetrics()[0])
+    desc = max(font.getmetrics()[1], big.getmetrics()[1])
     line_h = asc + desc
-    widths = [font.getlength(ln) for ln in lines]
     w = math.ceil(max(widths)) + 2 * st["pad_x"] + 2 * stroke
     h = len(lines) * line_h + (len(lines) - 1) * st["line_gap"] + 2 * st["pad_y"] + 2 * stroke
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -391,9 +441,13 @@ def card(lines: list[str], st: dict, font: ImageFont.FreeTypeFont) -> Image.Imag
         d.rounded_rectangle([0, 0, w - 1, h - 1], radius=st["radius"],
                             fill=hex_rgba(st["bg"], st.get("bg_alpha", 1.0)))
     y = st["pad_y"] + stroke
-    for ln in lines:
-        d.text((w / 2, y + line_h / 2), ln, font=font, anchor="mm", fill=hex_rgba(st["color"]),
-               stroke_width=stroke, stroke_fill=hex_rgba(st.get("stroke_color", "#000000")))
+    hl_color = hex_rgba(st.get("highlight_color", st["color"]))
+    for r, width in zip(rows, widths):
+        x = (w - width) / 2
+        for t, f, on in r:
+            d.text((x, y + asc), t, font=f, anchor="ls", fill=hl_color if on else hex_rgba(st["color"]),
+                   stroke_width=stroke, stroke_fill=hex_rgba(st.get("stroke_color", "#000000")))
+            x += f.getlength(t)
         y += line_h + st["line_gap"]
     return img
 
@@ -601,7 +655,10 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         bounds.append(end)
         for k, pg in enumerate(pages):
             # line: 何行目のナレーションの字幕か（人が直す画面で、直した字幕を指示書のどこに戻すか）
-            captions.append({"from": bounds[k], "to": bounds[k + 1], "lines": pg, "line": i})
+            cap = {"from": bounds[k], "to": bounds[k + 1], "lines": pg, "line": i}
+            if ln.get("highlight"):
+                cap["hl"] = list(ln["highlight"])
+            captions.append(cap)
 
     title = edit.get("title")
     titles = []
@@ -667,7 +724,7 @@ def layout(p: dict, style: dict, work: Path) -> list[dict]:
     two = card(["国国"] * cap_st["max_lines"], cap_st, cap_font)
     cap_top = cap_st["center_y"] - two.height // 2
     for i, it in enumerate(p["captions"]):
-        img = card(it["lines"], cap_st, cap_font)
+        img = card(it["lines"], cap_st, cap_font, hl=it.get("hl"))
         path = work / f"caption_{i:02d}.png"
         img.save(path)
         it.update({"png": str(path), "x": (W - img.width) // 2, "y": cap_st["center_y"] - img.height // 2,
@@ -735,6 +792,9 @@ def pick(item: dict, f: int, n_pop: int) -> int:
     shown = sum(1 for pt in item.get("parts", []) if pt["at"] <= f)
     if shown >= 2:
         return n_pop - 1 + (shown - 1)
+    if item["from"] == 0:
+        # 動画の頭のコマは、出来上がった大きさで始める（0コマ目が小さな字だと、止めて見る人に半端に見える）
+        return n_pop - 1
     return min(f - item["from"], n_pop - 1)
 
 
@@ -751,6 +811,20 @@ def speech_rms(x: np.ndarray) -> float:
     r = np.sqrt(np.mean(fr ** 2, axis=1))
     keep = r >= r.max() * db(-20)
     return float(np.sqrt(np.mean(fr[keep] ** 2)))
+
+
+def split_band(x: np.ndarray, lo_hz: float, hi_hz: float) -> tuple[np.ndarray, np.ndarray]:
+    """音を低い側と高い側に分ける（2つを足せば元に戻る）。lo_hz〜hi_hz をなめらかに受け渡す。
+
+    1本まるごとの FFT で切る（scipy を足さずに済み、同じ入力なら同じ出力）。両端の回り込みは、
+    BGM の頭と尻のフェードの中に収まる。
+    """
+    X = np.fft.rfft(x.astype(np.float64), axis=0)
+    f = np.fft.rfftfreq(len(x), 1 / SR)
+    u = np.clip((f - lo_hz) / (hi_hz - lo_hz), 0, 1)
+    w_lo = 0.5 * (1 + np.cos(np.pi * u))
+    lo = np.fft.irfft(X * w_lo[:, None], n=len(x), axis=0)
+    return lo.astype(np.float32), (x.astype(np.float64) - lo).astype(np.float32)
 
 
 def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Path, Path]:
@@ -784,12 +858,18 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     # s-a で下がり始めて s で底、e で上がり始めて e+r で戻る
     duck = np.ones(n, dtype=np.float64)
     low = db(au["duck_db"])
+    # BGM の高い側（子音の帯域）だけ、ナレーションの間さらに下げる。明るい曲（弦・シンバル・高い旋律）は
+    # 全体を 12dB 下げても 2〜5kHz で声の子音とぶつかり、そこだけ差が 7dB まで縮んだ。
+    # 全体をもっと下げると曲の土台（低音と拍）まで消えるので、高い側だけを深くする
+    duck_hi = np.ones(n, dtype=np.float64)
+    low_hi = db(au["duck_db"] + au.get("duck_hi_db", 0))
     for ln in p["narration"]:
         s = ln["at"] / fps
         e = (ln["at"] + ln["frames"]) / fps
         a, r = au["attack_s"], au["release_s"]
         k = np.clip(np.maximum((s - t) / a, (t - e) / r), 0, 1)
         duck = np.minimum(duck, low + (1 - low) * k)
+        duck_hi = np.minimum(duck_hi, low_hi + (1 - low_hi) * k)
 
     bgm = np.zeros((n, 2), dtype=np.float32)
     if p.get("bgm"):
@@ -807,14 +887,22 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
         p["bgm"]["release_s"] = au["release_s"]
         p["bgm"]["fade_out_s"] = au.get("bgm_fade_out_s", 0)
         p["bgm"]["fade_in_s"] = au.get("bgm_fade_in_s", 0)
-        g = base_g * duck
+        fades = np.ones(n, dtype=np.float64)
         fo = au.get("bgm_fade_out_s", 0)
         if fo:
-            g = g * np.clip((n / SR - t) / fo, 0, 1)
+            fades = fades * np.clip((n / SR - t) / fo, 0, 1)
         fi = au.get("bgm_fade_in_s", 0)
         if fi:
-            g = g * np.clip(t / fi, 0, 1)
-        bgm = (bgm * g[:, None]).astype(np.float32)
+            fades = fades * np.clip(t / fi, 0, 1)
+        g = base_g * duck * fades
+        if au.get("duck_hi_db"):
+            p["bgm"]["duck_hi_db"] = au["duck_hi_db"]
+            p["bgm"]["duck_hi_hz"] = au["duck_hi_hz"]
+            lo_part, hi_part = split_band(bgm, *au["duck_hi_hz"])
+            g_hi = base_g * duck_hi * fades
+            bgm = (lo_part * g[:, None] + hi_part * g_hi[:, None]).astype(np.float32)
+        else:
+            bgm = (bgm * g[:, None]).astype(np.float32)
 
     # 元の音は既定で消す。カットに audio_db があるときだけ、その dB で入れる
     # （本人の短い一言を残すとき）。ナレーションと重なったら BGM と同じだけ下げる。
@@ -869,6 +957,30 @@ def zoom_at(c: dict, j: int) -> float:
     if z.get("ease") == "out":
         u = 1 - (1 - u) ** 2
     return z.get("from", 1.0) + (z.get("to", 1.0) - z.get("from", 1.0)) * u
+
+
+def cover_map(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, float]:
+    """cover のカットの j コマ目の写像（X = ax*x + bx, Y = ay*y + by。x, y は元素材の画素）。
+
+    zoom に sx / sy（画面の 0〜1）があれば、寄る先（x, y）をその画面の位置に置く。配信の画は
+    見せたい物（バス・看板）が上の 3〜4割に写っていることが多く、その場で寄るとタイトルの箱の裏か、
+    画面の上の UI の裏に入る。置き場を下げると元素材の外が見えるときは、見えない所まで戻す。
+    """
+    z = zoom_at(c, j)
+    kx, ky, tx, ty = cover_affine(c, W, H)
+    zz = c.get("zoom") or {}
+    if "sx" not in zz and "sy" not in zz:
+        px, py = zoom_point(c, kx, ky, tx, ty, W, H)
+        return z * kx, z * tx + px * (1 - z), z * ky, z * ty + py * (1 - z)
+    ax, ay = z * kx, z * ky
+    xp, yp = zz.get("x", 0.5) * c["w"], zz.get("y", 0.5) * c["h"]
+    bx = zz.get("sx", 0.5) * W - ax * xp
+    by = zz.get("sy", 0.5) * H - ay * yp
+    cx, cy, cw, ch = c["crop"]
+    # 元素材の使ってよい範囲（透かしの帯を切ったあと）の外を見せない
+    bx = min(max(bx, W - ax * (cx + cw)), -ax * cx)
+    by = min(max(by, H - ay * (cy + ch)), -ay * cy)
+    return ax, bx, ay, by
 
 
 def zoom_point(c: dict, kx, ky, tx, ty, W, H) -> tuple[float, float]:
@@ -1018,22 +1130,33 @@ def prefetch(gen, depth: int = 6):
     th.join()
 
 
-def inset_of(cv2, src: np.ndarray, full: np.ndarray, ins: dict) -> np.ndarray:
-    """元素材の一部（rect）を、ぼかして暗くした画面の上に、角丸の札にして大きく見せる。
+def inset_of(cv2, src: np.ndarray, full: np.ndarray, ins: dict, f_src: int | None = None) -> np.ndarray:
+    """元素材の一部（rect）を、暗くした画面の上に、札にして大きく見せる。
 
     見せたい所が画面の端（上の UI に隠れる帯）にしか写っていないときに使う。北マケドニアの回の
     メニューは「Doner … 280 Lekë」の行がどのコマでも上の端にあり、寄っても切り方を変えても
     安全領域に入らなかった（寄る中心を動かすと、元素材の外が見えてしまう）。
+
+    keys（元素材のコマ f と rect）があれば直線で補い、小数の画素で切る（手ぶれを追う・ゆっくり寄る）。
+    札の高さは最初の rect の縦横比で決まる（rect の縦横比は keys で揃えておく）。
+    bg_blur 0 なら背景はぼかさず暗くするだけ（元の画面のままに見せたいとき）。
     """
     H, W = full.shape[:2]
-    small = cv2.resize(full, (W // 8, H // 8), interpolation=cv2.INTER_AREA)
-    small = cv2.GaussianBlur(small, (0, 0), sigmaX=4)
-    bg = cv2.resize(small, (W, H), interpolation=cv2.INTER_LINEAR)
+    blur = ins.get("bg_blur", 4)
+    if blur:
+        small = cv2.resize(full, (W // 8, H // 8), interpolation=cv2.INTER_AREA)
+        small = cv2.GaussianBlur(small, (0, 0), sigmaX=blur)
+        bg = cv2.resize(small, (W, H), interpolation=cv2.INTER_LINEAR)
+    else:
+        bg = full
     bg = (bg.astype(np.uint16) * ins.get("dim", 150) // 255).astype(np.uint8)
-    x, y, w, h = [int(v) for v in ins["rect"]]
+    first = ins["keys"][0]["rect"] if ins.get("keys") else ins["rect"]
+    x, y, w, h = [float(v) for v in (interp_rect(ins, f_src) if f_src is not None else first)]
     ow = int(ins.get("w", 840))
-    oh = round(h * ow / w)
-    fg = cv2.resize(np.ascontiguousarray(src[y:y + h, x:x + w]), (ow, oh), interpolation=cv2.INTER_CUBIC)
+    oh = round(first[3] * ow / first[2])
+    s = ow / w
+    M = np.array([[s, 0, -x * s], [0, s, -y * s]], dtype=np.float64)
+    fg = cv2.warpAffine(src, M, (ow, oh), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
     b = int(ins.get("border", 6))
     r = int(ins.get("radius", 28))
     X0, Y0 = (W - ow) // 2, int(ins.get("cy", 765)) - oh // 2
@@ -1062,6 +1185,15 @@ def inset_of(cv2, src: np.ndarray, full: np.ndarray, ins: dict) -> np.ndarray:
     return (out + 0.5).astype(np.uint8)
 
 
+_GAMMA: dict[float, np.ndarray] = {}
+
+
+def gamma_lut(g: float) -> np.ndarray:
+    if g not in _GAMMA:
+        _GAMMA[g] = np.round(np.power(np.arange(256) / 255.0, float(g)) * 255).astype(np.uint8)
+    return _GAMMA[g]
+
+
 def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarray:
     """元のコマ1枚 → 透かしを外し・顔をぼかし・1080x1920 に収めた1枚。"""
     if c.get("delogo"):
@@ -1080,13 +1212,15 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
             blur_box(cv2, img, rect, reg.get("cells", 7))
     z = zoom_at(c, j)
     if c["fit"] == "cover":
-        kx, ky, tx, ty = cover_affine(c, W, H)
-        px, py = zoom_point(c, kx, ky, tx, ty, W, H)
-        M = np.array([[z * kx, 0, z * tx + px * (1 - z)], [0, z * ky, z * ty + py * (1 - z)]], dtype=np.float64)
-        interp = cv2.INTER_CUBIC if z * min(kx, ky) >= 1 else cv2.INTER_AREA
+        ax, bx, ay, by = cover_map(c, j, W, H)
+        M = np.array([[ax, 0, bx], [0, ay, by]], dtype=np.float64)
+        interp = cv2.INTER_CUBIC if min(ax, ay) >= 1 else cv2.INTER_AREA
         out = cv2.warpAffine(img, M, (W, H), flags=interp, borderMode=cv2.BORDER_REPLICATE)
+        if c.get("gamma"):
+            # 暗い車内などを持ち上げる（1 より小さいほど明るい。白は飛ばさない）
+            out = cv2.LUT(out, gamma_lut(c["gamma"]))
         if c.get("inset"):
-            out = inset_of(cv2, img, out, c["inset"])
+            out = inset_of(cv2, img, out, c["inset"], c["in"] + j)
         return out
     if c["fit"] == "blur":
         cx, cy, cw, ch = c["crop"]
@@ -1167,9 +1301,7 @@ def out_affine(c: dict, j: int, W: int, H: int) -> tuple[float, float, float, fl
     """元素材の画素 → 書き出しの画素（X = ax*x + bx, Y = ay*y + by）。frame_of と同じ式。"""
     z = zoom_at(c, j)
     if c["fit"] == "cover":
-        kx, ky, tx, ty = cover_affine(c, W, H)
-        px, py = zoom_point(c, kx, ky, tx, ty, W, H)
-        return z * kx, z * tx + px * (1 - z), z * ky, z * ty + py * (1 - z)
+        return cover_map(c, j, W, H)
     cx, cy, cw, ch = c["crop"]
     s2 = min(W / cw, H / ch)
     fw, fh = 2 * round(cw * s2 / 2), 2 * round(ch * s2 / 2)

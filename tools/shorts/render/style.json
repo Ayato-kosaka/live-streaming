@@ -46,7 +46,9 @@
     "pop": [0.7, 0.92, 1.06, 1.02, 1.0]
   },
   "caption": {
-    "_note": "白い字に黒の縁（依頼の「セリフは中央配置で文字枠あり」の文字枠＝縁取り）。箱は敷かない（bg_alpha 0）",
+    "_note": "白い字に黒の縁（依頼の「セリフは中央配置で文字枠あり」の文字枠＝縁取り）。箱は敷かない（bg_alpha 0）。強調（行の highlight）はタイトルの箱と同じ黄色で少し大きく",
+    "highlight_color": "#F9D342",
+    "highlight_scale": 1.12,
     "font": "caption",
     "size": 66,
     "color": "#FFFFFF",
@@ -69,14 +71,16 @@
     "prism_live": { "size": [720, 1280], "rect": [405, 1204, 270, 39], "margin": 12, "mode": "crop" }
   },
   "audio": {
-    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」。元の音は既定で消し、カットの audio_db で入れたものも同じだけ下げる",
+    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」。BGM の duck_hi_hz より高い側（子音の帯域）は、さらに duck_hi_db 下げる。元の音は既定で消し、カットの audio_db で入れたものも duck_db だけ下げる",
     "narration_rms_dbfs": -16,
     "bgm_rms_dbfs": -22,
     "duck_db": -12,
     "attack_s": 0.12,
     "release_s": 0.35,
     "bgm_fade_out_s": 1.2,
-    "bgm_fade_in_s": 0.6,
+    "bgm_fade_in_s": 0.3,
+    "duck_hi_db": -6,
+    "duck_hi_hz": [1500, 2500],
     "master_lufs": -14.0,
     "master_tp_dbtp": -1.5
   },

@@ -3,12 +3,12 @@
 
     python3 tools/shorts/plan/build_edit.py <spec_A.json> --clips <clips/index.json> --out <edit_A.json>
         [--voice <voice/lines.json> --plan A]    # 本番の声（無ければ open_jtalk で尺の下書き）
-        [--bgm <bgm.mp3>] [--overrides <ov_A.json>] [--speed 1.15] [--tail 1.0]
+        [--bgm <bgm.mp3>] [--overrides <ov_A.json>] [--speed 1.15] [--tail 0.5]
 
 ## 何をどう決めるか
 
 - **1行の長さ ＝ その行のナレーション（頭と尻の無音を詰めた声）＋ 0.25秒 ＋ hold。**
-  最後の行だけ `--tail` 秒足す（声が終わってから BGM が戻って終わる）
+  最後の行だけ `--tail` 秒足す（声が終わってから、字幕の消えた絵を少し見せて終わる）
 - ナレーションはその行の頭から話す。字幕は render.py が声の長さから出す
 - 元動画の時刻が2つある行は、行の時間を2つのカットに分ける。ナレーションが2文なら、
   **1文目が終わった声の間で切る**（「北マケドニア行きの看板。｜乗るのは、このミニバン。」）。1文なら半分で
@@ -29,6 +29,7 @@ import json
 import math
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -113,6 +114,97 @@ def telop_parts(telop: str, line: str, start: int, voice_frames: int) -> list[di
             at = start + round(voice_frames * k / len(parts))
         out.append({"text": ptxt, "at": max(at, out[-1]["at"] + 6 if out else start)})
     return out
+
+
+# ---------------------------------------------------------------- テロップは「言っていないこと」だけ
+
+TELOP_DUP = 0.6  # テロップの字のこの割合以上が、その行の字幕かタイトルに出ているなら、同じことの繰り返し
+_DROP = set(" 　「」『』（）()[]【】、。，．,.!！?？…‥・~〜→⇒＝=≒≈＋+/／:：")
+_SPLIT = re.compile(r"[\s　＋+→⇒＝=≒≈/／・「」『』（）()?？!！…‥:：]+")
+
+
+def _norm_map(s: str) -> tuple[str, list[int]]:
+    """比べるための形（NFKC・小文字・記号と「約」を落とす）と、各字が元のどこから来たか。"""
+    out, idx = [], []
+    for i, ch in enumerate(s):
+        for c in unicodedata.normalize("NFKC", ch).lower():
+            if c in _DROP or c == "約":
+                continue
+            out.append(c)
+            idx.append(i)
+    return "".join(out), idx
+
+
+def coverage(telop: str, refs: list[str]) -> float:
+    """テロップの字のうち、どれかの参照（字幕・タイトル）にも出てくる字の割合。
+
+    テロップを記号と空白で言葉に分け、言葉ごとに「3字以上（短い言葉はその長さ）続けて参照に出てくる所」
+    だけを数える。2字の偶然の一致（「北マケドニア」の「ニア」と「アルバニア」）で、
+    言っていない地名を言ったことにしない。
+    """
+    rs = [_norm_map(r)[0] for r in refs]
+    total = hit = 0
+    for tok in _SPLIT.split(telop):
+        t, _ = _norm_map(tok)
+        if not t:
+            continue
+        m = min(3, len(t))
+        cov = [False] * len(t)
+        for i in range(len(t)):
+            L = 0
+            for r in rs:
+                j = m
+                while i + j <= len(t) and t[i:i + j] in r:
+                    j += 1
+                L = max(L, j - 1 if j > m else 0)
+            for k in range(i, i + L):
+                cov[k] = True
+        total += len(t)
+        hit += sum(cov)
+    return hit / total if total else 1.0
+
+
+def highlight_phrases(telop: str, caption: str, limit: int = 3) -> list[str]:
+    """消したテロップの代わりに、字幕の中で強調する言葉（字幕の中の元の書き方で返す）。
+
+    テロップを記号と空白で言葉に分け、字幕に出てくる所を探す（そのままか、いちばん長く重なる所）。
+    数字を含む言葉があれば、それだけにする（値段・時間・数がいちばん目に入れたいもの）。
+    字幕の言葉の直前が「約」なら、強調に含める。
+    """
+    cn, cmap = _norm_map(caption)
+    spans = []
+    for tok in _SPLIT.split(telop):
+        tn, _ = _norm_map(tok)
+        if len(tn) < 1:
+            continue
+        k = cn.find(tn)
+        L = len(tn)
+        if k < 0:
+            best = (0, -1)
+            for i in range(len(tn)):
+                for j in range(len(tn), i + 1, -1):
+                    p = cn.find(tn[i:j])
+                    if p >= 0 and j - i > best[0]:
+                        best = (j - i, p)
+                        break
+            L, k = best
+            if L < 2:
+                continue
+        a, b = cmap[k], cmap[k + L - 1] + 1
+        if a > 0 and caption[a - 1] == "約":
+            a -= 1
+        # 言葉の続きの漢字1字までは含める（「ビッグマックの」＋「味」）。かなの助詞は含めない
+        if b < len(caption) and "一" <= caption[b] <= "鿿" and (
+                b + 1 >= len(caption) or caption[b + 1] in "、。 　」』！？!?"):
+            b += 1
+        spans.append((a, b))
+    phrases = []
+    for a, b in sorted(set(spans)):
+        p = caption[a:b].strip("、。 　")
+        if p and p not in phrases:
+            phrases.append(p)
+    digits = [p for p in phrases if any(ch.isdigit() for ch in unicodedata.normalize("NFKC", p))]
+    return (digits or phrases)[:limit]
 
 
 def sentence_split_ratio(text: str) -> float | None:
@@ -297,6 +389,23 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         ln["at"] = t
         _, center = parse_telop(r.get("telop", ""))
         center = ro.get("telop", center)
+        tel_meta = None
+        if center:
+            # テロップは「ナレーションもタイトルも言っていないこと」だけを出す（本人の言葉・訳・地図の矢印）。
+            # 同じことを字幕とテロップで2回見せると、画面が字だらけになって、どちらも読まれない。
+            # 消したテロップの言葉は、字幕の中で黄色にして目に入れる
+            cap_text = ln.get("caption") or ln["text"]
+            cov = coverage(center, [cap_text, title])
+            keep = ro.get("telop_keep", cov < TELOP_DUP)
+            tel_meta = {"text": center, "coverage": round(cov, 2), "shown": bool(keep)}
+            if not keep:
+                hl = ro.get("highlight") or highlight_phrases(center, cap_text)
+                if hl:
+                    ln["highlight"] = hl
+                tel_meta["highlight"] = hl
+                center = None
+        elif ro.get("highlight"):
+            ln["highlight"] = ro["highlight"]
         specs = ro.get("cuts") or [{"t": s} for s in r["src"]]
         zooms = zoom_segments(r.get("fx", ""), len(specs))
         # len（秒）を書いたカットはその長さで固定し、残りを書いていないカットで分ける
@@ -305,12 +414,24 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         rest = n - sum(fixed.values())
         if free and rest < MIN_CUT * len(free):
             sys.exit(f"{i}行目: len の合計が行の長さ（{n / FPS:.2f}秒）を食いつぶしている")
+        if not free and rest:
+            # 全部のカットに len を書いた行は、丸めの差（と書き違い）を最後のカットで吸う。
+            # 吸わないと行の長さとカットの合計がずれ、後ろの行がみな「画が字幕より1コマ先に替わる」になった
+            last = len(specs) - 1
+            if fixed[last] + rest < MIN_CUT:
+                sys.exit(f"{i}行目: len の合計が行の長さ（{n / FPS:.2f}秒）を越えている")
+            if abs(rest) > 3:
+                print(f"  注意: {i}行目 len の合計と行の長さが {rest}コマ違うので、最後のカットで合わせた",
+                      file=sys.stderr)
+            fixed[last] += rest
+            rest = 0
         free_specs = [specs[k] for k in free]
         # 文の切れ目で分けるのは、行まるごとを分けるときだけ（固定のカットがあると声の位置がずれる）
         free_lens = split_row(rest, len(free), vf, pauses, "" if fixed else ln["text"],
                               [c.get("share") for c in free_specs] if all(c.get("share") for c in free_specs)
                               else None) if free else []
         lens = [fixed[k] if k in fixed else free_lens[free.index(k)] for k in range(len(specs))]
+        assert sum(lens) == n, f"{i}行目: カットの合計 {sum(lens)} コマ ≠ 行の長さ {n} コマ"
         row_cuts = []
         for k, (cs, m) in enumerate(zip(specs, lens)):
             t0, _ = src_span(cs["t"])
@@ -339,8 +460,15 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 cut["blur"] = blur
             if cs.get("audio_db") is not None:
                 cut["audio_db"] = cs["audio_db"]
+            if cs.get("gamma"):
+                cut["gamma"] = cs["gamma"]
             if cs.get("inset"):
-                cut["inset"] = cs["inset"]
+                ins = {k: v for k, v in cs["inset"].items() if k != "keys"}
+                if cs["inset"].get("keys"):
+                    # 元動画の時刻 → 窓の頭からのコマ番号（ぼかしの箱と同じ）
+                    ins["keys"] = [{"f": round((sec(k["t"]) - clip["start"]) * FPS), "rect": k["rect"]}
+                                   for k in cs["inset"]["keys"]]
+                cut["inset"] = ins
             if cs.get("note"):
                 cut["note"] = cs["note"]  # なぜこの画にしたか（人が直すときに読む。書き出しは読まない）
             cuts.append(cut)
@@ -357,7 +485,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                     tp["parts"] = telop_parts(center, ln["text"], t, vf)
                 telops.append(tp)
         meta_rows.append({"row": i, "from": t, "frames": n, "voice_frames": vf, "cuts": row_cuts,
-                          "line": ln["text"], "telop": center or ""})
+                          "line": ln["text"], "telop": tel_meta})
         t += n
 
     edit = {
@@ -390,7 +518,8 @@ def main() -> int:
     ap.add_argument("--overrides")
     ap.add_argument("--blur", help="ぼかしの帳面（動画ごとに1冊。元動画の時刻で書いた顔の箱）")
     ap.add_argument("--speed", type=float, default=1.15, help="open_jtalk の速さ（下書きのとき）")
-    ap.add_argument("--tail", type=float, default=1.0, help="最後の行に足す秒（BGM が戻って終わる）")
+    ap.add_argument("--tail", type=float, default=0.5,
+                    help="最後の行に足す秒。声が終わってから絵を少し見せて終わる（0.25秒の間と合わせて約0.75秒）")
     ap.add_argument("--video", help="指示書の id の頭（動画 ID）")
     ap.add_argument("--work", help="声の測りの置き場（既定: 出力の横に <名前>.narr）")
     a = ap.parse_args()
