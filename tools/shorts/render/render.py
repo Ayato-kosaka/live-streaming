@@ -1291,7 +1291,9 @@ def layer_at(ly: dict, f: int, W: int, style: dict):
         img = imgs[lkey]
         x = round(ly["cx"] + st["dx"] - img.width / 2)
         y = round(ly["cy"] + st["dy"] - img.height / 2)
-        cache[key] = (Overlay(img, x, y), img)
+        ovs = ly.setdefault("ov_cache", {})
+        cache[key] = (Overlay(img, x, y, like=ovs.get(lkey)), img)
+        ovs.setdefault(lkey, cache[key][0])
     return cache[key][0], key, cache[key][1]
 
 
@@ -1742,13 +1744,17 @@ def blur_box(cv2, img: np.ndarray, rect, cells: int):
 class Overlay:
     """字の絵を、コマに重ねるための形（premultiplied の整数）にしておく。整数で混ぜるので毎回同じ値になる。"""
 
-    def __init__(self, img: Image.Image, x: int, y: int):
-        a = np.asarray(img, dtype=np.uint16)
-        self.alpha = a[:, :, 3:4]
-        self.pre = a[:, :, :3] * self.alpha
-        self.inv = 255 - self.alpha
+    def __init__(self, img: Image.Image | None, x: int, y: int, like: "Overlay | None" = None):
+        # like: 同じ絵を別の所に置く（揺れ）。整数の配列は 1画素 10バイトあるので、置き場ごとに作り直さない
+        if like is not None:
+            self.alpha, self.pre, self.inv = like.alpha, like.pre, like.inv
+        else:
+            a = np.asarray(img, dtype=np.uint16)
+            self.alpha = a[:, :, 3:4]
+            self.pre = a[:, :, :3] * self.alpha
+            self.inv = 255 - self.alpha
         self.x, self.y = x, y
-        self.h, self.w = a.shape[:2]
+        self.h, self.w = self.alpha.shape[:2]
 
     def blend(self, frame: np.ndarray):
         H, W = frame.shape[:2]
