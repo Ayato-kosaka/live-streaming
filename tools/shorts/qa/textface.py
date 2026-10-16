@@ -9,8 +9,8 @@
   被っているものほど通ってしまう
 - 字が出ている全コマで探す（前後3〜4コマも。つなぐため）。見つけ役（YuNet。重みが無ければ Haar）・肌色・
   ぼかしの判定は顔の検査（faces.py）と同じ。YuNet の重みは書き出しの道具の `render/models/` にもあれば使う
-- 1〜2コマだけ出る箱は顔として数えない（食べ物や車輪を顔と間違えた箱。本物の顔は続けて出る）。
-  隣のコマ（1コマ空いてよい）で重なる箱（IoU 0.3 以上）をつなぎ、3つ以上つながったものだけが顔
+- 1〜4コマだけ出る箱は顔として数えない（食べ物・車輪・手を顔と間違えた箱。本物の顔は続けて出る）。
+  隣のコマ（1コマ空いてよい）で重なる箱（IoU 0.3 以上）をつなぎ、5つ以上つながったものだけが顔
 - 目と鼻の範囲は、YuNet の5点から（鼻の先の点から口の点へ 4割下りた所までを鼻の下とする。
   `facetrack.guard_zone`）。点の無い Haar では箱の高さの 72%。書き出しも同じ関数で決める
 - 字の箱は、時間割（plan.json）の字の絵の、濃さ 16 以上の画素の外接矩形（縁・発光を含む）。
@@ -164,8 +164,9 @@ def check(ctx: Ctx) -> dict:
         return result("text_on_face", title, FAIL,
                       f"字が顔に被っている行 {len(rows)}（{sum(r['frames'] for r in rows)}コマ）" + note,
                       measured=m, thresholds=th,
-                      problems=[f"{r['from_t']}秒〜 {r['kind']}「{r['text'][:24]}」: 顔 {r['face'][:4]} と字 {r['text_box']}"
-                                f" が {r['frames']}コマ重なる（いちばん多いコマ {r['worst']}・{r['max_px']}px²）"
+                      problems=[f"{r['from_t']}秒〜 {r['kind']}「{r['text'][:24]}」: 目と鼻 {[round(v) for v in r['face'][:4]]}"
+                                f" と字 {r['text_box']}"
+                                f" が {r['frames']}コマ重なる（いちばん多いコマ {r['worst']}・{round(r['max_px'])}px²）"
                                 + (f"。例外の印は {r['ok']['frames']}コマまで" if r.get("ok") else "") for r in rows])
     return result("text_on_face", title, PASS,
                   f"字の出ている {len(want)}コマで顔のあるコマ {m['frames_with_face']}・字の箱 {len(boxes)} 枚・"

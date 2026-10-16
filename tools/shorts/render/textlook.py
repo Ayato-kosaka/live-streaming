@@ -492,8 +492,11 @@ def speedlines(W: int, H: int, cfg: dict, seed: int, j: int) -> Image.Image:
 
 # ---------------------------------------------------------------- キラキラ（字のまわりの画の効果）
 
-def _star(size: float, color: tuple, glow_px: float) -> Image.Image:
-    """四角い星（4本の細い光と、真ん中の小さな菱形）。2倍で描いて縮める。"""
+def _star(size: float, color: tuple, glow_px: float, glow_color: tuple | None = None) -> Image.Image:
+    """四角い星（4本の細い光と、真ん中の小さな菱形）。2倍で描いて縮める。
+
+    glow_color: まわりの光の色（白い星は明るい地に溶けるので、金色の光で縁取って見えるようにする）。
+    """
     s = max(3, int(round(size)))
     big = Image.new("RGBA", (s * 2 * SS, s * 2 * SS), (0, 0, 0, 0))
     d = ImageDraw.Draw(big)
@@ -505,7 +508,11 @@ def _star(size: float, color: tuple, glow_px: float) -> Image.Image:
     d.polygon([(c, c - q), (c + q, c), (c, c + q), (c - q, c)], fill=color)
     img = big.resize((s * 2, s * 2), Image.LANCZOS)
     if glow_px > 0:
-        halo = blur_rgba(img, glow_px)
+        src = img
+        if glow_color is not None:
+            src = Image.new("RGBA", img.size, glow_color[:3] + (0,))
+            src.putalpha(img.getchannel("A").point(lambda v: round(v * glow_color[3] / 255)))
+        halo = blur_rgba(src, glow_px)
         halo = halo.crop(((halo.width - img.width) // 2, (halo.height - img.height) // 2,
                           (halo.width + img.width) // 2, (halo.height + img.height) // 2))
         out = Image.new("RGBA", img.size, (0, 0, 0, 0))
@@ -544,6 +551,7 @@ def sparkles(w: int, h: int, cfg: dict, specs: list[dict], j: int) -> Image.Imag
         a = max(0.0, math.sin(2 * math.pi * u)) ** 1.5
         if a < 0.06:
             continue
-        st = _star(sp["size"] * (0.45 + 0.55 * a), hex_rgba(sp["color"], a), cfg.get("glow_px", 4) * a)
+        gc = hex_rgba(cfg["glow_color"], cfg.get("glow_alpha", 0.9) * a) if cfg.get("glow_color") else None
+        st = _star(sp["size"] * (0.45 + 0.55 * a), hex_rgba(sp["color"], a), cfg.get("glow_px", 4) * max(a, 0.5), gc)
         img.alpha_composite(st, (int(round(sp["x"] - st.width / 2)), int(round(sp["y"] - st.height / 2))))
     return img

@@ -958,7 +958,8 @@ def mood_pages(text: str, ment: dict, style: dict) -> list[list[str]]:
     mst = style["moods"]
     lk, fpath = ment["look"], font_path(style, ment["font"])
     s0, s1 = ment.get("min_size", ment["size"]), ment["size"]
-    maxw, nmax = mst["max_width"], mst.get("max_lines", 2)
+    # 出る動きでいちばん大きくなったときに幅に収まるように測る（弾む字は 1.06倍になる）
+    maxw, nmax = mst["max_width"] / anim_scale_max(ment.get("anim")), mst.get("max_lines", 2)
     f_min = ImageFont.truetype(str(fpath), s0)
 
     def fits(lines):
@@ -1477,8 +1478,9 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 # 行の割りは plan が決めたまま（文の切れ目を崩さない）。収まるいちばん大きい大きさだけを選ぶ
                 lines = it["lines"]
                 size = min(cap, ment.get("min_size", cap))
+                maxw = mst["max_width"] / anim_scale_max(ment.get("anim"))
                 for sz in range(cap, size - 1, -2):
-                    if TL.text_width(lines, mlk, ImageFont.truetype(str(mfont), sz)) + 6 <= mst["max_width"]:
+                    if TL.text_width(lines, mlk, ImageFont.truetype(str(mfont), sz)) + 6 <= maxw:
                         size = sz
                         break
                 im = TL.text_img(lines, mlk, ImageFont.truetype(str(mfont), size), seed=seed)
