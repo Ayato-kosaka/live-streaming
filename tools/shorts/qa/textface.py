@@ -6,7 +6,8 @@
 
 - 顔は**字なしの書き出し（plate）**で探す。字を重ねた版で探すと、字が顔を隠して見つからず、
   被っているものほど通ってしまう
-- 全コマで探す（YuNet）。見つけ役・肌色・ぼかしの判定は顔の検査（faces.py）と同じ
+- 字が出ている全コマで探す（前後3〜4コマも。つなぐため）。見つけ役（YuNet。重みが無ければ Haar）・肌色・
+  ぼかしの判定は顔の検査（faces.py）と同じ。YuNet の重みは書き出しの道具の `render/models/` にもあれば使う
 - 1〜2コマだけ出る箱は顔として数えない（食べ物や車輪を顔と間違えた箱。本物の顔は続けて出る）。
   隣のコマ（1コマ空いてよい）で重なる箱（IoU 0.3 以上）をつなぎ、3つ以上つながったものだけが顔
 - 字の箱は、時間割（plan.json）の字の絵の、濃さ 16 以上の画素の外接矩形（縁・発光を含む）。
@@ -101,8 +102,11 @@ def check(ctx: Ctx) -> dict:
             out.append((X, Y, Wd, Hd, skin, inner, outer))
         return out
 
+    # 字が出ているコマ（と、つなぐために前後 MIN_RUN+RUN_GAP コマ）だけ探す。字の無いコマの顔は被りようがない
+    pad = MIN_RUN + RUN_GAP
+    want = sorted({g for t in boxes for g in range(max(0, t["from"] - pad), min(n, t["to"] + pad))})
     dropped = {"not_skin": 0, "blurred": 0}
-    for f, img in iter_frames(ctx.plate, range(n), ctx.W, ctx.H):
+    for f, img in iter_frames(ctx.plate, want, ctx.W, ctx.H):
         for (X, Y, Wd, Hd, skin, inner, outer) in frame_memo(f"textface:{name}", img, lambda: detect(img)):
             if skin < F.SKIN_MIN:
                 dropped["not_skin"] += 1
@@ -132,7 +136,7 @@ def check(ctx: Ctx) -> dict:
                      "from_t": round(r["first"] / ctx.fps, 2)})
     title_hits = sum(1 for t in titles for f in range(max(0, t["from"]), min(n, t["to"]))
                      if any(overlap(t["box"], fb) > 0 for fb in faces[f]))
-    m = {"detector": name, "frames": n, "frames_with_face": sum(1 for x in faces if x),
+    m = {"detector": name, "frames": len(want), "frames_total": n, "frames_with_face": sum(1 for x in faces if x),
          "detections": sum(len(x) for x in raw), "dropped": dropped,
          "dropped_short": sum(len(x) for x in raw) - sum(len(x) for x in faces),
          "text_boxes": len(boxes), "lines_on_face": rows, "title_card_frames_on_face": title_hits}
@@ -143,5 +147,5 @@ def check(ctx: Ctx) -> dict:
                       problems=[f"{r['from_t']}秒〜 {r['kind']}「{r['text'][:24]}」: 顔 {r['face'][:4]} と字 {r['text_box']}"
                                 f" が {r['frames']}コマ重なる（いちばん多いコマ {r['worst']}・{r['max_px']}px²）" for r in rows])
     return result("text_on_face", title, PASS,
-                  f"{n}コマで顔のあるコマ {m['frames_with_face']}・字の箱 {len(boxes)} 枚・重なり 0",
+                  f"字の出ている {len(want)}コマで顔のあるコマ {m['frames_with_face']}・字の箱 {len(boxes)} 枚・重なり 0",
                   measured=m, thresholds=th)
