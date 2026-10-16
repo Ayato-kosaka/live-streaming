@@ -69,7 +69,8 @@
    "visual": "手に取る",
    "pic_note": "手に取る（0:47:06）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "shake_red"
   },
   {
    "line": "てことで、ケバブ屋。",
@@ -113,7 +114,8 @@
    "visual": "同上",
    "pic_note": "同上（寄る）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "shake_white"
   },
   {
    "line": "しかもここのケバブ、中にポテト入りらしい。",
@@ -135,7 +137,8 @@
    "visual": "揚げ始めたフライヤー",
    "pic_note": "揚げ始めたフライヤー（0:53:02）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "brush_zoom"
   },
   {
    "line": "「チキンで」って頼んだら、",
@@ -224,7 +227,8 @@
    "visual": "食べる",
    "pic_note": "食べる（1:00:15）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "glow_pink"
   },
   {
    "line": "日本で再現するなら、",
@@ -257,7 +261,8 @@
    "visual": "ケバブを手に",
    "pic_note": "ケバブを手に（1:03:10）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "static_darkred"
   },
   {
    "line": "ちなみに肉はすぐ固くなるから、熱いうちに食べてな。",

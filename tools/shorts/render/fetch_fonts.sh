@@ -11,6 +11,13 @@ done
 # 版の中身が変わったら、書き出しの見た目も変わる。変わったことに気づけるように控える。
 (cd "$dir" && sha256sum MPLUSRounded1c-*.ttf)
 
+# 大きい字の「白・黒縁の揺れ」と「筆の拡大」の書体（Kaisei Tokumin ExtraBold、OFL）。
+# 参考のショート（HPJrXDpkfuo）の字形といちばん重なった（2026-10-16 の計測）。版を固定して確かめる
+kt="$dir/KaiseiTokumin-ExtraBold.ttf"
+[ -s "$kt" ] || curl -sSfL -o "$kt" \
+  https://raw.githubusercontent.com/google/fonts/main/ofl/kaiseitokumin/KaiseiTokumin-ExtraBold.ttf
+echo "bf44bb3e23cc703bfb19111833f78e651998d0a2b1863eff9e88cecb38a8bc53  $kt" | sha256sum -c -
+
 # 顔の見つけ役（faces.py）が使う YuNet（OpenCV Zoo、MIT）。git には入れない。
 # raw.githubusercontent.com は LFS の札（131バイト）しか返さないので、media の側から取る。
 # 中身が札でないことを、LFS の札に書かれた sha256 で確かめる。
