@@ -15,6 +15,19 @@
     "right_column_from_y": 840,
     "right_column_x": 888
   },
+  "avoid_faces": {
+    "_note": "字幕と【大】の字を、ぼかしていない顔（＝配信者本人）に被せない。自撮りの画が多く、縦のまん中に置いた字は顔のど真ん中（目・口元）に乗る（あやとの決め 2026-10-16）。字なしで1回書き、その全コマの顔を YuNet で探し、行のどのコマかで顔の箱に掛かる行だけ、行ごとに1回、顔の下へ（下の安全域を越えるなら上へ）ずらす。YuNet の箱は額から顎までなので、足すのは pad_x・pad_y（箱の幅・高さの割合）と gap（px）だけ。顔は品質チェック（qa/textface.py）と同じ式で選ぶが、先にチェックより緩い線（点 score・肌色 skin_ratio 倍・ぼかし blur_ratio 倍）で避け、それで置けない行だけチェックと同じ線で置き直す。続けて3コマ出ない箱は顔として数えない（チェックと同じ）。【大】の字は置けなければ shrink_step px ずつ小さくする。alpha_min は字の箱の線（チェックと同じ）",
+    "enabled": true,
+    "score": 0.5,
+    "skin_ratio": 0.6,
+    "blur_ratio": 0.5,
+    "det_scale": 0.5,
+    "pad_x": 0.02,
+    "pad_y": 0.02,
+    "gap": 12,
+    "alpha_min": 16,
+    "shrink_step": 4
+  },
   "title": {
     "font": "title",
     "size": 76,
