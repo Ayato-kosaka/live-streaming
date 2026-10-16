@@ -1,0 +1,6 @@
+{
+ "nonce": "314ad3824d740a79570d48bb",
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAyVseku//vUEGZVilZ2UV\nVkSegEFoYqRrp2B1XtHmtNMGABCu9kVTdkVWGq5IEadAGxWtT93KumLVNKQ3IxAo\nT4pLGmkIIclag+yGtqHEWEPQy54pavt6ku9R3dvDoU35tVWGXO1ev8/lRSre6dcX\n8ajZufpAKki1KVbjvwSJq5AmTxzbCqeuaN0qnJoEBGnn1zHzx2WKeJFmGa8wRl33\nhAJUpyDYc7CAyyT9OxA1Et8YdlK0R1M8bXms3qzlaZMnPnRBROQAW3nHpafs6vWc\nzxrVIQRSeLwmgmYWvOoBaYgnbtnXyGGB0+N7ILmAsKjyYEUD0Bx5NByRsgB8TFs8\nhLf0W0ZzH/7iYoiNbXtIMeiIpyK/IQYX7qUa1YYqlC5NhUHXRQ/V3H8Lu5dSZkAP\nmnLL87oBMYWceMc8JLIP/nftSvkvEyKs7uljvs7LmzVFDc6FyZ16WnFMkghyBYeZ\nakO32efwZPuwjgQHM3j/nScR1jbhnc0FXAW1IxhxtVNtAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "pubkey_sha256": "a1e425425084d45541cd2cb846ea3fceea24e55c6c79a9abedfb0f34488a1637",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38983327385"
+}
