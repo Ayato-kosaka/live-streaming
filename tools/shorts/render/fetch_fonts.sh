@@ -18,7 +18,7 @@ kt="$dir/KaiseiTokumin-ExtraBold.ttf"
   https://raw.githubusercontent.com/google/fonts/main/ofl/kaiseitokumin/KaiseiTokumin-ExtraBold.ttf
 echo "bf44bb3e23cc703bfb19111833f78e651998d0a2b1863eff9e88cecb38a8bc53  $kt" | sha256sum -c -
 
-# 顔の見つけ役（faces.py）が使う YuNet（OpenCV Zoo、MIT）。git には入れない。
+# 顔の見つけ役（face_scan.py）が使う YuNet（OpenCV Zoo、MIT）。git には入れない。
 # raw.githubusercontent.com は LFS の札（131バイト）しか返さないので、media の側から取る。
 # 中身が札でないことを、LFS の札に書かれた sha256 で確かめる。
 mdir="$(cd "$(dirname "$0")" && pwd)/models"

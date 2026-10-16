@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """顔を見つけて、ぼかしの箱を決める手伝いをする（決めるのは人。これは見落としを減らす道具）。
 
-    python3 tools/shorts/render/faces.py edit.json OUTDIR [--every 5] [--score 0.5]
-    python3 tools/shorts/render/faces.py --mp4 out.mp4 OUTDIR [--every 3]      # 書き出したものを見回る
+    python3 tools/shorts/render/face_scan.py edit.json OUTDIR [--every 5] [--score 0.5]
+    python3 tools/shorts/render/face_scan.py --mp4 out.mp4 OUTDIR [--every 3]      # 書き出したものを見回る
 
 - 指示書のカットごとに、元素材のコマを every コマおきに YuNet（OpenCV Zoo）に通す
 - 見つけた顔を、コマをまたいで「同じ人」の列（track）につなぐ。列ごとに、ぼかしに貼れる形

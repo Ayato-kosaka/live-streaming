@@ -26,7 +26,7 @@ ffmpeg のフィルタだと、寄りが整数の画素に丸められて震え�
 python3 tools/shorts/plan/build_edit.py shorts/videos/<id>/p1/spec_A.json \
   --clips <clips>/index.json --voice <voice>/lines.json --bgm <bgm>.mp3 \
   --overrides ov_A.json --blur blur_<id>.json --video <id> --out edit_A.json
-python3 tools/shorts/render/faces.py edit_A.json faces_A/          # 顔の見落としを探す（決めるのは人）
+python3 tools/shorts/render/face_scan.py edit_A.json faces_A/          # 顔の見落としを探す（決めるのは人）
 python3 tools/shorts/render/render.py edit_A.json --out A.mp4 --work A.work
 python3 tools/shorts/render/sheet.py A.mp4 A.work A_sheet.jpg       # 行ごとの真ん中の1コマを並べた1枚
 python3 tools/shorts/render/render.py edit_A.json --out A_bare.mp4 --work A_bare.work --no-text
@@ -234,7 +234,7 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
   切り落とせない素材には `"mode": "inpaint"`（周りから描き埋める）もある
 - **顔は、モザイクにしてからぼかす。** ぼかしだけだと目鼻の位置と肌の色が残り、知っている人には分かる。
   箱の短い辺を `cells` マスにして、マス目が見えなくなるまでぼかす。縁は外側にだけ広げて馴染ませ、角は丸める
-- 箱を決めるのは人。`faces.py` は見落としを減らす道具で、指示書の各カットを YuNet に通し、
+- 箱を決めるのは人。`face_scan.py` は見落としを減らす道具で、指示書の各カットを YuNet に通し、
   「同じ人」の列にまとめ、箱に覆われていない顔を赤で出す。看板・お菓子の箱・タイヤも顔と言うので、
   **絵を見て決める**。決めた箱は動画ごとの帳面（元動画の時刻で書く）に置き、`build_edit.py --blur` で
   どの案のカットにも当てる（同じ店・同じバスを3案が使い回しても、1回決めれば効く）
