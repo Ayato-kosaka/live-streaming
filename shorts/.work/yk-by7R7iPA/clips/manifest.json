@@ -1,0 +1,63 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "yk-by7R7iPA__clips",
+ "mode": "clips",
+ "dest": "yk-by7R7iPA/clips",
+ "video": "yk-by7R7iPA",
+ "channel": null,
+ "request": "workflow_dispatch",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 6,
+  "clips_ok": 6,
+  "clip_seconds": 449.0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 213491283,
+  "tar_gz": 213291541,
+  "encrypted": 213291552
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "a1245be72909b443ba0ec90a6f19e34914045a331498f509602129d9f0e7ab17"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "8312fce6e773472999a4c17153f691fdcb5339fab29a9dcea8ee648fc34a57bc"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "60f783e0780d1a7b69b3c910be583b8b5a8169762357177951e6d17362aabd77"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "1e95eca7f7cfbe14ecb59547a02a9b05aaebef5eb242e355207ceee731731072"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 24547872,
+   "sha256": "9485eeefaaed0240a4694a1b272d18689256e3212d4e6b45a952afd111f600c0"
+  }
+ ],
+ "hmac_sha256": "7ad8e788426c7250eaeef49fcbd891d9f5995cab45bc6602119c4022e154c996",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/38933847401",
+ "created_at": "2026-10-16T16:52:00+00:00"
+}
