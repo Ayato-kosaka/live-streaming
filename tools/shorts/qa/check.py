@@ -31,6 +31,7 @@ import container  # noqa: E402
 import faces  # noqa: E402
 import text  # noqa: E402
 import textdup  # noqa: E402
+import textface  # noqa: E402
 import video  # noqa: E402
 import watermark  # noqa: E402
 from common import FAIL, HUMAN, NA, PASS, SEVERITY, Ctx, ffprobe, load_plan, load_style, rate  # noqa: E402
@@ -45,6 +46,7 @@ CHECKS = {
     "safe_area": text.check_safe_area,
     "watermark": watermark.check,
     "faces": faces.check,
+    "text_on_face": textface.check,
     "black": video.check_black,
     "frozen": video.check_frozen,
     "silence": audio.check_silence,
@@ -52,7 +54,7 @@ CHECKS = {
     "original_audio": audio.check_original_audio,
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
-VIDEO_ONLY = ("safe_area", "watermark", "faces", "black", "frozen")
+VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "frozen")
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 

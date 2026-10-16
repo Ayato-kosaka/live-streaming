@@ -36,13 +36,20 @@ TRACK_GAP = 3            # 同じ所の顔が、この数の見本（コマ）�
 # 本物の顔（配信者・通りすがり 6人）は全部 0.78 以上、捨てたのは壁・看板・服だけだった。
 # 弱いところ: 青や緑の照明の下の顔は肌色に入らず、見逃す（README の「弱いところ」）
 SKIN_MIN = 0.25
+YUNET_SCORE = 0.6        # YuNet の点の線（書き出しの顔よけが、チェックと同じ線で選び直すときに読む）
 
 
-def detector(cv2):
-    """（名前, 1コマの白黒 → 箱の並び）。無ければ None。"""
+def detector(cv2, also: tuple = ()):
+    """（名前, 1コマの白黒 → 箱の並び）。無ければ None。
+
+    also: YuNet の重みを、ここで見つからないときに探す場所（字と顔の検査が、書き出しの道具の
+    `render/models/` を使う。顔の検査そのものは渡さないので、振る舞いは変わらない）。
+    """
     model = os.environ.get("SHORTS_QA_YUNET") or str(HERE / "models" / "face_detection_yunet_2023mar.onnx")
+    if not os.path.exists(model):
+        model = next((str(m) for m in also if os.path.exists(m)), model)
     if os.path.exists(model) and hasattr(cv2, "FaceDetectorYN"):
-        det = cv2.FaceDetectorYN.create(model, "", (320, 320), 0.6, 0.3, 5000)
+        det = cv2.FaceDetectorYN.create(model, "", (320, 320), YUNET_SCORE, 0.3, 5000)
 
         def run_yunet(bgr):
             h, w = bgr.shape[:2]

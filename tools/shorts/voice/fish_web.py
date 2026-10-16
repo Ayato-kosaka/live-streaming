@@ -5,6 +5,7 @@
                               [--budget-credits 4500] [--attempt-limit 2]
     python3 fish_web.py adopt --model <声のID> --key A/01 --text '<送った字>' --out ...   # 画面で手で作った分を記録に取り込む
     python3 fish_web.py state --model <声のID>        # ログイン・声・モデル・速度・残りのクレジットを見るだけ（作らない）
+    python3 fish_web.py backup                       # 作る前に、あやとの下書き（字と話者）を写す（残りのクレジットも出す）
     python3 fish_web.py restore --backup <下書きの写し.json>   # 入力欄を元の下書き（声と字）に戻す
 
 置き場所は EC2 の `~/cdp/`（ubuntu のホーム。`cdp.py` と並べる）。Chrome は `up("fish")`（`~/cdp-fish`）。
@@ -414,6 +415,34 @@ def cmd_state(a):
     print(json.dumps(st, ensure_ascii=False, indent=1))
 
 
+def cmd_backup(a):
+    """作る前に、あやとの下書き（入力欄の字と話者）を写す。
+
+    `?modelId=` を付けて開くと話者が替わってしまうので、付けずに開き、画面が読む
+    `GET /tts-draft` の返事をそのまま書く。中に利用者の ID などが入るので、置き場は
+    権限 700 のフォルダにして、表には話者の名前と字数だけ出す。戻し終えたら消す"""
+    os.makedirs(a.dir, exist_ok=True)
+    os.chmod(a.dir, 0o700)
+    t = fresh_tab()
+    t.call("Network.enable", maxPostDataSize=65536)
+    t.events.clear()
+    t.go("https://fish.audio/ja/app/text-to-speech/", wait=8)
+    bal = balance(t)
+    body = None
+    for e in t.events:
+        p = e.get("params", {})
+        if e.get("method") == "Network.responseReceived" and p["response"]["url"].split("?")[0] == "https://api.fish.audio/tts-draft":
+            body = body_of(t, p["requestId"]) or body
+    if not body:
+        raise SystemExit("下書き（GET /tts-draft）の返事が拾えない")
+    path = os.path.join(a.dir, f"draft_backup_{int(time.time())}.json")
+    open(path, "w", encoding="utf-8").write(body)
+    os.chmod(path, 0o600)
+    seg = (json.loads(body).get("segments") or [{}])[0]
+    print(json.dumps({"backup": path, "speaker": seg.get("speaker_title"), "text_chars": len(seg.get("text") or ""),
+                      "credits_balance": bal}, ensure_ascii=False))
+
+
 def cmd_restore(a):
     """入力欄を、写しておいた下書き（GET /tts-draft の返事）に戻す。
 
@@ -446,11 +475,13 @@ def main():
     d.add_argument("--out", required=True)
     s = sub.add_parser("state")
     s.add_argument("--model", required=True)
+    k = sub.add_parser("backup")
+    k.add_argument("--dir", default=f"{EC2_HOME}/voice/private")
     r = sub.add_parser("restore")
     r.add_argument("--model", default="", help="写しに話者が無いときだけ使う")
     r.add_argument("--backup", required=True)
     a = ap.parse_args()
-    {"gen": cmd_gen, "adopt": cmd_adopt, "state": cmd_state, "restore": cmd_restore}[a.cmd](a)
+    {"gen": cmd_gen, "adopt": cmd_adopt, "state": cmd_state, "backup": cmd_backup, "restore": cmd_restore}[a.cmd](a)
 
 
 if __name__ == "__main__":

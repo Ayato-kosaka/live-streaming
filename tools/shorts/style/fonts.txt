@@ -1,0 +1,46 @@
+# font_match.py に当てる候補の書体（google/fonts の中の道。すべて SIL OFL か Apache で、動画に焼いてよい）。
+# 2026-10-16 に HPJrXDpkfuo を測ったときの43本。和文が出せて、太い字・丸い字・筆の字・手書きを一通り含む。
+# 落としかたは README.md の「4. 書体を当てる」。行頭が # の行は読み飛ばす。
+ofl/chokokutai/Chokokutai-Regular.ttf
+ofl/darumadropone/DarumadropOne-Regular.ttf
+ofl/delagothicone/DelaGothicOne-Regular.ttf
+ofl/hachimarupop/HachiMaruPop-Regular.ttf
+ofl/hinamincho/HinaMincho-Regular.ttf
+ofl/kaiseidecol/KaiseiDecol-Bold.ttf
+ofl/kaiseiharunoumi/KaiseiHarunoUmi-Bold.ttf
+ofl/kaiseiopti/KaiseiOpti-Bold.ttf
+ofl/kaiseitokumin/KaiseiTokumin-ExtraBold.ttf
+ofl/kiwimaru/KiwiMaru-Medium.ttf
+ofl/kleeone/KleeOne-SemiBold.ttf
+apache/kosugimaru/KosugiMaru-Regular.ttf
+ofl/lineseedjp/LINESeedJP-ExtraBold.ttf
+ofl/mplus1/MPLUS1[wght].ttf
+ofl/mplus1p/MPLUS1p-Black.ttf
+ofl/mplus1p/MPLUS1p-ExtraBold.ttf
+ofl/mplusrounded1c/MPLUSRounded1c-Black.ttf
+ofl/mplusrounded1c/MPLUSRounded1c-Bold.ttf
+ofl/mplusrounded1c/MPLUSRounded1c-ExtraBold.ttf
+ofl/mochiypopone/MochiyPopOne-Regular.ttf
+ofl/mochiypoppone/MochiyPopPOne-Regular.ttf
+ofl/newtegomin/NewTegomin-Regular.ttf
+ofl/notosansjp/NotoSansJP[wght].ttf
+ofl/pottaone/PottaOne-Regular.ttf
+ofl/rampartone/RampartOne-Regular.ttf
+ofl/reggaeone/ReggaeOne-Regular.ttf
+ofl/rocknrollone/RocknRollOne-Regular.ttf
+ofl/shipporiantique/ShipporiAntique-Regular.ttf
+ofl/shipporiantiqueb1/ShipporiAntiqueB1-Regular.ttf
+ofl/stick/Stick-Regular.ttf
+ofl/trainone/TrainOne-Regular.ttf
+ofl/yomogi/Yomogi-Regular.ttf
+ofl/yujiboku/YujiBoku-Regular.ttf
+ofl/yujimai/YujiMai-Regular.ttf
+ofl/yujisyuku/YujiSyuku-Regular.ttf
+ofl/yuseimagic/YuseiMagic-Regular.ttf
+ofl/zenantique/ZenAntique-Regular.ttf
+ofl/zenantiquesoft/ZenAntiqueSoft-Regular.ttf
+ofl/zenkakugothicnew/ZenKakuGothicNew-Black.ttf
+ofl/zenkurenaido/ZenKurenaido-Regular.ttf
+ofl/zenmarugothic/ZenMaruGothic-Black.ttf
+ofl/zenmarugothic/ZenMaruGothic-Bold.ttf
+ofl/zenoldmincho/ZenOldMincho-Black.ttf

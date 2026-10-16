@@ -11,8 +11,9 @@
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**13の検査が全部 pass**。壊した1本ごとに、
-**壊したところを見る検査だけが落ち、ほかの12は pass のまま**であること。
+壊れていない1本（clean）は**14の検査が全部 pass**。壊した1本ごとに、
+**壊したところを見る検査だけが落ち、ほかの13は pass のまま**であること（字と顔の検査は字なしの版で
+しか測れないので、字なしの版を渡さない足では not-checkable が正しい）。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
 関係ない検査まで落ちるなら、検査が混ざっている。
 
@@ -30,6 +31,7 @@
 | 1〜3秒に PRISM Live の透かしを貼る | watermark | qa_video |
 | ぼかしていない顔を2秒貼る | faces（needs-human） | qa_video |
 | ぼかした顔を2秒貼る | どれも落ちない（検出はされ、ぼかし済みと判定されること） | qa_video |
+| 字なしの版の、1行目の字幕の下に、ぼかしていない顔を 1.3秒貼る（仕上がりは clean のまま） | text_on_face | qa_video |
 | 2秒を真っ黒にする | black | qa_video |
 | 2秒を止める | frozen | qa_video |
 | （動画ではなく1コマ）強い模様の隣の一色の地 | 透かしの守り（平らな地を測らない）を外すと 0.40 以上に化け、守りがあれば化けないこと | qa_video |
@@ -236,6 +238,9 @@ def style_copy(box: Path, name: str, **over) -> Path:
     """repo の様式の写し。x264 だけ速くする（検査は画質の細部を見ない）。over で1か所だけ変える。"""
     st = json.loads((RENDER / "style.json").read_text())
     st["encode"]["preset"] = "ultrafast"
+    # 顔よけ（字なしで1回書いて顔を探す）は切る。合成素材（testsrc2）に顔は無く、CI には YuNet の重みも無い。
+    # 切ると work に no_text.mp4 が書かれないので、字なしの版を渡す足は今までどおり clean と safe_low だけ
+    st.setdefault("avoid_faces", {})["enabled"] = False
     for path, val in over.items():
         d = st
         keys = path.split("__")
@@ -463,9 +468,13 @@ CASES = {
     "watermark": ("qa_video", "watermark", "fail"),
     "face": ("qa_video", "faces", "needs-human"),
     "face_blurred": ("qa_video", None, None),
+    "text_face": ("qa_video", "text_on_face", "fail"),
     "black": ("qa_video", "black", "fail"),
     "frozen": ("qa_video", "frozen", "fail"),
 }
+
+
+PLATE_ONLY = ("text_on_face",)   # 字なしの版（plate）が無ければ not-checkable になる検査
 
 
 def run(half: str, keep: Path | None = None) -> int:
@@ -480,7 +489,7 @@ def run(half: str, keep: Path | None = None) -> int:
         return 2
     import check as C
     import numpy as np
-    from common import PASS, video_md5
+    from common import NA, PASS, video_md5
 
     names = [n for n, (h, _, _) in CASES.items() if half == "all" or h in (half, "both")]
     t_all = time.monotonic()
@@ -531,7 +540,7 @@ def run(half: str, keep: Path | None = None) -> int:
             "source_loud": dict(voices=voices, style=st, bgm=bgm, cut_audio_db=0.0),
         }
         # 字なしの書き出し（plate）は、字の置き場を画素の差で見る足（safe_area の2つ目の測り）に使う
-        want_jobs = [j for j in jobs if j in names or (j == "plate" and "safe_low" in names)]
+        want_jobs = [j for j in jobs if j in names or (j == "plate" and ({"safe_low", "text_face"} & set(names)))]
         made, raw_loud = {}, {}
         t0 = time.monotonic()
         for name in want_jobs:
@@ -576,6 +585,16 @@ def run(half: str, keep: Path | None = None) -> int:
                 lossless(clean, box / f"{nm}.mp4", inputs=["-i", str(fp)],
                          fc="[0:v][1:v]overlay=400:1300:enable='between(t,3,5)'[v]")
                 post[nm] = box / f"{nm}.mp4"
+        # 字と顔: 字なしの版の、1行目の字幕の下に、ぼかしていない顔を貼る（仕上がりの mp4 は clean のまま）。
+        # 字と顔の検査は字なしの版で顔を探すので、これで「字が顔に被っている」になる。仕上がりに顔は無いので
+        # 顔の検査は落ちず、字なしの版との差は安全領域の内側だけなので safe_area も落ちない
+        text_face_plate = None
+        if "text_face" in names and plate is not None:
+            fp = face_png(box, 0)
+            text_face_plate = box / "plate_text_face.mp4"
+            lossless(plate, text_face_plate, inputs=["-i", str(fp)],
+                     fc="[0:v][1:v]overlay=420:830:enable='between(t,0.3,1.6)'[v]")
+            post["text_face"] = clean
         # 黒・止めるのは、1行目と2行目の字幕の間（字幕を消さない。消すと字の検査まで落ちる）
         if "black" in names:
             lossless(clean, box / "black.mp4",
@@ -596,7 +615,7 @@ def run(half: str, keep: Path | None = None) -> int:
             _, target, want = CASES[name]
             mp4, work = inputs[name]
             # 字なしとの差は、clean と字の置き場を変えた版で当てる（ほかの版は、時間割の絵で当てる足だけ）
-            pl = plate if name in ("clean", "safe_low") else None
+            pl = plate if name in ("clean", "safe_low") else (text_face_plate if name == "text_face" else None)
             t0 = time.monotonic()
             ctx = C.make_ctx(mp4, work, plate=pl, crops=box / f"{name}.qa")
             vkey = (video_md5(mp4), overlay_key(ctx.plan), str(pl))
@@ -614,17 +633,20 @@ def run(half: str, keep: Path | None = None) -> int:
             if len(got) != len(C.CHECKS):
                 wrong.append(f"検査が {len(got)} 本しか回っていない")
             for cid, s in got.items():
-                expect = want if cid == target else PASS
+                # 字と顔の検査は字なしの版でしか測れない。渡していない足では not-checkable が正しい
+                expect = want if cid == target else (NA if cid in PLATE_ONLY and pl is None else PASS)
                 if s != expect:
                     wrong.append(f"{cid}: {s}（欲しいのは {expect}）")
             if wrong:
                 bad.append((name, wrong))
-            failed = [cid for cid, s in got.items() if s != PASS]
+            # 字なしの版を渡していない足の not-checkable（思ったとおり）は、落ちた検査に並べない
+            failed = [cid for cid, s in got.items() if s != PASS and not (cid in PLATE_ONLY and pl is None and s == NA)]
             rows.append(("○" if not wrong else "✕", name, target or "（なし）", ", ".join(failed) or "（なし）",
                          round(time.monotonic() - t0, 1), "絵は clean と同じ" if reuse else ""))
             if keep:
                 (box / f"{name}.qa.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
 
+        extra = []
         # ---- 分母: 「0件で通った」を通ったと読まない（docs/island-standards.md §15）
         cl = {r["id"]: r for r in reports["clean"]["checks"]}
         dur = N / FPS
@@ -640,10 +662,16 @@ def run(half: str, keep: Path | None = None) -> int:
         if plate is not None:
             floor.append(("safe_area が字なしと引いたコマ",
                           cl["safe_area"]["measured"].get("plate", {}).get("frames", 0), N // 7))
+            # 字が出ているコマ（3行で 4.4秒ぶん）は全部見ること
+            floor.append(("text_on_face が見たコマ", cl["text_on_face"]["measured"].get("frames", 0),
+                          int(sum(sec for _, sec, _ in LINES) * FPS)))
+        if "text_face" in reports:
+            tf = {r["id"]: r for r in reports["text_face"]["checks"]}["text_on_face"]["measured"]
+            extra.append(f"字と顔: 貼った顔に被った行 {len(tf.get('lines_on_face', []))}・顔のあるコマ {tf.get('frames_with_face', 0)}"
+                         f"（1〜2コマで捨てた箱 {tf.get('dropped_short', 0)}）")
         for what, got_n, need_n in floor:
             if got_n < need_n:
                 bad.append(("clean", [f"{what} が {got_n}（{need_n} 以上のはず）"]))
-        extra = []
         # render/verify.py（書き出しの道具の確かめ）の字幕の出入りの照合も、同じ clean で回り続けること
         sys.path.insert(0, str(RENDER))
         import verify
@@ -697,7 +725,7 @@ def run(half: str, keep: Path | None = None) -> int:
                 for w in ws:
                     print(f"  {name}: {w}")
             return 1
-        print(f"○ {len(names)}通り、思ったとおり（clean は13本とも pass、壊した版は壊したところだけが落ちる）")
+        print(f"○ {len(names)}通り、思ったとおり（clean は{len(C.CHECKS)}本とも pass、壊した版は壊したところだけが落ちる）")
         return 0
     finally:
         if tmp is not None:

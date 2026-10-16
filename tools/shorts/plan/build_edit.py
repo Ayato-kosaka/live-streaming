@@ -277,6 +277,18 @@ def fmt(t: float) -> str:
     return f"{int(h)}:{int(m):02d}:{s:04.1f}"
 
 
+def fmt_exact(t: float) -> str:
+    """コマの境目まで落とさない時刻（「同上」の続きを、前のカットの次のコマから取るため）。"""
+    h, r = divmod(t, 3600)
+    m, s = divmod(r, 60)
+    return f"{int(h)}:{int(m):02d}:{s:09.6f}"
+
+
+def spoken_chars(text: str) -> int:
+    """喋る速さの物差しにする字数（句読点・記号・空白を数えない。長音の「ー」は数える）。"""
+    return sum(1 for ch in unicodedata.normalize("NFKC", text) if unicodedata.category(ch)[0] in "LN")
+
+
 # ---------------------------------------------------------------- 組み立て
 
 def narration_frames(lines: list[dict], narr: dict, work: Path) -> list[tuple[int, list[tuple[int, int]]]]:
@@ -373,9 +385,48 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         lines = [{"text": r["line"]} for r in rows]
     work = Path(args.work)
     measured = narration_frames(lines, narr, work)
+    speech = None
+    cps = spec.get("narration_cps_target")
+    if cps:
+        # 喋る速さを、伸びているショートの速さ（毎秒 cps 字）に揃える。倍率は動画に1つ
+        # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る
+        chars = sum(spoken_chars(ln["text"]) for ln in lines)
+        dur = sum(vf for vf, _ in measured) / FPS
+        raw = dur / (chars / cps)
+        tempo = min(max(raw, 1.0), args.max_tempo)
+        if raw > args.max_tempo:
+            print(f"  注意: 毎秒 {cps} 字に要る倍率 {raw:.2f} は上限 {args.max_tempo} を越えるので、上限で止めた",
+                  file=sys.stderr)
+        narr["tempo"] = round(tempo, 3)
+        if args.max_pause:
+            narr["max_pause_s"] = args.max_pause
+        measured = narration_frames(lines, narr, work)
+        voiced = sum(vf for vf, _ in measured) / FPS
+        for _ in range(2):
+            # 間を縮めたぶん、声の間の速さが目標を越える。倍率を下げて合わせ直す（2回でほぼ止まる）
+            want = chars / cps
+            if abs(voiced - want) < 1.0 / FPS * len(lines) / 2:
+                break
+            narr["tempo"] = round(min(max(narr["tempo"] * voiced / want, 1.0), args.max_tempo), 3)
+            measured = narration_frames(lines, narr, work)
+            voiced = sum(vf for vf, _ in measured) / FPS
+        speech = {"chars": chars, "raw_voice_s": round(dur, 2), "tempo": narr["tempo"], "target_cps": cps,
+                  "voiced_s": round(voiced, 2), "cps_voiced": round(chars / voiced, 2)}
 
     title, _ = parse_telop(rows[0].get("telop", ""))
-    title = ov.get("title") or title or spec["title"]
+    title = ov.get("title") or title or spec.get("title_card") or spec["title"]
+    card_row = next((i for i, r in enumerate(rows) if r.get("card")), None) if spec.get("title_card") else None
+    if card_row is not None:
+        # 題の札がその行の字幕を兼ねる（札と字幕に同じ言葉を2回出さない）
+        lines[card_row]["caption"] = ""
+    sys.path.insert(0, str(RENDER))
+    import render as R  # noqa: E402
+    big_st = R.load_style(args.style, Path(args.out).resolve().parent)["big"]
+    big_order, big_looks = big_st["order"], big_st["looks"]
+    n_big = 0
+    notes = []
+    prev_end: float | None = None  # 1つ前の行の最後のカットが、元動画のどこで終わったか（「同上」の続き）
+    prev_spec: dict = {}
 
     sources: dict[str, dict] = {}
     cuts, telops, meta_rows = [], [], []
@@ -383,10 +434,33 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     for i, (r, ln, (vf, pauses)) in enumerate(zip(rows, lines, measured)):
         ro = rows_ov.get(str(i), {})
         hold = float(ro.get("hold", r.get("hold", 0)))
-        n = vf + round((GAP_S + hold) * FPS)
+        n = vf + round((args.gap + hold) * FPS)
         if i == len(rows) - 1:
             n += round(args.tail * FPS)
         ln["at"] = t
+        if r.get("big") and i != card_row:
+            # 【大】の行は字幕そのものを大きく。見た目は spec の big_style（様式の big.looks の名前）。
+            # 書いていなければ様式の order の順に替える（同じ形が続くと目が慣れる）
+            ln["big"] = r.get("big_style") or big_order[n_big % len(big_order)]
+            if ln["big"] not in big_looks:
+                sys.exit(f"{i}行目: big_style {ln['big']!r} は様式の big.looks に無い（{', '.join(big_looks)}）")
+            n_big += 1
+            pre = int(big_looks[ln["big"]].get("pre_roll_frames", 0))
+            if pre:
+                # 字が薄い所から現れる見た目は、出きってから声を出す（声の頭で字が読めないと、字幕と声がずれる）。
+                # 画の切り替えと字の出はじめは行の頭、声はそのあと pre コマ。オチの前のひと呼吸になる
+                ln["caption_from"] = t
+                ln["at"] = t + pre
+                n += pre
+        if r.get("face_overlap_ok"):
+            # 顔を避けきれない行の例外（顔が画面いっぱいで、上にも下にも置けない）。重なってよいコマ数と理由。
+            # 品質チェックは、書いたコマ数を超えたら落とす（例外が黙って広がらないように）
+            fo = r["face_overlap_ok"]
+            if not isinstance(fo, dict) or int(fo.get("frames", -1)) < 0 or not fo.get("why"):
+                sys.exit(f"{i}行目: face_overlap_ok は {{\"frames\": 重なってよいコマ数, \"why\": 理由}} で書く")
+            ln["face_overlap_ok"] = {"frames": int(fo["frames"]), "why": str(fo["why"])}
+        if r.get("corner_note"):
+            notes.append({"from": t, "to": t + n, "text": r["corner_note"]})
         _, center = parse_telop(r.get("telop", ""))
         center = ro.get("telop", center)
         tel_meta = None
@@ -406,7 +480,23 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 center = None
         elif ro.get("highlight"):
             ln["highlight"] = ro["highlight"]
-        specs = ro.get("cuts") or [{"t": s} for s in r["src"]]
+        specs = ro.get("cuts")
+        if not specs and r.get("same_as_prev") and prev_end is not None:
+            # 「同上」の行は前の行の画をそのまま続ける（切れ目を作らない。元動画の続きのコマから）。
+            # 寄り・明るさ・札も引き継ぐ（引き継がないと、つなぎ目で寄りが外れて隠していた顔が出る）
+            cont = {"t": fmt_exact(prev_end), "note": "前の行の画の続き"}
+            for k in ("gamma", "inset", "focus_x", "focus_y", "audio_db"):
+                if k in prev_spec:
+                    cont[k] = prev_spec[k]
+            if prev_spec.get("zoom"):
+                z = dict(prev_spec["zoom"])
+                z["from"] = z.get("to", z.get("from", 1.0))
+                cont["zoom"] = z
+            specs = [cont]
+        elif specs and specs[0].get("continue") and prev_end is not None:
+            # overrides で「前の行の画の続き」を選んだとき（spec は別の画を指しているが、続けたほうが良い所）
+            specs = [{**specs[0], "t": fmt_exact(prev_end)}] + specs[1:]
+        specs = specs or [{"t": s} for s in r["src"]]
         zooms = zoom_segments(r.get("fx", ""), len(specs))
         # len（秒）を書いたカットはその長さで固定し、残りを書いていないカットで分ける
         fixed = {k: round(float(c["len"]) * FPS) for k, c in enumerate(specs) if c.get("len")}
@@ -473,6 +563,8 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 cut["note"] = cs["note"]  # なぜこの画にしたか（人が直すときに読む。書き出しは読まない）
             cuts.append(cut)
             row_cuts.append(f"{fmt(t0)}+{m / FPS:.2f}s")
+        prev_end = clip["start"] + cuts[-1]["out"] / FPS
+        prev_spec = specs[-1]
         if center:
             # テロップを出すカット。既定は行ぜんぶ。inset（札で見せる画）のカットとは同じ帯を取り合うので、
             # 既定ではそこを外す。overrides の telop_cuts で選べる
@@ -485,14 +577,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                     tp["parts"] = telop_parts(center, ln["text"], t, vf)
                 telops.append(tp)
         meta_rows.append({"row": i, "from": t, "frames": n, "voice_frames": vf, "cuts": row_cuts,
-                          "line": ln["text"], "telop": tel_meta})
+                          "line": ln["text"], "telop": tel_meta,
+                          **({"big": ln["big"]} if ln.get("big") else {}),
+                          **({"same_as_prev": True} if r.get("same_as_prev") else {})})
         t += n
 
     edit = {
         "_note": f"build_edit.py が {Path(args.spec).name} から組んだ。人が直すのは overrides か、この指示書の数字",
         "version": 2,
         "id": f"{args.video}-{spec['id']}" if args.video else spec["id"],
-        "style": "style.json",
+        "style": args.style,
         "sources": sources,
         "cuts": cuts,
         "title": {"text": title},
@@ -501,8 +595,23 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         "meta": {"spec": str(Path(args.spec).resolve()), "fps": FPS, "frames": t, "seconds": round(t / FPS, 3),
                  "rows": meta_rows},
     }
+    if card_row is not None:
+        # 題の札は頭の title_card_seconds 秒まで（ずっと出すと、字幕と画の場所を食う）。様式の
+        # title_card.end_with_line なら、書き出しが「題の読み上げが終わるコマ」でもっと早く消す
+        edit["title"] = {"text": title, "look": "card", "from": 0, "line": card_row,
+                         "to": round(float(spec.get("title_card_seconds", 4.0)) * FPS)}
+    if notes:
+        edit["notes"] = notes
+    if speech:
+        speech["video_s"] = round(t / FPS, 2)
+        speech["cps_video"] = round(speech["chars"] / (t / FPS), 2)
+        edit["meta"]["speech"] = speech
+    audio = {k: v for k, v in (("duck_db", args.duck_db),) if v is not None}
+    if audio:
+        edit["audio"] = audio
     if args.bgm:
-        edit["bgm"] = {"path": str(Path(args.bgm).resolve()), "db": float(ov.get("bgm_db", 0)),
+        db_ = args.bgm_db if args.bgm_db is not None else float(ov.get("bgm_db", 0))
+        edit["bgm"] = {"path": str(Path(args.bgm).resolve()), "db": db_,
                        **({"start_s": ov["bgm_start_s"]} if "bgm_start_s" in ov else {})}
     return edit
 
@@ -520,6 +629,16 @@ def main() -> int:
     ap.add_argument("--speed", type=float, default=1.15, help="open_jtalk の速さ（下書きのとき）")
     ap.add_argument("--tail", type=float, default=0.5,
                     help="最後の行に足す秒。声が終わってから絵を少し見せて終わる（0.25秒の間と合わせて約0.75秒）")
+    ap.add_argument("--style", default="style.json",
+                    help="様式の JSON（tools/shorts/render/ の名前か、指示書からの相対）。書体・字の見た目・動き・音の大きさ")
+    ap.add_argument("--gap", type=float, default=GAP_S,
+                    help="行と行の間の秒（声が終わってから次の行まで）。伸びているショートは 0.1〜0.15 秒")
+    ap.add_argument("--max-tempo", type=float, default=2.2,
+                    help="spec の narration_cps_target に合わせて声を速くするときの、倍率の上限")
+    ap.add_argument("--max-pause", type=float,
+                    help="行の中の間をこの秒数までに縮める（速めたあとの時間。伸びているショートはほとんど間を置かない）")
+    ap.add_argument("--bgm-db", type=float, help="BGM の大きさの上げ下げ（dB。既定は overrides の bgm_db か 0）")
+    ap.add_argument("--duck-db", type=float, help="ナレーションの間に BGM を下げる量（dB。既定は様式の duck_db）")
     ap.add_argument("--video", help="指示書の id の頭（動画 ID）")
     ap.add_argument("--work", help="声の測りの置き場（既定: 出力の横に <名前>.narr）")
     a = ap.parse_args()
@@ -532,7 +651,8 @@ def main() -> int:
     a.out.write_text(json.dumps(edit, ensure_ascii=False, indent=1) + "\n")
     print(json.dumps({"out": str(a.out), "rows": len(spec["rows"]), "cuts": len(edit["cuts"]),
                       "frames": edit["meta"]["frames"], "seconds": edit["meta"]["seconds"],
-                      "narration": edit["narration"]["engine"]}, ensure_ascii=False))
+                      "narration": edit["narration"]["engine"], **edit["meta"].get("speech", {})},
+                     ensure_ascii=False))
     return 0
 
 

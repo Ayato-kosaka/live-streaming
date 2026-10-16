@@ -69,7 +69,8 @@
    "visual": "揚げ始めたフライヤー",
    "pic_note": "揚げ始めたフライヤー（0:53:02）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "shake_white"
   },
   {
    "line": "出発まで、あと25分やで。",
@@ -124,7 +125,8 @@
    "visual": "挟む手元",
    "pic_note": "挟む手元（0:56:40）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "brush_zoom"
   },
   {
    "line": "揚げたてポテトに赤いソースで、完成。",
@@ -234,7 +236,8 @@
    "visual": "窓際の1人席に座る",
    "pic_note": "窓際の1人席に座る（1:09:50）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "glow_pink"
   },
   {
    "line": "あと一歩遅かったら、知らん人と相席やったわ。",
@@ -245,7 +248,11 @@
    "visual": "ほっとした顔",
    "pic_note": "ほっとした顔（1:10:00）",
    "big": false,
-   "card": false
+   "card": false,
+   "face_overlap_ok": {
+    "frames": 11,
+    "why": "バスの中の近い自撮りで、行の間に顔が画面の縦いっぱいに動く（y 124〜1228）。安全域（360〜1248）の中に顔に掛からない置き場が無く、顎の下が最も重ならない"
+   }
   },
   {
    "line": "正直もうちょいええバス想像してたけど、座れたら勝ち。",
@@ -256,7 +263,11 @@
    "visual": "親指を立てる",
    "pic_note": "親指を立てる（1:10:05）",
    "big": false,
-   "card": false
+   "card": false,
+   "face_overlap_ok": {
+    "frames": 3,
+    "why": "バスの中の近い自撮りで、行の間に顔が画面の縦いっぱいに動く（y 124〜1228）。安全域（360〜1248）の中に顔に掛からない置き場が無く、顎の下が最も重ならない"
+   }
   },
   {
    "line": "北マケドニアまで、あと4時間。",

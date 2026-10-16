@@ -69,7 +69,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "shake_red"
   },
   {
    "line": "来た！……けど、1Aって書いてある。",
@@ -135,7 +136,8 @@
    "visual": "黄色いバスが止まる",
    "pic_note": "黄色いバスが止まる（0:16:02）",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "shake_white"
   },
   {
    "line": "……ドア開かへん。え、こっち？",
@@ -179,7 +181,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": true,
-   "card": false
+   "card": false,
+   "big_style": "brush_zoom"
   },
   {
    "line": "お金渡したら、紙のきっぷくれるねん。",

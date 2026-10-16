@@ -45,6 +45,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import textlook as TL  # noqa: E402
+
 HERE = Path(__file__).resolve().parent
 SR = 48000  # 音声のサンプリング周波数。ffmpeg も open_jtalk もこれで揃える
 
@@ -82,19 +85,34 @@ def probe(path: Path) -> dict:
 
 # ---------------------------------------------------------------- 読み込み
 
+def deep_merge(a: dict, b: dict) -> dict:
+    """b を a に重ねる（入れ子の dict は中まで。ほかは b で置き換える）。"""
+    out = dict(a)
+    for k, v in b.items():
+        out[k] = deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
+def load_style(ref: str, base: Path) -> dict:
+    """様式の JSON。`"extends": "style.json"` があれば、その様式に重ねる（参考の動画ごとの様式を差分だけで書く）。"""
+    path = base / ref
+    if not path.exists():
+        path = HERE / ref
+    st = json.loads(path.read_text())
+    parent = st.pop("extends", None)
+    return deep_merge(load_style(parent, path.parent), st) if parent else st
+
+
 def load(edit_path: Path) -> tuple[dict, dict, Path]:
     edit = json.loads(edit_path.read_text())
     base = edit_path.resolve().parent
-    style_ref = edit.get("style", "style.json")
-    style_path = base / style_ref
-    if not style_path.exists():
-        style_path = HERE / style_ref
-    style = json.loads(style_path.read_text())
+    style = load_style(edit.get("style", "style.json"), base)
     return edit, style, base
 
 
 def font_path(style: dict, key: str) -> Path:
-    name = style["fonts"][key]
+    """書体。様式の fonts の名前か、書体のファイル名そのもの（fonts/ か SHORTS_FONTS_DIR に置く）。"""
+    name = style["fonts"].get(key, key)
     for d in [os.environ.get("SHORTS_FONTS_DIR"), HERE / "fonts"]:
         if d and (Path(d) / name).exists():
             return Path(d) / name
@@ -158,14 +176,96 @@ def trimmed_wav(src: Path, out: Path) -> Path:
     return write_wav(trim_voice(x)[:, None], out)
 
 
+def atempo_chain(tempo: float) -> str:
+    """速さ tempo 倍の atempo（音の高さは変えない）。1段 2.0 倍までに、同じ倍率で割って重ねる
+    （2.2 倍を 2.0 × 1.1 にすると、2.0 の段で崩れが目立つ。1.483 × 1.483 のほうが滑らか）。"""
+    n = max(1, math.ceil(math.log(tempo) / math.log(2.0) - 1e-9))
+    step = tempo ** (1.0 / n)
+    return ",".join(f"atempo={step:.6f}" for _ in range(n))
+
+
+def compress_pauses(x: np.ndarray, max_s: float, rel_db: float = -35.0) -> np.ndarray:
+    """行の中の無音（その行のいちばん大きい所から rel_db より小さい 10ms が続く所）を max_s 秒までに縮める。
+
+    縮めるのは間の真ん中だけ（前後 max_s/2 ずつは残す）。つなぎ目は 5ms で重ねる（無音どうしなので跡は出ない）。
+    """
+    w = SR // 100
+    k = len(x) // w
+    if k < 3:
+        return x
+    r = np.sqrt(np.mean(x[:k * w].reshape(k, w).astype(np.float64) ** 2, axis=1))
+    quiet = r < r.max() * db(rel_db)
+    keep = int(round(max_s * 100))
+    cuts, s = [], None
+    for j, q in enumerate(list(quiet) + [False]):
+        if q and s is None:
+            s = j
+        elif not q and s is not None:
+            if s > 0 and j < k and j - s > keep:
+                a = (s + keep // 2) * w
+                b = (j - (keep - keep // 2)) * w
+                cuts.append((a, b))
+            s = None
+    if not cuts:
+        return x
+    xf = int(SR * 0.005)
+    out, pos = [], 0
+    for a, b in cuts:
+        seg = x[pos:a].astype(np.float32).copy()
+        nxt = x[b:b + xf].astype(np.float32)
+        n = min(xf, len(seg), len(nxt))
+        if n:
+            ramp = np.linspace(0, 1, n, dtype=np.float32)
+            seg[-n:] = seg[-n:] * (1 - ramp) + nxt[:n] * ramp
+        out.append(seg)
+        pos = b + n
+    out.append(x[pos:].astype(np.float32))
+    return np.concatenate(out)
+
+
+def tempo_wav(src: Path, tempo: float, work: Path, max_pause: float | None = None) -> Path:
+    """詰めた声 src を tempo 倍の速さにして、もう一度頭と尻を詰める（字幕の出だしの物差しを保つ）。
+
+    1本の動画の中では全行を同じ倍率にする（行ごとに変えると、行の間で喋る速さが揺れる）。
+    max_pause があれば、行の中の間もその秒数までに縮める（伸びているショートはほとんど間を置かない）。
+    """
+    key = hashlib.sha256(src.read_bytes() + f"tempo|{tempo:.4f}|{max_pause}|{TRIM_VER}".encode()).hexdigest()[:16]
+    out = work / "narration" / f"{key}.wav"
+    if out.exists():
+        return out
+    if abs(tempo - 1.0) < 1e-6:
+        x = decode_audio(src, 1)[:, 0]
+    else:
+        raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(src), "-af",
+                              atempo_chain(tempo), "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
+                             check=True, capture_output=True).stdout
+        x = np.frombuffer(raw, dtype="<f4")
+    x = trim_voice(x)
+    if max_pause:
+        x = compress_pauses(x, float(max_pause))
+    return write_wav(x[:, None], out)
+
+
 def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     """1行ぶんのナレーションの wav（48kHz・1ch・頭と尻の無音を詰めたもの）を返す。
 
     - `audio`: 行ごとの声のファイル（Fish Audio で作ったもの）。詰めて使う。`engine: "files"` の本番
     - `file`: 詰めずにそのまま使う（人が録った声など。頭の間も演出として残したいとき）
     - どちらも無ければ open_jtalk で読ませる（尺の下書き用。`tts_text` があれば読みはそちら）
+    - `narration.tempo`（1 より大きい）があれば、詰めたあと音の高さを変えずにその倍率で速くする
+    - `narration.max_pause_s` があれば、行の中の間をその秒数までに縮める（速めたあとの時間で）
     中身と処理が同じなら作り直さない。
     """
+    tempo = float(narr.get("tempo") or 1.0)
+    mp = narr.get("max_pause_s")
+    out = narration_wav_raw(line, narr, base, work)
+    if line.get("file") or (abs(tempo - 1.0) < 1e-6 and not mp):
+        return out
+    return tempo_wav(out, tempo, work, mp)
+
+
+def narration_wav_raw(line: dict, narr: dict, base: Path, work: Path) -> Path:
+    """narration_wav の、速さを変える前の段。"""
     if line.get("file"):
         return resolve(base, line["file"])
     engine = narr.get("engine", "open_jtalk")
@@ -401,55 +501,12 @@ def highlight_marks(lines: list[str], phrases: list[str]) -> list[list[bool]]:
 
 
 def card(lines: list[str], st: dict, font: ImageFont.FreeTypeFont, hl: list[str] | None = None) -> Image.Image:
-    """角丸の箱に、行ごとに中央揃えで字を置いた絵（RGBA、箱ぶんの大きさ）。箱の濃さが 0 なら字だけ。
+    """行ごとに中央揃えで字を置いた絵（RGBA）。見た目は様式の区画 st（の look）どおり（textlook.py）。
 
-    hl があれば、その言葉だけタイトルの箱と同じ黄色にし、少し大きくする（数字・値段を目に入れる）。
+    hl があれば、その言葉だけ強調の色にし、少し大きくする（数字・値段を目に入れる）。
     大きくして max_width を越える行が出るなら、色だけ変える。
     """
-    stroke = st.get("stroke", 0)
-    marks = highlight_marks(lines, hl) if hl else [[False] * len(ln) for ln in lines]
-    scale = st.get("highlight_scale", 1.0) if any(any(m) for m in marks) else 1.0
-    path = getattr(font, "path", None)
-    big = ImageFont.truetype(path, round(font.size * scale)) if scale != 1.0 and path else font
-
-    def runs(ln, mk, f_big):
-        out, k = [], 0
-        while k < len(ln):
-            j = k
-            while j < len(ln) and mk[j] == mk[k]:
-                j += 1
-            out.append((ln[k:j], f_big if mk[k] else font, mk[k]))
-            k = j
-        return out
-
-    def measure(f_big):
-        rs = [runs(ln, mk, f_big) for ln, mk in zip(lines, marks)]
-        return rs, [sum(f.getlength(t) for t, f, _ in r) for r in rs]
-
-    rows, widths = measure(big)
-    if big is not font and max(widths) > st["max_width"] - 2 * st["pad_x"] - 2 * stroke:
-        big = font
-        rows, widths = measure(big)
-    asc = max(font.getmetrics()[0], big.getmetrics()[0])
-    desc = max(font.getmetrics()[1], big.getmetrics()[1])
-    line_h = asc + desc
-    w = math.ceil(max(widths)) + 2 * st["pad_x"] + 2 * stroke
-    h = len(lines) * line_h + (len(lines) - 1) * st["line_gap"] + 2 * st["pad_y"] + 2 * stroke
-    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    if st.get("bg_alpha", 1.0) > 0:
-        d.rounded_rectangle([0, 0, w - 1, h - 1], radius=st["radius"],
-                            fill=hex_rgba(st["bg"], st.get("bg_alpha", 1.0)))
-    y = st["pad_y"] + stroke
-    hl_color = hex_rgba(st.get("highlight_color", st["color"]))
-    for r, width in zip(rows, widths):
-        x = (w - width) / 2
-        for t, f, on in r:
-            d.text((x, y + asc), t, font=f, anchor="ls", fill=hl_color if on else hex_rgba(st["color"]),
-                   stroke_width=stroke, stroke_fill=hex_rgba(st.get("stroke_color", "#000000")))
-            x += f.getlength(t)
-        y += line_h + st["line_gap"]
-    return img
+    return TL.text_img(lines, TL.look_of(st), font, highlight_marks(lines, hl) if hl else None, st.get("max_width"))
 
 
 _RUN = re.compile(r"[0-9０-９][0-9０-９,.]*|[^0-9０-９]+")
@@ -616,7 +673,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     cap_font = ImageFont.truetype(str(font_path(style, cap_st["font"])), cap_st["size"])
     inner = cap_st["max_width"] - 2 * cap_st["pad_x"] - 2 * cap_st.get("stroke", 0)
     lines, captions = [], []
-    starts = [ln["at"] for ln in narr.get("lines", [])] + [total]
+    # 字幕の出はじめ（ふつうは声の頭。caption_from があればそこ。前の行の字幕はそこまで）
+    starts = [ln.get("caption_from", ln["at"]) for ln in narr.get("lines", [])] + [total]
     for i, ln in enumerate(narr.get("lines", [])):
         wav = narration_wav(ln, narr, base, work)
         x = decode_audio(wav, 1)[:, 0]
@@ -628,14 +686,16 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         text = ln.get("caption", ln["text"])
         if text == "":
             continue
-        pages = paginate(text, cap_font, inner, cap_st["max_lines"])
+        # 【大】の行は字幕そのものを大きく出す（1枚。折り返しと大きさは layout が置き場に合わせて決める）
+        big = ln.get("big")
+        pages = [[text]] if big else paginate(text, cap_font, inner, cap_st["max_lines"])
         end = min(ln["at"] + frames + cap_st.get("hold_frames", 0), starts[i + 1], total)
         # 次の行がすぐ（bridge_frames 以内）なら、次の行の頭まで出しておく。行の頭はカットの切れ目なので、
         # 字幕が消えるのと画が変わるのが同じコマになる（7コマだけ字幕が消えてまた出る、のちらつきも無くなる）
         nxt = starts[i + 1]
         if ln["at"] + frames <= nxt <= min(total, ln["at"] + frames + cap_st.get("bridge_frames", 0)):
             end = nxt
-        bounds = [ln["at"]]
+        bounds = [starts[i]]
         if len(pages) > 1:
             # 字数の比で見当をつけ、いちばん近い「声の間のあと、次に声が出るコマ」に合わせる
             weights = [reading_weight("".join(pg)) for pg in pages]
@@ -656,19 +716,45 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         for k, pg in enumerate(pages):
             # line: 何行目のナレーションの字幕か（人が直す画面で、直した字幕を指示書のどこに戻すか）
             cap = {"from": bounds[k], "to": bounds[k + 1], "lines": pg, "line": i}
+            if ln.get("face_overlap_ok"):
+                cap["face_overlap_ok"] = ln["face_overlap_ok"]
             if ln.get("highlight"):
                 cap["hl"] = list(ln["highlight"])
+            if big:
+                cap["big"] = big
+                cap["text"] = text
             captions.append(cap)
 
     title = edit.get("title")
     titles = []
     if title:
-        ti_st = style["title"]
-        ti_font = ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"])
-        rows = wrap(title["text"], ti_font, ti_st["max_width"] - 2 * ti_st["pad_x"])
-        if len(rows) > ti_st["max_lines"]:
-            print(f"注意: タイトルが {len(rows)} 行（上限 {ti_st['max_lines']}）", file=sys.stderr)
-        titles.append({"from": title.get("from", 0), "to": title.get("to") or total, "lines": rows})
+        look = title.get("look")
+        ti_st = style["title_card"] if look == "card" else style["title"]
+        if look == "card":
+            # 題の札は、題を決めた人の改行どおりに出す（大きさのほうを layout で合わせる）
+            rows = [s for s in title["text"].split("\n") if s]
+        else:
+            ti_font = ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"])
+            rows = wrap(title["text"], ti_font, ti_st["max_width"] - 2 * ti_st["pad_x"])
+        if len(rows) > ti_st.get("max_lines", 9):
+            print(f"注意: タイトルが {len(rows)} 行（上限 {ti_st.get('max_lines', 9)}）", file=sys.stderr)
+        ti = {"from": title.get("from", 0), "to": min(title.get("to") or total, total), "lines": rows,
+              "text": title["text"].replace("\n", "")}
+        if look:
+            ti["look"] = look
+        if "line" in title:
+            # 札がそのナレーションの行の字幕を兼ねる（同じ言葉を札と字幕で2回出さない）
+            ti["line"] = int(title["line"])
+            if look == "card" and ti_st.get("end_with_line"):
+                # 題の読み上げが終わるコマ（＝次の行の字幕が出るコマ）で、カットで消す。edit の to は上限のまま
+                # （あやとの「開始4秒だけ」）。参考のショートも題は 2.3秒で、最初の字幕が出る同じコマで消える
+                nxt = [c["from"] for c in captions if c["line"] > ti["line"]]
+                if nxt:
+                    ti["to"] = min(ti["to"], min(nxt))
+        titles.append(ti)
+
+    notes = [{"from": int(n["from"]), "to": min(int(n["to"]), total), "text": n["text"]}
+             for n in edit.get("notes", []) if n.get("text")]
 
     telops = []
     prev_end = -1
@@ -689,12 +775,540 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         prev_end = b
 
     return {"fps": fps, "size": [W, H], "frames": total, "cuts": cuts, "narration": lines,
-            "captions": captions, "titles": titles, "telops": telops, "bgm": edit.get("bgm")}
+            "captions": captions, "titles": titles, "telops": telops, "notes": notes, "bgm": edit.get("bgm"),
+            "tempo": float(narr.get("tempo") or 1.0), "audio_override": edit.get("audio") or {}}
+
+
+def audio_cfg(p: dict, style: dict) -> dict:
+    """音の決まり（様式）に、指示書の audio の上書きを重ねたもの（BGM の大きさやダッキングを動画ごとに）。"""
+    return {**style["audio"], **(p.get("audio_override") or {})}
+
+
+# ---------------------------------------------------------------- 題の札・【大】の字幕
+
+# 節の終わり、または3字以上のカタカナの語のあとにひらがな・漢字が続く所（「イエローバス｜やんか！」「ポテト｜入り！？」）
+_CLAUSE_END = re.compile(r"(だら|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿])(?![はがをにへともでのや][、。！？…]|[はがをにへともでの]$))(?=.)")
+
+
+def fine_chunks(text: str) -> list[str]:
+    """文節（BudouX）を、節の終わり（〜たら・〜から・〜けど…）でもう一段割る。
+
+    BudouX は「ケバブ頼んだらまさかの」を1つの文節にする。題を2行に割るとき、それだと
+    「ケバブ頼んだらまさかの／事態！」しか選べない。「ケバブ頼んだら／まさかの事態！」を選べるようにする。
+    """
+    out = []
+    for ch in chunks_of(text):
+        pos = 0
+        for m in _CLAUSE_END.finditer(ch):
+            out.append(ch[pos:m.end()])
+            pos = m.end()
+        out.append(ch[pos:])
+    return [c for c in out if c]
+
+
+def halve_longest(ch: list[str]) -> list[str] | None:
+    """いちばん長い文節（5字以上）を、真ん中の字の切れ目で2つに割る（文節の切れ目だけでは大きく出せないときの最後の手）。
+
+    「ちょうどすぎる」→「ちょうど」「すぎる」。句読点の手前では割らない。
+    """
+    k = max(range(len(ch)), key=lambda i: len(ch[i].rstrip("、。！？…")))
+    c = ch[k]
+    body = len(c.rstrip("、。！？…"))
+    if body < 5:
+        return None
+    m = (body + 1) // 2
+    return ch[:k] + [c[:m], c[m:]] + ch[k + 1:]
+
+
+def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[list[str]]:
+    """text を文節（fine_chunks）の切れ目で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。"""
+    ch = ch or fine_chunks(text)
+    if n == 1:
+        return [[text]]
+    if len(ch) < n:
+        return []
+    out = []
+
+    def rec(start: int, k: int, acc: list[str]):
+        if k == 1:
+            out.append(acc + ["".join(ch[start:])])
+            return
+        for j in range(start + 1, len(ch) - k + 2):
+            rec(j, k - 1, acc + ["".join(ch[start:j])])
+
+    rec(0, n, [])
+    return [[ln.rstrip("、。").strip() for ln in c] for c in out if all(ln.rstrip("、。").strip() for ln in c)]
+
+
+def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w: float, max_lines: int = 2,
+              wrap_below: int = 0, step: int = 2, fold_floor: int = 0) -> tuple[list[str], int]:
+    """text を幅 max_w に収める（行と大きさ）。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。
+
+    縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（文節の切れ目のうち、
+    いちばん大きく出せる割り方）。2行でも fold_floor に届かず max_lines が 3 以上なら3行。どれも届かないなら、
+    いちばん大きく出せる行数にする。
+    """
+    def fits(lines, s):
+        # 絵は見積もりより両側 2〜3px 広くなる（2倍で描くときの余白と丸め）。その分を空けて比べる
+        return TL.text_width(lines, lk, ImageFont.truetype(str(fpath), s)) + 6 <= max_w
+
+    def best(lines):
+        for s in range(size, min_size - 1, -step):
+            if fits(lines, s):
+                return s
+        return None
+
+    results = []
+    chunk_sets = [fine_chunks(text)]
+    forced = halve_longest(chunk_sets[0]) if fold_floor else None
+    if forced:
+        chunk_sets.append(forced)
+    for ch in chunk_sets:
+        for n in range(1, max(1, max_lines) + 1):
+            cands = split_candidates(text, n, ch)
+            top = None
+            for c in cands:
+                s = best(c)
+                # 同じ大きさなら、行の幅がそろう割り方（読む目が戻りやすい）
+                if s is not None and (top is None or s > top[0] or (s == top[0] and _spread(c, lk, fpath, s) < top[2])):
+                    top = (s, c, _spread(c, lk, fpath, s))
+            if top:
+                results.append((n, top[0], top[1]))
+            floor = wrap_below if n == 1 else fold_floor
+            if top and top[0] >= floor:
+                return top[1], top[0]
+    if results:
+        n, s, c = max(results, key=lambda r: (r[1], -r[0]))
+        return c, s
+    f = ImageFont.truetype(str(fpath), min_size)
+    return wrap(text, f, max_w - 2 * TL.margin_of(lk, min_size)), min_size
+
+
+def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
+    f = ImageFont.truetype(str(fpath), s)
+    ws = [TL.advance(ln, f, lk.get("tracking", 0.0)) for ln in lines]
+    return max(ws) - min(ws)
+
+
+def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
+    """題の札。黒い箱の中に、題の行ごとに様式の lines[k] の見た目で字を積む（参考の題は1行目と2行目で見た目が違う）。
+
+    題の改行（\\n）ごとに1つの見た目。箱の幅に収まる大きさまで縮め、2つ目からは縮めすぎるなら文節で2行に割る。
+    lines が無い古い様式では、全部の行を1つの見た目で出す。
+    """
+    parts = [s for s in text.split("\n") if s]
+    pad_x, pad_y = st.get("pad", [st.get("pad_x", 30), st.get("pad_y", 20)])
+    inner = st["max_width"] - 2 * pad_x
+    styles = st.get("lines") or [{"font": st["font"], "size": st["size"], "min_size": st["min_size"],
+                                  "look": {k: v for k, v in TL.look_of(st).items() if k != "box"}}]
+    gap = st.get("gap", 0)
+
+    def build(shrink: int) -> list[Image.Image]:
+        imgs = []
+        for k, part in enumerate(parts):
+            ls = styles[min(k, len(styles) - 1)]
+            fpath = font_path(style, ls["font"])
+            lk = ls["look"]
+            # 大きさは縁までで決める。発光は箱の余白に広がってよい（はみ出す分は箱の縁で切る）
+            lk_fit = {k: v for k, v in lk.items() if k != "glow"}
+            top = max(ls.get("min_size", 40), ls["size"] - shrink)
+            lines, size = fit_lines(part, lk_fit, fpath, top, min(top, ls.get("min_size", 40)), inner,
+                                    ls.get("max_lines", 2), min(top, ls.get("wrap_below", 0)))
+            im = TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=TL.text_seed(part))
+            if im.width > st["max_width"]:
+                cut = (im.width - st["max_width"]) // 2
+                im = im.crop((cut, 0, cut + st["max_width"], im.height))
+            imgs.append(im)
+        return imgs
+
+    # 箱は max_height に収める（下の字幕の置き場（画面のまん中）に掛からないように）。収まるまで字を小さくする
+    shrink = 0
+    imgs = build(0)
+    while st.get("max_height") and sum(i.height for i in imgs) + gap * (len(imgs) - 1) + 2 * pad_y > st["max_height"] \
+            and shrink < 80:
+        shrink += 4
+        imgs = build(shrink)
+    w = max(min(st["max_width"], max(i.width for i in imgs) + 2 * pad_x), max(i.width for i in imgs))
+    h = sum(i.height for i in imgs) + gap * (len(imgs) - 1) + 2 * pad_y
+    card_img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    bx = st.get("box") or {"color": st.get("bg", "#000000"), "alpha": st.get("bg_alpha", 1.0),
+                           "radius": st.get("radius", 24)}
+    ImageDraw.Draw(card_img).rounded_rectangle([0, 0, w - 1, h - 1], radius=bx.get("radius", 24),
+                                               fill=hex_rgba(bx["color"], bx.get("alpha", 1.0)))
+    y = pad_y
+    for im in imgs:
+        card_img.alpha_composite(im, ((w - im.width) // 2, y))
+        y += im.height + gap
+    return card_img
+
+
+def anim_scale_max(anim: dict | None) -> float:
+    """出入りの動きで、いちばん大きくなるときの倍率（置き場に収まるかは、そのときの大きさで見る）。"""
+    sts = TL.anim_frames((anim or {}).get("in")) + TL.anim_frames((anim or {}).get("out"))
+    return max([1.0] + [s["scale"] for s in sts])
+
+
+def big_extent(img: Image.Image, smax: float, mx: float, my: float, alpha_min: int = 16) -> tuple[float, ...]:
+    """【大】の字の見える箱を、置く中心（字のかたまりの真ん中＝ink_y の cy）からの距離で
+    （左, 右, 上, 下）。動きでいちばん大きくなったとき・揺れでいちばん動いたときまで含める。"""
+    vb = visible_box(img, alpha_min)
+    bb = img.getbbox() or (0, 0, img.width, img.height)
+    ay = (bb[1] + bb[3]) / 2                      # ink_y が cy に合わせる所（絵の中の y）
+    cy_img, cx_img = img.height / 2 - ay, img.width / 2   # 拡大の中心（絵の真ん中）の、cy からの位置
+    ys = [cy_img + s * (v - ay - cy_img) for s in (1.0, smax) for v in (vb[1], vb[3])]
+    xs = [s * (v - cx_img) for s in (1.0, smax) for v in (vb[0], vb[2])]
+    return min(xs) - mx, max(xs) + mx, min(ys) - my, max(ys) + my
+
+
+def big_layout(it: dict, p: dict, style: dict, faces: list | None = None) -> tuple[Image.Image, int, int, dict | None, dict]:
+    """【大】の字幕の、出来上がりの絵・置く中心の y・字の大きさ・出入りの動き・見た目の設定。
+
+    見た目と動きは style の big.looks[名前]（{"look": …, "anim": …, "font"・"size"・"min_size"・"speedlines"}）。
+    いちばん大きく出せる大きさを探し（長い行は文節で2行に割る）、centers の順に置ける所へ置く。
+    右のボタン列（y>=840 で x>888）に掛かる高さなら幅 696 まで、掛からなければ 840 まで。
+    動きでいちばん大きくなるとき・揺れでいちばん動いたときにも収まるように測る。
+    題の札・札（inset）の帯とは重ねない。
+
+    faces（コマごとの顔の箱）を渡すと、その行のどのコマかで顔に掛かるときは、揺れの中心ごと顔の下へ
+    （収まらなければ上へ）ずらす。どちらにも収まらなければ、収まるまで字を小さくする。
+    """
+    st, safe = style["big"], style["safe"]
+    af = style.get("avoid_faces") or {}
+    W = p["size"][0]
+    ent = st["looks"][it["big"]]
+    lk, anim = ent.get("look", ent), ent.get("anim")
+    fpath = font_path(style, ent.get("font", st["font"]))
+    seed = TL.text_seed(it["text"])
+    top_lim = top_limit(it, p, st["top"])
+    busy = busy_bands(it, p)
+    smax = anim_scale_max(anim)
+    mx, my = TL.shake_margin(anim)
+    half_narrow, half_wide = safe["right_column_x"] - W / 2, safe["right"] - W / 2
+
+    def fit(half: float, cap: int | None = None):
+        max_w = min(st["max_width"], 2 * (half - mx) / smax)
+        lines, size = fit_lines(it["text"], lk, fpath, cap or ent.get("size", st["size"]),
+                                ent.get("min_size", st["min_size"]), max_w,
+                                ent.get("max_lines", st.get("max_lines", 2)),
+                                ent.get("wrap_below", 0), fold_floor=ent.get("fold_floor", 0))
+        return lines, size, TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=seed)
+
+    chosen = None
+    for cy in st["centers"]:
+        for half in (half_wide, half_narrow):
+            lines, size, img = fit(half)
+            w, h = img.width * smax + 2 * mx, img.height * smax + 2 * my
+            if cy - h / 2 < top_lim or cy + h / 2 > safe["bottom"]:
+                continue
+            if any(cy - h / 2 < b and a < cy + h / 2 for a, b in busy):
+                continue
+            lim = half_narrow if cy + h / 2 > safe["right_column_from_y"] else half_wide
+            if w / 2 <= lim + 0.5:
+                chosen = (lines, size, img, cy)
+                break
+        if chosen:
+            break
+    if not chosen:
+        sys.exit(f"【大】の字幕が置き場に収まらない: {it['text']}")
+    lines, size, img, cy = chosen
+    if faces is not None:
+        def where(img_: Image.Image):
+            l, r, t, b = big_extent(img_, smax, mx, my, af.get("alpha_min", 16))
+            ymax = safe["bottom"] - b
+            if W / 2 + r > safe["right_column_x"]:
+                ymax = min(ymax, safe["right_column_from_y"] - b)
+            return place_off_face(cy, t, b, W / 2 + l, W / 2 + r, it, faces, af, busy, top_lim - t, ymax)
+
+        first = where(img)
+        if first[1]:
+            # 顔に掛かる。揺れの中心ごと下（上）へ。どこにも置けなければ、置けるまで小さくする
+            # （下限は見た目の min_size。折りかたも大きさごとに選び直す）
+            step = af.get("shrink_step", 4)
+            caps = list(range(size - step, ent.get("min_size", st["min_size"]) - 1, -step))
+            got = None if first[3] else (lines, size, img, first)
+            for cap in caps if got is None else []:
+                l2, s2, im2 = fit(half_narrow, cap)
+                r2 = where(im2)
+                if not r2[3]:
+                    got = (l2, s2, im2, r2)
+                    break
+            if got is None:
+                # どの大きさでも避けきれない（顔が画面いっぱい・行の間に顔が大きく動く）。大きさは元のまま、
+                # 重なりがいちばん少ない所へ。品質チェックはこの行で落ちる（隠さない）
+                note_move(p, it, "big", cy, first[0], first[1], first[2], unresolved=True)
+                cy = first[0]
+            else:
+                l2, s2, im2, (y2, how2, sp2, _) = got
+                note_move(p, it, "big", cy, y2, how2 if s2 == size else f"{how2 or 'その場'}・{size}→{s2}px", sp2,
+                          size_from=size, size_to=s2)
+                lines, size, img, cy = l2, s2, im2, y2
+    it["lines"] = lines
+    return img, cy, size, anim, ent
+
+
+_IDENT = TL.state_key(TL.IDENTITY)
+
+
+# ---------------------------------------------------------------- 顔を避ける
+
+YUNET = HERE / "models" / "face_detection_yunet_2023mar.onnx"
+
+
+def qa_faces():
+    """品質チェックの顔の検査（qa/faces.py）の、肌色と「ぼかしてあるか」の式と線。
+
+    同じ式を2か所に書くと、片方だけ直されて「書き出しは顔でないと見たのに、チェックは顔と言う」が
+    起きる。だから写さずに読む（書き出しの側にも顔の道具 render/face_scan.py があり、取り違えないよう場所を名指しして読む）。
+    """
+    import importlib.util
+    qa = HERE.parent / "qa"
+    if str(qa) not in sys.path:
+        sys.path.append(str(qa))  # qa/faces.py の `from common import` のため。書き出しの道具より後ろに置く
+    spec = importlib.util.spec_from_file_location("qa_faces", qa / "faces.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def qa_facetrack():
+    """品質チェックの、顔の箱をコマをまたいでつなぐ道具（qa/facetrack.py。同じ線で選ぶため写さずに読む）。"""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("qa_facetrack", HERE.parent / "qa" / "facetrack.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def plate_faces(plate: Path, W: int, H: int, cfg: dict) -> list[list[list]]:
+    """字なしの書き出しの全コマで顔を探す。コマごとの [x, y, w, h, 点, 肌色の割合, 細かさ, まわりの細かさ]。
+
+    品質チェック（qa/textface.py）と同じ絵——書き出して読み直した字なしの版——を、同じ縮め方
+    （色を BGR にしてから縦横半分に面積平均）で YuNet に通し、同じ式で肌色とぼかしを測る。
+    どれを顔として避けるかは face_boxes が決める（チェックより緩い線で、避ける側に倒す）。
+    """
+    cv2 = cv()
+    QF = qa_faces()
+    model = Path(cfg["model"]) if cfg.get("model") else YUNET
+    if not model.exists() or not hasattr(cv2, "FaceDetectorYN"):
+        sys.exit(f"顔を避けるための顔の重みが無い: {model}（tools/shorts/render/fetch_fonts.sh を回す）。"
+                 "避けずに書くなら様式の avoid_faces.enabled を false に")
+    s = cfg.get("det_scale", 0.5)
+    w, h = int(W * s), int(H * s)
+    det = cv2.FaceDetectorYN.create(str(model), "", (w, h), cfg.get("score", 0.5), 0.3, 5000)
+    proc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(plate), "-map", "0:v:0",
+                             "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+    out, size = [], W * H * 3
+    try:
+        while len(buf := proc.stdout.read(size)) == size:
+            img = np.frombuffer(buf, dtype=np.uint8).reshape(H, W, 3)
+            sm = cv2.resize(cv2.cvtColor(img, cv2.COLOR_RGB2BGR), (w, h), interpolation=cv2.INTER_AREA)
+            det.setInputSize((w, h))
+            _, fs = det.detect(sm)
+            row = []
+            if fs is not None:
+                gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+                for f in fs:
+                    X, Y, Wd, Hd = [int(round(int(v) / s)) for v in f[:4]]
+                    inner, outer = QF.sharpness(cv2, gray, X, Y, Wd, Hd)
+                    row.append([X, Y, Wd, Hd, round(float(f[-1]), 3), round(QF.skin_share(cv2, img, X, Y, Wd, Hd), 3),
+                                round(inner, 1), round(outer, 1)])
+            out.append(row)
+    finally:
+        proc.stdout.close()
+        proc.wait()
+    return out
+
+
+def face_boxes(dets: list[list[list]], cfg: dict, strict: bool = False) -> list[list[list[int]]]:
+    """避ける顔の箱（コマごと）。
+
+    strict=False（先に使う）: 品質チェックが顔と数えるもの（点 0.6・肌色 SKIN_MIN 以上・ぼかしていない）を
+    必ず含むように、チェックより緩い線で選ぶ。点は様式の score まで、肌色は skin_ratio 倍まで下げ、
+    「ぼかしてある」は細かさがチェックの線の blur_ratio 倍より小さいときだけ。
+    strict=True（緩い線では置き場が無い行だけ）: チェックとちょうど同じ線。食べ物を顔と間違えた
+    点 0.5〜0.6 の箱が、置き場を塞いでいたことがある（B の「ちなみに肉は」）。
+    どちらも、続けて出ない箱（1〜2コマ）はチェックと同じ道具で落とす。
+    """
+    QF = qa_faces()
+    if strict:
+        k_skin, k_blur, min_score = 1.0, 1.0, QF.YUNET_SCORE
+    else:
+        k_skin, k_blur, min_score = cfg.get("skin_ratio", 0.6), cfg.get("blur_ratio", 0.5), 0.0
+    out = []
+    for row in dets:
+        keep = []
+        for x, y, w, h, score, skin, inner, outer in row:
+            if score < min_score or skin < QF.SKIN_MIN * k_skin:
+                continue
+            if inner < QF.BLUR_ABS * k_blur and (outer <= 0 or inner < QF.BLUR_RATIO * k_blur * outer):
+                continue
+            keep.append([x, y, w, h])
+        out.append(keep)
+    return qa_facetrack().keep_persistent(out)
+
+
+def place_off_face(y0: float, top: float, bot: float, x0: float, x1: float, it: dict, tiers: list, cfg: dict,
+                   busy: list, ymin: float, ymax: float) -> tuple[float, str, list, bool]:
+    """字の見える箱 [y + top, y + bot]（横 x0..x1）を、顔に掛からない y に置く。（y, どう動かしたか, 顔の縦の範囲, 避けきれないか）。
+
+    tiers は [緩い線の顔, チェックと同じ線の顔]。緩い線で置ければそれで、置けなければチェックの線で、
+    それでも置けなければ重なりが最少の所（避けきれない。品質チェックはこの行で落ちる）。
+    顔に掛かっていなければ y0 のまま（how は ""）。
+    """
+    gap = cfg.get("gap", 12)
+    spans = face_spans(tiers[0], it["from"], it["to"], x0, x1, cfg)
+    if not on_face(y0, top, bot, spans, gap):
+        return y0, "", spans, False
+    for k, faces in enumerate(tiers):
+        sp = spans if k == 0 else face_spans(faces, it["from"], it["to"], x0, x1, cfg)
+        if k and not on_face(y0, top, bot, sp, gap):
+            return y0, "その場（チェックの線では顔に掛からない）", sp, False
+        got = free_y(y0, top, bot, sp, busy, ymin, ymax, gap)
+        if got:
+            return got[0], got[1] + ("（チェックの線で）" if k else ""), sp, False
+    sp = face_spans(tiers[-1], it["from"], it["to"], x0, x1, cfg)
+    return least_y(y0, top, bot, sp, busy, ymin, ymax, gap), "避けきれない（重なりが最少の所）", sp, True
+
+
+def visible_box(img: Image.Image, alpha_min: int = 16) -> tuple[int, int, int, int]:
+    """絵の見える範囲（縁・発光まで。濃さ alpha_min 以上）。品質チェックの字の箱と同じ線。"""
+    a = np.asarray(img.getchannel("A"))
+    ys, xs = np.nonzero(a >= alpha_min)
+    if not len(xs):
+        return 0, 0, img.width, img.height
+    return int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1
+
+
+def face_spans(faces: list | None, f0: int, f1: int, x0: float, x1: float, cfg: dict) -> list[tuple[float, float]]:
+    """コマ [f0, f1) に出る顔のうち、横 [x0, x1) に掛かるものの縦の範囲（眉から顎＋余裕）。"""
+    if not faces:
+        return []
+    px, py, gap = cfg.get("pad_x", 0.02), cfg.get("pad_y", 0.02), cfg.get("gap", 12)
+    out = []
+    for f in range(max(0, f0), min(len(faces), f1)):
+        for x, y, w, h in faces[f]:
+            if x + w * (1 + px) + gap <= x0 or x - w * px - gap >= x1:
+                continue
+            out.append((y - h * py, y + h * (1 + py)))
+    return out
+
+
+def free_y(y0: float, top: float, bot: float, spans: list, busy: list, ymin: float, ymax: float,
+           gap: float) -> tuple[int, str] | None:
+    """字の見える箱 [y + top, y + bot] が顔（spans）にも塞がった帯（busy）にも掛からない y。
+
+    顔の下へ（いちばん下に掛かる顔の下端＋gap から）。下の安全域を越えるなら顔の上へ。
+    どちらにも置けなければ None。y の範囲は [ymin, ymax]。
+    """
+    iv = [(a - gap - bot, b + gap - top) for a, b in spans] + [(a - bot, b - top) for a, b in busy]
+
+    def hit(y):
+        return next(((a, b) for a, b in iv if a < y < b), None)
+
+    y = y0
+    while (h := hit(y)) is not None:
+        y = math.ceil(h[1])
+    if ymin <= y <= ymax:
+        return int(y), "below"
+    y = y0
+    while (h := hit(y)) is not None:
+        y = math.floor(h[0])
+    if ymin <= y <= ymax:
+        return int(y), "above"
+    return None
+
+
+def least_y(y0: float, top: float, bot: float, spans: list, busy: list, ymin: float, ymax: float,
+            gap: float) -> int:
+    """顔を避けきれない行の置き場: 塞がった帯には掛けず、顔との重なり（コマごとの重なった高さの和）が
+    いちばん少ない y。同じなら下（顔の下へ、の向き）。置ける所が無ければ y0 のまま。"""
+    best = None
+    for y in range(math.ceil(ymin), math.floor(ymax) + 1, 2):
+        if any(a - bot < y < b - top for a, b in busy):
+            continue
+        cost = sum(max(0.0, min(b + gap, y + bot) - max(a - gap, y + top)) for a, b in spans)
+        if best is None or cost < best[0] or (cost == best[0] and y > best[1]):
+            best = (cost, y)
+    return int(y0) if best is None else best[1]
+
+
+def on_face(y: float, top: float, bot: float, spans: list, gap: float) -> bool:
+    return any(a - gap - bot < y < b + gap - top for a, b in spans)
+
+
+def busy_bands(it: dict, p: dict, pad: int = 16) -> list[tuple[float, float]]:
+    """行 it が出ている間、字を置けない縦の帯（札（inset）の絵・左上の注）。"""
+    out = []
+    for c in p["cuts"]:
+        ins = c.get("inset")
+        if ins and c["at"] < it["to"] and it["from"] < c["at"] + c["frames"]:
+            r0 = ins["keys"][0]["rect"] if ins.get("keys") else ins["rect"]
+            oh = r0[3] * int(ins.get("w", 840)) / r0[2]
+            cyi = int(ins.get("cy", 765))
+            out.append((cyi - oh / 2 - pad, cyi + oh / 2 + pad))
+    for nt in p.get("notes", []):
+        if "h" in nt and nt["from"] < it["to"] and it["from"] < nt["to"]:
+            out.append((nt["y"] - pad, nt["y"] + nt["h"] + pad))
+    return out
+
+
+def top_limit(it: dict, p: dict, base: float, pad: int = 24) -> float:
+    """行 it の字の上端の限り。題の札が同じ時に出ていれば、その下。"""
+    lim = base
+    for t in p["titles"]:
+        if t["from"] < it["to"] and it["from"] < t["to"] and "h" in t:
+            lim = max(lim, t["y"] + t["h"] + pad)
+    return lim
+
+
+def note_move(p: dict, it: dict, kind: str, y0: float, y1: float | None, how: str, spans: list, **kw):
+    """顔を避けて動かした（動かせなかった）行を、時間割に残す（報告と品質チェックの手がかり）。"""
+    p.setdefault("face_avoid", []).append({
+        "kind": kind, "text": it.get("text") or "／".join(it.get("lines", [])), "from": it["from"], "to": it["to"],
+        **({"face_overlap_ok": it["face_overlap_ok"]} if it.get("face_overlap_ok") else {}),
+        "y_from": round(y0), "y_to": None if y1 is None else round(y1), "how": how,
+        "faces": len(spans), "face_y": [round(min(a for a, _ in spans)), round(max(b for _, b in spans))] if spans else None,
+        **kw})
+
+
+def layer_at(ly: dict, f: int, W: int, style: dict):
+    """層 ly を f コマ目に重ねる形（Overlay・絵の見分けの鍵・絵）。出ていなければ None。
+
+    テロップは昔からの「ポン」の段（pick）。ほかは様式の anim（textlook.state_at）で、
+    出来上がりの絵を真ん中を動かさずに拡大・傾け・ぼかし・薄くし、dx・dy だけずらして置く。
+    絵は位置のずれを除いた鍵で覚える（揺れは同じ絵を毎コマ別の所に置くだけ）。
+    """
+    it = ly["item"]
+    if not (it["from"] <= f < it["to"]):
+        return None
+    cache = ly.setdefault("cache", {})
+    if ly["kind"] == "telop":
+        k = pick(it, f, len(style["telop"].get("pop", [1.0])))
+        key = ("pick", k)
+        if key not in cache:
+            img = ly["imgs"][k]
+            cache[key] = (Overlay(img, (W - img.width) // 2, ly["cy"] - img.height // 2), img)
+        return cache[key][0], key, cache[key][1]
+    st = TL.state_at(ly.get("anim"), f - it["from"], it["to"] - it["from"], it["from"] == 0, ly.get("seed", 0))
+    key = TL.state_key(st)
+    if key not in cache:
+        imgs = ly.setdefault("img_cache", {})
+        lkey = TL.look_key(st)
+        if lkey not in imgs:
+            blur = (ly.get("anim") or {}).get("sharp_blur_em", 0.10) * ly.get("font_px", 0)
+            imgs[lkey] = ly["base"] if lkey == TL.look_key(TL.IDENTITY) else TL.transform(ly["base"], st, blur)
+        img = imgs[lkey]
+        x = round(ly["cx"] + st["dx"] - img.width / 2)
+        y = round(ly["cy"] + st["dy"] - img.height / 2)
+        ovs = ly.setdefault("ov_cache", {})
+        cache[key] = (Overlay(img, x, y, like=ovs.get(lkey)), img)
+        ovs.setdefault(lkey, cache[key][0])
+    return cache[key][0], key, cache[key][1]
 
 
 # ---------------------------------------------------------------- 字の置き場
 
-def layout(p: dict, style: dict, work: Path) -> list[dict]:
+def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[dict]:
     """タイトル・テロップ・字幕の絵を作り、置き場を決める。
 
     置き場（README の「字の置き場」）:
@@ -702,34 +1316,93 @@ def layout(p: dict, style: dict, work: Path) -> list[dict]:
       間   テロップ（黄色い字に黒の縁）  タイトルの下端と、字幕2行ぶんの上端の、ちょうど間
       中央 字幕（白い字に黒の縁）       中心 y=1000
     3つは縦に重ならない。テロップは同時に1つまで。
+
+    faces（字なしの書き出しのコマごとの顔の箱）を渡すと、字幕と【大】の字は、その行のどのコマかで
+    顔に掛かるなら、行ごとに1回だけ顔の下（収まらなければ上）へずらす。顔の無い行は動かさない。
     """
     W, H = p["size"]
     safe = style["safe"]
+    af = style.get("avoid_faces") or {}
     out = []
+    # 2回呼ばれる（顔を探す前と後）。前の回の効果と記録を持ち越さない
+    p["fx"] = []
+    p.pop("face_avoid", None)
 
-    ti_st = style["title"]
-    ti_font = ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"])
+    def still(kind: str, it: dict, img: Image.Image, anim: dict | None) -> dict:
+        """出来上がりの絵を (x, y) に置く層。動きは真ん中を基準にする。"""
+        return {"kind": kind, "item": it, "base": img, "imgs": [img], "anim": anim,
+                "cx": it["x"] + img.width / 2, "cy": it["y"] + img.height / 2}
+
     title_bottom = safe["top"]
     for i, it in enumerate(p["titles"]):
-        img = card(it["lines"], ti_st, ti_font)
+        if it.get("look") == "card":
+            ti_st = style["title_card"]
+            img = title_card_img("\n".join(it["lines"]), ti_st, style)
+        else:
+            ti_st = style["title"]
+            img = card(it["lines"], ti_st, ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"]))
+        top = ti_st["top"]
         path = work / f"title_{i:02d}.png"
         img.save(path)
-        it.update({"png": str(path), "x": (W - img.width) // 2, "y": ti_st["top"], "w": img.width, "h": img.height})
-        title_bottom = max(title_bottom, ti_st["top"] + img.height)
-        out.append({"kind": "title", "item": it, "imgs": [img]})
+        it.update({"png": str(path), "x": (W - img.width) // 2, "y": top, "w": img.width, "h": img.height})
+        # 全編に出るタイトルだけが、テロップの置き場の上端を決める（4秒で消える札は決めない）
+        if it.get("look") != "card":
+            title_bottom = max(title_bottom, top + img.height)
+        out.append(still("title", it, img, ti_st.get("anim")))
+
+    for i, it in enumerate(p.get("notes", [])):
+        st = style["note"]
+        img = card([it["text"]], st, ImageFont.truetype(str(font_path(style, st["font"])), st["size"]))
+        path = work / f"note_{i:02d}.png"
+        img.save(path)
+        it.update({"png": str(path), "x": st["x"], "y": st["y"], "w": img.width, "h": img.height})
+        out.append(still("note", it, img, st.get("anim")))
 
     cap_st = style["caption"]
     cap_font = ImageFont.truetype(str(font_path(style, cap_st["font"])), cap_st["size"])
     # 字幕2行ぶんの高さ。テロップの置き場の下端は、字幕が何行でも同じにする（行数で動くと目が迷う）
     two = card(["国国"] * cap_st["max_lines"], cap_st, cap_font)
     cap_top = cap_st["center_y"] - two.height // 2
+    def ink_y(img: Image.Image, cy: float) -> int:
+        """絵の見える部分（縁まで）の上下の真ん中を cy に置くときの、絵の上端。"""
+        bb = img.getbbox() or (0, 0, img.width, img.height)
+        return round(cy - (bb[1] + bb[3]) / 2)
+
     for i, it in enumerate(p["captions"]):
-        img = card(it["lines"], cap_st, cap_font, hl=it.get("hl"))
         path = work / f"caption_{i:02d}.png"
+        if it.get("big"):
+            img, cy, size, anim, ent = big_layout(it, p, style, faces)
+            img.save(path)
+            it.update({"png": str(path), "x": (W - img.width) // 2, "y": ink_y(img, cy),
+                       "w": img.width, "h": img.height, "size": size})
+            ly = still("caption", it, img, anim)
+            ly.update({"seed": TL.text_seed(it["text"]), "font_px": size})
+            if ent.get("speedlines"):
+                # 集中線は字ではなく画の効果（字なしの書き出しにも入れる。品質チェックが字の画素と数えない）
+                p.setdefault("fx", []).append({"type": "speedlines", "from": it["from"], "to": it["to"],
+                                               "seed": TL.text_seed(it["text"]), "cfg": ent["speedlines"]})
+            out.append(ly)
+            continue
+        img = card(it["lines"], cap_st, cap_font, hl=it.get("hl"))
         img.save(path)
-        it.update({"png": str(path), "x": (W - img.width) // 2, "y": cap_st["center_y"] - img.height // 2,
-                   "w": img.width, "h": img.height})
-        out.append({"kind": "caption", "item": it, "imgs": [img]})
+        y = ink_y(img, cap_st["center_y"]) if cap_st.get("anchor") == "ink_center" \
+            else cap_st["center_y"] - img.height // 2
+        if faces is not None:
+            # 字の見える箱（縁まで）を [y + top, y + bot] として、顔に掛かるなら行ごとに1回だけ動かす
+            x_img = (W - img.width) // 2
+            vb = visible_box(img, af.get("alpha_min", 16))
+            ymax = safe["bottom"] - vb[3]
+            if x_img + vb[2] > safe["right_column_x"]:
+                ymax = min(ymax, safe["right_column_from_y"] - vb[3])
+            ymin = top_limit(it, p, safe["top"]) - vb[1]
+            y2, how, sp, bad = place_off_face(y, vb[1], vb[3], x_img + vb[0], x_img + vb[2], it, faces, af,
+                                              busy_bands(it, p), ymin, ymax)
+            if how:
+                mid = (vb[1] + vb[3]) / 2
+                note_move(p, it, "caption", y + mid, y2 + mid, how, sp, **({"unresolved": True} if bad else {}))
+                y = y2
+        it.update({"png": str(path), "x": (W - img.width) // 2, "y": y, "w": img.width, "h": img.height})
+        out.append(still("caption", it, img, cap_st.get("anim")))
 
     tp_st = style["telop"]
     fpath = font_path(style, tp_st["font"])
@@ -827,13 +1500,42 @@ def split_band(x: np.ndarray, lo_hz: float, hi_hz: float) -> tuple[np.ndarray, n
     return lo.astype(np.float32), (x.astype(np.float64) - lo).astype(np.float32)
 
 
+def level_bgm(x: np.ndarray, cfg: dict) -> tuple[np.ndarray, dict]:
+    """BGM のゆっくりした大小（サビ・静かな所）をならす。参考のショートの BGM は 5秒ごとに見て ±1.5dB で一定だった。
+
+    window_s ごとの RMS を、全体の RMS との差だけ逆に動かす（max_db まで）。動かし方は smooth_s でなめらかにする
+    （速く動かすと曲の拍で音量が揺れて聞こえる）。行ごとの「声 − BGM」がそろい、いちばん小さい行が上がる。
+    """
+    hop = SR // 20
+    k = len(x) // hop
+    if k < 4:
+        return x, {}
+    m = x[:k * hop].astype(np.float64).mean(axis=1).reshape(k, hop)
+    e = (m ** 2).mean(axis=1)
+    w = max(1, int(round(cfg.get("window_s", 1.0) * 20)))
+    kern = np.ones(w) / w
+    e_s = np.convolve(np.pad(e, (w // 2, w - 1 - w // 2), mode="edge"), kern, mode="valid")
+    lvl = 10 * np.log10(np.maximum(e_s, 1e-12))
+    ref = 10 * np.log10(max(float(e.mean()), 1e-12))
+    loud = lvl > ref - 30  # 曲の頭と尻の無音は持ち上げない
+    g = np.where(loud, np.clip(ref - lvl, -cfg.get("max_db", 6), cfg.get("max_db", 6)), 0.0)
+    s = max(1, int(round(cfg.get("smooth_s", 2.0) * 20)))
+    ks = np.ones(s) / s
+    g = np.convolve(np.pad(g, (s // 2, s - 1 - s // 2), mode="edge"), ks, mode="valid")
+    t_hop = (np.arange(k) + 0.5) * hop
+    gs = np.interp(np.arange(len(x)), t_hop, g)
+    y = (x * db(gs)[:, None]).astype(np.float32)
+    return y, {"window_s": cfg.get("window_s", 1.0), "smooth_s": cfg.get("smooth_s", 2.0),
+               "max_db": cfg.get("max_db", 6), "gain_db_range": [round(float(g.min()), 2), round(float(g.max()), 2)]}
+
+
 def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Path, Path]:
     """ナレーションの束・ダッキング済みの BGM・元の音（使うカットだけ）を、サンプル単位で作る。
 
     ダッキングはコンプレッサーに任せず、時間割から音量の折れ線を引く。
     いつ・どれだけ下がるかが指示書から一意に決まり、測って確かめられるから。
     """
-    au = style["audio"]
+    au = audio_cfg(p, style)
     fps = p["fps"]
     spf = SR // fps
     n = p["frames"] * spf
@@ -879,6 +1581,9 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
         bgm = np.tile(src, (reps, 1))[:n] if reps > 1 else src[:n].copy()
         if len(bgm) < n:
             bgm = np.vstack([bgm, np.zeros((n - len(bgm), 2), dtype=np.float32)])
+        if au.get("bgm_level"):
+            bgm, lv = level_bgm(bgm, au["bgm_level"])
+            p["bgm"]["level"] = lv
         rms = max(float(np.sqrt(np.mean(bgm.astype(np.float64) ** 2))), 1e-9)
         base_g = db(au["bgm_rms_dbfs"] + p["bgm"].get("db", 0)) / rms
         p["bgm"]["norm_file"] = str(write_wav(bgm * base_g, work / "bgm_norm.wav"))
@@ -1048,13 +1753,17 @@ def blur_box(cv2, img: np.ndarray, rect, cells: int):
 class Overlay:
     """字の絵を、コマに重ねるための形（premultiplied の整数）にしておく。整数で混ぜるので毎回同じ値になる。"""
 
-    def __init__(self, img: Image.Image, x: int, y: int):
-        a = np.asarray(img, dtype=np.uint16)
-        self.alpha = a[:, :, 3:4]
-        self.pre = a[:, :, :3] * self.alpha
-        self.inv = 255 - self.alpha
+    def __init__(self, img: Image.Image | None, x: int, y: int, like: "Overlay | None" = None):
+        # like: 同じ絵を別の所に置く（揺れ）。整数の配列は 1画素 10バイトあるので、置き場ごとに作り直さない
+        if like is not None:
+            self.alpha, self.pre, self.inv = like.alpha, like.pre, like.inv
+        else:
+            a = np.asarray(img, dtype=np.uint16)
+            self.alpha = a[:, :, 3:4]
+            self.pre = a[:, :, :3] * self.alpha
+            self.inv = 255 - self.alpha
         self.x, self.y = x, y
-        self.h, self.w = a.shape[:2]
+        self.h, self.w = self.alpha.shape[:2]
 
     def blend(self, frame: np.ndarray):
         H, W = frame.shape[:2]
@@ -1349,8 +2058,117 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
     narr_p, bgm_p, src_p = audio_stems(p, style, base, work)
     layers = layout(p, style, work)
 
+    enc = style["encode"]
+    au = audio_cfg(p, style)
+    p["audio"] = au
+    # 音の仕上げ（一定の音量＋リミッター）。BGM 入りと、BGM 抜き（TikTok 向け）を別々に作る
+    p["master"] = {"with_bgm": master([narr_p, bgm_p, src_p], work, "with_bgm", au, enc)}
+    if no_bgm_out:
+        p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
+
+    def encode(path: Path, timeline: list[list[Overlay]], keep_args: bool):
+        """コマを作って ffmpeg に流す（字の絵は timeline のとおりに重ねる。集中線は字なしでも入れる）。"""
+        args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0",
+                "-i", p["master"]["with_bgm"]["file"]]
+        fc = ["[0:v]scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,"
+              "format=yuv420p[vout]"]
+        args += [
+            "-filter_complex", ";".join(fc), "-map", "[vout]", "-map", "1:a",
+            "-frames:v", str(p["frames"]), "-r", str(fps),
+            "-c:v", "libx264", "-preset", enc["preset"], "-crf", str(enc["crf"]),
+            "-profile:v", "high", "-pix_fmt", "yuv420p", "-threads", "4",
+            # x264 をコマ単位で並列にすると、箱が混んでいるときだけ別のバイト列が出た
+            # （同時に3本回して1本だけ違った。filtergraph の出力は3本とも同じ）。
+            # スライス単位の並列は混んでいても3本とも同じだった。遅くなる（27秒→45秒）が、
+            # 「同じ指示書から同じ動画」を取る。
+            "-x264-params", "sliced-threads=1",
+            "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
+            # 音は仕上げた AAC をそのまま入れる（測って合わせたものを、もう一度符号化して変えない）
+            "-c:a", "copy",
+            # 同じ指示書から同じバイト列を出すため、版や日時を書き込ませない
+            "-fflags", "+bitexact", "-flags:v", "+bitexact", "-flags:a", "+bitexact",
+            "-map_metadata", "-1", "-movflags", "+faststart", str(path),
+        ]
+        if keep_args:
+            (work / "ffmpeg_args.json").write_text(json.dumps(args, ensure_ascii=False, indent=1))
+        enc_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
+
+        # 画の効果（集中線など）。字ではないので、字なしの書き出しにも同じに入れる
+        fx_at: list[list[dict]] = [[] for _ in range(p["frames"])]
+        for fx in p.get("fx", []):
+            for f in range(max(0, fx["from"]), min(p["frames"], fx["to"])):
+                fx_at[f].append(fx)
+
+        def frames():
+            f = 0
+            for c in p["cuts"]:
+                for j, img in enumerate(prefetch(decode_cut(c, fps))):
+                    frame = frame_of(cv2, img, c, j, W, H)
+                    for fx in fx_at[f]:
+                        if fx["type"] == "speedlines":
+                            Overlay(TL.speedlines(W, H, fx["cfg"], fx["seed"], f - fx["from"]), 0, 0).blend(frame)
+                    for ov in timeline[f]:
+                        ov.blend(frame)
+                    yield frame.tobytes()
+                    f += 1
+
+        # 書き込みは別の糸で（pipe が詰まっているあいだに、次のコマを作れるように）
+        wq: queue.Queue = queue.Queue(4)
+        err: list[BaseException] = []
+
+        def writer():
+            try:
+                while (b := wq.get()) is not None:
+                    enc_proc.stdin.write(b)
+            except BaseException as e:  # noqa: BLE001
+                err.append(e)
+                while wq.get() is not None:  # 作る側を止めないように、残りを捨てる
+                    pass
+
+        wt = threading.Thread(target=writer, daemon=True)
+        wt.start()
+        try:
+            for b in frames():
+                wq.put(b)
+        finally:
+            wq.put(None)
+            wt.join()
+            enc_proc.stdin.close()
+            rc = enc_proc.wait()
+        if err or rc != 0:
+            sys.exit(f"ffmpeg の符号化が落ちた（{rc} {err[:1]}）")
+
+    af = style.get("avoid_faces") or {}
+    if text and af.get("enabled"):
+        # 字を顔に被せない（自撮りの画が多い。字を縦のまん中に置くと、顔のど真ん中に乗る）。
+        # まず字なしで書き、それを読み直して全コマの顔を探す。品質チェックはこの字なしの版で
+        # 顔を探すので、同じ絵で探せば「書き出しは避けたのに、チェックは被っていると言う」が起きない。
+        # 字なしの版は work/no_text.mp4（品質チェックが既定で読む所）に置く
+        t_face = time.time()
+        plate = work / "no_text.mp4"
+        encode(plate, [[] for _ in range(p["frames"])], False)
+        dets = plate_faces(plate, W, H, af)
+        if len(dets) != p["frames"]:
+            sys.exit(f"字なしの版から {len(dets)} コマしか読めなかった（{p['frames']} コマのはず）")
+        (work / "faces.json").write_text(json.dumps(dets))
+        faces = [face_boxes(dets, af), face_boxes(dets, af, strict=True)]
+        layers = layout(p, style, work, faces)
+        fa = p.get("face_avoid", [])
+        p["faces"] = {"plate": str(plate), "frames": len(dets), "frames_with_detection": sum(1 for x in dets if x),
+                      "frames_with_face": sum(1 for x in faces[0] if x),
+                      "frames_with_face_strict": sum(1 for x in faces[1] if x), "score": af.get("score", 0.5),
+                      "seconds": round(time.time() - t_face, 1),
+                      "moved": sum(1 for m in fa if not m.get("unresolved")),
+                      "unresolved": sum(1 for m in fa if m.get("unresolved"))}
+        for m in fa:
+            if m.get("unresolved"):
+                ok = m.get("face_overlap_ok")
+                print(f"顔を避けきれない: {m['kind']}「{m['text']}」{m['from']}〜{m['to']}コマ"
+                      + (f"（例外の印あり: {ok['frames']}コマまで）" if ok else ""), file=sys.stderr)
+
     # コマごとに、重ねる字の絵を引けるようにする（タイトル → テロップ → 字幕 の順に重ねる）
-    order = {"title": 0, "telop": 1, "caption": 2}
+    order = {"title": 0, "note": 1, "telop": 2, "caption": 3}
     timeline: list[list[Overlay]] = [[] for _ in range(p["frames"])]
     p["overlays"] = []
     kind_count: dict[str, int] = {}
@@ -1358,105 +2176,57 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
     if text:
         for ly in sorted(layers, key=lambda z: order[z["kind"]]):
             it = ly["item"]
-            ovs = [Overlay(img, (W - img.width) // 2,
-                           (ly["cy"] - img.height // 2) if ly["kind"] == "telop" else it["y"])
-                   for img in ly["imgs"]]
-            n_pop = len(style["telop"].get("pop", [1.0])) if ly["kind"] == "telop" else 1
+            seq = []
             for f in range(max(0, it["from"]), min(p["frames"], it["to"])):
-                timeline[f].append(ovs[pick(it, f, n_pop) if ly["kind"] == "telop" else 0])
+                ov, key, img = layer_at(ly, f, W, style)
+                timeline[f].append(ov)
+                seq.append((f, key, ov, img))
 
             # 品質チェックが「重ねた物の全部」を読めるように、コマの範囲ごとに1つずつ書き出す
-            # （テロップの「ポン」は数コマごとに絵が変わるので、絵ごとに1件）
-            seq = [(f, pick(it, f, n_pop) if ly["kind"] == "telop" else 0)
-                   for f in range(max(0, it["from"]), min(p["frames"], it["to"]))]
+            # （「ポン」や出入りの動きでは数コマごとに絵が変わるので、絵ごとに1件）
             nth = kind_count.get(ly["kind"], 0)
             kind_count[ly["kind"]] = nth + 1
+            names: dict = {}
             k0 = 0
             while k0 < len(seq):
                 k1 = k0
                 while k1 + 1 < len(seq) and seq[k1 + 1][1] == seq[k0][1]:
                     k1 += 1
-                ov, gi = ovs[seq[k0][1]], seq[k0][1]
+                _, key, ov, img = seq[k0]
+                # 絵が同じなら（揺れで置き場だけ違う）同じ PNG を指す
+                gi = names.setdefault(id(img), len(names))
                 png = work / f"ov_{ly['kind']}_{nth:02d}_{gi}.png"
                 if (ly["kind"], nth, gi) not in saved:
-                    ly["imgs"][gi].save(png)
+                    img.save(png)
                     saved.add((ly["kind"], nth, gi))
                 o = {"kind": ly["kind"], "png": str(png), "x": ov.x, "y": ov.y, "w": ov.w, "h": ov.h,
                      "from": seq[k0][0], "to": seq[k1][0] + 1, "text": it.get("text") or "／".join(it["lines"])}
+                if key not in (_IDENT,) and key[0] != "pick":
+                    # 出入りの動き・揺れの途中の絵（大きさ・濃さ・ぼけ・位置が出来上がりと違う）。
+                    # 濃さが 1 より小さい絵は、字の画素を「不透明な所」で探す検査には見つからない
+                    o["anim"] = dict(zip(("scale", "alpha", "dx", "dy", "rotate", "sharp"), key))
                 if "line" in it:
                     o["line"] = it["line"]
+                if it.get("face_overlap_ok"):
+                    o["face_overlap_ok"] = it["face_overlap_ok"]
+                if it.get("big"):
+                    o["big"] = it["big"]
+                if o.get("anim") and o["anim"]["alpha"] < 0.999:
+                    # 薄い途中の絵は、品質チェックが「不透明な画素」で字の位置を探せない（見つからない、と落ちる）。
+                    # 別に控える。安全領域は字なしの書き出しとの差（画素）で、薄い字も含めて確かめられる
+                    p.setdefault("overlays_anim", []).append(o)
+                    k0 = k1 + 1
+                    continue
                 p["overlays"].append(o)
+                if ly["kind"] == "title" and "line" in it:
+                    # 題の札はその行の字幕を兼ねる。字幕と声のずれの検査が札を字幕として測れるよう、
+                    # 同じ絵・同じ置き場で「その行の字幕」としても書いておく（画面に重ねるのは1回だけ）
+                    p["overlays"].append({**o, "kind": "caption", "card": True})
                 k0 = k1 + 1
     p["style"] = style
     p["blur_out"] = blur_out(p, W, H)
 
-    enc = style["encode"]
-    au = style["audio"]
-    # 音の仕上げ（一定の音量＋リミッター）。BGM 入りと、BGM 抜き（TikTok 向け）を別々に作る
-    p["master"] = {"with_bgm": master([narr_p, bgm_p, src_p], work, "with_bgm", au, enc)}
-    if no_bgm_out:
-        p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
-
-    args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0",
-            "-i", p["master"]["with_bgm"]["file"]]
-    fc = ["[0:v]scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,"
-          "format=yuv420p[vout]"]
-    args += [
-        "-filter_complex", ";".join(fc), "-map", "[vout]", "-map", "1:a",
-        "-frames:v", str(p["frames"]), "-r", str(fps),
-        "-c:v", "libx264", "-preset", enc["preset"], "-crf", str(enc["crf"]),
-        "-profile:v", "high", "-pix_fmt", "yuv420p", "-threads", "4",
-        # x264 をコマ単位で並列にすると、箱が混んでいるときだけ別のバイト列が出た
-        # （同時に3本回して1本だけ違った。filtergraph の出力は3本とも同じ）。
-        # スライス単位の並列は混んでいても3本とも同じだった。遅くなる（27秒→45秒）が、
-        # 「同じ指示書から同じ動画」を取る。
-        "-x264-params", "sliced-threads=1",
-        "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
-        # 音は仕上げた AAC をそのまま入れる（測って合わせたものを、もう一度符号化して変えない）
-        "-c:a", "copy",
-        # 同じ指示書から同じバイト列を出すため、版や日時を書き込ませない
-        "-fflags", "+bitexact", "-flags:v", "+bitexact", "-flags:a", "+bitexact",
-        "-map_metadata", "-1", "-movflags", "+faststart", str(out),
-    ]
-    (work / "ffmpeg_args.json").write_text(json.dumps(args, ensure_ascii=False, indent=1))
-    enc_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
-
-    def frames():
-        f = 0
-        for c in p["cuts"]:
-            for j, img in enumerate(prefetch(decode_cut(c, fps))):
-                frame = frame_of(cv2, img, c, j, W, H)
-                for ov in timeline[f]:
-                    ov.blend(frame)
-                yield frame.tobytes()
-                f += 1
-
-    # 書き込みは別の糸で（pipe が詰まっているあいだに、次のコマを作れるように）
-    wq: queue.Queue = queue.Queue(4)
-    err: list[BaseException] = []
-
-    def writer():
-        try:
-            while (b := wq.get()) is not None:
-                enc_proc.stdin.write(b)
-        except BaseException as e:  # noqa: BLE001
-            err.append(e)
-            while wq.get() is not None:  # 作る側を止めないように、残りを捨てる
-                pass
-
-    wt = threading.Thread(target=writer, daemon=True)
-    wt.start()
-    try:
-        for b in frames():
-            wq.put(b)
-    finally:
-        wq.put(None)
-        wt.join()
-        enc_proc.stdin.close()
-        rc = enc_proc.wait()
-    if err or rc != 0:
-        sys.exit(f"ffmpeg の符号化が落ちた（{rc} {err[:1]}）")
+    encode(out, timeline, True)
     if no_bgm_out:
         # BGM 抜きの版（TikTok は投稿のときに媒体の音源から曲を付けるので、ファイルに曲を入れない）。
         # 映像は書いたものをそのまま写す（同じ絵を2回符号化しない。2本の絵が1画素も違わない）

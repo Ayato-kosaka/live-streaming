@@ -95,5 +95,6 @@ python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> s
 
 - 動画ごとの制作記録: `shorts/videos/<videoId>/`（企画・原稿・絵コンテ・編集指示書・投稿の URL・確かめる仮説）
 - **作り方の学び（本編集〜Gate 2）: `references/production.md`。直しが出るたびに、決めたことと人の目の検査の表に足す**
+- **参考の見た目と音（書体・大きさ・位置・縁・色・動き・BGM の差）: `references/style_reference.md`。参考を渡されたら、台本だけでなくここも測ってから作る**（`docs/island-misses.md` #278）
 - 仮説とベストプラクティス: `references/playbook.md`。**複数の動画で支持されたものだけを上げる。** 矛盾したら規則のほうを疑う
 - 参考ショートの分析（日付つきの記録。あとから直さない）: `references/reference_shorts_2026-10.md`
