@@ -39,11 +39,13 @@ SKIN_MIN = 0.25
 YUNET_SCORE = 0.6        # YuNet の点の線（書き出しの顔よけが、チェックと同じ線で選び直すときに読む）
 
 
-def detector(cv2, also: tuple = ()):
+def detector(cv2, also: tuple = (), full: bool = False):
     """（名前, 1コマの白黒 → 箱の並び）。無ければ None。
 
     also: YuNet の重みを、ここで見つからないときに探す場所（字と顔の検査が、書き出しの道具の
     `render/models/` を使う。顔の検査そのものは渡さないので、振る舞いは変わらない）。
+    full: YuNet のとき、箱の後ろに5点（右目・左目・鼻・右口角・左口角の x,y）も返す（字と顔の検査が
+    「目と鼻」の範囲を決めるのに使う）。Haar は点を持たないので箱だけ。
     """
     model = os.environ.get("SHORTS_QA_YUNET") or str(HERE / "models" / "face_detection_yunet_2023mar.onnx")
     if not os.path.exists(model):
@@ -55,7 +57,11 @@ def detector(cv2, also: tuple = ()):
             h, w = bgr.shape[:2]
             det.setInputSize((w, h))
             _, faces = det.detect(bgr)
-            return [] if faces is None else [tuple(int(v) for v in f[:4]) for f in faces]
+            if faces is None:
+                return []
+            if full:
+                return [tuple(int(v) for v in f[:4]) + tuple(float(v) for v in f[4:14]) for f in faces]
+            return [tuple(int(v) for v in f[:4]) for f in faces]
         return "yunet", run_yunet, False
     if hasattr(cv2, "CascadeClassifier") and hasattr(cv2, "data"):
         root = cv2.data.haarcascades

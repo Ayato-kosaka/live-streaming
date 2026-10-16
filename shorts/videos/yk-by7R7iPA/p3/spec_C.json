@@ -25,7 +25,8 @@
    "visual": "早朝のバス停",
    "pic_note": "早朝のバス停（0:13:31）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "運賃は80円らしいんやけど、",
@@ -36,7 +37,8 @@
    "visual": "大通り",
    "pic_note": "大通り（0:13:45）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "誰に払うんか、マジで分からへん。",
@@ -47,7 +49,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "チャッピーに聞いた80円握りしめて、",
@@ -58,7 +61,8 @@
    "visual": "バス停",
    "pic_note": "バス停（0:13:55）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "「少ないわ」って怒られたらどうしよ。",
@@ -81,7 +85,8 @@
    "visual": "近づくバス",
    "pic_note": "近づくバス（0:14:12）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "めっちゃ人乗ってるし、これは違うやんな？",
@@ -92,7 +97,8 @@
    "visual": "通り過ぎるバス",
    "pic_note": "通り過ぎるバス（0:14:25）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "予定の時間も、もう過ぎてるし……",
@@ -103,7 +109,8 @@
    "visual": "来ないバスを待つ通り",
    "pic_note": "来ないバスを待つ通り（0:15:44）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "gloom"
   },
   {
    "line": "さっき聞いた人、「イエローバス」って言うてたな。",
@@ -114,7 +121,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "来た来た来た！",
@@ -125,7 +133,8 @@
    "visual": "黄色いバスが近づく",
    "pic_note": "黄色いバスが近づく（0:15:58）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "excited"
   },
   {
    "line": "イエローバスやんか！",
@@ -148,7 +157,8 @@
    "visual": "ドアの前",
    "pic_note": "ドアの前（0:16:10）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "ほんで運賃は、運転手？それとも機械？",
@@ -159,7 +169,8 @@
    "visual": "車内",
    "pic_note": "車内（0:16:45）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "と思ってたら、車内のお兄さんが集金に来た。",
@@ -170,7 +181,8 @@
    "visual": "係の人にお金を渡す手",
    "pic_note": "係の人にお金を渡す手（0:16:50。顔はぼかす）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "まさかの対面払い！",
@@ -193,7 +205,8 @@
    "visual": "切符",
    "pic_note": "切符（0:17:00〜0:17:41）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy"
   },
   {
    "line": "日本やったら、ICカードでピッやのにな。",
@@ -204,7 +217,8 @@
    "visual": "走り出したバスの窓の外",
    "pic_note": "走り出したバスの窓の外（0:17:20）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "80円で、怒られへんかった。よかった。",
@@ -215,7 +229,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy"
   },
   {
    "line": "みんなは海外の路線バス、ひとりで乗れる派？タクシー派？",
@@ -226,7 +241,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   }
  ]
 }

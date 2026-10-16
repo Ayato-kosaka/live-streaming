@@ -688,7 +688,14 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             continue
         # 【大】の行は字幕そのものを大きく出す（1枚。折り返しと大きさは layout が置き場に合わせて決める）
         big = ln.get("big")
-        pages = [[text]] if big else paginate(text, cap_font, inner, cap_st["max_lines"])
+        mood = ln.get("mood")
+        ment = (style.get("moods") or {}).get("looks", {}).get(mood) if mood and mood != "plain" else None
+        if big:
+            pages = [[text]]
+        elif ment:
+            pages = mood_pages(text, ment, style)
+        else:
+            pages = paginate(text, cap_font, inner, cap_st["max_lines"])
         end = min(ln["at"] + frames + cap_st.get("hold_frames", 0), starts[i + 1], total)
         # 次の行がすぐ（bridge_frames 以内）なら、次の行の頭まで出しておく。行の頭はカットの切れ目なので、
         # 字幕が消えるのと画が変わるのが同じコマになる（7コマだけ字幕が消えてまた出る、のちらつきも無くなる）
@@ -723,6 +730,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             if big:
                 cap["big"] = big
                 cap["text"] = text
+            elif ment:
+                cap["mood"] = mood
             captions.append(cap)
 
     title = edit.get("title")
@@ -942,6 +951,29 @@ def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
     return card_img
 
 
+def mood_pages(text: str, ment: dict, style: dict) -> list[list[str]]:
+    """感情の字幕の頁と行。1頁（2行まで）に min_size 以上で収まるなら1頁:
+    文が2つ（。！？で切れる）でそれぞれ1行に収まるならその切れ目で、だめなら文節で2行に折る。
+    1頁に収まらないときだけ、ふつうの字幕と同じ割りかた（その書体のいちばん小さい大きさで）。"""
+    mst = style["moods"]
+    lk, fpath = ment["look"], font_path(style, ment["font"])
+    s0, s1 = ment.get("min_size", ment["size"]), ment["size"]
+    maxw, nmax = mst["max_width"], mst.get("max_lines", 2)
+    f_min = ImageFont.truetype(str(fpath), s0)
+
+    def fits(lines):
+        return len(lines) <= nmax and TL.text_width(lines, lk, f_min) + 6 <= maxw
+
+    sents = [x.rstrip("、。").strip() for x in re.split(r"(?<=[。！？])", text) if x.rstrip("、。").strip()]
+    if 2 <= len(sents) <= nmax and fits(sents):
+        return [sents]
+    lines, _ = fit_lines(text, lk, fpath, s1, s0, maxw, nmax, wrap_below=s1)
+    if fits(lines):
+        return [lines]
+    m_inner = maxw - 2 * TL.margin_of(TL.look_of(lk), s0) - 6
+    return paginate(text, f_min, m_inner, nmax)
+
+
 def anim_scale_max(anim: dict | None) -> float:
     """出入りの動きで、いちばん大きくなるときの倍率（置き場に収まるかは、そのときの大きさで見る）。"""
     sts = TL.anim_frames((anim or {}).get("in")) + TL.anim_frames((anim or {}).get("out"))
@@ -1049,6 +1081,38 @@ def big_layout(it: dict, p: dict, style: dict, faces: list | None = None) -> tup
 _IDENT = TL.state_key(TL.IDENTITY)
 
 
+def add_sparkles(p: dict, it: dict, cfg: dict, img: Image.Image, x: int, y: int, size: int, seed: int,
+                 safe: dict, smax: float = 1.0, mx: float = 0.0, my: float = 0.0):
+    """字のまわりのキラキラを、画の効果として時間割に足す（字の置き場が決まったあとで）。
+
+    粒は字の見える箱を margin_em だけ広げた中に置き、安全領域（右のボタン列も）から出ないように切る。
+    字なしの書き出しには入れない（置き場が字に付いているので、顔を探す前の版と位置が合わない）。
+    """
+    if not cfg:
+        return
+    vb = visible_box(img)
+    w2, h2 = img.width / 2, img.height / 2
+    xs = [x + w2 + k * (v - w2) for k in (1.0, smax) for v in (vb[0], vb[2])]
+    ys = [y + h2 + k * (v - h2) for k in (1.0, smax) for v in (vb[1], vb[3])]
+    tx0, tx1, ty0, ty1 = min(xs) - mx, max(xs) + mx, min(ys) - my, max(ys) + my
+    ex, ey = cfg["margin_em"][0] * size, cfg["margin_em"][1] * size
+    x0, y0 = max(safe["left"], tx0 - ex), max(safe["top"], ty0 - ey)
+    x1, y1 = min(safe["right"], tx1 + ex), min(safe["bottom"], ty1 + ey)
+    if y1 > safe["right_column_from_y"]:
+        x1 = min(x1, safe["right_column_x"])
+    # 粒の大きさの分だけ内側に置く（星と光が箱の縁で切れて、安全領域の外にはみ出さないように）
+    pad = int(cfg.get("size_px", [10, 26])[1] + cfg.get("glow_px", 4) * 2)
+    box = [int(x0), int(y0), int(x1), int(y1)]
+    core = ((tx0 + tx1) / 2 - x0 - pad, (ty0 + ty1) / 2 - y0 - pad,
+            (tx1 - tx0) / 2 * cfg.get("core", 0.6), (ty1 - ty0) / 2 * cfg.get("core", 0.6))
+    specs = TL.sparkle_specs(max(1, box[2] - box[0] - 2 * pad), max(1, box[3] - box[1] - 2 * pad), cfg, seed, core)
+    for sp in specs:
+        sp["x"] += pad
+        sp["y"] += pad
+    p.setdefault("fx", []).append({"type": "sparkles", "from": it["from"], "to": it["to"], "box": box,
+                                   "cfg": cfg, "specs": specs, "plate": False})
+
+
 # ---------------------------------------------------------------- 顔を避ける
 
 YUNET = HERE / "models" / "face_detection_yunet_2023mar.onnx"
@@ -1080,7 +1144,7 @@ def qa_facetrack():
 
 
 def plate_faces(plate: Path, W: int, H: int, cfg: dict) -> list[list[list]]:
-    """字なしの書き出しの全コマで顔を探す。コマごとの [x, y, w, h, 点, 肌色の割合, 細かさ, まわりの細かさ]。
+    """字なしの書き出しの全コマで顔を探す。コマごとの [x, y, w, h, 点, 肌色の割合, 細かさ, まわりの細かさ, 5点の x,y…]。
 
     品質チェック（qa/textface.py）と同じ絵——書き出して読み直した字なしの版——を、同じ縮め方
     （色を BGR にしてから縦横半分に面積平均）で YuNet に通し、同じ式で肌色とぼかしを測る。
@@ -1110,8 +1174,10 @@ def plate_faces(plate: Path, W: int, H: int, cfg: dict) -> list[list[list]]:
                 for f in fs:
                     X, Y, Wd, Hd = [int(round(int(v) / s)) for v in f[:4]]
                     inner, outer = QF.sharpness(cv2, gray, X, Y, Wd, Hd)
+                    # 5点（右目・左目・鼻・右口角・左口角）。字を被せないのは目と鼻だけなので、その範囲を決めるのに使う
+                    lm = [round(float(v) / s, 1) for v in f[4:14]]
                     row.append([X, Y, Wd, Hd, round(float(f[-1]), 3), round(QF.skin_share(cv2, img, X, Y, Wd, Hd), 3),
-                                round(inner, 1), round(outer, 1)])
+                                round(inner, 1), round(outer, 1)] + lm)
             out.append(row)
     finally:
         proc.stdout.close()
@@ -1120,7 +1186,7 @@ def plate_faces(plate: Path, W: int, H: int, cfg: dict) -> list[list[list]]:
 
 
 def face_boxes(dets: list[list[list]], cfg: dict, strict: bool = False) -> list[list[list[int]]]:
-    """避ける顔の箱（コマごと）。
+    """避ける顔の範囲（コマごと）。顔の箱の上端から鼻の下まで＝目と鼻（qa/facetrack.py の guard_zone）。
 
     strict=False（先に使う）: 品質チェックが顔と数えるもの（点 0.6・肌色 SKIN_MIN 以上・ぼかしていない）を
     必ず含むように、チェックより緩い線で選ぶ。点は様式の score まで、肌色は skin_ratio 倍まで下げ、
@@ -1134,17 +1200,20 @@ def face_boxes(dets: list[list[list]], cfg: dict, strict: bool = False) -> list[
         k_skin, k_blur, min_score = 1.0, 1.0, QF.YUNET_SCORE
     else:
         k_skin, k_blur, min_score = cfg.get("skin_ratio", 0.6), cfg.get("blur_ratio", 0.5), 0.0
+    FT = qa_facetrack()
     out = []
     for row in dets:
         keep = []
-        for x, y, w, h, score, skin, inner, outer in row:
+        for d in row:
+            x, y, w, h, score, skin, inner, outer = d[:8]
             if score < min_score or skin < QF.SKIN_MIN * k_skin:
                 continue
             if inner < QF.BLUR_ABS * k_blur and (outer <= 0 or inner < QF.BLUR_RATIO * k_blur * outer):
                 continue
-            keep.append([x, y, w, h])
+            keep.append(d)
         out.append(keep)
-    return qa_facetrack().keep_persistent(out)
+    # 続けて出たかは顔の箱ぜんぶでつなぎ、避ける範囲は目と鼻だけにする（口から下は字が被ってよい）
+    return [[FT.guard_zone(d[0], d[1], d[2], d[3], d[8:18] or None) for d in row] for row in FT.keep_persistent(out)]
 
 
 def place_off_face(y0: float, top: float, bot: float, x0: float, x1: float, it: dict, tiers: list, cfg: dict,
@@ -1163,11 +1232,12 @@ def place_off_face(y0: float, top: float, bot: float, x0: float, x1: float, it: 
         sp = spans if k == 0 else face_spans(faces, it["from"], it["to"], x0, x1, cfg)
         if k and not on_face(y0, top, bot, sp, gap):
             return y0, "その場（チェックの線では顔に掛からない）", sp, False
-        got = free_y(y0, top, bot, sp, busy, ymin, ymax, gap)
+        got = free_y(y0, top, bot, sp, busy, ymin, ymax, gap, up=cfg.get("up", False))
         if got:
             return got[0], got[1] + ("（チェックの線で）" if k else ""), sp, False
     sp = face_spans(tiers[-1], it["from"], it["to"], x0, x1, cfg)
-    return least_y(y0, top, bot, sp, busy, ymin, ymax, gap), "避けきれない（重なりが最少の所）", sp, True
+    lo = ymin if cfg.get("up", False) else max(ymin, y0)
+    return least_y(y0, top, bot, sp, busy, lo, ymax, gap), "避けきれない（重なりが最少の所）", sp, True
 
 
 def visible_box(img: Image.Image, alpha_min: int = 16) -> tuple[int, int, int, int]:
@@ -1194,11 +1264,11 @@ def face_spans(faces: list | None, f0: int, f1: int, x0: float, x1: float, cfg: 
 
 
 def free_y(y0: float, top: float, bot: float, spans: list, busy: list, ymin: float, ymax: float,
-           gap: float) -> tuple[int, str] | None:
+           gap: float, up: bool = False) -> tuple[int, str] | None:
     """字の見える箱 [y + top, y + bot] が顔（spans）にも塞がった帯（busy）にも掛からない y。
 
-    顔の下へ（いちばん下に掛かる顔の下端＋gap から）。下の安全域を越えるなら顔の上へ。
-    どちらにも置けなければ None。y の範囲は [ymin, ymax]。
+    顔の下へ（いちばん下に掛かる顔の下端＋gap から）。up なら、下の安全域を越えるときに顔の上へも探す
+    （あやとの直し #926 で、上へは逃がさないことにした。既定は false）。置けなければ None。y の範囲は [ymin, ymax]。
     """
     iv = [(a - gap - bot, b + gap - top) for a, b in spans] + [(a - bot, b - top) for a, b in busy]
 
@@ -1210,6 +1280,8 @@ def free_y(y0: float, top: float, bot: float, spans: list, busy: list, ymin: flo
         y = math.ceil(h[1])
     if ymin <= y <= ymax:
         return int(y), "below"
+    if not up:
+        return None
     y = y0
     while (h := hit(y)) is not None:
         y = math.floor(h[0])
@@ -1381,28 +1453,100 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 # 集中線は字ではなく画の効果（字なしの書き出しにも入れる。品質チェックが字の画素と数えない）
                 p.setdefault("fx", []).append({"type": "speedlines", "from": it["from"], "to": it["to"],
                                                "seed": TL.text_seed(it["text"]), "cfg": ent["speedlines"]})
+            if ent.get("sparkles"):
+                spk = (style.get("sparkles") or {}).get(ent["sparkles"])
+                bmx, bmy = TL.shake_margin(anim)
+                add_sparkles(p, it, spk, img, (W - img.width) // 2, ink_y(img, cy), size, TL.text_seed(it["text"]),
+                             safe, anim_scale_max(anim), bmx, bmy)
             out.append(ly)
             continue
-        img = card(it["lines"], cap_st, cap_font, hl=it.get("hl"))
-        img.save(path)
-        y = ink_y(img, cap_st["center_y"]) if cap_st.get("anchor") == "ink_center" \
-            else cap_st["center_y"] - img.height // 2
-        if faces is not None:
-            # 字の見える箱（縁まで）を [y + top, y + bot] として、顔に掛かるなら行ごとに1回だけ動かす
+        mood = it.get("mood")
+        ment = (style.get("moods") or {}).get("looks", {}).get(mood) if mood else None
+        if ment:
+            # 感情の字幕: 書体・色・縁・動きは様式の moods.looks[mood]。頁の字を、size から min_size の間で
+            # いちばん大きく（1行に収まらなければ2行に折る）
+            mst = style["moods"]
+            mlk, anim = ment["look"], ment.get("anim")
+            mfont = font_path(style, ment["font"])
+            seed = TL.text_seed("".join(it["lines"]))
+            s0 = ment.get("size", 72)
+            floor = ment.get("face_min_size", ment.get("min_size", s0))
+            spk = (style.get("sparkles") or {}).get(ment.get("sparkles")) if ment.get("sparkles") else None
+
+            def build(cap, it=it, mlk=mlk, mfont=mfont, mst=mst, ment=ment, seed=seed):
+                # 行の割りは plan が決めたまま（文の切れ目を崩さない）。収まるいちばん大きい大きさだけを選ぶ
+                lines = it["lines"]
+                size = min(cap, ment.get("min_size", cap))
+                for sz in range(cap, size - 1, -2):
+                    if TL.text_width(lines, mlk, ImageFont.truetype(str(mfont), sz)) + 6 <= mst["max_width"]:
+                        size = sz
+                        break
+                im = TL.text_img(lines, mlk, ImageFont.truetype(str(mfont), size), seed=seed)
+                if ment.get("rotate"):
+                    # 困惑: 傾けた絵を止めたまま出す（傾きは動きではないので、絵そのものを回す）
+                    im = im.rotate(ment["rotate"], resample=Image.BICUBIC, expand=True)
+                return im, size, lines
+        else:
+            anim, spk, seed = cap_st.get("anim"), None, 0
+            s0 = cap_st["size"]
+            floor = cap_st.get("face_min_size", s0)
+
+            def build(cap, it=it):
+                f = cap_font if cap == cap_st["size"] else ImageFont.truetype(str(font_path(style, cap_st["font"])), cap)
+                return card(it["lines"], cap_st, f, hl=it.get("hl")), cap, it["lines"]
+        smax = anim_scale_max(anim)
+        mx, my = TL.shake_margin(anim)
+        amin = af.get("alpha_min", 16)
+
+        def extent(im, size, smax=smax, mx=mx, my=my, amin=amin):
+            """絵の左上からの、見える箱（動きでいちばん大きくなったとき・揺れでいちばん動いたときまで）。"""
+            vb = visible_box(im, amin)
+            h2, w2 = im.height / 2, im.width / 2
+            ys = [h2 + k * (v - h2) for k in (1.0, smax) for v in (vb[1], vb[3])]
+            xs = [w2 + k * (v - w2) for k in (1.0, smax) for v in (vb[0], vb[2])]
+            return min(xs) - mx, max(xs) + mx, min(ys) - my, max(ys) + my
+
+        step = af.get("shrink_step", 4)
+        first = chosen = None
+        for cap in [s0] + list(range(s0 - step, floor - 1, -step)):
+            img, size, lines = build(cap)
+            y0 = ink_y(img, cap_st["center_y"]) if cap_st.get("anchor") == "ink_center" \
+                else cap_st["center_y"] - img.height // 2
+            if faces is None:
+                chosen = (img, size, lines, y0, "", [], False, y0)
+                break
+            l, r, t, b = extent(img, size)
             x_img = (W - img.width) // 2
-            vb = visible_box(img, af.get("alpha_min", 16))
-            ymax = safe["bottom"] - vb[3]
-            if x_img + vb[2] > safe["right_column_x"]:
-                ymax = min(ymax, safe["right_column_from_y"] - vb[3])
-            ymin = top_limit(it, p, safe["top"]) - vb[1]
-            y2, how, sp, bad = place_off_face(y, vb[1], vb[3], x_img + vb[0], x_img + vb[2], it, faces, af,
+            # キラキラも目と鼻には掛けない（上と横に広げて測る。下と安全域は描くときに切る）
+            ex, ey = (spk["margin_em"][0] * size, spk["margin_em"][1] * size) if spk else (0, 0)
+            ymax = safe["bottom"] - b
+            if x_img + r > safe["right_column_x"]:
+                ymax = min(ymax, safe["right_column_from_y"] - b)
+            ymin = top_limit(it, p, safe["top"]) - t
+            y2, how, sp, bad = place_off_face(y0, t - ey, b, x_img + l - ex, x_img + r + ex, it, faces, af,
                                               busy_bands(it, p), ymin, ymax)
-            if how:
-                mid = (vb[1] + vb[3]) / 2
-                note_move(p, it, "caption", y + mid, y2 + mid, how, sp, **({"unresolved": True} if bad else {}))
-                y = y2
-        it.update({"png": str(path), "x": (W - img.width) // 2, "y": y, "w": img.width, "h": img.height})
-        out.append(still("caption", it, img, cap_st.get("anim")))
+            res = (img, size, lines, y2, how, sp, bad, y0)
+            first = first or res
+            if not how or not bad:
+                chosen = res
+                break
+        img, size, lines, y, how, sp, bad, y0 = chosen or first
+        if how:
+            # 顔に掛かる行は、行ごとに1回だけ下へ（置けなければ小さくしてから）。動かした行は時間割に残す
+            vb = visible_box(img, amin)
+            mid = (vb[1] + vb[3]) / 2
+            label = how if size == s0 else f"{how or 'その場'}・{s0}→{size}px"
+            note_move(p, it, "caption", y0 + mid, y + mid, label, sp, size_from=s0, size_to=size,
+                      **({"unresolved": True} if bad and chosen is None else {}))
+        img.save(path)
+        it.update({"png": str(path), "x": (W - img.width) // 2, "y": y, "w": img.width, "h": img.height, "size": size})
+        if ment:
+            it["lines"] = lines
+        ly = still("caption", it, img, anim)
+        ly.update({"seed": seed, "font_px": size})
+        out.append(ly)
+        if spk:
+            add_sparkles(p, it, spk, img, (W - img.width) // 2, y, size, seed, safe, smax, mx, my)
 
     tp_st = style["telop"]
     fpath = font_path(style, tp_st["font"])
@@ -2066,7 +2210,7 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
     if no_bgm_out:
         p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
 
-    def encode(path: Path, timeline: list[list[Overlay]], keep_args: bool):
+    def encode(path: Path, timeline: list[list[Overlay]], keep_args: bool, plate: bool = False):
         """コマを作って ffmpeg に流す（字の絵は timeline のとおりに重ねる。集中線は字なしでも入れる）。"""
         args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
                 "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0",
@@ -2097,6 +2241,8 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         # 画の効果（集中線など）。字ではないので、字なしの書き出しにも同じに入れる
         fx_at: list[list[dict]] = [[] for _ in range(p["frames"])]
         for fx in p.get("fx", []):
+            if plate and fx.get("plate") is False:
+                continue  # 字に付いた効果（キラキラ）は、字なしの版に入れない
             for f in range(max(0, fx["from"]), min(p["frames"], fx["to"])):
                 fx_at[f].append(fx)
 
@@ -2110,6 +2256,12 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                             Overlay(TL.speedlines(W, H, fx["cfg"], fx["seed"], f - fx["from"]), 0, 0).blend(frame)
                     for ov in timeline[f]:
                         ov.blend(frame)
+                    for fx in fx_at[f]:
+                        if fx["type"] == "sparkles":
+                            # キラキラは字の上に重ねる（参考も字の手前で瞬く）
+                            bx = fx["box"]
+                            Overlay(TL.sparkles(bx[2] - bx[0], bx[3] - bx[1], fx["cfg"], fx["specs"], f - fx["from"]),
+                                    bx[0], bx[1]).blend(frame)
                     yield frame.tobytes()
                     f += 1
 
@@ -2147,7 +2299,7 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         # 字なしの版は work/no_text.mp4（品質チェックが既定で読む所）に置く
         t_face = time.time()
         plate = work / "no_text.mp4"
-        encode(plate, [[] for _ in range(p["frames"])], False)
+        encode(plate, [[] for _ in range(p["frames"])], False, plate=True)
         dets = plate_faces(plate, W, H, af)
         if len(dets) != p["frames"]:
             sys.exit(f"字なしの版から {len(dets)} コマしか読めなかった（{p['frames']} コマのはず）")
@@ -2211,6 +2363,8 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                     o["face_overlap_ok"] = it["face_overlap_ok"]
                 if it.get("big"):
                     o["big"] = it["big"]
+                if it.get("mood"):
+                    o["mood"] = it["mood"]
                 if o.get("anim") and o["anim"]["alpha"] < 0.999:
                     # 薄い途中の絵は、品質チェックが「不透明な画素」で字の位置を探せない（見つからない、と落ちる）。
                     # 別に控える。安全領域は字なしの書き出しとの差（画素）で、薄い字も含めて確かめられる

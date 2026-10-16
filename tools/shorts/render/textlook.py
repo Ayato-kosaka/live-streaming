@@ -488,3 +488,62 @@ def speedlines(W: int, H: int, cfg: dict, seed: int, j: int) -> Image.Image:
         p2 = (cx + math.cos(th + ang) * R, cy + math.sin(th + ang) * R)
         d.polygon([p_in, p1, p2], fill=col)
     return img
+
+
+# ---------------------------------------------------------------- キラキラ（字のまわりの画の効果）
+
+def _star(size: float, color: tuple, glow_px: float) -> Image.Image:
+    """四角い星（4本の細い光と、真ん中の小さな菱形）。2倍で描いて縮める。"""
+    s = max(3, int(round(size)))
+    big = Image.new("RGBA", (s * 2 * SS, s * 2 * SS), (0, 0, 0, 0))
+    d = ImageDraw.Draw(big)
+    c = s * SS
+    r, w = s * SS * 0.95, max(1.0, s * SS * 0.16)
+    d.polygon([(c, c - r), (c + w, c), (c, c + r), (c - w, c)], fill=color)
+    d.polygon([(c - r, c), (c, c - w), (c + r, c), (c, c + w)], fill=color)
+    q = s * SS * 0.22
+    d.polygon([(c, c - q), (c + q, c), (c, c + q), (c - q, c)], fill=color)
+    img = big.resize((s * 2, s * 2), Image.LANCZOS)
+    if glow_px > 0:
+        halo = blur_rgba(img, glow_px)
+        halo = halo.crop(((halo.width - img.width) // 2, (halo.height - img.height) // 2,
+                          (halo.width + img.width) // 2, (halo.height + img.height) // 2))
+        out = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        out.alpha_composite(halo)
+        out.alpha_composite(img)
+        img = out
+    return img
+
+
+def sparkle_specs(w: int, h: int, cfg: dict, seed: int, core: tuple | None = None) -> list[dict]:
+    """粒の並び（置き場・大きさ・色・瞬く周期と位相）。行ごとに同じ種なので、毎回同じ粒になる。
+
+    core = (cx, cy, rx, ry): 字のかたまりの楕円。この中には置かない（字の上に粒が乗ると読みにくい）。
+    """
+    rng = np.random.default_rng([seed, 4093])
+    out = []
+    s0, s1 = cfg.get("size_px", [10, 26])
+    p0, p1 = cfg.get("period", [12, 24])
+    cols = cfg.get("colors", ["#FFFFFF"])
+    tries = 0
+    while len(out) < int(cfg.get("count", 20)) and tries < 2000:
+        tries += 1
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        if core and ((x - core[0]) / max(1, core[2])) ** 2 + ((y - core[1]) / max(1, core[3])) ** 2 < 1:
+            continue
+        out.append({"x": x, "y": y, "size": rng.uniform(s0, s1), "color": cols[int(rng.integers(len(cols)))],
+                    "period": int(rng.integers(p0, p1 + 1)), "phase": rng.uniform(0, 1)})
+    return out
+
+
+def sparkles(w: int, h: int, cfg: dict, specs: list[dict], j: int) -> Image.Image:
+    """j コマ目のキラキラ（w×h の透明な絵）。粒ごとに明るさを sin の山で上げ下げし、明るいほど大きく。"""
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    for sp in specs:
+        u = (j / sp["period"] + sp["phase"]) % 1.0
+        a = max(0.0, math.sin(2 * math.pi * u)) ** 1.5
+        if a < 0.06:
+            continue
+        st = _star(sp["size"] * (0.45 + 0.55 * a), hex_rgba(sp["color"], a), cfg.get("glow_px", 4) * a)
+        img.alpha_composite(st, (int(round(sp["x"] - st.width / 2)), int(round(sp["y"] - st.height / 2))))
+    return img

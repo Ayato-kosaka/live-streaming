@@ -22,7 +22,7 @@
 | 61秒にする（同じ動画をつなぐ） | container | qa_video |
 | faststart を外す（moov を後ろに） | container | qa |
 | 音を 8dB 下げる | loudness | qa |
-| BGM を 8dB 上げる（声との差 9〜10dB） | voice_vs_bgm | qa |
+| BGM を 12dB 上げる（声との差 5〜6dB。線は 9dB） | voice_vs_bgm | qa |
 | 2行目の声の頭に 6コマの無音（字幕が声より 6コマ早い） | subtitle_sync | qa |
 | 字幕を y=1300 に下げる（安全領域の下 1248 を越える） | safe_area | qa |
 | BGM を外す（声の間が 2〜3秒無音） | silence | qa |
@@ -532,7 +532,7 @@ def run(half: str, keep: Path | None = None) -> int:
         jobs = {
             "clean": dict(voices=voices, style=st, bgm=bgm),
             "plate": dict(voices=voices, style=st, bgm=bgm, captions=False, title=False),
-            "bgm_loud": dict(voices=voices, style=st, bgm=bgm, bgm_db=8.0),
+            "bgm_loud": dict(voices=voices, style=st, bgm=bgm, bgm_db=12.0),
             "sync_late": dict(voices={**voices, 1: late}, style=st, bgm=bgm),
             "safe_low": dict(voices=voices, style=style_copy(box, "low", caption__center_y=1300), bgm=bgm),
             "no_bgm": dict(voices=voices, style=st, bgm=None),

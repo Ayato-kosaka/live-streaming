@@ -220,18 +220,25 @@ def sentence_split_ratio(text: str) -> float | None:
 
 # ---------------------------------------------------------------- 入力
 
-def load_clips(path: Path) -> list[dict]:
-    """取り込んだ窓の一覧。clips[] = {n, start, end（元動画の秒）, file, fps, frames, ok}。"""
-    d = json.loads(path.read_text())
-    clips = d["clips"] if isinstance(d, dict) else d
+def load_clips(paths: list[Path] | Path) -> list[dict]:
+    """取り込んだ窓の一覧。clips[] = {n, start, end（元動画の秒）, file, fps, frames, ok}。
+
+    一覧は複数渡せる（あとから足した区間を別の置き場 clips2/ に取り込んだとき）。窓の番号 n は一覧ごとに
+    1 から振られるので、指示書の素材の名前は2つ目から一覧の番号を付けて分ける（c03 と c2_03）。
+    """
     out = []
-    for c in clips:
-        if c.get("ok") is False:
-            continue
-        f = Path(c["file"])
-        if not f.is_absolute():
-            f = (path.parent / f).resolve()
-        out.append({**c, "path": str(f), "start": float(c["start"]), "end": float(c["end"])})
+    for k, path in enumerate([paths] if isinstance(paths, Path) else paths):
+        d = json.loads(path.read_text())
+        clips = d["clips"] if isinstance(d, dict) else d
+        for c in clips:
+            if c.get("ok") is False:
+                continue
+            f = Path(c["file"])
+            if not f.is_absolute():
+                f = (path.parent / f).resolve()
+            n = int(c.get("n", len(out) + 1))
+            out.append({**c, "path": str(f), "start": float(c["start"]), "end": float(c["end"]),
+                        "key": f"c{n:02d}" if k == 0 else f"c{k + 1}_{n:02d}"})
     return sorted(out, key=lambda c: c["start"])
 
 
@@ -257,7 +264,13 @@ def load_voice(path: Path, plan_id: str) -> list[dict]:
 
 
 def find_clip(clips: list[dict], t0: float, dur: float) -> tuple[dict, float]:
-    """t0 から dur 秒を取れる窓と、取り始める時刻。窓の終わりを越えるなら前にずらす。"""
+    """t0 から dur 秒を取れる窓と、取り始める時刻。窓の終わりを越えるなら前にずらす。
+
+    一覧が2つあって窓が重なるときは、t0 から dur 秒をまるごと含む窓を先に選ぶ（前にずらさずに済む）。
+    """
+    for c in clips:
+        if c["start"] - 1e-6 <= t0 and t0 + dur <= c["end"] + 1e-6:
+            return c, t0
     for c in clips:
         if c["start"] - 1e-6 <= t0 < c["end"]:
             if t0 + dur <= c["end"] + 1e-6:
@@ -421,8 +434,10 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         lines[card_row]["caption"] = ""
     sys.path.insert(0, str(RENDER))
     import render as R  # noqa: E402
-    big_st = R.load_style(args.style, Path(args.out).resolve().parent)["big"]
+    st_all = R.load_style(args.style, Path(args.out).resolve().parent)
+    big_st = st_all["big"]
     big_order, big_looks = big_st["order"], big_st["looks"]
+    mood_looks = (st_all.get("moods") or {}).get("looks", {})
     n_big = 0
     notes = []
     prev_end: float | None = None  # 1つ前の行の最後のカットが、元動画のどこで終わったか（「同上」の続き）
@@ -452,6 +467,12 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 ln["caption_from"] = t
                 ln["at"] = t + pre
                 n += pre
+        mood = r.get("mood")
+        if mood and mood != "plain" and not r.get("big") and i != card_row:
+            # 感情の字幕（書体・色・動きは様式の moods.looks[mood]）。plain・【大】の行・題の札の行には付けない
+            if mood not in mood_looks:
+                sys.exit(f"{i}行目: mood {mood!r} は様式の moods.looks に無い（plain, {', '.join(mood_looks)}）")
+            ln["mood"] = mood
         if r.get("face_overlap_ok"):
             # 顔を避けきれない行の例外（顔が画面いっぱいで、上にも下にも置けない）。重なってよいコマ数と理由。
             # 品質チェックは、書いたコマ数を超えたら落とす（例外が黙って広がらないように）
@@ -532,7 +553,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                       f"{fmt(t1)} からにした", file=sys.stderr)
                 t0 = t1
             clip, t0 = find_clip(clips, t0, m / FPS)
-            key = f"c{int(clip.get('n', len(sources) + 1)):02d}"
+            key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
             sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
             fin = round((t0 - clip["start"]) * FPS)
             cut = {"src": key, "in": fin, "out": fin + m, "row": i}
@@ -619,7 +640,8 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("spec")
-    ap.add_argument("--clips", required=True, type=Path)
+    ap.add_argument("--clips", required=True, type=Path, action="append",
+                    help="取り込んだ窓の一覧（index.json）。あとから足した区間の一覧があれば、もう一度 --clips で渡す")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--voice", type=Path, help="声の一覧（lines.json）。無ければ open_jtalk で下書き")
     ap.add_argument("--plan", help="声の一覧のどの案か（既定: spec の id）")

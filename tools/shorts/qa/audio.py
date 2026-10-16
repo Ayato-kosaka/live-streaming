@@ -25,10 +25,12 @@ LUFS_TARGET, LUFS_TOL = -14.0, 1.5
 # トゥルーピーク。AAC にすると、波形の山が書き出し前より最大 1dB ほど上に出る。-1 dBTP 以下なら、
 # 媒体側でもう一度符号化されても割れない（配信向けの推奨でよく使われる値。EBU R128 s1 も同じ）
 TP_MAX = -1.0
-# 声と BGM の差（ナレーションの間）。様式の設計値は 18dB（声 -16dBFS、BGM -22 を 12dB 下げて -34）。
-# 12 を切るのは設計から 6dB（音圧で2倍）以上 BGM が上がったときで、指示書の bgm.db の付け間違いや
-# ダッキングの掛け忘れを拾う幅。行ごとに見る（1行だけ BGM のサビに埋もれる、を拾うため）
-VOICE_OVER_BGM_MIN_DB = 12.0
+# 声と BGM の差（ナレーションの間）。行ごとに見る（1行だけ BGM のサビに埋もれる、を拾うため）。
+# 初めは 12dB（様式の設計値 18dB から BGM が 6dB 上がったら落とす）にしていたが、あやとが2回
+# 「BGM もう少し大きく」と言った（#926、2026-10-16）。参考のショートの差 13.6dB より、あやとの好み
+# （話している間で 10.5dB 前後）を取るので、行ごとの線は 9dB に下げる。9 を切るのは、その好みから
+# さらに BGM が 1.5dB 以上上がった行（サビに埋もれた行・指示書の bgm.db の付け間違い）
+VOICE_OVER_BGM_MIN_DB = 9.0
 # 無音: 声も BGM も鳴っていない間が 1.5 秒を超えたら落とす（あやとの決め）
 SILENCE_DBFS = -50.0
 SILENCE_MAX_SEC = 1.5
@@ -109,9 +111,11 @@ def check_voice_vs_bgm(ctx: Ctx) -> dict:
         bad = [r_ for r_ in rows if r_["margin_db"] < VOICE_OVER_BGM_MIN_DB]
         problems = [f"{r_['line']}行目（{r_['at']}コマ目〜）: 声 {r_['narration_dbfs']} / BGM {r_['bgm_dbfs']} dBFS、"
                     f"差 {r_['margin_db']}dB" for r_ in bad]
+        # 話している間ぜんぶでの差（声の間をつないで測る。あやとの好みの 10.5dB 前後と比べる値）
+        m["overall_margin_db"] = round(m["narration_dbfs"] - m["bgm_during_narration_dbfs"], 2)
         return result("voice_vs_bgm", title, FAIL if bad else PASS,
-                      f"いちばん小さい差 {worst}dB（{len(rows)}行）", measured=m, thresholds=th,
-                      problems=problems)
+                      f"話している間 {m['overall_margin_db']}dB・いちばん小さい行 {worst}dB（{len(rows)}行）",
+                      measured=m, thresholds=th, problems=problems)
 
     # 束が無い: 仕上がりの音の、ナレーションの間の 50ms ごとの音量から見当をつける。
     # 声の切れ目（息継ぎ・語の間）には BGM と元音声だけが残るので、下から 10% の音量は

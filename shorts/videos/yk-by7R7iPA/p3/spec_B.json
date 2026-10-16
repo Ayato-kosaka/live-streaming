@@ -25,7 +25,8 @@
    "visual": "現金を数える",
    "pic_note": "現金を数える（0:45:30）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "出国したら使われへんし、ここで使い切る！",
@@ -36,7 +37,8 @@
    "visual": "バスターミナル",
    "pic_note": "バスターミナル（0:41:10）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "excited"
   },
   {
    "line": "まずはスーパー。",
@@ -47,7 +49,8 @@
    "visual": "スーパーの通路",
    "pic_note": "スーパーの通路（0:46:54）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "クッキー1箱で200円。",
@@ -58,7 +61,8 @@
    "visual": "クッキーの棚",
    "pic_note": "クッキーの棚（0:47:00）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "高っ！これじゃ朝ごはんにならん。",
@@ -81,7 +85,8 @@
    "visual": "店の奥の串",
    "pic_note": "店の奥の串（0:53:05）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "豚も鶏も、550円。",
@@ -92,7 +97,8 @@
    "visual": "メニューの Derri・Pule の行",
    "pic_note": "メニューの Derri・Pule の行（0:48:40）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "残り590円やから……",
@@ -103,7 +109,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "ちょうどすぎるやろ！",
@@ -126,7 +133,8 @@
    "visual": "メニューの patate の字",
    "pic_note": "メニューの patate の字（0:48:44）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "ポテト入り！？",
@@ -149,7 +157,8 @@
    "visual": "カウンター",
    "pic_note": "カウンター（0:50:45。店員さんの顔は映さない）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "返ってきたのは「プーレ」。",
@@ -160,7 +169,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "アルバニア語で、鶏のことやって。",
@@ -172,7 +182,8 @@
    "pic_note": "同上",
    "big": false,
    "card": false,
-   "corner_note": "Pulë＝鶏"
+   "corner_note": "Pulë＝鶏",
+   "mood": "plain"
   },
   {
    "line": "揚げたてポテトに赤いソースどばっと、",
@@ -183,7 +194,8 @@
    "visual": "挟む・ソース",
    "pic_note": "挟む・ソース（0:56:30）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy"
   },
   {
    "line": "パンはギュッとプレス。",
@@ -194,7 +206,8 @@
    "visual": "プレス",
    "pic_note": "プレス（0:56:21）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "いただきます！",
@@ -205,7 +218,8 @@
    "visual": "かぶりつく",
    "pic_note": "かぶりつく（0:59:22）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "excited"
   },
   {
    "line": "パン、トーストみたいにサクサク！",
@@ -216,7 +230,8 @@
    "visual": "焼き目のパン",
    "pic_note": "焼き目のパン（0:59:35）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy"
   },
   {
    "line": "ソースは……ほぼビッグマック。",
@@ -228,11 +243,7 @@
    "pic_note": "食べる（1:00:15）",
    "big": true,
    "card": false,
-   "big_style": "glow_pink",
-   "face_overlap_ok": {
-    "frames": 15,
-    "why": "顔が画面の縦のまん中（y 424〜1121）を占め、大きい字はどの大きさでも上にも下にも収まらない。下の端（胸とケバブの上）が最も重ならない"
-   }
+   "big_style": "glow_pink"
   },
   {
    "line": "日本で再現するなら、",
@@ -243,7 +254,8 @@
    "visual": "ケバブを手に",
    "pic_note": "ケバブを手に（1:02:45）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "ケバブ屋とスタバとマクドで材料そろえてプレス。",
@@ -254,7 +266,8 @@
    "visual": "ケバブの寄り",
    "pic_note": "ケバブの寄り（0:58:05）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "……いや、3軒はしごは大変やな。",
@@ -277,7 +290,8 @@
    "visual": "食べる",
    "pic_note": "食べる（1:00:00）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "これで残りの現金、40円。",
@@ -288,7 +302,8 @@
    "visual": "ケバブの包み",
    "pic_note": "ケバブの包み（0:58:10）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "みんなは朝からケバブ、アリ？ナシ？",
@@ -299,7 +314,8 @@
    "visual": "ポテトの見える断面",
    "pic_note": "ポテトの見える断面（0:59:22。冒頭と同じ画に戻す）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   }
  ]
 }
