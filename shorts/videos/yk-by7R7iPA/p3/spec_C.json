@@ -25,7 +25,8 @@
    "visual": "早朝のバス停",
    "pic_note": "早朝のバス停（0:13:31）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "運賃は80円らしいんやけど、",
@@ -36,7 +37,8 @@
    "visual": "大通り",
    "pic_note": "大通り（0:13:45）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "誰に払うんか、マジで分からへん。",
@@ -47,7 +49,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "チャッピーに聞いた80円握りしめて、",
@@ -58,7 +61,8 @@
    "visual": "バス停",
    "pic_note": "バス停（0:13:55）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "「少ないわ」って怒られたらどうしよ。",
@@ -81,18 +85,20 @@
    "visual": "近づくバス",
    "pic_note": "近づくバス（0:14:12）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "めっちゃ人乗ってるし、これは違うやんな？",
    "src": [
-    "0:14:25"
+    "0:14:35.8–0:14:37.7"
    ],
    "same_as_prev": false,
    "visual": "通り過ぎるバス",
-   "pic_note": "通り過ぎるバス（0:14:25）",
+   "pic_note": "見送る 1A のバス（0:14:35.8〜37.7）。目の前を過ぎる横の窓（0:14:25.5〜27.5）は、乗客の顔が窓いっぱいに並び、顔だけの小さいぼかしでは隠しきれないので使わない",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "予定の時間も、もう過ぎてるし……",
@@ -103,7 +109,8 @@
    "visual": "来ないバスを待つ通り",
    "pic_note": "来ないバスを待つ通り（0:15:44）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "gloom"
   },
   {
    "line": "さっき聞いた人、「イエローバス」って言うてたな。",
@@ -114,7 +121,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "来た来た来た！",
@@ -125,7 +133,8 @@
    "visual": "黄色いバスが近づく",
    "pic_note": "黄色いバスが近づく（0:15:58）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "excited"
   },
   {
    "line": "イエローバスやんか！",
@@ -148,38 +157,42 @@
    "visual": "ドアの前",
    "pic_note": "ドアの前（0:16:10）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "anxious"
   },
   {
    "line": "ほんで運賃は、運転手？それとも機械？",
    "src": [
-    "0:16:45"
+    "0:16:59.9–0:17:02.1"
    ],
    "same_as_prev": false,
    "visual": "車内",
-   "pic_note": "車内（0:16:45）",
+   "pic_note": "車内（0:16:59.9〜0:17:02.1）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "puzzled"
   },
   {
    "line": "と思ってたら、車内のお兄さんが集金に来た。",
    "src": [
-    "0:16:50"
+    "0:17:02.1–0:17:02.8",
+    "0:16:43.05–0:16:44.42"
    ],
    "same_as_prev": false,
    "visual": "係の人にお金を渡す手",
-   "pic_note": "係の人にお金を渡す手（0:16:50。顔はぼかす）",
+   "pic_note": "車内の続き（0:17:02.1〜02.8）→ 集金に来た係の人（0:16:43.05〜44.42）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "まさかの対面払い！",
    "src": [
-    "0:16:50"
+    "0:16:44.4–0:16:45.6"
    ],
-   "same_as_prev": true,
+   "same_as_prev": false,
    "visual": "同上",
-   "pic_note": "同上",
+   "pic_note": "お金を渡す手（0:16:44.4〜45.6）",
    "big": true,
    "card": false,
    "big_style": "brush_zoom"
@@ -187,13 +200,19 @@
   {
    "line": "お金渡したら、紙のきっぷくれるねん。",
    "src": [
-    "0:17:00–0:17:41"
+    "0:16:45.6–0:16:46.7",
+    "0:16:46.7–0:16:49.0"
    ],
    "same_as_prev": false,
    "visual": "切符",
-   "pic_note": "切符（0:17:00〜0:17:41）",
+   "pic_note": "紙のきっぷを受け取る手元（0:16:45.6〜46.7）→ 車内",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy",
+   "face_overlap_ok": {
+    "frames": 5,
+    "why": "顔ではない: きっぷの寄りの左下の、バスの床と扉の縁を YuNet が顔と読んだ箱（点 0.52〜0.72・肌色 0.8〜0.9・7コマ続く）。顔は写っていない。字はこの箱を避けて下の端へ寄り、5コマ掛かる"
+   }
   },
   {
    "line": "日本やったら、ICカードでピッやのにな。",
@@ -204,7 +223,8 @@
    "visual": "走り出したバスの窓の外",
    "pic_note": "走り出したバスの窓の外（0:17:20）",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   },
   {
    "line": "80円で、怒られへんかった。よかった。",
@@ -215,7 +235,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "joy"
   },
   {
    "line": "みんなは海外の路線バス、ひとりで乗れる派？タクシー派？",
@@ -226,7 +247,8 @@
    "visual": "同上",
    "pic_note": "同上",
    "big": false,
-   "card": false
+   "card": false,
+   "mood": "plain"
   }
  ]
 }
