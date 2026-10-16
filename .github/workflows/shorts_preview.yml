@@ -1,0 +1,105 @@
+name: ショートの下見を置く
+
+# 書き出したショートの下見を、あやとがスマホで開ける**署名付き URL**で渡す。
+# 使い方は `tools/shorts/preview/README.md`。作業箱の道具は `tools/shorts/preview/put.py`。
+#
+# **なぜ Actions か。** 作業箱には GCP の資格情報が無い。持っているのは Actions の
+# `FIREBASE_SERVICE_ACCOUNT` だけで、新しい秘密は足さない。だからここでは**鍵を渡さず**、
+# ファイルごとに「その1つを・その操作だけ・決まった時間だけ」許す URL を作って渡す
+# （上げる PUT は1時間、見る GET と消す DELETE は7日）。作業箱はその URL で直に上げる。
+# 前は EC2 の Chrome からあやとのドライブへ上げていて、作業箱 → EC2 の転送で3本95MB に
+# 約35分かかった（あやと 2026-10-16「ドライブに置く → Firebase storage か GCS に置いたら？」）。
+#
+# **なぜ暗号化か。** 署名付き URL は、持っている人なら誰でも開ける鍵。このリポジトリは
+# 公開で、Actions のログも誰でも読める。URL は依頼の公開鍵で包んで作業枝に置き
+# （`tools/shorts/ingest/seal.py` と同じ形）、ログには出さない。出すのはバケット名・
+# ファイルの名前と数・権限の ○/✕・成否だけ。
+#
+# **置き場は非公開。** `live-streaming-d3cac-shorts-preview`（公開アクセス防止を強制・
+# 均一アクセス・14日で消える）。署名なしの道では 403 になることを作業箱が毎回確かめる。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/preview/*.json"]
+  # master に入ってから使う
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "下見の名前（英数字と . _ -）"
+        required: true
+      files:
+        description: "置くファイル名。カンマ区切り（例 A.mp4,B.mp4,C.mp4）"
+        required: true
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      nonce:
+        description: "作業箱が作った乱数（届いた結果を見分ける）"
+        required: false
+        default: ""
+      branch:
+        description: "結果を置く枝（claude/ で始まる）"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 道具を入れる
+        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 置き場を用意して署名する
+        id: sign
+        env:
+          IN_NAME: ${{ inputs.name }}
+          IN_FILES: ${{ inputs.files }}
+          IN_PUBKEY: ${{ inputs.pubkey }}
+          IN_NONCE: ${{ inputs.nonce }}
+          IN_BRANCH: ${{ inputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 tools/shorts/preview/sign.py "$RUNNER_TEMP/sealed"
+
+      - name: 資格情報の写しを消す
+        # auth が作業ツリーに置いた鍵のファイル（gha-creds-*.json）を、commit の前に消す。
+        # 置き場の push は shorts/.work/ の下しか add しないが、それに頼らない
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
+
+      - name: 作業枝に置く
+        env:
+          SEALED: ${{ runner.temp }}/sealed
+          BRANCH: ${{ steps.sign.outputs.branch }}
+          PLACE: preview
+          RUN_ID: ${{ github.run_id }}
+        run: bash tools/shorts/preview/push.sh
+
+      - name: 署名できなかったものがあれば赤くする
+        if: steps.sign.outputs.failed != '0'
+        env:
+          FAILED: ${{ steps.sign.outputs.failed }}
+        run: |
+          echo "署名できなかった依頼: ${FAILED}件（上の ○/✕ と、復号した run.json を見る）"
+          exit 1
