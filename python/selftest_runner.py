@@ -189,6 +189,15 @@ SKIP: dict[str, str] = {
     "tools/shorts/qa/qa_video_selftest.py":
         "遅い（書き出して壊す対照。2本で4〜5分・ffmpeg と OpenCV 4 が要る）。"
         "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
+    # BGM の大きさの物差しの見張り（2026-10-16）は**遅くない**（数秒）が、numpy が要る。
+    # Selftests は numpy を入れていない（`python/requirements.txt` のどれも numpy を引かない。
+    # 2026-10-16 に pip show で確かめた）。守っている実物（`tools/shorts/style/bgm_gap.py`）は
+    # `tools/shorts/` の下にしか無く、そこを触る PR では必ず `shorts_selftest.yml` が走って
+    # numpy も入れているので、**そちらで名指しで回せば見のがす PR は無い**。
+    # 島の PR ぜんぶに依存を1つ足すより、こちらを取った
+    "tools/shorts/style/bgm_gap_selftest.py":
+        "numpy が要る（Selftests は入れていない。2026-10-16 確認）。守る実物は tools/shorts/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

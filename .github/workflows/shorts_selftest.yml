@@ -13,6 +13,9 @@
 # （`python/watch_census_selftest.py`）が「どこからも走っていない見張り」を
 # ワークフローの `run:` の名前で数えるから——`find` で拾うと、数えられずに孤児になる。
 #
+# BGM の物差しの見張り（`tools/shorts/style/bgm_gap_selftest.py`、2026-10-16）も同じ形で
+# あちらから外し、ここで名指しで回す。こちらは数秒で遅くないが、Selftests に無い numpy が要る。
+#
 # ## いつ走るか
 #
 # `tools/shorts/` の下と、このファイルを変えた PR・master への push。
@@ -74,15 +77,23 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/qa/qa_video_selftest.py
 
+      # 参考の BGM の大きさを測る物差し（`tools/shorts/style/bgm_gap.py`）。作った声と BGM を
+      # 既知の差で混ぜて ±1.5dB に入るかを見る。numpy だけで数秒。Selftests は numpy を
+      # 入れないので、回し役の SKIP に理由つきで載せ、ここで名指しで回す
+      - name: BGM の物差しの見張り（声と BGM の差）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/style/bgm_gap_selftest.py
+
       # 承認の関所・取り込みの見張りは Selftests でも走るが、ショートを触った PR では
       # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
-      # 上の2本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
+      # 上の3本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
       - name: ほかのショートの見張り（承認の関所・取り込み）
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
+            ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
             -print0 | sort -z)
           if [ "${#found[@]}" -eq 0 ]; then
             echo "::error::tools/shorts の見張りを1本も拾えなかった"
