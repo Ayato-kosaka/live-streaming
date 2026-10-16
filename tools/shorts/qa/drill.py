@@ -26,7 +26,7 @@
 | 字幕を y=1300 に下げる（安全領域の下 1248 を越える） | safe_area | qa |
 | BGM を外す（声の間が 2〜3秒無音） | silence | qa |
 | 1行目の声を割る（頭が平ら。RMS は元のまま） | clipping | qa |
-| 元音声を下げない（source_db = 0） | original_audio | qa |
+| 元の音を下げずに入れる（カットの audio_db = 0） | original_audio | qa |
 | 1〜3秒に PRISM Live の透かしを貼る | watermark | qa_video |
 | ぼかしていない顔を2秒貼る | faces（needs-human） | qa_video |
 | ぼかした顔を2秒貼る | どれも落ちない（検出はされ、ぼかし済みと判定されること） | qa_video |
@@ -211,11 +211,14 @@ GAP = (60, 120)    # 黒くする・止めるコマ [60, 120) = 2.0秒
 
 
 def build_edit(box: Path, name: str, *, voices: dict[int, Path], style: Path, bgm: Path | None,
-               bgm_db: float = 0.0, captions: bool = True, title: bool = True) -> Path:
+               bgm_db: float = 0.0, captions: bool = True, title: bool = True,
+               cut_audio_db: float | None = None) -> Path:
     edit = {
         "version": 1, "id": f"qa-{name}", "style": style.name,
         "sources": {"s": {"path": str(box / "source.mp4")}},
-        "cuts": [{"src": "s", "in": a, "out": b} for a, b in CUTS],
+        # 元の音は、書き出しの既定では消える。カットに audio_db を書いたときだけ、その dB で入る
+        "cuts": [{"src": "s", "in": a, "out": b,
+                  **({} if cut_audio_db is None else {"audio_db": cut_audio_db})} for a, b in CUTS],
         "narration": {"engine": "files", "lines": [
             {"at": at, "text": txt, "file": str(voices[i]), **({} if captions else {"caption": ""})}
             for i, (at, _, txt) in enumerate(LINES)]},
@@ -525,7 +528,7 @@ def run(half: str, keep: Path | None = None) -> int:
             "safe_low": dict(voices=voices, style=style_copy(box, "low", caption__center_y=1300), bgm=bgm),
             "no_bgm": dict(voices=voices, style=st, bgm=None),
             "clipped": dict(voices={**voices, 0: clipped}, style=st, bgm=bgm),
-            "source_loud": dict(voices=voices, style=style_copy(box, "src", audio__source_db=0), bgm=bgm),
+            "source_loud": dict(voices=voices, style=st, bgm=bgm, cut_audio_db=0.0),
         }
         # 字なしの書き出し（plate）は、字の置き場を画素の差で見る足（safe_area の2つ目の測り）に使う
         want_jobs = [j for j in jobs if j in names or (j == "plate" and "safe_low" in names)]
