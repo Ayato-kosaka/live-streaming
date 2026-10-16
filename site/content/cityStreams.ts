@@ -1893,6 +1893,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "WJ8KEi1V-no",
         "title": "【緊急】北マケドニアの夕日が美しすぎます",
         "date": "2026-10-16"
+      },
+      {
+        "videoId": "E2oGYjnVQSA",
+        "title": "北マケドニアでグラムチャウダー作ります",
+        "date": "2026-10-16"
       }
     ]
   }
