@@ -476,7 +476,7 @@ def main():
     s = sub.add_parser("state")
     s.add_argument("--model", required=True)
     k = sub.add_parser("backup")
-    k.add_argument("--dir", default="/home/ubuntu/voice/private")
+    k.add_argument("--dir", default=f"{EC2_HOME}/voice/private")
     r = sub.add_parser("restore")
     r.add_argument("--model", default="", help="写しに話者が無いときだけ使う")
     r.add_argument("--backup", required=True)
