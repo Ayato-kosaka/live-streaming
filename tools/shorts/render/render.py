@@ -716,6 +716,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         for k, pg in enumerate(pages):
             # line: 何行目のナレーションの字幕か（人が直す画面で、直した字幕を指示書のどこに戻すか）
             cap = {"from": bounds[k], "to": bounds[k + 1], "lines": pg, "line": i}
+            if ln.get("face_overlap_ok"):
+                cap["face_overlap_ok"] = ln["face_overlap_ok"]
             if ln.get("highlight"):
                 cap["hl"] = list(ln["highlight"])
             if big:
@@ -743,6 +745,12 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         if "line" in title:
             # 札がそのナレーションの行の字幕を兼ねる（同じ言葉を札と字幕で2回出さない）
             ti["line"] = int(title["line"])
+            if look == "card" and ti_st.get("end_with_line"):
+                # 題の読み上げが終わるコマ（＝次の行の字幕が出るコマ）で、カットで消す。edit の to は上限のまま
+                # （あやとの「開始4秒だけ」）。参考のショートも題は 2.3秒で、最初の字幕が出る同じコマで消える
+                nxt = [c["from"] for c in captions if c["line"] > ti["line"]]
+                if nxt:
+                    ti["to"] = min(ti["to"], min(nxt))
         titles.append(ti)
 
     notes = [{"from": int(n["from"]), "to": min(int(n["to"]), total), "text": n["text"]}
@@ -1257,6 +1265,7 @@ def note_move(p: dict, it: dict, kind: str, y0: float, y1: float | None, how: st
     """顔を避けて動かした（動かせなかった）行を、時間割に残す（報告と品質チェックの手がかり）。"""
     p.setdefault("face_avoid", []).append({
         "kind": kind, "text": it.get("text") or "／".join(it.get("lines", [])), "from": it["from"], "to": it["to"],
+        **({"face_overlap_ok": it["face_overlap_ok"]} if it.get("face_overlap_ok") else {}),
         "y_from": round(y0), "y_to": None if y1 is None else round(y1), "how": how,
         "faces": len(spans), "face_y": [round(min(a for a, _ in spans)), round(max(b for _, b in spans))] if spans else None,
         **kw})
@@ -2154,7 +2163,9 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                       "unresolved": sum(1 for m in fa if m.get("unresolved"))}
         for m in fa:
             if m.get("unresolved"):
-                print(f"顔を避けきれない: {m['kind']}「{m['text']}」{m['from']}〜{m['to']}コマ", file=sys.stderr)
+                ok = m.get("face_overlap_ok")
+                print(f"顔を避けきれない: {m['kind']}「{m['text']}」{m['from']}〜{m['to']}コマ"
+                      + (f"（例外の印あり: {ok['frames']}コマまで）" if ok else ""), file=sys.stderr)
 
     # コマごとに、重ねる字の絵を引けるようにする（タイトル → テロップ → 字幕 の順に重ねる）
     order = {"title": 0, "note": 1, "telop": 2, "caption": 3}
@@ -2196,6 +2207,8 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                     o["anim"] = dict(zip(("scale", "alpha", "dx", "dy", "rotate", "sharp"), key))
                 if "line" in it:
                     o["line"] = it["line"]
+                if it.get("face_overlap_ok"):
+                    o["face_overlap_ok"] = it["face_overlap_ok"]
                 if it.get("big"):
                     o["big"] = it["big"]
                 if o.get("anim") and o["anim"]["alpha"] < 0.999:

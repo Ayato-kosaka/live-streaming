@@ -13,7 +13,8 @@
 - 字の箱は、時間割（plan.json）の字の絵の、濃さ 16 以上の画素の外接矩形（縁・発光を含む）。
   揺れ・出入りの動きの途中の絵（overlays_anim）も1枚ずつ数える
 - 題の札（頭の4秒）は数えない（置き場を決めてある札で、字幕とは別。被りの数は measured に出す）
-- 1コマでも重なれば fail
+- 1コマでも重なれば fail。ただし spec の行に `face_overlap_ok: {"frames": N, "why": …}`（顔が画面いっぱいで
+  置き場が無い、と人が決めた例外）があれば、その行（字幕が2枚に割れても行で足す）は N コマまで通し、超えたら落とす
 """
 from __future__ import annotations
 
@@ -46,7 +47,8 @@ def text_boxes(plan: dict) -> list[dict]:
             continue
         x, y = int(o["x"]), int(o["y"])
         out.append({"from": int(o["from"]), "to": int(o["to"]), "kind": o.get("kind"), "text": o.get("text", ""),
-                    "big": o.get("big"), "box": [x + bb[0], y + bb[1], x + bb[2], y + bb[3]]})
+                    "big": o.get("big"), "line": o.get("line"), "ok": o.get("face_overlap_ok"),
+                    "box": [x + bb[0], y + bb[1], x + bb[2], y + bb[3]]})
     return out
 
 
@@ -69,7 +71,8 @@ def check(ctx: Ctx) -> dict:
     title = "字と顔（被り）"
     th = {"alpha_min": ALPHA_MIN, "min_run": MIN_RUN, "run_gap": RUN_GAP, "run_iou": RUN_IOU,
           "skin_min": F.SKIN_MIN, "blurred_if": f"細かさ < まわりの {F.BLUR_RATIO} 倍 かつ < {F.BLUR_ABS}",
-          "fail_if": "字の箱と顔の箱が1コマでも重なる", "not_counted": list(SKIP_KINDS)}
+          "fail_if": "字の箱と顔の箱が1コマでも重なる（spec の face_overlap_ok の行は、書いたコマ数を超えたら）",
+          "not_counted": list(SKIP_KINDS)}
     if not ctx.plan:
         return result("text_on_face", title, NA, "work（plan.json）が無い（字の箱が分からない）", thresholds=th)
     if ctx.plate is None or not os.path.exists(ctx.plate):
@@ -123,29 +126,41 @@ def check(ctx: Ctx) -> dict:
                 ov = overlap(t["box"], fb)
                 if ov <= 0:
                     continue
-                key = (t["kind"], t["text"])
-                r = lines.setdefault(key, {"kind": t["kind"], "text": t["text"], "big": t.get("big"),
+                # 例外の印は spec の行ごと（1行が2枚の字幕に割れても、重なりのコマは行で足す）
+                key = ("line", t["line"]) if t.get("ok") and t.get("line") is not None else (t["kind"], t["text"])
+                r = lines.setdefault(key, {"kind": t["kind"], "text": t["text"], "big": t.get("big"), "ok": t.get("ok"),
                                            "frames": set(), "max_px": 0, "first": f, "text_box": t["box"], "face": fb})
                 r["frames"].add(f)
                 if ov > r["max_px"]:
                     r.update(max_px=ov, text_box=t["box"], face=fb, worst=f)
                 r["first"] = min(r["first"], f)
-    rows = []
+    rows, allowed = [], []
     for r in sorted(lines.values(), key=lambda r: r["first"]):
-        rows.append({**{k: v for k, v in r.items() if k != "frames"}, "frames": len(r["frames"]),
-                     "from_t": round(r["first"] / ctx.fps, 2)})
+        row = {**{k: v for k, v in r.items() if k != "frames"}, "frames": len(r["frames"]),
+               "from_t": round(r["first"] / ctx.fps, 2)}
+        # spec の行に face_overlap_ok（顔が画面いっぱいで置き場が無い、と人が決めた例外）があれば、
+        # 書いたコマ数までは通す。超えたら落とす（置き場や画が変わって重なりが増えたのに、黙って通さない）
+        if r.get("ok") and row["frames"] <= int(r["ok"]["frames"]):
+            allowed.append(row)
+        else:
+            rows.append(row)
     title_hits = sum(1 for t in titles for f in range(max(0, t["from"]), min(n, t["to"]))
                      if any(overlap(t["box"], fb) > 0 for fb in faces[f]))
     m = {"detector": name, "frames": len(want), "frames_total": n, "frames_with_face": sum(1 for x in faces if x),
          "detections": sum(len(x) for x in raw), "dropped": dropped,
          "dropped_short": sum(len(x) for x in raw) - sum(len(x) for x in faces),
-         "text_boxes": len(boxes), "lines_on_face": rows, "title_card_frames_on_face": title_hits}
+         "text_boxes": len(boxes), "lines_on_face": rows, "lines_allowed": allowed,
+         "title_card_frames_on_face": title_hits}
+    note = (f"・例外の印で通した行 {len(allowed)}（" + "、".join(f"「{a['text'][:10]}」{a['frames']}/{a['ok']['frames']}コマ"
+                                                  for a in allowed) + "）") if allowed else ""
     if rows:
         return result("text_on_face", title, FAIL,
-                      f"字が顔に被っている行 {len(rows)}（{sum(r['frames'] for r in rows)}コマ）",
+                      f"字が顔に被っている行 {len(rows)}（{sum(r['frames'] for r in rows)}コマ）" + note,
                       measured=m, thresholds=th,
                       problems=[f"{r['from_t']}秒〜 {r['kind']}「{r['text'][:24]}」: 顔 {r['face'][:4]} と字 {r['text_box']}"
-                                f" が {r['frames']}コマ重なる（いちばん多いコマ {r['worst']}・{r['max_px']}px²）" for r in rows])
+                                f" が {r['frames']}コマ重なる（いちばん多いコマ {r['worst']}・{r['max_px']}px²）"
+                                + (f"。例外の印は {r['ok']['frames']}コマまで" if r.get("ok") else "") for r in rows])
     return result("text_on_face", title, PASS,
-                  f"字の出ている {len(want)}コマで顔のあるコマ {m['frames_with_face']}・字の箱 {len(boxes)} 枚・重なり 0",
+                  f"字の出ている {len(want)}コマで顔のあるコマ {m['frames_with_face']}・字の箱 {len(boxes)} 枚・"
+                  f"重なり {'例外の行だけ' if allowed else '0'}" + note,
                   measured=m, thresholds=th)

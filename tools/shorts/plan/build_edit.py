@@ -452,6 +452,13 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 ln["caption_from"] = t
                 ln["at"] = t + pre
                 n += pre
+        if r.get("face_overlap_ok"):
+            # 顔を避けきれない行の例外（顔が画面いっぱいで、上にも下にも置けない）。重なってよいコマ数と理由。
+            # 品質チェックは、書いたコマ数を超えたら落とす（例外が黙って広がらないように）
+            fo = r["face_overlap_ok"]
+            if not isinstance(fo, dict) or int(fo.get("frames", -1)) < 0 or not fo.get("why"):
+                sys.exit(f"{i}行目: face_overlap_ok は {{\"frames\": 重なってよいコマ数, \"why\": 理由}} で書く")
+            ln["face_overlap_ok"] = {"frames": int(fo["frames"]), "why": str(fo["why"])}
         if r.get("corner_note"):
             notes.append({"from": t, "to": t + n, "text": r["corner_note"]})
         _, center = parse_telop(r.get("telop", ""))
@@ -589,7 +596,8 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                  "rows": meta_rows},
     }
     if card_row is not None:
-        # 題の札は頭の title_card_seconds 秒だけ（ずっと出すと、字幕と画の場所を食う）
+        # 題の札は頭の title_card_seconds 秒まで（ずっと出すと、字幕と画の場所を食う）。様式の
+        # title_card.end_with_line なら、書き出しが「題の読み上げが終わるコマ」でもっと早く消す
         edit["title"] = {"text": title, "look": "card", "from": 0, "line": card_row,
                          "to": round(float(spec.get("title_card_seconds", 4.0)) * FPS)}
     if notes:

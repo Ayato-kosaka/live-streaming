@@ -43,6 +43,8 @@
   },
   "title_card": {
     "_note": "頭の数秒だけ出す題の札（指示書の title.look = card）。黒い箱に白い太丸ゴシック。改行は題のとおりで、いちばん長い行が幅に収まるまで size から min_size へ小さくする",
+    "_note_end": "end_with_line: 題の読み上げ（札が兼ねる行）が終わるコマ＝次の行の字幕が出るコマで、カットで消す。指示書の to（title_card_seconds、既定 4秒）は上限。参考のショートも題は 2.3秒で、最初の字幕と同じコマで消える。4秒出すと、2行目の字幕が札と顔に挟まれて置き場が無くなった（p3 の B）",
+    "end_with_line": true,
     "font": "caption",
     "size": 84,
     "min_size": 64,

@@ -228,7 +228,11 @@
    "pic_note": "食べる（1:00:15）",
    "big": true,
    "card": false,
-   "big_style": "glow_pink"
+   "big_style": "glow_pink",
+   "face_overlap_ok": {
+    "frames": 15,
+    "why": "顔が画面の縦のまん中（y 424〜1121）を占め、大きい字はどの大きさでも上にも下にも収まらない。下の端（胸とケバブの上）が最も重ならない"
+   }
   },
   {
    "line": "日本で再現するなら、",
