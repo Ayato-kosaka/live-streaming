@@ -779,7 +779,7 @@ def audio_cfg(p: dict, style: dict) -> dict:
 # ---------------------------------------------------------------- 題の札・【大】の字幕
 
 # 節の終わり、または3字以上のカタカナの語のあとにひらがな・漢字が続く所（「イエローバス｜やんか！」「ポテト｜入り！？」）
-_CLAUSE_END = re.compile(r"(だら|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿]))(?=.)")
+_CLAUSE_END = re.compile(r"(だら|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿])(?![はがをにへともでのや][、。！？…]|[はがをにへともでの]$))(?=.)")
 
 
 def fine_chunks(text: str) -> list[str]:
@@ -798,10 +798,48 @@ def fine_chunks(text: str) -> list[str]:
     return [c for c in out if c]
 
 
+def halve_longest(ch: list[str]) -> list[str] | None:
+    """いちばん長い文節（5字以上）を、真ん中の字の切れ目で2つに割る（文節の切れ目だけでは大きく出せないときの最後の手）。
+
+    「ちょうどすぎる」→「ちょうど」「すぎる」。句読点の手前では割らない。
+    """
+    k = max(range(len(ch)), key=lambda i: len(ch[i].rstrip("、。！？…")))
+    c = ch[k]
+    body = len(c.rstrip("、。！？…"))
+    if body < 5:
+        return None
+    m = (body + 1) // 2
+    return ch[:k] + [c[:m], c[m:]] + ch[k + 1:]
+
+
+def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[list[str]]:
+    """text を文節（fine_chunks）の切れ目で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。"""
+    ch = ch or fine_chunks(text)
+    if n == 1:
+        return [[text]]
+    if len(ch) < n:
+        return []
+    out = []
+
+    def rec(start: int, k: int, acc: list[str]):
+        if k == 1:
+            out.append(acc + ["".join(ch[start:])])
+            return
+        for j in range(start + 1, len(ch) - k + 2):
+            rec(j, k - 1, acc + ["".join(ch[start:j])])
+
+    rec(0, n, [])
+    return [[ln.rstrip("、。").strip() for ln in c] for c in out if all(ln.rstrip("、。").strip() for ln in c)]
+
+
 def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w: float, max_lines: int = 2,
-              wrap_below: int = 0, step: int = 2) -> tuple[list[str], int]:
-    """text を幅 max_w に収める（行と大きさ）。まず1行でいちばん大きく、それが wrap_below より小さくなるなら
-    文節で2行に割って大きさを決め直す。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。"""
+              wrap_below: int = 0, step: int = 2, fold_floor: int = 0) -> tuple[list[str], int]:
+    """text を幅 max_w に収める（行と大きさ）。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。
+
+    縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（文節の切れ目のうち、
+    いちばん大きく出せる割り方）。2行でも fold_floor に届かず max_lines が 3 以上なら3行。どれも届かないなら、
+    いちばん大きく出せる行数にする。
+    """
     def fits(lines, s):
         # 絵は見積もりより両側 2〜3px 広くなる（2倍で描くときの余白と丸め）。その分を空けて比べる
         return TL.text_width(lines, lk, ImageFont.truetype(str(fpath), s)) + 6 <= max_w
@@ -812,22 +850,36 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
                 return s
         return None
 
-    one = best([text])
-    if one is not None and one >= wrap_below:
-        return [text], one
-    if max_lines >= 2:
-        for s in range(size, min_size - 1, -step):
-            f = ImageFont.truetype(str(fpath), s)
-            inner = max_w - 2 * TL.margin_of(lk, s) - 2 * lk.get("pad", [0, 0])[0]
-            two = balanced2(fine_chunks(text), f, inner / (1 + min(0.0, lk.get("tracking", 0.0))))
-            if two and fits(two, s):
-                if one is None or s > one:
-                    return two, s
-                break
-    if one is not None:
-        return [text], one
+    results = []
+    chunk_sets = [fine_chunks(text)]
+    forced = halve_longest(chunk_sets[0]) if fold_floor else None
+    if forced:
+        chunk_sets.append(forced)
+    for ch in chunk_sets:
+        for n in range(1, max(1, max_lines) + 1):
+            cands = split_candidates(text, n, ch)
+            top = None
+            for c in cands:
+                s = best(c)
+                # 同じ大きさなら、行の幅がそろう割り方（読む目が戻りやすい）
+                if s is not None and (top is None or s > top[0] or (s == top[0] and _spread(c, lk, fpath, s) < top[2])):
+                    top = (s, c, _spread(c, lk, fpath, s))
+            if top:
+                results.append((n, top[0], top[1]))
+            floor = wrap_below if n == 1 else fold_floor
+            if top and top[0] >= floor:
+                return top[1], top[0]
+    if results:
+        n, s, c = max(results, key=lambda r: (r[1], -r[0]))
+        return c, s
     f = ImageFont.truetype(str(fpath), min_size)
     return wrap(text, f, max_w - 2 * TL.margin_of(lk, min_size)), min_size
+
+
+def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
+    f = ImageFont.truetype(str(fpath), s)
+    ws = [TL.advance(ln, f, lk.get("tracking", 0.0)) for ln in lines]
+    return max(ws) - min(ws)
 
 
 def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
@@ -922,8 +974,9 @@ def big_layout(it: dict, p: dict, style: dict) -> tuple[Image.Image, int, int, d
         for half in (half_wide, half_narrow):
             max_w = min(st["max_width"], 2 * (half - mx) / smax)
             lines, size = fit_lines(it["text"], lk, fpath, ent.get("size", st["size"]),
-                                    ent.get("min_size", st["min_size"]), max_w, st.get("max_lines", 2),
-                                    ent.get("wrap_below", 0))
+                                    ent.get("min_size", st["min_size"]), max_w,
+                                    ent.get("max_lines", st.get("max_lines", 2)),
+                                    ent.get("wrap_below", 0), fold_floor=ent.get("fold_floor", 0))
             img = TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=seed)
             w, h = img.width * smax + 2 * mx, img.height * smax + 2 * my
             if cy - h / 2 < top_lim or cy + h / 2 > safe["bottom"]:

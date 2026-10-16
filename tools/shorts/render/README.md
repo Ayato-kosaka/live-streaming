@@ -158,7 +158,7 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
 - **題の札**（`title.look = card`）は頭の4秒だけ。札が出ている間は、全編のタイトルの代わりに上の置き場を使う。
   札はその行（1行目）の字幕を兼ねるので、1行目の字幕は出さない（同じ言葉を2回出さない）
 - **【大】の行**は字幕そのものを大きく出す（テロップを別に出さない）。見た目ごとの大きさから2px ずつ下げて
-  いちばん大きく出せる大きさを探し（`wrap_below` より小さくなるなら文節で2行に割る）、`big.centers` の順に置ける所へ置く。
+  いちばん大きく出せる大きさを探す。縮めるより先に折る（1行で `wrap_below` に届かなければ文節で2行、2行で `fold_floor` に届かず `max_lines` が 3 なら3行。文節の切れ目だけで届かなければ、いちばん長い文節を真ん中で割る）。`big.centers` の順に置ける所へ置く。
   動きでいちばん大きくなったとき・揺れでいちばん動いたときにも安全領域と右のボタン列に収まるように測り、
   題の札・札（inset）の帯とは重ねない。見た目は spec の `big_style`、無ければ `big.order` の順
 - 様式の `caption.anchor = "ink_center"` なら、字幕は縁まで含めた字のかたまりの真ん中を `center_y` に置く
@@ -196,7 +196,7 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
   薄い所から現れる見た目には `pre_roll_frames` を書く。`build_edit.py` が行の頭にそのコマ数を足し、字が出きってから声を出す
   （声の頭で字が読めないと、字幕と声がずれる。オチの前のひと呼吸にもなる）
 - 【大】の行の見た目は spec の行の `big_style`（`big.looks` の名前）。`speedlines` を書いた見た目は、集中線（画の効果。
-  字なしの書き出しにも入る）を重ねる。見た目ごとに `font`・`size`・`min_size`・`wrap_below`（これより小さくなるなら2行に割る）を書ける
+  字なしの書き出しにも入る）を重ねる。見た目ごとに `font`・`size`・`min_size`・`wrap_below`・`fold_floor`・`max_lines` を書ける。文節は BudouX に、節の終わり（〜たら・〜けど…）と「カタカナの語｜ひらがな・漢字」（助詞の前は除く）の切れ目を足したもの
 - 題の札（`title_card`）は題の改行ごとに `lines[k]` の見た目で積み、`max_height` に収まるまで小さくする
   （下の字幕の置き場と、右のボタン列（y≥840）に掛けないため）。発光は箱の余白に広がってよく、箱の縁で切る
 - 書体は `fonts` の名前か、`fonts/`（または `SHORTS_FONTS_DIR`）に置いたファイル名をそのまま書ける。

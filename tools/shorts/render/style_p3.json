@@ -66,8 +66,8 @@
     "order": ["shake_white", "glow_pink", "brush_zoom", "shake_red", "static_darkred"],
     "looks": {
       "shake_white": {
-        "_note": "(d1) 白・黒縁・外に白縁、集中線。カットで出て消え、いる間は位置だけ毎コマでたらめに跳ねる",
-        "font": "KaiseiTokumin-ExtraBold.ttf", "size": 123, "min_size": 60, "wrap_below": 100,
+        "_note": "(d1) 白・黒縁・外に白縁、集中線。カットで出て消え、いる間は位置だけ毎コマでたらめに跳ねる。参考は 123px。1行で 123px に届かなければ縮めずに折る（2行で 96px に届かなければ3行）",
+        "font": "KaiseiTokumin-ExtraBold.ttf", "size": 123, "min_size": 60, "wrap_below": 123, "fold_floor": 96, "max_lines": 3,
         "look": {
           "fill": "#FEFEFE",
           "outline": [{ "color": "#000000", "width_em": 0.086 }, { "color": "#FFFFFF", "width_em": 0.056 }],
