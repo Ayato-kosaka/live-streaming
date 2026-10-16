@@ -157,19 +157,26 @@ def check_subtitle_sync(ctx: Ctx) -> dict:
         sp = voice_span(narr, lo, min(hi, nxt), ln["at"] * spf, (ln["at"] + ln["frames"]) * spf)
         voice.append(None if sp is None else (sp[0] // spf, sp[1] // spf))
 
-    # 行ごとに2つの窓: 出だし（最初のページ）と、終わり（最後のページ）
-    wins: dict[tuple[int, str], tuple[Card, list[int]]] = {}
+    # 行ごとに2つの窓: 出だし（最初のページ）と、終わり（最後のページ）。
+    # 終わりは、その窓に掛かるその行の字の絵ぜんぶで見る。揺れる字は置き場ごとに別の絵として控えてあり、
+    # 最後の絵だけで見ると、震えが ±2px の字（感情の字幕）は前の置き場でもたまたま当たって、
+    # 「声より早く消えた」と誤った（2026-10-16、A の「この時点で、あと20分」）
+    wins: dict[tuple[int, str], tuple[list[Card], list[int]]] = {}
     want: dict[int, list[Card]] = {}
     for i, ln in enumerate(lines):
         cs = by_line.get(i, [])
         if not cs or voice[i] is None:
             continue
         v0, v1 = voice[i]
-        for key, card, ref, v in (("on", cs[0], cs[0].ov["from"], v0), ("off", cs[-1], cs[-1].ov["to"], v1)):
+        for key, ref, v in (("on", cs[0].ov["from"], v0), ("off", cs[-1].ov["to"], v1)):
             a, b = max(0, min(ref, v) - 6), min(ctx.nframes - 1, max(ref, v) + 6)
-            wins[(i, key)] = (card, list(range(a, b + 1)))
+            cards = [cs[0]] if key == "on" else \
+                [c for c in cs if int(c.ov["from"]) <= b + 1 and int(c.ov["to"]) >= a - 1] or [cs[-1]]
+            wins[(i, key)] = (cards, list(range(a, b + 1)))
             for f in range(a, b + 1):
-                want.setdefault(f, []).append(card)
+                for c in cards:
+                    if c not in want.setdefault(f, []):
+                        want[f].append(c)
     # まず字の絵ごとに、出ているはずの真ん中のコマで置き場のずれ（±2px）を決める
     mids: dict[int, list[Card]] = {}
     for cs in by_line.values():
@@ -187,6 +194,10 @@ def check_subtitle_sync(ctx: Ctx) -> dict:
         v = mae.get((id(c), f))
         return None if v is None else v < PRESENT_MAE
 
+    def present_any(cards: list[Card], f: int) -> bool | None:
+        got = [present(c, f) for c in cards]
+        return True if any(g for g in got) else (None if all(g is None for g in got) else False)
+
     problems, worst, rows = [], 0, []
     for i, ln in enumerate(lines):
         cs = by_line.get(i, [])
@@ -200,7 +211,7 @@ def check_subtitle_sync(ctx: Ctx) -> dict:
         if not cs:
             problems.append(f"{i}行目（{ln['at']}コマ目）: 声はあるのに字幕が無い")
             continue
-        first, fr = wins[(i, "on")]
+        (first,), fr = wins[(i, "on")]
         on = next((f for f in fr if present(first, f) and present(first, f + 1) is not False), None)
         if on is None:
             problems.append(f"{i}行目: 字幕が出たコマが見つからない（{fr[0]}〜{fr[-1]}コマ目を見た）")
@@ -214,8 +225,8 @@ def check_subtitle_sync(ctx: Ctx) -> dict:
         if abs(off) > SYNC_MAX_FRAMES:
             problems.append(f"{i}行目: 声は {v0} コマ目、字幕は {on} コマ目（{off:+d}コマ）")
         # 終わり: 最後のページが消えたコマ。次の行の字幕がもう出ているなら、早く消えても構わない
-        last, fr2 = wins[(i, "off")]
-        gone = next((f for f in fr2 if present(last, f) is False and present(last, f - 1)), None)
+        lasts, fr2 = wins[(i, "off")]
+        gone = next((f for f in fr2 if present_any(lasts, f) is False and present_any(lasts, f - 1)), None)
         row["caption_off"] = gone
         nxt = by_line.get(i + 1)
         nxt_from = nxt[0].ov["from"] if nxt else None
