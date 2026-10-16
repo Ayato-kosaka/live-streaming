@@ -23,7 +23,7 @@
    ],
    "same_as_prev": false,
    "visual": "現金を数える",
-   "pic_note": "財布の口と硬貨（0:13:32.5〜35.0。バス停の朝の素材）",
+   "pic_note": "財布の口と硬貨（0:13:32.5〜35.0。バス停の朝の素材。下半分へ寄せる）",
    "big": false,
    "card": false,
    "mood": "plain"
@@ -147,7 +147,7 @@
    ],
    "same_as_prev": false,
    "visual": "揚げ始めたフライヤー",
-   "pic_note": "ケバブからはみ出すポテト（1:00:44.0〜44.75、寄り）",
+   "pic_note": "ケバブからはみ出すポテト（1:00:44.0〜44.75、顔の下で切る寄り）",
    "big": true,
    "card": false,
    "big_style": "brush_zoom"
@@ -204,11 +204,12 @@
   {
    "line": "パンはギュッとプレス。",
    "src": [
-    "0:54:39.95–0:54:41.0"
+    "0:54:39.96–0:54:40.03",
+    "0:54:40.03–0:54:41.0"
    ],
    "same_as_prev": false,
    "visual": "プレス",
-   "pic_note": "プレス機（0:54:39.95〜41.0、寄り）",
+   "pic_note": "プレス機（0:54:39.96〜41.0、寄り）",
    "big": false,
    "card": false,
    "mood": "plain"
@@ -244,7 +245,7 @@
    ],
    "same_as_prev": false,
    "visual": "食べる",
-   "pic_note": "かじった断面（1:00:24.0〜26.1）",
+   "pic_note": "かじった断面（1:00:24.0〜26.1、顔の下で切る寄り）",
    "big": true,
    "card": false,
    "big_style": "glow_pink"
