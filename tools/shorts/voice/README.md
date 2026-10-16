@@ -45,7 +45,8 @@ Cookie や `authorization` の値には触らない。
 | そのままでよいもの | プーレ・スタバ・マクド・ケバブ・ミニバン（カタカナ） | カタカナはそのまま読まれる |
 
 迷ったら直す。直したかどうかは聞き取り（4）で確かめる。
-実際に使った組（27文）は `lines/yk-by7R7iPA_p1.json`。次の動画もこの形（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）で作る。
+実際に使った組は `lines/yk-by7R7iPA_p1.json`（三人称・27文）と `lines/yk-by7R7iPA_p3.json`（関西弁の一人称・71文。
+2回目で直した文は1回目の字を `tts_text_1` に残してある）。次の動画もこの形（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）で作る。
 
 2026-10-15 の27文は、この決まりで直した字のまま、**1回目で全部が聞き取りと合った**（数・1A・プーレ・スタバ・マクドも）。
 ただし Holiday Twist は「1A」「プーレ」をそのままでも読めたかは試していない（直さずに作った文が無い）。
@@ -65,18 +66,22 @@ python3 $E put lines_in.json ~/voice/<動画>-lines_in.json      # [{"key": "A/0
 EC2 で（長いので `nohup` で裏に回す。鍵 `~/locks/fish-voice` は道具が1文ごとに触る）:
 
 ```sh
-cd ~/cdp && python3 fish_web.py state --model <声のID>          # ログイン・モデル・速度だけ見る（作らない）
+cd ~/cdp && python3 fish_web.py backup                       # あやとの下書きを写す・残りのクレジットを見る
+python3 fish_web.py state --model <声のID>                               # ログイン・モデル・速度だけ見る（作らない）
 nohup python3 fish_web.py gen --model <声のID> --lines ~/voice/<動画>-lines_in.json \
   --out ~/voice/out/<動画> --budget-credits 4500 > ~/voice/gen.log 2>&1 &
 ```
 
 - 済んだ文は飛ばすので、止まっても同じ指示をもう一度流せば続きから
 - 押しても要求が出なかったとき（窓が邪魔をしたなど）は、タブを作り直して1回だけ押し直す。
-  そのときの画面は `err_<文>_<時刻>.jpg` に残る
+  そのときの画面は `err_<文>_<時刻>.jpg` に残る。2026-10-15 と 10-16 の2回とも、原因は開いた直後に出る
+  **アップグレードの窓**（「期間限定：初年度50%オフ」「Plus（年払い）にアップグレード」）だった。
+  **窓の中は何も押さない。** タブを作り直すと出ずに押せた
 - **設定は触らない。** 2026-10-15 のアカウントは「Fish Audio S2.1 Pro・速度 1.1・ボリューム 0・ラウドネス正規化 オン・
   テキスト正規化 オフ」（あやとの下書きに入っていたまま）。各テイクの `settings`・`task_params` に残る
 - **入力欄はあやとの下書きと同じもの**（`GET/PUT api.fish.audio/tts-draft` でサーバーに保存される）。
-  作る前に下書きの返事（`GET /tts-draft`）を写しておき（EC2 の `~/voice/private/`、git に入れない）、
+  作る前に `fish_web.py backup` で下書きの返事（`GET /tts-draft`）を写しておき（EC2 の `~/voice/private/`、
+  権限 700、git に入れない。`?modelId=` を付けずに開くので話者は替わらない）、
   終わったら `fish_web.py restore --backup <写し>` で戻す（下書きの話者の ID で開き直してから字を入れるので、声も字も戻る）。
   戻し終えた写しは消す（アカウントの情報が入っている）
 - `state` と `gen` の最初に出る `credits_balance` が残りのクレジット（画面が読む `wallet/<team>/package` の返事）
@@ -89,7 +94,9 @@ nohup python3 fish_web.py gen --model <声のID> --lines ~/voice/<動画>-lines_
 python3 -m venv ~/voice/asr-venv          # 要るなら apt-get install python3.12-venv
 ~/voice/asr-venv/bin/pip install faster-whisper
 ~/voice/asr-venv/bin/python ~/cdp/asr_check.py ~/voice/out/<動画> \
-  ~/voice/out/<動画>/asr.json --model <int8 の large-v3-turbo の置き場>
+  ~/voice/out/<動画>/asr.json --model <int8 の large-v3-turbo の置き場> --pack 26
+# 合わなかった文だけ、1本ずつ聞き直す（--pack を付けない）
+~/voice/asr-venv/bin/python ~/cdp/asr_check.py <同じ> <同じ> --model <同じ> --only A/04_a1_t1,B/03
 ```
 
 - **t3.medium（メモリ 4GB）では `large-v3-turbo`（float16 の 1.6GB）を int8 で読み込む途中で落ちる**（Killed。
@@ -98,7 +105,17 @@ python3 -m venv ~/voice/asr-venv          # 要るなら apt-get install python3
 - int8 でも、**`~/cdp-fish` の Chrome を開いたままだと読み込みで落ちる**（Killed）。聞き取りの前に `down("fish")` で閉じる
 - faster-whisper 1.2.1 の音声の読み込みは、PyAV 19 では `metadata_errors` の引数で落ちる（`av<15` は wheel が無くビルドで落ちた）。
   `asr_check.py` は PyAV で自分で開いて配列を渡している（EC2 に ffmpeg は無い）
-- 2 vCPU で1本あたり約30秒（数秒の音声でも 30秒の窓ぶん計算する）。27文×2テイクで約27分。`nohup` で裏に回す
+- 2 vCPU で1本あたり約30秒（数秒の音声でも 30秒の窓ぶん計算する）。27文×2テイクで約27分かかった。
+  **`--pack 26` で、無音1.2秒をはさんで26秒ぶんまで1つの窓に詰めて聞き**、単語の時刻で文に割り戻す。
+  同じ22本で 660秒 → 138秒、22本とも1本ずつ聞いたときと同じ文に割り戻せた（2026-10-16）。
+  境目で取り違えた文は「合わない」に出るので、その文だけ `--only` で1本ずつ聞き直す。`nohup` で裏に回す
+- **詰めるときの落とし穴（2026-10-16 に踏んだ）:** 同じ文の2テイクを隣に並べると、Whisper は2回目を繰り返しとみなして
+  1回ぶんしか書かない（142本中17本が空）。残った1回がどちらの音から来たか分からないので、**片方が読み違えていても
+  「合っている」に化けうる。** いまの `asr_check.py` はテイク1を全部並べてからテイク2を並べる。
+  それでも**数・名前の入った文と、選ぶテイクは1本ずつ聞き直してから合否を決める**（10-16 は 50本を聞き直した）
+- 1本ずつ聞いても、かなの数が助詞と切れて聞こえることがある。「出発にじゅうごふん前」は2テイクとも「出発に15分前」、
+  「ひとはこでにひゃくえん」は「人は小手に100円」と聞き取られた。**漢数字にすると数のまとまりで読まれて直った**
+  （「出発二十五分前」「ひと箱で二百円」）。かなにするのは、数の前が助詞と紛れないときだけにする
 - **原稿を手がかり（`initial_prompt`）に渡さない。** 聞き取りが原稿に寄って、読み違いが「合っている」に化ける
 
 ## 5. 揃える（手元）
@@ -119,6 +136,9 @@ python3 tools/shorts/voice/collect.py --lines lines_in.json --attempts raw/attem
   （自動の判定は `match_auto` に残る）
 - `lines.json` に、字幕・声に渡した字・ファイル・長さ（ffprobe）・試した回数・聞き取り・合否・音量（EBU R128）が入る
 - **音量は測るだけで揃えない。** 揃えるのは書き出しの仕事（ここで触ると二重に掛かる）
+- 聞き取りでは「平板に読んだ」「問いを平叙で読んだ」は分からない。代わりに**長さで怪しい文に印を付ける**:
+  頭とお尻の無音を除いた喋りの秒数で読み（カナ）の数を割り、同じ回の中央値の 0.7倍より遅い・1.4倍より速い、
+  または途中の無音が1秒を超える文を `duration_flag` に出す。印の付いた文は人が聞く
 
 ## 6. 直す
 
