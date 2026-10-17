@@ -3,7 +3,7 @@
     python3 tools/shorts/preview/serve.py          # .github/workflows/shorts_preview.yml から
 
 依頼の形は `req.py`、置き場ごとの中身は `host.py`（Firebase Hosting のプレビューチャンネル。
-いまの既定）と `gcs.py`（非公開バケットの署名付き URL。権限が付いてから）。
+いまの既定）と `gcs.py`（非公開バケットの署名付き URL。#938 で付与）。
 
 結果は依頼の公開鍵で包み（`tools/shorts/ingest/seal.py` と同じ形）、作業枝の
 `shorts/.work/preview/<name>/` に置く。**同じ commit で依頼ファイル・受け取り口・作業箱の荷物を

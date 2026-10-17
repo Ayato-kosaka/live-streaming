@@ -9,8 +9,8 @@
     python3 tools/shorts/preview/put.py check  --name yk-v2 --out <同じ>
 
 置き場は2つ（`--place`）。いまは **hosting**（Firebase Hosting のプレビューチャンネル）。
-**gcs**（非公開バケットの署名付き URL）はサービスアカウントに Storage の権限が付いてから
-（README の「GCS の道」）。
+**gcs**（非公開バケットの署名付き URL。#938 で 2026-10-17 から）は作業箱から直に上げるので速い（37秒）が、
+並べたページは無い（README の「GCS の道」）。
 
 ## hosting の流れ
 
@@ -457,7 +457,7 @@ def main() -> int:
         if name == "up":
             p.add_argument("--urls", required=True, help="見る URL の一覧を書くファイル（リポジトリの外）")
             p.add_argument("--place", choices=("hosting", "gcs"), default="hosting",
-                           help="hosting＝プレビューチャンネル（いまの既定）/ gcs＝非公開バケット（権限が付いてから）")
+                           help="hosting＝プレビューチャンネル（いまの既定）/ gcs＝非公開バケットの署名付き URL（速い・ページ無し）")
             p.add_argument("--title", default="", help="ページの見出し（無ければ「下見 <name>」）")
             p.add_argument("--label", action="append",
                            help="動画の題 NAME=題（無ければ同じフォルダの post_<名前>.json の題）")

@@ -1,10 +1,9 @@
 """GCS の非公開バケットに、ファイルごとの署名付き URL を作る（Actions 側。`serve.py` から呼ぶ）。
 
-**いまは使えない。** Actions のサービスアカウントに Storage の権限が無い
-（2026-10-16 に実測: プロジェクトで storage.buckets.create ✕、Firebase の既定バケットで
-objects.create/get/delete ✕。#283・`docs/island-misses.md` #61 と同じ壁）。
-あやとがバケットを作ってサービスアカウントに付与すれば、ここはそのまま動く
-（手順は `tools/shorts/preview/README.md` の「GCS の道」）。それまで下見は hosting で渡す。
+Actions のサービスアカウントは、プロジェクト全体の Storage には何もできない
+（2026-10-16 に実測: storage.buckets.create ✕、Firebase の既定バケットで objects.* ✕。
+#283・`docs/island-misses.md` #61 と同じ壁）。**このバケットだけ**、あやとが作って
+roles/storage.admin を付けた（#938、2026-10-17）。だから作るのではなく、在るものを使う。
 
 作業箱には GCP の資格情報が無い。**鍵を作業箱へ渡さずに、作業箱から直に上げる**ために、
 ファイルごとに「その1つだけを・その操作だけ・決まった時間だけ」許す URL を作る。

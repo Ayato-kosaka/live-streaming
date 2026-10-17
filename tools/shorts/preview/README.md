@@ -77,27 +77,24 @@ python3 tools/shorts/preview/put.py delete --name yk-v3b \
 - 作業枝の依頼・受け取り口・荷物・結果は、put.py とランナーが使い終わったその場で下ろす。
   途中で止めたときは `shorts/preview/<name>.json` と `shorts/.work/preview/<name>/` を git rm する
 
-## GCS の道（付与待ち）
+## GCS の道（非公開バケットの署名付き URL。2026-10-17 から使える）
 
-本命は非公開バケットの署名付き URL（`gcs.py`。PUT 1時間・GET/DELETE 7日、作業箱から直に上げる。
-`put.py up --place gcs`）。**2026-10-16 に測ったら、Actions のサービスアカウントは Storage に何もできなかった**:
+`put.py up --place gcs`。Actions が `live-streaming-d3cac-shorts-preview`（us-central1・公開アクセス防止を強制・
+均一アクセス・14日で消える）にファイルごとの上げる URL（PUT・1時間）と見る／消す URL（7日）を作り、
+作業箱はそこへ**直に上げる**。落とし直した sha256 と、署名なしの道が 403 になること（非公開）を毎回見る。
+v2 の3本（96MB）で**起動から見る URL まで37秒**（1本 0.7〜1.3秒で上がった）。Hosting の85秒より速い。
+見る URL は1本ずつの mp4 で、並べたページは無い（ページが要るときは hosting）。
 
-```
-プロジェクト live-streaming-d3cac      storage.buckets.create ✕  storage.buckets.list ✕
-live-streaming-d3cac.firebasestorage.app  buckets.get ○  objects.create / get / delete / list ✕
-```
-
-あやとが Cloud Shell で次の2行を打てば、コードを変えずに動く（バケットを作り、そのバケットに
-だけ管理者を付ける。寿命14日の決まりはサービスアカウントが最初に使うときに足す）:
+Actions のサービスアカウントはプロジェクト全体の Storage には何もできない（2026-10-16 の実測）。
+このバケットだけ、あやとが Cloud Shell で作って管理者を付けた（#938）:
 
 ```bash
 gcloud storage buckets create gs://live-streaming-d3cac-shorts-preview --project=live-streaming-d3cac --location=us-central1 --uniform-bucket-level-access --public-access-prevention --soft-delete-duration=0
 gcloud storage buckets add-iam-policy-binding gs://live-streaming-d3cac-shorts-preview --member=serviceAccount:github-action-live-streaming@live-streaming-d3cac.iam.gserviceaccount.com --role=roles/storage.admin
 ```
 
-付与のあと確かめること: `put.py up --place gcs` で、`gcs.py` が権限を聞いて ○ がそろう・
-14日の寿命が付く・作業箱から上げて GET で落とし直した sha256 が一致・**署名なしの道が 403**。
-第2段（Actions で並べて書き出す）の素材の受け渡しもこのバケットを使う。
+14日の寿命の決まりは、`gcs.py` が最初に使うときに足した（buckets.update が付いているので）。
+同じバケットを、書き出しを Actions で並べる道（`tools/shorts/render/remote.py`）の受け渡しにも使う。
 
 ## 落ちたときの見方
 

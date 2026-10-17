@@ -6,7 +6,7 @@
 
 | 欄 | 意味 |
 | --- | --- |
-| `place` | `hosting`（Firebase Hosting のプレビューチャンネル。いまの既定）/ `gcs`（非公開バケットの署名付き URL。サービスアカウントに Storage の権限が付いてから） |
+| `place` | `hosting`（Firebase Hosting のプレビューチャンネル。いまの既定）/ `gcs`（非公開バケットの署名付き URL。#938 で付与） |
 | `action` | `up`（置く）/ `delete`（hosting のチャンネルを消す。`channel_sha256` で指す） |
 | `files` | 置くファイル。hosting は大きさと sha256 が要る（ランナーが受け取ったものと、配ったあと落とし直したものを突き合わせる） |
 | `pubkey` | 結果（URL）を包む作業箱の公開鍵。RSA 2048bit 以上 |
