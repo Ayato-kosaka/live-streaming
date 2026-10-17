@@ -1463,6 +1463,8 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
             continue
         mood = it.get("mood")
         ment = (style.get("moods") or {}).get("looks", {}).get(mood) if mood else None
+        # 例外の印に keep_size があれば、顔を避けるために小さくしない（顔の誤検出のために字が縮むのは逆効果、と人が決めた行）
+        keep_size = bool((it.get("face_overlap_ok") or {}).get("keep_size"))
         if ment:
             # 感情の字幕: 書体・色・縁・動きは様式の moods.looks[mood]。頁の字を、size から min_size の間で
             # いちばん大きく（1行に収まらなければ2行に折る）
@@ -1471,8 +1473,8 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
             mfont = font_path(style, ment["font"])
             seed = TL.text_seed("".join(it["lines"]))
             s0 = ment.get("size", 72)
-            floor = ment.get("face_min_size", ment.get("min_size", s0))
-            spk = (style.get("sparkles") or {}).get(ment.get("sparkles")) if ment.get("sparkles") else None
+            floor = s0 if keep_size else ment.get("face_min_size", ment.get("min_size", s0))
+            spk =(style.get("sparkles") or {}).get(ment.get("sparkles")) if ment.get("sparkles") else None
 
             def build(cap, it=it, mlk=mlk, mfont=mfont, mst=mst, ment=ment, seed=seed):
                 # 行の割りは plan が決めたまま（文の切れ目を崩さない）。収まるいちばん大きい大きさだけを選ぶ
@@ -1491,7 +1493,7 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
         else:
             anim, spk, seed = cap_st.get("anim"), None, 0
             s0 = cap_st["size"]
-            floor = cap_st.get("face_min_size", s0)
+            floor = s0 if keep_size else cap_st.get("face_min_size", s0)
 
             def build(cap, it=it):
                 f = cap_font if cap == cap_st["size"] else ImageFont.truetype(str(font_path(style, cap_st["font"])), cap)
