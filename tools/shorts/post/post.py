@@ -2,7 +2,6 @@
 """承認されたショートを、EC2 の Chrome から YouTube と TikTok に出す（手元で回す入口）。
 
     D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
-    python3 tools/shorts/post/post.py approval --issue 926 --option A --dir $D --files A.mp4 post_A.json B.mp4 post_B.json C.mp4 post_C.json
     python3 tools/shorts/post/post.py send     --dir $D --video yk-by7R7iPA --option A
     python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A
     python3 tools/shorts/post/post.py yt-related --video yk-by7R7iPA --id <ショートのID>
@@ -51,24 +50,6 @@ def tt_caption(post):
     return "\n".join(lines)
 
 
-def cmd_approval(a):
-    """関所（gate.py require）を通す。終了コード 0 で、出てきた JSON の options に案が入っているときだけ 0 を返す。
-    --files は Gate 2 で提出したのと同じ並び（案ごとの動画なら A.mp4 post_A.json B.mp4 …）。
-    公開の手（yt-publish / tt-post）の直前に毎回これを回す"""
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "shorts", "gate.py"), "require", "--issue", str(a.issue),
-                        "--gate", "video", "--files", *a.files], cwd=a.dir, capture_output=True, text=True)
-    out = (r.stdout + r.stderr).strip()
-    opts = None
-    if r.returncode == 0:
-        try:
-            opts = json.loads(r.stdout).get("options")
-        except Exception:
-            opts = None
-    ok = r.returncode == 0 and isinstance(opts, list) and a.option in opts
-    print(json.dumps({"ok": ok, "exit": r.returncode, "options": opts, "out": out[:600]}, ensure_ascii=False, indent=1))
-    return 0 if ok else 1
-
-
 def cmd_send(a):
     mp4, pj = os.path.join(a.dir, f"{a.option}.mp4"), os.path.join(a.dir, f"post_{a.option}.json")
     post = json.load(open(pj))
@@ -81,7 +62,7 @@ def cmd_send(a):
     for f in ("cdp.py",):
         ec2.put(os.path.join(ROOT, ".claude", "skills", "ec2-chrome", f), f"{CDP}/{f}")
     ec2.put(os.path.join(ROOT, ".claude", "skills", "youtube-studio", "yt_studio.py"), f"{CDP}/yt_studio.py")
-    for f in ("yt_post.py", "tt_post.py"):
+    for f in ("yt_post.py", "tt_post.py", "yt_thumb.py"):
         ec2.put(os.path.join(HERE, f), f"{CDP}/{f}")
     print(json.dumps({"mp4_sha256": sha(mp4), "tt_caption": cap}, ensure_ascii=False, indent=1))
     return r.returncode
@@ -117,9 +98,28 @@ def cmd_tt_post(a):
     if a.sha and not remote_sha_ok(a, a.sha):
         return 1
     d = f"{REMOTE}/{a.video}"
-    extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "")
+    extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover {d}/{a.option}_cover.jpg" if getattr(a, "cover", None) else "")
     r = remote_run(f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra}\n", 560)
     return 0 if r.get("ok") else 1
+
+
+def cmd_cover(a):
+    """題の札が見えるコマを切り出して <案>_cover.jpg にし、EC2 へ送る（YouTube のサムネイルと TikTok のカバーに使う）。
+    題の札は1行目の読み上げのあいだ（0秒〜約2〜3秒）出ているので、既定は 1.0 秒のコマ"""
+    mp4 = os.path.join(a.dir, f"{a.option}.mp4")
+    jpg = os.path.join(a.dir, f"{a.option}_cover.jpg")
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", str(a.cover_at), "-i", mp4, "-frames:v", "1", "-q:v", "2", jpg], check=True)
+    ec2.put(jpg, f"{REMOTE}/{a.video}/{a.option}_cover.jpg")
+    print(jpg)
+    return 0
+
+
+def cmd_yt_thumb(a):
+    """題の札が見えるコマ（<案>_cover.jpg、送り済み）を YouTube のサムネイルにする"""
+    d = f"{REMOTE}/{a.video}"
+    st, out = ec2.run(f"cd {CDP} && timeout 200 python3 yt_thumb.py {a.id} {d}/{a.option}_cover.jpg 2>&1 | tail -4", 260, quiet=True)
+    print(out)
+    return 0 if '"ok": true' in out else 1
 
 
 def cmd_clean(a):
@@ -130,7 +130,6 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("cmd")
     p.add_argument("--issue", type=int)
-    p.add_argument("--files", nargs="+", help="approval: Gate 2 に出したファイルの並び（--dir の中の名前）")
     p.add_argument("--option")
     p.add_argument("--dir")
     p.add_argument("--video")
@@ -138,9 +137,11 @@ if __name__ == "__main__":
     p.add_argument("--at")
     p.add_argument("--sha", help="公開の直前に EC2 の mp4 と照らす sha256")
     p.add_argument("--dry", action="store_true")
+    p.add_argument("--cover-at", type=float, default=1.0, help="cover: 切り出す秒（題の札が見えている間）")
+    p.add_argument("--cover", action="store_true", help="tt-post: 題の札が見えるコマ（<案>_cover.jpg、送り済み）をカバーにする")
     a = p.parse_args()
-    fn = {"approval": cmd_approval, "send": cmd_send, "yt-draft": cmd_yt_draft, "yt-related": cmd_yt_related,
-          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "clean": cmd_clean}.get(a.cmd)
+    fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-related": cmd_yt_related,
+          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover, "clean": cmd_clean}.get(a.cmd)
     if not fn:
         sys.exit(__doc__)
     sys.exit(fn(a))

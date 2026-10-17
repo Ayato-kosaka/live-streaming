@@ -127,7 +127,7 @@ def settings(t):
     })()""")
 
 
-def post(t, mp4, caption, dry=False, at=None):
+def post(t, mp4, caption, dry=False, at=None, cover=None):
     if not os.path.exists(mp4):
         raise RuntimeError(f"no file: {mp4}")
     first = caption.split("\n")[0]
@@ -161,9 +161,20 @@ def post(t, mp4, caption, dry=False, at=None):
     # キャプション: 全部選んで消し、貼り付けで入れる
     t.click(ED)
     time.sleep(0.5)
-    key(t, "a", "KeyA", 65, mods=2)
+    # Linux の Chrome では、CDP の Ctrl+A（modifiers だけ）が全選択にならない（ファイル名「A」が残った）。
+    # 全選択の命令を付けて送り、残ったら末尾から字数ぶん Backspace で消す
+    t.call("Input.dispatchKeyEvent", type="keyDown", key="a", code="KeyA", windowsVirtualKeyCode=65, modifiers=2, commands=["selectAll"])
+    t.call("Input.dispatchKeyEvent", type="keyUp", key="a", code="KeyA", windowsVirtualKeyCode=65, modifiers=2)
     key(t, "Backspace", "Backspace", 8)
     time.sleep(0.8)
+    for _ in range(3):
+        left = t.js(f"{ED}.innerText").strip()
+        if not left:
+            break
+        key(t, "End", "End", 35, mods=2)
+        for _ in range(len(left) + 2):
+            key(t, "Backspace", "Backspace", 8)
+        time.sleep(0.5)
     left = t.js(f"{ED}.innerText").strip()
     log("after clear:", repr(left[:40]))
     pasted = t.js(f"""(() => {{ const e = {ED}; e.focus();
@@ -179,6 +190,39 @@ def post(t, mp4, caption, dry=False, at=None):
     log("pasted handled:", pasted, "| caption match:", norm == caption, "| entities:", mention)
     if norm != caption:
         log("GOT:", json.dumps(got, ensure_ascii=False))
+    if cover:
+        # サムネイル（カバー）は題の札が見えるコマにする（あやと 2026-10-17）。コマを選ぶ窓より、
+        # 書き出しから切り出した絵を上げるほうが、どのコマになるかが確か
+        opened = click_text(t, "Edit cover") or click_text(t, "カバーを編集")
+        time.sleep(3)
+        log("cover modal opened", opened, "|", (t.js("(() => { const m = [...document.querySelectorAll('[role=dialog], .TUXModal, [class*=modal], [class*=Modal]')].find(e => e.offsetParent); return m ? m.innerText.trim().slice(0, 200) : null; })()") or ""))
+        click_text(t, "Upload cover") or click_text(t, "カバーをアップロード")
+        time.sleep(2)
+        try:
+            t.set_files("input[type=file][accept*='image']", [cover])
+            log("cover file set")
+        except Exception as e:
+            log("cover file input not found", e)
+            shot(t, "tt_cover_fail")
+            result({"ok": False, "error": "cover_input"})
+            return
+        time.sleep(5)
+        shot(t, "tt_cover_set")
+        # 窓の右上の「Save」は button ではなく div のことがある。字で探し、見つからなければ止める
+        done = None
+        for label in ("Save", "保存", "Confirm", "確認"):
+            try:
+                done = click_text(t, label)
+                break
+            except RuntimeError:
+                continue
+        if not done:
+            shot(t, "tt_cover_nosave")
+            result({"ok": False, "error": "cover_save"})
+            return
+        time.sleep(3)
+        log("cover confirmed", done)
+        shot(t, "tt_cover_done")
     # 「もっと見る」を開いて AI 生成の印などのスイッチを読む
     if has_text(t, "Show more"):
         click_text(t, "Show more")
@@ -197,7 +241,8 @@ def post(t, mp4, caption, dry=False, at=None):
         log("schedule inputs", sched_ui)
         result({"ok": False, "error": "schedule_not_implemented", "inputs": sched_ui})
         return
-    now_ok = any(k.startswith("Now") and v for k, v in when.items()) or any(k.startswith("今すぐ") and v for k, v in when.items())
+    # ラジオ2つの字が同じ（"Now\nSchedule"）になるので dict にすると後ろが勝つ。並びの先頭が Now
+    now_ok = bool(st["radios"]) and st["radios"][0][1] is True
     shot(t, "tt_2_ready")
     ok = norm == caption and not mention and not ai_on and not disc_on and everyone and now_ok and up_ok
     info = {"caption_match": norm == caption, "entities": mention, "ai_on": ai_on, "disclose_on": disc_on,
@@ -240,7 +285,8 @@ if __name__ == "__main__":
     elif cmd == "post":
         args = sys.argv[2:]
         at = args[args.index("--at") + 1] if "--at" in args else None
+        cover = args[args.index("--cover") + 1] if "--cover" in args else None
         t = fresh_tab()
-        post(t, args[0], open(args[1], encoding="utf-8").read(), dry="--dry" in args, at=at)
+        post(t, args[0], open(args[1], encoding="utf-8").read(), dry="--dry" in args, at=at, cover=cover)
     else:
         sys.exit(__doc__)

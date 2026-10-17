@@ -322,7 +322,9 @@ def publish(t, vid, at=None):
     _wait(t, f"!!{sel}", 30)
     t.click(sel)
     time.sleep(3)
-    d = VISIBLE_DLG
+    # 公開設定の窓は position: fixed の tp-yt-paper-dialog の中にあり、offsetParent が null になる。
+    # VISIBLE_DLG（offsetParent で絞る）では拾えないので、中身の ytcp-video-visibility-select を直に見る
+    d = "(document.querySelector('ytcp-video-visibility-select') || null)"
     pub = f"({d}).querySelector('tp-yt-paper-radio-button[name=\"PUBLIC\"]')"
     if not t.js(f"!!({d}) && !!{pub}"):
         result({"ok": False, "error": "visibility_dialog", "radios": t.js(f"(() => {{ const d = {d}; return d ? [...d.querySelectorAll('tp-yt-paper-radio-button')].map(r => r.getAttribute('name')) : null; }})()")})
@@ -333,7 +335,7 @@ def publish(t, vid, at=None):
     if not ok:
         result({"ok": False, "error": "public_not_selected"})
         return
-    t.js(f"""(() => {{ const b = [...({d}).querySelectorAll('ytcp-button, button')].find(b => b.offsetParent && /^(完了|Done)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
+    t.js(f"""(() => {{ const root = ({d}).closest('tp-yt-paper-dialog') || ({d}); const b = [...root.querySelectorAll('ytcp-button, button')].find(b => /^(完了|Done)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
     time.sleep(2)
     t.click(SAVE)
     time.sleep(8)
