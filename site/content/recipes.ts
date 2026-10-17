@@ -542,6 +542,20 @@ export const RECIPES: Recipe[] = [
       { label: "調理", date: "2026-10-09", videoId: "yGEacTlskmY", title: "アルバニアでチーズケーキつくろか！" },
     ],
   },
+  {
+    slug: "chicken-cream-stew",
+    name: "チキンクリームシチュー",
+    emoji: "🥣",
+    icon: "food-carrot",
+    country: "north-macedonia",
+    kind: "soup",
+    date: "2026-10-16",
+    note: "企画会議のルーレットで決まったのはクラムチャウダーだったが、買い出しであさりが見つからなかった。骨つきの手羽先を茹でた汁をスープにして、バターと小麦粉からルゥを手作りし、クリームシチューになった。コンソメのつもりで買った袋の中身はパスタで、それもそのまま鍋に入れた。",
+    streams: [
+      { label: "企画会議", date: "2026-10-15", videoId: "CKJvprUMOgA", title: "北マケドニアで今週の企画会議や！" },
+      { label: "調理", date: "2026-10-16", videoId: "E2oGYjnVQSA", title: "北マケドニアでグラムチャウダー作ります" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);

@@ -122,6 +122,14 @@ curl -sS -o vendor/jsm/utils/BufferGeometryUtils.js \
 #   models/food/   ← food-kit の「GLB format」
 ```
 
+**zip の `Textures/` も一緒に置く。無いと、焼いた絵が色を失う。**
+food-kit の glb は色を持っておらず、`Textures/colormap.png` の1枚を全員で
+共有している（`models/food/Textures/colormap.png`）。これが欠けていても
+**焼くほうは何も言わずに通る**ので、まっ白な料理の絵が焼ける
+（2026-10-17 に人参がそうなった。まっ白な人参が `hero/` に入りかけた）。
+`node bake.mjs /tmp/bake-test food-pepper` で**色の付いているはずの絵を1枚**
+焼いて、オレンジに出るかを先に見る。
+
 **いま配られているキットは、この manifest を書いたときのものより新しい。**
 building-kit は部品の名前が変わっていて、`wall-window-small.glb` がもう無い
 （`legend-kazbegi` の礼拝堂がそれを呼ぶ）。**いま在る絵をそのまま焼き直すと
