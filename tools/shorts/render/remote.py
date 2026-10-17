@@ -84,8 +84,13 @@ MEDIA = (".mp4", ".mov", ".mkv", ".m4a", ".wav", ".mp3", ".aac", ".flac", ".png"
          ".webp", ".json", ".ttf", ".otf")
 JST = dt.timezone(dt.timedelta(hours=9))
 # 本体の job が GCS に置くもの（work 一式は tar.gz にまとめる）
-OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}.strips.jpg", "{id}.strips.json",
+OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_strips.json",
              "{id}.sheet.jpg", "{id}.plan.json", "{id}.work.tgz")
+# 検査を4つに分けて同時に回す（1本ずつ順だと 200秒あまり。どれも1コアしか使わず、4コアが遊ぶ）。
+# 重いもの（安全域 70秒・透かし 60秒・字と顔 40秒・字幕 35秒）を別々の組に置く
+QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"), ("text_on_face", "faces"),
+             ("container", "loudness", "voice_vs_bgm", "subtitle_sync", "text_dup", "silence",
+              "clipping", "original_audio"))
 
 
 def sha256_file(p: Path) -> str:
@@ -421,6 +426,66 @@ def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, **kw)
 
 
+def run_checks(mp4: Path, work: Path, job: Path, iid: str, draft: bool) -> dict:
+    """check.py を組ごとに同時に回し、1つの報告（json と md）にまとめる。並びと判定は check.py のまま。
+
+    check.py はこの道具の中に import しない（あちらの `common` は qa/ のもの、こちらが先に読んだ
+    `common` は ingest/ のもので、同じ名前がぶつかる）。並びと md は check.py を子として呼んで作る。
+    """
+    qa = HERE.parent / "qa"
+    severity = {"pass": 0, "not-checkable": 1, "needs-human": 2, "fail": 3}  # qa/common.py の SEVERITY
+    info = json.loads(subprocess.run(
+        [sys.executable, "-c", "import sys, json; sys.path.insert(0, sys.argv[1]); import check; "
+         "print(json.dumps({'order': list(check.CHECKS), 'draft': list(check.DRAFT_CHECKS)}))", str(qa)],
+        capture_output=True, text=True, check=True).stdout)
+    # 顔の検査の YuNet は qa/models/ に無い（fetch_fonts.sh が落とすのは render/models/）
+    env = dict(os.environ, SHORTS_QA_YUNET=str(HERE / "models" / "face_detection_yunet_2023mar.onnx"))
+    groups = ([("safe_area",), tuple(c for c in info["draft"] if c != "safe_area")] if draft
+              else QA_GROUPS)
+    procs = []
+    for k, g in enumerate(groups):
+        out = job / f"{iid}.qa{k}.json"
+        procs.append((out, subprocess.Popen(
+            [sys.executable, str(HERE.parent / "qa/check.py"), str(mp4), str(work), "--only", ",".join(g),
+             "--json", str(out), "--crops", str(job / f"{iid}.qa")], cwd=job, env=env,
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)))
+    checks, notes, errs = {}, [], []
+    for out, p in procs:
+        _, err = p.communicate()
+        try:
+            r = json.loads(out.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            errs.append((err or "")[-400:])
+            continue
+        checks.update({c["id"]: c for c in r["checks"]})
+        notes += [n for n in r.get("notes", []) if n not in notes]
+        out.unlink()
+    ordered = [checks[c] for c in info["order"] if c in checks]
+    worst = max((c["status"] for c in ordered), key=lambda s: severity[s], default="not-checkable")
+    rep = {"file": str(mp4), "work": str(work), "plate": None, "overall": worst,
+           "counts": {s: sum(c["status"] == s for c in ordered) for s in severity},
+           "checks": ordered, "notes": notes + [f"検査が止まった組: {e}" for e in errs]}
+    pj = job / f"{iid}.qa.json"
+    pj.write_text(json.dumps(rep, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    md = subprocess.run([sys.executable, "-c", "import sys, json; sys.path.insert(0, sys.argv[1]); "
+                         "import check; print(check.markdown(json.load(open(sys.argv[2]))), end='')",
+                         str(qa), str(pj)], capture_output=True, text=True)
+    (job / f"{iid}.qa.md").write_text(md.stdout, encoding="utf-8")
+    rc = {"pass": 0, "fail": 1, "needs-human": 3, "not-checkable": 3}[worst]
+    return {"overall": worst, "counts": rep["counts"], "rc": rc,
+            "checks": {c["id"]: c["status"] for c in ordered}, "errors": errs}
+
+
+def cpu_info() -> dict:
+    """ランナーの CPU（同じ指示書でもバイト列が変わる元。README の「同じものが出るか」）。"""
+    try:
+        txt = Path("/proc/cpuinfo").read_text()
+    except OSError:
+        return {}
+    model = next((ln.split(":", 1)[1].strip() for ln in txt.splitlines() if ln.startswith("model name")), "?")
+    return {"model": model, "avx512": " avx512f" in txt}
+
+
 def cmd_job() -> int:
     prefix = os.environ["PREFIX"]
     iid, role = os.environ["ITEM_ID"], os.environ["ROLE"]
@@ -456,8 +521,9 @@ def cmd_job() -> int:
     r = run([sys.executable, str(HERE / "render.py"), str(ep), "--out", str(mp4), "--work", str(work)]
             + (["--draft"] if draft else []), cwd=job, capture_output=True, text=True)
     T["rendered"] = now()
-    res = {"id": iid, "role": role, "draft": draft, "timing": T,
+    res = {"id": iid, "role": role, "draft": draft, "timing": T, "cpu": cpu_info(),
            "render_rc": r.returncode, "render_seconds": round(T["rendered"] - T["inputs"], 1)}
+    print(f"  CPU: {res['cpu'].get('model')}（AVX-512 {'あり' if res['cpu'].get('avx512') else 'なし'}）")
     if r.returncode != 0 or not mp4.is_file():
         res["error"] = (r.stderr or "")[-1500:]
         print(f"!! 書き出しが落ちた（{r.returncode}）")
@@ -466,22 +532,16 @@ def cmd_job() -> int:
         res["bytes"] = mp4.stat().st_size
         print(f"  書き出した（{res['render_seconds']}秒）sha256 {res['sha256'][:8]}…")
     if role == "main" and "sha256" in res:
-        qa = run([sys.executable, str(HERE.parent / "qa/check.py"), str(mp4), str(work),
-                  "--json", str(job / f"{iid}.qa.json"), "--md", str(job / f"{iid}.qa.md"),
-                  "--crops", str(job / f"{iid}.qa")] + (["--draft"] if draft else []),
-                 cwd=job, capture_output=True, text=True)
+        res["qa"] = run_checks(mp4, work, job, iid, draft)
         T["checked"] = now()
-        try:
-            rep = json.loads((job / f"{iid}.qa.json").read_text(encoding="utf-8"))
-            res["qa"] = {"rc": qa.returncode, "overall": rep["overall"], "counts": rep["counts"],
-                         "seconds": round(T["checked"] - T["rendered"], 1),
-                         "checks": {c["id"]: c["status"] for c in rep["checks"]}}
-        except (OSError, json.JSONDecodeError, KeyError):
-            res["qa"] = {"rc": qa.returncode, "overall": "not-checkable", "error": (qa.stderr or "")[-800:]}
+        res["qa"]["seconds"] = round(T["checked"] - T["rendered"], 1)
         print(f"  検査 {res['qa'].get('overall')}（{res['qa'].get('seconds')}秒）"
               f" {json.dumps(res['qa'].get('counts'), ensure_ascii=False)}")
-        run([sys.executable, str(HERE.parent / "qa/strips.py"), str(mp4), str(work),
-             "--out", str(job / f"{iid}.strips")], cwd=job, capture_output=True)
+        # strips.py の --out は「名前の頭」で、拡張子を付け替える（A.strips → A.jpg）。_ でつなぐ
+        st = run([sys.executable, str(HERE.parent / "qa/strips.py"), str(mp4), str(work),
+                  "--out", str(job / f"{iid}_strips")], cwd=job, capture_output=True, text=True)
+        if st.returncode != 0:
+            res["strips_error"] = (st.stderr or "")[-600:]
         run([sys.executable, str(HERE / "contact_sheet.py"), str(mp4), str(work), str(job / f"{iid}.sheet.jpg")],
             cwd=job, capture_output=True)
         shutil.copy(work / "plan.json", job / f"{iid}.plan.json")
