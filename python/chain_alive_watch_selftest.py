@@ -34,6 +34,9 @@
 | 14 | 下流の引きが窓を覆っていない | 判定しない（覆えない所を0と読まない） |
 | 15 | 1回だけ上流とそろう | 挙がらない。**割合は残る** |
 | 16 | 1回もそろわない | やはり挙がる（15 がゆるめ過ぎていないか） |
+| 17 | 下流を「**今日できた新顔**」にする | 判定しない（足した当日に赤くしない） |
+| 18 | 下流を「**GitHub がまだ知らない**」にする | 判定しない（新しいファイルで繋いだ日） |
+| 19 | 18 と同じ表で古株に戻す | やはり挙がる（17・18 がゆるめ過ぎていないか） |
 
 9〜16 を足したのは #865。**[4] では届かない**——受け皿を持つ下流は、
 1本目の繋ぎが死んでいても受け皿が毎晩起こすので、ワークフロー単位では
@@ -381,6 +384,50 @@ def main() -> int:
         print(f"[16] ○ 0回なら、やはり {want10}本 挙がる")
     else:
         print(f"[16] ✕ 0回なのに {len([r for r in rows16 if victim5 in r])}件"
+              f"（{want10}件のはず）")
+        ng += 1
+
+    # [17] **今日できた新顔は、[5] でも数えない**（2026-10-16。#273）
+    #
+    #      [4] には「新顔は数えない」が在ったのに、[5] には無かった。
+    #      だから**繋ぎを1本足した PR は、必ずここで赤くなる**——足した当日は
+    #      無人の上流が何度も終わっているのに、下流はまだ1回も起きていない。
+    #      「足したから赤い」が常態になると、本物の切れが埋もれる（§13）。
+    t17 = copy.deepcopy(t10)          # victim5 の繋ぎが死んで見える表
+    t17["made"] = {victim5: iso(0.5)}
+    rows17, seen17 = judge_pairs(docs, t17, DAYS, NOW)
+    if (not [r for r in rows17 if victim5 in r]
+            and seen17["new"] == want10
+            and seen17["judged"] == seen10["judged"] - want10):
+        print(f"[17] ○ {victim5} が今日できた新顔なら挙がらず、"
+              f"判定が {seen10['judged']} → {seen17['judged']}本 に減る"
+              f"（新顔 {seen17['new']}本）")
+    else:
+        print(f"[17] ✕ 新顔なのに {len(rows17)}件 挙がった／{seen17}")
+        ng += 1
+
+    # [18] **GitHub がまだ知らないファイル**も新顔に落ちること。
+    #
+    #      この PR で足したワークフローは `created_at` すら返ってこないので
+    #      [17] の `made` では拾えない。`live_pairs()` が `absent` を立てる。
+    #      ここが効かないと、繋ぎを**新しいファイルで**足した PR が、
+    #      本物の赤と見分けの付かない赤を出す
+    t18 = copy.deepcopy(t10)
+    t18["downs"][victim5] = {"at": [], "oldest": None, "absent": True}
+    rows18, seen18 = judge_pairs(docs, t18, DAYS, NOW)
+    if (not [r for r in rows18 if victim5 in r] and seen18["new"] == want10):
+        print(f"[18] ○ GitHub がまだ知らないファイルも挙がらない"
+              f"（新顔 {seen18['new']}本）")
+    else:
+        print(f"[18] ✕ 知らないファイルで {len(rows18)}件 挙がった／{seen18}")
+        ng += 1
+
+    # [19] **ゆるめ過ぎていないか。** 古株に戻せば、同じ表でやはり赤くなる
+    rows19, _ = judge_pairs(docs, {**t10, "made": {victim5: iso(200)}}, DAYS, NOW)
+    if len([r for r in rows19 if victim5 in r]) == want10:
+        print(f"[19] ○ 古株に戻せば、同じ表で {want10}本 挙がる")
+    else:
+        print(f"[19] ✕ 古株なのに {len([r for r in rows19 if victim5 in r])}件"
               f"（{want10}件のはず）")
         ng += 1
 

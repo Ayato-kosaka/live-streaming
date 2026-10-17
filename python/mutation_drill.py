@@ -155,6 +155,24 @@ REPO_CASES: list[dict] = [
      "file": "functions/src/cards.ts",
      "old": "===", "new": "!==", "all": True,
      "why": "誰でも読める応答を作るところの等しさを全部ひっくり返す"},
+    # **`tools/sprites/reachwatch.mjs` は、どこからも当てられていなかった**
+    # （2026-10-16。#273）。124回まわって赤 0回で、「守れている」と
+    # 「何も見ていない」の区別が付いていない（`docs/island-standards.md` §15）。
+    #
+    # 回し役は `*_selftest.*` しか拾わないので、この道具は `--list` にすら
+    # 出ていなかった。`FIXONLY=1` を渡すと**対照の台（14件）だけ**を測って
+    # 帰るので、書き出しも配り先も要らずに当てられる。
+    #
+    # 壊すのは**測っている実物**（`hitbox.mjs` の `measure()`）。
+    # あれが「押しどころの真ん中が別の何かに取られているか」を
+    # `elementFromPoint` で決めている本体で、ここが狂えば台の14件が外れる。
+    # `reachwatch.mjs` 自身ではなく `hitbox.mjs` を壊すのは、
+    # **本物の退行はそちらで起きる**から（`reachwatch` は呼んでいるだけ）
+    {"watch": "tools/sprites/reachwatch.mjs",
+     "env": {"FIXONLY": "1"},
+     "file": "tools/sprites/hitbox.mjs",
+     "old": "===", "new": "!==", "all": True,
+     "why": "指の届きを測るところ（hitbox.measure）の等しさを全部ひっくり返す"},
     {"watch": "python/cron_lag_selftest.py",
      "file": "python/cron_lag.py",
      "old": "d = (t - p).total_seconds() / 3600",
@@ -413,10 +431,18 @@ def mjs_subject(path: Path) -> Path | None:
 
 # ---- 当てる ----------------------------------------------------------
 
-def run_watch(rel: str) -> int:
+def run_watch(rel: str, extra: dict | None = None) -> int:
+    """見張りを1回まわして、終了コードを返す。
+
+    `extra` は `REPO_CASES` の `env`。**ブラウザの道具を当てるのに要る**
+    ——`tools/sprites/*.mjs` は書き出しと配り先を環境変数で受け取るので、
+    素で起こすと「数えるものが無い」の 2 で帰ってしまい、
+    **壊す前から緑ではない**として飛ばされる（＝一生当てられない）。
+    """
     head = ["node"] if rel.endswith(".mjs") else [sys.executable]
     env = dict(os.environ)
     env.setdefault("BQ_PROJECT_ID", "mutation-drill-no-such-project")
+    env.update(extra or {})
     try:
         r = subprocess.run([*head, rel], cwd=REPO, env=env, capture_output=True,
                            text=True, timeout=TIMEOUT_SEC, check=False)
@@ -427,7 +453,7 @@ def run_watch(rel: str) -> int:
         return -2
 
 
-def reads_it(rel: str, target: Path) -> bool | None:
+def reads_it(rel: str, target: Path, extra: dict | None = None) -> bool | None:
     """**この見張りは、本当にこのファイルを読んでいるか。**
 
     `py` と `mjs` の当て先は字から推したものなので、**当て違いがある。**
@@ -442,7 +468,7 @@ def reads_it(rel: str, target: Path) -> bool | None:
     journal_write(tgt)
     try:
         target.write_text("/*(((壊した)))*/ (((\n" * 3, encoding="utf-8")
-        rc = run_watch(rel)
+        rc = run_watch(rel, extra)
     finally:
         back = restore(tgt)
         journal_write(None)
@@ -451,7 +477,8 @@ def reads_it(rel: str, target: Path) -> bool | None:
     return rc != 0
 
 
-def attempt(rel: str, target: Path, make, why: str) -> dict:
+def attempt(rel: str, target: Path, make, why: str,
+            extra: dict | None = None) -> dict:
     """1本当てる。**壊したものは、何があっても戻す。**"""
     tgt = target.relative_to(REPO).as_posix()
     src = target.read_text(encoding="utf-8")
@@ -463,14 +490,14 @@ def attempt(rel: str, target: Path, make, why: str) -> dict:
         return {"watch": rel, "skip": f"{tgt} に壊すところが無い"}
     new, n = out
 
-    base = run_watch(rel)
+    base = run_watch(rel, extra)
     if base != 0:
         # **1回で決めない。** 当てているあいだ箱は混んでいて、子を何本も
         # 起こす見張り（`python/admin/characters_*`）は、素で回せば通るのに
         # ここだけ落ちることがある（2026-10-13 に3本で実際に起きた）。
         # **混んでいて落ちたものを「壊れている」と書かない**（§13）
         time.sleep(2)
-        base2 = run_watch(rel)
+        base2 = run_watch(rel, extra)
         if base2 != 0:
             return {"watch": rel,
                     "skip": f"壊す前から緑ではない（終了コード {base}→{base2}。"
@@ -480,7 +507,7 @@ def attempt(rel: str, target: Path, make, why: str) -> dict:
     journal_write(tgt)
     try:
         target.write_text(new, encoding="utf-8")
-        rc = run_watch(rel)
+        rc = run_watch(rel, extra)
     finally:
         back = restore(tgt)
         journal_write(None)
@@ -654,6 +681,31 @@ def plan(only: str | None, names: list[str]) -> list[dict]:
             else:
                 out.append({"kind": "-", "watch": rel,
                             "skip": "守る実物を `join(…)` から特定できない"})
+
+    # **回し役が拾わないものも、`REPO_CASES` に書いてあれば当てる**
+    # （2026-10-16。#273）。
+    #
+    # ここまでは `selftest_runner.py --list` が拾った `*_selftest.*` だけを
+    # 見ていた。**ブラウザと書き出しが要る道具は1本も拾われない**ので、
+    # `tools/sprites/reachwatch.mjs` のような「CI のワークフローからしか
+    # 走らない見張り」には、書いても一生当たらなかった
+    # （`python3 python/mutation_drill.py <道>` と名指ししたときだけ当たる）。
+    seen = {o["watch"] for o in out}
+    if only in (None, "repo"):
+        for c in REPO_CASES:
+            rel = c["watch"]
+            if rel in seen or (names and rel not in names):
+                continue
+            if not (REPO / rel).is_file():
+                out.append({"kind": "-", "watch": rel,
+                            "skip": "見張りそのものがこの枝に無い"})
+                continue
+            if not (REPO / c["file"]).is_file():
+                out.append({"kind": "-", "watch": rel,
+                            "skip": f"当て先の {c['file']} がこの枝に無い"})
+                continue
+            out.append({"kind": "repo", "watch": rel,
+                        "target": REPO / c["file"], "case": c})
     return out
 
 
@@ -829,7 +881,7 @@ def main() -> int:
                 out = src.replace(c["old"], c["new"]) if cnt < 0 \
                     else src.replace(c["old"], c["new"], cnt)
                 return out, (src.count(c["old"]) if cnt < 0 else 1)
-            res = attempt(rel, r["target"], make, c["why"])
+            res = attempt(rel, r["target"], make, c["why"], c.get("env"))
 
         if res.get("fatal"):
             fatal.append((rel, res["skip"]))

@@ -86,6 +86,30 @@ jobs:
       - name: PyYAML
         run: python3 -m pip install --quiet pyyaml
 
+      # **ブラウザの道具にも当てる**（2026-10-16。#273）。
+      # `tools/sprites/reachwatch.mjs` は `REPO_CASES` に `FIXONLY=1` で
+      # 載せてあり、**対照の台だけ**を測って帰る（書き出しも配り先も要らない）。
+      # ここを入れないと「壊す前から緑ではない」で毎回飛ばされる
+      # ——当てられなかったものは一覧に出るが、**出ているだけでは守りではない**
+      - name: 下ごしらえ（tools/sprites の playwright-core）
+        run: npm ci --prefix tools/sprites --no-audit --no-fund
+
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            exit 2
+          fi
+
       - name: 対照を当てる
         env:
           BQ_PROJECT_ID: mutation-drill-no-such-project
