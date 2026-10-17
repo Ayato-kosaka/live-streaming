@@ -37,8 +37,10 @@
 
 ランナーの道具を作業箱にそろえてある（ubuntu-24.04 の apt の ffmpeg 6.1.1・x264 0.164、
 Python 3.13、numpy 2.5.3・Pillow 12.3.0・opencv-python-headless 5.0.0.93・budoux 0.9.3、
-書体と YuNet は fetch_fonts.sh が sha256 で確かめる）。書き出すのは**作業枝に push してある版の
-render.py**。手元で直した道具は push してから回す。
+書体と YuNet は fetch_fonts.sh が sha256 で確かめる）。それでも AMD EPYC のランナーでは x264 だけが
+別のバイト列を出したので、Actions の書き出しは x264 の cpu-independent を付ける
+（`SHORTS_X264_CPU_INDEPENDENT=1`。job ごとの指紋 `probe_stages` で、どの段が違うかを残す）。
+書き出すのは**作業枝に push してある版の render.py**。手元で直した道具は push してから回す。
 """
 
 from __future__ import annotations
