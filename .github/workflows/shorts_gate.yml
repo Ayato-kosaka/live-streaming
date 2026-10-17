@@ -36,35 +36,13 @@ name: ショート動画の承認を記録する
 # ## 本番で確かめられるのは master に入ってから
 #
 # `issue_comment` は**既定の枝（master）のこのファイル**で走る。枝の上で直しても動かない。
-#
-# ## 過ぎたコメントを読み直す口（手で起動）
-#
-# 受け口が落ちた・その日の言いかたの表で読めなかった、で記録の出なかった返事を、
-# issue 番号とコメント ID を渡して読み直す（#926 の「Aは今出して」がそれだった）。
-# 判定は `gate.py reread` が、いつもと同じ `judge()` で行う。App の判定・承認者・
-# 書き換え・札・提出との順序も同じに通す。**断りは issue に書かず、この run の要約と赤で返す**
-# （押したのは運営の側で、あやとに「書き直して」を出さない）。
-# 手で起動できるのは、このリポジトリに書き込み権限のある人だけ（GitHub の決まり）。
-# 入力はシェルに差し込まず、環境変数で渡して gate.py が数字として読む。
 
 run-name: >-
-  ${{ github.event_name == 'workflow_dispatch'
-      && format('#{0} のコメント {1} を読み直す（ショートの承認）', inputs.issue, inputs.comment_id)
-      || format('#{0} へのコメント（ショートの承認）', github.event.issue.number) }}
+  ${{ format('#{0} へのコメント（ショートの承認）', github.event.issue.number) }}
 
 on:
   issue_comment:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      issue:
-        description: issue の番号（例 926）
-        required: true
-        type: string
-      comment_id:
-        description: 読み直すコメントの ID（URL の issuecomment- のうしろの数字）
-        required: true
-        type: string
 
 # **`concurrency` を置かない。** 同じ group で待てる run は1本だけで、3本続くと
 # 真ん中が黙って取り消される。取り消された承認は記録も返事も出ず、あやとには
@@ -95,19 +73,9 @@ jobs:
 
       # 対象外のコメント（命令でも提出でもない）は、GitHub の口を1回も叩かずに終わる
       - name: 承認を確かめて記録する
-        if: github.event_name == 'issue_comment'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 tools/shorts/gate.py record --event "$GITHUB_EVENT_PATH"
-
-      # 記録しなかったとき（断り）は終了コード 1 で赤くなる。理由は要約に1行
-      - name: 過ぎたコメントを読み直して記録する
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE: ${{ inputs.issue }}
-          COMMENT: ${{ inputs.comment_id }}
-        run: python3 tools/shorts/gate.py reread --issue "$ISSUE" --comment "$COMMENT"
 
       # **黙って赤くならない。** 記録が書けないと、後段は「承認の記録がありません」で止まる。
       # 止まる向きなので危なくはないが、あやとには「承認したのに進まない」としか見えない
@@ -118,7 +86,6 @@ jobs:
             echo "### ショートの承認を記録できませんでした"
             echo ""
             echo '**承認は記録されていません。** 後段は止まったままです。'
-            echo '読み直し（手で起動）なら、上の step の1行が記録しなかった理由です。'
             echo '同じ命令を、新しいコメントでもう一度書けば記録し直します。'
             echo '判定のほうを疑うときは `python3 tools/shorts/gate_selftest.py` を手元で回す。'
           } >> "$GITHUB_STEP_SUMMARY"

@@ -37,10 +37,7 @@
 | `optlist` | 動画の提出の案の並びが読めなければ承認しない | `optlist` |
 | `optmatch` | 記録の「出してよい案」も、元のコメントから導き直したものと突き合わせる | `forged` |
 | `extra` | `/approve` で案を選ぶ承認の1行目は案だけ（案でない字があれば断る。黙って広げない） | `extra` |
-| `ending` | 短い返事の案のうしろは、決めの言いかたの表にあるものだけ（`B？`・`Bではなく`・`Aは出さないで`・`Aは直してから出して` を承認と読まない） | `short_ending` |
-| `release` | 「出して」と頼む返事（`Aは今出して`）は、いちばん新しい提出が動画のときだけ | `short_release` |
-| `rescope` | 読み直す口は、名指しの issue の、札の付いた issue のコメントだけ | `reread_scope` |
-| `recount` | 読み直した承認は、後段が拾うときだけ記録する（あとの差し戻しで消えた承認に札を付けない） | `reread_effect` |
+| `ending` | 短い返事の案のうしろは、決めの言いかたの表にあるものだけ（`B？`・`Bではなく` を承認と読まない） | `short_ending` |
 | `shortopts` | 短い返事が指すのは、いちばん新しい提出が案を持つときだけ | `short_noopts` |
 | `shortname` | 承認者の名前でない短い返事は、会話として黙って流す | `short_quiet` |
 | `shortlabel` | 札の無い issue の短い返事には返事をしない | `short_quiet` |
@@ -51,7 +48,7 @@
 | `head` | 機械可読ブロックは本文の1行目だけ | `head` |
 
 外さない足もある: `ok_plan` `ok_video` `ok_all` `ok_choice` `ok_short` `ok_noplan` `phone` `quiet`
-`reread` `limit_pat` `config`。
+`limit_pat` `config`。
 どの `BREAK` でも、これらは**通ったまま**でないといけない（守りを外したら関係ない足まで
 落ちる、は守りが混ざっている印）。
 
@@ -100,8 +97,7 @@ BREAKS: dict[str, str] = {
     "optmatch": "forged",
     "extra": "extra", "multi": "plan_multi",
     "shortopts": "short_noopts", "shortname": "short_quiet", "shortlabel": "short_quiet",
-    "ending": "short_ending", "release": "short_release",
-    "rescope": "reread_scope", "recount": "reread_effect",
+    "ending": "short_ending",
 }
 
 
@@ -193,12 +189,6 @@ def apply_break(name: str) -> None:
         G._answers_unlabeled = lambda cmd: True
     elif name == "ending":
         G._ending_ok = lambda ending: True
-    elif name == "release":
-        G._release_target = lambda cmd, sub: True
-    elif name == "rescope":
-        G._reread_scope = lambda c, issue, info: ""
-    elif name == "recount":
-        G._reread_counts = lambda *a, **k: ""
 
 
 # ---------------------------------------------------------------- こしらえる材料
@@ -307,10 +297,6 @@ class FakeGitHub:
         hit = next((c for c in self.t.comments if c["id"] == cid), None)
         return copy.deepcopy(hit)
 
-    def get_issue(self, issue):
-        self.calls.append(("issue", issue))
-        return {"number": issue, "labels": [{"name": x} for x in self.t.labels]}
-
     def list_comments(self, issue):
         self.calls.append(("list", issue))
         return copy.deepcopy(self.t.comments)
@@ -389,9 +375,6 @@ def cli(t: Thread, *argv: str) -> tuple[int, str]:
         def list_comments(self, issue):
             return copy.deepcopy(t.comments)
 
-        def __getattr__(self, name):        # get_comment・get_issue・post_comment・札は、この issue へ
-            return getattr(t.api, name)
-
     saved = G.GitHub, G.load_approvers
     G.GitHub, G.load_approvers = Local, (lambda *a, **k: list(AP))
     out = io.StringIO()
@@ -401,17 +384,6 @@ def cli(t: Thread, *argv: str) -> tuple[int, str]:
     finally:
         G.GitHub, G.load_approvers = saved
     return code, out.getvalue()
-
-
-def reread(t: Thread, c: dict | int, issue: int | None = None) -> tuple[int, str]:
-    """手で起動する読み直しの口（`gate.py reread`）を、この issue に当てる。"""
-    cid = c if isinstance(c, int) else c["id"]
-    return G.handle_reread(issue or t.number, cid, t.api, AP, recorded_at=t.stamp())
-
-
-# #926 にあやとが書いた返事の形（2026-10-16、コメント 6226638301）。1行目だけが決めで、2行目からは直しの指摘
-REPLY_926 = ("Aは今出して\nBは指摘直してから14時JSTに出して\nCはさらにもう一度指摘直してから。（21時予定）\n\n"
-             "指摘\nキラキラは男のショートには合わない。\n")
 
 
 def require_json(t: Thread, gate: str, sha256: str) -> tuple[int, dict | None]:
@@ -614,27 +586,6 @@ def leg_ok_short() -> None:
     ok(leg, (record_of(t.bots()[-1]) or {}).get("option") == "B"
        and "企画 p1 は、B案で作ると記録しました" in t.bots()[-1]["body"],
        "企画への `Bでお願いします！` も、B案として記録する")
-    # 「出して」と頼む言いかた（#926 2026-10-16「Aは今出して」を読めなかった）
-    for text, want in (("Aは今出して", ["A"]), ("Aは出して", ["A"]), ("A Cは今出して", ["A", "C"]),
-                       ("Aを出して", ["A"]), ("Aは投稿して", ["A"]), ("Aだけ出して", ["A"]),
-                       ("Ａは今すぐ出してください！", ["A"]), ("Aは出してOK", ["A"]),
-                       ("B・Cはもう出してほしい", ["B", "C"]), ("Cはすぐ出して欲しい。", ["C"]),
-                       ("全部出して", ["A", "B", "C"]), ("Aで出して", ["A"])):
-        w = choice_video()
-        w.say(text)
-        rec = record_of(w.bots()[-1]) or {}
-        why, d = req(w, "video", sha(VIDEO["v1"]))
-        ok(leg, rec.get("options") == want and why == "ok" and d.options == want
-           and "gate2-approved" in w.api.labels,
-           f"「出して」と頼む {text!r} は、動画 v1 の {'・'.join(want)} の承認として記録する（{why}）")
-    w = choice_video()
-    w.say(REPLY_926)
-    body = w.bots()[-1]["body"]
-    rec = record_of(w.bots()[-1]) or {}
-    why, d = req(w, "video", sha(VIDEO["v1"]))
-    ok(leg, rec.get("options") == ["A"] and why == "ok" and d.options == ["A"]
-       and "動画 v1 の A案を、投稿してよいと記録しました" in body,
-       f"#926 の返事（1行目「Aは今出して」、2行目から B・C の直し）は、A だけを承認として記録する（{why}）")
 
 
 def leg_ok_noplan() -> None:
@@ -756,13 +707,9 @@ def leg_config() -> None:
     ok(leg, picks and all((REPO / p).is_file() for p in picks)
        and "tools/shorts/gate.py" in picks and "shorts/config/approvers.json" in picks,
        f"ワークフローが取る2本（{picks}）が、名前どおり在る（名前を変えたら黙って落ちる）")
-    code_lines = "\n".join(x for x in lines if not x.lstrip().startswith("#"))
-    ok(leg, "${{ github.event.comment.body }}" not in code_lines,
-       "コメントの本文をシェルやログに差し込んでいない")
-    ok(leg, "workflow_dispatch:" in code_lines
-       and 'python3 tools/shorts/gate.py reread --issue "$ISSUE" --comment "$COMMENT"' in code_lines
-       and not any("run:" in x and "${{" in x for x in lines),
-       "手で起動する読み直しの口があり、入力は環境変数で渡す（run の字に差し込まない）")
+    ok(leg, "${{ github.event.comment.body }}" not in "\n".join(
+        x for x in lines if not x.lstrip().startswith("#")),
+        "コメントの本文をシェルやログに差し込んでいない")
 
 
 # ---------------------------------------------------------------- 足（弾く側）
@@ -778,19 +725,13 @@ def leg_app() -> None:
     ok(leg, "gate1-approved" not in t.api.labels, "札も付かない")
     why, _ = req(t, "plan", sha(PLAN["p1"]))
     ok(leg, why != "ok", f"後段も通らない（{why}）")
-    for text in ("B", "全部", "Aは今出して"):
+    for text in ("B", "全部"):
         u = choice_video()
         u.say(text, shape="claude_app")
         why, _ = req(u, "video", sha(VIDEO["v1"]))
         ok(leg, refused_reason(u.bots()[-1]) == "app" and "gate2-approved" not in u.api.labels
            and why != "ok",
            f"Claude の App から書いた短い返事 {text!r} も数えない（{why}）")
-    x = choice_video()
-    c = x.add("claude_app", REPLY_926)
-    code, line = reread(x, c)
-    ok(leg, code == 1 and "（app）" in line and not x.bots() and "gate2-approved" not in x.api.labels
-       and req(x, "video", sha(VIDEO["v1"]))[0] != "ok",
-       "App から書いた返事は、手で読み直しても記録しない")
 
 
 def leg_approver() -> None:
@@ -826,13 +767,6 @@ def leg_edited() -> None:
     u.edit(c)
     u.api.feed(c)
     ok(leg, refused_reason(u.bots()[-1]) == "edited", "走る前に書き換えられたコメントも数えない")
-    w = choice_video()
-    c = w.add("human", "Aは今出して")
-    w.edit(c, REPLY_926)                                # 書いたあとに指摘を書き足した
-    code, line = reread(w, c)
-    ok(leg, code == 1 and "（edited）" in line and not w.bots()
-       and req(w, "video", sha(VIDEO["v1"]))[0] == "no_record",
-       "書いたあとに書き換えた返事は、手で読み直しても記録しない（#926 の 6226638301 がこの形）")
 
 
 def leg_stale() -> None:
@@ -954,13 +888,6 @@ def leg_revoked() -> None:
     u.say("/revise 冒頭をもっと短く")
     why, _ = req(u, "plan", sha(PLAN["p1"]))
     ok(leg, why == "revise_requested", f"承認のあとの直しの依頼で止まる（{why}）")
-    w = choice_video()
-    c = w.add("human", "Aは今出して")                  # 受け口が読めなかった
-    w.say("A C")                                        # そのあと A・C を承認（記録される）
-    reread(w, c)
-    why, d = req(w, "video", sha(VIDEO["v1"]))
-    ok(leg, why == "ok" and d.options == ["A", "C"],
-       f"A・C の承認のあとに古い `A` を読み直しても、出してよい案は A・C のまま（{why}）")
 
 
 def leg_tamper() -> None:
@@ -1120,11 +1047,7 @@ def leg_short_ending() -> None:
     leg = "short_ending"
     for text in ("Bではなく", "B以外", "Bはやめて", "Bかな？", "B？", "Bで？", "Bでいい？",
                  "B いいね", "Bでいいけど字幕を直して", "BではなくCで", "Bがいいかな",
-                 "B a nice one", "全部 おねがいします", "A案の台本、もう少し短く",
-                 "Aは出さないで", "Aは出さんといて", "Aは今出さないで", "Aは直してから出して",
-                 "Aは出して？", "Aは出して?", "Aは出してもいい？", "Aは出していいけど字幕を直して",
-                 "Aは出したら教えて", "Aは出してから直して", "Aは出して、Bは直してから",
-                 "Bは指摘直してから14時JSTに出して"):
+                 "B a nice one", "全部 おねがいします", "A案の台本、もう少し短く"):
         t = choice_video()
         posted, calls = silent(t, text)
         why, _ = req(t, "video", sha(VIDEO["v1"]))
@@ -1168,90 +1091,6 @@ def leg_short_quiet() -> None:
        "札の無い issue であやとが `B` と書いても、返事をしない（ほかの issue の問いへの答え）")
 
 
-def leg_short_release() -> None:
-    leg = "short_release"
-    for text in ("Aは出して", "Aを今出して", "全部出して"):
-        t = Thread()
-        t.submit("plan", "p1", PLAN["p1"])
-        posted, _ = silent(t, text)
-        ok(leg, posted == 0 and req(t, "plan", sha(PLAN["p1"]))[0] == "no_record",
-           f"いちばん新しい提出が企画のとき、{text!r} は命令ではない（企画を「出す」とは読まない）")
-    u = choice_video()
-    u.submit("plan", "p2", PLAN["p2"])                  # 動画のあとに、企画が出た
-    posted, _ = silent(u, "Aは今出して")
-    ok(leg, posted == 0 and req(u, "video", sha(VIDEO["v1"]))[0] == "no_record"
-       and req(u, "plan", sha(PLAN["p2"]))[0] == "no_record",
-       "動画のあとに企画が出ていたら、「出して」はどちらの承認にもしない")
-
-
-def leg_reread() -> None:
-    leg = "reread"
-    t = choice_video()
-    c = t.add("human", REPLY_926)                       # 受け口は読めなかった（記録が無い）
-    ok(leg, req(t, "video", sha(VIDEO["v1"]))[0] == "no_record", "読み直す前は、記録が無いので後段は止まる")
-    code, line = reread(t, c)
-    bot = t.bots()[-1] if t.bots() else {"body": ""}
-    rec = record_of(bot) or {}
-    why, d = req(t, "video", sha(VIDEO["v1"]))
-    ok(leg, code == 0 and rec.get("options") == ["A"] and rec.get("comment_id") == c["id"]
-       and rec.get("reread") is True and "gate2-approved" in t.api.labels
-       and why == "ok" and d.options == ["A"],
-       f"過ぎた返事を読み直すと、いつもと同じ判定で A を記録し、後段も A で通る（{why}）")
-    ok(leg, "動画 v1 の A案を、投稿してよいと記録しました（あとから読み直しました）。" in bot["body"],
-       "記録の文に、読み直したことが出る")
-    n = len(t.bots())
-    code, line = reread(t, c)
-    ok(leg, code == 0 and len(t.bots()) == n and "already" in line,
-       "同じコメントをもう一度読み直しても、記録を重ねない")
-    u = choice_video()
-    c = u.add("human", "A Cは今出して")
-    code, _ = cli(u, "reread", "--issue", str(u.number), "--comment", str(c["id"]))
-    why, d = req(u, "video", sha(VIDEO["v1"]))
-    ok(leg, code == 0 and why == "ok" and d.options == ["A", "C"],
-       f"ワークフローが呼ぶ `gate.py reread` が 0 で終わり、A・C を記録する（{code}）")
-    v = choice_video()
-    c = v.add("human", "いいですね")
-    code, out = cli(v, "reread", "--issue", str(v.number), "--comment", str(c["id"]))
-    ok(leg, code == 1 and not v.bots() and "not_command" in out,
-       "命令でないコメントは、読み直しても記録せず 1 で終わる（issue には何も書かない）")
-    code, out = cli(v, "reread", "--issue", str(v.number), "--comment", "1")
-    ok(leg, code == 1 and not v.bots() and "gone" in out, "見つからないコメントは 1 で終わる")
-    w = choice_video()
-    w.say("/approve video v1 B")
-    c = w.add("human", "/reject video v1 音が大きい")    # 受け口が落ちた
-    code, _ = reread(w, c)
-    ok(leg, code == 0 and (record_of(w.bots()[-1]) or {}).get("kind") == "reject"
-       and "gate2-approved" not in w.api.labels and req(w, "video", sha(VIDEO["v1"]))[0] != "ok",
-       "差し戻しも読み直せる（記録して札を外し、後段は止まる）")
-
-
-def leg_reread_scope() -> None:
-    leg = "reread_scope"
-    t = choice_video()
-    c = t.add("human", "Aは今出して")
-    code, line = reread(t, c, issue=t.number + 1)
-    ok(leg, code == 1 and "other_issue" in line and not t.bots() and "gate2-approved" not in t.api.labels,
-       "番号違いの issue を名指ししたら、別の issue のコメントを記録しない")
-    u = Thread(labels=())
-    u.submit("plan", "p1", PLAN["p1"])
-    u.submit("video", "v1", VIDEO["v1"], options=["A", "B", "C"])
-    c = u.add("human", "Aは今出して")
-    code, line = reread(u, c)
-    ok(leg, code == 1 and "no_label" in line and not u.bots(),
-       "札の無い issue のコメントは、読み直しても記録しない（いつもの受け口と同じ）")
-
-
-def leg_reread_effect() -> None:
-    leg = "reread_effect"
-    t = choice_video()
-    c = t.add("human", "Aは今出して")                  # 受け口が読めなかった
-    t.say("/reject video v1 やっぱり音が大きい")         # そのあと差し戻した（記録される）
-    n = len(t.bots())
-    code, _ = reread(t, c)
-    ok(leg, code == 1 and len(t.bots()) == n and "gate2-approved" not in t.api.labels,
-       "読み直した承認が、あとの差し戻しで消えているなら、記録も札も出さない")
-
-
 LEGS = [leg_ok_plan, leg_ok_video, leg_ok_all, leg_ok_choice, leg_ok_short, leg_ok_noplan,
         leg_phone, leg_quiet,
         leg_limit_pat, leg_config,
@@ -1259,7 +1098,7 @@ LEGS = [leg_ok_plan, leg_ok_video, leg_ok_all, leg_ok_choice, leg_ok_short, leg_
         leg_fake, leg_forged, leg_recedit, leg_subedit, leg_newer, leg_revoked, leg_tamper,
         leg_option, leg_outsider, leg_dup, leg_manifest, leg_head,
         leg_bare, leg_optlist, leg_extra, leg_plan_multi, leg_short_ending, leg_short_noopts,
-        leg_short_quiet, leg_short_release, leg_reread, leg_reread_scope, leg_reread_effect]
+        leg_short_quiet]
 
 
 def run_legs() -> None:

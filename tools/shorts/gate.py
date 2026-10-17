@@ -12,7 +12,6 @@
 
     # ワークフロー（.github/workflows/shorts_gate.yml）から
     python3 tools/shorts/gate.py record --event "$GITHUB_EVENT_PATH"
-    python3 tools/shorts/gate.py reread --issue 926 --comment 6226638301   # 過ぎたコメントを読み直す（手で起動）
 
 終了コード 0=通った / 1=止めた（理由を出す） / 2=読めなかった（GitHub に届かない・設定が無い・引数が足りない）。
 
@@ -38,10 +37,6 @@
 読まず、返事もしない: 承認者の名前でない・表に無い言いかた（`B？`・`Bではなく`・`B いいね`）・
 いちばん新しい提出が案を持たない・札の無い issue。App の判定・書き換え・版・sha256 は
 `/approve` と同じに通す。`/approve` の1行目は、いままでどおり案だけ。
-
-「出して」と頼む言いかた（`Aは今出して`・`A Cは出してください`・`Aを出して`・`Aは投稿して`・
-`Aだけ出して`・`全部出して`。形は `SHORT_RELEASE`）も同じに読む。ただし**動画を出す**言葉なので、
-いちばん新しい提出が動画のときだけ（企画のあとの `Aは出して` は命令として読まない）。
 
 ## 見分けの肝: 著者の名前では分からない
 
@@ -143,12 +138,6 @@ SHORT_ENDINGS = frozenset({
     "でいい", "でいいよ", "でいいです", "がいい", "にする", "にします",
     "で行こう", "でいこう", "でok",
 })
-# 「出して」と頼む言いかた（#926 2026-10-16 のあやとの返事「Aは今出して」を読めなかった）。
-# 案のうしろが**丸ごと**この形のときだけ。打ち消し（`出さないで`）・問い（`出して？`）・
-# 条件つき（`直してから出して`・`出したら`・`出していいけど`）は形が合わないので、承認に倒れない。
-# 小文字にして比べる（`OK` は `ok`）
-SHORT_RELEASE = re.compile(
-    r"(?:は|を|で|だけ)?(?:今すぐ|今|すぐ|もう)?(?:出して|投稿して)(?:ください|下さい|ほしい|欲しい|ok)?")
 # 言いかたのうしろに付いてよい字（全角は NFKC で半角になってから見る）。`?` は入れない
 SHORT_TAIL = re.compile(r"[\s。!〜~w]+\Z")
 # 1行目の頭の案の並び。1文字の案は、すぐうしろに英字が続かないこと（`Bad` を B・A・D と読まない）
@@ -187,7 +176,6 @@ class Command:
     options: list = field(default_factory=list)   # 1行目に書かれた案（書かれた順。ALL も入りうる）
     extra: bool = False            # 1行目の案のうしろに、案でない字がある
     short: bool = False            # `/approve` を書かない短い返事（`B`・`全部`）。関所と版は judge が決める
-    release: bool = False          # 短い返事のうち「出して」と頼む言いかた（`Aは今出して`）。動画にだけ効く
     error: str = ""                # 書式が読めないときの理由の名前
 
 
@@ -346,18 +334,9 @@ def _line_clean(cmd: "Command") -> bool:
 
 
 def _ending_ok(ending: str) -> bool:
-    """短い返事の案のうしろが、決めの言いかたの表にある（`で`・`でお願いします`…）か、
-    「出して」と頼む形（`は今出して`）そのもの。
-    `Bではなく`・`B？`・`Bでいいけど字幕を直して`・`Aは出さないで`・`Aは直してから出して` を、
-    承認と読まない。"""
-    low = ending.lower()
-    return low in SHORT_ENDINGS or SHORT_RELEASE.fullmatch(low) is not None
-
-
-def _release_target(cmd: "Command", sub: "Sub") -> bool:
-    """「出して」と頼む返事が指せる提出。いちばん新しい提出が動画のときだけ。
-    企画のあとの `Aは出して` を、企画 A の承認とは読まない（出すのは動画で、企画ではない）。"""
-    return not cmd.release or sub.gate == "video"
+    """短い返事の案のうしろが、決めの言いかたの表にある（`で`・`でお願いします`…）。
+    `Bではなく`・`B？`・`Bでいいけど字幕を直して` を、B の承認と読まない。"""
+    return ending.lower() in SHORT_ENDINGS
 
 
 def _short_author(c: dict, approvers: list[str]) -> bool:
@@ -410,39 +389,6 @@ def _record_matches(rec: dict, derived: Decision, rec_comment: dict) -> bool:
     return True
 
 
-def _reread_scope(c: dict, issue: int, info: dict | None) -> str:
-    """読み直す口で、そのコメントが**名指しの issue の**、札の付いた制作 issue のものか。
-    空なら読み直してよい、字があれば断る理由の名前。番号を打ち違えて、別の issue のコメントを
-    この issue の承認として記録しない（記録の issue と元のコメントが食い違う）。
-    札はいつもの受け口と同じに見る（札の無い issue の返事は、ほかの問いへの答えかもしれない）。"""
-    if _issue_number(c) != issue:
-        return "other_issue"
-    if not info or info.get("pull_request"):
-        return "not_issue"
-    if LABEL not in {str((x or {}).get("name") or "") for x in info.get("labels") or []}:
-        return "no_label"
-    return ""
-
-
-def _reread_counts(comments: list[dict], d: Decision, recorded_at: str,
-                   approvers: list[str]) -> str:
-    """読み直した承認の記録を書いたら、後段（`evaluate`）がそれを拾うか。空なら拾う、字は拾わない理由。
-
-    過ぎたコメントは、そのあとに差し戻し・新しい版・新しい返事が来ていることがある。
-    `judge` はそのコメントより**前**しか見ないので通るが、記録して札まで付けると、
-    issue には「投稿してよいと記録しました」と出たのに後段は止まる。書く前に、書いたつもりで確かめる。"""
-    top = max((_cid(c) for c in comments), default=0) + 1
-    rec = {"id": top, "user": {"login": BOT_LOGIN, "type": "Bot"},
-           "performed_via_github_app": {"slug": BOT_SLUG},
-           "created_at": recorded_at, "updated_at": recorded_at,
-           "body": record_body(d, recorded_at, reread=True)}
-    try:
-        got = evaluate(comments + [rec], d.gate, approvers)
-    except Refused as x:
-        return x.reason
-    return "" if got.comment_id == d.comment_id else "superseded"
-
-
 def _source_lookup(by_id: dict[int, dict], rec: dict) -> dict | None:
     try:
         return by_id.get(int(rec.get("comment_id") or 0))
@@ -451,12 +397,8 @@ def _source_lookup(by_id: dict[int, dict], rec: dict) -> dict | None:
 
 
 def _decision_for(decisions: list[Decision]) -> Decision | None:
-    """その関所の、いちばん新しい判定。承認のあとの差し戻しは承認を消す。
-
-    「新しい」は**元のコメントの順**で決める。記録の順で決めると、あとから読み直して書いた
-    古い返事の記録（`reread`）が、そのあとの返事の判定を上書きする（`A C` のあとに読み直した
-    `A` が、出してよい案を A に縮める）。並べて走った記録が前後しても同じことが起きる。"""
-    return max(decisions, key=lambda d: d.comment_id) if decisions else None
+    """その関所の、いちばん新しい判定。承認のあとの差し戻しは承認を消す。"""
+    return decisions[-1] if decisions else None
 
 
 def _no_later_objection(comments: list[dict], d: Decision, gate: str,
@@ -680,8 +622,7 @@ def _short_reply(line: str) -> Command | None:
     ending = m.group("end").strip()
     if not opts or extra or (ending and not _ending_ok(ending)):
         return None
-    release = bool(ending) and SHORT_RELEASE.fullmatch(ending.lower()) is not None
-    return Command(kind="approve", options=opts, short=True, release=release)
+    return Command(kind="approve", options=opts, short=True)
 
 
 def parse_command(body: str) -> Command | None:
@@ -759,8 +700,7 @@ def judge(c: dict, prior: list[dict], approvers: list[str]) -> Decision:
         # 短い返事は、いちばん新しい提出への `/approve` として、このあと同じ道を通す。
         # 読めないものは命令ではない（返事もしない）——どれも承認には倒れない
         last = _latest_any(subs)
-        if not (_short_author(c, approvers) and _short_target(last)
-                and _release_target(cmd, last)):
+        if not (_short_author(c, approvers) and _short_target(last)):
             return Decision(ok=False, reason="not_command")
         cmd.gate, cmd.version = last.gate, last.version
         if cmd.gate == "plan":
@@ -963,12 +903,6 @@ def explain(reason: str, d: dict) -> str:
         "submission_broken": f"{v} の提出が読めません（{d.get('why')}）。出し直しを待ってください。",
         "no_submission": f"{g + 'の' if g else ''}提出がまだありません。",
         "no_label": "この issue では数えません。ショートの制作 issue に書いてください。",
-        # ---- 読み直す口（読むのは押した人）
-        "gone": "そのコメントは見つかりません（消えた・番号違い）。",
-        "other_issue": "そのコメントは、名指しした issue のものではありません。",
-        "not_issue": "名指しした番号は issue ではありません（PR か、見つからない）。",
-        "superseded": "このコメントのあとに、同じ関所の新しい判定があります。",
-        "already": "このコメントの記録は、もうあります。",
         # ---- 後段が確かめるとき（読むのは後段の担当）
         "no_record": f"{g}の承認の記録がありません（最新は {d.get('latest')}）。あやとの承認を待ってください。",
         "fake_record": "github-actions 以外が書いた承認の記録しかありません。あやとの承認を待ってください。",
@@ -1032,15 +966,10 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def record_body(d: Decision, recorded_at: str, reread: bool = False) -> str:
-    # 元のコメント・提出・sha256 は1行目のブロックに入っている。人に見せるのは1文だけ。
-    # 読み直して書いた記録には印を付ける（突き合わせる欄ではないので、導き直しには響かない）
-    data = {**record_fields(d), "recorded_at": recorded_at}
-    sentence = record_sentence(d)
-    if reread:
-        data["reread"] = True
-        sentence = sentence.removesuffix("。") + "（あとから読み直しました）。"
-    return "\n".join([dump_block(RECORD_TAG, data), f"**{sentence}**"])
+def record_body(d: Decision, recorded_at: str) -> str:
+    # 元のコメント・提出・sha256 は1行目のブロックに入っている。人に見せるのは1文だけ
+    return "\n".join([dump_block(RECORD_TAG, {**record_fields(d), "recorded_at": recorded_at}),
+                      f"**{record_sentence(d)}**"])
 
 
 def refusal_body(reason: str, detail: dict, comment_id: int, **extra) -> str:
@@ -1091,14 +1020,6 @@ class GitHub:
             return None
         if st != 200 or not isinstance(data, dict):
             raise Unreadable(f"コメントが読めない（{st}）: {cid}")
-        return data
-
-    def get_issue(self, issue: int) -> dict | None:
-        st, data = self._call("GET", f"/repos/{self.repo}/issues/{int(issue)}")
-        if st == 404:
-            return None
-        if st != 200 or not isinstance(data, dict):
-            raise Unreadable(f"issue #{issue} が読めない（{st}）")
         return data
 
     def list_comments(self, issue: int) -> list[dict]:
@@ -1190,61 +1111,13 @@ def handle_event(event: dict, api, approvers, recorded_at: str | None = None) ->
         api.post_comment(number, refusal_body(d.reason, {**d.detail, "gate": d.gate}, cid,
                                               gate=d.gate or None, version=d.version or None))
         return f"#{number} コメント {cid}: 断った（{d.reason}）"
-    _write_record(number, d, recorded_at or now_iso(), api)
-    return f"#{number} コメント {cid}: 記録した（{d.gate} {d.version} {d.kind}）"
-
-
-def _write_record(number: int, d: Decision, recorded_at: str, api, reread: bool = False) -> None:
-    api.post_comment(number, record_body(d, recorded_at, reread=reread))
+    api.post_comment(number, record_body(d, recorded_at or now_iso()))
     label = GATES[d.gate]["label"]
     if d.kind == "approve":
         api.add_labels(number, [label])
     else:
         api.remove_label(number, label)
-
-
-def handle_reread(issue: int, cid: int, api, approvers,
-                  recorded_at: str | None = None) -> tuple[int, str]:
-    """**過ぎたコメント1本を読み直して**、いつもと同じ `judge()` で判定し、通れば記録する。
-
-    受け口が落ちた・その日の言いかたの表で読めなかった、で記録の出なかった返事を、あとから拾う口
-    （`shorts_gate.yml` の手で起動する入口）。人間の確かめ（App・承認者・関係・書き換え）・札・
-    提出との順序（そのコメントより**前**の提出だけ）は、いつもの受け口と同じに通す。
-
-    返すのは（終了コード, 要約の1行）。0=記録した・もう記録があった / 1=記録しない。
-    **断りは issue に書かない。** 押したのは運営の側で、あやとが書いたばかりのコメントではない
-    （頼んでもいない人に「書き直してください」を出さない）。理由は要約と終了コードで押した人に返す。
-    本文はログに出さない（公開のログ）。
-    """
-    if callable(approvers):
-        approvers = approvers()
-
-    def no(reason: str, detail: dict | None = None) -> tuple[int, str]:
-        return 1, f"#{issue} コメント {cid}: 記録しない（{reason}）。{explain(reason, detail or {})}"
-
-    fresh = api.get_comment(cid)
-    if fresh is None:
-        return no("gone")
-    why = _reread_scope(fresh, issue, api.get_issue(issue))
-    if why:
-        return no(why)
-    comments = api.list_comments(issue)
-    if all(_cid(c) != cid for c in comments):
-        comments.append(fresh)
-    d = judge(fresh, before(comments, fresh), approvers)
-    if not d.ok:
-        return no(d.reason, {**d.detail, "gate": d.gate, "version": d.version})
-    if any(_is_bot_record(c) and _record_unedited(c) and rec.get("comment_id") == cid
-           for c, rec in records(comments)):
-        return 0, f"#{issue} コメント {cid}: 記録しない（already）。{explain('already', {})}"
-    at = recorded_at or now_iso()
-    if d.kind == "approve":
-        # 差し戻し・直しの依頼は、遅れて記録しても止まる向きにしか効かないので、そのまま書く
-        why = _reread_counts(comments, d, at, approvers)
-        if why:
-            return no(why, {"gate": d.gate, "version": d.version})
-    _write_record(issue, d, at, api, reread=True)
-    return 0, f"#{issue} コメント {cid}: 読み直して記録した（{d.gate} {d.version} {d.kind}）"
+    return f"#{number} コメント {cid}: 記録した（{d.gate} {d.version} {d.kind}）"
 
 
 def _handle_submission(c: dict, prior: list[dict], number: int, api,
@@ -1309,10 +1182,6 @@ def main(argv: list[str] | None = None) -> int:
     e = sp.add_parser("record", help="issue_comment の受け取りを見て記録する（ワークフロー用）")
     e.add_argument("--event", required=True)
 
-    w = sp.add_parser("reread", help="過ぎたコメント1本を読み直して記録する（ワークフローの手で起動する口）")
-    w.add_argument("--issue", type=int, required=True)
-    w.add_argument("--comment", type=int, required=True)
-
     a = ap.parse_args(argv)
     try:
         if a.cmd == "sha256":
@@ -1340,10 +1209,6 @@ def main(argv: list[str] | None = None) -> int:
                 event = json.load(f)
             _summary(handle_event(event, GitHub(), load_approvers))
             return 0
-        if a.cmd == "reread":
-            code, line = handle_reread(a.issue, a.comment, GitHub(), load_approvers)
-            _summary(line)
-            return code
     except Unreadable as x:
         print(f"読めませんでした: {x}")
         return 2
