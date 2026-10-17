@@ -32,7 +32,9 @@
 - `tools/sprites/rootcheck.mjs` … 0.18秒・依存なし。`selftest.yml` の毎 PR
 - `tools/sprites/ogcheck.py` … 6.0秒・Pillow だけ。`selftest.yml` の毎 PR
 - `tools/sprites/walkedcount.mjs` / `tools/sprites/dexfit.mjs` …
-  書き出しとブラウザが要るので `selftest.yml` の別の job（`browserwatch`）
+  書き出しとブラウザが要るので `heavy_watch.yml` の `browserwatch`
+  （**2026-10-16 まで `selftest.yml` に居た。** 毎 PR の壁時計が18分に
+  なっていたので、master と毎晩へ移した。#281）
 - `tools/sprites/cardgo.mjs` … **配りの後ろ**
   （`firebase-hosting-deploy-prod.yml` の最後。`prodsweep.mjs` `notfound.mjs` と同じ並び）。
   ブラウザと**本番そのもの**（面と `GET /cards`）が要る（1回28〜36秒。2026-09-19 実測）。
@@ -68,8 +70,13 @@
 その PR の1回目は必ず落とし直す。
 
 書き出しとブラウザが要る道具は、**この土台の上でしか回らない。**
-土台は `browserwatch` に在る。ただし40分の枠をほぼ使い切っているので、
-面を1枚ずつ歩くような重いものは別の job を立てる（`reachwatch` `reachkeys`）。
+土台は `heavy_watch.yml` の `browserwatch` に在る。ただし40分の枠をほぼ
+使い切っているので、面を1枚ずつ歩くような重いものは別の job を立てる
+（`reachwatch` は同じ `heavy_watch.yml`、`reachkeys` は `selftest.yml`）。
+
+**足す前に、置き場を3つから選ぶ**（#281 の決めごと1）。毎 PR
+（`selftest.yml`）/ master と毎晩（`heavy_watch.yml`）/ 手で押す
+（`mutation_drill.yml`）。**既定は毎 PR ではない。**
 """
 
 from __future__ import annotations
@@ -77,7 +84,8 @@ from __future__ import annotations
 EXCUSES: dict[str, str] = {
     # `tools/sprites/reachkeys.mjs` の断りは 2026-10-15 に外した（#883）。
     # 残っていた17件（同じ字のリンクが別の先）と、道具の側の嘘7件を片づけて、
-    # `selftest.yml` の `reachkeys` job から毎 PR で回っている。
+    # `selftest.yml` の `reachkeys` job から毎 PR で回っている
+    # （`reachwatch` のほうは 2026-10-16 に `heavy_watch.yml` へ移した。#281）。
 
     # ---- 鍵が要る・外に出る（回し役の SKIP と同じ理由） ----
     "python/admin/character_days_probe.py":

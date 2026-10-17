@@ -4,6 +4,7 @@
  *   PORT=4203 DIST=site/.next-3203 node tools/sprites/reachwatch.mjs
  *   PORT=4203 WIDTHS=390x844 node tools/sprites/reachwatch.mjs
  *   PORT=4203 BREAK=nocover node tools/sprites/reachwatch.mjs   # わざと盲点を作る
+ *   FIXONLY=1 node tools/sprites/reachwatch.mjs   # 対照の台だけ（書き出しも配り先も要らない）
  *
  * 終了コード: 0＝通った / 1＝見つかった / 2＝数えるものが無い
  * （対照が落ちた・開けなかった面がある・押しどころが1つも無い）。
@@ -80,6 +81,26 @@
  * 断りは `SKIP_SEL` に**理由ごと**置いて、**毎回印字する**（黙って落とさない。
  * `islepages.mjs` の `SKIP` と同じ決め）。
  *
+ * ## 1枚で固まったら、その1枚の名前を出して落ちる（2026-10-16。#273）
+ *
+ * CI の 125回のうち **13回（10%）が、30分の枠で打ち切られていた。**
+ * 残り 112回は 4.3〜5.2分に収まっていて、**その間が1回も無い**
+ * ——遅いのではなく、**どこかで止まっている。**
+ *
+ * 止まった回のログは、対照（①）を通したあとの見出しまで出て、そこから
+ * **30分ぶん1行も無い。** 本物の面の行は見つかったときしか出ないので、
+ * **147面のどこで止まったのかが分からない。** 打ち切られた回を何回読んでも
+ * 材料が増えないので、**次に止まった回で分かるようにした:**
+ *
+ *   - 1枚ごとに `PAGE_MS`（既定 120秒）の砂時計を置く。切れたら、その面と幅を
+ *     名指しして `miss` に積み、**その page は捨てて開き直す**（残りは測り切る）
+ *   - 幅ごとに「何枚済んだか」を印字する（止まった位置がログに残る）
+ *   - 終わったあとの `close()` にも砂時計を置く（**出力はぜんぶ `b.close()` の
+ *     あと**なので、ここで止まっても「1行も出ないまま30分」になる）
+ *
+ * **job の枠を伸ばすのは直しではない**（固まったまま30分待つのが40分になる
+ * だけ）。1枚 120秒は、通っている回の1枚あたり 0.9秒の130倍。
+ *
  * `BREAK=` で、その守りが効いているかを確かめられる:
  *
  * **本物の面でも、わざと覆って確かめられる。** `LID=1` を付けると、面ごとに
@@ -109,6 +130,26 @@ const ORIGIN = process.env.ORIGIN || `http://127.0.0.1:${PORT}`;
 const MIN = Number(process.env.MIN || 48);
 const OUT = process.env.OUT || "/tmp/reachwatch.json";
 const BREAK = process.env.BREAK || "";
+/** 1枚にかける上限（ミリ秒）。切れたら、その面を名指しして捨てる */
+const PAGE_MS = Number(process.env.PAGE_MS || 120000);
+/** 入れ物とブラウザを閉じるのにかける上限。**出力はぜんぶこのあと** */
+const CLOSE_MS = Number(process.env.CLOSE_MS || 60000);
+/** 対照の台だけ回して帰る（書き出しも配り先も要らない。mutation_drill 用） */
+const FIXONLY = !!process.env.FIXONLY;
+
+/**
+ * 約束に砂時計を付ける。**切れたら投げる。**
+ *
+ * `page.evaluate()` には時間切れが無い（Playwright の仕様）。中で待っている
+ * 約束が解けないと**永久に帰ってこない**ので、呼ぶ側で切る。
+ */
+function withDeadline(pr, ms, what) {
+  let t;
+  const bell = new Promise((_, no) => {
+    t = setTimeout(() => no(new Error(`${what} が ${Math.round(ms / 1000)}秒で返ってこない`)), ms);
+  });
+  return Promise.race([Promise.resolve(pr).finally(() => clearTimeout(t)), bell]);
+}
 const skip = {
   fold: BREAK === "nofold",
   cover: BREAK === "nocover",
@@ -296,6 +337,16 @@ if (ctl.miss || seen < 6) {
 }
 console.log(`  ${ctl.total}件ぜんぶ、仕込みはそのとおりに出た\n`);
 
+/* **対照だけで帰る口**（`FIXONLY=1`）。書き出しも配り先も要らないので、
+   `python/mutation_drill.py` がここに当てる——測っている実物
+   （`hitbox.mjs` の `measure()`）を壊して、上の14件が外れるかを見る。
+   本物の面を測らないので、**これが通っても面の合格ではない。** */
+if (FIXONLY) {
+  await b.close();
+  console.log("FIXONLY=1。対照の台だけ見て帰ります（本物の面は測っていません）");
+  process.exit(0);
+}
+
 /* ---- ② 本物の面 ------------------------------------------------------- */
 
 if (!PAGES.length) {
@@ -351,19 +402,53 @@ async function one(p, W, path) {
     console.log(`${W} ${path}  覆い ${g.covers.length}  ${MIN}px割れ ${g.smalls.length}`);
 }
 
+/* **固まった1枚を名指しするための入れ物。** `miss` に積むと
+   `reportMissing` が終了コードを 2 にする（0件を出して終わらない） */
+const stuck = [];
+let done = 0;
+
 for (const [W, H] of WIDTHS) {
   const ctx = await openCtx(W, H);
   const queue = [...PAGES];
+  const t0 = Date.now();
   await Promise.all(
     Array.from({ length: Math.max(1, JOBS) }, async () => {
-      const p = await ctx.newPage();
-      for (let path = queue.shift(); path; path = queue.shift()) await one(p, W, path);
-      await p.close();
+      let p = await ctx.newPage();
+      for (let path = queue.shift(); path; path = queue.shift()) {
+        try {
+          await withDeadline(one(p, W, path), PAGE_MS, `${W} ${path}`);
+        } catch (e) {
+          /* **止まった1枚で全部を道連れにしない。** その page は
+             （中の evaluate が帰ってこないので）捨てて、開き直して続ける */
+          const why = String(e.message || e).slice(0, 120);
+          console.error(`!! ${W} ${path} で止まりました: ${why}`);
+          stuck.push(`${W} ${path}（${why}）`);
+          try { await withDeadline(p.close(), 10000, "page.close"); } catch { /* 捨てる */ }
+          p = await ctx.newPage();
+        }
+        done++;
+      }
+      try { await withDeadline(p.close(), 10000, "page.close"); } catch { /* 捨てる */ }
     }),
   );
-  await ctx.close();
+  /* **進みをログに残す。** 見つからない回は1行も出ないので、
+     止まった回に「どこまで行ったか」の手がかりが無かった */
+  console.log(`幅 ${W}: ${PAGES.length}面 を ${((Date.now() - t0) / 1000).toFixed(0)}秒で見た`);
+  try {
+    await withDeadline(ctx.close(), CLOSE_MS, `幅 ${W} の入れ物を閉じる`);
+  } catch (e) {
+    console.error(`!! ${String(e.message || e)}（先へ進みます）`);
+    stuck.push(`幅 ${W} の入れ物が閉じない`);
+  }
 }
-await b.close();
+/* **ここで止まると、下の出力が1行も出ないまま枠を使い切る。**
+   打ち切られた13回が全部そう見えていたので、ここにも砂時計を置く */
+try {
+  await withDeadline(b.close(), CLOSE_MS, "ブラウザを閉じる");
+} catch (e) {
+  console.error(`!! ${String(e.message || e)}（数えたものは下に出します）`);
+  stuck.push("ブラウザが閉じない");
+}
 
 /* 並べ替えておく。同時に測ると出る順が回ごとに変わるので、**読み比べられない**
    （前の回と diff を取りたくなるのは必ず起きる） */
@@ -394,6 +479,14 @@ for (const r of smalls)
       `  見た目 ${r.box[0]}x${r.box[1]}  当たり ${r.hit}${r.fold ? "  畳みの中" : ""}` +
       (r.rivals.length ? `  隣に食われた: ${r.rivals.join(" ")}` : ""),
   );
+
+/* **止まった面は「見ていない面」。** 0件を出して終わらない */
+if (stuck.length) {
+  console.error(`\n止まったところが ${stuck.length} 件あります。出した数は当てになりません:`);
+  for (const m of stuck) console.error("  - " + m);
+  console.error("1枚にかける上限は PAGE_MS（既定 120秒）。**枠を伸ばすのは直しではありません**");
+  process.exitCode = 2;
+}
 
 if (process.exitCode === 2) process.exit(2);
 if (taps < 100) {
