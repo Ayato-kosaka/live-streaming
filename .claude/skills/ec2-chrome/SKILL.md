@@ -139,13 +139,6 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   開いたあとに踏んだ）。サイトのスキルは「そのサイトのタブを1枚だけ残す」入口を持つ
 - **閉じた直後の `/json/list` には、閉じたタブがまだ載っている。** 一覧を取り直して
   `tab()` すると `No such target id` で落ちる。残したタブの情報をそのまま使う
-- **自前で `getBoundingClientRect` を測って `click_at` に渡すなら、測る前に `scrollIntoView`。**
-  画面（窓 1280×900、中は 809px ほど）の外の座標を `Input.dispatchMouseEvent` で押しても、何にも当たらず
-  エラーも出ない。`Tab.click(selector_js)` は送ってから測るので、使えるならそちらを使う。
-  Doneru の YouTube チャンネル一覧は伸びていて、ここを疑った回がある（`doneru-cookie/SKILL.md` 6章）
-- **ログインを通した直後に、最初のタブとの WebSocket が切れることがある**
-  （`WebSocketConnectionClosedException`。Doneru で 2026-10-17）。ログインのあとに同じ `Tab` で
-  続けて叩くなら、切れたら `pages()` から取り直して繋ぎ直す形にしておく
 - **`DOM.setFileInputFiles` に無いパスを渡しても、Chrome は黙って空のファイルを渡す。**
   画面は「PNGまたはJPEG」と言うだけで、原因が分からない。渡す前にこちらで存在を確かめる
 - **EC2 の python は PEP 668。** 足りないものは `apt-get install python3-<名前>`

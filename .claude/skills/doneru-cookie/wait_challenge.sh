@@ -8,13 +8,8 @@
 # 前で回すのは ec2_exec.sh の出力ではなくこちら。ec2_exec.sh の出力は SSM が
 # 終わってからまとめて届くので、そちらを待つと数字は5分の待ちが切れたあとに見える
 # （2026-10-01 にそれで1回ぶん、あやとの通知を無駄にした）。
-#
-# 1回の起動で数字が2回出ることがある（2026-10-17、7 を通した直後に 13 が出た）。
-# あやとが押したら、出た行の時刻を2つめに渡してもう一度回す。次の数字か、回の結果のどちらかで抜ける:
-#   bash .claude/skills/doneru-cookie/wait_challenge.sh <出力ファイル> 1792280270
 set -uo pipefail
-RUN_OUT="${1:?usage: wait_challenge.sh <ec2_exec output file> [前に出た数字の時刻]}"
-AFTER="${2:-0}"
+RUN_OUT="${1:?usage: wait_challenge.sh <ec2_exec output file>}"
 A="aws --profile sandbox --region ap-northeast-1"
 ID=i-0684d39b0c1b1abb6
 # 前の回の数字を拾わないように、起こした時刻より新しいものだけを見る
@@ -22,7 +17,7 @@ SINCE=$(( $(date +%s) - 120 ))
 
 for _ in $(seq 1 120); do
   if grep -qE "final state|RUN FINISHED" "$RUN_OUT" 2>/dev/null; then
-    echo "NO-CHALLENGE: 数字を拾う前に回が終わった（本人確認が要らなかったか、窓が切れた）。出力を読む:"; grep -E "OK:|STOP|ERROR|existing _dt|challenge|delegation: 押す|fetch|HTTP" "$RUN_OUT"
+    echo "NO-CHALLENGE: 数字を拾う前に回が終わった（本人確認が要らなかったか、窓が切れた）。出力を読む:"; grep -E "OK:|STOP|existing _dt|challenge|fetch|HTTP" "$RUN_OUT"
     exit 0
   fi
   cid=$($A ssm send-command --instance-ids $ID --document-name AWS-RunShellScript \
@@ -32,7 +27,7 @@ for _ in $(seq 1 120); do
   cur=$($A ssm get-command-invocation --command-id "$cid" --instance-id $ID \
     --query StandardOutputContent --output text 2>/dev/null | head -1)
   ts=${cur%% *}
-  if [[ "$ts" =~ ^[0-9]+$ ]] && [ "$ts" -ge "$SINCE" ] && [ "$ts" -gt "$AFTER" ] && [[ "$cur" == *numbers=* ]]; then
+  if [[ "$ts" =~ ^[0-9]+$ ]] && [ "$ts" -ge "$SINCE" ] && [[ "$cur" == *numbers=* ]]; then
     echo "CHALLENGE: $cur"
     exit 0
   fi

@@ -67,20 +67,6 @@ def read_dt(tab):
             return c["value"]
 
 def api_in_browser():
-    # ログインの直後は、最初のタブとの繋がりが切れていることがある（2026-10-17、_dt は取れたのに
-    # ここで WebSocketConnectionClosedException で落ち、Secret に入らなかった）。切れていたら繋ぎ直す
-    global tab
-    for _ in range(2):
-        try:
-            return _api_in_browser(tab)
-        except Exception as e:
-            print(f"  browser fetch: タブとの繋がりが切れた（{type(e).__name__}）。繋ぎ直す")
-            time.sleep(3)
-            d = [p for p in pages() if "doneru" in p["url"]]
-            tab = Tab(d[-1]) if d else cdp.tab("doneru", new=True); tab.call("Network.enable")
-    return "error 繋ぎ直しても読めなかった"
-
-def _api_in_browser(tab):
     # ブラウザの中から寄付一覧の API を叩く。EC2 からの curl だけでは _dt の良し悪しを言い切れないのと、
     # _dt が本物でも「別の YouTube チャンネルで入っている」と 403 になるので、それもここで分かる
     tab.call("Page.navigate", url="https://doneru.jp/"); time.sleep(6)
