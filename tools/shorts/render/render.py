@@ -2115,6 +2115,105 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
     sys.exit(f"未対応の fit: {c['fit']}")
 
 
+# ---------------------------------------------------------------- 下書き（--draft）
+#
+# 中身（字・時間割・顔よけ）を直している間は、毎回の本番の書き出し（1本4分）を待たない。
+# 置き場と時間割は本番と同じ 1080x1920 の座標で決め、**コマだけ縦横半分（540x960）で作る**。
+# 1コマあたりの CPU を測った値（2026-10-17、v2 の C）: 元のコマを収める 59ms → 16ms、
+# x264（medium・スライス並列）168ms → veryfast 16ms、字なしの版の符号化と読み直しは無し、
+# 顔の見つけ役（YuNet・540x960）47ms は1コマおきにして半分。本番の段（README）は今までどおり。
+
+DRAFT_SCALE = 2          # 縦横を 1/2 に
+DRAFT_FACE_EVERY = 2     # 顔は2コマに1回探し、間のコマは前のコマの箱を使う（顔は数十コマ続く）
+
+
+def frame_out(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int, OW: int, OH: int) -> np.ndarray:
+    """元のコマ1枚 → 書き出す大きさ（OW x OH）の1枚。本番は frame_of そのもの。
+
+    下書きでは、収める写像（cover_map・blur の背景）が画面の大きさに対する比で決まるので、
+    半分の大きさを渡せばそのまま半分の絵になる。札（inset）だけは置き場が画素で決まっているので、
+    本番の大きさで作ってから縮める。
+    """
+    if (OW, OH) == (W, H):
+        return frame_of(cv2, img, c, j, W, H)
+    if c.get("inset"):
+        return cv2.resize(frame_of(cv2, img, c, j, W, H), (OW, OH), interpolation=cv2.INTER_AREA)
+    return frame_of(cv2, img, c, j, OW, OH)
+
+
+class _Scaled:
+    """Overlay を1/k に縮めたもの（下書きのコマに重ねる）。premultiplied のまま面積平均で縮める。"""
+
+    _cache: dict = {}
+
+    def __init__(self, ov: Overlay, k: int):
+        cv2 = cv()
+        key = (id(ov.alpha), k)
+        if key not in _Scaled._cache:
+            h, w = max(1, ov.h // k), max(1, ov.w // k)
+            a = cv2.resize(ov.alpha[:, :, 0].astype(np.float32), (w, h), interpolation=cv2.INTER_AREA)
+            pre = cv2.resize(ov.pre.astype(np.float32), (w, h), interpolation=cv2.INTER_AREA)
+            alpha = np.clip(np.round(a), 0, 255).astype(np.uint16)[:, :, None]
+            # 1/k の絵の id を鍵にするので、元の配列を握って id の使い回しを防ぐ
+            _Scaled._cache[key] = (alpha, np.round(pre).astype(np.uint16), 255 - alpha, ov.alpha)
+        self.alpha, self.pre, self.inv, _ = _Scaled._cache[key]
+        self.x, self.y = ov.x // k, ov.y // k
+        self.h, self.w = self.alpha.shape[:2]
+
+    blend = Overlay.blend
+
+
+def plate_key(p: dict, af: dict) -> str:
+    """字なしの絵を決めるものの指紋（下書きの顔の控えを使い回してよいかの鍵）。
+
+    字を直しただけなら字なしの絵は変わらないので、顔を探し直さない。素材のファイルが変われば
+    （大きさ・更新時刻）、カット・ぼかし・寄り・画の効果が変われば、探し直す。
+    """
+    srcs = sorted({c["path"] for c in p["cuts"]})
+    stamp = [[s, os.path.getsize(s), int(os.path.getmtime(s))] for s in srcs if os.path.exists(s)]
+    fx = [x for x in p.get("fx", []) if x.get("plate") is not False]
+    body = json.dumps({"v": 1, "cuts": p["cuts"], "fx": fx, "src": stamp, "af": af,
+                       "scale": DRAFT_SCALE, "every": DRAFT_FACE_EVERY}, sort_keys=True, default=str)
+    return hashlib.sha256(body.encode()).hexdigest()
+
+
+def draft_faces(p: dict, W: int, H: int, cfg: dict, compose) -> list[list[list]]:
+    """下書きの顔: 字なしのコマを符号化せずにその場で YuNet に通す（plate_faces と同じ欄・本番の座標）。
+
+    本番は「書き出して読み直した字なしの版」を縦横半分に縮めて探す。下書きのコマはもともと
+    縦横半分なので、そのまま渡す。肌色とぼかしの式は 64px に揃えて測るので、半分の絵でも
+    本番とほぼ同じ値になる（違いは H.264 を通すかどうかだけ）。
+    """
+    cv2 = cv()
+    QF = qa_faces()
+    model = Path(cfg["model"]) if cfg.get("model") else YUNET
+    if not model.exists() or not hasattr(cv2, "FaceDetectorYN"):
+        sys.exit(f"顔を避けるための顔の重みが無い: {model}（tools/shorts/render/fetch_fonts.sh を回す）")
+    k = DRAFT_SCALE
+    out: list[list[list]] = []
+    det = None
+    for f, img in enumerate(compose()):
+        if f % DRAFT_FACE_EVERY and out:
+            out.append([list(r) for r in out[-1]])
+            continue
+        h, w = img.shape[:2]
+        if det is None:
+            det = cv2.FaceDetectorYN.create(str(model), "", (w, h), cfg.get("score", 0.5), 0.3, 5000)
+        _, fs = det.detect(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        row = []
+        if fs is not None:
+            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+            for d in fs:
+                x, y, wd, hd = [int(round(float(v))) for v in d[:4]]
+                inner, outer = QF.sharpness(cv2, gray, x, y, wd, hd)
+                lm = [round(float(v) * k, 1) for v in d[4:14]]
+                row.append([x * k, y * k, wd * k, hd * k, round(float(d[-1]), 3),
+                            round(QF.skin_share(cv2, img, x, y, wd, hd), 3), round(inner, 1),
+                            round(outer, 1)] + lm)
+        out.append(row)
+    return out
+
+
 def loudness(inp: list[str]) -> tuple[float, float]:
     """（積分ラウドネス LUFS, トゥルーピーク dBTP）。ffmpeg の ebur128 で測る。"""
     e = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", *inp, "-vn", "-af", "ebur128=peak=true",
@@ -2206,7 +2305,7 @@ def blur_out(p: dict, W: int, H: int, step: int = 3) -> list[dict]:
 
 
 def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out: Path | None = None,
-           no_bgm_work: Path | None = None) -> dict:
+           no_bgm_work: Path | None = None, draft: bool = False) -> dict:
     t0 = time.time()
     cv2 = cv()
     edit, style, base = load(edit_path)
@@ -2215,6 +2314,12 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
     p = plan(edit, style, base, work)
     fps = p["fps"]
     W, H = p["size"]
+    # 書き出す大きさ。下書きは縦横半分（置き場・時間割は W x H の座標のまま。plan.json の size も W x H）
+    k = DRAFT_SCALE if draft else 1
+    OW, OH = W // k, H // k
+    if draft:
+        # 前に本番で書いた字なしの版が残っていると、品質チェックがこの下書きと突き合わせてしまう
+        (work / "no_text.mp4").unlink(missing_ok=True)
     narr_p, bgm_p, src_p = audio_stems(p, style, base, work)
     layers = layout(p, style, work)
 
@@ -2226,23 +2331,58 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
     if no_bgm_out:
         p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
 
+    def compose(timeline: list[list[Overlay]], plate: bool):
+        """書き出すコマ（OW x OH の RGB）を順に返す。字の絵は timeline のとおり、集中線は字なしでも入れる。"""
+        # 画の効果（集中線など）。字ではないので、字なしの書き出しにも同じに入れる
+        fx_at: list[list[dict]] = [[] for _ in range(p["frames"])]
+        for fx in p.get("fx", []):
+            if plate and fx.get("plate") is False:
+                continue  # 字に付いた効果（キラキラ）は、字なしの版に入れない
+            for f in range(max(0, fx["from"]), min(p["frames"], fx["to"])):
+                fx_at[f].append(fx)
+
+        def put(img: Image.Image, x: int, y: int, frame: np.ndarray):
+            ov = Overlay(img, x, y)
+            (ov if k == 1 else _Scaled(ov, k)).blend(frame)
+            _Scaled._cache.pop((id(ov.alpha), k), None)  # 毎コマ引き直す絵なので控えない
+
+        f = 0
+        for c in p["cuts"]:
+            for j, img in enumerate(prefetch(decode_cut(c, fps))):
+                frame = frame_out(cv2, img, c, j, W, H, OW, OH)
+                for fx in fx_at[f]:
+                    if fx["type"] == "speedlines":
+                        put(TL.speedlines(W, H, fx["cfg"], fx["seed"], f - fx["from"]), 0, 0, frame)
+                for ov in timeline[f]:
+                    (ov if k == 1 else _Scaled(ov, k)).blend(frame)
+                for fx in fx_at[f]:
+                    if fx["type"] == "sparkles":
+                        # キラキラは字の上に重ねる（参考も字の手前で瞬く）
+                        bx = fx["box"]
+                        put(TL.sparkles(bx[2] - bx[0], bx[3] - bx[1], fx["cfg"], fx["specs"], f - fx["from"]),
+                            bx[0], bx[1], frame)
+                yield frame
+                f += 1
+
     def encode(path: Path, timeline: list[list[Overlay]], keep_args: bool, plate: bool = False):
         """コマを作って ffmpeg に流す（字の絵は timeline のとおりに重ねる。集中線は字なしでも入れる）。"""
         args = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(fps), "-i", "pipe:0",
+                "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{OW}x{OH}", "-framerate", str(fps), "-i", "pipe:0",
                 "-i", p["master"]["with_bgm"]["file"]]
         fc = ["[0:v]scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+full_chroma_int,"
               "format=yuv420p[vout]"]
+        # 下書きは速さを取る（見て直すための絵。双子のバイト一致は本番の段で見る）
+        e = {**enc, **{"preset": "veryfast", "crf": 23}, **(style.get("encode_draft") or {})} if draft else enc
         args += [
             "-filter_complex", ";".join(fc), "-map", "[vout]", "-map", "1:a",
             "-frames:v", str(p["frames"]), "-r", str(fps),
-            "-c:v", "libx264", "-preset", enc["preset"], "-crf", str(enc["crf"]),
+            "-c:v", "libx264", "-preset", e["preset"], "-crf", str(e["crf"]),
             "-profile:v", "high", "-pix_fmt", "yuv420p", "-threads", "4",
             # x264 をコマ単位で並列にすると、箱が混んでいるときだけ別のバイト列が出た
             # （同時に3本回して1本だけ違った。filtergraph の出力は3本とも同じ）。
             # スライス単位の並列は混んでいても3本とも同じだった。遅くなる（27秒→45秒）が、
-            # 「同じ指示書から同じ動画」を取る。
-            "-x264-params", "sliced-threads=1",
+            # 「同じ指示書から同じ動画」を取る。下書きはバイト一致を求めないのでコマ単位のまま
+            *([] if draft else ["-x264-params", "sliced-threads=1"]),
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             # 音は仕上げた AAC をそのまま入れる（測って合わせたものを、もう一度符号化して変えない）
             "-c:a", "copy",
@@ -2254,32 +2394,9 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
             (work / "ffmpeg_args.json").write_text(json.dumps(args, ensure_ascii=False, indent=1))
         enc_proc = subprocess.Popen(args, stdin=subprocess.PIPE)
 
-        # 画の効果（集中線など）。字ではないので、字なしの書き出しにも同じに入れる
-        fx_at: list[list[dict]] = [[] for _ in range(p["frames"])]
-        for fx in p.get("fx", []):
-            if plate and fx.get("plate") is False:
-                continue  # 字に付いた効果（キラキラ）は、字なしの版に入れない
-            for f in range(max(0, fx["from"]), min(p["frames"], fx["to"])):
-                fx_at[f].append(fx)
-
         def frames():
-            f = 0
-            for c in p["cuts"]:
-                for j, img in enumerate(prefetch(decode_cut(c, fps))):
-                    frame = frame_of(cv2, img, c, j, W, H)
-                    for fx in fx_at[f]:
-                        if fx["type"] == "speedlines":
-                            Overlay(TL.speedlines(W, H, fx["cfg"], fx["seed"], f - fx["from"]), 0, 0).blend(frame)
-                    for ov in timeline[f]:
-                        ov.blend(frame)
-                    for fx in fx_at[f]:
-                        if fx["type"] == "sparkles":
-                            # キラキラは字の上に重ねる（参考も字の手前で瞬く）
-                            bx = fx["box"]
-                            Overlay(TL.sparkles(bx[2] - bx[0], bx[3] - bx[1], fx["cfg"], fx["specs"], f - fx["from"]),
-                                    bx[0], bx[1]).blend(frame)
-                    yield frame.tobytes()
-                    f += 1
+            for frame in compose(timeline, plate):
+                yield frame.tobytes()
 
         # 書き込みは別の糸で（pipe が詰まっているあいだに、次のコマを作れるように）
         wq: queue.Queue = queue.Queue(4)
@@ -2315,20 +2432,36 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         # 字なしの版は work/no_text.mp4（品質チェックが既定で読む所）に置く
         t_face = time.time()
         plate = work / "no_text.mp4"
-        encode(plate, [[] for _ in range(p["frames"])], False, plate=True)
-        dets = plate_faces(plate, W, H, af)
+        reused = False
+        if draft:
+            # 下書きは字なしの版を書かずに、その場のコマで探す。字だけ直した回は、前の回の控えを使う
+            key = plate_key(p, af)
+            memo = work / "faces_draft.json"
+            old = json.loads(memo.read_text()) if memo.exists() else {}
+            if old.get("key") == key and len(old.get("dets", [])) == p["frames"]:
+                dets, reused = old["dets"], True
+            else:
+                dets = draft_faces(p, W, H, af, lambda: compose([[] for _ in range(p["frames"])], True))
+                memo.write_text(json.dumps({"key": key, "dets": dets}))
+            plate = None
+        else:
+            encode(plate, [[] for _ in range(p["frames"])], False, plate=True)
+            dets = plate_faces(plate, W, H, af)
         if len(dets) != p["frames"]:
             sys.exit(f"字なしの版から {len(dets)} コマしか読めなかった（{p['frames']} コマのはず）")
         (work / "faces.json").write_text(json.dumps(dets))
         faces = [face_boxes(dets, af), face_boxes(dets, af, strict=True)]
         layers = layout(p, style, work, faces)
         fa = p.get("face_avoid", [])
-        p["faces"] = {"plate": str(plate), "frames": len(dets), "frames_with_detection": sum(1 for x in dets if x),
+        p["faces"] = {"plate": str(plate) if plate else None, "frames": len(dets),
+                      "frames_with_detection": sum(1 for x in dets if x),
                       "frames_with_face": sum(1 for x in faces[0] if x),
                       "frames_with_face_strict": sum(1 for x in faces[1] if x), "score": af.get("score", 0.5),
                       "seconds": round(time.time() - t_face, 1),
                       "moved": sum(1 for m in fa if not m.get("unresolved")),
                       "unresolved": sum(1 for m in fa if m.get("unresolved"))}
+        if draft:
+            p["faces"]["draft"] = {"every": DRAFT_FACE_EVERY, "reused": reused}
         for m in fa:
             if m.get("unresolved"):
                 ok = m.get("face_overlap_ok")
@@ -2395,6 +2528,9 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                 k0 = k1 + 1
     p["style"] = style
     p["blur_out"] = blur_out(p, W, H)
+    if draft:
+        # 品質チェックは、これを見て書き出したコマを W x H に広げてから測る（qa/common.py）
+        p["draft"] = {"scale": k, "out_size": [OW, OH]}
 
     encode(out, timeline, True)
     if no_bgm_out:
@@ -2433,12 +2569,16 @@ def main():
                     help="BGM 抜きの版の時間割と音の束の置き場（既定: <work から拡張子を外した名前>_nobgm.work）")
     ap.add_argument("--no-text", action="store_true",
                     help="字を重ねずに書く（字の画素を、書き出したコマどうしの差で測るときの比べる相手）")
+    ap.add_argument("--draft", action="store_true",
+                    help="下書き: 縦横半分（540x960）・x264 veryfast・字なしの版は書かない（顔はその場で探す）。"
+                         "置き場と時間割は本番と同じ。出す前は必ず本番の段で書き直す")
     a = ap.parse_args()
     for tool in ("ffmpeg", "ffprobe"):
         if not shutil.which(tool):
             sys.exit(f"{tool} が無い")
     work = a.work or a.out.with_suffix(".work")
-    p = render(a.edit, a.out, work, text=not a.no_text, no_bgm_out=a.no_bgm_out, no_bgm_work=a.no_bgm_work)
+    p = render(a.edit, a.out, work, text=not a.no_text, no_bgm_out=a.no_bgm_out, no_bgm_work=a.no_bgm_work,
+               draft=a.draft)
     print(json.dumps({"out": str(a.out), "frames": p["frames"], "seconds": p["frames"] / p["fps"],
                       "captions": len(p["captions"]), "telops": len(p["telops"]),
                       "render_seconds": p["render_seconds"]}, ensure_ascii=False))

@@ -137,20 +137,41 @@ def _select_expr(frames: list[int]) -> str:
     return "+".join(parts)
 
 
+_NATIVE: dict = {}
+
+
+def native_size(path: Path) -> tuple[int, int]:
+    """動画そのものの縦横（下書きは 540x960 で、時間割の座標は 1080x1920）。"""
+    key = str(path)
+    if key not in _NATIVE:
+        out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                              "stream=width,height", "-of", "csv=p=0:s=x", str(path)],
+                             capture_output=True, text=True).stdout.strip()
+        w, _, h = out.partition("x")
+        _NATIVE[key] = (int(w), int(h)) if w.isdigit() and h.isdigit() else (0, 0)
+    return _NATIVE[key]
+
+
 def iter_frames(path: Path, frames: Iterable[int], W: int, H: int,
                 gray: bool = False) -> Iterator[tuple[int, np.ndarray]]:
-    """指定したコマを、1回の復号で順に返す（全部を手元に溜めない。1コマ 6MB ある）。"""
+    """指定したコマを、1回の復号で順に返す（全部を手元に溜めない。1コマ 6MB ある）。
+
+    動画が W x H と違う大きさ（render.py --draft の縦横半分）なら、W x H に広げて返す。
+    時間割の字の絵・置き場は W x H の座標なので、広げれば同じ検査がそのまま使える。
+    """
     want = sorted(set(int(f) for f in frames if f >= 0))
     if not want:
         return
+    grow =native_size(path) not in ((W, H), (0, 0))
     # 式が長くなりすぎると ffmpeg が受け付けないので、塊に分けて復号し直す
     chunk = 400
     for k in range(0, len(want), chunk):
         part = want[k:k + chunk]
         pix, ch = ("gray", 1) if gray else ("rgb24", 3)
+        vf = f"select={_select_expr(part)}" + (f",scale={W}:{H}:flags=bicubic" if grow else "")
         proc = subprocess.Popen(
             ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path), "-map", "0:v:0",
-             "-vf", f"select={_select_expr(part)}", "-fps_mode", "passthrough",
+             "-vf", vf, "-fps_mode", "passthrough",
              "-f", "rawvideo", "-pix_fmt", pix, "-"], stdout=subprocess.PIPE)
         size = W * H * ch
         got = 0

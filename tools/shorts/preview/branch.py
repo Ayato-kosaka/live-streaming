@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 WORK_OK = re.compile(r"^shorts/\.work/.+/(manifest\.json|key\.enc|payload\.enc(\.\d{3})?|inbox\.json)$")
-REQ_OK = re.compile(r"^shorts/preview/[A-Za-z0-9][A-Za-z0-9._-]{0,63}\.json$")
+REQ_OK = re.compile(r"^shorts/(preview|render)/[A-Za-z0-9][A-Za-z0-9._-]{0,63}\.json$")
 MAX_FILE = 90 * 1024 * 1024
 # Actions の中では git の名前が無いので、ここで決める（作業箱では clone の設定を使う）
 BOT = {"GIT_AUTHOR_NAME": "github-actions[bot]",

@@ -1,0 +1,122 @@
+name: ショートを並べて書き出す
+
+# 作業箱（4コア）で3本を順に回すと、1本 書き出し4分＋双子4分＋検査5分で1周 約42分かかった。
+# ランナーを 本数 × (本体・双子) 台並べて、1周を「いちばん遅い1本の 書き出し＋検査」にする
+# （あやと 2026-10-16「GitHub actions に汎用並列マシン作っても良いよ」）。
+# 使い方と流れは `tools/shorts/render/remote.py` の頭と `tools/shorts/render/README.md` の「Actions で並べる」。
+#
+# **受け渡しは GCS の非公開バケットだけ**（live-streaming-d3cac-shorts-preview。#938 で付与）。
+# 素材は作業箱が署名付き URL で直に上げ、出来たものはランナーが置いて、見る URL（7日）を
+# 依頼の公開鍵で包んで作業枝に返す。毎周 数百MB を git に積まない。
+# **artifact にはしない**（公開リポジトリの artifact は誰でも落とせる）。
+#
+# 道具の版は作業箱にそろえる（ubuntu-24.04 の apt の ffmpeg 6.1.1、Python 3.13、下の pip の版）。
+# 同じ指示書から作業箱と同じバイト列が出るかは、双子と sha256 で見る。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/render/*.json"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-render-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    # 作業箱が素材を上げ終わるのを最長25分待つ（remote.py の UPLOAD_WAIT）
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      matrix: ${{ steps.prep.outputs.matrix }}
+      prefix: ${{ steps.prep.outputs.prefix }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる
+        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: 無い素材の上げる URL を渡し、上がるのを待つ
+        id: prep
+        env:
+          PYTHONUNBUFFERED: "1"
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/shorts/render/remote.py prepare
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
+
+  render:
+    needs: prepare
+    name: ${{ matrix.id }}-${{ matrix.role }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる（作業箱と同じ版）
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          ffmpeg -version | head -1
+          python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0" \
+            "opencv-python-headless==5.0.0.93" "budoux==0.9.3" "google-cloud-storage==3.17.1" requests
+          bash tools/shorts/render/fetch_fonts.sh > /dev/null
+          grep -m1 "model name" /proc/cpuinfo
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: 書き出す（本体は検査・帯の絵まで）
+        env:
+          PYTHONUNBUFFERED: "1"
+          ITEM: ${{ toJSON(matrix) }}
+          PREFIX: ${{ needs.prepare.outputs.prefix }}
+        run: python3 tools/shorts/render/remote.py job
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
+
+  report:
+    needs: [prepare, render]
+    # 1本落ちても、出来たぶんと落ちた理由を返す
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる
+        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: 結果を集め、見る URL を暗号化して作業枝へ返す
+        env:
+          PYTHONUNBUFFERED: "1"
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: ${{ needs.prepare.outputs.prefix }}
+        run: python3 tools/shorts/render/remote.py report
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
