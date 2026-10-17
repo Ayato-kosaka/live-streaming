@@ -24,7 +24,7 @@ python3 tools/shorts/preview/put.py delete --name yk-v3b \
 
 - `--name` は英数字と `. _ -`。**同じ名前でもう一度 up すると、新しいチャンネル（新しい URL）になる**
   （前のは7日で消える。急ぐなら delete）
-- 題は同じフォルダの `post_<名前>.json`（`gate.py` の提出に使うもの）の YouTube の題を拾う。
+- 題は同じフォルダの `post_<名前>.json`（投稿文）の YouTube の題を拾う。
   無ければ `--label B.mp4=題`。ページの見出しは `--title`
 - 結果は `--out/preview/<name>/` に開く（`urls.json`・`run.json`・スマホ幅で撮った `phone.jpg`・`timing.json`）。
   `--out` と `--urls` はリポジトリの外にしか置けない

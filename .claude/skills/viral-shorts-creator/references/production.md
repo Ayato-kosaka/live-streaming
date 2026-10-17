@@ -1,4 +1,4 @@
-# 本編集から Gate 2 まで（作り方と、見るところ）
+# 本編集から、完成をあやとに見せるまで（作り方と、見るところ）
 
 企画が決まってから、あやとに完成動画を見せるまで。1本目（北マケドニアの回 `yk-by7R7iPA`、
 2026-10-15〜16、3案とも作った）で通した形。**直すたびに、ここを書き足す**（あとの回が同じところで転ばないように）。
@@ -13,8 +13,8 @@
 | 書き出し | BGM を入れた1本（YouTube・TikTok で同じもの。曲はあやとが選ぶ。#909） | `tools/shorts/render/render.py` | mp4 と `plan.json`・音の stem・字なしの版 |
 | 機械の検査 | 14項目。顔は「人が見る」で出る。強調の字の言い直しは `text_dup` が、字が顔に被っているのは `text_on_face` が落とす | `tools/shorts/qa/check.py` | 項目ごとの合否と数 |
 | **人の目の検査** | 下の 3 を全部。機械は「弱い画」を言い切れず、言葉の重なりも一部しか拾えない | 帯の絵 `tools/shorts/qa/strips.py`（下の 3） | 直しの一覧 → 書き出しに戻す |
-| 見せる | Firebase Hosting のプレビューチャンネル（**7日で消える**・乱数の名前・noindex）に置き、動画を並べた1枚のページの URL を渡す。URL は issue（Gate 2 の提出）に貼ってよい。本番のサイト（live）には触らない | `tools/shorts/preview/put.py up`（Actions `shorts_preview`。3本96MB で起動から85秒） | ページと1本ずつの URL（`--urls` のファイル）。Gate 2 の提出（`gate.py submission --gate video --options …`） |
-| 投稿 | あやとが issue で「出して」と言った案だけ（「Aは今出して」「Bは14時に出して」のような普段の言いかたで足りる。承認の確かめを厳しくしすぎない。あやと 2026-10-17）。**YouTube は元のアーカイブを「関連動画」に付ける。TikTok はキャプションの2行目に「YouTube「@あやとグルメアプリ」の生配信から」**（どの配信の切り抜きか分かるように。あやと 2026-10-17） | EC2 の Chrome で YouTube Studio と TikTok の web（#911） | 媒体ごとの URL を issue に残す |
+| 見せる | Firebase Hosting のプレビューチャンネル（**7日で消える**・乱数の名前・noindex）に置き、動画を並べた1枚のページの URL を渡す。URL は issueに貼ってよい。本番のサイト（live）には触らない | `tools/shorts/preview/put.py up`（Actions `shorts_preview`。3本96MB で起動から85秒） | ページと1本ずつの URL（`--urls` のファイル）。制作 issue に URL を書く |
+| 投稿 | あやとが issue で「出して」と言った案だけ（あやとの言葉をそのまま読む。書き直しを頼まない。あやと 2026-10-17、`docs/island-misses.md` #282）。**YouTube は元のアーカイブを「関連動画」に付ける。TikTok はキャプションの2行目に「YouTube「@あやとグルメアプリ」の生配信から」**（どの配信の切り抜きか分かるように。あやと 2026-10-17） | EC2 の Chrome で YouTube Studio と TikTok の web（#911） | 媒体ごとの URL を issue に残す |
 
 **字の書体・大きさ・位置・縁・色・動きと BGM の大きさは、参考を測った値から決める**（`references/style_reference.md`。自分の好みで決めない。`docs/island-misses.md` #278）。題の札の**箱（上部・黒い地）だけはあやとの指示**（2026-10-16「背景は黄色から黒に」）で、参考（箱なし）と違うまま残す。箱の中の字は参考の題に寄せる。
 

@@ -207,7 +207,7 @@ def probe_files(files: list[Path], titles: dict[str, str]) -> tuple[list[dict], 
                 it["duration"] = round(float(r.stdout.strip()), 2)
             except ValueError:
                 pass
-        # 題は引数で渡したものか、同じフォルダの post_<名前>.json（gate.py の提出に使うもの）から
+        # 題は引数で渡したものか、同じフォルダの post_<名前>.json（投稿文）から
         t = titles.get(f.name)
         post = f.with_name(f"post_{f.stem}.json")
         if not t and post.is_file():
