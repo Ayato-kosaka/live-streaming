@@ -28,7 +28,7 @@ python3 tools/shorts/plan/build_edit.py shorts/videos/<id>/p1/spec_A.json \
   --overrides ov_A.json --blur blur_<id>.json --video <id> --out edit_A.json
 python3 tools/shorts/render/face_scan.py edit_A.json faces_A/          # 顔の見落としを探す（決めるのは人）
 python3 tools/shorts/render/render.py edit_A.json --out A.mp4 --work A.work
-python3 tools/shorts/render/sheet.py A.mp4 A.work A_sheet.jpg       # 行ごとの真ん中の1コマを並べた1枚
+python3 tools/shorts/render/contact_sheet.py A.mp4 A.work A_sheet.jpg       # 行ごとの真ん中の1コマを並べた1枚
 python3 tools/shorts/render/render.py edit_A.json --out A_bare.mp4 --work A_bare.work --no-text
 python3 tools/shorts/render/safearea.py A.mp4 A_bare.mp4           # 字の画素が安全領域の外に無いか
 ```
@@ -75,6 +75,78 @@ python3 tools/shorts/render/render.py edit_A.json --no-text --out A.work/no_text
 
 `--no-bgm-out` のときは、BGM 抜きの版の時間割と束（BGM の束は 0）を `--no-bgm-work`
 （既定 `<work から拡張子を外した名前>_nobgm.work`）に置く。
+
+### 下書きの段（`--draft`）
+
+中身（字・時間割・顔よけ）を直している間は、本番の書き出しを待たない。
+
+```bash
+python3 tools/shorts/render/render.py edit_A.json --draft --out A_draft.mp4 --work A_draft.work
+python3 tools/shorts/qa/check.py A_draft.mp4 A_draft.work --draft    # 字幕のずれ・安全域・黒・強調の言い直し
+```
+
+- **置き場と時間割は本番と同じ 1080x1920 の座標で決め、コマだけ縦横半分（540x960）で作る。**
+  x264 は veryfast・CRF 23・コマ単位の並列（バイト一致は求めない）
+- 字なしの版（`no_text.mp4`）は書かない。顔はその場のコマで1コマおきに探し、`work/faces_draft.json` に
+  控える。**字だけ直した回は控えを使う**（素材・カット・ぼかし・寄り・画の効果が変われば探し直す）
+- `check.py --draft` は下書きを時間割の大きさに広げて測る（`plan.json` の `draft`）。形式（container）は
+  本番の大きさで見るものなので回さない。顔・透かし・字と顔は本番の段で
+- **出す前は必ず本番の段で書き直す。** 顔よけの置き場は本番と数px ずれることがある（半分の絵で探すと、
+  際どい小さな顔の数が変わる。v2 の C で、本番 92コマ・下書き 70コマに顔があり、【大】の字が 2px ずれた）
+
+1コマあたりの CPU（2026-10-17、v2 の C を測った）: 元のコマを収める 59ms → 16ms、x264（medium・
+スライス並列）168ms → veryfast 16ms、顔の見つけ役 47ms → 1コマおきで 24ms、字なしの版の符号化と読み直しは無し。
+
+| v2（作業箱。ほかの担当と相乗りで load 4〜11） | 本番 | 下書き |
+| --- | --- | --- |
+| C の書き出し（36秒） | 302秒 | 92秒（顔の控えを使う回は 59秒） |
+| 検査 1本 | 約280秒（14項目） | 47〜69秒（4項目） |
+| 3本の1周（書き出し＋検査。本番は双子も） | 約42分 | 約9分（A 179秒・B 197秒・C 161秒） |
+
+### Actions で並べる（`remote.py`・`.github/workflows/shorts_render.yml`）
+
+作業箱の4コアで3本を順に回すと、本番の1周（書き出し・双子・検査）が約42分かかる。
+ランナーを 本数 × (本体・双子) 台並べて、1周を「いちばん遅い1本の 書き出し＋検査」にする。
+
+```bash
+python3 tools/shorts/render/remote.py up --name yk-v3 --key <スクラッチパッド>/keys/ref_private.pem \
+  --out <スクラッチパッド>/remote edit_A.json edit_B.json edit_C.json      # 本番の段
+python3 tools/shorts/render/remote.py up --draft --name yk-v3d …                # 下書きの段
+```
+
+- 指示書が指す素材・声・BGM を全部集め、**中身の sha256 の名前で** GCS の非公開バケット
+  （`render/cas/<sha256>`、#938）に作業箱から直に上げる。同じものは2回上げない（2回目からは0MB）
+- 本体の job は書き出し → 検査（14項目を4組に分けて同時に）→ 帯の絵（`<id>_strips.jpg`）→
+  一覧の絵（`<id>.sheet.jpg`）→ GCS に置く。双子の job は同じ指示書を別のランナーで書いて sha256 だけ置く
+- 出来たものは `--out/<name>/<id>/`（mp4・`qa.json`/`qa.md`・帯・一覧・`plan.json`・`work.tgz`）。
+  `work.tgz` を開けば、手元で検査をやり直せる（字なしの版と音の束も入っている）
+- **書き出すのは作業枝に push してある版の render.py**。手元で直した道具は push してから回す
+- artifact は使わない（公開リポジトリの artifact は誰でも落とせる）
+
+| v2 の3本（2026-10-17） | 作業箱で順に | Actions で並べる（準備込み） |
+| --- | --- | --- |
+| 本番の1周（書き出し・双子・検査14項目・帯の絵） | 約42分 | **9分12秒**（起動から出来たものが手元に揃うまで。素材が GCS に在る回） |
+| 素材を初めて上げる回 | — | ＋15秒（100個・413MB） |
+| 下書きの1周（書き出し・検査4項目） | 約9分 | **4分23秒**（書き出し 64〜81秒・検査 18〜48秒） |
+
+**同じ指示書から作業箱と同じバイト列が出るか。** ランナーの道具は作業箱にそろえてある（ubuntu-24.04 の
+apt の ffmpeg 6.1.1・libx264 0.164.3108、Python 3.13.16、numpy 2.5.3・Pillow 12.3.0・
+opencv-python-headless 5.0.0.93・budoux 0.9.3、書体と YuNet は sha256 で確かめる）。それでも
+**AMD EPYC 7763 のランナーだけ別のバイト列**になった（Intel Xeon のランナーは作業箱と1バイトも違わない。
+v2 の A/B/C で確認）。job ごとの指紋（`remote.py probe` と同じもの: 元のコマの復号・収める・swscale・
+YuNet・x264）を突き合わせると、**x264 の出口だけが違い**、ほかは一致した。作業箱で AVX-512 を切っても
+（OpenCV・numpy・ffmpeg の -cpuflags・IPP の段）出力は変わらないので、AVX-512 の有無ではなく x264 が
+CPU ごとに選ぶ道の違い。字なしの版も x264 を通るので、顔の見つけ役が見る絵まで変わり、字の置き場が動き、
+AMD の版だけ `text_on_face` が落ちた回があった。x264 の `cpu-independent` を付けると揃う
+（環境変数 `SHORTS_X264_CPU_INDEPENDENT=1`。Actions の書き出しは付ける）。付けて回した v2 の3本は、
+AMD EPYC 7763・9V45・9V74 の6台で双子が全部一致し、作業箱（Intel）で付けて書いた C とも1バイトも
+違わなかった（B は段ごとの指紋まで一致）。**作業箱の既定はまだ変えていない**: 付けると今までのバイト列
+から変わり、v2 の B・C は字なしの版が変わったぶん顔の箱が動いて、例外の印のコマ数（B 20・C 5）を
+1〜2コマ超えて `text_on_face` が落ちる。既定にするなら、その2本の例外の印か置き場を見直してから。
+
+本番の1周の中身（Actions。いちばん遅い本体の job）: 依頼と上げる URL 31秒 → 道具を入れる 約40秒 →
+書き出し 240〜270秒（AMD EPYC。Intel のランナーなら 157秒）→ 検査 140秒（順に回すと 217秒）→
+帯・一覧・置く 18秒 → 結果をまとめて返す 25秒。
 
 ### 道具が壊れていないかを確かめる（合成素材で）
 
@@ -186,7 +258,9 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
     （隠さない）。動かした行は全部 `face_avoid` に、元と先の y・どう動かしたかと一緒に入る
   - 人が「この画しか無い」と決めた行だけ、spec の行に `face_overlap_ok: {"frames": 重なってよいコマ数, "why": 理由}` を
     書く（`build_edit.py` が指示書の行へ、書き出しが時間割の字幕と重ね物へ写す）。品質チェックはその行を書いたコマ数まで
-    通し、超えたら落とす。コマ数は「いま重なっているコマ数」を書く（例外が黙って広がらないように）
+    通し、超えたら落とす。コマ数は「いま重なっているコマ数」を書く（例外が黙って広がらないように）。
+    `"keep_size": true` を足した行は、顔を避けるために小さくしない（顔の誤検出のために字が 36px まで縮むのは逆効果、
+    と統括が決めた C17 の床と扉。2026-10-17）
 
 ## 感情の字幕（spec の行の `mood`）
 
@@ -194,7 +268,21 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
 60〜72px で出し、書体・色・縁・動きは様式の `moods.looks[mood]` で決まる（あやとの直し #926「もっと感情に合わせて
 フォントとか色変えて欲しい」を受けた割り当て）。カットで出て消え、動きは出ている間だけ。
 
-| mood | 見た目 |
+**v3（`style_v3.json`。北マケドニアの B・C から）では、書体を1つ・色を2系統にまとめ、キラキラをやめた**（あやと #926、
+2026-10-16 23:31 UTC「キラキラは男のショートには合わない」「字幕のフォントのバリエーションが多すぎる」「なんの感情もない
+ナレーションは基本の字幕で良い」「感情ある系もある程度系統束ねて色のばらつきを抑えて欲しい」「大きさとかアニメーションは
+色々変えて良い」）。感情の動かない行は `plain`。大きい字の色も白・黒・黄・赤だけ（d3 は黄の字に茶の縁と淡い黄の光、
+d2 は白い字に黒縁で止まったまま）。下の v2 の表（`style_p3.json`）は、v2 のまま出した A のために残してある。
+
+| mood（v3） | 見た目 |
+| --- | --- |
+| `plain` | ふつうの字幕 |
+| `tense_shake`（不安） | 白に濃紺 #1E3A8A の縁、Dela Gothic One、小さく震える |
+| `tense_tilt`（困惑） | 同じ色・書体で −4° 傾けて止める |
+| `tense_still`（落胆） | 同じ色・書体で止まったまま |
+| `up_pop`（喜び・ワクワク・決意） | 黄 #FFE14D に茶 #2A1600 の縁、Dela Gothic One、出るとき弾む 0.8 → 1.06 → 1.0 |
+
+| mood（v2） | 見た目 |
 | --- | --- |
 | `plain` | ふつうの字幕 |
 | `anxious`（不安・焦り） | 水色 #9FD3FF に濃紺の縁、Yusei Magic、細かく震える（1〜2px・15fps） |

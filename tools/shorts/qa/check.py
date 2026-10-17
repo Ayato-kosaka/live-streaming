@@ -55,6 +55,10 @@ CHECKS = {
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
 VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "frozen")
+# 下書き（render.py --draft）で回す最低限。中身を直している間に崩れやすいものだけ:
+# 字幕と声のずれ・字が安全域から出ていないか・真っ黒なコマ・強調の字の言い直し（時間割だけで測るので速い）。
+# 顔・透かし・字と顔は字なしの版と本番の画素で見るので、本番の段で回す
+DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup")
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 
@@ -72,8 +76,15 @@ def make_ctx(mp4: Path, work: Path | None, *, plate: Path | None = None, style: 
     fps = rate(v.get("avg_frame_rate")) or rate(v.get("r_frame_rate")) or 30.0
     nb = v.get("nb_frames")
     n = int(nb) if nb and str(nb).isdigit() else int(round(float(pr["format"]["duration"]) * fps))
+    W, H = int(v["width"]), int(v["height"])
+    notes = []
+    if plan and plan.get("draft"):
+        # 下書き（render.py --draft）は縦横半分。字の絵と置き場は時間割の座標（W x H）なので、
+        # コマを広げて測る（common.iter_frames）。形式（container）は本番の大きさで見るものなので落ちる
+        notes.append(f"下書き（{W}x{H}）を時間割の {plan['size'][0]}x{plan['size'][1]} に広げて測った")
+        W, H = plan["size"]
     return Ctx(mp4=mp4, work=work, style=st, out_dir=crops or mp4.with_suffix(".qa"), plate=plate,
-               plan=plan, probe=pr, W=int(v["width"]), H=int(v["height"]), fps=fps, nframes=n)
+               plan=plan, probe=pr, W=W, H=H, fps=fps, nframes=n, notes=notes)
 
 
 def run_checks(ctx: Ctx, only: list[str] | None = None, skip: list[str] | None = None) -> dict:
@@ -135,7 +146,11 @@ def main() -> int:
     ap.add_argument("--crops", type=Path, help="人が見る切り抜きの置き場（既定: <mp4>.qa/）")
     ap.add_argument("--only", help="この検査だけ（, 区切り）")
     ap.add_argument("--skip", help="この検査を飛ばす（, 区切り）")
+    ap.add_argument("--draft", action="store_true",
+                    help=f"下書きの最低限だけ（{','.join(DRAFT_CHECKS)}）。出す前は必ず全部を回す")
     a = ap.parse_args()
+    if a.draft and not a.only:
+        a.only = ",".join(DRAFT_CHECKS)
     if not a.mp4.exists():
         print(f"✕ 無い: {a.mp4}")
         return 2

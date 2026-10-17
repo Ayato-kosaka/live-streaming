@@ -154,6 +154,12 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   返ってこない。`get` / `put` の並列も、その間は効かない。**様子はファイル（ログの JSON）に
   書かせて、一括が終わってから読む。** 一括は「済んだものを飛ばす」形にしておけば、
   止まっても同じスクリプトをもう一度流すだけで続きから進む
+- **`put`（と小分けの転送）で送った中身は、SSM エージェントのログに base64 のまま残る。**
+  `/var/log/amazon/ssm/amazon-ssm-agent.log*`（誰でも読める権限）。ショートの下見3本を送った日に
+  ローテートした分が約130MB 溜まっていた（承認前の動画の断片）。大きいもの・人に見せる前のものを
+  送ったら、終わりに `sudo rm -f /var/log/amazon/ssm/amazon-ssm-agent.log.*` と現在のログの空にまでやる。
+  落とし直しで Chrome のキャッシュ（`<プロファイル>/Default/Cache/Cache_Data`）に入った分も、Chrome を閉じてから消す。
+  動画のような大きいものは、そもそも EC2 を通さない（ショートの下見は GCS の署名付き URL で渡す）
 - **大きい HTML を何度も DOMParser に通すと、タブが固まる。** SUZURI の編集画面（3.8MB）を
   1件ごとに組み立てて20件ほどで、CDP の WebSocket が返らなくなった（メモリは足りていた）。
   欲しい属性だけを正規表現で抜く。重い画面は用が済んだら軽い画面へ移る。

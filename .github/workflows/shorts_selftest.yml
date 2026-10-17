@@ -84,10 +84,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/style/bgm_gap_selftest.py
 
-      # 承認の関所・取り込みの見張りは Selftests でも走るが、ショートを触った PR では
+      # 取り込みの見張りは Selftests でも走るが、ショートを触った PR では
       # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
       # 上の3本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
-      - name: ほかのショートの見張り（承認の関所・取り込み）
+      - name: ほかのショートの見張り（取り込み）
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail

@@ -29,7 +29,10 @@ done <<'FONTS'
 82098615f39ed9da6a8ccc674b9006e49c70dd5b775a7a1697f6bedd22ce25a2 YuseiMagic-Regular.ttf yuseimagic
 78408910c8f1a2f174a279cbc1484b48b71780039eba3fe1be2bfcc5d4df3f98 HachiMaruPop-Regular.ttf hachimarupop
 9e009430e1316c271a5f34759c6b65fc343c4e806f193042528887e7235a92c6 MochiyPopOne-Regular.ttf mochiypopone
+4ff87a0965f1b0505e5a2c58424bc6ad3cff27e56a82f21c2fc9d6b0e3857ee2 DelaGothicOne-Regular.ttf delagothicone
 FONTS
+# v3（style_v3.json）は感情の字幕を Dela Gothic One の1書体にまとめた（あやと #926、2026-10-16 23:31 UTC
+# 「字幕のフォントのバリエーションが多すぎる」）。上の3書体は v2 の style_p3.json（A）のために残す
 
 # 顔の見つけ役（face_scan.py）が使う YuNet（OpenCV Zoo、MIT）。git には入れない。
 # raw.githubusercontent.com は LFS の札（131バイト）しか返さないので、media の側から取る。

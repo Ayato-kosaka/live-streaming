@@ -480,6 +480,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             if not isinstance(fo, dict) or int(fo.get("frames", -1)) < 0 or not fo.get("why"):
                 sys.exit(f"{i}行目: face_overlap_ok は {{\"frames\": 重なってよいコマ数, \"why\": 理由}} で書く")
             ln["face_overlap_ok"] = {"frames": int(fo["frames"]), "why": str(fo["why"])}
+            if fo.get("keep_size"):
+                # 小さくして逃がさない（顔の誤検出のために字が縮むのは逆効果、と人が決めた行。C17 の床と扉）
+                ln["face_overlap_ok"]["keep_size"] = True
         if r.get("corner_note"):
             notes.append({"from": t, "to": t + n, "text": r["corner_note"]})
         _, center = parse_telop(r.get("telop", ""))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """書き出した mp4 から、行ごとの真ん中の1コマ（字を重ねたまま）を並べた1枚を作る。
 
-    python3 tools/shorts/render/sheet.py out.mp4 work_dir sheet.jpg [--cols 6] [--at middle|start|end]
+    python3 tools/shorts/render/contact_sheet.py out.mp4 work_dir sheet.jpg [--cols 6] [--at middle|start|end]
 
 行 ＝ ナレーションの1行（plan.json の narration）。行の始まりから次の行の始まりまで。
 見るためのもの: 字のはみ出し・違う場面・ぼかし忘れ・透かしの残り・真っ黒なコマ。
