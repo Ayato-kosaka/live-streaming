@@ -146,7 +146,8 @@ const FIXONLY = !!process.env.FIXONLY;
 function withDeadline(pr, ms, what) {
   let t;
   const bell = new Promise((_, no) => {
-    t = setTimeout(() => no(new Error(`${what} が ${Math.round(ms / 1000)}秒で返ってこない`)), ms);
+    const howLong = ms >= 1000 ? `${Math.round(ms / 1000)}秒` : `${ms}ミリ秒`;
+    t = setTimeout(() => no(new Error(`${what} が ${howLong} 返ってこない`)), ms);
   });
   return Promise.race([Promise.resolve(pr).finally(() => clearTimeout(t)), bell]);
 }
