@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview-in__yk-v3b",
+ "mode": "preview-in",
+ "dest": "preview-in/yk-v3b",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/yk-v3b.json",
+ "status": "ok",
+ "stages": {
+  "upload": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 32888077,
+  "tar_gz": 32872047,
+  "encrypted": 32872048
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 32872048,
+   "sha256": "452eacba40dc5a46bcfe5adf167e5e2f770125fcfb4d77575c2e153adf776c3e"
+  }
+ ],
+ "hmac_sha256": "f08133502567954e2a133f7689053f1ac3e57ab004ee5eb335c0c87a3d6bc0bd",
+ "pubkey_sha256": "0fb3a3bd710bb41fae0a9c6153a1a6fdc1e879bcd6c537b24feec1194a96ad46",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-17T00:29:08+00:00",
+ "nonce": "7279018a853d581df4a495b0"
+}
