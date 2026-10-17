@@ -42,7 +42,7 @@
    "pic_note": "バスターミナル（0:41:10）",
    "big": false,
    "card": false,
-   "mood": "excited"
+   "mood": "up_pop"
   },
   {
    "line": "まずはスーパー。",
@@ -114,10 +114,10 @@
    "pic_note": "同上",
    "big": false,
    "card": false,
-   "mood": "puzzled",
+   "mood": "plain",
    "face_overlap_ok": {
-    "frames": 20,
-    "why": "上を向いた横顔で、鼻の下が画面の y 1224 まで来る。鼻の下から安全域の下（1248）まで 24px しか無く、48px まで小さくしても置けない。下の端がいちばん重ならない（顎と小鼻のあたり。20コマ）。画は今のまま（統括の決め）"
+    "frames": 9,
+    "why": "上を向いた横顔で、鼻の下が画面の y 1224 まで来る。鼻の下から安全域の下（1248）まで 24px しか無く、普通の字幕を 36px まで小さくしても置けない。下の端がいちばん重ならない（顎と小鼻のあたり。9コマ）。画は今のまま（統括の決め）"
    }
   },
   {
@@ -178,7 +178,7 @@
    "pic_note": "同上",
    "big": false,
    "card": false,
-   "mood": "puzzled"
+   "mood": "plain"
   },
   {
    "line": "アルバニア語で、鶏のことやって。",
@@ -203,7 +203,7 @@
    "pic_note": "ポテトにソースをどばっと（0:56:44.0〜45.9）",
    "big": false,
    "card": false,
-   "mood": "joy"
+   "mood": "plain"
   },
   {
    "line": "パンはギュッとプレス。",
@@ -228,7 +228,7 @@
    "pic_note": "かぶりつく（0:59:22）",
    "big": false,
    "card": false,
-   "mood": "excited"
+   "mood": "up_pop"
   },
   {
    "line": "パン、トーストみたいにサクサク！",
@@ -240,7 +240,7 @@
    "pic_note": "焼き目のパン（0:59:35）",
    "big": false,
    "card": false,
-   "mood": "joy"
+   "mood": "up_pop"
   },
   {
    "line": "ソースは……ほぼビッグマック。",
@@ -252,7 +252,7 @@
    "pic_note": "かじった断面（1:00:24.0〜26.1、顔の下で切る寄り）",
    "big": true,
    "card": false,
-   "big_style": "glow_pink"
+   "big_style": "glow_yellow"
   },
   {
    "line": "日本で再現するなら、",
@@ -289,7 +289,7 @@
    "pic_note": "ケバブを手に（1:03:10）",
    "big": true,
    "card": false,
-   "big_style": "static_darkred"
+   "big_style": "static_white"
   },
   {
    "line": "ちなみに肉はすぐ固くなるから、熱いうちに食べてな。",
