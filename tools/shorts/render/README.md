@@ -28,7 +28,7 @@ python3 tools/shorts/plan/build_edit.py shorts/videos/<id>/p1/spec_A.json \
   --overrides ov_A.json --blur blur_<id>.json --video <id> --out edit_A.json
 python3 tools/shorts/render/face_scan.py edit_A.json faces_A/          # 顔の見落としを探す（決めるのは人）
 python3 tools/shorts/render/render.py edit_A.json --out A.mp4 --work A.work
-python3 tools/shorts/render/sheet.py A.mp4 A.work A_sheet.jpg       # 行ごとの真ん中の1コマを並べた1枚
+python3 tools/shorts/render/contact_sheet.py A.mp4 A.work A_sheet.jpg       # 行ごとの真ん中の1コマを並べた1枚
 python3 tools/shorts/render/render.py edit_A.json --out A_bare.mp4 --work A_bare.work --no-text
 python3 tools/shorts/render/safearea.py A.mp4 A_bare.mp4           # 字の画素が安全領域の外に無いか
 ```

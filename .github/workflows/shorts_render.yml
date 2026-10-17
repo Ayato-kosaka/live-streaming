@@ -33,7 +33,9 @@ jobs:
     permissions:
       contents: write
     outputs:
-      matrix: ${{ steps.prep.outputs.matrix }}
+      # JSON の matrix は渡せない（鍵の「{」「}」の行が伏せ字なので捨てられる。remote.py の prepare）
+      ids: ${{ steps.prep.outputs.ids }}
+      roles: ${{ steps.prep.outputs.roles }}
       prefix: ${{ steps.prep.outputs.prefix }}
     steps:
       - uses: actions/checkout@v5
@@ -63,7 +65,9 @@ jobs:
     timeout-minutes: 40
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+      matrix:
+        id: ${{ fromJSON(needs.prepare.outputs.ids) }}
+        role: ${{ fromJSON(needs.prepare.outputs.roles) }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -85,7 +89,8 @@ jobs:
       - name: 書き出す（本体は検査・帯の絵まで）
         env:
           PYTHONUNBUFFERED: "1"
-          ITEM: ${{ toJSON(matrix) }}
+          ITEM_ID: ${{ matrix.id }}
+          ROLE: ${{ matrix.role }}
           PREFIX: ${{ needs.prepare.outputs.prefix }}
         run: python3 tools/shorts/render/remote.py job
       - name: 資格情報の写しを消す

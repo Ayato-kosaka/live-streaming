@@ -398,8 +398,6 @@ def cmd_prepare() -> int:
     run = os.environ.get("GITHUB_RUN_ID", "local")
     prefix = f"render/{name}/{run}/"
     roles = ["main", "twin"] if req["twin"] else ["main"]
-    matrix = {"include": [{"id": it["id"], "edit": it["edit"], "role": r, "draft": req["draft"]}
-                          for it in req["items"] for r in roles]}
     meta = {"name": name, "prefix": prefix, "started": t0, "ready": now(), "inbox_s": round(t_inbox, 1),
             "uploaded_mb": round(sum(o["bytes"] for o in missing) / 1e6, 1),
             "draft": req["draft"], "twin": req["twin"], "items": req["items"]}
@@ -408,7 +406,12 @@ def cmd_prepare() -> int:
     gh = os.environ.get("GITHUB_OUTPUT")
     if gh:
         with open(gh, "a", encoding="utf-8") as f:
-            f.write(f"matrix={json.dumps(matrix)}\nprefix={prefix}\nname={name}\nbranch={branch}\n")
+            # **波括弧を出力に入れない。** サービスアカウントの鍵（複数行の JSON）は1行ずつ伏せ字に
+            # 登録されるので、「{」と「}」だけの行も伏せ字になり、JSON の matrix は「秘密を含むかも」と
+            # 捨てられた（2026-10-17、render の job が1本も起きなかった）。並びだけ渡し、掛け合わせは
+            # Actions の matrix に任せる。指示書の sha256 と下書きかどうかは GCS の prepare.json から読む
+            ids = [it["id"] for it in req["items"]]
+            f.write(f"ids={json.dumps(ids)}\nroles={json.dumps(roles)}\nprefix={prefix}\n")
     return 0
 
 
@@ -419,13 +422,15 @@ def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
 
 
 def cmd_job() -> int:
-    item = json.loads(os.environ["ITEM"])
     prefix = os.environ["PREFIX"]
-    iid, role, draft = item["id"], item["role"], bool(item.get("draft"))
+    iid, role = os.environ["ITEM_ID"], os.environ["ROLE"]
     if not ID.match(iid) or role not in ("main", "twin"):
         raise Bad("matrix の形が違う")
     T: dict[str, float] = {"start": now()}
     client, bucket = storage()
+    meta = json.loads(bucket.blob(prefix + "prepare.json").download_as_bytes())
+    item = next(it for it in meta["items"] if it["id"] == iid)
+    draft = bool(meta["draft"])
     job = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())) / "job"
     (job / "in").mkdir(parents=True, exist_ok=True)
     edit = json.loads(bucket.blob(CAS + item["edit"]).download_as_bytes())
@@ -477,7 +482,7 @@ def cmd_job() -> int:
               f" {json.dumps(res['qa'].get('counts'), ensure_ascii=False)}")
         run([sys.executable, str(HERE.parent / "qa/strips.py"), str(mp4), str(work),
              "--out", str(job / f"{iid}.strips")], cwd=job, capture_output=True)
-        run([sys.executable, str(HERE / "sheet.py"), str(mp4), str(work), str(job / f"{iid}.sheet.jpg")],
+        run([sys.executable, str(HERE / "contact_sheet.py"), str(mp4), str(work), str(job / f"{iid}.sheet.jpg")],
             cwd=job, capture_output=True)
         shutil.copy(work / "plan.json", job / f"{iid}.plan.json")
         with tarfile.open(job / f"{iid}.work.tgz", "w:gz", compresslevel=1) as tf:
