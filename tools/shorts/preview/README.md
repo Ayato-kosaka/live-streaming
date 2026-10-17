@@ -28,7 +28,7 @@ python3 tools/shorts/preview/put.py delete --name yk-v3b \
   無ければ `--label B.mp4=題`。ページの見出しは `--title`
 - 結果は `--out/preview/<name>/` に開く（`urls.json`・`run.json`・スマホ幅で撮った `phone.jpg`・`timing.json`）。
   `--out` と `--urls` はリポジトリの外にしか置けない
-- URL は **issue（Gate 2 の提出）に貼ってよい**。リポジトリには平文で入れない
+- URL は **制作 issue に貼ってよい**。リポジトリには平文で入れない
 - master に入ったあとは `--via dispatch` で workflow_dispatch から起こせる（既定は依頼ファイルを作業枝に積む形）
 
 ## 流れ（いまの置き場は Firebase Hosting のプレビューチャンネル）

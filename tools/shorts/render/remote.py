@@ -476,6 +476,64 @@ def run_checks(mp4: Path, work: Path, job: Path, iid: str, draft: bool) -> dict:
             "checks": {c["id"]: c["status"] for c in ordered}, "errors": errs}
 
 
+def probe_stages(edit_path: Path, n: int = 24) -> dict:
+    """同じ指示書の頭の n コマを、段ごとに sha256 にする（どの段が CPU で変わるかを突き合わせる）。
+
+    元のコマの復号（ffmpeg）→ 収める（OpenCV の warpAffine ほか）→ 字の絵を重ねずに x264 で符号化 →
+    顔の見つけ役（YuNet）。作業箱でも `remote.py probe edit.json` で同じものが出る。
+    """
+    sys.path.insert(0, str(HERE))
+    import numpy as np
+    import render as R
+
+    cv2 = R.cv()
+    edit, style, base = R.load(edit_path)
+    with tempfile.TemporaryDirectory() as td:
+        p = R.plan(edit, style, base, Path(td))
+        W, H = p["size"]
+        c = p["cuts"][0]
+        raw, out = hashlib.sha256(), hashlib.sha256()
+        frames = []
+        for j, img in enumerate(R.decode_cut(c, p["fps"])):
+            if j >= n:
+                break
+            raw.update(img.tobytes())
+            fr = R.frame_of(cv2, img, c, j, W, H)
+            out.update(fr.tobytes())
+            frames.append(fr)
+        mp4 = Path(td) / "p.mp4"
+        enc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo",
+                                "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(p["fps"]), "-i", "pipe:0",
+                                "-vf", "scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+"
+                                "full_chroma_int,format=yuv420p", "-c:v", "libx264", "-preset", "medium",
+                                "-crf", "20", "-threads", "4", "-x264-params", "sliced-threads=1",
+                                "-fflags", "+bitexact", "-flags:v", "+bitexact", "-map_metadata", "-1",
+                                str(mp4)], stdin=subprocess.PIPE)
+        for fr in frames:
+            enc.stdin.write(fr.tobytes())
+        enc.stdin.close()
+        enc.wait()
+        x264_hash = sha256_file(mp4)[:16] if mp4.exists() else None
+        yuv = subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp4), "-f", "rawvideo", "-pix_fmt",
+                              "yuv420p", "-"], capture_output=True).stdout
+        # 同じ生のコマを、x264 を通さずに yuv420p にしただけのもの（swscale の差を x264 と分ける）
+        sws = subprocess.run(["ffmpeg", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}",
+                              "-i", "pipe:0", "-vf", "scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+"
+                              "accurate_rnd+full_chroma_int,format=yuv420p", "-f", "rawvideo", "-"],
+                             input=b"".join(f.tobytes() for f in frames), capture_output=True).stdout
+        det = cv2.FaceDetectorYN.create(str(R.YUNET), "", (W // 2, H // 2), 0.5, 0.3, 5000)
+        faces = []
+        for fr in frames:
+            _, fs = det.detect(cv2.resize(cv2.cvtColor(fr, cv2.COLOR_RGB2BGR), (W // 2, H // 2),
+                                          interpolation=cv2.INTER_AREA))
+            faces.append([] if fs is None else np.round(fs, 3).tolist())
+    return {"frames": len(frames), "decode": raw.hexdigest()[:16], "frame_of": out.hexdigest()[:16],
+            "swscale": hashlib.sha256(sws).hexdigest()[:16],
+            "x264_mp4": x264_hash,
+            "x264_decoded": hashlib.sha256(yuv).hexdigest()[:16],
+            "yunet": hashlib.sha256(json.dumps(faces).encode()).hexdigest()[:16], "cpu": cpu_info()}
+
+
 def cpu_info() -> dict:
     """ランナーの CPU（同じ指示書でもバイト列が変わる元。README の「同じものが出るか」）。"""
     try:
@@ -513,6 +571,11 @@ def cmd_job() -> int:
         sizes = list(ex.map(fetch, need))
     ep = job / f"edit_{iid}.json"
     ep.write_text(json.dumps(edit, ensure_ascii=False, indent=1), encoding="utf-8")
+    try:
+        probe = probe_stages(ep)
+    except Exception as e:  # noqa: BLE001  突き合わせの材料。落ちても書き出しは続ける
+        probe = {"error": f"{type(e).__name__}: {e}"[:300]}
+    print(f"  段ごとの指紋: {json.dumps({k: v for k, v in probe.items() if k != 'cpu'}, ensure_ascii=False)}")
     T["inputs"] = now()
     print(f"{iid}/{role}: 素材 {len(need)}個 {sum(sizes) / 1e6:.0f}MB を読んだ"
           f"（{T['inputs'] - T['start']:.0f}秒）")
@@ -521,7 +584,7 @@ def cmd_job() -> int:
     r = run([sys.executable, str(HERE / "render.py"), str(ep), "--out", str(mp4), "--work", str(work)]
             + (["--draft"] if draft else []), cwd=job, capture_output=True, text=True)
     T["rendered"] = now()
-    res = {"id": iid, "role": role, "draft": draft, "timing": T, "cpu": cpu_info(),
+    res = {"id": iid, "role": role, "draft": draft, "timing": T, "cpu": cpu_info(), "probe": probe,
            "render_rc": r.returncode, "render_seconds": round(T["rendered"] - T["inputs"], 1)}
     print(f"  CPU: {res['cpu'].get('model')}（AVX-512 {'あり' if res['cpu'].get('avx512') else 'なし'}）")
     if r.returncode != 0 or not mp4.is_file():
@@ -642,7 +705,12 @@ def main() -> int:
     p.add_argument("edits", nargs="+")
     for n in ("prepare", "job", "report"):
         sub.add_parser(n)
+    pp = sub.add_parser("probe", help="指示書の頭のコマを段ごとに sha256 にする（ランナーの job と突き合わせる）")
+    pp.add_argument("edit")
     a = ap.parse_args()
+    if a.cmd == "probe":
+        print(json.dumps(probe_stages(Path(a.edit)), ensure_ascii=False))
+        return 0
     if a.cmd == "up":
         if not NAME.match(a.name) or not a.branch.startswith("claude/"):
             print("!! name は英数字と . _ -、作業枝は claude/ で始まる名前")
