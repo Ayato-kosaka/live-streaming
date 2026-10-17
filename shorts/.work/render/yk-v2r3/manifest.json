@@ -2,33 +2,33 @@
  "format": "shorts-ingest/1",
  "key": "render__yk-v2r3",
  "mode": "render",
- "dest": "render/yk-v2r3/inbox",
+ "dest": "render/yk-v2r3",
  "video": null,
  "channel": null,
  "request": "shorts/render/yk-v2r3.json",
- "status": "ok",
+ "status": "failed",
  "stages": {
-  "render": "ok"
+  "render": "failed"
  },
  "counts": {
   "files": 1
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1181,
-  "encrypted": 1184
+  "plain": 28831,
+  "tar_gz": 10391,
+  "encrypted": 10400
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "c1d34c3979d3064593fd872298b21a0f04cbd05ad9896768f2adbd0fcced307b"
+   "bytes": 10400,
+   "sha256": "3981d92741212dc9d0a68cd3015b5b1adbbce261ed23a0b1ee3778bf9023dd5a"
   }
  ],
- "hmac_sha256": "8ff7be97b6eb4941be6ff37d49923f313c1933359bf204981edf090b3b1aa763",
+ "hmac_sha256": "c9bb8f480ad5851909052c32b18e10daefbfab635f0b4582f567b29270e551fb",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-17T00:45:49+00:00",
+ "created_at": "2026-10-17T00:54:22+00:00",
  "nonce": "0b9ab8d3661afa9c0cb71697"
 }
