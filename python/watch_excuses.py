@@ -167,9 +167,12 @@ EXCUSES: dict[str, str] = {
     "tools/sprites/tapink.mjs":
         "26面 × 4とおりで ひと回り40〜60分（`island-standards.md` §15 の実測）。"
         "PR ごとには載せられない。出す前のチェックで回す（2026-09-19）",
-    "tools/sprites/hitbox.mjs":
-        "押しどころの実寸。面を手で渡す作りで、単体だと渡し忘れた面が"
-        "「割れ0」に化ける。26面まとめて回す `tapink.mjs` 側で見る（2026-09-19）",
+    # `tools/sprites/hitbox.mjs` の断りは 2026-10-16 に外した（#281）。
+    # 2026-09-19 に書いた断りは「面を手で渡す作りなので単体では繋がない」で、
+    # そのときは本当だった。**いまは `reachwatch.mjs` が全面ぶんを渡して
+    # `measure()` を呼んでいる**（`heavy_watch.yml` から master と毎晩）。
+    # そのうえ `python/mutation_drill.py` が、この実物を壊して
+    # `reachwatch.mjs` が赤くなるかを当てている。**断りのほうが古かった。**
     "tools/sprites/inkpx.mjs":
         "字の濃さを画素から測る。同じく面を手で渡す作りで、"
         "26面ぶんは `tapink.mjs` が回す（2026-09-19）",
