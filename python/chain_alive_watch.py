@@ -300,15 +300,24 @@ def live_table(docs: dict[str, dict], gh: Gh) -> dict[str, dict]:
     # ——**生きているか**を見ているので、何が起こしたかは問わない
     for want in targets:
         path = names[want]
+        row = table.setdefault(path, {})
+        if path not in made:
+            # **GitHub がまだ知らないワークフロー**（この PR で足したばかり）。
+            # 引きにいくと 404 で落ちて、**本物の数字を1つも出さずに 2** になる
+            row["absent"] = True
+            continue
         last = gh.latest(path)
-        table.setdefault(path, {})["last"] = last.get("created_at") if last else None
+        row["last"] = last.get("created_at") if last else None
     # こちらは「**繋ぎで**起きたのはいつか」。手押しや cron の回を数えると、
     # 保険の cron が毎朝拾っているぶんで、切れた繋ぎが隠れる
     for path in linked:
         row = table.setdefault(path, {})
+        row["created"] = made.get(path)
+        if path not in made:
+            row["absent"] = True
+            continue
         bychain = gh.latest(path, event="workflow_run")
         row["by_chain"] = bychain.get("created_at") if bychain else None
-        row["created"] = made.get(path)
     return table
 
 
@@ -337,8 +346,12 @@ def live_pairs(docs: dict[str, dict], gh: Gh) -> dict:
     names = {name_of(p, d): p for p, d in docs.items()}
     targets = sorted({w for p in linked for w in wanted(docs[p]) if w in names})
 
+    made = gh.made_on()
+
     ups: dict[str, list[dict]] = {}
     for want in targets:
+        if names[want] not in made:
+            continue          # GitHub がまだ知らない。下で「新顔」に落ちる
         rows = []
         for r in gh.recent(names[want]):
             if r.get("status") != "completed":
@@ -350,9 +363,14 @@ def live_pairs(docs: dict[str, dict], gh: Gh) -> dict:
 
     downs: dict[str, dict] = {}
     for p in linked:
+        if p not in made:
+            downs[p] = {"at": [], "oldest": None, "absent": True}
+            continue
         at = [r.get("created_at") for r in gh.recent(p) if r.get("created_at")]
         downs[p] = {"at": at, "oldest": min(at) if at else None}
-    return {"ups": ups, "downs": downs}
+    # **新顔を赤くしないための材料。** [4] と同じ決めを [5] にも効かせる
+    # （`judge_pairs` が使う。作り物の表を差すときは省いてよい＝ぜんぶ古株）
+    return {"ups": ups, "downs": downs, "made": made}
 
 
 def judge_pairs(docs: dict[str, dict], pairs: dict, days: int,
@@ -383,15 +401,27 @@ def judge_pairs(docs: dict[str, dict], pairs: dict, days: int,
                           "rates": [(下流, 上流, 起きた数, 上流の数)]})
     """
     rows: list[str] = []
-    seen = {"judged": 0, "thin": 0, "missing": 0, "ok": 0, "rates": []}
+    seen = {"judged": 0, "thin": 0, "missing": 0, "ok": 0, "new": 0, "rates": []}
     limit = now - timedelta(days=days)
     ups_t = (pairs or {}).get("ups") or {}
     downs_t = (pairs or {}).get("downs") or {}
+    # **新顔は数えない。** [4] に在る決めが、ここには無かった——
+    # だから繋ぎを1本足した PR は、[4] を通っても [5] で必ず赤くなった
+    # （足した当日は、無人の上流が終わったのに下流がまだ1回も起きていない）。
+    # 作り物の表を差すときは省いてよい（＝ぜんぶ古株とみなす）
+    made_t = (pairs or {}).get("made") or {}
     linked = sorted(p for p in docs if wanted(docs[p]))
     names = {name_of(p, d): p for p, d in docs.items()}
 
     for p in linked:
         down = downs_t.get(p)
+        born = made_t.get(p)
+        # `absent` は **GitHub がまだ知らないファイル**（`created_at` すら
+        # 返ってこないので、`born` では拾えない）
+        if (down and down.get("absent")) or (born and ts(born) > limit):
+            # 繋ぎの本数ぶん「見ていない」に数える（0 に混ぜない。§15）
+            seen["new"] += len(wanted(docs[p]))
+            continue
         for want in wanted(docs[p]):
             if want not in names:
                 continue          # 名前の切れは [1] の仕事
@@ -459,6 +489,12 @@ def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
         if row is None:
             seen["missing"] += 1
             continue
+        if row.get("absent"):
+            # **GitHub がまだ知らない**（同じ PR で足した繋ぎ先）。
+            # 足した当日に赤くすると「足したから赤い」が常態になって、
+            # 本物の切れが埋もれる（[4] の「新顔は数えない」と同じ決め）
+            seen["new"] += 1
+            continue
         last = row.get("last")
         seen["targets"] += 1
         who = ", ".join(sorted(p for p in linked if want in wanted(docs[p])))
@@ -480,8 +516,10 @@ def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
             continue
         made = row.get("created")
         # **新顔は数えない。** 足した当日の PR で赤くなると、
-        # 「足したから赤い」が常態になって、本物の切れが埋もれる
-        if made and ts(made) > limit:
+        # 「足したから赤い」が常態になって、本物の切れが埋もれる。
+        # **GitHub がまだ知らないもの**（この PR で足したファイル）も新顔——
+        # あちらは `created_at` すら返ってこないので、`made` では拾えない
+        if row.get("absent") or (made and ts(made) > limit):
             seen["new"] += 1
             continue
         seen["downstream"] += 1
@@ -635,8 +673,8 @@ def main() -> int:
         return 2
     if pseen["judged"] == 0:
         print(f"!! 繋ぎ1本ずつを1本も判定できなかった"
-              f"（数が足りない {pseen['thin']}本 / 答えの返らなかったもの "
-              f"{pseen['missing']}本）。**0件を通さない**")
+              f"（数が足りない {pseen['thin']}本 / 新顔 {pseen['new']}本 / "
+              f"答えの返らなかったもの {pseen['missing']}本）。**0件を通さない**")
         return 2
     if prows:
         print(f"[5] ✕ 無人の上流に対して死んでいる繋ぎが {len(prows)}件")
@@ -647,7 +685,9 @@ def main() -> int:
         print(f"[5] ○ 繋ぎ {pseen['judged']}本、無人の上流が終わったあとに"
               f"ちゃんと起きている"
               + (f"（数が足りず見ていない {pseen['thin']}本）"
-                 if pseen["thin"] else ""))
+                 if pseen["thin"] else "")
+              + (f"（新顔なので数えていない {pseen['new']}本）"
+                 if pseen["new"] else ""))
     for p, want, hit, tot in sorted(pseen["rates"]):
         print(f"      {want} → {p}: {hit}/{tot}")
 
