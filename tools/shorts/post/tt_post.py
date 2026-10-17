@@ -3,7 +3,7 @@
 
 `ec2-chrome` の cdp.py の上に乗る。TikTok にログインしてあるのは `~/cdp-fish` の Chrome
 （あやとが既定のプロファイルでログインし、Fish Audio の用で複製したもの。2026-10-15）。
-手元から `ec2.py put` で `/home/ubuntu/cdp/tt_post.py` に置き、手元の `post.py` から呼ぶ（README.md）。
+手元から `ec2.py put` で `~/cdp/tt_post.py` に置き、手元の `post.py` から呼ぶ（README.md）。
 
     python3 tt_post.py check <探す字>                          # ログインしているか・同じ投稿がもう在るか
     python3 tt_post.py post <mp4> <caption.txt> --dry          # 投稿の手前まで（字と設定を確かめて、投稿しない）
@@ -24,11 +24,11 @@
 そのあとの Enter で**候補を選んでしまう**。貼り付け（paste のイベント）なら候補を通らない。
 """
 import json, os, re, sys, time, urllib.request
-sys.path.insert(0, "/home/ubuntu/cdp")
+sys.path.insert(0, os.path.expanduser("~ubuntu/cdp"))
 from cdp import Tab, up, pages, where, _port  # noqa: E402
 
 NAME = "fish"
-SHOTS = "/home/ubuntu/shots/post"
+SHOTS = os.path.expanduser("~ubuntu/shots/post")
 UPLOAD = "https://www.tiktok.com/tiktokstudio/upload?from=webapp"
 CONTENT = "https://www.tiktok.com/tiktokstudio/content"
 ED = "(document.querySelector('.public-DraftEditor-content') || document.querySelector('[contenteditable=true]'))"

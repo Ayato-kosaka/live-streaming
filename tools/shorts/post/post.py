@@ -18,16 +18,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, ".claude", "skills", "ec2-chrome"))
 import ec2  # noqa: E402
+# EC2 の家。手元の道具に直書きしない（tools/sprites/rootcheck.mjs）
+EC2_HOME = "/home/ubuntu"
 
 REPO = "Ayato-kosaka/live-streaming"
-REMOTE = "/home/ubuntu/shorts_post"
-CDP = "/home/ubuntu/cdp"
+REMOTE = f"{EC2_HOME}/shorts_post"
+CDP = f"{EC2_HOME}/cdp"
 # あやと 2026-10-17: TikTok では YouTube のどのチャンネルの配信かが分かるように、題の行のすぐ下に足す
 TT_SOURCE_LINE = "YouTube「@あやとグルメアプリ」の生配信から"
 
 # 遠隔デスクトップであやとが触っている最中に Chrome を開かない（入力が7分止まっているのを見てから）
-GUARD = """touch /home/ubuntu/locks/shorts-post
-ms=$(DISPLAY=:20 XAUTHORITY=/home/ubuntu/.Xauthority sudo -u ubuntu xprintidle 2>/dev/null || echo 0)
+GUARD = """touch ~ubuntu/locks/shorts-post
+ms=$(DISPLAY=:20 XAUTHORITY=~ubuntu/.Xauthority sudo -u ubuntu xprintidle 2>/dev/null || echo 0)
 if [ "${ms:-0}" -lt 420000 ]; then echo "WAIT: desktop input within 7 min (${ms}ms)"; echo 'RESULT {"ok": false, "error": "desktop_busy"}'; exit 0; fi
 """
 

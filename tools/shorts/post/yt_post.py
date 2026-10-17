@@ -2,7 +2,7 @@
 """EC2 の上で動く。YouTube Studio にショートを上げる（非公開で保存 → 確かめる → 公開）。
 
 `ec2-chrome` の cdp.py と `youtube-studio` の yt_studio.py の上に乗る。手元から
-`ec2.py put` で `/home/ubuntu/cdp/yt_post.py` に置き、手元の `post.py` から呼ぶ（README.md）。
+`ec2.py put` で `~/cdp/yt_post.py` に置き、手元の `post.py` から呼ぶ（README.md）。
 
     python3 yt_post.py dup <題>                       # 同じ題のショートがもう在るか
     python3 yt_post.py draft <mp4> <post.json>        # 上げて、題・説明・子ども向けでない・改変なし → 非公開で保存
@@ -25,11 +25,11 @@ Studio に在るので、開き直しても失うものが無い。**公開に�
 メタデータも同じと見て、書き込みは画面で押し、**読み直しは api()（get_creator_videos）で**する。
 """
 import json, os, re, sys, time
-sys.path.insert(0, "/home/ubuntu/cdp")
+sys.path.insert(0, os.path.expanduser("~ubuntu/cdp"))
 from cdp import where  # noqa: E402
 from yt_studio import studio, api, get_videos, url_of, CH, BASE, _wait  # noqa: E402
 
-SHOTS = "/home/ubuntu/shots/post"
+SHOTS = os.path.expanduser("~ubuntu/shots/post")
 SHORTS = {"and": {"operands": [{"channelIdIs": {"value": CH}}, {"contentTypeIs": {"value": "CREATOR_CONTENT_TYPE_SHORTS"}}]}}
 # 知らない列を mask に入れても落ちない（黙って返さないだけ）。返ってくるのを確かめた列だけ置く
 READ = {"videoId": True, "title": True, "description": True, "privacy": True, "lengthSeconds": True,

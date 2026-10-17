@@ -7,10 +7,10 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
 | `post.py` | 手元 | 入口。`send`（送る）・`cover`（題の札のコマを切り出して送る）・`yt-draft`・`yt-related`・`yt-thumb`・`yt-publish`・`tt-post`・`clean` |
-| `yt_thumb.py` | EC2（`/home/ubuntu/cdp/`） | Studio: サムネイルを絵のファイルに差し替えて保存 |
+| `yt_thumb.py` | EC2（`~/cdp/`） | Studio: サムネイルを絵のファイルに差し替えて保存 |
 | `send.py` | 手元 | 動画を小分けで EC2 へ送り、EC2 で sha256 を照らす。止まっても続きから。`clean` で送った跡を消す |
-| `yt_post.py` | EC2（`/home/ubuntu/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
-| `tt_post.py` | EC2（`/home/ubuntu/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで） |
+| `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
+| `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで） |
 
 ## 手順（1本ぶん）
 
@@ -30,7 +30,7 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 
 - EC2 で Chrome を開く手は、どれも**遠隔デスクトップの入力が7分止まっているのを見てから**動く（`post.py` の `GUARD`）。
   あやとが触っている最中なら `desktop_busy` で何もせずに戻る
-- 待つあいだは `/home/ubuntu/locks/shorts-post` を触って見張り（idle-stop）に止められないようにしている。終わったら消す
+- 待つあいだは `~/locks/shorts-post` を触って見張り（idle-stop）に止められないようにしている。終わったら消す
 - 媒体の決まり（あやと）:
   - YouTube: 曲は動画に焼いてあるので付けない。子ども向けではない。改変されたコンテンツは「いいえ」（声は特定の人のまねではない AI の読み上げで、説明欄に書いてある）。**関連動画に元のアーカイブ**（2026-10-17）
   - **サムネイル（YouTube）とカバー（TikTok）は、題の札が見えるコマ**（2026-10-17。`cover` で切り出した絵を上げる。コマを選ぶ窓より、どのコマになるかが確か）
@@ -68,4 +68,4 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 ## 1本目（2026-10-17）
 
 北マケドニアの回の A を、この道具で出した（YouTube https://youtube.com/shorts/Do04EoViYdU ・TikTok の投稿 7697445174338751765）。
-初めての手を回すときは、画面の写し（`/home/ubuntu/shots/post/`）を持ち帰って見る。
+初めての手を回すときは、画面の写し（`~/shots/post/`）を持ち帰って見る。

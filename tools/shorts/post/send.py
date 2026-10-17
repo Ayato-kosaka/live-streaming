@@ -17,6 +17,8 @@ SSM の send-command が1本ずつ詰まると途中で落ちる。落ちたら�
 自分たちの転送の跡なので、終わったら消す。ディレクトリを渡せば、送った動画もそこで消す。
 """
 import base64, hashlib, os, sys, time
+# EC2 の家。手元の道具に直書きしない（tools/sprites/rootcheck.mjs）
+EC2_HOME = "/home/ubuntu"
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -90,8 +92,8 @@ def clean(dirs):
     # 消すのはこちらの転送の跡だけ。エージェントのログは今のファイルを空にし、回したものを消す
     script = "set -u\n"
     for d in dirs:
-        if not d.startswith("/home/ubuntu/shorts_post"):
-            sys.exit(f"refuse: {d}（/home/ubuntu/shorts_post の下だけ消す）")
+        if not d.startswith(f"{EC2_HOME}/shorts_post"):
+            sys.exit(f"refuse: {d}（{EC2_HOME}/shorts_post の下だけ消す）")
         script += f"rm -rf '{d}'\n"
     script += ("before=$(sudo grep -c \"printf '%s'\" /var/log/amazon/ssm/amazon-ssm-agent.log 2>/dev/null)\n"
                "sudo sh -c 'rm -f /var/log/amazon/ssm/amazon-ssm-agent.log.* && : > /var/log/amazon/ssm/amazon-ssm-agent.log'\n"
