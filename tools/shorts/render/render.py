@@ -2126,6 +2126,10 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
 # 顔の見つけ役（YuNet・540x960）47ms は1コマおきにして半分。本番の段（README）は今までどおり。
 
 DRAFT_SCALE = 2          # 縦横を 1/2 に
+# 本番の x264 の決まり（encode の中の説明）。cpu-independent は付けると今までのバイト列から変わるので、
+# いまは環境変数で選ぶ（Actions の書き出しは付ける。既定にするかは統括が決める）
+X264_PARAMS = "sliced-threads=1" + (":cpu-independent=1" if os.environ.get("SHORTS_X264_CPU_INDEPENDENT") == "1"
+                                    else "")
 DRAFT_FACE_EVERY = 2     # 顔は2コマに1回探し、間のコマは前のコマの箱を使う（顔は数十コマ続く）
 
 
@@ -2383,8 +2387,12 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
             # x264 をコマ単位で並列にすると、箱が混んでいるときだけ別のバイト列が出た
             # （同時に3本回して1本だけ違った。filtergraph の出力は3本とも同じ）。
             # スライス単位の並列は混んでいても3本とも同じだった。遅くなる（27秒→45秒）が、
-            # 「同じ指示書から同じ動画」を取る。下書きはバイト一致を求めないのでコマ単位のまま
-            *([] if draft else ["-x264-params", "sliced-threads=1"]),
+            # 「同じ指示書から同じ動画」を取る。下書きはバイト一致を求めないのでコマ単位のまま。
+            # SHORTS_X264_CPU_INDEPENDENT=1 で x264 の cpu-independent も付ける: 同じ yuv を渡しても、
+            # x264 は AMD EPYC と Intel Xeon で別のバイト列を出した（2026-10-17 の Actions。復号・収める・
+            # swscale・YuNet の指紋は一致し、x264 の出口だけが違った。remote.py の probe_stages）。
+            # 字なしの版も x264 を通るので、顔の見つけ役が見る絵まで変わり、字の置き場が動いていた
+            *([] if draft else ["-x264-params", X264_PARAMS]),
             "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
             # 音は仕上げた AAC をそのまま入れる（測って合わせたものを、もう一度符号化して変えない）
             "-c:a", "copy",

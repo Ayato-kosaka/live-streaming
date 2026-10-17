@@ -89,6 +89,9 @@ jobs:
       - name: 書き出す（本体は検査・帯の絵まで）
         env:
           PYTHONUNBUFFERED: "1"
+          # x264 は CPU（AMD EPYC と Intel Xeon）で別のバイト列を出す。どのランナーに当たっても
+          # 同じものが出るように cpu-independent を付ける（render.py の X264_PARAMS）
+          SHORTS_X264_CPU_INDEPENDENT: "1"
           ITEM_ID: ${{ matrix.id }}
           ROLE: ${{ matrix.role }}
           PREFIX: ${{ needs.prepare.outputs.prefix }}

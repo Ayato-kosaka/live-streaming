@@ -506,7 +506,7 @@ def probe_stages(edit_path: Path, n: int = 24) -> dict:
                                 "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-framerate", str(p["fps"]), "-i", "pipe:0",
                                 "-vf", "scale=out_color_matrix=bt709:out_range=tv:flags=bicubic+accurate_rnd+"
                                 "full_chroma_int,format=yuv420p", "-c:v", "libx264", "-preset", "medium",
-                                "-crf", "20", "-threads", "4", "-x264-params", "sliced-threads=1",
+                                "-crf", "20", "-threads", "4", "-x264-params", R.X264_PARAMS,
                                 "-fflags", "+bitexact", "-flags:v", "+bitexact", "-map_metadata", "-1",
                                 str(mp4)], stdin=subprocess.PIPE)
         for fr in frames:
@@ -650,10 +650,12 @@ def cmd_report() -> int:
             items.append(out)
             continue
         out.update(status="ok", sha256=m["sha256"], bytes=m["bytes"], qa=m.get("qa"),
-                   render_seconds=m["render_seconds"], timing=m["timing"])
+                   render_seconds=m["render_seconds"], timing=m["timing"], cpu=m.get("cpu"),
+                   probe=m.get("probe"))
         if req["twin"]:
             out["twin"] = {"sha256": (tw or {}).get("sha256"), "same": bool(tw) and tw.get("sha256") == m["sha256"],
-                           "render_seconds": (tw or {}).get("render_seconds")}
+                           "render_seconds": (tw or {}).get("render_seconds"), "cpu": (tw or {}).get("cpu"),
+                           "probe": (tw or {}).get("probe")}
             if not out["twin"]["same"]:
                 out["status"] = "twin-differs"
         files = []
