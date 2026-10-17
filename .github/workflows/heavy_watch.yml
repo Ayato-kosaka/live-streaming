@@ -658,6 +658,16 @@ jobs:
         with:
           python-version: '3.12'
 
+      # **素性の見張りが読み込むぶんだけ入れる。**
+      # `logsafe_selftest.py` は `island_channels` などを取り込むので、
+      # `python/requirements.txt` が無いと **ImportError で落ちる**
+      # ——落ちると見張りそのものが回らず、口はこの job で1つも守られない。
+      # **ここを削るなら、下の見張りも一緒に外すことになる**（#500）。
+      # `python/logsafe_wiring_selftest.py` が、入れ忘れを毎 PR で数えている
+      # （2026-10-03 に `upkeep_watch.yml` が1行落として実際に踏んだ形）
+      - name: 素性の見張りが読み込むぶんだけ入れる
+        run: pip install -r python/requirements.txt
+
       # **公開のログに素性が出ないこと**を、口を開く前に見る（#500）。
       # このリポジトリは公開で、Actions のログも誰でも読める。
       # この係は `run_watch` ごしに `logsafe` を取り込んでいるので、下の step は
@@ -668,9 +678,10 @@ jobs:
       - name: 公開のログに素性が出ない側が効いているか
         run: python3 python/logsafe_selftest.py
 
-      # **pip を1つも通らない。** 読むのは GitHub の口だけで、BigQuery も
-      # Firestore も1行も触らない。止まっていることを知らせる係が、
-      # 関係のない依存が1つ壊れただけで動かない形にしたくない
+      # **この係そのものは、入れたものを1つも使わない。** 読むのは GitHub の
+      # 口だけで、BigQuery も Firestore も1行も触らない（上の pip は
+      # 素性の見張りのため）。止まっていることを知らせる係が、関係のない
+      # 依存が1つ壊れただけで動かない形にはしていない
       - name: 赤いあいだ issue を1本だけ開いておく
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
