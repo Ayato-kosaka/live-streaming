@@ -115,17 +115,6 @@ FIND = r"""(() => {
   return {kind: 'doneru:none', diag: diag()};
 })()"""
 
-# delegation の行を字で探し直し、画面の中へ送ってから座標を返す。同じ字の重なりは FIND と同じく内側（最後）を取る
-AT_TEXT = r"""((want) => {
-  const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && e.offsetParent !== null; };
-  const txt = e => (e.innerText || e.value || e.getAttribute('aria-label') || e.getAttribute('alt') || '').trim().replace(/\s+/g, ' ').replace(/\S+@\S+/g, '<mail>').slice(0, 60);
-  const e = [...document.querySelectorAll('[data-identifier],li,[role=link],[role=button],button')].filter(vis).filter(e => txt(e) === want).pop();
-  if (!e) return null;
-  e.scrollIntoView({block: 'center'});
-  const r = e.getBoundingClientRect();
-  return {x: r.x + r.width / 2, y: r.y + r.height / 2, h: innerHeight};
-})(%s)"""
-
 def click(t, x, y):
     for typ in ("mouseMoved", "mousePressed", "mouseReleased"):
         t.call("Input.dispatchMouseEvent", type=typ, x=x, y=y, button="left", clickCount=1)
@@ -152,7 +141,6 @@ if not dt:
     # /auth/youtube?type=streamer（あやと 2026-09-23）。直接行けば Google のアカウント選択から始まる。
     # （/login は存在しない。Return to Home の画面になる）
     tab.call("Page.navigate", url="https://doneru.jp/auth/youtube?type=streamer"); time.sleep(8)
-    delegation_clicks = 0
     for step in range(25):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
@@ -208,16 +196,8 @@ if not dt:
                         i = int(open(CHOICE_FILE).read().strip()); hit = [opts[i]]
                 if not hit:
                     print("STOP: チャンネルを決められなかった。何も押さずに止める"); sys.exit(3)
-            # 一覧の座標は画面に送らずに測っている。チャンネルが増えて ayato_arigato が画面の外に出ると、
-            # 外を押し続けて1歩も進まない（2026-10-17 に23回押して止まった）。押す直前に画面の中へ送って測り直す
-            at = cur.js(AT_TEXT % json.dumps(hit[0]["text"])) or {}
-            print("  delegation: 押す ->", hit[0]["text"], f"(y {int(hit[0]['y'])} -> {int(at.get('y', -1))}, 画面の高さ {at.get('h')})")
-            if "y" not in at:
-                print("STOP: 押す行を見失った。何も押さずに止める"); sys.exit(3)
-            delegation_clicks += 1
-            if delegation_clicks > 3:
-                print("STOP: チャンネルを3回押しても先へ進まない。押し続けずに止める"); sys.exit(3)
-            click(cur, at["x"], at["y"]); time.sleep(6); continue
+            print("  delegation: 押す ->", hit[0]["text"])
+            click(cur, hit[0]["x"], hit[0]["y"]); time.sleep(6); continue
         if r["kind"] == "google:chooser":
             hit = [i for i, a in enumerate(r["accounts"]) if hashlib.sha256(a["id"].encode()).hexdigest() == ACCOUNT_SHA256]
             print(f"  account chooser: {len(r['accounts'])} 件、一致 {hit}")
