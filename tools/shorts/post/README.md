@@ -8,7 +8,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | --- | --- | --- |
 | `post.py` | 手元 | 入口。`send`（送る）・`cover`（題の札のコマを切り出して送る）・`yt-draft`・`yt-related`・`yt-thumb`・`yt-publish`・`tt-post`・`clean` |
 | `yt_thumb.py` | EC2（`~/cdp/`） | Studio: サムネイルを絵のファイルに差し替えて保存 |
-| `send.py` | 手元 | 動画を小分けで EC2 へ送り、EC2 で sha256 を照らす。止まっても続きから。`clean` で送った跡を消す |
+| `send.py` | 手元 | 動画・投稿文・題の札の絵を EC2 へ送り、EC2 で sha256 を照らす。GCS の `transfer/` に置いて、EC2 には署名付き URL を `curl` で落とさせる（下の「EC2 への送りかた」）。`clean` で送った動画を消す |
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
 | `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで） |
 | `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
@@ -17,7 +17,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 
 ```bash
 D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
-python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 30MB で約15分
+python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 1分ほど（ほとんどが Actions の URL 待ち）
 python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A --sha <sha256>   # 非公開で保存。ショートの ID が出る（sha256 は send が出す mp4_sha256）
 python3 tools/shorts/post/post.py yt-related --video <元の動画ID> --id <ショートのID>   # 関連動画に元のアーカイブ
 python3 tools/shorts/post/post.py cover      --dir $D --video <元の動画ID> --option A   # 題の札が見えるコマ（既定 1.0秒）を切り出して送る
@@ -26,7 +26,7 @@ python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A
 # 出すのは、あやとが issue かチャットで「出して」と言った案だけ。EC2 の mp4 の sha256 を照らして出す
 python3 tools/shorts/post/post.py yt-publish --video <元の動画ID> --option A --id <ショートのID> --sha <sha256>   # --video/--option が無いと EC2 の mp4 を引けず MISMATCH で止まる
 python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --cover --sha <sha256>
-python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画と SSM のログの base64 を消す
+python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画を消す（SSM のログには触らない）
 ```
 
 - **同じ動画を同じ場所へ2回出さない**（#920）。`yt-draft` と `tt-post` は EC2 に触る前に台帳 `posted.json` を引き、
@@ -40,6 +40,31 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
   - YouTube: 曲は動画に焼いてあるので付けない。子ども向けではない。改変されたコンテンツは「いいえ」（声は特定の人のまねではない AI の読み上げで、説明欄に書いてある）。**関連動画に元のアーカイブ**（2026-10-17）
   - **サムネイル（YouTube）とカバー（TikTok）は、題の札が見えるコマ**（2026-10-17。`cover` で切り出した絵を上げる。コマを選ぶ窓より、どのコマになるかが確か）
   - TikTok: キャプションは `post_*.json` の `tiktok.caption` の**題の行のすぐ下に「YouTube「@あやとグルメアプリ」の生配信から」**（2026-10-17、`post.py` の `TT_SOURCE_LINE` が足す）。音源は付けない。AI 生成の印は付けない
+
+## EC2 への送りかた（2026-10-18 から）
+
+**中身を SSM のコマンドに載せない。** 前の `send.py` は動画を base64 に割って SSM の send-command に載せていて、
+動画がそのまま EC2 の SSM エージェントのログに残った。送ったあとにログを消していたが、2026-10-18 に
+「監査ログの改ざん」として安全確認に止められたので、**ログは消さない**（消す・空にする・回すのどれもしない）。
+いまは:
+
+1. `send.py` が Actions（「ショートの下見を置く」、依頼の place は `transfer`）に署名付き URL を頼む。
+   結果はこの回だけの鍵で包んで作業枝に返り、開いたら作業枝から下ろす
+2. 作業箱から GCS の `transfer/` に直に上げる（上げる URL は1時間）
+3. EC2 に `curl` で落とさせ、EC2 の上で sha256 を照らす。**SSM のコマンドに載るのは URL だけ**
+4. 照らし終わったら（落ちても）GCS のものをすぐ消す
+
+- **URL は EC2 のログに残る。それは仕方ないとする。** 見る URL の寿命は3時間で、4 で消したあとは 404。
+  置いたものも1日で消える（バケットの寿命の決まり。`uploads/` の30日・`preview/` `render/` の14日はそのまま）
+- **URL は標準出力・コミット・issue に出さない。** `send.py` は名前・大きさ・秒・sha256・HTTP の数だけを出す。
+  鍵と開いた URL は一時の場所（リポジトリの外）に置き、終わったら消す
+- `post.py` の道具（`yt_post.py` など）は `ec2.py put` のまま。中身はリポジトリの公開物と同じなので、ログに残っても困らない
+- 確かめたこと（2026-10-18、作り物の動画 21MB）: 起動から52秒（URL が来るまで44秒・上げる0.6秒・EC2 が落とす7秒）。
+  前の小分けは 30MB で約15分。EC2 の sha256 が一致し、消したあとの見る URL は 404。
+  EC2 の上でその動画の base64 から48字の断片を50本作り（断片をコマンドに載せないため）、SSM のログと
+  `/var/lib/amazon/ssm/*/document/orchestration` を数えて**どちらも0**。同じ数えかたで、`ec2.py put` で送った
+  乱数の字（4KB）はログの3行・orchestration の1ファイルに当たった（数えかたが見えている証拠）。ログは消さずに
+  6,711行 → 10,146行（1行目は同じ）
 
 ## 分かっていること（2026-10-17 に1本目で踏んだ）
 

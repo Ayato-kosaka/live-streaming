@@ -3,7 +3,8 @@
     python3 tools/shorts/preview/serve.py          # .github/workflows/shorts_preview.yml から
 
 依頼の形は `req.py`、置き場ごとの中身は `host.py`（Firebase Hosting のプレビューチャンネル。
-いまの既定）と `gcs.py`（非公開バケットの署名付き URL。#938 で付与）。
+いまの既定）と `gcs.py`（非公開バケットの署名付き URL。#938 で付与。place が `transfer` のときは
+EC2 へ渡す受け渡しの道 `transfer/`。`tools/shorts/post/send.py` が頼む）。
 
 結果は依頼の公開鍵で包み（`tools/shorts/ingest/seal.py` と同じ形）、作業枝の
 `shorts/.work/preview/<name>/` に置く。**同じ commit で依頼ファイル・受け取り口・作業箱の荷物を
@@ -65,7 +66,7 @@ def one(req: dict, branch: str, tmp: Path) -> bool:
           f"（{', '.join(f['name'] for f in req['files'][:10])}）← {req['req']}")
     body, err, extra, attach = None, None, {}, []
     try:
-        if req["place"] == "gcs":
+        if req["place"] in ("gcs", "transfer"):
             body, extra["probe"] = gcs.gcs_up(req)
             print(f"  署名した: {len(body['files'])}本")
         elif req["action"] == "delete":

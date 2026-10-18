@@ -95,6 +95,10 @@ gcloud storage buckets add-iam-policy-binding gs://live-streaming-d3cac-shorts-p
 
 14日の寿命の決まりは、`gcs.py` が最初に使うときに足した（buckets.update が付いているので）。
 同じバケットを、書き出しを Actions で並べる道（`tools/shorts/render/remote.py`）の受け渡しにも使う。
+あやとが上げる録画（`uploads/`、`tools/shorts/upload/`）は30日置くので、14日の決まりは
+`preview/` `render/` だけに掛けてある（寿命の決まりは「どれか1つに当たれば消す」）。
+EC2 へ動画を渡す受け渡し（`transfer/`、依頼の place が `transfer`。`tools/shorts/post/send.py`）は
+1日で消える決まりを `transfer/` だけに足した。見る・消す URL は3時間（URL が EC2 の SSM のログに載るので短くする）。
 
 ## 落ちたときの見方
 
