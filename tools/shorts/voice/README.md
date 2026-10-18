@@ -79,6 +79,11 @@ nohup python3 fish_web.py gen --model <声のID> --lines ~/voice/<動画>-lines_
   **窓の中は何も押さない。** タブを作り直すと出ずに押せた
 - **設定は触らない。** 2026-10-15 のアカウントは「Fish Audio S2.1 Pro・速度 1.1・ボリューム 0・ラウドネス正規化 オン・
   テキスト正規化 オフ」（あやとの下書きに入っていたまま）。各テイクの `settings`・`task_params` に残る
+- **画面の「速度」では声は速くならない**（2026-10-18 に `gen --speed 1.3` で B の3行を作って確かめた。詰めた長さの合計は
+  1.1 の 12.32秒に対して 12.31秒。聞き取りは6本とも原稿の語どおりで、「たかっ」の促音が落ちて聞こえるのは 1.1 のときと同じ）。速度は生成の要求（`POST /task` の本文）に乗らず、
+  下書きの `audio_settings.prosody.speed` に残るだけ。画面の幅は 0.7〜1.3。速さは書き出しの倍率で決める
+  （`tools/shorts/render/style.json` の `narration.max_tempo`）。`gen --speed` は試し用に残す（終わると元の値に戻す。
+  途中で切れたら `fish_web.py speed --model <声> --value 1.1` と `restore --backup <写し>` で戻す）
 - **入力欄はあやとの下書きと同じもの**（`GET/PUT api.fish.audio/tts-draft` でサーバーに保存される）。
   作る前に `fish_web.py backup` で下書きの返事（`GET /tts-draft`）を写しておき（EC2 の `~/voice/private/`、
   権限 700、git に入れない。`?modelId=` を付けずに開くので話者は替わらない）、

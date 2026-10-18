@@ -1,0 +1,8 @@
+[
+ {"plan": "yk-by7R7iPA/A", "place": "youtube", "state": "done", "id": "Do04EoViYdU", "sha256": "652410cbf5fb21d66d5e714f380e8f73207e47f37d9bd7664303a7c290b58d88", "at": "2026-10-17T01:42:46Z", "note": "台帳より前に出した（#920）。時刻は #926 に報告した時刻（これより前に上げている）"},
+ {"plan": "yk-by7R7iPA/A", "place": "tiktok", "state": "done", "id": "7697445174338751765", "sha256": "652410cbf5fb21d66d5e714f380e8f73207e47f37d9bd7664303a7c290b58d88", "at": "2026-10-17T01:38:34Z", "note": "台帳より前に出した（#920）。時刻は投稿 ID に入っている時刻"},
+ {"plan": "yk-by7R7iPA/B", "place": "youtube", "state": "done", "id": "rVGC150Y3hA", "sha256": "19e6cbc6d52e0e239e408757e4bcb0f2f11757fb8d447ac4bcd4b71b3d643514", "at": "2026-10-17T10:42:08Z", "note": "台帳より前に出した（#920）。時刻は #926 に報告した時刻（これより前に上げている）"},
+ {"plan": "yk-by7R7iPA/B", "place": "tiktok", "state": "done", "id": "7697584644493036820", "sha256": "19e6cbc6d52e0e239e408757e4bcb0f2f11757fb8d447ac4bcd4b71b3d643514", "at": "2026-10-17T10:39:47Z", "note": "台帳より前に出した（#920）。時刻は投稿 ID に入っている時刻"},
+ {"plan": "yk-by7R7iPA/C", "place": "youtube", "state": "done", "id": "W96gFSEKxZs", "sha256": "0ebed6b3085c79c1edf52d0063220cc11dd4a4a5697519204f78cda258d2ed1c", "at": "2026-10-17T12:08:52Z", "note": "台帳より前に出した（#920）。時刻は #926 に報告した時刻（これより前に上げている）"},
+ {"plan": "yk-by7R7iPA/C", "place": "tiktok", "state": "done", "id": "7697607097986370836", "sha256": "0ebed6b3085c79c1edf52d0063220cc11dd4a4a5697519204f78cda258d2ed1c", "at": "2026-10-17T12:06:55Z", "note": "台帳より前に出した（#920）。時刻は投稿 ID に入っている時刻"}
+]

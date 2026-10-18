@@ -11,13 +11,14 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | `send.py` | 手元 | 動画を小分けで EC2 へ送り、EC2 で sha256 を照らす。止まっても続きから。`clean` で送った跡を消す |
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
 | `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで） |
+| `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
 
 ## 手順（1本ぶん）
 
 ```bash
 D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
 python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 30MB で約15分
-python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A           # 非公開で保存。ショートの ID が出る
+python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A --sha <sha256>   # 非公開で保存。ショートの ID が出る（sha256 は send が出す mp4_sha256）
 python3 tools/shorts/post/post.py yt-related --video <元の動画ID> --id <ショートのID>   # 関連動画に元のアーカイブ
 python3 tools/shorts/post/post.py cover      --dir $D --video <元の動画ID> --option A   # 題の札が見えるコマ（既定 1.0秒）を切り出して送る
 python3 tools/shorts/post/post.py yt-thumb   --video <元の動画ID> --option A --id <ショートのID>   # それをサムネイルに
@@ -28,6 +29,10 @@ python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A
 python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画と SSM のログの base64 を消す
 ```
 
+- **同じ動画を同じ場所へ2回出さない**（#920）。`yt-draft` と `tt-post` は EC2 に触る前に台帳 `posted.json` を引き、
+  同じ sha256 × 同じ場所が `done` なら投稿 ID を出して止まる。`pending`（前の回が途中で切れた）でも止まるので、
+  投稿先で見てから、出ていれば `post.py mark --place <youtube|tiktok> --sha <sha256> --done --id <投稿ID>`、
+  出ていなければ `--again` を付けてやり直す。始める直前に `pending`、ID が取れたら `done` を書く。**台帳が変わったらコミットする**
 - EC2 で Chrome を開く手は、どれも**遠隔デスクトップの入力が7分止まっているのを見てから**動く（`post.py` の `GUARD`）。
   あやとが触っている最中なら `desktop_busy` で何もせずに戻る
 - 待つあいだは `~/locks/shorts-post` を触って見張り（idle-stop）に止められないようにしている。終わったら消す

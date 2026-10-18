@@ -116,6 +116,9 @@ python3 tools/shorts/render/remote.py up --draft --name yk-v3d …              
 
 - 指示書が指す素材・声・BGM を全部集め、**中身の sha256 の名前で** GCS の非公開バケット
   （`render/cas/<sha256>`、#938）に作業箱から直に上げる。同じものは2回上げない（2回目からは0MB）
+- **速める声は作業箱で作ってから運ぶ**（`remote.py` の `bake_narration`）。声を速める Rubber Band はランナーに
+  入っていないので、作業箱で速めた wav を行の `file`（そのまま使う声）に差し替える。ランナーの道具を足さずに済み、
+  声のバイト列も作業箱と同じになる
 - 本体の job は書き出し → 検査（14項目を4組に分けて同時に）→ 帯の絵（`<id>_strips.jpg`）→
   一覧の絵（`<id>.sheet.jpg`）→ GCS に置く。双子の job は同じ指示書を別のランナーで書いて sha256 だけ置く
 - 出来たものは `--out/<name>/<id>/`（mp4・`qa.json`/`qa.md`・帯・一覧・`plan.json`・`work.tgz`）。
@@ -192,7 +195,8 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
 | `title.text` | 上のタイトル。`\n` で改行。無ければ文節で折り返す |
 | `title.look` / `from` / `to` / `line` | `"card"` で頭の数秒だけの題の札（`style` の `title_card`。黒い箱に白い太字、改行は題のとおり）。`line` はその札が字幕を兼ねるナレーションの行（その行の字幕は出さない） |
 | `notes[]` | 言葉にしない小さな注（`{"from", "to", "text"}`。例「Pulë＝鶏」）。`style` の `note` の置き場に出す |
-| `narration.tempo` | 声を音の高さを変えずに何倍速にするか（動画に1つ。ffmpeg の atempo）。詰めた声を速め、もう一度頭と尻を詰める |
+| `narration.tempo` | 声を音の高さを変えずに何倍速にするか（動画に1つ）。詰めた声を速め、もう一度頭と尻を詰める。**上限は様式の `narration.max_tempo`（いま 1.4）で、越えた指示書は書き出さずに止まる**（早送りに聞こえる。字を減らす。viral-shorts-creator の `script_writing.md` 6） |
+| `narration.stretch` | 速める道具。既定は `rubberband`（Rubber Band の R3・`--fine --formant`。`apt-get install rubberband-cli`）。`atempo`（ffmpeg）は1本目の作り方を再現するときだけ。B の頭10行で測ると、atempo は 1.3倍で継ぎ目の周期の乱れ（jitter）が素の声より +21%、R3 は ±0%（`docs/island-misses.md` #285） |
 | `narration.lines[].big` | 【大】の行。字幕そのものを大きく、`style` の `big.looks[名前]` の見た目と動きで出す |
 | `audio` | `style` の `audio` の上書き（`duck_db` など。動画ごとに） |
 | `telops[]` | 強調の字（絵コンテの「中央: …」）。`{"from", "to", "text"}`。重ねてはいけない（同時に1つ）。`parts: [{"text", "at"}]` で言葉を順に足す |
@@ -376,11 +380,11 @@ d2 は白い字に黒縁で止まったまま）。下の v2 の表（`style_p3.
   `big` の行は【大】の字幕、`corner_note` は小さな注になる
 - **喋る速さ**: spec の `narration_cps_target`（毎秒の字数。伸びているショートは 8.7〜9.2）に合わせ、
   動画に1つの倍率で声を速める。倍率 ＝ 詰めた声の長さの合計 ÷（喋る字数 ÷ 目標）。喋る字数は句読点・記号・
-  空白を数えない。上限は `--max-tempo`（既定 2.2）。行の間は `--gap`（伸びているショートは 0.1〜0.15 秒）。
+  空白を数えない。上限は `--max-tempo`（道具の既定は 2.2 のままなので、**様式の `narration.max_tempo` と同じ 1.4 を渡す**。渡し忘れると書き出しが止まる）。上限で止まって目標の速さに届かないときは、倍率を上げずに原稿の字を減らす。行の間は `--gap`（伸びているショートは 0.1〜0.15 秒）。
   `--max-pause` を付けると、速めたあとの行の中の間（その行のいちばん大きい所から −35dB より小さい所）も
   その秒数までに縮め、縮めたぶん倍率を下げて目標の速さに合わせ直す。
   倍率と、できた速さ（声の間だけ・動画全体）は `meta.speech` に残る。
-  声の大きさは速めたあとの行で揃える（atempo は大きさを変えない線形の処理なので、揃えてから速めるのと同じ）
+  声の大きさは速めたあとの行で揃える
 
 ### テロップを出すか
 

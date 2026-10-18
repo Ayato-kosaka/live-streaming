@@ -3,21 +3,25 @@
 
     D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
     python3 tools/shorts/post/post.py send     --dir $D --video yk-by7R7iPA --option A
-    python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A
+    python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A --sha <sha256>
     python3 tools/shorts/post/post.py yt-related --video yk-by7R7iPA --id <ショートのID>
     python3 tools/shorts/post/post.py yt-publish --id <ショートのID> [--at 2026-10-17T05:00:00Z]
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --dry
-    python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A [--at 2026-10-17T05:00:00Z]
+    python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --sha <sha256> [--at 2026-10-17T05:00:00Z]
+    python3 tools/shorts/post/post.py mark       --place tiktok --sha <sha256> --done --id <投稿ID>
     python3 tools/shorts/post/post.py clean    --video yk-by7R7iPA
 
 手順と判断の基準は同じ置き場の README.md。EC2 で動くのは yt_post.py / tt_post.py。
+投稿の段（yt-draft / tt-post）は、EC2 に触る前に台帳（posted.json、posted.py）を引く。
 """
 import argparse, hashlib, json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, ".claude", "skills", "ec2-chrome"))
+sys.path.insert(0, HERE)
 import ec2  # noqa: E402
+import posted  # noqa: E402
 # EC2 の家。手元の道具に直書きしない（tools/sprites/rootcheck.mjs）
 EC2_HOME = "/home/ubuntu"
 
@@ -77,10 +81,59 @@ def remote_sha_ok(a, want):
     return got == want
 
 
+def ledger_sha(a):
+    """台帳を引く鍵（動画の sha256）と、引けないときの理由。--sha か、--dir の動画から"""
+    s = a.sha.lower() if a.sha else None
+    if a.dir and a.option:
+        local = posted.sha256_of(os.path.join(a.dir, f"{a.option}.mp4"))
+        if s and s != local:
+            return None, f"--sha と --dir の動画の sha256 が違う（{s[:8]}… / {local[:8]}…）"
+        s = local
+    if not s:
+        return None, "台帳を引くのに動画の sha256 が要る。--sha <send が出した mp4_sha256> か --dir を付ける"
+    if not posted.SHA_RE.fullmatch(s):
+        return None, f"--sha が 64 桁の16進ではない: {s}"
+    return s, None
+
+
+def posting(a, place, body, timeout):
+    """投稿の段を台帳で挟む。**EC2 に触る前に引く** → EC2 の mp4 を照らす → 始める直前に pending →
+    ID が取れたら done。落ちたら pending のまま残る（次の回が止まる）"""
+    sha, why = ledger_sha(a)
+    if why:
+        print(f"止めた: {why}")
+        return 1
+    try:
+        rows = posted.load()
+    except posted.Broken as e:
+        print(f"止めた: {e}")
+        return 1
+    stop = posted.refusal(rows, sha, place, a.again)
+    if stop:
+        print(stop)
+        return 1
+    # 台帳に書く sha256 が、実際に上げるもの（EC2 に送った mp4）と同じであること
+    if not remote_sha_ok(a, sha):
+        return 1
+    rec = posted.begin(sha, place, f"{a.video}/{a.option}", a.again)
+    r = remote_run(body, timeout)
+    if r.get("error") == "desktop_busy":
+        # GUARD は本体を1行も動かさずに戻る。何も始まっていないので pending を残さない
+        posted.forget(rec)
+        return 1
+    vid = posted.id_of(place, r)
+    done = bool(r.get("ok") and vid)
+    new = posted.finish(rec, vid, done)
+    if new["state"] == "done":
+        print(f"台帳: {place} {new['plan']} → done（投稿 ID {new['id']}）")
+        return 0
+    print(f"台帳: 終わりを確かめられなかったので pending のまま残した（{new['plan']}・{place}）。\n" + posted.next_step(new))
+    return 1
+
+
 def cmd_yt_draft(a):
     d = f"{REMOTE}/{a.video}"
-    r = remote_run(f"cd {CDP} && timeout 400 python3 yt_post.py draft {d}/{a.option}.mp4 {d}/post_{a.option}.json\n", 450)
-    return 0 if r.get("ok") else 1
+    return posting(a, "youtube", f"cd {CDP} && timeout 400 python3 yt_post.py draft {d}/{a.option}.mp4 {d}/post_{a.option}.json\n", 450)
 
 
 def cmd_yt_related(a):
@@ -97,12 +150,16 @@ def cmd_yt_publish(a):
 
 
 def cmd_tt_post(a):
-    if a.sha and not remote_sha_ok(a, a.sha):
-        return 1
     d = f"{REMOTE}/{a.video}"
     extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover {d}/{a.option}_cover.jpg" if getattr(a, "cover", None) else "")
-    r = remote_run(f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra}\n", 560)
-    return 0 if r.get("ok") else 1
+    body = f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra}\n"
+    if a.dry:
+        # 投稿の手前までの確かめ。出さないので台帳は見ない・書かない
+        if a.sha and not remote_sha_ok(a, a.sha):
+            return 1
+        r = remote_run(body, 560)
+        return 0 if r.get("ok") else 1
+    return posting(a, "tiktok", body, 560)
 
 
 def cmd_cover(a):
@@ -124,11 +181,30 @@ def cmd_yt_thumb(a):
     return 0 if '"ok": true' in out else 1
 
 
+def cmd_mark(a):
+    """投稿先で見て確かめた結果を台帳に書く（pending → done）。EC2 には触らない"""
+    if not a.done:
+        print("止めた: mark は --done だけ（出ていなかったなら、投稿の段に --again を付けてやり直す）")
+        return 1
+    sha, why = ledger_sha(a)
+    if why:
+        print(f"止めた: {why}")
+        return 1
+    plan = f"{a.video}/{a.option}" if a.video and a.option else None
+    try:
+        r = posted.mark(sha, a.place, a.id, plan)
+    except (posted.Broken, posted.Refused) as e:
+        print(f"止めた: {e}")
+        return 1
+    print("台帳: " + json.dumps(r, ensure_ascii=False))
+    return 0
+
+
 def cmd_clean(a):
     return subprocess.run([sys.executable, os.path.join(HERE, "send.py"), "clean", f"{REMOTE}/{a.video}"]).returncode
 
 
-if __name__ == "__main__":
+def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("cmd")
     p.add_argument("--issue", type=int)
@@ -141,9 +217,17 @@ if __name__ == "__main__":
     p.add_argument("--dry", action="store_true")
     p.add_argument("--cover-at", type=float, default=1.0, help="cover: 切り出す秒（題の札が見えている間）")
     p.add_argument("--cover", action="store_true", help="tt-post: 題の札が見えるコマ（<案>_cover.jpg、送り済み）をカバーにする")
-    a = p.parse_args()
+    p.add_argument("--again", action="store_true", help="yt-draft / tt-post: 台帳に記録があっても出す（投稿先で出ていないのを見たときだけ）")
+    p.add_argument("--place", help="mark: youtube / tiktok")
+    p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
+    a = p.parse_args(argv)
     fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-related": cmd_yt_related,
-          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover, "clean": cmd_clean}.get(a.cmd)
+          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover,
+          "mark": cmd_mark, "clean": cmd_clean}.get(a.cmd)
     if not fn:
         sys.exit(__doc__)
-    sys.exit(fn(a))
+    return fn(a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

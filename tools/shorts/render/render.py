@@ -184,6 +184,49 @@ def atempo_chain(tempo: float) -> str:
     return ",".join(f"atempo={step:.6f}" for _ in range(n))
 
 
+# 声を速める道具（`narration.stretch` で替えられる。既定は rubberband）。
+# 1本目（北マケドニアの回）は atempo で 1.73〜1.79倍に縮め、あやとに「早送りで違和感」と言われた（#285）。
+# B の頭10行で測ると、atempo は 1.2倍から継ぎ目の周期の乱れ（Praat の jitter）が素の声より増え
+# （1.3倍 +21%・1.76倍 +36%）、Rubber Band の R3（--fine）は 1.3倍まで素の声と同じ・1.5倍で +7% だった。
+# ffmpeg の rubberband フィルタ（実時間の R2）は HNR が 2〜3dB 落ちて atempo より悪かったので使わない。
+STRETCH = "rubberband"
+RUBBERBAND = ("rubberband", "--fine", "--formant", "--quiet")
+
+
+def stretched(src: Path, tempo: float, how: str) -> np.ndarray:
+    """src（48kHz・1ch の wav）を、音の高さを変えずに tempo 倍の速さにした配列。"""
+    if how == "atempo":
+        raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(src), "-af",
+                              atempo_chain(tempo), "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
+                             check=True, capture_output=True).stdout
+        return np.frombuffer(raw, dtype="<f4")
+    if how != "rubberband":
+        sys.exit(f"未対応の伸び縮み（narration.stretch）: {how}")
+    if not shutil.which(RUBBERBAND[0]):
+        sys.exit("rubberband が無い（apt-get install rubberband-cli）。声を速めるのに使う（narration.stretch）")
+    out = src.with_name(f"{src.stem}.rb{os.getpid()}.wav")
+    try:
+        sh([*RUBBERBAND, "--tempo", f"{tempo:.6f}", str(src), str(out)], capture_output=True)
+        return decode_audio(out, 1)[:, 0]
+    finally:
+        out.unlink(missing_ok=True)
+
+
+def tempo_cap(style: dict) -> float:
+    """声の倍率の上限（様式の narration.max_tempo）。これより速く読ませる原稿は、字を減らして収める。"""
+    return float((style.get("narration") or {}).get("max_tempo") or 99.0)
+
+
+def check_tempo(narr: dict, style: dict) -> None:
+    """指示書の倍率が上限を越えていたら止める（書き出しで黙って丸めると、行の長さが時間割とずれる）。"""
+    tempo, cap = float(narr.get("tempo") or 1.0), tempo_cap(style)
+    if narr.get("lines") and tempo > cap + 1e-9:
+        cut = 100 * (1 - cap / tempo)
+        sys.exit(f"声の倍率 {tempo:.3f} が上限 {cap}（様式の narration.max_tempo）を越える。早送りに聞こえる。\n"
+                 f"  同じ尺に収めるなら原稿を約 {cut:.0f}% 減らし、声を作り直して build_edit.py を "
+                 f"--max-tempo {cap} で組み直す（viral-shorts-creator の script_writing.md 6）")
+
+
 def compress_pauses(x: np.ndarray, max_s: float, rel_db: float = -35.0) -> np.ndarray:
     """行の中の無音（その行のいちばん大きい所から rel_db より小さい 10ms が続く所）を max_s 秒までに縮める。
 
@@ -223,23 +266,23 @@ def compress_pauses(x: np.ndarray, max_s: float, rel_db: float = -35.0) -> np.nd
     return np.concatenate(out)
 
 
-def tempo_wav(src: Path, tempo: float, work: Path, max_pause: float | None = None) -> Path:
+def tempo_wav(src: Path, tempo: float, work: Path, max_pause: float | None = None,
+              how: str = STRETCH) -> Path:
     """詰めた声 src を tempo 倍の速さにして、もう一度頭と尻を詰める（字幕の出だしの物差しを保つ）。
 
     1本の動画の中では全行を同じ倍率にする（行ごとに変えると、行の間で喋る速さが揺れる）。
     max_pause があれば、行の中の間もその秒数までに縮める（伸びているショートはほとんど間を置かない）。
+    how は速める道具（上の STRETCH）。
     """
-    key = hashlib.sha256(src.read_bytes() + f"tempo|{tempo:.4f}|{max_pause}|{TRIM_VER}".encode()).hexdigest()[:16]
+    tag = f"tempo|{tempo:.4f}|{max_pause}|{TRIM_VER}" + ("" if how == "atempo" else f"|{how}|{' '.join(RUBBERBAND)}")
+    key = hashlib.sha256(src.read_bytes() + tag.encode()).hexdigest()[:16]
     out = work / "narration" / f"{key}.wav"
     if out.exists():
         return out
     if abs(tempo - 1.0) < 1e-6:
         x = decode_audio(src, 1)[:, 0]
     else:
-        raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(src), "-af",
-                              atempo_chain(tempo), "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"],
-                             check=True, capture_output=True).stdout
-        x = np.frombuffer(raw, dtype="<f4")
+        x = stretched(src, tempo, how)
     x = trim_voice(x)
     if max_pause:
         x = compress_pauses(x, float(max_pause))
@@ -253,6 +296,7 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     - `file`: 詰めずにそのまま使う（人が録った声など。頭の間も演出として残したいとき）
     - どちらも無ければ open_jtalk で読ませる（尺の下書き用。`tts_text` があれば読みはそちら）
     - `narration.tempo`（1 より大きい）があれば、詰めたあと音の高さを変えずにその倍率で速くする
+      （上限は様式の `narration.max_tempo`。道具は `narration.stretch`、既定は STRETCH）
     - `narration.max_pause_s` があれば、行の中の間をその秒数までに縮める（速めたあとの時間で）
     中身と処理が同じなら作り直さない。
     """
@@ -261,7 +305,7 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     out = narration_wav_raw(line, narr, base, work)
     if line.get("file") or (abs(tempo - 1.0) < 1e-6 and not mp):
         return out
-    return tempo_wav(out, tempo, work, mp)
+    return tempo_wav(out, tempo, work, mp, narr.get("stretch") or STRETCH)
 
 
 def narration_wav_raw(line: dict, narr: dict, base: Path, work: Path) -> Path:
@@ -669,6 +713,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     cut_starts = sorted({c["at"] for c in cuts if c["at"] > 0})
 
     narr = edit.get("narration", {})
+    check_tempo(narr, style)
     cap_st = style["caption"]
     cap_font = ImageFont.truetype(str(font_path(style, cap_st["font"])), cap_st["size"])
     inner = cap_st["max_width"] - 2 * cap_st["pad_x"] - 2 * cap_st.get("stroke", 0)
