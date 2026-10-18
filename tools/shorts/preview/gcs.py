@@ -161,7 +161,7 @@ def choose_bucket(client, creds) -> tuple[str, dict]:
         e = Bad(f"{BUCKET} を使わない: " + " / ".join(bad))
         e.probe = dict(probe, bad=bad)  # type: ignore[attr-defined]
         raise e
-    print(f"  ここに置く: {BUCKET}（非公開・{KEEP_DAYS}日で消える）")
+    print(f"  ここに置く: {BUCKET}（非公開・{' '.join(SHORT_LIVED)} は{KEEP_DAYS}日で消える）")
     return BUCKET, probe
 
 
