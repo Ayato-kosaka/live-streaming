@@ -27,7 +27,7 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 | 2 見どころ | 字幕・コマ・音・チャットを重ねて候補を8本以上。上位は zoom で1秒刻みに確かめる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
 | 3 企画 | 体験の違う3案。原稿・絵コンテ・尺の確認・自己評価・事実の表 | `shorts/videos/<id>/p1/plan.md` と絵コンテの絵 | `references/planning.md` |
 | 4 企画を見せる | 制作 issue に plan.md を出す → あやとが作る案を言うのを待つ。チャットで決まったら待たない | あやとの返事、またはチャットで決まったことの書き置き | この手引きの 5 |
-| 5 本編集 | 素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube・TikTok 共通の1本を書き出す（声の倍率は 1.4 まで。`build_edit.py` が「上限で止めた」と出したら原稿の字を減らす。上限を越えた指示書は `render.py` が止め、字を何%減らすかを出す）→ 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | `references/production.md` |
+| 5 本編集 | 素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube・TikTok 共通の1本を書き出す（声の倍率は 1.4 まで。上限で読ませても60秒に入らない原稿は、`build_edit.py` が組む段で止まって字を何%減らすかを出すので、原稿の字を減らす）→ 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | `references/production.md` |
 | 6 完成を見せる | `tools/shorts/preview/put.py up` でプレビューチャンネルに置き（7日で見られなくなる）、下見の URL と案ごとの投稿文を1つのコメントにまとめて制作 issue に出す | 出す案を言ったあやとの言葉（issue の返事かチャット。`B`・`全部` など） | `tools/shorts/preview/README.md`・この手引きの 5 |
 | 7 投稿 | 出してと言われた案だけ、EC2 の Chrome から出す。YouTube は非公開で上げる → 関連動画（元のアーカイブ）→ サムネイル → 公開、TikTok は投稿文・カバー。台帳 `posted.json` が同じ動画（sha256）を同じ場所へ2回出すのを止める | 媒体ごとの URL を制作 issue に書き、台帳の変わりをコミットした | `tools/shorts/post/README.md`・`references/production.md` 1 |
 | 8 数字・改善 | 途中（#921 数字・#922 仮説の台帳）。数字の取りかたと判定の手順は、1本目を回してから書く | まだ決まっていない | `references/playbook.md` |
