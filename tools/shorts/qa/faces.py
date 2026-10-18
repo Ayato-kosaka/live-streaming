@@ -5,10 +5,12 @@
 すぐ外の細かさよりずっと小さければ、ぼかしてある。
 
 検出器は2つのどちらか:
-  - YuNet（OpenCV の顔検出 CNN）。`models/face_detection_yunet_2023mar.onnx` か
-    環境変数 SHORTS_QA_YUNET に置いてあれば使う（2026-10-15 時点、この箱のプロキシは
-    github と huggingface の取得を断るので、まだ置いていない）
-  - Haar（OpenCV 4 の wheel に同梱。OpenCV 5 で削られた）。横顔の型も足す
+  - YuNet（OpenCV の顔検出 CNN。opencv_zoo の `face_detection_yunet_2023mar.onnx`）。重みは
+    環境変数 SHORTS_QA_YUNET → `qa/models/` → 書き出しの道具の `render/models/`（`fetch_fonts.sh` が
+    sha256 を確かめて落とす）の順に探し、在れば使う。書き出しの顔よけ・Actions の書き出し（remote.py）と同じ重み
+  - Haar（OpenCV 4 の wheel に同梱。OpenCV 5 で削られた）。重みがどこにも無いときだけ。横顔の型も足す。
+    顔でないものを顔と数えやすく、字と顔の検査が嘘の不合格を出す（v3 の B で7行）。だから重みが手元に
+    在るのに Haar に落ちないよう、`render/models/` も既定で見る
 どちらも無ければ not-checkable（「顔は無かった」とは言わない）。
 """
 from __future__ import annotations
@@ -18,7 +20,7 @@ import os
 import numpy as np
 from PIL import Image
 
-from common import HERE, HUMAN, NA, PASS, Ctx, frame_memo, iter_frames, result
+from common import HERE, HUMAN, NA, PASS, RENDER, Ctx, frame_memo, iter_frames, result
 
 STEP = 7                 # 30/7 = 4.3 コマ/秒（あやとの決め: 4コマ/秒以上）
 DET_SCALE = 0.5          # 540x960 で探す。いちばん小さい顔は 24px → 書き出しで 48px
@@ -37,20 +39,20 @@ TRACK_GAP = 3            # 同じ所の顔が、この数の見本（コマ）�
 # 弱いところ: 青や緑の照明の下の顔は肌色に入らず、見逃す（README の「弱いところ」）
 SKIN_MIN = 0.25
 YUNET_SCORE = 0.6        # YuNet の点の線（書き出しの顔よけが、チェックと同じ線で選び直すときに読む）
+YUNET_NAME = "face_detection_yunet_2023mar.onnx"
 
 
 def detector(cv2, also: tuple = (), full: bool = False):
     """（名前, 1コマの白黒 → 箱の並び）。無ければ None。
 
-    also: YuNet の重みを、ここで見つからないときに探す場所（字と顔の検査が、書き出しの道具の
-    `render/models/` を使う。顔の検査そのものは渡さないので、振る舞いは変わらない）。
+    YuNet の重みは、環境変数 SHORTS_QA_YUNET（在れば最優先）→ `qa/models/` → `render/models/` → also の順に探す。
+    also: ほかに探す場所（呼ぶ側が足したいとき）。
     full: YuNet のとき、箱の後ろに5点（右目・左目・鼻・右口角・左口角の x,y）も返す（字と顔の検査が
     「目と鼻」の範囲を決めるのに使う）。Haar は点を持たないので箱だけ。
     """
-    model = os.environ.get("SHORTS_QA_YUNET") or str(HERE / "models" / "face_detection_yunet_2023mar.onnx")
-    if not os.path.exists(model):
-        model = next((str(m) for m in also if os.path.exists(m)), model)
-    if os.path.exists(model) and hasattr(cv2, "FaceDetectorYN"):
+    places = [os.environ.get("SHORTS_QA_YUNET") or HERE / "models" / YUNET_NAME, RENDER / "models" / YUNET_NAME, *also]
+    model = next((str(m) for m in places if m and os.path.exists(m)), None)
+    if model and hasattr(cv2, "FaceDetectorYN"):
         det = cv2.FaceDetectorYN.create(model, "", (320, 320), YUNET_SCORE, 0.3, 5000)
 
         def run_yunet(bgr):

@@ -16,6 +16,9 @@
 - 演出の「寄る」は、ゆっくり寄る（1.0→1.12倍）。「A → B」の形なら、寄るのは「寄る」と書いた側のカット
 - カットの入りは spec の時刻を、取り込んだ窓（clips/index.json）の頭からのコマ数に直したもの。
   窓の終わりを越えるなら、越えないところまで入りを前にずらす（ずらしたら知らせる）
+- spec に `narration_cps_target` があれば、声を動画に1つの倍率で速める。倍率の上限は様式の
+  `narration.max_tempo`。要る倍率が上限を越えたら上限で読ませ、**そのときの尺が `FIT_S` 秒を越えるなら
+  指示書を書かずに終了コード 2 で止める**（字を何%・何字減らすかを出す）。越えなければ注意を1行出して組む
 
 ## 人が決めること（overrides）
 
@@ -39,6 +42,11 @@ FPS = 30
 GAP_S = 0.25          # 行と行の間（声が終わってから次の行まで）
 ZOOM_TO = 1.12        # 「寄る」の終わりの倍率。3〜5秒でこれくらいだと、寄っていると気づくが酔わない
 MIN_CUT = 12          # 1カットの最短（0.4秒）。これより短い画は、何が写ったか分からない
+# 上限の倍率で読ませた尺がこれを越えたら、組まずに止める。決まりは60秒未満（qa の container.py）。
+# 見積もりは組み立てと同じ足しかた（row_frames）なので、上限のまま組めば指示書の尺と同じになる。
+# 1秒手前で止めるのは、組んだあとの手直し（hold・末尾を足す）と、--max-pause で倍率を下げ直したときに
+# 伸びるぶんの余裕。組んでから60秒を越えたと分かると、声の作り直しから書き出しまでやり直しになる（#916）
+FIT_S = 59.0
 
 
 # ---------------------------------------------------------------- 時刻と文
@@ -317,6 +325,56 @@ def narration_frames(lines: list[dict], narr: dict, work: Path) -> list[tuple[in
     return out
 
 
+def big_looks_for(rows: list[dict], card_row: int | None, big_order: list[str], big_looks: dict) -> list[str | None]:
+    """行ごとの【大】の見た目の名前（【大】でない行は None）。
+
+    spec の big_style（様式の big.looks の名前）。書いていなければ様式の order の順に替える（同じ形が続くと
+    目が慣れる）。題の札の行は【大】にしない。
+    """
+    out: list[str | None] = []
+    n_big = 0
+    for i, r in enumerate(rows):
+        if not r.get("big") or i == card_row:
+            out.append(None)
+            continue
+        look = r.get("big_style") or big_order[n_big % len(big_order)]
+        if look not in big_looks:
+            sys.exit(f"{i}行目: big_style {look!r} は様式の big.looks に無い（{', '.join(big_looks)}）")
+        n_big += 1
+        out.append(look)
+    return out
+
+
+def row_frames(voice_frames: int, hold: float, pre: int, last: bool, args) -> int:
+    """1行の長さ（コマ）＝ 声 ＋ 行の間 ＋ hold ＋【大】の字が出きるまでの間 ＋（最後の行だけ）末尾。
+
+    組み立ても、上限で読ませたときの尺の見積もりも、これ1つで数える（足しかたが2つあると、
+    見積もりでは入るのに組むと60秒を越える、が起きる）。
+    """
+    n = voice_frames + round((args.gap + hold) * FPS) + pre
+    if last:
+        n += round(args.tail * FPS)
+    return n
+
+
+def over_cap_message(cap: float, video_s: float, voice_s: float, chars: int) -> str:
+    """上限の倍率でも尺に入らないときの、止まる知らせ。字を何%・何字減らせば FIT_S 秒に入るか。
+
+    減らすのは声だけで、行の間と末尾は行の数で決まるので残る。声は字の数にほぼ比例するとみて、
+    声に使える秒（FIT_S − 声のほか）に入るまでの割合を出す。割合は切り上げ、字数はその割合から出す
+    （2つの数が食い違わない。行ごとの声はコマに切り上がるので、ちょうどの割合だと入りきらないことがある）。
+    """
+    room = FIT_S - (video_s - voice_s)
+    head = f"上限 {cap:g} でも {video_s:.1f} 秒になる。"
+    if room <= 0:
+        return (head + f"行の間と末尾だけで {video_s - voice_s:.1f} 秒あり、字を減らしても60秒未満にならない。"
+                "行の数を減らす（viral-shorts-creator の script_writing.md 6）")
+    pct = math.ceil((1 - room / voice_s) * 100)
+    return (head + f"60秒未満にするには、字を約 {pct}% 減らす（あと {-(-chars * pct // 100)} 字）\n"
+            f"  倍率は上げない（早送りに聞こえる）。原稿を減らして声を作り直し、組み直す。"
+            f"見込みで {FIT_S:.1f} 秒までに入れる（viral-shorts-creator の script_writing.md 6）")
+
+
 def split_row(n_frames: int, n_cuts: int, voice_frames: int, pauses, text: str, shares) -> list[int]:
     """行の長さ n_frames を n_cuts 本に分ける（各カットのコマ数）。"""
     if n_cuts == 0:
@@ -396,6 +454,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     else:
         narr = {"engine": "open_jtalk", "speed": args.speed}
         lines = [{"text": r["line"]} for r in rows]
+    sys.path.insert(0, str(RENDER))
+    import render as R  # noqa: E402
+    st_all = R.load_style(args.style, Path(args.out).resolve().parent)
+    big_st = st_all["big"]
+    big_order, big_looks = big_st["order"], big_st["looks"]
+    card_row = next((i for i, r in enumerate(rows) if r.get("card")), None) if spec.get("title_card") else None
+    looks = big_looks_for(rows, card_row, big_order, big_looks)
+    pres = [int(big_looks[lk].get("pre_roll_frames", 0)) if lk else 0 for lk in looks]
+    holds = [float(rows_ov.get(str(i), {}).get("hold", r.get("hold", 0))) for i, r in enumerate(rows)]
+
     work = Path(args.work)
     measured = narration_frames(lines, narr, work)
     speech = None
@@ -403,9 +471,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     if cps and args.max_tempo is None:
         # 上限は様式の narration.max_tempo と同じ値を読む。別の既定（2.2）を持っていると、
         # 渡し忘れた指示書が render.py の上限で止まる
-        sys.path.insert(0, str(RENDER))
-        import render as R  # noqa: E402
-        args.max_tempo = R.tempo_cap(R.load_style(args.style, Path(args.out).resolve().parent))
+        args.max_tempo = R.tempo_cap(st_all)
     if cps:
         # 喋る速さを、伸びているショートの速さ（毎秒 cps 字）に揃える。倍率は動画に1つ
         # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る
@@ -413,14 +479,23 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         dur = sum(vf for vf, _ in measured) / FPS
         raw = dur / (chars / cps)
         tempo = min(max(raw, 1.0), args.max_tempo)
-        if raw > args.max_tempo:
-            print(f"  注意: 毎秒 {cps} 字に要る倍率 {raw:.2f} は上限 {args.max_tempo} を越えるので、上限で止めた",
-                  file=sys.stderr)
         narr["tempo"] = round(tempo, 3)
         if args.max_pause:
             narr["max_pause_s"] = args.max_pause
         measured = narration_frames(lines, narr, work)
         voiced = sum(vf for vf, _ in measured) / FPS
+        if raw > args.max_tempo:
+            # 上限で読ませた尺を、組み立てと同じ足しかたで見積もる。入らないなら、ここで止める。
+            # 組んで書き出してから60秒を越えたと分かると、声の作り直しから書き出しまでがやり直しになる。
+            # 倍率を上げて入れるのはしない（早送りに聞こえる。#285）。減らすのは字
+            vfs = [vf for vf, _ in measured]
+            fit_s = sum(row_frames(vf, h, p, k == len(vfs) - 1, args)
+                        for k, (vf, h, p) in enumerate(zip(vfs, holds, pres))) / FPS
+            if fit_s > FIT_S:
+                print(over_cap_message(args.max_tempo, fit_s, voiced, chars), file=sys.stderr)
+                sys.exit(2)
+            print(f"  注意: 毎秒 {cps} 字に要る倍率 {raw:.2f} は上限 {args.max_tempo} を越えるので、上限で止めた"
+                  f"（上限で読んで {fit_s:.1f} 秒の見込み）", file=sys.stderr)
         for _ in range(2):
             # 間を縮めたぶん、声の間の速さが目標を越える。倍率を下げて合わせ直す（2回でほぼ止まる）
             want = chars / cps
@@ -434,17 +509,10 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
 
     title, _ = parse_telop(rows[0].get("telop", ""))
     title = ov.get("title") or title or spec.get("title_card") or spec["title"]
-    card_row = next((i for i, r in enumerate(rows) if r.get("card")), None) if spec.get("title_card") else None
     if card_row is not None:
         # 題の札がその行の字幕を兼ねる（札と字幕に同じ言葉を2回出さない）
         lines[card_row]["caption"] = ""
-    sys.path.insert(0, str(RENDER))
-    import render as R  # noqa: E402
-    st_all = R.load_style(args.style, Path(args.out).resolve().parent)
-    big_st = st_all["big"]
-    big_order, big_looks = big_st["order"], big_st["looks"]
     mood_looks = (st_all.get("moods") or {}).get("looks", {})
-    n_big = 0
     notes = []
     prev_end: float | None = None  # 1つ前の行の最後のカットが、元動画のどこで終わったか（「同上」の続き）
     prev_spec: dict = {}
@@ -454,25 +522,17 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     t = 0
     for i, (r, ln, (vf, pauses)) in enumerate(zip(rows, lines, measured)):
         ro = rows_ov.get(str(i), {})
-        hold = float(ro.get("hold", r.get("hold", 0)))
-        n = vf + round((args.gap + hold) * FPS)
-        if i == len(rows) - 1:
-            n += round(args.tail * FPS)
+        n = row_frames(vf, holds[i], pres[i], i == len(rows) - 1, args)
         ln["at"] = t
-        if r.get("big") and i != card_row:
-            # 【大】の行は字幕そのものを大きく。見た目は spec の big_style（様式の big.looks の名前）。
-            # 書いていなければ様式の order の順に替える（同じ形が続くと目が慣れる）
-            ln["big"] = r.get("big_style") or big_order[n_big % len(big_order)]
-            if ln["big"] not in big_looks:
-                sys.exit(f"{i}行目: big_style {ln['big']!r} は様式の big.looks に無い（{', '.join(big_looks)}）")
-            n_big += 1
-            pre = int(big_looks[ln["big"]].get("pre_roll_frames", 0))
-            if pre:
+        if looks[i]:
+            # 【大】の行は字幕そのものを大きく（見た目の選びかたは big_looks_for）
+            ln["big"] = looks[i]
+            if pres[i]:
                 # 字が薄い所から現れる見た目は、出きってから声を出す（声の頭で字が読めないと、字幕と声がずれる）。
-                # 画の切り替えと字の出はじめは行の頭、声はそのあと pre コマ。オチの前のひと呼吸になる
+                # 画の切り替えと字の出はじめは行の頭、声はそのあと pre コマ（行の長さに足してある）。
+                # オチの前のひと呼吸になる
                 ln["caption_from"] = t
-                ln["at"] = t + pre
-                n += pre
+                ln["at"] = t + pres[i]
         mood = r.get("mood")
         if mood and mood != "plain" and not r.get("big") and i != card_row:
             # 感情の字幕（書体・色・動きは様式の moods.looks[mood]）。plain・【大】の行・題の札の行には付けない
@@ -646,7 +706,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     return edit
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("spec")
     ap.add_argument("--clips", required=True, type=Path, action="append",
@@ -672,7 +732,7 @@ def main() -> int:
     ap.add_argument("--duck-db", type=float, help="ナレーションの間に BGM を下げる量（dB。既定は様式の duck_db）")
     ap.add_argument("--video", help="指示書の id の頭（動画 ID）")
     ap.add_argument("--work", help="声の測りの置き場（既定: 出力の横に <名前>.narr）")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     a.work = a.work or str(a.out.with_suffix(".narr"))
     spec = json.loads(Path(a.spec).read_text())
     clips = load_clips(a.clips)
