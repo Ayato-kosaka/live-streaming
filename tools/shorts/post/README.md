@@ -17,7 +17,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 
 ```bash
 D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
-python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # Actions が URL を作るのを待つぶん（1分ほど）＋数秒
+python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 1分ほど（ほとんどが Actions の URL 待ち）
 python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A --sha <sha256>   # 非公開で保存。ショートの ID が出る（sha256 は send が出す mp4_sha256）
 python3 tools/shorts/post/post.py yt-related --video <元の動画ID> --id <ショートのID>   # 関連動画に元のアーカイブ
 python3 tools/shorts/post/post.py cover      --dir $D --video <元の動画ID> --option A   # 題の札が見えるコマ（既定 1.0秒）を切り出して送る
@@ -59,6 +59,12 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 - **URL は標準出力・コミット・issue に出さない。** `send.py` は名前・大きさ・秒・sha256・HTTP の数だけを出す。
   鍵と開いた URL は一時の場所（リポジトリの外）に置き、終わったら消す
 - `post.py` の道具（`yt_post.py` など）は `ec2.py put` のまま。中身はリポジトリの公開物と同じなので、ログに残っても困らない
+- 確かめたこと（2026-10-18、作り物の動画 21MB）: 起動から52秒（URL が来るまで44秒・上げる0.6秒・EC2 が落とす7秒）。
+  前の小分けは 30MB で約15分。EC2 の sha256 が一致し、消したあとの見る URL は 404。
+  EC2 の上でその動画の base64 から48字の断片を50本作り（断片をコマンドに載せないため）、SSM のログと
+  `/var/lib/amazon/ssm/*/document/orchestration` を数えて**どちらも0**。同じ数えかたで、`ec2.py put` で送った
+  乱数の字（4KB）はログの3行・orchestration の1ファイルに当たった（数えかたが見えている証拠）。ログは消さずに
+  6,711行 → 10,146行（1行目は同じ）
 
 ## 分かっていること（2026-10-17 に1本目で踏んだ）
 
