@@ -192,15 +192,24 @@ def main() -> int:
                     r["day"], r["currency"], fx_rate.WHY.get(why, why),
                     mask(r["id"]))
 
+    # **注記にも内訳を出す。** Actions の生ログは口から読めない（置き場が
+    # 別）ので、押したあとに何が動いたかを確かめられるのは注記だけ。
+    # 出すのは**日付と通貨**まで——`fx-tips` の issue が公開で出しているのと
+    # 同じ粒度で、額もチャンネルIDも入らない
+    def digest(items) -> str:
+        return " / ".join(f"{r['day']} {r['currency']}" for r in items) or "なし"
+
     if not apply:
         log.info("下見です。**1バイトも書いていません。**"
                  ' 書くには {"apply": true} を付けてください')
-        notice(f"下見: 直せる {len(ready)}件 / 直せない {len(left)}件")
+        notice(f"下見: 直せる {len(ready)}件（{digest([r for r, _ in ready])}）"
+               f" / 直せない {len(left)}件（{digest([r for r, _ in left])}）")
         return 0
 
     done = write(live, ready)
     log.info("書きました: %d件。直せなかったのは %d件", done, len(left))
-    notice(f"円に直した {done}件 / 直せなかった {len(left)}件")
+    notice(f"円に直した {done}件（{digest([r for r, _ in ready])}）"
+           f" / 直せなかった {len(left)}件（{digest([r for r, _ in left])}）")
     if left:
         log.warning("直せなかったぶんは貢献額に入りません。"
                     "fx-tips の issue が開いたままになります")
