@@ -1903,6 +1903,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "hk39U7ZEKCQ",
         "title": "北マケドニアで新市街みにいこか！",
         "date": "2026-10-17"
+      },
+      {
+        "videoId": "TDArug_te90",
+        "title": "北マケドニアで城塞みにいこ！",
+        "date": "2026-10-18"
       }
     ]
   }
