@@ -288,7 +288,14 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
           s = await where(rec.session, total);
         }
         if (s.done) break;
-        if (s.gone) { mem.set(key, { slot: rec.slot }); throw new Stop("gone"); }
+        if (s.gone) {
+          // セッションが切れた（GCS は1週間で捨てる）。取ってある枠で始め直す
+          if (++miss > CFG.retries) throw new Stop("net");
+          rec = { slot: rec.slot, session: await open(rec.slot) };
+          mem.set(key, rec);
+          at = base = 0; t0 = Date.now(); draw(0);
+          continue;
+        }
         if (s.bad) throw new Stop("http " + s.bad);
         // 進まない答えが続くときは、いったん止めて選び直してもらう（続きは覚えてある）
         if (s.next > at) {
@@ -303,7 +310,6 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
       const why = e instanceof Stop ? e.message : "err";
       if (why === "expired") fail("このページの期限が切れました", false);
       else if (why === "full") fail("このページで送れる本数を使い切りました", false);
-      else if (why === "gone") fail("最初から送り直します。もう一度、同じ動画を選んでください");
       else fail("途切れました。もう一度、同じ動画を選ぶと続きから送ります");
     } finally {
       busy = false;
