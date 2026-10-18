@@ -13,8 +13,10 @@ roles/storage.admin を付けた（#938、2026-10-17）。だから作るので�
 - 消す（DELETE・7日）… 7日を過ぎたらバケットの寿命（14日）が消す
 
 置き場は `live-streaming-d3cac-shorts-preview`（公開アクセス防止を強制・均一アクセス・
-14日で消える・消したものを取っておかない）。**使う前に権限を聞き、設定を読み直す。**
+`preview/` `render/` は14日で消える・消したものを取っておかない）。**使う前に権限を聞き、設定を読み直す。**
 寿命の決まりが無ければ、`storage.buckets.update` があればここで足す。
+同じバケットの `uploads/`（あやとが上げる録画）は30日で消える（`tools/shorts/upload/store.py`）。
+寿命の決まりは「どれか1つに当たれば消す」ので、14日の決まりは全体ではなく短い道だけに掛ける。
 ログに出すのはバケット名・権限の ○/✕・成否だけ。URL と道の乱数は出さない。
 """
 
@@ -33,6 +35,8 @@ BUCKET = f"{PROJECT}-shorts-preview"
 # あやとが日本から30MB の動画を開く分には、遠さで困らない
 LOCATION = "us-central1"
 KEEP_DAYS = 14
+# 14日で消す道。全体に掛けると uploads/（30日）まで14日で消える
+SHORT_LIVED = ("preview/", "render/")
 PUT_TTL = dt.timedelta(hours=1)
 # V4 署名の上限（604800秒）。これより長くは作れない
 GET_TTL = dt.timedelta(days=7)
@@ -99,7 +103,7 @@ def create_bucket(client):
     b = storage.Bucket(client, BUCKET)
     b.iam_configuration.uniform_bucket_level_access_enabled = True
     b.iam_configuration.public_access_prevention = "enforced"
-    b.add_lifecycle_delete_rule(age=KEEP_DAYS)
+    b.add_lifecycle_delete_rule(age=KEEP_DAYS, matches_prefix=list(SHORT_LIVED))
     # 消したものを7日取っておく既定（soft delete）を外す。顔の写った下見を
     # 「消したのに残っている」にしない
     b.soft_delete_policy.retention_duration_seconds = 0
@@ -108,16 +112,19 @@ def create_bucket(client):
 
 
 def has_lifecycle(b) -> bool:
-    ages = [r.get("condition", {}).get("age") for r in b.lifecycle_rules
-            if r.get("action", {}).get("type") == "Delete"]
-    return any(a and a <= KEEP_DAYS for a in ages)
+    """短い道（preview/ render/）が、どれも14日以内に消える決まりに当たるか。"""
+    rules = [r for r in b.lifecycle_rules if r.get("action", {}).get("type") == "Delete"
+             and 0 < (r.get("condition", {}).get("age") or 0) <= KEEP_DAYS]
+    return all(any(not r["condition"].get("matchesPrefix")
+                   or any(p.startswith(m) for m in r["condition"]["matchesPrefix"]) for r in rules)
+               for p in SHORT_LIVED)
 
 
 def bucket_ok(b, can_update: bool) -> list[str]:
     """非公開であること・寿命があることを、使う前に読み直して見る。寿命だけは足せるなら足す。"""
     b.reload()
     if not has_lifecycle(b) and can_update:
-        b.add_lifecycle_delete_rule(age=KEEP_DAYS)
+        b.add_lifecycle_delete_rule(age=KEEP_DAYS, matches_prefix=list(SHORT_LIVED))
         b.patch()
         b.reload()
         print(f"  {KEEP_DAYS}日で消える決まりを足した")
