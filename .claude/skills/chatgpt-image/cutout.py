@@ -3,7 +3,7 @@
 
 手元（このセッションの箱）で動く。EC2 も ChatGPT も要らない。
 
-    python3 .claude/skills/chatgpt-image/cutout.py <入力> <出力.png> [--tchroma 40] [--min-island 1500]
+    python3 .claude/skills/chatgpt-image/cutout.py <入力> <出力.png> [--tchroma 40] [--min-island 1500] [--gaps]
 
 背景透過は、まずこれ（#780 D1: 原則は手元。抜いて汚れが目立つときだけ ChatGPT）。
 🃏（1600×1200）を抜いたのがこれで、不透明部分の元画素との差 0・境目の白っぽい画素 0 / 19,407 だった。
@@ -14,6 +14,8 @@
   2. 境目の数pxだけ、その場の地の色 B と線の色 F の間のどこにいるかで alpha を出す
      （C = a*F + (1-a)*B を a について解く）。色は B を差し引いて戻す
   3. 外の白い粒（JPEG のまだら）で alpha が薄く残ったものは消す
+  4. `--gaps` を付けたときだけ、**外と繋がっていない地**も抜く（長い髪の房が
+     閉じ込めた白い楔。`trapped_bg`）
 
 効かないもの: 地が白でない（写真・模様・グラデーション）、輪郭線が無くて絵と地の色が近い。
 そういうときは ChatGPT（SKILL.md 2）。
@@ -133,9 +135,60 @@ def finish(C, out, alpha):
     return np.dstack([rgb, a8])
 
 
-def cut(C, tchroma=40.0, min_island=1500, min_contrast=40.0):
+def trapped_bg(C, light, surround=0.85, chroma=14.0, min_area=20):
+    """**外と繋がっていない地**を見つける（髪の房が輪になって閉じ込めた白）。
+
+    外周からの塗りつぶしは、どこかで外と繋がっている白しか抜けない。
+    長い髪の絵は房が交差して白い楔を閉じ込めるので、そのままだと
+    **髪の中に白い楔が何十か所も残る。** 縮めて眺めると髪の艶に見えるので
+    気づきにくい（2026-10-18、住人1人の絵で 38 か所・17,709画素）。
+
+    体の白（帽子・エプロン・靴下・髪に付いた星・リボンの白）と見分けるのは、
+    **囲っているものが髪色だけか**と、**色味が無いか**の2つ。星やリボンの
+    白は周りに青や金が混ざり、色も暖かい（赤 − 青が 15 以上）。
+
+    Args:
+        C: RGB の float 配列
+        light: 地とみなせる明るさの画素（`flood_bg` の2つ目）
+        surround: 囲いのうち髪色が占める割合の下限
+        chroma: これ以上色味があるものは体の白とみなして残す
+        min_area: これより小さい塊は見ない
+
+    Returns:
+        閉じ込められた地の mask
+    """
+    lab, n = ndi.label(light, structure=np.ones((3, 3)))
+    if not n:
+        return np.zeros(light.shape, bool)
+    edge = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    edge = set(int(x) for x in edge if x > 0)
+    R, G, B = C[..., 0], C[..., 1], C[..., 2]
+    lum = C @ np.array([0.299, 0.587, 0.114])
+    hair = (R >= B + 12) & (R >= G + 4) & (lum < 215)
+    out = np.zeros(light.shape, bool)
+    for i, sl in enumerate(ndi.find_objects(lab), start=1):
+        if i in edge or sl is None:
+            continue
+        pad = tuple(slice(max(0, s.start - 8), min(d, s.stop + 8))
+                    for s, d in zip(sl, light.shape))
+        m = lab[pad] == i
+        if m.sum() < min_area:
+            continue
+        ring = ndi.binary_dilation(
+            m, ndi.generate_binary_structure(2, 2), iterations=5) & ~m & ~light[pad]
+        if ring.sum() < 10:
+            continue
+        col = C[pad][m].mean(0)
+        if hair[pad][ring].mean() >= surround and col.max() - col.min() < chroma:
+            out[pad] |= m
+    return out
+
+
+def cut(C, tchroma=40.0, min_island=1500, min_contrast=40.0, gaps=False):
     """C は RGB の float 配列。RGBA の uint8 配列を返す"""
-    bg, _ = flood_bg(C, tmin=200, tchroma=tchroma, close=1)
+    bg, light = flood_bg(C, tmin=200, tchroma=tchroma, close=1)
+    if gaps:
+        bg = bg | trapped_bg(C, light)
     fg = ~bg
     # 輪郭線の外に落ちている小さな描きこみ（🃏 の帽子と角のすき間の薄い線など）は捨てる
     lab, n = ndi.label(fg, structure=np.ones((3, 3)))
@@ -169,8 +222,11 @@ if __name__ == "__main__":
     ap.add_argument("--tchroma", type=float, default=40.0, help="地とみなす色の薄さ。JPEG のにじみが多い絵は 28 くらいに下げる")
     ap.add_argument("--min-island", type=int, default=1500, help="これより小さい離れ小島は捨てる（px）。小さい絵は下げる")
     ap.add_argument("--min-contrast", type=float, default=40.0)
+    ap.add_argument("--gaps", action="store_true",
+                    help="外と繋がっていない地（長い髪が閉じ込めた白い楔）も抜く。"
+                         "**抜いたあと必ず目で見る**（体の白を巻き込んでいないか）")
     o = ap.parse_args()
     C = np.asarray(Image.open(o.src).convert("RGB")).astype(float)
-    rgba = cut(C, o.tchroma, o.min_island, o.min_contrast)
+    rgba = cut(C, o.tchroma, o.min_island, o.min_contrast, o.gaps)
     Image.fromarray(rgba, "RGBA").save(o.out, optimize=True)
     report(C, rgba)
