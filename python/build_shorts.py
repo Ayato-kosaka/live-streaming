@@ -84,6 +84,7 @@ import re
 import subprocess
 import sys
 import time
+import traceback
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -297,6 +298,27 @@ DAY = timedelta(days=1)
 FAR = date(9999, 12, 31)
 
 
+def shift(d: date, days: int) -> date:
+    """日をずらす。**端で溢れさせない。**
+
+    いま歩いている章には終わりが無いので、`spans()` の終わりは `FAR`
+    （9999-12-31）になる。そこへ幅（`EDGE_DAYS`）を足すと `date` の端を越えて
+    **`OverflowError` で落ちる。**
+
+    落ちるのは「その章の窓に入るショートが1本でも出た晩」だけなので、
+    章が変わってから**最初のショートが出る日まで黙っている。**
+    2026-09-28 にバルカンの章へ移って、10-16 のショートが一覧に出た
+    2026-10-17 の晩から5回連続で赤くなった（`docs/island-misses.md` #289）。
+
+    端に寄せるのが正しい。終わりの無い章の窓は「その日からずっと先まで」で、
+    今日出たショートはその章に入る。
+    """
+    try:
+        return d + days * DAY
+    except OverflowError:
+        return date.max if days > 0 else date.min
+
+
 def read_chapters() -> list[dict]:
     """`site/content/chapters.ts` から章を読む。
 
@@ -367,7 +389,7 @@ def chapter_of(d: str, sp: dict[str, tuple[date, date, bool]]) -> str | None:
     """
     day = date.fromisoformat(d)
     near = [(slug, b, e, br) for slug, (b, e, br) in sp.items()
-            if b - EDGE_DAYS * DAY <= day <= e + EDGE_DAYS * DAY]
+            if shift(b, -EDGE_DAYS) <= day <= shift(e, EDGE_DAYS)]
     if near:
         def gap(b: date, e: date) -> int:
             return max((b - day).days, (day - e).days, 0)
@@ -442,9 +464,13 @@ def dates(gap: float = WATCH_GAP) -> int:
     return left
 
 
-def build() -> int:
-    src = load()
-    sp = spans(read_chapters())
+def render(src: dict, sp: dict[str, tuple[date, date, bool]]) -> tuple[str, dict[str, list[dict]], list[str], list[dict]]:
+    """棚の字を組む。**書かない。**
+
+    書くところと分けてあるのは、見張り（`build_shorts_selftest.py`）が
+    **本物の置き場を1バイトも触らずに**同じ答えを作れるようにするため。
+    返すのは (焼く字, 置き場ごとの中身, 公開日の無い id, どの章にも入らないもの)。
+    """
     rows = sorted(
         [v for v in src["shorts"] if v.get("date")],
         key=lambda v: (v["date"], v["id"]),
@@ -462,8 +488,9 @@ def build() -> int:
 
     # 置き場の並びは、いちばん古いショートの日付順。**辞書の順に頼らない**
     order = sorted(groups, key=lambda g: (groups[g][0]["date"], g))
+    groups = {g: groups[g] for g in order}
 
-    body, n = [], 0
+    body = []
     for g in order:
         body.append(f"  {ts(g)}: [")
         for v in groups[g]:
@@ -472,9 +499,17 @@ def build() -> int:
                 if v.get(k):
                     fields.append(f"{k}: {ts(v[k])}")
             body.append("    { " + ", ".join(fields) + " },")
-            n += 1
         body.append("  ],")
-    OUT_TS.write_text(HEADER + "\n".join(body) + "\n" + FOOTER, encoding="utf-8")
+    return HEADER + "\n".join(body) + "\n" + FOOTER, groups, undated, orphan
+
+
+def build() -> int:
+    src = load()
+    sp = spans(read_chapters())
+    text, groups, undated, orphan = render(src, sp)
+    order = list(groups)
+    n = sum(len(v) for v in groups.values())
+    OUT_TS.write_text(text, encoding="utf-8")
 
     print(f"{OUT_TS} … {n}本 / {len(order)}か所")
     for g in order:
@@ -572,5 +607,30 @@ def main() -> int:
     return 0
 
 
+def guarded() -> int:
+    """思っていなかった落ち方を、**注記に出る形**に直してから返す。
+
+    2026-10-17 から5晩、ここは `OverflowError` の traceback だけを吐いて
+    終了コード 1 で終わっていた。traceback は `::error::` ではないので
+    **注記（annotation）に1行も出ない。** 呼ぶ側（`rebake.yml`）の赤も
+    「棚を取り直せませんでした。上の『焼く』を見てください」としか言わないので、
+    **run を開いてログを下まで送るまで、何が駄目だったのか分からなかった**
+    （`docs/island-misses.md` #289）。
+
+    握りつぶさない。traceback はそのまま出したうえで、**いちばん知りたい1行**
+    （例外の型と文と、落ちた場所）を `::error::` でもう一度言う。
+    """
+    try:
+        return main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 —— 種類を問わず、注記に出してから落とす
+        traceback.print_exc()
+        tb = traceback.extract_tb(sys.exc_info()[2])
+        where = f"{Path(tb[-1].filename).name}:{tb[-1].lineno} {tb[-1].name}()" if tb else "どこか不明"
+        print(f"::error::build_shorts が落ちました: {type(exc).__name__}: {exc}（{where}）")
+        return 1
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(guarded())
