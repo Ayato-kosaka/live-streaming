@@ -44,7 +44,7 @@ export type Resident = {
 };
 
 export const RESIDENTS: Resident[] = [
-  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 89, score: 0.945, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
+  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 89, score: 0.955, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
   { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 81, score: 0.995, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
   { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 77, score: 0.895, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
   { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", emoji: "🍃", days: 65, score: 0.980, channel: "UCfhX-rOzBe-QhWPPv03FtQA" },
@@ -57,12 +57,12 @@ export const RESIDENTS: Resident[] = [
   { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 35, score: 0.935, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
   { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 34, score: 0.445, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
   { icon: "cf129e7ea06f499693a002543dcd7c290", emoji: "🐏", days: 31, score: 0.825, channel: "UCjPL5OEBxF25njVbJ1Kq_wQ" },
-  { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 23, score: 0.890, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
+  { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 23, score: 0.885, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
   { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 20, score: 0.805, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
   { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", emoji: "🍑", days: 19, score: 0.855, channel: "UCJPDZ4SQYonw3vZvyxVKrjg" },
   { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 18, score: 0.420, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
   { icon: "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO", emoji: "🏀", days: 15, score: 0.415, channel: "UCszUt4VHX0G1qRJ-MJF8HNg" },
-  { icon: "a43e965774df4900b7c8724c66f5deba0", emoji: "🦐", days: 13, score: 0.860, channel: "UCrfV94VGIIo6irYh5F_T0Gw" },
+  { icon: "a43e965774df4900b7c8724c66f5deba0", emoji: "🦐", days: 13, score: 0.855, channel: "UCrfV94VGIIo6irYh5F_T0Gw" },
   { icon: "5cc99a90acad4e7997d92b27c5207c6c0", emoji: "🦆", days: 12, score: 0.840, channel: "UCjiF-3vPERhqlWe5VzLBENw" },
   { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", emoji: "🤤", days: 11, score: 0.755, channel: "UCPPWcswbh9XAkE7CWV0QLUg" },
   { icon: "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp", emoji: "🟣", days: 11, score: 0.815, channel: "UCwmvel3_YWKhDHgt8MFmykA" },
