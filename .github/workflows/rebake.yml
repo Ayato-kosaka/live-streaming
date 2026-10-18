@@ -722,15 +722,31 @@ jobs:
                   echo "::warning::$s は YouTube に届きませんでした。棚は前のままです（赤にはしません）"
                 elif [ "$rc" != "0" ]; then
                   git checkout -- site/content/shorts.ts python/data/shorts.json || true
-                  # 理由の1行。スクリプトが出した `::error::` の最後——
+                  # 理由の1行。スクリプトが出した `::error::` の**いちばん上。**
+                  # **最後ではない。** 手元の id が消えていた晩は3種類の行が出る——
+                  # 見出し（何が起きたか）→ 内訳（消えた id）→ 直しかた（`_gone` に足す）。
+                  # 最後を採ると「`_gone` に足してください」だけが注記に出て、
+                  # **何が起きたのかが落ちる。** 見出しが先頭に来る決まりなので上を採る。
                   # 何も出ていなければログの最後の1行（traceback なら例外の行）。
                   # **空で終わらせない**（空だと前と同じ「見てください」に戻る）
-                  why="$(grep -a '^::error::' /tmp/shorts-run.log | tail -1 | sed 's/^::error:://')"
+                  #
+                  # **`grep | head` を `$( )` に入れない。** この step は
+                  # `set -euo pipefail` の下にいる。`grep` は当たらなければ 1 を返すし、
+                  # 当たっても `head -1` が先に閉じると SIGPIPE で 141 を返す。
+                  # どちらも代入が失敗して、**`set -e` がこの step ごと殺す**——
+                  # つまり `SHORTS_BAD` が立たないまま「焼く」が落ちて、
+                  # **同じ晩の他の焼き込みまで commit されなくなる。**
+                  # 理由を1行出したいだけで棚以外を道連れにするので、
+                  # 当たらなくても 0 で終わる `awk` 1本にする。
+                  why="$(awk '/^::error::/{sub(/^::error::/, ""); print; exit}' /tmp/shorts-run.log)"
                   if [ -z "$why" ]; then
-                    why="$(grep -av '^$' /tmp/shorts-run.log | tail -1)"
+                    why="$(awk 'NF{last=$0} END{print last}' /tmp/shorts-run.log)"
                   fi
-                  # 注記は1行。長いと読めないので切る（全文は下の要約に出す）
-                  why="$(printf '%s' "$why" | cut -c1-300)"
+                  # 注記は1行。長いと読めないので切る（全文は下の要約に出す）。
+                  # **`cut -c` ではなく文字で切る。** coreutils の `cut -c` は
+                  # 実体がバイトなので、日本語の途中で切ると壊れた1文字が
+                  # `$GITHUB_ENV` に入る（300バイト＝日本語100字で、思ったより早く切れる）
+                  why="$(printf '%s' "$why" | python -c 'import sys; sys.stdout.write(sys.stdin.read()[:300])' || true)"
                   echo "SHORTS_BAD=1" >> "$GITHUB_ENV"
                   echo "SHORTS_WHY=${why:-理由がログに残っていません（終了コード $rc）}" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。棚は前のまま戻しました。run の最後で赤くします"
