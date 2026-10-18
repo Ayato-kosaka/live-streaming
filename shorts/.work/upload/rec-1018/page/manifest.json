@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "upload__rec-1018__page",
+ "mode": "upload",
+ "dest": "upload/rec-1018/page",
+ "video": null,
+ "channel": null,
+ "request": "shorts/upload/rec-1018.json",
+ "status": "ok",
+ "stages": {
+  "page": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 26830,
+  "tar_gz": 9462,
+  "encrypted": 9472
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 9472,
+   "sha256": "c2a573f8e14cfc90275ac1e7a8d6cebd3ef61a42b425a6adeba323cf773c94c8"
+  }
+ ],
+ "hmac_sha256": "c510f1d1e755c59e4bba8edce4a96cd8bbfbc812e0ce5432b4dd4084a9ab0be7",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39170822435",
+ "created_at": "2026-10-18T22:07:48+00:00",
+ "nonce": "9ab97780f41dacb7b5f3abb8",
+ "action": "page"
+}
