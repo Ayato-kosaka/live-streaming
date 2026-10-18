@@ -24,7 +24,7 @@ python3 tools/shorts/post/post.py cover      --dir $D --video <元の動画ID> -
 python3 tools/shorts/post/post.py yt-thumb   --video <元の動画ID> --option A --id <ショートのID>   # それをサムネイルに
 python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --dry --cover   # 投稿の手前まで確かめる
 # 出すのは、あやとが issue かチャットで「出して」と言った案だけ。EC2 の mp4 の sha256 を照らして出す
-python3 tools/shorts/post/post.py yt-publish --id <ショートのID> --sha <sha256>
+python3 tools/shorts/post/post.py yt-publish --video <元の動画ID> --option A --id <ショートのID> --sha <sha256>   # --video/--option が無いと EC2 の mp4 を引けず MISMATCH で止まる
 python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --cover --sha <sha256>
 python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画と SSM のログの base64 を消す
 ```
