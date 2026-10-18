@@ -413,7 +413,7 @@ jobs:
               # (2) 公開日の取れなかった晩はその本が棚から落ちるので、
               # **同じ1本が晩ごとに出たり消えたりしていた**（`7kdy1Mwh3ms` が
               # 実際に cf26de19 で消えて be385d95 で戻っている）。
-              # `docs/island-misses.md` #288
+              # `docs/island-misses.md` #289
               build_shorts)        p="site/content/shorts.ts python/data/shorts.json" ;;
               # **`site.ts` は焼き込みの中で唯一、人の欄と同居している。**
               # 焼くのは `STATS_FALLBACK` の中だけで、`SITE` と `PROFILE` には
@@ -712,7 +712,7 @@ jobs:
                 # 控えずに「上の『焼く』を見てください」とだけ出していたので、
                 # 注記（annotation）だけ読んでも**何が駄目だったのか分からなかった。**
                 # 5晩おなじ赤が並んだとき、理由を知るには run を開いて
-                # ログを 1,500行ぶん送るしかなかった（`docs/island-misses.md` #288）。
+                # ログを 1,500行ぶん送るしかなかった（`docs/island-misses.md` #289）。
                 set +e
                 python "python/$s.py" 2>&1 | tee /tmp/shorts-run.log
                 rc=${PIPESTATUS[0]}
@@ -2075,7 +2075,7 @@ jobs:
       #   - 手元にある id が YouTube の一覧から消えていた（`_gone` に書く話）
       #   - 焼くほうが落ちた（2026-10-17 からの5晩がこれ。`OverflowError`）
       # どちらなのかが注記に出ないので、**run を開いてログを下まで送るまで
-      # 見分けられなかった**（`docs/island-misses.md` #288）。
+      # 見分けられなかった**（`docs/island-misses.md` #289）。
       # いまは「焼く」で拾った1行（`SHORTS_WHY`）をそのまま出す。
       - name: ショートの棚を取り直せたか
         if: ${{ !cancelled() && env.SHORTS_BAD == '1' }}

@@ -16,7 +16,7 @@
 2026-10-17 から5晩、毎晩の焼き直しが赤かった。落ちていたのは
 `chapter_of()` の `e + EDGE_DAYS * DAY` で、**いま歩いている章には終わりが
 無い**ので `e` が `FAR`（9999-12-31）になり、そこへ7日足して
-`OverflowError`。`docs/island-misses.md` #288。
+`OverflowError`。`docs/island-misses.md` #289。
 
 この落ちかたには、見張りにとって厄介な性質が3つある。
 

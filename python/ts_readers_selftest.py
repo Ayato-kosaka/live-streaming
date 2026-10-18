@@ -518,6 +518,12 @@ ALLOW: dict[str, tuple[int, str]] = {
         "「鍵→字」で返すので、**増えた欄が消える**（欲しいのは増えたほう）",
     ),
     "python/viewable_streams_selftest.py": (2, "2つの焼き込みの数を突き合わせる（対照）"),
+    "python/build_shorts_selftest.py": (
+        1,
+        "**焼いてある `shorts.ts` から id だけを拾う（対照）。** 焼くほうと同じ"
+        "読み方にすると、控えに無い id が棚に出ている形（`ghost-shelf`）を"
+        "見落とす。`ts_read` の口は「章→字」で返すので、欲しい id がそこで消える",
+    ),
     # --- TS ではないもの ---
     "python/channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),
     "python/failed_reentry_nightly_selftest.py": (2, "ワークフローの YAML を読む（TS ではない）"),
