@@ -2,8 +2,8 @@
 
 **BigQuery にも Firestore にも1バイトも触らない**（手元でも走る）。
 
-見るのは4つ。どれも 2026-09 の授賞式で実際に外したところ
-（`docs/island-misses.md` #191 #192）。
+見るのは6つ。4つめまでは 2026-09 の授賞式で実際に外したところ
+（`docs/island-misses.md` #191 #192）、残り2つは外貨（#290 / #951）。
 
 1. **額は貢献額**（スパチャ ÷ 2 + Doneru）。実額で出ていないか
 2. **端数は切り捨て**。豚の貯金箱（`fund_box.box`）と同じ割り方か
@@ -11,6 +11,17 @@
    奇数円のスパチャの数だけずれる
 4. **名寄せは図鑑の `lookupKeys` ちょうど1人のときだけ**。
    0人・2人では寄せない。寄らなかった人を消さない
+5. **円以外は、台帳に入っている円（`amountJpy`）で足す。**
+   直っていない行は足さずに名指しする（**0 にしない**）
+6. **図鑑（`build_residents`）と月末で、同じ人の額が一致する。**
+   足す側が2本に割れていないこと——割れると、島の順位と授賞式で
+   同じ人の額が違う
+
+## 対照（`BREAK=`。`docs/island-standards.md` §15）
+
+  fxzero  … 直っていない行を 0円 として足す → [6] が落ちる
+  fxraw   … 円に直す前の額をそのまま足す    → [6] [7] が落ちる
+  fxdrop  … 円に直せた行をランキングに足さない → [6] [7] が落ちる
 """
 
 import os
@@ -18,8 +29,33 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# **`fx_detail()` は通貨の読み方を `python/island_tips.py` から借りる。**
+# あちらは `config` を読み込むので `BQ_PROJECT_ID` が要る——が、
+# **BigQuery にも Firestore にも1バイトも触らない**（読むのは表記の字だけ）。
+# ここで置いておかないと、手元で直に回したときだけ落ちる
+os.environ.setdefault("BQ_PROJECT_ID", "monthly-tips-selftest-reads-no-bigquery")
+
+import build_residents as B  # noqa: E402
+import fx_rate  # noqa: E402
+import monthly_tips as M  # noqa: E402
 from fund_box import SUPERCHAT_RATE, box, viewer_yen  # noqa: E402
-from monthly_tips import Roster, merge, norm_key, rank, total  # noqa: E402
+from logsafe import detail_lines, mask  # noqa: E402
+from monthly_tips import (  # noqa: E402
+    Roster, fx_detail, fx_stuck, fx_superchats, merge, norm_key, rank, total,
+)
+
+BREAK = os.environ.get("BREAK", "")
+
+# **対照：仕込みを先に刺す。** 本物を1つも測る前に、足を折っておく
+if BREAK == "fxzero":
+    _row = fx_rate.row_yen
+    fx_rate.row_yen = lambda doc: (
+        lambda g: (0, g[1]) if g[0] is None else g)(_row(doc))
+if BREAK == "fxraw":
+    fx_rate.row_yen = lambda doc: (
+        int((doc or {}).get("amount") or 0), "")
+if BREAK == "fxdrop":
+    M.fx_superchats = lambda rows: []
 
 FAILED = []
 PROBES = []
@@ -130,6 +166,140 @@ def case_rank():
            [{"channelId": "z", "handle": "@z", "yen": 1}], [], r))], [])
 
 
+def case_fx():
+    """[6] 円以外のスパチャ（#951 / `island-misses.md` #290）。"""
+    print("\n[6] 円以外のスパチャ（台帳の円で足す／直っていなければ名指し）")
+    sc = [{"channelId": "UC_sky", "handle": "@スカイライン-t2w", "yen": 1000}]
+    # BigQuery が返す「円で始まらないスパチャ」。鍵は video_id と event_id
+    bq = [
+        # 同じ人の、円に直してある回
+        {"cid": "UC_sky", "handle": "@スカイライン-t2w", "day": "2026-05-07",
+         "amt": "₪6.00", "video_id": "v1", "event_id": "e1"},
+        # この期間は外貨だけの人。**直っていない**（台湾ドル）
+        {"cid": "UC_fx", "handle": "@fx", "day": "2026-01-09",
+         "amt": "NT$100", "video_id": "v2", "event_id": "e2"},
+    ]
+    led = [
+        {"sourceEventId": "yt:v1:e1", "amount": 6.0, "currency": "ILS",
+         "amountJpy": 323, "fxRate": 53.787, "fxDate": "2026-05-07"},
+        {"sourceEventId": "yt:v2:e2", "amount": 100.0, "currency": "TWD",
+         "amountJpy": None, "fxWhy": "unsupported"},
+    ]
+    got = fx_detail(bq, sc, led)
+    ok("日付順に並ぶ", [r["day"] for r in got], ["2026-01-09", "2026-05-07"])
+    ok("通貨は表記から読む（島と同じ読み方）",
+       [r["currency"] for r in got], ["TWD", "ILS"])
+    ok("台帳の鍵で当てる", [r["src"] for r in got], ["yt:v2:e2", "yt:v1:e1"])
+    ok("直してある行は、台帳の円が入る", [r["yen"] for r in got], [None, 323])
+    ok("**直っていない行は 0 ではなく None**", got[0]["yen"], None)
+    ok("直らない理由が残る", got[0]["why"], "unsupported")
+    ok("円も出している人が分かる", [r["yen_too"] for r in got], [False, True])
+    ok("元の表記を落とさない（月末に人が見る）",
+       [r["amt"] for r in got], ["NT$100", "₪6.00"])
+
+    add = M.fx_superchats(got)
+    ok("ランキングに足すのは、直せた行だけ",
+       add, [{"channelId": "UC_sky", "handle": "@スカイライン-t2w", "yen": 323}])
+    ok("直っていない行は名指しで返る",
+       [r["cid"] for r in fx_stuck(got)], ["UC_fx"])
+
+    # **÷2 は、円に直したあとの合計にかかる**（1件ずつ半分にしない）
+    r = Roster([])
+    rows = rank(merge(sc + add, [], r))
+    ok("÷2 は円に直したあとの合計にかかる", rows[0]["yen"],
+       viewer_yen(1000 + 323, 0))
+
+    # 台帳が1行も無い（取り込みがまだ届いていない）
+    ok("台帳に無い行は pending（**0 にしない**）",
+       [(x["yen"], x["why"]) for x in fx_detail(bq, sc, [])],
+       [(None, "pending"), (None, "pending")])
+    # **両側。** 外貨の無い期間で、1行も出ないこと
+    ok("外貨が無い期間は、1行も出ない", fx_detail([], sc, led), [])
+    # **誰だか読めない行を、数から落とさない**（落とすと「外貨は無かった」に化ける）
+    ok("チャンネルIDが空でも1行として残す",
+       len(fx_detail([{"cid": None, "day": "2026-01-09", "amt": "$1.00"}],
+                     sc, led)), 1)
+    ok("読めない表記は ? にする（黙って円にしない）",
+       fx_detail([{"cid": "x", "day": "2026-01-09", "amt": "1.00"}],
+                 sc, led)[0]["currency"], "?")
+    # 公開の場では指紋。**生のチャンネルIDが出ない**
+    ok("公開の場では、チャンネルIDが指紋になる",
+       mask("UC_fx", public=True).startswith("#") and "UC_fx" not in
+       mask("UC_fx", public=True), True)
+    ok("公開の場では、元の表記は1行も流れない",
+       detail_lines([("2026-01-09", "UC_fx", "CA$2.79")], public=True), [])
+
+
+def case_same():
+    """[7] 図鑑と月末で、同じ人の額が一致するか（#951 の合格条件4）。
+
+    **足す側が2本に割れていないこと**を見る。割れると、島の順位
+    （`build_residents`）と授賞式（`monthly_tips_run`）で同じ人の額が違う。
+    同じ台帳を両方に食わせて、**スパチャとして足された円**を突き合わせる。
+    """
+    print("\n[7] 図鑑（build_residents）と月末で、同じ人の額が一致するか")
+    d0, d1 = B.window()
+    cid = "UC_same"
+    # 台帳。円が1件、円に直してある外貨が1件、直っていない外貨が1件
+    led = [
+        {"sourceEventId": "yt:v0:e0", "day": d1, "channelId": cid,
+         "amount": 1000, "currency": "JPY", "amountJpy": None},
+        {"sourceEventId": "yt:v1:e1", "day": d1, "channelId": cid,
+         "amount": 2.79, "currency": "CAD", "amountJpy": 317,
+         "fxRate": 113.54, "fxDate": d1},
+        {"sourceEventId": "yt:v2:e2", "day": d0, "channelId": cid,
+         "amount": 100.0, "currency": "TWD", "amountJpy": None,
+         "fxWhy": "unsupported"},
+    ]
+
+    class Doc:
+        def __init__(self, v):
+            self._v = v
+
+        def to_dict(self):
+            return dict(self._v)
+
+    class Query:
+        def __init__(self, rows, lo):
+            self.rows, self.lo = rows, lo
+
+        def stream(self):
+            return [Doc(r) for r in self.rows if str(r["day"]) >= self.lo]
+
+    class Col:
+        def __init__(self, rows):
+            self.rows = rows
+
+        def where(self, field, op, value):
+            return Query(self.rows, value)
+
+    class FakeDb:
+        def collection(self, name):
+            return Col(led)
+
+    island, tipped = B.fetch_tips(FakeDb())
+
+    # 月末の側。円は SQL_SC が、円以外は SQL_FX ＋ 台帳が出す
+    sc = [{"channelId": cid, "handle": "@same", "yen": 1000}]
+    bq = [
+        {"cid": cid, "handle": "@same", "day": d1, "amt": "CA$2.79",
+         "video_id": "v1", "event_id": "e1"},
+        {"cid": cid, "handle": "@same", "day": d0, "amt": "NT$100",
+         "video_id": "v2", "event_id": "e2"},
+    ]
+    detail = fx_detail(bq, sc, led)
+    monthly = sum(x["yen"] for x in sc + M.fx_superchats(detail))
+
+    ok("スパチャとして足した円が、1円まで同じ", monthly, int(island[cid]))
+    ok("直っていないぶんは、どちらにも入っていない", monthly, 1317)
+    ok("図鑑も月末も、取りこぼしを1件と数える",
+       (tipped["fx_stuck"], len(fx_stuck(detail))), (1, 1))
+    # **÷2 は円に直したあとの合計に1回だけ**
+    ok("貢献額は、合計してから半分", rank(merge(
+        sc + M.fx_superchats(detail), [], Roster([])))[0]["yen"],
+        viewer_yen(1317, 0))
+
+
 def main() -> int:
     print("=== 月末の投げ銭ランキングの決め方を、偽のデータで確かめる ===")
     print("（BigQuery にも Firestore にも1バイトも触りません）")
@@ -138,6 +308,8 @@ def main() -> int:
     case_sum()
     case_alias()
     case_rank()
+    case_fx()
+    case_same()
 
     print()
     if not PROBES:
