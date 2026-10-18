@@ -20,6 +20,7 @@
   2. **直っている行を「直っていない」と読む**
      → 毎晩 issue が立って、誰も読まなくなる
   3. **台帳を日付で絞る** → 古い取りこぼしが「直った」に化けて issue が閉じる
+     （逆に、**レートでは直らない行**を数えると issue が永久に閉じない）
   4. **台帳が読めなかった朝に「取りこぼしなし」へ倒す**
      → 開いている issue を「直った」と言って閉じる（いちばん悪い）
   5. **直しかたを本文に書かない** → 読んだ人がまた自力で探す（#288 の決めごと4）
@@ -31,6 +32,7 @@
   recent  … 台帳を直近90日で切る              → [2] が落ちる
   done    … 直っていない行を「直った」と読む  → [3] の「立つ側」が落ちる
   stuck   … 直っている行も取りこぼしに数える  → [3] の「立たない側」が落ちる
+  noamt   … 額の読めない行まで取りこぼしに数える → [3] の「立たない側」が落ちる
   jpy     … 円も外貨に数える                   → [3] の「立たない側」が落ちる
   unknown … 読めなかったのを「0件」に倒す      → [4] が落ちる
   ask     … 本文から #951 への指しを落とす     → [5] が落ちる
@@ -69,6 +71,18 @@ if BREAK == "done":
     H.fx_rate.row_yen = lambda doc: (1, "")        # 何が来ても「直っている」
 if BREAK == "stuck":
     H.fx_rate.row_yen = lambda doc: (None, "unsupported")   # 何でも「直らない」
+if BREAK == "noamt":
+    _survey = H.survey
+
+    def _withamt(rows):
+        got = _survey(rows)
+        extra = sum(1 for d in rows or []
+                    if H.currency_of(d) != H.MAIN_CURRENCY
+                    and (d or {}).get("amount") is None)
+        return {**got, "stuck": got["stuck"] + extra,
+                "down": (got["stuck"] + extra) > 0}
+
+    H.survey = _withamt
 if BREAK == "jpy":
     H.MAIN_CURRENCY = "円"          # `JPY` が外貨に化ける
 if BREAK == "unknown":
@@ -217,6 +231,10 @@ ok("**円に直してある行では立てない**",
 ok("円だけなら立てない",
    H.survey([tip(D1, "JPY"), tip(D0, None)])["down"], False)
 ok("1件も無くても立てない", H.survey([])["down"], False)
+# **額が読めない行では立てない。** レートを引いても直らないので、
+# 数えると issue が永久に閉じない（島は `no_amount` で別に数えている）
+ok("額が読めない行では立てない",
+   H.survey([tip(D1, "CAD", amount=None)])["down"], False)
 ok("直してある行は、円以外としては数える",
    H.survey([tip(D1, "CAD", 2.79, jpy=317)])["fx"], 1)
 ok("直してある行の内訳は空", H.survey([tip(D1, "CAD", 2.79, jpy=317)])["by"], {})

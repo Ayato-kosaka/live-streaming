@@ -167,6 +167,11 @@ def survey(rows) -> dict:
         yen, why = fx_rate.row_yen(doc)
         if yen is not None:
             continue
+        if why == "amount":
+            # **額そのものが読めない行。** レートを引いても直らないので、
+            # ここに数えると issue が永久に閉じない。島のほうも別に数えて
+            # いる（`build_residents.fetch_tips` の `no_amount`）
+            continue
         stuck += 1
         by[(cur, why)] = by.get((cur, why), 0) + 1
         day = str((doc or {}).get("day") or "")
