@@ -141,6 +141,10 @@
     "_note": "配信アーカイブに焼き込まれた透かし。rect は size の元素材での画素 [x, y, w, h]（yk-by7R7iPA の18窓・273コマの、どの場面でも明るい画素の外枠）。crop はその帯より上だけを使う（跡が残らない）、inpaint は周りから描き埋める",
     "prism_live": { "size": [720, 1280], "rect": [405, 1204, 270, 39], "margin": 12, "mode": "crop" }
   },
+  "narration": {
+    "_note": "max_tempo は声を速める倍率の上限（render.py が越えた指示書を止める）。Fish の声（素で毎秒 6.2 拍）を 1.4倍にすると毎秒 8.6 拍で、参考の西園寺さん（Open JTalk の 1.33倍 ≒ 毎秒 8.9 拍）に並ぶ。1本目の 1.76倍は毎秒 10.6 拍で、あやとに「早送りで違和感」と言われた（docs/island-misses.md #285）。上限で尺に入らない原稿は、字を減らす（viral-shorts-creator の script_writing.md 6）",
+    "max_tempo": 1.4
+  },
   "audio": {
     "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」。BGM の duck_hi_hz より高い側（子音の帯域）は、さらに duck_hi_db 下げる。元の音は既定で消し、カットの audio_db で入れたものも duck_db だけ下げる",
     "narration_rms_dbfs": -16,

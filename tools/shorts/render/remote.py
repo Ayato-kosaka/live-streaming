@@ -109,15 +109,39 @@ def now() -> float:
 
 # ---------------------------------------------------------------- 作業箱: 指示書を集める
 
-def collect(edit_path: Path, objects: dict[str, Path]) -> bytes:
+def bake_narration(edit: dict, base: Path, work: Path) -> dict:
+    """速める声（narration.tempo か max_pause_s のある行）を作業箱で作り、行の `file` に差し替えた指示書を返す。
+
+    声を速める Rubber Band（render.py の STRETCH）はランナーに入っていない。作業箱で速めた wav を
+    `file`（そのまま使う声）として運べば、ランナーに道具を足さずに済み、作業箱と同じ声のバイト列になる。
+    """
+    narr = edit.get("narration") or {}
+    if abs(float(narr.get("tempo") or 1.0) - 1.0) < 1e-6 and not narr.get("max_pause_s"):
+        return edit
+    sys.path.insert(0, str(HERE))
+    import render as R  # noqa: E402
+    lines = []
+    for ln in narr.get("lines", []):
+        if ln.get("audio") and not ln.get("file"):
+            wav = R.narration_wav(ln, narr, base, work)
+            # 元の声の道は残さない（残すと collect がそれも運ぶ）。作業箱で速めたことだけ印を付ける
+            ln = {k: v for k, v in ln.items() if k != "audio"} | {"file": str(wav), "baked": True}
+        lines.append(ln)
+    return {**edit, "narration": {**narr, "lines": lines}}
+
+
+def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None) -> bytes:
     """指示書が指すファイルを全部 objects（sha256 → 道）に足し、道を `in/<sha256><拡張子>` に書き換える。
 
     書き出しは指示書の場所から相対の道を解く（render.py の resolve）。ランナーでは指示書と同じ所に
     `in/` を作って並べるので、書き換えた指示書はそのまま読める。様式（style）も指示書の隣にあれば
     同じように運ぶ（無ければランナーのリポジトリの tools/shorts/render/ のものを使う。作業箱と同じ）。
+    work があれば、速める声を先にそこで作って運ぶ（bake_narration）。
     """
     base = edit_path.resolve().parent
     edit = json.loads(edit_path.read_text(encoding="utf-8"))
+    if work is not None:
+        edit = bake_narration(edit, base, work)
     memo: dict[str, str] = {}
 
     def swap(s: str) -> str:
@@ -207,7 +231,7 @@ def cmd_up(a) -> int:
     try:
         for e in a.edits:
             ep = Path(e)
-            body = collect(ep, objects)
+            body = collect(ep, objects, stage / "narration")
             h = hashlib.sha256(body).hexdigest()
             (stage / h).write_bytes(body)
             objects[h] = stage / h

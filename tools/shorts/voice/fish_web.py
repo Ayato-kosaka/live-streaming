@@ -2,9 +2,10 @@
 """Fish Audio の画面（EC2 のログイン済み Chrome）で、ナレーションを1文ずつ作って持ち帰る（EC2 の上で動く）。
 
     python3 fish_web.py gen   --model <声のID> --lines lines.json --out ~/voice/out/<動画> [--only A/04,B/03]
-                              [--budget-credits 4500] [--attempt-limit 2]
+                              [--budget-credits 4500] [--attempt-limit 2] [--speed 1.3]
     python3 fish_web.py adopt --model <声のID> --key A/01 --text '<送った字>' --out ...   # 画面で手で作った分を記録に取り込む
     python3 fish_web.py state --model <声のID>        # ログイン・声・モデル・速度・残りのクレジットを見るだけ（作らない）
+    python3 fish_web.py speed --model <声のID> --value 1.1   # 速度のスライダーだけ合わせる（戻し用）
     python3 fish_web.py backup                       # 作る前に、あやとの下書き（字と話者）を写す（残りのクレジットも出す）
     python3 fish_web.py restore --backup <下書きの写し.json>   # 入力欄を元の下書き（声と字）に戻す
 
@@ -24,6 +25,9 @@
 6. 1テイク1行で `attempts.jsonl` に足す（字・バイト・クレジット・長さ・タスク ID・設定）
 
 **押すのは「音声を生成する」だけ。** 設定（モデル・速度・正規化）はアカウントに入っているまま触らない。
+例外は `gen --speed`（速度のスライダーを矢印キーで動かし、終わったら元の値に戻す）。速度は下書きの
+`audio_settings.prosody.speed` に残るあやとの設定なので、戻すまでが1回ぶん。なお速度は生成された声に効かない
+（2026-10-18 に 1.1 と 1.3 で同じ3行を作って長さが同じだった。README の 3）。確かめ直すときのために残してある。
 「テイク1が良い」などの評価ボタンも押さない。Cookie・`authorization` の値は読まない・書かない
 （要求はページ自身が送り、こちらは返事の本文を CDP で読むだけ）。
 """
@@ -154,6 +158,35 @@ def state_of(t: Tab) -> dict:
         plan: [...document.querySelectorAll('button,div,span')].filter(vis).map(txt).find(s => /^My Team\s*(Free|Plus|Pro)/.test(s)) || null,
       };
     })()""")
+
+
+SPEED = "document.querySelector('[role=slider][aria-valuemin=\"0.7\"]')"
+
+
+def set_speed(t: Tab, want: float) -> float:
+    """画面の「速度」のスライダーを want に合わせる（キーボードの矢印で1刻みずつ。押すのはスライダーだけ）。
+
+    速度は下書きの `audio_settings.prosody.speed` としてサーバーに残る（あやとの設定でもある）ので、
+    変えたら必ず戻す（`gen --speed` は終わりに元へ戻す）。画面の幅は 0.7〜1.3 で、それより外は選べない。
+    """
+    lo, hi = 0.7, 1.3
+    if not lo - 1e-9 <= want <= hi + 1e-9:
+        raise SystemExit(f"速度 {want} は画面で選べない（{lo}〜{hi}）")
+    t.js(f"{SPEED}.focus()")
+    for _ in range(40):
+        now = float(t.js(f"{SPEED}.getAttribute('aria-valuenow')"))
+        if abs(now - want) < 1e-6:
+            break
+        key, vk = ("ArrowRight", 39) if now < want else ("ArrowLeft", 37)
+        t.key(key, vk=vk)
+        time.sleep(0.15)
+        nxt = float(t.js(f"{SPEED}.getAttribute('aria-valuenow')"))
+        if (now < want < nxt) or (nxt < want < now):
+            raise SystemExit(f"速度の刻みが {want} に合わない（{now} → {nxt}）")
+    else:
+        raise SystemExit(f"速度を {want} にできなかった（いま {now}）")
+    time.sleep(2.0)   # 下書きへの書き戻し（PUT /tts-draft）を待つ
+    return float(t.js(f"{SPEED}.getAttribute('aria-valuenow')"))
 
 
 # ---------------------------------------------------------------- 入力
@@ -328,6 +361,22 @@ def cmd_gen(a):
     t = fresh_tab()
     st = open_playground(t, a.model)
     print("state", json.dumps(st, ensure_ascii=False), flush=True)
+    speed0 = st.get("speed")
+    if a.speed:
+        st["speed"] = str(set_speed(t, a.speed))
+        st["speed_before"] = speed0
+        print("speed", speed0, "->", st["speed"], flush=True)
+    try:
+        _gen_lines(a, t, st, lines, only, log)
+    finally:
+        if a.speed and speed0 is not None:
+            # 作り直しでタブを替えていても、設定は下書き（サーバー）にあるので開き直して戻す
+            t = fresh_tab()
+            open_playground(t, a.model)
+            print("speed restored", set_speed(t, float(speed0)), flush=True)
+
+
+def _gen_lines(a, t: Tab, st: dict, lines: list[dict], only, log: str):
     for ln in lines:
         key, text = ln["key"], ln["tts_text"]
         if only is not None and key not in only:
@@ -409,6 +458,13 @@ def cmd_adopt(a):
     print(a.key, [(r["take"], r["status"], r.get("duration_s"), r.get("credit_count")) for r in got])
 
 
+def cmd_speed(a):
+    """速度のスライダーだけを合わせる（`gen --speed` が途中で切れて、元の値に戻らなかったときの戻し用）"""
+    t = fresh_tab()
+    open_playground(t, a.model)
+    print("speed", set_speed(t, a.value))
+
+
 def cmd_state(a):
     t = fresh_tab()
     st = open_playground(t, a.model)
@@ -468,11 +524,16 @@ def main():
     g.add_argument("--only", default="")
     g.add_argument("--budget-credits", type=int, default=0, help="この出力先で使ってよいクレジットの合計（0 は無制限）")
     g.add_argument("--attempt-limit", type=int, default=2)
+    g.add_argument("--speed", type=float, default=0,
+                   help="画面の速度（0.7〜1.3）をこの値にして作り、終わったら元に戻す（0 は触らない）")
     d = sub.add_parser("adopt")
     d.add_argument("--model", required=True)
     d.add_argument("--key", required=True)
     d.add_argument("--text", required=True)
     d.add_argument("--out", required=True)
+    v = sub.add_parser("speed")
+    v.add_argument("--model", required=True)
+    v.add_argument("--value", type=float, required=True, help="速度（0.7〜1.3）。あやとの設定は 1.1")
     s = sub.add_parser("state")
     s.add_argument("--model", required=True)
     k = sub.add_parser("backup")
@@ -481,7 +542,8 @@ def main():
     r.add_argument("--model", default="", help="写しに話者が無いときだけ使う")
     r.add_argument("--backup", required=True)
     a = ap.parse_args()
-    {"gen": cmd_gen, "adopt": cmd_adopt, "state": cmd_state, "backup": cmd_backup, "restore": cmd_restore}[a.cmd](a)
+    {"gen": cmd_gen, "adopt": cmd_adopt, "speed": cmd_speed, "state": cmd_state, "backup": cmd_backup,
+     "restore": cmd_restore}[a.cmd](a)
 
 
 if __name__ == "__main__":
