@@ -79,12 +79,15 @@ master からは `workflow_dispatch` でも回せる。
 - **原稿はあやとに先に見せてから声を作る**（声の無料枠は月 8,000 クレジットで、作り直すほど減る）
 - 尺は毎秒7字前後で見積もり（声を速める倍率の上限 1.4 で読んだ速さ。60秒未満なら 350字・22行前後まで）、声を作ったら実物の長さで測り直す。**上限を越える原稿は、倍率ではなく字を減らす**（`script_writing.md` 6、`docs/island-misses.md` #285）
 
-作る順:
+作る順: 原稿（plan.md。1行ずつ根拠と使う画）を先に書いて出す → 返事を待つあいだに絵コンテ。
 
 ```bash
-python3 tools/shorts/plan/storyboard.py <spec_A.json> <復号した材料/videoId> <出力>   # 表と絵コンテの絵
-python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> shorts/videos/<videoId>/p1
+python3 tools/shorts/plan/storyboard.py <spec_A.json> <復号した材料/videoId> <出力>   # 表と絵コンテの絵（コマの下に秒・元動画の時刻・原稿）
+python3 tools/shorts/plan/assemble.py <本体.md> <出力> <spec の接頭辞> shorts/videos/<videoId>/p1   # 3案の本体に表と絵を差し込むとき
 ```
+
+spec の still は `H:MM:SS`（その回）か `videoId@H:MM:SS`（同じ置き場に復号したほかの回）。前提を画で埋めるのに、ほかの回の画を混ぜられる。
+行の秒は、声を様式の上限の倍率で読んだ速さ（毎秒6.8字）で割り付ける。字を読ませたい行は `crop`（0〜1 の比の箱）で寄せる。
 
 ## 5. あやとに見せる（企画と完成）
 
