@@ -1470,7 +1470,10 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
 
     for i, it in enumerate(p.get("notes", [])):
         st = style["note"]
-        img = card([it["text"]], st, ImageFont.truetype(str(font_path(style, st["font"])), st["size"]))
+        nfont = ImageFont.truetype(str(font_path(style, st["font"])), st["size"])
+        # 注は1行のまま描いていたので、長い注（「お店の情報を取ってくるサービスの料金」）が画面の右の外へ出た。
+        # 様式の max_width に収まるよう、字幕と同じ文節の折り返しで割る（短い注は1行のまま）
+        img = card(wrap(it["text"], nfont, st["max_width"] - 2 * st.get("pad_x", 0)), st, nfont)
         path = work / f"note_{i:02d}.png"
         img.save(path)
         it.update({"png": str(path), "x": st["x"], "y": st["y"], "w": img.width, "h": img.height})

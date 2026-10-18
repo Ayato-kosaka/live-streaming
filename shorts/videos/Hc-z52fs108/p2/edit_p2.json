@@ -1,0 +1,1005 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "Hc-z52fs108-p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/08_1-06-36_1-06-58.mp4",
+   "watermark": "prism_live",
+   "t0": 3996.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/LjE5Zen0f7g/clips/01_0-11-18_0-11-42.mp4",
+   "watermark": "prism_live",
+   "t0": 678.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/wxaQlQHchYQ/clips/02_0-02-05_0-02-17.mp4",
+   "watermark": "prism_live",
+   "t0": 125.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/02_0-12-31_0-12-43.mp4",
+   "watermark": "prism_live",
+   "t0": 751.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/01_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33600.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/02_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33660.0
+  },
+  "c5_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/03_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33720.0
+  },
+  "c5_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/04_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33780.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/01_0-00-05_0-00-16.mp4",
+   "watermark": "prism_live",
+   "t0": 5.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/05_0-47-56_0-48-33.mp4",
+   "watermark": "prism_live",
+   "t0": 2876.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/04_0-45-26_0-46-08.mp4",
+   "watermark": "prism_live",
+   "t0": 2726.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/06_0-49-03_0-49-16.mp4",
+   "watermark": "prism_live",
+   "t0": 2943.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/ingest/Hc-z52fs108/clips/07_0-51-09_0-51-21.mp4",
+   "watermark": "prism_live",
+   "t0": 3069.0
+  },
+  "c5_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/05_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33840.0
+  },
+  "c5_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/canvas/06_canvas.mp4",
+   "watermark": "prism_live",
+   "t0": 33900.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c08",
+   "in": 450,
+   "out": 568,
+   "row": 0,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.3,
+    "x": 0.6667,
+    "y": 0.6719,
+    "sx": 0.7963,
+    "sy": 0.6656
+   },
+   "note": "本編。ダッシュボードの「直近30日」の棒グラフ。右端の 7/17 だけ跳ねる（題の答え）。跳ねた棒を画面の右の列（x 888）より左・題の札の下に置き、棒の付け根を動かさずにゆっくり寄る。上の帯と額は外に出る"
+  },
+  {
+   "src": "c08",
+   "in": 450,
+   "out": 551,
+   "row": 1,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.4,
+    "x": 0.3847,
+    "y": 0.3031,
+    "sx": 0.5,
+    "sy": 0.2083
+   },
+   "note": "本編。ダッシュボードの全体（「なに食べよ ユーザー数」の見出し・今日の新規・全期間累計・棒グラフ）。見出しを画面の上の端（y 400）に置き、見出しを動かさずにゆっくり寄る"
+  },
+  {
+   "src": "c3_01",
+   "in": 60,
+   "out": 97,
+   "row": 2,
+   "inset": {
+    "rect": [
+     215,
+     785,
+     410,
+     200
+    ],
+    "w": 840,
+    "cy": 600
+   },
+   "note": "リリース日の回 LjE5Zen0f7g（2025-09-02）。App Store の「なに食べよ」のページ。画面の下の端にしか写っていないので札にして上へ"
+  },
+  {
+   "src": "c08",
+   "in": 450,
+   "out": 496,
+   "row": 2,
+   "inset": {
+    "rect": [
+     40,
+     915,
+     346,
+     315
+    ],
+    "w": 600,
+    "cy": 642
+   },
+   "note": "本編。ダッシュボードの「月別12ヶ月」の左側（9月〜4月が地面すれすれ）。月の名前（y 1210）は透かしの帯より下なので、札にして見せる（5月の高い棒 x 388〜 と透かしの箱 x 405〜 は入れない）"
+  },
+  {
+   "src": "c08",
+   "in": 288,
+   "out": 402,
+   "row": 3,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "inset": {
+    "w": 740,
+    "cy": 640,
+    "bg_blur": 0,
+    "keys": [
+     {
+      "f": 288,
+      "rect": [
+       150,
+       1030,
+       230,
+       160
+      ]
+     },
+     {
+      "f": 405,
+      "rect": [
+       40,
+       876,
+       452,
+       314
+      ]
+     }
+    ]
+   },
+   "note": "本編（右で指が動いている所。後ろはぼかさず暗くするだけ）。ダッシュボードの「月別12ヶ月」。平らな 4月の手前に寄った所から引いて、すぐ5月の跳ねた棒が入り、終わりで 9月〜7月の全体になる（5月は人が来た月で、請求が来た月）。透かしの箱（y 1204〜）に掛けないよう下は y 1190 まで。存続の危機の回の自撮りは、顔が大きく画面のまん中にあり、左上の注記が目と鼻に被るので使わない。後ろは 1.3倍で下の端に合わせて寄せ、固定コメントの帯を外に出す"
+  },
+  {
+   "src": "c2_02",
+   "in": 99,
+   "out": 163,
+   "row": 4,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "存続の危機の回 wxaQlQHchYQ。頭の後ろで手を組む。0:02:07.5 と 0:02:11.5 は左に通りがかりの人が入るので、その間だけ。顔が近く【大】の字が目と鼻に掛かるので、1.3倍で下の端に合わせて顔を上へ出す"
+  },
+  {
+   "src": "c08",
+   "in": 480,
+   "out": 558,
+   "row": 5,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.28,
+    "x": 0.6667,
+    "y": 0.6719,
+    "sx": 0.7963,
+    "sy": 0.6656
+   },
+   "note": "本編。冒頭と同じ棒グラフ（今日の新規 4,711 と、7/17 だけ跳ねた棒）"
+  },
+  {
+   "src": "c02",
+   "in": 219,
+   "out": 273,
+   "row": 6,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。人差し指を立てて「1日」。0:12:37.5 は左下に通りがかりの人"
+  },
+  {
+   "src": "c5_01",
+   "in": 0,
+   "out": 76,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真A。15 なに食べよ の下の区切り線を字幕の帯のすぐ上に。上に 14 スシロー・13 Uber Eats。帯から下は白"
+  },
+  {
+   "src": "c5_02",
+   "in": 0,
+   "out": 28,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真A。「ミスドも」で 11 ミスタードーナツ の下の区切り線を帯のすぐ上に（上に 10・9）"
+  },
+  {
+   "src": "c5_03",
+   "in": 0,
+   "out": 41,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真A。「スシローも並んでる中やで」で 15 を帯のすぐ上に、14 スシロー・13・12 を上に（字 40px 前後）"
+  },
+  {
+   "src": "c5_04",
+   "in": 0,
+   "out": 70,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真A。9 食べログ の下の区切り線を帯のすぐ上に（上に見出し「ランキング フード／ドリンク」）。帯から下は白"
+  },
+  {
+   "src": "c01",
+   "in": 135,
+   "out": 193,
+   "row": 10,
+   "zoom": {
+    "from": 2.3,
+    "to": 2.4,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "inset": {
+    "w": 840,
+    "cy": 560,
+    "bg_blur": 0,
+    "keys": [
+     {
+      "f": 135,
+      "rect": [
+       25,
+       70,
+       360,
+       120
+      ]
+     },
+     {
+      "f": 225,
+      "rect": [
+       45,
+       77,
+       320,
+       107
+      ]
+     }
+    ]
+   },
+   "note": "本編の頭。ダッシュボードの見出し「なに食べよ 食べログ超えまで後6位！」を札にして上に（帯の出る前）。後ろは本人の胸から下に 2.3倍で寄せ、大きい字は字の無い暗い地に乗る。札の中もゆっくり寄る"
+  },
+  {
+   "src": "c01",
+   "in": 210,
+   "out": 287,
+   "row": 11,
+   "zoom": {
+    "from": 2.0,
+    "to": 2.1,
+    "x": 0.1569,
+    "y": 0.2109,
+    "sx": 0.5,
+    "sy": 0.3333
+   },
+   "note": "本編の頭。「App Store ランキング 15位」の札（下の小さい札は なに食べよ 15・食べログ 9）に寄る。札の下の端を字幕より上に"
+  },
+  {
+   "src": "c05",
+   "in": 72,
+   "out": 122,
+   "row": 12,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。カメラから離れて立つ（引き）"
+  },
+  {
+   "src": "c04",
+   "in": 339,
+   "out": 388,
+   "row": 12,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。水のボトルを両手で握って待つ（引き）。0:45:41.5 から右に通りがかりの人"
+  },
+  {
+   "src": "c05",
+   "in": 549,
+   "out": 604,
+   "row": 13,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。更新に気づいてカメラに顔を寄せる"
+  },
+  {
+   "src": "c05",
+   "in": 777,
+   "out": 824,
+   "row": 14,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。「ああ、あかんかった」で顔をゆがめ → 両手を上げ → 崩れて頭だけ。0:48:26 からは右に通りがかりの人"
+  },
+  {
+   "src": "c05",
+   "in": 360,
+   "out": 451,
+   "row": 15,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.28,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "inset": {
+    "w": 666,
+    "cy": 600,
+    "keys": [
+     {
+      "f": 360,
+      "rect": [
+       26,
+       222,
+       180,
+       128
+      ]
+     },
+     {
+      "f": 450,
+      "rect": [
+       36,
+       229,
+       160,
+       114
+      ]
+     }
+    ]
+   },
+   "note": "本編。更新のあとの「15位」の札と、下の小さい札（なに食べよ 15・食べログ 11）。小さい札の数字が読める大きさまで寄せて札にする（帯は後ろのぼかしで読めない）。止まったコマにならないよう、札の中と後ろをゆっくり寄る"
+  },
+  {
+   "src": "c06",
+   "in": 102,
+   "out": 176,
+   "row": 16,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。指で「4」を作る（0:49:07.3 から）"
+  },
+  {
+   "src": "c07",
+   "in": 120,
+   "out": 171,
+   "row": 17,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.28,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。顔を寄せて苦い笑い。0:51:17.5 は左下に通りがかりの人"
+  },
+  {
+   "src": "c5_05",
+   "in": 0,
+   "out": 40,
+   "row": 18,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真B（1:32）。「結局、14位までしか」で 14 なに食べよ の下の区切り線を帯のすぐ上に（12〜14）"
+  },
+  {
+   "src": "c5_06",
+   "in": 0,
+   "out": 33,
+   "row": 18,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4217,
+    "sx": 0.5,
+    "sy": 0.4531
+   },
+   "note": "写真B。「行かへんかった」で引いて、10 食べログ〜14 なに食べよ を帯より上に収める（0.67倍。10 は画面の上の端の帯に掛かる。字は 25px 前後）"
+  },
+  {
+   "src": "c04",
+   "in": 579,
+   "out": 650,
+   "row": 19,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.28,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。引きの画（腰に手）"
+  },
+  {
+   "src": "c04",
+   "in": 990,
+   "out": 1082,
+   "row": 20,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本編。引きの画（髪をかき上げる → 手で話す）"
+  },
+  {
+   "src": "c08",
+   "in": 495,
+   "out": 568,
+   "row": 21,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.28,
+    "x": 0.6667,
+    "y": 0.6719,
+    "sx": 0.7963,
+    "sy": 0.6656
+   },
+   "note": "本編。冒頭と同じ棒グラフに戻して切る"
+  }
+ ],
+ "title": {
+  "text": "アプリ作り始めて1年、\nついに1日4700人突破！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "アプリ作り始めて1年、ついに1日4700人突破！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/01.wav",
+    "tts_text": "アプリ作り始めて一年、ついにいちにち四千七百人突破！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "このグラフ、僕が1人で作ったグルメアプリのユーザー数。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/02.wav",
+    "tts_text": "このグラフ、僕が一人で作ったグルメアプリのユーザー数。",
+    "at": 118
+   },
+   {
+    "text": "去年の9月に出して、全然人が集まらへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/03.wav",
+    "tts_text": "去年の九月に出して、全然人が集まらへん。",
+    "at": 219,
+    "mood": "tense_still"
+   },
+   {
+    "text": "やっと人が来たと思ったら、使われた分の請求が25万円。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/04.wav",
+    "tts_text": "やっと人が来たと思ったら、使われた分の請求が二十五万円。",
+    "at": 302,
+    "highlight": [
+     "25万円"
+    ]
+   },
+   {
+    "text": "ほんまに、アプリやめようかと思った。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/05.wav",
+    "tts_text": "ほんまに、アプリやめようかと思った。",
+    "at": 416,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "そしたら、友達のショートがバズって、これ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/06.wav",
+    "tts_text": "そしたら、友達のショートがバズって、これ。",
+    "at": 480,
+    "mood": "up_pop"
+   },
+   {
+    "text": "えぐいで、これ1日やで。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/07.wav",
+    "tts_text": "えぐいで、これいちにちやで。",
+    "at": 558,
+    "big": "shake_white"
+   },
+   {
+    "text": "しかもグルメアプリの順位で、15位。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/08.wav",
+    "tts_text": "しかもグルメアプリの順位で、十五位。",
+    "at": 612,
+    "highlight": [
+     "15位"
+    ]
+   },
+   {
+    "text": "ミスドもスシローも並んでる中やで。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/09.wav",
+    "tts_text": "ミスドもスシローも並んでるなかやで。",
+    "at": 688
+   },
+   {
+    "text": "9位には、目標にしてた食べログ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/10.wav",
+    "tts_text": "九位には、目標にしてた食べログ。",
+    "at": 757,
+    "highlight": [
+     "食べログ"
+    ]
+   },
+   {
+    "text": "あと6つで、抜ける！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/11.wav",
+    "tts_text": "あと六つで、抜ける！",
+    "at": 837,
+    "big": "glow_yellow",
+    "caption_from": 827
+   },
+   {
+    "text": "でも順位が変わるのは、3時間に1回。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/12.wav",
+    "tts_text": "でも順位が変わるのは、三時間に一回。",
+    "at": 885
+   },
+   {
+    "text": "次は夜の11時前。頼むよ、頼むよ……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/13.wav",
+    "tts_text": "次は夜の十一時前。頼むよ、頼むよ……",
+    "at": 962,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "ちょっと待って、更新されてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/14.wav",
+    "tts_text": "ちょっと待って、更新されてる！",
+    "at": 1061,
+    "mood": "up_pop"
+   },
+   {
+    "text": "……あかんかった。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/15.wav",
+    "tts_text": "……あかんかった。",
+    "at": 1116,
+    "big": "shake_red"
+   },
+   {
+    "text": "僕は15位のまま、なんでか食べログが下がって、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/16.wav",
+    "tts_text": "僕は十五位のまま、なんでか食べログが下がって、",
+    "at": 1163,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "差だけ縮まった。4位足らず。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/17.wav",
+    "tts_text": "差だけ縮まった。よんい足らず。",
+    "at": 1254,
+    "mood": "tense_still"
+   },
+   {
+    "text": "いやあ、悔しいな。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/18.wav",
+    "tts_text": "いやあ、悔しいな。",
+    "at": 1328,
+    "big": "static_white"
+   },
+   {
+    "text": "結局、14位までしか行かへんかった。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/19.wav",
+    "tts_text": "結局、じゅうよんいまでしか行かへんかった。",
+    "at": 1379,
+    "mood": "tense_still"
+   },
+   {
+    "text": "でもバズるって、急に来るもんちゃうねん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/20.wav",
+    "tts_text": "でもバズるって、急に来るもんちゃうねん。",
+    "at": 1452
+   },
+   {
+    "text": "コツコツ積み上げた上に、こういう日が来るんよ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/21.wav",
+    "tts_text": "コツコツ積み上げた上に、こういう日が来るんよ。",
+    "at": 1533,
+    "big": "glow_yellow",
+    "caption_from": 1523
+   },
+   {
+    "text": "みんなは、1年続けたこと、ある？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hc_p2/voice/v2/p2/22.wav",
+    "tts_text": "みんなは一年続けたことある？",
+    "at": 1615
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-ae2b1f606527ff996/shorts/videos/Hc-z52fs108/p2/spec.json",
+  "fps": 30,
+  "frames": 1688,
+  "seconds": 56.267,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 118,
+    "voice_frames": 110,
+    "cuts": [
+     "1:06:51.0+3.93s"
+    ],
+    "line": "アプリ作り始めて1年、ついに1日4700人突破！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 118,
+    "frames": 101,
+    "voice_frames": 93,
+    "cuts": [
+     "1:06:51.0+3.37s"
+    ],
+    "line": "このグラフ、僕が1人で作ったグルメアプリのユーザー数。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 219,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "0:11:20.0+1.23s",
+     "1:06:51.0+1.53s"
+    ],
+    "line": "去年の9月に出して、全然人が集まらへん。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 302,
+    "frames": 114,
+    "voice_frames": 106,
+    "cuts": [
+     "1:06:45.6+3.80s"
+    ],
+    "line": "やっと人が来たと思ったら、使われた分の請求が25万円。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 416,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:02:08.3+2.13s"
+    ],
+    "line": "ほんまに、アプリやめようかと思った。",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 5,
+    "from": 480,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:06:52.0+2.60s"
+    ],
+    "line": "そしたら、友達のショートがバズって、これ。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 558,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "0:12:38.3+1.80s"
+    ],
+    "line": "えぐいで、これ1日やで。",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 7,
+    "from": 612,
+    "frames": 76,
+    "voice_frames": 68,
+    "cuts": [
+     "9:20:00.0+2.53s"
+    ],
+    "line": "しかもグルメアプリの順位で、15位。",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 688,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "9:21:00.0+0.93s",
+     "9:22:00.0+1.37s"
+    ],
+    "line": "ミスドもスシローも並んでる中やで。",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 757,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "9:23:00.0+2.33s"
+    ],
+    "line": "9位には、目標にしてた食べログ。",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 827,
+    "frames": 58,
+    "voice_frames": 40,
+    "cuts": [
+     "0:00:09.5+1.93s"
+    ],
+    "line": "あと6つで、抜ける！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 11,
+    "from": 885,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:00:12.0+2.57s"
+    ],
+    "line": "でも順位が変わるのは、3時間に1回。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 962,
+    "frames": 99,
+    "voice_frames": 91,
+    "cuts": [
+     "0:47:58.4+1.67s",
+     "0:45:37.3+1.63s"
+    ],
+    "line": "次は夜の11時前。頼むよ、頼むよ……",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1061,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "0:48:14.3+1.83s"
+    ],
+    "line": "ちょっと待って、更新されてる！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1116,
+    "frames": 47,
+    "voice_frames": 21,
+    "cuts": [
+     "0:48:21.9+1.57s"
+    ],
+    "line": "……あかんかった。",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 15,
+    "from": 1163,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "0:48:08.0+3.03s"
+    ],
+    "line": "僕は15位のまま、なんでか食べログが下がって、",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1254,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "0:49:06.4+2.47s"
+    ],
+    "line": "差だけ縮まった。4位足らず。",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1328,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "0:51:13.0+1.70s"
+    ],
+    "line": "いやあ、悔しいな。",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 18,
+    "from": 1379,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "9:24:00.0+1.33s",
+     "9:25:00.0+1.10s"
+    ],
+    "line": "結局、14位までしか行かへんかった。",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1452,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "0:45:45.3+2.37s"
+    ],
+    "line": "でもバズるって、急に来るもんちゃうねん。",
+    "telop": null
+   },
+   {
+    "row": 20,
+    "from": 1523,
+    "frames": 92,
+    "voice_frames": 74,
+    "cuts": [
+     "0:45:59.0+3.07s"
+    ],
+    "line": "コツコツ積み上げた上に、こういう日が来るんよ。",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 21,
+    "from": 1615,
+    "frames": 73,
+    "voice_frames": 50,
+    "cuts": [
+     "1:06:52.5+2.43s"
+    ],
+    "line": "みんなは、1年続けたこと、ある？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 345,
+   "raw_voice_s": 67.87,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 48.63,
+   "cps_voiced": 7.09,
+   "video_s": 56.27,
+   "cps_video": 6.13
+  }
+ },
+ "notes": [
+  {
+   "from": 302,
+   "to": 416,
+   "text": "お店の情報を取ってくるサービスの料金"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/csikos_fast.mp3",
+  "db": 0.0
+ }
+}
