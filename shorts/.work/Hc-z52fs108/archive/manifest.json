@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Hc-z52fs108__archive",
+ "mode": "archive",
+ "dest": "Hc-z52fs108/archive",
+ "video": "Hc-z52fs108",
+ "channel": null,
+ "request": "shorts/requests/2026-10-18-hc-archive.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
+ },
+ "counts": {
+  "sheets": 22,
+  "caption_segments": 1015,
+  "transcript_segments": 102,
+  "cuts": 19,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 36
+ },
+ "bytes": {
+  "plain": 7656980,
+  "tar_gz": 5510959,
+  "encrypted": 5510960
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 5510960,
+   "sha256": "d79746cdcd0da82371bd3d3c0344c1a1be040b9a48d855cdb03850e8239943fa"
+  }
+ ],
+ "hmac_sha256": "341889ba32fd6a81d1c972e2c6d90ff43cc2d8a536faacaf834945a1aa642c1b",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39081293596",
+ "created_at": "2026-10-18T00:24:18+00:00"
+}
