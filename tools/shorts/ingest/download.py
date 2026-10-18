@@ -35,7 +35,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import in_no_go, now_iso, read_json, write_json  # noqa: E402
+from common import now_iso, read_json, write_json  # noqa: E402
+from gate import Gate  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -189,7 +190,7 @@ def fetch_video(it: dict, d: Path, client: str) -> dict:
             "why": None if ok else why_failed(log.read_text(errors="ignore"))}
 
 
-def fetch_channel(it: dict, d: Path, client: str) -> dict:
+def fetch_channel(it: dict, d: Path, client: str, gate: Gate | None = None) -> dict:
     """チャンネルのタブ（既定 shorts）の一覧を取り、上位は1本ずつ詳しく引く。
 
     一覧（`--flat-playlist`）だけだと、ショートのタブは**長さと投稿日が空**で返る
@@ -217,12 +218,21 @@ def fetch_channel(it: dict, d: Path, client: str) -> dict:
 
     top = sorted(entries, key=lambda e: -(e.get("view_count") or 0))[:it["details"]]
     detail = d / "details.jsonl"
-    t0, done = time.time(), 0
-    # 25本ずつ。**時間帯と時間切れを塊ごとに見る**（途中で止めても引けたぶんは残す）
+    t0, done, waited = time.time(), 0, 0.0
+    # 25本ずつ。**ほかの取り込みと時間切れを塊ごとに見る**（途中で止めても引けたぶんは残す）。
+    # 20分は引いている時間で数える（ほかの取り込みを待ったぶんは足さない）
     for i in range(0, len(top), 25):
-        if in_no_go() or time.time() - t0 > 1200:
-            res["details_stopped"] = "時間帯" if in_no_go() else "20分で打ち切り"
+        if time.time() - t0 - waited > 1200:
+            res["details_stopped"] = "20分で打ち切り"
             break
+        if gate is not None:
+            v = gate.wait()
+            waited += v.waited
+            if v.waited or not v.ok:
+                print(f"   判定: {v.why}", flush=True)
+            if not v.ok:
+                res["details_stopped"] = f"Cookie を使い始めなかった（{v.how}）"
+                break
         batch = d / f"_batch{i // 25}.txt"
         batch.write_text("".join(f"https://www.youtube.com/watch?v={e['id']}\n"
                                  for e in top[i:i + 25]))
@@ -247,7 +257,7 @@ def fetch_channel(it: dict, d: Path, client: str) -> dict:
 def main() -> int:
     items = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["include"]
     # **一覧（channel）は最後。** 1本ずつ引き直すので1チャンネル7分かかる（2026-10-15 に
-    # 実測 60本で412秒）。時間帯に掛かって途中で止めるなら、動画のほうを先に取っておく
+    # 実測 60本で412秒）。ほかの取り込みに掛かって途中で止めるなら、動画のほうを先に取っておく
     order = {"archive": 0, "zoom": 1, "clips": 1, "reference": 2, "channel": 3}
     items.sort(key=lambda it: order.get(it["mode"], 9))
     media = Path(sys.argv[2])
@@ -256,15 +266,23 @@ def main() -> int:
     rows = []
     ver = subprocess.run([sys.executable, "-m", "yt_dlp", "--version"], capture_output=True,
                          text=True).stdout.strip()
+    # **1本ごとに、Cookie を使うほかの取り込みが動き出していないかを見る**（plan で見てから
+    # ここまで、ランナー待ちと道具の入れで数分あく）。動いていれば待つ。待ちの持ち時間は
+    # この job で合わせて60分。`pending` は数えない（gate.py の頭。master で回すと、
+    # 毎晩の取り込みの `pending` はこの job が終わるのを待っている）
+    gate = Gate.from_env(count_pending=False)
+    print(gate.heading(), flush=True)
     for n, it in enumerate(items):
         d = media / it["key"]
         d.mkdir(parents=True, exist_ok=True)
         st = {"key": it["key"], "mode": it["mode"], "started_at": now_iso(), "tries": [],
               "yt_dlp_version": ver}
         print(f"\n== [{n + 1}/{len(items)}] {it['key']}", flush=True)
-        if in_no_go():
-            st.update(ok=False, why="毎晩の取り込みの時間帯に入ったので取らなかった")
-            print("   時間帯に入ったので取らない", flush=True)
+        v = gate.wait()
+        if n == 0 or v.waited or not v.ok:
+            print(f"   判定: {v.why}", flush=True)
+        if not v.ok:
+            st.update(ok=False, why=f"Cookie を使い始めなかった: {v.why}")
             write_json(d / "fetch.json", st)
             rows.append(st)
             continue
@@ -277,7 +295,8 @@ def main() -> int:
                 st["tries"].append({"ok": False, "why": nowhy})
                 break
             try:
-                r = (fetch_channel if it["mode"] == "channel" else fetch_video)(it, d, client)
+                r = (fetch_channel(it, d, client, gate) if it["mode"] == "channel"
+                     else fetch_video(it, d, client))
             except Exception as e:  # noqa: BLE001 — 1本の失敗で残りを止めない
                 r = {"ok": False, "client": client, "why": f"{type(e).__name__}"}
             st["tries"].append(r)
