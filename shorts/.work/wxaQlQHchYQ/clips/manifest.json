@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "wxaQlQHchYQ__clips",
+ "mode": "clips",
+ "dest": "wxaQlQHchYQ/clips",
+ "video": "wxaQlQHchYQ",
+ "channel": null,
+ "request": "shorts/requests/2026-10-18-hc-p2-clips-wxaq.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 3,
+  "clips_ok": 3,
+  "clip_seconds": 39.0,
+  "channel_entries": 0,
+  "files": 9
+ },
+ "bytes": {
+  "plain": 18185678,
+  "tar_gz": 18161663,
+  "encrypted": 18161664
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 18161664,
+   "sha256": "76437599e282b6b4049e28708ca8abc89ae76c2469627b9ba8ba7358f61b82b1"
+  }
+ ],
+ "hmac_sha256": "0c6b0eab29749e551129d59476b203de8807ec79ec3ecd594ab919bab52b5318",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39123362623",
+ "created_at": "2026-10-18T11:36:48+00:00"
+}
