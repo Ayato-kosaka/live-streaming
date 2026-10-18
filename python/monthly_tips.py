@@ -18,6 +18,17 @@ BigQuery も Firestore も触らない。行を渡されて、名寄せして、
 2026-09 の授賞式は実額のまま出して、1位が入れ替わっていた
 （`docs/island-misses.md` #191）。
 
+## 円以外のスパチャも入る（#951）
+
+**円に直した額で足す。** 直すのは取り込みのとき1回きりで
+（`python/island_tips.py` の `yen_of`）、ここは台帳（`islandTips`）に
+入っている `amountJpy` を読むだけ（`fx_rate.row_yen()`）。
+**集計のたびに引き直さない**——同じ投げ銭が焼いた日によって別の額になり、
+図鑑（`python/build_residents.py`）と順位が割れる。
+
+**直っていない行は足さない。0 にもしない。** そのぶんは `fx_stuck()` が
+名指しで返して、呼ぶ側がログに出す。
+
 ## 名寄せは図鑑（islandCharacter）が正
 
 **名前の似ている度合いでは当てない。** 当てるのは2つだけ。
@@ -199,3 +210,148 @@ def rank(rows):
 def total(rows) -> int:
     """画面に出す合計。**貢献額の足し算。実額の合計ではない。**"""
     return sum(int(r["yen"]) for r in rows)
+
+
+def currency_of(text) -> str:
+    """スパチャの表記（`CA$2.79`）から通貨コードを読む。
+
+    **読み方は `python/island_tips.py` の `CURRENCY_MARKS` ひとつ。**
+    ここに表を写すと、新しい通貨が来た日に片方だけ直る。
+
+    取り込みを関数の中に置いてあるのは、あちらが `google.cloud` と
+    `config`（`BQ_PROJECT_ID` が要る）を読み込むから。**この文書の頭に
+    書いてあるとおり、ここは行を渡されて数えるだけの場所**なので、
+    外を読む取り込みを上には置かない。
+
+    Args:
+        text: `¥1,000` `CA$2.79` のような表記
+
+    Returns:
+        `CAD` のような通貨コード。読めなければ `?`
+    """
+    from island_tips import parse_amount
+
+    return parse_amount(text)[1] or "?"
+
+
+def ledger_key(video_id, event_id) -> str:
+    """台帳（`islandTips`）の `sourceEventId` を組む。**向こうの写し。**
+
+    組み方は `python/island_tips.py` の `fetch_youtube`（`yt:{動画}:{イベント}`）。
+    **当てるのはこの鍵ひとつ。** 日付とチャンネルIDで当てると、同じ人が
+    同じ日に2回投げた回にどちらが当たるか決まらない。
+
+    Args:
+        video_id: 動画ID
+        event_id: スパチャのイベントID
+
+    Returns:
+        `yt:xxx:yyy`
+    """
+    return f"yt:{video_id or ''}:{event_id or ''}"
+
+
+def fx_detail(fx, superchats, ledger=None) -> list:
+    """**円以外のスパチャ**を、台帳の換算と突き合わせて1件ずつ並べる。
+
+    ## なぜ台帳から取るのか（2026-10-18。#951）
+
+    円に直すのは**取り込みのとき1回きり**（`python/island_tips.py` の
+    `yen_of`）。集計のたびにレートを引き直すと、同じ投げ銭が**焼いた日に
+    よって別の額**になり、図鑑（`python/build_residents.py`）と月末で
+    順位が割れる。だから取り出しは `fx_rate.row_yen()` 1本に寄せて、
+    **向こうも同じ1本を通す。**
+
+    ## 円のスパチャ（`SQL_SC`）と二重に数えない
+
+    当てるのは `sourceEventId`（`ledger_key()`）。BigQuery の円以外の行と
+    台帳の行が1対1で当たるので、**円の行をここから足すことはない。**
+
+    ## 直っていない行は、足さずに名指しする
+
+    台帳に `amountJpy` が無い行（対応していない通貨・口が落ちた日・
+    まだ埋め直していない日）は `yen` が None。**0 にしない。**
+    足らないぶんが誰のものかは呼ぶ側がログに出す
+    （`python/admin/monthly_tips_run.py`。公開の場では指紋）。
+
+    ## 誰だかは、呼ぶ側が伏せる
+
+    `cid` をそのまま持つ。**出すときに伏せるのは呼ぶ側の仕事**で、
+    公開の Actions ログでは指紋になる（`python/logsafe.py` の `mask`）。
+    元の表記（実額）は公開の場に出さない（`docs/island-money.md` 2章）。
+
+    Args:
+        fx: 円で始まらないスパチャの行
+            （`cid` / `handle` / `day` / `amt` / `video_id` / `event_id`）
+        superchats: 同じ期間の**円の**スパチャ（`merge()` に渡すのと同じ並び）
+        ledger: 同じ期間の台帳（`islandTips`）の行。省くと**全件が未換算**
+
+    Returns:
+        日付順の並び。1件につき
+        `{"cid", "handle", "day", "amt", "currency", "src",
+          "yen", "why", "yen_too"}`。
+        `yen` は円に直せた額（直っていなければ None）、`why` はその理由の符丁。
+        `yen_too` は**同じ期間に円のスパチャも出しているか**
+    """
+    import fx_rate
+
+    with_yen = {str(s.get("channelId") or "")
+                for s in (superchats or []) if s.get("channelId")}
+    by_src = {str((d or {}).get("sourceEventId") or ""): (d or {})
+              for d in (ledger or [])}
+    out = []
+    for r in (fx or []):
+        r = r or {}
+        cid = str(r.get("cid") or "")
+        amt = str(r.get("amt") or "")
+        src = ledger_key(r.get("video_id"), r.get("event_id"))
+        # 台帳に無い行＝取り込みがまだ届いていない。**0 にしない**
+        doc = by_src.get(src)
+        yen, why = fx_rate.row_yen(doc) if doc else (None, "pending")
+        out.append({
+            "cid": cid,
+            "handle": str(r.get("handle") or ""),
+            "day": str(r.get("day") or ""),
+            "amt": amt,
+            "currency": currency_of(amt),
+            "src": src,
+            "yen": yen,
+            "why": why,
+            "yen_too": cid in with_yen,
+        })
+    # 日付順。**実行のたびに入れ替わらないように**、同じ日は鍵で決める
+    out.sort(key=lambda r: (r["day"], r["src"], r["cid"]))
+    return out
+
+
+def fx_superchats(rows) -> list:
+    """`fx_detail()` の並びから、**ランキングに足す**スパチャ行を作る。
+
+    足すのは**円に直せて、誰のものか読める行だけ。** 返す形は `SQL_SC` と
+    同じ（`merge()` がそのまま食える）ので、**÷2 は `rank()` の
+    `viewer_yen()` が円に直したあとの額にかける**——1件ずつ半分にしない
+    （`docs/island-money.md` 1章「足してから半分にする」）。
+
+    Args:
+        rows: `fx_detail()` の返り値
+
+    Returns:
+        `{"channelId", "handle", "yen"}` の並び
+    """
+    return [{"channelId": r["cid"], "handle": r["handle"], "yen": int(r["yen"])}
+            for r in (rows or [])
+            if r.get("yen") is not None and r.get("cid")]
+
+
+def fx_stuck(rows) -> list:
+    """`fx_detail()` のうち、**円に直せていない行**だけ。
+
+    ここが空でなければ、その月のランキングは**そのぶん足りない。**
+
+    Args:
+        rows: `fx_detail()` の返り値
+
+    Returns:
+        同じ形の並び
+    """
+    return [r for r in (rows or []) if r.get("yen") is None]
