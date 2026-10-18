@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "LjE5Zen0f7g__clips",
+ "mode": "clips",
+ "dest": "LjE5Zen0f7g/clips",
+ "video": "LjE5Zen0f7g",
+ "channel": null,
+ "request": "shorts/requests/2026-10-18-hc-p2-clips-lje5.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 24.0,
+  "channel_entries": 0,
+  "files": 7
+ },
+ "bytes": {
+  "plain": 6518899,
+  "tar_gz": 6501441,
+  "encrypted": 6501456
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 6501456,
+   "sha256": "c94dc76c61259eabf0618cd4252441102e6a8fb8ddee6d06eec5f85d4ac83229"
+  }
+ ],
+ "hmac_sha256": "1276950d8340b7d58808ebb2bcd24322ceba54216d0bd0e1a06534ea1b095a56",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39123362623",
+ "created_at": "2026-10-18T11:36:52+00:00"
+}
