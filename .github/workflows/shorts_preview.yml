@@ -13,6 +13,9 @@ name: ショートの下見を置く
 # - gcs … 非公開バケットの署名付き URL（`gcs.py`）。サービスアカウントはプロジェクト全体の
 #   Storage には何もできず（2026-10-16 の実測）、このバケットだけあやとが作って付与した（#938）。
 #   作業箱から直に上げるので速い（v2 の3本で37秒）が、並べたページは無い
+# - transfer … 同じバケットの `transfer/`。下見ではなく、EC2 へ動画を渡す受け渡し
+#   （`tools/shorts/post/send.py`）。SSM のコマンドに中身を載せず URL だけを載せるための道で、
+#   URL は3時間・置いたものは1日で消える
 #
 # **なぜ Actions か。** 作業箱には GCP の資格情報が無く、*.web.app にも届かない。持っているのは
 # Actions の `FIREBASE_SERVICE_ACCOUNT` だけで、新しい秘密は足さない（読むだけ）。
@@ -33,7 +36,7 @@ on:
         description: "下見の名前（英数字と . _ -）"
         required: true
       place:
-        description: "hosting / gcs"
+        description: "hosting / gcs / transfer"
         required: false
         default: "hosting"
       action:
