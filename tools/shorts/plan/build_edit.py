@@ -400,6 +400,12 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     measured = narration_frames(lines, narr, work)
     speech = None
     cps = spec.get("narration_cps_target")
+    if cps and args.max_tempo is None:
+        # 上限は様式の narration.max_tempo と同じ値を読む。別の既定（2.2）を持っていると、
+        # 渡し忘れた指示書が render.py の上限で止まる
+        sys.path.insert(0, str(RENDER))
+        import render as R  # noqa: E402
+        args.max_tempo = R.tempo_cap(R.load_style(args.style, Path(args.out).resolve().parent))
     if cps:
         # 喋る速さを、伸びているショートの速さ（毎秒 cps 字）に揃える。倍率は動画に1つ
         # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る
@@ -658,8 +664,8 @@ def main() -> int:
                     help="様式の JSON（tools/shorts/render/ の名前か、指示書からの相対）。書体・字の見た目・動き・音の大きさ")
     ap.add_argument("--gap", type=float, default=GAP_S,
                     help="行と行の間の秒（声が終わってから次の行まで）。伸びているショートは 0.1〜0.15 秒")
-    ap.add_argument("--max-tempo", type=float, default=2.2,
-                    help="spec の narration_cps_target に合わせて声を速くするときの、倍率の上限")
+    ap.add_argument("--max-tempo", type=float,
+                    help="spec の narration_cps_target に合わせて声を速くするときの、倍率の上限（既定は様式の narration.max_tempo）")
     ap.add_argument("--max-pause", type=float,
                     help="行の中の間をこの秒数までに縮める（速めたあとの時間。伸びているショートはほとんど間を置かない）")
     ap.add_argument("--bgm-db", type=float, help="BGM の大きさの上げ下げ（dB。既定は overrides の bgm_db か 0）")
