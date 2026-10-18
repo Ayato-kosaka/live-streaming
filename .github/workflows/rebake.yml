@@ -402,7 +402,19 @@ jobs:
               build_on_this_day)   p="site/content/onThisDay.ts" ;;
               build_city_streams)  p="site/content/cityStreams.ts" ;;
               build_country_stats) p="site/content/countryStats.ts" ;;
-              build_shorts)        p="site/content/shorts.ts" ;;
+              # **棚の控え（`python/data/shorts.json`）も一緒に commit する。**
+              # 焼き込みではないが、`build_shorts.py` が**書き換えるファイル**で、
+              # ここに並んでいないものは `git add` されない。
+              #
+              # 2026-09-25 から10-18 まで、ここが `shorts.ts` だけだったせいで
+              # 控えは83本で止まり、**毎晩おなじ4本を足し直しては捨てていた。**
+              # 実害は2つ。(1) 手元にまだ無い扱いなので、**毎晩その4本の視聴ページを
+              # 開きに行っていた**（1本5秒。連打すると reCAPTCHA が返る相手）。
+              # (2) 公開日の取れなかった晩はその本が棚から落ちるので、
+              # **同じ1本が晩ごとに出たり消えたりしていた**（`7kdy1Mwh3ms` が
+              # 実際に cf26de19 で消えて be385d95 で戻っている）。
+              # `docs/island-misses.md` #289
+              build_shorts)        p="site/content/shorts.ts python/data/shorts.json" ;;
               # **`site.ts` は焼き込みの中で唯一、人の欄と同居している。**
               # 焼くのは `STATS_FALLBACK` の中だけで、`SITE` と `PROFILE` には
               # 1バイトも触らない（`python/build_site_stats.py` の `patch()` が
@@ -685,30 +697,58 @@ jobs:
                 # master に入らなくなる（`docs/island-fresh.md` の止め金4と同じ考え）。
                 # 棚を前のまま戻しておいて、**run のいちばん最後で赤くする。**
                 #
-                # なお「YouTube に届かなかった」ときはスクリプト自身が 0 で終わる
-                # （焼かずに引き下がる）ので、ここに来るのは
-                # **手元にある id が一覧から消えていた**ときだけ。
                 echo "$s は BigQuery ではなく YouTube（チャンネルのショートのタブ）を読みます"
                 #
                 # **終わりかたを2つに分ける。**
                 #   3 … YouTube に届かなかった（棚は前のまま。**こちらの落ち度ではない**）
-                #   3以外の0以外 … 手元にある id が一覧から消えていた（人が見る話）
+                #   3以外の0以外 … 焼けなかった（人が見る話）
                 #
                 # 前は届かなかった晩も 0 で返っていて、「今日はショートが出なかった晩」と
                 # **まったく同じ顔**になっていた。凍りの見張りはショートを 0（見ない）に
                 # してある——4ヶ月出ない期間が実際にあるので日数では狼少年になる——ので、
                 # **ここで言わないと、何週間届いていなくても誰も気づけない。**
                 # 赤にはしない（届かないのは向こうの都合で、直しようがない晩がある）。
+                # **落ちた理由を、最後の赤まで持っていく。** 前はここで何も
+                # 控えずに「上の『焼く』を見てください」とだけ出していたので、
+                # 注記（annotation）だけ読んでも**何が駄目だったのか分からなかった。**
+                # 5晩おなじ赤が並んだとき、理由を知るには run を開いて
+                # ログを 1,500行ぶん送るしかなかった（`docs/island-misses.md` #289）。
                 set +e
-                python "python/$s.py"
-                rc=$?
+                python "python/$s.py" 2>&1 | tee /tmp/shorts-run.log
+                rc=${PIPESTATUS[0]}
                 set -e
                 if [ "$rc" = "3" ]; then
                   echo "SHORTS_UNREACHABLE=1" >> "$GITHUB_ENV"
                   echo "::warning::$s は YouTube に届きませんでした。棚は前のままです（赤にはしません）"
                 elif [ "$rc" != "0" ]; then
-                  git checkout -- site/content/shorts.ts || true
+                  git checkout -- site/content/shorts.ts python/data/shorts.json || true
+                  # 理由の1行。スクリプトが出した `::error::` の**いちばん上。**
+                  # **最後ではない。** 手元の id が消えていた晩は3種類の行が出る——
+                  # 見出し（何が起きたか）→ 内訳（消えた id）→ 直しかた（`_gone` に足す）。
+                  # 最後を採ると「`_gone` に足してください」だけが注記に出て、
+                  # **何が起きたのかが落ちる。** 見出しが先頭に来る決まりなので上を採る。
+                  # 何も出ていなければログの最後の1行（traceback なら例外の行）。
+                  # **空で終わらせない**（空だと前と同じ「見てください」に戻る）
+                  #
+                  # **`grep | head` を `$( )` に入れない。** この step は
+                  # `set -euo pipefail` の下にいる。`grep` は当たらなければ 1 を返すし、
+                  # 当たっても `head -1` が先に閉じると SIGPIPE で 141 を返す。
+                  # どちらも代入が失敗して、**`set -e` がこの step ごと殺す**——
+                  # つまり `SHORTS_BAD` が立たないまま「焼く」が落ちて、
+                  # **同じ晩の他の焼き込みまで commit されなくなる。**
+                  # 理由を1行出したいだけで棚以外を道連れにするので、
+                  # 当たらなくても 0 で終わる `awk` 1本にする。
+                  why="$(awk '/^::error::/{sub(/^::error::/, ""); print; exit}' /tmp/shorts-run.log)"
+                  if [ -z "$why" ]; then
+                    why="$(awk 'NF{last=$0} END{print last}' /tmp/shorts-run.log)"
+                  fi
+                  # 注記は1行。長いと読めないので切る（全文は下の要約に出す）。
+                  # **`cut -c` ではなく文字で切る。** coreutils の `cut -c` は
+                  # 実体がバイトなので、日本語の途中で切ると壊れた1文字が
+                  # `$GITHUB_ENV` に入る（300バイト＝日本語100字で、思ったより早く切れる）
+                  why="$(printf '%s' "$why" | python -c 'import sys; sys.stdout.write(sys.stdin.read()[:300])' || true)"
                   echo "SHORTS_BAD=1" >> "$GITHUB_ENV"
+                  echo "SHORTS_WHY=${why:-理由がログに残っていません（終了コード $rc）}" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。棚は前のまま戻しました。run の最後で赤くします"
                 fi ;;
               build_site_stats)
@@ -2030,9 +2070,13 @@ jobs:
       # commit と deploy のあとに置くのは「凍っていたら赤くする」と同じ理由で、
       # 止めても入るものが増えるわけではなく、同じ晩の他の6本を道連れにするだけだから。
       #
-      # ここが赤くなるのは「手元にある id が YouTube の一覧から消えていた」ときだけ。
-      # **非公開・削除だと分かったら `python/data/shorts.json` の `_gone` に
-      # 理由を添えて足す。** 書いてあるものは一覧に無くても止まらない。
+      # **赤に理由を載せる。** ここは長いこと「上の『焼く』を見てください」としか
+      # 言わなかった。赤くなる筋道は1つではない——
+      #   - 手元にある id が YouTube の一覧から消えていた（`_gone` に書く話）
+      #   - 焼くほうが落ちた（2026-10-17 からの5晩がこれ。`OverflowError`）
+      # どちらなのかが注記に出ないので、**run を開いてログを下まで送るまで
+      # 見分けられなかった**（`docs/island-misses.md` #289）。
+      # いまは「焼く」で拾った1行（`SHORTS_WHY`）をそのまま出す。
       - name: ショートの棚を取り直せたか
         if: ${{ !cancelled() && env.SHORTS_BAD == '1' }}
         run: |
@@ -2040,12 +2084,20 @@ jobs:
             echo ""
             echo "### ショートの棚を取り直せませんでした"
             echo ""
-            echo "手元にあるショートが、YouTube の一覧に見当たりません。**棚は前のまま**で、"
-            echo "焼き込みは1バイトも書き換わっていません。上の「焼く」に消えた id が出ています。"
-            echo "非公開・削除だと分かったら \`python/data/shorts.json\` の \`_gone\` に理由を添えて足してください。"
+            echo "\`\`\`"
+            echo "${SHORTS_WHY:-（理由が残っていません）}"
+            echo "\`\`\`"
+            echo ""
+            echo "**棚は前のまま**で、焼き込みも控え（\`python/data/shorts.json\`）も"
+            echo "1バイトも書き換わっていません。上の「焼く」に全文が出ています。"
+            echo ""
+            echo "手元にあるショートが一覧から消えていた、という理由なら、"
+            echo "非公開・削除だと分かったところで \`python/data/shorts.json\` の \`_gone\` に"
+            echo "理由を添えて足してください。書いてあるものは一覧に無くても止まりません。"
+            echo ""
             echo "**この赤は「落ちた」ではありません。** 他の焼き込みは master に入れて、配るところまで済んでいます。"
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::ショートの棚を取り直せませんでした。上の「焼く」を見てください"
+          echo "::error::ショートの棚を取り直せませんでした: ${SHORTS_WHY:-理由が残っていません}"
           exit 1
 
       # 届かなかった晩は、赤にしないかわりに**必ず一言残す。**

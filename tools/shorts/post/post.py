@@ -13,6 +13,8 @@
 
 手順と判断の基準は同じ置き場の README.md。EC2 で動くのは yt_post.py / tt_post.py。
 投稿の段（yt-draft / tt-post）は、EC2 に触る前に台帳（posted.json、posted.py）を引く。
+動画・投稿文・題の札の絵は send.py（GCS の署名付き URL を EC2 が curl で落とす）で送る。
+中身が SSM のログに残るので ec2.put では送らない。ec2.put で送るのはリポジトリの道具だけ。
 """
 import argparse, hashlib, json, os, re, subprocess, sys, tempfile
 
@@ -168,9 +170,10 @@ def cmd_cover(a):
     mp4 = os.path.join(a.dir, f"{a.option}.mp4")
     jpg = os.path.join(a.dir, f"{a.option}_cover.jpg")
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", str(a.cover_at), "-i", mp4, "-frames:v", "1", "-q:v", "2", jpg], check=True)
-    ec2.put(jpg, f"{REMOTE}/{a.video}/{a.option}_cover.jpg")
+    # 出す前の動画のコマなので ec2.put（中身が SSM のログに残る）ではなく send.py で
+    r = subprocess.run([sys.executable, os.path.join(HERE, "send.py"), "put", jpg, f"{REMOTE}/{a.video}/{a.option}_cover.jpg"])
     print(jpg)
-    return 0
+    return r.returncode
 
 
 def cmd_yt_thumb(a):
@@ -201,6 +204,7 @@ def cmd_mark(a):
 
 
 def cmd_clean(a):
+    # 送った動画を消すだけ。SSM のログには触らない（send.py の頭）
     return subprocess.run([sys.executable, os.path.join(HERE, "send.py"), "clean", f"{REMOTE}/{a.video}"]).returncode
 
 

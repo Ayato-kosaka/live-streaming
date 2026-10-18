@@ -6,7 +6,7 @@
 
 | 欄 | 意味 |
 | --- | --- |
-| `place` | `hosting`（Firebase Hosting のプレビューチャンネル。いまの既定）/ `gcs`（非公開バケットの署名付き URL。#938 で付与） |
+| `place` | `hosting`（Firebase Hosting のプレビューチャンネル。いまの既定）/ `gcs`（非公開バケットの署名付き URL。#938 で付与）/ `transfer`（同じバケットの `transfer/`。EC2 へ渡す受け渡し。URL は3時間・置いたものは1日で消える。`tools/shorts/post/send.py`） |
 | `action` | `up`（置く）/ `delete`（hosting のチャンネルを消す。`channel_sha256` で指す） |
 | `files` | 置くファイル。hosting は大きさと sha256 が要る（ランナーが受け取ったものと、配ったあと落とし直したものを突き合わせる） |
 | `pubkey` | 結果（URL）を包む作業箱の公開鍵。RSA 2048bit 以上 |
@@ -30,7 +30,7 @@ from plan import Bad, compare_files, norm_pem  # noqa: E402,F401
 
 ROOT = HERE.parents[2]
 REQ_DIR = "shorts/preview/"
-PLACES = ("hosting", "gcs")
+PLACES = ("hosting", "gcs", "transfer")
 ACTIONS = ("up", "delete")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 SEG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")

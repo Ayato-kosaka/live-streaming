@@ -3,7 +3,7 @@
 **BigQuery にも Firestore にも1バイトも触らない**（手元でも走る）。
 
 見るのは6つ。4つめまでは 2026-09 の授賞式で実際に外したところ
-（`docs/island-misses.md` #191 #192）、残り2つは外貨（#288 / #951）。
+（`docs/island-misses.md` #191 #192）、残り2つは外貨（#290 / #951）。
 
 1. **額は貢献額**（スパチャ ÷ 2 + Doneru）。実額で出ていないか
 2. **端数は切り捨て**。豚の貯金箱（`fund_box.box`）と同じ割り方か
@@ -167,7 +167,7 @@ def case_rank():
 
 
 def case_fx():
-    """[6] 円以外のスパチャ（#951 / `island-misses.md` #288）。"""
+    """[6] 円以外のスパチャ（#951 / `island-misses.md` #290）。"""
     print("\n[6] 円以外のスパチャ（台帳の円で足す／直っていなければ名指し）")
     sc = [{"channelId": "UC_sky", "handle": "@スカイライン-t2w", "yen": 1000}]
     # BigQuery が返す「円で始まらないスパチャ」。鍵は video_id と event_id

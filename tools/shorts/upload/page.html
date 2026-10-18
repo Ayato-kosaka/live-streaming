@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>録画を送る</title>
+<style>
+:root {
+  --bg: #f4f2ec; --card: #ffffff; --ink: #1d1d1f; --sub: #6b6b70; --line: #e2dfd6;
+  --accent: #23795a; --accent-ink: #ffffff; --track: #e6e2d8; --warn: #a8471a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --card: #1d1d1f; --ink: #f2f2f2; --sub: #a1a1a6; --line: #313134;
+    --accent: #4fb48d; --accent-ink: #0b2219; --track: #333336; --warn: #f2a46c;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%; line-height: 1.5;
+}
+main { max-width: 480px; margin: 0 auto; padding: 32px 16px 48px; }
+h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px; }
+.pick {
+  display: block; width: 100%; padding: 17px 16px; border-radius: 14px; border: 0;
+  background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 18px; font-weight: 700;
+  text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.pick:active { opacity: .85; }
+.pick.again { margin-top: 20px; }
+.file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.name { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.size { color: var(--sub); font-size: 15px; margin-top: 2px; }
+.track { height: 12px; background: var(--track); border-radius: 99px; overflow: hidden; margin: 18px 0 10px; }
+.fill { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+.pct { font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.nums { display: flex; justify-content: space-between; gap: 12px; color: var(--sub); font-size: 15px;
+  font-variant-numeric: tabular-nums; margin-top: 4px; }
+.note { color: var(--sub); font-size: 15px; margin: 16px 0 0; }
+.done { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 10px; }
+.done svg { flex: none; }
+.warn { color: var(--warn); font-size: 16px; font-weight: 600; margin: 0 0 18px; }
+.sent { margin: 26px 4px 0; }
+.sent h2 { font-size: 14px; color: var(--sub); font-weight: 600; margin: 0 0 6px; }
+.sent ul { list-style: none; padding: 0; margin: 0; }
+.sent li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.sent li span:first-child { overflow-wrap: anywhere; }
+.sent li span:last-child { color: var(--sub); white-space: nowrap; font-variant-numeric: tabular-nums; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>録画を送る</h1>
+  <section class="card">
+    <div id="idle">
+      <label class="pick" for="file">動画を選ぶ</label>
+    </div>
+    <div id="busy" hidden>
+      <div class="name" id="bname"></div>
+      <div class="track"><span class="fill" id="fill"></span></div>
+      <div class="pct" id="pct">0%</div>
+      <div class="nums"><span id="amount"></span><span id="eta"></span></div>
+      <p class="note" id="msg"></p>
+    </div>
+    <div id="ok" hidden>
+      <div class="done"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="14" fill="currentColor"/><path d="M8 14.5l4 4 8-9" fill="none" stroke="var(--card)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>届きました</div>
+      <div class="name" id="oname"></div>
+      <div class="size" id="osize"></div>
+      <label class="pick again" for="file">もう1本送る</label>
+    </div>
+    <div id="ng" hidden>
+      <p class="warn" id="nmsg"></p>
+      <label class="pick" for="file" id="nbtn">動画を選ぶ</label>
+    </div>
+  </section>
+  <div class="sent" id="sent" hidden>
+    <h2>このページで届いたもの</h2>
+    <ul id="list"></ul>
+  </div>
+  <input class="file" type="file" id="file" accept="video/*,.mp4,.mov,.m4v">
+</main>
+<script type="application/json" id="cfg">__CONFIG__</script>
+<script>
+(() => {
+  "use strict";
+  const CFG = JSON.parse(document.getElementById("cfg").textContent);
+  const $ = (id) => document.getElementById(id);
+  const NS = "rec:" + CFG.id + ":";
+  const SENDING = "終わるまで、この画面を閉じないでください";
+
+  // この端末にだけ覚えておく（続きから送るため）。使えない端末でも送れる
+  const mem = {
+    get(k) { try { return JSON.parse(localStorage.getItem(NS + k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(NS + k, JSON.stringify(v)); } catch (e) { /* 覚えられないだけ */ } },
+  };
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const bytes = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + " GB"
+    : n >= 1e6 ? (n / 1e6).toFixed(n >= 1e8 ? 0 : 1) + " MB" : Math.max(1, Math.round(n / 1e3)) + " KB";
+  const eta = (s) => !isFinite(s) || s <= 0 ? "" : s < 60 ? "まもなく"
+    : s < 3600 ? "残り 約" + Math.ceil(s / 60) + "分"
+    : "残り 約" + Math.floor(s / 3600) + "時間" + (Math.round((s % 3600) / 60) ? Math.round((s % 3600) / 60) + "分" : "");
+
+  function show(which) { for (const s of ["idle", "busy", "ok", "ng"]) $(s).hidden = s !== which; }
+  class Stop extends Error {}
+
+  function fail(text, again = true) {
+    $("nmsg").textContent = text;
+    $("nbtn").hidden = !again;
+    show("ng");
+  }
+
+  function drawSent() {
+    const list = mem.get("sent") || sentHere;
+    // 届いたのが今の1本だけなら、上の札と同じなので並べない
+    $("sent").hidden = !list.length || (list.length === 1 && !$("ok").hidden);
+    $("list").replaceChildren(...list.map((f) => {
+      const li = document.createElement("li");
+      const a = document.createElement("span"); a.textContent = f.name;
+      const b = document.createElement("span"); b.textContent = bytes(f.size);
+      li.append(a, b);
+      return li;
+    }));
+  }
+  const sentHere = [];
+
+  // 1回の要求。止まったまま動かない要求は、しばらくで切って、やり直しに回す
+  function request(method, url, headers, body, onSent) {
+    return new Promise((resolve) => {
+      const x = new XMLHttpRequest();
+      let last = Date.now();
+      const dog = setInterval(() => { if (Date.now() - last > CFG.stall_ms) x.abort(); }, 5000);
+      const end = (r) => { clearInterval(dog); resolve(r); };
+      x.open(method, url);
+      for (const [k, v] of Object.entries(headers || {})) x.setRequestHeader(k, v);
+      if (onSent && x.upload) x.upload.onprogress = (e) => { last = Date.now(); onSent(e.loaded); };
+      x.onreadystatechange = () => { last = Date.now(); };
+      x.onload = () => end({ status: x.status, h: (n) => x.getResponseHeader(n) });
+      x.onerror = x.onabort = x.ontimeout = () => end({ status: 0, h: () => null });
+      x.send(body === undefined ? null : body);
+    });
+  }
+
+  // GCS の答えを読む。途中は 308（または 200 ＋ X-HTTP-Status-Code-Override: 308）
+  function read(r) {
+    const mid = r.status === 308 || (r.status === 200 && r.h("X-HTTP-Status-Code-Override") === "308");
+    if (mid) {
+      const m = /bytes=0-(\d+)/.exec(r.h("Range") || "");
+      return { next: m ? Number(m[1]) + 1 : 0 };
+    }
+    if (r.status === 200 || r.status === 201) return { done: true };
+    if (r.status === 404 || r.status === 410) return { gone: true };
+    if (r.status === 0 || r.status === 408 || r.status === 429 || r.status >= 500) return { retry: true };
+    return { bad: r.status };
+  }
+
+  const wait = (n) => sleep(Math.min(30000, 1000 * 2 ** Math.min(n, 5)));
+
+  // どこまで届いたかを聞く（続きから送るため）
+  async function where(session, total) {
+    for (let n = 0; n < CFG.retries; n++) {
+      const s = read(await request("PUT", session, { "Content-Range": "bytes */" + total, ...CFG.no308 }));
+      if (!s.retry) return s;
+      $("msg").textContent = "電波を待っています…";
+      await wait(n);
+    }
+    throw new Stop("net");
+  }
+
+  async function fingerprint(file) {
+    // 同じ動画をもう一度選んだと分かるように。頭と尻の 1MB と大きさから作る（全部は読まない）
+    const mb = 1 << 20;
+    const parts = [file.slice(0, mb), file.slice(Math.max(0, file.size - mb)), new Blob([String(file.size)])];
+    const buf = await new Blob(parts).arrayBuffer();
+    const d = await crypto.subtle.digest("SHA-256", buf);
+    return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // 1回の要求を、電波が戻るまで何度か送り直す
+  async function retrying(send) {
+    let r;
+    for (let n = 0; n < CFG.retries; n++) {
+      r = await send();
+      if (!read(r).retry) return r;
+      $("msg").textContent = "電波を待っています…";
+      await wait(n);
+    }
+    return r;
+  }
+
+  // 枠を取る。控え（元のファイル名・大きさ・指紋）を置けた枠が自分のもの。もう控えのある枠は 412 なので次へ
+  async function claim(file, fp) {
+    const used = mem.get("used") || [];
+    const body = JSON.stringify({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified,
+      fingerprint: fp, ua: navigator.userAgent, started: new Date().toISOString() });
+    for (let i = 0; i < CFG.slots.length; i++) {
+      if (used.includes(i)) continue;
+      const r = await retrying(() => request("PUT", CFG.slots[i].meta, CFG.meta_headers, body));
+      used.push(i);
+      mem.set("used", used);
+      if (r.status === 412) continue;
+      if (r.status === 200) return i;
+      throw new Stop(r.status === 0 ? "net" : expired() ? "expired" : "http " + r.status);
+    }
+    throw new Stop("full");
+  }
+
+  // 取った枠でセッションを始める（返ってくる URL に細切れを送る）
+  async function open(slot) {
+    const r = await retrying(() => request("POST", CFG.slots[slot].init, CFG.init_headers));
+    const session = (r.status === 200 || r.status === 201) && r.h("Location");
+    if (!session) throw new Stop(r.status === 0 ? "net" : expired() ? "expired" : "http " + r.status);
+    return session;
+  }
+
+  function expired() { return Date.now() > Date.parse(CFG.expires); }
+
+  let lock = null;
+  async function awake(on) {
+    try {
+      if (on && "wakeLock" in navigator && !lock) {
+        lock = await navigator.wakeLock.request("screen");
+        lock.addEventListener("release", () => { lock = null; });
+      } else if (!on && lock) { await lock.release(); lock = null; }
+    } catch (e) { /* 画面が消えるのは止められないだけ */ }
+  }
+
+  let busy = false;
+  document.addEventListener("visibilitychange", () => { if (busy && document.visibilityState === "visible") awake(true); });
+  window.addEventListener("beforeunload", (e) => { if (busy) { e.preventDefault(); e.returnValue = ""; } });
+
+  async function send(file) {
+    if (busy) return;
+    if (!file.size) { fail("中身が空のファイルです。別の動画を選んでください"); return; }
+    if (file.size > CFG.max_bytes) { fail("大きすぎて送れません（" + bytes(CFG.max_bytes) + " まで）"); return; }
+    busy = true;
+    show("busy");
+    $("bname").textContent = file.name;
+    $("msg").textContent = SENDING;
+    const total = file.size;
+    let base = 0, t0 = Date.now();
+    const draw = (sent) => {
+      const p = Math.min(100, Math.floor((sent / total) * 100));
+      $("fill").style.width = (sent / total) * 100 + "%";
+      $("pct").textContent = p + "%";
+      $("amount").textContent = bytes(sent) + " / " + bytes(total);
+      const sec = (Date.now() - t0) / 1000;
+      const speed = sec > 3 ? (sent - base) / sec : 0;
+      $("eta").textContent = speed > 0 ? eta((total - sent) / speed) : "";
+    };
+    draw(0);
+    awake(true);
+    try {
+      const fp = await fingerprint(file);
+      const key = "f:" + fp;
+      let rec = mem.get(key);
+      let at = 0;
+      if (rec && rec.done) { done(file, rec, fp, true); return; }
+      if (rec && rec.session) {
+        const s = await where(rec.session, total);
+        if (s.done) { done(file, rec, fp); return; }
+        if (s.next !== undefined) {
+          at = s.next;
+          if (at > 0) $("msg").textContent = "続きから送ります。" + SENDING;
+        } else rec = { slot: rec.slot };  // セッションが切れた。取ってある枠で始め直す
+      }
+      if (!rec) { rec = { slot: await claim(file, fp) }; mem.set(key, rec); }
+      if (!rec.session) { rec.session = await open(rec.slot); mem.set(key, rec); }
+      base = at; t0 = Date.now(); draw(at);
+      let miss = 0;
+      while (true) {
+        const end = Math.min(at + CFG.chunk, total);
+        const r = await request("PUT", rec.session,
+          { "Content-Range": "bytes " + at + "-" + (end - 1) + "/" + total, ...CFG.no308 },
+          file.slice(at, end), (n) => draw(at + n));
+        let s = read(r);
+        if (s.retry) {
+          $("msg").textContent = "電波を待っています…";
+          await wait(miss + 1);
+          s = await where(rec.session, total);
+        }
+        if (s.done) break;
+        if (s.gone) {
+          // セッションが切れた（GCS は1週間で捨てる）。取ってある枠で始め直す
+          if (++miss > CFG.retries) throw new Stop("net");
+          rec = { slot: rec.slot, session: await open(rec.slot) };
+          mem.set(key, rec);
+          at = base = 0; t0 = Date.now(); draw(0);
+          continue;
+        }
+        if (s.bad) throw new Stop("http " + s.bad);
+        // 進まない答えが続くときは、いったん止めて選び直してもらう（続きは覚えてある）
+        if (s.next > at) {
+          if (miss) $("msg").textContent = SENDING;
+          miss = 0;
+        } else if (++miss > CFG.retries) throw new Stop("net");
+        at = s.next;
+        draw(at);
+      }
+      done(file, rec, fp);
+    } catch (e) {
+      const why = e instanceof Stop ? e.message : "err";
+      if (why === "expired") fail("このページの期限が切れました", false);
+      else if (why === "full") fail("このページで送れる本数を使い切りました", false);
+      else fail("途切れました。もう一度、同じ動画を選ぶと続きから送ります");
+    } finally {
+      busy = false;
+      awake(false);
+    }
+  }
+
+  function done(file, rec, fp, before) {
+    if (!before) {
+      mem.set("f:" + fp, { slot: rec.slot, done: true });
+      const list = mem.get("sent") || sentHere;
+      if (!list.some((f) => f.fp === fp)) list.push({ name: file.name, size: file.size, fp });
+      sentHere.splice(0, sentHere.length, ...list);
+      mem.set("sent", list);
+    }
+    $("oname").textContent = file.name;
+    $("osize").textContent = bytes(file.size);
+    show("ok");
+    drawSent();
+  }
+
+  $("file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (f) send(f);
+  });
+
+  if (expired()) fail("このページの期限が切れました", false);
+  drawSent();
+})();
+</script>
+</body>
+</html>

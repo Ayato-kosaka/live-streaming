@@ -13,6 +13,14 @@
 EC2 へのポート転送（ssm:StartSession）も権限が無い。S3 も無い。
 使えるのは **SSM の send-command だけ**で、その標準出力は 24,000 字で切れる。
 なので、ファイルは base64 を 20,000 字ずつに割って、何回かに分けて受け取る。
+
+## put で送ってよいもの
+
+`put` は中身を base64 にして SSM のコマンドに載せる。**中身が EC2 の SSM エージェントの
+ログにそのまま残る**（ログは消さない。SKILL.md の 4）。送ってよいのは、中身がリポジトリの
+公開物と同じもの（cdp.py のような道具・スクリプト・設定の JSON）だけ。
+**秘密や動画は送らない。** それは `tools/shorts/post/send.py put`（GCS の署名付き URL を EC2 が
+curl で落とす。SSM のコマンドに載るのは URL だけ）。動画の拡張子はここで断る。
 """
 import base64, json, os, subprocess, sys, time, hashlib, threading
 
@@ -87,7 +95,14 @@ def get(remote: str, local: str):
     print(f"got {remote} -> {local} ({size} bytes, {len(parts)} parts)")
 
 
+VIDEO = (".mp4", ".mov", ".m4v", ".webm", ".mkv")
+
+
 def put(local: str, remote: str):
+    # 中身が SSM のログに残るので、動画はここを通さない（上の「put で送ってよいもの」）
+    if os.path.splitext(local)[1].lower() in VIDEO:
+        sys.exit(f"put は動画を送らない（中身が SSM のログに残る）: {local}\n"
+                 "  → python3 tools/shorts/post/send.py put <手元> <EC2>")
     data = open(local, "rb").read()
     b64 = base64.b64encode(data).decode()
     # send-command の引数は 64KB まで。40,000 字ずつ番号付きの片に書き、8本並べて送る

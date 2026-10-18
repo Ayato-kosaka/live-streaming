@@ -699,7 +699,7 @@ def main() -> int:
         if tipped["fx_stuck"]:
             # **ここが 0 でないあいだ、その人の順位はそのぶん下がる。**
             # ログは誰も見に行かないので、issue のほうでも知らせる
-            # （`python/fx_tips_watch.py`。#951 / `island-misses.md` #288）
+            # （`python/fx_tips_watch.py`。#951 / `island-misses.md` #290）
             for (cur, why), n in sorted(tipped["fx_why"].items()):
                 logger.warning(
                     "**%s の %d件は円に直せていない**（%s）。額に足していないので、"
