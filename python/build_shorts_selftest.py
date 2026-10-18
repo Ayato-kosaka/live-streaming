@@ -133,12 +133,21 @@ def made_up() -> dict[str, tuple[date, date, bool]]:
 
     本物の章立てに終わりの無い章が1つも無い日（旅から帰って、次が決まるまで）
     でも、1章の足が効き続けるようにするため。
+
+    **`spans()` を通して作る。** 手で辞書を組むと、`spans()` を壊す足
+    （`drop-open`）がここを素通りして、**抜いても落ちない足**になる。
     """
     today = date.today()
-    return {
-        "owari-aru": (today - 200 * DAY, today - 100 * DAY, False),
-        "owari-nai": (today - 20 * DAY, b.FAR, False),
-    }
+
+    def row(slug: str, frm: date, to: date | None) -> dict:
+        return {"slug": slug, "name": slug, "from": frm.isoformat(),
+                "to": to.isoformat() if to else "", "opensAt": "", "branchOf": "",
+                "plannedDays": 0, "countries": []}
+
+    return b.spans([
+        row("owari-aru", today - 200 * DAY, today - 100 * DAY),
+        row("owari-nai", today - 20 * DAY, None),
+    ])
 
 
 def baked_ids(text: str) -> list[str]:
@@ -186,10 +195,18 @@ def main() -> int:
     # **きょうのショートは、終わりの無い章に入る。** 落ちないだけでは足りない
     # （何も返さない作りでも落ちはしない）
     mu = made_up()
-    check("作りもの: きょうは、終わりの無い章に入る",
-          b.chapter_of(today.isoformat(), mu), "owari-nai")
-    check("作りもの: 1年先も、終わりの無い章に入る",
-          b.chapter_of((today + 365 * DAY).isoformat(), mu), "owari-nai")
+
+    def land(d: date) -> str | None:
+        """落ちたら、落ちたことを**値として**返す。ここで traceback を出して
+        死ぬと、残りの章を1つも見ずに終わる（＝足を抜いたとき何が落ちたのか
+        分からない）"""
+        try:
+            return b.chapter_of(d.isoformat(), mu)
+        except Exception as exc:  # noqa: BLE001
+            return f"落ちた: {type(exc).__name__}"
+
+    check("作りもの: きょうは、終わりの無い章に入る", land(today), "owari-nai")
+    check("作りもの: 1年先も、終わりの無い章に入る", land(today + 365 * DAY), "owari-nai")
 
     # --- 2・3. 棚と控えが合っているか ----------------------------------------
     print("\n2. 焼いてある棚が、控えから焼き直したものと1バイトも違わない")
