@@ -1,0 +1,29 @@
+{
+ "name": "yk-tempo-1",
+ "place": "hosting",
+ "action": "up",
+ "files": [
+  {
+   "name": "a.mp4",
+   "bytes": 13045434,
+   "sha256": "0f9f6f21ab3c2253e67bddcbfaf393df85b708af05d66ea6ecd763612e3ca53f"
+  },
+  {
+   "name": "b.mp4",
+   "bytes": 13037827,
+   "sha256": "fbdd7b4646f5f898e6e890638692c0f451e89dd5493de78a860a2acc81f98c10"
+  },
+  {
+   "name": "c.mp4",
+   "bytes": 15885038,
+   "sha256": "165e00e3d1325c734144df905f53576b69687e8b2a41ec983a0f7637b9ad9c39"
+  },
+  {
+   "name": "e.mp4",
+   "bytes": 15765145,
+   "sha256": "0dd9c801f1fbb4b4634ea8d1a8890d6ccd370769e2b054618f287df05f354c53"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtEvgLsVXVjIhViLdWffR\nn0W3pIBU562Me1uGj0UeA7Z439yxhhsgGuA/4eQtLk0p3xrWBD8pPW+X1yEBvEd1\nKwNvPQIRJVJKPlxkSK70+yiEyeZadqXdopyTK3L+4PakgSas5fl/8NdnLSYDm2te\nFT3KilgAYoEU0QUP7B+h9K5vh/g918XQXlm3KNjkGTiLzp+znQyOIbn3xl8d4xjK\nFzuMJaJs0ZWolJxomHPWB0C4zrz5HtKyOnRiQp+4l9v4QYM6tLfwsbKVqGplezrx\nb+VMigLLgRrkrTvW/MsR5TFWzM8TJJ30s7aunkvMJYOC10NmNZUN2f2nW+59IO3s\nK8QK9qNOwkkl8pGKJrjXi4EgbFmf9PoU11rpeZaJlI1kdQQLLvMsil9XI4VSiaYv\nIUnzZ38CKcoRcvWCsX9d8LocLuuewugkG78dW+GjxkoITezvZjZWcNWI87Im8NyT\no45KJW44QkwjdRa5G0DHt0mlPpQPiNF3pFt/bzj7XFFdAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "dda4748f3af6ee824fdfb146"
+}
