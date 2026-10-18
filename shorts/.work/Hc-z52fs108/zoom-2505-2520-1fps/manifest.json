@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Hc-z52fs108__zoom-2505-2520-1fps",
+ "mode": "zoom",
+ "dest": "Hc-z52fs108/zoom-2505-2520-1fps",
+ "video": "Hc-z52fs108",
+ "channel": null,
+ "request": "shorts/requests/2026-10-18-hc-zoom-board.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 4,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 702496,
+  "tar_gz": 669341,
+  "encrypted": 669344
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 669344,
+   "sha256": "2a0919bba0270c55ac13f0cdcff5d62358f7048b960b4f7b5e46b9d62fb82f52"
+  }
+ ],
+ "hmac_sha256": "75f1d604fbc3a077b8699e56076365f587fca4cca7c5a44e3e1f20a212b1b6c2",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39082905284",
+ "created_at": "2026-10-18T00:57:05+00:00"
+}
