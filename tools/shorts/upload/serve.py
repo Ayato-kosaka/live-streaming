@@ -153,6 +153,7 @@ def do_page(req: dict, tmp: Path) -> dict:
     print(f"  枠を {len(slots)}本 署名した（7日）")
     cfg = {"id": secrets.token_hex(6), "slots": slots,
            "init_headers": dict(store.init_headers(), **{"Content-Type": "application/octet-stream"}),
+           "meta_headers": dict(store.meta_headers(), **{"Content-Type": "application/json"}),
            "no308": {"X-GUploader-No-308": "yes"}, "chunk": store.CHUNK,
            "max_bytes": store.MAX_BYTES, "retries": RETRIES, "stall_ms": STALL_MS,
            "expires": expires.isoformat()}
@@ -181,14 +182,16 @@ def do_page(req: dict, tmp: Path) -> dict:
     print("  上げてみた（ブラウザと同じ要求）: "
           f"下見 {'○' if st.get('preflight_init', {}).get('ok') else '✕'}"
           f"（{st.get('preflight_init', {}).get('sec')}秒）"
-          f"  形 * {'○' if st.get('pattern_ok') else '✕'}"
+          f"  枠を取る {st.get('claim', {}).get('first')}→{st.get('claim', {}).get('second')}"
           f"  始め {st.get('init', {}).get('status')}"
           f"  1切れ目 {st.get('piece', {}).get('status')}/{st.get('piece', {}).get('override') or '-'}"
           f"  聞く {st.get('ask', {}).get('status')}/{st.get('ask', {}).get('override') or '-'}"
           f"（308 のまま {st.get('ask_plain', {}).get('status')}）"
           f"  続きから {st.get('last', {}).get('from')}バイト目 → {st.get('last', {}).get('status')}"
           f"  md5 {'一致' if st.get('stored', {}).get('md5_ok') else '✕'}"
-          f"  もう一度始める {st.get('again', {}).get('status')}"
+          f"  同じ名前でもう1本 {st.get('again', {}).get('init')}→{st.get('again', {}).get('final')}"
+          f"（前のまま {'○' if st.get('again', {}).get('kept') else '✕'}）"
+          f"  上限 {'効く' if st.get('cap', {}).get('enforced') else '効かない'}"
           f"  署名なし {st.get('plain_get')}")
     problems = list(life["problems"])
     if not st.get("ok"):

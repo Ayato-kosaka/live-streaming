@@ -99,13 +99,16 @@ def cmd_page(a) -> int:
     st = body.get("selftest") or {}
     print(f"  寿命: {json.dumps(body['lifecycle']['days'], ensure_ascii=False)}"
           f"{'（' + ' / '.join(body['lifecycle']['changed']) + '）' if body['lifecycle']['changed'] else ''}")
-    print(f"  CORS: {'書き換えた' if body['cors']['changed'] else 'そのまま'}・形 * "
-          f"{'効く' if st.get('pattern_ok') else '効かない（出どころを1つずつ足す形で受けた）'}")
+    print(f"  CORS: {'書き換えた' if body['cors']['changed'] else 'そのまま'}"
+          f"（出どころ {body['cors']['exact']}つ・{'/'.join(body['cors']['methods'])}）")
+    ag, cap = st.get("again") or {}, st.get("cap") or {}
     print(f"  ランナーから上げてみた: {'○' if st.get('ok') else '!! ✕'}"
-          f"（始め {st.get('init', {}).get('status')}・1切れ目 {st.get('piece', {}).get('status')}/"
+          f"（枠を取る {st.get('claim', {}).get('first')}→{st.get('claim', {}).get('second')}・"
+          f"始め {st.get('init', {}).get('status')}・1切れ目 {st.get('piece', {}).get('status')}/"
           f"{st.get('piece', {}).get('override') or '-'}・続きから {st.get('last', {}).get('from')}バイト目・"
           f"md5 {'一致' if st.get('stored', {}).get('md5_ok') else '✕'}・"
-          f"もう一度始める {st.get('again', {}).get('status')}・署名なし {st.get('plain_get')}）")
+          f"同じ名前でもう1本 {ag.get('init')}→{ag.get('final')}（前のまま {'○' if ag.get('kept') else '✕'}）・"
+          f"上限 {'効く' if cap.get('enforced') else '効かない'}・署名なし {st.get('plain_get')}）")
     print(f"  ページ: {json.dumps(body.get('page_check'), ensure_ascii=False)}")
     url_txt = dest / "url.txt"
     url_txt.write_text(f"# 録画を送るページ {a.name}（{jst(body['expires'])} JST まで）\n"

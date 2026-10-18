@@ -4,22 +4,28 @@
 Actions のサービスアカウントに管理者を付けた）の `uploads/` の下。
 
     uploads/<name>/<乱数16桁>/00.bin   録画そのもの（ブラウザが細切れに上げる）
-    uploads/<name>/<乱数16桁>/00.json  ブラウザが添える控え（元のファイル名・大きさ・頭と尻の指紋）
+    uploads/<name>/<乱数16桁>/00.json  ブラウザが最初に置く控え（元のファイル名・大きさ・頭と尻の指紋）
 
 ## なぜ「枠」を先に署名しておくか
 
 ブラウザが上げる名前は、ページを作る時点では分からない。だから決まった名前の枠
 （`00.bin` 〜）を本数ぶん先に署名し、元のファイル名は控え（`00.json`）に書かせる。
-枠の始め（resumable の開始）には `x-goog-if-generation-match: 0` を署名に入れてある。
-**もう届いている枠は 412 で断られる**ので、ページは次の枠へ進む（上書きしない）。
+
+**控えを置くことが、枠を取ること。** 控えの PUT には `x-goog-if-generation-match: 0` を
+署名に入れてあり、もう控えのある枠は 412 で断られるので、ページは次の枠へ進む（上書きしない）。
+録画の resumable の始めにも同じ札を入れてあるが、**GCS は始めの時点ではこれを見ない**
+（2026-10-18 にランナーで実測。在る名前でも 201 が返る）。こちらは最後の1切れで断られる
+（selftest の `again`）。だから枠の取り合いは、始めではなく控えで決める。
 
 ## 守り
 
 - 署名は7日（V4 の上限）。ページ（プレビューチャンネル）も7日で消える
 - バケットは公開アクセス防止を強制・均一アクセス（`gcs.py` が毎回読み直す）。`uploads/` も同じ
 - `uploads/` は30日で消える（寿命の決まり。ほかの道の14日の決まりは `preview/` `render/` に絞る）
-- CORS は、プレビューチャンネルの出どころからの PUT・POST・OPTIONS だけ（GET は許さない。
-  ブラウザから読み返す道を作らない）
+- CORS は、配ったページの出どころ（プレビューチャンネル。新しい順に10まで）からの
+  PUT・POST・OPTIONS だけ（GET は許さない。ブラウザから読み返す道を作らない）。
+  **GCS の CORS は `https://…--*.web.app` のような途中の `*` を読まない**（2026-10-18 に実測。
+  形の出どころでは下見が通らなかった）ので、出どころは1つずつ足す
 - 署名付き URL・セッションの URL はログに出さない
 """
 
@@ -50,6 +56,7 @@ CHUNK = 8 * 1024 * 1024
 # 全編で 5〜10GB（2026-10-18 の依頼）。それより大きいものは枠の始めで断る
 MAX_BYTES = 16 * 1024 ** 3
 TTL = dt.timedelta(days=7)
+# 前に入れていた形（効かなかった）。見つけたらこちらの決まりとして扱い、外す
 ORIGIN_PATTERN = f"https://{gcs.PROJECT}--*.web.app"
 ORIGIN_RE = re.compile(rf"^https://{re.escape(gcs.PROJECT)}--[a-z0-9-]+\.web\.app$")
 CORS_METHODS = ["PUT", "POST", "OPTIONS"]
@@ -59,7 +66,7 @@ CORS_HEADERS = ["Content-Type", "Content-Range", "Range", "Location", "x-goog-re
                 "x-goog-if-generation-match", "x-goog-content-length-range",
                 "X-GUploader-No-308", "X-HTTP-Status-Code-Override"]
 CORS_MAX_AGE = 3600
-# 出どころを1つずつ足す形に倒れたときに残す数（ページは7日で消えるので、新しい順に十分）
+# 残す出どころの数（ページは7日で消えるので、新しい順に十分）
 MAX_EXACT = 10
 
 
@@ -69,10 +76,20 @@ def init_headers() -> dict[str, str]:
             "x-goog-content-length-range": f"0,{MAX_BYTES}"}
 
 
-def sign_init(blob) -> str:
+def meta_headers() -> dict[str, str]:
+    """控え（＝枠を取る印）の PUT に署名する見出し。もう在れば 412。"""
+    return {"x-goog-if-generation-match": "0"}
+
+
+def sign_init(blob, headers: dict | None = None) -> str:
     return blob.generate_signed_url(version="v4", method="POST", expiration=TTL,
                                     content_type="application/octet-stream",
-                                    headers=init_headers())
+                                    headers=headers or init_headers())
+
+
+def sign_meta(blob) -> str:
+    return blob.generate_signed_url(version="v4", method="PUT", expiration=TTL,
+                                    content_type="application/json", headers=meta_headers())
 
 
 def sign_slots(bucket, name: str, n: int) -> tuple[str, list[dict], dt.datetime]:
@@ -83,8 +100,7 @@ def sign_slots(bucket, name: str, n: int) -> tuple[str, list[dict], dt.datetime]
     for i in range(n):
         slots.append({
             "init": sign_init(bucket.blob(f"{prefix}{i:02d}.bin")),
-            "meta": bucket.blob(f"{prefix}{i:02d}.json").generate_signed_url(
-                version="v4", method="PUT", expiration=TTL, content_type="application/json")})
+            "meta": sign_meta(bucket.blob(f"{prefix}{i:02d}.json"))})
     return prefix, slots, now + TTL
 
 
@@ -147,10 +163,9 @@ def _ours(rule: dict) -> bool:
 
 
 def ensure_cors(b, origin: str) -> dict:
-    """プレビューチャンネルの出どころから、PUT・POST・OPTIONS だけを許す。ほかの決まりには触らない。
+    """配ったページの出どころから、PUT・POST・OPTIONS だけを許す。ほかの決まりには触らない。
 
-    出どころは `https://live-streaming-d3cac--*.web.app` の形と、いま配ったページの出どころそのもの
-    （形が効かないときの受け皿。新しい順に MAX_EXACT まで）。
+    出どころはページごとに1つずつ足し、新しい順に MAX_EXACT まで残す（`*` の形は GCS が読まない）。
     """
     if not ORIGIN_RE.match(origin):
         raise ValueError("ページの出どころがプレビューチャンネルの形ではない")
@@ -161,7 +176,7 @@ def ensure_cors(b, origin: str) -> dict:
     for r in rules:
         if _ours(r):
             exact += [o for o in r.get("origin", []) if o != ORIGIN_PATTERN and o not in exact]
-    rule = {"origin": [ORIGIN_PATTERN, *exact[:MAX_EXACT]], "method": CORS_METHODS,
+    rule = {"origin": exact[:MAX_EXACT], "method": CORS_METHODS,
             "responseHeader": CORS_HEADERS, "maxAgeSeconds": CORS_MAX_AGE}
     new = others + [rule]
     changed = new != rules
@@ -170,7 +185,7 @@ def ensure_cors(b, origin: str) -> dict:
         b.patch()
         b.reload()
     print(f"  CORS: {'書き換えた' if changed else 'そのまま'}（ほかの決まり {len(others)}本・"
-          f"出どころ 形1つ＋{len(exact[:MAX_EXACT])}つ・{'/'.join(CORS_METHODS)}）")
+          f"出どころ {len(exact[:MAX_EXACT])}つ・{'/'.join(CORS_METHODS)}）")
     return {"changed": changed, "others": len(others), "methods": CORS_METHODS,
             "headers": CORS_HEADERS, "exact": len(exact[:MAX_EXACT])}
 
@@ -207,61 +222,94 @@ def preflight(url: str, origin: str, method: str, headers: list[str], wait: floa
 def selftest(bucket, prefix: str, origin: str) -> dict:
     """ページの JS と同じ順で、小さなものを上げてみる（ランナーから。Origin を付けて）。
 
-    始める → 1切れ目 → どこまで届いたかを聞く（＝再開）→ 残り → 届いたものの md5 →
-    同じ枠をもう一度始めると 412（上書きしない）→ 署名なしでは読めない（非公開）。
+    控えで枠を取る（2回目は 412）→ 始める → 1切れ目 → どこまで届いたかを聞く（＝再開）→ 残り →
+    届いたものの md5 → 同じ名前でもう1本上げると最後で 412（上書きしない）→ 署名なしでは読めない。
+    大きさの上限（x-goog-content-length-range）が効くかも、小さな上限で見る（合否には入れない）。
     """
     import requests
 
     out: dict = {}
     blob = bucket.blob(prefix + "selftest.bin")
+    meta = bucket.blob(prefix + "selftest.json")
+    cap = bucket.blob(prefix + "selftest-cap.bin")
     init = sign_init(blob)
     H = dict(init_headers(), **{"Content-Type": "application/octet-stream"})
+    MH = dict(meta_headers(), **{"Content-Type": "application/json"})
     piece = 2 * 256 * 1024
     data = os.urandom(3 * 256 * 1024)
     total = len(data)
-    out["preflight_init"] = preflight(init, origin, "POST", list(H), wait=120)
-    # 形（*）が効くかを、配ったページではない出どころで見る（効かなければ1つずつ足す形で受ける）
-    other = f"https://{gcs.PROJECT}--sp-0000000000-selftest.web.app"
-    out["pattern_ok"] = preflight(init, other, "POST", list(H))["ok"]
-    r = requests.post(init, headers=dict(H, Origin=origin), data=b"", timeout=30)
-    session = _h(r, "Location")
-    out["init"] = {"status": r.status_code, "location": bool(session),
-                   "allow_origin": _h(r, "Access-Control-Allow-Origin") == origin,
-                   "expose_location": _exposed(r, "Location")}
-    if not session:
-        out["ok"] = False
-        return out
-    put_h = ["Content-Range", "X-GUploader-No-308"]
-    out["preflight_session"] = preflight(session, origin, "PUT", put_h, wait=60)
-    no308 = {"X-GUploader-No-308": "yes", "Origin": origin}
-    r = requests.put(session, data=data[:piece], timeout=60,
-                     headers=dict(no308, **{"Content-Range": f"bytes 0-{piece - 1}/{total}"}))
-    out["piece"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
-                    "range": _h(r, "Range"), "expose_range": _exposed(r, "Range"),
-                    "expose_override": _exposed(r, "X-HTTP-Status-Code-Override")}
-    r = requests.put(session, data=b"", timeout=30,
-                     headers=dict(no308, **{"Content-Range": f"bytes */{total}"}))
-    out["ask"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
-                  "range": _h(r, "Range")}
-    # X-GUploader-No-308 を付けないときの答え（308 のまま。ブラウザによっては扱えない）
-    r = requests.put(session, data=b"", timeout=30, allow_redirects=False,
-                     headers={"Origin": origin, "Content-Range": f"bytes */{total}"})
-    out["ask_plain"] = {"status": r.status_code, "range": _h(r, "Range")}
-    m = re.match(r"bytes=0-(\d+)$", out["ask"]["range"])
-    resume = int(m.group(1)) + 1 if m else 0
-    r = requests.put(session, data=data[resume:], timeout=60,
-                     headers=dict(no308, **{"Content-Range": f"bytes {resume}-{total - 1}/{total}"}))
-    out["last"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
-                   "from": resume}
-    blob.reload()
-    md5 = base64.b64encode(hashlib.md5(data).digest()).decode()
-    out["stored"] = {"bytes": blob.size, "md5_ok": blob.md5_hash == md5}
-    r = requests.post(init, headers=dict(H, Origin=origin), data=b"", timeout=30)
-    out["again"] = {"status": r.status_code}
-    out["plain_get"] = requests.get(f"https://storage.googleapis.com/{bucket.name}/{blob.name}",
-                                    timeout=30).status_code
-    blob.delete()
-    out["ok"] = (out["preflight_init"]["ok"] and out["init"]["status"] in (200, 201)
+    resume = -1
+    try:
+        out["preflight_init"] = preflight(init, origin, "POST", list(H), wait=120)
+        murl = sign_meta(meta)
+        out["preflight_meta"] = preflight(murl, origin, "PUT", list(MH), wait=60)
+        claim = [requests.put(murl, data=b'{"selftest":true}', timeout=30,
+                              headers=dict(MH, Origin=origin)).status_code for _ in range(2)]
+        out["claim"] = {"first": claim[0], "second": claim[1]}
+        r = requests.post(init, headers=dict(H, Origin=origin), data=b"", timeout=30)
+        session = _h(r, "Location")
+        out["init"] = {"status": r.status_code, "location": bool(session),
+                       "allow_origin": _h(r, "Access-Control-Allow-Origin") == origin,
+                       "expose_location": _exposed(r, "Location")}
+        if not session:
+            out["ok"] = False
+            return out
+        put_h = ["Content-Range", "X-GUploader-No-308"]
+        out["preflight_session"] = preflight(session, origin, "PUT", put_h, wait=60)
+        no308 = {"X-GUploader-No-308": "yes", "Origin": origin}
+        r = requests.put(session, data=data[:piece], timeout=60,
+                         headers=dict(no308, **{"Content-Range": f"bytes 0-{piece - 1}/{total}"}))
+        out["piece"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
+                        "range": _h(r, "Range"), "expose_range": _exposed(r, "Range"),
+                        "expose_override": _exposed(r, "X-HTTP-Status-Code-Override")}
+        r = requests.put(session, data=b"", timeout=30,
+                         headers=dict(no308, **{"Content-Range": f"bytes */{total}"}))
+        out["ask"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
+                      "range": _h(r, "Range")}
+        # X-GUploader-No-308 を付けないときの答え（308 のまま。ブラウザによっては扱えない）
+        r = requests.put(session, data=b"", timeout=30, allow_redirects=False,
+                         headers={"Origin": origin, "Content-Range": f"bytes */{total}"})
+        out["ask_plain"] = {"status": r.status_code, "range": _h(r, "Range")}
+        m = re.match(r"bytes=0-(\d+)$", out["ask"]["range"])
+        resume = int(m.group(1)) + 1 if m else 0
+        r = requests.put(session, data=data[resume:], timeout=60,
+                         headers=dict(no308, **{"Content-Range": f"bytes {resume}-{total - 1}/{total}"}))
+        out["last"] = {"status": r.status_code, "override": _h(r, "X-HTTP-Status-Code-Override"),
+                       "from": resume}
+        blob.reload()
+        md5 = base64.b64encode(hashlib.md5(data).digest()).decode()
+        out["stored"] = {"bytes": blob.size, "md5_ok": blob.md5_hash == md5}
+        # 同じ名前でもう1本。始めは通る（GCS は始めでは札を見ない）が、最後の1切れで 412 になるはず
+        other = os.urandom(total)
+        r = requests.post(init, headers=dict(H, Origin=origin), data=b"", timeout=30)
+        again = {"init": r.status_code}
+        if _h(r, "Location"):
+            again["final"] = requests.put(_h(r, "Location"), data=other, timeout=60, headers=dict(
+                no308, **{"Content-Range": f"bytes 0-{total - 1}/{total}"})).status_code
+        blob.reload()
+        again["kept"] = blob.md5_hash == md5
+        out["again"] = again
+        # 大きさの上限が resumable で効くか（上限 512KiB−1 で 768KiB を上げてみる）
+        small = dict(init_headers(), **{"x-goog-content-length-range": f"0,{piece - 1}"})
+        r = requests.post(sign_init(cap, small), data=b"", timeout=30,
+                          headers=dict(small, **{"Content-Type": "application/octet-stream"}, Origin=origin))
+        c = {"init": r.status_code}
+        if _h(r, "Location"):
+            c["final"] = requests.put(_h(r, "Location"), data=data, timeout=60, headers=dict(
+                no308, **{"Content-Range": f"bytes 0-{total - 1}/{total}"})).status_code
+        c["stored"] = cap.exists()
+        out["cap"] = dict(c, enforced=not c["stored"])
+        out["plain_get"] = requests.get(f"https://storage.googleapis.com/{bucket.name}/{blob.name}",
+                                        timeout=30).status_code
+    finally:
+        for x in (blob, meta, cap):
+            try:
+                x.delete()
+            except Exception:  # noqa: BLE001  無いものは消せないだけ
+                pass
+    out["ok"] = (out["preflight_init"]["ok"] and out["preflight_meta"]["ok"]
+                 and out["claim"] == {"first": 200, "second": 412}
+                 and out["init"]["status"] in (200, 201)
                  and out["init"]["allow_origin"] and out["init"]["expose_location"]
                  and out["preflight_session"]["ok"]
                  and out["piece"]["override"] == "308" and out["piece"]["expose_range"]
@@ -269,7 +317,8 @@ def selftest(bucket, prefix: str, origin: str) -> dict:
                  and out["ask"]["override"] == "308" and resume == piece
                  and out["last"]["status"] in (200, 201) and not out["last"]["override"]
                  and out["stored"]["bytes"] == total and out["stored"]["md5_ok"]
-                 and out["again"]["status"] == 412 and out["plain_get"] in (401, 403))
+                 and out["again"].get("final") == 412 and out["again"]["kept"]
+                 and out["plain_get"] in (401, 403))
     return out
 
 
@@ -281,7 +330,7 @@ def uploads(client, bucket, name: str) -> list[dict]:
     side = {b.name[:-len(".json")]: b for b in blobs if b.name.endswith(".json")}
     out = []
     for b in sorted(blobs, key=lambda x: x.name):
-        if not b.name.endswith(".bin") or b.name.endswith("/selftest.bin"):
+        if not b.name.endswith(".bin") or Path(b.name).name.startswith("selftest"):
             continue
         meta = {}
         s = side.get(b.name[:-len(".bin")])

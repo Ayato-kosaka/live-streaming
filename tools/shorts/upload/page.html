@@ -184,37 +184,41 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
     return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
   }
 
-  async function note(slot, file, fp, extra) {
-    const body = JSON.stringify({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified,
-      fingerprint: fp, ua: navigator.userAgent, ...extra });
-    for (let n = 0; n < 3; n++) {
-      const r = await request("PUT", CFG.slots[slot].meta, { "Content-Type": "application/json" }, body);
-      if (r.status === 200) return;
+  // 1回の要求を、電波が戻るまで何度か送り直す
+  async function retrying(send) {
+    let r;
+    for (let n = 0; n < CFG.retries; n++) {
+      r = await send();
+      if (!read(r).retry) return r;
+      $("msg").textContent = "電波を待っています…";
       await wait(n);
     }
+    return r;
   }
 
-  // 空いている枠でセッションを始める。もう届いている枠は 412 で断られるので次へ
-  async function begin(file, fp) {
+  // 枠を取る。控え（元のファイル名・大きさ・指紋）を置けた枠が自分のもの。もう控えのある枠は 412 なので次へ
+  async function claim(file, fp) {
     const used = mem.get("used") || [];
+    const body = JSON.stringify({ name: file.name, size: file.size, type: file.type, lastModified: file.lastModified,
+      fingerprint: fp, ua: navigator.userAgent, started: new Date().toISOString() });
     for (let i = 0; i < CFG.slots.length; i++) {
       if (used.includes(i)) continue;
-      let r;
-      for (let n = 0; n < CFG.retries; n++) {
-        r = await request("POST", CFG.slots[i].init, CFG.init_headers);
-        if (read(r).retry === undefined) break;
-        $("msg").textContent = "電波を待っています…";
-        await wait(n);
-      }
-      if (r.status === 412) { used.push(i); mem.set("used", used); continue; }
-      const session = (r.status === 200 || r.status === 201) && r.h("Location");
-      if (!session) throw new Stop(r.status === 0 ? "net" : expired() ? "expired" : "http " + r.status);
+      const r = await retrying(() => request("PUT", CFG.slots[i].meta, CFG.meta_headers, body));
       used.push(i);
       mem.set("used", used);
-      await note(i, file, fp, { started: new Date().toISOString() });
-      return { slot: i, session };
+      if (r.status === 412) continue;
+      if (r.status === 200) return i;
+      throw new Stop(r.status === 0 ? "net" : expired() ? "expired" : "http " + r.status);
     }
     throw new Stop("full");
+  }
+
+  // 取った枠でセッションを始める（返ってくる URL に細切れを送る）
+  async function open(slot) {
+    const r = await retrying(() => request("POST", CFG.slots[slot].init, CFG.init_headers));
+    const session = (r.status === 200 || r.status === 201) && r.h("Location");
+    if (!session) throw new Stop(r.status === 0 ? "net" : expired() ? "expired" : "http " + r.status);
+    return session;
   }
 
   function expired() { return Date.now() > Date.parse(CFG.expires); }
@@ -266,9 +270,10 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
         if (s.next !== undefined) {
           at = s.next;
           if (at > 0) $("msg").textContent = "続きから送ります。" + SENDING;
-        } else rec = null;
+        } else rec = { slot: rec.slot };  // セッションが切れた。取ってある枠で始め直す
       }
-      if (!rec || !rec.session) { rec = await begin(file, fp); mem.set(key, rec); }
+      if (!rec) { rec = { slot: await claim(file, fp) }; mem.set(key, rec); }
+      if (!rec.session) { rec.session = await open(rec.slot); mem.set(key, rec); }
       base = at; t0 = Date.now(); draw(at);
       let miss = 0;
       while (true) {
@@ -283,7 +288,7 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
           s = await where(rec.session, total);
         }
         if (s.done) break;
-        if (s.gone) { mem.set(key, null); throw new Stop("gone"); }
+        if (s.gone) { mem.set(key, { slot: rec.slot }); throw new Stop("gone"); }
         if (s.bad) throw new Stop("http " + s.bad);
         // 進まない答えが続くときは、いったん止めて選び直してもらう（続きは覚えてある）
         if (s.next > at) {
@@ -309,7 +314,6 @@ h1 { font-size: 24px; margin: 0 0 20px; font-weight: 800; letter-spacing: .02em;
   function done(file, rec, fp, before) {
     if (!before) {
       mem.set("f:" + fp, { slot: rec.slot, done: true });
-      note(rec.slot, file, fp, { done: new Date().toISOString() });
       const list = mem.get("sent") || sentHere;
       if (!list.some((f) => f.fp === fp)) list.push({ name: file.name, size: file.size, fp });
       sentHere.splice(0, sentHere.length, ...list);
