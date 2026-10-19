@@ -7,8 +7,9 @@
 書体は Inter Bold（OFL）。使う字だけに削って `fonts/` に置いてある。
 
 - 字は白、地は透明。付箋の写真は黒いTシャツなので、見本も黒にする（`goods.json`）
-- 表は胸の高さに、面の幅の 8割ほどで1行。背中は肩甲骨の高さに、表より小さく1行。
-  付箋の写真で、表と背中の字の幅はほぼ同じで、背中のほうが字が小さい（字数が多い）
+- 表は胸の高さに、背中は肩甲骨の高さに、どちらも面いっぱいの幅で1行。
+  付箋の写真は字が胸幅の半分ほどある。面の 8割で試作したら、見本では 3分の1 にしか見えなかった。
+  表と背中の字の幅はほぼ同じで、背中のほうが字が小さい（字数が多い）
 - 面は Tシャツ（スタンダード）の 2520 x 2992。SUZURI は縮めずに 1画素=1画素で置く
   （`compose.sh` の頭に同じ話）
 """
@@ -24,8 +25,8 @@ WHITE = (255, 255, 255, 255)
 
 # (置き先, 字, 字の幅, 上端)
 LINES = [
-    ("tshirt-noreturn-front.png", "COME des NO RETURN", 2000, 640),
-    ("tshirt-noreturn-back.png", "TRAVELING WITH NO RETURN DATE", 2000, 520),
+    ("tshirt-noreturn-front.png", "COME des NO RETURN", 2480, 600),
+    ("tshirt-noreturn-back.png", "TRAVELING WITH NO RETURN DATE", 2480, 640),
 ]
 
 
