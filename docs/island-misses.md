@@ -17426,5 +17426,5 @@ if cur != MAIN_CURRENCY:
    呼び戻しもこの中（`planning.md` 1.6・`production.md` 2）
 4. **人の目の検査に「動き」と「同じ画の秒・回数」を足した**（`production.md` 3）。動きは一覧では見えないので、
    機械の数を読み、線の近い区間と寄せを掛けた区間は等倍で再生して見る。「呼び戻しだから」を通す理由にしない
-5. 見張りは `tools/shorts/qa/qa_selftest.py`（カクつきの足4本）と `qa_video_selftest.py`（使い回しの足8本）。
+5. 見張りは `tools/shorts/qa/qa_selftest.py`（カクつきの足4本）と `qa_video_selftest.py`（使い回しの足7本）。
    検査を「いつも通す」に崩すと、どちらの見張りも赤くなることを当てた（2026-10-19）

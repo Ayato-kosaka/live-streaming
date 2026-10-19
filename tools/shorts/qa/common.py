@@ -169,9 +169,11 @@ def iter_frames(path: Path, frames: Iterable[int], W: int, H: int,
         part = want[k:k + chunk]
         pix, ch = ("gray", 1) if gray else ("rgb24", 3)
         vf = f"select={_select_expr(part)}" + (f",scale={W}:{H}:flags=bicubic" if grow else "")
+        # 欲しいコマを出し切ったら ffmpeg を止める（-frames:v）。止めないと、後ろのコマを使わなくても
+        # 動画の終わりまで復号し続け、それを待つ（61秒の版の頭のコマだけ欲しいときに 8秒ほど余計にかかった）
         proc = subprocess.Popen(
             ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path), "-map", "0:v:0",
-             "-vf", vf, "-fps_mode", "passthrough",
+             "-vf", vf, "-fps_mode", "passthrough", "-frames:v", str(len(part)),
              "-f", "rawvideo", "-pix_fmt", pix, "-"], stdout=subprocess.PIPE)
         size = W * H * ch
         got = 0
@@ -253,7 +255,9 @@ def stream_of(path: Path) -> tuple[str, float]:
     """素材のファイルが、どの配信の何秒目から始まるか（配信の id, 頭の秒）。
 
     取り込みの clips は、同じ置き場の index.json に配信の id（`video`）と区間ごとの頭の秒（`start`）を
-    書いている。それが無い素材（手で作った絵・selftest の合成）は、ファイルそのものを1本の配信とみなし、
+    書いている。Actions の書き出し（`render/remote.py`）は素材を sha256 の名前で並べ直すので、区間ごとに
+    `video` を持つ index.json を書き戻す（区間の `video` があればそれを、無ければ全体の `video` を取る）。
+    どちらも無い素材（手で作った絵・selftest の合成）は、ファイルそのものを1本の配信とみなし、
     頭を 0 秒にする（別のファイルどうしは「同じ配信」と言わない側に倒す）。
     """
     key = str(path)
@@ -264,7 +268,8 @@ def stream_of(path: Path) -> tuple[str, float]:
             j = json.loads(ix.read_text())
             for c in j.get("clips", []):
                 if c.get("file") == Path(path).name:
-                    vid, t0 = str(j.get("video") or Path(path).parent), float(c.get("start") or 0.0)
+                    vid = str(c.get("video") or j.get("video") or Path(path).parent)
+                    t0 = float(c.get("start") or 0.0)
                     break
         except (OSError, ValueError, AttributeError):
             pass
@@ -273,8 +278,12 @@ def stream_of(path: Path) -> tuple[str, float]:
 
 
 def hms(t: float) -> str:
-    t = max(0.0, float(t))
-    return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:04.1f}"
+    """秒を H:MM:SS.s に。**先に 0.1秒に丸めてから**時・分・秒に割る（割ってから丸めると、
+    299.97 が 0:04:60.0 になる）。"""
+    tenths = int(round(max(0.0, float(t)) * 10))
+    h, r = divmod(tenths, 36000)
+    m, r = divmod(r, 600)
+    return f"{h}:{m:02d}:{r / 10:04.1f}"
 
 
 def segments(plan: dict | None) -> list[dict]:
@@ -303,9 +312,13 @@ def segments(plan: dict | None) -> list[dict]:
 def where(s: dict) -> str:
     """区間を人が元の配信で探せる言い方にする（出来上がりの秒・配信の中の時刻・素材のファイル）。"""
     span = f"{hms(s['src_from'])}〜{hms(s['src_to'])}"
+    f = s["file"]
+    stem, dot, ext = f.partition(".")
+    if len(stem) == 64 and all(ch in "0123456789abcdef" for ch in stem):
+        f = f"{stem[:12]}…{dot}{ext}"  # Actions では素材が sha256 の名前で並ぶ。頭だけで見分けられる
     if s["stream"] != s["path"]:
-        return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（配信 {s['stream']} の {span}・素材 {s['file']}）"
-    return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（素材 {s['file']} の {span}）"
+        return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（配信 {s['stream']} の {span}・素材 {f}）"
+    return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（素材 {f} の {span}）"
 
 
 def safe_area(style: dict) -> dict:

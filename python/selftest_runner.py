@@ -174,7 +174,8 @@ SKIP: dict[str, str] = {
     # 2026-09-18 から 2026-10-15 まで、外すものは1本も無かった。
     #
     # ショートの品質チェックの見張り2本は「遅い」で外す。本物の render.py で書き出した
-    # 1本を14通りに壊して当てるので、2本で4〜5分かかり、ffmpeg と OpenCV 4 が要る。
+    # 1本を14通りに壊して当て（ほかに、時間割と素材だけを差し替えた足が11本。検査は16項目）、
+    # 2本で7〜9分かかり、ffmpeg と OpenCV 4 が要る。
     # Selftests は全部の PR で走り、その多くは島（site/）の直しでショートに触らない。
     # **外しただけでは走らなくなる**ので、ショートを触った PR では
     # `.github/workflows/shorts_selftest.yml` が名指しで回す（棚卸し
@@ -182,10 +183,10 @@ SKIP: dict[str, str] = {
     # 手元では `python3 python/selftest_runner.py tools/shorts/qa/qa_selftest.py
     # tools/shorts/qa/qa_video_selftest.py`（名指しすれば、ここに載っていても回る）
     "tools/shorts/qa/qa_selftest.py":
-        "遅い（書き出して壊す対照。2本で4〜5分・ffmpeg と OpenCV 4 が要る）。"
+        "遅い（書き出して壊す対照。2本で7〜9分・ffmpeg と OpenCV 4 が要る）。"
         "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
     "tools/shorts/qa/qa_video_selftest.py":
-        "遅い（書き出して壊す対照。2本で4〜5分・ffmpeg と OpenCV 4 が要る）。"
+        "遅い（書き出して壊す対照。2本で7〜9分・ffmpeg と OpenCV 4 が要る）。"
         "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
     # BGM の大きさの物差しの見張り（2026-10-16）は**遅くない**（数秒）が、numpy が要る。
     # Selftests は numpy を入れていない（`python/requirements.txt` のどれも numpy を引かない。

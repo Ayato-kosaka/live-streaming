@@ -10,7 +10,7 @@
 | 素材 | 絵コンテが指す元動画の時刻を、前後に余白（区間 −2〜+3秒、1点なら −2〜+8秒）を付けて並べ、重なりはまとめて1本の依頼にする | `shorts_ingest` の `clips`（`tools/shorts/ingest/README.md`） | 区間ごとの mp4（元の縦横・fps・音）と `index.json`。手元で復号 |
 | 声 | 原稿を1文ずつ。数字・英字・外の言葉は**かなに直して渡し、字幕は原稿のまま** | `tools/shorts/voice/`（EC2 の Chrome で Fish Audio） | 1文1ファイルの wav と `lines.json`（長さ・聞き取り直した字） |
 | 編集指示書 | 企画の spec と素材の index と声の長さから組む。場面の差し替えは上書きファイルに理由つきで書く | `tools/shorts/plan/build_edit.py` | `edit_<案>.json`（人が直せる編集データ） |
-| 書き出し | BGM を入れた1本（YouTube・TikTok で同じもの。曲はあやとが選ぶ。#909）。**中身を直している間は下書き**（`--draft`：縦横半分・双子なし・検査4項目）で回し、出す前に本番で書き直す。3本の本番は Actions に並べる | `tools/shorts/render/render.py`・`tools/shorts/render/remote.py`（Actions。本番 9分・下書き 4分半。作業箱で順に回すと 42分・9分） | mp4 と `plan.json`・音の stem・字なしの版 |
+| 書き出し | BGM を入れた1本（YouTube・TikTok で同じもの。曲はあやとが選ぶ。#909）。**中身を直している間は下書き**（`--draft`：縦横半分・双子なし・検査6項目。元素材のカクつきと使い回しも下書きで見る）で回し、出す前に本番で書き直す。3本の本番は Actions に並べる | `tools/shorts/render/render.py`・`tools/shorts/render/remote.py`（Actions。本番 9分・下書き 4分半。作業箱で順に回すと 42分・9分） | mp4 と `plan.json`・音の stem・字なしの版 |
 | 機械の検査 | 16項目。顔は「人が見る」で出る。強調の字の言い直しは `text_dup` が、字が顔に被っているのは `text_on_face` が、元素材のカクつきは `source_stutter` が、同じ画の使い回しは `shot_reuse` が落とす | `tools/shorts/qa/check.py` | 項目ごとの合否と数 |
 | **人の目の検査** | 下の 3 を全部。機械は「弱い画」を言い切れず、言葉の重なりも一部しか拾えない | 帯の絵 `tools/shorts/qa/strips.py`（下の 3） | 直しの一覧 → 書き出しに戻す |
 | 見せる | Firebase Hosting のプレビューチャンネル（**7日で消える**・乱数の名前・noindex）に置き、動画を並べた1枚のページの URL を渡す。URL は issueに貼ってよい。本番のサイト（live）には触らない | `tools/shorts/preview/put.py up`（Actions `shorts_preview`。3本96MB で起動から85秒） | ページと1本ずつの URL（`--urls` のファイル）。制作 issue に URL を書く |

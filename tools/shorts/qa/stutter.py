@@ -61,6 +61,14 @@ MIN_MOVING = 8        # 動いている所が 8コマ（0.27秒）に満たな�
 REPEAT_FAIL = 0.60    # 繰り返しが 6割を越える（実質 12fps 未満）区間が1つでもあれば落とす
 
 
+def zooming(z) -> bool:
+    """カットに**動く**寄せが掛かっているか（from と to が違う）。from == to は止まった切り出しで、
+    寄せが動かないので「なめらかな寄せの下で中身だけ跳ぶ」は起きない。"""
+    if not isinstance(z, dict) or z.get("from") is None or z.get("to") is None:
+        return False
+    return abs(float(z["from"]) - float(z["to"])) > 1e-9
+
+
 def source_gray(path: str, a: int, b: int, fps: float, crop):
     """元素材の [a, b) コマを、元の大きさの白黒で1コマずつ返す（書き出しの decode_cut と同じ切りかた）。"""
     W, H = native_size(path)
@@ -153,7 +161,7 @@ def check(ctx: Ctx) -> dict:
         d = source_diffs(s["path"], s["in"], s["out"], fps, s["crop"])
         rows.append({**{k: s[k] for k in ("from_s", "to_s", "file", "in", "out")},
                      "src_from": round(s["src_from"], 2), "src_to": round(s["src_to"], 2),
-                     "zoom": bool(s.get("zoom")), "where": where(s), **measure(d, fps)})
+                     "zoom": zooming(s.get("zoom")), "where": where(s), **measure(d, fps)})
     rated = [r for r in rows if r["repeat"] is not None]
     bad = [r for r in rated if r["repeat"] > REPEAT_FAIL]
     worst = max(rated, key=lambda r: r["repeat"], default=None)
