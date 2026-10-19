@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview-in__zj-p2-v3",
+ "mode": "preview-in",
+ "dest": "preview-in/zj-p2-v3",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/zj-p2-v3.json",
+ "status": "ok",
+ "stages": {
+  "upload": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 26769117,
+  "tar_gz": 26749244,
+  "encrypted": 26749248
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 26749248,
+   "sha256": "9c81522beaedac3e821c368a35e98a333de654fc3060e66708476f296b687bc8"
+  }
+ ],
+ "hmac_sha256": "e7f5e21e1f378221b5c88af1dbcf43054995460b867a9af1db28c6e0764d2df6",
+ "pubkey_sha256": "6ab1b7ce970eacc83465ce19753129340f9e2243733c9c1d143ad077e22d25e7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-19T16:21:52+00:00",
+ "nonce": "1fe8b6bbfaa8e34c607e842b"
+}
