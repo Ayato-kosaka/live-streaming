@@ -96,6 +96,8 @@ git branch --show-current     # master だったら、そこでコミットし�
 git log --oneline origin/master..HEAD
 ```
 
+**ショートの取り込みの返し先を兼ねる枝（`shorts/requests/` を push した枝）の PR は、マージの前に `gh run list -w shorts_ingest.yml -b <ブランチ> --json status,url -q '.[]|select(.status!="completed")'` が空かを見て、空でなければ終わるまでマージしない**（マージで枝が消え、走っている解析の結果が置き場を失う。`island-misses.md` #291）。
+
 マージのあとはブランチに master を取り込んでおく:
 
 ```bash
