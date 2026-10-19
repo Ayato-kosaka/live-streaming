@@ -40,5 +40,13 @@
     "itemId": 393,
     "variant": 3416,
     "front": "tools/goods/art/out/towel.png"
+  },
+  {
+    "key": "sweat-aytearth",
+    "title": "ayt earth スウェット",
+    "description": "胸いっぱいに、まあるい字で「ayt earth」。\nあやとと、あやとが歩く地球のこと。\n色も着る人も選ばない、いつもの一枚にどうぞ。\nあやと島から、旅のおともに🌍✨",
+    "itemId": 5,
+    "variant": 183,
+    "front": "tools/goods/art/out/sweat-aytearth.png"
   }
 ]

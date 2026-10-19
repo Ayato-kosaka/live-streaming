@@ -1,8 +1,20 @@
 {
  "_": "SUZURI（suzuri.jp/ayato_arigato）に在るデザインの台帳。tools/sprites/shopgoods_selftest.mjs が読む。手で書き換えない——取り直しかたは同じファイルの頭に書いてある",
- "takenAt": "2026-10-14",
+ "takenAt": "2026-10-19",
  "takenBy": "SUZURI API ワークフロー（suzuri_api.yml / command: materials）",
  "designs": [
+  {
+   "id": 21191111,
+   "title": "ayt earth スウェット",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21188379,
+   "title": "カサ・アヤトの住人 🇺🇸",
+   "published": true,
+   "route": "resident"
+  },
   {
    "id": 21154518,
    "title": "",

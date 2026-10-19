@@ -120,10 +120,17 @@ def items(q=""):
         ex = ex[0] if ex else {}
         print(f"{it['id']}\t{it.get('name')}\t{it.get('humanizeName')}\t面={','.join(it.get('availablePrintPlaces', []))}"
               f"\t型{ex.get('id')}({(ex.get('color') or {}).get('name')}/{(ex.get('size') or {}).get('name')})\t税込{it.get('minPriceWithTax')}〜")
+        if q:
+            # 絞ったときだけ、色ごとの型を1つずつ出す。見本の色（exemplary）を代表以外にしたいとき引く
+            seen = {}
+            for v in vs:
+                seen.setdefault((v.get("color") or {}).get("name"), f"{v.get('id')}({(v.get('size') or {}).get('name')})")
+            print("    色:", " ".join(f"{c}={x}" for c, x in seen.items()))
     print(f"{n} 品目")
 
 
-RAW = "https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/master/"
+# 刷る絵は、ワークフローを走らせた版から取る。枝で押せば、master に入れる前に `--trial` で見本を見られる
+RAW = f"https://raw.githubusercontent.com/Ayato-kosaka/live-streaming/{os.environ.get('GITHUB_SHA') or 'master'}/"
 
 
 def goods(spec_path, dry=False, pub=False, trial=False, only=None):
