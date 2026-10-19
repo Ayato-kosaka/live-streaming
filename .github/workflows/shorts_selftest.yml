@@ -60,14 +60,16 @@ jobs:
       # DejaVu を見張りが同じ名前で置き直して使う（検査は字の形を見ない。和文は豆腐になる）。
       # OpenCV は **5 未満**に止める。顔の検出に使う Haar の型が OpenCV 5 で削られた
       # （5.0.0 の wheel に `cv2.data.haarcascades` の中身も `CascadeClassifier` も無い）。
-      # budoux は書き出しの字幕の折り返しが本番と同じになるように（無くても回る）
+      # budoux は書き出しの字幕の折り返しが本番と同じになるように（無くても回る）。
+      # PyYAML は取り込みの判定の見張り（`ingest/gate_selftest.py`）が自分のワークフローを
+      # 読むのに要る。Selftests は入れているので、あちらでは落ちずにここだけ落ちていた
       - name: 道具を入れる（ffmpeg・OpenCV 4）
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
           ffmpeg -version > /dev/null
           python -m pip install --upgrade pip
-          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow budoux
+          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow budoux PyYAML
 
       # 落ちた1本で止めない（`!cancelled()`）。3つとも回してから、まとめて落ちる
       - name: 品質チェックの見張り（音・字・形式）
