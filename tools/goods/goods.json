@@ -48,5 +48,14 @@
     "itemId": 5,
     "variant": 183,
     "front": "tools/goods/art/out/sweat-aytearth.png"
+  },
+  {
+    "key": "tshirt-noreturn",
+    "title": "COME des NO RETURN Tシャツ",
+    "description": "胸に「COME des NO RETURN」、背中に「TRAVELING WITH NO RETURN DATE」。\n帰る日を決めずに旅を続けるあやとの、合言葉を白い字1行ずつに。\n黒にも白にも合わせやすい、毎日の一枚にどうぞ。\nあやと島から、帰らない旅のおともに🌏✨",
+    "itemId": 1,
+    "variant": 2,
+    "front": "tools/goods/art/out/tshirt-noreturn-front.png",
+    "back": "tools/goods/art/out/tshirt-noreturn-back.png"
   }
 ]
