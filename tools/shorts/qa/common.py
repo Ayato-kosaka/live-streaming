@@ -246,6 +246,68 @@ def overlays(plan: dict | None) -> list[dict]:
     return out
 
 
+_STREAM: dict = {}
+
+
+def stream_of(path: Path) -> tuple[str, float]:
+    """素材のファイルが、どの配信の何秒目から始まるか（配信の id, 頭の秒）。
+
+    取り込みの clips は、同じ置き場の index.json に配信の id（`video`）と区間ごとの頭の秒（`start`）を
+    書いている。それが無い素材（手で作った絵・selftest の合成）は、ファイルそのものを1本の配信とみなし、
+    頭を 0 秒にする（別のファイルどうしは「同じ配信」と言わない側に倒す）。
+    """
+    key = str(path)
+    if key not in _STREAM:
+        vid, t0 = key, 0.0
+        ix = Path(path).parent / "index.json"
+        try:
+            j = json.loads(ix.read_text())
+            for c in j.get("clips", []):
+                if c.get("file") == Path(path).name:
+                    vid, t0 = str(j.get("video") or Path(path).parent), float(c.get("start") or 0.0)
+                    break
+        except (OSError, ValueError, AttributeError):
+            pass
+        _STREAM[key] = (vid, t0)
+    return _STREAM[key]
+
+
+def hms(t: float) -> str:
+    t = max(0.0, float(t))
+    return f"{int(t // 3600)}:{int(t % 3600 // 60):02d}:{t % 60:04.1f}"
+
+
+def segments(plan: dict | None) -> list[dict]:
+    """時間割のカットを、出来上がりの秒と元素材（ファイル・コマ・配信の中の秒）に戻す。
+
+    書き出しは plan.json の `cuts` に、元素材の置き場（path）・元のコマ（in / out、元素材の fps で数える。
+    render.py は元素材の fps が時間割と同じものしか受けない）・出来上がりの頭のコマ（at）を写している。
+    """
+    if not plan or not plan.get("cuts"):
+        return []
+    fps = float(plan["fps"])
+    out = []
+    for k, c in enumerate(plan["cuts"]):
+        if not all(key in c for key in ("path", "in", "out", "at")):
+            continue
+        n = int(c.get("frames") or (c["out"] - c["in"]))
+        vid, t0 = stream_of(Path(c["path"]))
+        out.append({"k": k, "path": str(c["path"]), "file": Path(c["path"]).name, "in": int(c["in"]),
+                    "out": int(c["out"]), "at": int(c["at"]), "frames": n,
+                    "from_s": c["at"] / fps, "to_s": (c["at"] + n) / fps,
+                    "stream": vid, "src_from": t0 + c["in"] / fps, "src_to": t0 + c["out"] / fps,
+                    "crop": c.get("crop"), "zoom": c.get("zoom"), "src": c.get("src")})
+    return out
+
+
+def where(s: dict) -> str:
+    """区間を人が元の配信で探せる言い方にする（出来上がりの秒・配信の中の時刻・素材のファイル）。"""
+    span = f"{hms(s['src_from'])}〜{hms(s['src_to'])}"
+    if s["stream"] != s["path"]:
+        return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（配信 {s['stream']} の {span}・素材 {s['file']}）"
+    return f"{s['from_s']:.2f}〜{s['to_s']:.2f} 秒（素材 {s['file']} の {span}）"
+
+
 def safe_area(style: dict) -> dict:
     s = style["safe"]
     W = style["canvas"]["width"]
