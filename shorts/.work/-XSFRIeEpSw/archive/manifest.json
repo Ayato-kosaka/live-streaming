@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "-XSFRIeEpSw__archive",
+ "mode": "archive",
+ "dest": "-XSFRIeEpSw/archive",
+ "video": "-XSFRIeEpSw",
+ "channel": null,
+ "request": "shorts/requests/2026-10-19-zj-archive.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1235,
+  "tar_gz": 1037,
+  "encrypted": 1040
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1040,
+   "sha256": "6e69d4c6a2edc649a83eefc10e3fb5f7761c93c833b06cd32e47ef1069e46878"
+  }
+ ],
+ "hmac_sha256": "f8a66fef19e941c2844f5305539b6f69b5a4497a5e23078abc8f4108dd49d9d1",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39178935150",
+ "created_at": "2026-10-19T00:53:59+00:00"
+}
