@@ -5,37 +5,44 @@
  "dest": "zjHZucyfrq8/archive",
  "video": "zjHZucyfrq8",
  "channel": null,
- "request": "shorts/requests/2026-10-19-zj-archive.json",
- "status": "failed",
+ "request": "shorts/requests/2026-10-19-zj-archive-main.json",
+ "status": "ok",
  "stages": {
-  "download": "failed"
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
  },
  "counts": {
-  "sheets": 0,
-  "caption_segments": 0,
-  "transcript_segments": 0,
-  "cuts": 0,
+  "sheets": 41,
+  "caption_segments": 1639,
+  "transcript_segments": 184,
+  "cuts": 56,
   "clips": 0,
   "clips_ok": 0,
   "clip_seconds": 0,
   "channel_entries": 0,
-  "files": 2
+  "files": 55
  },
  "bytes": {
-  "plain": 1235,
-  "tar_gz": 1045,
-  "encrypted": 1056
+  "plain": 15269383,
+  "tar_gz": 11834325,
+  "encrypted": 11834336
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1056,
-   "sha256": "090d59833fc693d3aedda47c085d32f4a83878887805c5496bf7822f0aaefc7f"
+   "bytes": 11834336,
+   "sha256": "fa76cc3347d1d90f59c634b6c2f5308d4499c681a7556ebb18be0b3a24930f17"
   }
  ],
- "hmac_sha256": "776baf47c6ed74a46524801a7068a7438bfc9a423d32156af0194881b4a08e49",
+ "hmac_sha256": "726cc9c062bba9c5d647711551e1ea80a2bf942fa29929a6c606fc09fe56d773",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39178935150",
- "created_at": "2026-10-19T00:54:03+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39182708157",
+ "created_at": "2026-10-19T01:16:05+00:00"
 }
