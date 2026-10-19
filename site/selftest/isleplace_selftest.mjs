@@ -272,12 +272,16 @@ const WANT = {
      - guidebook … この国の歩きかた（`/north-macedonia`）
      - board ……… この旅に来ている付箋を読む板（`components/isle/board.ts`）
 
-     **streams / shorts / legends はまだ建たない。**
+     **2026-10-19 に `shorts` が増えた。** この旅のショートを4本出して、
+     毎晩の焼き直し（`build_shorts`）が `content/shorts.ts` に `balkans` を
+     足したので、「ショート動画」が建つ。
+
+     **streams / legends はまだ建たない。**
      `chapterStreams` に `balkans` の鍵が無く（焼いても1本も入らなかった）、
      この島の企画もまだ無い。そちらが埋まったら、また増える——
      **増えても減っても赤くなる**形にしてあるので、気づかずに痩せることはない
      （`docs/island-misses.md` #210）。 */
-  balkans: "countries facts guidebook board pier",
+  balkans: "countries shorts facts guidebook board pier",
 };
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");
