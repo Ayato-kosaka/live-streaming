@@ -1,0 +1,690 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "zjHZucyfrq8-p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest/zjHZucyfrq8/clips/01_0-04-55_0-07-10.mp4",
+   "watermark": "prism_live",
+   "t0": 295.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/01_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72000.0
+  },
+  "c4_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/08_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72420.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest2/HjSLfg57t7E/clips/01_0-03-20_0-04-30.mp4",
+   "watermark": "prism_live",
+   "t0": 36200.0
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/02_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72060.0
+  },
+  "c4_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/03_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72120.0
+  },
+  "c4_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/04_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72180.0
+  },
+  "c4_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/05_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72240.0
+  },
+  "c4_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/06_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72300.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest2/HjSLfg57t7E/clips/03_0-33-30_0-35-00.mp4",
+   "watermark": "prism_live",
+   "t0": 38010.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest2/zjHZucyfrq8/clips/04_0-25-15_0-26-35.mp4",
+   "watermark": "prism_live",
+   "t0": 1515.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest/zjHZucyfrq8/clips/08_1-30-35_1-31-15.mp4",
+   "watermark": "prism_live",
+   "t0": 5435.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest/zjHZucyfrq8/clips/09_1-33-25_1-33-37.mp4",
+   "watermark": "prism_live",
+   "t0": 5605.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/ingest/zjHZucyfrq8/clips/10_1-34-35_1-34-47.mp4",
+   "watermark": "prism_live",
+   "t0": 5675.0
+  },
+  "c4_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/zj/stills/07_still.mp4",
+   "watermark": "prism_live",
+   "t0": 72360.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c01",
+   "in": 396,
+   "out": 453,
+   "row": 0,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "屋上のベッドの寄り（赤い毛布・パレット・手すりの向こうに街）。題の札の下でもベッドが見える。0秒目の画。0:05:07.4〜0:05:08.1 は指がレンズに掛かり、0:05:10.2 からはテーブルへ振れて 0.5秒止まる"
+  },
+  {
+   "src": "c4_01",
+   "in": 0,
+   "out": 29,
+   "row": 0,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:22:51.4】屋上の全体。2行目の頭まで同じ寄りを続ける（行の境で切らずに1つの画に見せる）。ベッドの引き（0:04:59）は題の札にベッドが隠れるので使わない（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_01",
+   "in": 0,
+   "out": 65,
+   "row": 1,
+   "zoom": {
+    "from": 1.301,
+    "to": 1.37,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:22:51.4】屋上の全体（青空・まわりの建物・干した服）。1行目の終わりからの寄りを続ける（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_08",
+   "in": 0,
+   "out": 69,
+   "row": 2,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:05:55.7】屋上の外のベッド（パレットの上の赤い毛布）。受付の人は脚だけ。大きい字の後ろで寄る（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c3_01",
+   "in": 600,
+   "out": 688,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "【着いた日の回 0:03:40】夜の空港を歩く本人"
+  },
+  {
+   "src": "c4_02",
+   "in": 0,
+   "out": 77,
+   "row": 4,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:23:53.1】宿の暗い廊下（出口の光）。チェックインした宿の中。寄る（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_03",
+   "in": 0,
+   "out": 45,
+   "row": 5,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.27,
+    "x": 0.3,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:12:16.6】屋根の下の白い冷蔵庫の前の本人。冷蔵庫が画の左にあるので寄る先を左へ。引く（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_04",
+   "in": 0,
+   "out": 63,
+   "row": 6,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:17:31.9】屋外のコンロ（焦げと錆）。寄る（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_05",
+   "in": 0,
+   "out": 44,
+   "row": 7,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.27,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:14:19.9】積んだフライパンと皿。引く（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_06",
+   "in": 0,
+   "out": 71,
+   "row": 8,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:17:58.0】汚れた流し。寄る（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c3_03",
+   "in": 360,
+   "out": 440,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "【着いた日の回 0:33:42】朝のカフェでコーヒーを持つ本人"
+  },
+  {
+   "src": "c2_04",
+   "in": 240,
+   "out": 324,
+   "row": 10,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "宿の近くの通り（青い車・猫）。0:25:22 は同じ絵の繰り返しが 70% なので 0:25:23 から"
+  },
+  {
+   "src": "c08",
+   "in": 180,
+   "out": 257,
+   "row": 11,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "見学した宿の部屋（青緑のソファベッド）"
+  },
+  {
+   "src": "c08",
+   "in": 750,
+   "out": 828,
+   "row": 12,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "同じ部屋の寄り（窓とソファベッド）"
+  },
+  {
+   "src": "c09",
+   "in": 120,
+   "out": 194,
+   "row": 13,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "頭に手をやって苦笑い"
+  },
+  {
+   "src": "c10",
+   "in": 60,
+   "out": 118,
+   "row": 14,
+   "zoom": {
+    "from": 1.27,
+    "to": 1.33,
+    "x": 0.66,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「3泊ぐらいちょっと地獄見ようせ」と言い直しているところ（1:34:30 に1度言って、1:34:37 でもう1度）。左の店の看板（ROBO…）が字幕と同じ高さに入るので、寄る先を右へずらして外に出す"
+  },
+  {
+   "src": "c4_07",
+   "in": 0,
+   "out": 49,
+   "row": 15,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.3655,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:22:59.6】屋根の枠だけの屋外のキッチン。17行目まで同じ引きを続ける（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c4_07",
+   "in": 0,
+   "out": 84,
+   "row": 16,
+   "zoom": {
+    "from": 1.3644,
+    "to": 1.27,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【止め絵 本編 0:22:59.6】屋根の枠だけの屋外のキッチン（壁が無い）。16行目からの引きを続けて屋根の枠を見せる（元の区間はカクつくので止め絵にした）"
+  },
+  {
+   "src": "c01",
+   "in": 126,
+   "out": 199,
+   "row": 17,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.56,
+    "x": 0.5,
+    "y": 0.45,
+    "sx": 0.5,
+    "sy": 0.4
+   },
+   "note": "冒頭と同じ屋上のベッド。冒頭の画に戻して切る"
+  }
+ ],
+ "title": {
+  "text": "アルバニアの1泊1400円ホステルが、\n異常すぎた",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "open_jtalk",
+  "speed": 1.15,
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "アルバニアの1泊1400円ホステルが、異常すぎた。",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "受付を探して、屋上に上がったら……",
+    "at": 86
+   },
+   {
+    "text": "外のベッドで、受付のおっちゃんが寝てた。",
+    "at": 151,
+    "big": "shake_white"
+   },
+   {
+    "text": "34軒くらいホステル回ってきて、初めて見たわ。",
+    "at": 220,
+    "mood": "tense_still"
+   },
+   {
+    "text": "起こして、お金払って、なんとかチェックイン。",
+    "at": 308
+   },
+   {
+    "text": "ほんで冷蔵庫……外。",
+    "at": 385,
+    "big": "static_white"
+   },
+   {
+    "text": "キッチンも外。生まれて初めて見た。",
+    "at": 430,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "しかも、めっちゃ汚い。",
+    "at": 493,
+    "big": "shake_red"
+   },
+   {
+    "text": "3000円なら、きれいな宿もあるらしいけど、",
+    "at": 537
+   },
+   {
+    "text": "毎日泊まるから、それやと月10万。無理や。",
+    "at": 608,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "もう嫌すぎて、この国は2週間で出るって決めた。",
+    "at": 688,
+    "mood": "tense_still"
+   },
+   {
+    "text": "そしたら同じ1400円で、ええ宿見つけた！",
+    "at": 772,
+    "mood": "up_pop"
+   },
+   {
+    "text": "めっちゃええやん。こっちのほうが全然マシ。",
+    "at": 859,
+    "big": "glow_yellow",
+    "caption_from": 849
+   },
+   {
+    "text": "……でも今の宿、ノリで3泊払ってもうてた。",
+    "at": 927,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "まあ3泊くらい、地獄見ようや。",
+    "at": 1001
+   },
+   {
+    "text": "外にベッドある理由を聞いたら、",
+    "at": 1059
+   },
+   {
+    "text": "横殴りの雨が来えへんから、屋根だけで平気らしい。",
+    "at": 1108
+   },
+   {
+    "text": "みんなは、この宿、泊まれる？",
+    "at": 1192
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-aa23d92fef063a53f/shorts/videos/zjHZucyfrq8/p2/spec.json",
+  "fps": 30,
+  "frames": 1265,
+  "seconds": 42.167,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "0:05:08.2+1.90s",
+     "20:00:00.0+0.97s"
+    ],
+    "line": "アルバニアの1泊1400円ホステルが、異常すぎた。",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 86,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "20:00:00.0+2.17s"
+    ],
+    "line": "受付を探して、屋上に上がったら……",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 151,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "20:07:00.0+2.30s"
+    ],
+    "line": "外のベッドで、受付のおっちゃんが寝てた。",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 3,
+    "from": 220,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "10:03:40.0+2.93s"
+    ],
+    "line": "34軒くらいホステル回ってきて、初めて見たわ。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 308,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "20:01:00.0+2.57s"
+    ],
+    "line": "起こして、お金払って、なんとかチェックイン。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 385,
+    "frames": 45,
+    "voice_frames": 37,
+    "cuts": [
+     "20:02:00.0+1.50s"
+    ],
+    "line": "ほんで冷蔵庫……外。",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 6,
+    "from": 430,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "20:03:00.0+2.10s"
+    ],
+    "line": "キッチンも外。生まれて初めて見た。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 493,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "20:04:00.0+1.47s"
+    ],
+    "line": "しかも、めっちゃ汚い。",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 8,
+    "from": 537,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "20:05:00.0+2.37s"
+    ],
+    "line": "3000円なら、きれいな宿もあるらしいけど、",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 608,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "10:33:42.0+2.67s"
+    ],
+    "line": "毎日泊まるから、それやと月10万。無理や。",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 688,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "0:25:23.0+2.80s"
+    ],
+    "line": "もう嫌すぎて、この国は2週間で出るって決めた。",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 772,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "1:30:41.0+2.57s"
+    ],
+    "line": "そしたら同じ1400円で、ええ宿見つけた！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 849,
+    "frames": 78,
+    "voice_frames": 60,
+    "cuts": [
+     "1:31:00.0+2.60s"
+    ],
+    "line": "めっちゃええやん。こっちのほうが全然マシ。",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 13,
+    "from": 927,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:33:29.0+2.47s"
+    ],
+    "line": "……でも今の宿、ノリで3泊払ってもうてた。",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1001,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "1:34:37.0+1.93s"
+    ],
+    "line": "まあ3泊くらい、地獄見ようや。",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1059,
+    "frames": 49,
+    "voice_frames": 41,
+    "cuts": [
+     "20:06:00.0+1.63s"
+    ],
+    "line": "外にベッドある理由を聞いたら、",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1108,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "20:06:00.0+2.80s"
+    ],
+    "line": "横殴りの雨が来えへんから、屋根だけで平気らしい。",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1192,
+    "frames": 73,
+    "voice_frames": 50,
+    "cuts": [
+     "0:04:59.2+2.43s"
+    ],
+    "line": "みんなは、この宿、泊まれる？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 300,
+   "raw_voice_s": 51.07,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 36.53,
+   "cps_voiced": 8.21,
+   "video_s": 42.17,
+   "cps_video": 7.11
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/csikos_fast.mp3",
+  "db": 0.0
+ }
+}

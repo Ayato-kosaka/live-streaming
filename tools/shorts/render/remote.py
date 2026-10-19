@@ -89,10 +89,12 @@ JST = dt.timezone(dt.timedelta(hours=9))
 OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_strips.json",
              "{id}.sheet.jpg", "{id}.plan.json", "{id}.work.tgz")
 # 検査を4つに分けて同時に回す（1本ずつ順だと 200秒あまり。どれも1コアしか使わず、4コアが遊ぶ）。
-# 重いもの（安全域 70秒・透かし 60秒・字と顔 40秒・字幕 35秒）を別々の組に置く
-QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"), ("text_on_face", "faces"),
+# 重いもの（安全域 70秒・透かし 60秒・字と顔 40秒・字幕 35秒）を別々の組に置く。
+# 元素材のカクつき（42秒の動画で 20秒。元素材を元の大きさで読む）は字幕の組へ、使い回し（5秒）は
+# 字と顔の組へ足した（どちらの組も安全域の 70秒を越えない。2026-10-19、zjHZucyfrq8 p2 v2 で測った）
+QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"), ("text_on_face", "faces", "shot_reuse"),
              ("container", "loudness", "voice_vs_bgm", "subtitle_sync", "text_dup", "silence",
-              "clipping", "original_audio"))
+              "clipping", "original_audio", "source_stutter"))
 
 
 def sha256_file(p: Path) -> str:
@@ -142,6 +144,12 @@ def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None)
     edit = json.loads(edit_path.read_text(encoding="utf-8"))
     if work is not None:
         edit = bake_narration(edit, base, work)
+    for src in (edit.get("sources") or {}).values():
+        if isinstance(src, dict) and isinstance(src.get("path"), str) and "stream" not in src:
+            p = Path(src["path"]) if Path(src["path"]).is_absolute() else base / src["path"]
+            st = stream_info(p)
+            if st:
+                src["stream"] = st
     memo: dict[str, str] = {}
 
     def swap(s: str) -> str:
@@ -452,6 +460,54 @@ def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, **kw)
 
 
+def qa_groups(order: list[str], draft_checks: list[str], draft: bool) -> list[tuple[str, ...]]:
+    """同時に回す検査の組。**check.py に在って、どの組にも無い検査は、最後の組として回す。**
+
+    組は名指しなので、check.py に検査を足しても、ここに書き足すまで Actions では1度も回らない
+    （2026-10-19 に `source_stutter` と `shot_reuse` を足したとき、そうなっていた。報告には
+    回らなかった検査の行が無いだけなので、誰も気づかない）。名指しの組に無いものは黙って捨てない。
+    """
+    if draft:
+        groups = [("safe_area",), tuple(c for c in draft_checks if c != "safe_area")]
+        want = list(draft_checks)
+    else:
+        groups = [tuple(c for c in g if c in order) for g in QA_GROUPS]
+        want = list(order)
+    placed = {c for g in groups for c in g}
+    rest = tuple(c for c in want if c not in placed)
+    return [g for g in groups if g] + ([rest] if rest else [])
+
+
+def stream_info(p: Path) -> dict | None:
+    """素材が取り込みの clips なら、どの配信の何秒目からか（同じ置き場の index.json）。
+
+    ランナーには素材だけが sha256 の名前で並び、index.json は運ばれない。品質チェックの使い回しの検査は
+    「同じ配信の同じ瞬間か」をこれで見て、元素材のカクつきの検査は差し替える区間を配信の時刻で出すので、
+    指示書の素材の欄に写して運ぶ（job が `in/index.json` に書き戻す。qa/common.py の stream_of が読む形）。
+    """
+    try:
+        j = json.loads((p.parent / "index.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    for c in j.get("clips", []) if isinstance(j, dict) else []:
+        if isinstance(c, dict) and c.get("file") == p.name and j.get("video"):
+            return {"video": str(j["video"]), "start": float(c.get("start") or 0.0)}
+    return None
+
+
+def write_stream_index(edit: dict, into: Path) -> int:
+    """指示書の素材の欄に写した配信の id と頭の秒を、ランナーの `in/index.json` に書く（書いた数を返す）。"""
+    clips = []
+    for src in (edit.get("sources") or {}).values():
+        st = src.get("stream") if isinstance(src, dict) else None
+        if isinstance(st, dict) and str(src.get("path", "")).startswith("in/"):
+            clips.append({"file": Path(src["path"]).name, "video": st["video"], "start": st["start"]})
+    if clips:
+        (into / "index.json").write_text(json.dumps({"clips": clips}, ensure_ascii=False, indent=1),
+                                         encoding="utf-8")
+    return len(clips)
+
+
 def run_checks(mp4: Path, work: Path, job: Path, iid: str, draft: bool) -> dict:
     """check.py を組ごとに同時に回し、1つの報告（json と md）にまとめる。並びと判定は check.py のまま。
 
@@ -466,8 +522,7 @@ def run_checks(mp4: Path, work: Path, job: Path, iid: str, draft: bool) -> dict:
         capture_output=True, text=True, check=True).stdout)
     # 顔の検査の YuNet は qa/models/ に無い（fetch_fonts.sh が落とすのは render/models/）
     env = dict(os.environ, SHORTS_QA_YUNET=str(HERE / "models" / "face_detection_yunet_2023mar.onnx"))
-    groups = ([("safe_area",), tuple(c for c in info["draft"] if c != "safe_area")] if draft
-              else QA_GROUPS)
+    groups = qa_groups(info["order"], info["draft"], draft)
     procs = []
     for k, g in enumerate(groups):
         out = job / f"{iid}.qa{k}.json"
@@ -597,6 +652,7 @@ def cmd_job() -> int:
         sizes = list(ex.map(fetch, need))
     ep = job / f"edit_{iid}.json"
     ep.write_text(json.dumps(edit, ensure_ascii=False, indent=1), encoding="utf-8")
+    write_stream_index(edit, job / "in")
     try:
         probe = probe_stages(ep)
     except Exception as e:  # noqa: BLE001  突き合わせの材料。落ちても書き出しは続ける

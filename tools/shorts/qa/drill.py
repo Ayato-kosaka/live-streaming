@@ -11,8 +11,8 @@
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**14の検査が全部 pass**。壊した1本ごとに、
-**壊したところを見る検査だけが落ち、ほかの13は pass のまま**であること（字と顔の検査は字なしの版で
+壊れていない1本（clean）は**16の検査が全部 pass**。壊した1本ごとに、
+**壊したところを見る検査だけが落ち、ほかは pass のまま**であること（字と顔の検査は字なしの版で
 しか測れないので、字なしの版を渡さない足では not-checkable が正しい）。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
 関係ない検査まで落ちるなら、検査が混ざっている。
@@ -40,9 +40,17 @@
 | （時間割だけ）はじめの3秒、タイトル・強調・字幕の3つに「ショート」 | text_dup（3つ並びの線だけで落ちる） | qa |
 | 合成の6秒（前半は形のある画、後半は細かい粒だけの灰色） | strips.py の弱い画の印が後半にだけ付く | qa_video |
 | clean を strips.py に通す | 行の帯が行の数だけ・絵と JSON が書ける | qa_video |
+| （時間割と元素材だけ）使った区間の元素材で、同じ絵を4コマずつ繰り返す ほか4本 | source_stutter（表は `stutter_legs`） | qa |
+| （関数だけ）配信の時刻の書きかた（299.97秒 → 0:05:00.0） | common.hms | qa |
+| （時間割と場面の絵だけ）同じ区間を4回・同じ素材の別の時刻を4回 ほか5本 | shot_reuse（表は `reuse_legs`） | qa_video |
 
 時間割だけの足は、いまの render.py が強調の字（テロップ）を描かないので、clean の時間割に強調の字を
 足した写しで text_dup だけを回す（絵には字が無いので、ほかの検査は回さない）。
+
+元素材のカクつきと使い回しの足も、書き出しを通さない。どちらの検査も出来上がりの画素ではなく、
+時間割から戻った元素材とカットの並びを見るので、時間割と素材だけを差し替えれば当たる（書き出しを
+足すと、1本 5分の上限に入らない）。足ごとに2つの検査を両方回し、壊したほうだけが落ちることを見る。
+clean は本物の書き出しで16本を回すので、2つの検査が本物の時間割で落ちないことはそちらで当たる。
 
 ## 素材と書き出し
 
@@ -451,6 +459,297 @@ def strips_legs(box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool, st
     return [("strips_weak", ok1, msg1), ("strips_rows", ok2, msg2)]
 
 
+HELD_SIZE = (360, 640)
+
+
+def held_sources(box: Path, src: Path, n: int) -> dict[str, Path]:
+    """元素材のカクつきの足の素材。clean の元素材（testsrc2）を1回だけ読み、4本に書き分ける。
+
+    - judder_in: 2つ目のカットが使う [125, 230) だけ、同じ絵を4コマずつ繰り返す（実質 7.5fps。
+      p2 のカクカクの区間と同じ 75% 前後）。ほかのコマは元のまま
+    - judder_out: 使っていない所（カットの間と後ろ）だけ繰り返す。使った区間は元のまま
+    - fifteen: 全部を2コマずつ（実質 15fps。Hc-z52fs108 の配信の区間と同じ形。線の手前）
+    - still: 頭の1コマを止めたまま（写真。止まった画はカクつかない）
+
+    縦横は半分（360x640）にして書く（4本の符号化と、検査が元の大きさで読むぶんを軽くする。testsrc2 は
+    半分でも隣のコマとの差が 2 前後あり、止まった画の線 1.0 より上で「動いている」と読まれる）。
+    """
+    W, H = HELD_SIZE
+    used = [(a, b) for a, b in CUTS]
+    hold_in = range(CUTS[1][0], CUTS[1][1])
+    rules = {
+        "judder_in": lambda k: k in hold_in,
+        "judder_out": lambda k: not any(a <= k < b for a, b in used),
+        "fifteen": lambda k: True,
+        "still": None,
+    }
+    step = {"judder_in": 4, "judder_out": 4, "fifteen": 2}
+    out = {name: box / f"src_{name}.mp4" for name in rules}
+    encs = {name: subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo",
+                                    "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+                                    "-c:v", "libx264", "-preset", "ultrafast", "-crf", "18", "-pix_fmt", "yuv420p",
+                                    str(p)], stdin=subprocess.PIPE) for name, p in out.items()}
+    dec = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(src), "-map", "0:v:0",
+                            "-vf", f"scale={W}:{H}:flags=area", "-frames:v", str(n), "-f", "rawvideo",
+                            "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+    held: dict[str, bytes] = {}
+    first = None
+    for k in range(n):
+        buf = dec.stdout.read(W * H * 3)
+        if len(buf) < W * H * 3:
+            break
+        first = first or buf
+        for name, rule in rules.items():
+            if rule is None:
+                fr = first
+            elif rule(k):
+                # 繰り返す間は、step コマごとに新しい絵を取り、その間は同じ絵を出す（配信がコマを落とした形）
+                if k % step[name] == 0 or name not in held:
+                    held[name] = buf
+                fr = held[name]
+            else:
+                held.pop(name, None)
+                fr = buf
+            encs[name].stdin.write(fr)
+    dec.stdout.close()
+    dec.wait()
+    for e in encs.values():
+        e.stdin.close()
+        e.wait()
+    return out
+
+
+def scene_clip(path: Path, seed: int, hue: int, n: int = 60, face: bool = False) -> None:
+    """使い回しの足の素材: 色味（hue）と模様（seed）が場面ごとに違い、横に流れる絵（270x480・30fps）。
+
+    場面どうしは HSV の分布がほぼ重ならず（色相の箱が別）、模様も別なので pHash も遠い。
+    流れているので、元素材のカクつきの検査は「動いていて、繰り返しが無い」と測る。
+    face=True は、流れる地の上に公有の顔写真を据えた「本人が話す画」（高さ 2割。本人の画の線は 1割）。
+    """
+    import numpy as np
+    from PIL import Image
+    w, h, speed = 270, 480, 3
+    rng = np.random.default_rng(seed)
+    wide = w + speed * n
+    sv = []
+    for _ in range(2):
+        small = (rng.random((h // 24 + 2, wide // 24 + 2)) * 255).astype(np.uint8)
+        sv.append(np.asarray(Image.fromarray(small).resize((wide, h), Image.BICUBIC)))
+    hh = (hue + (rng.random((h // 60 + 2, wide // 60 + 2)) * 14 - 7)).clip(0, 255).astype(np.uint8)
+    hh = np.asarray(Image.fromarray(hh).resize((wide, h), Image.BICUBIC))
+    s = (150 + sv[0] // 3).astype(np.uint8)
+    v = (90 + sv[1] // 2).astype(np.uint8)
+    field = np.stack([hh, s, v], -1)
+    head = None
+    if face:
+        head = Image.open(HERE / "assets" / "face_public_domain.jpg").convert("RGB").resize((82, 96), Image.BICUBIC)
+    enc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
+                            "-s", f"{w}x{h}", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "ultrafast",
+                            "-crf", "18", "-pix_fmt", "yuv420p", str(path)], stdin=subprocess.PIPE)
+    for t in range(n):
+        rgb = Image.fromarray(np.ascontiguousarray(field[:, t * speed:t * speed + w]), "HSV").convert("RGB")
+        if head is not None:
+            rgb.paste(head, (94, 150))
+        enc.stdin.write(rgb.tobytes())
+    enc.stdin.close()
+    enc.wait()
+
+
+_SCENES: dict = {}
+
+
+def scene_frames(path: Path):
+    """場面の絵（270x480）を全部、1回だけ復号して持つ（1場面 60〜240コマで 23〜93MB）。"""
+    import numpy as np
+    if path not in _SCENES:
+        raw = sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path), "-f", "rawvideo",
+                  "-pix_fmt", "rgb24", "-"]).stdout
+        _SCENES[path] = np.frombuffer(raw, np.uint8).reshape(-1, 480, 270, 3)
+    return _SCENES[path]
+
+
+def synth_leg(box: Path, name: str, cuts: list[tuple[Path, int, int]]) -> tuple[Path, Path]:
+    """カットの並びどおりに、場面の絵をつないだ下書きの大きさ（540x960）の mp4 と、その時間割を作る。
+
+    書き出し（render.py）を通さないのは、見張りの5分に入れるため（素材の絵をそのまま並べるだけなので、
+    寄せの無い書き出しと同じ絵になる）。時間割は下書きの形（draft・size 1080x1920）にし、
+    検査が下書きを広げて測る道（common.iter_frames）をそのまま通す。
+    """
+    mp4, work = box / f"{name}.mp4", box / f"{name}.work"
+    work.mkdir(exist_ok=True)
+    enc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
+                            "-s", "540x960", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "ultrafast",
+                            "-crf", "18", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(mp4)],
+                           stdin=subprocess.PIPE)
+    plan_cuts, at = [], 0
+    for src, a, b in cuts:
+        frames = scene_frames(src)[a:b]
+        assert len(frames) == b - a, (src, a, b, len(frames))
+        # 縦横2倍（近いコマの画素を並べるだけ）。場面ごとに1回だけ復号して、足をまたいで使い回す
+        enc.stdin.write(frames.repeat(2, axis=1).repeat(2, axis=2).tobytes())
+        plan_cuts.append({"src": src.stem, "path": str(src), "in": a, "out": b, "at": at, "frames": b - a,
+                          "crop": [0, 0, 270, 480]})
+        at += b - a
+    enc.stdin.close()
+    enc.wait()
+    (work / "plan.json").write_text(json.dumps({"fps": FPS, "size": [1080, 1920], "frames": at, "draft": True,
+                                                "cuts": plan_cuts, "overlays": []}, ensure_ascii=False))
+    return mp4, work
+
+
+def run_both(C, box: Path, name: str, mp4: Path, work: Path) -> dict:
+    """新しい2つの検査（元素材のカクつき・同じ画の使い回し）だけを回す。"""
+    ctx = C.make_ctx(mp4, work, crops=box / f"{name}.qa")
+    return {r["id"]: r for r in C.run_checks(ctx, only=["source_stutter", "shot_reuse"])["checks"]}
+
+
+def stutter_legs(C, box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool, str]]:
+    """元素材のカクつき（source_stutter）の足。**clean の時間割の元素材だけを差し替える**（絵は clean のまま）。
+
+    この検査は出来上がりの画素ではなく、時間割から戻った元素材の区間を見るので、書き出しを通さずに当てる。
+    使い回しの検査も一緒に回し、こちらは落ちないこと（2つが混ざっていないこと）も見る。
+
+    | 足 | 壊し方 | source_stutter | shot_reuse |
+    | --- | --- | --- | --- |
+    | stutter_in | 2つ目のカットの元の区間だけ、同じ絵を4コマずつ（実質 7.5fps） | fail（その区間だけ 6割超） | pass |
+    | stutter_out | 使っていない所だけ繰り返す | pass（3区間とも 1割以下） | pass |
+    | stutter_15fps | 全部を2コマずつ（Hc の配信の形） | pass（繰り返しは 4〜6割と測ったうえで） | pass |
+    | stutter_still | 1コマを止めたまま（写真） | pass（3区間とも止まった画として数えない） | pass |
+    | stutter_zoom_hint | stutter_in の2つ目のカットに、止まった切り出し（from == to）と動く寄せを付ける | どちらも fail。「ゆっくり寄せている」は動く寄せにだけ付く | — |
+    """
+    import shutil as _sh
+    out = []
+    base = json.loads((cwork / "plan.json").read_text())
+    srcs = held_sources(box, box / "source.mp4", CUTS[-1][1] + 10)
+    for name, key in (("stutter_in", "judder_in"), ("stutter_out", "judder_out"),
+                      ("stutter_15fps", "fifteen"), ("stutter_still", "still")):
+        work = box / f"{name}.work"
+        if work.exists():
+            _sh.rmtree(work)
+        work.mkdir()
+        plan = copy.deepcopy(base)
+        for c in plan["cuts"]:
+            c["path"] = str(srcs[key])
+            c["crop"] = [0, 0, *HELD_SIZE]
+        (work / "plan.json").write_text(json.dumps(plan, ensure_ascii=False))
+        r = run_both(C, box, name, clean, work)
+        st, ru = r["source_stutter"], r["shot_reuse"]
+        reps = [x.get("repeat") for x in st["measured"].get("segments", [])]
+        both = ru["status"] == "pass" and len(reps) == len(CUTS)
+        if name == "stutter_in":
+            ok = (both and st["status"] == "fail" and reps[1] is not None and reps[1] > 0.6
+                  and all(x is not None and x <= 0.1 for x in (reps[0], reps[2])))
+        elif name == "stutter_15fps":
+            # 1コマおきの繰り返しを「繰り返し」と数えたうえで、線（6割）の手前に収まること
+            ok = both and st["status"] == "pass" and all(x is not None and 0.4 <= x <= 0.6 for x in reps)
+        elif name == "stutter_still":
+            ok = both and st["status"] == "pass" and st["measured"].get("still_segments") == len(CUTS)
+        else:
+            ok = both and st["status"] == "pass" and all(x is not None and x <= 0.1 for x in reps)
+        out.append((name, ok, f"source_stutter {st['status']}（区間ごとの繰り返し {reps}）／shot_reuse {ru['status']}"))
+
+    # 寄せの言い添え: 動く寄せ（from != to）の区間にだけ「ゆっくり寄せている」を付ける。止まった切り出し
+    # （from == to）に付けると、直す人を寄せ（無いもの）に向かわせる（2026-10-19、編集の担当が見つけた）
+    hint = "ゆっくり寄せている"
+    said = {}
+    for kind, zoom in (("static", {"from": 1.3, "to": 1.3, "x": 0.5, "y": 0.5}),
+                       ("moving", {"from": 1.27, "to": 1.33, "x": 0.5, "y": 0.5})):
+        work = box / f"stutter_zoom_{kind}.work"
+        if work.exists():
+            _sh.rmtree(work)
+        work.mkdir()
+        plan = copy.deepcopy(base)
+        for c in plan["cuts"]:
+            c["path"] = str(srcs["judder_in"])
+            c["crop"] = [0, 0, *HELD_SIZE]
+        plan["cuts"][1]["zoom"] = zoom
+        (work / "plan.json").write_text(json.dumps(plan, ensure_ascii=False))
+        ctx = C.make_ctx(clean, work, crops=box / f"stutter_zoom_{kind}.qa")
+        st = C.run_checks(ctx, only=["source_stutter"])["checks"][0]
+        said[kind] = st["status"] == "fail" and any(hint in p for p in st["problems"])
+    ok = said == {"static": False, "moving": True}
+    out.append(("stutter_zoom_hint", ok, f"寄せの言い添え: 止まった切り出し {said['static']}（False のはず）・"
+                                         f"動く寄せ {said['moving']}（True のはず）"))
+    return out
+
+
+def format_legs() -> list[tuple[str, bool, str]]:
+    """配信の時刻の書きかた（common.hms）。0.1秒に丸めてから時・分・秒に割ること（割ってから丸めると
+    299.97秒が 0:04:60.0 になった。2026-10-19、編集の担当が見つけた）。"""
+    from common import hms
+    want = {299.97: "0:05:00.0", 3599.96: "1:00:00.0", 59.94: "0:00:59.9", 0.0: "0:00:00.0", 396.5: "0:06:36.5",
+            5441.04: "1:30:41.0"}
+    got = {t: hms(t) for t in want}
+    bad = {t: g for t, g in got.items() if g != want[t]}
+    return [("hms_carry", not bad, f"時刻の書きかた {len(want) - len(bad)}/{len(want)} が思ったとおり"
+                                   + (f"。違う: {bad}" if bad else ""))]
+
+
+def reuse_legs(C, box: Path) -> list[tuple[str, bool, str]]:
+    """同じ画の使い回し（shot_reuse）の足。場面の絵をつないだ下書きと、その時間割で当てる。
+
+    出来上がりは素材の絵をそのまま並べるだけなので、書き出し（render.py）を通さない。
+    元素材のカクつきの検査も一緒に回し、こちらは落ちないことも見る（場面は流れていて繰り返しが無い）。
+
+    | 足 | 並べ方 | shot_reuse |
+    | --- | --- | --- |
+    | reuse_4x | 同じ場面の同じ区間を4回（間に別の場面） | fail（57%・4回） |
+    | reuse_scene | 同じ素材の**別の時刻**を4回（1.7秒ずつ離す。p2 のベッドの形） | fail（47%・4回） |
+    | reuse_presenter | reuse_scene と同じ並びで、場面に顔（高さ 2割）を据える | pass（本人の画どうしは束ねない） |
+    | reuse_count | 同じ区間を短く4回 | fail（回数だけ。割合は 18%） |
+    | reuse_share | 同じ区間を長く2回 | fail（割合だけ。57%・2回） |
+    | reuse_none | 7場面とも別。A だけ行の境で2つに割って続けて並べる | pass（割った A は1回と数える） |
+    | reuse_callback | 冒頭と終わりだけ同じ（21%・2回） | pass（呼び戻しと読む） |
+    """
+    scenes = {}
+    for k, nm in enumerate("ABCDEFG"):
+        scenes[nm] = box / f"scene_{nm}.mp4"
+        scene_clip(scenes[nm], seed=10 + k, hue=k * 255 // 7)
+    # 別の時刻を使う足の場面は 8秒。色は肌から遠い青（顔の検出器が地を顔と読まないように）
+    S, P = box / "scene_S.mp4", box / "scene_P.mp4"
+    scene_clip(S, seed=30, hue=170, n=240)
+    scene_clip(P, seed=30, hue=170, n=240, face=True)
+    A, B, Cs, D, E, F, G = (scenes[x] for x in "ABCDEFG")
+
+    def spread(x):
+        return [(x, 0, 20), (B, 0, 30), (x, 70, 90), (Cs, 0, 30), (x, 140, 160), (D, 0, 30), (x, 210, 230)]
+
+    legs = {
+        "reuse_4x": ([(A, 0, 30), (B, 0, 30), (A, 0, 30), (Cs, 0, 30), (A, 0, 30), (D, 0, 30), (A, 0, 30)],
+                     "fail", lambda m: m["largest"]["runs"] == 4 and m["largest"]["share"] > 0.25),
+        # 別の時刻どうしなので、束ねる前に顔を探していること（探して、本人の画ではないと読んだこと）も見る
+        "reuse_scene": (spread(S), "fail",
+                        lambda m: m["largest"]["runs"] == 4 and not m["presenter_cuts"] and m["faces_looked_cuts"] >= 1),
+        "reuse_presenter": (spread(P), "pass",
+                            lambda m: m["largest"] is None and len(m["presenter_cuts"]) == 4),
+        "reuse_count": ([(A, 0, 10), (B, 0, 30), (A, 0, 10), (Cs, 0, 30), (A, 0, 10), (D, 0, 30), (A, 0, 10),
+                         (E, 0, 30), (F, 0, 30), (G, 0, 30)],
+                        "fail", lambda m: m["largest"]["runs"] == 4 and m["largest"]["share"] <= 0.25),
+        "reuse_share": ([(A, 0, 60), (B, 0, 30), (Cs, 0, 30), (A, 0, 60), (D, 0, 30)],
+                        "fail", lambda m: m["largest"]["runs"] == 2 and m["largest"]["share"] > 0.25),
+        # A を行の境で2つに割って続けて並べる（1回と数える）ほかは、全部別の場面
+        "reuse_none": ([(A, 0, 30), (A, 30, 60)] + [(x, 0, 30) for x in (B, Cs, D, E, F, G)], "pass",
+                       lambda m: m["largest"] is None),
+        "reuse_callback": ([(A, 0, 20), (B, 0, 30), (Cs, 0, 30), (D, 0, 30), (E, 0, 30), (F, 0, 30), (A, 0, 20)],
+                           "pass", lambda m: m["largest"] is not None and m["largest"]["callback"]
+                           and m["largest"]["runs"] == 2),
+    }
+    out = []
+    for name, (cuts, want, shape) in legs.items():
+        mp4, work = synth_leg(box, name, cuts)
+        r = run_both(C, box, name, mp4, work)
+        st, ru = r["source_stutter"], r["shot_reuse"]
+        m = ru["measured"]
+        try:
+            fits = bool(shape(m))
+        except (KeyError, TypeError):
+            fits = False
+        ok = ru["status"] == want and st["status"] == "pass" and m.get("cuts") == len(cuts) and fits
+        out.append((name, ok, f"shot_reuse {ru['status']}（欲しいのは {want}。{ru['summary']}。"
+                              f"本人の画 {m.get('presenter_cuts')}）／source_stutter {st['status']}"))
+    return out
+
+
 # ---------------------------------------------------------------- 当てる
 
 # 名前 → （どちらの見張りか, 落ちるはずの検査, その判定）。None は「どれも落ちない」
@@ -658,6 +957,9 @@ def run(half: str, keep: Path | None = None) -> int:
                                          if r.get("offset") is not None), len(LINES)),
             ("safe_area が見た字の絵", cl["safe_area"]["measured"].get("overlay_count", 0), 1 + len(LINES)),
             ("voice_vs_bgm が測った行", len(cl["voice_vs_bgm"]["measured"].get("lines", [])), len(LINES)),
+            # 元素材の testsrc2 は動いているので、3区間とも「止まった画」ではなく割合を出すこと
+            ("source_stutter が測った区間", cl["source_stutter"]["measured"].get("measured_segments", 0), len(CUTS)),
+            ("shot_reuse が見たカット", cl["shot_reuse"]["measured"].get("cuts", 0), len(CUTS)),
         ]
         if plate is not None:
             floor.append(("safe_area が字なしと引いたコマ",
@@ -705,6 +1007,20 @@ def run(half: str, keep: Path | None = None) -> int:
         if half in ("qa_video", "all"):
             for name, ok, msg in strips_legs(box, clean, cwork):
                 rows.append(("○" if ok else "✕", name, "strips の弱い画", msg, 0.0, "帯の絵"))
+                if not ok:
+                    bad.append((name, [msg]))
+        # 元素材のカクつきの足は qa、使い回しの足は qa_video に置く（どちらも絵の検査だが、
+        # 使い回しの足は顔を探すぶん重い。2本の時間を揃えて、1本 5分の上限に余裕を残すため）
+        for want_half, fn, target in (("qa", lambda: stutter_legs(C, box, clean, cwork), "source_stutter"),
+                                      ("qa", format_legs, "common.hms"),
+                                      ("qa_video", lambda: reuse_legs(C, box), "shot_reuse")):
+            if half not in (want_half, "all"):
+                continue
+            t0 = time.monotonic()
+            legs = fn()
+            per = round((time.monotonic() - t0) / max(1, len(legs)), 1)
+            for name, ok, msg in legs:
+                rows.append(("○" if ok else "✕", name, target, msg, per, "時間割と素材だけの足"))
                 if not ok:
                     bad.append((name, [msg]))
 
