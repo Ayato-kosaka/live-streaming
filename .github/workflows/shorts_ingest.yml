@@ -18,8 +18,12 @@ name: ショートの材料を作る
 # 解析（matrix）は Cookie を持たない。2本の配信を並べて取ると、同じセッションを
 # 2か所から同時に使うことになるので。
 #
-# **毎晩の取り込みの時間帯（21:30〜23:59 UTC）には走らせない。** 取るのに長くて
-# 10分かかるので、21:15 からは取り始めない（plan と download.py の両方で見る）。
+# **Cookie を使うほかの取り込み（毎晩の取り込みほか）と同時に取らない。** 時計では
+# 決めない（毎晩の取り込みは cron から数時間遅れ、時計の枠の外に来る晩もある。
+# 遅れは `python3 python/cron_lag.py` で測る）。plan と download.py が Actions の API で、`YOUTUBE_COOKIES`
+# を使うワークフローの run が動いていないかを見て、動いていれば1分ごとに見直して
+# 最長60分待つ（tools/shorts/ingest/gate.py）。そのために `actions: read` を足してある。
+# API が読めないときだけ、前の時計の枠（21:15〜23:59 UTC は取り始めない）に戻る。
 #
 # 取ったものは Actions のキャッシュで解析の job へ渡し、最後に消す。
 # artifact にしないのは、公開リポジトリの artifact は誰でも落とせるから
@@ -63,11 +67,14 @@ on:
 
 permissions:
   contents: read
+  # gate.py が、Cookie を使うほかのワークフローの run の状態を読む（読めないと時計の枠に戻る）
+  actions: read
 
 jobs:
   plan:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # ほかの取り込みが動いていれば、ここで最長60分待つ（gate.py の MAX_WAIT）
+    timeout-minutes: 70
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       fetch: ${{ steps.plan.outputs.fetch }}
@@ -86,7 +93,8 @@ jobs:
           IN_FPS: ${{ inputs.fps }}
           IN_PUBKEY: ${{ inputs.pubkey }}
           IN_BRANCH: ${{ inputs.branch }}
-          # 枝を作った push は commits が空で来るので、既定の枝との compare を引くのに使う
+          # 枝を作った push は commits が空で来るので、既定の枝との compare を引くのに使う。
+          # ほかの取り込みの run の状態を読むのにも使う（gate.py）
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/shorts/ingest/plan.py
 
@@ -94,11 +102,13 @@ jobs:
     needs: plan
     if: needs.plan.outputs.count != '0'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # 取るぶん（前と同じ120分）＋ほかの取り込みを待つ60分（download.py が1本ごとに待つ）
+    timeout-minutes: 180
     # **毎晩の取り込み・切り抜きと同じ枠。** 名前を揃えてあるので、同じ ref で
     # 片方が走っているあいだ、もう片方は待つ（clip_fetch.yml と同じ考え）。
     # 作業枝から push で走るときは ref が master と違うので枠も別になる。
-    # そのときに毎晩の取り込みと重ならないことは、時間帯の見張りが受け持つ。
+    # そのときに毎晩の取り込みと重ならないことは、download.py が1本ごとに
+    # Actions の API で見る（gate.py）。
     concurrency:
       group: fetch-chat-${{ github.ref }}
       cancel-in-progress: false
@@ -148,6 +158,8 @@ jobs:
         env:
           BGUTIL_HOME: /tmp/bgutil/server
           ITEMS: ${{ needs.plan.outputs.fetch }}
+          # 1本ごとに、ほかの取り込みの run の状態を読む（gate.py）
+          GH_TOKEN: ${{ github.token }}
         run: |
           printf '%s' "$ITEMS" > "$RUNNER_TEMP/items.json"
           python3 tools/shorts/ingest/download.py "$RUNNER_TEMP/items.json" "$HOME/shorts-media"

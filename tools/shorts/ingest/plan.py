@@ -15,7 +15,10 @@ workflow_dispatch のときは入力から依頼を1件こしらえる（形は�
 - clips の区間が多すぎる・長すぎる（暗号文は作業枝に積もるので、量に上限を置く）
 - 公開鍵が RSA 2048bit 以上の `PUBLIC KEY` として読めない
   （**鍵が読めないまま落としに行くと、1時間計算したあとで暗号化できずに捨てる**）
-- 毎晩の取り込みの時間帯（common.in_no_go）
+- Cookie を使うほかの取り込み（毎晩の取り込みほか）が動いている（gate.py）。
+  **時計では決めない。** Actions の run を見て、動いていれば1分ごとに見直して最長60分待ち、
+  待ち切れたら止める。Actions が読めないときだけ、前の時計の枠（21:15〜23:59 UTC）で決める。
+  待つのは依頼の形を見終わってから（読めない依頼を60分待たせてから断らない）
 - 結果を置く枝が `claude/` で始まらない（**master に平文も暗号文も入れない**）
 
 ログに出すのは「何本・どの動画・どの mode」だけ。鍵の中身は出さない
@@ -35,7 +38,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import VIDEO_ID, in_no_go, secs  # noqa: E402
+from common import VIDEO_ID, secs  # noqa: E402
+from gate import Gate  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 REQ_DIR = "shorts/requests/"
@@ -306,6 +310,17 @@ def out_branch() -> str:
     return b
 
 
+def wait_gate() -> bool:
+    """Cookie を使い始めてよいか（gate.py）。判定は `判定:` の1行でログに出す。"""
+    gate = Gate.from_env()
+    print(gate.heading(), flush=True)
+    v = gate.wait()
+    print(f"判定: {v.why}", flush=True)
+    if not v.ok:
+        print("!! Cookie を使い始めないので、取りに行かない")
+    return v.ok
+
+
 def main() -> int:
     if len(sys.argv) > 2 and sys.argv[1] == "--check":
         for f in sys.argv[2:]:
@@ -313,11 +328,6 @@ def main() -> int:
             for it in its:
                 print(f"ok  {it['key']}  鍵 {it['pubkey_sha256'][:16]}…")
         return 0
-
-    if in_no_go():
-        print("!! いまは毎晩の取り込みの時間帯（21:15〜23:59 UTC）。Cookie を握らないので走らせない。"
-              "00:00 UTC を過ぎてから依頼を push し直す")
-        return 1
 
     ev_name = os.environ.get("GITHUB_EVENT_NAME", "")
     items: list[dict] = []
@@ -340,6 +350,8 @@ def main() -> int:
 
     for it in items:
         print(f"  {it['key']}  ← {it['req']}")
+    if items and not wait_gate():
+        return 1
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a", encoding="utf-8") as f:
