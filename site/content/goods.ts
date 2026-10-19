@@ -815,6 +815,17 @@ export const SHOP_GOODS: ShopGoods[] = [
     },
   },
   {
+    /* 付箋「誰にでも似合うトレーナー」（2026-10-18）から。2026-10-20 公開 */
+    id: 21191111,
+    name: "ayt earth スウェット",
+    shot: {
+      src: "/goods/suzuri-sweat-aytearth.webp",
+      alt: "胸に、まるい大きな字で ayt earth と入った紺のスウェット",
+      w: 560,
+      h: 560,
+    },
+  },
+  {
     id: 21142564,
     name: "無帰国フェイスタオル",
     nameParts: ["無帰国", "フェイスタオル"],

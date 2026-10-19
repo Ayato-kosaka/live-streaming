@@ -96,6 +96,12 @@ SHOTS = [
         "&output_format=jpg&token=eyJhbGciOiJIUzI1NiJ9.eyJsYXlvdXQiOnsic2hvdCI6eyJpdGVtIjoiZGVzay1jYWxlbmRhciIsImNvbG9yIjoiIiwic2l6ZSI6IiIsImFuZ2xlIjoiIn0sImFkanVzdG1lbnQiOnsic2NhbGUiOjEsIm9mZnNldF94IjowLCJvZmZzZXRfeSI6MH0sIm9yaWdpbmFsX3NpemUiOnsid2lkdGgiOjAsImhlaWdodCI6MH0sIm91dHB1dF9zaXplIjp7IndpZHRoIjowLCJoZWlnaHQiOjB9fSwic291cmNlX3BhdGgiOiIiLCJzb3VyY2VfdmVyc2lvbiI6MCwidmlvbGF0aW9uIjpmYWxzZSwib3V0cHV0X2Zvcm1hdCI6IiJ9"
         ".dBrZVnUn9-CThPGqgOmHZEsa1bpETwKxKU_dJjczdVU",
     ),
+    # 付箋「誰にでも似合うトレーナー」（2026-10-18）から作ったスウェット（21191111）。紺の前
+    (
+        "suzuri-sweat-aytearth",
+        f"{LENS}/sweat/s/navy/21191111/1792438144-2520x2992.png.contain.webp"
+        "?h=f031f4561685ed46c7d1b530d4d7cd677c98c612&printed=true",
+    ),
     # Tシャツ2枚は背中。id は裏のデザイン（21142560 / 21142557）
     (
         "suzuri-tee-globe",
