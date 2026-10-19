@@ -27,8 +27,8 @@ STROKE = 0.012        # 太らせる縁（字の大きさに対して）
 TRACK = -0.025        # 字間
 LEAD = 0.80           # 行送り。y の脚が下の行に触れない、ぎりぎり
 CANVAS = (2520, 2992)
-WIDTH = 2200          # 胸の字の幅（面 32cm のうち 28cm ほど）
-TOP = 330             # 襟の下からの高さ
+WIDTH = 2480          # 胸の字の幅。面（32cm）いっぱい。付箋の写真は胸の半分近くを字が占める
+TOP = 120             # 面の上端から。付箋の写真は襟のすぐ下から字が始まる
 
 f = ImageFont.truetype(FONT, SIZE)
 stroke = round(SIZE * STROKE)
