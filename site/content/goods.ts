@@ -815,6 +815,18 @@ export const SHOP_GOODS: ShopGoods[] = [
     },
   },
   {
+    /* 付箋「すてきなTシャツ」（2026-10-14）から。2026-10-20 公開。
+       ほかの2枚のTシャツと違い、写真は前（胸の1行がこのTシャツの顔） */
+    id: 21191982,
+    name: "COME des NO RETURN Tシャツ",
+    shot: {
+      src: "/goods/suzuri-tee-noreturn.webp",
+      alt: "胸に、白い字で COME des NO RETURN と1行入った黒いTシャツ",
+      w: 560,
+      h: 560,
+    },
+  },
+  {
     /* 付箋「誰にでも似合うトレーナー」（2026-10-18）から。2026-10-20 公開 */
     id: 21191111,
     name: "ayt earth スウェット",

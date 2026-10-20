@@ -196,9 +196,12 @@ def goods(spec_path, dry=False, pub=False, trial=False, only=None):
                 print(f"    見本が取れなかった {key}-{name}")
     if trial:
         # 試作: 見本を取ったら、デザインごと消す（非公開のまま。売り場には1度も出ない）
+        # 裏の絵は別のデザインとして登録されるので、表を消しても残る（題なし・非公開で一覧に溜まった）
         for key, mid, pr in made:
-            st, _ = call("DELETE", f"/materials/{mid}")
-            print(f"  試作を消した {key} {mid} -> {st}")
+            subs = [(p.get("material") or {}).get("id") for p in pr.get("prints") or [] if p.get("place") != "front"]
+            for i in [mid] + [s for s in subs if s and s != mid]:
+                st, _ = call("DELETE", f"/materials/{i}")
+                print(f"  試作を消した {key} {i} -> {st}")
         return
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary and made:

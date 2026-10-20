@@ -1,8 +1,20 @@
 {
  "_": "SUZURI（suzuri.jp/ayato_arigato）に在るデザインの台帳。tools/sprites/shopgoods_selftest.mjs が読む。手で書き換えない——取り直しかたは同じファイルの頭に書いてある",
- "takenAt": "2026-10-19",
+ "takenAt": "2026-10-20",
  "takenBy": "SUZURI API ワークフロー（suzuri_api.yml / command: materials）",
  "designs": [
+  {
+   "id": 21191983,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21191982,
+   "title": "COME des NO RETURN Tシャツ",
+   "published": true,
+   "route": "shop"
+  },
   {
    "id": 21191111,
    "title": "ayt earth スウェット",

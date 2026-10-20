@@ -102,6 +102,13 @@ SHOTS = [
         f"{LENS}/sweat/s/navy/21191111/1792438144-2520x2992.png.contain.webp"
         "?h=f031f4561685ed46c7d1b530d4d7cd677c98c612&printed=true",
     ),
+    # 付箋「すてきなTシャツ」（2026-10-14）から作ったTシャツ（21191982）。黒の前。
+    # 胸の1行がこのTシャツの顔なので、ほかの2枚と違って前を焼く
+    (
+        "suzuri-tee-noreturn",
+        f"{LENS}/t-shirt/s/black/front/21191982/1792451519-2520x2992.png.contain.webp"
+        "?h=21016184894ce267059fae1ad42ba527477f349d&printed=true",
+    ),
     # Tシャツ2枚は背中。id は裏のデザイン（21142560 / 21142557）
     (
         "suzuri-tee-globe",
