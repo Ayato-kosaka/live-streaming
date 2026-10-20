@@ -12,6 +12,7 @@
 - 流れる字幕の重なりを落とせないと、同じ文が2回並ぶ → 2回言ったことになる
 - 落としすぎると、本当に2回言った言葉（「そうそう」）が消える
 - 30秒の箱の境目を外すと、チャットと突き合わせたときに時刻がずれる
+- 曲の区間（`[音楽]` / `♪` のある30秒）を伏せ損ねると、公開リポジトリに歌詞が載る（#969）
 - チャットの時刻を「書いた時刻 − 開始」だけで出すと、動画の 0 秒と開始時刻のずれぶん
   まるごとずれる。アーカイブの時刻（`videoOffsetTimeMsec` / `timestampText`）を先に使う
 
@@ -105,14 +106,56 @@ def check_captions() -> None:
             "start": dt.datetime(2026, 10, 18, 11, 3, tzinfo=dt.timezone.utc),
             "caption_desc": "ja-orig（自動・json3）"}
     body = st.transcript_text(head, [(0, "やあ"), (30, "どうも")]).splitlines()
-    check("ヘッダ（題名の改行は詰める・開始は JST）", body[:5],
+    check("ヘッダ（題名の改行は詰める・開始は JST）", body[:6],
           ["# テスト 配信", "# https://www.youtube.com/watch?v=abcdefghijk",
-           "# 開始: 2026-10-18 20:03 JST", "# 字幕: ja-orig（自動・json3）", "# 行数: 2（30秒ごと）"])
-    check("本文", body[6:], ["[0:00:00] やあ", "[0:00:30] どうも"])
+           "# 開始: 2026-10-18 20:03 JST", "# 字幕: ja-orig（自動・json3）", "# 行数: 2（30秒ごと）",
+           "# 曲の区間（音楽の印のある30秒）は伏せてある"])
+    check("本文", body[7:], ["[0:00:00] やあ", "[0:00:30] どうも"])
     check("ファイル名の stem（JST）", st.stem_for("abcdefghijk", head["start"]),
           "2026-10-18_2003_abcdefghijk")
     check("置き場（JST の年/月）",
           st.rel_dir(dt.datetime(2026, 10, 31, 16, 0, tzinfo=dt.timezone.utc)), "2026/11")
+
+
+def check_music() -> None:
+    """曲の区間を伏せる（#969）。歌詞を公開リポジトリに置かないための口なので、
+    「伏せ漏れ」と「伏せすぎ」の両方を当てる。字は架空のもの（本物の歌詞を見本に置かない）。"""
+    print("曲の区間を伏せる")
+    bins = [(0, "[音楽]"),
+            (30, "こんばんは[音楽]らららの歌詞みたいな字"),
+            (60, "♪ららら♪"),
+            (90, "今日はピザを食べます"),
+            (120, "おんがくの話をしよう")]          # 「音楽」と言っただけの話は伏せない
+    got, n = st.mask_music(bins)
+    check("[音楽]だけの行・[音楽]＋話の行・♪ の行は [音楽] だけ、印の無い行はそのまま", got,
+          [(0, "[音楽]"), (30, "[音楽]"), (60, "[音楽]"), (90, "今日はピザを食べます"),
+           (120, "おんがくの話をしよう")])
+    check("曲の区間の行数", n, 3)
+    check("2回かけても同じ", st.mask_music(got), (got, 3))
+
+    head = {"video_id": "abcdefghijk", "title": "t",
+            "start": dt.datetime(2026, 10, 18, 11, 3, tzinfo=dt.timezone.utc), "caption_desc": "x"}
+    body = st.transcript_text(head, bins)
+    check("書き出しにも伏せが効く（mask_music を通し忘れても）",
+          [l for l in body.splitlines() if l.startswith("[")],
+          ["[0:00:00] [音楽]", "[0:00:30] [音楽]", "[0:01:00] [音楽]",
+           "[0:01:30] 今日はピザを食べます", "[0:02:00] おんがくの話をしよう"])
+
+    # 置いてあるファイルへの後がけ（python/stream_mask_music.py の中身）
+    old = "\n".join(["# t", "# 字幕: x", "# 行数: 3（30秒ごと）", "",
+                     "[0:00:00] やあ", "[0:00:30] 話と[音楽]と字", "[1:02:00] ♪"]) + "\n"
+    new, n = st.mask_transcript(old)
+    check("後がけ: ヘッダの1行を # 行数 の下に足し、印の行を伏せる", new.splitlines(),
+          ["# t", "# 字幕: x", "# 行数: 3（30秒ごと）", st.MUSIC_HEADER, "",
+           "[0:00:00] やあ", "[0:00:30] [音楽]", "[1:02:00] [音楽]"])
+    check("後がけ: 行数", n, 2)
+    check("後がけ: 2回かけても同じ", st.mask_transcript(new), (new, 2))
+    check("ヘッダに印そのものを書かない（grep で数えられるように）",
+          st.has_music(st.MUSIC_HEADER), False)
+
+    check("note に足す", st.music_note("ja-orig（自動・json3）", 4), "ja-orig（自動・json3）・曲の区間 4行を伏せた")
+    check("note の数は差し替える", st.music_note("ja・曲の区間 4行を伏せた", 5), "ja・曲の区間 5行を伏せた")
+    check("0行なら足さない", st.music_note("ja", 0), "ja")
 
 
 def check_chat() -> None:
@@ -166,6 +209,7 @@ def check_manifest() -> None:
 
 def main() -> int:
     check_captions()
+    check_music()
     check_chat()
     check_manifest()
     print(f"\n対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")

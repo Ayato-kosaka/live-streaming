@@ -6,7 +6,8 @@
 
 ## 形
 
-- 文字起こし: `[h:mm:ss] 発話` を **30秒ごとに1行**。発話の無い30秒は行を作らない
+- 文字起こし: `[h:mm:ss] 発話` を **30秒ごとに1行**。発話の無い30秒は行を作らない。
+  `[音楽]` / `♪` のある30秒は `[h:mm:ss] [音楽]` だけにする（歌詞を公開しない。#969）
 - チャット: `[h:mm:ss] 名前: 本文`。投げ銭は `[h:mm:ss] ¥500 名前: 本文`
 - どちらも冒頭に `# ` で始まるヘッダを数行
 
@@ -155,10 +156,82 @@ def read_captions(path: Path) -> list[dict]:
     return parse_json3(path) if path.suffix == ".json3" else parse_vtt(path)
 
 
+# ---------------------------------------------------------------- 曲の区間を伏せる（#969）
+#
+# 自動字幕は、配信で流した曲の歌詞まで字に起こすことがある。このリポジトリは公開なので、
+# そのまま置くと歌詞を公開することになる。歌詞と話を字の上で見分ける手は無い
+# （混ざって1行になる）ので、**印のある30秒は話ごと捨てる。** 話が少し欠けるのは、
+# 議事録の材料としては許せる損。歌詞を1行でも残すほうが許せない。
+MUSIC_MARKS = ("[音楽]", "♪")
+MUSIC_LINE = "[音楽]"
+# ヘッダには印そのもの（`[音楽]` / `♪`）を書かない。書くと「♪ が0件か」「[音楽] の行が
+# 全部伏せた形か」を grep で確かめるときに、ヘッダが引っかかって数えられなくなる
+MUSIC_HEADER = f"# 曲の区間（音楽の印のある{BIN_SEC}秒）は伏せてある"
+
+
+def has_music(text: str) -> bool:
+    return any(m in text for m in MUSIC_MARKS)
+
+
+def mask_music(bins: list[tuple[int, str]]) -> tuple[list[tuple[int, str]], int]:
+    """印のある行を `[音楽]` だけにする。（伏せたあとの並び, 曲の区間の行数）。
+
+    数は「中身を捨てた行」ではなく「曲の区間の行」。もともと `[音楽]` だけの行も数える。
+    同じファイルに2回かけても数が変わらない（一覧の note を書き直しても揺れない）ように。
+    """
+    out, n = [], 0
+    for t, s in bins:
+        if has_music(s):
+            out.append((t, MUSIC_LINE))
+            n += 1
+        else:
+            out.append((t, s))
+    return out, n
+
+
+def music_note(note: str, n: int) -> str:
+    """一覧の note に「曲の区間 N行を伏せた」を足す（列は増やさない）。前の数は差し替える。"""
+    base = re.sub(r"・?曲の区間 \d+行を伏せた", "", note or "").strip("・ ")
+    if not n:
+        return base
+    tag = f"曲の区間 {n}行を伏せた"
+    return f"{base}・{tag}" if base else tag
+
+
+_LINE_RE = re.compile(r"(\[-?\d+:\d{2}:\d{2}\]) ?(.*)")
+
+
+def mask_transcript(text: str) -> tuple[str, int]:
+    """置いてある transcript.txt の本文に同じ伏せをかける。（新しい本文, 曲の区間の行数）。
+
+    ヘッダに伏せた旨の1行が無ければ `# 行数:` の下に足す。何度かけても同じものになる。
+    """
+    head, body, n = [], [], 0
+    for line in text.splitlines():
+        m = _LINE_RE.fullmatch(line)
+        if not m:
+            (head if not body else body).append(line)
+            continue
+        s = m.group(2)
+        if has_music(s):
+            s, n = MUSIC_LINE, n + 1
+        body.append(f"{m.group(1)} {s}")
+    if MUSIC_HEADER not in head:
+        at = next((i + 1 for i, l in enumerate(head) if l.startswith("# 行数:")), None)
+        if at is None:
+            at = next((i for i, l in enumerate(head) if not l.startswith("# ")), len(head))
+        head.insert(at, MUSIC_HEADER)
+    return "\n".join(head + body) + "\n", n
+
+
 def transcript_text(head: dict, bins: list[tuple[int, str]]) -> str:
+    """bins は伏せたあとのもの（`mask_music` を通す）。ここでも通すのは、通し忘れた
+    呼び手がいても歌詞を書き出さないため。2回通しても同じになる。"""
+    bins, _ = mask_music(bins)
     lines = [f"[{hms(t)}] {s}" for t, s in bins]
     out = header(head) + [f"# 字幕: {head.get('caption_desc', '?')}",
-                          f"# 行数: {len(lines)}（{BIN_SEC}秒ごと）", ""]
+                          f"# 行数: {len(lines)}（{BIN_SEC}秒ごと）",
+                          MUSIC_HEADER, ""]
     return "\n".join(out + lines) + "\n"
 
 
