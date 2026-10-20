@@ -1913,6 +1913,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "misSMBhPlkc",
         "title": "北マケドニアで遂にチャンネル登録1900人パーティーや！！",
         "date": "2026-10-19"
+      },
+      {
+        "videoId": "DNLVmUpew48",
+        "title": "北マケドニアで聖クリメント・オフリド教会見に行きたい！",
+        "date": "2026-10-20"
       }
     ]
   }
