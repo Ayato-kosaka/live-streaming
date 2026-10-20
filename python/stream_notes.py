@@ -193,6 +193,10 @@ def check_one(md: Path, transcript_chars: int | None = None) -> list[str]:
         transcript_chars = len(transcript.read_text(encoding="utf-8")) if transcript.exists() else 0
     tgt = target_chars(transcript_chars)
     lo, hi = int(tgt * LOW), int(tgt * HIGH)
+    # 下限600字に引き上げられた回（字幕の25%が600に届かない）は、材料そのものが
+    # 薄いので下を見ない。3分・チャット1件の回を600字に膨らませると決まりに反する
+    if transcript_chars * 0.25 < 600:
+        lo = 0
     n = body_chars(text)
     if not lo <= n <= hi:
         why.append(f"本文 {n}字 が目安 {tgt}（{lo}〜{hi}）の外")
