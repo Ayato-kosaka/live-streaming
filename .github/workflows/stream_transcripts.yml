@@ -15,15 +15,18 @@ name: Fetch Stream Transcripts
 # スクリプトが出すのは動画ID・本数・字数・件数・理由だけ。
 
 on:
-  # 毎晩の取り込みが終わったら（チャットが BQ に入ったあと）。**conclusion は見ない。**
-  # 毎晩の取り込みは「表に無い どねID」が来た晩に最後の step が exit 1 で終わるが、
-  # チャットは入っている。成功のときだけ繋ぐと、その晩だけ取られない（CLAUDE.md）
-  workflow_run:
-    workflows: ["Fetch YouTube Chat Data"]
-    types: [completed]
-  # 保険。繋ぎが切れた晩の受け皿（この時間帯の cron は4時間以上遅れて来る）
-  schedule:
-    - cron: "41 2 * * *"
+  # **自動の起動は止めてある（#969）。** 自動字幕が、配信で流した曲の歌詞を字に起こすことがあり、
+  # 公開リポジトリに置くと歌詞を公開することになる。置き場が決まるまで、手で起動したときだけ走る。
+  # 戻すときは下の2つの # を外す（毎晩の繋ぎは conclusion を見ない。CLAUDE.md）
+  # # 毎晩の取り込みが終わったら（チャットが BQ に入ったあと）。**conclusion は見ない。**
+  # # 毎晩の取り込みは「表に無い どねID」が来た晩に最後の step が exit 1 で終わるが、
+  # # チャットは入っている。成功のときだけ繋ぐと、その晩だけ取られない（CLAUDE.md）
+  # workflow_run:
+  #   workflows: ["Fetch YouTube Chat Data"]
+  #   types: [completed]
+  # # 保険。繋ぎが切れた晩の受け皿（この時間帯の cron は4時間以上遅れて来る）
+  # schedule:
+  #   - cron: "41 2 * * *"
   workflow_dispatch:
     inputs:
       count:
