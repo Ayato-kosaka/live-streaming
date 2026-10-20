@@ -205,6 +205,8 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
 - `/nightly-check` — 毎晩の取り込みを見届ける（走ったか・ログの読みどころ・本番との突き合わせ）
 - `/island-ship` — 直したものを本番に出す（確かめ方・dry-run・PR・デプロイ・出たものの確認）
 - `/monthly-review` — 月末配信の授賞式ページを作る
+- `/stream-notes` — 配信の議事録（約4,000字）と月の目次（`streams/YYYY/MM.md`）を作る。
+  月末の前に、その月の分を埋める（まだの回は `python3 python/stream_notes.py pending`）
 - `/island-fresh` — 焼き込みのうち**人の判断が要るもの**を新しくする（料理のスタンプ・引用・他己紹介・歩いた国）。
   機械だけで決まる9本は毎晩ひとりでに焼ける（`.github/workflows/rebake.yml`。
   下流の `characterBox.ts` が名簿にぶら下がって10本目）

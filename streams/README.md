@@ -9,7 +9,9 @@
 2. **議事録 `streams/YYYY/MM/<stem>.md`** — 1本ぶんの流れと出来事
 3. 生の文字起こし・チャット（下）— **要るときだけ開く。** 1本で数万字ある
 
-目次と議事録は、これから別の手順で作る（まだ無い月・配信がある）。
+目次と議事録の作りかたはスキル `stream-notes`（`.claude/skills/stream-notes/SKILL.md`）。
+まだの回・形の確かめ・目次づくりは `python/stream_notes.py`（`pending` / `check` / `index`）。
+**目次は手で直さない**（`index` が議事録から作り直す）。
 
 ## 何がどこにあるか
 
