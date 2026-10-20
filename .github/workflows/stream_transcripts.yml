@@ -68,8 +68,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: BigQuery の道具を入れる
-        run: python3 -m pip install --quiet "google-cloud-bigquery>=3.11.0"
+      # BigQuery だけで足りるが、下の素性の見張りが requirements 一式を読む
+      # （入れずに起こすと見張りが ModuleNotFoundError で落ちる。python/logsafe_wiring_selftest.py の [7]）
+      - name: 必要なパッケージを入れる
+        run: python3 -m pip install --quiet -r python/requirements.txt
 
       # 中身をログに出さない作りだが、公開のログに素性が出ない側が効いているかは
       # 口の手前で見ておく（同じ job に置くことが要る。python/logsafe_wiring_selftest.py）
