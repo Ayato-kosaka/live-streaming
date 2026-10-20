@@ -55,7 +55,7 @@ jobs:
     timeout-minutes: 150
     env:
       BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
-      COUNT: ${{ inputs.count || (github.event_name == 'push' && '3') || '40' }}
+      COUNT: ${{ inputs.count || '40' }}
     steps:
       - uses: actions/checkout@v5
 
