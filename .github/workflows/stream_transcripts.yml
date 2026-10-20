@@ -30,13 +30,6 @@ on:
         description: "1回に取る本数の上限（新しい順）"
         required: false
         default: "40"
-  # 作り始めの確かめ用。この枝で道具を直して push したら走る
-  push:
-    branches: ["claude/funny-goodall-xlld2i"]
-    paths:
-      - ".github/workflows/stream_transcripts.yml"
-      - "python/stream_transcripts.py"
-      - "python/stream_text.py"
 
 permissions:
   contents: write
