@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "upload__fra-a-v2cas__cas",
+ "mode": "upload",
+ "dest": "upload/fra-a-v2cas/cas",
+ "video": null,
+ "channel": null,
+ "request": "shorts/upload/fra-a-v2cas.json",
+ "status": "ok",
+ "stages": {
+  "cas": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 33639,
+  "tar_gz": 12458,
+  "encrypted": 12464
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 12464,
+   "sha256": "66b6761de7b0f9860720c8030de80a1f0dc8b2fc085883041e1b102a3aeb8bfb"
+  }
+ ],
+ "hmac_sha256": "e8b7675bac2f239df760da1394be06cfc300620b00bb939b0dc6900e13590ec9",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39663513498",
+ "created_at": "2026-10-21T19:39:42+00:00",
+ "nonce": "315bb34c2d1644a2dab62834",
+ "action": "cas"
+}
