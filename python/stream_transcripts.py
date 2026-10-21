@@ -1,7 +1,11 @@
 """配信アーカイブの文字起こし（自動字幕）とチャットを取り、`streams/` に置く。
 
-    python3 python/stream_transcripts.py plan  --count 40 --out todo.json   # 何を取るか（BQ だけ）
-    python3 python/stream_transcripts.py fetch todo.json                    # 取って streams/ に書く
+    python3 python/stream_transcripts.py plan  --count 150 --out-dir plan/   # 何を取るか・3つに分ける（BQ だけ）
+    python3 python/stream_transcripts.py fetch plan/todo-0.json --out-dir out/  # 1つぶんを取る
+    python3 python/stream_transcripts.py merge got/                          # 集めて streams/ と manifest に足す
+    python3 python/stream_transcripts.py next  --ok 12                       # 続きを起こすか（BQ と Actions）
+
+    python3 python/stream_transcripts.py fetch todo.json     # --out-dir 無し: streams/ に直に書く（手元用）
 
 Actions（`.github/workflows/stream_transcripts.yml`）で回す。作業箱からは YouTube の
 字幕が 429 で断られ、BigQuery にも届かないので。
@@ -13,14 +17,33 @@ BQ の `videos` から、開始時刻のある配信を**新しい順**に並べ
 チャットの取り込みが落ち着いていない配信（PENDING / WAITING）は待つ。
 いま書くとチャットが0件のまま「済み」になって、あとから増えた分を取り直さないので。
 
+**3つに分けて並べて取る**（`split`）。1本ずつ順に取ると、溜まった数百本が
+1晩40本ずつしか減らなかった。字幕は1本ごとに数十秒待つ仕事なので、ランナー（＝IP）を
+分ければそのまま速くなる。**配る順は新しいものから交互に**——どの1つが落ちても、
+いちばん新しい配信がまとめて取り残されないように。
+
 ## 取り方（fetch）
 
 - 字幕は yt-dlp で `--skip-download`（動画は落とさない）。口の当たり方・PO Token・Cookie は
   ショートの取り込み（`tools/shorts/ingest/download.py`）のをそのまま使う
 - **Cookie を使うほかの取り込みと同時に使わない。** 1本ごとに `gate.py` で見る
-- 1本ごとに数秒あける。429 か「ボット確認」が続いたら、その回はそこで打ち切る
-  （取れたぶんは書いてある。ワークフローがそれをコミットする）
+- 1本ごとに数秒あける
+- **429 か「ボット確認」が出ても打ち切らない。** 60→120→240→480秒と待って、同じ配信を
+  取り直す。前は2本続いたらその回をやめていたので、1晩の締め出しで残りが丸ごと次の晩に
+  回っていた。**待ち切っても続くときだけ**、その1つの残りを次回に回す。
+  **回したものは manifest に書かない**——書くと「取りに行った回数」を締め出しで使い切って、
+  字幕があるのに諦めることになる
 - チャットは BQ の `chat_messages` から1回のクエリでまとめて引く
+
+`--out-dir` を付けると、書くのは `<out-dir>/streams/…` と `<out-dir>/rows.json` だけ。
+並べて取るとき、3つが同じ `manifest.tsv` を書くと最後の1つしか残らないので、
+行は別に出して最後の1か所（merge）で足す。
+
+## 続きを起こす（next）
+
+残りがあって、今回1本でも取れていれば、ワークフローが自分をもう一度起こす（`should_chain`）。
+**1本も取れなかった回は起こさない**——取れない理由が続いているのに起こし続けると止まらない。
+1回に1本以上「ok」が増えるので、起こす回数は未取得の本数で必ず尽きる。
 
 ## ログに出すもの
 
@@ -35,6 +58,7 @@ import datetime as dt
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -50,10 +74,23 @@ STREAMS = ROOT / "streams"
 MANIFEST = STREAMS / "manifest.tsv"
 DATASET = "youtube_chat"
 WORKFLOW = "stream_transcripts.yml"
+WF_DIR = ROOT / ".github/workflows"
 # 1本ごとにあける秒。字幕は1本1〜2回の要求なので、これで1分に数本に収まる
 PAUSE_SEC = 8
-# 429 / ボット確認がこの本数続いたら、その回は打ち切る（粘るほど長く締め出される）
-STOP_AFTER = 2
+# 並べて取る数と、1つあたりの上限。3つ × 50本で、1回の上限が 150本
+SHARDS = 3
+PER_SHARD = 50
+# 429 / ボット確認が出たら待つ秒。倍々にするのは、締め出しが数分で明けることも
+# 十数分続くこともあるから。合わせて15分待っても続く日は、その1つを次回に回す
+BACKOFF = (60, 120, 240, 480)
+THROTTLE = ("429", "429（取りすぎ）", "ボット確認")
+# 1つの持ち時間（分）。ここを過ぎたら新しい配信に手を付けない。job の timeout で
+# 殺されると rows.json を上げる step が走るとは限らないので、自分で先に止まる
+BUDGET_MIN = 125
+# 同じ concurrency の枠で「空き待ち」の状態。**新しい run が枠に並ぶと、先に待っていた
+# run は GitHub に消される**（同じ枠の pending は1つだけ）。続きを起こすとき、
+# 毎晩の取り込みが待っていたらそれを消してしまうので、ここで見て起こさない
+SLOT_WAITING = ("requested", "queued", "pending", "waiting")
 
 
 def bq():
@@ -67,7 +104,7 @@ def bq():
 
 # ---------------------------------------------------------------- plan
 
-def plan(count: int, out: Path) -> int:
+def videos() -> list[dict]:
     bigquery, client, project = bq()
     sql = f"""
 SELECT video_id, title, actual_start_time, status
@@ -75,29 +112,65 @@ FROM `{project}.{DATASET}.videos`
 WHERE actual_start_time IS NOT NULL
 ORDER BY actual_start_time DESC
 """
-    rows = list(client.query(sql).result())
-    man = st.read_manifest(MANIFEST)
+    return [{"video_id": r.video_id, "title": r.title or "", "status": r.status,
+             "start": r.actual_start_time.astimezone(dt.timezone.utc)}
+            for r in client.query(sql).result()]
+
+
+def select(rows: list[dict], man: dict[str, dict], count: int | None) -> tuple[list[dict], int]:
+    """取るもの（新しい順・最大 count 本。None なら全部）と、チャット待ちの本数。
+
+    plan と next（残りを数える）が**同じ数え方**をするために、ここ1つにしてある。
+    数え方がずれると「残りがあるのに選ばれない」配信が出て、続きを起こし続けて止まらない。
+    """
+    rows = sorted(rows, key=lambda r: r["start"], reverse=True)
     todo, waiting = [], 0
     for r in rows:
-        if not st.wanted(man.get(r.video_id)):
+        prev = man.get(r["video_id"])
+        if not st.wanted(prev):
             continue
-        if r.status in ("PENDING", "WAITING"):
+        if r["status"] in ("PENDING", "WAITING"):
             waiting += 1
             continue
-        start = r.actual_start_time.astimezone(dt.timezone.utc)
-        prev = man.get(r.video_id) or {}
-        todo.append({"video_id": r.video_id, "title": r.title or "",
-                     "start": start.isoformat(), "tries": int(prev.get("tries") or 0)})
-        if len(todo) >= count:
+        todo.append({"video_id": r["video_id"], "title": r["title"],
+                     "start": r["start"].isoformat(), "tries": int((prev or {}).get("tries") or 0)})
+        if count is not None and len(todo) >= count:
             break
+    return todo, waiting
+
+
+def split(todo: list[dict], n: int = SHARDS) -> list[list[dict]]:
+    """n 個に分ける。新しい順のまま**交互に**配る（空の分は返さない）。
+
+    頭から50本ずつに切ると、1つ目が落ちた日にいちばん新しい50本がまとめて残る。
+    交互なら、どれが落ちても新しいものは他の2つにも散っている。
+    """
+    n = max(1, n)
+    parts = [todo[i::n] for i in range(n)]
+    return [p for p in parts if p]
+
+
+def plan(count: int, out_dir: Path) -> int:
+    cap = SHARDS * PER_SHARD
+    if count > cap:
+        print(f"1回の上限は {cap}本（{SHARDS}つ × {PER_SHARD}本）。{count}本は {cap}本に詰める",
+              flush=True)
+        count = cap
+    rows = videos()
+    man = st.read_manifest(MANIFEST)
+    todo, waiting = select(rows, man, count)
+    parts = split(todo)
     done = sum(1 for r in man.values() if r.get("caption") == "ok")
-    print(f"配信 {len(rows)}本 / 済み {done}本 / チャット待ち {waiting}本 / 今回取る {len(todo)}本",
-          flush=True)
-    out.write_text(json.dumps(todo, ensure_ascii=False), encoding="utf-8")
+    print(f"配信 {len(rows)}本 / 済み {done}本 / チャット待ち {waiting}本 / 今回取る {len(todo)}本"
+          f"（{len(parts)}つに分ける: {' / '.join(str(len(p)) for p in parts) or '-'}）", flush=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for i, part in enumerate(parts):
+        (out_dir / f"todo-{i}.json").write_text(json.dumps(part, ensure_ascii=False),
+                                                 encoding="utf-8")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a", encoding="utf-8") as f:
-            f.write(f"count={len(todo)}\n")
+            f.write(f"count={len(todo)}\nshards={json.dumps(list(range(len(parts))))}\n")
     return 0
 
 
@@ -189,10 +262,11 @@ def next_client(dl, cur: str) -> str:
 
 # ---------------------------------------------------------------- fetch
 
-def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str) -> dict:
+def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str,
+              root: Path = STREAMS) -> dict:
     start = dt.datetime.fromisoformat(item["start"])
     stem = st.stem_for(item["video_id"], start)
-    d = STREAMS / st.rel_dir(start)
+    d = root / st.rel_dir(start)
     d.mkdir(parents=True, exist_ok=True)
     head = {"video_id": item["video_id"], "title": item["title"], "start": start}
     row = {"video_id": item["video_id"], "start_jst": f"{start.astimezone(st.JST):%Y-%m-%d %H:%M}",
@@ -203,7 +277,7 @@ def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str) -> d
     (d / f"{stem}.chat.txt").write_text(chat_body, encoding="utf-8")
     row["chat_count"] = len(lines)
     if cap and cap.get("ok"):
-        raw = st.bin_captions(st.read_captions(cap["path"]))
+        raw = st.bin_captions(cap["rows"] if "rows" in cap else st.read_captions(cap["path"]))
         bins, n_music = st.mask_music(raw)
         head["caption_desc"] = f"{cap['lang']}（{cap['kind']}・{cap['path'].suffix[1:]}）"
         body = st.transcript_text(head, bins)
@@ -219,7 +293,59 @@ def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str) -> d
     return row
 
 
-def fetch(todo_path: Path) -> int:
+def throttled(cap: dict | None) -> bool:
+    return bool(cap) and not cap.get("ok") and cap.get("why") in THROTTLE
+
+
+def drive(todo: list[dict], take, record, *, gate_wait=None, waits=BACKOFF, pause=PAUSE_SEC,
+          deadline: float | None = None, clock=time.monotonic, sleep=time.sleep,
+          log=lambda s: print(s, flush=True)) -> dict:
+    """1つぶんを順に取る。take(item, n) が字幕の結果、record(item, cap) が manifest の行。
+
+    **429 / ボット確認は、その配信を記録せずに待って取り直す。** 待ち切っても続いたら、
+    その配信から後ろを丸ごと次回に回す（記録しないので、次の plan でまた選ばれる）。
+    YouTube も gate も触らない形にしてあるのは、待ち方と回し方を見張りで当てるため。
+    """
+    tally = {"ok": 0, "none": 0, "error": 0}
+    stopped, waited, done = "", 0.0, 0
+    for n, item in enumerate(todo):
+        left = len(todo) - n
+        if deadline is not None and clock() >= deadline:
+            stopped = f"持ち時間を使い切った（残り {left}本は次回）"
+            break
+        log(f"\n== [{n + 1}/{len(todo)}] {item['video_id']}")
+        if gate_wait is not None:
+            v = gate_wait(n)
+            if not v.ok:
+                stopped = f"Cookie を使い始めなかった（{v.how}。残り {left}本は次回）"
+                break
+        k = 0
+        while True:
+            cap = take(item, n)
+            if not throttled(cap) or k >= len(waits):
+                break
+            w = waits[k]
+            if deadline is not None and clock() + w >= deadline:
+                break
+            log(f"   {cap['why']}。{w}秒待って同じ配信を取り直す（{k + 1}/{len(waits)}）")
+            sleep(w)
+            waited += w
+            k += 1
+        if throttled(cap):
+            stopped = f"{cap['why']} が待っても続いた（{k}回待った。残り {left}本は次回）"
+            break
+        row = record(item, cap)
+        done += 1
+        tally[row["caption"]] += 1
+        log(f"   字幕 {row['caption']}（{row['note'] if row['caption'] != 'ok' else '済'}）"
+            f"  字数 {row['chars']}  チャット {row['chat_count']}件  {row['tries']}回目")
+        sleep(pause)
+    return {"tally": tally, "stopped": stopped, "done": done,
+            "deferred": len(todo) - done, "waited": waited}
+
+
+def fetch(todo_path: Path, out_dir: Path | None = None, budget_min: float = BUDGET_MIN) -> int:
+    started = time.monotonic()
     todo = json.loads(todo_path.read_text(encoding="utf-8"))
     if not todo:
         print("取るものが無い", flush=True)
@@ -227,7 +353,8 @@ def fetch(todo_path: Path) -> int:
     dl = _load("shorts_download", ROOT / "tools/shorts/ingest/download.py")
     gate_mod = sys.modules["gate"]
     # **自分以外の、Cookie を使うワークフローを全部見る。** `Gate.from_env` は
-    # ショートの取り込みを自分として外すので、そのままだとショートとぶつかる
+    # ショートの取り込みを自分として外すので、そのままだとショートとぶつかる。
+    # 並べて取るほかの2つは同じ run（GITHUB_RUN_ID が同じ）なので、own_run で外れる
     e = os.environ.get
     gate = gate_mod.Gate(gate_mod.cookie_workflows(exclude={WORKFLOW}),
                          gate_mod.api_lister(e("GITHUB_REPOSITORY", ""),
@@ -236,76 +363,204 @@ def fetch(todo_path: Path) -> int:
                          own_run=e("GITHUB_RUN_ID", ""), count_pending=False)
     print(gate.heading(), flush=True)
     chats = fetch_chat([t["video_id"] for t in todo])
-    man = st.read_manifest(MANIFEST)
+    root = (out_dir / "streams") if out_dir else STREAMS
+    rows_path = out_dir / "rows.json" if out_dir else None
+    man = {} if out_dir else st.read_manifest(MANIFEST)
     fetched = dt.datetime.now(st.JST).strftime("%Y-%m-%d")
     good: str | None = None
-    streak, stopped = 0, ""
-    tally = {"ok": 0, "none": 0, "error": 0}
-    for n, item in enumerate(todo):
-        vid = item["video_id"]
-        print(f"\n== [{n + 1}/{len(todo)}] {vid}", flush=True)
+
+    def gate_wait(n: int):
         v = gate.wait()
         if n == 0 or v.waited or not v.ok:
             print(f"   判定: {v.why}", flush=True)
-        if not v.ok:
-            stopped = f"Cookie を使い始めなかった（{v.how}）"
-            break
+        return v
+
+    def take(item: dict, n: int) -> dict:
+        nonlocal good
+        vid = item["video_id"]
         work = Path(tempfile.mkdtemp(prefix=f"cap-{vid}-"))
         try:
             url = f"https://www.youtube.com/watch?v={vid}"
             if not good:
                 good, nowhy = dl.find_client(url, None, rounds=1 if n else 2, pause=30)
             if not good:
-                cap = {"ok": False, "why": nowhy}
-            else:
-                cap = grab_captions(dl, vid, work, good)
-                # 取れなかったら、次の口で1回だけ当たり直す。「字幕が無い」も口によって
-                # 一覧が空で返ることがあるので、無いと決める前に別の口でもう一度見る。
-                # **429 だけは当たり直さない。** 口を変えても同じ IP なので、締め出しを延ばすだけ
-                if not cap["ok"] and cap["why"] != "429":
-                    alt = next_client(dl, good)
-                    print(f"   取れなかった（{cap['why']}）。口 {alt} で当たり直す", flush=True)
-                    for p in work.glob("src.*"):
-                        p.unlink()
-                    cap2 = grab_captions(dl, vid, work, alt)
-                    if cap2["ok"] or cap["why"] == "ja の字幕が無い":
-                        cap = cap2
-                    if cap2["ok"]:
-                        good = alt
-            row = write_one(item, cap, chats.get(vid, []), fetched)
+                return {"ok": False, "why": nowhy}
+            cap = grab_captions(dl, vid, work, good)
+            # 取れなかったら、次の口で1回だけ当たり直す。「字幕が無い」も口によって
+            # 一覧が空で返ることがあるので、無いと決める前に別の口でもう一度見る。
+            # **429 だけは当たり直さない。** 口を変えても同じ IP なので、締め出しを延ばすだけ
+            if not cap["ok"] and cap["why"] != "429":
+                alt = next_client(dl, good)
+                print(f"   取れなかった（{cap['why']}）。口 {alt} で当たり直す", flush=True)
+                for p in work.glob("src.*"):
+                    p.unlink()
+                cap2 = grab_captions(dl, vid, work, alt)
+                if cap2["ok"] or cap["why"] == "ja の字幕が無い":
+                    cap = cap2
+                if cap2["ok"]:
+                    good = alt
+            if throttled(cap):
+                # 待ったあとは口を選び直す（締め出しが明けた口が前と同じとは限らない）
+                good = None
+            elif cap.get("ok"):
+                # 書くのは record で。ここで消す work の中の字幕を読むので、読んで持っておく
+                cap["rows"] = st.read_captions(cap["path"])
+            return cap
         finally:
             shutil.rmtree(work, ignore_errors=True)
-        man[vid] = row
-        st.write_manifest(MANIFEST, man)
-        tally[row["caption"]] += 1
-        print(f"   字幕 {row['caption']}（{row['note'] if row['caption'] != 'ok' else '済'}）"
-              f"  字数 {row['chars']}  チャット {row['chat_count']}件  {row['tries']}回目",
-              flush=True)
-        if cap and not cap.get("ok") and cap.get("why") in ("429", "ボット確認"):
-            streak += 1
-            good = None
-            if streak >= STOP_AFTER:
-                stopped = f"{cap['why']} が {streak}本続いた"
-                break
+
+    def record(item: dict, cap: dict) -> dict:
+        row = write_one(item, cap, chats.get(item["video_id"], []), fetched, root)
+        man[item["video_id"]] = row
+        if rows_path:
+            # 1本ごとに書き直す。途中で落ちても、そこまでの行は上げられるように
+            rows_path.write_text(json.dumps(list(man.values()), ensure_ascii=False),
+                                 encoding="utf-8")
         else:
-            streak = 0
-        time.sleep(PAUSE_SEC)
+            st.write_manifest(MANIFEST, man)
+        return row
+
+    if out_dir:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        rows_path.write_text("[]", encoding="utf-8")
+    res = drive(todo, take, record, gate_wait=gate_wait,
+                deadline=started + budget_min * 60)
+    tally, stopped = res["tally"], res["stopped"]
     print(f"\n字幕 ok {tally['ok']} / 無い {tally['none']} / 取れなかった {tally['error']}"
-          f"（頼んだ {len(todo)}本）", flush=True)
+          f" / 次回に回した {res['deferred']}（頼んだ {len(todo)}本・待った {res['waited']:.0f}秒）",
+          flush=True)
     if stopped:
-        print(f"打ち切り: {stopped}", flush=True)
+        print(f"途中で止めた: {stopped}", flush=True)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write(f"### 配信の文字起こし\n\n字幕 ok **{tally['ok']}** / 無い {tally['none']} / "
-                    f"取れなかった {tally['error']}（頼んだ {len(todo)}本）\n\n")
+            f.write(f"### 配信の文字起こし（この1つぶん）\n\n字幕 ok **{tally['ok']}** / "
+                    f"無い {tally['none']} / 取れなかった {tally['error']} / "
+                    f"次回に回した {res['deferred']}（頼んだ {len(todo)}本）\n\n")
             if stopped:
-                f.write(f"**打ち切り:** {stopped}\n\n")
+                f.write(f"**途中で止めた:** {stopped}\n\n")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a", encoding="utf-8") as f:
             f.write(f"ok={tally['ok']}\nnone={tally['none']}\nerror={tally['error']}\n"
-                    f"stopped={'1' if stopped else '0'}\n")
+                    f"deferred={res['deferred']}\nstopped={'1' if stopped else '0'}\n")
+    return 0
+
+
+# ---------------------------------------------------------------- merge
+
+# 並べて取った1つが置いてよいもの。**議事録（.md）は人が書くもの**なので、
+# 取り込みの側から1枚も上書きしない
+TAKEN = (".transcript.txt", ".chat.txt")
+
+
+def merge(dirs: list[Path], streams: Path = STREAMS, manifest: Path = MANIFEST) -> dict:
+    """並べて取ったぶん（<dir>/streams/… と <dir>/rows.json）を streams/ と manifest に足す。"""
+    man = st.read_manifest(manifest)
+    files, rows = 0, []
+    for d in dirs:
+        for rp in sorted(d.rglob("rows.json")):
+            try:
+                got = json.loads(rp.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                print(f"{rp.parent.name}: rows.json が読めない。その1つは足さない", flush=True)
+                continue
+            src = rp.parent / "streams"
+            for f in sorted(src.rglob("*")) if src.is_dir() else []:
+                if not f.is_file() or not f.name.endswith(TAKEN):
+                    continue
+                dst = streams / f.relative_to(src)
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(f, dst)
+                files += 1
+            rows.extend(r for r in got if isinstance(r, dict) and r.get("video_id"))
+    tally = {"ok": 0, "none": 0, "error": 0}
+    for r in rows:
+        man[r["video_id"]] = r
+        tally[r.get("caption", "error")] = tally.get(r.get("caption", "error"), 0) + 1
+    if rows:
+        st.write_manifest(manifest, man)
+    return {"rows": len(rows), "files": files, "tally": tally}
+
+
+# ---------------------------------------------------------------- next
+
+def should_chain(remaining: int, ok: int, waiting: list[dict] | None = None,
+                 unreadable: str = "") -> tuple[bool, str]:
+    """続きを自分で起こすか。(起こすか, 理由)。"""
+    if remaining <= 0:
+        return False, "残りが0本"
+    if ok < 1:
+        # 取れない理由（締め出し・Cookie 切れ）が続いているのに起こすと、止まらずに回り続ける
+        return False, f"今回1本も取れなかった（残り {remaining}本は次の晩に）"
+    if unreadable:
+        return False, f"同じ枠で待っている run が読めない（{unreadable}）。次の晩に"
+    if waiting:
+        names = "、".join(f"{w['workflow']} #{w['id']}" for w in waiting)
+        return False, (f"同じ枠で {names} が待っている。いま起こすとそちらが消されるので起こさない"
+                       "（毎晩の取り込みなら、その完了でまた起きる）")
+    return True, f"残り {remaining}本"
+
+
+def slot_sharers(wf_dir: Path = WF_DIR, exclude: set[str] = frozenset({WORKFLOW})) -> list[str]:
+    """同じ concurrency の枠（`fetch-chat-…`）を使うワークフローを、置き場から grep して求める。
+
+    手で並べると、枠に入るものが増えた日に黙ってずれる（gate.py の cookie_workflows と同じ考え）。
+    """
+    out = []
+    for p in sorted(list(wf_dir.glob("*.yml")) + list(wf_dir.glob("*.yaml"))):
+        if p.name in exclude:
+            continue
+        try:
+            text = p.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for line in text.splitlines():
+            body = re.split(r"(?:^|\s)#", line, maxsplit=1)[0]
+            if re.search(r"\bgroup:\s*fetch-chat-", body):
+                out.append(p.name)
+                break
+    return out
+
+
+def slot_waiting(workflows: list[str], list_runs, ref: str) -> list[dict]:
+    """同じ枝で、枠の空きを待っている run。"""
+    out = []
+    for wf in workflows:
+        for r in list_runs(wf):
+            if r.get("status") in SLOT_WAITING and (r.get("head_branch") or ref) == ref:
+                out.append({"workflow": wf, "id": r.get("id"), "status": r.get("status")})
+    return out
+
+
+def next_run(ok: int) -> int:
+    rows = videos()
+    man = st.read_manifest(MANIFEST)
+    todo, waiting_chat = select(rows, man, None)
+    remaining = len(todo)
+    e = os.environ.get
+    waiting, unreadable = [], ""
+    if remaining > 0 and ok >= 1:
+        gate_mod = _load("gate", ROOT / "tools/shorts/ingest/gate.py")
+        lister = gate_mod.api_lister(e("GITHUB_REPOSITORY", ""),
+                                     e("GH_TOKEN") or e("GITHUB_TOKEN") or "",
+                                     e("GITHUB_API_URL") or "https://api.github.com")
+        try:
+            waiting = slot_waiting(slot_sharers(), lister, e("GITHUB_REF_NAME", "master"))
+        except gate_mod.Unreadable as ex:
+            unreadable = str(ex)
+    go, why = should_chain(remaining, ok, waiting, unreadable)
+    print(f"残り {remaining}本（チャット待ち {waiting_chat}本は数えない）/ 今回 ok {ok}本 → "
+          f"{'続きを起こす' if go else '起こさない'}: {why}", flush=True)
+    summary = e("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as f:
+            f.write(f"### 続き\n\n残り **{remaining}本** / 今回 ok {ok}本 → "
+                    f"**{'続きを起こす' if go else '起こさない'}**（{why}）\n\n")
+    gh_out = e("GITHUB_OUTPUT")
+    if gh_out:
+        with open(gh_out, "a", encoding="utf-8") as f:
+            f.write(f"remaining={remaining}\nchain={'1' if go else '0'}\n")
     return 0
 
 
@@ -313,14 +568,33 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("plan")
-    p.add_argument("--count", type=int, default=40)
-    p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--count", type=int, default=SHARDS * PER_SHARD)
+    p.add_argument("--out-dir", type=Path, required=True)
     f = sub.add_parser("fetch")
     f.add_argument("todo", type=Path)
+    f.add_argument("--out-dir", type=Path, default=None)
+    f.add_argument("--budget-min", type=float, default=BUDGET_MIN)
+    m = sub.add_parser("merge")
+    m.add_argument("dirs", type=Path, nargs="+")
+    n = sub.add_parser("next")
+    n.add_argument("--ok", type=int, required=True)
     a = ap.parse_args()
     if a.cmd == "plan":
-        return plan(max(1, a.count), a.out)
-    return fetch(a.todo)
+        return plan(max(1, a.count), a.out_dir)
+    if a.cmd == "fetch":
+        return fetch(a.todo, a.out_dir, a.budget_min)
+    if a.cmd == "merge":
+        res = merge(a.dirs)
+        t = res["tally"]
+        print(f"足した行 {res['rows']} / ファイル {res['files']}"
+              f"（字幕 ok {t.get('ok', 0)} / 無い {t.get('none', 0)} / 取れなかった {t.get('error', 0)}）",
+              flush=True)
+        gh_out = os.environ.get("GITHUB_OUTPUT")
+        if gh_out:
+            with open(gh_out, "a", encoding="utf-8") as fo:
+                fo.write(f"ok={t.get('ok', 0)}\nrows={res['rows']}\n")
+        return 0
+    return next_run(a.ok)
 
 
 if __name__ == "__main__":
