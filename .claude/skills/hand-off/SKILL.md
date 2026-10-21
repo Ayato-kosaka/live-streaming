@@ -38,7 +38,7 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 | --- | --- | --- |
 | 作文者 | `python3 tools/shorts/script/brief.py writer --video <id> --range <区間> --ref <参考> --about "…" -o <scratch>/brief.md` の1枚のパスと、書き出す先。頼む文の雛形は `references/writer_prompt.md`（1枚の中に入る） | 帳面の全文・参考の書き起こし全文・手引きの全文（効く所は1枚に入っている） |
 | 批評役 | **Agent で頼まない。** `python3 tools/shorts/script/critic.py <git show で書き出した script.txt> --ref <参考> --about "…" --out <scratch>/critic/<名前>` で回す（`brief.py critic` の1枚だけを `claude -p` に渡し、JSON を返させ、`critic_gate.py` が合否を数える。`script_writing.md` 7.4） | 往復の記録・ほかの批評役の点・作文者の3列の表（1枚に入らないので、見ようがない） |
-| 書き出し | 帳面のパス（画・音・投稿の項目を `check.py` と人の目で当てる） | — |
+| 書き出し（本編集） | `python3 tools/shorts/script/brief.py edit --episode <回> --pattern <案> --about "…" --scratch <scratch> -o <scratch>/brief_edit.md` の1枚のパスだけ（原稿と素材の表・帳面の画・音・投稿の項目・企画の節のどこを読むか・声から下見までの呼び出しの形）。頼む文の雛形は `references/editor_prompt.md`（1枚の中に入る） | 手引きの全文（`SKILL.md`・`production.md`・`render/README.md`・`voice/README.md`・`ec2-chrome`）・道具のソース・帳面の全文（効く所は1枚に入っている） |
 
 - 批評役は**1案に2人まで、直しは2回まで**（`script_writing.md` 7.3）。2人目は、1人目の ✕ に帳面・(h)・(i) が残ったときだけ。点の 3・離れる行の △ では呼ばない
 - 編集長の役は置かない（批評役の JSON が添削で、採るものを決めるのはまとめ役）
