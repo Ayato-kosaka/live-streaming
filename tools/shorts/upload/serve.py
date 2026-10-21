@@ -41,7 +41,7 @@ from req import Bad, compare_files, norm_pem, out_branch  # noqa: E402
 
 ROOT = HERE.parents[2]
 REQ_DIR = "shorts/upload/"
-ACTIONS = ("page", "probe", "drop", "drive")
+ACTIONS = ("page", "probe", "drop", "drive", "cas")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 RETRIES = 8
 STALL_MS = 60_000
@@ -72,8 +72,12 @@ def read_request(req: dict, origin: str) -> dict:
 
         if not drive.FOLDER.match(folder):
             raise Bad(f"{origin}: drive には folder（共有フォルダの ID）が要る")
+    shas = req.get("sha256") or []
+    if action == "cas" and (not isinstance(shas, list) or not 1 <= len(shas) <= 300
+                            or not all(re.match(r"^[0-9a-f]{64}$", str(x)) for x in shas)):
+        raise Bad(f"{origin}: cas には sha256 の並び（1〜300）が要る")
     return {"name": name, "action": action, "pubkey": pem, "pubkey_sha256": fp, "nonce": nonce,
-            "slots": slots, "hash": bool(want_hash), "req": origin, "folder": folder}
+            "slots": slots, "hash": bool(want_hash), "req": origin, "folder": folder, "sha256": shas}
 
 
 def requests_now() -> list[dict]:
@@ -240,6 +244,28 @@ def do_probe(req: dict) -> dict:
             "files": files, "ok": not bad, "problems": [f"{s} が読めない・md5 が合わない" for s in bad]}
 
 
+def do_cas(req: dict) -> dict:
+    """書き出しの置き場（render/cas/<sha256>）に前に上げたものを、署名付き GET（1日）で返す。
+
+    前の版の声や素材を作業箱で消したあとでも、同じバイト列を取り戻して次の版に使えるように
+    （声を作り直すと読みが変わる。#998 v3）。
+    """
+    import gcs
+
+    client, _ = gcs.client_and_creds()
+    b = client.bucket(gcs.BUCKET)
+    out = []
+    for h in req["sha256"]:
+        blob = b.get_blob(f"render/cas/{h}")
+        out.append({"sha256": h, "bytes": blob.size if blob else None,
+                    "url": blob.generate_signed_url(version="v4", method="GET",
+                                                    expiration=dt.timedelta(days=1)) if blob else None})
+    miss = [x["sha256"][:12] for x in out if not x["url"]]
+    print(f"  在った: {len(out) - len(miss)}本 / 無い: {len(miss)}本")
+    return {"format": "shorts-upload/1", "action": "cas", "name": req["name"], "files": out,
+            "ok": not miss, "problems": [f"無い: {m}" for m in miss]}
+
+
 def do_drop(req: dict) -> dict:
     import gcs
     import store
@@ -292,6 +318,8 @@ def one(req: dict, branch: str, tmp: Path) -> bool:
             import drive
 
             body = drive.do_drive(req, tmp, tmp / "drive_out")
+        elif action == "cas":
+            body = do_cas(req)
         else:
             body = (do_page(req, tmp) if action == "page" else do_probe(req) if action == "probe"
                     else do_drop(req))

@@ -180,6 +180,33 @@ def cmd_drive(a) -> int:
     return 0 if body.get("ok") else 1
 
 
+def cmd_cas(a) -> int:
+    """書き出しの置き場から、sha256 で名指したものを手元へ落とす（--cas-out/<sha256>）。"""
+    shas = [x.strip() for x in Path(a.list).read_text(encoding="utf-8").split() if x.strip()]
+    body, _, dest = ask(a, "cas", {"sha256": shas})
+    into = Path(a.cas_out)
+    into.mkdir(parents=True, exist_ok=True)
+    bad = 0
+    for f in body.get("files") or []:
+        if not f.get("url"):
+            print(f"  !! 無い: {f['sha256'][:12]}")
+            bad += 1
+            continue
+        out = into / f["sha256"]
+        if out.is_file() and out.stat().st_size == f["bytes"]:
+            continue
+        import sys as _s
+        _s.path.insert(0, str(HERE.parent / "render"))
+        from remote import get_one
+
+        st, h, sec = get_one(f["url"], out)
+        ok = st == 200 and h == f["sha256"]
+        bad += 0 if ok else 1
+        print(f"  {f['sha256'][:12]}  {f['bytes'] / 1e6:.1f}MB  {'○' if ok else '!! ✕'}（{sec:.0f}秒）")
+    print(f"落とした先: {into}")
+    return 1 if bad else 0
+
+
 def cmd_drop(a) -> int:
     body, _, _ = ask(a, "drop", {})
     print(f"消した: {body['deleted']}個（残り {body['left']}個）")
@@ -214,7 +241,7 @@ def cmd_check(a) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("page", "probe", "drop", "check", "drive"):
+    for name in ("page", "probe", "drop", "check", "drive", "cas"):
         p = sub.add_parser(name)
         p.add_argument("--name", required=True, help="受け取り口の名前（英数字と . _ -）")
         p.add_argument("--out", required=True, help="結果を開く場所（リポジトリの外）")
@@ -231,6 +258,9 @@ def main() -> int:
         if name == "drive":
             p.add_argument("--folder", required=True, help="共有フォルダの ID（リンクを知っている人は閲覧可）")
             p.add_argument("--no-fetch", action="store_true", help="署名付き URL から手元へ落とさない")
+        if name == "cas":
+            p.add_argument("--list", required=True, help="sha256 を空白・改行で並べたファイル")
+            p.add_argument("--cas-out", required=True, help="落とす先（リポジトリの外）")
         if name == "probe":
             p.add_argument("--no-hash", action="store_true",
                            help="sha256 を出さない（全部を落とし直さない。大きいとき）")
@@ -243,7 +273,7 @@ def main() -> int:
         print("!! 作業枝は claude/ で始まる名前にする")
         return 1
     return {"page": cmd_page, "probe": cmd_probe, "drop": cmd_drop, "check": cmd_check,
-            "drive": cmd_drive}[a.cmd](a)
+            "drive": cmd_drive, "cas": cmd_cas}[a.cmd](a)
 
 
 if __name__ == "__main__":
