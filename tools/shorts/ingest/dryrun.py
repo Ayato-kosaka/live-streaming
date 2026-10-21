@@ -328,7 +328,9 @@ def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) 
     # 先に全部開いた置き場に、あとからシートだけを開いても mp4 は消えない
     r7 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--sheets", "--out",
                          str(root / "kopened"), str(only)], capture_output=True, text=True)
-    if r7.returncode != 0 or len(list(got.glob("*.mp4"))) != 4:
+    if r7.returncode != 0:
+        fails.append(f"全部開いた置き場に、シートだけを開き直せない（{r7.stdout.strip()[-60:]}）")
+    elif len(list(got.glob("*.mp4"))) != 4:
         fails.append("シートだけを開き直したら、先に開いた mp4 が消えた")
     (ksealed / names[1]).unlink()
     r5 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--out",
