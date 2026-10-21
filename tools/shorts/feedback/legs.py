@@ -11,6 +11,15 @@
 **写しを置かない。** 書き換えた字をその場で読み込む（`__file__` は本物のまま）。道具は自分の置き場から
 リポジトリの根を引くので、別の置き場へ写すと、その引きかたごと変わってしまう。
 外す字が本物に1か所だけ無ければ 2 で落ちる（字を直したのに、対照を直し忘れた）。
+
+## 外へ出ない・読み込みで終わらない
+
+`python/mutation_drill.py` は道具の比較を全部ひっくり返す。そのとき `if __name__ == "__main__":` も `!=` になり、
+**読み込んだだけで本物の `main()` が走る**（2026-10-21 に watch.py で踏んだ。本物の GitHub を読みに行き、
+`sys.exit(0)` で自己テストごと緑で終わった）。だから2つ塞ぐ。
+
+- この台を取り込んだ自己テストの中からは、`urllib.request.urlopen` で外へ出られない（偽物の口だけで回す約束を、字で守る）
+- 読み込みの途中の `SystemExit` は飲み込み、読み込めたところまでで足を回す（足が、壊れた字の上で落ちる）
 """
 from __future__ import annotations
 
@@ -20,7 +29,16 @@ import subprocess
 import sys
 import traceback
 import types
+import urllib.error
+import urllib.request
 from pathlib import Path
+
+
+def _no_network(*_a, **_k):
+    raise urllib.error.URLError("自己テストの中からは外へ出ない（legs.py）")
+
+
+urllib.request.urlopen = _no_network
 
 
 def load(path: Path, name: str, cut: tuple | None = None):
@@ -37,7 +55,11 @@ def load(path: Path, name: str, cut: tuple | None = None):
     mod = types.ModuleType(name)
     mod.__file__ = str(path)
     sys.modules[name] = mod
-    exec(compile(text, str(path), "exec"), mod.__dict__)
+    try:
+        exec(compile(text, str(path), "exec"), mod.__dict__)
+    except SystemExit:
+        # 読み込みで main が走って終わった（上の「読み込みで終わらない」）。定義はもう済んでいる
+        print(f"（{path.name} は読み込んだだけで終了した。`__main__` の守りが崩れている）")
     return mod
 
 
