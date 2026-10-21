@@ -13,5 +13,5 @@
  {"plan": "TDArug_te90/p1", "place": "youtube", "state": "done", "id": "mdbEL8b5b_8", "sha256": "6ccb162b31e57a3c212e2965519434955631b7c32773d423bea999230ba2c986", "at": "2026-10-21T08:10:32Z", "note": "非公開で上げて、2026-10-22T10:00:00Z（19:00 JST）に一般公開の予約（Studio の scheduledTimeSeconds 1792663200 を読み直した）"},
  {"plan": "TDArug_te90/p1", "place": "tiktok", "state": "pending", "id": null, "sha256": "6ccb162b31e57a3c212e2965519434955631b7c32773d423bea999230ba2c986", "at": "2026-10-21T08:54:45Z", "note": "時刻の選ぶ欄が開いたままと見て、Schedule を押す前に止まった（押していない）。開いているかの見かたが誤り（幅で見ていた）と分かり、高さで見るよう直して --again でやり直した"},
  {"plan": "TDArug_te90/p1", "place": "tiktok", "state": "done", "id": "7699048596204834068", "sha256": "6ccb162b31e57a3c212e2965519434955631b7c32773d423bea999230ba2c986", "at": "2026-10-21T09:19:28Z", "again": true, "note": "2026-10-22T10:00:00Z（19:00 JST）に予約投稿（TikTok Studio の一覧の行に Oct 22, 10:00 AM を読み直した。一覧は UTC）"},
- {"plan": "CKJvprUMOgA/p2", "place": "youtube", "state": "pending", "id": null, "sha256": "a0dd07be21759b114cde8686df3c0326417b2f0724cb54f588e689534d30b451", "at": "2026-10-21T13:32:04Z"}
+ {"plan": "CKJvprUMOgA/p2", "place": "youtube", "state": "done", "id": "yYBqfXBhkCg", "sha256": "a0dd07be21759b114cde8686df3c0326417b2f0724cb54f588e689534d30b451", "at": "2026-10-21T13:32:04Z"}
 ]
