@@ -1,0 +1,58 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "u64xGgMIvh4__clips",
+ "mode": "clips",
+ "dest": "u64xGgMIvh4/clips",
+ "video": "u64xGgMIvh4",
+ "channel": null,
+ "request": "shorts/requests/2026-10-21-fr-a-collioure.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 3,
+  "clips_ok": 3,
+  "clip_seconds": 305.0,
+  "channel_entries": 0,
+  "files": 9
+ },
+ "bytes": {
+  "plain": 170979699,
+  "tar_gz": 170847623,
+  "encrypted": 170847632
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "8f3fd5de996667fdacb2ef269a92dc8f82be5fff0b6202171cfbd3a16670cfc3"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "64b9ace3fa47dea2d7aa0845d718dfba8c67ba17001f18050cd61c6df0318f7e"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "ffb06940b85c17875e802ad4e2a1a406623c30c501ca649bc1747a649611b87e"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 29289872,
+   "sha256": "9e4ef2790d583ecaf945707e9067657d6f8272b73258d540decf7b0312eb92f3"
+  }
+ ],
+ "hmac_sha256": "befba5443c15b973bc0fa7ada5066433070e3fde8f566370fe45487a9a6f8567",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39630596480",
+ "created_at": "2026-10-21T16:19:49+00:00"
+}
