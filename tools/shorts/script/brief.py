@@ -519,15 +519,40 @@ def stream_ids(vdir: Path, spec: dict | None) -> list:
     return out
 
 
+SHEETS = re.compile(r"/sheets\.enc(\.\d{3})?$")
+
+
+def clips_state(vid: str) -> str:
+    """その配信の clips の暗号文が作業枝に在るか・コマ一覧の小さな封（`sheets.enc`。62c63c0e から）を持つか。
+
+    封のある clips は `decrypt.py --sheets` で約1MB だけ取ればコマ一覧が読める。無い（前に頼んだ）clips は、
+    mp4 の封（数十〜数百MB）を開いて手元で作るしかない。担当が開いてから分かるのでは遅いので、先に書く。
+    """
+    rel_ = f"shorts/.work/{vid}/clips"
+    d = ROOT / rel_
+    if (d / "manifest.json").exists():
+        return "作業枝に在る・" + ("コマ一覧の封あり" if any(SHEETS.search("/" + p.name) for p in d.iterdir()) else "古い形")
+    try:
+        c = subprocess.run(["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--diff-filter=AM", "--",
+                            f"{rel_}/manifest.json"], capture_output=True, text=True, timeout=30, check=False).stdout.strip()
+        if not c:
+            return "取り込みの記録が無い"
+        ls = subprocess.run(["git", "-C", str(ROOT), "ls-tree", "--name-only", c, f"{rel_}/"],
+                            capture_output=True, text=True, timeout=30, check=False).stdout
+    except (OSError, subprocess.SubprocessError):
+        return "?"
+    return f"下ろしてある（{c[:8]} の木に在る・" + ("コマ一覧の封あり）" if any(SHEETS.search(p) for p in ls.splitlines())
+                                                else "古い形）")
+
+
 def material_block(vdir: Path, spec: dict | None, excerpt: str, scratch: str | None) -> str:
     parts = []
     if spec and spec.get("_note"):
         parts.append(f"- 時間軸（spec の `_note`）: {short(str(spec['_note']), 700)}")
     ids = stream_ids(vdir, spec)
     if ids:
-        have = [v for v in ids if (WORK / v / "clips/manifest.json").exists()]
-        parts.append(f"- 配信: {'・'.join(ids)}。作業枝の暗号文（`shorts/.work/<videoId>/clips/`）: "
-                     + (f"在る {'・'.join(have)}" if have else "無い（下ろしてある。下の 1 の戻しかたで開く）"))
+        parts.append("- 配信と clips の暗号文（`shorts/.work/<videoId>/clips/`。開きかたは下の 1）: "
+                     + "・".join(f"{v}（{clips_state(v)}）" for v in ids))
     if scratch and ids:
         found = []
         for v in ids:
@@ -538,7 +563,8 @@ def material_block(vdir: Path, spec: dict | None, excerpt: str, scratch: str | N
                          + "・".join(f"`{p}`" + ("（`sheets/` あり）" if (p.parent / "sheets").is_dir() else "") for p in found[:12]))
         else:
             parts.append(f"- 手元に開いた素材は無い（`{scratch}` の3段下まで探した）。下の 1 で開く")
-    parts.append("- コマ一覧: 開いた clips の `sheets/`（取り込みが作る、区間ごとの2秒おきの一覧）。まだ無ければ下の 1 の ffmpeg で作る")
+    parts.append("- コマ一覧: 「コマ一覧の封あり」の配信は `decrypt.py --sheets` で `<videoId>/clips/sheets/` だけ取る（下の 1）。"
+                 "「古い形」（62c63c0e より前に頼んだ clips）は mp4 を開いて手元で作る")
     return "\n".join(parts) + "\n\n" + excerpt
 
 
@@ -589,11 +615,30 @@ def check_tools(text: str) -> None:
         raise KeyError("雛形（editor_prompt.md）の呼び出しが道具と食い違う: " + " / ".join(sorted(set(stale))))
 
 
+def render_names() -> set:
+    """作業枝に頼んだことのある書き出しの名前（`shorts/render/<名前>.json`。いま在るものと、下ろしたもの）。"""
+    names = {p.stem for p in (ROOT / "shorts/render").glob("*.json")}
+    try:
+        out = subprocess.run(["git", "-C", str(ROOT), "log", "--format=", "--name-only", "--", "shorts/render/"],
+                             capture_output=True, text=True, timeout=60, check=False).stdout
+    except (OSError, subprocess.SubprocessError):
+        out = ""
+    return names | {Path(p).stem for p in out.split() if re.fullmatch(r"shorts/render/[^/]+\.json", p)}
+
+
 def suggest_name(vdir: Path, sid: str, qa: Path) -> str:
-    """書き出しの名前の案（回の頭3字-案-次の版）。版は検査の記録に出てくる v<数> のいちばん大きいものの次。"""
+    """書き出しの名前の案（回の頭3字-案-版）。版は検査の記録に出てくる v<数> の次から、頼んだことのある名前を飛ばす。
+
+    同じ名前で頼むと、下見の置き場と前の版の結果が重なる（F-010）。フランス A の v3 は、記録（qa_A.md）には
+    v2 までしか無いのに、作業枝ではもう fra-a-v3 で頼まれていた。
+    """
     base = re.sub(r"[^a-z0-9]", "", vdir.parent.name.lower())[:3] or "sh"
     vs = [int(x) for x in re.findall(r"(?<![A-Za-z0-9])v(\d+)(?![0-9])", qa.read_text(encoding="utf-8"))] if qa.exists() else []
-    return f"{base}-{re.sub(r'[^a-z0-9]', '', sid.lower())}-v{max(vs, default=0) + 1}"
+    used, v = render_names(), max(vs, default=0) + 1
+    head = f"{base}-{re.sub(r'[^a-z0-9]', '', sid.lower())}-v"
+    while f"{head}{v}" in used:
+        v += 1
+    return f"{head}{v}"
 
 
 def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str | None, scratch: str | None) -> str:

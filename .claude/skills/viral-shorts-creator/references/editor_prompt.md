@@ -44,17 +44,22 @@
 `E=.claude/skills/ec2-chrome/ec2.py`。
 **素材の取り出しと声は互いに待たない。** 声は EC2 の鍵（下）を取ってから。待つあいだは「鍵を待つあいだに」を先にやる。
 
-1. **素材を開く**: 上の「素材」に手元の置き場があればそれを使う。無ければ
-   `git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD` →
-   `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest shorts/.work/<videoId>/clips`（開く先はリポジトリの外。鍵違いは開かない）。
-   暗号文を下ろしてあれば `git log --oneline -2 -- shorts/.work/<videoId>/clips`（上が下ろしたコミット）→
-   `git restore --source <下ろしたコミット>^ -- shorts/.work/<videoId>/clips` で戻して開き、開いたら `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）。
-   `index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）。
+1. **素材を開く**（上の「素材」の配信ごとの状態で分かれる。手元に開いた置き場があればそれを使う。開く先は `$S`）:
+   - **コマ一覧から見る（mp4 は開かない）**: 「作業枝に在る・コマ一覧の封あり」の配信は
+     `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest --sheets --branch claude/serene-darwin-sf09tt`
+     （git fetch は要らない。約1MB・5秒。1か所だけなら末尾に `shorts/.work/<videoId>/clips`）→ `$S/ingest/<videoId>/clips/sheets/NN_PP.jpg` を Read。
+     区間ごと・2秒に1コマ。帯は「配信の時刻＋mp4 の中の秒」（例 `0:04:15 +0s`）。縦長は 6×5（1枚60秒）・横長は 5×6。同じ所に `sheets.csv`・`index.json`。
+     **この形で取れるのは 62c63c0e より後に頼んだ clips だけ。** 「古い形」の配信は、下の mp4 を開いて手元で作る
+     （`mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`。1枚 60秒ぶん）
+   - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: `git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD` →
+     `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest shorts/.work/<videoId>/clips`（鍵違いは開かない）
+   - **「下ろしてある」配信**: 書いてあるコミットの木から戻して開く。`git restore --source <コミット> -- shorts/.work/<videoId>/clips`
+     （コマ一覧だけなら `…/clips/manifest.json` と `'…/clips/sheets.*'` だけ戻し、`--branch` を付けずに `--sheets`）→ 開いたら
+     `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）
+   - `index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）
    - **配信が2本以上**なら、`build_edit.py` は時刻を1本の時間軸で引くので、spec の時刻の頭の時間 k で配信を分ける（上の時間軸）。
      k 本目の一覧を k×3600 秒ずらした写しを隣に作り（`index_k.json`）、それを `--clips` に渡す:
      `python3 -c 'import json,sys;p,k=sys.argv[1],int(sys.argv[2]);d=json.load(open(p));[c.update(start=c["start"]+k*3600,end=c["end"]+k*3600) for c in d["clips"]];json.dump(d,open(p.replace("index.json",f"index_{k}.json"),"w"))' <index.json> <k>`
-   - **コマ一覧**: 開いた clips の `sheets/`（取り込みが作る2秒おきの一覧）。まだ無ければ
-     `mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`（1枚 60秒ぶん）
    - **カクつき**: 使う区間は先に `python3 tools/shorts/qa/stutter.py <窓の mp4> --from <秒> --to <秒>` で測り、✕（繰り返し 60% 越え）の秒を避ける
    - **0秒目**: `python3 tools/shorts/plan/hook.py {{spec}} --material $S/ingest/<videoId> --clips <index.json> --out $S/hook`
      （配信1本の回だけ。つないだ回は、0秒目の候補の時刻を行ごとの帯で見て、題の札（y 380〜580）の下に本体が来る時刻を選ぶ）

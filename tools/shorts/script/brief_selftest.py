@@ -34,12 +34,15 @@
 | `e_others` | 銅像・地下鉄・城塞の回でも、落ちずに2万字以下で出て、その回の原稿の1行目が表に入る |
 | `e_pick` | 案を付けない回はいちばん新しい版（銅像は p2）。案が要る回で案が無い・無い案は止まる |
 | `e_cmds` | 雛形に書いた道具と `--引数` が今の道具に在る。無い引数・無い道具は止まる。同じ行の別の道具の引数は通す |
+| `e_clips` | 配信ごとの clips を「作業枝に在る・コマ一覧の封あり／古い形」「下ろしてある（在った木のコミット）」「記録が無い」に分ける |
+| `e_name` | 勧める書き出しの名前は、作業枝に頼んだことのある名前（`shorts/render/<名前>.json` の今と履歴）と重ならない |
 | `e_voice` | 声に渡す字の雛形は、spec の `tts_text`（無ければ行の字）・key は `<id>/NN`・bytes は UTF-8 のバイト数 |
 """
 from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -83,6 +86,10 @@ CUTS = {
     "e_stale": ("brief.py", "    if stale:\n", "    if False:\n", {"e_cmds"}, "雛形の古い呼び出しを見逃す"),
     "e_tts": ("brief.py", '        t = r.get("tts_text") or r["line"]\n', '        t = r["line"]\n', {"e_voice"},
               "声に渡す字を、かなに直した字でなく字幕の字にする"),
+    "e_name": ("brief.py", '    while f"{head}{v}" in used:\n', "    while False:\n", {"e_name"},
+               "頼んだことのある書き出しの名前を勧める"),
+    "e_seal": ("brief.py", 'SHEETS = re.compile(r"/sheets\\.enc(\\.\\d{3})?$")\n', 'SHEETS = re.compile(r"$^")\n', {"e_clips"},
+               "コマ一覧の小さな封を見分けない"),
 }
 
 VIDEOS = ROOT / "shorts/videos"
@@ -317,11 +324,43 @@ def leg_e_voice(B):
             ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01")]
 
 
+def leg_e_clips(B):
+    real_root = B.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            B.ROOT = Path(td)   # git の無い置き場に、作業枝の clips の形だけを作る
+            for vid, files in (("AAAAAAAAAa1", ("manifest.json", "sheets.key.enc", "sheets.enc.000")),
+                               ("BBBBBBBBBb2", ("manifest.json", "key.enc", "payload.enc"))):
+                d = Path(td) / "shorts/.work" / vid / "clips"
+                d.mkdir(parents=True)
+                for f in files:
+                    (d / f).write_text("x", encoding="utf-8")
+            new, old, none = B.clips_state("AAAAAAAAAa1"), B.clips_state("BBBBBBBBBb2"), B.clips_state("CCCCCCCCCc3")
+    finally:
+        B.ROOT = real_root
+    got = B.clips_state("Lmk2lp9iFQ8")
+    m = re.match(r"^下ろしてある（([0-9a-f]{8}) の木に在る・(古い形|コマ一覧の封あり)）$", got)
+    in_tree = bool(m) and subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e", f"{m.group(1)}:shorts/.work/Lmk2lp9iFQ8/clips/manifest.json"],
+                                         capture_output=True, check=False).returncode == 0
+    return [("作業枝に小さな封（sheets.enc.000）が在れば「コマ一覧の封あり」", new == "作業枝に在る・コマ一覧の封あり"),
+            ("mp4 の封だけなら「古い形」", old == "作業枝に在る・古い形"),
+            ("どこにも無ければ「取り込みの記録が無い」", none == "取り込みの記録が無い"),
+            (f"下ろした配信は、在った木のコミットを名指す（{got}）", in_tree or got.startswith("作業枝に在る"))]
+
+
+def leg_e_name(B):
+    used = B.render_names()
+    got = B.suggest_name(FR, "A", FR / "qa_A.md")
+    return [("頼んだことのある書き出しの名前（fra-a-v3 など）を数える", "fra-a-v3" in used),
+            (f"勧める名前（{got}）は、頼んだことのある名前と重ならず、記録の版（v2）より後", got not in used
+             and int(got.rsplit("v", 1)[1]) >= 3)]
+
+
 LEGS = {"cats": leg_cats, "grows": leg_grows, "machine": leg_machine, "holdout": leg_holdout, "pair": leg_pair,
         "chat": leg_chat, "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
         "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
         "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
-        "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice}
+        "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
 
 if __name__ == "__main__":
     sys.exit(legs.main(Path(__file__).resolve(), LEGS, CUTS, setup))
