@@ -1918,6 +1918,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "DNLVmUpew48",
         "title": "北マケドニアで聖クリメント・オフリド教会見に行きたい！",
         "date": "2026-10-20"
+      },
+      {
+        "videoId": "0upPnKMc5po",
+        "title": "北マケドニアでフライパンパンパン作りの作戦会議&買い出しや",
+        "date": "2026-10-21"
       }
     ]
   }

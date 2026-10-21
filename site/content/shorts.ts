@@ -128,6 +128,8 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "W96gFSEKxZs", date: "2026-10-17", title: "アルバニアの路線バスは対面払い！？" },
     { id: "rVGC150Y3hA", date: "2026-10-17", title: "アルバニア出国の朝にケバブ食べてみた" },
     { id: "waajCeichi8", date: "2026-10-18", title: "アプリ作り始めて1年、ついに1日4700人突破！" },
+    { id: "cwolzunLAko", date: "2026-10-21", title: "🇫🇷 フランスを10日レンタカー旅してみた！" },
+    { id: "qcWK52DE0X8", date: "2026-10-21", title: "🇦🇱アルバニアの1泊1400円ホステルが異常すぎた😰" },
   ],
 };
 

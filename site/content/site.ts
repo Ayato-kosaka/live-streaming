@@ -178,8 +178,8 @@ export const NOW_FALLBACK = {
 
 /** サイトに出す数字の初期値。/island-api/state の stats で上書きされる。 */
 export const STATS_FALLBACK = {
-  streams: 816,
-  streamDays: 663,
+  streams: 817,
+  streamDays: 664,
   comments: 154424,
   people: 2367,
   /* **歩いた国の数はここに置かない。**「焼き込みから数える」まで来ていたが、
@@ -202,5 +202,5 @@ export const STATS_FALLBACK = {
      料理が増えるたびに同じことが起きるので、出どころを1つにする。 */
   recipes: RECIPES.length,
   since: "2024-10-28",
-  updatedAt: "2026-10-20",
+  updatedAt: "2026-10-21",
 };
