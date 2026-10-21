@@ -19,6 +19,7 @@
 | `approved/yk-by7R7iPA_p3` | 2026-10-17「A」「B」「C」（#926。3本とも出した） | 2026-10-17 |
 | `rejected/nGgoJ753rBw_p1` | 2026-10-21「この原稿めちゃくちゃAI臭い」（#975。「地下鉄1回に見えてきた」） | 今日 |
 | `rejected/CKJvprUMOgA_p2` | 2026-10-21「全然現実的じゃなくてつまらん」（#976。題） | 今日 |
+| `rejected/CKJvprUMOgA_p2_17` | 2026-10-21「配信になぞりすぎてて、行間が空きすぎてる」「話が二転三転するくらいならない方が良い」（#976。題を直して2行消した17行の版） | 今日 |
 | `rejected/yk-by7R7iPA_p1` | 2026-10-16「原稿とか全然ダメですね」（チャット。#275 #276 #277） | 2026-10-16 |
 
 ## 足
@@ -35,6 +36,7 @@
 | `length` | 351字で落ち、350字で通る |
 | `end` | 最後の行が問い・問い → アーカイブ・アーカイブだけ（#975）は通す。問いのあとの別の行・どちらも無い終わりを拾う |
 | `ashi` | 【足】の行を全部 △ で出す（数では落とさない）。原稿の字の印も拾う。spec も印も無ければ「見ていない」 |
+| `sorry` | 銅像 p2（17行）の12行目「すいません」を △ で出す（落とさない）。城塞 p1 には出さない。「ごめん」も拾う |
 | `as_of` | 決まりの日より前の日を渡すと、その規則を当てない |
 | `cli` | 終了コード: 当たる 1・通る 0・空 2 |
 """
@@ -83,6 +85,8 @@ CUTS = {
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if as_of and r.since > as_of:\n", "        if False:\n",
               {"as_of", "approved"}, "決まりの日を見ない"),
+    "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
+              {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
                    {"later_rule_live"}, "spec の題の札を読まない"),
 }
@@ -239,6 +243,18 @@ def leg_ashi(L):
             ("spec も印も無ければ L-ASHI は「見ていない」", "L-ASHI" in blind)]
 
 
+def leg_sorry(L):
+    p2 = L.lint(fix(L, "rejected/CKJvprUMOgA_p2_17"), TODAY)["hits"]
+    castle = L.lint(fix(L, "approved/TDArug_te90_p1"), TODAY)["hits"]
+    soft = L.lint(ctx(L, ["題", "言い過ぎてごめんやけど、やっぱり高い！", "みんなは？"]), TODAY)["hits"]
+    return [("銅像 p2（17行）の12行目「北マケドニアさん、すいません。」を △ で出す（落とさない）",
+             [h.line for h in p2 if h.rule == "L-SORRY" and h.look] == [12]
+             and not [h for h in p2 if h.rule == "L-SORRY" and not h.look]),
+            ("城塞 p1 には謝る行が無いので出さない", not [h for h in castle if h.rule == "L-SORRY"]),
+            ("向きを変えない謝り（「言い過ぎてごめんやけど、やっぱり高い！」）も △ で出す。どちらかを読むのは批評役",
+             [h.line for h in soft if h.rule == "L-SORRY" and h.look] == [2])]
+
+
 def leg_as_of(L):
     r = L.lint(fix(L, "rejected/nGgoJ753rBw_p1"), "2026-10-20")
     return [("10-21 の決まり（L-MIETE）を 10-20 では当てない", "L-MIETE" in r["later"] and not [h for h in r["hits"] if h.rule == "L-MIETE"]),
@@ -262,7 +278,7 @@ LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
     "narrator": leg_narrator, "phrase": leg_phrase, "yen": leg_yen, "length": leg_length,
-    "end": leg_end, "ashi": leg_ashi, "as_of": leg_as_of, "cli": leg_cli,
+    "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
 }
 
 if __name__ == "__main__":
