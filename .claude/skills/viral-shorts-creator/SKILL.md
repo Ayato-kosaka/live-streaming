@@ -24,10 +24,10 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 
 | 段 | やること | 終わった印 | 手引き |
 | --- | --- | --- | --- |
-| 1 取り込み | 依頼ファイルを作業枝に push（`archive`）→ Actions → 復号 | `shorts/.work/<id>/archive/manifest.json` が ok、手元に `captions.txt`・`transcript.txt`・`sheets/` | `tools/shorts/ingest/README.md` |
-| 2 見どころ | 字幕・コマ・音・チャットを重ねて候補を8本以上。上位は zoom で1秒刻みに確かめる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
-| 3 企画 | 体験の違う3案（どの案にも土台 → 山 → 結末 → 問い）。原稿（1行ずつ根拠と使う画）・尺の確認・自己評価・事実の表 | `shorts/videos/<id>/p1/plan.md` | `references/planning.md` |
-| 4 企画を見せる | 制作 issue に plan.md を出す（**1次レビューは原稿だけ**）→ あやとが作る案を言うのを待つ。待つあいだに絵コンテ（コマに原稿入り）を作って同じ issue に足す。チャットで決まったら待たない | あやとの返事、またはチャットで決まったことの書き置き | この手引きの 5 |
+| 1 取り込み | **1次の原稿には待たない**（段2・3は `streams/` から）。原稿が使う区間だけを `clips`・`zoom` で作業枝に push → Actions → 復号。回まるごとの `archive` は `streams/` に字幕の無い回だけ | `shorts/.work/<id>/<mode>/manifest.json` が ok、手元に区間の mp4・コマ | `tools/shorts/ingest/README.md`・`references/planning.md` 0 |
+| 2 見どころ | `streams/` の議事録・字幕・チャットから候補を8本以上。コマでの確かめは段4と並べる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
+| 3 企画 | 体験の違う3案（どの案にも土台 → 山 → 結末 → 問い）。**書く前に写す参考を決める** → 原稿（1行ずつ根拠・参考の手・使う画）・尺の確認・事実の表 → **編集長と5往復 → 往復を知らない批評役の関所（全部 4 以上・離れる行なし）**。急ぐ指示でもこの往復を飛ばさない | `shorts/videos/<id>/p1/plan.md`（写し表とレビューの記録つき） | `references/planning.md`・`references/script_writing.md` 7 |
+| 4 企画を見せる | まとめ役が参考の台本と並べて見る人として読んでから、制作 issue に plan.md を出す（**1次レビューは原稿だけ**）→ あやとが作る案を言うのを待つ。待つあいだに、原稿が使う区間を取り込んで画を確かめ（写っているか・3秒未満・カクつき）、絵コンテ（コマに原稿入り）を作って同じ issue に足す。チャットで決まったら待たない | あやとの返事、またはチャットで決まったことの書き置き | この手引きの 5 |
 | 5 本編集 | 素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube・TikTok 共通の1本を書き出す（声の倍率は 1.4 まで。上限で読ませても60秒に入らない原稿は、`build_edit.py` が組む段で止まって字を何%減らすかを出すので、原稿の字を減らす）→ 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | `references/production.md` |
 | 6 完成を見せる | `tools/shorts/preview/put.py up` でプレビューチャンネルに置き（7日で見られなくなる）、下見の URL と案ごとの投稿文を1つのコメントにまとめて制作 issue に出す | 出す案を言ったあやとの言葉（issue の返事かチャット。`B`・`全部` など） | `tools/shorts/preview/README.md`・この手引きの 5 |
 | 7 投稿 | 出してと言われた案だけ、EC2 の Chrome から出す。YouTube は非公開で上げる → 関連動画（元のアーカイブ）→ サムネイル → 公開、TikTok は投稿文・カバー。台帳 `posted.json` が同じ動画（sha256）を同じ場所へ2回出すのを止める | 媒体ごとの URL を制作 issue に書き、台帳の変わりをコミットした | `tools/shorts/post/README.md`・`references/production.md` 1 |
