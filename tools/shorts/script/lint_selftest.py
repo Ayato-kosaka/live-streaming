@@ -33,8 +33,8 @@
 | `flag` | 国旗が無い・違う国・国の名前の後ろ、を拾う。正しい旗と、国の名前が無い題は通す |
 | `narrator` `phrase` `yen` | 10-16 に直された p1 の行（あやとは・本人いわく・だそうです／国を出る／280レク。約550円）を拾い、言い換えた行は通す |
 | `length` | 351字で落ち、350字で通る |
-| `end` | 問いで切る・問い → アーカイブの1行は通す。問いのあとの別の行・問いの無い終わりを拾う |
-| `ashi` | 【足】5行で落ち、3行は △ だけ。spec も印も無ければ「見ていない」 |
+| `end` | 最後の行が問い・問い → アーカイブ・アーカイブだけ（#975）は通す。問いのあとの別の行・どちらも無い終わりを拾う |
+| `ashi` | 【足】の行を全部 △ で出す（数では落とさない）。原稿の字の印も拾う。spec も印も無ければ「見ていない」 |
 | `as_of` | 決まりの日より前の日を渡すと、その規則を当てない |
 | `cli` | 終了コード: 当たる 1・通る 0・空 2 |
 """
@@ -75,12 +75,12 @@ CUTS = {
             {"yen"}, "現地の通貨を拾わない"),
     "length": ("lint.py", "    if n <= MAX_CHARS:\n", "    if True:\n",
                {"length"}, "字数を見ない"),
-    "end_noq": ("lint.py", "    if q is None or q < n - 2:\n", "    if q is None:\n",
-                {"end"}, "問いのあとに2行あっても通す"),
-    "end_after": ("lint.py", '    if after and "アーカイブ" not in after[0]:\n', "    if False:\n",
-                  {"end"}, "問いのあとの別の行を通す"),
-    "ashi_max": ("lint.py", "    if len(rows) > ASHI_MAX:\n", "    if False:\n",
-                 {"ashi"}, "【足】の数を見ない"),
+    "end_any": ("lint.py", '    return [Hit("L-END", len(c.lines), last,', '    return [] and [Hit("L-END", len(c.lines), last,',
+                {"end"}, "どんな終わりも通す"),
+    "end_archive": ("lint.py", '    if "アーカイブ" in last:\n        return []\n', "",
+                    {"end", "approved"}, "アーカイブの1行で終える形を落とす"),
+    "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
+                  {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if as_of and r.since > as_of:\n", "        if False:\n",
               {"as_of", "approved"}, "決まりの日を見ない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
@@ -216,22 +216,26 @@ def leg_end(L):
     def hits(lines):
         return [h for h in fails(L, ctx(L, lines)) if h.rule == "L-END"]
     return [("問いで切る（「みんなは、この宿、泊まれる？」）は通す", not hits(["題", "宿", "みんなは、この宿、泊まれる？"])),
-            ("問い → 「…アーカイブ見てね！」は通す", not hits(["題", "みんなやったら、ケバブ守る？あげる？", "この国で見た爆焼夕日は配信のアーカイブ見てね！"])),
+            ("問い → 「…アーカイブ見てね！」は通す（#977）", not hits(["題", "みんなやったら、ケバブ守る？あげる？", "この国で見た爆焼夕日は配信のアーカイブ見てね！"])),
+            ("問いを置かずにアーカイブの1行で終えるのも通す（#975。途中の「どっち？」は終わりの問いではない）",
+             not hits(["題", "どっち？……乗っちゃお！", "船も乗れるねん！", "……船酔いしてるわな。", "続きはアーカイブ見てな！"])),
             ("問いのあとの「ありがとう！」を拾う", bool(hits(["題", "みんなは？", "見てくれてありがとう！"]))),
-            ("問いのあとに2行（まとめと挨拶）を拾う", bool(hits(["題", "みんなは？", "って訳で、最高やった。", "またね！"]))),
-            ("問い → アーカイブ → 挨拶（アーカイブの1行のあとにも足した）を拾う",
+            ("問い → アーカイブ → 挨拶（アーカイブのあとにも足した）を拾う",
              bool(hits(["題", "みんなは？", "続きは配信のアーカイブ見てね！", "またね！"]))),
-            ("問いの無い終わりを拾う", bool(hits(["題", "ほんまに楽しかった。"])))]
+            ("問いもアーカイブも無い終わりを拾う", bool(hits(["題", "ほんまに楽しかった。"])))]
 
 
 def leg_ashi(L):
     ck = L.lint(fix(L, "rejected/CKJvprUMOgA_p2"), TODAY)["hits"]
     ng = L.lint(fix(L, "rejected/nGgoJ753rBw_p1"), TODAY)["hits"]
     blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
-    return [("銅像 p2（【足】5行）は ✕ と △5",
-             sum(1 for h in ck if h.rule == "L-ASHI" and not h.look) == 1 and sum(1 for h in ck if h.rule == "L-ASHI" and h.look) == 5),
-            ("地下鉄 p1（【足】3行）は △3 だけ",
-             [h.line for h in ng if h.rule == "L-ASHI" and h.look] == [14, 15, 17] and not [h for h in ng if h.rule == "L-ASHI" and not h.look]),
+    marked = L.lint(L.Ctx(lines=["題", "会社の集合写真か！", "みんなは？"], title_card=None, title_from="足",
+                          rows=None, ashi_marked={2}), TODAY)["hits"]
+    return [("銅像 p2 の【足】5行を、全部 △ で出す（数では落とさない）",
+             [h.line for h in ck if h.rule == "L-ASHI" and h.look] == [4, 6, 8, 19, 20]
+             and not [h for h in ck if h.rule == "L-ASHI" and not h.look]),
+            ("地下鉄 p1 の【足】（14・15・17行目）を △ で出す", [h.line for h in ng if h.rule == "L-ASHI" and h.look] == [14, 15, 17]),
+            ("spec が無くても、原稿の字の【足】の印は拾う", [h.line for h in marked if h.rule == "L-ASHI"] == [2]),
             ("spec も印も無ければ L-ASHI は「見ていない」", "L-ASHI" in blind)]
 
 

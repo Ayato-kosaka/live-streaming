@@ -67,8 +67,6 @@ HOME = "日本"   # 比べる物差しとして題に出る。題の札に国旗
 
 # 「〜まで」の上限。尺: 声を上限の倍率 1.4 で読んで毎秒7字・喋る50秒（`script_writing.md` 6）
 MAX_CHARS = 350
-# 【足】の行の上限。地下鉄 p1 の裁定（3本まで）と同じ。2本とも直された回があるので、増やさない
-ASHI_MAX = 3
 
 FLAG_PAIR = re.compile("[\U0001F1E6-\U0001F1FF]{2}")
 MARK = re.compile(r"【(大|足)】")
@@ -297,22 +295,28 @@ def l_length(c: Ctx):
 
 
 def l_end(c: Ctx):
-    """F-032 終わりは問い。そのあとはアーカイブへの1行だけ。"""
+    """F-032 最後の行は、問いか、アーカイブへの1行。
+
+    **問いを必ず置く、ではない。** あやとは #977 で問いのあとにアーカイブの1行を足し、#975 では問いの行ごと消して
+    アーカイブの1行で終えた。見るのは最後の行だけ（途中の「どっち？」は終わりの問いではない）。
+    """
     if not c.lines:
         return None
-    q = max((i for i, ln in enumerate(c.lines) if "？" in ln or "?" in ln), default=None)
-    n = len(c.lines)
-    if q is None or q < n - 2:
-        last = c.lines[-1]
-        return [Hit("L-END", n, last, "最後が「みんな」への問いで切れていない")]
-    after = c.lines[q + 1:]
-    if after and "アーカイブ" not in after[0]:
-        return [Hit("L-END", q + 2, after[0], "問いのあとに足してよいのは「アーカイブ見てね」の1行だけ")]
-    return []
+    last = c.lines[-1]
+    if "アーカイブ" in last:
+        return []
+    if "？" in last or "?" in last:
+        return []
+    return [Hit("L-END", len(c.lines), last, "最後の行が、「みんな」への問いでも、アーカイブへの1行でもない（挨拶・まとめ・別の話で終えない）")]
 
 
 def l_ashi(c: Ctx):
-    """F-035・F-036 【足】の行（配信で本人が言っていない言葉）を数え、全部を批評役に回す。"""
+    """F-035・F-036 【足】の行（配信で本人が言っていない言葉）を、全部 △ で批評役に回す。
+
+    **数では落とさない。** 【足】の良し悪しは字では決まらない（ツッコミの多くは【足】で、それで通った原稿もある）。
+    あやとが直した2文（「地下鉄1回に見えてきた」「乗れたんこの2回」）は、どちらも【足】だった。
+    だから1行も見落とさずに、人の目（7.4 の (h)）へ回す。
+    """
     if c.rows is None and not c.ashi_marked:
         return None
     rows = set(c.ashi_marked)
@@ -323,9 +327,6 @@ def l_ashi(c: Ctx):
     for i in sorted(rows):
         text = c.lines[i - 1] if 0 < i <= len(c.lines) else ""
         out.append(Hit("L-ASHI", i, text, "【足】: 本人の言い方か（見立て・言いまとめになっていないか）・映像の枠の外でも正しいか", look=True))
-    if len(rows) > ASHI_MAX:
-        out.append(Hit("L-ASHI", None, f"【足】{len(rows)}行",
-                       f"【足】が {len(rows)} 行（{ASHI_MAX} 行まで）。本人が配信で言った言葉に戻すか、行を切る"))
     return out
 
 
@@ -337,9 +338,9 @@ RULES = (
     Rule("T-FLAG", ("F-030",), "2026-10-21", "題の札の国旗（無い・違う国・国の名前の後ろ）", t_flag),
     Rule("T-REAL", ("F-031",), "2026-10-21", "題に場所も数字も無い", t_real),
     Rule("T-METAPHOR", ("F-031",), "2026-10-21", "題が見立て（〜に見えて・みたいな・のような）", t_metaphor),
-    Rule("L-END", ("F-032",), "2026-10-21", "問いで終わらない・問いのあとに別の行", l_end),
+    Rule("L-END", ("F-032",), "2026-10-21", "最後の行が、問いでもアーカイブへの1行でもない", l_end),
     Rule("L-MIETE", ("F-035",), "2026-10-21", "作った見立て「〜に見えてきた」", l_miete),
-    Rule("L-ASHI", ("F-035", "F-036"), "2026-10-21", f"【足】の行（全部 △、{ASHI_MAX} 行を越えたら ✕）", l_ashi),
+    Rule("L-ASHI", ("F-035", "F-036"), "2026-10-21", "【足】の行（全部 △。数では落とさない）", l_ashi),
 )
 
 
