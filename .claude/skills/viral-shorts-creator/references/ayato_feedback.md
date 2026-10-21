@@ -255,7 +255,7 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
   > ドライブに置く → Firebase storage か GCS に置いたら？ パブリックバケット作っても良いし
   >
   > 動画のレビューは非公開に無理にする必要ないので issue に書いて良い
-- **決まり:** する — `tools/shorts/preview/put.py up`（プレビューチャンネル。7日で消える）で URL を作り、制作 issue に貼る。しない — 非公開にこだわって遅い道（EC2 経由でドライブ）を使う
+- **決まり:** する — Firebase Hosting のプレビューチャンネル（7日で消える）の URL を制作 issue に貼る。いまは Actions の書き出し（`tools/shorts/render/remote.py`）が下見の URL まで作る（手元から作るときは `tools/shorts/preview/put.py up`）。しない — 非公開にこだわって遅い道（EC2 経由でドライブ）を使う
 - **直す前 → 直した後:** ドライブへ3本95MB で約35分 → プレビューチャンネルへ85秒
 - **当てる場所:** 人の目（完成を見せるとき。`SKILL.md` 5）
 

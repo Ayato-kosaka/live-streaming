@@ -618,8 +618,10 @@ def check_tools(text: str) -> None:
 def render_names() -> set:
     """作業枝に頼んだことのある書き出しの名前（`shorts/render/<名前>.json`。いま在るものと、下ろしたもの）。"""
     names = {p.stem for p in (ROOT / "shorts/render").glob("*.json")}
+    # --full-history: 担当の枝で足して下ろした依頼は、merge の片側で消えて見えるので、既定の省略だと数えない
     try:
-        out = subprocess.run(["git", "-C", str(ROOT), "log", "--format=", "--name-only", "--", "shorts/render/"],
+        out = subprocess.run(["git", "-C", str(ROOT), "log", "--full-history", "--format=", "--name-only", "--",
+                              "shorts/render/"],
                              capture_output=True, text=True, timeout=60, check=False).stdout
     except (OSError, subprocess.SubprocessError):
         out = ""
