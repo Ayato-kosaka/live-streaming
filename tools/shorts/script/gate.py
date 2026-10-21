@@ -234,8 +234,12 @@ def report(res: dict, lint_fails: list, d: dict) -> str:
     cancels = sum(1 for t in d.get("turns", []) if t.get("kind") == "取消")
     out.append(f"点: {' '.join(f'{k}{s.get(k)}' for k in 'abcdef')}  つなぎ: 跳 {tsu.count('跳')}/{len(tsu)}・取消 {cancels}"
                f"  批評役の一言: {d.get('verdict')}")
-    if nf:
-        out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直して、2人目の批評役（往復を知らない別の担当）に1回だけ回す")
+    hi = any(k.startswith(("(h)", "(i)")) for _, k, _ in res["fail"])
+    if nf and hi:
+        out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直して、2人目の批評役（往復を知らない別の担当）に1回だけ回す"
+                   "（`script_writing.md` 7.3。2人目でも残ったら、まとめ役が裁く）")
+    elif nf:
+        out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直す。帳面・(h)・(i) の当たりではないので、2人目は呼ばずにまとめ役が読む")
     else:
         out.append(f"結果: 通る（✕ 0・△ {len(res['look'])}）"
                    + ("。△ は1回だけ直してよい（2人目の批評役は呼ばない）" if res["look"] else ""))
