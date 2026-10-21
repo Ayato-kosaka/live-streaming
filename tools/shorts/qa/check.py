@@ -30,6 +30,7 @@ import audio  # noqa: E402
 import container  # noqa: E402
 import cuts  # noqa: E402
 import faces  # noqa: E402
+import linebreak  # noqa: E402
 import reuse  # noqa: E402
 import still  # noqa: E402
 import stutter  # noqa: E402
@@ -47,6 +48,7 @@ CHECKS = {
     "voice_vs_bgm": audio.check_voice_vs_bgm,
     "subtitle_sync": text.check_subtitle_sync,
     "text_dup": textdup.check,
+    "line_breaks": linebreak.check,
     "safe_area": text.check_safe_area,
     "watermark": watermark.check,
     "faces": faces.check,
@@ -74,9 +76,10 @@ VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "froze
 # カットの長さ・似た見た目の連続・止め絵も、同じ理由で下書きで回す（あやと 2026-10-21。どれも「どの区間を
 # どこに何秒使うか」で決まり、本番で見つけると選び直しになる）。長さは時間割だけ、止め絵はカクつきと同じ
 # 元素材の読みを使い回し、似た見た目は使い回しと同じコマの要約を使い回すので、足してもほとんど遅くならない。
-# 顔・透かし・字と顔は字なしの版と本番の画素で見るので、本番の段で回す
-DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup", "cut_length", "similar_run", "still_image",
-                "source_stutter", "shot_reuse")
+# 顔・透かし・字と顔は字なしの版と本番の画素で見るので、本番の段で回す。
+# 字の改行（語の途中で割れていないか）は、字を直している下書きの段で崩れやすく、時間割の字だけで測るので一瞬
+DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup", "line_breaks", "cut_length", "similar_run",
+                "still_image", "source_stutter", "shot_reuse")
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 

@@ -15,7 +15,7 @@
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**19の検査が全部 pass**。壊した1本ごとに、
+壊れていない1本（clean）は**20の検査が全部 pass**。壊した1本ごとに、
 **壊したところを見る検査だけが落ち、ほかは pass のまま**であること（字と顔の検査は字なしの版で
 しか測れないので、字なしの版を渡さない足では not-checkable が正しい）。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
@@ -44,6 +44,11 @@
 | （時間割だけ）はじめの3秒、タイトル・強調・字幕の3つに「ショート」 | text_dup（3つ並びの線だけで落ちる） | qa |
 | 合成の6秒（前半は形のある画、後半は細かい粒だけの灰色） | strips.py の弱い画の印が後半にだけ付く | qa_video |
 | clean を strips.py に通す | 行の帯が行の数だけ・絵と JSON が書ける | qa_video |
+| （時間割だけ）1行目の字幕を、試写で割れた字（「1回700｜円やって！」「作りす｜ぎやろ！」「1ミリも貢献して｜へんて！」・行の頭の読点）に差し替える ほか2本 | line_breaks（表は `linebreak_legs`） | qa |
+| （時間割だけ）同じ字を、割ってよい所で割る・割らない | line_breaks は pass | qa |
+| （時間割だけ）【大】の字に人が決めた割れ目「1回｜700円やって！」（manual_breaks）／同じ割れ目を人が決めずに／「1回7｜00円」「貢献して｜へんて」と決める | 通る／落ちる／落ちる | qa |
+| （関数だけ）人が決めた割れ目を書き出しに渡す（render.py の manual_split・fit_lines の fixed） | 正しい指定はそのとおり描き、固い決まりに当たる指定では止まる（`lb_render_manual`） | qa |
+| （関数だけ）書き出しの割り方（render.py の fit_lines・wrap）に、割れた字8つを【大】3つの見た目×4つの幅で割らせる | 割れ目が全部、割ってよい所にある（`lb_render`） | qa |
 | （時間割と元素材だけ）使った区間の元素材で、同じ絵を4コマずつ繰り返す ほか4本 | source_stutter（表は `stutter_legs`） | qa |
 | （関数だけ）配信の時刻の書きかた（299.97秒 → 0:05:00.0） | common.hms | qa |
 | （時間割と場面の絵だけ）同じ区間を4回・同じ素材の別の時刻を4回 ほか5本 | shot_reuse（表は `reuse_legs`） | qa_video |
@@ -81,7 +86,9 @@ clean の一部のコマだけを変える（貼る・黒くする・止める�
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
+import io
 import json
 import math
 import os
@@ -112,7 +119,8 @@ def need() -> list[str]:
         if not shutil.which(t):
             miss.append(f"{t}（apt install ffmpeg）")
     import importlib.util
-    for mod, pip in (("numpy", "numpy"), ("PIL", "Pillow")):
+    # budoux: 書き出しが行を割る所と、字の改行の検査（line_breaks）が割ってよい所を決める。無いと割り方が決まらない
+    for mod, pip in (("numpy", "numpy"), ("PIL", "Pillow"), ("budoux", "budoux")):
         if importlib.util.find_spec(mod) is None:
             miss.append(f"{mod}（pip install {pip}）")
     try:
@@ -447,6 +455,153 @@ def text_dup_legs(C, clean: Path, cwork: Path, box: Path) -> list[tuple[str, str
         rep = C.run_checks(ctx, only=["text_dup"])
         r = rep["checks"][0]
         out.append((name, want, r["status"], r["summary"] + (f"／{r['problems'][0]}" if r["problems"] else "")))
+    return out
+
+
+def linebreak_legs(C, clean: Path, cwork: Path, box: Path) -> list[tuple[str, str, str, str]]:
+    """字の改行（line_breaks）の足。**時間割の字だけを書き換えて当てる**（text_dup の足と同じ形）。
+
+    2026-10-21 の試写で実際に出た割れ（地下鉄の回 p1・銅像の回 p2 のコマ一覧で見たもの）を、clean の時間割の
+    1行目の字幕に差し替え、line_breaks だけを回す。正しく割った同じ字は通ること、書き出しが元の字（src）を
+    書いていない古い時間割でも落ちること、描いた行が元の字に当たらなければ落ちることも見る。
+    """
+    import shutil as _sh
+    base = json.loads((cwork / "plan.json").read_text())
+
+    def big(src, lines, legacy=False, manual=None):
+        c = {"line": 0, "big": "shake_white", "text": src, "lines": lines}
+        if not legacy:
+            c["src"] = src
+        if manual:
+            # 人が決めた割れ目（render.py が指示書の split から書く）
+            c["manual_breaks"] = manual
+        return c
+
+    def plain(src, lines):
+        return {"line": 0, "src": src, "lines": lines}
+
+    legs = [
+        # 地下鉄の回 p1 の 6〜7秒（数と単位の間）
+        ("lb_yen", "fail", big("1回700円やって！", ["1回700", "円やって！"])),
+        # 銅像の回 p2 の 4秒（budoux では1つの文節の真ん中）
+        ("lb_sugi", "fail", big("作りすぎやろ！", ["作りす", "ぎやろ！"])),
+        # 銅像の回 p2 の 36〜37秒（budoux は切れ目と言うが、関西の打ち消しの前）
+        ("lb_hen", "fail", big("1ミリも貢献してへんて！", ["1ミリも貢献して", "へんて！"])),
+        # 地下鉄の回 p1 の 13行目（550cabd7 で直した、行の頭の読点）
+        ("lb_comma", "fail", plain("ほんでカフェ覗いてみたら、コーヒー720円。", ["ほんでカフェ覗いてみたら", "、コーヒー720円"])),
+        # 書き出しが src を書いていない古い時間割でも、【大】の字（text）で当てて落ちる
+        ("lb_legacy", "fail", big("作りすぎやろ！", ["作りす", "ぎやろ！"], legacy=True)),
+        # 描いた行が元の字に当たらない（字幕だけ直して書き出し直していない、など）
+        ("lb_unplaced", "fail", plain("1回700円やって！", ["1回800円やって！"])),
+        # 同じ字を、割ってよい所で割った（または割らなかった）もの
+        ("lb_ok", "pass", [big("1回700円やって！", ["1回700円やって！"]), big("作りすぎやろ！", ["作りすぎやろ！"]),
+                           big("1ミリも貢献してへんて！", ["1ミリも", "貢献してへんて！"]),
+                           plain("ほんでカフェ覗いてみたら、コーヒー720円。", ["ほんでカフェ覗いてみたら", "コーヒー720円"])]),
+        # 人が決めた割れ目（【大】の split）。budoux の切れ目でない「1回｜700円」も、人が決めれば通る
+        ("lb_manual_ok", "pass", [big("1回700円やって！", ["1回", "700円やって！"], manual=[2]),
+                                  big("中身スカスカやないかい！", ["中身", "スカスカやないかい！"], manual=[2])]),
+        # 同じ割れ目でも、人が決めていなければ落ちる（budoux の切れ目ではない）
+        ("lb_unmarked", "fail", big("1回700円やって！", ["1回", "700円やって！"])),
+        # 人が決めても、固い決まりに当たれば落ちる（数と単位の間・関西の打ち消しの前）
+        ("lb_manual_bad", "fail", big("1回700円やって！", ["1回7", "00円やって！"], manual=[3])),
+        ("lb_manual_hen", "fail", big("1ミリも貢献してへんて！", ["1ミリも貢献して", "へんて！"], manual=[8])),
+    ]
+    out = []
+    for name, want, caps in legs:
+        work = box / f"{name}.work"
+        if work.exists():
+            _sh.rmtree(work)
+        work.mkdir()
+        plan = copy.deepcopy(base)
+        caps = caps if isinstance(caps, list) else [caps]
+        f0 = plan["captions"][0]["from"] if plan.get("captions") else 0
+        plan["captions"] = [{**c, "from": f0 + 10 * k, "to": f0 + 10 * k + 10} for k, c in enumerate(caps)] + \
+            [c for c in plan.get("captions", []) if c.get("line") != 0]
+        (work / "plan.json").write_text(json.dumps(plan, ensure_ascii=False))
+        ctx = C.make_ctx(clean, work, crops=box / f"{name}.qa")
+        r = C.run_checks(ctx, only=["line_breaks"])["checks"][0]
+        out.append((name, want, r["status"], r["summary"] + (f"／{r['problems'][0]}" if r["problems"] else "")))
+    return out
+
+
+def linebreak_render_leg(fd: Path) -> list[tuple[str, bool, str]]:
+    """書き出しの割り方そのもの（render.py の fit_lines・wrap）が、割ってよい所でしか割らないか。
+
+    試写で割れた字を、割れたときと同じ見た目（様式 v3 の【大】の shake_white・brush_zoom・shake_red）と、
+    わざと狭くした幅で割らせる。前の書き出しは、文節の切れ目だけで大きく出せないと「いちばん長い文節を真ん中で割る」
+    「1字ずつ割る」をしていたので、狭い幅ほど割れた（「1回700｜円やって！」「作りす｜ぎやろ！」）。
+    書体が無い箱（CI）では箱の書体を同じ名前で置くので、字の幅は本物と違う。割れ目が割ってよい所かどうかは、
+    幅に関係なく成り立つはずの性質なので、それを見る。
+    """
+    os.environ["SHORTS_FONTS_DIR"] = str(fd)
+    sys.path.insert(0, str(RENDER))
+    import linebreak as LB
+    import render as R
+    from PIL import ImageFont
+    st = R.load_style("style_v3.json", RENDER)
+
+    def font(name):
+        # CI は M PLUS の名前に箱の書体を置くだけなので、【大】の筆の書体（Kaisei Tokumin）は無い。字幕の書体で代える
+        try:
+            return R.font_path(st, name)
+        except SystemExit:
+            return R.font_path(st, "caption")
+
+    texts = ["1回700円やって！", "作りすぎやろ！", "1ミリも貢献してへんて！", "船も乗れるねん！", "中身スカスカやないかい！",
+             "北マケドニアさん、すいません。", "入口の横の駐車場から、日の入りぴったり！", "と思ってたら、野良犬が来た。"]
+    bad, stopped, n = [], [], 0
+    for look in ("shake_white", "brush_zoom", "shake_red"):
+        ent = st["big"]["looks"][look]
+        fpath = font(ent.get("font", st["big"]["font"]))
+        for t in texts:
+            for w in (840, 696, 420, 300):
+                try:
+                    # 狭い幅では「割らずに小さくした」の注意が出る（思ったとおりなので、報告には混ぜない）
+                    with contextlib.redirect_stderr(io.StringIO()):
+                        lines, size = R.fit_lines(t, ent.get("look", ent), fpath, ent.get("size", 100),
+                                                  ent.get("min_size", 60), w, ent.get("max_lines", 2),
+                                                  ent.get("wrap_below", 0), fold_floor=ent.get("fold_floor", 0))
+                except SystemExit:
+                    stopped.append(f"{look} 幅{w}: {t}")   # 割らずに止まるのは、割るより正しい（数えて出す）
+                    continue
+                n += 1
+                r = LB.bad_breaks(t, lines)
+                if r is None or r[0]:
+                    bad.append(f"{look} 幅{w}: {'｜'.join(lines)}")
+    cap = ImageFont.truetype(str(font("caption")), 48)
+    for t in texts:
+        for w in (300, 200):
+            lines = R.wrap(t, cap, w)
+            n += 1
+            r = LB.bad_breaks(t, lines)
+            if r is None or r[0]:
+                bad.append(f"字幕 幅{w}: {'｜'.join(lines)}")
+    out = [("lb_render", not bad and n > 0,
+            f"書き出しの割り方 {n} 通り（【大】3つの見た目×{len(texts)}字×4幅、字幕の折り返し）で語の途中の割れ {len(bad)}"
+            + (f"・割らずに止まった {len(stopped)}" if stopped else "")
+            + (f"。{' / '.join(bad[:4])}" if bad else ""))]
+
+    # 人が決めた割れ目（指示書の split）: 正しい指定はそのとおりの行で描き、固い決まりに当たる指定では止まる
+    ent = st["big"]["looks"]["shake_white"]
+    fpath = font(ent.get("font", st["big"]["font"]))
+    said = {}
+    for marked, want in (("1回｜700円やって！", "draw"), ("中身｜スカスカやないかい！", "draw"),
+                         ("1回7｜00円やって！", "stop"), ("1ミリも貢献して｜へんて！", "stop"), ("て｜ことで", "stop")):
+        text = marked.replace("｜", "")
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                segs, pos = R.manual_split(text, marked, "見張り")
+                lines, _ = R.fit_lines(text, ent.get("look", ent), fpath, ent.get("size", 100), ent.get("min_size", 60),
+                                       696, ent.get("max_lines", 2), ent.get("wrap_below", 0),
+                                       fold_floor=ent.get("fold_floor", 0), fixed=segs)
+            got = "draw" if lines == marked.split("｜") else f"別の行 {lines}"
+        except SystemExit:
+            got = "stop"
+        said[marked] = (got, want)
+    wrong = {k: v for k, v in said.items() if v[0] != v[1]}
+    out.append(("lb_render_manual", not wrong,
+                f"人が決めた割れ目 {len(said)} 通り: 正しい指定はそのとおり描き、固い決まりに当たる指定（1回7｜00円・"
+                f"貢献して｜へんて・仮名1字の行）は止まる" + (f"。違う: {wrong}" if wrong else "")))
     return out
 
 
@@ -1000,6 +1155,8 @@ def run(half: str, keep: Path | None = None) -> int:
             ("cut_length が見たカット", cl["cut_length"]["measured"].get("plan_cuts", 0), len(CUTS)),
             ("similar_run が見たカット", cl["similar_run"]["measured"].get("cuts", 0), len(CUTS)),
             ("still_image が画素で測ったカット", cl["still_image"]["measured"].get("measured_cuts", 0), len(CUTS)),
+            # 字の改行も、clean の字（題と字幕3行）を全部見たうえで通ること
+            ("line_breaks が見た字のかたまり", cl["line_breaks"]["measured"].get("items", 0), 1 + len(LINES)),
         ]
         if plate is not None:
             floor.append(("safe_area が字なしと引いたコマ",
@@ -1037,13 +1194,14 @@ def run(half: str, keep: Path | None = None) -> int:
             if not fs["artifacts"]:
                 bad.append(("face", ["人に見せる顔の切り抜きが出ていない"]))
         if half in ("qa", "all"):
-            for name, want, got, summ in text_dup_legs(C, clean, cwork, box):
-                ok = got == want
-                rows.append(("○" if ok else "✕", name, f"text_dup（{want}）", f"text_dup: {got}", 0.0,
-                             "時間割だけの足"))
-                extra.append(f"{name}: {summ}")
-                if not ok:
-                    bad.append((name, [f"text_dup: {got}（欲しいのは {want}）"]))
+            for cid, fn in (("text_dup", text_dup_legs), ("line_breaks", linebreak_legs)):
+                for name, want, got, summ in fn(C, clean, cwork, box):
+                    ok = got == want
+                    rows.append(("○" if ok else "✕", name, f"{cid}（{want}）", f"{cid}: {got}", 0.0,
+                                 "時間割だけの足"))
+                    extra.append(f"{name}: {summ}")
+                    if not ok:
+                        bad.append((name, [f"{cid}: {got}（欲しいのは {want}）"]))
         if half in ("qa_video", "all"):
             for name, ok, msg in strips_legs(box, clean, cwork):
                 rows.append(("○" if ok else "✕", name, "strips の弱い画", msg, 0.0, "帯の絵"))
@@ -1053,6 +1211,7 @@ def run(half: str, keep: Path | None = None) -> int:
         # 使い回しの足は顔を探すぶん重い。2本の時間を揃えて、1本 5分の上限に余裕を残すため）
         for want_half, fn, target in (("qa", lambda: stutter_legs(C, box, clean, cwork), "source_stutter"),
                                       ("qa", format_legs, "common.hms"),
+                                      ("qa", lambda: linebreak_render_leg(fd), "render.py の割り方"),
                                       ("qa_video", lambda: reuse_legs(C, box), "shot_reuse")):
             if half not in (want_half, "all"):
                 continue

@@ -73,6 +73,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+      # budoux は 0.9.3 から動かさない。行を割ってよい所の線（仮名どうしの点）をこの版で測り、品質チェックの
+      # line_breaks も同じ版で割れ目を決める（tools/shorts/qa/linebreak.py の BUDOUX_PIN。自己テストの CI も同じ版）
       - name: 道具を入れる（作業箱と同じ版）
         run: |
           sudo apt-get update -qq

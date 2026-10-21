@@ -139,6 +139,14 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
     時計の印と `Oct 21, 10:00 AM`（UTC。時刻と AM のあいだは細い空白 U+202F のことがある）が出る。投稿 ID（`/video/…`）は
     予約の時点で出るので、台帳は `done` になる
 - 予約は出したのと同じに数える。台帳（`posted.json`）は予約の時点で `done`、`note` に予約の時刻を書く
+- **予約の時刻のあとに、出たかを確かめる**（2026-10-21 に最安ホステルの回 p2 で、予約中の城塞の回と並べて見分けた）。
+  どちらも EC2 で、ログインしない `curl` で見る（この箱からは youtube.com・tiktok.com に届かない）
+  - YouTube: `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/<ID>&format=json` が **200 で題を返せば公開**、
+    予約中（非公開）は 403。動画のページを開くと、公開済みでも「bot ではないことを確認」でログインを求められるので使わない
+  - TikTok: **oEmbed は使えない**（予約中でも 200 を返し、題も作者も空）。`https://www.tiktok.com/embed/v2/<ID>` が
+    **200 で `secret` が false なら公開**、予約中は 400
+  - 最後に Studio（`get_creator_videos` の `privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と
+    TikTok Studio の一覧（予約の時計の札が外れて、公開範囲が選べる「Everyone」の行）でも読み直す
 - **YouTube の本人確認**（2026-10-21）: 上げる画面で「本人確認 — 続行するには、本人確認を行う必要があります」の窓が出て、
   「次へ」は Google のパスワードの画面だった。「別の方法」はパスキー・アカウント復元（再設定用のメール）だけで、スマホの
   確認（dp）は無かった。**こちらでは打たない・アカウント復元は選ばない。** あやとに遠隔デスクトップの ytstudio の Chrome で

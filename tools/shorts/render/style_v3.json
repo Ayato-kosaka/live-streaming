@@ -25,6 +25,11 @@
         "font": "DelaGothicOne-Regular.ttf", "size": 76, "min_size": 60, "face_min_size": 48,
         "look": { "fill": "#FFE14D", "outline": [{ "color": "#2A1600", "width_em": 0.09 }], "tracking": -0.03, "line_pitch_em": 1.12 },
         "anim": { "in": { "frames": 4, "first_hold": 2, "scale": { "keys": [[0, 0.8], [2, 1.06], [3, 1.0]] } } }
+      },
+      "chat": {
+        "_note": "感情ではなく、コメントの札（視聴者さんのチャットを読み上げる所）。ライブのチャット欄に見えるよう、字幕の書体の白い字を半透明の黒い角丸の地に載せる（左上の注 note と同じ地）。名前は出さない。動かさない（字幕の出を測る検査が、出たコマを1コマで読める）。spec の caption_parts で、チャットの文の頁だけに付ける",
+        "font": "caption", "size": 60, "min_size": 48, "face_min_size": 44,
+        "look": { "fill": "#FFFFFF", "box": { "color": "#000000", "alpha": 0.72, "radius": 22 }, "pad": [30, 16], "line_pitch_em": 1.2 }
       }
     }
   },
