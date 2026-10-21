@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "UQdkUSro9Ck__archive",
+ "mode": "archive",
+ "dest": "UQdkUSro9Ck/archive",
+ "video": "UQdkUSro9Ck",
+ "channel": null,
+ "request": "shorts/requests/2026-10-21-stickies-archive.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
+ },
+ "counts": {
+  "sheets": 33,
+  "caption_segments": 1021,
+  "transcript_segments": 171,
+  "cuts": 22,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 47
+ },
+ "bytes": {
+  "plain": 11274501,
+  "tar_gz": 8996823,
+  "encrypted": 8996832
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 8996832,
+   "sha256": "6ef4d2e1b49c24f2b13fbb457038756cef11cff64693d5eb4e8e6f4b97b3e4ed"
+  }
+ ],
+ "hmac_sha256": "015677c430f92460565d2ba44404bbe5de2980fd088e7f995ff25e155ccda2c8",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39519779753",
+ "created_at": "2026-10-21T01:42:36+00:00"
+}
