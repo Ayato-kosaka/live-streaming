@@ -1,5 +1,5 @@
 {
- "_note": "build_edit.py が spec_A.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "_note": "build_edit.py が spec_A.json から組んだ v2 に、v3（#998 F-045）で Drive の素材の6カットを手で差し替えた。声・字・題の札・BGM・行の秒は v2 と同じ（Actions の書き出しは render/cas に残っていた v2 の入力を使った）",
  "version": 2,
  "id": "france-2025-A",
  "style": "style_v3.json",
@@ -78,6 +78,26 @@
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/u64xGgMIvh4/clips/02_0-07-20_0-10-10.mp4",
    "watermark": "prism_live",
    "t0": 29240.0
+  },
+  "d02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/02.mp4",
+   "t0": 32520
+  },
+  "d05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/05.mp4",
+   "t0": 32700
+  },
+  "d08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/08.mp4",
+   "t0": 32880
+  },
+  "d10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/10.mp4",
+   "t0": 33000
+  },
+  "d11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/11.mp4",
+   "t0": 33060
   }
  },
  "cuts": [
@@ -96,17 +116,18 @@
    "note": "「南仏も回れた！」コリウールの海に建つ城（コリウール 0:03:34.5。人は写らない）"
   },
   {
-   "src": "c06",
-   "in": 1920,
-   "out": 1972,
-   "row": 1
+   "src": "d05",
+   "in": 90,
+   "out": 142,
+   "row": 1,
+   "note": "「人生初の左ハンドル！」運転席から見た右側通行の道（Drive。配信に運転の画は無かった）"
   },
   {
-   "src": "c02",
-   "in": 1680,
-   "out": 1708,
+   "src": "d02",
+   "in": 9,
+   "out": 37,
    "row": 2,
-   "note": "「まずルーアン。」木組みの家並み（ルーアン 0:05:46）"
+   "note": "「まずルーアン。」木組みの家と大時計の通り（Drive）"
   },
   {
    "src": "c02",
@@ -147,10 +168,11 @@
    "row": 5
   },
   {
-   "src": "c08",
-   "in": 1035,
-   "out": 1105,
-   "row": 5
+   "src": "d08",
+   "in": 45,
+   "out": 115,
+   "row": 5,
+   "note": "「雲1個しかない、南国来てもうた！」崖の上のテラスから青い海（Drive）"
   },
   {
    "src": "c08",
@@ -184,11 +206,11 @@
    "note": "「次の日は晴れて、」晴れたレ・ボーの谷（三ツ星の回 0:03:30。人は遠くの点）"
   },
   {
-   "src": "c13",
-   "in": 900,
-   "out": 935,
+   "src": "d10",
+   "in": 15,
+   "out": 50,
    "row": 9,
-   "note": "「2000年近く前の橋。」ポン・デュ・ガールのアーチ（0:00:30）。次の石の寄りと合わせて3秒未満"
+   "note": "「2000年近く前の橋。」ポン・デュ・ガールのアーチを下から（Drive）。次の石の寄り（配信）と合わせて3秒未満"
   },
   {
    "src": "c14",
@@ -198,11 +220,11 @@
    "note": "「セメント無しで建ってる！」石を積んだだけの壁の寄り（0:04:33。本人が 0:04:30〜0:05:00 で話す所）"
   },
   {
-   "src": "c07",
-   "in": 3180,
-   "out": 3200,
+   "src": "d05",
+   "in": 360,
+   "out": 380,
    "row": 10,
-   "note": "「レンタカーで」夜の道に停まった車（ニース 0:07:21。1行目の 3:02:49 とは別の素材）"
+   "note": "「レンタカーで」運転席から前の道（Drive。2行目と同じ素材の別の時刻）"
   },
   {
    "src": "c15",
@@ -212,10 +234,11 @@
    "note": "「スペインの手前まで来た！」コリウールの港と色とりどりの家並み（0:03:20）"
   },
   {
-   "src": "c17",
-   "in": 252,
-   "out": 284,
-   "row": 11
+   "src": "d11",
+   "in": 6,
+   "out": 38,
+   "row": 11,
+   "note": "「食べたんはパエリア。」パエリアの寄り（Drive。配信にパエリアは写っていなかった）"
   },
   {
    "src": "c16",
