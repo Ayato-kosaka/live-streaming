@@ -95,9 +95,16 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/style/bgm_gap_selftest.py
 
+      # 題の札の国旗（`tools/shorts/render/textlook.py` が `flags/` の絵を字の中に置く）。本物の書き出しの
+      # 道具で題の札を描き、国旗の色の画素が1行目の頭に出るかを数え、守りを1つずつ外して落ちるかを見る。
+      # numpy と OpenCV が要るので、BGM の物差しと同じく回し役の SKIP に載せ、ここで名指しで回す
+      - name: 題の札の国旗の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/flag_selftest.py
+
       # 取り込みの見張りは Selftests でも走るが、ショートを触った PR では
       # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
-      # 上の4本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
+      # 上で名指しで済ませたものは除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
       - name: ほかのショートの見張り（取り込み）
         if: ${{ !cancelled() }}
         run: |
@@ -105,6 +112,7 @@ jobs:
           mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
             ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
+            ! -path 'tools/shorts/render/flag_selftest.py' \
             -print0 | sort -z)
           if [ "${#found[@]}" -eq 0 ]; then
             echo "::error::tools/shorts の見張りを1本も拾えなかった"

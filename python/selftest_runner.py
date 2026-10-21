@@ -203,6 +203,11 @@ SKIP: dict[str, str] = {
     "tools/shorts/style/bgm_gap_selftest.py":
         "numpy が要る（Selftests は入れていない。2026-10-16 確認）。守る実物は tools/shorts/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # 題の札の国旗の見張り（2026-10-21）も同じ形。書き出しは通さず遅くないが、守っている
+    # `textlook.py` が字の縁を numpy と OpenCV で描くので、絵を描いて画素を数えるには両方が要る
+    "tools/shorts/render/flag_selftest.py":
+        "numpy と OpenCV が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

@@ -181,6 +181,32 @@ def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None)
     return (json.dumps(out, ensure_ascii=False, indent=1) + "\n").encode()
 
 
+# 国旗の絵文字（地域指示子2つ。🇦🇱）。textlook.FLAG_RE と同じ。textlook は numpy を読むので、
+# GCS と requests しか入れない prepare・report の箱でも読めるように、ここでは写して持つ
+FLAG_RE = re.compile("[\U0001F1E6-\U0001F1FF]{2}")
+
+
+def missing_flags(edit: dict) -> list[str]:
+    """指示書の字に書いた国旗のうち、ランナーで描けないもの（絵が無い・git に入っていない）。
+
+    ランナーは作業枝を checkout して `flags/<2字>.png` を読む。手元にしか無い絵では、素材を上げきって
+    数分待ったあとに書き出しが止まる。上げる前に止める。
+    """
+    codes = sorted({"".join(chr(ord(c) - 0x1F1E6 + ord("A")) for c in m)
+                    for m in FLAG_RE.findall(json.dumps(edit, ensure_ascii=False))})
+    out = []
+    for code in codes:
+        png = HERE / "flags" / f"{code.lower()}.png"
+        if not png.is_file():
+            out.append(f"{code}: 絵が無い（python3 tools/shorts/render/flags.py add {code}）")
+            continue
+        r = subprocess.run(["git", "-C", str(HERE), "ls-files", "--error-unmatch", str(png)],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            out.append(f"{code}: {png.name} が git に入っていない（コミットして作業枝に push してから回す）")
+    return out
+
+
 def item_id(edit_path: Path) -> str:
     m = re.match(r"^edit_(.+)\.json$", edit_path.name)
     s = m.group(1) if m else edit_path.stem
@@ -241,6 +267,11 @@ def cmd_up(a) -> int:
     items = []
     stage = Path(tempfile.mkdtemp(dir=out, prefix=".edits-"))
     try:
+        for e in a.edits:
+            miss = missing_flags(json.loads(Path(e).read_text(encoding="utf-8")))
+            if miss:
+                print(f"!! {e} の国旗をランナーで描けない: " + " / ".join(miss))
+                return 1
         for e in a.edits:
             ep = Path(e)
             body = collect(ep, objects, stage / "narration")

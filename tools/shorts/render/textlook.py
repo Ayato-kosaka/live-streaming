@@ -16,12 +16,21 @@
      "shadow": {"dx": 0, "dy": 8, "blur": 0, "color": "#000000", "alpha": 0.45},
      "box": {"color": "#000000", "alpha": 1.0, "radius": 28},
      "pad": [x, y], "line_gap": 8, "line_pitch_em": 1.073, "tracking": -0.04,   # 字間・行の送りは em
-     "highlight": {"fill": "#F9D342", "scale": 1.12}}
+     "highlight": {"fill": "#F9D342", "scale": 1.12},
+     "flag": {"height_em": 0.82, "side_em": 0.09, "edge_em": 0.022}}   # 字の中の国旗（下の「国旗」。既定は FLAG_DEFAULT）
 
 古い書き方（color・stroke・stroke_color・strokes・bg・bg_alpha・pad_x・pad_y・radius・line_gap・
 highlight_color・highlight_scale・shadow_dy・shadow_alpha）も look_of がそのまま読む。
 
 縁と発光は、字の形からの距離（2倍の細かさで測る）で塗る。だから 4.5px・6.5px のような半端な幅もそのまま出る。
+
+## 国旗（字の中に 🇦🇱 と書く）
+
+字に国旗の絵文字（地域指示子2つ。🇦🇱 = U+1F1E6 U+1F1F1）があれば、そこに国旗の絵を1字ぶんとして置く。
+書体（M PLUS）には絵文字の字形が無いので、そのまま描くと豆腐（□□）になる。絵は `flags/<小文字の2字>.png`
+（`flags.py` が足す。出どころと許諾は `flags/README.md`）。国旗も字の形として縁・発光・影を受ける
+（その行の字と同じ縁で囲まれ、地の上で字と同じ重さに見える）。塗りは字の色ではなく国旗の絵。
+国旗の無い字は、これまでと1画素も変わらない（国旗を探す前に、無ければ元の道をそのまま通る）。
 
 ## anim（出入り）
 
@@ -38,13 +47,112 @@ hold の shake は、出ている間ずっと位置だけを毎コマでたら�
 """
 from __future__ import annotations
 
+import functools
 import math
+import re
+import sys
 import zlib
+from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 SS = 2  # 縁と発光を測る細かさ（2倍で描いて縮める）
+
+# ---------------------------------------------------------------- 国旗
+
+FLAG_RE = re.compile("[\U0001F1E6-\U0001F1FF]{2}")
+FLAG_DIR = Path(__file__).resolve().parent / "flags"
+# どれも 2026-10-21 にホステルの回の題の札（1080x1920）で見比べて決めた:
+# 高さ 0.82em: 0.74 / 0.82 / 0.90 を並べ、かなの字（M PLUS で 0.79em）と同じ重さに見えたもの。0.90 は字より目立つ。
+#   横長の国旗（カタール 11:28）は幅 max_width_em で止め、そのぶん低くする（行の幅を国旗が食わない）
+# 横の余白 0.09em ずつ: 国旗と隣の字の縁どうしが重なって1つの塊に見えないだけ空ける
+# 角の丸み 0.1（高さに対して）: 丸ゴシックの字の角に寄せる
+# 内側の縁 edge_em（白）: 黒い箱の上で、黒を含む国旗（ドイツ・エストニア）の上の辺が箱に溶けて消えた。
+#   国旗の形の内側に細い明るい縁を引いて、四角の輪郭を残す（外へは広げない。字の置き場は変わらない）
+FLAG_DEFAULT = {"height_em": 0.82, "max_width_em": 1.5, "side_em": 0.09, "radius_em": 0.1,
+                "edge_em": 0.022, "edge_color": "#FFFFFF", "edge_alpha": 0.85}
+# 国旗の縦の真ん中を、ベースラインから上へ 0.35em に置く（漢字「国」の字形が −0.81〜+0.10em、
+# かな「ア」が −0.74〜+0.05em で、どちらも真ん中がここ。M PLUS Rounded 1c で測った）
+FLAG_CENTER_EM = 0.35
+
+
+def has_flag(text: str) -> bool:
+    return bool(FLAG_RE.search(text or ""))
+
+
+def flag_code(pair: str) -> str:
+    """地域指示子2つ（🇦🇱）を ISO 3166-1 の2字（AL）に。"""
+    return "".join(chr(ord(c) - 0x1F1E6 + ord("A")) for c in pair)
+
+
+def flag_emoji(code: str) -> str:
+    """ISO 3166-1 の2字（AL）を、国旗の絵文字（🇦🇱）に。"""
+    return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in code.upper())
+
+
+def flag_cfg(fl: dict | None) -> dict:
+    return {**FLAG_DEFAULT, **(fl or {})}
+
+
+@functools.lru_cache(maxsize=None)
+def flag_source(code: str) -> Image.Image:
+    """国旗の元の絵（RGBA）。無ければ止める（豆腐や別の国の旗を黙って焼かない）。"""
+    path = FLAG_DIR / f"{code.lower()}.png"
+    if not path.exists():
+        sys.exit(f"国旗の絵が無い: {flag_emoji(code)} {code}（python3 tools/shorts/render/flags.py add {code} で足して、"
+                 f"flags/ ごとコミットする）")
+    return Image.open(path).convert("RGBA")
+
+
+def flag_box(code: str, size: float, fl: dict | None = None) -> tuple[float, float]:
+    """大きさ size の字の中に置く国旗の (幅, 高さ)（px）。幅は国旗の縦横比のまま（スイスは正方形のまま）。"""
+    c = flag_cfg(fl)
+    src = flag_source(code)
+    h = c["height_em"] * size
+    w = min(h * src.width / src.height, c["max_width_em"] * size)
+    return w, w * src.height / src.width
+
+
+def flag_img(code: str, w: float, h: float, c: dict, size: float) -> Image.Image:
+    """幅 w・高さ h に縮めて角を丸め、内側に明るい縁を引いた国旗（RGBA）。size は字の大きさ（縁の太さの基準）。
+
+    角の型は4倍で描いて縮める（ギザを出さない）。
+    """
+    import cv2
+    W, H = max(1, round(w)), max(1, round(h))
+    img = flag_source(code).resize((W, H), Image.LANCZOS)
+    r = c["radius_em"] * H
+    if r > 0:
+        m = Image.new("L", (W * 4, H * 4), 0)
+        ImageDraw.Draw(m).rounded_rectangle([0, 0, W * 4 - 1, H * 4 - 1], radius=r * 4, fill=255)
+        m = m.resize((W, H), Image.LANCZOS)
+        a = np.minimum(np.asarray(img.getchannel("A")), np.asarray(m))
+        img.putalpha(Image.fromarray(a))
+    ew = c.get("edge_em", 0) * size
+    if ew > 0:
+        arr = np.asarray(img, dtype=np.float32)
+        al = arr[..., 3] / 255
+        # 国旗の形の内側で、輪郭からの距離が ew までの帯（外の地との境目は国旗の濃さのまま）
+        inside = cv2.distanceTransform(np.pad((al >= 0.5).astype(np.uint8), 1), cv2.DIST_L2, 5)[1:-1, 1:-1]
+        band = np.clip(ew - inside + 0.5, 0, 1) * c.get("edge_alpha", 1.0)
+        col = np.asarray(hex_rgba(c.get("edge_color", "#FFFFFF"))[:3], dtype=np.float32)
+        arr[..., :3] = arr[..., :3] * (1 - band[..., None]) + col * band[..., None]
+        img = Image.fromarray(np.clip(arr, 0, 255).round().astype(np.uint8), "RGBA")
+    return img
+
+
+def split_flags(text: str) -> list[str]:
+    """字と国旗に分ける（国旗は1つずつ、字は続くかぎり1つに）。"""
+    out, pos = [], 0
+    for m in FLAG_RE.finditer(text):
+        if m.start() > pos:
+            out.append(text[pos:m.start()])
+        out.append(m.group(0))
+        pos = m.end()
+    if pos < len(text):
+        out.append(text[pos:])
+    return out
 
 
 def hex_rgba(h: str, alpha: float = 1.0) -> tuple:
@@ -109,14 +217,25 @@ def stroke_width(lk: dict, size: float = 0) -> int:
     return math.ceil(outline_total(lk, size))
 
 
-def advance(text: str, font: ImageFont.FreeTypeFont, tracking: float) -> float:
-    return font.getlength(text) + tracking * font.size * len(text)
+def advance(text: str, font: ImageFont.FreeTypeFont, tracking: float, fl: dict | None = None) -> float:
+    """字の送りの合計。国旗は1字として、絵の幅と両側の余白（side_em）で数える。"""
+    if not has_flag(text):
+        return font.getlength(text) + tracking * font.size * len(text)
+    c = flag_cfg(fl)
+    total = 0.0
+    for seg in split_flags(text):
+        if FLAG_RE.fullmatch(seg):
+            total += flag_box(flag_code(seg), font.size, c)[0] + 2 * c["side_em"] * font.size + tracking * font.size
+        else:
+            total += font.getlength(seg) + tracking * font.size * len(seg)
+    return total
 
 
 def text_width(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont) -> float:
     """描いたときの絵の幅の見積もり（字の幅＋外へ広がる幅の両側＋余白）。"""
     tr = lk.get("tracking", 0.0)
-    return max(advance(ln, font, tr) for ln in lines) + 2 * margin_of(lk, font.size) + 2 * lk.get("pad", [0, 0])[0]
+    return max(advance(ln, font, tr, lk.get("flag")) for ln in lines) + 2 * margin_of(lk, font.size) \
+        + 2 * lk.get("pad", [0, 0])[0]
 
 
 def _color_stops(fill) -> list[tuple[float, tuple]]:
@@ -178,9 +297,11 @@ def text_img(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont, marks: li
             k = j
         return out
 
+    fl = flag_cfg(lk.get("flag")) if any(has_flag(ln) for ln in lines) else None
+
     def measure(f_big):
         rs = [runs(ln, mk, f_big) for ln, mk in zip(lines, marks)]
-        return rs, [sum(advance(t, f, tracking) for t, f, _ in r) for r in rs]
+        return rs, [sum(advance(t, f, tracking, fl) for t, f, _ in r) for r in rs]
 
     rows, adv = measure(f2)
     m = margin_of(lk, size)
@@ -202,19 +323,38 @@ def text_img(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont, marks: li
     hl_m = Image.new("L", (iw, ih), 0)
     df, dh = ImageDraw.Draw(fill_m), ImageDraw.Draw(hl_m)
     bands = []
+    flags = []  # 置いた国旗（絵, 左上の x, y）。2倍の細かさの座標
     y = M + pad_y * SS
     for r, a in zip(rows, adv):
         x = M + pad_x * SS + (text_w - a) / 2
         bands.append((y, y + asc + desc))
         for t, f, on in r:
             pieces = list(t) if tracking else [t]
+            if fl and has_flag(t):
+                # 国旗は地域指示子2つで1つ。1字ずつに割ると旗にならないので、先に字と国旗に分ける
+                pieces = [q for seg in split_flags(t)
+                          for q in ([seg] if FLAG_RE.fullmatch(seg) or not tracking else list(seg))]
             for pc in pieces:
-                (dh if on else df).text((x, y + asc), pc, font=f, anchor="ls", fill=255)
-                x += advance(pc, f, tracking)
+                if fl and FLAG_RE.fullmatch(pc):
+                    code = flag_code(pc)
+                    fw, fh = flag_box(code, f.size, fl)
+                    im = flag_img(code, fw, fh, fl, f.size)
+                    fx = round(x + fl["side_em"] * f.size)
+                    fy = round(y + asc - FLAG_CENTER_EM * f.size - im.height / 2)
+                    flags.append((im, fx, fy))
+                else:
+                    (dh if on else df).text((x, y + asc), pc, font=f, anchor="ls", fill=255)
+                x += advance(pc, f, tracking, fl)
         y += pitch
     fa = np.asarray(fill_m, dtype=np.float32) / 255
     ha = np.asarray(hl_m, dtype=np.float32) / 255
     glyph = np.maximum(fa, ha)
+    if flags:
+        # 国旗も字の形として数える（縁・発光・影がその行の字と同じように国旗を囲む）。塗りは国旗の絵で、最後に重ねる
+        fm = Image.new("L", (iw, ih), 0)
+        for im, fx, fy in flags:
+            fm.paste(im.getchannel("A"), (fx, fy))
+        glyph = np.maximum(glyph, np.asarray(fm, dtype=np.float32) / 255)
     # 字の形の外側の、輪郭からの距離（1倍の px）。中は 0
     dist = cv2.distanceTransform((glyph < 0.5).astype(np.uint8), cv2.DIST_L2, 5) / SS
 
@@ -299,6 +439,11 @@ def text_img(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont, marks: li
             u[sel] = np.clip((ys[sel] - a0) / max(1, b0 - a0), 0, 1)
         col = _ramp(stops, u)  # (ih, 4)
         over(col[:, None, :3].repeat(iw, axis=1), mask * (col[:, None, 3] / 255))
+    for im, fx, fy in flags:
+        fc = Image.new("RGBA", (iw, ih), (0, 0, 0, 0))
+        fc.paste(im, (fx, fy))
+        a = np.asarray(fc, dtype=np.float32)
+        over(a[..., :3], a[..., 3] / 255)
     rgba = np.dstack([np.clip(out[..., :3], 0, 255), np.clip(out[..., 3] * 255, 0, 255)]).round().astype(np.uint8)
     big = Image.fromarray(rgba, "RGBA")
     # 縮めるときは濃さを掛けた色で（縁の外に黒いにじみを出さない）
