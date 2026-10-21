@@ -147,6 +147,16 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
     **200 で `secret` が false なら公開**、予約中は 400
   - 最後に Studio（`get_creator_videos` の `privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と
     TikTok Studio の一覧（予約の時計の札が外れて、公開範囲が選べる「Everyone」の行）でも読み直す
+- **予約を差し替える**（2026-10-21 に銅像の回 p2 の v7 → v8 で通した）: YouTube は上げた動画のファイルを差し替えられない。
+  **先に古い予約を消し、消えたのを読み直してから、新しい版を上げて同じ時刻で予約する**（逆だと、消し損ねたときに2本出る）。
+  上げる段の同じ題の見張り（`dup` / `find_posts`）も、古いほうが残っていると止まる
+  - YouTube: `yt_post.py delete <ID> <題>`（`--dry` で窓を開いてキャンセル）。一覧の行（ID で探す）→「オプション」→「完全に削除」→
+    窓の「了解しました」にチェック →「完全に削除」。**公開済みと、題が控えと違う動画は消さない**。
+    読み直しは `yt_post.py status <ID>` が `VIDEO_STATUS_DELETED`、`yt_post.py dup <題>` が0本
+  - TikTok: `tt_post.py delete <投稿ID> <題の行> <予約の UTC の ISO>`（`--probe` で行の押せるものを書き出すだけ、`--dry` で念押しの窓まで）。
+    行の右の「操作」の4つの丸いボタンのいちばん右（「…」。字も aria-label も無い）→「Delete」→ 窓「Delete post?」の「Delete」。
+    **予約の時刻の札が出ている行だけ消す**。読み直しは `tt_post.py scheduled` が見つからない・`check` が0件・ログインなしの `embed/v2/<ID>` が 400
+  - 台帳は、消した行を消さずに `note` に「消したこと・理由・読み直した値」を足す。新しい版は sha256 が違うので、別の行として入る
 - **YouTube の本人確認**（2026-10-21）: 上げる画面で「本人確認 — 続行するには、本人確認を行う必要があります」の窓が出て、
   「次へ」は Google のパスワードの画面だった。「別の方法」はパスキー・アカウント復元（再設定用のメール）だけで、スマホの
   確認（dp）は無かった。**こちらでは打たない・アカウント復元は選ばない。** あやとに遠隔デスクトップの ytstudio の Chrome で

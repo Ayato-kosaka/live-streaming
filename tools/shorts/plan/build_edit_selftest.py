@@ -20,6 +20,7 @@
 | `under_cap` | 要る倍率が上限以内 → 要る倍率で読ませる（上限の倍率では一度も測らない）。止めない・注意も出さない |
 | `over_cap_fits` | 上限を越えるが、上限で読んで59秒以内 → 上限で読ませ、注意を1行出して組む（終了コード 0）。注意に出す見込みの尺が、組んだ指示書の尺と同じ。上限は様式から読む（様式を 1.3 にすれば 1.3） |
 | `over_60_stops` | 上限で読んでも59秒を越える（声だけなら入るが、行の間と末尾を足すと越える）→ 指示書を書かずに終了コード 2。尺・何%・何字を出し、その数が下の手計算と合う。言われたとおり減らせば通る |
+| `card_own` | 題の札が1行目と同じ言葉（国旗・改行・句読点だけ違う）なら、札が1行目の字幕を兼ねる（字幕を出さない・札に line）。別の言葉（あやと F-043「札は手段と日数、1行目は回れた中身」）なら兼ねない（1行目の字幕を出す・札に line を持たせない・札は題の行の終わりか4秒の早いほうで消す） |
 
 数の手計算（`expect_frames`）は `build_edit.py` の関数を使わずに書く。見張りの側が本物と同じ式を
 借りると、本物の式が壊れても一緒に壊れて、緑のままになる。
@@ -71,6 +72,16 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                    {"under_cap"}, "要る倍率が上限以内でも、上限で読ませる"),
     "style_cap": ("        args.max_tempo = R.tempo_cap(st_all)\n", "        args.max_tempo = 1.4\n",
                   {"over_cap_fits"}, "上限を様式から読まない"),
+    # 題の札と1行目が別の言葉のとき（あやと F-043）
+    "card_always_same": ("    card_own = card_row is not None and bare_text(title) != bare_text(rows[card_row][\"line\"])\n",
+                         "    card_own = False\n",
+                         {"card_own"}, "札が別の言葉でも1行目の字幕を兼ねさせる（読み上げの字が画面に出ない）"),
+    "card_raw_compare": ("    card_own = card_row is not None and bare_text(title) != bare_text(rows[card_row][\"line\"])\n",
+                         "    card_own = card_row is not None and title != rows[card_row][\"line\"]\n",
+                         {"card_own"}, "国旗・改行・句読点の違いで別の言葉と読む（同じ言葉が札と字幕に2回出る）"),
+    "card_to": ("            edit[\"title\"][\"to\"] = min(edit[\"title\"][\"to\"], row[\"from\"] + row[\"frames\"])\n",
+                "            pass\n",
+                {"card_own"}, "兼ねない札を題の行の終わりで消さない（2行目の字幕と並ぶ）"),
 }
 
 FPS = 30
@@ -82,6 +93,7 @@ GAP_F = 8            # round(0.25 × 30)
 TAIL_F = 15          # round(0.5 × 30)
 HOLD_ROW, HOLD_F = 3, 22    # hold 0.5 秒の行。round((0.25 + 0.5) × 30) = round(22.5) = 22（偶数へ丸める）
 BIG_ROW, PRE_F = 5, 10      # 【大】の行と、字が出きってから声を出すまでのコマ（様式の pre_roll_frames）
+CARD_S = 4.0                # spec の title_card_seconds（あやと F-015「開始4秒だけ」）
 
 
 def voice_frames(chars: int, natural: float, tempo: float) -> int:
@@ -124,17 +136,25 @@ class Bench:
         clips.write_text(json.dumps({"clips": [{"n": 1, "start": 0, "end": 600, "file": "c01.mp4"}]}))
         self.clips = clips
 
-    def run(self, per_line: list[int], natural: float, cap: float = CAP) -> dict:
-        """1回組む。終了コード・標準出力と標準エラー・できた指示書（無ければ None）・測った倍率"""
+    def run(self, per_line: list[int], natural: float, cap: float = CAP,
+            card: tuple[str, str] | None = None) -> dict:
+        """1回組む。終了コード・標準出力と標準エラー・できた指示書（無ければ None）・測った倍率。
+
+        card =（1行目の読み上げ, 題の札）を渡すと、1行目を題の札の行にする。
+        """
         self.n += 1
         d = self.tmp / f"run{self.n}"
         d.mkdir()
         rows = [{"line": "あ" * c + "。", "src": ["0:01:00"]} for c in per_line]
         rows[HOLD_ROW]["hold"] = 0.5
         rows[BIG_ROW]["big"] = True
+        sp = {"id": "T", "title": "見張り", "narration_cps_target": CPS, "rows": rows}
+        if card is not None:
+            rows[0]["line"], sp["title_card"] = card
+            rows[0]["card"] = True
+            sp["title_card_seconds"] = CARD_S
         spec = d / "spec_T.json"
-        spec.write_text(json.dumps({"id": "T", "title": "見張り", "narration_cps_target": CPS, "rows": rows},
-                                   ensure_ascii=False))
+        spec.write_text(json.dumps(sp, ensure_ascii=False))
         out = d / "edit_T.json"
         tempos: list[float] = []
 
@@ -229,10 +249,36 @@ def leg_over_60_stops(b: Bench):
     return out
 
 
+def leg_card_own(b: Bench):
+    """題の札が1行目と同じ言葉なら札が字幕を兼ね、別の言葉（F-043）なら兼ねない"""
+    per_line, natural = [17] * 8, 6.6
+    same = ("ストックホルム来たら、地下鉄が高すぎた！", "🇸🇪 ストックホルム来たら、\n地下鉄が高すぎた！")
+    own = ("フランスに行ったら、10日で南仏も回れた！", "🇫🇷 フランスを10日\nレンタカー旅してみた！")
+    rs, ro = b.run(per_line, natural, card=same), b.run(per_line, natural, card=own)
+    es, eo = rs["edit"] or {}, ro["edit"] or {}
+    ts, to = es.get("title") or {}, eo.get("title") or {}
+    ls = ((es.get("narration") or {}).get("lines") or [{}])[0]
+    lo = ((eo.get("narration") or {}).get("lines") or [{}])[0]
+    row0 = (((eo.get("meta") or {}).get("rows") or [{}])[0])
+    end0 = int(row0.get("from", 0)) + int(row0.get("frames", 0))
+    cap_f = round(CARD_S * FPS)
+    return [(f"どちらも組む（終了コード {rs['rc']} / {ro['rc']}）", rs["rc"] == 0 and ro["rc"] == 0 and es and eo),
+            ("同じ言葉（国旗・改行・句読点だけ違う）: 1行目の字幕を出さない（札が兼ねる）", ls.get("caption") == ""),
+            (f"同じ言葉: 札は1行目に付く（line {ts.get('line')}）・上限 {cap_f} コマ（{ts.get('to')}）",
+             ts.get("line") == 0 and ts.get("to") == cap_f and ts.get("look") == "card"),
+            (f"別の言葉: 1行目の字幕を消さない（caption {lo.get('caption')!r}）",
+             "caption" not in lo and lo.get("text") == own[0]),
+            (f"別の言葉: 札は行の字幕として扱わない（line を持たない: {sorted(to)}）",
+             "line" not in to and to.get("look") == "card" and to.get("text") == own[1]),
+            (f"別の言葉: 札は題の行の終わり（{end0} コマ）か {cap_f} コマの早いほうで消す（{to.get('to')}）",
+             0 < end0 < cap_f and to.get("to") == min(end0, cap_f))]
+
+
 LEGS = {
     "under_cap": leg_under_cap,
     "over_cap_fits": leg_over_cap_fits,
     "over_60_stops": leg_over_60_stops,
+    "card_own": leg_card_own,
 }
 
 

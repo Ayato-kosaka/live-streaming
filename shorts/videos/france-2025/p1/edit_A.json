@@ -1,0 +1,633 @@
+{
+ "_note": "build_edit.py が spec_A.json から組んだ v2 に、v3・v4（#998 F-045）で Drive の素材のカットを手で差し替えた。7行目の注「ヴァンス」は v4 で画がエズとレ・ボーになったので外した。声・字幕・題の札・BGM・行の秒は v2 と同じ（Actions の書き出しは render/cas に残っていた v2 の入力を使った）",
+ "version": 2,
+ "id": "france-2025-A",
+ "style": "style_v3.json",
+ "sources": {
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/Lmk2lp9iFQ8/clips/03_0-14-15_0-15-15.mp4",
+   "watermark": "prism_live",
+   "t0": 8055.0
+  },
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/u64xGgMIvh4/clips/01_0-02-20_0-03-50.mp4",
+   "watermark": "prism_live",
+   "t0": 28940.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/9H5ZzwTB2V4/clips/01_0-01-45_0-04-00.mp4",
+   "watermark": "prism_live",
+   "t0": 10905.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/NWVWtIVn-pg/clips/02_0-04-50_0-06-20.mp4",
+   "watermark": "prism_live",
+   "t0": 3890.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/Lmk2lp9iFQ8/clips/02_0-11-15_0-13-55.mp4",
+   "watermark": "prism_live",
+   "t0": 7875.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/Lmk2lp9iFQ8/clips/01_0-00-15_0-00-55.mp4",
+   "watermark": "prism_live",
+   "t0": 7215.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/hPZ2hAggOLE/clips/01_0-08-15_0-09-00.mp4",
+   "watermark": "prism_live",
+   "t0": 14895.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/sSpOtvWjbEY/clips/02_0-06-45_0-07-30.mp4",
+   "watermark": "prism_live",
+   "t0": 18405.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/sSpOtvWjbEY/clips/01_0-01-50_0-03-10.mp4",
+   "watermark": "prism_live",
+   "t0": 18110.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/hB1jT4Nl4II/clips/01_0-02-45_0-03-45.mp4",
+   "watermark": "prism_live",
+   "t0": 21765.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/weSZaHeQVlI/clips/01_0-00-00_0-00-45.mp4",
+   "watermark": "prism_live",
+   "t0": 25200.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/weSZaHeQVlI/clips/02_0-04-15_0-05-15.mp4",
+   "watermark": "prism_live",
+   "t0": 25455.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/9H5ZzwTB2V4/clips/02_0-05-35_0-07-45.mp4",
+   "watermark": "prism_live",
+   "t0": 11135.0
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/u64xGgMIvh4/clips/03_0-16-15_0-17-00.mp4",
+   "watermark": "prism_live",
+   "t0": 29775.0
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/src/u64xGgMIvh4/clips/02_0-07-20_0-10-10.mp4",
+   "watermark": "prism_live",
+   "t0": 29240.0
+  },
+  "d02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/02.mp4",
+   "t0": 32520
+  },
+  "d05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/05.mp4",
+   "t0": 32700
+  },
+  "d08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/08.mp4",
+   "t0": 32880
+  },
+  "d10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/10.mp4",
+   "t0": 33000
+  },
+  "d11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/11.mp4",
+   "t0": 33060
+  },
+  "d01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/01.mp4",
+   "t0": 32460
+  },
+  "d07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/07.mp4",
+   "t0": 32820
+  },
+  "d09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/09.mp4",
+   "t0": 32940
+  }
+ },
+ "cuts": [
+  {
+   "src": "c05",
+   "in": 960,
+   "out": 1043,
+   "row": 0,
+   "note": "0秒目: 満潮で海に浮くモンサンミッシェルの寄り（MSM 0:14:47）。本体が札（y 380〜580）の下に来る。「モンサンミッシェルも」の声が終わるあたり（2.77秒）まで。3秒未満"
+  },
+  {
+   "src": "c15",
+   "in": 2235,
+   "out": 2269,
+   "row": 0,
+   "note": "「南仏も回れた！」コリウールの海に建つ城（コリウール 0:03:34.5。人は写らない）"
+  },
+  {
+   "src": "d05",
+   "in": 90,
+   "out": 142,
+   "row": 1,
+   "note": "「人生初の左ハンドル！」運転席から見た右側通行の道（Drive。配信に運転の画は無かった）"
+  },
+  {
+   "src": "d02",
+   "in": 9,
+   "out": 37,
+   "row": 2,
+   "note": "「まずルーアン。」木組みの家と大時計の通り（Drive）"
+  },
+  {
+   "src": "d01",
+   "in": 15,
+   "out": 33,
+   "row": 2,
+   "note": "「ジャンヌ・ダルクの」ルーアンの旧市場広場（Drive IMG_0794。ジャンヌ・ダルクの教会がある広場）"
+  },
+  {
+   "src": "c02",
+   "in": 1155,
+   "out": 1178,
+   "row": 2,
+   "note": "「…の教会で、」ジャンヌ・ダルクの教会の尖った屋根（配信 NWVWtIVn-pg 0:05:28.5〜）"
+  },
+  {
+   "src": "c02",
+   "in": 480,
+   "out": 514,
+   "row": 2,
+   "note": "「観光終わりです！」本人の自撮り（0:05:06）"
+  },
+  {
+   "src": "c04",
+   "in": 3960,
+   "out": 4009,
+   "row": 3
+  },
+  {
+   "src": "c03",
+   "in": 60,
+   "out": 106,
+   "row": 3
+  },
+  {
+   "src": "c04",
+   "in": 1230,
+   "out": 1313,
+   "row": 4
+  },
+  {
+   "src": "c08",
+   "in": 600,
+   "out": 671,
+   "row": 5
+  },
+  {
+   "src": "d08",
+   "in": 45,
+   "out": 115,
+   "row": 5,
+   "note": "「雲1個しかない、南国来てもうた！」崖の上のテラスから青い海（Drive）"
+  },
+  {
+   "src": "d07",
+   "in": 60,
+   "out": 88,
+   "row": 6,
+   "note": "「山の上に村が」山の上の村エズの石の家と黄色い壁（Drive IMG_0962）"
+  },
+  {
+   "src": "d09",
+   "in": 15,
+   "out": 43,
+   "row": 6,
+   "note": "「ポンポン！」もう1つの山の上の村レ・ボーの石畳（Drive IMG_1082）"
+  },
+  {
+   "src": "c10",
+   "in": 15,
+   "out": 68,
+   "row": 7
+  },
+  {
+   "src": "c09",
+   "in": 810,
+   "out": 864,
+   "row": 7
+  },
+  {
+   "src": "c09",
+   "in": 1965,
+   "out": 2029,
+   "row": 8
+  },
+  {
+   "src": "c12",
+   "in": 1350,
+   "out": 1389,
+   "row": 9,
+   "note": "「次の日は晴れて、」晴れたレ・ボーの谷（三ツ星の回 0:03:30。人は遠くの点）"
+  },
+  {
+   "src": "d10",
+   "in": 15,
+   "out": 50,
+   "row": 9,
+   "note": "「2000年近く前の橋。」ポン・デュ・ガールのアーチを下から（Drive）。次の石の寄り（配信）と合わせて3秒未満"
+  },
+  {
+   "src": "c14",
+   "in": 540,
+   "out": 582,
+   "row": 9,
+   "note": "「セメント無しで建ってる！」石を積んだだけの壁の寄り（0:04:33。本人が 0:04:30〜0:05:00 で話す所）"
+  },
+  {
+   "src": "d05",
+   "in": 360,
+   "out": 380,
+   "row": 10,
+   "note": "「レンタカーで」運転席から前の道（Drive。2行目と同じ素材の別の時刻）"
+  },
+  {
+   "src": "c15",
+   "in": 1800,
+   "out": 1841,
+   "row": 10,
+   "note": "「スペインの手前まで来た！」コリウールの港と色とりどりの家並み（0:03:20）"
+  },
+  {
+   "src": "d11",
+   "in": 6,
+   "out": 38,
+   "row": 11,
+   "note": "「食べたんはパエリア。」パエリアの寄り（Drive。配信にパエリアは写っていなかった）"
+  },
+  {
+   "src": "c16",
+   "in": 2130,
+   "out": 2169,
+   "row": 11
+  },
+  {
+   "src": "c17",
+   "in": 0,
+   "out": 45,
+   "row": 12
+  },
+  {
+   "src": "c15",
+   "in": 2355,
+   "out": 2400,
+   "row": 12
+  }
+ ],
+ "title": {
+  "text": "🇫🇷 フランスを10日\nレンタカー旅してみた！",
+  "look": "card",
+  "from": 0,
+  "to": 117
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "フランスに行ったら、10日でモンサンミッシェルも南仏も回れた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/01.wav",
+    "tts_text": "フランスに行ったら、とおかでモンサンミッシェルも、なんふつも回れた！",
+    "at": 0
+   },
+   {
+    "text": "人生初の左ハンドル！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/02.wav",
+    "tts_text": "人生初の左ハンドル！",
+    "at": 117,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "まずルーアン。ジャンヌ・ダルクの教会で、観光終わりです！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/03.wav",
+    "tts_text": "まずルーアン。ジャンヌダルクの教会で、観光終わりです！",
+    "at": 169,
+    "parts": [
+     {
+      "text": "まずルーアン。ジャンヌ・ダルクの教会で、"
+     },
+     {
+      "text": "観光終わりです！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "text": "次、モンサンミッシェル。ほんまに海に浮いてた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/04.wav",
+    "tts_text": "次、モンサンミッシェル。ほんまに海に浮いてた！",
+    "at": 272,
+    "mood": "up_pop"
+   },
+   {
+    "text": "満潮で、砂浜降りたら靴びちゃびちゃや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/05.wav",
+    "tts_text": "満潮で、砂浜おりたら靴びちゃびちゃや！",
+    "at": 367,
+    "parts": [
+     {
+      "text": "満潮で、砂浜降りたら"
+     },
+     {
+      "text": "靴びちゃびちゃや！",
+      "big": "shake_white"
+     }
+    ]
+   },
+   {
+    "text": "残り6日は、飛行機で南仏。雲1個しかない、南国来てもうた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/06.wav",
+    "tts_text": "残りむいかは、飛行機でなんふつ。雲いっこしかない、なんごく来てもうた！",
+    "at": 450,
+    "mood": "up_pop"
+   },
+   {
+    "text": "山の上に村がポンポン！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/07.wav",
+    "tts_text": "山の上に村がポンポン！",
+    "at": 591
+   },
+   {
+    "text": "と思ったら次の街は暴風。お目当てのアンティーク市も休み。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/08.wav",
+    "tts_text": "と思ったら次の街は暴風。お目当てのアンティークいちも休み。",
+    "at": 647,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "老後の楽しみに、残しときました。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/09.wav",
+    "tts_text": "老後の楽しみに、残しときました。",
+    "at": 754,
+    "mood": "tense_still"
+   },
+   {
+    "text": "次の日は晴れて、2000年近く前の橋。セメント無しで建ってる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/10.wav",
+    "tts_text": "次の日は晴れて、二千年近く前の橋。セメント無しで建ってる！",
+    "at": 818,
+    "mood": "up_pop",
+    "highlight": [
+     "2000年近く前"
+    ]
+   },
+   {
+    "text": "レンタカーでスペインの手前まで来た！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/11.wav",
+    "tts_text": "レンタカーでスペインの手前まで来た！",
+    "at": 934
+   },
+   {
+    "text": "食べたんはパエリア。それスペインやないかい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/12.wav",
+    "tts_text": "食べたんはパエリア。それスペインやないかい！",
+    "at": 995,
+    "parts": [
+     {
+      "text": "食べたんはパエリア。"
+     },
+     {
+      "text": "それスペインやないかい！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "text": "みんなやったら、フランス10日、どこ回る？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/fr_a/voice/out/A/13.wav",
+    "tts_text": "みんなやったら、フランスとおか、どこ回る？",
+    "at": 1066
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a67592957180d3277/shorts/videos/france-2025/p1/spec_A.json",
+  "fps": 30,
+  "frames": 1156,
+  "seconds": 38.533,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 117,
+    "voice_frames": 109,
+    "cuts": [
+     "2:14:47.0+2.77s",
+     "8:03:34.5+1.13s"
+    ],
+    "line": "フランスに行ったら、10日でモンサンミッシェルも南仏も回れた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 117,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "3:02:49.0+1.73s"
+    ],
+    "line": "人生初の左ハンドル！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 169,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "1:05:46.0+0.93s",
+     "1:05:28.5+1.37s",
+     "1:05:06.0+1.13s"
+    ],
+    "line": "まずルーアン。ジャンヌ・ダルクの教会で、観光終わりです！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "まずルーアン。ジャンヌ・ダルクの教会で、"
+     },
+     {
+      "text": "観光終わりです！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "row": 3,
+    "from": 272,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "2:13:27.0+1.63s",
+     "2:00:17.0+1.53s"
+    ],
+    "line": "次、モンサンミッシェル。ほんまに海に浮いてた！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 367,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "2:11:56.0+2.77s"
+    ],
+    "line": "満潮で、砂浜降りたら靴びちゃびちゃや！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "満潮で、砂浜降りたら"
+     },
+     {
+      "text": "靴びちゃびちゃや！",
+      "big": "shake_white"
+     }
+    ]
+   },
+   {
+    "row": 5,
+    "from": 450,
+    "frames": 141,
+    "voice_frames": 133,
+    "cuts": [
+     "4:08:35.0+2.37s",
+     "4:08:49.5+2.33s"
+    ],
+    "line": "残り6日は、飛行機で南仏。雲1個しかない、南国来てもうた！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 591,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "4:08:39.5+1.87s"
+    ],
+    "line": "山の上に村がポンポン！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 647,
+    "frames": 107,
+    "voice_frames": 99,
+    "cuts": [
+     "5:06:45.5+1.77s",
+     "5:02:17.0+1.80s"
+    ],
+    "line": "と思ったら次の街は暴風。お目当てのアンティーク市も休み。",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 754,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "5:02:55.5+2.13s"
+    ],
+    "line": "老後の楽しみに、残しときました。",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 818,
+    "frames": 116,
+    "voice_frames": 108,
+    "cuts": [
+     "6:03:30.0+1.30s",
+     "7:00:30.0+1.17s",
+     "7:04:33.0+1.40s"
+    ],
+    "line": "次の日は晴れて、2000年近く前の橋。セメント無しで建ってる！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 934,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "3:07:21.0+0.67s",
+     "8:03:20.0+1.37s"
+    ],
+    "line": "レンタカーでスペインの手前まで来た！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 995,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "8:16:23.4+1.07s",
+     "8:08:31.0+1.30s"
+    ],
+    "line": "食べたんはパエリア。それスペインやないかい！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "食べたんはパエリア。"
+     },
+     {
+      "text": "それスペインやないかい！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 1066,
+    "frames": 90,
+    "voice_frames": 67,
+    "cuts": [
+     "8:16:15.0+1.50s",
+     "8:03:38.5+1.50s"
+    ],
+    "line": "みんなやったら、フランス10日、どこ回る？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 257,
+   "raw_voice_s": 48.47,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 34.57,
+   "cps_voiced": 7.43,
+   "video_s": 38.53,
+   "cps_video": 6.67
+  }
+ },
+ "notes": [
+  {
+   "from": 857,
+   "to": 934,
+   "text": "ポン・デュ・ガール",
+   "_why": "9行目の2つ目のカット（ポン・デュ・ガールの画）の頭から。行の頭からだと別の場所の画に地名が乗る"
+  },
+  {
+   "from": 954,
+   "to": 995,
+   "text": "コリウール",
+   "_why": "10行目の2つ目のカット（コリウールの画）の頭から。行の頭からだと別の場所の画に地名が乗る"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

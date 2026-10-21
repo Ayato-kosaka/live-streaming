@@ -8,6 +8,10 @@ name: ショートを並べて書き出す
 # **受け渡しは GCS の非公開バケットだけ**（live-streaming-d3cac-shorts-preview。#938 で付与）。
 # 素材は作業箱が署名付き URL で直に上げ、出来たものはランナーが置いて、見る URL（7日）を
 # 依頼の公開鍵で包んで作業枝に返す。毎周 数百MB を git に積まない。
+#
+# **担当は「指示書を置く → 要約（summary.json）と絵を読む」だけ**（#1011）。本体の job が書き出し・
+# 品質チェック20項目・1秒ごとのコマ一覧・字の切り抜き・顔の切り抜き・頭の BGM と終わりの札の数（proof.py）まで作り、
+# report が下見（Hosting のプレビューチャンネル。7日）を置く。前は担当が手元の4コアで順に回し、1本 約2時間だった。
 # **artifact にはしない**（公開リポジトリの artifact は誰でも落とせる）。
 #
 # 道具の版は作業箱にそろえる（ubuntu-24.04 の apt の ffmpeg 6.1.1、Python 3.13、下の pip の版）。
@@ -38,7 +42,16 @@ jobs:
       roles: ${{ steps.prep.outputs.roles }}
       prefix: ${{ steps.prep.outputs.prefix }}
     steps:
+      # **作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。** 素のままの checkout は先の木を全部
+      # 落とし、prepare の checkout だけで 2分39秒かかった（r1011-ng4-ckj8）。道具（tools/shorts）と依頼
+      # （shorts/render）だけを取り、ほかの中身は要るときに git が取りに行く（branch.py の extract・push は
+      # 木だけで回る）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -69,7 +82,13 @@ jobs:
         id: ${{ fromJSON(needs.prepare.outputs.ids) }}
         role: ${{ fromJSON(needs.prepare.outputs.roles) }}
     steps:
+      # 暗号文を落とさない（prepare の頭）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -107,21 +126,35 @@ jobs:
     # 1本落ちても、出来たぶんと落ちた理由を返す
     if: ${{ !cancelled() && needs.prepare.result == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 下見（Hosting のプレビューチャンネル）を置いて確かめるぶん、firebase-tools を入れて配って再生まで 2〜3分
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
+      # 暗号文を落とさない（prepare の頭）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+      # 下見を配る firebase-tools と、スマホ幅の再生を見る playwright-core（remote.py の preview。
+      # 入れるのは tools/shorts/preview/host.py の prewarm。ブラウザはランナーの Google Chrome）
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
       - name: 道具を入れる
         run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
       - name: Google Cloud 認証
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - name: 結果を集め、見る URL を暗号化して作業枝へ返す
+      # 本番の段は、本体の mp4 を GCS から読んで Hosting のプレビューチャンネル（7日）に並べる。
+      # 担当が受け取るのは要約（summary.json）と目で見る絵だけ（#1011）
+      - name: 結果を集め、下見を置き、要約と見る URL を暗号化して作業枝へ返す
         env:
           PYTHONUNBUFFERED: "1"
           GH_TOKEN: ${{ github.token }}

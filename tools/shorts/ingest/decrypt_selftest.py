@@ -19,12 +19,19 @@ GitHub が 100MB を超えるファイルを断るので、seal.py は 45MB ず�
 4. manifest.json と暗号文に、中身（ファイル名・平文の目印）が出ていない
 5. 開かないもの: 1バイト壊した切れ端 / sha256 を書き換えて辻褄を合わせた切れ端（HMAC で止まる）/
    欠けた切れ端 / 並びを入れ替えた切れ端 / 違う鍵 / git の中への展開
+6. clips の見る用の小さな封（#1011）: manifest.json・sheets.key.enc・sheets.enc の3つだけ
+   （mp4 の暗号文は無い）で `--sheets` が開き、出てくるのはシートと一覧だけ（mp4 もログも無い）・
+   元と1バイトも違わない。壊したもの・違う鍵・小さな封の無い回（archive）は開かない。
+   `--branch` の取りかた（fetch_remote / remote_dests）を偽の GitHub で回し、
+   **取りに行くのが manifest と小さな封だけ**（payload.enc を1つも頼まない）こと、
+   ほかの鍵の置き場は manifest だけ読んで飛ばすことを見る
 """
 
 from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -63,6 +70,108 @@ def same_tree(a: Path, b: Path) -> bool:
     return fa == fb and all((a / r).read_bytes() == (b / r).read_bytes() for r in fa)
 
 
+def files_of(d: Path) -> list[str]:
+    return sorted(p.relative_to(d).as_posix() for p in d.rglob("*") if p.is_file())
+
+
+def light_leg(root: Path, src: Path, item: dict, st: dict, priv: Path, other: Path,
+              check, light_want: list[str]) -> None:
+    """6. clips の見る用の小さな封（sheets.key.enc・sheets.enc）だけで、シートに届く。"""
+    import decrypt
+
+    seal.PART = 45 * 1024 * 1024
+    full = root / "sealed-light" / item["dest"]
+    man = seal.seal(item, src, full, st)
+    lt = man.get("sheets") or {}
+    lnames = [lt.get("key_file"), *[f["name"] for f in lt.get("encrypted_files") or []]]
+    check(lnames == ["sheets.key.enc", "sheets.enc"] and all((full / n).is_file() for n in lnames),
+          f"clips の封に見る用の小さな封が並ぶ（{lnames}）")
+    check(lt.get("sheets") == 2 and lt.get("files") == len(light_want),
+          f"manifest の sheets に枚数とファイル数（{lt.get('sheets')}枚・{lt.get('files')}）")
+    check(0 < lt.get("bytes", {}).get("encrypted", 0) < man["bytes"]["encrypted"] / 3,
+          "見る用の封は mp4 の入った封よりずっと小さい")
+    if not lt:
+        check(False, "小さな封が無いので、ここから先（--sheets で開く・--branch）は回せない")
+        return
+
+    # mp4 の暗号文を持たない置き場（manifest と小さな封の3つだけ）
+    only = root / "light-only" / item["dest"]
+    only.mkdir(parents=True)
+    for n in ["manifest.json", *lnames]:
+        (only / n).write_bytes((full / n).read_bytes())
+    out = root / "o-light"
+    r = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--out", str(out),
+                        "--sheets", str(only)], capture_output=True, text=True)
+    got = out / item["dest"]
+    check(r.returncode == 0 and got.is_dir() and files_of(got) == light_want
+          and all((got / f).read_bytes() == (src / f).read_bytes() for f in light_want),
+          f"payload.enc が無くても --sheets で開け、シートと一覧だけが元のまま出る（{r.stdout.strip()[-70:]}）")
+
+    def refused(what: str, d: Path, key: Path = priv) -> None:
+        o = root / f"o-light-bad-{abs(hash(what)) % 10**6}"
+        r = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(key), "--out", str(o),
+                            "--sheets", str(d)], capture_output=True, text=True)
+        check(r.returncode == 1 and not (o / item["dest"] / "sheets").exists(),
+              f"{what} は --sheets でも開かない（{r.stdout.strip()[-50:]}）")
+
+    bad = root / "light-bad" / item["dest"]
+    shutil.copytree(only, bad)
+    b = bytearray((bad / "sheets.enc").read_bytes())
+    b[len(b) // 2] ^= 1
+    (bad / "sheets.enc").write_bytes(bytes(b))
+    m = json.loads((bad / "manifest.json").read_text())
+    m["sheets"]["encrypted_files"][0]["sha256"] = seal.sha256_file(bad / "sheets.enc")
+    (bad / "manifest.json").write_text(json.dumps(m))
+    refused("壊して sha256 も書き換えた小さな封（HMAC で止まる）", bad)
+    refused("違う鍵", only, other)
+    arch = root / "sealed-archive" / "selftest000/archive"
+    seal.seal(dict(item, mode="archive", key="selftest000__archive", dir="archive",
+                   dest="selftest000/archive"), src, arch, st)
+    check(not (arch / "sheets.enc").exists() and "sheets" not in json.loads(
+        (arch / "manifest.json").read_text()), "archive には小さな封を作らない")
+    refused("小さな封の無い回（archive）", arch)
+
+    # --branch の取りかた。偽の GitHub（commit → tree → 置き場の中身）で回す
+    asked: list[str] = []
+    mine, theirs = "aaaaaaaaaaa/clips", "bbbbbbbbbbb/clips"
+    m2 = json.loads((full / "manifest.json").read_text())
+    m2["pubkey_sha256"] = "0" * 64
+    blobs = {mine: {n: (full / n).read_bytes() for n in [p.name for p in full.iterdir()]},
+             theirs: {"manifest.json": json.dumps(m2).encode(), "sheets.enc": b"x"}}
+
+    def get(api: str, to: Path | None = None, raw: bool = False) -> bytes:
+        asked.append(api)
+        if api.endswith("/commits/SHA"):
+            return json.dumps({"commit": {"tree": {"sha": "t0"}}}).encode()
+        trees = {"t0": [{"path": "shorts", "type": "tree", "sha": "t1"}],
+                 "t1": [{"path": ".work", "type": "tree", "sha": "t2"}]}
+        for t, rows in trees.items():
+            if api.endswith(f"/git/trees/{t}"):
+                return json.dumps({"tree": rows}).encode()
+        if api.endswith("/git/trees/t2?recursive=1"):
+            rows = [{"path": f"{d}/{n}", "type": "blob"} for d, fs in blobs.items() for n in fs]
+            rows.append({"path": "ccccccccccc/archive/payload.enc", "type": "blob"})
+            return json.dumps({"tree": rows}).encode()
+        rel, name = api.split("/contents/shorts/.work/")[1].split("?ref=")[0].rsplit("/", 1)
+        to.parent.mkdir(parents=True, exist_ok=True)
+        to.write_bytes(blobs[rel][name])
+        return b""
+
+    dests = decrypt.remote_dests("o/r", "SHA", get=get)
+    check(dests == [mine, theirs], f"--branch: 小さな封を持つ置き場だけを並べる（{dests}）")
+    into = root / "o-remote" / ".sealed"
+    fp = decrypt.pub_fp(priv)
+    d1, _ = decrypt.fetch_remote("o/r", "SHA", mine, into, fp, True, get=get)
+    d2, why2 = decrypt.fetch_remote("o/r", "SHA", theirs, into, fp, True, get=get)
+    names = [a.split("?")[0].rsplit("/", 1)[1] for a in asked if "/contents/" in a]
+    check(sorted(names) == sorted(["manifest.json", "sheets.key.enc", "sheets.enc", "manifest.json"]),
+          f"--branch: 取りに行くのは manifest と小さな封だけ（payload.enc を頼まない。{names}）")
+    check(d2 is None and "鍵が違う" in why2, "--branch: ほかの鍵の置き場は manifest だけ読んで飛ばす")
+    ok, msg = decrypt.open_one(d1, priv, fp, root / "o-remote", sheets=True)
+    check(ok and files_of(root / "o-remote" / item["dest"]) == light_want,
+          f"--branch: 取った3つだけで開ける（{msg[-40:]}）")
+
+
 def main() -> int:
     fails: list[str] = []
 
@@ -82,6 +191,14 @@ def main() -> int:
         (src / "01_0-13-29_0-14-05.mp4").write_bytes(os.urandom(300_000))
         (src / "index.json").write_text(json.dumps({"note": MARK}, ensure_ascii=False))
         (src / "logs" / "ffmpeg_clips.log").write_text(MARK)
+        # 見る用の小さな封に入るもの（seal.LIGHT）。シートは乱数で代える
+        (src / "sheets").mkdir()
+        (src / "sheets" / "01_01.jpg").write_bytes(os.urandom(20_000))
+        (src / "sheets" / "01_02.jpg").write_bytes(os.urandom(15_000))
+        (src / "sheets.csv").write_text("clip,file\n1,sheets/01_01.jpg\n1,sheets/01_02.jpg\n")
+        (src / "meta.json").write_text(json.dumps({"title": MARK}, ensure_ascii=False))
+        light_want = ["index.json", "meta.json", "sheets.csv", "sheets/01_01.jpg",
+                      "sheets/01_02.jpg"]
         item = {"key": "selftest000__clips", "mode": "clips", "video": "selftest000",
                 "dir": "clips", "dest": "selftest000/clips", "pubkey": pem, "pubkey_sha256": fp}
         st = {"stages": {"download": "ok", "meta": "ok", "clips": "ok"}, "counts": {"clips": 1}}
@@ -163,6 +280,9 @@ def main() -> int:
         (fake / ".git").mkdir(parents=True)
         r = opened(multi, priv, fake / "inner")
         check(r.returncode == 2, "git の中へは展開しない（2 で断る）")
+
+        # 6. 見る用の小さな封だけで開く
+        light_leg(root, src, item, st, priv, other, check, light_want)
 
     print(f"\nNG  封と開けの見張り {len(fails)}件落ちた" if fails else "\nOK  封と開けの見張り 全部通った")
     return 1 if fails else 0

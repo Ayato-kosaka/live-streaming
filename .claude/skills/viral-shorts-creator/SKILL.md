@@ -29,9 +29,9 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 | --- | --- | --- | --- |
 | 1 取り込み | **1次の原稿には待たない**（段2・3は `streams/` から）。原稿が使う区間だけを `clips`・`zoom` で作業枝に push → Actions → 復号。回まるごとの `archive` は `streams/` に字幕の無い回だけ | `shorts/.work/<id>/<mode>/manifest.json` が ok、手元に区間の mp4・コマ | `tools/shorts/ingest/README.md`・`references/planning.md` 0 |
 | 2 見どころ | `streams/` の議事録・字幕・チャットから候補を8本以上。コマでの確かめは段4と並べる | 候補の表（時刻・前後の文脈・根拠・採点） | `references/highlight_rubric.md` |
-| 3 企画 | 体験の違う3案（どの案にも土台 → 山 → 結末 → 問い）。**書く前に帳面（`references/ayato_feedback.md`）を読み、写す参考を決める** → 原稿（1行ずつ根拠・参考の手・使う画）・尺の確認・事実の表 → **`tools/shorts/script/lint.py` を通す** → **編集長と5往復 → 往復を知らない批評役の関所（全部 4 以上・離れる行なし・帳面に当たる行なし）**。急ぐ指示でもこの往復を飛ばさない | `shorts/videos/<id>/p1/plan.md`（写し表とレビューの記録つき） | `references/planning.md`・`references/script_writing.md` 7 |
+| 3 企画 | 体験の違う3案（どの案にも土台 → 山 → 結末 → 問い）。**写す参考を決め、`tools/shorts/script/brief.py writer` の1枚（帳面 `references/ayato_feedback.md` の要約・参考の拍・配信の区間）を作文者に渡す** → 原稿（1行ずつ根拠・参考の手・使う画）・尺の確認・事実の表 → **`tools/shorts/script/lint.py` の ✕ 0** → **往復を知らない批評役（`critic.py` → `critic_gate.py` の ✕ 0）。批評役は2人まで・直しは2回まで**。急ぐ指示でも関所は飛ばさない | `shorts/videos/<id>/p1/plan.md`（写し表とレビューの記録つき） | `references/planning.md`・`references/script_writing.md` 7 |
 | 4 企画を見せる | まとめ役が参考の台本と並べて見る人として読んでから、制作 issue に plan.md を出す（**1次レビューは原稿だけ**）→ あやとが作る案を言うのを待つ。待つあいだに、原稿が使う区間を取り込んで画を確かめ（写っているか・3秒未満・カクつき）、絵コンテ（コマに原稿入り）を作って同じ issue に足す。チャットで決まったら待たない | あやとの返事、またはチャットで決まったことの書き置き。**返事は直す前に帳面に足した** | この手引きの 5 |
-| 5 本編集 | 素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube・TikTok 共通の1本を書き出す（声の倍率は 1.4 まで。上限で読ませても60秒に入らない原稿は、`build_edit.py` が組む段で止まって字を何%減らすかを出すので、原稿の字を減らす）→ 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | `references/production.md` |
+| 5 本編集 | **担当には `tools/shorts/script/brief.py edit --episode <回> --pattern <案> --about "…" --scratch <scratch> -o <scratch>/brief_edit.md` の1枚のパスだけを渡す**（その回の原稿と素材の表・帳面の画・音・投稿の項目・企画の節のどこを読むか・声から下見までの道具の呼び出しの形。頼む文は `references/editor_prompt.md`）。**手引きの全文・道具のソースは渡さない。** 担当は素材（`clips`）と声（Fish Audio）を並べて取り、編集指示書を組んで YouTube・TikTok 共通の1本を Actions で書き出す（声の倍率は 1.4 まで。上限で読ませても60秒に入らない原稿は、`build_edit.py` が組む段で止まって字を何%減らすかを出すので、原稿の字を減らす）→ 機械の検査 → **人の目の検査** | mp4 と `edit_<案>.json`、`check.py` が顔以外すべて合格、人の目の検査の表がすべて済み | 担当: `references/editor_prompt.md` の1枚／まとめ役: `references/production.md` |
 | 6 完成を見せる | `tools/shorts/preview/put.py up` でプレビューチャンネルに置き（7日で見られなくなる）、下見の URL と案ごとの投稿文を1つのコメントにまとめて制作 issue に出す | 出す案を言ったあやとの言葉（issue の返事かチャット。`B`・`全部` など）。指摘があれば直す前に帳面に足した | `tools/shorts/preview/README.md`・この手引きの 5 |
 | 7 投稿 | 出してと言われた案だけ、EC2 の Chrome から出す。YouTube は非公開で上げる → 関連動画（元のアーカイブ）→ サムネイル → 公開、TikTok は投稿文・カバー。台帳 `posted.json` が同じ動画（sha256）を同じ場所へ2回出すのを止める | 媒体ごとの URL を制作 issue に書き、台帳の変わりをコミットした | `tools/shorts/post/README.md`・`references/production.md` 1 |
 | 8 数字・改善 | 途中（#921 数字・#922 仮説の台帳）。数字の取りかたと判定の手順は、1本目を回してから書く | まだ決まっていない | `references/playbook.md` |
@@ -87,11 +87,16 @@ master からは `workflow_dispatch` でも回せる。
 - **0秒目にいちばんの画と、1行で言い切ったタイトル。4〜8秒に2つ目の山。** あやとの過去ショートは4〜8秒で離れていた（`references/playbook.md` の H1）
 - 0秒目の画は原稿の1行目の画のまま決めない。`tools/shorts/plan/hook.py` で素材から候補3つを測って並べ、その動画の答え（オチ）を先に見せる画を選ぶ（`references/production.md` 3）
 - 見る人の頭に「？」を残さない。話の前提が見る人の常識と食い違うところは、先に前提をそろえてから違いを見せる（`references/script_writing.md` 0.7）
-- **書く前に帳面 `references/ayato_feedback.md` を全部読む**（題・言い回し・事実・構成は必ず）。書いたら
-  `python3 tools/shorts/script/lint.py shorts/videos/<id>/p1/script.txt`（隣の spec.json の題の札も見る）を通し、✕ が残っているうちは編集長に渡さない。
-  **編集長と批評役の依頼文には、帳面のパスを必ず入れる**（批評役は `script_writing.md` 7.4 の (h) で1行ずつ当て、(i) で行と行のつなぎと向きの変わり目を1行ずつ見る）。lint が緑でも、
+- **作文者には `tools/shorts/script/brief.py writer` の1枚だけを渡す**（帳面 `references/ayato_feedback.md` のうち原稿の段に効く項目を1〜2行ずつ・写す参考の拍・
+  配信の使う区間・3列の表の雛形。頼む文は `references/writer_prompt.md` で、あやとに前にも言われたこと——行間 F-039・二転三転 F-040・答えのあと F-037・
+  題の形 F-031/F-043・同行者 F-043——を書く前の自己点検にしてある）。帳面の全文・参考の書き起こし全文は読ませない。書いたら
+  `python3 tools/shorts/script/lint.py shorts/videos/<id>/p1/script.txt`（隣の spec.json の題の札も見る）を通し、✕ が残っているうちは批評役に回さない
+- **批評役は `tools/shorts/script/critic.py` で回す**（`brief.py critic` の1枚——帳面の要約・lint の結果・参考の拍・原稿の表——だけを `claude -p` に渡し、
+  決まった型の JSON を返させ、合否は `critic_gate.py` が数える。`script_writing.md` 7.4）。批評役は (h) で帳面の項目を1つずつ当て、(i) で全部の行のつなぎを1字ずつ付ける。lint が緑でも、
   字で拾える指摘に当たっていないだけ——題が現実か・「？」が残るか・映像の枠の外でも正しいかは (h)、前の行から渡れるか・話が二転三転していないか（F-039・F-040）は (i) で見る
-- **原稿の表には、1行ずつ「つなぎ／聞いた直後の頭の中／向き」の3列を書いてから編集長に渡す**（`script_writing.md` 0.8。配信をなぞった行間の跳びは、この列で見つかる）
+- **回数の上限: 批評役は2人まで・直しは2回まで**（`script_writing.md` 7.3。2人目は、1人目の ✕ に帳面・(h)・(i) が残ったときだけ。点の 3・離れる行の △ では呼ばない）。
+  あやと（帳面 F-044）「半分ぐらいで大丈夫です。その代わりプロンプトとかを磨き上げて」。使った数は `python3 tools/shorts/cost/tally.py` で段ごとに数える
+- **原稿の表には、1行ずつ「つなぎ／聞いた直後の頭の中／向き」の3列を書いてから批評役に回す**（`script_writing.md` 0.8。配信をなぞった行間の跳びは、この列で見つかる）
 - **原稿は `references/script_writing.md` に従って書く。書く前に全部読む。** あやとが自分の言葉（関西弁）で喋る一人称の台本を AI の声が読む。
   事実1行→反応1行を2〜3秒ごと、最後は「みんな」への問い（入りきらなかった見どころは「アーカイブ見てね」の1行で渡してよい。帳面 F-032）。外の語り手の説明口調（「あやとは〜」「本人いわく」）は使わない（`docs/island-misses.md` #275）
 - 言い回しは、まず配信の文字起こしからあやとの言葉を拾う。原稿は1行ずつ根拠の時刻を持つ。言い切れないことは「〜とも」にする

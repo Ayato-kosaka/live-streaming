@@ -98,6 +98,49 @@ def _hsv(rgb: np.ndarray) -> np.ndarray:
     return np.stack([h, s, mx], axis=-1)
 
 
+def _pick(step: float) -> str:
+    # 刻みごとに「刻みちょうどか、そのすぐ後の最初のコマ」を1枚ずつ取る。
+    # mkv の時刻はミリ秒に丸めてあるので、1/30秒が 0.033 になって刻み 0.0333 に
+    # 届かない。ほんの少し（刻みの1/4か 2ms の小さいほう）先へ見る
+    eps = min(0.002, step / 4)
+    return f"select='gte(t+{eps}\\,selected_n*{step:.6f})'"
+
+
+def _fit(tw: int, th: int) -> str:
+    """シートの1コマの大きさに縮める（縦横比は保ち、余りは黒で埋める）。"""
+    return (f"scale={tw}:{th}:flags=lanczos:force_original_aspect_ratio=decrease,"
+            f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2")
+
+
+SHOWINFO_PTS = re.compile(r"Parsed_showinfo\S* @ \S+\] .*?pts_time:(\S+)")
+
+
+def grab_frames(src: Path, frames_dir: Path, log: Path, *, every: float,
+                tile: tuple[int, int]) -> tuple[list[Path], list[float]]:
+    """`every` 秒に1コマ、シートの1コマの大きさの PNG に書き、そのコマの本当の時刻と返す。
+
+    clips の見る用のシート（切った mp4 から作る）に使う。取りかたは video_pass の
+    シートと同じ（`select` で刻みに届いた最初のコマを取り、焼く秒は showinfo の時刻）。
+    時刻は mp4 の中の秒（0 が区間の頭）。**時刻とコマの数が合わなければ落とす。**
+    「n 枚目 × 刻み」で埋めると、ずれていても帯がもっともらしい秒を書いてしまう。
+    """
+    tw, th = tile
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    cmd = ["ffmpeg", "-hide_banner", "-nostats", "-v", "info", "-nostdin", "-y",
+           "-i", str(src), "-map", "0:v:0", "-vf", f"{_pick(every)},showinfo,{_fit(tw, th)}",
+           "-fps_mode", "passthrough", "-c:v", "png", "-start_number", "0",
+           str(frames_dir / "%06d.png")]
+    with open(log, "w", encoding="utf-8") as lf:
+        rc = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=lf).returncode
+    if rc != 0:
+        raise RuntimeError(f"ffmpeg が {rc} で終わった（{log.name}）")
+    frames = sorted(frames_dir.glob("*.png"))
+    pts = [float(x) for x in SHOWINFO_PTS.findall(log.read_text(errors="ignore"))]
+    if len(pts) != len(frames):
+        raise RuntimeError(f"showinfo の時刻 {len(pts)}個とコマ {len(frames)}枚が合わない")
+    return frames, pts
+
+
 def video_pass(src: Path, work: Path, *, stats_fps: float, sheet_fps: float,
                tile: tuple[int, int], start: float = 0.0, length: float | None = None) -> dict:
     """1回の読みで、コマごとの数値と、シート用のコマ（PNG）を作る。
@@ -114,19 +157,9 @@ def video_pass(src: Path, work: Path, *, stats_fps: float, sheet_fps: float,
     tw, th = tile
     frames_dir = work / "_frames"
     frames_dir.mkdir(parents=True, exist_ok=True)
-
-    def pick(step: float) -> str:
-        # 刻みごとに「刻みちょうどか、そのすぐ後の最初のコマ」を1枚ずつ取る。
-        # mkv の時刻はミリ秒に丸めてあるので、1/30秒が 0.033 になって刻み 0.0333 に
-        # 届かない。ほんの少し（刻みの1/4か 2ms の小さいほう）先へ見る
-        eps = min(0.002, step / 4)
-        return f"select='gte(t+{eps}\\,selected_n*{step:.6f})'"
-
     fc = (f"[0:v]split=2[a][b];"
-          f"[a]{pick(1 / stats_fps)},scale={sw}:{sh}:flags=area,format=rgb24[s];"
-          f"[b]{pick(1 / sheet_fps)},showinfo,scale={tw}:{th}:flags=lanczos:"
-          f"force_original_aspect_ratio=decrease,"
-          f"pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2[t]")
+          f"[a]{_pick(1 / stats_fps)},scale={sw}:{sh}:flags=area,format=rgb24[s];"
+          f"[b]{_pick(1 / sheet_fps)},showinfo,{_fit(tw, th)}[t]")
     # showinfo の行（各コマの本当の時刻）を拾うので info で受ける。行はファイルへ。
     cmd = ["ffmpeg", "-hide_banner", "-nostats", "-v", "info", "-nostdin"]
     if start:
@@ -166,7 +199,7 @@ def video_pass(src: Path, work: Path, *, stats_fps: float, sheet_fps: float,
     # シートに焼く時刻は「n 枚目 × 刻み」ではなく、そのコマの本当の時刻。
     # 配信が途中で途切れて時刻が飛んでいても、焼いた秒が画とずれない
     log = (work / "_ffmpeg_video.log").read_text(errors="ignore")
-    pts = [float(x) for x in re.findall(r"Parsed_showinfo\S* @ \S+\] .*?pts_time:(\S+)", log)]
+    pts = [float(x) for x in SHOWINFO_PTS.findall(log)]
     if len(pts) != len(frames):
         pts = [i / sheet_fps for i in range(len(frames))]
     return {"stats_fps": stats_fps, "sheet_fps": sheet_fps, "bright": bright, "sat": sat,
@@ -230,51 +263,70 @@ def _font(size: int):
         return ImageFont.load_default()
 
 
+SHEET_GAP, SHEET_HEAD = 4, 30
+
+
+def sheet_cell(i: int, grid: tuple[int, int], tile: tuple[int, int]) -> tuple[int, int]:
+    """シートの i 番目のコマの左上（make_sheets と同じ並び）。読み戻す側（dryrun.py）も使う。"""
+    cols, _ = grid
+    tw, th = tile
+    label_h = max(20, int(round(th * 0.07)))
+    r, c = divmod(i, cols)
+    return (SHEET_GAP + c * (tw + SHEET_GAP),
+            SHEET_HEAD + SHEET_GAP + r * (th + label_h + SHEET_GAP))
+
+
 def make_sheets(frames: list[Path], times: list[float], out_dir: Path, *,
                 grid: tuple[int, int], tile: tuple[int, int], title: str,
-                step_label: str, quality: int = 80) -> list[dict]:
+                step_label: str, quality: int = 80, per: int | None = None,
+                labels: list[str] | None = None, name=None, clock=hms) -> list[dict]:
     """コマを格子に並べ、各コマの**下の帯**に H:MM:SS を書く。
 
     秒は画の上に重ねない。ショートの字幕（テロップ）は下にも上にも出るので、
     重ねるとちょうど読みたい字を隠す。
+
+    `per`（1枚に並べるコマの数。既定は格子いっぱい）・`labels`（帯の字。既定は H:MM:SS）・
+    `name`（k 枚目のファイル名）・`clock`（見出しの時刻の書きかた）は clips の見る用のシートが使う。並びと余白は変えない
+    （tools/shorts/plan/ や qa/ が同じ数を写して読んでいる）。
     """
     from PIL import Image, ImageDraw
 
     cols, rows = grid
     tw, th = tile
-    gap = 4
+    gap = SHEET_GAP
     label_h = max(20, int(round(th * 0.07)))
-    head_h = 30
+    head_h = SHEET_HEAD
     W = cols * tw + (cols + 1) * gap
     H = head_h + rows * (th + label_h) + (rows + 1) * gap
     f_label = _font(label_h - 5)
     f_head = _font(18)
-    per = cols * rows
+    per = min(per or cols * rows, cols * rows)
+    labels = labels or [hms(t) for t in times]
+    name = name or (lambda k: f"{k:04d}.jpg")
     out_dir.mkdir(parents=True, exist_ok=True)
     total = (len(frames) + per - 1) // per
     sheets = []
     for k in range(total):
-        chunk = list(zip(frames[k * per:(k + 1) * per], times[k * per:(k + 1) * per]))
+        chunk = list(zip(frames[k * per:(k + 1) * per], times[k * per:(k + 1) * per],
+                         labels[k * per:(k + 1) * per]))
         # 最後の1枚は埋まった段までで切る（空の段を何百 px も運ばない）
         used = (len(chunk) + cols - 1) // cols
         img = Image.new("RGB", (W, H - (rows - used) * (th + label_h + gap)), (24, 24, 24))
         d = ImageDraw.Draw(img)
         t_from, t_to = chunk[0][1], chunk[-1][1]
-        d.text((gap + 2, 5), f"{title} | {hms(t_from)} - {hms(t_to)} | {step_label} | "
+        d.text((gap + 2, 5), f"{title} | {clock(t_from)} - {clock(t_to)} | {step_label} | "
                f"{k + 1}/{total}", fill=(235, 235, 235), font=f_head)
-        for i, (fp, t) in enumerate(chunk):
-            r, c = divmod(i, cols)
-            x = gap + c * (tw + gap)
-            y = head_h + gap + r * (th + label_h + gap)
+        for i, (fp, t, lab) in enumerate(chunk):
+            x, y = sheet_cell(i, grid, tile)
             with Image.open(fp) as fr:
                 img.paste(fr.convert("RGB"), (x, y))
             d.rectangle([x, y + th, x + tw - 1, y + th + label_h - 1], fill=(0, 0, 0))
-            d.text((x + 6, y + th + 2), hms(t), fill=(255, 255, 255), font=f_label)
-        name = f"{k:04d}.jpg"
-        img.save(out_dir / name, "JPEG", quality=quality, optimize=True)
-        sheets.append({"file": f"sheets/{name}", "from": round(t_from, 2),
+            d.text((x + 6, y + th + 2), lab, fill=(255, 255, 255), font=f_label)
+        fn = name(k)
+        img.save(out_dir / fn, "JPEG", quality=quality, optimize=True)
+        sheets.append({"file": f"sheets/{fn}", "from": round(t_from, 2),
                        "to": round(t_to, 2), "from_hms": hms(t_from), "to_hms": hms(t_to),
-                       "frames": len(chunk), "bytes": (out_dir / name).stat().st_size})
+                       "frames": len(chunk), "bytes": (out_dir / fn).stat().st_size})
     return sheets
 
 

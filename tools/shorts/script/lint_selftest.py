@@ -39,9 +39,18 @@
 | `sorry` | 銅像 p2（17行）の12行目「すいません」を △ で出す（落とさない）。城塞 p1 には出さない。「ごめん」も拾う |
 | `as_of` | 決まりの日より前の日を渡すと、その規則を当てない |
 | `cli` | 終了コード: 当たる 1・通る 0・空 2 |
+| `card` | spec の題の札が 4.9秒なら ✕（T-CARD）、4.0秒は通る、秒が無ければ「見ていない」 |
+| `sec` | 36字の行は ✕、35字は △ だけ、27字は何も出さない。あやとの1行目（29字・4.3秒）は △ だけ（L-SEC） |
+| `after` | 【答】から締めまで3行で ✕、2行で △ が2つ、0行で何も出さない。問い → アーカイブの終わりは問いを締めに数える。原稿の字の【答】も spec の why の【答】も読む。印が無ければ「見ていない」（L-AFTER） |
+| `num` | 銅像 p2（17行）の15行目「101体目」を △。「1回目」のあとの「2回目」・「30体」のあとの「31体目」は出さない。✕ にはしない（L-NUM） |
+| `quote` | 城塞 p1 の「」2つ（って・言うたら）は出さない。前の行が「返事」なら出さない。印の無い「全然似てへん」を △。2字の札「1A」は見ない（L-QUOTE） |
+| `ashirate` | 【足】7/13・5/13 は △、4/13 は出さない。城塞 p1 は出さない（L-ASHIRATE） |
+| `ask` | 銅像 p2（17行）の終わり「…あり？なし？」を △。城塞 p1（みんな → アーカイブ）・地下鉄の形（アーカイブだけ）は出さない。アーカイブの前の「どっち派？」は △（L-ASK） |
+| `desu` | 銅像 p2（17行）の10・12行目を △。城塞 p1 の「」の中の「閉まってますよ」は見ない（L-DESU） |
 """
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -89,6 +98,32 @@ CUTS = {
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
                    {"later_rule_live"}, "spec の題の札を読まない"),
+    # ---- 2026-10-21（#1011）に足した規則 ----
+    "card": ("lint.py", "    if c.card_seconds <= CARD_MAX:\n", "    if True:\n", {"card"}, "題の札の秒を見ない"),
+    "card_spec": ("lint.py", '        secs = s.get("title_card_seconds")\n', "        secs = None\n",
+                  {"card"}, "spec の札の秒を読まない"),
+    "sec_hard": ("lint.py", "        if n > LINE_HARD:\n", "        if False:\n", {"sec"}, "35字を越える行を落とさない"),
+    "sec_soft": ("lint.py", "        elif sec > LINE_SOFT:\n", "        elif False:\n", {"sec"}, "4秒を越える行を出さない"),
+    "after_hard": ("lint.py", "    if len(between) >= AFTER_HARD:\n", "    if False:\n", {"after"}, "答えのあとの3行を落とさない"),
+    "after_close": ("lint.py", '    if n >= 2 and "アーカイブ" in lines[-1] and ("？" in lines[-2] or "?" in lines[-2]):\n        return n - 1\n', "",
+                    {"after", "ask"}, "問い → アーカイブの終わりで、問いを締めに数えない"),
+    "answer_mark": ("lint.py", '        if "【答】" in s:\n            answer.add(len(lines) + 1)\n', "",
+                    {"after"}, "原稿の字の【答】を読まない"),
+    "answer_spec": ("lint.py", '            if "【答】" in (r.get("why") or ""):\n                answer.add(i)\n', "            pass\n",
+                    {"after"}, "spec の why の【答】を読まない"),
+    "num": ("lint.py", "            if v is not None and v >= 2 and v - 1 not in said and v not in said:\n", "            if False:\n",
+            {"num"}, "序数の手前の数を見ない"),
+    "num_said": ("lint.py", "                said.add(v)\n", "                pass\n", {"num"}, "前の行で言った数を覚えない"),
+    "quote": ("lint.py", "        if ATTR.search(rest) or ATTR.search(prev):\n            continue\n", "",
+              {"quote"}, "誰の言葉かの印を見ない"),
+    "quote_prev": ("lint.py", "        if ATTR.search(rest) or ATTR.search(prev):\n", "        if ATTR.search(rest):\n",
+                   {"quote"}, "1つ前の行の印を見ない"),
+    "ashirate": ("lint.py", "    if not n or len(rows) / n <= ASHI_SHARE:\n", "    if True:\n", {"ashirate"}, "【足】の割合を見ない"),
+    "ask": ("lint.py", '    if not ("？" in ln or "?" in ln) or "アーカイブ" in ln or "みんな" in ln:\n', "    if True:\n",
+            {"ask"}, "終わりの問いの「みんな」を見ない"),
+    "desu": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = None\n", {"desu"}, "です・ます調を拾わない"),
+    "desu_quote": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = DESU.search(ln)\n",
+                   {"desu"}, "「」の中のです・ますまで拾う"),
 }
 
 
@@ -274,11 +309,124 @@ def leg_cli(L):
             ("空の原稿は 2", r_empty == 2)]
 
 
+_TMP = tempfile.TemporaryDirectory(prefix="lint-selftest-")   # 終わるときに消える（対照の子ごとに1つ）
+
+
+def tmp_script(lines, spec=None):
+    """一時の置き場に script.txt（と spec.json）を書いて、L.build に読ませる道を返す。"""
+    td = tempfile.mkdtemp(dir=_TMP.name)
+    sp = Path(td) / "script.txt"
+    sp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if spec is not None:
+        (Path(td) / "spec.json").write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
+    return sp
+
+
+def hits_of(L, c, rule):
+    return [h for h in L.lint(c, TODAY)["hits"] if h.rule == rule]
+
+
+def leg_card(L):
+    long_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.9, "rows": []}))
+    ok_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.0, "rows": []}))
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    h = hits_of(L, long_, "T-CARD")
+    return [("spec の題の札が 4.9秒なら ✕（題の札の行 0）", len(h) == 1 and not h[0].look and h[0].line == 0),
+            ("4.0秒は通る", not hits_of(L, ok_, "T-CARD")),
+            ("秒が無ければ「見ていない」", "T-CARD" in blind)]
+
+
+def leg_sec(L):
+    def hs(line):
+        return hits_of(L, ctx(L, ["題", line, "みんなは？"]), "L-SEC")
+    h36, h35, h27 = hs("あ" * 36), hs("あ" * 35), hs("あ" * 27)
+    ayato = hs("フランスに行ったら、10日でモンサンミッシェルも南仏も回れた！")
+    return [("36字の行は ✕", any(not h.look for h in h36)),
+            ("35字は ✕ にせず △ だけ（5.1秒）", h35 and all(h.look for h in h35)),
+            ("27字（4.0秒）は何も出さない", not h27),
+            ("あやとの1行目（29字・4.3秒）は △ だけ", ayato and all(h.look for h in ayato))]
+
+
+def leg_after(L):
+    def c_(lines, ans):
+        return L.Ctx(lines=list(lines), title_card=None, title_from="足", rows=None, answer_marked=set(ans))
+    three = hits_of(L, c_(["題", "a", "船も乗れるねん！", "x", "y", "z", "みんなは？"], {3}), "L-AFTER")
+    two = hits_of(L, c_(["題", "a", "船も乗れるねん！", "x", "y", "みんなは？"], {3}), "L-AFTER")
+    zero = hits_of(L, c_(["題", "a", "船も乗れるねん！", "みんなは？"], {3}), "L-AFTER")
+    arch = hits_of(L, c_(["題", "a", "船も乗れるねん！", "乗りたかったんよ、船！", "……船酔いしてるわな。", "続きはアーカイブ見てな！"], {3}), "L-AFTER")
+    ask_arch = hits_of(L, c_(["題", "犬が食べたんはキュウリ。", "みんなやったら、守る？あげる？", "続きは配信のアーカイブ見てね！"], {2}), "L-AFTER")
+    inline = L.build(tmp_script(["題", "a", "【答】船も乗れるねん！", "x", "y", "z", "みんなは？"]))
+    in_spec = L.build(tmp_script(["題", "a", "船も乗れるねん！", "x", "y", "z", "みんなは？"],
+                                 {"rows": [{"line": "題"}, {"line": "a"}, {"line": "船", "why": "【答】題の答え"}, {}, {}, {}, {}]}))
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    return [("【答】から締めまで3行で ✕", len(three) == 1 and not three[0].look),
+            ("2行は ✕ にせず △ が2つ（4・5行目）", [h.line for h in two if h.look] == [4, 5] and all(h.look for h in two)),
+            ("答えのすぐあとが締めなら何も出さない", not zero),
+            ("アーカイブだけの終わり（#975 の直す前）は、答えのあとの2行を △", [h.line for h in arch] == [4, 5]),
+            ("問い → アーカイブの終わりは、問いを締めに数える（答えのすぐあと）", not ask_arch),
+            ("原稿の字の【答】を読む", any(not h.look for h in hits_of(L, inline, "L-AFTER"))),
+            ("spec の why の【答】を読む", any(not h.look for h in hits_of(L, in_spec, "L-AFTER"))),
+            ("【答】が無ければ「見ていない」", "L-AFTER" in blind)]
+
+
+def leg_num(L):
+    p2 = hits_of(L, fix(L, "rejected/CKJvprUMOgA_p2_17"), "L-NUM")
+    seq = hits_of(L, ctx(L, ["題", "1回目は迷った。", "2回目で着いた！", "みんなは？"]), "L-NUM")
+    nxt = hits_of(L, ctx(L, ["題", "スーツの銅像だけで、30体。", "31体目、僕。", "みんなは？"]), "L-NUM")
+    own = hits_of(L, ctx(L, ["題", "人生3回目のフランス！", "みんなは？"]), "L-NUM")
+    return [("銅像 p2（17行）の15行目「101体目」を △", [h.line for h in p2] == [15] and all(h.look for h in p2)),
+            ("「1回目」のあとの「2回目」は出さない", not seq),
+            ("「30体」のあとの「31体目」は出さない", not nxt),
+            ("「人生3回目」も △ で出すが、✕ にはしない（拾う前提かは批評役が読む）", own and all(h.look for h in own))]
+
+
+def leg_quote(L):
+    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-QUOTE")
+    reply = hits_of(L, ctx(L, ["次の日の返事、たった3行。", "「ハロー。請求はキャンセルします。良い旅を」", "みんなは？"]), "L-QUOTE")
+    bare = hits_of(L, ctx(L, ["題", "「全然似てへん」。", "みんなは？"]), "L-QUOTE")
+    label = hits_of(L, ctx(L, ["題", "来たのは「1A」。……これ、違う？", "みんなは？"]), "L-QUOTE")
+    return [("城塞 p1 の「」（って・言うたら）は出さない", not castle),
+            ("前の行が「返事」なら出さない", not reply),
+            ("印の無い「全然似てへん」を △", [h.line for h in bare] == [2] and all(h.look for h in bare)),
+            ("2字の札「1A」は見ない", not label)]
+
+
+def leg_ashirate(L):
+    def c_(n, k):
+        return L.Ctx(lines=[f"行{i}" for i in range(n)], title_card=None, title_from="足", rows=None,
+                     ashi_marked=set(range(1, k + 1)))
+    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-ASHIRATE")
+    return [("【足】7/13（あやとの A の形）は △", bool(hits_of(L, c_(13, 7), "L-ASHIRATE"))),
+            ("【足】5/13 は △", bool(hits_of(L, c_(13, 5), "L-ASHIRATE"))),
+            ("【足】4/13 は出さない", not hits_of(L, c_(13, 4), "L-ASHIRATE")),
+            ("城塞 p1 は出さない", not castle)]
+
+
+def leg_ask(L):
+    p2 = hits_of(L, fix(L, "rejected/CKJvprUMOgA_p2_17"), "L-ASK")
+    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-ASK")
+    arch = hits_of(L, ctx(L, ["題", "船も乗れるねん！", "続きはアーカイブ見てな！"]), "L-ASK")
+    before = hits_of(L, ctx(L, ["題", "x", "どっち派？", "続きはアーカイブ見てね！"]), "L-ASK")
+    return [("銅像 p2（17行）の終わり「…あり？なし？」を △", [h.line for h in p2] == [17] and all(h.look for h in p2)),
+            ("城塞 p1（みんな → アーカイブ）は出さない", not castle),
+            ("アーカイブだけの終わりは出さない", not arch),
+            ("アーカイブの前の「どっち派？」は △", [h.line for h in before] == [3])]
+
+
+def leg_desu(L):
+    p2 = hits_of(L, fix(L, "rejected/CKJvprUMOgA_p2_17"), "L-DESU")
+    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-DESU")
+    return [("銅像 p2（17行）の10・12行目を △", [h.line for h in p2] == [10, 12] and all(h.look for h in p2)),
+            ("城塞 p1 の「」の中の「閉まってますよ」は見ない", not castle)]
+
+
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
     "narrator": leg_narrator, "phrase": leg_phrase, "yen": leg_yen, "length": leg_length,
     "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
+    "card": leg_card, "sec": leg_sec, "after": leg_after, "num": leg_num, "quote": leg_quote,
+    "ashirate": leg_ashirate, "ask": leg_ask, "desu": leg_desu,
 }
 
 if __name__ == "__main__":

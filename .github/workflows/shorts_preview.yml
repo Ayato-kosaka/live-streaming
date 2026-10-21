@@ -77,7 +77,15 @@ jobs:
     permissions:
       contents: write
     steps:
+      # 作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。素のままの checkout は先の木を全部落とし、
+      # 書き出しの Actions では checkout だけで 2分39秒かかった。道具と依頼だけを取り、荷物（upload/）は
+      # branch.py の extract が要るときに取りに行く
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/preview
 
       - uses: actions/setup-python@v6
         with:

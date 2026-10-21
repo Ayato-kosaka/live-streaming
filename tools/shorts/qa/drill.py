@@ -284,6 +284,12 @@ def style_copy(box: Path, name: str, **over) -> Path:
     # 顔よけ（字なしで1回書いて顔を探す）は切る。合成素材（testsrc2）に顔は無く、CI には YuNet の重みも無い。
     # 切ると work に no_text.mp4 が書かれないので、字なしの版を渡す足は今までどおり clean と safe_low だけ
     st.setdefault("avoid_faces", {})["enabled"] = False
+    # 終わりの注の札（CTA。様式の end_note、あやと F-042）は足さない。字なしの版を渡さない足では、使い回しと
+    # 似た見た目の連続が「全部の字の箱を除いた残り」で比べる（video.text_mask）。この練習問題の題は小さい
+    # 1枚もので、CTA の箱（左上 y=400）が新しく除かれ、合成の場面どうしの違う所が消えて全部のカットが束になった
+    # （2026-10-21、shot_reuse が11本で落ちた）。本物の回は題の札（y=380 から 359px）が同じ所を先に覆っていて、
+    # 除く所は変わらない（銅像 p2 v8 で札あり・なしとも同じ判定）。CTA そのものは render/bgm_cta_selftest.py が見る
+    st["end_note"] = {"enabled": False}
     for path, val in over.items():
         d = st
         keys = path.split("__")

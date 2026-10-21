@@ -31,6 +31,36 @@ python3 tools/shorts/upload/ask.py check --name rec-1018 --out <同じ>
 - master に入ったあとは `--via dispatch` で workflow_dispatch から起こせる（既定は依頼ファイルを作業枝に積む形）
 - 鍵の作りかたは `tools/shorts/ingest/README.md`（セッションごとに作り直す）
 
+### Drive の共有フォルダから素材を受け取る（`drive`）
+
+あやとが素材を Google Drive のフォルダ（リンクを知っている人は閲覧可）で渡してきたとき。作業箱からは
+drive.google.com に届かない（プロキシが 403。コネクタでもフォルダの中身が一覧に出ない）ので、ランナーで落とす。
+
+```bash
+python3 tools/shorts/upload/ask.py drive --name fra-a-drive --folder <フォルダの ID> \
+  --key <スクラッチパッド>/keys/priv.pem --out <スクラッチパッド>/drive
+# → --out/upload/<名前>/drive/ に result.json・sheets/（2秒おき・時刻入りのコマ一覧）・media/NN.mp4
+```
+
+- ランナーは `gdown --folder` で落とし（駄目なら埋め込み用の一覧から1本ずつ）、動画は**書き出しにそのまま渡せる形**
+  （回転を焼いた縦横・長い辺 1920・30fps 以下・H.264・BT.709。HLG/PQ は縮めてから tonemap）に揃えて
+  `uploads/<名前>/<乱数>/NN.mp4` に置き、署名付き GET（3日）を返す。HEIC は heif-convert で JPEG に
+- `result.json` の `files[]` に元のファイル名・撮った時刻・元の縦横と回転・色・揃えたものの sha256。ログには番号・大きさ・秒だけ
+- 2026-10-21 フランス周遊 A v3（#998）: iPhone 11 Pro の 4K を 11本（うち HEIC 1枚は開けなかった）、落とす 28秒・揃える 96秒
+
+### 前の版の書き出しの入力を取り戻す（`cas`）
+
+`remote.py up` は入力を `render/cas/<sha256>` に置く。作業箱で声や素材を消したあとでも、前の版の依頼
+（`git show <コミット>:shorts/render/<名前>.json` の `items[].edit` と `objects[].sha256`）を並べて頼めば、同じバイト列が戻る。
+声を作り直すと読みが変わるので、原稿が同じ直しはこれで前の声を使う。
+
+```bash
+python3 tools/shorts/upload/ask.py cas --name <名前> --list <sha256 を並べたファイル> \
+  --cas-out <スクラッチパッド>/cas --key <鍵> --out <スクラッチパッド>/drive
+# 指示書（items[].edit）は in/<sha256>.<拡張子> の道で書かれている。指示書の隣に in/ を作って並べれば、
+# そのまま remote.py up に渡せる（同じ sha なので上げ直しは起きない）
+```
+
 ## ページがすること
 
 動画を選ぶ → 進み具合（％・量・残りの時間）→「届きました（ファイル名・大きさ）」。続けて何本でも

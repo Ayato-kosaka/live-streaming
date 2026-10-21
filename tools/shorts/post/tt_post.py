@@ -11,6 +11,7 @@
     python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00   # 予約（UTC。EC2 の Chrome の時計が UTC で、欄もその時刻。翌日以降は暦を送って日を押す）
     python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00 --dry --probe   # 時刻と日付の欄を開いて中身を書き出すだけ
     python3 tt_post.py scheduled <探す字> 2026-10-21T10:00:00Z  # 予約の読み直し（一覧の行に予約の時刻の札が出ているか）
+    python3 tt_post.py delete <投稿ID> <探す字> 2026-10-23T10:00:00Z [--probe | --dry]   # 予約を差し替えるときに、古い予約を消す
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す。
 
@@ -499,8 +500,130 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False):
                 schedule_row=sched_row, urls=hits, rows=n, text_hit=any_hit))
 
 
+# ---- 予約の差し替え（古い予約を消す）----
+# 予約中の版を直すときは、古い予約を消してから入れ直す（逆だと、消し損ねたときに2本出る）
+VISIBLE = "(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })"
+CLICKABLE = "button, [role=button], [role=menuitem], [data-e2e], [aria-label], a, svg"
+
+
+def post_row(vid):
+    """一覧の中で、その投稿 ID へのリンクを持つ行。リンクから上へ、**ほかの投稿へのリンクを含まない**いちばん大きい箱まで
+    たどる（行の右の操作の印は、題の欄とは別の欄にあるので、題の欄で止めると拾えない）"""
+    return f"""(() => {{ const a = [...document.querySelectorAll('a[href*="/video/{vid}"]')][0]; if (!a) return null;
+      const other = e => [...e.querySelectorAll('a[href*="/video/"]')].some(x => !(x.href || '').includes('/video/{vid}'));
+      let r = a; while (r.parentElement && r.parentElement !== document.body && !other(r.parentElement)) r = r.parentElement;
+      const h = r.getBoundingClientRect().height;
+      return (h > 40 && h < 400 && /\\d{{1,2}}:\\d{{2}}/.test(r.innerText || '')) ? r : null; }})()"""
+
+
+def clickables(t, scope):
+    return t.js(f"""[...({scope}).querySelectorAll('{CLICKABLE}')].filter({VISIBLE}).slice(0, 60).map(e => {{ const r = e.getBoundingClientRect();
+        return [e.tagName.toLowerCase(), e.getAttribute('data-e2e'), e.getAttribute('aria-label'), (e.innerText || '').trim().slice(0, 30),
+                (e.className && e.className.toString ? e.className.toString() : '').slice(0, 60), Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)]; }})""")
+
+
+def delete(t, vid, needle, at_utc, probe=False, dry=False):
+    """予約中の投稿を消す。
+
+    - 行は投稿 ID（行の中のリンク）で探す。題の字と予約の時刻の札（未来の時刻）が両方出ている行だけを消す
+      （出た投稿は消さない。差し替えの対象は予約だけ）
+    - probe は行の上に指を置いて、押せるものを書き出すだけ（知らない画面の見当をつける）
+    - 消したあとは一覧を開き直し、その ID へのリンクが無いのを見てから ok にする"""
+    t.go(CONTENT, wait=10)
+    if not signed_in(t):
+        result({"ok": False, "error": "signed_out", "at": where(t.url())})
+        return
+    row = post_row(vid)
+    for _ in range(4):
+        if t.js(f"!!{row}"):
+            break
+        time.sleep(4)
+    if not t.js(f"!!{row}"):
+        hits, n, _ = find_posts(t, needle)
+        gone = not any(f"/video/{vid}" in h for h in hits)
+        result({"ok": gone and not probe, "error": None if gone else "row_not_found", "already_gone": gone, "hits": hits, "rows": n})
+        return
+    label = schedule_label(at_utc)
+    text = t.js(f"(() => {{ const r = {row}; return r ? r.innerText.replace(/[\\s\\u00a0\\u202f]+/g, ' ').trim().slice(0, 300) : null; }})()")
+    log("row:", text)
+    if needle not in (text or "") or label not in (text or ""):
+        result({"ok": False, "error": "row_not_scheduled", "row": text, "want_label": label})
+        return
+    c = t.center(row)
+    t.call("Input.dispatchMouseEvent", type="mouseMoved", x=c[0], y=c[1])
+    time.sleep(1.5)
+    cl = clickables(t, row)
+    log("row clickables:", json.dumps(cl, ensure_ascii=False))
+    shot(t, "tt_del_0_row")
+    if probe:
+        os.makedirs(SHOTS, exist_ok=True)
+        open(f"{SHOTS}/tt_del_row.html", "w").write(t.js(f"({row}).outerHTML") or "")
+        result({"ok": True, "probe": True, "row": text, "clickables": cl})
+        return
+    # 行の右の「削除」（ごみ箱の印）。字・aria-label・data-e2e のどれかに Delete / 削除 を持つもの
+    del_btn = f"""[...({row}).querySelectorAll('{CLICKABLE}')].filter({VISIBLE}).find(e => /^(delete|削除)$/i.test((e.innerText || '').trim())
+        || /delete|削除/i.test(e.getAttribute('aria-label') || '') || /delete/i.test(e.getAttribute('data-e2e') || ''))"""
+    if not t.js(f"!!({del_btn})"):
+        # 「…」（その他）の中にある形。行の右の「操作」の欄は、鉛筆・グラフ・吹き出し・「…」の4つの丸いボタンで、
+        # どれも字・aria-label・data-e2e を持たない（2026-10-21 に写した）。「…」はいちばん右の、字の無いボタン
+        more = f"""[...({row}).querySelectorAll('button')].filter({VISIBLE}).filter(b => !(b.innerText || '').trim())
+            .sort((a, b) => b.getBoundingClientRect().x - a.getBoundingClientRect().x)[0]"""
+        if not t.js(f"!!({more})"):
+            result({"ok": False, "error": "delete_control_not_found", "clickables": cl})
+            return
+        t.click(more)
+        time.sleep(1.5)
+        menu = t.js(f"""[...document.querySelectorAll('[role=menuitem], [role=menu] *, [class*=Popover] *, [class*=popover] *, [class*=Dropdown] *, [class*=dropdown] *')]
+            .filter({VISIBLE}).filter(e => e.children.length === 0).map(e => (e.innerText || '').trim()).filter(s => s && s.length < 40)""")
+        log("more menu:", menu)
+        shot(t, "tt_del_1_more")
+        del_btn = f"""[...document.querySelectorAll('[role=menuitem], li, div, span, button')].filter({VISIBLE}).filter(e => /^(Delete|削除)$/.test((e.innerText || '').trim()))
+            .sort((a, b) => a.getBoundingClientRect().width * a.getBoundingClientRect().height - b.getBoundingClientRect().width * b.getBoundingClientRect().height)[0]"""
+        if not t.js(f"!!({del_btn})"):
+            result({"ok": False, "error": "delete_item_not_found", "clickables": cl, "menu": menu})
+            return
+    t.click(del_btn)
+    time.sleep(2)
+    # 念押しの窓は「Delete post? / You won't be able to recover it. / Delete / Cancel」（2026-10-21 に写した）。
+    # 窓の題だけを持つ小さい箱も class に modal を持つので、Delete と Cancel の両方のボタンを含むいちばん小さい箱を取る
+    dlg = f"""[...document.querySelectorAll('[role=dialog], .TUXModal, [class*=modal], [class*=Modal]')].filter({VISIBLE})
+        .filter(e => {{ const bs = [...e.querySelectorAll('button, [role=button]')].map(b => (b.innerText || '').trim());
+          return bs.some(s => /^(Delete|削除)$/.test(s)) && bs.some(s => /^(Cancel|キャンセル)$/.test(s)); }})
+        .sort((a, b) => a.getBoundingClientRect().width * a.getBoundingClientRect().height - b.getBoundingClientRect().width * b.getBoundingClientRect().height)[0]"""
+    dtext = t.js(f"(() => {{ const d = {dlg}; return d ? d.innerText.trim().replace(/\\s+/g, ' ').slice(0, 400) : null; }})()")
+    log("confirm dialog:", dtext)
+    shot(t, "tt_del_2_dialog")
+    ok_btn = f"[...({dlg}).querySelectorAll('button, [role=button]')].filter({VISIBLE}).find(b => /^(Delete|削除)$/.test((b.innerText || '').trim()))"
+    if not dtext or not re.search(r"Delete post|投稿を削除", dtext) or not t.js(f"!!({ok_btn})"):
+        result({"ok": False, "error": "confirm_not_found", "dialog": dtext})
+        return
+    if dry:
+        t.js(f"(() => {{ const b = [...({dlg}).querySelectorAll('button, [role=button]')].find(b => /^(Cancel|キャンセル)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()")
+        result({"ok": True, "dry": True, "dialog": dtext})
+        return
+    t.click(ok_btn)
+    log("clicked delete")
+    time.sleep(6)
+    gone = False
+    for _ in range(4):
+        t.go(CONTENT, wait=10)
+        time.sleep(3)
+        if not t.js(f"!!document.querySelector('a[href*=\"/video/{vid}\"]')") and t.js("document.querySelectorAll('a[href*=\"/video/\"]').length > 0"):
+            gone = True
+            break
+        time.sleep(5)
+    shot(t, "tt_del_3_after")
+    left = scheduled_row(t, needle, at_utc)
+    result({"ok": gone and not left, "deleted": gone, "left_row": left, "dialog": dtext})
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
+    if cmd == "delete":
+        # python3 tt_post.py delete <投稿ID> <題の行> <予約の UTC の ISO> [--probe | --dry]
+        t = fresh_tab()
+        delete(t, sys.argv[2], sys.argv[3], sys.argv[4], probe="--probe" in sys.argv, dry="--dry" in sys.argv)
+        sys.exit(0)
     if cmd == "check":
         t = fresh_tab()
         hits, n, any_hit = find_posts(t, sys.argv[2])
