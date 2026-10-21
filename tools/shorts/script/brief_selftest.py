@@ -35,12 +35,15 @@
 | `e_pick` | 案を付けない回はいちばん新しい版（銅像は p2）。案が要る回で案が無い・無い案は止まる |
 | `e_cmds` | 雛形に書いた道具と `--引数` が今の道具に在る。無い引数・無い道具は止まる。同じ行の別の道具の引数は通す |
 | `e_clips` | 配信ごとの clips を「作業枝に在る・コマ一覧の封あり／古い形」「下ろしてある（在った木のコミット）」「記録が無い」に分ける |
-| `e_name` | 勧める書き出しの名前は、作業枝に頼んだことのある名前（`shorts/render/<名前>.json` の今と履歴）と重ならない |
+| `e_name` | 勧める書き出しの名前は、作業枝に頼んだことのある名前（`shorts/render/<名前>.json` の今と履歴）と重ならない。担当の枝で足して下ろした依頼も数える |
+
+`e_clips` の「下ろしてある」と `e_name` は、本物の履歴ではなく、その場で作る小さな git（`git_fixture`）で見る。CI は浅い checkout（履歴1つ）で、本物の履歴に頼ると CI だけで落ちる（#1012 で落ちた）。
 | `e_voice` | 声に渡す字の雛形は、spec の `tts_text`（無ければ行の字）・key は `<id>/NN`・bytes は UTF-8 のバイト数 |
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -88,6 +91,8 @@ CUTS = {
               "声に渡す字を、かなに直した字でなく字幕の字にする"),
     "e_name": ("brief.py", '    while f"{head}{v}" in used:\n', "    while False:\n", {"e_name"},
                "頼んだことのある書き出しの名前を勧める"),
+    "e_hist": ("brief.py", '"log", "--full-history", "--format=", "--name-only", "--",\n', '"log", "--format=", "--name-only", "--",\n',
+               {"e_name"}, "担当の枝で足して下ろした書き出しの依頼を、既定の省略のまま数えない"),
     "e_seal": ("brief.py", 'SHEETS = re.compile(r"/sheets\\.enc(\\.\\d{3})?$")\n', 'SHEETS = re.compile(r"$^")\n', {"e_clips"},
                "コマ一覧の小さな封を見分けない"),
 }
@@ -324,6 +329,40 @@ def leg_e_voice(B):
             ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01")]
 
 
+def git_fixture(td: Path) -> str:
+    """作業枝の履歴の形だけを持つ git を作る。CI は浅い checkout（履歴1つ）なので、本物の履歴を当てにしない。
+
+    担当の枝（side）で、書き出しの依頼 fra-a-v3 と、配信 DDDDDDDDDd4 の clips（古い形）を足してから下ろし、
+    --no-ff で main に入れる。merge の片側で足して消えた道は、git log の既定の省略だと見えない。
+    返すのは clips を足したコミット。
+    """
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"}
+
+    def git(*a):
+        return subprocess.run(["git", "-C", str(td), *a], check=True, capture_output=True, text=True, env=env).stdout.strip()
+
+    git("init", "-q", "-b", "main")
+    (td / "README").write_text("x", encoding="utf-8")
+    git("add", "README")
+    git("commit", "-q", "-m", "0")
+    git("checkout", "-q", "-b", "side")
+    (td / "shorts/render").mkdir(parents=True)
+    (td / "shorts/render/fra-a-v3.json").write_text("{}", encoding="utf-8")
+    clips = td / "shorts/.work/DDDDDDDDDd4/clips"
+    clips.mkdir(parents=True)
+    for f in ("manifest.json", "key.enc", "payload.enc"):
+        (clips / f).write_text("x", encoding="utf-8")
+    git("add", "shorts")
+    git("commit", "-q", "-m", "add")
+    added = git("rev-parse", "HEAD")
+    git("rm", "-q", "-r", "shorts")
+    git("commit", "-q", "-m", "drop")
+    git("checkout", "-q", "main")
+    git("merge", "-q", "--no-ff", "-m", "merge", "side")
+    return added
+
+
 def leg_e_clips(B):
     real_root = B.ROOT
     try:
@@ -336,24 +375,34 @@ def leg_e_clips(B):
                 for f in files:
                     (d / f).write_text("x", encoding="utf-8")
             new, old, none = B.clips_state("AAAAAAAAAa1"), B.clips_state("BBBBBBBBBb2"), B.clips_state("CCCCCCCCCc3")
+        with tempfile.TemporaryDirectory() as td:
+            B.ROOT = Path(td)   # 下ろした clips は、履歴の形だけを持つ git で見る
+            added = git_fixture(Path(td))
+            got = B.clips_state("DDDDDDDDDd4")
     finally:
         B.ROOT = real_root
-    got = B.clips_state("Lmk2lp9iFQ8")
-    m = re.match(r"^下ろしてある（([0-9a-f]{8}) の木に在る・(古い形|コマ一覧の封あり)）$", got)
-    in_tree = bool(m) and subprocess.run(["git", "-C", str(ROOT), "cat-file", "-e", f"{m.group(1)}:shorts/.work/Lmk2lp9iFQ8/clips/manifest.json"],
-                                         capture_output=True, check=False).returncode == 0
     return [("作業枝に小さな封（sheets.enc.000）が在れば「コマ一覧の封あり」", new == "作業枝に在る・コマ一覧の封あり"),
             ("mp4 の封だけなら「古い形」", old == "作業枝に在る・古い形"),
             ("どこにも無ければ「取り込みの記録が無い」", none == "取り込みの記録が無い"),
-            (f"下ろした配信は、在った木のコミットを名指す（{got}）", in_tree or got.startswith("作業枝に在る"))]
+            (f"下ろした配信は、在った木のコミットを名指す（{got}）", got == f"下ろしてある（{added[:8]} の木に在る・古い形）")]
 
 
 def leg_e_name(B):
-    used = B.render_names()
-    got = B.suggest_name(FR, "A", FR / "qa_A.md")
-    return [("頼んだことのある書き出しの名前（fra-a-v3 など）を数える", "fra-a-v3" in used),
-            (f"勧める名前（{got}）は、頼んだことのある名前と重ならず、記録の版（v2）より後", got not in used
-             and int(got.rsplit("v", 1)[1]) >= 3)]
+    real_root = B.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            B.ROOT = Path(td)
+            git_fixture(Path(td))
+            vdir = Path(td) / "shorts/videos/france-2025/p1"
+            vdir.mkdir(parents=True)
+            qa = vdir / "qa_A.md"
+            qa.write_text("## 本編集（v1 → v2）\n", encoding="utf-8")   # 記録には v2 まで。作業枝ではもう v3 を頼んだ
+            used = B.render_names()
+            got = B.suggest_name(vdir, "A", qa)
+    finally:
+        B.ROOT = real_root
+    return [("頼んだことのある書き出しの名前（担当の枝で足して下ろした fra-a-v3）を数える", "fra-a-v3" in used),
+            (f"勧める名前（{got}）は、頼んだことのある名前を飛ばした次（fra-a-v4）", got == "fra-a-v4")]
 
 
 LEGS = {"cats": leg_cats, "grows": leg_grows, "machine": leg_machine, "holdout": leg_holdout, "pair": leg_pair,

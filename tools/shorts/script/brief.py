@@ -533,7 +533,7 @@ def clips_state(vid: str) -> str:
     if (d / "manifest.json").exists():
         return "作業枝に在る・" + ("コマ一覧の封あり" if any(SHEETS.search("/" + p.name) for p in d.iterdir()) else "古い形")
     try:
-        c = subprocess.run(["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--diff-filter=AM", "--",
+        c = subprocess.run(["git", "-C", str(ROOT), "log", "-1", "--full-history", "--format=%H", "--diff-filter=AM", "--",
                             f"{rel_}/manifest.json"], capture_output=True, text=True, timeout=30, check=False).stdout.strip()
         if not c:
             return "取り込みの記録が無い"
