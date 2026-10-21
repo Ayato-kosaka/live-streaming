@@ -37,6 +37,16 @@ description: 配信アーカイブの URL から、初見の人が止まって�
 
 ## 2. 取り込み
 
+### 視聴者さんの頼み（島の付箋）
+
+どの回を作るかの頼みは、島の付箋（テーマ `shorts-idea`）に来る。「この回のこのあたりをショートに」と、配信のリンクつきで貼られる。
+
+- **読むのは Actions の「付箋を読む」（`stickies_pull.yml`）。EC2 を起こして curl しない。** この箱から島には届かないが、Actions からは届く。依頼（`{"theme": "shorts-idea", "limit": 300, "pubkey": …}`）を作業枝の `shorts/stickies/<名前>.json` に push → 暗号文が `shorts/.work/stickies/shorts-idea/` に届く → `python3 tools/shorts/stickies/read.py --key <秘密鍵> --ref FETCH_HEAD` で手元に表を出す。手順は `tools/shorts/stickies/README.md`
+- **依頼を `shorts/requests/` に置かない。** そこは取り込み（`shorts_ingest.yml`）が見ている
+- **視聴者さんの名前は、どこにも出さない。** issue・コミット・企画・台本・投稿文のどれにも。本文もそのまま写さず、「どの回の、どのあたりか」を自分の言葉で書く。リンクは動画IDと時刻だけにする（`si=` は共有した人を指す。`read.py` は落として出す）
+
+### 配信の材料
+
 ```bash
 # 鍵はセッションごとに作る（秘密鍵はスクラッチパッドから出さない）
 openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out <scratch>/keys/ref_private.pem
