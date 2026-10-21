@@ -1,0 +1,25 @@
+{
+ "schema": 1,
+ "video": "TDArug_te90",
+ "option": "p1",
+ "version": "p1",
+ "_source": "完成の下見（#977 のコメント 6308021517）で「説明欄には、城塞の回（TDArug_te90）と夕日の回（WJ8KEi1V-no）のリンクと、声が AI であることを入れます」と書いた形。字の並びは最安ホステルの回 p2（zjHZucyfrq8/p2/post_p2.json）を写した。あやとの「2026/10/22 19:00 に出して」（#977 のコメント 6310722951、2026-10-21 07:39 UTC）→ 2026-10-22 19:00 JST（10:00 UTC）に出す",
+ "youtube": {
+  "file": "p1.mp4",
+  "title": "🇲🇰 北マケドニアの夕日見に行ったら、野良犬に襲われた！",
+  "description": "スコピエ城塞の横で夕日を待ちながら激辛ケバブを食べていたら、野良犬がすぐそばまで来た。地元の兄ちゃんらが追い払ってくれて、ケバブは死守。犬が食べたのは、落としたキュウリだった。\n\n配信のアーカイブ（全編）: https://www.youtube.com/watch?v=TDArug_te90\nこの国で見た爆焼夕日の配信: https://www.youtube.com/watch?v=WJ8KEi1V-no\n最後の夕日の画は、この配信から使っています。\n\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#北マケドニア #野良犬 #海外旅行 #一人旅 #バックパッカー",
+  "visibility": "public",
+  "publish_at": "2026-10-22T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない",
+  "related_video": "https://www.youtube.com/watch?v=TDArug_te90"
+ },
+ "tiktok": {
+  "file": "p1.mp4",
+  "caption": "🇲🇰 北マケドニアの夕日見に行ったら、野良犬に襲われた！\nYouTube「@あやとグルメアプリ」の生配信から\nスコピエ城塞の横で夕日を待ちながら激辛ケバブを食べていたら、野良犬がすぐそばまで来た。地元の兄ちゃんらが追い払ってくれて、ケバブは死守。犬が食べたのは、落としたキュウリだった。\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#北マケドニア #野良犬 #海外旅行 #一人旅 #バックパッカー",
+  "publish_at": "2026-10-22T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない"
+ },
+ "cover_at_s": 1.1,
+ "_cover_note": "サムネイル（YouTube）とカバー（TikTok）は題の札が見えるコマ。post.py cover --cover-at 1.1（札の下で、犬の鼻と顔がレンズに向いている。1.0秒は顔がぶれていた）",
+ "file": "p1.mp4"
+}
