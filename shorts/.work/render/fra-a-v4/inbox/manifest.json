@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__fra-a-v4",
+ "mode": "render",
+ "dest": "render/fra-a-v4/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/fra-a-v4.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 4024,
+  "tar_gz": 1899,
+  "encrypted": 1904
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1904,
+   "sha256": "a78795d25fc15f557a120de6b0a21dceb49b961dfea650f51434df1e620bdd7a"
+  }
+ ],
+ "hmac_sha256": "c87b2d4d6cff341302e1144fba31cf5fefa09461f5029b1470dca460e52780ed",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-21T20:00:15+00:00",
+ "nonce": "2766fe826ac496bd03503cf6"
+}
