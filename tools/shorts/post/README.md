@@ -89,11 +89,41 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 - TikTok にログインしてあるのは `~/cdp-fish` の Chrome（`tt_post.py` の `NAME`）。画面は英語。EC2 の Chrome の時計は UTC
   （TikTok の一覧の時刻が UTC で出る）
 
-## 予約投稿
+## 予約投稿（2026-10-21 に最安ホステルの回 p2 で両方とも通した）
 
-- YouTube: 公開設定の段に「スケジュール設定」が在る（2026-10-17 に見た）。`yt_post.py publish --at` はまだ押すところまで作っていない
-- TikTok: 「When to post」に `Now` / `Schedule` が在る（2026-10-15 に見た）。`tt_post.py post --at` は Schedule を押して欄を出すところまで。
-  日時の欄の入れ方はまだ確かめていない。**時刻は EC2 の Chrome の時計（UTC）で出る**
+あやとの「19時に出して」のように時刻の指定があれば、**投稿先の予約で出す**（こちらのセッションが止まっていても、その時刻に出る）。
+`--at` は **UTC の ISO**（19:00 JST なら `2026-10-21T10:00:00Z`）。EC2 の Chrome の時計は UTC なので、両方とも UTC のまま入れる。
+
+```bash
+# YouTube: 非公開の下書き（yt-draft → yt-related → yt-thumb）を作ってから、予約にする
+python3 tools/shorts/post/post.py yt-publish --video <元の動画ID> --option <案> --id <ショートのID> --sha <sha256> --at 2026-10-21T10:00:00Z
+# TikTok: 上げて、キャプション・カバー・予約の日時を入れて「Schedule」を押す（--dry で押す手前まで）
+python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案> --cover --sha <sha256> --at 2026-10-21T10:00
+```
+
+- **YouTube**（`yt_post.py publish <ID> --at <ISO>`。`--dry` で欄を入れて「キャンセル」まで）: 詳細のページ → 公開設定 →
+  「スケジュールを設定」（`#second-container-expand-button`）→ 日付は `#datepicker-trigger` を開いて「日付を入力」の箱
+  （`ytcp-date-picker tp-yt-paper-input#textbox input`）に `2026/10/21` を打って Enter、時刻は `ytcp-datetime-picker` の中の
+  `H:MM` の箱に `10:00` を打って Enter → 完了 → 保存
+  - **タイムゾーンの札は「（GMT+0000）現地時間」**（窓の「タイムゾーン」を開くと選ばれている行が読める）。Chrome の時計と札の
+    両方が UTC であることを確かめてから入れる。違えば押さずに止まる
+  - 読み直しは `get_creator_videos` の `scheduledPublishingDetails.scheduledPublishings[]`（`scheduledTimeSeconds` が UTC の秒、
+    `action` が `SCHEDULED_PUBLISHING_ACTION_SET_PUBLIC`、`status` が `SCHEDULED_PUBLISHING_STATUS_SCHEDULED`）。
+    秒が `--at` と1秒でも違えば ok にしない。同じ時刻で予約済みなら何もしない。予約のあいだ `privacy` は `VIDEO_PRIVACY_PRIVATE` のまま
+- **TikTok**（`tt_post.py post … --at`。`--dry` で押す手前、`--probe` で時刻の欄を開いて中身を書き出すだけ）:
+  `input[type=radio][value=schedule]` を押すと、時刻（`HH:MM`）と日付（`YYYY-MM-DD`）の欄が出る。既定は今日・いまから20分ほど先
+  - 時刻の欄は左の列が時（00〜23）・右の列が分（**5分おき**）。`.tiktok-timepicker-option-item` の中の span（class に
+    `tiktok-timepicker-le` / `-ri`）の字で押す。閉じるのは Escape（blur だけでは開いたまま）
+  - 日付の暦はまだ押すところまで作っていない（**今日の日付だけ**。違う日なら `date_picker_not_implemented` で止まる）
+  - 押すボタンの字が **Schedule であることを確かめてから押す**（Post は今すぐ出る）。予約のときは念押しの窓が出ても押さない
+  - 読み直しは投稿の一覧（`tt_post.py scheduled <題の字> <UTC の ISO>`）。予約の行は公開範囲が灰色で、作った日の代わりに
+    時計の印と `Oct 21, 10:00 AM`（UTC。時刻と AM のあいだは細い空白 U+202F のことがある）が出る。投稿 ID（`/video/…`）は
+    予約の時点で出るので、台帳は `done` になる
+- 予約は出したのと同じに数える。台帳（`posted.json`）は予約の時点で `done`、`note` に予約の時刻を書く
+- **YouTube の本人確認**（2026-10-21）: 上げる画面で「本人確認 — 続行するには、本人確認を行う必要があります」の窓が出て、
+  「次へ」は Google のパスワードの画面だった。「別の方法」はパスキー・アカウント復元（再設定用のメール）だけで、スマホの
+  確認（dp）は無かった。**こちらでは打たない・アカウント復元は選ばない。** あやとに遠隔デスクトップの ytstudio の Chrome で
+  本人確認をしてもらった。窓が出たまま進めると、題だけ入って説明欄の改行・改変コンテンツの問いが入らず、動画も保存されない
 
 ## 1本目（2026-10-17）
 
