@@ -5,7 +5,7 @@
  "dest": "nGgoJ753rBw/clips",
  "video": "nGgoJ753rBw",
  "channel": null,
- "request": "shorts/requests/2026-10-21-ng-clips-r2.json",
+ "request": "shorts/requests/2026-10-21-ng-clips-r3.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -19,25 +19,25 @@
   "cuts": 0,
   "clips": 1,
   "clips_ok": 1,
-  "clip_seconds": 70.0,
+  "clip_seconds": 20.0,
   "channel_entries": 0,
   "files": 7
  },
  "bytes": {
-  "plain": 39777611,
-  "tar_gz": 39749920,
-  "encrypted": 39749936
+  "plain": 11695292,
+  "tar_gz": 11685003,
+  "encrypted": 11685008
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 39749936,
-   "sha256": "a0388fbb241635952b9214c3500a1500314bbc139667dfc7ba4a0c2fcaa68f5c"
+   "bytes": 11685008,
+   "sha256": "d6f6a906f81c44383f8796431893ffc1d7fa376cac56b5423b7a89b1dc4bd41f"
   }
  ],
- "hmac_sha256": "9e789e16da82902e7647a5cbec960df3b6a3cb1075af85d8a689865df17bd4db",
+ "hmac_sha256": "55ce41f9da4a4f54248646ecfef4d96b91b9541177926c494900f95b65acd232",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39542686316",
- "created_at": "2026-10-21T04:20:31+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39573006681",
+ "created_at": "2026-10-21T09:00:58+00:00"
 }
