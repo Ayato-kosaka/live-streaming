@@ -93,7 +93,10 @@ def push_change(branch: str, adds: dict[str, bytes | Path], removes: list[str],
                         git("update-index", "--force-remove", p, env=env)
             for path, sha in blobs.items():
                 git("update-index", "--add", "--cacheinfo", f"100644,{sha},{path}", env=env)
-            tree = git("write-tree", env=env).strip()
+            # --missing-ok: Actions は中身（blob）を落とさない checkout（blob:none）で回る。write-tree は既定で
+            # 木の全部の中身が手元にあるかを確かめ、無ければ取りに行く。作業枝の暗号文 889MB を毎回落として
+            # 1回の push に 65〜92秒かかった（2026-10-21、r1011-b）。木を作るのに中身は要らない
+            tree = git("write-tree", "--missing-ok", env=env).strip()
         if tree == git("rev-parse", f"{base}^{{tree}}").strip():
             return None
         commit = git("commit-tree", tree, "-p", base, "-m", message, env=_commit_env()).strip()

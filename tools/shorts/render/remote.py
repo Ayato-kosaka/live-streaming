@@ -408,6 +408,11 @@ def print_summary(summ: dict) -> None:
         print(f"    BGM の頭 {bgm.get('head_trim_s')}秒を飛ばした・0コマ目 {bgm.get('mix_first_frame_db')}dBFS"
               f"  終わりの札 " + (" / ".join(f"{e['text']} {e['from']}〜{e['to']}コマ 描かれて{'いる' if e.get('drawn') else 'いない' if e.get('drawn') is False else '?'}"
                                          for e in ends) or "!! 無い"))
+        moved = it.get("moved") or []
+        if moved:
+            # 前の版から道（手元 ↔ Actions）を替えたときは、ここが前の版と同じかを見る（字の置き場が動いていないか）
+            print("    顔を避けて動かした字: " + " / ".join(
+                f"{m['text'][:12]} {m['from']}コマ〜 y {m['y_from']}→{m['y_to']}" for m in moved))
 
 
 # ---------------------------------------------------------------- Actions: 依頼を読む
@@ -961,7 +966,7 @@ def summary(rep: dict) -> dict:
                       "seconds": qa.get("seconds"), "errors": qa.get("errors")},
                "bgm": dict(pr.get("bgm") or {}, mix_first_frame_db=(head.get("mix_db") or [None])[0],
                            bgm_first_frame=head.get("bgm_first_frame"), mix_db_first_second=head.get("mix_db")),
-               "end_notes": pr.get("end_notes"),
+               "end_notes": pr.get("end_notes"), "moved": pr.get("moved"),
                "preview": (pv.get("files") or {}).get(f"{it['id']}.mp4"),
                "look": {k: files.get(f"{it['id']}{suf}") for k, suf in
                         (("sheet1s", ".sheet1s.jpg"), ("texts", ".texts.jpg"), ("faces", ".faces.jpg"),

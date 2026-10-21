@@ -234,6 +234,11 @@ def main() -> int:
                   "fade_in_s": (plan.get("bgm") or {}).get("fade_in_s")} if plan.get("bgm") else None
     res["head"] = head_audio(a.mp4, a.work, fps)
     res["end_notes"] = end_card(a.mp4, a.work, plan, W, H, n)
+    # 顔を避けて字を動かした行（前の版と字の置き場が変わっていないかを、要約だけで見られるように）。
+    # 同じ指示書でも、書き出す箱の CPU が変わると字なしの版の符号化が変わり、顔の箱が動いて字が動くことがある
+    # （銅像 p2 の 7行目が、Actions では 216px 下へ動いた。2026-10-21）
+    res["moved"] = [{k: f.get(k) for k in ("kind", "text", "from", "to", "how", "y_from", "y_to")}
+                    for f in plan.get("face_avoid", []) if f.get("y_from") != f.get("y_to") or f.get("unresolved")]
     Path(pre + ".proof.json").write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in res.items() if k != "head"}, ensure_ascii=False))
     return 0
