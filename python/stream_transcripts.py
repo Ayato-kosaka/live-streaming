@@ -26,7 +26,10 @@ BQ の `videos` から、開始時刻のある配信を**新しい順**に並べ
 
 - 字幕は yt-dlp で `--skip-download`（動画は落とさない）。口の当たり方・PO Token・Cookie は
   ショートの取り込み（`tools/shorts/ingest/download.py`）のをそのまま使う
-- **Cookie を使うほかの取り込みと同時に使わない。** 1本ごとに `gate.py` で見る
+- **Cookie を使うほかの取り込みと同時に使わない。** 1本ごとに `gate.py` で見る。
+  **握られていたら待たずに、Cookie なしで取る。** 字幕は Cookie なしでもたいてい取れる。
+  前は空くまで最長60分待っていて、ショートの取り込みが続いた日（2026-10-21）は
+  3つとも60分待って1本も取らずに終わった
 - 1本ごとに数秒あける
 - **429 か「ボット確認」が出ても打ち切らない。** 60→120→240→480秒と待って、同じ配信を
   取り直す。前は2本続いたらその回をやめていたので、1晩の締め出しで残りが丸ごと次の晩に
@@ -360,7 +363,8 @@ def fetch(todo_path: Path, out_dir: Path | None = None, budget_min: float = BUDG
                          gate_mod.api_lister(e("GITHUB_REPOSITORY", ""),
                                              e("GH_TOKEN") or e("GITHUB_TOKEN") or "",
                                              e("GITHUB_API_URL") or "https://api.github.com"),
-                         own_run=e("GITHUB_RUN_ID", ""), count_pending=False)
+                         own_run=e("GITHUB_RUN_ID", ""), count_pending=False, max_wait=0)
+    cookie = e("CLIP_COOKIES_FILE", "")
     print(gate.heading(), flush=True)
     chats = fetch_chat([t["video_id"] for t in todo])
     root = (out_dir / "streams") if out_dir else STREAMS
@@ -370,8 +374,17 @@ def fetch(todo_path: Path, out_dir: Path | None = None, budget_min: float = BUDG
     good: str | None = None
 
     def gate_wait(n: int):
+        # 待たずに1回だけ見る。握られていたら、この1本は Cookie なしで取る
+        # （yt_args は CLIP_COOKIES_FILE が在るときだけ --cookies を付ける）
         v = gate.wait()
-        if n == 0 or v.waited or not v.ok:
+        if not cookie:
+            return v
+        if v.ok:
+            os.environ["CLIP_COOKIES_FILE"] = cookie
+        else:
+            os.environ.pop("CLIP_COOKIES_FILE", None)
+            v = gate_mod.Verdict(True, "no-cookie", f"{v.why} → Cookie なしで取る", v.waited, v.log)
+        if n == 0 or v.how != "clear":
             print(f"   判定: {v.why}", flush=True)
         return v
 
