@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "CKJvprUMOgA__clips",
+ "mode": "clips",
+ "dest": "CKJvprUMOgA/clips",
+ "video": "CKJvprUMOgA",
+ "channel": null,
+ "request": "shorts/requests/2026-10-21-statues-clips-ckj.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1556,
+  "tar_gz": 1201,
+  "encrypted": 1216
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1216,
+   "sha256": "8de7420dafb708ffc3c2e071fe954e3bab46210e727ae2b37f8bff8b0e9626ad"
+  }
+ ],
+ "hmac_sha256": "0f14b0069b1dbc541260f5c963a45259934bfbcd0c400d7897973ac8e7a6a881",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39520586421",
+ "created_at": "2026-10-21T02:33:51+00:00"
+}
