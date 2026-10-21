@@ -10,7 +10,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | `yt_thumb.py` | EC2（`~/cdp/`） | Studio: サムネイルを絵のファイルに差し替えて保存 |
 | `send.py` | 手元 | 動画・投稿文・題の札の絵を EC2 へ送り、EC2 で sha256 を照らす。GCS の `transfer/` に置いて、EC2 には署名付き URL を `curl` で落とさせる（下の「EC2 への送りかた」）。`clean` で送った動画を消す |
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
-| `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで） |
+| `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで）。予約の日を暦で押す手の見張りは `tt_post_selftest.py`（手元で回る。EC2 に触らない） |
 | `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
 
 ## 手順（1本ぶん）
@@ -88,6 +88,11 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 - TikTok のカバーは「Edit cover」→ 窓の中の file input（`accept` に image）に絵を渡す → 右上の「Save」（button ではないことがある）
 - TikTok にログインしてあるのは `~/cdp-fish` の Chrome（`tt_post.py` の `NAME`）。画面は英語。EC2 の Chrome の時計は UTC
   （TikTok の一覧の時刻が UTC で出る）
+- **こちらの手が、遠隔デスクトップの見張り（`GUARD`）を自分で止めることがある**（2026-10-21）。EC2 を起こした直後は
+  無操作の時間が起動からの数分しか無いので、`desktop_busy` で戻る。Studio や TikTok で動画を開いた手のあとも、無操作の
+  時間が0に戻っていた（遠隔デスクトップの接続は無かった。Chrome が動画の再生中に画面の消灯を止める仕掛けが、X の無操作の
+  時間を戻している見立て）。**見張りは外さない。** 次の手の前に、EC2 の上で無操作が7分を超えるのを待ってから回す
+  （1手ごとに7分ほど待つことになる）
 
 ## 予約投稿（2026-10-21 に最安ホステルの回 p2 で両方とも通した）
 
@@ -112,9 +117,17 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
     秒が `--at` と1秒でも違えば ok にしない。同じ時刻で予約済みなら何もしない。予約のあいだ `privacy` は `VIDEO_PRIVACY_PRIVATE` のまま
 - **TikTok**（`tt_post.py post … --at`。`--dry` で押す手前、`--probe` で時刻の欄を開いて中身を書き出すだけ）:
   `input[type=radio][value=schedule]` を押すと、時刻（`HH:MM`）と日付（`YYYY-MM-DD`）の欄が出る。既定は今日・いまから20分ほど先
-  - 時刻の欄は左の列が時（00〜23）・右の列が分（**5分おき**）。`.tiktok-timepicker-option-item` の中の span（class に
-    `tiktok-timepicker-le` / `-ri`）の字で押す。閉じるのは Escape（blur だけでは開いたまま）
-  - 日付の暦はまだ押すところまで作っていない（**今日の日付だけ**。違う日なら `date_picker_not_implemented` で止まる）
+  - **日付を先に、時刻をあとに入れる。** 日付の欄（`YYYY-MM-DD`）を押すと暦（`.calendar-wrapper`）が開く。見出しは
+    `.month-title`「October」と `.year-title`「2026」、左右の `.month-header-wrapper .arrow`（左が前の月・右が次の月）、
+    日は `.day-span-container > span.day`（押せる日は class に `valid`、選んでいる日に `selected`）。
+    **頭に前の月の日が並ぶ**（10月なら頭の「27 28 29 30」は9月）ので、字だけで探さない。週は日曜はじまりで、
+    1日の曜日ぶんずらした位置の字が日と同じで、`valid` が付いているときだけ押す（`pick_day`）。月が違えば矢印で送る
+    （2か月より先は `date_too_far` で押さない）。押すと暦は閉じ、欄の値が変わる（2026-10-21 に 10/22 で通した）
+  - 時刻の欄は左の列が時（00〜23）・右の列が分（**5分おき**。`--at` の分が5の倍数でなければ `bad_at` で止まる）。
+    `.tiktok-timepicker-option-item` の中の span（class に `tiktok-timepicker-le` / `-ri`）の字で押す。
+    閉じるのは Escape（blur だけでは開いたまま）。**翌日の日を押したあとは Escape でも開いたまま残った**ので、
+    そのときは時刻の欄をもう一度押して閉じる。閉じたのを見るまで ok にしない（開いたまま「Schedule」を押すと、
+    1回目が欄を閉じるだけになりうる）
   - 押すボタンの字が **Schedule であることを確かめてから押す**（Post は今すぐ出る）。予約のときは念押しの窓が出ても押さない
   - 読み直しは投稿の一覧（`tt_post.py scheduled <題の字> <UTC の ISO>`）。予約の行は公開範囲が灰色で、作った日の代わりに
     時計の印と `Oct 21, 10:00 AM`（UTC。時刻と AM のあいだは細い空白 U+202F のことがある）が出る。投稿 ID（`/video/…`）は

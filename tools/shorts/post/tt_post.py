@@ -8,8 +8,8 @@
     python3 tt_post.py check <探す字>                          # ログインしているか・同じ投稿がもう在るか
     python3 tt_post.py post <mp4> <caption.txt> --dry          # 投稿の手前まで（字と設定を確かめて、投稿しない）
     python3 tt_post.py post <mp4> <caption.txt>                # 投稿する
-    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-21T10:00   # 予約（UTC。EC2 の Chrome の時計が UTC で、欄もその時刻）
-    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-21T10:00 --dry --probe   # 時刻の欄を開いて中身を書き出すだけ
+    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00   # 予約（UTC。EC2 の Chrome の時計が UTC で、欄もその時刻。翌日以降は暦を送って日を押す）
+    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00 --dry --probe   # 時刻と日付の欄を開いて中身を書き出すだけ
     python3 tt_post.py scheduled <探す字> 2026-10-21T10:00:00Z  # 予約の読み直し（一覧の行に予約の時刻の札が出ているか）
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す。
@@ -25,7 +25,7 @@
 編集欄は Draft.js。1字ずつ打つと `#` と `@` でハッシュタグ・人の候補が開き、
 そのあとの Enter で**候補を選んでしまう**。貼り付け（paste のイベント）なら候補を通らない。
 """
-import json, os, re, sys, time, urllib.request
+import datetime, json, os, re, sys, time, urllib.request
 sys.path.insert(0, os.path.expanduser("~ubuntu/cdp"))
 from cdp import Tab, up, pages, where, _port  # noqa: E402
 
@@ -134,6 +134,97 @@ SCHED_INPUTS = r"""(() => { const ins = [...document.querySelectorAll('input[typ
   return {time: tm ? tm.value : null, date: dt ? dt.value : null}; })()"""
 
 
+def parse_at(at):
+    """--at（UTC。"2026-10-22T10:00" / "2026-10-22T10:00:00Z"）を (日付, 時, 分) にする。読めなければ None。
+    分は欄が5分おきなので、5の倍数でなければ None（押せない時刻を受けて、近い時刻に化けさせない）"""
+    m = re.fullmatch(r"(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})(?::00)?Z?", (at or "").strip())
+    if not m or int(m.group(2)) > 23 or int(m.group(3)) % 5:
+        return None
+    try:
+        datetime.date.fromisoformat(m.group(1))
+    except ValueError:
+        return None
+    return m.group(1), m.group(2), m.group(3)
+
+
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+          "November", "December"]
+# 暦の見出し・矢印・日のます（2026-10-21 に写した。見出しは「October / 2026」、左の矢印が前の月）
+CAL = ".calendar-wrapper"
+CAL_HEAD = f"""(() => {{ const c = document.querySelector('{CAL}'); if (!c || !c.getBoundingClientRect().width) return null;
+  const m = c.querySelector('.month-title'), y = c.querySelector('.year-title');
+  return [m ? m.innerText.trim() : null, y ? y.innerText.trim() : null]; }})()"""
+CAL_DAYS = f"""[...document.querySelectorAll('{CAL} .day-span-container > span.day')].map(e => [e.innerText.trim(), (e.className || '').toString()])"""
+# 時刻の選ぶ欄が開いているか
+TIME_OPEN = "[...document.querySelectorAll('.tiktok-timepicker-option-item')].some(e => e.getBoundingClientRect().width > 0)"
+
+
+def month_steps(month_title, year_title, want_date):
+    """暦がいま見せている月から、want_date の月まで、矢印を何回押すか（正なら次の月へ、負なら前の月へ）。
+    見出しが読めなければ None"""
+    if month_title not in MONTHS or not str(year_title or "").isdigit():
+        return None
+    w = datetime.date.fromisoformat(want_date)
+    return (w.year * 12 + w.month) - (int(year_title) * 12 + MONTHS.index(month_title) + 1)
+
+
+def pick_day(cells, want_date):
+    """暦のます（[字, class] を左上から順に。頭に前の月の日が並ぶ）から、want_date の日を押す番号を決める。
+    返すのは (番号, None) か (None, 理由)。
+
+    - 字だけで探さない。前の月・次の月の日が同じ数字で並ぶ（10月の頭の「27〜30」は9月）。
+      週は日曜はじまり（見出しが Sun … Sat）なので、1日の曜日ぶんだけずらした位置が、その日
+    - その位置の字が日と違えば、並びが写したときと違う（月曜はじまり等）ので押さない
+    - 押せる日は class に valid が付く（過去と、先すぎる日には付かない）"""
+    w = datetime.date.fromisoformat(want_date)
+    lead = (w.replace(day=1).weekday() + 1) % 7  # 日曜=0
+    idx = lead + w.day - 1
+    if len(cells) <= idx or cells[idx][0] != str(w.day):
+        return None, "calendar_grid_unexpected"
+    if "valid" not in cells[idx][1].split():
+        return None, "date_not_selectable"
+    return idx, None
+
+
+def set_date(t, want_date):
+    """日付の欄の暦を開き、want_date の月まで矢印で送って、その日を押す。欄から読み直した値を返す"""
+    dt_in = r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{4}-\d{2}-\d{2}$/.test(i.value))"""
+    if not t.js(CAL_HEAD):
+        t.click(dt_in)
+        time.sleep(1.5)
+    head = t.js(CAL_HEAD)
+    for _ in range(4):
+        steps = month_steps(*(head or [None, None]), want_date)
+        if steps is None:
+            return {"ok": False, "error": "calendar_header", "head": head}
+        if steps == 0:
+            break
+        if abs(steps) > 2:
+            # TikTok が予約できるのは先の数日だけ。暦を何か月も送る指定は、--at の書き違いとみて押さない
+            return {"ok": False, "error": "date_too_far", "head": head, "want": want_date}
+        arrow = f"[...document.querySelectorAll('{CAL} .month-header-wrapper .arrow')][{0 if steps < 0 else 1}]"
+        if not t.js(f"!!({arrow}) && document.querySelectorAll('{CAL} .month-header-wrapper .arrow').length === 2"):
+            return {"ok": False, "error": "calendar_arrow", "head": head}
+        t.click(arrow)
+        time.sleep(1)
+        head = t.js(CAL_HEAD)
+    else:
+        return {"ok": False, "error": "calendar_header", "head": head}
+    cells = t.js(CAL_DAYS) or []
+    idx, why = pick_day(cells, want_date)
+    if why:
+        shot(t, "tt_sched_date_fail")
+        return {"ok": False, "error": why, "head": head, "cells": cells}
+    t.click(f"[...document.querySelectorAll('{CAL} .day-span-container > span.day')][{idx}]")
+    time.sleep(1.5)
+    if t.js(CAL_HEAD):
+        # 押しても暦が開いたままなら閉じる（時刻の欄と同じく Escape）
+        key(t, "Escape", "Escape", 27)
+        time.sleep(0.8)
+    got = t.js(SCHED_INPUTS).get("date")
+    return {"ok": got == want_date, "error": None if got == want_date else "date_not_set", "head": head, "date": got}
+
+
 def schedule_label(at_utc):
     """一覧の行に出る時刻の札の字（EC2 の Chrome の時計＝UTC で出る）。2026-10-21T10:00:00Z なら Oct 21, 10:00 AM"""
     import datetime as dt
@@ -177,10 +268,10 @@ def set_schedule(t, at, probe=False):
     off = t.js("new Date().getTimezoneOffset()")
     if off != 0:
         return {"ok": False, "error": "chrome_clock_not_utc", "offset_min": off}
-    m = re.fullmatch(r"(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})(?::00)?Z?", at.strip())
-    if not m:
+    parsed = parse_at(at)
+    if not parsed:
         return {"ok": False, "error": "bad_at", "at": at}
-    want_date, hh, mm = m.group(1), m.group(2), m.group(3)
+    want_date, hh, mm = parsed
     t.click("document.querySelector('input[type=radio][value=schedule]')")
     time.sleep(2)
     before = t.js(SCHED_INPUTS)
@@ -188,14 +279,26 @@ def set_schedule(t, at, probe=False):
     if not before.get("time"):
         return {"ok": False, "error": "schedule_fields_missing", "before": before}
     time_in = r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{2}:\d{2}$/.test(i.value))"""
+    if probe:
+        t.click(time_in)
+        time.sleep(1.5)
+        shot(t, "tt_sched_time_open")
+        tp = picker_dump(t)
+        key(t, "Escape", "Escape", 27)
+        time.sleep(0.8)
+        t.click(r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{4}-\d{2}-\d{2}$/.test(i.value))""")
+        time.sleep(1.5)
+        shot(t, "tt_sched_date_open")
+        return {"ok": True, "before": before, "time_picker": tp, "calendar": t.js(CAL_HEAD), "days": t.js(CAL_DAYS)}
+    date_r = None
+    if before.get("date") != want_date:
+        # 欄の既定は今日。違う日なら、暦を送ってその日を押す（日を先に決める。時刻の欄はそのあと）
+        date_r = set_date(t, want_date)
+        log("date", json.dumps({k: v for k, v in date_r.items() if k != "cells"}, ensure_ascii=False))
+        if not date_r.get("ok"):
+            return {"ok": False, "error": date_r.get("error") or "date_not_set", "before": before, "date_step": date_r}
     t.click(time_in)
     time.sleep(1.5)
-    if probe:
-        shot(t, "tt_sched_time_open")
-        return {"ok": True, "before": before, "time_picker": picker_dump(t)}
-    if before.get("date") != want_date:
-        # 日付の欄（暦）はまだ押すところまで作っていない。今日の日付だけ（欄の既定が今日）
-        return {"ok": False, "error": "date_picker_not_implemented", "before": before, "want": want_date}
     # 時刻の欄は左の列が時（00〜23）、右の列が分（5分おき）。どちらも .tiktok-timepicker-option-item の中の字
     for side, val in (("le", hh), ("ri", mm)):
         opt = f"""[...document.querySelectorAll('.tiktok-timepicker-option-item')].find(e => {{ const s = e.querySelector('span');
@@ -210,12 +313,19 @@ def set_schedule(t, at, probe=False):
     t.js("document.activeElement && document.activeElement.blur()")
     key(t, "Escape", "Escape", 27)
     time.sleep(1)
-    log("time picker still open:", t.js("[...document.querySelectorAll('.tiktok-timepicker-option-item')].some(e => e.getBoundingClientRect().width > 0)"))
+    if t.js(TIME_OPEN):
+        # 翌日の日を押してから時刻を入れた回（2026-10-21）は、Escape でも開いたまま残った。欄をもう一度押すと閉じる。
+        # 開いたまま「Schedule」を押すと、1回目が欄を閉じるだけになりうるので、閉じたのを見てから先へ進む
+        t.click(time_in)
+        time.sleep(1)
+    still_open = bool(t.js(TIME_OPEN))
+    log("time picker still open:", still_open)
     after = t.js(SCHED_INPUTS)
     radio_on = t.js("(() => { const r = document.querySelector('input[type=radio][value=schedule]'); return !!(r && r.checked); })()")
     shot(t, "tt_sched_set")
-    ok = after.get("time") == f"{hh}:{mm}" and after.get("date") == want_date and radio_on
+    ok = after.get("time") == f"{hh}:{mm}" and after.get("date") == want_date and radio_on and not still_open
     return {"ok": ok, "error": None if ok else "schedule_not_set", "before": before, "after": after, "schedule_radio": radio_on,
+            "time_picker_open": still_open, "date_step": date_r and {k: v for k, v in date_r.items() if k != "cells"},
             "utc": f"{want_date}T{hh}:{mm}:00Z"}
 
 
