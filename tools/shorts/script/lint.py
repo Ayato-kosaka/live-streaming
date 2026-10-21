@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""**原稿を、あやとの指摘の帳面に機械で当てる。** 書いた人が、編集長に渡す前に通す。
+"""**原稿を、あやとの指摘の帳面に機械で当てる。** 書いた人が、批評役に回す前に通す。
 
     python3 tools/shorts/script/lint.py <script.txt>                    # 隣の spec.json（script_A.txt なら spec_A.json）も読む
     python3 tools/shorts/script/lint.py <script.txt> --title "🇸🇪 ストックホルム来たら、地下鉄が高すぎた！"
@@ -633,7 +633,7 @@ def report(path: str, c: Ctx, res: dict, as_of: str | None) -> str:
     fails = sum(1 for h in res["hits"] if not h.look)
     looks = sum(1 for h in res["hits"] if h.look)
     out.append(f"結果: ✕ {fails}・△ {looks}（当てた規則 {len(res['ran'])}/{len(RULES)}）"
-               + ("。✕ が残っているうちは編集長に渡さない" if fails else "。字で拾える指摘には当たっていない（面白いかは批評役の (h) で）"))
+               + ("。✕ が残っているうちは批評役に回さない" if fails else "。字で拾える指摘には当たっていない（面白いかは批評役の (h) で）"))
     return "\n".join(out)
 
 

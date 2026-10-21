@@ -82,6 +82,7 @@ def main() -> int:
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--effort", default=EFFORT, help="low / medium / high / xhigh（空なら既定）")
     ap.add_argument("--timeout", type=int, default=1500)
+    ap.add_argument("--as-of", help="gate.py に渡す（承認済みの原稿を読み直すとき。`gate.py --help`）")
     a = ap.parse_args()
 
     out = Path(a.out)
@@ -125,7 +126,8 @@ def main() -> int:
         return 2
     (out / "critic.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
     g = subprocess.run([sys.executable, str(HERE / "gate.py"), str(out / "critic.json"), str(script)]
-                       + (["--spec", str(spec)] if spec else []), capture_output=True, text=True, timeout=120, check=False)
+                       + (["--spec", str(spec)] if spec else []) + (["--as-of", a.as_of] if a.as_of else []),
+                       capture_output=True, text=True, timeout=120, check=False)
     (out / "gate.txt").write_text(g.stdout + g.stderr, encoding="utf-8")
     print(g.stdout + g.stderr, end="")
     return g.returncode

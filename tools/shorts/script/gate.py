@@ -21,10 +21,15 @@
 | lint の ✕ | (a)〜(f) の 3 |
 | (a)〜(f) の 2 以下 | 離れる行（leave） |
 | (h) 帳面の項目に当たる行 | ✕ の理由が【あやと】の行（あやとが書いた・決めた字）だけに当たるもの。まとめ役が裁く（7.3） |
+| | (h) の F-039（行間）・F-040（二転三転）で、同じ行に (i) の当たりが無いもの。この2つは (i) の数えかたで決める項目で、批評役自身の行ごとのつなぎでは渡れている |
 | (i) 跳ぶ行・答えない問い・答える前に移る問い・印の無い人の話・前に声の無い数 | 帳面に無い ID |
 | (i) 取消の2回目・印の無い取消・理由が声に無い取消・2行以上を消す取消・すぐ向きを戻す取消 | |
 
 最後の行が「アーカイブ」の1行なら、その行の (i) は数えない（7.4）。
+
+**承認済みの原稿を読み直すとき**（`script_writing.md` 7.7 の対照）は `--as-of <日付>:<あやとの返事のコメントID>` を渡す。
+その時点より後にできた帳面の項目に当たった ✕ は △ にする。`lint.py --as-of` と同じ理由——承認より後にできた決まりで落ちたものを、
+原稿の誤りと取り違えない（城塞 p1 は 2026-10-21 01:57 に承認され、F-037 は 09:28、F-039・F-040 は 11:57 にできた）。
 
 **△ だけなら通る。** △ は1回だけ直す候補で、2人目の批評役は呼ばない（`script_writing.md` 7 の上限）。
 """
@@ -46,6 +51,8 @@ import ledger as ledger_mod  # noqa: E402
 import lint as lint_mod  # noqa: E402
 
 TSUNAGI = {"題", "答", "反", "足", "前", "転", "外", "跳", "締"}
+# (i) で数える帳面の項目。(h) で挙げても、同じ行に (i) の当たりが無ければ △
+I_SIDE = {"F-039", "F-040"}
 
 
 def check_shape(d, schema: dict, where: str = "") -> list:
@@ -79,7 +86,37 @@ def check_shape(d, schema: dict, where: str = "") -> list:
     return errs
 
 
-def judge(d: dict, c, rows: list, led=None) -> dict:
+def in_force(item, as_of: tuple | None) -> bool:
+    """帳面の項目が、as_of（日付, コメントID か None）の時点で在ったか。
+
+    「言われた」の箇条のどれか1つが、as_of より前（日付が前・同じ日なら URL のコメントID が as_of 以下）なら在った。
+    同じ日のチャットでコメントID の無い箇条は、前か後か分からないので「在った」に倒す（落とす側に倒す）。
+    """
+    if as_of is None:
+        return True
+    day, cid = as_of
+    for ln in item.fields.get("言われた", "").splitlines():
+        m = ledger_mod.DATE.search(ln)
+        if not m:
+            continue
+        d = m.group(0)
+        ids = [int(x) for x in re.findall(r"#issuecomment-(\d+)", ln)]
+        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):
+            return True
+    return False
+
+
+def parse_as_of(s: str | None) -> tuple | None:
+    """`2026-10-21` か `2026-10-21:6306110329`（その日の、そのコメントの時点）。"""
+    if not s:
+        return None
+    day, _, cid = s.partition(":")
+    if not re.fullmatch(r"20\d\d-\d\d-\d\d", day) or (cid and not cid.isdigit()):
+        raise ValueError(f"--as-of は YYYY-MM-DD か YYYY-MM-DD:<コメントID>: {s}")
+    return day, (int(cid) if cid else None)
+
+
+def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
     """批評役の JSON（d）と原稿（c・rows）から、✕ と △ を数える。
 
     Returns:
@@ -148,6 +185,7 @@ def judge(d: dict, c, rows: list, led=None) -> dict:
         if in_range(x.get("line")) and not x.get("said_before"):
             put(x["line"], "(i) 数", "あとで拾う数・前提が、前の行の声に無い", i_side=True)
 
+    i_lines = {x[0] for x in fail + look if x[1].startswith("(i)")}
     for h in d.get("ledger", []):
         fid, ln = h.get("id"), h.get("line")
         if not in_range(ln, 0):
@@ -155,6 +193,15 @@ def judge(d: dict, c, rows: list, led=None) -> dict:
             continue
         if fid not in led.items:
             look.append((ln, "(h) ?", f"帳面に無い ID {fid}: {h.get('why', '')}"))
+            continue
+        if not in_force(led.items[fid], as_of):
+            # 承認済みの原稿を読み直すとき、承認より後にできた決まりで落ちたものを、原稿の誤りと取り違えない（lint の --as-of と同じ）
+            look.append((ln, f"(h) {fid}", f"as_of より後にできた決まり（{h.get('why', '')}）"))
+            continue
+        if fid in I_SIDE and ln not in i_lines:
+            # 行間（F-039）と二転三転（F-040）は (i) で数える項目。同じ行に (i) の当たりが無いのに (h) だけで挙げたのは、
+            # 批評役自身の行ごとのつなぎでは渡れている、ということ。印象の揺れを ✕ にしない（まとめ役が読む）
+            look.append((ln, f"(h) {fid}", f"(i) では渡れている（{h.get('why', '')}）"))
             continue
         put(ln, f"(h) {fid}", h.get("why", ""))
 
@@ -201,6 +248,8 @@ def main() -> int:
     ap.add_argument("script", help="見た原稿（script.txt）")
     ap.add_argument("--spec", help="spec.json（既定は原稿の隣）")
     ap.add_argument("--json", action="store_true", help="1行の JSON で出す")
+    ap.add_argument("--as-of", help="承認済みの原稿を読み直すとき: YYYY-MM-DD か YYYY-MM-DD:<あやとの返事のコメントID>。"
+                                    "その時点より後にできた帳面の項目に当たった ✕ を △ にする")
     a = ap.parse_args()
     try:
         d = json.loads(Path(a.critic).read_text(encoding="utf-8"))
@@ -212,11 +261,16 @@ def main() -> int:
     if errs:
         print("✕ 批評役の JSON が決まりの形でない: " + " / ".join(errs[:8]), file=sys.stderr)
         return 2
-    res = judge(d, c, rows)
+    try:
+        as_of = parse_as_of(a.as_of)
+    except ValueError as e:
+        print(str(e), file=sys.stderr)
+        return 2
+    res = judge(d, c, rows, as_of=as_of)
     if res["bad"]:
         print("✕ 批評役の JSON が原稿と合わない: " + " / ".join(res["bad"][:8]), file=sys.stderr)
         return 2
-    lint_fails = [h for h in lint_mod.lint(c)["hits"] if not h.look]
+    lint_fails = [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]
     nf = len(res["fail"]) + len(lint_fails)
     if a.json:
         print(json.dumps({"pass": nf == 0, "fail": len(res["fail"]) + len(lint_fails), "look": len(res["look"]),
