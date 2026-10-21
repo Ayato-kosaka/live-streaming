@@ -1,11 +1,11 @@
-"""**関所の合否を数える道具（`gate.py`）の見張り。** 要るのは Python だけ（批評役は回さない）。
+"""**関所の合否を数える道具（`critic_gate.py`）の見張り。** 要るのは Python だけ（批評役は回さない）。
 
-    python3 tools/shorts/script/gate_selftest.py
-    BREAK=jump python3 tools/shorts/script/gate_selftest.py   # 守りを1つ外した版で回す（対照の子）
+    python3 tools/shorts/script/critic_gate_selftest.py
+    BREAK=jump python3 tools/shorts/script/critic_gate_selftest.py   # 守りを1つ外した版で回す（対照の子）
 
 終了コード 0=通った / 1=落ちた / 2=数えるものが無い・外す字が見つからない（`docs/island-standards.md` §15）。
 
-`gate.py` は、批評役の JSON の数（跳ぶ行・取消・捨てた問い・帳面の ID・点）から合否を決める。
+`critic_gate.py` は、批評役の JSON の数（跳ぶ行・取消・捨てた問い・帳面の ID・点）から合否を決める。
 ここが緩むと、批評役が正しく見つけた跳びや取消を、関所が黙って通す。逆に厳しすぎると、
 【あやと】の行（あやとが書いた字）で落とし、あやとの決めたものを替える直しを作文者に回すことになる（`script_writing.md` 7.3）。
 
@@ -40,42 +40,42 @@ sys.path.insert(0, str(HERE.parent / "feedback"))
 import legs  # noqa: E402
 
 CUTS = {
-    "shape_required": ("gate.py", "            if k not in d:\n", "            if False:\n", {"shape"}, "必須の鍵を見ない"),
-    "shape_enum": ("gate.py", '        if "enum" in schema and d not in schema["enum"]:\n', "        if False:\n",
+    "shape_required": ("critic_gate.py", "            if k not in d:\n", "            if False:\n", {"shape"}, "必須の鍵を見ない"),
+    "shape_enum": ("critic_gate.py", '        if "enum" in schema and d not in schema["enum"]:\n', "        if False:\n",
                    {"shape"}, "enum に無い字を通す"),
-    "count": ("gate.py", "    if len(tsu) != n:\n", "    if False:\n", {"count"}, "つなぎの数を見ない"),
-    "jump": ("gate.py", '        if t == "跳":\n', "        if False:\n", {"jump"}, "跳の行を数えない"),
-    "archive_last": ("gate.py", "        if i_side and last_archive and line == n:\n            return\n", "",
+    "count": ("critic_gate.py", "    if len(tsu) != n:\n", "    if False:\n", {"count"}, "つなぎの数を見ない"),
+    "jump": ("critic_gate.py", '        if t == "跳":\n', "        if False:\n", {"jump"}, "跳の行を数えない"),
+    "archive_last": ("critic_gate.py", "        if i_side and last_archive and line == n:\n            return\n", "",
                      {"jump"}, "アーカイブの1行の (i) まで数える"),
-    "q_none": ("gate.py", "        if not ans or not in_range(ans) or ans <= ln:\n", "        if False:\n",
+    "q_none": ("critic_gate.py", "        if not ans or not in_range(ans) or ans <= ln:\n", "        if False:\n",
                {"question"}, "答えない問いを通す"),
-    "q_moved": ("gate.py", '        elif q.get("moved"):\n', "        elif False:\n", {"question"}, "答える前に移る問いを通す"),
-    "final_ask": ("gate.py", "        if final_ask:\n            continue\n", "", {"question"}, "終わりの問いまで答えを求める"),
-    "cancel_count": ("gate.py", "        if k >= 1:\n", "        if False:\n", {"cancel"}, "取消の2回目を通す"),
-    "cancel_mark": ("gate.py", '        if not (t.get("mark") or "").strip():\n', "        if False:\n", {"cancel"}, "印の無い取消を通す"),
-    "cancel_reason": ("gate.py", '        if not t.get("reason"):\n', "        if False:\n", {"cancel"}, "理由の無い取消を通す"),
-    "cancel_erases": ("gate.py", '        if len(t.get("erases") or []) >= 2:\n', "        if False:\n", {"cancel"}, "積んだ結論の取消を通す"),
-    "cancel_back": ("gate.py", '        if t.get("back"):\n', "        if False:\n", {"cancel"}, "すぐ戻す取消を通す"),
-    "hearsay": ("gate.py", '        if in_range(h.get("line")) and not h.get("marked"):\n', "        if False:\n",
+    "q_moved": ("critic_gate.py", '        elif q.get("moved"):\n', "        elif False:\n", {"question"}, "答える前に移る問いを通す"),
+    "final_ask": ("critic_gate.py", "        if final_ask:\n            continue\n", "", {"question"}, "終わりの問いまで答えを求める"),
+    "cancel_count": ("critic_gate.py", "        if k >= 1:\n", "        if False:\n", {"cancel"}, "取消の2回目を通す"),
+    "cancel_mark": ("critic_gate.py", '        if not (t.get("mark") or "").strip():\n', "        if False:\n", {"cancel"}, "印の無い取消を通す"),
+    "cancel_reason": ("critic_gate.py", '        if not t.get("reason"):\n', "        if False:\n", {"cancel"}, "理由の無い取消を通す"),
+    "cancel_erases": ("critic_gate.py", '        if len(t.get("erases") or []) >= 2:\n', "        if False:\n", {"cancel"}, "積んだ結論の取消を通す"),
+    "cancel_back": ("critic_gate.py", '        if t.get("back"):\n', "        if False:\n", {"cancel"}, "すぐ戻す取消を通す"),
+    "hearsay": ("critic_gate.py", '        if in_range(h.get("line")) and not h.get("marked"):\n', "        if False:\n",
                 {"hearsay", "i_side"}, "印の無い人の話を通す（i_side は人の話の当たりを (i) の印に使う）"),
-    "numbers": ("gate.py", '        if in_range(x.get("line")) and not x.get("said_before"):\n', "        if False:\n",
+    "numbers": ("critic_gate.py", '        if in_range(x.get("line")) and not x.get("said_before"):\n', "        if False:\n",
                 {"numbers"}, "前に声の無い数を通す"),
-    "ledger_unknown": ("gate.py", "        if fid not in led.items:\n", "        if False:\n", {"ledger"}, "帳面に無い ID まで ✕ にする"),
-    "score_low": ("gate.py", "        if v <= 2:\n", "        if False:\n", {"scores"}, "2 以下の点を通す"),
-    "score_three": ("gate.py", "        elif v == 3:\n", "        elif False:\n", {"scores"}, "3 の点を △ に出さない"),
-    "ayato": ("gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato"}, "【あやと】の行でも ✕ にする"),
-    "i_side": ("gate.py", "        if fid in I_SIDE and ln not in i_lines:\n", "        if False:\n",
+    "ledger_unknown": ("critic_gate.py", "        if fid not in led.items:\n", "        if False:\n", {"ledger"}, "帳面に無い ID まで ✕ にする"),
+    "score_low": ("critic_gate.py", "        if v <= 2:\n", "        if False:\n", {"scores"}, "2 以下の点を通す"),
+    "score_three": ("critic_gate.py", "        elif v == 3:\n", "        elif False:\n", {"scores"}, "3 の点を △ に出さない"),
+    "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato"}, "【あやと】の行でも ✕ にする"),
+    "i_side": ("critic_gate.py", "        if fid in I_SIDE and ln not in i_lines:\n", "        if False:\n",
                {"i_side"}, "(i) で渡れている行の F-039 も ✕ にする"),
-    "as_of": ("gate.py", "        if not in_force(led.items[fid], as_of):\n", "        if False:\n",
+    "as_of": ("critic_gate.py", "        if not in_force(led.items[fid], as_of):\n", "        if False:\n",
               {"as_of"}, "承認より後にできた決まりでも ✕ にする"),
-    "as_of_id": ("gate.py", "        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):\n",
+    "as_of_id": ("critic_gate.py", "        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):\n",
                  "        if d < day or d == day:\n", {"as_of"}, "同じ日の決まりの前後をコメントID で分けない"),
 }
 
 
 def setup(cut):
     c = CUTS[cut] if cut else None
-    return legs.load(HERE / "gate.py", "gate", (c[1], c[2]) if c else None)
+    return legs.load(HERE / "critic_gate.py", "gate", (c[1], c[2]) if c else None)
 
 
 SCRIPT = FIX / "approved/TDArug_te90_p1/script.txt"   # 20行。最後が「…アーカイブ見てね！」、その前が「みんなやったら…？」
@@ -232,7 +232,7 @@ def leg_cli(G):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "critic.json"
             p.write_text(d if isinstance(d, str) else json.dumps(d, ensure_ascii=False), encoding="utf-8")
-            return subprocess.run([sys.executable, str(HERE / "gate.py"), str(p), str(SCRIPT)], capture_output=True,
+            return subprocess.run([sys.executable, str(HERE / "critic_gate.py"), str(p), str(SCRIPT)], capture_output=True,
                                   text=True, timeout=60, check=False).returncode
     t = base()["tsunagi"]
     t[4] = "跳"

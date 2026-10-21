@@ -120,6 +120,18 @@ EXCUSES: dict[str, str] = {
         "外に出るうえに本番のアカウントを使うので、PR ごとには回さない。"
         "渡っていない月が無いかは `python/monthly_taps_selftest.py` が毎 PR で見る",
 
+    # ---- 手元の記録か、LLM を起こす（CI では回せない）----
+    "tools/shorts/script/critic.py":
+        "往復を知らない批評役を `claude -p` で1人起こし、返った JSON を "
+        "`tools/shorts/script/critic_gate.py` に掛ける道具。批評役を起こすのに "
+        "Claude の認証とトークンが要るので、PR ごとには回さない。合否を数える側"
+        "（`critic_gate.py`）は `critic_gate_selftest.py` が毎 PR で見る（2026-10-21・#1011）",
+    "tools/shorts/cost/tally.py":
+        "Claude Code の記録（`~/.claude/projects/*.jsonl` と担当ごとの出力）から、"
+        "担当ごとのトークンと時間を数える道具。記録はセッションの箱の中にしか無く、"
+        "CI には無いので回せない。数えかたは `tally_selftest.py` が作った記録で見る"
+        "（2026-10-21・#1011）",
+
     "tools/sprites/cardshot.mjs":
         "カードの一覧を撮って人が見る道具。撮れたことは出せることではないので、"
         "機械で合否を出さない（2026-09-19）",

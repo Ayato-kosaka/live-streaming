@@ -1,5 +1,5 @@
 {
-  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、gate.py が読む前に同じ形かを確かめる",
+  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる",
   "type": "object",
   "additionalProperties": false,
   "required": ["scores", "score_why", "tsunagi", "questions", "turns", "hearsay", "numbers", "ledger", "leave", "fixes", "verdict"],

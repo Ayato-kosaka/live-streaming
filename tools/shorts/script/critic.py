@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""**往復を知らない批評役を1人、`claude -p` で回し、合否を `gate.py` で数える。**
+"""**往復を知らない批評役を1人、`claude -p` で回し、合否を `critic_gate.py` で数える。**
 
     python3 tools/shorts/script/critic.py shorts/videos/<id>/p1/script.txt --ref vJo --about "…" --out <scratch>/critic/<名前>
     python3 tools/shorts/script/critic.py <script.txt> --ref HPJ --about "…" --out <dir> --runs <scratch>/critic/runs.jsonl
 
-終了コード: `gate.py` と同じ（0=通る / 1=落ちる / 2=回せない・JSON が読めない）。
+終了コード: `critic_gate.py` と同じ（0=通る / 1=落ちる / 2=回せない・JSON が読めない）。
 
 ## 何を渡し、何を渡さないか
 
@@ -12,7 +12,7 @@
 **道具を持たせない**（`--tools ""`）・**MCP も設定も読ませない**・**リポジトリの外の空の置き場で起こす**（CLAUDE.md を拾わせない）。
 往復の記録・ほかの批評役の点・作文者の3列の表は、1枚に入らないので、見ようがない（7.4 の「往復を知らない」を、字ではなく仕組みで守る）。
 
-Agent で回してもよい（その場合も、この1枚のパスだけを渡し、`SubagentHandback` に JSON だけを返させて、`gate.py` に掛ける）。
+Agent で回してもよい（その場合も、この1枚のパスだけを渡し、`SubagentHandback` に JSON だけを返させて、`critic_gate.py` に掛ける）。
 ただし Agent は、起こしただけで約6.9万トークン（Claude Code の手引き・道具・CLAUDE.md）を読む。`claude -p` は約2千。
 
 ## 控え
@@ -82,7 +82,7 @@ def main() -> int:
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--effort", default=EFFORT, help="low / medium / high / xhigh（空なら既定）")
     ap.add_argument("--timeout", type=int, default=1500)
-    ap.add_argument("--as-of", help="gate.py に渡す（承認済みの原稿を読み直すとき。`gate.py --help`）")
+    ap.add_argument("--as-of", help="critic_gate.py に渡す（承認済みの原稿を読み直すとき。`critic_gate.py --help`）")
     a = ap.parse_args()
 
     out = Path(a.out)
@@ -125,7 +125,7 @@ def main() -> int:
         print(f"批評役の返事が JSON でない: {str(raw.get('result'))[:300]}", file=sys.stderr)
         return 2
     (out / "critic.json").write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    g = subprocess.run([sys.executable, str(HERE / "gate.py"), str(out / "critic.json"), str(script)]
+    g = subprocess.run([sys.executable, str(HERE / "critic_gate.py"), str(out / "critic.json"), str(script)]
                        + (["--spec", str(spec)] if spec else []) + (["--as-of", a.as_of] if a.as_of else []),
                        capture_output=True, text=True, timeout=120, check=False)
     (out / "gate.txt").write_text(g.stdout + g.stderr, encoding="utf-8")

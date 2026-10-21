@@ -37,14 +37,14 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 | 担当 | 渡すもの | 渡さないもの |
 | --- | --- | --- |
 | 作文者 | `python3 tools/shorts/script/brief.py writer --video <id> --range <区間> --ref <参考> --about "…" -o <scratch>/brief.md` の1枚のパスと、書き出す先。頼む文の雛形は `references/writer_prompt.md`（1枚の中に入る） | 帳面の全文・参考の書き起こし全文・手引きの全文（効く所は1枚に入っている） |
-| 批評役 | **Agent で頼まない。** `python3 tools/shorts/script/critic.py <git show で書き出した script.txt> --ref <参考> --about "…" --out <scratch>/critic/<名前>` で回す（`brief.py critic` の1枚だけを `claude -p` に渡し、JSON を返させ、`gate.py` が合否を数える。`script_writing.md` 7.4） | 往復の記録・ほかの批評役の点・作文者の3列の表（1枚に入らないので、見ようがない） |
+| 批評役 | **Agent で頼まない。** `python3 tools/shorts/script/critic.py <git show で書き出した script.txt> --ref <参考> --about "…" --out <scratch>/critic/<名前>` で回す（`brief.py critic` の1枚だけを `claude -p` に渡し、JSON を返させ、`critic_gate.py` が合否を数える。`script_writing.md` 7.4） | 往復の記録・ほかの批評役の点・作文者の3列の表（1枚に入らないので、見ようがない） |
 | 書き出し | 帳面のパス（画・音・投稿の項目を `check.py` と人の目で当てる） | — |
 
 - 批評役は**1案に2人まで、直しは2回まで**（`script_writing.md` 7.3）。2人目は、1人目の ✕ に帳面・(h)・(i) が残ったときだけ。点の 3・離れる行の △ では呼ばない
 - 編集長の役は置かない（批評役の JSON が添削で、採るものを決めるのはまとめ役）
 - `--about` には、何の配信か・この案の狙いを1〜3行で書く。**あやとの返事や、前の批評役の結論を書かない**（往復を知らない担当でなくなる）
 - Agent でしか回せないときは、`brief.py critic -o <scratch>/critic_prompt.md` の1枚のパスだけを渡し、`SubagentHandback` に JSON だけを返させて、
-  `python3 tools/shorts/script/gate.py <json> <script.txt>` に掛ける
+  `python3 tools/shorts/script/critic_gate.py <json> <script.txt>` に掛ける
 
 ### ① 合格の条件
 

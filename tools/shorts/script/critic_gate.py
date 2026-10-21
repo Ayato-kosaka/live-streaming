@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """**批評役の JSON から、関所の合否を数える。** 批評役の「通る／通らない」の一言では決めない。
 
-    python3 tools/shorts/script/gate.py <critic.json> <script.txt>            # 隣の spec.json（印・題の札）も読む
-    python3 tools/shorts/script/gate.py <critic.json> <script.txt> --json     # まとめ役・記録用に1行の JSON
+    python3 tools/shorts/script/critic_gate.py <critic.json> <script.txt>            # 隣の spec.json（印・題の札）も読む
+    python3 tools/shorts/script/critic_gate.py <critic.json> <script.txt> --json     # まとめ役・記録用に1行の JSON
 
 終了コード **0=通る（✕ が無い） / 1=落ちる（✕ がある） / 2=JSON が読めない・型が違う・行の数が合わない**。
 
