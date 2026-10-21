@@ -151,12 +151,13 @@ MONTHS = ["January", "February", "March", "April", "May", "June", "July", "Augus
           "November", "December"]
 # 暦の見出し・矢印・日のます（2026-10-21 に写した。見出しは「October / 2026」、左の矢印が前の月）
 CAL = ".calendar-wrapper"
-CAL_HEAD = f"""(() => {{ const c = document.querySelector('{CAL}'); if (!c || !c.getBoundingClientRect().width) return null;
+CAL_HEAD = f"""(() => {{ const c = document.querySelector('{CAL}'); const r = c && c.getBoundingClientRect(); if (!r || !r.width || !r.height) return null;
   const m = c.querySelector('.month-title'), y = c.querySelector('.year-title');
   return [m ? m.innerText.trim() : null, y ? y.innerText.trim() : null]; }})()"""
 CAL_DAYS = f"""[...document.querySelectorAll('{CAL} .day-span-container > span.day')].map(e => [e.innerText.trim(), (e.className || '').toString()])"""
-# 時刻の選ぶ欄が開いているか
-TIME_OPEN = "[...document.querySelectorAll('.tiktok-timepicker-option-item')].some(e => e.getBoundingClientRect().width > 0)"
+# 時刻の選ぶ欄が開いているか。**幅では見ない。** 閉じた欄もますは DOM に残り、幅 84px のまま高さだけ 0 になる
+# （2026-10-21 に写した。幅で見ると、一度も開いていないうちから「開いている」になった）
+TIME_OPEN = "[...document.querySelectorAll('.tiktok-timepicker-option-item')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })"
 
 
 def month_steps(month_title, year_title, want_date):
@@ -314,8 +315,9 @@ def set_schedule(t, at, probe=False):
     key(t, "Escape", "Escape", 27)
     time.sleep(1)
     if t.js(TIME_OPEN):
-        # 翌日の日を押してから時刻を入れた回（2026-10-21）は、Escape でも開いたまま残った。欄をもう一度押すと閉じる。
-        # 開いたまま「Schedule」を押すと、1回目が欄を閉じるだけになりうるので、閉じたのを見てから先へ進む
+        # 翌日の日を押してから時刻を入れた回（2026-10-21）は、Escape でも開いたまま残った（写しで見た）。
+        # 欄をもう一度押すと閉じる（外を押しても閉じた）。開いたまま「Schedule」を押すと、1回目が欄を閉じるだけに
+        # なりうるので、閉じたのを見てから先へ進む
         t.click(time_in)
         time.sleep(1)
     still_open = bool(t.js(TIME_OPEN))
