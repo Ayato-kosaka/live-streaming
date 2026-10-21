@@ -20,6 +20,13 @@ analyze.py → seal.py → decrypt.py を通す。whisper はモデルを落と�
    残りは使える（段は failed、manifest は partial）
 7. clips の暗号文を小さく切っても（payload.enc.000 …）、つないで元に戻る。
    切れ端が1つ欠けたら開かない
+8. clips の見る用のシート: 合格した mp4 ごとに2秒に1コマ・コマの数と枚数が長さから
+   計算した数と合う・**各コマに写っている縞（コマ番号）が「区間の頭＋2秒×k」のコマ**で、
+   sheets.csv の from / to が配信の秒。横長の長い区間（65.5秒・頭に端数）は横長の格子で
+   2枚に均して分かれる。はみ出した区間（mp4 が無い）にはシートを作らない
+9. 見る用の小さな封（sheets.key.enc・sheets.enc）だけを別の置き場に写して
+   `decrypt.py --sheets` で開ける（mp4 の暗号文が手元に無くても開く）。開いたものは
+   シートと一覧だけで、元と1バイトも違わない。先に開いた mp4 は消さない
 """
 
 from __future__ import annotations
@@ -76,29 +83,30 @@ BAR, BITS, CH = 16, 12, 320
 CW = BAR * BITS
 
 
-def make_counter(d: Path, sec: int = 40) -> None:
+def make_counter(d: Path, sec: int = 40, ch: int = CH, vid: str = "dryrun00000") -> None:
     """コマ番号を縞で焼いた動画を src.mkv として置く（download.py の clips と同じ形）。
 
     キーフレームは5秒おき・B フレームあり。YouTube の配信と同じく疎らにして、
     頭を合わせるのに「手前のキーフレームから復号して、頼んだ秒より前を捨てる」道を通らせる。
     音は PCM（AAC のように頭に詰め物が入らず、時刻の起点が映像と揃う）。
+    `ch` を幅（192）より小さくすると横長になる（シートの格子が入れ替わるのを見る）。
     """
     d.mkdir(parents=True, exist_ok=True)
     p = subprocess.Popen(
         ["ffmpeg", "-v", "error", "-y",
-         "-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", f"{CW}x{CH}", "-r", "30", "-i", "-",
+         "-f", "rawvideo", "-pix_fmt", "yuv420p", "-s", f"{CW}x{ch}", "-r", "30", "-i", "-",
          "-f", "lavfi", "-i", f"sine=f=440:d={sec}",
          "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "veryfast", "-crf", "12",
          "-g", "150", "-bf", "2", "-c:a", "pcm_s16le", str(d / "src.mkv")],
         stdin=subprocess.PIPE)
-    chroma = bytes([128]) * ((CW // 2) * (CH // 2) * 2)
+    chroma = bytes([128]) * ((CW // 2) * (ch // 2) * 2)
     for k in range(sec * 30):
         row = b"".join(bytes([235 if (k >> b) & 1 else 16]) * BAR for b in range(BITS))
-        p.stdin.write(row * CH + chroma)
+        p.stdin.write(row * ch + chroma)
     p.stdin.close()
     if p.wait() != 0:
         raise RuntimeError("縞の動画が作れない")
-    (d / "src.info.json").write_text(json.dumps({"id": "dryrun00000", "duration": sec,
+    (d / "src.info.json").write_text(json.dumps({"id": vid, "duration": sec,
                                                  "format_id": "dryrun"}))
     (d / "fetch.json").write_text(json.dumps({"ok": True, "sec": 0, "finished_at": "x",
                                               "tries": [{"client": "dryrun"}]}))
@@ -115,6 +123,105 @@ def read_counter(mp4: Path) -> list[int]:
         mid = raw[i * size + (CH // 2) * CW: i * size + (CH // 2 + 1) * CW]
         ids.append(sum(1 << b for b in range(BITS) if mid[b * BAR + BAR // 2] > 125))
     return ids
+
+
+def sheet_counters(jpg: Path, cells: int, src_wh: tuple[int, int]) -> list[int]:
+    """シート1枚の各コマから、縞のコマ番号を読み戻す（make_sheets と同じ並びで当てる）。"""
+    from PIL import Image
+
+    from analyze import CLIP_SHEET
+    from media import sheet_cell, tile_size
+
+    w, h = src_wh
+    tw, th = tile_size(w, h, CLIP_SHEET["long"])
+    g = CLIP_SHEET["grid"]
+    grid = g if h >= w else (g[1], g[0])
+    # 縮めたときの倍率と、余りを埋めた黒の幅（_fit と同じ）
+    sc = min(tw / w, th / h)
+    ox, oy = (tw - round(w * sc)) // 2, (th - round(h * sc)) // 2
+    with Image.open(jpg) as im:
+        px = im.convert("L").load()
+        ids = []
+        for i in range(cells):
+            x, y = sheet_cell(i, grid, (tw, th))
+            yc = y + oy + int(h * sc / 2)
+            ids.append(sum(1 << b for b in range(BITS)
+                           if px[x + ox + int((b * BAR + BAR / 2) * sc), yc] > 125))
+    return ids
+
+
+def check_sheets(out: Path, fails: list[str], what: str, every: float = 2.0) -> dict:
+    """8. 合格した mp4 ごとのシート。コマの数・枚数・from / to・写っている縞を当てる。"""
+    import csv
+
+    from analyze import CLIP_SHEET
+
+    idx = json.loads((out / "index.json").read_text())
+    if not (out / "sheets.csv").exists():
+        fails.append(f"{what}: sheets.csv が無い（シートの段が回っていない）")
+        return {}
+    rows = list(csv.DictReader(open(out / "sheets.csv")))
+    cap = CLIP_SHEET["grid"][0] * CLIP_SHEET["grid"][1]
+    seen = {}
+    for c in idx["clips"]:
+        mine = [r for r in rows if int(r["clip"]) == c["n"]]
+        if not c.get("width"):
+            if mine:
+                fails.append(f"{what} {c['n']:02d}: mp4 が無い区間にシートがある")
+            continue
+        # 2秒ごとのコマは mp4 のコマ数（30fps）÷60 の切り上げだけある
+        n_want = -(-int(c["frames"]) // round(every * 30))
+        pages = -(-n_want // cap)
+        got = [int(r["frames"]) for r in mine]
+        if sum(got) != n_want or len(mine) != pages or (got and max(got) - min(got) > 1):
+            fails.append(f"{what} {c['n']:02d}: シート {got}（欲しいのは {n_want}コマを "
+                         f"{pages}枚に均す）")
+            continue
+        if [r["file"] for r in mine] != [f"sheets/{c['n']:02d}_{k + 1:02d}.jpg"
+                                         for k in range(pages)]:
+            fails.append(f"{what} {c['n']:02d}: シートの名前 {[r['file'] for r in mine]}")
+        k0, n0 = 0, round(c["start"] * 30)
+        for r in mine:
+            fr, to = float(r["from"]), float(r["to"])
+            want_from = c["start"] + every * k0
+            want_to = c["start"] + every * (k0 + int(r["frames"]) - 1)
+            if abs(fr - want_from) > 0.02 or abs(to - want_to) > 0.02:
+                fails.append(f"{what} {r['file']}: from/to {fr}/{to}（欲しいのは配信の "
+                             f"{want_from:g}/{want_to:g}秒）")
+            ids = sheet_counters(out / r["file"], int(r["frames"]), (c["width"], c["height"]))
+            want = [n0 + round(every * 30) * (k0 + i) for i in range(int(r["frames"]))]
+            if ids != want:
+                fails.append(f"{what} {r['file']}: 写っているコマ {ids[:4]}…（欲しいのは "
+                             f"{want[:4]}…＝区間の頭から2秒ずつ）")
+            k0 += int(r["frames"])
+        seen[c["n"]] = got
+    return seen
+
+
+def landscape_leg(root: Path, media: Path, pub: Path, fails: list[str]) -> None:
+    """8 の横長・長い区間。65.5秒（頭に端数）→ 33コマを横長の格子で 17＋16 に均す。"""
+    from plan import items_of
+
+    it = items_of({"mode": "clips", "videos": ["dryrunland0"], "pubkey": pub.read_text(),
+                   "ranges": ["0:00:01.5-0:01:07"]}, "dryrun")[0]
+    make_counter(media / it["key"], sec=70, ch=108, vid="dryrunland0")
+    (root / "litem.json").write_text(json.dumps(it))
+    lout = root / "lout"
+    subprocess.run([PY, str(HERE / "analyze.py"), str(root / "litem.json"), str(media),
+                    str(lout)], env={**os.environ, "RUNNER_TEMP": str(root)},
+                   capture_output=True)
+    st = json.loads((root / f"stages-{it['key']}.json").read_text())
+    if st["stages"].get("clips") != "ok" or st["stages"].get("sheets") != "ok":
+        fails.append(f"横長: 段が ok でない {st['stages']}")
+        return
+    got = check_sheets(lout, fails, "横長")
+    if got.get(1) != [17, 16]:
+        fails.append(f"横長の65.5秒が 17＋16 に均されていない: {got}")
+    from PIL import Image
+    with Image.open(lout / "sheets" / "01_01.jpg") as im:
+        # 横長は格子が入れ替わる（縦長 6×5 → 横長 5×6）。1コマは 320×180
+        if im.width != 5 * 320 + 6 * 4:
+            fails.append(f"横長のシートの幅 {im.width}（5列×320 のはず）")
 
 
 def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) -> None:
@@ -160,6 +267,13 @@ def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) 
         if c["sha256"] != seal_mod.sha256_file(p):
             fails.append(f"clips {c['n']:02d} の sha256 が index.json と合わない")
 
+    # 8. 見る用のシート（縦長・短い区間。はみ出した 05 には作らない）
+    if st["stages"].get("sheets") != "ok":
+        fails.append(f"シートの段が ok でない: {st['stages'].get('sheets')}")
+    seen = check_sheets(kout, fails, "縦長")
+    if sorted(seen) != [1, 2, 3, 4]:
+        fails.append(f"縦長: シートのある mp4 が {sorted(seen)}（01〜04 のはず）")
+
     # 7. 小さく切って封をし、つないで開く。切れ端が欠けたら開かない
     seal_mod.PART = 256 * 1024
     ksealed = root / "ksealed" / it["dest"]
@@ -183,6 +297,41 @@ def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) 
         for q in kout.rglob("*") if q.is_file())
     if not same:
         fails.append("clips を切れ端から開いたものが元と違う")
+
+    # 9. 見る用の小さな封だけを別の置き場に写して開く（mp4 の暗号文は手元に無い）
+    light = man.get("sheets") or {}
+    lnames = ["manifest.json", light.get("key_file", "?")] + [
+        f["name"] for f in light.get("encrypted_files") or []]
+    only = root / "klight" / it["dest"]
+    only.mkdir(parents=True)
+    for nm in lnames:
+        if (ksealed / nm).is_file():
+            shutil.copy(ksealed / nm, only / nm)
+    r6 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--sheets", "--out",
+                         str(root / "klopened"), str(only)], capture_output=True, text=True)
+    print(r6.stdout.strip())
+    lgot = root / "klopened" / it["dest"]
+    want = sorted(q.relative_to(kout) for q in kout.rglob("*") if q.is_file()
+                  and (q.parts[len(kout.parts)] in ("sheets", "sheets.csv", "index.json",
+                                                    "index.md", "meta.json")))
+    have = sorted(q.relative_to(lgot) for q in lgot.rglob("*") if q.is_file()) \
+        if lgot.exists() else []
+    if r6.returncode != 0 or not light or have != want or not any(
+            str(q).startswith("sheets/") for q in have) or any(
+            (lgot / q).read_bytes() != (kout / q).read_bytes() for q in have):
+        fails.append(f"見る用の封だけでシートが開けない: rc={r6.returncode} "
+                     f"開いた {[str(q) for q in have][:6]}…")
+    if light and light.get("sheets") != len(list((kout / "sheets").glob("*.jpg"))):
+        fails.append(f"manifest の sheets.sheets {light.get('sheets')} がシートの枚数と違う")
+    if light and any(f["bytes"] > 5 * 1024 * 1024 for f in light["encrypted_files"]):
+        fails.append("見る用の封が大きい（mp4 が混ざった？）")
+    # 先に全部開いた置き場に、あとからシートだけを開いても mp4 は消えない
+    r7 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--sheets", "--out",
+                         str(root / "kopened"), str(only)], capture_output=True, text=True)
+    if r7.returncode != 0:
+        fails.append(f"全部開いた置き場に、シートだけを開き直せない（{r7.stdout.strip()[-60:]}）")
+    elif len(list(got.glob("*.mp4"))) != 4:
+        fails.append("シートだけを開き直したら、先に開いた mp4 が消えた")
     (ksealed / names[1]).unlink()
     r5 = subprocess.run([PY, str(HERE / "decrypt.py"), "--key", str(priv), "--out",
                          str(root / "kopened2"), str(ksealed)], capture_output=True, text=True)
@@ -311,6 +460,7 @@ def main() -> int:
         fails.append(f"channel の並びか数が違う: {[(r['id'], r['view_count']) for r in rows]}")
 
     clips_leg(root, media, keys / "pub.pem", keys / "priv.pem", fails)
+    landscape_leg(root, media, keys / "pub.pem", fails)
 
     man = json.loads((sealed / item["dest"] / "manifest.json").read_text())
     print(json.dumps({k: man[k] for k in ("status", "stages", "counts", "bytes")},

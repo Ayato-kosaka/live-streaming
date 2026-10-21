@@ -10,7 +10,9 @@
 
 もう1つ、企画が決まったあとの**編集の素材**も同じ道で取る（`clips`）。頼んだ区間を
 1本ずつ、元の縦横・fps・音つきの mp4 に切ったもの。書き出し（`tools/shorts/render/`）が
-これを読む。
+これを読む。画を選ぶための**見る用のシート**（mp4 ごとに2秒に1コマ）も添え、シートだけを
+mp4 とは別の小さな封にも包むので、**mp4 の暗号文（数百MB）を落とさずにシートを読める**
+（下の「シートだけ開く」。#1011）。
 
 **このリポジトリは公開。** 出来たものは全部、依頼ファイルに入れた公開鍵で暗号化して
 作業枝の `shorts/.work/` に置く。平文で置くのは「何がいくつ・何バイト・成否」だけの
@@ -89,6 +91,9 @@ shorts/.work/channels/<@を外した名前>/<tab>/
     manifest.json   平文。状態と数だけ
     key.enc         RSA-OAEP(SHA-256) で包んだ AES 鍵・HMAC 鍵・IV（80バイト）
     payload.enc     中身の tar.gz を AES-256-CBC で暗号化したもの（45MB を超えたら .000 .001 … に切る）
+    sheets.key.enc  clips だけ。見る用の小さな封の鍵（key.enc とは別の鍵）
+    sheets.enc      clips だけ。シート（sheets/・sheets.csv）と一覧（index.json・index.md・meta.json）
+                    だけを同じ形で包んだもの。数MB（大きいほうの封にも同じものが入っている）
 ```
 
 **45MB で切るのは、GitHub が 100MB を超えるファイルの push を断る（50MB から警告）から。**
@@ -98,7 +103,8 @@ HMAC はつないだ全体に掛けてある。`push.sh` は 90MB 以上のフ�
 `manifest.json` の欄: `status`（ok / partial / failed）・`stages`（段ごとの ok / failed / skipped）・
 `counts`（シートの枚数・字幕と書き起こしの区間数・変わりめの数・一覧の本数・clips の本数と合格した本数と秒・ファイル数）・
 `bytes`（平文 / tar.gz / 暗号文）・`encrypted_files`（名前・バイト・sha256）・`hmac_sha256`・
-`pubkey_sha256`（どの鍵で包んだか）・`run`（Actions の run の URL）。
+`pubkey_sha256`（どの鍵で包んだか）・`run`（Actions の run の URL）・
+`sheets`（clips だけ。小さな封の鍵のファイル名・暗号文の一覧・HMAC・シートの枚数・ファイル数・バイト数）。
 **題名・字幕・理由の文面は入れない**（理由は暗号化した `run.json` の中）。
 
 ## 開きかた
@@ -115,6 +121,26 @@ python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/pri
 sha256 が合わないときは開かない（git の取り込みが途中なら、取り込み直す）。
 clips は数百MB になるので、全体をメモリに載せずに 1MB ずつ流して開く
 （復号した tar.gz は展開先の隣に一時ファイルで受けて、展開したら消す）。
+
+### シートだけ開く（clips。本編集の担当はまずこれ）
+
+**枝を git で取り込まない。** 取り込むと mp4 の暗号文（数百MB）も全部落ちてくる。
+`--branch` は GitHub の API（`gh api`）で、枝の先の commit から `manifest.json` と小さな封
+（`sheets.key.enc`・`sheets.enc`）だけを取り、`<out>/.sealed/` に置いてから開く。
+
+```bash
+K=<スクラッチパッド>/keys/ref_private.pem; O=<スクラッチパッド>/ingest
+python3 tools/shorts/ingest/decrypt.py --key $K --out $O --sheets --branch claude/serene-darwin-sf09tt
+#   → この鍵で包んだ clips を全部。1つだけなら末尾に shorts/.work/weSZaHeQVlI/clips のように足す
+ls $O/weSZaHeQVlI/clips/sheets/          # 01_01.jpg 01_02.jpg 02_01.jpg …（Read で開く）
+```
+
+- 開くと `<out>/<videoId>/clips/` に `sheets/NN_PP.jpg`・`sheets.csv`・`index.json`・`index.md`・`meta.json`。
+  **先に開いた mp4 は消さない**（`sheets/` だけを入れ替える）
+- 枝を取り込み済みなら `--branch` を外して置き場を指す（`--sheets shorts/.work/<id>/clips`）
+- 画が決まって mp4 が要るようになったら、前と同じく git で取り込んで `--sheets` 無しで開く
+- ほかの担当の鍵で包んだ置き場は、manifest だけ読んで飛ばす。`--sheets` で小さな封が無い回
+  （シートを作る前の回・archive など）は「シートの封が無い」で断る
 
 ## 中身（暗号化の中）
 
@@ -153,6 +179,8 @@ clips は数百MB になるので、全体をメモリに載せずに 1MB ずつ
 | --- | --- |
 | `NN_H-MM-SS_H-MM-SS.mp4` | 依頼に並べた区間を1本ずつ（`NN` は並べた順）。**0秒が配信の区間の頭のコマ。** 元の縦横・fps（CFR に揃える）・音つき。H.264（x264 CRF 18・preset slow・yuv420p）＋ AAC 192k ステレオ |
 | `index.json` | `clips[]` = n / range / start / end（配信の秒）/ file / duration / video_duration / audio_duration / width / height / fps / frames / bytes / sha256 / ok / why。`source`（取った形式・縦横・fps・符号化）と `encode`（切りかた） |
+| `sheets/NN_PP.jpg` | 見る用のシート。`NN` は mp4 の番号、`PP` は何枚目か。**切った mp4 から**2秒に1コマ（mp4 の0秒から）。各コマの下の帯が**配信の時刻**（端数のある区間は 0.1秒まで）と mp4 の中の秒（`+12s`。指示書の in / out はこれ × fps のコマ番号）。縦長は 6×5（1枚60秒）・横長は 5×6。60秒を超える区間は均して何枚かに分ける（31コマを 30＋1 にしない）。1コマの長辺 320 |
+| `sheets.csv` | clip（mp4 の番号）/ file / from_hms / to_hms / from / to（配信の秒）/ frames / bytes / clip_file / start |
 | `meta.json` | 上の表と同じ（題名・長さ・`original_max`＝YouTube にある最大の縦横）に、`ranges` を足したもの |
 | `run.json` / `logs/` | 段の成否と、yt-dlp・ffmpeg（`ffmpeg_clips.log`）のログ |
 
@@ -184,6 +212,20 @@ fps が元と同じ、のどれかが外れた mp4 は `ok:false` と `why` が�
 
 VAD は yk の 6,169秒のうち 3,080秒、hK の 12,593秒のうち 7,329秒を「声がある」として残した。
 
+clips の見る用のシート（2026-10-21・run 39660478161。フランス周遊 A の橋 2区間・ヴァンス 1区間、どれも 720x1280）:
+
+| | weSZaHeQVlI（45秒＋60秒） | hPZ2hAggOLE（45秒） |
+| --- | --- | --- |
+| シート | 2枚（23コマ・30コマ）0.78MB | 1枚（23コマ）0.30MB |
+| sheets の段 | — | **1.6秒**（切る clips の段は 25.4秒） |
+| 小さな封（sheets.enc） | **0.77MB** | **0.29MB** |
+| 大きいほうの封（mp4 入り） | 60.8MB（2つに切れた） | 22.6MB |
+
+`--sheets --branch` で2か所を取って開くまで **5.2秒**（取ったのは 1.1MB）。前は担当が枝を取り込み、
+mp4 の暗号文を開いてから手元の使い捨てで18区間のコマ一覧を作り直していた（コマ一覧だけで211秒）。
+帯の秒と画が合っていることは、ヴァンスの mp4 を開いて当てた（23コマとも、帯の秒のコマが
+mp4 のコマの中でいちばん近い。1秒ずらして当てると 22コマが外れる）。
+
 同じ5分（yk の 0:20:00〜0:25:00）をモデル違いで書き起こした秒（`bench/bench.md`）:
 
 | モデル | 書き起こし秒 | RTF | 所感 |
@@ -214,8 +256,12 @@ clips は、コマ番号を2進の縞で焼いた動画（キーフレーム5秒
 区間を切り、**切った mp4 の1コマ目が頼んだ秒のコマで、そこから1コマも抜けず重ならずに
 続くこと**を縞を読み戻して見る。動画の外にはみ出す区間が NG になって残りが使えること、
 暗号文を小さく切ってもつないで開けること・切れ端が1つ欠けたら開かないことも見る。
+clips のシートは、**シートの各コマに写っている縞が「区間の頭＋2秒×k」のコマ**であること
+（帯の秒と画が合っている）・コマの数と枚数・横長の長い区間（65.5秒・頭に端数）が横長の格子で
+17＋16 に均されること・小さな封の3つだけ（mp4 の暗号文無し）で `--sheets` が開けて、
+出てくるのがシートと一覧だけで元と1バイトも違わないことを見る。
 
-毎回の PR では、ffmpeg の要らない3本が回し役（`python3 python/selftest_runner.py`）から走る。
+毎回の PR では、ffmpeg の要らない4本が回し役（`python3 python/selftest_runner.py`）から走る。
 
 - `plan_selftest.py` — 依頼の読みかた。clips の18区間が1本の job・頼んだ順のまま・上限で断る、
   zoom と archive が変わっていない
@@ -224,7 +270,11 @@ clips は、コマ番号を2進の縞で焼いた動画（キーフレーム5秒
   60分で止まる・読めない → 時計の枠に戻る、と、plan / download が本当にここを通ること・
   ワークフローが `actions: read` を渡していること
 - `decrypt_selftest.py` — 切った暗号文の封と開け。つないで1バイトも違わない・切らない形も開く・
-  壊れた／書き換えた／欠けた／入れ替えた切れ端・違う鍵・git の中への展開を断る
+  壊れた／書き換えた／欠けた／入れ替えた切れ端・違う鍵・git の中への展開を断る。
+  clips の小さな封: 3つだけ（payload.enc 無し）で `--sheets` が開きシートと一覧だけが出る・
+  壊した／違う鍵／小さな封の無い回は断る・`--branch` が取りに行くのは manifest と小さな封だけ
+  （偽の GitHub で回す）
+- `push_selftest.py` — 作業枝に置く（push.sh）。f が小さな封（sheets.key.enc・sheets.enc）を置くこと
 
 ## 落ちたときの見方
 
@@ -303,5 +353,5 @@ cron が直近30日で 21:54〜01:48 UTC に来ていた）。
 - 動画の実物（mp4 / mkv / m4a）は平文で commit しない。取ったものはキャッシュで受け渡して、
   最後に消す。clips の mp4 も暗号文の中にだけ入る
 - チャット（視聴者の名前）は取らない（字幕は `ja-orig,ja` だけを頼む）
-- 置くのは `claude/` で始まる枝だけ。`push.sh` が `manifest.json / key.enc / payload.enc*`
-  以外が混ざっていないこと・90MB 以上のファイルが無いことを見てから置く
+- 置くのは `claude/` で始まる枝だけ。`push.sh` が `manifest.json / key.enc / payload.enc*` /
+  `sheets.key.enc / sheets.enc*` 以外が混ざっていないこと・90MB 以上のファイルが無いことを見てから置く

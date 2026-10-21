@@ -14,6 +14,8 @@ manifest.json の `stages` に状態の語だけが出る。
 
 clips だけは材料ではなく**編集に使う実物**（頼んだ区間ごとの mp4）を作る。
 読むための縮んだ画ではなく、元の縦横・fps・音つきのまま切る（build_clips）。
+画を選ぶための見る用のシート（mp4 ごとに2秒に1コマ）も添える（build_clip_sheets）。
+シートは seal.py が mp4 とは別の小さな封にも入れるので、mp4 を落とさずに読める。
 """
 
 from __future__ import annotations
@@ -701,6 +703,90 @@ def build_clips(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
     return {"clips": len(rows)}
 
 
+# clips の見る用のシート。**本編集の担当が mp4（数百MB）を開かずに画を選べるように**、
+# 切った mp4 ごとに2秒に1コマを並べる（#1011。前は担当が手元の使い捨てで毎回作り直し、
+# 18区間で211秒かけていた）。格子は縦長のときの「横×縦」で、横長なら入れ替える。
+# 6×5 は1枚60秒ぶん（フランス周遊 A の18区間は 40〜170秒、半分が60秒以下で1枚に収まる）。
+# Read は1枚を約115万画素まで縮めて見せるので、縦長の1コマは 約140×245 に見える
+# （顔の有無と景色の違いが分かる大きさ。archive の 5×4 より一回り小さい）。
+# 長辺 320 は archive と同じ（それより大きく作っても Read で見える大きさは変わらない）。
+CLIP_SHEET = {"every": 2.0, "grid": (6, 5), "long": 320, "q": 80}
+
+
+def _clock(t: float) -> str:
+    """配信の時刻。秒に端数がある区間（0:13:29.5 など）は 0.1秒まで書く。"""
+    if abs(t - round(t)) < 0.05:
+        return hms(round(t))
+    s = int(t)
+    return f"{s // 3600}:{s % 3600 // 60:02d}:{s % 60:02d}.{int((t - s) * 10) % 10}"
+
+
+def _offset(x: float) -> str:
+    """mp4 の中の秒（0 が区間の頭）。指示書の in / out はこれ × fps のコマ番号。"""
+    return f"+{x:.0f}s" if abs(x - round(x)) < 0.05 else f"+{x:.1f}s"
+
+
+def build_clip_sheets(it: dict, out: Path, ctx: dict, work: Path) -> dict:
+    """切った mp4 1本ごとに、2秒に1コマのシートを作る（`sheets/NN_PP.jpg` と `sheets.csv`）。
+
+    **コマは切った mp4 から取る。** 担当が使うのはその mp4 なので、元の配信から取ると
+    「シートに写っているのに mp4 には無い」がありうる。帯の時刻は「区間の頭（index.json の
+    start）＋ mp4 の中の本当の時刻（showinfo）」で、mp4 の0秒が区間の頭のコマであることは
+    build_clips が受け持つ（dryrun.py が縞を読み戻して見ている）。
+
+    1区間のコマが1枚に収まらなければ、何枚かに**均して**分ける（31コマを 30＋1 にしない）。
+    mp4 が無い区間（動画の外にはみ出したなど。clips の段で NG になっている）は飛ばす。
+    """
+    from media import grab_frames, make_sheets, tile_size, write_csv
+
+    rows = ctx.get("clips") or []
+    if not rows:
+        raise RuntimeError("切った mp4 の一覧が無い（clips の段を見る）")
+    every, cap = CLIP_SHEET["every"], CLIP_SHEET["grid"][0] * CLIP_SHEET["grid"][1]
+    logs = out / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    sheets, skipped = [], []
+    for r in rows:
+        mp4 = out / r["file"]
+        if not mp4.exists() or not r.get("width") or not r.get("height"):
+            skipped.append(r["n"])
+            continue
+        n, start = int(r["n"]), float(r["start"])
+        w, h = int(r["width"]), int(r["height"])
+        tile = tile_size(w, h, CLIP_SHEET["long"])
+        g = CLIP_SHEET["grid"]
+        grid = g if h >= w else (g[1], g[0])
+        log = work / f"_sheets_{n:02d}.log"
+        frames, pts = grab_frames(mp4, work / f"_clip_frames_{n:02d}", log,
+                                  every=every, tile=tile)
+        # 公開しないログ（暗号化の中）に、1コマ1行の showinfo を除いて残す
+        with open(logs / "ffmpeg_sheets.log", "a", encoding="utf-8") as lf:
+            lf.write(f"\n# {r['file']}\n" + "".join(
+                ln for ln in log.read_text(errors="ignore").splitlines(keepends=True)
+                if "Parsed_showinfo" not in ln))
+        if not frames:
+            raise RuntimeError(f"{n:02d} からコマが1枚も取れなかった")
+        times = [start + t for t in pts]
+        pages = -(-len(frames) // cap)
+        made = make_sheets(
+            frames, times, out / "sheets", grid=grid, tile=tile,
+            title=f"{it.get('video')} clip {n:02d} {_clock(start)}-{_clock(float(r['end']))}",
+            step_label=f"{every:g}s/frame", quality=CLIP_SHEET["q"], per=-(-len(frames) // pages),
+            labels=[f"{_clock(t)} {_offset(p)}" for t, p in zip(times, pts)],
+            name=lambda k, n=n: f"{n:02d}_{k + 1:02d}.jpg", clock=_clock)
+        for s in made:
+            s.update(clip=n, clip_file=r["file"], start=start)
+        sheets += made
+        shutil.rmtree(work / f"_clip_frames_{n:02d}", ignore_errors=True)
+        print(f"   {n:02d}  {len(frames)}コマ → {len(made)}枚  "
+              f"{sum(s['bytes'] for s in made) / 1e3:.0f}KB", flush=True)
+    write_csv(out / "sheets.csv", sheets,
+              ["clip", "file", "from_hms", "to_hms", "from", "to", "frames", "bytes",
+               "clip_file", "start"])
+    ctx.update(sheets=sheets, sheet_fps=1 / every)
+    return {"sheets": len(sheets), "skipped": skipped}
+
+
 # ---------------------------------------------------------------- index / run
 
 FILES = {
@@ -745,11 +831,26 @@ FILES = {
 }
 
 
+# clips のシートは archive / zoom と名前の付けかたと列が違う
+CLIP_FILES = {
+    "sheets/NNNN.jpg": ("sheets/NN_PP.jpg",
+                        "見る用のシート。`NN` は mp4 の番号、`PP` は何枚目か（1区間60秒ぶんで1枚、"
+                        "長ければ均して何枚か）。2秒に1コマ。各コマの下の帯が**配信の時刻**と、"
+                        "mp4 の中の秒（`+12s`。指示書の in / out はこれ × fps のコマ番号）。"
+                        "見出しに mp4 の番号・区間・範囲・刻み"),
+    "sheets.csv": ("sheets.csv",
+                   "clip（mp4 の番号）/ file / from_hms / to_hms / from / to（配信の秒）/ frames / "
+                   "bytes / clip_file（mp4 の名前）/ start（区間の頭。配信の秒）"),
+}
+
+
 def write_index(it: dict, out: Path, ctx: dict, stages: Stages) -> None:
     present = []
     for name, desc in FILES.items():
         p = out / name.split("/")[0] if "/" in name else out / name
         if p.exists():
+            if it["mode"] == "clips" and name in CLIP_FILES:
+                name, desc = CLIP_FILES[name]
             present.append(f"- `{name}` — {desc}")
     if ctx.get("clips"):
         ok = sum(1 for r in ctx["clips"] if r.get("ok"))
@@ -812,6 +913,7 @@ def main() -> int:
             st.run("meta", build_meta, it, mdir, out, ctx)
             if mode == "clips":
                 st.run("clips", build_clips, it, mdir, out, ctx)
+                st.run("sheets", build_clip_sheets, it, out, ctx, work)
             if mode in ("archive", "reference"):
                 st.run("captions", build_captions, it, mdir, out, ctx)
                 st.run("audio", build_audio, it, mdir, out, ctx, work)

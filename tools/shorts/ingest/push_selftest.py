@@ -25,6 +25,7 @@ clone した中から**本物の push.sh** を回す。箱の git の設定（�
 - e. origin が読めない（通信が落ちた）→ 「無い」と読まない。枝を作らずに落ちる。
      読むほうの URL だけを壊し、push のほうは本物に向けておく——「無い」と読み違えれば、
      本物に枝ができて見える
+- f. clips の見る用の小さな封（sheets.key.enc・sheets.enc）も置く。シートの平文は置かない
 
 終了コード 0=全部通った / 1=落ちたものがある / 2=回せない（git・bash・push.sh が無い）。
 """
@@ -342,6 +343,34 @@ def main() -> int:
         check(r.returncode != 0 and box.tip() is None and box.refs() == before
               and RECREATE not in r.stdout,
               f"e. 枝が無い・読めない → 「無い」と読まず、枝を作らない（{tail(r)}）")
+
+        # --- f. clips の見る用の小さな封（seal.py の sheets.key.enc・sheets.enc）も置く。
+        #        シートの平文（.jpg）は置かない
+        root = top / "f"
+        root.mkdir()
+        box = Box(root, env)
+        job = box.checkout("job")
+        dest = "vidF/clips"
+
+        def light(s: Path) -> None:
+            (s / "sheets.key.enc").write_bytes(os.urandom(384))
+            (s / "sheets.enc").write_bytes(os.urandom(2048))
+
+        rt = sealed(root, "f")
+        light(rt / "sealed")
+        r = run_push(job, job_env(env, rt, dest))
+        tip = box.tip()
+        check(r.returncode == 0 and tip is not None
+              and box.files(tip, f"shorts/.work/{dest}") == on_disk(rt)
+              and {"sheets.key.enc", "sheets.enc"} <= set(on_disk(rt)),
+              f"f. 見る用の小さな封（sheets.key.enc・sheets.enc）も一緒に置く（{tail(r)}）")
+        rt2 = sealed(root, "f2")
+        light(rt2 / "sealed")
+        (rt2 / "sealed" / "01_01.jpg").write_bytes(b"\xff\xd8")
+        before = box.refs()
+        r = run_push(job, job_env(env, rt2, dest))
+        check(r.returncode != 0 and box.refs() == before and "置かないはずのもの" in r.stdout,
+              f"f. シートの平文（01_01.jpg）が混ざったら何も push しない（{tail(r)}）")
 
     print(f"\nNG  作業枝に置く見張り {len(fails)}件落ちた" if fails else "\nOK  作業枝に置く見張り 全部通った")
     return 1 if fails else 0

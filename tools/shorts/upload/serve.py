@@ -11,6 +11,7 @@
 | `page` | 枠を署名し、1枚のページをプレビューチャンネル（7日）に配り、CORS と寿命の決まりをそろえ、ブラウザと同じ要求で上げてみる。ページの URL を返す |
 | `probe` | `uploads/<name>/` に届いた録画を、署名付き URL のまま ffprobe で読み、落とし直して sha256 を出す |
 | `drop` | `uploads/<name>/` を消す（消さなくても30日で消える） |
+| `drive` | 共有フォルダ（リンクで閲覧可）を落とし、書き出しに渡せる形に揃えて `uploads/<name>/` に置き、署名付き GET（3日）とコマ一覧を返す（`drive.py`） |
 
 結果は依頼の公開鍵で包み（`tools/shorts/ingest/seal.py` の形）、作業枝の
 `shorts/.work/upload/<name>/<action>/` に置く。**同じ commit で依頼ファイルを下ろす。**
@@ -40,7 +41,7 @@ from req import Bad, compare_files, norm_pem, out_branch  # noqa: E402
 
 ROOT = HERE.parents[2]
 REQ_DIR = "shorts/upload/"
-ACTIONS = ("page", "probe", "drop")
+ACTIONS = ("page", "probe", "drop", "drive", "cas")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 RETRIES = 8
 STALL_MS = 60_000
@@ -65,8 +66,18 @@ def read_request(req: dict, origin: str) -> dict:
     want_hash = req.get("hash", True)
     if isinstance(want_hash, str):
         want_hash = want_hash.lower() not in ("false", "0", "no", "")
+    folder = str(req.get("folder") or "")
+    if action == "drive":
+        import drive
+
+        if not drive.FOLDER.match(folder):
+            raise Bad(f"{origin}: drive には folder（共有フォルダの ID）が要る")
+    shas = req.get("sha256") or []
+    if action == "cas" and (not isinstance(shas, list) or not 1 <= len(shas) <= 300
+                            or not all(re.match(r"^[0-9a-f]{64}$", str(x)) for x in shas)):
+        raise Bad(f"{origin}: cas には sha256 の並び（1〜300）が要る")
     return {"name": name, "action": action, "pubkey": pem, "pubkey_sha256": fp, "nonce": nonce,
-            "slots": slots, "hash": bool(want_hash), "req": origin}
+            "slots": slots, "hash": bool(want_hash), "req": origin, "folder": folder, "sha256": shas}
 
 
 def requests_now() -> list[dict]:
@@ -233,6 +244,28 @@ def do_probe(req: dict) -> dict:
             "files": files, "ok": not bad, "problems": [f"{s} が読めない・md5 が合わない" for s in bad]}
 
 
+def do_cas(req: dict) -> dict:
+    """書き出しの置き場（render/cas/<sha256>）に前に上げたものを、署名付き GET（1日）で返す。
+
+    前の版の声や素材を作業箱で消したあとでも、同じバイト列を取り戻して次の版に使えるように
+    （声を作り直すと読みが変わる。#998 v3）。
+    """
+    import gcs
+
+    client, _ = gcs.client_and_creds()
+    b = client.bucket(gcs.BUCKET)
+    out = []
+    for h in req["sha256"]:
+        blob = b.get_blob(f"render/cas/{h}")
+        out.append({"sha256": h, "bytes": blob.size if blob else None,
+                    "url": blob.generate_signed_url(version="v4", method="GET",
+                                                    expiration=dt.timedelta(days=1)) if blob else None})
+    miss = [x["sha256"][:12] for x in out if not x["url"]]
+    print(f"  在った: {len(out) - len(miss)}本 / 無い: {len(miss)}本")
+    return {"format": "shorts-upload/1", "action": "cas", "name": req["name"], "files": out,
+            "ok": not miss, "problems": [f"無い: {m}" for m in miss]}
+
+
 def do_drop(req: dict) -> dict:
     import gcs
     import store
@@ -258,6 +291,9 @@ def seal_result(req: dict, body: dict | None, err: str | None, extra: dict, tmp:
     out.mkdir(parents=True)
     if body:
         seal.write_json(out / "result.json", body)
+    # drive はコマ一覧も一緒に包む（中身の写真なので平文では置かない）
+    if (tmp / "drive_out" / "sheets").is_dir():
+        shutil.copytree(tmp / "drive_out" / "sheets", out / "sheets")
     seal.write_json(out / "run.json", dict(extra, error=err, run=os.environ.get("RUN_URL")))
     dest = tmp / "sealed"
     item = {"key": f"upload__{req['name']}__{req['action']}", "mode": "upload", "dest": rel,
@@ -278,8 +314,15 @@ def one(req: dict, branch: str, tmp: Path) -> bool:
     body, err, extra = None, None, {}
     t0 = time.time()
     try:
-        body = (do_page(req, tmp) if action == "page" else do_probe(req) if action == "probe"
-                else do_drop(req))
+        if action == "drive":
+            import drive
+
+            body = drive.do_drive(req, tmp, tmp / "drive_out")
+        elif action == "cas":
+            body = do_cas(req)
+        else:
+            body = (do_page(req, tmp) if action == "page" else do_probe(req) if action == "probe"
+                    else do_drop(req))
     except Exception as e:  # noqa: BLE001  落ちたことも暗号化して返す（作業箱が待ち続けないように）
         err = f"{type(e).__name__}: {e}"
         extra["probe"] = getattr(e, "probe", None)
@@ -304,7 +347,8 @@ def main() -> int:
     reqs = requests_now()
     if cmd == "plan":
         gh = os.environ.get("GITHUB_OUTPUT")
-        line = (f"count={len(reqs)}\nffmpeg={'true' if any(r['action'] == 'probe' for r in reqs) else 'false'}\n"
+        line = (f"count={len(reqs)}\nffmpeg={'true' if any(r['action'] in ('probe', 'drive') for r in reqs) else 'false'}\n"
+                f"drive={'true' if any(r['action'] == 'drive' for r in reqs) else 'false'}\n"
                 f"node={'true' if any(r['action'] == 'page' for r in reqs) else 'false'}\n")
         if gh:
             with open(gh, "a", encoding="utf-8") as f:
