@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__td977-p1-v2",
+ "mode": "render",
+ "dest": "render/td977-p1-v2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/td977-p1-v2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 26156,
+  "tar_gz": 9745,
+  "encrypted": 9760
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 9760,
+   "sha256": "22bdf4c7a617ae9172149c69a8c5d019fd6635aca16fefef367bec0e902c47c0"
+  }
+ ],
+ "hmac_sha256": "7842c380dcbc695c001ae83918a7105d708da69dbebd684dac87b09cc90f9983",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-21T18:11:08+00:00",
+ "nonce": "43d7c3fe20778f2ee096f66e"
+}
