@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__r1011-c",
  "mode": "render",
- "dest": "render/r1011-c/inbox",
+ "dest": "render/r1011-c",
  "video": null,
  "channel": null,
  "request": "shorts/render/r1011-c.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2,
-  "tar_gz": 212,
-  "encrypted": 224
+  "plain": 69372,
+  "tar_gz": 19540,
+  "encrypted": 19552
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 224,
-   "sha256": "ccaaff113e9081ed459a301e0fde0ee1df186572a9d532cf6a49d89a8dc47cea"
+   "bytes": 19552,
+   "sha256": "5b51d426f32aa1518fc2021dc148e0e09bfaa277cc5d519b716a20f5c7f2ece1"
   }
  ],
- "hmac_sha256": "b7b1d13f134779ce10fcc42ed84263f7f9fc458e433267400c85d6dd409e111b",
+ "hmac_sha256": "8d6c59ac86ddd1a4f7be002a04ff7c3890753494fecc3bbd99eccf447bbf87fc",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-21T17:00:48+00:00",
+ "created_at": "2026-10-21T17:10:33+00:00",
  "nonce": "00b268801940048263c2d134"
 }
