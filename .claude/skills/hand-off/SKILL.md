@@ -166,3 +166,8 @@ python/admin/
 - worktree を切るなら `functions/node_modules` は symlink 可、
   **`tools/sprites/node_modules` は実体を複製**（CLAUDE.md の表。symlink だと1本落ちる）
 - ビルドは `tools/build.sh` から。**並列で `next build` を3本回すと箱が止まる**
+- **終わった担当の worktree は、その日のうちに片づける。** 担当の worktree
+  （`.claude/worktrees/agent-*`）は、担当が終わっても残る。2026-10-21 に30個・約8GB 溜まっていて、
+  ショートの暗号文（作業枝に1.5GB）を開いた担当が「unable to write file」で止まった（空き 1.3MB）。
+  片づける前に1本ずつ `git -C <wt> status --porcelain` が空なのを見て、`git worktree remove <wt>`
+  （`--force` は使わない。枝は残るのでコミットは消えない）。動いている担当と、ロックの掛かったものは残す
