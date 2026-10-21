@@ -8,6 +8,9 @@
 Firebase storage か GCS に置いたら？ パブリックバケット作っても良いし」「動画のレビューは
 非公開に無理にする必要ないので issue に書いて良い」。
 
+**Actions で書き出した本番の段（`tools/shorts/render/remote.py`）は、下見も report の job が同じ配り方で置く**
+（URL は要約 `summary.json` の `preview`。#1011）。`put.py` を使うのは、手元で書き出したものを見せるときだけ。
+
 ## 使い方（作業箱で）
 
 ```bash
