@@ -157,7 +157,7 @@
    "card": false,
    "big": false,
    "tts_text": "十二回乗ったら元取れる。",
-   "corner_note": "乗った回数 0/12",
+   "corner_note": "この動画で乗った回数 0/12",
    "mood": "plain"
   },
   {
@@ -179,7 +179,7 @@
    "fx": "",
    "card": false,
    "big": true,
-   "corner_note": "乗った回数 0/12",
+   "corner_note": "この動画で乗った回数 0/12",
    "big_style": "glow_yellow"
   },
   {
@@ -204,7 +204,7 @@
    "card": false,
    "big": false,
    "tts_text": "まずは親友おすすめの景色へ。どっち？　乗っちゃお！",
-   "corner_note": "乗った回数 1/12",
+   "corner_note": "この動画で乗った回数 1/12",
    "mood": "tense_tilt"
   },
   {
@@ -226,7 +226,7 @@
    "fx": "",
    "card": false,
    "big": true,
-   "corner_note": "乗った回数 1/12",
+   "corner_note": "この動画で乗った回数 1/12",
    "big_style": "brush_zoom"
   },
   {
@@ -250,7 +250,7 @@
    "fx": "画を2つ",
    "card": false,
    "big": false,
-   "corner_note": "乗った回数 1/12",
+   "corner_note": "この動画で乗った回数 1/12",
    "mood": "tense_shake"
   },
   {
@@ -277,7 +277,7 @@
    "card": false,
    "big": false,
    "tts_text": "着いた！待って待って、絵はがきやん！",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "up_pop"
   },
   {
@@ -302,7 +302,7 @@
    "card": false,
    "big": false,
    "tts_text": "って浮かれてカフェ覗いたら、コーヒー七百二十円。",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "tense_still"
   },
   {
@@ -325,7 +325,7 @@
    "card": false,
    "big": false,
    "tts_text": "コーヒー一杯が、",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "plain"
   },
   {
@@ -348,7 +348,7 @@
    "card": false,
    "big": true,
    "tts_text": "地下鉄一回に見えてきた。",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "big_style": "static_white"
   },
   {
@@ -371,7 +371,7 @@
    "card": false,
    "big": false,
    "tts_text": "やめとこ。",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "plain"
   },
   {
@@ -396,7 +396,7 @@
    "card": false,
    "big": false,
    "tts_text": "出まくる言うて、乗れたんこの二回、",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "tense_still"
   },
   {
@@ -419,7 +419,7 @@
    "card": false,
    "big": true,
    "tts_text": "しかも一回は逆！",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "big_style": "shake_red"
   },
   {
@@ -444,7 +444,7 @@
    "card": false,
    "big": false,
    "tts_text": "みんなは地下鉄七百円の街、引きこもる？出まくる？",
-   "corner_note": "乗った回数 2/12",
+   "corner_note": "この動画で乗った回数 2/12",
    "mood": "plain"
   }
  ]
