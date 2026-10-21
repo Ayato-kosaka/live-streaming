@@ -64,7 +64,10 @@ jobs:
       # DejaVu を見張りが同じ名前で置き直して使う（検査は字の形を見ない。和文は豆腐になる）。
       # OpenCV は **5 未満**に止める。顔の検出に使う Haar の型が OpenCV 5 で削られた
       # （5.0.0 の wheel に `cv2.data.haarcascades` の中身も `CascadeClassifier` も無い）。
-      # budoux は書き出しの字幕の折り返しが本番と同じになるように（無くても回る）。
+      # budoux は**要る**（書き出しが行を割り、字の改行の検査 line_breaks が割ってよい所を決める。無いと書き出しが止まる）。
+      # 版は 0.9.3 に止める。割ってよい所の線（仮名どうしの点）をこの版で測った。版が変わると文節の切れ目が変わり
+      # （0.10.0 は「あり？なし？」「手間すぎるやろ」を 0.9.3 と違う所で切った）、書き出しの Actions（shorts_render.yml）と
+      # 作業箱の版とも食い違う（tools/shorts/qa/linebreak.py の BUDOUX_PIN）。
       # PyYAML は取り込みの判定の見張り（`ingest/gate_selftest.py`）が自分のワークフローを
       # 読むのに要る。Selftests は入れているので、あちらでは落ちずにここだけ落ちていた
       - name: 道具を入れる（ffmpeg・OpenCV 4）
@@ -73,7 +76,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
           ffmpeg -version > /dev/null
           python -m pip install --upgrade pip
-          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow budoux PyYAML
+          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow 'budoux==0.9.3' PyYAML
 
       # 落ちた1本で止めない（`!cancelled()`）。全部回してから、まとめて落ちる
       - name: 品質チェックの見張り（音・字・形式）

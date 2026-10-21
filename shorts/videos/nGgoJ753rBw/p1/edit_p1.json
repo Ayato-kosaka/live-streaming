@@ -457,7 +457,8 @@
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/03.wav",
     "tts_text": "一回七百円やって！",
     "at": 170,
-    "big": "shake_white"
+    "big": "shake_white",
+    "split": "1回｜700円やって！"
    },
    {
     "text": "もう引きこもろ。",

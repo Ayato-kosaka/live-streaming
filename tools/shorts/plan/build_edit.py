@@ -526,9 +526,14 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         ro = rows_ov.get(str(i), {})
         n = row_frames(vf, holds[i], pres[i], i == len(rows) - 1, args)
         ln["at"] = t
+        if r.get("big_split") and not looks[i]:
+            sys.exit(f"{i}行目: big_split（人が決めた割れ目）は【大】の行だけに書ける")
         if looks[i]:
             # 【大】の行は字幕そのものを大きく（見た目の選びかたは big_looks_for）
             ln["big"] = looks[i]
+            if r.get("big_split"):
+                # budoux が見落とす切れ目を人が決める（「1回｜700円やって！」）。確かめるのは書き出し（render.py の manual_split）
+                ln["split"] = r["big_split"]
             if pres[i]:
                 # 字が薄い所から現れる見た目は、出きってから声を出す（声の頭で字が読めないと、字幕と声がずれる）。
                 # 画の切り替えと字の出はじめは行の頭、声はそのあと pre コマ（行の長さに足してある）。
@@ -548,10 +553,14 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             parts = []
             for pt in r["caption_parts"]:
                 q = {"text": pt["text"]}
+                if pt.get("split") and not pt.get("big"):
+                    sys.exit(f"{i}行目: caption_parts の split（人が決めた割れ目）は【大】の頁だけに書ける")
                 if pt.get("big"):
                     q["big"] = looks[i] if pt["big"] is True else pt["big"]
                     if q["big"] not in big_looks:
                         sys.exit(f"{i}行目: caption_parts の big {q['big']!r} は様式の big.looks に無い")
+                    if pt.get("split"):
+                        q["split"] = pt["split"]
                 elif pt.get("mood") and pt["mood"] != "plain":
                     if pt["mood"] not in mood_looks:
                         sys.exit(f"{i}行目: caption_parts の mood {pt['mood']!r} は様式の moods.looks に無い")

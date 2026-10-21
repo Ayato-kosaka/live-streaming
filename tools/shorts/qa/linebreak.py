@@ -42,6 +42,15 @@ budoux に任せる）と、書いた人が入れた空白・改行。
 7. **語の帳面 `NO_SPLIT` の語の中**。budoux が高い点で語を割った実例（「日の｜入り」3551・「間に｜合う」1773・
    「追い｜払って」1678・「は｜しご」1293）。新しく見つけたらここに足す
 
+## 人が決めた割れ目（【大】の字だけ）
+
+budoux は「1回700円やって！」「中身スカスカやないかい！」を1つの文節と読むので、上の決めだけだと割れず、
+1行で小さくなる（試写で 123px → 73px、74px → 54px）。そこで【大】の行に限り、人が `｜` で割れ目を決められる
+（指示書の行・頁の `split`、spec の行の `big_split`・`caption_parts` の頁の `split`。例「1回｜700円やって！」）。
+人の割れ目は budoux の切れ目でなくてよく、仮名どうしの点（3）も見ない。**ほかの固い決まり（1・2・4〜7）に
+当たる割れ目は、書き出しが止まり（`manual_problems`）、品質チェックも落とす**（「1回7｜00円やって！」）。
+時間割には `captions[].manual_breaks`（元の字の中の位置）として残る。
+
 点の数は budoux 0.9.3（書き出しの Actions と作業箱の版）で測った。budoux の型が変わって、ここで数えた点が
 budoux の `parse` の切れ目と食い違ったら、点を使う決め（3）を飛ばして `parse` の切れ目だけで割る（`measured` に出る）。
 """
@@ -52,6 +61,11 @@ import sys
 from functools import lru_cache
 
 WEAK_KANA = 500
+# 点の数（WEAK_KANA）と下の実例は、この版の budoux で測った。版が変わると文節の切れ目が変わる
+# （0.10.0 は「あり？なし？」「手間すぎるやろ」の切れ目が 0.9.3 と違った）。書き出しの Actions・自己テストの CI・
+# 作業箱を全部この版に揃える（違う版で回すと、品質チェックの要約に版の食い違いが出る）
+BUDOUX_PIN = "0.9.3"
+MARK = "｜"   # 人が決めた割れ目の印（【大】の字の split）
 # budoux が高い点で語の中を切れ目と言った実例（shorts/ の字を全部 budoux に通して、目で拾った）
 NO_SPLIT = ("日の入り", "日の出", "間に合", "追い払", "絵はがき", "正々堂々", "もうちょい", "はしご")
 
@@ -268,6 +282,46 @@ def reason(text: str, p: int) -> str:
     return dict(_analyse(text)[1]).get(p, "割ってよい所ではない")
 
 
+# ---------------------------------------------------------------- 人が決めた割れ目（【大】の字だけ）
+
+def parse_marked(marked: str) -> tuple[str, list[int]]:
+    """「1回｜700円やって！」→（「1回700円やって！」, [2]）。｜は人が決めた割れ目の印。"""
+    text, pos = "", []
+    for ch in marked:
+        if ch == MARK:
+            pos.append(len(text))
+        else:
+            text += ch
+    return text, pos
+
+
+def manual_problems(text: str, positions: list[int]) -> list[dict]:
+    """人が決めた割れ目のうち、**固い決まり**に当たるもの。
+
+    budoux の切れ目かどうかと、仮名どうしの点（WEAK_KANA）は見ない（budoux が見落とす切れ目
+    「1回｜700円やって！」「中身｜スカスカやないかい！」を人が足すための道なので）。
+    見るのは、数と単位・関西の打ち消しと言い切り・行頭行末の禁則・「……」の中・国旗・語の帳面と、
+    仮名1字だけの行を作らないこと。
+    """
+    out = []
+    ps = sorted(set(positions))
+    for p in ps:
+        if not 0 < p < len(text):
+            out.append({"pos": p, "shown": text, "why": "字の端（割れ目にならない）"})
+            continue
+        r = rule(text, p, None)
+        if r:
+            out.append({"pos": p, "shown": f"{text[:p][-6:]}｜{text[p:][:6]}", "why": r})
+    b = [0] + [p for p in ps if 0 < p < len(text)] + [len(text)]
+    for k in range(len(b) - 1):
+        seg = text[b[k]:b[k + 1]]
+        body = "".join(x for x in seg if x not in EDGE)
+        if len(body) == 1 and KANA.match(body):
+            p = b[k + 1] if b[k + 1] < len(text) else b[k]
+            out.append({"pos": p, "shown": f"{text[:p][-6:]}｜{text[p:][:6]}", "why": f"仮名1字だけの行（「{seg.strip()}」）"})
+    return out
+
+
 def chunks(text: str) -> list[str]:
     """text を、割ってよい位置だけで切った塊（書き出しはこれより細かく割らない）。"""
     if not text:
@@ -295,12 +349,18 @@ def placed(src: str, lines: list[str]) -> list[tuple[int, int]] | None:
     return spans
 
 
-def bad_breaks(src: str, lines: list[str]) -> tuple[list[dict], int] | None:
-    """描いた行の割れ目のうち、割ってよい所でないもの（と、見た割れ目の数）。行を元の字に当てられなければ None。"""
+def bad_breaks(src: str, lines: list[str], manual: list[int] | None = None) -> tuple[list[dict], int] | None:
+    """描いた行の割れ目のうち、割ってよい所でないもの（と、見た割れ目の数）。行を元の字に当てられなければ None。
+
+    manual は人が決めた割れ目（【大】の字の split。src の中の位置）。固い決まりに当たらなければ割ってよい所に足し、
+    当たれば（描いていなくても）落とす。
+    """
     sp = placed(src, lines)
     if sp is None:
         return None
-    ok = allowed(src)
+    ok = set(allowed(src))
+    man_bad = {m["pos"]: m for m in manual_problems(src, manual)} if manual else {}
+    ok |= {p for p in (manual or []) if p not in man_bad}
     bad = []
     for (a0, a1), (b0, b1) in zip(sp, sp[1:]):
         gap = src[a1:b0]
@@ -309,7 +369,12 @@ def bad_breaks(src: str, lines: list[str]) -> tuple[list[dict], int] | None:
         if any(p in ok for p in range(a1, b0 + 1)):
             continue
         p = b0 if gap else a1
-        bad.append({"pos": p, "shown": f"{src[a0:a1]}｜{src[b0:b1]}", "why": reason(src, p)})
+        why = f"人の指定（{MARK}）が固い決まりに当たる: {man_bad[p]['why']}" if p in man_bad else reason(src, p)
+        bad.append({"pos": p, "shown": f"{src[a0:a1]}｜{src[b0:b1]}", "why": why})
+    seen = {b["pos"] for b in bad}
+    for p, m in man_bad.items():
+        if p not in seen:
+            bad.append({"pos": p, "shown": m["shown"], "why": f"人の指定（{MARK}）が固い決まりに当たる: {m['why']}"})
     return bad, max(0, len(sp) - 1)
 
 
@@ -342,7 +407,7 @@ def plan_items(plan: dict) -> list[dict]:
             src = c0["src"]
         kind = "【大】" if c0.get("big") else ("感情の字幕" if c0.get("mood") else "字幕")
         out.append({"kind": kind, "src": src, "lines": lines, "from": c0.get("from", 0), "line": c0.get("line"),
-                    "legacy": g["legacy"]})
+                    "legacy": g["legacy"], "manual": c0.get("manual_breaks")})
     for t in plan.get("titles") or []:
         rows = t.get("lines") or []
         src = t.get("src") or "\n".join(rows)
@@ -376,7 +441,7 @@ def check(ctx) -> dict:
         return result("line_breaks", title, NA, "時間割に画面の字が1つも無い", thresholds=th)
     problems, rows, n_breaks, n_multi = [], [], 0, 0
     for it in its:
-        r = bad_breaks(it["src"], it["lines"])
+        r = bad_breaks(it["src"], it["lines"], it.get("manual"))
         at = round(it["from"] / fps, 2)
         if r is None:
             problems.append(f"{at}秒 {it['kind']}「{'／'.join(it['lines'])}」: 描いた行を元の字「{it['src']}」に当てられない")
@@ -386,14 +451,21 @@ def check(ctx) -> dict:
         n_breaks += nb
         n_multi += nb > 0
         rows.append({"kind": it["kind"], "at_s": at, "src": it["src"], "lines": it["lines"], "breaks": nb,
-                     "bad": bad, **({"legacy": True} if it.get("legacy") else {})})
+                     "bad": bad, **({"legacy": True} if it.get("legacy") else {}),
+                     **({"manual": it["manual"]} if it.get("manual") else {})})
         for b in bad:
             problems.append(f"{at}秒 {it['kind']}「{b['shown']}」: {b['why']}")
     legacy = sum(1 for it in its if it.get("legacy"))
-    m = {"budoux": budoux_version(), "items": len(its), "items_with_breaks": n_multi, "breaks": n_breaks,
-         "bad": len(problems), "legacy_items": legacy, "score_matches_parse": _SCORE_OK["ok"], "rows": rows}
+    manual = sum(1 for it in its if it.get("manual"))
+    ver = budoux_version()
+    m = {"budoux": ver, "budoux_pin": BUDOUX_PIN, "items": len(its), "items_with_breaks": n_multi,
+         "breaks": n_breaks, "manual_items": manual, "bad": len(problems), "legacy_items": legacy,
+         "score_matches_parse": _SCORE_OK["ok"], "rows": rows}
     summ = (f"字のかたまり {len(its)}・割れ目 {n_breaks}（{n_multi} かたまり）・語の途中の割れ {len(problems)}"
-            + (f"・元の字を書いていない古い時間割 {legacy}" if legacy else ""))
+            + (f"・人が割れ目を決めた【大】 {manual}" if manual else "")
+            + (f"・元の字を書いていない古い時間割 {legacy}" if legacy else "")
+            + (f"・budoux {ver}（決めた版は {BUDOUX_PIN}。割れ目が書き出しと違う版で決まっているかもしれない）"
+               if ver != BUDOUX_PIN else ""))
     return result("line_breaks", title, FAIL if problems else PASS, summ, measured=m, thresholds=th, problems=problems)
 
 

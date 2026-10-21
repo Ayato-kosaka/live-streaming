@@ -413,9 +413,47 @@ def chunks_of(para: str) -> list[str]:
     """
     LB = qa_linebreak()
     if not LB.available():
-        sys.exit("budoux が無い（pip install budoux==0.9.3）。無いと割ってよい所が決まらず、語の途中で割る")
+        sys.exit(f"budoux が無い（pip install budoux=={LB.BUDOUX_PIN}）。無いと割ってよい所が決まらず、語の途中で割る")
+    if not _LB_WARNED and LB.budoux_version() != LB.BUDOUX_PIN:
+        # 割り方の決め（仮名どうしの点）は決めた版で測った。違う版でも止めないが、割れ目が変わりうることは言う
+        _LB_WARNED.append(1)
+        print(f"注意: budoux {LB.budoux_version()}（決めた版は {LB.BUDOUX_PIN}）。行の割れ目が本番と違うかもしれない",
+              file=sys.stderr)
     out = LB.chunks(para)
     return glue_flags(out) if TL.has_flag(para) else out
+
+
+_LB_WARNED: list = []
+
+
+def manual_split(text: str, marked: str, where: str) -> tuple[list[str], list[int]]:
+    """人が決めた【大】の字の割れ目（「1回｜700円やって！」）を、行と位置にする。
+
+    budoux は「1回700円やって！」を1つの文節と読み、割らずに出すと 123px が 73px まで縮んだ。budoux が見落とす
+    切れ目は人が足す。ただし固い決まり（数と単位・関西の打ち消し・仮名1字の行・禁則・国旗・語の帳面）に当たる
+    指定は書き出さずに止める（品質チェックの line_breaks も同じ qa/linebreak.py で落とす）。
+    """
+    LB = qa_linebreak()
+    plain, pos = LB.parse_marked(marked)
+    if plain != text:
+        sys.exit(f"{where}: 割れ目の指定「{marked}」から {LB.MARK} を除いた字が、字幕「{text}」と違う")
+    if not pos:
+        sys.exit(f"{where}: 割れ目の指定「{marked}」に {LB.MARK} が無い")
+    bad = LB.manual_problems(text, pos)
+    if bad:
+        sys.exit(f"{where}: 割れ目の指定「{marked}」が割ってはいけない所に当たる: "
+                 + " / ".join(f"{b['shown']}（{b['why']}）" for b in bad))
+    b = [0] + pos + [len(text)]
+    return [text[b[k]:b[k + 1]] for k in range(len(b) - 1)], pos
+
+
+def split_attrs(text: str, marked: str | None, where: str) -> dict:
+    """【大】の字幕の時間割に足す、人が決めた割れ目（無ければ空）。split_lines は書き出しが使い、
+    manual_breaks（元の字の中の位置）は品質チェックが「人が決めた所」として読む。"""
+    if not marked:
+        return {}
+    segs, pos = manual_split(text, marked, where)
+    return {"split_lines": segs, "manual_breaks": pos}
 
 
 def glue_flags(chunks: list[str]) -> list[str]:
@@ -817,9 +855,12 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             mlooks = (style.get("moods") or {}).get("looks", {})
             for pt in ln["parts"]:
                 # src: 割った元の字（品質チェックが、描いた行の割れ目を割ってよい所と突き合わせる）
+                if pt.get("split") and not pt.get("big"):
+                    sys.exit(f"{i}行目: parts の split（人が決めた割れ目）は【大】の頁だけに書ける: {pt['text']}")
                 if pt.get("big"):
                     pages.append([pt["text"]])
-                    attrs.append({"big": pt["big"], "text": pt["text"], "src": pt["text"]})
+                    attrs.append({"big": pt["big"], "text": pt["text"], "src": pt["text"],
+                                  **split_attrs(pt["text"], pt.get("split"), f"{i}行目の parts")})
                 elif pt.get("mood") and pt["mood"] != "plain":
                     if pt["mood"] not in mlooks:
                         sys.exit(f"{i}行目: parts の mood {pt['mood']!r} は様式の moods.looks に無い")
@@ -833,6 +874,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
                         attrs.append({"src": pt["text"], **({"fit_size": fs} if fs != cap_st["size"] else {})})
         elif big:
             pages = [[text]]
+        elif ln.get("split"):
+            sys.exit(f"{i}行目: split（人が決めた割れ目）は【大】の行だけに書ける: {text}")
         elif ment:
             pages = mood_pages(text, ment, style)
         else:
@@ -876,6 +919,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             elif big:
                 cap["big"] = big
                 cap["text"] = text
+                cap.update(split_attrs(text, ln.get("split"), f"{i}行目"))
             elif ment:
                 cap["mood"] = mood
             cap.setdefault("src", text)
@@ -976,7 +1020,8 @@ def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[lis
 
 
 def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w: float, max_lines: int = 2,
-              wrap_below: int = 0, step: int = 2, fold_floor: int = 0) -> tuple[list[str], int]:
+              wrap_below: int = 0, step: int = 2, fold_floor: int = 0,
+              fixed: list[str] | None = None) -> tuple[list[str], int]:
     """text を幅 max_w に収める（行と大きさ）。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。
 
     縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（割ってよい所のうち、
@@ -989,6 +1034,17 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
     def fits(lines, s):
         # 絵は見積もりより両側 2〜3px 広くなる（2倍で描くときの余白と丸め）。その分を空けて比べる
         return TL.text_width(lines, lk, ImageFont.truetype(str(fpath), s)) + 6 <= max_w
+
+    if fixed:
+        # 人が決めた割れ目（manual_split で固い決まりを確かめたもの）。行は動かさず、入るいちばん大きい大きさだけ選ぶ
+        lines = [ln.rstrip("、。").strip() for ln in fixed]
+        for s in range(size, FIT_FLOOR - 1, -step):
+            if fits(lines, s):
+                if s < min_size:
+                    print(f"注意: 人が決めた割れ目「{'｜'.join(lines)}」は {min_size}px で幅 {max_w:.0f}px に入らないので、"
+                          f"{s}px にした", file=sys.stderr)
+                return lines, s
+        sys.exit(f"人が決めた割れ目「{'｜'.join(lines)}」は {FIT_FLOOR}px でも幅 {max_w:.0f}px に収まらない")
 
     ch = chunks_of(text)
 
@@ -1166,7 +1222,8 @@ def big_layout(it: dict, p: dict, style: dict, faces: list | None = None) -> tup
         lines, size = fit_lines(it["text"], lk, fpath, cap or ent.get("size", st["size"]),
                                 ent.get("min_size", st["min_size"]), max_w,
                                 ent.get("max_lines", st.get("max_lines", 2)),
-                                ent.get("wrap_below", 0), fold_floor=ent.get("fold_floor", 0))
+                                ent.get("wrap_below", 0), fold_floor=ent.get("fold_floor", 0),
+                                fixed=it.get("split_lines"))
         return lines, size, TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=seed)
 
     chosen = None

@@ -10,7 +10,7 @@ python3 tools/shorts/render/verify.py out.mp4 out.work  # 形式・カット位�
 ```
 
 要るもの: ffmpeg（libx264 入り。ubuntu-24.04 の apt の 6.1.1 で確かめた）、
-python3 の numpy・Pillow・budoux（**無いと止まる**。行を割ってよい所が決まらない）・OpenCV（`opencv-python-headless`。5.0.0 で確かめた）、
+python3 の numpy・Pillow・budoux（**0.9.3**。無いと止まる。行を割ってよい所が決まらない。版は `qa/linebreak.py` の `BUDOUX_PIN`）・OpenCV（`opencv-python-headless`。5.0.0 で確かめた）、
 仮ナレーションに open_jtalk（`open-jtalk open-jtalk-mecab-naist-jdic hts-voice-nitech-jp-atr503-m001`）。
 `fetch_fonts.sh` は書体と、顔の見つけ役（YuNet、MIT）の重みも落とす。
 
@@ -213,6 +213,7 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
 | `narration.tempo` | 声を音の高さを変えずに何倍速にするか（動画に1つ）。詰めた声を速め、もう一度頭と尻を詰める。**上限は様式の `narration.max_tempo`（いま 1.4）で、越えた指示書は書き出さずに止まる**（早送りに聞こえる。字を減らす。viral-shorts-creator の `script_writing.md` 6）。`build_edit.py` が様式の上限で組んだ指示書は越えないので、ここで止まるのは倍率を手で上げたときか、`--max-tempo` に様式より大きい値を渡したとき |
 | `narration.stretch` | 速める道具。既定は `rubberband`（Rubber Band の R3・`--fine --formant`。`apt-get install rubberband-cli`）。`atempo`（ffmpeg）は1本目の作り方を再現するときだけ。B の頭10行で測ると、atempo は 1.3倍で継ぎ目の周期の乱れ（jitter）が素の声より +21%、R3 は ±0%（`docs/island-misses.md` #285） |
 | `narration.lines[].big` | 【大】の行。字幕そのものを大きく、`style` の `big.looks[名前]` の見た目と動きで出す |
+| `narration.lines[].split` | 【大】の行（と `parts` の【大】の頁）の割れ目を人が決める。字幕の字に `｜` を入れたもの（`"1回｜700円やって！"`）。budoux が1つの文節と読む行（「1回700円やって！」「中身スカスカやないかい！」）は、決めなければ割らずに1行で小さくなる。budoux の切れ目でなくてよいが、固い決まり（数と単位の間・へん/やろ/ねん等の前・仮名1字の行・禁則・国旗の直後・語の帳面の中。`qa/linebreak.py`）に当たる指定は**書き出さずに止まる**（「1回7｜00円」）。行はそのとおりにして、入るいちばん大きい大きさだけを選ぶ。spec の行の `big_split`（`caption_parts` の頁は `split`）を `build_edit.py` が写す。品質チェックは時間割の `manual_breaks` で同じ決めを当てる |
 | `narration.lines[].parts` | 1行の字幕を、言う順に見た目の違う頁へ分ける。`[{"text": "1,200億かけて、"}, {"text": "中身スカスカやないかい！", "big": "shake_red"}]` なら前半はふつうの字幕、後半だけ【大】。`"mood": "chat"` でその頁だけコメントの札（チャットの文だけを札にして、前置き「配信のコメントで」はふつうの字幕）。頁の切り替えは長い字幕の頁と同じく、字数の比の見当にいちばん近い声の間。書いた行では行の `big`・`mood` は使わない。spec の行の `caption_parts` を `build_edit.py` が写す（`big: true` はその行の【大】の見た目） |
 | `audio` | `style` の `audio` の上書き（`duck_db` など。動画ごとに） |
 | `telops[]` | 強調の字（絵コンテの「中央: …」）。`{"from", "to", "text"}`。重ねてはいけない（同時に1つ）。`parts: [{"text", "at"}]` で言葉を順に足す |

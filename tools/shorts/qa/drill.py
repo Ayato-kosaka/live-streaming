@@ -46,6 +46,8 @@
 | clean を strips.py に通す | 行の帯が行の数だけ・絵と JSON が書ける | qa_video |
 | （時間割だけ）1行目の字幕を、試写で割れた字（「1回700｜円やって！」「作りす｜ぎやろ！」「1ミリも貢献して｜へんて！」・行の頭の読点）に差し替える ほか2本 | line_breaks（表は `linebreak_legs`） | qa |
 | （時間割だけ）同じ字を、割ってよい所で割る・割らない | line_breaks は pass | qa |
+| （時間割だけ）【大】の字に人が決めた割れ目「1回｜700円やって！」（manual_breaks）／同じ割れ目を人が決めずに／「1回7｜00円」「貢献して｜へんて」と決める | 通る／落ちる／落ちる | qa |
+| （関数だけ）人が決めた割れ目を書き出しに渡す（render.py の manual_split・fit_lines の fixed） | 正しい指定はそのとおり描き、固い決まりに当たる指定では止まる（`lb_render_manual`） | qa |
 | （関数だけ）書き出しの割り方（render.py の fit_lines・wrap）に、割れた字8つを【大】3つの見た目×4つの幅で割らせる | 割れ目が全部、割ってよい所にある（`lb_render`） | qa |
 | （時間割と元素材だけ）使った区間の元素材で、同じ絵を4コマずつ繰り返す ほか4本 | source_stutter（表は `stutter_legs`） | qa |
 | （関数だけ）配信の時刻の書きかた（299.97秒 → 0:05:00.0） | common.hms | qa |
@@ -466,10 +468,13 @@ def linebreak_legs(C, clean: Path, cwork: Path, box: Path) -> list[tuple[str, st
     import shutil as _sh
     base = json.loads((cwork / "plan.json").read_text())
 
-    def big(src, lines, legacy=False):
+    def big(src, lines, legacy=False, manual=None):
         c = {"line": 0, "big": "shake_white", "text": src, "lines": lines}
         if not legacy:
             c["src"] = src
+        if manual:
+            # 人が決めた割れ目（render.py が指示書の split から書く）
+            c["manual_breaks"] = manual
         return c
 
     def plain(src, lines):
@@ -492,6 +497,14 @@ def linebreak_legs(C, clean: Path, cwork: Path, box: Path) -> list[tuple[str, st
         ("lb_ok", "pass", [big("1回700円やって！", ["1回700円やって！"]), big("作りすぎやろ！", ["作りすぎやろ！"]),
                            big("1ミリも貢献してへんて！", ["1ミリも", "貢献してへんて！"]),
                            plain("ほんでカフェ覗いてみたら、コーヒー720円。", ["ほんでカフェ覗いてみたら", "コーヒー720円"])]),
+        # 人が決めた割れ目（【大】の split）。budoux の切れ目でない「1回｜700円」も、人が決めれば通る
+        ("lb_manual_ok", "pass", [big("1回700円やって！", ["1回", "700円やって！"], manual=[2]),
+                                  big("中身スカスカやないかい！", ["中身", "スカスカやないかい！"], manual=[2])]),
+        # 同じ割れ目でも、人が決めていなければ落ちる（budoux の切れ目ではない）
+        ("lb_unmarked", "fail", big("1回700円やって！", ["1回", "700円やって！"])),
+        # 人が決めても、固い決まりに当たれば落ちる（数と単位の間・関西の打ち消しの前）
+        ("lb_manual_bad", "fail", big("1回700円やって！", ["1回7", "00円やって！"], manual=[3])),
+        ("lb_manual_hen", "fail", big("1ミリも貢献してへんて！", ["1ミリも貢献して", "へんて！"], manual=[8])),
     ]
     out = []
     for name, want, caps in legs:
@@ -563,10 +576,33 @@ def linebreak_render_leg(fd: Path) -> list[tuple[str, bool, str]]:
             r = LB.bad_breaks(t, lines)
             if r is None or r[0]:
                 bad.append(f"字幕 幅{w}: {'｜'.join(lines)}")
-    return [("lb_render", not bad and n > 0,
-             f"書き出しの割り方 {n} 通り（【大】3つの見た目×{len(texts)}字×4幅、字幕の折り返し）で語の途中の割れ {len(bad)}"
-             + (f"・割らずに止まった {len(stopped)}" if stopped else "")
-             + (f"。{' / '.join(bad[:4])}" if bad else ""))]
+    out = [("lb_render", not bad and n > 0,
+            f"書き出しの割り方 {n} 通り（【大】3つの見た目×{len(texts)}字×4幅、字幕の折り返し）で語の途中の割れ {len(bad)}"
+            + (f"・割らずに止まった {len(stopped)}" if stopped else "")
+            + (f"。{' / '.join(bad[:4])}" if bad else ""))]
+
+    # 人が決めた割れ目（指示書の split）: 正しい指定はそのとおりの行で描き、固い決まりに当たる指定では止まる
+    ent = st["big"]["looks"]["shake_white"]
+    fpath = font(ent.get("font", st["big"]["font"]))
+    said = {}
+    for marked, want in (("1回｜700円やって！", "draw"), ("中身｜スカスカやないかい！", "draw"),
+                         ("1回7｜00円やって！", "stop"), ("1ミリも貢献して｜へんて！", "stop"), ("て｜ことで", "stop")):
+        text = marked.replace("｜", "")
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                segs, pos = R.manual_split(text, marked, "見張り")
+                lines, _ = R.fit_lines(text, ent.get("look", ent), fpath, ent.get("size", 100), ent.get("min_size", 60),
+                                       696, ent.get("max_lines", 2), ent.get("wrap_below", 0),
+                                       fold_floor=ent.get("fold_floor", 0), fixed=segs)
+            got = "draw" if lines == marked.split("｜") else f"別の行 {lines}"
+        except SystemExit:
+            got = "stop"
+        said[marked] = (got, want)
+    wrong = {k: v for k, v in said.items() if v[0] != v[1]}
+    out.append(("lb_render_manual", not wrong,
+                f"人が決めた割れ目 {len(said)} 通り: 正しい指定はそのとおり描き、固い決まりに当たる指定（1回7｜00円・"
+                f"貢献して｜へんて・仮名1字の行）は止まる" + (f"。違う: {wrong}" if wrong else "")))
+    return out
 
 
 def strips_legs(box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool, str]]:

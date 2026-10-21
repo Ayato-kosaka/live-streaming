@@ -71,7 +71,8 @@
    "card": false,
    "big": true,
    "tts_text": "一回七百円やって！",
-   "big_style": "shake_white"
+   "big_style": "shake_white",
+   "big_split": "1回｜700円やって！"
   },
   {
    "line": "もう引きこもろ。",
