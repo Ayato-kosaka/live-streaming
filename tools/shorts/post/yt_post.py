@@ -10,6 +10,7 @@
     python3 yt_post.py related <動画ID> <元の動画ID>   # 「関連動画」に元のアーカイブを付けて保存
     python3 yt_post.py publish <動画ID> [--at <UTC の ISO> [--dry]]  # 公開（--at で一般公開の予約。--dry は欄を入れてキャンセル）
     python3 yt_post.py status <動画ID>                # 題・説明・公開範囲・関連動画を読み直す
+    python3 yt_post.py delete <動画ID> <題> [--dry]   # 予約を差し替えるときに、古い（非公開の）動画を完全に削除する
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す（手元はそこだけ読む）。
 
@@ -459,6 +460,115 @@ def status(t, vid):
     result({"ok": True, "video": v})
 
 
+# ---- 予約の差し替え（古い動画を消す）----
+# YouTube は上げた動画のファイルを差し替えられない。予約中の版を直すときは、古い動画を消してから上げ直す。
+# 消すのは一覧の行の「オプション」→「完全に削除」→ 窓の「理解しました」にチェック →「完全に削除」（元に戻せない）
+VISIBLE = "(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })"
+ROW = "[...document.querySelectorAll('ytcp-video-row')].find(r => [...r.querySelectorAll('a')].some(a => (a.href || '').includes('/video/{vid}/')))"
+DEL_LABEL = r"/^(完全に削除|Delete forever)$/"
+
+
+def still_there(t, vid, title):
+    """消したあとの読み直し。ショートの一覧（下書き・非公開を含む）に、その ID の行がまだ在るか"""
+    hits, seen = dup(t, title)
+    return [h for h in hits if h["id"] == vid], seen
+
+
+def delete(t, vid, title, dry=False):
+    """古い動画（非公開・予約中）を消す。
+
+    - **公開済みは消さない**（見た人のいる動画。差し替えの対象ではない）
+    - **題が控えと1字でも違えば消さない**（ID の書き違いで別の動画を消さない）
+    - 行は ID（行の中のリンク）で探す。窓の字に題が無ければ押さない
+    - 消したあとは一覧で読み直し、その ID の行が無いのを見てから ok にする"""
+    try:
+        v = get_videos(t, [vid], mask=READ)
+        v = v[0] if v else {}
+    except RuntimeError as e:
+        # 消えた動画は get_creator_videos が失敗で返ることがある。一覧で読み直して決める
+        log("get_creator_videos failed:", str(e)[:200])
+        v = {}
+    log("before", v.get("videoId"), v.get("privacy"), json.dumps(v.get("scheduledPublishingDetails"), ensure_ascii=False))
+    if v.get("videoId") != vid:
+        left, seen = still_there(t, vid, title)
+        result({"ok": not left, "video_id": vid, "error": None if not left else "not_readable", "already_gone": not left, "seen": seen})
+        return
+    if (v.get("title") or "").strip() != title.strip():
+        result({"ok": False, "error": "title_mismatch", "video_id": vid, "title": v.get("title")})
+        return
+    if v.get("privacy") == "VIDEO_PRIVACY_PUBLIC":
+        result({"ok": False, "error": "public_video", "video_id": vid})
+        return
+    t.go(url_of("videos/short"), wait=8)
+    guard_login(t)
+    row = ROW.replace("{vid}", vid)
+    _wait(t, "document.querySelectorAll('ytcp-video-row').length > 0", 40)
+    if not t.js(f"!!({row})"):
+        result({"ok": False, "error": "row_not_found", "video_id": vid,
+                "rows": t.js("[...document.querySelectorAll('ytcp-video-row')].slice(0, 10).map(r => r.innerText.trim().slice(0, 60))")})
+        return
+    # 行の上に指を置くと、行の右に操作の印（オプションほか）が出る
+    c = t.center(row)
+    t.call("Input.dispatchMouseEvent", type="mouseMoved", x=c[0], y=c[1])
+    time.sleep(1.5)
+    btns = t.js(f"""[...({row}).querySelectorAll('ytcp-icon-button, button, [role=button]')].filter({VISIBLE})
+        .map(b => [b.tagName.toLowerCase(), b.id, b.getAttribute('aria-label') || (b.innerText || '').trim().slice(0, 20)])""")
+    log("row buttons:", btns)
+    opt = f"[...({row}).querySelectorAll('ytcp-icon-button, button, [role=button]')].filter({VISIBLE}).find(b => /^(オプション|Options)$/.test(b.getAttribute('aria-label') || ''))"
+    if not t.js(f"!!({opt})"):
+        shot(t, "yt_del_0_row")
+        result({"ok": False, "error": "options_not_found", "buttons": btns})
+        return
+    t.click(opt)
+    time.sleep(1.5)
+    items = t.js(f"[...document.querySelectorAll('tp-yt-paper-item, [role=menuitem], ytcp-ve')].filter({VISIBLE}).map(e => (e.innerText || '').trim()).filter(s => s && s.length < 30)")
+    log("menu:", items)
+    item = f"[...document.querySelectorAll('tp-yt-paper-item, [role=menuitem]')].filter({VISIBLE}).find(e => {DEL_LABEL}.test((e.innerText || '').trim()))"
+    if not t.js(f"!!({item})"):
+        shot(t, "yt_del_1_menu")
+        result({"ok": False, "error": "delete_item_not_found", "menu": items})
+        return
+    t.click(item)
+    time.sleep(2.5)
+    dlg = f"[...document.querySelectorAll('ytcp-dialog, tp-yt-paper-dialog, ytcp-confirmation-dialog')].filter({VISIBLE}).filter(e => [...e.querySelectorAll('ytcp-button, button')].some(b => {DEL_LABEL}.test((b.innerText || '').trim()))).pop()"
+    text = t.js(f"(() => {{ const d = {dlg}; return d ? d.innerText.trim().replace(/\\s+/g, ' ').slice(0, 600) : null; }})()")
+    log("dialog:", text)
+    shot(t, "yt_del_2_dialog")
+    # 窓には動画の題が出る（長い題は途中で切れて見えるが、innerText は全部）。題の頭が無ければ別の動画の窓とみて押さない
+    if not text or title.strip()[:12] not in text:
+        result({"ok": False, "error": "dialog_not_for_this_video", "dialog": text})
+        return
+    box = f"({dlg}).querySelector('ytcp-checkbox-lit, #checkbox, [role=checkbox]')"
+    if not t.js(f"!!({box})"):
+        result({"ok": False, "error": "confirm_checkbox_not_found", "dialog": text})
+        return
+    checked = f"(() => {{ const b = {box}; return b.hasAttribute('checked') || b.getAttribute('aria-checked') === 'true' || !!b.querySelector('[aria-checked=true]'); }})()"
+    if not t.js(checked):
+        t.click(box)
+        time.sleep(1)
+    btn = f"[...({dlg}).querySelectorAll('ytcp-button, button')].find(b => {DEL_LABEL}.test((b.innerText || '').trim()))"
+    enabled = t.js(f"(() => {{ const b = {btn}; return !!b && !b.hasAttribute('disabled') && b.getAttribute('aria-disabled') !== 'true'; }})()")
+    log("confirm checked", t.js(checked), "| button enabled", enabled)
+    shot(t, "yt_del_3_checked")
+    if not (t.js(checked) and enabled):
+        result({"ok": False, "error": "confirm_not_ready", "checked": t.js(checked), "enabled": enabled})
+        return
+    if dry:
+        t.js(f"(() => {{ const b = [...({dlg}).querySelectorAll('ytcp-button, button')].find(b => /^(キャンセル|Cancel)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()")
+        result({"ok": True, "dry": True, "video_id": vid, "dialog": text})
+        return
+    t.click(btn)
+    log("clicked delete forever")
+    left, seen = [vid], 0
+    for _ in range(12):
+        time.sleep(5)
+        left, seen = still_there(t, vid, title)
+        if not left:
+            break
+    shot(t, "yt_del_4_after")
+    result({"ok": not left, "video_id": vid, "deleted": not left, "left": left, "seen": seen})
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "dup":
@@ -486,5 +596,10 @@ if __name__ == "__main__":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)
         status(t, sys.argv[2])
+    elif cmd == "delete":
+        # python3 yt_post.py delete <動画ID> <題> [--dry]（題は控えの post_*.json の youtube.title）
+        t = studio(url_of("videos/short"), wait=6)
+        guard_login(t)
+        delete(t, sys.argv[2], sys.argv[3], dry="--dry" in sys.argv)
     else:
         sys.exit(__doc__)
