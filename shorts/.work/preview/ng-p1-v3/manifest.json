@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview__ng-p1-v3",
+ "mode": "preview",
+ "dest": "preview/ng-p1-v3",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/ng-p1-v3.json",
+ "status": "ok",
+ "stages": {
+  "up": "ok"
+ },
+ "counts": {
+  "files": 3
+ },
+ "bytes": {
+  "plain": 87534,
+  "tar_gz": 80744,
+  "encrypted": 80752
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 80752,
+   "sha256": "f291284f24495e8e605380d34ba54cb01abce001549fb4ea5d627fced2c39653"
+  }
+ ],
+ "hmac_sha256": "78a092d7437ffba85f4ae667c639499a283b5da19b756abae5b7c7f8f92b91f3",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39605623922",
+ "created_at": "2026-10-21T13:11:10+00:00",
+ "nonce": "a2f37f34e19df7dec2d608a9",
+ "place": "hosting"
+}
