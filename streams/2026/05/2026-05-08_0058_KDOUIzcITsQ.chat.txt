@@ -1,0 +1,10 @@
+# おわた。明日は13時から
+# https://www.youtube.com/watch?v=KDOUIzcITsQ
+# 開始: 2026-05-08 00:58 JST
+# 件数: 4
+# 時刻の出どころ: clock 4（msec=動画内の時刻 / clock=チャット横の時刻 / diff=書いた時刻−開始）
+
+[0:00:38] @ひめひめ-r9z: あやとさーん:party_popper:
+[0:00:51] @murasaki_ม่วง: said hi
+[0:01:05] @ひめひめ-r9z: 頑張って:chequered_flag::person_in_suit_levitating::chequered_flag:
+[0:02:03] @あやとグルメアプリ: ひめひめ 100 円、投げ銭ありやと！
