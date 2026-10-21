@@ -388,12 +388,33 @@ def speech_onsets(x: np.ndarray, spf: int, min_gap: int = 2, rel_db: float = -32
 
 # ---------------------------------------------------------------- 文字の折り返し
 
+_LB = []
+
+
+def qa_linebreak():
+    """品質チェックの「割ってよい所」（qa/linebreak.py）。書き出しは、そこで切った塊より細かく割らない。
+
+    同じ決めを2か所に書くと、片方だけ直されて「書き出しは割ってよいと読んだのに、チェックは語の途中と言う」が
+    起きる。だから写さずに読む（顔の式を qa/faces.py から読むのと同じ形）。
+    """
+    if not _LB:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("qa_linebreak", HERE.parent / "qa" / "linebreak.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _LB.append(mod)
+    return _LB[0]
+
+
 def chunks_of(para: str) -> list[str]:
-    try:
-        import budoux
-        out = budoux.load_default_japanese_parser().parse(para)
-    except ImportError:
-        out = list(para)
+    """行を割ってよい所で切った塊（budoux の文節から、数と単位・関西の打ち消し…の間を除いたもの。qa/linebreak.py）。
+
+    前は budoux が無いと1字ずつの塊にしていた（どこでも割れる＝語の途中で割る）。無ければ止める。
+    """
+    LB = qa_linebreak()
+    if not LB.available():
+        sys.exit("budoux が無い（pip install budoux==0.9.3）。無いと割ってよい所が決まらず、語の途中で割る")
+    out = LB.chunks(para)
     return glue_flags(out) if TL.has_flag(para) else out
 
 
@@ -439,18 +460,12 @@ def text_len(s: str, font: ImageFont.FreeTypeFont) -> float:
     return TL.advance(s, font, 0.0) if TL.has_flag(s) else font.getlength(s)
 
 
-def safe_cut(s: str, cut: int) -> int:
-    """s を cut 字目で割るとき、国旗の中か直後に当たるなら、国旗の手前へずらす（旗を割らない・国の名前から離さない）。"""
-    for m in TL.FLAG_RE.finditer(s):
-        if m.start() < cut <= m.end():
-            return m.start()
-    return cut
-
-
 def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
-    """文節（BudouX）で区切って、幅に収まるように詰める。
+    """割ってよい所（chunks_of）で区切って、幅に収まるように詰める。
 
     行末の「、」「。」は落とす。字幕の行末に句読点があると読みにくい。
+    **塊1つが幅を越えても、塊の中では割らない**（その行は幅をはみ出す）。前はそこで1字ずつ割っていて、
+    語の途中で割れた。はみ出したら、呼んだ側が字を小さくする（wrap_fit・paginate_fit）。
     """
     lines_out = []
     for para in text.split("\n"):
@@ -470,18 +485,28 @@ def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
                 cur = ch
             else:
                 cur = cand
-            # 文節1つが幅を超えるときは、1文字ずつ割る
-            while text_len(cur.rstrip("、。"), font) > max_px and len(cur) > 1:
-                cut = len(cur)
-                while cut > 1 and text_len(cur[:cut], font) > max_px:
-                    cut -= 1
-                # 国旗の手前へずらす。行頭の国旗しか入らない幅（0 に戻る）だけは、空の行を作らないよう元の位置で割る
-                cut = safe_cut(cur, cut) or cut
-                lines_out.append(cur[:cut])
-                cur = cur[cut:]
         if cur:
             lines_out.append(cur)
     return [ln.rstrip("、。").strip() for ln in lines_out if ln.rstrip("、。").strip()]
+
+
+def too_wide(lines: list[str], font: ImageFont.FreeTypeFont, max_px: float) -> bool:
+    return any(text_len(ln, font) > max_px for ln in lines)
+
+
+# 塊が幅に収まらないとき、字を小さくしてよい下限（px）。これでも収まらなければ、語の途中で割らずに止まる
+FIT_FLOOR = 24
+
+
+def wrap_fit(text: str, fpath: Path, size: int, max_px: float, floor: int = FIT_FLOOR) -> tuple[list[str], int]:
+    """wrap を、塊を割らずに幅に収まる大きさで（収まらない塊があれば、収まるまで 2px ずつ小さくする）。"""
+    for s in range(size, floor - 1, -2):
+        f = ImageFont.truetype(str(fpath), s)
+        lines = wrap(text, f, max_px)
+        if not too_wide(lines, f, max_px):
+            return lines, s
+    sys.exit(f"「{text}」は、文節を割らずには {floor}px でも幅 {max_px:.0f}px に収まらない（語の途中では割らない）。"
+             "字を減らすか、空白か改行を入れる")
 
 
 _SENT = re.compile(r".*?(?:[。！？!?]+[」』）)]*|$)")
@@ -534,6 +559,18 @@ def paginate(text: str, font: ImageFont.FreeTypeFont, max_px: int, max_lines: in
         if cur:
             flush(cur)
     return [pg for pg in pages if pg]
+
+
+def paginate_fit(text: str, fpath: Path, size: int, max_px: float, max_lines: int,
+                 floor: int = FIT_FLOOR) -> tuple[list[list[str]], int]:
+    """paginate を、塊を割らずに幅に収まる大きさで（はみ出す塊があれば、収まるまで 2px ずつ小さくする）。"""
+    for s in range(size, floor - 1, -2):
+        f = ImageFont.truetype(str(fpath), s)
+        pages = paginate(text, f, max_px, max_lines)
+        if not any(too_wide(pg, f, max_px) for pg in pages):
+            return pages, s
+    sys.exit(f"字幕「{text}」は、文節を割らずには {floor}px でも幅 {max_px:.0f}px に収まらない（語の途中では割らない）。"
+             "字を減らすか、空白を入れる")
 
 
 def reading_weight(s: str) -> float:
@@ -750,7 +787,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     narr = edit.get("narration", {})
     check_tempo(narr, style)
     cap_st = style["caption"]
-    cap_font = ImageFont.truetype(str(font_path(style, cap_st["font"])), cap_st["size"])
+    cap_path = font_path(style, cap_st["font"])
     inner = cap_st["max_width"] - 2 * cap_st["pad_x"] - 2 * cap_st.get("stroke", 0)
     lines, captions = [], []
     # 字幕の出はじめ（ふつうは声の頭。caption_from があればそこ。前の行の字幕はそこまで）
@@ -779,25 +816,30 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             pages, attrs = [], []
             mlooks = (style.get("moods") or {}).get("looks", {})
             for pt in ln["parts"]:
+                # src: 割った元の字（品質チェックが、描いた行の割れ目を割ってよい所と突き合わせる）
                 if pt.get("big"):
                     pages.append([pt["text"]])
-                    attrs.append({"big": pt["big"], "text": pt["text"]})
+                    attrs.append({"big": pt["big"], "text": pt["text"], "src": pt["text"]})
                 elif pt.get("mood") and pt["mood"] != "plain":
                     if pt["mood"] not in mlooks:
                         sys.exit(f"{i}行目: parts の mood {pt['mood']!r} は様式の moods.looks に無い")
                     for pg in mood_pages(pt["text"], mlooks[pt["mood"]], style):
                         pages.append(pg)
-                        attrs.append({"mood": pt["mood"]})
+                        attrs.append({"mood": pt["mood"], "src": pt["text"]})
                 else:
-                    for pg in paginate(pt["text"], cap_font, inner, cap_st["max_lines"]):
+                    pgs, fs = paginate_fit(pt["text"], cap_path, cap_st["size"], inner, cap_st["max_lines"])
+                    for pg in pgs:
                         pages.append(pg)
-                        attrs.append({})
+                        attrs.append({"src": pt["text"], **({"fit_size": fs} if fs != cap_st["size"] else {})})
         elif big:
             pages = [[text]]
         elif ment:
             pages = mood_pages(text, ment, style)
         else:
-            pages = paginate(text, cap_font, inner, cap_st["max_lines"])
+            # 文節が字幕の幅に入らなければ、割らずにその行の字を小さくする（fit_size。layout がそこから描く）
+            pages, fs = paginate_fit(text, cap_path, cap_st["size"], inner, cap_st["max_lines"])
+            if fs != cap_st["size"]:
+                attrs = [{"src": text, "fit_size": fs} for _ in pages]
         end = min(ln["at"] + frames + cap_st.get("hold_frames", 0), starts[i + 1], total)
         # 次の行がすぐ（bridge_frames 以内）なら、次の行の頭まで出しておく。行の頭はカットの切れ目なので、
         # 字幕が消えるのと画が変わるのが同じコマになる（7コマだけ字幕が消えてまた出る、のちらつきも無くなる）
@@ -836,6 +878,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
                 cap["text"] = text
             elif ment:
                 cap["mood"] = mood
+            cap.setdefault("src", text)
             captions.append(cap)
 
     title = edit.get("title")
@@ -843,16 +886,20 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     if title:
         look = title.get("look")
         ti_st = style["title_card"] if look == "card" else style["title"]
+        ti_size = None
         if look == "card":
             # 題の札は、題を決めた人の改行どおりに出す（大きさのほうを layout で合わせる）
             rows = [s for s in title["text"].split("\n") if s]
         else:
-            ti_font = ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"])
-            rows = wrap(title["text"], ti_font, ti_st["max_width"] - 2 * ti_st["pad_x"])
+            rows, ti_size = wrap_fit(title["text"], font_path(style, ti_st["font"]), ti_st["size"],
+                                     ti_st["max_width"] - 2 * ti_st["pad_x"])
         if len(rows) > ti_st.get("max_lines", 9):
             print(f"注意: タイトルが {len(rows)} 行（上限 {ti_st.get('max_lines', 9)}）", file=sys.stderr)
+        # src: 改行を残した元の題（品質チェックが、描いた行の割れ目を割ってよい所と突き合わせる）
         ti = {"from": title.get("from", 0), "to": min(title.get("to") or total, total), "lines": rows,
-              "text": title["text"].replace("\n", "")}
+              "text": title["text"].replace("\n", ""), "src": title["text"]}
+        if ti_size is not None and ti_size != ti_st["size"]:
+            ti["font_size"] = ti_size
         if look:
             ti["look"] = look
         if "line" in title:
@@ -902,59 +949,15 @@ def audio_cfg(p: dict, style: dict) -> dict:
 
 # ---------------------------------------------------------------- 題の札・【大】の字幕
 
-# 節の終わり、または3字以上のカタカナの語のあとにひらがな・漢字が続く所（「イエローバス｜やんか！」「ポテト｜入り！？」）
-# 「だらけ」の「だら」は節の終わりではない（「銅像だら｜けにした」と割っていた）
-_CLAUSE_END = re.compile(r"(だら(?!け)|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿])(?![はがをにへともでのや][、。！？…]|[はがをにへともでの]$))(?=.)")
-# 行の頭に来てはいけない字（句読点・閉じ括弧）
-_HEAD_PUNCT = re.compile(r"[、。，．！？…）」』]+")
-
-
-def fine_chunks(text: str) -> list[str]:
-    """文節（BudouX）を、節の終わり（〜たら・〜から・〜けど…）でもう一段割る。
-
-    BudouX は「ケバブ頼んだらまさかの」を1つの文節にする。題を2行に割るとき、それだと
-    「ケバブ頼んだらまさかの／事態！」しか選べない。「ケバブ頼んだら／まさかの事態！」を選べるようにする。
-    """
-    out = []
-    for ch in chunks_of(text):
-        pos = 0
-        for m in _CLAUSE_END.finditer(ch):
-            out.append(ch[pos:m.end()])
-            pos = m.end()
-        out.append(ch[pos:])
-    # 節の終わりのすぐ後ろが句読点だと、句読点が次の塊の頭に付いて行頭に出る
-    # （「覗いてみたら／、コーヒー720円」）。句読点は前の塊の尻へ戻す
-    res = []
-    for c in out:
-        m = _HEAD_PUNCT.match(c)
-        if res and m:
-            res[-1] += m.group(0)
-            c = c[m.end():]
-        if c:
-            res.append(c)
-    return res
-
-
-def halve_longest(ch: list[str]) -> list[str] | None:
-    """いちばん長い文節（5字以上）を、真ん中の字の切れ目で2つに割る（文節の切れ目だけでは大きく出せないときの最後の手）。
-
-    「ちょうどすぎる」→「ちょうど」「すぎる」。句読点の手前では割らない。
-    """
-    k = max(range(len(ch)), key=lambda i: len(ch[i].rstrip("、。！？…")))
-    c = ch[k]
-    body = len(c.rstrip("、。！？…"))
-    if body < 5:
-        return None
-    m = (body + 1) // 2
-    m = safe_cut(c, m)
-    if m <= 0:
-        return None
-    return ch[:k] + [c[:m], c[m:]] + ch[k + 1:]
+# 前はここに、budoux の文節をもう一段細かく割る `fine_chunks`（節の終わり〜たら・〜から、カタカナの語の後ろ）と、
+# 大きく出せないときに「いちばん長い文節を真ん中の字で割る」`halve_longest` があった。試写で語の途中の割れが出た
+# （「1回700｜円やって！」「作りす｜ぎやろ！」「北マケドニア｜さん」「中身スカスカ｜やないかい」。2026-10-21）。
+# 割ってよい所は qa/linebreak.py の1か所で決め、ここではそれより細かく割らない。入らなければ字を小さくする
 
 
 def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[list[str]]:
-    """text を文節（fine_chunks）の切れ目で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。"""
-    ch = ch or fine_chunks(text)
+    """text を割ってよい所（chunks_of）で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。"""
+    ch = ch or chunks_of(text)
     if n == 1:
         return [[text]]
     if len(ch) < n:
@@ -976,30 +979,30 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
               wrap_below: int = 0, step: int = 2, fold_floor: int = 0) -> tuple[list[str], int]:
     """text を幅 max_w に収める（行と大きさ）。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。
 
-    縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（文節の切れ目のうち、
+    縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（割ってよい所のうち、
     いちばん大きく出せる割り方）。2行でも fold_floor に届かず max_lines が 3 以上なら3行。どれも届かないなら、
     いちばん大きく出せる行数にする。
+    **割ってよい所（chunks_of）でしか割らない。** min_size でもどの割り方も入らなければ、割らずに字を
+    FIT_FLOOR まで小さくする（前は「いちばん長い文節を真ん中の字で割る」「1字ずつ割る」をしていて、
+    「1回700｜円やって！」「作りす｜ぎやろ！」と語の途中で割れた）。それでも入らなければ止まる。
     """
     def fits(lines, s):
         # 絵は見積もりより両側 2〜3px 広くなる（2倍で描くときの余白と丸め）。その分を空けて比べる
         return TL.text_width(lines, lk, ImageFont.truetype(str(fpath), s)) + 6 <= max_w
 
-    def best(lines):
-        for s in range(size, min_size - 1, -step):
-            if fits(lines, s):
-                return s
-        return None
+    ch = chunks_of(text)
 
-    results = []
-    chunk_sets = [fine_chunks(text)]
-    forced = halve_longest(chunk_sets[0]) if fold_floor else None
-    if forced:
-        chunk_sets.append(forced)
-    for ch in chunk_sets:
-        for n in range(1, max(1, max_lines) + 1):
-            cands = split_candidates(text, n, ch)
+    def search(lo: int, nmax: int):
+        def best(lines):
+            for s in range(size, lo - 1, -step):
+                if fits(lines, s):
+                    return s
+            return None
+
+        results = []
+        for n in range(1, max(1, nmax) + 1):
             top = None
-            for c in cands:
+            for c in split_candidates(text, n, ch):
                 s = best(c)
                 # 同じ大きさなら、行の幅がそろう割り方（読む目が戻りやすい）
                 if s is not None and (top is None or s > top[0] or (s == top[0] and _spread(c, lk, fpath, s) < top[2])):
@@ -1009,11 +1012,22 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
             floor = wrap_below if n == 1 else fold_floor
             if top and top[0] >= floor:
                 return top[1], top[0]
-    if results:
-        n, s, c = max(results, key=lambda r: (r[1], -r[0]))
-        return c, s
-    f = ImageFont.truetype(str(fpath), min_size)
-    return wrap(text, f, max_w - 2 * TL.margin_of(lk, min_size)), min_size
+        if results:
+            n, s, c = max(results, key=lambda r: (r[1], -r[0]))
+            return c, s
+        return None
+
+    got = search(min_size, max_lines)
+    if got is None:
+        # 前の最後の手（min_size で1字ずつ折る）と同じく、まず1行増やして min_size を守る。だめなら小さくする
+        got = search(min_size, max_lines + 1) or (search(FIT_FLOOR, max_lines + 1) if min_size > FIT_FLOOR else None)
+        if got is not None:
+            print(f"注意: 「{text}」は文節を割らないと {max_lines}行・{min_size}px で幅 {max_w:.0f}px に入らないので、"
+                  f"{len(got[0])}行・{got[1]}px にした", file=sys.stderr)
+    if got is None:
+        sys.exit(f"「{text}」は、文節を割らずには {FIT_FLOOR}px でも幅 {max_w:.0f}px に収まらない（語の途中では割らない）。"
+                 "字を減らすか、空白か改行を入れる")
+    return got
 
 
 def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
@@ -1022,11 +1036,12 @@ def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
     return max(ws) - min(ws)
 
 
-def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
+def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None) -> Image.Image:
     """題の札。黒い箱の中に、題の行ごとに様式の lines[k] の見た目で字を積む（参考の題は1行目と2行目で見た目が違う）。
 
     題の改行（\\n）ごとに1つの見た目。箱の幅に収まる大きさまで縮め、2つ目からは縮めすぎるなら文節で2行に割る。
     lines が無い古い様式では、全部の行を1つの見た目で出す。
+    drawn を渡すと、実際に描いた行（題の改行のうえに文節で折った行）を入れて返す（品質チェックが割れ目を見る）。
     """
     parts = [s for s in text.split("\n") if s]
     pad_x, pad_y = st.get("pad", [st.get("pad_x", 30), st.get("pad_y", 20)])
@@ -1037,6 +1052,8 @@ def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
 
     def build(shrink: int) -> list[Image.Image]:
         imgs = []
+        if drawn is not None:
+            drawn.clear()
         for k, part in enumerate(parts):
             ls = styles[min(k, len(styles) - 1)]
             fpath = font_path(style, ls["font"])
@@ -1046,6 +1063,8 @@ def title_card_img(text: str, st: dict, style: dict) -> Image.Image:
             top = max(ls.get("min_size", 40), ls["size"] - shrink)
             lines, size = fit_lines(part, lk_fit, fpath, top, min(top, ls.get("min_size", 40)), inner,
                                     ls.get("max_lines", 2), min(top, ls.get("wrap_below", 0)))
+            if drawn is not None:
+                drawn.extend(lines)
             im = TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=TL.text_seed(part))
             if im.width > st["max_width"]:
                 cut = (im.width - st["max_width"]) // 2
@@ -1095,7 +1114,8 @@ def mood_pages(text: str, ment: dict, style: dict) -> list[list[str]]:
     if fits(lines):
         return [lines]
     m_inner = maxw - 2 * TL.margin_of(TL.look_of(lk), s0) - 6
-    return paginate(text, f_min, m_inner, nmax)
+    # 文節が min_size でも1行に入らなければ、割らずに小さくする（大きさは layout がその行に合わせて選び直す）
+    return paginate_fit(text, fpath, s0, m_inner, nmax)[0]
 
 
 def anim_scale_max(anim: dict | None) -> float:
@@ -1533,10 +1553,13 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
     for i, it in enumerate(p["titles"]):
         if it.get("look") == "card":
             ti_st = style["title_card"]
-            img = title_card_img("\n".join(it["lines"]), ti_st, style)
+            drawn: list[str] = []
+            img = title_card_img("\n".join(it["lines"]), ti_st, style, drawn)
+            it["drawn"] = drawn   # 題の改行のうえに、札の幅で文節に折った行（品質チェックが割れ目を見る）
         else:
             ti_st = style["title"]
-            img = card(it["lines"], ti_st, ImageFont.truetype(str(font_path(style, ti_st["font"])), ti_st["size"]))
+            img = card(it["lines"], ti_st, ImageFont.truetype(str(font_path(style, ti_st["font"])),
+                                                              it.get("font_size", ti_st["size"])))
         top = ti_st["top"]
         path = work / f"title_{i:02d}.png"
         img.save(path)
@@ -1548,10 +1571,13 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
 
     for i, it in enumerate(p.get("notes", [])):
         st = style["note"]
-        nfont = ImageFont.truetype(str(font_path(style, st["font"])), st["size"])
         # 注は1行のまま描いていたので、長い注（「お店の情報を取ってくるサービスの料金」）が画面の右の外へ出た。
-        # 様式の max_width に収まるよう、字幕と同じ文節の折り返しで割る（短い注は1行のまま）
-        img = card(wrap(it["text"], nfont, st["max_width"] - 2 * st.get("pad_x", 0)), st, nfont)
+        # 様式の max_width に収まるよう、字幕と同じ文節の折り返しで割る（短い注は1行のまま。文節が入らなければ小さくする）
+        nlines, nsize = wrap_fit(it["text"], font_path(style, st["font"]), st["size"],
+                                 st["max_width"] - 2 * st.get("pad_x", 0))
+        nfont = ImageFont.truetype(str(font_path(style, st["font"])), nsize)
+        it["lines"] = nlines
+        img = card(nlines, st, nfont)
         path = work / f"note_{i:02d}.png"
         img.save(path)
         it.update({"png": str(path), "x": st["x"], "y": st["y"], "w": img.width, "h": img.height})
@@ -1607,7 +1633,8 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 lines = it["lines"]
                 size = min(cap, ment.get("min_size", cap))
                 maxw = mst["max_width"] / anim_scale_max(ment.get("anim"))
-                for sz in range(cap, size - 1, -2):
+                # min_size でも入らない行（割らずに残した長い文節）だけは、入るまで FIT_FLOOR まで下げる
+                for sz in range(cap, FIT_FLOOR - 1, -2):
                     if TL.text_width(lines, mlk, ImageFont.truetype(str(mfont), sz)) + 6 <= maxw:
                         size = sz
                         break
@@ -1618,8 +1645,9 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 return im, size, lines
         else:
             anim, spk, seed = cap_st.get("anim"), None, 0
-            s0 = cap_st["size"]
-            floor = s0 if keep_size else cap_st.get("face_min_size", s0)
+            # fit_size: 文節が字幕の幅に入らないので、割らずに小さくした行（plan の paginate_fit）
+            s0 = it.get("fit_size", cap_st["size"])
+            floor = s0 if keep_size else min(s0, cap_st.get("face_min_size", s0))
 
             def build(cap, it=it):
                 f = cap_font if cap == cap_st["size"] else ImageFont.truetype(str(font_path(style, cap_st["font"])), cap)

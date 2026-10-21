@@ -20,7 +20,7 @@
 | `title_flag` | ホステルの回の題（様式 v3）に 🇦🇱 を書くと、1行目の頭に**アルバニアの赤と鷲の黒**が出る。赤の塊の縦横比が国旗（7:5）で、高さが字の大きさの 0.82 倍前後。国旗の右に1行目の白い字が始まり、国旗と字が重ならない。🇦🇱 の無い同じ題には、その赤が1画素も無い |
 | `dark_edge` | 縁の無い様式（style.json の黒い箱に白い字）で 🇩🇪 を置いても、黒い帯の上の辺に明るい縁が出る（黒い箱に溶けない） |
 | `measure` | 国旗1つの送り幅が「絵の縦横比 × 高さ 0.82em ＋ 両側 0.09em」。数は `textlook.py` の関数を使わずに PNG の大きさから手で出す |
-| `glue` | 折り返しで国旗を割らない・国の名前から離さない（地域指示子の間・国旗の直後では割らない） |
+| `glue` | 折り返しで国旗を割らない・国の名前から離さない（地域指示子の間・国旗の直後では割らない。空白を挟んでも。割ってよい所は `qa/linebreak.py`） |
 | `missing` | 絵の無い国（ZZ）は、豆腐を焼かずに止まり、足す手順（`flags.py add ZZ`）を言う |
 | `manifest` | `flags/` の PNG が控え（`SOURCES.json`）の sha256 どおり。PNG を1枚いじると、控えとの食い違いとして出る |
 
@@ -59,8 +59,10 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
              {"dark_edge"}, "国旗の内側の明るい縁を引かない"),
     "glue": ("render.py", "        if out and pos in keep:\n", "        if False:\n",
              {"glue"}, "国旗の中・直後で文節を割る"),
-    "cut": ("render.py", "            return m.start()\n", "            return cut\n",
-            {"glue"}, "1字ずつ割るときに、国旗の中・直後で割る"),
+    # 書き出しの「1字ずつ割る」は無くなった（語の途中で割れた。2026-10-21）。割れ目は qa/linebreak.py が決めるので、
+    # そちらの「国旗の直後（空白を挟んでも）は割らない」を外す
+    "cut": ("../qa/linebreak.py", "            return \"国旗の直後（国旗は後ろの国の名前と1つ）\"\n", "            pass\n",
+            {"glue"}, "割ってよい所の決め（qa/linebreak.py）で、国旗の直後を割ってよいことにする"),
     "missing": ("textlook.py", "    if not path.exists():\n",
                 "    if not path.exists():\n        return Image.new(\"RGBA\", (7, 5))\n",
                 {"missing"}, "絵の無い国で止まらない（透明な絵を黙って置く）"),
@@ -96,6 +98,9 @@ def make_src(dst: Path, cut: str | None) -> None:
     for name in ("render.py", "textlook.py", "flags.py", "style.json", "style_p3.json", "style_v3.json"):
         shutil.copy(HERE / name, dst / name)
     shutil.copytree(HERE / "flags", dst / "flags")
+    # 書き出しは割ってよい所を品質チェックの qa/linebreak.py から読む（render.py の隣の ../qa/）
+    (dst.parent / "qa").mkdir(exist_ok=True)
+    shutil.copy(HERE.parent / "qa" / "linebreak.py", dst.parent / "qa" / "linebreak.py")
     if cut:
         fname, old, new, _, _ = CUTS[cut]
         text = (dst / fname).read_text(encoding="utf-8")
@@ -231,9 +236,11 @@ def leg_glue(R, TL, F) -> list[tuple[str, bool]]:
     out.append((f"地域指示子の間で割れた文節をつなぐ（{got}）", got == ["ようこそ", AL + "アルバニアへ"]))
     got = R.glue_flags(["今日は", AL, "アルバニア"])
     out.append((f"国旗だけの文節を、後ろの国の名前につなぐ（{got}）", got == ["今日は", AL + "アルバニア"]))
-    s = "ようこそ" + AL + "アル"
-    cuts = {k: R.safe_cut(s, k) for k in (4, 5, 6, 7)}
-    out.append((f"1字ずつ割るとき、国旗の中・直後なら国旗の手前で割る（{cuts}）", cuts == {4: 4, 5: 4, 6: 4, 7: 7}))
+    # 書き出しは「1字ずつ割る」をやめた（語の途中で割れた。2026-10-21）。割れ目は qa/linebreak.py が決め、
+    # 国旗の中と直後（空白を挟んでも）は割らない
+    got = R.chunks_of("ようこそ" + AL + " アルバニアへ")
+    out.append((f"国旗と後ろの国の名前の間（空白を挟む）で割らない（{got}）",
+                [c for c in got if AL in c] == [c for c in got if "アルバニア" in c] != []))
     font = ImageFont.truetype(str(R.font_path(R.load_style("style.json", HERE), "caption")), 60)
     text = "ついに" + AL + "アルバニアに着いたけど宿が見つからへん"
     for width in (300, 420, 560):

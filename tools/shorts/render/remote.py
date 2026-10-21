@@ -98,7 +98,7 @@ OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_
 QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"),
              ("text_on_face", "faces", "shot_reuse", "similar_run"),
              ("container", "loudness", "voice_vs_bgm", "subtitle_sync", "text_dup", "silence",
-              "clipping", "original_audio", "cut_length", "still_image", "source_stutter"))
+              "clipping", "original_audio", "cut_length", "still_image", "source_stutter", "line_breaks"))
 
 
 def sha256_file(p: Path) -> str:
