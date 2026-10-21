@@ -208,6 +208,11 @@ SKIP: dict[str, str] = {
     "tools/shorts/render/flag_selftest.py":
         "numpy と OpenCV が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # BGM の頭の無音と最後の札（あやと F-041・F-042、2026-10-21）。本物の書き出しを下書きで1回通すので
+    # ffmpeg・numpy・Pillow・OpenCV・budoux が要る
+    "tools/shorts/render/bgm_cta_selftest.py":
+        "ffmpeg と numpy・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

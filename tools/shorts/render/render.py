@@ -795,6 +795,26 @@ def delogo_rect(src: dict, meta: dict, style: dict) -> list[int] | None:
             math.ceil((w + 2 * m) * sx), math.ceil((h + 2 * m) * sy)]
 
 
+def end_note(notes: list[dict], cuts: list[dict], total: int, style: dict) -> list[dict]:
+    """最後の画に、注の札（CTA）を足す。あやと F-042「最後のテロップ『※YouTubeで毎日22時から配信』」
+    「このCTAテロップ、次から全部入れて」。読み上げない注なので、言葉の原稿（spec）ではなく様式で決める。
+
+    様式の `end_note`: text（出す字）・replaces（これに替える前の終わりの注。「※生配信のアーカイブ」）・min_s。
+    出すのは最後のカットの頭から終わりまで。最後のカットが min_s より短いときは、終わりの min_s 前から
+    （14字を読みきれる長さを残す）。指示書に同じ字の注があれば足さない（二重に出さない）。
+    """
+    cfg = style.get("end_note") or {}
+    text = cfg.get("text")
+    if not text or not cuts or cfg.get("enabled") is False:
+        return notes
+    drop = set(cfg.get("replaces") or [])
+    out = [n for n in notes if n["text"] not in drop]
+    if any(n["text"] == text for n in out):
+        return out
+    a = min(cuts[-1]["at"], max(0, total - round(float(cfg.get("min_s", 2.0)) * style["canvas"]["fps"])))
+    return out + [{"from": a, "to": total, "text": text, "end_note": True}]
+
+
 def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     fps = style["canvas"]["fps"]
     spf = SR // fps  # 1コマあたりのサンプル数（48000/30 = 1600）
@@ -959,6 +979,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
 
     notes = [{"from": int(n["from"]), "to": min(int(n["to"]), total), "text": n["text"]}
              for n in edit.get("notes", []) if n.get("text")]
+    notes = end_note(notes, cuts, total, style)
 
     telops = []
     prev_end = -1
@@ -1637,7 +1658,12 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
         img = card(nlines, st, nfont)
         path = work / f"note_{i:02d}.png"
         img.save(path)
-        it.update({"png": str(path), "x": st["x"], "y": st["y"], "w": img.width, "h": img.height})
+        # 同じ時に出ている注（回の注と、様式が足す終わりの注）は重ねず、下へ積む
+        y = st["y"]
+        for prev in p.get("notes", [])[:i]:
+            if prev["from"] < it["to"] and it["from"] < prev["to"] and y < prev["y"] + prev["h"]:
+                y = prev["y"] + prev["h"] + st.get("stack_gap", 12)
+        it.update({"png": str(path), "x": st["x"], "y": y, "w": img.width, "h": img.height})
         out.append(still("note", it, img, st.get("anim")))
 
     cap_st = style["caption"]
@@ -1888,6 +1914,30 @@ def level_bgm(x: np.ndarray, cfg: dict) -> tuple[np.ndarray, dict]:
                "max_db": cfg.get("max_db", 6), "gain_db_range": [round(float(g.min()), 2), round(float(g.max()), 2)]}
 
 
+def bgm_head_silence(x: np.ndarray, cfg: dict) -> int:
+    """BGM の頭の無音のサンプル数（あやと F-041。ポケットサウンドの「クシコス・ポスト」は頭に 1.42秒）。
+
+    5ms の窓の RMS が「曲の鳴っている間の RMS」から rel_db 下の線を初めて越えた窓の、keep_s 前までを無音とする。
+    線は曲の大きさから決める（静かな曲でも同じ深さで測れる）。ただし floor_dbfs より下には引かない
+    （mp3 の頭の無音は 0 ではなく −130dB ほどのデコーダの床が鳴っていて、線が下がりすぎるとそれを音と読む）。
+    頭がすぐ鳴る曲は 0（曲の出だしを削らない）。enabled が false なら飛ばさない。
+    """
+    if cfg.get("enabled") is False or len(x) == 0:
+        return 0
+    w = SR // 200
+    k = len(x) // w
+    if k == 0:
+        return 0
+    r = np.sqrt(np.mean(x[: k * w].astype(np.float64).reshape(k, w, -1) ** 2, axis=(1, 2)))
+    loud = r >= r.max() * db(-20)
+    ref = float(np.sqrt(np.mean(r[loud] ** 2))) if loud.any() else 0.0
+    line = max(ref * db(cfg.get("rel_db", -40)), db(cfg.get("floor_dbfs", -70)))
+    on = np.flatnonzero(r > line)
+    if len(on) == 0:
+        return 0
+    return max(0, int(on[0]) * w - int(cfg.get("keep_s", 0.005) * SR))
+
+
 def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Path, Path]:
     """ナレーションの束・ダッキング済みの BGM・元の音（使うカットだけ）を、サンプル単位で作る。
 
@@ -1936,6 +1986,11 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     if p.get("bgm"):
         src = decode_audio(resolve(base, p["bgm"]["path"]), 2)
         src = src[int(p["bgm"].get("start_s", 0) * SR):]
+        # 曲の頭の無音は、測って飛ばす（あやと F-041「BGM の初めのミュート部分は切ってください」）。
+        # 回ごとに start_s を手で書くと、曲を替えたときに付け忘れる。指示書の start_s のあとに残った無音も飛ばす
+        head = bgm_head_silence(src, au.get("bgm_head_trim") or {})
+        p["bgm"]["head_trim_s"] = round(head / SR, 4)
+        src = src[head:]
         reps = math.ceil(n / len(src))
         bgm = np.tile(src, (reps, 1))[:n] if reps > 1 else src[:n].copy()
         if len(bgm) < n:

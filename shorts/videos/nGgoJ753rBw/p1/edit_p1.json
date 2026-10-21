@@ -777,13 +777,6 @@
    "cps_video": 5.46
   }
  },
- "notes": [
-  {
-   "from": 1051,
-   "to": 1116,
-   "text": "※生配信のアーカイブ"
-  }
- ],
  "bgm": {
   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
   "db": 0.0

@@ -1,13 +1,20 @@
 """ショートの書き出しを GitHub Actions で並べて回す（作業箱 → GCS → ランナー → GCS → 作業箱）。
 
-    # 作業箱で（本番の段: 書き出し・双子・品質チェック・帯の絵）
-    python3 tools/shorts/render/remote.py up --name yk-v2r --key <秘密鍵.pem> --out <リポジトリの外> \\
-        edit_A.json edit_B.json edit_C.json
-    # 下書きの段（縦横半分・双子なし・最低限の検査）
+    # 作業箱で（本番の段: 書き出し・双子・品質チェック20項目・コマ一覧・字の切り抜き・顔の切り抜き・下見）
+    python3 tools/shorts/render/remote.py up --name ng-p1-v4 --key <秘密鍵.pem> --out <リポジトリの外> \\
+        --detach edit_A.json edit_B.json        # 素材を上げたら手を離す（1〜2分）
+    python3 tools/shorts/render/remote.py fetch --name ng-p1-v4 --key <秘密鍵.pem> --out <リポジトリの外>
+        # → <out>/<name>/summary.json（担当が読むのはこれ）と、目で見る絵（コマ一覧・字・顔）だけを落とす
+    # 下書きの段（縦横半分・双子なし・最低限の検査・下見なし）
     python3 tools/shorts/render/remote.py up --draft --name yk-v2d … edit_A.json edit_B.json edit_C.json
 
     # Actions の中で（.github/workflows/shorts_render.yml から）
     python3 tools/shorts/render/remote.py prepare | job | report
+
+**担当がすることは「指示書を置く → 要約（summary.json 1つ）と絵を読む」だけ**（#1011。あやと F-044
+「Python とかでガリガリ加工できるところは GitHub Actions に寄せて、その結果を読む」）。前は書き出し・検査・
+1秒ごとのコマ一覧・字の切り抜き・下見（put.py）を担当が手元（4コア）で順に回し、1本 約2時間かかった。
+mp4 と work 一式は既定では落とさない（`fetch --all` で落とす）。
 
 ## なぜ
 
@@ -27,8 +34,10 @@
 4. job（本数 × 本体・双子）: GCS から読んで書き出す。本体は品質チェック・帯の絵・一覧の絵まで作り、
    出来たもの（mp4・検査の json/md・帯・一覧・時間割・work 一式）を GCS に置く。双子は同じ指示書を
    別のランナーで書き、sha256 だけを置く（同じ指示書から同じバイト列が出るか）
-5. report（1台）: 結果を集め、見る URL（7日）を作って公開鍵で包み、`shorts/.work/render/<name>/` に置く
-6. 作業箱: 開いて、出来たものを `--out/<name>/<id>/` に落とし、sha256 を確かめる
+5. report（1台）: 結果を集め、本体の mp4 を Firebase Hosting のプレビューチャンネル（7日）に並べて配り
+   （`tools/shorts/preview/host.py` と同じ配り方・確かめ方。下書きは配らない）、見る URL（7日）と要約
+   （`summary.json`）を公開鍵で包み、`shorts/.work/render/<name>/` に置く
+6. 作業箱（`fetch`）: 開いて、要約と目で見る絵だけを `--out/<name>/<id>/` に落とし、sha256 を確かめる
 
 **artifact は使わない**（公開リポジトリの artifact は誰でも落とせる。作業箱からは取りにも行けない）。
 受け渡しは GCS の非公開バケット（`tools/shorts/preview/gcs.py`）だけ。
@@ -85,9 +94,12 @@ UPLOAD_WAIT = 1500
 MEDIA = (".mp4", ".mov", ".mkv", ".m4a", ".wav", ".mp3", ".aac", ".flac", ".png", ".jpg", ".jpeg",
          ".webp", ".json", ".ttf", ".otf")
 JST = dt.timezone(dt.timedelta(hours=9))
-# 本体の job が GCS に置くもの（work 一式は tar.gz にまとめる）
+# 本体の job が GCS に置くもの（work 一式は tar.gz にまとめる）。目で見る絵は proof.py が作る
 OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_strips.json",
-             "{id}.sheet.jpg", "{id}.plan.json", "{id}.work.tgz")
+             "{id}.sheet.jpg", "{id}.plan.json", "{id}.work.tgz",
+             "{id}.sheet1s.jpg", "{id}.texts.jpg", "{id}.faces.jpg", "{id}.proof.json")
+# fetch が既定で落とすもの（担当が読む・見るものだけ。mp4 と work 一式は --all のとき）
+LIGHT = (".qa.md", ".qa.json", "_strips.jpg", ".sheet1s.jpg", ".texts.jpg", ".faces.jpg", ".proof.json")
 # 検査を4つに分けて同時に回す（1本ずつ順だと 200秒あまり。どれも1コアしか使わず、4コアが遊ぶ）。
 # 重いもの（安全域 70秒・透かし 60秒・字と顔 40秒・字幕 35秒）を別々の組に置く。
 # 元素材のカクつき（42秒の動画で 20秒。元素材を元の大きさで読む）は字幕の組へ、使い回し（5秒）は
@@ -290,6 +302,7 @@ def cmd_up(a) -> int:
         nonce = secrets.token_hex(12)
         req = {"name": a.name, "nonce": nonce, "pubkey": pubkey_of(Path(a.key)),
                "draft": bool(a.draft), "twin": not a.draft and not a.no_twin,
+               "preview": not a.draft and not a.no_preview,
                "items": items, "objects": objs}
         br.push_change(a.branch, {f"{REQ_DIR}{a.name}.json":
                                   (json.dumps(req, ensure_ascii=False, indent=1) + "\n").encode()}, [],
@@ -318,40 +331,83 @@ def cmd_up(a) -> int:
     finally:
         shutil.rmtree(stage, ignore_errors=True)
 
-    rel = f"shorts/.work/render/{a.name}"
-    sha, man = br.wait_json(a.branch, f"{rel}/manifest.json", lambda d: d.get("nonce") == nonce,
-                            a.timeout)
+    # 手を離しても後から結果を受け取れるように、乱数と時間を控える（リポジトリの外の --out にだけ）
+    local = out / a.name / "request.local.json"
+    local.parent.mkdir(parents=True, exist_ok=True)
+    local.write_text(json.dumps({"name": a.name, "nonce": nonce, "branch": a.branch, "started": t0,
+                                 "up": {k: round(v, 1) for k, v in T.items()}}, indent=1), encoding="utf-8")
+    if a.detach:
+        print(f"手を離した（{T['uploaded']:.0f}秒）。ランナーの書き出し・検査・下見は約10分。結果は:\n"
+              f"  python3 tools/shorts/render/remote.py fetch --name {a.name} --key {a.key} --out {a.out}")
+        return 0
+    return fetch_result(a.name, Path(a.key), out, a.branch, a.timeout, a.all, a.keep_branch)
+
+
+def fetch_result(name: str, key: Path, out: Path, branch: str, timeout: float, full: bool, keep: bool) -> int:
+    """結果（暗号文）が来るのを待って開き、要約（summary.json）と目で見る絵だけを落とす（full なら全部）。
+
+    担当が読むのは `<out>/<name>/summary.json` と、品目ごとの `<id>.sheet1s.jpg`（1秒ごとのコマ）・
+    `<id>.texts.jpg`（字の切り抜き）・`<id>.faces.jpg`（顔の切り抜き）。mp4 は下見の URL で見る。
+    """
+    t_fetch = time.time()
+    local = json.loads((out / name / "request.local.json").read_text(encoding="utf-8"))
+    nonce, t0 = local["nonce"], local["started"]
+    T = dict(local.get("up") or {})
+    rel = f"shorts/.work/render/{name}"
+    sha, man = br.wait_json(branch, f"{rel}/manifest.json", lambda d: d.get("nonce") == nonce, timeout)
     T["result"] = time.time() - t0
-    dest = open_sealed(sha, rel, Path(a.key), out)
+    dest = open_sealed(sha, rel, key, out)
     rep = json.loads((dest / "report.json").read_text(encoding="utf-8"))
-    print(f"結果が来た（{T['result']:.0f}秒・status={man.get('status')}）")
-    got_dir = out / a.name
-    jobs = []
-    for it in rep["items"]:
-        for f in it.get("files", []):
-            jobs.append((it["id"], f))
+    summ = json.loads((dest / "summary.json").read_text(encoding="utf-8")) if (dest / "summary.json").is_file() \
+        else None
+    print(f"結果が来た（起動から {T['result']:.0f}秒・status={man.get('status')}）")
+    got_dir = out / name
+    jobs = [(it["id"], f) for it in rep["items"] for f in it.get("files", [])
+            if full or f["name"].endswith(LIGHT)]
     with cf.ThreadPoolExecutor(4) as ex:
         dl = list(ex.map(lambda j: (j, get_one(j[1]["get"], got_dir / j[0] / j[1]["name"])), jobs))
     T["downloaded"] = time.time() - t0
     ng = [j[1]["name"] for j, (st, h, _) in dl if st != 200 or h != j[1]["sha256"]]
-    for it in rep["items"]:
-        tw = it.get("twin")
-        print(f"  {it['id']}: {it.get('status')}  mp4 {str(it.get('sha256'))[:8]}…"
-              + (f"  双子 {'一致' if tw.get('same') else '!! 不一致'}" if tw else "")
-              + f"  検査 {it.get('qa', {}).get('overall')}（{json.dumps(it.get('qa', {}).get('counts'), ensure_ascii=False)}）"
-              + f"  書き出し {it.get('render_seconds')}秒")
-    print(f"  ランナー: {json.dumps(rep.get('timing'), ensure_ascii=False)}")
     if ng:
         print(f"!! 落とし直しの sha256 が合わない: {ng}")
-    if not a.keep_branch:
-        br.push_change(a.branch, {}, [f"{REQ_DIR}{a.name}.json", rel],
-                       f"ショートの書き出し {a.name} の暗号文を下ろす\n\n作業箱で開いて使い終えた。作業枝に溜めない。")
+    if summ:
+        for it in summ["items"]:
+            it["local"] = {f.name: str(f) for f in sorted((got_dir / it["id"]).glob("*")) if f.is_file()} \
+                if (got_dir / it["id"]).is_dir() else {}
+        T["box_active_s"] = round(float(local["up"].get("uploaded", 0)) + time.time() - t_fetch, 1)
+        T["wall_s"] = round(time.time() - t0, 1)
+        summ["box_timing"] = {k: round(v, 1) for k, v in T.items()}
+        (got_dir / "summary.json").write_text(json.dumps(summ, ensure_ascii=False, indent=1), encoding="utf-8")
+        print_summary(summ)
+    if not keep:
+        br.push_change(branch, {}, [f"{REQ_DIR}{name}.json", rel],
+                       f"ショートの書き出し {name} の暗号文を下ろす\n\n作業箱で開いて使い終えた。作業枝に溜めない。")
     T["total"] = time.time() - t0
     (dest / "timing_box.json").write_text(json.dumps({k: round(v, 1) for k, v in T.items()},
                                                      indent=1), encoding="utf-8")
-    print(f"出来たもの: {got_dir}")
+    print(f"要約: {got_dir / 'summary.json'}")
     print("時間（起動からの秒）: " + "  ".join(f"{k} {v:.0f}" for k, v in T.items()))
     return 1 if ng or any(it.get("status") != "ok" for it in rep["items"]) else 0
+
+
+def print_summary(summ: dict) -> None:
+    """要約を、担当が読む数行にする（検査は合格以外だけ名前を出す）。"""
+    pv = summ.get("preview") or {}
+    if pv:
+        print(f"  下見: {'○' if pv.get('ok') else '!! ' + ' / '.join(pv.get('problems') or [])}"
+              f"  {pv.get('playback', '')}（URL は summary.json の preview.page。7日）")
+    for it in summ["items"]:
+        qa = it.get("qa") or {}
+        rest = [f"{c['id']}={c['status']}" for c in qa.get("checks", []) if c["status"] != "pass"]
+        bgm = it.get("bgm") or {}
+        ends = it.get("end_notes") or []
+        print(f"  {it['id']}（{it.get('label')}）: {it.get('status')}  {it.get('seconds')}秒  sha256 {str(it.get('sha256'))[:12]}…"
+              + (f"  双子 {'一致' if it.get('twin_same') else '!! 不一致'}" if it.get('twin_same') is not None else ""))
+        print(f"    検査 {qa.get('overall')} {json.dumps(qa.get('counts'), ensure_ascii=False)}"
+              + (f"  合格以外: {', '.join(rest)}" if rest else ""))
+        print(f"    BGM の頭 {bgm.get('head_trim_s')}秒を飛ばした・0コマ目 {bgm.get('mix_first_frame_db')}dBFS"
+              f"  終わりの札 " + (" / ".join(f"{e['text']} {e['from']}〜{e['to']}コマ 描かれて{'いる' if e.get('drawn') else 'いない' if e.get('drawn') is False else '?'}"
+                                         for e in ends) or "!! 無い"))
 
 
 # ---------------------------------------------------------------- Actions: 依頼を読む
@@ -380,6 +436,7 @@ def read_request(req: dict, origin: str) -> dict:
         raise Bad(f"{origin}: 指示書が objects に無い")
     return {"name": name, "nonce": nonce, "pubkey": pem, "pubkey_sha256": fp, "req": origin,
             "draft": bool(req.get("draft")), "twin": bool(req.get("twin")) and not req.get("draft"),
+            "preview": bool(req.get("preview")) and not req.get("draft"),
             "items": items, "objects": objs}
 
 
@@ -588,8 +645,10 @@ def run_checks(mp4: Path, work: Path, job: Path, iid: str, draft: bool) -> dict:
                          str(qa), str(pj)], capture_output=True, text=True)
     (job / f"{iid}.qa.md").write_text(md.stdout, encoding="utf-8")
     rc = {"pass": 0, "fail": 1, "needs-human": 3, "not-checkable": 3}[worst]
+    # 要約に載せる1行ずつ（担当は qa.md を開かずに、合否と測った値の1行だけを読む）
+    detail = [{"id": c["id"], "title": c["title"], "status": c["status"], "summary": c["summary"]} for c in ordered]
     return {"overall": worst, "counts": rep["counts"], "rc": rc,
-            "checks": {c["id"]: c["status"] for c in ordered}, "errors": errs}
+            "checks": {c["id"]: c["status"] for c in ordered}, "detail": detail, "errors": errs}
 
 
 def probe_stages(edit_path: Path, n: int = 24) -> dict:
@@ -702,7 +761,9 @@ def cmd_job() -> int:
             + (["--draft"] if draft else []), cwd=job, capture_output=True, text=True)
     T["rendered"] = now()
     res = {"id": iid, "role": role, "draft": draft, "timing": T, "cpu": cpu_info(), "probe": probe,
-           "render_rc": r.returncode, "render_seconds": round(T["rendered"] - T["inputs"], 1)}
+           "render_rc": r.returncode, "render_seconds": round(T["rendered"] - T["inputs"], 1),
+           # 下見のページの見出し（指示書の id と題の札）。結果は GCS と暗号文にだけ置く（ログには出さない）
+           "label": str(edit.get("id") or iid), "title": ((edit.get("title") or {}).get("text") or "").replace("\n", "")}
     print(f"  CPU: {res['cpu'].get('model')}（AVX-512 {'あり' if res['cpu'].get('avx512') else 'なし'}）")
     if r.returncode != 0 or not mp4.is_file():
         res["error"] = (r.stderr or "")[-1500:]
@@ -724,6 +785,14 @@ def cmd_job() -> int:
             res["strips_error"] = (st.stderr or "")[-600:]
         run([sys.executable, str(HERE / "contact_sheet.py"), str(mp4), str(work), str(job / f"{iid}.sheet.jpg")],
             cwd=job, capture_output=True)
+        # 担当が目で見る絵（1秒ごとのコマ・字の切り抜き・顔の切り抜き）と、頭の BGM・終わりの札の数
+        pr = run([sys.executable, str(HERE / "proof.py"), str(mp4), str(work), "--prefix", str(job / iid),
+                  "--crops", str(job / f"{iid}.qa")], cwd=job, capture_output=True, text=True)
+        if pr.returncode != 0:
+            res["proof_error"] = (pr.stderr or "")[-600:]
+        elif (job / f"{iid}.proof.json").is_file():
+            res["proof"] = json.loads((job / f"{iid}.proof.json").read_text(encoding="utf-8"))
+        T["proof"] = now()
         shutil.copy(work / "plan.json", job / f"{iid}.plan.json")
         with tarfile.open(job / f"{iid}.work.tgz", "w:gz", compresslevel=1) as tf:
             tf.add(work, arcname=f"{iid}.work")
@@ -768,7 +837,8 @@ def cmd_report() -> int:
             continue
         out.update(status="ok", sha256=m["sha256"], bytes=m["bytes"], qa=m.get("qa"),
                    render_seconds=m["render_seconds"], timing=m["timing"], cpu=m.get("cpu"),
-                   probe=m.get("probe"))
+                   probe=m.get("probe"), label=m.get("label"), title=m.get("title"), proof=m.get("proof"),
+                   **({"proof_error": m["proof_error"]} if m.get("proof_error") else {}))
         if req["twin"]:
             out["twin"] = {"sha256": (tw or {}).get("sha256"), "same": bool(tw) and tw.get("sha256") == m["sha256"],
                            "render_seconds": (tw or {}).get("render_seconds"), "cpu": (tw or {}).get("cpu"),
@@ -784,6 +854,15 @@ def cmd_report() -> int:
         items.append(out)
         if out["status"] != "ok" and status_all == "ok":
             status_all = "partial"
+    pv = None
+    if req["preview"] and any(it["status"] != "failed" for it in items):
+        t_pv = time.time()
+        try:
+            pv = preview(req, items, bucket, prefix)
+        except Exception as e:  # noqa: BLE001  下見が落ちても、書き出しと検査の結果は返す
+            pv = {"ok": False, "problems": [f"下見を置けなかった: {type(e).__name__}: {str(e)[:200]}"]}
+        pv["seconds"] = round(time.time() - t_pv, 1)
+        print(f"下見: {'できた' if pv.get('ok') else '!! 落ちた'}（{pv['seconds']}秒）")
     ends = [r["timing"].get("uploaded") or r["timing"].get("rendered") for r in results.values()]
     timing = {"prepare_ready_s": round(meta["ready"] - meta["started"], 1),
               "jobs_end_s": round(max(ends) - meta["started"], 1) if ends else None,
@@ -799,14 +878,102 @@ def cmd_report() -> int:
               + (f"  双子 {'一致' if tw and tw['same'] else '不一致'}" if tw else "")
               + f"  検査 {(it.get('qa') or {}).get('overall')}")
     print(f"時間: {json.dumps(timing, ensure_ascii=False)}")
+    rep["preview"] = pv
+    summ = summary(rep)
     with tempfile.TemporaryDirectory() as td:
-        adds = seal_to(req, {"report.json": json.dumps(rep, ensure_ascii=False, indent=1).encode()},
+        adds = seal_to(req, {"report.json": json.dumps(rep, ensure_ascii=False, indent=1).encode(),
+                             "summary.json": json.dumps(summ, ensure_ascii=False, indent=1).encode()},
                        f"render/{req['name']}", Path(td), "ok" if status_all == "ok" else "failed")
         br.push_change(branch, adds, [f"{REQ_DIR}{req['name']}.json", f"shorts/.work/render/{req['name']}"],
                        f"ショートの書き出し {req['name']} の結果を暗号化して置く（{status_all}・run "
                        f"{os.environ.get('GITHUB_RUN_ID', '?')}）\n\n見る URL は依頼の公開鍵で包む。"
                        "依頼と上げる URL は同じ commit で下ろす。")
     return 0 if status_all == "ok" else 1
+
+
+def preview(req: dict, items: list[dict], bucket, prefix: str) -> dict:
+    """本体の mp4 を Firebase Hosting のプレビューチャンネル（7日）に並べて配り、ランナーから確かめる。
+
+    配り方・確かめ方は下見の道（`tools/shorts/preview/host.py`）と同じ: チャンネル名は `sp-<乱数>`、
+    本番の firebase.json・public は使わず一時の場所から配る・落とし直しの sha256・範囲の要求 206・
+    スマホ幅の Chrome で再生。違うのは動画の受け取り方だけで、作業箱から作業枝で受け取らず、
+    書き出した job が GCS に置いたものを読む（作業箱に mp4 を落として、また上げる往復が無くなる）。
+    """
+    import host
+
+    tmp = Path(tempfile.mkdtemp(dir=os.environ.get("RUNNER_TEMP")))
+    try:
+        tools = tmp / "tools"
+        npm = host.prewarm(tools)
+        got = tmp / "got"
+        got.mkdir()
+        files, meta = [], []
+        for it in items:
+            if it["status"] == "failed":
+                continue
+            name = f"{it['id']}.mp4"
+            bucket.blob(f"{prefix}{it['id']}/{name}").download_to_filename(str(got / name))
+            if sha256_file(got / name) != it["sha256"]:
+                raise Bad(f"{name}: GCS から読んだ mp4 の sha256 が書き出しと違う")
+            files.append({"name": name, "bytes": (got / name).stat().st_size, "sha256": it["sha256"]})
+            meta.append({"name": name, "label": it.get("label") or it["id"], "title": it.get("title") or "",
+                         "duration": (it.get("proof") or {}).get("seconds")})
+        preq = {"name": req["name"], "files": files}
+        site = host.make_site(preq, got, {"title": f"下見 {req['name']}", "items": meta}, tmp)
+        if npm.wait() != 0:
+            raise Bad("firebase-tools / playwright-core を入れられなかった")
+        channel = "sp-" + secrets.token_hex(10)
+        assert host.CHANNEL.match(channel) and channel != "live"
+        d = host.firebase(tools, ["hosting:channel:deploy", channel, "--expires", host.EXPIRES], site,
+                          tmp / "deploy.log")
+        url, expire = host.find_url(d.get("result"))
+        if not url:
+            raise Bad("配ったが URL が返ってこなかった")
+        checks = host.verify_http(url, preq)
+        play = host.playback(url, tools, tmp)
+        play.pop("shot", None)
+        bad = [c["name"] for c in checks if not (c["sha256_ok"] and c["range_status"] == 206)]
+        if len([v for v in play.get("videos") or [] if v.get("played")]) < len(files):
+            bad.append("スマホ幅で再生できないものがある")
+        return {"ok": not bad, "problems": bad, "page": url + "/", "expires": expire,
+                "channel_sha256": hashlib.sha256(channel.encode()).hexdigest(),
+                "files": {f["name"]: f"{url}/{f['name']}" for f in files}, "checks": checks,
+                "playback": host.summarize_play(play) if "videos" in play else play.get("error")}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def summary(rep: dict) -> dict:
+    """担当が読む要約（summary.json）。品目ごとに sha256・長さ・20項目の合否と測った値の1行・BGM の頭・
+    終わりの札・下見の URL・目で見る絵の置き場。報告（report.json）から、読むものだけを抜く。"""
+    pv = rep.get("preview") or {}
+    out = []
+    for it in rep["items"]:
+        pr = it.get("proof") or {}
+        head = pr.get("head") or {}
+        qa = it.get("qa") or {}
+        files = {f["name"]: f["get"] for f in it.get("files", [])}
+        ent = {"id": it["id"], "label": it.get("label"), "status": it["status"], "sha256": it.get("sha256"),
+               "bytes": it.get("bytes"), "seconds": pr.get("seconds"), "frames": pr.get("frames"),
+               "twin_same": (it.get("twin") or {}).get("same") if it.get("twin") else None,
+               "render_seconds": it.get("render_seconds"),
+               "qa": {"overall": qa.get("overall"), "counts": qa.get("counts"), "checks": qa.get("detail") or [],
+                      "seconds": qa.get("seconds"), "errors": qa.get("errors")},
+               "bgm": dict(pr.get("bgm") or {}, mix_first_frame_db=(head.get("mix_db") or [None])[0],
+                           bgm_first_frame=head.get("bgm_first_frame"), mix_db_first_second=head.get("mix_db")),
+               "end_notes": pr.get("end_notes"),
+               "preview": (pv.get("files") or {}).get(f"{it['id']}.mp4"),
+               "look": {k: files.get(f"{it['id']}{suf}") for k, suf in
+                        (("sheet1s", ".sheet1s.jpg"), ("texts", ".texts.jpg"), ("faces", ".faces.jpg"),
+                         ("strips", "_strips.jpg"), ("qa_md", ".qa.md"), ("mp4", ".mp4"), ("work", ".work.tgz"))}}
+        if it.get("error") or it.get("proof_error"):
+            ent["error"] = it.get("error") or it.get("proof_error")
+        out.append(ent)
+    return {"format": "shorts-render-summary/1", "name": rep["name"], "status": rep["status"],
+            "draft": rep["draft"], "run": rep.get("run"), "expires": rep.get("expires"), "timing": rep.get("timing"),
+            "preview": {k: pv.get(k) for k in ("ok", "problems", "page", "expires", "playback", "seconds",
+                                                "channel_sha256")} if pv else None,
+            "items": out}
 
 
 def main() -> int:
@@ -821,7 +988,19 @@ def main() -> int:
     p.add_argument("--no-twin", action="store_true", help="本番の段で双子を回さない")
     p.add_argument("--timeout", type=float, default=2400)
     p.add_argument("--keep-branch", action="store_true")
+    p.add_argument("--no-preview", action="store_true", help="本番の段でも下見（Hosting）を置かない")
+    p.add_argument("--detach", action="store_true",
+                   help="素材を上げたら手を離す（結果は fetch で受け取る。待つあいだ担当の手が空く）")
+    p.add_argument("--all", action="store_true", help="mp4・work 一式も落とす（既定は要約と目で見る絵だけ）")
     p.add_argument("edits", nargs="+")
+    f = sub.add_parser("fetch", help="up --detach で頼んだ結果を待って受け取る")
+    f.add_argument("--name", required=True)
+    f.add_argument("--key", required=True)
+    f.add_argument("--out", required=True)
+    f.add_argument("--branch", default=BRANCH)
+    f.add_argument("--timeout", type=float, default=2400)
+    f.add_argument("--keep-branch", action="store_true")
+    f.add_argument("--all", action="store_true", help="mp4・work 一式も落とす")
     for n in ("prepare", "job", "report"):
         sub.add_parser(n)
     pp = sub.add_parser("probe", help="指示書の頭のコマを段ごとに sha256 にする（ランナーの job と突き合わせる）")
@@ -830,6 +1009,11 @@ def main() -> int:
     if a.cmd == "probe":
         print(json.dumps(probe_stages(Path(a.edit)), ensure_ascii=False))
         return 0
+    if a.cmd == "fetch":
+        if not NAME.match(a.name) or not a.branch.startswith("claude/"):
+            print("!! name は英数字と . _ -、作業枝は claude/ で始まる名前")
+            return 1
+        return fetch_result(a.name, Path(a.key), Path(a.out), a.branch, a.timeout, a.all, a.keep_branch)
     if a.cmd == "up":
         if not NAME.match(a.name) or not a.branch.startswith("claude/"):
             print("!! name は英数字と . _ -、作業枝は claude/ で始まる名前")

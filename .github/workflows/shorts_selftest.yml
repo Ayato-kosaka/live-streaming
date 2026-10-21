@@ -105,6 +105,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/render/flag_selftest.py
 
+      # BGM の頭の無音を飛ばす・最後の画に注の札（CTA）を出す（あやと F-041・F-042、2026-10-21）。
+      # 合成の素材で書き出しの音の束と時間割を見て、本物の書き出し（下書き）を1回通す。守り8つを1つずつ外して1分ほど
+      - name: BGM の頭と最後の札の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/bgm_cta_selftest.py
+
       # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
       # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
       # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
@@ -130,7 +136,7 @@ jobs:
           mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
             ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
-            ! -path 'tools/shorts/render/flag_selftest.py' \
+            ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
             ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
             ! -path 'tools/shorts/feedback/watch_selftest.py' \
             -print0 | sort -z)

@@ -36,8 +36,19 @@ python3 tools/shorts/render/safearea.py A.mp4 A_bare.mp4           # 字の画�
 `verify.py` のカット照合は合成素材の箱を読むので、本番の素材では使えない（字幕の出入り・音量・
 `--twin` は本番でも意味がある）。
 
-**1案1本。YouTube も TikTok も同じファイルを出す（BGM 入り）。** BGM は曲の頭から 0コマ目に合わせて鳴らし、
-頭 0.3秒で上げ、終わり 1.2秒で下げて最後のコマでちょうど 0 になる。曲のクレジットは
+**1案1本。YouTube も TikTok も同じファイルを出す（BGM 入り）。** BGM は**最初のコマから鳴らす**
+（あやと F-041「BGM の初めのミュート部分は切ってください」）。曲の頭の無音は書き出しが測って飛ばす
+（`render.py` の `bgm_head_silence`。5ms の窓の RMS が「曲の鳴っている間」から −40dB の線を初めて越えた所の 5ms 前から。
+線は −70dBFS より下に引かない。mp3 の頭の無音は 0 ではなく −135dB ほどのデコーダの床が鳴っているので）。
+ポケットサウンドの「クシコス・ポスト」は 1.42秒を飛ばす。飛ばした秒は `plan.json` の `bgm.head_trim_s`。
+回ごとに `start_s` を手で書かない（曲を替えたときに付け忘れる）。頭は1コマ（0.033秒）で上げ（前の 0.3秒だと
+最初のコマが −24dB でほぼ鳴らなかった）、終わり 1.2秒で下げて最後のコマでちょうど 0 になる。
+
+**最後の画に注の札「※YouTubeで毎日22時から配信」を出す**（あやと F-042「このCTAテロップ、次から全部入れて」。読み上げない）。
+様式の `end_note` を書き出しが足すので、spec にも指示書にも書かない。出すのは最後のカットの頭から終わりまで
+（最後のカットが2秒より短ければ、終わりの2秒前から）。見た目と置き場は注（`note`）のまま。前の終わりの注
+「※生配信のアーカイブ」は外してこれに替える。同じ時に出る注があれば、下に積む。
+守りの見張りは `bgm_cta_selftest.py`（足8本・守り8つを1つずつ外して、その足だけが落ちるかを見る）。曲のクレジットは
 画面ではなく投稿の文に書く（いまの曲と書き方は `docs/shorts.md` 4）。BGM 抜きの版が要るときだけ `--no-bgm-out` で同じ絵の2本目を書ける
 （映像は書いたものをそのまま写すので、2本の絵は1画素も違わない）。
 
@@ -110,16 +121,34 @@ python3 tools/shorts/qa/check.py A_draft.mp4 A_draft.work --draft    # 字幕の
 使い回しと同じ見本のコマを使い、カットの長さは時間割とつなぎの2コマだけなので、ほとんど遅くならない（p2 v9 の 46.7秒で、
 使い回しだけ 5.1秒 → 似た見た目の連続と一緒に 6.8秒、カクつきだけ 13.4秒 → 止め絵・カットの長さと一緒に 14.1秒。2026-10-21）。
 
-### Actions で並べる（`remote.py`・`.github/workflows/shorts_render.yml`）
+### Actions で並べる（`remote.py`・`.github/workflows/shorts_render.yml`）— **書き出しの既定はこちら**
 
-作業箱の4コアで3本を順に回すと、本番の1周（書き出し・双子・検査）が約42分かかる。
-ランナーを 本数 × (本体・双子) 台並べて、1周を「いちばん遅い1本の 書き出し＋検査」にする。
+**担当がすることは「指示書を置く → 要約（`summary.json` 1つ）と絵を読む」だけ**（#1011。あやと F-044）。
+2026-10-21 の担当は、書き出し・20項目の検査・1秒ごとのコマ一覧・字の切り抜き一覧・下見（`put.py`）を手元の4コアで
+順に回し、1本 約2時間・30〜70万トークンかかっていた。この道は 10-17 から在ったが、使われなかった。使いにくかった所:
+
+| 使いにくかった所 | いま |
+| --- | --- |
+| `up` は結果が揃うまで手元を塞ぎ（約10分）、mp4 と work 一式（数百MB）を全部落とした | `--detach` で素材を上げたら手を離す（1〜2分）。`fetch` は要約と目で見る絵だけを落とす（`--all` で全部） |
+| 1秒ごとのコマ一覧・字の切り抜き一覧は Actions で作らず、担当が手元の使い捨て（スクラッチパッドの `proof.py`・`sheet.sh`）で作り直していた | 本体の job が `proof.py` で作る（コマ一覧・字の切り抜き・顔の切り抜き・頭の BGM と終わりの札の数） |
+| 下見は別の道（`put.py` → `shorts_preview.yml`）で、落とした mp4 を作業枝に暗号文で積んで上げ直していた | report の job が、job が GCS に置いた mp4 をそのまま Hosting のプレビューチャンネルに配る（作業箱を通らない） |
+| 結果は品目ごとの検査の合否の数だけで、何が「人が見る」なのかは qa.md を開くまで分からなかった | 要約に20項目の合否と測った値の1行・BGM の頭・終わりの札・下見の URL・絵の置き場が並ぶ |
+| 手引き（`production.md`）では「3本の本番は Actions に並べる」で、1〜2本の直しは手元が既定に読めた | 本数に関わらず、本番の段はこちら |
 
 ```bash
-python3 tools/shorts/render/remote.py up --name yk-v3 --key <スクラッチパッド>/keys/ref_private.pem \
-  --out <スクラッチパッド>/remote edit_A.json edit_B.json edit_C.json      # 本番の段
-python3 tools/shorts/render/remote.py up --draft --name yk-v3d …                # 下書きの段
+K=<スクラッチパッド>/keys/ref_private.pem; O=<スクラッチパッド>/remote
+python3 tools/shorts/render/remote.py up --detach --name ng-p1-v4 --key $K --out $O edit_A.json edit_B.json
+#   … 待つあいだは別の仕事をする（ランナーで書き出し・検査・絵・下見まで、約10分）
+python3 tools/shorts/render/remote.py fetch --name ng-p1-v4 --key $K --out $O
+#   → $O/ng-p1-v4/summary.json と $O/ng-p1-v4/<id>/<id>.{sheet1s,texts,faces}.jpg
+python3 tools/shorts/render/remote.py up --draft --name yk-v3d …                # 下書きの段（下見なし）
 ```
+
+`summary.json`（`shorts-render-summary/1`）の品目ごとの中身: `sha256`・`seconds`・`frames`・双子の一致・
+`qa.checks`（20項目の id・合否・測った値の1行）・`bgm`（飛ばした頭の秒・最初の1秒のコマごとの音量）・
+`end_notes`（終わりの札の字・出るコマ・最後のコマに描かれているか＝字なしの版との差）・`preview`（この1本の URL）・
+`look`（絵と mp4 の見る URL）・`local`（落とした絵の手元の道）。全体の `preview.page` が下見のページ（7日）。
+URL は依頼の公開鍵で包んで返るので、リポジトリには平文で入らない。制作 issue には貼ってよい（下見の README）。
 
 - 指示書が指す素材・声・BGM を全部集め、**中身の sha256 の名前で** GCS の非公開バケット
   （`render/cas/<sha256>`、#938）に作業箱から直に上げる。同じものは2回上げない（2回目からは0MB）
@@ -130,7 +159,8 @@ python3 tools/shorts/render/remote.py up --draft --name yk-v3d …              
   同じ元素材・同じコマを2度読まない。`QA_GROUPS` の名指しに無い検査は
   5つ目の組で回る（`qa_groups`）。検査を足しても Actions で黙って回らないことがないように）→ 帯の絵（`<id>_strips.jpg`）→
   一覧の絵（`<id>.sheet.jpg`）→ GCS に置く。双子の job は同じ指示書を別のランナーで書いて sha256 だけ置く
-- 出来たものは `--out/<name>/<id>/`（mp4・`qa.json`/`qa.md`・帯・一覧・`plan.json`・`work.tgz`）。
+- 出来たものは GCS に7日（見る URL は要約の `look`）。`fetch` が落とすのは `--out/<name>/<id>/` の
+  `qa.json`/`qa.md`・帯・`sheet1s`・`texts`・`faces`・`proof.json` だけ。`fetch --all` で mp4・`plan.json`・`work.tgz` も。
   `work.tgz` を開けば、手元で検査をやり直せる（字なしの版と音の束も入っている）
 - **書き出すのは作業枝に push してある版の render.py**。手元で直した道具は push してから回す
   （品質チェック `tools/shorts/qa/` も同じ。道具は運ばず、ランナーが作業枝を checkout したものを使う）
