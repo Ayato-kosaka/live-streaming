@@ -148,6 +148,38 @@ def cmd_probe(a) -> int:
     return 0 if body.get("ok") else 1
 
 
+def cmd_drive(a) -> int:
+    """共有フォルダを Actions で落として揃え、署名付き URL で手元へ。コマ一覧は開いた先の sheets/。"""
+    import requests
+
+    body, _, dest = ask(a, "drive", {"folder": a.folder})
+    files = body.get("files") or []
+    print(f"落ちてきたもの: {len(files)}本（{body.get('fetched', {}).get('via')}・HDR を寄せる道具 "
+          f"{'○' if body.get('zscale') else '✕'}）")
+    media = dest / "media"
+    media.mkdir(exist_ok=True)
+    for f in files:
+        part = f.get("proxy") or f.get("image") or {}
+        s = (part.get("summary") or {})
+        v = s.get("video") or {}
+        line = (f"  {f['idx']}  {f['kind']}  元 {f['bytes'] / 1e6:.1f}MB"
+                f"  → {v.get('width')}x{v.get('height')} {v.get('avg_fps') or ''}fps {s.get('duration') or ''}秒"
+                f"{'  HDR→SDR' if part.get('tonemapped') else ''}")
+        if not a.no_fetch and part.get("url"):
+            ext = ".mp4" if f["kind"] == "video" else ".jpg"
+            out = media / f"{f['idx']}{ext}"
+            if not out.is_file() or out.stat().st_size != part.get("bytes", -1):
+                with requests.get(part["url"], stream=True, timeout=(30, 1800)) as r:
+                    r.raise_for_status()
+                    with open(out, "wb") as fh:
+                        for b in r.iter_content(8 << 20):
+                            fh.write(b)
+            line += f"  手元 {out.name}"
+        print(line)
+    print(f"開いた先: {dest}（result.json・sheets/・media/）")
+    return 0 if body.get("ok") else 1
+
+
 def cmd_drop(a) -> int:
     body, _, _ = ask(a, "drop", {})
     print(f"消した: {body['deleted']}個（残り {body['left']}個）")
@@ -182,7 +214,7 @@ def cmd_check(a) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("page", "probe", "drop", "check"):
+    for name in ("page", "probe", "drop", "check", "drive"):
         p = sub.add_parser(name)
         p.add_argument("--name", required=True, help="受け取り口の名前（英数字と . _ -）")
         p.add_argument("--out", required=True, help="結果を開く場所（リポジトリの外）")
@@ -196,6 +228,9 @@ def main() -> int:
         p.add_argument("--keep-branch", action="store_true", help="作業枝の暗号文を残す")
         if name == "page":
             p.add_argument("--slots", type=int, default=12, help="このページで送れる本数")
+        if name == "drive":
+            p.add_argument("--folder", required=True, help="共有フォルダの ID（リンクを知っている人は閲覧可）")
+            p.add_argument("--no-fetch", action="store_true", help="署名付き URL から手元へ落とさない")
         if name == "probe":
             p.add_argument("--no-hash", action="store_true",
                            help="sha256 を出さない（全部を落とし直さない。大きいとき）")
@@ -207,7 +242,8 @@ def main() -> int:
     if a.cmd != "check" and not a.branch.startswith("claude/"):
         print("!! 作業枝は claude/ で始まる名前にする")
         return 1
-    return {"page": cmd_page, "probe": cmd_probe, "drop": cmd_drop, "check": cmd_check}[a.cmd](a)
+    return {"page": cmd_page, "probe": cmd_probe, "drop": cmd_drop, "check": cmd_check,
+            "drive": cmd_drive}[a.cmd](a)
 
 
 if __name__ == "__main__":
