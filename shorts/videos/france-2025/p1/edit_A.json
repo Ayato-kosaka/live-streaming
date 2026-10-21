@@ -1,5 +1,5 @@
 {
- "_note": "build_edit.py が spec_A.json から組んだ v2 に、v3（#998 F-045）で Drive の素材の6カットを手で差し替えた。声・字・題の札・BGM・行の秒は v2 と同じ（Actions の書き出しは render/cas に残っていた v2 の入力を使った）",
+ "_note": "build_edit.py が spec_A.json から組んだ v2 に、v3・v4（#998 F-045）で Drive の素材のカットを手で差し替えた。7行目の注「ヴァンス」は v4 で画がエズとレ・ボーになったので外した。声・字幕・題の札・BGM・行の秒は v2 と同じ（Actions の書き出しは render/cas に残っていた v2 の入力を使った）",
  "version": 2,
  "id": "france-2025-A",
  "style": "style_v3.json",
@@ -80,24 +80,36 @@
    "t0": 29240.0
   },
   "d02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/02.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/02.mp4",
    "t0": 32520
   },
   "d05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/05.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/05.mp4",
    "t0": 32700
   },
   "d08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/08.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/08.mp4",
    "t0": 32880
   },
   "d10": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/10.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/10.mp4",
    "t0": 33000
   },
   "d11": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v3/drive/11.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/11.mp4",
    "t0": 33060
+  },
+  "d01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/01.mp4",
+   "t0": 32460
+  },
+  "d07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/07.mp4",
+   "t0": 32820
+  },
+  "d09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/v4/drive/09.mp4",
+   "t0": 32940
   }
  },
  "cuts": [
@@ -130,11 +142,18 @@
    "note": "「まずルーアン。」木組みの家と大時計の通り（Drive）"
   },
   {
+   "src": "d01",
+   "in": 15,
+   "out": 33,
+   "row": 2,
+   "note": "「ジャンヌ・ダルクの」ルーアンの旧市場広場（Drive IMG_0794。ジャンヌ・ダルクの教会がある広場）"
+  },
+  {
    "src": "c02",
    "in": 1155,
-   "out": 1196,
+   "out": 1178,
    "row": 2,
-   "note": "「ジャンヌ・ダルクの教会で、」教会の尖った屋根（0:05:28.5〜。本人が 0:05:00 で「これジャンダルクの教会」と言う所）"
+   "note": "「…の教会で、」ジャンヌ・ダルクの教会の尖った屋根（配信 NWVWtIVn-pg 0:05:28.5〜）"
   },
   {
    "src": "c02",
@@ -175,10 +194,18 @@
    "note": "「雲1個しかない、南国来てもうた！」崖の上のテラスから青い海（Drive）"
   },
   {
-   "src": "c08",
-   "in": 735,
-   "out": 791,
-   "row": 6
+   "src": "d07",
+   "in": 60,
+   "out": 88,
+   "row": 6,
+   "note": "「山の上に村が」山の上の村エズの石の家と黄色い壁（Drive IMG_0962）"
+  },
+  {
+   "src": "d09",
+   "in": 15,
+   "out": 43,
+   "row": 6,
+   "note": "「ポンポン！」もう1つの山の上の村レ・ボーの石畳（Drive IMG_1082）"
   },
   {
    "src": "c10",
@@ -586,11 +613,6 @@
   }
  },
  "notes": [
-  {
-   "from": 591,
-   "to": 647,
-   "text": "ヴァンス"
-  },
   {
    "from": 857,
    "to": 934,
