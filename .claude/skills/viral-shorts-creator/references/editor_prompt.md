@@ -40,23 +40,26 @@
 
 ## 進めかた（呼び出しの形だけ）
 
-置き場: `S={{scratch}}`（作業の置き場。リポジトリの外）・`K={{key}}`（取り込みの秘密鍵）・`E=.claude/skills/ec2-chrome/ec2.py`。
+置き場: `S={{scratch}}`（作業の置き場。リポジトリの外）・`K=$S/keys/ref_private.pem`（取り込みの秘密鍵）・`V={{ep}}`（この回）・
+`E=.claude/skills/ec2-chrome/ec2.py`。
 **素材の取り出しと声は互いに待たない。** 声は EC2 の鍵（下）を取ってから。待つあいだは「鍵を待つあいだに」を先にやる。
 
 1. **素材を開く**: 上の「素材」に手元の置き場があればそれを使う。無ければ
    `git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD` →
    `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest shorts/.work/<videoId>/clips`（開く先はリポジトリの外。鍵違いは開かない）。
-   暗号文を下ろしてあれば、表の clips のコミットから `git restore --source <コミット> -- shorts/.work/<videoId>/clips` で戻して開き、開いたら
-   `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）。`index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）。
-   - **配信が2本以上**なら、k 本目の `index.json` の `start`/`end` に k×3600 を足した写しを同じ置き場に作り（`index_k.json`）、
-     spec の時刻の頭の時間で配信を分ける（上の時間軸）。`build_edit.py` は時刻を1本の時間軸で引く
+   暗号文を下ろしてあれば `git log --oneline -2 -- shorts/.work/<videoId>/clips`（上が下ろしたコミット）→
+   `git restore --source <下ろしたコミット>^ -- shorts/.work/<videoId>/clips` で戻して開き、開いたら `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）。
+   `index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）。
+   - **配信が2本以上**なら、`build_edit.py` は時刻を1本の時間軸で引くので、spec の時刻の頭の時間 k で配信を分ける（上の時間軸）。
+     k 本目の一覧を k×3600 秒ずらした写しを隣に作り（`index_k.json`）、それを `--clips` に渡す:
+     `python3 -c 'import json,sys;p,k=sys.argv[1],int(sys.argv[2]);d=json.load(open(p));[c.update(start=c["start"]+k*3600,end=c["end"]+k*3600) for c in d["clips"]];json.dump(d,open(p.replace("index.json",f"index_{k}.json"),"w"))' <index.json> <k>`
    - **コマ一覧**: 開いた clips の `sheets/`（取り込みが作る2秒おきの一覧）。まだ無ければ
-     `ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheet_<番号>.jpg`
+     `mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`（1枚 60秒ぶん）
    - **カクつき**: 使う区間は先に `python3 tools/shorts/qa/stutter.py <窓の mp4> --from <秒> --to <秒>` で測り、✕（繰り返し 60% 越え）の秒を避ける
    - **0秒目**: `python3 tools/shorts/plan/hook.py {{spec}} --material $S/ingest/<videoId> --clips <index.json> --out $S/hook`
      （配信1本の回だけ。つないだ回は、0秒目の候補の時刻を行ごとの帯で見て、題の札（y 380〜580）の下に本体が来る時刻を選ぶ）
 2. **声**（Fish Audio・Holiday Twist。EC2 の Chrome）: 声に渡す字は `{{vl}}`（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）。
-   無ければ `python3 tools/shorts/script/brief.py edit --episode {{ep}}{{pat_arg}} --voice-lines {{vl}}` が spec の `tts_text` から作る。
+   無ければ `python3 tools/shorts/script/brief.py edit --episode $V{{pat_arg}} --voice-lines {{vl}}` が spec の `tts_text` から作る。
    直すのは読み違えそうな所だけ（数・英字・読みが割れる漢字）。**言う中身は字幕と同じ。** かなの数が助詞と紛れるときは漢数字
    （「とおか」「二千年」。「人生初」をかなにしたら「は」を「わ」と読んだ）。鍵を取ったら（下）:
    - 道具と字を置く: `python3 $E put tools/shorts/voice/fish_web.py /home/ubuntu/cdp/fish_web.py`（`asr_check.py` も同じ）・
@@ -86,11 +89,11 @@
    直しの途中は `up --draft`（縦横半分・下見なし・検査10項目。カットの長さ・似た見た目・止め絵・カクつき・使い回しは見られる）。
    **書き出すのは作業枝に push してある道具。** 名前は版ごとに変える（F-010）
 6. **結果を読む**: `$S/render/{{name}}/summary.json` の品目ごとに `qa.checks`（20項目の合否と測った値）・`bgm`（飛ばした頭の秒・0コマ目の音量）・
-   `end_notes`（終わりの札が最後のコマに描かれているか）・`moved`（顔を避けて動いた字）・`preview`。目で見るのは `$S/render/{{name}}/<id>/` の:
-   - `<id>.sheet1s.jpg`（1秒1コマ・字つき）: 0秒目の画・場面の流れ・ぼかし忘れ・透かしの残り
-   - `<id>.texts.jpg`（字の切り抜き）: 語の途中の割れ・はみ出し・題の札の国旗が題の国か・終わりの札
-   - `<id>.faces.jpg`（顔の切り抜き）: 本人以外の顔・映さないと決めた人が写っていないか（決めるのは人）
-   - `<id>_strips.jpg`（行ごとの1秒刻みの帯・弱い画に赤い枠）: **行ごとに、言った物がその行の画に写っているか**（F-014）・弱い画が2秒以上続かないか
+   `end_notes`（終わりの札が最後のコマに描かれているか）・`moved`（顔を避けて動いた字）・`preview`。目で見るのは `$S/render/{{name}}/{{sid}}/` の:
+   - `{{sid}}.sheet1s.jpg`（1秒1コマ・字つき）: 0秒目の画・場面の流れ・ぼかし忘れ・透かしの残り
+   - `{{sid}}.texts.jpg`（字の切り抜き）: 語の途中の割れ・はみ出し・題の札の国旗が題の国か・終わりの札
+   - `{{sid}}.faces.jpg`（顔の切り抜き）: 本人以外の顔・映さないと決めた人が写っていないか（決めるのは人）
+   - `{{sid}}_strips.jpg`（行ごとの1秒刻みの帯・弱い画に赤い枠）: **行ごとに、言った物がその行の画に写っているか**（F-014）・弱い画が2秒以上続かないか
 7. **直す**（落ちた検査 → 直しかた）:
 
    | 検査 | 直しかた |
@@ -105,10 +108,10 @@
    | `faces`（人が見る） | 本人・誤検出なら記録に書いて通す。第三者の顔が大きければ、その画を使わない（大きくぼかさない） |
 
    直したら 4 → 5 → 6。前の版と変えたカット（行・前 → 後・なぜ）を控える
-8. **下見と記録**: 下見の URL は `summary.json` の `preview.page`（7日で消える）。**報告に書く。** 制作 issue に出すのはまとめ役。
-   記録は `{{qa}}`（版ごとの sha256・秒・カット数・検査の数／帳面の画・音の項目の ○△／行ごとの画と、写せなかった物と代わりの画／
-   声に渡した字と聞き取り／前の版から直したこと／投稿の文に入れるもの: 元のアーカイブ・`BGM：ポケットサウンド – https://pocket-se.info/`）と、
-   `{{spec}}`・`{{ov}}`・`{{edit}}`・`{{vl}}`。コミットのしかたは、まとめ役の頼む文に従う
+8. **下見と記録**: 下見は本番の書き出しが Hosting に置く（`put.py` は回さない）。URL は `summary.json` の `preview.page`（7日で消える）。
+   **報告に書く。** 制作 issue に出すのはまとめ役。記録は `{{qa}}`（版ごとの sha256・秒・カット数・検査の数／帳面の画・音の項目の ○△／
+   行ごとの画と、写せなかった物と代わりの画／声に渡した字と聞き取り／前の版から直したこと／投稿の文に入れるもの: 元のアーカイブ・
+   `BGM：ポケットサウンド – https://pocket-se.info/`）と、spec・上書き・指示書・声の字。コミットのしかたは、まとめ役の頼む文に従う
 
 ## EC2 の鍵（`/home/ubuntu/locks/fish-voice`）
 

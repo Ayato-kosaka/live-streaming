@@ -502,14 +502,20 @@ def plan_map(heads: list, plan: Path, have_spec: bool, inlined) -> str:
 # 素材
 
 def stream_ids(vdir: Path, spec: dict | None) -> list:
-    """この回が使う配信の videoId（回の置き場の名前・spec の `_note`・行の video / src_video）。"""
-    cand = [vdir.parent.name]
-    if spec:
-        cand.append(str(spec.get("_note", "")))
-        cand += [json.dumps(r.get(k), ensure_ascii=False) for r in spec.get("rows", []) for k in ("video", "src_video") if r.get(k)]
+    """この回が使う配信の videoId（回の置き場の名前・行の video / src_video・spec の `_note`）。
+
+    `_note` に時間軸の割り当て（`2:=Lmk2lp9iFQ8`）があれば、それだけを使う。`_note` には「使わない配信」も書いてある。
+    """
+    note = str((spec or {}).get("_note", ""))
+    axis = re.findall(r"\d+:=(" + VID.pattern + ")", note)
+    cand = [vdir.parent.name] + ([" ".join(axis)] if axis else [note])
+    cand += [json.dumps(r.get(k), ensure_ascii=False) for r in (spec or {}).get("rows", []) for k in ("video", "src_video")
+             if r.get(k)]
     out = []
     for s in cand:
-        out += [v for v in VID.findall(s) if v not in out]
+        for v in VID.findall(s):
+            if v not in out:
+                out.append(v)
     return out
 
 
@@ -521,7 +527,7 @@ def material_block(vdir: Path, spec: dict | None, excerpt: str, scratch: str | N
     if ids:
         have = [v for v in ids if (WORK / v / "clips/manifest.json").exists()]
         parts.append(f"- 配信: {'・'.join(ids)}。作業枝の暗号文（`shorts/.work/<videoId>/clips/`）: "
-                     + (f"在る {'・'.join(have)}" if have else "無い（下ろしてある。下の表の clips のコミットの木から開く）"))
+                     + (f"在る {'・'.join(have)}" if have else "無い（下ろしてある。下の 1 の戻しかたで開く）"))
     if scratch and ids:
         found = []
         for v in ids:
@@ -603,8 +609,10 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
     heads = plan_heads(lines, pattern)
     at, excerpt = ingest_excerpt(lines, heads, plan)
     name = name or suggest_name(vdir, sid, files["検査の記録"])
-    S = scratch or "<スクラッチパッド>"
-    bgm = ((spec or {}).get("bgm") or {}).get("path") or f"{S}/bgm/pocket_csikos.mp3"
+    S = scratch.rstrip("/") if scratch else "<スクラッチパッド>"
+    bgm = ((spec or {}).get("bgm") or {}).get("path") or "$S/bgm/pocket_csikos.mp3"
+    if bgm.startswith(S + "/"):
+        bgm = "$S" + bgm[len(S):]
 
     have = [f"`{p.name}`" + (f"（{len(c.lines)}行）" if k == "原稿" else "") for k, p in files.items() if p.exists()]
     make = [f"`{p.name}`" for k, p in files.items() if not p.exists() and k not in ("投稿の文", "原稿")]
@@ -617,7 +625,7 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
         where.append(f"- !! {w}")
     dec = decision(lines)
     if dec:
-        where.append("- あやとの決定（企画の頭）:\n" + "\n".join("  " + ln for ln in dec.splitlines()))
+        where.append("- 企画の頭の引用（あやとの決定・頼み）:\n" + "\n".join("  " + ln for ln in dec.splitlines()))
     if lines:
         where.append(plan_map(heads, plan, spec is not None, at))
     else:
@@ -633,10 +641,10 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
         "table": edit_table(c, rows, real, c.title_card),
         "material": material_block(vdir, spec, excerpt, scratch),
         "ledger": edit_ledger_block(),
-        "scratch": S, "key": f"{S}/keys/ref_private.pem", "bgm": bgm, "name": name, "sid": sid,
+        "scratch": S, "bgm": bgm, "name": name, "sid": sid,
         "ep": rel(vdir), "pat_arg": f" --pattern {pattern}" if pattern else "",
-        "spec": rel(files["spec"]), "ov": rel(files["上書き"]), "edit": rel(files["指示書"]),
-        "vl": rel(files["声の字"]), "qa": rel(files["検査の記録"]),
+        "spec": "$V/" + files["spec"].name, "ov": "$V/" + files["上書き"].name, "edit": "$V/" + files["指示書"].name,
+        "vl": "$V/" + files["声の字"].name, "qa": "$V/" + files["検査の記録"].name,
     })
 
 
