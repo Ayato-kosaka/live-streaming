@@ -1,0 +1,25 @@
+{
+ "schema": 1,
+ "video": "zjHZucyfrq8",
+ "option": "p2",
+ "version": "p2 v10",
+ "_source": "投稿文は #959 のコメント 6304422126 で見せた形のまま（v10 のコメント 6305411791「投稿文は、前のコメントの形のまま」）。あやとの「19時に出して」（#959 のコメント 6305646320、2026-10-21 01:21 UTC）→ 2026-10-21 19:00 JST（10:00 UTC）に出す",
+ "youtube": {
+  "file": "p2.mp4",
+  "title": "🇦🇱アルバニアの1泊1400円ホステルが異常すぎた😰",
+  "description": "受付の人がいなくて屋上に上がったら、外のベッドで受付のおっちゃんが寝ていた。冷蔵庫もキッチンも外。34軒くらいホステルを回ってきて、初めて見た宿。\n\n配信のアーカイブ（全編）: https://www.youtube.com/watch?v=zjHZucyfrq8\n一部に、別の日の配信（https://www.youtube.com/watch?v=HjSLfg57t7E）の画も使っています。\n\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#アルバニア #ホステル #海外旅行 #一人旅 #バックパッカー",
+  "visibility": "public",
+  "publish_at": "2026-10-21T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない",
+  "related_video": "https://www.youtube.com/watch?v=zjHZucyfrq8"
+ },
+ "tiktok": {
+  "file": "p2.mp4",
+  "caption": "🇦🇱アルバニアの1泊1400円ホステルが異常すぎた😰\nYouTube「@あやとグルメアプリ」の生配信から\n受付の人がいなくて屋上に上がったら、外のベッドで受付のおっちゃんが寝ていた。冷蔵庫もキッチンも外。34軒くらいホステルを回ってきて、初めて見た宿。\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#アルバニア #ホステル #海外旅行 #一人旅 #バックパッカー",
+  "publish_at": "2026-10-21T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない"
+ },
+ "cover_at_s": 1.0,
+ "_cover_note": "サムネイル（YouTube）とカバー（TikTok）は題の札が見えるコマ。post.py cover --cover-at 1.0（題の札とベッドが見える）",
+ "file": "p2.mp4"
+}

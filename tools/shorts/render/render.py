@@ -391,9 +391,29 @@ def speech_onsets(x: np.ndarray, spf: int, min_gap: int = 2, rel_db: float = -32
 def chunks_of(para: str) -> list[str]:
     try:
         import budoux
-        return budoux.load_default_japanese_parser().parse(para)
+        out = budoux.load_default_japanese_parser().parse(para)
     except ImportError:
-        return list(para)
+        out = list(para)
+    return glue_flags(out) if TL.has_flag(para) else out
+
+
+def glue_flags(chunks: list[str]) -> list[str]:
+    """国旗（🇦🇱）の中と直後では割らない。国旗は後ろの国の名前と1つの塊（「🇦🇱アルバニアの」）。
+
+    行末に国旗だけ残ると、どの国の旗かが次の行に行ってしまう。地域指示子2つの間で割ると、旗が2つの□に化ける。
+    """
+    text = "".join(chunks)
+    keep = set()  # ここ（字の位置）の前では割らない
+    for m in TL.FLAG_RE.finditer(text):
+        keep.update(range(m.start() + 1, m.end() + 1))
+    out, pos = [], 0
+    for ch in chunks:
+        if out and pos in keep:
+            out[-1] += ch
+        else:
+            out.append(ch)
+        pos += len(ch)
+    return out
 
 
 def balanced2(chunks: list[str], font: ImageFont.FreeTypeFont, max_px: int) -> list[str] | None:
@@ -405,13 +425,26 @@ def balanced2(chunks: list[str], font: ImageFont.FreeTypeFont, max_px: int) -> l
     best = None
     for k in range(1, len(chunks)):
         a, b = "".join(chunks[:k]).rstrip("、。"), "".join(chunks[k:]).rstrip("、。")
-        wa, wb = font.getlength(a), font.getlength(b)
+        wa, wb = text_len(a, font), text_len(b, font)
         if wa > max_px or wb > max_px:
             continue
         score = max(wa, wb) - (font.size * 3 if chunks[k - 1].endswith(("、", "。", "？", "！")) else 0)
         if best is None or score < best[0]:
             best = (score, [a, b])
     return best[1] if best else None
+
+
+def text_len(s: str, font: ImageFont.FreeTypeFont) -> float:
+    """字の幅（px）。国旗（🇦🇱）は絵の幅で数える。国旗の無い字は font.getlength と同じ値。"""
+    return TL.advance(s, font, 0.0) if TL.has_flag(s) else font.getlength(s)
+
+
+def safe_cut(s: str, cut: int) -> int:
+    """s を cut 字目で割るとき、国旗の中か直後に当たるなら、国旗の手前へずらす（旗を割らない・国の名前から離さない）。"""
+    for m in TL.FLAG_RE.finditer(s):
+        if m.start() < cut <= m.end():
+            return m.start()
+    return cut
 
 
 def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
@@ -422,7 +455,7 @@ def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
     lines_out = []
     for para in text.split("\n"):
         chunks = chunks_of(para)
-        if font.getlength(para.rstrip("、。")) <= max_px:
+        if text_len(para.rstrip("、。"), font) <= max_px:
             lines_out.append(para)
             continue
         two = balanced2(chunks, font, max_px)
@@ -432,16 +465,18 @@ def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
         cur = ""
         for ch in chunks:
             cand = cur + ch
-            if cur and font.getlength(cand.rstrip("、。")) > max_px:
+            if cur and text_len(cand.rstrip("、。"), font) > max_px:
                 lines_out.append(cur)
                 cur = ch
             else:
                 cur = cand
             # 文節1つが幅を超えるときは、1文字ずつ割る
-            while font.getlength(cur.rstrip("、。")) > max_px and len(cur) > 1:
+            while text_len(cur.rstrip("、。"), font) > max_px and len(cur) > 1:
                 cut = len(cur)
-                while cut > 1 and font.getlength(cur[:cut]) > max_px:
+                while cut > 1 and text_len(cur[:cut], font) > max_px:
                     cut -= 1
+                # 国旗の手前へずらす。行頭の国旗しか入らない幅（0 に戻る）だけは、空の行を作らないよう元の位置で割る
+                cut = safe_cut(cur, cut) or cut
                 lines_out.append(cur[:cut])
                 cur = cur[cut:]
         if cur:
@@ -817,6 +852,9 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         text = " ".join(pt["text"] for pt in parts) if parts else tp.get("text")
         if not text:
             continue
+        if TL.has_flag(text):
+            # テロップは縁を PIL の stroke で描く別の道（telop_canvas）で、国旗の絵を置けない。豆腐（□□）を焼かずに止める
+            sys.exit(f"テロップ（強調の字）には国旗を置けない: {text}（国旗は題の札か字幕に書く）")
         a, b = int(tp["from"]), min(int(tp["to"]), total)
         if a < prev_end:
             sys.exit(f"テロップが重なっている（画面に出すのは1つまで）: {tp}")
@@ -871,6 +909,9 @@ def halve_longest(ch: list[str]) -> list[str] | None:
     if body < 5:
         return None
     m = (body + 1) // 2
+    m = safe_cut(c, m)
+    if m <= 0:
+        return None
     return ch[:k] + [c[:m], c[m:]] + ch[k + 1:]
 
 
@@ -940,7 +981,7 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
 
 def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
     f = ImageFont.truetype(str(fpath), s)
-    ws = [TL.advance(ln, f, lk.get("tracking", 0.0)) for ln in lines]
+    ws = [TL.advance(ln, f, lk.get("tracking", 0.0), lk.get("flag")) for ln in lines]
     return max(ws) - min(ws)
 
 

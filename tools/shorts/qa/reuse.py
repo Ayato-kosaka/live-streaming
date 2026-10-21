@@ -112,6 +112,27 @@ def presenter_height(cv2, det, img: np.ndarray) -> float:
     return best
 
 
+def alike(segs: list[dict], sig: dict, pres, i: int, j: int, look_line: float = SAME_LOOK) -> str | None:
+    """カット i と j が「同じ画」か。同じなら理由（人に見せる言葉）、違えば None。
+
+    使い回し（shot_reuse）の束ね方と、似た見た目の連続（cuts.check_similar_run）の見分けは、**この1本**で決める
+    （同じ瞬間・同じ場面・pHash・本人の画の外し方）。違うのは色の分布の線（look_line）だけで、続けて並べた
+    カットのほうが緩い（`cuts.SIMILAR_LOOK`。宿の部屋の引きと寄りは使い回しでは別の画、続けると似た見た目）。
+    """
+    a, b = segs[i], segs[j]
+    same_stream = a["stream"] == b["stream"]
+    gap = max(a["src_from"], b["src_from"]) - min(a["src_to"], b["src_to"])
+    look = max(float(np.minimum(x["hist"], y["hist"]).sum()) for x in sig[i] for y in sig[j]) >= look_line
+    twin = min(int(np.sum(x["phash"] != y["phash"])) for x in sig[i] for y in sig[j]) <= TWIN_PHASH
+    if same_stream and gap <= MOMENT_SEC and look:
+        return "同じ瞬間"
+    scene = (a["path"] == b["path"] or (same_stream and gap <= NEAR_SEC)) and look
+    # 顔を探すのは、同じ瞬間ではないのに束ねそうな組だけ（ほとんどの組は色で別と分かる）
+    if (scene or twin) and not (pres(i) and pres(j)):
+        return "同じ場面で見た目が近い" if scene else "ほぼ同じ絵"
+    return None
+
+
 def group(segs: list[dict], sig: dict, pres) -> list[list[int]]:
     """カットを同じ画の束に分ける。pres(i) は「本人が大きく写る画か」（要るときだけ顔を探す）。"""
     n = len(segs)
@@ -125,15 +146,7 @@ def group(segs: list[dict], sig: dict, pres) -> list[list[int]]:
 
     for i in range(n):
         for j in range(i + 1, n):
-            a, b = segs[i], segs[j]
-            same_stream = a["stream"] == b["stream"]
-            gap = max(a["src_from"], b["src_from"]) - min(a["src_to"], b["src_to"])
-            look = max(float(np.minimum(x["hist"], y["hist"]).sum()) for x in sig[i] for y in sig[j]) >= SAME_LOOK
-            twin = min(int(np.sum(x["phash"] != y["phash"])) for x in sig[i] for y in sig[j]) <= TWIN_PHASH
-            moment = same_stream and gap <= MOMENT_SEC and look
-            scene = (a["path"] == b["path"] or (same_stream and gap <= NEAR_SEC)) and look
-            # 顔を探すのは、同じ瞬間ではないのに束ねそうな組だけ（ほとんどの組は色で別と分かる）
-            if moment or ((scene or twin) and not (pres(i) and pres(j))):
+            if alike(segs, sig, pres, i, j):
                 par[find(i)] = find(j)
     out: dict[int, list[int]] = {}
     for i in range(n):
@@ -165,57 +178,74 @@ def sheet(ctx: Ctx, imgs: list[np.ndarray], name: str) -> str:
     return str(p)
 
 
+def looks(ctx: Ctx) -> dict:
+    """カットごとの見た目（3コマの要約・縮めたコマ・本人の画か）。測れなければ {"na": 理由}。
+
+    使い回し（shot_reuse）と似た見た目の連続（similar_run）が同じものを読む。1回の検査で2度復号しないように
+    ctx に覚えておく（Actions では2つを同じ組に置いている。`render/remote.py` の QA_GROUPS）。
+    """
+    def load() -> dict:
+        segs = segments(ctx.plan)
+        if not segs:
+            return {"na": "時間割（plan.json の cuts）が無く、カットの区切りが分からない"}
+        try:
+            import cv2
+            import faces
+        except ImportError:
+            return {"na": "OpenCV が無い（本人の画を見分けられない）"}
+        det = faces.detector(cv2)
+        if det is None:
+            return {"na": "顔の検出器が無い（本人の画を見分けられない）"}
+        # 画面に出た絵。字なしの書き出しがあればそれ、無ければ仕上がりの字の箱を除いて比べる
+        use_plate = ctx.plate is not None and Path(ctx.plate).exists()
+        src = Path(ctx.plate) if use_plate else ctx.mp4
+        keep = None
+        if not use_plate:
+            import video
+            keep = ~video.text_mask(ctx, THUMB[1], THUMB[0])
+        want: dict[int, int] = {}
+        for i, s in enumerate(segs):
+            for q in SAMPLES:
+                want[s["at"] + int(round(q * max(0, s["frames"] - 1)))] = i
+        sig: dict[int, list] = {i: [] for i in range(len(segs))}
+        small: dict[int, list] = {i: [] for i in range(len(segs))}
+        for f, img in iter_frames(src, list(want), ctx.W, ctx.H):
+            i = want[f]
+            sig[i].append(signature(img, keep))
+            # 顔は束ねそうな組にだけ探すので、1/3 に縮めたコマを取っておく（1コマ 0.7MB）
+            small[i].append(np.asarray(Image.fromarray(img).resize(DET_SIZE, Image.BOX)))
+        if any(not v for v in sig.values()):
+            lost = [where(segs[i]) for i, v in sig.items() if not v]
+            return {"na": f"{len(lost)} カットの絵が読めなかった", "problems": lost[:8], "detector": det[0]}
+        face_h: dict[int, float] = {}
+
+        def pres(i: int) -> bool:
+            if i not in face_h:
+                face_h[i] = 0.0
+                for im in small[i]:
+                    face_h[i] = max(face_h[i], frame_memo(f"reuse_face:{det[0]}", im,
+                                                          lambda: presenter_height(cv2, det, im)))
+                    if face_h[i] >= PRESENTER_FACE:
+                        break
+            return face_h[i] >= PRESENTER_FACE
+        return {"segs": segs, "sig": sig, "small": small, "pres": pres, "face_h": face_h, "detector": det[0],
+                "use_plate": use_plate}
+    return ctx.memo("cut_looks", load)
+
+
 def check(ctx: Ctx) -> dict:
     cid, title = "shot_reuse", "同じ画の使い回し"
     th = {"same_look_hist_ge": SAME_LOOK, "twin_phash_le": TWIN_PHASH, "same_moment_sec": MOMENT_SEC,
           "same_scene": f"同じ素材のファイルか、同じ配信の {NEAR_SEC:g}秒以内",
           "presenter_face_ge": PRESENTER_FACE, "fail_if_share_gt": SHARE_FAIL, "fail_if_count_gt": COUNT_FAIL}
-    segs = segments(ctx.plan)
-    if not segs:
-        return result(cid, title, NA, "時間割（plan.json の cuts）が無く、カットの区切りが分からない", thresholds=th)
-    try:
-        import cv2
-        import faces
-    except ImportError:
-        return result(cid, title, NA, "OpenCV が無い（本人の画を見分けられない）", thresholds=th)
-    det = faces.detector(cv2)
-    if det is None:
-        return result(cid, title, NA, "顔の検出器が無い（本人の画を見分けられない）", thresholds=th)
-    th["detector"] = det[0]
+    L = looks(ctx)
+    if "detector" in L:
+        th["detector"] = L["detector"]
+    if "na" in L:
+        return result(cid, title, NA, L["na"], thresholds=th, problems=L.get("problems"))
+    segs, sig, small, pres, face_h, use_plate = (L[k] for k in ("segs", "sig", "small", "pres", "face_h", "use_plate"))
     fps = float(ctx.plan["fps"])
     total = float(ctx.plan.get("frames") or ctx.nframes) / fps
-    # 画面に出た絵。字なしの書き出しがあればそれ、無ければ仕上がりの字の箱を除いて比べる
-    use_plate = ctx.plate is not None and Path(ctx.plate).exists()
-    src = Path(ctx.plate) if use_plate else ctx.mp4
-    keep = None
-    if not use_plate:
-        import video
-        keep = ~video.text_mask(ctx, THUMB[1], THUMB[0])
-    want: dict[int, int] = {}
-    for i, s in enumerate(segs):
-        for q in SAMPLES:
-            want[s["at"] + int(round(q * max(0, s["frames"] - 1)))] = i
-    sig: dict[int, list] = {i: [] for i in range(len(segs))}
-    small: dict[int, list] = {i: [] for i in range(len(segs))}
-    for f, img in iter_frames(src, list(want), ctx.W, ctx.H):
-        i = want[f]
-        sig[i].append(signature(img, keep))
-        # 顔は束ねそうな組にだけ探すので、1/3 に縮めたコマを取っておく（1コマ 0.7MB）
-        small[i].append(np.asarray(Image.fromarray(img).resize(DET_SIZE, Image.BOX)))
-    if any(not v for v in sig.values()):
-        lost = [where(segs[i]) for i, v in sig.items() if not v]
-        return result(cid, title, NA, f"{len(lost)} カットの絵が読めなかった", thresholds=th, problems=lost[:8])
-    face_h: dict[int, float] = {}
-
-    def pres(i: int) -> bool:
-        if i not in face_h:
-            face_h[i] = 0.0
-            for im in small[i]:
-                face_h[i] = max(face_h[i], frame_memo(f"reuse_face:{det[0]}", im,
-                                                      lambda: presenter_height(cv2, det, im)))
-                if face_h[i] >= PRESENTER_FACE:
-                    break
-        return face_h[i] >= PRESENTER_FACE
     order = sorted(range(len(segs)), key=lambda i: segs[i]["at"])
     first, last = order[0], order[-1]
     rows = []

@@ -6,12 +6,16 @@
     python3 tools/shorts/qa/qa_video_selftest.py   # 絵・長さの壊し方（透かし・顔・黒・止まり・61秒）
     python3 tools/shorts/qa/drill.py all --keep DIR  # 両方を1回で。作った動画と報告を DIR に残す
 
+カットの選び方の3つ（長さ・似た見た目の連続・止め絵）の壊し方は、書き出しを通さない合成の足だけなので
+3本目の見張り `cuts_selftest.py` に置いた（この2本は上限 5分の手前にいる）。ここでは clean が3つとも
+通ることだけを当てる。
+
 終了コード 0=全部思ったとおり / 1=思ったとおりでない足がある / **2=数えるものが無い**
 （ffmpeg・OpenCV・顔の検出器・書体のどれかが無い。「通った」とは言わない）。
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**16の検査が全部 pass**。壊した1本ごとに、
+壊れていない1本（clean）は**19の検査が全部 pass**。壊した1本ごとに、
 **壊したところを見る検査だけが落ち、ほかは pass のまま**であること（字と顔の検査は字なしの版で
 しか測れないので、字なしの版を渡さない足では not-checkable が正しい）。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
@@ -50,7 +54,7 @@
 元素材のカクつきと使い回しの足も、書き出しを通さない。どちらの検査も出来上がりの画素ではなく、
 時間割から戻った元素材とカットの並びを見るので、時間割と素材だけを差し替えれば当たる（書き出しを
 足すと、1本 5分の上限に入らない）。足ごとに2つの検査を両方回し、壊したほうだけが落ちることを見る。
-clean は本物の書き出しで16本を回すので、2つの検査が本物の時間割で落ちないことはそちらで当たる。
+clean は本物の書き出しで19本を回すので、2つの検査が本物の時間割で落ちないことはそちらで当たる。
 
 ## 素材と書き出し
 
@@ -150,11 +154,32 @@ def fonts_dir(box: Path) -> Path | None:
     return d
 
 
+# 元素材の4つの場面（SCENE_SEC 秒ずつ）。どれも testsrc2 を、裏返し・明暗の反転・色相の回しで別の見た目にしたもの。
+# clean は「3秒未満のカットを、隣と似ていない場面から1つずつ」でないと、カットの長さ・似た見た目の連続・
+# 使い回しの検査で落ちる（2026-10-21 に足した検査。それまでの clean は 1場面から 3.5秒を3つで、今の線では両方落ちる）。
+# 4つの場面は、どの2つも使い回しの線（色の分布の重なり 0.6・pHash 10ビット）の外にいること。隣どうしでなくても、
+# 同じ素材のファイルの中で見た目が近いと、使い回しの検査が冒頭と終わりを「呼び戻し」と束ねて落とす
+# （4つ目を hflip,vflip,hue=h=240 にしたら、字なしの版で1つ目と 0.619 になって落ちた）。いまの4つは、書き出した
+# clean で測って、字なしの版で重なり 0.04〜0.33・pHash の違い 26〜42ビット、仕上がり（字の箱を除く）で
+# pHash の違い 14〜50ビット（字の箱を平均で埋めるぶん近づく。線 10 との間は 4ビット）。3つ目を vflip,hue=h=120 に
+# すると、仕上がりで1つ目と 12ビットまで近づいた。testsrc2 のままにしたのは、顔・透かし・字幕の検査がこの絵で
+# 化けないと確かめてあるから
+SCENES = ("null", "hflip,hue=h=60", "negate,hue=h=120", "hflip,vflip,hue=h=180")
+SCENE_SEC = 4
+
+
 def make_source(path: Path):
-    """make_assets.py と同じ作り（testsrc2・220Hz）を、配信と同じ 720x1280 で。"""
+    """make_assets.py と同じ作り（testsrc2・220Hz）を、配信と同じ 720x1280 で。見た目の違う4場面をつなぐ。"""
+    n = len(SCENES)
+    parts = [f"[s{k}]trim={k * SCENE_SEC}:{(k + 1) * SCENE_SEC},setpts=PTS-STARTPTS,{vf}[v{k}]"
+             for k, vf in enumerate(SCENES)]
+    fc = (f"[0:v]split={n}" + "".join(f"[s{k}]" for k in range(n)) + ";" + ";".join(parts) + ";"
+          + "".join(f"[v{k}]" for k in range(n)) + f"concat=n={n}:v=1:a=0,format=yuv420p[v]")
+    dur = n * SCENE_SEC
     sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-        "-f", "lavfi", "-i", f"testsrc2=size=720x1280:rate={FPS}:duration={SEC + 5}",
-        "-f", "lavfi", "-i", f"sine=frequency=220:sample_rate={SR}:duration={SEC + 5}",
+        "-f", "lavfi", "-i", f"testsrc2=size=720x1280:rate={FPS}:duration={dur}",
+        "-f", "lavfi", "-i", f"sine=frequency=220:sample_rate={SR}:duration={dur}",
+        "-filter_complex", fc, "-map", "[v]", "-map", "1:a",
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "18", "-g", "30", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "128k", "-shortest", str(path)])
 
@@ -214,9 +239,11 @@ LINES = [  # 出だし（コマ）・長さ（秒）・字幕
     (135, 1.5, "字幕と声は、同じコマで出る。"),
     (240, 1.4, "最後まで、見てくれてありがとう。"),
 ]
-# 元素材のコマ（out は含まない）。合わせて 315 コマ。
-# 1行目の字幕が消える 57 コマ目から 2行目の 135 コマ目までは字幕が無い（2.6秒）。黒・止めるはここに入れる
-CUTS = [(10, 115), (125, 230), (240, 345)]
+# 元素材のコマ（out は含まない）。4場面から1つずつ、2.0秒・2.83秒・2.83秒・2.83秒で、合わせて 315 コマ。
+# 1行目の字幕が消える 57 コマ目から 2行目の 135 コマ目までは字幕が無い（2.6秒）。黒・止めるはここに入れる。
+# 黒・止める [60, 120) は、2つ目のカット（出来上がりの 60〜145 コマ）の中に収める。2つのカットにまたがると、
+# 両方のカットの見本のコマが同じ黒・同じ止まった絵になって、似た見た目の連続まで落ちる（壊したところだけが落ちない）
+CUTS = [(10, 70), (130, 215), (250, 335), (370, 455)]
 GAP = (60, 120)    # 黒くする・止めるコマ [60, 120) = 2.0秒
 
 
@@ -333,6 +360,12 @@ def overlay_key(plan: dict | None) -> str:
         h = hashlib.md5(Path(o["png"]).read_bytes()).hexdigest() if o.get("png") and Path(o["png"]).exists() else ""
         out.append([o.get("kind"), o["x"], o["y"], o["w"], o["h"], o["from"], o["to"], h])
     return json.dumps(out)
+
+
+def cuts_key(plan: dict | None) -> str:
+    """時間割のカットのうち、絵とカットの選び方の検査に効く欄（音の欄 audio_db は入れない）。"""
+    keys = ("path", "in", "out", "at", "frames", "crop", "zoom", "fit", "still", "image")
+    return json.dumps([[c.get(k) for k in keys] for c in (plan or {}).get("cuts", [])], sort_keys=True, default=str)
 
 
 def flat_control() -> tuple[bool, str]:
@@ -519,12 +552,15 @@ def held_sources(box: Path, src: Path, n: int) -> dict[str, Path]:
     return out
 
 
-def scene_clip(path: Path, seed: int, hue: int, n: int = 60, face: bool = False) -> None:
+def scene_clip(path: Path, seed: int, hue: int, n: int = 60, face: bool = False,
+               face_size: tuple[int, int] = (82, 96)) -> None:
     """使い回しの足の素材: 色味（hue）と模様（seed）が場面ごとに違い、横に流れる絵（270x480・30fps）。
 
     場面どうしは HSV の分布がほぼ重ならず（色相の箱が別）、模様も別なので pHash も遠い。
     流れているので、元素材のカクつきの検査は「動いていて、繰り返しが無い」と測る。
     face=True は、流れる地の上に公有の顔写真を据えた「本人が話す画」（高さ 2割。本人の画の線は 1割）。
+    既定の大きさ（82x96）は、Haar が返す顔の箱が画面の高さの 0.098〜0.100 で、本人の画の線（0.10）の
+    ちょうど上下に出る（2026-10-21 に測った）。線から離したい足は face_size で大きくする
     """
     import numpy as np
     from PIL import Image
@@ -542,7 +578,7 @@ def scene_clip(path: Path, seed: int, hue: int, n: int = 60, face: bool = False)
     field = np.stack([hh, s, v], -1)
     head = None
     if face:
-        head = Image.open(HERE / "assets" / "face_public_domain.jpg").convert("RGB").resize((82, 96), Image.BICUBIC)
+        head = Image.open(HERE / "assets" / "face_public_domain.jpg").convert("RGB").resize(face_size, Image.BICUBIC)
     enc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
                             "-s", f"{w}x{h}", "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "ultrafast",
                             "-crf", "18", "-pix_fmt", "yuv420p", str(path)], stdin=subprocess.PIPE)
@@ -612,9 +648,9 @@ def stutter_legs(C, box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool
     | 足 | 壊し方 | source_stutter | shot_reuse |
     | --- | --- | --- | --- |
     | stutter_in | 2つ目のカットの元の区間だけ、同じ絵を4コマずつ（実質 7.5fps） | fail（その区間だけ 6割超） | pass |
-    | stutter_out | 使っていない所だけ繰り返す | pass（3区間とも 1割以下） | pass |
+    | stutter_out | 使っていない所だけ繰り返す | pass（全区間とも 1割以下） | pass |
     | stutter_15fps | 全部を2コマずつ（Hc の配信の形） | pass（繰り返しは 4〜6割と測ったうえで） | pass |
-    | stutter_still | 1コマを止めたまま（写真） | pass（3区間とも止まった画として数えない） | pass |
+    | stutter_still | 1コマを止めたまま（写真） | pass（全区間とも止まった画として数えない） | pass |
     | stutter_zoom_hint | stutter_in の2つ目のカットに、止まった切り出し（from == to）と動く寄せを付ける | どちらも fail。「ゆっくり寄せている」は動く寄せにだけ付く | — |
     """
     import shutil as _sh
@@ -638,7 +674,7 @@ def stutter_legs(C, box: Path, clean: Path, cwork: Path) -> list[tuple[str, bool
         both = ru["status"] == "pass" and len(reps) == len(CUTS)
         if name == "stutter_in":
             ok = (both and st["status"] == "fail" and reps[1] is not None and reps[1] > 0.6
-                  and all(x is not None and x <= 0.1 for x in (reps[0], reps[2])))
+                  and all(x is not None and x <= 0.1 for k, x in enumerate(reps) if k != 1))
         elif name == "stutter_15fps":
             # 1コマおきの繰り返しを「繰り返し」と数えたうえで、線（6割）の手前に収まること
             ok = both and st["status"] == "pass" and all(x is not None and 0.4 <= x <= 0.6 for x in reps)
@@ -917,7 +953,7 @@ def run(half: str, keep: Path | None = None) -> int:
             pl = plate if name in ("clean", "safe_low") else (text_face_plate if name == "text_face" else None)
             t0 = time.monotonic()
             ctx = C.make_ctx(mp4, work, plate=pl, crops=box / f"{name}.qa")
-            vkey = (video_md5(mp4), overlay_key(ctx.plan), str(pl))
+            vkey = (video_md5(mp4), overlay_key(ctx.plan), cuts_key(ctx.plan), str(pl))
             reuse = vkey in vcache
             rep = C.run_checks(ctx, skip=list(C.VIDEO_ONLY) if reuse else None)
             if reuse:
@@ -957,9 +993,13 @@ def run(half: str, keep: Path | None = None) -> int:
                                          if r.get("offset") is not None), len(LINES)),
             ("safe_area が見た字の絵", cl["safe_area"]["measured"].get("overlay_count", 0), 1 + len(LINES)),
             ("voice_vs_bgm が測った行", len(cl["voice_vs_bgm"]["measured"].get("lines", [])), len(LINES)),
-            # 元素材の testsrc2 は動いているので、3区間とも「止まった画」ではなく割合を出すこと
+            # 元素材の testsrc2 は動いているので、全区間とも「止まった画」ではなく割合を出すこと
             ("source_stutter が測った区間", cl["source_stutter"]["measured"].get("measured_segments", 0), len(CUTS)),
             ("shot_reuse が見たカット", cl["shot_reuse"]["measured"].get("cuts", 0), len(CUTS)),
+            # カットの選び方の3つも、clean の全カットを見たうえで通ること（0件で通ったを通ったと読まない）
+            ("cut_length が見たカット", cl["cut_length"]["measured"].get("plan_cuts", 0), len(CUTS)),
+            ("similar_run が見たカット", cl["similar_run"]["measured"].get("cuts", 0), len(CUTS)),
+            ("still_image が画素で測ったカット", cl["still_image"]["measured"].get("measured_cuts", 0), len(CUTS)),
         ]
         if plate is not None:
             floor.append(("safe_area が字なしと引いたコマ",

@@ -8,7 +8,7 @@
     python3 yt_post.py draft <mp4> <post.json>        # 上げて、題・説明・子ども向けでない・改変なし → 非公開で保存
     python3 yt_post.py resume <動画ID> <post.json>    # 途中で閉じた下書きを開き直して続きから
     python3 yt_post.py related <動画ID> <元の動画ID>   # 「関連動画」に元のアーカイブを付けて保存
-    python3 yt_post.py publish <動画ID> [--at <ISO>]  # 公開（--at で予約）にして保存
+    python3 yt_post.py publish <動画ID> [--at <UTC の ISO> [--dry]]  # 公開（--at で一般公開の予約。--dry は欄を入れてキャンセル）
     python3 yt_post.py status <動画ID>                # 題・説明・公開範囲・関連動画を読み直す
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す（手元はそこだけ読む）。
@@ -306,7 +306,7 @@ def related(t, vid, target, dry=False):
     result({"ok": after == [target], "video_id": vid, "linked": after, "changed": True})
 
 
-def publish(t, vid, at=None):
+def publish(t, vid, at=None, dry=False):
     """詳細のページの「公開設定」から公開にして保存し、読み直す"""
     v = get_videos(t, [vid], mask=READ)[0]
     log("before", v.get("privacy"), v.get("draftStatus"))
@@ -314,7 +314,7 @@ def publish(t, vid, at=None):
         result({"ok": True, "video_id": vid, "privacy": v.get("privacy"), "changed": False})
         return
     if at:
-        result({"ok": False, "error": "schedule_not_implemented"})
+        schedule(t, vid, at, dry=dry)
         return
     t.go(f"{BASE}/video/{vid}/edit", wait=8)
     guard_login(t)
@@ -345,6 +345,115 @@ def publish(t, vid, at=None):
             "published": v.get("timePublishedSeconds"), "title": v.get("title"), "changed": True})
 
 
+def scheduled_public_at(v):
+    """Studio の返事から、一般公開の予約の秒（UTC の epoch）を読む。予約が無ければ None。
+    形は {"scheduledPublishings": [{"scheduledTimeSeconds": "…", "action": "SCHEDULED_PUBLISHING_ACTION_SET_PUBLIC",
+    "status": "SCHEDULED_PUBLISHING_STATUS_SCHEDULED"}]}（2026-10-21 に見た）"""
+    for x in (v.get("scheduledPublishingDetails") or {}).get("scheduledPublishings") or []:
+        if x.get("action") == "SCHEDULED_PUBLISHING_ACTION_SET_PUBLIC" and x.get("status") == "SCHEDULED_PUBLISHING_STATUS_SCHEDULED" \
+                and str(x.get("scheduledTimeSeconds", "")).isdigit():
+            return int(x["scheduledTimeSeconds"])
+    return None
+
+
+def schedule(t, vid, at, dry=False):
+    """詳細のページの「公開設定」→「スケジュールを設定」で、at（UTC の ISO。"2026-10-21T10:00:00Z"）に一般公開を予約して保存する。
+
+    - 予約の時刻は、窓の「タイムゾーン」で選ばれている地域の時刻で入れる。EC2 の Chrome の既定は「（GMT+0000）現地時間」
+      （2026-10-21 に見た）。なので Chrome の時計が UTC であることを確かめてから、UTC のまま入れる
+    - 入れたあと、Studio の返事（scheduledPublishingDetails）の秒を at と突き合わせる。1秒でも違えば ok にしない
+    """
+    import datetime as dt
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::00)?Z?", at.strip())
+    if not m:
+        result({"ok": False, "error": "bad_at", "at": at})
+        return
+    when = dt.datetime(*map(int, m.groups()), tzinfo=dt.timezone.utc)
+    want = int(when.timestamp())
+    if want < time.time() + 15 * 60:
+        result({"ok": False, "error": "too_soon", "at": at})
+        return
+    off = t.js("new Date().getTimezoneOffset()")
+    if off != 0:
+        result({"ok": False, "error": "chrome_clock_not_utc", "offset_min": off})
+        return
+    date_s, time_s = when.strftime("%Y/%m/%d"), f"{when.hour}:{when.minute:02d}"
+    v = get_videos(t, [vid], mask=READ)[0]
+    if scheduled_public_at(v) == want:
+        result({"ok": True, "video_id": vid, "privacy": v.get("privacy"), "scheduled_utc": when.isoformat(), "changed": False})
+        return
+    t.go(f"{BASE}/video/{vid}/edit", wait=8)
+    guard_login(t)
+    sel = "(document.querySelector('ytcp-video-metadata-visibility #select-button') || document.querySelector('ytcp-video-metadata-visibility'))"
+    _wait(t, f"!!{sel}", 30)
+    t.click(sel)
+    time.sleep(3)
+    d = "document.querySelector('ytcp-video-visibility-select')"
+    if not t.js(f"!!{d}"):
+        result({"ok": False, "error": "visibility_dialog"})
+        return
+    t.click(f"{d}.querySelector('#second-container-expand-button')")
+    time.sleep(2)
+    # タイムゾーンの札（窓を開かずに読めないので、窓を開いて選ばれている行を読み、閉じる）
+    tzb = f"[...{d}.querySelectorAll('ytcp-button, button')].find(b => /タイムゾーン|Time zone/.test(b.innerText || ''))"
+    t.click(tzb)
+    time.sleep(2)
+    tzd = "[...document.querySelectorAll('tp-yt-paper-dialog, ytcp-dialog')].filter(e => e.getBoundingClientRect().width > 0 && /GMT/.test(e.innerText || '')).pop()"
+    tz = t.js(f"(() => {{ const e = {tzd}; if (!e) return null; return [...e.querySelectorAll('[aria-selected=true], [aria-checked=true], .iron-selected')].map(x => x.innerText.trim().slice(0, 40)); }})()")
+    log("time zone selected:", tz)
+    if not tz or not any(re.search(r"GMT\+0000|GMT\+00:00|UTC", z) for z in tz):
+        result({"ok": False, "error": "timezone_not_utc", "timezone": tz})
+        return
+    # 選び直さずに閉じる（選ばれている行をもう一度押す）
+    t.click(f"[...({tzd}).querySelectorAll('[aria-selected=true], [aria-checked=true], .iron-selected')][0]")
+    time.sleep(1.5)
+    # 日付: 欄を開き、「日付を入力」の箱に打って Enter
+    t.click(f"{d}.querySelector('#datepicker-trigger')")
+    time.sleep(2)
+    box = "document.querySelector('ytcp-date-picker tp-yt-paper-input#textbox input')"
+    if not t.js(f"!!{box}"):
+        result({"ok": False, "error": "date_input"})
+        return
+    t.js(f"(() => {{ const i = {box}; i.focus(); i.select(); }})()")
+    t.type(date_s)
+    key(t, "Enter", "Enter", 13, "\r")
+    time.sleep(1.5)
+    got_date = t.js(f"{d}.querySelector('#datepicker-trigger').innerText.trim()")
+    # 時刻: 時刻の欄（ytcp-datetime-picker の中の、値が H:MM の箱）に打って Enter
+    tin = f"[...{d}.querySelectorAll('ytcp-datetime-picker tp-yt-paper-input input')].find(i => /^\\d{{1,2}}:\\d{{2}}$/.test(i.value))"
+    if not t.js(f"!!({tin})"):
+        result({"ok": False, "error": "time_input", "date": got_date})
+        return
+    t.click(tin)
+    time.sleep(1)
+    t.js(f"(() => {{ const i = {tin}; i.focus(); i.select(); }})()")
+    t.type(time_s)
+    key(t, "Enter", "Enter", 13, "\r")
+    time.sleep(1.5)
+    got_time = t.js(f"(() => {{ const i = {tin}; return i ? i.value : null; }})()")
+    log("schedule fields:", got_date, got_time, "| want", date_s, time_s)
+    shot(t, "yt_8_schedule_set")
+    if got_date != date_s or got_time != time_s:
+        result({"ok": False, "error": "schedule_fields", "date": got_date, "time": got_time, "want": [date_s, time_s]})
+        return
+    if dry:
+        # 確かめだけ。窓は「キャンセル」で閉じ、ページも保存しない
+        t.js(f"""(() => {{ const root = {d}.closest('tp-yt-paper-dialog') || {d}; const b = [...root.querySelectorAll('ytcp-button, button')].find(b => /^(キャンセル|Cancel)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
+        result({"ok": True, "dry": True, "video_id": vid, "date": got_date, "time": got_time, "timezone": tz, "want_utc": when.isoformat()})
+        return
+    t.js(f"""(() => {{ const root = {d}.closest('tp-yt-paper-dialog') || {d}; const b = [...root.querySelectorAll('ytcp-button, button')].find(b => /^(完了|Done)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
+    time.sleep(2)
+    t.click(SAVE)
+    time.sleep(8)
+    shot(t, "yt_9_saved_scheduled")
+    v = get_videos(t, [vid], mask=READ)[0]
+    sp = v.get("scheduledPublishingDetails") or {}
+    secs = scheduled_public_at(v)
+    log("read back", v.get("privacy"), json.dumps(sp, ensure_ascii=False))
+    result({"ok": secs == want, "video_id": vid, "privacy": v.get("privacy"), "scheduled": sp, "scheduled_utc":
+            dt.datetime.fromtimestamp(secs, dt.timezone.utc).isoformat() if secs else None, "want_utc": when.isoformat()})
+
+
 def status(t, vid):
     v = get_videos(t, [vid], mask=READ)[0]
     result({"ok": True, "video": v})
@@ -372,7 +481,7 @@ if __name__ == "__main__":
     elif cmd == "publish":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)
-        publish(t, sys.argv[2], at=sys.argv[sys.argv.index("--at") + 1] if "--at" in sys.argv else None)
+        publish(t, sys.argv[2], at=sys.argv[sys.argv.index("--at") + 1] if "--at" in sys.argv else None, dry="--dry" in sys.argv)
     elif cmd == "status":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)

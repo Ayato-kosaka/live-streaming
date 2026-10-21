@@ -277,6 +277,29 @@ def stream_of(path: Path) -> tuple[str, float]:
     return _STREAM[key]
 
 
+_ENTRY: dict = {}
+
+
+def clip_entry(path: Path) -> dict:
+    """素材のファイルの、取り込みの台帳（同じ置き場の index.json）の行。無ければ空。
+
+    止め絵を作る道具は、元の絵を台帳に書き残している（Hc-z52fs108 の App Store の画面は `source_png`、
+    zjHZucyfrq8 の止め絵は `range` に「…のうち … の1コマ」）。止め絵の検査はそれを人に見せる。
+    """
+    key = str(path)
+    if key not in _ENTRY:
+        _ENTRY[key] = {}
+        try:
+            j = json.loads((Path(path).parent / "index.json").read_text())
+            for c in j.get("clips", []):
+                if isinstance(c, dict) and c.get("file") == Path(path).name:
+                    _ENTRY[key] = c
+                    break
+        except (OSError, ValueError, AttributeError):
+            pass
+    return _ENTRY[key]
+
+
 def hms(t: float) -> str:
     """秒を H:MM:SS.s に。**先に 0.1秒に丸めてから**時・分・秒に割る（割ってから丸めると、
     299.97 が 0:04:60.0 になる）。"""

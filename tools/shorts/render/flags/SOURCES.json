@@ -1,0 +1,380 @@
+{
+ "AE": {
+  "emoji": "🇦🇪",
+  "name": "アラブ首長国連邦",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/AE.svg",
+  "svg_sha256": "bc3147ff378d6a2118504fb2172d50993ec59838a751e015e2432ff3d81f8e8b",
+  "png_sha256": "0252338d1b26432b9d5b209242a5379eee81b6d79e593854dfe82218643dc871",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "AL": {
+  "emoji": "🇦🇱",
+  "name": "アルバニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/AL.svg",
+  "svg_sha256": "8053cd25f1c043b8855ebbf6ead57753b85df32afcf25e789ef44de2307620b8",
+  "png_sha256": "5ba091a48cce54a6c5a0ff65ef46eb040ecb7c3c3d727c15c7e72002d625acb1",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "AM": {
+  "emoji": "🇦🇲",
+  "name": "アルメニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/AM.svg",
+  "svg_sha256": "f94e70cf578e8c001b12929d8b9fdf5b43be5e99915b74e8cc8df51a14638ad3",
+  "png_sha256": "dcad92727879220ac9744598926e2952a0635c44877c5993b95cc1382c0bbb78",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "AT": {
+  "emoji": "🇦🇹",
+  "name": "オーストリア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/AT.svg",
+  "svg_sha256": "636937a503637e7ed454fcdb150cf1ab021f287f7cad5a2e53ed0baea774afa3",
+  "png_sha256": "604f0ff8bbcadbfc1cf2da498a5ef8e1fa90a44b3a9d73b3b08f623252f252ff",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "AZ": {
+  "emoji": "🇦🇿",
+  "name": "アゼルバイジャン",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/AZ.svg",
+  "svg_sha256": "5e53d978423f8827e5f9a22669b8393126107a38b6ef0c5ed99a54329cba32ba",
+  "png_sha256": "7328c5a9e92263e1902cfff1e7b5ff15e4869ddb67fa9d64d46f0fe04a94dbf7",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "BA": {
+  "emoji": "🇧🇦",
+  "name": "ボスニア・ヘルツェゴビナ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/BA.svg",
+  "svg_sha256": "2b379399e315c3df92a104a08b9e14d1f66169dfee0fc2213794baa1c233b75c",
+  "png_sha256": "9969f7723886c4d3a5dc1a52e3569c50394078ec40513d939da6522efaa45ce3",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "BE": {
+  "emoji": "🇧🇪",
+  "name": "ベルギー",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/BE.svg",
+  "svg_sha256": "466985238fa5d76003dd4c3421c1210ec81760e7d1dd84e5c3f5435dc6d19cb6",
+  "png_sha256": "c835e9ff786f12724ff55983631f1575cc36209d006670e6cef45663163f798f",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "BG": {
+  "emoji": "🇧🇬",
+  "name": "ブルガリア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/BG.svg",
+  "svg_sha256": "9c023198075538da242eeb7c16192d6aed8757e4e954ed974822c24637e4cc7f",
+  "png_sha256": "fe2926b39e8005abd0741d3f1e6b912460024faed3cf5cbeb3a9f5a35cb91488",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "CY": {
+  "emoji": "🇨🇾",
+  "name": "キプロス",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/CY.svg",
+  "svg_sha256": "1b8d70a291db5fbec1864783dae84553a1309e251f1cf8032f137712ad207cc0",
+  "png_sha256": "8bb2cafe8084297072af36eb0a33fb7e5104c7cd75a1e4b428dcfc5cc26dbccc",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "CZ": {
+  "emoji": "🇨🇿",
+  "name": "チェコ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/CZ.svg",
+  "svg_sha256": "1c2756e8ae81e11ca40e8cc859300062206e1939e559672457471ee6eec9ec87",
+  "png_sha256": "ecf8fb995ccafa317ac4dd493fe3621e862351505ca181f8e37c53c5e20cb9f9",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "DE": {
+  "emoji": "🇩🇪",
+  "name": "ドイツ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/DE.svg",
+  "svg_sha256": "eba233c164f038c5c6065889f84c84fd193325dd13b6fc734fe30ef4f34a8081",
+  "png_sha256": "9387c04d85a670ee6dadf0189852f7d71ea3a11237c913c1d9bda359c601245d",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "DK": {
+  "emoji": "🇩🇰",
+  "name": "デンマーク",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/DK.svg",
+  "svg_sha256": "9482b42f811ec69bd4011732070ca4c47a6bf7fa86613b890fd156105646b8c4",
+  "png_sha256": "a28db7f5415f7323b6501eef9c169f91358aa588ed36f5605f017b410450c6ef",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "EE": {
+  "emoji": "🇪🇪",
+  "name": "エストニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/EE.svg",
+  "svg_sha256": "2b9aa02de632b22a0b00b59753e87c8fa2869338978292d797680855de4d3188",
+  "png_sha256": "d7985975456e529299ba1d256a383cebe722bed58489224046ad0beabb7f012e",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "EG": {
+  "emoji": "🇪🇬",
+  "name": "エジプト",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/EG.svg",
+  "svg_sha256": "5cfa856f6b33a1d7c96ec8eb2cc2fcbdecbfc99ce6121849209a7cd54a7eced1",
+  "png_sha256": "cc5ea18d0bf83d7ea7b18b935d61b0ba2a35e12d2b9539f9093248dc0d4b6b8f",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "ES": {
+  "emoji": "🇪🇸",
+  "name": "スペイン",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/ES.svg",
+  "svg_sha256": "a40614a588f466817a199ed6c072e81aff368c35aa21c1e86130db915391281f",
+  "png_sha256": "3b988f13aac3e30e358d01eb004ddd01b642839d9bd760f2e9d0006735126915",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "FI": {
+  "emoji": "🇫🇮",
+  "name": "フィンランド",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/FI.svg",
+  "svg_sha256": "648eeb3d9b95548aeb731df2de7f2cd089ef4772d9e39888124f7e1075df3eff",
+  "png_sha256": "003a34323f0c5b53b4521f7ef966fae3e67538b0dc3f863360b39dc2a11f742d",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "FR": {
+  "emoji": "🇫🇷",
+  "name": "フランス",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/FR.svg",
+  "svg_sha256": "241dac7da9d2782f58c2ffdc05090ac486b49cde149c879675d189dee66aedf6",
+  "png_sha256": "a235a476104831f399a8d4f619c26faa40c023477c2738468ff109f05d7c357b",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "GB": {
+  "emoji": "🇬🇧",
+  "name": "イギリス",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/GB.svg",
+  "svg_sha256": "d9b86c8de4422e66eeb0d0ab9074f51434eca690fd0caf96e7eade4ea726e32f",
+  "png_sha256": "4457c89fa1216ae8613774b4db310e50590e4889c548773c12810221c126e271",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "GE": {
+  "emoji": "🇬🇪",
+  "name": "ジョージア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/GE.svg",
+  "svg_sha256": "52eea8e7561f0493a0ef69eb98bab023df2570a3fba4b111d9c3d8b2cf25888c",
+  "png_sha256": "63ddd6c049e848c0435ca565c9a2858ad085eaf542b300f162a83e707d1de8c8",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "GR": {
+  "emoji": "🇬🇷",
+  "name": "ギリシャ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/GR.svg",
+  "svg_sha256": "f7eba1e47e8e0bf63f8b90ea6d7571d5882f8f9333a6a330b198224e38b13054",
+  "png_sha256": "aad12abc97e80fd34b76454870eefdba2314e1ccb5a83aacadc726f68017859e",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "HR": {
+  "emoji": "🇭🇷",
+  "name": "クロアチア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/HR.svg",
+  "svg_sha256": "1b01904476d7c123c1347176dedf3b8b9d589e90e70cd105469a75276c3fe547",
+  "png_sha256": "a21758665d2505337d7b5af4851f5fa85a023eb286063504c4bbba3c6cf8c9e9",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "HU": {
+  "emoji": "🇭🇺",
+  "name": "ハンガリー",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/HU.svg",
+  "svg_sha256": "4ac54209c0f864805b646c0de25d4829e21d3c85c2a7008875cefedbebc04ae9",
+  "png_sha256": "d7eb845d714b984159a7490585e28a152e282aabbee609b7b7f031af20667c80",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "IR": {
+  "emoji": "🇮🇷",
+  "name": "イラン",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/IR.svg",
+  "svg_sha256": "7166cdcc96327f36bcd4279e223b2fc03967639dfca992aa010f63d18cdb94ce",
+  "png_sha256": "b09d4f3881309dc9f541704b5a08a37c05b0690ef890575739e0bd5d2c170ac9",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "IS": {
+  "emoji": "🇮🇸",
+  "name": "アイスランド",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/IS.svg",
+  "svg_sha256": "bf785da55a891f0965893cd4e61751c3556620ff683d05f16bc63d7f25a79475",
+  "png_sha256": "2a55fc4dc033239aaadd86f5e80a07133c6257ecf112fdf2ec1d9bd7872084c5",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "IT": {
+  "emoji": "🇮🇹",
+  "name": "イタリア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/IT.svg",
+  "svg_sha256": "c939e50605c5a08df1aaf19818f74d2919a9d3c3b7aa7cd90520b8bfc9c5dddc",
+  "png_sha256": "9abb97eb653fcaccfb392374b2c78a92c5903840c56fb1302419c57861c75c4f",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "JO": {
+  "emoji": "🇯🇴",
+  "name": "ヨルダン",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/JO.svg",
+  "svg_sha256": "54c9ab74477dfedf1fb3384edeb7c234af1ce5882471ee5947e6af77f598f4b2",
+  "png_sha256": "53b4439982cab31053835fbb4bf4a229f7b83fb79e38551e58267b127dcc8233",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "JP": {
+  "emoji": "🇯🇵",
+  "name": "日本",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/JP.svg",
+  "svg_sha256": "a38388d6f4913b02c2d6040bb2c5e7a442c092c293e14fa9dde71a7ecce41ee2",
+  "png_sha256": "331f42eb79bf1ff3c1edd57a2d3d5ed54478f470bc2ceac7ffa6669ef2e04491",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "LT": {
+  "emoji": "🇱🇹",
+  "name": "リトアニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/LT.svg",
+  "svg_sha256": "2409b426d81a861a17e7759a7ed84cc980ef8a975d3b6ba0bb3e6ce56fa0537c",
+  "png_sha256": "8e2f01d8697b2158cb0a02cb8abcd8491f438080b0e96fd77a10c85ca04145e3",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "LV": {
+  "emoji": "🇱🇻",
+  "name": "ラトビア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/LV.svg",
+  "svg_sha256": "da9471e10b028d872f4e7043c23139a796b8e5427b23732ea96932e42d9025be",
+  "png_sha256": "6a91421ef1f75cc71d02861c83557995561e27422fd6618be5c4360bac83ccbe",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "MD": {
+  "emoji": "🇲🇩",
+  "name": "モルドバ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/MD.svg",
+  "svg_sha256": "e9fa94c202c0df4f81d14a201c54e2a7f88531ed4c5dce8c7fed3f9f4d690cbd",
+  "png_sha256": "451bb2d8c06b6cb5c6019d724759c881c34c73ef0e754f04ff2af57598e1b96b",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "ME": {
+  "emoji": "🇲🇪",
+  "name": "モンテネグロ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/ME.svg",
+  "svg_sha256": "26d5d74d555764488346680118f0b909497e3ad6eec4955296281fd1d9d93cfd",
+  "png_sha256": "598d3db625e7161464d754dd849f176def0b5e9d0e7d346ea510b86c7386a86e",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "MK": {
+  "emoji": "🇲🇰",
+  "name": "北マケドニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/MK.svg",
+  "svg_sha256": "95c7a0feaf0d5e47ac7ecff58d6ea6d80a602bd0ec1023f25364eac20ec77a18",
+  "png_sha256": "25d14979ba489fe0619df31b2302984d1abce04fd098d47538a5f0c59483a35e",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "NL": {
+  "emoji": "🇳🇱",
+  "name": "オランダ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/NL.svg",
+  "svg_sha256": "ca54d8929286e0d78b23a8c92adb24caed3bea32571c7be14f621bae186492c1",
+  "png_sha256": "01ed0ac25b5d68707adbb84067f8966a2ba28d9fc07aec49607f306f8ff89251",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "NO": {
+  "emoji": "🇳🇴",
+  "name": "ノルウェー",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/NO.svg",
+  "svg_sha256": "edab308c8536391fe23f018503efefbeb8b7807c9d732fd67a263f91ae097b77",
+  "png_sha256": "d39e822c6348b317b8d61e2a95c086273c2b2b383fe56859d838207f24062a05",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "PL": {
+  "emoji": "🇵🇱",
+  "name": "ポーランド",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/PL.svg",
+  "svg_sha256": "5151baa3332f99516d28817c5828d62108d4d0e1a6bd95a1d8b0de7e7eda247e",
+  "png_sha256": "7d873f517121a601f41c1f3b1d3717bd9b131bbf14198db3f4bd33a344cbf8ce",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "RO": {
+  "emoji": "🇷🇴",
+  "name": "ルーマニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/RO.svg",
+  "svg_sha256": "5bde7df1f22df3c2d42f0c438fa9388f400c604666c0048ae3a4d98095ce37a1",
+  "png_sha256": "c54d684e75b4cdbfee6d37a924eb107433d567a394dfa306635fc1bfe92eb72f",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "RS": {
+  "emoji": "🇷🇸",
+  "name": "セルビア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/RS.svg",
+  "svg_sha256": "efbca805ecc1574d9604a5d74153b483cb624ca35818c796dad412dc2e5ce0c6",
+  "png_sha256": "5bbf97898c7c6632b609a4a7662f6747a50cd7e4b91af539a5c6f75f1cb1340d",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "SE": {
+  "emoji": "🇸🇪",
+  "name": "スウェーデン",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/SE.svg",
+  "svg_sha256": "21ede5a837604f8798b2bfc0895be07aff29e6c9f0b0a8e4964716dc3d3d0673",
+  "png_sha256": "5635b2d0bb5a2c2cebc7ceec078eb1d51066828890e308bf8765be4f6cc0b7c1",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "SI": {
+  "emoji": "🇸🇮",
+  "name": "スロベニア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/SI.svg",
+  "svg_sha256": "b124908fee8f042314866dd779a9eeb7ed7305c3c67f22eae329b50f5d3034ae",
+  "png_sha256": "738439230d4c63db6c1b1c347ac501554ad18e110dfef75c859ebfcee8247539",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "SK": {
+  "emoji": "🇸🇰",
+  "name": "スロバキア",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/SK.svg",
+  "svg_sha256": "2875096d9e5184de08d8bd77a1a28476b280db2b74ba01d06a578a889b6c7243",
+  "png_sha256": "803a36c6c0c83eeaebc5ca2ed03153f6c039fd0074d08143beee20c805a6a650",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "TR": {
+  "emoji": "🇹🇷",
+  "name": "トルコ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/TR.svg",
+  "svg_sha256": "861e268e870de769940cbcef0755c102339c10ed9fb90bf801ce7afc24765e72",
+  "png_sha256": "8988eb51ed738ff6214b95c186a82e381b64be802d6466a2330e0331214bc2ca",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ },
+ "XK": {
+  "emoji": "🇽🇰",
+  "name": "コソボ",
+  "svg": "https://raw.githubusercontent.com/googlefonts/noto-emoji/v2.047/third_party/region-flags/svg/XK.svg",
+  "svg_sha256": "6a072179b663c5a2b6ebf1a5877befb299d362fae7e63bf32f581e4dc0f975f2",
+  "png_sha256": "5e4a22323f769c24f0c80689303f0c55836b015503a0e042550a1ca4573f9795",
+  "height": 256,
+  "tool": "resvg-py 0.5.0"
+ }
+}

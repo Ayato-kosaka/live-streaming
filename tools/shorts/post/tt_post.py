@@ -8,7 +8,9 @@
     python3 tt_post.py check <探す字>                          # ログインしているか・同じ投稿がもう在るか
     python3 tt_post.py post <mp4> <caption.txt> --dry          # 投稿の手前まで（字と設定を確かめて、投稿しない）
     python3 tt_post.py post <mp4> <caption.txt>                # 投稿する
-    python3 tt_post.py post <mp4> <caption.txt> --at "2026-10-17 14:00"   # 予約（画面の時刻＝JST）
+    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00   # 予約（UTC。EC2 の Chrome の時計が UTC で、欄もその時刻。翌日以降は暦を送って日を押す）
+    python3 tt_post.py post <mp4> <caption.txt> --at 2026-10-22T10:00 --dry --probe   # 時刻と日付の欄を開いて中身を書き出すだけ
+    python3 tt_post.py scheduled <探す字> 2026-10-21T10:00:00Z  # 予約の読み直し（一覧の行に予約の時刻の札が出ているか）
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す。
 
@@ -23,7 +25,7 @@
 編集欄は Draft.js。1字ずつ打つと `#` と `@` でハッシュタグ・人の候補が開き、
 そのあとの Enter で**候補を選んでしまう**。貼り付け（paste のイベント）なら候補を通らない。
 """
-import json, os, re, sys, time, urllib.request
+import datetime, json, os, re, sys, time, urllib.request
 sys.path.insert(0, os.path.expanduser("~ubuntu/cdp"))
 from cdp import Tab, up, pages, where, _port  # noqa: E402
 
@@ -127,7 +129,209 @@ def settings(t):
     })()""")
 
 
-def post(t, mp4, caption, dry=False, at=None, cover=None):
+SCHED_INPUTS = r"""(() => { const ins = [...document.querySelectorAll('input[type=text]')].filter(i => i.getBoundingClientRect().width > 0);
+  const tm = ins.find(i => /^\d{2}:\d{2}$/.test(i.value)), dt = ins.find(i => /^\d{4}-\d{2}-\d{2}$/.test(i.value));
+  return {time: tm ? tm.value : null, date: dt ? dt.value : null}; })()"""
+
+
+def parse_at(at):
+    """--at（UTC。"2026-10-22T10:00" / "2026-10-22T10:00:00Z"）を (日付, 時, 分) にする。読めなければ None。
+    分は欄が5分おきなので、5の倍数でなければ None（押せない時刻を受けて、近い時刻に化けさせない）"""
+    m = re.fullmatch(r"(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})(?::00)?Z?", (at or "").strip())
+    if not m or int(m.group(2)) > 23 or int(m.group(3)) % 5:
+        return None
+    try:
+        datetime.date.fromisoformat(m.group(1))
+    except ValueError:
+        return None
+    return m.group(1), m.group(2), m.group(3)
+
+
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+          "November", "December"]
+# 暦の見出し・矢印・日のます（2026-10-21 に写した。見出しは「October / 2026」、左の矢印が前の月）
+CAL = ".calendar-wrapper"
+CAL_HEAD = f"""(() => {{ const c = document.querySelector('{CAL}'); const r = c && c.getBoundingClientRect(); if (!r || !r.width || !r.height) return null;
+  const m = c.querySelector('.month-title'), y = c.querySelector('.year-title');
+  return [m ? m.innerText.trim() : null, y ? y.innerText.trim() : null]; }})()"""
+CAL_DAYS = f"""[...document.querySelectorAll('{CAL} .day-span-container > span.day')].map(e => [e.innerText.trim(), (e.className || '').toString()])"""
+# 時刻の選ぶ欄が開いているか。**幅では見ない。** 閉じた欄もますは DOM に残り、幅 84px のまま高さだけ 0 になる
+# （2026-10-21 に写した。幅で見ると、一度も開いていないうちから「開いている」になった）
+TIME_OPEN = "[...document.querySelectorAll('.tiktok-timepicker-option-item')].some(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })"
+
+
+def month_steps(month_title, year_title, want_date):
+    """暦がいま見せている月から、want_date の月まで、矢印を何回押すか（正なら次の月へ、負なら前の月へ）。
+    見出しが読めなければ None"""
+    if month_title not in MONTHS or not str(year_title or "").isdigit():
+        return None
+    w = datetime.date.fromisoformat(want_date)
+    return (w.year * 12 + w.month) - (int(year_title) * 12 + MONTHS.index(month_title) + 1)
+
+
+def pick_day(cells, want_date):
+    """暦のます（[字, class] を左上から順に。頭に前の月の日が並ぶ）から、want_date の日を押す番号を決める。
+    返すのは (番号, None) か (None, 理由)。
+
+    - 字だけで探さない。前の月・次の月の日が同じ数字で並ぶ（10月の頭の「27〜30」は9月）。
+      週は日曜はじまり（見出しが Sun … Sat）なので、1日の曜日ぶんだけずらした位置が、その日
+    - その位置の字が日と違えば、並びが写したときと違う（月曜はじまり等）ので押さない
+    - 押せる日は class に valid が付く（過去と、先すぎる日には付かない）"""
+    w = datetime.date.fromisoformat(want_date)
+    lead = (w.replace(day=1).weekday() + 1) % 7  # 日曜=0
+    idx = lead + w.day - 1
+    if len(cells) <= idx or cells[idx][0] != str(w.day):
+        return None, "calendar_grid_unexpected"
+    if "valid" not in cells[idx][1].split():
+        return None, "date_not_selectable"
+    return idx, None
+
+
+def set_date(t, want_date):
+    """日付の欄の暦を開き、want_date の月まで矢印で送って、その日を押す。欄から読み直した値を返す"""
+    dt_in = r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{4}-\d{2}-\d{2}$/.test(i.value))"""
+    if not t.js(CAL_HEAD):
+        t.click(dt_in)
+        time.sleep(1.5)
+    head = t.js(CAL_HEAD)
+    for _ in range(4):
+        steps = month_steps(*(head or [None, None]), want_date)
+        if steps is None:
+            return {"ok": False, "error": "calendar_header", "head": head}
+        if steps == 0:
+            break
+        if abs(steps) > 2:
+            # TikTok が予約できるのは先の数日だけ。暦を何か月も送る指定は、--at の書き違いとみて押さない
+            return {"ok": False, "error": "date_too_far", "head": head, "want": want_date}
+        arrow = f"[...document.querySelectorAll('{CAL} .month-header-wrapper .arrow')][{0 if steps < 0 else 1}]"
+        if not t.js(f"!!({arrow}) && document.querySelectorAll('{CAL} .month-header-wrapper .arrow').length === 2"):
+            return {"ok": False, "error": "calendar_arrow", "head": head}
+        t.click(arrow)
+        time.sleep(1)
+        head = t.js(CAL_HEAD)
+    else:
+        return {"ok": False, "error": "calendar_header", "head": head}
+    cells = t.js(CAL_DAYS) or []
+    idx, why = pick_day(cells, want_date)
+    if why:
+        shot(t, "tt_sched_date_fail")
+        return {"ok": False, "error": why, "head": head, "cells": cells}
+    t.click(f"[...document.querySelectorAll('{CAL} .day-span-container > span.day')][{idx}]")
+    time.sleep(1.5)
+    if t.js(CAL_HEAD):
+        # 押しても暦が開いたままなら閉じる（時刻の欄と同じく Escape）
+        key(t, "Escape", "Escape", 27)
+        time.sleep(0.8)
+    got = t.js(SCHED_INPUTS).get("date")
+    return {"ok": got == want_date, "error": None if got == want_date else "date_not_set", "head": head, "date": got}
+
+
+def schedule_label(at_utc):
+    """一覧の行に出る時刻の札の字（EC2 の Chrome の時計＝UTC で出る）。2026-10-21T10:00:00Z なら Oct 21, 10:00 AM"""
+    import datetime as dt
+    w = dt.datetime.strptime(at_utc[:16], "%Y-%m-%dT%H:%M")
+    h12 = w.hour % 12 or 12
+    return f"{w.strftime('%b')} {w.day}, {h12}:{w.minute:02d} {'AM' if w.hour < 12 else 'PM'}"
+
+
+def scheduled_row(t, needle, at_utc):
+    """投稿の一覧（find_posts で開いた画面）で、needle を含む行に、予約の時刻の札（未来の時刻）が出ているか。
+    予約の行は公開範囲の札が灰色で、作った日の代わりに時計の印と予約の時刻が出る（2026-10-21 に見た）。
+    出した行にも「Oct 18, 7:59 PM」のような時刻が出るが、それは過去なので、未来の予約の時刻と一致するかで見分ける"""
+    label = schedule_label(at_utc)
+    # 時刻と AM のあいだは細い空白（U+202F）のことがあるので、空白をそろえてから比べる
+    row = t.js(f"""(() => {{ const norm = s => (s || '').replace(/[\\s\\u00a0\\u202f]+/g, ' ');
+      const els = [...document.querySelectorAll('div,tr,li')].filter(e => e.getBoundingClientRect().width > 0
+        && norm(e.innerText).includes({json.dumps(needle)}) && norm(e.innerText).includes({json.dumps(label)}));
+      els.sort((a, b) => a.innerText.length - b.innerText.length);
+      return els[0] ? norm(els[0].innerText).trim().slice(0, 300) : null; }})()""")
+    if not row:
+        # 見つからないときは、題の行の字をそのまま返して人が見られるようにする
+        seen = t.js(f"""(() => {{ const els = [...document.querySelectorAll('div,tr,li')].filter(e => e.getBoundingClientRect().width > 0
+            && (e.innerText || '').includes({json.dumps(needle)}) && /\\d{{1,2}}:\\d{{2}}/.test(e.innerText || ''));
+          els.sort((a, b) => a.innerText.length - b.innerText.length);
+          return els[0] ? JSON.stringify(els[0].innerText.trim().slice(0, 300)) : null; }})()""")
+        log("schedule row not matched; nearest row:", seen, "| want label:", label)
+    return {"label": label, "row": row} if row else None
+
+
+def picker_dump(t):
+    """開いている選ぶ欄（時刻・日付）の、数字だけの字を持つ要素（見当をつける用）"""
+    return t.js(r"""[...document.querySelectorAll('body *')].filter(e => { const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && e.children.length === 0 && /^\d{1,2}$/.test((e.innerText || '').trim()); })
+      .slice(0, 120).map(e => { const r = e.getBoundingClientRect(); return [e.innerText.trim(), e.tagName.toLowerCase(), (e.className || '').toString().slice(0, 50),
+        (e.parentElement && e.parentElement.className || '').toString().slice(0, 50), Math.round(r.x), Math.round(r.y)]; })""")
+
+
+def set_schedule(t, at, probe=False):
+    """「When to post」を Schedule にして、日付と時刻の欄を at（EC2 の Chrome の時計＝UTC。"2026-10-21T10:00"）に合わせる。
+    合わせた値を欄から読み直して返す。probe なら時刻の欄を開いて中身を書き出すだけ"""
+    off = t.js("new Date().getTimezoneOffset()")
+    if off != 0:
+        return {"ok": False, "error": "chrome_clock_not_utc", "offset_min": off}
+    parsed = parse_at(at)
+    if not parsed:
+        return {"ok": False, "error": "bad_at", "at": at}
+    want_date, hh, mm = parsed
+    t.click("document.querySelector('input[type=radio][value=schedule]')")
+    time.sleep(2)
+    before = t.js(SCHED_INPUTS)
+    log("schedule fields before", before)
+    if not before.get("time"):
+        return {"ok": False, "error": "schedule_fields_missing", "before": before}
+    time_in = r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{2}:\d{2}$/.test(i.value))"""
+    if probe:
+        t.click(time_in)
+        time.sleep(1.5)
+        shot(t, "tt_sched_time_open")
+        tp = picker_dump(t)
+        key(t, "Escape", "Escape", 27)
+        time.sleep(0.8)
+        t.click(r"""[...document.querySelectorAll('input[type=text]')].find(i => /^\d{4}-\d{2}-\d{2}$/.test(i.value))""")
+        time.sleep(1.5)
+        shot(t, "tt_sched_date_open")
+        return {"ok": True, "before": before, "time_picker": tp, "calendar": t.js(CAL_HEAD), "days": t.js(CAL_DAYS)}
+    date_r = None
+    if before.get("date") != want_date:
+        # 欄の既定は今日。違う日なら、暦を送ってその日を押す（日を先に決める。時刻の欄はそのあと）
+        date_r = set_date(t, want_date)
+        log("date", json.dumps({k: v for k, v in date_r.items() if k != "cells"}, ensure_ascii=False))
+        if not date_r.get("ok"):
+            return {"ok": False, "error": date_r.get("error") or "date_not_set", "before": before, "date_step": date_r}
+    t.click(time_in)
+    time.sleep(1.5)
+    # 時刻の欄は左の列が時（00〜23）、右の列が分（5分おき）。どちらも .tiktok-timepicker-option-item の中の字
+    for side, val in (("le", hh), ("ri", mm)):
+        opt = f"""[...document.querySelectorAll('.tiktok-timepicker-option-item')].find(e => {{ const s = e.querySelector('span');
+            return s && (s.className || '').toString().includes('tiktok-timepicker-{side}') && s.innerText.trim() === {json.dumps(val)}; }})"""
+        if not t.js(f"!!({opt})"):
+            return {"ok": False, "error": f"time_option_missing_{side}", "want": val, "before": before}
+        t.js(f"({opt}).scrollIntoView({{block: 'center'}})")
+        time.sleep(0.5)
+        t.click(opt)
+        time.sleep(1)
+    # 選ぶ欄を閉じる（blur だけでは開いたまま残った。キャプションを貼ったあとと同じく Escape で閉じる）
+    t.js("document.activeElement && document.activeElement.blur()")
+    key(t, "Escape", "Escape", 27)
+    time.sleep(1)
+    if t.js(TIME_OPEN):
+        # 翌日の日を押してから時刻を入れた回（2026-10-21）は、Escape でも開いたまま残った（写しで見た）。
+        # 欄をもう一度押すと閉じる（外を押しても閉じた）。開いたまま「Schedule」を押すと、1回目が欄を閉じるだけに
+        # なりうるので、閉じたのを見てから先へ進む
+        t.click(time_in)
+        time.sleep(1)
+    still_open = bool(t.js(TIME_OPEN))
+    log("time picker still open:", still_open)
+    after = t.js(SCHED_INPUTS)
+    radio_on = t.js("(() => { const r = document.querySelector('input[type=radio][value=schedule]'); return !!(r && r.checked); })()")
+    shot(t, "tt_sched_set")
+    ok = after.get("time") == f"{hh}:{mm}" and after.get("date") == want_date and radio_on and not still_open
+    return {"ok": ok, "error": None if ok else "schedule_not_set", "before": before, "after": after, "schedule_radio": radio_on,
+            "time_picker_open": still_open, "date_step": date_r and {k: v for k, v in date_r.items() if k != "cells"},
+            "utc": f"{want_date}T{hh}:{mm}:00Z"}
+
+
+def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False):
     if not os.path.exists(mp4):
         raise RuntimeError(f"no file: {mp4}")
     first = caption.split("\n")[0]
@@ -177,6 +381,11 @@ def post(t, mp4, caption, dry=False, at=None, cover=None):
         time.sleep(0.5)
     left = t.js(f"{ED}.innerText").strip()
     log("after clear:", repr(left[:40]))
+    # 消し切れなかった字（2026-10-21 はファイル名「p2」が残った）は、範囲で選んでから貼る。貼り付けが選んだ字を置き換える
+    select_all = f"""(() => {{ const e = {ED}; e.focus(); const r = document.createRange(); r.selectNodeContents(e);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r); return s.toString().length; }})()"""
+    if left:
+        log("selected to replace:", t.js(select_all))
     pasted = t.js(f"""(() => {{ const e = {ED}; e.focus();
         const dt = new DataTransfer(); dt.setData('text/plain', {json.dumps(caption)});
         const ev = new ClipboardEvent('paste', {{clipboardData: dt, bubbles: true, cancelable: true}});
@@ -234,28 +443,36 @@ def post(t, mp4, caption, dry=False, at=None, cover=None):
     everyone = any(v in ("Everyone", "全員") for v in st["visibility"])
     when = {r[0]: r[1] for r in st["radios"]}
     if at:
-        click_text(t, "Schedule")
-        time.sleep(2)
-        shot(t, "tt_2_schedule")
-        sched_ui = t.js("[...document.querySelectorAll('input')].filter(i => i.getBoundingClientRect().width > 0).map(i => [i.type, i.value, i.placeholder])")
-        log("schedule inputs", sched_ui)
-        result({"ok": False, "error": "schedule_not_implemented", "inputs": sched_ui})
-        return
+        sc = set_schedule(t, at, probe=probe)
+        log("schedule", json.dumps(sc, ensure_ascii=False))
+        if probe or not sc.get("ok"):
+            result(dict(sc, ok=False if not probe else sc.get("ok", False), probe=probe))
+            return
     # ラジオ2つの字が同じ（"Now\nSchedule"）になるので dict にすると後ろが勝つ。並びの先頭が Now
-    now_ok = bool(st["radios"]) and st["radios"][0][1] is True
+    # 予約なら「Schedule」が選ばれて日時が合っていること（set_schedule が欄から読み直した値）。予約でなければ Now
+    now_ok = bool(sc["ok"]) if at else (bool(st["radios"]) and st["radios"][0][1] is True)
     shot(t, "tt_2_ready")
     ok = norm == caption and not mention and not ai_on and not disc_on and everyone and now_ok and up_ok
     info = {"caption_match": norm == caption, "entities": mention, "ai_on": ai_on, "disclose_on": disc_on,
-            "everyone": everyone, "now": now_ok, "uploaded": up_ok}
+            "everyone": everyone, ("schedule" if at else "now"): now_ok, "uploaded": up_ok}
+    if at:
+        info["schedule_utc"] = sc.get("utc")
+        info["schedule_fields"] = sc.get("after")
     if not ok or dry:
         result(dict(info, ok=ok and dry, error=None if ok else "not_ready", dry=dry))
         return
-    btn = """(document.querySelector('button[data-e2e="post_video_button"]') || [...document.querySelectorAll('button')].find(b => (b.innerText || '').trim() === 'Post'))"""
+    btn = """(document.querySelector('button[data-e2e="post_video_button"]') || [...document.querySelectorAll('button')].find(b => /^(Post|Schedule)$/.test((b.innerText || '').trim())))"""
+    label = t.js(f"({btn}) ? ({btn}).innerText.trim() : null")
+    log("post button label:", label)
+    if at and label != "Schedule":
+        # 予約のつもりで「Post」を押すと、その場で出てしまう。字が Schedule でなければ押さない
+        result(dict(info, ok=False, error="button_not_schedule", label=label))
+        return
     if t.js(f"!{btn} || {btn}.disabled || {btn}.getAttribute('aria-disabled') === 'true'"):
         result(dict(info, ok=False, error="post_button_disabled"))
         return
     t.click(btn)
-    log("clicked Post")
+    log("clicked", label)
     t0 = time.time()
     for _ in range(60):
         time.sleep(2)
@@ -264,8 +481,12 @@ def post(t, mp4, caption, dry=False, at=None, cover=None):
             break
         # 「投稿してよいか」の念押しが出たら、内容を出して止まる（字が読めないものは押さない）
         modal = t.js("(() => { const m = [...document.querySelectorAll('[role=dialog], .TUXModal, [class*=modal]')].find(e => e.offsetParent); return m ? m.innerText.trim().slice(0, 300) : null; })()")
-        if modal and not re.search(r"Uploading|Posting|投稿中", modal):
+        if modal and not re.search(r"Uploading|Posting|投稿中|Scheduling", modal):
             log("modal:", modal)
+            if at:
+                # 予約のときは念押しの窓を押さない（「Post now」は今すぐ出す）。何の窓かを残して止まる
+                shot(t, "tt_sched_modal")
+                break
             if re.search(r"Post now|今すぐ投稿", modal):
                 click_text(t, "Post now", "button")
     log("after post", where(t.url()), int(time.time() - t0), "s")
@@ -273,7 +494,9 @@ def post(t, mp4, caption, dry=False, at=None, cover=None):
     time.sleep(8)
     hits, n, any_hit = find_posts(t, caption.split("\n")[0])
     shot(t, "tt_4_content")
-    result(dict(info, ok=bool(hits), posted=True, urls=hits, rows=n, text_hit=any_hit))
+    sched_row = scheduled_row(t, caption.split("\n")[0], sc.get("utc")) if at else None
+    result(dict(info, ok=bool(hits) or bool(at and sched_row), posted=not at, scheduled=bool(at and sched_row),
+                schedule_row=sched_row, urls=hits, rows=n, text_hit=any_hit))
 
 
 if __name__ == "__main__":
@@ -282,11 +505,18 @@ if __name__ == "__main__":
         t = fresh_tab()
         hits, n, any_hit = find_posts(t, sys.argv[2])
         result({"ok": True, "signed_in": signed_in(t), "at": where(t.url()), "hits": hits, "rows": n, "text_hit": any_hit})
+    elif cmd == "scheduled":
+        # 予約の読み直し: python3 tt_post.py scheduled <探す字> <UTC の ISO>
+        t = fresh_tab()
+        hits, n, any_hit = find_posts(t, sys.argv[2])
+        row = scheduled_row(t, sys.argv[2], sys.argv[3])
+        result({"ok": bool(row), "hits": hits, "rows": n, "scheduled": row})
     elif cmd == "post":
         args = sys.argv[2:]
         at = args[args.index("--at") + 1] if "--at" in args else None
         cover = args[args.index("--cover") + 1] if "--cover" in args else None
         t = fresh_tab()
-        post(t, args[0], open(args[1], encoding="utf-8").read(), dry="--dry" in args, at=at, cover=cover)
+        post(t, args[0], open(args[1], encoding="utf-8").read(), dry="--dry" in args, at=at, cover=cover,
+             probe="--probe" in args)
     else:
         sys.exit(__doc__)

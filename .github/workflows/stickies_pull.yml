@@ -1,0 +1,96 @@
+name: 付箋を読む
+
+# 島の付箋（視聴者さんが「この回をショートにして」と貼るテーマ `shorts-idea` など）を読み、
+# **暗号化して**作業枝の `shorts/.work/stickies/<テーマ>/` に置く。
+# 使い方・依頼の形・開きかたは `tools/shorts/stickies/README.md`。
+#
+# **なぜ Actions か。** 作業箱から島（live-streaming-d3cac.web.app）に届かない（プロキシが断る）。
+# 前は EC2 を起こして curl していた。Actions からは届き、EC2 を起こさなくていい。
+#
+# **なぜ暗号化か。** リポジトリも Actions のログも公開。付箋には視聴者さんの表示名と本文が入る。
+# 島では、あやとが「しまう」で下ろせるが、git の履歴とログはあとから消せない。
+# だから応答はランナーの一時の場所（`$RUNNER_TEMP`）にだけ書き、同じ step の中で包んで消す。
+# ログに出すのは HTTP の状態・バイト数・枚数・いちばん新しい日だけ（`tools/shorts/stickies/pull.py`）。
+# 置くのは依頼の公開鍵で包んだ暗号文と、数と sha256 だけの manifest.json
+# （ingest の seal.py と同じ形なので、`tools/shorts/ingest/decrypt.py` でも開ける）。
+# artifact にしないのは、公開リポジトリの artifact は誰でも落とせるから。
+#
+# **依頼の置き場は `shorts/stickies/`。`shorts/requests/` にしない。** あちらはショートの
+# 取り込み（`shorts_ingest.yml`）が見ているので、同じ置き場だと取り込みまで起きて赤くなる。
+# 見張り: `tools/shorts/stickies/pull_selftest.py`。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/stickies/*.json"]
+  # master に入ってから使う（GitHub は既定の枝に無いワークフローを手で起こさせない）
+  workflow_dispatch:
+    inputs:
+      theme:
+        description: "付箋のテーマ。空ならテーマ横断の新着"
+        required: false
+        default: "shorts-idea"
+      limit:
+        description: "何枚まで読むか（1〜300）"
+        required: false
+        default: "300"
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      branch:
+        description: "結果を置く枝（claude/ で始まる）。空なら、起こした枝"
+        required: false
+        default: ""
+
+# 既定は何も渡さない。要るのは、積む job の contents: write だけ
+permissions: {}
+
+concurrency:
+  group: stickies-pull-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 依頼の compare を読む・作業枝へ積む（push.sh）。ほかの権限は要らない
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 依頼を読む
+        id: plan
+        # 入力は env で渡す（`run:` の中に式を直に埋めない）
+        env:
+          IN_THEME: ${{ inputs.theme }}
+          IN_LIMIT: ${{ inputs.limit }}
+          IN_PUBKEY: ${{ inputs.pubkey }}
+          IN_BRANCH: ${{ inputs.branch }}
+          # 枝を作った push は commits が空で来るので、compare を引く（ingest の plan.py と同じ）
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/shorts/stickies/order.py "$RUNNER_TEMP/stickies"
+
+      - name: 付箋を読んで、包んで、平文を消す
+        if: steps.plan.outputs.count != '0'
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          for item in "$RUNNER_TEMP"/stickies/*/item.json; do
+            python3 tools/shorts/stickies/pull.py "$item"
+          done
+
+      - name: 作業枝に置く
+        if: steps.plan.outputs.count != '0'
+        # ingest と同じ push.sh（断られたら取り直して8回・枝が消えていたら作り直す・
+        # manifest.json / key.enc / payload.enc 以外が混ざっていたら1つも置かない）。
+        # push.sh は `$RUNNER_TEMP/sealed` を読むので、1件ごとにその親を RUNNER_TEMP として渡す
+        env:
+          BRANCH: ${{ steps.plan.outputs.branch }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          for d in "$RUNNER_TEMP"/stickies/*/; do
+            d="${d%/}"
+            RUNNER_TEMP="$d" DEST="$(cat "$d/dest")" KEY="$(cat "$d/label")" \
+              bash tools/shorts/ingest/push.sh
+          done

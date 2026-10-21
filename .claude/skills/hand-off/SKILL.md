@@ -31,6 +31,8 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 
 ## 1. 型（この4つが無い依頼文は投げない）
 
+**ショートの担当（作文者・編集長・批評役・書き出し）へは、あやとの指摘の帳面 `.claude/skills/viral-shorts-creator/references/ayato_feedback.md` のパスを必ず入れる**（読んでから書く・`script_writing.md` 7.4 の (h) で当てる）。渡さなければ、担当は前に言われたことを知らない。
+
 ### ① 合格の条件
 
 **「前より良い」は条件ではない**（`docs/island-standards.md`）。
@@ -166,3 +168,8 @@ python/admin/
 - worktree を切るなら `functions/node_modules` は symlink 可、
   **`tools/sprites/node_modules` は実体を複製**（CLAUDE.md の表。symlink だと1本落ちる）
 - ビルドは `tools/build.sh` から。**並列で `next build` を3本回すと箱が止まる**
+- **終わった担当の worktree は、その日のうちに片づける。** 担当の worktree
+  （`.claude/worktrees/agent-*`）は、担当が終わっても残る。2026-10-21 に30個・約8GB 溜まっていて、
+  ショートの暗号文（作業枝に1.5GB）を開いた担当が「unable to write file」で止まった（空き 1.3MB）。
+  片づける前に1本ずつ `git -C <wt> status --porcelain` が空なのを見て、`git worktree remove <wt>`
+  （`--force` は使わない。枝は残るのでコミットは消えない）。動いている担当と、ロックの掛かったものは残す
