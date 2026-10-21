@@ -3,6 +3,7 @@
 # 開始: 2026-09-16 13:04 JST
 # 字幕: ja-orig（自動・json3）
 # 行数: 1214（30秒ごと）
+# 曲の区間（音楽の印のある30秒）は伏せてある
 
 [0:00:00] ます。
 [0:00:30] あおちゃん、おはよう。ヤッホー。ちょっと待ってね。インスタで
@@ -24,11 +25,11 @@
 [0:08:30] これバス1本でいけんのか?あ、これこの前止まったとこの前この前のバス停か。この前のバス停や。これ昨日昨いのバス停か。ら辺のバス停か。なるほどね。あ、そうやね。で、ここでヒッチ配するか。バスが1本できるね。54番。
 [0:09:00] どうする?あ、今こんばんは。ありがとう。今日も来てくれて。なんか今日人少なくない?なんで?あさん、こんばんは。ヤッホー。ちょっとInstagramで
 [0:09:30] 告知しよう。いや、マジ昨日高かったな。
-[0:10:00] [音楽]お花ぐシュぐシュですね。大丈夫ですか?大丈夫だよ。え、でも昨日よりまししじゃない?昨日もっと弱くなかった。北王州有北王ヒッチ俳句収油旅も
+[0:10:00] [音楽]
 [0:10:30] えっと主旅も半分超えたぞ。[鼻息]えっと、リトアニア、
 [0:11:00] なんか今日ちょっとめっちゃ不安ねんけど。さっきから地図見てるけどさ。え、みんなも見てくれてるやんだ。ちょっとお願いやで。今日めっちゃ不安やねんけど。え、全然うまくいく気がせへん。特にさ、1本目、1本目がマジでうまくいく気がせへんよ。え、
 [0:11:30] どうすればいいの?これなんか1本目結構やばくない?あ、紫さん、こんばんは。ありがとうね。今日も来てくれて見てますよ。見てくれてる?地図頑張。頑張るけどいい天気でよかった。もう曇もりやけど。いつも通りいつも通りヨーロッパの朝は
-[0:12:00] 曇もりやけど。あ、今日ちょっと不安やな。不安やけどまだ7時。[音楽]まだ7時です。あ、また応援しに来て。やりにづらそうなの伝わる。まだ7時っていうのが不行中の幸いやな。ちょっと今からがっつりアド買いに行ってで[鼻息]、あの、いっぱいいっぱいあの
+[0:12:00] [音楽]
 [0:12:30] 物資補給してそれで行こう。そう。朝早いから。だからまあまあ可能性はある。7時やからまだ。ちょっと待ってね。昨日はリトレのしば
 [0:13:00] 今日ラトビアかな?ラトビアまで行くよ。え、なんか楽しみやねんけど。今日は
 [0:13:30] 道中のどっかをちょっと見れたらいいかなと思ってねんけど、まだそこまで調べてる余裕ないです。一応今回中なんて今日はさ、まあ、うまくいけばね、うまくいけば時間があるから、うまくいけば時間があるから道中を見えたらいいなとか思ってんねんけど、まだ分からないです。ちょっと待ってね。えっと、固定コメント、固定コメント。固定コメント。
@@ -207,10 +208,10 @@
 [1:43:30] закрыть первый
 [1:44:00] унасвтороしこし仕事田舎に物運はいる。ああ。え、スタート。
 [1:44:30] 確かにそっか。なんか郵便局とか郵便局で手紙運ぶとかそっか。そういう系はそっか仕事として郊外に行く人は結構いるか。確かにね。出勤近じゃなくて逆に仕事として郊外に行く人がいいのがあ、いいですね。可能性あり
-[1:45:00] ます。ちょ、気合入れよう。スイッチ入れよ。[音楽]昨日1
+[1:45:00] [音楽]
 [1:45:30] 日躍してないから、また無障モードが出てきてる気がする。笑顔で笑顔で行かない
 [1:46:00] よいしょ。いや
-[1:46:30] 、ここсвечка короче вотэти[音楽]
+[1:46:30] [音楽]
 [1:47:00] вотэтадорога школаи学生がどこ?学生がバスってあと
 [1:48:00] туалетки
 [1:49:00] あと2駅や2駅です。
@@ -370,7 +371,7 @@
 [3:08:30] R surprised people
 [3:09:00] out morepol
 [3:09:30] R Russia all
-[3:10:00] R ofpeople[歌声]
+[3:10:00] [音楽]
 [3:10:30] うん。langes.Yeah.
 [3:11:00] PeoplespeakEnglish again comp
 [3:11:30] M
@@ -567,7 +568,7 @@
 [5:03:30] anksčiausiaiatlikų protinėj nairšiandien sustiprėspetinių vėjasbusjuntamas temperatūvėl privins,na,apie vasarą,nestikraibus šiltadienaiki19-24 laipsniųšilumos.Na, irtaščiausiadiena apie24laipsnius turėtųbūti
 [5:04:00] pietinuose centrinėsešalies rajonuose.Taijau ketvirtadienionaktį perLietuvą tai didėjasir tr 15šumosnair ketvirtadieniodieną irtoliaubūsime ciklonoįtakojetai dienatikrainebus tokiašiandien atsirasdaugtankių debesųirvėlgi daugelyješalies protpys irstiprokas
 [5:04:30] pietvakarųvakarų vėjasirtemperatūra tokiadebesuota litingadienąžemesnė taiiki1520laips šilumosnabetnuo penktadieniov truputįkeisįgeresnę pusęvėlturėtų sustiprėti aukštesnioslėgio laukasdebesidysisir trumpaiparinos tiktaivietomiso temperatūranakties metusviruostarp6-1 laipsųšilumosodieną bustarp172laip sinoptikėbičiutė
-[5:05:00] 12minu [音楽] Lietuvijos pirminink
+[5:05:00] [音楽]
 [5:05:30] めっで人を乗せて送ることに慣れてる運転してるよ。めっちゃ可愛い。そんなことが丁寧でうまいなら炎やね。気がしてきた。ないって言って怒られる未来が見えてきた。
 [5:06:00] irkitąsvarbiątemą. Šiandien parlamentarai uždariameposėdyje aptarėregiono saugumosituacija dirbaVaidotas BurokastaiVaidui aptarkimemestaikas yražinomairtaiką pavykotau išsiaiškinti pradėkimekogero,nuo
 [5:06:30] totekonukalbinti apsaugosministrą kasyražinomaapie vakarnaktįiš Baltarusijos ir dr yrakalbamaapietai, kadjisbuvorusiškas taipsako,bentjaukad taipgalibūtitaip sakokonservatorius LaurynasKūnas.Na,o kraštoapsaugos ministrasRobertas Kaunasteigia,kad pareigūnaišiuometu bandodekoduoti Lietuvojenumušto dronorastą programinęįrangą.Iš BaltarusijosLietuvo
@@ -742,7 +743,7 @@
 [6:37:00] パンもいっぱい売ってるね。パンもいっぱい売ってるのだが。
 [6:37:30] バケットがないな。なんかバケット的なパンとであとスイーツを買いたいね。Yes、イエスイエス。あ、で、スイーツ、スイーツ、スイツ、スイーツ。
 [6:38:00] ああ、クッキー。へえ。関冷。ああ。あ、なるほどなるほど。どうしようかな。この前でもこの前ブラウニー勝ったからどうしよっかな。え、全然決められへんやん。
-[6:38:30] みんななんか気になるのあったら教えてよ。[音楽]激山がいいねんけど。山がなんかでも甘い系はね、パン系じゃない方がいいんよな。甘い系はパン系じゃない方が良くてどうしよう。でもこのレーズンのパンもめっちゃ美味しそう。このレーズンのパン食べたい。これ
+[6:38:30] [音楽]
 [6:39:00] 1ユロか。1やって安いね。よいしょ。どうしようかな。なんか、え、決められへん。決められへん。全く決められへん。うーん。で、バケ、バケ、バケット。ああ。うん。あ、いいや。いけ、いけ。
 [6:39:30] バケット系上の奥にある。なんかもっと細長いやつが欲しかったんけどな。迷いますね。
 [6:40:00] あ、マジで決められへん。マジで決められへん。皆さんもなんかどれが美味しそうとかあって教えてよ。
@@ -941,7 +942,7 @@
 [8:19:00] people secondpersonnumber notfrquentlylikeing on likehiing
 [8:19:30] youknow take aroundナイスナイスどうしようかな。緊急時代です。
 [8:20:00] り
-[8:20:30] ます。Whyyouletmejointhe car? Whatmakesyou car?[音楽] Don'tknow travelingandallthe time inYouTubetraveltwo
+[8:20:30] [音楽]
 [8:21:00] guyswhogoingaround all tosee people. Oké Ihavepoint may don'tknowmay [笑い]ジャパジャパジャパジャパニーセピースカリセフ
 [8:21:30] ちょっと待ってね後でおおlikeyouneedone
 [8:22:00] ing be
@@ -1048,7 +1049,7 @@
 [9:13:30] 分かりました。綾島カードね。綾島カード。これか。しょうがないな。しょうがない。
 [9:14:00] はい。
 [9:14:30] ああ、よいしょ。あ、島カード取っときました。お城の背景から光がわ、いいね。川よしょ。素敵なところですね。川の流れのようにルル
-[9:15:00] [歌声]すごいよ。このお城も川に囲まれてて、もう攻め込みづらそうな。やっぱりお城っていうのはいいよね。こういうなんか考えさせられるよね。
+[9:15:00] [音楽]
 [9:15:30] お、お城の中に入ろうと思うと10、1800円します。なので入りません。お城の中には。これドローンから見るとこんな感じらしいよ。ドローンから見るとこんな感じらしい。
 [9:16:00] ガチで綺麗やな。このさ、お城をさ、ドローンから取んのずるいねんけど。僕もこの角度から見たい。お城をさ、ドローンか飛んのやめてほしい。そうそう。見、めちゃくちゃ綺麗やけどさ、この姿使ったら僕見れへんやん。わざわざ現地まで来てんのに。で、このお城すごいよね。だからさ、右にはさ、右にこのさか、今僕が座ってる川が見えて、左にも川が川と川に挟まれてる段階絶壁のお仕様ですね。
 [9:16:30] 強一。強一好き。強一。この川好き。この川強一好き。そんなにそんなに湖めっちゃ僕気についてんけど。え、みんなどっち派?バウスカか?バウカか?あの、あの湖の街どっち派?みんなビルジャイかバウスか?

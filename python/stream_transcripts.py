@@ -203,11 +203,16 @@ def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str) -> d
     (d / f"{stem}.chat.txt").write_text(chat_body, encoding="utf-8")
     row["chat_count"] = len(lines)
     if cap and cap.get("ok"):
-        bins = st.bin_captions(st.read_captions(cap["path"]))
+        raw = st.bin_captions(st.read_captions(cap["path"]))
+        bins, n_music = st.mask_music(raw)
         head["caption_desc"] = f"{cap['lang']}（{cap['kind']}・{cap['path'].suffix[1:]}）"
         body = st.transcript_text(head, bins)
         (d / f"{stem}.transcript.txt").write_text(body, encoding="utf-8")
-        row.update(caption="ok", chars=sum(len(s) for _, s in bins), note=head["caption_desc"])
+        # chars は**伏せる前**の字数。議事録の目安字数（stream_notes.py）がこの数から出ていて、
+        # 伏せたあとで数えると、伏せる前に書いた議事録が目安の外に押し出される（実際に14本出た）。
+        # 列の意味を「字幕の字数」で揃えておく
+        row.update(caption="ok", chars=sum(len(s) for _, s in raw),
+                   note=st.music_note(head["caption_desc"], n_music))
     else:
         why = (cap or {}).get("why") or "取りに行かなかった"
         row.update(caption="none" if why == "ja の字幕が無い" else "error", chars=0, note=why)
