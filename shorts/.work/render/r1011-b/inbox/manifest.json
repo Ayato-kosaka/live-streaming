@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__r1011-b",
+ "mode": "render",
+ "dest": "render/r1011-b/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/r1011-b.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2,
+  "tar_gz": 210,
+  "encrypted": 224
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 224,
+   "sha256": "0cc3447f73453f0822aacc95051825400b614460f7aed31018d86428e67ac093"
+  }
+ ],
+ "hmac_sha256": "f2be0fd2560017af7ea7a8701b0e88965c9c60f12be81d5af5951170109fa553",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-21T16:42:24+00:00",
+ "nonce": "eb158c1a47238075012f3f43"
+}
