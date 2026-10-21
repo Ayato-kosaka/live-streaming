@@ -14,7 +14,8 @@
 # できた枝を取って上に積む（下の繰り返しがそのまま受ける）。
 #
 # **平文を置かないことをここでも見る。** sealed に manifest.json / key.enc /
-# payload.enc(.NNN) 以外が混ざっていたら、1つも置かずに落ちる。
+# payload.enc(.NNN) / sheets.key.enc / sheets.enc(.NNN)（clips の見る用の小さな封。seal.py）
+# 以外が混ざっていたら、1つも置かずに落ちる。
 #
 # 見張り: tools/shorts/ingest/push_selftest.py（手元の bare リポジトリを origin にして回す）
 set -euo pipefail
@@ -32,6 +33,7 @@ src="$RUNNER_TEMP/sealed"
 for f in "$src"/*; do
   case "$(basename "$f")" in
     manifest.json|key.enc|payload.enc|payload.enc.[0-9][0-9][0-9]) ;;
+    sheets.key.enc|sheets.enc|sheets.enc.[0-9][0-9][0-9]) ;;
     *) echo "!! 置かないはずのものが混ざっている: $(basename "$f")"; exit 1 ;;
   esac
   # GitHub は 100MB を超えるファイルの push を断る。断られてから8回粘るより、
