@@ -903,7 +903,10 @@ def audio_cfg(p: dict, style: dict) -> dict:
 # ---------------------------------------------------------------- 題の札・【大】の字幕
 
 # 節の終わり、または3字以上のカタカナの語のあとにひらがな・漢字が続く所（「イエローバス｜やんか！」「ポテト｜入り！？」）
-_CLAUSE_END = re.compile(r"(だら|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿])(?![はがをにへともでのや][、。！？…]|[はがをにへともでの]$))(?=.)")
+# 「だらけ」の「だら」は節の終わりではない（「銅像だら｜けにした」と割っていた）
+_CLAUSE_END = re.compile(r"(だら(?!け)|たら|から|けど|ので|のに|ても|でも|[ァ-ヴー]{3,}(?=[ぁ-ゖ一-鿿])(?![はがをにへともでのや][、。！？…]|[はがをにへともでの]$))(?=.)")
+# 行の頭に来てはいけない字（句読点・閉じ括弧）
+_HEAD_PUNCT = re.compile(r"[、。，．！？…）」』]+")
 
 
 def fine_chunks(text: str) -> list[str]:
@@ -919,7 +922,17 @@ def fine_chunks(text: str) -> list[str]:
             out.append(ch[pos:m.end()])
             pos = m.end()
         out.append(ch[pos:])
-    return [c for c in out if c]
+    # 節の終わりのすぐ後ろが句読点だと、句読点が次の塊の頭に付いて行頭に出る
+    # （「覗いてみたら／、コーヒー720円」）。句読点は前の塊の尻へ戻す
+    res = []
+    for c in out:
+        m = _HEAD_PUNCT.match(c)
+        if res and m:
+            res[-1] += m.group(0)
+            c = c[m.end():]
+        if c:
+            res.append(c)
+    return res
 
 
 def halve_longest(ch: list[str]) -> list[str] | None:
