@@ -30,7 +30,7 @@ on:
         description: "受け取り口の名前（英数字と . _ -）"
         required: true
       action:
-        description: "page / probe / drop"
+        description: "page / probe / drop / drive"
         required: false
         default: "page"
       hash:
@@ -98,6 +98,13 @@ jobs:
       - name: 道具を入れる
         if: steps.plan.outputs.count != '0'
         run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+
+      # drive … 共有フォルダを落とす（gdown）・iPhone の HEIC を開く（heif-convert）
+      - name: Drive の道具を入れる
+        if: steps.plan.outputs.drive == 'true'
+        run: |
+          python3 -m pip install --quiet "gdown==5.2.0"
+          sudo apt-get install -y -qq libheif-examples || true
 
       - name: Google Cloud 認証
         if: steps.plan.outputs.count != '0'
