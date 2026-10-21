@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "n9FK4SYbcpA__clips",
+ "mode": "clips",
+ "dest": "n9FK4SYbcpA/clips",
+ "video": "n9FK4SYbcpA",
+ "channel": null,
+ "request": "shorts/requests/2026-10-21-fr-a-airport.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 105.0,
+  "channel_entries": 0,
+  "files": 7
+ },
+ "bytes": {
+  "plain": 56304543,
+  "tar_gz": 56212499,
+  "encrypted": 56212512
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "5211b247e00a49d9fbea8a50168d1f73cf2fb5dafe0cf2ed7302ae51b6212d78"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 9026592,
+   "sha256": "4fe7e67aef833c1119e230f42943ed8fd3ab4277662a67070d2f1975944c6ea6"
+  }
+ ],
+ "hmac_sha256": "15719fd281712a0bdc5de69a585c643e7d537456def690aa69ea3de9b402627e",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39630596480",
+ "created_at": "2026-10-21T16:16:52+00:00"
+}
