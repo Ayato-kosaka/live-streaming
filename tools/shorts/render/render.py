@@ -770,7 +770,29 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         big = ln.get("big")
         mood = ln.get("mood")
         ment = (style.get("moods") or {}).get("looks", {}).get(mood) if mood and mood != "plain" else None
-        if big:
+        # 頁ごとの見た目（parts の行だけ頁ごとに違う。ほかの行は行の big・mood が全頁に掛かる）
+        attrs: list[dict] | None = None
+        if ln.get("parts"):
+            # 1行の字幕を、言う順に見た目の違う頁へ分ける（前半はふつうの字幕・後半だけ【大】、
+            # 前置きはふつうの字幕・チャットの文だけコメントの札、など）。行全体を【大】にすると、
+            # 前置きまで大きくなって、オチの言葉が目立たない
+            pages, attrs = [], []
+            mlooks = (style.get("moods") or {}).get("looks", {})
+            for pt in ln["parts"]:
+                if pt.get("big"):
+                    pages.append([pt["text"]])
+                    attrs.append({"big": pt["big"], "text": pt["text"]})
+                elif pt.get("mood") and pt["mood"] != "plain":
+                    if pt["mood"] not in mlooks:
+                        sys.exit(f"{i}行目: parts の mood {pt['mood']!r} は様式の moods.looks に無い")
+                    for pg in mood_pages(pt["text"], mlooks[pt["mood"]], style):
+                        pages.append(pg)
+                        attrs.append({"mood": pt["mood"]})
+                else:
+                    for pg in paginate(pt["text"], cap_font, inner, cap_st["max_lines"]):
+                        pages.append(pg)
+                        attrs.append({})
+        elif big:
             pages = [[text]]
         elif ment:
             pages = mood_pages(text, ment, style)
@@ -807,7 +829,9 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
                 cap["face_overlap_ok"] = ln["face_overlap_ok"]
             if ln.get("highlight"):
                 cap["hl"] = list(ln["highlight"])
-            if big:
+            if attrs is not None:
+                cap.update(attrs[k])
+            elif big:
                 cap["big"] = big
                 cap["text"] = text
             elif ment:

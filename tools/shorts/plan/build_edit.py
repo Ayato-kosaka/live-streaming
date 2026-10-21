@@ -461,7 +461,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     big_order, big_looks = big_st["order"], big_st["looks"]
     card_row = next((i for i, r in enumerate(rows) if r.get("card")), None) if spec.get("title_card") else None
     looks = big_looks_for(rows, card_row, big_order, big_looks)
-    pres = [int(big_looks[lk].get("pre_roll_frames", 0)) if lk else 0 for lk in looks]
+    # 頁を分ける行（caption_parts）は、行の頭がふつうの字幕なので、【大】の字が出きるのを待たない
+    pres = [int(big_looks[lk].get("pre_roll_frames", 0)) if lk and not r.get("caption_parts") else 0
+            for lk, r in zip(looks, rows)]
     holds = [float(rows_ov.get(str(i), {}).get("hold", r.get("hold", 0))) for i, r in enumerate(rows)]
 
     work = Path(args.work)
@@ -539,6 +541,25 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             if mood not in mood_looks:
                 sys.exit(f"{i}行目: mood {mood!r} は様式の moods.looks に無い（plain, {', '.join(mood_looks)}）")
             ln["mood"] = mood
+        if r.get("caption_parts"):
+            # 1行の字幕を、言う順に見た目の違う頁へ分ける（render.py の narration.lines[].parts）。
+            # 例: 前半はふつうの字幕・後半だけ【大】（big: true はこの行の【大】の見た目、名前ならその見た目）、
+            # 前置きはふつうの字幕・チャットの文だけコメントの札（mood: "chat"）。行の big・mood は使わない
+            parts = []
+            for pt in r["caption_parts"]:
+                q = {"text": pt["text"]}
+                if pt.get("big"):
+                    q["big"] = looks[i] if pt["big"] is True else pt["big"]
+                    if q["big"] not in big_looks:
+                        sys.exit(f"{i}行目: caption_parts の big {q['big']!r} は様式の big.looks に無い")
+                elif pt.get("mood") and pt["mood"] != "plain":
+                    if pt["mood"] not in mood_looks:
+                        sys.exit(f"{i}行目: caption_parts の mood {pt['mood']!r} は様式の moods.looks に無い")
+                    q["mood"] = pt["mood"]
+                parts.append(q)
+            ln["parts"] = parts
+            ln.pop("big", None)
+            ln.pop("mood", None)
         if r.get("face_overlap_ok"):
             # 顔を避けきれない行の例外（顔が画面いっぱいで、上にも下にも置けない）。重なってよいコマ数と理由。
             # 品質チェックは、書いたコマ数を超えたら落とす（例外が黙って広がらないように）
@@ -669,6 +690,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         meta_rows.append({"row": i, "from": t, "frames": n, "voice_frames": vf, "cuts": row_cuts,
                           "line": ln["text"], "telop": tel_meta,
                           **({"big": ln["big"]} if ln.get("big") else {}),
+                          **({"parts": ln["parts"]} if ln.get("parts") else {}),
                           **({"same_as_prev": True} if r.get("same_as_prev") else {})})
         t += n
 

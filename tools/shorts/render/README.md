@@ -213,6 +213,7 @@ python3 tools/shorts/render/apply_patch.py edit.json comment.md --out edit2.json
 | `narration.tempo` | 声を音の高さを変えずに何倍速にするか（動画に1つ）。詰めた声を速め、もう一度頭と尻を詰める。**上限は様式の `narration.max_tempo`（いま 1.4）で、越えた指示書は書き出さずに止まる**（早送りに聞こえる。字を減らす。viral-shorts-creator の `script_writing.md` 6）。`build_edit.py` が様式の上限で組んだ指示書は越えないので、ここで止まるのは倍率を手で上げたときか、`--max-tempo` に様式より大きい値を渡したとき |
 | `narration.stretch` | 速める道具。既定は `rubberband`（Rubber Band の R3・`--fine --formant`。`apt-get install rubberband-cli`）。`atempo`（ffmpeg）は1本目の作り方を再現するときだけ。B の頭10行で測ると、atempo は 1.3倍で継ぎ目の周期の乱れ（jitter）が素の声より +21%、R3 は ±0%（`docs/island-misses.md` #285） |
 | `narration.lines[].big` | 【大】の行。字幕そのものを大きく、`style` の `big.looks[名前]` の見た目と動きで出す |
+| `narration.lines[].parts` | 1行の字幕を、言う順に見た目の違う頁へ分ける。`[{"text": "1,200億かけて、"}, {"text": "中身スカスカやないかい！", "big": "shake_red"}]` なら前半はふつうの字幕、後半だけ【大】。`"mood": "chat"` でその頁だけコメントの札（チャットの文だけを札にして、前置き「配信のコメントで」はふつうの字幕）。頁の切り替えは長い字幕の頁と同じく、字数の比の見当にいちばん近い声の間。書いた行では行の `big`・`mood` は使わない。spec の行の `caption_parts` を `build_edit.py` が写す（`big: true` はその行の【大】の見た目） |
 | `audio` | `style` の `audio` の上書き（`duck_db` など。動画ごとに） |
 | `telops[]` | 強調の字（絵コンテの「中央: …」）。`{"from", "to", "text"}`。重ねてはいけない（同時に1つ）。`parts: [{"text", "at"}]` で言葉を順に足す |
 | `narration.engine` | `files`（行ごとの声のファイル。本番）/ `open_jtalk`（尺の下書き） |
@@ -300,6 +301,7 @@ d2 は白い字に黒縁で止まったまま）。下の v2 の表（`style_p3.
 | `tense_tilt`（困惑） | 同じ色・書体で −4° 傾けて止める |
 | `tense_still`（落胆） | 同じ色・書体で止まったまま |
 | `up_pop`（喜び・ワクワク・決意） | 黄 #FFE14D に茶 #2A1600 の縁、Dela Gothic One、出るとき弾む 0.8 → 1.06 → 1.0 |
+| `chat`（感情ではない。コメントの札） | 字幕の書体の白い字を、半透明の黒い角丸の地（左上の注と同じ地）に載せる。動かさない。チャットの文だけを札にするので、ふつうは行ではなく `parts` の頁に付ける |
 
 | mood（v2） | 見た目 |
 | --- | --- |
@@ -400,6 +402,9 @@ d2 は白い字に黒縁で止まったまま）。下の v2 の表（`style_p3.
   寄り・明るさ・札も引き継ぐ。引き継がないと、つなぎ目で寄りが外れて隠していた顔が出る）
 - spec に `title_card` があれば、`card` の行のナレーションに重ねて頭の `title_card_seconds` 秒だけ題の札を出す。
   `big` の行は【大】の字幕、`corner_note` は小さな注になる
+- spec の `caption_parts`（`[{"text": 前置き}, {"text": オチ, "big": true}]`・`{"text": チャットの文, "mood": "chat"}`）は、
+  指示書の `narration.lines[].parts` になる（上の「編集指示書」）。前半はふつうの字幕・後半だけ【大】、
+  前置きはふつうの字幕・チャットの文だけコメントの札、のように1行の中で見た目を替える。その行の【大】の前の間は取らない
 - **喋る速さ**: spec の `narration_cps_target`（毎秒の字数。伸びているショートは 8.7〜9.2）に合わせ、
   動画に1つの倍率で声を速める。倍率 ＝ 詰めた声の長さの合計 ÷（喋る字数 ÷ 目標）。喋る字数は句読点・記号・
   空白を数えない。倍率の上限は様式の `narration.max_tempo`（いま 1.4）を読む（`--max-tempo` は渡さなくてよい。渡せばそちら）。
