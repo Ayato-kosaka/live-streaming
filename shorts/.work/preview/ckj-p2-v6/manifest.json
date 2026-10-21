@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview__ckj-p2-v6",
+ "mode": "preview",
+ "dest": "preview/ckj-p2-v6",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/ckj-p2-v6.json",
+ "status": "ok",
+ "stages": {
+  "up": "ok"
+ },
+ "counts": {
+  "files": 3
+ },
+ "bytes": {
+  "plain": 85507,
+  "tar_gz": 80243,
+  "encrypted": 80256
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 80256,
+   "sha256": "8c7a0fba07e722e99298b46fc96aeb07b93e72607b038cb03bca440ef624ffb0"
+  }
+ ],
+ "hmac_sha256": "3fa1843a7662d1455c4facf2f016c2c244d003a4efecb43c48aeca408dd6e84c",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39600707020",
+ "created_at": "2026-10-21T12:35:44+00:00",
+ "nonce": "c305234d33546820be312919",
+ "place": "hosting"
+}
