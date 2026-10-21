@@ -42,7 +42,16 @@ jobs:
       roles: ${{ steps.prep.outputs.roles }}
       prefix: ${{ steps.prep.outputs.prefix }}
     steps:
+      # **作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。** 素のままの checkout は先の木を全部
+      # 落とし、prepare の checkout だけで 2分39秒かかった（r1011-ng4-ckj8）。道具（tools/shorts）と依頼
+      # （shorts/render）だけを取り、ほかの中身は要るときに git が取りに行く（branch.py の extract・push は
+      # 木だけで回る）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -73,7 +82,13 @@ jobs:
         id: ${{ fromJSON(needs.prepare.outputs.ids) }}
         role: ${{ fromJSON(needs.prepare.outputs.roles) }}
     steps:
+      # 暗号文を落とさない（prepare の頭）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
@@ -116,7 +131,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      # 暗号文を落とさない（prepare の頭）
       - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
