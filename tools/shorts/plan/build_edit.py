@@ -310,6 +310,16 @@ def spoken_chars(text: str) -> int:
     return sum(1 for ch in unicodedata.normalize("NFKC", text) if unicodedata.category(ch)[0] in "LN")
 
 
+def bare_text(text: str) -> str:
+    """字と数だけにそろえる（国旗・空白・改行・句読点・記号を落とす）。
+
+    題の札とその行の読み上げが同じ言葉かを見る。札は国旗と改行と句読点の打ち方だけ違うのがふつうで
+    （「🇸🇪 ストックホルム来たら、\\n地下鉄が高すぎた！」と「ストックホルム来たら、地下鉄が高すぎた！」）、
+    そこで別の言葉と読むと、札と字幕に同じ言葉が2回出る。
+    """
+    return "".join(ch for ch in unicodedata.normalize("NFKC", text or "") if unicodedata.category(ch)[0] in "LN")
+
+
 # ---------------------------------------------------------------- 組み立て
 
 def narration_frames(lines: list[dict], narr: dict, work: Path) -> list[tuple[int, list[tuple[int, int]]]]:
@@ -511,7 +521,11 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
 
     title, _ = parse_telop(rows[0].get("telop", ""))
     title = ov.get("title") or title or spec.get("title_card") or spec["title"]
-    if card_row is not None:
+    # 題の札が、その行の読み上げと別の言葉のとき（あやと F-043: 札は「手段と日数」、1行目は「回れた中身」。
+    # フランス周遊の「🇫🇷 フランスを10日レンタカー旅してみた！」）は、札はその行の字幕を兼ねない。
+    # 兼ねさせると、読み上げている1行目の字が画面のどこにも出ない
+    card_own = card_row is not None and bare_text(title) != bare_text(rows[card_row]["line"])
+    if card_row is not None and not card_own:
         # 題の札がその行の字幕を兼ねる（札と字幕に同じ言葉を2回出さない）
         lines[card_row]["caption"] = ""
     mood_looks = (st_all.get("moods") or {}).get("looks", {})
@@ -721,6 +735,12 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         # title_card.end_with_line なら、書き出しが「題の読み上げが終わるコマ」でもっと早く消す
         edit["title"] = {"text": title, "look": "card", "from": 0, "line": card_row,
                          "to": round(float(spec.get("title_card_seconds", 4.0)) * FPS)}
+        if card_own:
+            # 字幕を兼ねない札は、書き出しが「その行の字幕」として扱わないように line を持たせない。
+            # end_with_line も line を見る仕組みなので、消すコマ（題の行の終わり＝次の行の頭）をここで決めて渡す
+            row = meta_rows[card_row]
+            del edit["title"]["line"]
+            edit["title"]["to"] = min(edit["title"]["to"], row["from"] + row["frames"])
     if notes:
         edit["notes"] = notes
     if speech:
