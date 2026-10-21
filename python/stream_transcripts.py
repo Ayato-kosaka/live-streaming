@@ -202,6 +202,9 @@ def _load(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, path)
     mod = importlib.util.module_from_spec(spec)
     sys.path.insert(0, str(path.parent))
+    # 先に sys.modules に置く。gate.py の @dataclass は自分のモジュールを sys.modules から
+    # 引くので、置かずに読むと next（続きを起こすか）だけが落ちる（run 10 で踏んだ）
+    sys.modules[name] = mod
     spec.loader.exec_module(mod)
     return mod
 
