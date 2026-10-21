@@ -90,6 +90,9 @@ def light_leg(root: Path, src: Path, item: dict, st: dict, priv: Path, other: Pa
           f"manifest の sheets に枚数とファイル数（{lt.get('sheets')}枚・{lt.get('files')}）")
     check(0 < lt.get("bytes", {}).get("encrypted", 0) < man["bytes"]["encrypted"] / 3,
           "見る用の封は mp4 の入った封よりずっと小さい")
+    if not lt:
+        check(False, "小さな封が無いので、ここから先（--sheets で開く・--branch）は回せない")
+        return
 
     # mp4 の暗号文を持たない置き場（manifest と小さな封の3つだけ）
     only = root / "light-only" / item["dest"]
