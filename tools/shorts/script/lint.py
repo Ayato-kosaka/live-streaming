@@ -45,7 +45,9 @@ from typing import Callable
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
 sys.path.insert(0, str(ROOT / "tools/shorts/plan"))
+sys.path.insert(0, str(ROOT / "python"))
 from readtime import chars  # noqa: E402  尺の見積もりと同じ数えかた（記号を除いた字数）
+from ts_read import entries, read_map  # noqa: E402
 
 FLAGS = ROOT / "tools/shorts/render/flags/SOURCES.json"
 CITIES = ROOT / "site/content/cityStreams.ts"
@@ -116,16 +118,12 @@ def _places_table() -> dict:
                 out[e["name"]] = code
     except (OSError, ValueError):
         pass
+    # 焼き込み（`site/content/*.ts`）は、共通の読み口 `python/ts_read.py` で読む。字を自前の正規表現で読むと、
+    # 注釈を1行挟んだだけで1件が黙って落ちる（`python/ts_readers_selftest.py` が読み手の数を見張っている）
     try:
-        slug = None
-        for ln in CITIES.read_text(encoding="utf-8").splitlines():
-            m = re.match(r'^  "([a-z-]+)": \{', ln)
-            if m:
-                slug = m.group(1)
-                continue
-            m = re.match(r'^    "([^"]+)": \[', ln)
-            if m:
-                out.setdefault(m.group(1), SLUG_CODE.get(slug or ""))
+        for slug, cities in read_map(CITIES.read_text(encoding="utf-8"), "CITY_STREAMS"):
+            for city, _ in entries(cities):
+                out.setdefault(city, SLUG_CODE.get(slug))
     except OSError:
         pass
     for k, v in EXTRA_CITIES.items():
