@@ -1,9 +1,11 @@
 # **ショート動画の道具の見張りを、ショートを触った PR だけで回す。**
 #
-# 品質チェック（`tools/shorts/qa/check.py`。16項目）の見張り2本は、本物の `render.py` で
+# 品質チェック（`tools/shorts/qa/check.py`。19項目）の見張り2本は、本物の `render.py` で
 # 書き出した1本を14通りに壊し、**壊したところを見る検査だけが落ちる**ことを当てる
 # （元素材のカクつきと使い回しは、時間割と素材だけを差し替えた足11本で当てる）。
 # 書き出しと顔・透かしの検出で、2本あわせて7〜9分かかり、ffmpeg と OpenCV 4 が要る。
+# カットの長さ・似た見た目の連続・止め絵（2026-10-21）の足13本は、書き出しを通さない3本目
+# （`cuts_selftest.py`、1分ほど）に分けた。上の2本は1本 5分の上限の手前にいて、足を足す余地が無い。
 #
 # ## なぜ Selftests（`selftest.yml`）に入れないか
 #
@@ -73,13 +75,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install 'opencv-python-headless==4.12.0.88' numpy Pillow budoux PyYAML
 
-      # 落ちた1本で止めない（`!cancelled()`）。3つとも回してから、まとめて落ちる
+      # 落ちた1本で止めない（`!cancelled()`）。全部回してから、まとめて落ちる
       - name: 品質チェックの見張り（音・字・形式）
         run: python3 tools/shorts/qa/qa_selftest.py
 
       - name: 品質チェックの見張り（絵・長さ）
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/qa/qa_video_selftest.py
+
+      # 同じカットの長さ・似た見た目の連続・止め絵（あやと 2026-10-21、#959）。場面の絵と時間割だけで当てる
+      - name: 品質チェックの見張り（カットの選び方）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/qa/cuts_selftest.py
 
       # 参考の BGM の大きさを測る物差し（`tools/shorts/style/bgm_gap.py`）。作った声と BGM を
       # 既知の差で混ぜて ±1.5dB に入るかを見る。numpy だけで数秒。Selftests は numpy を
@@ -90,14 +97,14 @@ jobs:
 
       # 取り込みの見張りは Selftests でも走るが、ショートを触った PR では
       # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
-      # 上の3本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
+      # 上の4本は名指しで済ませたので除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
       - name: ほかのショートの見張り（取り込み）
         if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
-            ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
+            ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
             -print0 | sort -z)
           if [ "${#found[@]}" -eq 0 ]; then
             echo "::error::tools/shorts の見張りを1本も拾えなかった"

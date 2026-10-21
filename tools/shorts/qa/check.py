@@ -28,8 +28,10 @@ sys.path.insert(0, str(HERE))
 
 import audio  # noqa: E402
 import container  # noqa: E402
+import cuts  # noqa: E402
 import faces  # noqa: E402
 import reuse  # noqa: E402
+import still  # noqa: E402
 import stutter  # noqa: E402
 import text  # noqa: E402
 import textdup  # noqa: E402
@@ -51,6 +53,9 @@ CHECKS = {
     "text_on_face": textface.check,
     "black": video.check_black,
     "frozen": video.check_frozen,
+    "cut_length": cuts.check_cut_length,
+    "similar_run": cuts.check_similar_run,
+    "still_image": still.check,
     "source_stutter": stutter.check,
     "shot_reuse": reuse.check,
     "silence": audio.check_silence,
@@ -58,15 +63,20 @@ CHECKS = {
     "original_audio": audio.check_original_audio,
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
-VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "frozen", "source_stutter", "shot_reuse")
+VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "frozen", "cut_length", "similar_run",
+              "still_image", "source_stutter", "shot_reuse")
 # 下書き（render.py --draft）で回す最低限。中身を直している間に崩れやすいものだけ:
 # 字幕と声のずれ・字が安全域から出ていないか・真っ黒なコマ・強調の字の言い直し（時間割だけで測るので速い）。
 # 元素材のカクつきと使い回しも下書きで回す。どちらも「どの区間をどこに使うか」で決まり、それを直すのは
 # 下書きの段だから（本番で見つけると、区間を選び直して書き出しからやり直しになる）。カクつきは元素材を
 # 読むだけで縦横半分の書き出しにも関係なく、42秒の動画で 20秒。使い回しはカットごとに3コマで 5秒
 # （2026-10-19、zjHZucyfrq8 p2 v2）。
+# カットの長さ・似た見た目の連続・止め絵も、同じ理由で下書きで回す（あやと 2026-10-21。どれも「どの区間を
+# どこに何秒使うか」で決まり、本番で見つけると選び直しになる）。長さは時間割だけ、止め絵はカクつきと同じ
+# 元素材の読みを使い回し、似た見た目は使い回しと同じコマの要約を使い回すので、足してもほとんど遅くならない。
 # 顔・透かし・字と顔は字なしの版と本番の画素で見るので、本番の段で回す
-DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup", "source_stutter", "shot_reuse")
+DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup", "cut_length", "similar_run", "still_image",
+                "source_stutter", "shot_reuse")
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 

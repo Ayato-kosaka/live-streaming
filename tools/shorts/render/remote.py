@@ -91,10 +91,14 @@ OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_
 # 検査を4つに分けて同時に回す（1本ずつ順だと 200秒あまり。どれも1コアしか使わず、4コアが遊ぶ）。
 # 重いもの（安全域 70秒・透かし 60秒・字と顔 40秒・字幕 35秒）を別々の組に置く。
 # 元素材のカクつき（42秒の動画で 20秒。元素材を元の大きさで読む）は字幕の組へ、使い回し（5秒）は
-# 字と顔の組へ足した（どちらの組も安全域の 70秒を越えない。2026-10-19、zjHZucyfrq8 p2 v2 で測った）
-QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"), ("text_on_face", "faces", "shot_reuse"),
+# 字と顔の組へ足した（どちらの組も安全域の 70秒を越えない。2026-10-19、zjHZucyfrq8 p2 v2 で測った）。
+# カットの選び方の3つ（2026-10-21）は、読むものを分け合う相手と**同じ組**に置く。組ごとに別の子なので、
+# 別の組に置くと同じ元素材・同じコマを2度読む: 止め絵はカクつきと同じ元素材の差を、似た見た目の連続は
+# 使い回しと同じカットの見本のコマを使う。カットの長さは時間割とつなぎの2コマだけで軽い
+QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"),
+             ("text_on_face", "faces", "shot_reuse", "similar_run"),
              ("container", "loudness", "voice_vs_bgm", "subtitle_sync", "text_dup", "silence",
-              "clipping", "original_audio", "source_stutter"))
+              "clipping", "original_audio", "cut_length", "still_image", "source_stutter"))
 
 
 def sha256_file(p: Path) -> str:

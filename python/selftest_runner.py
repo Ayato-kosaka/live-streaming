@@ -174,7 +174,7 @@ SKIP: dict[str, str] = {
     # 2026-09-18 から 2026-10-15 まで、外すものは1本も無かった。
     #
     # ショートの品質チェックの見張り2本は「遅い」で外す。本物の render.py で書き出した
-    # 1本を14通りに壊して当て（ほかに、時間割と素材だけを差し替えた足が11本。検査は16項目）、
+    # 1本を14通りに壊して当て（ほかに、時間割と素材だけを差し替えた足が11本。検査は19項目）、
     # 2本で7〜9分かかり、ffmpeg と OpenCV 4 が要る。
     # Selftests は全部の PR で走り、その多くは島（site/）の直しでショートに触らない。
     # **外しただけでは走らなくなる**ので、ショートを触った PR では
@@ -188,6 +188,12 @@ SKIP: dict[str, str] = {
     "tools/shorts/qa/qa_video_selftest.py":
         "遅い（書き出して壊す対照。2本で7〜9分・ffmpeg と OpenCV 4 が要る）。"
         "ショートを触った PR で .github/workflows/shorts_selftest.yml が回す",
+    # カットの選び方の見張り（2026-10-21）は書き出しを通さず1分ほどだが、合成の場面を ffmpeg で作り、
+    # 似た見た目の検査が本人の顔を OpenCV 4 の Haar で探す。どちらも Selftests に無い。守っている実物は
+    # `tools/shorts/qa/` の下だけで、そこを触る PR では `shorts_selftest.yml` が名指しで回す
+    "tools/shorts/qa/cuts_selftest.py":
+        "ffmpeg と OpenCV 4 と numpy が要る（Selftests は入れていない。2026-10-21 確認）。守る実物は tools/shorts/qa/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
     # BGM の大きさの物差しの見張り（2026-10-16）は**遅くない**（数秒）が、numpy が要る。
     # Selftests は numpy を入れていない（`python/requirements.txt` のどれも numpy を引かない。
     # 2026-10-16 に pip show で確かめた）。守っている実物（`tools/shorts/style/bgm_gap.py`）は
