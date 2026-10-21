@@ -31,7 +31,7 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 
 ## 1. 型（この4つが無い依頼文は投げない）
 
-**ショートの担当（作文者・編集長・批評役・書き出し）へは、あやとの指摘の帳面 `.claude/skills/viral-shorts-creator/references/ayato_feedback.md` のパスを必ず入れる**（読んでから書く・`script_writing.md` 7.4 の (h) で当てる）。渡さなければ、担当は前に言われたことを知らない。
+**ショートの担当（作文者・編集長・批評役・書き出し）へは、あやとの指摘の帳面 `.claude/skills/viral-shorts-creator/references/ayato_feedback.md` のパスを必ず入れる**（読んでから書く・`script_writing.md` 7.4 の (h) で当て、(i) で行と行のつなぎを見る）。渡さなければ、担当は前に言われたことを知らない。
 
 ### ① 合格の条件
 
