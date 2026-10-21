@@ -393,10 +393,18 @@ def table(agents: list, cal: tuple, title: str) -> str:
     return "\n".join(out)
 
 
+def session_cwd() -> str:
+    """記録の置き場の名前になる作業場所。担当の worktree（`.claude/worktrees/<名>`）から回しても、
+    記録はまとめ役のセッションを始めた本体の場所の名前で置かれるので、そこまで戻す。"""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "sprites"))
+    from repo import repo_root
+    return str(repo_root()).split("/.claude/worktrees/")[0]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="担当ごとのトークンと時間を、段ごとの表にする")
     ap.add_argument("--session", help="セッション本体の .jsonl（既定は、この作業場所のいちばん新しいもの）")
-    ap.add_argument("--cwd", default="/home/user/live-streaming", help="作業場所（記録の置き場の名前になる）")
+    ap.add_argument("--cwd", default=session_cwd(), help="作業場所（記録の置き場の名前になる）")
     ap.add_argument("--since", help="この時刻（UTC、ISO）以降に始まった担当。既定は今日の 00:00 UTC")
     ap.add_argument("--until", help="この時刻（UTC、ISO）より前に始まった担当")
     ap.add_argument("--all", action="store_true", help="日付で切らない")
