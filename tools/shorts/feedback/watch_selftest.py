@@ -30,6 +30,7 @@
 """
 from __future__ import annotations
 
+import atexit
 import io
 import logging
 import sys
@@ -166,7 +167,10 @@ def setup(cut):
     c = CUTS[cut] if cut else None
     legs.load(HERE / "ledger.py", "ledger")
     W = legs.load(HERE / "watch.py", "watch", (c[1], c[2]) if c else None)
-    return Bench(W, Path(tempfile.mkdtemp(prefix="watch_selftest_")))
+    # 使い捨ての帳面の置き場。終わったら消す（対照の子も1つずつ作るので、残すと回すたびに溜まる）
+    td = tempfile.TemporaryDirectory(prefix="watch_selftest_")
+    atexit.register(td.cleanup)
+    return Bench(W, Path(td.name))
 
 
 # ---- 足 ----
