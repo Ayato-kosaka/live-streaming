@@ -5,7 +5,7 @@
  "dest": "VusdZVyjgjQ/captions",
  "video": "VusdZVyjgjQ",
  "channel": null,
- "request": "shorts/requests/2026-10-22-vusd-captions.json",
+ "request": "shorts/requests/2026-10-22-vusd-captions-r2.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -13,24 +13,24 @@
  },
  "counts": {
   "caption_segments": 2819,
-  "caption_lines": 3481,
+  "caption_lines": 3804,
   "files": 6
  },
  "bytes": {
-  "plain": 1435287,
-  "tar_gz": 225637,
-  "encrypted": 225648
+  "plain": 1438843,
+  "tar_gz": 225921,
+  "encrypted": 225936
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 225648,
-   "sha256": "5cab9688c327f1d897445d47b3525c8d367542b2b88267b4607492dfcf38a9b6"
+   "bytes": 225936,
+   "sha256": "2e46ade36bb6f5782230a65b5498ab21e966b1f2a6fa19deaaa682817eee969e"
   }
  ],
- "hmac_sha256": "a088ffd11b7af688947738432b8b0d8cd2f3fe738e578d6d6b4f1e747d38a8fa",
+ "hmac_sha256": "1837f0cbebc019c8738065f79d6ed54a7c94c07e1145a379e57143c36726737b",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39870585977",
- "created_at": "2026-10-22T23:16:29+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39871775416",
+ "created_at": "2026-10-22T23:27:18+00:00"
 }
