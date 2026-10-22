@@ -41,7 +41,8 @@ for n in 1 2; do
   echo "::warning::${what} … ${why}（${n}回目・${took}秒）"
   if [ "$n" -eq 1 ]; then
     case "$what" in
-      *apt-get*|*dpkg*) sudo dpkg --configure -a || true ;;
+      # 片づけそのものにも上限を置く（trigger の続きで、これも止まることがある）
+      *apt-get*|*dpkg*) sudo timeout --kill-after=10 "$lim" dpkg --configure -a || true ;;
     esac
     sleep "${RETRY_PAUSE:-10}"
     echo "   取り直す"
