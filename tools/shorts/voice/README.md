@@ -133,6 +133,10 @@ python3 tools/shorts/voice/collect.py --lines lines_in.json --attempts raw/attem
   --raw raw --out <書き出し先>
 ```
 
+- **投稿が済んだ回の声は、EC2 から消してよい**（あやと 2026-10-22 #1013「投稿完了したら素材は捨てて良い」。EC2 のディスクは 29G しかない）。
+  消すのは素材だけ: `~/voice/out/<動画>`・`~/voice/<動画>.tgz`・`~/voice/<動画>-lines_in.json`。
+  `~/voice/asr-venv`・書き起こしのモデル・`~/voice/private/`・`*.log` は残す。差し替えで同じ声が要るときは、
+  書き出しの入力の置き場（`tools/shorts/render/remote.py` の CAS）から sha256 で取り戻せる（フランス A v3 で通した）
 - 1文に2本（以上）あるテイクのうち、**聞き取りが原稿と合うもの**を選ぶ（同じなら新しい試し・テイク1）。
   人が聞いて選び直すときは `--pick A/04=2.1`（試し2のテイク1）
 - 比べるのは字ではなく**読み**（Open JTalk でカタカナにして比べる）。「鶏／とり」「25分／にじゅうごふん」を同じとみなすため。
