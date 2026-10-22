@@ -1923,6 +1923,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "0upPnKMc5po",
         "title": "北マケドニアでフライパンパンパン作りの作戦会議&買い出しや",
         "date": "2026-10-21"
+      },
+      {
+        "videoId": "VusdZVyjgjQ",
+        "title": "北マケドニアでチーズオリーブフォカッチャつくろー！",
+        "date": "2026-10-22"
       }
     ]
   }
