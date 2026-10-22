@@ -23,7 +23,7 @@ yt-dlp は偽物（この見張りが一時フォルダに書く `yt_dlp` パッ
 | `seal` | 一周（偽の gate → 偽の yt-dlp → 整える → 封）。置くのは manifest・key.enc・payload.enc だけ。平文の manifest に題名も字幕も出ない。開くと 1行1文の captions.txt と題・長さがある。**封をしたら平文が残らない** |
 | `gate` | gate が「止める」なら YouTube に当たらない（偽の yt-dlp が1度も呼ばれない）。「取らなかった」封を置いて 1 で帰る |
 | `retry` | retry.sh: 通れば1回だけ・上限を越えたら切って1回だけ取り直す（止まったまま待たない）・2回とも駄目なら 1 |
-| `ffmpeg` | ffmpeg.sh（偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で）: 入っていれば apt に触らない・apt が通れば apt（`--no-install-recommends`）・apt が止まったら上限で2回切って GitHub の静的ビルドに切り替える・それも落とせなければ 1・ffmpeg があれば書体だけ頼み、入らなくても進む |
+| `ffmpeg` | ffmpeg.sh（偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で）: 入っていれば apt に触らない・apt が通れば apt（`--no-install-recommends`・man-db の索引の作り直しを止めてから）・apt が止まったら上限で2回切って GitHub の静的ビルドに切り替える・それも落とせなければ 1・ffmpeg があれば書体だけ頼み、入らなくても進む |
 | `workflow` | captions の job: plan のあと・fetch と同じ concurrency の枠・`contents: write` と `actions: read`・GH_TOKEN・Cookie の写しを必ず消す・ffmpeg も whisper も入れない。fetch はこの job のあと（`!cancelled()` で、字幕の道が無い回も走る）。道具を入れる段（captions / fetch / analyze）は apt・pip・npm・clone を全部 retry.sh に通し、段に `timeout-minutes` がある |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
@@ -83,6 +83,8 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                {"ffmpeg"}, "apt が詰まったときに静的ビルドへ切り替えない"),
     "present": ("ffmpeg.sh", 'if [ "${#need[@]}" -eq 0 ]; then', "if false; then",
                 {"ffmpeg"}, "入っていても apt に触る"),
+    "mandb": ("ffmpeg.sh", 'sudo rm -f "${MANDB_FLAG:-/var/lib/man-db/auto-update}"', ":",
+              {"ffmpeg"}, "man-db の索引の作り直しを止めずに apt で入れる"),
 }
 
 TITLE = "偽の題（題名は平文に出ない）"
@@ -429,7 +431,7 @@ MOCKS = {
     # sudo は頼まれたものをそのまま走らせる（root にはしない）
     "sudo": 'exec "$@"\n',
     "apt-get": ('echo "apt-get $*" >> "$FAKE_LOG"\n'
-                'case "$*" in *update*) [ "$FAKE_APT" = hang ] && sleep 30; exit 0 ;; esac\n'
+                'case "$*" in *update*) exit 0 ;; esac\n'
                 'case "$FAKE_APT" in\n'
                 '  hang) sleep 30 ;;\n'
                 '  fail) exit 100 ;;\n'
@@ -480,7 +482,10 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
                 (binz / b).chmod(0o755)
         log = base / f"{name}.log"
         log.write_text("")
+        flag = base / f"mandb-{name}"
+        flag.write_text("")
         env = {"PATH": f"{mock}:{binz}:{sysd}", "FAKE_LOG": str(log), "FAKE_APT": apt,
+               "MANDB_FLAG": str(flag),
                "FAKE_CURL": curl, "FAKE_TAR": str(tar), "FAKE_DPKG_HAS": dpkg_has,
                "FFMPEG_BIN": str(binz), "RETRY_PAUSE": "0", "APT_UPDATE_SEC": "1",
                "APT_INSTALL_SEC": "1", "HOME": str(base)}
@@ -494,22 +499,26 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
         ff = binz / "ffmpeg"
         # 偽の ffmpeg が名乗る出どころ（here / apt / static）
         kind = ff.read_text().split("version ")[-1].strip().strip('"') if ff.exists() else None
+        go.mandb_left = flag.exists()
         return rc, log.read_text().splitlines(), kind, time.time() - t0
 
     rc, calls, kind, _ = go("have", "ok", True)
-    if rc != 0 or calls:
+    if rc != 0 or calls or not go.mandb_left:
         bad.append(f"入っているのに apt か curl に触った（rc={rc}・{calls[:2]}）")
     rc, calls, kind, _ = go("apt", "ok", False)
     inst = [x for x in calls if "install" in x]
     if rc != 0 or kind != "apt" or not inst or "--no-install-recommends" not in inst[0] \
             or any(x.startswith("curl") for x in calls):
         bad.append(f"apt が通るなら apt で入れる（--no-install-recommends・curl に触らない）（rc={rc}・{kind}）")
+    if go.mandb_left:
+        bad.append("apt で入れる前に man-db の索引の作り直しを止めていない")
     rc, calls, kind, dt = go("hang", "hang", False)
     inst = [x for x in calls if "install" in x]
     if rc != 0 or kind != "static" or len(inst) != 2 or dt > 30:
         bad.append(f"apt が止まったら上限で2回切って静的ビルドに切り替える"
                    f"（rc={rc}・{kind}・install {len(inst)}回・{dt:.0f}秒）")
-    rc, calls, kind, _ = go("nocurl", "hang", False, curl="fail")
+    # 止まるのではなく断られる apt（待たずに済む）で、静的ビルドも落とせない形
+    rc, calls, kind, _ = go("nocurl", "fail", False, curl="fail")
     if rc == 0 or kind is not None:
         bad.append(f"静的ビルドも落とせないのに 0 で帰った（rc={rc}）")
     rc, calls, kind, _ = go("font", "fail", True, args=("fonts-dejavu-core",))

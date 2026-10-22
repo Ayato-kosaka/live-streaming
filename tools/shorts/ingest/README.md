@@ -123,9 +123,10 @@ python3 tools/shorts/ingest/decrypt.py --key <秘密鍵> --out <リポジトリ�
 - 前の版で開いた `captions.txt` の切りかたを揃えるときは
   `python3 tools/shorts/ingest/quick_captions.py --text <out>/<id>/captions/captions.json`
 
-2026-10-22 の実測（run 39870585977・VusdZVyjgjQ・3時間55分）: push から暗号文が枝に積まれるまで **62秒**
-（captions の job 45秒。道具の入れ 11秒・字幕を取って封をする 15秒・置く 2秒）。字幕 2,819行 →
-1行1文 3,804行・暗号文 0.2MB。同じ回の archive は、道具の入れ 32分・whisper 40分超だった。
+2026-10-22 の実測（VusdZVyjgjQ・3時間55分）: push から暗号文が枝に積まれるまで **62秒・61秒**
+（run 39870585977・39871775416。captions の job 45秒・43秒。道具の入れ 9〜11秒・字幕を取って封をする
+15秒・置く 2〜3秒）。字幕 2,819行 → 1行1文 3,804行（最長59字）・暗号文 0.2MB。
+同じ回の archive は、道具の入れ 32分・whisper 40分超だった。
 
 ## 置かれるもの（平文）
 

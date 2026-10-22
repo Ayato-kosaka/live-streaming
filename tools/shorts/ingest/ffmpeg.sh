@@ -10,8 +10,8 @@
 # 鏡の側の詰まりは、こちらが待っても取り直しても戻らないことがある。そこで、
 #
 # 1. もう入っていれば何もしない（apt に触らない）
-# 2. apt で入れる（--no-install-recommends。映像の駆動系など要らない包みを落とさない）。
-#    コマンドごとに上限を置き、止まったら1回だけ取り直す（retry.sh）
+# 2. apt で入れる（--no-install-recommends。映像の駆動系など要らない包みを落とさない。
+#    man-db の索引の作り直しも止める）。コマンドごとに上限を置き、止まったら1回だけ取り直す（retry.sh）
 # 3. それでも ffmpeg が無ければ、GitHub の静的ビルド（BtbN/FFmpeg-Builds）を落として置く。
 #    書体（fonts-dejavu-core）は無くても進む（media.py は PIL の既定の書体に落ちる）
 #
@@ -37,7 +37,11 @@ fi
 
 "${R[@]}" "${APT_UPDATE_SEC:-90}" sudo apt-get update -qq \
   || echo "::warning::apt-get update が通らない（上限で2回切った）。古い一覧のまま入れてみる"
-if "${R[@]}" "${APT_INSTALL_SEC:-180}" sudo apt-get install -y -qq --no-install-recommends \
+# man-db の索引の作り直しを止める。包みを入れるたびに dpkg の trigger で走り、ランナーでは
+# 何分もかかることがある（ffmpeg は依存が多く、man のページを持つ包みも多い）。
+# ここで要るのは ffmpeg だけで、man は読まない
+sudo rm -f "${MANDB_FLAG:-/var/lib/man-db/auto-update}"
+if "${R[@]}" "${APT_INSTALL_SEC:-150}" sudo apt-get install -y -qq --no-install-recommends \
     -o DPkg::Lock::Timeout=60 "${need[@]}"; then
   have && { echo "apt で入れた: ${need[*]}"; exit 0; }
 fi
