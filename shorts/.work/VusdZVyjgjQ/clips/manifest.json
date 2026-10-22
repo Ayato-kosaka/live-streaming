@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "VusdZVyjgjQ__clips",
+ "mode": "clips",
+ "dest": "VusdZVyjgjQ/clips",
+ "video": "VusdZVyjgjQ",
+ "channel": null,
+ "request": "shorts/requests/2026-10-22-vusd-clips.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1562,
+  "tar_gz": 1192,
+  "encrypted": 1200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1200,
+   "sha256": "439dbbc957a908e874aa45c313bde9def9ca143e0e63b7153a6c763f91717f7e"
+  }
+ ],
+ "hmac_sha256": "bcc233c935801fb955fe45c12e6dce42676e036e324cca494db27390e977c9f5",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39870741046",
+ "created_at": "2026-10-22T23:26:39+00:00"
+}
