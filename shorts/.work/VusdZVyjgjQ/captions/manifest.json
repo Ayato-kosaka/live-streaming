@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "VusdZVyjgjQ__captions",
+ "mode": "captions",
+ "dest": "VusdZVyjgjQ/captions",
+ "video": "VusdZVyjgjQ",
+ "channel": null,
+ "request": "shorts/requests/2026-10-22-vusd-captions.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 2819,
+  "caption_lines": 3481,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 1435287,
+  "tar_gz": 225637,
+  "encrypted": 225648
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 225648,
+   "sha256": "5cab9688c327f1d897445d47b3525c8d367542b2b88267b4607492dfcf38a9b6"
+  }
+ ],
+ "hmac_sha256": "a088ffd11b7af688947738432b8b0d8cd2f3fe738e578d6d6b4f1e747d38a8fa",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39870585977",
+ "created_at": "2026-10-22T23:16:29+00:00"
+}
