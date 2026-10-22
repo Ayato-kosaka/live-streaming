@@ -57,6 +57,11 @@ MAX_CLIENTS = 5
 NO_CAPS_AGREE = 2
 
 
+def drop(p: Path) -> None:
+    """平文（取った字幕・info.json・整えたもの）を消す。封をしたあとと、job の終わりに。"""
+    shutil.rmtree(p, ignore_errors=True)
+
+
 def sub_cmd(client: str, d: Path, video: str) -> list[str]:
     """字幕と info.json だけを頼む yt-dlp の呼びかた。**媒体の形式は頼まない。**"""
     url = f"https://www.youtube.com/watch?v={video}"
@@ -126,6 +131,14 @@ def fetch_one(it: dict, d: Path, first: str | None = None) -> dict:
     return {"ok": False, "client": None, "tries": tries, "why": f"字幕が取れなかった（{last}）"}
 
 
+def caption_text(meta: dict, cap: dict, said: list) -> str:
+    """読む用の captions.txt。頭に `# ` の数行（題・URL・長さ・字幕の種類・行数）、そのあと1行1文。"""
+    head = [f"# {meta.get('title') or meta.get('id')}", f"# {meta.get('url')}",
+            f"# 長さ: {meta.get('duration_hms')}  字幕: {cap.get('lang')}（{cap.get('format')}）",
+            f"# 行数: {len(said)}（1行1文。語の時刻で切った）", ""]
+    return "\n".join(head) + "".join(f"[{hms(t)}] {s}\n" for t, s in said)
+
+
 def build(it: dict, d: Path, out: Path, res: dict, ver: str) -> dict:
     """取った字幕を、封の中身（out）に整える。数（平文の manifest に出してよいもの）を返す。"""
     out.mkdir(parents=True, exist_ok=True)
@@ -152,14 +165,10 @@ def build(it: dict, d: Path, out: Path, res: dict, ver: str) -> dict:
         lang, p = got
         rows = parse_json3(p) if p.suffix == ".json3" else parse_vtt(p)
         said = lines(rows)
-        write_json(out / "captions.json", {
-            "ok": True, "lang": lang, "source": "manual" if lang in (info.get("subtitles") or {})
-            else "auto", "format": p.suffix[1:], "segments": rows})
-        head = [f"# {meta['title'] or it['video']}", f"# {meta['url']}",
-                f"# 長さ: {meta['duration_hms']}  字幕: {lang}（{p.suffix[1:]}）",
-                f"# 行数: {len(said)}（1行1文。語の時刻で切った）", ""]
-        (out / "captions.txt").write_text(
-            "\n".join(head) + "".join(f"[{hms(t)}] {s}\n" for t, s in said), encoding="utf-8")
+        cap = {"ok": True, "lang": lang, "source": "manual" if lang in (info.get("subtitles") or {})
+               else "auto", "format": p.suffix[1:], "segments": rows}
+        write_json(out / "captions.json", cap)
+        (out / "captions.txt").write_text(caption_text(meta, cap, said), encoding="utf-8")
     else:
         write_json(out / "captions.json", {"ok": False, "why": res.get("why"), "segments": []})
     logs = out / "logs"
@@ -216,16 +225,34 @@ def main() -> int:
                       "counts": counts}
             seal.seal(it, out, sealed_root / it["key"], stages)
             # **平文はここで捨てる。** 置く段は sealed だけを見る
-            shutil.rmtree(work / it["key"], ignore_errors=True)
+            drop(work / it["key"])
             ok = res["ok"] and counts["caption_lines"] > 0
             bad += 0 if ok else 1
             print(f"   {'OK' if ok else 'NG'}  字幕 {counts['caption_segments']}行 → "
                   f"1行1文 {counts['caption_lines']}行  {sec}秒", flush=True)
     finally:
-        shutil.rmtree(work, ignore_errors=True)
+        drop(work)
     print(f"\n字幕が取れた {len(items) - bad}/{len(items)}", flush=True)
     return 1 if bad else 0
 
 
+def retext(cap_json: Path) -> int:
+    """復号した置き場で captions.txt を作り直す（切りかたを直したとき、取り直さずに揃える）。
+
+        python3 tools/shorts/ingest/quick_captions.py --text <out>/<videoId>/captions/captions.json
+    """
+    cap = read_json(cap_json, {}) or {}
+    if not cap.get("ok"):
+        print(f"!! 字幕の無い置き場: {cap.get('why')}")
+        return 1
+    meta = read_json(cap_json.parent / "meta.json", {}) or {}
+    said = lines(cap["segments"])
+    (cap_json.parent / "captions.txt").write_text(caption_text(meta, cap, said), encoding="utf-8")
+    print(f"captions.txt  {len(said)}行")
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "--text":
+        sys.exit(retext(Path(sys.argv[2])))
     sys.exit(main())

@@ -59,6 +59,9 @@ def parse_vtt(path: Path) -> list[dict]:
 
 
 END_MARKS = ("。", "！", "？", "!", "?")
+# 1語の中の句点の直後で切る（句点は前に残す）
+SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
+PUNCT = "。、！？!?,."
 
 
 def lines(rows: list[dict], gap: float = 1.2, max_chars: int = 40) -> list[tuple[float, str]]:
@@ -69,18 +72,35 @@ def lines(rows: list[dict], gap: float = 1.2, max_chars: int = 40) -> list[tuple
     つなぎ直して切る。自動字幕には句読点がほとんど無いので、切るのは
     句点・語と語の頭のあいだが `gap` 秒を越えたとき（息つぎ）・`max_chars` 字に届いたとき。
     語の時刻が無い字幕（vtt）は1行をそのまま1つの語として扱う。
+
+    いまの ja の自動字幕には句点が付く（VusdZVyjgjQ の 3時間55分で「。」2,357・「?」252）。
+    ただし語の時刻を持たない長い1語（130字近く）で来る行もあるので、**1語の中の句点でも切る**
+    （切った後ろは同じ秒）。息つぎのあとに句点だけが来たら、前の文の尻に付ける。
     """
     words: list[tuple[float, str]] = []
     for r in rows:
         ws = r.get("words") or []
-        if ws:
-            words += [(w["t"], w["w"]) for w in ws]
-        elif r.get("text"):
-            words.append((r["start"], r["text"]))
+        pairs = [(w["t"], w["w"]) for w in ws] if ws else (
+            [(r["start"], r["text"])] if r.get("text") else [])
+        for t, w in pairs:
+            words += [(t, piece) for piece in SENT_SPLIT.split(w) if piece]
     out: list[tuple[float, str]] = []
     cur, t0, prev = "", None, None
     for t, w in words:
         w = re.sub(r"\s+", " ", w)
+        if w.strip() and not w.strip().strip(PUNCT):
+            # 句読点だけの語は、息つぎのあとに来ても今の文（無ければ前の文）の尻に付ける。
+            # 「。」1字の行を作らない
+            p = w.strip()
+            if cur.strip():
+                cur += p
+                if p.endswith(END_MARKS):
+                    out.append((t0, cur.strip()))
+                    cur, t0 = "", None
+            elif out and not out[-1][1].endswith(END_MARKS):
+                out[-1] = (out[-1][0], out[-1][1] + p)
+            prev = t
+            continue
         if cur.strip() and ((prev is not None and t - prev > gap) or len(cur.strip()) >= max_chars):
             out.append((t0, cur.strip()))
             cur, t0 = "", None
