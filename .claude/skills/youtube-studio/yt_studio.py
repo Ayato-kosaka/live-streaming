@@ -67,7 +67,7 @@ def studio(url=None, wait=8):
     前の send-command で開いたタブに繋ぎ直すと、Page.enable も Runtime.evaluate も
     返らないことがある（2026-10-10 に2回。誰も繋いでいないあいだに描画プロセスが固まる。
     ダイアログは出ていなかった）。固まったタブは Target.closeTarget なら閉じられる。
-    最初の up はプロファイルの複製（1.2GB）で数分かかる"""
+    最初の up はプロファイルを複製する（拡張などは写さないので約35MB・数秒。#1013）"""
     port = up(NAME)
     b = _browser(port)
     old = pages(NAME)
