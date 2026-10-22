@@ -349,7 +349,11 @@ clips のシートは、**シートの各コマに写っている縞が「区間
    1つずつ上限つきで回し、越えたら切って1回だけ取り直す（`retry.sh`。ふだんは全部で10〜40秒）。
    ログの `!! apt-get update -qq … 120秒で終わらないので切った（1回目・120秒）` が止まったところ。
    2回とも駄目なら段ごと赤くなる（段そのものにも `timeout-minutes` がある）。2026-10-22 に
-   analyze の段が32分止まったのを受けて置いた
+   analyze の段が32分止まったのを受けて置いた。切ったところは `::warning::` で run の頁の注記にも出る
+   （この箱からはログが読めないが、注記は `gh api repos/…/check-runs/<job>/annotations` で読める）。
+   **ffmpeg は `ffmpeg.sh` が入れる。** 入っていれば apt に触らず、apt（`--no-install-recommends`）が
+   上限で2回切られたら GitHub の静的ビルド（BtbN/FFmpeg-Builds）に切り替える。同じ晩、clips の fetch が
+   apt-get install ffmpeg を4分ずつ2回切られて落ちたため（run 39870741046）
 
 `fetch` の job は**同じ ref の毎晩の取り込みと同じ枠**（`fetch-chat-${{ github.ref }}`）。
 1つの枠に「走っている1本＋待っている1本」までしか並ばず、3本目が来ると待っていた

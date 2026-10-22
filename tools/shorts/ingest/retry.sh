@@ -37,7 +37,8 @@ for n in 1 2; do
   else
     why="終了コード $rc"
   fi
-  echo "!! ${what} … ${why}（${n}回目・${took}秒）"
+  # 注記（::warning::）にも出す。ログが読めない箱からも、どこで止まったかが run の頁で読める
+  echo "::warning::${what} … ${why}（${n}回目・${took}秒）"
   if [ "$n" -eq 1 ]; then
     case "$what" in
       *apt-get*|*dpkg*) sudo dpkg --configure -a || true ;;

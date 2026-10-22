@@ -247,8 +247,8 @@ jobs:
           R="bash tools/shorts/ingest/retry.sh"
           $R 180 python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
           python3 -m yt_dlp --version
-          $R 120 sudo apt-get update -qq
-          $R 240 sudo apt-get install -y -qq -o DPkg::Lock::Timeout=60 ffmpeg
+          # apt が詰まったら GitHub の静的ビルドに切り替える（ffmpeg.sh。2026-10-22 に apt が止まった）
+          bash tools/shorts/ingest/ffmpeg.sh
           ffmpeg -version > /dev/null
           $R 90 bash -c 'rm -rf /tmp/bgutil && git clone --depth 1 --branch 2.0.0 \
             https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil'
@@ -324,8 +324,8 @@ jobs:
           MODE: ${{ matrix.mode }}
         run: |
           R="bash tools/shorts/ingest/retry.sh"
-          $R 120 sudo apt-get update -qq
-          $R 240 sudo apt-get install -y -qq -o DPkg::Lock::Timeout=60 ffmpeg fonts-dejavu-core
+          # apt が詰まったら GitHub の静的ビルドに切り替える（ffmpeg.sh。書体は無くても進む）
+          bash tools/shorts/ingest/ffmpeg.sh fonts-dejavu-core
           ffmpeg -version > /dev/null
           $R 180 python3 -m pip install --quiet numpy pillow
           # whisper を使うのは archive と reference だけ（zoom と clips は書き起こさない）

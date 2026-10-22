@@ -279,8 +279,10 @@ def check_chain() -> None:
 def check_cookie_jobs() -> None:
     print("Cookie を握る job だけを待つ（job_aware）")
     wf_dir = ROOT / ".github/workflows"
-    # 実物の置き場から。ショートの取り込みが Cookie を握るのは fetch だけ（解析は握らない）
-    check("ショートの取り込みで握るのは fetch だけ", tr.cookie_jobs(wf_dir / "shorts_ingest.yml"), ["fetch"])
+    # 実物の置き場から。ショートの取り込みが Cookie を握るのは captions（字幕だけの道。#1014）と
+    # fetch だけ（解析は握らない）
+    check("ショートの取り込みで握るのは captions と fetch だけ",
+          tr.cookie_jobs(wf_dir / "shorts_ingest.yml"), ["captions", "fetch"])
     check("毎晩の取り込みで握るのは fetch_chat_data だけ",
           tr.cookie_jobs(wf_dir / "schedule_fetch_chat.yml"), ["fetch_chat_data"])
     with tempfile.TemporaryDirectory() as d:
@@ -294,8 +296,9 @@ def check_cookie_jobs() -> None:
         check("コメントだけのものは握らない", tr.cookie_jobs(d / "c.yml"), [])
 
     done = {"status": "completed", "conclusion": "success"}
-    shorts = [{"name": "plan", **done}, {"name": "fetch", **done},
-              {"name": "VusdZVyjgjQ__archive", "status": "in_progress"}]
+    # captions の job は依頼に字幕だけの道が無い回も、skipped（status は completed）で一覧に出る
+    shorts = [{"name": "plan", **done}, {"name": "captions", "status": "completed", "conclusion": "skipped"},
+              {"name": "fetch", **done}, {"name": "VusdZVyjgjQ__archive", "status": "in_progress"}]
     check("握る job が終わって解析だけ動いている run は待たない", tr.holds_cookie(shorts, ["fetch"]), False)
     check("握る job が動いていたら待つ",
           tr.holds_cookie([{"name": "plan", **done}, {"name": "fetch", "status": "in_progress"}], ["fetch"]),

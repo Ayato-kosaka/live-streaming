@@ -23,6 +23,7 @@ yt-dlp は偽物（この見張りが一時フォルダに書く `yt_dlp` パッ
 | `seal` | 一周（偽の gate → 偽の yt-dlp → 整える → 封）。置くのは manifest・key.enc・payload.enc だけ。平文の manifest に題名も字幕も出ない。開くと 1行1文の captions.txt と題・長さがある。**封をしたら平文が残らない** |
 | `gate` | gate が「止める」なら YouTube に当たらない（偽の yt-dlp が1度も呼ばれない）。「取らなかった」封を置いて 1 で帰る |
 | `retry` | retry.sh: 通れば1回だけ・上限を越えたら切って1回だけ取り直す（止まったまま待たない）・2回とも駄目なら 1 |
+| `ffmpeg` | ffmpeg.sh（偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で）: 入っていれば apt に触らない・apt が通れば apt（`--no-install-recommends`）・apt が止まったら上限で2回切って GitHub の静的ビルドに切り替える・それも落とせなければ 1・ffmpeg があれば書体だけ頼み、入らなくても進む |
 | `workflow` | captions の job: plan のあと・fetch と同じ concurrency の枠・`contents: write` と `actions: read`・GH_TOKEN・Cookie の写しを必ず消す・ffmpeg も whisper も入れない。fetch はこの job のあと（`!cancelled()` で、字幕の道が無い回も走る）。道具を入れる段（captions / fetch / analyze）は apt・pip・npm・clone を全部 retry.sh に通し、段に `timeout-minutes` がある |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
@@ -68,21 +69,28 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
               {"seal"}, "封をしたあとに平文を消さない"),
     "gate": ("quick_captions.py", "            if v.ok:\n", "            if True:\n",
              {"gate"}, "gate が止めても YouTube に当たりに行く"),
+    # ffmpeg.sh は retry.sh の上に乗っている（apt を2回切ってから静的ビルドへ）ので、そちらも落ちる
     "once": ("retry.sh", "for n in 1 2; do", "for n in 1; do",
-             {"retry"}, "止まったものを取り直さない"),
+             {"retry", "ffmpeg"}, "止まったものを取り直さない"),
     "limit": ("retry.sh", '  cmd=(timeout --kill-after=15 "$lim" "$@")', '  cmd=("$@")',
               {"retry"}, "上限を置かない（止まったら待ち続ける）"),
     "needs": (WF_REL, "    needs: [plan, captions]\n", "    needs: plan\n",
               {"workflow"}, "fetch を字幕の道のあとにしない（同じ run で Cookie を2か所が握る）"),
-    "wrap": (WF_REL, "          $R 240 sudo apt-get install -y -qq -o DPkg::Lock::Timeout=60 ffmpeg\n",
+    "wrap": (WF_REL, "          bash tools/shorts/ingest/ffmpeg.sh\n",
              "          sudo apt-get install -y -qq ffmpeg\n",
-             {"workflow"}, "fetch の apt-get install を上限なしに戻す"),
+             {"workflow"}, "fetch の ffmpeg を上限なしの apt-get に戻す"),
+    "static": ("ffmpeg.sh", '"${R[@]}" 180 curl -fsSL', 'exit 1; curl -fsSL',
+               {"ffmpeg"}, "apt が詰まったときに静的ビルドへ切り替えない"),
+    "present": ("ffmpeg.sh", 'if [ "${#need[@]}" -eq 0 ]; then', "if false; then",
+                {"ffmpeg"}, "入っていても apt に触る"),
 }
 
 TITLE = "偽の題（題名は平文に出ない）"
 WORD = "フォカッチャ"
 
-FAKE_MAIN = r'''
+# 生の文字列（r'''…'''）にしない。`"鍵": "値"` を含む生の文字列は、TS を字で読む正規表現の
+# 見張り（python/ts_readers_selftest.py）が「読み手が生えた」と数える
+FAKE_MAIN = '''
 import json, os, sys
 from pathlib import Path
 a = sys.argv[1:]
@@ -90,7 +98,7 @@ if "--version" in a:
     print("2026.10.01-fake")
     sys.exit(0)
 with open(os.environ["FAKE_YT_LOG"], "a", encoding="utf-8") as f:
-    f.write(json.dumps(a) + "\n")
+    f.write(json.dumps(a) + "\\n")
 plan = json.loads(os.environ.get("FAKE_YT_PLAN") or "{}")
 client = next((x.split("=", 1)[1] for x in a if x.startswith("youtube:player_client=")), "")
 mode = plan.get(client, plan.get("*", "ok"))
@@ -110,7 +118,7 @@ w = os.environ["FAKE_WORD"]
 ev = [{"tStartMs": 0, "dDurationMs": 4000, "segs": [{"utf8": "こんにちは"},
        {"utf8": "今日は", "tOffsetMs": 600}, {"utf8": "パンを", "tOffsetMs": 1100},
        {"utf8": "焼きます", "tOffsetMs": 1500}]},
-      {"tStartMs": 2000, "aAppend": 1, "segs": [{"utf8": "\n"}]},
+      {"tStartMs": 2000, "aAppend": 1, "segs": [{"utf8": "\\n"}]},
       {"tStartMs": 6000, "dDurationMs": 3000, "segs": [{"utf8": w}, {"utf8": "です", "tOffsetMs": 500}]},
       {"tStartMs": 3723000, "dDurationMs": 1500, "segs": [{"utf8": "おわり"}]}]
 (d / "src.ja-orig.json3").write_text(json.dumps({"events": ev}, ensure_ascii=False))
@@ -124,8 +132,10 @@ class Ctx:
         self.ing, self.root, self.tmp = ing, root, tmp
         fake = tmp / "fake" / "yt_dlp"
         fake.mkdir(parents=True, exist_ok=True)
-        (fake / "__init__.py").write_text("")
-        (fake / "__main__.py").write_text(FAKE_MAIN)
+        # 名前を字のまま書かない。見張りの棚卸し（python/watch_census_selftest.py）が、見張りの中に
+        # 出てくる `○○.py` を呼んでいる先として引き、python/ の下の同じ名前と取り違えて止まる
+        (fake / ("__init__" + ".py")).write_text("")
+        (fake / ("__main__" + ".py")).write_text(FAKE_MAIN)
         self.log = tmp / "fake.log"
         os.environ["PYTHONPATH"] = str(tmp / "fake")
         os.environ.update(FAKE_YT_LOG=str(self.log), FAKE_TITLE=TITLE, FAKE_WORD=WORD,
@@ -415,6 +425,104 @@ def leg_retry(c: Ctx) -> list[str]:
     return bad
 
 
+MOCKS = {
+    # sudo は頼まれたものをそのまま走らせる（root にはしない）
+    "sudo": 'exec "$@"\n',
+    "apt-get": ('echo "apt-get $*" >> "$FAKE_LOG"\n'
+                'case "$*" in *update*) [ "$FAKE_APT" = hang ] && sleep 30; exit 0 ;; esac\n'
+                'case "$FAKE_APT" in\n'
+                '  hang) sleep 30 ;;\n'
+                '  fail) exit 100 ;;\n'
+                '  ok) case "$*" in *" ffmpeg"*) for b in ffmpeg ffprobe; do\n'
+                '        printf \'#!/bin/sh\\necho "%s version apt"\\n\' "$b" > "$FFMPEG_BIN/$b";\n'
+                '        chmod +x "$FFMPEG_BIN/$b"; done ;; esac ;;\n'
+                'esac\n'),
+    "dpkg": 'case "$1" in -s) case " $FAKE_DPKG_HAS " in *" $2 "*) exit 0 ;; esac; exit 1 ;; esac\nexit 0\n',
+    "curl": ('echo "curl $*" >> "$FAKE_LOG"\n'
+             '[ "$FAKE_CURL" = fail ] && exit 22\n'
+             'while [ "$#" -gt 0 ]; do [ "$1" = -o ] && { cp "$FAKE_TAR" "$2"; exit 0; }; shift; done\n'
+             'exit 2\n'),
+}
+SYS_TOOLS = ("bash", "sh", "timeout", "sleep", "date", "mktemp", "tar", "xz", "find", "head", "cut",
+             "rm", "install", "cat", "dirname", "cp", "chmod", "printf", "mkdir", "env")
+
+
+def leg_ffmpeg(c: Ctx) -> list[str]:
+    """ffmpeg.sh を、偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で回す。"""
+    bad = []
+    base = c.tmp / "ffmpeg"
+    mock, sysd = base / "mock", base / "sys"
+    mock.mkdir(parents=True)
+    sysd.mkdir()
+    for name, body in MOCKS.items():
+        (mock / name).write_text("#!/bin/bash\n" + body)
+        (mock / name).chmod(0o755)
+    for t in SYS_TOOLS:
+        w = shutil.which(t)
+        if not w:
+            return [f"箱に {t} が無いので当てられない"]
+        (sysd / t).symlink_to(w)
+    # 静的ビルドの偽物（中に bin/ffmpeg と bin/ffprobe）
+    pkg = base / "pkg" / "ffmpeg-master-latest-linux64-gpl" / "bin"
+    pkg.mkdir(parents=True)
+    for b in ("ffmpeg", "ffprobe"):
+        (pkg / b).write_text(f'#!/bin/sh\necho "{b} version static"\n')
+        (pkg / b).chmod(0o755)
+    tar = base / "static.tar.xz"
+    subprocess.run(["tar", "-cJf", str(tar), "-C", str(base / "pkg"), "."], check=True)
+
+    def go(name: str, apt: str, have_ff: bool, args=(), curl: str = "ok", dpkg_has: str = ""):
+        binz = base / f"bin-{name}"
+        binz.mkdir()
+        if have_ff:
+            for b in ("ffmpeg", "ffprobe"):
+                (binz / b).write_text(f'#!/bin/sh\necho "{b} version here"\n')
+                (binz / b).chmod(0o755)
+        log = base / f"{name}.log"
+        log.write_text("")
+        env = {"PATH": f"{mock}:{binz}:{sysd}", "FAKE_LOG": str(log), "FAKE_APT": apt,
+               "FAKE_CURL": curl, "FAKE_TAR": str(tar), "FAKE_DPKG_HAS": dpkg_has,
+               "FFMPEG_BIN": str(binz), "RETRY_PAUSE": "0", "APT_UPDATE_SEC": "1",
+               "APT_INSTALL_SEC": "1", "HOME": str(base)}
+        t0 = time.time()
+        try:
+            r = subprocess.run([str(sysd / "bash"), str(c.ing / "ffmpeg.sh"), *args], env=env,
+                               capture_output=True, text=True, timeout=90)
+            rc = r.returncode
+        except subprocess.TimeoutExpired:
+            rc = -1
+        ff = binz / "ffmpeg"
+        # 偽の ffmpeg が名乗る出どころ（here / apt / static）
+        kind = ff.read_text().split("version ")[-1].strip().strip('"') if ff.exists() else None
+        return rc, log.read_text().splitlines(), kind, time.time() - t0
+
+    rc, calls, kind, _ = go("have", "ok", True)
+    if rc != 0 or calls:
+        bad.append(f"入っているのに apt か curl に触った（rc={rc}・{calls[:2]}）")
+    rc, calls, kind, _ = go("apt", "ok", False)
+    inst = [x for x in calls if "install" in x]
+    if rc != 0 or kind != "apt" or not inst or "--no-install-recommends" not in inst[0] \
+            or any(x.startswith("curl") for x in calls):
+        bad.append(f"apt が通るなら apt で入れる（--no-install-recommends・curl に触らない）（rc={rc}・{kind}）")
+    rc, calls, kind, dt = go("hang", "hang", False)
+    inst = [x for x in calls if "install" in x]
+    if rc != 0 or kind != "static" or len(inst) != 2 or dt > 30:
+        bad.append(f"apt が止まったら上限で2回切って静的ビルドに切り替える"
+                   f"（rc={rc}・{kind}・install {len(inst)}回・{dt:.0f}秒）")
+    rc, calls, kind, _ = go("nocurl", "hang", False, curl="fail")
+    if rc == 0 or kind is not None:
+        bad.append(f"静的ビルドも落とせないのに 0 で帰った（rc={rc}）")
+    rc, calls, kind, _ = go("font", "fail", True, args=("fonts-dejavu-core",))
+    inst = [x for x in calls if "install" in x]
+    if rc != 0 or not inst or "fonts-dejavu-core" not in inst[0] or " ffmpeg" in inst[0]:
+        bad.append(f"ffmpeg があるなら書体だけを頼み、入らなくても進む（rc={rc}・{inst[:1]}）")
+    rc, calls, _, _ = go("fontok", "ok", True, args=("fonts-dejavu-core",),
+                         dpkg_has="fonts-dejavu-core")
+    if rc != 0 or calls:
+        bad.append(f"書体も入っているのに apt に触った（{calls[:1]}）")
+    return bad
+
+
 def leg_workflow(c: Ctx) -> list[str]:
     import yaml
 
@@ -477,15 +585,20 @@ def leg_workflow(c: Ctx) -> list[str]:
             bad.append(f"{jn} の「道具を入れる」が retry.sh を使っていない")
         for ln in run.splitlines():
             s = ln.strip()
+            if s.startswith("#"):
+                continue
             if any(k in s for k in ("apt-get ", "pip install", "npm ", "git clone")) \
                     and not s.startswith(("$R ", "archive|reference) $R ")) \
                     and not s.startswith("https://"):
                 bad.append(f"{jn}: 上限なしで走るコマンドがある（{s[:60]}）")
+        if jn in ("fetch", "analyze") and "bash tools/shorts/ingest/ffmpeg.sh" not in run:
+            bad.append(f"{jn} が ffmpeg を ffmpeg.sh（apt が詰まったら静的ビルド）で入れていない")
     return bad
 
 
 LEGS = {"cmd": leg_cmd, "order": leg_order, "lines": leg_lines, "fetch": leg_fetch,
-        "seal": leg_seal, "gate": leg_gate, "retry": leg_retry, "workflow": leg_workflow}
+        "seal": leg_seal, "gate": leg_gate, "retry": leg_retry, "ffmpeg": leg_ffmpeg,
+        "workflow": leg_workflow}
 
 
 def run_legs(ing: Path, root: Path, tmp: Path, quiet: bool = False) -> tuple[list[str], int]:
