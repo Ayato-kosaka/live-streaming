@@ -27,7 +27,9 @@
 from __future__ import annotations
 
 import datetime as dt
+import inspect
 import json
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -328,6 +330,11 @@ def check_cookie_jobs() -> None:
                                    lambda wf: tr.cookie_jobs(wf_dir / wf)), "", False)["busy"]
     check("run で見ると解析のあいだ待つ（直す前の形）", len(plain), 1)
     check("job で見ると解析のあいだは待たない", len(aware), 0)
+    # 部品が正しくても、fetch が gate に渡していなければ前と同じに待つ
+    src = inspect.getsource(tr.fetch)
+    check("fetch は job まで見る一覧を gate に渡す",
+          [bool(re.search(r"job_aware\(\s*gate_mod\.api_lister\(", src)),
+           bool(re.search(r"jobs_lister\(repo, token, api\)", src))], [True, True])
 
 
 # ---------------------------------------------------------------- ワークフロー
