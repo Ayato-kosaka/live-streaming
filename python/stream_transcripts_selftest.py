@@ -272,6 +272,64 @@ def check_chain() -> None:
     check("同じ枝で枠の空きを待っているものだけ", [r["id"] for r in got], [1, 5])
 
 
+# ---------------------------------------------------------------- Cookie を握る job
+
+def check_cookie_jobs() -> None:
+    print("Cookie を握る job だけを待つ（job_aware）")
+    wf_dir = ROOT / ".github/workflows"
+    # 実物の置き場から。ショートの取り込みが Cookie を握るのは fetch だけ（解析は握らない）
+    check("ショートの取り込みで握るのは fetch だけ", tr.cookie_jobs(wf_dir / "shorts_ingest.yml"), ["fetch"])
+    check("毎晩の取り込みで握るのは fetch_chat_data だけ",
+          tr.cookie_jobs(wf_dir / "schedule_fetch_chat.yml"), ["fetch_chat_data"])
+    with tempfile.TemporaryDirectory() as d:
+        d = Path(d)
+        (d / "a.yml").write_text("jobs:\n  x:\n    name: ${{ matrix.k }}\n"
+                                 "    env:\n      C: ${{ secrets.YOUTUBE_COOKIES }}\n")
+        check("名前が式の job は見分けられない", tr.cookie_jobs(d / "a.yml"), [None])
+        (d / "b.yml").write_text("env:\n  C: ${{ secrets.YOUTUBE_COOKIES }}\njobs:\n  x:\n    runs-on: u\n")
+        check("頭で読むものは、どの job とも言えない", tr.cookie_jobs(d / "b.yml"), [None])
+        (d / "c.yml").write_text("jobs:\n  x:\n    runs-on: u  # YOUTUBE_COOKIES はコメントだけ\n")
+        check("コメントだけのものは握らない", tr.cookie_jobs(d / "c.yml"), [])
+
+    done = {"status": "completed", "conclusion": "success"}
+    shorts = [{"name": "plan", **done}, {"name": "fetch", **done},
+              {"name": "VusdZVyjgjQ__archive", "status": "in_progress"}]
+    check("握る job が終わって解析だけ動いている run は待たない", tr.holds_cookie(shorts, ["fetch"]), False)
+    check("握る job が動いていたら待つ",
+          tr.holds_cookie([{"name": "plan", **done}, {"name": "fetch", "status": "in_progress"}], ["fetch"]),
+          True)
+    check("握る job がまだ一覧に無い（前の job が動いている）なら待つ",
+          tr.holds_cookie([{"name": "plan", "status": "in_progress"}], ["fetch"]), True)
+    check("並べた job は1つでも動いていたら待つ",
+          tr.holds_cookie([{"name": "fetch (0)", **done}, {"name": "fetch (1)", "status": "queued"}],
+                          ["fetch"]), True)
+    check("並べた job が全部終わったら待たない",
+          tr.holds_cookie([{"name": "fetch (0)", **done}, {"name": "fetch (1)", **done}], ["fetch"]), False)
+    check("似た名前の別の job を握る job と数えない",
+          tr.holds_cookie([{"name": "fetcher", **done}], ["fetch"]), True)
+    check("見分けられない job があれば待つ", tr.holds_cookie(shorts, ["fetch", None]), True)
+    check("握る job が分からないワークフローは待つ", tr.holds_cookie(shorts, []), True)
+    check("job が読めなければ待つ", tr.holds_cookie(None, ["fetch"]), True)
+
+    runs = {"s.yml": [{"id": 1, "status": "in_progress"}, {"id": 2, "status": "queued"},
+                      {"id": 3, "status": "completed"}, {"id": 4, "status": "pending"}]}
+    jobs = {1: shorts, 2: [], 3: shorts, 4: []}
+    w = tr.job_aware(lambda wf: runs[wf], lambda rid: jobs.get(rid), lambda wf: ["fetch"])
+    check("動いている run のうち、握り終えたものだけ外す", [r["id"] for r in w("s.yml")], [2, 3, 4])
+    w = tr.job_aware(lambda wf: runs[wf], lambda rid: None, lambda wf: ["fetch"])
+    check("job が読めない run は外さない", [r["id"] for r in w("s.yml")], [1, 2, 3, 4])
+
+    # gate.py の数え方に通して、2026-10-22 の晩の形で「待たない」になるか
+    gate = tr._load("gate", ROOT / "tools/shorts/ingest/gate.py")
+    live = {"shorts_ingest.yml": [{"id": 9, "status": "in_progress", "head_branch": "work"}]}
+    plain = gate.scan(["shorts_ingest.yml"], lambda wf: live[wf], "", False)["busy"]
+    aware = gate.scan(["shorts_ingest.yml"],
+                      tr.job_aware(lambda wf: live[wf], lambda rid: shorts,
+                                   lambda wf: tr.cookie_jobs(wf_dir / wf)), "", False)["busy"]
+    check("run で見ると解析のあいだ待つ（直す前の形）", len(plain), 1)
+    check("job で見ると解析のあいだは待たない", len(aware), 0)
+
+
 # ---------------------------------------------------------------- ワークフロー
 
 def check_workflow() -> None:
@@ -303,6 +361,7 @@ def main() -> int:
     check_drive()
     check_merge()
     check_chain()
+    check_cookie_jobs()
     check_workflow()
     print(f"\n対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")
     for line in ng:
