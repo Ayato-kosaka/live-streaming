@@ -129,6 +129,10 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
 
 ## 4. 躓いたところ
 
+- **`npm` は root にも ubuntu の PATH にも無い。** nvm の下（`/home/ubuntu/.nvm/versions/node/v24.19.0/bin/npm`）を
+  直に呼ぶ。`sudo -u ubuntu npm` は command not found になる（2026-10-22、#1013 で npm のキャッシュを空けるときに踏んだ）
+- **ディスクは 29G で、Chrome のプロファイルの複製が約11G を占める。** 空けてよいのは各プロファイルの
+  `Cache`・`Code Cache`・`GPUCache` だけ（Chrome が止まっているときに。1.5G 空いた）。ログ・Cookie・Local Storage は触らない（#1013）
 - **SSM の標準出力は 24,000 字で切れる。** 大きいものはファイルに書いて `get` で持ち帰る。
   `get` は 20,000 字ずつ 8本並べて取る（順に取ると 1MB で10分かかった）
 - **`run` が 120秒を超えると、Bash が裏に回す。** 長い一括は `run_in_background` で回し、
