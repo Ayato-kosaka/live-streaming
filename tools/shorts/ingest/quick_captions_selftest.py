@@ -431,7 +431,7 @@ MOCKS = {
     # sudo は頼まれたものをそのまま走らせる（root にはしない）
     "sudo": 'exec "$@"\n',
     "apt-get": ('echo "apt-get $*" >> "$FAKE_LOG"\n'
-                'case "$*" in *update*) [ "$FAKE_APT" = hang ] && sleep 30; exit 0 ;; esac\n'
+                'case "$*" in *update*) exit 0 ;; esac\n'
                 'case "$FAKE_APT" in\n'
                 '  hang) sleep 30 ;;\n'
                 '  fail) exit 100 ;;\n'
@@ -517,7 +517,8 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
     if rc != 0 or kind != "static" or len(inst) != 2 or dt > 30:
         bad.append(f"apt が止まったら上限で2回切って静的ビルドに切り替える"
                    f"（rc={rc}・{kind}・install {len(inst)}回・{dt:.0f}秒）")
-    rc, calls, kind, _ = go("nocurl", "hang", False, curl="fail")
+    # 止まるのではなく断られる apt（待たずに済む）で、静的ビルドも落とせない形
+    rc, calls, kind, _ = go("nocurl", "fail", False, curl="fail")
     if rc == 0 or kind is not None:
         bad.append(f"静的ビルドも落とせないのに 0 で帰った（rc={rc}）")
     rc, calls, kind, _ = go("font", "fail", True, args=("fonts-dejavu-core",))
