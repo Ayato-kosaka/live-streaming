@@ -5,7 +5,7 @@
  "dest": "LdgTh1DC3Jk/clips",
  "video": "LdgTh1DC3Jk",
  "channel": null,
- "request": "shorts/requests/2026-10-23-georgia-falls-clips.json",
+ "request": "shorts/requests/2026-10-23-georgia-falls-shoes-clips.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,109 +14,64 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 17,
+  "sheets": 6,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 3,
-  "clips_ok": 3,
-  "clip_seconds": 1020.0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 360.0,
   "channel_entries": 0,
-  "files": 28
+  "files": 15
  },
  "bytes": {
-  "plain": 582721870,
-  "tar_gz": 582129401,
-  "encrypted": 582129408
+  "plain": 152354227,
+  "tar_gz": 152120360,
+  "encrypted": 152120368
  },
  "encrypted_files": [
   {
    "name": "payload.enc.000",
    "bytes": 47185920,
-   "sha256": "bf4b6fabc5d3c7b5dfdf8b680848c90a1b9ce2e8060e0cd6a08cb80d0d5d9e9c"
+   "sha256": "8c7bd939ea17fdd62e8ed5484dff2bf7c458895e2c0c971217add739362d443e"
   },
   {
    "name": "payload.enc.001",
    "bytes": 47185920,
-   "sha256": "dafd8123e3ca17bb0f9d844d43d384b7fbcea385c841c67d038f05b5e439ac56"
+   "sha256": "72d1c6f81b029237cee47f73e9bd365477c4c48010cbbd987ccf0dede2cd8c46"
   },
   {
    "name": "payload.enc.002",
    "bytes": 47185920,
-   "sha256": "9109bc78896a15ea7e6f679d98f2a9a6e262a35e8db96449651e37ae4207d8d0"
+   "sha256": "98283e8a94185f8a4da0f499cfb1c8a48d0af5875f7cec75a49d3329c535a49c"
   },
   {
    "name": "payload.enc.003",
-   "bytes": 47185920,
-   "sha256": "ba7c607a0d10f841286a04b486875fbc0abc62141914f9724897254b3435e2f3"
-  },
-  {
-   "name": "payload.enc.004",
-   "bytes": 47185920,
-   "sha256": "62f1c1815340b9dbf781ec3d88243215fe0d8aca076fc3cc436ee98de2c28354"
-  },
-  {
-   "name": "payload.enc.005",
-   "bytes": 47185920,
-   "sha256": "4bef2e1268710c4e9639801a4b0cd84c20d18d71b9705c5a0a9736485a5d58b9"
-  },
-  {
-   "name": "payload.enc.006",
-   "bytes": 47185920,
-   "sha256": "640529576a0954c002e9f4b8e38b50c37399858fbc6401d9725bf6e7820fde80"
-  },
-  {
-   "name": "payload.enc.007",
-   "bytes": 47185920,
-   "sha256": "b0392024e7afd1071669712e57aa3aa6fe2cc1d80e89e4ad6a3fcf971d7b2a1e"
-  },
-  {
-   "name": "payload.enc.008",
-   "bytes": 47185920,
-   "sha256": "e4f16318465f71e152f4695874cf6ae5c113e3379cf6dfc759bda6b918610dd3"
-  },
-  {
-   "name": "payload.enc.009",
-   "bytes": 47185920,
-   "sha256": "c796610ae41f7842417fbe18b111a1fb50be46c763bb26279c5a445c931c44b9"
-  },
-  {
-   "name": "payload.enc.010",
-   "bytes": 47185920,
-   "sha256": "eabe8294523610f1204deab645a3054833ca1d0ed3fa1ddd63184d8edc008a59"
-  },
-  {
-   "name": "payload.enc.011",
-   "bytes": 47185920,
-   "sha256": "54710b8588087a84f5dd7625197852fdf379cb824b3706aab855dd82aff9ae39"
-  },
-  {
-   "name": "payload.enc.012",
-   "bytes": 15898368,
-   "sha256": "92408cf677a1a48b878f246c6dc63f3ae8c7ff8d1b0d8c2c97466abf159f8591"
+   "bytes": 10562608,
+   "sha256": "68ebad36943e4492f2b679d1365eec65fc5efc24a6c99b40da50f018cf38bfab"
   }
  ],
- "hmac_sha256": "f3ac426b10ce4f41fdb776b0d0900d1048543774a2eefbbb52b5efd6de33136a",
+ "hmac_sha256": "0add5f48d6bf29ffcdfaef014992651347b5208eefcd962e57d2d27ee2da6a26",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39989682745",
- "created_at": "2026-10-23T17:13:00+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39998763839",
+ "created_at": "2026-10-23T18:10:40+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 7480560,
-    "sha256": "15615e52cb46a0c40cd1235fc3dda61fad2cc2ef2fd4c1eb3c136adf8bcaf897"
+    "bytes": 2114544,
+    "sha256": "f46b4ebda1a4617a5124524c2e9fe88d88adea74c483b232ba4ff2fee1acd520"
    }
   ],
-  "hmac_sha256": "73d15e014d86a3bec9143314c3c75eb713b7b920a8bcb72c4f0c8330667121c6",
-  "files": 21,
-  "sheets": 17,
+  "hmac_sha256": "3a0535e0a7c95969105474b70181067f2a37e845387073b1f0851efe5839f8eb",
+  "files": 10,
+  "sheets": 6,
   "bytes": {
-   "plain": 7685855,
-   "tar_gz": 7480545,
-   "encrypted": 7480560
+   "plain": 2200496,
+   "tar_gz": 2114529,
+   "encrypted": 2114544
   }
  }
 }
