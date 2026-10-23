@@ -594,6 +594,11 @@ jobs:
             exit 2
           fi
 
+      # 差し替えのサムネイルが og.png（550KB）に戻ると、配信の一覧で描画が止まる（#944）。
+      # route.mjs の守りはブラウザが要るので Selftests では回らない。ブラウザの入ったここで回す
+      - name: 差し替えの絵の守り（route.mjs）
+        run: node tools/sprites/route.mjs --selftest
+
       # 終了コードで読む（0=通った / 1=見つかった / 2=数えるものが無い）。
       # **`| tail` を挟まない。** 挟むと終了コードが消える（#124）
       - name: 指が届かない押しどころを数える
