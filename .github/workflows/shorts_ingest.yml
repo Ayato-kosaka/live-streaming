@@ -84,7 +84,7 @@ permissions:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # ほかの取り込みが動いていれば、ここで最長60分待つ（gate.py の MAX_WAIT）
     timeout-minutes: 70
     outputs:
@@ -116,7 +116,7 @@ jobs:
   captions:
     needs: plan
     if: needs.plan.outputs.captions_count != '0'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # ほかの取り込みを待つ60分（gate.py）＋取って封をして置く数分
     timeout-minutes: 80
     # **fetch と同じ枠。** Cookie を握るので、同じ ref のほかの run の fetch と並ばせる
@@ -216,7 +216,7 @@ jobs:
     # 無い・落ちた回でも走る（`!cancelled()`）。走る条件は前と同じ（plan が通って count が 0 でない）
     needs: [plan, captions]
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 取るぶん（前と同じ120分）＋ほかの取り込みを待つ60分（download.py が1本ごとに待つ）
     timeout-minutes: 180
     # **毎晩の取り込み・切り抜きと同じ枠。** 名前を揃えてあるので、同じ ref で
@@ -300,7 +300,7 @@ jobs:
     # ただし回ごと取り消したときは走らない（`always()` だと取り消しても7本とも走った）
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
     name: ${{ matrix.key }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 330
     permissions:
       contents: write
@@ -389,7 +389,7 @@ jobs:
   cleanup:
     needs: [plan, fetch, analyze]
     if: always() && needs.fetch.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       actions: write

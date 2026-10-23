@@ -36,7 +36,9 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    # 箱の版を止める: ubuntu-latest は Ubuntu 26 へ移り、apt の ffmpeg が作業箱（6.1.1）と変わる。
+    # 版が変わると同じ指示書でも書き出しのバイト列が変わり、作業箱で通した検査と揃わない（ingest も同じ）
+    runs-on: ubuntu-24.04
     # 作業箱が素材を上げ終わるのを最長25分待つ（remote.py の UPLOAD_WAIT）
     timeout-minutes: 30
     permissions:
@@ -83,7 +85,7 @@ jobs:
   render:
     needs: prepare
     name: ${{ matrix.id }}-${{ matrix.role }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -142,7 +144,7 @@ jobs:
     needs: [prepare, render]
     # 1本落ちても、出来たぶんと落ちた理由を返す
     if: ${{ !cancelled() && needs.prepare.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 下見（Hosting のプレビューチャンネル）を置いて確かめるぶん、firebase-tools を入れて配って再生まで 2〜3分
     timeout-minutes: 20
     permissions:
