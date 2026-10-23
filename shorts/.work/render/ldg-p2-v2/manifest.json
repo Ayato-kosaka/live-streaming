@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__ldg-p2-v2",
  "mode": "render",
- "dest": "render/ldg-p2-v2/inbox",
+ "dest": "render/ldg-p2-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/ldg-p2-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1182,
-  "encrypted": 1184
+  "plain": 36517,
+  "tar_gz": 9279,
+  "encrypted": 9280
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "c8ac27736b9f1a435efa75588c8ad3eea45a5d051e83726e57771573c1e3cc5e"
+   "bytes": 9280,
+   "sha256": "97b2e9261f631cc16557fc3fd3756dc34e086996e49b7a89fd6f0e353e888a6f"
   }
  ],
- "hmac_sha256": "112aed508711a62ab6a5b66d138cb3a0a66f0161a2372b293cd2e811b8b1c35c",
+ "hmac_sha256": "fb389cc56abe61a1f1ff36cffe65acb17701271e7fa0e9140a8c7c2ee38430c6",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-23T21:53:02+00:00",
+ "created_at": "2026-10-23T22:07:25+00:00",
  "nonce": "0356a84da3a89a29e03940c6"
 }
