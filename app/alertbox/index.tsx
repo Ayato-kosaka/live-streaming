@@ -24,7 +24,9 @@ import {
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
-import { sendLog } from "@/lib/log";
+import { sendLog as sendLogRaw } from "@/lib/log";
+import { useSeason } from "./season/useSeason";
+import { SeasonEffects } from "./season/SeasonEffects";
 import {
   describeNickname,
   matchViewerByNickname,
@@ -75,6 +77,28 @@ const REPLAY_POLL_MS = 3000;
    **待っているあいだ、画面はその人の絵。** 何も出ない時間は作らない。 */
 const VIDEO_START_TIMEOUT_MS = 3000;
 
+/* 試し表示（`?preview=`）のあいだは、ログを1行も送らない。
+   ログの口は本番の台帳と同じ所へ行くので、見た目を撮るたびに
+   「投げ銭が来た」が残ると、あとで本物と見分けられない。
+   ここで止めれば、下の呼び出しを1つずつ書き換えずに済む。 */
+let quiet = false;
+const sendLog: typeof sendLogRaw = (...args) =>
+  quiet ? Promise.resolve() : sendLogRaw(...args);
+
+/** `?preview=` の読み方。`1` は偽の投げ銭を1件、`bank` は貯金箱だけ */
+function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
+  const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
+  if (v === "1" || v === "true" || v === "alert") return "alert";
+  if (v === "bank") return "bank";
+  return null;
+}
+
+/** URL の数。読めなければ既定値 */
+function numParam(raw: string | string[] | undefined, fallback: number): number {
+  const v = Number(Array.isArray(raw) ? raw[0] : raw);
+  return raw != null && raw !== "" && Number.isFinite(v) ? v : fallback;
+}
+
 export default function AlertBox() {
   // Parse URL parameters for source selection
   /* `k` は OBS の URL に載せる 32 桁の合言葉（#180）。
@@ -84,7 +108,21 @@ export default function AlertBox() {
     source?: string;
     k?: string;
     still?: string;
+    /** 季節テーマを固定する（`halloween` / `none`）。無ければ日付で決まる */
+    theme?: string;
+    /** 試し表示。外の口・ログ・WebSocket には繋がない */
+    preview?: string;
+    /** 試し表示の貯金箱の溜まり具合（%）と、偽の投げ銭の額 */
+    fill?: string;
+    amount?: string;
   }>();
+
+  const preview = previewMode(params.preview);
+  quiet = preview !== null;
+
+  /* 今日の季節テーマと、その絵。貯金箱とアラートの後ろの小物の両方に渡す。
+     テーマが無い日は何も足さない（いつもの豚のまま）。 */
+  const season = useSeason(params.theme);
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -205,6 +243,37 @@ export default function AlertBox() {
   }, [params.still]);
 
   useEffect(() => {
+    /* 試し表示。**外へは1本も繋がない**（名簿・額の口、どねる・YouTube、
+       もう一度出しての聞き取り、ログ）。貯金箱は `fill`（%）で、
+       投げ銭は `amount`（円）で、配信に出さずに見た目だけを撮れる。 */
+    if (preview) {
+      const target = 50000;
+      const fill = Math.max(0, Math.min(100, numParam(params.fill, 60)));
+      setGoal({
+        currentAmount: Math.round((target * fill) / 100),
+        targetAmount: target,
+        label: "おためし表示",
+      });
+      if (preview !== "alert") return;
+      const amount = Math.max(0, Math.round(numParam(params.amount, 500)));
+      const timer = setTimeout(() => {
+        setNotificationQueue((q) => [
+          ...q,
+          {
+            id: `preview-${amount}`,
+            type: "donation",
+            amount,
+            assetID: null,
+            message: "これは試し表示です",
+            messageType: 1,
+            nickname: "おためし",
+            test: true,
+          },
+        ]);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount", { enabledSources });
 
@@ -519,7 +588,8 @@ export default function AlertBox() {
       // 画面離脱ログ
       sendLog("AlertBox", sessionId, "unmount");
     };
-  }, [enabledSources, alertboxId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledSources, alertboxId, preview]);
 
   /**
    * 金額に応じてアラート時間を調整
@@ -885,6 +955,22 @@ export default function AlertBox() {
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
+                {/* 季節の小物。**キャラの絵より後ろ**（いちばん奥の飾り）。
+                    名簿の絵文字の花火・雨はこの上にそのまま出る */}
+                {season.theme && (
+                  <SeasonEffects
+                    theme={season.theme}
+                    fx={season.fx}
+                    durationSec={calculateAdjustedAlertDuration(notification)}
+                    yen={
+                      notification.type === "superchat"
+                        ? notification.jpy
+                        : notification.amount
+                    }
+                    seed={notification.id}
+                  />
+                )}
+
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
                     ref={videoRef}
@@ -1118,6 +1204,7 @@ export default function AlertBox() {
               currentAmount={goal.currentAmount}
               targetAmount={goal.targetAmount}
               label={goal.label}
+              season={season}
             />
           </View>
         )}
