@@ -14,25 +14,25 @@
    "watermark": "prism_live",
    "t0": 8955.0
   },
-  "c01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/01_0-41-20_0-43-50.mp4",
-   "watermark": "prism_live",
-   "t0": 2480.0
-  },
-  "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/02_1-40-45_1-43-30.mp4",
-   "watermark": "prism_live",
-   "t0": 6045.0
-  },
   "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/03_2-02-45_2-04-30.mp4",
    "watermark": "prism_live",
    "t0": 7365.0
   },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/01_0-41-20_0-43-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2480.0
+  },
   "c05": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/05_2-37-45_2-41-30.mp4",
    "watermark": "prism_live",
    "t0": 9465.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/02_1-40-45_1-43-30.mp4",
+   "watermark": "prism_live",
+   "t0": 6045.0
   },
   "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/06_2-43-15_2-45-00.mp4",
@@ -81,32 +81,32 @@
    "note": "崩れた生地からチーズが糸を引く（まさかの事態そのもの）"
   },
   {
-   "src": "c01",
-   "in": 1875,
-   "out": 1915,
+   "src": "c03",
+   "in": 600,
+   "out": 640,
    "row": 1,
-   "note": "蓋をした鍋の向こうで本人が手順を話す"
+   "note": "コンロの上の蓋をした鍋に手を伸ばす（弱火で温めて。顔の無い画にして、字が顔に乗らないようにする）"
   },
   {
    "src": "c01",
    "in": 585,
    "out": 624,
    "row": 1,
-   "note": "蓋をした鍋を上から（発酵させる鍋）"
+   "note": "蓋をした鍋を上から（発酵させる鍋。前の画と別の素材なので、似た見た目が続かない）"
   },
   {
-   "src": "c01",
-   "in": 189,
-   "out": 233,
+   "src": "c04",
+   "in": 4500,
+   "out": 4544,
    "row": 2,
-   "note": "ホステルの台所の電気コンロ（名指した物）"
+   "note": "青い壁の台所のコンロ（ここのホステルのコンロ。0:41 のコンロは五徳が顔に誤検出されて字が被るので使わない）"
   },
   {
-   "src": "c01",
-   "in": 3495,
-   "out": 3540,
+   "src": "c05",
+   "in": 5295,
+   "out": 5340,
    "row": 2,
-   "note": "本人が鍋の前でコンロの弱さを話す"
+   "note": "コンロに載せたフライパン（あったまんのに時間かかんのよ。本人の顔の画をやめてコンロの画に）"
   },
   {
    "src": "c02",
@@ -123,9 +123,16 @@
    "note": "蓋を持ち上げて開ける（スポーン）"
   },
   {
+   "src": "c01",
+   "in": 3885,
+   "out": 3911,
+   "row": 5,
+   "note": "頭を抱える本人（……全くもって。鍋の寄りが3つ続くのを、見た目の違う反応の画で割る）"
+  },
+  {
    "src": "c03",
    "in": 1929,
-   "out": 1980,
+   "out": 1954,
    "row": 5,
    "note": "平たいままの生地の寄り（膨らんでへん）"
   },
@@ -165,11 +172,11 @@
    "note": "崩れた生地からチーズが糸を引いて出る"
   },
   {
-   "src": "c04",
-   "in": 4500,
-   "out": 4530,
+   "src": "c05",
+   "in": 5604,
+   "out": 5634,
    "row": 9,
-   "note": "青い壁の台所のコンロ（火つけたけど。チーズの寄りと見た目を変える）"
+   "note": "生地の鍋をコンロに載せ、つまみを回す手（火つけたけど。崩れた生地の寄りが3つ続くのを、別の素材の画で割る）"
   },
   {
    "src": "c04",
@@ -279,23 +286,16 @@
   {
    "src": "c12",
    "in": 309,
-   "out": 361,
+   "out": 383,
    "row": 18,
    "note": "笑って話す本人（リベンジ）"
   },
   {
    "src": "c09",
    "in": 945,
-   "out": 989,
+   "out": 1019,
    "row": 18,
-   "note": "皿の上の丸い焼き上がり（ワンパンの結果）"
-  },
-  {
-   "src": "c12",
-   "in": 3129,
-   "out": 3181,
-   "row": 18,
-   "note": "本人が話す（配信見にきてね）"
+   "note": "皿の上の丸い焼き上がり（配信見にきてね。終わりの注は左上の決まった所に出て動かないので、最後の画は顔の無い画にする。2.0秒以上あれば注が最後のカットの頭から出る）"
   }
  ],
  "title": {
@@ -436,7 +436,7 @@
   ]
  },
  "meta": {
-  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a17d74c55d7646cf4/shorts/videos/VusdZVyjgjQ/p1/spec.json",
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-aae3a3d8437272051/shorts/videos/VusdZVyjgjQ/p1/spec.json",
   "fps": 30,
   "frames": 1284,
   "seconds": 42.8,
@@ -459,7 +459,7 @@
     "frames": 79,
     "voice_frames": 71,
     "cuts": [
-     "0:42:22.5+1.33s",
+     "2:03:05.0+1.33s",
      "0:41:39.5+1.30s"
     ],
     "line": "弱火で温めて、10分発酵させる。",
@@ -471,8 +471,8 @@
     "frames": 89,
     "voice_frames": 81,
     "cuts": [
-     "0:41:26.3+1.47s",
-     "0:43:16.5+1.50s"
+     "2:31:45.0+1.47s",
+     "2:40:41.5+1.50s"
     ],
     "line": "ここのホステルのコンロ、あったまんのに時間かかんのよ。",
     "telop": null
@@ -506,7 +506,8 @@
     "frames": 51,
     "voice_frames": 43,
     "cuts": [
-     "2:03:49.3+1.70s"
+     "0:43:29.5+0.87s",
+     "2:03:49.3+0.83s"
     ],
     "line": "……全くもって膨らんでへん。",
     "telop": null
@@ -553,7 +554,7 @@
     "frames": 66,
     "voice_frames": 58,
     "cuts": [
-     "2:31:45.0+1.00s",
+     "2:40:51.8+1.00s",
      "2:31:09.0+1.20s"
     ],
     "line": "火つけたけど全く焼けてへんやんか！",
@@ -662,9 +663,8 @@
     "frames": 148,
     "voice_frames": 125,
     "cuts": [
-     "3:41:55.3+1.73s",
-     "3:15:16.5+1.47s",
-     "3:43:29.3+1.73s"
+     "3:41:55.3+2.47s",
+     "3:15:16.5+2.47s"
     ],
     "line": "リベンジにワンパンピザを本日22時から作るので配信見にきてね！",
     "telop": null
