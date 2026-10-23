@@ -57,6 +57,7 @@ const done = (a: Animation | null, ms: number, m: Motion) =>
   });
 
 const wait = (m: Motion, ms: number) => new Promise<void>((res) => m.after(ms, res));
+const m0 = (m: Motion, ms: number, fn: () => void) => m.after(ms, fn);
 
 const tr = (x: number, y: number) => `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
 
@@ -84,7 +85,9 @@ export class Kuro {
     /** 手前（バケツより前）に出すか。バケツに入るときは奥にする */
     private setFront: (front: boolean) => void,
     /** 足もとに土ぼこりを出す（場面の単位） */
-    private puff: (x: number, y: number, dir: number, n: number) => void
+    private puff: (x: number, y: number, dir: number, n: number) => void,
+    /** のぞき込んだあとにくわえて出てくるお菓子（バケツの `items` の1つ） */
+    candy?: { url: string; width: number; height: number } | null
   ) {
     this.x = g.minX + 40;
     this.y = g.groundY;
@@ -113,8 +116,33 @@ export class Kuro {
     this.bob.appendChild(rig.root);
     host.appendChild(this.pos);
     this.commit();
-    rig.part("candy") && (rig.part("candy")!.style.visibility = "hidden");
+    const mouth = rig.loop("mouth");
+    if (candy && mouth) {
+      // 口の前にくわえる。大きさは頭の 1/3 ほど（部品の絵の px で）
+      const head = rig.part("head");
+      const w = (head ? parseFloat(head.style.width) : 380) * 0.36;
+      const h = (w * candy.height) / candy.width;
+      const el = document.createElement("img");
+      el.src = candy.url;
+      el.alt = "";
+      Object.assign(el.style, {
+        position: "absolute",
+        left: `${parseFloat(mouth.style.width) * 0.55 - w * 0.25}px`,
+        top: `${parseFloat(mouth.style.height) * 0.6 - h / 2}px`,
+        width: `${w}px`,
+        height: `${h}px`,
+        zIndex: "999",
+        visibility: "hidden",
+        transform: "rotate(-18deg)",
+      } satisfies Partial<CSSStyleDeclaration>);
+      mouth.appendChild(el);
+      this.candyEl = el;
+    }
   }
+
+  private candyEl: HTMLImageElement | null = null;
+  /** バケツ（山）に乗った・降りたときに呼ぶ（取っ手を揺らす） */
+  onBucket: ((kind: "in" | "out") => void) | null = null;
 
   private px = (u: number) => u * this.g.U;
   /** クロの背丈（px） */
@@ -150,7 +178,7 @@ export class Kuro {
       { transform: "scale(1, 1)" },
     ], { duration: 2400, iterations: Infinity });
     // しっぽは呼吸と周期をずらす。先の節はさらに遅れる（波が伝わる）
-    m.play(rig.loop("tail"), [{ transform: "rotate(-9deg)" }, { transform: "rotate(9deg)" }], {
+    m.play(rig.loop("tail_root"), [{ transform: "rotate(-9deg)" }, { transform: "rotate(9deg)" }], {
       duration: 1600, iterations: Infinity, direction: "alternate", easing: "ease-in-out",
     });
     m.play(rig.loop("tail_tip"), [{ transform: "rotate(-14deg)" }, { transform: "rotate(16deg)" }], {
@@ -166,17 +194,17 @@ export class Kuro {
     const next = () => {
       if (!this.alive) return;
       this.m.after(range(this.r, 2000, 5000), () => {
-        if (!this.eyesBusy && this.rig.swapped("eyes") === "open") {
+        if (!this.eyesBusy && this.rig.swapped("eye") === "open") {
           const twice = this.r() < 0.25;
-          this.rig.swap("eyes", "closed");
+          this.rig.swap("eye", "closed");
           this.m.after(120, () => {
             if (this.eyesBusy) return;
-            this.rig.swap("eyes", "open");
+            this.rig.swap("eye", "open");
             if (twice)
               this.m.after(130, () => {
                 if (this.eyesBusy) return;
-                this.rig.swap("eyes", "closed");
-                this.m.after(110, () => !this.eyesBusy && this.rig.swap("eyes", "open"));
+                this.rig.swap("eye", "closed");
+                this.m.after(110, () => !this.eyesBusy && this.rig.swap("eye", "open"));
               });
           });
         }
@@ -190,10 +218,10 @@ export class Kuro {
   private face_(eyes: string | null, mouth?: string) {
     if (eyes) {
       this.eyesBusy = true;
-      this.rig.swap("eyes", eyes);
+      this.rig.swap("eye", eyes);
     } else {
       this.eyesBusy = false;
-      this.rig.swap("eyes", "open");
+      this.rig.swap("eye", "open");
     }
     this.rig.swap("mouth", mouth ?? "closed");
   }
@@ -242,10 +270,10 @@ export class Kuro {
       { transform: `rotate(${-a}deg)`, offset: 0.5, easing: "ease-in-out" },
       { transform: `rotate(${a}deg)` },
     ];
-    loop(rig.part("leg_f_r"), swing(-32));
-    loop(rig.part("leg_b_l"), swing(-30));
-    loop(rig.part("leg_f_l"), swing(32));
-    loop(rig.part("leg_b_r"), swing(30));
+    loop(rig.part("leg_f_near"), swing(-32));
+    loop(rig.part("leg_b_far"), swing(-30));
+    loop(rig.part("leg_f_far"), swing(32));
+    loop(rig.part("leg_b_near"), swing(30));
     // 頭は胴と逆に小さく揺れる。耳・帽子・しっぽは 60〜120ms 遅れてついてくる
     loop(rig.part("head"), [
       { transform: "rotate(-4deg)", easing: "ease-in-out" },
@@ -257,11 +285,11 @@ export class Kuro {
       { transform: `rotate(${a}deg)`, offset: 0.4, easing: "ease-in-out" },
       { transform: "rotate(0deg)" },
     ];
-    loop(rig.part("ear_r"), flap(-22), 60, step);
-    loop(rig.part("ear_l"), flap(-18), 75, step);
+    loop(rig.part("ear_near"), flap(-22), 60, step);
+    loop(rig.part("ear_far"), flap(-18), 75, step);
     loop(rig.part("hat"), flap(-7), 50, step);
     loop(rig.part("hat_tip"), flap(-20), 110, step);
-    loop(rig.part("tail"), flap(16), 60, step);
+    loop(rig.part("tail_root"), flap(16), 60, step);
     loop(rig.part("tail_tip"), flap(26), 120, step);
   }
 
@@ -349,9 +377,9 @@ export class Kuro {
       { transform: `rotate(${a}deg)`, offset: 0.35 },
       { transform: "rotate(0deg)" },
     ];
-    m.play(rig.part("leg_f_r"), brace(-38), { duration: 330 });
-    m.play(rig.part("leg_f_l"), brace(-30), { duration: 330 });
-    m.play(rig.part("leg_b_r"), brace(18), { duration: 330 });
+    m.play(rig.part("leg_f_near"), brace(-38), { duration: 330 });
+    m.play(rig.part("leg_f_far"), brace(-30), { duration: 330 });
+    m.play(rig.part("leg_b_near"), brace(18), { duration: 330 });
     // 耳と帽子としっぽは、止まったあとも前へ流れて戻る
     const follow = (a: number, delay: number) => [
       { transform: "rotate(0deg)", easing: EASE.out },
@@ -359,10 +387,10 @@ export class Kuro {
       { transform: `rotate(${-a * 0.35}deg)`, offset: 0.75, easing: "ease-in-out" },
       { transform: "rotate(0deg)" },
     ];
-    m.play(rig.part("ear_r"), follow(16, 0), { duration: 420, delay: 40 });
+    m.play(rig.part("ear_near"), follow(16, 0), { duration: 420, delay: 40 });
     m.play(rig.part("hat"), follow(10, 0), { duration: 460, delay: 50 });
     m.play(rig.part("hat_tip"), follow(26, 0), { duration: 520, delay: 90 });
-    m.play(rig.part("tail"), follow(-22, 0), { duration: 480, delay: 60 });
+    m.play(rig.part("tail_root"), follow(-22, 0), { duration: 480, delay: 60 });
     await done(slide, 160, m);
     this.x = to;
     this.commit();
@@ -382,7 +410,7 @@ export class Kuro {
         { transform: "rotate(6deg)", offset: 0.85, easing: "ease-in-out" },
         { transform: "rotate(0deg)" },
       ], { duration: ms });
-      m.play(rig.part("ear_r"), [
+      m.play(rig.part("ear_near"), [
         { transform: "rotate(0deg)" },
         { transform: "rotate(-14deg)", offset: 0.3 },
         { transform: "rotate(4deg)", offset: 0.38 },
@@ -424,11 +452,11 @@ export class Kuro {
       { transform: `rotate(${-a * 0.6}deg)`, offset: 0.6 },
       { transform: "rotate(0deg)" },
     ];
-    m.play(rig.part("leg_f_r"), tuck(-40), { duration: ms });
-    m.play(rig.part("leg_f_l"), tuck(-34), { duration: ms });
-    m.play(rig.part("leg_b_r"), tuck(40), { duration: ms });
-    m.play(rig.part("leg_b_l"), tuck(34), { duration: ms });
-    m.play(rig.part("tail"), [{ transform: "rotate(-20deg)" }, { transform: "rotate(20deg)" }], { duration: ms });
+    m.play(rig.part("leg_f_near"), tuck(-40), { duration: ms });
+    m.play(rig.part("leg_f_far"), tuck(-34), { duration: ms });
+    m.play(rig.part("leg_b_near"), tuck(40), { duration: ms });
+    m.play(rig.part("leg_b_far"), tuck(34), { duration: ms });
+    m.play(rig.part("tail_root"), [{ transform: "rotate(-20deg)" }, { transform: "rotate(20deg)" }], { duration: ms });
     if (atApex) m.after(ms * 0.5, atApex);
     await done(move, ms, m);
     this.x = toX;
@@ -460,6 +488,7 @@ export class Kuro {
     const tx = g.bucket.cx + side * (g.bucket.right - g.bucket.left) * 0.12;
     const peak = Math.max(40, this.y - g.bucket.topY + this.g.kuroH * 0.35) * 0.5 + 30;
     await this.leap(tx, g.bucket.inY, 430, peak, () => this.setFront(false));
+    this.onBucket?.("in");
     this.where = "bucket";
   }
 
@@ -471,6 +500,7 @@ export class Kuro {
     const edge = side < 0 ? g.bucket.left - 50 : g.bucket.right + 50;
     if (this.where === "ground" && Math.abs(this.x - edge) > 30) await this.run(edge);
     await this.leap(g.bucket.cx + side * 10, g.pileY, 460, 70, () => this.setFront(false));
+    this.onBucket?.("in");
     this.where = "pile";
   }
 
@@ -480,6 +510,7 @@ export class Kuro {
     if (this.where === "ground") return;
     const s = side ?? (this.r() < 0.5 ? -1 : 1);
     const tx = s < 0 ? g.bucket.left - range(this.r, 70, 150) : g.bucket.right + range(this.r, 70, 150);
+    m0(this.m, 150, () => this.onBucket?.("out"));
     await this.leap(
       Math.max(g.minX, Math.min(g.maxX, tx)),
       g.groundY,
@@ -521,7 +552,7 @@ export class Kuro {
       { transform: "scale(1.05, 0.95)", offset: 0.5 },
       { transform: "scale(0.9, 1.12)" },
     ], { duration: ms });
-    m.play(rig.part("tail"), [{ transform: "rotate(30deg)" }, { transform: "rotate(-30deg)" }], { duration: ms });
+    m.play(rig.part("tail_root"), [{ transform: "rotate(30deg)" }, { transform: "rotate(-30deg)" }], { duration: ms });
     m.play(rig.part("hat"), [
       { transform: "translateY(0px) rotate(0deg)" },
       { transform: `translateY(${-14}px) rotate(-14deg)`, offset: 0.55 },
@@ -539,7 +570,7 @@ export class Kuro {
     const { m, rig } = this;
     await this.hopIn();
     await wait(m, 160);
-    this.face_("wow");
+    this.face_("surprised");
     await wait(m, 220);
     // 前へ倒れて頭を突っ込む（足もとを支点に）
     const dive = m.play(this.tilt, [
@@ -547,19 +578,16 @@ export class Kuro {
       { transform: `translateY(${this.H * 0.12}px) rotate(68deg)` },
     ], { duration: 260, fill: "forwards" });
     await done(dive, 260, m);
-    const wag = m.play(rig.part("tail"), [
+    const wag = m.play(rig.part("tail_root"), [
       { transform: "rotate(-28deg)" },
       { transform: "rotate(30deg)" },
     ], { duration: 200, iterations: 8, direction: "alternate", easing: "ease-in-out" });
-    m.play(rig.part("leg_b_r"), [{ transform: "rotate(0deg)" }, { transform: "rotate(14deg)" }], {
+    m.play(rig.part("leg_b_near"), [{ transform: "rotate(0deg)" }, { transform: "rotate(14deg)" }], {
       duration: 400, iterations: 4, direction: "alternate", easing: "ease-in-out",
     });
     await done(wag, 1600, m);
-    const candy = this.r() < 0.34;
-    if (candy) {
-      const c = rig.part("candy");
-      if (c) c.style.visibility = "visible";
-    }
+    const candy = !!this.candyEl && this.r() < 0.34;
+    if (candy) this.candyEl!.style.visibility = "visible";
     this.face_(candy ? "smile" : "open", candy ? "closed" : "omega");
     m.play(this.tilt, [
       { transform: `translateY(${this.H * 0.12}px) rotate(68deg)`, easing: EASE.back },
@@ -570,11 +598,7 @@ export class Kuro {
     await wait(m, 360);
     await wait(m, candy ? 700 : 250);
     await this.hopOut();
-    if (candy)
-      m.after(1400, () => {
-        const c = rig.part("candy");
-        if (c) c.style.visibility = "hidden";
-      });
+    if (candy) m.after(1400, () => this.candyEl && (this.candyEl.style.visibility = "hidden"));
     this.face_(null);
   }
 
@@ -591,13 +615,13 @@ export class Kuro {
       { transform: sitT(-26, this.H * 0.06), offset: 0.9, easing: EASE.inOut },
       { transform: sitT(0, 0) },
     ], { duration: ms });
-    m.play(rig.part("leg_b_r"), [
+    m.play(rig.part("leg_b_near"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(-62deg)", offset: 0.1 },
       { transform: "rotate(-62deg)", offset: 0.9 },
       { transform: "rotate(0deg)" },
     ], { duration: ms });
-    m.play(rig.part("leg_b_l"), [
+    m.play(rig.part("leg_b_far"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(-55deg)", offset: 0.1 },
       { transform: "rotate(-55deg)", offset: 0.9 },
@@ -613,7 +637,7 @@ export class Kuro {
     }
     rub.push({ transform: "rotate(0deg)", offset: 1 });
     head.push({ transform: "rotate(0deg)", offset: 1 });
-    m.play(rig.part("leg_f_r"), rub, { duration: ms, easing: "ease-in-out" });
+    m.play(rig.part("leg_f_near"), rub, { duration: ms, easing: "ease-in-out" });
     m.play(rig.part("head"), head, { duration: ms, easing: "ease-in-out" });
     m.after(ms * 0.55, () => this.rig.swap("mouth", "omega"));
     await wait(m, ms);
@@ -623,33 +647,33 @@ export class Kuro {
   /** ④ こっちを見て首をかしげ、まばたき（1.2秒） */
   async headTilt() {
     const { m, rig } = this;
-    this.face_("wow", "closed");
+    this.face_("surprised", "closed");
     m.play(rig.part("head"), [
       { transform: "rotate(0deg)", easing: EASE.back },
       { transform: "rotate(-20deg)", offset: 0.22 },
       { transform: "rotate(-20deg)", offset: 0.78, easing: "ease-in-out" },
       { transform: "rotate(0deg)" },
     ], { duration: 1200 });
-    m.play(rig.part("ear_r"), [
+    m.play(rig.part("ear_near"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(-18deg)", offset: 0.18 },
       { transform: "rotate(6deg)", offset: 0.26 },
       { transform: "rotate(0deg)", offset: 0.34 },
       { transform: "rotate(0deg)" },
     ], { duration: 1200 });
-    m.play(rig.part("ear_l"), [
+    m.play(rig.part("ear_far"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(12deg)", offset: 0.2 },
       { transform: "rotate(0deg)", offset: 0.36 },
       { transform: "rotate(0deg)" },
     ], { duration: 1200 });
-    m.play(rig.part("tail"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-18deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], {
+    m.play(rig.part("tail_root"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-18deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], {
       duration: 1200, easing: "ease-in-out",
     });
     await wait(m, 520);
-    rig.swap("eyes", "closed");
+    rig.swap("eye", "closed");
     await wait(m, 130);
-    rig.swap("eyes", "wow");
+    rig.swap("eye", "surprised");
     await wait(m, 550);
     this.face_(null);
   }
@@ -667,9 +691,11 @@ export class Kuro {
     const upright = (a: number, y: number) => `translateX(${bx}px) rotate(${a}deg) translateX(${-bx}px) translateY(${y}px)`;
     const ms = 1500;
     m.play(this.tilt, [
+      /* 口の中で胸を張る（後ろへ少し反る）。大きく立ち上がらせると、真横の絵では
+         縁から後ろへ落ちていくように見えた（本物の絵で録って確かめた） */
       { transform: upright(0, 0), easing: EASE.back },
-      { transform: upright(-58, 0), offset: 0.14 },
-      { transform: upright(-58, 0), offset: 0.88, easing: EASE.inOut },
+      { transform: upright(-16, -this.H * 0.06), offset: 0.14 },
+      { transform: upright(-16, -this.H * 0.06), offset: 0.88, easing: EASE.inOut },
       { transform: upright(0, 0) },
     ], { duration: ms });
     // 3回弾む
@@ -694,9 +720,17 @@ export class Kuro {
       { transform: `rotate(${a}deg)`, offset: 0.86 },
       { transform: "rotate(0deg)", offset: 1 },
     ];
-    m.play(rig.part("leg_f_r"), wave(-150, 26), { duration: ms, easing: "ease-in-out" });
-    m.play(rig.part("leg_f_l"), wave(-140, -24), { duration: ms, easing: "ease-in-out" });
-    m.play(rig.part("tail"), [{ transform: "rotate(-24deg)" }, { transform: "rotate(24deg)" }], {
+    m.play(rig.part("leg_f_near"), wave(-128, 30), { duration: ms, easing: "ease-in-out" });
+    m.play(rig.part("leg_f_far"), wave(-118, -26), { duration: ms, easing: "ease-in-out" });
+    // 見上げて
+    m.play(rig.part("head"), [
+      { transform: "rotate(0deg)", easing: EASE.back },
+      { transform: "rotate(-12deg)", offset: 0.16 },
+      { transform: "rotate(-8deg)", offset: 0.5 },
+      { transform: "rotate(-12deg)", offset: 0.84, easing: EASE.inOut },
+      { transform: "rotate(0deg)" },
+    ], { duration: ms });
+    m.play(rig.part("tail_root"), [{ transform: "rotate(-24deg)" }, { transform: "rotate(24deg)" }], {
       duration: 180, iterations: 8, direction: "alternate", easing: "ease-in-out",
     });
     m.play(rig.part("hat"), [
@@ -731,7 +765,7 @@ export class Kuro {
         { transform: `rotate(${side * 8}deg) scale(0.96, 1.05)`, offset: 0.5 },
         { transform: "rotate(0deg) scale(1, 1)" },
       ], { duration: beat });
-      m.play(rig.part(i % 2 === 0 ? "leg_f_r" : "leg_f_l"), [
+      m.play(rig.part(i % 2 === 0 ? "leg_f_near" : "leg_f_far"), [
         { transform: "rotate(0deg)" },
         { transform: "rotate(-140deg)", offset: 0.4 },
         { transform: "rotate(0deg)" },
@@ -755,20 +789,20 @@ export class Kuro {
     flyBy(fromLeft, flyMs);
     await wait(m, 380);
     // 気づく（見上げて、びっくり）
-    this.face_("wow", "open");
+    this.face_("surprised", "open");
     m.play(rig.part("head"), [
       { transform: "rotate(0deg)", easing: EASE.back },
       { transform: "rotate(-24deg)", offset: 0.4 },
       { transform: "rotate(-24deg)" },
     ], { duration: 320, fill: "forwards" });
-    m.play(rig.part("ear_r"), [{ transform: "rotate(-24deg)" }, { transform: "rotate(0deg)" }], { duration: 300, easing: EASE.back });
+    m.play(rig.part("ear_near"), [{ transform: "rotate(-24deg)" }, { transform: "rotate(0deg)" }], { duration: 300, easing: EASE.back });
     await wait(m, 320);
     rig.part("head")?.getAnimations().forEach((a) => a.cancel());
     // 追いかける
     const end = fromLeft ? g.maxX - 30 : g.minX + 30;
     await this.run(end, 860);
     // 端で跳びつく（手を伸ばす）
-    m.play(rig.part("leg_f_r"), [
+    m.play(rig.part("leg_f_near"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(-130deg)", offset: 0.5 },
       { transform: "rotate(0deg)" },
@@ -794,8 +828,8 @@ export class Kuro {
     m.play(rig.part("head"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-26deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], {
       duration: 900, easing: EASE.inOut,
     });
-    m.play(rig.part("leg_f_r"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-50deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], { duration: 900 });
-    m.play(rig.part("leg_f_l"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-44deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], { duration: 900 });
+    m.play(rig.part("leg_f_near"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-50deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], { duration: 900 });
+    m.play(rig.part("leg_f_far"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-44deg)", offset: 0.5 }, { transform: "rotate(0deg)" }], { duration: 900 });
     await wait(m, 900);
     // 丸まる
     this.face_("closed", "closed");
@@ -807,16 +841,16 @@ export class Kuro {
       { transform: a },
     ];
     m.play(this.tilt, hold("translateY(0px) scale(1, 1)", `translateY(${this.H * 0.16}px) scale(1.1, 0.8)`), { duration: ms });
-    m.play(rig.part("leg_f_r"), hold("rotate(0deg)", "rotate(-80deg)"), { duration: ms });
-    m.play(rig.part("leg_f_l"), hold("rotate(0deg)", "rotate(-74deg)"), { duration: ms });
-    m.play(rig.part("leg_b_r"), hold("rotate(0deg)", "rotate(76deg)"), { duration: ms });
-    m.play(rig.part("leg_b_l"), hold("rotate(0deg)", "rotate(70deg)"), { duration: ms });
+    m.play(rig.part("leg_f_near"), hold("rotate(0deg)", "rotate(-80deg)"), { duration: ms });
+    m.play(rig.part("leg_f_far"), hold("rotate(0deg)", "rotate(-74deg)"), { duration: ms });
+    m.play(rig.part("leg_b_near"), hold("rotate(0deg)", "rotate(76deg)"), { duration: ms });
+    m.play(rig.part("leg_b_far"), hold("rotate(0deg)", "rotate(70deg)"), { duration: ms });
     m.play(rig.part("head"), hold("rotate(0deg)", "rotate(20deg)"), { duration: ms });
-    m.play(rig.part("tail"), hold("rotate(0deg)", "rotate(-40deg)"), { duration: ms });
+    m.play(rig.part("tail_root"), hold("rotate(0deg)", "rotate(-40deg)"), { duration: ms });
     // 耳だけぴくぴく（2回）
     for (const at of [900, 2000]) {
       m.after(at, () =>
-        m.play(rig.part("ear_r"), [
+        m.play(rig.part("ear_near"), [
           { transform: "rotate(0deg)" },
           { transform: "rotate(-24deg)", offset: 0.3 },
           { transform: "rotate(4deg)", offset: 0.6 },

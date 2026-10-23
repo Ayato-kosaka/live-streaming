@@ -47,7 +47,7 @@ export const SCENE_RATIO = 0.585;
  */
 const GROUND_Y = 470;
 const BUCKET_W = 330;
-const KURO_H = 225;
+const KURO_H = 240;
 
 /**
  * 出直しをまたいで、前に見せていた額と溜まり具合を覚えておく
@@ -165,23 +165,32 @@ export const KuroBank: React.FC<Props> = ({
     let alive = true;
 
     // ---- バケツ ----------------------------------------------------------
+    /* 絵の担当の形: 根の部品 `bucket` が {empty, full, over} の差し替えを持つ（胴は3枚とも
+       画素一致で、中身と顔の灯りだけ違う）。取っ手 `handle` は胴の奥。
+       目印 `rimBack`（奥の縁の上の辺）・`rimFront`（口の手前の辺）・`label`（字を置ける四角） */
     const bdef = bucket.def;
-    const emptyP = partOf(bdef, "empty");
-    const fullP = partOf(bdef, "full");
-    const imgOf = (id: string) => {
-      const p = partOf(bdef, id);
-      return p ? bucket.images.get(p.file ?? Object.values(p.swaps ?? {})[0]) ?? null : null;
-    };
-    const eImg = imgOf("empty");
-    if (!emptyP || !fullP || !eImg) return;
+    const bp = partOf(bdef, "bucket");
+    const swaps = bp?.swaps ?? {};
+    const swapImg = (name: string) => (swaps[name] ? bucket.images.get(swaps[name]) ?? null : null);
+    const eImg = swapImg("empty") ?? (bp?.file ? bucket.images.get(bp.file) ?? null : null);
+    const fImg = swapImg("full");
+    if (!bp || !eImg || !fImg) return;
+    const oImg = swapImg("over");
+    const handleP = partOf(bdef, "handle");
+    const hImg = handleP?.file ? bucket.images.get(handleP.file) ?? null : null;
     const eBox = alphaBox(eImg.url, eImg);
-    const eOrigin = restOrigin(bdef, "empty")!;
+    const bO = restOrigin(bdef, "bucket")!;
     // 空のバケツの「色の付いた幅」を BUCKET_W に合わせる
     const sB = (BUCKET_W * U) / eBox.w;
     // 台紙の (0,0) を場面のどこに置くか（px）
-    const bx = 500 * U - (eOrigin[0] + eBox.x + eBox.w / 2) * sB;
-    const by = GROUND_Y * U - (eOrigin[1] + eBox.y + eBox.h) * sB;
+    const bx = 500 * U - (bO[0] + eBox.x + eBox.w / 2) * sB;
+    const by = GROUND_Y * U - (bO[1] + eBox.y + eBox.h) * sB;
     const [BW, BH] = bdef.size;
+    /** 台紙の高さ → 場面の単位 */
+    const toU = (y: number) => (by + y * sB) / U;
+    const anc = bdef.anchors;
+    const rimBackY = anc.rimBack?.[1] ?? bO[1] + eBox.y;
+    const rimFrontY = anc.rimFront?.[1] ?? bO[1] + eBox.y + eBox.h * 0.22;
 
     const layer = (z: number) => {
       const d = document.createElement("div");
@@ -189,80 +198,90 @@ export const KuroBank: React.FC<Props> = ({
       host.appendChild(d);
       return d;
     };
-    /* クロはふだんバケツの手前。バケツに入るとき（跳んだ頂点）だけ奥へ回る */
-    const kuroBox = layer(3);
-    const bucketBox = layer(2);
-    const puffBox = layer(3);
-    const batBox = layer(4);
+    /* 重なり（奥から）: バケツ → [バケツの中のクロ] → バケツの口の手前 → 土ぼこり →
+       [地面のクロ] → こうもり。クロはバケツに入るとき（跳んだ頂点）だけ奥の段へ回る。
+       口の手前の段は、同じバケツを「口の手前の辺より下」だけ切り出したもの。
+       これがあるので、クロは口の中に立って見える（体の下が縁に隠れる） */
+    const backBox = layer(2);
+    const kuroBox = layer(6);
+    const frontBox = layer(4);
+    const puffBox = layer(5);
+    const batBox = layer(7);
 
-    const stage = document.createElement("div");
-    Object.assign(stage.style, {
-      position: "absolute",
-      left: `${bx}px`,
-      top: `${by}px`,
-      width: `${BW}px`,
-      height: `${BH}px`,
-      transformOrigin: "0 0",
-      transform: `scale(${sB})`,
-    });
-    bucketBox.appendChild(stage);
-    const place = (id: string, into: HTMLElement) => {
-      const p = partOf(bdef, id);
-      const im = imgOf(id);
-      if (!p || !im) return null;
-      const o = restOrigin(bdef, id)!;
+    const imgEl = (url: string, x: number, y: number, w: number, h: number) => {
       const el = document.createElement("img");
-      el.src = im.url;
+      el.src = url;
       el.alt = "";
       el.draggable = false;
       Object.assign(el.style, {
         position: "absolute",
-        left: `${o[0]}px`,
-        top: `${o[1]}px`,
-        width: `${im.width}px`,
-        height: `${im.height}px`,
-        zIndex: String(Math.round(p.z * 10)),
+        left: `${x}px`,
+        top: `${y}px`,
+        width: `${w}px`,
+        height: `${h}px`,
         pointerEvents: "none",
         userSelect: "none",
       });
-      into.appendChild(el);
       return el;
     };
-    const ordered = [...bdef.parts].sort((a, b) => a.z - b.z);
-    const fillBox = document.createElement("div");
-    Object.assign(fillBox.style, {
-      position: "absolute",
-      left: "0px",
-      top: "0px",
-      width: `${BW}px`,
-      height: `${BH}px`,
-      zIndex: String(Math.round(fullP.z * 10)),
-    });
-    let pileEl: HTMLImageElement | null = null;
-    let glowEl: HTMLImageElement | null = null;
-    for (const p of ordered) {
-      if (p.id === "full") {
-        stage.appendChild(fillBox);
-        place("full", fillBox);
-      } else if (p.id === "glow") {
-        glowEl = place("glow", fillBox);
-      } else if (p.id === "overflow") {
-        pileEl = place("overflow", stage);
-      } else place(p.id, stage);
-    }
+    /** バケツ1組（取っ手・空・中身・あふれ）。`cutAbove` を渡すと、その高さより上を切る */
+    const stack = (into: HTMLElement, cutAbove: number | null) => {
+      const st = document.createElement("div");
+      Object.assign(st.style, {
+        position: "absolute",
+        left: `${bx}px`,
+        top: `${by}px`,
+        width: `${BW}px`,
+        height: `${BH}px`,
+        transformOrigin: "0 0",
+        transform: `scale(${sB})`,
+        overflow: "visible",
+      });
+      if (cutAbove != null) {
+        // 絵は台紙からはみ出すので、四角は台紙より広く取る（inset の負の値は効かない環境がある）
+        const c = `polygon(-1000px ${cutAbove}px, 2000px ${cutAbove}px, 2000px 2000px, -1000px 2000px)`;
+        st.style.clipPath = c;
+        (st.style as unknown as Record<string, string>).webkitClipPath = c;
+      }
+      into.appendChild(st);
+      let handle: HTMLImageElement | null = null;
+      if (handleP && hImg && cutAbove == null) {
+        const ho = restOrigin(bdef, "handle")!;
+        handle = imgEl(hImg.url, ho[0], ho[1], hImg.width, hImg.height);
+        handle.style.transformOrigin = `${handleP.pivot[0]}px ${handleP.pivot[1]}px`;
+        st.appendChild(handle);
+      }
+      st.appendChild(imgEl(eImg.url, bO[0], bO[1], eImg.width, eImg.height));
+      const fill = document.createElement("div");
+      Object.assign(fill.style, { position: "absolute", left: "0px", top: "0px", width: `${BW}px`, height: `${BH}px`, overflow: "visible" });
+      fill.appendChild(imgEl(fImg.url, bO[0], bO[1], fImg.width, fImg.height));
+      st.appendChild(fill);
+      let over: HTMLImageElement | null = null;
+      if (oImg) {
+        over = imgEl(oImg.url, bO[0], bO[1], oImg.width, oImg.height);
+        over.style.visibility = "hidden";
+        st.appendChild(over);
+      }
+      return { fill, over, handle };
+    };
+    const back = stack(backBox, null);
+    const front = stack(frontBox, rimFrontY);
 
-    // 満タンの絵の、中身の上下（0% と 100% の水面）
-    const fImg = imgOf("full")!;
+    /* 溜まりの 0% と 100%。0% は顔の灯りのすぐ下（`label` の上の辺）、100% は満タンの絵の
+       お菓子の山の天辺。胴は空と満タンで画素一致なので、そこを切り抜いても何も変わらない。
+       見えるところ（顔が灯り、口にお菓子が増える）だけに割り当てる */
     const fBox = alphaBox(fImg.url, fImg);
-    const fO = restOrigin(bdef, "full")!;
-    const fillTop = fO[1] + fBox.y;
-    const fillBottom = fO[1] + fBox.y + fBox.h;
+    const fillTop = bO[1] + fBox.y;
+    const fillBottom = anc.label?.[1] ?? bO[1] + eBox.y + eBox.h * 0.75;
     let lvl = shown.level;
     let phase = 0;
     const clip = () => {
+      // 波の高さ（`wave.ts` の AMP=8px）は台紙の px なので、絵の縮尺に合わせて小さくなる
       const d = makeWaveClipPath(BW, BH, lvl, phase, fillTop - 9, fillBottom);
-      fillBox.style.clipPath = `path("${d}")`;
-      (fillBox.style as unknown as Record<string, string>).webkitClipPath = `path("${d}")`;
+      for (const f of [back.fill, front.fill]) {
+        f.style.clipPath = `path("${d}")`;
+        (f.style as unknown as Record<string, string>).webkitClipPath = `path("${d}")`;
+      }
     };
     clip();
     /* 溜まる。**rAF はこのあいだだけ**回す（終われば止める） */
@@ -282,41 +301,39 @@ export const KuroBank: React.FC<Props> = ({
       };
       raf = requestAnimationFrame(step);
     };
-    if (glowEl) {
-      m.play(glowEl, [
-        { opacity: 1 },
-        { opacity: 0.7, offset: 0.18 },
-        { opacity: 0.95, offset: 0.3 },
-        { opacity: 0.78, offset: 0.62 },
-        { opacity: 1 },
-      ], { duration: 2600, iterations: Infinity });
-    }
 
-    // 満タンの山
-    const pileImg = imgOf("overflow");
-    let pileTopY: number | null = null;
-    if (pileEl && pileImg) {
-      const pBox = alphaBox(pileImg.url, pileImg);
-      const pO = restOrigin(bdef, "overflow")!;
-      pileTopY = (by + (pO[1] + pBox.y) * sB) / U;
-      pileEl.style.transformOrigin = `${pBox.x + pBox.w / 2}px ${pBox.y + pBox.h}px`;
-      pileEl.style.visibility = live.current.overflow && shown.level >= 1 ? "visible" : "hidden";
-    }
+    // 100% を超えたら、あふれた山（over）に差し替える
+    const oBox = oImg ? alphaBox(oImg.url, oImg) : null;
+    const pileTopY = oBox ? toU(bO[1] + oBox.y) : null;
+    const pileOrigin = oBox ? `${bO[0] + oBox.x + oBox.w / 2}px ${bO[1] + oBox.y + oBox.h * 0.55}px` : "50% 50%";
     const showPile = (on: boolean) => {
-      if (!pileEl) return;
-      const was = pileEl.style.visibility === "visible";
-      pileEl.style.visibility = on ? "visible" : "hidden";
-      if (on && !was)
-        m.play(pileEl, [
-          { transform: "scale(0.4, 0.2)", opacity: 0, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
-          { transform: "scale(1.06, 1.12)", opacity: 1, offset: 0.6 },
-          { transform: "scale(1, 1)", opacity: 1 },
-        ], { duration: 520 });
+      for (const o of [back.over, front.over]) {
+        if (!o) continue;
+        const was = o.style.visibility === "visible";
+        o.style.visibility = on ? "visible" : "hidden";
+        o.style.transformOrigin = pileOrigin;
+        if (on && !was)
+          m.play(o, [
+            { transform: "scale(0.7, 0.5)", opacity: 0, easing: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+            { transform: "scale(1.04, 1.1)", opacity: 1, offset: 0.6 },
+            { transform: "scale(1, 1)", opacity: 1 },
+          ], { duration: 520 });
+      }
     };
+    if (live.current.overflow && shown.level >= 1) showPile(true);
+
+    /** 取っ手が揺れる（クロが乗り降りしたとき）。倒すのは scaleY（絵の担当の指定） */
+    const bump = (k: number) =>
+      m.play(back.handle, [
+        { transform: "scaleY(1)", easing: "ease-out" },
+        { transform: `scaleY(${1 - 0.22 * k})`, offset: 0.25, easing: "ease-in-out" },
+        { transform: `scaleY(${1 + 0.08 * k})`, offset: 0.55, easing: "ease-in-out" },
+        { transform: `scaleY(${1 - 0.04 * k})`, offset: 0.8 },
+        { transform: "scaleY(1)" },
+      ], { duration: 520 });
 
     // ---- 場面の寸法（クロに渡す） --------------------------------------
-    const bTop = (by + (eOrigin[1] + eBox.y) * sB) / U;
-    const bLeft = (bx + (eOrigin[0] + eBox.x) * sB) / U;
+    const bLeft = (bx + (bO[0] + eBox.x) * sB) / U;
     const bRight = bLeft + BUCKET_W;
     const frame = kuroFrame(mascot);
     const sK = (KURO_H * U) / frame.height;
@@ -329,15 +346,17 @@ export const KuroBank: React.FC<Props> = ({
         left: bLeft,
         right: bRight,
         cx: (bLeft + bRight) / 2,
-        topY: bTop,
-        // 口の中へ少し沈む。帽子の先が場面の上で切れない高さまで
-        inY: Math.max(KURO_H + 6, bTop + (eBox.h * sB) / U * 0.1),
+        topY: toU(rimBackY),
+        // 口の手前の辺より少し下に足を置く（体の下が縁に隠れる）。帽子の先が場面の上で切れない高さまで
+        inY: Math.max(KURO_H + 6, toU(rimFrontY) + KURO_H * 0.06),
       },
       pileY: null,
       kuroH: KURO_H,
     };
-    const pileFeet = pileTopY != null ? Math.max(KURO_H + 4, pileTopY + KURO_H * 0.1) : null;
+    const pileFeet = pileTopY != null ? Math.max(KURO_H + 4, pileTopY + KURO_H * 0.14) : null;
     if (live.current.overflow) geo.pileY = pileFeet;
+    // ラベルはバケツの胴の、字を置ける四角（`label`）の真ん中に
+    const labelMidY = anc.label ? toU((anc.label[1] + anc.label[3]) / 2) : toU(rimFrontY) + (GROUND_Y - toU(rimFrontY)) * 0.62;
 
     // ---- 土ぼこり -------------------------------------------------------
     const puff = (x: number, y: number, dir: number, n: number) => {
@@ -369,9 +388,12 @@ export const KuroBank: React.FC<Props> = ({
     // ---- クロ -------------------------------------------------------------
     const kRig = buildRig(mascot, sK);
     const setFront = (front: boolean) => {
-      kuroBox.style.zIndex = front ? "3" : "1";
+      kuroBox.style.zIndex = front ? "6" : "3";
     };
-    const kuro = new Kuro(m, kRig, kuroBox, geo, frame, r, setFront, puff);
+    const candyFile = bdef.items.wrapped ?? Object.values(bdef.items)[0];
+    const candy = candyFile ? bucket.images.get(candyFile) ?? null : null;
+    const kuro = new Kuro(m, kRig, kuroBox, geo, frame, r, setFront, puff, candy);
+    kuro.onBucket = (k) => bump(k === "in" ? 1 : 0.6);
     kuro.startLoops();
 
     // ---- 横切るこうもり ---------------------------------------------------
@@ -422,11 +444,7 @@ export const KuroBank: React.FC<Props> = ({
       countRaf = requestAnimationFrame(step);
     };
     if (amountRef.current) amountRef.current.textContent = fmt(shown.amount);
-    // ラベルはバケツの胴（下から 4 割の高さ）に貼る
-    if (labelRef.current) {
-      const bBottom = GROUND_Y;
-      labelRef.current.style.top = `${(bTop + (bBottom - bTop) * 0.58) * U - fsLabel * 0.55}px`;
-    }
+    if (labelRef.current) labelRef.current.style.top = `${labelMidY * U - fsLabel * 0.55}px`;
 
     // 外から溜まり具合が変わったとき（試し表示の rise など）
     api.current = {
@@ -510,7 +528,7 @@ export const KuroBank: React.FC<Props> = ({
   return (
     <div style={{ position: "relative", width: sceneW, height: sceneH }}>
       <div ref={hostRef} style={{ position: "absolute", inset: 0 }} />
-      <div style={{ position: "absolute", inset: 0, zIndex: 5, pointerEvents: "none" }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: 10, pointerEvents: "none" }}>
         <div
           ref={labelRef}
           style={{

@@ -14,12 +14,13 @@
  *
  * ## 振付けが名指しする部品の id（ハロウィン）
  *
- * 無い部品は、その動きを飛ばすだけ（壊れない）。`_l` は奥側、`_r` は手前側。
+ * 無い部品は、その動きを飛ばすだけ（壊れない）。`_far` は奥側、`_near` は手前側。
  *
- * - kuro（真横・右向き）: body / head / ear_l / ear_r / hat / hat_tip / tail / tail_tip /
- *   leg_f_l / leg_f_r / leg_b_l / leg_b_r / eyes{open, closed, smile, wow} /
- *   mouth{closed, open, omega} / candy（くわえるあめ。ふだんは隠す）
- * - bucket（根の部品だけ）: empty / full / handle / overflow / glow（顔の灯り。無くてよい）
+ * - kuro（真横・右向き）: body / head / ear_far / ear_near / hat / hat_tip / tail_root / tail_tip /
+ *   leg_f_far / leg_f_near / leg_b_far / leg_b_near / eye{open, closed, smile, surprised} /
+ *   mouth{closed, open, omega}
+ * - bucket: bucket{empty, full, over}（根。胴は3枚とも画素一致で、中身と顔の灯りだけ違う）/
+ *   handle（胴の奥）。目印 `rimBack` `rimFront` `label`、お菓子の粒 `items`
  * - bat（正面）: body / wing_l / wing_r（羽の関節は肩）
  * - vlad（ななめ前）: body（根）/ head / eyes{normal, wink, smile} / mouth{grin, open, omega} /
  *   cape_l / cape_r（閉じた形で描く。関節は首元の肩）/ cape_in（金の裏地。胴の奥）/
@@ -51,6 +52,13 @@ export type RigDef = {
   name: string;
   size: Vec;
   parts: RigPart[];
+  /**
+   * 約束の外の目印（台紙 px）。絵の担当が付けてくれるもの。読めなければ空。
+   * バケツなら `rimBack` `rimFront`（[左, 高さ, 右]）・`label`（[左, 上, 右, 下]）
+   */
+  anchors: Record<string, number[]>;
+  /** 部品とは別に使う小さな絵（名前 → ファイル）。バケツのお菓子など */
+  items: Record<string, string>;
 };
 
 const isVec = (v: unknown): v is Vec =>
@@ -100,10 +108,26 @@ export function parseRig(json: unknown): RigDef | null {
     for (let i = 0; cur && i <= parts.length; i++) cur = cur.parent ? byId.get(cur.parent) : undefined;
     if (cur) return null;
   }
+  const anchors: Record<string, number[]> = {};
+  if (o.anchors && typeof o.anchors === "object" && !Array.isArray(o.anchors)) {
+    for (const [k, v] of Object.entries(o.anchors as Record<string, unknown>)) {
+      if (Array.isArray(v) && v.length >= 2 && v.every((n) => typeof n === "number" && Number.isFinite(n))) {
+        anchors[k] = v as number[];
+      }
+    }
+  }
+  const items: Record<string, string> = {};
+  if (o.items && typeof o.items === "object" && !Array.isArray(o.items)) {
+    for (const [k, v] of Object.entries(o.items as Record<string, unknown>)) {
+      if (typeof v === "string" && v) items[k] = v;
+    }
+  }
   return {
     name: typeof o.name === "string" ? o.name : "",
     size: o.size,
     parts,
+    anchors,
+    items,
   };
 }
 
@@ -114,6 +138,7 @@ export function rigFiles(rig: RigDef): string[] {
     if (p.file) out.add(p.file);
     if (p.swaps) Object.values(p.swaps).forEach((f) => out.add(f));
   }
+  Object.values(rig.items).forEach((f) => out.add(f));
   return [...out];
 }
 
