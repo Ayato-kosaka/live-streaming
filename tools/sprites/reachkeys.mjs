@@ -78,6 +78,8 @@
  *   BREAK=nohead   見出しの段を見ない
  *   BREAK=nodup    同じ字のリンクを見ない
  *   BREAK=nofold   畳みを開かずに歩く（**直す前の姿**。畳みの中が届かないのに 0件 になる）
+ *   BREAK=noretry  止まった面を取り直さない（「一度だけ止まる面」が開けないままになる）
+ *   BREAK=noreopen 止まったタブを捨てずに使い回す（「止まった次の面」が1回目に開けない。#963 の姿）
  */
 import { chromium } from "playwright-core";
 import { readFile } from "node:fs/promises";
@@ -758,7 +760,31 @@ function fail(msg) {
   return b.close().then(() => process.exit(2));
 }
 
-async function sweep(base, pages, { quiet = false } = {}) {
+/** 1枚にかける上限（ミリ秒）。切れたら、その面を名指しして取り直しに回す */
+const PAGE_MS = Number(process.env.PAGE_MS || 120000);
+/** 対照の台は小さいので、5秒で止まったとみなす */
+const CTL_MS = Number(process.env.CTL_MS || 5000);
+
+/**
+ * 約束に砂時計を付ける。**切れたら投げる。**
+ * `page.evaluate()` には時間切れが無いので、描画の手が固まると永久に帰ってこない
+ * （`reachwatch.mjs` の同じ名前の関数と同じ。#944）。
+ */
+function withDeadline(pr, ms, what) {
+  let t;
+  const bell = new Promise((_, no) => {
+    t = setTimeout(() => no(new Error(`${what} が ${Math.round(ms / 1000)}秒 返ってこない`)), ms);
+  });
+  return Promise.race([Promise.resolve(pr).finally(() => clearTimeout(t)), bell]);
+}
+const short = (e) => String(e?.message || e).split("\n")[0].slice(0, 120);
+
+/** 捨てる。閉じるのにも砂時計を付ける（固まったタブは閉じるのも遅い） */
+async function discard(thing) {
+  try { await withDeadline(thing.close(), 15000, "閉じる"); return true; } catch { return false; }
+}
+
+async function newCtx() {
   const ctx = await b.newContext({ viewport: { width: WIDTH, height: HEIGHT } });
   /* **絵は、いちばん小さいもの1枚で返す。**
      ここが見るのは `alt` の字と、Tab で届くかどうか。絵が描けているかを
@@ -769,12 +795,95 @@ async function sweep(base, pages, { quiet = false } = {}) {
   await ctx.route(/\.(png|jpe?g|webp|gif|avif|ico|bmp)(\?|$)/i, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PX }));
   await ctx.route(STUB, (r) => r.fulfill({ status: 200, contentType: "image/png", body: PX }));
   await ctx.route(/fonts\.googleapis\.com/, (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-  const p = await ctx.newPage();
+  return ctx;
+}
+
+/**
+ * 1枚を砂時計つきで見る。戻り: `visit()` の答え、または `{ stall: 理由 }`。
+ *
+ * `visit()` が「開けなかった」と返しても、理由が Playwright の失敗
+ * （時間切れ・`Page crashed`・タブが外れた）なら、それは**止まった側**。
+ * 404 や「水あわせが終わらない」は面の答えなので、そのまま返す。
+ */
+async function guarded(p, base, path, ms) {
+  try {
+    const v = await withDeadline(visit(p, base, path), ms, path);
+    if (!v.open && /Timeout|crash|detached|closed|Target/i.test(v.why)) return { stall: short(v.why) };
+    return v;
+  } catch (e) {
+    return { stall: short(e) };
+  }
+}
+
+/**
+ * 面の並びを1枚ずつ歩く。**本物の面と対照の台が、同じこれを通る。**
+ *
+ * ## 1枚が止まったら（2026-10-23。#963）
+ *
+ * CI で `/me` のあと `/me/desk` の `goto` が45秒×2回切れ、**同じタブを
+ * 使い回したので残り43面がぜんぶ `Page crashed`** になった（直近100回のうち5回、
+ * 5回とも同じ所）。1面の事故で43面ぶんの数字が消えていた。だから:
+ *
+ *   1. 止まったタブは捨てて、**次の面は新しいタブで開く**（`BREAK=noreopen` で外れる）
+ *   2. 止まった面は、**新しい入れ物で1回だけ**取り直す（`BREAK=noretry` で外れる）。
+ *      2回目も止まったら「開けなかった面」に名指しで積む（→ 2 で落ちる）
+ *   3. **取り直した面は、緑の回でも印字する**（Actions では `::warning::` にも出す）
+ *
+ * ## 面が開いた別窓は、その面を見終わったら閉じる
+ *
+ * `/me` の「YouTubeでログイン」に Enter を当てると（ダイアログ探しは押すと出る
+ * ものを探して Enter を押す）、CI では Google の入口が**別窓で開く。**
+ * この箱では `apis.google.com` に届かないので開かず、ここが CI と手元の違いとして
+ * 残っている（#963 が CI でだけ起きる理由の、いちばん近い候補。まだ確かめていない）。
+ * 開いた別窓をそのまま次の面へ持ち越さないように閉じて、**何枚閉じたかを出す。**
+ *
+ * 戻り: { per, unseen, sum, retried, popped }
+ */
+async function sweep(base, pages, { quiet = false, ms = PAGE_MS } = {}) {
+  const ctx = await newCtx();
+  let p = await ctx.newPage();
   const per = new Map();
   const unseen = [];
+  const retried = [];
+  const popped = [];
   const sum = { press: 0, stops: 0, imgs: 0, links: 0, heads: 0, folds: 0, react: 0, dialogs: 0, nowrap: [] };
   for (const page of pages) {
-    const v = await visit(p, base, page);
+    /* 見る前から在ったタブ（捨てそこねた古いタブを含む）は、別窓に数えない */
+    const had = new Set(ctx.pages());
+    let v = await guarded(p, base, page, ms);
+    if (v.stall) {
+      const why = v.stall;
+      console.log(`!! ${page} で止まりました: ${why}`);
+      /* **止まったタブで次の面を開かない**（#963 の43面はこれで消えた） */
+      if (BREAK !== "noreopen") {
+        await discard(p);
+        p = await ctx.newPage();
+      }
+      if (BREAK === "noretry") {
+        v = { open: false, why: `止まった（${why}）` };
+      } else {
+        const c2 = await newCtx();
+        try {
+          const v2 = await guarded(await c2.newPage(), base, page, ms);
+          if (v2.stall) {
+            v = { open: false, why: `1回目: ${why} / 取り直し: ${v2.stall}` };
+            console.log(`!! ${page} は、取り直しても返ってきません: ${v2.stall}`);
+          } else {
+            v = v2;
+            retried.push({ page, why });
+            console.log(`↻ ${page} は、新しい入れ物で取り直して見られました（1回目: ${why}）`);
+          }
+        } finally {
+          await discard(c2);
+        }
+      }
+    }
+    /* 面が開いた別窓（ログインの入口など）を、次の面へ持ち越さない */
+    for (const extra of ctx.pages()) {
+      if (extra === p || had.has(extra)) continue;
+      popped.push(page);
+      await discard(extra);
+    }
     if (!v.open) {
       unseen.push(`${page}（${v.why}）`);
       continue;
@@ -794,8 +903,9 @@ async function sweep(base, pages, { quiet = false } = {}) {
       console.log(`${f.length ? "NG" : "ok"} ${page}  押せる${v.got.press.length} / 止まれた${v.stops.length} / 絵${v.got.imgs.length}` + (f.length ? "\n      " + f.slice(0, LIST ? 9999 : 30).map((x) => x.t).join("\n      ") + (!LIST && f.length > 30 ? `\n      … ほか ${f.length - 30} 件（LIST=1 で全部）` : "") : ""));
     }
   }
-  await ctx.close();
-  return { per, unseen, sum };
+  await discard(p);
+  await discard(ctx);
+  return { per, unseen, sum, retried, popped };
 }
 
 /* ── 対照が先。落ちたら本物の面の数字は出さない ────────────────────── */
@@ -833,8 +943,19 @@ const FIXTURES = [
 {
   const dir = join(HERE, "reachkeysfix");
   const TYPES = { ".html": "text/html; charset=utf-8", ".png": "image/png", ".md": "text/plain" };
+  /* **返ってこない面の対照。** 何回目に何を返すかは、ここが持つ
+       /once.html   … 1回目だけ stall.html、2回目からは calm.html
+       /always.html … 何回でも stall.html
+       /after.html  … calm.html。**止まった面のすぐ次に置く**（立て直しを見る） */
+  const asked = new Map();
+  const STALL = { "once.html": (n) => (n === 1 ? "stall.html" : "calm.html"), "always.html": () => "stall.html", "after.html": () => "calm.html" };
   const srv = createServer(async (req, res) => {
-    const name = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "");
+    let name = decodeURIComponent(req.url.split("?")[0]).replace(/^\/+/, "");
+    if (STALL[name]) {
+      const n = (asked.get(name) || 0) + 1;
+      asked.set(name, n);
+      name = STALL[name](n);
+    }
     try {
       const body = await readFile(join(dir, name));
       res.writeHead(200, { "content-type": TYPES[extname(name)] || "application/octet-stream" });
@@ -847,6 +968,9 @@ const FIXTURES = [
   await new Promise((r) => srv.listen(0, "127.0.0.1", r));
   const cbase = `http://127.0.0.1:${srv.address().port}`;
   const got = await sweep(cbase, FIXTURES.map(([f]) => f), { quiet: true });
+  /* 止まる台は、本物と同じ `sweep()` に流す。always → once → after の順に
+     1つのタブで歩くので、「止まったタブを使い回したか」が after に必ず出る */
+  const st = await sweep(cbase, ["/always.html", "/once.html", "/after.html"], { quiet: true, ms: CTL_MS });
   srv.close();
   console.log("── 対照（わざと壊した台を、拾えるか／拾わずにいられるか）");
   let miss = 0;
@@ -866,7 +990,21 @@ const FIXTURES = [
   } else {
     console.log(`  ○ 台 ${FIXTURES.length}枚とも、Tab で一周して戻ってきた`);
   }
-  console.log(`  対照 ${FIXTURES.length}件中 ${FIXTURES.length - miss}件 一致${BREAK ? `（BREAK=${BREAK}）` : ""}`);
+  /* 返ってこない面の3件。**止まる台が1回目に本当に止まったか**まで見る
+     （止まらない台で「取り直しが効いた」と言っても、何も守っていない） */
+  const unseenOf = (pg) => st.unseen.some((u) => u.startsWith(pg));
+  const retriedOf = (pg) => st.retried.some((r) => r.page === pg);
+  const stallChecks = [
+    ["何度でも止まる面 /always.html", "名指しで「開けなかった」に積む", unseenOf("/always.html")],
+    ["一度だけ止まる面 /once.html", "取り直して見られた", !unseenOf("/once.html") && retriedOf("/once.html") && (asked.get("once.html") || 0) >= 2],
+    ["止まった次の面 /after.html", "1回目で見られた（止まったタブを使い回していない）", !unseenOf("/after.html") && !retriedOf("/after.html")],
+  ];
+  for (const [name, want, ok] of stallChecks) {
+    if (!ok) miss++;
+    console.log(`  ${ok ? "○" : "×"} ${name.padEnd(30)} ${want}`);
+  }
+  const total = FIXTURES.length + stallChecks.length;
+  console.log(`  対照 ${total}件中 ${total - miss}件 一致${BREAK ? `（BREAK=${BREAK}）` : ""}`);
   if (got.unseen.length) console.log(`  開けなかった対照: ${got.unseen.join(" , ")}`);
   if (miss) await fail(`\n対照が ${miss}件 外れた。**本物の面の数字は出さない。**（docs/island-standards.md §15）`);
 }
@@ -879,8 +1017,16 @@ if (!sm.ok) await fail(`\n面の一覧が sitemap より少ない（${sm.why || 
 
 const pages = (ONLY.length ? everyPage.filter((x) => ONLY.includes(x)) : everyPage).map((x) => (x === "/" ? "/index.html" : x + ".html"));
 console.log(`\n── 面を歩く（幅 ${WIDTH}px・${pages.length}面）`);
-const { per, unseen, sum } = await sweep(BASE, pages);
+const { per, unseen, sum, retried, popped } = await sweep(BASE, pages);
 await b.close();
+
+/* **取り直した面は、緑の回でも出す。** 同じ面が毎回ここに出るなら、たまたまではない */
+console.log(`\n取り直した面 ${retried.length}件（1回目に止まり、新しい入れ物で1回だけ見直せたもの）`);
+for (const r of retried) {
+  console.log(`  ↻ ${r.page}  1回目: ${r.why}`);
+  if (process.env.GITHUB_ACTIONS) console.log(`::warning::reachkeys: ${r.page} は1回目に止まり、取り直して見た（${r.why}）`);
+}
+console.log(`別窓を閉じた面 ${popped.length}件${popped.length ? `: ${[...new Set(popped)].join(" , ")}` : ""}`);
 
 if (unseen.length) {
   console.log(`\n開けなかった面が ${unseen.length} 件あります。**下の数字は当てになりません**:`);
