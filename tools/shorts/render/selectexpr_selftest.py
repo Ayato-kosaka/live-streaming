@@ -58,23 +58,25 @@ HERE = Path(__file__).resolve().parent
 SHORTS = HERE.parent
 BREAK = os.environ.get("BREAK", "")
 
-# 名前: (ファイル（tools/shorts からの道）, 本物の字, 外した字, 落ちるはずの足, real も落ちる条件, 何を外したか)
+# 名前: (ファイル（リポジトリの根からの道。写しの木では tools/shorts/ を外して引く）, 本物の字, 外した字, 落ちるはずの足,
+#        real も落ちる条件, 何を外したか)。根からの道で書くのは、見張りの棚卸し（python/watch_census_selftest.py）が
+#        「qa/common.py」を ingest/common.py と見分けられないため
 # 条件: always = どの ffmpeg でも / depth = PATH の ffmpeg が式の深さの上限を持つなら / vsync = -vsync を持たないなら
 CUTS: dict[str, tuple[str, str, str, set[str], str, str]] = {
-    "flat": ("render/selectexpr.py", "    return _tree(leaves)\n", '    return "+".join(leaves)\n',
+    "flat": ("tools/shorts/render/selectexpr.py", "    return _tree(leaves)\n", '    return "+".join(leaves)\n',
              {"expr", "fake_new"}, "depth", "式を括弧で組まず、+ で横につなぐ（前の形）"),
-    "spans": ("render/selectexpr.py", "        if out and f == out[-1][1] + 1:\n",
+    "spans": ("tools/shorts/render/selectexpr.py", "        if out and f == out[-1][1] + 1:\n",
               "        if out and f <= out[-1][1] + 2:\n",
               {"expr", "fake_new", "chunk"}, "always", "1コマ飛びの番号も続きとして between に畳む（間のコマまで選ぶ）"),
-    "vsync": ("render/verify.py", '"-fps_mode", "passthrough", "-f", "rawvideo",',
+    "vsync": ("tools/shorts/render/verify.py", '"-fps_mode", "passthrough", "-f", "rawvideo",',
               '"-vsync", "0", "-f", "rawvideo",',
               {"census", "fake_new"}, "vsync", "verify.grab を -vsync 0 に戻す（9.0 で消えたオプション）"),
-    "inline": ("render/contact_sheet.py", '"-vf", f"select={select_expr(uniq)}",',
+    "inline": ("tools/shorts/render/contact_sheet.py", '"-vf", f"select={select_expr(uniq)}",',
                '"-vf", "select=" + "+".join(f"eq(n\\\\,{f})" for f in uniq),',
                {"census", "fake_new"}, "depth", "contact_sheet が式を自分で + でつなぐ（selectexpr を通さない）"),
-    "drop": ("qa/common.py", "        part = want[k:k + chunk]\n", "        part = want[k:k + chunk - 1]\n",
+    "drop": ("tools/shorts/qa/common.py", "        part = want[k:k + chunk]\n", "        part = want[k:k + chunk - 1]\n",
              {"chunk"}, "always", "塊の最後のコマを落とす"),
-    "dup": ("qa/common.py", "        part = want[k:k + chunk]\n", "        part = want[max(k - 1, 0):k + chunk]\n",
+    "dup": ("tools/shorts/qa/common.py", "        part = want[k:k + chunk]\n", "        part = want[max(k - 1, 0):k + chunk]\n",
             {"chunk"}, "always", "前の塊の最後のコマを、次の塊でもう一度出す"),
 }
 
@@ -252,7 +254,7 @@ class Box:
                 shutil.copy2(p, root / d / p.name)
         if cut:
             rel, old, new, *_ = CUTS[cut]
-            p = root / rel
+            p = root / rel.removeprefix("tools/shorts/")
             text = p.read_text(encoding="utf-8")
             if text.count(old) != 1:
                 raise SystemExit(f"外す字が {rel} に {text.count(old)}か所（1か所のはず）: {old!r}")
@@ -551,19 +553,20 @@ def path_ffmpeg_traits() -> dict[str, bool]:
     return {"always": True, "depth": len(r.stdout) < 101 * 256, "vsync": v.returncode != 0}
 
 
-def drill() -> list[str]:
-    """守りを1つずつ外して、**その守りの足だけ**が落ちるかを見る"""
+def drill() -> tuple[list[str], int]:
+    """守りを1つずつ外して、**その守りの足だけ**が落ちるかを見る。外れた守りと、当てた数を返す"""
     print("[対照] 守りを1つずつ外すと、その足だけが落ちるか")
     traits = path_ffmpeg_traits()
     seen = {leg for leg in LEGS if not missing(leg) and (leg != "real" or shutil.which("ffmpeg"))}
     env = {k: v for k, v in os.environ.items() if k != "SELECTEXPR_FFMPEG_DIRS"}  # 子は PATH の ffmpeg だけ
-    bad = []
+    bad, tried = [], 0
     for name, (_, _, _, want, real_if, why) in CUTS.items():
         want = set(want) | ({"real"} if traits.get(real_if) else set())
         want &= seen
         if not want:
             print(f"  – BREAK={name}（{why}）は当てていない（落ちるはずの足が、この箱では見られない）")
             continue
+        tried += 1
         r = subprocess.run([sys.executable, str(Path(__file__).resolve())], capture_output=True, text=True,
                            env=dict(env, BREAK=name), timeout=600, check=False)
         line = [ln for ln in r.stdout.splitlines() if ln.startswith("LEGS_FAILED ")]
@@ -574,7 +577,7 @@ def drill() -> list[str]:
               f"（欲しいのは {sorted(want)}）")
         if not hit:
             bad.append(name)
-    return bad
+    return bad, tried
 
 
 def main() -> int:
@@ -582,7 +585,7 @@ def main() -> int:
         return child(BREAK)
     rc = child(None)
     print()
-    bad = drill()
+    bad, tried = drill()
     print()
     if rc == 2:
         print("✕ 1つも数えなかった。**「通りました」とは言わない**")
@@ -593,7 +596,8 @@ def main() -> int:
         if bad:
             print(f"✕ 対照が外れた: {' / '.join(bad)}（外しても、その足だけが落ちる形になっていない）")
         return 1
-    print(f"○ 本物で足が通り、守り {len(CUTS)}個を1つずつ外すと、その足だけが落ちた（見ていない足は上に – で出した）")
+    print(f"○ 本物で足が通り、守り {tried}個（{len(CUTS)}個のうち。当てていないものと見ていない足は上に – で出した）"
+          "を1つずつ外すと、その足だけが落ちた")
     return 0
 
 

@@ -20,6 +20,9 @@
 # `-vsync` が消えていて（9.0 の枝から）書き出しの検査が終了コード 8 で止まり、`+` で長くつないだ select の式も
 # 深さの上限（8.1 の枝から）で止まった。夜間版は毎晩変わるので、落ちた理由が run ごとに違いうる。
 # 枝（`ffmpeg-nX.Y-latest`）は点の版（n8.1.3 → n8.1.4）しか動かない。枝は古い順に当てる（8.1 → 9.0）。
+# 2026-10-23 に手元で、品質チェックの見張り2本（qa_selftest・qa_video_selftest）と selectexpr_selftest が
+# n8.1.3・n9.0.2 で通ることを確かめた。同じ日の夜間版（N-127941）は、式と -vsync を直したあとも
+# qa の similar_run が、字なしの版を持たない壊し方13本で落ちた（clean は通る。ほかに clipped の loudness）。
 # BtbN の latest に置かれる枝は新しい2本だけ（2026-10-23 は 8.1 と 9.0。7.1 はもう無い）なので、
 # **どの枝も落とせなければ、夜間版に逃げずに赤くして止まる。** そのときは FFMPEG_STATIC_BRANCHES の既定を
 # いま置かれている枝に上げる（tools/shorts/render/selectexpr_selftest.py を、その版の ffmpeg で回してから）。
