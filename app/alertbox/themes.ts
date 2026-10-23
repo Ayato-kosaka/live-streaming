@@ -1,12 +1,20 @@
 /**
  * アラートの季節テーマ。**次の季節を足すのは、下の `THEMES` に1件足すだけ。**
  *
- * テーマが持つのは4つ。
+ * テーマが持つのは5つ。
  *
  *   1. 期間（JST）。`from` から `until` の**手前まで**
- *   2. 絵の置き場（`dir`）。名前の決まりは下の `bankFrameUrl` / `fxUrl`
- *   3. 貯金箱の字の色
- *   4. アラート中に後ろで出す小物の並び（`fx`）と、締めの群れ（`finale`）
+ *   2. 絵の置き場（`dir`）。名前の決まりは下の `bankFrameUrl` / `fxUrl` / `rigDir`
+ *   3. 貯金箱。切り絵の部品で動かすもの（`rigBank`）と、読めなかったときのコマ送り（`bank`）
+ *   4. 金額の段（`tiers`）。段ごとに、後ろで出す小物（`fx`）か、**演出の台本**（`show`）と、
+ *      名前の札の飾り（`plate`）を持つ
+ *   5. 締めの群れ（`finale`）
+ *
+ * ## 段は「台本」を持てる
+ *
+ * 段に `show` を書くと、その段は小物の代わりに台本どおりの演出になる（暗転・主役の登場・
+ * 札・数え上げ…）。台本は時刻つきの出来事の並び（`season/show/script.ts`）。
+ * 部品の絵が読めなかった日は、その段は小物の演出に落ちる（何も出ない、にしない）。
  *
  * テーマが無い日（期間外）は、いつもの豚の貯金箱のまま。何も足さない。
  *
@@ -15,6 +23,8 @@
  * 書き出し（`output: "static"`）は日付を焼くので、ここでは決めない。
  * 決めるのは `season/useSeason.ts`。OBS は開きっぱなしなので、1分ごとに見直す。
  */
+
+import type { Cue } from "./season/show/script";
 
 /** 小物が出てくる場所。画面の真ん中は使わない（配信画面とキャラを塞がない）。 */
 export type FxPlace =
@@ -65,9 +75,44 @@ export type FxSlot = {
   lane?: number;
 };
 
+/** 名前の札の飾り。字の大きさは画面の幅 1080 のときの px（幅に比例して縮める） */
+export type PlateStyle = {
+  /** 角丸の札か、金の額縁か */
+  frame: "round" | "gold";
+  /** 札の地（字が読めるように、背景の配信画面を沈める） */
+  bg: string;
+  /** 縁の色 */
+  edge: string;
+  nameColor: string;
+  amountColor: string;
+  nameSize: number;
+  amountSize: number;
+  /** 段1〜3のように台本が無いとき、札が出る秒 */
+  appearAt?: number;
+};
+
+/** 段の演出（台本つき） */
+export type TierShow = {
+  /** 振付けの名前（`season/show/` の中。今は "vampire" だけ） */
+  kind: "vampire";
+  /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
+  rigs: string[];
+  /**
+   * その人のキャラ絵と読み上げを出す秒。**0 なら今どおり（すぐ）**。
+   * 主役が「どうぞ」と見せる時刻に合わせる（台本の `reveal` と同じ秒）
+   */
+  revealSec: number;
+  /** 台本 */
+  script: Cue[];
+};
+
 export type FxTier = {
   /** この額（JPY）以上でこの段 */
   min: number;
+  /** 名前の札。無ければ今までどおりの字（画面の真ん中） */
+  plate?: PlateStyle;
+  /** 演出の台本。あれば小物（`slots` / `files`）の代わりにこれを出す */
+  show?: TierShow;
   /** 使う枠の数（`slots` の頭から） */
   slots: number;
   /** この段で出してよい小物（`fx` の `file`） */
@@ -80,6 +125,16 @@ export type FxTier = {
 export type TextTone = {
   color: string;
   shadow: string;
+};
+
+/** 切り絵の貯金箱。どの部品を使うか */
+export type RigBankDef = {
+  /** 振付けの名前（`season/bank/` の中。今は "kuro" だけ） */
+  kind: "kuro";
+  /** 走り回る子・器・ときどき横切るもの（`rigDir` の名前） */
+  mascot: string;
+  bucket: string;
+  visitor?: string;
 };
 
 export type SeasonTheme = {
@@ -107,6 +162,11 @@ export type SeasonTheme = {
     /** `manifest.json` が読めないときの絵の大きさ（中身の外接矩形は絵の全体とみなす） */
     fallbackSize: { width: number; height: number };
   };
+  /**
+   * 切り絵の貯金箱。あればこちらを先に使う。部品が1つでも読めなければ、
+   * 下の `bank`（コマ送り）に落ちる。それも読めなければ豚
+   */
+  rigBank?: RigBankDef;
   /** 貯金箱の字。上（目標）・中（いまの額）・下（ラベル） */
   text: { top: TextTone; center: TextTone; bottom: TextTone };
   /** 出しうる小物ぜんぶ。どれを出すかは段（`tiers`）が決める */
@@ -135,6 +195,38 @@ export type SeasonTheme = {
   } | null;
 };
 
+/** 吸血鬼の伯爵（段4、10,000円〜）の台本。秒の決め方は設計書 §3.5 の絵コンテ */
+const VAMPIRE: Cue[] = [
+  // 前兆。ほかのものは何も出ていない
+  { at: 0.0, do: "darken", to: 0.82, dur: 0.4 },
+  { at: 0.4, do: "pulse", n: 0.55 },
+  { at: 0.8, do: "pulse", n: 1 },
+  { at: 0.9, do: "batVortex", n: 20, dur: 0.6 },
+  { at: 1.5, do: "flash" },
+  // 登場
+  { at: 1.6, do: "moonRise", dur: 0.7 },
+  { at: 1.8, do: "coffinDrop", dur: 0.3 },
+  { at: 2.1, do: "shake", dur: 0.25 },
+  { at: 2.1, do: "hitstop", dur: 0.08 },
+  { at: 2.4, do: "lidRattle", dur: 0.36 },
+  { at: 2.76, do: "lidOpen" },
+  { at: 2.76, do: "coinFountain", n: 120, dur: 0.7 },
+  { at: 3.0, do: "rise", dur: 0.6 },
+  { at: 3.6, do: "capeOpen", dur: 0.35 },
+  { at: 3.8, do: "glint" },
+  { at: 4.0, do: "plateIn", dur: 0.6 },
+  { at: 4.6, do: "count", dur: 1.2 },
+  { at: 4.6, do: "coinRain", n: 60, dur: 1.2 },
+  { at: 5.8, do: "don" },
+  { at: 5.8, do: "bow", dur: 0.7 },
+  // その人の番
+  { at: 6.5, do: "reveal", dur: 0.8 },
+  { at: 6.5, do: "retreat", to: 0.2, dur: 2.5 },
+  { at: 9.0, do: "stay" },
+  // 締め（終わりの4秒前から）
+  { at: -4.0, do: "finale", dur: 4 },
+];
+
 export const THEMES: SeasonTheme[] = [
   {
     id: "halloween",
@@ -145,6 +237,8 @@ export const THEMES: SeasonTheme[] = [
     // 10/31 23:59 まで。11/1 0:00 からは豚に戻る
     until: "2026-11-01T00:00",
     dir: "/alert/themes/halloween",
+    /* 黒猫のクロが、かぼちゃのお菓子バケツのまわりを走り回る（設計書 §3.1 案A） */
+    rigBank: { kind: "kuro", mascot: "kuro", bucket: "bucket", visitor: "bat" },
     bank: {
       frames: 4,
       /* 0 ふつう / 1 にっこり（灯りが明るい）/ 2 ヘタが揺れる / 3 まばたき。
@@ -193,6 +287,16 @@ export const THEMES: SeasonTheme[] = [
     tiers: [
       {
         min: 0,
+        plate: {
+          frame: "round",
+          bg: "rgba(10,38,44,0.82)",
+          edge: "#7CF5DA",
+          nameColor: "#FFFFFF",
+          amountColor: "#8CFFE0",
+          nameSize: 48,
+          amountSize: 56,
+          appearAt: 0.8,
+        },
         slots: 3,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
         bats: 2,
@@ -200,6 +304,16 @@ export const THEMES: SeasonTheme[] = [
       },
       {
         min: 1000,
+        plate: {
+          frame: "round",
+          bg: "rgba(48,22,6,0.84)",
+          edge: "#FFB238",
+          nameColor: "#FFFFFF",
+          amountColor: "#FFC845",
+          nameSize: 56,
+          amountSize: 72,
+          appearAt: 0.8,
+        },
         slots: 5,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png"],
         bats: 4,
@@ -207,6 +321,16 @@ export const THEMES: SeasonTheme[] = [
       },
       {
         min: 5000,
+        plate: {
+          frame: "round",
+          bg: "rgba(44,8,46,0.84)",
+          edge: "#FF6AD5",
+          nameColor: "#FFFFFF",
+          amountColor: "#FF8CE4",
+          nameSize: 64,
+          amountSize: 88,
+          appearAt: 0.8,
+        },
         slots: 7,
         files: [
           "fx-web.png",
@@ -221,6 +345,23 @@ export const THEMES: SeasonTheme[] = [
       },
       {
         min: 10000,
+        plate: {
+          frame: "gold",
+          bg: "rgba(58,4,16,0.88)",
+          edge: "#F4C24E",
+          nameColor: "#FFF1C9",
+          amountColor: "#FFD54F",
+          nameSize: 76,
+          amountSize: 110,
+        },
+        /* 暗転 → 鼓動 → こうもりの渦 → 満月と棺 → 伯爵 → 金の額縁の札 → 数え上げ「ドン」。
+           小物（下の slots / files）は、部品が読めなかった日の控え */
+        show: {
+          kind: "vampire",
+          rigs: ["vlad", "bat", "props"],
+          revealSec: 6.5,
+          script: VAMPIRE,
+        },
         slots: 10,
         files: [
           "fx-web.png",
@@ -298,6 +439,21 @@ export const bankFrameUrl = (
 ) => `${th.dir}/bank-${layer}-${i}.png`;
 
 export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
+
+/** 切り絵の部品の置き場（`<dir>/rig/<名前>/rig.json` と部品の絵） */
+export const rigDir = (th: SeasonTheme, name: string) => `${th.dir}/rig/${name}`;
+
+/** テーマが使う切り絵の名前ぜんぶ（貯金箱と、段の演出の両方） */
+export function themeRigs(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  if (th.rigBank) {
+    out.add(th.rigBank.mascot);
+    out.add(th.rigBank.bucket);
+    if (th.rigBank.visitor) out.add(th.rigBank.visitor);
+  }
+  th.tiers.forEach((t) => t.show?.rigs.forEach((r) => out.add(r)));
+  return [...out];
+}
 
 export const manifestUrl = (th: SeasonTheme) => `${th.dir}/manifest.json`;
 

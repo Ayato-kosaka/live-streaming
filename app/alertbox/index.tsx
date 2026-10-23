@@ -12,7 +12,15 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { View, Text, Animated, Image, TextStyle, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Animated,
+  Image,
+  TextStyle,
+  Platform,
+  useWindowDimensions,
+} from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
@@ -27,6 +35,11 @@ import { DeadMark } from "./components/DeadMark";
 import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
 import { SeasonEffects } from "./season/SeasonEffects";
+import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
+import { TierShow } from "./season/show/TierShow";
+import { NamePlate } from "./season/plate/NamePlate";
+import { CharBox } from "./season/plate/CharBox";
+import { splitPlateText } from "./season/plate/plateText";
 import {
   describeNickname,
   matchViewerByNickname,
@@ -125,6 +138,15 @@ export default function AlertBox() {
   /* 今日の季節テーマと、その絵。貯金箱とアラートの後ろの小物の両方に渡す。
      テーマが無い日は何も足さない（いつもの豚のまま）。 */
   const season = useSeason(params.theme);
+  /* 通知を出す関数は、キューが変わったときにしか作り直されない。季節はその外で
+     変わる（絵を読み終わる）ので、出す瞬間の季節を ref で読む */
+  const seasonRef = useRef(season);
+  seasonRef.current = season;
+
+  /* 出している通知の「段と出し方」（台本・札・その人の絵を出す秒）。
+     通知1件のあいだは決めたままにする（途中で絵が読み終わっても組み直さない） */
+  const [stage, setStage] = useState<AlertStage | null>(null);
+  const { width: winW, height: winH } = useWindowDimensions();
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -764,6 +786,30 @@ export default function AlertBox() {
     }
     showSource(source);
 
+    // 金額に応じて調整された表示時間
+    const adjustedAlertDuration =
+      calculateAdjustedAlertDuration(currentNotification);
+
+    /* 段と出し方。季節が無い日は null（今までどおり）。
+       台本の部品が読めていなければ、その段は前の小物の演出に落ちる */
+    const sn = seasonRef.current;
+    const isMoney =
+      currentNotification.type === "donation" ||
+      currentNotification.type === "superchat";
+    const nextStage = isMoney
+      ? stageFor(
+          sn.theme,
+          currentNotification.type === "superchat"
+            ? currentNotification.jpy
+            : currentNotification.amount,
+          adjustedAlertDuration,
+          (name) => sn.rigs.has(name)
+        )
+      : null;
+    setStage(nextStage);
+    /* その人の絵と読み上げを出す秒。0 なら今どおり（すぐ） */
+    const revealSec = nextStage?.revealSec ?? 0;
+
     // 表示開始（フェードイン）
     setNotification(currentNotification);
     Animated.timing(opacity, {
@@ -772,19 +818,19 @@ export default function AlertBox() {
       useNativeDriver: true,
     }).start();
 
-    // 読み上げ（設定が有効な donation/superchat のみ）
+    // 読み上げ（設定が有効な donation/superchat のみ）。台本があれば、その人の絵が出る秒から
     if (
       currentNotification.type === "donation" ||
       currentNotification.type === "superchat"
     )
-      if (settings[currentNotification.type]?.tts.enable === 1)
-        speak(currentNotification.message, (e) =>
-          sendLog("AlertBox", sessionId, "ttsError", { message: e.message })
-        );
-
-    // 金額に応じて調整された表示時間
-    const adjustedAlertDuration =
-      calculateAdjustedAlertDuration(currentNotification);
+      if (settings[currentNotification.type]?.tts.enable === 1) {
+        const say = () =>
+          speak(currentNotification.message, (e) =>
+            sendLog("AlertBox", sessionId, "ttsError", { message: e.message })
+          );
+        if (revealSec > 0) setTimeout(say, revealSec * 1000);
+        else say();
+      }
 
     // 指定時間後にフェードアウト→完了後に通知をクリア＆キュー先頭を削除
     setTimeout(() => {
@@ -795,6 +841,7 @@ export default function AlertBox() {
       }).start();
       setTimeout(() => {
         setNotification(null);
+        setStage(null);
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
@@ -973,7 +1020,17 @@ export default function AlertBox() {
               <View style={styles.alertContainer}>
                 {/* 季節の小物。**キャラの絵より後ろ**（いちばん奥の飾り）。
                     名簿の絵文字の花火・雨はこの上にそのまま出る */}
-                {season.theme && (
+                {season.theme && stage?.show && (
+                  <TierShow
+                    key={notification.id}
+                    show={stage.show}
+                    rigs={season.rigs}
+                    durationSec={calculateAdjustedAlertDuration(notification)}
+                    W={winW}
+                    H={winH}
+                  />
+                )}
+                {season.theme && !stage?.show && (
                   <SeasonEffects
                     theme={season.theme}
                     fx={season.fx}
@@ -987,6 +1044,12 @@ export default function AlertBox() {
                   />
                 )}
 
+                <CharBox
+                  key={`char-${notification.id}`}
+                  themed={!!stage?.plate}
+                  revealAt={stage?.revealSec ?? 0}
+                  H={winH}
+                >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
                     ref={videoRef}
@@ -1077,6 +1140,7 @@ export default function AlertBox() {
                       }}
                     />
                   )}
+                </CharBox>
 
                 {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
                 {emoji && (
@@ -1108,7 +1172,28 @@ export default function AlertBox() {
                     )
                   )}
 
+                {/* 季節の札（上から 30% に、名前と額を大きく）。季節の外は今までの字 */}
+                {stage?.plate && (
+                  <NamePlate
+                    key={`plate-${notification.id}`}
+                    plate={stage.plate}
+                    lines={splitPlateText(mainTextTemplate, {
+                      name: notification.nickname,
+                      amount: notification.amount,
+                      unit:
+                        notification.type === "superchat"
+                          ? notification.currency
+                          : "円",
+                    })}
+                    message={notification.message}
+                    W={winW}
+                    H={winH}
+                    {...plateTiming(stage)}
+                  />
+                )}
+
                 {/* テキスト部（テンプレートの {名前} / {金額} / {単位} を置換） */}
+                {!stage?.plate && (
                 <View style={styles.textContainer}>
                   <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
@@ -1163,6 +1248,7 @@ export default function AlertBox() {
                     {notification.message}
                   </Text>
                 </View>
+                )}
               </View>
             )}
 

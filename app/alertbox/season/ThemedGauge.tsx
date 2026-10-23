@@ -37,7 +37,7 @@ type Props = {
  * （橙の中身の上の橙の額が、実際に読めなくなった）。8方向にずらした影で縁を描く。
  * `-webkit-text-stroke` + `paint-order` は OBS の古い Chromium で字の内側を削るので使わない。
  */
-function outline(c: string, w: number): string {
+export function outline(c: string, w: number): string {
   const d = w * 0.72;
   return [
     `${w}px 0 0 ${c}`,

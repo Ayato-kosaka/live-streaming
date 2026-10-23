@@ -16,6 +16,10 @@
  * 貯金箱のコマが1枚でも読めなければ、いつもの豚で出す。
  * 読めなかったものは 10分おきに黙って読み直す（あとから絵が置かれた日にも、
  * 開き直さずに出るように）。
+ *
+ * 切り絵の部品（`rig/<名前>/rig.json` と部品の絵）も同じ。**部品が1枚でも読めなければ、
+ * その組は無かったことにする**（片腕の無い伯爵を配信に出さない）。使う側は、組が無ければ
+ * 前の作り（コマ送りの貯金箱・小物の演出）に落ちる。
  */
 import { useEffect, useMemo, useState } from "react";
 import { Platform } from "react-native";
@@ -25,12 +29,16 @@ import {
   fxUrl,
   manifestUrl,
   readManifest,
+  rigDir,
   themeAt,
   themeFromParam,
+  themeRigs,
   type Rect,
   type SeasonTheme,
   type ThemeManifest,
 } from "../themes";
+import { parseRig, rigFiles } from "./rig/rig";
+import type { LoadedRig } from "./rig/RigView";
 
 /** 読めた絵。大きさは実物から取る */
 export type LoadedImage = { url: string; width: number; height: number };
@@ -52,6 +60,10 @@ export type Season = {
   bank: SeasonBank | "loading" | null;
   /** 読めた小物（ファイル名 → 絵） */
   fx: ReadonlyMap<string, LoadedImage>;
+  /** 読めた切り絵の組（名前 → 組）。読めなかった組は入っていない */
+  rigs: ReadonlyMap<string, LoadedRig>;
+  /** 切り絵を一度は読みに行き終えたか（読めたかどうかは問わない） */
+  rigsSettled: boolean;
 };
 
 /** テーマを見直す間隔。分の単位で切り替われば足りる */
@@ -66,6 +78,11 @@ const isWeb = Platform.OS === "web";
 /* 読んだ絵はページに1つずつ持つ。テーマを見直しても、同じ絵を二度落とさない。
    読めなかったものは控えない（次の読み直しでもう一度試す）。 */
 const loaded = new Map<string, Promise<LoadedImage | null>>();
+/** 読み終わった絵の要素（解読済み）。絵の中身の外形を測るときに使う */
+const elements = new Map<string, HTMLImageElement>();
+
+/** 読み終わった絵の要素。まだ読めていなければ null */
+export const loadedElement = (url: string): HTMLImageElement | null => elements.get(url) ?? null;
 
 export function loadImage(url: string): Promise<LoadedImage | null> {
   if (!isWeb || typeof window === "undefined" || typeof window.Image !== "function") {
@@ -85,10 +102,12 @@ export function loadImage(url: string): Promise<LoadedImage | null> {
     };
     const timer = window.setTimeout(() => finish(null), IMAGE_TIMEOUT_MS);
     img.onload = () => {
-      const ok = () =>
-        img.naturalWidth > 0
-          ? finish({ url, width: img.naturalWidth, height: img.naturalHeight })
-          : finish(null);
+      const ok = () => {
+        if (img.naturalWidth > 0) {
+          elements.set(url, img);
+          finish({ url, width: img.naturalWidth, height: img.naturalHeight });
+        } else finish(null);
+      };
       /* 解読まで済ませておく。済ませないと、初めて出す瞬間に解読が走って
          コマ送りの1周目が引っかかる */
       if (typeof img.decode === "function") img.decode().then(ok, ok);
@@ -142,6 +161,31 @@ function bankBox(
 }
 
 const EMPTY: ReadonlyMap<string, LoadedImage> = new Map();
+const NO_RIGS: ReadonlyMap<string, LoadedRig> = new Map();
+
+/** 切り絵の組を1つ読む。rig.json が読めない・部品が1枚でも読めないなら null */
+async function loadRig(th: SeasonTheme, name: string): Promise<LoadedRig | null> {
+  const base = rigDir(th, name);
+  try {
+    const ctl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = setTimeout(() => ctl?.abort(), IMAGE_TIMEOUT_MS);
+    const res = await fetch(`${base}/rig.json`, { signal: ctl?.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const def = parseRig(await res.json());
+    if (!def) return null;
+    const files = rigFiles(def);
+    const imgs = await Promise.all(files.map((f) => loadImage(`${base}/${f}`)));
+    if (!imgs.every((v) => v)) return null;
+    return {
+      def,
+      base,
+      images: new Map(files.map((f, i) => [f, imgs[i]!])),
+    };
+  } catch {
+    return null;
+  }
+}
 
 export function useSeason(param: string | string[] | undefined): Season {
   const forced = themeFromParam(param);
@@ -168,16 +212,23 @@ export function useSeason(param: string | string[] | undefined): Season {
 
   const [bank, setBank] = useState<Season["bank"]>(null);
   const [fx, setFx] = useState<ReadonlyMap<string, LoadedImage>>(EMPTY);
+  const [rigs, setRigs] = useState<ReadonlyMap<string, LoadedRig>>(NO_RIGS);
+  const [rigsSettled, setRigsSettled] = useState(false);
 
   useEffect(() => {
     if (!theme || !isWeb) {
       setBank(null);
       setFx(EMPTY);
+      setRigs(NO_RIGS);
+      setRigsSettled(false);
       return;
     }
     let alive = true;
     setBank("loading");
     setFx(EMPTY);
+    setRigs(NO_RIGS);
+    setRigsSettled(false);
+    const rigNames = themeRigs(theme);
 
     const files = new Set<string>(theme.fx.map((f) => f.file));
     theme.finale?.files.forEach((f) => files.add(f));
@@ -190,14 +241,23 @@ export function useSeason(param: string | string[] | undefined): Season {
             loadImage(bankFrameUrl(theme, layer, i))
           )
         );
-      const [base, fill, fxList] = await Promise.all([
+      const [base, fill, fxList, rigList] = await Promise.all([
         frames("base"),
         frames("fill"),
         Promise.all(
           [...files].map(async (f) => [f, await loadImage(fxUrl(theme, f))] as const)
         ),
+        Promise.all(rigNames.map(async (n) => [n, await loadRig(theme, n)] as const)),
       ]);
       if (!alive) return false;
+
+      setRigs((prev) => {
+        // 読めている組は差し替えない（10分ごとの読み直しで描き直さない）
+        const next = new Map(prev);
+        for (const [n, r] of rigList) if (r && !next.has(n)) next.set(n, r);
+        return next.size === prev.size ? prev : next;
+      });
+      setRigsSettled(true);
 
       const bankOk = [...base, ...fill].every((v) => v);
       setBank((prev) => {
@@ -217,7 +277,7 @@ export function useSeason(param: string | string[] | undefined): Season {
         for (const [f, img] of fxList) if (img) next.set(f, img);
         return next.size === prev.size ? prev : next;
       });
-      return bankOk && fxList.every(([, img]) => img);
+      return bankOk && fxList.every(([, img]) => img) && rigList.every(([, r]) => r);
     };
 
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -232,5 +292,8 @@ export function useSeason(param: string | string[] | undefined): Season {
     };
   }, [theme]);
 
-  return useMemo(() => ({ theme, bank, fx }), [theme, bank, fx]);
+  return useMemo(
+    () => ({ theme, bank, fx, rigs, rigsSettled }),
+    [theme, bank, fx, rigs, rigsSettled]
+  );
 }

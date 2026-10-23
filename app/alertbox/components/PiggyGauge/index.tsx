@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { PiggyBank } from "./PiggyBank";
 import type { Season } from "../../season/useSeason";
 import { ThemedGauge } from "../../season/ThemedGauge";
+import { KuroBank } from "../../season/bank/KuroBank";
 
 export type PiggyGaugeProps = {
   currentAmount: number; // 現在（例: 65000）
@@ -41,6 +42,29 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   /* 季節の貯金箱。絵を読んでいる途中は何も出さない（豚を一瞬出してから
      差し替えると、OBS を開いた直後に豚がちらつく）。読めなかったら豚 */
   if (season?.theme && season.bank === "loading") return null;
+  /* 切り絵の貯金箱（クロとバケツ）。部品を読み終えるまで待ち、読めた組があれば
+     こちらを出す。読めなければ下のコマ送り（→ 豚）に落ちる */
+  const rb = season?.theme?.rigBank;
+  if (season?.theme && rb) {
+    if (!season.rigsSettled) return null;
+    const mascot = season.rigs.get(rb.mascot);
+    const bucket = season.rigs.get(rb.bucket);
+    if (mascot && bucket) {
+      return (
+        <View style={styles.container}>
+          <KuroBank
+            theme={season.theme}
+            mascot={mascot}
+            bucket={bucket}
+            visitor={rb.visitor ? season.rigs.get(rb.visitor) ?? null : null}
+            currentAmount={currentAmount}
+            targetAmount={targetAmount}
+            label={label}
+          />
+        </View>
+      );
+    }
+  }
   if (season?.theme && season.bank && season.bank !== "loading") {
     return (
       <View style={styles.container}>
