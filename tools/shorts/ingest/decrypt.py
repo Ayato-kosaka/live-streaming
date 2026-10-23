@@ -40,6 +40,15 @@ clips の置き場には、mp4 の大きな封とは別に、見る用の小さ�
 開くのに要るファイルだけを取り、`<out>/.sealed/<dest>/` に置いてから開く。
 置き場を指さなければ、その枝の `shorts/.work/` で小さな封を持つ置き場のうち、
 **この鍵で包んだもの**を全部開く（ほかの担当の鍵のものは飛ばす）。
+
+**中身は git の blob で取る（`git/blobs/<sha>`）。`contents/<道>` の raw では取らない。**
+contents の raw は、GitHub が「文字だ」と見立てたファイルを UTF-8 に**書き換えて**返す。
+2026-10-23、dRXae0mJw8M の `key.enc`（384バイトの乱数）が UTF-16BE の文字と見立てられ、
+571バイトの文字列になって届いた（応答の Content-Length から 571。GitHub の側で化けている）。
+包んだ鍵が壊れるので openssl が開けず、`CalledProcessError` とだけ出て止まった。
+blob の raw は書き換えないうえ、届いたものの git の hash（`blob <長さ>\\0` + 中身の sha1）を
+置き場の一覧にある blob の sha と突き合わせられる。合わなければ開かずに断る
+（manifest に sha256 の無い `key.enc` も、これで守れる）。
 """
 
 from __future__ import annotations
@@ -234,17 +243,41 @@ def remote_dests(repo: str, sha: str, get=gh_get) -> list[str]:
                    if re.search(r"/sheets\.enc(\.\d{3})?$", p)})
 
 
+class Garbled(ValueError):
+    """枝から取ったものが、枝の中身と1バイトでも違って届いた（開かない）。"""
+
+
+def git_blob_sha(path: Path) -> str:
+    """git がそのファイルに付ける blob の sha（`git hash-object` と同じ）。"""
+    h = hashlib.sha1(f"blob {path.stat().st_size}\0".encode())
+    for b in _chunks(path):
+        h.update(b)
+    return h.hexdigest()
+
+
 def fetch_remote(repo: str, sha: str, rel: str, into: Path, fp: str | None, sheets: bool,
                  get=gh_get) -> tuple[Path | None, str]:
     """manifest.json と、開くのに要るファイルだけを取る。(置いた所, 一言) を返す。
 
     fp を渡すと、鍵が違う置き場は manifest だけ読んで飛ばす（None を返す）。
+    1つでも枝の中身と違って届いたら `Garbled` で止める（化けたものを開きに行かない）。
     """
     d = into / rel
     if d.exists():
         shutil.rmtree(d)
-    src = f"repos/{repo}/contents/{WORK}/{rel}"
-    gh_get_to = (lambda name: get(f"{src}/{name}?ref={sha}", d / name, raw=True))
+    # 置き場の一覧で、名前ごとの blob の sha を先に知る（取ったあとの突き合わせに使う）
+    listing = json.loads(get(f"repos/{repo}/contents/{WORK}/{rel}?ref={sha}"))
+    blob_of = {e["name"]: e["sha"] for e in listing if e.get("type") == "file"}
+
+    def gh_get_to(name: str) -> None:
+        if name not in blob_of:
+            raise Garbled(f"{name} が枝の置き場に無い")
+        f = d / name
+        get(f"repos/{repo}/git/blobs/{blob_of[name]}", f, raw=True)
+        if git_blob_sha(f) != blob_of[name]:
+            raise Garbled(f"{name} が枝の中身と違って届いた（{f.stat().st_size}バイト。"
+                          "GitHub が文字に書き換えた？）ので開かない")
+
     gh_get_to("manifest.json")
     man = json.loads((d / "manifest.json").read_text(encoding="utf-8"))
     if fp and man.get("pubkey_sha256") != fp:
@@ -276,6 +309,7 @@ def main() -> int:
         return 2
     priv = Path(a.key)
     fp = pub_fp(priv)
+    bad = 0
     if a.branch:
         dirs = []
         try:
@@ -291,11 +325,18 @@ def main() -> int:
                 print("!! --branch で置き場を指さないのは --sheets のときだけ（大きいほうは git で取る）")
                 return 2
             if every:
-                rels = remote_dests(repo, sha)
+                # get は呼ぶときに引く（見張りが偽の GitHub に差し替えて main ごと回せるように）
+                rels = remote_dests(repo, sha, get=gh_get)
             print(f"{repo} の {a.branch}（{sha[:12]}）から {len(rels)}か所")
             for rel in rels:
-                d, msg = fetch_remote(repo, sha, rel, out / ".sealed", fp if every else None,
-                                      a.sheets)
+                try:
+                    d, msg = fetch_remote(repo, sha, rel, out / ".sealed", fp if every else None,
+                                          a.sheets, get=gh_get)
+                except Garbled as e:
+                    # 1か所が化けても、ほかの置き場は開く。化けたところは数えて赤にする
+                    print(f"NG  {rel}  {e}")
+                    bad += 1
+                    continue
                 print(f"   {rel}  {msg}")
                 if d:
                     dirs.append(d)
@@ -307,8 +348,7 @@ def main() -> int:
             p.parent for p in (ROOT / WORK).rglob("manifest.json"))
     if not dirs:
         print("開くものが無い（git pull した？ --branch なら、枝にこの鍵の小さな封が無い）")
-        return 2
-    bad = 0
+        return 1 if bad else 2
     for d in dirs:
         try:
             ok, msg = open_one(d, priv, fp, out, sheets=a.sheets)
