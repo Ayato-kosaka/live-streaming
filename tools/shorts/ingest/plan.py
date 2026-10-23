@@ -21,6 +21,12 @@ workflow_dispatch のときは入力から依頼を1件こしらえる（形は�
   待つのは依頼の形を見終わってから（読めない依頼を60分待たせてから断らない）
 - 結果を置く枝が `claude/` で始まらない（**master に平文も暗号文も入れない**）
 
+## 字幕だけの道（captions）は列を分ける
+
+`captions` は媒体を落とさずに字幕と題・長さだけを取る道（quick_captions.py）。fetch / analyze の
+列（`matrix` / `fetch` / `count`）には入れず、`captions` / `captions_count` に分けて書く。
+同じ push に archive が混ざっていても、字幕は解析を待たずに数分で届く（#1014）。
+
 ログに出すのは「何本・どの動画・どの mode」だけ。鍵の中身は出さない
 （公開鍵なので漏れても困らないが、出す理由もない）。
 """
@@ -43,7 +49,9 @@ from gate import Gate  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
 REQ_DIR = "shorts/requests/"
-MODES = ("archive", "reference", "zoom", "channel", "clips")
+MODES = ("archive", "reference", "zoom", "channel", "clips", "captions")
+# 媒体を落とさない道。fetch / analyze の列に入れず、別の job（captions）が取って封をして置く
+QUICK = ("captions",)
 TABS = ("shorts", "videos", "streams")
 # @ハンドルか UC で始まるチャンネルID。置き場の道にそのまま使うので ASCII に絞る
 CHANNEL = re.compile(r"^(@[A-Za-z0-9._-]{3,30}|UC[A-Za-z0-9_-]{22})$")
@@ -155,6 +163,13 @@ def items_of(req: dict, origin: str) -> list[dict]:
         ranges = [parse_range(r) for r in rs]
     out = []
     for v in vids:
+        if mode == "captions":
+            # **字幕と題・長さだけ。** whisper も区間も持たない（媒体を落とさないので、
+            # 書き起こす音もコマも無い）。置き場は <id>/captions（archive とは別の封）
+            out.append({"video": v, "mode": "captions", "req": origin, "pubkey": pem,
+                        "pubkey_sha256": fp, "dir": "captions", "key": f"{v}__captions",
+                        "dest": f"{v}/captions"})
+            continue
         if mode == "clips":
             # **clips は動画1本で1つの job。** 区間ごとに job を分けると、同じ配信を
             # 区間の数だけ取り直すことになる（取るのは Cookie を握る1本の列なので遅い）。
@@ -352,16 +367,33 @@ def main() -> int:
         print(f"  {it['key']}  ← {it['req']}")
     if items and not wait_gate():
         return 1
-    gh_out = os.environ.get("GITHUB_OUTPUT")
-    if gh_out:
-        with open(gh_out, "a", encoding="utf-8") as f:
-            f.write(f"matrix={json.dumps({'include': items}, ensure_ascii=False)}\n")
-            # 取る job には鍵を渡さない（使わないうえ、env の見出しに37本ぶん並ぶ）
-            light = [{k: v for k, v in it.items() if k != "pubkey"} for it in items]
-            f.write(f"fetch={json.dumps({'include': light}, ensure_ascii=False)}\n")
-            f.write(f"count={len(items)}\n")
-            f.write(f"branch={branch}\n")
+    write_outputs(items, branch)
     return 0
+
+
+def split(items: list[dict]) -> tuple[list[dict], list[dict]]:
+    """（字幕だけの道に回すもの, 取って解析する列に回すもの）。"""
+    quick = [it for it in items if it["mode"] in QUICK]
+    return quick, [it for it in items if it["mode"] not in QUICK]
+
+
+def write_outputs(items: list[dict], branch: str) -> None:
+    """GITHUB_OUTPUT に書く。**`count` は取って解析する列の本数だけ**（fetch / analyze /
+    cleanup がこれを見て走るので、字幕だけの依頼で空の fetch を起こさない）。
+    字幕だけの道は `captions`（鍵つき。その job で封をする）と `captions_count`。"""
+    gh_out = os.environ.get("GITHUB_OUTPUT")
+    if not gh_out:
+        return
+    quick, rest = split(items)
+    with open(gh_out, "a", encoding="utf-8") as f:
+        f.write(f"matrix={json.dumps({'include': rest}, ensure_ascii=False)}\n")
+        # 取る job には鍵を渡さない（使わないうえ、env の見出しに37本ぶん並ぶ）
+        light = [{k: v for k, v in it.items() if k != "pubkey"} for it in rest]
+        f.write(f"fetch={json.dumps({'include': light}, ensure_ascii=False)}\n")
+        f.write(f"count={len(rest)}\n")
+        f.write(f"captions={json.dumps({'include': quick}, ensure_ascii=False)}\n")
+        f.write(f"captions_count={len(quick)}\n")
+        f.write(f"branch={branch}\n")
 
 
 if __name__ == "__main__":

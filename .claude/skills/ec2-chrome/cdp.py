@@ -5,7 +5,7 @@
 `ec2.py run` で送る短い python から `sys.path.insert(0, "/home/ubuntu/cdp"); from cdp import *`
 で使う。
 
-    up("suzuri")            # ~/cdp-suzuri で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）
+    up("suzuri")            # ~/cdp-suzuri で Chrome を起動（無ければ既定のプロファイルから1回だけ複製。拡張などは写さない）
     t = tab()               # いちばん手前のタブ
     t.go("https://suzuri.jp/")
     t.js("document.title")
@@ -32,6 +32,14 @@ HOME = "/home/ubuntu"
 SRC_UDD = f"{HOME}/.config/google-chrome"
 # サイト名 → ポート。並べて起動しても奪い合わないように、名前ごとに固定する
 PORTS = {"doneru": 9222, "suzuri": 9223}
+# 既定の Chrome から写さないもの（rsync の --exclude。Default の下）。
+# あやとが遠隔デスクトップで使う普段の Chrome には、拡張（AdBlock・画面録画・VPN）・
+# Google ドキュメントのオフライン・サービスワーカーのキャッシュが溜まっていて、まるごと写すと
+# サイトごとに 1.2〜2.0G、7つで 10G を超えた（EC2 のディスク 29G のうち。#1013）。
+# どれもログインとは関係が無い（ログインは Network/ の Cookie・Local Storage・Login Data）
+SEED_SKIP = ["Extensions", "Local Extension Settings", "Extension State", "Extension Rules",
+             "Extension Scripts", "Service Worker", "File System",
+             "IndexedDB/https_drive.google.com_0.indexeddb.*", "IndexedDB/https_docs.google.com_0.indexeddb.*"]
 
 
 def _port(name):
@@ -62,12 +70,20 @@ def up(name, url="about:blank", reseed=False):
     if reseed or not os.path.isdir(f"{udd}/Default"):
         subprocess.run(["rm", "-rf", udd])
         os.makedirs(udd, exist_ok=True)
-        subprocess.run(["cp", "-a", f"{SRC_UDD}/Default", f"{SRC_UDD}/Local State", udd + "/"], check=True)
+        skip = [f"--exclude=/Default/{p}" for p in SEED_SKIP]
+        subprocess.run(["rsync", "-a", *skip, f"{SRC_UDD}/Default", f"{SRC_UDD}/Local State", udd + "/"], check=True)
         subprocess.run(["chown", "-R", "ubuntu:ubuntu", udd])
         print(f"seed: {SRC_UDD}/Default -> {udd}")
     subprocess.run(["sh", "-c", f"rm -f {udd}/Singleton*"])
+    # --disable-extensions: 写した Preferences に拡張が載っていると、ファイルを消しても起動のたびに
+    #   ウェブストアから入れ直す（cdp-fish で、消して 764M → 起動2回で 1.3G に戻った。2026-10-22）。
+    #   CDP で触るのに拡張は要らない
+    # --disable-component-update: Chrome が自分で落とす部品（component_crx_cache ほか）を増やさない
+    # --disable-background-networking は足さない。同期やログインの更新まで止めるおそれがあり、
+    #   Google のログインは一度まとめて切れている（#768）
     cmd = (f"export DISPLAY=:20; setsid nohup google-chrome --user-data-dir={udd} "
            f"--remote-debugging-port={port} --remote-allow-origins=http://localhost:{port} "
+           f"--disable-extensions --disable-component-update "
            f"--no-first-run --no-default-browser-check --window-size=1280,900 '{url}' "
            f">/tmp/chrome-{name}.log 2>&1 < /dev/null & disown")
     subprocess.run(["sudo", "-u", "ubuntu", "-i", "--", "bash", "-c", cmd])

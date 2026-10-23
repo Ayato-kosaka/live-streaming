@@ -1,6 +1,7 @@
 """YouTube の字幕ファイル（json3 / vtt）を、時刻つきの行に読む。
 
-ショートの材料（analyze.py）と、配信の文字起こし（python/stream_text.py）の両方が使う。
+ショートの材料（analyze.py・字幕だけの道の quick_captions.py）と、
+配信の文字起こし（python/stream_text.py）が使う。
 **読み方を2か所に持たない。** 片方だけ直して、もう片方が古いまま、になるので。
 """
 
@@ -55,3 +56,61 @@ def parse_vtt(path: Path) -> list[dict]:
                 cur["text"] = (cur["text"] + " " + t).strip()
                 last = t
     return [r for r in rows if r["text"]]
+
+
+END_MARKS = ("。", "！", "？", "!", "?")
+# 1語の中の句点の直後で切る（句点は前に残す）
+SENT_SPLIT = re.compile(r"(?<=[。！？!?])")
+PUNCT = "。、！？!?,."
+
+
+def lines(rows: list[dict], gap: float = 1.2, max_chars: int = 40) -> list[tuple[float, str]]:
+    """字幕の行を、読む用の「1行1文」に刻み直す。（言い始めの秒, 文）の並び。
+
+    自動字幕の1行（json3 の event）は画面に出す1行で、文の途中で切れて次の行へ続く。
+    原稿の区間を決めるときに読みたいのは「何秒から何を言ったか」なので、**語の時刻で**
+    つなぎ直して切る。自動字幕には句読点がほとんど無いので、切るのは
+    句点・語と語の頭のあいだが `gap` 秒を越えたとき（息つぎ）・`max_chars` 字に届いたとき。
+    語の時刻が無い字幕（vtt）は1行をそのまま1つの語として扱う。
+
+    いまの ja の自動字幕には句点が付く（VusdZVyjgjQ の 3時間55分で「。」2,357・「?」252）。
+    ただし語の時刻を持たない長い1語（130字近く）で来る行もあるので、**1語の中の句点でも切る**
+    （切った後ろは同じ秒）。息つぎのあとに句点だけが来たら、前の文の尻に付ける。
+    """
+    words: list[tuple[float, str]] = []
+    for r in rows:
+        ws = r.get("words") or []
+        pairs = [(w["t"], w["w"]) for w in ws] if ws else (
+            [(r["start"], r["text"])] if r.get("text") else [])
+        for t, w in pairs:
+            words += [(t, piece) for piece in SENT_SPLIT.split(w) if piece]
+    out: list[tuple[float, str]] = []
+    cur, t0, prev = "", None, None
+    for t, w in words:
+        w = re.sub(r"\s+", " ", w)
+        if w.strip() and not w.strip().strip(PUNCT):
+            # 句読点だけの語は、息つぎのあとに来ても今の文（無ければ前の文）の尻に付ける。
+            # 「。」1字の行を作らない
+            p = w.strip()
+            if cur.strip():
+                cur += p
+                if p.endswith(END_MARKS):
+                    out.append((t0, cur.strip()))
+                    cur, t0 = "", None
+            elif out and not out[-1][1].endswith(END_MARKS):
+                out[-1] = (out[-1][0], out[-1][1] + p)
+            prev = t
+            continue
+        if cur.strip() and ((prev is not None and t - prev > gap) or len(cur.strip()) >= max_chars):
+            out.append((t0, cur.strip()))
+            cur, t0 = "", None
+        if t0 is None:
+            t0 = t
+        cur += w
+        prev = t
+        if w.strip().endswith(END_MARKS):
+            out.append((t0, cur.strip()))
+            cur, t0 = "", None
+    if cur.strip():
+        out.append((t0, cur.strip()))
+    return [(t, s) for t, s in out if s]
