@@ -103,8 +103,9 @@ export const NamePlate: React.FC<Props> = ({
     if (carried) {
       // 上から運ばれてきて、掛かったところで振り子のように揺れて止まる
       play(box, [
-        { transform: `translateY(${-H * 0.42}px) rotate(-4deg)`, opacity: 0, offset: 0 },
-        { transform: `translateY(${-H * 0.4}px) rotate(-4deg)`, opacity: 1, offset: 0.03, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
+        // 画面の高さに対する割合（vh）で書く。途中で箱の大きさが変わっても、古い高さを握らない
+        { transform: "translateY(-42vh) rotate(-4deg)", opacity: 0, offset: 0 },
+        { transform: "translateY(-40vh) rotate(-4deg)", opacity: 1, offset: 0.03, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
         { transform: "translateY(0px) rotate(3deg)", offset: 0.5, easing: "ease-in-out" },
         { transform: "translateY(0px) rotate(-2deg)", offset: 0.7, easing: "ease-in-out" },
         { transform: "translateY(0px) rotate(1deg)", offset: 0.85, easing: "ease-in-out" },
@@ -264,7 +265,7 @@ export const NamePlate: React.FC<Props> = ({
             s.kind === "name" ? (
               <span key={i}>{s.text}</span>
             ) : (
-              <span key={i} style={{ fontSize: "0.72em", marginLeft: "0.2em" }}>
+              <span key={i} style={{ fontSize: "0.8em", marginLeft: "0.2em" }}>
                 {s.text}
               </span>
             )

@@ -187,7 +187,12 @@ export function runVampire(
   };
 
   // ---------------------------------------------------------------- 金貨
-  const coins = new Coins(L.canvas, W, H, partImage(rigs.props, "coin"), () => m.time() / 1000);
+  /* canvas は舞台の大きさ。描く画素の数は「いま画面で何 px に拡げられているか」で決める
+     （1080×1920 をそのまま dpr で描くと、スマホで 3,000 万画素を超える） */
+  const coins = new Coins(L.canvas, W, H, partImage(rigs.props, "coin"), () => m.time() / 1000, () => {
+    const k = L.canvas.getBoundingClientRect().width / W || 1;
+    return Math.min(2, k * (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1));
+  });
 
   // ---------------------------------------------------------------- 揺れ（演出の層だけ）
   const shake = (ms: number, amp: number) => {
@@ -204,12 +209,15 @@ export function runVampire(
   };
 
   // ---------------------------------------------------------------- 札の位置
+  /* 札は舞台の外（React）にあるので、画面の位置を測って舞台の px に直す。
+     舞台は今の箱へ拡げてあるので、拡げ方（k）で割る */
   const plateBox = () => {
     const el = L.root.querySelector<HTMLElement>('[data-plate="box"]');
-    const rr = L.root.getBoundingClientRect();
+    const sr = L.dark.getBoundingClientRect();
+    const k = sr.width / W || 1;
     if (!el) return { l: X(0.12), t: Y(0.3), r: X(0.88), b: Y(0.46) };
     const r = el.getBoundingClientRect();
-    return { l: r.left - rr.left, t: r.top - rr.top, r: r.right - rr.left, b: r.bottom - rr.top };
+    return { l: (r.left - sr.left) / k, t: (r.top - sr.top) / k, r: (r.right - sr.left) / k, b: (r.bottom - sr.top) / k };
   };
 
   // ---------------------------------------------------------------- 出来事ごと
@@ -338,8 +346,8 @@ export function runVampire(
           { transform: `translate(${-X(0.55) / sc}px, ${-Y(0.42) / sc}px) rotate(-260deg)` },
         ], { duration: 800, fill: "forwards" });
       }
-      // 金の光が噴き出す
-      const beam = div(L.coffin, {
+      // 金の光が噴き出す（伯爵より奥。起き上がる伯爵の前を塞がない）
+      const beam = div(L.moon, {
         position: "absolute",
         left: `${X(0.5) - X(0.3)}px`,
         top: `${coffinTopY - Y(0.5)}px`,
@@ -349,7 +357,6 @@ export function runVampire(
         clipPath: "polygon(30% 100%, 70% 100%, 100% 0%, 0% 0%)",
         transformOrigin: "50% 100%",
         opacity: "0",
-        zIndex: "-1",
       });
       m.play(beam, [
         { opacity: 0, transform: "scaleY(0.1)", easing: EASE.out },
@@ -360,7 +367,14 @@ export function runVampire(
       for (let i = 0; i < 5; i++) sparkle(m, L.front, X(0.3 + Math.random() * 0.4), coffinTopY - Y(Math.random() * 0.2), X(0.1), i * 90);
     },
 
-    coinFountain: (c) => coins.fountain(X(0.5), coffinTopY + X(0.03), c.n ?? 120, c.dur ?? 0.7, X(0.36)),
+    /* 棺の左右の端から外へ向けて噴く。真ん中は伯爵が起き上がるところなので通さない
+       （真ん中から噴くと、主役の起き上がりが金貨に隠れた。こちらの録画を見ての指摘） */
+    coinFountain: (c) => {
+      const n = c.n ?? 70;
+      for (const side of [-1, 1]) {
+        coins.fountain(X(0.5 + side * COFFIN.w * 0.4), coffinTopY + X(0.03), Math.round(n / 2), c.dur ?? 0.7, X(0.08), side);
+      }
+    },
 
     rise: (c) => {
       const ms = (c.dur ?? 0.6) * 1000;
@@ -440,7 +454,8 @@ export function runVampire(
       }
     },
 
-    coinRain: (c) => coins.rain(c.n ?? 60, c.dur ?? 1.2),
+    // 伯爵の顔の前（真ん中の縦の帯）には降らせない
+    coinRain: (c) => coins.rain(c.n ?? 60, c.dur ?? 1.2, [0.3, 0.7]),
 
     don: () => {
       m.play(goldFlash, [{ opacity: 0 }, { opacity: 0.9, offset: 0.15 }, { opacity: 0 }], { duration: 500, easing: "ease-out" });
@@ -519,7 +534,8 @@ export function runVampire(
       L.vlad.style.clipPath = "";
       const a = moveVlad(tx, ty, k, ms * 0.48, EASE.inOut);
       const land = () => {
-        L.vlad.style.zIndex = "4";
+        // 重なりは外側の箱で決まる（舞台の箱は拡げるためだけのもの）
+        (L.vlad.parentElement ?? L.vlad).style.zIndex = "4";
         m.play(vPose, [
           { transform: "scale(1.12, 0.86)", easing: EASE.out },
           { transform: "scale(0.96, 1.05)", offset: 0.5 },

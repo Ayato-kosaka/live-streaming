@@ -78,9 +78,12 @@ export class Coins {
     private H: number,
     coinImg: HTMLImageElement | null,
     /** 演出の時計（秒）。ヒットストップのあいだは進まない */
-    private clock: () => number
+    private clock: () => number,
+    /** 舞台の 1px を canvas の何画素で描くか（箱の大きさで変わる。毎コマ聞き直す） */
+    private density: () => number = () =>
+      Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)
   ) {
-    this.dpr = Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
+    this.dpr = density();
     canvas.width = Math.round(W * this.dpr);
     canvas.height = Math.round(H * this.dpr);
     this.ctx = canvas.getContext("2d");
@@ -89,13 +92,16 @@ export class Coins {
     this.back = sprite(S, coinImg, true);
   }
 
-  /** 噴水。(x, y) から上へ `n` 枚を `dur` 秒かけて */
-  fountain(x: number, y: number, n: number, dur: number, spread: number) {
+  /**
+   * 噴水。(x, y) から上へ `n` 枚を `dur` 秒かけて。
+   * `dir` を渡すと、その向き（-1 左 / 1 右）へだけ広げる（真ん中の主役の前を通さない）
+   */
+  fountain(x: number, y: number, n: number, dur: number, spread: number, dir = 0) {
     const { W, H } = this;
     this.emit(n, dur, () => ({
       x: x + (Math.random() - 0.5) * spread,
       y,
-      vx: (Math.random() - 0.5) * W * 1.3,
+      vx: dir ? dir * W * (0.18 + Math.random() * 0.5) : (Math.random() - 0.5) * W * 1.3,
       vy: -H * (0.9 + Math.random() * 0.55),
       ph: Math.random() * Math.PI * 2,
       spin: 9 + Math.random() * 9,
@@ -108,11 +114,19 @@ export class Coins {
     }));
   }
 
-  /** 上から降る雨 */
-  rain(n: number, dur: number) {
+  /** 上から降る雨。`avoid` は降らせない横の範囲（主役の前。画面の幅に対する割合） */
+  rain(n: number, dur: number, avoid: [number, number] | null = null) {
     const { W, H } = this;
+    const pickX = () => {
+      if (!avoid) return Math.random() * W;
+      // 避ける範囲の左右に、幅の比で振り分ける
+      const left = avoid[0];
+      const right = 1 - avoid[1];
+      const u = Math.random() * (left + right);
+      return (u < left ? u : avoid[1] + (u - left)) * W;
+    };
     this.emit(n, dur, () => ({
-      x: Math.random() * W,
+      x: pickX(),
       y: -W * 0.05,
       vx: (Math.random() - 0.5) * W * 0.12,
       vy: H * (0.25 + Math.random() * 0.25),
@@ -191,6 +205,13 @@ export class Coins {
   private draw() {
     const c = this.ctx;
     if (!c) return;
+    // 箱の大きさが変わったら、描く画素の数を合わせ直す
+    const want = this.density();
+    if (Math.abs(want - this.dpr) > 0.05) {
+      this.dpr = want;
+      this.canvas.width = Math.round(this.W * want);
+      this.canvas.height = Math.round(this.H * want);
+    }
     const d = this.dpr;
     c.setTransform(1, 0, 0, 1, 0, 0);
     c.clearRect(0, 0, this.canvas.width, this.canvas.height);
