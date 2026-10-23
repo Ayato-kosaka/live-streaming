@@ -203,7 +203,7 @@ def scan_mp4(mp4: Path, out: Path, every: int, score: float):
     det = detector(cv2, W, H, score)
     raw = subprocess.Popen(
         ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(mp4), "-vf", f"select=not(mod(n\\,{every}))",
-         "-vsync", "0", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+         "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     tiles, hits, k = [], [], 0
     while True:
         buf = raw.stdout.read(W * H * 3)
@@ -217,7 +217,10 @@ def scan_mp4(mp4: Path, out: Path, every: int, score: float):
             tiles.append(tile(img, [(d["rect"], (255, 60, 60), f"{d['score']:.2f}") for d in ds],
                               f"f{f} {f / meta['fps']:.2f}s", tw=240))
         k += 1
-    raw.wait()
+    # ffmpeg が落ちると1コマも出ず、「顔のあるコマ 0」で通って見える（`-vsync 0` のままだと 9.0 でそうなる）。
+    # 落ちたら落ちたと言う
+    if raw.wait() != 0:
+        raise RuntimeError(f"ffmpeg が {mp4} のコマを出せなかった（終了コード {raw.returncode}）")
     for i in range(0, len(tiles), 30):
         grid(tiles[i:i + 30]).save(out / f"mp4_faces_{i // 30:02d}.jpg", quality=85)
     (out / "mp4_faces.json").write_text(json.dumps(hits, ensure_ascii=False, indent=1))

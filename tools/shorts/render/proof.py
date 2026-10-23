@@ -33,6 +33,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
+# 同じ階の selectexpr.py を読む（ほかの道具から import されたときも。後ろに足すので、呼んだ側の同名を隠さない）
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.append(str(Path(__file__).resolve().parent))
+from selectexpr import select_expr  # noqa: E402
+
 HERE = Path(__file__).resolve().parent
 SR = 48000
 # 札の箱の中の、字ありと字なしの差の平均（0〜255）。札は半透明の黒（0.72）の地に白い字なので、
@@ -62,8 +67,9 @@ def grab(mp4: Path, frames: list[int], W: int, H: int) -> dict[int, np.ndarray]:
     uniq = sorted(set(frames))
     if not uniq:
         return {}
-    expr = "+".join(f"eq(n\\,{f})" for f in uniq)
-    raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(mp4), "-vf", f"select={expr}",
+    # 式は selectexpr.py で組む（1秒ごとの一覧は60コマを超える。`+` で横につなぐと新しい ffmpeg は101項で止まる）
+    raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(mp4), "-vf",
+                          f"select={select_expr(uniq)}",
                           "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
                          check=True, capture_output=True).stdout
     arr = np.frombuffer(raw, dtype=np.uint8).reshape(-1, H, W, 3)

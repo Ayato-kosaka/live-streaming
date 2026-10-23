@@ -35,6 +35,11 @@ from pathlib import Path
 
 import numpy as np
 
+# 同じ階の selectexpr.py を読む（qa/drill.py から import されたときも。後ろに足すので、呼んだ側の同名を隠さない）
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.append(str(Path(__file__).resolve().parent))
+from selectexpr import select_expr  # noqa: E402
+
 SR = 48000
 
 
@@ -47,11 +52,15 @@ def ffprobe(path: Path) -> dict:
 
 
 def grab(path: Path, frames: list[int], W: int, H: int) -> dict[int, np.ndarray]:
-    """指定コマを1回のデコードで rgb の配列として取る。"""
+    """指定コマを1回のデコードで rgb の配列として取る。
+
+    式は selectexpr.py で組む（`+` で横につなぐと、新しい ffmpeg は101項から受け付けない）。
+    `-vsync 0` は ffmpeg 9.0 で消えた（`Unrecognized option 'vsync'`、終了コード 8。PR #1015 の CI の赤はこれ）。
+    同じ意味の `-fps_mode passthrough` は 5.1 から在る。
+    """
     uniq = sorted(set(frames))
-    expr = "+".join(f"eq(n\\,{f})" for f in uniq)
     raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path),
-                          "-vf", f"select={expr}", "-vsync", "0", "-f", "rawvideo",
+                          "-vf", f"select={select_expr(uniq)}", "-fps_mode", "passthrough", "-f", "rawvideo",
                           "-pix_fmt", "rgb24", "-"], check=True, capture_output=True).stdout
     arr = np.frombuffer(raw, dtype=np.uint8).reshape(-1, H, W, 3)
     assert len(arr) == len(uniq), (len(arr), len(uniq))

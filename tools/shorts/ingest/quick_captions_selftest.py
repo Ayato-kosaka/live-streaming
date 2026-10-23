@@ -23,7 +23,7 @@ yt-dlp は偽物（この見張りが一時フォルダに書く `yt_dlp` パッ
 | `seal` | 一周（偽の gate → 偽の yt-dlp → 整える → 封）。置くのは manifest・key.enc・payload.enc だけ。平文の manifest に題名も字幕も出ない。開くと 1行1文の captions.txt と題・長さがある。**封をしたら平文が残らない** |
 | `gate` | gate が「止める」なら YouTube に当たらない（偽の yt-dlp が1度も呼ばれない）。「取らなかった」封を置いて 1 で帰る |
 | `retry` | retry.sh: 通れば1回だけ・上限を越えたら切って1回だけ取り直す（止まったまま待たない）・2回とも駄目なら 1 |
-| `ffmpeg` | ffmpeg.sh（偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で）: 入っていれば apt に触らない・apt が通れば apt（`--no-install-recommends`・man-db の索引の作り直しを止めてから）・apt が止まったら上限で2回切って GitHub の静的ビルドに切り替える・それも落とせなければ 1・ffmpeg があれば書体だけ頼み、入らなくても進む |
+| `ffmpeg` | ffmpeg.sh（偽の sudo / apt-get / dpkg / curl と、ffmpeg の無い PATH で）: 入っていれば apt に触らない・apt が通れば apt（`--no-install-recommends`・man-db の索引の作り直しを止めてから）・apt が止まったら上限で2回切って GitHub の静的ビルドの**版の決まった枝**（8.1 → 9.0。master の夜間版は当てない）に切り替える・枝が落とせなければ次の枝・名前と違う版（夜間版）を名乗るものは置かない・どれも落とせなければ 1・ffmpeg があれば書体だけ頼み、入らなくても進む |
 | `workflow` | captions の job: plan のあと・fetch と同じ concurrency の枠・`contents: write` と `actions: read`・GH_TOKEN・Cookie の写しを必ず消す・ffmpeg も whisper も入れない。fetch はこの job のあと（`!cancelled()` で、字幕の道が無い回も走る）。道具を入れる段（captions / fetch / analyze）は apt・pip・npm・clone を全部 retry.sh に通し、段に `timeout-minutes` がある |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
@@ -81,6 +81,14 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
              {"workflow"}, "fetch の ffmpeg を上限なしの apt-get に戻す"),
     "static": ("ffmpeg.sh", '"${R[@]}" 180 curl -fsSL', 'exit 1; curl -fsSL',
                {"ffmpeg"}, "apt が詰まったときに静的ビルドへ切り替えない"),
+    # 静的ビルドを master の夜間版に戻す（#1015。2026-10-23 に夜間版で -vsync が消えていて検査が止まった）
+    "nightly": ("ffmpeg.sh", 'urls+=("$v|$BASE/ffmpeg-n${v}-latest-linux64-gpl-${v}.tar.xz")',
+                'urls+=("$v|$BASE/ffmpeg-master-latest-linux64-gpl.tar.xz")',
+                {"ffmpeg"}, "静的ビルドを版の決まった枝ではなく master の夜間版から落とす"),
+    "vercheck": ("ffmpeg.sh", 'if [ "$got" != "url" ] && [[ "$ver" != "ffmpeg version n${got}"* ]]; then',
+                 "if false; then", {"ffmpeg"}, "枝の名前で落としたものが別の版を名乗っても置く"),
+    "nextbranch": ("ffmpeg.sh", '  echo "::warning::静的ビルド（${u%%|*}）が落とせない。次を当てる"\n',
+                   "  break\n", {"ffmpeg"}, "最初の枝が落とせなければ、次の枝を当てずに諦める"),
     "present": ("ffmpeg.sh", 'if [ "${#need[@]}" -eq 0 ]; then', "if false; then",
                 {"ffmpeg"}, "入っていても apt に触る"),
     "mandb": ("ffmpeg.sh", 'sudo rm -f "${MANDB_FLAG:-/var/lib/man-db/auto-update}"', ":",
@@ -442,6 +450,7 @@ MOCKS = {
     "dpkg": 'case "$1" in -s) case " $FAKE_DPKG_HAS " in *" $2 "*) exit 0 ;; esac; exit 1 ;; esac\nexit 0\n',
     "curl": ('echo "curl $*" >> "$FAKE_LOG"\n'
              '[ "$FAKE_CURL" = fail ] && exit 22\n'
+             'case "$*" in *"${FAKE_CURL_FAIL_ON:-@@}"*) exit 22 ;; esac\n'
              'while [ "$#" -gt 0 ]; do [ "$1" = -o ] && { cp "$FAKE_TAR" "$2"; exit 0; }; shift; done\n'
              'exit 2\n'),
 }
@@ -464,16 +473,20 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
         if not w:
             return [f"箱に {t} が無いので当てられない"]
         (sysd / t).symlink_to(w)
-    # 静的ビルドの偽物（中に bin/ffmpeg と bin/ffprobe）
-    pkg = base / "pkg" / "ffmpeg-master-latest-linux64-gpl" / "bin"
-    pkg.mkdir(parents=True)
-    for b in ("ffmpeg", "ffprobe"):
-        (pkg / b).write_text(f'#!/bin/sh\necho "{b} version static"\n')
-        (pkg / b).chmod(0o755)
-    tar = base / "static.tar.xz"
-    subprocess.run(["tar", "-cJf", str(tar), "-C", str(base / "pkg"), "."], check=True)
+    # 静的ビルドの偽物（中に bin/ffmpeg と bin/ffprobe）。名乗る版ごとに: 8.1 の枝・9.0 の枝・
+    # 枝の名前で置かれているのに中身が夜間版（ffmpeg.sh が置かずに止まるべきもの）
+    tars = {}
+    for key, ver in (("81", "n8.1.3-fake"), ("90", "n9.0.2-fake"), ("nightly", "N-127941-fake")):
+        pkg = base / f"pkg-{key}" / "ffmpeg-static" / "bin"
+        pkg.mkdir(parents=True)
+        for b in ("ffmpeg", "ffprobe"):
+            (pkg / b).write_text(f'#!/bin/sh\necho "{b} version {ver}"\n')
+            (pkg / b).chmod(0o755)
+        tars[key] = base / f"static-{key}.tar.xz"
+        subprocess.run(["tar", "-cJf", str(tars[key]), "-C", str(base / f"pkg-{key}"), "."], check=True)
 
-    def go(name: str, apt: str, have_ff: bool, args=(), curl: str = "ok", dpkg_has: str = ""):
+    def go(name: str, apt: str, have_ff: bool, args=(), curl: str = "ok", dpkg_has: str = "",
+           tar: str = "81", fail_on: str = ""):
         binz = base / f"bin-{name}"
         binz.mkdir()
         if have_ff:
@@ -486,7 +499,8 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
         flag.write_text("")
         env = {"PATH": f"{mock}:{binz}:{sysd}", "FAKE_LOG": str(log), "FAKE_APT": apt,
                "MANDB_FLAG": str(flag),
-               "FAKE_CURL": curl, "FAKE_TAR": str(tar), "FAKE_DPKG_HAS": dpkg_has,
+               "FAKE_CURL": curl, "FAKE_TAR": str(tars[tar]), "FAKE_DPKG_HAS": dpkg_has,
+               "FAKE_CURL_FAIL_ON": fail_on or "@@",
                "FFMPEG_BIN": str(binz), "RETRY_PAUSE": "0", "APT_UPDATE_SEC": "1",
                "APT_INSTALL_SEC": "1", "HOME": str(base)}
         t0 = time.time()
@@ -497,7 +511,7 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
         except subprocess.TimeoutExpired:
             rc = -1
         ff = binz / "ffmpeg"
-        # 偽の ffmpeg が名乗る出どころ（here / apt / static）
+        # 偽の ffmpeg が名乗る出どころ（here / apt / 静的ビルドなら版の名前 n8.1.3-fake など）
         kind = ff.read_text().split("version ")[-1].strip().strip('"') if ff.exists() else None
         go.mandb_left = flag.exists()
         return rc, log.read_text().splitlines(), kind, time.time() - t0
@@ -514,13 +528,28 @@ def leg_ffmpeg(c: Ctx) -> list[str]:
         bad.append("apt で入れる前に man-db の索引の作り直しを止めていない")
     rc, calls, kind, dt = go("hang", "hang", False)
     inst = [x for x in calls if "install" in x]
-    if rc != 0 or kind != "static" or len(inst) != 2 or dt > 30:
-        bad.append(f"apt が止まったら上限で2回切って静的ビルドに切り替える"
+    if rc != 0 or not str(kind).startswith("n8.1") or len(inst) != 2 or dt > 30:
+        bad.append(f"apt が止まったら上限で2回切って静的ビルド（8.1 の枝）に切り替える"
                    f"（rc={rc}・{kind}・install {len(inst)}回・{dt:.0f}秒）")
+    got = [x for x in calls if x.startswith("curl")]
+    if len(got) != 1 or "/ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz" not in got[0]:
+        bad.append(f"静的ビルドを版の決まった枝（ffmpeg-n8.1-latest）から1回で落とさない（{got[:2]}）")
+    # 8.1 の枝が下ろされていたら、9.0 の枝を当てる（夜間版には逃げない）
+    rc, calls, kind, _ = go("next", "fail", False, tar="90", fail_on="ffmpeg-n8.1-")
+    got = [x for x in calls if x.startswith("curl")]
+    if rc != 0 or not str(kind).startswith("n9.0") or not got or "ffmpeg-n9.0-latest" not in got[-1]:
+        bad.append(f"8.1 の枝が落とせないとき、9.0 の枝を当てて置かない（rc={rc}・{kind}・{got[-1:]}）")
+    # 枝の名前で落としたのに、中身が夜間版を名乗る。置かずに 1
+    rc, calls, kind, _ = go("liar", "fail", False, tar="nightly")
+    if rc == 0 or kind is not None:
+        bad.append(f"8.1 の枝のはずが夜間版を名乗るものを置いた（rc={rc}・{kind}）")
     # 止まるのではなく断られる apt（待たずに済む）で、静的ビルドも落とせない形
     rc, calls, kind, _ = go("nocurl", "fail", False, curl="fail")
     if rc == 0 or kind is not None:
         bad.append(f"静的ビルドも落とせないのに 0 で帰った（rc={rc}）")
+    got = [x for x in calls if x.startswith("curl")]
+    if any("master" in x for x in got) or not any("ffmpeg-n9.0-latest" in x for x in got):
+        bad.append(f"どの枝も落とせないとき、夜間版に逃げた・枝を全部当てていない（{got}）")
     rc, calls, kind, _ = go("font", "fail", True, args=("fonts-dejavu-core",))
     inst = [x for x in calls if "install" in x]
     if rc != 0 or not inst or "fonts-dejavu-core" not in inst[0] or " ffmpeg" in inst[0]:

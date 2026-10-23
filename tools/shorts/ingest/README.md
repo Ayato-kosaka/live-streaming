@@ -354,7 +354,10 @@ clips のシートは、**シートの各コマに写っている縞が「区間
    （この箱からはログが読めないが、注記は `gh api repos/…/check-runs/<job>/annotations` で読める）。
    **ffmpeg は `ffmpeg.sh` が入れる。** 入っていれば apt に触らず、apt（`--no-install-recommends`）が
    上限で2回切られたら GitHub の静的ビルド（BtbN/FFmpeg-Builds）に切り替える。同じ晩、clips の fetch が
-   apt-get install ffmpeg を4分ずつ2回切られて落ちたため（run 39870741046）
+   apt-get install ffmpeg を4分ずつ2回切られて落ちたため（run 39870741046）。静的ビルドは**版の決まった枝**
+   （`ffmpeg-n8.1-latest` → `ffmpeg-n9.0-latest`）だけを当て、master の夜間版には逃げない（2026-10-23、
+   夜間版で `-vsync` が消えていて検査が止まった。#1015）。どの枝も落とせなければ赤くなるので、
+   `ffmpeg.sh` の `FFMPEG_STATIC_BRANCHES` の既定を、BtbN の latest に今ある枝に上げる
 
 `fetch` の job は**同じ ref の毎晩の取り込みと同じ枠**（`fetch-chat-${{ github.ref }}`）。
 1つの枠に「走っている1本＋待っている1本」までしか並ばず、3本目が来ると待っていた
