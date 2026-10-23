@@ -110,14 +110,20 @@ def xenv():
     return dict(os.environ, DISPLAY=DISPLAY, XAUTHORITY=XAUTH)
 
 
+def clock():
+    """起動からの秒（CLOCK_BOOTTIME）。時刻は全部これで持つ。壁の時計は、起こした直後に chrony が
+    跳ばす（2026-10-23 は見張りが繋いだ5秒後に 1.84秒）。壁の時計で X の立った時刻を出していたら、
+    跳んだぶん「X が立ち直した」に見えて、起こした直後の GUARD が前の xprintidle に戻った"""
+    return time.clock_gettime(time.CLOCK_BOOTTIME)
+
+
 def x_server():
-    """表示 :20 の X の (pid, 立った時刻)。立ち直したかを pid と時刻の両方で見分ける"""
+    """表示 :20 の X の (pid, 立った時刻（起動からの秒）)。立ち直したかを pid と時刻の両方で見分ける"""
     try:
         pid = int(open(LOCK).read().strip())
         rest = open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()
-        btime = next(int(ln.split()[1]) for ln in open("/proc/stat") if ln.startswith("btime "))
-        return pid, round(btime + int(rest[19]) / os.sysconf("SC_CLK_TCK"), 2)
-    except (OSError, ValueError, IndexError, StopIteration):
+        return pid, round(int(rest[19]) / os.sysconf("SC_CLK_TCK"), 2)
+    except (OSError, ValueError, IndexError):
         return None
 
 
@@ -154,16 +160,19 @@ def watch():
     time.sleep(ATTACH_S)
     if p.poll() is not None:
         sys.exit(f"xinput を {DISPLAY} に繋げない（systemd が起こし直す）")
-    now = time.time()
+    now = clock()
     xi = xidle()
     last = seed(now, x[1], xi)
     st = {"pid": os.getpid(), "x_pid": x[0], "x_start": x[1], "attached": round(now, 2),
           "seed_xidle_ms": xi, "last": None if last is None else round(last, 2), "beat": round(now, 2)}
     write_state(st)
-    fd, buf, wrote = p.stdout.fileno(), b"", now
+    fd, buf, wrote, dirty = p.stdout.fileno(), b"", now, False
     while True:
-        r, _, _ = select.select([fd], [], [], BEAT_S)
-        now = time.time()
+        # 入力は続けて来るので、書くのは1秒に1回まで。ただし書き残した入力は1秒以内に必ず書く
+        # （xdotool の1回は DeviceChanged → RawMotion の順に来る。前者で書いた直後の後者を
+        # 次の「生きている」まで30秒書かずにいて、その間の GUARD が素通りした。2026-10-23）
+        r, _, _ = select.select([fd], [], [], max(0.0, wrote + 1 - clock()) if dirty else BEAT_S)
+        now = clock()
         if r:
             chunk = os.read(fd, 65536)
             if not chunk:
@@ -172,12 +181,11 @@ def watch():
             *lines, buf = (buf + chunk).split(b"\n")
             if any(is_input(ln.decode("utf-8", "replace")) for ln in lines):
                 st["last"] = round(now, 2)
-            # 入力は続けて来る。書くのは1秒に1回まで（7分を測るのに足りる）
-            if now - wrote < 1:
-                continue
-        st["beat"] = round(now, 2)
-        write_state(st)
-        wrote = now
+                dirty = True
+        if not r or (dirty and now - wrote >= 1) or now - wrote >= BEAT_S:
+            st["beat"] = round(now, 2)
+            write_state(st)
+            wrote, dirty = now, False
 
 
 def idle():
@@ -185,7 +193,7 @@ def idle():
         st = json.load(open(STATE))
     except (OSError, ValueError):
         st = None
-    ms, src = judge(time.time(), st, bool(st) and alive(st.get("pid")), x_server(), xidle())
+    ms, src = judge(clock(), st, bool(st) and alive(st.get("pid")), x_server(), xidle())
     print(ms, src)
 
 

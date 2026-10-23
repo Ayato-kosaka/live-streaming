@@ -55,7 +55,8 @@ Cookie や `authorization` の値には触らない。
 
 前提: あやとが EC2 の**既定のプロファイル**で fish.audio にログインしている。
 複製は `up("fish", reseed=True)`（`ec2-chrome` スキル 3）。**あやとがリモートデスクトップで操作中は複製しない**
-（`xprintidle` が5分以上になってから）。
+（EC2 の `/usr/local/sbin/desktop-input idle` の数が 300000（5分）以上になってから。xprintidle はこちらの Chrome が
+動画を止めるだけで0に戻るので、それでは見ない。`ec2-chrome` スキル 2）。
 
 ```bash
 E=.claude/skills/ec2-chrome/ec2.py
