@@ -1,0 +1,18 @@
+{
+ "name": "vlad",
+ "size": [803, 1099],
+ "parts": [
+  {"id": "torso", "file": "torso.png", "parent": null, "pivot": [204.3, 372.7], "at": [411.2, 781.0], "z": 20},
+  {"id": "head", "file": "head.png", "parent": "torso", "pivot": [344.7, 509.7], "at": [204.3, 92.6], "z": 18},
+  {"id": "eyes", "swaps": {"normal": "eyes-normal.png", "wink": "eyes-wink.png", "smile": "eyes-smile.png"}, "parent": "head", "pivot": [102.7, 77.7], "at": [319.5, 293.2], "z": 19},
+  {"id": "mouth", "swaps": {"smirk": "mouth-smirk.png", "open": "mouth-open.png", "omega": "mouth-omega.png"}, "parent": "head", "pivot": [60.5, 15.9], "at": [407.4, 399.8], "z": 19},
+  {"id": "collar", "file": "collar.png", "parent": "torso", "pivot": [264.7, 172.3], "at": [204.3, 104.1], "z": 8},
+  {"id": "cape_inner", "file": "cape_inner.png", "parent": "torso", "pivot": [406.4, 81.6], "at": [204.3, 104.1], "z": 5},
+  {"id": "leg_l", "file": "leg_l.png", "parent": "torso", "pivot": [160.3, 72.0], "at": [175.0, 332.8], "z": 10},
+  {"id": "leg_r", "file": "leg_r.png", "parent": "torso", "pivot": [94.8, 70.3], "at": [225.8, 332.8], "z": 11},
+  {"id": "arm_ring", "file": "arm_ring.png", "parent": "torso", "pivot": [165.2, 59.2], "at": [108.1, 150.2], "z": 31},
+  {"id": "arm_goblet", "file": "arm_goblet.png", "parent": "torso", "pivot": [62.9, 105.3], "at": [288.9, 150.2], "z": 30},
+  {"id": "cape_l", "file": "cape_l.png", "parent": "torso", "pivot": [313.2, 177.7], "at": [77.4, 127.1], "z": 25},
+  {"id": "cape_r", "file": "cape_r.png", "parent": "torso", "pivot": [122.0, 169.4], "at": [323.5, 127.1], "z": 24}
+ ]
+}
