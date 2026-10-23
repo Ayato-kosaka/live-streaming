@@ -12,6 +12,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
 | `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで）。予約の日を暦で押す手の見張りは `tt_post_selftest.py`（手元で回る。EC2 に触らない） |
 | `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
+| `desktop_guard_selftest.py` | 手元 | 遠隔デスクトップの見張り（`GUARD` と、EC2 の `desktop-input`・idle-stop）の見張り。EC2 に触らない |
 
 ## 手順（1本ぶん）
 
@@ -33,8 +34,8 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
   同じ sha256 × 同じ場所が `done` なら投稿 ID を出して止まる。`pending`（前の回が途中で切れた）でも止まるので、
   投稿先で見てから、出ていれば `post.py mark --place <youtube|tiktok> --sha <sha256> --done --id <投稿ID>`、
   出ていなければ `--again` を付けてやり直す。始める直前に `pending`、ID が取れたら `done` を書く。**台帳が変わったらコミットする**
-- EC2 で Chrome を開く手は、どれも**遠隔デスクトップの入力が7分止まっているのを見てから**動く（`post.py` の `GUARD`）。
-  あやとが触っている最中なら `desktop_busy` で何もせずに戻る
+- EC2 で Chrome を開く手は、どれも**遠隔デスクトップの本物の入力が7分止まっているのを見てから**動く（`post.py` の `GUARD`。
+  数えるのは EC2 の `desktop-input`。下の「分かっていること」）。あやとが触っている最中なら `desktop_busy` で何もせずに戻る
 - 待つあいだは `~/locks/shorts-post` を触って見張り（idle-stop）に止められないようにしている。終わったら消す
 - 媒体の決まり（あやと）:
   - YouTube: 曲は動画に焼いてあるので付けない。子ども向けではない。改変されたコンテンツは「いいえ」（声は特定の人のまねではない AI の読み上げで、説明欄に書いてある）。**関連動画に元のアーカイブ**（2026-10-17）
@@ -92,11 +93,24 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 - TikTok のカバーは「Edit cover」→ 窓の中の file input（`accept` に image）に絵を渡す → 右上の「Save」（button ではないことがある）
 - TikTok にログインしてあるのは `~/cdp-fish` の Chrome（`tt_post.py` の `NAME`）。画面は英語。EC2 の Chrome の時計は UTC
   （TikTok の一覧の時刻が UTC で出る）
-- **こちらの手が、遠隔デスクトップの見張り（`GUARD`）を自分で止めることがある**（2026-10-21）。EC2 を起こした直後は
-  無操作の時間が起動からの数分しか無いので、`desktop_busy` で戻る。Studio や TikTok で動画を開いた手のあとも、無操作の
-  時間が0に戻っていた（遠隔デスクトップの接続は無かった。Chrome が動画の再生中に画面の消灯を止める仕掛けが、X の無操作の
-  時間を戻している見立て）。**見張りは外さない。** 次の手の前に、EC2 の上で無操作が7分を超えるのを待ってから回す
-  （1手ごとに7分ほど待つことになる）
+- **遠隔デスクトップの見張り（`GUARD`）は、X に入った本物の入力だけを数える**（2026-10-23。前は xprintidle をそのまま見ていて、
+  こちらの手で止まり、1手ごとに7分待っていた。#1011）。EC2 で測った原因は2つ:
+  - **こちらの Chrome が動画を止める・閉じると、表示 :20 の無操作の時間が0に戻る。** TikTok の再生画面を30秒流して閉じると
+    79,028ms → 4,944ms、使い捨ての Chrome で動画を60秒流して消すと 311,899ms → 965ms。そのあいだ X の生の入力（XI2）は0件。
+    セッションバスを切った Chrome でも戻り、Chrome を別の表示（Xvfb :99）で起こすと、同じ Inhibit が飛んでも :20 は戻らなかった
+    （戻しているのは Chrome が :20 に繋いでいる X の線。動画の間の画面の消灯止めを外すところ）
+  - **起こした直後は、X が立ってからの時間しか無い**（起動27秒で 21,647ms）
+  - 遠隔デスクトップの接続が無かったことは、XI2 の生の入力が起動から1件も来ていない（来たのは自分で入れた xdotool だけ）ことで確かめた
+- いまの形: EC2 の `desktop-input`（`.claude/skills/ec2-chrome/desktop_input.py`、systemd）が `xinput test-xi2 --root` を読み、
+  生の入力（Raw*）の時刻だけを控える。GUARD はそれを聞く。遠隔デスクトップの入力は XTest で X に入るので数えられる
+  （:20 に xdotool で1回入れると2秒後に 2,035ms、直後の手は `desktop_busy`）。CDP の入力とタブの開け閉め（FocusIn/Out）は数えない。
+  X が立ってから入力が無ければ「一度も無い」と答えるので、起こした直後も待たない。**見張りは外していない**
+  - 見張りが居ない・X が立ち直した・印が古いときは前の xprintidle に戻る（待つ側に倒れる）。`desktop-input` が無ければ
+    `desktop_busy` で止まり、入れ直す一手 `python3 .claude/skills/ec2-chrome/ec2.py guard`（idle-stop と一緒に入る）を出す
+  - 2026-10-23 に、起こして約40秒後から公開しない手（`~/cdp-fish` で動画を30秒流してタブを閉じる）を2回続けて回し、
+    2回とも待たずに通った（1回目の前の xprintidle は 34,284ms、2回目の前は 8,671ms。前の見張りならどちらも7分待っていた）。
+    1回目は TikTok が埋め込みを断った（overload-protect）ので、同じ Chrome でページの中で作った動画を流した
+  - 見張りの見張りは `desktop_guard_selftest.py`（判定を偽の値で回し、GUARD と idle-stop の本物の字を sh で回す。EC2 に触らない）
 
 ## 予約投稿（2026-10-21 に最安ホステルの回 p2 で両方とも通した）
 

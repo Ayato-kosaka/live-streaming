@@ -33,10 +33,15 @@ CDP = f"{EC2_HOME}/cdp"
 # あやと 2026-10-17: TikTok では YouTube のどのチャンネルの配信かが分かるように、題の行のすぐ下に足す
 TT_SOURCE_LINE = "YouTube「@あやとグルメアプリ」の生配信から"
 
-# 遠隔デスクトップであやとが触っている最中に Chrome を開かない（入力が7分止まっているのを見てから）
-GUARD = """touch ~ubuntu/locks/shorts-post
-ms=$(DISPLAY=:20 XAUTHORITY=~ubuntu/.Xauthority sudo -u ubuntu xprintidle 2>/dev/null || echo 0)
-if [ "${ms:-0}" -lt 420000 ]; then echo "WAIT: desktop input within 7 min (${ms}ms)"; echo 'RESULT {"ok": false, "error": "desktop_busy"}'; exit 0; fi
+# 遠隔デスクトップであやとが触っている最中に Chrome を開かない（本物の入力が7分止まっているのを見てから）。
+# 数えるのは X に入った本物の入力だけ（desktop-input）。xprintidle は、こちらの Chrome が動画を流すだけで
+# 0に戻る（README「分かっていること」・desktop_input.py の頭）。答えが無い・読めないときは、触っている側に倒す
+DESKTOP_INPUT = "/usr/local/sbin/desktop-input"
+GUARD = f"""touch {EC2_HOME}/locks/shorts-post
+set -- $({DESKTOP_INPUT} idle 2>/dev/null); ms=${{1:-0}}; src=${{2:-error}}
+case "$ms" in ''|*[!0-9]*) ms=0 ;; esac
+if [ "$src" = error ]; then echo "WAIT: desktop-input が無い・答えない（手元で python3 .claude/skills/ec2-chrome/ec2.py guard）"; fi
+if [ "$ms" -lt 420000 ]; then echo "WAIT: desktop input within 7 min (${{ms}}ms, $src)"; echo 'RESULT {{"ok": false, "error": "desktop_busy"}}'; exit 0; fi
 """
 
 

@@ -126,7 +126,7 @@ TT_OK = 'RESULT {"ok": true, "posted": true, "urls": ["https://www.tiktok.com/@x
 DRY_OK = 'RESULT {"ok": true, "dry": true}'
 # 2026-10-17 の C の TikTok の形: 返事の行が来ないまま切れる
 CUT_OFF = "websocket._exceptions.WebSocketTimeoutException: timed out"
-BUSY = 'WAIT: desktop input within 7 min (1000ms)\nRESULT {"ok": false, "error": "desktop_busy"}'
+BUSY = 'WAIT: desktop input within 7 min (1000ms, xi2)\nRESULT {"ok": false, "error": "desktop_busy"}'
 
 
 class Fake:

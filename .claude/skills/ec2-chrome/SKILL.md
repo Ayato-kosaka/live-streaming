@@ -27,10 +27,11 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`（**道具だけ。中身が SSM のログに残る**。4）・`state`/`start`/`stop`・`guard`（止め忘れの見張りを入れ直す。2） |
+| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`（**道具だけ。中身が SSM のログに残る**。4）・`state`/`start`/`stop`・`guard`（止め忘れの見張りと `desktop-input` を入れ直す。2） |
 | `tools/shorts/post/send.py`（リポジトリの） | 手元 | `put <手元> <EC2> …`。**動画・秘密はこちらで送る。** GCS の署名付き URL を EC2 が `curl` で落とし、sha256 を照らす（中身は SSM のコマンドに載らない。4） |
 | `ec2_exec.sh` | 手元 | **起こして → 実行して → 必ず止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ）。実行の前に `cdp.py` を EC2 へ置き直す |
 | `idle_stop.sh` | EC2（`/usr/local/sbin/idle-stop`、root の cron で5分ごと） | 誰も使っていない時間が30分続いたら EC2 を止める（2） |
+| `desktop_input.py` | EC2（`/usr/local/sbin/desktop-input`、systemd の `desktop-input.service`） | 遠隔デスクトップ（:20）に**人の本物の入力**が最後にあった時刻を控える。`desktop-input idle` が「何ミリ秒前か・出どころ」を1行で出す。投稿の GUARD と idle-stop が聞く（2） |
 | `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（拡張・部品の更新なし。無ければ既定のプロファイルから不要物を落として1回だけ複製。3）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
 | `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む・ファイルを渡す（`chatgpt` スキル）。絵を作るのは `chatgpt-image` |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
@@ -101,9 +102,14 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
 | 起きてから20分以内 | 起こしたセッションが最初のコマンドを送るまでの間 |
 | SSM のコマンドが走っている | セッションが何かを流している最中 |
 | 鍵のファイルが6時間以内に触られている（`/home/ubuntu/locks/*`・`/home/ubuntu/chatgpt/LOCK`・`/home/ubuntu/stamp/RUNNING`） | 裏で回している一括。**6時間を超える一括は、鍵を触り続ける**（`os.utime`）。消し忘れた鍵で永久に起きっぱなしにならないよう、古い鍵は数えない |
-| Chrome リモートデスクトップの画面に30分以内の入力（`xprintidle`） | あやとが入っている |
+| Chrome リモートデスクトップの画面に30分以内の本物の入力（`desktop-input idle`） | あやとが入っている |
 
 - 入れ直しは `ec2.py guard`（何度でもよい）。見張りの記録は EC2 の `/var/log/idle-stop.log`
+- **「あやとが触っているか」を xprintidle で見ない。** xprintidle は、こちらの Chrome が動画を止める・閉じるだけで0に戻る
+  （2026-10-23 に測った。`desktop_input.py` の頭）。`desktop-input` は X に入った生の入力（XI2 の Raw*）だけを数える。
+  遠隔デスクトップの入力は XTest で入るので数えられ、CDP の入力とタブの開け閉めは数えない。答えは
+  `1834000 xi2`（本物の入力から何ミリ秒）・`2147483647 xi2-never`（X が立ってから一度も無い）・`… xprintidle-dead`
+  （見張りが居ないので前の xprintidle に戻った）の形。自分の道具で「触っているか」を見るときも、これを聞く
 - **武装している**（2026-10-14 から）。中からの shutdown は、インスタンスの「シャットダウン動作」が **停止** なら止まり、
   **終了** なら EC2 そのものが消える。こちらの権限ではその設定を読めない（`ec2:DescribeInstanceAttribute` も、
   EC2 の役割からの `StopInstances` も拒否）ので、**あやとがコンソールで「停止」になっているのを見てから**武装した（#857）

@@ -5,7 +5,8 @@
     python3 .claude/skills/ec2-chrome/ec2.py get <EC2のパス> <手元のパス>   # EC2 のファイルを持ち帰る
     python3 .claude/skills/ec2-chrome/ec2.py put <手元のパス> <EC2のパス>   # 手元のファイルを EC2 へ送る
     python3 .claude/skills/ec2-chrome/ec2.py state | start | stop
-    python3 .claude/skills/ec2-chrome/ec2.py guard            # 誰も使っていなければ EC2 がひとりでに止まる見張りを入れ直す
+    python3 .claude/skills/ec2-chrome/ec2.py guard            # 誰も使っていなければ EC2 がひとりでに止まる見張りと、
+                                                              # 遠隔デスクトップの本物の入力の見張り（desktop_input.py）を入れ直す
 
 ## なぜこの形か
 
@@ -127,11 +128,16 @@ def put(local: str, remote: str):
 
 def guard():
     """idle_stop.sh を EC2 に置き、root の cron で5分ごとに回す（ec2-chrome の SKILL.md 2）。
+    desktop_input.py も置いて systemd で起こす（投稿の GUARD と idle-stop が「あやとが触っているか」を聞く先）。
     セッションは唐突に切れるので、止めるのを手元に頼らない。何度入れ直してもよい"""
     here = os.path.dirname(os.path.abspath(__file__))
     put(os.path.join(here, "idle_stop.sh"), "/usr/local/sbin/idle-stop")
-    st, out = run("chmod 755 /usr/local/sbin/idle-stop && "
+    # 遠隔デスクトップの本物の入力を控える見張り（desktop_input.py）。投稿の GUARD と idle-stop が読む
+    put(os.path.join(here, "desktop_input.py"), "/usr/local/sbin/desktop-input")
+    st, out = run("chmod 755 /usr/local/sbin/idle-stop /usr/local/sbin/desktop-input && "
                   "(command -v xprintidle >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q xprintidle >/dev/null 2>&1); "
+                  "(command -v xinput >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q xinput >/dev/null 2>&1); "
+                  "/usr/local/sbin/desktop-input install && "
                   "printf '%s\\n' 'SHELL=/bin/sh' '*/5 * * * * root /usr/local/sbin/idle-stop' > /etc/cron.d/idle-stop && "
                   "chmod 644 /etc/cron.d/idle-stop && "
                   "echo armed=$([ -f /etc/idle-stop/armed ] && echo yes || echo no) && tail -3 /var/log/idle-stop.log 2>/dev/null", 300, quiet=True)
