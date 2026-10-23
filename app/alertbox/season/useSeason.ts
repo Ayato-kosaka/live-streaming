@@ -199,6 +199,12 @@ export function useSeason(param: string | string[] | undefined): Season {
       setTheme(forced);
       return;
     }
+    /* 配信に出してよいテーマが1つも無ければ、日付の見直しも回さない。
+       豚の日（いまはこれ）に、季節の仕組みが何も動かず何も持たないように */
+    if (!THEMES.some((t) => t.live !== false)) {
+      setTheme(null);
+      return;
+    }
     const check = () =>
       setTheme((prev) => {
         const next = themeAt(new Date(), THEMES);
