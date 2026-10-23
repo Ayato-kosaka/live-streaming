@@ -55,6 +55,8 @@
  *   書いたあと ffprobe と箱の並びで確かめて、1行ずつ出す
  *
  * `--shots 1.5,6,12` で、その秒（読み込みの完了から）に PNG も撮る（`--out` の横に置く）。
+ * `--grow-at 秒`（と `--grow-frame 左,上,幅,高さ`）で、その秒に面の箱を大きくする。
+ * `--shrink-at 秒` で `--frame` に戻す（オーナーが手で箱を広げる・戻すのに合わせて見る）。
  * `--also-small` で、短い辺を 720 に縮めた版（縦なら 720×1280）を `-small.mp4` で並べて出す。
  * `--sheet 6`（コマ数）か `--sheet 2,8,20`（秒）で、録れた mp4 からコマ一覧の PNG を `-sheet.png` で出す。
  *
@@ -158,6 +160,12 @@ function parseFrame(s) {
   return { x, y, w, h };
 }
 const frame = parseFrame(arg("frame", `0,0,${W},${H}`));
+/* 箱の大きさを途中で変える（オーナーは投げ銭が来てから手で箱を大きくし、終わったら戻す）。
+   `--grow-at 秒` でその秒に `--grow-frame`（既定は画面いっぱい）へ、`--shrink-at 秒` で
+   `--frame` へ戻す。拡げ方（--zoom）はそのまま。アラートの面がその場で描き直されるかを見るため */
+const growAt = Number(arg("grow-at", "NaN"));
+const shrinkAt = Number(arg("shrink-at", "NaN"));
+const growFrame = parseFrame(arg("grow-frame", `0,0,${W},${H}`));
 /* 面を何倍に拡げて箱に収めるか。アプリが小さく描いた面を拡げて置いている場合に合わせる
    （iframe は 幅/zoom × 高さ/zoom で描かれ、箱の大きさまで拡げられる）。
    字の大きさは px で決め打ちなので、拡げ方が違うと字と貯金箱の釣り合いが変わる */
@@ -345,6 +353,27 @@ await cdp.send("Page.startScreencast", {
   everyNthFrame: 1,
 });
 const t0 = Date.now();
+
+const moveFrame = (f) =>
+  page
+    .evaluate(
+      ({ f, zoom }) => {
+        const el = document.querySelector("iframe");
+        if (!el) return;
+        Object.assign(el.style, {
+          left: `${f.x}px`,
+          top: `${f.y}px`,
+          width: `${f.w / zoom}px`,
+          height: `${f.h / zoom}px`,
+        });
+        const o = document.querySelector(".outline");
+        if (o) Object.assign(o.style, { left: `${f.x}px`, top: `${f.y}px`, width: `${f.w}px`, height: `${f.h}px` });
+      },
+      { f, zoom }
+    )
+    .catch(() => {});
+if (Number.isFinite(growAt)) setTimeout(() => moveFrame(growFrame), growAt * 1000);
+if (Number.isFinite(shrinkAt)) setTimeout(() => moveFrame(frame), shrinkAt * 1000);
 
 const shotBase = join(dirname(out), basename(out, extname(out)));
 mkdirSync(dirname(out), { recursive: true });
