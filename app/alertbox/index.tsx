@@ -115,6 +115,8 @@ export default function AlertBox() {
     /** 試し表示の貯金箱の溜まり具合（%）と、偽の投げ銭の額 */
     fill?: string;
     amount?: string;
+    /** 試し表示で、貯金箱を 0 から `fill` まで何秒かけて溜めるか（溜まる様子を録るため） */
+    rise?: string;
   }>();
 
   const preview = previewMode(params.preview);
@@ -249,11 +251,25 @@ export default function AlertBox() {
     if (preview) {
       const target = 50000;
       const fill = Math.max(0, Math.min(100, numParam(params.fill, 60)));
-      setGoal({
-        currentAmount: Math.round((target * fill) / 100),
+      const goalAt = (ratio: number) => ({
+        currentAmount: Math.round((target * fill * ratio) / 100),
         targetAmount: target,
         label: "おためし表示",
       });
+      /* `rise` 秒かけて額を上げていく。本番の溜まり方（2.2秒で今の額まで）は
+         一瞬で終わって録画では見えないので、試し表示のときだけ額のほうを動かす */
+      const rise = Math.max(0, numParam(params.rise, 0));
+      if (rise > 0 && preview === "bank") {
+        const started = Date.now();
+        setGoal(goalAt(0));
+        const tick = setInterval(() => {
+          const r = Math.min(1, (Date.now() - started) / (rise * 1000));
+          setGoal(goalAt(r));
+          if (r >= 1) clearInterval(tick);
+        }, 100);
+        return () => clearInterval(tick);
+      }
+      setGoal(goalAt(1));
       if (preview !== "alert") return;
       const amount = Math.max(0, Math.round(numParam(params.amount, 500)));
       const timer = setTimeout(() => {

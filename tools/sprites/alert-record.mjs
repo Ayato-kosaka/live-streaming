@@ -5,6 +5,8 @@
  *   node alert-record.mjs --base http://localhost:4310 --amount 500 --out /tmp/a.mp4
  *   node alert-record.mjs --base http://localhost:4310 --mode bank --fill 100 \
  *        --size 640x360 --seconds 10 --out /tmp/bank.mp4
+ *   node alert-record.mjs --base http://localhost:4310 --mode bank --fill 100 --rise 8 \
+ *        --size 960x540 --seconds 11 --out /tmp/bank-rise.mp4   # 8秒かけて溜める
  *
  * `--base` は Expo の web を書き出したもの（`npx expo export --platform web`）を
  * 静的に配っている先。開発サーバーでは録らない（`CLAUDE.md`「測るときは開発サーバーを
@@ -45,6 +47,8 @@ const base = arg("base", "http://localhost:4310").replace(/\/$/, "");
 const mode = arg("mode", "alert"); // alert | bank
 const amount = Number(arg("amount", "500"));
 const fill = arg("fill", "60");
+// 貯金箱を 0 から fill まで何秒かけて溜めるか（--mode bank のときだけ。0 は本番どおり）
+const rise = arg("rise", "0");
 const theme = arg("theme", "halloween");
 const [W, H] = arg("size", "1920x1080").split("x").map(Number);
 const out = resolve(arg("out", join(tmpdir(), `alert-${mode}-${amount}.mp4`)));
@@ -81,6 +85,7 @@ const q = new URLSearchParams({
   theme,
   fill,
   amount: String(amount),
+  ...(Number(rise) > 0 ? { rise } : {}),
 });
 const target = `${base}/alertbox/?${q}`;
 

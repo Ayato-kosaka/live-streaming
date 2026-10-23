@@ -1,8 +1,13 @@
 /**
  * 季節の貯金箱。豚と同じ場所・同じ字の並びで、絵だけを季節の4コマに替える。
  *
- * - 下地（base）と中身（fill）をそれぞれ4コマ重ねて、CSS でコマ送りする
- *   （島のあやとの歩きと同じ、ささやかな動き）
+ * - 下地（base）と中身（fill）をそれぞれ4コマ重ねて、JS の時計でコマ送りする
+ *   （島のあやとの歩きと同じ、ささやかな動き）。**CSS の animation では送らない。**
+ *   opacity を CSS で動かすとコマ1枚ずつが合成レイヤーになり、Chrome は見えていない
+ *   （opacity 0 の）レイヤーを描いておかない。負荷が高いと、出た瞬間のコマが
+ *   タイル（256px）の一部しか描けていないまま画面に出て、中身が欠けて下地の灰が
+ *   見えた（実測。下地と中身のコマ替わりもずれた）。JS で `visibility` を切り替えれば
+ *   ふつうの描き直しになり、描き終わるまで前の絵が出たままになる
  * - 溜まり方は豚と同じ（`components/PiggyGauge/wave.ts`）。中身の層を、波打つ
  *   水面で下から切り抜く。**色は絵に任せる**
  * - 字（目標・いまの額・ラベル）の色はテーマが持つ
@@ -15,7 +20,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, StyleSheet, useWindowDimensions, type TextStyle } from "react-native";
 import type { SeasonTheme, TextTone } from "../themes";
 import type { SeasonBank } from "./useSeason";
-import { ensureSeasonCss, sequenceAnimation } from "./seasonCss";
+
 import { emptyClip, useWaveClip } from "../components/PiggyGauge/wave";
 
 type Props = {
@@ -58,9 +63,28 @@ export const ThemedGauge: React.FC<Props> = ({
   targetText,
   label,
 }) => {
+  const baseRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const fillRefs = useRef<(HTMLImageElement | null)[]>([]);
+
+  /* コマ送り。`sequence` の `[コマ, ms]` を順に出す。下地と中身は同じ時に替える。
+     1周 4秒ほどで8回しか起きないので、時計の負担は無いに等しい */
   useEffect(() => {
-    ensureSeasonCss();
-  }, []);
+    const seq = theme.bank.sequence;
+    let step = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const show = () => {
+      const [k, ms] = seq[step % seq.length];
+      for (const refs of [baseRefs.current, fillRefs.current]) {
+        refs.forEach((el, i) => {
+          if (el) el.style.visibility = i === k ? "visible" : "hidden";
+        });
+      }
+      step += 1;
+      timer = setTimeout(show, ms);
+    };
+    show();
+    return () => clearTimeout(timer);
+  }, [theme, bank]);
 
   const { width: screenWidth } = useWindowDimensions();
   // 豚の占めていた高さ（PiggyGauge と同じ式）。幅は画面からはみ出さない
@@ -74,11 +98,16 @@ export const ThemedGauge: React.FC<Props> = ({
   const fillRef = useRef<HTMLDivElement | null>(null);
   useWaveClip(fillRef, true, boxW, boxH, progress, -OVERFILL_PX, boxH);
 
-  const n = theme.bank.frames;
-  const frames = (imgs: SeasonBank["base"]) =>
+  const frames = (
+    imgs: SeasonBank["base"],
+    refs: React.MutableRefObject<(HTMLImageElement | null)[]>
+  ) =>
     imgs.map((img, i) => (
       <img
         key={img.url}
+        ref={(el) => {
+          refs.current[i] = el;
+        }}
         src={img.url}
         alt=""
         draggable={false}
@@ -88,8 +117,7 @@ export const ThemedGauge: React.FC<Props> = ({
           top: -b.y * s,
           width: img.width * s,
           height: img.height * s,
-          opacity: 0,
-          animation: sequenceAnimation(theme.id, n, theme.bank.sequence, i),
+          visibility: i === 0 ? "visible" : "hidden",
           pointerEvents: "none",
           userSelect: "none",
         }}
@@ -102,7 +130,7 @@ export const ThemedGauge: React.FC<Props> = ({
   return (
     <View style={{ width: boxW, height: boxH, position: "relative" }}>
       <div style={{ position: "absolute", left: 0, top: 0, width: boxW, height: boxH }}>
-        {frames(bank.base)}
+        {frames(bank.base, baseRefs)}
       </div>
       <div
         ref={fillRef}
@@ -116,7 +144,7 @@ export const ThemedGauge: React.FC<Props> = ({
           WebkitClipPath: emptyClip(boxW, boxH),
         }}
       >
-        {frames(bank.fill)}
+        {frames(bank.fill, fillRefs)}
       </div>
 
       <View style={styles.textOverlay}>

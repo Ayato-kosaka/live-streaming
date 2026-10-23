@@ -217,7 +217,7 @@ const Bat: React.FC<{
               inset: 0,
               width: "100%",
               height: "100%",
-              opacity: frames.length > 1 ? 0 : 1,
+              visibility: frames.length > 1 ? "hidden" : "visible",
               animation:
                 frames.length > 1 ? frameAnimation(2, i, half) : undefined,
               userSelect: "none",

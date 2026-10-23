@@ -17,11 +17,14 @@
  * 右（-r）の2本へ数字を埋めて展開する。
  */
 
+/* コマ送りは opacity ではなく visibility で切り替える。opacity 0 のコマは合成レイヤーとして
+   描かれずに置かれ、負荷が高いと出た瞬間に描けていない（`ThemedGauge.tsx` の頭）。
+   visibility はふつうの描き直しになるので、描き終わるまで前のコマが出たまま */
 const FRAME_STEPS = (n: number) => `
 @keyframes ss-frame-${n} {
-  0% { opacity: 1; }
-  ${(100 / n).toFixed(4)}% { opacity: 0; }
-  100% { opacity: 0; }
+  0% { visibility: visible; }
+  ${(100 / n).toFixed(4)}% { visibility: hidden; }
+  100% { visibility: hidden; }
 }`;
 
 /* 小物の動き。`--dir` は書くときだけの印（左の枠で 1、右の枠で -1）。差す前に数字にする */
@@ -134,40 +137,6 @@ export function ensureSeasonCss() {
   el.id = ID;
   el.textContent = CSS;
   document.head.appendChild(el);
-}
-
-/**
- * 間の決まったコマ送り（`[コマ, ms]` の並び）を、コマ1枚ごとの keyframes にする。
- * どのコマも同じ長さ・同じ始まりの animation なので、下地と中身のコマがずれない。
- * テーマごとに1回だけ差す。
- */
-export function sequenceAnimation(
-  id: string,
-  frames: number,
-  seq: [number, number][],
-  i: number
-): string {
-  const total = seq.reduce((a, [, ms]) => a + ms, 0);
-  const name = `ss-seq-${id}-${i}`;
-  const styleId = `season-seq-${id}`;
-  if (typeof document !== "undefined" && !document.getElementById(styleId)) {
-    let css = "";
-    for (let k = 0; k < frames; k++) {
-      let t = 0;
-      let body = "";
-      for (const [f, ms] of seq) {
-        body += `${((t / total) * 100).toFixed(4)}% { opacity: ${f === k ? 1 : 0}; } `;
-        t += ms;
-      }
-      body += `100% { opacity: ${seq[seq.length - 1][0] === k ? 1 : 0}; }`;
-      css += `@keyframes ss-seq-${id}-${k} { ${body} }\n`;
-    }
-    const el = document.createElement("style");
-    el.id = styleId;
-    el.textContent = css;
-    document.head.appendChild(el);
-  }
-  return `${name} ${total}ms step-end 0ms infinite`;
 }
 
 /**
