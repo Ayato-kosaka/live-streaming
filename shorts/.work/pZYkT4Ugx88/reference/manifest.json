@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "pZYkT4Ugx88__reference",
+ "mode": "reference",
+ "dest": "pZYkT4Ugx88/reference",
+ "video": "pZYkT4Ugx88",
+ "channel": null,
+ "request": "shorts/requests/shinkiro-ref-20261023.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 19,
+  "caption_segments": 31,
+  "transcript_segments": 1,
+  "cuts": 69,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 33
+ },
+ "bytes": {
+  "plain": 3448732,
+  "tar_gz": 3284648,
+  "encrypted": 3284656
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 3284656,
+   "sha256": "e2985c6e131a647d3b0ef46cd682558c2b64b308e926f2a814df49e85f173d34"
+  }
+ ],
+ "hmac_sha256": "f4df887ba69929034d6d3f2e15c521a4453b19555858e0f7c55a7a7c0a96f518",
+ "pubkey_sha256": "c09960e57e3dd7c12bad54d0e692a3fcba37d8c7a1bf74816a9d061a5cdbe962",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40021160960",
+ "created_at": "2026-10-23T20:50:50+00:00"
+}
