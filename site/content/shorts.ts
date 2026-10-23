@@ -130,6 +130,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "waajCeichi8", date: "2026-10-18", title: "アプリ作り始めて1年、ついに1日4700人突破！" },
     { id: "cwolzunLAko", date: "2026-10-21", title: "🇫🇷 フランスを10日レンタカー旅してみた！" },
     { id: "qcWK52DE0X8", date: "2026-10-21", title: "🇦🇱アルバニアの1泊1400円ホステルが異常すぎた😰" },
+    { id: "PZXKg7NET20", date: "2026-10-22", title: "海外キッチンでワンパンチーズフォカッチャ作ったらまさかの事態に！" },
     { id: "ieMGyM2QjCA", date: "2026-10-22", title: "🇲🇰 北マケドニアの夕日見に行ったら、野良犬に襲われた！" },
   ],
 };
