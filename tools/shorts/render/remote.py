@@ -50,6 +50,10 @@ Python 3.13、numpy 2.5.3・Pillow 12.3.0・opencv-python-headless 5.0.0.93・bu
 別のバイト列を出したので、Actions の書き出しは x264 の cpu-independent を付ける
 （`SHORTS_X264_CPU_INDEPENDENT=1`。job ごとの指紋 `probe_stages` で、どの段が違うかを残す）。
 書き出すのは**作業枝に push してある版の render.py**。手元で直した道具は push してから回す。
+
+ランナーの apt が詰まると、ffmpeg は GitHub の静的ビルドに切り替わる（ワークフローの「道具を入れる」が
+取り込みの ffmpeg.sh を呼ぶ）。**その版は作業箱と違い、バイト列も変わる。** job が版を控え（`ffmpeg_version`）、
+要約に出す。作業箱の版（`WORKBOX_FFMPEG`）でなければ `fetch` が「!! ffmpeg が作業箱と違う版」と言う。
 """
 
 from __future__ import annotations
@@ -111,6 +115,10 @@ QA_GROUPS = (("safe_area",), ("watermark", "black", "frozen"),
              ("text_on_face", "faces", "shot_reuse", "similar_run"),
              ("container", "loudness", "voice_vs_bgm", "subtitle_sync", "text_dup", "silence",
               "clipping", "original_audio", "cut_length", "still_image", "source_stutter", "line_breaks"))
+# 作業箱の ffmpeg（ubuntu-24.04 の apt）。ランナーの版がこれで始まらなければ、要約で知らせる
+WORKBOX_FFMPEG = "6.1.1"
+# report の段で入れる firebase-tools と playwright-core（下見）。ふだん1分かからない。止まったら切って入れ直す
+NPM_SEC = 240
 
 
 def sha256_file(p: Path) -> str:
@@ -403,6 +411,11 @@ def print_summary(summ: dict) -> None:
         ends = it.get("end_notes") or []
         print(f"  {it['id']}（{it.get('label')}）: {it.get('status')}  {it.get('seconds')}秒  sha256 {str(it.get('sha256'))[:12]}…"
               + (f"  双子 {'一致' if it.get('twin_same') else '!! 不一致'}" if it.get('twin_same') is not None else ""))
+        odd = {k: v for k, v in (it.get("ffmpeg") or {}).items() if v and not str(v).startswith(WORKBOX_FFMPEG)}
+        if odd:
+            # apt が詰まって静的ビルドで書いた job がある。作業箱で書いた版・双子とバイト列が揃わない
+            print(f"    !! ffmpeg が作業箱と違う版（{' / '.join(f'{k} {v}' for k, v in odd.items())}。"
+                  f"作業箱は {WORKBOX_FFMPEG}）。同じ指示書でもバイト列が変わる。承認を取る版・出す版にするなら回し直す")
         print(f"    検査 {qa.get('overall')} {json.dumps(qa.get('counts'), ensure_ascii=False)}"
               + (f"  合格以外: {', '.join(rest)}" if rest else ""))
         print(f"    BGM の頭 {bgm.get('head_trim_s')}秒を飛ばした・0コマ目 {bgm.get('mix_first_frame_db')}dBFS"
@@ -724,6 +737,16 @@ def cpu_info() -> dict:
     return {"model": model, "avx512": " avx512f" in txt}
 
 
+def ffmpeg_version() -> str | None:
+    """`ffmpeg -version` の頭の行の版（apt なら 6.1.1-3ubuntu5、静的ビルドなら N-…）。"""
+    try:
+        line = subprocess.run(["ffmpeg", "-version"], capture_output=True, text=True, timeout=30).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    m = re.match(r"ffmpeg version (\S+)", line)
+    return m.group(1) if m else None
+
+
 def cmd_job() -> int:
     prefix = os.environ["PREFIX"]
     iid, role = os.environ["ITEM_ID"], os.environ["ROLE"]
@@ -766,10 +789,12 @@ def cmd_job() -> int:
             + (["--draft"] if draft else []), cwd=job, capture_output=True, text=True)
     T["rendered"] = now()
     res = {"id": iid, "role": role, "draft": draft, "timing": T, "cpu": cpu_info(), "probe": probe,
+           "ffmpeg": ffmpeg_version(),
            "render_rc": r.returncode, "render_seconds": round(T["rendered"] - T["inputs"], 1),
            # 下見のページの見出し（指示書の id と題の札）。結果は GCS と暗号文にだけ置く（ログには出さない）
            "label": str(edit.get("id") or iid), "title": ((edit.get("title") or {}).get("text") or "").replace("\n", "")}
-    print(f"  CPU: {res['cpu'].get('model')}（AVX-512 {'あり' if res['cpu'].get('avx512') else 'なし'}）")
+    print(f"  CPU: {res['cpu'].get('model')}（AVX-512 {'あり' if res['cpu'].get('avx512') else 'なし'}）"
+          f"  ffmpeg {res['ffmpeg']}")
     if r.returncode != 0 or not mp4.is_file():
         res["error"] = (r.stderr or "")[-1500:]
         print(f"!! 書き出しが落ちた（{r.returncode}）")
@@ -843,11 +868,12 @@ def cmd_report() -> int:
         out.update(status="ok", sha256=m["sha256"], bytes=m["bytes"], qa=m.get("qa"),
                    render_seconds=m["render_seconds"], timing=m["timing"], cpu=m.get("cpu"),
                    probe=m.get("probe"), label=m.get("label"), title=m.get("title"), proof=m.get("proof"),
+                   ffmpeg=m.get("ffmpeg"),
                    **({"proof_error": m["proof_error"]} if m.get("proof_error") else {}))
         if req["twin"]:
             out["twin"] = {"sha256": (tw or {}).get("sha256"), "same": bool(tw) and tw.get("sha256") == m["sha256"],
                            "render_seconds": (tw or {}).get("render_seconds"), "cpu": (tw or {}).get("cpu"),
-                           "probe": (tw or {}).get("probe")}
+                           "probe": (tw or {}).get("probe"), "ffmpeg": (tw or {}).get("ffmpeg")}
             if not out["twin"]["same"]:
                 out["status"] = "twin-differs"
         files = []
@@ -896,6 +922,28 @@ def cmd_report() -> int:
     return 0 if status_all == "ok" else 1
 
 
+def wait_tools(first: subprocess.Popen, again, limit: float = NPM_SEC) -> bool:
+    """下見の道具の npm install を上限つきで待ち、止まったら切って1回だけ入れ直す（again() が新しく起こす）。
+
+    ワークフローの「道具を入れる」（retry.sh）と同じ形。上限なしで待つと、npm が止まった回は report の
+    job の上限（20分）まで待って落ち、書き出しと検査の結果まで返らない。ここで切れば、下見だけ落として返す。
+    """
+    p = first
+    for n in (1, 2):
+        try:
+            if p.wait(timeout=limit) == 0:
+                return True
+            why = f"終了コード {p.returncode}"
+        except subprocess.TimeoutExpired:
+            p.kill()
+            p.wait()
+            why = f"{limit:.0f}秒で終わらないので切った"
+        print(f"::warning::firebase-tools / playwright-core の npm install … {why}（{n}回目）")
+        if n == 1:
+            p = again()
+    return False
+
+
 def preview(req: dict, items: list[dict], bucket, prefix: str) -> dict:
     """本体の mp4 を Firebase Hosting のプレビューチャンネル（7日）に並べて配り、ランナーから確かめる。
 
@@ -925,8 +973,8 @@ def preview(req: dict, items: list[dict], bucket, prefix: str) -> dict:
                          "duration": (it.get("proof") or {}).get("seconds")})
         preq = {"name": req["name"], "files": files}
         site = host.make_site(preq, got, {"title": f"下見 {req['name']}", "items": meta}, tmp)
-        if npm.wait() != 0:
-            raise Bad("firebase-tools / playwright-core を入れられなかった")
+        if not wait_tools(npm, lambda: host.prewarm(tools)):
+            raise Bad("firebase-tools / playwright-core を入れられなかった（上限で2回切った）")
         channel = "sp-" + secrets.token_hex(10)
         assert host.CHANNEL.match(channel) and channel != "live"
         d = host.firebase(tools, ["hosting:channel:deploy", channel, "--expires", host.EXPIRES], site,
@@ -962,6 +1010,8 @@ def summary(rep: dict) -> dict:
                "bytes": it.get("bytes"), "seconds": pr.get("seconds"), "frames": pr.get("frames"),
                "twin_same": (it.get("twin") or {}).get("same") if it.get("twin") else None,
                "render_seconds": it.get("render_seconds"),
+               # 本体と双子の ffmpeg の版。apt が詰まって静的ビルドに切り替わった job は、作業箱と違う版で書いている
+               "ffmpeg": {"main": it.get("ffmpeg"), **({"twin": it["twin"].get("ffmpeg")} if it.get("twin") else {})},
                "qa": {"overall": qa.get("overall"), "counts": qa.get("counts"), "checks": qa.get("detail") or [],
                       "seconds": qa.get("seconds"), "errors": qa.get("errors")},
                "bgm": dict(pr.get("bgm") or {}, mix_first_frame_db=(head.get("mix_db") or [None])[0],

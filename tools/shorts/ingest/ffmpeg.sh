@@ -17,6 +17,8 @@
 #
 # 切り替えたことは `::warning::` で run の頁に出す（ログが読めない箱からも注記は読める）。
 # 見張り: tools/shorts/ingest/quick_captions_selftest.py（leg ffmpeg）
+# 書き出し（shorts_render.yml の「道具を入れる」）も、この道のまま呼ぶ。置き場や引数を変えるときは、
+# あちらと見張り tools/shorts/render/install_selftest.py も直す
 set -uo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 R=(bash "$here/retry.sh")
