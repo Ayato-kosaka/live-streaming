@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__drx-p1-v3",
  "mode": "render",
- "dest": "render/drx-p1-v3/inbox",
+ "dest": "render/drx-p1-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/drx-p1-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2,
-  "tar_gz": 212,
-  "encrypted": 224
+  "plain": 36996,
+  "tar_gz": 9456,
+  "encrypted": 9472
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 224,
-   "sha256": "d1ab0f57c4dc7ea322e914bb5d88848031835b45295db31a7bab4e1598e635e1"
+   "bytes": 9472,
+   "sha256": "df5d19666c143bd2c37c1d4a639f5629eccb368e6ce42ec82ce88b4f7ce940f7"
   }
  ],
- "hmac_sha256": "4d4e433151d6df4fa8b93405cefbcc72ac16bdc8f75e6089532dd9e06ce818a9",
+ "hmac_sha256": "9278a28f09c06a736847070a7c3873a7a001bc45b952ddff71c5854a2b7c933a",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-23T22:25:17+00:00",
+ "created_at": "2026-10-23T22:32:27+00:00",
  "nonce": "b406031ba39fec639026c2c5"
 }
