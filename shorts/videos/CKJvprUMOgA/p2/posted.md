@@ -49,3 +49,11 @@ YouTube は上げた動画のファイルを差し替えられないので、**�
 2026-10-23 10:00 UTC を過ぎたら、`tools/shorts/post/README.md` の「予約の時刻のあとに、出たかを確かめる」のとおり、
 EC2 からログインしない `curl` で YouTube の oEmbed（200 で題が返れば公開）と TikTok の `embed/v2`（200 で `secret` が false なら公開）を見て、
 Studio と TikTok Studio の一覧でも読み直す。**見るのは v8 の ID（frcgM9wiRr8・7699179825432448277）**。確かめたら #976 を閉じる。
+
+## 公開を確かめた（2026-10-23）
+
+予約の時刻（10:00 UTC）のあと、EC2 からログインしない `curl` で 10:09〜10:10 UTC に見た。
+
+- YouTube `frcgM9wiRr8`: oEmbed が 200 で題「🇲🇰 北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった」を返した（`post_p2.json` の youtube.title と1字ずつ一致）→ 公開
+- TikTok `7699179825432448277`: `embed/v2` が 200・`"secret":false`・`createTime` 1792749600（= 10:00:00 UTC）→ 公開。
+  10:09 UTC に 503 が1回出たが、25秒あけて取り直すと 200 だった（一時的なもの）
