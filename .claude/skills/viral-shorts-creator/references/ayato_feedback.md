@@ -304,9 +304,12 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 
 - **言われた:**
   - 2026-10-18 島の付箋（`docs/island-misses.md` #285）
+  - 2026-10-24 #1019 https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6376656920（「冒頭の映像だけもっとこだわって欲しい。とはいえ、良い映像がないよね？犬出すとかかな？」。滝の回の0〜4秒が泥と岩だった）
 - **分類:** 画
 - **あやとの言葉:**
   > 2. 冒頭3秒の映像はもっとこだわって1番惹かれる映像を使うとより良い
+  >
+  > 冒頭の映像だけもっとこだわって欲しい。とはいえ、良い映像がないよね？犬出すとかかな？（2026-10-24 #1019。答えの泥を先に見せたが、動きも惹きも無い画だった）
 - **決まり:** する — `tools/shorts/plan/hook.py` で素材から候補3つを測って並べ、その動画の答え（オチ）を先に見せる画を人が選ぶ。しない — 原稿の1行目の画をそのまま0秒目に置く
 - **直す前 → 直した後:** 原稿の1行目の画のまま → 城塞の回は、犬がカメラに飛びかかる画の上に題の札
 - **当てる場所:** 人の目（`production.md` 3 の「0秒目がその動画でいちばん強い画か」）
@@ -772,3 +775,6 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/977#issuecomment-6310722951（時刻の指定）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6373871268（承認「両方めっちゃ良い。進めて」・チャットの書き置き）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6373871669（承認「両方めっちゃ良い。進めて」・チャットの書き置き）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6373811673（原稿 p2 の承認「めちゃくちゃ良い！最高😆」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6373841083（原稿 p1 の承認「良い。進めて」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6376680974（完成の承認と時刻の指定「完璧です 2026/10/25 21:30に投稿して」）
