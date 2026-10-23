@@ -18,7 +18,7 @@ import os
 import re
 import sys
 import tempfile
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -81,8 +81,20 @@ miss = [t for _, v, t in rows if v not in real and wide.search(t)]
 # イラン歩き旅（「一緒にご飯食べにイランまで歩く」）が入っていること。
 # **広い当てかたが駄目な理由を、この見張りが実測で持っている**
 ok("広い当てかたは料理でない回を拾う（だから狭めた）", len(miss) >= 10, True)
-ok("いまの当てかたは拾わない", len([t for _, v, t in rows if v not in real and R.COOK.search(t)]),
-   0 if BREAK != "wide" else len(miss))
+# 本物の表で「拾わない」を見るときも、本体（`lagging`）と同じく配信から DEFAULT_DAYS 以内の回は数えない。
+# 数えると、料理の配信があった翌日は図鑑に入るのを待っているだけで、毎回ここが赤くなる（#1015 で落ちた）
+cut = date.today() - timedelta(days=R.DEFAULT_DAYS)
+
+
+def settled(d: str) -> bool:
+    try:
+        return date.fromisoformat(d) <= cut
+    except ValueError:
+        return False
+
+
+ok("いまの当てかたは拾わない", len([t for d, v, t in rows if v not in real and R.COOK.search(t) and settled(d)]),
+   0 if BREAK != "wide" else len([t for d, v, t in rows if v not in real and wide.search(t) and settled(d)]))
 
 print("[5] 数えるものが無ければ 2")
 with tempfile.TemporaryDirectory() as tmp:
