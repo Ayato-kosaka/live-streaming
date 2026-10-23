@@ -18,15 +18,15 @@
 | `holdout` | 批評役の1枚では、見ている原稿の行を引く直しの例（銅像 p2 → F-039 の例）を伏せ、決まりは残す。ほかの原稿では例を残す。作文者の1枚では伏せない |
 | `ranges` | 書き起こしは、区間に掛かる30秒の行だけ |
 | `fill` | 雛形の {{…}} が1つでも残れば止まる |
-| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない |
+| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない。`orig_voice` のある行に【元の声】（F-051） |
 | `c_source` | 批評役の1枚に、`--video` の配信の字幕が入る（フォカッチャの下書きなら、作文者が根拠に挙げた 2:44:00 の行）。`--video` が無ければ「渡していない」と書く（#1014、F-047） |
 | `c_ranges` | 字幕の区間は、spec の why・src に書いた時刻の前後30秒。重なる区間は1つにまとめ、src の小数の秒も読む |
 | `c_leak` | 批評役の雛形は、対照の原稿の行を8字以上そのまま引かない（終わりの形「アーカイブ見てね」は数えない）。引いた字をこしらえると拾い、1枚を作らずに止まる |
 | `c_cards` | 批評役の1枚に、作文者と同じカード（ID の見出しが全部）と「当てる ID」の並びが入る |
 | `rows_stop` | spec が `rows` でなく `lines` で書いてあれば、批評役の1枚を作らずに止まる（滝の回 p1 は、画の列が空のまま回っていた） |
-| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」 |
+| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」。表は4欄（4欄目が「選んだ理由」。あやと #1019） |
 | `w_order` | 作文者の1枚は、約束のカード → 方針 → 書く形 → 当て表 → 材料（配信の字幕）の順。カードが先頭で、字幕はいちばん後ろ |
-| `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても）。`--chat` を渡すと止まる（F-048） |
+| `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても、本人が読み上げて自動字幕に入っていても。読み上げは〔コメントの読み上げ〕に伏せる）。`--chat` を渡すと止まる（F-048） |
 | `w_ate` | 当て表の雛形（表と spec の promises の形）に、カードの ID が全部・1回ずつ並ぶ |
 | `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及があれば、時刻と言葉だけを書く（字幕の文は写さない） |
 
@@ -87,6 +87,10 @@ CUTS = {
     "w_chat": ("brief.py", "    if chat:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_nochat"},
                "--chat を黙って受け取る"),
     "w_particle": ("brief.py", "        if drops:\n", "        if False:\n", {"w_fixed"}, "題の札の助詞の抜けを作文者に書かない"),
+    "w_reason": ("brief.py", ' | 残した本人の言葉 | 選んだ理由 |\",\n', ' | 残した本人の言葉 |\",\n', {"w_fixed"},
+                 "表の4欄目（選んだ理由）を外す"),
+    "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
+    "w_mask": ("brief.py", "            if b in ln:\n", "            if False:\n", {"w_nochat"}, "字幕の中のコメントの読み上げを伏せない"),
     "w_watch": ("brief.py", "        at = [ln.split(\"]\", 1)[0].lstrip(\"[\") for ln in lines if lint_mod.nick_at(ln, bad)]\n",
                 "        at = []\n", {"w_watch"}, "字幕の呼び名を作文者に書かない"),
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
@@ -169,13 +173,20 @@ def card_part(block: str, fid: str) -> str:
 def leg_cards(B):
     led = B.ledger_mod.load()
     ids = B.card_ids()
-    want_extra = {"F-014", "F-019", "F-050"}
-    script_cats = [it.id for it in led.items.values() if it.category in ("題", "言い回し", "事実", "構成")]
-    other = [it.id for it in led.items.values() if it.category in ("画", "音", "投稿", "進め方") and it.id not in want_extra]
+    cats = ("題", "言い回し", "事実", "構成")
+
+    def names_stage(it):
+        # 当てる場所が原稿の段（lint・批評役・書く段）を名指すか。選ぶ側（ledger.for_script）とは別に、帳面の字から読む
+        return bool(re.search(r"`lint:|批評役|書く段", it.place))
+    script_cats = [it.id for it in led.items.values() if it.category in cats]
+    staged = [it.id for it in led.items.values() if it.category not in cats and names_stage(it)]
+    other = [it.id for it in led.items.values() if it.category not in cats and not names_stage(it)]
     block = B.cards()
     return [(f"題・言い回し・事実・構成の {len(script_cats)} 項目が全部入る", bool(script_cats) and all(i in ids for i in script_cats)),
-            ("字に効く F-014（画）・F-019（音）・F-050（進め方）と、帳面の外の X2 も入る", want_extra <= set(ids) and "X2" in ids),
-            ("F-044（往復の上限）・画や音だけの項目（F-012・F-028 ほか）は入らない", "F-044" not in ids and not any(i in ids for i in other)),
+            (f"分類は別でも原稿の段を名指す {len(staged)} 項目（F-014 画・F-019 音・F-050 進め方ほか）と、帳面の外の X2 も入る",
+             {"F-014", "F-019", "F-050"} <= set(staged) and all(i in ids for i in staged) and "X2" in ids),
+            ("F-044（往復の上限）・画や音だけの項目（F-012・F-028 ほか）は入らない",
+             "F-044" in other and "F-012" in other and not any(i in ids for i in other)),
             (f"1枚に、全部の ID の見出しが1枚ずつ（{len(ids)}枚）", all(block.count(f"### {i} ") == 1 for i in ids))]
 
 
@@ -260,7 +271,8 @@ def leg_ayato(B):
             ("「あやとの添削（#1014）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの添削（#1014 2026-10-23）。2:47:30「ちょっと待つわ」"})),
             ("言い換え「あやとの言葉 #976 を、まとめ役が言い換えた」には付けない",
              "【あやと】" not in B.marks({"why": "題（あやとの言葉 #976 を、まとめ役が言い換えた案 B）"})),
-            ("【足】も印になる", B.marks({"why": "【足】ツッコミ"}) == "【足】")]
+            ("【足】も印になる", B.marks({"why": "【足】ツッコミ"}) == "【足】"),
+            ("配信の本人の声を流す行（orig_voice）に【元の声】（F-051）", B.marks({"why": "0:10:20 叫び", "orig_voice": "0:10:18〜0:10:21"}) == "【元の声】")]
 
 
 # ---------- 批評役の1枚の配信の字幕（#1014、F-047） ----------
@@ -332,6 +344,8 @@ def leg_w_fixed(B):
             ("表の1行目に札の字（改行を外して）が入る", "| 1 | 題の札をそのまま読む | 海外キッチンでまさかの事態に！ |" in w),
             ("札に助詞の抜け（滝観に）があれば、直す字（滝を観に）と一緒に書く（F-049）", "「滝観に行」→「滝を観に行」" in drop),
             ("直した札には書かない", "助詞の抜けがある" not in fixed),
+            ("表は4欄で、4欄目が「選んだ理由」（あやと #1019「なぜそれを選んだか理由付きで」）",
+             "| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 残した本人の言葉 | 選んだ理由 |" in w),
             ("無ければ「指定なし」", "（指定なし。" in bare)]
 
 
@@ -340,7 +354,8 @@ def fake_streams(B, td: Path):
     d = td / "2026/08"
     d.mkdir(parents=True)
     (d / "2026-08-04_2159_ZZZZZZZZZZ1.transcript.txt").write_text(
-        "[0:00:00] ここはポチだらけの草原です。\n[0:00:30] いま配信のコメントで道を教えてもらいました。\n[0:01:00] 水が多すぎて渡れへん。\n",
+        "[0:00:00] ここはポチだらけの草原です。\n[0:00:30] いま配信のコメントで道を教えてもらいました。こしらえたチャットの本文その一。\n"
+        "[0:01:00] 水が多すぎて渡れへん。\n",
         encoding="utf-8")
     (d / "2026-08-04_2159_ZZZZZZZZZZ1.chat.txt").write_text(
         "[0:00:10] みはりやく: こしらえたチャットの本文その一\n[0:00:40] ¥500 みはりやく: こしらえたチャットの本文その二\n", encoding="utf-8")
@@ -373,6 +388,8 @@ def leg_w_nochat(B):
     except ValueError:
         stopped = True
     return [("同じ区間にチャットがあっても、本文は1行も入らない", "こしらえたチャットの本文" not in w and "みはりやく" not in w),
+            ("本人が読み上げて字幕に入ったコメントは〔コメントの読み上げ〕に伏せ、伏せた数を書く",
+             "〔コメントの読み上げ〕" in w and "コメント 1 か所は" in w),
             ("--chat を渡すと止まる（F-048）", stopped)]
 
 
@@ -392,6 +409,8 @@ def leg_w_watch(B):
     return [("字幕の呼び名「ポチ」を、時刻（0:00:00）と直す言葉（野良犬）つきで書く", "「ポチ」が 1 か所（0:00:00）" in got and "野良犬" in got),
             ("「ポチっと」は数えない", "（0:01:00" not in got),
             ("コメントに触れた時刻（0:00:30）を書く", "0:00:30「コメント」" in got),
+            ("伏せた読み上げ（〔コメントの読み上げ〕）は「読み上げ」として数え、印の中の「コメント」は数えない",
+             "0:02:00「読み上げ」" in B.watch_block(["[0:02:00] それ〔コメントの読み上げ〕やな"])),
             ("字幕の文はそのまま写さない", "道を教えてもらいました" not in got and "草原です" not in got)]
 
 

@@ -28,7 +28,7 @@
 - だから今は、**約束のカード（帳面の決まりと直しを、1字も切らずに）を先頭に**置き、字幕は**いちばん後ろの「材料」**に下げる。
   **チャットの本文は入れない**（視聴者の書き込みで話を動かさない。F-048）。カードは帳面から毎回組む（`ledger.py` の `script_items`）
 
-作文者は1行ずつ「元の出来事（配信の時刻）／見る人に届く文／残した本人の言葉」の3欄で書き、カード1枚ずつに当て表
+作文者は1行ずつ「元の出来事（配信の時刻）／見る人に届く文／残した本人の言葉／選んだ理由」の4欄で書き、カード1枚ずつに当て表
 （spec の `promises`）を付ける。当て表の欠けは lint の L-ATE が ✕ にする（渡せない）。
 
 ## 批評役の1枚
@@ -186,6 +186,50 @@ def cut(path: Path, ranges: list, step: int = 30) -> list:
     return out
 
 
+# 本人が配信でコメントを読み上げると、視聴者さんの書き込みの字が自動字幕に入る。2026-10-23 の滝の回の1枚には、
+# チャットを入れなくても、同じ区間のチャットの本文が2行、字幕の側から入っていた。8字に満たない字（「こんばんは」）は伏せない
+READ_MIN = 8
+READ_PAD = 90     # 読み上げはチャットの少しあと（〜1分半）になる。区間の前後この秒のチャットまで見る
+READ_MARK = "〔コメントの読み上げ〕"
+
+
+def comment_bodies(video: str, ranges: list, pad: int = READ_PAD) -> list:
+    """区間（の前後 pad 秒）のチャットの本文（名前と投げ銭の額を落とす）。長い順。字はここで使うだけで、どこにも出さない。"""
+    try:
+        ch = stream_file(video, "chat")
+    except FileNotFoundError:
+        return []
+    out = set()
+    for ln in ch.read_text(encoding="utf-8").splitlines():
+        m = TIME.match(ln)
+        if not m:
+            continue
+        t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+        if not any(a - pad <= t <= b + pad for a, b in ranges):
+            continue
+        body = re.sub(r"^[¥$€£][\d,]+\s+", "", m.group(4))
+        body = body.split(": ", 1)[1] if ": " in body else body
+        if len(body.strip()) >= READ_MIN:
+            out.add(body.strip())
+    return sorted(out, key=len, reverse=True)
+
+
+def mask_read(lines: list, bodies: list) -> tuple:
+    """字幕の行の中の、チャットの本文と同じ字を伏せる。（伏せた行, 伏せた数）。"""
+    out, n = [], 0
+    for ln in lines:
+        for b in bodies:
+            if b in ln:
+                n += ln.count(b)
+                ln = ln.replace(b, READ_MARK)
+        out.append(ln)
+    return out, n
+
+
+def masked_note(n: int) -> str:
+    return f"本人が読み上げた視聴者さんのコメント {n} か所は{READ_MARK}に伏せた。F-048" if n else ""
+
+
 # ---------- 原稿の表 ----------
 
 def rows_of(script: Path, spec: Path | None) -> tuple:
@@ -215,6 +259,8 @@ def marks(r: dict) -> str:
         m.append("【あやと】")
     if "【答】" in why:
         m.append("【答】")
+    if r.get("orig_voice"):
+        m.append("【元の声】")   # AI の声で読まず、配信の本人の声（叫び）を流す行（帳面 F-051）
     return "".join(m)
 
 
@@ -287,9 +333,10 @@ def critic_source(video: str | None, ranges: list, rows: list) -> str:
     if not rs:
         return "（字幕の区間が決まらない。`--range` を渡すか、spec の why に配信の時刻を書く）"
     tr = stream_file(video, "transcript")
-    got = cut(tr, rs)
+    got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
     how = "まとめ役が渡した区間" if ranges else f"spec の why・src に書いた時刻の前後{PAD}秒"
-    return f"自動字幕（{rel(tr)}、30秒ごと。{how}）:\n\n```\n" + "\n".join(got) + "\n```"
+    note = f"。{masked_note(n)}" if n else ""
+    return f"自動字幕（{rel(tr)}、30秒ごと。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"
 
 
 FIXTURES = HERE / "fixtures"
@@ -365,7 +412,14 @@ def watch_block(lines: list) -> str:
         if at:
             out.append(f"- 字幕に、配信の中の呼び名「{bad}」が {len(at)} か所（{'・'.join(at[:6])}{' ほか' if len(at) > 6 else ''}）。"
                        f"声では「{good}」のように、初見に通じる言葉で言う（F-048・F-008。lint の L-NICK が見る）")
-    inner = [(ln.split("]", 1)[0].lstrip("["), m.group(0)) for ln in lines if (m := lint_mod.INNER.search(ln))]
+    inner = []
+    for ln in lines:
+        at = ln.split("]", 1)[0].lstrip("[")
+        m = lint_mod.INNER.search(ln.replace(READ_MARK, ""))   # 伏せた印の中の「コメント」は数えない
+        if m:
+            inner.append((at, m.group(0)))
+        elif READ_MARK in ln:
+            inner.append((at, "読み上げ"))
     if inner:
         out.append(f"- 字幕で、本人がコメント・チャットに触れている所が {len(inner)} か所（"
                    + "・".join(f"{t}「{w}」" for t, w in inner[:6]) + "）。"
@@ -374,14 +428,18 @@ def watch_block(lines: list) -> str:
 
 
 def table_template(n: int, title: str | None = None) -> str:
-    """1行ずつ3欄（元の出来事／見る人に届く文／残した本人の言葉）の雛形。"""
-    head = ["| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 残した本人の言葉 |", "| ---: | --- | --- | --- |"]
+    """1行ずつ4欄（元の出来事／見る人に届く文／残した本人の言葉／選んだ理由）の雛形。
+
+    選んだ理由は、あやとの返事（#1019「なぜそれを選んだか理由付きで」、帳面 F-051）から。
+    """
+    head = ["| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 残した本人の言葉 | 選んだ理由 |",
+            "| ---: | --- | --- | --- | --- |"]
     rows = []
     for i in range(1, n + 1):
         if i == 1 and title:
-            rows.append(f"| 1 | 題の札をそのまま読む | {title.replace(chr(10), '')} |  |")
+            rows.append(f"| 1 | 題の札をそのまま読む | {title.replace(chr(10), '')} |  |  |")
         else:
-            rows.append(f"| {i} |  |  |  |")
+            rows.append(f"| {i} |  |  |  |  |")
     return "\n".join(head + rows)
 
 
@@ -402,8 +460,9 @@ def build_writer(video: str | None, ranges: list, refs: list, about: str, n: int
     if video and ranges:
         rs = parse_ranges(ranges)
         tr = stream_file(video, "transcript")
-        got = cut(tr, rs)
-        parts.append(f"自動字幕（{rel(tr)}、30秒ごと）:\n\n```\n" + "\n".join(got) + "\n```")
+        got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
+        note = f"。{masked_note(n)}" if n else ""
+        parts.append(f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(got) + "\n```")
     for p in extra:
         text = Path(p).read_text(encoding="utf-8").strip()
         got += [ln for ln in text.splitlines() if TIME.match(ln)]
@@ -818,7 +877,7 @@ def main() -> int:
     w.add_argument("--range", action="append", default=[], help="H:MM:SS-H:MM:SS（何回でも）")
     w.add_argument("--chat", action="store_true", help="使わない（作文者の1枚にチャットの本文は入れない。帳面 F-048）。渡すと止まる")
     w.add_argument("--extra", action="append", default=[], help="足す書き起こし（復号した whisper など、[H:MM:SS] 形式）")
-    w.add_argument("--lines", type=int, default=18, help="3欄の表の雛形の行数")
+    w.add_argument("--lines", type=int, default=18, help="4欄の表の雛形の行数")
     w.add_argument("--title", help="題の札の字（決まっていれば。1行目でそのまま読む・表の1行目に入れる。助詞の抜けがあれば1枚に書く）")
     w.add_argument("--next", help="最後の行で言う次の配信（「本日22時」。決まっていれば）")
     c = sub.add_parser("critic", help="批評役へ（関所）")
