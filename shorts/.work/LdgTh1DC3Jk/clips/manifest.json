@@ -5,7 +5,7 @@
  "dest": "LdgTh1DC3Jk/clips",
  "video": "LdgTh1DC3Jk",
  "channel": null,
- "request": "shorts/requests/2026-10-23-georgia-falls-shoes-clips.json",
+ "request": "shorts/requests/2026-10-23-georgia-falls-all-clips.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,64 +14,129 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 6,
+  "sheets": 25,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 1,
-  "clips_ok": 1,
-  "clip_seconds": 360.0,
+  "clips": 5,
+  "clips_ok": 5,
+  "clip_seconds": 1500.0,
   "channel_entries": 0,
-  "files": 15
+  "files": 38
  },
  "bytes": {
-  "plain": 152354227,
-  "tar_gz": 152120360,
-  "encrypted": 152120368
+  "plain": 790914370,
+  "tar_gz": 790018170,
+  "encrypted": 790018176
  },
  "encrypted_files": [
   {
    "name": "payload.enc.000",
    "bytes": 47185920,
-   "sha256": "8c7bd939ea17fdd62e8ed5484dff2bf7c458895e2c0c971217add739362d443e"
+   "sha256": "26a3c031c5fe32588a37f1f9d2dad1c98cb867d62a1d7bd64ab4dc28af3614e3"
   },
   {
    "name": "payload.enc.001",
    "bytes": 47185920,
-   "sha256": "72d1c6f81b029237cee47f73e9bd365477c4c48010cbbd987ccf0dede2cd8c46"
+   "sha256": "72bc6a51bb672951cf680483123759bdf5b3395a230e35b85603d6893c599e09"
   },
   {
    "name": "payload.enc.002",
    "bytes": 47185920,
-   "sha256": "98283e8a94185f8a4da0f499cfb1c8a48d0af5875f7cec75a49d3329c535a49c"
+   "sha256": "890735eef2ee7f3ee12fa0cd1fa6ee2daf1051e052ef12ca1a7f229634c20047"
   },
   {
    "name": "payload.enc.003",
-   "bytes": 10562608,
-   "sha256": "68ebad36943e4492f2b679d1365eec65fc5efc24a6c99b40da50f018cf38bfab"
+   "bytes": 47185920,
+   "sha256": "ab39f667712944199a33ec2a2bb9c43a54aa98a51898302a6b66d9a10e716315"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 47185920,
+   "sha256": "421a4afbaebed1f845b787b6c9a577c98af30f1d4c1b38c583b1cc7deb932b11"
+  },
+  {
+   "name": "payload.enc.005",
+   "bytes": 47185920,
+   "sha256": "2e67c9e88bf06b91ed99e5677ff716953545ea2bb3ec49c1c62aef867dcca9c2"
+  },
+  {
+   "name": "payload.enc.006",
+   "bytes": 47185920,
+   "sha256": "2462fce6cab1621b4752ff14b1596e17f024c6ccd37f1894895aaa6f669e187f"
+  },
+  {
+   "name": "payload.enc.007",
+   "bytes": 47185920,
+   "sha256": "6f3235e166e688755aae86aa0595cbe45d5db72528bd242d6c68dad54a302591"
+  },
+  {
+   "name": "payload.enc.008",
+   "bytes": 47185920,
+   "sha256": "49d65d3c9c8393d91c89d2fd4f102daeb0f041d73524fce6f218c0eea1b20d66"
+  },
+  {
+   "name": "payload.enc.009",
+   "bytes": 47185920,
+   "sha256": "22e9b54bcb06907c37ba312048c854c95c7447e405b951d6f7b026c321ea6103"
+  },
+  {
+   "name": "payload.enc.010",
+   "bytes": 47185920,
+   "sha256": "e5541c24579bcba7c33a9454b292a4bb53e93f86b66c30feece4ce9bea71f65d"
+  },
+  {
+   "name": "payload.enc.011",
+   "bytes": 47185920,
+   "sha256": "16b7ea840f007b0aee9dd5145e90382ae5290d99eff27b40ac7f55b5a71549b9"
+  },
+  {
+   "name": "payload.enc.012",
+   "bytes": 47185920,
+   "sha256": "de77c52bcb17b7246ce47de3c8af7a81fd6acf5284c40a24b646b521636eecf0"
+  },
+  {
+   "name": "payload.enc.013",
+   "bytes": 47185920,
+   "sha256": "a6fe62278c1428934697963161d8b1ed53d713d5ee6222c35c428e19aa8785c9"
+  },
+  {
+   "name": "payload.enc.014",
+   "bytes": 47185920,
+   "sha256": "792ec827eea9f49b8d335e99a252223125dbe19ce1c683184cfb560fb9c054a3"
+  },
+  {
+   "name": "payload.enc.015",
+   "bytes": 47185920,
+   "sha256": "a51a554820c1e90c63f87dd5da640cd5cd4bc85494248c4340e39e86d8f2d535"
+  },
+  {
+   "name": "payload.enc.016",
+   "bytes": 35043456,
+   "sha256": "820866c79a0ec73e1a8cd469aec80f457b45292634b40003e094c6de8944a17d"
   }
  ],
- "hmac_sha256": "0add5f48d6bf29ffcdfaef014992651347b5208eefcd962e57d2d27ee2da6a26",
+ "hmac_sha256": "b785dc24f699c75c10ad93e553b0f93a2379f2684e2f08357850c97f7a08fb72",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39998763839",
- "created_at": "2026-10-23T18:10:40+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40002069340",
+ "created_at": "2026-10-23T18:45:52+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 2114544,
-    "sha256": "f46b4ebda1a4617a5124524c2e9fe88d88adea74c483b232ba4ff2fee1acd520"
+    "bytes": 10287488,
+    "sha256": "321173fd1a0d7e18af23cc37a15d913f5dd5d9c74c08120360e3e29740766bac"
    }
   ],
-  "hmac_sha256": "3a0535e0a7c95969105474b70181067f2a37e845387073b1f0851efe5839f8eb",
-  "files": 10,
-  "sheets": 6,
+  "hmac_sha256": "490e5aaf7b851ccf9d42ae75531ff19f66c5bc9b735933c8a73b426bf2322768",
+  "files": 29,
+  "sheets": 25,
   "bytes": {
-   "plain": 2200496,
-   "tar_gz": 2114529,
-   "encrypted": 2114544
+   "plain": 10603436,
+   "tar_gz": 10287485,
+   "encrypted": 10287488
   }
  }
 }
