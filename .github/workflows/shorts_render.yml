@@ -16,6 +16,11 @@ name: ショートを並べて書き出す
 #
 # 道具の版は作業箱にそろえる（ubuntu-24.04 の apt の ffmpeg 6.1.1、Python 3.13、下の pip の版）。
 # 同じ指示書から作業箱と同じバイト列が出るかは、双子と sha256 で見る。
+#
+# **道具を入れる段は、コマンドごとに上限を置いて1回だけ取り直す**（取り込みの retry.sh・ffmpeg.sh を
+# 写さずに呼ぶ。checkout が tools/shorts を取るので在る）。2026-10-23 のフォカッチャの回（run 39884210053）で、
+# 本体の job だけが「道具を入れる」で21分止まった（双子は同じ段を数十秒で抜け、取り消して回し直すと通った）。
+# 見張り: tools/shorts/render/install_selftest.py
 
 on:
   push:
@@ -31,7 +36,9 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    # 箱の版を止める: ubuntu-latest は Ubuntu 26 へ移り、apt の ffmpeg が作業箱（6.1.1）と変わる。
+    # 版が変わると同じ指示書でも書き出しのバイト列が変わり、作業箱で通した検査と揃わない（ingest も同じ）
+    runs-on: ubuntu-24.04
     # 作業箱が素材を上げ終わるのを最長25分待つ（remote.py の UPLOAD_WAIT）
     timeout-minutes: 30
     permissions:
@@ -56,7 +63,11 @@ jobs:
         with:
           python-version: "3.13"
       - name: 道具を入れる
-        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+        # ふだん数秒。止まったら上限で切って1回だけ取り直す（retry.sh）
+        timeout-minutes: 8
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
       - name: Google Cloud 認証
         uses: google-github-actions/auth@v3
         with:
@@ -74,7 +85,7 @@ jobs:
   render:
     needs: prepare
     name: ${{ matrix.id }}-${{ matrix.role }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -94,14 +105,22 @@ jobs:
           python-version: "3.13"
       # budoux は 0.9.3 から動かさない。行を割ってよい所の線（仮名どうしの点）をこの版で測り、品質チェックの
       # line_breaks も同じ版で割れ目を決める（tools/shorts/qa/linebreak.py の BUDOUX_PIN。自己テストの CI も同じ版）
+      #
+      # ふだん40秒ほど。2026-10-23 に本体の job だけがここで21分止まった（run 39884210053）。コマンドごとに
+      # 上限を置き、止まったら切って1回だけ取り直す（retry.sh）。ffmpeg は ffmpeg.sh: 入っていれば apt に
+      # 触らない・man-db の索引の作り直しを止める・apt が詰まったら GitHub の静的ビルドに切り替える。
+      # **静的ビルドは作業箱（apt の 6.1.1）と別の版で、同じ指示書でもバイト列が変わる。** job が版を控え、
+      # 要約に「!! ffmpeg が作業箱と違う版」と出す（remote.py の ffmpeg_version）
       - name: 道具を入れる（作業箱と同じ版）
+        timeout-minutes: 15
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq --no-install-recommends ffmpeg
+          R="bash tools/shorts/ingest/retry.sh"
+          bash tools/shorts/ingest/ffmpeg.sh
           ffmpeg -version | head -1
-          python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0" \
+          $R 300 python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0" \
             "opencv-python-headless==5.0.0.93" "budoux==0.9.3" "google-cloud-storage==3.17.1" requests
-          bash tools/shorts/render/fetch_fonts.sh > /dev/null
+          # 書体と YuNet。落としかけは本物の名前で残らない（fetch_fonts.sh は .part に落としてから名前を付ける）
+          $R 180 bash -c 'bash tools/shorts/render/fetch_fonts.sh > /dev/null'
           grep -m1 "model name" /proc/cpuinfo
       - name: Google Cloud 認証
         uses: google-github-actions/auth@v3
@@ -125,7 +144,7 @@ jobs:
     needs: [prepare, render]
     # 1本落ちても、出来たぶんと落ちた理由を返す
     if: ${{ !cancelled() && needs.prepare.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 下見（Hosting のプレビューチャンネル）を置いて確かめるぶん、firebase-tools を入れて配って再生まで 2〜3分
     timeout-minutes: 20
     permissions:
@@ -147,7 +166,12 @@ jobs:
         with:
           node-version: "24"
       - name: 道具を入れる
-        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+        # prepare と同じ（retry.sh）。firebase-tools と playwright-core は下の段の中で入れる
+        # （remote.py の wait_tools。npm にも上限と1回の取り直しがある）
+        timeout-minutes: 8
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
       - name: Google Cloud 認証
         uses: google-github-actions/auth@v3
         with:
