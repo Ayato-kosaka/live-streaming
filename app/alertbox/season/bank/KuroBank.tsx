@@ -1,15 +1,19 @@
 /**
  * 季節の貯金箱（切り絵版）。かぼちゃのお菓子バケツのまわりを、黒猫のクロが走り回る。
  *
- * - **大きさは全部、ウィジェットの幅に比例する**（PRISM は貯金箱のウィジェットを幅 248 前後の
- *   css px で描いて 1.25 倍に拡げている。配信によって箱の大きさが違う）。場面は幅を 1000 と
- *   した単位で組み、最後に幅へ掛ける
- * - 溜まり具合は、空のバケツの絵の上に満タンの絵を重ね、波の形で下から切り抜く
- *   （豚と同じ `wave.ts`）。**波を動かすのは溜まるあいだだけ**で、溜まり終わったら止める。
+ * - **置き方と大きさは豚と同じ決め方**（ビューポートの幅を基準に、下の真ん中）。豚の絵の
+ *   外形（幅 0.82・高さ 0.52、ビューポートの幅に対して）を、バケツとクロで使う。
+ *   場面は幅を 1000 とした単位で組み、最後に幅へ掛ける。幅が変わったら（オーナーが手で
+ *   箱を広げる・戻す）その場で組み直す。古い寸法は握らない
+ * - 溜まり具合は**豚と同じ読み方**: 灰色のかぼちゃに、下からオレンジが溜まる（いまの波の
+ *   切り抜き、`wave.ts`）。オレンジは縁まで含めたかぼちゃの外形ぜんぶで、灰色の残りが
+ *   そのまま「あと何割」になる。あわせて口のお菓子も増える（0% 空 → 半分で少し →
+ *   100% 山盛り → 超えたらあふれる）。お菓子は満タンの絵から**お菓子の画素だけ**を抜いて
+ *   重ねる（縁ごと重ねると、灰色のはずの縁がお菓子と一緒に色づいて、残りが少なく見える）。
+ *   **波を動かすのは溜まるあいだだけ**で、溜まり終わったら止める。
  *   何時間も出ているので、待機中に rAF を回さない
  * - 100% を超えたら、お菓子があふれた山を出し、クロがその上で踊る
- * - 字は上から 目標（小）・いまの額（大）・ラベル（小）。いまの額はバケツの胴に置く。
- *   クロがバケツに乗っても、額と重ならない高さ
+ * - 字は いまの額（大）と目標（小）をかぼちゃの胴に1行で、ラベルはいちばん下に
  * - 貯金箱はアラートのあいだ消えて、明けると出直す。出直すたびに、クロがバケツに飛び乗って
  *   喜び、そのあいだに中身が前の額から今の額まで上がる（数字も数え上げる）
  */
@@ -35,25 +39,40 @@ type Props = {
   label: string;
 };
 
-/** 場面の縦横比。本物のウィジェット（248×145 前後）に合わせる */
-export const SCENE_RATIO = 0.585;
+/**
+ * 豚の絵の外形（ビューポートの幅に対する割合）。豚は幅 1.2・高さ 0.52 の箱に描かれ、
+ * 絵そのものは箱の幅の 17〜85%（ビューポートの幅の 0.82）。オーナーの指摘
+ * 「配信の豚よりひと回り小さい」（2026-10-23）を受けて、同じ広さを使う
+ */
+export const PIG_W = 0.82;
+export const PIG_H = 0.52;
 
 /**
- * 場面の単位（幅 1000、高さ 585）での置き場所。
+ * 場面の単位（幅 1000、高さ 634）での置き場所。
  *
- * 下の 2 割は字の帯（いまの額・目標）で、クロはそこへ降りない。上の 8 割が舞台。
- * 額をバケツの胴に載せると、幅 248px の箱では字がバケツとクロを覆ってしまい、
- * クロが字の陰に隠れるか、字がクロに隠れるかのどちらかになった（録画で確かめた）
+ * バケツは取っ手の先から底までで場面の高さをほぼ使い切る（豚の絵が箱の高さを使い切って
+ * いるのに合わせる。字を下に別の帯で置くと、そのぶんバケツが豚より小さくなった）。
+ * 字は豚と同じく絵の上に載せる: いまの額と目標はかぼちゃの胴の字の四角（`label` の目印）に、
+ * ラベルはいちばん下に。
+ *
+ * 測ると、豚の絵は ビューポートの幅の 0.82 × 0.52（箱いっぱい）。バケツはこの大きさで
+ * 0.59 × 0.51、横にクロが並ぶと 0.83 になる。
+ *
+ * `KURO_H` は部品の台紙で測った背丈（帽子の箱の上〜足の箱の下）で、描かれている
+ * 背丈はその 85%。350 で描かれた背丈が 299 になり、かぼちゃ（取っ手を除く、498）の
+ * 60%・取っ手まで含めた高さ（620）の 48%（オーナーの指摘「クロだと分かるだけで
+ * 小さすぎる。バケツの高さの 55〜65%」）
  */
-const GROUND_Y = 470;
-const BUCKET_W = 330;
-const KURO_H = 240;
+const SCENE_H = Math.round((1000 * PIG_H) / PIG_W);
+const GROUND_Y = 625;
+const BUCKET_W = 704;
+const KURO_H = 350;
 
 /**
  * 出直しをまたいで、前に見せていた額と溜まり具合を覚えておく
  * （アラート明けに、前の額から数え上げるため）。ページに1つ
  */
-const shown = { amount: 0, level: 0 };
+const shown = { amount: 0, level: 0, seen: false };
 
 const fmt = (n: number) => `${Math.round(n).toLocaleString("ja-JP")}円`;
 
@@ -94,6 +113,77 @@ function alphaBox(url: string, fallback: { width: number; height: number }): { x
   return out;
 }
 
+/**
+ * 満タンの絵から、お菓子だけを抜いた絵。空の絵と色が違う画素を残し、`cutY`（絵の px）より
+ * 下は捨てる。一度作ったら覚える（作れなければ null → 満タンの絵をそのまま使う）。
+ *
+ * 色の差だけで抜くと、空の絵の縁とたまたま同じ色のお菓子（棒つきキャンディのオレンジ）に
+ * 横すじの穴が開く。抜いた形を 6px 太らせてから 6px 痩せさせて（閉じる）、穴だけ埋める
+ */
+const candyCache = new Map<string, HTMLCanvasElement | null>();
+function candyOnly(fullUrl: string, emptyUrl: string, cutY: number): HTMLCanvasElement | null {
+  const key = `${fullUrl}|${emptyUrl}|${Math.round(cutY)}`;
+  if (candyCache.has(key)) return candyCache.get(key) ?? null;
+  let out: HTMLCanvasElement | null = null;
+  try {
+    const f = loadedElement(fullUrl);
+    const e = loadedElement(emptyUrl);
+    if (f && e && f.naturalWidth === e.naturalWidth && f.naturalHeight === e.naturalHeight) {
+      const w = f.naturalWidth;
+      const h = Math.max(1, Math.min(f.naturalHeight, Math.round(cutY)));
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(e, 0, 0);
+        const ed = ctx.getImageData(0, 0, w, h).data;
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(f, 0, 0);
+        const img = ctx.getImageData(0, 0, w, h);
+        const fd = img.data;
+        const n = w * h;
+        let k = new Float32Array(n);
+        for (let i = 0; i < n; i++) {
+          const j = i * 4;
+          const d = Math.max(
+            Math.abs(fd[j] - ed[j]),
+            Math.abs(fd[j + 1] - ed[j + 1]),
+            Math.abs(fd[j + 2] - ed[j + 2]),
+            Math.abs(fd[j + 3] - ed[j + 3])
+          );
+          k[i] = Math.min(1, Math.max(0, (d - 24) / 40));
+        }
+        const R = 6;
+        const pass = (src: Float32Array, horiz: boolean, grow: boolean) => {
+          const dst = new Float32Array(n);
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              let v = src[y * w + x];
+              for (let s = 1; s <= R; s++) {
+                const a = horiz ? (x - s >= 0 ? src[y * w + x - s] : 0) : y - s >= 0 ? src[(y - s) * w + x] : 0;
+                const b = horiz ? (x + s < w ? src[y * w + x + s] : 0) : y + s < h ? src[(y + s) * w + x] : 0;
+                v = grow ? Math.max(v, a, b) : Math.min(v, a, b);
+              }
+              dst[y * w + x] = v;
+            }
+          }
+          return dst;
+        };
+        k = pass(pass(k, true, true), false, true);
+        k = pass(pass(k, true, false), false, false);
+        for (let i = 0; i < n; i++) fd[i * 4 + 3] = Math.round(fd[i * 4 + 3] * k[i]);
+        ctx.putImageData(img, 0, 0);
+        out = c;
+      }
+    }
+  } catch {
+    out = null;
+  }
+  candyCache.set(key, out);
+  return out;
+}
+
 /** クロの足もと・背丈を、部品の絵の外形から決める */
 function kuroFrame(rig: LoadedRig): KuroFrame {
   const def = rig.def;
@@ -129,22 +219,25 @@ export const KuroBank: React.FC<Props> = ({
   targetAmount,
   label,
 }) => {
-  const { width: W } = useWindowDimensions();
-  const sceneW = Math.max(1, Math.round(W));
-  const sceneH = Math.round(sceneW * SCENE_RATIO);
+  const { width: W, height: H } = useWindowDimensions();
+  const sceneW = Math.max(1, Math.round(W * PIG_W));
+  const sceneH = Math.round((sceneW * SCENE_H) / 1000);
   const U = sceneW / 1000;
+  /* 場面の上に空いている高さ（場面の単位）。箱は縦長なので、バケツの上に乗ったクロの
+     帽子が場面の上へはみ出してもよい。横長の箱で開かれたときだけ、ここで抑える */
+  const headroom = Math.max(0, Math.round((H - sceneH) / U));
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const amountRef = useRef<HTMLSpanElement | null>(null);
-  const labelRef = useRef<HTMLDivElement | null>(null);
-  /* 字の大きさ。**幅に比例**（PRISM の箱の大きさは配信ごとに違う）。
-     幅 248 で いまの額 27px・目標 14px・ラベル 13px。本物の配信では 1.25 倍に拡げて出る */
-  const fsAmount = sceneW * 0.11;
-  const fsTarget = sceneW * 0.058;
-  const fsLabel = sceneW * 0.052;
+  const lineRef = useRef<HTMLDivElement | null>(null);
+  /* 字の大きさ。**幅に比例**（PRISM の箱の大きさは配信ごとに違う）。いまの額がいちばん大きい */
+  const fsAmount = sceneW * 0.1;
+  const fsTarget = sceneW * 0.06;
+  const fsLabel = sceneW * 0.055;
   const ratio = targetAmount > 0 ? currentAmount / targetAmount : 0;
   const level = Math.max(0, Math.min(1, ratio));
-  const overflow = ratio >= 1;
+  // ちょうど 100% は山盛り、超えたらあふれ（オーナーの指定）
+  const overflow = ratio > 1;
 
   /** 場面の外から、いまの溜まり具合を渡す口（場面を組み直さずに） */
   const live = useRef({ level, overflow, amount: currentAmount });
@@ -175,6 +268,8 @@ export const KuroBank: React.FC<Props> = ({
     const eImg = swapImg("empty") ?? (bp?.file ? bucket.images.get(bp.file) ?? null : null);
     const fImg = swapImg("full");
     if (!bp || !eImg || !fImg) return;
+    // 灰色（溜まっていない分）。無ければ空のバケツで代える
+    const gImg = swapImg("gray") ?? eImg;
     const oImg = swapImg("over");
     const handleP = partOf(bdef, "handle");
     const hImg = handleP?.file ? bucket.images.get(handleP.file) ?? null : null;
@@ -191,6 +286,14 @@ export const KuroBank: React.FC<Props> = ({
     const anc = bdef.anchors;
     const rimBackY = anc.rimBack?.[1] ?? bO[1] + eBox.y;
     const rimFrontY = anc.rimFront?.[1] ?? bO[1] + eBox.y + eBox.h * 0.22;
+    const bodyTop = bO[1] + eBox.y;
+    const bodyBottom = bO[1] + eBox.y + eBox.h;
+    const fBox = alphaBox(fImg.url, fImg);
+    const candyTop = bO[1] + fBox.y;
+    /* お菓子だけの絵（絵の px で、口の手前の辺より少し下まで）。絵の大きさは台紙の上の
+       大きさと同じ（fImg.width は絵の px）。作れなければ、前どおり満タンの絵を重ねる */
+    const fEl = loadedElement(fImg.url);
+    const candyArt = candyOnly(fImg.url, eImg.url, ((rimFrontY - bO[1]) * (fEl?.naturalHeight || fImg.height)) / fImg.height + 6);
 
     const layer = (z: number) => {
       const d = document.createElement("div");
@@ -224,7 +327,24 @@ export const KuroBank: React.FC<Props> = ({
       });
       return el;
     };
-    /** バケツ1組（取っ手・空・中身・あふれ）。`cutAbove` を渡すと、その高さより上を切る */
+    /** 横に十分広い四角で、y0〜y1 の帯だけを残す切り抜き（絵は台紙からはみ出すので広めに） */
+    const band = (y0: number, y1: number) =>
+      `polygon(-1000px ${y0}px, 2000px ${y0}px, 2000px ${y1}px, -1000px ${y1}px)`;
+    const setClip = (el: HTMLElement, c: string) => {
+      el.style.clipPath = c;
+      (el.style as unknown as Record<string, string>).webkitClipPath = c;
+    };
+    const box = () => {
+      const d = document.createElement("div");
+      Object.assign(d.style, { position: "absolute", left: "0px", top: "0px", width: `${BW}px`, height: `${BH}px`, overflow: "visible" });
+      return d;
+    };
+    /**
+     * バケツ1組。灰色のかぼちゃ → 下から溜まるオレンジ（口の手前の辺より下は満タンの絵＝顔が
+     * 灯る、上は空の絵＝縁と口の中。どちらもお菓子は無い）→ 口のお菓子（お菓子だけの絵。
+     * 溜まりに合わせて下から増える）→ あふれ。
+     * `cutAbove` を渡すと、その高さより上を切る（口の手前の段）
+     */
     const stack = (into: HTMLElement, cutAbove: number | null) => {
       const st = document.createElement("div");
       Object.assign(st.style, {
@@ -237,12 +357,7 @@ export const KuroBank: React.FC<Props> = ({
         transform: `scale(${sB})`,
         overflow: "visible",
       });
-      if (cutAbove != null) {
-        // 絵は台紙からはみ出すので、四角は台紙より広く取る（inset の負の値は効かない環境がある）
-        const c = `polygon(-1000px ${cutAbove}px, 2000px ${cutAbove}px, 2000px 2000px, -1000px 2000px)`;
-        st.style.clipPath = c;
-        (st.style as unknown as Record<string, string>).webkitClipPath = c;
-      }
+      if (cutAbove != null) setClip(st, band(cutAbove, 4000));
       into.appendChild(st);
       let handle: HTMLImageElement | null = null;
       if (handleP && hImg && cutAbove == null) {
@@ -251,36 +366,66 @@ export const KuroBank: React.FC<Props> = ({
         handle.style.transformOrigin = `${handleP.pivot[0]}px ${handleP.pivot[1]}px`;
         st.appendChild(handle);
       }
-      st.appendChild(imgEl(eImg.url, bO[0], bO[1], eImg.width, eImg.height));
-      const fill = document.createElement("div");
-      Object.assign(fill.style, { position: "absolute", left: "0px", top: "0px", width: `${BW}px`, height: `${BH}px`, overflow: "visible" });
-      fill.appendChild(imgEl(fImg.url, bO[0], bO[1], fImg.width, fImg.height));
-      st.appendChild(fill);
+      st.appendChild(imgEl(gImg.url, bO[0], bO[1], gImg.width, gImg.height));
+      // オレンジ（縁まで含めたかぼちゃ。お菓子は下の段が受け持つ）
+      const bodyOuter = box();
+      setClip(bodyOuter, band(bodyTop - 2, 4000));
+      const body = box();
+      const lit = imgEl(fImg.url, bO[0], bO[1], fImg.width, fImg.height);
+      setClip(lit, band(rimFrontY - bO[1], 4000));
+      body.appendChild(lit);
+      const rim = imgEl(eImg.url, bO[0], bO[1], eImg.width, eImg.height);
+      setClip(rim, band(-4000, rimFrontY - bO[1]));
+      body.appendChild(rim);
+      bodyOuter.appendChild(body);
+      st.appendChild(bodyOuter);
+      // 口のお菓子（口の手前の辺より上だけ）
+      let candy: HTMLDivElement | null = null;
+      if (cutAbove == null) {
+        const candyOuter = box();
+        setClip(candyOuter, band(-4000, rimFrontY));
+        candy = box();
+        if (candyArt) {
+          const cv = document.createElement("canvas");
+          cv.width = candyArt.width;
+          cv.height = candyArt.height;
+          cv.getContext("2d")?.drawImage(candyArt, 0, 0);
+          Object.assign(cv.style, {
+            position: "absolute",
+            left: `${bO[0]}px`,
+            top: `${bO[1]}px`,
+            width: `${fImg.width}px`,
+            height: `${(candyArt.height * fImg.width) / candyArt.width}px`,
+            pointerEvents: "none",
+          });
+          candy.appendChild(cv);
+        } else {
+          candy.appendChild(imgEl(fImg.url, bO[0], bO[1], fImg.width, fImg.height));
+        }
+        candyOuter.appendChild(candy);
+        st.appendChild(candyOuter);
+      }
       let over: HTMLImageElement | null = null;
       if (oImg) {
         over = imgEl(oImg.url, bO[0], bO[1], oImg.width, oImg.height);
         over.style.visibility = "hidden";
         st.appendChild(over);
       }
-      return { fill, over, handle };
+      return { body, candy, over, handle };
     };
     const back = stack(backBox, null);
     const front = stack(frontBox, rimFrontY);
 
-    /* 溜まりの 0% と 100%。0% は顔の灯りのすぐ下（`label` の上の辺）、100% は満タンの絵の
-       お菓子の山の天辺。胴は空と満タンで画素一致なので、そこを切り抜いても何も変わらない。
-       見えるところ（顔が灯り、口にお菓子が増える）だけに割り当てる */
-    const fBox = alphaBox(fImg.url, fImg);
-    const fillTop = bO[1] + fBox.y;
-    const fillBottom = anc.label?.[1] ?? bO[1] + eBox.y + eBox.h * 0.75;
+    /* 溜まりの 0% と 100%。オレンジは胴の底から縁の上まで、お菓子は口の手前の辺から山の
+       天辺まで。お菓子は少し遅れて増やす（半分でまだ「少し」に見えるように） */
     let lvl = shown.level;
     let phase = 0;
     const clip = () => {
-      // 波の高さ（`wave.ts` の AMP=8px）は台紙の px なので、絵の縮尺に合わせて小さくなる
-      const d = makeWaveClipPath(BW, BH, lvl, phase, fillTop - 9, fillBottom);
-      for (const f of [back.fill, front.fill]) {
-        f.style.clipPath = `path("${d}")`;
-        (f.style as unknown as Record<string, string>).webkitClipPath = `path("${d}")`;
+      const d = makeWaveClipPath(BW, BH, lvl, phase, bodyTop - 9, bodyBottom);
+      for (const f of [back.body, front.body]) setClip(f, `path("${d}")`);
+      if (back.candy) {
+        const c = makeWaveClipPath(BW, BH, Math.pow(lvl, 1.4), phase + 1.7, candyTop - 9, rimFrontY + 6);
+        setClip(back.candy, `path("${c}")`);
       }
     };
     clip();
@@ -347,15 +492,15 @@ export const KuroBank: React.FC<Props> = ({
         right: bRight,
         cx: (bLeft + bRight) / 2,
         topY: toU(rimBackY),
-        // 口の手前の辺より少し下に足を置く（体の下が縁に隠れる）。帽子の先が場面の上で切れない高さまで
-        inY: Math.max(KURO_H + 6, toU(rimFrontY) + KURO_H * 0.06),
+        // 口の手前の辺より少し下に足を置く（体の下が縁に隠れる）。帽子の先が箱の上で切れない高さまで
+        inY: Math.max(KURO_H + 6 - headroom, toU(rimFrontY) + KURO_H * 0.06),
       },
       pileY: null,
       kuroH: KURO_H,
     };
-    const pileFeet = pileTopY != null ? Math.max(KURO_H + 4, pileTopY + KURO_H * 0.14) : null;
+    const pileFeet = pileTopY != null ? Math.max(KURO_H + 4 - headroom, pileTopY + KURO_H * 0.14) : null;
     if (live.current.overflow) geo.pileY = pileFeet;
-    // ラベルはバケツの胴の、字を置ける四角（`label`）の真ん中に
+    // いまの額の行は、バケツの胴の字を置ける四角（`label`）の真ん中に
     const labelMidY = anc.label ? toU((anc.label[1] + anc.label[3]) / 2) : toU(rimFrontY) + (GROUND_Y - toU(rimFrontY)) * 0.62;
 
     // ---- 土ぼこり -------------------------------------------------------
@@ -443,8 +588,11 @@ export const KuroBank: React.FC<Props> = ({
       };
       countRaf = requestAnimationFrame(step);
     };
-    if (amountRef.current) amountRef.current.textContent = fmt(shown.amount);
-    if (labelRef.current) labelRef.current.style.top = `${labelMidY * U - fsLabel * 0.55}px`;
+    if (amountRef.current)
+      amountRef.current.textContent = fmt(
+        !shown.seen || shown.amount !== live.current.amount ? shown.amount : live.current.amount
+      );
+    if (lineRef.current) lineRef.current.style.top = `${labelMidY * U - fsAmount * 0.5}px`;
 
     // 外から溜まり具合が変わったとき（試し表示の rise など）
     api.current = {
@@ -464,21 +612,35 @@ export const KuroBank: React.FC<Props> = ({
     };
 
     // ---- 段取り -----------------------------------------------------------
-    // 出直したらすぐ飛び乗れるように、バケツの脇から始める
-    kuro.place(geo.bucket.left - 70, geo.groundY);
+    /* 喜ぶのは「額が増えて出直したとき」と「初めて開いたとき」だけ。箱の大きさが
+       変わって組み直したとき（オーナーが手で広げる・戻す）は、続きから何事もなく動く */
+    const fresh = !shown.seen || shown.amount !== live.current.amount;
+    shown.seen = true;
     const brain = initialBrain(r, kuro.x, geo.minX, geo.maxX, live.current.overflow, null);
     (async () => {
-      await new Promise<void>((res) => m.after(200, res));
-      // アラート明け: バケツ（山）に飛び乗って喜ぶ。そのあいだに中身が上がる
-      await kuro.cheer(() => {
+      if (fresh) {
+        // 出直したらすぐ飛び乗れるように、バケツの脇から始める
+        kuro.place(geo.bucket.left - 70, geo.groundY);
+        await new Promise<void>((res) => m.after(200, res));
+        // アラート明け: バケツ（山）に飛び乗って喜ぶ。そのあいだに中身が上がる
+        await kuro.cheer(() => {
+          started = true;
+          const { level: p, amount } = live.current;
+          tween(p, 1500);
+          countUp(shown.amount, amount, 1500);
+          if (live.current.overflow) m.after(1300, () => showPile(true));
+        });
+        if (live.current.overflow) await kuro.dance(range(r, 1800, 2600));
+        await kuro.hopOut();
+      } else {
         started = true;
-        const { level: p, amount } = live.current;
-        tween(p, 1500);
-        countUp(shown.amount, amount, 1500);
-        if (live.current.overflow) m.after(1300, () => showPile(true));
-      });
-      if (live.current.overflow) await kuro.dance(range(r, 1800, 2600));
-      await kuro.hopOut();
+        lvl = live.current.level;
+        shown.level = lvl;
+        clip();
+        if (live.current.overflow) showPile(true);
+        kuro.place(range(r, geo.minX, geo.maxX), geo.groundY);
+        brain.x = kuro.x;
+      }
       while (alive) {
         brain.t = m.time();
         brain.x = kuro.x;
@@ -509,7 +671,7 @@ export const KuroBank: React.FC<Props> = ({
     };
     // 場面は幅と絵で組む。額の変化は api 経由で渡す
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneW, mascot, bucket, visitor]);
+  }, [sceneW, headroom, mascot, bucket, visitor]);
 
   const tone = (t: TextTone, w: number): React.CSSProperties => ({
     color: t.color,
@@ -529,21 +691,8 @@ export const KuroBank: React.FC<Props> = ({
     <div style={{ position: "relative", width: sceneW, height: sceneH }}>
       <div ref={hostRef} style={{ position: "absolute", inset: 0 }} />
       <div style={{ position: "absolute", inset: 0, zIndex: 10, pointerEvents: "none" }}>
-        <div
-          ref={labelRef}
-          style={{
-            ...textBase,
-            top: sceneH * 0.6,
-            fontSize: fsLabel,
-            lineHeight: 1.1,
-            fontWeight: 800,
-            ...tone(theme.text.bottom, Math.max(1.5, sceneW * 0.007)),
-          }}
-        >
-          {label}
-        </div>
-        {/* 字の帯。いまの額（大）と目標（小）を1行に。クロはこの帯へ降りない */}
-        <div style={{ ...textBase, bottom: 0, lineHeight: 1, fontWeight: 900 }}>
+        {/* いまの額（大）と目標（小）を1行に。かぼちゃの胴の上 */}
+        <div ref={lineRef} style={{ ...textBase, top: sceneH * 0.72, lineHeight: 1, fontWeight: 900 }}>
           <span
             ref={amountRef}
             style={{ fontSize: fsAmount, ...tone(theme.text.center, Math.max(2, sceneW * 0.01)) }}
@@ -553,6 +702,18 @@ export const KuroBank: React.FC<Props> = ({
           <span style={{ fontSize: fsTarget, fontWeight: 800, ...tone(theme.text.top, Math.max(1.5, sceneW * 0.007)) }}>
             {` / ${fmt(targetAmount)}`}
           </span>
+        </div>
+        <div
+          style={{
+            ...textBase,
+            bottom: 0,
+            fontSize: fsLabel,
+            lineHeight: 1.1,
+            fontWeight: 800,
+            ...tone(theme.text.bottom, Math.max(1.5, sceneW * 0.007)),
+          }}
+        >
+          {label}
         </div>
       </div>
     </div>

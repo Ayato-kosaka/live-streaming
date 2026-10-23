@@ -272,7 +272,8 @@ export default function AlertBox() {
        投げ銭は `amount`（円）で、配信に出さずに見た目だけを撮れる。 */
     if (preview) {
       const target = 50000;
-      const fill = Math.max(0, Math.min(100, numParam(params.fill, 60)));
+      // 100 を超えた「あふれ」も撮れるように、150% まで受ける
+      const fill = Math.max(0, Math.min(150, numParam(params.fill, 60)));
       const goalAt = (ratio: number) => ({
         currentAmount: Math.round((target * fill * ratio) / 100),
         targetAmount: target,
