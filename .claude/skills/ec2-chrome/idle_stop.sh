@@ -9,7 +9,8 @@
 #   - 起きてから GRACE_MIN 分以内（起こしたセッションが最初のコマンドを送るまでの間）
 #   - SSM のコマンドが走っている（セッションが何かを流している最中）
 #   - 鍵のファイルが STALE_H 時間以内に触られている（裏で回している一括。長い一括は鍵を触り続ける）
-#   - Chrome リモートデスクトップの画面に、IDLE_MIN 分以内に人の入力がある（あやとが入っている）
+#   - Chrome リモートデスクトップの画面に、IDLE_MIN 分以内に人の入力がある（あやとが入っている。
+#     数えるのは desktop-input が控えた本物の入力。こちらの Chrome の動画では数えない）
 #
 # **武装は /etc/idle-stop/armed の中身が `behavior=stop` のときだけ。** 無ければ「止めるはずだった」と書くだけ。
 # 中から shutdown したときの動きは、インスタンスの「シャットダウン動作」の設定で決まる（停止 / 終了）。
@@ -42,13 +43,27 @@ if [ -z "$why" ]; then
   done
 fi
 
-if [ -z "$why" ] && command -v xprintidle >/dev/null 2>&1; then
-  for d in /tmp/.X11-unix/X*; do
-    n=":${d##*/X}"
-    ms=$(DISPLAY=$n XAUTHORITY=/home/ubuntu/.Xauthority sudo -u ubuntu xprintidle 2>/dev/null) || continue
-    if [ "${ms:-999999999}" -lt $((IDLE_MIN * 60000)) ]; then why="desktop$n"; break; fi
-  done
+# >>> desktop（tools/shorts/post/desktop_guard_selftest.py がこの間だけを切り出して回す）
+# 人の入力は desktop-input に聞く（X に入った本物の入力だけを数える）。xprintidle は、こちらの Chrome が
+# 動画を流すだけで0に戻る（2026-10-23 に測った。desktop_input.py の頭）ので、そのままだと
+# こちらの手のあと30分、止まらずに起きている。desktop-input が無い・答えないときだけ、前の見かたに戻る
+if [ -z "$why" ]; then
+  set -- $(${DESKTOP_INPUT:-/usr/local/sbin/desktop-input} idle 2>/dev/null)
+  case "${1:-}" in
+    ''|*[!0-9]*)
+      if command -v xprintidle >/dev/null 2>&1; then
+        for d in /tmp/.X11-unix/X*; do
+          n=":${d##*/X}"
+          ms=$(DISPLAY=$n XAUTHORITY=/home/ubuntu/.Xauthority sudo -u ubuntu xprintidle 2>/dev/null) || continue
+          if [ "${ms:-999999999}" -lt $((IDLE_MIN * 60000)) ]; then why="desktop$n"; break; fi
+        done
+      fi ;;
+    *)
+      # none-* は X に繋がらなかった（画面が無い）。前の見かた（xprintidle が取れなければ数えない）と同じに扱う
+      case "${2:-}" in none-*) ;; *) [ "$1" -lt $((IDLE_MIN * 60000)) ] && why="desktop:$2" ;; esac ;;
+  esac
 fi
+# <<< desktop
 
 if [ -n "$why" ]; then
   echo "$now" > "$STATE/last"
