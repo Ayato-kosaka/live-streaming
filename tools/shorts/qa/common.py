@@ -125,16 +125,20 @@ def runs(mask: np.ndarray) -> list[tuple[int, int]]:
 # ---------------------------------------------------------------- 絵
 
 def _select_expr(frames: list[int]) -> str:
-    """コマ番号の並びを、ffmpeg の select の式にする（続いた番号は between に畳む）。"""
-    parts, i = [], 0
-    while i < len(frames):
-        j = i
-        while j + 1 < len(frames) and frames[j + 1] == frames[j] + 1:
-            j += 1
-        a, b = frames[i], frames[j]
-        parts.append(f"eq(n\\,{a})" if a == b else f"between(n\\,{a}\\,{b})")
-        i = j + 1
-    return "+".join(parts)
+    """コマ番号の並びを、ffmpeg の select の式にする（render/selectexpr.py。続いた番号は between に畳み、
+    項は括弧で二分に組む。`+` で横につなぐと、新しい ffmpeg は101項から受け付けない）。"""
+    import sys
+
+    if str(RENDER) not in sys.path:
+        sys.path.append(str(RENDER))  # 後ろに足す（qa の同名のものを render で隠さない）
+    from selectexpr import select_expr
+
+    return select_expr(frames)
+
+
+# 1回の ffmpeg で抜き出すコマの数。塊ごとに頭から復号し直すので、大きくしすぎない。
+# 塊の境目でコマを落とさない・重ねないことは render/selectexpr_selftest.py が、ここを小さくして当てる
+CHUNK = 400
 
 
 _NATIVE: dict = {}
@@ -162,9 +166,10 @@ def iter_frames(path: Path, frames: Iterable[int], W: int, H: int,
     want = sorted(set(int(f) for f in frames if f >= 0))
     if not want:
         return
-    grow =native_size(path) not in ((W, H), (0, 0))
-    # 式が長くなりすぎると ffmpeg が受け付けないので、塊に分けて復号し直す
-    chunk = 400
+    grow = native_size(path) not in ((W, H), (0, 0))
+    # 塊（CHUNK コマ）に分けて復号し直す。前は「式が長すぎると受け付けない」ためだったが、
+    # 式は括弧で浅く組むようになった（_select_expr）。塊の数だけ頭から復号し直す
+    chunk = CHUNK
     for k in range(0, len(want), chunk):
         part = want[k:k + chunk]
         pix, ch = ("gray", 1) if gray else ("rgb24", 3)

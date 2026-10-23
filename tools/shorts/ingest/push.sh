@@ -29,7 +29,9 @@ case "$DEST" in
   *..*|/*|"") echo "!! 置き場の道が変: $DEST"; exit 1 ;;
 esac
 
-src="$RUNNER_TEMP/sealed"
+# 字幕だけの道（captions の job）は1つの job で何本も封をするので、置き場ごとに SEALED で指す
+src="${SEALED:-$RUNNER_TEMP/sealed}"
+[ -d "$src" ] || { echo "!! 封の置き場が無い: $src"; exit 1; }
 for f in "$src"/*; do
   case "$(basename "$f")" in
     manifest.json|key.enc|payload.enc|payload.enc.[0-9][0-9][0-9]) ;;

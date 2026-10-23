@@ -36,6 +36,11 @@ python3 tools/shorts/render/safearea.py A.mp4 A_bare.mp4           # 字の画�
 `verify.py` のカット照合は合成素材の箱を読むので、本番の素材では使えない（字幕の出入り・音量・
 `--twin` は本番でも意味がある）。
 
+**コマ番号で抜き出す式（`select=`）は `selectexpr.py` で組む。** `verify.py`・`proof.py`・`contact_sheet.py`・
+`qa/common.py` が使う。`+` で横につなぐと、ffmpeg 8.1 の枝から入った式の深さの上限（100）で101項から止まる。
+`-vsync 0` は 9.0 で消えたので `-fps_mode passthrough` を使う（2026-10-23、PR #1015 の CI の赤。
+見張りは `selectexpr_selftest.py`）。
+
 **1案1本。YouTube も TikTok も同じファイルを出す（BGM 入り）。** BGM は**最初のコマから鳴らす**
 （あやと F-041「BGM の初めのミュート部分は切ってください」）。曲の頭の無音は書き出しが測って飛ばす
 （`render.py` の `bgm_head_silence`。5ms の窓の RMS が「曲の鳴っている間」から −40dB の線を初めて越えた所の 5ms 前から。
@@ -189,6 +194,12 @@ checkout は `filter: blob:none` と `sparse-checkout`（tools/shorts と依頼�
   書き戻す。ランナーでは素材が sha256 の名前で並ぶので、無いと使い回しの検査が「同じ配信の同じ瞬間」を見られず、
   カクつきの検査も差し替える区間を配信の時刻で出せない
 - artifact は使わない（公開リポジトリの artifact は誰でも落とせる）
+- **「道具を入れる」はコマンドごとに上限を置き、止まったら1回だけ取り直す**（取り込みの `tools/shorts/ingest/retry.sh`・
+  `ffmpeg.sh` を写さずに呼ぶ）。2026-10-23 のフォカッチャの回（run 39884210053）で本体の job だけがここで21分止まった。
+  ふだんは本体 52秒・prepare 7秒・report 4秒（vus-p1-rt1、run 39939434560）。apt が詰まると ffmpeg は GitHub の静的ビルド（版の決まった枝。
+  8.1 → 9.0。master の夜間版は使わない）に切り替わり、**作業箱（6.1.1）と別の版でバイト列が変わる**ので、要約の `ffmpeg`（本体・双子の版）を見て、`fetch` が
+  「!! ffmpeg が作業箱と違う版」と言ったら回し直す。下見の npm にも上限と1回の入れ直しがある（`wait_tools`）。
+  見張りは `install_selftest.py`
 
 | v2 の3本（2026-10-17） | 作業箱で順に | Actions で並べる（準備込み） |
 | --- | --- | --- |

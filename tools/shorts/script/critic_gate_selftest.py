@@ -24,6 +24,7 @@
 | `as_of` | 城塞 p1 の承認（2026-10-21:6306110329）で読み直すと、あとでできた F-037（09:28）の ✕ は △。前からある F-008 は ✕ のまま。as_of 無しなら F-037 も ✕ |
 | `i_side` | (h) の F-039・F-040 は、同じ行に (i) の当たりがあれば ✕、無ければ △（批評役自身のつなぎでは渡れている） |
 | `cli` | 終了コード: 通る 0・落ちる 1・形が違う 2 |
+| `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は lint の ✕ 0。批評役の (h) F-047 は ✕ |
 """
 from __future__ import annotations
 
@@ -68,6 +69,8 @@ CUTS = {
                {"i_side"}, "(i) で渡れている行の F-039 も ✕ にする"),
     "as_of": ("critic_gate.py", "        if not in_force(led.items[fid], as_of):\n", "        if False:\n",
               {"as_of"}, "承認より後にできた決まりでも ✕ にする"),
+    "lint_in": ("critic_gate.py", '    return [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]\n',
+                "    return []\n", {"focaccia"}, "lint の ✕ を関所の合否に入れない"),
     "as_of_id": ("critic_gate.py", "        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):\n",
                  "        if d < day or d == day:\n", {"as_of"}, "同じ日の決まりの前後をコメントID で分けない"),
 }
@@ -240,10 +243,22 @@ def leg_cli(G):
             ("形の違う JSON は 2", rc({"scores": {}}) == 2), ("JSON でなければ 2", rc("通る") == 2)]
 
 
+def leg_focaccia(G):
+    ng, ok = FIX / "rejected/VusdZVyjgjQ_p1/script.txt", FIX / "approved/VusdZVyjgjQ_p1/script.txt"
+    c_ng, rows_ng = G.brief.rows_of(ng, None)
+    c_ok, _ = G.brief.rows_of(ok, None)
+    lf = [(h.rule, h.line) for h in G.lint_fails_of(c_ng)]
+    hit = G.judge(base(len(c_ng.lines)) | {"ledger": [{"id": "F-047", "line": 12, "why": "2: 意気込みだけ"}]}, c_ng, rows_ng)
+    return [("下書きは、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる",
+             sorted(lf) == [("L-NEXT", 21), ("T-READ", 1)]),
+            ("あやとの添削版は lint の ✕ 0", not G.lint_fails_of(c_ok)),
+            ("批評役の (h) F-047（12行目）は ✕", [(x[0], x[1]) for x in hit["fail"]] == [(12, "(h) F-047")])]
+
+
 LEGS = {
     "shape": leg_shape, "count": leg_count, "jump": leg_jump, "question": leg_question, "cancel": leg_cancel,
     "hearsay": leg_hearsay, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
-    "i_side": leg_i_side, "as_of": leg_as_of, "cli": leg_cli,
+    "i_side": leg_i_side, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
 }
 
 if __name__ == "__main__":

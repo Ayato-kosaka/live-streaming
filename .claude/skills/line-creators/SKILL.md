@@ -37,7 +37,7 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 ## 2. ログイン
 
 - **あやとが、リモートデスクトップのふだんの Chrome（既定のプロファイル）でログインする。**
-  CDP は既定のプロファイルに繋げないので、`up("line")` が `~/cdp-line` に複製して開く（初回は1.2GB の複製で数分。裏で回す）
+  CDP は既定のプロファイルに繋げないので、`up("line")` が `~/cdp-line` に複製して開く（初回だけ複製する。拡張などは写さないので約35MB・数秒。#1013）
 - ログインしているかは `https://creator.line.me/my/` を開いて見る。入っていれば
   `/my/<クリエイターID>/sticker/`（Manage Items）に飛び、右上に「Log Out」と名前が出る。
   トップページ（`/ja/`）はログインしていても「登録はこちら」を出すので、そこでは決めない

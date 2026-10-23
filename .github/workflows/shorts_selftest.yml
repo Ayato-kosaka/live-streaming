@@ -49,7 +49,7 @@ permissions:
 
 jobs:
   shorts-selftest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 2本で7〜9分（4コアの箱で、ほかの書き出しと並んで 232秒と 252秒。2026-10-19）。
     # 道具を入れるのに1分ほど。倍以上の余裕を見る
     timeout-minutes: 20
@@ -70,13 +70,17 @@ jobs:
       # 作業箱の版とも食い違う（tools/shorts/qa/linebreak.py の BUDOUX_PIN）。
       # PyYAML は取り込みの判定の見張り（`ingest/gate_selftest.py`）が自分のワークフローを
       # 読むのに要る。Selftests は入れているので、あちらでは落ちずにここだけ落ちていた
+      # 2026-10-23 に、ここの apt が止まって job の上限20分まで動かず、見張りが1本も回らなかった（#1015）。
+      # 取り込み・書き出しと同じく、コマンドごとに上限を置いて1回だけ取り直し（retry.sh）、ffmpeg は
+      # ffmpeg.sh（入っていれば apt に触らない・man-db の索引を止める・詰まったら静的ビルド）で入れる
       - name: 道具を入れる（ffmpeg・OpenCV 4）
+        timeout-minutes: 12
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+          R="bash tools/shorts/ingest/retry.sh"
+          bash tools/shorts/ingest/ffmpeg.sh fonts-dejavu-core
           ffmpeg -version > /dev/null
-          python -m pip install --upgrade pip
-          pip install 'opencv-python-headless==4.12.0.88' numpy Pillow 'budoux==0.9.3' PyYAML
+          $R 180 python -m pip install --upgrade pip
+          $R 300 pip install 'opencv-python-headless==4.12.0.88' numpy Pillow 'budoux==0.9.3' PyYAML
 
       # 落ちた1本で止めない（`!cancelled()`）。全部回してから、まとめて落ちる
       - name: 品質チェックの見張り（音・字・形式）

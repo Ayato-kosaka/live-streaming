@@ -11,10 +11,16 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+
+# 同じ階の selectexpr.py を読む（ほかの道具から import されたときも。後ろに足すので、呼んだ側の同名を隠さない）
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.append(str(Path(__file__).resolve().parent))
+from selectexpr import select_expr  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 TW, TH = 270, 480  # 1コマの大きさ（1080x1920 の 1/4）
@@ -22,9 +28,11 @@ TW, TH = 270, 480  # 1コマの大きさ（1080x1920 の 1/4）
 
 def grab(path: Path, frames: list[int], W: int, H: int) -> dict[int, np.ndarray]:
     uniq = sorted(set(frames))
-    expr = "+".join(f"eq(n\\,{f})" for f in uniq)
+    # 式は selectexpr.py で組む（行が100を超えると、`+` で横につないだ式を新しい ffmpeg が受け付けない）。
+    # `-vsync 0` は 9.0 で消えた（Unrecognized option）。同じ意味の `-fps_mode passthrough` は 5.1 から在る
     raw = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path),
-                          "-vf", f"select={expr}", "-vsync", "0", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                          "-vf", f"select={select_expr(uniq)}", "-fps_mode", "passthrough", "-f", "rawvideo",
+                          "-pix_fmt", "rgb24", "-"],
                          check=True, capture_output=True).stdout
     arr = np.frombuffer(raw, dtype=np.uint8).reshape(-1, H, W, 3)
     return dict(zip(uniq, arr))

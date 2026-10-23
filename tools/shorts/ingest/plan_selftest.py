@@ -18,10 +18,15 @@ plan.py は「Cookie を握って取りに行く前に、依頼を断れる最�
 - zoom: 区間ごとに1本の job（clips を足したことで変わっていない）・区間が空なら断る
 - archive: 動画ごとに1本・置き場は `<id>/archive`
 - 公開鍵が無い依頼は断る
+- captions（字幕だけの道）: 動画ごとに1本・置き場は `<id>/captions`・whisper も区間も持たない。
+  **fetch / analyze の列（matrix / fetch / count）に入れず、captions / captions_count に分ける**。
+  字幕だけの依頼では count が 0、captions の無い依頼では captions_count が 0
 """
 
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -113,6 +118,52 @@ def main() -> int:
           "archive は動画ごとに1本・置き場は <id>/archive")
     check(refused({"mode": "clip", "videos": ["yk-by7R7iPA"], "pubkey": pem}),
           "知らない mode（clip）を断る")
+
+    # 字幕だけの道（#1014）。fetch / analyze の列に入れず、captions / captions_count に分ける
+    c = plan.items_of({"mode": "captions", "videos": ["VusdZVyjgjQ", "yk-by7R7iPA"],
+                       "pubkey": pem}, "selftest")
+    check([i["dest"] for i in c] == ["VusdZVyjgjQ/captions", "yk-by7R7iPA/captions"]
+          and [i["key"] for i in c] == ["VusdZVyjgjQ__captions", "yk-by7R7iPA__captions"],
+          "captions は動画ごとに1本・置き場は <id>/captions")
+    check(all("whisper" not in i and "ranges" not in i and i.get("pubkey_sha256") for i in c),
+          "captions は whisper も区間も持たず、公開鍵の指紋を持つ")
+    check(refused({"mode": "captions", "videos": ["VusdZVyjgjQ"], "pubkey": ""}),
+          "captions で公開鍵が無いのを断る")
+    check(refused({"mode": "captions", "videos": ["VusdZVyjgjQ!"], "pubkey": pem}),
+          "captions で動画IDの形が違うのを断る")
+
+    def outputs(items: list) -> dict:
+        with tempfile.TemporaryDirectory() as td:
+            p = Path(td) / "out"
+            p.write_text("")
+            old = os.environ.get("GITHUB_OUTPUT")
+            os.environ["GITHUB_OUTPUT"] = str(p)
+            try:
+                plan.write_outputs(items, "claude/selftest")
+            finally:
+                if old is None:
+                    os.environ.pop("GITHUB_OUTPUT")
+                else:
+                    os.environ["GITHUB_OUTPUT"] = old
+            return dict(ln.split("=", 1) for ln in p.read_text().splitlines())
+
+    o = outputs(c + a)
+    mat = json.loads(o.get("matrix", "{}")).get("include", [])
+    fet = json.loads(o.get("fetch", "{}")).get("include", [])
+    cap = json.loads(o.get("captions", "{}")).get("include", [])
+    check(o.get("count") == "1" and [i["mode"] for i in mat] == ["archive"]
+          and [i["mode"] for i in fet] == ["archive"],
+          f"captions を fetch / analyze の列に入れない（count={o.get('count')}）")
+    check(o.get("captions_count") == "2" and [i["key"] for i in cap] == [i["key"] for i in c]
+          and all("BEGIN PUBLIC KEY" in i.get("pubkey", "") for i in cap),
+          f"captions は captions に鍵つきで並ぶ（captions_count={o.get('captions_count')}）")
+    check(all("pubkey" not in i for i in fet), "取る列（fetch）には鍵を渡さないまま")
+    o = outputs(c)
+    check(o.get("count") == "0" and o.get("captions_count") == "2",
+          "字幕だけの依頼では count が 0（空の fetch を起こさない）")
+    o = outputs(a)
+    check(o.get("count") == "1" and o.get("captions_count") == "0",
+          "captions の無い依頼では captions_count が 0（字幕の job を起こさない）")
 
     print(f"\nNG  plan の見張り {len(fails)}件落ちた" if fails else "\nOK  plan の見張り 全部通った")
     return 1 if fails else 0

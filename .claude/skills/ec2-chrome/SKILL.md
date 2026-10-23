@@ -31,7 +31,7 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 | `tools/shorts/post/send.py`（リポジトリの） | 手元 | `put <手元> <EC2> …`。**動画・秘密はこちらで送る。** GCS の署名付き URL を EC2 が `curl` で落とし、sha256 を照らす（中身は SSM のコマンドに載らない。4） |
 | `ec2_exec.sh` | 手元 | **起こして → 実行して → 必ず止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ）。実行の前に `cdp.py` を EC2 へ置き直す |
 | `idle_stop.sh` | EC2（`/usr/local/sbin/idle-stop`、root の cron で5分ごと） | 誰も使っていない時間が30分続いたら EC2 を止める（2） |
-| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
+| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（拡張・部品の更新なし。無ければ既定のプロファイルから不要物を落として1回だけ複製。3）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`** |
 | `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む・ファイルを渡す（`chatgpt` スキル）。絵を作るのは `chatgpt-image` |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
 
@@ -120,6 +120,25 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   なので `up(名前)` は `~/cdp-<名前>` に `Default` を**1回だけ複製**して、そちらで起動する
   （Doneru だけは先に作られた `~/doneru-chrome`）。以後はその複製が正
 - 既定のほうでログインし直したら `up(名前, reseed=True)` で複製し直す
+- **既定の Chrome をまるごと写さない。** あやとの普段の Chrome の `Default` は 1.15GB のうち約 1.1GB が
+  拡張（AdBlock・画面録画・VPN）・サービスワーカーのキャッシュ・Google ドキュメントのオフラインで、
+  ログインとは関係が無い。`up()` の複製は `cdp.py` の `SEED_SKIP` を rsync で除いて写す（35MB）。
+  手で写すときも同じものを落とす（`cp -a` でまるごと写すと、7つで 10.5G になった。#1013）
+- **Chrome は `--disable-extensions` と `--disable-component-update` を付けて起こす**（`up()` が付ける）。
+  付けずに起こすと、Preferences に載っている拡張を、ファイルを消してあってもウェブストアから入れ直す
+  （cdp-fish で、消して 764M → 起動2回で 1.3G。2026-10-22）。旗を付けて80秒置いても、`Extensions` と
+  `component_crx_cache` は増えなかった。`--disable-background-networking` は付けない
+  （同期やログインの更新まで止めるおそれがある。Google のログインは一度まとめて切れている。4）
+- **消してよい置き場**（Chrome を止めてから。2026-10-22 に7つとも、消す前と後でログインが変わらないのを確かめた）:
+  - `Default/` の下の `Extensions`・`Local Extension Settings`・`Extension State`・`Extension Rules`・
+    `Extension Scripts`・`Service Worker`・`File System`。`Cache`・`Code Cache`・`GPUCache` も消してよい
+    （こちらは同じ日に先に空けた分。4）
+  - `Default/IndexedDB/` の `https_drive.google.com_0.*` と `https_docs.google.com_0.*` **だけ**。
+    ほかの項目は消さない（`~/cdp-fish` の `https_www.tiktok.com_0.*` 564MB は TikTok の下書き）
+  - プロファイル直下の `extensions_crx_cache`・`component_crx_cache`
+  - 直下の `optimization_guide_model_store`・`WasmTtsEngine`・`Safe Browsing`・`OnDeviceHeadSuggestModel`
+    （7つで計 720M）は、**消して確かめていない**ので残してある
+  - 触らない: `Network/`（Cookie）・`Local Storage`・`Login Data`・`Preferences`・`Local State`
 - **cookie を中身で調べに行かない**（sqlite で名前を引くのも、権限の判定で止められた）。
   ログインしているかは、**ログインが要るページの中身が読めるか**で見る。「ログアウト」のボタンが
   DOM に在るかでは決めない（SUZURI は切れているのにボタンが在った。2026-10-10）
@@ -129,6 +148,13 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
 
 ## 4. 躓いたところ
 
+- **`npm` は root にも ubuntu の PATH にも無い。** nvm の下（`/home/ubuntu/.nvm/versions/node/v24.19.0/bin/npm`）を
+  直に呼ぶ。`sudo -u ubuntu npm` は command not found になる（2026-10-22、#1013 で npm のキャッシュを空けるときに踏んだ）
+- **ディスクは 29G。Chrome のプロファイルの複製7つは、既定の Chrome をまるごと写して作っていたので、
+  `Cache`・`Code Cache`・`GPUCache` を空けた（1.5G）あとでも計 10.5G（1つ 1.2〜1.9G）あり、空きは 3.4G だった。**
+  不要物を落として計 2.2G（うち `~/cdp-fish` の TikTok の下書き 564MB）、使われていなかった
+  `~/.local/share/pnpm`（1.5G）も消して、空きは 13G になった（2026-10-22、#1013）。
+  空けてよい置き場は 3 の「消してよい置き場」。ログ・Cookie・Local Storage は触らない
 - **SSM の標準出力は 24,000 字で切れる。** 大きいものはファイルに書いて `get` で持ち帰る。
   `get` は 20,000 字ずつ 8本並べて取る（順に取ると 1MB で10分かかった）
 - **`run` が 120秒を超えると、Bash が裏に回す。** 長い一括は `run_in_background` で回し、
@@ -183,7 +209,8 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
   返らない（YouTube Studio で 2026-10-10 に2回。ダイアログは出ていなかった）。`/json/close` ではなく、
   ブラウザの WebSocket から `Target.createTarget` で新しいタブを作り、古いタブを `Target.closeTarget` で閉じる。
   形は `youtube-studio/yt_studio.py` の `studio()` と `current()`
-- **最初の `up(名前)` は、既定のプロファイル（1.2GB）を複製するので数分かかる。** 120秒を超えるので裏で回す
+- **最初の `up(名前)` は、既定のプロファイルを複製する。** 不要物を落とすので 35MB（2026-10-22 に rsync の
+  dry-run で数えた）。まるごと写していたころは 1.15GB で数分かかり、120秒を超えるので裏で回していた
 - **複製したプロファイルを長く使い続けると、Google のログインがまとめて切れることがある。** 2026-10-12 01:30 UTC、
   10日に複製した `~/cdp-ytstudio` で YouTube Studio を2日使ったところで 401 になり、**既定のプロファイルのほうも
   3アカウントとも Signed out** になっていた（#768）。原因は確かではないが、同じログインを2つの Chrome で

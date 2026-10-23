@@ -23,8 +23,9 @@ HERE = Path(__file__).resolve().parent
 
 
 def frames(path: Path, W: int, H: int, every: int):
+    # `-vsync 0` は ffmpeg 9.0 で消えた（Unrecognized option）。同じ意味の `-fps_mode passthrough` は 5.1 から在る
     p = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", str(path),
-                          "-vf", f"select=not(mod(n\\,{every}))", "-vsync", "0",
+                          "-vf", f"select=not(mod(n\\,{every}))", "-fps_mode", "passthrough",
                           "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
     size = W * H * 3
     while True:
@@ -32,7 +33,9 @@ def frames(path: Path, W: int, H: int, every: int):
         if len(b) < size:
             break
         yield np.frombuffer(b, dtype=np.uint8).reshape(H, W, 3)
-    p.wait()
+    # ffmpeg が落ちても読めるのは「0コマ」で、字が1つも外に出ていない（通った）に見える。黙って通さない
+    if p.wait() != 0:
+        raise RuntimeError(f"ffmpeg が {path} のコマを出せなかった（終了コード {p.returncode}）")
 
 
 def text_mask(a: np.ndarray, b: np.ndarray, thr: int) -> np.ndarray:

@@ -17,7 +17,11 @@
 | `chat` | チャットは名前を落として本文だけ（投げ銭の額は残す） |
 | `ranges` | 書き起こしは、区間に掛かる30秒の行だけ |
 | `fill` | 雛形の {{…}} が1つでも残れば止まる |
-| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない |
+| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない |
+| `c_source` | 批評役の1枚に、`--video` の配信の字幕が入る（フォカッチャの下書きなら、作文者が根拠に挙げた 2:44:00 の行）。`--video` が無ければ「渡していない」と書く（#1014、F-047） |
+| `c_ranges` | 字幕の区間は、spec の why・src に書いた時刻の前後30秒。重なる区間は1つにまとめ、src の小数の秒も読む |
+| `c_leak` | 批評役の雛形は、対照の原稿の行を8字以上そのまま引かない（終わりの形「アーカイブ見てね」は数えない）。引いた字をこしらえると拾い、1枚を作らずに止まる |
+| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。無ければ「指定なし」 |
 
 本編集の担当の1枚（`brief.py edit`）。担当はこれ1枚と企画の名指した小節だけを読む（#1011）ので、1枚から落ちたものは担当に届かない。
 本物の回（フランス周遊 A・銅像・地下鉄・城塞）で組んで確かめる。
@@ -68,9 +72,17 @@ CUTS = {
     "chat": ("brief.py", '            rest = rest.split(": ", 1)[1] if ": " in rest else rest\n', "",
              {"chat"}, "チャットの名前を残す"),
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
-               {"ranges"}, "区間の外の行まで入れる"),
+               {"ranges", "c_source"}, "区間の外の行まで入れる"),
     "fill": ("brief.py", "    if left:\n", "    if False:\n", {"fill"}, "埋めていない所を見逃す"),
     "ayato": ("brief.py", '    if AYATO.search(why):\n', "    if False:\n", {"ayato"}, "【あやと】を付けない"),
+    # 批評役の1枚の配信の字幕（#1014、F-047）
+    "c_video": ("brief.py", "    if not video:\n", "    if True:\n", {"c_source"}, "批評役の1枚に配信の字幕を入れない"),
+    "c_cited": ("brief.py", '        pts += [hms(t) for t in CITED.findall(text)]\n', "        pass\n", {"c_ranges", "c_source"},
+                "spec の why・src の時刻を読まない"),
+    "c_merge": ("brief.py", "        if out and a <= out[-1][1]:\n", "        if False:\n", {"c_ranges"}, "重なる区間をまとめない"),
+    "c_leak": ("brief.py", "            if any(n[i:i + k] in body for i in range(len(n) - k + 1)):\n", "            if False:\n",
+               {"c_leak"}, "雛形が対照の行を引いても見逃す"),
+    "w_title": ("brief.py", "    if title:\n", "    if False:\n", {"w_fixed"}, "題の札を作文者の1枚に書かない"),
     # 本編集の1枚
     "e_item": ("brief.py", "    items = edit_items(led)\n", "    items = edit_items(led)[1:]\n", {"e_ledger"},
                "帳面の画の項目を1つ落とす"),
@@ -152,9 +164,14 @@ def leg_holdout(B):
     def ex(block, fid):
         part = block.split(f"**{fid}**", 1)[1].split("\n- **", 1)[0]
         return "例:" in part
+    ng = (FIX / "rejected/VusdZVyjgjQ_p1/script.txt").read_text(encoding="utf-8").splitlines()
+    ok = (FIX / "approved/VusdZVyjgjQ_p1/script.txt").read_text(encoding="utf-8").splitlines()
     return [("銅像 p2 を見るときは、F-039 の例（銅像の行そのもの）を落とす", not ex(B.ledger_block(True, avoid=p2), "F-039")),
             ("ほかの原稿では F-039 の例を残す", ex(B.ledger_block(True, avoid=other), "F-039")),
-            ("題（決まりの1行）は残す", "**F-039**" in B.ledger_block(True, avoid=p2))]
+            ("題（決まりの1行）は残す", "**F-039**" in B.ledger_block(True, avoid=p2)),
+            ("フォカッチャの下書きと添削版を見るときは、F-047 の例（どちらの行も引いている）を落とす",
+             not ex(B.ledger_block(True, avoid=ng), "F-047") and not ex(B.ledger_block(True, avoid=ok), "F-047")),
+            ("ほかの原稿では F-047 の例を残す", ex(B.ledger_block(True, avoid=other), "F-047"))]
 
 
 def leg_pair(B):
@@ -190,9 +207,55 @@ def leg_fill(B):
 def leg_ayato(B):
     return [("「あやとの題（#977）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの題（#977 2026-10-21）"})),
             ("「あやと #975「日本の三倍や！…」」に【あやと】", "【あやと】" in B.marks({"why": "あやと #975「日本の三倍や！とかでいいんじゃ無い？」"})),
+            ("「あやとの添削（#1014）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの添削（#1014 2026-10-23）。2:47:30「ちょっと待つわ」"})),
             ("言い換え「あやとの言葉 #976 を、まとめ役が言い換えた」には付けない",
              "【あやと】" not in B.marks({"why": "題（あやとの言葉 #976 を、まとめ役が言い換えた案 B）"})),
             ("【足】も印になる", B.marks({"why": "【足】ツッコミ"}) == "【足】")]
+
+
+# ---------- 批評役の1枚の配信の字幕（#1014、F-047） ----------
+
+VUSD_NG = FIX / "rejected/VusdZVyjgjQ_p1/script.txt"
+
+
+def leg_c_source(B):
+    with_ = B.build_critic(VUSD_NG, None, [], "x", "VusdZVyjgjQ")
+    without = B.build_critic(VUSD_NG, None, [], "x")
+    part = with_.split("## 配信の字幕", 1)[1].split("\n## ", 1)[0] if "## 配信の字幕" in with_ else ""
+    return [("--video で、作文者が根拠に挙げた 2:44:00 の字幕の行が入る", "[2:44:00]" in part),
+            ("挙げていない 1:00:00 の行は入らない", "[1:00:00]" not in part),
+            ("--video が無ければ「渡していない」と書く", "配信の字幕は渡していない" in without and "[2:44:00]" not in without)]
+
+
+def leg_c_ranges(B):
+    rows = [{"why": "2:39:30「くそ」＋2:40:00「挽回」"}, {"why": "根拠なし", "src": ["2:49:53.7"]}, {"why": "【足】"}]
+    got = B.cited_ranges(rows)
+    return [("2:39:30 と 2:40:00 は前後30秒で重なるので1つにまとめる", got[:1] == [(B.hms("2:39:00"), B.hms("2:40:30"))]),
+            ("src の「2:49:53.7」も読む", (B.hms("2:49:23"), B.hms("2:50:23")) in got),
+            ("時刻の無い行からは区間を作らない（全部で2つ）", len(got) == 2)]
+
+
+def leg_c_leak(B):
+    body = B.CRITIC_TMPL.read_text(encoding="utf-8").split(B.MARK, 1)[-1]
+    fab = body + "\n例: 1,200億かけて、中身スカスカやないかい！\n"
+    try:
+        B.build_critic(VUSD_NG, None, [], "x")
+        stopped = False
+    except KeyError:
+        stopped = True
+    return [("いまの雛形は、対照の行を引いていない（終わりの形「アーカイブ見てね」は数えない）", not B.leaks(body)),
+            ("銅像 p2 の行をこしらえて足すと拾う", "CKJvprUMOgA_p2_17" in {n for n, _ in B.leaks(fab)}),
+            ("いまの雛形なら1枚は作れる（止まらない）", not stopped)]
+
+
+def leg_w_fixed(B):
+    t = "海外キッチンで\nまさかの事態に！"
+    w = B.build_writer(None, [], [], "x", 3, False, [], t, "本日22時")
+    bare = B.build_writer(None, [], [], "x", 3, False, [])
+    return [("--title の札を「1行目はそのまま読む」と書く", "1行目は、この字をそのまま読む" in w and "海外キッチンで ／ まさかの事態に！" in w),
+            ("--next の時刻を「最後の行で言う」と書く", "本日22時" in w and "この時刻まで言う" in w),
+            ("表の1行目に札の字（改行を外して）が入る", "| 1 | 海外キッチンでまさかの事態に！ | 題 |" in w),
+            ("無ければ「指定なし」", "（指定なし。" in bare)]
 
 
 # ---------- 本編集の1枚 ----------
@@ -405,7 +468,9 @@ def leg_e_name(B):
             (f"勧める名前（{got}）は、頼んだことのある名前を飛ばした次（fra-a-v4）", got == "fra-a-v4")]
 
 
-LEGS = {"cats": leg_cats, "grows": leg_grows, "machine": leg_machine, "holdout": leg_holdout, "pair": leg_pair,
+LEGS = {
+    "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "w_fixed": leg_w_fixed,
+    "cats": leg_cats, "grows": leg_grows, "machine": leg_machine, "holdout": leg_holdout, "pair": leg_pair,
         "chat": leg_chat, "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
         "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
         "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,

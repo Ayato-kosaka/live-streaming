@@ -14,6 +14,9 @@
 mp4 とは別の小さな封にも包むので、**mp4 の暗号文（数百MB）を落とさずにシートを読める**
 （下の「シートだけ開く」。#1011）。
 
+**区間を決めるだけなら、まず `captions`（字幕だけの道）。** 媒体を落とさずに YouTube の自動字幕と
+題・長さだけを取り、その場で封をして置く。push から手元に届くまで**約1分**（下の「字幕だけの道」）。
+
 **このリポジトリは公開。** 出来たものは全部、依頼ファイルに入れた公開鍵で暗号化して
 作業枝の `shorts/.work/` に置く。平文で置くのは「何がいくつ・何バイト・成否」だけの
 `manifest.json`。`shorts/.work/` は作業用の一時置き場で、master には入れない。
@@ -25,7 +28,9 @@ shorts/requests/*.json を claude/** の枝に push
   └ .github/workflows/shorts_ingest.yml
       plan     依頼を読む（形・公開鍵・置き場の枝を見る）                    plan.py
                → 毎晩の取り込みが動いていれば、終わるまで待つ（最長60分）      gate.py
-      fetch    YouTube から1本ずつ順に取る（Cookie を握るのはここだけ。        download.py
+      captions mode captions だけ。字幕と題・長さを取り、封をして作業枝に置く    quick_captions.py / seal.py / push.sh
+               （媒体を落とさない。fetch と同じ Cookie の枠。fetch はこのあと）
+      fetch    YouTube から1本ずつ順に取る（Cookie を握るのは fetch と captions。 download.py
                1本ごとに、毎晩の取り込みが動き出していないかを見直す）
                → Actions のキャッシュに置く（artifact は公開で誰でも落とせるので使わない）
       analyze  1本ずつ並べて解析（Cookie 無し）→ 暗号化 → 作業枝に push        analyze.py / seal.py / push.sh
@@ -53,11 +58,12 @@ push の前後を GitHub の compare で比べて拾う）。同じものをも�
                       "limit": 200, "details": 60, "pubkey": "…"}
 {"mode": "clips",     "videos": ["yk-by7R7iPA"], "ranges": ["0:13:29-0:14:05", "0:14:10-0:14:38"],
                       "pubkey": "…"}
+{"mode": "captions",  "videos": ["VusdZVyjgjQ"], "pubkey": "…"}
 ```
 
 | 欄 | 意味 | 既定 |
 | --- | --- | --- |
-| `mode` | `archive`（長い配信）/ `reference`（他人のショート）/ `zoom`（区間を細かく）/ `channel`（一覧）/ `clips`（編集の素材。区間ごとの mp4） | 必須 |
+| `mode` | `archive`（長い配信）/ `reference`（他人のショート）/ `zoom`（区間を細かく）/ `channel`（一覧）/ `clips`（編集の素材。区間ごとの mp4）/ `captions`（字幕と題・長さだけ。媒体を落とさない） | 必須 |
 | `videos` / `video` | 動画ID（11字） | 必須（channel 以外） |
 | `pubkey` | RSA 2048bit 以上の公開鍵。`openssl pkey -in priv.pem -pubout` の形。改行が空白に化けてもよい | 必須 |
 | `range` / `ranges` | zoom の区間 `H:MM:SS-H:MM:SS`（1区間15分まで）。`ranges` で並べると1区間1本の job になる。**clips では、並べた区間が全部1本の job**（配信は1回だけ取って、そこから全部切る）。1区間10分・合計30分・60区間まで。秒に端数を書いてよい（`0:13:29.5`）。並べた順が mp4 の番号になり、重なっていてもそれぞれ1本 | zoom・clips で必須 |
@@ -82,6 +88,45 @@ openssl pkey -in <スクラッチパッド>/keys/priv.pem -pubout -out <スク�
 ```
 
 **秘密鍵はリポジトリに入れない**（`.gitignore` の `*.pem` でも弾かれるが、そもそも中に置かない）。
+
+## 字幕だけの道（`captions`。#1014）
+
+**書き起こしが `streams/` に無い回は、まず字幕で区間を決めて原稿に入る。whisper は原稿が使う区間だけ。**
+配信の議事録の元（`streams/YYYY/MM/<stem>.transcript.txt`）は毎晩の取り込みのあとに付くので、
+配信の当日・翌朝の回にはまだ無い。そこで archive（配信まるごとを取って whisper）を頼むと、
+字幕は最初の数分で取れているのに、全部が終わるまで1つの封にならない。フォカッチャの回
+（VusdZVyjgjQ・3時間55分）は、道具の入れが32分止まり、whisper が40分を越えても終わらず、
+1時間を越えても原稿の段に入れなかった（帳面 F-046）。
+
+```bash
+# shorts/requests/<好きな名前>.json を claude/ の枝に足して push する
+{"mode": "captions", "videos": ["VusdZVyjgjQ"], "pubkey": "-----BEGIN PUBLIC KEY-----\n…"}
+# 置き場は shorts/.work/<id>/captions/。届いたら開く（数百KB なので git で取り込んでよい）
+git fetch origin claude/serene-darwin-sf09tt && git merge FETCH_HEAD
+python3 tools/shorts/ingest/decrypt.py --key <秘密鍵> --out <リポジトリの外> shorts/.work/VusdZVyjgjQ/captions
+```
+
+- **媒体は落とさない**（`yt-dlp --skip-download --write-subs --write-auto-subs --sub-langs ja-orig,ja`）。
+  ffmpeg も whisper も入れないので、job は1分ほどで終わる
+- 開くと `<out>/<id>/captions/` に `captions.txt`（**読む用。`[H:MM:SS] 文` を1行1文**。句点・1.2秒を越える
+  息つぎ・40字で切る。頭の `# ` の数行が題・長さ・字幕の種類・行数）・`captions.json`（字幕の1行ずつと語の時刻）・
+  `meta.json`（題・長さ・公開日時・chapters・heatmap）・`run.json`（当たった口と成否）
+- 字幕は `ja-orig`（話した言葉のまま）を先に、無ければ `ja`。口は tools/clip/fetch.py の順に当たり、
+  字幕が取れた口で止める（5つまで）。**Cookie・PO Token は fetch の job と同じ**（`YOUTUBE_COOKIES` を読むだけ・
+  gate.py を通る・fetch と同じ concurrency の枠）。同じ push に archive などが混ざっていても、
+  fetch は captions の job が終わってから走る（同じ run の2つの job で Cookie を同時に握らない）
+- **字幕が取れないとき** — 「この動画には ja の字幕（自動も手動も）がまだ無い」は、口2つが揃って
+  字幕の一覧に ja が無いと言ったとき。配信の直後は自動字幕が遅れて付くので、時間をおいて依頼の名前を
+  変えて頼み直す。どちらでも「取れなかった」封は置かれ（manifest の `status: failed`）、job は赤くなる
+- 区間が決まったら、その区間だけを `clips`（編集の素材）・`zoom`（コマを細かく）で頼む。
+  配信まるごとの `archive` は、自動字幕が無い・崩れていて読めない回だけ。**原稿は whisper を待たない**
+- 前の版で開いた `captions.txt` の切りかたを揃えるときは
+  `python3 tools/shorts/ingest/quick_captions.py --text <out>/<id>/captions/captions.json`
+
+2026-10-22 の実測（VusdZVyjgjQ・3時間55分）: push から暗号文が枝に積まれるまで **62秒・61秒**
+（run 39870585977・39871775416。captions の job 45秒・43秒。道具の入れ 9〜11秒・字幕を取って封をする
+15秒・置く 2〜3秒）。字幕 2,819行 → 1行1文 3,804行（最長59字）・暗号文 0.2MB。
+同じ回の archive は、道具の入れ 32分・whisper 40分超だった。
 
 ## 置かれるもの（平文）
 
@@ -261,10 +306,17 @@ clips のシートは、**シートの各コマに写っている縞が「区間
 17＋16 に均されること・小さな封の3つだけ（mp4 の暗号文無し）で `--sheets` が開けて、
 出てくるのがシートと一覧だけで元と1バイトも違わないことを見る。
 
-毎回の PR では、ffmpeg の要らない4本が回し役（`python3 python/selftest_runner.py`）から走る。
+毎回の PR では、ffmpeg の要らない5本が回し役（`python3 python/selftest_runner.py`）から走る。
+
+- `quick_captions_selftest.py` — 字幕だけの道。偽の yt-dlp（`python -m yt_dlp` で起きる）と偽の gate で、
+  頼むのが字幕と info.json だけ（`--skip-download`・媒体の形式を頼まない）・ja-orig を先に選ぶ・
+  1行1文の切りかた・口の当たりかた（ボット確認を飛ばす・字幕が無いと口2つが言ったら見切る・5つで止まる）・
+  一周して封に題名も字幕も平文で出ず、封をしたら平文が残らない・gate が止めたら YouTube に当たらない・
+  retry.sh（上限で切って1回だけ取り直す）・ワークフローの captions の job と道具の入れの上限。
+  守りを1つずつ外した写しで回して、その足だけが落ちることも見る（`BREAK=<名前>` で1つだけ）
 
 - `plan_selftest.py` — 依頼の読みかた。clips の18区間が1本の job・頼んだ順のまま・上限で断る、
-  zoom と archive が変わっていない
+  zoom と archive が変わっていない。captions は fetch / analyze の列に入らず `captions` / `captions_count` に分かれる
 - `gate_selftest.py` — 毎晩の取り込みとぶつからないか（下の「毎晩の取り込みと同時に取らない」）。
   偽の Actions と偽の時計で、動いていない → すぐ通る・queued / in_progress → 待つ・
   60分で止まる・読めない → 時計の枠に戻る、と、plan / download が本当にここを通ること・
@@ -274,7 +326,8 @@ clips のシートは、**シートの各コマに写っている縞が「区間
   clips の小さな封: 3つだけ（payload.enc 無し）で `--sheets` が開きシートと一覧だけが出る・
   壊した／違う鍵／小さな封の無い回は断る・`--branch` が取りに行くのは manifest と小さな封だけ
   （偽の GitHub で回す）
-- `push_selftest.py` — 作業枝に置く（push.sh）。f が小さな封（sheets.key.enc・sheets.enc）を置くこと
+- `push_selftest.py` — 作業枝に置く（push.sh）。f が小さな封（sheets.key.enc・sheets.enc）を置くこと、
+  g が字幕だけの道の封を置き場ごとに `SEALED` で指して続けて置くこと
 
 ## 落ちたときの見方
 
@@ -293,6 +346,18 @@ clips のシートは、**シートの各コマに写っている縞が「区間
    run の頁に `::warning::` で出る（`push.sh`・#291）
 5. **キャッシュの受け渡し** — `fetch` が落ちて何も置けなかったとき、`analyze` は
    「取ったものがキャッシュに無い」で failed の manifest を置く
+6. **道具を入れる段が長い・赤い** — captions / fetch / analyze の「道具を入れる」は、apt・pip・npm・clone を
+   1つずつ上限つきで回し、越えたら切って1回だけ取り直す（`retry.sh`。ふだんは全部で10〜40秒）。
+   ログの `!! apt-get update -qq … 120秒で終わらないので切った（1回目・120秒）` が止まったところ。
+   2回とも駄目なら段ごと赤くなる（段そのものにも `timeout-minutes` がある）。2026-10-22 に
+   analyze の段が32分止まったのを受けて置いた。切ったところは `::warning::` で run の頁の注記にも出る
+   （この箱からはログが読めないが、注記は `gh api repos/…/check-runs/<job>/annotations` で読める）。
+   **ffmpeg は `ffmpeg.sh` が入れる。** 入っていれば apt に触らず、apt（`--no-install-recommends`）が
+   上限で2回切られたら GitHub の静的ビルド（BtbN/FFmpeg-Builds）に切り替える。同じ晩、clips の fetch が
+   apt-get install ffmpeg を4分ずつ2回切られて落ちたため（run 39870741046）。静的ビルドは**版の決まった枝**
+   （`ffmpeg-n8.1-latest` → `ffmpeg-n9.0-latest`）だけを当て、master の夜間版には逃げない（2026-10-23、
+   夜間版で `-vsync` が消えていて検査が止まった。#1015）。どの枝も落とせなければ赤くなるので、
+   `ffmpeg.sh` の `FFMPEG_STATIC_BRANCHES` の既定を、BtbN の latest に今ある枝に上げる
 
 `fetch` の job は**同じ ref の毎晩の取り込みと同じ枠**（`fetch-chat-${{ github.ref }}`）。
 1つの枠に「走っている1本＋待っている1本」までしか並ばず、3本目が来ると待っていた

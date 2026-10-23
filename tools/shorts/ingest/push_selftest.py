@@ -26,6 +26,8 @@ clone した中から**本物の push.sh** を回す。箱の git の設定（�
      読むほうの URL だけを壊し、push のほうは本物に向けておく——「無い」と読み違えれば、
      本物に枝ができて見える
 - f. clips の見る用の小さな封（sheets.key.enc・sheets.enc）も置く。シートの平文は置かない
+- g. 字幕だけの道（captions の job）: 1つの job の封を、置き場ごとに `SEALED` で指して続けて置く。
+     指した置き場が無ければ何も push しない
 
 終了コード 0=全部通った / 1=落ちたものがある / 2=回せない（git・bash・push.sh が無い）。
 """
@@ -371,6 +373,33 @@ def main() -> int:
         r = run_push(job, job_env(env, rt2, dest))
         check(r.returncode != 0 and box.refs() == before and "置かないはずのもの" in r.stdout,
               f"f. シートの平文（01_01.jpg）が混ざったら何も push しない（{tail(r)}）")
+
+        # --- g. 字幕だけの道（captions の job）。1つの job で何本も封をするので、
+        #        置き場ごとに SEALED で指して続けて置く。2本とも枝に残る。指した置き場が無ければ置かない
+        root = top / "g"
+        root.mkdir()
+        box = Box(root, env)
+        job = box.checkout("job")
+        rt = root / "rt-g"
+        caps: dict[str, Path] = {}
+        for v in ("vidG1", "vidG2"):
+            s = rt / "sealed-captions" / f"{v}__captions"
+            s.mkdir(parents=True)
+            (s / "manifest.json").write_text(json.dumps({"key": f"{v}__captions"}), encoding="utf-8")
+            (s / "key.enc").write_bytes(os.urandom(384))
+            (s / "payload.enc").write_bytes(os.urandom(2048))
+            caps[v] = s
+        rcs = [run_push(job, dict(job_env(env, rt, f"{v}/captions"), SEALED=str(s))).returncode
+               for v, s in caps.items()]
+        tip = box.tip()
+        check(rcs == [0, 0] and tip is not None and all(
+            box.files(tip, f"shorts/.work/{v}/captions")
+            == {p.name: p.read_bytes() for p in s.iterdir()} for v, s in caps.items()),
+            f"g. SEALED で指した置き場を、続けて2本とも置く（{rcs}）")
+        before = box.refs()
+        r = run_push(job, dict(job_env(env, rt, "vidG3/captions"), SEALED=str(rt / "nope")))
+        check(r.returncode != 0 and box.refs() == before and "封の置き場が無い" in r.stdout,
+              f"g. SEALED の置き場が無ければ何も push しない（{tail(r)}）")
 
     print(f"\nNG  作業枝に置く見張り {len(fails)}件落ちた" if fails else "\nOK  作業枝に置く見張り 全部通った")
     return 1 if fails else 0

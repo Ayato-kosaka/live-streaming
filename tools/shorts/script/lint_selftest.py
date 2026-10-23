@@ -21,15 +21,22 @@
 | `rejected/CKJvprUMOgA_p2` | 2026-10-21「全然現実的じゃなくてつまらん」（#976。題） | 今日 |
 | `rejected/CKJvprUMOgA_p2_17` | 2026-10-21「配信になぞりすぎてて、行間が空きすぎてる」「話が二転三転するくらいならない方が良い」（#976。題を直して2行消した17行の版） | 今日 |
 | `rejected/yk-by7R7iPA_p1` | 2026-10-16「原稿とか全然ダメですね」（チャット。#275 #276 #277） | 2026-10-16 |
+| `rejected/VusdZVyjgjQ_p1` | 2026-10-23「ちょっと台本の品質が悪い」（#1014。7c008c3d の下書き21行。帳面 F-047） | 今日 |
+| `approved/VusdZVyjgjQ_p1` | 2026-10-23 あやとの添削そのもの（#1014。5f1a3008 の19行） | 今日 |
+
+フォカッチャの2本は、批評役の対照（`script_writing.md` 7.7）にも使うので、spec に `why`（作文者が挙げた配信の時刻）と
+`visual`（画）を残してある。下書きの spec は当時まだ無かったので、作文者の表（7c008c3d の `script_table.md`）から組んだ。
+添削版の spec は `shorts/videos/` の spec から削り、あやとが書き換えた・足した10行の why に「あやとの添削」を付け（城塞・地下鉄の
+控えの【あやと】と同じ扱い）、まとめ役が渡すはずの `next_stream`（本日22時）を足した。
 
 ## 足
 
 | 足 | 確かめること |
 | --- | --- |
-| `approved` | 出してよいと言われた5本が、言われた日の決まりで ✕ 0（TDArug は今日の決まりでも） |
+| `approved` | 出してよいと言われた6本が、言われた日の決まりで ✕ 0（TDArug とフォカッチャの添削版は今日の決まりでも） |
 | `later_rule_live` | ホステル p2 を今日の決まりで当てると、T-FLAG だけが落ちる（承認のあとにできた決まりが効いている） |
 | `miete` | 「地下鉄1回に見えてきた」を 15行目で拾う。「海が見えてきた！」は拾わない |
-| `title_real` | 「銅像だらけの国で、僕まで銅像にされた」を拾う。あやとが書いた題3本と、アプリの回の題は通す |
+| `title_real` | 「銅像だらけの国で、僕まで銅像にされた」を拾う。あやとが書いた題4本（「海外キッチンで…」を含む）と、アプリの回の題は通す |
 | `title_metaphor` | 「〜みたいだった」の題を拾う。あやとの題は通す |
 | `flag` | 国旗が無い・違う国・国の名前の後ろ、を拾う。正しい旗と、国の名前が無い題は通す |
 | `narrator` `phrase` `yen` | 10-16 に直された p1 の行（あやとは・本人いわく・だそうです／国を出る／280レク。約550円）を拾い、言い換えた行は通す |
@@ -47,6 +54,8 @@
 | `ashirate` | 【足】7/13・5/13 は △、4/13 は出さない。城塞 p1 は出さない（L-ASHIRATE） |
 | `ask` | 銅像 p2（17行）の終わり「…あり？なし？」を △。城塞 p1（みんな → アーカイブ）・地下鉄の形（アーカイブだけ）は出さない。アーカイブの前の「どっち派？」は △（L-ASK） |
 | `desu` | 銅像 p2（17行）の10・12行目を △。城塞 p1 の「」の中の「閉まってますよ」は見ない（L-DESU） |
+| `title_read` | フォカッチャの下書きの1行目（札と違う字）を ✕。あやとの添削版・城塞 p1（札は国旗と改行つき）は通す。札が無ければ「見ていない」。10-22 の決まりでは当てない（T-READ） |
+| `next_time` | 下書きの最後「…配信見にきてね！」（時刻なし）を ✕。添削版（22時）は通す。spec の next_stream と違う時刻・「3時間」（時刻ではない）は ✕。アーカイブの1行・問いの終わりは見ない（L-NEXT） |
 """
 from __future__ import annotations
 
@@ -68,8 +77,10 @@ CUTS = {
     # `cli` の足は本物の lint.py を別に起こすので、ここで外した字の影響を受けない（mutation_drill の側で当たる）
     "miete": ("lint.py", "        m = MIETE.search(ln)\n", "        m = None\n",
               {"miete"}, "見立てを拾わない"),
-    "real": ("lint.py", "    if places_in(t) or REAL_NUM.search(t):\n", "    if True:\n",
+    "real": ("lint.py", "    if places_in(t) or REAL_NUM.search(t) or REAL_PLACE.search(t):\n", "    if True:\n",
              {"title_real"}, "題の現実の手がかりを見ない"),
+    "real_place": ("lint.py", "    if places_in(t) or REAL_NUM.search(t) or REAL_PLACE.search(t):\n",
+                   "    if places_in(t) or REAL_NUM.search(t):\n", {"title_real", "approved"}, "あやとが題の場所に使った「海外」を場所に数えない"),
     "metaphor": ("lint.py", "    m = METAPHOR.search(t)\n", "    m = None\n",
                  {"title_metaphor"}, "題の見立てを拾わない"),
     "flag_none": ("lint.py", '        return [Hit("T-FLAG", 0, card, f"題の札に国旗が無い', '        return [] and [Hit("T-FLAG", 0, card, f"題の札に国旗が無い',
@@ -86,6 +97,7 @@ CUTS = {
             {"yen"}, "現地の通貨を拾わない"),
     "length": ("lint.py", "    if n <= MAX_CHARS:\n", "    if True:\n",
                {"length"}, "字数を見ない"),
+    "end_invite": ("lint.py", "    if invites(last):\n        return []\n", "", {"end", "approved"}, "次の配信への誘いで終える形を落とす"),
     "end_any": ("lint.py", '    return [Hit("L-END", len(c.lines), last,', '    return [] and [Hit("L-END", len(c.lines), last,',
                 {"end"}, "どんな終わりも通す"),
     "end_archive": ("lint.py", '    if "アーカイブ" in last:\n        return []\n', "",
@@ -93,11 +105,11 @@ CUTS = {
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if as_of and r.since > as_of:\n", "        if False:\n",
-              {"as_of", "approved"}, "決まりの日を見ない"),
+              {"as_of", "approved", "title_read"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
-                   {"later_rule_live"}, "spec の題の札を読まない"),
+                   {"later_rule_live", "title_read"}, "spec の題の札を読まない"),
     # ---- 2026-10-21（#1011）に足した規則 ----
     "card": ("lint.py", "    if c.card_seconds <= CARD_MAX:\n", "    if True:\n", {"card"}, "題の札の秒を見ない"),
     "card_spec": ("lint.py", '        secs = s.get("title_card_seconds")\n', "        secs = None\n",
@@ -124,6 +136,17 @@ CUTS = {
     "desu": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = None\n", {"desu"}, "です・ます調を拾わない"),
     "desu_quote": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = DESU.search(ln)\n",
                    {"desu"}, "「」の中のです・ますまで拾う"),
+    # ---- 2026-10-23（#1014、F-047）に足した規則 ----
+    "read_any": ("lint.py", "    if card == first:\n", "    if True:\n", {"title_read"}, "1行目が題の札と違っても通す"),
+    "read_norm": ("lint.py", '    return TITLE_NOISE.sub("", FLAG_PAIR.sub("", s or ""))\n', '    return s or ""\n',
+                  {"title_read", "approved", "later_rule_live"}, "国旗・改行・句読点の置きかたの違いまで ✕ にする"),
+    "next_none": ("lint.py", "    if invites(last) and not TIME.search(last):\n", "    if False:\n", {"next_time"}, "時刻の無い誘いを通す"),
+    "next_spec": ("lint.py", "        if miss:\n", "        if False:\n", {"next_time"}, "spec の next_stream の時刻を見ない"),
+    "next_spec_read": ("lint.py", '        nxt = s.get("next_stream") or None\n', "        nxt = None\n", {"next_time"},
+                       "spec の next_stream を読まない"),
+    "time_hours": ("lint.py", "時(?!間)|(?<![0-9])", "時|(?<![0-9])", {"next_time"}, "「3時間」を時刻に数える"),
+    "invite_archive": ("lint.py", '    return "アーカイブ" not in line and bool(INVITE.search(line))\n',
+                       "    return bool(INVITE.search(line))\n", {"next_time"}, "アーカイブの1行を次の配信への誘いに数える"),
 }
 
 
@@ -152,7 +175,8 @@ def leg_approved(L):
                                ("approved/TDArug_te90_p1", "script.txt", TODAY),
                                ("approved/yk-by7R7iPA_p3", "script_A.txt", "2026-10-17"),
                                ("approved/yk-by7R7iPA_p3", "script_B.txt", "2026-10-17"),
-                               ("approved/yk-by7R7iPA_p3", "script_C.txt", "2026-10-17")):
+                               ("approved/yk-by7R7iPA_p3", "script_C.txt", "2026-10-17"),
+                               ("approved/VusdZVyjgjQ_p1", "script.txt", TODAY)):
         f = fails(L, fix(L, rel, script), as_of)
         out.append((f"{rel}/{script}（{as_of if as_of != TODAY else '今日'}の決まり）は ✕ 0"
                     + (f" ← {[h.rule for h in f]}" if f else ""), not f))
@@ -178,7 +202,8 @@ def leg_miete(L):
 AYATO_TITLES = ("🇲🇰 北マケドニアの夕日見に行ったら、野良犬に襲われた！",
                 "🇸🇪 ストックホルム来たら、地下鉄が高すぎた！",
                 "🇲🇰 北マケドニアに来たら、銅像に1,200億円かけてる国だった",
-                "アプリ作り始めて1年、\nついに1日4700人突破！")
+                "アプリ作り始めて1年、\nついに1日4700人突破！",
+                "海外キッチンでワンパンチーズフォカッチャ\n作ったらまさかの事態に！")
 
 
 def title_hits(L, card, rule):
@@ -255,6 +280,8 @@ def leg_end(L):
     def hits(lines):
         return [h for h in fails(L, ctx(L, lines)) if h.rule == "L-END"]
     return [("問いで切る（「みんなは、この宿、泊まれる？」）は通す", not hits(["題", "宿", "みんなは、この宿、泊まれる？"])),
+            ("次の配信への誘い（あやと #1014「…本日22時から作るので配信見にきてね！」）で終えるのも通す",
+             not hits(["題", "うまい！", "リベンジにワンパンピザを本日22時から作るので配信見にきてね！"])),
             ("問い → 「…アーカイブ見てね！」は通す（#977）", not hits(["題", "みんなやったら、ケバブ守る？あげる？", "この国で見た爆焼夕日は配信のアーカイブ見てね！"])),
             ("問いを置かずにアーカイブの1行で終えるのも通す（#975。途中の「どっち？」は終わりの問いではない）",
              not hits(["題", "どっち？……乗っちゃお！", "船も乗れるねん！", "……船酔いしてるわな。", "続きはアーカイブ見てな！"])),
@@ -420,6 +447,40 @@ def leg_desu(L):
             ("城塞 p1 の「」の中の「閉まってますよ」は見ない", not castle)]
 
 
+VUSD_NG = "rejected/VusdZVyjgjQ_p1"   # フォカッチャの下書き（あやと「台本の品質が悪い」#1014）
+VUSD_OK = "approved/VusdZVyjgjQ_p1"   # あやとの添削版
+
+
+def leg_title_read(L):
+    ng = hits_of(L, fix(L, VUSD_NG), "T-READ")
+    ok = hits_of(L, fix(L, VUSD_OK), "T-READ")
+    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "T-READ")
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    before = L.lint(fix(L, VUSD_NG), "2026-10-22")
+    return [("フォカッチャの下書きの1行目（札と違う字）を ✕", [(h.line, h.look) for h in ng] == [(1, False)]),
+            ("あやとの添削版（札の改行と1行目の句読点だけが違う）は通す", not ok),
+            ("城塞 p1（札は国旗と改行つき）は通す", not castle),
+            ("札が無ければ「見ていない」", "T-READ" in blind),
+            ("10-22 の決まりでは当てない", "T-READ" in before["later"] and not [h for h in before["hits"] if h.rule == "T-READ"])]
+
+
+def leg_next_time(L):
+    def last(line, nxt=None):
+        c = L.Ctx(lines=["題", "うまい！", line], title_card=None, title_from="足", rows=None, next_stream=nxt)
+        return hits_of(L, c, "L-NEXT")
+    ng = hits_of(L, fix(L, VUSD_NG), "L-NEXT")
+    ok = hits_of(L, fix(L, VUSD_OK), "L-NEXT")
+    other = L.build(tmp_script(["題", "うまい！", "明日は21時から作るので配信見にきてね！"],
+                               {"next_stream": "本日22時", "rows": []}))
+    return [("下書きの最後「明日はワンパンピザ作るので配信見にきてね！」（時刻なし）を ✕",
+             [(h.line, h.look) for h in ng] == [(21, False)]),
+            ("添削版の最後（本日22時から）は通す（spec の next_stream「本日22時」とも合う）", not ok),
+            ("spec の next_stream と違う時刻（22時 → 21時）は ✕", bool(hits_of(L, other, "L-NEXT"))),
+            ("「3時間配信するから見にきてね！」は時刻ではないので ✕", bool(last("3時間配信するから見にきてね！"))),
+            ("「続きはアーカイブ配信見てね！」は誘いではない（時刻を求めない）", not last("続きはアーカイブ配信見てね！")),
+            ("問いで終える回には時刻を求めない", not last("みんなは、これ食べたい？"))]
+
+
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
@@ -427,6 +488,7 @@ LEGS = {
     "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
     "card": leg_card, "sec": leg_sec, "after": leg_after, "num": leg_num, "quote": leg_quote,
     "ashirate": leg_ashirate, "ask": leg_ask, "desu": leg_desu,
+    "title_read": leg_title_read, "next_time": leg_next_time,
 }
 
 if __name__ == "__main__":

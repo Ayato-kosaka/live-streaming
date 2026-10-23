@@ -26,7 +26,9 @@ BQ の `videos` から、開始時刻のある配信を**新しい順**に並べ
 
 - 字幕は yt-dlp で `--skip-download`（動画は落とさない）。口の当たり方・PO Token・Cookie は
   ショートの取り込み（`tools/shorts/ingest/download.py`）のをそのまま使う
-- **Cookie を使うほかの取り込みと同時に使わない。** 1本ごとに `gate.py` で見る
+- **Cookie を使うほかの取り込みと同時に使わない。** 1本ごとに `gate.py` で見る。
+  見るのは run ではなく **Cookie を握る job**（`job_aware`）。ショートの取り込みの解析は
+  Cookie に触らないまま何時間も run を開けておくので、run で見ると毎晩それを待って諦める
 - 1本ごとに数秒あける
 - **429 か「ボット確認」が出ても打ち切らない。** 60→120→240→480秒と待って、同じ配信を
   取り直す。前は2本続いたらその回をやめていたので、1晩の締め出しで残りが丸ごと次の晩に
@@ -263,6 +265,92 @@ def next_client(dl, cur: str) -> str:
     return cs[(cs.index(cur) + 1) % len(cs)] if cur in cs else cs[0]
 
 
+# ---------------------------------------------------------------- Cookie を握る job
+
+# gate.py は「Cookie を使うワークフローの run が動いているか」を **run 単位**で見る。
+# ショートの取り込みは Cookie を握るのが fetch の job（数分）だけで、そのあとの解析
+# （whisper・最長330分）は Cookie に触らないのに、run は in_progress のまま残る。
+# ショートは配信の翌朝に頼まれ、毎晩の取り込みの完了でこちらが起きるのもその時間帯なので、
+# **こちらは解析が終わるまで60分待って、1本も取らずに諦める**（2026-10-22 の晩がそれ）。
+# そこで、動いている run は job まで見て、Cookie を握る job が全部終わっていれば数えない。
+# **見分けられないときは握っているとみなす**（前と同じに倒す）。
+SECRET = "YOUTUBE_COOKIES"
+RUN_BUSY = ("requested", "queued", "in_progress")
+
+
+def cookie_jobs(wf_path: Path) -> list[str | None]:
+    """Cookie を握る job の、Actions の API に出る名前。式で名前が決まるものは None（見分けられない）。"""
+    import yaml
+
+    try:
+        doc = yaml.safe_load(wf_path.read_text(encoding="utf-8")) or {}
+    except (OSError, UnicodeDecodeError, yaml.YAMLError):
+        return [None]
+    out: list[str | None] = []
+    for key, job in (doc.get("jobs") or {}).items():
+        # yaml を通すのでコメントは落ちる（gate.py の「コメントだけのものは数えない」と同じ）
+        if SECRET not in yaml.safe_dump(job, allow_unicode=True):
+            continue
+        name = job.get("name") if isinstance(job, dict) else None
+        out.append(None if name and "${{" in str(name) else str(name or key))
+    # ワークフローの頭（env など）で Cookie を読んでいるものは、どの job とも言えない
+    if not out and SECRET in yaml.safe_dump({k: v for k, v in doc.items() if k != "jobs"},
+                                            allow_unicode=True):
+        out.append(None)
+    return out
+
+
+def holds_cookie(jobs: list[dict] | None, names: list[str | None]) -> bool:
+    """この run が、まだ Cookie を握っている（これから握りうる）か。"""
+    if jobs is None or not names or None in names:
+        return True
+    for n in names:
+        mine = [j for j in jobs if j.get("name") == n or str(j.get("name") or "").startswith(f"{n} (")]
+        # まだ一覧に無い job は、前の job が終わるのを待っているだけで、これから握る
+        if not mine or any(j.get("status") != "completed" for j in mine):
+            return True
+    return False
+
+
+def jobs_lister(repo: str, token: str, api: str = "https://api.github.com"):
+    """run 1本ぶんの job の一覧。読めない・一覧が切れているなら None（握っているとみなす側）。"""
+    import urllib.request
+
+    def list_jobs(run_id) -> list[dict] | None:
+        if not repo:
+            return None
+        req = urllib.request.Request(f"{api}/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100",
+                                     headers={"Accept": "application/vnd.github+json",
+                                              "X-GitHub-Api-Version": "2022-11-28"})
+        if token:
+            req.add_header("Authorization", f"Bearer {token}")
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                d = json.load(r)
+        except Exception:  # noqa: BLE001 — どの落ち方でも「握っている」に倒すだけ
+            return None
+        jobs = d.get("jobs") if isinstance(d, dict) else None
+        if not isinstance(jobs, list) or int(d.get("total_count") or 0) > len(jobs):
+            return None
+        return jobs
+
+    return list_jobs
+
+
+def job_aware(list_runs, list_jobs, names_of):
+    """gate に渡す run の一覧から、Cookie を握る job が全部終わった run を外す。"""
+
+    def wrapped(wf: str) -> list:
+        out = []
+        for r in list_runs(wf):
+            if r.get("status") in RUN_BUSY and not holds_cookie(list_jobs(r.get("id")), names_of(wf)):
+                continue
+            out.append(r)
+        return out
+
+    return wrapped
+
+
 # ---------------------------------------------------------------- fetch
 
 def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str,
@@ -359,10 +447,12 @@ def fetch(todo_path: Path, out_dir: Path | None = None, budget_min: float = BUDG
     # ショートの取り込みを自分として外すので、そのままだとショートとぶつかる。
     # 並べて取るほかの2つは同じ run（GITHUB_RUN_ID が同じ）なので、own_run で外れる
     e = os.environ.get
+    repo, token = e("GITHUB_REPOSITORY", ""), e("GH_TOKEN") or e("GITHUB_TOKEN") or ""
+    api = e("GITHUB_API_URL") or "https://api.github.com"
+    names: dict[str, list[str | None]] = {}
     gate = gate_mod.Gate(gate_mod.cookie_workflows(exclude={WORKFLOW}),
-                         gate_mod.api_lister(e("GITHUB_REPOSITORY", ""),
-                                             e("GH_TOKEN") or e("GITHUB_TOKEN") or "",
-                                             e("GITHUB_API_URL") or "https://api.github.com"),
+                         job_aware(gate_mod.api_lister(repo, token, api), jobs_lister(repo, token, api),
+                                   lambda wf: names.setdefault(wf, cookie_jobs(WF_DIR / wf))),
                          own_run=e("GITHUB_RUN_ID", ""), count_pending=False)
     print(gate.heading(), flush=True)
     chats = fetch_chat([t["video_id"] for t in todo])
