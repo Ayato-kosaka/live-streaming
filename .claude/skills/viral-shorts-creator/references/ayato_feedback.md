@@ -770,3 +770,5 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/947#issuecomment-6249185963（素材の受け渡し）
 - https://github.com/Ayato-kosaka/live-streaming/issues/959#issuecomment-6305646320（時刻の指定）
 - https://github.com/Ayato-kosaka/live-streaming/issues/977#issuecomment-6310722951（時刻の指定）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6373871268（承認「両方めっちゃ良い。進めて」・チャットの書き置き）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6373871669（承認「両方めっちゃ良い。進めて」・チャットの書き置き）
