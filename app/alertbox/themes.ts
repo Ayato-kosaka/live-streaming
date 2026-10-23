@@ -88,6 +88,11 @@ export type SeasonTheme = {
   from: string;
   /** JST の終わり（含まない）。`YYYY-MM-DDTHH:mm` */
   until: string;
+  /**
+   * `false` なら期間中でも配信には出さない（`?theme=` の試し見だけで出る）。
+   * 届いていない出来のものを、作り直しのあいだ下ろしておくため。
+   */
+  live?: boolean;
   /** 絵の置き場（公開側のパス。`public/` の下） */
   dir: string;
   bank: {
@@ -133,6 +138,9 @@ export type SeasonTheme = {
 export const THEMES: SeasonTheme[] = [
   {
     id: "halloween",
+    /* 2026-10-23 に下ろした。あやとの評価が 20点（かぼちゃに魅力が無い・段の差が
+       分からない・縦長の配信で見ていない）。作り直すまで配信は豚のまま（#1022） */
+    live: false,
     from: "2026-10-01T00:00",
     // 10/31 23:59 まで。11/1 0:00 からは豚に戻る
     until: "2026-11-01T00:00",
@@ -247,6 +255,7 @@ export function themeAt(
 ): SeasonTheme | null {
   const t = now.getTime();
   for (const th of themes) {
+    if (th.live === false) continue;
     if (jstToMs(th.from) <= t && t < jstToMs(th.until)) return th;
   }
   return null;
