@@ -3,6 +3,7 @@
 
     python3 tools/shorts/script/lint.py <script.txt>                    # 隣の spec.json（script_A.txt なら spec_A.json）も読む
     python3 tools/shorts/script/lint.py <script.txt> --title "🇸🇪 ストックホルム来たら、地下鉄が高すぎた！"
+    python3 tools/shorts/script/lint.py <script.txt> --next "本日22時"    # 最後の行で言う次の配信の時刻（spec の next_stream と同じ）
     python3 tools/shorts/script/lint.py <script.txt> --as-of 2026-10-19  # その日に在った決まりだけで（承認済みの原稿を読み直すとき）
     python3 tools/shorts/script/lint.py --rules                          # 規則と、帳面の ID の一覧
 
@@ -92,6 +93,7 @@ class Ctx:
     ashi_marked: set = field(default_factory=set)   # 原稿の字に【足】の印があった行
     answer_marked: set = field(default_factory=set)  # 原稿の字に【答】の印があった行（題の答え。F-037）
     card_seconds: float | None = None                # spec の title_card_seconds（題の札を消す秒）
+    next_stream: str | None = None                   # spec の next_stream（最後の行で言う次の配信。F-047）
 
     @property
     def title(self) -> str:
@@ -197,6 +199,9 @@ def t_flag(c: Ctx):
 
 
 REAL_NUM = re.compile(r"[0-9０-９]|[一二三四五六七八九十百千万億]+(円|倍|回|人|日|年|体|泊|時間|分|秒|個|杯|位)")
+# 国や街の名前ではないが、あやとが題の場所に使った言葉（#1014「海外キッチンでワンパンチーズフォカッチャ作ったらまさかの事態に！」）。
+# 国旗を求める場所ではないので、PLACES（T-FLAG も読む）には入れない
+REAL_PLACE = re.compile(r"海外")
 
 
 def t_real(c: Ctx):
@@ -204,7 +209,7 @@ def t_real(c: Ctx):
     t = c.title
     if not t:
         return None
-    if places_in(t) or REAL_NUM.search(t):
+    if places_in(t) or REAL_NUM.search(t) or REAL_PLACE.search(t):
         return []
     return [Hit("T-REAL", 0, t, "題に場所も数字も無い。「〈場所〉に来たら／行ったら、〈本当に起きたこと〉」で言い切る"
                 "（あやとの直し:「🇲🇰 北マケドニアに来たら、銅像に1,200億円かけてる国だった」）")]
@@ -307,7 +312,71 @@ def l_end(c: Ctx):
         return []
     if "？" in last or "?" in last:
         return []
-    return [Hit("L-END", len(c.lines), last, "最後の行が、「みんな」への問いでも、アーカイブへの1行でもない（挨拶・まとめ・別の話で終えない）")]
+    # 次の配信への誘いも終わりの形（あやと #1014「リベンジにワンパンピザを本日22時から作るので配信見にきてね！」）。時刻は L-NEXT が見る
+    if invites(last):
+        return []
+    return [Hit("L-END", len(c.lines), last, "最後の行が、「みんな」への問いでも、アーカイブへの1行でも、次の配信への誘いでもない"
+                "（挨拶・まとめ・別の話で終えない）")]
+
+
+# 次の配信へ誘う言いかた。「配信のアーカイブ見てね」は誘いではない（アーカイブは先に見て外す）
+INVITE = re.compile(r"配信.{0,4}(見に|観に|来て|きて|遊びに|待って|待っと|おいで|見てね|見てな)")
+# 時刻（22時・夜10時・22:00・二十二時）。「10分発酵」「3時間」は時刻ではない
+TIME = re.compile(r"(?<![0-9０-９])[0-9０-９]{1,2}\s*時(?!間)|(?<![0-9])[0-9]{1,2}:[0-5][0-9]|[一二三四五六七八九十]+時(?!間)")
+
+
+def invites(line: str) -> bool:
+    return "アーカイブ" not in line and bool(INVITE.search(line))
+
+
+def l_next(c: Ctx):
+    """F-047 最後の行で次の配信に誘うなら、時刻まで言う。spec の next_stream（`--next`）があれば、その時刻を言う。
+
+    **指定が無く、誘ってもいない終わり（問い・アーカイブ）は見ない。** 問いで終える回に、時刻を求める決まりではない。
+    あやとは #1014 で「明日はワンパンピザ作るので配信見にきてね！」を「リベンジにワンパンピザを本日22時から作るので
+    配信見にきてね！」に直した。時刻の無い誘いは、見た人が「いつ？」で止まる。
+    """
+    if not c.lines:
+        return None
+    n, last = len(c.lines), c.lines[-1]
+    if c.next_stream:
+        want = [norm_time(t) for t in TIME.findall(c.next_stream)] or [c.next_stream]
+        have = {norm_time(t) for t in TIME.findall(last)}
+        miss = [t for t in want if t not in have and t not in last]
+        if miss:
+            return [Hit("L-NEXT", n, last, f"spec の next_stream「{c.next_stream}」の時刻（{'・'.join(miss)}）を、最後の行で言っていない")]
+        return []
+    if invites(last) and not TIME.search(last):
+        return [Hit("L-NEXT", n, last, "次の配信に誘うのに、時刻が無い（「本日22時から」のように、いつかまで言う）")]
+    return []
+
+
+def norm_time(t: str) -> str:
+    """「22時」「２２時」「22 時」→「22時」。"""
+    return re.sub(r"\s", "", t).translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+
+
+# 題の札と1行目を比べるときに外すもの: 国旗・空白・改行・句読点・記号（札は改行と句読点の置きかたが1行目と違う）
+TITLE_NOISE = re.compile(r"[\s、。，．,.!！?？…‥・「」『』（）()【】〜～~：:]")
+
+
+def norm_title(s: str) -> str:
+    return TITLE_NOISE.sub("", FLAG_PAIR.sub("", s or ""))
+
+
+def t_read(c: Ctx):
+    """F-047 1行目は、題の札の字をそのまま読む（題の札が分かるときだけ見る）。
+
+    F-043 の「札と1行目は別の字でよい」より、こちらを原則にした（あやと #1014「原則冒頭お題を読む」）。
+    国旗・改行・句読点は札と1行目で置きかたが違ってよいので、外して比べる。
+    """
+    if c.title_card is None or not c.lines:
+        return None
+    card, first = norm_title(c.title_card), norm_title(c.lines[0])
+    if card == first:
+        return []
+    shown = c.title_card.replace("\n", "")
+    return [Hit("T-READ", 1, c.lines[0], f"1行目が題の札の字と違う。札「{shown}」をそのまま読む（句読点と改行は変えてよい）")]
 
 
 def l_ashi(c: Ctx):
@@ -539,6 +608,9 @@ RULES = (
     Rule("L-ASHIRATE", ("F-035",), "2026-10-21", "【足】が3分の1を越える（△）", l_ashirate),
     Rule("L-ASK", ("F-032",), "2026-10-21", "終わりの問いに「みんな」が無い（△）", l_ask),
     Rule("L-DESU", ("F-004",), "2026-10-16", "です・ます調の行（△。「」の中は見ない）", l_desu),
+    # ---- 2026-10-23（#1014、F-047）: フォカッチャの下書きを、関所の批評役が落とせなかった所のうち、字で決まるもの ----
+    Rule("T-READ", ("F-047",), "2026-10-23", "1行目が題の札の字と違う（札があるときだけ。句読点・改行・国旗は見ない）", t_read),
+    Rule("L-NEXT", ("F-047",), "2026-10-23", "次の配信に誘う最後の行に時刻が無い・spec の next_stream の時刻を言っていない", l_next),
 )
 
 
@@ -566,9 +638,10 @@ def spec_for(script: Path) -> Path:
     return script.with_name(f"spec{suffix}.json")
 
 
-def build(script: Path, title: str | None = None, spec: Path | None = None, use_spec: bool = True) -> Ctx:
+def build(script: Path, title: str | None = None, spec: Path | None = None, use_spec: bool = True,
+          next_stream: str | None = None) -> Ctx:
     lines, ashi, answer = read_script(script)
-    rows, card, came, secs = None, None, "原稿の1行目（国旗は見ていない）", None
+    rows, card, came, secs, nxt = None, None, "原稿の1行目（国旗は見ていない）", None, None
     sp = spec or spec_for(script)
     if use_spec and sp.exists():
         s = json.loads(sp.read_text(encoding="utf-8"))
@@ -576,13 +649,16 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
         if s.get("title_card"):
             card, came = s["title_card"], f"{sp.name} の title_card"
         secs = s.get("title_card_seconds")
+        nxt = s.get("next_stream") or None
         for i, r in enumerate(rows or [], 1):
             if "【答】" in (r.get("why") or ""):
                 answer.add(i)
     if title is not None:
         card, came = title, "--title"
+    if next_stream is not None:
+        nxt = next_stream
     return Ctx(lines=lines, title_card=card, title_from=came, rows=rows, ashi_marked=ashi, answer_marked=answer,
-               card_seconds=secs)
+               card_seconds=secs, next_stream=nxt)
 
 
 def lint(c: Ctx, as_of: str | None = None) -> dict:
@@ -608,6 +684,7 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
 
 BLIND_WHY = {
     "T-FLAG": "題の札が無い（--title か spec の title_card を渡す）",
+    "T-READ": "題の札が無い（--title か spec の title_card を渡す）",
     "L-ASHI": "spec が無く、原稿の字にも【足】の印が無い",
     "T-REAL": "題が空", "T-METAPHOR": "題が空", "L-END": "原稿が空",
     "T-CARD": "spec に title_card_seconds が無い",
@@ -642,6 +719,7 @@ def main() -> int:
     ap.add_argument("script", nargs="?", help="原稿（1行1文。1行目は読み上げる題）")
     ap.add_argument("--title", help="題の札の字（国旗つき）。無ければ隣の spec の title_card")
     ap.add_argument("--spec", help="spec.json の在りか（既定は原稿の隣）")
+    ap.add_argument("--next", help="最後の行で言う次の配信（「本日22時」）。無ければ隣の spec の next_stream")
     ap.add_argument("--no-spec", action="store_true", help="spec を読まない")
     ap.add_argument("--as-of", help="この日（YYYY-MM-DD）までにできた決まりだけを当てる")
     ap.add_argument("--rules", action="store_true", help="規則の一覧")
@@ -660,7 +738,7 @@ def main() -> int:
             ap.error("--as-of は YYYY-MM-DD")
     p = Path(a.script)
     try:
-        c = build(p, a.title, Path(a.spec) if a.spec else None, not a.no_spec)
+        c = build(p, a.title, Path(a.spec) if a.spec else None, not a.no_spec, a.next)
     except (OSError, ValueError) as e:
         print(f"原稿か spec を読めない: {e}", file=sys.stderr)
         return 2

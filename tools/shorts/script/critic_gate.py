@@ -216,6 +216,15 @@ def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
     return {"fail": fail, "look": look, "bad": bad, "n": n}
 
 
+def lint_fails_of(c, as_of: tuple | None = None) -> list:
+    """lint の ✕。批評役が何も挙げなくても、関所はこれで落とす。
+
+    2026-10-23 のフォカッチャの下書きは、1行目が題の札と違い（T-READ）、最後の誘いに時刻が無かった（L-NEXT）。
+    どちらも字で決まるので、批評役の目の揺れに任せない（帳面 F-047）。
+    """
+    return [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]
+
+
 def report(res: dict, lint_fails: list, d: dict) -> str:
     out = []
     for h in lint_fails:
@@ -274,7 +283,7 @@ def main() -> int:
     if res["bad"]:
         print("✕ 批評役の JSON が原稿と合わない: " + " / ".join(res["bad"][:8]), file=sys.stderr)
         return 2
-    lint_fails = [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]
+    lint_fails = lint_fails_of(c, as_of)
     nf = len(res["fail"]) + len(lint_fails)
     if a.json:
         print(json.dumps({"pass": nf == 0, "fail": len(res["fail"]) + len(lint_fails), "look": len(res["look"]),

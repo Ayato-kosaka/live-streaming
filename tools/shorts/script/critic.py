@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """**往復を知らない批評役を1人、`claude -p` で回し、合否を `critic_gate.py` で数える。**
 
-    python3 tools/shorts/script/critic.py shorts/videos/<id>/p1/script.txt --ref vJo --about "…" --out <scratch>/critic/<名前>
+    python3 tools/shorts/script/critic.py shorts/videos/<id>/p1/script.txt --ref vJo --video <id> --about "…" --out <scratch>/critic/<名前>
     python3 tools/shorts/script/critic.py <script.txt> --ref HPJ --about "…" --out <dir> --runs <scratch>/critic/runs.jsonl
 
 終了コード: `critic_gate.py` と同じ（0=通る / 1=落ちる / 2=回せない・JSON が読めない）。
 
 ## 何を渡し、何を渡さないか
 
-渡すのは `brief.py critic` が作る1枚だけ（`references/critic_prompt.md` の雛形に、原稿の表・lint の結果・帳面の要約・参考の拍を差し込んだもの）。
+渡すのは `brief.py critic` が作る1枚だけ（`references/critic_prompt.md` の雛形に、原稿の表・lint の結果・帳面の要約・参考の拍・配信の字幕を差し込んだもの）。
+**`--video` を渡す。** 渡さないと1枚に配信の字幕が入らず、批評役は【足】の無い行を「本人が言った言葉」と信じて読むしかない
+（2026-10-23 のフォカッチャの下書きは、それで配信に無い・要らないつなぎと決め台詞を素通りした。帳面 F-047）。
+`--range` を省くと、spec の why・src に書いた時刻の前後30秒を入れる（作文者が根拠に挙げた所）。
 **道具を持たせない**（`--tools ""`）・**MCP も設定も読ませない**・**リポジトリの外の空の置き場で起こす**（CLAUDE.md を拾わせない）。
 往復の記録・ほかの批評役の点・作文者の3列の表は、1枚に入らないので、見ようがない（7.4 の「往復を知らない」を、字ではなく仕組みで守る）。
 
@@ -76,6 +79,8 @@ def main() -> int:
     ap.add_argument("--spec", help="spec.json（既定は原稿の隣）")
     ap.add_argument("--ref", action="append", default=[], help="写した参考の略号（reference_beats.md の節）")
     ap.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
+    ap.add_argument("--video", help="配信の videoId（streams/ の字幕を1枚に入れる）")
+    ap.add_argument("--range", action="append", default=[], help="字幕の区間 H:MM:SS-H:MM:SS（省くと spec の why・src の時刻の前後30秒）")
     ap.add_argument("--out", required=True, help="控えを置く場所（スクラッチパッドの下）")
     ap.add_argument("--label", default="", help="控えの名前（tally に出る）")
     ap.add_argument("--runs", help="1回1行の控え（.jsonl）に足す")
@@ -90,7 +95,7 @@ def main() -> int:
     script = Path(a.script)
     spec = Path(a.spec) if a.spec else None
     try:
-        prompt = brief.build_critic(script, spec, a.ref, a.about)
+        prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range)
     except (OSError, KeyError, ValueError) as e:
         print(f"1枚を作れない: {e}", file=sys.stderr)
         return 2

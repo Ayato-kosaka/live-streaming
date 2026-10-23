@@ -278,10 +278,11 @@
    配信の使う区間の書き起こし、0.8 の3列の表の雛形が入っている。帳面から毎回作り直すので、項目が増えても手で直さない。頼む文の雛形は `writer_prompt.md`
    （あやとに前にも言われたこと——行間 F-039・二転三転 F-040・答えのあと F-037・題の形 F-031/F-043・同行者 F-043——を、書く前の自己点検にしてある）
    ```bash
-   python3 tools/shorts/script/brief.py writer --video <id> --range 2:38:00-3:00:30 --ref vJo --ref HPJ --about "…" -o <scratch>/brief_writer.md
+   python3 tools/shorts/script/brief.py writer --video <id> --range 2:38:00-3:00:30 --ref vJo --ref HPJ \
+       --title "<題の札>" --next "本日22時" --about "…" -o <scratch>/brief_writer.md     # 題の札・次の配信が決まっていれば（F-047）
    ```
 2. **書いたら `python3 tools/shorts/script/lint.py <script.txt>` を通す。✕ が残っているうちは批評役に回さない。** lint は帳面のうち字で拾えるものを見る
-   （題に場所も数字も無い・見立て・現地の通貨・外の語り手・最後の行の形・題の札の秒・1行の字と秒・答えのあとの行（【答】の印から数える）…）。
+   （題に場所も数字も無い・見立て・現地の通貨・外の語り手・1行目が題の札の字か・最後の行の形と次の配信の時刻・題の札の秒・1行の字と秒・答えのあとの行（【答】の印から数える）…）。
    字で決まらないもの（序数の手前の数・「」の印・【足】・謝る行・です・ます）は △ で行だけ指す。△ の行は、渡すときに1行ずつ「本人の言い方か・正しいか」を添える。
    緑は「字で拾える指摘に当たっていない」だけ
 3. **批評役には `brief.py critic` の1枚だけを渡す**（`critic.py` が作って `claude -p` に渡す。7.4）。帳面の要約が入っているので、批評役は帳面を自分で読まない。
@@ -321,7 +322,7 @@
   往復を知らない批評役に4回続けて落とされた（`docs/island-misses.md` #295 の追記）。往復を重ねた目は、直った所を見て点を上げる
 - 作文者は案ごとに新しい担当にする。続きを送るのは、3 と 5 の直しだけ
 - 関所の批評役が、あやとの決めたもの（題・前提の順番など）を替える案を出したら、そこはまとめ役が裁定して、替えずに同じ効き目を出す方へ直させる。
-  spec の why に「あやとの題」「あやとの書き足し」「あやと #NNN「…」」とある行は、1枚の表で【あやと】になり、`critic_gate.py` はそこに当たった ✕ を △（まとめ役が裁く）にする
+  spec の why に「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」とある行は、1枚の表で【あやと】になり、`critic_gate.py` はそこに当たった ✕ を △（まとめ役が裁く）にする
 - **批評役の直し案を採る前に、帳面に当てる。** 批評役は帳面の項目を当てて落とすが、自分の直し案は帳面に当てないまま出してくることがある。
   とくに「答えのあとに1行足す」「冒頭を拾う締めの【足】」は F-037 に当たりやすい。2026-10-21 のフランス B は、批評役の案の【足】2行（答えのあとの言い直しと、冒頭の回収）をまとめ役がそのまま採らせ、次の批評役に F-037 で落とされた
 
@@ -329,9 +330,13 @@
 
 ```bash
 git show <作文者が push した SHA>:shorts/videos/<id>/p1/script.txt > <scratch>/gate/script.txt   # spec.json も同じ置き場へ
-python3 tools/shorts/script/critic.py <scratch>/gate/script.txt --ref vJo --ref HPJ --about "…" \
+python3 tools/shorts/script/critic.py <scratch>/gate/script.txt --ref vJo --ref HPJ --video <配信の videoId> --about "…" \
     --out <scratch>/critic/<案>_r1 --runs <scratch>/critic/runs.jsonl
 ```
+
+**`--video` を必ず渡す。** 1枚に配信の字幕（`--range` か、spec の why・src に書いた時刻の前後30秒）が入り、批評役は (h) の F-047 で、
+【足】の無い行が本人の言葉か・要らないつなぎと決め台詞・飾り・言い換えた説明・画とずれた動きの行を、字幕と並べて当てる。
+2026-10-23 のフォカッチャの下書きは、字幕の無い1枚で批評役1人に通り、あやとにほぼ全部直された（帳面 F-047）。
 
 `critic.py` は `brief.py critic` の1枚（雛形 `critic_prompt.md` に、原稿の表・lint の結果・帳面の要約・参考の拍を差し込んだもの）**だけ**を `claude -p` に渡す。
 道具を持たせず、リポジトリの外の空の置き場で起こすので、往復の記録も作文者の表も読みようがない（「往復を知らない」を、字ではなく仕組みで守る）。
@@ -423,7 +428,8 @@ Agent で回すときも、この1枚のパスだけを渡して JSON を返さ�
 
 批評役の雛形（`critic_prompt.md`）・1枚の作りかた（`brief.py`）・合否の数えかた（`critic_gate.py`）を直したら、あやとの返事が分かっている3本に当てる。
 **銅像 p2（17行。あやと「配信になぞりすぎてて、行間が空きすぎてる」「話が二転三転するくらいならない方が良い」）が 10〜12行目で落ち、
-城塞 p1（あやと「これで、進めて」）と地下鉄 p1（あやとの直しのあと「承認するので進めて」）が通る**ことを見る。外れたら雛形を戻す。
+城塞 p1（あやと「これで、進めて」）と地下鉄 p1（あやとの直しのあと「承認するので進めて」）が通る**ことを見る。
+**フォカッチャの下書き（21行。あやと「台本の品質が悪い」#1014）が落ち、あやとの添削版（19行）が通る**ことも見る。外れたら雛形を戻す。
 
 ```bash
 # --as-of は、あやとがその原稿に返事をしたコメント。その時点より後にできた帳面の項目に当たった ✕ は △ になる（critic_gate.py）
@@ -433,6 +439,11 @@ python3 tools/shorts/script/critic.py shorts/videos/TDArug_te90/p1/script.txt --
     --as-of 2026-10-21:6306110329 --out <scratch>/critic/<回>/castle --runs <scratch>/critic/<回>/runs.jsonl
 python3 tools/shorts/script/critic.py shorts/videos/nGgoJ753rBw/p1/script.txt --ref ael --ref HPJ --about "…" \
     --as-of 2026-10-21:6312662172 --out <scratch>/critic/<回>/subway --runs <scratch>/critic/<回>/runs.jsonl
+# フォカッチャの2本は shorts/videos に下書きが残っていないので、控え（fixtures）から回す。--as-of は付けない（F-047 そのものを見る）
+python3 tools/shorts/script/critic.py tools/shorts/script/fixtures/rejected/VusdZVyjgjQ_p1/script.txt --ref vJo --video VusdZVyjgjQ \
+    --about "…" --out <scratch>/critic/<回>/focaccia_ng --runs <scratch>/critic/<回>/runs.jsonl
+python3 tools/shorts/script/critic.py tools/shorts/script/fixtures/approved/VusdZVyjgjQ_p1/script.txt --ref vJo --video VusdZVyjgjQ \
+    --about "…" --out <scratch>/critic/<回>/focaccia_ok --runs <scratch>/critic/<回>/runs.jsonl
 ```
 
 - **雛形に、この3本の行を例として書かない。** 答えを見て通る・落ちるようになる。帳面の例が見ている原稿の行を引いているときは、`brief.py` が例を落として題だけ渡す
