@@ -1,0 +1,137 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "dRXae0mJw8M__clips",
+ "mode": "clips",
+ "dest": "dRXae0mJw8M/clips",
+ "video": "dRXae0mJw8M",
+ "channel": null,
+ "request": "shorts/requests/2026-10-23-georgia-kazbegi-clips.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 21,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 3,
+  "clips_ok": 3,
+  "clip_seconds": 1170.0,
+  "channel_entries": 0,
+  "files": 32
+ },
+ "bytes": {
+  "plain": 752363367,
+  "tar_gz": 751691285,
+  "encrypted": 751691296
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "4a9f4be08de9156bb4d28d1da6ed94048469546de1502ef80767765d455eb0a5"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "2f29c729bb3b66fe7b3c770c49c5a407d4cefb86bd1f97418c1c5eca9218aaf9"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "7b94e791939cc4873e135513560053768a45355b5ce3aa22a7617804ab38ff54"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "f36303b09a82675d199b8e380ba3323478d1a1ef59658cc0fb5cdf5f2c46600b"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 47185920,
+   "sha256": "49889b024597698be7a0cc97cdd88710dc42a7f3c019e7bb837df75123f49c5b"
+  },
+  {
+   "name": "payload.enc.005",
+   "bytes": 47185920,
+   "sha256": "4f69b9342c38a0733257db397700a825b50b744a1241b856cc15970d83ae0bf3"
+  },
+  {
+   "name": "payload.enc.006",
+   "bytes": 47185920,
+   "sha256": "c60eb86669169b672bfe3838e397eabd555a06a0fec69078c7fd2ba61444f877"
+  },
+  {
+   "name": "payload.enc.007",
+   "bytes": 47185920,
+   "sha256": "7ec55efe364763e336b0563f78bc4b62a630f33a4ce5e2f0a09b7cff2042bf13"
+  },
+  {
+   "name": "payload.enc.008",
+   "bytes": 47185920,
+   "sha256": "76e896a2f7856a2248bc0076390ec3d3f0155063f508543cefd97d1684900caf"
+  },
+  {
+   "name": "payload.enc.009",
+   "bytes": 47185920,
+   "sha256": "ca0afb8ffaeb75947847a62b333f5cafad72ae54007711b2fc873084c6b8ac2b"
+  },
+  {
+   "name": "payload.enc.010",
+   "bytes": 47185920,
+   "sha256": "a54bb604d8bd58122d2e280d900c7a614e929029b637e756ff9d0f586d186f3b"
+  },
+  {
+   "name": "payload.enc.011",
+   "bytes": 47185920,
+   "sha256": "cc34596a9e95a1a2e64b8d196e3a9b8e4b5948ceb7dc8a550337bcf935580b28"
+  },
+  {
+   "name": "payload.enc.012",
+   "bytes": 47185920,
+   "sha256": "038475498cd1e3f04192b175a30cbb2ce66e9b4bbb8a8654a5963e162c77103b"
+  },
+  {
+   "name": "payload.enc.013",
+   "bytes": 47185920,
+   "sha256": "195d7d591481739ec531ae82aa239c52cfc80de4f206489e5eff74c9c0f501d0"
+  },
+  {
+   "name": "payload.enc.014",
+   "bytes": 47185920,
+   "sha256": "6fca165ae60a0c27ef0710fc0a1d858616cf031e9029fb72fe92dfd7ab6fca80"
+  },
+  {
+   "name": "payload.enc.015",
+   "bytes": 43902496,
+   "sha256": "4c4b71b0a440f92513b729c0f00573c209f277d64c97d7fb07ad91c2592a10ee"
+  }
+ ],
+ "hmac_sha256": "0d35bd1c27a6f3b7df4e3546f7134b7097d860b4f303779af456f72f6771e936",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/39989682745",
+ "created_at": "2026-10-23T17:17:07+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 10562064,
+    "sha256": "7b8a4b8add74eca7cb6c7ef1b1b7be58e5dd2d47ffe1ddc0369c31234187aba2"
+   }
+  ],
+  "hmac_sha256": "17ad686a9ee37455f1b118ab0bc3df0b2482652543d5008bfdeae29f08f13cec",
+  "files": 25,
+  "sheets": 21,
+  "bytes": {
+   "plain": 10778684,
+   "tar_gz": 10562058,
+   "encrypted": 10562064
+  }
+ }
+}
