@@ -178,8 +178,9 @@ def cmd_assemble(o):
 def joint_radius(alpha, child, cx, cy):
     """点検する円の半径。次の2つの小さいほう:
     - pivot から、組み上がりで透明（半分より薄い）の画素に届くまでの距離（静止で円が全部埋まっているように）
-    - 子の部品の、関節のあたりでの太さの半分（親が大きく覆っていると円が子の幅を超え、
-      脚の側面が回って動くだけのところまで「穴」に数えてしまうので）"""
+    - 子の部品の、pivot のところでの太さの半分（pivot から子の縁までの距離。8px 以内の最大）。
+      子のいちばん太いところ（伯爵の顔）で測ると、円が首を越えて顔まで届き、
+      顔が回ってよけただけのところまで「穴」に数えてしまう"""
     from scipy import ndimage
 
     h, w = alpha.shape
@@ -188,9 +189,8 @@ def joint_radius(alpha, child, cx, cy):
         return 0.0
     r_all = float(ndimage.distance_transform_edt(alpha >= 128)[y, x])
     dc = ndimage.distance_transform_edt(child >= 128)
-    m = float(dc.max())
     yy, xx = np.ogrid[:h, :w]
-    near = (xx - cx) ** 2 + (yy - cy) ** 2 <= m ** 2
+    near = (xx - cx) ** 2 + (yy - cy) ** 2 <= 8 ** 2
     r_child = float(dc[near].max()) if near.any() else 0.0
     return min(r_all, r_child)
 
