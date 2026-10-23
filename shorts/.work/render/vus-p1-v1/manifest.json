@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__vus-p1-v1",
  "mode": "render",
- "dest": "render/vus-p1-v1/inbox",
+ "dest": "render/vus-p1-v1",
  "video": null,
  "channel": null,
  "request": "shorts/render/vus-p1-v1.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 3018,
-  "tar_gz": 1542,
-  "encrypted": 1552
+  "plain": 35289,
+  "tar_gz": 9050,
+  "encrypted": 9056
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1552,
-   "sha256": "d7f35d697188cd6d0cf0fb6143a3e5fd7b8fc3b4c4f954af89719d20ea2b57ad"
+   "bytes": 9056,
+   "sha256": "36a97fd5aa2d59e502013bb58750cd2406fd54d42c5989572c59db0d7b0156f8"
   }
  ],
- "hmac_sha256": "da6eeb2a0774c28218557cac97d119c08d86eae22372bda1b618f5ea1f0bc637",
+ "hmac_sha256": "13a92d00e7b9ee85c38e920eb848f31c0dad73948f78b39e3939d6c31bb12043",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-23T01:28:55+00:00",
+ "created_at": "2026-10-23T01:59:14+00:00",
  "nonce": "4c41b99ad39c365bcaeacf58"
 }
