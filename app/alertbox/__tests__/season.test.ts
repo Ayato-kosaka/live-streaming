@@ -20,33 +20,39 @@ import { planEffects } from "../season/plan";
 import { makeWaveClipPath } from "../components/PiggyGauge/wave";
 
 const halloween = THEMES.find((t) => t.id === "halloween")!;
+/** 期間の境目は、下ろしてあるかと関係なく確かめる（出しているものとして） */
+const ON = THEMES.map((t) => ({ ...t, live: true }));
 
 /** JST の時刻から Date を作る（箱の時間帯に左右されないように +09:00 を書く） */
 const jst = (s: string) => new Date(`${s}+09:00`);
 
 describe("日付 → テーマ", () => {
   it("ハロウィンの期間の中", () => {
-    expect(themeAt(jst("2026-10-23T12:00:00"))?.id).toBe("halloween");
+    expect(themeAt(jst("2026-10-23T12:00:00"), ON)?.id).toBe("halloween");
   });
 
   it("10/31 23:59（JST）はまだハロウィン", () => {
-    expect(themeAt(jst("2026-10-31T23:59:00"))?.id).toBe("halloween");
-    expect(themeAt(jst("2026-10-31T23:59:59.999"))?.id).toBe("halloween");
+    expect(themeAt(jst("2026-10-31T23:59:00"), ON)?.id).toBe("halloween");
+    expect(themeAt(jst("2026-10-31T23:59:59.999"), ON)?.id).toBe("halloween");
   });
 
   it("11/1 0:00（JST）からは豚に戻る", () => {
-    expect(themeAt(jst("2026-11-01T00:00:00"))).toBeNull();
-    expect(themeAt(jst("2026-11-15T12:00:00"))).toBeNull();
+    expect(themeAt(jst("2026-11-01T00:00:00"), ON)).toBeNull();
+    expect(themeAt(jst("2026-11-15T12:00:00"), ON)).toBeNull();
   });
 
   it("UTC で見ると 10/31 15:00 が境目（JST の 0 時）", () => {
-    expect(themeAt(new Date("2026-10-31T14:59:59Z"))?.id).toBe("halloween");
-    expect(themeAt(new Date("2026-10-31T15:00:00Z"))).toBeNull();
+    expect(themeAt(new Date("2026-10-31T14:59:59Z"), ON)?.id).toBe("halloween");
+    expect(themeAt(new Date("2026-10-31T15:00:00Z"), ON)).toBeNull();
+  });
+
+  it("下ろしてあるテーマは、期間中でも配信に出ない（豚のまま）", () => {
+    expect(themeAt(jst("2026-10-23T12:00:00"), [{ ...halloween, live: false }])).toBeNull();
   });
 
   it("始まる前も豚", () => {
-    expect(themeAt(jst("2026-09-30T23:59:00"))).toBeNull();
-    expect(themeAt(jst("2026-10-01T00:00:00"))?.id).toBe("halloween");
+    expect(themeAt(jst("2026-09-30T23:59:00"), ON)).toBeNull();
+    expect(themeAt(jst("2026-10-01T00:00:00"), ON)?.id).toBe("halloween");
   });
 });
 
