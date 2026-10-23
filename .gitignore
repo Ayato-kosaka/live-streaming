@@ -122,3 +122,6 @@ deno.lock
 # 手引きに足す前の下書きと、1回きりの書き換え script
 /.misses*.md
 /.patch_*.py
+
+# 書き出しの声の作業置き場（build_edit.py の --work を渡さないと、リポジトリの中の edit_*.narr にできる。声の素材を入れない）
+shorts/videos/**/*.narr/
