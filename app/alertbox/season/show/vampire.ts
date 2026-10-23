@@ -44,7 +44,7 @@ const COFFIN = { x: 0.5, bottom: 0.76, w: 0.64 };
 /** 伯爵が棺の上に浮いて止まる足の高さと、そのときの背丈 */
 const VLAD = { x: 0.5, feet: 0.6, h: 0.44 };
 /** 退いたあと（札の左上に立つ）の背丈 */
-const VLAD_STAY_H = 0.13;
+const VLAD_STAY_H = 0.16;
 /** 小さくなった満月の置き場所（右上の角） */
 const MOON_STAY = { x: 0.86, y: 0.075, k: 0.24 };
 
@@ -235,7 +235,7 @@ export function runVampire(
       const cy = Y(0.36);
       const R0 = Math.hypot(W, H) * 0.62;
       for (let i = 0; i < n; i++) {
-        const bat = makeBat(m, rigs.bat, L.moon, X(0.07 + Math.random() * 0.04), 110);
+        const bat = makeBat(m, rigs.bat, L.moon, X(0.11 + Math.random() * 0.06), 110);
         const a0 = (i / n) * Math.PI * 2 + Math.random() * 0.3;
         const pts: [number, number][] = [];
         const offs: number[] = [];
@@ -544,8 +544,8 @@ export function runVampire(
         duration: 3100, iterations: Infinity, direction: "alternate", easing: "ease-in-out",
       });
       // 上の角にぶら下がるこうもり（逆さま。ときどき羽をのばす）
-      for (const [fx, fy] of [[0.06, 0.035], [0.15, 0.02]] as const) {
-        const bat = makeBat(m, rigs.bat, L.top, X(0.09), 2400);
+      for (const [fx, fy] of [[0.07, 0.04], [0.19, 0.025]] as const) {
+        const bat = makeBat(m, rigs.bat, L.top, X(0.12), 2400);
         bat.el.style.transform = `translate(${X(fx)}px, ${Y(fy)}px) rotate(180deg) scale(0.9)`;
         m.play(bat.el, [{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
         hanging.push(bat.el);

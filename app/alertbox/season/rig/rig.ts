@@ -12,6 +12,20 @@
  * - `z` … 描く順（大きいほど手前）
  * - `swaps` … 差し替える絵（目・口）。最初の名前が既定
  *
+ * ## 振付けが名指しする部品の id（ハロウィン）
+ *
+ * 無い部品は、その動きを飛ばすだけ（壊れない）。`_l` は奥側、`_r` は手前側。
+ *
+ * - kuro（真横・右向き）: body / head / ear_l / ear_r / hat / hat_tip / tail / tail_tip /
+ *   leg_f_l / leg_f_r / leg_b_l / leg_b_r / eyes{open, closed, smile, wow} /
+ *   mouth{closed, open, omega} / candy（くわえるあめ。ふだんは隠す）
+ * - bucket（根の部品だけ）: empty / full / handle / overflow / glow（顔の灯り。無くてよい）
+ * - bat（正面）: body / wing_l / wing_r（羽の関節は肩）
+ * - vlad（ななめ前）: body（根）/ head / eyes{normal, wink, smile} / mouth{grin, open, omega} /
+ *   cape_l / cape_r（閉じた形で描く。関節は首元の肩）/ cape_in（金の裏地。胴の奥）/
+ *   collar / arm_cup（杯を持つ腕）/ arm_pose（指輪の手）/ leg_l / leg_r
+ * - props: coffin（根。子に lid と gold）/ moon / coin
+ *
  * 描く側（`RigView.ts`）は部品を**親の中に入れ子**にして組む。親を回せば子も一緒に回る
  * ので、関節を動かすのに JS の計算が要らない（Web Animations に任せられる）。
  * そのかわり **z は兄弟どうしと親の絵とのあいだでしか効かない**（入れ子のぶんだけ

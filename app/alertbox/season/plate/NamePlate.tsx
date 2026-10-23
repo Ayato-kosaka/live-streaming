@@ -227,6 +227,8 @@ export const NamePlate: React.FC<Props> = ({
         left: W * 0.08,
         width: W * 0.84,
         top: H * 0.3,
+        // その人のキャラ絵（1）と金貨（2）より手前、こうもり（4）より奥
+        zIndex: 3,
         pointerEvents: "none",
         display: "flex",
         justifyContent: "center",
