@@ -123,6 +123,8 @@ CUTS = {
     "e_stale": ("brief.py", "    if stale:\n", "    if False:\n", {"e_cmds"}, "雛形の古い呼び出しを見逃す"),
     "e_tts": ("brief.py", '        t = r.get("tts_text") or r["line"]\n', '        t = r["line"]\n', {"e_voice"},
               "声に渡す字を、かなに直した字でなく字幕の字にする"),
+    "e_origv": ("brief.py", '        if r.get("orig_voice"):  # 元の声の行（帳面 F-051）\n',
+                '        if False:  # 元の声の行（帳面 F-051）\n', {"e_voice"}, "元の声の行の声まで Fish で作らせる"),
     "e_name": ("brief.py", '    while f"{head}{v}" in used:\n', "    while False:\n", {"e_name"},
                "頼んだことのある書き出しの名前を勧める"),
     "e_hist": ("brief.py", '"log", "--full-history", "--format=", "--name-only", "--",\n', '"log", "--format=", "--name-only", "--",\n',
@@ -541,11 +543,15 @@ def leg_e_voice(B):
     spec = json.loads((FR / "spec_A.json").read_text(encoding="utf-8"))
     v = B.voice_lines(spec)
     bare = B.voice_lines({"id": "p1", "rows": [{"line": "みんなは？"}]})
+    orig = B.voice_lines({"id": "p2", "rows": [{"line": "犬が来た。"}, {"line": "ああーっ！", "orig_voice": "0:10:24〜0:10:29"},
+                                                 {"line": "沼や。"}]})
     return [("13文・key は A/01 から", len(v) == 13 and v[0]["key"] == "A/01" and v[-1]["key"] == "A/13" and v[0]["plan"] == "A"),
             ("声に渡す字は spec の tts_text（かなに直した字）", v[0]["tts_text"] == spec["rows"][0]["tts_text"] != spec["rows"][0]["line"]),
             ("字幕は行の字・bytes は UTF-8 のバイト数", v[0]["caption"] == spec["rows"][0]["line"]
              and all(x["bytes"] == len(x["tts_text"].encode("utf-8")) for x in v)),
-            ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01")]
+            ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01"),
+            ("元の声の行（F-051）は声を作らない（番号はそのまま欠ける）",
+             [x["key"] for x in orig] == ["p2/01", "p2/03"] and "ああーっ！" not in [x["caption"] for x in orig])]
 
 
 def git_fixture(td: Path) -> str:

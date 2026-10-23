@@ -21,6 +21,7 @@
 | `over_cap_fits` | 上限を越えるが、上限で読んで59秒以内 → 上限で読ませ、注意を1行出して組む（終了コード 0）。注意に出す見込みの尺が、組んだ指示書の尺と同じ。上限は様式から読む（様式を 1.3 にすれば 1.3） |
 | `over_60_stops` | 上限で読んでも59秒を越える（声だけなら入るが、行の間と末尾を足すと越える）→ 指示書を書かずに終了コード 2。尺・何%・何字を出し、その数が下の手計算と合う。言われたとおり減らせば通る |
 | `card_own` | 題の札が1行目と同じ言葉（国旗・改行・句読点だけ違う）なら、札が1行目の字幕を兼ねる（字幕を出さない・札に line）。別の言葉（あやと F-043「札は手段と日数、1行目は回れた中身」）なら兼ねない（1行目の字幕を出す・札に line を持たせない・札は題の行の終わりか4秒の早いほうで消す） |
+| `orig_voice` | 元の声の行（あやと F-051「叫びは配信の本人の声で」）: 声の一覧にその行のぶんが無くても組む（あれば止まる）・その行の声はカットと同じ区間の元の音（`file`）で、仮の声にも倍率にも数えない・画は声と同じコマから取り、最後のカットだけ行の間ぶん延ばす・【大】でも声を遅らせない・延ばした画が until を越えるなら入りをずらさずに止まる |
 
 数の手計算（`expect_frames`）は `build_edit.py` の関数を使わずに書く。見張りの側が本物と同じ式を
 借りると、本物の式が壊れても一緒に壊れて、緑のままになる。
@@ -68,8 +69,9 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "pct_base": ("    pct = math.ceil((1 - room / voice_s) * 100)\n",
                  "    pct = math.ceil((1 - FIT_S / video_s) * 100)\n",
                  {"over_60_stops"}, "減らす割合を声ではなく動画の長さから出す"),
+    # orig_voice も倍率を手計算と突き合わせる足なので、一緒に落ちる
     "always_cap": ("        tempo = min(max(raw, 1.0), args.max_tempo)\n", "        tempo = args.max_tempo\n",
-                   {"under_cap"}, "要る倍率が上限以内でも、上限で読ませる"),
+                   {"under_cap", "orig_voice"}, "要る倍率が上限以内でも、上限で読ませる"),
     "style_cap": ("        args.max_tempo = R.tempo_cap(st_all)\n", "        args.max_tempo = 1.4\n",
                   {"over_cap_fits"}, "上限を様式から読まない"),
     # 題の札と1行目が別の言葉のとき（あやと F-043）
@@ -82,6 +84,21 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "card_to": ("            edit[\"title\"][\"to\"] = min(edit[\"title\"][\"to\"], row[\"from\"] + row[\"frames\"])\n",
                 "            pass\n",
                 {"card_own"}, "兼ねない札を題の行の終わりで消さない（2行目の字幕と並ぶ）"),
+    # 元の声の行（帳面 F-051。叫びは配信の本人の声で流す）
+    "orig_count": ("        if len(voice) != len(rows) - len(orig_rows):\n", "        if len(voice) != len(rows):\n",
+                   {"orig_voice"}, "元の声の行のぶんまで声の数を求める（その行の声は作らないので、組めない）"),
+    "orig_tts": ("        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True, \"file\": str(wav)}\n",
+                 "        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True}\n",
+                 {"orig_voice"}, "元の声の行に元の音を置かない（字を AI の声か仮の声で読ませる）"),
+    "orig_tempo": ("        chars = sum(spoken_chars(lines[k][\"text\"]) for k in spoken)\n",
+                   "        chars = sum(spoken_chars(ln[\"text\"]) for ln in lines)\n",
+                   {"orig_voice"}, "喋る速さの倍率に、速めない元の声の行の字まで数える"),
+    "orig_shift": ("            if i in orig_rows:\n                clip, t0 = orig_place(",
+                   "            if False:\n                clip, t0 = orig_place(",
+                   {"orig_voice"}, "元の声の行のカットも until に合わせて入りをずらす（声と画の秒がずれる）"),
+    "orig_pre": ("            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
+                 "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
+                 {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
 }
 
 FPS = 30
@@ -94,6 +111,8 @@ TAIL_F = 15          # round(0.5 × 30)
 HOLD_ROW, HOLD_F = 3, 22    # hold 0.5 秒の行。round((0.25 + 0.5) × 30) = round(22.5) = 22（偶数へ丸める）
 BIG_ROW, PRE_F = 5, 10      # 【大】の行と、字が出きってから声を出すまでのコマ（様式の pre_roll_frames）
 CARD_S = 4.0                # spec の title_card_seconds（あやと F-015「開始4秒だけ」）
+ORIG_ROW = 7                # 元の声の行（F-051）。hold の行・【大】の行とは別の行
+ORIG_LINE = "ああーっ！……最悪や！"
 
 
 def voice_frames(chars: int, natural: float, tempo: float) -> int:
@@ -137,10 +156,12 @@ class Bench:
         self.clips = clips
 
     def run(self, per_line: list[int], natural: float, cap: float = CAP,
-            card: tuple[str, str] | None = None) -> dict:
+            card: tuple[str, str] | None = None, orig: dict | None = None) -> dict:
         """1回組む。終了コード・標準出力と標準エラー・できた指示書（無ければ None）・測った倍率。
 
         card =（1行目の読み上げ, 題の札）を渡すと、1行目を題の札の行にする。
+        orig = {"row", "cuts", "voices"（声の一覧に入れる文の数。None なら仮の声）, "big"} を渡すと、
+        その行を元の声の行（orig_voice）にする。
         """
         self.n += 1
         d = self.tmp / f"run{self.n}"
@@ -153,6 +174,23 @@ class Bench:
             rows[0]["line"], sp["title_card"] = card
             rows[0]["card"] = True
             sp["title_card_seconds"] = CARD_S
+        extra: list[str] = []
+        seen: list[str] = []
+        if orig is not None:
+            r = rows[orig["row"]]
+            r["line"], r["orig_voice"] = ORIG_LINE, "0:02:00〜0:02:05"
+            r["big"] = bool(orig.get("big"))
+            ovp = d / "ov.json"
+            ovp.write_text(json.dumps({"rows": {str(orig["row"]): {"cuts": orig["cuts"]}}}, ensure_ascii=False))
+            extra += ["--overrides", str(ovp)]
+            if orig.get("voices") is not None:
+                vs = [{"plan": "T", "file": f"v{k:02d}.wav", "caption": rr["line"]}
+                      for k, rr in enumerate(rows) if k != orig["row"]][:orig["voices"]]
+                while len(vs) < orig["voices"]:
+                    vs.append({"plan": "T", "file": "extra.wav", "caption": ORIG_LINE})
+                vp = d / "lines.json"
+                vp.write_text(json.dumps(vs, ensure_ascii=False))
+                extra += ["--voice", str(vp)]
         spec = d / "spec_T.json"
         spec.write_text(json.dumps(sp, ensure_ascii=False))
         out = d / "edit_T.json"
@@ -161,15 +199,23 @@ class Bench:
         def narration_frames(lines, narr, work):
             tempo = float(narr.get("tempo") or 1.0)
             tempos.append(tempo)
+            seen.extend(ln["text"] for ln in lines)
             return [(voice_frames(self.be.spoken_chars(ln["text"]), natural, tempo), []) for ln in lines]
+
+        def orig_audio(pieces, work, name):
+            # 元の音を開く代わりに、どの区間を渡されたかだけ控える（ffmpeg も numpy も使わない）
+            self.orig_calls.append([(p["in"], p["frames"]) for p in pieces])
+            return Path(work) / f"{name}.wav"
 
         sys.modules["render"] = fake_render(cap)
         self.be.narration_frames = narration_frames
+        self.be.orig_audio = orig_audio
+        self.orig_calls: list = []
         buf = io.StringIO()
         try:
             with redirect_stdout(buf), redirect_stderr(buf):
                 rc = self.be.main([str(spec), "--clips", str(self.clips), "--out", str(out),
-                                   "--work", str(d / "work")])
+                                   "--work", str(d / "work"), *extra])
         except SystemExit as e:
             rc = e.code if isinstance(e.code, int) else 1
             if not isinstance(e.code, int) and e.code is not None:
@@ -178,7 +224,8 @@ class Bench:
             rc = 1
             buf.write(traceback.format_exc())
         edit = json.loads(out.read_text()) if out.exists() else None
-        return {"rc": rc, "text": buf.getvalue(), "edit": edit, "tempos": tempos}
+        return {"rc": rc, "text": buf.getvalue(), "edit": edit, "tempos": tempos, "seen": seen,
+                "orig_calls": list(self.orig_calls)}
 
 
 def seen_estimate(text: str) -> str | None:
@@ -274,11 +321,65 @@ def leg_card_own(b: Bench):
              0 < end0 < cap_f and to.get("to") == min(end0, cap_f))]
 
 
+def leg_orig_voice(b: Bench):
+    """元の声の行（F-051）: 声を作らず、カットと同じコマの元の音を声の行に置く。画と声の秒をずらさない"""
+    per_line, natural = [17] * 10, 6.6
+    cuts = [{"t": "0:02:00.0", "len": 1.6}, {"t": "0:02:02.0–0:02:04.5"}]
+    # 手で数えた区間: 窓の頭（0秒）からのコマ。1.6秒 = 48コマ、2.5秒 = 75コマ
+    want_pieces = [(120 * FPS, 48), (122 * FPS, 75)]
+    orig_f = 48 + 75
+    spoken = [c for k, c in enumerate(per_line) if k != ORIG_ROW]
+    raw = sum(voice_frames(c, natural, 1.0) for c in spoken) / FPS / (sum(spoken) / CPS)
+    ra = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cuts, "voices": None, "big": True})
+    e = ra["edit"] or {}
+    lines = ((e.get("narration") or {}).get("lines") or [])
+    ln = lines[ORIG_ROW] if len(lines) > ORIG_ROW else {}
+    mrow = (((e.get("meta") or {}).get("rows") or [{}] * (ORIG_ROW + 1))[ORIG_ROW])
+    got_cuts = [(c["in"], c["out"]) for c in e.get("cuts", []) if c.get("row") == ORIG_ROW]
+    want_cuts = [(want_pieces[0][0], want_pieces[0][0] + 48), (want_pieces[1][0], want_pieces[1][0] + 75 + GAP_F)]
+    sp = (e.get("meta") or {}).get("speech") or {}
+    out = [(f"組む（終了コード {ra['rc']}）・指示書を書く", ra["rc"] == 0 and bool(e)),
+           (f"元の音を、カットと同じ区間から取る（渡した区間 {ra['orig_calls']} / 手計算 {[want_pieces]}）",
+            ra["orig_calls"] == [want_pieces]),
+           (f"その行の声は元の音（file・印 orig_voice・AI の声 audio は無い。{sorted(ln)}）",
+            str(ln.get("file", "")).endswith(f"orig_T_{ORIG_ROW:02d}.wav") and ln.get("orig_voice") is True
+            and "audio" not in ln and ln.get("text") == ORIG_LINE),
+           ("仮の声で読ませない（声の測りに、元の声の行の字が渡らない）", ORIG_LINE not in ra["seen"]),
+           (f"倍率は声を作る行だけから決める（{sp.get('tempo')} / 手計算 {round(raw, 3)}）",
+            sp.get("tempo") == round(raw, 3)),
+           (f"画は声と同じコマから・最後のカットだけ行の間ぶん延ばす（{got_cuts} / 手計算 {want_cuts}）",
+            got_cuts == want_cuts),
+           (f"行の長さ = 元の音 {orig_f} + 行の間 {GAP_F} コマ（{mrow.get('frames')}）・meta に印",
+            mrow.get("frames") == orig_f + GAP_F and mrow.get("orig_voice") is True),
+           (f"【大】でも、字が出きるまで声を遅らせない（声の頭 {ln.get('at')} = 行の頭 {mrow.get('from')}）",
+            ln.get("at") == mrow.get("from") and "caption_from" not in ln)]
+    # 声の一覧には、元の声の行のぶんが無い（9文）。10文渡したら止まる
+    rb = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cuts, "voices": len(per_line) - 1})
+    eb = rb["edit"] or {}
+    lb = ((eb.get("narration") or {}).get("lines") or [])
+    out += [(f"声 {len(per_line) - 1}文（元の声の行のぶん無し）で組む（終了コード {rb['rc']}）",
+             rb["rc"] == 0 and len(lb) == len(per_line) and "audio" not in lb[ORIG_ROW]
+             and all("audio" in x for k, x in enumerate(lb) if k != ORIG_ROW)),
+            ("声を作る行の字幕は、それぞれの行の声（元の声の行で1つずれない）",
+             all(x.get("audio") == f"{Path(b.tmp / f'run{b.n}' / f'v{k:02d}.wav')}"
+                 for k, x in enumerate(lb) if k != ORIG_ROW))]
+    rc_ = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cuts, "voices": len(per_line)})
+    out += [(f"声 {len(per_line)}文（元の声の行のぶんまで）なら止まる（終了コード {rc_['rc']}）",
+             rc_["rc"] != 0 and rc_["edit"] is None and "声の数" in rc_["text"])]
+    # 行の間ぶん延ばした画が until を越える: ずらして収めず、止まる
+    cu = [cuts[0], {**cuts[1], "until": "0:02:04.6"}]
+    rd = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cu, "voices": None})
+    out += [(f"画が until を越えるなら、入りをずらさずに止まる（終了コード {rd['rc']}）",
+             rd["rc"] != 0 and rd["edit"] is None and "元の声" in rd["text"])]
+    return out
+
+
 LEGS = {
     "under_cap": leg_under_cap,
     "over_cap_fits": leg_over_cap_fits,
     "over_60_stops": leg_over_60_stops,
     "card_own": leg_card_own,
+    "orig_voice": leg_orig_voice,
 }
 
 

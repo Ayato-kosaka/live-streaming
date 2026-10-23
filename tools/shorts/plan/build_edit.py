@@ -19,6 +19,11 @@
 - spec に `narration_cps_target` があれば、声を動画に1つの倍率で速める。倍率の上限は様式の
   `narration.max_tempo`。要る倍率が上限を越えたら上限で読ませ、**そのときの尺が `FIT_S` 秒を越えるなら
   指示書を書かずに終了コード 2 で止める**（字を何%・何字減らすかを出す）。越えなければ注意を1行出して組む
+- spec の行に `orig_voice` があれば**元の声の行**（帳面 F-051: 叫びは配信の本人の声で流してよい）。声の一覧に
+  その行のぶんは要らない。カット（overrides の `cuts` か `src`）と同じコマの元の音をつないだ wav を作業の置き場に作り、
+  声の行の `file`（詰めない・速めない声）にする。画と声は同じ秒から取るので、カットごとに `len` か区間の `t` が要り、
+  窓や `until` に合わせて入りをずらさない（越えるなら止まる）。行の間と hold のぶんは最後のカットの画を延ばす。
+  喋る速さの倍率はこの行を数えずに決める。字幕は原稿の字（叫びの字）
 
 ## 人が決めること（overrides）
 
@@ -446,24 +451,120 @@ def library_for(lib: list[dict], clip: dict, t0: float, t1: float) -> list[dict]
     return blur_regions(out, clip)
 
 
+def orig_pieces(i: int, specs: list[dict], clips: list[dict]) -> list[dict]:
+    """元の声の行（spec の `orig_voice`。帳面 F-051）の、声と画に使う元動画の区間。
+
+    叫びのような本人の声を、AI の声で読まずにその秒の元の音で流す行。画と声は同じ秒から取る
+    （どちらかをずらすと、叫びと画の動きがずれる）ので、カットごとの長さが先に決まっていないといけない。
+    長さは `len`（秒）か、`t` を区間（'0:10:24.0–0:10:25.6'）で書く。`until` は画の上限のまま
+    （行の間のぶん延ばした画が越えたら止める。orig_place）。返すのは [{"clip", "in", "frames"}]。
+    """
+    out = []
+    for k, cs in enumerate(specs):
+        t0, t1 = src_span(cs["t"])
+        if cs.get("len"):
+            m = round(float(cs["len"]) * FPS)
+        elif t1 is not None:
+            m = round((t1 - t0) * FPS)
+        else:
+            sys.exit(f"{i}行目は元の声の行（orig_voice）: カット {k} の長さを len か区間の t で書く"
+                     f"（画と声を同じ秒から取るので、声の長さが先に要る）")
+        if m < MIN_CUT:
+            sys.exit(f"{i}行目（元の声）: カット {k} が {m}コマ（{MIN_CUT}コマより短い）")
+        clip = next((c for c in clips if c["start"] - 1e-6 <= t0 and t0 + m / FPS <= c["end"] + 1e-6), None)
+        if clip is None:
+            sys.exit(f"{i}行目（元の声）: {fmt(t0)} から {m / FPS:.2f}秒をまるごと含む窓が無い"
+                     f"（窓に合わせて入りをずらすと、声と画が合わなくなる）")
+        out.append({"clip": clip, "in": round((t0 - clip["start"]) * FPS), "frames": m})
+    return out
+
+
+def orig_place(i: int, k: int, cs: dict, p: dict, m: int) -> tuple[dict, float]:
+    """元の声の行のカットの入り。声と同じコマから取り、ふつうの行のように前へずらさない。
+
+    行の間と hold のぶん、最後のカットの画は声より長い。その画が窓や until を越えるなら止める
+    （ずらして収めると、そのカットの画が声より前の秒になる）。
+    """
+    clip = p["clip"]
+    t0 = clip["start"] + p["in"] / FPS
+    end = t0 + m / FPS
+    if end > clip["end"] + 1e-6:
+        sys.exit(f"{i}行目（元の声）: カット {k} の画（{m / FPS:.2f}秒）が窓の終わり {fmt(clip['end'])} を越える"
+                 f"（ずらすと声と画が合わない。len を短くする）")
+    if cs.get("until") and end > sec(cs["until"]) + 1e-6:
+        sys.exit(f"{i}行目（元の声）: カット {k} の画（行の間を足して {m / FPS:.2f}秒）が until {cs['until']} を越える"
+                 f"（ずらすと声と画が合わない。len を短くする）")
+    return clip, t0
+
+
+def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
+    """元の声の行の声: カットと同じコマの元の音をつないだ1本の wav（48kHz・1ch）。
+
+    取り方は書き出しが元の音を入れるとき（render.py の audio_stems の audio_db）と同じ
+    （入りの1秒前から開いて、コマの境目で切る）。つなぎ目は 12ms ずつ上げ下げして、プツッと鳴らさない。
+    声の行の `file`（詰めない・速めない声）として渡すので、ナレーションと同じ大きさに揃い、BGM もその間は下がる。
+    """
+    sys.path.insert(0, str(RENDER))
+    import numpy as np  # noqa: E402
+    import render as R  # noqa: E402
+    spf = R.SR // FPS
+    fade = int(R.SR * 0.012)
+    parts = []
+    for p in pieces:
+        ss = max(0, math.floor(p["in"] / FPS) - 1)
+        rel = p["in"] - ss * FPS
+        m = p["frames"] * spf
+        x = R.decode_audio(Path(p["clip"]["path"]), 1, ss=ss)[rel * spf:rel * spf + m, 0]
+        if len(x) < m:
+            x = np.concatenate([x, np.zeros(m - len(x), dtype=np.float32)])
+        env = np.ones(m, dtype=np.float32)
+        env[:fade] = np.linspace(0, 1, fade, dtype=np.float32)
+        env[-fade:] = np.linspace(1, 0, fade, dtype=np.float32)
+        parts.append(x * env)
+    out = work / f"{name}.wav"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    return R.write_wav(np.concatenate(parts)[:, None], out)
+
+
 def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict:
     ov = json.loads(Path(args.overrides).read_text()) if args.overrides else {}
     lib = json.loads(Path(args.blur).read_text())["regions"] if args.blur else []
     rows_ov = ov.get("rows", {})
     rows = spec["rows"]
+    # 元の声の行（帳面 F-051）: AI の声を作らず、その秒の元の音を声の行に置く。声の一覧にはこの行のぶんが無い
+    orig_rows = {i for i, r in enumerate(rows) if r.get("orig_voice")}
+    orig_specs = {i: rows_ov.get(str(i), {}).get("cuts") or [{"t": s} for s in rows[i]["src"]] for i in orig_rows}
+    pieces = {i: orig_pieces(i, orig_specs[i], clips) for i in sorted(orig_rows)}
 
     if voice is not None:
-        if len(voice) != len(rows):
-            sys.exit(f"声の数 {len(voice)} と行の数 {len(rows)} が合わない")
+        if len(voice) != len(rows) - len(orig_rows):
+            sys.exit(f"声の数 {len(voice)} と、声を作る行の数 {len(rows) - len(orig_rows)}"
+                     f"（行 {len(rows)}・元の声の行 {len(orig_rows)}）が合わない")
         narr = {"engine": "files"}
-        lines = [{"text": v.get("caption") or r["line"], "audio": v["file"],
-                  **({"tts_text": v["tts_text"]} if v.get("tts_text") else {})} for v, r in zip(voice, rows)]
-        for i, (v, r) in enumerate(zip(voice, rows)):
+        vit = iter(voice)
+        lines = []
+        for i, r in enumerate(rows):
+            if i in orig_rows:
+                lines.append({"text": r["line"]})
+                continue
+            v = next(vit)
+            lines.append({"text": v.get("caption") or r["line"], "audio": v["file"],
+                          **({"tts_text": v["tts_text"]} if v.get("tts_text") else {})})
             if (v.get("caption") or "").replace(" ", "") != r["line"].replace(" ", ""):
                 print(f"  注意: {i}行目の字幕が原稿と違う: {v.get('caption')!r} / {r['line']!r}", file=sys.stderr)
     else:
         narr = {"engine": "open_jtalk", "speed": args.speed}
         lines = [{"text": r["line"]} for r in rows]
+    work = Path(args.work)
+    for i in sorted(orig_rows):
+        wav = orig_audio(pieces[i], work, f"orig_{spec.get('id', 'X')}_{i:02d}")
+        lines[i] = {"text": rows[i]["line"], "orig_voice": True, "file": str(wav)}
+    spoken = [k for k in range(len(rows)) if k not in orig_rows]
+
+    def measure(narr_: dict) -> list[tuple[int, list[tuple[int, int]]]]:
+        """行ごとの（声のコマ, 声の間）。元の声の行は区間の長さそのもの（速めない・詰めない）"""
+        got = dict(zip(spoken, narration_frames([lines[k] for k in spoken], narr_, work)))
+        return [(sum(p["frames"] for p in pieces[k]), []) if k in orig_rows else got[k] for k in range(len(rows))]
     sys.path.insert(0, str(RENDER))
     import render as R  # noqa: E402
     st_all = R.load_style(args.style, Path(args.out).resolve().parent)
@@ -471,13 +572,13 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     big_order, big_looks = big_st["order"], big_st["looks"]
     card_row = next((i for i, r in enumerate(rows) if r.get("card")), None) if spec.get("title_card") else None
     looks = big_looks_for(rows, card_row, big_order, big_looks)
-    # 頁を分ける行（caption_parts）は、行の頭がふつうの字幕なので、【大】の字が出きるのを待たない
-    pres = [int(big_looks[lk].get("pre_roll_frames", 0)) if lk and not r.get("caption_parts") else 0
-            for lk, r in zip(looks, rows)]
+    # 頁を分ける行（caption_parts）は、行の頭がふつうの字幕なので、【大】の字が出きるのを待たない。
+    # 元の声の行も待たない（声を遅らせると、同じ秒から取った画とずれる）
+    pres = [int(big_looks[lk].get("pre_roll_frames", 0)) if lk and not r.get("caption_parts")
+            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]
     holds = [float(rows_ov.get(str(i), {}).get("hold", r.get("hold", 0))) for i, r in enumerate(rows)]
 
-    work = Path(args.work)
-    measured = narration_frames(lines, narr, work)
+    measured = measure(narr)
     speech = None
     cps = spec.get("narration_cps_target")
     if cps and args.max_tempo is None:
@@ -486,16 +587,17 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         args.max_tempo = R.tempo_cap(st_all)
     if cps:
         # 喋る速さを、伸びているショートの速さ（毎秒 cps 字）に揃える。倍率は動画に1つ
-        # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る
-        chars = sum(spoken_chars(ln["text"]) for ln in lines)
-        dur = sum(vf for vf, _ in measured) / FPS
+        # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る。
+        # 元の声の行は速めないので、字にも長さにも数えない（数えると、叫びの長い間で倍率が上がる）
+        chars = sum(spoken_chars(lines[k]["text"]) for k in spoken)
+        dur = sum(measured[k][0] for k in spoken) / FPS
         raw = dur / (chars / cps)
         tempo = min(max(raw, 1.0), args.max_tempo)
         narr["tempo"] = round(tempo, 3)
         if args.max_pause:
             narr["max_pause_s"] = args.max_pause
-        measured = narration_frames(lines, narr, work)
-        voiced = sum(vf for vf, _ in measured) / FPS
+        measured = measure(narr)
+        voiced = sum(measured[k][0] for k in spoken) / FPS
         if raw > args.max_tempo:
             # 上限で読ませた尺を、組み立てと同じ足しかたで見積もる。入らないなら、ここで止める。
             # 組んで書き出してから60秒を越えたと分かると、声の作り直しから書き出しまでがやり直しになる。
@@ -511,11 +613,11 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         for _ in range(2):
             # 間を縮めたぶん、声の間の速さが目標を越える。倍率を下げて合わせ直す（2回でほぼ止まる）
             want = chars / cps
-            if abs(voiced - want) < 1.0 / FPS * len(lines) / 2:
+            if abs(voiced - want) < 1.0 / FPS * len(spoken) / 2:
                 break
             narr["tempo"] = round(min(max(narr["tempo"] * voiced / want, 1.0), args.max_tempo), 3)
-            measured = narration_frames(lines, narr, work)
-            voiced = sum(vf for vf, _ in measured) / FPS
+            measured = measure(narr)
+            voiced = sum(measured[k][0] for k in spoken) / FPS
         speech = {"chars": chars, "raw_voice_s": round(dur, 2), "tempo": narr["tempo"], "target_cps": cps,
                   "voiced_s": round(voiced, 2), "cps_voiced": round(chars / voiced, 2)}
 
@@ -631,9 +733,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             # overrides で「前の行の画の続き」を選んだとき（spec は別の画を指しているが、続けたほうが良い所）
             specs = [{**specs[0], "t": fmt_exact(prev_end)}] + specs[1:]
         specs = specs or [{"t": s} for s in r["src"]]
+        if i in orig_rows:
+            # 元の声の行は、声を取ったカットそのもの（「同上」で前の行の続きにはしない。声と画の秒がずれる）
+            specs = orig_specs[i]
         zooms = zoom_segments(r.get("fx", ""), len(specs))
-        # len（秒）を書いたカットはその長さで固定し、残りを書いていないカットで分ける
+        # len（秒）を書いたカットはその長さで固定し、残りを書いていないカットで分ける。
+        # 元の声の行は、声の区間の長さで固定（行の間と hold のぶんは最後のカットの画を延ばす）
         fixed = {k: round(float(c["len"]) * FPS) for k, c in enumerate(specs) if c.get("len")}
+        if i in orig_rows:
+            fixed = {k: p["frames"] for k, p in enumerate(pieces[i])}
+            fixed[len(specs) - 1] += n - sum(fixed.values())
         free = [k for k in range(len(specs)) if k not in fixed]
         rest = n - sum(fixed.values())
         if free and rest < MIN_CUT * len(free):
@@ -659,13 +768,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         row_cuts = []
         for k, (cs, m) in enumerate(zip(specs, lens)):
             t0, _ = src_span(cs["t"])
-            if cs.get("until") and t0 + m / FPS > sec(cs["until"]) + 1e-6:
-                # ここより後ろは使えない（指が映る・場面が変わる）。足りないぶんは入りを前にずらす
-                t1 = sec(cs["until"]) - m / FPS
-                print(f"  注意: {i}行目 {fmt(t0)} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
-                      f"{fmt(t1)} からにした", file=sys.stderr)
-                t0 = t1
-            clip, t0 = find_clip(clips, t0, m / FPS)
+            if i in orig_rows:
+                clip, t0 = orig_place(i, k, cs, pieces[i][k], m)
+            else:
+                if cs.get("until") and t0 + m / FPS > sec(cs["until"]) + 1e-6:
+                    # ここより後ろは使えない（指が映る・場面が変わる）。足りないぶんは入りを前にずらす
+                    t1 = sec(cs["until"]) - m / FPS
+                    print(f"  注意: {i}行目 {fmt(t0)} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
+                          f"{fmt(t1)} からにした", file=sys.stderr)
+                    t0 = t1
+                clip, t0 = find_clip(clips, t0, m / FPS)
             key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
             sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
             fin = round((t0 - clip["start"]) * FPS)
@@ -714,6 +826,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                           "line": ln["text"], "telop": tel_meta,
                           **({"big": ln["big"]} if ln.get("big") else {}),
                           **({"parts": ln["parts"]} if ln.get("parts") else {}),
+                          **({"orig_voice": True} if i in orig_rows else {}),
                           **({"same_as_prev": True} if r.get("same_as_prev") else {})})
         t += n
 

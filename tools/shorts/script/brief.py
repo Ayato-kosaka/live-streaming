@@ -749,6 +749,9 @@ def voice_lines(spec: dict) -> list:
     sid = spec.get("id") or "A"
     out = []
     for n, r in enumerate(spec["rows"], 1):
+        if r.get("orig_voice"):  # 元の声の行（帳面 F-051）
+            # 声は作らず、配信の本人の声を流す（build_edit.py が元の音を置く）。key の番号は行の番号のまま（その番号だけ欠ける）
+            continue
         t = r.get("tts_text") or r["line"]
         out.append({"key": f"{sid}/{n:02d}", "plan": sid, "n": n, "caption": r["line"], "tts_text": t,
                     "bytes": len(t.encode("utf-8"))})
