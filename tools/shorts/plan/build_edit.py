@@ -497,6 +497,19 @@ def orig_place(i: int, k: int, cs: dict, p: dict, m: int) -> tuple[dict, float]:
     return clip, t0
 
 
+# 元の声を wav に書くときの頂点。wav は 16bit なので、1.0 を越えた所は平らに割れる（滝の回の叫びは、
+# 配信の AAC を復号すると 1.048 まで出て、5サンプル張り付いた。検査の clipping が「声の平らな頂点」で落とした）
+ORIG_PEAK = 0.9
+
+
+def orig_gain(peak: float) -> float:
+    """元の声の wav に掛ける倍率。頂点が ORIG_PEAK を越えるときだけ、そこまで下げる。
+
+    上げはしない（大きさは書き出しが行ごとに「話している間の RMS」で揃えるので、ここで下げても仕上がりは同じ）。
+    """
+    return ORIG_PEAK / peak if peak > ORIG_PEAK else 1.0
+
+
 def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
     """元の声の行の声: カットと同じコマの元の音をつないだ1本の wav（48kHz・1ch）。
 
@@ -521,9 +534,11 @@ def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
         env[:fade] = np.linspace(0, 1, fade, dtype=np.float32)
         env[-fade:] = np.linspace(1, 0, fade, dtype=np.float32)
         parts.append(x * env)
+    y = np.concatenate(parts)
+    y = y * orig_gain(float(np.max(np.abs(y))) if len(y) else 0.0)
     out = work / f"{name}.wav"
     out.parent.mkdir(parents=True, exist_ok=True)
-    return R.write_wav(np.concatenate(parts)[:, None], out)
+    return R.write_wav(y[:, None], out)
 
 
 def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict:

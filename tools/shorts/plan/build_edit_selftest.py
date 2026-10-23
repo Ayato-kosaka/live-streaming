@@ -96,6 +96,8 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "orig_shift": ("            if i in orig_rows:\n                clip, t0 = orig_place(",
                    "            if False:\n                clip, t0 = orig_place(",
                    {"orig_voice"}, "元の声の行のカットも until に合わせて入りをずらす（声と画の秒がずれる）"),
+    "orig_peak": ("    return ORIG_PEAK / peak if peak > ORIG_PEAK else 1.0\n", "    return 1.0\n",
+                  {"orig_voice"}, "元の声の 1.0 を越える頂点を下げない（16bit に書くと平らに割れる）"),
     "orig_pre": ("            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
@@ -371,6 +373,11 @@ def leg_orig_voice(b: Bench):
     rd = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cu, "voices": None})
     out += [(f"画が until を越えるなら、入りをずらさずに止まる（終了コード {rd['rc']}）",
              rd["rc"] != 0 and rd["edit"] is None and "元の声" in rd["text"])]
+    # 16bit の wav に書くと 1.0 を越えた頂点が平らに割れる。叫びの復号で出た 1.048 は 0.9 まで下げ、小さい声は上げない
+    hot, quiet = b.be.orig_gain(1.048), b.be.orig_gain(0.5)
+    out += [(f"1.0 を越える頂点（1.048）は割れない所まで下げる（倍率 {hot:.3f}・下げた頂点 {1.048 * hot:.3f}）",
+             1.048 * hot <= 0.9 + 1e-9),
+            (f"頂点が低い声は上げない（0.5 の倍率 {quiet}）", quiet == 1.0)]
     return out
 
 
