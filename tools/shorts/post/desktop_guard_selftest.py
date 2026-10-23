@@ -33,7 +33,7 @@ GUARD と idle-stop の字は**本物の字を sh で回す**（`desktop-input` 
 | `seed_input_kept` | 繋ぐ前の入力（xprintidle に残っている）を捨てない |
 | `seed_unknown_waits` | 繋いだときに xprintidle が取れなければ「いま入力があった」とみなす |
 | `raw_only` | 数えるのは生の入力（Raw*）だけ。FocusIn / FocusOut / Motion / DeviceChanged は数えない |
-| `watch_records` | 見張りの本体に偽の xinput をつないで回す。生の入力は**1秒以内に**控えに書かれ、窓の出入りだけでは書かれない |
+| `watch_records` | 見張りの本体に偽の xinput をつないで回す。生の入力は**書く間隔（FLUSH_S）のうちに**控えに書かれ、窓の出入りだけでは書かれない |
 | `alive_by_name` | 見張りが生きているかを pid の有る無しではなく名前で見る（pid の使い回しに化かされない） |
 | `x_start_boot_clock` | X の立った時刻を起動からの秒で持つ。壁の時計は起こした直後に chrony が跳ばし、跳んだぶん「X が立ち直した」に見えた（2026-10-23） |
 | `guard_busy_under_7min` | GUARD: 419,999ms なら desktop_busy で戻り、本体を1行も動かさない |
@@ -102,7 +102,7 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                           {"seed_unknown_waits"}, "xprintidle が取れないときに「入力は無い」とみなす"),
     "raw_any": ("desktop_input.py", r'RAW = re.compile(r"^EVENT type \d+ \(Raw(?:', r'RAW = re.compile(r"^EVENT type \d+ |\(Raw(?:',
                 {"raw_only", "watch_records"}, "生の入力でない出来事（窓の出入り）も数える"),
-    "watch_late": ("desktop_input.py", "max(0.0, wrote + 1 - clock()) if dirty else BEAT_S", "BEAT_S",
+    "watch_late": ("desktop_input.py", "max(0.0, wrote + FLUSH_S - clock()) if dirty else BEAT_S", "BEAT_S",
                    {"watch_records"}, "書き残した入力を次の「生きている」まで書かない（2026-10-23 に EC2 で踏んだ）"),
     "watch_drop": ("desktop_input.py", '                st["last"] = round(now, 2)\n', "                pass\n",
                    {"watch_records"}, "生の入力を読んでも控えない"),
@@ -294,17 +294,27 @@ def leg_raw_only(b: Bench):
             (f"生でない出来事は数えない（数えた: {bad_no}）", not bad_no)]
 
 
-def run_watch(b: Bench, lines_py: str, check_at: float):
-    """見張りの本体（watch）に偽の xinput をつないで回す。check_at 秒後の控えと、終わったあとの控えを返す"""
+def run_watch(b: Bench, lines_py: str):
+    """見張りの本体（watch）に偽の xinput をつないで回す。控えを書いた時刻と中身の並び・最後の控えを返す。
+    書く間隔（FLUSH_S）は 0.2秒に縮める。縮めても「書き残した入力を、その間隔のうちに書くか」は同じに見える"""
     d = b.fresh()
     di = b.di
-    saved = (di.STATE, di.XINPUT, di.ATTACH_S, di.x_server, di.xidle)
+    saved = (di.STATE, di.XINPUT, di.ATTACH_S, di.FLUSH_S, di.x_server, di.xidle, di.write_state)
     di.STATE = str(d / "state.json")
     di.XINPUT = [sys.executable, "-c", lines_py]
     di.ATTACH_S = 0.05
+    di.FLUSH_S = 0.2
     t0 = di.clock()
     di.x_server = lambda: (4242, t0 - 3600)
     di.xidle = lambda: 5000          # 繋ぐ5秒前に入力があった（控えの最初は「5秒前」）
+    hist: list[tuple[float, dict]] = []
+    write = di.write_state
+
+    def recorded(st):
+        hist.append((di.clock(), dict(st)))
+        write(st)
+
+    di.write_state = recorded
     err: list[str] = []
 
     def go():
@@ -318,32 +328,35 @@ def run_watch(b: Bench, lines_py: str, check_at: float):
     th = threading.Thread(target=go, daemon=True)
     try:
         th.start()
-        time.sleep(check_at)
-        mid = json.loads(Path(di.STATE).read_text()) if Path(di.STATE).exists() else None
         th.join(15)
         end = json.loads(Path(di.STATE).read_text()) if Path(di.STATE).exists() else None
     finally:
-        di.STATE, di.XINPUT, di.ATTACH_S, di.x_server, di.xidle = saved
-    return t0, mid, end, err
+        di.STATE, di.XINPUT, di.ATTACH_S, di.FLUSH_S, di.x_server, di.xidle, di.write_state = saved
+    return t0, hist, end, err
 
 
 def leg_watch_records(b: Bench):
-    # xdotool の1回の形: DeviceChanged のすぐあとに RawMotion。そのあと4秒は何も来ない（「生きている」は30秒ごと）
-    t0, mid, end, err = run_watch(b, (
+    # 入力が続けて来て、2つ目が「書いた直後」に来る形（2026-10-23 の EC2 は、DeviceChanged で書いた直後の
+    # RawMotion を30秒書かずにいた）。そのあと 0.8秒は何も来ない（「生きている」は30秒ごと）
+    t0, hist, end, err = run_watch(b, (
         "import time\n"
-        "time.sleep(0.3); print('EVENT type 1 (DeviceChanged)', flush=True)\n"
+        "time.sleep(0.3); print('EVENT type 1 (DeviceChanged)', flush=True); print('EVENT type 17 (RawMotion)', flush=True)\n"
         "time.sleep(0.05); print('EVENT type 17 (RawMotion)', flush=True); print('    device: 2 (12)', flush=True)\n"
-        "time.sleep(4)\n"), check_at=2.5)
-    got = (mid or {}).get("last")
+        "time.sleep(0.8)\n"))
+    final = (end or {}).get("last")
+    first = next((at for at, st in hist if final is not None and st.get("last") == final), None)
+    lag = None if first is None else round(first - final, 2)
     out = [(f"見張りが落ちない（{err[0].strip().splitlines()[-1] if err else 'ok'}）", not err),
-           (f"RawMotion から約2秒の控えに、その時刻が入っている（last は始めから {None if got is None else round(got - t0, 2)}秒）",
-            got is not None and 0.2 < got - t0 < 1.6)]
+           (f"最後の RawMotion の時刻が控えに入る（始めから {None if final is None else round(final - t0, 2)}秒）",
+            final is not None and 0.2 < final - t0 < 1.6),
+           (f"それを読んでから {lag}秒で書く（書く間隔 0.2秒のうち。次の入力も「生きている」も来ないまま）",
+            lag is not None and lag <= 0.5)]
     # 窓の出入りだけ（Chrome のタブを開けて閉じた形）
-    t1, mid2, end2, err2 = run_watch(b, (
+    t1, hist2, end2, err2 = run_watch(b, (
         "import time\n"
         "for s in ('EVENT type 9 (FocusIn)', 'EVENT type 10 (FocusOut)', 'EVENT type 6 (Motion)'):\n"
         "    time.sleep(0.1); print(s, flush=True)\n"
-        "time.sleep(0.3)\n"), check_at=0.2)
+        "time.sleep(0.3)\n"))
     last2 = (end2 or {}).get("last")
     out.append((f"窓の出入りだけなら控えは最初のまま（繋ぐ5秒前。last は始めから {None if last2 is None else round(last2 - t1, 2)}秒）",
                 not err2 and last2 is not None and -6 < last2 - t1 < -4))
@@ -506,11 +519,18 @@ def child(name: str) -> int:
 def drill() -> list[str]:
     """守りを1つずつ外して、**その守りの足だけ**が落ちるかを見る"""
     print("[対照] 守りを1つずつ外すと、その足だけが落ちるか")
+    from concurrent.futures import ThreadPoolExecutor
+
+    def one(name):
+        return subprocess.run([sys.executable, str(Path(__file__).resolve())], capture_output=True,
+                              text=True, env=dict(os.environ, BREAK=name), timeout=120, check=False)
+
+    # 1本ずつ回すと2分かかった（子が21本）。4本ずつ並べる。足の時間の見張りは、見張り自身の時計で測るので混んでも狂わない
+    with ThreadPoolExecutor(4) as ex:
+        runs = dict(zip(CUTS, ex.map(one, CUTS)))
     bad = []
     for name, (fname, _, _, want, why) in CUTS.items():
-        env = dict(os.environ, BREAK=name)
-        r = subprocess.run([sys.executable, str(Path(__file__).resolve())], capture_output=True,
-                           text=True, env=env, timeout=120, check=False)
+        r = runs[name]
         line = [ln for ln in r.stdout.splitlines() if ln.startswith("LEGS_FAILED ")]
         got = set(json.loads(line[-1][len("LEGS_FAILED "):])) if line else None
         hit = got == want and r.returncode == 1

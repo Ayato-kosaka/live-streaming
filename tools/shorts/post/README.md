@@ -103,12 +103,13 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
   - 遠隔デスクトップの接続が無かったことは、XI2 の生の入力が起動から1件も来ていない（来たのは自分で入れた xdotool だけ）ことで確かめた
 - いまの形: EC2 の `desktop-input`（`.claude/skills/ec2-chrome/desktop_input.py`、systemd）が `xinput test-xi2 --root` を読み、
   生の入力（Raw*）の時刻だけを控える。GUARD はそれを聞く。遠隔デスクトップの入力は XTest で X に入るので数えられる
-  （:20 に xdotool で1回入れると2秒後に 2,034ms、直後の手は `desktop_busy`）。CDP の入力とタブの開け閉め（FocusIn/Out）は数えない。
+  （:20 に xdotool で1回入れると2秒後に 2,035ms、直後の手は `desktop_busy`）。CDP の入力とタブの開け閉め（FocusIn/Out）は数えない。
   X が立ってから入力が無ければ「一度も無い」と答えるので、起こした直後も待たない。**見張りは外していない**
   - 見張りが居ない・X が立ち直した・印が古いときは前の xprintidle に戻る（待つ側に倒れる）。`desktop-input` が無ければ
     `desktop_busy` で止まり、入れ直す一手 `python3 .claude/skills/ec2-chrome/ec2.py guard`（idle-stop と一緒に入る）を出す
-  - 2026-10-23 に、起こして27秒後から公開しない手（再生画面を30秒流して閉じる）を2回続けて回し、2回とも待たずに通った
-    （1手48秒。2回目の前の xprintidle は 8,650ms で、前の見張りなら7分待っていた）
+  - 2026-10-23 に、起こして約40秒後から公開しない手（`~/cdp-fish` で動画を30秒流してタブを閉じる）を2回続けて回し、
+    2回とも待たずに通った（1回目の前の xprintidle は 34,284ms、2回目の前は 8,671ms。前の見張りならどちらも7分待っていた）。
+    1回目は TikTok が埋め込みを断った（overload-protect）ので、同じ Chrome でページの中で作った動画を流した
   - 見張りの見張りは `desktop_guard_selftest.py`（判定を偽の値で回し、GUARD と idle-stop の本物の字を sh で回す。EC2 に触らない）
 
 ## 予約投稿（2026-10-21 に最安ホステルの回 p2 で両方とも通した）

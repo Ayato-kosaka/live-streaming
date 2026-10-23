@@ -45,6 +45,7 @@ UNIT_PATH = "/etc/systemd/system/desktop-input.service"
 XINPUT = ["stdbuf", "-oL", "xinput", "test-xi2", "--root"]
 ATTACH_S = 1.0     # xinput が X に繋いだかを見るまでの間
 BEAT_S = 30        # 入力が無くても、この間隔で「生きている」を書く
+FLUSH_S = 1.0      # 入力を書くのはこの間隔に1回まで。書き残した入力も、この時間のうちに必ず書く（7分を測るのに足りる）
 STALE_S = 120      # 印がこれより古ければ、見張りは止まっているとみなす
 SEED_TOL_S = 5     # X が立ってからの時間と xprintidle の差がこれ以内なら、立ってから入力は無い
 NEVER_MS = 2**31 - 1
@@ -168,10 +169,10 @@ def watch():
     write_state(st)
     fd, buf, wrote, dirty = p.stdout.fileno(), b"", now, False
     while True:
-        # 入力は続けて来るので、書くのは1秒に1回まで。ただし書き残した入力は1秒以内に必ず書く
+        # 入力は続けて来るので、書くのは FLUSH_S に1回まで。ただし書き残した入力は FLUSH_S のうちに必ず書く
         # （xdotool の1回は DeviceChanged → RawMotion の順に来る。前者で書いた直後の後者を
         # 次の「生きている」まで30秒書かずにいて、その間の GUARD が素通りした。2026-10-23）
-        r, _, _ = select.select([fd], [], [], max(0.0, wrote + 1 - clock()) if dirty else BEAT_S)
+        r, _, _ = select.select([fd], [], [], max(0.0, wrote + FLUSH_S - clock()) if dirty else BEAT_S)
         now = clock()
         if r:
             chunk = os.read(fd, 65536)
@@ -182,7 +183,7 @@ def watch():
             if any(is_input(ln.decode("utf-8", "replace")) for ln in lines):
                 st["last"] = round(now, 2)
                 dirty = True
-        if not r or (dirty and now - wrote >= 1) or now - wrote >= BEAT_S:
+        if not r or (dirty and now - wrote >= FLUSH_S) or now - wrote >= BEAT_S:
             st["beat"] = round(now, 2)
             write_state(st)
             wrote, dirty = now, False
