@@ -8,7 +8,9 @@
 
 ## 何を渡し、何を渡さないか
 
-渡すのは `brief.py critic` が作る1枚だけ（`references/critic_prompt.md` の雛形に、原稿の表・lint の結果・帳面の要約・参考の拍・配信の字幕を差し込んだもの）。
+渡すのは `brief.py critic` が作る1枚だけ（`references/critic_prompt.md` の雛形に、作文者と同じ約束のカード（帳面の決まりと直しの全文）・
+原稿の表・lint の結果・参考の拍・配信の字幕を差し込んだもの）。批評役は当てたカードの ID を全部 `checked` に並べ、
+1行ずつ「その行だけ聞いて意味が通るか」（`alone`）と「画に居ない人の言葉を持ち出したか」（`outsider`）を返す（2026-10-23 #1019、帳面 F-048〜F-050）。
 **`--video` を渡す。** 渡さないと1枚に配信の字幕が入らず、批評役は【足】の無い行を「本人が言った言葉」と信じて読むしかない
 （2026-10-23 のフォカッチャの下書きは、それで配信に無い・要らないつなぎと決め台詞を素通りした。帳面 F-047）。
 `--range` を省くと、spec の why・src に書いた時刻の前後30秒を入れる（作文者が根拠に挙げた所）。
@@ -87,7 +89,8 @@ def main() -> int:
     ap.add_argument("--model", default=MODEL)
     ap.add_argument("--effort", default=EFFORT, help="low / medium / high / xhigh（空なら既定）")
     ap.add_argument("--timeout", type=int, default=1500)
-    ap.add_argument("--as-of", help="critic_gate.py に渡す（承認済みの原稿を読み直すとき。`critic_gate.py --help`）")
+    ap.add_argument("--as-of", help="承認済みの原稿を読み直すとき（YYYY-MM-DD:<あやとの返事のコメントID>）。1枚の lint の結果と、"
+                                    "critic_gate.py の合否を、その時点の決まりで出す（`critic_gate.py --help`）")
     a = ap.parse_args()
 
     out = Path(a.out)
@@ -95,7 +98,7 @@ def main() -> int:
     script = Path(a.script)
     spec = Path(a.spec) if a.spec else None
     try:
-        prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range)
+        prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range, a.as_of)
     except (OSError, KeyError, ValueError) as e:
         print(f"1枚を作れない: {e}", file=sys.stderr)
         return 2

@@ -16,15 +16,17 @@
 | `jump` | 跳の行を ✕。最後の行がアーカイブの1行なら、その行の跳は数えない |
 | `question` | 答えない問い・答える前に移る問いを ✕。終わりの問い（アーカイブの前の問いも）は数えない |
 | `cancel` | 取消の2回目・印なし・理由なし・2行を消す・すぐ戻す、をそれぞれ ✕。印と理由のある1回は通す。動は数えない |
-| `hearsay` | 印の無い人の話を ✕ |
+| `outsider` | 画に居ない人（視聴者のコメントなど）の言葉を持ち出した行を ✕。範囲の外の行は崩れ（2026-10-23 から。前の「印の無い人の話」は外した） |
+| `alone` | その行だけで意味が通らない行（`alone` の `ok` が false）を ✕（理由つき）。最後のアーカイブの1行は数えない。【あやと】の行は △。抜けた行・2回ある行は崩れ。題の札（行 0）は飛ばす |
+| `checked` | 約束のカードの ID が `checked` に1つでも無ければ ✕（欠けた ID を名指す）。`ledger` に挙げた ID は当てたに数える。帳面の外の約束 X2 も帳面の ID と同じに扱う |
 | `numbers` | 前の声に無い数を ✕ |
 | `ledger` | 帳面にある ID は ✕、帳面に無い ID は △ |
 | `scores` | 2 以下は ✕、3 は △、4 は何も出さない |
 | `ayato` | 【あやと】の行（spec の why が「あやとの題」など）に当たった ✕ は △ にする（まとめ役が裁く） |
 | `as_of` | 城塞 p1 の承認（2026-10-21:6306110329）で読み直すと、あとでできた F-037（09:28）の ✕ は △。前からある F-008 は ✕ のまま。as_of 無しなら F-037 も ✕ |
-| `i_side` | (h) の F-039・F-040 は、同じ行に (i) の当たりがあれば ✕、無ければ △（批評役自身のつなぎでは渡れている） |
+| `i_side` | (h) の F-039・F-040 は、同じ行に (i)(j)(k) の当たりがあれば ✕、無ければ △（批評役自身の見かたでは渡れている） |
 | `cli` | 終了コード: 通る 0・落ちる 1・形が違う 2 |
-| `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は lint の ✕ 0。批評役の (h) F-047 は ✕ |
+| `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、添削の時点（2026-10-23:6354242835）の決まりでも、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は同じ時点で lint の ✕ 0（日付だけにすると夕方の規則まで当たる）。批評役の (h) F-047 は ✕ |
 """
 from __future__ import annotations
 
@@ -47,7 +49,7 @@ CUTS = {
     "count": ("critic_gate.py", "    if len(tsu) != n:\n", "    if False:\n", {"count"}, "つなぎの数を見ない"),
     "jump": ("critic_gate.py", '        if t == "跳":\n', "        if False:\n", {"jump"}, "跳の行を数えない"),
     "archive_last": ("critic_gate.py", "        if i_side and last_archive and line == n:\n            return\n", "",
-                     {"jump"}, "アーカイブの1行の (i) まで数える"),
+                     {"jump", "alone"}, "アーカイブの1行の (i)(j) まで数える"),
     "q_none": ("critic_gate.py", "        if not ans or not in_range(ans) or ans <= ln:\n", "        if False:\n",
                {"question"}, "答えない問いを通す"),
     "q_moved": ("critic_gate.py", '        elif q.get("moved"):\n', "        elif False:\n", {"question"}, "答える前に移る問いを通す"),
@@ -57,19 +59,30 @@ CUTS = {
     "cancel_reason": ("critic_gate.py", '        if not t.get("reason"):\n', "        if False:\n", {"cancel"}, "理由の無い取消を通す"),
     "cancel_erases": ("critic_gate.py", '        if len(t.get("erases") or []) >= 2:\n', "        if False:\n", {"cancel"}, "積んだ結論の取消を通す"),
     "cancel_back": ("critic_gate.py", '        if t.get("back"):\n', "        if False:\n", {"cancel"}, "すぐ戻す取消を通す"),
-    "hearsay": ("critic_gate.py", '        if in_range(h.get("line")) and not h.get("marked"):\n', "        if False:\n",
-                {"hearsay", "i_side"}, "印の無い人の話を通す（i_side は人の話の当たりを (i) の印に使う）"),
+    "outsider": ("critic_gate.py", '        if in_range(h.get("line")):\n', "        if False:\n",
+                 {"outsider", "i_side"}, "画に居ない人の言葉を通す（i_side は (k) の当たりを F-039 の印に使う）"),
+    "alone": ("critic_gate.py", '        if not alone[i].get("ok"):\n', "        if False:\n", {"alone"}, "その行だけで通らない行を通す"),
+    "alone_count": ("critic_gate.py", "    if set(alone) != set(range(1, n + 1)):\n", "    if False:\n", {"alone"}, "抜けた行を見ない"),
+    "alone_card": ("critic_gate.py", "        if ln == 0:\n            continue\n", "", {"alone"}, "題の札（行 0）の1件を崩れに数える"),
+    "checked": ("critic_gate.py", "    if miss:\n        fail.append((None, \"(h) 当てていない約束\"",
+                "    if False:\n        fail.append((None, \"(h) 当てていない約束\"", {"checked"}, "当てていない約束を通す"),
+    "checked_ledger": ("critic_gate.py", ' | {h.get("id") for h in d.get("ledger", [])}\n', "\n", {"checked"},
+                       "ledger に挙げた ID を、当てたに数えない"),
+    "known_own": ("critic_gate.py", "    known = {**led.items, **{o.id: o for o in ledger_mod.OWN}}", "    known = dict(led.items)", {"checked"},
+                  "帳面の外の約束（X2）の当たりを、カードに無い ID として △ にする"),
+    "as_of_text": ("critic_gate.py", '    return f"{as_of[0]}:{as_of[1]}" if as_of[1] is not None else as_of[0]\n', "    return as_of[0]\n",
+                   {"focaccia"}, "lint に、承認の時点のコメントID を渡さない（日付だけにする）"),
     "numbers": ("critic_gate.py", '        if in_range(x.get("line")) and not x.get("said_before"):\n', "        if False:\n",
                 {"numbers"}, "前に声の無い数を通す"),
-    "ledger_unknown": ("critic_gate.py", "        if fid not in led.items:\n", "        if False:\n", {"ledger"}, "帳面に無い ID まで ✕ にする"),
+    "ledger_unknown": ("critic_gate.py", "        if fid not in known:\n", "        if False:\n", {"ledger"}, "帳面に無い ID まで ✕ にする"),
     "score_low": ("critic_gate.py", "        if v <= 2:\n", "        if False:\n", {"scores"}, "2 以下の点を通す"),
     "score_three": ("critic_gate.py", "        elif v == 3:\n", "        elif False:\n", {"scores"}, "3 の点を △ に出さない"),
-    "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato"}, "【あやと】の行でも ✕ にする"),
+    "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato", "alone"}, "【あやと】の行でも ✕ にする"),
     "i_side": ("critic_gate.py", "        if fid in I_SIDE and ln not in i_lines:\n", "        if False:\n",
                {"i_side"}, "(i) で渡れている行の F-039 も ✕ にする"),
-    "as_of": ("critic_gate.py", "        if not in_force(led.items[fid], as_of):\n", "        if False:\n",
+    "as_of": ("critic_gate.py", "        if not in_force(known[fid], as_of):\n", "        if False:\n",
               {"as_of"}, "承認より後にできた決まりでも ✕ にする"),
-    "lint_in": ("critic_gate.py", '    return [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]\n',
+    "lint_in": ("critic_gate.py", '    return [h for h in lint_mod.lint(c, as_of_text(as_of))["hits"] if not h.look]\n',
                 "    return []\n", {"focaccia"}, "lint の ✕ を関所の合否に入れない"),
     "as_of_id": ("critic_gate.py", "        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):\n",
                  "        if d < day or d == day:\n", {"as_of"}, "同じ日の決まりの前後をコメントID で分けない"),
@@ -82,12 +95,17 @@ def setup(cut):
 
 
 SCRIPT = FIX / "approved/TDArug_te90_p1/script.txt"   # 20行。最後が「…アーカイブ見てね！」、その前が「みんなやったら…？」
+FOCACCIA_AT = "2026-10-23:6354242835"   # フォカッチャのあやとの添削（#1014）
+sys.path.insert(0, str(HERE))
+import brief as _brief  # noqa: E402
+CARD_IDS = _brief.card_ids()             # 約束のカードの ID（帳面から。手で並べない）
 
 
 def base(n=20) -> dict:
-    """何にも当たらない批評役の JSON（20行・全部4）。"""
-    return {"scores": dict.fromkeys("abcdef", 4), "score_why": dict.fromkeys("abcdef", ""),
-            "tsunagi": ["題"] + ["足"] * (n - 3) + ["締", "締"], "questions": [], "turns": [], "hearsay": [],
+    """何にも当たらない批評役の JSON（20行・全部4・約束のカードを全部当てた）。"""
+    return {"scores": dict.fromkeys("abcdef", 4), "score_why": dict.fromkeys("abcdef", ""), "checked": list(CARD_IDS),
+            "alone": [{"line": i, "ok": True, "why": ""} for i in range(1, n + 1)], "outsider": [],
+            "tsunagi": ["題"] + ["足"] * (n - 3) + ["締", "締"], "questions": [], "turns": [],
             "numbers": [], "ledger": [], "leave": [], "fixes": [], "verdict": "通る"}
 
 
@@ -166,9 +184,39 @@ def leg_cancel(G):
             ("動は何回あっても数えない", not f(turn(3, kind="動"), turn(6, kind="動", mark=""), turn(12, kind="動")))]
 
 
-def leg_hearsay(G):
-    return [("印の無い人の話（11行目）を ✕", [x[0] for x in fails(G, with_(hearsay=[{"line": 11, "marked": False}]))] == [11]),
-            ("印のある人の話は通す", not fails(G, with_(hearsay=[{"line": 3, "marked": True}])))]
+def leg_outsider(G):
+    hit = fails(G, with_(outsider=[{"line": 11, "who": "視聴者のコメント"}]))
+    return [("画に居ない人の言葉（11行目・視聴者のコメント）を ✕", [(x[0], x[1]) for x in hit] == [(11, "(k) 画に居ない人の言葉")]),
+            ("挙げなければ通る（「って」の印の有無は数えない）", not fails(G, base())),
+            ("範囲の外の行（21）は崩れ", bool(run(G, with_(outsider=[{"line": 21, "who": "x"}]))["bad"]))]
+
+
+def leg_alone(G):
+    def al(no=(), why="宛先が犬のまま", n=20):
+        return [{"line": i, "ok": i not in no, "why": why if i in no else ""} for i in range(1, n + 1)]
+    a5, last = al((5,)), al((20,))
+    hit = fails(G, with_(alone=a5))
+    c, rows = G.brief.rows_of(SCRIPT, None)
+    rows = copy.deepcopy(rows)
+    rows[4]["why"] = "あやとの添削（#977 2026-10-21）"
+    ayato = G.judge(with_(alone=a5), c, rows)
+    return [("その行だけで通らない5行目を ✕（理由つき）", [(x[0], x[2]) for x in hit] == [(5, "宛先が犬のまま")]),
+            ("最後の行（アーカイブの1行）の「否」は数えない", not fails(G, with_(alone=last))),
+            ("【あやと】の行の「否」は △（まとめ役が裁く）", not ayato["fail"] and any(x[0] == 5 for x in ayato["look"])),
+            ("20行目が抜けたら崩れ", bool(run(G, with_(alone=al(n=19)))["bad"])),
+            ("同じ行が2回あれば崩れ", bool(run(G, with_(alone=al() + [{"line": 3, "ok": True, "why": ""}]))["bad"])),
+            ("題の札（行 0）の1件は飛ばす（崩れにしない）", not run(G, with_(alone=[{"line": 0, "ok": True, "why": ""}] + al()))["bad"])]
+
+
+def leg_checked(G):
+    miss = run(G, with_(checked=[i for i in CARD_IDS if i != "F-048"]))
+    via_ledger = run(G, with_(checked=[i for i in CARD_IDS if i != "F-048"],
+                              ledger=[{"id": "F-048", "line": 8, "why": "コメントの話"}]))
+    own = run(G, with_(ledger=[{"id": "X2", "line": 8, "why": "盛っている"}]))
+    return [(f"カード {len(CARD_IDS)} 枚を全部当てれば通る（帳面の外の X2 を含む）", "X2" in CARD_IDS and not fails(G, base())),
+            ("F-048 を当てていなければ ✕（欠けた ID を名指す）", [(x[1], x[2]) for x in miss["fail"]] == [("(h) 当てていない約束", "F-048")]),
+            ("checked に無くても、ledger に挙げた F-048 は当てたに数える", [x[1] for x in via_ledger["fail"]] == ["(h) F-048"]),
+            ("帳面の外の約束 X2 の当たりも ✕（カードに無い ID の △ にしない）", [x[1] for x in own["fail"]] == ["(h) X2"])]
 
 
 def leg_numbers(G):
@@ -208,10 +256,10 @@ def leg_ayato(G):
 
 def leg_i_side(G):
     alone = run(G, with_(ledger=[{"id": "F-039", "line": 18, "why": "誰の興奮か分からない"}]))
-    both = run(G, with_(ledger=[{"id": "F-039", "line": 11, "why": "出どころが札だけ"}], hearsay=[{"line": 11, "marked": False}]))
+    both = run(G, with_(ledger=[{"id": "F-039", "line": 11, "why": "文字起こしのまま"}], outsider=[{"line": 11, "who": "チャット"}]))
     other = run(G, with_(ledger=[{"id": "F-008", "line": 18, "why": "x"}]))
     return [("(i) の当たりの無い行の F-039 は ✕ にせず △", not alone["fail"] and [x[1] for x in alone["look"]] == ["(h) F-039"]),
-            ("(i) の当たり（印の無い人の話）と同じ行の F-039 は ✕", "(h) F-039" in [x[1] for x in both["fail"]]),
+            ("(k) の当たり（画に居ない人の言葉）と同じ行の F-039 は ✕", "(h) F-039" in [x[1] for x in both["fail"]]),
             ("F-039・F-040 でない ID は、(i) が無くても ✕", [x[1] for x in other["fail"]] == ["(h) F-008"])]
 
 
@@ -235,7 +283,9 @@ def leg_cli(G):
         with tempfile.TemporaryDirectory() as td:
             p = Path(td) / "critic.json"
             p.write_text(d if isinstance(d, str) else json.dumps(d, ensure_ascii=False), encoding="utf-8")
-            return subprocess.run([sys.executable, str(HERE / "critic_gate.py"), str(p), str(SCRIPT)], capture_output=True,
+            # 城塞 p1 は承認の時点で読む（今日の決まりでは、あとでできた L-NICK・L-PARTICLE・L-ATE が lint で当たる）
+            return subprocess.run([sys.executable, str(HERE / "critic_gate.py"), str(p), str(SCRIPT), "--as-of", "2026-10-21:6306110329"],
+                                  capture_output=True,
                                   text=True, timeout=60, check=False).returncode
     t = base()["tsunagi"]
     t[4] = "跳"
@@ -247,17 +297,18 @@ def leg_focaccia(G):
     ng, ok = FIX / "rejected/VusdZVyjgjQ_p1/script.txt", FIX / "approved/VusdZVyjgjQ_p1/script.txt"
     c_ng, rows_ng = G.brief.rows_of(ng, None)
     c_ok, _ = G.brief.rows_of(ok, None)
-    lf = [(h.rule, h.line) for h in G.lint_fails_of(c_ng)]
+    at = G.parse_as_of(FOCACCIA_AT)
+    lf = [(h.rule, h.line) for h in G.lint_fails_of(c_ng, at)]
     hit = G.judge(base(len(c_ng.lines)) | {"ledger": [{"id": "F-047", "line": 12, "why": "2: 意気込みだけ"}]}, c_ng, rows_ng)
     return [("下書きは、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる",
              sorted(lf) == [("L-NEXT", 21), ("T-READ", 1)]),
-            ("あやとの添削版は lint の ✕ 0", not G.lint_fails_of(c_ok)),
+            ("あやとの添削版は、添削の時点の決まりで lint の ✕ 0", not G.lint_fails_of(c_ok, at)),
             ("批評役の (h) F-047（12行目）は ✕", [(x[0], x[1]) for x in hit["fail"]] == [(12, "(h) F-047")])]
 
 
 LEGS = {
     "shape": leg_shape, "count": leg_count, "jump": leg_jump, "question": leg_question, "cancel": leg_cancel,
-    "hearsay": leg_hearsay, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
+    "outsider": leg_outsider, "alone": leg_alone, "checked": leg_checked, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
     "i_side": leg_i_side, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
 }
 
