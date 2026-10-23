@@ -77,12 +77,21 @@ export type FxSlot = {
 
 /** 名前の札の飾り。字の大きさは画面の幅 1080 のときの px（幅に比例して縮める） */
 export type PlateStyle = {
+  /*
+   * 角丸の札は**透かさない**（地は不透明）。字の縁は、札の地を暗くした色（`ink`）。
+   * 透かした札（0.84〜0.95）だと、白い壁が透けたところで地が明るくなり、小さな字
+   * （額の「,」）では縁の画素が字の大半になって、濃さが 1.3〜1.9 まで落ちた
+   * （本物の配信画面4枚の上で、字の濃さを画素から測った。2026-10-23）。
+   * 不透明にすると、どの画面でも中央値の最小が 8.6 を超えた
+   */
   /** 角丸の札か、金の額縁か */
   frame: "round" | "gold";
-  /** 札の地（字が読めるように、背景の配信画面を沈める） */
+  /** 札の地（字が読めるように、背景の配信画面から切り離す） */
   bg: string;
   /** 縁の色 */
   edge: string;
+  /** 字の縁取りの色（札の地を暗くした色） */
+  ink: string;
   nameColor: string;
   amountColor: string;
   nameSize: number;
@@ -289,8 +298,9 @@ export const THEMES: SeasonTheme[] = [
         min: 0,
         plate: {
           frame: "round",
-          bg: "rgba(10,38,44,0.82)",
+          bg: "rgb(10,38,44)",
           edge: "#7CF5DA",
+          ink: "#04171B",
           nameColor: "#FFFFFF",
           amountColor: "#8CFFE0",
           nameSize: 48,
@@ -306,8 +316,9 @@ export const THEMES: SeasonTheme[] = [
         min: 1000,
         plate: {
           frame: "round",
-          bg: "rgba(48,22,6,0.84)",
+          bg: "rgb(48,22,6)",
           edge: "#FFB238",
+          ink: "#1E0C02",
           nameColor: "#FFFFFF",
           amountColor: "#FFC845",
           nameSize: 56,
@@ -323,8 +334,9 @@ export const THEMES: SeasonTheme[] = [
         min: 5000,
         plate: {
           frame: "round",
-          bg: "rgba(44,8,46,0.84)",
+          bg: "rgb(44,8,46)",
           edge: "#FF6AD5",
+          ink: "#1B031C",
           nameColor: "#FFFFFF",
           amountColor: "#FF8CE4",
           nameSize: 64,
@@ -349,6 +361,7 @@ export const THEMES: SeasonTheme[] = [
           frame: "gold",
           bg: "rgba(58,4,16,0.88)",
           edge: "#F4C24E",
+          ink: "#2A0208",
           nameColor: "#FFF1C9",
           amountColor: "#FFD54F",
           nameSize: 76,

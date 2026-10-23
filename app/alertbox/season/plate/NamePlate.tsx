@@ -74,7 +74,7 @@ export const NamePlate: React.FC<Props> = ({
   }, [lines.amount, plate.amountSize, k, innerW]);
 
   const gold = plate.frame === "gold";
-  const ink = gold ? "#2A0208" : "#08060E";
+  const ink = plate.ink;
   const outline = (w: number) =>
     [
       `${w}px 0 0 ${ink}`,
