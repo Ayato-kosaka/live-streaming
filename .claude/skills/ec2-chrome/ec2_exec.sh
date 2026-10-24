@@ -4,7 +4,7 @@
 #   列は EC2_QUEUE_LANE（既定 exec。doneru-cookie の入口は doneru を渡す）
 #
 # 起きっぱなしの箱を何回にも分けて触るときは ec2.py run を使う。
-# 起こしたあと、実行の前に cdp.py を EC2 へ置き直す（リポジトリの版と食い違わないように）。
+# 起こしたあと、実行の前に cdp.py を EC2 へ置き直す（リポジトリの版と食い違わないように。EC2 のほうが新しければ置かない）。
 #
 # **止めるのは ec2.py stop を通す（2026-10-24）。** 前はここで無条件に stop-instances を打っていて、
 # ほかの担当やあやとが使っている最中でも止めていた。いまは、ほかの SSM・鍵・遠隔デスクトップ・札
@@ -73,15 +73,13 @@ fi
 # ---- 内側: ec2.py hold の中で回る（EC2 は起きていて、EC2_QUEUE_TICKET に札がある） ----
 log "=== 札: ${EC2_QUEUE_TICKET:-（なし）} ==="
 
-# cdp.py（Chrome を CDP で触る道具）を毎回置き直す。EC2 に残っている古い版で動かさない
-CDP_SRC="$(dirname "$0")/cdp.py"
+# cdp.py（Chrome を CDP で触る道具）を毎回置き直す。EC2 に残っている古い版で動かさない。
+# **ただし EC2 のほうが新しい版（番号が大きい）なら置かない**（下げない）。比べるのは ec2.py put
+# （cdp_heal.sh の place）。前はここで直に base64 -d > cdp.py と書いていて、古い枝のこの道具が
+# 札を取らない版を書き戻していた（2026-10-24。いまは EC2 の cdp-heal が戻す）
+CDP_SRC="$HERE/cdp.py"
 if [ -f "$CDP_SRC" ]; then
-  jq -n --arg b "$(base64 -w0 "$CDP_SRC")" \
-    '{commands: ["mkdir -p /home/ubuntu/cdp && echo \($b) | base64 -d > /home/ubuntu/cdp/cdp.py && chown -R ubuntu:ubuntu /home/ubuntu/cdp && sha256sum /home/ubuntu/cdp/cdp.py"]}' > "$PARAMS_FILE"
-  SYNC_ID=$(timeout 30 $AWSP ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
-    --parameters "file://$PARAMS_FILE" --query 'Command.CommandId' --output text 2>>"$LOG")
-  sleep "${EC2_EXEC_SYNC_WAIT:-4}"
-  log "cdp.py sync: $(timeout 30 $AWSP ssm get-command-invocation --command-id "$SYNC_ID" --instance-id "$INSTANCE_ID" --query StandardOutputContent --output text 2>>"$LOG" | cut -c1-16) (local $(sha256sum "$CDP_SRC" | cut -c1-16))"
+  log "cdp.py sync: $(timeout 300 python3 "$EC2PY" put "$CDP_SRC" /home/ubuntu/cdp/cdp.py 2>&1 | tail -1) (local $(sha256sum "$CDP_SRC" | cut -c1-16))"
 fi
 
 run_one_command() {

@@ -71,7 +71,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BREAK = os.environ.get("BREAK", "")
-NAMES = ("ec2_queue.py", "ec2.py", "idle_stop.sh", "ec2_exec.sh", "cdp.py")
+NAMES = ("ec2_queue.py", "ec2.py", "idle_stop.sh", "ec2_exec.sh", "cdp.py", "cdp_heal.sh")
 REAL = {n: HERE for n in NAMES}
 NOW = 1_792_900_000.0
 BOOT = NOW - 86_400
@@ -157,7 +157,7 @@ DEPS: dict[str, set[str]] = {
     "idle_stop_live_dead": {"idle_stop.sh", "ec2_queue.py"},
     "idle_stop_failsafe": {"idle_stop.sh", "ec2_queue.py"},
     "stop_flow": {"ec2.py", "ec2_queue.py", "idle_stop.sh"},
-    "exec_respects": {"ec2_exec.sh", "ec2.py", "ec2_queue.py", "idle_stop.sh", "cdp.py"},
+    "exec_respects": {"ec2_exec.sh", "ec2.py", "ec2_queue.py", "idle_stop.sh", "cdp.py", "cdp_heal.sh"},
     "lease_local": {"ec2.py", "ec2_queue.py"},
     "cdp_hold": {"cdp.py", "ec2_queue.py"},
 }
@@ -763,6 +763,7 @@ class FakeEC2:
         (self.home / "locks").mkdir(parents=True)
         self.qdir = self.d / "q"
         self.qdir.mkdir()
+        self.canon = self.d / "canon"
         self.proc = self.d / "proc"
         self.proc.mkdir()
         (self.proc / "stat").write_text(f"btime {time.time() - 3600}\n")
@@ -779,8 +780,10 @@ class FakeEC2:
         (self.d / "config.json").write_text(json.dumps({
             "proc": str(self.proc), "bin": str(self.bin),
             "env": {"EC2_QUEUE_DIR": str(self.qdir), "EC2_QUEUE_PROC": str(self.proc)},
+            # cdp.py の正の版と戻した記録（ec2.py put が cdp_heal.sh の字を送ってくる）も、手元の置き場へ
             "subst": [["/usr/local/sbin/ec2-queue", str(self.queue)], ["/usr/local/sbin/desktop-input", str(di)],
-                      ["/home/ubuntu", str(self.home)]]}))
+                      ["/home/ubuntu", str(self.home)], ["/usr/local/lib/ec2-chrome", str(self.canon)],
+                      ["/var/log/cdp-heal.log", str(self.d / "cdp-heal.log")]]}))
         self.aws_cmd = [PY, str(self.fake), "--dir", str(self.d)]
 
     def shift(self, s: float):
@@ -941,7 +944,7 @@ def leg_exec_respects(b: Bench):
         if shutil.which("aws", path=path) != str(f.bin / "aws"):
             return [("偽の aws が PATH の頭に無い（本物の aws に届くので回さない）", False)]
         env = dict(os.environ, PATH=path, EC2_CHROME_INSTANCE_ID=FakeEC2.INSTANCE, EC2_CHROME_LOG=str(log),
-                   EC2_CHROME_PARAMS=str(f.d / "params.json"), EC2_EXEC_SYNC_WAIT="0", EC2_EXEC_RETRY_S="0",
+                   EC2_CHROME_PARAMS=str(f.d / "params.json"), EC2_EXEC_RETRY_S="0",
                    EC2_PY_TIME_SCALE="0.01", EC2_QUEUE_LANE="doneru", AWS_CONFIG_FILE="/nonexistent/aws-config",
                    AWS_SHARED_CREDENTIALS_FILE="/nonexistent/aws-credentials")
         for k in ("EC2_QUEUE_TICKET", "EC2_QUEUE_WHO", "EC2_QUEUE_PURPOSE", "AWS_PROFILE"):

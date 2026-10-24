@@ -27,15 +27,17 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`（**道具だけ。中身が SSM のログに残る**。4）・`state`/`start`・`stop [--force]`（**使っている人が居れば止めずに 1**。2）・`guard`（止め忘れの見張り・`desktop-input`・`ec2-queue`・`cdp.py` を入れ直す。2）・**`hold <列> --who --purpose -- <コマンド>`**（札を取って回し、必ず返す）・`queue`（誰が何を持ち、誰が待っているか）。Python からは `with ec2.lease(列, …):`（2.5） |
+| `ec2.py` | 手元 | `run <sh> [秒]`（EC2 で実行して出力を出す）・`get <EC2> <手元>`・`put <手元> <EC2>`（**道具だけ。中身が SSM のログに残る**。4）・`state`/`start`・`stop [--force]`（**使っている人が居れば止めずに 1**。2）・`guard`（止め忘れの見張り・`desktop-input`・`ec2-queue`・`cdp.py` の正の版と戻す見張り `cdp-heal` を入れ直す。2・2.5）・**`hold <列> --who --purpose -- <コマンド>`**（札を取って回し、必ず返す）・`queue`（誰が何を持ち、誰が待っているか）。Python からは `with ec2.lease(列, …):`（2.5） |
 | `ec2_queue.py` | EC2（`/usr/local/sbin/ec2-queue`。`guard` が置く） | 順番待ちの札。列ごとに1人だけが持つ札と、先着の待ち札を EC2 の中（`/var/lib/ec2-queue`）に置く。`take`・`beat`・`release`・`list`・`busy`（idle-stop が聞く）・`stop-mark`（止める印）・`hold <列> -- <コマンド>`（EC2 の上の一括用）（2.5） |
 | `ec2_queue_selftest.py` | 手元 | 札の見張り。偽の EC2・偽の時計・偽の pid・偽の起動時刻で14本の足を回し、守りを1つずつ外した対照26個も当てる（2分ほど）。**本物の EC2 に触らない**。札・`ec2.py`・`idle_stop.sh`・`ec2_exec.sh`・`cdp.py` の札の段を触ったら回す |
+| `cdp_heal.sh` | EC2（`/usr/local/sbin/cdp-heal`。`guard` が置く。systemd の `cdp-heal.path` と5分ごとの cron が呼ぶ） | `/home/ubuntu/cdp/cdp.py` の版の番号が**正の版**（`/usr/local/lib/ec2-chrome/cdp.py`。root だけが書ける）より小さく（無く）なったら、書かれた瞬間に正の版に戻し、`/var/log/cdp-heal.log` に1行書く。手元の道具が置くときの比べ（`place`）もこれ（2.5） |
+| `cdp_heal_selftest.py` | 手元 | `cdp-heal` の見張り。古い版が戻る・同じ番号と大きい番号は戻さない・手元の置く道具（`ec2.put`・`ec2.py put`・`ec2_exec.sh`・`post.py send`）が下げない・戻した版で `up()` が札を取る・guard と .path / cron、の5本と、守りを1つずつ外した対照（30秒ほど）。**本物の EC2 に触らない**。`cdp_heal.sh`・`cdp.py`・`ec2.py` の put / guard・`ec2_exec.sh` の置き直しを触ったら回す |
 | `stop_guard_selftest.py` | 手元 | `ec2.py stop` の守りの見張り。偽の EC2（`run` と `aws` を差し替え）で回し、守りを1つずつ外した対照も当てる。**本物の EC2 に触らない**。`ec2.py`・`idle_stop.sh` を触ったら回す |
 | `tools/shorts/post/send.py`（リポジトリの） | 手元 | `put <手元> <EC2> …`。**動画・秘密はこちらで送る。** GCS の署名付き URL を EC2 が `curl` で落とし、sha256 を照らす（中身は SSM のコマンドに載らない。4） |
-| `ec2_exec.sh` | 手元 | **起こして → 札を取って実行して → 返して → 止めてよければ止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ。列は `EC2_QUEUE_LANE`、既定 `exec`）。実行の前に `cdp.py` を EC2 へ置き直す。止めるのは `ec2.py stop` を通すので、使っている人が居れば止めずに「idle-stop に任せる」とログに書く |
+| `ec2_exec.sh` | 手元 | **起こして → 札を取って実行して → 返して → 止めてよければ止める。** 箱が止まっているときの1回ぶん（Doneru の cookie 取りがこれ。列は `EC2_QUEUE_LANE`、既定 `exec`）。実行の前に `cdp.py` を EC2 へ置き直す（`ec2.py put` を通すので、EC2 のほうが新しい版なら置かない）。止めるのは `ec2.py stop` を通すので、使っている人が居れば止めずに「idle-stop に任せる」とログに書く |
 | `idle_stop.sh` | EC2（`/usr/local/sbin/idle-stop`、root の cron で5分ごと） | 誰も使っていない時間が30分続いたら EC2 を止める（2） |
 | `desktop_input.py` | EC2（`/usr/local/sbin/desktop-input`、systemd の `desktop-input.service`） | 遠隔デスクトップ（:20）に**人の本物の入力**が最後にあった時刻を控える。`desktop-input idle` が「何ミリ秒前か・出どころ」を1行で出す。投稿の GUARD と idle-stop が聞く（2） |
-| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（拡張・部品の更新なし。無ければ既定のプロファイルから不要物を落として1回だけ複製。3）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`**。**`up`・`tab`・`pages` は、列 `名前` の札を持っていなければ、そのプロセスの pid で取る**（取れるまで待つ。2.5） |
+| `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（拡張・部品の更新なし。無ければ既定のプロファイルから不要物を落として1回だけ複製。3）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`**。**`up`・`tab`・`pages` は、列 `名前` の札を持っていなければ、そのプロセスの pid で取る**（取れるまで待つ。2.5）。頭に版の番号 `CDP_VERSION`。**EC2 の上では正の版より古くなると戻る。中身を変えたら番号を上げる**（2.5） |
 | `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む・ファイルを渡す（`chatgpt` スキル）。絵を作るのは `chatgpt-image` |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
 
@@ -54,7 +56,7 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/x.png /tmp/claud
 ページを開いて、いちばん大きい絵を**ページの中の fetch で**取る。ChatGPT の絵の URL は数分で切れる
 署名付きなので、URL を写して後から curl しても取れない。ログインの要らないページなら、どこでも同じ。
 
-最初に1回、`cdp.py` を置く:
+最初に1回、`cdp.py` を置く（EC2 のほうが新しい版なら「置かなかった」と出て、そのまま EC2 の版で続ければよい。2.5）:
 
 ```bash
 python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/ec2-chrome/cdp.py /home/ubuntu/cdp/cdp.py
@@ -189,10 +191,32 @@ with ec2.lease("fish", who="voice", purpose="A/01〜A/13"):   # 取れるまで�
   - 何本かを続けて流すあいだに割り込まれたくなければ、1本の `ec2-queue hold <列> … -- sh -c '<1本目> && <2本目> …'` にまとめる
     （中のプロセスは札を受け継ぐ）
 - **呼ぶ側が忘れても守る:** `cdp.py` の `up`・`tab`・`pages` は、列の札を持っていなければそのプロセスの pid で取る（取れるまで待つ）。
-  ほかのタブを全部閉じる道具（各スキルの `fresh_tab`・`studio()`・`fresh()`）はどれもここを通る。**効くのは EC2 の
-  `/home/ubuntu/cdp/cdp.py` が新しい版のとき。** 古い版を `put` で置き直す道具（古い枝のセッション）があると、その間は効かない
+  ほかのタブを全部閉じる道具（各スキルの `fresh_tab`・`studio()`・`fresh()`）はどれもここを通る。効くのは EC2 の
+  `/home/ubuntu/cdp/cdp.py` が札を取る版のときなので、**古い版で上書きされたら EC2 の上で正の版に戻す**（下の「EC2 の cdp.py は正の版に戻る」）
 - **止める:** 自分の札を返してから `ec2.py stop`。札が1枚でも残っていれば断られる。止める印を見た人（札を取りに来た人・`run`）は、
   止まりきるのを待って起こし直してから続ける。印は10分か起動で消える（止める人が途中で死んでも、列は塞がったままにならない）
+
+### EC2 の cdp.py は正の版に戻る（2026-10-24 から）
+
+札を入れた日の 10:10 UTC、EC2 の `/home/ubuntu/cdp/cdp.py` が札を取らない古い版に戻っていた。古い枝のセッションが、
+使うたびに手元の版を置き直す道具（`ec2_exec.sh`・`post.py send`）で書き戻した。「最後に置いた人の版が効く」形では、
+古い枝が1回置くだけで札の守りが黙って外れ、古い枝の道具はこちらから直せない。だから戻すのは EC2 に持たせてある。
+
+- `cdp.py` の頭に版の番号 `CDP_VERSION`（行頭から `CDP_VERSION = <数>`）。行が無い版は 0（札の前の版と、札を入れた最初の版）
+- `ec2.py guard` が、root だけが書ける `/usr/local/lib/ec2-chrome/cdp.py` に**正の版**を置く（今の正の版より小さければ置かない）
+- EC2 の `cdp-heal`（`cdp_heal.sh`）が、`/home/ubuntu/cdp/cdp.py` の番号が正の版より小さい（無い・ファイルが消えた）ものを
+  **書かれた瞬間に**戻す（systemd の `cdp-heal.path` の `PathChanged=`。1秒置いて読み直してから戻す）。保険に root の cron で
+  5分ごと（`/etc/cron.d/cdp-heal`。idle-stop の cron とは別のファイルなので、古い枝の guard が idle-stop を入れ直しても消えない）。
+  戻したら `/var/log/cdp-heal.log` に「どの番号（sha256）を、正の版の何番（sha256）に戻した」を1行
+- **番号が正の版と同じか大きいものは触らない。** 新しい枝のセッションが新しい版を置いたら、それが生きる
+- 手元から置く道具（`ec2.py put` で `/home/ubuntu/cdp/cdp.py` に置くもの全部・`ec2_exec.sh`・`ec2.py guard`）も、
+  EC2 の版（生きている版と正の版の大きいほう）が手元より大きければ置かない（「置かなかった」と出て、落ちずに続く）
+- 呼び名は変えない。古い枝の道具（`up(name)` など）は、戻された版をそのまま呼んで札を取る
+
+**新しい版を出すときは、番号を上げる。** 上げずに中身だけ変えると、EC2 に残っている同じ番号の古い中身は戻されずに残る
+（同じ番号は「新しい枝のもの」として触らないので）。上げたら master に入れて `ec2.py guard` で正の版を入れ直す。
+試すだけなら番号を上げずに `put` する（同じ番号は置ける。上げて置くと、その版が EC2 に居座る）。
+いまの版と見張りは `ec2.py run` で `/usr/local/sbin/cdp-heal status`（`cdp: live=<番号> <sha256> canon=<番号> <sha256> path=active cron=…`）。
 
 **札の消えかた:** 手元のセッションの札は、**心拍（同じプロセスのスレッドが2分ごと）が10分途切れたら**失効する。
 心拍を切り離した裏のプロセスで打たない（セッションが死んでも心拍だけ生き残ると、EC2 が止まらなくなる）。

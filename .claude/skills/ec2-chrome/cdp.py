@@ -36,8 +36,21 @@ fish の Chrome で同時に `tt_post.py` を回し、片方の `fresh_tab` が�
 （kill -9 でも）次の確かめで消える。手元のセッションが `ec2.py lease` / `ec2.py hold` で取った札は、
 `ec2.py run` が `EC2_QUEUE_TICKET` で渡してくるので、取り直さずにそれを使う（自分の札を待って詰まらない）。
 EC2 に `ec2-queue` が無い・答えないときは、札なしで進む（Chrome の道具を止めない。止める側の守りは idle-stop が持つ）。
+
+## 版の番号（CDP_VERSION。2026-10-24）
+
+札を入れた日のうちに、EC2 の `/home/ubuntu/cdp/cdp.py` が札を取らない古い版に戻っていた。古い枝のセッションが、
+使うたびに手元の版を置き直す道具（`ec2_exec.sh`・`post.py send`）で書き戻した。だから EC2 の上の `cdp-heal`
+（`cdp_heal.sh`）が、ここが**正の版**（`ec2.py guard` が `/usr/local/lib/ec2-chrome/cdp.py` に置く）より小さい番号に
+なったら、すぐ正の版に戻す。手元から置く道具（`ec2.py put`・`ec2_exec.sh`・`ec2.py guard`）も、EC2 のほうが
+大きい番号なら置かない。**中身を変えて master に入れるときは番号を上げる**（上げないと、EC2 に残っている
+同じ番号の古い中身が戻されずに残る）。番号の行が無い版は 0（札の前の版と、札を入れた最初の版 #1027）。
+呼び名（`up(name)` など）は変えない。古い枝の道具が、戻された版をそのまま呼ぶ。
 """
 import atexit, base64, json, os, re, subprocess, sys, time, urllib.request
+
+# 版の番号（上の「版の番号」）。行の形は `cdp_heal.sh` の ver() が読む（行頭から `CDP_VERSION = <数>`）
+CDP_VERSION = 2
 
 HOME = "/home/ubuntu"
 SRC_UDD = f"{HOME}/.config/google-chrome"
