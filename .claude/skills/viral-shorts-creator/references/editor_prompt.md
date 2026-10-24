@@ -127,8 +127,9 @@ fish の Chrome（`/home/ubuntu/cdp-fish`）は、声を作る担当と TikTok �
 - 取る: `fish_web.py` と `tt_post.py`（`post.py tt-post`）は、どちらも札を自分で取る。ほかの人が持っていれば、何番目で誰かを出して空くまで待つ。
   手元で何手にも分けて触るなら `python3 $E hold fish --who <名前> --purpose '<何のため>' -- <コマンド>`（終われば返す）
 - **鍵（`~/locks/fish-voice`）はもう置かない・見ない。** 札は持ち主のプロセスが死ねば消えるので、消し忘れも起きない
-- `backup` → `state` → `gen` のあいだにほかの人に下書きを触られたくなければ、1本にまとめて流す:
-  `nohup /usr/local/sbin/ec2-queue hold fish --who <名前> --purpose '声 <回>' -- sh -c 'python3 fish_web.py backup && python3 fish_web.py gen …' > <ログ> 2>&1 &`
+- `backup` → `state` → `gen` のあいだにほかの人に下書きを触られたくなければ、3つを `&&` でつないだ1本の sh にして、
+  `nohup /usr/local/sbin/ec2-queue hold fish --who <名前> --purpose '声 <回>' -- sh -c '<つないだもの>' > <ログ> 2>&1 &` で流す
+  （中のプロセスは札を受け継ぐ。`ec2-chrome` 2.5）
 - 止める: 自分の札を返してから `python3 $E stop`。ほかの人の札があれば断られるので、そのまま置いておく（誰も使わなくなって30分で見張りが止める）
 
 **札を待つあいだに**（声が無くても進む所）: 素材を開く・コマ一覧と `stutter.py` で区間を選ぶ・0秒目を選ぶ → spec と overrides を書く →
