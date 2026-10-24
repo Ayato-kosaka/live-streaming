@@ -556,6 +556,20 @@ export const RECIPES: Recipe[] = [
       { label: "調理", date: "2026-10-16", videoId: "E2oGYjnVQSA", title: "北マケドニアでグラムチャウダー作ります" },
     ],
   },
+  {
+    slug: "cheese-olive-focaccia",
+    name: "チーズオリーブフォカッチャ",
+    emoji: "🫓",
+    icon: "food-cheese-cut",
+    country: "north-macedonia",
+    kind: "flour",
+    date: "2026-10-22",
+    note: "フライパン1つで作るワンパンフォカッチャ。強力粉もはかりも無く、発酵がうまく進まずに何度もやり直して3時間かかった。入れそびれたオリーブは、焼く前に指で開けた穴へ押し込んだ。",
+    streams: [
+      { label: "買い出し", date: "2026-10-21", videoId: "0upPnKMc5po", title: "北マケドニアでフライパンパンパン作りの作戦会議&買い出しや" },
+      { label: "調理", date: "2026-10-22", videoId: "VusdZVyjgjQ", title: "北マケドニアでチーズオリーブフォカッチャつくろー！" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);

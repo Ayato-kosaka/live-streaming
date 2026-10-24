@@ -18,7 +18,17 @@ fs.mkdirSync(outDir, { recursive: true });
 
 // 絞り込みはカンマ区切りで複数渡せる。直したものだけ焼き直して見比べるため
 const keys = only ? only.split(",").filter(Boolean) : null;
-let list = keys ? SPRITES.filter((s) => keys.some((k) => s.name.includes(k))) : SPRITES;
+// EXACT=1 で、名前を「その絵と、その hero/」にだけ当てる。
+// 既定の「名前の一部」だと food-cheese が food-cheese-cut や food-burger-cheese まで拾い、
+// 頼んでいない絵がいまのキットで焼き直されてしまう（Actions で焼くときはこちら。bake_sprites.yml）
+const hit = process.env.EXACT ?
+  (name, k) => name === k || name === `hero/${k}` :
+  (name, k) => name.includes(k);
+let list = keys ? SPRITES.filter((s) => keys.some((k) => hit(s.name, k))) : SPRITES;
+if (keys && !list.length) {
+  console.error(`焼くものが無い: ${keys.join(", ")}（manifest.mjs の name と合っているか）`);
+  process.exit(2);
+}
 // RESUME=1 で、まだ .png が無いものだけ焼く。
 // meta.py は webp に変えたあと .png を消すので、「.png が残っている」＝
 // 「この回で焼き終えた」の印になる。落ちても同じコマンドで続きから焼ける
@@ -99,3 +109,7 @@ for (const s of list) {
 }
 console.log(failed.length ? `\n焼けなかった: ${failed.join(", ")}` : "\n完了");
 await browser.close();
+// 名前を指して焼いたのに焼けなかったら、落ちたことにする。
+// 黙って 0 で終わると、続く meta.py が前の絵のまま寸法表を書き直し、焼けたように見える。
+// ぜんぶ焼くとき（絞り込み無し）は、キットが新しくて落ちる部品がある前提なので今までどおり
+if (keys && failed.length) process.exitCode = 1;
