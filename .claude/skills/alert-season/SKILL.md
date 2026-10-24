@@ -1,103 +1,94 @@
 ---
 name: alert-season
-description: 投げ銭アラート（app/alertbox）の季節テーマ（貯金箱と、投げ銭の後ろに出る小物）を提案して作って出す手順。いま適用するならどれかを数案出し、あやとが選んだものを ChatGPT（EC2 の Chrome）で描き、コマ送りの貯金箱・金額4段の小物・締めの群れにして、録画を見せてから本番に出す。期間が終われば豚に戻る。トリガー語:「季節テーマ」「アラートの季節」「貯金箱を季節に」「ハロウィン仕様」「クリスマス仕様」「投げ銭アラートを刷新」「alert-season」。
+description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだん出ている貯金箱のマスコットと、金額7段の演出）を提案して作って出す手順。季節の候補を出す → 設定画で目線を合わせる → ChatGPT（EC2 の Chrome）でポーズ絵と部品を描く → 段ごとに動かす → 本物の配信画面の縦の録画で見せる → 出す。期間が終われば豚に戻る。トリガー語:「季節テーマ」「アラートの季節」「貯金箱を季節に」「ハロウィン仕様」「クリスマス仕様」「投げ銭アラートを刷新」「alert-season」。
 ---
 
 # 投げ銭アラートの季節テーマ
 
-最初の1本はハロウィン（#1022 / PR #1023）。ここはその手順を次の季節でも同じに回すための紙。
+最初の1本はハロウィン（#1022）。1回目は 20点で下ろし（`docs/island-misses.md` #301）、
+作り直しでも外し方を重ねた（#303）。ここはその2回ぶんの決まりを、次の季節でも同じに回すための紙。
 
-## 0. 決まっていること（#1022、あやと 2026-10-23）
+## 0. 決まっていること（#1022、あやと 2026-10-23〜24）
 
 | | 決め |
 | --- | --- |
-| 何を変えるか | **貯金箱**（豚の代わりの器。溜まる色も季節の色）と、**投げ銭の後ろに出る小物**（キャラの絵より奥。最後に何かが群れで横切って締める） |
-| 小物の量 | **金額で4段**: 〜999 / 1,000〜4,999 / 5,000〜9,999 / 10,000〜（superchat は `jpy`） |
-| 名簿の絵文字の花火・雨 | **両方出す**（季節のものは後ろ） |
-| 効果音 | **変えない**（`Coins.mp3`） |
-| 期間外 | **豚に戻る**（今の豚と画素まで同じであること） |
-| 背景 | **塞がない。** 中央は空ける。ベタ塗りしない |
-| 誰が選ぶか | **こちらが提案し、あやとが選ぶ**（どの季節を作るかは仕様なので、こちらで決めない） |
-| 見せ方 | **録画で見せる**（あやとが録画で確認したいと言った） |
+| 基準 | **TikTok のギフトの水準**。「前より良い」は基準ではない |
+| 段 | **スパチャの7色の切れ目**: 〜199 青 / 200〜499 水色 / 500〜999 緑 / 1,000〜1,999 黄 / 2,000〜4,999 橙 / 5,000〜9,999 マゼンタ / 1万〜 赤（superchat は `jpy`） |
+| 金額の感覚 | 1,000円越えは高額（3日に1回）、5,000円越えは月1、1万越えは年2 |
+| 段の上がり方 | **数を増やして段を作らない。** 段ごとに主役を替え、前兆・画面の広さ・長さ・主役の大きさ・光と粒を同時に上げる。999 と 1,000 の差をいちばん大きく（〜999 は脇役たち、1,000〜 は**あやとが出る**）。1万〜は「超絶リッチ」 |
+| 人のキャラ | **「島を歩くあやと」がモチーフ**（`site/public/characters/ayato.webp`・`ayato-walk.webp`）。顔・巻き毛・ちびキャラ・ステッカー風の塗りを残して仮装させる。**歩きのポーズにしない**（見せ場のポーズで） |
+| 字 | 名前・額・メッセージは**その人のキャラ絵の上下中央**（今までの仕様どおり）。**背景の箱を使わない**。字そのものをリッチに（太い縁取り・影・額は段の色・1字ずつ弾む・額の数え上げと「ドン」）。季節の外も同じ大きさと縁取りで読みやすく |
+| 隠さない（厳禁） | **演出（主役・粒・光）は、その人のキャラ絵の顔に乗せない。字は、あやと（主役）の顔に乗せない** |
+| 前兆の暗さ | ウィジェットは画面いっぱいではない。暗さは**箱の縁で 0 に溶かす**（四角い暗い箱を浮かせない） |
+| 音 | **配信に出ない**ので作らない |
+| 期間外 | **豚に戻る**（今の豚と画素まで同じ） |
+| 見せ方 | **動画で見せる**。止めた絵は「描けた」の報告まで |
 
-## 1. 提案する（issue で）
+## 1. 配信の画面（実測。推測しない）
 
-1. `app/alertbox/themes.ts` の `THEMES` を読み、**いま効いているテーマと、次に切れる日**を出す
-2. 今日から先 6〜8 週の季節の候補を、表で出す（期間（JST）・器 → 溜まる色・小物・締め）。
-   作るのに 1 日、録画で直して 1〜2 日かかるので、**始まりまで 1 週間を切るものは「今年は間に合わせ」と書いて分ける**
-3. `/ask-ayato` の形で issue に書き、通知を飛ばす。**返事を待つあいだは止まらない**（下の 2 の道具の手入れ・去年の絵の点検など）
-4. **去年と同じ季節なら、絵は使い回せる**（`public/alert/themes/<id>/`）。その場合は「去年の絵で日付だけ足す / 描き直す」を選択肢として並べる
+- アプリは **PRISM Live（スマホ）**、配信は 9:16。貯金箱とアラートは**同じウィジェット**
+- ウィジェットのページの大きさ（CSS px）: **ふだん 436×776、投げ銭のとき手で広げて 664×1180**（9:16 のまま大きさだけ変わる）。PRISM の「140%」は、ページを 1.4 倍に拡げて見せる倍率
+- **resize の知らせが絶えず来る**（数百回）。寸法で React を描き直さない（rAF で1回にまとめ、1px 未満は捨てる）。react-native-web の `useWindowDimensions` は visualViewport を読み、ページ幅の半分を返す（豚が箱の4割に出るのはこれ）
+- 迷ったら測る: ウィジェットの URL を一時的に `https://live-streaming-d3cac.web.app/alert/probe` に向けてもらい、2枚撮ってもらう（`public/alert/probe.html`）
+- 録画の箱（1080×1920 の配信画面の座標）: ふだん `--frame 401,722,607,1082 --zoom 1.39`、広げたとき `--frame 76,445,927,1452 --zoom 1.40`
+- 配信画面の背景（`--bg street|face|alert-now|alert-fish`）はスクラッチの `bg/` に置く。**本人の顔が写っているので git に入れない**
 
-## 2. 描く（ChatGPT、EC2 の Chrome）
+## 2. 提案する（issue で）
 
-操作は `/chatgpt`・`/chatgpt-image`。**1つの会話で続けて描かせる**（絵柄が揃う）。
-タッチは LINE スタンプ風・太めの焦げ茶の輪郭線・かわいく、怖くしない（アラートは島の外なので
-`docs/island-design.md` §2 の「輪郭線を引かない」は当てない）。
+1. `app/alertbox/themes.ts` の `THEMES` を読み、いま効いているテーマと次に切れる日を出す
+2. 今日から 6〜8 週の季節の候補を、7段の主役の表で出す。作るのに 2〜3 日かかる（ハロウィンは設計からリリースまで約2日）
+3. `/ask-ayato` の形で issue に書き、通知を飛ばす。待つあいだは止まらない
+4. **目線合わせは「設定画を並べた資料」と「動画」で。** 全段の主役の表・人のキャラの仮装を並べた設定画・脇役の設定画・秒ごとの流れを1枚のページ（Artifact）にまとめ、レビューは「1,000円未満から1本・1,000円以上から1本」の動画で合わせる。合えば残りはリリースまで任される
 
-置き場 `public/alert/themes/<id>/`、すべて透過 PNG:
+## 3. 描く（ChatGPT、EC2 の Chrome）
 
-| ファイル | 中身 | 作り方 |
-| --- | --- | --- |
-| `bank-fill-0..3.png` | 満タンの器の**動きの4コマ**（外形はほぼ同じで、表情・灯り・ヘタなどで動かす）。横長 約 2.1:1、幅 1200 | ChatGPT に**1枚のシート（2×2 か 4×1）**で描かせ、`alert_theme.py frames` で切って位置を揃える |
-| `bank-base-0..3.png` | 空の器 | **描かせない。** `alert_theme.py base` で fill から作る（透明度を1画素も変えないので、溜まる境目がずれない） |
-| `fx-*.png` | 小物（長辺 332 前後） | シートで描かせて `split` → `item` |
-| 締めの2コマ（例 `fx-bat-0/1.png`） | 横切る群れの羽ばたき | 同上。2コマを同寸法・同位置に |
-| `manifest.json` | 寸法と、bank の中身の外接矩形 | `alert_theme.py manifest` |
+操作は `/chatgpt`・`/chatgpt-image`。**1つの会話で続けて描く**（絵柄が揃う）。EC2 は鍵を持って使い、終わったら止める
+（ほかのセッションが止めることがある。止まったら起こし直して時刻を控える）。返事待ちが 600 秒で切れても、会話を開き直すと絵はできていることがある。
 
-```bash
-python3 tools/alert-theme/alert_theme.py frames <シート.png> public/alert/themes/<id>/bank-fill --grid 2x2 --width 1200
-for i in 0 1 2 3; do python3 tools/alert-theme/alert_theme.py base public/alert/themes/<id>/bank-fill-$i.png public/alert/themes/<id>/bank-base-$i.png; done
-python3 tools/alert-theme/alert_theme.py split <小物シート.png> <scratch>/fx --grid 3x2
-python3 tools/alert-theme/alert_theme.py item <scratch>/fx-0.png public/alert/themes/<id>/fx-<名前>.png --long 332
-python3 tools/alert-theme/alert_theme.py manifest public/alert/themes/<id>
-python3 tools/alert-theme/alert_theme.py preview public/alert/themes/<id> <scratch>/prev   # 紺と緑の地・4コマの GIF・溜まり見本
-```
+1. **設定画を先に**: あやとの仮装を4つ並べた1枚・脇役を並べた1枚。ここで可愛くなければ全部が可愛くない。オーナーの目線合わせにも使う
+2. **あやとは「ポーズ絵」**（部品に分けない）: 並べた設定画からその仮装を切り出して添え、「この子の次のポーズ」と頼む。見せ場ごとに1枚（例: 魔法使い fly / cast / idle、ドラキュラ rise / spread / idle）。**設定画と並べて、顔が同じで崩れていないかを見てから使う**。顔の幅は仮装の中でそろえる（切り替えで顔が跳ねない）
+   ```bash
+   python3 tools/alert-theme/poses.py add <置き場> <名前> <ChatGPT の絵.png> --face-w 300
+   python3 tools/alert-theme/poses.py check <置き場> <out.png>     # 紺と緑の地・顔の枠
+   python3 tools/alert-theme/poses_webp.py ...                      # WebP q90 に（容量が半分）
+   ```
+   ChatGPT は「透過で」と頼んでも市松模様を描いて返すことがある（poses.py が地として抜く）
+3. **小さな脇役と小物は「部品」**（切り絵。60fps で体ごと動かす）: 貯金箱のマスコット・かぼちゃ坊や・おばけ・こうもりなど。関節の側を丸く余分に描かせ（重なりしろ）、`rigbuild.py` で rig.json と PNG を作り、`rig.py jointcheck` で ±30° 回して穴 0
+4. 置き場: `public/alert/themes/<id>/poses/<仮装>/`（poses.json: 寸法・中身の外接矩形・顔の枠・足元・向き）、`rig/<名前>/`（rig.json: parts の id・parent・pivot・at・z・swaps、anchors・items）、`items/<段>/`（items.json）
+5. 黒い体・黒い服は、外形にだけ光のふち（ラベンダー・金・淡い紫）を付ける。配信者の黒い服や暗転の上で溶ける
 
-**合格**: 白いフチ・にじみが無い（`preview` の紺と緑で目視）／ base と fill の透明でない範囲が一致／
-4コマを重ねて外形が跳ねない／合計 2MB 以下。
+## 4. 動かす（`app/alertbox/season/`）
 
-## 3. 定義を足す（`app/alertbox/themes.ts`）
+- 段を足すのは「`season/show/` に1ファイル＋ `TierShow.tsx` の kind に1分岐＋ `themes.ts` の段の `show` 1件」。テーマを足すのは `THEMES` に1件
+- 主役は登場で箱の中央を使い、**字が出る瞬間には顔が字のブロックより上**。滞在中は箱の上の帯（`headroom`）の角へ退く
+- 読み込み: 開いたら貯金箱の絵だけ展開。ほかの段の絵は4秒後からダウンロードだけ。**展開（decode）は投げ銭が来たその段のぶんだけ**（スマホの記憶を食わない）。間に合わない段は小物の演出に落ちる（欠けた主役は出さない）
+- 動かすのは transform と opacity だけ（CLAUDE.md の描画コスト）。待機中は rAF を回さない
+- `live: false` で作り、出すときに外す（`?theme=<id>` の試し見では `live: false` でも出る）
 
-`THEMES` に1件足すだけで動く。ハロウィンの定義を写して変える:
+## 5. 確かめる（数える。目だけで決めない）
 
-- `from` / `until` は **JST**、`until` は含まない（10/31 まで → `"2026-11-01T00:00"`）。
-  **年を持っている。** 来年も同じ季節を出すなら、来年の日付で1件足す（絵の `dir` は使い回してよい）
-- `bank.sequence` は**等間隔にしない**。ふだんの顔で長く休み、ときどき動く
-- `text` は器の色の上で読める色（ハロウィンはオレンジの額に濃紫の縁）
-- `slots` は四隅と下端だけ。中央に寄る枠を作らない
-- `tiers` は4段。枠の数・出る小物・締めの数で段差がはっきり分かるように
-- 向きのある絵は `FxDef` で反転の可否を持つ（正面の絵は反転しない）
-
-テスト `app/alertbox/__tests__/season.test.ts` に、**新しいテーマの境界の日時**と段の境界を足す。
-
-## 4. 確かめる・録る
+ビルドを静的に配って（`npx expo export --platform web`）、`tools/sprites/` から:
 
 ```bash
-npx jest app/alertbox                       # roster.test.tsx の時間切れ 1〜3件は master でも落ちる（2026-10-23）
-npx expo export --platform web --output-dir <scratch>/web
-python3 -m http.server 4310 --directory <scratch>/web &
-cd tools/sprites
-for a in 500 3000 7000 20000; do node alert-record.mjs --base http://localhost:4310 --amount $a --theme <id> --out <scratch>/rec/<id>-$a.mp4; done
-node alert-record.mjs --base http://localhost:4310 --mode bank --fill 100 --rise 8 --size 960x540 --seconds 11 --theme <id> --out <scratch>/rec/<id>-bank.mp4
+export ALERT_BG_DIR=<スクラッチ>/bg
+node alert-record.mjs --base http://127.0.0.1:PORT --portrait --ui --also-small --sheet 6 \
+     --amount 20000 --frame 401,722,607,1082 --zoom 1.39 --out <置き場>/t7.mp4      # 縦の録画
+node alert-compare.mjs --base ... --bg <bg>/prism-street.jpg --char <キャラ> --out <置き場>/compare.png   # 全段を同じ秒で
+node alert-overlap.mjs --base ... --chars <キャラの置き場> --theme <id> --amounts 100,300,700,1500,3000,7000,10000 \
+     --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 --out <置き場> --sheet   # 顔×演出・主役の顔×字が全部 0
+node alert-overlap.mjs ... --control face ; node alert-overlap.mjs ... --control hero          # 対照は 1 で落ちる
+node alert-ink.mjs --base ... --bg-dir <bg> --chars <キャラ> --amounts ... --out <置き場>      # 字の濃さ 4.5 以上
+node alert-decode.mjs --dist <dist> --amounts ... --rates 1,4,6 --runs 3                         # 段の頭の展開が上限内
+node alert-cpu.mjs --base ... --char <キャラ> --amounts ... --rounds 3                           # CPU ms/秒
 ```
 
-（`--theme` の既定は `halloween`。新しいテーマでは必ず付ける）
+- **キャラ絵は本物で**: 名簿の絵は Google ドライブのファイル（`site/content/residents.ts` の `icon`）。この箱からは lh3 に出られないので、Google ドライブの接続で落とす。形（縦長・横長・余白）と画風（3D風・ステッカー風）を散らして10人以上
+- 豚（`theme=none`・期間の外）が今と画素まで同じ。季節の外のいつものアラートも撮って並べる
+- `npx jest app/alertbox`（`roster.test.tsx` の時間切れ 1〜3件は前から落ちる）・型は `.svg` の2件だけ
 
-見るところ:
+## 6. 出す
 
-- **期間外と `theme=none` が master の豚と画素差 0**（`?preview=bank&fill=…` を master と並べて撮る）
-- 小物がキャラの後ろ・中央が空いている・締めがアラートの消える前に終わる
-- **貯金箱が出た直後に絵が欠けるコマが無い。** CSS の opacity でコマを替えると、Chrome が
-  タイルを描き終える前に出して欠ける（#1022 で 1,650 コマ中 5 コマ）。コマ送りは JS で
-  `visibility` を切り替える形のまま触らない
-
-試し表示の URL（本番でも外へは繋がない）:
-`/alertbox?preview=1&theme=<id>&amount=7000` ／ `/alertbox?preview=bank&theme=<id>&fill=50&rise=8`
-
-## 5. 見せる → 出す
-
-1. 録画（4段＋溜まる様子）をチャットに `SendUserFile` で送り、issue に「録画を出した」と書く
-2. 基準に届いているかを**こちらで決めて**、`/island-ship` で出す（`app/` と `public/` なので
-   `Firebase Hosting Deploy`）。期間の始まりより前に出しておけば、その日の 0:00 にひとりでに切り替わる
-3. 本番で `?preview=1&theme=<id>` を開いて、絵が 200 で返るかを見る
-4. 期間が終わると豚に戻る。**終わったテーマは消さない**（来年の使い回し）
+1. 全段の縦の録画と同じ秒の一覧を**自分で見て**、届いていなければ出さない
+2. `/island-ship` で出す（`app/` と `public/` なので `Firebase Hosting Deploy`）。期間の始まりより前に出しておけば、その日の 0:00 にひとりでに切り替わる
+3. 出したら issue に録画（Artifact の `assets` に置くとスマホでも再生できる。チャットに付けた mp4 はアプリで再生できない）と数字を置いて報告
+4. 期間が終わると豚に戻る。**終わったテーマは消さない**（来年の使い回し。年を持つので、来年は日付だけ足す）
