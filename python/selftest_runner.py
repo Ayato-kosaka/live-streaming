@@ -696,6 +696,13 @@ def main() -> int:
     print("遅かった順（上位10本）:")
     for p, _, dt, _ in sorted(results, key=lambda r: -r[2])[:10]:
         print(f"  {dt:6.1f}秒  {label(p, cwd)}")
+    # **1本の上限に近づいたものは、赤くなる前に知らせる。** 並べると遅い1本はさらに伸びる
+    # （CI で ec2_queue_selftest.py が1本ずつで148秒、並べて147〜212秒）。上限を越えると
+    # 「落ちた」と数えるので、そうなってから気づくと、中身は壊れていないのに赤い PR が出る
+    for p, rc, dt, _ in results:
+        if rc == 0 and dt > TIMEOUT_SEC * 0.6:
+            print(f"::warning::{label(p, cwd)} が {dt:.0f}秒かかった（1本の上限 {TIMEOUT_SEC}秒の"
+                  f"{dt / TIMEOUT_SEC:.0%}）。上限に当たる前に中を縮める")
 
     head = [f"### 見張り {len(found) - len(bad)}/{len(found)} 本が通りました", ""]
     if bad:
