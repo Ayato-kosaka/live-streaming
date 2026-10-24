@@ -53,7 +53,12 @@ const BIG_H = 0.44;
  * 足元の置き場の上下の限り（面に対する割合）。実際の足元は字のブロックの上端のすぐ上（`stand`）。
  * 上は面の上の端から 3% を空ける
  */
-const FEET = { min: 0.4, max: 0.62, top: 0.03 };
+const FEET = { min: 0.4, max: 0.62, top: 0.01 };
+/**
+ * 現れる姿に対して、いちばん背が高くなるときの倍率。振り抜く姿は 1.06 倍の背があり、振る瞬間に
+ * さらに縦へ伸びる。この背でも頭と大鎌が面の上の端から出ないように、現れる姿の大きさを決める
+ */
+const TALLEST = 1.14;
 /** 鬼火が集まって渦を巻く輪の半径（面の幅に対する割合）。輪の中心は死神の胸（現れる所） */
 const GATHER_R = 0.1;
 /** 鬼火が四方から来る所 */
@@ -64,7 +69,9 @@ const FROM: [number, number][] = [
 const ORBIT = { rx: 0.4, ry: 0.07, tilt: -7, ms: 3200 };
 const WISP_W = 0.075;
 /** 待つときの高さ（面の高さに対する割合）と、左の端からのすき間 */
-const STAY_H = 0.18;
+const STAY_H = 0.17;
+/** 帯の中でポーズを替えるときの弾みの強さ（強いと、伸びた頭が面の上の端で切れる） */
+const STAY_POP = 0.5;
 const STAY_LEFT = 0.05;
 /** 待つあいだ鬼火が回る楕円（面の幅・高さに対する割合）。帯の中に収まる大きさ */
 const STAY_ORBIT = { rx: 0.15, ry: 0.042, tilt: -10, ms: 5200 };
@@ -109,7 +116,7 @@ export function runReaper(
      メッセージで背が伸びるので、ここで測る（札の置き場は振付けより先に組まれている） */
   const pb0 = plateBoxOf(L, W, H);
   const feetY = Math.max(Y(FEET.min), Math.min(Y(FEET.max), pb0.t - X(0.015)));
-  const stand: At = { x: X(0.5), y: feetY, k: Math.min(1, (feetY - Y(FEET.top)) / Y(BIG_H)) };
+  const stand: At = { x: X(0.5), y: feetY, k: Math.min(1, (feetY - Y(FEET.top)) / (Y(BIG_H) * TALLEST)) };
   /** 現れる姿の高さ（舞台の px） */
   const standH = Y(BIG_H) * stand.k;
 
@@ -350,11 +357,13 @@ export function runReaper(
 
     // 振り抜く: 一瞬ためて、振り抜いた姿に差し替え、斬撃の光が画面の幅いっぱいに走る。閃光
     slash: () => {
+      /* ため（のけぞる）と振り抜き（前へ）。傾きは回さずに skew で付ける（足元の線が動かない。
+         回すと絵の下の角が字のブロックの上端に掛かった） */
       m.play(actor.squash, [
-        { transform: "rotate(0deg) scale(1, 1)", easing: EASE.in },
-        { transform: "rotate(-6deg) scale(0.92, 1.06)", offset: 0.3, easing: EASE.out },
-        { transform: "rotate(3deg) scale(1.12, 0.9)", offset: 0.55, easing: EASE.inOut },
-        { transform: "rotate(0deg) scale(1, 1)" },
+        { transform: "skewX(0deg) scale(1, 1)", easing: EASE.in },
+        { transform: "skewX(7deg) scale(0.92, 1.06)", offset: 0.3, easing: EASE.out },
+        { transform: "skewX(-4deg) scale(1.12, 0.9)", offset: 0.55, easing: EASE.inOut },
+        { transform: "skewX(0deg) scale(1, 1)" },
       ], { duration: 340 });
       m.after(100, () => {
         actor.show("swing");
@@ -446,7 +455,9 @@ export function runReaper(
       fadeOut(m, wispBox, ms * 0.5);
       const to = staySpot();
       const go = ms * 0.85;
-      arcMove(m, actor.pos, now, to, [now.x - X(0.12), Math.min(now.y, to.y) - Y(0.04)], go, 8);
+      /* 傾けない（滑り出す瞬間に体を傾けると、足元の角が字のブロックに掛かる）。先に横へ滑ってから
+         上がる道にする（上へ弧を描くと、小さくなりきる前に頭が面の上の端から出た） */
+      arcMove(m, actor.pos, now, to, [to.x + X(0.04), now.y - Y(0.02)], go, 0);
       m.play(actor.squash, [
         { transform: "scale(1, 1)" },
         { transform: "scale(0.94, 1.08)", offset: 0.4 },
@@ -457,7 +468,7 @@ export function runReaper(
         L.actorBox.style.zIndex = "4";
         // 帯の下の辺から下は描かない（キャラ絵の顔の前を、主役も奥の鬼火も通らない）
         L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - bandBottomOf(L, W, H)).toFixed(1)}px 0px)`;
-        pop("idle", 320);
+        pop("idle", 320, STAY_POP);
         startStayOrbit();
       });
     },
@@ -635,15 +646,16 @@ export function runReaper(
 
   // 小芸（滞在中）。どれも上の帯の中
   function laugh() {
-    pop("appear", 300);
-    m.after(1400, () => pop("idle", 300));
+    pop("appear", 300, STAY_POP);
+    m.after(1400, () => pop("idle", 300, STAY_POP));
   }
   function hop() {
-    const up = Y(0.03) / Math.max(0.01, now.k);
+    // 帯の中で跳ねる。頭が面の上の端で切れない高さ（上の端まで面の 3% ほどしか空いていない）
+    const up = Y(0.012) / Math.max(0.01, now.k);
     m.play(actor.squash, [
       { transform: "translateY(0px) scale(1, 1)", easing: EASE.out },
       { transform: "translateY(0px) scale(1.1, 0.88)", offset: 0.15, easing: EASE.up },
-      { transform: `translateY(${-up}px) scale(0.95, 1.07)`, offset: 0.5, easing: EASE.down },
+      { transform: `translateY(${-up}px) scale(0.97, 1.03)`, offset: 0.5, easing: EASE.down },
       { transform: "translateY(0px) scale(1.1, 0.9)", offset: 0.82, easing: EASE.out },
       { transform: "translateY(0px) scale(1, 1)" },
     ], { duration: 640 });
