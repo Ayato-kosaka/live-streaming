@@ -13,7 +13,7 @@
  *   **波を動かすのは溜まるあいだだけ**で、溜まり終わったら止める。
  *   何時間も出ているので、待機中に rAF を回さない
  * - 100% を超えたら、お菓子があふれた山を出し、クロがその上で踊る
- * - 字は いまの額（大）と目標（小）をかぼちゃの胴に1行で、ラベルはいちばん下に
+ * - 字は いまの額（大）と目標（小）をいちばん下に1行で、ラベルは取っ手の上に
  * - 貯金箱はアラートのあいだ消えて、明けると出直す。出直すたびに、クロがバケツに飛び乗って
  *   喜び、そのあいだに中身が前の額から今の額まで上がる（数字も数え上げる）
  */
@@ -52,8 +52,8 @@ export const PIG_H = 0.52;
  *
  * バケツは取っ手の先から底までで場面の高さをほぼ使い切る（豚の絵が箱の高さを使い切って
  * いるのに合わせる。字を下に別の帯で置くと、そのぶんバケツが豚より小さくなった）。
- * 字は豚と同じく絵の上に載せる: いまの額と目標はかぼちゃの胴の字の四角（`label` の目印）に、
- * ラベルはいちばん下に。
+ * 字は豚と同じく絵に重ねる: いまの額と目標はいちばん下（かぼちゃの底の 2 割に掛かる）、ラベルは
+ * 取っ手の上。額をかぼちゃの胴の真ん中に置くと、1〜3 割の溜まりが字の裏に隠れて読めなかった。
  *
  * 測ると、豚の絵は ビューポートの幅の 0.82 × 0.52（箱いっぱい）。バケツはこの大きさで
  * 0.59 × 0.51、横にクロが並ぶと 0.83 になる。
@@ -229,7 +229,7 @@ export const KuroBank: React.FC<Props> = ({
 
   const hostRef = useRef<HTMLDivElement | null>(null);
   const amountRef = useRef<HTMLSpanElement | null>(null);
-  const lineRef = useRef<HTMLDivElement | null>(null);
+  const labelRef = useRef<HTMLDivElement | null>(null);
   /* 字の大きさ。**幅に比例**（PRISM の箱の大きさは配信ごとに違う）。いまの額がいちばん大きい */
   const fsAmount = sceneW * 0.1;
   const fsTarget = sceneW * 0.06;
@@ -500,8 +500,8 @@ export const KuroBank: React.FC<Props> = ({
     };
     const pileFeet = pileTopY != null ? Math.max(KURO_H + 4 - headroom, pileTopY + KURO_H * 0.14) : null;
     if (live.current.overflow) geo.pileY = pileFeet;
-    // いまの額の行は、バケツの胴の字を置ける四角（`label`）の真ん中に
-    const labelMidY = anc.label ? toU((anc.label[1] + anc.label[3]) / 2) : toU(rimFrontY) + (GROUND_Y - toU(rimFrontY)) * 0.62;
+    // ラベルは取っ手の上（バケツのいちばん上の少し上）に
+    const topU = handleP && hImg ? toU(restOrigin(bdef, "handle")![1] + alphaBox(hImg.url, hImg).y) : toU(rimBackY);
 
     // ---- 土ぼこり -------------------------------------------------------
     const puff = (x: number, y: number, dir: number, n: number) => {
@@ -592,7 +592,7 @@ export const KuroBank: React.FC<Props> = ({
       amountRef.current.textContent = fmt(
         !shown.seen || shown.amount !== live.current.amount ? shown.amount : live.current.amount
       );
-    if (lineRef.current) lineRef.current.style.top = `${labelMidY * U - fsAmount * 0.5}px`;
+    if (labelRef.current) labelRef.current.style.top = `${(topU - 6) * U - fsLabel * 1.1}px`;
 
     // 外から溜まり具合が変わったとき（試し表示の rise など）
     api.current = {
@@ -691,8 +691,8 @@ export const KuroBank: React.FC<Props> = ({
     <div style={{ position: "relative", width: sceneW, height: sceneH }}>
       <div ref={hostRef} style={{ position: "absolute", inset: 0 }} />
       <div style={{ position: "absolute", inset: 0, zIndex: 10, pointerEvents: "none" }}>
-        {/* いまの額（大）と目標（小）を1行に。かぼちゃの胴の上 */}
-        <div ref={lineRef} style={{ ...textBase, top: sceneH * 0.72, lineHeight: 1, fontWeight: 900 }}>
+        {/* いまの額（大）と目標（小）を1行に。いちばん下（かぼちゃの底に掛かる） */}
+        <div style={{ ...textBase, bottom: 0, lineHeight: 1, fontWeight: 900 }}>
           <span
             ref={amountRef}
             style={{ fontSize: fsAmount, ...tone(theme.text.center, Math.max(2, sceneW * 0.01)) }}
@@ -704,9 +704,10 @@ export const KuroBank: React.FC<Props> = ({
           </span>
         </div>
         <div
+          ref={labelRef}
           style={{
             ...textBase,
-            bottom: 0,
+            top: -fsLabel * 1.2,
             fontSize: fsLabel,
             lineHeight: 1.1,
             fontWeight: 800,
