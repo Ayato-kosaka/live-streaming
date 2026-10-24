@@ -114,6 +114,9 @@ def same_thing(old, new):
     a, b = solid(old), solid(new)
     ra, rb = a.width / a.height, b.width / b.height
     return diff(a, b), abs(ra - rb) / ra
+
+
+def cell(im, label):
     """市松の地に絵を置いて、下に名前を書いた1マス。"""
     out = Image.new("RGBA", (CELL, CELL + 18), (255, 255, 255, 255))
     d = ImageDraw.Draw(out)
