@@ -47,10 +47,10 @@ describe("額 → 段 → 出し方", () => {
     [999, "round", true],
     [1000, "round", true],
     [1999, "round", true],
-    [2000, "round", false],
-    [4999, "round", false],
-    [5000, "round", false],
-    [9999, "round", false],
+    [2000, "round", true],
+    [4999, "round", true],
+    [5000, "round", true],
+    [9999, "round", true],
     [10000, "gold", true],
     [300000, "gold", true],
   ])("%d円 → 札 %s / 台本 %s", (yen, frame, show) => {
@@ -96,9 +96,10 @@ describe("額 → 段 → 出し方", () => {
     expect(stageFor(null, 20000, 60, allRigs)).toBeNull();
   });
 
-  it("台本の無い段は、札はすぐ（0.8秒）ぽんっと出て、絵も遅らせない", () => {
+  /* 段はどれも台本を持つ（2026-10-24 に段5・段6も入った）。台本に乗れないのは、絵が読めなかった日 */
+  it("台本に乗れない日（絵が読めない）は、札はすぐ（0.8秒）ぽんっと出て、絵も遅らせない", () => {
     for (const yen of [3000, 7000]) {
-      const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
+      const st = stageFor(halloween, yen, durationFor(yen), noRigs)!;
       expect(st.revealSec).toBe(0);
       expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, wipe: null, count: null, donAt: null });
     }

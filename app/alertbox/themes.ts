@@ -107,9 +107,10 @@ export type PlateStyle = {
 export type TierShow = {
   /**
    * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "batSign" 段2 こうもりの子 /
-   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "dracula" 段7 ドラキュラのあやと
+   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "reaper" 段5 死神のあやと /
+   * "zombie" 段6 ゾンビのあやと / "dracula" 段7 ドラキュラのあやと
    */
-  kind: "ghost" | "batSign" | "march" | "wizard" | "dracula";
+  kind: "ghost" | "batSign" | "march" | "wizard" | "reaper" | "zombie" | "dracula";
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
   /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
@@ -280,6 +281,58 @@ const WIZARD: Cue[] = [
   { at: 4.3, do: "reveal" },
   { at: 5.2, do: "stay" },
   // 締め（終わりの 3 秒前から）。大きな弧で右上へ飛び去る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * 死神のあやと（段5、2,000〜4,999円）の台本。登場 5 秒・前兆は端の暗さと鬼火 0.8 秒（構成 v3）。
+ * 振り抜いた瞬間に一瞬止める。字は斬撃の跡から切り出される（`write`。振付けが左から広げる）。
+ * その人のキャラ絵は、死神が上の帯の左の角へ退いてから出る
+ */
+const REAPER: Cue[] = [
+  { at: 0.0, do: "darken", to: 0.9, dur: 0.5 },
+  { at: 0.05, do: "wisps", n: 6, dur: 0.75 },
+  { at: 0.75, do: "mist", dur: 0.7 },
+  { at: 1.05, do: "appear", dur: 0.7 },
+  { at: 2.1, do: "slash" },
+  // 斬撃の光が伸びきって、閃光がいちばん明るいところで止める
+  { at: 2.28, do: "hitstop", dur: 0.07 },
+  { at: 2.28, do: "shake", dur: 0.22 },
+  { at: 2.3, do: "write", dur: 0.32 },
+  { at: 3.0, do: "don" },
+  { at: 3.45, do: "cast" },
+  { at: 4.15, do: "retreat", dur: 0.8 },
+  { at: 4.9, do: "reveal" },
+  { at: 5.6, do: "stay" },
+  // 締め（終わりの 3 秒前から）。フードをひるがえして霧に消える
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * ゾンビのあやと（段6、5,000〜9,999円）の台本。登場 6.5 秒・前兆は端の暗さ＋紫の稲光2回＋地鳴り
+ * 1.2 秒（構成 v3）。墓から這い出した瞬間に一瞬止める。字は踊り出してから1字ずつ弾んで出る。
+ * その人のキャラ絵は、ゾンビが上の帯の右の角へ跳んでから出る
+ */
+const ZOMBIE: Cue[] = [
+  { at: 0.0, do: "darken", to: 0.92, dur: 0.5 },
+  { at: 0.1, do: "rumble", dur: 1.05 },
+  { at: 0.3, do: "lightning", n: 0 },
+  { at: 0.85, do: "lightning", n: 1 },
+  { at: 1.2, do: "graves", dur: 0.9 },
+  { at: 2.2, do: "hand", dur: 0.65 },
+  { at: 2.9, do: "rise", dur: 0.45 },
+  // 土から伸び上がりきったところで止める
+  { at: 3.08, do: "hitstop", dur: 0.06 },
+  { at: 3.08, do: "shake", dur: 0.25 },
+  { at: 3.65, do: "dance" },
+  { at: 3.75, do: "lightning", n: 2 },
+  { at: 3.8, do: "friends", dur: 0.5 },
+  { at: 4.35, do: "textIn" },
+  { at: 5.25, do: "don" },
+  { at: 5.7, do: "retreat", dur: 0.8 },
+  { at: 6.3, do: "reveal" },
+  { at: 6.9, do: "stay" },
+  // 締め（終わりの 3 秒前から）。墓へずぼっと戻る
   { at: -3.0, do: "finale", dur: 2.6 },
 ];
 
@@ -521,6 +574,16 @@ export const THEMES: SeasonTheme[] = [
           amountSize: 140,
           appearAt: 0.8,
         },
+        /* 死神のあやとが霧の中から現れ、大鎌の斬撃で字を切り出す。小物（下の slots / files）は、
+           ポーズ絵が読めなかった日の控え。止めた 0.07 秒のぶん、その人の絵は 4.97 秒 */
+        show: {
+          kind: "reaper",
+          rigs: ["bat"],
+          poses: ["reaper"],
+          revealSec: 4.97,
+          headroom: 0.2,
+          script: REAPER,
+        },
         slots: 6,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png", "fx-grave.png"],
         bats: 6,
@@ -541,6 +604,16 @@ export const THEMES: SeasonTheme[] = [
           nameSize: 98,
           amountSize: 142,
           appearAt: 0.8,
+        },
+        /* ゾンビのあやとが墓から這い出し、かぼちゃ坊やとちびおばけと踊る。小物（下の slots / files）は、
+           ポーズ絵か仲間の部品が読めなかった日の控え。止めた 0.06 秒のぶん、その人の絵は 6.36 秒 */
+        show: {
+          kind: "zombie",
+          rigs: ["pumpkin_kid", "ghost", "bat"],
+          poses: ["zombie"],
+          revealSec: 6.36,
+          headroom: 0.2,
+          script: ZOMBIE,
         },
         slots: 8,
         files: [

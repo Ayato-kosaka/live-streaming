@@ -32,6 +32,8 @@ import { runMarch } from "./march";
 import { runWizard } from "./wizard";
 import { runGhost } from "./ghost";
 import { runBatSign } from "./batSign";
+import { runReaper } from "./reaper";
+import { runZombie } from "./zombie";
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
 import type { TierShow as TierShowDef } from "../../themes";
@@ -117,6 +119,24 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
           { kid: rigs.get("pumpkin_kid")!, bat: rigs.get("bat")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "reaper") {
+        stop = runReaper(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { poses: poses.get("reaper")!, bat: rigs.get("bat")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "zombie") {
+        stop = runZombie(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { poses: poses.get("zombie")!, kid: rigs.get("pumpkin_kid")!, ghost: rigs.get("ghost")!, bat: rigs.get("bat")! },
           resolveScript(show.script, durationSec, false),
           STAGE_W,
           STAGE_H
