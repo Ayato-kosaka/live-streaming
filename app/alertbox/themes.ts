@@ -106,11 +106,11 @@ export type PlateStyle = {
 /** 段の演出（台本つき） */
 export type TierShow = {
   /**
-   * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "batSign" 段2 こうもりの子 /
+   * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "broom" 段2 ほうきのクロとこうもり /
    * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "reaper" 段5 死神のあやと /
    * "zombie" 段6 ゾンビのあやと / "dracula" 段7 ドラキュラのあやと
    */
-  kind: "ghost" | "batSign" | "march" | "wizard" | "reaper" | "zombie" | "dracula";
+  kind: "ghost" | "broom" | "march" | "wizard" | "reaper" | "zombie" | "dracula";
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
   /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
@@ -226,28 +226,27 @@ export type SeasonTheme = {
 };
 
 /**
- * ちびおばけ（段1、〜199円）の台本。登場 1.2 秒・前兆なし（設計書 v3）。
- * その人のキャラ絵は最初から出ている（段1〜3）ので、ランタンとおばけは面の上の端の帯の中だけ
+ * ちびおばけ（段1、〜199円）の台本。前兆なし（2版目）。左下のランタンのふたが2回カタカタ（溜め）→
+ * 3回目で「ばあ！」→ おばけが右上の帯へ弧を描いて飛ぶ。その人のキャラ絵は最初から出ている（段1〜3）
  */
 const GHOST: Cue[] = [
   { at: 0.0, do: "lanternIn", dur: 0.3 },
-  { at: 0.3, do: "lidRattle", dur: 0.3 },
-  { at: 0.6, do: "boo" },
-  { at: 0.9, do: "textIn" },
-  { at: 1.2, do: "settle" },
-  { at: 1.6, do: "stay" },
+  { at: 0.45, do: "lidRattle", dur: 0.32 },
+  { at: 0.95, do: "lidRattle", dur: 0.32 },
+  { at: 1.45, do: "boo" },
+  { at: 1.6, do: "textIn" },
+  { at: 1.85, do: "settle", dur: 0.9 },
+  { at: 2.9, do: "stay" },
   { at: -2.8, do: "finale", dur: 2.6 },
 ];
 
 /**
- * こうもりの子3匹（段2、200〜499円）の台本。登場 1.8 秒・前兆なし（設計書 v3）。
- * 札は字を入れない小物（字はキャラ絵の上下中央）。こうもりと札は面の上の端の帯の中だけ
+ * ほうきのクロとこうもりの追いかけっこ（段2、200〜499円）の台本。前兆なし（2版目）。
+ * クロが左の外から飛び込み、帯を左右に往復し続ける（往復は振付けが自分で回す）。こうもりが追う
  */
-const BAT_SIGN: Cue[] = [
-  { at: 0.0, do: "batsIn", dur: 1.4 },
-  { at: 1.2, do: "perch", dur: 0.6 },
+const BROOM_CHASE: Cue[] = [
+  { at: 0.0, do: "batsIn", dur: 1.6 },
   { at: 1.5, do: "textIn" },
-  { at: 2.2, do: "stay" },
   { at: -2.8, do: "finale", dur: 2.6 },
 ];
 
@@ -483,13 +482,14 @@ export const THEMES: SeasonTheme[] = [
           amountSize: 134,
           appearAt: 0.8,
         },
-        /* こうもりの子が木の札を吊るして飛んでくる（札に字は入れない）。小物は控え */
+        /* ほうきに乗ったクロを、こうもりの子が追いかける（クロは貯金箱のマスコット。先に読めている）。
+           小物は控え */
         show: {
-          kind: "batSign",
-          rigs: ["bat"],
+          kind: "broom",
+          rigs: ["kuro", "broom", "bat"],
           revealSec: 0,
           headroom: 0.22,
-          script: BAT_SIGN,
+          script: BROOM_CHASE,
         },
         slots: 3,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
@@ -516,7 +516,8 @@ export const THEMES: SeasonTheme[] = [
            小物（下の slots / files）は、部品が読めなかった日の控え */
         show: {
           kind: "march",
-          rigs: ["pumpkin_kid", "bat"],
+          // バケツは貯金箱のマスコットの絵（先に読めている）。お菓子を撒くときに掲げる
+          rigs: ["pumpkin_kid", "bat", "bucket"],
           revealSec: 0,
           headroom: 0.2,
           script: MARCH,

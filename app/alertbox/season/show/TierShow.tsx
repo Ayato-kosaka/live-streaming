@@ -31,7 +31,7 @@ import { runDracula } from "./dracula";
 import { runMarch } from "./march";
 import { runWizard } from "./wizard";
 import { runGhost } from "./ghost";
-import { runBatSign } from "./batSign";
+import { runBroom } from "./broom";
 import { runReaper } from "./reaper";
 import { runZombie } from "./zombie";
 import type { LoadedPoses } from "./poses";
@@ -103,8 +103,8 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
       const script = resolveScript(show.script, durationSec, false);
       if (show.kind === "ghost") {
         stop = runGhost(m, LL, { ghost: rigs.get("ghost")!, bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
-      } else if (show.kind === "batSign") {
-        stop = runBatSign(m, LL, { bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
+      } else if (show.kind === "broom") {
+        stop = runBroom(m, LL, { kuro: rigs.get("kuro")!, broom: rigs.get("broom")!, bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
       } else if (show.kind === "wizard") {
         stop = runWizard(
           m,
@@ -118,7 +118,7 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
         stop = runMarch(
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
-          { kid: rigs.get("pumpkin_kid")!, bat: rigs.get("bat")! },
+          { kid: rigs.get("pumpkin_kid")!, bat: rigs.get("bat")!, bucket: rigs.get("bucket") },
           resolveScript(show.script, durationSec, false),
           STAGE_W,
           STAGE_H
