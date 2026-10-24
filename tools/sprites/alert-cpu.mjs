@@ -1,6 +1,6 @@
 /**
  * 投げ銭アラートの段ごとの描画の CPU を、**登場（0〜8秒）と滞在（12〜20秒）**に分けて測る。
- * 貯金箱だけ（`preview=bank`）と季節の外（`theme=none`）も同じ物差しで並べる。
+ * 貯金箱だけ（`preview=bank`。ふだんの豚と季節の貯金箱）と季節の外（`theme=none`）も同じ物差しで並べる。
  *
  *   cd tools/sprites
  *   node alert-cpu.mjs --base http://localhost:4349 --char /path/to/panda.png
@@ -43,7 +43,9 @@ const WINDOWS = [
   ["登場 0〜8秒", 0, 8],
   ["滞在 12〜20秒", 12, 20],
 ];
+// 季節の貯金箱は配信中ずっと出ているので、ふだんの豚と並べて「季節でいくら増えたか」を読む
 const targets = [
+  { key: "豚の貯金箱", q: { preview: "bank", theme: "none", fill: "60" } },
   { key: "貯金箱だけ", q: { preview: "bank", theme: "halloween", fill: "60" } },
   { key: "季節の外", q: { preview: "1", theme: "none", amount: "1500" } },
   ...amounts.map((a) => ({ key: `${a}円`, q: { preview: "1", theme: "halloween", amount: String(a) } })),
