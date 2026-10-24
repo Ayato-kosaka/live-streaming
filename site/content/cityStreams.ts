@@ -1933,6 +1933,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "vZ2O8pabk1g",
         "title": "【緊急】ホステル追い出されました",
         "date": "2026-10-23"
+      },
+      {
+        "videoId": "eHBAnQF56-E",
+        "title": "🇲🇰北マケドニアのマトカ渓谷いこー！紅葉みながら川下りや！",
+        "date": "2026-10-24"
       }
     ]
   }
