@@ -4,7 +4,8 @@
     python3 python/selftest_runner.py --list       # 何を回すかだけ出す
     python3 python/selftest_runner.py --list --json  # 同じものを機械で読む形で
     python3 python/selftest_runner.py --only-drill # 対照だけ回して帰る
-    python3 python/selftest_runner.py path/to/a_selftest.py …  # 指定のものだけ
+    python3 python/selftest_runner.py path/to/a_selftest.py …  # 指定のものだけ（1本ずつ）
+    python3 python/selftest_runner.py --jobs 1     # 並べずに1本ずつ（既定は CPU の数だけ並べる）
 
 終了コード 0=ぜんぶ通った / 1=落ちたものがある /
 **2=数えるものが無い**（`docs/island-standards.md` §15）。
@@ -92,6 +93,41 @@ mjs が要るもの（実測で切り分け）:
 「いつも緑の CI」は、何も守っていないのに守っている気にさせる——
 それがいちばん高くつく。
 
+## 並べて回す（2026-10-24）
+
+見張りが増えるたびに伸びて、PR #1031 の run では全部回す step が **17分**
+（job の上限 20分）になった。次に1本足すと上限に当たって取り消される。
+手元で1本ずつ回すと **実 14分 / user+sys 14分**——4コアのうち1つしか
+使っていなかった。だから**既定で CPU の数だけ並べる**（`--jobs` か
+`SELFTEST_JOBS` で変えられる。名指しで回すときは今までどおり1本ずつ）。
+
+並べると、**同じものに書く2本が互いを壊す**（嘘の赤・嘘の緑）。
+全部の見張りを1本ずつ strace にかけて、どこへ書くかを控えてから決めた:
+
+  1. **並べるときは、一時の置き場を1本ずつ別にする。** `TMPDIR`（と、在れば
+     `RUNNER_TEMP`）を見張りごとの使い捨ての部屋に差し替える。固定の名前で
+     一時ファイルを書く見張りがあり、`characters_name_match` と `characters_why` は
+     **同じ `_name_match_harness.cjs` を書いて node に読ませている**
+  2. **リポジトリの中へ書く見張りは、同じ列（`LANES`）に入れて1本ずつ回す。**
+     `functions/selftest/` の見張りは、どれも `tsc` で `functions/lib/` へ
+     書き出してから、その `lib` を読む。並べると、片方が書いている途中の
+     `lib` をもう片方が読む
+
+列の外の見張りは、リポジトリの中へも `.git` へも1バイトも書かない
+（`__pycache__` を除く。あれは書き出してから名前を付け替えるので、読む側が
+半端なものを掴まない）。ポートを握る見張りも無い。
+**新しく足す見張りがリポジトリの中へ書くなら、`LANES` に足すこと。**
+
+列は1本ずつしか進まないので、列そのものが壁時計になる。`functions/selftest/` の
+列は 23本で、並べた手元の回で **425秒——全部回すのと同じ長さ**だった。1本 10秒が
+ほぼ全部 `tsc` で、**23本が同じ src から同じ lib を1本ずつ作り直していた。**
+だから見張りの側を `tsc -b` にした（src が lib より新しいときだけ書き出す。
+src を変えれば作り直し、型の誤りでは今までどおり落ちる）。列は **72秒**になった。
+
+対照も足した（下の `drill()`）。同じ列の2本が重ならないこと・一時の置き場が
+分かれていること・**列の外の2本は本当に重なること**（並べたつもりで1本ずつ
+回っていても、0 は出てしまうので）を、偽の見張りで毎回測る。
+
 ## `BQ_PROJECT_ID` を置いていくのはなぜか
 
 `python/config.py` は読み込まれた時点で `BQ_PROJECT_ID` が無いと投げる。
@@ -106,9 +142,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 
@@ -154,6 +192,52 @@ MJS_ROOTS = (
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300
+
+# **同じものに書く見張りの列。** 列の中は1本ずつ、列の外とは並べて回す。
+# 道の頭で決める——列に入る見張りを足した人が、ここを書き足さなくても列に入るように。
+# 列の外の見張りがリポジトリの中へ書かないことは、2026-10-24 に全部を strace にかけて確かめた
+LANES: dict[str, str] = {
+    "functions/selftest/":
+        "どれも tsc で functions/lib/ へ書き出してから、その lib を読む"
+        "（predeploy は npm run build で同じところへ書く）。"
+        "並べると、片方が書いている途中の lib をもう片方が読む",
+}
+
+# **先に起こすもの。順番だけの手がかりで、結果は変わらない。**
+# 長い1本を最後に起こすと、ほかが終わったあと1本だけが走り続けて壁時計が伸びる。
+# 外れても遅くなるだけ（どれだけかかったかは、回すたびに最後の「遅かった順」に出る）
+SLOW_FIRST: tuple[str, ...] = (
+    ".claude/skills/ec2-chrome/ec2_queue_selftest.py",
+    "tools/shorts/ingest/quick_captions_selftest.py",
+    "tools/shorts/script/brief_selftest.py",
+    "tools/shorts/render/selectexpr_selftest.py",
+    "tools/shorts/render/install_selftest.py",
+    "python/mutation_drill_selftest.py",
+    "tools/shorts/script/lint_selftest.py",
+    ".claude/skills/ec2-chrome/cdp_heal_selftest.py",
+    "python/counts_selftest.py",
+    "tools/shorts/script/critic_gate_selftest.py",
+    "tools/shorts/post/desktop_guard_selftest.py",
+    "site/selftest/calendar_selftest.mjs",
+)
+
+
+def lane_of(rel: str) -> str | None:
+    """その見張りが入る列。列に入らなければ None（何とでも並べてよい）。"""
+    for head in LANES:
+        if rel.startswith(head):
+            return head
+    return None
+
+
+def default_jobs(named: bool) -> int:
+    """並べる本数の既定。名指しのときは今までどおり1本ずつ。"""
+    raw = os.environ.get("SELFTEST_JOBS", "").strip()
+    if raw:
+        return max(1, int(raw))
+    # 名指しで回すのは `shorts_selftest.yml`（書き出しの重い2本）と、対照を作るとき。
+    # あちらは並べて確かめていないので、黙って並べない
+    return 1 if named else max(1, os.cpu_count() or 1)
 
 # **要約欄の行き先は、起動した時点で環境から取り上げる。**
 #
@@ -247,14 +331,27 @@ def label(path: Path, cwd: Path) -> str:
         return path.as_posix()
 
 
-def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
-    """1本回して（終了コード, かかった秒, 最後の1行）を返す。"""
+def run_one(path: Path, cwd: Path, env: dict,
+            tmp_root: Path | None = None) -> tuple[int, float, str]:
+    """1本回して（終了コード, かかった秒, 最後の1行）を返す。
+
+    `tmp_root` を渡されたら、その下に**この1本だけの一時の置き場**を作って
+    `TMPDIR` を差し替える（並べたときに、固定の名前の一時ファイルを書き合わないように）。
+    """
     rel = label(path, cwd)
     who = rel if not rel.startswith("/") else str(path)
     # mjs は node で回す。中の `SITE` は自分のファイルの場所から出しているので、
     # どこを cwd にしても同じところを見る（`rebake.yml` は site を cwd にしている）
     head = ["node"] if path.suffix == ".mjs" else [sys.executable]
     cmd = [*head, who, *ARGS.get(rel, [])]
+    own = None
+    if tmp_root is not None:
+        own = Path(tempfile.mkdtemp(prefix="w", dir=tmp_root))
+        env = dict(env, TMPDIR=str(own), TEMP=str(own), TMP=str(own))
+        # 道具の中には `RUNNER_TEMP` を `TMPDIR` より先に見るものがある（`characters_why.py` ほか）。
+        # 手元には無いので、在るときだけ差し替える（無いものを足すと、CI のふりをさせてしまう）
+        if "RUNNER_TEMP" in env:
+            env["RUNNER_TEMP"] = str(own)
     t0 = time.monotonic()
     try:
         r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True,
@@ -266,6 +363,9 @@ def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
     except OSError as e:
         # `node` が無い箱。**「回せなかった」を「通った」と同じ顔にしない**
         rc, out = 1, f"{head[0]} を動かせない: {e}"
+    finally:
+        if own is not None:
+            shutil.rmtree(own, ignore_errors=True)
     dt = time.monotonic() - t0
     tail = ""
     for line in reversed(out.splitlines()):
@@ -301,13 +401,14 @@ def drill() -> bool:
 
         # 上で `SUMMARY_PATH` を環境から取り上げてあるので、対照の子
         # （偽の見張り）も要約欄には1行も書けない
-        env = dict(os.environ)
+        env = dict(os.environ, RUNNER_DRILL_TOKEN=os.urandom(6).hex())
 
-        def sub(root: Path, want: int, need: str | None) -> None:
+        def sub(root: Path, want: int, need: str | None,
+                extra_args: tuple[str, ...] = ()) -> None:
             nonlocal ok
             r = subprocess.run(
                 [sys.executable, str(Path(__file__).resolve()),
-                 "--root", str(root), "--no-drill"],
+                 "--root", str(root), "--no-drill", *extra_args],
                 capture_output=True, text=True, timeout=TIMEOUT_SEC,
                 check=False, env=env)
             got = r.returncode
@@ -334,8 +435,137 @@ def drill() -> bool:
         sub(onlymjs, 1, "redjs_selftest.mjs")
         # 1本も拾えない → 2。ここが 0 だと「ぜんぶ通りました」の嘘になる
         sub(empty, 2, None)
+
+        # **並べかたの対照。** 上の箱の外に置く（`sub(box, …)` は下の階まで拾うので）
+        with tempfile.TemporaryDirectory() as tmp2:
+            two = Path(tmp2)
+            # 偽の見張り。生きているあいだ部屋に札を置き、ほかの札が見えたら「重なった」で落ちる。
+            # 重なったときは札を残したまま帰る（相手にも見えるように。消すと相手は待ちきるまで帰らない）。
+            # 部屋は2つ: 箱の根（列の確かめ）と、一時の置き場の下（置き場が分かれているかの確かめ）。
+            # **一時の置き場の部屋の名前は、この対照の回ごとに変える**——前の回の残り物で落ちないように
+            meet = (
+                "import os, sys, tempfile, time\n"
+                "from pathlib import Path\n"
+                "here = Path(__file__).resolve()\n"
+                "box = here.parents[2]\n"
+                "room = (Path(tempfile.gettempdir()) / ('_runner_drill_' + os.environ['RUNNER_DRILL_TOKEN'])\n"
+                "        if here.parents[1].name == 'scratch' else box)\n"
+                "room.mkdir(exist_ok=True)\n"
+                "mine = room / ('alive-' + here.stem)\n"
+                "mine.touch()\n"
+                "end = time.time() + float((box / 'hold').read_text())\n"
+                "while time.time() < end:\n"
+                "    if any(p != mine for p in room.glob('alive-*')):\n"
+                "        print('重なった: ' + here.stem)\n"
+                "        sys.exit(1)\n"
+                "    time.sleep(0.02)\n"
+                "mine.unlink()\n"
+                "print('ok')\n")
+
+            def put(root: Path, rel: str) -> None:
+                (root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (root / rel).write_text(meet, encoding="utf-8")
+
+            # 同じ列の2本は重ならない・一時の置き場は1本ずつ別 → 0。
+            # 列が効いていなければ a と b が、置き場が分かれていなければ c と d が重なって 1 になる
+            lanes = two / "lanes"
+            put(lanes, "functions/selftest/a_selftest.py")
+            put(lanes, "functions/selftest/b_selftest.py")
+            put(lanes, "scratch/x/c_selftest.py")
+            put(lanes, "scratch/x/d_selftest.py")
+            (lanes / "hold").write_text("0.6", encoding="utf-8")
+            sub(lanes, 0, None, ("--jobs", "4"))
+            # 列の外の2本は、本当に重なる → 1。**並べたつもりで1本ずつ回っていると、
+            # 上の 0 は何も確かめていない**ので、重なれば落ちることをここで見る。
+            # 待ちは長めに取る（重なった時点で抜けるので、ふだんは一瞬で終わる）
+            apart = two / "apart"
+            put(apart, "elsewhere/x/a_selftest.py")
+            put(apart, "elsewhere/x/b_selftest.py")
+            (apart / "hold").write_text("8", encoding="utf-8")
+            sub(apart, 1, "重なった", ("--jobs", "4"))
     print("  " + ("○ 回し役は落ちられる" if ok else "✕ 回し役の対照が外れた"))
     return ok
+
+
+def run_all(found: list[Path], cwd: Path, env: dict,
+            jobs: int) -> list[tuple[Path, int, float, str]]:
+    """`jobs` 本ずつ並べて回し、（道, 終了コード, 秒, 最後の1行）を拾った順で返す。
+
+    **同じ列（`LANES`）の2本は重ねない。** 列の見張りを先頭に並べて、列が空けば
+    すぐ次の1本が入るようにする——列は1本ずつしか進まないので、遅れて起こすと
+    それだけ壁時計が伸びる。そのあとに `SLOW_FIRST`、残りは拾った順。
+    終わった順に1行ずつ出す（行の形は1本ずつ回していたときと同じ）。
+    """
+    rels = [label(p, cwd) for p in found]
+    slow = {n: i for i, n in enumerate(SLOW_FIRST)}
+
+    def rank(i: int) -> tuple:
+        rel = rels[i]
+        if lane_of(rel) is not None:
+            return (0, 0, i)
+        if rel in slow:
+            return (1, slow[rel], i)
+        return (2, 0, i)
+
+    pending = sorted(range(len(found)), key=rank)
+    busy: set[str] = set()
+    done: dict[int, tuple[int, float, str]] = {}
+    cond = threading.Condition()
+    # 一時の置き場を分けるのは、並べるときだけ（1本ずつなら書き合う相手が居ない。
+    # 名指しで回す `shorts_selftest.yml` の重い2本を、確かめていない形で回さないため）
+    tmp_root = Path(tempfile.mkdtemp(prefix="selftest-")) if jobs > 1 else None
+
+    def report(i: int, rc: int, dt: float, tail: str) -> None:
+        mark = "○" if rc == 0 else "✕"
+        print(f"  {mark} {rels[i]}  終了コード {rc}  {dt:.1f}秒")
+        if rc != 0:
+            print(f"      {tail}")
+
+    def worker() -> None:
+        while True:
+            with cond:
+                while True:
+                    if not pending:
+                        return
+                    pick = next((i for i in pending
+                                 if lane_of(rels[i]) not in busy), None)
+                    if pick is not None:
+                        break
+                    cond.wait()
+                pending.remove(pick)
+                lane = lane_of(rels[pick])
+                if lane is not None:
+                    busy.add(lane)
+            try:
+                rc, dt, tail = run_one(found[pick], cwd, env, tmp_root)
+            except BaseException as e:  # noqa: BLE001 — 回し役の中で倒れても、1本ぶんとして落とす
+                rc, dt, tail = 1, 0.0, f"回し役が回しそこねた: {type(e).__name__}: {e}"[:160]
+            with cond:
+                if lane is not None:
+                    busy.discard(lane)
+                done[pick] = (rc, dt, tail)
+                report(pick, rc, dt, tail)
+                cond.notify_all()
+
+    try:
+        threads = [threading.Thread(target=worker, daemon=True)
+                   for _ in range(min(jobs, len(found)))]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    finally:
+        if tmp_root is not None:
+            shutil.rmtree(tmp_root, ignore_errors=True)
+
+    out = []
+    for i, p in enumerate(found):
+        # **回らなかったものを「通った」に数えない。** 起きないはずだが、起きたら落ちたとして出す
+        rc, dt, tail = done.get(i, (1, 0.0, "回し役が回さなかった（並べる仕組みの不具合）"))
+        if i not in done:
+            report(i, rc, dt, tail)
+        out.append((p, rc, dt, tail))
+    return out
 
 
 def summary(lines: list[str]) -> None:
@@ -359,13 +589,24 @@ def main() -> int:
                     help="`--list` の中身を機械で読む形で出す（`watch_census_selftest.py` が読む）")
     ap.add_argument("--only-drill", action="store_true", help="対照だけ回して帰る")
     ap.add_argument("--no-drill", action="store_true", help="対照を飛ばす（対照の中から呼ぶ用）")
+    ap.add_argument("--jobs", type=int, default=None,
+                    help="何本並べて回すか（既定: CPU の数。名指しのときは1。SELFTEST_JOBS でも変えられる）")
     a = ap.parse_args()
+
+    # CI のログは行ごとに時刻が付く。溜めて最後に吐くと、どの見張りがいつ終わったかが読めない
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except (AttributeError, ValueError):
+        pass
 
     # `python/config.py` は読み込んだ時点で投げる。見張りの中では
     # BigQuery のクライアントが偽物に差し替わっているので、この値は届かない
     os.environ.setdefault("BQ_PROJECT_ID", "selftest-no-such-project")
 
-    if not a.no_drill:
+    # 並べるだけ（`--list`）なら見張りを1本も回さないので、回し役の対照も要らない。
+    # `mutation_drill.py` の `plan()` が `--list --json` を毎回呼ぶので、そのたびに
+    # 対照（偽の見張りを並べて回す。2秒ほど）を払わせない
+    if not a.no_drill and not a.list:
         if not drill():
             print("\n✕ 回し役の対照が外れた。**本物の見張りは1本も回していない**")
             summary(["### 見張り", "",
@@ -437,26 +678,35 @@ def main() -> int:
             print(f"  — 外した {n} … {why}")
         return 0
 
-    print(f"[見張り] {len(found)}本を回す"
+    jobs = a.jobs if a.jobs is not None else default_jobs(bool(a.paths))
+    jobs = max(1, jobs)
+    if a.root is None and not a.paths:
+        # 順番の手がかりが腐っても結果は変わらないので、落とさずに知らせるだけ
+        for n in SLOW_FIRST:
+            if not (cwd / n).is_file():
+                print(f"::warning::SLOW_FIRST に在るのに、そのファイルが無い: {n}")
+
+    print(f"[見張り] {len(found)}本を回す（{jobs}本ずつ並べる）"
           + (f"（外したもの {len(skipped)}本）" if skipped else ""))
     for n, why in skipped:
         print(f"  — 外した {n} … {why}")
 
     env = dict(os.environ)
-    bad: list[tuple[str, int, str]] = []
-    for p in found:
-        rel = label(p, cwd)
-        rc, dt, tail = run_one(p, cwd, env)
-        mark = "○" if rc == 0 else "✕"
-        if rc != 0:
-            bad.append((rel, rc, tail))
-        print(f"  {mark} {rel}  終了コード {rc}  {dt:.1f}秒")
-        if rc != 0:
-            print(f"      {tail}")
+    t_all = time.monotonic()
+    results = run_all(found, cwd, env, jobs)
+    wall = time.monotonic() - t_all
+    bad: list[tuple[str, int, str]] = [
+        (label(p, cwd), rc, tail) for p, rc, _, tail in results if rc != 0]
 
     print()
     print(f"見た {len(found)}本 / 通った {len(found) - len(bad)}本 / "
           f"落ちた {len(bad)}本")
+    total = sum(dt for _, _, dt, _ in results)
+    print(f"壁時計 {wall:.0f}秒（{jobs}本ずつ並べた。1本ごとの秒を足すと {total:.0f}秒）")
+    # 遅い見張りを、次に縮める人が探さなくて済むように
+    print("遅かった順（上位10本）:")
+    for p, _, dt, _ in sorted(results, key=lambda r: -r[2])[:10]:
+        print(f"  {dt:6.1f}秒  {label(p, cwd)}")
 
     head = [f"### 見張り {len(found) - len(bad)}/{len(found)} 本が通りました", ""]
     if bad:
