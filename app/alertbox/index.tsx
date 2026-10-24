@@ -37,7 +37,7 @@ import { useSeason } from "./season/useSeason";
 import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
-import { NamePlate } from "./season/plate/NamePlate";
+import { NamePlate, frameKitOf } from "./season/plate/NamePlate";
 import { CharBox } from "./season/plate/CharBox";
 import { splitPlateText } from "./season/plate/plateText";
 import {
@@ -1190,6 +1190,7 @@ export default function AlertBox() {
                     W={winW}
                     H={winH}
                     {...plateTiming(stage)}
+                    kit={stage.show ? frameKitOf(season.rigs.get("props")) : null}
                   />
                 )}
 

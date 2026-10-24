@@ -22,10 +22,12 @@
  * - bucket: bucket{empty, full, over}（根。胴は3枚とも画素一致で、中身と顔の灯りだけ違う）/
  *   handle（胴の奥）。目印 `rimBack` `rimFront` `label`、お菓子の粒 `items`
  * - bat（正面）: body / wing_l / wing_r（羽の関節は肩）
- * - vlad（ななめ前）: body（根）/ head / eyes{normal, wink, smile} / mouth{grin, open, omega} /
- *   cape_l / cape_r（閉じた形で描く。関節は首元の肩）/ cape_in（金の裏地。胴の奥）/
- *   collar / arm_cup（杯を持つ腕）/ arm_pose（指輪の手）/ leg_l / leg_r
- * - props: coffin（根。子に lid と gold）/ moon / coin
+ * - vlad（ななめ前）: torso（根）/ head / eyes{normal, wink, smile} / mouth{smirk, open, omega} /
+ *   cape_l / cape_r（少し開いた形で描く。関節は肩。腕より奥）/ cape_inner（金の裏地。胴の奥）/
+ *   collar / arm_goblet（杯を持つ腕）/ arm_ring（指輪の手）/ leg_l / leg_r
+ * - props: coffin（根。奥の壁と中の赤）/ coins（中の金貨の山）/ coffin_front（手前の壁）/
+ *   lid（ふた。関節は左の蝶番）。`items` に coin・moon と額縁の切れ端（frameCorner・
+ *   frameEdgeH・frameEdgeV・frameBarH・frameBarV）、`frame` に額縁を組む座標
  *
  * 描く側（`RigView.ts`）は部品を**親の中に入れ子**にして組む。親を回せば子も一緒に回る
  * ので、関節を動かすのに JS の計算が要らない（Web Animations に任せられる）。
@@ -59,6 +61,8 @@ export type RigDef = {
   anchors: Record<string, number[]>;
   /** 部品とは別に使う小さな絵（名前 → ファイル）。バケツのお菓子など */
   items: Record<string, string>;
+  /** 額縁を組むための数（絵の px）。小物の組の `frame`（角の腕の中心・棒の中心）。読めなければ空 */
+  frame: Record<string, number>;
 };
 
 const isVec = (v: unknown): v is Vec =>
@@ -122,12 +126,19 @@ export function parseRig(json: unknown): RigDef | null {
       if (typeof v === "string" && v) items[k] = v;
     }
   }
+  const frame: Record<string, number> = {};
+  if (o.frame && typeof o.frame === "object" && !Array.isArray(o.frame)) {
+    for (const [k, v] of Object.entries(o.frame as Record<string, unknown>)) {
+      if (typeof v === "number" && Number.isFinite(v)) frame[k] = v;
+    }
+  }
   return {
     name: typeof o.name === "string" ? o.name : "",
     size: o.size,
     parts,
     anchors,
     items,
+    frame,
   };
 }
 

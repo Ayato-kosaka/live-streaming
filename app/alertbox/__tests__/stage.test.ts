@@ -238,6 +238,59 @@ describe("rig.json の読み方", () => {
   ])("%s → 読まない（null）", (_, json) => {
     expect(parseRig(json)).toBeNull();
   });
+
+  it("額縁の数（frame）は数だけ拾う", () => {
+    const r = parseRig({ ...good, frame: { cornerArmX: 31.5, barCenterY: 68.5, bad: "x" } })!;
+    expect(r.frame).toEqual({ cornerArmX: 31.5, barCenterY: 68.5 });
+    expect(parseRig(good)!.frame).toEqual({});
+  });
+});
+
+/* 振付けが名指しする部品・差し替え・小物が、絵の担当の rig.json に揃っているか。
+   名前が食い違うと、その動きは黙って飛ばされる（壊れないが、伯爵が動かない） */
+describe("ハロウィンの部品の名前（振付けとの約束）", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require("fs") as typeof import("fs");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require("path") as typeof import("path");
+  const dir = path.join(__dirname, "../../../public/alert/themes/halloween/rig");
+  const read = (name: string) => parseRig(JSON.parse(fs.readFileSync(path.join(dir, name, "rig.json"), "utf8")))!;
+  const ids = (name: string) => new Set(read(name).parts.map((p) => p.id));
+  const swaps = (name: string, id: string) => Object.keys(read(name).parts.find((p) => p.id === id)?.swaps ?? {});
+
+  it.each(["kuro", "bucket", "bat", "vlad", "props"])("%s は読めて、絵が全部ある", (name) => {
+    const r = read(name);
+    expect(r).not.toBeNull();
+    for (const f of rigFiles(r)) expect(fs.existsSync(path.join(dir, name, f))).toBe(true);
+  });
+
+  /* クロは耳と脚の z が入れ子と全体で食い違うが、耳と脚は重ならないので描いた絵は同じ
+     （入れ子と全体の順で組んで、画素の差 0 を確かめた）。重なる組だけを見る */
+  it.each(["bucket", "bat", "vlad", "props"])("%s は入れ子で組んでも描く順が変わらない", (name) => {
+    expect(zConflicts(read(name))).toEqual([]);
+  });
+
+  it("伯爵", () => {
+    const v = ids("vlad");
+    for (const id of ["torso", "head", "eyes", "mouth", "cape_l", "cape_r", "cape_inner", "collar", "arm_goblet", "arm_ring", "leg_l", "leg_r"]) {
+      expect(v.has(id)).toBe(true);
+    }
+    expect(swaps("vlad", "eyes")).toEqual(expect.arrayContaining(["normal", "wink", "smile"]));
+    expect(swaps("vlad", "mouth")).toEqual(expect.arrayContaining(["smirk", "omega"]));
+  });
+
+  it("棺と小物・額縁", () => {
+    const p = read("props");
+    for (const id of ["coffin", "coins", "coffin_front", "lid"]) expect(ids("props").has(id)).toBe(true);
+    for (const k of ["coin", "moon", "frameCorner", "frameEdgeH", "frameBarH", "frameBarV"]) expect(p.items[k]).toBeTruthy();
+    for (const k of ["cornerArmX", "cornerArmY", "barCenterX", "barCenterY"]) expect(Number.isFinite(p.frame[k])).toBe(true);
+  });
+
+  it("こうもり・クロ・バケツ", () => {
+    for (const id of ["body", "wing_l", "wing_r"]) expect(ids("bat").has(id)).toBe(true);
+    for (const id of ["body", "head", "eye", "mouth", "hat", "tail_root", "leg_f_near", "leg_b_near"]) expect(ids("kuro").has(id)).toBe(true);
+    expect(swaps("bucket", "bucket")).toEqual(expect.arrayContaining(["empty", "full", "over", "gray"]));
+  });
 });
 
 describe("クロの動きの決め方（60秒ぶんを机の上で回す）", () => {

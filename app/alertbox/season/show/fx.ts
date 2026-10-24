@@ -44,11 +44,11 @@ export function rigBounds(rig: LoadedRig) {
   return { l, t, r, b, w: r - l, h: b - t };
 }
 
-/** 部品の絵の要素（解読済み）。無ければ null */
+/** 部品の絵の要素（解読済み）。部品に無ければ `items` から探す。無ければ null */
 export function partImage(rig: LoadedRig, id: string): HTMLImageElement | null {
   const p = rig.def.parts.find((q) => q.id === id);
-  if (!p) return null;
-  const f = p.file ?? Object.values(p.swaps ?? {})[0];
+  const f = p ? p.file ?? Object.values(p.swaps ?? {})[0] : rig.def.items[id];
+  if (!f) return null;
   return loadedElement(`${rig.base}/${f}`);
 }
 

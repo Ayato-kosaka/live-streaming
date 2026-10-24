@@ -38,13 +38,33 @@ export type VampireLayers = {
 
 export type VampireRigs = { vlad: LoadedRig; bat: LoadedRig; props: LoadedRig };
 
-/** 置き場所（画面に対する割合） */
+/**
+ * 置き場所（画面に対する割合）。満月は直径 720px で描いてあるので、幅 1080 の 6 割（648px）は
+ * 縮めて使っている（拡げない）
+ */
 const MOON = { x: 0.5, y: 0.3, d: 0.6 };
-const COFFIN = { x: 0.5, bottom: 0.76, w: 0.64 };
-/** 伯爵が棺の上に浮いて止まる足の高さと、そのときの背丈 */
-const VLAD = { x: 0.5, feet: 0.6, h: 0.44 };
+const COFFIN = { x: 0.5, bottom: 0.8, w: 0.72 };
+/** 伯爵が棺の中に立って止まる足の高さと、そのときの背丈（台紙の高さ。膝から下は棺に隠れる） */
+const VLAD = { x: 0.5, feet: 0.66, h: 0.52 };
 /** 退いたあと（札の左上に立つ）の背丈 */
 const VLAD_STAY_H = 0.16;
+/**
+ * 姿勢（度。関節まわりの回転）。絵の休みの形が 0。
+ * マントは開くほど横に広がる。この背丈で 34° のとき幅 0.95 画面（絵の担当の注意:
+ * 「高さ 55% で 40° だと 1128px で画面を超える」）。行き過ぎは 1.15 倍まで
+ */
+const POSE = {
+  capeClosed: 14,
+  capeOpen: 34,
+  /** 杯を掲げる（乾杯）・おじぎのあとに持つ */
+  gobletUp: -24,
+  gobletHold: -8,
+  /** 指輪の手を広げる・おじぎで胸に当てる */
+  ringOut: 22,
+  ringChest: -28,
+  /** ふたが開いて止まる角度（蝶番は左） */
+  lidOpen: -72,
+};
 /** 小さくなった満月の置き場所（右上の角） */
 const MOON_STAY = { x: 0.86, y: 0.075, k: 0.24 };
 
@@ -146,6 +166,9 @@ export function runVampire(
   if (coffinPart && coffinImg) {
     const s = X(COFFIN.w) / coffinImg.width;
     coffin = buildRig(rigs.props, s, { only: ["coffin"] });
+    // 中の金貨の山は、ふたが開いてから出す（閉じているあいだも、山の頂がふたの奥からのぞく）
+    const pile = coffin.part("coins");
+    if (pile) pile.style.opacity = "0";
     const o = restOrigin(pb, "coffin")!;
     // 棺の下辺の真ん中が (0,0)
     coffin.root.style.left = `${-(o[0] + coffinImg.width / 2) * s}px`;
@@ -167,15 +190,21 @@ export function runVampire(
   vlad.root.style.top = `${-vb.b * s0}px`;
   vPose.appendChild(vlad.root);
   const vAt = (x: number, y: number, k = 1) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${k.toFixed(4)})`;
-  let vNow = { x: X(VLAD.x), y: Y(VLAD.feet) + Y(VLAD.h) * 1.05, k: 1 };
+  /* 登場のあいだは、棺の中ほど（金貨の山の高さ）より下を切る。棺の中から出てくるように。
+     棺の下辺で切ると、棺の細くなった両端の外から伯爵の頭がのぞいた */
+  const riseClipY = coffinTopY + (Y(COFFIN.bottom) - coffinTopY) * 0.5;
+  let vNow = { x: X(VLAD.x), y: riseClipY + Y(VLAD.h) * 1.02, k: 1 };
   vPos.style.transform = vAt(vNow.x, vNow.y, vNow.k);
   vPos.style.opacity = "0";
-  // 登場のあいだは、棺の下辺より下を切る（棺の中から出てくるように）
-  L.vlad.style.clipPath = `inset(0px 0px ${Math.max(0, H - Y(COFFIN.bottom))}px 0px)`;
-  // 眠っている（目を閉じ、マントは閉じ、裏地は畳んである）
+  L.vlad.style.clipPath = `inset(0px 0px ${Math.max(0, H - riseClipY)}px 0px)`;
+  // 眠っている（目を閉じ、マントは体に巻き、裏地は畳んである）
   vlad.swap("eyes", "smile");
-  const capeIn = vlad.part("cape_in");
+  const capeIn = vlad.part("cape_inner");
   if (capeIn) capeIn.style.transform = "scaleX(0.25)";
+  const capeL = vlad.part("cape_l");
+  const capeR = vlad.part("cape_r");
+  if (capeL) capeL.style.transform = `rotate(${-POSE.capeClosed}deg)`;
+  if (capeR) capeR.style.transform = `rotate(${POSE.capeClosed}deg)`;
   const moveVlad = (x: number, y: number, k: number, ms: number, easing: string) => {
     const a = m.play(vPos, [{ transform: vAt(vNow.x, vNow.y, vNow.k) }, { transform: vAt(x, y, k) }], {
       duration: ms,
@@ -316,18 +345,19 @@ export function runVampire(
     hitstop: (c) => m.hitstop((c.dur ?? 0.08) * 1000),
 
     lidRattle: (c) => {
+      // 蝶番（左）を軸に、右の端が中から押されて持ち上がる
       const lid = coffin?.part("lid");
       const ms = (c.dur ?? 0.36) * 1000;
       m.play(lid, [
-        { transform: "translate(0px, 0px) rotate(0deg)" },
-        { transform: "translate(0px, -10px) rotate(-5deg)", offset: 0.12 },
-        { transform: "translate(0px, 0px) rotate(1deg)", offset: 0.25 },
-        { transform: "translate(0px, -6px) rotate(-3deg)", offset: 0.35 },
-        { transform: "translate(0px, 0px) rotate(0deg)", offset: 0.5 },
-        { transform: "translate(0px, -16px) rotate(-8deg)", offset: 0.66 },
-        { transform: "translate(0px, 0px) rotate(2deg)", offset: 0.8 },
-        { transform: "translate(0px, -8px) rotate(-4deg)", offset: 0.9 },
-        { transform: "translate(0px, 0px) rotate(0deg)" },
+        { transform: "rotate(0deg)" },
+        { transform: "rotate(-4deg)", offset: 0.12 },
+        { transform: "rotate(0.5deg)", offset: 0.25 },
+        { transform: "rotate(-2.5deg)", offset: 0.35 },
+        { transform: "rotate(0deg)", offset: 0.5 },
+        { transform: "rotate(-7deg)", offset: 0.66 },
+        { transform: "rotate(0.8deg)", offset: 0.8 },
+        { transform: "rotate(-3deg)", offset: 0.9 },
+        { transform: "rotate(0deg)" },
       ], { duration: ms });
       m.play(coffinG, [
         { transform: `translate(${X(COFFIN.x)}px, ${Y(COFFIN.bottom)}px) scale(1, 1)` },
@@ -337,15 +367,19 @@ export function runVampire(
     },
 
     lidOpen: () => {
-      // ふたが弾け飛んで、回りながら左上へ消える
+      // ふたが蝶番（左）で跳ね上がり、行き過ぎて戻って止まる。中の金貨の山が現れる
       const lid = coffin?.part("lid");
-      if (lid) {
-        const sc = coffin!.scale;
-        m.play(lid, [
-          { transform: "translate(0px, 0px) rotate(0deg)", easing: "cubic-bezier(0.2, 0.7, 0.4, 1)" },
-          { transform: `translate(${-X(0.55) / sc}px, ${-Y(0.42) / sc}px) rotate(-260deg)` },
-        ], { duration: 800, fill: "forwards" });
-      }
+      m.play(lid, [
+        { transform: "rotate(0deg)", easing: "cubic-bezier(0.2, 0.8, 0.3, 1)" },
+        { transform: `rotate(${POSE.lidOpen * 1.17}deg)`, offset: 0.45, easing: "ease-in-out" },
+        { transform: `rotate(${POSE.lidOpen * 0.92}deg)`, offset: 0.75, easing: "ease-in-out" },
+        { transform: `rotate(${POSE.lidOpen}deg)` },
+      ], { duration: 700, fill: "forwards" });
+      m.play(coffin?.part("coins") ?? null, [
+        { opacity: 0, transform: "translateY(6%) scale(0.9, 0.7)", easing: EASE.out },
+        { opacity: 1, transform: "translateY(0%) scale(1.03, 1.08)", offset: 0.6 },
+        { opacity: 1, transform: "translateY(0%) scale(1, 1)" },
+      ], { duration: 380, fill: "forwards" });
       // 金の光が噴き出す（伯爵より奥。起き上がる伯爵の前を塞がない）
       const beam = div(L.moon, {
         position: "absolute",
@@ -383,20 +417,21 @@ export function runVampire(
       // 起き上がりきる手前で目が開く
       m.after(ms * 0.7, () => {
         vlad.swap("eyes", "normal");
-        vlad.swap("mouth", "grin");
+        vlad.swap("mouth", "smirk");
       });
     },
 
     capeOpen: (c) => {
       const ms = (c.dur ?? 0.35) * 1000;
-      const open = (id: string, a: number) =>
+      // 体に巻いた形（∓capeClosed）から開く
+      const open = (id: string, from: number, to: number) =>
         m.play(vlad.part(id), [
-          { transform: "rotate(0deg)", easing: EASE.out },
-          { transform: `rotate(${a * 1.22}deg)`, offset: 0.55, easing: "ease-in-out" },
-          { transform: `rotate(${a}deg)` },
+          { transform: `rotate(${from}deg)`, easing: EASE.out },
+          { transform: `rotate(${to * 1.15}deg)`, offset: 0.55, easing: "ease-in-out" },
+          { transform: `rotate(${to}deg)` },
         ], { duration: ms * 1.6, fill: "forwards" });
-      open("cape_l", 62);
-      open("cape_r", -62);
+      open("cape_l", -POSE.capeClosed, POSE.capeOpen);
+      open("cape_r", POSE.capeClosed, -POSE.capeOpen);
       m.play(capeIn, [
         { transform: "scaleX(0.25)", easing: EASE.out },
         { transform: "scaleX(1.15)", offset: 0.55, easing: "ease-in-out" },
@@ -408,13 +443,14 @@ export function runVampire(
         { transform: "scale(0.98, 1.03)", offset: 0.6 },
         { transform: "scale(1, 1)" },
       ], { duration: ms * 1.6 });
-      m.play(vlad.part("arm_cup"), [
+      // 杯を掲げ、指輪の手を広げる
+      m.play(vlad.part("arm_goblet"), [
         { transform: "rotate(0deg)", easing: EASE.back },
-        { transform: "rotate(-150deg)" },
+        { transform: `rotate(${POSE.gobletUp}deg)` },
       ], { duration: ms * 1.4, fill: "forwards" });
-      m.play(vlad.part("arm_pose"), [
+      m.play(vlad.part("arm_ring"), [
         { transform: "rotate(0deg)", easing: EASE.back },
-        { transform: "rotate(35deg)" },
+        { transform: `rotate(${POSE.ringOut}deg)` },
       ], { duration: ms * 1.4, fill: "forwards" });
       // マントの風で、金の粉が舞う
       coins.dust(30, 0.4, X(0.15), X(0.85), Y(0.25), Y(0.55));
@@ -428,9 +464,10 @@ export function runVampire(
         if (!lp || !im) return;
         sparkle(m, lp, im.width * fx, im.height * fy, size / vlad.scale, delay);
       };
-      add("mouth", 0.68, 0.7, X(0.13), 0);
-      add("arm_pose", 0.65, 0.8, X(0.16), 120);
-      add("arm_cup", 0.6, 0.62, X(0.18), 60);
+      // 牙・指輪・杯の縁（どれも絵の中の割合）
+      add("mouth", 0.3, 0.75, X(0.13), 0);
+      add("arm_ring", 0.3, 0.82, X(0.16), 120);
+      add("arm_goblet", 0.8, 0.2, X(0.18), 60);
       vlad.swap("eyes", "wink");
       m.after(380, () => vlad.swap("eyes", "normal"));
     },
@@ -468,10 +505,11 @@ export function runVampire(
     bow: (c) => {
       const ms = (c.dur ?? 0.7) * 1000;
       vlad.swap("eyes", "smile");
-      m.play(vlad.part("arm_cup"), [{ transform: "rotate(-150deg)" }, { transform: "rotate(-20deg)" }], {
+      // 杯を下ろして持ち、指輪の手を胸に当てる（このあとの滞在の形）
+      m.play(vlad.part("arm_goblet"), [{ transform: `rotate(${POSE.gobletUp}deg)` }, { transform: `rotate(${POSE.gobletHold}deg)` }], {
         duration: ms * 0.5, fill: "forwards", easing: EASE.inOut,
       });
-      m.play(vlad.part("arm_pose"), [{ transform: "rotate(35deg)" }, { transform: "rotate(-75deg)" }], {
+      m.play(vlad.part("arm_ring"), [{ transform: `rotate(${POSE.ringOut}deg)` }, { transform: `rotate(${POSE.ringChest}deg)` }], {
         duration: ms * 0.5, fill: "forwards", easing: EASE.inOut,
       });
       m.play(vlad.part("head"), [
@@ -548,7 +586,7 @@ export function runVampire(
 
     stay: () => {
       // 呼吸（ずっと）
-      m.play(vlad.loop("body"), [
+      m.play(vlad.loop("torso"), [
         { transform: "scale(1, 1)" },
         { transform: "scale(1.01, 1.025)", offset: 0.6 },
         { transform: "scale(1, 1)" },
@@ -601,12 +639,12 @@ export function runVampire(
       const ms = (c.dur ?? 4) * 1000;
       if (stayTimer) m.clear(stayTimer);
       // マントで体を包む
-      const close = (id: string, from: number) =>
-        m.play(vlad.part(id), [{ transform: `rotate(${from}deg)` }, { transform: "rotate(0deg)" }], {
+      const close = (id: string, from: number, to: number) =>
+        m.play(vlad.part(id), [{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }], {
           duration: 380, easing: EASE.in, fill: "forwards",
         });
-      close("cape_l", 62);
-      close("cape_r", -62);
+      close("cape_l", POSE.capeOpen, -POSE.capeClosed);
+      close("cape_r", -POSE.capeOpen, POSE.capeClosed);
       m.play(capeIn, [{ transform: "scaleX(1)" }, { transform: "scaleX(0.25)" }], { duration: 380, fill: "forwards" });
       vlad.swap("eyes", "smile");
       // ぽんっと消えて、こうもりの群れになる
@@ -656,28 +694,30 @@ export function runVampire(
 
   // 小芸（滞在中）
   function cupSwirl() {
-    m.play(vlad.part("arm_cup"), [
-      { transform: "rotate(-20deg)" },
-      { transform: "rotate(-48deg)", offset: 0.25 },
-      { transform: "rotate(-32deg)", offset: 0.45 },
-      { transform: "rotate(-48deg)", offset: 0.65 },
-      { transform: "rotate(-32deg)", offset: 0.85 },
-      { transform: "rotate(-20deg)" },
+    const h = POSE.gobletHold;
+    m.play(vlad.part("arm_goblet"), [
+      { transform: `rotate(${h}deg)` },
+      { transform: `rotate(${h - 16}deg)`, offset: 0.25 },
+      { transform: `rotate(${h - 6}deg)`, offset: 0.45 },
+      { transform: `rotate(${h - 16}deg)`, offset: 0.65 },
+      { transform: `rotate(${h - 6}deg)`, offset: 0.85 },
+      { transform: `rotate(${h}deg)` },
     ], { duration: 1600, easing: "ease-in-out" });
     vlad.swap("mouth", "omega");
-    m.after(1600, () => vlad.swap("mouth", "grin"));
+    m.after(1600, () => vlad.swap("mouth", "smirk"));
   }
   function coinFlick() {
-    const arm = vlad.loop("arm_pose");
-    const p = rigs.vlad.def.parts.find((q) => q.id === "arm_pose");
+    const arm = vlad.loop("arm_ring");
+    const p = rigs.vlad.def.parts.find((q) => q.id === "arm_ring");
     const im = p ? rigs.vlad.images.get(p.file ?? "") : null;
     if (!arm || !im) return;
     const size = X(0.035) / vlad.scale;
     const coin = document.createElement("div");
     Object.assign(coin.style, {
       position: "absolute",
-      left: `${im.width * 0.55 - size / 2}px`,
-      top: `${im.height * 0.75 - size / 2}px`,
+      // 指輪の手（腕の絵の左下）から弾く
+      left: `${im.width * 0.3 - size / 2}px`,
+      top: `${im.height * 0.8 - size / 2}px`,
       width: `${size}px`,
       height: `${size}px`,
       borderRadius: "50%",
@@ -692,13 +732,14 @@ export function runVampire(
       { transform: `translateY(${up}px) scaleX(-1)`, offset: 0.5, easing: EASE.down },
       { transform: "translateY(0px) scaleX(1)" },
     ], { duration: 900 });
-    m.play(vlad.part("arm_pose"), [
-      { transform: "rotate(-75deg)" },
-      { transform: "rotate(-95deg)", offset: 0.12 },
-      { transform: "rotate(-75deg)", offset: 0.3 },
-      { transform: "rotate(-75deg)", offset: 0.9 },
-      { transform: "rotate(-88deg)", offset: 0.97 },
-      { transform: "rotate(-75deg)" },
+    const c0 = POSE.ringChest;
+    m.play(vlad.part("arm_ring"), [
+      { transform: `rotate(${c0}deg)` },
+      { transform: `rotate(${c0 + 14}deg)`, offset: 0.12 },
+      { transform: `rotate(${c0}deg)`, offset: 0.3 },
+      { transform: `rotate(${c0}deg)`, offset: 0.9 },
+      { transform: `rotate(${c0 + 9}deg)`, offset: 0.97 },
+      { transform: `rotate(${c0}deg)` },
     ], { duration: 900 });
     vlad.swap("eyes", "normal");
     const rm = () => coin.remove();
@@ -707,7 +748,7 @@ export function runVampire(
   }
   function wink() {
     vlad.swap("eyes", "wink");
-    vlad.swap("mouth", "grin");
+    vlad.swap("mouth", "smirk");
     m.play(vlad.part("head"), [
       { transform: "rotate(0deg)" },
       { transform: "rotate(-7deg)", offset: 0.3 },

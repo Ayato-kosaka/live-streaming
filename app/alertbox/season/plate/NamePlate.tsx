@@ -5,7 +5,8 @@
  *   顔に字を重ねない（設計書 §3.0）
  * - 1行目「◯◯ 様」、2行目「¥20,000 ありやとう！！」（いまの文面の型を2行に割る。`plateText.ts`）、
  *   その下にメッセージ（小さく、最大3行）
- * - 段4は金の額縁。額は 0 から**回る数字**で数え上がり、止まった瞬間に「ドン」
+ * - 段4は金の額縁。絵の担当の切れ端（角・辺の飾り・伸ばす棒。小物の組の `items` と `frame`）で
+ *   組む。読めなければ線と菱形の飾りで代える。額は 0 から**回る数字**で数え上がり、止まった瞬間に「ドン」
  * - 字の大きさは画面の幅 1080 のときの px（`PlateStyle`）を、幅に比例させる
  *
  * 時刻（出る・数え始める・ドン）は台本から受け取る。動きは Web Animations（transform と
@@ -14,6 +15,47 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import type { PlateStyle } from "../../themes";
 import type { PlateLines, PlateSeg } from "./plateText";
+import type { LoadedRig } from "../rig/RigView";
+
+type KitImg = { url: string; w: number; h: number };
+/** 金の額縁の切れ端（絵の px）。角は左上の形で、ほかの角は反転して使う */
+export type FrameKit = {
+  corner: KitImg;
+  edgeH: KitImg;
+  barH: KitImg;
+  barV: KitImg;
+  /** 角の絵の中の、縦の腕・横の腕の中心線 */
+  armX: number;
+  armY: number;
+  /** 横の棒・縦の棒の絵の中の、棒の中心線 */
+  barCY: number;
+  barCX: number;
+};
+
+/** 小物の組から額縁の切れ端を拾う。どれか欠けていれば null（線の額縁で代える） */
+export function frameKitOf(rig: LoadedRig | null | undefined): FrameKit | null {
+  if (!rig) return null;
+  const { items, frame } = rig.def;
+  const img = (name: string): KitImg | null => {
+    const f = items[name];
+    const im = f ? rig.images.get(f) : undefined;
+    return im ? { url: im.url, w: im.width, h: im.height } : null;
+  };
+  const corner = img("frameCorner");
+  const edgeH = img("frameEdgeH");
+  const barH = img("frameBarH");
+  const barV = img("frameBarV");
+  const n = (k: string) => (Number.isFinite(frame[k]) ? frame[k] : null);
+  const armX = n("cornerArmX");
+  const armY = n("cornerArmY");
+  const barCY = n("barCenterY");
+  const barCX = n("barCenterX");
+  if (!corner || !edgeH || !barH || !barV || armX == null || armY == null || barCY == null || barCX == null) return null;
+  return { corner, edgeH, barH, barV, armX, armY, barCY, barCX };
+}
+
+/** 額縁の切れ端を、画面の幅 1080 のとき何倍で置くか（絵は幅 900 の札に組む大きさで描いてある） */
+const KIT_SCALE = 0.8;
 
 type Props = {
   plate: PlateStyle;
@@ -30,6 +72,8 @@ type Props = {
   count?: { at: number; dur: number } | null;
   /** 「ドン」の秒 */
   donAt?: number | null;
+  /** 金の額縁の切れ端（段4）。無ければ線と菱形の飾り */
+  kit?: FrameKit | null;
 };
 
 /** 字の幅のざっくりした見積もり（em）。全角 1、数字・記号・英字 0.6 */
@@ -50,6 +94,7 @@ export const NamePlate: React.FC<Props> = ({
   carried,
   count,
   donAt,
+  kit,
 }) => {
   const k = W / 1080;
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -57,7 +102,8 @@ export const NamePlate: React.FC<Props> = ({
   const flashRef = useRef<HTMLDivElement | null>(null);
   const stripRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const innerW = W * 0.84 - 64 * k;
+  // 切れ端の額縁は左右の余白を広く取る（下の padding と同じ数）
+  const innerW = W * 0.84 - (plate.frame === "gold" && kit ? 128 : 64) * k;
   /* 名前が長いと札からはみ出すので、入る大きさまで縮める（下限は 6 割） */
   const nameText = lines.name.map((s) => s.text).join("");
   const nameSize = Math.max(
@@ -74,6 +120,8 @@ export const NamePlate: React.FC<Props> = ({
   }, [lines.amount, plate.amountSize, k, innerW]);
 
   const gold = plate.frame === "gold";
+  const useKit = gold && !!kit;
+  const ks = KIT_SCALE * k;
   const ink = plate.ink;
   const outline = (w: number) =>
     [
@@ -155,7 +203,14 @@ export const NamePlate: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const frameStyle: React.CSSProperties = gold
+  const frameStyle: React.CSSProperties = useKit
+    ? {
+        // 縁は切れ端の棒が受け持つ（棒の中心線が札の縁に来る）。角と飾りがぶつからない幅を取る
+        borderRadius: 6 * k,
+        minWidth: Math.min(W * 0.84, 780 * ks),
+        boxShadow: `0 ${6 * k}px ${18 * k}px rgba(0,0,0,0.45)`,
+      }
+    : gold
     ? {
         border: `${7 * k}px solid ${plate.edge}`,
         borderRadius: 16 * k,
@@ -242,7 +297,8 @@ export const NamePlate: React.FC<Props> = ({
           position: "relative",
           boxSizing: "border-box",
           maxWidth: "100%",
-          padding: `${16 * k}px ${32 * k}px ${18 * k}px`,
+          // 切れ端の額縁は角の飾りが内側へ張り出すので、字を内へ寄せる
+          padding: useKit ? `${30 * k}px ${64 * k}px ${30 * k}px` : `${16 * k}px ${32 * k}px ${18 * k}px`,
           background: plate.bg,
           textAlign: "center",
           fontFamily: "'Kosugi Maru', sans-serif",
@@ -307,7 +363,7 @@ export const NamePlate: React.FC<Props> = ({
             {message}
           </div>
         )}
-        {gold && <GoldCorners k={k} color={plate.edge} />}
+        {useKit && kit ? <KitFrame kit={kit} s={ks} /> : gold && <GoldCorners k={k} color={plate.edge} />}
         <div
           ref={flashRef}
           style={{
@@ -324,7 +380,69 @@ export const NamePlate: React.FC<Props> = ({
   );
 };
 
-/** 金の額縁の四隅の飾り（菱形）と、上の真ん中の飾り */
+/**
+ * 絵の担当の切れ端で組む金の額縁。棒（伸ばす）→ 辺の飾り → 角 の順に重ねる。
+ * 札の大きさは字で決まるので、置き場所は % と calc で書き、札が変わってもついて行く
+ */
+const KitFrame: React.FC<{ kit: FrameKit; s: number }> = ({ kit, s }) => {
+  const { corner, edgeH, barH, barV, armX, armY, barCY, barCX } = kit;
+  const base: React.CSSProperties = { position: "absolute", pointerEvents: "none" };
+  const bg = (im: KitImg): React.CSSProperties => ({
+    backgroundImage: `url(${im.url})`,
+    backgroundSize: "100% 100%",
+    backgroundRepeat: "no-repeat",
+  });
+  const flip = (x: boolean, y: boolean) => `scale(${x ? -1 : 1}, ${y ? -1 : 1})`;
+  return (
+    <>
+      {/* 上下の棒・左右の棒 */}
+      <div style={{ ...base, ...bg(barH), left: 0, right: 0, top: -barCY * s, height: barH.h * s }} />
+      <div style={{ ...base, ...bg(barH), left: 0, right: 0, top: `calc(100% - ${barCY * s}px)`, height: barH.h * s }} />
+      <div style={{ ...base, ...bg(barV), top: 0, bottom: 0, left: -barCX * s, width: barV.w * s }} />
+      <div style={{ ...base, ...bg(barV), top: 0, bottom: 0, left: `calc(100% - ${barCX * s}px)`, width: barV.w * s }} />
+      {/* 上下の真ん中の飾り */}
+      {[false, true].map((down) => (
+        <img
+          key={`e${down}`}
+          src={edgeH.url}
+          alt=""
+          style={{
+            ...base,
+            left: "50%",
+            marginLeft: (-edgeH.w * s) / 2,
+            top: down ? `calc(100% - ${barCY * s}px)` : -barCY * s,
+            width: edgeH.w * s,
+            height: edgeH.h * s,
+            transform: flip(false, down),
+          }}
+        />
+      ))}
+      {/* 四隅。左上の形を反転して使う */}
+      {([
+        [false, false],
+        [true, false],
+        [false, true],
+        [true, true],
+      ] as const).map(([right, down]) => (
+        <img
+          key={`c${right}${down}`}
+          src={corner.url}
+          alt=""
+          style={{
+            ...base,
+            left: right ? `calc(100% - ${(corner.w - armX) * s}px)` : -armX * s,
+            top: down ? `calc(100% - ${(corner.h - armY) * s}px)` : -armY * s,
+            width: corner.w * s,
+            height: corner.h * s,
+            transform: flip(right, down),
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
+/** 金の額縁の四隅の飾り（菱形）と、上の真ん中の飾り（切れ端が読めないとき） */
 const GoldCorners: React.FC<{ k: number; color: string }> = ({ k, color }) => {
   const s = 26 * k;
   const gem = (style: React.CSSProperties, key: string) => (
