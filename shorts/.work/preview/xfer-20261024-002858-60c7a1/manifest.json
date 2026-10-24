@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview__xfer-20261024-002858-60c7a1",
+ "mode": "preview",
+ "dest": "preview/xfer-20261024-002858-60c7a1",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/xfer-20261024-002858-60c7a1.json",
+ "status": "ok",
+ "stages": {
+  "up": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 10323,
+  "tar_gz": 4032,
+  "encrypted": 4048
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 4048,
+   "sha256": "d182050bc4e6f267d941a9245f006894d7442a9da4fdd513e5ff6b2284122546"
+  }
+ ],
+ "hmac_sha256": "24a999b06c3d29f71d0007c7dfeb0f55cb2a3ae10f64dc1f61921d51cdbdde20",
+ "pubkey_sha256": "450e85a3cf4ab56b3dcee5941a4ed48dd09eafe885fa0c1a5baf60bf21715b25",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40045345810",
+ "created_at": "2026-10-24T00:31:04+00:00",
+ "nonce": "5782b4d9e80f0939e4121181",
+ "place": "transfer"
+}
