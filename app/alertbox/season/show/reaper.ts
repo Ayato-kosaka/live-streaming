@@ -23,8 +23,9 @@ import { EASE, range, type Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
 import type { TimedCue } from "./script";
 import { pathFrames, sparkle } from "./fx";
-import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } from "./layers";
 import type { LoadedPoses } from "./poses";
+import type { LoadedItems } from "./items";
 import { makePoseActor } from "./poseActor";
 import {
   Items,
@@ -38,11 +39,10 @@ import {
   jolt,
   popPose,
   sparkRing,
-  themeDirOf,
   type At,
 } from "./undead";
 
-export type ReaperAssets = { poses: LoadedPoses; bat: LoadedRig };
+export type ReaperAssets = { poses: LoadedPoses; bat: LoadedRig; items: LoadedItems | undefined };
 
 /**
  * 現れる姿（appear）の高さの上限。面の高さの 0.44（段4の魔法使いの飛ぶ姿 0.4 より大きい）。
@@ -85,8 +85,8 @@ export function runReaper(
 ): () => void {
   const X = (f: number) => f * W;
   const Y = (f: number) => f * H;
-  // 小物はこの段が始まったときに読む（解読が済んだものから使える）
-  const items = new Items(`${themeDirOf(a.poses)}/items/reaper`, { wisp: "wisp.png" });
+  // 小物（鬼火）は土台が展開し終えている（show.items）
+  const items = new Items(a.items);
 
   // ---------------------------------------------------------------- 端の暗さ・閃光
   const dark = edgeDark(L.dark, "rgba(18,6,28,0.74)", "rgba(6,2,12,0.97)");
@@ -95,10 +95,11 @@ export function runReaper(
     m.play(dark, [{ opacity: darkNow }, { opacity: to }], { duration: ms, easing: EASE.inOut, fill: "forwards" });
     darkNow = to;
   };
-  const flash = div(L.front, {
+  // 閃光も箱の縁で 0 に溶かす（縁まで光ると、ウィジェットの四角が浮く）
+  const flash = div(outerBoxOf(L.front), {
     position: "absolute",
     inset: "0px",
-    background: "radial-gradient(ellipse at 50% 42%, rgba(255,246,230,1) 0%, rgba(255,180,90,0.85) 45%, rgba(255,120,20,0.35) 100%)",
+    background: edgeFade([[0, "rgba(255,246,230,1)"], [45, "rgba(255,180,90,0.85)"], [80, "rgba(255,120,20,0.35)"], [100, "rgba(255,120,20,0)"]], "50% 42%"),
     opacity: "0",
   });
 

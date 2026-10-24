@@ -4,16 +4,17 @@
  * - 絵の展開（decode）は**段の頭で、その段のぶんだけ**（土台 `useSeason` の決まり）。主役のポーズ絵と
  *   仲間の切り絵は、土台の `ensureFor` がアラートの頭で展開し終えている（間に合わなければ台本に乗らない）。
  *   ここの `gate` は念のための二重の確かめで、済むまで箱ごと出さない（欠けた絵を配信に出さない）
- * - 小物（墓石・鬼火・土のかけら）は `items/<仮装>/items.json` と絵。**ここでは展開するだけ**で、
- *   落とすのは土台の後読み（貯金箱の数秒後）に任せる。土台が小物をまだ後読みしていない間は、
- *   初めての段5・段6で段の頭に落ちてくる。そのあいだに間に合わなかった小物は、その出番を飛ばす
- *   （土台に `season.items` ができたら、そちらに寄せる）
- * - 端の暗さ・揺れ・稲光の閃光は、画面いっぱいの層の opacity と、演出の層の translate だけ
+ * - 小物（墓石・鬼火・土のかけら）は `items/<仮装>/items.json` と絵。土台（`useSeason`）が段7の小物と
+ *   同じく、貯金箱の数秒後に落としておき、その段の投げ銭が来たら展開する（`show.items`）。
+ *   ここの `Items` は、展開し終えた組（`season.items`）を振付けから使う窓口
+ * - 暗さ・揺れ・稲光の閃光は、画面いっぱいの層の opacity と、演出の層の translate だけ。暗さは箱の縁で
+ *   0 に溶かす（`edgeDark`）
  */
 import { EASE, type Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
 import { makeBat, pathFrames, sparkle } from "./fx";
-import { div } from "./layers";
+import { div, edgeFade, outerBoxOf } from "./layers";
+import type { LoadedItems } from "./items";
 import type { LoadedPoses } from "./poses";
 import type { PoseActor } from "./poseActor";
 
@@ -42,61 +43,36 @@ export function gate(box: HTMLElement): Promise<boolean> {
   });
 }
 
-/** ポーズ絵の置き場（`…/poses/<仮装>`）から、テーマの置き場を出す */
-export const themeDirOf = (p: LoadedPoses) => p.base.replace(/\/poses\/[^/]+\/?$/, "");
-
 type Box4 = [number, number, number, number];
 export type Item = { img: HTMLImageElement; w: number; h: number; content: Box4 };
 
 /**
- * 小物の絵（`items/<仮装>/`）。作った瞬間（段の頭）に展開を始め、済んだものから使える。
- * 落とすのは土台の後読みの仕事なので、HTTP の控えにあるものを使う（`force-cache`）。
- * まだ済んでいないもの・読めなかったものは `get` が null を返すので、振付けはその小物を飛ばす
+ * 小物の絵（`items/<仮装>/`）。土台が展開し終えた組（`season.items`）を受け取る。台本に乗るのは
+ * 組が全部展開できたときだけなので、ふつうは全部そろっている。無いものは `get` が null を返し、
+ * 振付けはその小物を飛ばす
  */
 export class Items {
   private got = new Map<string, Item>();
-  private waits = new Map<string, Promise<boolean>>();
-  private defs: Record<string, { content?: unknown }> = {};
 
-  constructor(dir: string, files: Record<string, string>) {
-    if (typeof window === "undefined" || typeof window.Image !== "function") return;
-    if (typeof fetch === "function") {
-      fetch(`${dir}/items.json`, { cache: "force-cache" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((j) => {
-          if (j && typeof j.items === "object" && j.items) this.defs = j.items;
-        })
-        .catch(() => {});
-    }
-    for (const [name, file] of Object.entries(files)) {
+  constructor(set: LoadedItems | undefined) {
+    if (!set || typeof window === "undefined" || typeof window.Image !== "function") return;
+    for (const [name, it] of set.items) {
       const im = new window.Image();
       im.alt = "";
       im.draggable = false;
-      im.src = `${dir}/${file}`;
-      this.waits.set(
-        name,
-        decoded(im).then((ok) => {
-          if (ok) this.got.set(name, { img: im, w: im.naturalWidth, h: im.naturalHeight, content: [0, 0, im.naturalWidth, im.naturalHeight] });
-          return ok;
-        })
-      );
+      im.src = it.img.url;
+      this.got.set(name, { img: im, w: it.img.width, h: it.img.height, content: it.content });
     }
   }
 
-  /** 解読が済んだら true（読めなければ false） */
+  /** 使えるなら true（土台が展開し終えているので、待たずに決まる） */
   when(name: string): Promise<boolean> {
-    return this.waits.get(name) ?? Promise.resolve(false);
+    return Promise.resolve(this.got.has(name));
   }
 
-  /** 解読まで済んだ絵（中身の外接矩形は items.json から。読めていなければ絵の全体） */
+  /** 展開済みの絵（中身の外接矩形は items.json から） */
   get(name: string): Item | null {
-    const it = this.got.get(name);
-    if (!it) return null;
-    const c = this.defs[name]?.content;
-    if (Array.isArray(c) && c.length === 4 && c.every((n) => typeof n === "number")) {
-      return { ...it, content: c as Box4 };
-    }
-    return it;
+    return this.got.get(name) ?? null;
   }
 
   /**
@@ -126,12 +102,16 @@ export class Items {
   }
 }
 
-/** 画面の端だけを暗くする層（真ん中は空ける）。opacity だけ動かす */
+/**
+ * 前兆の暗さの層。opacity だけ動かす。**箱の縁へ向かって 0 に溶ける**楕円（真ん中から 6 割まで
+ * `mid`、8 割で `edge`、縁で透明）。舞台ではなく箱いっぱいの外の箱に置く。縁がいちばん暗いと、
+ * 画面いっぱいでないウィジェットの形が、配信の上に暗い四角になって浮いた（オーナーの指摘 2026-10-24）
+ */
 export function edgeDark(parent: HTMLElement, mid: string, edge: string): HTMLDivElement {
-  return div(parent, {
+  return div(outerBoxOf(parent), {
     position: "absolute",
     inset: "0px",
-    background: `radial-gradient(ellipse 78% 62% at 50% 46%, rgba(0,0,0,0) 34%, ${mid} 72%, ${edge} 100%)`,
+    background: edgeFade([[0, mid], [60, mid], [80, edge], [100, "rgba(0,0,0,0)"]]),
     opacity: "0",
   });
 }

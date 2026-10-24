@@ -127,7 +127,7 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
         stop = runReaper(
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
-          { poses: poses.get("reaper")!, bat: rigs.get("bat")! },
+          { poses: poses.get("reaper")!, bat: rigs.get("bat")!, items: items.get("reaper") },
           resolveScript(show.script, durationSec, false),
           STAGE_W,
           STAGE_H
@@ -136,7 +136,7 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
         stop = runZombie(
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
-          { poses: poses.get("zombie")!, kid: rigs.get("pumpkin_kid")!, ghost: rigs.get("ghost")!, bat: rigs.get("bat")! },
+          { poses: poses.get("zombie")!, kid: rigs.get("pumpkin_kid")!, ghost: rigs.get("ghost")!, bat: rigs.get("bat")!, items: items.get("zombie") },
           resolveScript(show.script, durationSec, false),
           STAGE_W,
           STAGE_H

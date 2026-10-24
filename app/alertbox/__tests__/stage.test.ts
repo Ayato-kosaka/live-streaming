@@ -147,9 +147,12 @@ describe("額 → 段 → 出し方", () => {
     expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "props", "pumpkin_kid", "ghost"]));
   });
 
-  it("段7はポーズ絵と小物も要る。ポーズ絵と小物は同じ名前（dracula）でも、種類ごとに見分ける", () => {
-    expect(themePoses(halloween)).toEqual(expect.arrayContaining(["wizard", "dracula"]));
-    expect(themeItems(halloween)).toEqual(["dracula"]);
+  it("段5〜7はポーズ絵と小物も要る。ポーズ絵と小物は同じ名前（dracula）でも、種類ごとに見分ける", () => {
+    expect(themePoses(halloween)).toEqual(expect.arrayContaining(["wizard", "reaper", "zombie", "dracula"]));
+    expect(new Set(themeItems(halloween))).toEqual(new Set(["reaper", "zombie", "dracula"]));
+    // 段5・段6も、小物の組が読めていなければ台本に乗らない
+    expect(stageFor(halloween, 3000, 45, (n, kind) => !(kind === "item" && n === "reaper"))!.show).toBeNull();
+    expect(stageFor(halloween, 7000, 45, (n, kind) => !(kind === "item" && n === "zombie"))!.show).toBeNull();
     // 小物の組だけ読めていない → 台本に乗らない（ポーズ絵の dracula が読めていても取り違えない）
     const noItems = stageFor(halloween, 10000, 60, (n, kind) => !(kind === "item" && n === "dracula"))!;
     expect(noItems.show).toBeNull();

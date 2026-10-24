@@ -25,8 +25,9 @@ import { attachItem, buildRig, type LoadedRig, type RigHandle } from "../rig/Rig
 import { restPivot } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { dustPuffs, rigBounds, sparkle } from "./fx";
-import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } from "./layers";
 import type { LoadedPoses } from "./poses";
+import type { LoadedItems } from "./items";
 import { makePoseActor } from "./poseActor";
 import {
   Items,
@@ -42,11 +43,10 @@ import {
   retire,
   rumble,
   sparkRing,
-  themeDirOf,
   type At,
 } from "./undead";
 
-export type ZombieAssets = { poses: LoadedPoses; kid: LoadedRig; ghost: LoadedRig; bat: LoadedRig };
+export type ZombieAssets = { poses: LoadedPoses; kid: LoadedRig; ghost: LoadedRig; bat: LoadedRig; items: LoadedItems | undefined };
 
 /**
  * 地面の高さの上下の限り（面に対する割合）。実際の地面は字のブロックの上端のすぐ上（`groundY`）。
@@ -108,16 +108,8 @@ export function runZombie(
   const groundY = Math.max(Y(GROUND.min), Math.min(Y(GROUND.max), pb0.t - X(0.015)));
   /** 登場のあいだのゾンビの倍率（1 で踊る姿が面の DANCE_H） */
   const k0 = Math.min(1, (groundY - Y(GROUND.top)) / Y(DANCE_H));
-  // 小物はこの段が始まったときに読む（解読が済んだものから使える）
-  const items = new Items(`${themeDirOf(a.poses)}/items/zombie`, {
-    tombstone_a: "tombstone_a.png",
-    tombstone_b: "tombstone_b.png",
-    tombstone_c: "tombstone_c.png",
-    hand_from_soil: "hand_from_soil.png",
-    dirt_l: "dirt_l.png",
-    dirt_m: "dirt_m.png",
-    dirt_s: "dirt_s.png",
-  });
+  // 小物（墓石・手・土）は土台が展開し終えている（show.items）
+  const items = new Items(a.items);
 
   // ---------------------------------------------------------------- 端の暗さ・閃光
   const dark = edgeDark(L.dark, "rgba(40,0,44,0.76)", "rgba(14,0,18,0.97)");
@@ -126,10 +118,11 @@ export function runZombie(
     m.play(dark, [{ opacity: darkNow }, { opacity: to }], { duration: ms, easing: EASE.inOut, fill: "forwards" });
     darkNow = to;
   };
-  const flash = div(L.front, {
+  // 稲光の閃光も箱の縁で 0 に溶かす（縁まで光ると、ウィジェットの四角が浮く）
+  const flash = div(outerBoxOf(L.front), {
     position: "absolute",
     inset: "0px",
-    background: "radial-gradient(ellipse at 50% 35%, rgba(250,230,255,1) 0%, rgba(214,140,255,0.8) 45%, rgba(160,60,220,0.45) 100%)",
+    background: edgeFade([[0, "rgba(250,230,255,1)"], [45, "rgba(214,140,255,0.8)"], [80, "rgba(160,60,220,0.45)"], [100, "rgba(160,60,220,0)"]], "50% 35%"),
     opacity: "0",
   });
   const shakeEls = [L.back, L.actor, L.mid];
