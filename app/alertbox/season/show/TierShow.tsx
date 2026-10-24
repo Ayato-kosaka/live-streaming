@@ -6,7 +6,7 @@
  *
  *   0  暗転 / 満月 / 伯爵 / 棺（同じ 0 は書いた順。伯爵は退いたあと 4 に上がる）
  *   1  その人のキャラ絵（index.tsx）
- *   2  金貨・きらめき・閃光
+ *   2  金貨・きらめき・閃光（キャラ絵が出たら 0 へ下がる。滞在中は粒を顔の前に通さない）
  *   3  名前の札（index.tsx）
  *   4  こうもり
  *
@@ -59,26 +59,28 @@ export function showReady(show: TierShowDef | undefined, rigs: ReadonlyMap<strin
 
 export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => {
   const dark = useRef<HTMLDivElement | null>(null);
-  const moon = useRef<HTMLDivElement | null>(null);
-  const vlad = useRef<HTMLDivElement | null>(null);
-  const coffin = useRef<HTMLDivElement | null>(null);
+  const back = useRef<HTMLDivElement | null>(null);
+  const actor = useRef<HTMLDivElement | null>(null);
+  const mid = useRef<HTMLDivElement | null>(null);
   const front = useRef<HTMLDivElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const top = useRef<HTMLDivElement | null>(null);
   /** 暗転の層の外の箱（その親がアラートの面。札を探すのに使う）・伯爵の層の外の箱（重なりを上げる） */
   const darkBox = useRef<HTMLDivElement | null>(null);
-  const vladBox = useRef<HTMLDivElement | null>(null);
+  const actorBox = useRef<HTMLDivElement | null>(null);
+  const frontBox = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const L = {
       dark: dark.current,
-      moon: moon.current,
-      vlad: vlad.current,
-      coffin: coffin.current,
+      back: back.current,
+      actor: actor.current,
+      mid: mid.current,
       front: front.current,
       canvas: canvas.current,
       top: top.current,
-      vladBox: vladBox.current,
+      actorBox: actorBox.current,
+      frontBox: frontBox.current,
     };
     if (Object.values(L).some((v) => !v)) return;
     const root = darkBox.current?.parentElement ?? L.dark!;
@@ -123,35 +125,36 @@ export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => 
   const inner: React.CSSProperties = { position: "absolute", left: 0, top: 0, width: STAGE_W, height: STAGE_H };
   return (
     <>
-      <div ref={darkBox} aria-hidden style={{ ...full, zIndex: 0 }}>
+      <div ref={darkBox} data-show="layer" aria-hidden style={{ ...full, zIndex: 0 }}>
         <div style={stage}>
           <div ref={dark} style={inner} />
         </div>
       </div>
-      <div aria-hidden style={{ ...full, zIndex: 0 }}>
+      <div data-show="layer" aria-hidden style={{ ...full, zIndex: 0 }}>
         <div style={stage}>
-          <div ref={moon} style={inner} />
+          <div ref={back} style={inner} />
         </div>
       </div>
       {/* 伯爵は退いたあと札の上へ出る（この外側の箱の重なりを上げる） */}
-      <div ref={vladBox} aria-hidden style={{ ...full, zIndex: 0 }}>
+      <div ref={actorBox} data-show="layer" aria-hidden style={{ ...full, zIndex: 0 }}>
         <div style={stage}>
-          <div ref={vlad} style={inner} />
+          <div ref={actor} style={inner} />
         </div>
       </div>
-      <div aria-hidden style={{ ...full, zIndex: 0 }}>
+      <div data-show="layer" aria-hidden style={{ ...full, zIndex: 0 }}>
         <div style={stage}>
-          <div ref={coffin} style={inner} />
+          <div ref={mid} style={inner} />
         </div>
       </div>
-      <div aria-hidden style={{ ...full, zIndex: 2 }}>
+      {/* 粒の層。キャラ絵が出たらキャラ絵の後ろ（0）へ下がる（振付けが下げる） */}
+      <div ref={frontBox} data-show="layer" aria-hidden style={{ ...full, zIndex: 2 }}>
         <div style={stage}>
           <div ref={front} style={inner}>
             <canvas ref={canvas} style={{ position: "absolute", left: 0, top: 0, width: STAGE_W, height: STAGE_H }} />
           </div>
         </div>
       </div>
-      <div aria-hidden style={{ ...full, zIndex: 4 }}>
+      <div data-show="layer" aria-hidden style={{ ...full, zIndex: 4 }}>
         <div style={stage}>
           <div ref={top} style={inner} />
         </div>

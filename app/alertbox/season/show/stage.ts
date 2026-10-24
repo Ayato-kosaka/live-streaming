@@ -28,12 +28,6 @@ export type PlateTiming = {
   carried: boolean;
   count: { at: number; dur: number } | null;
   donAt: number | null;
-  /**
-   * 札を上寄り（上から 6%）に掛けておき、この秒に定位置（30%）へ下ろす。null なら最初から定位置。
-   * 段7では、伯爵の見せ場（マント・ウインク・杯）のあいだ札が伯爵の顔に掛からないように、
-   * 伯爵が退く（retreat）ときに下ろす
-   */
-  lowerAt: number | null;
 };
 
 /** 台本の無い段で、札が出る秒（前の作りでキャラ絵がフェードインし終わるころ） */
@@ -58,12 +52,10 @@ export function plateTiming(st: AlertStage): PlateTiming {
   const appear = st.cues ? cueOf(st.cues, "plateIn") : null;
   const count = st.cues ? cueOf(st.cues, "count") : null;
   const don = st.cues ? cueOf(st.cues, "don") : null;
-  const retreat = st.cues ? cueOf(st.cues, "retreat") : null;
   return {
     appearAt: appear?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
     carried: !!appear,
     count: count ? { at: count.t, dur: count.dur ?? 1 } : null,
     donAt: don?.t ?? null,
-    lowerAt: retreat?.t ?? null,
   };
 }

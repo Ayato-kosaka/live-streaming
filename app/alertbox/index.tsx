@@ -39,6 +39,7 @@ import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
 import { NamePlate, frameKitOf } from "./season/plate/NamePlate";
 import { CharBox } from "./season/plate/CharBox";
+import { CharFit } from "./components/CharFit";
 import { splitPlateText } from "./season/plate/plateText";
 import {
   describeNickname,
@@ -130,6 +131,12 @@ export default function AlertBox() {
     amount?: string;
     /** 試し表示で、貯金箱を 0 から `fill` まで何秒かけて溜めるか（溜まる様子を録るため） */
     rise?: string;
+    /** 試し表示の名前とメッセージ（長い名前・3行のメッセージで並べ方を確かめるため） */
+    name?: string;
+    msg?: string;
+    /** 試し表示で、その名前の人が動画（URL）・絵文字を持っていることにする */
+    video?: string;
+    emoji?: string;
   }>();
 
   const preview = previewMode(params.preview);
@@ -150,6 +157,38 @@ export default function AlertBox() {
      useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
      （豚も）が描き直された（`season/useBoxSize.ts`） */
   const { width: winW, height: winH } = useBoxSize();
+  /* 名前の札の枠の高さ（px）。札は面のいちばん上、その人のキャラ絵は札のすぐ下から下の端まで。
+     **字とキャラ絵は1画素も重ねない**（オーナーの決まり）。札が長い名前・3行のメッセージで
+     高くなったら、キャラ絵の箱が下がって縮む。変わったときだけ描き直す（1px 未満は捨てる） */
+  const [plateH, setPlateH] = useState(0);
+  const plateSlotRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = plateSlotRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const h = el.offsetHeight;
+        setPlateH((p) => (Math.abs(p - h) < 1 ? p : h));
+      });
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  });
+  /* 札の上の余白。主役が札の上の端に乗る段（台本のある段）は、乗る高さを空けておく */
+  const plateTopPx = Math.round(winH * (stage?.show ? 0.1 : 0.03));
+  // 札の影（下へ 24px × 幅の比）がキャラ絵の頭に掛からないすき間
+  const charGap = Math.round(winH * 0.015);
+  const charBottom = Math.round(winH * 0.02);
+  const charAreaH = Math.max(0, winH - (plateTopPx + plateH + charGap) - charBottom);
+  /* キャラ絵の中身の高さ（px。CharFit が測って知らせる）。横長の絵は四角の高さを使い切らないので、
+     余った高さを上下に分けて、札とキャラ絵の組を面の真ん中に置く（上に詰めると下が空く） */
+  const [charContent, setCharContent] = useState<{ id: string; h: number } | null>(null);
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -298,7 +337,36 @@ export default function AlertBox() {
       setGoal(goalAt(1));
       if (preview !== "alert") return;
       const amount = Math.max(0, Math.round(numParam(params.amount, 500)));
-      const timer = setTimeout(() => {
+      const nickname = typeof params.name === "string" && params.name ? params.name : "おためし";
+      /* `video`（動画の URL）・`emoji` を渡すと、その名前の人が名簿に1人だけいることにする。
+         動画の人・絵文字の花火と雨の人の並び方を、外へ繋がずに撮るため */
+      const pv = (v: unknown) => (typeof v === "string" && v ? v : null);
+      if (pv(params.video) || pv(params.emoji)) {
+        const v = toViewers([
+          {
+            id: "preview",
+            emoji: pv(params.emoji) ?? "",
+            channelName: nickname,
+            aliases: [],
+            plain: null,
+            scene: null,
+            videoUrl: pv(params.video),
+          },
+        ]);
+        normViewersRef.current = v;
+        setNormViewers(v);
+      }
+      /* 季節の部品が読み終わるまで待ってから出す（最長 8 秒）。読み終わる前に出すと、その段は
+         台本の無い小物の演出に落ちて、撮りたいものが撮れない。本番は面を開いてから投げ銭が
+         来るまで間があるので、待たない */
+      const startedAt = Date.now();
+      let timer: ReturnType<typeof setTimeout>;
+      const fire = () => {
+        const sn = seasonRef.current;
+        if (sn.theme && !sn.rigsSettled && Date.now() - startedAt < 8000) {
+          timer = setTimeout(fire, 100);
+          return;
+        }
         setNotificationQueue((q) => [
           ...q,
           {
@@ -306,13 +374,14 @@ export default function AlertBox() {
             type: "donation",
             amount,
             assetID: null,
-            message: "これは試し表示です",
+            message: typeof params.msg === "string" ? params.msg : "これは試し表示です",
             messageType: 1,
-            nickname: "おためし",
+            nickname,
             test: true,
           },
         ]);
-      }, 800);
+      };
+      timer = setTimeout(fire, 800);
       return () => clearTimeout(timer);
     }
 
@@ -1005,6 +1074,22 @@ export default function AlertBox() {
     [notification]
   );
 
+  /* 札とキャラ絵の組を下げる量。動画は中身の高さを測らないので、上に詰めたまま */
+  const shownId = notification && "id" in notification ? String(notification.id) : null;
+  const contentH =
+    shownId != null && charContent != null && charContent.id === shownId && displaySource.type !== "video"
+      ? charContent.h
+      : null;
+  const groupShift = contentH != null ? Math.max(0, Math.round((charAreaH - contentH) / 2)) : 0;
+  const onCharContent = (h: number | null) => {
+    if (shownId == null) return;
+    const id = shownId;
+    setCharContent((p) => {
+      if (h == null) return p != null && p.id === id ? null : p;
+      return p != null && p.id === id && Math.abs(p.h - h) < 1 ? p : { id, h };
+    });
+  };
+
   return (
     <>
       {/* 画面ヘッダーを非表示 */}
@@ -1022,8 +1107,7 @@ export default function AlertBox() {
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
-                {/* 季節の小物。**キャラの絵より後ろ**（いちばん奥の飾り）。
-                    名簿の絵文字の花火・雨はこの上にそのまま出る */}
+                {/* 季節の小物。**キャラの絵より後ろ**（いちばん奥の飾り） */}
                 {season.theme && stage?.show && (
                   <TierShow
                     key={notification.id}
@@ -1050,9 +1134,10 @@ export default function AlertBox() {
 
                 <CharBox
                   key={`char-${notification.id}`}
-                  themed={!!stage?.plate}
+                  top={plateTopPx + groupShift + plateH + charGap}
+                  bottom={charBottom}
                   revealAt={stage?.revealSec ?? 0}
-                  H={winH}
+                  originY={stage?.show ? winH * 0.3 : undefined}
                 >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
@@ -1072,7 +1157,13 @@ export default function AlertBox() {
                        Android の WebView が ▶ の板を画面いっぱいに描く。
                        あやとが撮った絵がそれ。透明にしておけば、下に置いた
                        その人の絵がそのまま見えている。 */
-                    style={{ ...styles.image, opacity: videoStarted ? 1 : 0 }}
+                    /* 動画は中身を測れないので、枠ごと箱に収める（上の辺を札のすぐ下に） */
+                    style={{
+                      ...styles.image,
+                      objectFit: "contain",
+                      objectPosition: "50% 0%",
+                      opacity: videoStarted ? 1 : 0,
+                    }}
                     onLoadStart={() =>
                       sendLog("AlertBox", sessionId, "videoLoadStart", {
                         url: displaySource.url,
@@ -1118,12 +1209,11 @@ export default function AlertBox() {
                     }}
                   />
                 ) : (
-                  <Image
-                    resizeMode="contain"
-                    style={{ ...styles.image }}
-                    source={{
-                      uri: displaySource.url || imageUrl(notification.type),
-                    }}
+                  <CharFit
+                    url={displaySource.url || imageUrl(notification.type)}
+                    width={winW}
+                    height={charAreaH}
+                    onContent={onCharContent}
                   />
                 )}
 
@@ -1135,18 +1225,22 @@ export default function AlertBox() {
                 {displaySource.type === "video" &&
                   !!displaySource.url &&
                   !videoStarted && (
-                    <Image
-                      resizeMode="contain"
-                      style={{ ...styles.image }}
-                      source={{
-                        uri:
-                          iconUrl(notification) || imageUrl(notification.type),
-                      }}
+                    <CharFit
+                      url={iconUrl(notification) || imageUrl(notification.type)}
+                      width={winW}
+                      height={charAreaH}
                     />
                   )}
                 </CharBox>
 
-                {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
+                {/* 視聴者に絵文字設定がある場合の花火・雨。**キャラ絵の後ろ**（zIndex 0）。
+                    粒はキャラ絵の顔の前を通さない（オーナーの決まり。前は花火が zIndex 2 で顔の前に出ていた） */}
+                {emoji && (
+                <div
+                  data-show="emoji"
+                  aria-hidden
+                  style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", zIndex: 0, pointerEvents: "none", overflow: "hidden" }}
+                >
                 {emoji && (
                   <FireworkDisplay
                     style={styles.fireworkExplosion}
@@ -1175,8 +1269,26 @@ export default function AlertBox() {
                       />
                     )
                   )}
+                </div>
+                )}
 
-                {/* 季節の札（上から 30% に、名前と額を大きく）。季節の外は今までの字 */}
+                {/* 名前の札の枠（面のいちばん上）。季節の札か、季節の外は飾りの無い字。
+                    高さは字で決まり、キャラ絵の箱はこの下から始まる */}
+                <div
+                  ref={plateSlotRef}
+                  data-plate="slot"
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: plateTopPx + groupShift,
+                    zIndex: 3,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    pointerEvents: "none",
+                  }}
+                >
                 {stage?.plate && (
                   <NamePlate
                     key={`plate-${notification.id}`}
@@ -1199,7 +1311,7 @@ export default function AlertBox() {
 
                 {/* テキスト部（テンプレートの {名前} / {金額} / {単位} を置換） */}
                 {!stage?.plate && (
-                <View style={styles.textContainer}>
+                <View data-plate="box" style={styles.textContainer}>
                   <Text style={{ ...styles.message, ...mainTextStyle }}>
                     {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
                       if (part === "{名前}") {
@@ -1254,6 +1366,7 @@ export default function AlertBox() {
                   </Text>
                 </View>
                 )}
+                </div>
               </View>
             )}
 

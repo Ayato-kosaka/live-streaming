@@ -1,8 +1,8 @@
 /**
  * アラートの後ろで、季節の小物をポロポロ出す。締めに群れが横切る。
  *
- * - 置き場所は**キャラの絵（zIndex 1）より後ろ**。名簿の絵文字の花火・雨（zIndex 2）
- *   と字（zIndex 3）はさらに上。季節のものは、いちばん奥の飾り
+ * - 置き場所は**キャラの絵（zIndex 1）より後ろ**。名簿の絵文字の花火・雨も後ろ（粒はキャラ絵の
+ *   顔の前を通さない）。字（zIndex 3）だけが上
  * - 出す場所は四隅・下端・横の端だけ。**真ん中には枠が無い**（`themes.ts` の `slots`）
  * - 金額で段が変わる（枠の数・出る小物・群れの数）
  * - 時刻は全部先に決めて CSS に渡す（`plan.ts`）。出ているあいだ JS は何もしない
@@ -63,6 +63,7 @@ export const SeasonEffects: React.FC<Props> = ({ theme, fx, durationSec, yen, se
   return (
     <div
       aria-hidden
+      data-show="fx"
       style={{
         position: "absolute",
         left: 0,

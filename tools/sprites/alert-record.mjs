@@ -54,6 +54,7 @@
  * - 書き出しは**スマホでそのまま再生できる形**（H.264 main / yuv420p / faststart / 音なし）。
  *   書いたあと ffprobe と箱の並びで確かめて、1行ずつ出す
  *
+ * `--name 名前` `--msg メッセージ` で、試し表示の名前とメッセージを変える（長い名前・3行のとき）。
  * `--shots 1.5,6,12` で、その秒（読み込みの完了から）に PNG も撮る（`--out` の横に置く）。
  * `--grow-at 秒`（と `--grow-frame 左,上,幅,高さ`）で、その秒に面の箱を大きくする。
  * `--shrink-at 秒` で `--frame` に戻す（オーナーが手で箱を広げる・戻すのに合わせて見る）。
@@ -221,6 +222,9 @@ const q = new URLSearchParams({
   fill,
   amount: String(amount),
   ...(Number(rise) > 0 ? { rise } : {}),
+  // 試し表示の名前とメッセージ（長い名前・3行で並べ方を見る）。古い書き出しは読まずに既定の字を出す
+  ...(arg("name", null) != null ? { name: arg("name") } : {}),
+  ...(arg("msg", null) != null ? { msg: arg("msg") } : {}),
 });
 const target = `${base}/alertbox/?${q}`;
 
@@ -289,9 +293,14 @@ await ctx.route("**/*", async (route) => {
       body: readFileSync(backdrop),
     });
   }
-  // キャラの絵は CDN にある（この箱から届かない）。手元の絵で代える
+  /* キャラの絵は CDN にある（この箱から届かない）。手元の絵で代える。本物の置き場
+     （Firebase Storage）と同じく、よそからでも画素を読ませる（アラートが絵の中身の外接矩形を測る） */
   if (url.includes("cloudfront.net")) {
-    return route.fulfill({ contentType: "image/png", body: readFileSync(character) });
+    return route.fulfill({
+      contentType: "image/png",
+      body: readFileSync(character),
+      headers: { "access-control-allow-origin": "*" },
+    });
   }
   if (url.startsWith(base)) return route.continue();
   if (url.startsWith("data:")) return route.continue();

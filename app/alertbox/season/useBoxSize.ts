@@ -51,7 +51,8 @@ const readBox = (): BoxSize => {
 };
 
 const subscribeBox = (fire: () => void) => {
-  if (typeof window === "undefined") return () => {};
+  // 試験の画面（react-test-renderer）には window はあっても addEventListener が無い
+  if (typeof window === "undefined" || typeof window.addEventListener !== "function") return () => {};
   const vv = window.visualViewport;
   window.addEventListener("resize", fire);
   vv?.addEventListener("resize", fire);

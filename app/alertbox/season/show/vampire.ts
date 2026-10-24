@@ -4,12 +4,12 @@
  * 何がいつ起きるかは台本（`themes.ts` の `VAMPIRE`）が持つ。ここは出来事1つずつの
  * 「どう見せるか」だけを持つ。時計は `Motion`（ヒットストップで止まる）。
  *
- * 層（奥から。どれもアラートの面いっぱい）:
+ * 層（`layers.ts`。奥から）:
  *
  *   dark   暗転・赤い鼓動（揺らさない）
- *   moon   満月・後光・こうもりの渦         ┐
- *   vlad   伯爵（登場中は棺の後ろ。退いたら札の上へ） ├ 揺れる（演出の層だけ）
- *   coffin 棺                              ┘
+ *   back   満月・後光・こうもりの渦         ┐
+ *   actor  伯爵（登場中は棺の後ろ。退いたら札の上へ） ├ 揺れる（演出の層だけ）
+ *   mid    棺                              ┘
  *   ── その人のキャラ絵（index.tsx）──
  *   front  金貨・きらめき・閃光（canvas と DOM）
  *   ── 名前の札（NamePlate）──
@@ -23,20 +23,10 @@ import { buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restOrigin } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, partImage, pathFrames, rigBounds, sparkle } from "./fx";
+import { div, plateBoxOf, type ShowLayers } from "./layers";
 
-export type VampireLayers = {
-  /** アラートの面（札の位置を測るのに使う） */
-  root: HTMLElement;
-  dark: HTMLDivElement;
-  moon: HTMLDivElement;
-  vlad: HTMLDivElement;
-  coffin: HTMLDivElement;
-  front: HTMLDivElement;
-  canvas: HTMLCanvasElement;
-  top: HTMLDivElement;
-  /** 伯爵の層の外の箱（重なりはここで決まる。退いたあと札の上へ出すときに上げる） */
-  vladBox: HTMLDivElement;
-};
+/** 層は `layers.ts`。満月・後光・こうもりの渦は back、伯爵は actor、棺は mid */
+export type VampireLayers = ShowLayers;
 
 export type VampireRigs = { vlad: LoadedRig; bat: LoadedRig; props: LoadedRig };
 
@@ -52,8 +42,11 @@ const COFFIN = { x: 0.5, bottom: 0.8, w: 0.72 };
  * （札が伯爵の顔を隠していた）
  */
 const VLAD = { x: 0.52, feet: 0.72, h: 0.46 };
-/** 退いたあと（札の左上に立つ）の背丈 */
-const VLAD_STAY_H = 0.16;
+/**
+ * 退いたあと（札の左上の角に立つ）の背丈。札の上の余白（index.tsx、面の高さの 1 割）に収まる大きさ。
+ * キャラ絵は札のすぐ下なので、伯爵は札より下へ行かない
+ */
+const VLAD_STAY_H = 0.1;
 /**
  * 姿勢（度。関節まわりの回転）。絵の休みの形が 0。
  * マントは開くほど横に広がる。この背丈で 34° のとき幅 0.95 画面（絵の担当の注意:
@@ -113,7 +106,7 @@ export function runVampire(
 
   // ---------------------------------------------------------------- 満月と後光
   const moonD = X(MOON.d);
-  const moonG = div(L.moon, {
+  const moonG = div(L.back, {
     position: "absolute",
     left: `${X(MOON.x) - moonD / 2}px`,
     top: `${Y(MOON.y) - moonD / 2}px`,
@@ -167,7 +160,7 @@ export function runVampire(
   const coffinPart = pb.parts.find((p) => p.id === "coffin");
   const coffinImg = coffinPart ? rigs.props.images.get(coffinPart.file ?? "") : null;
   let coffin: RigHandle | null = null;
-  const coffinG = div(L.coffin, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", opacity: "0" });
+  const coffinG = div(L.mid, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", opacity: "0" });
   let coffinTop = Y(COFFIN.bottom) - X(COFFIN.w) * 0.5;
   if (coffinPart && coffinImg) {
     const s = X(COFFIN.w) / coffinImg.width;
@@ -190,7 +183,7 @@ export function runVampire(
   const vb = rigBounds(rigs.vlad);
   const s0 = Y(VLAD.h) / vb.h;
   const vlad = buildRig(rigs.vlad, s0);
-  const vPos = div(L.vlad, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
+  const vPos = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
   const vPose = div(vPos, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
   vlad.root.style.left = `${-(vb.l + vb.w / 2) * s0}px`;
   vlad.root.style.top = `${-vb.b * s0}px`;
@@ -202,7 +195,7 @@ export function runVampire(
   let vNow = { x: X(VLAD.x), y: riseClipY + Y(VLAD.h) * 1.02, k: 1 };
   vPos.style.transform = vAt(vNow.x, vNow.y, vNow.k);
   vPos.style.opacity = "0";
-  L.vlad.style.clipPath = `inset(0px 0px ${Math.max(0, H - riseClipY)}px 0px)`;
+  L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - riseClipY)}px 0px)`;
   // 眠っている（目を閉じ、マントは体に巻き、裏地は畳んである）
   vlad.swap("eyes", "smile");
   const capeIn = vlad.part("cape_inner");
@@ -240,32 +233,12 @@ export function runVampire(
       const dy = i === n ? 0 : (i % 2 === 0 ? -0.6 : 0.5) * a;
       f.push({ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` });
     }
-    for (const el of [L.moon, L.vlad, L.coffin]) m.play(el, f, { duration: ms, easing: "linear" });
+    for (const el of [L.back, L.actor, L.mid]) m.play(el, f, { duration: ms, easing: "linear" });
   };
 
   // ---------------------------------------------------------------- 札の位置
-  /* 札は舞台の外（React）にあるので、画面の位置を測って舞台の px に直す。
-     舞台は今の箱へ拡げてあるので、拡げ方（k）で割る。
-     `settled` なら、上寄りから定位置へ下ろす途中でも、下ろし終えた位置を返す（伯爵が退く先） */
-  const plateBox = (settled = false) => {
-    const el = L.root.querySelector<HTMLElement>('[data-plate="box"]');
-    const sr = L.dark.getBoundingClientRect();
-    const k = sr.width / W || 1;
-    if (!el) return { l: X(0.12), t: Y(0.3), r: X(0.88), b: Y(0.46) };
-    const r = el.getBoundingClientRect();
-    let dy = 0;
-    const slide = settled ? el.closest<HTMLElement>('[data-plate="slide"]') : null;
-    if (slide) {
-      const t = getComputedStyle(slide).transform;
-      if (t && t !== "none") dy = new DOMMatrixReadOnly(t).m42;
-    }
-    return {
-      l: (r.left - sr.left) / k,
-      t: (r.top - dy - sr.top) / k,
-      r: (r.right - sr.left) / k,
-      b: (r.bottom - dy - sr.top) / k,
-    };
-  };
+  /* 札の位置（舞台の px）。`settled` なら、上寄りから定位置へ下ろす途中でも、下ろし終えた位置 */
+  const plateBox = () => plateBoxOf(L, W, H);
 
   // ---------------------------------------------------------------- 出来事ごと
   const hanging: HTMLDivElement[] = [];
@@ -290,7 +263,7 @@ export function runVampire(
       const cy = Y(0.36);
       const R0 = Math.hypot(W, H) * 0.62;
       for (let i = 0; i < n; i++) {
-        const bat = makeBat(m, rigs.bat, L.moon, X(0.11 + Math.random() * 0.06), 110);
+        const bat = makeBat(m, rigs.bat, L.back, X(0.11 + Math.random() * 0.06), 110);
         const a0 = (i / n) * Math.PI * 2 + Math.random() * 0.3;
         const pts: [number, number][] = [];
         const offs: number[] = [];
@@ -353,8 +326,8 @@ export function runVampire(
           { transform: `${base} scale(1.02, 0.98)`, offset: 0.75, easing: "ease-in-out" },
           { transform: `${base} scale(1, 1)` },
         ], { duration: 380 });
-        dustPuffs(m, L.coffin, X(COFFIN.x - COFFIN.w * 0.45), Y(COFFIN.bottom) - X(0.02), X(0.12), 3);
-        dustPuffs(m, L.coffin, X(COFFIN.x + COFFIN.w * 0.45), Y(COFFIN.bottom) - X(0.02), X(0.12), 3);
+        dustPuffs(m, L.mid, X(COFFIN.x - COFFIN.w * 0.45), Y(COFFIN.bottom) - X(0.02), X(0.12), 3);
+        dustPuffs(m, L.mid, X(COFFIN.x + COFFIN.w * 0.45), Y(COFFIN.bottom) - X(0.02), X(0.12), 3);
       });
     },
 
@@ -399,7 +372,7 @@ export function runVampire(
         { opacity: 1, transform: "translateY(0%) scale(1, 1)" },
       ], { duration: 380, fill: "forwards" });
       // 金の光が噴き出す（伯爵より奥。起き上がる伯爵の前を塞がない）
-      const beam = div(L.moon, {
+      const beam = div(L.back, {
         position: "absolute",
         left: `${X(0.5) - X(0.3)}px`,
         top: `${coffinTopY - Y(0.5)}px`,
@@ -431,7 +404,13 @@ export function runVampire(
     rise: (c) => {
       const ms = (c.dur ?? 0.6) * 1000;
       vPos.style.opacity = "1";
-      moveVlad(X(VLAD.x), Y(VLAD.feet), 1, ms, "cubic-bezier(0.25, 0.1, 0.25, 1.15)");
+      /* 頭のてっぺんを札の下の辺より下に収める（札は字の量で高さが変わる。長い名前・3行の
+         メッセージで札が下へ伸びたら、伯爵のほうを縮める）。札はまだ見えていないが、置き場は
+         もう決まっていて測れる */
+      const feet = Y(VLAD.feet);
+      const roof = plateBox().b + Y(0.012);
+      const k = Math.min(1, Math.max(0.55, (feet - roof) / Y(VLAD.h)));
+      moveVlad(X(VLAD.x), feet, k, ms, "cubic-bezier(0.25, 0.1, 0.25, 1.15)");
       // 起き上がりきる手前で目が開く
       m.after(ms * 0.7, () => {
         vlad.swap("eyes", "normal");
@@ -496,8 +475,8 @@ export function runVampire(
       for (const side of [-1, 1]) {
         const bat = makeBat(m, rigs.bat, L.top, X(0.13), 90);
         const x = X(0.5 + side * 0.3);
-        // 札は見せ場のあいだ上寄り（上から 6%）に掛かる（NamePlate の lowerAt）
-        const y = Y(0.06) - X(0.02);
+        // 札の上の辺をつかむ（札の置き場は面のいちばん上の枠。index.tsx）
+        const y = plateBox().t - X(0.02);
         const a = m.play(bat.el, [
           { transform: `translate(${x}px, ${y - Y(0.42)}px)`, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
           { transform: `translate(${x}px, ${y}px)`, offset: 0.45 },
@@ -547,8 +526,11 @@ export function runVampire(
     },
 
     reveal: () => {
+      /* ここから先はその人のキャラ絵が出ている。降っている金貨・きらめき・閃光の層を
+         キャラ絵の後ろへ下げる（滞在中は粒を顔の前に通さない。オーナーの決まり） */
+      L.frontBox.style.zIndex = "0";
       // その人の絵が満月の光の中から出る（絵そのものは index.tsx）。光がふくらんで消える
-      const glow = div(L.moon, {
+      const glow = div(L.back, {
         position: "absolute",
         left: `${X(MOON.x) - moonD}px`,
         top: `${Y(MOON.y) - moonD}px`,
@@ -585,14 +567,15 @@ export function runVampire(
       m.play(coffinG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.25, fill: "forwards" });
       // 伯爵は札の左上へ（札は同じ秒に定位置へ下りはじめる。下りきった位置へ向かう）。
       // 札の裏を通って、着いてから手前に出る
-      const pb2 = plateBox(true);
+      const pb2 = plateBox();
       const k = VLAD_STAY_H / VLAD.h;
+      // 札の左上の角に立つ（足を札の上の縁に掛ける）
       const tx = pb2.l + X(0.07);
-      const ty = pb2.t + X(0.012);
-      L.vlad.style.clipPath = "";
+      const ty = pb2.t + X(0.008);
+      L.actor.style.clipPath = "";
       const a = moveVlad(tx, ty, k, ms * 0.48, EASE.inOut);
       const land = () => {
-        L.vladBox.style.zIndex = "4";
+        L.actorBox.style.zIndex = "4";
         m.play(vPose, [
           { transform: "scale(1.12, 0.86)", easing: EASE.out },
           { transform: "scale(0.96, 1.05)", offset: 0.5 },
@@ -617,7 +600,8 @@ export function runVampire(
         duration: 3100, iterations: Infinity, direction: "alternate", easing: "ease-in-out",
       });
       // 上の角にぶら下がるこうもり（逆さま。ときどき羽をのばす）
-      for (const [fx, fy] of [[0.07, 0.04], [0.19, 0.025]] as const) {
+      // 上の端の真ん中寄り（左上の角には伯爵、右上の角には満月がいる）
+      for (const [fx, fy] of [[0.32, 0.02], [0.44, 0.032]] as const) {
         const bat = makeBat(m, rigs.bat, L.top, X(0.12), 2400);
         bat.el.style.transform = `translate(${X(fx)}px, ${Y(fy)}px) rotate(180deg) scale(0.9)`;
         m.play(bat.el, [{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
@@ -644,10 +628,12 @@ export function runVampire(
       const glints = () => {
         m.after(range(Math.random, 2200, 4200), () => {
           const b = plateBox();
+          // 左右の縁か上の縁だけ。下の縁はすぐ下がキャラ絵の頭なので、きらめきを置かない
           const edge = Math.random() < 0.5;
           const x = edge ? (Math.random() < 0.5 ? b.l : b.r) : b.l + Math.random() * (b.r - b.l);
-          const y = edge ? b.t + Math.random() * (b.b - b.t) : Math.random() < 0.5 ? b.t : b.b;
-          sparkle(m, L.front, x, y, X(0.08));
+          const y = edge ? b.t + Math.random() * (b.b - b.t) * 0.6 : b.t;
+          // 札より手前の層に置く（粒の層はもうキャラ絵の後ろ。札の縁なので顔には掛からない）
+          sparkle(m, L.top, x, y, X(0.08));
           glints();
         });
       };
@@ -678,7 +664,8 @@ export function runVampire(
         for (let i = 0; i < 6; i++) sparkle(m, L.top, ox + (Math.random() - 0.5) * X(0.15), oy + (Math.random() - 0.5) * X(0.15), X(0.09), i * 50);
         const wave = (delay: number, fromX: number, fromY: number, band: [number, number], n: number) => {
           for (let i = 0; i < n; i++) {
-            const bat = makeBat(m, rigs.bat, L.top, X(0.08 + Math.random() * 0.05), 120);
+            // 群れはキャラ絵の後ろを飛ぶ（滞在中は顔の前を通さない）
+            const bat = makeBat(m, rigs.bat, L.back, X(0.08 + Math.random() * 0.05), 120);
             const yEnd = Y(band[0] + Math.random() * (band[1] - band[0]));
             const pts: [number, number][] = [];
             const SEG = 10;
@@ -703,7 +690,8 @@ export function runVampire(
         wave(800, -X(0.15), Y(0.5), [0.32, 0.62], 11);
         // ぶら下がっていたこうもりも飛び立つ
         hanging.forEach((h) => m.play(h, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" }));
-        coins.dust(70, 1.6, 0, W, 0, Y(0.45));
+        // 金の粉は札より上（キャラ絵の顔に掛けない）
+        coins.dust(70, 1.6, 0, W, 0, plateBox().t);
       });
       // 月が消え、暗さも引く
       m.play(moonG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.5, delay: 500, fill: "forwards" });
@@ -786,9 +774,3 @@ export function runVampire(
   return () => coins.dispose();
 }
 
-function div(parent: HTMLElement, style: Partial<CSSStyleDeclaration>): HTMLDivElement {
-  const d = document.createElement("div");
-  Object.assign(d.style, { pointerEvents: "none", ...style });
-  parent.appendChild(d);
-  return d;
-}
