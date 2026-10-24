@@ -1,5 +1,5 @@
 {
-  "why": "10/22 のチーズオリーブフォカッチャの主役（hero/food-cheese-cut）が無い。food-pepper は色とキットの版の見比べ",
+  "why": "同じ依頼をもう一度。焼き直しが同じバイト列になるか（コミット無しで終わるか）と、見比べが影の裾で「違う」と出ないかを見る",
   "names": ["food-cheese-cut"],
   "check": ["food-pepper"]
 }

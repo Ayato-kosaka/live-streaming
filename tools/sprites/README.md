@@ -149,7 +149,10 @@ gh workflow run bake_sprites.yml --ref <claude/…> -f names=food-cheese-cut
   いまのキットで焼き直してしまう
 - **`check` の絵は別の置き場に焼き、いまの絵と画素で比べる**（`bakecheck.py`）。
   色が抜けていたら止めてコミットしない（`Textures/` が置けていない）。形や色が違うだけなら
-  止めずに「違う」と出す——キットの版が違う、という知らせなので、出た絵を自分で見る
+  止めずに「違う」と出す——キットの版が違う、という知らせなので、出た絵を自分で見る。
+  比べるのは**接地影を除いた物そのもの**。影の薄い裾は焼く箱で数px動く
+  （作業箱で焼いた `food-pepper` 320x173 が、ランナーでは 320x177）ので、外枠で比べると
+  形も色も同じなのに「違う」と出る
 - **並べた絵はログに base64 で出る。** この箱からは artifact もログの zip も落とせない
   （blob の宛先で 403）。`mcp__github__get_job_logs`（`return_content: true`）で読んで
   ファイルに置き、`python3 bakecheck.py unsheet <ログ> /tmp/sheet.png` で絵に戻す

@@ -97,7 +97,23 @@ def diff(a, b):
     return tot / n if n else 0.0
 
 
-def cell(im, label):
+def solid(im):
+    """物そのもの（接地影を除いた濃い画素）だけを切り出す。meta.py の SOLID と同じ境目。"""
+    box = im.getchannel("A").point(lambda v: 255 if v > 140 else 0).getbbox()
+    return im.crop(box) if box else im
+
+
+def same_thing(old, new):
+    """物そのものを重ねて比べる。(差, 縦横比の違い)。
+
+    絵の外枠は接地影の薄い裾で決まるので、焼く箱が違うだけで数px動く
+    （作業箱で焼いた food-pepper と、ランナーで焼いたものが 320x173 と 320x177）。
+    外枠のまま縮めて比べると、形も色も同じなのに輪郭が1〜2pxずれて「違う」と出る。
+    キットの版が違うかを知りたいので、物そのものを切り出してから比べる。
+    """
+    a, b = solid(old), solid(new)
+    ra, rb = a.width / a.height, b.width / b.height
+    return diff(a, b), abs(ra - rb) / ra
     """市松の地に絵を置いて、下に名前を書いた1マス。"""
     out = Image.new("RGBA", (CELL, CELL + 18), (255, 255, 255, 255))
     d = ImageDraw.Draw(out)
@@ -151,15 +167,18 @@ def main(argv):
             print(f"  {label}: 新しい絵 {size_new} 彩度 {s_new:.2f} 平均色 {mean_rgb(new)}")
             return
         s_old = saturation(old)
-        d = diff(old, new)
+        d, skew = same_thing(old, new)
         faded = s_old > 0.08 and s_new < s_old * FADE
-        same = d <= SAME and abs(new.width - old.width) <= 2 and abs(new.height - old.height) <= 2
+        same = d <= SAME and skew <= 0.02
         verdict = "**色が抜けた**" if faded else ("同じ" if same else "**違う**")
         lines.append(
             f"| `{label}` | {old.width}x{old.height} | {size_new} | {s_old:.2f} → {s_new:.2f} "
-            f"| {mean_rgb(new)} | {d:.1f} | {verdict} |"
+            f"| {mean_rgb(new)} | {d:.1f}（縦横比 {skew:.1%}） | {verdict} |"
         )
-        print(f"  {label}: {old.width}x{old.height} → {size_new}  彩度 {s_old:.2f} → {s_new:.2f}  差 {d:.1f}  {verdict}")
+        print(
+            f"  {label}: {old.width}x{old.height} → {size_new}  彩度 {s_old:.2f} → {s_new:.2f}"
+            f"  物の差 {d:.1f}（縦横比 {skew:.1%}）  {verdict}"
+        )
         if faded:
             bad += 1
             print(f"::error::{label} の色が抜けている（Textures/colormap.png が置けていない？）")
