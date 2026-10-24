@@ -78,7 +78,7 @@ export type FxSlot = {
 /**
  * アラートの字（名前・額・メッセージ）の飾り。**背景の箱は持たない**（2026-10-24、オーナー:
  * 字はキャラ絵の上下中央に重ね、箱は使わずに字そのものをリッチに）。描くのは `season/plate/RichText.tsx`。
- * 字の大きさは画面の幅 1080 のときの px（幅に比例させる）。額の字の高さは面の幅の 7% 以上・名前 5.5% 以上
+ * 字の大きさはどの段も同じで、RichText が面の幅に比例して決める（2版目。段で変えるのは色と縁と飾り）
  */
 export type PlateStyle = {
   /** "gold" は段7の金の縁と光（ほかは濃い縁だけ） */
@@ -97,8 +97,6 @@ export type PlateStyle = {
   /** 額のグラデーション（上 → 下） */
   amountColor: string;
   amountColor2?: string;
-  nameSize: number;
-  amountSize: number;
   /** 台本が無いとき、字が出る秒 */
   appearAt?: number;
 };
@@ -449,8 +447,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#E3F2FD",
           amountColor2: "#64B5F6",
-          nameSize: 88,
-          amountSize: 132,
           appearAt: 0.8,
         },
         /* ちびおばけがランタンから「ばあ！」。小物（下の slots / files）は、部品が読めなかった日の控え */
@@ -478,8 +474,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#E0F7FA",
           amountColor2: "#26C6DA",
-          nameSize: 90,
-          amountSize: 134,
           appearAt: 0.8,
         },
         /* ほうきに乗ったクロを、こうもりの子が追いかける（クロは貯金箱のマスコット。先に読めている）。
@@ -508,8 +502,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#E8F5E9",
           amountColor2: "#69F0AE",
-          nameSize: 92,
-          amountSize: 136,
           appearAt: 0.8,
         },
         /* かぼちゃ坊や3人組が面の上の端を、竿の小旗を振りながら行進してくる。
@@ -539,8 +531,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#FFFDE7",
           amountColor2: "#FFCA28",
-          nameSize: 94,
-          amountSize: 138,
           appearAt: 0.8,
         },
         /* 魔法使いのあやとがほうきで飛び込み、杖の光で札を書く。小物（下の slots / files）は、
@@ -570,8 +560,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#FFF3E0",
           amountColor2: "#FFA726",
-          nameSize: 96,
-          amountSize: 140,
           appearAt: 0.8,
         },
         /* 死神のあやとが霧の中から現れ、大鎌の斬撃で字を切り出す。小物（下の slots / files）は、
@@ -602,8 +590,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFFFFF",
           amountColor: "#FCE4EC",
           amountColor2: "#FF5C93",
-          nameSize: 98,
-          amountSize: 142,
           appearAt: 0.8,
         },
         /* ゾンビのあやとが墓から這い出し、かぼちゃ坊やとちびおばけと踊る。小物（下の slots / files）は、
@@ -641,8 +627,6 @@ export const THEMES: SeasonTheme[] = [
           nameColor: "#FFF1C9",
           amountColor: "#FFF8E1",
           amountColor2: "#FFC107",
-          nameSize: 104,
-          amountSize: 150,
         },
         /* 紫の前兆 → 古城と満月 → 赤じゅうたん → 棺 → ドラキュラのあやと（マントばさっで赤へ）→
            数え上げ「ドン」。小物（下の slots / files）は、絵が読めなかった日の控え */

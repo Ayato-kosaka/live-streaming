@@ -59,11 +59,12 @@ describe("額 → 段 → 出し方", () => {
     expect(!!st.show).toBe(show);
   });
 
-  it("段ごとに札の字が大きくなる（名前も額も）", () => {
-    const sizes = [100, 300, 700, 1500, 3000, 7000, 20000].map((y) => tierFor(halloween, y).plate!);
-    for (let i = 1; i < sizes.length; i++) {
-      expect(sizes[i].nameSize).toBeGreaterThan(sizes[i - 1].nameSize);
-      expect(sizes[i].amountSize).toBeGreaterThan(sizes[i - 1].amountSize);
+  /* 字の大きさは段で変えない（2版目。オーナー「大きいので下げて」）。段で強くなるのは縁の太さと光 */
+  it("段ごとに字の縁が太く・光が強くなる", () => {
+    const ps = [100, 300, 700, 1500, 3000, 7000].map((y) => tierFor(halloween, y).plate!);
+    for (let i = 1; i < ps.length; i++) {
+      expect(ps[i].stroke).toBeGreaterThanOrEqual(ps[i - 1].stroke);
+      expect(ps[i].glow).toBeGreaterThanOrEqual(ps[i - 1].glow);
     }
   });
 
