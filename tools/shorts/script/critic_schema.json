@@ -1,8 +1,9 @@
 {
-  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる",
+  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した",
   "type": "object",
   "additionalProperties": false,
-  "required": ["scores", "score_why", "tsunagi", "questions", "turns", "hearsay", "numbers", "ledger", "leave", "fixes", "verdict"],
+  "required": ["scores", "score_why", "checked", "alone", "outsider", "tsunagi", "questions", "turns", "numbers",
+               "ledger", "leave", "fixes", "verdict"],
   "properties": {
     "scores": {
       "type": "object",
@@ -24,6 +25,21 @@
       "properties": {
         "a": {"type": "string"}, "b": {"type": "string"}, "c": {"type": "string"},
         "d": {"type": "string"}, "e": {"type": "string"}, "f": {"type": "string"}
+      }
+    },
+    "checked": {"type": "array", "items": {"type": "string", "pattern": "^(F-[0-9]{3}|X[0-9]+)$"}},
+    "alone": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "ok", "why"],
+        "properties": {"line": {"type": "integer"}, "ok": {"type": "boolean"}, "why": {"type": "string"}}
+      }
+    },
+    "outsider": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "who"],
+        "properties": {"line": {"type": "integer"}, "who": {"type": "string"}}
       }
     },
     "tsunagi": {"type": "array", "items": {"type": "string", "enum": ["題", "答", "反", "足", "前", "転", "外", "跳", "締"]}},
@@ -48,13 +64,6 @@
         }
       }
     },
-    "hearsay": {
-      "type": "array",
-      "items": {
-        "type": "object", "additionalProperties": false, "required": ["line", "marked"],
-        "properties": {"line": {"type": "integer"}, "marked": {"type": "boolean"}}
-      }
-    },
     "numbers": {
       "type": "array",
       "items": {
@@ -66,7 +75,7 @@
       "type": "array",
       "items": {
         "type": "object", "additionalProperties": false, "required": ["id", "line", "why"],
-        "properties": {"id": {"type": "string", "pattern": "^F-[0-9]{3}$"}, "line": {"type": "integer"}, "why": {"type": "string"}}
+        "properties": {"id": {"type": "string", "pattern": "^(F-[0-9]{3}|X[0-9]+)$"}, "line": {"type": "integer"}, "why": {"type": "string"}}
       }
     },
     "leave": {

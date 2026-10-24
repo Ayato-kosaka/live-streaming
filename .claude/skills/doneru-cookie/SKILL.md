@@ -20,7 +20,7 @@ SSM の躓きはそちらに書いてある。ここに残すのは **Doneru に
 
 | ファイル | 何をするか |
 | --- | --- |
-| `ec2_exec.sh` | 土台の `ec2-chrome/ec2_exec.sh` へ渡すだけの1行。EC2 を起動 → `cdp.py` を置き直す → SSM でスクリプトを実行 → **必ず停止**。最後に `final state: stopped` を出す |
+| `ec2_exec.sh` | 土台の `ec2-chrome/ec2_exec.sh` へ渡すだけの1行。EC2 を起動 → 列 `doneru` の札を取る → `cdp.py` を置き直す → SSM でスクリプトを実行 → 札を返す → **止めてよければ止める**（ほかの人が使っていれば止めずに「idle-stop に任せる」とログに書く。`ec2-chrome` 2.5）。最後に `final state` を出す |
 | `remote_refresh.sh` | EC2 上で走る。`cdp.up("doneru")` で Chrome を起こす → `_dt` を読む → 切れていれば押してログイン → `api.doneru.jp` で 200 を確かめる → `gh secret set DONERU_COOKIE` |
 | `wait_challenge.sh` | 本人確認の数字が画面に出た瞬間に1行出して抜ける |
 
@@ -76,10 +76,10 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 合格は、出力に次の2行が**両方**あること:
 
 - `OK: DONERU_COOKIE を更新しました（_dt length=33）`
-- `final state: stopped`
+- `final state: stopped`（ほかの人が EC2 を使っていたときは `running` と「止めなかった: ほかの人が使っている…idle-stop に任せる」。それで合格）
 
-`final state` が `stopped` でなければ、手で止める:
-`aws --profile sandbox --region ap-northeast-1 ec2 stop-instances --instance-ids i-0684d39b0c1b1abb6`
+`final state` が `stopped` でなく、「idle-stop に任せる」も出ていなければ、`python3 .claude/skills/ec2-chrome/ec2.py stop` で止める
+（使っている人が居れば断られる。`aws … stop-instances` を直に打たない。ほかの人の作業ごと止まる）
 
 1回の起動は2〜7分（本人確認の待ちを含む）。**続けて回すときは、前の回の `RUN FINISHED` を待ってから。**
 

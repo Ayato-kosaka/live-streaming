@@ -1,0 +1,882 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/02_0-09-30_0-16-30.mp4",
+   "watermark": "prism_live",
+   "t0": 570.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/01_0-01-00_0-08-00.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/03_0-44-30_0-47-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2670.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/04_0-16-30_0-22-30.mp4",
+   "watermark": "prism_live",
+   "t0": 990.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c02",
+   "in": 1362,
+   "out": 1441,
+   "row": 0,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.55,
+    "x": 0.4583,
+    "sx": 0.5,
+    "y": [
+     0.5469,
+     0.6562
+    ],
+    "sy": 0.68
+   },
+   "note": "冒頭: 白い子犬が正面からこちらへ駆けてきて、至近でカメラを見上げる（02）。犬は題の札の下に寄せる"
+  },
+  {
+   "src": "c01",
+   "in": 2100,
+   "out": 2131,
+   "row": 1,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "草原に白い子犬と黒い犬（01）。野良犬だらけの草原"
+  },
+  {
+   "src": "c01",
+   "in": 3360,
+   "out": 3391,
+   "row": 1,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "手を伸ばした先の白い子犬（01）。スタート"
+  },
+  {
+   "src": "c01",
+   "in": 4440,
+   "out": 4497,
+   "row": 2,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "遠くの子犬2匹へ手のひらを向けて手招き（01）"
+  },
+  {
+   "src": "c01",
+   "in": 4770,
+   "out": 4822,
+   "row": 3,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.8,
+    "x": 0.425,
+    "sx": 0.5,
+    "y": 0.8516,
+    "sy": 1.0
+   },
+   "note": "数m先で座ったままの子犬2匹（01）。子犬に寄せる"
+  },
+  {
+   "src": "c01",
+   "in": 1500,
+   "out": 1529,
+   "row": 4,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "自撮り: 口をとがらせる顔（01）。しゃあないから"
+  },
+  {
+   "src": "c01",
+   "in": 4230,
+   "out": 4260,
+   "row": 4,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "本人の長い影と遠くの子犬（01）。1人で出発"
+  },
+  {
+   "src": "c01",
+   "in": 1872,
+   "out": 1926,
+   "row": 5,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "自撮り: 手で日差しを遮って遠くを見る（01）。目指すのは"
+  },
+  {
+   "src": "c03",
+   "in": 2280,
+   "out": 2335,
+   "row": 5,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.6528,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "家と石の塔の並ぶ村の舗装路（03）。町"
+  },
+  {
+   "src": "c01",
+   "in": 1320,
+   "out": 1370,
+   "row": 6,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "自撮り: 話す顔（01）。宿にスリッパが無い"
+  },
+  {
+   "src": "c01",
+   "in": 11082,
+   "out": 11133,
+   "row": 6,
+   "zoom": {
+    "from": 1.6,
+    "to": 1.6,
+    "x": 0.2778,
+    "sx": 0.5,
+    "y": 0.9297,
+    "sy": 1.0
+   },
+   "note": "紺のスニーカーと黒いズボンが草の上を歩く（01）。豚の左で切る"
+  },
+  {
+   "src": "c02",
+   "in": 8760,
+   "out": 8812,
+   "row": 7,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "灌木のあいだの細い踏み跡（02）。道なき道"
+  },
+  {
+   "src": "c01",
+   "in": 9240,
+   "out": 9293,
+   "row": 7,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "草原に水たまりと細い流れ（01）。緊急事態発生"
+  },
+  {
+   "src": "c01",
+   "in": 10440,
+   "out": 10511,
+   "row": 8,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "茶色い泥水のぬかるみ（01）"
+  },
+  {
+   "src": "c01",
+   "in": 10908,
+   "out": 10975,
+   "row": 9,
+   "zoom": {
+    "from": 1.6,
+    "to": 1.6,
+    "x": [
+     0.25,
+     0.5
+    ],
+    "sx": 0.5,
+    "y": 0.8531,
+    "sy": 1.0
+   },
+   "note": "泥の縁から、泥の上に本人の影（01）。右へ歩く影を枠で追う。枠の下の端を豚の上に"
+  },
+  {
+   "src": "c01",
+   "in": 11220,
+   "out": 11266,
+   "row": 10,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "逆光の山の方へ引き返す（01）"
+  },
+  {
+   "src": "c01",
+   "in": 6000,
+   "out": 6046,
+   "row": 11,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "始まりの草原に子犬（01）。始まりの位置"
+  },
+  {
+   "src": "c02",
+   "in": 1200,
+   "out": 1247,
+   "row": 11,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "白い子犬が正面から駆け寄る（02）"
+  },
+  {
+   "src": "c01",
+   "in": 1791,
+   "out": 1838,
+   "row": 12,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.12,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.0,
+    "sy": 0.0
+   },
+   "note": "自撮り: 振り向いて叫ぶ顔（01）。怖いから近づかないで"
+  },
+  {
+   "src": "c02",
+   "in": 1620,
+   "out": 1665,
+   "row": 13,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "【元の声】叫び2回の秒（逆光の山→走るぶれ。02）"
+  },
+  {
+   "src": "c02",
+   "in": 1734,
+   "out": 1775,
+   "row": 13,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "【元の声】「ああ、最悪や」の秒（草原。02）"
+  },
+  {
+   "src": "c02",
+   "in": 12030,
+   "out": 12069,
+   "row": 14,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "黒い子犬とクリームの犬が草の上で駆け回る（02）。犬に追っかけ回され"
+  },
+  {
+   "src": "c02",
+   "in": 9924,
+   "out": 9964,
+   "row": 14,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.4583,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "泥のぬかるみに立つ本人の影（02）。沼にはまった"
+  },
+  {
+   "src": "c01",
+   "in": 10530,
+   "out": 10613,
+   "row": 15,
+   "zoom": {
+    "from": 1.6,
+    "to": 1.6,
+    "x": 0.2778,
+    "sx": 0.5,
+    "y": 0.9297,
+    "sy": 1.0
+   },
+   "note": "足元いっぱいの茶色いぬかるみ（01）。豚の左で切る"
+  },
+  {
+   "src": "c01",
+   "in": 810,
+   "out": 852,
+   "row": 16,
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.8531,
+    "sy": 1.0
+   },
+   "note": "自撮り: ほっとして笑う顔（01）。なんとか抜けれたけど。顔を画面の上へ寄せ、字幕を顎の下に"
+  },
+  {
+   "src": "c04",
+   "in": 600,
+   "out": 637,
+   "row": 17,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "白い建物の脇の土の道（04）。まだ滝は見えない"
+  },
+  {
+   "src": "c02",
+   "in": 7110,
+   "out": 7147,
+   "row": 17,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.6722,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "あやと指定 13:27 の足元の紺のスニーカー（02）"
+  },
+  {
+   "src": "c02",
+   "in": 2880,
+   "out": 2921,
+   "row": 18,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "足元を見下ろす紺の靴（沼のあと。02）"
+  },
+  {
+   "src": "c04",
+   "in": 3600,
+   "out": 3641,
+   "row": 18,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "草原の中の一本道（04）。滝まで歩く？"
+  },
+  {
+   "src": "c02",
+   "in": 11820,
+   "out": 11888,
+   "row": 19,
+   "zoom": {
+    "from": 1.42,
+    "to": 1.42,
+    "x": 0.5,
+    "sx": 0.5,
+    "y": 0.1953,
+    "sy": 0.0
+   },
+   "note": "クリーム色の大きな野良犬が近づいて真横に（02）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇪ジョージアで滝を観に行こうと思ったら\n大惨事に！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ジョージアで滝を観に行こうと思ったら大惨事に！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/01.wav",
+    "tts_text": "ジョージアで滝を見に行こうと思ったら大惨事に！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "野良犬だらけの草原からスタート！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/02.wav",
+    "tts_text": "野良犬だらけの草原からスタート！",
+    "at": 79
+   },
+   {
+    "text": "一緒に行こって手招きしたけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/03.wav",
+    "tts_text": "一緒に行こって手招きしたけど、",
+    "at": 141
+   },
+   {
+    "text": "座ったまま付いてこーへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/04.wav",
+    "tts_text": "座ったまま付いてこーへん！",
+    "at": 198
+   },
+   {
+    "text": "しゃあないから、1人で出発！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/05.wav",
+    "tts_text": "しゃあないから、ひとりで出発！",
+    "at": 250
+   },
+   {
+    "text": "目指すのは、宿のおばちゃんが小学生の頃に住んでた町の滝！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/06.wav",
+    "tts_text": "目指すのは、宿のおばちゃんが小学生の頃に住んでた町の滝！",
+    "at": 309
+   },
+   {
+    "text": "ただ、宿にスリッパが無いから、靴だけは濡らされへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/07.wav",
+    "tts_text": "ただ、宿にスリッパが無いから、靴だけは濡らされへん。",
+    "at": 418
+   },
+   {
+    "text": "ひたすら道なき道を、歩いていると、緊急事態発生！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/08.wav",
+    "tts_text": "ひたすら道なき道を、歩いていると、緊急事態発生！",
+    "at": 519,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "草原が田んぼみたいに、ぐっちょぐちょ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/09.wav",
+    "tts_text": "そうげんが田んぼみたいに、ぐっちょぐちょ！",
+    "at": 624
+   },
+   {
+    "text": "危ない、靴がドロドロになりかけた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/10.wav",
+    "tts_text": "危ない、靴がドロドロになりかけた！",
+    "at": 695
+   },
+   {
+    "text": "ここは急がば回れや。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/11.wav",
+    "tts_text": "ここは急がば回れや。",
+    "at": 762
+   },
+   {
+    "text": "始まりの位置まで戻ったら、野良犬が駆け足で寄ってきた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/12.wav",
+    "tts_text": "始まりの位置まで戻ったら、野良犬が駆け足で寄ってきた。",
+    "at": 808
+   },
+   {
+    "text": "怖いから近づかないで！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/13.wav",
+    "tts_text": "怖いから近づかないで！",
+    "at": 901,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "ああーっ！……最悪や！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/narr/orig_p2_13.wav",
+    "at": 948,
+    "big": "shake_white"
+   },
+   {
+    "text": "犬に追っかけ回されてたら、沼にはまった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/15.wav",
+    "tts_text": "犬に追っかけ回されてたら、沼にはまった！",
+    "at": 1034
+   },
+   {
+    "text": "どこに足を置いても沼で、抜け出されへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/16.wav",
+    "tts_text": "どこに足を置いても沼で、抜け出されへん！",
+    "at": 1113,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "なんとか抜けれたけど……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/17.wav",
+    "tts_text": "なんとか抜けれたけど……",
+    "at": 1196,
+    "mood": "tense_still"
+   },
+   {
+    "text": "まだ滝も見てへんのに、靴がドロッドロ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/18.wav",
+    "tts_text": "まだ滝も見てへんのに、靴がドロッドロ！",
+    "at": 1238,
+    "big": "shake_red"
+   },
+   {
+    "text": "みんなやったら、ドロドロの靴でも滝まで歩く？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/19.wav",
+    "tts_text": "みんなやったら、ドロドロの靴でも滝まで歩く？",
+    "at": 1312
+   },
+   {
+    "text": "続きは、アーカイブを見てな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/waterfall_p2/voice/ldg-p2-v1/p2/20.wav",
+    "tts_text": "続きは、アーカイブを見てな！",
+    "at": 1394
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a5628405cbc9897f4/shorts/videos/LdgTh1DC3Jk/p2/spec.json",
+  "fps": 30,
+  "frames": 1462,
+  "seconds": 48.733,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "0:10:15.4+2.63s"
+    ],
+    "line": "ジョージアで滝を観に行こうと思ったら大惨事に！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 79,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "0:02:10.0+1.03s",
+     "0:02:52.0+1.03s"
+    ],
+    "line": "野良犬だらけの草原からスタート！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 141,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "0:03:28.0+1.90s"
+    ],
+    "line": "一緒に行こって手招きしたけど、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 198,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "0:03:39.0+1.73s"
+    ],
+    "line": "座ったまま付いてこーへん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 250,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "0:01:50.0+0.97s",
+     "0:03:21.0+1.00s"
+    ],
+    "line": "しゃあないから、1人で出発！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 309,
+    "frames": 109,
+    "voice_frames": 101,
+    "cuts": [
+     "0:02:02.4+1.80s",
+     "0:45:46.0+1.83s"
+    ],
+    "line": "目指すのは、宿のおばちゃんが小学生の頃に住んでた町の滝！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 418,
+    "frames": 101,
+    "voice_frames": 93,
+    "cuts": [
+     "0:01:44.0+1.67s",
+     "0:07:09.4+1.70s"
+    ],
+    "line": "ただ、宿にスリッパが無いから、靴だけは濡らされへん。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 519,
+    "frames": 105,
+    "voice_frames": 97,
+    "cuts": [
+     "0:14:22.0+1.73s",
+     "0:06:08.0+1.77s"
+    ],
+    "line": "ひたすら道なき道を、歩いていると、緊急事態発生！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 624,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "0:06:48.0+2.37s"
+    ],
+    "line": "草原が田んぼみたいに、ぐっちょぐちょ！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 695,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "0:07:03.6+2.23s"
+    ],
+    "line": "危ない、靴がドロドロになりかけた！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 762,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "0:07:14.0+1.53s"
+    ],
+    "line": "ここは急がば回れや。",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 808,
+    "frames": 93,
+    "voice_frames": 85,
+    "cuts": [
+     "0:04:20.0+1.53s",
+     "0:10:10.0+1.57s"
+    ],
+    "line": "始まりの位置まで戻ったら、野良犬が駆け足で寄ってきた。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 901,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:01:59.7+1.57s"
+    ],
+    "line": "怖いから近づかないで！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 948,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "0:10:24.0+1.50s",
+     "0:10:27.8+1.37s"
+    ],
+    "line": "ああーっ！……最悪や！",
+    "telop": null,
+    "big": "shake_white",
+    "orig_voice": true
+   },
+   {
+    "row": 14,
+    "from": 1034,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "0:16:11.0+1.30s",
+     "0:15:00.8+1.33s"
+    ],
+    "line": "犬に追っかけ回されてたら、沼にはまった！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1113,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "0:06:51.0+2.77s"
+    ],
+    "line": "どこに足を置いても沼で、抜け出されへん！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1196,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "0:01:27.0+1.40s"
+    ],
+    "line": "なんとか抜けれたけど……",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1238,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "0:16:50.0+1.23s",
+     "0:13:27.0+1.23s"
+    ],
+    "line": "まだ滝も見てへんのに、靴がドロッドロ！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 18,
+    "from": 1312,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "0:11:06.0+1.37s",
+     "0:18:30.0+1.37s"
+    ],
+    "line": "みんなやったら、ドロドロの靴でも滝まで歩く？",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1394,
+    "frames": 68,
+    "voice_frames": 45,
+    "cuts": [
+     "0:16:04.0+2.27s"
+    ],
+    "line": "続きは、アーカイブを見てな！",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 316,
+   "raw_voice_s": 56.3,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 40.3,
+   "cps_voiced": 7.84,
+   "video_s": 48.73,
+   "cps_video": 6.48
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

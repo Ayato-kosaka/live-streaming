@@ -20,12 +20,18 @@
 | --- | --- |
 | lint の ✕ | (a)〜(f) の 3 |
 | (a)〜(f) の 2 以下 | 離れる行（leave） |
-| (h) 帳面の項目に当たる行 | ✕ の理由が【あやと】の行（あやとが書いた・決めた字）だけに当たるもの。まとめ役が裁く（7.3） |
-| | (h) の F-039（行間）・F-040（二転三転）で、同じ行に (i) の当たりが無いもの。この2つは (i) の数えかたで決める項目で、批評役自身の行ごとのつなぎでは渡れている |
-| (i) 跳ぶ行・答えない問い・答える前に移る問い・印の無い人の話・前に声の無い数 | 帳面に無い ID |
+| (h) 約束のカードに当たる行 | ✕ の理由が【あやと】の行（あやとが書いた・決めた字）だけに当たるもの。まとめ役が裁く（7.3） |
+| (h) **当てていない約束**（`checked` に無いカードの ID。`ledger` に挙げた ID は当てたに数える） | (h) の F-039（行間）・F-040（二転三転）で、同じ行に (i)(j)(k) の当たりが無いもの。批評役自身の行ごとの見かたでは渡れている |
+| (j) その行だけ聞いて意味が通らない行（`alone` の `ok` が false） | カードに無い ID |
+| (k) 画に居ない人（視聴者のコメントなど）の言葉を持ち出した行（`outsider`） | |
+| (i) 跳ぶ行・答えない問い・答える前に移る問い・前に声の無い数 | |
 | (i) 取消の2回目・印の無い取消・理由が声に無い取消・2行以上を消す取消・すぐ向きを戻す取消 | |
 
-最後の行が「アーカイブ」の1行なら、その行の (i) は数えない（7.4）。
+**「人の話の印があるか」は当てない**（2026-10-23 #1019、帳面 F-048）。前は印の無い伝聞を ✕ にしていて、批評役が「コメントで」を
+要求する作りだった（滝の回 p1 の8・9行目がそれで通り、関所が「思てたのに」を足させる向きに押した）。いまの当たりは (k)。
+**約束のカードを全部当てたか**は `checked` で見る。前は批評役が当てたかどうかが分からなかった（F-050「書く前と渡す前に1つずつ当てる」）。
+
+最後の行が「アーカイブ」の1行なら、その行の (i)(j) は数えない（7.4）。
 
 **承認済みの原稿を読み直すとき**（`script_writing.md` 7.7 の対照）は `--as-of <日付>:<あやとの返事のコメントID>` を渡す。
 その時点より後にできた帳面の項目に当たった ✕ は △ にする。`lint.py --as-of` と同じ理由——承認より後にできた決まりで落ちたものを、
@@ -51,7 +57,7 @@ import ledger as ledger_mod  # noqa: E402
 import lint as lint_mod  # noqa: E402
 
 TSUNAGI = {"題", "答", "反", "足", "前", "転", "外", "跳", "締"}
-# (i) で数える帳面の項目。(h) で挙げても、同じ行に (i) の当たりが無ければ △
+# (i)(j)(k) で数える帳面の項目。(h) で挙げても、同じ行に (i)(j)(k) の当たりが無ければ △
 I_SIDE = {"F-039", "F-040"}
 
 
@@ -124,6 +130,7 @@ def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
     """
     n = len(c.lines)
     led = led or ledger_mod.load()
+    known = {**led.items, **{o.id: o for o in ledger_mod.OWN}}   # 帳面の項目と、帳面の外の約束（X2）
     fail, look, bad = [], [], []
     ayato = {i for i, r in enumerate(rows, 1) if "【あやと】" in brief.marks(r)}
     if 1 in ayato:
@@ -178,23 +185,40 @@ def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
         if t.get("back"):
             put(ln, "(i) 取消", "すぐあとで同じ話題の向きをもう一度変える")
 
-    for h in d.get("hearsay", []):
-        if in_range(h.get("line")) and not h.get("marked"):
-            put(h["line"], "(i) 人の話", "人に言われた・聞いた話の印が声に無い", i_side=True)
+    # (j) 全部の行を1件ずつ（行の番号つき。字の並びだと、批評役が1つ多く・少なく返して行がずれる）。題の札（行 0）は声の行ではないので飛ばす
+    alone = {}
+    for x in d.get("alone", []):
+        ln = x.get("line")
+        if ln == 0:
+            continue
+        if not in_range(ln) or ln in alone:
+            bad.append(f"alone の行 {ln} が範囲の外か、2回ある")
+            continue
+        alone[ln] = x
+    if set(alone) != set(range(1, n + 1)):
+        bad.append(f"alone に無い行: {sorted(set(range(1, n + 1)) - set(alone))}")
+    for i in sorted(alone):
+        if not alone[i].get("ok"):
+            put(i, "(j) その行だけで通らない", alone[i].get("why") or "その行だけ聞いて意味が通らない", i_side=True)
+    for h in d.get("outsider", []):
+        if in_range(h.get("line")):
+            put(h["line"], "(k) 画に居ない人の言葉", f"{h.get('who') or '旅の場に居ない人'}の言葉で話を動かす（F-048）")
+        else:
+            bad.append(f"outsider の行 {h.get('line')} が範囲の外")
     for x in d.get("numbers", []):
         if in_range(x.get("line")) and not x.get("said_before"):
             put(x["line"], "(i) 数", "あとで拾う数・前提が、前の行の声に無い", i_side=True)
 
-    i_lines = {x[0] for x in fail + look if x[1].startswith("(i)")}
+    i_lines = {x[0] for x in fail + look if x[1].startswith(("(i)", "(j)", "(k)"))}
     for h in d.get("ledger", []):
         fid, ln = h.get("id"), h.get("line")
         if not in_range(ln, 0):
             bad.append(f"ledger の行 {ln} が範囲の外")
             continue
-        if fid not in led.items:
-            look.append((ln, "(h) ?", f"帳面に無い ID {fid}: {h.get('why', '')}"))
+        if fid not in known:
+            look.append((ln, "(h) ?", f"カードに無い ID {fid}: {h.get('why', '')}"))
             continue
-        if not in_force(led.items[fid], as_of):
+        if not in_force(known[fid], as_of):
             # 承認済みの原稿を読み直すとき、承認より後にできた決まりで落ちたものを、原稿の誤りと取り違えない（lint の --as-of と同じ）
             look.append((ln, f"(h) {fid}", f"as_of より後にできた決まり（{h.get('why', '')}）"))
             continue
@@ -205,6 +229,11 @@ def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
             continue
         put(ln, f"(h) {fid}", h.get("why", ""))
 
+    # 約束のカードを全部当てたか（`ledger` に挙げた ID は当てたに数える）。承認済みの読み直し（as_of）でも、批評役には全部のカードを渡している
+    seen = set(d.get("checked", [])) | {h.get("id") for h in d.get("ledger", [])}
+    miss = [i for i in brief.card_ids(led) if i not in seen]
+    if miss:
+        fail.append((None, "(h) 当てていない約束", "・".join(miss)))
     for k, v in sorted((d.get("scores") or {}).items()):
         why = (d.get("score_why") or {}).get(k, "")
         if v <= 2:
@@ -216,13 +245,20 @@ def judge(d: dict, c, rows: list, led=None, as_of: tuple | None = None) -> dict:
     return {"fail": fail, "look": look, "bad": bad, "n": n}
 
 
+def as_of_text(as_of: tuple | None) -> str | None:
+    """（日付, コメントID）→ lint の --as-of の字（`2026-10-23:6354242835`）。"""
+    if not as_of:
+        return None
+    return f"{as_of[0]}:{as_of[1]}" if as_of[1] is not None else as_of[0]
+
+
 def lint_fails_of(c, as_of: tuple | None = None) -> list:
     """lint の ✕。批評役が何も挙げなくても、関所はこれで落とす。
 
     2026-10-23 のフォカッチャの下書きは、1行目が題の札と違い（T-READ）、最後の誘いに時刻が無かった（L-NEXT）。
     どちらも字で決まるので、批評役の目の揺れに任せない（帳面 F-047）。
     """
-    return [h for h in lint_mod.lint(c, as_of[0] if as_of else None)["hits"] if not h.look]
+    return [h for h in lint_mod.lint(c, as_of_text(as_of))["hits"] if not h.look]
 
 
 def report(res: dict, lint_fails: list, d: dict) -> str:
@@ -241,14 +277,16 @@ def report(res: dict, lint_fails: list, d: dict) -> str:
     s = d.get("scores") or {}
     tsu = d.get("tsunagi") or []
     cancels = sum(1 for t in d.get("turns", []) if t.get("kind") == "取消")
+    alone = [x for x in d.get("alone") or [] if x.get("line")]
     out.append(f"点: {' '.join(f'{k}{s.get(k)}' for k in 'abcdef')}  つなぎ: 跳 {tsu.count('跳')}/{len(tsu)}・取消 {cancels}"
+               f"  その行だけで通らない: {sum(1 for x in alone if not x.get('ok'))}/{len(alone)}  当てた約束: {len(set(d.get('checked') or []))}"
                f"  批評役の一言: {d.get('verdict')}")
-    hi = any(k.startswith(("(h)", "(i)")) for _, k, _ in res["fail"])
+    hi = any(k.startswith(("(h)", "(i)", "(j)", "(k)")) for _, k, _ in res["fail"])
     if nf and hi:
         out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直して、2人目の批評役（往復を知らない別の担当）に1回だけ回す"
                    "（`script_writing.md` 7.3。2人目でも残ったら、まとめ役が裁く）")
     elif nf:
-        out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直す。帳面・(h)・(i) の当たりではないので、2人目は呼ばずにまとめ役が読む")
+        out.append(f"結果: 落ちる（✕ {nf}・△ {len(res['look'])}）。✕ を直す。帳面・(h)・(i)・(j)・(k) の当たりではないので、2人目は呼ばずにまとめ役が読む")
     else:
         out.append(f"結果: 通る（✕ 0・△ {len(res['look'])}）"
                    + ("。△ は1回だけ直してよい（2人目の批評役は呼ばない）" if res["look"] else ""))
@@ -288,6 +326,7 @@ def main() -> int:
     if a.json:
         print(json.dumps({"pass": nf == 0, "fail": len(res["fail"]) + len(lint_fails), "look": len(res["look"]),
                           "fail_lines": sorted({x[0] for x in res["fail"] if isinstance(x[0], int)}),
+                          "critic_fail": len(res["fail"]), "lint_fail": len(lint_fails),
                           "scores": d.get("scores"), "jump": (d.get("tsunagi") or []).count("跳"),
                           "verdict": d.get("verdict")}, ensure_ascii=False))
     else:

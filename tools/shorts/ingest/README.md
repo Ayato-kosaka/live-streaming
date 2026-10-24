@@ -172,6 +172,8 @@ clips は数百MB になるので、全体をメモリに載せずに 1MB ずつ
 **枝を git で取り込まない。** 取り込むと mp4 の暗号文（数百MB）も全部落ちてくる。
 `--branch` は GitHub の API（`gh api`）で、枝の先の commit から `manifest.json` と小さな封
 （`sheets.key.enc`・`sheets.enc`）だけを取り、`<out>/.sealed/` に置いてから開く。
+中身は git の blob（`git/blobs/<sha>`）で取り、届いたものの git の hash を置き場の一覧と突き合わせる。
+合わない置き場は `NG` と出して開かず、終了コードは 1（ほかの置き場は開く。下の「これまでに踏んだこと」）。
 
 ```bash
 K=<スクラッチパッド>/keys/ref_private.pem; O=<スクラッチパッド>/ingest
@@ -325,7 +327,9 @@ clips のシートは、**シートの各コマに写っている縞が「区間
   壊れた／書き換えた／欠けた／入れ替えた切れ端・違う鍵・git の中への展開を断る。
   clips の小さな封: 3つだけ（payload.enc 無し）で `--sheets` が開きシートと一覧だけが出る・
   壊した／違う鍵／小さな封の無い回は断る・`--branch` が取りに行くのは manifest と小さな封だけ
-  （偽の GitHub で回す）
+  （偽の GitHub で回す）。偽の GitHub に contents の raw の書き換えをさせ、前の取りかたでは化けて
+  開けない（対照）・blob で取れば大きいほうまで元のまま開く・blob まで化けたら突き合わせで止まる（対照）・
+  main ごと回して化けた置き場だけ NG で終了コード 1
 - `push_selftest.py` — 作業枝に置く（push.sh）。f が小さな封（sheets.key.enc・sheets.enc）を置くこと、
   g が字幕だけの道の封を置き場ごとに `SEALED` で指して続けて置くこと
 
@@ -408,6 +412,11 @@ cron が直近30日で 21:54〜01:48 UTC に来ていた）。
 - **10秒刻みのコマと焼いた秒が5〜10秒ずれる** — `fps` フィルタの丸め。`select` で取り、
   showinfo の本当の時刻を焼いている（`media.py` の頭）
 - **37本を並べると push がぶつかる** — 取り直しを8回・ばらつかせた待ちにした
+- **`--branch` で key.enc が化ける**（2026-10-23）— dRXae0mJw8M の clips の `key.enc`（384バイトの乱数）が
+  571バイトの文字列で届き、openssl が開けず `CalledProcessError` で止まった。`contents/<道>` を
+  `Accept: application/vnd.github.raw` で取ると、GitHub が乱数を UTF-16BE の文字と見立てて
+  UTF-8 に書き換えて返していた（応答の Content-Length が既に 571）。同じファイルを
+  `git/blobs/<sha>` の raw で取ると 384バイトのまま。いまは blob で取り、git の hash で確かめる
 
 ## 守っていること
 

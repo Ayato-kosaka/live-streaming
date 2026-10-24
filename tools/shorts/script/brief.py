@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """**作文者と批評役に渡す「1枚」を作る。** 帳面・参考・7.4 節・配信の書き起こしを、担当が自分で全部読みに行かないように。
 
-    # 作文者へ（書く前）: 配信の区間・帳面の要約・写す参考の拍・3列の表の雛形
-    python3 tools/shorts/script/brief.py writer --video TDArug_te90 --range 2:38:00-3:00:30 --ref vJo --ref HPJ \\
-        --about "城塞の夕日に間に合うか → 野良犬" --lines 20 -o <scratch>/brief_writer.md
+    # 作文者へ（書く前）: 約束のカード（帳面の決まりと直しの全文）→ 方針 → 書く形 → 当て表 → 材料（配信の字幕）
+    python3 tools/shorts/script/brief.py writer --video LdgTh1DC3Jk --range 0:00:00-0:21:30 --ref IhF --ref f8t \\
+        --title "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！" --about "…" -o <scratch>/brief_writer.md
 
-    # 批評役へ（関所）: 雛形（references/critic_prompt.md）に、原稿の表・lint の結果・帳面の要約・参考の拍・配信の字幕を差し込む
+    # 批評役へ（関所）: 雛形（references/critic_prompt.md）に、同じ約束のカード・原稿の表・lint の結果・参考の拍・配信の字幕を差し込む
     python3 tools/shorts/script/brief.py critic shorts/videos/TDArug_te90/p1/script.txt --ref vJo \\
         --video TDArug_te90 --about "…" -o <scratch>/critic_prompt.md     # --range を省くと、spec の why・src の時刻の前後30秒
 
@@ -14,30 +14,31 @@
         --about "…" --scratch <scratch> -o <scratch>/brief_edit.md
     python3 tools/shorts/script/brief.py edit --episode … --voice-lines shorts/videos/<回>/p1/voice_lines_A.json   # 声に渡す字の雛形
 
-終了コード 0=書けた / 2=原稿・配信の書き起こし・参考の節が見つからない（edit は、雛形の呼び出しが道具と食い違うときも）。
+終了コード 0=書けた / 2=原稿・配信の書き起こし・参考の節が見つからない・spec の形が違う（rows が無い・行の数が違う）
+（edit は、雛形の呼び出しが道具と食い違うときも）。
 
-## なぜ1枚にするか（#1011、帳面 F-044）
+## 作文者の1枚を、ゼロから作り直した（#1019、帳面 F-048〜F-050）
 
-2026-10-21 のフランス周遊では、批評役1人が毎回、帳面の全文（44項目）・参考の書き起こし全文（2本で約4万字）・7.4 節を読み、
-1人 約14〜19万トークン・6〜12分を使った（`tools/shorts/cost/tally.py`）。点は批評役ごとに揺れた。
-読む量の大半は、その原稿に効かない項目と、写さない言い回しだった。ここで**原稿の段に効く所だけ**を1枚に寄せる。
+2026-10-23 の滝の回 p1 は、17行のうち13行が配信の字幕をほぼそのまま写していて、あやとに「字幕をつなげてるだけ」「約束が漏れすぎ」と
+言われた。棚卸し（2026-10-23）で数えると、原稿に効く約束26個のうち10個が、この1枚に中身ごと入っていなかった。
 
-## 何を入れるか
+- **前の1枚は、帳面を「題＋直しの最初の1組（90字で切る）」に縮めていた。** 決まり（する／しない）は全項目で0字。
+  2回目に言われて中身が増えても、題が同じなら1枚は変わらなかった。分類で選んだので、字に効く F-014（画）・F-019（音）・F-050（進め方）が落ちた
+- **1枚の6割が字幕とチャットの生の文で、その真上に「まずここから拾う」と書いてあった。** 作文者は材料の側に引っ張られた
+- だから今は、**約束のカード（帳面の決まりと直しを、1字も切らずに）を先頭に**置き、字幕は**いちばん後ろの「材料」**に下げる。
+  **チャットの本文は入れない**（視聴者の書き込みで話を動かさない。F-048）。カードは帳面から毎回組む（`ledger.py` の `script_items`）
 
-- **帳面の要約**: 分類が「題・言い回し・事実・構成」の項目を、題（決まりの1行）＋直す前 → 直した後の最初の1組で1〜2行ずつ。
-  帳面から毎回作り直すので、項目が増えても手で直さない。批評役には「機械が見る項目」（当てる場所が `lint:` だけ）を名前だけにして、
-  読んで当てる項目（批評役 (h)・(i)）を全文で渡す
-- **参考の拍**: `references/reference_beats.md` の節（他人の台本の全文は公開リポジトリに置かない。要約だけ）
-- **配信の書き起こし**: `streams/` の自動字幕（30秒ごと）の、指定の区間だけ。チャットは名前を落として本文だけ（`--chat`）
-- **3列の表の雛形**（`script_writing.md` 0.8）
-- **決まっている字**（作文者へ。`--title` の題の札は1行目でそのまま読む・`--next` の時刻は最後の行で言う。帳面 F-047）
+作文者は1行ずつ「元の出来事（配信の時刻）／見る人に届く文／残した本人の言葉／選んだ理由」の4欄で書き、カード1枚ずつに当て表
+（spec の `promises`）を付ける。当て表の欠けは lint の L-ATE が ✕ にする（渡せない）。
 
-## 批評役の1枚に配信の字幕を入れる（#1014、帳面 F-047）
+## 批評役の1枚
 
-2026-10-23 のフォカッチャの下書きは、配信に無い・要らないつなぎと決め台詞、飾り、本人の言い方でない説明を、あやとに
-ほぼ全部直された。批評役の1枚には配信の字幕が無く、【足】の印の無い行を「配信で本人が言った言葉」と信じて読むしかなかった。
-`--video` を渡すと、作文者に渡したのと同じ字幕（`--range` か、spec の why・src に書いた時刻の前後30秒）を1枚に入れる。
-批評役は、行を字幕のその場面と並べて当てる（`references/critic_prompt.md` の (h) F-047）。
+作文者と**同じカード**を入れる。批評役は当てた ID を全部 `checked` に並べ、欠けたら `critic_gate.py` が ✕ にする。
+いま見ている原稿の行を引いている直しの例だけは、伏せる（例との一致で落とす・通すのを避ける。`quotes_script`）。
+`--video` で配信の字幕を入れる（#1014、帳面 F-047。作文者が根拠に挙げた時刻の前後30秒か `--range`）。
+
+**spec に `rows` が無い・行の数が原稿と違うときは、作らずに止まる**（`lint.build` が止める）。滝の回 p1 は spec が `lines` の鍵で書かれていて、
+批評役の1枚の画の列が空のまま回っていた。
 
 ## 本編集の担当の1枚（edit）
 
@@ -70,8 +71,6 @@ sys.path.insert(0, str(HERE))
 import ledger as ledger_mod  # noqa: E402
 import lint as lint_mod  # noqa: E402
 
-# 原稿の段に効く分類（画・音・投稿・進め方は、書き出しと投稿の段で当てる）
-SCRIPT_CATS = ("題", "言い回し", "事実", "構成")
 CPS = 6.8      # 上限の倍率 1.4 で読んだ毎秒の字（`script_writing.md` 6・`storyboard.py`）
 GAP = 0.3      # 行の間（秒）
 CARD = 4.0     # 題の札を消す秒（帳面 F-015）
@@ -80,25 +79,7 @@ AYATO = re.compile(r"あやとの(題|書き足し|字|添削)|あやと\s*#\d+\
 TIME = re.compile(r"^\[(\d+):(\d\d):(\d\d)\]\s*(.*)$")
 
 
-# ---------- 帳面 ----------
-
-def first_pair(text: str, width: int = 90) -> str:
-    """「直す前 → 直した後」の最初の1組を、width 字までに。"""
-    # 組と組のあいだは「 ／ 」（前後に空白）。引用の中の「／」（行の区切り）では切らない
-    s = re.split(r"\s+／\s+", text.strip())[0]
-    s = re.sub(r"\s+", " ", s)
-    return s if len(s) <= width else s[: width - 1] + "…"
-
-
-def ledger_items(led=None, cats=SCRIPT_CATS) -> list:
-    led = led or ledger_mod.load()
-    return [it for it in led.items.values() if it.category in cats]
-
-
-def machine_only(it) -> bool:
-    """当てる場所が `lint:` だけ（批評役も人の目も名指していない）。"""
-    return bool(it.lint) and "批評役" not in it.place and ledger_mod.HUMAN not in it.place
-
+# ---------- 約束のカード ----------
 
 def _norm(s: str) -> str:
     return re.sub(r"[\s「」『』（）()…、。！？!?・ー〜,，【】]", "", s)
@@ -114,30 +95,42 @@ def quotes_script(example: str, lines: list, k: int = 8) -> bool:
     return False
 
 
-def ledger_block(for_critic: bool, led=None, avoid: list | None = None) -> str:
-    """帳面の要約。`avoid`（いま見る原稿の行）を引いている例は、題だけ残して例を落とす。
+def flat(s: str) -> str:
+    """欄の字を1段落に（改行と字下げを空白1つに）。**切らない**。"""
+    return re.sub(r"\s+", " ", s or "").strip()
 
+
+def card_ids(led=None) -> list:
+    """約束のカードの ID（帳面の原稿の段の項目と、帳面の外の約束）。当て表と批評役の `checked` は、これを全部埋める。"""
+    return [it.id for it in ledger_mod.script_items(led)]
+
+
+def cards(led=None, avoid: list | None = None) -> str:
+    """約束のカード。帳面の決まり（する／しない）と直す前 → 直した後を、**1字も切らずに**入れる。
+
+    `avoid`（いま見る原稿の行）を引いている直しの例は、批評役の1枚では伏せる。
     **その原稿の行が帳面に「ダメな例」として載っていると、批評役は決まりではなく例との一致で落とす。**
     対照（銅像 p2 は帳面 F-039・F-040 の例そのもの）が答えを見て落ちるので、雛形の良し悪しを測れなくなる。
-    同じ原稿を二度見ることは本番では無いので、落としても失うものは無い。
     """
-    items = ledger_items(led)
     out = []
-    machine = [it for it in items if machine_only(it)] if for_critic else []
-    for it in items:
-        if it in machine:
-            continue
-        times = f"（{it.times}回）" if it.times > 1 else ""
-        lint = f" ［lint: {'・'.join(sorted(it.lint))}］" if it.lint else ""
-        raw = it.fields.get("直す前 → 直した後", "")
-        if avoid and quotes_script(raw, avoid):
-            out.append(f"- **{it.id}**（{it.category}）{it.title}{times}{lint}")
-            continue
-        out.append(f"- **{it.id}**（{it.category}）{it.title}{times}{lint}\n  例: {first_pair(raw)}")
-    if machine:
-        out.append("- 機械だけが見る（lint の結果に出る。読んで当てなくてよい）: "
-                   + "・".join(f"{it.id} {it.title[:18]}…" for it in machine))
-    return "\n".join(out)
+    for it in ledger_mod.script_items(led):
+        own = it.id in {o.id for o in ledger_mod.OWN}   # 帳面の外の約束
+        times = f"・{it.times}回言われた" if it.times > 1 else ""
+        head = f"### {it.id} {it.title}（{it.category}{times}{'・帳面の外の約束' if own else ''}）"
+        fix = flat(it.fields.get("直す前 → 直した後", ""))
+        if avoid and quotes_script(fix, avoid):
+            fix = "（いま見る原稿の行を引いているので、この1枚では伏せた。決まりで当てる）"
+        body = [head, "", f"- **決まり**: {flat(it.fields.get('決まり', ''))}",
+                f"- **{'直した例' if own else 'あやとの直し'}**: {fix}"]
+        if it.lint:
+            body.append(f"- **機械の守り**: lint の {'・'.join(sorted(it.lint))}（lint の結果に出る）")
+        out.append("\n".join(body))
+    return "\n\n".join(out)
+
+
+def ids_line(led=None) -> str:
+    ids = card_ids(led)
+    return f"{'・'.join(ids)}（{len(ids)}枚）"
 
 
 # ---------- 参考の拍 ----------
@@ -179,8 +172,8 @@ def stream_file(video: str, kind: str) -> Path:
     return hits[0]
 
 
-def cut(path: Path, ranges: list, step: int = 30, chat: bool = False) -> list:
-    """`[h:mm:ss] 文` の行のうち、区間に掛かるものだけ。チャットは名前を落として本文だけにする。"""
+def cut(path: Path, ranges: list, step: int = 30) -> list:
+    """`[h:mm:ss] 文` の行のうち、区間に掛かるものだけ。"""
     out = []
     for ln in path.read_text(encoding="utf-8").splitlines():
         m = TIME.match(ln)
@@ -189,25 +182,60 @@ def cut(path: Path, ranges: list, step: int = 30, chat: bool = False) -> list:
         t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
         if not any(a - step < t <= b for a, b in ranges):
             continue
-        body = m.group(4)
-        if chat:
-            # `名前: 本文` / `¥500 名前: 本文`。視聴者さんの名前は、どこにも出さない（SKILL.md 2）
-            money = re.match(r"^([¥$€£][\d,]+)\s+", body)
-            rest = body[money.end():] if money else body
-            rest = rest.split(": ", 1)[1] if ": " in rest else rest
-            body = (money.group(1) + " " if money else "") + rest
-        out.append(f"[{m.group(1)}:{m.group(2)}:{m.group(3)}] {body}")
+        out.append(f"[{m.group(1)}:{m.group(2)}:{m.group(3)}] {m.group(4)}")
     return out
+
+
+# 本人が配信でコメントを読み上げると、視聴者さんの書き込みの字が自動字幕に入る。2026-10-23 の滝の回の1枚には、
+# チャットを入れなくても、同じ区間のチャットの本文が2行、字幕の側から入っていた。8字に満たない字（「こんばんは」）は伏せない
+READ_MIN = 8
+READ_PAD = 90     # 読み上げはチャットの少しあと（〜1分半）になる。区間の前後この秒のチャットまで見る
+READ_MARK = "〔コメントの読み上げ〕"
+
+
+def comment_bodies(video: str, ranges: list, pad: int = READ_PAD) -> list:
+    """区間（の前後 pad 秒）のチャットの本文（名前と投げ銭の額を落とす）。長い順。字はここで使うだけで、どこにも出さない。"""
+    try:
+        ch = stream_file(video, "chat")
+    except FileNotFoundError:
+        return []
+    out = set()
+    for ln in ch.read_text(encoding="utf-8").splitlines():
+        m = TIME.match(ln)
+        if not m:
+            continue
+        t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+        if not any(a - pad <= t <= b + pad for a, b in ranges):
+            continue
+        body = re.sub(r"^[¥$€£][\d,]+\s+", "", m.group(4))
+        body = body.split(": ", 1)[1] if ": " in body else body
+        if len(body.strip()) >= READ_MIN:
+            out.add(body.strip())
+    return sorted(out, key=len, reverse=True)
+
+
+def mask_read(lines: list, bodies: list) -> tuple:
+    """字幕の行の中の、チャットの本文と同じ字を伏せる。（伏せた行, 伏せた数）。"""
+    out, n = [], 0
+    for ln in lines:
+        for b in bodies:
+            if b in ln:
+                n += ln.count(b)
+                ln = ln.replace(b, READ_MARK)
+        out.append(ln)
+    return out, n
+
+
+def masked_note(n: int) -> str:
+    return f"本人が読み上げた視聴者さんのコメント {n} か所は{READ_MARK}に伏せた。F-048" if n else ""
 
 
 # ---------- 原稿の表 ----------
 
 def rows_of(script: Path, spec: Path | None) -> tuple:
-    """原稿の行と、spec の行（無ければ空の辞書）。"""
+    """原稿の行と、spec の行（無ければ空の辞書）。spec に rows が無い・行の数が違えば、`lint.build` が止める（ValueError）。"""
     c = lint_mod.build(script, spec=spec)
     rows = c.rows or [{} for _ in c.lines]
-    if len(rows) != len(c.lines):
-        rows = [{} for _ in c.lines]
     for i, r in enumerate(rows, 1):
         r.setdefault("_ashi", i in c.ashi_marked)
     return c, rows
@@ -231,6 +259,8 @@ def marks(r: dict) -> str:
         m.append("【あやと】")
     if "【答】" in why:
         m.append("【答】")
+    if r.get("orig_voice"):
+        m.append("【元の声】")   # AI の声で読まず、配信の本人の声（叫び）を流す行（帳面 F-051）
     return "".join(m)
 
 
@@ -251,8 +281,9 @@ def script_table(c, rows: list) -> str:
     return "\n".join(head + out)
 
 
-def lint_block(script: Path, spec: Path | None) -> str:
-    r = subprocess.run([sys.executable, str(HERE / "lint.py"), str(script)] + (["--spec", str(spec)] if spec else []),
+def lint_block(script: Path, spec: Path | None, as_of: str | None = None) -> str:
+    r = subprocess.run([sys.executable, str(HERE / "lint.py"), str(script)] + (["--spec", str(spec)] if spec else [])
+                       + (["--as-of", as_of] if as_of else []),
                        capture_output=True, text=True, timeout=60, check=False)
     return "\n".join(ln for ln in r.stdout.splitlines() if not ln.startswith("原稿: "))
 
@@ -302,9 +333,10 @@ def critic_source(video: str | None, ranges: list, rows: list) -> str:
     if not rs:
         return "（字幕の区間が決まらない。`--range` を渡すか、spec の why に配信の時刻を書く）"
     tr = stream_file(video, "transcript")
-    got = cut(tr, rs)
+    got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
     how = "まとめ役が渡した区間" if ranges else f"spec の why・src に書いた時刻の前後{PAD}秒"
-    return f"自動字幕（{tr.relative_to(ROOT)}、30秒ごと。{how}）:\n\n```\n" + "\n".join(got) + "\n```"
+    note = f"。{masked_note(n)}" if n else ""
+    return f"自動字幕（{rel(tr)}、30秒ごと。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"
 
 
 FIXTURES = HERE / "fixtures"
@@ -335,7 +367,7 @@ def leaks(text: str, k: int = 8) -> list:
 
 
 def build_critic(script: Path, spec: Path | None, refs: list, about: str, video: str | None = None,
-                 ranges: list | None = None) -> str:
+                 ranges: list | None = None, as_of: str | None = None) -> str:
     c, rows = rows_of(script, spec)
     sp = spec or lint_mod.spec_for(script)
     tmpl = CRITIC_TMPL.read_text(encoding="utf-8")
@@ -347,52 +379,104 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video:
         "about": about.strip() or "（まとめ役が1〜3行で書く: 誰の何の配信か・この案の狙い）",
         "n": str(len(c.lines)),
         "table": script_table(c, rows),
-        "lint": lint_block(script, sp if sp.exists() else None),
-        "ledger": ledger_block(for_critic=True, avoid=c.lines),
+        "lint": lint_block(script, sp if sp.exists() else None, as_of),
+        "cards": cards(avoid=c.lines),
+        "ids": ids_line(),
         "refs": beats(refs) if refs else "（参考の指定なし）",
         "source": critic_source(video, ranges or [], rows),
     })
 
 
-def table_template(n: int, lines: list | None = None) -> str:
-    head = ["| # | 原稿 | つなぎ | 聞いた直後の頭の中 | 向き |", "| ---: | --- | --- | --- | --- |"]
-    rows = []
-    for i in range(1, n + 1):
-        ln = lines[i - 1] if lines and i <= len(lines) else ""
-        tsu = "題" if i == 1 else ""
-        rows.append(f"| {i} | {ln} | {tsu} |  |  |")
-    return "\n".join(head + rows)
-
+# ---------- 作文者へ ----------
 
 def fixed_block(title: str | None, nxt: str | None) -> str:
-    """作文者に、決まっている字（題の札・次の配信）を渡す。1行目と最後の行は、ここから書く（帳面 F-047）。"""
+    """作文者に、決まっている字（題の札・次の配信）を渡す。1行目と最後の行は、ここから書く（帳面 F-047・F-049）。"""
     out = []
     if title:
-        out.append(f"- **題の札**: 「{title.replace(chr(10), ' ／ ')}」。**1行目は、この字をそのまま読む**（句読点と改行の置きかただけ変えてよい。lint の T-READ が見る）")
+        t = title.replace("\n", "")
+        out.append(f"- **題の札**: 「{title.replace(chr(10), ' ／ ')}」。**1行目は、この札の字をそのまま読む**（句読点と改行の置きかただけ変えてよい。lint の T-READ が見る）")
+        drops = lint_mod.particle_drops(t)
+        if drops:
+            out.append("  - **ただし、この札には助詞の抜けがある**: " + "・".join(f"「{g}」→「{f}」" for g, f in drops)
+                       + "。あやとの札でも、札ごと直して spec の `title_card` と1行目に同じ字を書き、直したことを返すときに書く（F-049。lint の L-PARTICLE が見る）")
     if nxt:
         out.append(f"- **次の配信**: {nxt}。最後の行で次の配信に誘うなら、**この時刻まで言う**（lint の L-NEXT が見る）")
     return "\n".join(out) or "（指定なし。題の札が決まったら、1行目はその字をそのまま読む。最後の行で次の配信に誘うなら、時刻まで言う）"
 
 
+def watch_block(lines: list) -> str:
+    """この回の字幕で、約束に当たりやすい所（機械で見つけたもの）。字幕の本文は写さず、時刻と言葉だけ。"""
+    out = []
+    for bad, good in lint_mod.nicknames().items():
+        at = [ln.split("]", 1)[0].lstrip("[") for ln in lines if lint_mod.nick_at(ln, bad)]
+        if at:
+            out.append(f"- 字幕に、配信の中の呼び名「{bad}」が {len(at)} か所（{'・'.join(at[:6])}{' ほか' if len(at) > 6 else ''}）。"
+                       f"声では「{good}」のように、初見に通じる言葉で言う（F-048・F-008。lint の L-NICK が見る）")
+    inner = []
+    for ln in lines:
+        at = ln.split("]", 1)[0].lstrip("[")
+        m = lint_mod.INNER.search(ln.replace(READ_MARK, ""))   # 伏せた印の中の「コメント」は数えない
+        if m:
+            inner.append((at, m.group(0)))
+        elif READ_MARK in ln:
+            inner.append((at, "読み上げ"))
+    if inner:
+        out.append(f"- 字幕で、本人がコメント・チャットに触れている所が {len(inner)} か所（"
+                   + "・".join(f"{t}「{w}」" for t, w in inner[:6]) + "）。"
+                   "そこで向きが変わる話は、視聴者の書き込みで動いている。持ち出さず、その段ごと外すか、本人・画に居る人・起きた出来事で渡す（F-048）")
+    return "\n".join(out) or "（字幕からは、呼び名・内輪の言葉は見つからなかった。それでも全部のカードを当てる）"
+
+
+def table_template(n: int, title: str | None = None) -> str:
+    """1行ずつ4欄（元の出来事／見る人に届く文／残した本人の言葉／選んだ理由）の雛形。
+
+    選んだ理由は、あやとの返事（#1019「なぜそれを選んだか理由付きで」、帳面 F-051）から。
+    """
+    head = ["| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 残した本人の言葉 | 選んだ理由 |",
+            "| ---: | --- | --- | --- | --- |"]
+    rows = []
+    for i in range(1, n + 1):
+        if i == 1 and title:
+            rows.append(f"| 1 | 題の札をそのまま読む | {title.replace(chr(10), '')} |  |  |")
+        else:
+            rows.append(f"| {i} |  |  |  |  |")
+    return "\n".join(head + rows)
+
+
+def ate_template(led=None) -> str:
+    """当て表の雛形（カードの ID を全部）と、spec の promises に書く形。"""
+    items = ledger_mod.script_items(led)
+    head = ["| ID | 約束 | 当たる行 | どう直したか／当たらない理由 |", "| --- | --- | --- | --- |"]
+    rows = [f"| {it.id} | {short(it.title, 40)} |  |  |" for it in items]
+    skel = ",\n".join(f'  "{it.id}": {{"lines": [], "note": ""}}' for it in items)
+    return "\n".join(head + rows) + "\n\nspec.json の `promises`（同じ中身。lint の L-ATE が、ID の欠け・空の note・原稿の外の行の番号を ✕ にする）:\n\n```json\n\"promises\": {\n" + skel + "\n}\n```"
+
+
 def build_writer(video: str | None, ranges: list, refs: list, about: str, n: int, chat: bool,
                  extra: list, title: str | None = None, nxt: str | None = None) -> str:
-    parts = []
+    if chat:
+        raise ValueError("作文者の1枚にチャットの本文は入れない（視聴者の書き込みで話を動かさない。帳面 F-048）。--chat を外す")
+    parts, got = [], []
     if video and ranges:
         rs = parse_ranges(ranges)
         tr = stream_file(video, "transcript")
-        parts.append(f"自動字幕（{tr.relative_to(ROOT)}、30秒ごと）:\n\n```\n" + "\n".join(cut(tr, rs)) + "\n```")
-        if chat:
-            ch = stream_file(video, "chat")
-            parts.append("チャット（名前は落とした。出来事の15〜35秒あとに付く）:\n\n```\n" + "\n".join(cut(ch, rs, 0, chat=True)) + "\n```")
+        got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
+        note = f"。{masked_note(n)}" if n else ""
+        parts.append(f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(got) + "\n```")
     for p in extra:
-        parts.append(f"{Path(p).name}:\n\n```\n" + Path(p).read_text(encoding="utf-8").strip() + "\n```")
+        text = Path(p).read_text(encoding="utf-8").strip()
+        got += [ln for ln in text.splitlines() if TIME.match(ln)]
+        parts.append(f"{Path(p).name}:\n\n```\n" + text + "\n```")
     return fill(WRITER_TMPL.read_text(encoding="utf-8"), {
         "about": about.strip() or "（まとめ役が1〜3行で書く: どの配信のどの出来事か・企画の型・伝えたいこと）",
-        "source": "\n\n".join(parts) or "（区間の指定なし。`--video` と `--range` を渡す）",
-        "ledger": ledger_block(for_critic=False),
-        "refs": beats(refs) if refs else "（参考の指定なし。`references/reference_beats.md` の頭の選びかたで決める）",
+        "cards": cards(),
+        "n_cards": str(len(card_ids())),
         "fixed": fixed_block(title, nxt),
-        "table": table_template(n, [title.replace("\n", "")] if title else None),
+        "watch": watch_block(got),
+        "refs": beats(refs) if refs else "（参考の指定なし。上の方針と、あやとの直しを手本にする）",
+        "table": table_template(n, title),
+        "ate": ate_template(),
+        "source": "\n\n".join(parts) or "（区間の指定なし。`--video` と `--range` を渡す）",
     })
 
 
@@ -665,6 +749,9 @@ def voice_lines(spec: dict) -> list:
     sid = spec.get("id") or "A"
     out = []
     for n, r in enumerate(spec["rows"], 1):
+        if r.get("orig_voice"):  # 元の声の行（帳面 F-051）
+            # 声は作らず、配信の本人の声を流す（build_edit.py が元の音を置く）。key の番号は行の番号のまま（その番号だけ欠ける）
+            continue
         t = r.get("tts_text") or r["line"]
         out.append({"key": f"{sid}/{n:02d}", "plan": sid, "n": n, "caption": r["line"], "tts_text": t,
                     "bytes": len(t.encode("utf-8"))})
@@ -791,10 +878,10 @@ def main() -> int:
     w = sub.add_parser("writer", help="作文者へ（書く前）")
     w.add_argument("--video", help="配信の videoId（streams/ の書き起こしから切る）")
     w.add_argument("--range", action="append", default=[], help="H:MM:SS-H:MM:SS（何回でも）")
-    w.add_argument("--chat", action="store_true", help="同じ区間のチャットも（名前は落とす）")
+    w.add_argument("--chat", action="store_true", help="使わない（作文者の1枚にチャットの本文は入れない。帳面 F-048）。渡すと止まる")
     w.add_argument("--extra", action="append", default=[], help="足す書き起こし（復号した whisper など、[H:MM:SS] 形式）")
-    w.add_argument("--lines", type=int, default=18, help="3列の表の雛形の行数")
-    w.add_argument("--title", help="題の札の字（決まっていれば。1行目でそのまま読む・表の1行目に入れる）")
+    w.add_argument("--lines", type=int, default=18, help="4欄の表の雛形の行数")
+    w.add_argument("--title", help="題の札の字（決まっていれば。1行目でそのまま読む・表の1行目に入れる。助詞の抜けがあれば1枚に書く）")
     w.add_argument("--next", help="最後の行で言う次の配信（「本日22時」。決まっていれば）")
     c = sub.add_parser("critic", help="批評役へ（関所）")
     c.add_argument("script")
@@ -802,6 +889,7 @@ def main() -> int:
     c.add_argument("--video", help="配信の videoId（streams/ の字幕を1枚に入れる。配信に無い言葉を批評役が当てるため）")
     c.add_argument("--range", action="append", default=[],
                    help="H:MM:SS-H:MM:SS（何回でも）。省くと spec の why・src に書いた時刻の前後30秒")
+    c.add_argument("--as-of", help="承認済みの原稿を読み直すとき（lint の結果をその時点の決まりで出す。`lint.py --help`）")
     ed = sub.add_parser("edit", help="本編集の担当へ（声 → spec → 書き出し → 直す → 下見）")
     ed.add_argument("--episode", required=True, help="回の置き場（shorts/videos/<回> か、その版 p1）")
     ed.add_argument("--pattern", help="案（script_A.txt の A。案が1つの回は付けない）")
@@ -816,7 +904,7 @@ def main() -> int:
     a = ap.parse_args()
     try:
         if a.who == "critic":
-            text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range)
+            text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range, a.as_of)
         elif a.who == "edit" and a.voice_lines:
             vdir, _, sfx = pick(Path(a.episode), a.pattern)
             items = voice_lines(json.loads((vdir / f"spec{sfx}.json").read_text(encoding="utf-8")))

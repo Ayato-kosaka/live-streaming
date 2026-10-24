@@ -22,19 +22,27 @@
 | `rejected/CKJvprUMOgA_p2_17` | 2026-10-21「配信になぞりすぎてて、行間が空きすぎてる」「話が二転三転するくらいならない方が良い」（#976。題を直して2行消した17行の版） | 今日 |
 | `rejected/yk-by7R7iPA_p1` | 2026-10-16「原稿とか全然ダメですね」（チャット。#275 #276 #277） | 2026-10-16 |
 | `rejected/VusdZVyjgjQ_p1` | 2026-10-23「ちょっと台本の品質が悪い」（#1014。7c008c3d の下書き21行。帳面 F-047） | 今日 |
-| `approved/VusdZVyjgjQ_p1` | 2026-10-23 あやとの添削そのもの（#1014。5f1a3008 の19行） | 今日 |
+| `approved/VusdZVyjgjQ_p1` | 2026-10-23 あやとの添削そのもの（#1014。5f1a3008 の19行） | 添削の時点（2026-10-23:6354242835） |
+| `rejected/LdgTh1DC3Jk_p1` | 2026-10-23「字幕をつなげてるだけ」「『配信のコメントで』は使わない約束」「何度も言ってます」（#1019。滝の回 p1 の17行。帳面 F-048〜F-050） | 今日 |
 
 フォカッチャの2本は、批評役の対照（`script_writing.md` 7.7）にも使うので、spec に `why`（作文者が挙げた配信の時刻）と
 `visual`（画）を残してある。下書きの spec は当時まだ無かったので、作文者の表（7c008c3d の `script_table.md`）から組んだ。
 添削版の spec は `shorts/videos/` の spec から削り、あやとが書き換えた・足した10行の why に「あやとの添削」を付け（城塞・地下鉄の
 控えの【あやと】と同じ扱い）、まとめ役が渡すはずの `next_stream`（本日22時）を足した。
 
+滝の回 p1 の spec は、作文者が `rows` ではなく `lines` の鍵で書いていた（lint が黙って読み飛ばした元）。控えでは鍵だけ `rows` に直し、
+8行目の視聴者さんの書き込みの字を「……」に伏せた（規則は字ではなく「コメント」で当たるので、伏せても同じ所で落ちる）。
+
+**承認済みの原稿は、承認の時点（`--as-of <日付>:<あやとの返事のコメントID>`）で当てる。** 2026-10-23 の夕方にできた規則（L-INNER・L-NICK・
+L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」）・地下鉄 p1（「ストックホルム来たら」）・銅像 p2（「配信のコメントで」）に今日の決まりで当たる。
+承認より後の決まりで落ちたものを、原稿の誤りと取り違えない（`later_rule_live` と `nick`・`particle` が、今日の決まりでは当たることを見る）。
+
 ## 足
 
 | 足 | 確かめること |
 | --- | --- |
-| `approved` | 出してよいと言われた6本が、言われた日の決まりで ✕ 0（TDArug とフォカッチャの添削版は今日の決まりでも） |
-| `later_rule_live` | ホステル p2 を今日の決まりで当てると、T-FLAG だけが落ちる（承認のあとにできた決まりが効いている） |
+| `approved` | 出してよいと言われた6本が、言われた時点の決まりで ✕ 0（城塞はコメントの時点、フォカッチャの添削版は添削の時点） |
+| `later_rule_live` | ホステル p2 を 10-22 の決まりで当てると、T-FLAG だけが落ちる（承認のあとにできた決まりが効いている） |
 | `miete` | 「地下鉄1回に見えてきた」を 15行目で拾う。「海が見えてきた！」は拾わない |
 | `title_real` | 「銅像だらけの国で、僕まで銅像にされた」を拾う。あやとが書いた題4本（「海外キッチンで…」を含む）と、アプリの回の題は通す |
 | `title_metaphor` | 「〜みたいだった」の題を拾う。あやとの題は通す |
@@ -50,12 +58,17 @@
 | `sec` | 36字の行は ✕、35字は △ だけ、27字は何も出さない。あやとの1行目（29字・4.3秒）は △ だけ（L-SEC） |
 | `after` | 【答】から締めまで3行で ✕、2行で △ が2つ、0行で何も出さない。問い → アーカイブの終わりは問いを締めに数える。原稿の字の【答】も spec の why の【答】も読む。印が無ければ「見ていない」（L-AFTER） |
 | `num` | 銅像 p2（17行）の15行目「101体目」を △。「1回目」のあとの「2回目」・「30体」のあとの「31体目」は出さない。✕ にはしない（L-NUM） |
-| `quote` | 城塞 p1 の「」2つ（って・言うたら）は出さない。前の行が「返事」なら出さない。印の無い「全然似てへん」を △。2字の札「1A」は見ない（L-QUOTE） |
-| `ashirate` | 【足】7/13・5/13 は △、4/13 は出さない。城塞 p1 は出さない（L-ASHIRATE） |
+| `quote` | 城塞 p1 の「」2つ（って・言うたら）は出さない。前の行が「返事」なら出さない。印の無い「全然似てへん」を △。2字の札「1A」は見ない。「コメント」は印に数えない（L-QUOTE） |
 | `ask` | 銅像 p2（17行）の終わり「…あり？なし？」を △。城塞 p1（みんな → アーカイブ）・地下鉄の形（アーカイブだけ）は出さない。アーカイブの前の「どっち派？」は △（L-ASK） |
 | `desu` | 銅像 p2（17行）の10・12行目を △。城塞 p1 の「」の中の「閉まってますよ」は見ない（L-DESU） |
 | `title_read` | フォカッチャの下書きの1行目（札と違う字）を ✕。あやとの添削版・城塞 p1（札は国旗と改行つき）は通す。札が無ければ「見ていない」。10-22 の決まりでは当てない（T-READ） |
 | `next_time` | 下書きの最後「…配信見にきてね！」（時刻なし）を ✕。添削版（22時）は通す。spec の next_stream と違う時刻・「3時間」（時刻ではない）は ✕。アーカイブの1行・問いの終わりは見ない（L-NEXT） |
+| `inner` | 滝の回 p1 の8行目「配信のコメントで…」・銅像 p2 の6行目・「チャットで」・題の札の「リスナー」を ✕。締めの問い・アーカイブ・次の配信への誘いは見ない（L-INNER） |
+| `nick` | 滝の回 p1 の2・10・12行目「ポチ」を ✕。城塞 p1 の13行目は今日の決まりで ✕・承認の時点では当てない。「ポチっと」「ポチった」・直した「野良犬」は見ない。帳面に `呼び名「…」→「…」` を足すと辞書が増え、帳面に1つも無ければ「見ていない」（L-NICK） |
+| `particle` | 題「滝観に」「ストックホルム来たら」を ✕（札が無ければ1行目を題として ✕）。直した題・「乗り放題」「花見に」「パリ行き」は見ない。行の「路線バス乗るの」は △ だけ（L-PARTICLE） |
+| `ate` | 当て表（spec の promises）にカードの ID が全部あれば通る。1つ欠ける・note が「なし」・行の番号が原稿の外・promises が無い、をそれぞれ ✕。spec が無ければ「見ていない」（L-ATE） |
+| `as_of_id` | `--as-of 2026-10-23:6354242835`（朝のフォカッチャの添削）では夕方の4規則を当てず、日付だけの T-READ・L-NEXT は当てる。夕方のコメントの時点・日付だけなら当てる |
+| `spec_rows` | spec が `rows` でなく `lines` で書いてある・行の数が原稿と違う、なら当てずに止まる（何の鍵で書いてあるかを言う）。`--no-spec` なら当てる |
 """
 from __future__ import annotations
 
@@ -71,6 +84,9 @@ sys.path.insert(0, str(HERE.parent / "feedback"))
 import legs  # noqa: E402
 
 TODAY = "2099-12-31"   # 「いまある決まり全部」の代わり（日付で切らない）
+CASTLE_AT = "2026-10-21:6306110329"     # 城塞 p1 の承認（あやと #977「これで、進めて」）
+FOCACCIA_AT = "2026-10-23:6354242835"   # フォカッチャのあやとの添削（#1014）
+WF = "rejected/LdgTh1DC3Jk_p1"          # 滝の回 p1（#1019「字幕をつなげてるだけ」）
 
 # 外す守り: 名前 → (ファイル, 本物の字, 書き換えた字, 落ちるはずの足, 何を外すか)
 CUTS = {
@@ -104,12 +120,12 @@ CUTS = {
                     {"end", "approved"}, "アーカイブの1行で終える形を落とす"),
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
-    "as_of": ("lint.py", "        if as_of and r.since > as_of:\n", "        if False:\n",
-              {"as_of", "approved", "title_read"}, "決まりの日を見ない"),
+    "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
+              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
-                   {"later_rule_live", "title_read"}, "spec の題の札を読まない"),
+                   {"later_rule_live", "title_read", "as_of_id", "particle"}, "spec の題の札を読まない"),
     # ---- 2026-10-21（#1011）に足した規則 ----
     "card": ("lint.py", "    if c.card_seconds <= CARD_MAX:\n", "    if True:\n", {"card"}, "題の札の秒を見ない"),
     "card_spec": ("lint.py", '        secs = s.get("title_card_seconds")\n', "        secs = None\n",
@@ -130,7 +146,6 @@ CUTS = {
               {"quote"}, "誰の言葉かの印を見ない"),
     "quote_prev": ("lint.py", "        if ATTR.search(rest) or ATTR.search(prev):\n", "        if ATTR.search(rest):\n",
                    {"quote"}, "1つ前の行の印を見ない"),
-    "ashirate": ("lint.py", "    if not n or len(rows) / n <= ASHI_SHARE:\n", "    if True:\n", {"ashirate"}, "【足】の割合を見ない"),
     "ask": ("lint.py", '    if not ("？" in ln or "?" in ln) or "アーカイブ" in ln or "みんな" in ln:\n', "    if True:\n",
             {"ask"}, "終わりの問いの「みんな」を見ない"),
     "desu": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = None\n", {"desu"}, "です・ます調を拾わない"),
@@ -139,7 +154,7 @@ CUTS = {
     # ---- 2026-10-23（#1014、F-047）に足した規則 ----
     "read_any": ("lint.py", "    if card == first:\n", "    if True:\n", {"title_read"}, "1行目が題の札と違っても通す"),
     "read_norm": ("lint.py", '    return TITLE_NOISE.sub("", FLAG_PAIR.sub("", s or ""))\n', '    return s or ""\n',
-                  {"title_read", "approved", "later_rule_live"}, "国旗・改行・句読点の置きかたの違いまで ✕ にする"),
+                  {"title_read", "approved", "particle"}, "国旗・改行・句読点の置きかたの違いまで ✕ にする"),
     "next_none": ("lint.py", "    if invites(last) and not TIME.search(last):\n", "    if False:\n", {"next_time"}, "時刻の無い誘いを通す"),
     "next_spec": ("lint.py", "        if miss:\n", "        if False:\n", {"next_time"}, "spec の next_stream の時刻を見ない"),
     "next_spec_read": ("lint.py", '        nxt = s.get("next_stream") or None\n', "        nxt = None\n", {"next_time"},
@@ -147,6 +162,35 @@ CUTS = {
     "time_hours": ("lint.py", "時(?!間)|(?<![0-9])", "時|(?<![0-9])", {"next_time"}, "「3時間」を時刻に数える"),
     "invite_archive": ("lint.py", '    return "アーカイブ" not in line and bool(INVITE.search(line))\n',
                        "    return bool(INVITE.search(line))\n", {"next_time"}, "アーカイブの1行を次の配信への誘いに数える"),
+    "quote_comment": ("lint.py", 'ATTR = re.compile(r"って|言われ|', 'ATTR = re.compile(r"コメント|って|言われ|', {"quote"},
+                      "「コメント」を、誰の言葉かの印に数える（前の形）"),
+    # ---- 2026-10-23（#1019、F-048・F-049・F-050）に足した規則 ----
+    "inner": ("lint.py", "        m = INNER.search(ln)\n", "        m = None\n", {"inner"}, "内輪の言葉を拾わない"),
+    "card_lines": ("lint.py", '    return ([(0, c.title_card.replace("\\n", ""))] if c.title_card else []) + list(enumerate(c.lines, 1))\n',
+                   "    return list(enumerate(c.lines, 1))\n", {"inner", "nick"}, "題の札の内輪・呼び名を見ない"),
+    "nick": ("lint.py", "            if nick_at(ln, bad):\n", "            if False:\n", {"nick"}, "呼び名を拾わない"),
+    "nick_ledger": ("lint.py", '        for bad, good in NICK_PAIR.findall(it.fields.get("直す前 → 直した後", "")):\n',
+                    '        for bad, good in NICK_PAIR.findall(""):\n', {"nick"}, "帳面の直しから辞書を作らない"),
+    "nick_verb": ("lint.py", "(?![ァ-ヶーっッるりらろれゃャ])", "(?![ァ-ヶー])", {"nick"}, "「ポチっと」「ポチった」まで呼び名に数える"),
+    "particle_see": ("lint.py", "    for m in SEE.finditer(text):\n", "    for m in ():\n", {"particle"}, "「滝観に」を拾わない"),
+    "particle_place": ("lint.py", "        if PLACE_GO.match(rest):\n", "        if False:\n", {"particle"}, "「ストックホルム来たら」を拾わない"),
+    "particle_ride": ("lint.py", "    for m in RIDE.finditer(text):\n", "    for m in ():\n", {"particle"}, "「路線バス乗る」を拾わない"),
+    "particle_noun": ("lint.py", "(?<!花)", "", {"particle"}, "「花見に」まで助詞の抜けに数える"),
+    "particle_look": ("lint.py", '声だけで一度で分かるか", look=True))', '声だけで一度で分かるか", look=False))', {"particle"},
+                      "行の助詞の抜けまで ✕ にする（関西の話し言葉で自然に抜く所がある）"),
+    "particle_card": ("lint.py", "    title_line = 0 if c.title_card is not None else 1\n", "    title_line = 1\n", {"particle"},
+                      "札の助詞の抜けを1行目の行に付ける"),
+    "ate_miss": ("lint.py", "    if miss:\n        out.append(Hit(\"L-ATE\"", "    if False:\n        out.append(Hit(\"L-ATE\"", {"ate"},
+                 "当て表の欠けた ID を見ない"),
+    "ate_note": ("lint.py", "        if len(note) < NOTE_MIN:\n", "        if False:\n", {"ate"}, "空の note を通す"),
+    "ate_lines": ("lint.py", "and 0 <= x <= n for x in lines):\n", "for x in lines):\n", {"ate"}, "原稿の外の行の番号を通す"),
+    "ate_none": ("lint.py", "    if c.promises is None:\n", "    if False:\n", {"ate"}, "当て表の無い spec を、形の違いと区別しない"),
+    "ate_read": ("lint.py", '        has_spec, promises = True, s.get("promises")\n', "        has_spec, promises = True, None\n", {"ate"},
+                 "spec の promises を読まない"),
+    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved"},
+                  "同じ日の決まりの前後をコメントID で分けない"),
+    "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
+    "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
 }
 
 
@@ -172,20 +216,20 @@ def leg_approved(L):
     out = []
     for rel, script, as_of in (("approved/zjHZucyfrq8_p2", "script.txt", "2026-10-19"),
                                ("approved/TDArug_te90_p1", "script.txt", "2026-10-21"),
-                               ("approved/TDArug_te90_p1", "script.txt", TODAY),
+                               ("approved/TDArug_te90_p1", "script.txt", CASTLE_AT),
                                ("approved/yk-by7R7iPA_p3", "script_A.txt", "2026-10-17"),
                                ("approved/yk-by7R7iPA_p3", "script_B.txt", "2026-10-17"),
                                ("approved/yk-by7R7iPA_p3", "script_C.txt", "2026-10-17"),
-                               ("approved/VusdZVyjgjQ_p1", "script.txt", TODAY)):
+                               ("approved/VusdZVyjgjQ_p1", "script.txt", FOCACCIA_AT)):
         f = fails(L, fix(L, rel, script), as_of)
-        out.append((f"{rel}/{script}（{as_of if as_of != TODAY else '今日'}の決まり）は ✕ 0"
+        out.append((f"{rel}/{script}（{as_of}の決まり）は ✕ 0"
                     + (f" ← {[h.rule for h in f]}" if f else ""), not f))
     return out
 
 
 def leg_later_rule_live(L):
-    f = fails(L, fix(L, "approved/zjHZucyfrq8_p2"))
-    return [(f"ホステル p2 を今日の決まりで当てると T-FLAG だけ ← {[h.rule for h in f]}",
+    f = fails(L, fix(L, "approved/zjHZucyfrq8_p2"), "2026-10-22")
+    return [(f"ホステル p2 を 10-22 の決まりで当てると T-FLAG だけ ← {[h.rule for h in f]}",
              [h.rule for h in f] == ["T-FLAG"])]
 
 
@@ -331,9 +375,12 @@ def leg_cli(L):
         empty = Path(td) / "script.txt"
         empty.write_text("\n# 空\n", encoding="utf-8")
         r_empty = rc(empty)
+    lines_key = tmp_script(["題", "みんなは？"], {"title_card": "題", "lines": [{"line": "題"}, {"line": "みんなは？"}]})
     return [("地下鉄 p1 は 1", rc(FIX / "rejected/nGgoJ753rBw_p1/script.txt") == 1),
-            ("城塞 p1 は 0", rc(FIX / "approved/TDArug_te90_p1/script.txt") == 0),
-            ("空の原稿は 2", r_empty == 2)]
+            ("城塞 p1（承認の時点の決まり）は 0", rc(FIX / "approved/TDArug_te90_p1/script.txt", "--as-of", CASTLE_AT) == 0),
+            ("空の原稿は 2", r_empty == 2),
+            ("spec が rows でなく lines で書いてあれば 2", rc(lines_key) == 2),
+            ("--as-of の形が違えば 2（2026-10-23:abc）", rc(FIX / "approved/TDArug_te90_p1/script.txt", "--as-of", "2026-10-23:abc") == 2)]
 
 
 _TMP = tempfile.TemporaryDirectory(prefix="lint-selftest-")   # 終わるときに消える（対照の子ごとに1つ）
@@ -349,13 +396,16 @@ def tmp_script(lines, spec=None):
     return sp
 
 
+ROWS2 = [{"line": "題"}, {"line": "みんなは？"}]
+
+
 def hits_of(L, c, rule):
     return [h for h in L.lint(c, TODAY)["hits"] if h.rule == rule]
 
 
 def leg_card(L):
-    long_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.9, "rows": []}))
-    ok_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.0, "rows": []}))
+    long_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.9, "rows": ROWS2}))
+    ok_ = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "title_card_seconds": 4.0, "rows": ROWS2}))
     blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
     h = hits_of(L, long_, "T-CARD")
     return [("spec の題の札が 4.9秒なら ✕（題の札の行 0）", len(h) == 1 and not h[0].look and h[0].line == 0),
@@ -412,21 +462,12 @@ def leg_quote(L):
     reply = hits_of(L, ctx(L, ["次の日の返事、たった3行。", "「ハロー。請求はキャンセルします。良い旅を」", "みんなは？"]), "L-QUOTE")
     bare = hits_of(L, ctx(L, ["題", "「全然似てへん」。", "みんなは？"]), "L-QUOTE")
     label = hits_of(L, ctx(L, ["題", "来たのは「1A」。……これ、違う？", "みんなは？"]), "L-QUOTE")
+    comment = hits_of(L, ctx(L, ["題", "ほんまに「最高や」とコメント。", "みんなは？"]), "L-QUOTE")
     return [("城塞 p1 の「」（って・言うたら）は出さない", not castle),
             ("前の行が「返事」なら出さない", not reply),
             ("印の無い「全然似てへん」を △", [h.line for h in bare] == [2] and all(h.look for h in bare)),
-            ("2字の札「1A」は見ない", not label)]
-
-
-def leg_ashirate(L):
-    def c_(n, k):
-        return L.Ctx(lines=[f"行{i}" for i in range(n)], title_card=None, title_from="足", rows=None,
-                     ashi_marked=set(range(1, k + 1)))
-    castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-ASHIRATE")
-    return [("【足】7/13（あやとの A の形）は △", bool(hits_of(L, c_(13, 7), "L-ASHIRATE"))),
-            ("【足】5/13 は △", bool(hits_of(L, c_(13, 5), "L-ASHIRATE"))),
-            ("【足】4/13 は出さない", not hits_of(L, c_(13, 4), "L-ASHIRATE")),
-            ("城塞 p1 は出さない", not castle)]
+            ("2字の札「1A」は見ない", not label),
+            ("「コメント」は誰の言葉かの印に数えない（視聴者の書き込みは印を付けても持ち出さない。F-048）", [h.line for h in comment] == [2])]
 
 
 def leg_ask(L):
@@ -471,7 +512,7 @@ def leg_next_time(L):
     ng = hits_of(L, fix(L, VUSD_NG), "L-NEXT")
     ok = hits_of(L, fix(L, VUSD_OK), "L-NEXT")
     other = L.build(tmp_script(["題", "うまい！", "明日は21時から作るので配信見にきてね！"],
-                               {"next_stream": "本日22時", "rows": []}))
+                               {"next_stream": "本日22時", "rows": [{}, {}, {}]}))
     return [("下書きの最後「明日はワンパンピザ作るので配信見にきてね！」（時刻なし）を ✕",
              [(h.line, h.look) for h in ng] == [(21, False)]),
             ("添削版の最後（本日22時から）は通す（spec の next_stream「本日22時」とも合う）", not ok),
@@ -481,14 +522,128 @@ def leg_next_time(L):
             ("問いで終える回には時刻を求めない", not last("みんなは、これ食べたい？"))]
 
 
+# ---------- 2026-10-23（#1019、F-048・F-049・F-050） ----------
+
+def leg_inner(L):
+    wf = hits_of(L, fix(L, WF), "L-INNER")
+    statue = hits_of(L, fix(L, "rejected/CKJvprUMOgA_p2_17"), "L-INNER")
+    closing = hits_of(L, ctx(L, ["題", "みんなやったら、それでも行く？", "続きは配信のアーカイブ見てね！"]), "L-INNER")
+    invite = hits_of(L, ctx(L, ["題", "うまい！", "リベンジに本日22時から作るので配信見にきてね！"]), "L-INNER")
+    chat = hits_of(L, ctx(L, ["題", "チャットで教えてもらった店。", "みんなは？"]), "L-INNER")
+    card = hits_of(L, ctx(L, ["題", "みんなは？"], title_card="リスナーさんに言われて来た店"), "L-INNER")
+    return [("滝の回 p1 の8行目「配信のコメントで…」を ✕", [(h.line, h.look) for h in wf] == [(8, False)]),
+            ("銅像 p2（17行・公開済み）の6行目「配信のコメントで…」も今日の決まりでは ✕", [h.line for h in statue] == [6]),
+            ("締めの「みんなやったら…？」「配信のアーカイブ見てね」は内輪ではない", not closing),
+            ("次の配信への誘い「…配信見にきてね！」も内輪ではない", not invite),
+            ("「チャットで」を ✕", [h.line for h in chat] == [2]),
+            ("題の札の「リスナー」も ✕（行 0）", [h.line for h in card] == [0])]
+
+
+def leg_nick(L):
+    wf = hits_of(L, fix(L, WF), "L-NICK")
+    castle = fix(L, "approved/TDArug_te90_p1")
+    now = hits_of(L, castle, "L-NICK")
+    then = [h for h in L.lint(castle, CASTLE_AT)["hits"] if h.rule == "L-NICK"]
+    verb = hits_of(L, ctx(L, ["題", "ボタンをポチっと押したら、", "ネットでポチった。", "みんなは？"]), "L-NICK")
+    good = hits_of(L, ctx(L, ["題", "野良犬だらけの草原からスタート！", "みんなは？"]), "L-NICK")
+    card = hits_of(L, ctx(L, ["題", "みんなは？"], title_card="ポチと歩いた草原"), "L-NICK")
+    led_mod, led = L._ledger()
+    text = led_mod.PATH.read_text(encoding="utf-8")
+    grown = led_mod.parse(text.replace("（呼び名「ポチ」→「野良犬」）", "（呼び名「ポチ」→「野良犬」・呼び名「タマ」→「野良猫」）", 1))
+    empty = led_mod.parse(text.replace("呼び名「", "名「"))
+    saved = list(L._LED)
+    try:
+        L._LED[:] = [(led_mod, empty)]
+        blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    finally:
+        L._LED[:] = saved
+    return [("滝の回 p1 の2・10・12行目「ポチ」を ✕", [(h.line, h.look) for h in wf] == [(2, False), (10, False), (12, False)]),
+            ("城塞 p1 の13行目「ポチ、あかんよ」は、今日の決まりでは ✕", [h.line for h in now] == [13]),
+            ("同じ城塞 p1 も、承認の時点（2026-10-21:6306110329）では当てない", not then),
+            ("「ポチっと」「ポチった」（ボタン・買い物）は呼び名に数えない", not verb),
+            ("直した「野良犬」は通す", not good),
+            ("題の札の呼び名も ✕（行 0）", [h.line for h in card] == [0]),
+            ("帳面に `呼び名「タマ」→「野良猫」` を足すと、手で直さずに辞書が増える",
+             L.nicknames(grown).get("タマ") == "野良猫" and "タマ" not in L.nicknames(led)),
+            ("帳面に呼び名の直しが1つも無ければ「見ていない」（0件を緑にしない）", "L-NICK" in blind)]
+
+
+def leg_particle(L):
+    def card_hits(card):
+        return hits_of(L, ctx(L, ["題", "みんなは？"], title_card=card), "L-PARTICLE")
+    wf = hits_of(L, fix(L, WF), "L-PARTICLE")
+    ride = hits_of(L, ctx(L, ["題", "アルバニアで路線バス乗るの今日が初めて", "みんなは？"]), "L-PARTICLE")
+    free = hits_of(L, ctx(L, ["題", "1週間乗り放題、7800円課金や！", "花見に行こ。", "パリ行きのバスに乗った。", "みんなは？"]),
+                   "L-PARTICLE")
+    no_card = hits_of(L, ctx(L, ["ストックホルム来たら、地下鉄が高すぎた！", "みんなは？"]), "L-PARTICLE")
+    return [("滝の回 p1 の題の札「滝観に」を ✕（行 0）", [(h.line, h.look) for h in wf] == [(0, False)]),
+            ("直した題「滝を観に」は通す", not card_hits("🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！")),
+            ("あやとの題「ストックホルム来たら」も ✕（題も訂正する。F-049）",
+             [(h.line, h.look) for h in card_hits("🇸🇪 ストックホルム来たら、地下鉄が高すぎた！")] == [(0, False)]),
+            ("「ストックホルムに来たら」は通す", not card_hits("🇸🇪 ストックホルムに来たら、地下鉄が高すぎた！")),
+            ("札が無ければ、1行目（読み上げる題）を ✕", [(h.line, h.look) for h in no_card] == [(1, False)]),
+            ("行の「路線バス乗るの」は △ だけ（あやとが通した話し言葉）", [(h.line, h.look) for h in ride] == [(2, True)]),
+            ("「乗り放題」「花見に」「パリ行きの」は見ない", not free)]
+
+
+def leg_ate(L):
+    led_mod, led = L._ledger()
+    ids = [it.id for it in led_mod.script_items(led)]
+    full = {i: {"lines": [], "note": "当たらない: この原稿にその場面が無い"} for i in ids}
+
+    def got(promises, has_key=True):
+        spec = {"rows": ROWS2, **({"promises": promises} if has_key else {})}
+        return [h for h in fails(L, L.build(tmp_script(["題", "みんなは？"], spec))) if h.rule == "L-ATE"]
+    miss = {k: v for k, v in full.items() if k != "F-048"}
+    short = {**full, "F-049": {"lines": [1], "note": "なし"}}
+    outside = {**full, "F-031": {"lines": [5], "note": "題の札に場所と出来事を入れた"}}
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    return [(f"カード {len(ids)} 枚（帳面の項目と、帳面の外の X2）の ID が全部あれば通る",
+             len(ids) > 1 and "X2" in ids and "F-050" in ids and not got(full)),
+            ("F-048 が欠けたら ✕（欠けた ID を名指す）", any("F-048" in h.note for h in got(miss))),
+            ("note が「なし」だけなら ✕", any("F-049" in h.text for h in got(short))),
+            ("行の番号が原稿の外（5行目。原稿は2行）なら ✕", any("F-031" in h.text for h in got(outside))),
+            ("spec に promises が無ければ ✕（「当て表が無い」と言う）", any("当て表が無い" in h.note for h in got(None, has_key=False))),
+            ("spec が無ければ「見ていない」", "L-ATE" in blind)]
+
+
+def leg_as_of_id(L):
+    ok = fix(L, VUSD_OK)
+    morning = L.lint(ok, FOCACCIA_AT)
+    evening = L.lint(ok, "2026-10-23:6370959237")
+    day = L.lint(ok, "2026-10-23")
+    late = {"L-INNER", "L-NICK", "L-PARTICLE", "L-ATE"}
+    return [("朝のフォカッチャの添削の時点（6354242835）では、夕方の規則（L-INNER ほか4つ）を当てない", late <= set(morning["later"])),
+            ("同じ時点でも、日付だけの規則（T-READ・L-NEXT）は当てる", {"T-READ", "L-NEXT"} <= set(morning["ran"])),
+            ("夕方の滝の回の直しの時点（6370959237）なら当てる", not late & set(evening["later"])),
+            ("日付だけの --as-of 2026-10-23 は、その日の規則を全部当てる（落とす側に倒す）", not late & set(day["later"]))]
+
+
+def leg_spec_rows(L):
+    def stops(spec, lines=("題", "みんなは？")):
+        try:
+            L.build(tmp_script(list(lines), spec))
+            return ""
+        except ValueError as e:
+            return str(e)
+    lines_key = stops({"title_card": "題", "lines": ROWS2})
+    short = stops({"rows": ROWS2[:1]})
+    no_spec = L.build(tmp_script(["題", "みんなは？"], {"title_card": "題", "lines": ROWS2}), use_spec=False)
+    return [("spec が rows でなく lines で書いてあれば止まる（lines で書いてある、と言う）", "lines" in lines_key),
+            ("rows の行の数が原稿と違えば止まる", "rows が 1 行" in short),
+            ("--no-spec なら spec を読まずに当てる", no_spec.lines == ["題", "みんなは？"] and not no_spec.has_spec)]
+
+
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
     "narrator": leg_narrator, "phrase": leg_phrase, "yen": leg_yen, "length": leg_length,
     "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
     "card": leg_card, "sec": leg_sec, "after": leg_after, "num": leg_num, "quote": leg_quote,
-    "ashirate": leg_ashirate, "ask": leg_ask, "desu": leg_desu,
+    "ask": leg_ask, "desu": leg_desu,
     "title_read": leg_title_read, "next_time": leg_next_time,
+    "inner": leg_inner, "nick": leg_nick, "particle": leg_particle, "ate": leg_ate,
+    "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
 }
 
 if __name__ == "__main__":

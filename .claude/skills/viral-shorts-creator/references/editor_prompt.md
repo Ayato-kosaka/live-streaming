@@ -42,7 +42,7 @@
 
 置き場: `S={{scratch}}`（作業の置き場。リポジトリの外）・`K=$S/keys/ref_private.pem`（取り込みの秘密鍵）・`V={{ep}}`（この回）・
 `E=.claude/skills/ec2-chrome/ec2.py`。
-**素材の取り出しと声は互いに待たない。** 声は EC2 の鍵（下）を取ってから。待つあいだは「鍵を待つあいだに」を先にやる。
+**素材の取り出しと声は互いに待たない。** 声は EC2 の札（下）を取ってから。待つあいだは「札を待つあいだに」を先にやる。
 
 1. **素材を開く**（上の「素材」の配信ごとの状態で分かれる。手元に開いた置き場があればそれを使う。開く先は `$S`）:
    - **コマ一覧から見る（mp4 は開かない）**: 「作業枝に在る・コマ一覧の封あり」の配信は
@@ -66,7 +66,7 @@
 2. **声**（Fish Audio・Holiday Twist。EC2 の Chrome）: 声に渡す字は `{{vl}}`（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）。
    無ければ `python3 tools/shorts/script/brief.py edit --episode $V{{pat_arg}} --voice-lines {{vl}}` が spec の `tts_text` から作る。
    直すのは読み違えそうな所だけ（数・英字・読みが割れる漢字）。**言う中身は字幕と同じ。** かなの数が助詞と紛れるときは漢数字
-   （「とおか」「二千年」。「人生初」をかなにしたら「は」を「わ」と読んだ）。鍵を取ったら（下）:
+   （「とおか」「二千年」。「人生初」をかなにしたら「は」を「わ」と読んだ）。札を取ったら（下）:
    - 道具と字を置く: `python3 $E put tools/shorts/voice/fish_web.py /home/ubuntu/cdp/fish_web.py`（`asr_check.py` も同じ）・
      `python3 $E put {{vl}} /home/ubuntu/voice/{{name}}-lines_in.json`
    - `python3 $E run <(echo 'cd /home/ubuntu/cdp && python3 fish_web.py backup && python3 fish_web.py state --model <声のID>') 300`
@@ -78,7 +78,7 @@
    - 持ち帰って揃える: EC2 で `tar czf /home/ubuntu/voice/{{name}}.tgz -C /home/ubuntu/voice/out {{name}}` → `python3 $E get /home/ubuntu/voice/{{name}}.tgz $S/voice/raw.tgz` →
      `python3 tools/shorts/voice/collect.py --lines {{vl}} --attempts <raw>/attempts.jsonl --asr <raw>/asr.json --raw <raw> --out $S/voice/{{name}}`。
      合わない文だけ `tts_text` を直して `fish_web.py gen … --only {{sid}}/04 --attempt-limit 2`。誤検出と確かめた文は `collect.py … --accept {{sid}}/09=理由`
-   - 終わったら `python3 fish_web.py restore --backup <写し>` で下書きを戻し、写しを消し、鍵を外す
+   - 終わったら `python3 fish_web.py restore --backup <写し>` で下書きを戻し、写しを消す（札は道具が終われば消える）
 3. **spec と overrides**: 行ごとの画は `{{spec}}`（`rows[].src` は配信の時刻。`visual`・`looks` は狙い）。無ければ企画の原稿の表の画から作る:
    `{"id": "{{sid}}", "title_card": "🇫🇷 …", "title_card_seconds": 4.0, "narration_cps_target": 9.0, "rows": [{"line", "src": ["H:MM:SS.s"], "visual", "why", "tts_text", "card": true（1行目）, "mood", "big": true, "corner_note"}]}`。
    `mood` は感情が動く行だけ（`tense_shake` 不安・`tense_tilt` 困惑・`tense_still` 落胆・`up_pop` 喜び。ほかは `plain`）。spec に書けない割りかたは
@@ -118,17 +118,21 @@
    行ごとの画と、写せなかった物と代わりの画／声に渡した字と聞き取り／前の版から直したこと／投稿の文に入れるもの: 元のアーカイブ・
    `BGM：ポケットサウンド – https://pocket-se.info/`）と、spec・上書き・指示書・声の字。コミットのしかたは、まとめ役の頼む文に従う
 
-## EC2 の鍵（`/home/ubuntu/locks/fish-voice`）
+## EC2 の札（列 `fish`）
 
-fish の Chrome（`/home/ubuntu/cdp-fish`）は、声を作る担当と TikTok に出す担当が使い回す。同時に触ると、あやとの下書きと入力欄を取り合う。
+fish の Chrome（`/home/ubuntu/cdp-fish`）は、声を作る担当と TikTok に出す担当が使い回す。同時に触ると、あやとの下書きと入力欄を取り合い、
+片方の `fresh_tab` がもう片方のタブを閉じる（10-24 01:01 UTC に実際に起きた）。**列 `fish` の札で1人ずつ使う**（`ec2-chrome` の 2.5）。
 
-- 起きているか: `python3 $E state`。止まっていたら `python3 $E start` で起こし、終わったら `python3 $E stop`。**起きていたら止めない**（ほかの担当かあやとが使っている）
-- 見る: `python3 $E run <(echo 'ls -l --time-style=+%F_%T /home/ubuntu/locks/; date "+now %F_%T"; pgrep -af "fish_web|tt_post" || echo no-proc') 60`
-- `fish-voice` が無い → `touch /home/ubuntu/locks/fish-voice` で取る（`gen` は1文ごとに触り直す）。終わったら `rm` で外す
-- 在って、30分以内に触られているか `fish_web`・`tt_post` が走っている → 誰かが使っている。**消さない。** 10分おきに見直す（Monitor の until ループで。手元を sleep で塞がない）
-- 在るのに30分以上触られておらず、何も走っていない → 消し忘れ。取って、報告に「消し忘れの鍵を取った」と書く
+- 見る: `python3 $E queue`（誰が何のために持ち、誰が待っているか。止まっていれば「止まっている」）
+- 取る: `fish_web.py` と `tt_post.py`（`post.py tt-post`）は、どちらも札を自分で取る。ほかの人が持っていれば、何番目で誰かを出して空くまで待つ。
+  手元で何手にも分けて触るなら `python3 $E hold fish --who <名前> --purpose '<何のため>' -- <コマンド>`（終われば返す）
+- **鍵（`~/locks/fish-voice`）はもう置かない・見ない。** 札は持ち主のプロセスが死ねば消えるので、消し忘れも起きない
+- `backup` → `state` → `gen` のあいだにほかの人に下書きを触られたくなければ、3つを `&&` でつないだ1本の sh にして、
+  `nohup /usr/local/sbin/ec2-queue hold fish --who <名前> --purpose '声 <回>' -- sh -c '<つないだもの>' > <ログ> 2>&1 &` で流す
+  （中のプロセスは札を受け継ぐ。`ec2-chrome` 2.5）
+- 止める: 自分の札を返してから `python3 $E stop`。ほかの人の札があれば断られるので、そのまま置いておく（誰も使わなくなって30分で見張りが止める）
 
-**鍵を待つあいだに**（声が無くても進む所）: 素材を開く・コマ一覧と `stutter.py` で区間を選ぶ・0秒目を選ぶ → spec と overrides を書く →
+**札を待つあいだに**（声が無くても進む所）: 素材を開く・コマ一覧と `stutter.py` で区間を選ぶ・0秒目を選ぶ → spec と overrides を書く →
 `build_edit.py` を `--voice` 無しで回して指示書を組み → `remote.py up --draft --detach` で下書きを回して、カットの長さ・似た見た目・止め絵・カクつき・使い回しを先に直す。
 声が来たら `--voice` を付けて組み直し、本番で書く。
 

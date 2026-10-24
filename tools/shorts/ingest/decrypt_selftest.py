@@ -25,10 +25,20 @@ GitHub が 100MB を超えるファイルを断るので、seal.py は 45MB ず�
    `--branch` の取りかた（fetch_remote / remote_dests）を偽の GitHub で回し、
    **取りに行くのが manifest と小さな封だけ**（payload.enc を1つも頼まない）こと、
    ほかの鍵の置き場は manifest だけ読んで飛ばすことを見る
+7. `--branch` が GitHub に化かされない（2026-10-23）。contents の raw は、乱数のファイルを
+   UTF-16BE の文字と見立てて UTF-8 に書き換えて返すことがある（dRXae0mJw8M の key.enc が
+   384→571バイトになり、openssl が開けなかった）。偽の GitHub に同じ書き換えをさせて、
+   [対照] 前の取りかた（contents の raw）では key.enc が化けて開けない（＝偽の GitHub が本当に化かしている）/
+   直した取りかた（blob の raw）では大きいほうまで元のまま開く /
+   [対照] blob まで化けたら git の hash の突き合わせで止める /
+   main ごと回して、化けた置き場だけ NG・終了コード 1・ほかの置き場は開く、を見る
 """
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
+import io
 import json
 import os
 import shutil
@@ -131,31 +141,14 @@ def light_leg(root: Path, src: Path, item: dict, st: dict, priv: Path, other: Pa
         (arch / "manifest.json").read_text()), "archive には小さな封を作らない")
     refused("小さな封の無い回（archive）", arch)
 
-    # --branch の取りかた。偽の GitHub（commit → tree → 置き場の中身）で回す
+    # --branch の取りかた。偽の GitHub（commit → tree → 置き場の一覧 → blob）で回す
     asked: list[str] = []
     mine, theirs = "aaaaaaaaaaa/clips", "bbbbbbbbbbb/clips"
     m2 = json.loads((full / "manifest.json").read_text())
     m2["pubkey_sha256"] = "0" * 64
-    blobs = {mine: {n: (full / n).read_bytes() for n in [p.name for p in full.iterdir()]},
-             theirs: {"manifest.json": json.dumps(m2).encode(), "sheets.enc": b"x"}}
-
-    def get(api: str, to: Path | None = None, raw: bool = False) -> bytes:
-        asked.append(api)
-        if api.endswith("/commits/SHA"):
-            return json.dumps({"commit": {"tree": {"sha": "t0"}}}).encode()
-        trees = {"t0": [{"path": "shorts", "type": "tree", "sha": "t1"}],
-                 "t1": [{"path": ".work", "type": "tree", "sha": "t2"}]}
-        for t, rows in trees.items():
-            if api.endswith(f"/git/trees/{t}"):
-                return json.dumps({"tree": rows}).encode()
-        if api.endswith("/git/trees/t2?recursive=1"):
-            rows = [{"path": f"{d}/{n}", "type": "blob"} for d, fs in blobs.items() for n in fs]
-            rows.append({"path": "ccccccccccc/archive/payload.enc", "type": "blob"})
-            return json.dumps({"tree": rows}).encode()
-        rel, name = api.split("/contents/shorts/.work/")[1].split("?ref=")[0].rsplit("/", 1)
-        to.parent.mkdir(parents=True, exist_ok=True)
-        to.write_bytes(blobs[rel][name])
-        return b""
+    places = {mine: {p.name: p.read_bytes() for p in full.iterdir()},
+              theirs: {"manifest.json": json.dumps(m2).encode(), "sheets.enc": b"x"}}
+    get = fake_hub(places, asked)
 
     dests = decrypt.remote_dests("o/r", "SHA", get=get)
     check(dests == [mine, theirs], f"--branch: 小さな封を持つ置き場だけを並べる（{dests}）")
@@ -163,13 +156,139 @@ def light_leg(root: Path, src: Path, item: dict, st: dict, priv: Path, other: Pa
     fp = decrypt.pub_fp(priv)
     d1, _ = decrypt.fetch_remote("o/r", "SHA", mine, into, fp, True, get=get)
     d2, why2 = decrypt.fetch_remote("o/r", "SHA", theirs, into, fp, True, get=get)
-    names = [a.split("?")[0].rsplit("/", 1)[1] for a in asked if "/contents/" in a]
+    name_of = {gitsha(c): n for fs in places.values() for n, c in fs.items()}
+    names = [name_of.get(a.rsplit("/", 1)[1], a) for a in asked if "/git/blobs/" in a]
     check(sorted(names) == sorted(["manifest.json", "sheets.key.enc", "sheets.enc", "manifest.json"]),
           f"--branch: 取りに行くのは manifest と小さな封だけ（payload.enc を頼まない。{names}）")
     check(d2 is None and "鍵が違う" in why2, "--branch: ほかの鍵の置き場は manifest だけ読んで飛ばす")
     ok, msg = decrypt.open_one(d1, priv, fp, root / "o-remote", sheets=True)
     check(ok and files_of(root / "o-remote" / item["dest"]) == light_want,
           f"--branch: 取った3つだけで開ける（{msg[-40:]}）")
+
+    garble_leg(root, src, full, item, st, priv, check)
+
+
+def gitsha(b: bytes) -> str:
+    """git の blob の sha（`git hash-object` と同じ）。"""
+    return hashlib.sha1(b"blob %d\0" % len(b) + b).hexdigest()
+
+
+def as_text(b: bytes) -> bytes:
+    """GitHub の contents の raw がしたこと（2026-10-23）: UTF-8 でない中身を UTF-16BE の文字と
+    見立てて、UTF-8 に書き直して返す。dRXae0mJw8M の key.enc 384バイトが 571バイトになった"""
+    try:
+        b.decode("utf-8")
+        return b
+    except UnicodeDecodeError:
+        return b.decode("utf-16-be", errors="replace").encode("utf-8")
+
+
+def fake_hub(places: dict[str, dict[str, bytes]], asked: list[str],
+             garbled: frozenset[str] = frozenset()):
+    """偽の GitHub。contents の raw は本物と同じく文字に書き換える。
+    blob の raw はそのまま返す（garbled に挙げた置き場だけ、blob も書き換えて返す＝対照）"""
+    where = {gitsha(c): (rel, c) for rel, fs in places.items() for c in fs.values()}
+
+    def get(api: str, to: Path | None = None, raw: bool = False) -> bytes:
+        asked.append(api)
+        if "/commits/" in api:
+            return json.dumps({"sha": "SHA", "commit": {"tree": {"sha": "t0"}}}).encode()
+        trees = {"t0": [{"path": "shorts", "type": "tree", "sha": "t1"}],
+                 "t1": [{"path": ".work", "type": "tree", "sha": "t2"}]}
+        for t, rows in trees.items():
+            if api.endswith(f"/git/trees/{t}"):
+                return json.dumps({"tree": rows}).encode()
+        if api.endswith("/git/trees/t2?recursive=1"):
+            rows = [{"path": f"{d}/{n}", "type": "blob"} for d, fs in places.items() for n in fs]
+            rows.append({"path": "ccccccccccc/archive/payload.enc", "type": "blob"})
+            return json.dumps({"tree": rows}).encode()
+        if "/git/blobs/" in api:
+            rel, body = where[api.rsplit("/", 1)[1]]
+            body = as_text(body) if rel in garbled else body
+        else:
+            tail = api.split("/contents/shorts/.work/")[1].split("?ref=")[0]
+            if tail in places:  # 置き場の一覧（JSON。raw ではない）
+                body = json.dumps([{"name": n, "type": "file", "sha": gitsha(c), "size": len(c)}
+                                   for n, c in places[tail].items()]).encode()
+            else:  # 前の取りかた（contents の raw）。本物の GitHub と同じく書き換える
+                rel, name = tail.rsplit("/", 1)
+                body = as_text(places[rel][name])
+        if to is None:
+            return body
+        to.parent.mkdir(parents=True, exist_ok=True)
+        to.write_bytes(body)
+        return b""
+
+    return get
+
+
+def garble_leg(root: Path, src: Path, full: Path, item: dict, st: dict, priv: Path,
+               check) -> None:
+    """7. GitHub が乱数を文字と見立てて書き換えても、化けたものは開かず、枝の中身どおりに取る。"""
+    import decrypt
+
+    fp = decrypt.pub_fp(priv)
+    place = "ddddddddddd/clips"
+    places = {place: {p.name: p.read_bytes() for p in full.iterdir()}}
+    man = json.loads(places[place]["manifest.json"])
+    need = ["manifest.json", "key.enc", *[p["name"] for p in man["encrypted_files"]]]
+
+    # 対照: 前の取りかた（contents の raw）で取ると、key.enc が化けて届き、開けない。
+    # ここが「開けた」なら、偽の GitHub が化かしていない（この足は何も見ていない）
+    old = root / "o-garble-old" / ".sealed" / place
+    get = fake_hub(places, [])
+    for n in need:
+        get(f"repos/o/r/contents/shorts/.work/{place}/{n}?ref=SHA", old / n, raw=True)
+    k_was, k_got = len(places[place]["key.enc"]), (old / "key.enc").stat().st_size
+    try:
+        ok_old, why_old = decrypt.open_one(old, priv, fp, root / "o-garble-old")
+    except subprocess.CalledProcessError:
+        ok_old, why_old = False, "openssl が包んだ鍵を開けない（CalledProcessError）"
+    check(k_got != k_was and not ok_old,
+          f"[対照] 前の取りかた（contents の raw）では key.enc が {k_was}→{k_got}バイトに化けて"
+          f"開けない（{why_old[:40]}）")
+
+    # 直した取りかた（blob の raw）。mp4 の入った大きいほうも、元と1バイトも違わず開く
+    asked: list[str] = []
+    got, _ = decrypt.fetch_remote("o/r", "SHA", place, root / "o-garble" / ".sealed", None, False,
+                                  get=fake_hub(places, asked))
+    ok, msg = decrypt.open_one(got, priv, fp, root / "o-garble")
+    by_contents = [a for a in asked if "/contents/" in a and a.split("?")[0].rsplit("/", 1)[1] in need]
+    check(ok and same_tree(src, root / "o-garble" / item["dest"]) and not by_contents,
+          f"--branch: 中身は blob で取り、化かされずに大きいほうまで元のまま開く"
+          f"（contents の raw で取ったもの {len(by_contents)}個。{msg[-30:]}）")
+
+    # 対照: blob まで化けて届いたら、突き合わせで止まり、何も開かない
+    try:
+        decrypt.fetch_remote("o/r", "SHA", place, root / "o-garble-bad" / ".sealed", None, False,
+                             get=fake_hub(places, [], garbled=frozenset({place})))
+        stopped, why = False, "止まらずに取り終えた"
+    except decrypt.Garbled as e:
+        stopped, why = True, str(e)
+    # manifest.json は文字なので化けない。止まるのは乱数の key.enc のところ
+    check(stopped and why.startswith("key.enc"),
+          f"[対照] blob が化けて届いたら、git の hash の突き合わせで止める（{why[:50]}）")
+
+    # main ごと: 化けた置き場は NG と数えて終了コード 1、化けていない置き場はそのまま開く。
+    # 中身が同じだと blob の sha が重なるので、化けない側は封をし直した別物にする
+    good = "eeeeeeeeeee/clips"
+    full2 = root / "sealed-light-2" / item["dest"]
+    seal.seal(item, src, full2, st)
+    places2 = {good: {p.name: p.read_bytes() for p in full2.iterdir()}, place: places[place]}
+    out = root / "o-garble-main"
+    argv, saved = sys.argv, decrypt.gh_get
+    buf = io.StringIO()
+    try:
+        decrypt.gh_get = fake_hub(places2, [], garbled=frozenset({place}))
+        sys.argv = ["decrypt.py", "--key", str(priv), "--out", str(out), "--sheets",
+                    "--branch", "b", f"shorts/.work/{good}", f"shorts/.work/{place}"]
+        with contextlib.redirect_stdout(buf):
+            rc = decrypt.main()
+    finally:
+        sys.argv, decrypt.gh_get = argv, saved
+    text = buf.getvalue()
+    check(rc == 1 and f"NG  {place}" in text and (out / item["dest"] / "sheets").is_dir(),
+          f"--branch: 化けた置き場だけ NG にして終了コード 1、ほかは開く（rc={rc}）")
 
 
 def main() -> int:

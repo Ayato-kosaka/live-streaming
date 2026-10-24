@@ -1,27 +1,34 @@
 """**作文者・批評役に渡す1枚（`brief.py`）の見張り。** 要るのは Python だけ。
 
     python3 tools/shorts/script/brief_selftest.py
-    BREAK=cats python3 tools/shorts/script/brief_selftest.py   # 守りを1つ外した版で回す（対照の子）
+    BREAK=holdout python3 tools/shorts/script/brief_selftest.py   # 守りを1つ外した版で回す（対照の子）
 
 終了コード 0=通った / 1=落ちた / 2=数えるものが無い・外す字が見つからない（`docs/island-standards.md` §15）。
 
 1枚が崩れると、担当は「前に言われたこと」を知らないまま書く・採点する（帳面を全文で読ませるのをやめたので、1枚が唯一の道）。
+2026-10-23 の棚卸しでは、約束26個のうち10個が作文者の1枚に中身ごと入っていなかった（帳面を題と例の頭に縮めていた）。
+だから「全部が・全文で・先頭に」入っているかを、帳面の字と突き合わせて見る（#1019、帳面 F-048〜F-050）。
 
 | 足 | 確かめること |
 | --- | --- |
-| `cats` | 帳面の項目のうち、題・言い回し・事実・構成だけが入る（画・音・投稿・進め方は入らない）。項目は1つ以上 |
-| `grows` | 帳面に項目を1つ足すと、手で直さずに1枚に入る |
-| `machine` | 批評役の1枚では、当てる場所が lint だけの項目（F-032）を名前だけにする。作文者の1枚では全文 |
-| `holdout` | 見ている原稿の行を引く帳面の例（銅像 p2 → F-039 の例）は、題だけ残して例を落とす。ほかの原稿では例を残す |
-| `pair` | 「直す前 → 直した後」は、組と組の区切り（前後に空白の「／」）でだけ切る。引用の中の「／」では切らない |
-| `chat` | チャットは名前を落として本文だけ（投げ銭の額は残す） |
+| `cards` | 約束のカードは、帳面の題・言い回し・事実・構成の項目に、字に効く F-014（画）・F-019（音）・F-050（進め方）と帳面の外の X2 を足したもの。F-044（進め方・往復の上限）と画・音・投稿だけの項目は入らない |
+| `full` | カードの決まり（する／しない）と直す前 → 直した後が、帳面の字と1字も違わずに入る（前は題と例の頭を90字で切っていた）。作文者・批評役とも |
+| `replaced` | 帳面で「置き換わった」へ移した古い字（F-043「別の字でよい」・F-004「足りないところだけ同じ口調で足す」・F-035「少なく」）が、カードに出ない |
+| `grows` | 帳面に項目を1つ足すと、手で直さずにカードに入る |
+| `holdout` | 批評役の1枚では、見ている原稿の行を引く直しの例（銅像 p2 → F-039 の例）を伏せ、決まりは残す。ほかの原稿では例を残す。作文者の1枚では伏せない |
 | `ranges` | 書き起こしは、区間に掛かる30秒の行だけ |
 | `fill` | 雛形の {{…}} が1つでも残れば止まる |
-| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない |
+| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない。`orig_voice` のある行に【元の声】（F-051） |
 | `c_source` | 批評役の1枚に、`--video` の配信の字幕が入る（フォカッチャの下書きなら、作文者が根拠に挙げた 2:44:00 の行）。`--video` が無ければ「渡していない」と書く（#1014、F-047） |
 | `c_ranges` | 字幕の区間は、spec の why・src に書いた時刻の前後30秒。重なる区間は1つにまとめ、src の小数の秒も読む |
 | `c_leak` | 批評役の雛形は、対照の原稿の行を8字以上そのまま引かない（終わりの形「アーカイブ見てね」は数えない）。引いた字をこしらえると拾い、1枚を作らずに止まる |
-| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。無ければ「指定なし」 |
+| `c_cards` | 批評役の1枚に、作文者と同じカード（ID の見出しが全部）と「当てる ID」の並びが入る |
+| `rows_stop` | spec が `rows` でなく `lines` で書いてあれば、批評役の1枚を作らずに止まる（滝の回 p1 は、画の列が空のまま回っていた） |
+| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」。表は4欄（4欄目が「選んだ理由」。あやと #1019） |
+| `w_order` | 作文者の1枚は、約束のカード → 方針 → 書く形 → 当て表 → 材料（配信の字幕）の順。カードが先頭で、字幕はいちばん後ろ |
+| `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても、本人が読み上げて自動字幕に入っていても。読み上げは〔コメントの読み上げ〕に伏せる）。`--chat` を渡すと止まる（F-048） |
+| `w_ate` | 当て表の雛形（表と spec の promises の形）に、カードの ID が全部・1回ずつ並ぶ |
+| `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及があれば、時刻と言葉だけを書く（字幕の文は写さない） |
 
 本編集の担当の1枚（`brief.py edit`）。担当はこれ1枚と企画の名指した小節だけを読む（#1011）ので、1枚から落ちたものは担当に届かない。
 本物の回（フランス周遊 A・銅像・地下鉄・城塞）で組んで確かめる。
@@ -61,16 +68,31 @@ sys.path.insert(0, str(HERE.parent / "feedback"))
 import legs  # noqa: E402
 
 CUTS = {
-    "cats": ("brief.py", 'SCRIPT_CATS = ("題", "言い回し", "事実", "構成")\n',
-             'SCRIPT_CATS = ("題", "言い回し", "事実", "構成", "画", "音", "投稿", "進め方")\n', {"cats"}, "原稿の段に効かない項目まで入れる"),
-    "machine": ("brief.py", "    machine = [it for it in items if machine_only(it)] if for_critic else []\n", "    machine = []\n",
-                {"machine"}, "lint だけの項目も批評役に全文で渡す"),
-    "holdout": ("brief.py", "        if avoid and quotes_script(raw, avoid):\n", "        if False:\n",
+    # 約束のカード（#1019、帳面 F-048〜F-050）。選びかたは帳面の読み手（ledger.py）にある
+    "cards_place": ("ledger.py", '    return it.category in SCRIPT_CATS or bool(it.lint) or WRITE in it.place or "批評役" in it.place\n',
+                    "    return it.category in SCRIPT_CATS\n", {"cards"}, "分類だけで選ぶ（F-014・F-019・F-050 が落ちる）"),
+    "cards_own": ("ledger.py", "    return [it for it in led.items.values() if for_script(it)] + list(OWN)\n",
+                  "    return [it for it in led.items.values() if for_script(it)]\n", {"cards"}, "帳面の外の約束（X2）を入れない"),
+    "full_rule": ("brief.py", "        body = [head, \"\", f\"- **決まり**: {flat(it.fields.get('決まり', ''))}\",\n",
+                  "        body = [head, \"\", f\"- **決まり**: {flat(it.fields.get('決まり', ''))[:90]}\",\n", {"full", "holdout"},
+                  "決まりを90字で切る（前の形）"),
+    "full_fix": ("brief.py", '        fix = flat(it.fields.get("直す前 → 直した後", ""))\n',
+                 '        fix = flat(it.fields.get("直す前 → 直した後", "")).split(" ／ ")[0]\n', {"full"},
+                 "直しの例を最初の1組だけにする（前の形）"),
+    "holdout": ("brief.py", "        if avoid and quotes_script(fix, avoid):\n", "        if False:\n",
                 {"holdout"}, "見ている原稿の行を引く例も渡す"),
-    "pair": ("brief.py", '    s = re.split(r"\\s+／\\s+", text.strip())[0]\n', '    s = re.split(r"\\s*／\\s*", text.strip())[0]\n',
-             {"pair"}, "引用の中の「／」でも切る"),
-    "chat": ("brief.py", '            rest = rest.split(": ", 1)[1] if ": " in rest else rest\n', "",
-             {"chat"}, "チャットの名前を残す"),
+    "rows_stop": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"rows_stop"},
+                  "rows の無い spec を黙って読む（lint.build が止めている）"),
+    "c_cards": ("brief.py", '        "cards": cards(avoid=c.lines),\n', '        "cards": "",\n', {"c_cards"}, "批評役の1枚にカードを入れない"),
+    "w_chat": ("brief.py", "    if chat:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_nochat"},
+               "--chat を黙って受け取る"),
+    "w_particle": ("brief.py", "        if drops:\n", "        if False:\n", {"w_fixed"}, "題の札の助詞の抜けを作文者に書かない"),
+    "w_reason": ("brief.py", ' | 残した本人の言葉 | 選んだ理由 |\",\n', ' | 残した本人の言葉 |\",\n', {"w_fixed"},
+                 "表の4欄目（選んだ理由）を外す"),
+    "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
+    "w_mask": ("brief.py", "            if b in ln:\n", "            if False:\n", {"w_nochat"}, "字幕の中のコメントの読み上げを伏せない"),
+    "w_watch": ("brief.py", "        at = [ln.split(\"]\", 1)[0].lstrip(\"[\") for ln in lines if lint_mod.nick_at(ln, bad)]\n",
+                "        at = []\n", {"w_watch"}, "字幕の呼び名を作文者に書かない"),
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
                {"ranges", "c_source"}, "区間の外の行まで入れる"),
     "fill": ("brief.py", "    if left:\n", "    if False:\n", {"fill"}, "埋めていない所を見逃す"),
@@ -101,6 +123,8 @@ CUTS = {
     "e_stale": ("brief.py", "    if stale:\n", "    if False:\n", {"e_cmds"}, "雛形の古い呼び出しを見逃す"),
     "e_tts": ("brief.py", '        t = r.get("tts_text") or r["line"]\n', '        t = r["line"]\n', {"e_voice"},
               "声に渡す字を、かなに直した字でなく字幕の字にする"),
+    "e_origv": ("brief.py", '        if r.get("orig_voice"):  # 元の声の行（帳面 F-051）\n',
+                '        if False:  # 元の声の行（帳面 F-051）\n', {"e_voice"}, "元の声の行の声まで Fish で作らせる"),
     "e_name": ("brief.py", '    while f"{head}{v}" in used:\n', "    while False:\n", {"e_name"},
                "頼んだことのある書き出しの名前を勧める"),
     "e_hist": ("brief.py", '"log", "--full-history", "--format=", "--name-only", "--",\n', '"log", "--format=", "--name-only", "--",\n',
@@ -128,16 +152,72 @@ def has_id(block: str, fid: str) -> bool:
 
 
 def setup(cut):
+    """対照の子では、外す字のある道具を先に読み込む。brief.py は `import ledger`・`import lint` で、読み込み済みのものを使う。"""
     c = CUTS[cut] if cut else None
-    return legs.load(HERE / "brief.py", "brief", (c[1], c[2]) if c else None)
+    if c and c[0] == "ledger.py":
+        legs.load(HERE.parent / "feedback/ledger.py", "ledger", (c[1], c[2]))
+    if c and c[0] == "lint.py":
+        legs.load(HERE / "lint.py", "lint", (c[1], c[2]))
+    return legs.load(HERE / "brief.py", "brief", (c[1], c[2]) if c and c[0] == "brief.py" else None)
 
 
-def leg_cats(B):
-    items = B.ledger_items()
-    cats = {it.category for it in items}
-    return [("題・言い回し・事実・構成だけ", cats <= set(B.SCRIPT_CATS) and {"題", "構成"} <= cats),
-            ("画（F-014）・進め方（F-044）は入らない", "F-014" not in B.ledger_block(False) and "F-044" not in B.ledger_block(False)),
-            ("項目が1つ以上", len(items) > 0)]
+# 帳面のどの直しの例も引いていない原稿（批評役の1枚で、例が伏せられないことを見る）
+NEUTRAL = ["スイスに来たら、牛のほうが多かった！", "みんなは？"]
+
+
+def card_part(block: str, fid: str) -> str:
+    """カードの塊のうち、その ID の1枚ぶん（見出しから次の見出しまで）。"""
+    if f"### {fid} " not in block:
+        return ""
+    return block.split(f"### {fid} ", 1)[1].split("\n### ", 1)[0]
+
+
+def leg_cards(B):
+    led = B.ledger_mod.load()
+    ids = B.card_ids()
+    cats = ("題", "言い回し", "事実", "構成")
+
+    def names_stage(it):
+        # 当てる場所が原稿の段（lint・批評役・書く段）を名指すか。選ぶ側（ledger.for_script）とは別に、帳面の字から読む
+        return bool(re.search(r"`lint:|批評役|書く段", it.place))
+    script_cats = [it.id for it in led.items.values() if it.category in cats]
+    staged = [it.id for it in led.items.values() if it.category not in cats and names_stage(it)]
+    other = [it.id for it in led.items.values() if it.category not in cats and not names_stage(it)]
+    block = B.cards()
+    return [(f"題・言い回し・事実・構成の {len(script_cats)} 項目が全部入る", bool(script_cats) and all(i in ids for i in script_cats)),
+            (f"分類は別でも原稿の段を名指す {len(staged)} 項目（F-014 画・F-019 音・F-050 進め方ほか）と、帳面の外の X2 も入る",
+             {"F-014", "F-019", "F-050"} <= set(staged) and all(i in ids for i in staged) and "X2" in ids),
+            ("F-044（往復の上限）・画や音だけの項目（F-012・F-028 ほか）は入らない",
+             "F-044" in other and "F-012" in other and not any(i in ids for i in other)),
+            (f"1枚に、全部の ID の見出しが1枚ずつ（{len(ids)}枚）", all(block.count(f"### {i} ") == 1 for i in ids))]
+
+
+def flat(s):
+    return re.sub(r"\s+", " ", s or "").strip()
+
+
+def leg_full(B):
+    led = B.ledger_mod.load()
+    writer = B.cards()
+    critic = B.cards(avoid=NEUTRAL)
+    bad_rule = [it.id for it in led.items.values() if it.id in B.card_ids() and flat(it.fields["決まり"]) not in card_part(writer, it.id)]
+    bad_fix = [it.id for it in led.items.values()
+               if it.id in B.card_ids() and flat(it.fields["直す前 → 直した後"]) not in card_part(writer, it.id)]
+    f047 = flat(led.items["F-047"].fields["決まり"])
+    return [("作文者の1枚: 決まりが帳面の字と1字も違わずに入る" + (f" ← {bad_rule}" if bad_rule else ""), not bad_rule),
+            ("作文者の1枚: 直す前 → 直した後が全部の組で入る（最初の1組で切らない）" + (f" ← {bad_fix}" if bad_fix else ""), not bad_fix),
+            ("いちばん長い F-047 の決まり（400字を越える）も切らない", len(f047) > 400 and f047 in card_part(writer, "F-047")),
+            ("批評役の1枚も同じ全文（いま見る原稿の行を引いていない項目）", f047 in card_part(critic, "F-047")
+             and flat(led.items["F-031"].fields["直す前 → 直した後"]) in card_part(critic, "F-031"))]
+
+
+def leg_replaced(B):
+    led = B.ledger_mod.load()
+    block = B.cards()
+    olds = {"F-043": "別の字でよい", "F-004": "足りないところだけ同じ口調で足す", "F-035": "少なく"}
+    return [(f"{fid} の置き換わった字「{old}」がカードに出ない（帳面の「置き換わった」には残る）",
+             old not in card_part(block, fid) and old in led.items[fid].fields.get(B.ledger_mod.REPLACED, ""))
+            for fid, old in olds.items()] + [("「置き換わった」の欄は1枚に出さない", "置き換わった" not in block)]
 
 
 def leg_grows(B):
@@ -147,44 +227,27 @@ def leg_grows(B):
            "- **あやとの言葉:**\n  > 見張り\n- **決まり:** する — 見張り。しない — 無い\n- **直す前 → 直した後:** 前 → 後\n"
            "- **当てる場所:** 批評役 (h)\n\n## 指摘ではないコメント")
     led2 = B.ledger_mod.parse(text.replace("## 指摘ではないコメント", add, 1))
-    return [("足した F-998 が1枚に入る", "F-998" in B.ledger_block(False, led2)),
-            ("足す前は入っていない", "F-998" not in B.ledger_block(False, led))]
-
-
-def leg_machine(B):
-    critic, writer = B.ledger_block(True), B.ledger_block(False)
-    return [("批評役の1枚では F-032（lint だけ）を「機械だけが見る」に名前だけ", "**F-032**" not in critic and "F-032" in critic),
-            ("作文者の1枚では F-032 を全文で", "**F-032**" in writer)]
+    return [("足した F-998 がカードに入る（決まりの全文つき）", "見張り。しない — 無い" in card_part(B.cards(led2), "F-998")),
+            ("足す前は入っていない", "F-998" not in B.cards(led))]
 
 
 def leg_holdout(B):
     p2 = (FIX / "rejected/CKJvprUMOgA_p2_17/script.txt").read_text(encoding="utf-8").splitlines()
-    other = ["ストックホルム来たら、地下鉄が高すぎた！", "みんなは？"]
+    other = NEUTRAL
+    hidden = "いま見る原稿の行を引いているので"
 
     def ex(block, fid):
-        part = block.split(f"**{fid}**", 1)[1].split("\n- **", 1)[0]
-        return "例:" in part
+        return hidden not in card_part(block, fid)
     ng = (FIX / "rejected/VusdZVyjgjQ_p1/script.txt").read_text(encoding="utf-8").splitlines()
     ok = (FIX / "approved/VusdZVyjgjQ_p1/script.txt").read_text(encoding="utf-8").splitlines()
-    return [("銅像 p2 を見るときは、F-039 の例（銅像の行そのもの）を落とす", not ex(B.ledger_block(True, avoid=p2), "F-039")),
-            ("ほかの原稿では F-039 の例を残す", ex(B.ledger_block(True, avoid=other), "F-039")),
-            ("題（決まりの1行）は残す", "**F-039**" in B.ledger_block(True, avoid=p2)),
-            ("フォカッチャの下書きと添削版を見るときは、F-047 の例（どちらの行も引いている）を落とす",
-             not ex(B.ledger_block(True, avoid=ng), "F-047") and not ex(B.ledger_block(True, avoid=ok), "F-047")),
-            ("ほかの原稿では F-047 の例を残す", ex(B.ledger_block(True, avoid=other), "F-047"))]
-
-
-def leg_pair(B):
-    s = B.first_pair("地下鉄「船も乗れるねん！／乗りたかったんよ、船！」→「船も乗れるねん！」 ／ 銅像「30体」→ 消す", 200)
-    return [("引用の中の「／」では切らない", "乗りたかったんよ" in s), ("組の区切りでは切る", "銅像" not in s)]
-
-
-def leg_chat(B):
-    with tempfile.TemporaryDirectory() as td:
-        p = Path(td) / "x.chat.txt"
-        p.write_text("[0:01:00] たろう: こんばんは\n[0:01:10] ¥500 はなこ: 応援してます\n", encoding="utf-8")
-        got = B.cut(p, [(0, 120)], 0, chat=True)
-    return [("名前を落とす", got[0] == "[0:01:00] こんばんは"), ("投げ銭の額は残し、名前は落とす", got[1] == "[0:01:10] ¥500 応援してます")]
+    led = B.ledger_mod.load()
+    return [("銅像 p2 を見るときは、F-039 の例（銅像の行そのもの）を伏せる", not ex(B.cards(avoid=p2), "F-039")),
+            ("ほかの原稿では F-039 の例を残す", ex(B.cards(avoid=other), "F-039")),
+            ("伏せても、決まり（全文）は残す", flat(led.items["F-039"].fields["決まり"]) in card_part(B.cards(avoid=p2), "F-039")),
+            ("フォカッチャの下書きと添削版を見るときは、F-047 の例（どちらの行も引いている）を伏せる",
+             not ex(B.cards(avoid=ng), "F-047") and not ex(B.cards(avoid=ok), "F-047")),
+            ("ほかの原稿では F-047 の例を残す", ex(B.cards(avoid=other), "F-047")),
+            ("作文者の1枚（avoid なし）では伏せない", hidden not in B.cards())]
 
 
 def leg_ranges(B):
@@ -210,18 +273,20 @@ def leg_ayato(B):
             ("「あやとの添削（#1014）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの添削（#1014 2026-10-23）。2:47:30「ちょっと待つわ」"})),
             ("言い換え「あやとの言葉 #976 を、まとめ役が言い換えた」には付けない",
              "【あやと】" not in B.marks({"why": "題（あやとの言葉 #976 を、まとめ役が言い換えた案 B）"})),
-            ("【足】も印になる", B.marks({"why": "【足】ツッコミ"}) == "【足】")]
+            ("【足】も印になる", B.marks({"why": "【足】ツッコミ"}) == "【足】"),
+            ("配信の本人の声を流す行（orig_voice）に【元の声】（F-051）", B.marks({"why": "0:10:20 叫び", "orig_voice": "0:10:18〜0:10:21"}) == "【元の声】")]
 
 
 # ---------- 批評役の1枚の配信の字幕（#1014、F-047） ----------
 
 VUSD_NG = FIX / "rejected/VusdZVyjgjQ_p1/script.txt"
+SOURCE_HEAD = "配信の字幕（原稿が使った場面）"
 
 
 def leg_c_source(B):
     with_ = B.build_critic(VUSD_NG, None, [], "x", "VusdZVyjgjQ")
     without = B.build_critic(VUSD_NG, None, [], "x")
-    part = with_.split("## 配信の字幕", 1)[1].split("\n## ", 1)[0] if "## 配信の字幕" in with_ else ""
+    part = with_.split(SOURCE_HEAD, 1)[1].split("\n## ", 1)[0] if SOURCE_HEAD in with_ else ""
     return [("--video で、作文者が根拠に挙げた 2:44:00 の字幕の行が入る", "[2:44:00]" in part),
             ("挙げていない 1:00:00 の行は入らない", "[1:00:00]" not in part),
             ("--video が無ければ「渡していない」と書く", "配信の字幕は渡していない" in without and "[2:44:00]" not in without)]
@@ -248,14 +313,107 @@ def leg_c_leak(B):
             ("いまの雛形なら1枚は作れる（止まらない）", not stopped)]
 
 
+def leg_c_cards(B):
+    text = B.build_critic(VUSD_NG, None, [], "x")
+    ids = B.card_ids()
+    line = [ln for ln in text.splitlines() if ln.startswith("当てる ID:")]
+    return [(f"批評役の1枚に、カード {len(ids)} 枚の見出しが全部ある", all(f"### {i} " in text for i in ids)),
+            ("「当てる ID」の並びに、全部の ID がある", bool(line) and all(i in line[0] for i in ids))]
+
+
+def leg_rows_stop(B):
+    with tempfile.TemporaryDirectory() as td:
+        sc = Path(td) / "script.txt"
+        sc.write_text("題\nみんなは？\n", encoding="utf-8")
+        (Path(td) / "spec.json").write_text(json.dumps({"title_card": "題", "lines": [{"line": "題"}, {"line": "みんなは？"}]},
+                                                       ensure_ascii=False), encoding="utf-8")
+        try:
+            B.build_critic(sc, None, [], "x")
+            err = ""
+        except ValueError as e:
+            err = str(e)
+    return [("spec が rows でなく lines で書いてあれば、批評役の1枚を作らずに止まる（lines と言う）", "lines" in err)]
+
+
 def leg_w_fixed(B):
     t = "海外キッチンで\nまさかの事態に！"
     w = B.build_writer(None, [], [], "x", 3, False, [], t, "本日22時")
     bare = B.build_writer(None, [], [], "x", 3, False, [])
-    return [("--title の札を「1行目はそのまま読む」と書く", "1行目は、この字をそのまま読む" in w and "海外キッチンで ／ まさかの事態に！" in w),
+    drop = B.build_writer(None, [], [], "x", 3, False, [], "🇬🇪ジョージアで滝観に行こうと思ったら大惨事に！")
+    fixed = B.build_writer(None, [], [], "x", 3, False, [], "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！")
+    return [("--title の札を「1行目はそのまま読む」と書く", "1行目は、この札の字をそのまま読む" in w and "海外キッチンで ／ まさかの事態に！" in w),
             ("--next の時刻を「最後の行で言う」と書く", "本日22時" in w and "この時刻まで言う" in w),
-            ("表の1行目に札の字（改行を外して）が入る", "| 1 | 海外キッチンでまさかの事態に！ | 題 |" in w),
+            ("表の1行目に札の字（改行を外して）が入る", "| 1 | 題の札をそのまま読む | 海外キッチンでまさかの事態に！ |" in w),
+            ("札に助詞の抜け（滝観に）があれば、直す字（滝を観に）と一緒に書く（F-049）", "「滝観に行」→「滝を観に行」" in drop),
+            ("直した札には書かない", "助詞の抜けがある" not in fixed),
+            ("表は4欄で、4欄目が「選んだ理由」（あやと #1019「なぜそれを選んだか理由付きで」）",
+             "| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 残した本人の言葉 | 選んだ理由 |" in w),
             ("無ければ「指定なし」", "（指定なし。" in bare)]
+
+
+def fake_streams(B, td: Path):
+    """本物の配信の代わりに、字幕とチャットの写しを置く（チャットの字は、こしらえたもの）。"""
+    d = td / "2026/08"
+    d.mkdir(parents=True)
+    (d / "2026-08-04_2159_ZZZZZZZZZZ1.transcript.txt").write_text(
+        "[0:00:00] ここはポチだらけの草原です。\n[0:00:30] いま配信のコメントで道を教えてもらいました。こしらえたチャットの本文その一。\n"
+        "[0:01:00] 水が多すぎて渡れへん。\n",
+        encoding="utf-8")
+    (d / "2026-08-04_2159_ZZZZZZZZZZ1.chat.txt").write_text(
+        "[0:00:10] みはりやく: こしらえたチャットの本文その一\n[0:00:40] ¥500 みはりやく: こしらえたチャットの本文その二\n", encoding="utf-8")
+
+
+def with_streams(B, fn):
+    real = B.STREAMS
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            fake_streams(B, Path(td))
+            B.STREAMS = Path(td)
+            return fn()
+    finally:
+        B.STREAMS = real
+
+
+def leg_w_order(B):
+    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
+    at = [w.find(h) for h in ("## 1. 約束のカード", "## 2. 何を作るか", "## 3. 方針", "## 4. 書く形", "## 5. 当て表", "## 6. 材料")]
+    return [("約束のカード → 何を作るか → 方針 → 書く形 → 当て表 → 材料 の順", all(a >= 0 for a in at) and at == sorted(at)),
+            ("カードが1枚の先頭（最初の見出し）", w.find("## ") == at[0]),
+            ("字幕はいちばん後ろの「材料」の節にだけある", w.find("[0:00:00]") > at[-1])]
+
+
+def leg_w_nochat(B):
+    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
+    try:
+        with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, True, [], "題"))
+        stopped = False
+    except ValueError:
+        stopped = True
+    return [("同じ区間にチャットがあっても、本文は1行も入らない", "こしらえたチャットの本文" not in w and "みはりやく" not in w),
+            ("本人が読み上げて字幕に入ったコメントは〔コメントの読み上げ〕に伏せ、伏せた数を書く",
+             "〔コメントの読み上げ〕" in w and "コメント 1 か所は" in w),
+            ("--chat を渡すと止まる（F-048）", stopped)]
+
+
+def leg_w_ate(B):
+    ids = B.card_ids()
+    a = B.ate_template()
+    table = a.split("```", 1)[0]
+    skel = a.split("```json", 1)[1] if "```json" in a else ""
+    return [(f"当て表の表に、カード {len(ids)} 枚の ID が1回ずつ", all(table.count(f"| {i} |") == 1 for i in ids)),
+            ("spec の promises の形にも、全部の ID が1回ずつ", all(skel.count(f'"{i}"') == 1 for i in ids))]
+
+
+def leg_w_watch(B):
+    lines = ["[0:00:00] ここはポチだらけの草原です。", "[0:00:30] いま配信のコメントで道を教えてもらいました。",
+             "[0:01:00] ボタンをポチっと押した。"]
+    got = B.watch_block(lines)
+    return [("字幕の呼び名「ポチ」を、時刻（0:00:00）と直す言葉（野良犬）つきで書く", "「ポチ」が 1 か所（0:00:00）" in got and "野良犬" in got),
+            ("「ポチっと」は数えない", "（0:01:00" not in got),
+            ("コメントに触れた時刻（0:00:30）を書く", "0:00:30「コメント」" in got),
+            ("伏せた読み上げ（〔コメントの読み上げ〕）は「読み上げ」として数え、印の中の「コメント」は数えない",
+             "0:02:00「読み上げ」" in B.watch_block(["[0:02:00] それ〔コメントの読み上げ〕やな"])),
+            ("字幕の文はそのまま写さない", "道を教えてもらいました" not in got and "草原です" not in got)]
 
 
 # ---------- 本編集の1枚 ----------
@@ -385,11 +543,15 @@ def leg_e_voice(B):
     spec = json.loads((FR / "spec_A.json").read_text(encoding="utf-8"))
     v = B.voice_lines(spec)
     bare = B.voice_lines({"id": "p1", "rows": [{"line": "みんなは？"}]})
+    orig = B.voice_lines({"id": "p2", "rows": [{"line": "犬が来た。"}, {"line": "ああーっ！", "orig_voice": "0:10:24〜0:10:29"},
+                                                 {"line": "沼や。"}]})
     return [("13文・key は A/01 から", len(v) == 13 and v[0]["key"] == "A/01" and v[-1]["key"] == "A/13" and v[0]["plan"] == "A"),
             ("声に渡す字は spec の tts_text（かなに直した字）", v[0]["tts_text"] == spec["rows"][0]["tts_text"] != spec["rows"][0]["line"]),
             ("字幕は行の字・bytes は UTF-8 のバイト数", v[0]["caption"] == spec["rows"][0]["line"]
              and all(x["bytes"] == len(x["tts_text"].encode("utf-8")) for x in v)),
-            ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01")]
+            ("tts_text の無い行は、行の字をそのまま", bare[0]["tts_text"] == "みんなは？" and bare[0]["key"] == "p1/01"),
+            ("元の声の行（F-051）は声を作らない（番号はそのまま欠ける）",
+             [x["key"] for x in orig] == ["p2/01", "p2/03"] and "ああーっ！" not in [x["caption"] for x in orig])]
 
 
 def git_fixture(td: Path) -> str:
@@ -469,12 +631,13 @@ def leg_e_name(B):
 
 
 LEGS = {
-    "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "w_fixed": leg_w_fixed,
-    "cats": leg_cats, "grows": leg_grows, "machine": leg_machine, "holdout": leg_holdout, "pair": leg_pair,
-        "chat": leg_chat, "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
-        "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
-        "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
-        "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
+    "cards": leg_cards, "full": leg_full, "replaced": leg_replaced, "grows": leg_grows, "holdout": leg_holdout,
+    "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
+    "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
+    "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
+    "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
+    "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
+    "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
 
 if __name__ == "__main__":
     sys.exit(legs.main(Path(__file__).resolve(), LEGS, CUTS, setup))

@@ -2,12 +2,17 @@
 """**原稿を、あやとの指摘の帳面に機械で当てる。** 書いた人が、批評役に回す前に通す。
 
     python3 tools/shorts/script/lint.py <script.txt>                    # 隣の spec.json（script_A.txt なら spec_A.json）も読む
-    python3 tools/shorts/script/lint.py <script.txt> --title "🇸🇪 ストックホルム来たら、地下鉄が高すぎた！"
+    python3 tools/shorts/script/lint.py <script.txt> --title "🇸🇪 ストックホルムに来たら、地下鉄が高すぎた！"
     python3 tools/shorts/script/lint.py <script.txt> --next "本日22時"    # 最後の行で言う次の配信の時刻（spec の next_stream と同じ）
     python3 tools/shorts/script/lint.py <script.txt> --as-of 2026-10-19  # その日に在った決まりだけで（承認済みの原稿を読み直すとき）
+    python3 tools/shorts/script/lint.py <script.txt> --as-of 2026-10-23:6354242835   # その日の、あやとのそのコメントの時点で
     python3 tools/shorts/script/lint.py --rules                          # 規則と、帳面の ID の一覧
 
-終了コード **0=落とす規則に1つも当たらない / 1=当たった / 2=原稿が読めない・空**。
+終了コード **0=落とす規則に1つも当たらない / 1=当たった / 2=原稿が読めない・空・spec の形が違う**。
+
+**spec に `rows`（行ごとの字・根拠・画）が無いとき・行の数が原稿と違うときは、当てずに 2 で止まる。** 2026-10-23 の滝の回 p1 は、
+作文者が spec を `lines` の鍵で書き、ここと `brief.py` が黙って読み飛ばした。【足】【答】の印も、批評役の1枚の画の列も、空のまま通った。
+spec を直すか、原稿だけを当てるなら `--no-spec`。
 
 ## 何を見て、何を見ないか
 
@@ -18,10 +23,13 @@
 
 印は2つ。✕ は落とす。△ は落とさないが、批評役が必ず読む行——【足】の行（配信で本人が言っていない言葉）は
 全部出す。2026-10-21 の地下鉄 p1 は、【足】の2文が2文ともあやとに直された（F-035・F-036）。
+【足】は「その出来事が配信に無い行」の印で、言い方を組み直しただけの行には付けない（F-050）。だから【足】の数・割合では何も言わない。
 
 ## 「いつからの決まりか」を持つ
 
 規則ごとに、帳面の項目の日付（あやとが言った日）を持つ。`--as-of` を渡すと、その日までに在った規則だけを当てる。
+同じ日に決まりが2つできることがあるので、日付のあとに `:<コメントID>` を付けて、その時点で切れる（`critic_gate.py --as-of` と同じ形）。
+2026-10-23 は、朝のフォカッチャの添削（6354242835）で T-READ・L-NEXT が、夕方の滝の回の直し（6370959237）で L-INNER・L-NICK・L-PARTICLE・L-ATE ができた。
 承認済みの原稿を読み直すときに、**承認より後にできた決まりで落ちたものを、原稿の誤りと取り違えない**ため
 （最安ホステルの p2 は 10-19 に承認され、題の札の国旗は 10-21 からの決まり）。
 
@@ -94,6 +102,8 @@ class Ctx:
     answer_marked: set = field(default_factory=set)  # 原稿の字に【答】の印があった行（題の答え。F-037）
     card_seconds: float | None = None                # spec の title_card_seconds（題の札を消す秒）
     next_stream: str | None = None                   # spec の next_stream（最後の行で言う次の配信。F-047）
+    has_spec: bool = False                           # spec を読んだか（--no-spec・spec が無いなら False）
+    promises: dict | None = None                     # spec の promises（作文者の当て表。F-050）。spec に鍵が無ければ None
 
     @property
     def title(self) -> str:
@@ -428,7 +438,6 @@ CPS = 6.8          # 声を上限の倍率 1.4 で読んだ毎秒の字（`scrip
 LINE_HARD = 35     # 1行の字の上限（`script_writing.md` 2「長くても35字」）
 LINE_SOFT = 4.0    # 1行の秒の目安。越えた行は、関所で「離れる行」に挙がってきた（フランスの 4.1〜4.9秒の行）
 AFTER_HARD = 3     # 【答】から締めまでに挟む行がこれ以上なら ✕（F-037）
-ASHI_SHARE = 1 / 3  # 【足】の割合の目安（F-035「少なく」）
 
 
 def t_card(c: Ctx):
@@ -527,8 +536,9 @@ def l_num(c: Ctx):
 
 
 QUOTE = re.compile(r"「([^」]*)」")
-# 誰の言葉か・どこで見た話かの印（`script_writing.md` 0.8 の決まり3。返事・看板のように「どこに書いてあったか」を言うのも印）
-ATTR = re.compile(r"って|言われ|言うて|言うた|言った|言わ|言う|言い|ゆうて|聞い|聞か|らしい|コメント|書いて|書いと|"
+# 誰の言葉か・どこで見た話かの印（`script_writing.md` 0.8 の決まり3。返事・看板のように「どこに書いてあったか」を言うのも印）。
+# 「コメント」は印に数えない。視聴者の書き込みは、印を付けても持ち出さない（F-048。前はここが「コメントで」を足せと言っていた）
+ATTR = re.compile(r"って|言われ|言うて|言うた|言った|言わ|言う|言い|ゆうて|聞い|聞か|らしい|書いて|書いと|"
                   r"返事|メール|メッセージ|看板|張り紙|貼り紙|いわく|曰く|教えて|呼ばれ|叫")
 
 
@@ -546,21 +556,9 @@ def l_quote(c: Ctx):
         prev = c.lines[i - 2] if i >= 2 else ""
         if ATTR.search(rest) or ATTR.search(prev):
             continue
-        out.append(Hit("L-QUOTE", i, ln, f"「{qs[0][:12]}」が誰の言葉か・どこの字かの印が、声に無い（〜って・言われて・コメントで…）",
+        out.append(Hit("L-QUOTE", i, ln, f"「{qs[0][:12]}」が誰の言葉か・どこの字かの印が、声に無い（〜って・言われて。画に居る人の言葉か）",
                        look=True))
     return out
-
-
-def l_ashirate(c: Ctx):
-    """F-035 【足】（配信で本人が言っていない言葉）は少なく。3分の1を越えたら △。"""
-    if c.rows is None and not c.ashi_marked:
-        return None
-    rows = set(c.ashi_marked) | {i for i, r in enumerate(c.rows or [], 1) if "【足】" in (r.get("why") or "")}
-    n = len(c.lines)
-    if not n or len(rows) / n <= ASHI_SHARE:
-        return []
-    return [Hit("L-ASHIRATE", None, f"【足】{len(rows)}/{n}行", f"【足】が{len(rows) / n:.0%}。配信の言い回しを先に拾ったか"
-                "（足すのは足りない所だけ。本人の言い方に寄せる）", look=True)]
 
 
 def l_ask(c: Ctx):
@@ -588,6 +586,178 @@ def l_desu(c: Ctx):
     return out
 
 
+# ---------- 2026-10-23（#1019、F-048・F-049・F-050）: 滝の回 p1 で、あやとに直された所のうち字で決まるもの ----------
+# 帳面が `lint:L-INNER`・`lint:L-PARTICLE` を名指したのに、規則が無かった（1枚は「lint が見る」と、無い守りを約束していた）
+
+LEDGER_DIR = ROOT / "tools/shorts/feedback"
+_LED: list = []   # 読んだ帳面（1回だけ読む）。読めなければ [None]
+
+
+def _ledger():
+    """帳面（`ledger.py` の Ledger と、その読み手）。読めなければ (None, None)。L-NICK と L-ATE は「見ていない」になる。"""
+    if not _LED:
+        try:
+            if str(LEDGER_DIR) not in sys.path:
+                sys.path.insert(0, str(LEDGER_DIR))
+            import ledger as ledger_mod
+            _LED.append((ledger_mod, ledger_mod.load()))
+        except (OSError, ImportError):
+            _LED.append((None, None))
+    return _LED[0]
+
+
+# 視聴者の書き込み・配信の内輪で話を動かす言葉（F-048）。「配信」だけでは拾わない（締めの「配信のアーカイブ見てね」
+# 「本日22時から配信見にきてね」は内輪ではない。あやとが自分で書いた終わりの形）
+INNER = re.compile(r"コメント|コメ欄|チャット|リスナー|視聴者|スパチャ|スーパーチャット|投げ銭|配信で言われ|みんなに言われ")
+
+
+def card_and_lines(c: Ctx) -> list:
+    """[(行, 字)]。題の札（行 0。読まない字でも、見る人の目に入る）と、声の行。"""
+    return ([(0, c.title_card.replace("\n", ""))] if c.title_card else []) + list(enumerate(c.lines, 1))
+
+
+def l_inner(c: Ctx):
+    """F-048 配信の内輪（コメント・チャット・視聴者の書き込み）を持ち出さない。題の札も見る。"""
+    out = []
+    targets = card_and_lines(c)
+    for i, ln in targets:
+        m = INNER.search(ln)
+        if m:
+            out.append(Hit("L-INNER", i, ln, f"配信の内輪（「{m.group(0)}」）。ショートはほとんど初見。視聴者の書き込みで話を動かさず、"
+                                             "その行ごと消すか、本人・画に居る人（地元の人・宿の人・店の人）・起きた出来事で言う"))
+    return out
+
+
+# 帳面の「直す前 → 直した後」に書いた呼び名の直し。あやとに直されるたびに帳面に足すと、ここが増える（手で辞書を持たない）
+NICK_PAIR = re.compile(r"呼び名「([^」]+)」→「([^」]+)」")
+
+
+def nicknames(led=None) -> dict:
+    """帳面の呼び名の直し {配信の中の呼び名: 誰でも分かる言葉}。帳面が読めなければ空。"""
+    if led is None:
+        led = _ledger()[1]
+    if led is None:
+        return {}
+    out = {}
+    for it in led.items.values():
+        for bad, good in NICK_PAIR.findall(it.fields.get("直す前 → 直した後", "")):
+            out.setdefault(bad, good)
+    return out
+
+
+def nick_at(text: str, nick: str):
+    """字の中の呼び名（長い片仮名語の一部・「ポチる」「ポチっと」のような動きの言葉は数えない）。"""
+    return re.search(r"(?<![ァ-ヶー])" + re.escape(nick) + r"(?![ァ-ヶーっッるりらろれゃャ])", text)
+
+
+def l_nick(c: Ctx):
+    """F-048・F-008 配信の中の呼び名（ポチ）を、初見に通じる言葉に替える。題の札も見る。"""
+    d = nicknames()
+    if not d:
+        return None
+    out = []
+    targets = card_and_lines(c)
+    for i, ln in targets:
+        for bad, good in d.items():
+            if nick_at(ln, bad):
+                out.append(Hit("L-NICK", i, ln, f"配信の中の呼び名「{bad}」。初見には何の話か分からない（あやとの直し:「{good}」）"))
+    return out
+
+
+# 助詞の抜け（F-049）。詰めた言い方のうち、字で決まる3つだけを見る。関西の話し言葉で自然に抜く所もある
+# （あやとは「路線バス乗るの今日が初めて」を通した）ので、行は △、題の札だけ ✕
+# 1) 名詞のすぐあとの「見に／観に（行く・来る）」。「花見」「下見」のように、1語の名詞になっているものは外す
+SEE = re.compile(r"(?<=[一-龥々ァ-ヶー])(?<!花)(?<!月)(?<!雪)(?<!下)(?<!味)(?<!脇)(?<!夢)(?<!形)(?<!様子)(見|観)に(行|来|い|き|く)")
+# 2) 地名のすぐあとの「来たら・行ったら」（「に」が無い）。「パリ行きのバス」は見ない
+# 「き」（かな）は数えない。「ジョージアきれい」を拾う
+PLACE_GO = re.compile(r"来(た|て|る|ま|れ)|行(った|って|く|こ|け)")
+# 3) 名詞のすぐあとの「乗る・乗った」（「乗り放題」「乗り換え」は見ない）
+RIDE = re.compile(r"(?<=[一-龥々ァ-ヶー])乗(る|った|って|ろ|ら|れ|ん)")
+
+
+NOUN_TAIL = re.compile(r"[一-龥々ァ-ヶー]+$")
+
+
+def particle_drops(text: str) -> list:
+    """字の中の助詞の抜け。[(抜けている字, 直すなら)]。"""
+    out = []
+
+    def noun(m):
+        return NOUN_TAIL.search(text[:m.start()]).group(0)
+    for m in SEE.finditer(text):
+        out.append((noun(m) + m.group(0), f"{noun(m)}を{m.group(0)}"))
+    for i, name, _ in places_in(text) + [(m.start(), m.group(0), None) for m in REAL_PLACE.finditer(text)]:
+        rest = text[i + len(name):]
+        if PLACE_GO.match(rest):
+            out.append((name + rest[:3], f"{name}に{rest[:3]}"))
+    for m in RIDE.finditer(text):
+        out.append((noun(m) + m.group(0), f"{noun(m)}に{m.group(0)}"))
+    return out
+
+
+def l_particle(c: Ctx):
+    """F-049 題も原稿も、助詞を抜いた詰めた日本語にしない。題（札。無ければ1行目）は ✕、ほかの行は △。"""
+    if not c.lines:
+        return None
+    out = []
+    title_line = 0 if c.title_card is not None else 1
+    title = c.title_card.replace("\n", "") if c.title_card is not None else c.lines[0]
+    for got, fix in particle_drops(title):
+        out.append(Hit("L-PARTICLE", title_line, title, f"題に助詞の抜け（「{got}」→「{fix}」）。あやとの題でも札ごと直し、"
+                                                       "1行目も直した字で読む（直したことを提出に書く）"))
+    for i, ln in enumerate(c.lines, 1):
+        if i == 1 and norm_title(ln) == norm_title(title):
+            continue    # 1行目が題そのもの（上で見た）
+        for got, fix in particle_drops(ln):
+            out.append(Hit("L-PARTICLE", i, ln, f"助詞の抜け（「{got}」→「{fix}」）。声だけで一度で分かるか", look=True))
+    return out
+
+
+NOTE_MIN = 8   # 当て表の1枚ぶんの字の下限。「なし」「OK」「当たらない」だけでは、当てたかどうかが読めない
+
+
+def l_ate(c: Ctx):
+    """F-050 約束のカード1枚ずつに、当たる行とどう直したか／当たらない理由を書いた当て表（spec の promises）が無いと渡せない。
+
+    **中身の正しさは見ない。** 見るのは、カードの ID が全部あるか・行の番号が原稿の中か・字が空でないか、だけ。
+    2026-10-23 の棚卸しで、約束26個のうち10個が作文者に中身ごと届いていなかった。届いても当てたかは誰も見ていなかった。
+    """
+    if not c.has_spec:
+        return None
+    led_mod, led = _ledger()
+    if led is None:
+        return None
+    want = [it.id for it in led_mod.script_items(led)]
+    if c.promises is None:
+        return [Hit("L-ATE", None, "spec に promises が無い", f"当て表が無い。約束のカード {len(want)} 枚の ID ごとに、"
+                    "{\"lines\": [当たる行], \"note\": \"どう直したか／当たらない理由\"} を spec の promises に書く")]
+    if not isinstance(c.promises, dict):
+        return [Hit("L-ATE", None, "spec の promises", "当て表は ID → {lines, note} の形で書く")]
+    out = []
+    miss = [i for i in want if i not in c.promises]
+    if miss:
+        out.append(Hit("L-ATE", None, f"当て表 {len(want) - len(miss)}/{len(want)}", f"当てていない約束: {'・'.join(miss)}"))
+    n = len(c.lines)
+    for fid in want:
+        e = c.promises.get(fid)
+        if e is None:
+            continue
+        lines = e.get("lines") if isinstance(e, dict) else None
+        note = (e.get("note") or "").strip() if isinstance(e, dict) else ""
+        if not isinstance(lines, list) or not all(isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= n for x in lines):
+            out.append(Hit("L-ATE", None, fid, f"{fid} の lines は、当たる行の番号の並び（題の札は 0。当たらないなら []）"))
+        if len(note) < NOTE_MIN:
+            out.append(Hit("L-ATE", None, fid, f"{fid} の note が空か短い（当たる行をどう直したか、当たらないならその理由を書く）"))
+    for fid in sorted(set(c.promises) - set(want)):
+        out.append(Hit("L-ATE", None, fid, f"{fid} は約束のカードに無い ID", look=True))
+    return out
+
+
+# 規則の since。同じ日の決まりは、あやとのコメントID で前後を分ける（`--as-of 2026-10-23:6354242835` なら、朝の
+# フォカッチャの添削の時点。夕方の滝の回の直しでできた規則は当てない）
+S1019 = "2026-10-23:6370959237"
+
+
 RULES = (
     Rule("L-NARRATOR", ("F-004",), "2026-10-16", "外の語り手の説明口調（あやとは・本人いわく・だそうです）", l_narrator),
     Rule("L-PHRASE", ("F-006",), "2026-10-16", "ふだん言わない言い回し（国を出る・人に払う）", l_phrase),
@@ -605,12 +775,16 @@ RULES = (
     Rule("L-AFTER", ("F-037",), "2026-10-21", f"【答】から締めまでに{AFTER_HARD}行以上（✕）・1〜2行（△）", l_after),
     Rule("L-NUM", ("F-039",), "2026-10-21", "序数の手前の数が、前の行の声に無い（△）", l_num),
     Rule("L-QUOTE", ("F-039",), "2026-10-21", "「」の言葉に、誰の言葉かの印が無い（△）", l_quote),
-    Rule("L-ASHIRATE", ("F-035",), "2026-10-21", "【足】が3分の1を越える（△）", l_ashirate),
     Rule("L-ASK", ("F-032",), "2026-10-21", "終わりの問いに「みんな」が無い（△）", l_ask),
     Rule("L-DESU", ("F-004",), "2026-10-16", "です・ます調の行（△。「」の中は見ない）", l_desu),
     # ---- 2026-10-23（#1014、F-047）: フォカッチャの下書きを、関所の批評役が落とせなかった所のうち、字で決まるもの ----
     Rule("T-READ", ("F-047",), "2026-10-23", "1行目が題の札の字と違う（札があるときだけ。句読点・改行・国旗は見ない）", t_read),
     Rule("L-NEXT", ("F-047",), "2026-10-23", "次の配信に誘う最後の行に時刻が無い・spec の next_stream の時刻を言っていない", l_next),
+    # ---- 2026-10-23（#1019、F-048・F-049・F-050）: 字幕を写した滝の回 p1 を、あやとが直した所のうち字で決まるもの ----
+    Rule("L-INNER", ("F-048",), S1019, "配信の内輪（コメント・チャット・リスナー・視聴者・スパチャ・投げ銭・配信で言われ）", l_inner),
+    Rule("L-NICK", ("F-048", "F-008"), S1019, "配信の中の呼び名（辞書は帳面の `呼び名「…」→「…」`）", l_nick),
+    Rule("L-PARTICLE", ("F-049",), S1019, "助詞の抜け（名詞＋見に行く・地名＋来たら・名詞＋乗った）。題は ✕・行は △", l_particle),
+    Rule("L-ATE", ("F-050",), S1019, "当て表（spec の promises）に約束のカードの ID が欠ける・中身が空", l_ate),
 )
 
 
@@ -643,9 +817,17 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     lines, ashi, answer = read_script(script)
     rows, card, came, secs, nxt = None, None, "原稿の1行目（国旗は見ていない）", None, None
     sp = spec or spec_for(script)
+    has_spec, promises = False, None
     if use_spec and sp.exists():
         s = json.loads(sp.read_text(encoding="utf-8"))
         rows = s.get("rows")
+        if not isinstance(rows, list):
+            other = [k for k in ("lines", "rows_A", "items") if k in s]
+            raise ValueError(f"{sp.name} に rows が無い" + ("（" + "・".join(other) + " で書いてある）" if other else "")
+                             + "。行ごとの字・根拠・画は rows に書く（読み飛ばすと【足】【答】と画が空のまま通る）。原稿だけを当てるなら --no-spec")
+        if len(rows) != len(lines):
+            raise ValueError(f"{sp.name} の rows が {len(rows)} 行で、原稿は {len(lines)} 行（spec を原稿に合わせて直す）")
+        has_spec, promises = True, s.get("promises")
         if s.get("title_card"):
             card, came = s["title_card"], f"{sp.name} の title_card"
         secs = s.get("title_card_seconds")
@@ -658,7 +840,27 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     if next_stream is not None:
         nxt = next_stream
     return Ctx(lines=lines, title_card=card, title_from=came, rows=rows, ashi_marked=ashi, answer_marked=answer,
-               card_seconds=secs, next_stream=nxt)
+               card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises)
+
+
+AS_OF = re.compile(r"20\d\d-\d\d-\d\d(:\d+)?")
+
+
+def when(s: str) -> tuple:
+    """「2026-10-23」「2026-10-23:6370959237」→（日付, コメントID か None）。"""
+    day, _, cid = s.partition(":")
+    return day, (int(cid) if cid else None)
+
+
+def in_force(since: str, as_of: str | None) -> bool:
+    """規則（since）が as_of の時点で在ったか。同じ日なら、両方にコメントID があるときだけ前後を比べる
+    （どちらかが日付だけなら、その日に在ったことにする。落とす側に倒す）。"""
+    if not as_of:
+        return True
+    (sd, sc), (ad, ac) = when(since), when(as_of)
+    if sd != ad:
+        return sd < ad
+    return sc is None or ac is None or sc <= ac
 
 
 def lint(c: Ctx, as_of: str | None = None) -> dict:
@@ -670,7 +872,7 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
     """
     hits, ran, blind, later = [], [], [], []
     for r in RULES:
-        if as_of and r.since > as_of:
+        if not in_force(r.since, as_of):
             later.append(r.id)
             continue
         got = r.run(c)
@@ -689,7 +891,9 @@ BLIND_WHY = {
     "T-REAL": "題が空", "T-METAPHOR": "題が空", "L-END": "原稿が空",
     "T-CARD": "spec に title_card_seconds が無い",
     "L-AFTER": "【答】の印が無い（原稿の字か spec の why に【答】を付ける）",
-    "L-ASHIRATE": "spec が無く、原稿の字にも【足】の印が無い", "L-ASK": "原稿が空",
+    "L-ASK": "原稿が空",
+    "L-NICK": "帳面に呼び名の直し（`呼び名「…」→「…」`）が無い・帳面が読めない",
+    "L-ATE": "spec が無い（当て表は spec の promises に書く）・帳面が読めない",
 }
 
 
@@ -721,7 +925,7 @@ def main() -> int:
     ap.add_argument("--spec", help="spec.json の在りか（既定は原稿の隣）")
     ap.add_argument("--next", help="最後の行で言う次の配信（「本日22時」）。無ければ隣の spec の next_stream")
     ap.add_argument("--no-spec", action="store_true", help="spec を読まない")
-    ap.add_argument("--as-of", help="この日（YYYY-MM-DD）までにできた決まりだけを当てる")
+    ap.add_argument("--as-of", help="この日（YYYY-MM-DD）か、その日のあやとのコメントの時点（YYYY-MM-DD:<コメントID>）までにできた決まりだけを当てる")
     ap.add_argument("--rules", action="store_true", help="規則の一覧")
     a = ap.parse_args()
 
@@ -733,9 +937,11 @@ def main() -> int:
         ap.error("原稿の在りかが要る")
     if a.as_of:
         try:
-            date.fromisoformat(a.as_of)
+            if not AS_OF.fullmatch(a.as_of):
+                raise ValueError(a.as_of)
+            date.fromisoformat(when(a.as_of)[0])
         except ValueError:
-            ap.error("--as-of は YYYY-MM-DD")
+            ap.error("--as-of は YYYY-MM-DD か YYYY-MM-DD:<コメントID>")
     p = Path(a.script)
     try:
         c = build(p, a.title, Path(a.spec) if a.spec else None, not a.no_spec, a.next)

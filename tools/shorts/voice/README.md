@@ -64,7 +64,8 @@ python3 $E put tools/shorts/voice/fish_web.py ~/cdp/fish_web.py
 python3 $E put lines_in.json ~/voice/<動画>-lines_in.json      # [{"key": "A/01", "tts_text": "…"}, …]
 ```
 
-EC2 で（長いので `nohup` で裏に回す。鍵 `~/locks/fish-voice` は道具が1文ごとに触る）:
+EC2 で（長いので `nohup` で裏に回す。道具が列 `fish` の札を自分の pid で取る。ほかの人が fish の Chrome を持っていれば——
+TikTok の投稿も同じ Chrome——空くまで待つ。札は道具が終われば消える。`ec2-chrome` 2.5。前は鍵 `~/locks/fish-voice` を1文ごとに触っていた）:
 
 ```sh
 cd ~/cdp && python3 fish_web.py backup                       # あやとの下書きを写す・残りのクレジットを見る
