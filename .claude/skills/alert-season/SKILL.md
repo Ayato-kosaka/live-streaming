@@ -78,6 +78,7 @@ node alert-overlap.mjs --base ... --chars <キャラの置き場> --theme <id> -
      --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 --out <置き場> --sheet   # 顔×演出・主役の顔×字が全部 0
 node alert-overlap.mjs ... --control face ; node alert-overlap.mjs ... --control hero          # 対照は 1 で落ちる
 node alert-ink.mjs --base ... --bg-dir <bg> --chars <キャラ> --amounts ... --out <置き場>      # 字の濃さ 4.5 以上
+node alert-textfit.mjs --base ... --out <置き場>                                                # 名前・額・メッセージの切れが 0
 node alert-decode.mjs --dist <dist> --amounts ... --rates 1,4,6 --runs 3                         # 段の頭の展開が上限内
 node alert-cpu.mjs --base ... --char <キャラ> --amounts ... --rounds 3                           # CPU ms/秒
 ```
