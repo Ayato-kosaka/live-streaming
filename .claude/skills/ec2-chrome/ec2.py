@@ -4,7 +4,8 @@
     python3 .claude/skills/ec2-chrome/ec2.py run <script.sh> [timeout秒]   # EC2 で実行して stdout/stderr を出す
     python3 .claude/skills/ec2-chrome/ec2.py get <EC2のパス> <手元のパス>   # EC2 のファイルを持ち帰る
     python3 .claude/skills/ec2-chrome/ec2.py put <手元のパス> <EC2のパス>   # 手元のファイルを EC2 へ送る
-    python3 .claude/skills/ec2-chrome/ec2.py state | start | stop
+    python3 .claude/skills/ec2-chrome/ec2.py state | start
+    python3 .claude/skills/ec2-chrome/ec2.py stop [--force]   # 使っている人が居れば止めずに理由を出して 1（下の「止める前に見るもの」）
     python3 .claude/skills/ec2-chrome/ec2.py guard            # 誰も使っていなければ EC2 がひとりでに止まる見張りと、
                                                               # 遠隔デスクトップの本物の入力の見張り（desktop_input.py）を入れ直す
 
@@ -22,12 +23,38 @@ EC2 へのポート転送（ssm:StartSession）も権限が無い。S3 も無い
 公開物と同じもの（cdp.py のような道具・スクリプト・設定の JSON）だけ。
 **秘密や動画は送らない。** それは `tools/shorts/post/send.py put`（GCS の署名付き URL を EC2 が
 curl で落とす。SSM のコマンドに載るのは URL だけ）。動画の拡張子はここで断る。
+
+## 止める前に見るもの（stop）
+
+2026-10-23 23:45 UTC、ショートの投稿の担当が EC2 で YouTube を読み直している最中に、EC2 が
+`Client.UserInitiatedShutdown`（外から stop-instances）で止まった。見張り（idle-stop）の記録には無い。
+担当たちは「自分で起こした EC2 は、誰も使っていないのを見てから stop」で動いていたが、2人が同時に
+使うと「誰も使っていない」の見分けが外れる。だから **stop そのものが、止める前に EC2 の中を見る。**
+並びは `idle_stop.sh` と同じ（SSM → 鍵 → 遠隔デスクトップ）。鍵の置き場は idle_stop.sh の `LOCKS` を
+そのまま読む（写すと黙ってずれる）。どれか1つでも当たれば止めずに 1。
+
+| 見るもの | 止めない条件 |
+| --- | --- |
+| ほかの SSM コマンド | この確かめを流している ssm-document-worker（自分の先祖）以外が走っている |
+| 鍵（ファイルでもディレクトリでも） | 15分以内に触られている |
+| 遠隔デスクトップ | `desktop-input idle` が7分未満（投稿の GUARD と同じ）。答えが無い・数でないも触っている側 |
+| 確かめそのもの | 答えが返らない（前のコマンドが終わるまで始まらないことがある） |
+
+既に止まっている（stopped / stopping）なら何もせずに 0。`--force` は中を見ずに止める。
+見張りの見張りは同じ置き場の `stop_guard_selftest.py`（偽の EC2 で回す。本物には触らない）。
 """
-import base64, json, os, subprocess, sys, time, hashlib, threading
+import base64, json, os, re, subprocess, sys, time, hashlib, threading
 
 INSTANCE = os.environ.get("EC2_CHROME_INSTANCE_ID", "i-0684d39b0c1b1abb6")
 AWS = ["aws", "--profile", "sandbox", "--region", "ap-northeast-1"]
 CHUNK = 20000
+HERE = os.path.dirname(os.path.abspath(__file__))
+# EC2 の家（手元の道具に直書きしない。tools/sprites/rootcheck.mjs と同じ考え）
+EC2_HOME = "/home/ubuntu"
+DESKTOP_INPUT = "/usr/local/sbin/desktop-input"
+LOCK_FRESH_S = 15 * 60       # 鍵がこれより新しければ、誰かが使っている
+DESKTOP_BUSY_MS = 420000     # 遠隔デスクトップの本物の入力がこれより新しければ、あやとが触っている（post.py の GUARD と同じ7分）
+CHECK_TIMEOUT = 60           # 確かめの1回。前のコマンドが居座っていると始まらず、答えが無いまま切れる
 
 
 def aws(*args, check=True):
@@ -144,6 +171,72 @@ def guard():
     print(out.strip())
 
 
+def idle_stop_locks():
+    """鍵の置き場は idle_stop.sh の LOCKS をそのまま使う。こちらに書き写すと、あちらに鍵を足した日に黙ってずれる"""
+    m = re.search(r'^LOCKS="([^"]+)"$', open(os.path.join(HERE, "idle_stop.sh"), encoding="utf-8").read(), re.M)
+    if not m:
+        sys.exit("idle_stop.sh に LOCKS=\"…\" の行が無い（鍵の置き場を読めないので止めない）")
+    return m.group(1)
+
+
+def busy_script():
+    """EC2 の上で「いま誰が使っているか」を見る sh。当たったものを `BUSY <理由>` で1行ずつ、最後に CHECKED を出す。
+    並びは idle_stop.sh と同じ（SSM → 鍵 → 遠隔デスクトップ）"""
+    return f"""now=$(date +%s)
+# この確かめを流している ssm-document-worker は自分の先祖。先祖を辿って、それ以外の worker だけを数える
+mine=" "; p=$$
+while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do mine="$mine$p "; p=$(sed 's/.*) //' "/proc/$p/stat" 2>/dev/null | cut -d' ' -f2); done
+for w in $(pgrep -f ssm-document-worker 2>/dev/null); do
+  case "$mine" in *" $w "*) ;; *) echo "BUSY ssm: ほかの SSM コマンドが走っている（ssm-document-worker pid $w）" ;; esac
+done
+for f in {idle_stop_locks()}; do
+  [ -e "$f" ] || continue
+  age=$(( now - $(stat -c %Y "$f") ))
+  if [ "$age" -lt {LOCK_FRESH_S} ]; then echo "BUSY lock: $f が ${{age}}秒前に触られた"; fi
+done
+set -- $({DESKTOP_INPUT} idle 2>/dev/null); ms=${{1:-}}; src=${{2:-}}
+case "$ms" in
+  ''|*[!0-9]*) echo "BUSY desktop: desktop-input が答えない（'$ms $src'。触っている側に倒す。入れ直すなら ec2.py guard）" ;;
+  *) if [ "$ms" -lt {DESKTOP_BUSY_MS} ]; then echo "BUSY desktop: 遠隔デスクトップの本物の入力が ${{ms}}ms 前（$src）"; fi ;;
+esac
+echo CHECKED
+"""
+
+
+def busy_reasons():
+    """止めない理由の並び。空なら誰も使っていない。答えが返らないのも「止めない」に倒す"""
+    try:
+        st, out = run(busy_script(), CHECK_TIMEOUT, quiet=True)
+    except SystemExit as e:
+        return [f"確かめのコマンドを送れなかった（{e}）"]
+    lines = [ln.strip() for ln in out.splitlines()]
+    why = [ln[5:] for ln in lines if ln.startswith("BUSY ")]
+    if st != "Success" or "CHECKED" not in lines:
+        why.append(f"確かめの答えが返らない（ssm status: {st}）。ほかのコマンドが居座っていると、それが終わるまで始まらない")
+    return why
+
+
+def stop(force=False):
+    """ほかの担当やあやとが使っている最中なら止めずに理由を出して 1。--force のときだけ中を見ずに止める"""
+    st = state()
+    if st in ("stopped", "stopping"):
+        print(f"{st}（もう止まっている。何もしない）")
+        return 0
+    if not force:
+        why = busy_reasons() if st == "running" else [f"いまの状態が {st}（誰かが起こしている途中かもしれない）"]
+        if why:
+            print("止めない。使っている最中:")
+            for w in why:
+                print(f"  - {w}")
+            print("自分の鍵なら外してからもう一度。ほかの人のなら置いておく（誰も使わなくなって30分で idle-stop が止める）。\n"
+                  "中を見ずに止めると決めたときだけ: python3 .claude/skills/ec2-chrome/ec2.py stop --force")
+            return 1
+    aws("ec2", "stop-instances", "--instance-ids", INSTANCE)
+    aws("ec2", "wait", "instance-stopped", "--instance-ids", INSTANCE)
+    print(state())
+    return 0
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "state"
     if cmd == "run":
@@ -162,6 +255,4 @@ if __name__ == "__main__":
     elif cmd == "guard":
         guard()
     elif cmd == "stop":
-        aws("ec2", "stop-instances", "--instance-ids", INSTANCE)
-        aws("ec2", "wait", "instance-stopped", "--instance-ids", INSTANCE)
-        print(state())
+        sys.exit(stop("--force" in sys.argv[2:]))

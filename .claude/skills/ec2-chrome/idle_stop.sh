@@ -8,7 +8,7 @@
 # 「使っている」とみなすもの（どれか1つでもあれば、時計を巻き戻す）:
 #   - 起きてから GRACE_MIN 分以内（起こしたセッションが最初のコマンドを送るまでの間）
 #   - SSM のコマンドが走っている（セッションが何かを流している最中）
-#   - 鍵のファイルが STALE_H 時間以内に触られている（裏で回している一括。長い一括は鍵を触り続ける）
+#   - 鍵（ファイルでもディレクトリでも）が STALE_H 時間以内に触られている（裏で回している一括。長い一括は鍵を触り続ける）
 #   - Chrome リモートデスクトップの画面に、IDLE_MIN 分以内に人の入力がある（あやとが入っている。
 #     数えるのは desktop-input が控えた本物の入力。こちらの Chrome の動画では数えない）
 #
@@ -35,13 +35,16 @@ if [ -z "$why" ] && pgrep -f ssm-document-worker >/dev/null 2>&1; then
   why="ssm"
 fi
 
+# >>> locks（.claude/skills/ec2-chrome/stop_guard_selftest.py がこの間だけを切り出して回す）
+# 鍵はファイルでもディレクトリでも数える（mkdir で取る鍵もある）。ec2.py stop も同じ LOCKS を読んで同じに数える
 if [ -z "$why" ]; then
   for f in $LOCKS; do
-    [ -f "$f" ] || continue
+    [ -e "$f" ] || continue
     age=$(( now - $(stat -c %Y "$f") ))
     if [ "$age" -lt $((STALE_H * 3600)) ]; then why="lock:$f"; break; fi
   done
 fi
+# <<< locks
 
 # >>> desktop（tools/shorts/post/desktop_guard_selftest.py がこの間だけを切り出して回す）
 # 人の入力は desktop-input に聞く（X に入った本物の入力だけを数える）。xprintidle は、こちらの Chrome が
