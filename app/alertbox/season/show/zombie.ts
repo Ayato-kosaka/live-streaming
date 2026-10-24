@@ -561,8 +561,10 @@ export function runZombie(
       now = to;
       m.after(go, () => {
         L.actorBox.style.zIndex = "4";
-        // 帯の下の辺から下は描かない（キャラ絵の顔の前を通さない。墓へ沈むのもこの切り口）
-        L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - bandBottomOf(L, W, H)).toFixed(1)}px 0px)`;
+        /* 帯の下の辺から下は描かない（キャラ絵の顔の前を通さない。墓へ沈むのもこの切り口）。
+           切り口ちょうどだと、縁のにじみの1行がキャラ絵の頭に掛かった（重なりの見張りで 59 画素）
+           ので、少し上で切る */
+        L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - bandBottomOf(L, W, H) + X(0.006)).toFixed(1)}px 0px)`;
         pop("idle", 320, STAY_POP);
         raiseStayGrave();
       });
