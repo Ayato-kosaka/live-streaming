@@ -29,6 +29,39 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import alert_theme as AT  # noqa: E402
 
 
+def remove_painted_bg(a):
+    """「透過で」と頼んでも、ChatGPT は市松模様（灰色と白の格子）を絵として描いて返すことがある（不透明）。
+    色味の無い明るい灰色で、外周につながっている画素を地として抜く。人物は太い暗い輪郭線で囲まれているので、
+    塗りつぶしは輪郭線で止まる。人物に囲まれた格子のすき間（脚のあいだなど）は、格子の2つの明るさを
+    両方含む大きな塊だけを地とみなす（白いフリルや靴の白は、片方の明るさしか持たない）"""
+    if (a[..., 3] < 250).mean() > 0.05:
+        return a, 0
+    rgb = a[..., :3].astype(int)
+    lum = 0.299 * rgb[..., 0] + 0.587 * rgb[..., 1] + 0.114 * rgb[..., 2]
+    chroma = rgb.max(-1) - rgb.min(-1)
+    gray = (chroma < 14) & (lum > 105) & (lum < 250)
+    lab, n = ndimage.label(gray)
+    border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
+    bg = np.isin(lab, list(border))
+    # 格子の2つの明るさ（外周の地から測る）
+    tones = np.sort(np.unique((lum[bg] // 16).astype(int), return_counts=True)[1])[-2:] if bg.any() else []
+    lo, hi = np.percentile(lum[bg], 20), np.percentile(lum[bg], 80)
+    sizes = ndimage.sum(gray, lab, range(1, n + 1))
+    for i, s in enumerate(sizes, 1):
+        if i in border or s < 1500:
+            continue
+        m = lab == i
+        v = lum[m]
+        if (np.abs(v - lo) < 12).mean() > 0.25 and (np.abs(v - hi) < 12).mean() > 0.25:
+            bg |= m
+    # 輪郭線と地のあいだのにじみ（暗めの灰色）は、地に接している 2px だけ半透明にする
+    near = ndimage.binary_dilation(bg, iterations=2) & ~bg & (chroma < 18) & (lum > 60)
+    a = a.copy()
+    a[bg] = 0
+    a[near, 3] = 128
+    return a, int(bg.sum())
+
+
 def face_box(a):
     """いちばん大きい肌色の塊の外接矩形（あやとの顔）"""
     r, g, b = (a[..., i].astype(int) for i in range(3))
@@ -64,7 +97,10 @@ def cmd_add(o):
     jpath = os.path.join(o.dir, "poses.json")
     J = json.load(open(jpath)) if os.path.exists(jpath) else {"faceW": o.face_w, "poses": {}}
     face_w = J.get("faceW", o.face_w)
-    a = AT.clean_alpha(np.array(Image.open(o.src).convert("RGBA")))
+    a, nbg = remove_painted_bg(np.array(Image.open(o.src).convert("RGBA")))
+    if nbg:
+        print(f"描かれた地（市松模様）を抜いた: {nbg}px")
+    a = AT.clean_alpha(a)
     a = AT.drop_specks(a, 300)
     f = face_box(a)
     if not f:
