@@ -106,10 +106,10 @@ export type PlateStyle = {
 /** 段の演出（台本つき） */
 export type TierShow = {
   /**
-   * 振付けの名前（`season/show/` の中）。"march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いの
-   * あやと / "vampire" 段7 伯爵
+   * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "batSign" 段2 こうもりの子 /
+   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "vampire" 段7 伯爵
    */
-  kind: "march" | "wizard" | "vampire";
+  kind: "ghost" | "batSign" | "march" | "wizard" | "vampire";
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
   /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
@@ -221,6 +221,32 @@ export type SeasonTheme = {
     toward: "left" | "right";
   } | null;
 };
+
+/**
+ * ちびおばけ（段1、〜199円）の台本。登場 1.2 秒・前兆なし（設計書 v3）。
+ * その人のキャラ絵は最初から出ている（段1〜3）ので、ランタンとおばけは面の上の端の帯の中だけ
+ */
+const GHOST: Cue[] = [
+  { at: 0.0, do: "lanternIn", dur: 0.3 },
+  { at: 0.3, do: "lidRattle", dur: 0.3 },
+  { at: 0.6, do: "boo" },
+  { at: 0.9, do: "textIn" },
+  { at: 1.2, do: "settle" },
+  { at: 1.6, do: "stay" },
+  { at: -2.8, do: "finale", dur: 2.6 },
+];
+
+/**
+ * こうもりの子3匹（段2、200〜499円）の台本。登場 1.8 秒・前兆なし（設計書 v3）。
+ * 札は字を入れない小物（字はキャラ絵の上下中央）。こうもりと札は面の上の端の帯の中だけ
+ */
+const BAT_SIGN: Cue[] = [
+  { at: 0.0, do: "batsIn", dur: 1.4 },
+  { at: 1.2, do: "perch", dur: 0.6 },
+  { at: 1.5, do: "textIn" },
+  { at: 2.2, do: "stay" },
+  { at: -2.8, do: "finale", dur: 2.6 },
+];
 
 /**
  * かぼちゃ坊や3人組の行進（段3、500〜999円）の台本。登場 2.5 秒・前兆なし（設計書 v3）。
@@ -364,6 +390,14 @@ export const THEMES: SeasonTheme[] = [
           amountSize: 132,
           appearAt: 0.8,
         },
+        /* ちびおばけがランタンから「ばあ！」。小物（下の slots / files）は、部品が読めなかった日の控え */
+        show: {
+          kind: "ghost",
+          rigs: ["ghost", "bat"],
+          revealSec: 0,
+          headroom: 0.17,
+          script: GHOST,
+        },
         slots: 2,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
         bats: 1,
@@ -384,6 +418,14 @@ export const THEMES: SeasonTheme[] = [
           nameSize: 90,
           amountSize: 134,
           appearAt: 0.8,
+        },
+        /* こうもりの子が木の札を吊るして飛んでくる（札に字は入れない）。小物は控え */
+        show: {
+          kind: "batSign",
+          rigs: ["bat"],
+          revealSec: 0,
+          headroom: 0.22,
+          script: BAT_SIGN,
         },
         slots: 3,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],

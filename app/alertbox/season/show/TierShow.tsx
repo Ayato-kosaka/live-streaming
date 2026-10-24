@@ -30,6 +30,8 @@ import { resolveScript } from "./script";
 import { runVampire } from "./vampire";
 import { runMarch } from "./march";
 import { runWizard } from "./wizard";
+import { runGhost } from "./ghost";
+import { runBatSign } from "./batSign";
 import type { LoadedPoses } from "./poses";
 import type { TierShow as TierShowDef } from "../../themes";
 
@@ -92,7 +94,13 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H
     const m = new Motion();
     let stop: (() => void) | null = null;
     try {
-      if (show.kind === "wizard") {
+      const LL = { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) };
+      const script = resolveScript(show.script, durationSec, false);
+      if (show.kind === "ghost") {
+        stop = runGhost(m, LL, { ghost: rigs.get("ghost")!, bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
+      } else if (show.kind === "batSign") {
+        stop = runBatSign(m, LL, { bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
+      } else if (show.kind === "wizard") {
         stop = runWizard(
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },

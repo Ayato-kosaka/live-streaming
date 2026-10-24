@@ -39,9 +39,10 @@ function rng(seed: number) {
 
 describe("額 → 段 → 出し方", () => {
   it.each([
-    [0, "round", false],
-    [199, "round", false],
-    [499, "round", false],
+    [0, "round", true],
+    [199, "round", true],
+    [200, "round", true],
+    [499, "round", true],
     [500, "round", true],
     [999, "round", true],
     [1000, "round", true],
@@ -96,7 +97,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("台本の無い段は、札はすぐ（0.8秒）ぽんっと出て、絵も遅らせない", () => {
-    for (const yen of [300, 3000, 7000]) {
+    for (const yen of [3000, 7000]) {
       const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
       expect(st.revealSec).toBe(0);
       expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, wipe: null, count: null, donAt: null });
@@ -125,6 +126,16 @@ describe("額 → 段 → 出し方", () => {
     expect(st.revealSec).toBe(0);
   });
 
+  it("段1・2（おばけ・こうもりの子）は、その人の絵をすぐ出し、字は1字ずつ弾んで出る", () => {
+    for (const [yen, kind, at] of [[100, "ghost", 0.9], [300, "batSign", 1.5]] as const) {
+      const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
+      expect(st.show?.kind).toBe(kind);
+      expect(st.revealSec).toBe(0);
+      expect(plateTiming(st)).toEqual({ appearAt: at, carried: false, wipe: null, count: null, donAt: null });
+      expect(scriptProblems(st.show!.script, durationFor(yen), 0)).toEqual([]);
+    }
+  });
+
   it("段3の坊やの部品が読めなければ、今までどおり札がぽんっと出る", () => {
     const st = stageFor(halloween, 700, durationFor(700), (n) => n !== "pumpkin_kid")!;
     expect(st.show).toBeNull();
@@ -132,7 +143,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("テーマが読む切り絵は、貯金箱と台本のある段のぶん", () => {
-    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid"]));
+    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid", "ghost"]));
   });
 
   it("期間中でも配信には出ていない（作り直しのお試し中）", () => {

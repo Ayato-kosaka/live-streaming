@@ -26,7 +26,7 @@
     657.0,
     355.5
    ],
-   "file": "fly.png",
+   "file": "fly.webp",
    "scale": 0.8721,
    "facing": "right",
    "about": "ほうきにまたがって飛ぶ（帽子の先とすそが後ろへなびく。クロがほうきの後ろ）"
@@ -56,7 +56,7 @@
     681.5,
     391.0
    ],
-   "file": "cast.png",
+   "file": "cast.webp",
    "scale": 0.9146,
    "facing": "right",
    "about": "ほうきに乗ったまま星の杖を振り上げる（口を開けて笑う）"
@@ -86,7 +86,7 @@
     398.0,
     353.0
    ],
-   "file": "idle.png",
+   "file": "idle.webp",
    "scale": 0.9063,
    "facing": "left",
    "about": "ほうきに横座りして浮かび、こちらに手を振る（待機。にっこり）"
