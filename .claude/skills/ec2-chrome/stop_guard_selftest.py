@@ -95,7 +95,11 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                           {"desktop_7min"}, "遠隔デスクトップの7分を1分に縮める"),
     "desktop_open_on_silence": ("ec2.py", """  ''|*[!0-9]*) echo "BUSY desktop:""", """  ''|*[!0-9]*) : "BUSY desktop:""",
                                 {"desktop_silent_busy"}, "desktop-input が答えないと「触っていない」に倒す"),
-    "trust_no_reply": ("ec2.py", '    if st != "Success" or "CHECKED" not in lines:\n', "    if False:\n",
+    # 答えが返らないときは、2つの守りがどちらも止めない（CHECKED が無い・止める印が立っていない）。両方を外す
+    "trust_no_reply": ("ec2.py", '    if st != "Success" or "CHECKED" not in lines:\n'
+                       '        why.append(f"確かめの答えが返らない（ssm status: {st}）。ほかのコマンドが居座っていると、それが終わるまで始まらない")\n'
+                       '    elif not why and not token and "NOQUEUE" not in lines:\n',
+                       "    if False:\n        pass\n    elif False:\n",
                        {"no_reply_refuses"}, "確かめの答えが返らなくても止める"),
     "force_ignored": ("ec2.py", "    if not force:\n", "    if True:\n",
                       {"force_stops"}, "--force でも中を見る"),
@@ -164,17 +168,19 @@ class FakeEC2:
             return ""
         raise AssertionError(f"偽の aws が知らない呼びかた: {args[:3]}")
 
-    def run(self, script: str, timeout: int = 600, quiet=False):
+    def run(self, script: str, timeout: int = 600, quiet=False, raw=False):
         self.sent.append(script)
         if isinstance(self.reply, BaseException):
             raise self.reply
         if self.reply is not None:
             return self.reply
         m = self.b.mod
-        for s in (m.EC2_HOME, m.DESKTOP_INPUT):
+        for s in (m.EC2_HOME, m.DESKTOP_INPUT, m.QUEUE):
             if s not in script:
                 raise AssertionError(f"確かめの sh に {s} が無い（差し替える字が変わった。偽物を直す）")
-        s = script.replace(m.DESKTOP_INPUT, str(self.tool)).replace(m.EC2_HOME, str(self.home))
+        # 札（ec2-queue）の段は偽物に答えさせる（列は空・印を立てた）。札の守りは ec2_queue_selftest.py が見る
+        s = (script.replace(m.QUEUE, str(self.b.bin / "ec2-queue")).replace(m.DESKTOP_INPUT, str(self.tool))
+             .replace(m.EC2_HOME, str(self.home)))
         env = dict(os.environ, PATH=f"{self.b.bin}{os.pathsep}{os.environ.get('PATH', '')}")
         env.pop("FAKE_OTHER", None)
         if self.other:
@@ -204,6 +210,7 @@ class Bench:
         _script(self.bin / "pgrep", '#!/bin/sh\n[ "$1" = -f ] && [ "$2" = ssm-document-worker ] || exit 1\n'
                                     '[ -n "${FAKE_SELF:-}" ] && echo "$FAKE_SELF"\n'
                                     '[ -n "${FAKE_OTHER:-}" ] && echo "$FAKE_OTHER"\nexit 0\n')
+        _script(self.bin / "ec2-queue", '#!/bin/sh\n[ "$1" = stop-mark ] && { echo "MARKED 0123456789ab"; exit 0; }\nexit 1\n')
 
     def fresh(self) -> Path:
         self.n += 1

@@ -46,22 +46,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # EC2 の ubuntu のホーム。SSM のコマンドは root で走るので `~` に頼らず、ここから組む
 EC2_HOME = "/home/ubuntu"
 sys.path.insert(0, f"{EC2_HOME}/cdp")
-from cdp import Tab, _port, pages, up  # noqa: E402
+from cdp import Tab, _port, hold, pages, up  # noqa: E402
 
 NAME = "fish"
 PLAY = "https://fish.audio/ja/text-to-speech/?modelId={model}"
 ED = "document.querySelector('div.tiptap.ProseMirror[contenteditable=true]')"
 GEN = "[...document.querySelectorAll('button')].find(b => /音声を生成/.test(b.innerText || ''))"
-LOCK = f"{EC2_HOME}/locks/fish-voice"
 LIMIT_BYTES = 500
 TASK_RE = re.compile(r"^https://api\.fish\.audio/task/([0-9a-f]{32})$")
 
 
-def touch_lock():
-    # 見張り（idle_stop.sh）は鍵が6時間以内に触られていれば止めない。1文ごとに触る
-    os.makedirs(os.path.dirname(LOCK), exist_ok=True)
-    open(LOCK, "a").close()
-    os.utime(LOCK)
+def hold_lane(what: str):
+    """列 fish（~/cdp-fish の Chrome。TikTok の投稿も同じ束）の札を、このプロセスの pid で持つ（cdp.py の hold）。
+    2人が同じタブで声作りを回すと入力が混ざるので、ほかの人が持っていれば空くまで待つ。
+    前は鍵 ~/locks/fish-voice を1文ごとに触っていたが、札は pid が生きているあいだ生きていて、
+    このプロセスが終われば（kill -9 でも）次の確かめで消える。札があれば idle-stop も止めない（持てて6時間）"""
+    hold(NAME, purpose=f"fish_web.py {what}")
 
 
 # ---------------------------------------------------------------- タブ
@@ -357,7 +357,6 @@ def cmd_gen(a):
     only = set(a.only.split(",")) if a.only else None
     log = os.path.join(a.out, "attempts.jsonl")
     os.makedirs(a.out, exist_ok=True)
-    touch_lock()
     t = fresh_tab()
     st = open_playground(t, a.model)
     print("state", json.dumps(st, ensure_ascii=False), flush=True)
@@ -396,7 +395,6 @@ def _gen_lines(a, t: Tab, st: dict, lines: list[dict], only, log: str):
             print(f"STOP budget: 使った {c} + この文 {n} > {a.budget_credits} クレジット", flush=True)
             break
         for tries in range(2):   # 要求が出なかったときだけ、タブを作り直してもう1回押す
-            touch_lock()
             try:
                 set_text(t, text)
                 tasks = generate(t)
@@ -542,6 +540,7 @@ def main():
     r.add_argument("--model", default="", help="写しに話者が無いときだけ使う")
     r.add_argument("--backup", required=True)
     a = ap.parse_args()
+    hold_lane(a.cmd + (f" {os.path.basename(a.out.rstrip('/'))}" if getattr(a, "out", None) else ""))
     {"gen": cmd_gen, "adopt": cmd_adopt, "speed": cmd_speed, "state": cmd_state, "backup": cmd_backup,
      "restore": cmd_restore}[a.cmd](a)
 

@@ -30,7 +30,7 @@ SUZURI 自身のアップロード処理（presign → lens へ送る → デザ
 """
 import json, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
-from cdp import Tab, down, up, tab, where  # noqa: E402
+from cdp import Tab, down, hold, up, tab, where  # noqa: E402
 from suzuri_common import *  # noqa: E402,F401,F403  大きさ・下ごしらえ・透過・題と本文
 
 BASE = "https://suzuri.jp"
@@ -373,21 +373,17 @@ def finish(t, mid, src, title=None, description=None, price=300):
 if __name__ == "__main__":
     # 決まった時刻に1手で出せるように、コマンドからも呼べる形を置く（ec2.py run で送る。ubuntu として回す）:
     #   python3 suzuri_ops.py publish <デザインid> [--dry-run]
-    # 鍵を置いて回し、終わったら Chrome を閉じて鍵を消す（閉じないとセッションが書き戻らない）
-    import os
+    # 列 suzuri の札をこのプロセスの pid で持って回し（cdp.py の hold。ほかの人が持っていれば空くまで待つ）、
+    # 終わったら Chrome を閉じる（閉じないとセッションが書き戻らない）。札はこのプロセスが終われば消える
+    # （前は鍵 ~/locks/suzuri-publish-<id> を置いて消していたが、kill -9 では消えずに6時間残った）
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 2 or args[0] != "publish" or not args[1].isdigit():
         sys.exit("使いかた: python3 suzuri_ops.py publish <デザインid> [--dry-run]")
-    lock = f"/home/ubuntu/locks/suzuri-publish-{args[1]}"
-    os.makedirs(os.path.dirname(lock), exist_ok=True)
-    open(lock, "w").write(f"suzuri_ops.py publish {args[1]}\n")
+    hold("suzuri", purpose=f"suzuri_ops.py publish {args[1]}")
     try:
         res = retrying(publish, int(args[1]), dry="--dry-run" in sys.argv)
     finally:
-        try:
-            down("suzuri")
-        finally:
-            os.remove(lock)
+        down("suzuri")
     print(json.dumps(res, ensure_ascii=False, indent=1))
     print("RESULT", "OK" if res.get("ok") else "NG", "(空打ち)" if res.get("dry_run") else "")
     sys.exit(0 if res.get("ok") else 1)

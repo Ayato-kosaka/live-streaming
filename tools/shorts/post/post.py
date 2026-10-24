@@ -35,10 +35,10 @@ TT_SOURCE_LINE = "YouTube「@あやとグルメアプリ」の生配信から"
 
 # 遠隔デスクトップであやとが触っている最中に Chrome を開かない（本物の入力が7分止まっているのを見てから）。
 # 数えるのは X に入った本物の入力だけ（desktop-input）。xprintidle は、こちらの Chrome が動画を流すだけで
-# 0に戻る（README「分かっていること」・desktop_input.py の頭）。答えが無い・読めないときは、触っている側に倒す
+# 0に戻る（README「分かっていること」・desktop_input.py の頭）。答えが無い・読めないときは、触っている側に倒す。
+# 前はここで ~/locks/shorts-post を触っていた（idle-stop に止められないように）。いまは列の札を持つ（下の LANES）
 DESKTOP_INPUT = "/usr/local/sbin/desktop-input"
-GUARD = f"""touch {EC2_HOME}/locks/shorts-post
-set -- $({DESKTOP_INPUT} idle 2>/dev/null); ms=${{1:-0}}; src=${{2:-error}}
+GUARD = f"""set -- $({DESKTOP_INPUT} idle 2>/dev/null); ms=${{1:-0}}; src=${{2:-error}}
 case "$ms" in ''|*[!0-9]*) ms=0 ;; esac
 if [ "$src" = error ]; then echo "WAIT: desktop-input が無い・答えない（手元で python3 .claude/skills/ec2-chrome/ec2.py guard）"; fi
 if [ "$ms" -lt 420000 ]; then echo "WAIT: desktop input within 7 min (${{ms}}ms, $src)"; echo 'RESULT {{"ok": false, "error": "desktop_busy"}}'; exit 0; fi
@@ -49,8 +49,19 @@ def sha(path):
     return hashlib.sha256(open(path, "rb").read()).hexdigest()
 
 
-def remote_run(body, timeout=420):
-    st, out = ec2.run(GUARD + body, timeout, quiet=True)
+# 投稿先ごとの Chrome の束（= 列）。yt_post.py / yt_thumb.py は yt_studio.py の "ytstudio"、
+# tt_post.py は TikTok にログインしてある "fish"（声作りの fish_web.py と同じ束なので、札で順番を待つ）
+LANES = {"youtube": "ytstudio", "tiktok": "fish"}
+
+
+def remote_run(body, timeout=420, lane="ytstudio"):
+    """列 lane の札を持って（取れるまで待つ）、GUARD + 本体を EC2 で回す。札は終わったら必ず返す"""
+    try:
+        with ec2.lease(lane, who=f"post.py {ec2.default_who()}", purpose=body.strip().split("&&")[-1].strip()[:160]):
+            st, out = ec2.run(GUARD + body, timeout, quiet=True)
+    except ec2.QueueError as e:
+        print(f"止めた: {e}")
+        return {"ok": False, "error": "queue_busy"}
     print(out.rstrip())
     res = [ln[7:] for ln in out.splitlines() if ln.startswith("RESULT ")]
     return json.loads(res[-1]) if res else {"ok": False, "error": f"no result (ssm {st})"}
@@ -123,9 +134,9 @@ def posting(a, place, body, timeout):
     if not remote_sha_ok(a, sha):
         return 1
     rec = posted.begin(sha, place, f"{a.video}/{a.option}", a.again)
-    r = remote_run(body, timeout)
-    if r.get("error") == "desktop_busy":
-        # GUARD は本体を1行も動かさずに戻る。何も始まっていないので pending を残さない
+    r = remote_run(body, timeout, LANES[place])
+    if r.get("error") in ("desktop_busy", "queue_busy"):
+        # GUARD は本体を1行も動かさずに戻る（札が取れなかったときも、EC2 では何も始まっていない）。pending を残さない
         posted.forget(rec)
         return 1
     vid = posted.id_of(place, r)
@@ -144,7 +155,7 @@ def cmd_yt_draft(a):
 
 
 def cmd_yt_related(a):
-    r = remote_run(f"cd {CDP} && timeout 300 python3 yt_post.py related {a.id} {a.video}\n", 350)
+    r = remote_run(f"cd {CDP} && timeout 300 python3 yt_post.py related {a.id} {a.video}\n", 350, LANES["youtube"])
     return 0 if r.get("ok") else 1
 
 
@@ -152,7 +163,7 @@ def cmd_yt_publish(a):
     if a.sha and not remote_sha_ok(a, a.sha):
         return 1
     at = f" --at {a.at}" if a.at else ""
-    r = remote_run(f"cd {CDP} && timeout 300 python3 yt_post.py publish {a.id}{at}\n", 350)
+    r = remote_run(f"cd {CDP} && timeout 300 python3 yt_post.py publish {a.id}{at}\n", 350, LANES["youtube"])
     return 0 if r.get("ok") else 1
 
 
@@ -164,7 +175,7 @@ def cmd_tt_post(a):
         # 投稿の手前までの確かめ。出さないので台帳は見ない・書かない
         if a.sha and not remote_sha_ok(a, a.sha):
             return 1
-        r = remote_run(body, 560)
+        r = remote_run(body, 560, LANES["tiktok"])
         return 0 if r.get("ok") else 1
     return posting(a, "tiktok", body, 560)
 
@@ -184,7 +195,12 @@ def cmd_cover(a):
 def cmd_yt_thumb(a):
     """題の札が見えるコマ（<案>_cover.jpg、送り済み）を YouTube のサムネイルにする"""
     d = f"{REMOTE}/{a.video}"
-    st, out = ec2.run(f"cd {CDP} && timeout 200 python3 yt_thumb.py {a.id} {d}/{a.option}_cover.jpg 2>&1 | tail -4", 260, quiet=True)
+    try:
+        with ec2.lease(LANES["youtube"], who=f"post.py {ec2.default_who()}", purpose=f"yt_thumb.py {a.id}"):
+            st, out = ec2.run(f"cd {CDP} && timeout 200 python3 yt_thumb.py {a.id} {d}/{a.option}_cover.jpg 2>&1 | tail -4", 260, quiet=True)
+    except ec2.QueueError as e:
+        print(f"止めた: {e}")
+        return 1
     print(out)
     return 0 if '"ok": true' in out else 1
 

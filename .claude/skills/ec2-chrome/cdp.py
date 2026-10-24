@@ -25,8 +25,17 @@ Chrome は `setsid nohup` で SSM のコマンドから切り離して起動す�
 1回の send-command が終わっても Chrome は残るので、次の send-command で
 同じタブの続きから触れる。**閉じるのは `down(name)`**（Browser.close で閉じる。
 pkill だけだとセッションが書き戻されなかった回がある＝Doneru で踏んだ）。
+
+## 束を2人で同時に触らない（札。2026-10-24）
+
+同じ束（`~/cdp-<名前>`）を2人が同時に触ると、タブを閉じ合い、入力が混ざる。だから `up(name)` と `tab(name)` は、
+**列 `name` の札を持っていなければ、このプロセスの pid で取る**（`hold(name)`。持てるまで待つ。
+ほかの人が持っていれば、何番目で誰が持っているかを出す）。pid の札なので、このプロセスが終われば
+（kill -9 でも）次の確かめで消える。手元のセッションが `ec2.py lease` / `ec2.py hold` で取った札は、
+`ec2.py run` が `EC2_QUEUE_TICKET` で渡してくるので、取り直さずにそれを使う（自分の札を待って詰まらない）。
+EC2 に `ec2-queue` が無い・答えないときは、札なしで進む（Chrome の道具を止めない。止める側の守りは idle-stop が持つ）。
 """
-import base64, json, os, re, subprocess, time, urllib.request
+import atexit, base64, json, os, re, subprocess, sys, time, urllib.request
 
 HOME = "/home/ubuntu"
 SRC_UDD = f"{HOME}/.config/google-chrome"
@@ -40,6 +49,87 @@ PORTS = {"doneru": 9222, "suzuri": 9223}
 SEED_SKIP = ["Extensions", "Local Extension Settings", "Extension State", "Extension Rules",
              "Extension Scripts", "Service Worker", "File System",
              "IndexedDB/https_drive.google.com_0.indexeddb.*", "IndexedDB/https_docs.google.com_0.indexeddb.*"]
+
+
+QUEUE = "/usr/local/sbin/ec2-queue"
+QUEUE_WAIT_S = int(os.environ.get("EC2_QUEUE_WAIT", "1800"))
+_HELD = {}       # 列 → 札（このプロセスが持っているもの。取ったもの・渡されたもの）
+_TAKEN = set()   # このプロセスが取った札（終わるときに返す）
+
+
+def _q(*args, timeout=30):
+    """ec2-queue を1回呼んで (終了コード, 答え) を返す。答えが読めなければ {"state": "error"}"""
+    try:
+        r = subprocess.run([QUEUE, "--json", *map(str, args)], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return 1, {"state": "error", "why": repr(e)}
+    for ln in reversed(r.stdout.splitlines()):
+        if ln.startswith("EC2Q "):
+            try:
+                return r.returncode, json.loads(ln[5:])
+            except ValueError:
+                break
+    return r.returncode, {"state": "error", "why": (r.stdout + r.stderr).strip()[-200:]}
+
+
+def _say(msg):
+    print(f"cdp: {msg}", file=sys.stderr, flush=True)
+
+
+def _release_all():
+    for tk in list(_TAKEN):
+        _q("release", tk)
+        _TAKEN.discard(tk)
+
+
+def hold(name, purpose=None, wait=None):
+    """列 name の札をこのプロセスで持つ（無ければ pid で取る。持てるまで待つ）。戻り値は札（無ければ None）"""
+    if name in _HELD:
+        return _HELD[name]
+    mine = dict(x.split(":", 1) for x in os.environ.get("EC2_QUEUE_TICKET", "").split() if ":" in x)
+    if name in mine and _q("owns", mine[name], name)[0] == 0:
+        _HELD[name] = mine[name]
+        return mine[name]
+    if not os.access(QUEUE, os.X_OK):
+        _say(f"{QUEUE} が無いので、列 {name} の札を取らずに進む（手元で ec2.py guard）")
+        return None
+    who = os.environ.get("EC2_QUEUE_WHO") or f"pid {os.getpid()}"
+    purpose = purpose or os.environ.get("EC2_QUEUE_PURPOSE") or f"{os.path.basename(sys.argv[0] or 'python')} の up({name})"
+    end = time.time() + (QUEUE_WAIT_S if wait is None else wait)
+    tk, said = None, None
+    while True:
+        args = ["take", name, "--pid", os.getpid(), "--who", who, "--purpose", purpose] + (["--ticket", tk] if tk else [])
+        _, r = _q(*args)
+        s = r.get("state")
+        if s == "held":
+            tk = r["ticket"]
+            _HELD[name] = tk
+            if not _TAKEN:
+                atexit.register(_release_all)
+            _TAKEN.add(tk)
+            # 子のプロセスが同じ束を触っても、この札で通るように
+            os.environ["EC2_QUEUE_TICKET"] = (os.environ.get("EC2_QUEUE_TICKET", "") + f" {name}:{tk}").strip()
+            return tk
+        if s == "waiting":
+            tk = r["ticket"]
+            h = r.get("holder") or {}
+            msg = (f"列 {name} は {h.get('who')}（{h.get('purpose')}）が持っている。{r.get('pos')}番目に待つ" if h
+                   else f"列 {name} の頭の待ち人を待つ（{r.get('pos')}番目）")
+            if msg != said:
+                _say(msg)
+                said = msg
+        elif s == "gone":
+            tk = None
+        elif s == "stopping":
+            raise RuntimeError(f"EC2 を止めている最中（{r.get('by')}）。止まりきってから起こし直して流し直す")
+        else:
+            _say(f"ec2-queue が答えないので、列 {name} の札を取らずに進む（{r.get('why')}）")
+            return None
+        if time.time() > end:
+            if tk:
+                _q("release", tk)
+            raise RuntimeError(f"列 {name} が空かない: {said}")
+        time.sleep(2)
 
 
 def _port(name):
@@ -60,7 +150,8 @@ def _alive(port):
 
 
 def up(name, url="about:blank", reseed=False):
-    """Chrome を起動する。もう動いていれば何もしない。戻り値はポート"""
+    """Chrome を起動する。もう動いていれば何もしない。戻り値はポート。先に列 name の札を持つ（hold）"""
+    hold(name)
     port, udd = _port(name), _udd(name)
     if _alive(port):
         return port
@@ -221,6 +312,7 @@ def pages(name):
 
 
 def tab(name="suzuri", index=0, new=False):
+    hold(name)
     port = _port(name)
     if new:
         t = json.loads(urllib.request.urlopen(urllib.request.Request(f"http://localhost:{port}/json/new?about:blank", method="PUT")).read())
