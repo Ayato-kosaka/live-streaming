@@ -127,7 +127,7 @@ const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
 const SHOWS = {
   halloween: [
     [0, 200, "ghost"],
-    [200, 500, "batSign"],
+    [200, 500, "broom"],
     [500, 1000, "march"],
     [1000, 2000, "wizard"],
     [2000, 5000, "reaper"],
@@ -158,7 +158,7 @@ function framesFor(a) {
   // ちびおばけ: ランタンが降りる・ふたが鳴る・「ばあ！」・字が出る・落ち着く。締めはランタンに戻る
   if (showOf(a) === "ghost") return [0.3, 0.6, 0.8, 1.0, 1.3, ...every(1.6, d - 2.8), d - 2.4, d - 1.8, d - 1.2, d - 0.6];
   // こうもり: 札を吊るして右上から来る・3匹目がとまる。締めは札ごと左上へ
-  if (showOf(a) === "batSign") return [0.4, 0.8, 1.2, 1.5, 1.9, ...every(2.2, d - 2.8), d - 2.4, d - 1.8, d - 1.2, d - 0.6];
+  if (showOf(a) === "broom") return [0.4, 0.8, 1.2, 1.5, 1.9, ...every(2.2, d - 2.8), d - 2.4, d - 1.8, d - 1.2, d - 0.6];
   // 死神: キャラ絵は 4.97 秒から 0.85 秒でふくらむ。滞在（左上の角で鬼火が回る・小芸）と、締めの霧に消えるところ
   if (showOf(a) === "reaper") return [0.6, 1.2, ...every(1.6, 5.9, 0.25), 5.9, ...every(7, d - 3), d - 2.8, d - 2.2, d - 1.6, d - 0.8];
   // ゾンビ: キャラ絵は 6.36 秒から。滞在（右上の角でゆらゆら・決めポーズ・潜る）と、締めの墓へ戻るところ
@@ -647,7 +647,7 @@ async function main() {
       const job = queue.shift();
       const r = await runOne(browser, job);
       // 絵を残す: 重なりのあったコマと、一覧に使う代表のコマ（滞在のまんなか）
-      const pickAt = { dracula: 15, march: 6, wizard: 9, ghost: 4.6, batSign: 5.2, reaper: 10, zombie: 11 }[showOf(r.amount)] ?? null;
+      const pickAt = { dracula: 15, march: 6, wizard: 9, ghost: 4.6, broom: 5.2, reaper: 10, zombie: 11 }[showOf(r.amount)] ?? null;
       const pick = r.frames.find((f) => f.t === pickAt) ?? r.frames.at(-1) ?? null;
       for (const f of r.frames) {
         if (f === pick || bad(f) > 0) {

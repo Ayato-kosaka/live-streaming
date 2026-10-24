@@ -59,11 +59,12 @@ describe("額 → 段 → 出し方", () => {
     expect(!!st.show).toBe(show);
   });
 
-  it("段ごとに札の字が大きくなる（名前も額も）", () => {
-    const sizes = [100, 300, 700, 1500, 3000, 7000, 20000].map((y) => tierFor(halloween, y).plate!);
-    for (let i = 1; i < sizes.length; i++) {
-      expect(sizes[i].nameSize).toBeGreaterThan(sizes[i - 1].nameSize);
-      expect(sizes[i].amountSize).toBeGreaterThan(sizes[i - 1].amountSize);
+  /* 字の大きさは段で変えない（2版目。オーナー「大きいので下げて」）。段で強くなるのは縁の太さと光 */
+  it("段ごとに字の縁が太く・光が強くなる", () => {
+    const ps = [100, 300, 700, 1500, 3000, 7000].map((y) => tierFor(halloween, y).plate!);
+    for (let i = 1; i < ps.length; i++) {
+      expect(ps[i].stroke).toBeGreaterThanOrEqual(ps[i - 1].stroke);
+      expect(ps[i].glow).toBeGreaterThanOrEqual(ps[i - 1].glow);
     }
   });
 
@@ -128,7 +129,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("段1・2（おばけ・こうもりの子）は、その人の絵をすぐ出し、字は1字ずつ弾んで出る", () => {
-    for (const [yen, kind, at] of [[100, "ghost", 0.9], [300, "batSign", 1.5]] as const) {
+    for (const [yen, kind, at] of [[100, "ghost", 1.6], [300, "broom", 1.5]] as const) {
       const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
       expect(st.show?.kind).toBe(kind);
       expect(st.revealSec).toBe(0);
@@ -144,7 +145,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("テーマが読む切り絵は、貯金箱と台本のある段のぶん", () => {
-    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "props", "pumpkin_kid", "ghost"]));
+    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "props", "pumpkin_kid", "ghost", "broom"]));
   });
 
   it("段5〜7はポーズ絵と小物も要る。ポーズ絵と小物は同じ名前（dracula）でも、種類ごとに見分ける", () => {
@@ -320,7 +321,7 @@ describe("ハロウィンの部品の名前（振付けとの約束）", () => {
   const ids = (name: string) => new Set(read(name).parts.map((p) => p.id));
   const swaps = (name: string, id: string) => Object.keys(read(name).parts.find((p) => p.id === id)?.swaps ?? {});
 
-  it.each(["kuro", "bucket", "bat", "props", "ghost", "pumpkin_kid"])("%s は読めて、絵が全部ある", (name) => {
+  it.each(["kuro", "bucket", "bat", "props", "ghost", "pumpkin_kid", "broom"])("%s は読めて、絵が全部ある", (name) => {
     const r = read(name);
     expect(r).not.toBeNull();
     for (const f of rigFiles(r)) expect(fs.existsSync(path.join(dir, name, f))).toBe(true);

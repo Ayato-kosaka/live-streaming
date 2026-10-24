@@ -6,13 +6,16 @@
  * - 縁取りは字を2〜3枚重ねて描く（奥ほど太い縁）。いちばん手前が字の色、その下に濃い縁、
  *   段7はさらに外に金の縁と光。`paint-order: stroke fill` に頼らない（古い WebView でも同じ形）
  * - 額は段の色のグラデーション。出るときは1字ずつ弾む。段7は額を数え上げて「ドン」
- * - 大きさは面の幅に比例（`PlateStyle` の px は幅 1080 のとき）。額の字の高さは面の幅の 7% 以上・
- *   名前 5.5% 以上・メッセージ 3.8% 以上（スマホの縦の配信で読める大きさ）
+ * - 大きさは面の幅に比例し、どの段も季節の外も同じ（2版目。オーナー「大きいので下げて。元々の
+ *   サイズのちょい上くらい。本文は見切れないこと」）。元は名前・額の行 20px・メッセージ 16px（固定）で、
+ *   いまは箱の幅 436 のとき名前・額の行 ≒ 24px・メッセージ ≒ 18px。額だけ行の 1.15 倍
+ * - **メッセージは全文を折り返して出す**（行数で切らない・… にしない）。長くて箱に収まらないときだけ、
+ *   メッセージの字を収まる大きさまで縮める（`maxH`）。名前も切らない（入らなければ縮めて、さらに折り返す）
  * - 季節の外は `plain`（弾まない・グラデーションなし・光なし）で、色は設定（config.ts）の色
  *
  * 置き場所（キャラ絵の上下中央）は index.tsx。振付けはこの箱（`data-plate="box"`）の位置を測る。
  */
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { PlateStyle } from "../../themes";
 import type { PlateLines, PlateSeg } from "./plateText";
 
@@ -34,8 +37,8 @@ type Props = {
   donAt?: number | null;
   /** 飾り無し（季節の外）。弾まず、グラデーションも光も無い */
   plain?: boolean;
-  /** メッセージを何行まで出すか（0 なら全部） */
-  maxLines?: number;
+  /** 字のブロックが使ってよい高さ（px）。メッセージが長くて超えるときだけ、メッセージの字を縮める */
+  maxH?: number;
 };
 
 /** 字の幅のざっくりした見積もり（em）。全角 1、数字・記号・英字 0.6 */
@@ -44,13 +47,19 @@ export function emWidth(s: string): number {
   for (const ch of s) w += /[\u0000-ÿ]/.test(ch) ? 0.6 : 1;
   return w;
 }
-/** 単位・語尾の字の大きさ（額の何倍か） */
-const UNIT_K = 0.62;
-const TAIL_K = 0.5;
+/** 名前・額の行の字の大きさ（面の幅 1080 のときの px。幅 436 で 24px） */
+const LINE_SIZE = 59.5;
+/** 額の数字だけ、行の何倍か（強調） */
+const AMOUNT_K = 1.15;
+/** 単位・語尾の字の大きさ（額の何倍か）。行の大きさに戻す */
+const UNIT_K = 1 / AMOUNT_K;
+const TAIL_K = 1 / AMOUNT_K;
 /** 字の塊の幅（面の幅に対する割合） */
 const BLOCK_W = 0.94;
-/** メッセージの字の大きさ（面の幅 1080 のときの px。5%） */
-const MSG_SIZE = 54;
+/** メッセージの字の大きさ（面の幅 1080 のときの px。幅 436 で 18px） */
+const MSG_SIZE = 44.6;
+/** 長いメッセージで縮めるときの下限（元の何倍まで） */
+const MSG_MIN_K = 0.55;
 const FONT = "'Kosugi Maru', 'M PLUS Rounded 1c', 'Hiragino Maru Gothic ProN', sans-serif";
 
 /** 縁の重ね（外から）。em で太さ、色、光 */
@@ -123,7 +132,7 @@ export const RichText: React.FC<Props> = ({
   count,
   donAt,
   plain = false,
-  maxLines = 3,
+  maxH,
 }) => {
   const k = W / 1080;
   const boxRef = useRef<HTMLDivElement | null>(null);
@@ -138,12 +147,26 @@ export const RichText: React.FC<Props> = ({
   const innerW = W * BLOCK_W;
   /* 名前・額が長いと面からはみ出すので、入る大きさまで縮める（下限は 6 割） */
   const nameText = lines.name.map((s) => s.text).join("");
-  const nameSize = Math.max(plate.nameSize * k * 0.6, Math.min(plate.nameSize * k, innerW / Math.max(1, emWidth(nameText) * 1.1)));
+  const nameSize = Math.max(LINE_SIZE * k * 0.7, Math.min(LINE_SIZE * k, innerW / Math.max(1, emWidth(nameText) * 1.1)));
   const amountSize = useMemo(() => {
     let em = 0;
     for (const s of lines.amount) em += emWidth(s.text) * (s.kind === "amount" ? 1 : s.kind === "unit" ? UNIT_K : TAIL_K);
-    return Math.max(plate.amountSize * k * 0.55, Math.min(plate.amountSize * k, innerW / Math.max(1, em * 1.12)));
-  }, [lines.amount, plate.amountSize, k, innerW]);
+    return Math.max(LINE_SIZE * k * 0.6, Math.min(LINE_SIZE * AMOUNT_K * k, innerW / Math.max(1, em * 1.12)));
+  }, [lines.amount, k, innerW]);
+  /* 長いメッセージ: 置いてみて、使ってよい高さを超えたらメッセージの字だけ縮める（下限 MSG_MIN_K）。
+     字の量で見積もると、折り返しの位置と絵文字の幅でずれる */
+  const [msgK, setMsgK] = useState(1);
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const msg = msgRef.current;
+    if (!box || !msg || !maxH || msgK <= MSG_MIN_K) return;
+    const over = box.offsetHeight - maxH;
+    if (over <= 0) return;
+    const mh = msg.offsetHeight || 1;
+    // メッセージの高さは字の大きさのほぼ2乗で縮む（行の高さ × 行数）
+    const want = Math.max(MSG_MIN_K, msgK * Math.sqrt(Math.max(0.05, (mh - over) / mh)) * 0.98);
+    if (want < msgK - 0.01) setMsgK(want);
+  }, [msgK, maxH, message, W]);
 
   const amountSeg = lines.amount.find((s): s is Extract<PlateSeg, { kind: "amount" }> => s.kind === "amount");
   const countUp = !!count && !plain;
@@ -280,7 +303,7 @@ export const RichText: React.FC<Props> = ({
         pointerEvents: "none",
       }}
     >
-      <div style={{ fontSize: nameSize, whiteSpace: "nowrap" }}>
+      <div style={{ fontSize: nameSize, maxWidth: innerW, overflowWrap: "anywhere" }}>
         {lines.name.map((s, i) =>
           s.kind === "name"
             ? <React.Fragment key={i}>{chars(s.text, { color: plate.nameColor })}</React.Fragment>
@@ -339,7 +362,9 @@ export const RichText: React.FC<Props> = ({
           style={{
             position: "relative",
             marginTop: `${0.25 * MSG_SIZE * k}px`,
-            fontSize: MSG_SIZE * k,
+            fontSize: MSG_SIZE * k * msgK,
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
             lineHeight: 1.28,
             maxWidth: innerW,
             fontWeight: 700,
@@ -355,13 +380,12 @@ export const RichText: React.FC<Props> = ({
                 color: r.color,
                 WebkitTextStroke: `${r.w}em ${r.color}`,
                 textShadow: DROP,
-                ...(maxLines ? clampStyle(maxLines) : null),
               }}
             >
               {message}
             </div>
           ))}
-          <div data-ink="fill" style={{ position: "relative", color: plate.textColor ?? "#FFFFFF", ...(maxLines ? clampStyle(maxLines) : null) }}>
+          <div data-ink="fill" style={{ position: "relative", color: plate.textColor ?? "#FFFFFF" }}>
             {message}
           </div>
         </div>
@@ -370,10 +394,3 @@ export const RichText: React.FC<Props> = ({
   );
 };
 
-const clampStyle = (n: number): React.CSSProperties => ({
-  display: "-webkit-box",
-  WebkitLineClamp: n,
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-  wordBreak: "break-word",
-});

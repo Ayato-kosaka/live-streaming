@@ -8,7 +8,9 @@
  * 転がって手前へ伸びる → 棺が落ちる → ふたが開いて金の光 → あやとが起き上がる（rise。マントを
  * 巻いて口元を隠す）→ **マントばさっ**（spread へ。横にばねのように弾み、金の閃光、紫が赤へ
  * 「昇格」、紙吹雪と花火）→ 字はこうもりに吊られて上の帯で数え上げ「ドン」→ その人の番:
- * 字がキャラ絵の上下中央へ落ち、あやとは idle で左上の角へ、古城は右上の角へ縮む。
+ * 字がキャラ絵の上下中央へ落ち、あやとは idle で左上の角へ。**古城と赤じゅうたんはキャラ絵の後ろに
+ * 残り**、滞在中は定期的に古城からこうもりが飛ぶ。締めはキャラ絵と字が消えてから、あやとが真ん中へ
+ * 戻ってマントを広げ、こうもりの群れになって消える（`common.ts`。オーナーのレビュー 2版目）。
  *
  * あやとはポーズ絵（`poses/dracula`）を**絵ごと**動かす。3枚とも顔の幅がそろえてあるので、
  * 倍率は1つ（spread がいちばん横に広く、面の幅の 0.96 に収まる大きさ）。基準点は足元。
@@ -34,6 +36,7 @@ import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, pathFrames, partImage, sparkle } from "./fx";
 import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, softDark, type ShowLayers } from "./layers";
 import { makePoseActor } from "./poseActor";
+import { centerOf, curtainCall, every, stayAura } from "./common";
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
 
@@ -41,8 +44,6 @@ export type DraculaAssets = { pose: LoadedPoses; items: LoadedItems; bat: Loaded
 
 /** 古城と満月（登場中）。城門（絵の下の辺）が面の高さの 0.4 に来る */
 const CASTLE = { x: 0.5, bottom: 0.4, w: 0.94 };
-/** 滞在中の古城: 帯の右上の角。幅は面の 0.38 */
-const CASTLE_STAY = { right: 0.02, w: 0.38 };
 /** 古城の絵の中の満月の中心と半径・城門（castle_moon.png の px） */
 const MOON_IN = { x: 430, y: 227, r: 250 };
 /**
@@ -425,6 +426,8 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
   const hanging: HTMLDivElement[] = [];
   let stayTimer = 0;
   let glintTimer = 0;
+  let stopStay: (() => void) | null = null;
+  let keepGlow: ReturnType<typeof stayAura> | null = null;
 
   const on: Partial<Record<TimedCue["do"], (c: TimedCue) => void>> = {
     darken: (c) => darkTo(c.to ?? 0.8, (c.dur ?? 0.4) * 1000, EASE.inOut),
@@ -763,10 +766,11 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
       }
       // その人の絵の後ろから光がふくらんで消える
       const gd = X(1.1);
+      const cc = centerOf(L, W, H);
       const glow = div(L.back, {
         position: "absolute",
-        left: `${X(0.5) - gd / 2}px`,
-        top: `${Y(0.59) - gd / 2}px`,
+        left: `${cc.x - gd / 2}px`,
+        top: `${cc.y - gd / 2}px`,
         width: `${gd}px`,
         height: `${gd}px`,
         borderRadius: "50%",
@@ -778,13 +782,14 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
         { opacity: 1, transform: "scale(1)", offset: 0.3 },
         { opacity: 0, transform: "scale(1.6)" },
       ], { duration: 1100, easing: "ease-out", fill: "forwards" });
+      // 赤い段の光を、キャラ絵の後ろに残す（古城とじゅうたんの手前、キャラ絵の奥）
+      keepGlow = stayAura(m, L.back, cc, X(0.52), "200,30,60", 0.4, 600);
     },
 
     retreat: (c) => {
       const ms = (c.dur ?? 2.5) * 1000;
       darkTo(c.to ?? 0.16, ms * 0.6, EASE.inOut);
-      // じゅうたん・棺・光の輪は消える
-      m.play(plane, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.3, fill: "forwards" });
+      // 棺・光の輪は消える。じゅうたんと古城はキャラ絵の後ろに残す
       m.play(coffinG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.25, fill: "forwards" });
       m.play(halo, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.3, fill: "forwards" });
       m.after(ms * 0.3, () => {
@@ -792,16 +797,6 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
         halo.style.display = "none";
       });
       const band = bandBottomOf(L, W, H);
-      // 古城は縮んで帯の右上の角へ
-      if (castle) {
-        const k = X(CASTLE_STAY.w) / castle.w;
-        const tx = W - X(CASTLE_STAY.right) - castle.w * k * 0.5;
-        const ty = band - X(0.01);
-        m.play(castle.box, [
-          { transform: T(X(CASTLE.x), Y(CASTLE.bottom), 1) },
-          { transform: T(tx, ty, k) },
-        ], { duration: ms * 0.55, easing: EASE.inOut, fill: "forwards" });
-      }
       /* あやとはマントで体を包み、こうもりの群れに化けて帯の左上の角へ飛び、そこで待機の形（idle）に
          戻る。飛んで移ると、上下中央へ落ちてくる字とあやとの顔が途中で重なった。群れはキャラ絵の後ろを
          飛ぶ（その人の顔の前を通らない） */
@@ -880,18 +875,15 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
           { transform: `translate(${X(fx)}px, ${Y(fy)}px) rotate(184deg) scale(0.9)` },
         ], { duration: 2200 + fx * 4000, iterations: Infinity, direction: "alternate", easing: "ease-in-out" });
       }
+      /* 5〜7秒おきに、あやとが合図して古城からこうもりが飛ぶ（キャラ絵の後ろをぐるりと回る）。
+         ときどき、あやとの小芸もはさむ */
       const tricks = [cupSwirl, phonePing, fangGlint, hop];
-      let last = -1;
-      const next = () => {
-        stayTimer = m.after(range(Math.random, 6000, 8500), () => {
-          let i = Math.floor(Math.random() * tricks.length);
-          if (i === last) i = (i + 1) % tricks.length;
-          last = i;
-          tricks[i]();
-          next();
-        });
-      };
-      next();
+      stopStay = every(m, 5000, 7000, (i) => {
+        if (i % 2 === 0) {
+          hop();
+          batFlight(i);
+        } else tricks[(i >> 1) % tricks.length]();
+      }, 1500);
       /* 字のまわりで、ときどき金のきらめき。顔（キャラ絵の上 45%）に掛からないように、字のブロックの
          真ん中より下（左右の端と下の端）だけに置く */
       const glints = () => {
@@ -908,56 +900,111 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
       glints();
     },
 
+    /* 締め: キャラ絵と字が消える → あやとが真ん中（前面）へ戻ってマントを広げる → こうもりの群れに
+       なって消える。古城・じゅうたん・暗さも消える */
     finale: (c) => {
       const ms = (c.dur ?? 4) * 1000;
       if (stayTimer) m.clear(stayTimer);
       if (glintTimer) m.clear(glintTimer);
-      // マントで体を包む（rise の形）→ ぽんっと消えて、こうもりの群れになる
-      act.show("rise");
-      squash([[0.9, 1.08], [1.04, 0.96], [1, 1]], 380);
-      m.after(450, () => {
-        const ox = now.x;
-        const oy = now.y - Y(STAY_H) * 0.5;
-        m.play(act.pos, [
-          { transform: T(now.x, now.y, now.k), opacity: 1 },
-          { transform: T(now.x, now.y, now.k * 0.2), opacity: 0 },
-        ], { duration: 260, easing: EASE.in, fill: "forwards" });
-        dustPuffs(m, L.top, ox, oy, X(0.1), 4);
-        for (let i = 0; i < 6; i++) sparkle(m, L.top, ox + (Math.random() - 0.5) * X(0.15), oy + (Math.random() - 0.5) * X(0.15), X(0.09), i * 50);
-        const wave = (delay: number, fromX: number, fromY: number, band: [number, number], n: number) => {
-          for (let i = 0; i < n; i++) {
-            // 群れはキャラ絵の後ろを飛ぶ（顔の前を通さない）
-            const bat = makeBat(m, A.bat, L.back, X(0.08 + Math.random() * 0.05), 120);
-            const yEnd = Y(band[0] + Math.random() * (band[1] - band[0]));
-            const pts: [number, number][] = [];
-            const SEG = 10;
-            const sway = X(0.02 + Math.random() * 0.03);
-            for (let j = 0; j <= SEG; j++) {
-              const k = j / SEG;
-              const x = fromX + (W * 1.15 - fromX) * k + Math.random() * 4;
-              const y = fromY + (yEnd - fromY) * Math.min(1, k * 1.6) + Math.sin(k * Math.PI * 3 + i) * sway;
-              pts.push([x, y]);
-            }
-            const a = m.play(bat.el, pathFrames(pts, { tilt: 20, scale: (k) => 0.4 + Math.min(1, k * 3) * 0.6 }), {
-              duration: 1500 + Math.random() * 500,
-              delay: delay + i * 45 + Math.random() * 80,
-              fill: "backwards",
-            });
-            const rm = () => bat.el.remove();
-            if (a) a.finished.then(rm, rm);
-            else rm();
-          }
-        };
-        wave(0, ox, oy, [0.05, 0.3], 11);
-        wave(800, -X(0.15), Y(0.5), [0.32, 0.62], 11);
-        hanging.forEach((h) => m.play(h, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" }));
-        // 金の粉は帯の中だけ（キャラ絵の顔に掛けない。粒の層はもうキャラ絵の後ろ）
-        coins.dust(70, 1.6, 0, W, 0, bandBottomOf(L, W, H));
+      stopStay?.();
+      const cc = centerOf(L, W, H);
+      const spreadK = 0.78;
+      curtainCall(m, L, {
+        ms: ms * 0.7,
+        hero: act.pos,
+        afterExit: () => {
+          keepGlow?.fadeOut(500);
+          hanging.forEach((h) => m.play(h, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" }));
+        },
+        toCenter: (mv) => {
+          act.bob.getAnimations().forEach((a) => a.cancel());
+          // こうもりの群れで左上から真ん中へ（idle のまま縮んで消え、真ん中で spread になって現れる）
+          const from = { ...now };
+          m.play(act.pos, [
+            { transform: T(from.x, from.y, from.k), opacity: 1 },
+            { transform: T(from.x, from.y, from.k * 0.3), opacity: 0 },
+          ], { duration: 180, easing: EASE.in, fill: "forwards" });
+          const fy = cc.y + Y(0.2);
+          swarm({ x: from.x, y: from.y - Y(STAY_H) * 0.5 }, { x: cc.x, y: cc.y - Y(0.05) }, mv * 0.6, L.top, 8);
+          m.after(mv * 0.6, () => {
+            act.show("spread");
+            now = { x: cc.x, y: fy, k: spreadK };
+            m.play(act.pos, [
+              { transform: T(cc.x, fy, spreadK * 0.4), opacity: 0 },
+              { transform: T(cc.x, fy, spreadK * 1.05), opacity: 1, offset: 0.6 },
+              { transform: T(cc.x, fy, spreadK), opacity: 1 },
+            ], { duration: mv * 0.4, easing: EASE.out, fill: "forwards" });
+            squash([[1.12, 0.9], [0.96, 1.05], [1, 1]], 360);
+            for (let i = 0; i < 8; i++) sparkle(m, L.top, cc.x + (Math.random() - 0.5) * X(0.6), cc.y + (Math.random() - 0.4) * Y(0.25), X(0.09), i * 40);
+          });
+        },
       });
-      if (castle) m.play(castle.box, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.5, delay: 500, fill: "forwards" });
-      m.after(500, () => darkTo(0, ms * 0.7, EASE.inOut));
+      // あやとが消えるところで、こうもりの群れになって右へ飛び去る。古城・じゅうたん・暗さも消える
+      m.after(ms * 0.7 - 260, () => {
+        swarm({ x: cc.x, y: cc.y }, { x: W * 1.15, y: Y(0.12) }, 1300, L.top, 14);
+        coins.dust(50, 1.2, 0, W, 0, H * 0.6);
+      });
+      const fadeAt = ms * 0.55;
+      if (castle) m.play(castle.box, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.4, delay: fadeAt, fill: "forwards" });
+      m.play(plane, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.4, delay: fadeAt, fill: "forwards" });
+      m.after(fadeAt, () => darkTo(0, ms * 0.4, EASE.inOut));
     },
   };
+
+  /** こうもりの群れ: `from` から `to` へ、揺れながら（出たり消えたり） */
+  function swarm(from: { x: number; y: number }, to: { x: number; y: number }, ms: number, parent: HTMLElement, n: number) {
+    for (let i = 0; i < n; i++) {
+      const bat = makeBat(m, A.bat, parent, X(0.07 + Math.random() * 0.04), 100);
+      const pts: [number, number][] = [];
+      const sway = X(0.03 + Math.random() * 0.05) * (i % 2 ? 1 : -1);
+      for (let j = 0; j <= 10; j++) {
+        const u = j / 10;
+        const e = u * u * (3 - 2 * u);
+        pts.push([
+          from.x + (to.x - from.x) * e + Math.sin(u * Math.PI) * sway + (Math.random() - 0.5) * X(0.02),
+          from.y + (to.y - from.y) * e - Math.sin(u * Math.PI) * Y(0.05),
+        ]);
+      }
+      const a = m.play(bat.el, pathFrames(pts, { tilt: 22, scale: (u) => 0.6 + Math.sin(u * Math.PI) * 0.5, opacity: (u) => (u < 0.9 ? 1 : 0) }), {
+        duration: ms,
+        delay: i * 30,
+        fill: "backwards",
+      });
+      const rm = () => bat.el.remove();
+      if (a) a.finished.then(rm, rm);
+      else rm();
+    }
+  }
+
+  /**
+   * 滞在中のこうもり: 古城の満月のあたりから飛び出し、キャラ絵の後ろをぐるりと回って、反対の端へ抜ける
+   * （back の層。キャラ絵の顔の前は通らない）
+   */
+  function batFlight(i: number) {
+    const cc = centerOf(L, W, H);
+    const dir = i % 4 === 0 ? 1 : -1;
+    const n = 5;
+    for (let j = 0; j < n; j++) {
+      const bat = makeBat(m, A.bat, L.back, X(0.08 + Math.random() * 0.04), 110);
+      const pts: [number, number][] = [];
+      const rx = X(0.42 + Math.random() * 0.06);
+      const ry = (cc.y - cc.top) * (0.55 + Math.random() * 0.2);
+      for (let k = 0; k <= 14; k++) {
+        const u = k / 14;
+        // 月 → キャラ絵のまわりを半周 → 外へ
+        const ang = -Math.PI / 2 + dir * u * Math.PI * 1.3;
+        pts.push([cc.x + Math.cos(ang) * rx * Math.min(1, u * 3) + (u > 0.85 ? dir * (u - 0.85) * X(2) : 0), moonAt.y + (cc.y + Math.sin(ang) * ry - moonAt.y) * Math.min(1, u * 2.2)]);
+      }
+      const a = m.play(bat.el, pathFrames(pts, { tilt: 20, scale: (u) => 0.5 + Math.min(1, u * 4) * 0.5, opacity: (u) => (u < 0.05 ? u * 20 : u > 0.92 ? (1 - u) * 12 : 1) }), {
+        duration: 2600 + Math.random() * 500,
+        delay: j * 140,
+        fill: "backwards",
+      });
+      const rm = () => bat.el.remove();
+      if (a) a.finished.then(rm, rm);
+      else rm();
+    }
+  }
 
   // ---------------------------------------------------------------- 小芸（滞在中。どれも帯の中で終わる）
   function cupSwirl() {
