@@ -377,11 +377,16 @@ def add_sound(t, title, artist):
     if not click_text(t, "Save", "button"):
         return {"ok": False, "error": "no_editor_save"}
     time.sleep(6)
+    # 保存すると音を合わせた動画が書き出し直されて上げ直る。曲名の札は「Original sound」のまま出る（2026-10-24 に見た）ので、
+    # 札では見ない。敷いた直後にトラックに曲名が在ったことと、上げ直しが終わって編集欄が戻ったことで見る
+    reup = False
+    for _ in range(90):
+        time.sleep(2)
+        if t.js(f"!!{ED}") and re.search(r"Uploaded|アップロード済み|アップロード完了", body(t)) and not has_text(t, "Cancel", "button"):
+            reup = True
+            break
     shot(t, "tt_sound_saved")
-    # 保存して戻った画面の、音の欄の字（前は「Original sound - …」）
-    shown = t.js(f"document.body.innerText.includes({json.dumps(title)})")
-    original = t.js("document.body.innerText.includes('Original sound')")
-    return {"ok": bool(shown) and not original, "row": c[2], "on_track_labels": on_track, "shown": shown, "original_left": original}
+    return {"ok": bool(on_track) and reup, "row": c[2], "on_track_labels": on_track, "reuploaded": reup}
 
 
 def save_draft(t):
@@ -429,6 +434,14 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False, sound=Non
         time.sleep(1.5)
         log("closed auto-check modal")
     shot(t, "tt_1_uploaded")
+    if sound:
+        # 編集画面で保存すると、音を合わせた動画が書き出し直されて上げ直り、キャプションが消える（2026-10-24）。
+        # なので音源はキャプションより先に敷く
+        snd = add_sound(t, *sound)
+        log("sound", json.dumps(snd, ensure_ascii=False))
+        if not snd.get("ok"):
+            result(dict(snd, ok=False))
+            return
     # キャプション: 全部選んで消し、貼り付けで入れる
     t.click(ED)
     time.sleep(0.5)
@@ -466,12 +479,6 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False, sound=Non
     log("pasted handled:", pasted, "| caption match:", norm == caption, "| entities:", mention)
     if norm != caption:
         log("GOT:", json.dumps(got, ensure_ascii=False))
-    if sound:
-        snd = add_sound(t, *sound)
-        log("sound", json.dumps(snd, ensure_ascii=False))
-        if not snd.get("ok"):
-            result(dict(snd, ok=False))
-            return
     if cover:
         # サムネイル（カバー）は題の札が見えるコマにする（あやと 2026-10-17）。コマを選ぶ窓より、
         # 書き出しから切り出した絵を上げるほうが、どのコマになるかが確か
