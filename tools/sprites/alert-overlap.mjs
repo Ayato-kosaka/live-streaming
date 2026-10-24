@@ -117,25 +117,45 @@ const videos = new Map(
 /* 滞在中のコマ（キャラ絵が出てからの秒）。台本のある段（段7）は、キャラ絵が出る 6.5 秒＋
    ふくらむ 0.85 秒までが登場で、終わりの 4 秒が締め。締めもキャラ絵は出ているので数える */
 const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
-/* 台本のある段（themes.ts）。段3 は行進（キャラ絵は最初から出ている）、段5 は死神、段6 はゾンビ、段7 は伯爵 */
+/* 台本のある段（themes.ts）。段1 はちびおばけ・段2 は札を吊るすこうもり・段3 は行進
+   （段1〜3 はキャラ絵が最初から出ている）、段4 は魔法使い、段5 は死神、段6 はゾンビ、段7 は伯爵 */
 const SHOWS = {
-  halloween: [[500, 1000, "march"], [1000, 2000, "wizard"], [2000, 5000, "reaper"], [5000, 10000, "zombie"], [10000, Infinity, "vampire"]],
+  halloween: [
+    [0, 200, "ghost"],
+    [200, 500, "batSign"],
+    [500, 1000, "march"],
+    [1000, 2000, "wizard"],
+    [2000, 5000, "reaper"],
+    [5000, 10000, "zombie"],
+    [10000, Infinity, "vampire"],
+  ],
 };
 const showOf = (a) => (SHOWS[theme] ?? []).find(([lo, hi]) => a >= lo && a < hi)?.[2] ?? null;
 const showTier = (a) => !!showOf(a);
+/* 滞在のあいだを 1.5 秒おきに撮る。小芸は 5〜8 秒おきにでたらめな順で出るので、まばらに撮ると
+   1つも写らない（行進を 6 秒の1コマだけで見ていたときがそれ） */
+const every = (from, to, step = 1.5) => {
+  const out = [];
+  for (let t = from; t < to; t += step) out.push(+t.toFixed(2));
+  return out;
+};
 function framesFor(a) {
   const given = arg("frames", "");
   if (given) return given.split(",").map(Number);
   const d = alertSec(a);
   if (showOf(a) === "vampire") return [8, 10, 16, 30, d - 3.4, d - 2.6, d - 1.6];
   // 魔法使い: キャラ絵は 4.3 秒から 0.85 秒でふくらむ。そこから滞在、締めは右上へ飛び去るところ
-  if (showOf(a) === "wizard") return [5.3, 6, 8, 12, 25, d - 2.6, d - 2.0, d - 1.4, d - 0.8];
+  if (showOf(a) === "wizard") return [5.3, ...every(6, d - 3), d - 2.6, d - 2.0, d - 1.4, d - 0.8];
   // 行進: キャラ絵は最初から出ているので、行進の途中も数える。締めは右へ去るところ
-  if (showOf(a) === "march") return [0.4, 0.9, 1.4, 1.8, 2.1, 2.4, 6, d - 2.6, d - 1.8, d - 1.0];
+  if (showOf(a) === "march") return [0.4, 0.9, 1.4, 1.8, 2.1, 2.4, ...every(3, d - 3), d - 2.6, d - 1.8, d - 1.0];
+  // ちびおばけ: ランタンが降りる・ふたが鳴る・「ばあ！」・字が出る・落ち着く。締めはランタンに戻る
+  if (showOf(a) === "ghost") return [0.3, 0.6, 0.8, 1.0, 1.3, ...every(1.6, d - 2.8), d - 2.4, d - 1.8, d - 1.2, d - 0.6];
+  // こうもり: 札を吊るして右上から来る・3匹目がとまる。締めは札ごと左上へ
+  if (showOf(a) === "batSign") return [0.4, 0.8, 1.2, 1.5, 1.9, ...every(2.2, d - 2.8), d - 2.4, d - 1.8, d - 1.2, d - 0.6];
   // 死神: キャラ絵は 4.97 秒から 0.85 秒でふくらむ。滞在（左上の角で鬼火が回る・小芸）と、締めの霧に消えるところ
-  if (showOf(a) === "reaper") return [5.9, 7, 9, 13, 20, 28, d - 2.8, d - 2.2, d - 1.6, d - 0.8];
+  if (showOf(a) === "reaper") return [5.9, ...every(7, d - 3), d - 2.8, d - 2.2, d - 1.6, d - 0.8];
   // ゾンビ: キャラ絵は 6.36 秒から。滞在（右上の角でゆらゆら・決めポーズ・潜る）と、締めの墓へ戻るところ
-  if (showOf(a) === "zombie") return [7.3, 8.5, 10, 14, 20, 28, d - 2.8, d - 2.2, d - 1.6, d - 0.8];
+  if (showOf(a) === "zombie") return [7.3, ...every(8, d - 3), d - 2.8, d - 2.2, d - 1.6, d - 0.8];
   // 札がぽんっと出て膨らみきった瞬間（0.8 秒から 0.45 秒の 65%）・収まったところ・出たあと
   return [1.09, 1.4, 4.5];
 }
@@ -363,7 +383,7 @@ async function measureFrame(page, W, H, wantShow) {
   const content = grid(rects.content, W, H);
   const face = content && { l: content.l, t: content.t, r: content.r, b: content.t + Math.ceil((content.b - content.t) * 0.45) };
   await setMode(page, "all");
-  const A = await shot(page);
+  let A = await shot(page);
   await setMode(page, "noshow");
   const B = await shot(page);
   await setMode(page, "char");
@@ -372,12 +392,44 @@ async function measureFrame(page, W, H, wantShow) {
   const E = await shot(page);
   await setMode(page, "all");
 
-  const front = count(E, face, (i) => E.data[i + 3] > 16);
+  /* 乗った画素を覚えておく（残す絵に印を付けて、どこに何が乗ったかを目で追えるように） */
+  const hits = [];
+  const front = count(E, face, (i) => {
+    const on = E.data[i + 3] > 16;
+    if (on) hits.push(i);
+    return on;
+  });
   const cover = count(A, face, (i) => {
     if (C.data[i + 3] < 250) return false;
     const d = Math.max(Math.abs(A.data[i] - B.data[i]), Math.abs(A.data[i + 1] - B.data[i + 1]), Math.abs(A.data[i + 2] - B.data[i + 2]));
+    if (d > 24) hits.push(i);
     return d > 24;
   });
+  if (hits.length) {
+    // 乗った画素を桃色にし、まわりを 12px の枠で囲む（数画素でも見つかるように）
+    const M = new PNG({ width: A.width, height: A.height });
+    A.data.copy(M.data);
+    const put = (x, y) => {
+      if (x < 0 || y < 0 || x >= M.width || y >= M.height) return;
+      const j = (y * M.width + x) * 4;
+      M.data[j] = 255;
+      M.data[j + 1] = 0;
+      M.data[j + 2] = 200;
+      M.data[j + 3] = 255;
+    };
+    for (const i of hits.slice(0, 2000)) {
+      const x = (i / 4) % M.width;
+      const y = Math.floor(i / 4 / M.width);
+      put(x, y);
+      for (let k = -12; k <= 12; k++) {
+        put(x + k, y - 12);
+        put(x + k, y + 12);
+        put(x - 12, y + k);
+        put(x + 12, y + k);
+      }
+    }
+    A = M;
+  }
   // 測れているか（何も見ていない緑を出さない）
   const charPx = count(C, content, (i) => C.data[i + 3] > 16);
   const why = [];
@@ -508,7 +560,7 @@ async function main() {
       const job = queue.shift();
       const r = await runOne(browser, job);
       // 絵を残す: 重なりのあったコマと、一覧に使う代表のコマ（滞在のまんなか）
-      const pickAt = { vampire: 16, march: 6, wizard: 8, reaper: 9, zombie: 10 }[showOf(r.amount)] ?? null;
+      const pickAt = { vampire: 16, march: 6, wizard: 9, ghost: 4.6, batSign: 5.2, reaper: 10, zombie: 11 }[showOf(r.amount)] ?? null;
       const pick = r.frames.find((f) => f.t === pickAt) ?? r.frames.at(-1) ?? null;
       for (const f of r.frames) {
         if (f === pick || bad(f) > 0) {

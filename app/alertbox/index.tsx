@@ -122,6 +122,12 @@ function plainPlate(type: NotificationData["type"]): PlateStyle {
   };
 }
 
+/**
+ * 投げ銭が来てから、その段の絵の展開を待つ上限（ms）。過ぎたら台本に乗せない（小物の演出で出す）。
+ * アラートの頭がこのぶん遅れる。展開は 1 段ぶん（数枚）なので、ふつうは数十〜数百 ms
+ */
+const DECODE_WAIT_MS = 1500;
+
 function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
   const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
   if (v === "1" || v === "true" || v === "alert") return "alert";
@@ -159,6 +165,8 @@ export default function AlertBox() {
     /** 試し表示で、その名前の人が動画（URL）・絵文字を持っていることにする */
     video?: string;
     emoji?: string;
+    /** 試し表示で、面を開いてから偽の投げ銭を出すまでの秒（段の絵を落とし終えたあとを測るため） */
+    at?: string;
   }>();
 
   const preview = previewMode(params.preview);
@@ -359,6 +367,9 @@ export default function AlertBox() {
          台本の無い小物の演出に落ちて、撮りたいものが撮れない。本番は面を開いてから投げ銭が
          来るまで間があるので、待たない */
       const startedAt = Date.now();
+      /* `at`（秒）を渡すと、面を開いてからその秒まで待って出す。段の絵を落とし終わったあとに
+         投げ銭が来る本番の順（貯金箱 → 4 秒後に落とす → 投げ銭で展開）を、そのまま測るため */
+      const at = Math.max(0, numParam(params.at, 0)) * 1000;
       let timer: ReturnType<typeof setTimeout>;
       const fire = () => {
         const sn = seasonRef.current;
@@ -380,7 +391,7 @@ export default function AlertBox() {
           },
         ]);
       };
-      timer = setTimeout(fire, 800);
+      timer = setTimeout(fire, Math.max(800, at));
       return () => clearTimeout(timer);
     }
 
@@ -863,11 +874,35 @@ export default function AlertBox() {
       calculateAdjustedAlertDuration(currentNotification);
 
     /* 段と出し方。季節が無い日は null（今までどおり）。
-       台本の部品が読めていなければ、その段は前の小物の演出に落ちる */
+       その段の絵（台本の切り絵・ポーズ絵か小物）を、ここで展開してから出す（上限つきで待つ）。
+       展開が間に合わなかった・読めなかった台本は、その段は前の小物の演出に落ちる（欠けた絵を出さない） */
     const sn = seasonRef.current;
     const isMoney =
       currentNotification.type === "donation" ||
       currentNotification.type === "superchat";
+    const yen =
+      currentNotification.type === "superchat"
+        ? currentNotification.jpy
+        : currentNotification.type === "donation"
+          ? currentNotification.amount
+          : 0;
+    if (isMoney && sn.theme) {
+      /* 展開にかかった時間を User Timing に残す（`season:ensure`。tools/sprites/alert-decode.mjs が
+         CPU を絞って読む）。待ちの上限を超えたかどうかは、ここを見ないと分からない */
+      const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+      const ensured = sn
+        .ensureFor(yen)
+        .catch(() => false)
+        .then((ok) => {
+          try {
+            performance.measure("season:ensure", { start: t0, detail: { yen, ok } });
+          } catch {
+            // 測れない環境では何もしない
+          }
+          return ok;
+        });
+      await Promise.race([ensured, new Promise((r) => setTimeout(r, DECODE_WAIT_MS))]);
+    }
     const nextStage = isMoney
       ? stageFor(
           sn.theme,

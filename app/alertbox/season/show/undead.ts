@@ -1,11 +1,13 @@
 /**
  * 段5（死神）と段6（ゾンビ）が分け合う道具。振付けそのものは `reaper.ts` / `zombie.ts`。
  *
- * - 絵の解読は**段の頭で、その段のぶんだけ**行う（`gate` / `Items`）。解読が済むまで、その絵の箱は
- *   出さない（display: none）。前兆のあいだに間に合わなかった主役は、済むまで出ない。
- *   欠けた絵・描きかけの絵を配信に出さない
- * - 小物（墓石・鬼火・土のかけら）は `items/<仮装>/items.json` と絵。テーマを開いたときには読まず、
- *   その段が始まったときに読む（ほかの段の日に、使わない絵を抱えない）
+ * - 絵の展開（decode）は**段の頭で、その段のぶんだけ**（土台 `useSeason` の決まり）。主役のポーズ絵と
+ *   仲間の切り絵は、土台の `ensureFor` がアラートの頭で展開し終えている（間に合わなければ台本に乗らない）。
+ *   ここの `gate` は念のための二重の確かめで、済むまで箱ごと出さない（欠けた絵を配信に出さない）
+ * - 小物（墓石・鬼火・土のかけら）は `items/<仮装>/items.json` と絵。**ここでは展開するだけ**で、
+ *   落とすのは土台の後読み（貯金箱の数秒後）に任せる。土台が小物をまだ後読みしていない間は、
+ *   初めての段5・段6で段の頭に落ちてくる。そのあいだに間に合わなかった小物は、その出番を飛ばす
+ *   （土台に `season.items` ができたら、そちらに寄せる）
  * - 端の暗さ・揺れ・稲光の閃光は、画面いっぱいの層の opacity と、演出の層の translate だけ
  */
 import { EASE, type Motion } from "../rig/motion";
@@ -47,7 +49,8 @@ type Box4 = [number, number, number, number];
 export type Item = { img: HTMLImageElement; w: number; h: number; content: Box4 };
 
 /**
- * 小物の絵（`items/<仮装>/`）。作った瞬間に読みに行き、解読まで済んだものから使える。
+ * 小物の絵（`items/<仮装>/`）。作った瞬間（段の頭）に展開を始め、済んだものから使える。
+ * 落とすのは土台の後読みの仕事なので、HTTP の控えにあるものを使う（`force-cache`）。
  * まだ済んでいないもの・読めなかったものは `get` が null を返すので、振付けはその小物を飛ばす
  */
 export class Items {
@@ -58,7 +61,7 @@ export class Items {
   constructor(dir: string, files: Record<string, string>) {
     if (typeof window === "undefined" || typeof window.Image !== "function") return;
     if (typeof fetch === "function") {
-      fetch(`${dir}/items.json`)
+      fetch(`${dir}/items.json`, { cache: "force-cache" })
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => {
           if (j && typeof j.items === "object" && j.items) this.defs = j.items;

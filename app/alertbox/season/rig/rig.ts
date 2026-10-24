@@ -21,7 +21,10 @@
  *   mouth{closed, open, omega}
  * - bucket: bucket{empty, full, over}（根。胴は3枚とも画素一致で、中身と顔の灯りだけ違う）/
  *   handle（胴の奥）。目印 `rimBack` `rimFront` `label`、お菓子の粒 `items`
- * - bat（正面）: body / wing_l / wing_r（羽の関節は肩）
+ * - bat（正面）: body / wing_l / wing_r（羽の関節は肩）。`items` に name_sign（字を入れない木の札。
+ *   左右の金具 `ringL` `ringR` を、2匹がつかんで吊るす）
+ * - ghost（正面）: body（根）/ face{boo, smile, surprised} / hand_l / hand_r。`items` に lantern
+ *   （かぼちゃのランタン。上が開いている）・lantern_lid（ふた）
  * - vlad（ななめ前）: torso（根）/ head / eyes{normal, wink, smile} / mouth{smirk, open, omega} /
  *   cape_l / cape_r（少し開いた形で描く。関節は肩。腕より奥）/ cape_inner（金の裏地。胴の奥）/
  *   collar / arm_goblet（杯を持つ腕）/ arm_ring（指輪の手）/ leg_l / leg_r
@@ -73,6 +76,8 @@ export type RigDef = {
   partAnchors: Record<string, { part: string; at: Vec }>;
   /** `items` の絵の中の、目印に合わせる点（帽子のかぶる点・竿の握る点）。絵の左上から px */
   itemAnchors: Record<string, Vec>;
+  /** `items` の絵の中の、名前つきの点（こうもりの札の左右の金具 `ringL` `ringR` など）。絵の左上から px */
+  itemPoints: Record<string, Record<string, Vec>>;
 };
 
 const isVec = (v: unknown): v is Vec =>
@@ -136,9 +141,16 @@ export function parseRig(json: unknown): RigDef | null {
     }
   }
   const itemAnchors: Record<string, Vec> = {};
+  const itemPoints: Record<string, Record<string, Vec>> = {};
   if (o.itemAnchors && typeof o.itemAnchors === "object" && !Array.isArray(o.itemAnchors)) {
     for (const [k, v] of Object.entries(o.itemAnchors as Record<string, unknown>)) {
       if (isVec(v)) itemAnchors[k] = v;
+      else if (v && typeof v === "object" && !Array.isArray(v)) {
+        // 名前つきの点の組（札の左右の金具など）
+        const pts: Record<string, Vec> = {};
+        for (const [n, q] of Object.entries(v as Record<string, unknown>)) if (isVec(q)) pts[n] = q;
+        if (Object.keys(pts).length) itemPoints[k] = pts;
+      }
     }
   }
   const items: Record<string, string> = {};
@@ -162,6 +174,7 @@ export function parseRig(json: unknown): RigDef | null {
     frame,
     partAnchors,
     itemAnchors,
+    itemPoints,
   };
 }
 

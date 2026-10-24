@@ -3,6 +3,7 @@
 
     python3 tools/alert-theme/poses.py add <置き場> <名前> <ChatGPT の絵.png> [--face-w 300] [--no-quant]
         絵を整えて <置き場>/<名前>.png に置き、poses.json を書き直す
+        （出す前に tools/alert-theme/poses_webp.py で WebP にする。PNG のままだと 1枚 300〜440KB）
     python3 tools/alert-theme/poses.py check <置き場> <out.png>
         置き場のポーズを、紺と緑の地に同じ縮尺で並べた絵（顔の枠と基準点つき）
 
