@@ -92,7 +92,10 @@ permissions:
 jobs:
   selftest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15分では足りなくなった（2026-10-24）。見張りを全部回す step が 14分14秒で、その後ろの
+    # 繋ぎの見張りの途中で上限に当たって取り消された。EC2 の札の見張り（ec2_queue_selftest.py。
+    # 守りを1つずつ外す対照が26通り）が128秒増やした。対照を削って縮めるより、上限を上げる
+    timeout-minutes: 20
 
     steps:
       # **何がこの run を起こしたかを、run そのものに残す。**

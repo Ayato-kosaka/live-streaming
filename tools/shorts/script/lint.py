@@ -823,7 +823,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
         rows = s.get("rows")
         if not isinstance(rows, list):
             other = [k for k in ("lines", "rows_A", "items") if k in s]
-            raise ValueError(f"{sp.name} に rows が無い" + (f"（{"・".join(other)} で書いてある）" if other else "")
+            raise ValueError(f"{sp.name} に rows が無い" + ("（" + "・".join(other) + " で書いてある）" if other else "")
                              + "。行ごとの字・根拠・画は rows に書く（読み飛ばすと【足】【答】と画が空のまま通る）。原稿だけを当てるなら --no-spec")
         if len(rows) != len(lines):
             raise ValueError(f"{sp.name} の rows が {len(rows)} 行で、原稿は {len(lines)} 行（spec を原稿に合わせて直す）")
