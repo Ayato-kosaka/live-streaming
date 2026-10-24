@@ -23,6 +23,8 @@ export type BatSignRigs = { bat: LoadedRig };
 const SIGN_W = 0.46;
 /** こうもりの翼の幅（面の幅に対する割合） */
 const BAT_W = 0.25;
+/** 着いてから札が振れるいちばん大きな角度（度）。着いたあとの揺れはこれより小さく描く */
+const SWING_MAX = 7;
 
 export function runBatSign(m: Motion, L: ShowLayers, rigs: BatSignRigs, cues: TimedCue[], W: number, H: number): () => void {
   const X = (f: number) => f * W;
@@ -40,8 +42,14 @@ export function runBatSign(m: Motion, L: ShowLayers, rigs: BatSignRigs, cues: Ti
   /** 金具の真ん中（札を吊るす点。揺れの中心） */
   const hang: [number, number] = [(ringL[0] + ringR[0]) / 2, (ringL[1] + ringR[1]) / 2];
 
-  /* 隊の箱の基準点 = 金具の真ん中。札の下の辺が帯の下の辺（キャラ絵の四角の上の辺）に来る高さ */
-  const home = () => ({ x: X(0.5), y: bandBottomOf(L, W, H) - X(0.006) - (sh - hang[1]) });
+  /* 札が振れると、下がった側の下の角が帯の下へはみ出す（重なりの道具で、王冠のある絵の頭に
+     4〜164 画素掛かった）。いちばん大きく振れる角度（SWING_MAX）でも下の角が帯の中に残るぶん、
+     札を上げて吊るす */
+  const below = sh - hang[1];
+  const th = (SWING_MAX * Math.PI) / 180;
+  const dip = (sw / 2) * Math.sin(th) + below * (Math.cos(th) - 1);
+  /* 隊の箱の基準点 = 金具の真ん中。札の下の辺が帯の下の辺（キャラ絵の四角の上の辺）より、振れるぶん上 */
+  const home = () => ({ x: X(0.5), y: bandBottomOf(L, W, H) - X(0.006) - Math.max(0, dip) - below });
   const h0 = home();
 
   const group = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
@@ -104,13 +112,14 @@ export function runBatSign(m: Motion, L: ShowLayers, rigs: BatSignRigs, cues: Ti
         path.push([x, Math.min(y, to.y)]);
       }
       m.play(group, pathFrames(path, { tilt: 10 }), { duration: ms, fill: "forwards", easing: "linear" });
-      // 札は遅れて振れる（引っぱられて後ろへ → 止まって前へ → 戻る）
+      // 札は遅れて振れる（引っぱられて後ろへ → 止まって前へ → 戻る）。着いてからは SWING_MAX まで
       m.play(sign, [
         { transform: "rotate(14deg)" },
-        { transform: "rotate(10deg)", offset: 0.75 },
-        { transform: "rotate(-12deg)", offset: 0.86, easing: "ease-in-out" },
-        { transform: "rotate(7deg)", offset: 0.93, easing: "ease-in-out" },
-        { transform: "rotate(-3deg)", offset: 0.97 },
+        { transform: "rotate(10deg)", offset: 0.4 },
+        { transform: `rotate(${SWING_MAX}deg)`, offset: 0.7 },
+        { transform: `rotate(${-SWING_MAX}deg)`, offset: 0.84, easing: "ease-in-out" },
+        { transform: "rotate(4deg)", offset: 0.93, easing: "ease-in-out" },
+        { transform: "rotate(-2deg)", offset: 0.97 },
         { transform: "rotate(0deg)" },
       ], { duration: ms + 600, fill: "forwards" });
       m.after(ms, () => {

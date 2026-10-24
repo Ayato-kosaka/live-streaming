@@ -111,6 +111,18 @@ export function runGhost(m: Motion, L: ShowLayers, rigs: GhostRigs, cues: TimedC
     Object.assign(im.style, { position: "absolute", inset: "0px", width: "100%", height: "100%" });
     lid.appendChild(im);
   }
+  /* ふたの着地点。逆さまに転がったふたの**いちばん下**（柄の先まで）が、帯の下の辺（ランタンの
+     置き場の高さ）より上に来る高さを、回した角度から出す。決め打ちの高さで置いたら、柄が帯から
+     はみ出してキャラ絵の頭（王冠）に掛かった（重なりの道具で 17〜65 画素） */
+  const lidPivotY = -lh - lidH * 0.55 + lidH * 0.8;
+  const lidLand = (deg: number) => {
+    const a = (deg * Math.PI) / 180;
+    let low = -Infinity;
+    for (const cx of [-lidW / 2, lidW / 2]) for (const cy of [-lidH * 0.8, lidH * 0.2]) low = Math.max(low, cx * Math.sin(a) + cy * Math.cos(a));
+    return -X(0.008) - (lidPivotY + low);
+  };
+  const LID_DOWN = `translate(${(lw * 0.72).toFixed(1)}px, ${lidLand(152).toFixed(1)}px) rotate(152deg)`;
+
   // 箱の大きさが変わると帯の高さも変わるので、キャラ絵の四角が動いたらランタンを付け直す
   const sync = () => {
     const p = base();
@@ -180,8 +192,8 @@ export function runGhost(m: Motion, L: ShowLayers, rigs: GhostRigs, cues: TimedC
       m.play(lid, [
         { transform: "translate(0px, 0px) rotate(0deg)", easing: EASE.up },
         { transform: `translate(${lw * 0.35}px, ${-lh * 0.55}px) rotate(70deg)`, offset: 0.45, easing: EASE.down },
-        { transform: `translate(${lw * 0.72}px, ${lh * 0.72}px) rotate(160deg)`, offset: 0.85, easing: EASE.out },
-        { transform: `translate(${lw * 0.72}px, ${lh * 0.66}px) rotate(152deg)` },
+        { transform: `translate(${lw * 0.72}px, ${lidLand(160)}px) rotate(160deg)`, offset: 0.85, easing: EASE.out },
+        { transform: LID_DOWN },
       ], { duration: ms, fill: "forwards" });
       jumpOut(true);
     },
@@ -223,7 +235,7 @@ export function runGhost(m: Motion, L: ShowLayers, rigs: GhostRigs, cues: TimedC
         });
         // ふたが戻る（跳ねてランタンの上へ）
         m.play(lid, [
-          { transform: `translate(${lw * 0.72}px, ${lh * 0.66}px) rotate(152deg)`, easing: EASE.up },
+          { transform: LID_DOWN, easing: EASE.up },
           { transform: `translate(${lw * 0.3}px, ${-lh * 0.5}px) rotate(40deg)`, offset: 0.5, easing: EASE.down },
           { transform: "translate(0px, 0px) rotate(0deg)" },
         ], { duration: 560, delay: 300, fill: "forwards" });
