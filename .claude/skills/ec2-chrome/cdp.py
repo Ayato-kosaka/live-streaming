@@ -28,7 +28,9 @@ pkill だけだとセッションが書き戻されなかった回がある＝Do
 
 ## 束を2人で同時に触らない（札。2026-10-24）
 
-同じ束（`~/cdp-<名前>`）を2人が同時に触ると、タブを閉じ合い、入力が混ざる。だから `up(name)` と `tab(name)` は、
+同じ束（`~/cdp-<名前>`）を2人が同時に触ると、タブを閉じ合い、入力が混ざる（10-24 01:01 UTC、投稿の担当2人が
+fish の Chrome で同時に `tt_post.py` を回し、片方の `fresh_tab` がもう片方のタブを閉じた）。呼ぶ側が札を取るのを
+覚えていてくれる形では守れないので、Chrome を開く・タブを拾う共通の所で守る。`up(name)`・`tab(name)`・`pages(name)` は、
 **列 `name` の札を持っていなければ、このプロセスの pid で取る**（`hold(name)`。持てるまで待つ。
 ほかの人が持っていれば、何番目で誰が持っているかを出す）。pid の札なので、このプロセスが終われば
 （kill -9 でも）次の確かめで消える。手元のセッションが `ec2.py lease` / `ec2.py hold` で取った札は、
@@ -53,6 +55,7 @@ SEED_SKIP = ["Extensions", "Local Extension Settings", "Extension State", "Exten
 
 QUEUE = "/usr/local/sbin/ec2-queue"
 QUEUE_WAIT_S = int(os.environ.get("EC2_QUEUE_WAIT", "1800"))
+QUEUE_POLL_S = 2     # 待ち札の聞き直しの間（EC2 の上なので安い）
 _HELD = {}       # 列 → 札（このプロセスが持っているもの。取ったもの・渡されたもの）
 _TAKEN = set()   # このプロセスが取った札（終わるときに返す）
 
@@ -129,7 +132,7 @@ def hold(name, purpose=None, wait=None):
             if tk:
                 _q("release", tk)
             raise RuntimeError(f"列 {name} が空かない: {said}")
-        time.sleep(2)
+        time.sleep(QUEUE_POLL_S)
 
 
 def _port(name):
@@ -308,6 +311,8 @@ class Tab:
 
 
 def pages(name):
+    """束のタブの一覧。ほかのタブを全部閉じる道具（各スキルの fresh_tab）はこれで閉じる相手を拾うので、ここでも札を持つ"""
+    hold(name)
     return [t for t in json.load(urllib.request.urlopen(f"http://localhost:{_port(name)}/json/list")) if t["type"] == "page"]
 
 

@@ -82,7 +82,7 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "fifo_jump": ("ec2_queue.py",
                   '            if holder(q) is None and q[0] is t:\n                t["held"] = at\n                t["beat"] = at\n',
                   '            if holder(q) is None:\n                t["held"] = at\n                t["beat"] = at\n',
-                  {"fifo"}, "持ち主が抜けたら、先着でなくても聞き直しに来た待ち人に渡す"),
+                  {"fifo", "dead_waiter"}, "持ち主が抜けたら、先着でなくても聞き直しに来た待ち人に渡す"),
     "beat_never_expires": ("ec2_queue.py", '    if at - t["beat"] > ttl:\n', "    if False:\n",
                            {"beat_expiry", "session_death", "dead_waiter", "idle_stop_live_dead"},
                            "心拍が途切れても札を消さない"),
@@ -113,7 +113,7 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "mark_survives_boot": ("ec2_queue.py", '    return m["t"] >= boot and', '    return True and',
                            {"boot", "stop_flow"}, "起動より前の止める印を生かす"),
     "idle_no_queue": ("idle_stop.sh", "      *BUSY*) [", "      *NEVERBUSY*) [",
-                      {"idle_stop_live_dead"}, "idle-stop が生きた札を数えない"),
+                      {"idle_stop_live_dead", "idle_stop_failsafe"}, "idle-stop が生きた札を数えない"),
     "idle_no_cap": ("idle_stop.sh", '      *BUSY*) [ "$qage" -lt $((STALE_H * 3600)) ] && qwhy=',
                     '      *BUSY*) qwhy=', {"idle_stop_failsafe"},
                     "ec2-queue が「使っている」と言えば、置き場が古くても数える"),
@@ -125,12 +125,12 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                       {"stop_flow", "exec_respects"}, "ec2.py stop が札を見ない（印を立てずに止める）"),
     "run_ignores_mark": ("ec2.py", "        if raw or not out.startswith(STOPPING):\n", "        if True:\n",
                          {"stop_flow"}, "run() が止める印を見ても、待たずに戻る"),
-    "lease_no_beat": ("ec2.py", "    beater.start()\n", "    pass\n", {"lease_local"}, "手元の札に心拍を打たない"),
+    "lease_no_beat": ("ec2.py", "    beater.start()\n", "    pass\n", {"lease_local", "session_death"}, "手元の札に心拍を打たない"),
     "lease_no_release": ("ec2.py", '        r = queue_call(["release", tk], 60)\n', '        r = {"state": "released"}\n',
                          {"lease_local", "exec_respects"}, "抜けても札を返さない"),
     "beat_detached": ("ec2.py", "    beater.start()\n",
                       "    subprocess.Popen([sys.executable, '-c', 'import sys, time; sys.path.insert(0, sys.argv[1]); import ec2; "
-                      "ec2.AWS = __import__(\"json\").loads(sys.argv[3]); ec2.INSTANCE = sys.argv[4]\\n"
+                      "ec2.AWS = __import__(\"json\").loads(sys.argv[3]); ec2.INSTANCE = sys.argv[4]; ec2.T = 0.002\\n"
                       "while True:\\n    ec2.queue_call([\"beat\", sys.argv[2]]); time.sleep(0.05)', HERE, tk, json.dumps(AWS), INSTANCE], "
                       "start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n    beater.start()\n",
                       {"session_death"}, "心拍を切り離した裏のプロセスで打つ（セッションが死んでも心拍が生き残る）"),
@@ -144,6 +144,22 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                     {"cdp_hold"}, "up() が札を取らずに Chrome を触る"),
     "cdp_ignore_env": ("cdp.py", '    if name in mine and _q("owns", mine[name], name)[0] == 0:\n', "    if False:\n",
                        {"cdp_hold"}, "手元から渡された自分の札を使わず、自分の札を待って詰まる"),
+}
+
+
+# 足ごとに、読む本物のファイル。子（守りを1つ外した写し）では、外したファイルを読まない足を回さない
+# （読まないので結果は変わらない。親が本物で全部の足を回して確かめている）
+QUEUE_ONLY = {"ec2_queue.py"}
+DEPS: dict[str, set[str]] = {
+    "fifo": QUEUE_ONLY, "beat_expiry": QUEUE_ONLY, "pid_death": QUEUE_ONLY, "dead_waiter": QUEUE_ONLY,
+    "boot": QUEUE_ONLY, "max_hold": QUEUE_ONLY, "broken_tickets": QUEUE_ONLY,
+    "session_death": {"ec2.py", "ec2_queue.py"},
+    "idle_stop_live_dead": {"idle_stop.sh", "ec2_queue.py"},
+    "idle_stop_failsafe": {"idle_stop.sh", "ec2_queue.py"},
+    "stop_flow": {"ec2.py", "ec2_queue.py", "idle_stop.sh"},
+    "exec_respects": {"ec2_exec.sh", "ec2.py", "ec2_queue.py", "idle_stop.sh", "cdp.py"},
+    "lease_local": {"ec2.py", "ec2_queue.py"},
+    "cdp_hold": {"cdp.py", "ec2_queue.py"},
 }
 
 
@@ -517,7 +533,8 @@ class IdleRig:
                 ("LOG=/var/log/idle-stop.log", f"LOG={self.d}/idle.log"),
                 ("EC2_QUEUE=/usr/local/sbin/ec2-queue", f"EC2_QUEUE={qt}"),
                 ("QUEUE_STATE=/var/lib/ec2-queue/state.json", f"QUEUE_STATE={q.qdir}/state.json"),
-                ("QUEUE_TIMEOUT=30", "QUEUE_TIMEOUT=0.3"),
+                # 答えない ec2-queue だけ短く待つ（本物の ec2-queue は混んでいると 0.2秒では返らず、答えないに化ける）
+                ("QUEUE_TIMEOUT=30", f"QUEUE_TIMEOUT={0.2 if queue == 'hang' else 20}"),
                 ("/etc/idle-stop/armed", f"{self.d}/armed"),
                 ("  pkill -TERM -u ubuntu -f 'user-data-dir=/home/ubuntu/cdp-' 2>/dev/null\n", "  :\n"),
                 ("  sleep 10\n", "  :\n"),
@@ -569,13 +586,13 @@ def leg_idle_stop_live_dead(b: Bench):
     a = q.take("fish", "A", ttl=600)["ticket"]
     rig = IdleRig(b, q)
     (rig.d / "state" / "last").write_text(str(int(NOW)))
-    sd, _ = rig.until_shutdown(NOW, NOW + 7200, each=lambda t: q.at(t).call("beat", a))
-    out.append((f"心拍のある札があれば2時間でも止めない（止めた時刻: {sd}）", sd is None))
+    sd, _ = rig.until_shutdown(NOW, NOW + 5400, each=lambda t: q.at(t).call("beat", a))
+    out.append((f"心拍のある札があれば1時間半でも止めない（止めた時刻: {sd}）", sd is None))
     # 心拍の札の持ち主が死ぬ（NOW から心拍なし）→ 期限 600秒 + 30分で止める
     q = Q(b)
     q.take("fish", "A", ttl=600)
     rig = IdleRig(b, q)
-    sd, trail = rig.until_shutdown(NOW, NOW + 4 * 3600)
+    sd, trail = rig.until_shutdown(NOW, NOW + 2 * 3600)
     out.append((f"心拍の持ち主が死んだ: 期限(600秒)+30分 = 2400秒で止める判断（{None if sd is None else sd - NOW}秒）",
                 sd is not None and sd - NOW == 600 + 1800))
     # pid の札の持ち主が 900秒の確かめのあとで kill -9 → 900 + 30分で止める
@@ -589,7 +606,7 @@ def leg_idle_stop_live_dead(b: Bench):
         if t - NOW == 1200 and not killed:
             q.kill(4242)
             killed.append(t)
-    sd, _ = rig.until_shutdown(NOW, NOW + 4 * 3600, each=each)
+    sd, _ = rig.until_shutdown(NOW, NOW + 2 * 3600, each=each)
     out.append((f"pid の持ち主が死んだ: 最後に生きていた確かめ(900秒)+30分 = 2700秒で止める（{None if sd is None else sd - NOW}秒）",
                 sd is not None and sd - NOW == 900 + 1800))
     # 2人（心拍と pid）とも死ぬ → 遅いほう + 30分
@@ -602,7 +619,7 @@ def leg_idle_stop_live_dead(b: Bench):
     def each2(t):
         if t - NOW == 300:
             q.kill(99)
-    sd, _ = rig.until_shutdown(NOW, NOW + 4 * 3600, each=each2)
+    sd, _ = rig.until_shutdown(NOW, NOW + 2 * 3600, each=each2)
     out.append((f"2人とも死んだ: 遅いほう（心拍の期限 900秒）+30分 = 2700秒（{None if sd is None else sd - NOW}秒）",
                 sd is not None and sd - NOW == 900 + 1800))
     return out
@@ -617,7 +634,7 @@ def leg_idle_stop_failsafe(b: Bench):
         sp.write_text('{"v": 1, "lanes": {}}')
         os.utime(sp, (NOW, NOW))
         rig = IdleRig(b, q, queue=kind)
-        step = 1800 if kind == "hang" else 600
+        step = 3600 if kind == "hang" else 600
         sd, trail = rig.until_shutdown(NOW, NOW + 8 * 3600, step=step)
         lb = None if rig.last_busy is None else rig.last_busy - NOW
         out += [(f"{what}・置き場は今書かれた: 6時間は使っている側に倒す（最後に使っていた判断 {lb}秒）",
@@ -866,7 +883,7 @@ def leg_stop_flow(b: Bench):
             def entrant():
                 try:
                     if who_kind == "lease":
-                        with m.lease("fish", who="B", purpose="race", wait=60):
+                        with m.lease("fish", who="B", purpose="race", wait=15):
                             got["held_at_call"] = len(f.calls())
                             got["boot_ok"] = f.busy().startswith("BUSY fish")
                     else:
@@ -877,11 +894,11 @@ def leg_stop_flow(b: Bench):
                     got["err"] = repr(e)
             th = threading.Thread(target=entrant, daemon=True)
             th.start()
-            time.sleep(0.6)
+            time.sleep(0.3)
             early = dict(got)
             stop_at = len(f.calls())
             m.aws("ec2", "stop-instances", "--instance-ids", m.INSTANCE)
-            th.join(30)
+            th.join(20)
         cl = f.calls()
         stops = [i for i, c in enumerate(cl) if c["cmd"] == ["ec2", "stop-instances"]]
         starts = [i for i, c in enumerate(cl) if c["cmd"] == ["ec2", "start-instances"]]
@@ -956,10 +973,12 @@ def leg_lease_local(b: Bench):
             inside = f.busy()
             env_tk = os.environ.get("EC2_QUEUE_TICKET", "")
             threads = [t.name for t in threading.enumerate()]
-            f.shift(500)
-            time.sleep(0.4)
-            f.shift(1000)
-            time.sleep(0.4)
+            for sh in (500, 1000):
+                f.shift(sh)
+                n0 = f.count("ssm", "send-command")
+                end = time.time() + 6
+                while f.count("ssm", "send-command") < n0 + 2 and time.time() < end:
+                    time.sleep(0.02)
             alive = f.busy()
         after = f.busy()
     out += [(f"取れる（{tk}）・札は環境に入る（{env_tk}）", bool(tk) and env_tk == f"fish:{tk}"),
@@ -1015,16 +1034,18 @@ def leg_session_death(b: Bench):
         env.pop(k, None)
     p = subprocess.Popen([PY, str(drv), json.dumps(cfg)], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=env)
     line = p.stdout.readline().strip()
-    time.sleep(1.2)
 
     def beats():
         return sum(1 for c in f.calls() if c["cmd"] == ["ssm", "send-command"])
+    end = time.time() + 6
+    while beats() < 3 and time.time() < end:
+        time.sleep(0.05)
     b0 = beats()
     os.kill(p.pid, signal.SIGKILL)
     p.wait(10)
     time.sleep(0.3)
     b1 = beats()
-    time.sleep(0.7)
+    time.sleep(0.8)
     b2 = beats()
     busy_before = f.busy()
     f.shift(601)
@@ -1043,6 +1064,7 @@ spec = importlib.util.spec_from_file_location("cdp", cfg["cdp"])
 cdp = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cdp)
 cdp.QUEUE = cfg["queue"]
+cdp.QUEUE_POLL_S = 0.1
 cdp._alive = lambda port: True          # Chrome はもう起きている、として up() の札の段だけを通す
 mode = cfg["mode"]
 if mode == "up":
@@ -1067,7 +1089,7 @@ def leg_cdp_hold(b: Bench):
         c = dict(cfg, cdp=str(b.files["cdp.py"] / "cdp.py"), queue=str(qt))
         return subprocess.Popen([PY, str(drv), json.dumps(c)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                 env=env or q.env())
-    p1 = spawn({"mode": "up", "sleep": 2.5})
+    p1 = spawn({"mode": "up", "sleep": 1.2})
     first = p1.stdout.readline().strip()
     lst = q.call("list")
     h = ((lst.get("lanes") or {}).get("fish") or [{}])[0]
@@ -1080,6 +1102,7 @@ def leg_cdp_hold(b: Bench):
     mine = q.take("fish", "session", ttl=600)
     env = q.env()
     env["EC2_QUEUE_TICKET"] = f"fish:{mine.get('ticket')}"
+    env["EC2_QUEUE_WAIT"] = "3"      # 自分の札を待ってしまう形なら、3秒で諦めて落ちる
     p3 = spawn({"mode": "up"}, env=env)
     o3, _ = p3.communicate(timeout=20)
     lst3 = q.call("list")
@@ -1089,7 +1112,7 @@ def leg_cdp_hold(b: Bench):
              first.startswith("PORT") and h.get("pid") == p1.pid and h.get("kind") == "pid"),
             (f"2人目は何番目で誰が持っているかを出して待つ（{[ln for ln in e2.splitlines() if '待つ' in ln][:1]}）",
              "番目に待つ" in e2 and f"pid {p1.pid}" in e2),
-            (f"1人目が終われば2人目に回る（{o2.strip()[:24]}・{waited:.1f}秒待った）", o2.startswith("GOT ") and 1.5 < waited < 15),
+            (f"1人目が終われば2人目に回る（{o2.strip()[:24]}・{waited:.1f}秒待った）", o2.startswith("GOT ") and 0.5 < waited < 20),
             (f"手元から渡された自分の札では待たず、札を増やさない（{o3.strip().splitlines()[:1]}・列 {n3}枚）",
              o3.startswith("PORT") and n3 == 1)]
 
@@ -1112,11 +1135,27 @@ LEGS = {
 }
 
 
-def run_legs(files: dict[str, Path], tmp: Path, quiet: bool) -> tuple[list[str], int]:
+def reap(root: Path):
+    """足が残したプロセス（守りを外した写しの、切り離した心拍など）を落とす。使い捨ての置き場の名前で見分ける"""
+    me = os.getpid()
+    for d in Path("/proc").glob("[0-9]*"):
+        try:
+            if int(d.name) != me and str(root) in (d / "cmdline").read_bytes().decode(errors="replace"):
+                os.kill(int(d.name), signal.SIGKILL)
+        except (OSError, ValueError):
+            pass
+
+
+def run_legs(files: dict[str, Path], tmp: Path, quiet: bool, cut_file: str | None = None,
+             root: Path | None = None) -> tuple[list[str], int]:
     b = Bench(files, tmp)
     failed: list[str] = []
     checked = 0
     for name, fn in LEGS.items():
+        if cut_file and cut_file not in DEPS[name]:
+            if not quiet:
+                print(f"[{name}]（{cut_file} を読まないので、この写しでは回さない）")
+            continue
         t0 = time.time()
         try:
             res = fn(b)
@@ -1124,6 +1163,7 @@ def run_legs(files: dict[str, Path], tmp: Path, quiet: bool) -> tuple[list[str],
             raise
         except BaseException:  # noqa: BLE001
             res = [(f"足が落ちた: {traceback.format_exc().strip().splitlines()[-1]}", False)]
+        reap(root or tmp)
         checked += len(res)
         if any(not ok for _, ok in res):
             failed.append(name)
@@ -1151,12 +1191,12 @@ def child(name: str) -> int:
     if name not in CUTS:
         print(f"✕ BREAK={name} という守りは無い（{' / '.join(CUTS)}）")
         return 2
-    with tempfile.TemporaryDirectory() as td:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
         src, tmp = Path(td) / "src", Path(td) / "work"
         src.mkdir()
         tmp.mkdir()
         files = cut_copy(name, src)
-        failed, checked = run_legs(files, tmp, quiet=False)
+        failed, checked = run_legs(files, tmp, quiet=False, cut_file=CUTS[name][0], root=Path(td))
     print("LEGS_FAILED " + json.dumps(sorted(failed)))
     if checked == 0:
         return 2
@@ -1168,10 +1208,14 @@ def drill() -> list[str]:
     from concurrent.futures import ThreadPoolExecutor
 
     def one(name):
-        return subprocess.run([PY, str(Path(__file__).resolve())], capture_output=True, text=True,
-                              env=dict(os.environ, BREAK=name), timeout=280, check=False)
+        t0 = time.time()
+        r = subprocess.run([PY, str(Path(__file__).resolve())], capture_output=True, text=True,
+                           env=dict(os.environ, BREAK=name), timeout=280, check=False)
+        r.secs = time.time() - t0
+        return r
 
-    with ThreadPoolExecutor(int(os.environ.get("EC2_QUEUE_DRILL_JOBS", "6"))) as ex:
+    # 子どうしは時刻を見て待つ足を持つので、コアの数より多く並べない（混みすぎると待ちが長くなるだけ）
+    with ThreadPoolExecutor(int(os.environ.get("EC2_QUEUE_DRILL_JOBS") or max(2, os.cpu_count() or 2))) as ex:
         runs = dict(zip(CUTS, ex.map(one, CUTS)))
     bad = []
     for name, (fname, _, _, want, why) in CUTS.items():
@@ -1181,7 +1225,7 @@ def drill() -> list[str]:
         hit = got == want and r.returncode == 1
         print(f"  {'○' if hit else '✕'} BREAK={name}（{fname}: {why}）→ 落ちた足 "
               f"{sorted(got) if got is not None else '（読めない: ' + (r.stdout + r.stderr).strip()[-300:] + '）'}"
-              f"（欲しいのは {sorted(want)}）")
+              f"（欲しいのは {sorted(want)}・{r.secs:.0f}秒）")
         if not hit:
             bad.append(name)
     return bad

@@ -403,7 +403,8 @@ def ride_out_stop(log=_log, limit=900):
             return
         if st == "running":
             r = queue_call(["stopping"], 60)
-            if r.get("state") != "stopping":
+            # 印が消えた（止める人が止めずに抜けた）ときだけ戻る。答えないのは、止めている最中で SSM が切れたのかもしれない
+            if r.get("state") in ("not", "noqueue"):
                 return
         time.sleep(10 * T)
     raise QueueError(f"止める印が立ったまま {limit}秒たっても止まりきらない")
@@ -446,6 +447,12 @@ def _acquire(lane, who, purpose, wait, ttl, log):
             tk = None
             continue
         else:
+            if state() != "running":
+                # 聞いているあいだに止まった（印を立てた人が stop-instances を打った）。止まりきってから起こし直す
+                log(f"{lane}: EC2 が起きていない。止まりきるのを待って起こし直す")
+                ride_out_stop(log)
+                tk = None
+                continue
             errors += 1
             log(f"{lane}: ec2-queue が答えない（{r.get('why') or r}）")
             if errors >= 4:
