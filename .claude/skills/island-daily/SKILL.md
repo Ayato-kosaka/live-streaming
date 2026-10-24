@@ -145,7 +145,7 @@ print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
 1. **作られたものを目で見る。** その晩の `SUZURI API` の回の Summary に作った人が並び、成果物 `suzuri-sheet` に
    見本の一覧が入っている。持ち帰りかたは `/suzuri` の `ops.md` 6。切れていないか・大きさがそろっているか
 2. **島で絵が描き直された人がいれば、差し替える。** ここだけ EC2 の Chrome（SUZURI のログイン）が要る
-   （`characters.py` の `changed`）。EC2 を使うので、ほかの作業が箱を使っていないかを先に見る（`ec2.py state`）
+   （`characters.py` の `changed`）。EC2 を使うので、ほかの作業が箱を使っていないかを先に見る（`ec2.py queue`。SUZURI の Chrome は列 `suzuri` の札で1人ずつ。`ec2-chrome` 2.5）
 
 透過の無い人は作られない（Summary に出る）。あやとの決め（#733）で、島の絵は直さないまま置いておく。
 

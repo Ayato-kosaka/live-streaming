@@ -215,7 +215,7 @@ description: 月末配信「1ヶ月ふりかえり授賞式」ページを作る
 あやとに数字を貼ってもらう形には戻さない（#847）。EC2 の Chrome から Studio を読む:
 
 ```bash
-python3 .claude/skills/ec2-chrome/ec2.py state     # stopped なら start し、終わったら stop
+python3 .claude/skills/ec2-chrome/ec2.py queue     # 止まっていれば start、終わったら stop（使っている人が居れば断られる）。Studio の Chrome は札（ec2-chrome 2.5）
 python3 tools/youtube_taps.py --missing            # 渡っていない月を全部取って python/data/monthly_taps.json へ
 python3 python/build_monthly.py --build            # /months に焼き直す
 ```

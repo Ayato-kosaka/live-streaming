@@ -28,7 +28,7 @@ python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/youtube-studio/yt_st
 
 | 関数 | 何をするか |
 | --- | --- |
-| `studio(url)` | **新しいタブを1枚作り、ほかを全部閉じて**開く（下の「固まるタブ」） |
+| `studio(url)` | **新しいタブを1枚作り、ほかを全部閉じて**開く（下の「固まるタブ」）。`up("ytstudio")` を通るので、列 `ytstudio` の札をそのプロセスで取る（ほかの人が持っていれば空くまで待つ。`ec2-chrome` 2.5） |
 | `current()` | 前の send-command で開いたタブの続き（ダイアログを開いたまま次の手を打つとき）。固まっていれば `None` |
 | `capture(t, url=…, act=…)` | 開く／押すあいだに出た youtubei の要求と返事を全部拾う。**知らない画面はまずこれ** |
 | `api(t, endpoint, body)` | youtubei を叩く。`context` と認証（SAPISIDHASH）はページの中で補う |

@@ -100,8 +100,9 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/chatgpt/out-0.png <手
 - **`chatgpt.fresh()` はほかのタブを全部閉じる。** 同じ Chrome をほかのセッションが使っていると、お互いの返事待ちが
   `WebSocketConnectionClosedException` で落ちる。一括は**自分のタブだけを作って閉じる**（`Target.createTarget`）か、
   鍵（`chatgpt` スキルの1）を置いてから流す
-- **流すあいだは `/home/ubuntu/stamp/RUNNING` か `/home/ubuntu/chatgpt/LOCK` を置き、1枚ごとに触る。**
-  EC2 の見張り（`ec2-chrome` 2）が「使っている」と見る。終わったら消す
+- **EC2 の上で一括を流すときは、列 `chatgpt` の札を持つ:** `nohup /usr/local/sbin/ec2-queue hold chatgpt --who … --purpose … -- python3 …`
+  （`ec2-chrome` 2.5）。札は一括の pid に付き、終われば消える。見張り（idle-stop）も `ec2.py stop` も札を見る。
+  `chatgpt.py` の鍵（`/home/ubuntu/chatgpt/LOCK`）は `fresh()` が見るので、鍵も置いてよい（置いたら終わりに消す）
 - **字は、元の大きさで1文字ずつ数えて突き合わせる**（`docs/island-misses.md` #249）。縮めた一覧で「眺める」と見落とす。
   72枚で見つかった崩れ: 長音「ー」が下にずれて「_」「、」に見える・頭に余計な「ー」が付く・
   最後の「イ」が小さい「ィ」になる・**縦書きで小さい「っ」が2つになる**（「ゆっっくり」。これは一覧で見落として申請まで出た）

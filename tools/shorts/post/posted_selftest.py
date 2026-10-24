@@ -45,6 +45,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib.util
 import io
 import json
@@ -155,6 +156,15 @@ class Fake:
 def load_tools(src: Path):
     """`src` に在る post.py / posted.py を読む。`ec2` は偽物の入れ物に差し替える"""
     box = types.ModuleType("ec2")
+    # post.py は Chrome を触る段を列の札（ec2.lease）で挟む。札は ec2-chrome の ec2_queue_selftest.py が見るので、
+    # ここでは何もしない札にして、どの列を取ったかだけ控える
+    box.leases = []
+
+    @contextlib.contextmanager
+    def lease(lane, who=None, purpose="", **kw):
+        box.leases.append(lane)
+        yield "fake-ticket"
+    box.lease, box.default_who, box.QueueError = lease, (lambda: "selftest"), type("QueueError", (Exception,), {})
     sys.modules["ec2"] = box
     for n in ("post", "posted"):
         sys.modules.pop(n, None)

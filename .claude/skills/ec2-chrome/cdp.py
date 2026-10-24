@@ -97,7 +97,8 @@ def hold(name, purpose=None, wait=None):
         _say(f"{QUEUE} が無いので、列 {name} の札を取らずに進む（手元で ec2.py guard）")
         return None
     who = os.environ.get("EC2_QUEUE_WHO") or f"pid {os.getpid()}"
-    purpose = purpose or os.environ.get("EC2_QUEUE_PURPOSE") or f"{os.path.basename(sys.argv[0] or 'python')} の up({name})"
+    prog = sys.argv[0] if sys.argv and sys.argv[0] not in ("", "-", "-c") else "python3 の標準入力"
+    purpose = purpose or os.environ.get("EC2_QUEUE_PURPOSE") or f"{os.path.basename(prog)} の up({name})"
     end = time.time() + (QUEUE_WAIT_S if wait is None else wait)
     tk, said = None, None
     while True:
