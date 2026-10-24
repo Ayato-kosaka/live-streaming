@@ -117,8 +117,6 @@ function plainPlate(type: NotificationData["type"]): PlateStyle {
     nameColor: hi,
     textColor: s.fontColor ?? "#FFFFFF",
     amountColor: hi,
-    nameSize: 88,
-    amountSize: 132,
   };
 }
 
@@ -1162,7 +1160,8 @@ export default function AlertBox() {
                   top={charTop}
                   bottom={charBottom}
                   revealAt={stage?.revealSec ?? 0}
-                  originY={stage?.show ? winH * 0.3 : undefined}
+                  /* 台本のある段は、キャラ絵の真ん中（字・魔法陣・あやとの着地と同じ中心。season/show/common.ts）からふくらむ */
+                  originY={stage?.show ? textCenterY : undefined}
                 >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
@@ -1317,7 +1316,8 @@ export default function AlertBox() {
                     key={`text-${notification.id}`}
                     plate={stage?.plate ?? plainPlate(notification.type)}
                     plain={!stage?.plate}
-                    maxLines={stage?.plate ? 3 : 0}
+                    /* 字のブロックはキャラ絵の真ん中に置くので、上下の短いほうの2倍まで（箱の縁で切らない） */
+                    maxH={Math.max(0, 2 * Math.min(textCenterY, winH - textCenterY) - winH * 0.03)}
                     lines={splitPlateText(mainTextTemplate, {
                       name: notification.nickname,
                       amount: notification.amount,

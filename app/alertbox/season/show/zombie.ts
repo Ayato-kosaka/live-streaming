@@ -7,9 +7,12 @@
  *   → 墓石3つが次々せり上がる（土のかけらが飛ぶ）→ まんなかの墓の前で、土を割って手が出る
  *   → 墓から上半身を出して這い出す（土が飛び散る・一瞬止める）
  *   → 跳び出して決めポーズ（稲光）、左右に跳ねて踊る。かぼちゃ坊やとちびおばけが出てきて並んで弾む
- *   → 字が1字ずつ弾んで出る → 「ドン」 → 仲間は土へ、墓は沈み、ゾンビは上の帯の右の角へ跳ぶ
- *   （その人のキャラ絵が出る）。小さな墓の横でゆらゆら、ときどき決めポーズ
- *   → 締めは墓へずぼっと戻る。こうもりが帯を横切る
+ *   → 字が1字ずつ弾んで出る → 「ドン」 → ゾンビは上の帯の右の角へ跳ぶ（その人のキャラ絵が出る）。
+ *   小さな墓の横でゆらゆら、ときどき決めポーズ
+ *   → 滞在（2版目、オーナーのレビュー）: 墓石・かぼちゃ坊や・ちびおばけは**その人のキャラ絵の背景に残る**
+ *     （キャラ絵の後ろの層）。マゼンタのオーラも後ろに残る。ときどきゾンビが決めポーズをすると、
+ *     墓石の1つが**掘り直される**（沈んで土が飛び、また生えてくる。となりの坊やが跳ねる）
+ *   → 締め（`curtainCall`）: キャラ絵と字が消える → ゾンビが真ん中へ戻る → 土へずぼっと潜って消える
  *
  * 段5（死神）より一段リッチに: 前兆が長く強い（稲光・地鳴り）・画面の幅いっぱいの墓場（面の 8 割）・
  * 主役のほかに仲間4人・土の粒・踊り。
@@ -29,6 +32,7 @@ import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } 
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
 import { makePoseActor } from "./poseActor";
+import { centerOf, curtainCall, every } from "./common";
 import {
   Items,
   arcMove,
@@ -41,7 +45,6 @@ import {
   gate,
   jolt,
   popPose,
-  retire,
   rumble,
   sparkRing,
   type At,
@@ -83,6 +86,8 @@ const GHOSTS = [
   { x: 0.835, dy: 0.055 },
 ];
 const GHOST_W = 0.3;
+/** 滞在のオーラ（キャラ絵の後ろに残るマゼンタの光）の色・半径（面の幅に対する割合）・濃さ */
+const AURA = { rgb: "220,50,150", r: 0.55, alpha: 0.42 };
 /** 踊りの1拍（ms） */
 const BEAT = 430;
 /** 待つときの高さと、右の端からのすき間。小さな墓は左どなり */
@@ -111,6 +116,11 @@ export function runZombie(
      字のブロックの上端のすぐ上を地面にし、ゾンビが入りきらなければ縮める。字のブロックは長い名前・
      3行のメッセージで背が伸びるので、ここで測る（札の置き場は振付けより先に組まれている） */
   const pb0 = plateBoxOf(L, W, H);
+  /* 横の位置は、字とその人のキャラ絵の真ん中にそろえる（2版目の決まり）。墓場もここを中心に並べる */
+  const center = centerOf(L, W, H);
+  const cx = center.x;
+  /** 面の幅に対する割合の横の位置を、真ん中（cx）基準に直す */
+  const XC = (f: number) => cx + (f - 0.5) * W;
   const groundY = Math.max(Y(GROUND.min), Math.min(Y(GROUND.max), pb0.t - X(0.015)));
   /** 登場のあいだのゾンビの倍率（1 で踊る姿が面の DANCE_H） */
   const k0 = Math.min(1, (groundY - Y(GROUND.top)) / (Y(DANCE_H) * TALLEST));
@@ -143,7 +153,7 @@ export function runZombie(
   const groundClip = (parent: HTMLElement) =>
     div(parent, { position: "absolute", left: "0px", top: "0px", width: `${W}px`, height: `${(groundY + 2).toFixed(1)}px`, overflow: "hidden" });
   const graveClip = groundClip(L.back);
-  const graves: { box: HTMLDivElement; h: number }[] = [];
+  const graves: { box: HTMLDivElement; h: number; x: number }[] = [];
 
   // ---------------------------------------------------------------- ゾンビ（解読が済むまで出さない）
   const gateBox = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
@@ -152,7 +162,7 @@ export function runZombie(
   gate(gateBox);
   /** 墓から出るときの足元（rise の絵の土の盛り上がりの下の辺）。地面より少し下 */
   const moundY = groundY + Y(0.02) * k0;
-  let now: At = { x: X(0.5), y: moundY, k: k0 };
+  let now: At = { x: cx, y: moundY, k: k0 };
   actor.pos.style.opacity = "0";
   actor.pos.style.transform = atTf(now);
   const pt = (name: string, p: [number, number]) => {
@@ -178,7 +188,7 @@ export function runZombie(
   const kids: Kid[] = KIDS.map((d) => {
     const h = buildRig(a.kid, ks);
     attachItem(h, a.kid, d.hat, "hatOn", 25);
-    const spot = div(kidGate, { position: "absolute", left: `${X(d.x).toFixed(1)}px`, top: `${groundY.toFixed(1)}px`, width: "0px", height: "0px" });
+    const spot = div(kidGate, { position: "absolute", left: `${XC(d.x).toFixed(1)}px`, top: `${groundY.toFixed(1)}px`, width: "0px", height: "0px" });
     const pos = div(spot, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
     const pose = div(pos, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
     h.root.style.left = `${(-hip[0] * ks).toFixed(1)}px`;
@@ -196,7 +206,7 @@ export function runZombie(
     const h = buildRig(a.ghost, gs);
     h.swap("face", "boo");
     const gy = groundY - Y(KID_H) - Y(d.dy) - (gb.h * gs) / 2;
-    const pos = div(ghostGate, { position: "absolute", left: `${X(d.x).toFixed(1)}px`, top: `${gy.toFixed(1)}px`, width: "0px", height: "0px", willChange: "transform", opacity: "0" });
+    const pos = div(ghostGate, { position: "absolute", left: `${XC(d.x).toFixed(1)}px`, top: `${gy.toFixed(1)}px`, width: "0px", height: "0px", willChange: "transform", opacity: "0" });
     const bob = div(pos, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
     h.root.style.left = `${(-(gb.l + gb.w / 2) * gs).toFixed(1)}px`;
     h.root.style.top = `${(-(gb.t + gb.h / 2) * gs).toFixed(1)}px`;
@@ -296,10 +306,11 @@ export function runZombie(
     ], { duration: BEAT, iterations, delay });
 
   let stayTimer = 0;
+  let aura: HTMLDivElement | null = null;
+  let stopDig: (() => void) | null = null;
   /** 土から出た手（這い出すときに引っ込める） */
   let handEl: HTMLDivElement | null = null;
   let stayGrave: HTMLDivElement | null = null;
-  let stayGraveH = 0;
 
   const on: Partial<Record<TimedCue["do"], (c: TimedCue) => void>> = {
     // 前兆: 端が暗くなる（マゼンタがかった闇）
@@ -334,10 +345,10 @@ export function runZombie(
         const ww = (hh * (x1 - x0)) / Math.max(1, y1 - y0);
         const p = items.place(d.name, graveClip, ww, "bottom");
         if (!p) continue;
-        p.box.style.left = `${X(d.x).toFixed(1)}px`;
+        p.box.style.left = `${XC(d.x).toFixed(1)}px`;
         p.box.style.top = `${groundY.toFixed(1)}px`;
         p.box.style.transform = `translateY(${(hh + 8).toFixed(1)}px)`;
-        graves.push({ box: p.box, h: hh });
+        graves.push({ box: p.box, h: hh, x: XC(d.x) });
         const delay = (i * ms) / GRAVES.length;
         m.play(p.box, [
           { transform: `translateY(${(hh + 8).toFixed(1)}px)`, easing: EASE.out },
@@ -345,15 +356,15 @@ export function runZombie(
           { transform: "translateY(0px)" },
         ], { duration: 420, delay, fill: "both" });
         m.after(delay + 60, () => {
-          dirt(L.front, X(d.x), groundY - Y(0.01), 5, 0.45, 0.6);
-          dustPuffs(m, L.mid, X(d.x) - ww * 0.4, groundY - Y(0.005), X(0.09), 2);
-          dustPuffs(m, L.mid, X(d.x) + ww * 0.4, groundY - Y(0.005), X(0.09), 2);
+          dirt(L.front, XC(d.x), groundY - Y(0.01), 5, 0.45, 0.6);
+          dustPuffs(m, L.mid, XC(d.x) - ww * 0.4, groundY - Y(0.005), X(0.09), 2);
+          dustPuffs(m, L.mid, XC(d.x) + ww * 0.4, groundY - Y(0.005), X(0.09), 2);
           jolt(m, shakeEls, 180, X(0.01));
         });
       }
       // 地面の霧（墓石の根元の継ぎ目を隠す）
       for (const [fx, fw] of [[0.2, 0.62], [0.5, 0.7], [0.8, 0.62]] as const) {
-        const f = fogBlob(L.mid, X(fx), groundY + Y(0.005), X(fw), Y(0.075));
+        const f = fogBlob(L.mid, XC(fx), groundY + Y(0.005), X(fw), Y(0.075));
         m.play(f, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, fill: "forwards" });
         fog.push(f);
       }
@@ -364,7 +375,7 @@ export function runZombie(
       const ms = (c.dur ?? 0.65) * 1000;
       const p = items.place("hand_from_soil", L.mid, X(HAND_W) * k0, "bottom");
       if (!p) return;
-      p.box.style.left = `${X(0.5).toFixed(1)}px`;
+      p.box.style.left = `${cx.toFixed(1)}px`;
       p.box.style.top = `${moundY.toFixed(1)}px`;
       m.play(p.box, [
         { transform: "scale(0.5, 0)", easing: EASE.out },
@@ -375,8 +386,8 @@ export function runZombie(
         { transform: "rotate(-4deg)", offset: 0.93 },
         { transform: "rotate(0deg)" },
       ], { duration: ms, fill: "both" });
-      dirt(L.front, X(0.5), moundY - p.h * 0.3, 6, 0.5, 0.7);
-      dustPuffs(m, L.mid, X(0.5), moundY - Y(0.01), X(0.1), 3);
+      dirt(L.front, cx, moundY - p.h * 0.3, 6, 0.5, 0.7);
+      dustPuffs(m, L.mid, cx, moundY - Y(0.01), X(0.1), 3);
       handEl = p.box;
     },
 
@@ -397,9 +408,9 @@ export function runZombie(
         { transform: "scale(1.05, 0.95)", offset: 0.75, easing: EASE.inOut },
         { transform: "scale(1, 1)" },
       ], { duration: ms });
-      dirt(L.front, X(0.5), moundY - Y(0.06), 14, 1, 1.1);
-      dustPuffs(m, L.mid, X(0.5) - X(0.18), moundY - Y(0.01), X(0.12), 3);
-      dustPuffs(m, L.mid, X(0.5) + X(0.18), moundY - Y(0.01), X(0.12), 3);
+      dirt(L.front, cx, moundY - Y(0.06), 14, 1, 1.1);
+      dustPuffs(m, L.mid, cx - X(0.18), moundY - Y(0.01), X(0.12), 3);
+      dustPuffs(m, L.mid, cx + X(0.18), moundY - Y(0.01), X(0.12), 3);
       const c0 = pt("rise", [340, 255]);
       sparkRing(m, L.front, c0.x, c0.y, X(0.2), 7, X(0.09), [MAG, VIO, PALE]);
     },
@@ -428,13 +439,13 @@ export function runZombie(
       now = land;
       m.after(120, () => {
         actor.show("dance");
-        dirt(L.front, X(0.5), moundY - Y(0.03), 10, 0.8, 1);
-        dustPuffs(m, L.mid, X(0.5), moundY - Y(0.01), X(0.14), 4);
+        dirt(L.front, cx, moundY - Y(0.03), 10, 0.8, 1);
+        dustPuffs(m, L.mid, cx, moundY - Y(0.01), X(0.14), 4);
       });
       m.after(520, () => {
         const c = pt("dance", [330, 450]);
         sparkRing(m, L.front, c.x, c.y, X(0.26), 8, X(0.1), [MAG, PALE, VIO]);
-        dustPuffs(m, L.mid, X(0.5), groundY - Y(0.005), X(0.1), 3);
+        dustPuffs(m, L.mid, cx, groundY - Y(0.005), X(0.1), 3);
         m.play(actor.bob, danceFrames(Math.min(Y(0.03), headroom) / k0), { duration: BEAT * 2, iterations: Infinity });
       });
     },
@@ -456,7 +467,7 @@ export function runZombie(
           m.play(k.h.part("arm_l"), [{ transform: "rotate(0deg)" }, { transform: "rotate(42deg)" }], o);
           m.play(k.h.part("arm_r"), [{ transform: "rotate(0deg)" }, { transform: "rotate(-42deg)" }], o);
         });
-        dirt(L.front, X(KIDS[i].x), groundY - Y(0.01), 4, 0.35, 0.5);
+        dirt(L.front, XC(KIDS[i].x), groundY - Y(0.01), 4, 0.35, 0.5);
       });
       ghosts.forEach((g, i) => {
         m.play(g.pos, [
@@ -519,31 +530,22 @@ export function runZombie(
     retreat: (c) => {
       const ms = (c.dur ?? 0.8) * 1000;
       darkTo(0, ms);
-      fog.forEach((f) => fadeOut(m, f, ms * 0.6));
+      /* 墓石・坊や・おばけ・地面の霧は、その人のキャラ絵の背景として残す（2版目。キャラ絵の後ろの層）。
+         踊りはやめて、ゆっくりの息だけにする（滞在は何十秒も続くので軽く） */
       kids.forEach((k, i) => {
         k.pose.getAnimations().forEach((x) => x.cancel());
+        k.h.part("arm_l")?.getAnimations().forEach((x) => x.cancel());
+        k.h.part("arm_r")?.getAnimations().forEach((x) => x.cancel());
         k.h.swap("head", "wink");
-        m.play(k.pos, [
-          { transform: "translateY(0px)", easing: EASE.up },
-          { transform: `translateY(${(-Y(0.04)).toFixed(1)}px)`, offset: 0.35, easing: EASE.in },
-          { transform: `translateY(${(Y(KID_H) * 1.5).toFixed(1)}px)` },
-        ], { duration: 420, delay: i * 80, fill: "forwards" });
+        m.after(600 + i * 200, () => k.h.swap("head", "smile"));
       });
-      ghosts.forEach((g, i) => {
-        g.h.swap("face", "surprised");
-        m.play(g.pos, [
-          { transform: "scale(1)", opacity: 1, easing: EASE.in },
-          { transform: "translateY(-30px) scale(0.2)", opacity: 0 },
-        ], { duration: 360, delay: i * 80, fill: "forwards" });
+      ghosts.forEach((g) => {
+        g.h.part("hand_l")?.getAnimations().forEach((x) => x.cancel());
+        g.h.part("hand_r")?.getAnimations().forEach((x) => x.cancel());
+        /* おばけも止める（背景は止め絵にして、動くのはオーラの息と墓の掘り直しだけ。キャラ絵の後ろで
+           回し続けると、滞在のコマの速さが半分まで落ちた） */
+        g.bob.getAnimations().forEach((x) => x.cancel());
       });
-      graves.forEach((g, i) => {
-        m.play(g.box, [
-          { transform: "translateY(0px)", easing: EASE.in },
-          { transform: `translateY(${(g.h + 8).toFixed(1)}px)` },
-        ], { duration: 420, delay: 120 + i * 70, fill: "forwards" });
-      });
-      // 土に戻った仲間と墓は片づける（滞在のあいだ、見えない踊りを回し続けない）
-      m.after(900, () => [kidClip, ghostGate, graveClip].forEach(retire));
       // 踊りをやめて、右上の角へ跳ぶ
       actor.bob.getAnimations().forEach((x) => x.cancel());
       const to = staySpot();
@@ -573,6 +575,22 @@ export function runZombie(
     // その人の絵が出る。粒の層をキャラ絵の後ろへ
     reveal: () => {
       L.frontBox.style.zIndex = "0";
+      /* オーラは息をさせない止め絵（stayAura の息を墓場の後ろで回すと、たくさんの部品の層と重なって
+         滞在のコマの速さが半分まで落ちた。止めれば 60fps に戻る） */
+      const c = centerOf(L, W, H);
+      const r = X(AURA.r);
+      aura = div(L.back, {
+        position: "absolute",
+        left: `${(c.x - r).toFixed(1)}px`,
+        top: `${(c.y - r).toFixed(1)}px`,
+        width: `${(r * 2).toFixed(1)}px`,
+        height: `${(r * 2).toFixed(1)}px`,
+        borderRadius: "50%",
+        background: edgeFade([[0, `rgba(${AURA.rgb},${AURA.alpha})`], [45, `rgba(${AURA.rgb},${(AURA.alpha * 0.55).toFixed(3)})`], [75, `rgba(${AURA.rgb},${(AURA.alpha * 0.18).toFixed(3)})`], [100, `rgba(${AURA.rgb},0)`]], "50% 50%"),
+        opacity: "0",
+      });
+      L.back.insertBefore(aura, L.back.firstChild);
+      m.play(aura, [{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 300, fill: "forwards", easing: EASE.out });
     },
 
     stay: () => {
@@ -594,43 +612,64 @@ export function runZombie(
         });
       };
       next();
+      // 墓を掘り直す（6.5〜9.5秒おき。最初は滞在に入って少ししてから）
+      stopDig = every(m, 6500, 9500, (i) => dig(i), 2500);
     },
 
-    // 締め: しゃがんで、ちょっと跳んで、墓へずぼっと戻る。土が飛ぶ。墓も沈む
-    finale: () => {
+    /* 締め（curtainCall）: キャラ絵と字と背景の墓場が消える → ゾンビが真ん中へ戻る →
+       しゃがんで、土へずぼっと潜って消える */
+    finale: (cue) => {
+      const ms = (cue.dur ?? 2.6) * 1000;
       if (stayTimer) m.clear(stayTimer);
+      stopDig?.();
       actor.bob.getAnimations().forEach((x) => x.cancel());
-      pop("dance", 280, STAY_POP);
-      // 姿の高さ（倍率 1 の px）。ずぼっと沈む深さ
-      const dance = a.poses.poses.get("dance");
-      const depth = dance ? (dance.content[3] - dance.content[1]) * actor.s0 * 1.15 : Y(0.5);
-      m.after(520, () => {
-        m.play(actor.squash, [
-          { transform: "translateY(0px) scale(1, 1)", easing: EASE.out },
-          { transform: "translateY(0px) scale(1.16, 0.82)", offset: 0.25, easing: EASE.up },
-          // 小さく跳んでから潜る（大きく跳ぶと、頭が面の上の端で切れた）
-          { transform: `translateY(${(-depth * 0.03).toFixed(1)}px) scale(0.94, 1.04)`, offset: 0.48, easing: EASE.in },
-          { transform: `translateY(${depth.toFixed(1)}px) scale(0.86, 1.2)` },
-        ], { duration: 640, fill: "forwards" });
-        m.after(420, () => {
-          dirt(L.actor, now.x, now.y - Y(0.01), 8, 0.22, 0.5);
-          dustPuffs(m, L.actor, now.x, now.y - Y(0.012), X(0.07), 4);
-          sparkle(m, L.actor, now.x, now.y - Y(0.04), X(0.07), 80, MAG);
-        });
-        if (stayGrave) {
-          const g = stayGrave;
-          m.play(g, [
-            { transform: "rotate(0deg) translateY(0px)" },
-            { transform: "rotate(-6deg) translateY(0px)", offset: 0.2 },
-            { transform: "rotate(5deg) translateY(0px)", offset: 0.4 },
-            { transform: "rotate(0deg) translateY(0px)", offset: 0.55, easing: EASE.in },
-            { transform: `rotate(0deg) translateY(${(stayGraveH + 6).toFixed(1)}px)` },
-          ], { duration: 900, delay: 300, fill: "forwards" });
-        }
+      batsAcross(m, a.bat, L.back, 8, W, [Y(0.03), Y(0.15)], 200);
+      const fadeMs = Math.max(250, ms * 0.24);
+      /* 墓場はキャラ絵と一緒に、締めの頭から消す。キャラ絵が消えたあと（afterExit）に消し始めると、
+         墓場が消えきらないうちにゾンビが真ん中へ動き出した */
+      const exitMs = Math.min(600, ms * 0.22);
+      if (aura) fadeOut(m, aura, exitMs);
+      for (const el of [graveClip, kidClip, ghostGate, ...fog]) fadeOut(m, el, exitMs);
+      if (stayGrave) fadeOut(m, stayGrave, exitMs * 0.8);
+      curtainCall(m, L, {
+        ms,
+        hero: gateBox,
+        exitMs,
+        toCenter: (moveMs) => {
+          // 帯の切り口を外す（真ん中へ戻る）。姿の真ん中がキャラ絵の真ん中に来る位置
+          L.actor.style.clipPath = "";
+          const k = k0 * 0.85;
+          const dn = a.poses.poses.get("dance");
+          const midFromFeet = dn ? (dn.bottom[1] - (dn.content[1] + dn.content[3]) / 2) * actor.s0 * k : Y(0.2);
+          const to: At = { x: cx, y: center.y + midFromFeet, k };
+          pop("dance", 300, STAY_POP);
+          arcMove(m, actor.pos, now, to, [now.x - X(0.15), now.y + Y(0.15)], moveMs, 0);
+          now = to;
+        },
       });
-      batsAcross(m, a.bat, L.back, 8, W, [Y(0.03), Y(0.15)], 900);
+      m.after(ms - fadeMs, () => dive(fadeMs));
     },
   };
+
+  /** 締めの最後: しゃがんで、ちょっと跳んで、土へずぼっと潜る。土が飛ぶ */
+  function dive(ms: number) {
+    // 姿の高さ（倍率 1 の px）。ずぼっと沈む深さ（半分ほど沈みながら消える）
+    const dance = a.poses.poses.get("dance");
+    const depth = dance ? (dance.content[3] - dance.content[1]) * actor.s0 * 0.6 : Y(0.3);
+    m.play(actor.squash, [
+      { transform: "translateY(0px) scale(1, 1)", easing: EASE.out },
+      { transform: "translateY(0px) scale(1.16, 0.82)", offset: 0.25, easing: EASE.up },
+      // 小さく跳んでから潜る（大きく跳ぶと、頭が面の上の端で切れた）
+      { transform: `translateY(${(-depth * 0.03).toFixed(1)}px) scale(0.94, 1.04)`, offset: 0.48, easing: EASE.in },
+      { transform: `translateY(${depth.toFixed(1)}px) scale(0.86, 1.2)` },
+    ], { duration: Math.max(ms, 500), fill: "forwards" });
+    m.after(ms * 0.45, () => {
+      dirt(L.top, now.x, now.y - Y(0.01), 10, 0.3, 0.6);
+      dustPuffs(m, L.top, now.x, now.y - Y(0.012), X(0.1), 4);
+      sparkle(m, L.top, now.x, now.y - Y(0.04), X(0.08), 80, MAG);
+    });
+  }
+
 
   /** 待機の場所（足元と倍率）。面の上の右の角。足を帯の下の辺に乗せる */
   function staySpot(): At {
@@ -660,7 +699,39 @@ export function runZombie(
       { transform: "translateY(0px)" },
     ], { duration: 420, delay: 120, fill: "both" });
     stayGrave = p.box;
-    stayGraveH = hh;
+  }
+
+  /**
+   * 墓を掘り直す（滞在）: ゾンビが角で決めポーズ → 墓石の1つが沈み（土が飛ぶ）、少しして
+   * また生えてくる（土ぼこり・となりの坊やが跳ねる）。墓石も土もキャラ絵の後ろの層
+   */
+  function dig(i: number) {
+    if (!graves.length) return;
+    const g = graves[(i + Math.floor(Math.random() * graves.length)) % graves.length];
+    strike();
+    const sink = 380;
+    m.play(g.box, [
+      { transform: "translateY(0px)", easing: EASE.in },
+      { transform: `translateY(${(g.h + 8).toFixed(1)}px)` },
+    ], { duration: sink, delay: 250, fill: "forwards" });
+    m.after(250 + sink * 0.5, () => {
+      dirt(L.back, g.x, groundY - Y(0.01), 5, 0.35, 0.5);
+      dustPuffs(m, L.back, g.x, groundY - Y(0.005), X(0.08), 3);
+    });
+    const up = 250 + sink + 650;
+    m.play(g.box, [
+      { transform: `translateY(${(g.h + 8).toFixed(1)}px)`, easing: EASE.out },
+      { transform: `translateY(${(-g.h * 0.08).toFixed(1)}px)`, offset: 0.7, easing: EASE.inOut },
+      { transform: "translateY(0px)" },
+    ], { duration: 460, delay: up, fill: "forwards" });
+    m.after(up + 80, () => {
+      dirt(L.back, g.x, groundY - Y(0.01), 6, 0.45, 0.6);
+      dustPuffs(m, L.back, g.x - X(0.08), groundY - Y(0.005), X(0.08), 2);
+      dustPuffs(m, L.back, g.x + X(0.08), groundY - Y(0.005), X(0.08), 2);
+      // となりの坊や（墓に近いほう）が跳ねる
+      const near = kids.reduce((best, k, j) => (Math.abs(XC(KIDS[j].x) - g.x) < Math.abs(XC(KIDS[best].x) - g.x) ? j : best), 0);
+      if (kids[near]) kidHop(kids[near], Y(0.03));
+    });
   }
 
   // 小芸（滞在中）。どれも上の帯の中

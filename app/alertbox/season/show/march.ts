@@ -2,8 +2,11 @@
  * 段3（500〜999円）の振付け: かぼちゃ坊や3人組の行進（設計書 v3）。
  *
  * 3人は面の上の端の帯（キャラ絵の四角の上）を、竿の先の小旗を振りながら左から行進してくる。
- * 止まったら3人で「ジャン！」と跳ね、まんなかの子がお菓子を放る。滞在のあいだは帯の上で
- * 足踏みと小芸、締めは右へ行進して去る。字（名前・額）は持たない（字はキャラ絵の上下中央）。
+ * 止まったら3人で「ジャン！」と跳ね、**3人いっしょにお菓子のバケツを頭の上でひっくり返す**。
+ * そのあと**1人ずつ2回ずつ**、短い間隔で撒く（2版目。オーナーのレビュー「テンポが遅い。それぞれ
+ * 2回ずつくらい。落とす予定のかぼちゃが袋持ってジタバタするとか」）。撒く番の子は、バケツを胸に抱えて
+ * **ジタバタ**（足をばたつかせ、体とバケツを揺する）してから、ひっくり返す。
+ * 滞在のあいだは帯の上で足踏みと小芸、締めは右へ行進して去る。字（名前・額）は持たない。
  *
  * **その人のキャラ絵は最初から出ている**（段1〜3は主役のあとに出さない）。だから坊やも
  * お菓子も、登場のあいだからキャラ絵の顔の前を通らない（オーナーの決まり）:
@@ -21,7 +24,7 @@ import type { TimedCue } from "./script";
 import { Coins, makeBat, pathFrames, rigBounds, sparkle } from "./fx";
 import { bandBottomOf, div, type ShowLayers } from "./layers";
 
-export type MarchRigs = { kid: LoadedRig; bat: LoadedRig };
+export type MarchRigs = { kid: LoadedRig; bat: LoadedRig; bucket?: LoadedRig };
 
 /**
  * 坊やの背丈（部品の外形。舞台の高さに対する割合）。見える背丈は帽子込みで面の高さの 14〜15%、
@@ -31,6 +34,11 @@ export type MarchRigs = { kid: LoadedRig; bat: LoadedRig };
 const KID_H = 0.15;
 /** 行進の1歩（ms） */
 const STEP = 260;
+/** お菓子のバケツの幅（坊やの幅に対する割合） */
+const PAIL_W = 0.44;
+/** 1人ずつ撒く番の間隔（ms）と、1回の長さ（掲げる → ジタバタ → ひっくり返す → 下ろす） */
+const TURN_GAP = 720;
+const TURN_MS = 1150;
 /** 3人の並び（面の幅に対する、左端からの位置）と帽子・竿・小旗の色。左から しんがり・まんなか・先頭 */
 const TROOP = [
   { at: 0.21, hat: "hat_leaf", pole: "gripL" as const, flag: "#8E44FF" },
@@ -50,6 +58,9 @@ type Kid = {
   poleArm: "arm_l" | "arm_r" | null;
   /** 札の幅に対する立ち位置 */
   at: number;
+  /** 胸に抱えるお菓子のバケツ（足元から見た位置の箱。撒く番だけ出す）。顔より下に持つ（顔を隠さない・帯の上で切れない） */
+  pail: HTMLDivElement | null;
+  pailRig: RigHandle | null;
 };
 
 export function runMarch(
@@ -100,8 +111,34 @@ export function runMarch(
     h.root.style.top = `${-kb.b * s}px`;
     pose.appendChild(h.root);
     pos.style.opacity = "0";
-    return { spot, pos, pose, h, pole, poleArm: t.pole === "gripL" ? "arm_l" : t.pole === "grip" ? "arm_r" : null, at: t.at };
+    // お菓子のバケツ（頭の上。原点はバケツの底の真ん中）。バンクのマスコットと同じ絵なので、もう読めている
+    let pail: HTMLDivElement | null = null;
+    let pailRig: RigHandle | null = null;
+    if (rigs.bucket) {
+      const bb = rigBounds(rigs.bucket);
+      const sb = (kb.w * s * PAIL_W) / bb.w;
+      pailRig = buildRig(rigs.bucket, sb);
+      pailRig.swap("bucket", "full");
+      pail = div(pose, {
+        position: "absolute",
+        left: "0px",
+        top: `${-Y(KID_H) * 0.04}px`,
+        width: "0px",
+        height: "0px",
+        opacity: "0",
+        // 回すのはバケツの真ん中で（底で回すと、ひっくり返したときに顔へかぶさった）
+        transformOrigin: "0px 0px",
+      });
+      pailRig.root.style.left = `${-(bb.l + bb.w / 2) * sb}px`;
+      pailRig.root.style.top = `${-bb.b * sb}px`;
+      pail.appendChild(pailRig.root);
+    }
+    return { spot, pos, pose, h, pole, poleArm: t.pole === "gripL" ? "arm_l" : t.pole === "grip" ? "arm_r" : null, at: t.at, pail, pailRig };
   });
+  const pailH = rigs.bucket ? (() => {
+    const bb = rigBounds(rigs.bucket!);
+    return bb.h * ((kb.w * s * PAIL_W) / bb.w);
+  })() : 0;
   /** いまの立ち位置（舞台の px。足元） */
   const where = (k: Kid) => ({ x: W * k.at, y: footY() });
 
@@ -156,6 +193,91 @@ export function runMarch(
     "candy"
   );
 
+  /**
+   * お菓子を撒く番（`delay` ms 後から）。バケツを抱えて → ジタバタ（足をばたつかせ、体とバケツを
+   * 揺する）→ 外へひっくり返して撒く（お菓子はキャラ絵の後ろへ降る）→ 空になったバケツをしまう。
+   * `jitter` が false なら、ジタバタせずにすぐ撒く（3人いっしょの1回目）
+   */
+  const dropTurn = (k: Kid, delay: number, jitter = true, n = 12) => {
+    const pail = k.pail;
+    if (!pail || !k.pailRig) {
+      m.after(delay, () => {
+        const p = where(k);
+        candy.fountain(p.x, p.y - Y(KID_H) * 0.9, n, 0.15, X(0.03), 0, 0.3);
+      });
+      return;
+    }
+    const idx = kids.indexOf(k);
+    // 外側へ撒く（まんなかの子は、交互に左右）
+    const dir = idx === 0 ? -1 : idx === 2 ? 1 : (turnCount++ % 2 ? 1 : -1);
+    const shake = jitter ? 560 : 0;
+    const tipAt = 180 + shake;
+    m.after(delay, () => {
+      k.pailRig!.swap("bucket", "full");
+      // 撒く側（外）の手元に抱える。回す中心はバケツの真ん中
+      pail.style.left = `${dir * kb.w * s * 0.34}px`;
+      pail.style.transformOrigin = `0px ${(-pailH / 2).toFixed(1)}px`;
+      // 掲げる（ぽんっと出る）。竿を持っていない手を上げる
+      m.play(pail, [
+        { opacity: 0, transform: "scale(0.3)" },
+        { opacity: 1, transform: "scale(1.12)", offset: 0.6 },
+        { opacity: 1, transform: "scale(1)" },
+      ], { duration: 180, fill: "forwards", easing: EASE.out });
+      const arms: ["arm_l" | "arm_r", number][] = [];
+      if (k.poleArm !== "arm_l") arms.push(["arm_l", 1]);
+      if (k.poleArm !== "arm_r") arms.push(["arm_r", -1]);
+      for (const [a, d] of arms) {
+        m.play(k.h.part(a), [
+          { transform: "rotate(0deg)" },
+          { transform: `rotate(${d * 22}deg)`, offset: 0.15 },
+          { transform: `rotate(${d * 22}deg)`, offset: 0.85 },
+          { transform: "rotate(0deg)" },
+        ], { duration: TURN_MS, easing: "ease-in-out" });
+      }
+      if (jitter) {
+        // ジタバタ: 足を速くばたつかせ、体を左右に揺すり、バケツもガサガサ
+        const o = { duration: 90, iterations: Math.round(shake / 90), direction: "alternate" as const, delay: 160, easing: "ease-in-out" };
+        m.play(k.h.part("leg_l"), [{ transform: "rotate(-28deg)" }, { transform: "rotate(22deg)" }], o);
+        m.play(k.h.part("leg_r"), [{ transform: "rotate(22deg)" }, { transform: "rotate(-28deg)" }], o);
+        m.play(k.h.part("body"), [{ transform: "rotate(-6deg)" }, { transform: "rotate(6deg)" }], { ...o, duration: 110, iterations: Math.round(shake / 110) });
+        m.play(k.pose, [
+          { transform: "translateY(0px) scale(1, 1)" },
+          { transform: `translateY(${-X(0.012)}px) scale(0.97, 1.04)` },
+        ], { ...o, duration: 140, iterations: Math.round(shake / 140) });
+        k.h.swap("head", "open");
+      }
+      // ひっくり返す（外へ傾けて）→ お菓子が噴き出して、キャラ絵の後ろへ降る
+      m.play(pail, [
+        { transform: "scale(1) rotate(0deg)" },
+        ...(jitter ? [
+          { transform: "scale(1) rotate(-9deg)", offset: 0.12 },
+          { transform: "scale(1) rotate(9deg)", offset: 0.24 },
+          { transform: "scale(1) rotate(-9deg)", offset: 0.36 },
+          { transform: "scale(1) rotate(8deg)", offset: 0.48 },
+        ] : []),
+        { transform: "scale(1) rotate(0deg)", offset: tipAt / (tipAt + 420) },
+        { transform: `scale(1) rotate(${dir * 95}deg)`, offset: (tipAt + 180) / (tipAt + 420), easing: EASE.out },
+        { transform: `scale(1) rotate(${dir * 82}deg)` },
+      ], { duration: tipAt + 420, delay: 180, fill: "forwards" });
+      m.after(180 + tipAt + 140, () => {
+        const p = where(k);
+        candy.fountain(p.x + dir * (kb.w * s * 0.34 + pailH * 0.5), p.y - Y(KID_H) * 0.04 - pailH * 0.5, n, 0.18, X(0.03), dir, 0.4);
+        k.pailRig!.swap("bucket", "empty");
+        k.h.swap("head", "smile");
+      });
+      // 空のバケツをしまう
+      m.after(TURN_MS - 220, () => {
+        m.play(pail, [
+          { opacity: 1, transform: `scale(1) rotate(${dir * 82}deg)` },
+          { opacity: 0, transform: `scale(0.4) rotate(${dir * 30}deg)` },
+        ], { duration: 220, fill: "forwards", easing: EASE.in });
+      });
+    });
+  };
+  let turnCount = 0;
+  /** 撒く番が全部終わる時刻（この時計の ms）。滞在の小芸はそのあとから */
+  let roundEnd = 0;
+
   let stayTimer = 0;
   const on: Partial<Record<TimedCue["do"], (c: TimedCue) => void>> = {
     /* 左から行進してくる。3人とも同じ速さで、最後の 1 割で止まって少し行き過ぎて戻る */
@@ -202,10 +324,14 @@ export function runMarch(
       }
     },
 
-    // まんなかの子がお菓子を放る（上へ噴き上げて、札とキャラ絵の後ろへ降る）
+    /* 3人いっしょにバケツをひっくり返す → 1人ずつ2回ずつ（左・まんなか・右・左・まんなか・右）、
+       前の子が撒き終える前に次の子がジタバタを始める速さで */
     candyBurst: (c) => {
-      const p = where(kids[1]);
-      candy.fountain(p.x, p.y - Y(KID_H) * 0.8, c.n ?? 34, c.dur ?? 0.3, X(0.06), 0, 0.55);
+      const n = Math.max(8, Math.round((c.n ?? 34) / 3));
+      kids.forEach((k, i) => dropTurn(k, i * 60, false, n));
+      const first = TURN_MS - 300;
+      for (let r = 0; r < 6; r++) dropTurn(kids[r % 3], first + r * TURN_GAP, true, 10);
+      roundEnd = m.time() + first + 5 * TURN_GAP + TURN_MS;
     },
 
     stay: () => {
@@ -224,8 +350,9 @@ export function runMarch(
       // 5〜8秒おきに小芸。だれか1人が、竿を回す・ウインク・足踏み・お菓子を放って受ける
       const tricks = [twirl, wink, stomp, toss];
       let last = -1;
-      const next = () => {
-        stayTimer = m.after(range(Math.random, 5000, 8000), () => {
+      const next = (first = false) => {
+        const wait = range(Math.random, 5000, 8000);
+        stayTimer = m.after(first ? Math.max(0, roundEnd - m.time()) + wait * 0.4 : wait, () => {
           let i = Math.floor(Math.random() * tricks.length);
           if (i === last) i = (i + 1) % tricks.length;
           last = i;
@@ -233,7 +360,7 @@ export function runMarch(
           next();
         });
       };
-      next();
+      next(true);
     },
 
     // 締め: 3人で右へ行進して去る。こうもりが奥を横切る
@@ -286,13 +413,9 @@ export function runMarch(
   function stomp() {
     kids.forEach((k, i) => m.after(i * 110, () => walk(k, 4, 240)));
   }
+  /** だれか1人が、もう一度バケツを抱えてジタバタして撒く */
   function toss() {
-    const k = kids[1];
-    k.h.swap("head", "open");
-    hop(k, X(0.03));
-    const p = where(k);
-    candy.fountain(p.x, p.y - Y(KID_H) * 0.9, 4, 0.1, X(0.02), 0, 0.12);
-    m.after(700, () => k.h.swap("head", "smile"));
+    dropTurn(kids[Math.floor(Math.random() * 3)], 0, true, 8);
   }
 
   /**
