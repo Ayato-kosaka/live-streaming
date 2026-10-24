@@ -332,7 +332,73 @@ def set_schedule(t, at, probe=False):
             "utc": f"{want_date}T{hh}:{mm}:00Z"}
 
 
-def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False):
+def add_sound(t, title, artist):
+    """編集画面の「Sounds」で、曲名が title・歌い手が artist の音源を1本だけ敷いて保存する。
+
+    曲を動画に入れられない回（市販の曲。2026-10-24 の北欧×蜃気楼）は、TikTok の音源から付ける。
+    敷いた音源は動画の頭から、音源の頭から鳴る（ずらす手は置いていない。動画のほうを音源の拍に合わせて書き出す）。
+    曲名の行はいちばん上とは限らないので、字で当てる。当たらなければ何も押さずに止める
+    """
+    if not (click_text(t, "Sounds", "button,div[role=button]")):
+        return {"ok": False, "error": "no_sounds_button"}
+    time.sleep(5)
+    if has_text(t, "Got it", "button"):
+        click_text(t, "Got it", "button")
+        time.sleep(1)
+    box = "document.querySelector(\"input[placeholder='Search sounds']\")"
+    if not t.js(f"!!{box}"):
+        return {"ok": False, "error": "no_search_box"}
+    t.js(f"(() => {{ const i = {box}; i.focus(); i.select(); return 1; }})()")
+    t.call("Input.insertText", text=f"{artist} {title}")
+    key(t, "Enter", "Enter", 13)
+    time.sleep(6)
+    head = f"{title}\n"
+    # 行: 字が「<曲名>\n<長さ> · <歌い手>」で始まる、いちばん小さい要素
+    row = f"""[...document.querySelectorAll('div')].filter(e => e.offsetParent && (e.innerText || '').startsWith({json.dumps(head)})
+        && (e.innerText || '').split('\\n')[1]?.endsWith({json.dumps('· ' + artist)}))
+        .sort((a, b) => a.innerText.length - b.innerText.length)[0]"""
+    c = t.js(f"(() => {{ const e = {row}; if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + 40, r.y + r.height / 2, e.innerText.split('\\n').slice(0, 2).join(' / ')]; }})()")
+    if not c:
+        return {"ok": False, "error": "sound_not_found"}
+    log("sound row", c[2])
+    t.call("Input.dispatchMouseEvent", type="mouseMoved", x=c[0], y=c[1])
+    time.sleep(1.2)
+    # 行に載せると出る丸いボタンのうち、いちばん右が「＋」（足す）。左は保存・置き換え
+    plus = t.js(f"""(() => {{ const e = {row}; let p = e; for (let k = 0; k < 4 && p; k++) {{ const bs = [...p.querySelectorAll('button')].filter(b => b.offsetParent);
+        if (bs.length) {{ const b = bs.sort((a, b) => b.getBoundingClientRect().x - a.getBoundingClientRect().x)[0]; const r = b.getBoundingClientRect();
+        return [r.x + r.width / 2, r.y + r.height / 2]; }} p = p.parentElement; }} return null; }})()""")
+    if not plus:
+        return {"ok": False, "error": "no_add_button"}
+    for ty in ("mousePressed", "mouseReleased"):
+        t.call("Input.dispatchMouseEvent", type=ty, x=plus[0], y=plus[1], button="left", clickCount=1)
+    time.sleep(5)
+    shot(t, "tt_sound_added")
+    on_track = t.js(f"document.body.innerText.split('\\n').filter(s => s.trim() === {json.dumps(title)}).length")
+    if not click_text(t, "Save", "button"):
+        return {"ok": False, "error": "no_editor_save"}
+    time.sleep(6)
+    shot(t, "tt_sound_saved")
+    # 保存して戻った画面の、音の欄の字（前は「Original sound - …」）
+    shown = t.js(f"document.body.innerText.includes({json.dumps(title)})")
+    original = t.js("document.body.innerText.includes('Original sound')")
+    return {"ok": bool(shown) and not original, "row": c[2], "on_track_labels": on_track, "shown": shown, "original_left": original}
+
+
+def save_draft(t):
+    """「Save draft」を押して、下書きに入ったかを読む。投稿のボタンは押さない"""
+    if not has_text(t, "Save draft", "button"):
+        return {"ok": False, "error": "no_draft_button"}
+    click_text(t, "Save draft", "button")
+    for _ in range(30):
+        time.sleep(2)
+        u = t.url() or ""
+        if "/tiktokstudio/upload" not in u or re.search(r"Saved to drafts|下書きに保存|Draft saved", body(t)):
+            break
+    shot(t, "tt_draft_saved")
+    return {"ok": True, "at": where(t.url()), "toast": bool(re.search(r"Saved to drafts|下書きに保存|Draft saved", body(t)))}
+
+
+def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False, sound=None, draft=False):
     if not os.path.exists(mp4):
         raise RuntimeError(f"no file: {mp4}")
     first = caption.split("\n")[0]
@@ -400,6 +466,12 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False):
     log("pasted handled:", pasted, "| caption match:", norm == caption, "| entities:", mention)
     if norm != caption:
         log("GOT:", json.dumps(got, ensure_ascii=False))
+    if sound:
+        snd = add_sound(t, *sound)
+        log("sound", json.dumps(snd, ensure_ascii=False))
+        if not snd.get("ok"):
+            result(dict(snd, ok=False))
+            return
     if cover:
         # サムネイル（カバー）は題の札が見えるコマにする（あやと 2026-10-17）。コマを選ぶ窓より、
         # 書き出しから切り出した絵を上げるほうが、どのコマになるかが確か
@@ -461,6 +533,11 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False):
         info["schedule_fields"] = sc.get("after")
     if not ok or dry:
         result(dict(info, ok=ok and dry, error=None if ok else "not_ready", dry=dry))
+        return
+    if draft:
+        # 下書きで止める（あやとが音や字を見てから出す回）。投稿・予約のボタンは押さない
+        dr = save_draft(t)
+        result(dict(info, **dr, draft=True, sound=bool(sound)))
         return
     btn = """(document.querySelector('button[data-e2e="post_video_button"]') || [...document.querySelectorAll('button')].find(b => /^(Post|Schedule)$/.test((b.innerText || '').trim())))"""
     label = t.js(f"({btn}) ? ({btn}).innerText.trim() : null")
@@ -639,7 +716,9 @@ if __name__ == "__main__":
         at = args[args.index("--at") + 1] if "--at" in args else None
         cover = args[args.index("--cover") + 1] if "--cover" in args else None
         t = fresh_tab()
+        # --sound "<曲名>" "<歌い手>": TikTok の音源を敷く ／ --draft: 投稿せず下書きで保存
+        sound = (args[args.index("--sound") + 1], args[args.index("--sound") + 2]) if "--sound" in args else None
         post(t, args[0], open(args[1], encoding="utf-8").read(), dry="--dry" in args, at=at, cover=cover,
-             probe="--probe" in args)
+             probe="--probe" in args, sound=sound, draft="--draft" in args)
     else:
         sys.exit(__doc__)
