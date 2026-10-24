@@ -35,6 +35,7 @@ import {
   atTf,
   batsAcross,
   edgeDark,
+  fadeSides,
   fadeOut,
   flashOnce,
   gate,
@@ -122,7 +123,8 @@ export function runZombie(
   const items = new Items(a.items);
 
   // ---------------------------------------------------------------- 端の暗さ・閃光
-  const dark = edgeDark(L.dark, "rgba(40,0,44,0.76)", "rgba(14,0,18,0.97)");
+  fadeSides(L);
+  const dark = edgeDark(L.dark, "rgba(26,0,32,0.92)");
   let darkNow = 0;
   const darkTo = (to: number, ms: number) => {
     m.play(dark, [{ opacity: darkNow }, { opacity: to }], { duration: ms, easing: EASE.inOut, fill: "forwards" });

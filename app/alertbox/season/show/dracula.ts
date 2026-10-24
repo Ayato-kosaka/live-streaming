@@ -32,7 +32,7 @@ import { buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restOrigin } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, pathFrames, partImage, sparkle } from "./fx";
-import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, softDark, type ShowLayers } from "./layers";
 import { makePoseActor } from "./poseActor";
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
@@ -108,14 +108,14 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
   const darkPurple = div(darkBoxEl, {
     position: "absolute",
     inset: "0px",
-    background: edgeFade([[0, "rgba(20,4,36,0.95)"], [62, "rgba(14,2,26,0.9)"], [84, "rgba(10,0,20,0.45)"], [100, "rgba(10,0,20,0)"]]),
+    background: softDark("16,3,30", 0.94),
     opacity: "0",
   });
   /* 「昇格」の赤。マントばさっで紫と入れ替わる（いちばん上の段に来た合図） */
   const darkRed = div(darkBoxEl, {
     position: "absolute",
     inset: "0px",
-    background: edgeFade([[0, "rgba(120,0,24,0.92)"], [62, "rgba(70,0,14,0.88)"], [84, "rgba(40,0,8,0.45)"], [100, "rgba(40,0,8,0)"]]),
+    background: softDark("92,0,18", 0.92),
     opacity: "0",
   });
   const pulseEl = (rgb: string) =>

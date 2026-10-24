@@ -51,6 +51,15 @@ export function edgeFade(stops: [number, string][], at = "50% 48%"): string {
   return `radial-gradient(ellipse farthest-side at ${at}, ${s})`;
 }
 
+/**
+ * 前兆の暗さ（真ん中が濃く、箱の縁で 0）。**なめらかに**薄くする（真ん中から 4 割は同じ濃さ、
+ * そこから縁まで少しずつ）。6 割から急に薄くすると、暗い楕円の輪郭が配信の上に見えた
+ */
+export function softDark(rgb: string, a: number, at = "50% 48%"): string {
+  const k: [number, number][] = [[0, 1], [40, 1], [56, 0.88], [68, 0.7], [78, 0.5], [86, 0.3], [93, 0.13], [100, 0]];
+  return edgeFade(k.map(([p, f]) => [p, `rgba(${rgb},${(a * f).toFixed(3)})`]), at);
+}
+
 /** 振付けの中で使う小さな div（指の当たらない絶対配置の箱） */
 export function div(parent: HTMLElement, style: Partial<CSSStyleDeclaration>): HTMLDivElement {
   const d = document.createElement("div");

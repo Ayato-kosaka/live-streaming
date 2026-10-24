@@ -33,6 +33,7 @@ import {
   atTf,
   batsAcross,
   edgeDark,
+  fadeSides,
   fadeOut,
   flashOnce,
   gate,
@@ -96,7 +97,8 @@ export function runReaper(
   const items = new Items(a.items);
 
   // ---------------------------------------------------------------- 端の暗さ・閃光
-  const dark = edgeDark(L.dark, "rgba(18,6,28,0.74)", "rgba(6,2,12,0.97)");
+  fadeSides(L);
+  const dark = edgeDark(L.dark, "rgba(10,3,20,0.92)");
   let darkNow = 0;
   const darkTo = (to: number, ms: number) => {
     m.play(dark, [{ opacity: darkNow }, { opacity: to }], { duration: ms, easing: EASE.inOut, fill: "forwards" });

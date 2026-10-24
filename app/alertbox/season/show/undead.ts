@@ -13,7 +13,7 @@
 import { EASE, type Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
 import { makeBat, pathFrames, sparkle } from "./fx";
-import { div, edgeFade, outerBoxOf } from "./layers";
+import { div, outerBoxOf, softDark } from "./layers";
 import type { LoadedItems } from "./items";
 import type { LoadedPoses } from "./poses";
 import type { PoseActor } from "./poseActor";
@@ -102,18 +102,35 @@ export class Items {
   }
 }
 
+const rgbOf = (c: string) => (/rgba?\(([^)]+)\)/.exec(c)?.[1].split(",").slice(0, 3).join(",") ?? "0,0,0").replace(/\s/g, "");
+const alphaOf = (c: string) => Number(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/.exec(c)?.[1] ?? 1);
+
 /**
- * 前兆の暗さの層。opacity だけ動かす。**箱の縁へ向かって 0 に溶ける**楕円（真ん中から 6 割まで
- * `mid`、8 割で `edge`、縁で透明）。舞台ではなく箱いっぱいの外の箱に置く。縁がいちばん暗いと、
- * 画面いっぱいでないウィジェットの形が、配信の上に暗い四角になって浮いた（オーナーの指摘 2026-10-24）
+ * 前兆の暗さの層。opacity だけ動かす。**真ん中が濃く、箱の縁へ向かって 0 に溶ける**楕円
+ * （`softDark`。`color` は "rgba(r,g,b,a)"）。舞台ではなく箱いっぱいの外の箱に置く。前は真ん中を
+ * 空けて縁をいちばん暗くしていたので、画面いっぱいでないウィジェットの形が、配信の上に暗い四角に
+ * なって浮いた（オーナーの指摘 2026-10-24）
  */
-export function edgeDark(parent: HTMLElement, mid: string, edge: string): HTMLDivElement {
+export function edgeDark(parent: HTMLElement, color: string): HTMLDivElement {
   return div(outerBoxOf(parent), {
     position: "absolute",
     inset: "0px",
-    background: edgeFade([[0, mid], [60, mid], [80, edge], [100, "rgba(0,0,0,0)"]]),
+    background: softDark(rgbOf(color), alphaOf(color)),
     opacity: "0",
   });
+}
+
+/**
+ * 主役の奥と手前の小道具の層（霧・墓石・群れ）を、箱の左右の縁で溶かす。霧は箱より横に広く流れる
+ * ので、縁でまっすぐ切れて、画面いっぱいでないウィジェットの形が見えた。主役の層は溶かさない
+ * （帯の角で待つ主役が薄くならないように）
+ */
+export function fadeSides(L: { back: HTMLElement; mid: HTMLElement }) {
+  const m = "linear-gradient(90deg, rgba(0,0,0,0) 0%, #000 7%, #000 93%, rgba(0,0,0,0) 100%)";
+  for (const el of [outerBoxOf(L.back), outerBoxOf(L.mid)]) {
+    el.style.setProperty("mask-image", m);
+    el.style.setProperty("-webkit-mask-image", m);
+  }
 }
 
 /** 画面いっぱいの閃光。`peak` まで上げて消す */
