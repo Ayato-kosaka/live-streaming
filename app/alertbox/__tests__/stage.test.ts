@@ -161,8 +161,8 @@ describe("額 → 段 → 出し方", () => {
     expect(stageFor(halloween, 10000, 60, allRigs)!.show?.kind).toBe("dracula");
   });
 
-  it("期間中でも配信には出ていない（作り直しのお試し中）", () => {
-    expect(halloween.live).toBe(false);
+  it("作り直したハロウィンは配信に出ている（下ろしていない）", () => {
+    expect(halloween.live).not.toBe(false);
   });
 });
 
