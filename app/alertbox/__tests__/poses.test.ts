@@ -2,7 +2,7 @@
  * あやとの仮装のポーズ絵（`season/show/poses.ts`）。絵の担当が置いた本物の poses.json を読めて、
  * 振付けが名指しするポーズがそろっていること。
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parsePoses } from "../season/show/poses";
 
@@ -16,6 +16,15 @@ describe("ポーズ絵の約束", () => {
     expect(p.poses.fly.facing).toBe("right");
     expect(p.poses.cast.facing).toBe("right");
     expect(p.poses.idle.facing).toBe("left");
+  });
+
+  it("ドラキュラ: 起き上がる・マントを広げる・待機がそろう（段7の振付けが名指しする3枚）", () => {
+    const p = parsePoses(read("dracula"))!;
+    expect(Object.keys(p.poses).sort()).toEqual(["idle", "rise", "spread"]);
+    for (const d of Object.values(p.poses)) {
+      expect(Math.abs(d.face[2] - d.face[0] - p.faceW)).toBeLessThanOrEqual(p.faceW * 0.02);
+      expect(existsSync(join(dir, "dracula", d.file))).toBe(true);
+    }
   });
 
   it("どのポーズも顔の幅がそろっている（切り替えても顔の大きさが跳ねない）", () => {

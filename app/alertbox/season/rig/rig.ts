@@ -25,12 +25,9 @@
  *   左右の金具 `ringL` `ringR` を、2匹がつかんで吊るす）
  * - ghost（正面）: body（根）/ face{boo, smile, surprised} / hand_l / hand_r。`items` に lantern
  *   （かぼちゃのランタン。上が開いている）・lantern_lid（ふた）
- * - vlad（ななめ前）: torso（根）/ head / eyes{normal, wink, smile} / mouth{smirk, open, omega} /
- *   cape_l / cape_r（少し開いた形で描く。関節は肩。腕より奥）/ cape_inner（金の裏地。胴の奥）/
- *   collar / arm_goblet（杯を持つ腕）/ arm_ring（指輪の手）/ leg_l / leg_r
  * - props: coffin（根。奥の壁と中の赤）/ coins（中の金貨の山）/ coffin_front（手前の壁）/
- *   lid（ふた。関節は左の蝶番）。`items` に coin・moon と額縁の切れ端（frameCorner・
- *   frameEdgeH・frameEdgeV・frameBarH・frameBarV）、`frame` に額縁を組む座標
+ *   lid（ふた。関節は左の蝶番）。`items` に coin（金貨の雨・噴水の絵）。段7のあやとはポーズ絵
+ *   （`poses/dracula`）、古城と満月は小物（`items/dracula`）
  * - pumpkin_kid（正面）: body（根）/ head{smile, open, wink} / hat_stem / arm_l / arm_r /
  *   leg_l / leg_r。`items` に hat_pointy・hat_ribbon・hat_leaf・pole、`itemAnchors` に
  *   その絵の「かぶる点・握る点」、部品の上の目印 `hatOn`（head）・`grip`（arm_r）・`gripL`（arm_l）

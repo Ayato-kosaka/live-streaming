@@ -11,7 +11,7 @@
  *
  * ## 決まり（オーナー、2026-10-24。厳禁扱い）
  *
- * 演出の粒・光・主役（かぼちゃ坊や・魔法使い・伯爵など）は、滞在中（キャラ絵が出たあと）
+ * 演出の粒・光・主役（かぼちゃ坊や・魔法使い・ドラキュラなど）は、滞在中（キャラ絵が出たあと）
  * キャラ絵の顔（中身の外接矩形の上 45%）の前を通さない。登場の数秒（キャラ絵が出る前）は
  * 画面を使ってよい。
  *
@@ -22,7 +22,8 @@
  *
  * - `front` … キャラ絵より手前の演出の層（zIndex 2 以上）だけを描いた絵で、顔の矩形に色が乗った画素数
  * - `cover` … 顔の矩形のうち、キャラ絵が不透明な画素で、演出の層を全部消すと色が変わる画素数
- *   （手前の層がキャラ絵を塗っている）
+ *   （手前の層がキャラ絵を塗っている）。字の矩形の中は数えない（字は2枚のどちらにも描かれていて、
+ *   出てくる途中は2枚で数画素ずれることがある。字の前を通る演出は front に出る）
  *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
@@ -118,14 +119,14 @@ const videos = new Map(
    ふくらむ 0.85 秒までが登場で、終わりの 4 秒が締め。締めもキャラ絵は出ているので数える */
 const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
 /* 台本のある段（themes.ts）。段1 はちびおばけ・段2 は札を吊るすこうもり・段3 は行進
-   （段1〜3 はキャラ絵が最初から出ている）、段4 は魔法使い、段7 は伯爵 */
+   （段1〜3 はキャラ絵が最初から出ている）、段4 は魔法使い、段7 はドラキュラ */
 const SHOWS = {
   halloween: [
     [0, 200, "ghost"],
     [200, 500, "batSign"],
     [500, 1000, "march"],
     [1000, 2000, "wizard"],
-    [10000, Infinity, "vampire"],
+    [10000, Infinity, "dracula"],
   ],
 };
 const showOf = (a) => (SHOWS[theme] ?? []).find(([lo, hi]) => a >= lo && a < hi)?.[2] ?? null;
@@ -141,7 +142,8 @@ function framesFor(a) {
   const given = arg("frames", "");
   if (given) return given.split(",").map(Number);
   const d = alertSec(a);
-  if (showOf(a) === "vampire") return [8, 10, 16, 30, d - 3.4, d - 2.6, d - 1.6];
+  // ドラキュラ: キャラ絵は 6.5 秒から 0.85 秒でふくらむ。滞在、締めはマントで包んでこうもりの群れに
+  if (showOf(a) === "dracula") return [...every(7.5, d - 4), d - 3.4, d - 2.6, d - 1.6];
   // 魔法使い: キャラ絵は 4.3 秒から 0.85 秒でふくらむ。そこから滞在、締めは右上へ飛び去るところ
   if (showOf(a) === "wizard") return [5.3, ...every(6, d - 3), d - 2.6, d - 2.0, d - 1.4, d - 0.8];
   // 行進: キャラ絵は最初から出ているので、行進の途中も数える。締めは右へ去るところ
@@ -329,12 +331,14 @@ async function readRects(page) {
     const mark = box?.querySelector('[data-char="content"]');
     const video = box?.querySelector("video");
     if (video && getComputedStyle(video).opacity !== "0" && video.videoWidth > 0) {
-      // 動画は枠に contain・上寄せ（index.tsx）。中身はその矩形
+      /* 動画は枠に contain・真ん中（index.tsx の objectPosition 50% 50%）。中身はその矩形。
+         上寄せのつもりで測っていたころは、横長の動画で顔の矩形が枠の上へはみ出し、帯の中の
+         ランタンやこうもりを「顔に乗った」と数えていた */
       const r = video.getBoundingClientRect();
       const s = Math.min(r.width / video.videoWidth, r.height / video.videoHeight);
       const w = video.videoWidth * s;
       const h = video.videoHeight * s;
-      content = { l: r.left + (r.width - w) / 2, t: r.top, r: r.left + (r.width + w) / 2, b: r.top + h };
+      content = { l: r.left + (r.width - w) / 2, t: r.top + (r.height - h) / 2, r: r.left + (r.width + w) / 2, b: r.top + (r.height + h) / 2 };
       kind = "video";
     } else if (mark) {
       content = R(mark.getBoundingClientRect());
@@ -393,8 +397,17 @@ async function measureFrame(page, W, H, wantShow) {
     if (on) hits.push(i);
     return on;
   });
+  /* 字の矩形の中は cover に数えない。字は演出の層ではなく、2枚（全部・演出なし）のどちらにも描かれて
+     いるのに、出てくる途中の字は2枚で数画素ずれることがある（同じコマを撮り直すと 0 に戻る。
+     2026-10-24、段1 の「円」で 19 画素）。字の前を演出が通れば、手前の層なので front に出る */
+  const inPlate = (i) => {
+    if (!plate) return false;
+    const x = (i / 4) % A.width;
+    const y = Math.floor(i / 4 / A.width);
+    return x >= plate.l && x < plate.r && y >= plate.t && y < plate.b;
+  };
   const cover = count(A, face, (i) => {
-    if (C.data[i + 3] < 250) return false;
+    if (C.data[i + 3] < 250 || inPlate(i)) return false;
     const d = Math.max(Math.abs(A.data[i] - B.data[i]), Math.abs(A.data[i + 1] - B.data[i + 1]), Math.abs(A.data[i + 2] - B.data[i + 2]));
     if (d > 24) hits.push(i);
     return d > 24;
@@ -554,7 +567,7 @@ async function main() {
       const job = queue.shift();
       const r = await runOne(browser, job);
       // 絵を残す: 重なりのあったコマと、一覧に使う代表のコマ（滞在のまんなか）
-      const pickAt = { vampire: 16, march: 6, wizard: 9, ghost: 4.6, batSign: 5.2 }[showOf(r.amount)] ?? null;
+      const pickAt = { dracula: 15, march: 6, wizard: 9, ghost: 4.6, batSign: 5.2 }[showOf(r.amount)] ?? null;
       const pick = r.frames.find((f) => f.t === pickAt) ?? r.frames.at(-1) ?? null;
       for (const f of r.frames) {
         if (f === pick || bad(f) > 0) {

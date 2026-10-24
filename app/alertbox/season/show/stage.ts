@@ -42,12 +42,19 @@ export function stageFor(
   theme: SeasonTheme | null,
   yen: number,
   durationSec: number,
-  rigLoaded: (name: string) => boolean
+  loaded: (name: string, kind: "rig" | "pose" | "item") => boolean
 ): AlertStage | null {
   if (!theme) return null;
   const tier = tierFor(theme, yen);
-  // 切り絵とポーズ絵が全部読めているときだけ台本に乗る（名前は重ならない）
-  const show = tier.show && [...tier.show.rigs, ...(tier.show.poses ?? [])].every(rigLoaded) ? tier.show : null;
+  /* 切り絵・ポーズ絵・小物の組が全部展開できているときだけ台本に乗る。ポーズ絵と小物は
+     同じ仮装の名前（"dracula"）を使うので、どの種類かも渡す */
+  const s = tier.show;
+  const ready =
+    !!s &&
+    s.rigs.every((n) => loaded(n, "rig")) &&
+    (s.poses ?? []).every((n) => loaded(n, "pose")) &&
+    (s.items ?? []).every((n) => loaded(n, "item"));
+  const show = ready ? s : null;
   const cues = show ? resolveScript(show.script, durationSec) : null;
   const reveal = cues ? cueOf(cues, "reveal") : null;
   const revealSec = show && show.revealSec > 0 ? reveal?.t ?? show.revealSec : 0;

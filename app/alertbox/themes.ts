@@ -107,13 +107,15 @@ export type PlateStyle = {
 export type TierShow = {
   /**
    * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "batSign" 段2 こうもりの子 /
-   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "vampire" 段7 伯爵
+   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "dracula" 段7 ドラキュラのあやと
    */
-  kind: "ghost" | "batSign" | "march" | "wizard" | "vampire";
+  kind: "ghost" | "batSign" | "march" | "wizard" | "dracula";
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
   /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
   poses?: string[];
+  /** 使う小物の組（`itemsDir` の名前。古城・じゅうたん・紙吹雪…）。読めなければ同じく小物の演出に落ちる */
+  items?: string[];
   /**
    * その人のキャラ絵と読み上げを出す秒。**0 なら今どおり（すぐ）**。
    * 主役が「どうぞ」と見せる時刻に合わせる（台本の `reveal` と同じ秒）
@@ -281,34 +283,44 @@ const WIZARD: Cue[] = [
   { at: -3.0, do: "finale", dur: 2.6 },
 ];
 
-/** 吸血鬼の伯爵（段7、10,000円〜）の台本。秒の決め方は設計書 §3.5 の絵コンテ */
-const VAMPIRE: Cue[] = [
-  // 前兆。ほかのものは何も出ていない
+/**
+ * ドラキュラのあやと（段7、10,000円〜）の台本。いちばん上の段なので「超絶リッチ」:
+ * 紫の前兆 → 古城と満月 → 赤じゅうたんが転がって伸びる → 棺 → 起き上がる →
+ * **マントばさっ**（紫から赤へ。金の閃光・紙吹雪・花火）→ 数え上げ「ドン」→ その人の番
+ */
+const DRACULA: Cue[] = [
+  // 前兆（紫）。ほかのものは何も出ていない
   { at: 0.0, do: "darken", to: 0.82, dur: 0.4 },
   { at: 0.4, do: "pulse", n: 0.55 },
   { at: 0.8, do: "pulse", n: 1 },
   { at: 0.9, do: "batVortex", n: 20, dur: 0.6 },
   { at: 1.5, do: "flash" },
-  // 登場
-  { at: 1.6, do: "moonRise", dur: 0.7 },
-  { at: 1.8, do: "coffinDrop", dur: 0.3 },
-  { at: 2.1, do: "shake", dur: 0.25 },
-  { at: 2.1, do: "hitstop", dur: 0.08 },
-  { at: 2.4, do: "lidRattle", dur: 0.36 },
-  { at: 2.76, do: "lidOpen" },
-  { at: 2.76, do: "coinFountain", n: 70, dur: 0.7 },
-  { at: 3.0, do: "rise", dur: 0.6 },
-  { at: 3.6, do: "capeOpen", dur: 0.35 },
-  { at: 3.8, do: "glint" },
-  { at: 4.0, do: "plateIn", dur: 0.6 },
-  { at: 4.6, do: "count", dur: 1.2 },
-  { at: 4.6, do: "coinRain", n: 60, dur: 1.2 },
-  { at: 5.8, do: "don" },
-  { at: 5.8, do: "bow", dur: 0.7 },
-  // その人の番
-  { at: 6.5, do: "reveal", dur: 0.8 },
-  { at: 6.5, do: "retreat", to: 0.2, dur: 2.5 },
-  { at: 9.0, do: "stay" },
+  // 登場: 古城と満月 → 赤じゅうたん → 棺
+  { at: 1.6, do: "castleRise", dur: 0.7 },
+  { at: 1.75, do: "carpetRoll", dur: 0.6 },
+  // じゅうたんが敷き終わってから棺が落ちる
+  { at: 2.55, do: "coffinDrop", dur: 0.3 },
+  { at: 2.85, do: "shake", dur: 0.25 },
+  { at: 2.85, do: "hitstop", dur: 0.08 },
+  { at: 3.05, do: "lidRattle", dur: 0.36 },
+  { at: 3.41, do: "lidOpen" },
+  { at: 3.41, do: "coinFountain", n: 60, dur: 0.6 },
+  { at: 3.55, do: "rise", dur: 0.6 },
+  // マントばさっ（紫から赤へ）
+  { at: 4.2, do: "capeOpen", dur: 0.35 },
+  { at: 4.2, do: "hitstop", dur: 0.06 },
+  { at: 4.25, do: "confetti", n: 44, dur: 2.2 },
+  { at: 4.3, do: "fireworks", n: 3 },
+  { at: 4.4, do: "plateIn", dur: 0.6 },
+  { at: 4.45, do: "glint" },
+  { at: 4.9, do: "count", dur: 1.0 },
+  { at: 4.9, do: "coinRain", n: 50, dur: 1.0 },
+  { at: 5.9, do: "don" },
+  { at: 5.9, do: "fireworks", n: 2 },
+  // その人の番（字はキャラ絵の上下中央へ落ちる）。ヒットストップ2回（0.14 秒）ぶん後ろへずれて 6.5 秒
+  { at: 6.36, do: "reveal", dur: 0.8 },
+  { at: 6.36, do: "retreat", to: 0.16, dur: 2.5 },
+  { at: 8.9, do: "stay" },
   // 締め（終わりの4秒前から）
   { at: -4.0, do: "finale", dur: 4 },
 ];
@@ -557,14 +569,16 @@ export const THEMES: SeasonTheme[] = [
           nameSize: 104,
           amountSize: 150,
         },
-        /* 暗転 → 鼓動 → こうもりの渦 → 満月と棺 → 伯爵 → 金の額縁の札 → 数え上げ「ドン」。
-           小物（下の slots / files）は、部品が読めなかった日の控え */
+        /* 紫の前兆 → 古城と満月 → 赤じゅうたん → 棺 → ドラキュラのあやと（マントばさっで赤へ）→
+           数え上げ「ドン」。小物（下の slots / files）は、絵が読めなかった日の控え */
         show: {
-          kind: "vampire",
-          rigs: ["vlad", "bat", "props"],
+          kind: "dracula",
+          rigs: ["bat", "props"],
+          poses: ["dracula"],
+          items: ["dracula"],
           revealSec: 6.5,
-          headroom: 0.12,
-          script: VAMPIRE,
+          headroom: 0.2,
+          script: DRACULA,
         },
         slots: 10,
         files: [
@@ -648,6 +662,16 @@ export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
 export const rigDir = (th: SeasonTheme, name: string) => `${th.dir}/rig/${name}`;
 /** あやとの仮装のポーズ絵の置き場（`poses.json` と絵） */
 export const posesDir = (th: SeasonTheme, name: string) => `${th.dir}/poses/${name}`;
+
+/** 段の小物の置き場（`items.json` と絵） */
+export const itemsDir = (th: SeasonTheme, name: string) => `${th.dir}/items/${name}`;
+
+/** テーマが読む小物の組ぜんぶ */
+export function themeItems(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  th.tiers.forEach((t) => t.show?.items?.forEach((p) => out.add(p)));
+  return [...out];
+}
 
 /** テーマが読むポーズ絵の組ぜんぶ */
 export function themePoses(th: SeasonTheme): string[] {

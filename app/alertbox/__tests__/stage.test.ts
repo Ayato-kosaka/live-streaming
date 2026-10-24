@@ -12,7 +12,7 @@
  *   4. rig.json の読み方（壊れた組で組まない）と、入れ子で組んだときの描く順
  *   5. クロは 60秒のあいだに同じことを繰り返さない（芸が 5〜9秒おき・続けて同じ芸をしない）
  */
-import { THEMES, themeRigs, tierFor } from "../themes";
+import { THEMES, themeItems, themePoses, themeRigs, tierFor } from "../themes";
 import { stageFor, plateTiming } from "../season/show/stage";
 import { cueOf, resolveScript, scriptProblems, type Cue } from "../season/show/script";
 import { splitPlateText, plainLine } from "../season/plate/plateText";
@@ -143,7 +143,18 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("テーマが読む切り絵は、貯金箱と台本のある段のぶん", () => {
-    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid", "ghost"]));
+    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "props", "pumpkin_kid", "ghost"]));
+  });
+
+  it("段7はポーズ絵と小物も要る。ポーズ絵と小物は同じ名前（dracula）でも、種類ごとに見分ける", () => {
+    expect(themePoses(halloween)).toEqual(expect.arrayContaining(["wizard", "dracula"]));
+    expect(themeItems(halloween)).toEqual(["dracula"]);
+    // 小物の組だけ読めていない → 台本に乗らない（ポーズ絵の dracula が読めていても取り違えない）
+    const noItems = stageFor(halloween, 10000, 60, (n, kind) => !(kind === "item" && n === "dracula"))!;
+    expect(noItems.show).toBeNull();
+    const noPose = stageFor(halloween, 10000, 60, (n, kind) => !(kind === "pose" && n === "dracula"))!;
+    expect(noPose.show).toBeNull();
+    expect(stageFor(halloween, 10000, 60, allRigs)!.show?.kind).toBe("dracula");
   });
 
   it("期間中でも配信には出ていない（作り直しのお試し中）", () => {
@@ -162,14 +173,14 @@ describe("台本の時刻の並び", () => {
 
   it("時刻の順に並んでいて、前兆 → 登場 → 札 → ドン → その人の番 → 滞在 → 締め", () => {
     for (let i = 1; i < cues.length; i++) expect(cues[i].t).toBeGreaterThanOrEqual(cues[i - 1].t);
-    const order: Cue["do"][] = ["darken", "pulse", "batVortex", "flash", "moonRise", "coffinDrop", "lidOpen", "rise", "capeOpen", "plateIn", "count", "don", "reveal", "retreat", "stay", "finale"];
+    const order: Cue["do"][] = ["darken", "pulse", "batVortex", "flash", "castleRise", "carpetRoll", "coffinDrop", "lidOpen", "rise", "capeOpen", "plateIn", "count", "don", "reveal", "retreat", "stay", "finale"];
     const times = order.map(t);
     for (let i = 1; i < times.length; i++) expect(times[i]).toBeGreaterThanOrEqual(times[i - 1]);
   });
 
   it("前兆のあいだ（暗転から閃光まで）は、主役も札も出ていない", () => {
     expect(t("darken")).toBe(0);
-    expect(t("flash")).toBeLessThan(t("moonRise"));
+    expect(t("flash")).toBeLessThan(t("castleRise"));
     expect(t("flash")).toBeLessThan(t("plateIn"));
     expect(t("flash") - t("darken")).toBeGreaterThanOrEqual(1.2);
   });
@@ -191,7 +202,9 @@ describe("台本の時刻の並び", () => {
     expect(c45.t + (c45.dur ?? 0)).toBeCloseTo(45, 5);
     expect(t("finale")).toBeCloseTo(56, 5);
     // 止めたぶん遅れる時計で見るときは、その合計だけ手前（壁の時計で同じ所に来る）
-    expect(cueOf(resolveScript(show.script, 60, false), "finale")!.t).toBeCloseTo(56 - 0.08, 5);
+    const stopped = show.script.reduce((a, c) => a + (c.do === "hitstop" ? c.dur ?? 0 : 0), 0);
+    expect(stopped).toBeGreaterThan(0);
+    expect(cueOf(resolveScript(show.script, 60, false), "finale")!.t).toBeCloseTo(56 - stopped, 5);
   });
 
   it("対照: 数え終わりとドンがずれた台本は、決まり破りとして挙がる", () => {
@@ -292,7 +305,7 @@ describe("rig.json の読み方", () => {
 });
 
 /* 振付けが名指しする部品・差し替え・小物が、絵の担当の rig.json に揃っているか。
-   名前が食い違うと、その動きは黙って飛ばされる（壊れないが、伯爵が動かない） */
+   名前が食い違うと、その動きは黙って飛ばされる（壊れないが、主役が動かない） */
 describe("ハロウィンの部品の名前（振付けとの約束）", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const fs = require("fs") as typeof import("fs");
@@ -303,7 +316,7 @@ describe("ハロウィンの部品の名前（振付けとの約束）", () => {
   const ids = (name: string) => new Set(read(name).parts.map((p) => p.id));
   const swaps = (name: string, id: string) => Object.keys(read(name).parts.find((p) => p.id === id)?.swaps ?? {});
 
-  it.each(["kuro", "bucket", "bat", "vlad", "props"])("%s は読めて、絵が全部ある", (name) => {
+  it.each(["kuro", "bucket", "bat", "props", "ghost", "pumpkin_kid"])("%s は読めて、絵が全部ある", (name) => {
     const r = read(name);
     expect(r).not.toBeNull();
     for (const f of rigFiles(r)) expect(fs.existsSync(path.join(dir, name, f))).toBe(true);
@@ -311,24 +324,14 @@ describe("ハロウィンの部品の名前（振付けとの約束）", () => {
 
   /* クロは耳と脚の z が入れ子と全体で食い違うが、耳と脚は重ならないので描いた絵は同じ
      （入れ子と全体の順で組んで、画素の差 0 を確かめた）。重なる組だけを見る */
-  it.each(["bucket", "bat", "vlad", "props"])("%s は入れ子で組んでも描く順が変わらない", (name) => {
+  it.each(["bucket", "bat", "props"])("%s は入れ子で組んでも描く順が変わらない", (name) => {
     expect(zConflicts(read(name))).toEqual([]);
   });
 
-  it("伯爵", () => {
-    const v = ids("vlad");
-    for (const id of ["torso", "head", "eyes", "mouth", "cape_l", "cape_r", "cape_inner", "collar", "arm_goblet", "arm_ring", "leg_l", "leg_r"]) {
-      expect(v.has(id)).toBe(true);
-    }
-    expect(swaps("vlad", "eyes")).toEqual(expect.arrayContaining(["normal", "wink", "smile"]));
-    expect(swaps("vlad", "mouth")).toEqual(expect.arrayContaining(["smirk", "omega"]));
-  });
-
-  it("棺と小物・額縁", () => {
+  it("棺と金貨", () => {
     const p = read("props");
     for (const id of ["coffin", "coins", "coffin_front", "lid"]) expect(ids("props").has(id)).toBe(true);
-    for (const k of ["coin", "moon", "frameCorner", "frameEdgeH", "frameBarH", "frameBarV"]) expect(p.items[k]).toBeTruthy();
-    for (const k of ["cornerArmX", "cornerArmY", "barCenterX", "barCenterY"]) expect(Number.isFinite(p.frame[k])).toBe(true);
+    expect(p.items.coin).toBeTruthy();
   });
 
   it("こうもり・クロ・バケツ", () => {

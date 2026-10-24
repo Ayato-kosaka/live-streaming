@@ -5,7 +5,7 @@
  *
  *   dark   暗転・前兆の光（揺らさない）
  *   back   主役の奥（満月・魔法陣・光の筋・こうもりの渦）        ┐
- *   actor  主役（伯爵・魔法使いあやと・行進）                      ├ 揺らしてよい
+ *   actor  主役（ドラキュラ・魔法使いのあやと・行進）            ├ 揺らしてよい
  *   mid    主役の手前の小道具（棺など）                            ┘
  *   ── その人のキャラ絵（index.tsx）──
  *   front  粒（canvas）・きらめき・閃光（キャラ絵が出たら、キャラ絵の後ろへ下がる）
@@ -63,7 +63,7 @@ export function bandBottomOf(L: ShowLayers, W: number, H: number): number {
  * **札が動いている途中でも、止まったときの位置を返す。** 札は運ばれてくる途中（上へ 42vh
  * ずれている）や、ぽんっと膨らむ途中でも、置き場は決まっている。transform を含む
  * getBoundingClientRect で測ると、出る前の札は画面の上の外にいることになり、
- * 伯爵の背丈の天井（札の下の辺）を読み違える。札の枠（`data-plate="slot"`）からの
+ * 字のまわりに置くきらめきの位置を読み違える。札の枠（`data-plate="slot"`）からの
  * offset の和で、transform を含まない位置を出す
  */
 export function plateBoxOf(L: ShowLayers, W: number, H: number) {

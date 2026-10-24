@@ -17,7 +17,7 @@
  * 1. 開いたら**貯金箱の切り絵だけ**読んで展開する（`decode()` まで）。読めなければ前の
  *    コマ送りの貯金箱を読み、それも読めなければ豚
  * 2. 貯金箱が出て数秒おいてから、ほかの段の絵を順に**落とすだけ**（HTTP の控えに乗せる。
- *    展開はしない）。rig.json / poses.json はここで読んでおく
+ *    展開はしない）。rig.json / poses.json / items.json はここで読んでおく
  * 3. 投げ銭が来たら、**その段のぶんだけ**展開する（`ensureFor`。index.tsx がアラートの頭で待つ）。
  *    待つ上限を過ぎても展開が終わらなければ、その段は台本に乗らない（欠けた絵を出さない）
  *
@@ -31,12 +31,14 @@ import {
   THEMES,
   bankFrameUrl,
   fxUrl,
+  itemsDir,
   manifestUrl,
   readManifest,
   posesDir,
   rigDir,
   themeAt,
   themeFromParam,
+  themeItems,
   themePoses,
   themeRigs,
   tierFor,
@@ -47,6 +49,7 @@ import {
 import { parseRig, rigFiles, type RigDef } from "./rig/rig";
 import type { LoadedRig } from "./rig/RigView";
 import { parsePoses, type LoadedPoses, type PoseDef } from "./show/poses";
+import { parseItems, type ItemDef, type LoadedItems } from "./show/items";
 
 /** 読めた絵。大きさは実物から取る */
 export type LoadedImage = { url: string; width: number; height: number };
@@ -72,6 +75,8 @@ export type Season = {
   rigs: ReadonlyMap<string, LoadedRig>;
   /** 読めたポーズ絵の組（仮装の名前 → 組）。読めなかった組は入っていない */
   poses: ReadonlyMap<string, LoadedPoses>;
+  /** 読めた小物の組（仮装の名前 → 組）。読めなかった組は入っていない */
+  items: ReadonlyMap<string, LoadedItems>;
   /** 貯金箱の切り絵を一度は読みに行き終えたか（読めたかどうかは問わない） */
   rigsSettled: boolean;
   /**
@@ -177,6 +182,7 @@ function bankBox(
 
 type RigInfo = { def: RigDef; base: string };
 type PoseInfo = { base: string; faceW: number; poses: Record<string, PoseDef> };
+type ItemsInfo = { base: string; items: Record<string, ItemDef> };
 
 async function fetchJson(url: string): Promise<unknown> {
   try {
@@ -218,6 +224,21 @@ async function decodePoses(info: PoseInfo): Promise<LoadedPoses | null> {
   const imgs = await Promise.all(names.map((n) => loadImage(`${info.base}/${info.poses[n].file}`)));
   if (!imgs.every((v) => v)) return null;
   return { base: info.base, faceW: info.faceW, poses: new Map(names.map((n, i) => [n, { ...info.poses[n], img: imgs[i]! }])) };
+}
+
+/** 小物の組の約束（items.json）だけを読む */
+async function fetchItemsDef(th: SeasonTheme, name: string): Promise<ItemsInfo | null> {
+  const base = itemsDir(th, name);
+  const items = parseItems(await fetchJson(`${base}/items.json`));
+  return items ? { base, items } : null;
+}
+
+/** 小物の組を読んで展開する。1枚でも読めなければ null（欠けた古城・じゅうたんを出さない） */
+async function decodeItems(info: ItemsInfo): Promise<LoadedItems | null> {
+  const names = Object.keys(info.items);
+  const imgs = await Promise.all(names.map((n) => loadImage(`${info.base}/${info.items[n].file}`)));
+  if (!imgs.every((v) => v)) return null;
+  return { base: info.base, items: new Map(names.map((n, i) => [n, { ...info.items[n], img: imgs[i]! }])) };
 }
 
 /** 落とすだけ（HTTP の控えに乗せる。展開しない）。しくじっても何もしない */
@@ -268,6 +289,7 @@ export function useSeason(param: string | string[] | undefined): Season {
      index.tsx が使う）。描き直しのきっかけは `version` */
   const rigsRef = useRef(new Map<string, LoadedRig>());
   const posesRef = useRef(new Map<string, LoadedPoses>());
+  const itemsRef = useRef(new Map<string, LoadedItems>());
   const fxRef = useRef(new Map<string, LoadedImage>());
   const [version, setVersion] = useState(0);
   const bump = () => setVersion((v) => v + 1);
@@ -276,6 +298,7 @@ export function useSeason(param: string | string[] | undefined): Season {
     theme: SeasonTheme;
     rigDefs: Map<string, Promise<RigInfo | null>>;
     poseDefs: Map<string, Promise<PoseInfo | null>>;
+    itemDefs: Map<string, Promise<ItemsInfo | null>>;
     decoding: Map<string, Promise<boolean>>;
   } | null>(null);
 
@@ -291,13 +314,20 @@ export function useSeason(param: string | string[] | undefined): Season {
     if (!p) c.poseDefs.set(name, (p = fetchPoseDef(c.theme, name)));
     return p;
   };
-  /** 1つの組（切り絵・ポーズ絵・小物1枚）を展開する。同じものは一度だけ */
-  const decodeOne = (kind: "rig" | "pose" | "fx", name: string): Promise<boolean> => {
+  const itemDef = (name: string) => {
+    const c = ctlRef.current!;
+    let p = c.itemDefs.get(name);
+    if (!p) c.itemDefs.set(name, (p = fetchItemsDef(c.theme, name)));
+    return p;
+  };
+  /** 1つの組（切り絵・ポーズ絵・小物の組・小物1枚）を展開する。同じものは一度だけ */
+  const decodeOne = (kind: "rig" | "pose" | "item" | "fx", name: string): Promise<boolean> => {
     const c = ctlRef.current;
     if (!c) return Promise.resolve(false);
     const key = `${kind}:${name}`;
     if (kind === "rig" && rigsRef.current.has(name)) return Promise.resolve(true);
     if (kind === "pose" && posesRef.current.has(name)) return Promise.resolve(true);
+    if (kind === "item" && itemsRef.current.has(name)) return Promise.resolve(true);
     if (kind === "fx" && fxRef.current.has(name)) return Promise.resolve(true);
     let p = c.decoding.get(key);
     if (p) return p;
@@ -312,6 +342,12 @@ export function useSeason(param: string | string[] | undefined): Season {
         const info = await poseDef(name);
         const r = info && (await decodePoses(info));
         if (r && ctlRef.current === c) posesRef.current.set(name, r);
+        return !!r;
+      }
+      if (kind === "item") {
+        const info = await itemDef(name);
+        const r = info && (await decodeItems(info));
+        if (r && ctlRef.current === c) itemsRef.current.set(name, r);
         return !!r;
       }
       const img = await loadImage(fxUrl(c.theme, name));
@@ -329,6 +365,7 @@ export function useSeason(param: string | string[] | undefined): Season {
   useEffect(() => {
     rigsRef.current = new Map();
     posesRef.current = new Map();
+    itemsRef.current = new Map();
     fxRef.current = new Map();
     setRigsSettled(false);
     bump();
@@ -337,7 +374,7 @@ export function useSeason(param: string | string[] | undefined): Season {
       setBank(null);
       return;
     }
-    const ctl = { theme, rigDefs: new Map(), poseDefs: new Map(), decoding: new Map() };
+    const ctl = { theme, rigDefs: new Map(), poseDefs: new Map(), itemDefs: new Map(), decoding: new Map() };
     ctlRef.current = ctl;
     let alive = true;
     setBank("loading");
@@ -377,6 +414,10 @@ export function useSeason(param: string | string[] | undefined): Season {
         const info = await poseDef(n);
         if (info) for (const p of Object.values(info.poses)) urls.push(`${info.base}/${p.file}`);
       }
+      for (const n of themeItems(theme)) {
+        const info = await itemDef(n);
+        if (info) for (const p of Object.values(info.items)) urls.push(`${info.base}/${p.file}`);
+      }
       const fxFiles = new Set<string>(theme.fx.map((f) => f.file));
       theme.finale?.files.forEach((f) => fxFiles.add(f));
       for (const f of fxFiles) urls.push(fxUrl(theme, f));
@@ -410,6 +451,7 @@ export function useSeason(param: string | string[] | undefined): Season {
       const oks = await Promise.all([
         ...show.rigs.map((n) => decodeOne("rig", n)),
         ...(show.poses ?? []).map((n) => decodeOne("pose", n)),
+        ...(show.items ?? []).map((n) => decodeOne("item", n)),
       ]);
       if (oks.every(Boolean)) {
         bump();
@@ -431,6 +473,7 @@ export function useSeason(param: string | string[] | undefined): Season {
       fx: fxRef.current,
       rigs: rigsRef.current,
       poses: posesRef.current,
+      items: itemsRef.current,
       rigsSettled,
       ensureFor,
     }),

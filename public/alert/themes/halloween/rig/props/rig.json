@@ -7,6 +7,5 @@
   {"id": "coffin_front", "file": "coffin_front.png", "parent": "coffin", "pivot": [3.0, 3.0], "at": [3.0, 3.0], "z": 20},
   {"id": "lid", "file": "lid.png", "parent": "coffin", "pivot": [38.0, 99.0], "at": [58.0, 111.0], "z": 30}
  ],
- "items": {"coin": "coin.png", "moon": "moon.png", "frameCorner": "frame-corner.png", "frameEdgeH": "frame-edge-h.png", "frameEdgeV": "frame-edge-v.png", "frameBarH": "frame-bar-h.png", "frameBarV": "frame-bar-v.png"},
- "frame": {"cornerArmY": 30.5, "cornerArmX": 31.5, "barCenterY": 68.5, "barCenterX": 49.5}
+ "items": {"coin": "coin.png"}
 }

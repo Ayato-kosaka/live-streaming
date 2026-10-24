@@ -127,6 +127,11 @@ function plainPlate(type: NotificationData["type"]): PlateStyle {
  * アラートの頭がこのぶん遅れる。展開は 1 段ぶん（数枚）なので、ふつうは数十〜数百 ms
  */
 const DECODE_WAIT_MS = 1500;
+/**
+ * 試し表示の上限。試し表示は貯金箱が出た直後に偽の投げ銭を出すので、段の絵をまだ落としていない
+ * （本番は落とし終えたあとに投げ銭が来る）。録画・見張りで台本が撮れないと困るので長めに待つ
+ */
+const PREVIEW_DECODE_WAIT_MS = 8000;
 
 function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
   const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
@@ -901,7 +906,7 @@ export default function AlertBox() {
           }
           return ok;
         });
-      await Promise.race([ensured, new Promise((r) => setTimeout(r, DECODE_WAIT_MS))]);
+      await Promise.race([ensured, new Promise((r) => setTimeout(r, preview ? PREVIEW_DECODE_WAIT_MS : DECODE_WAIT_MS))]);
     }
     const nextStage = isMoney
       ? stageFor(
@@ -910,7 +915,7 @@ export default function AlertBox() {
             ? currentNotification.jpy
             : currentNotification.amount,
           adjustedAlertDuration,
-          (name) => sn.rigs.has(name) || sn.poses.has(name)
+          (name, kind) => (kind === "rig" ? sn.rigs : kind === "pose" ? sn.poses : sn.items).has(name)
         )
       : null;
     setStage(nextStage);
@@ -1132,6 +1137,7 @@ export default function AlertBox() {
                     show={stage.show}
                     rigs={season.rigs}
                     poses={season.poses}
+                    items={season.items}
                     durationSec={calculateAdjustedAlertDuration(notification)}
                     W={winW}
                     H={winH}

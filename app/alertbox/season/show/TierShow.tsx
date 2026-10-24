@@ -1,10 +1,10 @@
 /**
  * 段の演出（台本つき）を、アラートの面に重ねる。
  *
- * 層は React で置き、中身は振付け（`vampire.ts`）が組む。層の重なりはアラートの面の中で
+ * 層は React で置き、中身は振付け（`dracula.ts` など）が組む。層の重なりはアラートの面の中で
  * その人のキャラ絵（zIndex 1）と名前の札（zIndex 3）を挟むように決めてある:
  *
- *   0  暗転 / 満月 / 伯爵 / 棺（同じ 0 は書いた順。伯爵は退いたあと 4 に上がる）
+ *   0  暗転 / 古城と満月 / 主役 / 棺（同じ 0 は書いた順。主役は退いたあと 4 に上がる）
  *   1  その人のキャラ絵（index.tsx）
  *   2  金貨・きらめき・閃光（キャラ絵が出たら 0 へ下がる。滞在中は粒を顔の前に通さない）
  *   3  名前の札（index.tsx）
@@ -27,12 +27,13 @@ import React, { useEffect, useRef } from "react";
 import { Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
 import { resolveScript } from "./script";
-import { runVampire } from "./vampire";
+import { runDracula } from "./dracula";
 import { runMarch } from "./march";
 import { runWizard } from "./wizard";
 import { runGhost } from "./ghost";
 import { runBatSign } from "./batSign";
 import type { LoadedPoses } from "./poses";
+import type { LoadedItems } from "./items";
 import type { TierShow as TierShowDef } from "../../themes";
 
 type Props = {
@@ -40,6 +41,8 @@ type Props = {
   rigs: ReadonlyMap<string, LoadedRig>;
   /** あやとの仮装のポーズ絵（段4〜） */
   poses: ReadonlyMap<string, LoadedPoses>;
+  /** 段の小物（古城・じゅうたん・紙吹雪…。段7〜） */
+  items: ReadonlyMap<string, LoadedItems>;
   durationSec: number;
   W: number;
   H: number;
@@ -64,7 +67,7 @@ export function showReady(show: TierShowDef | undefined, rigs: ReadonlyMap<strin
   return !!show && show.rigs.every((r) => rigs.has(r));
 }
 
-export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H }) => {
+export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSec, W, H }) => {
   const dark = useRef<HTMLDivElement | null>(null);
   const back = useRef<HTMLDivElement | null>(null);
   const actor = useRef<HTMLDivElement | null>(null);
@@ -72,7 +75,7 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H
   const front = useRef<HTMLDivElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const top = useRef<HTMLDivElement | null>(null);
-  /** 暗転の層の外の箱（その親がアラートの面。札を探すのに使う）・伯爵の層の外の箱（重なりを上げる） */
+  /** 暗転の層の外の箱（その親がアラートの面。札を探すのに使う）・主役の層の外の箱（重なりを上げる） */
   const darkBox = useRef<HTMLDivElement | null>(null);
   const actorBox = useRef<HTMLDivElement | null>(null);
   const frontBox = useRef<HTMLDivElement | null>(null);
@@ -118,13 +121,13 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H
           STAGE_W,
           STAGE_H
         );
-      } else if (show.kind === "vampire") {
-        stop = runVampire(
+      } else if (show.kind === "dracula") {
+        stop = runDracula(
           m,
-          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
-          { vlad: rigs.get("vlad")!, bat: rigs.get("bat")!, props: rigs.get("props")! },
+          LL,
+          { pose: poses.get("dracula")!, items: items.get("dracula")!, bat: rigs.get("bat")!, props: rigs.get("props")! },
           // 時計がヒットストップで止まるので、ここではずらさない（二重になる）
-          resolveScript(show.script, durationSec, false),
+          script,
           STAGE_W,
           STAGE_H
         );
@@ -166,7 +169,7 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H
           <div ref={back} style={inner} />
         </div>
       </div>
-      {/* 伯爵は退いたあと札の上へ出る（この外側の箱の重なりを上げる） */}
+      {/* 主役は退いたあと字とキャラ絵より手前へ出る（この外側の箱の重なりを上げる） */}
       <div ref={actorBox} data-show="layer" aria-hidden style={{ ...full, zIndex: 0 }}>
         <div style={stage}>
           <div ref={actor} style={inner} />
