@@ -5,7 +5,7 @@
     python3 python/selftest_runner.py --list --json  # 同じものを機械で読む形で
     python3 python/selftest_runner.py --only-drill # 対照だけ回して帰る
     python3 python/selftest_runner.py path/to/a_selftest.py …  # 指定のものだけ（1本ずつ）
-    python3 python/selftest_runner.py --jobs 1     # 並べずに1本ずつ（既定は CPU の数だけ並べる）
+    python3 python/selftest_runner.py --jobs 1     # 並べずに1本ずつ（既定は CI で CPU の数・手元で2本）
 
 終了コード 0=ぜんぶ通った / 1=落ちたものがある /
 **2=数えるものが無い**（`docs/island-standards.md` §15）。
@@ -98,8 +98,9 @@ mjs が要るもの（実測で切り分け）:
 見張りが増えるたびに伸びて、PR #1031 の run では全部回す step が **17分**
 （job の上限 20分）になった。次に1本足すと上限に当たって取り消される。
 手元で1本ずつ回すと **実 14分 / user+sys 14分**——4コアのうち1つしか
-使っていなかった。だから**既定で CPU の数だけ並べる**（`--jobs` か
-`SELFTEST_JOBS` で変えられる。名指しで回すときは今までどおり1本ずつ）。
+使っていなかった。だから**CI では既定で CPU の数だけ並べる**。手元の作業箱は
+何人もが同時に使うので2本まで（`--jobs` か `SELFTEST_JOBS` で変えられる。
+名指しで回すときは今までどおり1本ずつ）。
 
 並べると、**同じものに書く2本が互いを壊す**（嘘の赤・嘘の緑）。
 全部の見張りを1本ずつ strace にかけて、どこへ書くかを控えてから決めた。
@@ -251,7 +252,13 @@ def default_jobs(named: bool) -> int:
         return max(1, int(raw))
     # 名指しで回すのは `shorts_selftest.yml`（書き出しの重い2本）と、対照を作るとき。
     # あちらは並べて確かめていないので、黙って並べない
-    return 1 if named else max(1, os.cpu_count() or 1)
+    if named:
+        return 1
+    # 手元の作業箱（4コア）は何人もの担当が worktree を分けて同時に使う。各自が4本ずつ並べると
+    # load average が跳ねて箱ごと止まりかける（CLAUDE.md「検証のしかた」の並列ビルドと同じ形）。
+    # CI のランナーは1人で使うので、CPU の数だけ並べる
+    cpus = max(1, os.cpu_count() or 1)
+    return cpus if os.environ.get("GITHUB_ACTIONS") == "true" else min(2, cpus)
 
 # **要約欄の行き先は、起動した時点で環境から取り上げる。**
 #
