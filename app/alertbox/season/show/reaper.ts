@@ -16,8 +16,8 @@
  * その人のキャラ絵が出たあとは、死神も鬼火もキャラ絵の顔の前を通らない（オーナーの決まり）:
  * 滞在は上の帯（`headroom`）の中だけ。帯に着いたら主役の層を帯の下の辺で切る。
  *
- * 層（`layers.ts`）: 端の暗さは dark、霧の奥は back、死神と奥を回る鬼火は actor、霧の手前は mid、
- * 鬼火（登場）・斬撃・閃光は front、字を切る光・手前を回る鬼火は top。
+ * 層（`layers.ts`）: 端の暗さは dark、霧の奥は back、死神は actor、霧の手前は mid、
+ * 鬼火（登場）・斬撃・閃光は front、字を切る光・待つあいだの鬼火は top。
  */
 import { EASE, range, type Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
@@ -122,8 +122,10 @@ export function runReaper(
 
   // ---------------------------------------------------------------- 鬼火
   type Wisp = { wrap: HTMLDivElement; flick: HTMLDivElement };
-  /** 鬼火1つ。原点が火の玉の真ん中。ずっと小さく揺らめく。絵がまだなら null */
-  const makeWisp = (parent: HTMLElement, w: number): Wisp | null => {
+  /**
+   * 鬼火1つ。原点が火の玉の真ん中。`flickMs` の周期で小さく揺らめく（0 なら揺らめかない）。絵がまだなら null
+   */
+  const makeWisp = (parent: HTMLElement, w: number, flickMs = 240): Wisp | null => {
     const wrap = div(parent, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
     const flick = div(wrap, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", transformOrigin: `0px ${(w * 0.35).toFixed(1)}px` });
     div(flick, {
@@ -139,20 +141,17 @@ export function runReaper(
       wrap.remove();
       return null;
     }
-    m.play(flick, [
-      { transform: "scale(1, 1) rotate(-4deg)" },
-      { transform: "scale(0.93, 1.08) rotate(4deg)" },
-    ], { duration: 240 + Math.random() * 140, iterations: Infinity, direction: "alternate", easing: "ease-in-out" });
+    if (flickMs > 0) {
+      m.play(flick, [
+        { transform: "scale(1, 1) rotate(-4deg)" },
+        { transform: "scale(0.93, 1.08) rotate(4deg)" },
+      ], { duration: flickMs + Math.random() * flickMs * 0.6, iterations: Infinity, direction: "alternate", easing: "ease-in-out" });
+    }
     return { wrap, flick };
   };
 
-  /** 傾いた楕円を回る keyframes。手前（下の半分）ほど大きく濃い。`side` で片側だけ見せる（奥と手前で2枚を重ねる） */
-  const orbitFrames = (
-    o: { rx: number; ry: number; tilt: number },
-    phase: number,
-    side: "both" | "front" | "back" = "both",
-    n = 24
-  ): Keyframe[] => {
+  /** 傾いた楕円を回る keyframes（原点が楕円の中心）。手前（下の半分）ほど大きく濃く、奥は小さく薄い */
+  const orbitFrames = (o: { rx: number; ry: number; tilt: number }, phase: number, n = 24): Keyframe[] => {
     const t = (o.tilt * Math.PI) / 180;
     const out: Keyframe[] = [];
     for (let j = 0; j <= n; j++) {
@@ -160,11 +159,9 @@ export function runReaper(
       const x = Math.cos(th) * o.rx;
       const y = Math.sin(th) * o.ry;
       const s = Math.sin(th);
-      const k = side === "back" ? 0.72 : side === "front" ? 1 : 0.8 + 0.2 * s;
-      const op = side === "both" ? 0.62 + 0.38 * s : side === "front" ? (s >= 0 ? 1 : 0) : s < 0 ? 0.85 : 0;
       out.push({
-        transform: `translate(${(x * Math.cos(t) - y * Math.sin(t)).toFixed(1)}px, ${(x * Math.sin(t) + y * Math.cos(t)).toFixed(1)}px) scale(${k.toFixed(3)})`,
-        opacity: op,
+        transform: `translate(${(x * Math.cos(t) - y * Math.sin(t)).toFixed(1)}px, ${(x * Math.sin(t) + y * Math.cos(t)).toFixed(1)}px) scale(${(0.8 + 0.2 * s).toFixed(3)})`,
+        opacity: 0.62 + 0.38 * s,
       });
     }
     return out;
@@ -203,9 +200,8 @@ export function runReaper(
   const plateEl = () => L.root.querySelector<HTMLElement>('[data-plate="box"]');
   const clip = (open: number) => `inset(-40% ${(100 - open * 106).toFixed(2)}% -40% ${(-open * 6).toFixed(2)}%)`;
 
-  // ---------------------------------------------------------------- 待つあいだの鬼火（奥と手前）
-  let orbitBack: HTMLDivElement | null = null;
-  let orbitFront: HTMLDivElement | null = null;
+  // ---------------------------------------------------------------- 待つあいだの鬼火
+  let orbitBox: HTMLDivElement | null = null;
   let stayTimer = 0;
 
   /** 鬼火が四方から弧を描いて、輪（ring）の持ち場へ集まる。着いたら輪ごと回って渦になる */
@@ -498,13 +494,10 @@ export function runReaper(
         { opacity: 1, transform: "scale(1)", offset: 0.45 },
         { opacity: 0, transform: "scale(1.25, 1.15)" },
       ], { duration: 1500, delay: 350, fill: "both", easing: "ease-out" });
-      for (const box of [orbitBack, orbitFront]) {
-        if (!box) continue;
-        m.play(box, [
-          { transform: "rotate(0deg) scale(1)", opacity: 1, easing: EASE.in },
-          { transform: "rotate(320deg) scale(0)", opacity: 0 },
-        ], { duration: 950, fill: "forwards" });
-      }
+      m.play(orbitBox, [
+        { transform: "rotate(0deg) scale(1)", opacity: 1, easing: EASE.in },
+        { transform: "rotate(320deg) scale(0)", opacity: 0 },
+      ], { duration: 950, fill: "forwards" });
       for (let i = 0; i < 6; i++) sparkle(m, L.top, now.x + (Math.random() - 0.5) * X(0.18), cy + (Math.random() - 0.5) * Y(0.08), X(0.07), 500 + i * 70, i % 2 ? LILAC : ORANGE);
       batsAcross(m, a.bat, L.back, 6, W, [Y(0.03), Y(0.14)], 700);
     },
@@ -541,30 +534,30 @@ export function runReaper(
     return { x: X(STAY_LEFT) + left, y: bandBottomOf(L, W, H) - X(0.004), k };
   }
 
-  /** 待つあいだの鬼火3つ。死神の腰のまわりの傾いた楕円を、奥（死神の後ろ）と手前を通って回る */
+  /**
+   * 待つあいだの鬼火3つ。死神の腰のまわりの傾いた楕円を回る。奥の半分は小さく薄く（奥にいるように）。
+   * 待つあいだは何十秒も回るので、鬼火は3つの箱だけを動かす（揺らめきもしない）。奥と手前で
+   * 写しを2枚ずつ重ねて本当に死神の後ろを通す形も作ったが、滞在の CPU が段7を上回った
+   * （49 対 45 ms/秒。鬼火の動きを止めると 41）ので、こちらにした
+   */
   function startStayOrbit() {
     const idle = a.poses.poses.get("idle");
     const midY = idle ? (idle.bottom[1] - (idle.content[1] + idle.content[3]) / 2) * actor.s0 * now.k : Y(STAY_H) / 2;
-    const cx = now.x;
-    const cy = now.y - midY * 1.04;
-    const box = (parent: HTMLElement, before?: Node) => {
-      const d = document.createElement("div");
-      Object.assign(d.style, { position: "absolute", left: `${cx.toFixed(1)}px`, top: `${cy.toFixed(1)}px`, width: "0px", height: "0px", pointerEvents: "none", opacity: "0" });
-      if (before) parent.insertBefore(d, before);
-      else parent.appendChild(d);
-      return d;
-    };
-    orbitBack = box(L.actor, gateBox);
-    orbitFront = box(L.top);
+    const box = div(L.top, {
+      position: "absolute",
+      left: `${now.x.toFixed(1)}px`,
+      top: `${(now.y - midY * 1.04).toFixed(1)}px`,
+      width: "0px",
+      height: "0px",
+      opacity: "0",
+    });
+    orbitBox = box;
     const o = { rx: X(STAY_ORBIT.rx), ry: Y(STAY_ORBIT.ry), tilt: STAY_ORBIT.tilt };
     for (let i = 0; i < 3; i++) {
-      const phase = i / 3;
-      const b = makeWisp(orbitBack, X(STAY_WISP_W));
-      const f = makeWisp(orbitFront, X(STAY_WISP_W));
-      if (b) m.play(b.wrap, orbitFrames(o, phase, "back"), { duration: STAY_ORBIT.ms, iterations: Infinity, easing: "linear" });
-      if (f) m.play(f.wrap, orbitFrames(o, phase, "front"), { duration: STAY_ORBIT.ms, iterations: Infinity, easing: "linear" });
+      const w = makeWisp(box, X(STAY_WISP_W), 0);
+      if (w) m.play(w.wrap, orbitFrames(o, i / 3), { duration: STAY_ORBIT.ms, iterations: Infinity, easing: "linear" });
     }
-    for (const el of [orbitBack, orbitFront]) m.play(el, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, fill: "forwards" });
+    m.play(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, fill: "forwards" });
   }
 
   // 小芸（滞在中）。どれも上の帯の中
@@ -583,10 +576,7 @@ export function runReaper(
     ], { duration: 640 });
   }
   function flare() {
-    for (const el of [orbitBack, orbitFront]) {
-      if (!el) continue;
-      m.play(el, [{ transform: "scale(1)" }, { transform: "scale(1.18)", offset: 0.4 }, { transform: "scale(1)" }], { duration: 900, easing: "ease-in-out" });
-    }
+    m.play(orbitBox, [{ transform: "scale(1)" }, { transform: "scale(1.18)", offset: 0.4 }, { transform: "scale(1)" }], { duration: 900, easing: "ease-in-out" });
     const top = pt("idle", [700, 120]);
     sparkle(m, L.top, top.x, top.y, X(0.07), 0, ORANGE);
     sparkle(m, L.top, top.x - X(0.05), top.y + X(0.03), X(0.05), 160, EMBER);
