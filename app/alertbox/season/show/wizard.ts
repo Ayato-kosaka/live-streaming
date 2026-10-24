@@ -6,8 +6,11 @@
  *
  *   金のきらめきが走る → 魔法陣が開く → ほうきで弧を描いて飛び込む（速さで傾き・止まり際に
  *   行き過ぎて戻る・星の尾）→ 杖を振り上げる（一瞬つぶして弾ける）→ 杖の先から光が飛んで
- *   札を書く → ドン → 札の右上へ飛んで小さくなり、待機の姿でふわふわ浮く（その人のキャラ絵が出る）
- *   → 締めは大きな弧を描いて右上へ飛び去る
+ *   札を書く → ドン → 右上の角へはけて小さくなり、待機の姿でふわふわ浮く。**魔法陣は残り**、
+ *   その人のキャラ絵は**魔法陣から召喚**されて出る → 滞在中は定期的に杖を振って**星を振りかける**
+ *   → 締めはキャラ絵が**魔法陣へ帰り**、あやとが真ん中へ戻って消える（`common.ts` の curtainCall）
+ *
+ * 魔法陣・あやとの着地の横の位置・字・キャラ絵は同じ中心（`centerOf`。オーナーのレビュー 2版目）。
  *
  * その人のキャラ絵が出たあとは、あやとも星もキャラ絵の顔の前を通らない（オーナーの決まり）:
  * 待機は札の上の余白（`headroom`）の中、粒の層はキャラ絵の後ろ、締めの弧は札より上だけを通る。
@@ -21,6 +24,7 @@ import { pathFrames, sparkle } from "./fx";
 import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
 import type { LoadedPoses } from "./poses";
 import { heroFaceMark } from "./poseActor";
+import { centerOf, curtainCall, every, stayAura } from "./common";
 
 export type WizardAssets = { poses: LoadedPoses };
 
@@ -31,11 +35,8 @@ const BIG_H = 0.4;
  * 上の帯（`headroom` 0.2）に浮く高さまで収まる
  */
 const STAY_W = 0.3;
-/**
- * 飛び込んで止まる所の横の位置（顔の中心。面の幅に対する割合）。高さは字のブロックから決める
- * （`hoverSpot`。主役の顔は字で隠さない）
- */
-const HOVER_X = 0.55;
+/** 魔法陣の直径（面の幅に対する割合）。中心はキャラ絵の真ん中 */
+const RING_D = 0.88;
 /** 杖の星の中心（絵の px。左右反転する前） */
 const WAND: Record<string, [number, number]> = { fly: [1000, 315], cast: [1015, 75], idle: [360, 657] };
 /** ほうきの穂の真ん中（星の尾を出す所。絵の px） */
@@ -213,20 +214,44 @@ export function runWizard(
     const whole = pb.t - X(0.02) - below;
     const faceOnly = pb.t - X(0.03) - faceBelow;
     const top = Y(0.012) + above;
-    return { x: X(HOVER_X), y: Math.min(faceOnly, Math.max(top, whole)) };
+    // 横はキャラ絵・字・魔法陣と同じ中心
+    return { x: centerOf(L, W, H).x, y: Math.min(faceOnly, Math.max(top, whole)) };
   };
 
-  // ---------------------------------------------------------------- 魔法陣（back。止まる所のまわり）
+  // ---------------------------------------------------------------- 魔法陣（back。キャラ絵の真ん中。滞在中も残る）
   const ring = div(L.back, {
     position: "absolute",
-    left: `${X(0.5) - X(0.44)}px`,
-    top: `${Y(0.25) - X(0.44)}px`,
-    width: `${X(0.88)}px`,
-    height: `${X(0.88)}px`,
+    left: `${X(0.5 - RING_D / 2)}px`,
+    top: `${Y(0.6) - X(RING_D / 2)}px`,
+    width: `${X(RING_D)}px`,
+    height: `${X(RING_D)}px`,
     opacity: "0",
   });
   ring.innerHTML = magicCircleSvg();
   const ringSpin = ring.firstElementChild as SVGElement | null;
+  // 回すのは合成のスレッドで（滞在中ずっと回るので、描き直させない）
+  if (ringSpin) ringSpin.style.willChange = "transform";
+  const placeRing = () => {
+    const c = centerOf(L, W, H);
+    ring.style.left = `${c.x - X(RING_D / 2)}px`;
+    ring.style.top = `${c.y - X(RING_D / 2)}px`;
+    return c;
+  };
+  /** 魔法陣の上に重ねる光（明るくするのは opacity で。filter は毎回描き直しになる） */
+  const ringGlow = div(ring, {
+    position: "absolute",
+    inset: "0px",
+    borderRadius: "50%",
+    background: `radial-gradient(circle, rgba(255,246,210,0.7) 0%, rgba(${GOLD},0.45) 35%, rgba(${VIOLET},0.25) 62%, rgba(${VIOLET},0) 72%)`,
+    opacity: "0",
+  });
+  /** 魔法陣がふっと明るくなる（召喚・星が届いたとき） */
+  const ringFlare = (k = 1.06, ms = 520) => {
+    m.play(ring, [{ transform: "scale(1)" }, { transform: `scale(${k})`, offset: 0.35 }, { transform: "scale(1)" }], { duration: ms, easing: "ease-out" });
+    m.play(ringGlow, [{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], { duration: ms, easing: "ease-out" });
+  };
+  let aura: ReturnType<typeof stayAura> | null = null;
+  let stopStay: (() => void) | null = null;
 
   // ---------------------------------------------------------------- 札を光で書く
   const plateEl = () => L.root.querySelector<HTMLElement>('[data-plate="box"]');
@@ -265,7 +290,7 @@ export function runWizard(
     // 魔法陣が開いて、ゆっくり回り出す
     circle: (c) => {
       const ms = (c.dur ?? 0.5) * 1000;
-      ring.style.top = `${hoverSpot().y + Y(0.04) - X(0.44)}px`;
+      placeRing();
       m.play(ring, [
         { opacity: 0, transform: "scale(0.2)" },
         { opacity: 1, transform: "scale(1.06)", offset: 0.7, easing: EASE.inOut },
@@ -379,11 +404,10 @@ export function runWizard(
       }
     },
 
-    /* 札の右上へ飛んで小さくなる。魔法陣は消える。着いたら待機の姿に切り替え、札より手前へ。
-       キャラ絵が出るのはこの途中（あやとは着くまでキャラ絵の後ろ） */
+    /* 右上の角へはけて小さくなる。魔法陣は残る（キャラ絵はここから召喚される）。着いたら待機の姿に
+       切り替え、札より手前へ。キャラ絵が出るのはこの途中（あやとは着くまでキャラ絵の後ろ） */
     retreat: (c) => {
       const ms = (c.dur ?? 0.8) * 1000;
-      m.play(ring, [{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(0.6)" }], { duration: ms * 0.6, fill: "forwards", easing: EASE.in });
       const to = staySpot();
       flyArc(to, [now.x + X(0.15), Math.min(now.y, to.y) - Y(0.08)], ms, { overshoot: X(0.02) });
       m.after(ms, () => {
@@ -392,9 +416,37 @@ export function runWizard(
       });
     },
 
-    // その人の絵が出る。粒の層をキャラ絵の後ろへ
+    /* その人の絵が魔法陣から召喚される: 魔法陣が明るくなり、光の柱が立ち、キャラ絵が真ん中から
+       ふくらむ（index.tsx）。粒の層はキャラ絵の後ろへ。段の光をキャラ絵の後ろに残す */
     reveal: () => {
       L.frontBox.style.zIndex = "0";
+      const c = placeRing();
+      ringFlare(1.1, 700);
+      aura = stayAura(m, L.back, c, X(0.5), "179,136,255", 0.42, 200);
+      L.back.insertBefore(aura.el, ring);
+      const pillar = div(L.back, {
+        position: "absolute",
+        left: `${c.x - X(0.2)}px`,
+        top: `${c.top}px`,
+        width: `${X(0.4)}px`,
+        height: `${c.y - c.top + X(0.2)}px`,
+        background: `linear-gradient(0deg, rgba(${GOLD},0) 0%, rgba(255,240,200,0.75) 40%, rgba(${VIOLET},0.35) 80%, rgba(${VIOLET},0) 100%)`,
+        borderRadius: `${X(0.2)}px`,
+        transformOrigin: "50% 100%",
+        opacity: "0",
+      });
+      const pa = m.play(pillar, [
+        { opacity: 0, transform: "scaleY(0.2)" },
+        { opacity: 1, transform: "scaleY(1)", offset: 0.35 },
+        { opacity: 0, transform: "scaleY(1.1)" },
+      ], { duration: 1100, easing: "ease-out" });
+      const rmp = () => pillar.remove();
+      if (pa) pa.finished.then(rmp, rmp);
+      else rmp();
+      for (let i = 0; i < 10; i++) {
+        const ang = (i / 10) * Math.PI * 2;
+        sparkle(m, L.front, c.x + Math.cos(ang) * X(0.36), c.y + Math.sin(ang) * X(0.36) * 0.5, X(0.08), 120 + i * 40, i % 2 ? VIOLET : GOLD);
+      }
     },
 
     stay: () => {
@@ -404,30 +456,40 @@ export function runWizard(
         { transform: `translateY(${-X(0.012)}px) rotate(-1.5deg)`, offset: 0.5 },
         { transform: "translateY(0px) rotate(0deg)" },
       ], { duration: 2600, iterations: Infinity, easing: "ease-in-out" });
-      // 6〜9秒おきに、手を振る（小さく揺らす）か、杖の星がきらめく
-      const next = () => {
-        stayTimer = m.after(range(Math.random, 6000, 9000), () => {
-          if (Math.random() < 0.6) wave();
-          else twinkle();
-          next();
-        });
-      };
-      next();
+      // 魔法陣はゆっくり回り続ける（キャラ絵の後ろ）。6〜8秒おきに杖を振って、キャラ絵へ星を振りかける
+      stopStay = every(m, 6000, 8000, (i) => {
+        if (i % 3 === 2) {
+          wave();
+          twinkle();
+        } else sprinkle();
+      }, 2200);
     },
 
-    // 締め: 飛ぶ姿に切り替えて、大きな弧で右上へ飛び去る（札より上だけを通る）
+    /* 締め: キャラ絵が魔法陣へ帰る（真ん中へ縮んで消える）→ あやとが飛ぶ姿で真ん中へ戻る →
+       魔法陣と光が消え、あやとも消える */
     finale: (c) => {
       const ms = (c.dur ?? 2.6) * 1000;
       if (stayTimer) m.clear(stayTimer);
-      aBob.getAnimations().forEach((x) => x.cancel());
-      popTo("fly", 300);
-      m.after(320, () => {
-        const to = { x: W + X(0.6), y: -Y(0.12), k: now.k * 1.15 };
-        // いったん左へ戻ってから、右上へ大きく（いまの高さより下へは行かない。帯の中）
-        flyArc(to, [now.x - X(0.45), now.y], ms - 320, {
-          ease: (t) => t * t * (3 - 2 * t),
-          trail: L.front,
-        });
+      stopStay?.();
+      const cc = centerOf(L, W, H);
+      ringFlare(1.08, 600);
+      curtainCall(m, L, {
+        ms,
+        hero: aPos,
+        exitScale: 0.15,
+        afterExit: () => {
+          aura?.fadeOut(600);
+          for (let i = 0; i < 6; i++) sparkle(m, L.top, cc.x + (Math.random() - 0.5) * X(0.2), cc.y + (Math.random() - 0.5) * X(0.1), X(0.08), i * 40, i % 2 ? VIOLET : GOLD);
+        },
+        toCenter: (mv) => {
+          aBob.getAnimations().forEach((x) => x.cancel());
+          popTo("fly", 280);
+          // 角から、上へふくらむ弧で真ん中へ。大きさは登場のときに戻す
+          flyArc({ x: cc.x, y: cc.y - Y(0.04), k: 1 }, [now.x - X(0.1), Math.min(now.y, cc.y) - Y(0.12)], mv, { overshoot: X(0.03), trail: L.top });
+          m.after(mv, () => {
+            m.play(ring, [{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(1.15)" }], { duration: ms * 0.3, fill: "forwards", easing: EASE.in });
+          });
+        },
       });
     },
   };
@@ -457,6 +519,39 @@ export function runWizard(
       { transform: "rotate(-3deg)", offset: 0.7 },
       { transform: "rotate(0deg)" },
     ], { duration: 900, easing: "ease-in-out" });
+  }
+  /** 杖の先から星が飛んで、キャラ絵のまわりへ降りる（キャラ絵の後ろの層。顔の前は通らない）。届くと魔法陣が光る */
+  function sprinkle() {
+    wave();
+    const tip = at(WAND);
+    const c = centerOf(L, W, H);
+    const n = 12;
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 1 : -1;
+      const tx = c.x + side * X(0.22 + Math.random() * 0.2);
+      const ty = c.top + (c.y - c.top) * (0.2 + Math.random() * 0.9);
+      const mote = div(L.front, {
+        position: "absolute",
+        left: `${-X(0.025)}px`,
+        top: `${-X(0.025)}px`,
+        width: `${X(0.05)}px`,
+        height: `${X(0.05)}px`,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(255,255,240,1) 0%, rgba(${i % 3 ? GOLD : VIOLET},0.85) 45%, rgba(${GOLD},0) 72%)`,
+        opacity: "0",
+      });
+      const d = 120 + i * 55;
+      const fa = m.play(mote, [
+        { transform: `translate(${tip.x}px, ${tip.y}px) scale(0.5)`, opacity: 1 },
+        { transform: `translate(${(tip.x + tx) / 2}px, ${Math.min(tip.y, ty) - X(0.05)}px) scale(1)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(${tx}px, ${ty}px) scale(0.5)`, opacity: 0 },
+      ], { duration: 900, delay: d, easing: "ease-in", fill: "backwards" });
+      const rm = () => mote.remove();
+      if (fa) fa.finished.then(rm, rm);
+      else rm();
+      sparkle(m, L.front, tx, ty, X(0.07), d + 850, i % 2 ? VIOLET : GOLD);
+    }
+    m.after(120 + n * 55 + 850, () => ringFlare());
   }
   function twinkle() {
     const tip = at(WAND);

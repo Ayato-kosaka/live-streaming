@@ -108,7 +108,7 @@ export function every(m: Motion, min: number, max: number, fn: (i: number) => vo
 }
 
 /** 締めでキャラ絵と字を消す（`ms` かけて）。index.tsx の要素を、アニメ（WAAPI）で薄くするだけ */
-export function viewerExit(m: Motion, L: ShowLayers, ms: number, extra: { scale?: number; origin?: { x: number; y: number } } = {}) {
+export function viewerExit(m: Motion, L: ShowLayers, ms: number, extra: { scale?: number } = {}) {
   const box = L.root.querySelector<HTMLElement>('[data-char="box"]');
   const slot = L.root.querySelector<HTMLElement>('[data-plate="slot"]');
   const k = extra.scale ?? 0.92;
@@ -135,12 +135,14 @@ export function curtainCall(
     hero: HTMLElement;
     toCenter: (ms: number) => void;
     exitMs?: number;
+    /** キャラ絵が消えるときの縮み（段4は魔法陣へ帰るので小さく） */
+    exitScale?: number;
     /** キャラ絵が消えたあとに呼ぶ（オーラ・オブジェを消すなど） */
     afterExit?: () => void;
   }
 ) {
   const exitMs = o.exitMs ?? Math.min(600, o.ms * 0.22);
-  viewerExit(m, L, exitMs);
+  viewerExit(m, L, exitMs, { scale: o.exitScale });
   const moveMs = Math.max(300, o.ms * 0.38);
   const fadeMs = Math.max(250, o.ms * 0.24);
   m.after(exitMs, () => {
