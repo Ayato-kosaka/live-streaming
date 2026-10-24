@@ -8,7 +8,7 @@
     python3 .claude/skills/ec2-chrome/ec2.py stop [--force]   # 使っている人が居れば止めずに理由を出して 1（下の「止める前に見るもの」）
     python3 .claude/skills/ec2-chrome/ec2.py guard            # 誰も使っていなければ EC2 がひとりでに止まる見張りと、
                                                               # 遠隔デスクトップの本物の入力の見張り（desktop_input.py）と、
-                                                              # 順番待ち（ec2-queue）と cdp.py を入れ直す
+                                                              # 順番待ち（ec2-queue）と cdp.py の正の版・戻す見張り（cdp-heal）を入れ直す
     python3 .claude/skills/ec2-chrome/ec2.py hold <列> --who 誰 --purpose 何のため [--wait 秒] [--ttl 秒] -- <コマンド…>
                                                               # 列の札を取ってコマンドを回し、終わったら必ず返す（下の「札」）
     python3 .claude/skills/ec2-chrome/ec2.py queue            # いま誰が何を持ち、誰が待っているか
@@ -27,6 +27,10 @@ EC2 へのポート転送（ssm:StartSession）も権限が無い。S3 も無い
 公開物と同じもの（cdp.py のような道具・スクリプト・設定の JSON）だけ。
 **秘密や動画は送らない。** それは `tools/shorts/post/send.py put`（GCS の署名付き URL を EC2 が
 curl で落とす。SSM のコマンドに載るのは URL だけ）。動画の拡張子はここで断る。
+
+**`/home/ubuntu/cdp/cdp.py` へ置くときは、EC2 の版のほうが新しければ置かない**（`cdp.py` の頭「版の番号」）。
+一時ファイルに書いてから、`cdp_heal.sh` の place を字ごと送ってその場で比べる（EC2 に `cdp-heal` が
+まだ無くても効く）。置かなかったときは理由を出して戻る（落とさない。EC2 の新しい版で続ければよい）。
 
 ## 止める前に見るもの（stop）
 
@@ -81,6 +85,12 @@ DESKTOP_BUSY_MS = 420000     # 遠隔デスクトップの本物の入力がこ�
 CHECK_TIMEOUT = 60           # 確かめの1回。前のコマンドが居座っていると始まらず、答えが無いまま切れる
 QUEUE = "/usr/local/sbin/ec2-queue"   # 順番待ち（ec2_queue.py）。guard が置く
 QUEUE_DIR = "/var/lib/ec2-queue"
+# cdp.py の生きている置き場・正の版（root だけが書ける）・戻す見張り（cdp_heal.sh）。置き場の名前は cdp_heal.sh の頭と同じ
+CDP_LIVE = f"{EC2_HOME}/cdp/cdp.py"
+CDP_CANON = "/usr/local/lib/ec2-chrome/cdp.py"
+CDP_HEAL = "/usr/local/sbin/cdp-heal"
+HEAL_EOF = "CDP_HEAL_SH_EOF"
+PART = 40000                 # put の1片（send-command の引数は 64KB まで）
 QMARK = "EC2Q"                         # ec2-queue --json の答えの行の頭
 STOPPING = "EC2-QUEUE: STOPPING"       # run() の頭が、止める印を見て何もせずに戻ったときの1行
 TTL = 600                    # 手元の札の期限（心拍が途切れてから）。ec2_queue.py の TTL と同じ
@@ -178,46 +188,88 @@ def get(remote: str, local: str):
 VIDEO = (".mp4", ".mov", ".m4v", ".webm", ".mkv")
 
 
+def heal_sh(*args) -> str:
+    """cdp_heal.sh の字をそのまま送って、EC2 の上でその場で回す sh（EC2 に cdp-heal がまだ無くても効く）。
+    置いてある cdp-heal を呼ばずに字で送るのは、手元の版の比べかたで比べるためと、偽の EC2 の置き場の
+    差し替えが中まで届くように（自己テスト）"""
+    body = open(os.path.join(HERE, "cdp_heal.sh"), encoding="utf-8").read().rstrip("\n")
+    if HEAL_EOF in body:
+        sys.exit(f"cdp_heal.sh に {HEAL_EOF} の字がある（ヒアドキュメントの終わりと取り違える）")
+    return f"sh -s {' '.join(shlex.quote(str(a)) for a in args)} <<'{HEAL_EOF}'\n{body}\n{HEAL_EOF}\n"
+
+
 def put(local: str, remote: str):
+    """手元のファイルを EC2 へ送る。戻り値は置いたか（cdp.py で EC2 の版のほうが新しく、置かなかったときだけ False）"""
     # 中身が SSM のログに残るので、動画はここを通さない（上の「put で送ってよいもの」）
     if os.path.splitext(local)[1].lower() in VIDEO:
         sys.exit(f"put は動画を送らない（中身が SSM のログに残る）: {local}\n"
                  "  → python3 tools/shorts/post/send.py put <手元> <EC2>")
     data = open(local, "rb").read()
     b64 = base64.b64encode(data).decode()
-    # send-command の引数は 64KB まで。40,000 字ずつ番号付きの片に書き、8本並べて送る
-    # （順に足していくと 1MB で5分かかった）。最後に番号順につなぐ
-    from concurrent.futures import ThreadPoolExecutor
-    run(f"rm -rf '{remote}.parts' && mkdir -p '{remote}.parts'", 30, quiet=True)
-    offs = list(range(0, len(b64), 40000))
-    def one(i):
-        for _ in range(3):
-            st, _ = run(f"printf '%s' '{b64[offs[i]:offs[i] + 40000]}' > '{remote}.parts/{i:05d}'", 60, quiet=True)
-            if st == "Success":
-                return
-        sys.exit(f"part {i} failed")
-    with ThreadPoolExecutor(8) as ex:
-        list(ex.map(one, range(len(offs))))
-    run(f"cat '{remote}.parts'/* > '{remote}.b64' && rm -rf '{remote}.parts'", 60, quiet=True)
-    st, out = run(f"base64 -d '{remote}.b64' > '{remote}' && rm -f '{remote}.b64' && chmod 644 '{remote}' && sha256sum '{remote}' | cut -c1-64", 60, quiet=True)
-    if out.strip() != hashlib.sha256(data).hexdigest():
-        sys.exit("sha256 mismatch on put")
+    # cdp.py の生きている置き場は、一時ファイルに書いてから版を比べて置く（下げない。上の「put で送ってよいもの」）
+    live = os.path.normpath(remote) == CDP_LIVE
+    dst = f"{remote}.put.{os.getpid()}" if live else remote
+    if len(b64) <= PART:
+        # 1片で収まるもの（道具はほぼ全部）は1回で送る。片に割ると send-command が4回になる
+        write = f"mkdir -p \"$(dirname '{remote}')\" && printf '%s' '{b64}' | base64 -d > '{dst}'"
+    else:
+        # send-command の引数は 64KB まで。40,000 字ずつ番号付きの片に書き、8本並べて送る
+        # （順に足していくと 1MB で5分かかった）。最後に番号順につなぐ
+        from concurrent.futures import ThreadPoolExecutor
+        run(f"rm -rf '{remote}.parts' && mkdir -p '{remote}.parts'", 30, quiet=True)
+        offs = list(range(0, len(b64), PART))
+        def one(i):
+            for _ in range(3):
+                st, _ = run(f"printf '%s' '{b64[offs[i]:offs[i] + PART]}' > '{remote}.parts/{i:05d}'", 60, quiet=True)
+                if st == "Success":
+                    return
+            sys.exit(f"part {i} failed")
+        with ThreadPoolExecutor(8) as ex:
+            list(ex.map(one, range(len(offs))))
+        run(f"cat '{remote}.parts'/* > '{remote}.b64' && rm -rf '{remote}.parts'", 60, quiet=True)
+        write = f"base64 -d '{remote}.b64' > '{dst}' && rm -f '{remote}.b64'"
+    want = hashlib.sha256(data).hexdigest()
+    if live:
+        st, out = run(f"{write} && echo WROTE", 60, quiet=True)
+        if "WROTE" not in out.split():
+            sys.exit(f"put failed (ssm {st}): {out.strip()[-300:]}")
+        st, out = run(heal_sh("place", dst), 60, quiet=True)
+        words = next((ln.split() for ln in out.splitlines() if ln.split()[:1] in (["PLACED"], ["KEPT"])), [])
+        if words[:1] == ["KEPT"]:
+            kv = dict(w.split("=", 1) for w in words[1:] if "=" in w)
+            print(f"put: EC2 の cdp.py は版 {kv.get('ec2')} で、手元（版 {kv.get('local')}）より新しい。"
+                  f"下げないので置かなかった（{local} -> {remote}）")
+            return False
+        if words[:1] != ["PLACED"] or words[-1] != want:
+            sys.exit(f"put: cdp.py を置けなかった（ssm {st}）: {out.strip()[-300:]}")
+    else:
+        st, out = run(f"{write} && chmod 644 '{remote}' && sha256sum '{remote}' | cut -c1-64", 60, quiet=True)
+        if out.strip() != want:
+            sys.exit("sha256 mismatch on put")
     print(f"put {local} -> {remote} ({len(data)} bytes)")
+    return True
 
 
 def guard():
     """idle_stop.sh を EC2 に置き、root の cron で5分ごとに回す（ec2-chrome の SKILL.md 2）。
     desktop_input.py も置いて systemd で起こす（投稿の GUARD と idle-stop が「あやとが触っているか」を聞く先）。
     順番待ち（ec2_queue.py → ec2-queue）と、その札を自分で取る cdp.py も置く。
+    cdp.py は root だけが書ける置き場に**正の版**として置き（今の正の版より小さければ置かない）、生きている置き場
+    （/home/ubuntu/cdp/cdp.py）へは版を比べて写す。生きている版が正の版より小さくなったら戻す見張り
+    （cdp_heal.sh → cdp-heal。systemd の .path と5分ごとの cron）も入れる（cdp.py の頭「版の番号」）。
     セッションは唐突に切れるので、止めるのを手元に頼らない。何度入れ直してもよい。
     **置くのは .new に書いてから mv。** cron が5分ごとに idle-stop を起こすので、書いている途中の字を sh が読まないように"""
     items = [("idle_stop.sh", "/usr/local/sbin/idle-stop"), ("desktop_input.py", DESKTOP_INPUT),
-             ("ec2_queue.py", QUEUE), ("cdp.py", f"{EC2_HOME}/cdp/cdp.py")]
+             ("ec2_queue.py", QUEUE), ("cdp_heal.sh", CDP_HEAL)]
     for src, dst in items:
         put(os.path.join(HERE, src), dst + ".new")
+    put(os.path.join(HERE, "cdp.py"), CDP_CANON + ".new")
     mv = " && ".join(f"mv -f {d}.new {d}" for _, d in items)
-    st, out = run(f"chmod 755 /usr/local/sbin/idle-stop.new {DESKTOP_INPUT}.new {QUEUE}.new && "
-                  f"chown ubuntu:ubuntu {EC2_HOME}/cdp/cdp.py.new && {mv} && "
+    st, out = run(f"chmod 755 /usr/local/sbin/idle-stop.new {DESKTOP_INPUT}.new {QUEUE}.new {CDP_HEAL}.new && {mv} && "
+                  # 正の版を置いてから（下げない）、生きている置き場へ版を比べて写し、見張りを入れて1回確かめる
+                  f"mkdir -p {EC2_HOME}/cdp && cp {CDP_CANON}.new {CDP_LIVE}.guard && "
+                  f"{CDP_HEAL} canon {CDP_CANON}.new && {CDP_HEAL} place {CDP_LIVE}.guard && "
+                  f"{CDP_HEAL} install && {CDP_HEAL} check guard && "
                   f"install -d -m 2775 -o root -g ubuntu {QUEUE_DIR} && "
                   "(command -v xprintidle >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q xprintidle >/dev/null 2>&1); "
                   "(command -v xinput >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q xinput >/dev/null 2>&1); "
@@ -226,8 +278,8 @@ def guard():
                   "chmod 644 /etc/cron.d/idle-stop && "
                   "echo armed=$([ -f /etc/idle-stop/armed ] && echo yes || echo no) && "
                   "echo cron: $(grep idle-stop /etc/cron.d/idle-stop) && "
-                  f"echo queue: $(stat -c '%A %U:%G' {QUEUE_DIR}) && {QUEUE} list && "
-                  "tail -3 /var/log/idle-stop.log 2>/dev/null", 300, quiet=True, raw=True)
+                  f"echo queue: $(stat -c '%A %U:%G' {QUEUE_DIR}) && {QUEUE} list && {CDP_HEAL} status && "
+                  "tail -3 /var/log/idle-stop.log 2>/dev/null; tail -3 /var/log/cdp-heal.log 2>/dev/null", 300, quiet=True, raw=True)
     print(out.strip())
 
 
