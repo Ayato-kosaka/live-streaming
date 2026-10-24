@@ -45,23 +45,23 @@ import {
 export type ReaperAssets = { poses: LoadedPoses; bat: LoadedRig };
 
 /**
- * 現れる姿（appear）の高さ。面の高さの 0.44（段4の魔法使いの飛ぶ姿 0.4 より大きい）。
- * 霧と斬撃まで入れて面の 6 割に広がる
+ * 現れる姿（appear）の高さの上限。面の高さの 0.44（段4の魔法使いの飛ぶ姿 0.4 より大きい）。
+ * 字のブロックの上に入りきらなければ縮める（`stand`）。霧と斬撃まで入れて面の 6 割に広がる
  */
 const BIG_H = 0.44;
 /**
- * 立つ所（足元。面に対する割合）。顔の中心が面の 0.4 あたりに来る高さ。字（キャラ絵の上下中央、
- * 面の 0.47〜0.71）が出ても、顔には掛からない
+ * 足元の置き場の上下の限り（面に対する割合）。実際の足元は字のブロックの上端のすぐ上（`stand`）。
+ * 上は面の上の端から 3% を空ける
  */
-const STAND = { x: 0.5, feet: 0.7 };
-/** 鬼火が集まって渦を巻く所（死神が現れる所）と、その輪の半径（面の幅に対する割合） */
-const GATHER = { x: 0.5, y: 0.47, r: 0.1 };
+const FEET = { min: 0.4, max: 0.62, top: 0.03 };
+/** 鬼火が集まって渦を巻く輪の半径（面の幅に対する割合）。輪の中心は死神の胸（現れる所） */
+const GATHER_R = 0.1;
 /** 鬼火が四方から来る所 */
 const FROM: [number, number][] = [
   [-0.12, 0.06], [1.12, 0.12], [-0.14, 0.5], [1.14, 0.46], [0.16, 1.06], [0.86, 1.06],
 ];
-/** 登場のあいだ鬼火が回る楕円（腰の高さ）。傾き（度）と1周の ms */
-const ORBIT = { x: 0.5, y: 0.575, rx: 0.4, ry: 0.07, tilt: -7, ms: 3200 };
+/** 登場のあいだ鬼火が回る楕円（死神の腰の高さ）。半径・傾き（度）と1周の ms */
+const ORBIT = { rx: 0.4, ry: 0.07, tilt: -7, ms: 3200 };
 const WISP_W = 0.075;
 /** 待つときの高さ（面の高さに対する割合）と、左の端からのすき間 */
 const STAY_H = 0.18;
@@ -102,11 +102,22 @@ export function runReaper(
     opacity: "0",
   });
 
+  // ---------------------------------------------------------------- 立つ所
+  /* 字（名前・額。キャラ絵の上下中央）が出る瞬間に、死神は顔も体も字のブロックより上にいる
+     （オーナーの決まり: 主役を字で隠さない。字が腰〜脚に乗っていたのを直した）。足元を字の
+     ブロックの上端のすぐ上に置き、入りきらなければ縮める。字のブロックは長い名前・3行の
+     メッセージで背が伸びるので、ここで測る（札の置き場は振付けより先に組まれている） */
+  const pb0 = plateBoxOf(L, W, H);
+  const feetY = Math.max(Y(FEET.min), Math.min(Y(FEET.max), pb0.t - X(0.015)));
+  const stand: At = { x: X(0.5), y: feetY, k: Math.min(1, (feetY - Y(FEET.top)) / Y(BIG_H)) };
+  /** 現れる姿の高さ（舞台の px） */
+  const standH = Y(BIG_H) * stand.k;
+
   // ---------------------------------------------------------------- 死神（解読が済むまで出さない）
   const gateBox = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
   const actor = makePoseActor(gateBox, a.poses, { ref: "appear", height: Y(BIG_H), anchor: "feet" });
   gate(gateBox);
-  let now: At = { x: X(STAND.x), y: Y(STAND.feet), k: 1 };
+  let now: At = { ...stand };
   actor.pos.style.opacity = "0";
   actor.pos.style.transform = atTf(now);
   /** いまの姿の、絵の中の点（絵の px）が舞台のどこか */
@@ -169,18 +180,22 @@ export function runReaper(
 
   // 登場の鬼火: 集まる輪（ring）の中に置く。輪ごと回して渦にする
   const wispBox = div(L.front, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
-  const ring = div(wispBox, { position: "absolute", left: `${X(GATHER.x)}px`, top: `${Y(GATHER.y)}px`, width: "0px", height: "0px" });
+  /** 鬼火が集まる所（死神の胸）と、登場のあいだ回る楕円の中心（腰） */
+  const gatherAt = { x: stand.x, y: stand.y - standH * 0.55 };
+  const orbitAt = { x: stand.x, y: stand.y - standH * 0.28 };
+  const ring = div(wispBox, { position: "absolute", left: `${gatherAt.x.toFixed(1)}px`, top: `${gatherAt.y.toFixed(1)}px`, width: "0px", height: "0px" });
   const SPIN = 220;
   const gathered: { w: Wisp; end: [number, number] }[] = [];
 
   // ---------------------------------------------------------------- 霧
   const mists: HTMLDivElement[] = [];
+  /** 霧の塊。`dy` は足元からの高さ（面の高さに対する割合。上が負） */
   const MIST = [
-    { back: true, x: 0.3, y: 0.655, w: 0.85, h: 0.16 },
-    { back: true, x: 0.74, y: 0.63, w: 0.8, h: 0.15 },
-    { back: false, x: 0.5, y: 0.735, w: 1.0, h: 0.15 },
-    { back: false, x: 0.16, y: 0.765, w: 0.72, h: 0.13 },
-    { back: false, x: 0.86, y: 0.755, w: 0.72, h: 0.13 },
+    { back: true, x: 0.3, dy: -0.045, w: 0.85, h: 0.16 },
+    { back: true, x: 0.74, dy: -0.07, w: 0.8, h: 0.15 },
+    { back: false, x: 0.5, dy: 0.035, w: 1.0, h: 0.15 },
+    { back: false, x: 0.16, dy: 0.065, w: 0.72, h: 0.13 },
+    { back: false, x: 0.86, dy: 0.055, w: 0.72, h: 0.13 },
   ];
   /** 霧の塊（放射グラデーションの楕円。ぼかしの filter は使わない）。`alpha` 0 なら色の無い箱 */
   const mistBlob = (parent: HTMLElement, cx: number, cy: number, w: number, h: number, alpha = 0.62) =>
@@ -210,9 +225,9 @@ export function runReaper(
       const w = makeWisp(ring, X(WISP_W));
       if (!w) continue;
       const th = (i / n) * Math.PI * 2 - Math.PI / 2;
-      const end: [number, number] = [Math.cos(th) * X(GATHER.r), Math.sin(th) * X(GATHER.r) * 0.8];
+      const end: [number, number] = [Math.cos(th) * X(GATHER_R), Math.sin(th) * X(GATHER_R) * 0.8];
       const f = FROM[i % FROM.length];
-      const start: [number, number] = [X(f[0] - GATHER.x), Y(f[1] - GATHER.y)];
+      const start: [number, number] = [X(f[0]) - gatherAt.x, Y(f[1]) - gatherAt.y];
       const mx = (start[0] + end[0]) / 2;
       const my = (start[1] + end[1]) / 2;
       const dx = end[0] - start[0];
@@ -267,7 +282,7 @@ export function runReaper(
       const ms = (c.dur ?? 0.7) * 1000;
       MIST.forEach((d, i) => {
         // 流す箱は霧の大きさだけ（画面いっぱいの箱を動かさない）
-        const outer = mistBlob(d.back ? L.back : L.mid, X(d.x), Y(d.y), X(d.w), Y(d.h), 0);
+        const outer = mistBlob(d.back ? L.back : L.mid, X(d.x), stand.y + Y(d.dy), X(d.w), Y(d.h), 0);
         outer.style.opacity = "1";
         const blob = mistBlob(outer, X(d.w) / 2, Y(d.h) / 2, X(d.w), Y(d.h));
         m.play(blob, [
@@ -291,8 +306,8 @@ export function runReaper(
       const ms = (c.dur ?? 0.7) * 1000;
       actor.pos.style.opacity = "1";
       m.play(actor.pos, [
-        { transform: atTf({ ...now, y: now.y + Y(0.1), k: 0.9 }), opacity: 0, easing: EASE.out },
-        { transform: atTf({ ...now, y: now.y - Y(0.012), k: 1.02 }), opacity: 1, offset: 0.7, easing: EASE.inOut },
+        { transform: atTf({ ...now, y: now.y + Y(0.1), k: now.k * 0.9 }), opacity: 0, easing: EASE.out },
+        { transform: atTf({ ...now, y: now.y - Y(0.012), k: now.k * 1.02 }), opacity: 1, offset: 0.7, easing: EASE.inOut },
         { transform: atTf(now), opacity: 1 },
       ], { duration: ms });
       m.play(actor.squash, [
@@ -313,8 +328,8 @@ export function runReaper(
       // 鬼火: 渦の止まったところから、楕円の上の持ち場へ。そこからずっと回る
       const rot = (SPIN * Math.PI) / 180;
       ring.getAnimations().forEach((x) => x.cancel());
-      const off: [number, number] = [X(ORBIT.x - GATHER.x), Y(ORBIT.y - GATHER.y)];
-      const o = { rx: X(ORBIT.rx), ry: Y(ORBIT.ry), tilt: ORBIT.tilt };
+      const off: [number, number] = [orbitAt.x - gatherAt.x, orbitAt.y - gatherAt.y];
+      const o = { rx: X(ORBIT.rx), ry: Y(ORBIT.ry) * stand.k, tilt: ORBIT.tilt };
       gathered.forEach(({ w, end }, i) => {
         const sx = end[0] * Math.cos(rot) - end[1] * Math.sin(rot);
         const sy = end[0] * Math.sin(rot) + end[1] * Math.cos(rot);
@@ -330,7 +345,7 @@ export function runReaper(
         ], { duration: burst, easing: EASE.out, fill: "forwards" });
         m.play(w.wrap, loop, { duration: ORBIT.ms, delay: burst, iterations: Infinity, easing: "linear" });
       });
-      sparkRing(m, L.front, now.x, now.y - Y(BIG_H) * 0.55, X(0.3), 8, X(0.09), [ORANGE, EMBER]);
+      sparkRing(m, L.front, gatherAt.x, gatherAt.y, X(0.3), 8, X(0.09), [ORANGE, EMBER]);
     },
 
     // 振り抜く: 一瞬ためて、振り抜いた姿に差し替え、斬撃の光が画面の幅いっぱいに走る。閃光
@@ -503,26 +518,84 @@ export function runReaper(
     },
   };
 
-  /** 斬撃の光。両手を中心に、左から上を通って右へ、画面の幅いっぱいの三日月。回り込んで現れ、ふくらんで消える */
+  /**
+   * 斬撃の光。両手を中心に、左から上を通って右へ、画面の幅いっぱいの三日月。80ms で振り切り
+   * （台本はここで一瞬止める）、光の筋が残って揺らめき、火の粉になって外へ散りながら消える。
+   * 閃光のあとに橙の残光。合わせて 1.1 秒（0.5 秒では物足りなかった。オーナー側の見立て）
+   */
   function slashArc() {
     const hands = pt("swing", HANDS);
-    const R = X(0.46);
+    // 弧のてっぺんが面の上の端から出すぎないように（死神は字のブロックより上に立つので、手が高い）
+    const R = Math.max(X(0.3), Math.min(X(0.46), hands.y - Y(0.005)));
+    const MS = 1100;
     const box = div(L.front, { position: "absolute", left: `${hands.x.toFixed(1)}px`, top: `${hands.y.toFixed(1)}px`, width: "0px", height: "0px", opacity: "0" });
     box.innerHTML = crescentSvg(R);
-    // 80ms で振り切る（台本はここで一瞬止める）。そのあと少し残って、ふくらんで消える
     const sa = m.play(box, [
       { transform: "rotate(-95deg) scale(0.9)", opacity: 0, easing: EASE.out },
-      { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0.15 },
-      { transform: "rotate(2deg) scale(1.01)", opacity: 1, offset: 0.55, easing: EASE.in },
-      { transform: "rotate(6deg) scale(1.06)", opacity: 0 },
-    ], { duration: 540 });
+      { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0.07 },
+      { transform: "rotate(1deg) scale(1.005)", opacity: 0.85, offset: 0.25 },
+      { transform: "rotate(1.5deg) scale(1.01)", opacity: 1, offset: 0.4 },
+      { transform: "rotate(2.5deg) scale(1.02)", opacity: 0.8, offset: 0.58, easing: EASE.in },
+      { transform: "rotate(6deg) scale(1.08)", opacity: 0 },
+    ], { duration: MS });
     const rm = () => box.remove();
     if (sa) sa.finished.then(rm, rm);
     else rm();
-    // 弧に沿って火の粉
+    // 残光（閃光が引いたあと、斬撃のまわりが橙にほんのり光り続けて消える）
+    const glowD = R * 2.4;
+    const glow = div(L.front, {
+      position: "absolute",
+      left: `${(hands.x - glowD / 2).toFixed(1)}px`,
+      top: `${(hands.y - glowD * 0.62).toFixed(1)}px`,
+      width: `${glowD.toFixed(1)}px`,
+      height: `${glowD.toFixed(1)}px`,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(255,200,120,0.55) 0%, rgba(255,150,40,0.28) 35%, rgba(255,120,20,0) 66%)",
+      opacity: "0",
+    });
+    const ga = m.play(glow, [
+      { opacity: 0 },
+      { opacity: 1, offset: 0.12 },
+      { opacity: 0.7, offset: 0.5 },
+      { opacity: 0 },
+    ], { duration: MS, easing: "ease-out" });
+    const rmg = () => glow.remove();
+    if (ga) ga.finished.then(rmg, rmg);
+    else rmg();
+    // 弧に沿って火の粉。振り切った瞬間にきらめき、光の筋が引くころに外へ散る
     for (let i = 0; i < 7; i++) {
       const ang = ((175 + (i / 6) * 170) * Math.PI) / 180;
       sparkle(m, L.front, hands.x + Math.cos(ang) * R * 0.95, hands.y + Math.sin(ang) * R * 0.95, X(0.1), 60 + i * 24, i % 2 ? EMBER : "255,255,255");
+    }
+    const N = 16;
+    for (let i = 0; i < N; i++) {
+      const u = (i + 0.5) / N;
+      const ang = ((172 + u * 180) * Math.PI) / 180;
+      // 振り終わり（右）ほど太いので、粒も右ほど多く大きく
+      const r0 = R * (0.9 + Math.random() * 0.08);
+      const out = X(0.05 + Math.random() * 0.08);
+      const size = X(0.014 + 0.018 * u + Math.random() * 0.01);
+      const x0 = hands.x + Math.cos(ang) * r0;
+      const y0 = hands.y + Math.sin(ang) * r0;
+      const dot = div(L.front, {
+        position: "absolute",
+        left: `${(x0 - size / 2).toFixed(1)}px`,
+        top: `${(y0 - size / 2).toFixed(1)}px`,
+        width: `${size.toFixed(1)}px`,
+        height: `${size.toFixed(1)}px`,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(255,255,240,1) 0%, rgba(${i % 3 ? ORANGE : EMBER},0.9) 45%, rgba(${ORANGE},0) 72%)`,
+        opacity: "0",
+      });
+      const dx = Math.cos(ang) * out + (Math.random() - 0.5) * X(0.02);
+      const dy = Math.sin(ang) * out + Y(0.015);
+      const da = m.play(dot, [
+        { transform: "translate(0px, 0px) scale(1)", opacity: 1, easing: EASE.out },
+        { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.3)`, opacity: 0 },
+      ], { duration: 520 + Math.random() * 260, delay: MS * 0.45 + Math.random() * 180, fill: "backwards" });
+      const rmd = () => dot.remove();
+      if (da) da.finished.then(rmd, rmd);
+      else rmd();
     }
   }
 

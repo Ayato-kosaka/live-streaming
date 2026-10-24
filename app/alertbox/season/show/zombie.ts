@@ -49,11 +49,14 @@ import {
 export type ZombieAssets = { poses: LoadedPoses; kid: LoadedRig; ghost: LoadedRig; bat: LoadedRig };
 
 /**
- * 地面の高さ（面に対する割合）。踊る姿の顔の中心が面の 0.36 あたりに来る高さ。字（面の 0.47〜0.71）が
- * 出ても顔には掛からない。地面より下（面の下 3 割）は、配信ではコメント欄が重なりやすい所
+ * 地面の高さの上下の限り（面に対する割合）。実際の地面は字のブロックの上端のすぐ上（`groundY`）。
+ * 墓場は面の上半分に収まり、字はその下（キャラ絵の上下中央）に出る。上は面の上の端から 3% を空ける
  */
-const GROUND = 0.7;
-/** 踊る姿（dance）の高さ。面の高さの 0.46（段5の死神 0.44 より大きい） */
+const GROUND = { min: 0.4, max: 0.62, top: 0.03 };
+/**
+ * 踊る姿（dance）の高さの上限。面の高さの 0.46（段5の死神 0.44 より大きい）。地面の上に入りきらなければ
+ * 縮める
+ */
 const DANCE_H = 0.46;
 /** 墓石（中身の高さ。面の高さに対する割合）。左・右・まんなか（ゾンビの墓）の順にせり上がる */
 const GRAVES = [
@@ -62,17 +65,21 @@ const GRAVES = [
   { name: "tombstone_c", x: 0.5, h: 0.2 },
 ];
 const HAND_W = 0.3;
-/** かぼちゃ坊や（地面から跳び出す）と、ちびおばけ（墓の上に浮かぶ） */
+/**
+ * かぼちゃ坊や（地面から跳び出す）と、ちびおばけ（坊やの上に浮かぶ。`dy` は坊やの頭の上からの高さ）。
+ * 段3・段1 の仲間より大きく（坊や 1.6 倍・おばけ 1.5 倍）、画面の端で切れないように内へ詰める。
+ * 仲間はゾンビの後ろに立つ（主役の体の前を塞がない）
+ */
 const KIDS = [
-  { x: 0.09, hat: "hat_pointy" },
-  { x: 0.91, hat: "hat_ribbon" },
+  { x: 0.17, hat: "hat_pointy" },
+  { x: 0.83, hat: "hat_ribbon" },
 ];
-const KID_H = 0.115;
+const KID_H = 0.18;
 const GHOSTS = [
-  { x: 0.13, y: 0.37 },
-  { x: 0.87, y: 0.4 },
+  { x: 0.165, dy: 0.075 },
+  { x: 0.835, dy: 0.055 },
 ];
-const GHOST_W = 0.2;
+const GHOST_W = 0.3;
 /** 踊りの1拍（ms） */
 const BEAT = 430;
 /** 待つときの高さと、右の端からのすき間。小さな墓は左どなり */
@@ -93,7 +100,14 @@ export function runZombie(
 ): () => void {
   const X = (f: number) => f * W;
   const Y = (f: number) => f * H;
-  const groundY = Y(GROUND);
+  /* 地面（足元の線）。字（名前・額。キャラ絵の上下中央）が出る瞬間に、ゾンビは顔も体も字の
+     ブロックより上にいる（オーナーの決まり: 主役を字で隠さない。字が脚に乗っていたのを直した）。
+     字のブロックの上端のすぐ上を地面にし、ゾンビが入りきらなければ縮める。字のブロックは長い名前・
+     3行のメッセージで背が伸びるので、ここで測る（札の置き場は振付けより先に組まれている） */
+  const pb0 = plateBoxOf(L, W, H);
+  const groundY = Math.max(Y(GROUND.min), Math.min(Y(GROUND.max), pb0.t - X(0.015)));
+  /** 登場のあいだのゾンビの倍率（1 で踊る姿が面の DANCE_H） */
+  const k0 = Math.min(1, (groundY - Y(GROUND.top)) / Y(DANCE_H));
   // 小物はこの段が始まったときに読む（解読が済んだものから使える）
   const items = new Items(`${themeDirOf(a.poses)}/items/zombie`, {
     tombstone_a: "tombstone_a.png",
@@ -132,8 +146,8 @@ export function runZombie(
   actor.show("rise");
   gate(gateBox);
   /** 墓から出るときの足元（rise の絵の土の盛り上がりの下の辺）。地面より少し下 */
-  const moundY = groundY + Y(0.02);
-  let now: At = { x: X(0.5), y: moundY, k: 1 };
+  const moundY = groundY + Y(0.02) * k0;
+  let now: At = { x: X(0.5), y: moundY, k: k0 };
   actor.pos.style.opacity = "0";
   actor.pos.style.transform = atTf(now);
   const pt = (name: string, p: [number, number]) => {
@@ -149,9 +163,10 @@ export function runZombie(
   // ---------------------------------------------------------------- 仲間（解読が済むまで出さない）
   type Kid = { pos: HTMLDivElement; pose: HTMLDivElement; h: RigHandle };
   type Ghost = { pos: HTMLDivElement; bob: HTMLDivElement; h: RigHandle };
-  const kidClip = groundClip(L.mid);
+  // 仲間は墓石の手前・ゾンビの後ろ（同じ奥の層に、墓石のあとに置く）
+  const kidClip = groundClip(L.back);
   const kidGate = div(kidClip, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
-  const ghostGate = div(L.mid, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
+  const ghostGate = div(L.back, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
   const kb = rigBounds(a.kid);
   const ks = Y(KID_H) / kb.h;
   const hip = restPivot(a.kid.def, "body") ?? [kb.l + kb.w / 2, kb.b];
@@ -175,7 +190,8 @@ export function runZombie(
   const ghosts: Ghost[] = GHOSTS.map((d) => {
     const h = buildRig(a.ghost, gs);
     h.swap("face", "boo");
-    const pos = div(ghostGate, { position: "absolute", left: `${X(d.x).toFixed(1)}px`, top: `${Y(d.y).toFixed(1)}px`, width: "0px", height: "0px", willChange: "transform", opacity: "0" });
+    const gy = groundY - Y(KID_H) - Y(d.dy) - (gb.h * gs) / 2;
+    const pos = div(ghostGate, { position: "absolute", left: `${X(d.x).toFixed(1)}px`, top: `${gy.toFixed(1)}px`, width: "0px", height: "0px", willChange: "transform", opacity: "0" });
     const bob = div(pos, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
     h.root.style.left = `${(-(gb.l + gb.w / 2) * gs).toFixed(1)}px`;
     h.root.style.top = `${(-(gb.t + gb.h / 2) * gs).toFixed(1)}px`;
@@ -309,7 +325,7 @@ export function runZombie(
         const it = items.get(d.name);
         if (!it) continue;
         const [x0, y0, x1, y1] = it.content;
-        const hh = Y(d.h);
+        const hh = Y(d.h) * k0;
         const ww = (hh * (x1 - x0)) / Math.max(1, y1 - y0);
         const p = items.place(d.name, graveClip, ww, "bottom");
         if (!p) continue;
@@ -341,7 +357,7 @@ export function runZombie(
     // まんなかの墓の前で、土を割って手が出る。指をわきわき
     hand: (c) => {
       const ms = (c.dur ?? 0.65) * 1000;
-      const p = items.place("hand_from_soil", L.mid, X(HAND_W), "bottom");
+      const p = items.place("hand_from_soil", L.mid, X(HAND_W) * k0, "bottom");
       if (!p) return;
       p.box.style.left = `${X(0.5).toFixed(1)}px`;
       p.box.style.top = `${moundY.toFixed(1)}px`;
@@ -389,7 +405,7 @@ export function runZombie(
 
     // 跳び出して決めポーズ。着いたら左右に跳ねて踊る
     dance: () => {
-      const up = { ...now, y: groundY - Y(0.11) };
+      const up = { ...now, y: groundY - Y(0.11) * k0 };
       const land: At = { ...now, y: groundY };
       m.play(actor.pos, [
         { transform: atTf(now), easing: EASE.up },
@@ -414,7 +430,7 @@ export function runZombie(
         const c = pt("dance", [330, 450]);
         sparkRing(m, L.front, c.x, c.y, X(0.26), 8, X(0.1), [MAG, PALE, VIO]);
         dustPuffs(m, L.mid, X(0.5), groundY - Y(0.005), X(0.1), 3);
-        m.play(actor.bob, danceFrames(Y(0.03)), { duration: BEAT * 2, iterations: Infinity });
+        m.play(actor.bob, danceFrames(Y(0.03) / k0), { duration: BEAT * 2, iterations: Infinity });
       });
     },
 
