@@ -8,6 +8,7 @@
  *        --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 \
  *        --out /tmp/overlap --sheet
  *   node alert-overlap.mjs ... --control face    # 対照: 顔の前に手前の層の四角を置く → 1 で落ちる
+ *   node alert-overlap.mjs ... --control hero    # 対照: 主役の顔の枠を字の真ん中に置く → 1 で落ちる
  *
  * ## 決まり（オーナー、2026-10-24。厳禁扱い）
  *
@@ -24,6 +25,9 @@
  * - `cover` … 顔の矩形のうち、キャラ絵が不透明な画素で、演出の層を全部消すと色が変わる画素数
  *   （手前の層がキャラ絵を塗っている）。字の矩形の中は数えない（字は2枚のどちらにも描かれていて、
  *   出てくる途中は2枚で数画素ずれることがある。字の前を通る演出は front に出る）
+ * - `字`（主役の顔 × 字）… あやと（主役のポーズ絵）の顔の枠（`data-hero-face`。poses.json の face）と、
+ *   見えている字の行の矩形が重なった面積（画素）。**登場中も数える**（字が出る瞬間に主役の顔が
+ *   字の上端より上にいること。オーナーの決まり: 主役の顔は字で隠さない）
  *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
@@ -67,7 +71,7 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && control !== "face") die(`--control は face（${control}）`);
+if (control && control !== "face" && control !== "hero") die(`--control は face か hero（${control}）`);
 
 /* 名前とメッセージ。長い名前は全角 12 字（本物の視聴者さんの名前）。
    3行は本物の配信で届いたメッセージ（いまの字の大きさで 3〜4 行に折り返す） */
@@ -143,9 +147,10 @@ function framesFor(a) {
   if (given) return given.split(",").map(Number);
   const d = alertSec(a);
   // ドラキュラ: キャラ絵は 6.5 秒から 0.85 秒でふくらむ。滞在、締めはマントで包んでこうもりの群れに
-  if (showOf(a) === "dracula") return [...every(7.5, d - 4), d - 3.4, d - 2.6, d - 1.6];
+  if (showOf(a) === "dracula") return [1, 2, 3, ...every(3.6, 7.4, 0.3), ...every(7.5, d - 4), d - 3.4, d - 2.6, d - 1.6];
   // 魔法使い: キャラ絵は 4.3 秒から 0.85 秒でふくらむ。そこから滞在、締めは右上へ飛び去るところ
-  if (showOf(a) === "wizard") return [5.3, ...every(6, d - 3), d - 2.6, d - 2.0, d - 1.4, d - 0.8];
+  // 登場中（字を書く・ドン・退く）も、主役の顔 × 字を数えるために細かく撮る
+  if (showOf(a) === "wizard") return [0.6, 1.2, 1.8, ...every(2.2, 5.3, 0.25), 5.3, ...every(6, d - 3), d - 2.6, d - 2.0, d - 1.4, d - 0.8];
   // 行進: キャラ絵は最初から出ているので、行進の途中も数える。締めは右へ去るところ
   if (showOf(a) === "march") return [0.4, 0.9, 1.4, 1.8, 2.1, 2.4, ...every(3, d - 3), d - 2.6, d - 1.8, d - 1.0];
   // ちびおばけ: ランタンが降りる・ふたが鳴る・「ばあ！」・字が出る・落ち着く。締めはランタンに戻る
@@ -347,7 +352,41 @@ async function readRects(page) {
     const boxOpacity = box ? Number(getComputedStyle(box).opacity) : 0;
     const boxTransform = box ? getComputedStyle(box).transform : "none";
     const showLayers = document.querySelectorAll('[data-show="layer"]').length;
-    return { plate, content, kind, boxOpacity, boxTransform, showLayers, slotH: slot?.offsetHeight ?? 0 };
+    /* 見えている度合い（祖先の opacity の積）。出る前の字（opacity 0 で待っている）や、
+       消えていく途中の主役を数えないため */
+    const seen = (el) => {
+      let o = 1;
+      for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        if (cs.display === "none" || cs.visibility === "hidden") return 0;
+        o *= Number(cs.opacity);
+      }
+      return o;
+    };
+    /* 主役の顔の枠（振付けが置く印 `data-hero-face`。ポーズ絵と一緒に出し入れされる） */
+    const heroes = [];
+    for (const el of document.querySelectorAll("[data-hero-face]")) {
+      if (seen(el) < 0.05) continue;
+      const r = R(el.getBoundingClientRect());
+      if (r.r - r.l > 0 && r.b - r.t > 0) heroes.push(r);
+    }
+    /* 見えている字の矩形（字の行ごと。opacity 0 で待っている字は入れない） */
+    const texts = [];
+    if (slot) {
+      const range2 = document.createRange();
+      const walk2 = document.createTreeWalker(slot, NodeFilter.SHOW_TEXT);
+      for (let n = walk2.nextNode(); n; n = walk2.nextNode()) {
+        const pe = n.parentElement;
+        if (!pe || !n.textContent.trim() || seen(pe) < 0.05) continue;
+        range2.selectNodeContents(n);
+        const c = clipOf(pe);
+        for (const r0 of range2.getClientRects()) {
+          const r = clipped(R(r0), c);
+          if (r.r - r.l > 0 && r.b - r.t > 0) texts.push(r);
+        }
+      }
+    }
+    return { plate, content, kind, boxOpacity, boxTransform, showLayers, slotH: slot?.offsetHeight ?? 0, heroes, texts };
   });
 }
 
@@ -437,6 +476,14 @@ async function measureFrame(page, W, H, wantShow) {
     }
     A = M;
   }
+  /* 主役の顔 × 字（オーナーの決まり: 主役の顔は字で隠さない）。登場中も数える。
+     字の行の矩形と顔の枠の重なりの面積（画素） */
+  let heroText = 0;
+  for (const h of rects.heroes) for (const t of rects.texts) {
+    const w = Math.min(h.r, t.r) - Math.max(h.l, t.l);
+    const hh = Math.min(h.b, t.b) - Math.max(h.t, t.t);
+    if (w > 0 && hh > 0) heroText += Math.round(w * hh);
+  }
   // 測れているか（何も見ていない緑を出さない）
   const charPx = count(C, content, (i) => C.data[i + 3] > 16);
   const why = [];
@@ -451,6 +498,8 @@ async function measureFrame(page, W, H, wantShow) {
   return {
     front,
     cover,
+    heroText,
+    heroes: rects.heroes.length,
     plate,
     content,
     face,
@@ -469,6 +518,21 @@ async function applyControl(page, kind) {
   await page.evaluate((kind) => {
     const mark = document.querySelector('[data-char="content"]') || document.querySelector('[data-char="box"] video');
     const c = mark.getBoundingClientRect();
+    if (kind === "hero") {
+      // 主役の顔の枠を、字のブロックの真ん中に置く（字が主役の顔に乗った形）
+      const box = document.querySelector('[data-plate="box"]').getBoundingClientRect();
+      const d = document.createElement("div");
+      d.setAttribute("data-hero-face", "");
+      Object.assign(d.style, {
+        position: "fixed",
+        left: `${box.left + box.width / 2 - 30}px`,
+        top: `${box.top + box.height / 2 - 30}px`,
+        width: "60px",
+        height: "60px",
+        pointerEvents: "none",
+      });
+      document.body.appendChild(d);
+    }
     if (kind === "face") {
       const host = document.querySelector('[data-plate="slot"]').parentElement;
       const d = document.createElement("div");
@@ -547,8 +611,9 @@ async function runOne(browser, job) {
   return res;
 }
 
+/* front・cover は滞在中だけ（登場中はキャラ絵がまだ出ていない）。主役の顔 × 字は登場中も数える */
 function bad(f) {
-  return f.entrance ? 0 : f.front + f.cover;
+  return (f.entrance ? 0 : f.front + f.cover) + (f.heroText ?? 0);
 }
 
 async function main() {
@@ -585,7 +650,7 @@ async function main() {
       const inval = r.fatal ? `測れない: ${r.fatal}` : r.frames.some((f) => f.invalid.length) ? `測れない: ${[...new Set(r.frames.flatMap((f) => f.invalid))].join("・")}` : "";
       console.log(
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
-          (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}`).join(" ")}` : "0")) +
+          (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -606,6 +671,9 @@ async function main() {
   const hit = results.filter((r) => r.frames.some((f) => bad(f) > 0));
   console.log(`\n滞在中のコマ ${frames.length}（${results.length} 本）`);
   console.log(`  手前の演出が顔に乗った(front) ${sum("front")} / 演出が顔の画素を塗った(cover) ${sum("cover")}`);
+  const heroAll = all.reduce((s, f) => s + (f.heroText ?? 0), 0);
+  const heroSeen = all.filter((f) => f.heroes > 0).length;
+  console.log(`  主役の顔に字が乗った(登場中も) ${heroAll}（主役の顔が見えていたコマ ${heroSeen} / ${all.length}）`);
   const shares = results.map((r) => ({ r, s: r.frames.at(-1)?.charShare ?? 0 }));
   if (shares.length) {
     const lo = shares.reduce((a, b) => (b.s < a.s ? b : a));

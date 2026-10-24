@@ -20,6 +20,7 @@ import type { TimedCue } from "./script";
 import { pathFrames, sparkle } from "./fx";
 import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
 import type { LoadedPoses } from "./poses";
+import { heroFaceMark } from "./poseActor";
 
 export type WizardAssets = { poses: LoadedPoses };
 
@@ -30,8 +31,11 @@ const BIG_H = 0.4;
  * 上の帯（`headroom` 0.2）に浮く高さまで収まる
  */
 const STAY_W = 0.3;
-/** 飛び込んで止まる所（顔の中心。面に対する割合）。帽子の先が札の下の辺より下に来る高さ */
-const HOVER = { x: 0.55, y: 0.5 };
+/**
+ * 飛び込んで止まる所の横の位置（顔の中心。面の幅に対する割合）。高さは字のブロックから決める
+ * （`hoverSpot`。主役の顔は字で隠さない）
+ */
+const HOVER_X = 0.55;
 /** 杖の星の中心（絵の px。左右反転する前） */
 const WAND: Record<string, [number, number]> = { fly: [1000, 315], cast: [1015, 75], idle: [360, 657] };
 /** ほうきの穂の真ん中（星の尾を出す所。絵の px） */
@@ -62,7 +66,7 @@ export function runWizard(
   const aBob = div(aPos, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
   /** つぶし・伸ばし（切り替えの弾み・速さ） */
   const aSquash = div(aBob, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
-  const imgs = new Map<string, HTMLImageElement>();
+  const imgs = new Map<string, HTMLElement[]>();
   /** 右向きにそろえたときの、顔の中心から見た点（倍率 1 の舞台 px） */
   const rel = (name: string, pt: [number, number]): [number, number] => {
     const p = P.get(name)!;
@@ -90,12 +94,12 @@ export function runWizard(
       pointerEvents: "none",
     } satisfies Partial<CSSStyleDeclaration>);
     aSquash.appendChild(im);
-    imgs.set(name, im);
+    imgs.set(name, [im, heroFaceMark(aSquash, p, s0, fx, p.faceCenter[1], flip, name === "fly")]);
   }
   let pose = "fly";
   const show = (name: string) => {
     if (!imgs.has(name)) return;
-    imgs.forEach((im, k) => (im.style.visibility = k === name ? "visible" : "hidden"));
+    imgs.forEach((els, k) => els.forEach((el) => (el.style.visibility = k === name ? "visible" : "hidden")));
     pose = name;
   };
   let now = { x: -X(0.5), y: Y(1.1), k: 1, r: 0 };
@@ -194,11 +198,29 @@ export function runWizard(
     return anim;
   };
 
-  // ---------------------------------------------------------------- 魔法陣（back）
+  /**
+   * 飛び込んで止まる所（顔の中心）。**字のブロック（キャラ絵の上下中央）より上**に、杖を振り上げた
+   * 姿まで体ごと収まる高さ。体ごと収まらなければ、少なくとも顔の枠が字の上の端より上
+   * （オーナーの決まり: 主役の顔は字で隠さない。前は顔が面の真ん中にいて、書いた額が顔に乗った）。
+   * 杖の先の光が下の字の場所へ飛んで書く
+   */
+  const hoverSpot = () => {
+    const pb = plateBox();
+    const ps = ["fly", "cast"].map((n) => P.get(n) ?? fly);
+    const below = Math.max(...ps.map((p) => (p.content[3] - p.faceCenter[1]) * s0));
+    const above = Math.max(...ps.map((p) => (p.faceCenter[1] - p.content[1]) * s0));
+    const faceBelow = Math.max(...ps.map((p) => (p.face[3] - p.faceCenter[1]) * s0));
+    const whole = pb.t - X(0.02) - below;
+    const faceOnly = pb.t - X(0.03) - faceBelow;
+    const top = Y(0.012) + above;
+    return { x: X(HOVER_X), y: Math.min(faceOnly, Math.max(top, whole)) };
+  };
+
+  // ---------------------------------------------------------------- 魔法陣（back。止まる所のまわり）
   const ring = div(L.back, {
     position: "absolute",
     left: `${X(0.5) - X(0.44)}px`,
-    top: `${Y(HOVER.y) + Y(0.04) - X(0.44)}px`,
+    top: `${Y(0.25) - X(0.44)}px`,
     width: `${X(0.88)}px`,
     height: `${X(0.88)}px`,
     opacity: "0",
@@ -243,6 +265,7 @@ export function runWizard(
     // 魔法陣が開いて、ゆっくり回り出す
     circle: (c) => {
       const ms = (c.dur ?? 0.5) * 1000;
+      ring.style.top = `${hoverSpot().y + Y(0.04) - X(0.44)}px`;
       m.play(ring, [
         { opacity: 0, transform: "scale(0.2)" },
         { opacity: 1, transform: "scale(1.06)", offset: 0.7, easing: EASE.inOut },
@@ -258,7 +281,8 @@ export function runWizard(
       now = { x: -X(0.45), y: Y(0.95), k: 0.85, r: 0 };
       aPos.style.opacity = "1";
       aPos.style.transform = T(now.x, now.y, now.k);
-      flyArc({ x: X(HOVER.x), y: Y(HOVER.y), k: 1 }, [X(0.05), Y(0.28)], ms, { overshoot: X(0.05), trail: L.front });
+      const h = hoverSpot();
+      flyArc({ x: h.x, y: h.y, k: 1 }, [X(0.05), Math.min(Y(0.28), h.y - Y(0.1))], ms, { overshoot: X(0.05), trail: L.front });
     },
 
     // 杖を振り上げる
@@ -270,7 +294,13 @@ export function runWizard(
       const el = plateEl();
       if (!el) return;
       const pb = plateBox();
-      m.play(el, [{ clipPath: clip(0) }, { clipPath: clip(1) }], { duration: ms, fill: "forwards", easing: "cubic-bezier(0.35, 0.1, 0.3, 1)" });
+      const wa = m.play(el, [{ clipPath: clip(0) }, { clipPath: clip(1) }], { duration: ms, fill: "forwards", easing: "cubic-bezier(0.35, 0.1, 0.3, 1)" });
+      /* 書き終えたら切り口を外す。左右 6% しか開けていないので、このあとの「ドン」（額が 1.3 倍に
+         弾む）で額の左右が欠けた（段5の担当の知らせ） */
+      m.after(ms + 40, () => {
+        el.style.clipPath = "none";
+        wa?.cancel();
+      });
       const tip = at(WAND);
       // 杖の先が光る
       const glow = div(L.top, {

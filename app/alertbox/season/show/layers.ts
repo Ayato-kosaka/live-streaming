@@ -34,6 +34,23 @@ export type ShowLayers = {
  */
 export const UNROLL_CLOSED = "inset(-40% 100% -40% 0%)";
 
+/**
+ * その層の**外の箱**（アラートの面いっぱい）。舞台（1080×1920）は箱へ cover で拡げてあるので、
+ * 箱の形が 9:16 でないと舞台の縁は箱の外へ切れる。画面いっぱいの暗さ・閃光のように「箱の縁で
+ * 溶かしたい」ものは舞台でなくこちらに置く（縁を舞台で溶かすと、切れた所で暗さが四角く残る）
+ */
+export const outerBoxOf = (layer: HTMLElement): HTMLElement => layer.parentElement?.parentElement ?? layer;
+
+/**
+ * 箱の縁へ向かって 0 に溶ける、真ん中が濃い楕円の塗り（暗転・閃光）。`stops` は真ん中からの
+ * [位置 %, 色] の並び。最後は必ず透明（箱の縁）。ウィジェットは画面いっぱいではないので、
+ * 縁まで暗いと配信の上に暗い四角が浮く（オーナーの指摘 2026-10-24）
+ */
+export function edgeFade(stops: [number, string][], at = "50% 48%"): string {
+  const s = stops.map(([p, c]) => `${c} ${p}%`).join(", ");
+  return `radial-gradient(ellipse farthest-side at ${at}, ${s})`;
+}
+
 /** 振付けの中で使う小さな div（指の当たらない絶対配置の箱） */
 export function div(parent: HTMLElement, style: Partial<CSSStyleDeclaration>): HTMLDivElement {
   const d = document.createElement("div");

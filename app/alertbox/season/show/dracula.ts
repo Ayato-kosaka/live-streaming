@@ -32,7 +32,7 @@ import { buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restOrigin } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, pathFrames, partImage, sparkle } from "./fx";
-import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } from "./layers";
 import { makePoseActor } from "./poseActor";
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
@@ -66,6 +66,8 @@ const GLINT = {
  */
 const HANG_Y = 0.14;
 const HANG_TOP = 0.04;
+/** その人の番になってから字を落とすまで（ms）。あやとがこうもりに化けて消えてから落とす */
+const DROP_AFTER_MS = 440;
 
 export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: TimedCue[], W: number, H: number): () => void {
   const X = (f: number) => f * W;
@@ -99,30 +101,40 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
   };
 
   // ---------------------------------------------------------------- 暗転（紫 → 赤）・鼓動・閃光
-  const darkPurple = div(L.dark, {
+  /* 暗さ・鼓動・白い閃光は、舞台ではなく箱いっぱいの外の箱に置き、箱の縁へ向かって 0 に溶かす
+     （`edgeFade`）。縁まで暗いと、画面いっぱいでないウィジェットの形が暗い四角になって浮いた */
+  const darkBoxEl = outerBoxOf(L.dark);
+  const frontBoxEl = outerBoxOf(L.front);
+  const darkPurple = div(darkBoxEl, {
     position: "absolute",
     inset: "0px",
-    background: "radial-gradient(ellipse at 50% 40%, rgba(30,6,52,0.86) 0%, rgba(8,0,18,1) 78%)",
+    background: edgeFade([[0, "rgba(20,4,36,0.95)"], [62, "rgba(14,2,26,0.9)"], [84, "rgba(10,0,20,0.45)"], [100, "rgba(10,0,20,0)"]]),
     opacity: "0",
   });
   /* 「昇格」の赤。マントばさっで紫と入れ替わる（いちばん上の段に来た合図） */
-  const darkRed = div(L.dark, {
+  const darkRed = div(darkBoxEl, {
     position: "absolute",
     inset: "0px",
-    background: "radial-gradient(ellipse at 50% 42%, rgba(128,0,26,0.84) 0%, rgba(40,0,8,1) 80%)",
+    background: edgeFade([[0, "rgba(120,0,24,0.92)"], [62, "rgba(70,0,14,0.88)"], [84, "rgba(40,0,8,0.45)"], [100, "rgba(40,0,8,0)"]]),
     opacity: "0",
   });
   const pulseEl = (rgb: string) =>
-    div(L.dark, {
+    div(darkBoxEl, {
       position: "absolute",
       inset: "0px",
-      background: `radial-gradient(ellipse at 50% 45%, rgba(${rgb},0) 38%, rgba(${rgb},0.95) 100%)`,
+      // 鼓動は真ん中から広がる色のにじみ（輪にすると、箱の中に色の楕円の縁が浮いた）
+      background: edgeFade([[0, `rgba(${rgb},0.5)`], [55, `rgba(${rgb},0.38)`], [82, `rgba(${rgb},0.16)`], [100, `rgba(${rgb},0)`]]),
       opacity: "0",
     });
   const pulsePurple = pulseEl("150,40,230");
   const pulseRed = pulseEl("220,10,40");
   let red = false;
-  const flash = div(L.front, { position: "absolute", inset: "0px", background: "#FFFFFF", opacity: "0" });
+  const flash = div(frontBoxEl, {
+    position: "absolute",
+    inset: "0px",
+    background: edgeFade([[0, "rgba(255,255,255,1)"], [55, "rgba(255,255,255,0.95)"], [100, "rgba(255,255,255,0)"]]),
+    opacity: "0",
+  });
   const goldFlash = div(L.front, {
     position: "absolute",
     inset: "0px",
@@ -722,18 +734,22 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
     reveal: () => {
       // ここから先はその人のキャラ絵が出ている。粒・紙吹雪・閃光の層はキャラ絵の後ろへ
       L.frontBox.style.zIndex = "0";
-      // 字がキャラ絵の上下中央へ落ちる（ドスン）。運んでいたこうもりは左右へ飛び去る
+      /* 字がキャラ絵の上下中央へ落ちる（ドスン）。運んでいたこうもりは左右へ飛び去る。
+         落とすのは、あやとがこうもりに化けて消えてから（落ちる字があやとの顔の前を通らない。
+         オーナーの決まり: 主役の顔は字で隠さない） */
       if (slot) {
         const from = hangDy;
-        hangDy = 0;
         const k = screenK();
-        slot.style.transform = "translateY(-50%)";
-        m.play(slot, [
-          { transform: `translateY(calc(-50% + ${from.toFixed(1)}px))`, easing: EASE.down },
-          { transform: "translateY(calc(-50% + 0px))", offset: 0.6, easing: EASE.out },
-          { transform: `translateY(calc(-50% - ${(X(0.03) * k).toFixed(1)}px))`, offset: 0.8, easing: EASE.in },
-          { transform: "translateY(calc(-50% + 0px))" },
-        ], { duration: 640 });
+        m.after(DROP_AFTER_MS, () => {
+          hangDy = 0;
+          slot.style.transform = "translateY(-50%)";
+          m.play(slot, [
+            { transform: `translateY(calc(-50% + ${from.toFixed(1)}px))`, easing: EASE.down },
+            { transform: "translateY(calc(-50% + 0px))", offset: 0.6, easing: EASE.out },
+            { transform: `translateY(calc(-50% - ${(X(0.03) * k).toFixed(1)}px))`, offset: 0.8, easing: EASE.in },
+            { transform: "translateY(calc(-50% + 0px))" },
+          ], { duration: 640 });
+        });
       }
       for (const cb of carriers) {
         const t = cb.el.style.transform || getComputedStyle(cb.el).transform;
@@ -786,36 +802,64 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
           { transform: T(tx, ty, k) },
         ], { duration: ms * 0.55, easing: EASE.inOut, fill: "forwards" });
       }
-      // あやとは待機の形（idle）になって、弧を描いて帯の左上の角へ。キャラ絵の裏を通って、
-      // 着いてから手前に出る
-      L.actor.style.clipPath = "";
-      act.show("idle");
-      squash([[1.08, 0.9], [0.96, 1.05], [1, 1]], 300);
+      /* あやとはマントで体を包み、こうもりの群れに化けて帯の左上の角へ飛び、そこで待機の形（idle）に
+         戻る。飛んで移ると、上下中央へ落ちてくる字とあやとの顔が途中で重なった。群れはキャラ絵の後ろを
+         飛ぶ（その人の顔の前を通らない） */
+      act.show("rise");
+      squash([[0.9, 1.08], [1.05, 0.95]], 160);
       const idleH = idlePose ? (idlePose.content[3] - idlePose.content[1]) * s0 : spreadH;
       const k = Y(STAY_H) / idleH;
       const idleW = idlePose ? (idlePose.content[2] - idlePose.content[0]) * s0 * k : X(0.3);
       const tx = X(0.02) + idleW / 2;
       const ty = band - X(0.004);
       const from = { ...now };
-      const pts: [number, number][] = [];
-      const N = 12;
-      for (let i = 0; i <= N; i++) {
-        const u = i / N;
-        const e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
-        pts.push([from.x + (tx - from.x) * e, from.y + (ty - from.y) * e - Math.sin(u * Math.PI) * Y(0.08)]);
-      }
-      const a = m.play(act.pos, pathFrames(pts, { scale: (u) => from.k + (k - from.k) * (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2) }), {
-        duration: ms * 0.5,
-        easing: "linear",
-        fill: "forwards",
+      const fromC = { x: from.x, y: from.y - riseH * from.k * 0.55 };
+      const toC = { x: tx, y: ty - Y(STAY_H) * 0.5 };
+      m.after(160, () => {
+        m.play(act.pos, [
+          { transform: T(from.x, from.y, from.k), opacity: 1 },
+          { transform: T(from.x, from.y, from.k * 0.3), opacity: 0 },
+        ], { duration: 180, easing: EASE.in, fill: "forwards" });
+        dustPuffs(m, L.back, fromC.x, fromC.y, X(0.14), 5);
+        for (let i = 0; i < 6; i++) sparkle(m, L.back, fromC.x + (Math.random() - 0.5) * X(0.25), fromC.y + (Math.random() - 0.5) * X(0.25), X(0.1), i * 40);
+        const hop = ms * 0.32;
+        for (let i = 0; i < 9; i++) {
+          const bat = makeBat(m, A.bat, L.back, X(0.07 + Math.random() * 0.04), 100);
+          const pts: [number, number][] = [];
+          const sway = X(0.03 + Math.random() * 0.04) * (i % 2 ? 1 : -1);
+          for (let j = 0; j <= 10; j++) {
+            const u = j / 10;
+            const e = u * u * (3 - 2 * u);
+            pts.push([
+              fromC.x + (toC.x - fromC.x) * e + Math.sin(u * Math.PI) * sway + (Math.random() - 0.5) * X(0.02),
+              fromC.y + (toC.y - fromC.y) * e - Math.sin(u * Math.PI) * Y(0.06),
+            ]);
+          }
+          const a = m.play(bat.el, pathFrames(pts, { tilt: 22, scale: (u) => 0.6 + Math.sin(u * Math.PI) * 0.5, opacity: (u) => (u < 0.9 ? 1 : 0) }), {
+            duration: hop,
+            delay: i * 30,
+            fill: "backwards",
+          });
+          const rm = () => bat.el.remove();
+          if (a) a.finished.then(rm, rm);
+          else rm();
+        }
+        // 角でぽんっと戻る（帯の中。キャラ絵の手前へ）
+        m.after(hop + 240, () => {
+          // 棺の中ほどで切っていたのを外す（消えているあいだに。脚が棺の下からのぞかない）
+          L.actor.style.clipPath = "";
+          L.actorBox.style.zIndex = "4";
+          act.show("idle");
+          now = { x: tx, y: ty, k };
+          m.play(act.pos, [
+            { transform: T(tx, ty, k * 0.3), opacity: 0 },
+            { transform: T(tx, ty, k), opacity: 1 },
+          ], { duration: 220, easing: EASE.out, fill: "forwards" });
+          squash([[1.15, 0.85], [0.95, 1.06], [1, 1]], 320);
+          dustPuffs(m, L.top, toC.x, toC.y, X(0.08), 4);
+          for (let i = 0; i < 5; i++) sparkle(m, L.top, toC.x + (Math.random() - 0.5) * idleW, toC.y + (Math.random() - 0.5) * Y(STAY_H) * 0.6, X(0.07), i * 50);
+        });
       });
-      now = { x: tx, y: ty, k };
-      const land = () => {
-        L.actorBox.style.zIndex = "4";
-        squash([[1.12, 0.86], [0.96, 1.05], [1, 1]], 260);
-      };
-      if (a) a.finished.then(land, () => {});
-      else land();
     },
 
     stay: () => {

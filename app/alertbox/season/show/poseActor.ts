@@ -42,7 +42,7 @@ export function makePoseActor(
     const a = opts.anchor === "feet" ? p.bottom : p.faceCenter;
     return [flip(name) ? p.size[0] - a[0] : a[0], a[1]];
   };
-  const imgs = new Map<string, HTMLImageElement>();
+  const imgs = new Map<string, HTMLElement[]>();
   for (const [name, p] of set.poses) {
     const [ax, ay] = anchorOf(name);
     const im = document.createElement("img");
@@ -61,7 +61,7 @@ export function makePoseActor(
       pointerEvents: "none",
     } satisfies Partial<CSSStyleDeclaration>);
     squash.appendChild(im);
-    imgs.set(name, im);
+    imgs.set(name, [im, heroFaceMark(squash, p, s0, ax, ay, flip(name), name === opts.ref)]);
   }
   let cur = opts.ref;
   return {
@@ -71,7 +71,7 @@ export function makePoseActor(
     s0,
     show(name) {
       if (!imgs.has(name)) return;
-      imgs.forEach((im, k) => (im.style.visibility = k === name ? "visible" : "hidden"));
+      imgs.forEach((els, k) => els.forEach((el) => (el.style.visibility = k === name ? "visible" : "hidden")));
       cur = name;
     },
     current: () => cur,
@@ -83,4 +83,36 @@ export function makePoseActor(
       return [(x - ax) * s0, (pt[1] - ay) * s0];
     },
   };
+}
+
+/**
+ * 主役の顔の枠の印（`data-hero-face`）。見えない箱で、ポーズ絵と同じ箱に同じ位置・同じ反転で置き、
+ * ポーズと一緒に出し入れする。**字が主役の顔に乗っていないか**を、見張り（`alert-overlap.mjs`）が
+ * この印の画面の矩形と字の矩形の重なりで数える（オーナーの決まり: 主役の顔は字で隠さない）。
+ * `(ax, ay)` は絵の中の基準点（絵の px）。印も同じ点を原点にする
+ */
+export function heroFaceMark(
+  parent: HTMLElement,
+  p: { face: [number, number, number, number]; size: [number, number] },
+  s0: number,
+  ax: number,
+  ay: number,
+  flipped: boolean,
+  visible: boolean
+): HTMLDivElement {
+  const [x0, y0, x1, y1] = p.face;
+  const l = flipped ? p.size[0] - x1 : x0;
+  const d = document.createElement("div");
+  d.setAttribute("data-hero-face", "");
+  Object.assign(d.style, {
+    position: "absolute",
+    left: `${((l - ax) * s0).toFixed(1)}px`,
+    top: `${((y0 - ay) * s0).toFixed(1)}px`,
+    width: `${((x1 - x0) * s0).toFixed(1)}px`,
+    height: `${((y1 - y0) * s0).toFixed(1)}px`,
+    visibility: visible ? "visible" : "hidden",
+    pointerEvents: "none",
+  } satisfies Partial<CSSStyleDeclaration>);
+  parent.appendChild(d);
+  return d;
 }
