@@ -1,0 +1,10 @@
+{
+ "name": "bucket",
+ "size": [613, 568],
+ "parts": [
+  {"id": "bucket", "swaps": {"empty": "bucket-empty.png", "full": "bucket-full.png", "over": "bucket-over.png", "gray": "bucket-gray.png"}, "parent": null, "pivot": [337.0, 579.0], "at": [310.0, 547.0], "z": 10},
+  {"id": "handle", "file": "handle.png", "parent": "bucket", "pivot": [299.0, 219.3], "at": [337.0, 275.0], "z": 5}
+ ],
+ "anchors": {"rimBack": [166, 159, 459], "rimFront": [120, 263, 499], "label": [141, 425, 479, 517]},
+ "items": {"wrapped": "candy-wrapped.png", "lollipop": "candy-lollipop.png", "choco": "candy-choco.png", "cookie": "candy-cookie.png"}
+}
