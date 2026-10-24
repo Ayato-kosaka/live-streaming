@@ -1162,7 +1162,8 @@ export default function AlertBox() {
                   top={charTop}
                   bottom={charBottom}
                   revealAt={stage?.revealSec ?? 0}
-                  originY={stage?.show ? winH * 0.3 : undefined}
+                  /* 台本のある段は、キャラ絵の真ん中（字・魔法陣・あやとの着地と同じ中心。season/show/common.ts）からふくらむ */
+                  originY={stage?.show ? textCenterY : undefined}
                 >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
