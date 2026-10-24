@@ -30,6 +30,8 @@ import { resolveScript } from "./script";
 import { runVampire } from "./vampire";
 import { runMarch } from "./march";
 import { runWizard } from "./wizard";
+import { runReaper } from "./reaper";
+import { runZombie } from "./zombie";
 import type { LoadedPoses } from "./poses";
 import type { TierShow as TierShowDef } from "../../themes";
 
@@ -106,6 +108,24 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
           { kid: rigs.get("pumpkin_kid")!, bat: rigs.get("bat")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "reaper") {
+        stop = runReaper(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { poses: poses.get("reaper")!, bat: rigs.get("bat")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "zombie") {
+        stop = runZombie(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { poses: poses.get("zombie")!, kid: rigs.get("pumpkin_kid")!, ghost: rigs.get("ghost")!, bat: rigs.get("bat")! },
           resolveScript(show.script, durationSec, false),
           STAGE_W,
           STAGE_H

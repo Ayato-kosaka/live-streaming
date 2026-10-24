@@ -117,8 +117,10 @@ const videos = new Map(
 /* 滞在中のコマ（キャラ絵が出てからの秒）。台本のある段（段7）は、キャラ絵が出る 6.5 秒＋
    ふくらむ 0.85 秒までが登場で、終わりの 4 秒が締め。締めもキャラ絵は出ているので数える */
 const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
-/* 台本のある段（themes.ts）。段3 は行進（キャラ絵は最初から出ている）、段7 は伯爵 */
-const SHOWS = { halloween: [[500, 1000, "march"], [1000, 2000, "wizard"], [10000, Infinity, "vampire"]] };
+/* 台本のある段（themes.ts）。段3 は行進（キャラ絵は最初から出ている）、段5 は死神、段6 はゾンビ、段7 は伯爵 */
+const SHOWS = {
+  halloween: [[500, 1000, "march"], [1000, 2000, "wizard"], [2000, 5000, "reaper"], [5000, 10000, "zombie"], [10000, Infinity, "vampire"]],
+};
 const showOf = (a) => (SHOWS[theme] ?? []).find(([lo, hi]) => a >= lo && a < hi)?.[2] ?? null;
 const showTier = (a) => !!showOf(a);
 function framesFor(a) {
@@ -130,6 +132,10 @@ function framesFor(a) {
   if (showOf(a) === "wizard") return [5.3, 6, 8, 12, 25, d - 2.6, d - 2.0, d - 1.4, d - 0.8];
   // 行進: キャラ絵は最初から出ているので、行進の途中も数える。締めは右へ去るところ
   if (showOf(a) === "march") return [0.4, 0.9, 1.4, 1.8, 2.1, 2.4, 6, d - 2.6, d - 1.8, d - 1.0];
+  // 死神: キャラ絵は 4.97 秒から 0.85 秒でふくらむ。滞在（左上の角で鬼火が回る・小芸）と、締めの霧に消えるところ
+  if (showOf(a) === "reaper") return [5.9, 7, 9, 13, 20, 28, d - 2.8, d - 2.2, d - 1.6, d - 0.8];
+  // ゾンビ: キャラ絵は 6.36 秒から。滞在（右上の角でゆらゆら・決めポーズ・潜る）と、締めの墓へ戻るところ
+  if (showOf(a) === "zombie") return [7.3, 8.5, 10, 14, 20, 28, d - 2.8, d - 2.2, d - 1.6, d - 0.8];
   // 札がぽんっと出て膨らみきった瞬間（0.8 秒から 0.45 秒の 65%）・収まったところ・出たあと
   return [1.09, 1.4, 4.5];
 }
@@ -502,7 +508,7 @@ async function main() {
       const job = queue.shift();
       const r = await runOne(browser, job);
       // 絵を残す: 重なりのあったコマと、一覧に使う代表のコマ（滞在のまんなか）
-      const pickAt = { vampire: 16, march: 6, wizard: 8 }[showOf(r.amount)] ?? null;
+      const pickAt = { vampire: 16, march: 6, wizard: 8, reaper: 9, zombie: 10 }[showOf(r.amount)] ?? null;
       const pick = r.frames.find((f) => f.t === pickAt) ?? r.frames.at(-1) ?? null;
       for (const f of r.frames) {
         if (f === pick || bad(f) > 0) {

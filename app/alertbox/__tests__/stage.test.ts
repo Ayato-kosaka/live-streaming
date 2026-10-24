@@ -46,10 +46,10 @@ describe("額 → 段 → 出し方", () => {
     [999, "round", true],
     [1000, "round", true],
     [1999, "round", true],
-    [2000, "round", false],
-    [4999, "round", false],
-    [5000, "round", false],
-    [9999, "round", false],
+    [2000, "round", true],
+    [4999, "round", true],
+    [5000, "round", true],
+    [9999, "round", true],
     [10000, "gold", true],
     [300000, "gold", true],
   ])("%d円 → 札 %s / 台本 %s", (yen, frame, show) => {
@@ -96,7 +96,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("台本の無い段は、札はすぐ（0.8秒）ぽんっと出て、絵も遅らせない", () => {
-    for (const yen of [300, 3000, 7000]) {
+    for (const yen of [300]) {
       const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
       expect(st.revealSec).toBe(0);
       expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, wipe: null, count: null, donAt: null });
@@ -132,7 +132,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("テーマが読む切り絵は、貯金箱と台本のある段のぶん", () => {
-    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid"]));
+    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid", "ghost"]));
   });
 
   it("期間中でも配信には出ていない（作り直しのお試し中）", () => {
