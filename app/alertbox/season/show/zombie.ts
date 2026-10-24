@@ -32,7 +32,7 @@ import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } 
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
 import { makePoseActor } from "./poseActor";
-import { centerOf, curtainCall, every, stayAura } from "./common";
+import { centerOf, curtainCall, every } from "./common";
 import {
   Items,
   arcMove,
@@ -306,7 +306,7 @@ export function runZombie(
     ], { duration: BEAT, iterations, delay });
 
   let stayTimer = 0;
-  let aura: ReturnType<typeof stayAura> | null = null;
+  let aura: HTMLDivElement | null = null;
   let stopDig: (() => void) | null = null;
   /** 土から出た手（這い出すときに引っ込める） */
   let handEl: HTMLDivElement | null = null;
@@ -542,10 +542,9 @@ export function runZombie(
       ghosts.forEach((g) => {
         g.h.part("hand_l")?.getAnimations().forEach((x) => x.cancel());
         g.h.part("hand_r")?.getAnimations().forEach((x) => x.cancel());
+        /* おばけも止める（背景は止め絵にして、動くのはオーラの息と墓の掘り直しだけ。キャラ絵の後ろで
+           回し続けると、滞在のコマの速さが半分まで落ちた） */
         g.bob.getAnimations().forEach((x) => x.cancel());
-        m.play(g.bob, [{ transform: `translateY(${(-Y(0.008)).toFixed(1)}px)` }, { transform: `translateY(${Y(0.008).toFixed(1)}px)` }], {
-          duration: 1800, iterations: Infinity, direction: "alternate", easing: "ease-in-out",
-        });
       });
       // 踊りをやめて、右上の角へ跳ぶ
       actor.bob.getAnimations().forEach((x) => x.cancel());
@@ -576,7 +575,22 @@ export function runZombie(
     // その人の絵が出る。粒の層をキャラ絵の後ろへ
     reveal: () => {
       L.frontBox.style.zIndex = "0";
-      aura = stayAura(m, L.back, centerOf(L, W, H), X(AURA.r), AURA.rgb, AURA.alpha, 300);
+      /* オーラは息をさせない止め絵（stayAura の息を墓場の後ろで回すと、たくさんの部品の層と重なって
+         滞在のコマの速さが半分まで落ちた。止めれば 60fps に戻る） */
+      const c = centerOf(L, W, H);
+      const r = X(AURA.r);
+      aura = div(L.back, {
+        position: "absolute",
+        left: `${(c.x - r).toFixed(1)}px`,
+        top: `${(c.y - r).toFixed(1)}px`,
+        width: `${(r * 2).toFixed(1)}px`,
+        height: `${(r * 2).toFixed(1)}px`,
+        borderRadius: "50%",
+        background: edgeFade([[0, `rgba(${AURA.rgb},${AURA.alpha})`], [45, `rgba(${AURA.rgb},${(AURA.alpha * 0.55).toFixed(3)})`], [75, `rgba(${AURA.rgb},${(AURA.alpha * 0.18).toFixed(3)})`], [100, `rgba(${AURA.rgb},0)`]], "50% 50%"),
+        opacity: "0",
+      });
+      L.back.insertBefore(aura, L.back.firstChild);
+      m.play(aura, [{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 300, fill: "forwards", easing: EASE.out });
     },
 
     stay: () => {
@@ -615,7 +629,7 @@ export function runZombie(
         ms,
         hero: gateBox,
         afterExit: () => {
-          aura?.fadeOut(500);
+          if (aura) fadeOut(m, aura, 500);
           for (const el of [graveClip, kidClip, ghostGate, ...fog]) fadeOut(m, el, 500);
           if (stayGrave) fadeOut(m, stayGrave, 400);
         },

@@ -661,8 +661,8 @@ export function runReaper(
   }
 
   /**
-   * 呪い（滞在のはじめ）: キャラ絵の後ろに紫のオーラを残し、鬼火4つをキャラ絵のまわりで回す。
-   * どちらも奥の層（キャラ絵の後ろ）なので、顔の前は通らない。鬼火は4つの箱を回すだけ（揺らめかせない。
+   * 呪い（滞在のはじめ）: キャラ絵の後ろに紫のオーラを残し、鬼火3つをキャラ絵のまわりで回す。
+   * どちらも奥の層（キャラ絵の後ろ）なので、顔の前は通らない。鬼火は3つの箱を回すだけ（揺らめかせない。
    * 滞在は何十秒も続くので軽く）
    */
   function startCurse() {
@@ -678,9 +678,10 @@ export function runReaper(
     });
     curseBox = box;
     const o = { rx: c.w * CURSE_ORBIT.rx, ry: Y(CURSE_ORBIT.ry), tilt: CURSE_ORBIT.tilt };
-    for (let i = 0; i < 4; i++) {
+    // 3つ（4つでは滞在の CPU が段7を上回った）
+    for (let i = 0; i < 3; i++) {
       const w = makeWisp(box, X(CURSE_WISP_W), 0);
-      if (w) m.play(w.wrap, orbitFrames(o, i / 4), { duration: CURSE_ORBIT.ms, iterations: Infinity, easing: "linear" });
+      if (w) m.play(w.wrap, orbitFrames(o, i / 3), { duration: CURSE_ORBIT.ms, iterations: Infinity, easing: "linear" });
     }
     m.play(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: 400, fill: "forwards" });
   }
