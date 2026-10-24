@@ -1,40 +1,41 @@
 /**
  * 段3（500〜999円）の振付け: かぼちゃ坊や3人組の行進（設計書 v3）。
  *
- * 3人は名前の札の**上の縁を舞台にして**歩く。先頭の子が札（横断幕）の端を持って
- * 左から行進してきて、歩いたぶんだけ札が巻物のように広がる。止まったら3人で「ジャン！」と
- * 跳ね、まんなかの子がお菓子を放る。滞在のあいだは札の上で足踏みと小芸、締めは右へ行進して去る。
+ * 3人は面の上の端の帯（キャラ絵の四角の上）を、竿の先の小旗を振りながら左から行進してくる。
+ * 止まったら3人で「ジャン！」と跳ね、まんなかの子がお菓子を放る。滞在のあいだは帯の上で
+ * 足踏みと小芸、締めは右へ行進して去る。字（名前・額）は持たない（字はキャラ絵の上下中央）。
  *
  * **その人のキャラ絵は最初から出ている**（段1〜3は主役のあとに出さない）。だから坊やも
  * お菓子も、登場のあいだからキャラ絵の顔の前を通らない（オーナーの決まり）:
- * - 坊やは札の上の縁より上だけを歩く（足は縁に乗る。キャラ絵は札の下）
+ * - 坊やは帯の中だけを歩く（足は帯の下の辺。キャラ絵はその下）
  * - お菓子の粒の層（front）は最初からキャラ絵の後ろ（zIndex 0）に下げる
- * - 締めのこうもりも奥（back）を飛ぶ
+ * - 締めのこうもりは帯の高さの奥（back）を飛ぶ
  *
- * 層（`layers.ts`）: 坊やは actor（外の箱を最初から札より手前の 4 に上げる）、お菓子は front の
- * canvas、こうもりは back。
+ * 層（`layers.ts`）: 坊やは actor（外の箱を最初から 4 に上げる）、お菓子は front の canvas、
+ * こうもりは back。
  */
 import { EASE, range, type Motion } from "../rig/motion";
 import { attachItem, buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restPivot } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, makeBat, pathFrames, rigBounds, sparkle } from "./fx";
-import { div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, type ShowLayers } from "./layers";
 
 export type MarchRigs = { kid: LoadedRig; bat: LoadedRig };
 
 /**
- * 坊やの背丈（帽子を除く。舞台の高さに対する割合）。札の上の余白（`headroom` 0.2）に、
- * いちばん高い三角帽子と跳ねる高さまで収まる大きさ（帽子込みで 0.155）
+ * 坊やの背丈（部品の外形。舞台の高さに対する割合）。見える背丈は帽子込みで面の高さの 14〜15%、
+ * 3人の並びは面の幅の 75% 前後（段3は面の 3 割を使う設計）。上の帯（`headroom` 0.2）に
+ * 跳ねる高さまで収まる
  */
-const KID_H = 0.12;
+const KID_H = 0.15;
 /** 行進の1歩（ms） */
 const STEP = 260;
-/** 3人の並び（札の幅に対する、左端からの位置）と帽子・竿。左から しんがり・まんなか・先頭 */
+/** 3人の並び（面の幅に対する、左端からの位置）と帽子・竿・小旗の色。左から しんがり・まんなか・先頭 */
 const TROOP = [
-  { at: 0.14, hat: "hat_leaf", pole: "gripL" as const },
-  { at: 0.5, hat: "hat_ribbon", pole: null },
-  { at: 0.86, hat: "hat_pointy", pole: "grip" as const },
+  { at: 0.21, hat: "hat_leaf", pole: "gripL" as const, flag: "#8E44FF" },
+  { at: 0.5, hat: "hat_ribbon", pole: null, flag: "" },
+  { at: 0.79, hat: "hat_pointy", pole: "grip" as const, flag: "#FF8A1F" },
 ];
 
 type Kid = {
@@ -61,9 +62,8 @@ export function runMarch(
 ): () => void {
   const X = (f: number) => f * W;
   const Y = (f: number) => f * H;
-  const plateBox = () => plateBoxOf(L, W, H);
 
-  // キャラ絵は最初から出ている。粒の層はキャラ絵の後ろ、坊やは札より手前
+  // キャラ絵は最初から出ている。粒の層はキャラ絵の後ろ、坊やは字より手前（帯の中なので重ならない）
   L.frontBox.style.zIndex = "0";
   L.actorBox.style.zIndex = "4";
 
@@ -73,28 +73,25 @@ export function runMarch(
   const hip = restPivot(rigs.kid.def, "body") ?? [kb.l + kb.w / 2, kb.b];
   const tx = (x: number) => `translateX(${x.toFixed(1)}px)`;
 
-  /* 隊の箱: 札の上の縁に、札と同じ幅で置く。坊やの立ち位置は札の幅に対する %。
-     **札は出たあとも動く**（キャラ絵の中身を測り終えると、札とキャラ絵の組が真ん中へ下がる・
-     字の書体が読み終わると札の幅が変わる）ので、札が動いたら隊の箱だけを付け直す */
-  const troop = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px" });
+  /* 隊の箱: 帯の下の辺（キャラ絵の四角の上の辺）に、面の幅で置く。坊やの立ち位置は幅に対する %。
+     箱の大きさが変わると帯の高さも変わるので、キャラ絵の四角が動いたら隊の箱だけを付け直す */
+  const troop = div(L.actor, { position: "absolute", left: "0px", top: "0px", width: `${W}px`, height: "0px" });
+  const footY = () => bandBottomOf(L, W, H) - X(0.004);
   const sync = () => {
-    const pb = plateBox();
-    troop.style.transform = `translate(${pb.l.toFixed(1)}px, ${(pb.t + X(0.006)).toFixed(1)}px)`;
-    troop.style.width = `${Math.max(0, pb.r - pb.l).toFixed(1)}px`;
+    troop.style.transform = `translateY(${footY().toFixed(1)}px)`;
   };
   sync();
-  const slot = L.root.querySelector<HTMLElement>('[data-plate="slot"]');
-  const box = L.root.querySelector<HTMLElement>('[data-plate="box"]');
-  const mo = typeof MutationObserver === "function" && slot ? new MutationObserver(sync) : null;
-  mo?.observe(slot!, { attributes: true, attributeFilter: ["style"] });
-  const ro = typeof ResizeObserver === "function" && box ? new ResizeObserver(sync) : null;
-  ro?.observe(box!);
+  const cbox = L.root.querySelector<HTMLElement>('[data-char="box"]');
+  const mo = typeof MutationObserver === "function" && cbox ? new MutationObserver(sync) : null;
+  mo?.observe(cbox!, { attributes: true, attributeFilter: ["style"] });
 
   const kids: Kid[] = TROOP.map((t) => {
     const h = buildRig(rigs.kid, s);
     // 帽子は頭より手前、竿は握る手の絵より奥（拳が竿を握って見える）
     attachItem(h, rigs.kid, t.hat, "hatOn", 25);
     const pole = t.pole ? attachItem(h, rigs.kid, "pole", t.pole, 17) : null;
+    // 竿の先の小旗（三角の旗。竿と一緒に回る）
+    if (pole && t.flag) addFlag(pole, t.flag, t.pole === "gripL" ? -1 : 1);
     const spot = div(troop, { position: "absolute", left: `${t.at * 100}%`, top: "0px", width: "0px", height: "0px" });
     const pos = div(spot, { position: "absolute", left: "0px", top: "0px", width: "0px", height: "0px", willChange: "transform" });
     // 姿勢（跳ね・つぶし）は足元を中心に
@@ -106,10 +103,7 @@ export function runMarch(
     return { spot, pos, pose, h, pole, poleArm: t.pole === "gripL" ? "arm_l" : t.pole === "grip" ? "arm_r" : null, at: t.at };
   });
   /** いまの立ち位置（舞台の px。足元） */
-  const where = (k: Kid) => {
-    const pb = plateBox();
-    return { x: pb.l + (pb.r - pb.l) * k.at, y: pb.t + X(0.006) };
-  };
+  const where = (k: Kid) => ({ x: W * k.at, y: footY() });
 
   // ---------------------------------------------------------------- 歩き方
   /** 足踏み（`n` 歩）。脚を交互に振り、体は1歩ごとに弾む。腕は脚と逆に振る */
@@ -162,15 +156,9 @@ export function runMarch(
     "candy"
   );
 
-  // ---------------------------------------------------------------- 札を巻物のように広げる
-  const plateEl = () => L.root.querySelector<HTMLElement>('[data-plate="box"]');
-  // 閉じた形は右を 100% 切る。開いたら左右の影の分（6%）まで見せる
-  const clip = (open: number) => `inset(-40% ${(100 - open * 106).toFixed(2)}% -40% ${(-open * 6).toFixed(2)}%)`;
-
   let stayTimer = 0;
   const on: Partial<Record<TimedCue["do"], (c: TimedCue) => void>> = {
-    /* 左から行進してくる。3人とも同じ速さで、最後の 1 割で止まって少し行き過ぎて戻る。
-       先頭の子の竿の先が、札の広がる端 */
+    /* 左から行進してくる。3人とも同じ速さで、最後の 1 割で止まって少し行き過ぎて戻る */
     marchIn: (c) => {
       const ms = (c.dur ?? 1.7) * 1000;
       sync();
@@ -194,21 +182,6 @@ export function runMarch(
           { transform: "rotate(0deg)" },
         ], { duration: ms + 220 });
       });
-      // 札: 先頭の竿の先（子の中心から幅の 5%）までが広がる。止まったら残りがぱっと開く
-      const el = plateEl();
-      if (!el) return;
-      const pb = plateBox();
-      const pw = Math.max(1, pb.r - pb.l);
-      const edgeAt = (x: number) => Math.max(0, Math.min(1, (x + X(0.05) - pb.l) / pw));
-      // 先頭の竿の先が札の左の端に着く時刻（行進の割合。先頭は 0.9 で lead.x + 0.014 に着く）
-      const tIn = Math.max(0, Math.min(0.9, (0.9 * (pb.l - X(0.05) - (lead.x - dx))) / (dx + X(0.014))));
-      const open9 = edgeAt(lead.x + X(0.014));
-      m.play(el, [
-        { clipPath: clip(0), offset: 0 },
-        { clipPath: clip(0), offset: tIn * (ms / (ms + 240)) },
-        { clipPath: clip(open9), offset: 0.9 * (ms / (ms + 240)), easing: EASE.back },
-        { clipPath: clip(1), offset: 1 },
-      ], { duration: ms + 240, fill: "forwards", easing: "linear" });
     },
 
     // 3人で「ジャン！」。竿を振り上げ、まんなかの子は両手を上げて口を開ける、先頭はウインク
@@ -298,7 +271,7 @@ export function runMarch(
   // 小芸（滞在中）。どれも札の上の縁より上で終わる
   function twirl() {
     const k = Math.random() < 0.5 ? kids[0] : kids[2];
-    if (k.pole) m.play(k.pole, [{ transform: "rotate(0deg)" }, { transform: `rotate(${k === kids[2] ? 360 : -360}deg)` }], { duration: 760, easing: EASE.inOut });
+    if (k.pole) m.play(k.pole.parentElement, [{ transform: "rotate(0deg)" }, { transform: `rotate(${k === kids[2] ? 360 : -360}deg)` }], { duration: 760, easing: EASE.inOut });
     const p = where(k);
     sparkle(m, L.top, p.x, p.y - Y(KID_H) * 1.3, X(0.06), 380);
   }
@@ -322,13 +295,53 @@ export function runMarch(
     m.after(700, () => k.h.swap("head", "smile"));
   }
 
+  /**
+   * 竿の先に三角の小旗を付ける。竿の絵と旗を1つの箱に入れ直し、握る点を中心に一緒に回す
+   * （竿を回す小芸で、旗も付いてくる）。`side` は旗のなびく向き（外側）
+   */
+  function addFlag(pole: HTMLImageElement, color: string, side: number) {
+    const host = pole.parentElement;
+    if (!host) return;
+    const wrap = document.createElement("div");
+    Object.assign(wrap.style, {
+      position: "absolute",
+      left: pole.style.left,
+      top: pole.style.top,
+      width: pole.style.width,
+      height: pole.style.height,
+      transformOrigin: pole.style.transformOrigin,
+      zIndex: pole.style.zIndex,
+    } satisfies Partial<CSSStyleDeclaration>);
+    host.insertBefore(wrap, pole);
+    wrap.appendChild(pole);
+    Object.assign(pole.style, { left: "0px", top: "0px", transformOrigin: "" });
+    const w = parseFloat(pole.style.width) || 149;
+    const fw = w * 1.9;
+    const fh = w * 1.3;
+    const flag = document.createElement("div");
+    Object.assign(flag.style, {
+      position: "absolute",
+      left: side > 0 ? `${w * 0.55}px` : `${w * 0.45 - fw}px`,
+      top: `${w * 0.55}px`,
+      width: `${fw}px`,
+      height: `${fh}px`,
+      background: `linear-gradient(180deg, ${color}, ${color} 60%, rgba(0,0,0,0.25))`,
+      clipPath: side > 0 ? "polygon(0% 0%, 100% 50%, 0% 100%)" : "polygon(100% 0%, 0% 50%, 100% 100%)",
+      transformOrigin: side > 0 ? "0% 50%" : "100% 50%",
+    } satisfies Partial<CSSStyleDeclaration>);
+    wrap.appendChild(flag);
+    // 旗はずっと風になびく
+    m.play(flag, [{ transform: "skewY(-6deg) scaleX(0.92)" }, { transform: "skewY(6deg) scaleX(1.04)" }], {
+      duration: 520 + Math.random() * 120, iterations: Infinity, direction: "alternate", easing: "ease-in-out",
+    });
+  }
+
   for (const c of cues) {
     const fn = on[c.do];
     if (fn) m.at(c.t * 1000, () => fn(c));
   }
   return () => {
     mo?.disconnect();
-    ro?.disconnect();
     candy.dispose();
   };
 }

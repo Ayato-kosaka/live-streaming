@@ -27,10 +27,10 @@ export type PlateTiming = {
   appearAt: number;
   carried: boolean;
   /**
-   * 振付けが札を左から広げる（段3 は巻物のように・段4 は杖の光で書くように）。札は閉じた形で
-   * 待つ。null なら札が自分で出る（ぽんっと出る・運ばれてくる）
+   * 振付けが字を左から広げる（段4 は杖の光で書くように）。字は閉じた形で待つ。
+   * null なら字が自分で出る（1字ずつ弾む・運ばれてくる）
    */
-  wipe: "unroll" | "write" | null;
+  wipe: "write" | null;
   count: { at: number; dur: number } | null;
   donAt: number | null;
 };
@@ -56,14 +56,14 @@ export function stageFor(
 
 export function plateTiming(st: AlertStage): PlateTiming {
   const appear = st.cues ? cueOf(st.cues, "plateIn") : null;
-  const unroll = st.cues ? cueOf(st.cues, "unroll") : null;
+  const textIn = st.cues ? cueOf(st.cues, "textIn") : null;
   const write = st.cues ? cueOf(st.cues, "write") : null;
   const count = st.cues ? cueOf(st.cues, "count") : null;
   const don = st.cues ? cueOf(st.cues, "don") : null;
   return {
-    appearAt: appear?.t ?? unroll?.t ?? write?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
+    appearAt: appear?.t ?? textIn?.t ?? write?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
     carried: !!appear,
-    wipe: appear ? null : unroll ? "unroll" : write ? "write" : null,
+    wipe: appear ? null : write ? "write" : null,
     count: count ? { at: count.t, dur: count.dur ?? 1 } : null,
     donAt: don?.t ?? null,
   };

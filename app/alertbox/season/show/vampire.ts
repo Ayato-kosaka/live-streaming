@@ -23,7 +23,7 @@ import { buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restOrigin } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, partImage, pathFrames, rigBounds, sparkle } from "./fx";
-import { div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
 
 /** 層は `layers.ts`。満月・後光・こうもりの渦は back、伯爵は actor、棺は mid */
 export type VampireLayers = ShowLayers;
@@ -404,13 +404,7 @@ export function runVampire(
     rise: (c) => {
       const ms = (c.dur ?? 0.6) * 1000;
       vPos.style.opacity = "1";
-      /* 頭のてっぺんを札の下の辺より下に収める（札は字の量で高さが変わる。長い名前・3行の
-         メッセージで札が下へ伸びたら、伯爵のほうを縮める）。札はまだ見えていないが、置き場は
-         もう決まっていて測れる */
-      const feet = Y(VLAD.feet);
-      const roof = plateBox().b + Y(0.012);
-      const k = Math.min(1, Math.max(0.55, (feet - roof) / Y(VLAD.h)));
-      moveVlad(X(VLAD.x), feet, k, ms, "cubic-bezier(0.25, 0.1, 0.25, 1.15)");
+      moveVlad(X(VLAD.x), Y(VLAD.feet), 1, ms, "cubic-bezier(0.25, 0.1, 0.25, 1.15)");
       // 起き上がりきる手前で目が開く
       m.after(ms * 0.7, () => {
         vlad.swap("eyes", "normal");
@@ -565,13 +559,12 @@ export function runVampire(
       });
       // 棺は沈んで消える
       m.play(coffinG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.25, fill: "forwards" });
-      // 伯爵は札の左上へ（札は同じ秒に定位置へ下りはじめる。下りきった位置へ向かう）。
-      // 札の裏を通って、着いてから手前に出る
-      const pb2 = plateBox();
+      // 伯爵は面の上の左の角へ（上の帯。字のブロックとキャラ絵の顔を避ける）。
+      // キャラ絵の裏を通って、着いてから手前に出る
       const k = VLAD_STAY_H / VLAD.h;
-      // 札の左上の角に立つ（足を札の上の縁に掛ける）
-      const tx = pb2.l + X(0.07);
-      const ty = pb2.t + X(0.008);
+      // 足を帯の下の辺（キャラ絵の四角の上の辺）に乗せる
+      const tx = X(0.13);
+      const ty = bandBottomOf(L, W, H) - X(0.004);
       L.actor.style.clipPath = "";
       const a = moveVlad(tx, ty, k, ms * 0.48, EASE.inOut);
       const land = () => {
@@ -624,16 +617,16 @@ export function runVampire(
         });
       };
       next();
-      // 札の縁で、ときどき金のきらめき
+      /* 字のまわりで、ときどき金のきらめき。字はキャラ絵の上下中央なので、顔（キャラ絵の上 45%）に
+         掛からないように、字のブロックの真ん中より下（左右の端と下の端）だけに置く */
       const glints = () => {
-        m.after(range(Math.random, 2200, 4200), () => {
+        m.after(range(Math.random, 1600, 3200), () => {
           const b = plateBox();
-          // 左右の縁か上の縁だけ。下の縁はすぐ下がキャラ絵の頭なので、きらめきを置かない
-          const edge = Math.random() < 0.5;
-          const x = edge ? (Math.random() < 0.5 ? b.l : b.r) : b.l + Math.random() * (b.r - b.l);
-          const y = edge ? b.t + Math.random() * (b.b - b.t) * 0.6 : b.t;
-          // 札より手前の層に置く（粒の層はもうキャラ絵の後ろ。札の縁なので顔には掛からない）
-          sparkle(m, L.top, x, y, X(0.08));
+          const mid = (b.t + b.b) / 2 + X(0.045);
+          const side = Math.random() < 0.65;
+          const x = side ? (Math.random() < 0.5 ? b.l : b.r) : b.l + Math.random() * (b.r - b.l);
+          const y = side ? mid + Math.random() * Math.max(0, b.b - mid) : Math.max(mid, b.b);
+          sparkle(m, L.top, x, y, X(0.07));
           glints();
         });
       };
@@ -691,7 +684,7 @@ export function runVampire(
         // ぶら下がっていたこうもりも飛び立つ
         hanging.forEach((h) => m.play(h, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" }));
         // 金の粉は札より上（キャラ絵の顔に掛けない）
-        coins.dust(70, 1.6, 0, W, 0, plateBox().t);
+        coins.dust(70, 1.6, 0, W, 0, bandBottomOf(L, W, H));
       });
       // 月が消え、暗さも引く
       m.play(moonG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.5, delay: 500, fill: "forwards" });

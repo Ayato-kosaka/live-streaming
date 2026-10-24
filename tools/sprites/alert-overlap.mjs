@@ -1,28 +1,25 @@
 /**
- * 投げ銭アラート（`app/alertbox`）で、**名前の札の字がその人のキャラ絵に重なっていないか**、
- * **演出の主役・粒がキャラ絵の顔の前を通っていないか**を、画素で数える。
+ * 投げ銭アラート（`app/alertbox`）で、**演出の主役・粒・光がその人のキャラ絵の顔の前を通って
+ * いないか**を、画素で数える。
  *
  *   cd tools/sprites
  *   node alert-overlap.mjs --base http://localhost:4335 --chars /path/to/chars \
  *        --theme halloween --amounts 100,300,700,1500,3000,7000,10000 \
  *        --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 \
  *        --out /tmp/overlap --sheet
- *   node alert-overlap.mjs ... --control plate   # 対照: 札をキャラ絵の上へずらす → 1 で落ちる
  *   node alert-overlap.mjs ... --control face    # 対照: 顔の前に手前の層の四角を置く → 1 で落ちる
  *
  * ## 決まり（オーナー、2026-10-24。厳禁扱い）
  *
- * 1. 名前の札・額・メッセージの字は、その人のキャラ絵（絵でも動画でも）と1画素も重ねない。
- *    キャラ絵は**絵の中身の外接矩形**（透明でない範囲）で測る
- * 2. 演出の主役・粒・光は、滞在中（キャラ絵が出たあと）キャラ絵の顔（中身の外接矩形の上 45%）の
- *    前を通さない
+ * 演出の粒・光・主役（かぼちゃ坊や・魔法使い・伯爵など）は、滞在中（キャラ絵が出たあと）
+ * キャラ絵の顔（中身の外接矩形の上 45%）の前を通さない。登場の数秒（キャラ絵が出る前）は
+ * 画面を使ってよい。
+ *
+ * 字（名前・額・メッセージ）は**キャラ絵の上下中央に重ねる仕様**（同じ日に元の仕様へ戻した）
+ * なので、字とキャラ絵の重なりは数えない。字の読みやすさは `alert-ink.mjs` が測る。
  *
  * ## 数えるもの（1コマごと。全部 0 で合格）
  *
- * - `rect` … 札の矩形（札の枠の中の要素と字の行の矩形を全部合わせた外接矩形。動いている途中の
- *   transform も入る）と、キャラ絵の中身の外接矩形の重なりの画素数
- * - `ink` … 札だけを描いた絵で、キャラ絵の中身の外接矩形の中に色が乗った画素数（影・縁取りの
- *   はみ出しを拾う）
  * - `front` … キャラ絵より手前の演出の層（zIndex 2 以上）だけを描いた絵で、顔の矩形に色が乗った画素数
  * - `cover` … 顔の矩形のうち、キャラ絵が不透明な画素で、演出の層を全部消すと色が変わる画素数
  *   （手前の層がキャラ絵を塗っている）
@@ -32,17 +29,17 @@
  *
  * ## 止めて撮る
  *
- * 1コマを5回撮る（そのまま / 演出の層を消す / キャラ絵だけ / 札だけ / 手前の演出の層だけ）。
+ * 1コマを4回撮る（そのまま / 演出の層を消す / キャラ絵だけ / 手前の演出の層だけ）。
  * あいだに動くと差が出るので、撮るあいだは時計を止める: Web Animations を一時停止し、
  * `requestAnimationFrame` と `setTimeout` を預かり、`performance.now` / `Date.now` も止める。
  * 撮り終えたら止めていたぶんを引いて再開する（台本の時刻はずれない）。
  *
  * ## 「何も見ていない緑」を出さない
  *
- * 中身の矩形が無い・キャラ絵の画素が中身の 1 割に満たない・札の色が1画素も無い・
- * 演出のある段で演出の層が無い、のどれかなら、そのコマは「測れていない」で 2 で抜ける。
+ * 中身の矩形が無い・キャラ絵の画素が中身の 1 割に満たない・演出のある段で演出の層が無い、
+ * 滞在のコマが1つも無い、のどれかなら「測れていない」で 2 で抜ける。
  *
- * 終了コード: 0 = 全部 0 / 1 = 重なりがあった（対照ではこれが正しい） / 2 = 測れなかった
+ * 終了コード: 0 = 全部 0 / 1 = 顔に乗った（対照ではこれが正しい） / 2 = 測れなかった
  */
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, basename, extname } from "node:path";
@@ -69,7 +66,7 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && !["plate", "face"].includes(control)) die(`--control は plate か face（${control}）`);
+if (control && control !== "face") die(`--control は face（${control}）`);
 
 /* 名前とメッセージ。長い名前は全角 12 字（本物の視聴者さんの名前）。
    3行は本物の配信で届いたメッセージ（いまの字の大きさで 3〜4 行に折り返す） */
@@ -365,14 +362,10 @@ async function measureFrame(page, W, H, wantShow) {
   const B = await shot(page);
   await setMode(page, "char");
   const C = await shot(page);
-  await setMode(page, "plate");
-  const D = await shot(page);
   await setMode(page, "front");
   const E = await shot(page);
   await setMode(page, "all");
 
-  const rect = area(inter(plate, content));
-  const ink = count(D, content, (i) => D.data[i + 3] > 16);
   const front = count(E, face, (i) => E.data[i + 3] > 16);
   const cover = count(A, face, (i) => {
     if (C.data[i + 3] < 250) return false;
@@ -381,7 +374,6 @@ async function measureFrame(page, W, H, wantShow) {
   });
   // 測れているか（何も見ていない緑を出さない）
   const charPx = count(C, content, (i) => C.data[i + 3] > 16);
-  const platePx = count(D, plate, (i) => D.data[i + 3] > 16);
   const why = [];
   /* 登場（キャラ絵がまだ出きっていない）のコマは数えるが、合否には入れない。
      キャラ絵がふくらみ終わったら滞在 */
@@ -390,11 +382,8 @@ async function measureFrame(page, W, H, wantShow) {
     // 何も言わない（合否に入れない）
   } else if (!content || area(content) === 0) why.push("中身の矩形が無い");
   else if (charPx < area(content) * 0.1) why.push(`キャラ絵の画素が少ない(${charPx}/${area(content)})`);
-  // 札がまだ出ていないコマ（ぽんっと出る前）は色が無くてよい。1本のうちどれかのコマで出ていればよい（runOne）
   if (wantShow && rects.showLayers === 0) why.push("演出の層が無い");
   return {
-    rect,
-    ink,
     front,
     cover,
     plate,
@@ -403,11 +392,9 @@ async function measureFrame(page, W, H, wantShow) {
     kind: rects.kind,
     charOpacity: rects.boxOpacity,
     charTransform: rects.boxTransform,
-    gap: plate && content ? content.t - plate.b : null,
     charShare: content ? +((area(content) / (W * H)) * 100).toFixed(1) : 0,
     invalid: why,
     entrance,
-    platePx,
     A,
   };
 }
@@ -417,10 +404,6 @@ async function applyControl(page, kind) {
   await page.evaluate((kind) => {
     const mark = document.querySelector('[data-char="content"]') || document.querySelector('[data-char="box"] video');
     const c = mark.getBoundingClientRect();
-    if (kind === "plate") {
-      const slot = document.querySelector('[data-plate="slot"]');
-      slot.style.top = `${c.top + c.height * 0.2}px`;
-    }
     if (kind === "face") {
       const host = document.querySelector('[data-plate="slot"]').parentElement;
       const d = document.createElement("div");
@@ -490,7 +473,6 @@ async function runOne(browser, job) {
       res.frames.push(rest);
       rest._A = A;
     }
-    if (res.frames.length && !res.frames.some((f) => f.platePx > 0)) res.fatal = "どのコマにも札の色が無い";
     if (!res.frames.some((f) => !f.entrance)) res.fatal = "滞在のコマが1つも無い（キャラ絵が出ていない）";
   } catch (e) {
     res.fatal = String(e).slice(0, 300);
@@ -501,7 +483,7 @@ async function runOne(browser, job) {
 }
 
 function bad(f) {
-  return f.entrance ? 0 : f.rect + f.ink + f.front + f.cover;
+  return f.entrance ? 0 : f.front + f.cover;
 }
 
 async function main() {
@@ -538,7 +520,7 @@ async function main() {
       const inval = r.fatal ? `測れない: ${r.fatal}` : r.frames.some((f) => f.invalid.length) ? `測れない: ${[...new Set(r.frames.flatMap((f) => f.invalid))].join("・")}` : "";
       console.log(
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
-          (inval || (worst ? `重なり ${r.frames.map((f) => `${f.t}s:${f.rect}/${f.ink}/${f.front}/${f.cover}`).join(" ")}` : "0")) +
+          (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}`).join(" ")}` : "0")) +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -552,16 +534,13 @@ async function main() {
   const ent = all.filter((f) => f.entrance);
   if (ent.length) {
     const s = (k) => ent.reduce((a, f) => a + f[k], 0);
-    console.log(`登場中のコマ ${ent.length}（合否に入れない）: rect ${s("rect")} / ink ${s("ink")} / front ${s("front")} / cover ${s("cover")}`);
+    console.log(`登場中のコマ ${ent.length}（合否に入れない）: front ${s("front")} / cover ${s("cover")}`);
   }
   const invalid = results.filter((r) => r.fatal || r.frames.some((f) => f.invalid.length) || r.frames.length === 0);
   const sum = (k) => frames.reduce((s, f) => s + f[k], 0);
   const hit = results.filter((r) => r.frames.some((f) => bad(f) > 0));
   console.log(`\n滞在中のコマ ${frames.length}（${results.length} 本）`);
-  console.log(`  札とキャラ絵の矩形の重なり(rect) ${sum("rect")} / 札の色がキャラ絵の矩形に乗った(ink) ${sum("ink")}`);
   console.log(`  手前の演出が顔に乗った(front) ${sum("front")} / 演出が顔の画素を塗った(cover) ${sum("cover")}`);
-  const gaps = frames.map((f) => f.gap).filter((g) => g != null);
-  if (gaps.length) console.log(`  札の下の辺からキャラ絵の中身の上の辺まで: いちばん狭い ${Math.min(...gaps)}px`);
   const shares = results.map((r) => ({ r, s: r.frames.at(-1)?.charShare ?? 0 }));
   if (shares.length) {
     const lo = shares.reduce((a, b) => (b.s < a.s ? b : a));
@@ -583,7 +562,7 @@ async function main() {
   process.exit(hit.length ? 1 : 0);
 }
 
-/* 一覧の絵: 行 = キャラ、列 = 段（大きさ・字ごとに1枚ずつ）。札の矩形（水色）・中身の矩形（桃）・
+/* 一覧の絵: 行 = キャラ、列 = 段（大きさ・字ごとに1枚ずつ）。字のブロック（水色）・中身の矩形（桃）・
    顔の矩形（黄）を重ねて描き、数を下に添える */
 async function sheet(results) {
   const groups = new Map();
@@ -618,7 +597,7 @@ h1{font-size:15px;margin:0 0 8px}table{border-collapse:collapse}td,th{padding:4p
 th{font-weight:600}.c{position:relative;overflow:hidden;background:repeating-conic-gradient(#3a3a46 0 25%,#2c2c36 0 50%) 0 0/16px 16px}
 .c img{position:absolute;left:0;top:0;width:100%;height:100%}.c i{position:absolute;border:1.5px solid;box-sizing:border-box}
 b{display:block;font-weight:600}.ok{color:#7fffa0}.ng{color:#ff6b6b}.x{color:#aaa}
-</style><h1>${k.replace("_", "・")}（滞在中のコマ。水色=札の矩形 / 桃=キャラ絵の中身 / 黄=顔(上45%)。数は全コマの重なりの合計・中身が面に占める割合）</h1>
+</style><h1>${k.replace("_", "・")}（滞在中のコマ。水色=字のブロック / 桃=キャラ絵の中身 / 黄=顔(上45%)。数は全コマで顔に乗った画素の合計・中身が面に占める割合）</h1>
 <table><tr><th></th>${ams.map((a) => `<th>${a.toLocaleString()}円</th>`).join("")}</tr>
 ${ids
   .map((id) => `<tr><th>${id}</th>${ams.map((a) => cell(rs.find((r) => r.char === id && r.amount === a))).join("")}</tr>`)

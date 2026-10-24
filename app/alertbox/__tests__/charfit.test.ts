@@ -11,10 +11,10 @@ const inside = (c: { left: number; top: number; width: number; height: number },
   c.left >= -1e-6 && c.top >= -1e-6 && c.left + c.width <= aw + 1e-6 && c.top + c.height <= ah + 1e-6;
 
 describe("キャラ絵の置き方（中身の外接矩形で収める）", () => {
-  it("横長の中身は幅いっぱい・上の辺に揃う", () => {
+  it("横長の中身は幅いっぱい・縦は真ん中", () => {
     const at = fitContent({ natW: 1024, natH: 400, box: { x: 0, y: 0, w: 1, h: 1 } }, 436, 600);
     expect(at.content.width).toBeCloseTo(436);
-    expect(at.content.top).toBe(0);
+    expect(at.content.top + at.content.height / 2).toBeCloseTo(300);
     expect(inside(at.content, 436, 600)).toBe(true);
   });
 
@@ -33,7 +33,7 @@ describe("キャラ絵の置き方（中身の外接矩形で収める）", () =
     // 中身が四角の幅を使い切る（外枠で収めると 436/1400 倍で、中身の幅は 103px にしかならない）
     expect(at.content.width).toBeCloseTo(436);
     // 絵の外枠は、中身の位置が合うように動いている
-    expect(at.img.top).toBeCloseTo(-(942 / 1400) * 1400 * at.s);
+    expect(at.img.top).toBeCloseTo(at.content.top - (942 / 1400) * 1400 * at.s);
   });
 
   it("どんな形でも、中身は四角の中", () => {

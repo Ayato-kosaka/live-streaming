@@ -75,28 +75,31 @@ export type FxSlot = {
   lane?: number;
 };
 
-/** 名前の札の飾り。字の大きさは画面の幅 1080 のときの px（幅に比例して縮める） */
+/**
+ * アラートの字（名前・額・メッセージ）の飾り。**背景の箱は持たない**（2026-10-24、オーナー:
+ * 字はキャラ絵の上下中央に重ね、箱は使わずに字そのものをリッチに）。描くのは `season/plate/RichText.tsx`。
+ * 字の大きさは画面の幅 1080 のときの px（幅に比例させる）。額の字の高さは面の幅の 7% 以上・名前 5.5% 以上
+ */
 export type PlateStyle = {
-  /*
-   * 角丸の札は**透かさない**（地は不透明）。字の縁は、札の地を暗くした色（`ink`）。
-   * 透かした札（0.84〜0.95）だと、白い壁が透けたところで地が明るくなり、小さな字
-   * （額の「,」）では縁の画素が字の大半になって、濃さが 1.3〜1.9 まで落ちた
-   * （本物の配信画面4枚の上で、字の濃さを画素から測った。2026-10-23）。
-   * 不透明にすると、どの画面でも中央値の最小が 8.6 を超えた
-   */
-  /** 角丸の札か、金の額縁か */
+  /** "gold" は段7の金の縁と光（ほかは濃い縁だけ） */
   frame: "round" | "gold";
-  /** 札の地（字が読めるように、背景の配信画面から切り離す） */
-  bg: string;
-  /** 縁の色 */
+  /** 段の色。縁の光・「ドン」の光 */
   edge: string;
-  /** 字の縁取りの色（札の地を暗くした色） */
+  /** 字の縁取りの色（濃い色。明るい地・キャラ絵の柄の上でも字を読ませる） */
   ink: string;
+  /** 縁取りの太さ（em。外に見えるのはこの半分）。段が上がるほど太い */
+  stroke: number;
+  /** 縁の光の強さ（0..1）。段が上がるほど強い */
+  glow: number;
   nameColor: string;
+  /** 名前と額のあいだの字（「様」「ありやとう！！」）とメッセージの色。無ければ名前の色・白 */
+  textColor?: string;
+  /** 額のグラデーション（上 → 下） */
   amountColor: string;
+  amountColor2?: string;
   nameSize: number;
   amountSize: number;
-  /** 段1〜3のように台本が無いとき、札が出る秒 */
+  /** 台本が無いとき、字が出る秒 */
   appearAt?: number;
 };
 
@@ -221,12 +224,13 @@ export type SeasonTheme = {
 
 /**
  * かぼちゃ坊や3人組の行進（段3、500〜999円）の台本。登場 2.5 秒・前兆なし（設計書 v3）。
- * その人のキャラ絵は最初から出ている（段1〜3）ので、坊やは札の上の縁より上だけを歩く
+ * その人のキャラ絵は最初から出ている（段1〜3）ので、坊やは面の上の端の帯だけを歩く
  */
 const MARCH: Cue[] = [
   { at: 0.0, do: "marchIn", dur: 1.7 },
-  { at: 0.0, do: "unroll" },
   { at: 1.9, do: "tada" },
+  // 字は「ジャン！」と同時に1字ずつ弾んで出る
+  { at: 1.9, do: "textIn" },
   { at: 2.0, do: "candyBurst", n: 34, dur: 0.3 },
   { at: 2.6, do: "stay" },
   // 締め（終わりの 3 秒前から）。右へ行進して去る
@@ -349,13 +353,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#1565C0",
         plate: {
           frame: "round",
-          bg: "rgb(8,24,52)",
           edge: "#42A5F5",
           ink: "#020A18",
+          stroke: 0.18,
+          glow: 0.0,
           nameColor: "#FFFFFF",
-          amountColor: "#90CAF9",
-          nameSize: 54,
-          amountSize: 52,
+          amountColor: "#E3F2FD",
+          amountColor2: "#64B5F6",
+          nameSize: 88,
+          amountSize: 132,
           appearAt: 0.8,
         },
         slots: 2,
@@ -368,13 +374,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#00B8D4",
         plate: {
           frame: "round",
-          bg: "rgb(0,36,44)",
           edge: "#00E5FF",
           ink: "#00141A",
+          stroke: 0.19,
+          glow: 0.0,
           nameColor: "#FFFFFF",
-          amountColor: "#84FFFF",
-          nameSize: 58,
-          amountSize: 58,
+          amountColor: "#E0F7FA",
+          amountColor2: "#26C6DA",
+          nameSize: 90,
+          amountSize: 134,
           appearAt: 0.8,
         },
         slots: 3,
@@ -387,16 +395,18 @@ export const THEMES: SeasonTheme[] = [
         accent: "#00C853",
         plate: {
           frame: "round",
-          bg: "rgb(4,44,26)",
           edge: "#1DE9B6",
           ink: "#01160C",
+          stroke: 0.2,
+          glow: 0.25,
           nameColor: "#FFFFFF",
-          amountColor: "#69F0AE",
-          nameSize: 64,
-          amountSize: 66,
+          amountColor: "#E8F5E9",
+          amountColor2: "#69F0AE",
+          nameSize: 92,
+          amountSize: 136,
           appearAt: 0.8,
         },
-        /* かぼちゃ坊や3人組が札の上の縁を行進してきて、歩いたぶんだけ札が広がる。
+        /* かぼちゃ坊や3人組が面の上の端を、竿の小旗を振りながら行進してくる。
            小物（下の slots / files）は、部品が読めなかった日の控え */
         show: {
           kind: "march",
@@ -415,13 +425,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#FFCA28",
         plate: {
           frame: "round",
-          bg: "rgb(50,36,4)",
           edge: "#FFCA28",
           ink: "#1C1300",
+          stroke: 0.21,
+          glow: 0.4,
           nameColor: "#FFFFFF",
-          amountColor: "#FFE082",
-          nameSize: 76,
-          amountSize: 80,
+          amountColor: "#FFFDE7",
+          amountColor2: "#FFCA28",
+          nameSize: 94,
+          amountSize: 138,
           appearAt: 0.8,
         },
         /* 魔法使いのあやとがほうきで飛び込み、杖の光で札を書く。小物（下の slots / files）は、
@@ -444,13 +456,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#FF9100",
         plate: {
           frame: "round",
-          bg: "rgb(52,22,0)",
           edge: "#FF9100",
           ink: "#1C0B00",
+          stroke: 0.22,
+          glow: 0.55,
           nameColor: "#FFFFFF",
-          amountColor: "#FFB74D",
-          nameSize: 82,
-          amountSize: 90,
+          amountColor: "#FFF3E0",
+          amountColor2: "#FFA726",
+          nameSize: 96,
+          amountSize: 140,
           appearAt: 0.8,
         },
         slots: 6,
@@ -463,13 +477,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#E91E63",
         plate: {
           frame: "round",
-          bg: "rgb(48,4,24)",
           edge: "#FF4081",
           ink: "#1A0109",
+          stroke: 0.23,
+          glow: 0.75,
           nameColor: "#FFFFFF",
-          amountColor: "#FF80AB",
-          nameSize: 88,
-          amountSize: 98,
+          amountColor: "#FCE4EC",
+          amountColor2: "#FF5C93",
+          nameSize: 98,
+          amountSize: 142,
           appearAt: 0.8,
         },
         slots: 8,
@@ -489,13 +505,15 @@ export const THEMES: SeasonTheme[] = [
         accent: "#D50000",
         plate: {
           frame: "gold",
-          bg: "rgba(58,4,16,0.88)",
           edge: "#F4C24E",
           ink: "#2A0208",
+          stroke: 0.24,
+          glow: 1.0,
           nameColor: "#FFF1C9",
-          amountColor: "#FFD54F",
-          nameSize: 96,
-          amountSize: 110,
+          amountColor: "#FFF8E1",
+          amountColor2: "#FFC107",
+          nameSize: 104,
+          amountSize: 150,
         },
         /* 暗転 → 鼓動 → こうもりの渦 → 満月と棺 → 伯爵 → 金の額縁の札 → 数え上げ「ドン」。
            小物（下の slots / files）は、部品が読めなかった日の控え */
@@ -503,7 +521,7 @@ export const THEMES: SeasonTheme[] = [
           kind: "vampire",
           rigs: ["vlad", "bat", "props"],
           revealSec: 6.5,
-          headroom: 0.1,
+          headroom: 0.12,
           script: VAMPIRE,
         },
         slots: 10,

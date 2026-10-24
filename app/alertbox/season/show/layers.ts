@@ -9,7 +9,7 @@
  *   mid    主役の手前の小道具（棺など）                            ┘
  *   ── その人のキャラ絵（index.tsx）──
  *   front  粒（canvas）・きらめき・閃光（キャラ絵が出たら、キャラ絵の後ろへ下がる）
- *   ── 名前の札（NamePlate）──
+ *   ── 字（RichText。キャラ絵の上下中央）──
  *   top    札を運ぶもの・締めの群れ・札より手前に出る主役
  */
 export type ShowLayers = {
@@ -29,8 +29,8 @@ export type ShowLayers = {
 };
 
 /**
- * 巻物のように広がる札（段3）の、閉じた形。`NamePlate` が最初にこの形で置き、振付けが
- * 右の切り取りを 100% → -6% へ動かして広げる（左右の影のぶんまで見せる）
+ * 左から広がる字のブロック（段4: 杖の光で書く）の、閉じた形。`RichText` が最初にこの形で置き、
+ * 振付けが右の切り取りを 100% → -6% へ動かして広げる（左右の縁取りのぶんまで見せる）
  */
 export const UNROLL_CLOSED = "inset(-40% 100% -40% 0%)";
 
@@ -43,7 +43,22 @@ export function div(parent: HTMLElement, style: Partial<CSSStyleDeclaration>): H
 }
 
 /**
- * 名前の札の位置（舞台の px）。札は舞台の外（React）にあるので、画面の位置を測って直す。
+ * 主役が滞在中にいる帯（面の上の端）の下の辺 = その人のキャラ絵の四角の上の辺（舞台の px）。
+ * 台本のある段は index.tsx がこの帯を空けてキャラ絵を置くので、主役は帯の中にいればキャラ絵の
+ * 顔の前を通らない。ふくらんで出てくる途中でも、置き場の位置を返す（offset で測る）
+ */
+export function bandBottomOf(L: ShowLayers, W: number, H: number): number {
+  const el = L.root.querySelector<HTMLElement>('[data-char="box"]');
+  const sr = L.dark.getBoundingClientRect();
+  const k = sr.width / W || 1;
+  if (!el) return H * 0.2;
+  const parent = el.offsetParent as HTMLElement | null;
+  const top = (parent ? parent.getBoundingClientRect().top : 0) + el.offsetTop;
+  return (top - sr.top) / k;
+}
+
+/**
+ * 字のブロックの位置（舞台の px）。札は舞台の外（React）にあるので、画面の位置を測って直す。
  *
  * **札が動いている途中でも、止まったときの位置を返す。** 札は運ばれてくる途中（上へ 42vh
  * ずれている）や、ぽんっと膨らむ途中でも、置き場は決まっている。transform を含む

@@ -37,7 +37,8 @@ import { useBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
-import { NamePlate, frameKitOf } from "./season/plate/NamePlate";
+import { RichText } from "./season/plate/RichText";
+import type { PlateStyle } from "./themes";
 import { CharBox } from "./season/plate/CharBox";
 import { CharFit } from "./components/CharFit";
 import { splitPlateText } from "./season/plate/plateText";
@@ -100,6 +101,27 @@ const sendLog: typeof sendLogRaw = (...args) =>
   quiet ? Promise.resolve() : sendLogRaw(...args);
 
 /** `?preview=` の読み方。`1` は偽の投げ銭を1件、`bank` は貯金箱だけ */
+/**
+ * 季節の外の字（飾り無し）。色は設定（config.ts）の色、大きさと縁取りは季節の段と同じ読みやすさ
+ * （前は 20px 固定で、明るい地・キャラ絵の柄の上で読めなかった）
+ */
+function plainPlate(type: NotificationData["type"]): PlateStyle {
+  const s = settings[type] as { fontColor?: string; fontHighlightColor?: string };
+  const hi = s.fontHighlightColor ?? "#37a9fd";
+  return {
+    frame: "round",
+    edge: hi,
+    ink: "#06101C",
+    stroke: 0.2,
+    glow: 0,
+    nameColor: hi,
+    textColor: s.fontColor ?? "#FFFFFF",
+    amountColor: hi,
+    nameSize: 88,
+    amountSize: 132,
+  };
+}
+
 function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
   const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
   if (v === "1" || v === "true" || v === "alert") return "alert";
@@ -157,38 +179,15 @@ export default function AlertBox() {
      useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
      （豚も）が描き直された（`season/useBoxSize.ts`） */
   const { width: winW, height: winH } = useBoxSize();
-  /* 名前の札の枠の高さ（px）。札は面のいちばん上、その人のキャラ絵は札のすぐ下から下の端まで。
-     **字とキャラ絵は1画素も重ねない**（オーナーの決まり）。札が長い名前・3行のメッセージで
-     高くなったら、キャラ絵の箱が下がって縮む。変わったときだけ描き直す（1px 未満は捨てる） */
-  const [plateH, setPlateH] = useState(0);
-  const plateSlotRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = plateSlotRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    let raf = 0;
-    const ro = new ResizeObserver(() => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const h = el.offsetHeight;
-        setPlateH((p) => (Math.abs(p - h) < 1 ? p : h));
-      });
-    });
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-    };
-  });
-  /* 札の上の余白。主役が札の上の端に乗る段（台本のある段）は、乗る高さを空けておく */
-  const plateTopPx = Math.round(winH * (stage?.show ? stage.show.headroom : 0.03));
-  // 札の影（下へ 24px × 幅の比）がキャラ絵の頭に掛からないすき間
-  const charGap = Math.round(winH * 0.015);
+  /* その人のキャラ絵は面いっぱいに（中身の外接矩形で contain・真ん中）。字（名前・額・メッセージ）は
+     キャラ絵の上下中央に重ねる（オーナーの元の仕様。2026-10-24 に戻した）。
+     台本のある段は、主役が滞在中にいる帯（面の上の端）を空けて、その下にキャラ絵を置く。主役が
+     キャラ絵の顔の前を通らないように（主役の居場所は字のブロックとキャラ絵の顔を避けた上の端・角） */
+  const charTop = Math.round(winH * (stage?.show ? stage.show.headroom : 0.02));
   const charBottom = Math.round(winH * 0.02);
-  const charAreaH = Math.max(0, winH - (plateTopPx + plateH + charGap) - charBottom);
-  /* キャラ絵の中身の高さ（px。CharFit が測って知らせる）。横長の絵は四角の高さを使い切らないので、
-     余った高さを上下に分けて、札とキャラ絵の組を面の真ん中に置く（上に詰めると下が空く） */
-  const [charContent, setCharContent] = useState<{ id: string; h: number } | null>(null);
+  const charAreaH = Math.max(0, winH - charTop - charBottom);
+  /** 字のブロックの真ん中の高さ。キャラ絵は四角の真ん中に置くので、中身の真ん中もここ */
+  const textCenterY = charTop + charAreaH / 2;
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -1074,22 +1073,6 @@ export default function AlertBox() {
     [notification]
   );
 
-  /* 札とキャラ絵の組を下げる量。動画は中身の高さを測らないので、上に詰めたまま */
-  const shownId = notification && "id" in notification ? String(notification.id) : null;
-  const contentH =
-    shownId != null && charContent != null && charContent.id === shownId && displaySource.type !== "video"
-      ? charContent.h
-      : null;
-  const groupShift = contentH != null ? Math.max(0, Math.round((charAreaH - contentH) / 2)) : 0;
-  const onCharContent = (h: number | null) => {
-    if (shownId == null) return;
-    const id = shownId;
-    setCharContent((p) => {
-      if (h == null) return p != null && p.id === id ? null : p;
-      return p != null && p.id === id && Math.abs(p.h - h) < 1 ? p : { id, h };
-    });
-  };
-
   return (
     <>
       {/* 画面ヘッダーを非表示 */}
@@ -1135,7 +1118,7 @@ export default function AlertBox() {
 
                 <CharBox
                   key={`char-${notification.id}`}
-                  top={plateTopPx + groupShift + plateH + charGap}
+                  top={charTop}
                   bottom={charBottom}
                   revealAt={stage?.revealSec ?? 0}
                   originY={stage?.show ? winH * 0.3 : undefined}
@@ -1158,11 +1141,11 @@ export default function AlertBox() {
                        Android の WebView が ▶ の板を画面いっぱいに描く。
                        あやとが撮った絵がそれ。透明にしておけば、下に置いた
                        その人の絵がそのまま見えている。 */
-                    /* 動画は中身を測れないので、枠ごと箱に収める（上の辺を札のすぐ下に） */
+                    /* 動画は中身を測れないので、枠ごと箱に収める（真ん中） */
                     style={{
                       ...styles.image,
                       objectFit: "contain",
-                      objectPosition: "50% 0%",
+                      objectPosition: "50% 50%",
                       opacity: videoStarted ? 1 : 0,
                     }}
                     onLoadStart={() =>
@@ -1214,7 +1197,6 @@ export default function AlertBox() {
                     url={displaySource.url || imageUrl(notification.type)}
                     width={winW}
                     height={charAreaH}
-                    onContent={onCharContent}
                   />
                 )}
 
@@ -1273,16 +1255,16 @@ export default function AlertBox() {
                 </div>
                 )}
 
-                {/* 名前の札の枠（面のいちばん上）。季節の札か、季節の外は飾りの無い字。
-                    高さは字で決まり、キャラ絵の箱はこの下から始まる */}
+                {/* 字（名前・額・メッセージ）。キャラ絵の上下中央に重ねる。背景の箱は無い。
+                    季節の段は段の飾り（縁の光・1字ずつ弾む・数え上げ）、季節の外は飾り無しの同じ読みやすい字 */}
                 <div
-                  ref={plateSlotRef}
                   data-plate="slot"
                   style={{
                     position: "absolute",
                     left: 0,
                     right: 0,
-                    top: plateTopPx + groupShift,
+                    top: textCenterY,
+                    transform: "translateY(-50%)",
                     zIndex: 3,
                     display: "flex",
                     flexDirection: "column",
@@ -1290,10 +1272,11 @@ export default function AlertBox() {
                     pointerEvents: "none",
                   }}
                 >
-                {stage?.plate && (
-                  <NamePlate
-                    key={`plate-${notification.id}`}
-                    plate={stage.plate}
+                  <RichText
+                    key={`text-${notification.id}`}
+                    plate={stage?.plate ?? plainPlate(notification.type)}
+                    plain={!stage?.plate}
+                    maxLines={stage?.plate ? 3 : 0}
                     lines={splitPlateText(mainTextTemplate, {
                       name: notification.nickname,
                       amount: notification.amount,
@@ -1304,69 +1287,8 @@ export default function AlertBox() {
                     })}
                     message={notification.message}
                     W={winW}
-                    H={winH}
-                    {...plateTiming(stage)}
-                    kit={stage.show ? frameKitOf(season.rigs.get("props")) : null}
+                    {...(stage?.plate ? plateTiming(stage) : { appearAt: 0 })}
                   />
-                )}
-
-                {/* テキスト部（テンプレートの {名前} / {金額} / {単位} を置換） */}
-                {!stage?.plate && (
-                <View data-plate="box" style={styles.textContainer}>
-                  <Text style={{ ...styles.message, ...mainTextStyle }}>
-                    {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
-                      if (part === "{名前}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.nickname}
-                          </Text>
-                        );
-                      } else if (part === "{金額}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.amount.toLocaleString()}
-                          </Text>
-                        );
-                      } else if (part === "{単位}") {
-                        // Handle currency unit - donation uses JPY, superchat uses its currency
-                        const currency =
-                          notification.type === "superchat"
-                            ? notification.currency
-                            : "円";
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {currency}
-                          </Text>
-                        );
-                      }
-                      return part; // 通常のテキスト
-                    })}
-                  </Text>
-
-                  {/* メッセージ本文（寄付/スパチャ時のコメント） */}
-                  <Text style={{ ...styles.message, ...messageStyle }}>
-                    {notification.message}
-                  </Text>
-                </View>
-                )}
                 </div>
               </View>
             )}

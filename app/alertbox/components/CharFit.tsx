@@ -3,8 +3,8 @@
  *
  * 絵ごとに余白が違う（真四角に小さく描いた人・縦長いっぱいの人・横長の人）。絵の外枠で
  * 「contain」すると、余白の多い絵は小さく、余白の少ない絵は札にぶつかる。ここでは
- * 透明でない範囲（中身の外接矩形）を測って、その矩形が四角に収まるいちばん大きな倍率で置く。
- * 中身の上の辺を四角の上の辺に合わせる（札のすぐ下）。
+ * 透明でない範囲（中身の外接矩形）を測って、その矩形が四角に収まるいちばん大きな倍率で、
+ * 四角の真ん中に置く。
  *
  * - 中身は縮めた絵で一度だけ測り、URL ごとに覚える
  * - 測れない絵（よそから来て canvas が汚れる・透明の無い絵）は、絵の外枠を中身とみなす。
@@ -95,17 +95,17 @@ function measure(url: string): Promise<Fit | null> {
   return p.finally(() => pending.delete(url));
 }
 
-/** 中身の矩形が (aw × ah) に収まる置き方（px）。上の辺を合わせ、横は真ん中 */
+/** 中身の矩形が (aw × ah) に収まる置き方（px）。縦も横も真ん中（字は中身の上下中央に重なる） */
 export function fitContent(fit: Fit, aw: number, ah: number) {
   const cw = fit.box.w * fit.natW;
   const ch = fit.box.h * fit.natH;
   const s = Math.max(0, Math.min(aw / cw, ah / ch));
-  const left = (aw - cw * s) / 2 - fit.box.x * fit.natW * s;
-  const top = -fit.box.y * fit.natH * s;
+  const cl = (aw - cw * s) / 2;
+  const ct = (ah - ch * s) / 2;
   return {
     s,
-    img: { left, top, width: fit.natW * s, height: fit.natH * s },
-    content: { left: (aw - cw * s) / 2, top: 0, width: cw * s, height: ch * s },
+    img: { left: cl - fit.box.x * fit.natW * s, top: ct - fit.box.y * fit.natH * s, width: fit.natW * s, height: fit.natH * s },
+    content: { left: cl, top: ct, width: cw * s, height: ch * s },
   };
 }
 

@@ -103,11 +103,11 @@ describe("額 → 段 → 出し方", () => {
     }
   });
 
-  it("段3（行進）は、その人の絵をすぐ出し、札は巻物のように広がる（広げるのは振付け）", () => {
+  it("段3（行進）は、その人の絵をすぐ出し、字は「ジャン！」で1字ずつ弾んで出る", () => {
     const st = stageFor(halloween, 700, durationFor(700), allRigs)!;
     expect(st.show?.kind).toBe("march");
     expect(st.revealSec).toBe(0);
-    expect(plateTiming(st)).toEqual({ appearAt: 0, carried: false, wipe: "unroll", count: null, donAt: null });
+    expect(plateTiming(st)).toEqual({ appearAt: 1.9, carried: false, wipe: null, count: null, donAt: null });
     expect(scriptProblems(st.show!.script, durationFor(700), 0)).toEqual([]);
   });
 

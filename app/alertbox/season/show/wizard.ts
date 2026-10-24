@@ -18,15 +18,18 @@
 import { EASE, range, type Motion } from "../rig/motion";
 import type { TimedCue } from "./script";
 import { pathFrames, sparkle } from "./fx";
-import { div, plateBoxOf, type ShowLayers } from "./layers";
+import { bandBottomOf, div, plateBoxOf, type ShowLayers } from "./layers";
 import type { LoadedPoses } from "./poses";
 
 export type WizardAssets = { poses: LoadedPoses };
 
 /** 登場のあいだの大きさ（飛ぶ姿の高さが面の 4 割） */
 const BIG_H = 0.4;
-/** 札の上で待つときの大きさ（登場の何倍か）。札の上の余白（0.2）に浮く高さまで収まる */
-const STAY_K = 0.41;
+/**
+ * 待つときの大きさ（面の幅に対する、ほうきとクロまで入れた幅）。面の上の右の角に浮く。
+ * 上の帯（`headroom` 0.2）に浮く高さまで収まる
+ */
+const STAY_W = 0.3;
 /** 飛び込んで止まる所（顔の中心。面に対する割合）。帽子の先が札の下の辺より下に来る高さ */
 const HOVER = { x: 0.55, y: 0.5 };
 /** 杖の星の中心（絵の px。左右反転する前） */
@@ -389,10 +392,9 @@ export function runWizard(
       aBob.getAnimations().forEach((x) => x.cancel());
       popTo("fly", 300);
       m.after(320, () => {
-        const pb = plateBox();
         const to = { x: W + X(0.6), y: -Y(0.12), k: now.k * 1.15 };
-        // いったん左へ戻ってから、右上へ大きく（札の上の縁より下へは行かない）
-        flyArc(to, [now.x - X(0.45), Math.min(now.y, pb.t - Y(0.06))], ms - 320, {
+        // いったん左へ戻ってから、右上へ大きく（いまの高さより下へは行かない。帯の中）
+        flyArc(to, [now.x - X(0.45), now.y], ms - 320, {
           ease: (t) => t * t * (3 - 2 * t),
           trail: L.front,
         });
@@ -400,19 +402,20 @@ export function runWizard(
     },
   };
 
-  /** 待機の場所（顔の中心と倍率）。札の右上の角に、靴が札の上の縁に掛かるように */
+  /**
+   * 待機の場所（顔の中心と倍率）。面の上の右の角。靴が帯の下の辺（キャラ絵の四角の上の辺）に
+   * 乗るように。字のブロック（キャラ絵の上下中央）とキャラ絵の顔には掛からない
+   */
   function staySpot() {
-    const pb = plateBox();
     const idle = P.get("idle") ?? fly;
-    const k = STAY_K;
+    const k = X(STAY_W) / Math.max(1, (idle.content[2] - idle.content[0]) * s0);
     // 右向きにそろえた待機の絵の、顔の中心から見た右の端と下の端
     const flip = idle.facing === "left";
     const right = flip ? idle.size[0] - idle.content[0] : idle.content[2];
     const fx = flip ? idle.size[0] - idle.faceCenter[0] : idle.faceCenter[0];
     const toRight = (right - fx) * s0 * k;
     const toBottom = (idle.content[3] - idle.faceCenter[1]) * s0 * k;
-    const edge = Math.min(W - X(0.015), pb.r + X(0.02));
-    return { x: edge - toRight, y: pb.t + X(0.012) - toBottom, k };
+    return { x: W - X(0.02) - toRight, y: bandBottomOf(L, W, H) - X(0.004) - toBottom, k };
   }
 
   // 小芸（滞在中）。どれも札の上の余白の中
