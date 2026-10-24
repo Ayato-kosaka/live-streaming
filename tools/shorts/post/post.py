@@ -16,7 +16,7 @@
 動画・投稿文・題の札の絵は send.py（GCS の署名付き URL を EC2 が curl で落とす）で送る。
 中身が SSM のログに残るので ec2.put では送らない。ec2.put で送るのはリポジトリの道具だけ。
 """
-import argparse, hashlib, json, os, re, subprocess, sys, tempfile
+import argparse, hashlib, json, os, re, shlex, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -58,7 +58,8 @@ def remote_run(body, timeout=420):
 
 def tt_caption(post):
     lines = post["tiktok"]["caption"].split("\n")
-    if TT_SOURCE_LINE not in lines:
+    # 配信の映像を使わない回（旅の写真に曲を当てた回など）は、投稿文で外す。「生配信から」が嘘になる（帳面 F-048）
+    if post["tiktok"].get("source_line", True) and TT_SOURCE_LINE not in lines:
         lines.insert(1, TT_SOURCE_LINE)
     return "\n".join(lines)
 
@@ -159,6 +160,13 @@ def cmd_yt_publish(a):
 def cmd_tt_post(a):
     d = f"{REMOTE}/{a.video}"
     extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover {d}/{a.option}_cover.jpg" if getattr(a, "cover", None) else "")
+    # 曲を動画に入れられない回は、投稿文の tiktok.sound（[曲名, 歌い手]）で TikTok の音源を敷く
+    snd = json.load(open(a.post_json)).get("tiktok", {}).get("sound") if getattr(a, "post_json", None) else None
+    if snd:
+        extra += " --sound " + " ".join(shlex.quote(x) for x in snd)
+    if getattr(a, "draft", False):
+        # 下書きで止める。投稿 ID が無いので台帳は pending のまま残る（あやとが出したら mark で done にする）
+        extra += " --draft"
     body = f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra}\n"
     if a.dry:
         # 投稿の手前までの確かめ。出さないので台帳は見ない・書かない
@@ -227,6 +235,8 @@ def main(argv=None):
     p.add_argument("--cover-at", type=float, default=1.0, help="cover: 切り出す秒（題の札が見えている間）")
     p.add_argument("--cover", action="store_true", help="tt-post: 題の札が見えるコマ（<案>_cover.jpg、送り済み）をカバーにする")
     p.add_argument("--again", action="store_true", help="yt-draft / tt-post: 台帳に記録があっても出す（投稿先で出ていないのを見たときだけ）")
+    p.add_argument("--draft", action="store_true", help="tt-post: 投稿せず TikTok の下書きに保存する")
+    p.add_argument("--post-json", help="tt-post: 投稿文（tiktok.sound を読む）。手元の post_<案>.json")
     p.add_argument("--place", help="mark: youtube / tiktok")
     p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
     a = p.parse_args(argv)
