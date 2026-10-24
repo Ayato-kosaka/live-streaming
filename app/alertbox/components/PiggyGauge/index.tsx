@@ -1,17 +1,22 @@
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
 import { PiggyBank } from "./PiggyBank";
+import type { Season } from "../../season/useSeason";
+import { ThemedGauge } from "../../season/ThemedGauge";
 
 export type PiggyGaugeProps = {
   currentAmount: number; // 現在（例: 65000）
   targetAmount: number; // 目標金額
   label: string; // ラベル（例: "なに食べよの広告費"）
+  /** 季節テーマ。無い日・絵が読めなかった日は豚のまま */
+  season?: Season;
 };
 
 export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   currentAmount,
   targetAmount,
   label,
+  season,
 }) => {
   // 進捗計算（0〜1にクランプ）
   const progress = useMemo(() => {
@@ -32,6 +37,24 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   const { width: screenWidth } = useWindowDimensions();
   const gaugeWidth = screenWidth * 1.2;
   const gaugeHeight = (gaugeWidth * 260) / 600; // viewBoxのアスペクト比を維持
+
+  /* 季節の貯金箱。絵を読んでいる途中は何も出さない（豚を一瞬出してから
+     差し替えると、OBS を開いた直後に豚がちらつく）。読めなかったら豚 */
+  if (season?.theme && season.bank === "loading") return null;
+  if (season?.theme && season.bank && season.bank !== "loading") {
+    return (
+      <View style={styles.container}>
+        <ThemedGauge
+          theme={season.theme}
+          bank={season.bank}
+          progress={progress}
+          currentText={formatAmount(currentAmount)}
+          targetText={formatAmount(targetAmount)}
+          label={label}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

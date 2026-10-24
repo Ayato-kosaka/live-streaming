@@ -1,0 +1,123 @@
+{
+  "files": {
+    "bank-base-0.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 17,
+        "width": 1169,
+        "height": 526
+      }
+    },
+    "bank-base-1.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 17,
+        "width": 1169,
+        "height": 526
+      }
+    },
+    "bank-base-2.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 16,
+        "width": 1168,
+        "height": 530
+      }
+    },
+    "bank-base-3.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 19,
+        "width": 1169,
+        "height": 525
+      }
+    },
+    "bank-fill-0.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 17,
+        "width": 1169,
+        "height": 526
+      }
+    },
+    "bank-fill-1.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 17,
+        "width": 1169,
+        "height": 526
+      }
+    },
+    "bank-fill-2.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 16,
+        "width": 1168,
+        "height": 530
+      }
+    },
+    "bank-fill-3.png": {
+      "width": 1200,
+      "height": 562,
+      "content": {
+        "x": 16,
+        "y": 19,
+        "width": 1169,
+        "height": 525
+      }
+    },
+    "fx-bat-0.png": {
+      "width": 360,
+      "height": 250
+    },
+    "fx-bat-1.png": {
+      "width": 360,
+      "height": 250
+    },
+    "fx-candy.png": {
+      "width": 332,
+      "height": 227
+    },
+    "fx-ghost.png": {
+      "width": 332,
+      "height": 290
+    },
+    "fx-grave.png": {
+      "width": 332,
+      "height": 304
+    },
+    "fx-pumpkin.png": {
+      "width": 332,
+      "height": 226
+    },
+    "fx-web.png": {
+      "width": 332,
+      "height": 328
+    },
+    "fx-zombie.png": {
+      "width": 317,
+      "height": 332
+    }
+  },
+  "bankContent": {
+    "x": 16,
+    "y": 16,
+    "width": 1169,
+    "height": 530
+  },
+  "bankFrames": 4
+}
