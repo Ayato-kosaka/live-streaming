@@ -7,8 +7,11 @@
  *   → 足元から霧が湧く → 霧の中から、大鎌をかついだ死神が現れる（鬼火がまわりを回り出す）
  *   → 振り抜く（一瞬つぶして弾ける）＋斬撃の光が画面の幅いっぱいに走る・閃光・一瞬止める
  *   → 斬撃の跡から字が切り出される → 「ドン」 → 笑って大鎌をかつぎ直す
- *   → 上の帯の左の角へ滑って小さくなり、待機の姿に（その人のキャラ絵が出る）。鬼火がまわりをゆっくり回る
- *   → 締めはフードをひるがえして（縮めながら回って）霧に消える。こうもりが帯を横切る
+ *   → 上の帯の左の角へ滑って小さくなり、待機の姿に（その人のキャラ絵が出る）
+ *   → 滞在: **その人のキャラ絵を呪う**（2版目、オーナーのレビュー）。キャラ絵の後ろに紫の
+ *     オーラが残り、鬼火がキャラ絵のまわりを回る。ときどき死神が大鎌を振って呪いの火の玉を送り、
+ *     届くとオーラが燃え上がり、キャラ絵がぶるっと震える（顔は隠さない。鬼火もオーラもキャラ絵の後ろ）
+ *   → 締め（`curtainCall`）: キャラ絵と字が消える → 死神が真ん中へ戻る → フードをひるがえして霧に消える
  *
  * 段4（魔法使い）より一段リッチに: 前兆（暗さ・鬼火）がある・主役が大きい（面の高さの 4 割強、
  * 霧と斬撃まで入れて面の 6 割）・斬撃の閃光と一瞬の止め・滞在中も鬼火が回る。
@@ -27,6 +30,7 @@ import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, type ShowLayers } 
 import type { LoadedPoses } from "./poses";
 import type { LoadedItems } from "./items";
 import { makePoseActor } from "./poseActor";
+import { centerOf, curtainCall, every, stayAura } from "./common";
 import {
   Items,
   arcMove,
@@ -74,9 +78,14 @@ const STAY_H = 0.17;
 /** 帯の中でポーズを替えるときの弾みの強さ（強いと、伸びた頭が面の上の端で切れる） */
 const STAY_POP = 0.5;
 const STAY_LEFT = 0.05;
-/** 待つあいだ鬼火が回る楕円（面の幅・高さに対する割合）。帯の中に収まる大きさ */
-const STAY_ORBIT = { rx: 0.15, ry: 0.042, tilt: -10, ms: 5200 };
-const STAY_WISP_W = 0.042;
+/**
+ * 呪い（滞在）: キャラ絵のまわりを回る鬼火の楕円（横の半径はキャラ絵の四角の幅に対する割合、
+ * 縦は面の高さに対する割合）と1周の ms、鬼火の幅（面の幅に対する割合）。どれもキャラ絵の後ろ
+ */
+const CURSE_ORBIT = { rx: 0.46, ry: 0.06, tilt: -8, ms: 6400 };
+const CURSE_WISP_W = 0.06;
+/** 呪いのオーラ（キャラ絵の後ろに残る紫の光）の色・半径（面の幅に対する割合）・濃さ */
+const CURSE_AURA = { rgb: "150,60,210", r: 0.56, alpha: 0.5 };
 /** 振り抜いた姿の、大鎌を握る両手のあいだ（絵の px）。斬撃の弧の中心 */
 const HANDS: [number, number] = [620, 590];
 const ORANGE = "255,145,0";
@@ -119,7 +128,9 @@ export function runReaper(
      メッセージで背が伸びるので、ここで測る（札の置き場は振付けより先に組まれている） */
   const pb0 = plateBoxOf(L, W, H);
   const feetY = Math.max(Y(FEET.min), Math.min(Y(FEET.max), pb0.t - X(0.015)));
-  const stand: At = { x: X(0.5), y: feetY, k: Math.min(1, (feetY - Y(FEET.top)) / (Y(BIG_H) * TALLEST)) };
+  /* 横の位置は、字とその人のキャラ絵の真ん中にそろえる（2版目の決まり。ずれが気になると言われた） */
+  const center = centerOf(L, W, H);
+  const stand: At = { x: center.x, y: feetY, k: Math.min(1, (feetY - Y(FEET.top)) / (Y(BIG_H) * TALLEST)) };
   /** 現れる姿の高さ（舞台の px） */
   const standH = Y(BIG_H) * stand.k;
 
@@ -226,8 +237,10 @@ export function runReaper(
   const clip = (open: number) => `inset(-40% ${(100 - open * 106).toFixed(2)}% -40% ${(-open * 6).toFixed(2)}%)`;
 
   // ---------------------------------------------------------------- 待つあいだの鬼火
-  let orbitBox: HTMLDivElement | null = null;
+  let curseBox: HTMLDivElement | null = null;
+  let aura: ReturnType<typeof stayAura> | null = null;
   let stayTimer = 0;
+  let stopCurse: (() => void) | null = null;
 
   /** 鬼火が四方から弧を描いて、輪（ring）の持ち場へ集まる。着いたら輪ごと回って渦になる */
   function gather(ms: number, n: number) {
@@ -472,13 +485,13 @@ export function runReaper(
         // 帯の下の辺から下は描かない（キャラ絵の顔の前を、主役も奥の鬼火も通らない）
         L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - bandBottomOf(L, W, H)).toFixed(1)}px 0px)`;
         pop("idle", 320, STAY_POP);
-        startStayOrbit();
       });
     },
 
     // その人の絵が出る。粒の層をキャラ絵の後ろへ
     reveal: () => {
       L.frontBox.style.zIndex = "0";
+      startCurse();
     },
 
     stay: () => {
@@ -489,7 +502,7 @@ export function runReaper(
         { transform: "scale(1, 1)" },
       ], { duration: 2800, iterations: Infinity, easing: "ease-in-out" });
       // 6〜9秒おきに小芸。続けて同じ芸をしない
-      const tricks = [laugh, hop, flare];
+      const tricks = [laugh, hop];
       let last = -1;
       const next = () => {
         stayTimer = m.after(range(Math.random, 6000, 9000), () => {
@@ -501,36 +514,62 @@ export function runReaper(
         });
       };
       next();
+      // 呪い: 6〜9秒おきに、大鎌を振って呪いの火の玉をキャラ絵へ送る（最初は滞在に入ってすぐ）
+      stopCurse = every(m, 6000, 9000, () => curse(), 1200);
     },
 
-    // 締め: フードをひるがえして、縮みながら回って霧に消える。鬼火は渦を巻いて吸い込まれる
-    finale: () => {
+    /* 締め（curtainCall）: キャラ絵と字が消える → 死神が真ん中へ戻る → フードをひるがえして
+       縮みながら回り、霧に消える。呪いの鬼火とオーラはキャラ絵と一緒に消す */
+    finale: (cue) => {
+      const ms = (cue.dur ?? 2.6) * 1000;
       if (stayTimer) m.clear(stayTimer);
+      stopCurse?.();
       actor.bob.getAnimations().forEach((x) => x.cancel());
-      const idle = a.poses.poses.get("idle");
-      // 姿の真ん中の高さ（基準点＝足元から、倍率 1 の px）
-      const c = idle ? ((idle.bottom[1] - (idle.content[1] + idle.content[3]) / 2) * actor.s0) : Y(0.2);
-      const T = (r: number, s: number) => `translateY(${(-c).toFixed(1)}px) rotateY(${r}deg) scale(${s}) translateY(${c.toFixed(1)}px)`;
-      m.play(actor.squash, [
-        { transform: T(0, 1), opacity: 1, easing: EASE.in },
-        { transform: T(540, 0.8), opacity: 1, offset: 0.55 },
-        { transform: T(900, 0.05), opacity: 0 },
-      ], { duration: 1150, fill: "forwards" });
-      const cy = now.y - c * now.k;
-      const puff = mistBlob(L.top, now.x, cy, X(0.42), Y(0.11), 0.8);
-      m.play(puff, [
-        { opacity: 0, transform: "scale(0.3)" },
-        { opacity: 1, transform: "scale(1)", offset: 0.45 },
-        { opacity: 0, transform: "scale(1.25, 1.15)" },
-      ], { duration: 1500, delay: 350, fill: "both", easing: "ease-out" });
-      m.play(orbitBox, [
-        { transform: "rotate(0deg) scale(1)", opacity: 1, easing: EASE.in },
-        { transform: "rotate(320deg) scale(0)", opacity: 0 },
-      ], { duration: 950, fill: "forwards" });
-      for (let i = 0; i < 6; i++) sparkle(m, L.top, now.x + (Math.random() - 0.5) * X(0.18), cy + (Math.random() - 0.5) * Y(0.08), X(0.07), 500 + i * 70, i % 2 ? LILAC : ORANGE);
-      batsAcross(m, a.bat, L.back, 6, W, [Y(0.03), Y(0.14)], 700);
+      batsAcross(m, a.bat, L.back, 6, W, [Y(0.03), Y(0.14)], 200);
+      const fadeMs = Math.max(250, ms * 0.24);
+      curtainCall(m, L, {
+        ms,
+        hero: gateBox,
+        afterExit: () => {
+          aura?.fadeOut(500);
+          if (curseBox) fadeOut(m, curseBox, 500);
+        },
+        toCenter: (moveMs) => {
+          // 帯の切り口を外す（真ん中へ戻る）。姿の真ん中がキャラ絵の真ん中に来る大きさ・位置
+          L.actor.style.clipPath = "";
+          const k = stand.k * 0.85;
+          const ap = a.poses.poses.get("appear");
+          const midFromFeet = ap ? (ap.bottom[1] - (ap.content[1] + ap.content[3]) / 2) * actor.s0 * k : standH * 0.5;
+          const to: At = { x: center.x, y: center.y + midFromFeet, k };
+          pop("appear", 300, STAY_POP);
+          arcMove(m, actor.pos, now, to, [now.x + X(0.15), now.y + Y(0.15)], moveMs, 0);
+          now = to;
+        },
+      });
+      m.after(ms - fadeMs, () => vanish(fadeMs));
     },
   };
+
+  /** 締めの最後: フードをひるがえして、縮みながら回って霧に消える */
+  function vanish(ms: number) {
+    const idle = a.poses.poses.get("appear");
+    // 姿の真ん中の高さ（基準点＝足元から、倍率 1 の px）
+    const c = idle ? ((idle.bottom[1] - (idle.content[1] + idle.content[3]) / 2) * actor.s0) : Y(0.2);
+    const T = (r: number, s: number) => `translateY(${(-c).toFixed(1)}px) rotateY(${r}deg) scale(${s}) translateY(${c.toFixed(1)}px)`;
+    m.play(actor.squash, [
+      { transform: T(0, 1), opacity: 1, easing: EASE.in },
+      { transform: T(540, 0.8), opacity: 1, offset: 0.55 },
+      { transform: T(900, 0.05), opacity: 0 },
+    ], { duration: Math.max(ms, 600), fill: "forwards" });
+    const cy = now.y - c * now.k;
+    const puff = mistBlob(L.top, now.x, cy, X(0.6), Y(0.16), 0.8);
+    m.play(puff, [
+      { opacity: 0, transform: "scale(0.3)" },
+      { opacity: 1, transform: "scale(1)", offset: 0.45 },
+      { opacity: 0, transform: "scale(1.25, 1.15)" },
+    ], { duration: ms + 300, fill: "both", easing: "ease-out" });
+    for (let i = 0; i < 6; i++) sparkle(m, L.top, now.x + (Math.random() - 0.5) * X(0.18), cy + (Math.random() - 0.5) * Y(0.08), X(0.07), i * 70, i % 2 ? LILAC : ORANGE);
+  }
 
   /**
    * 斬撃の光。両手を中心に、左から上を通って右へ、画面の幅いっぱいの三日月。80ms で振り切り
@@ -622,29 +661,122 @@ export function runReaper(
   }
 
   /**
-   * 待つあいだの鬼火3つ。死神の腰のまわりの傾いた楕円を回る。奥の半分は小さく薄く（奥にいるように）。
-   * 待つあいだは何十秒も回るので、鬼火は3つの箱だけを動かす（揺らめきもしない）。奥と手前で
-   * 写しを2枚ずつ重ねて本当に死神の後ろを通す形も作ったが、滞在の CPU が段7を上回った
-   * （49 対 45 ms/秒。鬼火の動きを止めると 41）ので、こちらにした
+   * 呪い（滞在のはじめ）: キャラ絵の後ろに紫のオーラを残し、鬼火3つをキャラ絵のまわりで回す。
+   * どちらも奥の層（キャラ絵の後ろ）なので、顔の前は通らない。鬼火は3つの箱を回すだけ（揺らめかせない。
+   * 滞在は何十秒も続くので軽く）
    */
-  function startStayOrbit() {
-    const idle = a.poses.poses.get("idle");
-    const midY = idle ? (idle.bottom[1] - (idle.content[1] + idle.content[3]) / 2) * actor.s0 * now.k : Y(STAY_H) / 2;
-    const box = div(L.top, {
+  function startCurse() {
+    const c = centerOf(L, W, H);
+    aura = stayAura(m, L.back, c, X(CURSE_AURA.r), CURSE_AURA.rgb, CURSE_AURA.alpha, 300);
+    const box = div(L.back, {
       position: "absolute",
-      left: `${now.x.toFixed(1)}px`,
-      top: `${(now.y - midY * 1.04).toFixed(1)}px`,
+      left: `${c.x.toFixed(1)}px`,
+      top: `${c.y.toFixed(1)}px`,
       width: "0px",
       height: "0px",
       opacity: "0",
     });
-    orbitBox = box;
-    const o = { rx: X(STAY_ORBIT.rx), ry: Y(STAY_ORBIT.ry), tilt: STAY_ORBIT.tilt };
+    curseBox = box;
+    const o = { rx: c.w * CURSE_ORBIT.rx, ry: Y(CURSE_ORBIT.ry), tilt: CURSE_ORBIT.tilt };
+    // 3つ（4つでは滞在の CPU が段7を上回った）
     for (let i = 0; i < 3; i++) {
-      const w = makeWisp(box, X(STAY_WISP_W), 0);
-      if (w) m.play(w.wrap, orbitFrames(o, i / 3), { duration: STAY_ORBIT.ms, iterations: Infinity, easing: "linear" });
+      const w = makeWisp(box, X(CURSE_WISP_W), 0);
+      if (w) m.play(w.wrap, orbitFrames(o, i / 3), { duration: CURSE_ORBIT.ms, iterations: Infinity, easing: "linear" });
     }
-    m.play(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 600, fill: "forwards" });
+    m.play(box, [{ opacity: 0 }, { opacity: 1 }], { duration: 800, delay: 400, fill: "forwards" });
+  }
+
+  /**
+   * 呪いを掛ける: 死神が大鎌を振り、紫の火の玉が弧を描いてキャラ絵の真ん中へ飛ぶ（奥の層。キャラ絵の
+   * 後ろを通る）。届くと紫の輪が広がり、オーラが燃え上がり、鬼火が一瞬速く大きく回り、キャラ絵が
+   * ぶるっと震える（キャラ絵の箱を左右に小さく揺らすだけ。顔に何も乗せない）
+   */
+  function curse() {
+    const c = centerOf(L, W, H);
+    pop("swing", 260, STAY_POP);
+    m.after(900, () => pop("idle", 280, STAY_POP));
+    const from = pt("swing", HANDS);
+    const fly = 620;
+    const d = X(0.12);
+    const orb = div(L.back, {
+      position: "absolute",
+      left: `${(-d / 2).toFixed(1)}px`,
+      top: `${(-d / 2).toFixed(1)}px`,
+      width: `${d.toFixed(1)}px`,
+      height: `${d.toFixed(1)}px`,
+      borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(255,240,255,1) 0%, rgba(200,120,255,0.9) 30%, rgba(150,60,210,0.45) 55%, rgba(150,60,210,0) 72%)",
+      opacity: "0",
+    });
+    const pts: [number, number][] = [];
+    const qx = (from.x + c.x) / 2 + X(0.18);
+    const qy = Math.min(from.y, c.y) - Y(0.04);
+    for (let j = 0; j <= 10; j++) {
+      const u = j / 10;
+      pts.push([
+        (1 - u) * (1 - u) * from.x + 2 * (1 - u) * u * qx + u * u * c.x,
+        (1 - u) * (1 - u) * from.y + 2 * (1 - u) * u * qy + u * u * c.y,
+      ]);
+    }
+    const oa = m.play(orb, pathFrames(pts, { scale: (k) => 0.6 + 0.6 * k, opacity: (k) => (k < 0.9 ? 1 : 0) }), {
+      duration: fly,
+      delay: 120,
+      easing: "cubic-bezier(0.4, 0, 0.6, 1)",
+      fill: "backwards",
+    });
+    const rmo = () => orb.remove();
+    if (oa) oa.finished.then(rmo, rmo);
+    else rmo();
+    m.after(120 + fly, () => {
+      // 紫の輪（キャラ絵の後ろ）
+      const R = c.w * 0.62;
+      const ring = div(L.back, {
+        position: "absolute",
+        left: `${(c.x - R).toFixed(1)}px`,
+        top: `${(c.y - R).toFixed(1)}px`,
+        width: `${(2 * R).toFixed(1)}px`,
+        height: `${(2 * R).toFixed(1)}px`,
+        borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(170,80,240,0) 50%, rgba(200,130,255,0.75) 60%, rgba(150,60,210,0) 71%)",
+        opacity: "0",
+      });
+      const ra = m.play(ring, [
+        { opacity: 1, transform: "scale(0.35)", easing: EASE.out },
+        { opacity: 0, transform: "scale(1.1)" },
+      ], { duration: 700 });
+      const rmr = () => ring.remove();
+      if (ra) ra.finished.then(rmr, rmr);
+      else rmr();
+      if (aura) {
+        m.play(aura.el, [
+          { opacity: 1, transform: "scale(1)" },
+          { opacity: 1, transform: "scale(1.18)", offset: 0.25 },
+          { opacity: 0.8, transform: "scale(1)" },
+        ], { duration: 1100, easing: "ease-out" });
+      }
+      if (curseBox) {
+        m.play(curseBox, [
+          { transform: "rotate(0deg) scale(1)" },
+          { transform: "rotate(-14deg) scale(1.15)", offset: 0.35 },
+          { transform: "rotate(0deg) scale(1)" },
+        ], { duration: 1000, easing: "ease-in-out" });
+      }
+      shudder();
+    });
+  }
+
+  /** その人のキャラ絵がぶるっと震える（キャラ絵の箱を左右に小さく揺らす。0.5秒） */
+  function shudder() {
+    const box = L.root.querySelector<HTMLElement>('[data-char="box"]');
+    if (!box) return;
+    const f: Keyframe[] = [];
+    const n = 10;
+    for (let i = 0; i <= n; i++) {
+      const k = 1 - i / n;
+      const a = i === 0 || i === n ? 0 : (i % 2 ? 1 : -1) * 1.2 * k;
+      f.push({ transform: `translateX(${a.toFixed(2)}%) rotate(${(a * 0.6).toFixed(2)}deg)` });
+    }
+    m.play(box, f, { duration: 520, easing: "linear" });
   }
 
   // 小芸（滞在中）。どれも上の帯の中
@@ -663,12 +795,7 @@ export function runReaper(
       { transform: "translateY(0px) scale(1, 1)" },
     ], { duration: 640 });
   }
-  function flare() {
-    m.play(orbitBox, [{ transform: "scale(1)" }, { transform: "scale(1.18)", offset: 0.4 }, { transform: "scale(1)" }], { duration: 900, easing: "ease-in-out" });
-    const top = pt("idle", [700, 120]);
-    sparkle(m, L.top, top.x, top.y, X(0.07), 0, ORANGE);
-    sparkle(m, L.top, top.x - X(0.05), top.y + X(0.03), X(0.05), 160, EMBER);
-  }
+
 
   for (const c of cues) {
     const fn = on[c.do];
