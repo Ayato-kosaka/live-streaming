@@ -40,6 +40,7 @@ function rng(seed: number) {
 describe("額 → 段 → 出し方", () => {
   it.each([
     [0, "round", false],
+    [199, "round", false],
     [999, "round", false],
     [1000, "round", false],
     [4999, "round", false],
@@ -54,7 +55,7 @@ describe("額 → 段 → 出し方", () => {
   });
 
   it("段ごとに札の字が大きくなる（名前も額も）", () => {
-    const sizes = [500, 3000, 7000, 20000].map((y) => tierFor(halloween, y).plate!);
+    const sizes = [100, 300, 700, 1500, 3000, 7000, 20000].map((y) => tierFor(halloween, y).plate!);
     for (let i = 1; i < sizes.length; i++) {
       expect(sizes[i].nameSize).toBeGreaterThan(sizes[i - 1].nameSize);
       expect(sizes[i].amountSize).toBeGreaterThan(sizes[i - 1].amountSize);

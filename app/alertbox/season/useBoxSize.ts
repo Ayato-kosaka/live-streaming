@@ -10,7 +10,7 @@
  * ここでは知らせを rAF で1コマ1回にまとめ、1px 未満の違いは捨てる。
  *
  * - `useBoxSize` … 面の箱（`<html>` の clientWidth / clientHeight。CSS の vw・vh と同じ物差し）。
- *   季節の演出（貯金箱・段4・札）はこちらで測る
+ *   季節の演出（貯金箱・段の演出・札）はこちらで測る
  * - `useStableWindow` … react-native-web の `Dimensions` と同じ数（visualViewport × scale）。
  *   豚はこちら（数を変えると、豚の大きさが今と変わる）
  */

@@ -118,6 +118,11 @@ export type TierShow = {
 export type FxTier = {
   /** この額（JPY）以上でこの段 */
   min: number;
+  /**
+   * 段の色（YouTube のスパチャの色の切れ目と色に揃える）。札のふち・光・粒の色の元。
+   * 見ている人はスパチャの色で額の大きさを知っているので、色で段が分かるようにする
+   */
+  accent: string;
   /** 名前の札。無ければ今までどおりの字（画面の真ん中） */
   plate?: PlateStyle;
   /** 演出の台本。あれば小物（`slots` / `files`）の代わりにこれを出す */
@@ -204,7 +209,7 @@ export type SeasonTheme = {
   } | null;
 };
 
-/** 吸血鬼の伯爵（段4、10,000円〜）の台本。秒の決め方は設計書 §3.5 の絵コンテ */
+/** 吸血鬼の伯爵（段7、10,000円〜）の台本。秒の決め方は設計書 §3.5 の絵コンテ */
 const VAMPIRE: Cue[] = [
   // 前兆。ほかのものは何も出ていない
   { at: 0.0, do: "darken", to: 0.82, dur: 0.4 },
@@ -291,20 +296,43 @@ export const THEMES: SeasonTheme[] = [
       { place: "bottom", side: "l", lane: 2 },
       { place: "bottom", side: "r", lane: 2 },
     ],
-    /* 段の中身は #1022 で決めたもの。**どの段でも真ん中は空いている**
-       （枠がそもそも真ん中に無い）。 */
+    /* 段は7つ（構成 v3、2026-10-24）。切れ目と色は YouTube のスパチャに揃える
+       （〜199 青 / 〜499 水色 / 〜999 緑 / 〜1,999 黄 / 〜4,999 橙 / 〜9,999 マゼンタ / 1万〜 赤）。
+       999 と 1,000 の差をいちばん大きく: 段1〜3 は脇役たち、段4 から あやとが主役。
+       下の slots / files は台本（show）が無い段・部品が読めなかった日の小物。
+       **どの段でも真ん中は空いている**（枠がそもそも真ん中に無い）。 */
     tiers: [
       {
         min: 0,
+        accent: "#1565C0",
         plate: {
           frame: "round",
-          bg: "rgb(10,38,44)",
-          edge: "#7CF5DA",
-          ink: "#04171B",
+          bg: "rgb(8,24,52)",
+          edge: "#42A5F5",
+          ink: "#020A18",
           nameColor: "#FFFFFF",
-          amountColor: "#8CFFE0",
-          nameSize: 60,
-          amountSize: 56,
+          amountColor: "#90CAF9",
+          nameSize: 54,
+          amountSize: 52,
+          appearAt: 0.8,
+        },
+        slots: 2,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
+        bats: 1,
+        waves: 1,
+      },
+      {
+        min: 200,
+        accent: "#00B8D4",
+        plate: {
+          frame: "round",
+          bg: "rgb(0,36,44)",
+          edge: "#00E5FF",
+          ink: "#00141A",
+          nameColor: "#FFFFFF",
+          amountColor: "#84FFFF",
+          nameSize: 58,
+          amountSize: 58,
           appearAt: 0.8,
         },
         slots: 3,
@@ -313,16 +341,36 @@ export const THEMES: SeasonTheme[] = [
         waves: 1,
       },
       {
-        min: 1000,
+        min: 500,
+        accent: "#00C853",
         plate: {
           frame: "round",
-          bg: "rgb(48,22,6)",
-          edge: "#FFB238",
-          ink: "#1E0C02",
+          bg: "rgb(4,44,26)",
+          edge: "#1DE9B6",
+          ink: "#01160C",
           nameColor: "#FFFFFF",
-          amountColor: "#FFC845",
-          nameSize: 68,
-          amountSize: 72,
+          amountColor: "#69F0AE",
+          nameSize: 64,
+          amountSize: 66,
+          appearAt: 0.8,
+        },
+        slots: 4,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
+        bats: 3,
+        waves: 1,
+      },
+      {
+        min: 1000,
+        accent: "#FFCA28",
+        plate: {
+          frame: "round",
+          bg: "rgb(50,36,4)",
+          edge: "#FFCA28",
+          ink: "#1C1300",
+          nameColor: "#FFFFFF",
+          amountColor: "#FFE082",
+          nameSize: 76,
+          amountSize: 80,
           appearAt: 0.8,
         },
         slots: 5,
@@ -331,19 +379,39 @@ export const THEMES: SeasonTheme[] = [
         waves: 1,
       },
       {
-        min: 5000,
+        min: 2000,
+        accent: "#FF9100",
         plate: {
           frame: "round",
-          bg: "rgb(44,8,46)",
-          edge: "#FF6AD5",
-          ink: "#1B031C",
+          bg: "rgb(52,22,0)",
+          edge: "#FF9100",
+          ink: "#1C0B00",
           nameColor: "#FFFFFF",
-          amountColor: "#FF8CE4",
-          nameSize: 78,
-          amountSize: 88,
+          amountColor: "#FFB74D",
+          nameSize: 82,
+          amountSize: 90,
           appearAt: 0.8,
         },
-        slots: 7,
+        slots: 6,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png", "fx-grave.png"],
+        bats: 6,
+        waves: 1,
+      },
+      {
+        min: 5000,
+        accent: "#E91E63",
+        plate: {
+          frame: "round",
+          bg: "rgb(48,4,24)",
+          edge: "#FF4081",
+          ink: "#1A0109",
+          nameColor: "#FFFFFF",
+          amountColor: "#FF80AB",
+          nameSize: 88,
+          amountSize: 98,
+          appearAt: 0.8,
+        },
+        slots: 8,
         files: [
           "fx-web.png",
           "fx-pumpkin.png",
@@ -352,11 +420,12 @@ export const THEMES: SeasonTheme[] = [
           "fx-grave.png",
           "fx-zombie.png",
         ],
-        bats: 7,
+        bats: 8,
         waves: 1,
       },
       {
         min: 10000,
+        accent: "#D50000",
         plate: {
           frame: "gold",
           bg: "rgba(58,4,16,0.88)",
