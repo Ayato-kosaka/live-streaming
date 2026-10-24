@@ -58,7 +58,8 @@ def remote_run(body, timeout=420):
 
 def tt_caption(post):
     lines = post["tiktok"]["caption"].split("\n")
-    if TT_SOURCE_LINE not in lines:
+    # 配信の映像を使わない回（旅の写真に曲を当てた回など）は、投稿文で外す。「生配信から」が嘘になる（帳面 F-048）
+    if post["tiktok"].get("source_line", True) and TT_SOURCE_LINE not in lines:
         lines.insert(1, TT_SOURCE_LINE)
     return "\n".join(lines)
 
