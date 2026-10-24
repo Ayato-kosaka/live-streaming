@@ -190,7 +190,9 @@ python3 meta.py                                       # 余白を切って webp�
 
 `models/` と `vendor/` は git に入っていない（`.gitignore`）。**worktree を
 切った先には無い**ので、元の clone から借りる（`ln -s`）。借りた印は
-commit しない。
+commit しない。**元の clone にも無く、この箱から kenney.nl に届かないときは
+Actions で焼く**——`tools/sprites/bake-request.json` の `names` に選んだ名前を書いて
+作業枝に push する（`.github/workflows/bake_sprites.yml`。手順は `tools/sprites/README.md`）。
 
 そろったかどうかは、巡回（`crawl.mjs`）を待たずにここで分かる:
 

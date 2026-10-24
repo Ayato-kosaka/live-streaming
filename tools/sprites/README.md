@@ -122,6 +122,39 @@ curl -sS -o vendor/jsm/utils/BufferGeometryUtils.js \
 #   models/food/   ← food-kit の「GLB format」
 ```
 
+上の手順は `bash fetchkits.sh food-kit [nature-kit …]` に1本にしてある（three も一緒に落とす）。
+
+### 作業箱から届かないときは、Actions で焼く
+
+**この作業箱からは kenney.nl に届かない**（プロキシで 000/403。迂回しない）。
+そのときは `.github/workflows/bake_sprites.yml` が、ランナーで素材を落として焼き、
+**焼けた絵と寸法表（`sprites.json`・`heroWide.json`）だけ**を起こした枝にコミットして戻す。
+起こしかたはどちらも1手:
+
+```bash
+# 作業枝（claude/…）から。bake-request.json を書いて push すると走る
+#   names = 焼いてコミットする絵 / check = 見比べに焼くだけの絵（コミットしない）
+cat tools/sprites/bake-request.json   # {"why": "…", "names": ["food-cheese-cut"], "check": ["food-pepper"]}
+git add tools/sprites/bake-request.json && git commit -m "…" && git push
+
+# master に入ったあとは、ボタンでも
+gh workflow run bake_sprites.yml --ref <claude/…> -f names=food-cheese-cut
+```
+
+終わると github-actions[bot] のコミットが枝に積まれるので、`git pull --rebase` で受け取る。
+主役（`recipes.ts` などの `icon`）なら `hero/` の2枚もいっしょに焼ける。
+
+- **名前はぴったり当てる**（`EXACT=1`）。手元の `bake.mjs` は「名前の一部」で絞るので、
+  `food-cheese` が `food-cheese-cut` や `food-burger-cheese` まで拾って、頼んでいない絵を
+  いまのキットで焼き直してしまう
+- **`check` の絵は別の置き場に焼き、いまの絵と画素で比べる**（`bakecheck.py`）。
+  色が抜けていたら止めてコミットしない（`Textures/` が置けていない）。形や色が違うだけなら
+  止めずに「違う」と出す——キットの版が違う、という知らせなので、出た絵を自分で見る
+- **並べた絵はログに base64 で出る。** この箱からは artifact もログの zip も落とせない
+  （blob の宛先で 403）。`mcp__github__get_job_logs`（`return_content: true`）で読んで
+  ファイルに置き、`python3 bakecheck.py unsheet <ログ> /tmp/sheet.png` で絵に戻す
+- 焼くのに使ったキットの zip の在りか（＝版）は、run の要約に残る
+
 **zip の `Textures/` も一緒に置く。無いと、焼いた絵が色を失う。**
 food-kit の glb は色を持っておらず、`Textures/colormap.png` の1枚を全員で
 共有している（`models/food/Textures/colormap.png`）。これが欠けていても

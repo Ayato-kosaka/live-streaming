@@ -1,0 +1,5 @@
+{
+  "why": "10/22 のチーズオリーブフォカッチャの主役（hero/food-cheese-cut）が無い。food-pepper は色とキットの版の見比べ",
+  "names": ["food-cheese-cut"],
+  "check": ["food-pepper"]
+}
