@@ -10,6 +10,8 @@
         組み上がりを設定画と並べ、重ねた絵を作る。外形の重なり（IoU）も数で出す
     python3 tools/alert-theme/rig.py swapcheck <rig.json>
         差し替えの絵（swaps）が同じ寸法か・中身の中心がそろっているか
+    どれも --costume costume-<名前>.json を付けると、素体に仮装を重ねたものを扱う
+    （素体と同じ id の部品は置き換え、新しい id は足す。merge_costume）
 
 rig.json の読み方（`public/alert/themes/<id>/rig/<キャラ>/rig.json`。動きの担当とはこれだけが接点）:
 
@@ -40,9 +42,28 @@ BGS = {"navy": NAVY, "green": GREEN, "white": (255, 255, 255), "gray": (128, 128
 
 # ---------------------------------------------------------------- 読み込み
 
-def load(path):
+def merge_costume(rig, costume):
+    """仮装（costume-*.json）を素体に重ねる。素体と同じ id の部品はそっくり置き換え（絵・pivot・at・z）、
+    新しい id は足す。仮装の parent は素体の id を指してよい"""
+    parts = list(rig["parts"])
+    idx = {p["id"]: i for i, p in enumerate(parts)}
+    for p in costume["parts"]:
+        if p["id"] in idx:
+            parts[idx[p["id"]]] = p
+        else:
+            idx[p["id"]] = len(parts)
+            parts.append(p)
+    out = dict(rig)
+    out["parts"] = parts
+    return out
+
+
+def load(path, costume=None):
     rig = json.load(open(path, encoding="utf-8"))
     base = os.path.dirname(os.path.abspath(path))
+    if costume:
+        cpath = costume if os.path.isabs(costume) or os.path.exists(costume) else os.path.join(base, costume)
+        rig = merge_costume(rig, json.load(open(cpath, encoding="utf-8")))
     ids = [p["id"] for p in rig["parts"]]
     if len(set(ids)) != len(ids):
         raise SystemExit("部品の id が重なっている")
@@ -160,7 +181,7 @@ def color(s):
 # ---------------------------------------------------------------- assemble
 
 def cmd_assemble(o):
-    rig, base, by = load(o.rig)
+    rig, base, by = load(o.rig, o.costume)
     im = render(rig, base, by, parse_kv(o.pose, float), parse_kv(o.swap), o.scale, o.margin)
     if o.bg:
         im = on(im, color(o.bg))
@@ -196,7 +217,7 @@ def joint_radius(alpha, child, cx, cy):
 
 
 def cmd_jointcheck(o):
-    rig, base, by = load(o.rig)
+    rig, base, by = load(o.rig, o.costume)
     os.makedirs(o.outdir, exist_ok=True)
     W, H = rig["size"]
     margin = round(max(W, H) * 0.35)
@@ -298,7 +319,7 @@ def crop_to(mask, im):
 
 
 def cmd_compare(o):
-    rig, base, by = load(o.rig)
+    rig, base, by = load(o.rig, o.costume)
     asm = render(rig, base, by, parse_kv(o.pose, float), parse_kv(o.swap))
     am = silhouette(asm)
     asm_c, am_c = crop_to(am, asm)
@@ -365,7 +386,7 @@ def cmd_compare(o):
 # ---------------------------------------------------------------- swapcheck
 
 def cmd_swapcheck(o):
-    rig, base, by = load(o.rig)
+    rig, base, by = load(o.rig, o.costume)
     ok = True
     for p in rig["parts"]:
         if "swaps" not in p:
@@ -406,6 +427,9 @@ def add(sp):
     p.add_argument("--crop"); p.add_argument("--flip", action="store_true")
     p.add_argument("--pose"); p.add_argument("--swap")
     p = sp.add_parser("swapcheck"); p.add_argument("rig")
+    # 仮装（costume-*.json）を素体に重ねてから点検・組み立てる。rig.json と同じ置き場からの名前でよい
+    for name in ("assemble", "jointcheck", "compare", "swapcheck"):
+        sp.choices[name].add_argument("--costume")
 
 
 if __name__ == "__main__":

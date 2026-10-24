@@ -1,0 +1,13 @@
+{
+ "name": "costume-wizard",
+ "base": "rig.json",
+ "parts": [
+  {"id": "arm_l", "file": "wizard-arm_l.png", "parent": "torso", "pivot": [264.4, 69.4], "at": [118.2, 160.7], "z": 40},
+  {"id": "arm_r", "file": "wizard-arm_r.png", "parent": "torso", "pivot": [231.3, 85.0], "at": [441.0, 160.7], "z": 39},
+  {"id": "robe", "file": "wizard-robe.png", "parent": "torso", "pivot": [447.0, 183.3], "at": [260.0, 103.7], "z": 25},
+  {"id": "hat", "file": "wizard-hat.png", "parent": "head", "pivot": [376.4, 332.6], "at": [339.5, 242.1], "z": 50},
+  {"id": "hat_tip", "file": "wizard-hat_tip.png", "parent": "hat", "pivot": [155.7, 188.8], "at": [542.1, 144.7], "z": 49},
+  {"id": "wand", "file": "wizard-wand.png", "parent": "arm_r", "pivot": [110.3, 249.9], "at": [139.7, 217.3], "z": 38}
+ ],
+ "anchors": {"wandTip": {"part": "wand", "at": [93.2, 93.8]}}
+}
