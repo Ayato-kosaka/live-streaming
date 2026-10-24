@@ -148,6 +148,8 @@ MJS_ROOTS = (
     REPO / "functions" / "selftest",
     REPO / "tools" / "sprites",
     REPO / "tools" / "shorts",
+    # EC2 を止める前の守り（stop_guard_selftest.py）。置き場が `.claude/` の下で、どこからも走っていなかった
+    REPO / ".claude" / "skills" / "ec2-chrome",
 )
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない

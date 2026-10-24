@@ -45,13 +45,11 @@ idle-stop の30分待ちになる。通しすぎると、また人の作業ご�
 下の `CUTS` が、`ec2.py` / `idle_stop.sh` の**本物の字**を1か所だけ書き換えた写しを作り、それで足を全部回す。
 **外した守りの足だけが落ちる**ことを確かめる。外す字が本物に見つからなければ 2 で落ちる。
 
-## どこから走るか（2026-10-24 時点の断り）
+## どこから走るか
 
-回し役（`python/selftest_runner.py`）は `.claude/` を降りない（`MJS_ROOTS` に無い）。棚卸し
-（`python/watch_census_selftest.py`）も `.` で始まる置き場は見ないので、ここに在ることは数えにも出ない。
-この見張りを足した担当は `.claude/skills/ec2-chrome/` の外を触らない約束だったので、繋ぐのはまとめ役に返した。
-繋がるまでは、`ec2.py` か `idle_stop.sh` を触ったら手で回す
-（`python3 python/selftest_runner.py .claude/skills/ec2-chrome/stop_guard_selftest.py` でもよい。名指しなら回る）。
+回し役（`python/selftest_runner.py`）の `MJS_ROOTS` に `.claude/skills/ec2-chrome` を足して、Selftests から回す
+（2026-10-24。足すまでは `.claude/` の下がどこからも走っていなかった）。棚卸し（`python/watch_census_selftest.py`）は
+`.` で始まる置き場を見ないので、ここが外れても棚卸しは赤くならない。`MJS_ROOTS` の行を消さないこと。
 """
 
 from __future__ import annotations
