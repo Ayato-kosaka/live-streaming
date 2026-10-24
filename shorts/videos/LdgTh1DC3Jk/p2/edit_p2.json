@@ -4,15 +4,15 @@
  "id": "p2",
  "style": "style_v3.json",
  "sources": {
-  "c01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/01_0-01-00_0-08-00.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
   "c02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/02_0-09-30_0-16-30.mp4",
    "watermark": "prism_live",
    "t0": 570.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/01_0-01-00_0-08-00.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
   },
   "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/all/LdgTh1DC3Jk/clips/03_0-44-30_0-47-30.mp4",
@@ -27,10 +27,28 @@
  },
  "cuts": [
   {
-   "src": "c01",
-   "in": 10680,
-   "out": 10759,
+   "src": "c02",
+   "in": 1362,
+   "out": 1441,
    "row": 0,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.55,
+    "x": 0.4583,
+    "sx": 0.5,
+    "y": [
+     0.5469,
+     0.6562
+    ],
+    "sy": 0.68
+   },
+   "note": "冒頭: 白い子犬が正面からこちらへ駆けてきて、至近でカメラを見上げる（02）。犬は題の札の下に寄せる"
+  },
+  {
+   "src": "c01",
+   "in": 2100,
+   "out": 2131,
+   "row": 1,
    "zoom": {
     "from": 1.12,
     "to": 1.12,
@@ -39,22 +57,7 @@
     "y": 0.0,
     "sy": 0.0
    },
-   "note": "冒頭: 茶色い泥と水・岩、奥に山と谷（01）。題の『大惨事』の答え＝泥を先に見せる。泥は題の札の下"
-  },
-  {
-   "src": "c02",
-   "in": 864,
-   "out": 895,
-   "row": 1,
-   "zoom": {
-    "from": 1.42,
-    "to": 1.42,
-    "x": 0.5,
-    "sx": 0.5,
-    "y": 0.1953,
-    "sy": 0.0
-   },
-   "note": "草原の子犬3匹（白・黒・クリーム。02）。野良犬だらけの草原"
+   "note": "草原に白い子犬と黒い犬（01）。野良犬だらけの草原"
   },
   {
    "src": "c01",
@@ -622,7 +625,7 @@
   ]
  },
  "meta": {
-  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a67905a627496b599/shorts/videos/LdgTh1DC3Jk/p2/spec.json",
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a5628405cbc9897f4/shorts/videos/LdgTh1DC3Jk/p2/spec.json",
   "fps": 30,
   "frames": 1462,
   "seconds": 48.733,
@@ -633,7 +636,7 @@
     "frames": 79,
     "voice_frames": 71,
     "cuts": [
-     "0:06:56.0+2.63s"
+     "0:10:15.4+2.63s"
     ],
     "line": "ジョージアで滝を観に行こうと思ったら大惨事に！",
     "telop": null
@@ -644,7 +647,7 @@
     "frames": 62,
     "voice_frames": 54,
     "cuts": [
-     "0:09:58.8+1.03s",
+     "0:02:10.0+1.03s",
      "0:02:52.0+1.03s"
     ],
     "line": "野良犬だらけの草原からスタート！",
