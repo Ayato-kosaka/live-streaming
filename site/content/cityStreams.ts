@@ -1928,6 +1928,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "VusdZVyjgjQ",
         "title": "北マケドニアでチーズオリーブフォカッチャつくろー！",
         "date": "2026-10-22"
+      },
+      {
+        "videoId": "vZ2O8pabk1g",
+        "title": "【緊急】ホステル追い出されました",
+        "date": "2026-10-23"
       }
     ]
   }
