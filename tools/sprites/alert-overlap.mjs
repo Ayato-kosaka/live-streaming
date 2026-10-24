@@ -229,7 +229,16 @@ const FREEZE = `(() => {
       if (!frozen) return;
       shift = pNow() - frozenAt;
       frozen = false;
-      paused.forEach((a) => { try { a.play(); } catch {} });
+      /* 止めたときに終わりぎわにいたアニメは、play() で頭から巻き戻る（終わりにいるアニメの play() は
+         0 へ戻す決まり）。1字ずつ弾む字が、次のコマで遅れ(delay)の頭に戻って消えた（「100円」が
+         「10 円」に写った）。終わりにいるものは finish() で終わらせる */
+      paused.forEach((a) => {
+        try {
+          const end = a.effect ? a.effect.getComputedTiming().endTime : Infinity;
+          if (Number.isFinite(end) && Number(a.currentTime) >= Number(end) - 1) a.finish();
+          else a.play();
+        } catch {}
+      });
       pausedMedia.forEach((v) => v.play().catch(() => {}));
       const r = heldR; heldR = [];
       r.forEach((id) => { const e = rmap.get(id); if (e) e.nid = nRAF(e.run); });
