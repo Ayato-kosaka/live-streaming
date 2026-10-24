@@ -15,6 +15,8 @@
         各ファイルの寸法と、bank-* の「中身の外接矩形」を manifest.json に書く
     python3 tools/alert-theme/alert_theme.py preview <置き場> <出力の置き場>
         紺 #1b2340 と緑 #3a7d44 の地に重ねた確認画像と、bank の4コマの GIF（0.15 秒刻み）
+    python3 tools/alert-theme/alert_theme.py assemble|jointcheck|compare|swapcheck …
+        切り絵の部品（rig.json）の道具。中身と rig.json の読み方は rig.py の頭
 
 なぜ手元で揃えるか: ChatGPT はコマごとに数 px ずれて描く。そのまま重ねて切り替えると
 外形がガタガタ跳ねるので、コマ0の透明度に、ほかのコマの透明度がいちばん重なる位置へ寄せる。
@@ -371,8 +373,16 @@ def main():
     p.add_argument("--row", type=int, default=300); p.add_argument("--grid")
     p = sp.add_parser("manifest"); p.add_argument("dir")
     p = sp.add_parser("preview"); p.add_argument("dir"); p.add_argument("out")
+    # 切り絵の部品（rig.json）の道具は rig.py に置いてある。同じ口でも呼べるようにする
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import rig
+
+    rig.add(sp)
     o = ap.parse_args()
-    globals()["cmd_" + o.cmd](o)
+    if hasattr(rig, "cmd_" + o.cmd):
+        getattr(rig, "cmd_" + o.cmd)(o)
+    else:
+        globals()["cmd_" + o.cmd](o)
 
 
 if __name__ == "__main__":

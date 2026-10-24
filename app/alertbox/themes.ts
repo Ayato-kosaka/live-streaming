@@ -1,12 +1,20 @@
 /**
  * アラートの季節テーマ。**次の季節を足すのは、下の `THEMES` に1件足すだけ。**
  *
- * テーマが持つのは4つ。
+ * テーマが持つのは5つ。
  *
  *   1. 期間（JST）。`from` から `until` の**手前まで**
- *   2. 絵の置き場（`dir`）。名前の決まりは下の `bankFrameUrl` / `fxUrl`
- *   3. 貯金箱の字の色
- *   4. アラート中に後ろで出す小物の並び（`fx`）と、締めの群れ（`finale`）
+ *   2. 絵の置き場（`dir`）。名前の決まりは下の `bankFrameUrl` / `fxUrl` / `rigDir`
+ *   3. 貯金箱。切り絵の部品で動かすもの（`rigBank`）と、読めなかったときのコマ送り（`bank`）
+ *   4. 金額の段（`tiers`）。段ごとに、後ろで出す小物（`fx`）か、**演出の台本**（`show`）と、
+ *      名前の札の飾り（`plate`）を持つ
+ *   5. 締めの群れ（`finale`）
+ *
+ * ## 段は「台本」を持てる
+ *
+ * 段に `show` を書くと、その段は小物の代わりに台本どおりの演出になる（暗転・主役の登場・
+ * 札・数え上げ…）。台本は時刻つきの出来事の並び（`season/show/script.ts`）。
+ * 部品の絵が読めなかった日は、その段は小物の演出に落ちる（何も出ない、にしない）。
  *
  * テーマが無い日（期間外）は、いつもの豚の貯金箱のまま。何も足さない。
  *
@@ -15,6 +23,8 @@
  * 書き出し（`output: "static"`）は日付を焼くので、ここでは決めない。
  * 決めるのは `season/useSeason.ts`。OBS は開きっぱなしなので、1分ごとに見直す。
  */
+
+import type { Cue } from "./season/show/script";
 
 /** 小物が出てくる場所。画面の真ん中は使わない（配信画面とキャラを塞がない）。 */
 export type FxPlace =
@@ -65,9 +75,74 @@ export type FxSlot = {
   lane?: number;
 };
 
+/**
+ * アラートの字（名前・額・メッセージ）の飾り。**背景の箱は持たない**（2026-10-24、オーナー:
+ * 字はキャラ絵の上下中央に重ね、箱は使わずに字そのものをリッチに）。描くのは `season/plate/RichText.tsx`。
+ * 字の大きさは画面の幅 1080 のときの px（幅に比例させる）。額の字の高さは面の幅の 7% 以上・名前 5.5% 以上
+ */
+export type PlateStyle = {
+  /** "gold" は段7の金の縁と光（ほかは濃い縁だけ） */
+  frame: "round" | "gold";
+  /** 段の色。縁の光・「ドン」の光 */
+  edge: string;
+  /** 字の縁取りの色（濃い色。明るい地・キャラ絵の柄の上でも字を読ませる） */
+  ink: string;
+  /** 縁取りの太さ（em。外に見えるのはこの半分）。段が上がるほど太い */
+  stroke: number;
+  /** 縁の光の強さ（0..1）。段が上がるほど強い */
+  glow: number;
+  nameColor: string;
+  /** 名前と額のあいだの字（「様」「ありやとう！！」）とメッセージの色。無ければ名前の色・白 */
+  textColor?: string;
+  /** 額のグラデーション（上 → 下） */
+  amountColor: string;
+  amountColor2?: string;
+  nameSize: number;
+  amountSize: number;
+  /** 台本が無いとき、字が出る秒 */
+  appearAt?: number;
+};
+
+/** 段の演出（台本つき） */
+export type TierShow = {
+  /**
+   * 振付けの名前（`season/show/` の中）。"ghost" 段1 ちびおばけ / "batSign" 段2 こうもりの子 /
+   * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "reaper" 段5 死神のあやと /
+   * "zombie" 段6 ゾンビのあやと / "dracula" 段7 ドラキュラのあやと
+   */
+  kind: "ghost" | "batSign" | "march" | "wizard" | "reaper" | "zombie" | "dracula";
+  /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
+  rigs: string[];
+  /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
+  poses?: string[];
+  /** 使う小物の組（`itemsDir` の名前。古城・じゅうたん・紙吹雪…）。読めなければ同じく小物の演出に落ちる */
+  items?: string[];
+  /**
+   * その人のキャラ絵と読み上げを出す秒。**0 なら今どおり（すぐ）**。
+   * 主役が「どうぞ」と見せる時刻に合わせる（台本の `reveal` と同じ秒）
+   */
+  revealSec: number;
+  /**
+   * 名前の札の上に空ける高さ（面の高さに対する割合）。主役が札の上の縁に立つ・乗るぶん。
+   * 札とキャラ絵の組はこの下に置く（index.tsx）
+   */
+  headroom: number;
+  /** 台本 */
+  script: Cue[];
+};
+
 export type FxTier = {
   /** この額（JPY）以上でこの段 */
   min: number;
+  /**
+   * 段の色（YouTube のスパチャの色の切れ目と色に揃える）。札のふち・光・粒の色の元。
+   * 見ている人はスパチャの色で額の大きさを知っているので、色で段が分かるようにする
+   */
+  accent: string;
+  /** 名前の札。無ければ今までどおりの字（画面の真ん中） */
+  plate?: PlateStyle;
+  /** 演出の台本。あれば小物（`slots` / `files`）の代わりにこれを出す */
+  show?: TierShow;
   /** 使う枠の数（`slots` の頭から） */
   slots: number;
   /** この段で出してよい小物（`fx` の `file`） */
@@ -80,6 +155,16 @@ export type FxTier = {
 export type TextTone = {
   color: string;
   shadow: string;
+};
+
+/** 切り絵の貯金箱。どの部品を使うか */
+export type RigBankDef = {
+  /** 振付けの名前（`season/bank/` の中。今は "kuro" だけ） */
+  kind: "kuro";
+  /** 走り回る子・器・ときどき横切るもの（`rigDir` の名前） */
+  mascot: string;
+  bucket: string;
+  visitor?: string;
 };
 
 export type SeasonTheme = {
@@ -107,6 +192,11 @@ export type SeasonTheme = {
     /** `manifest.json` が読めないときの絵の大きさ（中身の外接矩形は絵の全体とみなす） */
     fallbackSize: { width: number; height: number };
   };
+  /**
+   * 切り絵の貯金箱。あればこちらを先に使う。部品が1つでも読めなければ、
+   * 下の `bank`（コマ送り）に落ちる。それも読めなければ豚
+   */
+  rigBank?: RigBankDef;
   /** 貯金箱の字。上（目標）・中（いまの額）・下（ラベル） */
   text: { top: TextTone; center: TextTone; bottom: TextTone };
   /** 出しうる小物ぜんぶ。どれを出すかは段（`tiers`）が決める */
@@ -135,6 +225,159 @@ export type SeasonTheme = {
   } | null;
 };
 
+/**
+ * ちびおばけ（段1、〜199円）の台本。登場 1.2 秒・前兆なし（設計書 v3）。
+ * その人のキャラ絵は最初から出ている（段1〜3）ので、ランタンとおばけは面の上の端の帯の中だけ
+ */
+const GHOST: Cue[] = [
+  { at: 0.0, do: "lanternIn", dur: 0.3 },
+  { at: 0.3, do: "lidRattle", dur: 0.3 },
+  { at: 0.6, do: "boo" },
+  { at: 0.9, do: "textIn" },
+  { at: 1.2, do: "settle" },
+  { at: 1.6, do: "stay" },
+  { at: -2.8, do: "finale", dur: 2.6 },
+];
+
+/**
+ * こうもりの子3匹（段2、200〜499円）の台本。登場 1.8 秒・前兆なし（設計書 v3）。
+ * 札は字を入れない小物（字はキャラ絵の上下中央）。こうもりと札は面の上の端の帯の中だけ
+ */
+const BAT_SIGN: Cue[] = [
+  { at: 0.0, do: "batsIn", dur: 1.4 },
+  { at: 1.2, do: "perch", dur: 0.6 },
+  { at: 1.5, do: "textIn" },
+  { at: 2.2, do: "stay" },
+  { at: -2.8, do: "finale", dur: 2.6 },
+];
+
+/**
+ * かぼちゃ坊や3人組の行進（段3、500〜999円）の台本。登場 2.5 秒・前兆なし（設計書 v3）。
+ * その人のキャラ絵は最初から出ている（段1〜3）ので、坊やは面の上の端の帯だけを歩く
+ */
+const MARCH: Cue[] = [
+  { at: 0.0, do: "marchIn", dur: 1.7 },
+  { at: 1.9, do: "tada" },
+  // 字は「ジャン！」と同時に1字ずつ弾んで出る
+  { at: 1.9, do: "textIn" },
+  { at: 2.0, do: "candyBurst", n: 34, dur: 0.3 },
+  { at: 2.6, do: "stay" },
+  // 締め（終わりの 3 秒前から）。右へ行進して去る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * 魔法使いのあやと（段4、1,000〜1,999円）の台本。登場 4 秒・前兆は金のきらめき 0.5 秒（設計書 v3）。
+ * その人のキャラ絵は、あやとが札の上へ退いてから出る
+ */
+const WIZARD: Cue[] = [
+  { at: 0.0, do: "glimmer", dur: 0.5 },
+  { at: 0.45, do: "circle", dur: 0.5 },
+  { at: 0.8, do: "flyIn", dur: 1.5 },
+  { at: 2.35, do: "cast" },
+  { at: 2.6, do: "write", dur: 0.9 },
+  { at: 3.6, do: "don" },
+  { at: 4.0, do: "retreat", dur: 0.8 },
+  { at: 4.3, do: "reveal" },
+  { at: 5.2, do: "stay" },
+  // 締め（終わりの 3 秒前から）。大きな弧で右上へ飛び去る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * 死神のあやと（段5、2,000〜4,999円）の台本。登場 5 秒・前兆は端の暗さと鬼火 0.8 秒（構成 v3）。
+ * 振り抜いた瞬間に一瞬止める。字は斬撃の跡から切り出される（`write`。振付けが左から広げる）。
+ * その人のキャラ絵は、死神が上の帯の左の角へ退いてから出る
+ */
+const REAPER: Cue[] = [
+  { at: 0.0, do: "darken", to: 0.9, dur: 0.5 },
+  { at: 0.05, do: "wisps", n: 6, dur: 0.75 },
+  { at: 0.75, do: "mist", dur: 0.7 },
+  { at: 1.05, do: "appear", dur: 0.7 },
+  { at: 2.1, do: "slash" },
+  // 斬撃の光が伸びきって、閃光がいちばん明るいところで止める
+  { at: 2.28, do: "hitstop", dur: 0.07 },
+  { at: 2.28, do: "shake", dur: 0.22 },
+  { at: 2.3, do: "write", dur: 0.32 },
+  { at: 3.0, do: "don" },
+  { at: 3.45, do: "cast" },
+  { at: 4.15, do: "retreat", dur: 0.8 },
+  { at: 4.9, do: "reveal" },
+  { at: 5.6, do: "stay" },
+  // 締め（終わりの 3 秒前から）。フードをひるがえして霧に消える
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * ゾンビのあやと（段6、5,000〜9,999円）の台本。登場 6.5 秒・前兆は端の暗さ＋紫の稲光2回＋地鳴り
+ * 1.2 秒（構成 v3）。墓から這い出した瞬間に一瞬止める。字は踊り出してから1字ずつ弾んで出る。
+ * その人のキャラ絵は、ゾンビが上の帯の右の角へ跳んでから出る
+ */
+const ZOMBIE: Cue[] = [
+  { at: 0.0, do: "darken", to: 0.92, dur: 0.5 },
+  { at: 0.1, do: "rumble", dur: 1.05 },
+  { at: 0.3, do: "lightning", n: 0 },
+  { at: 0.85, do: "lightning", n: 1 },
+  { at: 1.2, do: "graves", dur: 0.9 },
+  { at: 2.2, do: "hand", dur: 0.65 },
+  { at: 2.9, do: "rise", dur: 0.45 },
+  // 土から伸び上がりきったところで止める
+  { at: 3.08, do: "hitstop", dur: 0.06 },
+  { at: 3.08, do: "shake", dur: 0.25 },
+  { at: 3.65, do: "dance" },
+  { at: 3.75, do: "lightning", n: 2 },
+  { at: 3.8, do: "friends", dur: 0.5 },
+  { at: 4.35, do: "textIn" },
+  { at: 5.25, do: "don" },
+  { at: 5.7, do: "retreat", dur: 0.8 },
+  { at: 6.3, do: "reveal" },
+  { at: 6.9, do: "stay" },
+  // 締め（終わりの 3 秒前から）。墓へずぼっと戻る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * ドラキュラのあやと（段7、10,000円〜）の台本。いちばん上の段なので「超絶リッチ」:
+ * 紫の前兆 → 古城と満月 → 赤じゅうたんが転がって伸びる → 棺 → 起き上がる →
+ * **マントばさっ**（紫から赤へ。金の閃光・紙吹雪・花火）→ 数え上げ「ドン」→ その人の番
+ */
+const DRACULA: Cue[] = [
+  // 前兆（紫）。ほかのものは何も出ていない
+  { at: 0.0, do: "darken", to: 0.82, dur: 0.4 },
+  { at: 0.4, do: "pulse", n: 0.55 },
+  { at: 0.8, do: "pulse", n: 1 },
+  { at: 0.9, do: "batVortex", n: 20, dur: 0.6 },
+  { at: 1.5, do: "flash" },
+  // 登場: 古城と満月 → 赤じゅうたん → 棺
+  { at: 1.6, do: "castleRise", dur: 0.7 },
+  { at: 1.75, do: "carpetRoll", dur: 0.6 },
+  // じゅうたんが敷き終わってから棺が落ちる
+  { at: 2.55, do: "coffinDrop", dur: 0.3 },
+  { at: 2.85, do: "shake", dur: 0.25 },
+  { at: 2.85, do: "hitstop", dur: 0.08 },
+  { at: 3.05, do: "lidRattle", dur: 0.36 },
+  { at: 3.41, do: "lidOpen" },
+  { at: 3.41, do: "coinFountain", n: 60, dur: 0.6 },
+  { at: 3.55, do: "rise", dur: 0.6 },
+  // マントばさっ（紫から赤へ）
+  { at: 4.2, do: "capeOpen", dur: 0.35 },
+  { at: 4.2, do: "hitstop", dur: 0.06 },
+  { at: 4.25, do: "confetti", n: 44, dur: 2.2 },
+  { at: 4.3, do: "fireworks", n: 3 },
+  { at: 4.4, do: "plateIn", dur: 0.6 },
+  { at: 4.45, do: "glint" },
+  { at: 4.9, do: "count", dur: 1.0 },
+  { at: 4.9, do: "coinRain", n: 50, dur: 1.0 },
+  { at: 5.9, do: "don" },
+  { at: 5.9, do: "fireworks", n: 2 },
+  // その人の番（字はキャラ絵の上下中央へ落ちる）。ヒットストップ2回（0.14 秒）ぶん後ろへずれて 6.5 秒
+  { at: 6.36, do: "reveal", dur: 0.8 },
+  { at: 6.36, do: "retreat", to: 0.16, dur: 2.5 },
+  { at: 8.9, do: "stay" },
+  // 締め（終わりの4秒前から）
+  { at: -4.0, do: "finale", dur: 4 },
+];
+
 export const THEMES: SeasonTheme[] = [
   {
     id: "halloween",
@@ -145,6 +388,8 @@ export const THEMES: SeasonTheme[] = [
     // 10/31 23:59 まで。11/1 0:00 からは豚に戻る
     until: "2026-11-01T00:00",
     dir: "/alert/themes/halloween",
+    /* 黒猫のクロが、かぼちゃのお菓子バケツのまわりを走り回る（設計書 §3.1 案A） */
+    rigBank: { kind: "kuro", mascot: "kuro", bucket: "bucket", visitor: "bat" },
     bank: {
       frames: 4,
       /* 0 ふつう / 1 にっこり（灯りが明るい）/ 2 ヘタが揺れる / 3 まばたき。
@@ -188,26 +433,191 @@ export const THEMES: SeasonTheme[] = [
       { place: "bottom", side: "l", lane: 2 },
       { place: "bottom", side: "r", lane: 2 },
     ],
-    /* 段の中身は #1022 で決めたもの。**どの段でも真ん中は空いている**
-       （枠がそもそも真ん中に無い）。 */
+    /* 段は7つ（構成 v3、2026-10-24）。切れ目と色は YouTube のスパチャに揃える
+       （〜199 青 / 〜499 水色 / 〜999 緑 / 〜1,999 黄 / 〜4,999 橙 / 〜9,999 マゼンタ / 1万〜 赤）。
+       999 と 1,000 の差をいちばん大きく: 段1〜3 は脇役たち、段4 から あやとが主役。
+       下の slots / files は台本（show）が無い段・部品が読めなかった日の小物。
+       **どの段でも真ん中は空いている**（枠がそもそも真ん中に無い）。 */
     tiers: [
       {
         min: 0,
+        accent: "#1565C0",
+        plate: {
+          frame: "round",
+          edge: "#42A5F5",
+          ink: "#020A18",
+          stroke: 0.18,
+          glow: 0.0,
+          nameColor: "#FFFFFF",
+          amountColor: "#E3F2FD",
+          amountColor2: "#64B5F6",
+          nameSize: 88,
+          amountSize: 132,
+          appearAt: 0.8,
+        },
+        /* ちびおばけがランタンから「ばあ！」。小物（下の slots / files）は、部品が読めなかった日の控え */
+        show: {
+          kind: "ghost",
+          rigs: ["ghost", "bat"],
+          revealSec: 0,
+          headroom: 0.17,
+          script: GHOST,
+        },
+        slots: 2,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
+        bats: 1,
+        waves: 1,
+      },
+      {
+        min: 200,
+        accent: "#00B8D4",
+        plate: {
+          frame: "round",
+          edge: "#00E5FF",
+          ink: "#00141A",
+          stroke: 0.19,
+          glow: 0.0,
+          nameColor: "#FFFFFF",
+          amountColor: "#E0F7FA",
+          amountColor2: "#26C6DA",
+          nameSize: 90,
+          amountSize: 134,
+          appearAt: 0.8,
+        },
+        /* こうもりの子が木の札を吊るして飛んでくる（札に字は入れない）。小物は控え */
+        show: {
+          kind: "batSign",
+          rigs: ["bat"],
+          revealSec: 0,
+          headroom: 0.22,
+          script: BAT_SIGN,
+        },
         slots: 3,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
         bats: 2,
         waves: 1,
       },
       {
+        min: 500,
+        accent: "#00C853",
+        plate: {
+          frame: "round",
+          edge: "#1DE9B6",
+          ink: "#01160C",
+          stroke: 0.2,
+          glow: 0.25,
+          nameColor: "#FFFFFF",
+          amountColor: "#E8F5E9",
+          amountColor2: "#69F0AE",
+          nameSize: 92,
+          amountSize: 136,
+          appearAt: 0.8,
+        },
+        /* かぼちゃ坊や3人組が面の上の端を、竿の小旗を振りながら行進してくる。
+           小物（下の slots / files）は、部品が読めなかった日の控え */
+        show: {
+          kind: "march",
+          rigs: ["pumpkin_kid", "bat"],
+          revealSec: 0,
+          headroom: 0.2,
+          script: MARCH,
+        },
+        slots: 4,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
+        bats: 3,
+        waves: 1,
+      },
+      {
         min: 1000,
+        accent: "#FFCA28",
+        plate: {
+          frame: "round",
+          edge: "#FFCA28",
+          ink: "#1C1300",
+          stroke: 0.21,
+          glow: 0.4,
+          nameColor: "#FFFFFF",
+          amountColor: "#FFFDE7",
+          amountColor2: "#FFCA28",
+          nameSize: 94,
+          amountSize: 138,
+          appearAt: 0.8,
+        },
+        /* 魔法使いのあやとがほうきで飛び込み、杖の光で札を書く。小物（下の slots / files）は、
+           ポーズ絵が読めなかった日の控え */
+        show: {
+          kind: "wizard",
+          rigs: [],
+          poses: ["wizard"],
+          revealSec: 4.3,
+          headroom: 0.2,
+          script: WIZARD,
+        },
         slots: 5,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png"],
         bats: 4,
         waves: 1,
       },
       {
+        min: 2000,
+        accent: "#FF9100",
+        plate: {
+          frame: "round",
+          edge: "#FF9100",
+          ink: "#1C0B00",
+          stroke: 0.22,
+          glow: 0.55,
+          nameColor: "#FFFFFF",
+          amountColor: "#FFF3E0",
+          amountColor2: "#FFA726",
+          nameSize: 96,
+          amountSize: 140,
+          appearAt: 0.8,
+        },
+        /* 死神のあやとが霧の中から現れ、大鎌の斬撃で字を切り出す。小物（下の slots / files）は、
+           ポーズ絵が読めなかった日の控え。止めた 0.07 秒のぶん、その人の絵は 4.97 秒 */
+        show: {
+          kind: "reaper",
+          rigs: ["bat"],
+          poses: ["reaper"],
+          items: ["reaper"],
+          revealSec: 4.97,
+          headroom: 0.2,
+          script: REAPER,
+        },
+        slots: 6,
+        files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png", "fx-grave.png"],
+        bats: 6,
+        waves: 1,
+      },
+      {
         min: 5000,
-        slots: 7,
+        accent: "#E91E63",
+        plate: {
+          frame: "round",
+          edge: "#FF4081",
+          ink: "#1A0109",
+          stroke: 0.23,
+          glow: 0.75,
+          nameColor: "#FFFFFF",
+          amountColor: "#FCE4EC",
+          amountColor2: "#FF5C93",
+          nameSize: 98,
+          amountSize: 142,
+          appearAt: 0.8,
+        },
+        /* ゾンビのあやとが墓から這い出し、かぼちゃ坊やとちびおばけと踊る。小物（下の slots / files）は、
+           ポーズ絵か仲間の部品が読めなかった日の控え。止めた 0.06 秒のぶん、その人の絵は 6.36 秒 */
+        show: {
+          kind: "zombie",
+          rigs: ["pumpkin_kid", "ghost", "bat"],
+          poses: ["zombie"],
+          items: ["zombie"],
+          revealSec: 6.36,
+          headroom: 0.2,
+          script: ZOMBIE,
+        },
+        slots: 8,
         files: [
           "fx-web.png",
           "fx-pumpkin.png",
@@ -216,11 +626,35 @@ export const THEMES: SeasonTheme[] = [
           "fx-grave.png",
           "fx-zombie.png",
         ],
-        bats: 7,
+        bats: 8,
         waves: 1,
       },
       {
         min: 10000,
+        accent: "#D50000",
+        plate: {
+          frame: "gold",
+          edge: "#F4C24E",
+          ink: "#2A0208",
+          stroke: 0.24,
+          glow: 1.0,
+          nameColor: "#FFF1C9",
+          amountColor: "#FFF8E1",
+          amountColor2: "#FFC107",
+          nameSize: 104,
+          amountSize: 150,
+        },
+        /* 紫の前兆 → 古城と満月 → 赤じゅうたん → 棺 → ドラキュラのあやと（マントばさっで赤へ）→
+           数え上げ「ドン」。小物（下の slots / files）は、絵が読めなかった日の控え */
+        show: {
+          kind: "dracula",
+          rigs: ["bat", "props"],
+          poses: ["dracula"],
+          items: ["dracula"],
+          revealSec: 6.5,
+          headroom: 0.2,
+          script: DRACULA,
+        },
         slots: 10,
         files: [
           "fx-web.png",
@@ -298,6 +732,40 @@ export const bankFrameUrl = (
 ) => `${th.dir}/bank-${layer}-${i}.png`;
 
 export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
+
+/** 切り絵の部品の置き場（`<dir>/rig/<名前>/rig.json` と部品の絵） */
+export const rigDir = (th: SeasonTheme, name: string) => `${th.dir}/rig/${name}`;
+/** あやとの仮装のポーズ絵の置き場（`poses.json` と絵） */
+export const posesDir = (th: SeasonTheme, name: string) => `${th.dir}/poses/${name}`;
+
+/** 段の小物の置き場（`items.json` と絵） */
+export const itemsDir = (th: SeasonTheme, name: string) => `${th.dir}/items/${name}`;
+
+/** テーマが読む小物の組ぜんぶ */
+export function themeItems(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  th.tiers.forEach((t) => t.show?.items?.forEach((p) => out.add(p)));
+  return [...out];
+}
+
+/** テーマが読むポーズ絵の組ぜんぶ */
+export function themePoses(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  th.tiers.forEach((t) => t.show?.poses?.forEach((p) => out.add(p)));
+  return [...out];
+}
+
+/** テーマが使う切り絵の名前ぜんぶ（貯金箱と、段の演出の両方） */
+export function themeRigs(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  if (th.rigBank) {
+    out.add(th.rigBank.mascot);
+    out.add(th.rigBank.bucket);
+    if (th.rigBank.visitor) out.add(th.rigBank.visitor);
+  }
+  th.tiers.forEach((t) => t.show?.rigs.forEach((r) => out.add(r)));
+  return [...out];
+}
 
 export const manifestUrl = (th: SeasonTheme) => `${th.dir}/manifest.json`;
 

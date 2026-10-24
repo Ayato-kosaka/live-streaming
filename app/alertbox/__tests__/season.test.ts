@@ -75,16 +75,35 @@ describe("URL の theme=", () => {
 describe("金額 → 段", () => {
   const slots = (yen: number) => tierFor(halloween, yen).slots;
   it.each([
-    [0, 3],
-    [999, 3],
+    [0, 2],
+    [199, 2],
+    [200, 3],
+    [499, 3],
+    [500, 4],
+    [999, 4],
     [1000, 5],
-    [4999, 5],
-    [5000, 7],
-    [9999, 7],
+    [1999, 5],
+    [2000, 6],
+    [4999, 6],
+    [5000, 8],
+    [9999, 8],
     [10000, 10],
     [300000, 10],
   ])("%d円 → 枠 %d", (yen, n) => {
     expect(slots(yen)).toBe(n);
+  });
+
+  it("段は7つで、切れ目と色は YouTube のスパチャに揃える", () => {
+    expect(halloween.tiers.map((t) => t.min)).toEqual([0, 200, 500, 1000, 2000, 5000, 10000]);
+    expect(halloween.tiers.map((t) => t.accent.toUpperCase())).toEqual([
+      "#1565C0",
+      "#00B8D4",
+      "#00C853",
+      "#FFCA28",
+      "#FF9100",
+      "#E91E63",
+      "#D50000",
+    ]);
   });
 
   it("段が上がるほど、群れも小物の種類も減らない", () => {
@@ -96,16 +115,17 @@ describe("金額 → 段", () => {
     }
   });
 
-  it("おばけは 1,000円から、墓とゾンビは 5,000円から", () => {
+  it("おばけは 1,000円から、墓は 2,000円から、ゾンビは 5,000円から", () => {
     expect(tierFor(halloween, 999).files).not.toContain("fx-ghost.png");
     expect(tierFor(halloween, 1000).files).toContain("fx-ghost.png");
+    expect(tierFor(halloween, 1999).files).not.toContain("fx-grave.png");
+    expect(tierFor(halloween, 2000).files).toContain("fx-grave.png");
     expect(tierFor(halloween, 4999).files).not.toContain("fx-zombie.png");
     expect(tierFor(halloween, 5000).files).toContain("fx-zombie.png");
-    expect(tierFor(halloween, 5000).files).toContain("fx-grave.png");
   });
 
   it("数でない額はいちばん下の段", () => {
-    expect(tierFor(halloween, NaN).slots).toBe(3);
+    expect(tierFor(halloween, NaN).slots).toBe(2);
   });
 });
 

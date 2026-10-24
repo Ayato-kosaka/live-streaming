@@ -17,9 +17,10 @@
  * 透明な余白の分だけ小さく見える、を避けるため。
  */
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, useWindowDimensions, type TextStyle } from "react-native";
+import { View, Text, StyleSheet, type TextStyle } from "react-native";
 import type { SeasonTheme, TextTone } from "../themes";
 import type { SeasonBank } from "./useSeason";
+import { useStableWindow } from "./useBoxSize";
 
 import { emptyClip, useWaveClip } from "../components/PiggyGauge/wave";
 
@@ -37,7 +38,7 @@ type Props = {
  * （橙の中身の上の橙の額が、実際に読めなくなった）。8方向にずらした影で縁を描く。
  * `-webkit-text-stroke` + `paint-order` は OBS の古い Chromium で字の内側を削るので使わない。
  */
-function outline(c: string, w: number): string {
+export function outline(c: string, w: number): string {
   const d = w * 0.72;
   return [
     `${w}px 0 0 ${c}`,
@@ -86,7 +87,7 @@ export const ThemedGauge: React.FC<Props> = ({
     return () => clearTimeout(timer);
   }, [theme, bank]);
 
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth } = useStableWindow();
   // 豚の占めていた高さ（PiggyGauge と同じ式）。幅は画面からはみ出さない
   const availH = (screenWidth * 1.2 * 260) / 600;
   const availW = screenWidth * 0.95;
