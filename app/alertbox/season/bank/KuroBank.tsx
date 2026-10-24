@@ -1,15 +1,18 @@
 /**
  * 季節の貯金箱（切り絵版）。かぼちゃのお菓子バケツのまわりを、黒猫のクロが走り回る。
  *
- * - **置き方と大きさは豚と同じ決め方**（ビューポートの幅を基準に、下の真ん中）。豚の絵の
- *   外形（幅 0.82・高さ 0.52、ビューポートの幅に対して）を、バケツとクロで使う。
- *   場面は幅を 1000 とした単位で組み、最後に幅へ掛ける。幅が変わったら（オーナーが手で
- *   箱を広げる・戻す）その場で組み直す。古い寸法は握らない
+ * - **箱の下の真ん中に、バケツが箱の幅の半分**（オーナーが PRISM で測った豚は箱の幅の約 4 割。
+ *   「小さすぎる」と言われたので、豚を下回らない）。クロはバケツのまわりを、箱の幅いっぱいに走る。
+ *   場面は箱の幅を 1000 とした単位で組み、最後に幅へ掛ける。幅が変わったら（オーナーが手で
+ *   箱を広げる・戻す）その場で組み直す。古い寸法は握らない。幅は `useBoxSize`（PRISM が
+ *   絶えず送ってくる resize では描き直さない）
  * - 溜まり具合は**豚と同じ読み方**: 灰色のかぼちゃに、下からオレンジが溜まる（いまの波の
  *   切り抜き、`wave.ts`）。オレンジは縁まで含めたかぼちゃの外形ぜんぶで、灰色の残りが
  *   そのまま「あと何割」になる。あわせて口のお菓子も増える（0% 空 → 半分で少し →
  *   100% 山盛り → 超えたらあふれる）。お菓子は満タンの絵から**お菓子の画素だけ**を抜いて
  *   重ねる（縁ごと重ねると、灰色のはずの縁がお菓子と一緒に色づいて、残りが少なく見える）。
+ *   少ないときは、山の形のまま**バケツの中へ沈める**（口の中と縁より上でだけ見せる）。
+ *   下から切って増やすと、山の天辺が横一直線に切れて「見切れ」に見えた（オーナーの指摘）。
  *   **波を動かすのは溜まるあいだだけ**で、溜まり終わったら止める。
  *   何時間も出ているので、待機中に rAF を回さない
  * - 100% を超えたら、お菓子があふれた山を出し、クロがその上で踊る
@@ -18,7 +21,6 @@
  *   喜び、そのあいだに中身が前の額から今の額まで上がる（数字も数え上げる）
  */
 import React, { useEffect, useRef } from "react";
-import { useWindowDimensions } from "react-native";
 import type { SeasonTheme, TextTone } from "../../themes";
 import { makeWaveClipPath } from "../../components/PiggyGauge/wave";
 import { buildRig, type LoadedRig } from "../rig/RigView";
@@ -28,6 +30,7 @@ import { Kuro, type KuroGeo, type KuroFrame } from "./kuro";
 import { initialBrain, nextAction } from "./kuroBrain";
 import { outline } from "../ThemedGauge";
 import { loadedElement } from "../useSeason";
+import { useBoxSize } from "../useBoxSize";
 
 type Props = {
   theme: SeasonTheme;
@@ -40,33 +43,20 @@ type Props = {
 };
 
 /**
- * 豚の絵の外形（ビューポートの幅に対する割合）。豚は幅 1.2・高さ 0.52 の箱に描かれ、
- * 絵そのものは箱の幅の 17〜85%（ビューポートの幅の 0.82）。オーナーの指摘
- * 「配信の豚よりひと回り小さい」（2026-10-23）を受けて、同じ広さを使う
- */
-export const PIG_W = 0.82;
-export const PIG_H = 0.52;
-
-/**
- * 場面の単位（幅 1000、高さ 634）での置き場所。
+ * 場面の単位（箱の幅を 1000）での置き場所。場面の高さは 480（箱の下の端から上へ）。
  *
- * バケツは取っ手の先から底までで場面の高さをほぼ使い切る（豚の絵が箱の高さを使い切って
- * いるのに合わせる。字を下に別の帯で置くと、そのぶんバケツが豚より小さくなった）。
+ * バケツ（色の付いた幅）は 500 = 箱の幅の半分。取っ手の先から底までは 440。
  * 字は豚と同じく絵に重ねる: いまの額と目標はいちばん下（かぼちゃの底の 2 割に掛かる）、ラベルは
  * 取っ手の上。額をかぼちゃの胴の真ん中に置くと、1〜3 割の溜まりが字の裏に隠れて読めなかった。
  *
- * 測ると、豚の絵は ビューポートの幅の 0.82 × 0.52（箱いっぱい）。バケツはこの大きさで
- * 0.59 × 0.51、横にクロが並ぶと 0.83 になる。
- *
  * `KURO_H` は部品の台紙で測った背丈（帽子の箱の上〜足の箱の下）で、描かれている
- * 背丈はその 85%。350 で描かれた背丈が 299 になり、かぼちゃ（取っ手を除く、498）の
- * 60%・取っ手まで含めた高さ（620）の 48%（オーナーの指摘「クロだと分かるだけで
- * 小さすぎる。バケツの高さの 55〜65%」）
+ * 背丈はその 85%。250 で描かれた背丈が 214 になり、かぼちゃ（取っ手を除く、354）の
+ * 60%（オーナーの指摘「クロだと分かるだけで小さすぎる。バケツの高さの 55〜65%」）
  */
-const SCENE_H = Math.round((1000 * PIG_H) / PIG_W);
-const GROUND_Y = 625;
-const BUCKET_W = 704;
-const KURO_H = 350;
+const SCENE_H = 480;
+const GROUND_Y = 468;
+const BUCKET_W = 500;
+const KURO_H = 250;
 
 /**
  * 出直しをまたいで、前に見せていた額と溜まり具合を覚えておく
@@ -184,6 +174,57 @@ function candyOnly(fullUrl: string, emptyUrl: string, cutY: number): HTMLCanvasE
   return out;
 }
 
+/**
+ * お菓子を見せてよいところ（絵の px）。奥の縁の上の辺より上は全部、そこから口の手前の辺までは
+ * 口の中（縁の楕円の内側で、暗いところ）だけ。沈めたお菓子は、縁と胴の裏に隠れる。
+ * 作れなければ null
+ */
+const mouthCache = new Map<string, HTMLCanvasElement | null>();
+function mouthMask(
+  emptyUrl: string,
+  w: number,
+  h: number,
+  ring: { cx: number; cy: number; a: number; b: number; top: number }
+): HTMLCanvasElement | null {
+  const key = `${emptyUrl}|${w}x${h}|${ring.cx},${ring.cy},${ring.a},${ring.b},${ring.top}`;
+  if (mouthCache.has(key)) return mouthCache.get(key) ?? null;
+  let out: HTMLCanvasElement | null = null;
+  try {
+    const e = loadedElement(emptyUrl);
+    if (e) {
+      const c = document.createElement("canvas");
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(e, 0, 0);
+        const img = ctx.getImageData(0, 0, w, h);
+        const d = img.data;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const j = (y * w + x) * 4;
+            let on = y < ring.top;
+            if (!on && d[j + 3] > 0) {
+              const ex = (x - ring.cx) / ring.a;
+              const ey = (y - ring.cy) / ring.b;
+              const luma = 0.299 * d[j] + 0.587 * d[j + 1] + 0.114 * d[j + 2];
+              on = ex * ex + ey * ey <= 1 && luma < 90;
+            }
+            d[j] = d[j + 1] = d[j + 2] = 0;
+            d[j + 3] = on ? 255 : 0;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        out = c;
+      }
+    }
+  } catch {
+    out = null;
+  }
+  mouthCache.set(key, out);
+  return out;
+}
+
 /** クロの足もと・背丈を、部品の絵の外形から決める */
 function kuroFrame(rig: LoadedRig): KuroFrame {
   const def = rig.def;
@@ -219,8 +260,8 @@ export const KuroBank: React.FC<Props> = ({
   targetAmount,
   label,
 }) => {
-  const { width: W, height: H } = useWindowDimensions();
-  const sceneW = Math.max(1, Math.round(W * PIG_W));
+  const { width: W, height: H } = useBoxSize();
+  const sceneW = Math.max(1, Math.round(W));
   const sceneH = Math.round((sceneW * SCENE_H) / 1000);
   const U = sceneW / 1000;
   /* 場面の上に空いている高さ（場面の単位）。箱は縦長なので、バケツの上に乗ったクロの
@@ -231,9 +272,9 @@ export const KuroBank: React.FC<Props> = ({
   const amountRef = useRef<HTMLSpanElement | null>(null);
   const labelRef = useRef<HTMLDivElement | null>(null);
   /* 字の大きさ。**幅に比例**（PRISM の箱の大きさは配信ごとに違う）。いまの額がいちばん大きい */
-  const fsAmount = sceneW * 0.1;
-  const fsTarget = sceneW * 0.06;
-  const fsLabel = sceneW * 0.055;
+  const fsAmount = sceneW * 0.085;
+  const fsTarget = sceneW * 0.05;
+  const fsLabel = sceneW * 0.045;
   const ratio = targetAmount > 0 ? currentAmount / targetAmount : 0;
   const level = Math.max(0, Math.min(1, ratio));
   // ちょうど 100% は山盛り、超えたらあふれ（オーナーの指定）
@@ -294,6 +335,23 @@ export const KuroBank: React.FC<Props> = ({
        大きさと同じ（fImg.width は絵の px）。作れなければ、前どおり満タンの絵を重ねる */
     const fEl = loadedElement(fImg.url);
     const candyArt = candyOnly(fImg.url, eImg.url, ((rimFrontY - bO[1]) * (fEl?.naturalHeight || fImg.height)) / fImg.height + 6);
+    /* 口の中の形（絵の px）。目印が無ければ作らない（前どおり下から切って増やす） */
+    const ringOf = () => {
+      const rb = anc.rimBack;
+      const rf = anc.rimFront;
+      if (!rb || !rf || rf.length < 3) return null;
+      return {
+        cx: (rf[0] + rf[2]) / 2 - bO[0],
+        cy: (rb[1] + rf[1]) / 2 - bO[1],
+        a: (rf[2] - rf[0]) / 2,
+        b: (rf[1] - rb[1]) / 2,
+        top: rb[1] - bO[1],
+      };
+    };
+    const ring = ringOf();
+    const mask = candyArt && ring ? mouthMask(eImg.url, candyArt.width, candyArt.height, ring) : null;
+    /** 山を沈める深さ（絵の px）: 天辺が口の手前の辺まで下がれば、全部隠れる */
+    const sinkDepth = rimFrontY - candyTop;
 
     const layer = (z: number) => {
       const d = document.createElement("div");
@@ -381,6 +439,7 @@ export const KuroBank: React.FC<Props> = ({
       st.appendChild(bodyOuter);
       // 口のお菓子（口の手前の辺より上だけ）
       let candy: HTMLDivElement | null = null;
+      let candyCanvas: HTMLCanvasElement | null = null;
       if (cutAbove == null) {
         const candyOuter = box();
         setClip(candyOuter, band(-4000, rimFrontY));
@@ -390,6 +449,7 @@ export const KuroBank: React.FC<Props> = ({
           cv.width = candyArt.width;
           cv.height = candyArt.height;
           cv.getContext("2d")?.drawImage(candyArt, 0, 0);
+          candyCanvas = cv;
           Object.assign(cv.style, {
             position: "absolute",
             left: `${bO[0]}px`,
@@ -411,7 +471,7 @@ export const KuroBank: React.FC<Props> = ({
         over.style.visibility = "hidden";
         st.appendChild(over);
       }
-      return { body, candy, over, handle };
+      return { body, candy, candyCanvas, over, handle };
     };
     const back = stack(backBox, null);
     const front = stack(frontBox, rimFrontY);
@@ -420,12 +480,31 @@ export const KuroBank: React.FC<Props> = ({
        天辺まで。お菓子は少し遅れて増やす（半分でまだ「少し」に見えるように） */
     let lvl = shown.level;
     let phase = 0;
+    /** お菓子の山を、溜まり具合 c（0〜1）だけ出す。山の形のまま沈め、口の中と縁より上でだけ見せる */
+    let candyAt = -1;
+    const drawCandy = (c: number) => {
+      const cv = back.candyCanvas;
+      const ctx = cv?.getContext("2d");
+      if (!cv || !ctx || !candyArt || !mask) return false;
+      if (Math.abs(c - candyAt) < 0.003) return true;
+      candyAt = c;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(candyArt, 0, (1 - c) * sinkDepth);
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(mask, 0, 0);
+      ctx.globalCompositeOperation = "source-over";
+      return true;
+    };
     const clip = () => {
       const d = makeWaveClipPath(BW, BH, lvl, phase, bodyTop - 9, bodyBottom);
       for (const f of [back.body, front.body]) setClip(f, `path("${d}")`);
-      if (back.candy) {
-        const c = makeWaveClipPath(BW, BH, Math.pow(lvl, 1.4), phase + 1.7, candyTop - 9, rimFrontY + 6);
-        setClip(back.candy, `path("${c}")`);
+      // 半分でまだ「少し」に見えるように、お菓子は少し遅れて増やす
+      const c = Math.pow(lvl, 1.4);
+      if (back.candy && !drawCandy(c)) {
+        // 口の形が分からないときは、前どおり下から切って増やす
+        const w = makeWaveClipPath(BW, BH, c, phase + 1.7, candyTop - 9, rimFrontY + 6);
+        setClip(back.candy, `path("${w}")`);
       }
     };
     clip();
@@ -485,8 +564,11 @@ export const KuroBank: React.FC<Props> = ({
     const geo: KuroGeo = {
       U,
       groundY: GROUND_Y,
-      minX: 95,
-      maxX: 905,
+      // 足もとの動ける幅。クロは足もとから左右に 114 ずつ、くわえたお菓子でさらに 30 はみ出すので、
+      // 面の縁で切れない幅（110〜890 だと走り込んだときに尻尾が、135〜865 だとくわえたお菓子が
+      // 右の縁に触れた。縁の画素を数えて確かめた）
+      minX: 150,
+      maxX: 850,
       bucket: {
         left: bLeft,
         right: bRight,
