@@ -1,9 +1,10 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { PiggyBank } from "./PiggyBank";
 import type { Season } from "../../season/useSeason";
 import { ThemedGauge } from "../../season/ThemedGauge";
 import { KuroBank } from "../../season/bank/KuroBank";
+import { useStableWindow } from "../../season/useBoxSize";
 
 export type PiggyGaugeProps = {
   currentAmount: number; // 現在（例: 65000）
@@ -34,8 +35,9 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
     return amount.toLocaleString("ja-JP") + "円";
   };
 
-  // 画面幅の120%を使用
-  const { width: screenWidth } = useWindowDimensions();
+  // 画面幅の120%を使用。数は useWindowDimensions と同じで、変わったときだけ描き直す
+  // （PRISM は大きさが変わらなくても resize を絶えず送ってくる。`useBoxSize.ts`）
+  const { width: screenWidth } = useStableWindow();
   const gaugeWidth = screenWidth * 1.2;
   const gaugeHeight = (gaugeWidth * 260) / 600; // viewBoxのアスペクト比を維持
 

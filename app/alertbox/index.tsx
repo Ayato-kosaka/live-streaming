@@ -19,7 +19,6 @@ import {
   Image,
   TextStyle,
   Platform,
-  useWindowDimensions,
 } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
@@ -34,6 +33,7 @@ import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
 import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
+import { useBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
@@ -146,7 +146,10 @@ export default function AlertBox() {
   /* 出している通知の「段と出し方」（台本・札・その人の絵を出す秒）。
      通知1件のあいだは決めたままにする（途中で絵が読み終わっても組み直さない） */
   const [stage, setStage] = useState<AlertStage | null>(null);
-  const { width: winW, height: winH } = useWindowDimensions();
+  /* 面の大きさ（季節の演出・札・その人の絵の箱に渡す）。変わったときだけ描き直す。
+     useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
+     （豚も）が描き直された（`season/useBoxSize.ts`） */
+  const { width: winW, height: winH } = useBoxSize();
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */

@@ -8,7 +8,8 @@
  * - 時刻は全部先に決めて CSS に渡す（`plan.ts`）。出ているあいだ JS は何もしない
  */
 import React, { useEffect, useMemo } from "react";
-import { Platform, useWindowDimensions } from "react-native";
+import { Platform } from "react-native";
+import { useBoxSize } from "./useBoxSize";
 import type { SeasonTheme } from "../themes";
 import type { LoadedImage } from "./useSeason";
 import { planEffects, type BatSpawn, type FxSpawn } from "./plan";
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export const SeasonEffects: React.FC<Props> = ({ theme, fx, durationSec, yen, seed }) => {
-  const { width: W, height: H } = useWindowDimensions();
+  const { width: W, height: H } = useBoxSize();
 
   useEffect(() => {
     ensureSeasonCss();
