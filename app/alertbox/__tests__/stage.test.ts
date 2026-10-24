@@ -67,6 +67,17 @@ describe("額 → 段 → 出し方", () => {
     expect(st.revealSec).toBeLessThan(6.7);
   });
 
+  it("段4の札は、伯爵の見せ場（マント〜おじぎ）のあいだ上寄りに掛かり、伯爵が退くときに下りる", () => {
+    const st = stageFor(halloween, 20000, 60, allRigs)!;
+    const t = plateTiming(st);
+    const bow = cueOf(st.cues!, "bow")!;
+    expect(t.lowerAt).not.toBeNull();
+    expect(t.lowerAt!).toBeGreaterThanOrEqual(bow.t + (bow.dur ?? 0));
+    expect(t.lowerAt!).toBeCloseTo(cueOf(st.cues!, "retreat")!.t, 5);
+    // 札が出るより先には下りない
+    expect(t.lowerAt!).toBeGreaterThan(t.appearAt);
+  });
+
   it("部品が1つでも読めなければ台本に乗らず、その人の絵も遅らせない（前の小物の演出に落ちる）", () => {
     const st = stageFor(halloween, 20000, 60, (n) => n !== "props")!;
     expect(st.show).toBeNull();
@@ -93,7 +104,7 @@ describe("額 → 段 → 出し方", () => {
     for (const yen of [500, 3000, 7000]) {
       const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
       expect(st.revealSec).toBe(0);
-      expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, count: null, donAt: null });
+      expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, count: null, donAt: null, lowerAt: null });
     }
   });
 

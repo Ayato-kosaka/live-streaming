@@ -17,7 +17,11 @@
  * オーナーは投げ銭が来てから手で箱を大きくし、終わったら戻す。振付けは**決まった大きさの
  * 舞台（1080×1920）**の上で書き、層ごとにその舞台を今の箱へ拡げる（はみ出す側を切る
  * 「cover」）。大きさが変わったら拡げ方だけを変える。動きの keyframes は舞台の px なので、
- * 古い寸法を握らない
+ * 古い寸法を握らない。
+ *
+ * 層は3重: 重なりを決める外の箱 → 拡げる舞台（scale）→ 振付けが触る中の箱。揺れ（shake）は
+ * 中の箱の transform を動かすので、舞台の scale と同じ要素に置くと、揺れているあいだ
+ * scale が外れて満月が画面いっぱいに出た（録画で見つけた）
  */
 import React, { useEffect, useRef } from "react";
 import { Motion } from "../rig/motion";
@@ -61,6 +65,9 @@ export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => 
   const front = useRef<HTMLDivElement | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const top = useRef<HTMLDivElement | null>(null);
+  /** 暗転の層の外の箱（その親がアラートの面。札を探すのに使う）・伯爵の層の外の箱（重なりを上げる） */
+  const darkBox = useRef<HTMLDivElement | null>(null);
+  const vladBox = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const L = {
@@ -71,9 +78,10 @@ export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => 
       front: front.current,
       canvas: canvas.current,
       top: top.current,
+      vladBox: vladBox.current,
     };
     if (Object.values(L).some((v) => !v)) return;
-    const root = L.dark!.parentElement ?? L.dark!;
+    const root = darkBox.current?.parentElement ?? L.dark!;
     const m = new Motion();
     let stop: (() => void) | null = null;
     try {
@@ -112,28 +120,41 @@ export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => 
     transform: `scale(${k})`,
     pointerEvents: "none",
   };
+  const inner: React.CSSProperties = { position: "absolute", left: 0, top: 0, width: STAGE_W, height: STAGE_H };
   return (
     <>
-      <div aria-hidden style={{ ...full, zIndex: 0 }}>
-        <div ref={dark} style={stage} />
+      <div ref={darkBox} aria-hidden style={{ ...full, zIndex: 0 }}>
+        <div style={stage}>
+          <div ref={dark} style={inner} />
+        </div>
       </div>
       <div aria-hidden style={{ ...full, zIndex: 0 }}>
-        <div ref={moon} style={stage} />
+        <div style={stage}>
+          <div ref={moon} style={inner} />
+        </div>
       </div>
       {/* 伯爵は退いたあと札の上へ出る（この外側の箱の重なりを上げる） */}
-      <div aria-hidden style={{ ...full, zIndex: 0 }}>
-        <div ref={vlad} style={stage} />
+      <div ref={vladBox} aria-hidden style={{ ...full, zIndex: 0 }}>
+        <div style={stage}>
+          <div ref={vlad} style={inner} />
+        </div>
       </div>
       <div aria-hidden style={{ ...full, zIndex: 0 }}>
-        <div ref={coffin} style={stage} />
+        <div style={stage}>
+          <div ref={coffin} style={inner} />
+        </div>
       </div>
       <div aria-hidden style={{ ...full, zIndex: 2 }}>
-        <div ref={front} style={stage}>
-          <canvas ref={canvas} style={{ position: "absolute", left: 0, top: 0, width: STAGE_W, height: STAGE_H }} />
+        <div style={stage}>
+          <div ref={front} style={inner}>
+            <canvas ref={canvas} style={{ position: "absolute", left: 0, top: 0, width: STAGE_W, height: STAGE_H }} />
+          </div>
         </div>
       </div>
       <div aria-hidden style={{ ...full, zIndex: 4 }}>
-        <div ref={top} style={stage} />
+        <div style={stage}>
+          <div ref={top} style={inner} />
+        </div>
       </div>
     </>
   );

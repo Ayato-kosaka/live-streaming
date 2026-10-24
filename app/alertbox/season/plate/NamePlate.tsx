@@ -2,7 +2,8 @@
  * 名前の札。いまの小さな字（画面の真ん中、キャラ絵の顔の上）の置き換え。
  *
  * - 置き場所は画面の**上から 30%** から下へ。その人のキャラ絵（下 2/3）の頭の上で、
- *   顔に字を重ねない（設計書 §3.0）
+ *   顔に字を重ねない（設計書 §3.0）。段4は伯爵の見せ場のあいだ**上から 6%** に掛けておき、
+ *   伯爵が退くときに 30% へ下ろす（`lowerAt`。札が伯爵の顔を隠していた）
  * - 1行目「◯◯ 様」、2行目「¥20,000 ありやとう！！」（いまの文面の型を2行に割る。`plateText.ts`）、
  *   その下にメッセージ（小さく、最大3行）
  * - 段4は金の額縁。絵の担当の切れ端（角・辺の飾り・伸ばす棒。小物の組の `items` と `frame`）で
@@ -74,7 +75,12 @@ type Props = {
   donAt?: number | null;
   /** 金の額縁の切れ端（段4）。無ければ線と菱形の飾り */
   kit?: FrameKit | null;
+  /** この秒まで上寄り（6%）に掛けておき、定位置（30%）へ下ろす。無ければ最初から定位置 */
+  lowerAt?: number | null;
 };
+
+/** 上寄りに掛けておくときの、定位置からの持ち上げ（画面の高さに対する割合） */
+const HIGH_LIFT = 0.24;
 
 /** 字の幅のざっくりした見積もり（em）。全角 1、数字・記号・英字 0.6 */
 const emWidth = (s: string) =>
@@ -95,11 +101,13 @@ export const NamePlate: React.FC<Props> = ({
   count,
   donAt,
   kit,
+  lowerAt,
 }) => {
   const k = W / 1080;
   const boxRef = useRef<HTMLDivElement | null>(null);
   const amountRowRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
+  const slideRef = useRef<HTMLDivElement | null>(null);
   const stripRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // 切れ端の額縁は左右の余白を広く取る（下の padding と同じ数）
@@ -165,6 +173,13 @@ export const NamePlate: React.FC<Props> = ({
         { transform: "scale(1.08)", opacity: 1, offset: 0.65, easing: "ease-out" },
         { transform: "scale(1)", opacity: 1 },
       ], { duration: 450, delay: ms(appearAt), fill: "backwards" });
+    }
+    // 上寄りから定位置へ下ろす（vh で書く。箱の大きさが途中で変わってもついて行く）
+    if (lowerAt != null) {
+      play(slideRef.current, [
+        { transform: `translateY(${-HIGH_LIFT * 100}vh)`, easing: "cubic-bezier(0.45, 0, 0.3, 1)" },
+        { transform: "translateY(0vh)" },
+      ], { duration: 900, delay: ms(lowerAt), fill: "both" });
     }
     // 回る数字。0 から回り始めて、右の桁ほど多く回って、同時に止まる
     if (count) {
@@ -290,6 +305,17 @@ export const NamePlate: React.FC<Props> = ({
         justifyContent: "center",
       }}
     >
+      {/* 上寄り ↔ 定位置の上下だけを受け持つ箱（中の札の揺れ・ぽんっとは別に動かす） */}
+      <div
+        ref={slideRef}
+        data-plate="slide"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          maxWidth: "100%",
+          transform: lowerAt != null ? `translateY(${-HIGH_LIFT * 100}vh)` : undefined,
+        }}
+      >
       <div
         ref={boxRef}
         data-plate="box"
@@ -375,6 +401,7 @@ export const NamePlate: React.FC<Props> = ({
             pointerEvents: "none",
           }}
         />
+      </div>
       </div>
     </div>
   );

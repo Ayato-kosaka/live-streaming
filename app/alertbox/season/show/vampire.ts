@@ -34,6 +34,8 @@ export type VampireLayers = {
   front: HTMLDivElement;
   canvas: HTMLCanvasElement;
   top: HTMLDivElement;
+  /** 伯爵の層の外の箱（重なりはここで決まる。退いたあと札の上へ出すときに上げる） */
+  vladBox: HTMLDivElement;
 };
 
 export type VampireRigs = { vlad: LoadedRig; bat: LoadedRig; props: LoadedRig };
@@ -44,8 +46,12 @@ export type VampireRigs = { vlad: LoadedRig; bat: LoadedRig; props: LoadedRig };
  */
 const MOON = { x: 0.5, y: 0.3, d: 0.6 };
 const COFFIN = { x: 0.5, bottom: 0.8, w: 0.72 };
-/** 伯爵が棺の中に立って止まる足の高さと、そのときの背丈（台紙の高さ。膝から下は棺に隠れる） */
-const VLAD = { x: 0.5, feet: 0.66, h: 0.52 };
+/**
+ * 伯爵が棺の中に立って止まる足の高さと、そのときの背丈（台紙の高さ。膝から下は棺に隠れる）。
+ * 見せ場のあいだ札は上から 6〜24% に掛かるので、頭のてっぺんがその下（0.26）に来る大きさ
+ * （札が伯爵の顔を隠していた）
+ */
+const VLAD = { x: 0.52, feet: 0.72, h: 0.46 };
 /** 退いたあと（札の左上に立つ）の背丈 */
 const VLAD_STAY_H = 0.16;
 /**
@@ -63,7 +69,7 @@ const POSE = {
   ringOut: 22,
   ringChest: -28,
   /** ふたが開いて止まる角度（蝶番は左） */
-  lidOpen: -72,
+  lidOpen: -82,
 };
 /** 小さくなった満月の置き場所（右上の角） */
 const MOON_STAY = { x: 0.86, y: 0.075, k: 0.24 };
@@ -239,14 +245,26 @@ export function runVampire(
 
   // ---------------------------------------------------------------- 札の位置
   /* 札は舞台の外（React）にあるので、画面の位置を測って舞台の px に直す。
-     舞台は今の箱へ拡げてあるので、拡げ方（k）で割る */
-  const plateBox = () => {
+     舞台は今の箱へ拡げてあるので、拡げ方（k）で割る。
+     `settled` なら、上寄りから定位置へ下ろす途中でも、下ろし終えた位置を返す（伯爵が退く先） */
+  const plateBox = (settled = false) => {
     const el = L.root.querySelector<HTMLElement>('[data-plate="box"]');
     const sr = L.dark.getBoundingClientRect();
     const k = sr.width / W || 1;
     if (!el) return { l: X(0.12), t: Y(0.3), r: X(0.88), b: Y(0.46) };
     const r = el.getBoundingClientRect();
-    return { l: (r.left - sr.left) / k, t: (r.top - sr.top) / k, r: (r.right - sr.left) / k, b: (r.bottom - sr.top) / k };
+    let dy = 0;
+    const slide = settled ? el.closest<HTMLElement>('[data-plate="slide"]') : null;
+    if (slide) {
+      const t = getComputedStyle(slide).transform;
+      if (t && t !== "none") dy = new DOMMatrixReadOnly(t).m42;
+    }
+    return {
+      l: (r.left - sr.left) / k,
+      t: (r.top - dy - sr.top) / k,
+      r: (r.right - sr.left) / k,
+      b: (r.bottom - dy - sr.top) / k,
+    };
   };
 
   // ---------------------------------------------------------------- 出来事ごと
@@ -478,7 +496,8 @@ export function runVampire(
       for (const side of [-1, 1]) {
         const bat = makeBat(m, rigs.bat, L.top, X(0.13), 90);
         const x = X(0.5 + side * 0.3);
-        const y = Y(0.3) - X(0.02);
+        // 札は見せ場のあいだ上寄り（上から 6%）に掛かる（NamePlate の lowerAt）
+        const y = Y(0.06) - X(0.02);
         const a = m.play(bat.el, [
           { transform: `translate(${x}px, ${y - Y(0.42)}px)`, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
           { transform: `translate(${x}px, ${y}px)`, offset: 0.45 },
@@ -564,16 +583,16 @@ export function runVampire(
       });
       // 棺は沈んで消える
       m.play(coffinG, [{ opacity: 1 }, { opacity: 0 }], { duration: ms * 0.25, fill: "forwards" });
-      // 伯爵は札の左上へ。札の裏を通って、着いてから手前に出る
-      const pb2 = plateBox();
+      // 伯爵は札の左上へ（札は同じ秒に定位置へ下りはじめる。下りきった位置へ向かう）。
+      // 札の裏を通って、着いてから手前に出る
+      const pb2 = plateBox(true);
       const k = VLAD_STAY_H / VLAD.h;
       const tx = pb2.l + X(0.07);
       const ty = pb2.t + X(0.012);
       L.vlad.style.clipPath = "";
       const a = moveVlad(tx, ty, k, ms * 0.48, EASE.inOut);
       const land = () => {
-        // 重なりは外側の箱で決まる（舞台の箱は拡げるためだけのもの）
-        (L.vlad.parentElement ?? L.vlad).style.zIndex = "4";
+        L.vladBox.style.zIndex = "4";
         m.play(vPose, [
           { transform: "scale(1.12, 0.86)", easing: EASE.out },
           { transform: "scale(0.96, 1.05)", offset: 0.5 },
