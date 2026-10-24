@@ -625,14 +625,16 @@ export function runZombie(
       actor.bob.getAnimations().forEach((x) => x.cancel());
       batsAcross(m, a.bat, L.back, 8, W, [Y(0.03), Y(0.15)], 200);
       const fadeMs = Math.max(250, ms * 0.24);
+      /* 墓場はキャラ絵と一緒に、締めの頭から消す。キャラ絵が消えたあと（afterExit）に消し始めると、
+         墓場が消えきらないうちにゾンビが真ん中へ動き出した */
+      const exitMs = Math.min(600, ms * 0.22);
+      if (aura) fadeOut(m, aura, exitMs);
+      for (const el of [graveClip, kidClip, ghostGate, ...fog]) fadeOut(m, el, exitMs);
+      if (stayGrave) fadeOut(m, stayGrave, exitMs * 0.8);
       curtainCall(m, L, {
         ms,
         hero: gateBox,
-        afterExit: () => {
-          if (aura) fadeOut(m, aura, 500);
-          for (const el of [graveClip, kidClip, ghostGate, ...fog]) fadeOut(m, el, 500);
-          if (stayGrave) fadeOut(m, stayGrave, 400);
-        },
+        exitMs,
         toCenter: (moveMs) => {
           // 帯の切り口を外す（真ん中へ戻る）。姿の真ん中がキャラ絵の真ん中に来る位置
           L.actor.style.clipPath = "";
