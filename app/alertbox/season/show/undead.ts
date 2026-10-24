@@ -187,8 +187,9 @@ export function arcMove(m: Motion, el: HTMLElement, from: At, to: At, ctrl: [num
   }
   const frames = pathFrames(pts, { tilt });
   frames.forEach((f, i) => (f.transform = `${f.transform} scale(${ks[i].toFixed(4)})`));
-  // 着いたら傾きを戻す
-  frames[frames.length - 1].transform = atTf(to);
+  /* 着いたら傾きを戻す。関数の並びはほかのコマと揃える（並びが違うと行列で補間されて、
+     着く直前の1コマだけ姿が 15% ふくらんだ） */
+  frames[frames.length - 1].transform = `translate(${to.x.toFixed(1)}px, ${to.y.toFixed(1)}px) rotate(0deg) scale(1.000) scale(${to.k.toFixed(4)})`;
   return m.play(el, frames, { duration: ms, fill: "forwards", easing: "linear" });
 }
 

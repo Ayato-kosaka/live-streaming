@@ -52,7 +52,9 @@ export type ZombieAssets = { poses: LoadedPoses; kid: LoadedRig; ghost: LoadedRi
  * 地面の高さの上下の限り（面に対する割合）。実際の地面は字のブロックの上端のすぐ上（`groundY`）。
  * 墓場は面の上半分に収まり、字はその下（キャラ絵の上下中央）に出る。上は面の上の端から 3% を空ける
  */
-const GROUND = { min: 0.4, max: 0.62, top: 0.03 };
+const GROUND = { min: 0.4, max: 0.62, top: 0.01 };
+/** 踊る姿が弾んだ・跳び出したときに縦へ伸びるぶん（この背でも頭が面の上の端から出ないように） */
+const TALLEST = 1.12;
 /**
  * 踊る姿（dance）の高さの上限。面の高さの 0.46（段5の死神 0.44 より大きい）。地面の上に入りきらなければ
  * 縮める
@@ -83,7 +85,10 @@ const GHOST_W = 0.3;
 /** 踊りの1拍（ms） */
 const BEAT = 430;
 /** 待つときの高さと、右の端からのすき間。小さな墓は左どなり */
-const STAY_H = 0.17;
+const STAY_H = 0.16;
+/** 帯の中でポーズを替えるときの弾みの強さと、決めポーズで弾む高さ（伸びた頭が面の上の端で切れない） */
+const STAY_POP = 0.5;
+const STAY_HOP = 0.012;
 const STAY_RIGHT = 0.04;
 const STAY_GRAVE_H = 0.1;
 const MAG = "255,64,129";
@@ -107,7 +112,12 @@ export function runZombie(
   const pb0 = plateBoxOf(L, W, H);
   const groundY = Math.max(Y(GROUND.min), Math.min(Y(GROUND.max), pb0.t - X(0.015)));
   /** 登場のあいだのゾンビの倍率（1 で踊る姿が面の DANCE_H） */
-  const k0 = Math.min(1, (groundY - Y(GROUND.top)) / Y(DANCE_H));
+  const k0 = Math.min(1, (groundY - Y(GROUND.top)) / (Y(DANCE_H) * TALLEST));
+  /**
+   * 跳ぶ・弾む高さの上限。踊る姿の頭のてっぺんが面の上の端から出ない高さ（跳び出したとき、
+   * 頭が面の上で切れていた）
+   */
+  const headroom = Math.max(Y(0.015), groundY - Y(DANCE_H) * k0 * TALLEST - Y(GROUND.top));
   // 小物（墓石・手・土）は土台が展開し終えている（show.items）
   const items = new Items(a.items);
 
@@ -398,7 +408,7 @@ export function runZombie(
 
     // 跳び出して決めポーズ。着いたら左右に跳ねて踊る
     dance: () => {
-      const up = { ...now, y: groundY - Y(0.11) * k0 };
+      const up = { ...now, y: groundY - Math.min(Y(0.11) * k0, headroom) };
       const land: At = { ...now, y: groundY };
       m.play(actor.pos, [
         { transform: atTf(now), easing: EASE.up },
@@ -407,7 +417,7 @@ export function runZombie(
       ], { duration: 520, fill: "forwards" });
       m.play(actor.squash, [
         { transform: "scale(1.1, 0.85)", easing: EASE.out },
-        { transform: "scale(0.9, 1.12)", offset: 0.25 },
+        { transform: "scale(0.93, 1.07)", offset: 0.25 },
         { transform: "scale(1, 1)", offset: 0.5 },
         { transform: "scale(0.96, 1.04)", offset: 0.9, easing: EASE.out },
         { transform: "scale(1.14, 0.86)", offset: 0.97 },
@@ -423,7 +433,7 @@ export function runZombie(
         const c = pt("dance", [330, 450]);
         sparkRing(m, L.front, c.x, c.y, X(0.26), 8, X(0.1), [MAG, PALE, VIO]);
         dustPuffs(m, L.mid, X(0.5), groundY - Y(0.005), X(0.1), 3);
-        m.play(actor.bob, danceFrames(Y(0.03) / k0), { duration: BEAT * 2, iterations: Infinity });
+        m.play(actor.bob, danceFrames(Math.min(Y(0.03), headroom) / k0), { duration: BEAT * 2, iterations: Infinity });
       });
     },
 
@@ -536,7 +546,9 @@ export function runZombie(
       actor.bob.getAnimations().forEach((x) => x.cancel());
       const to = staySpot();
       const go = ms * 0.8;
-      arcMove(m, actor.pos, now, to, [X(0.72), Math.min(now.y, to.y) - Y(0.12)], go, 12);
+      /* 傾けない（跳び立つ瞬間に体を傾けると、足元の角が字のブロックに掛かった）。先に横へ跳んでから
+         上がる道にする（上へ弧を描くと、小さくなりきる前に頭が面の上の端から出た） */
+      arcMove(m, actor.pos, now, to, [to.x - X(0.04), now.y - Y(0.03)], go, 0);
       m.play(actor.squash, [
         { transform: "scale(1.1, 0.88)", easing: EASE.out },
         { transform: "scale(0.92, 1.1)", offset: 0.3 },
@@ -549,7 +561,7 @@ export function runZombie(
         L.actorBox.style.zIndex = "4";
         // 帯の下の辺から下は描かない（キャラ絵の顔の前を通さない。墓へ沈むのもこの切り口）
         L.actor.style.clipPath = `inset(0px 0px ${Math.max(0, H - bandBottomOf(L, W, H)).toFixed(1)}px 0px)`;
-        pop("idle", 320);
+        pop("idle", 320, STAY_POP);
         raiseStayGrave();
       });
     },
@@ -584,7 +596,7 @@ export function runZombie(
     finale: () => {
       if (stayTimer) m.clear(stayTimer);
       actor.bob.getAnimations().forEach((x) => x.cancel());
-      pop("dance", 280);
+      pop("dance", 280, STAY_POP);
       // 姿の高さ（倍率 1 の px）。ずぼっと沈む深さ
       const dance = a.poses.poses.get("dance");
       const depth = dance ? (dance.content[3] - dance.content[1]) * actor.s0 * 1.15 : Y(0.5);
@@ -592,7 +604,8 @@ export function runZombie(
         m.play(actor.squash, [
           { transform: "translateY(0px) scale(1, 1)", easing: EASE.out },
           { transform: "translateY(0px) scale(1.16, 0.82)", offset: 0.25, easing: EASE.up },
-          { transform: `translateY(${(-depth * 0.12).toFixed(1)}px) scale(0.9, 1.12)`, offset: 0.48, easing: EASE.in },
+          // 小さく跳んでから潜る（大きく跳ぶと、頭が面の上の端で切れた）
+          { transform: `translateY(${(-depth * 0.03).toFixed(1)}px) scale(0.94, 1.04)`, offset: 0.48, easing: EASE.in },
           { transform: `translateY(${depth.toFixed(1)}px) scale(0.86, 1.2)` },
         ], { duration: 640, fill: "forwards" });
         m.after(420, () => {
@@ -648,9 +661,9 @@ export function runZombie(
 
   // 小芸（滞在中）。どれも上の帯の中
   function strike() {
-    pop("dance", 300);
-    m.after(320, () => m.play(actor.squash, danceFrames(Y(0.03) / Math.max(0.01, now.k)), { duration: BEAT * 2 }));
-    m.after(1250, () => pop("idle", 300));
+    pop("dance", 300, STAY_POP);
+    m.after(320, () => m.play(actor.squash, danceFrames(Y(STAY_HOP) / Math.max(0.01, now.k)), { duration: BEAT * 2 }));
+    m.after(1250, () => pop("idle", 300, STAY_POP));
   }
   function peek() {
     const idle = a.poses.poses.get("idle");
