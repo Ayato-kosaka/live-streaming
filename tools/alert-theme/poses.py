@@ -114,6 +114,10 @@ def cmd_add(o):
     if k != 1.0:
         im = im.convert("RGBa").resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).convert("RGBA")
     a = AT.clean_alpha(np.array(im))
+    if o.rim:
+        # 黒い衣装（死神のローブ）が、暗くした画面や配信者の黒い服に溶けないよう、外形にだけ細い光のふちを敷く
+        from rigbuild import add_rim, pad as padimg
+        a = add_rim(padimg(a, int(o.rim) + 4), o.rim, tuple(int(o.rim_color[i:i + 2], 16) for i in (0, 2, 4)))
     x0, y0, x1, y1 = bbox(a)
     P = o.pad
     a = a[max(0, y0 - P):y1 + P, max(0, x0 - P):x1 + P]
@@ -167,6 +171,8 @@ def main():
     p = sp.add_parser("add"); p.add_argument("dir"); p.add_argument("name"); p.add_argument("src")
     p.add_argument("--face-w", type=int, default=300); p.add_argument("--pad", type=int, default=8)
     p.add_argument("--no-quant", action="store_true")
+    p.add_argument("--rim", type=float, default=0, help="外形に敷く光のふちの太さ px（0 で付けない）")
+    p.add_argument("--rim-color", default="b9a0ff")
     p = sp.add_parser("check"); p.add_argument("dir"); p.add_argument("out")
     o = ap.parse_args()
     globals()["cmd_" + o.cmd](o)
