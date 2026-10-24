@@ -102,21 +102,28 @@ mjs が要るもの（実測で切り分け）:
 `SELFTEST_JOBS` で変えられる。名指しで回すときは今までどおり1本ずつ）。
 
 並べると、**同じものに書く2本が互いを壊す**（嘘の赤・嘘の緑）。
-全部の見張りを1本ずつ strace にかけて、どこへ書くかを控えてから決めた:
+全部の見張りを1本ずつ strace にかけて、どこへ書くかを控えてから決めた。
+**同じものに書く見張りは、同じ列（`LANES`）に入れて1本ずつ回す**:
 
-  1. **並べるときは、一時の置き場を1本ずつ別にする。** `TMPDIR`（と、在れば
-     `RUNNER_TEMP`）を見張りごとの使い捨ての部屋に差し替える。固定の名前で
-     一時ファイルを書く見張りがあり、`characters_name_match` と `characters_why` は
-     **同じ `_name_match_harness.cjs` を書いて node に読ませている**
-  2. **リポジトリの中へ書く見張りは、同じ列（`LANES`）に入れて1本ずつ回す。**
-     `functions/selftest/` の見張りは、どれも `tsc` で `functions/lib/` へ
-     書き出してから、その `lib` を読む。並べると、片方が書いている途中の
-     `lib` をもう片方が読む
+  - `functions/selftest/` の見張りは、どれも `tsc` で `functions/lib/` へ
+    書き出してから、その `lib` を読む。並べると、片方が書いている途中の
+    `lib` をもう片方が読む
+  - `characters_name_match` と `characters_why` は、**同じ名前の一時ファイル**
+    （`RUNNER_TEMP` か `TMPDIR` の下の `_name_match_harness.cjs`）を書いて node に読ませる
 
 列の外の見張りは、リポジトリの中へも `.git` へも1バイトも書かない
 （`__pycache__` を除く。あれは書き出してから名前を付け替えるので、読む側が
-半端なものを掴まない）。ポートを握る見張りも無い。
-**新しく足す見張りがリポジトリの中へ書くなら、`LANES` に足すこと。**
+半端なものを掴まない）。固定の名前の一時ファイルを2本が書き合う所も、
+ポートを握る見張りも無い。
+**新しく足す見張りがリポジトリの中や、固定の名前の一時ファイルへ書くなら、`LANES` に足すこと。**
+
+**見張りの環境は1本ずつ回していたときと1文字も変えない。** はじめは
+`TMPDIR` を1本ずつ別の部屋に差し替えて書き合いを避けたが、CI で
+`mutation_drill_selftest.py` が嘘の赤を出した。あれは「同じ置き場で走っている
+見張りを拾えるか」を、`mutation_drill.busy()` が**頭から90文字で切った命令の行**に
+一時の道に置いた見張りの名前が見えるかで確かめている。CI の命令は87文字で
+**3文字の余りで収まっていた**のが、部屋の道のぶん115文字に伸びて名前が切れた。
+環境を変えると、どこかの見張りの前提が黙って外れる。並べるだけにする。
 
 列は1本ずつしか進まないので、列そのものが壁時計になる。`functions/selftest/` の
 列は 23本で、並べた手元の回で **425秒——全部回すのと同じ長さ**だった。1本 10秒が
@@ -124,9 +131,9 @@ mjs が要るもの（実測で切り分け）:
 だから見張りの側を `tsc -b` にした（src が lib より新しいときだけ書き出す。
 src を変えれば作り直し、型の誤りでは今までどおり落ちる）。列は **72秒**になった。
 
-対照も足した（下の `drill()`）。同じ列の2本が重ならないこと・一時の置き場が
-分かれていること・**列の外の2本は本当に重なること**（並べたつもりで1本ずつ
-回っていても、0 は出てしまうので）を、偽の見張りで毎回測る。
+対照も足した（下の `drill()`）。同じ列の2本が重ならないこと・**列の外の2本は
+本当に重なること**（並べたつもりで1本ずつ回っていても、0 は出てしまうので）を、
+偽の見張りで毎回測る。
 
 ## `BQ_PROJECT_ID` を置いていくのはなぜか
 
@@ -142,7 +149,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -194,13 +200,20 @@ MJS_ROOTS = (
 TIMEOUT_SEC = 300
 
 # **同じものに書く見張りの列。** 列の中は1本ずつ、列の外とは並べて回す。
-# 道の頭で決める——列に入る見張りを足した人が、ここを書き足さなくても列に入るように。
-# 列の外の見張りがリポジトリの中へ書かないことは、2026-10-24 に全部を strace にかけて確かめた
-LANES: dict[str, str] = {
-    "functions/selftest/":
+# 列の名前 → （入る見張り, なぜ）。`/` で終わるものは道の頭で決める——その置き場に
+# 見張りを足した人が、ここを書き足さなくても列に入るように。
+# 列の外の見張りが同じものに書かないことは、2026-10-24 に全部を strace にかけて確かめた
+LANES: dict[str, tuple[tuple[str, ...], str]] = {
+    "functions/lib": (
+        ("functions/selftest/",),
         "どれも tsc で functions/lib/ へ書き出してから、その lib を読む"
         "（predeploy は npm run build で同じところへ書く）。"
-        "並べると、片方が書いている途中の lib をもう片方が読む",
+        "並べると、片方が書いている途中の lib をもう片方が読む"),
+    "_name_match_harness.cjs": (
+        ("python/admin/characters_name_match_selftest.py",
+         "python/admin/characters_why_selftest.py"),
+        "どちらも RUNNER_TEMP（無ければ TMPDIR）の下の同じ名前のファイルへ、本物の"
+        "突き合わせを動かす台を書いて node に読ませる。並べると、相手が書き直している途中の台を読む"),
 }
 
 # **先に起こすもの。順番だけの手がかりで、結果は変わらない。**
@@ -224,9 +237,10 @@ SLOW_FIRST: tuple[str, ...] = (
 
 def lane_of(rel: str) -> str | None:
     """その見張りが入る列。列に入らなければ None（何とでも並べてよい）。"""
-    for head in LANES:
-        if rel.startswith(head):
-            return head
+    for lane, (members, _) in LANES.items():
+        for m in members:
+            if rel == m or (m.endswith("/") and rel.startswith(m)):
+                return lane
     return None
 
 
@@ -331,27 +345,14 @@ def label(path: Path, cwd: Path) -> str:
         return path.as_posix()
 
 
-def run_one(path: Path, cwd: Path, env: dict,
-            tmp_root: Path | None = None) -> tuple[int, float, str]:
-    """1本回して（終了コード, かかった秒, 最後の1行）を返す。
-
-    `tmp_root` を渡されたら、その下に**この1本だけの一時の置き場**を作って
-    `TMPDIR` を差し替える（並べたときに、固定の名前の一時ファイルを書き合わないように）。
-    """
+def run_one(path: Path, cwd: Path, env: dict) -> tuple[int, float, str]:
+    """1本回して（終了コード, かかった秒, 最後の1行）を返す。"""
     rel = label(path, cwd)
     who = rel if not rel.startswith("/") else str(path)
     # mjs は node で回す。中の `SITE` は自分のファイルの場所から出しているので、
     # どこを cwd にしても同じところを見る（`rebake.yml` は site を cwd にしている）
     head = ["node"] if path.suffix == ".mjs" else [sys.executable]
     cmd = [*head, who, *ARGS.get(rel, [])]
-    own = None
-    if tmp_root is not None:
-        own = Path(tempfile.mkdtemp(prefix="w", dir=tmp_root))
-        env = dict(env, TMPDIR=str(own), TEMP=str(own), TMP=str(own))
-        # 道具の中には `RUNNER_TEMP` を `TMPDIR` より先に見るものがある（`characters_why.py` ほか）。
-        # 手元には無いので、在るときだけ差し替える（無いものを足すと、CI のふりをさせてしまう）
-        if "RUNNER_TEMP" in env:
-            env["RUNNER_TEMP"] = str(own)
     t0 = time.monotonic()
     try:
         r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True,
@@ -363,9 +364,6 @@ def run_one(path: Path, cwd: Path, env: dict,
     except OSError as e:
         # `node` が無い箱。**「回せなかった」を「通った」と同じ顔にしない**
         rc, out = 1, f"{head[0]} を動かせない: {e}"
-    finally:
-        if own is not None:
-            shutil.rmtree(own, ignore_errors=True)
     dt = time.monotonic() - t0
     tail = ""
     for line in reversed(out.splitlines()):
@@ -401,7 +399,7 @@ def drill() -> bool:
 
         # 上で `SUMMARY_PATH` を環境から取り上げてあるので、対照の子
         # （偽の見張り）も要約欄には1行も書けない
-        env = dict(os.environ, RUNNER_DRILL_TOKEN=os.urandom(6).hex())
+        env = dict(os.environ)
 
         def sub(root: Path, want: int, need: str | None,
                 extra_args: tuple[str, ...] = ()) -> None:
@@ -439,18 +437,14 @@ def drill() -> bool:
         # **並べかたの対照。** 上の箱の外に置く（`sub(box, …)` は下の階まで拾うので）
         with tempfile.TemporaryDirectory() as tmp2:
             two = Path(tmp2)
-            # 偽の見張り。生きているあいだ部屋に札を置き、ほかの札が見えたら「重なった」で落ちる。
-            # 重なったときは札を残したまま帰る（相手にも見えるように。消すと相手は待ちきるまで帰らない）。
-            # 部屋は2つ: 箱の根（列の確かめ）と、一時の置き場の下（置き場が分かれているかの確かめ）。
-            # **一時の置き場の部屋の名前は、この対照の回ごとに変える**——前の回の残り物で落ちないように
+            # 偽の見張り。生きているあいだ箱の根に札を置き、ほかの札が見えたら「重なった」で落ちる。
+            # 重なったときは札を残したまま帰る（相手にも見えるように。消すと相手は待ちきるまで帰らない）
             meet = (
-                "import os, sys, tempfile, time\n"
+                "import sys, time\n"
                 "from pathlib import Path\n"
                 "here = Path(__file__).resolve()\n"
                 "box = here.parents[2]\n"
-                "room = (Path(tempfile.gettempdir()) / ('_runner_drill_' + os.environ['RUNNER_DRILL_TOKEN'])\n"
-                "        if here.parents[1].name == 'scratch' else box)\n"
-                "room.mkdir(exist_ok=True)\n"
+                "room = box\n"
                 "mine = room / ('alive-' + here.stem)\n"
                 "mine.touch()\n"
                 "end = time.time() + float((box / 'hold').read_text())\n"
@@ -466,13 +460,10 @@ def drill() -> bool:
                 (root / rel).parent.mkdir(parents=True, exist_ok=True)
                 (root / rel).write_text(meet, encoding="utf-8")
 
-            # 同じ列の2本は重ならない・一時の置き場は1本ずつ別 → 0。
-            # 列が効いていなければ a と b が、置き場が分かれていなければ c と d が重なって 1 になる
+            # 同じ列の2本は重ならない → 0。列が効いていなければ a と b が重なって 1 になる
             lanes = two / "lanes"
             put(lanes, "functions/selftest/a_selftest.py")
             put(lanes, "functions/selftest/b_selftest.py")
-            put(lanes, "scratch/x/c_selftest.py")
-            put(lanes, "scratch/x/d_selftest.py")
             (lanes / "hold").write_text("0.6", encoding="utf-8")
             sub(lanes, 0, None, ("--jobs", "4"))
             # 列の外の2本は、本当に重なる → 1。**並べたつもりで1本ずつ回っていると、
@@ -511,10 +502,6 @@ def run_all(found: list[Path], cwd: Path, env: dict,
     busy: set[str] = set()
     done: dict[int, tuple[int, float, str]] = {}
     cond = threading.Condition()
-    # 一時の置き場を分けるのは、並べるときだけ（1本ずつなら書き合う相手が居ない。
-    # 名指しで回す `shorts_selftest.yml` の重い2本を、確かめていない形で回さないため）
-    tmp_root = Path(tempfile.mkdtemp(prefix="selftest-")) if jobs > 1 else None
-
     def report(i: int, rc: int, dt: float, tail: str) -> None:
         mark = "○" if rc == 0 else "✕"
         print(f"  {mark} {rels[i]}  終了コード {rc}  {dt:.1f}秒")
@@ -537,7 +524,7 @@ def run_all(found: list[Path], cwd: Path, env: dict,
                 if lane is not None:
                     busy.add(lane)
             try:
-                rc, dt, tail = run_one(found[pick], cwd, env, tmp_root)
+                rc, dt, tail = run_one(found[pick], cwd, env)
             except BaseException as e:  # noqa: BLE001 — 回し役の中で倒れても、1本ぶんとして落とす
                 rc, dt, tail = 1, 0.0, f"回し役が回しそこねた: {type(e).__name__}: {e}"[:160]
             with cond:
@@ -547,16 +534,12 @@ def run_all(found: list[Path], cwd: Path, env: dict,
                 report(pick, rc, dt, tail)
                 cond.notify_all()
 
-    try:
-        threads = [threading.Thread(target=worker, daemon=True)
-                   for _ in range(min(jobs, len(found)))]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-    finally:
-        if tmp_root is not None:
-            shutil.rmtree(tmp_root, ignore_errors=True)
+    threads = [threading.Thread(target=worker, daemon=True)
+               for _ in range(min(jobs, len(found)))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     out = []
     for i, p in enumerate(found):
@@ -641,6 +624,12 @@ def main() -> int:
             # **黙って4本減る**ので、ここで一緒に見る
             rot = [n for n in list(SKIP) + list(ARGS)
                    if not (cwd / n).is_file()]
+            # 列の表も同じ。名前が変わったのに表に残っていると、**並べてはいけない2本が
+            # 黙って並ぶ**（赤くならず、ときどき嘘の赤・嘘の緑が出るだけ）
+            for lane, (members, _) in LANES.items():
+                for m in members:
+                    if not ((cwd / m).is_dir() if m.endswith("/") else (cwd / m).is_file()):
+                        rot.append(f"{m}（列 {lane}）")
             for r in MJS_ROOTS:
                 if not r.is_dir():
                     rot.append(f"{label(r, cwd)}/（mjs の置き場が無い）")
