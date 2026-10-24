@@ -149,7 +149,9 @@ const admin = {
 /* ---------------- lib/stampLine.js を、偽の admin で読み込む ---------------- */
 
 console.log("# tsc を回して、いまの src から読み込む");
-execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), {cwd: FUNCTIONS});
+// -b: src が lib より新しいときだけ書き出す（src を変えれば作り直し、型の誤りでは今までどおり落ちる）。
+// Selftests では functions/selftest の見張りが同じ src から同じ lib を1本ずつ作り直していて、1本 10秒がほぼそれだった
+execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), ["-b"], {cwd: FUNCTIONS});
 
 const nodeRequire = createRequire(import.meta.url);
 /**

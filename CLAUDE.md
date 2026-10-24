@@ -272,7 +272,7 @@ python3 -m http.server 4130 --directory site/.next-3130 &
 **見張りを足した・書き換えたら、その見張りが「落ちるときに落ちる」かを見る。**
 
 ```bash
-python3 python/selftest_runner.py        # 見張りを全部回す（緑かどうか）
+python3 python/selftest_runner.py        # 見張りを全部回す（緑かどうか。手元は2本ずつ並べる・CI は CPU の数。混んでいれば --jobs 1）
 python3 python/mutation_drill.py --list  # 対照を、何に当てられるか
 python3 python/mutation_drill.py         # 守っている実物を壊して、赤くなるかを見る
 ```
