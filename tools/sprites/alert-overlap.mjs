@@ -120,14 +120,19 @@ const videos = new Map(
 /* 滞在中のコマ（キャラ絵が出てからの秒）。台本のある段（段7）は、キャラ絵が出る 6.5 秒＋
    ふくらむ 0.85 秒までが登場で、終わりの 4 秒が締め。締めもキャラ絵は出ているので数える */
 const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
-const showTier = (a) => theme === "halloween" && a >= 10000;
+/* 台本のある段（themes.ts）。段3 は行進（キャラ絵は最初から出ている）、段7 は伯爵 */
+const SHOWS = { halloween: [[500, 1000, "march"], [1000, 2000, "wizard"], [10000, Infinity, "vampire"]] };
+const showOf = (a) => (SHOWS[theme] ?? []).find(([lo, hi]) => a >= lo && a < hi)?.[2] ?? null;
+const showTier = (a) => !!showOf(a);
 function framesFor(a) {
   const given = arg("frames", "");
   if (given) return given.split(",").map(Number);
-  if (showTier(a)) {
-    const d = alertSec(a);
-    return [8, 10, 16, 30, d - 3.4, d - 2.6, d - 1.6];
-  }
+  const d = alertSec(a);
+  if (showOf(a) === "vampire") return [8, 10, 16, 30, d - 3.4, d - 2.6, d - 1.6];
+  // 魔法使い: キャラ絵は 4.3 秒から 0.85 秒でふくらむ。そこから滞在、締めは右上へ飛び去るところ
+  if (showOf(a) === "wizard") return [5.3, 6, 8, 12, 25, d - 2.6, d - 2.0, d - 1.4, d - 0.8];
+  // 行進: キャラ絵は最初から出ているので、行進の途中も数える。締めは右へ去るところ
+  if (showOf(a) === "march") return [0.4, 0.9, 1.4, 1.8, 2.1, 2.4, 6, d - 2.6, d - 1.8, d - 1.0];
   // 札がぽんっと出て膨らみきった瞬間（0.8 秒から 0.45 秒の 65%）・収まったところ・出たあと
   return [1.09, 1.4, 4.5];
 }
@@ -515,7 +520,8 @@ async function main() {
       const job = queue.shift();
       const r = await runOne(browser, job);
       // 絵を残す: 重なりのあったコマと、一覧に使う代表のコマ（滞在のまんなか）
-      const pick = r.frames.length ? r.frames[Math.min(r.frames.length - 1, showTier(r.amount) ? 2 : r.frames.length - 1)] : null;
+      const pickAt = { vampire: 16, march: 6, wizard: 8 }[showOf(r.amount)] ?? null;
+      const pick = r.frames.find((f) => f.t === pickAt) ?? r.frames.at(-1) ?? null;
       for (const f of r.frames) {
         if (f === pick || bad(f) > 0) {
           const p = join(out, "frames", `${r.char}_${r.amount}_${r.size}_${r.text}_t${String(f.t).replace(".", "_")}.png`);

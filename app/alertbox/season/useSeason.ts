@@ -29,9 +29,11 @@ import {
   fxUrl,
   manifestUrl,
   readManifest,
+  posesDir,
   rigDir,
   themeAt,
   themeFromParam,
+  themePoses,
   themeRigs,
   type Rect,
   type SeasonTheme,
@@ -39,6 +41,7 @@ import {
 } from "../themes";
 import { parseRig, rigFiles } from "./rig/rig";
 import type { LoadedRig } from "./rig/RigView";
+import { parsePoses, type LoadedPoses } from "./show/poses";
 
 /** 読めた絵。大きさは実物から取る */
 export type LoadedImage = { url: string; width: number; height: number };
@@ -62,6 +65,8 @@ export type Season = {
   fx: ReadonlyMap<string, LoadedImage>;
   /** 読めた切り絵の組（名前 → 組）。読めなかった組は入っていない */
   rigs: ReadonlyMap<string, LoadedRig>;
+  /** 読めたポーズ絵の組（仮装の名前 → 組）。読めなかった組は入っていない */
+  poses: ReadonlyMap<string, LoadedPoses>;
   /** 切り絵を一度は読みに行き終えたか（読めたかどうかは問わない） */
   rigsSettled: boolean;
 };
@@ -162,6 +167,31 @@ function bankBox(
 
 const EMPTY: ReadonlyMap<string, LoadedImage> = new Map();
 const NO_RIGS: ReadonlyMap<string, LoadedRig> = new Map();
+const NO_POSES: ReadonlyMap<string, LoadedPoses> = new Map();
+
+/** ポーズ絵の組を1つ読む。poses.json が読めない・絵が1枚でも読めないなら null */
+async function loadPoses(th: SeasonTheme, name: string): Promise<LoadedPoses | null> {
+  const base = posesDir(th, name);
+  try {
+    const ctl = typeof AbortController === "function" ? new AbortController() : null;
+    const timer = setTimeout(() => ctl?.abort(), IMAGE_TIMEOUT_MS);
+    const res = await fetch(`${base}/poses.json`, { signal: ctl?.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const def = parsePoses(await res.json());
+    if (!def) return null;
+    const names = Object.keys(def.poses);
+    const imgs = await Promise.all(names.map((n) => loadImage(`${base}/${def.poses[n].file}`)));
+    if (!imgs.every((v) => v)) return null;
+    return {
+      base,
+      faceW: def.faceW,
+      poses: new Map(names.map((n, i) => [n, { ...def.poses[n], img: imgs[i]! }])),
+    };
+  } catch {
+    return null;
+  }
+}
 
 /** 切り絵の組を1つ読む。rig.json が読めない・部品が1枚でも読めないなら null */
 async function loadRig(th: SeasonTheme, name: string): Promise<LoadedRig | null> {
@@ -219,6 +249,7 @@ export function useSeason(param: string | string[] | undefined): Season {
   const [bank, setBank] = useState<Season["bank"]>(null);
   const [fx, setFx] = useState<ReadonlyMap<string, LoadedImage>>(EMPTY);
   const [rigs, setRigs] = useState<ReadonlyMap<string, LoadedRig>>(NO_RIGS);
+  const [poses, setPoses] = useState<ReadonlyMap<string, LoadedPoses>>(NO_POSES);
   const [rigsSettled, setRigsSettled] = useState(false);
 
   useEffect(() => {
@@ -226,6 +257,7 @@ export function useSeason(param: string | string[] | undefined): Season {
       setBank(null);
       setFx(EMPTY);
       setRigs(NO_RIGS);
+      setPoses(NO_POSES);
       setRigsSettled(false);
       return;
     }
@@ -233,8 +265,10 @@ export function useSeason(param: string | string[] | undefined): Season {
     setBank("loading");
     setFx(EMPTY);
     setRigs(NO_RIGS);
+    setPoses(NO_POSES);
     setRigsSettled(false);
     const rigNames = themeRigs(theme);
+    const poseNames = themePoses(theme);
 
     const files = new Set<string>(theme.fx.map((f) => f.file));
     theme.finale?.files.forEach((f) => files.add(f));
@@ -247,13 +281,14 @@ export function useSeason(param: string | string[] | undefined): Season {
             loadImage(bankFrameUrl(theme, layer, i))
           )
         );
-      const [base, fill, fxList, rigList] = await Promise.all([
+      const [base, fill, fxList, rigList, poseList] = await Promise.all([
         frames("base"),
         frames("fill"),
         Promise.all(
           [...files].map(async (f) => [f, await loadImage(fxUrl(theme, f))] as const)
         ),
         Promise.all(rigNames.map(async (n) => [n, await loadRig(theme, n)] as const)),
+        Promise.all(poseNames.map(async (n) => [n, await loadPoses(theme, n)] as const)),
       ]);
       if (!alive) return false;
 
@@ -261,6 +296,11 @@ export function useSeason(param: string | string[] | undefined): Season {
         // 読めている組は差し替えない（10分ごとの読み直しで描き直さない）
         const next = new Map(prev);
         for (const [n, r] of rigList) if (r && !next.has(n)) next.set(n, r);
+        return next.size === prev.size ? prev : next;
+      });
+      setPoses((prev) => {
+        const next = new Map(prev);
+        for (const [n, p] of poseList) if (p && !next.has(n)) next.set(n, p);
         return next.size === prev.size ? prev : next;
       });
       setRigsSettled(true);
@@ -283,7 +323,7 @@ export function useSeason(param: string | string[] | undefined): Season {
         for (const [f, img] of fxList) if (img) next.set(f, img);
         return next.size === prev.size ? prev : next;
       });
-      return bankOk && fxList.every(([, img]) => img) && rigList.every(([, r]) => r);
+      return bankOk && fxList.every(([, img]) => img) && rigList.every(([, r]) => r) && poseList.every(([, p]) => p);
     };
 
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -299,7 +339,7 @@ export function useSeason(param: string | string[] | undefined): Season {
   }, [theme]);
 
   return useMemo(
-    () => ({ theme, bank, fx, rigs, rigsSettled }),
-    [theme, bank, fx, rigs, rigsSettled]
+    () => ({ theme, bank, fx, rigs, poses, rigsSettled }),
+    [theme, bank, fx, rigs, poses, rigsSettled]
   );
 }

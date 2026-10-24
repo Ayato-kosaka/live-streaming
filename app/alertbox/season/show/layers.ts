@@ -28,6 +28,12 @@ export type ShowLayers = {
   frontBox: HTMLDivElement;
 };
 
+/**
+ * 巻物のように広がる札（段3）の、閉じた形。`NamePlate` が最初にこの形で置き、振付けが
+ * 右の切り取りを 100% → -6% へ動かして広げる（左右の影のぶんまで見せる）
+ */
+export const UNROLL_CLOSED = "inset(-40% 100% -40% 0%)";
+
 /** 振付けの中で使う小さな div（指の当たらない絶対配置の箱） */
 export function div(parent: HTMLElement, style: Partial<CSSStyleDeclaration>): HTMLDivElement {
   const d = document.createElement("div");

@@ -181,7 +181,7 @@ export default function AlertBox() {
     };
   });
   /* 札の上の余白。主役が札の上の端に乗る段（台本のある段）は、乗る高さを空けておく */
-  const plateTopPx = Math.round(winH * (stage?.show ? 0.1 : 0.03));
+  const plateTopPx = Math.round(winH * (stage?.show ? stage.show.headroom : 0.03));
   // 札の影（下へ 24px × 幅の比）がキャラ絵の頭に掛からないすき間
   const charGap = Math.round(winH * 0.015);
   const charBottom = Math.round(winH * 0.02);
@@ -876,7 +876,7 @@ export default function AlertBox() {
             ? currentNotification.jpy
             : currentNotification.amount,
           adjustedAlertDuration,
-          (name) => sn.rigs.has(name)
+          (name) => sn.rigs.has(name) || sn.poses.has(name)
         )
       : null;
     setStage(nextStage);
@@ -1113,6 +1113,7 @@ export default function AlertBox() {
                     key={notification.id}
                     show={stage.show}
                     rigs={season.rigs}
+                    poses={season.poses}
                     durationSec={calculateAdjustedAlertDuration(notification)}
                     W={winW}
                     H={winH}

@@ -102,15 +102,25 @@ export type PlateStyle = {
 
 /** 段の演出（台本つき） */
 export type TierShow = {
-  /** 振付けの名前（`season/show/` の中。今は "vampire" だけ） */
-  kind: "vampire";
+  /**
+   * 振付けの名前（`season/show/` の中）。"march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いの
+   * あやと / "vampire" 段7 伯爵
+   */
+  kind: "march" | "wizard" | "vampire";
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
+  /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
+  poses?: string[];
   /**
    * その人のキャラ絵と読み上げを出す秒。**0 なら今どおり（すぐ）**。
    * 主役が「どうぞ」と見せる時刻に合わせる（台本の `reveal` と同じ秒）
    */
   revealSec: number;
+  /**
+   * 名前の札の上に空ける高さ（面の高さに対する割合）。主役が札の上の縁に立つ・乗るぶん。
+   * 札とキャラ絵の組はこの下に置く（index.tsx）
+   */
+  headroom: number;
   /** 台本 */
   script: Cue[];
 };
@@ -208,6 +218,38 @@ export type SeasonTheme = {
     toward: "left" | "right";
   } | null;
 };
+
+/**
+ * かぼちゃ坊や3人組の行進（段3、500〜999円）の台本。登場 2.5 秒・前兆なし（設計書 v3）。
+ * その人のキャラ絵は最初から出ている（段1〜3）ので、坊やは札の上の縁より上だけを歩く
+ */
+const MARCH: Cue[] = [
+  { at: 0.0, do: "marchIn", dur: 1.7 },
+  { at: 0.0, do: "unroll" },
+  { at: 1.9, do: "tada" },
+  { at: 2.0, do: "candyBurst", n: 34, dur: 0.3 },
+  { at: 2.6, do: "stay" },
+  // 締め（終わりの 3 秒前から）。右へ行進して去る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
+
+/**
+ * 魔法使いのあやと（段4、1,000〜1,999円）の台本。登場 4 秒・前兆は金のきらめき 0.5 秒（設計書 v3）。
+ * その人のキャラ絵は、あやとが札の上へ退いてから出る
+ */
+const WIZARD: Cue[] = [
+  { at: 0.0, do: "glimmer", dur: 0.5 },
+  { at: 0.45, do: "circle", dur: 0.5 },
+  { at: 0.8, do: "flyIn", dur: 1.5 },
+  { at: 2.35, do: "cast" },
+  { at: 2.6, do: "write", dur: 0.9 },
+  { at: 3.6, do: "don" },
+  { at: 4.0, do: "retreat", dur: 0.8 },
+  { at: 4.3, do: "reveal" },
+  { at: 5.2, do: "stay" },
+  // 締め（終わりの 3 秒前から）。大きな弧で右上へ飛び去る
+  { at: -3.0, do: "finale", dur: 2.6 },
+];
 
 /** 吸血鬼の伯爵（段7、10,000円〜）の台本。秒の決め方は設計書 §3.5 の絵コンテ */
 const VAMPIRE: Cue[] = [
@@ -354,6 +396,15 @@ export const THEMES: SeasonTheme[] = [
           amountSize: 66,
           appearAt: 0.8,
         },
+        /* かぼちゃ坊や3人組が札の上の縁を行進してきて、歩いたぶんだけ札が広がる。
+           小物（下の slots / files）は、部品が読めなかった日の控え */
+        show: {
+          kind: "march",
+          rigs: ["pumpkin_kid", "bat"],
+          revealSec: 0,
+          headroom: 0.2,
+          script: MARCH,
+        },
         slots: 4,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png"],
         bats: 3,
@@ -372,6 +423,16 @@ export const THEMES: SeasonTheme[] = [
           nameSize: 76,
           amountSize: 80,
           appearAt: 0.8,
+        },
+        /* 魔法使いのあやとがほうきで飛び込み、杖の光で札を書く。小物（下の slots / files）は、
+           ポーズ絵が読めなかった日の控え */
+        show: {
+          kind: "wizard",
+          rigs: [],
+          poses: ["wizard"],
+          revealSec: 4.3,
+          headroom: 0.2,
+          script: WIZARD,
         },
         slots: 5,
         files: ["fx-web.png", "fx-pumpkin.png", "fx-candy.png", "fx-ghost.png"],
@@ -442,6 +503,7 @@ export const THEMES: SeasonTheme[] = [
           kind: "vampire",
           rigs: ["vlad", "bat", "props"],
           revealSec: 6.5,
+          headroom: 0.1,
           script: VAMPIRE,
         },
         slots: 10,
@@ -524,6 +586,15 @@ export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
 
 /** 切り絵の部品の置き場（`<dir>/rig/<名前>/rig.json` と部品の絵） */
 export const rigDir = (th: SeasonTheme, name: string) => `${th.dir}/rig/${name}`;
+/** あやとの仮装のポーズ絵の置き場（`poses.json` と絵） */
+export const posesDir = (th: SeasonTheme, name: string) => `${th.dir}/poses/${name}`;
+
+/** テーマが読むポーズ絵の組ぜんぶ */
+export function themePoses(th: SeasonTheme): string[] {
+  const out = new Set<string>();
+  th.tiers.forEach((t) => t.show?.poses?.forEach((p) => out.add(p)));
+  return [...out];
+}
 
 /** テーマが使う切り絵の名前ぜんぶ（貯金箱と、段の演出の両方） */
 export function themeRigs(th: SeasonTheme): string[] {

@@ -59,13 +59,20 @@ type Coin = {
   ph: number; spin: number; size: number; g: number;
   kind: "coin" | "dust";
   life: number; age: number; drag: number;
+  /** どの絵で描くか（お菓子は色ごとに絵がある） */
+  skin?: number;
 };
+
+/** 粒の絵。金貨（段7）か、包み紙のお菓子（段3の紙吹雪） */
+export type CoinSkin = "coin" | "candy";
+/** お菓子の包み紙の色（ハロウィンの橙・紫・緑・桃・黄） */
+const CANDY_COLORS = ["#FF8A1F", "#9C4DFF", "#3DDC84", "#FF5FA2", "#FFD23F"];
 type Emitter = { at: number; dur: number; n: number; done: number; make: () => Coin };
 
 export class Coins {
   private ctx: CanvasRenderingContext2D | null;
-  private front: HTMLCanvasElement;
-  private back: HTMLCanvasElement;
+  private skins: { front: HTMLCanvasElement; back: HTMLCanvasElement }[];
+  private candy: boolean;
   private parts: Coin[] = [];
   private emitters: Emitter[] = [];
   private raf = 0;
@@ -81,28 +88,32 @@ export class Coins {
     private clock: () => number,
     /** 舞台の 1px を canvas の何画素で描くか（箱の大きさで変わる。毎コマ聞き直す） */
     private density: () => number = () =>
-      Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1)
+      Math.min(2, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
+    skin: CoinSkin = "coin"
   ) {
     this.dpr = density();
     canvas.width = Math.round(W * this.dpr);
     canvas.height = Math.round(H * this.dpr);
     this.ctx = canvas.getContext("2d");
     const S = 96;
-    this.front = sprite(S, coinImg, false);
-    this.back = sprite(S, coinImg, true);
+    this.candy = skin === "candy";
+    this.skins = this.candy
+      ? CANDY_COLORS.map((c) => ({ front: candySprite(S, c, false), back: candySprite(S, c, true) }))
+      : [{ front: sprite(S, coinImg, false), back: sprite(S, coinImg, true) }];
   }
 
   /**
    * 噴水。(x, y) から上へ `n` 枚を `dur` 秒かけて。
-   * `dir` を渡すと、その向き（-1 左 / 1 右）へだけ広げる（真ん中の主役の前を通さない）
+   * `dir` を渡すと、その向き（-1 左 / 1 右）へだけ広げる（真ん中の主役の前を通さない）。
+   * `power` は噴き上げる高さの倍率（1 で画面の高さほど）
    */
-  fountain(x: number, y: number, n: number, dur: number, spread: number, dir = 0) {
+  fountain(x: number, y: number, n: number, dur: number, spread: number, dir = 0, power = 1) {
     const { W, H } = this;
     this.emit(n, dur, () => ({
       x: x + (Math.random() - 0.5) * spread,
       y,
-      vx: dir ? dir * W * (0.18 + Math.random() * 0.5) : (Math.random() - 0.5) * W * 1.3,
-      vy: -H * (0.9 + Math.random() * 0.55),
+      vx: (dir ? dir * W * (0.18 + Math.random() * 0.5) : (Math.random() - 0.5) * W * 1.3) * Math.sqrt(power),
+      vy: -H * (0.9 + Math.random() * 0.55) * Math.sqrt(power),
       ph: Math.random() * Math.PI * 2,
       spin: 9 + Math.random() * 9,
       size: W * (0.04 + Math.random() * 0.025),
@@ -161,7 +172,9 @@ export class Coins {
   }
 
   private emit(n: number, dur: number, make: () => Coin) {
-    this.emitters.push({ at: this.clock(), dur: Math.max(0.01, dur), n, done: 0, make });
+    const k = this.skins.length;
+    const withSkin = () => ({ ...make(), skin: Math.floor(Math.random() * k) });
+    this.emitters.push({ at: this.clock(), dur: Math.max(0.01, dur), n, done: 0, make: withSkin });
     this.start();
   }
 
@@ -228,8 +241,17 @@ export class Coins {
       const cs = Math.cos(p.ph);
       const sx = Math.max(0.08, Math.abs(cs));
       const s = p.size / 96;
-      c.setTransform(sx * s * d, 0, 0, s * d, p.x * d, p.y * d);
-      c.drawImage(cs >= 0 ? this.front : this.back, -48, -48);
+      const sk = this.skins[p.skin ?? 0] ?? this.skins[0];
+      if (this.candy) {
+        // お菓子は裏返りながら、くるくる回って落ちる
+        const r = p.ph * 0.6;
+        const cr = Math.cos(r);
+        const sr = Math.sin(r);
+        c.setTransform(cr * sx * s * d, sr * sx * s * d, -sr * s * d, cr * s * d, p.x * d, p.y * d);
+      } else {
+        c.setTransform(sx * s * d, 0, 0, s * d, p.x * d, p.y * d);
+      }
+      c.drawImage(cs >= 0 ? sk.front : sk.back, -48, -48);
     }
     c.globalAlpha = 1;
   }
@@ -272,6 +294,61 @@ function sprite(S: number, img: HTMLImageElement | null, dark: boolean): HTMLCan
   if (dark) {
     x.globalCompositeOperation = "source-atop";
     x.fillStyle = "rgba(90,40,0,0.38)";
+    x.fillRect(0, 0, S, S);
+  }
+  return c;
+}
+
+/** 包み紙のお菓子1粒（両端をねじった飴）。裏は少し暗く */
+function candySprite(S: number, color: string, dark: boolean): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = S;
+  c.height = S;
+  const x = c.getContext("2d");
+  if (!x) return c;
+  const cx = S / 2;
+  const cy = S / 2;
+  const r = S * 0.2;
+  x.lineJoin = "round";
+  x.lineWidth = S * 0.035;
+  x.strokeStyle = "#3A1A4A";
+  // ねじった両端（三角）
+  for (const dir of [-1, 1]) {
+    x.beginPath();
+    x.moveTo(cx + dir * r * 0.8, cy);
+    x.lineTo(cx + dir * S * 0.46, cy - S * 0.17);
+    x.lineTo(cx + dir * S * 0.42, cy);
+    x.lineTo(cx + dir * S * 0.46, cy + S * 0.17);
+    x.closePath();
+    x.fillStyle = color;
+    x.fill();
+    x.stroke();
+  }
+  // 粒
+  x.beginPath();
+  x.ellipse(cx, cy, r * 1.15, r, 0, 0, Math.PI * 2);
+  x.fillStyle = color;
+  x.fill();
+  x.stroke();
+  // 縞と照り
+  x.save();
+  x.clip();
+  x.strokeStyle = "rgba(255,255,255,0.55)";
+  x.lineWidth = S * 0.05;
+  for (const o of [-0.5, 0.15, 0.8]) {
+    x.beginPath();
+    x.moveTo(cx + o * r - r, cy + r);
+    x.lineTo(cx + o * r + r * 0.2, cy - r);
+    x.stroke();
+  }
+  x.restore();
+  x.beginPath();
+  x.ellipse(cx - r * 0.4, cy - r * 0.45, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+  x.fillStyle = "rgba(255,255,255,0.8)";
+  x.fill();
+  if (dark) {
+    x.globalCompositeOperation = "source-atop";
+    x.fillStyle = "rgba(40,0,40,0.3)";
     x.fillRect(0, 0, S, S);
   }
   return c;

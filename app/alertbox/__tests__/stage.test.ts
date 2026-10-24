@@ -41,8 +41,12 @@ describe("額 → 段 → 出し方", () => {
   it.each([
     [0, "round", false],
     [199, "round", false],
-    [999, "round", false],
-    [1000, "round", false],
+    [499, "round", false],
+    [500, "round", true],
+    [999, "round", true],
+    [1000, "round", true],
+    [1999, "round", true],
+    [2000, "round", false],
     [4999, "round", false],
     [5000, "round", false],
     [9999, "round", false],
@@ -91,16 +95,44 @@ describe("額 → 段 → 出し方", () => {
     expect(stageFor(null, 20000, 60, allRigs)).toBeNull();
   });
 
-  it("段1〜3は台本が無いので、札はすぐ（0.8秒）出て、絵も遅らせない", () => {
-    for (const yen of [500, 3000, 7000]) {
+  it("台本の無い段は、札はすぐ（0.8秒）ぽんっと出て、絵も遅らせない", () => {
+    for (const yen of [300, 3000, 7000]) {
       const st = stageFor(halloween, yen, durationFor(yen), allRigs)!;
       expect(st.revealSec).toBe(0);
-      expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, count: null, donAt: null });
+      expect(plateTiming(st)).toEqual({ appearAt: 0.8, carried: false, wipe: null, count: null, donAt: null });
     }
   });
 
-  it("テーマが読む切り絵は、貯金箱と段4の両方ぶん", () => {
-    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props"]));
+  it("段3（行進）は、その人の絵をすぐ出し、札は巻物のように広がる（広げるのは振付け）", () => {
+    const st = stageFor(halloween, 700, durationFor(700), allRigs)!;
+    expect(st.show?.kind).toBe("march");
+    expect(st.revealSec).toBe(0);
+    expect(plateTiming(st)).toEqual({ appearAt: 0, carried: false, wipe: "unroll", count: null, donAt: null });
+    expect(scriptProblems(st.show!.script, durationFor(700), 0)).toEqual([]);
+  });
+
+  it("段4（魔法使い）は、あやとが札の上へ退いてからその人の絵を出し、札は杖の光で書く", () => {
+    const st = stageFor(halloween, 1500, durationFor(1500), allRigs)!;
+    expect(st.show?.kind).toBe("wizard");
+    expect(st.revealSec).toBeCloseTo(4.3);
+    expect(plateTiming(st)).toEqual({ appearAt: 2.6, carried: false, wipe: "write", count: null, donAt: 3.6 });
+    expect(scriptProblems(st.show!.script, durationFor(1500), st.show!.revealSec)).toEqual([]);
+  });
+
+  it("段4のポーズ絵が読めなければ、台本に乗らずその人の絵も遅らせない", () => {
+    const st = stageFor(halloween, 1500, durationFor(1500), (n) => n !== "wizard")!;
+    expect(st.show).toBeNull();
+    expect(st.revealSec).toBe(0);
+  });
+
+  it("段3の坊やの部品が読めなければ、今までどおり札がぽんっと出る", () => {
+    const st = stageFor(halloween, 700, durationFor(700), (n) => n !== "pumpkin_kid")!;
+    expect(st.show).toBeNull();
+    expect(plateTiming(st).wipe).toBeNull();
+  });
+
+  it("テーマが読む切り絵は、貯金箱と台本のある段のぶん", () => {
+    expect(new Set(themeRigs(halloween))).toEqual(new Set(["kuro", "bucket", "bat", "vlad", "props", "pumpkin_kid"]));
   });
 
   it("期間中でも配信には出ていない（作り直しのお試し中）", () => {

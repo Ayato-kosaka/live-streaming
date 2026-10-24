@@ -183,5 +183,37 @@ export function buildRig(
   };
 }
 
+/**
+ * 部品の目印（`partAnchors`）に、`items` の小さな絵を付ける（帽子をかぶせる・竿を握らせる）。
+ * 絵の中の点（`itemAnchors`）が目印に重なるように置き、その点を回すときの中心にする。
+ * `z` は付ける部品の中での重なり（部品の z と同じ物差し。部品の絵より奥なら小さく）。
+ * 目印か絵が無ければ何もしない（null）
+ */
+export function attachItem(h: RigHandle, rig: LoadedRig, item: string, anchor: string, z: number): HTMLImageElement | null {
+  const a = rig.def.partAnchors[anchor];
+  const file = rig.def.items[item];
+  const host = a ? h.loop(a.part) : null;
+  const im = file ? rig.images.get(file) : undefined;
+  if (!a || !host || !im) return null;
+  const [ax, ay] = rig.def.itemAnchors[item] ?? [0, 0];
+  const el = document.createElement("img");
+  el.src = im.url;
+  el.alt = "";
+  el.draggable = false;
+  Object.assign(el.style, {
+    position: "absolute",
+    left: `${a.at[0] - ax}px`,
+    top: `${a.at[1] - ay}px`,
+    width: `${im.width}px`,
+    height: `${im.height}px`,
+    transformOrigin: `${ax}px ${ay}px`,
+    zIndex: String(Math.round(z * 10)),
+    userSelect: "none",
+    pointerEvents: "none",
+  } satisfies Partial<CSSStyleDeclaration>);
+  host.appendChild(el);
+  return el;
+}
+
 /** 部品の絵の URL（置き場 + ファイル名） */
 export const rigFileUrl = (base: string, file: string) => `${base}/${file}`;

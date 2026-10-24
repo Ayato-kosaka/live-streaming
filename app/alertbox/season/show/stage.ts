@@ -26,6 +26,11 @@ export type AlertStage = {
 export type PlateTiming = {
   appearAt: number;
   carried: boolean;
+  /**
+   * 振付けが札を左から広げる（段3 は巻物のように・段4 は杖の光で書くように）。札は閉じた形で
+   * 待つ。null なら札が自分で出る（ぽんっと出る・運ばれてくる）
+   */
+  wipe: "unroll" | "write" | null;
   count: { at: number; dur: number } | null;
   donAt: number | null;
 };
@@ -41,7 +46,8 @@ export function stageFor(
 ): AlertStage | null {
   if (!theme) return null;
   const tier = tierFor(theme, yen);
-  const show = tier.show && tier.show.rigs.every(rigLoaded) ? tier.show : null;
+  // 切り絵とポーズ絵が全部読めているときだけ台本に乗る（名前は重ならない）
+  const show = tier.show && [...tier.show.rigs, ...(tier.show.poses ?? [])].every(rigLoaded) ? tier.show : null;
   const cues = show ? resolveScript(show.script, durationSec) : null;
   const reveal = cues ? cueOf(cues, "reveal") : null;
   const revealSec = show && show.revealSec > 0 ? reveal?.t ?? show.revealSec : 0;
@@ -50,11 +56,14 @@ export function stageFor(
 
 export function plateTiming(st: AlertStage): PlateTiming {
   const appear = st.cues ? cueOf(st.cues, "plateIn") : null;
+  const unroll = st.cues ? cueOf(st.cues, "unroll") : null;
+  const write = st.cues ? cueOf(st.cues, "write") : null;
   const count = st.cues ? cueOf(st.cues, "count") : null;
   const don = st.cues ? cueOf(st.cues, "don") : null;
   return {
-    appearAt: appear?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
+    appearAt: appear?.t ?? unroll?.t ?? write?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
     carried: !!appear,
+    wipe: appear ? null : unroll ? "unroll" : write ? "write" : null,
     count: count ? { at: count.t, dur: count.dur ?? 1 } : null,
     donAt: don?.t ?? null,
   };

@@ -28,11 +28,16 @@ import { Motion } from "../rig/motion";
 import type { LoadedRig } from "../rig/RigView";
 import { resolveScript } from "./script";
 import { runVampire } from "./vampire";
+import { runMarch } from "./march";
+import { runWizard } from "./wizard";
+import type { LoadedPoses } from "./poses";
 import type { TierShow as TierShowDef } from "../../themes";
 
 type Props = {
   show: TierShowDef;
   rigs: ReadonlyMap<string, LoadedRig>;
+  /** あやとの仮装のポーズ絵（段4〜） */
+  poses: ReadonlyMap<string, LoadedPoses>;
   durationSec: number;
   W: number;
   H: number;
@@ -57,7 +62,7 @@ export function showReady(show: TierShowDef | undefined, rigs: ReadonlyMap<strin
   return !!show && show.rigs.every((r) => rigs.has(r));
 }
 
-export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => {
+export const TierShow: React.FC<Props> = ({ show, rigs, poses, durationSec, W, H }) => {
   const dark = useRef<HTMLDivElement | null>(null);
   const back = useRef<HTMLDivElement | null>(null);
   const actor = useRef<HTMLDivElement | null>(null);
@@ -87,7 +92,25 @@ export const TierShow: React.FC<Props> = ({ show, rigs, durationSec, W, H }) => 
     const m = new Motion();
     let stop: (() => void) | null = null;
     try {
-      if (show.kind === "vampire") {
+      if (show.kind === "wizard") {
+        stop = runWizard(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { poses: poses.get("wizard")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "march") {
+        stop = runMarch(
+          m,
+          { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },
+          { kid: rigs.get("pumpkin_kid")!, bat: rigs.get("bat")! },
+          resolveScript(show.script, durationSec, false),
+          STAGE_W,
+          STAGE_H
+        );
+      } else if (show.kind === "vampire") {
         stop = runVampire(
           m,
           { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) },

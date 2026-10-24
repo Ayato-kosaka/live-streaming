@@ -28,6 +28,9 @@
  * - props: coffin（根。奥の壁と中の赤）/ coins（中の金貨の山）/ coffin_front（手前の壁）/
  *   lid（ふた。関節は左の蝶番）。`items` に coin・moon と額縁の切れ端（frameCorner・
  *   frameEdgeH・frameEdgeV・frameBarH・frameBarV）、`frame` に額縁を組む座標
+ * - pumpkin_kid（正面）: body（根）/ head{smile, open, wink} / hat_stem / arm_l / arm_r /
+ *   leg_l / leg_r。`items` に hat_pointy・hat_ribbon・hat_leaf・pole、`itemAnchors` に
+ *   その絵の「かぶる点・握る点」、部品の上の目印 `hatOn`（head）・`grip`（arm_r）・`gripL`（arm_l）
  *
  * 描く側（`RigView.ts`）は部品を**親の中に入れ子**にして組む。親を回せば子も一緒に回る
  * ので、関節を動かすのに JS の計算が要らない（Web Animations に任せられる）。
@@ -63,6 +66,13 @@ export type RigDef = {
   items: Record<string, string>;
   /** 額縁を組むための数（絵の px）。小物の組の `frame`（角の腕の中心・棒の中心）。読めなければ空 */
   frame: Record<string, number>;
+  /**
+   * 部品の上の目印（`anchors` のうち `{ part, at }` の形のもの）。`at` はその部品の絵の中の px。
+   * 帽子をかぶせる点・竿を握る点など、部品と一緒に動く点
+   */
+  partAnchors: Record<string, { part: string; at: Vec }>;
+  /** `items` の絵の中の、目印に合わせる点（帽子のかぶる点・竿の握る点）。絵の左上から px */
+  itemAnchors: Record<string, Vec>;
 };
 
 const isVec = (v: unknown): v is Vec =>
@@ -113,11 +123,22 @@ export function parseRig(json: unknown): RigDef | null {
     if (cur) return null;
   }
   const anchors: Record<string, number[]> = {};
+  const partAnchors: Record<string, { part: string; at: Vec }> = {};
   if (o.anchors && typeof o.anchors === "object" && !Array.isArray(o.anchors)) {
     for (const [k, v] of Object.entries(o.anchors as Record<string, unknown>)) {
       if (Array.isArray(v) && v.length >= 2 && v.every((n) => typeof n === "number" && Number.isFinite(n))) {
         anchors[k] = v as number[];
+      } else if (v && typeof v === "object" && !Array.isArray(v)) {
+        // 部品の上の目印。知らない部品を指していたら捨てる
+        const a = v as Record<string, unknown>;
+        if (typeof a.part === "string" && ids.has(a.part) && isVec(a.at)) partAnchors[k] = { part: a.part, at: a.at };
       }
+    }
+  }
+  const itemAnchors: Record<string, Vec> = {};
+  if (o.itemAnchors && typeof o.itemAnchors === "object" && !Array.isArray(o.itemAnchors)) {
+    for (const [k, v] of Object.entries(o.itemAnchors as Record<string, unknown>)) {
+      if (isVec(v)) itemAnchors[k] = v;
     }
   }
   const items: Record<string, string> = {};
@@ -139,6 +160,8 @@ export function parseRig(json: unknown): RigDef | null {
     anchors,
     items,
     frame,
+    partAnchors,
+    itemAnchors,
   };
 }
 

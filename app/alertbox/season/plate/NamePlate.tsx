@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import type { PlateStyle } from "../../themes";
 import type { PlateLines, PlateSeg } from "./plateText";
 import type { LoadedRig } from "../rig/RigView";
+import { UNROLL_CLOSED } from "../show/layers";
 
 type KitImg = { url: string; w: number; h: number };
 /** 金の額縁の切れ端（絵の px）。角は左上の形で、ほかの角は反転して使う */
@@ -69,6 +70,8 @@ type Props = {
   appearAt: number;
   /** こうもりが運んでくる（上から落ちてきて揺れる）か、その場でぽんっと出るか */
   carried?: boolean;
+  /** 振付けが左から広げる（段3 は巻物・段4 は光の字）。閉じた形で待ち、広げるのは振付け */
+  wipe?: "unroll" | "write" | null;
   /** 数え上げ（秒）。無ければ額は最初から出ている */
   count?: { at: number; dur: number } | null;
   /** 「ドン」の秒 */
@@ -93,6 +96,7 @@ export const NamePlate: React.FC<Props> = ({
   H,
   appearAt,
   carried,
+  wipe,
   count,
   donAt,
   kit,
@@ -139,6 +143,9 @@ export const NamePlate: React.FC<Props> = ({
       `-${w * 0.72}px -${w * 0.72}px 0 ${ink}`,
     ].join(", ");
 
+  /* 光の字（段4: 杖の光で書いた札）。縁取りの外に金の光をにじませる。字の濃さは縁取りが持つ */
+  const lit = (sh: string) => (wipe === "write" ? `${sh}, 0 0 ${14 * k}px rgba(255,214,90,0.85)` : sh);
+
   // 額の桁。回る数字の列ごとに、何周してから止まるか（右ほど多く回る）
   const amountSeg = lines.amount.find((s): s is Extract<PlateSeg, { kind: "amount" }> => s.kind === "amount");
   const digits = amountSeg ? [...amountSeg.text] : [];
@@ -152,7 +159,9 @@ export const NamePlate: React.FC<Props> = ({
       if (el) anims.push((el as HTMLElement).animate(f, o));
     };
     const ms = (s: number) => s * 1000;
-    if (carried) {
+    if (wipe) {
+      // 広げるのは振付け。ここでは動かさない（閉じた形は下の style）
+    } else if (carried) {
       // 上から運ばれてきて、掛かったところで振り子のように揺れて止まる
       play(box, [
         // 画面の高さに対する割合（vh）で書く。途中で箱の大きさが変わっても、古い高さを握らない
@@ -219,6 +228,14 @@ export const NamePlate: React.FC<Props> = ({
         border: `${7 * k}px solid ${plate.edge}`,
         borderRadius: 16 * k,
         boxShadow: `inset 0 0 0 ${3 * k}px #7A4A08, inset 0 0 0 ${7 * k}px rgba(255,228,140,0.55), 0 ${6 * k}px ${18 * k}px rgba(0,0,0,0.45)`,
+      }
+    : wipe === "unroll"
+    ? {
+        // 行進の横断幕（段3）。3人が上の縁に並べる幅を取り、角は布らしく小さく丸める
+        border: `${5 * k}px solid ${plate.edge}`,
+        borderRadius: 14 * k,
+        minWidth: W * 0.7,
+        boxShadow: `0 ${5 * k}px ${14 * k}px rgba(0,0,0,0.4)`,
       }
     : {
         border: `${5 * k}px solid ${plate.edge}`,
@@ -310,6 +327,7 @@ export const NamePlate: React.FC<Props> = ({
           /* ぽんっと出るときは下の辺を据えて膨らませる（真ん中から膨らむと、下の辺がすぐ下の
              キャラ絵の頭へはみ出す）。運ばれてくる札は上の辺から吊るす */
           transformOrigin: carried ? "50% 0%" : "50% 100%",
+          clipPath: wipe ? UNROLL_CLOSED : undefined,
           willChange: "transform",
           ...frameStyle,
         }}
@@ -320,7 +338,7 @@ export const NamePlate: React.FC<Props> = ({
             lineHeight: 1.15,
             color: plate.nameColor,
             whiteSpace: "nowrap",
-            textShadow: outline(Math.max(2, 4 * k)),
+            textShadow: lit(outline(Math.max(2, 4 * k))),
           }}
         >
           {lines.name.map((s, i) =>
@@ -340,7 +358,7 @@ export const NamePlate: React.FC<Props> = ({
               fontSize: amountSize,
               lineHeight: 1.12,
               whiteSpace: "nowrap",
-              textShadow: outline(Math.max(2, 5 * k)),
+              textShadow: lit(outline(Math.max(2, 5 * k))),
               display: "flex",
               justifyContent: "center",
               alignItems: "baseline",

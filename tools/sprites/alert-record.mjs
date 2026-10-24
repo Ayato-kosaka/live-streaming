@@ -74,6 +74,7 @@ import {
   readSync,
   fstatSync,
   closeSync,
+  symlinkSync,
 } from "node:fs";
 import { dirname, join, resolve, basename, extname } from "node:path";
 import { tmpdir } from "node:os";
@@ -414,16 +415,18 @@ if (sizes.size !== 1 || !sizes.has(want)) {
   bad = true;
 }
 
-/* コマは変わったときにしか届かないので、間隔がまちまち。
-   1枚ごとの長さを書いた並び（concat）にして、ffmpeg に 30fps へ揃えさせる */
-let list = "";
-frames.forEach((t, i) => {
-  const next = frames[i + 1] ?? t + 1 / 30;
-  list += `file '${frameName(i)}'\nduration ${Math.max(0.001, next - t).toFixed(4)}\n`;
-});
-// 最後のコマは concat の決まりで、もう一度書かないと長さが効かない
-list += `file '${frameName(frames.length - 1)}'\n`;
-writeFileSync(join(dir, "list.txt"), list);
+/* コマは変わったときにしか届かないので、間隔がまちまち。ここで 30fps の並びに直す
+   （1/30 秒ごとに、その時刻までに届いたいちばん新しいコマ）。並びは元のコマへの symlink。
+   前は1枚ごとの長さを書いた concat で ffmpeg に揃えさせていたが、concat は1枚を 1/25 秒より
+   短くできず、コマが速く届く場面（演出の山）ほど動画が間延びした（52 秒が 66.9 秒になった） */
+const FPS = 30;
+const nOut = Math.max(1, Math.round((frames[frames.length - 1] - frames[0]) * FPS) + 1);
+let src = 0;
+for (let k = 0; k < nOut; k++) {
+  const t = frames[0] + k / FPS;
+  while (src + 1 < frames.length && frames[src + 1] <= t + 1e-6) src++;
+  symlinkSync(join(dir, frameName(src)), join(dir, `s${String(k).padStart(6, "0")}.jpg`));
+}
 
 const span = frames[frames.length - 1] - frames[0];
 console.log(
@@ -444,7 +447,7 @@ const x264 = (crf) => [
 const scale = (w, h) => `scale=${w}:${h}:flags=lanczos,format=yuv420p`;
 const encArgs = [
   "-y", "-loglevel", "error",
-  "-f", "concat", "-safe", "0", "-i", join(dir, "list.txt"),
+  "-framerate", String(FPS), "-i", join(dir, "s%06d.jpg"),
   ...(small
     ? [
         "-filter_complex",
