@@ -62,10 +62,13 @@ def remove_painted_bg(a):
     return a, int(bg.sum())
 
 
-def face_box(a):
-    """いちばん大きい肌色の塊の外接矩形（あやとの顔）"""
+def face_box(a, skin_kind="normal"):
+    """いちばん大きい肌色の塊の外接矩形（あやとの顔）。ゾンビは少し緑がかった肌（g が r とほぼ同じ、b が低い）"""
     r, g, b = (a[..., i].astype(int) for i in range(3))
-    skin = (a[..., 3] > 200) & (r > 215) & (g > 160) & (g < 225) & (b > 120) & (b < 200) & (r - b > 40)
+    if skin_kind == "zombie":
+        skin = (a[..., 3] > 200) & (r > 200) & (g > 200) & (np.abs(r - g) < 14) & (b > 150) & (b < 200) & (g - b > 30)
+    else:
+        skin = (a[..., 3] > 200) & (r > 215) & (g > 160) & (g < 225) & (b > 120) & (b < 200) & (r - b > 40)
     skin = ndimage.binary_opening(skin, iterations=2)
     lab, n = ndimage.label(skin)
     if not n:
@@ -80,9 +83,9 @@ def bbox(a):
     return [int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1]
 
 
-def describe(a):
+def describe(a, skin_kind="normal"):
     c = bbox(a)
-    f = face_box(a)
+    f = face_box(a, skin_kind)
     ys, xs = np.nonzero(a[..., 3] > 0)
     bottom_y = int(ys.max())
     e = {"size": [a.shape[1], a.shape[0]], "content": c, "bottom": [round((c[0] + c[2]) / 2, 1), bottom_y]}
@@ -102,7 +105,7 @@ def cmd_add(o):
         print(f"描かれた地（市松模様）を抜いた: {nbg}px")
     a = AT.clean_alpha(a)
     a = AT.drop_specks(a, 300)
-    f = face_box(a)
+    f = face_box(a, o.skin)
     if not f:
         raise SystemExit("顔（肌色の塊）が見つからない")
     k = face_w / (f[2] - f[0])
@@ -114,12 +117,16 @@ def cmd_add(o):
     if k != 1.0:
         im = im.convert("RGBa").resize((round(im.width * k), round(im.height * k)), Image.LANCZOS).convert("RGBA")
     a = AT.clean_alpha(np.array(im))
+    if o.rim:
+        # 黒い衣装（死神のローブ）が、暗くした画面や配信者の黒い服に溶けないよう、外形にだけ細い光のふちを敷く
+        from rigbuild import add_rim, pad as padimg
+        a = add_rim(padimg(a, int(o.rim) + 4), o.rim, tuple(int(o.rim_color[i:i + 2], 16) for i in (0, 2, 4)))
     x0, y0, x1, y1 = bbox(a)
     P = o.pad
     a = a[max(0, y0 - P):y1 + P, max(0, x0 - P):x1 + P]
     out = os.path.join(o.dir, f"{o.name}.png")
     n = AT.save(Image.fromarray(a), out, quant=not o.no_quant)
-    e = describe(np.array(Image.open(out).convert("RGBA")))
+    e = describe(np.array(Image.open(out).convert("RGBA")), o.skin)
     e["file"] = f"{o.name}.png"
     e["scale"] = round(k, 4)
     J["poses"][o.name] = e
@@ -167,6 +174,9 @@ def main():
     p = sp.add_parser("add"); p.add_argument("dir"); p.add_argument("name"); p.add_argument("src")
     p.add_argument("--face-w", type=int, default=300); p.add_argument("--pad", type=int, default=8)
     p.add_argument("--no-quant", action="store_true")
+    p.add_argument("--rim", type=float, default=0, help="外形に敷く光のふちの太さ px（0 で付けない）")
+    p.add_argument("--rim-color", default="b9a0ff")
+    p.add_argument("--skin", default="normal", choices=["normal", "zombie"], help="顔を探す肌の色（ゾンビは緑がかった肌）")
     p = sp.add_parser("check"); p.add_argument("dir"); p.add_argument("out")
     o = ap.parse_args()
     globals()["cmd_" + o.cmd](o)
