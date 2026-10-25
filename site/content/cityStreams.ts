@@ -1938,6 +1938,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "eHBAnQF56-E",
         "title": "🇲🇰北マケドニアのマトカ渓谷いこー！紅葉みながら川下りや！",
         "date": "2026-10-24"
+      },
+      {
+        "videoId": "KNgGbR0zdIc",
+        "title": "🇲🇰北マケドニアで雑談配信！これからどこの国行くか決めたいな！",
+        "date": "2026-10-25"
       }
     ]
   }
