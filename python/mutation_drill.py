@@ -58,6 +58,24 @@ HEAD の字に戻せる。**
   1. **鍵を1つ取る**（`flock`）。2本目は走らずに 2 で帰る
   2. **ほかの見張りが走っていたら、当てずに 2 で帰る**（`pgrep`）
 
+## 古い pyc を読まない（2026-10-26）
+
+Python が `__pycache__` の pyc を使うかは、**元ファイルの時刻（秒）と大きさ**しか見ない。
+`py` の当てかたは実物を書き換えて回し、`git checkout --` で戻す。書き換えと戻しが
+**同じ1秒・同じ大きさ**に収まると（`>`→`<` のような同じ長さの書き換えで起きうる）、
+書き換えたほうの pyc が元の字の顔をして残り、**次に回す見張りがそちらで判定される。**
+2026-10-23 に手で同じことをして、`recipe_lag_watch.py` が3日、何も見ずに「遅れ0件」を返した
+（`selftest_runner.py` の頭に経緯）。
+
+だから**見張りは子ごとに空の pyc の置き場で起こす**（`run_watch()` の `PYTHONPYCACHEPREFIX`）。
+子が作った pyc は子と一緒に捨てるので、戻したあとに残らない。置き場の `__pycache__` も
+読まないし書かない（前の誰かが置いていった毒も読まない）。速さは、子ごとに標準の部品と
+`google-cloud-*` をコンパイルし直すぶん（子1本 +0.2秒、`google-cloud-*` を読む見張りで +2〜3秒）。
+2026-10-26 にこの箱で `--only py`（79本）を測って、26分05秒 → 30分59秒（CPU user 26分14秒 → 27分00秒）。
+回の中で使い回さないのは、使い回すと**回の中で**同じ毒ができるから（壊す前に焼いた pyc を、
+同じ1秒・同じ大きさで壊したあとの子が読み、壊したのに緑と出る。写しで当てて確かめた）。
+対照は `mutation_drill_selftest.py` の [7]（`BREAK=stalepyc` で守りを外すと赤くなる）。
+
 ## 毎 PR には載せない
 
 実物を壊すので、**同じ置き場でほかの job が走っていると巻き添えになる。**
@@ -83,6 +101,10 @@ REPO = Path(__file__).resolve().parent.parent
 
 # 1本にかける上限。止まったものは「当てられなかった」であって「赤」ではない
 TIMEOUT_SEC = 600
+
+# **見張りは子ごとに空の pyc の置き場で起こす**（頭の「古い pyc を読まない」）。
+# False にするのは `mutation_drill_selftest.py` の対照（`BREAK=stalepyc`）だけ
+FRESH_PYC = True
 
 # ほかの試験が走っていないかを見るときの、名前の手がかり
 BUSY_HINTS = ("_selftest.py", "_selftest.mjs", "selftest_runner.py")
@@ -443,14 +465,19 @@ def run_watch(rel: str, extra: dict | None = None) -> int:
     env = dict(os.environ)
     env.setdefault("BQ_PROJECT_ID", "mutation-drill-no-such-project")
     env.update(extra or {})
-    try:
-        r = subprocess.run([*head, rel], cwd=REPO, env=env, capture_output=True,
-                           text=True, timeout=TIMEOUT_SEC, check=False)
-        return r.returncode
-    except subprocess.TimeoutExpired:
-        return -1
-    except OSError:
-        return -2
+    # 子が作った pyc は子と一緒に捨てる。戻したあとの字を、書き換えたときの pyc で読ませない
+    with tempfile.TemporaryDirectory(prefix="mutation-drill-pyc-",
+                                     ignore_cleanup_errors=True) as pyc:
+        if FRESH_PYC:
+            env["PYTHONPYCACHEPREFIX"] = pyc
+        try:
+            r = subprocess.run([*head, rel], cwd=REPO, env=env, capture_output=True,
+                               text=True, timeout=TIMEOUT_SEC, check=False)
+            return r.returncode
+        except subprocess.TimeoutExpired:
+            return -1
+        except OSError:
+            return -2
 
 
 def reads_it(rel: str, target: Path, extra: dict | None = None) -> bool | None:

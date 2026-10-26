@@ -5,6 +5,7 @@
     BREAK=noguard  python3 python/mutation_drill_selftest.py  # 鍵と混み見を外す
     BREAK=noback   python3 python/mutation_drill_selftest.py  # 戻しを外す
     BREAK=plan     python3 python/mutation_drill_selftest.py  # 当てる先を0本にする
+    BREAK=stalepyc python3 python/mutation_drill_selftest.py  # 子に空の pyc の置き場を渡さない
 
 終了コード 0=通った / 1=落ちた / **2=数えるものが無い**（`docs/island-standards.md` §15）。
 
@@ -24,6 +25,8 @@
   4. **混んでいたら当てない**（`busy()` が同じ置き場の相手を拾う）
   5. **当てる先が0本なら 2**（「ぜんぶ対照がある」と言わない）
   6. `--list` が、本物の置き場で1本以上並べられる（分母）
+  7. **古い pyc を読まない**（元と時刻・大きさが同じで中身だけ違う pyc があっても、
+     見張りは元の字で判定される。書き換えて戻したのが同じ1秒・同じ大きさでも）
 """
 
 from __future__ import annotations
@@ -50,6 +53,12 @@ if BREAK == "noback":
     MD.restore = lambda rel: True        # type: ignore
 if BREAK == "plan":
     MD.plan = lambda only, names: []     # type: ignore
+if BREAK == "stalepyc":
+    MD.FRESH_PYC = False                 # type: ignore
+    # 外（回し役）から渡された置き場と「書かない」も外す。残すと、そちらが守りの代わりをして
+    # 対照にならない（回し役は回ごとに置き場を渡している）
+    os.environ.pop("PYTHONPYCACHEPREFIX", None)
+    os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
 
 
 def ok(name: str, got, want) -> None:
@@ -244,10 +253,43 @@ ok("当てかたは py / mjs / repo のどれか",
    all(r["kind"] in ("py", "mjs", "repo") for r in hit), True)
 
 
-print("[7] 対照（この見張りが、落ちるときに落ちるか）")
+print("[7] 古い pyc を読まない（元と時刻・大きさが同じで、中身だけ違う pyc）")
+# 2026-10-23 に手で `>` を `<` にして同じ1秒で戻したら、書き換えたほうの pyc が
+# `python/__pycache__` に残り、`recipe_lag_watch.py` が3日、何も見ずに「遅れ0件」を返した。
+# Python は pyc の記録（時刻の秒・大きさ）しか見ないので、同じ長さの書き換えは見分けられない。
+# 道具の `attempt()` も「書き換える → 回す → `git checkout --` で戻す」なので、同じ形になりうる
+import selftest_runner as SR  # noqa: E402  毒の置きかたは回し役の対照と1つにしておく
+
+with tempfile.TemporaryDirectory() as tmp:
+    box = Path(tmp)
+    judge = box / "judge.py"
+    judge.write_text(SR._JUDGE, encoding="utf-8")
+    (box / "judge_selftest.py").write_text(SR._JUDGE_TEST, encoding="utf-8")
+    old_repo = MD.REPO
+    MD.REPO = box
+    try:
+        # (a) 前の誰かが置いていった毒
+        cache = SR.plant_stale_pyc(judge, SR._JUDGE_BAD)
+        ok("置いていった毒の pyc があっても、元の字で判定する",
+           MD.run_watch("judge_selftest.py"), 0)
+        cache.unlink()
+        # (b) 当てているあいだにできる毒。同じ長さに書き換えて回し、同じ時刻で元に戻す
+        judge.write_text(SR._JUDGE_BAD, encoding="utf-8")
+        t = judge.stat()
+        ok("書き換えたほうでは赤", MD.run_watch("judge_selftest.py"), 1)
+        judge.write_text(SR._JUDGE, encoding="utf-8")
+        os.utime(judge, ns=(t.st_atime_ns, t.st_mtime_ns))
+        ok("同じ時刻・同じ大きさで戻したあと、戻した字で判定する",
+           MD.run_watch("judge_selftest.py"), 0)
+        ok("子が置き場の `__pycache__` に pyc を残していない", cache.exists(), False)
+    finally:
+        MD.REPO = old_repo
+
+
+print("[8] 対照（この見張りが、落ちるときに落ちるか）")
 if not BREAK:
     bad = []
-    for leg in ("noguard", "noback", "plan"):
+    for leg in ("noguard", "noback", "plan", "stalepyc"):
         rr = subprocess.run([sys.executable, str(Path(__file__).resolve())],
                             capture_output=True, text=True, timeout=900,
                             env=dict(os.environ, BREAK=leg), check=False)
@@ -257,7 +299,7 @@ if not BREAK:
         print(f"  {mark} BREAK={leg} → 終了コード {rr.returncode}（0 でなければよい）")
     if bad:
         FAILED.append("対照: " + " / ".join(bad) + " を抜いても緑のまま")
-    CHECKED += 3
+    CHECKED += 4
 
 print()
 if CHECKED == 0:
