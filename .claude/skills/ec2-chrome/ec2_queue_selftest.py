@@ -99,7 +99,7 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "no_boot": ("ec2_queue.py", '    if t["t0"] < boot:\n', "    if False:\n", {"boot"}, "起動より前の札を数える"),
     "no_max": ("ec2_queue.py", "    if at - since > MAX_S:\n", "    if False:\n", {"max_hold"}, "6時間の上限を外す"),
     "broken_crash": ("ec2_queue.py", '    if not valid(t, at):\n        return False, "broken"\n', "",
-                     {"broken_tickets"}, "壊れた札を読まずに数えに行く（落ちる）"),
+                     {"broken_tickets", "idle_stop_failsafe"}, "壊れた札を読まずに数えに行く（落ちる。idle-stop は新しい置き場で ec2-queue が落ちたのを、6時間は使っている側に倒す）"),
     "busy_writes": ("ec2_queue.py", "            lv = live(st, at, boot)\n            if err:\n",
                     "            prune(st, at, boot)\n            save(st)\n            lv = live(st, at, boot)\n            if err:\n",
                     {"broken_tickets"}, "busy が置き場を書く（idle-stop の6時間の上限が、置き場の新しさで切れなくなる）"),
@@ -648,14 +648,19 @@ def leg_idle_stop_failsafe(b: Bench):
     sd, _ = rig.until_shutdown(NOW, NOW + 3 * 3600)
     out.append((f"置き場も ec2-queue も無い: 30分で止める（{None if sd is None else sd - NOW}秒）", sd is not None and sd - NOW == 1800))
     # 壊れた札しか無い置き場（本物の ec2-queue）→ 数えない → 30分で止める
+    # 置き場の時刻は偽の時計（NOW）で書く。書いたままだと本物の時刻になり、本物の時刻が NOW を
+    # 越えた日（2026-10-25）から「未来に書かれた＝新しい置き場」に化けて、答えが変わった。
+    # 新しい置き場にしておくのが本来の確かめ（6時間より古いと、ec2-queue が何と言っても数えないので何も見ていない）
     q = Q(b)
     (q.qdir / "state.json").write_text('{"lanes": {"fish": [{"id": "zz", "held": 1}], "x": "y"}}')
+    os.utime(q.qdir / "state.json", (NOW, NOW))
     rig = IdleRig(b, q)
     (rig.d / "state" / "last").write_text(str(int(NOW)))
     sd, _ = rig.until_shutdown(NOW, NOW + 3 * 3600)
     out.append((f"壊れた札は数えない: 30分で止める（{None if sd is None else sd - NOW}秒）", sd is not None and sd - NOW == 1800))
     q = Q(b)
     (q.qdir / "state.json").write_text("{{{ not json")
+    os.utime(q.qdir / "state.json", (NOW, NOW))
     rig = IdleRig(b, q)
     (rig.d / "state" / "last").write_text(str(int(NOW)))
     sd, _ = rig.until_shutdown(NOW, NOW + 3 * 3600)
