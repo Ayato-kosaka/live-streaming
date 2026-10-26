@@ -353,18 +353,22 @@ def check_watchdog() -> None:
         old = td / "old.py"
         old.write_text(OLD, encoding="utf-8")
         (repo / "site" / "content").mkdir(parents=True)
-        subprocess.run(["git", "init", "-q", "-b", "master", str(repo)], check=True)
+        # 作業箱の ~/.gitconfig は commit に署名させる。署名は箱の外の口に頼むので、口が1回黙れば
+        # 守りと関係の無いところで commit が落ちる。足の git は箱の設定から切り離す（CI の素の git と同じ）
+        genv = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        genv.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+        subprocess.run(["git", "init", "-q", "-b", "master", str(repo)], check=True, env=genv)
         for k, v in (("user.email", "a@b.c"), ("user.name", "selftest")):
-            subprocess.run(["git", "config", k, v], cwd=repo, check=True)
+            subprocess.run(["git", "config", k, v], cwd=repo, check=True, env=genv)
 
         days = 12
         for n in range(days):
             (repo / "site/content/cityStreams.ts").write_text(city_variant(city0, n), encoding="utf-8")
             (repo / "site/content/residents.ts").write_text(residents_variant(res0, n), encoding="utf-8")
             when = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - (days - n) * 86400))
-            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True, env=genv)
             subprocess.run(["git", "commit", "-q", "-m", f"焼き直し {n}"], cwd=repo, check=True,
-                           env=dict(os.environ, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when))
+                           env=dict(genv, GIT_AUTHOR_DATE=when, GIT_COMMITTER_DATE=when))
         print(f"  {days}晩ぶん、**並び替えただけ**の commit を積んだ（中身は1度も動いていない）")
 
         paths = ["site/content/cityStreams.ts", "site/content/residents.ts"]
