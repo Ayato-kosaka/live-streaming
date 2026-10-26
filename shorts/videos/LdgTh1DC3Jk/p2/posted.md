@@ -38,3 +38,22 @@
 2026-10-26 12:30 UTC を過ぎたら、`tools/shorts/post/README.md` の「予約の時刻のあとに、出たかを確かめる」のとおり、
 EC2 からログインしない `curl` で YouTube の oEmbed（200 で題が返れば公開）と TikTok の `embed/v2`（200 で `secret` が false なら公開）を見て、
 Studio と TikTok Studio の一覧でも読み直す。見るのは NibbSNmx0U8 と 7700034754187513108。
+
+### 公開を確かめた（2026-10-26）
+
+予約の時刻（12:30 UTC）のあと、EC2 からログインしない `curl` で 13:00 UTC ごろに見て、続けて Studio と TikTok Studio の一覧で読み直した
+（Studio は列 `ytstudio`、TikTok Studio は列 `fish` の札を取って読んだ。どちらも待ちなし。読み終えて `down()` で Chrome を閉じた）。
+
+- YouTube `NibbSNmx0U8`（https://youtube.com/shorts/NibbSNmx0U8）: oEmbed が 200（1回目で）で題「🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！」を返した → 公開。
+  Studio の `get_creator_videos` は `privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null・
+  `timePublishedSeconds` 1793017832（= 12:30:32 UTC）・`CREATOR_CONTENT_TYPE_SHORTS`（49秒）・`VIDEO_STATUS_PROCESSED`。ショートの一覧でも同じ題の行はこの1本だけ
+- TikTok `7700034754187513108`（https://www.tiktok.com/@ayato_arigato/video/7700034754187513108）: `embed/v2` は 503 が2回混じって3回目で 200・`"secret":false` → 公開。
+  ログインしない動画のページも `secret` false・`privateItem` false・`createTime` 1793017800（= 12:30:00 UTC）。
+  TikTok Studio の一覧でこの題の行は1本だけ（`find_posts` の当たりもこの投稿の URL 1つ）で、行の時刻は `Oct 26, 12:30 PM`
+- 投稿文（`post_p2.json`）との読み比べ。違ったところは無い
+  - YouTube の題・説明欄（`BGM：ポケットサウンド – https://pocket-se.info/` の行とハッシュタグの行まで）が `youtube.title` / `youtube.description` と1字ずつ一致
+  - 関連動画は `LdgTh1DC3Jk`（`videoLinkageShortsAttribution`。`youtube.related_video` の本編）
+  - TikTok のキャプションは、ログインしない動画のページの `desc` と TikTok Studio の一覧の行のどちらも、
+    `tt_caption_p2.txt`（＝ `tiktok.caption`）の改行を空白にしたものと1字ずつ一致（`#ポケットサウンド` も入っている）
+- EC2 は止まっていたのでこちらで起こし、読み終えて札を返してから `ec2.py stop` で止めた（`--force` なし。止める前に `ec2.py queue` で列が空いているのを見た）。
+  EC2 の `yt_studio.py`・`yt_post.py`・`tt_post.py`・`cdp.py` はリポジトリと同じだった（sha256 で突き合わせた）
