@@ -554,6 +554,21 @@ def leg_e_voice(B):
              [x["key"] for x in orig] == ["p2/01", "p2/03"] and "ああーっ！" not in [x["caption"] for x in orig])]
 
 
+def fixture_env() -> dict:
+    """足の小さな git を、箱の git の設定から切り離して動かす（CI の素の git と同じにする）。
+
+    作業箱の ~/.gitconfig は commit に署名させる（commit.gpgsign・gpg.ssh.program=/tmp/code-sign）。署名は箱の外の口に
+    頼むので、1回0.1秒かかり（1回の見張りで280回）、口が1回でも返事をしなければ commit が落ちて、守りと関係の無い
+    e_clips・e_name が落ちる。対照の子でそれが起きると「その足だけが落ちる」が外れる（2026-10-26 に手元で1回外れた
+    BREAK=holdout の見立て。落ちた足は残っていなかった）。
+    受け継いだ GIT_*（フックの中から回すと付く GIT_DIR など）も外す。付いたままだと -C の置き場ではなくそちらを書き換える。
+    """
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    return {**env, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
+            "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"}
+
+
 def git_fixture(td: Path) -> str:
     """作業枝の履歴の形だけを持つ git を作る。CI は浅い checkout（履歴1つ）なので、本物の履歴を当てにしない。
 
@@ -561,8 +576,7 @@ def git_fixture(td: Path) -> str:
     --no-ff で main に入れる。merge の片側で足して消えた道は、git log の既定の省略だと見えない。
     返すのは clips を足したコミット。
     """
-    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.com",
-           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.com"}
+    env = fixture_env()
 
     def git(*a):
         return subprocess.run(["git", "-C", str(td), *a], check=True, capture_output=True, text=True, env=env).stdout.strip()
@@ -639,5 +653,43 @@ LEGS = {
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
     "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
 
+
+class _Tee:
+    """出した字をそのまま流しつつ、控える。"""
+
+    def __init__(self, real):
+        self.real, self.seen = real, []
+
+    def write(self, s):
+        self.seen.append(s)
+        return self.real.write(s)
+
+    def flush(self):
+        self.real.flush()
+
+    def __getattr__(self, k):
+        return getattr(self.real, k)
+
+
+def main() -> int:
+    """回し役（selftest_runner.py）は最後の1行しか出さない。対照が外れたら、どの足が落ちたかを最後の1行に載せる。
+
+    前は「✕ 対照が外れた: holdout」としか残らず、どの足が余計に落ちたのかを後から読めなかった（2026-10-26）。
+    """
+    if os.environ.get("BREAK"):
+        return legs.main(Path(__file__).resolve(), LEGS, CUTS, setup)
+    tee, real = _Tee(sys.stdout), sys.stdout
+    sys.stdout = tee
+    try:
+        rc = legs.main(Path(__file__).resolve(), LEGS, CUTS, setup)
+    finally:
+        sys.stdout = real
+    missed = [re.sub(r"^(BREAK=\w+)（.*?）→", r"\1 →", ln.strip()[2:]) for ln in "".join(tee.seen).splitlines()
+              if ln.strip().startswith("✕ BREAK=")]
+    if missed:
+        print("✕ 外れた対照の中身: " + " / ".join(missed))
+    return rc
+
+
 if __name__ == "__main__":
-    sys.exit(legs.main(Path(__file__).resolve(), LEGS, CUTS, setup))
+    sys.exit(main())
