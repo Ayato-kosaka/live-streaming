@@ -23,10 +23,27 @@
  * なので `prod.mjs` の側で `playwright-core` を**回すときに読む**ようにして、
  * ここからは `fetchProd()` と `judge()` だけを呼ぶ。
  *
- * **失うのは「route に繋がっているか」。** `resourceType()==="document"` を
- * 渡しているか、溜めた先を表に出しているかは、ここでは見えない。そこは
- * `node tools/sprites/prod.mjs` を本番に当てて見る（`/nordic/photos` を撮って
- * h1 が1つ出ること）。**ここが見るのは、腐ると「0件」になる側**だけ。
+ * ## route に繋がっているかも見る（2026-10-26）
+ *
+ * 前はここに「**失うのは route に繋がっているか**」と書いて、`viaCurl()` を
+ * 見ていなかった。`resourceType() === "document"` を渡しているか、`judge()` の
+ * 「たどった」「小さすぎ」をそれぞれの溜め先（`redirects()` / `thin()`）へ
+ * 分けているかは、本体の等しさを全部ひっくり返しても緑のままだった
+ * （`mutation_drill.py` で当てて分かった）。ひっくり返ると、**小さい css が
+ * 「小さすぎ」に数えられて巡回が赤くなる**か、**21B の面が「たどった」に紛れて
+ * だめに数えられない**（0件が合格に見える #157 の形）。
+ *
+ * ブラウザは要らない。`viaCurl(ctx)` が使うのは `ctx.route()` に渡す関数だけで、
+ * その関数が触るのも `r.request().url()` / `resourceType()` と `fulfill` / `abort`
+ * だけなので、**偽の ctx と偽の route** で足りる（5章）。
+ *
+ * 宛先は**本番の名前**（`live-streaming-d3cac.web.app`）にする。`PASS` に
+ * 当たらない宛先は curl に渡る前に止められるので。curl には `http_proxy` で
+ * **偽のサーバを proxy として**渡し、本番の名前の要求も 127.0.0.1 で受ける
+ * （本番には出ない。受けた本数を数えて確かめる）。
+ *
+ * 見えないまま残るのは、本番の `/me` を撮って看板・顔・絵を判じるところ
+ * （`prod.mjs` を直に起こしたときだけ走る）。そこは本番に当てて見る。
  *
  * ## 本番へは出ない。偽のサーバを自分で立てる
  *
@@ -39,15 +56,27 @@
  *     BREAK=nofollow node tools/sprites/prodcurl_selftest.mjs   # 1 で落ちる
  *     BREAK=nothin   node tools/sprites/prodcurl_selftest.mjs   # 1 で落ちる
  *     BREAK=allthin  node tools/sprites/prodcurl_selftest.mjs   # 1 で落ちる
+ *     BREAK=alldoc   node tools/sprites/prodcurl_selftest.mjs   # 1 で落ちる（5章だけ）
+ *     BREAK=allredir node tools/sprites/prodcurl_selftest.mjs   # 1 で落ちる（5章だけ）
  *
- * **足は3本とも別々に折る**（`docs/island-standards.md` §15 の
+ * **足は別々に折る**（`docs/island-standards.md` §15 の
  * 「対照は、足の数だけ用意する」）。`nofollow` は追うのを外す足、
  * `nothin` は小ささの見張りを外す足、`allthin` は小ささを**面以外にも**
  * 鳴らす足（うるさくして誰も読まなくなる側の壊れ）。
+ *
+ * `alldoc` と `allredir` は 5章の足で、**守りを外した `prod.mjs` の写し**を
+ * 使い捨ての置き場に書いて読む（本物のファイルは触らない）。`alldoc` は
+ * `resourceType() === "document"` を外して何でも面として数える写し、`allredir` は
+ * 「たどった」かどうかを見ずに全部を `redirects()` へ溜める写し。
  */
 import { createServer } from "node:http";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { fetchProd, judge, THIN_BYTES } from "./prod.mjs";
+import * as PROD from "./prod.mjs";
 
 /* **偽のサーバへは proxy を通さない。** この箱は `https_proxy` を立てているので、
    通すと自分の中の 127.0.0.1 にすら届かないことがある。curl は環境変数を見る。 */
@@ -74,17 +103,25 @@ const PAGE = `<!doctype html><html><body><h1>カード</h1>${"あ".repeat(20000)
 /** Firebase Hosting が 301 で返す本文。**実測21バイト** */
 const STUB = "Redirecting to /cards";
 
+/** 本番の名前で頼まれた（proxy として受けた）要求。**本番に出ていない**ことの裏付け（5章） */
+const PROXIED = [];
+
 const srv = createServer((req, res) => {
-  if (req.url === "/nordic/photos") {
+  /* proxy として受けた要求は `http://本番の名前/…` の形で来る。道だけを見る */
+  if (/^https?:/.test(req.url)) PROXIED.push(req.url);
+  const path = new URL(req.url, "http://127.0.0.1").pathname;
+  if (path === "/nordic/photos") {
     res.writeHead(301, { Location: "/cards", "Content-Type": "text/html" });
     return res.end(STUB);
   }
-  if (req.url === "/cards") {
+  if (path === "/cards") {
     res.writeHead(200, { "Content-Type": "text/html" });
     return res.end(PAGE);
   }
-  if (req.url === "/empty") { res.writeHead(200, { "Content-Type": "text/html" }); return res.end(""); }
-  if (req.url === "/tiny.css") { res.writeHead(200, { "Content-Type": "text/css" }); return res.end("body{}"); }
+  /* 追わずに 200 で 21B を返す面（壊れた書き出しの姿）。5章で「小さすぎ」に溜まるか */
+  if (path === "/thin") { res.writeHead(200, { "Content-Type": "text/html" }); return res.end(STUB); }
+  if (path === "/empty") { res.writeHead(200, { "Content-Type": "text/html" }); return res.end(""); }
+  if (path === "/tiny.css") { res.writeHead(200, { "Content-Type": "text/css" }); return res.end("body{}"); }
   res.writeHead(404); res.end("no");
 });
 await new Promise((r) => srv.listen(0, "127.0.0.1", r));
@@ -162,9 +199,93 @@ console.log("4. 取れなかったものは、掴んだことにしない");
   check("404 は例外になる（本文を面として配らない）", threw, "落ちなかった");
 }
 
+/* ------------------------------------- 5. route に繋がっている（viaCurl） -- */
+
+console.log("5. route に繋がっている（偽の ctx。本番の名前の要求も偽のサーバで受ける）");
+
+/** `PASS` に当たる宛先。curl には偽のサーバを proxy として渡すので、本番には出ない */
+const HOST = "http://live-streaming-d3cac.web.app";
+
+/**
+ * 守りを外した `prod.mjs` の写しを、使い捨ての置き場に書いて読む。**本物のファイルは触らない。**
+ * `./asme.mjs` は本物を指すように書き換える（写しの隣には無いので）。
+ */
+const SCRATCH = [];
+async function brokenProd(from, to) {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, "prod.mjs"), "utf8");
+  const cut = src.replace(from, to);
+  if (cut === src) throw new Error(`写せなかった（${from} が prod.mjs に無い）`);
+  const dir = mkdtempSync(join(tmpdir(), "prodcurl-"));
+  SCRATCH.push(dir);
+  const file = join(dir, "prod.mjs");
+  writeFileSync(file, cut.replace('"./asme.mjs"', JSON.stringify(pathToFileURL(join(here, "asme.mjs")).href)));
+  return import(pathToFileURL(file).href);
+}
+
+/** `viaCurl()` が `ctx.route()` に渡した関数を、偽の route で1本ずつ呼ぶ */
+async function hit(ctx, url, type) {
+  const rec = { status: 0, body: null, contentType: "", aborted: false };
+  await ctx.handler({
+    request: () => ({ url: () => url, resourceType: () => type }),
+    fulfill: async (o) => { rec.status = o.status; rec.body = o.body; rec.contentType = o.contentType; },
+    abort: async () => { rec.aborted = true; },
+  });
+  return rec;
+}
+
+{
+  const P = BREAK === "alldoc" ? await brokenProd(/r\.request\(\)\.resourceType\(\) [!=]== "document"/, "true")
+    : BREAK === "allredir" ? await brokenProd(/n\.kind [!=]== "たどった"/, "true")
+    : PROD;
+  const keep = process.env.http_proxy;
+  process.env.http_proxy = BASE;
+  try {
+    const ctx = { handler: null, async route(_pattern, h) { ctx.handler = h; } };
+    await P.viaCurl(ctx);
+    check("route に関数を1本渡す", typeof ctx.handler === "function", String(ctx.handler));
+
+    const photos = await hit(ctx, `${HOST}/nordic/photos`, "document");
+    check("面を追って、追った先の中身を 200 で流し込む",
+      photos.status === 200 && photos.body?.length > 20000 && photos.contentType === "text/html",
+      `${photos.status} ${photos.body?.length}B ${photos.contentType}`);
+    await hit(ctx, `${HOST}/thin`, "document");
+    const css = await hit(ctx, `${HOST}/tiny.css`, "stylesheet");
+    check("css は種類を css にして流し込む", css.status === 200 && css.contentType === "text/css",
+      `${css.status} ${css.contentType}`);
+
+    const R = P.redirects(ctx);
+    const T = P.thin(ctx);
+    check("追った面だけが「たどった」に溜まる（元 → 行き着いた先）",
+      R.size === 1 && R.get(`${HOST}/nordic/photos`) === `${HOST}/cards`, JSON.stringify([...R]));
+    check("21B の面が「小さすぎ」に溜まる（何バイトだったかも）",
+      T.get(`${HOST}/thin`) === STUB.length, JSON.stringify([...T]));
+    check("面でない小さい css は「小さすぎ」に溜めない",
+      !T.has(`${HOST}/tiny.css`), JSON.stringify([...T]));
+    check("追って中身の大きい面は「小さすぎ」に溜めない",
+      !T.has(`${HOST}/nordic/photos`) && T.size === 1, JSON.stringify([...T]));
+
+    /* 通さない先は curl に渡す前に止め、宛先ごとに数える */
+    const out = await hit(ctx, "http://example.invalid/a.png", "image");
+    check("通さない先は止めて、宛先を数える",
+      out.aborted && P.blocked(ctx).get("example.invalid") === 1, JSON.stringify([...P.blocked(ctx)]));
+    const gone = await hit(ctx, `${HOST}/nowhere`, "document");
+    check("取れなかった面は止めて「取れず」に数える（404 を面として配らない）",
+      gone.aborted && gone.status === 0 && P.blocked(ctx).get("live-streaming-d3cac.web.app(取れず)") === 1,
+      JSON.stringify([...P.blocked(ctx)]));
+  } finally {
+    if (keep === undefined) delete process.env.http_proxy;
+    else process.env.http_proxy = keep;
+  }
+  /* 本番の名前で頼んだ5本（追った先を含む）が、全部ここで受けたものか */
+  check("本番の名前の要求は、全部偽のサーバが受けた（本番に出ていない）",
+    PROXIED.length === 5 && PROXIED.every((u) => u.startsWith(`${HOST}/`)), JSON.stringify(PROXIED));
+}
+
 /* ------------------------------------------------------------------ まとめ -- */
 
 srv.close();
+for (const d of SCRATCH) rmSync(d, { recursive: true, force: true });
 console.log("");
 if (SEEN === 0) {
   console.log("::error::数えるものが1つも無かった。");
