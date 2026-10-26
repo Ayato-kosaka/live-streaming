@@ -118,7 +118,8 @@ mjs が要るもの（実測で切り分け）:
 ポートを握る見張りも無い。
 **新しく足す見張りがリポジトリの中や、固定の名前の一時ファイルへ書くなら、`LANES` に足すこと。**
 
-**見張りの環境は1本ずつ回していたときと1文字も変えない。** はじめは
+**見張りの環境は1本ずつ回していたときと1文字も変えない**（例外は1つだけ。
+下の「古い pyc を読まない」の `PYTHONPYCACHEPREFIX`）。はじめは
 `TMPDIR` を1本ずつ別の部屋に差し替えて書き合いを避けたが、CI で
 `mutation_drill_selftest.py` が嘘の赤を出した。あれは「同じ置き場で走っている
 見張りを拾えるか」を、`mutation_drill.busy()` が**頭から90文字で切った命令の行**に
@@ -136,6 +137,35 @@ src を変えれば作り直し、型の誤りでは今までどおり落ちる�
 本当に重なること**（並べたつもりで1本ずつ回っていても、0 は出てしまうので）を、
 偽の見張りで毎回測る。
 
+## 古い pyc を読まない（2026-10-26）
+
+この作業箱の `python/__pycache__/recipe_lag_watch.cpython-313.pyc` が、元ファイルと
+中身で食い違っていた（178行目の `when > cut` が、バイトコードでは `when < cut`）。
+Python が pyc を使うかどうかは**元ファイルの時刻（秒）と大きさ**しか見ない。
+2026-10-23 に手で `>` を `<` にして見張りが落ちるのを確かめ、**同じ1秒のうちに戻した**ので、
+記録は元と同じまま中身だけが書き換えたほうになり、3日のあいだ `recipe_lag_watch.py` は
+「遅れ0件」と言いながら何も見ていなかった（見張りは 1 で落ちた。pyc を消すと 0）。
+CI は毎回まっさらな取り出しなので当たらない。**手元の作業箱でだけ、見張りが黙って外れる。**
+（`dead_stream_watch_selftest.py` は前に同じ穴を踏んで、自分の守る2本の pyc だけを頭で消している）
+
+だから**子には、回ごとに空の pyc の置き場を渡す**（`PYTHONPYCACHEPREFIX`）。子も孫も
+（環境を受け継ぐかぎり）置き場の `__pycache__` を読まず、ソースから作り直す。回の中では
+1つの置き場を分け合う——回の中で見張りがリポジトリの `.py` を書き換えることは無い
+（上の「列の外の見張りは、リポジトリの中へも1バイトも書かない」）ので、回の中では古くならない。
+環境を作り直して孫を起こす見張り（`env={"PATH": …}` の形）の孫は守れないので、
+**手で実物を書き換えて試したら、戻したあと `__pycache__` を消す**（CLAUDE.md）。
+
+この環境の差は、命令の行にも `TMPDIR` にも出ない（上の `busy()` の 90文字の件は踏まない）。
+速さは測った（2026-10-26。この箱で2本ずつ、177本）: 壁時計 455秒 → 450秒（揺れの内）、
+CPU（user）12分12秒 → 12分29秒（+2%）。増えるのは、標準の部品と `google-cloud-*` を
+回の中で1度コンパイルし直すぶん（`photos_selftest.py` 1本なら、空の置き場で 0.9秒 → 2.8〜3.9秒、
+2本目からは 0.85秒）。子ごとに空にすると、この 2〜3秒を毎回払うので、回ごとにした。
+`drill()` は下の対照のぶん 1.9秒 → 2.6秒。
+
+対照は `drill()` にある。元と時刻・大きさが同じで中身だけ違う pyc を置いて回し、
+元のとおりに判定されること。**守りだけを外した回し役**（`FRESH_PYC = False`）では、
+同じ箱が毒の pyc のほうで判定されて赤くなること（毒が本物である証拠）。
+
 ## `BQ_PROJECT_ID` を置いていくのはなぜか
 
 `python/config.py` は読み込まれた時点で `BQ_PROJECT_ID` が無いと投げる。
@@ -148,7 +178,9 @@ src を変えれば作り直し、型の誤りでは今までどおり落ちる�
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import marshal
 import os
 import subprocess
 import sys
@@ -199,6 +231,10 @@ MJS_ROOTS = (
 
 # 1本にかける上限。止まった見張りは「落ちた」であって「待つもの」ではない
 TIMEOUT_SEC = 300
+
+# **子には、回ごとに空の pyc の置き場を渡す**（頭の「古い pyc を読まない」）。
+# False にするのは `drill()` の対照だけ（守りを外すと毒の pyc が読まれることを見る）
+FRESH_PYC = True
 
 # **同じものに書く見張りの列。** 列の中は1本ずつ、列の外とは並べて回す。
 # 列の名前 → （入る見張り, なぜ）。`/` で終わるものは道の頭で決める——その置き場に
@@ -481,7 +517,100 @@ def drill() -> bool:
             put(apart, "elsewhere/x/b_selftest.py")
             (apart / "hold").write_text("8", encoding="utf-8")
             sub(apart, 1, "重なった", ("--jobs", "4"))
+
+    if not stale_pyc_drill():
+        ok = False
     print("  " + ("○ 回し役は落ちられる" if ok else "✕ 回し役の対照が外れた"))
+    return ok
+
+
+# 古い pyc の対照に使う、作り物の本体と見張り。毒は同じ長さの書き換え（`>` → `<`）
+_JUDGE = "def late(when, cut):\n    return when > cut\n"
+_JUDGE_BAD = _JUDGE.replace(">", "<")
+_JUDGE_TEST = ("import sys\nsys.path.insert(0, __file__.rsplit('/', 1)[0])\n"
+               "from judge import late\nsys.exit(0 if late(2, 1) else 1)\n")
+
+
+def plant_stale_pyc(src: Path, text: str) -> Path:
+    """`src` と時刻（秒）・大きさが同じで、中身だけ `text` の pyc を、置き場の `__pycache__` に置く。
+
+    Python は pyc を使うかを記録（時刻・大きさ）でしか決めないので、これがそのまま読まれる。
+    置く先は `importlib.util.cache_from_source` ではなく手で組む——あちらは自分の
+    `sys.pycache_prefix` に従うので、外から置き場を渡されていると毒が置き場の外へ行く
+    """
+    st = src.stat()
+    code = compile(text, str(src), "exec", dont_inherit=True)
+    pyc = src.parent / "__pycache__" / f"{src.stem}.{sys.implementation.cache_tag}.pyc"
+    pyc.parent.mkdir(exist_ok=True)
+    pyc.write_bytes(importlib.util.MAGIC_NUMBER + bytes(4)
+                    + (int(st.st_mtime) & 0xFFFFFFFF).to_bytes(4, "little")
+                    + (st.st_size & 0xFFFFFFFF).to_bytes(4, "little")
+                    + marshal.dumps(code))
+    return pyc
+
+
+def stale_pyc_drill() -> bool:
+    """**古い pyc を読まないか**（頭の「古い pyc を読まない」）。
+
+    2つの毒を当てる。守りのある回し役では元のとおりに判定され（0）、**守りだけを外した
+    回し役**（`FRESH_PYC = False`）では毒のほうで判定される（1）ことを見る。後者が 0 なら、
+    毒が毒になっていない（置きかたが壊れている）ので、前者の 0 は何も確かめていない。
+
+      1. 置いていった毒——2026-10-23 に手で書き換えて同じ1秒で戻した形
+      2. 回のあいだにできる毒——同じ長さに書き換えて1回まわし、同じ時刻で元に戻してもう1回。
+         置き場を回ごとに作り直さず使い回すと（固定の道にする、など）、ここで落ちる
+    """
+    ok = True
+    # 外から渡された置き場や「書かない」が残っていると、守りを外した側でも毒が読まれず、
+    # 対照にならない
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("PYTHONPYCACHEPREFIX", "PYTHONDONTWRITEBYTECODE")}
+
+    def runner_rc(root: Path, guard: bool) -> int:
+        args = ["--root", str(root), "--no-drill"]
+        if guard:
+            cmd = [sys.executable, str(Path(__file__).resolve()), *args]
+        else:
+            # 守りだけを外した回し役。ほかは1文字も変えない
+            cmd = [sys.executable, "-c",
+                   "import sys; sys.path.insert(0, sys.argv[1]); "
+                   "import selftest_runner as R; R.FRESH_PYC = False; "
+                   "sys.argv = ['selftest_runner.py', *sys.argv[2:]]; sys.exit(R.main())",
+                   str(HERE), *args]
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_SEC,
+                              check=False, env=env).returncode
+
+    def box(at: Path) -> Path:
+        at.mkdir()
+        (at / "judge.py").write_text(_JUDGE, encoding="utf-8")
+        (at / "judge_selftest.py").write_text(_JUDGE_TEST, encoding="utf-8")
+        return at / "judge.py"
+
+    def say(what: str, got: tuple, want: tuple) -> None:
+        nonlocal ok
+        hit = got == want
+        ok = ok and hit
+        print(f"  {'○' if hit else '✕'} {what} → 終了コード {'→'.join(map(str, got))}"
+              f"（欲しいのは {'→'.join(map(str, want))}）")
+
+    print("[対照] 古い pyc（元と時刻・大きさが同じで、中身が違う）を読まないか")
+    with tempfile.TemporaryDirectory() as tmp:
+        for guard in (True, False):
+            tag = "" if guard else "（守りを外した回し役）"
+            # 1. 置いていった毒
+            src = box(Path(tmp) / f"left{int(guard)}")
+            plant_stale_pyc(src, _JUDGE_BAD)
+            say(f"置いていった毒の pyc がある{tag}", (runner_rc(src.parent, guard),),
+                (0,) if guard else (1,))
+            # 2. 回のあいだにできる毒。1回目は書き換えたほうなので、どちらでも赤
+            src = box(Path(tmp) / f"between{int(guard)}")
+            src.write_text(_JUDGE_BAD, encoding="utf-8")
+            t = src.stat()
+            first = runner_rc(src.parent, guard)
+            src.write_text(_JUDGE, encoding="utf-8")
+            os.utime(src, ns=(t.st_atime_ns, t.st_mtime_ns))
+            say(f"書き換えて回し、同じ時刻・同じ大きさで戻してもう1回{tag}",
+                (first, runner_rc(src.parent, guard)), (1, 0) if guard else (1, 1))
     return ok
 
 
@@ -688,9 +817,14 @@ def main() -> int:
         print(f"  — 外した {n} … {why}")
 
     env = dict(os.environ)
-    t_all = time.monotonic()
-    results = run_all(found, cwd, env, jobs)
-    wall = time.monotonic() - t_all
+    # 置き場は回の終わりに捨てる。次の回は、また空から作る
+    with tempfile.TemporaryDirectory(prefix="selftest-pyc-",
+                                     ignore_cleanup_errors=True) as pyc:
+        if FRESH_PYC:
+            env["PYTHONPYCACHEPREFIX"] = pyc
+        t_all = time.monotonic()
+        results = run_all(found, cwd, env, jobs)
+        wall = time.monotonic() - t_all
     bad: list[tuple[str, int, str]] = [
         (label(p, cwd), rc, tail) for p, rc, _, tail in results if rc != 0]
 

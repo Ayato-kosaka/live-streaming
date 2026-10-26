@@ -283,6 +283,8 @@ python3 python/mutation_drill.py         # 守っている実物を壊して、�
 **実物を壊すあいだ、ほかの見張りを同じ置き場で回さない**こと
 （混ざると嘘の赤が出る。道具の側でも鍵と `ps` で止めてある）。
 本番では手で押す（Actions の「見張りの対照を当てる」）。
+**手で実物を書き換えて試したら、戻したあと `__pycache__` を消す**（`find . -name __pycache__ -prune -exec rm -rf {} +`）。同じ長さの書き換えを同じ1秒で戻すと、Python は書き換えたほうの pyc を使い続ける（2026-10-23 から3日、この箱の `recipe_lag_watch.py` が何も見ずに「遅れ0件」を返していた）。
+`selftest_runner.py` と `mutation_drill.py` から回すぶんは、子に空の pyc の置き場（`PYTHONPYCACHEPREFIX`）を渡すので読まない。
 
 ページを触ったら、書き出したものを一通り回して確認する:
 
