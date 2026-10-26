@@ -7,13 +7,27 @@
  * 面ごと・太さごとに画面へ出る字（`tools/fonts/weights.json`）を突き合わせて、
  * **ブラウザを立てずに**「この面はどの束を取りに行って、何バイト払うか」を出す。
  *
- * 見るのは4つ。
+ * 見るのは5つ。
  *
  *   1. 落ちる字が無いか … 画面に出る字が、どの束にも入っていなければ
  *      **端末の書体に落ちる**（Android では丸ゴシックでなくなる＝見た目が変わる）
  *   2. いちばん重い面が上限を超えていないか
  *   3. 1面あたりの平均が上限を超えていないか（1面だけ軽くして他を太らせる切り方よけ）
  *   4. **表（`weights.json`）が、島の面ぜんぶを持っているか**（下の「分母」）
+ *   5. **表を作る拾いかた（`fontweigh.mjs` の `COLLECT`）が、字を太さごとに正しく拾うか**（下の「拾いかた」）
+ *
+ * ## 拾いかた——表そのものが嘘だと、1〜4 は嘘の表の上で緑になる（2026-10-26）
+ *
+ * 表は `fontweigh.mjs` の `COLLECT` がブラウザの中で拾った字でできている。
+ * ここが狂うと——`<script>` の中身を拾う・端末の書体で出している段まで拾う・
+ * `::before` の `counter(…)` を字と読む・入力欄でない値を拾う・太さの束を取り違える——
+ * 次に表を作り直した日から、**束が太るか、焼かない字が出る。** それでもこの見張りは
+ * 表と束を突き合わせるだけなので、緑のまま通っていた（`mutation_drill.py` で
+ * `COLLECT` の等しさを全部ひっくり返して緑だった）。
+ *
+ * **ブラウザは立てない**（CI に `playwright-core` が無い）。`COLLECT` が触るのは
+ * `document` / `NodeFilter` / `getComputedStyle` の3つだけなので、それを偽で置き、
+ * 作った面1枚（`FAKE_PAGE`）に当てて、太さごとの字が1字違わず出るかを見る。
  *
  * ## 分母——表に無い面は、重くても軽くても出てこない（#902）
  *
@@ -55,13 +69,20 @@
  *   hole  … 表から面を1枚抜く（#902 当時の姿）。分母の足が効いていなければ素通りする
  *   blind … 面を1枚も見つけられない置き場を数えさせる。**0 で緑にならない**か
  *
- * 終了コード 0=通った / 1=超えた・落ちる字がある・表に無い面がある /
+ * 拾いかたの対照は**守りを外した写し**。`COLLECT` を字のまま写し、守りを1つずつ外して
+ * 偽の面に当てる（本物のファイルは触らない）。拾いかたの足が効いていなければ素通りする。
+ *
+ *   noskip     … `<script>` / `<style>` の中身も拾う
+ *   anyvalue   … 入力欄（`INPUT`）でない値も拾う
+ *   rawcontent … `::before` / `::after` の中身を、字（`"…"`）でなくても拾う
+ *
+ * 終了コード 0=通った / 1=超えた・落ちる字がある・表に無い面がある・字の拾いかたが狂った /
  * 2=数えるものが無い。
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { NEAR, pageKeys } from "./fontweigh.mjs";
+import { COLLECT, NEAR, pageKeys } from "./fontweigh.mjs";
 import { DIST } from "./islepages.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -256,6 +277,92 @@ function judge(rows, label, only) {
   return bad;
 }
 
+/* ── 拾いかた。`COLLECT` を偽の DOM に当てる ───────────────────────── */
+
+const MARU = '"Maru Island", sans-serif';
+
+/** 偽の要素。`COLLECT` が読むものだけを持つ（字は自分の書体と太さを直に持つ。継ぐのは無し） */
+function el(tagName, o = {}, ...kids) {
+  return {
+    nodeType: 1, nodeValue: null, tagName,
+    font: o.font ?? MARU, weight: String(o.weight ?? 400),
+    pseudo: { "::before": o.before ?? "none", "::after": o.after ?? "none" },
+    placeholder: o.placeholder ?? "", value: o.value ?? "",
+    shadowRoot: o.shadow ? { nodeType: 11, nodeValue: null, childNodes: o.shadow } : null,
+    childNodes: kids.map((k) => (typeof k === "string" ? { nodeType: 3, nodeValue: k } : k)),
+  };
+}
+
+/* 作った面1枚。**守りの1つ1つに、外すと字が増えるか減る行を当ててある** */
+const FAKE_PAGE = el("BODY", {}, "あ",
+  el("H1", { weight: 700 }, "見出"),
+  el("P", { weight: 500 }, "丸め"),               // 500 は 400 の束に落ちる
+  el("B", { weight: 600 }, "太"),                // 600 は 700
+  el("STRONG", { weight: 800 }, "濃"),           // 800 は 900
+  el("SCRIPT", {}, "脚本"),                      // 中身は数えない
+  el("STYLE", {}, "様式"),
+  el("SPAN", { font: "system-ui, sans-serif" }, "端末"),   // 島の書体で出していない段
+  el("SPAN", { before: '"★"', after: "counter(n)" }, "星"), // 字の `content` だけ拾う
+  el("INPUT", { placeholder: "入力欄", value: "値" }),
+  el("TEXTAREA", { value: "下書" }),             // 値を拾うのは INPUT だけ
+  el("DIV", { shadow: [el("EM", { weight: 900 }, "影")] }, "箱"),
+  el("I", {}, "改\n行"),                         // 改行（0x1f 以下）は数えない
+);
+const sorted = (s) => [...s].sort().join("");
+const FAKE_WANT = { 400: sorted("あ丸め★星入力欄値箱改行"), 700: sorted("見出太"), 900: sorted("濃影") };
+
+/** ブラウザの TreeWalker と同じく、根の下の要素だけを文書の順に返す（影の中へは入らない） */
+function walker(root) {
+  const order = [];
+  const visit = (n) => {
+    for (const k of n.childNodes || []) if (k.nodeType === 1) { order.push(k); visit(k); }
+  };
+  visit(root);
+  let i = 0;
+  return { nextNode: () => order[i++] || null };
+}
+
+function style(n, pseudo) {
+  // ブラウザも、要素でないものを渡すと投げる
+  if (!n || n.nodeType !== 1) throw new TypeError("getComputedStyle: 要素ではない");
+  return pseudo ? { content: n.pseudo[pseudo] ?? "none" } : { fontFamily: n.font, fontWeight: n.weight };
+}
+
+/**
+ * `fn`（`COLLECT` か、その写し）を偽の面に当てて、外れた太さを返す。外れなければ空。
+ * 偽の `document` などは、当てているあいだだけ置く。
+ */
+function collectBad(fn) {
+  const names = ["document", "NodeFilter", "getComputedStyle"];
+  const keep = names.map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]);
+  globalThis.document = { body: FAKE_PAGE, createTreeWalker: walker };
+  globalThis.NodeFilter = { SHOW_ELEMENT: 1 };
+  globalThis.getComputedStyle = style;
+  try {
+    const got = fn(NEAR);
+    return [400, 700, 900]
+      .filter((w) => got[w] !== FAKE_WANT[w])
+      .map((w) => `${w} の束に「${got[w]}」（欲しいのは「${FAKE_WANT[w]}」）`);
+  } catch (e) {
+    return [`投げた: ${e.message}`];
+  } finally {
+    for (const [k, d] of keep) {
+      if (d) Object.defineProperty(globalThis, k, d);
+      else delete globalThis[k];
+    }
+  }
+}
+
+/* 写しの元。**字のまま写す**（ブラウザへ渡すときも `p.evaluate` が字にして渡している） */
+const COLLECT_SRC = COLLECT.toString();
+const copyCollect = (src) => (0, eval)(`(${src})`);
+/** 守りを1つずつ外した写し。[名前, 何を外すか, 外す字, 代わりの字] */
+const COLLECT_BREAKS = [
+  ["noskip", "`<script>` / `<style>` の中身も拾う", /skip\.has\(el\.tagName\)/, "false"],
+  ["anyvalue", "入力欄でない値も拾う", /el\.tagName [!=]== "INPUT"/, "true"],
+  ["rawcontent", "`::before` の中身を、字でなくても拾う", /c\[0\] [!=]== '"'/, "true"],
+];
+
 let seen;
 try {
   seen = JSON.parse(readFileSync(SEEN, "utf8"));
@@ -294,6 +401,15 @@ for (const [name, why] of [["share", "太さごとの切り分けをやめる"],
   console.log(`  ${bad === null ? "○" : "✕"} blind → ${bad === null ? "数えるものが無い（2 で落ちる）" : "**0面を数えて先へ進んだ**"}`);
   if (bad !== null) ok = false;
 }
+/* 拾いかたの対照。**守りを外した写しを偽の面に当てて、外れることを見てから**本物を当てる。
+   写しが投げたのは「外れた」に数えない（写しかたが壊れているだけかもしれない） */
+for (const [name, why, from, to] of COLLECT_BREAKS) {
+  const src = COLLECT_SRC.replace(from, to);
+  const bad = src === COLLECT_SRC ? ["写せなかった（外す字が `COLLECT` に無い）"] : collectBad(copyCollect(src));
+  const caught = src !== COLLECT_SRC && bad.length > 0 && !bad[0].startsWith("投げた");
+  console.log(`  ${caught ? "○" : "✕"} ${name}（${why}）→ ${caught ? bad[0] : bad[0] ?? "**素通りした。拾いかたの足は効いていない**"}`);
+  if (!caught) ok = false;
+}
 /* 丸めの表。ここが狂うと、焼かない字が出て端末の書体に落ちる */
 for (const [w, want] of [[300, 400], [400, 400], [500, 400], [600, 700], [700, 700], [800, 900], [900, 900]]) {
   if (near(w) !== want) {
@@ -304,6 +420,20 @@ for (const [w, want] of [[300, 400], [400, 400], [500, 400], [600, 700], [700, 7
 if (!ok) {
   console.log("\n✕ 対照が外れた。**本物の数字は1つも出さない**");
   process.exit(2);
+}
+
+console.log("\n[拾いかた] 偽の面1枚で、表を作る `COLLECT` が太さごとに字を拾えるか");
+{
+  /* 本物と、書き換えずに写しただけのもの。後者が外れるなら、対照の写しかたのほうを疑う */
+  const real = collectBad(COLLECT);
+  const plain = collectBad(copyCollect(COLLECT_SRC));
+  for (const [label, bad] of [["本物", real], ["写しただけ", plain]]) {
+    console.log(`  ${bad.length ? "✕" : "○"} ${label} → ${bad.length ? bad.join(" / ") : "3太さとも1字違わない"}`);
+  }
+  if (real.length || plain.length) {
+    console.log("\n✕ 字の拾いかたが狂っている。このまま表（`tools/fonts/weights.json`）を作り直すと、束が太るか焼かない字が出る");
+    process.exit(1);
+  }
 }
 
 console.log("\n[本物]");

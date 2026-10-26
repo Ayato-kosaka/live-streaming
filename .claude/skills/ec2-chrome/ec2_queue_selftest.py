@@ -22,6 +22,8 @@ EC2 をいくつものセッションが同時に使い、片方の「済んだ�
   `ec2.py` は `AWS` を差し替えて読み込み、`ec2_exec.sh` は PATH の頭に偽の `aws` を置いて回す
   （本物の aws が呼ばれても届かないよう、インスタンスは `i-fake…`、`AWS_CONFIG_FILE` は無い場所）
 - **idle-stop**: `idle_stop.sh` の本物の字の、時刻・uptime・置き場・shutdown だけを差し替えて、5分ごとの cron を偽の時計で回す
+- **実時間**: 流れるのは本物のプロセスを相手にする所（心拍のスレッド・kill -9・exec・2つのプロセスの順番）だけ。
+  そこも決まった秒は待たず、条件が満ちるまで見る（`until`）。CI が混んでも答えが変わらないように（2026-10-26）
 
 | 足 | 確かめること（依頼の合格の条件の番号） |
 | --- | --- |
@@ -183,6 +185,57 @@ def ems(out: str) -> dict:
         if ln.startswith("EC2Q "):
             return json.loads(ln[5:])
     return {"state": "noanswer", "out": out.strip()[-300:]}
+
+
+# ---- 実時間で待つところ -----------------------------------------------------------
+# 時刻で決まる答えは偽の時計（NOW と q.at()）で出す。本物のプロセスを相手にする足（心拍のスレッド・
+# kill -9・exec・2つのプロセスの順番）だけは実時間が流れるが、**決まった秒は待たない**。
+# 決まった秒は、ランナーが混むと足りなくなって答えが揺れた（PR #1038 の Selftests で、
+# 4本並べた見張りの裏で BREAK=beat_never_expires の対照が外れた）。条件が満ちるまで短く何度も見て、
+# 満ちたら次へ進む。上限は混んでも届かない長さにして、使い切るのは満ちない形（守りを外した写し）だけにする
+
+def until(cond, cap: float, every: float = 0.02) -> bool:
+    """cond() が真になるまで見続ける。真になれば True、cap 秒たっても偽なら False"""
+    end = time.monotonic() + cap
+    while not cond():
+        if time.monotonic() > end:
+            return False
+        time.sleep(every)
+    return True
+
+
+class Lines:
+    """パイプを裏で読み続ける。readline で止まらずに「この字が来たか」を until で見るため"""
+
+    def __init__(self, pipe) -> None:
+        self.got: list[str] = []
+
+        def pump():
+            for ln in pipe:
+                self.got.append(ln)
+        self.th = threading.Thread(target=pump, daemon=True)
+        self.th.start()
+
+    def has(self, s: str) -> bool:
+        return any(s in ln for ln in list(self.got))
+
+    def text(self) -> str:
+        self.th.join(30)
+        return "".join(self.got)
+
+
+def _pstat(pid) -> list[str] | None:
+    """/proc/<pid>/stat の ) より後ろ（[0]=状態 [1]=親 [3]=セッション [19]=起動時刻）。居なければ None"""
+    try:
+        s = Path(f"/proc/{pid}/stat").read_text(errors="replace")
+    except OSError:
+        return None
+    return s[s.rfind(")") + 2:].split()
+
+
+def _alive(pid: int, start: str) -> bool:
+    ps = _pstat(pid)
+    return bool(ps) and ps[0] not in ("Z", "X", "x") and ps[19] == start
 
 
 class Bench:
@@ -360,15 +413,22 @@ def leg_pid_death(b: Bench):
     q = Q(b, real=True)
     p = subprocess.Popen([PY, str(b.tool), "hold", "fish", "--who", "batch", "--", "sleep", "60"], env=q.env(),
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    lst = {}
-    for _ in range(100):
-        lst = q.call("list")
-        if (lst.get("lanes") or {}).get("fish"):
-            break
-        time.sleep(0.05)
+    lst: dict = {}
+
+    def listed():
+        lst.update(q.call("list"))
+        return bool((lst.get("lanes") or {}).get("fish"))
+
+    def argv0():
+        try:
+            return Path(f"/proc/{p.pid}/cmdline").read_bytes().split(b"\0")[0].decode()
+        except OSError:
+            return "?"
+    until(listed, 60)
     h = ((lst.get("lanes") or {}).get("fish") or [{}])[0]
-    time.sleep(0.2)
-    cmdline = Path(f"/proc/{p.pid}/cmdline").read_bytes().split(b"\0")[0].decode() if Path(f"/proc/{p.pid}").exists() else "?"
+    # 札を書いてから exec するまでの間がある。混むと決まった 0.2秒で足りる保証は無いので、成り代わるまで見る
+    until(lambda: argv0() == "sleep" or p.poll() is not None, 30)
+    cmdline = argv0()
     w = q.take("fish", "B")
     os.kill(p.pid, signal.SIGKILL)
     p.wait(10)
@@ -791,8 +851,26 @@ class FakeEC2:
                       ["/var/log/cdp-heal.log", str(self.d / "cdp-heal.log")]]}))
         self.aws_cmd = [PY, str(self.fake), "--dir", str(self.d)]
 
-    def shift(self, s: float):
-        (self.d / "shift").write_text(str(s))
+    def shift(self, s: float) -> list[tuple[int, str]]:
+        """偽の EC2 の時計を s 秒進める。返すのは、進める前から動いていた偽の aws（古い時計で書くかもしれない）。
+        書きかけの shift を読ませないよう、別の名前に書いてから置き換える"""
+        tmp = self.d / "shift.tmp"
+        tmp.write_text(str(s))
+        os.replace(tmp, self.d / "shift")
+        return self.inflight()
+
+    def inflight(self) -> list[tuple[int, str]]:
+        """いま動いている偽の aws（pid, 起動時刻）"""
+        me = str(self.fake).encode()
+        out = []
+        for d in Path("/proc").glob("[0-9]*"):
+            try:
+                argv = (d / "cmdline").read_bytes().split(b"\0")
+            except OSError:
+                continue
+            if len(argv) > 1 and argv[1] == me and (ps := _pstat(d.name)):
+                out.append((int(d.name), ps[19]))
+        return out
 
     def qenv(self) -> dict:
         e = dict(os.environ)
@@ -815,8 +893,10 @@ class FakeEC2:
         return r.stdout.strip()
 
     def calls(self) -> list[dict]:
+        # 偽の aws は心拍のたびに書き足す。書きかけの最後の行（改行の無い行）は読まない
+        # （足が回っている最中に何度も数えるので、書く途中に当たると json が読めずに足ごと落ちる）
         p = self.d / "calls.jsonl"
-        return [json.loads(ln) for ln in p.read_text().splitlines()] if p.exists() else []
+        return [json.loads(ln) for ln in p.read_text().split("\n")[:-1]] if p.exists() else []
 
     def count(self, a, b2) -> int:
         return sum(1 for c in self.calls() if c["cmd"] == [a, b2])
@@ -827,6 +907,15 @@ class FakeEC2:
     def history(self) -> str:
         p = self.qdir / "history.log"
         return p.read_text() if p.exists() else ""
+
+    def beat_of(self, tk) -> float:
+        """置き場に書かれた、その札の最後の心拍の時刻（無ければ -inf）"""
+        try:
+            lanes = json.loads((self.qdir / "state.json").read_text()).get("lanes", {})
+        except (OSError, ValueError):
+            return float("-inf")
+        return next((t.get("beat", float("-inf")) for q in lanes.values() for t in q
+                     if isinstance(t, dict) and t.get("id") == tk), float("-inf"))
 
     def module(self):
         """偽の EC2 に繋いだ ec2.py（写しの置き場のもの）"""
@@ -902,11 +991,14 @@ def leg_stop_flow(b: Bench):
                     got["err"] = repr(e)
             th = threading.Thread(target=entrant, daemon=True)
             th.start()
-            time.sleep(0.3)
+            # 来た人が印を見る（「止めている最中」と言う）か、取ってしまうまで待ってから止める。
+            # 決まった秒（前は0.3秒）だと、混んだ箱では来た人が札を聞く前に止めてしまい、
+            # 印を見ずに「止まっているので起こす」道を通る（印を無視して札を出す写しでも通ってしまう）
+            until(lambda: "止めている最中" in err.getvalue() or bool(got) or not th.is_alive(), 120)
             early = dict(got)
             stop_at = len(f.calls())
             m.aws("ec2", "stop-instances", "--instance-ids", m.INSTANCE)
-            th.join(20)
+            th.join(180)
         cl = f.calls()
         stops = [i for i, c in enumerate(cl) if c["cmd"] == ["ec2", "stop-instances"]]
         starts = [i for i, c in enumerate(cl) if c["cmd"] == ["ec2", "start-instances"]]
@@ -977,23 +1069,33 @@ def leg_lease_local(b: Bench):
     m = f.module()
     m.T = 0.001     # 心拍は 120秒×0.001 = 0.12秒ごと
     with quiet_env():
+        t0 = time.monotonic()
         with m.lease("fish", who="me", purpose="voice A", ttl=600) as tk:
+            took = time.monotonic() - t0    # 起こして札を取るまで（偽の aws を5回）。いまの混み具合の物差し
             inside = f.busy()
             env_tk = os.environ.get("EC2_QUEUE_TICKET", "")
             threads = [t.name for t in threading.enumerate()]
-            for sh in (500, 1000):
-                f.shift(sh)
-                n0 = f.count("ssm", "send-command")
-                end = time.time() + 6
-                while f.count("ssm", "send-command") < n0 + 2 and time.time() < end:
-                    time.sleep(0.02)
+            beater = next((t for t in threading.enumerate() if t.name == "ec2-queue-beat-fish"), None)
+            for sh in (250, 500, 750, 1000):
+                # 進めたあとの心拍が置き場に届き、進める前に出かけた心拍（古い時計で書く）が全部書き終わるまで見る。
+                # 前は「500秒ずつ2回・send-command が2本増えるまで6秒」で、2つ外れた（CPU を絞って回した元の形）:
+                #  - 混むと6秒で1本も届かない。守りと関係の無い写し（BREAK=stop_no_queue）でこの足が落ちた
+                #  - 心拍が並んで走る形（BREAK=beat_detached。この足は通るはず）で、古い時計の心拍が新しい心拍より
+                #    後に書き、古い側から見て札が SKEW_S（300秒）より先に書かれている＝壊れた札として消した
+                # だから一度に進めるのは300秒未満にし、次に進める前に古い心拍が書き終わるのを見る。
+                # 上限は使い切らない（心拍のスレッドが居なければ来ないので待たない。その形は「スレッド」の確かめで落ちる）
+                due = time.time() + sh
+                old = f.shift(sh)
+                until(lambda: (f.beat_of(tk) >= due and not any(_alive(*k) for k in old))
+                      or beater is None or not beater.is_alive(), max(30.0, 10 * took))
             alive = f.busy()
         after = f.busy()
     out += [(f"取れる（{tk}）・札は環境に入る（{env_tk}）", bool(tk) and env_tk == f"fish:{tk}"),
             (f"心拍はこのプロセスのスレッド（{[t for t in threads if 'beat' in t]}）", "ec2-queue-beat-fish" in threads),
             (f"心拍で持ち続ける（時計を1000秒進めても {alive[:24]}）", alive.startswith("BUSY fish") and inside.startswith("BUSY fish")),
             (f"抜けたら返す（{after}）", after == "IDLE")]
-    f.shift(0)
+    old = f.shift(0)        # 戻す前に出かけた心拍（1000秒先の時計で書く）が、次の札を古いとみなして消さないように
+    until(lambda: not any(_alive(*k) for k in old), 60)
     try:
         with quiet_env():
             with m.lease("fish", who="me", purpose="boom"):
@@ -1040,20 +1142,32 @@ def leg_session_death(b: Bench):
     env = dict(os.environ)
     for k in ("EC2_QUEUE_TICKET", "EC2_QUEUE_WHO", "EC2_QUEUE_PURPOSE"):
         env.pop(k, None)
+    t0 = time.monotonic()
     p = subprocess.Popen([PY, str(drv), json.dumps(cfg)], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=env)
     line = p.stdout.readline().strip()
+    took = time.monotonic() - t0       # 起動して札を取るまで（偽の aws を5回）。いまの混み具合の物差し
 
     def beats():
         return sum(1 for c in f.calls() if c["cmd"] == ["ssm", "send-command"])
-    end = time.time() + 6
-    while beats() < 3 and time.time() < end:
-        time.sleep(0.05)
+    # 上限は守りを外した写しでしか使い切らない。心拍のスレッドが無い（タスクが1本）なら来ないので待たない
+    until(lambda: beats() >= 3 or len(list(Path(f"/proc/{p.pid}/task").glob("[0-9]*"))) < 2, max(30.0, 10 * took))
     b0 = beats()
+    # kill -9 の瞬間に出かけていた心拍（子の偽の aws）は、親が死んでも書き終わる。それを「生き残った心拍」と
+    # 数えないよう、止めて（SIGSTOP）から子を控え、kill -9 し、控えた子が抜けるまで見る。
+    # 切り離した裏（start_new_session）はセッションが違うので控えない（それが生き残るのを見たい）
+    os.kill(p.pid, signal.SIGSTOP)
+    until(lambda: all((_pstat(f"{p.pid}/task/{t.name}") or ["T"])[0] in ("T", "t")
+                      for t in Path(f"/proc/{p.pid}/task").glob("[0-9]*")), 10)
+    me = _pstat(p.pid) or [""] * 4
+    kids = [(int(d.name), ps[19]) for d in Path("/proc").glob("[0-9]*")
+            if (ps := _pstat(d.name)) and ps[1] == str(p.pid) and ps[3] == me[3]]
     os.kill(p.pid, signal.SIGKILL)
     p.wait(10)
-    time.sleep(0.3)
+    until(lambda: not any(_alive(k, s) for k, s in kids), 60)
     b1 = beats()
-    time.sleep(0.8)
+    # 生き残った心拍が居れば、札を取るまでにかかった時間の2倍のうちに1本は来る（裏の心拍は0.05秒おき）。
+    # 来れば待ち切らずに次へ
+    until(lambda: beats() > b1, max(0.8, 2 * took))
     b2 = beats()
     busy_before = f.busy()
     f.shift(601)
@@ -1078,7 +1192,10 @@ mode = cfg["mode"]
 if mode == "up":
     print("PORT", cdp.up("fish"), flush=True)
     print("TICKETS", os.environ.get("EC2_QUEUE_TICKET", ""), flush=True)
-    time.sleep(float(cfg.get("sleep", 0)))
+    # 見張りが「2人目が待っている」のを見て gate を置くまで持つ（決まった秒は持たない）
+    end = time.time() + 120
+    while cfg.get("gate") and not os.path.exists(cfg["gate"]) and time.time() < end:
+        time.sleep(0.02)
 elif mode == "hold":
     try:
         print("GOT", cdp.hold("fish", wait=float(cfg["wait"])), flush=True)
@@ -1097,22 +1214,31 @@ def leg_cdp_hold(b: Bench):
         c = dict(cfg, cdp=str(b.files["cdp.py"] / "cdp.py"), queue=str(qt))
         return subprocess.Popen([PY, str(drv), json.dumps(c)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                 env=env or q.env())
-    p1 = spawn({"mode": "up", "sleep": 1.2})
+    # 1人目は2人目が待ちに入るのを見てから抜ける。前は「1人目は1.2秒持つ」で、混むと2人目が起きて
+    # 札を聞く前に1人目が抜け、待たずに取れてしまう（「待つ」を確かめられずに落ちる）
+    gate = q.d / "gate"
+    p1 = spawn({"mode": "up", "gate": str(gate)})
     first = p1.stdout.readline().strip()
     lst = q.call("list")
     h = ((lst.get("lanes") or {}).get("fish") or [{}])[0]
-    t0 = time.time()
-    p2 = spawn({"mode": "hold", "wait": 20})
-    o2, e2 = p2.communicate(timeout=40)
-    waited = time.time() - t0
-    p1.wait(10)
+    p2 = spawn({"mode": "hold", "wait": 60})
+    out2, err2 = Lines(p2.stdout), Lines(p2.stderr)
+    until(lambda: err2.has("番目に待つ") or p2.poll() is not None, 60)
+    held_back = p2.poll() is None and not out2.has("GOT")     # 1人目が持っているあいだは取れていない
+    gate.write_text("")
+    try:
+        p2.wait(90)
+    except subprocess.TimeoutExpired:
+        p2.kill()
+    o2, e2 = out2.text(), err2.text()
+    p1.wait(30)
     # 手元から渡された自分の札（心拍の札）なら、取り直さずにそれを使う（待たない）
     mine = q.take("fish", "session", ttl=600)
     env = q.env()
     env["EC2_QUEUE_TICKET"] = f"fish:{mine.get('ticket')}"
     env["EC2_QUEUE_WAIT"] = "3"      # 自分の札を待ってしまう形なら、3秒で諦めて落ちる
     p3 = spawn({"mode": "up"}, env=env)
-    o3, _ = p3.communicate(timeout=20)
+    o3, _ = p3.communicate(timeout=60)
     lst3 = q.call("list")
     n3 = len((lst3.get("lanes") or {}).get("fish") or [])
     q.call("release", mine.get("ticket", ""))
@@ -1120,7 +1246,8 @@ def leg_cdp_hold(b: Bench):
              first.startswith("PORT") and h.get("pid") == p1.pid and h.get("kind") == "pid"),
             (f"2人目は何番目で誰が持っているかを出して待つ（{[ln for ln in e2.splitlines() if '待つ' in ln][:1]}）",
              "番目に待つ" in e2 and f"pid {p1.pid}" in e2),
-            (f"1人目が終われば2人目に回る（{o2.strip()[:24]}・{waited:.1f}秒待った）", o2.startswith("GOT ") and 0.5 < waited < 20),
+            (f"1人目が終われば2人目に回る（{o2.strip()[:24]}・1人目が持つあいだは待っていた {held_back}）",
+             held_back and o2.startswith("GOT ")),
             (f"手元から渡された自分の札では待たず、札を増やさない（{o3.strip().splitlines()[:1]}・列 {n3}枚）",
              o3.startswith("PORT") and n3 == 1)]
 
@@ -1217,8 +1344,13 @@ def drill() -> list[str]:
 
     def one(name):
         t0 = time.time()
-        r = subprocess.run([PY, str(Path(__file__).resolve())], capture_output=True, text=True,
-                           env=dict(os.environ, BREAK=name), timeout=280, check=False)
+        try:
+            r = subprocess.run([PY, str(Path(__file__).resolve())], capture_output=True, text=True,
+                               env=dict(os.environ, BREAK=name), timeout=280, check=False)
+        except subprocess.TimeoutExpired as e:
+            # 1本が上限に当たっても、ほかの対照の結果は読めるように（例外で全部を落とさない）
+            out = e.stdout.decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
+            r = subprocess.CompletedProcess(e.cmd, 1, out + "\n280秒で返ってこなかった", "")
         r.secs = time.time() - t0
         return r
 
@@ -1235,7 +1367,18 @@ def drill() -> list[str]:
               f"{sorted(got) if got is not None else '（読めない: ' + (r.stdout + r.stderr).strip()[-300:] + '）'}"
               f"（欲しいのは {sorted(want)}・{r.secs:.0f}秒）")
         if not hit:
-            bad.append(name)
+            # 回し役は最後の1行しか出さないので、外れ方（余計に落ちた足・落ちなかった足）を名前に添えて最後の行に載せる
+            how = ([f"+{x}" for x in sorted(got - want)] + [f"-{x}" for x in sorted(want - got)]
+                   if got is not None else ["読めない"])
+            bad.append(f"{name}[{' '.join(how) or f'rc={r.returncode}'}]")
+            # どの確かめで外れたかを出す（CI のログだけで、揺れか本物かを見分けられるように）
+            leg, shown = "?", 0
+            for ln in r.stdout.splitlines():
+                if ln.startswith("["):
+                    leg = ln.split("]")[0][1:]
+                elif ln.lstrip().startswith("✕") and shown < 8:
+                    print(f"      [{leg}] {ln.strip()[:200]}")
+                    shown += 1
     return bad
 
 
