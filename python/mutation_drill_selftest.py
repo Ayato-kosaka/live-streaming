@@ -6,6 +6,7 @@
     BREAK=noback   python3 python/mutation_drill_selftest.py  # 戻しを外す
     BREAK=plan     python3 python/mutation_drill_selftest.py  # 当てる先を0本にする
     BREAK=stalepyc python3 python/mutation_drill_selftest.py  # 子に空の pyc の置き場を渡さない
+    BREAK=gate     python3 python/mutation_drill_selftest.py  # 本体の門もひっくり返す
 
 終了コード 0=通った / 1=落ちた / **2=数えるものが無い**（`docs/island-standards.md` §15）。
 
@@ -27,6 +28,9 @@
   6. `--list` が、本物の置き場で1本以上並べられる（分母）
   7. **古い pyc を読まない**（元と時刻・大きさが同じで中身だけ違う pyc があっても、
      見張りは元の字で判定される。書き換えて戻したのが同じ1秒・同じ大きさでも）
+  8. **本体の門はひっくり返さない**（`if __name__ == "__main__":` と、mjs の
+     `import.meta.url` / `process.argv[1]` を比べる行。逆さにすると、見張りが
+     `import` しただけで main が走る。門しか比べるところが無い本体は「壊すところが無い」）
 """
 
 from __future__ import annotations
@@ -59,6 +63,8 @@ if BREAK == "stalepyc":
     # 対照にならない（回し役は回ごとに置き場を渡している）
     os.environ.pop("PYTHONPYCACHEPREFIX", None)
     os.environ.pop("PYTHONDONTWRITEBYTECODE", None)
+if BREAK == "gate":
+    MD.KEEP_GATE = False                 # type: ignore
 
 
 def ok(name: str, got, want) -> None:
@@ -286,10 +292,35 @@ with tempfile.TemporaryDirectory() as tmp:
         MD.REPO = old_repo
 
 
-print("[8] 対照（この見張りが、落ちるときに落ちるか）")
+print("[8] 本体の門はひっくり返さない")
+# 門を逆さにすると、見張りが本体を `import` しただけで main が走る。2026-10-26 に
+# `recipe_lag_watch_selftest.py` がその `sys.exit(0)` で判定を1つも出さずに緑で終わり、
+# `comments_pull_selftest.py` がリポジトリの直下に `out/comments.json` を残した
+import ast  # noqa: E402
+
+GATE_ONLY = 'def main():\n    return 0\n\n\nif __name__ == "__main__":\n    main()\n'
+ok("門しか比べるところが無い本体は「壊すところが無い」", MD.mutate_py(GATE_ONLY), None)
+BOTH = 'def f(x):\n    return x == 1\n\n\nif __name__ == "__main__":\n    f(1)\n'
+got = MD.mutate_py(BOTH)
+ok("門と本物の比較がある本体で、ひっくり返す数", got[1] if got else None, 1)
+ops = sorted((type(n.ops[0]).__name__, MD.is_gate(n))
+             for n in ast.walk(ast.parse(got[0] if got else BOTH))
+             if isinstance(n, ast.Compare))
+ok("ひっくり返ったのは本物の比較だけ（演算子, 門か）", ops, [("Eq", True), ("NotEq", False)])
+
+JS_GATE_LINE = "if (import.meta.url === `file://${process.argv[1]}`) process.exit(main());\n"
+ok("mjs: 門の行はそのままで、本物の等しさだけひっくり返る",
+   MD.mutate_js("export const f = (x) => x === 1;\n" + JS_GATE_LINE),
+   ("export const f = (x) => x !== 1;\n" + JS_GATE_LINE, 1))
+# 数字の1つ動かし（定数の表のための逃げ道）も、門の `process.argv[1]` には当てない
+ok("mjs: 門の行しか比べるところが無ければ「壊すところが無い」",
+   MD.mutate_js('function main() { return "ok"; }\n' + JS_GATE_LINE), None)
+
+
+print("[9] 対照（この見張りが、落ちるときに落ちるか）")
 if not BREAK:
     bad = []
-    for leg in ("noguard", "noback", "plan", "stalepyc"):
+    for leg in ("noguard", "noback", "plan", "stalepyc", "gate"):
         rr = subprocess.run([sys.executable, str(Path(__file__).resolve())],
                             capture_output=True, text=True, timeout=900,
                             env=dict(os.environ, BREAK=leg), check=False)
@@ -299,7 +330,7 @@ if not BREAK:
         print(f"  {mark} BREAK={leg} → 終了コード {rr.returncode}（0 でなければよい）")
     if bad:
         FAILED.append("対照: " + " / ".join(bad) + " を抜いても緑のまま")
-    CHECKED += 4
+    CHECKED += 5
 
 print()
 if CHECKED == 0:

@@ -27,12 +27,30 @@
 
 | | どれに | 何を壊すか |
 | --- | --- | --- |
-| `py` | `X_selftest.py` の隣に `X.py` が在るもの | `X.py` の比較演算子を**全部ひっくり返す**（`==`↔`!=`、`<`↔`>=` …） |
-| `mjs` | `X_selftest.mjs` が `readFileSync` で名指ししている実物 | その実物の `===`↔`!==` を全部ひっくり返す |
+| `py` | `X_selftest.py` の隣に `X.py` が在るもの | `X.py` の比較演算子を**全部ひっくり返す**（`==`↔`!=`、`<`↔`>=` …）。門は除く |
+| `mjs` | `X_selftest.mjs` が `readFileSync` で名指ししている実物 | その実物の `===`↔`!==` を全部ひっくり返す。門の行は除く |
 | `repo` | リポジトリそのものを読む見張り | 下の `REPO_CASES`（何をどう壊すかを1件ずつ書いてある） |
 
 **「当てられなかった」を 0 に混ぜない。** 当てた本数・赤くなった本数・
 当てられなかった本数と**その理由**を、毎回ぜんぶ出す（§15）。
+
+## 門は壊さない（2026-10-26）
+
+本体の末尾の `if __name__ == "__main__": sys.exit(main())`（mjs なら
+`import.meta.url` や `process.argv[1]` を比べて main を守る行）は、ふるまいではなく
+**「直に起こされたときだけ main に入る」ための門**。ここまでひっくり返すと、
+見張りが本体を `import` しただけで main が走る。
+
+- `recipe_lag_watch_selftest.py` は、その main の `sys.exit(0)` で判定を1つも出さずに
+  **緑で終わった**（比較7か所を全部ひっくり返して緑。門だけを逆さにしても緑だった）
+- `comments_pull_selftest.py` は、走り出した main が**リポジトリの直下に
+  `out/comments.json` を残し**、yt-dlp で23本を本当に取りに行った
+- 赤く出たものも、**見張りが中身を見て落ちたのか、main が走ったから落ちたのか**が
+  見分けられない。py の当て先のうち57本が、門つきの本体を `import` していた
+
+だから門は、ひっくり返す数にも数えない。門しか比べるところが無い本体は
+「壊すところが無い」になる。対照は `mutation_drill_selftest.py` の [8]
+（`BREAK=gate` で門もひっくり返す元の形に戻すと赤くなる）。
 
 ## 壊したものは、必ず戻る
 
@@ -105,6 +123,15 @@ TIMEOUT_SEC = 600
 # **見張りは子ごとに空の pyc の置き場で起こす**（頭の「古い pyc を読まない」）。
 # False にするのは `mutation_drill_selftest.py` の対照（`BREAK=stalepyc`）だけ
 FRESH_PYC = True
+
+# **本体の門はひっくり返さない**（頭の「門は壊さない」）。
+# False にするのは `mutation_drill_selftest.py` の対照（`BREAK=gate`）だけ
+KEEP_GATE = True
+
+# mjs の門の行。`import.meta.url` や `process.argv[1]` を比べて main を守る
+# （「if (import.meta.url === `file://${process.argv[1]}`)」など。2026-10-26 に
+#  リポジトリの 15行を見て、これらを比べているのは全部この門だった）
+JS_GATE = re.compile(r"import\.meta\.url|process\.argv\[1\]|require\.main")
 
 # ほかの試験が走っていないかを見るときの、名前の手がかり
 BUSY_HINTS = ("_selftest.py", "_selftest.mjs", "selftest_runner.py")
@@ -251,12 +278,20 @@ def journal_recover() -> str | None:
 
 # ---- 壊しかた --------------------------------------------------------
 
+def is_gate(node: ast.Compare) -> bool:
+    """`__name__` を比べているか（`if __name__ == "__main__":` の門）。"""
+    return any(isinstance(x, ast.Name) and x.id == "__name__"
+               for x in (node.left, *node.comparators))
+
+
 class Flipper(ast.NodeTransformer):
     def __init__(self) -> None:
         self.n = 0
 
     def visit_Compare(self, node: ast.Compare) -> ast.Compare:
         self.generic_visit(node)
+        if KEEP_GATE and is_gate(node):
+            return node
         ops = []
         for op in node.ops:
             t = FLIP.get(type(op))
@@ -270,7 +305,7 @@ class Flipper(ast.NodeTransformer):
 
 
 def mutate_py(src: str) -> tuple[str, int] | None:
-    """比較演算子を全部ひっくり返す。1つも無ければ None。"""
+    """比較演算子を全部ひっくり返す（門は除く）。1つも無ければ None。"""
     tree = ast.parse(src)
     f = Flipper()
     tree = f.visit(tree)
@@ -284,28 +319,47 @@ def mutate_py(src: str) -> tuple[str, int] | None:
 # 見分けが付かず、字が壊れて「読めないから赤」になる。それは対照ではない。
 JS_EQ = {"===": "!==", "!==": "===", "==": "!=", "!=": "=="}
 JS_BOOL = {"&&": "||", "||": "&&"}
+JS_EQ_RE = r"===|!==|(?<![=!<>])==(?!=)|(?<![=!<>])!=(?!=)"
+
+
+def outside_gate(src: str, pat: str, repl, count: int = 0) -> tuple[str, int]:
+    """門の行（`JS_GATE`）を飛ばして、`pat` を `repl` に置き換える。返すのは (字, 置き換えた数)。
+
+    `count` が 1 以上なら、そこで止める。行ごとに当てるので、前後の1字を見る
+    `(?<!…)` `(?!…)` も、改行をまたがない限り字全体に当てたときと同じに働く。
+    """
+    parts = src.splitlines(keepends=True)
+    n = 0
+    for i, line in enumerate(parts):
+        if count and n >= count:
+            break
+        if KEEP_GATE and JS_GATE.search(line):
+            continue
+        parts[i], k = re.subn(pat, repl, line, count=(count - n) if count else 0)
+        n += k
+    return "".join(parts), n
 
 
 def mutate_js(src: str) -> tuple[str, int] | None:
-    """等しさを見るところをひっくり返す。無ければ、かつ／または を入れ替える。
+    """等しさを見るところをひっくり返す。無ければ、かつ／または を入れ替える。門の行は除く。
 
     等しさのほうを先に使うのは、**字が通るまま意味だけ変わる**から。
     かつ／または は型が変わって `tsc` が落ちることがあり、そうなると
     「読めないから赤」になって、**見張りが中身を見ている証拠にならない。**
     """
-    n = len(re.findall(r"===|!==|(?<![=!<>])==(?!=)|(?<![=!<>])!=(?!=)", src))
+    new, n = outside_gate(src, JS_EQ_RE, lambda m: JS_EQ[m.group(0)])
     if n:
-        return re.sub(r"===|!==|(?<![=!<>])==(?!=)|(?<![=!<>])!=(?!=)",
-                      lambda m: JS_EQ[m.group(0)], src), n
-    n = len(re.findall(r"&&|\|\|", src))
+        return new, n
+    new, n = outside_gate(src, r"&&|\|\|", lambda m: JS_BOOL[m.group(0)])
     if n:
-        return re.sub(r"&&|\|\|", lambda m: JS_BOOL[m.group(0)], src), n
+        return new, n
     # 定数の表（比べるところが1つも無い字）。**数を1つだけ動かす。**
     # 丸ごと壊すと「読めないから赤」になって、見張りが中身を見ている
-    # 証拠にならないので、**1か所だけ**
-    m = re.search(r"(?<![\w.])(\d+)(?![\w.])", src)
-    if m:
-        return src[:m.start()] + str(int(m.group(1)) + 1) + src[m.end():], 1
+    # 証拠にならないので、**1か所だけ**（門の `process.argv[1]` の 1 も動かさない）
+    new, n = outside_gate(src, r"(?<![\w.])(\d+)(?![\w.])",
+                          lambda m: str(int(m.group(1)) + 1), count=1)
+    if n:
+        return new, 1
     return None
 
 
@@ -895,9 +949,9 @@ def main() -> int:
             cant.append((rel, f"{tgt} が手元で直しかけ。他人の作業を踏まない"))
             continue
         if r["kind"] == "py":
-            res = attempt(rel, r["target"], mutate_py, "比較演算子を全部ひっくり返す")
+            res = attempt(rel, r["target"], mutate_py, "比較演算子を全部ひっくり返す（門は除く）")
         elif r["kind"] == "mjs":
-            res = attempt(rel, r["target"], mutate_js, "`===`／`!==` を全部ひっくり返す")
+            res = attempt(rel, r["target"], mutate_js, "`===`／`!==` を全部ひっくり返す（門の行は除く）")
         else:
             c = r["case"]
             cnt = -1 if c.get("all") else 1
@@ -905,6 +959,10 @@ def main() -> int:
             def make(src, c=c, cnt=cnt):
                 if c["old"] not in src:
                     return None
+                # 等しさを丸ごとひっくり返す件（`hitbox.mjs` ほか）も、門の行は除く
+                if c["old"] in JS_EQ and cnt < 0:
+                    out, n = outside_gate(src, re.escape(c["old"]), lambda m: c["new"])
+                    return (out, n) if n else None
                 out = src.replace(c["old"], c["new"]) if cnt < 0 \
                     else src.replace(c["old"], c["new"], cnt)
                 return out, (src.count(c["old"]) if cnt < 0 else 1)

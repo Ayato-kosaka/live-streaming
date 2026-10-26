@@ -25,7 +25,7 @@
   ずれても、走ってしまってから分かる。Cookie を2本が書き戻すと
   **どちらが最新か誰も知らなくなり、毎晩の取り込みごと締め出される**
 
-## 見るもの（足は4本）
+## 見るもの（足は6本）
 
 | | 足 | 見るもの |
 | --- | --- | --- |
@@ -34,6 +34,19 @@
 | 3 | `撃ち直し` | 429 のときだけ撃ち直す。秒数は `utils.throttle` のものを借りている |
 | 4 | `ログ` | 本文も表示名も1文字も出ない。「何本目 / 全何本、取れた件数」は出る |
 | 5 | `配線` | cron を持たない・毎晩の取り込みと同じ `concurrency`・Cookie を書き戻さない |
+| 6 | `置き場` | 読み込んだだけで main に入る写しでも、起こした場所に何も残さず、yt-dlp を呼ばない |
+
+## 本体は `contained()` の中で読み込む（2026-10-26）
+
+本体の末尾の門（`if __name__ == "__main__":`）が逆さになると、**`import` しただけで
+main が走る。** 既定の `--out out/comments.json` は起こした場所からの相対なので、
+回し役から起こされた見張りは**リポジトリの直下に `out/comments.json` を残し**、
+しかも yt-dlp で23本を本当に取りに行く。`mutation_drill.py` が比較を全部
+ひっくり返した写しで回したときに、2回そうなって手で消した（次の `git add` で紛れ込む）。
+
+だから読み込むあいだだけ、引数を本体の知らない字にし（main は argparse で止まり、
+何も取りに行かない）、置き場を使い捨ての箱へ移す（引数を飲む作りになった日も、
+書く先は箱の中）。足6がその2つを、門を逆さにした写しで確かめる。
 
 ## 対照（本物の判定を1つも出す前に、毎回）
 
@@ -53,13 +66,18 @@
 | `別グループ`   | `concurrency` を別の名前にする（同時に走れてしまう） |
 | `書き戻し`     | この口からも Cookie を Secret へ書き戻す（どちらが最新か分からなくなる） |
 | `他所でも書き戻し` | 別のワークフローからも書き戻す（持ち回りの責任が散る） |
+| `置き場そのまま` | 本体を読み込むあいだ、置き場を箱へ移さない（起こした場所に書く） |
+| `引数そのまま` | 本体を読み込むあいだ、引数を差し替えない（main が最後まで走って取りに行く） |
 
 対照が1つでも外れたら、本物の判定を1つも出さずに **2** で落ちる。
 """
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
+import os
 import re
 import sys
 import tempfile
@@ -71,7 +89,37 @@ sys.path.insert(0, str(HERE.parent))            # python/
 
 import yaml  # noqa: E402
 
-import comments_pull as cp  # noqa: E402
+# 本体を読み込むあいだだけ渡す、本体が知らない引数（`contained()`）
+IMPORT_GUARD = "--comments-pull-selftest-import-guard"
+
+
+@contextlib.contextmanager
+def contained(brk: str = ""):
+    """本体を読み込むあいだ、置き場を使い捨ての箱へ移し、引数を本体の知らない字にする。
+
+    `brk` は足6の対照（`置き場そのまま` / `引数そのまま`）。片方ずつ外す。
+    """
+    argv, cwd = sys.argv[:], os.getcwd()
+    with tempfile.TemporaryDirectory(prefix="comments-pull-selftest-") as box:
+        try:
+            if brk != "置き場そのまま":
+                os.chdir(box)
+            if brk != "引数そのまま":
+                sys.argv = [argv[0], IMPORT_GUARD]
+            with contextlib.redirect_stderr(io.StringIO()):  # argparse の使いかたの表示は要らない
+                yield
+        finally:
+            os.chdir(cwd)
+            sys.argv = argv
+
+
+try:
+    with contained():
+        import comments_pull as cp  # noqa: E402
+except SystemExit as e:
+    print(f"✕ comments_pull を読み込んだだけで main に入った（終了コード {e.code}）。"
+          "直に起こされたときだけ main に入るはずの門が開いている")
+    sys.exit(1)
 from utils import throttle  # noqa: E402
 
 
@@ -134,7 +182,7 @@ WANT_KEYS = {"videoId", "author", "text", "likeCount",
 
 CHANNEL_ID_RE = re.compile(r"UC[0-9A-Za-z_-]{22}")
 
-LEGS = ("素性", "落ちても続く", "撃ち直し", "ログ", "配線")
+LEGS = ("素性", "落ちても続く", "撃ち直し", "ログ", "配線", "置き場")
 
 # 配線を見る先
 REPO = HERE.parent.parent                       # リポジトリの直下
@@ -498,12 +546,62 @@ def leg_wiring(brk: str = "") -> list[tuple[str, bool, str]]:
     ]
 
 
+# 写しを作るときに探す字。本体の門と、引数の受けかた
+MAIN_GATE = 'if __name__ == "__main__":'
+PARSE = "a = ap.parse_args()"
+
+
+def leg_place(brk: str = "") -> list[tuple[str, bool, str]]:
+    """6. 読み込んだだけで main に入る写しでも、起こした場所に何も残さず、取りに行かない。
+
+    本体の門だけを逆さにした写しを、`contained()` の中で読み込む。**本物のファイルは触らない。**
+    写しは2通り——知らない引数で argparse が止まる今の作りと、黙って飲む作り
+    （`parse_known_args`。引数の差し替えが効かなくなった日に、置き場の移しだけで守れているか）。
+    """
+    src = Path(cp.__file__).read_text(encoding="utf-8")
+    if MAIN_GATE not in src or PARSE not in src:
+        return [("写しを仕込める", False, f"{MAIN_GATE!r} か {PARSE!r} が本体に無い")]
+    head, _, tail = src.partition(MAIN_GATE)
+    opened = 'if __name__ != "__main__":' + tail
+    out = []
+    for label, swallow in (("止まる作り", False), ("飲む作り", True)):
+        body = head.replace(PARSE, "a, _ = ap.parse_known_args()") if swallow else head
+        calls: list[str] = []
+        code = None
+        back = os.getcwd()
+        with tempfile.TemporaryDirectory(prefix="comments-pull-start-") as start:
+            # 見張りを起こした場所（回し役ではリポジトリの直下）の代わり
+            os.chdir(start)
+            try:
+                with contained(brk):
+                    ns = {"__name__": "comments_pull_opened", "__file__": cp.__file__}
+                    exec(compile(body, cp.__file__, "exec"), ns)
+                    # 取りに行く口だけ差し替えてから門をくぐる。ネットにも yt-dlp にも出ない
+                    ns["run_ytdlp"] = lambda vid, *a, **k: (calls.append(vid), (False, "偽の yt-dlp"))[1]
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        exec(compile(opened, cp.__file__, "exec"), ns)
+            except SystemExit as e:
+                code = e.code
+            finally:
+                os.chdir(back)
+            left = sorted(p.relative_to(start).as_posix() for p in Path(start).rglob("*"))
+        out += [
+            (f"{label}: 門の開いた写しは main に入る（仕込みの確認）", code is not None,
+             f"終了コード {code}"),
+            (f"{label}: 起こした場所に何も残さない", not left, f"{left[:3]}"),
+        ]
+        if not swallow:
+            out.append((f"{label}: yt-dlp を1回も呼ばない", not calls, f"{len(calls)}回"))
+    return out
+
+
 ALL_LEGS = {
     "素性": leg_identity,
     "落ちても続く": leg_resume,
     "撃ち直し": leg_retry,
     "ログ": leg_log,
     "配線": leg_wiring,
+    "置き場": leg_place,
 }
 
 DRILLS = {
@@ -517,6 +615,8 @@ DRILLS = {
     "別グループ": "配線",
     "書き戻し": "配線",
     "他所でも書き戻し": "配線",
+    "置き場そのまま": "置き場",
+    "引数そのまま": "置き場",
 }
 
 
