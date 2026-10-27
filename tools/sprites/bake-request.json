@@ -1,5 +1,5 @@
 {
-  "why": "tomato-slice は焼けたが、橙1色の浅い器のように写り材料に見えない。ピザの材料（オリーブオイル・トマト缶・塩・ニンニク・オリーブ・バジル）とピザの1切れが kit に在るかを、焼けるかどうかで確かめる。焼けなかった名前はログの「焼けなかった」に出る",
-  "names": ["food-bottle-oil", "food-can-open", "food-shaker-salt", "food-garlic", "food-olive", "food-basil", "food-pizza-slice"],
+  "why": "前の回で garlic・olive・basil・pizza-slice は kit に無かった（404）。在った3つ（オリーブオイルの瓶・開いた缶・塩の容器）を焼いて、絵を見て1枚選ぶ。選ばなかった2つは次のコミットで外す",
+  "names": ["food-bottle-oil", "food-can-open", "food-shaker-salt"],
   "check": ["food-pepper"]
 }

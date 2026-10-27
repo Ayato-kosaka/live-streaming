@@ -934,7 +934,7 @@ const SPRITES_BASE = [
     // 空いている絵に材料の写るものが無かった（チーズは1色の塊、ピザ箱は空の器）
     "tomato-slice",
     // 下は kit に在るかを焼いて確かめるための候補（在ったものから1枚選び、残りは外す）
-    "bottle-oil", "can-open", "shaker-salt", "garlic", "olive", "basil", "pizza-slice",
+    "bottle-oil", "can-open", "shaker-salt",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ----------
