@@ -1,5 +1,5 @@
 {
-  "why": "10/26 のマルゲリータ（olive-margherita）の主役を food-cheese（1色の塊）から差し替える。food-kit に tomato-slice が在るかを、焼けるかどうかで確かめる。在れば素のぶんと hero/ の2枚が入る",
-  "names": ["food-tomato-slice"],
+  "why": "tomato-slice は焼けたが、橙1色の浅い器のように写り材料に見えない。ピザの材料（オリーブオイル・トマト缶・塩・ニンニク・オリーブ・バジル）とピザの1切れが kit に在るかを、焼けるかどうかで確かめる。焼けなかった名前はログの「焼けなかった」に出る",
+  "names": ["food-bottle-oil", "food-can-open", "food-shaker-salt", "food-garlic", "food-olive", "food-basil", "food-pizza-slice"],
   "check": ["food-pepper"]
 }
