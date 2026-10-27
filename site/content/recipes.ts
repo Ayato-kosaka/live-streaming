@@ -570,6 +570,19 @@ export const RECIPES: Recipe[] = [
       { label: "調理", date: "2026-10-22", videoId: "VusdZVyjgjQ", title: "北マケドニアでチーズオリーブフォカッチャつくろー！" },
     ],
   },
+  {
+    slug: "olive-margherita",
+    name: "オリーブのマルゲリータ",
+    emoji: "🍕",
+    icon: "food-bottle-oil",
+    country: "north-macedonia",
+    kind: "flour",
+    date: "2026-10-26",
+    note: "生地は、スーパーで買った半分焼いてある冷凍のもの。ニンニクをオリーブオイルで炒めてトマトを煮つめたソースを塗り、オリーブとモッツァレラを乗せた。オーブンに入れるときは、ピザの世界チャンピオンの掛け声「バーイバーイ」をまねた。",
+    streams: [
+      { label: "調理", date: "2026-10-26", videoId: "814E2V_257A", title: "🇲🇰北マケドニアでマルゲリータピザつくろ！" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);
