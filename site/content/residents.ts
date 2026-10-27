@@ -44,19 +44,19 @@ export type Resident = {
 };
 
 export const RESIDENTS: Resident[] = [
-  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 90, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
+  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 89, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
   { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 84, score: 0.901, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
-  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 80, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
+  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 79, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
   { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", emoji: "🍃", days: 66, score: 0.985, channel: "UCfhX-rOzBe-QhWPPv03FtQA" },
   { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", emoji: "🪟", days: 62, score: 0.946, channel: "UCaHTatQmUMV4TEkSDIeSzHw" },
   { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 62, score: 0.901, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
   { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 49, score: 0.950, channel: "UCceC2uQXoN9wt2POovos37Q" },
   { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 43, score: 0.955, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
   { icon: "cf129e7ea06f499693a002543dcd7c290", emoji: "🐏", days: 38, score: 0.861, channel: "UCjPL5OEBxF25njVbJ1Kq_wQ" },
-  { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 37, score: 0.941, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
-  { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 36, score: 0.441, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
-  { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 36, score: 0.901, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
-  { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", emoji: "🐠", days: 36, score: 0.812, channel: "UCe7Vv25PNHDvDgDS5jB6Nrg" },
+  { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 36, score: 0.446, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
+  { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 36, score: 0.906, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
+  { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 36, score: 0.931, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
+  { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", emoji: "🐠", days: 35, score: 0.812, channel: "UCe7Vv25PNHDvDgDS5jB6Nrg" },
   { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 29, score: 0.891, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
   { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 22, score: 0.431, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
   { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 20, score: 0.802, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
@@ -152,5 +152,5 @@ export const RESIDENTS: Resident[] = [
 export const ACTIVE_FRIENDS = 68;
 
 /** 出席の分母。期間内に**読めた**配信日の数
- *  （配信はあったのに取り込めていない0日は、出席にも分母にも入れていない） */
-export const STREAM_DAYS = 90;
+ *  （配信はあったのに取り込めていない1日は、出席にも分母にも入れていない） */
+export const STREAM_DAYS = 89;

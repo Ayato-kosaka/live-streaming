@@ -1948,6 +1948,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "814E2V_257A",
         "title": "🇲🇰北マケドニアでマルゲリータピザつくろ！",
         "date": "2026-10-26"
+      },
+      {
+        "videoId": "_XzkJJIvpOE",
+        "title": "🇲🇰北マケドニアでおしゃれ街みにいこか！世界は狭いなぁ☺",
+        "date": "2026-10-27"
       }
     ]
   }

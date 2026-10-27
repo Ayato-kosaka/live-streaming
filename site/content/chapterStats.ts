@@ -267,7 +267,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // バルカン諸国周遊
   "balkans": {
     people: 181,
-    streams: 34,
+    streams: 35,
     residents: [
       { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 30 },
       { icon: "cf129e7ea06f499693a002543dcd7c290", days: 30 },
