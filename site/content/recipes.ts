@@ -574,7 +574,7 @@ export const RECIPES: Recipe[] = [
     slug: "olive-margherita",
     name: "オリーブのマルゲリータ",
     emoji: "🍕",
-    icon: "food-cheese",
+    icon: "food-tomato-slice",
     country: "north-macedonia",
     kind: "flour",
     date: "2026-10-26",

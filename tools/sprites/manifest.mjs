@@ -930,6 +930,9 @@ const SPRITES_BASE = [
     "radish", "beet", "pepper", "whole-ham", "meat-sausage", "bacon", "egg",
     "cheese-cut", "glass-wine", "soda-can", "mug", "plate-deep",
     "burger-double", "cake-birthday", "chocolate", "pizza-box",
+    // 10/26 のマルゲリータ（2品目のピザ）の主役。food-pizza は 8/14 のぶんで使っていて、
+    // 空いている絵に材料の写るものが無かった（チーズは1色の塊、ピザ箱は空の器）
+    "tomato-slice",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ----------

@@ -1,5 +1,5 @@
 {
-  "why": "10/26 のマルゲリータ（olive-margherita）の主役。recipes.ts の icon に food-cheese を書いたので、hero/ の2枚が要る。素の food-cheese も同じ名前でいまのキットから焼き直される",
-  "names": ["food-cheese"],
+  "why": "10/26 のマルゲリータ（olive-margherita）の主役を food-cheese（1色の塊）から差し替える。food-kit に tomato-slice が在るかを、焼けるかどうかで確かめる。在れば素のぶんと hero/ の2枚が入る",
+  "names": ["food-tomato-slice"],
   "check": ["food-pepper"]
 }
