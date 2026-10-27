@@ -136,6 +136,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "frcgM9wiRr8", date: "2026-10-23", title: "🇲🇰 北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった" },
     { id: "VP9gim0yrCw", date: "2026-10-24", title: "🇸🇪 ストックホルム来たら、地下鉄が高すぎた！" },
     { id: "3Z2Kq-H0BCo", date: "2026-10-25", title: "🇬🇪海外の山奥に来たら、動物たちがはちゃめちゃすぎた！" },
+    { id: "NibbSNmx0U8", date: "2026-10-26", title: "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！" },
   ],
 };
 
