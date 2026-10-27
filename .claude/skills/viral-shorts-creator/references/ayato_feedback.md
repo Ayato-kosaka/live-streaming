@@ -805,3 +805,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6373811673（原稿 p2 の承認「めちゃくちゃ良い！最高😆」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6373841083（原稿 p1 の承認「良い。進めて」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6376680974（完成の承認と時刻の指定「完璧です 2026/10/25 21:30に投稿して」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6450787450（2026-10-27・チャット。制作する1案、題「海外ホステルを追い出されました！」と、新しい宿の到着後「なんかやばそうなホステルや」で締める指定）
