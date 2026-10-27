@@ -931,10 +931,9 @@ const SPRITES_BASE = [
     "cheese-cut", "glass-wine", "soda-can", "mug", "plate-deep",
     "burger-double", "cake-birthday", "chocolate", "pizza-box",
     // 10/26 のマルゲリータ（2品目のピザ）の主役。food-pizza は 8/14 のぶんで使っていて、
-    // 空いている絵に材料の写るものが無かった（チーズは1色の塊、ピザ箱は空の器）
-    "tomato-slice",
-    // 下は kit に在るかを焼いて確かめるための候補（在ったものから1枚選び、残りは外す）
-    "bottle-oil", "can-open", "shaker-salt",
+    // 空いている絵に材料の写るものが無かった（チーズは1色の塊、ピザ箱は空の器）。
+    // ソースもオリーブオイルで作ったので、その瓶にした。トマトの輪切りは橙1色の浅い器に見えた
+    "bottle-oil",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ----------

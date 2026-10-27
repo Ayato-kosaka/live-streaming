@@ -1,5 +1,5 @@
 {
-  "why": "前の回で garlic・olive・basil・pizza-slice は kit に無かった（404）。在った3つ（オリーブオイルの瓶・開いた缶・塩の容器）を焼いて、絵を見て1枚選ぶ。選ばなかった2つは次のコミットで外す",
-  "names": ["food-bottle-oil", "food-can-open", "food-shaker-salt"],
+  "why": "10/26 のマルゲリータ（olive-margherita）の主役を food-bottle-oil（オリーブオイルの瓶）に決めた。hero/ を焼く。素の food-bottle-oil は前の回で焼いたものと同じになるはず",
+  "names": ["food-bottle-oil"],
   "check": ["food-pepper"]
 }
