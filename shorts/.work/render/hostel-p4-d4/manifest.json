@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__hostel-p4-d4",
  "mode": "render",
- "dest": "render/hostel-p4-d4/inbox",
+ "dest": "render/hostel-p4-d4",
  "video": null,
  "channel": null,
  "request": "shorts/render/hostel-p4-d4.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1178,
-  "encrypted": 1184
+  "plain": 31218,
+  "tar_gz": 7995,
+  "encrypted": 8000
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "3ec91f7dd38ee53e91a9f91f3b6cb9189758235c044a229e651be664c8978a06"
+   "bytes": 8000,
+   "sha256": "a328ec178b8d365e48b614f380bab077a51dddbf92a95d6586eac7f6006c745a"
   }
  ],
- "hmac_sha256": "67ad3a70069e51b17aa864827c46a7e16df11d8faabb94b89a55b47ae3a851ad",
+ "hmac_sha256": "942c2bba9d427000978a3862441151fc7a8ccfb44eeaaa00be3ae9eb97ddf907",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-28T08:54:35+00:00",
+ "created_at": "2026-10-28T08:58:22+00:00",
  "nonce": "36f3165f652681d03d5df280"
 }
