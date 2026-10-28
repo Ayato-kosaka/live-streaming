@@ -227,13 +227,14 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 
 - **言われた:**
   - 2026-10-16 #926 https://github.com/Ayato-kosaka/live-streaming/issues/926#issuecomment-6219894353
+  - 2026-10-29 #1046 https://github.com/Ayato-kosaka/live-streaming/issues/1046#issuecomment-6481838724（2回目。「相席の人は…ご飯頼んでた」の行に、相手の皿ではなくメニューの写真と椅子を引く手を当てた。「相席のところ、相手の食べ物が写ってるシーンに変えて」）
 - **分類:** 画
 - **あやとの言葉:**
   > AB
   > ポテト今から揚げるん？
   > のとこ、映像がポテトになってない
   > プレスのとこも
-- **決まり:** する — 書き出したコマで行ごとに3〜4コマ見て、名指した物・動きが写っているかを確かめる。写っていなければ配信から写っている時刻を探して差し替える。しない — spec の `pic_note`（狙い）を写っている証拠として扱う
+- **決まり:** する — 書き出したコマで行ごとに3〜4コマ見て、名指した物・動きが写っているかを確かめる。写っていなければ配信から写っている時刻を探して差し替える。字幕の時刻の前後だけで「写っていない」と決めず、その場面にいる間（店に居る間など）を全部見てから決める。しない — spec の `pic_note`（狙い）を写っている証拠として扱う・名指した物の代わりにメニューの写真や似た物で埋める（2回目）
 - **直す前 → 直した後:** 「ポテト、今から揚げるん！？」の行が空のフライヤーの籠 → 揚げ始めたフライヤーの画
 - **当てる場所:** 書く段（spec の `visual` に、その行が名指す物・動きが写る配信の時刻を書く） ／ 人の目（`production.md` 3「言葉の物が、その行の画に写っているか」）
 
@@ -853,3 +854,7 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6450787450（2026-10-27・チャット。制作する1案、題「海外ホステルを追い出されました！」と、新しい宿に着いて「なんかやばそうなホステルや」と言うのが落ち、の指定。**落ちの指定であって、締めの CTA を外す指定ではない**——「問いも宣伝も足さない」は前の担当の読み替えだった。F-032 の 2026-10-28）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6467867613（完成の承認と時刻「オッケーです。21：30に出して」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1045#issuecomment-6468063701（猫の触れ合い集の企画の承認。題「海外の野良猫たち人懐こすぎた！」を Holiday Twist で読む・テロップでどの国のどの場面か分かるように・猫好きが見たくなるように綺麗に）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6451496430（セッションが書いた原稿 p1 の提出。あやとのアカウントで署名なしに書いたので、見張りがあやとの字と読んだ。#1049）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6456092039（セッションが書いた原稿 p2 の提出。同上）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1045#issuecomment-6481805956（完成の承認と時刻「2026/10/29 21:30に出して」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1047#issuecomment-6481872005（完成の承認と時刻「2026/10/30 21:30にだして」）
