@@ -234,7 +234,8 @@ EC2 の上で走り続けていれば、その終わり（`run` の秒数）ま�
 - **Chrome 136 以降は、既定の user-data-dir ではデバッグポートを開かない。**
   なので `up(名前)` は `~/cdp-<名前>` に `Default` を**1回だけ複製**して、そちらで起動する
   （Doneru だけは先に作られた `~/doneru-chrome`）。以後はその複製が正
-- 既定のほうでログインし直したら `up(名前, reseed=True)` で複製し直す
+- 既定のほうでログインし直したら `up(名前, reseed=True)` で複製し直す。**ただし fish は複製し直さない**
+  （`~/cdp-fish` に TikTok の下書き約564MB があり、消える）。fish は `tools/shorts/voice/fish_login.py` でその Chrome の中で入り直す
 - **既定の Chrome をまるごと写さない。** あやとの普段の Chrome の `Default` は 1.15GB のうち約 1.1GB が
   拡張（AdBlock・画面録画・VPN）・サービスワーカーのキャッシュ・Google ドキュメントのオフラインで、
   ログインとは関係が無い。`up()` の複製は `cdp.py` の `SEED_SKIP` を rsync で除いて写す（35MB）。

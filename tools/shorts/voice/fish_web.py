@@ -113,7 +113,7 @@ def open_playground(t: Tab, model: str) -> dict:
     st = state_of(t)
     st["credits_balance"] = balance(t)
     if st["login_button"]:
-        raise SystemExit("ログインしていない（右上に「ログイン」）。あやとに既定のプロファイルで入ってもらい、up('fish', reseed=True) で複製し直す")
+        raise SystemExit("ログインしていない（右上に「ログイン」）。列 fish の札を取って fish_login.py（tools/shorts/voice/）で入り直す。reseed しない（~/cdp-fish の TikTok の下書きが消える）")
     if not st["editor"] or not st["generate"]:
         raise SystemExit(f"入力欄か「音声を生成する」が見つからない: {st}")
     return st
