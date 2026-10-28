@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__cats-p1-v2",
  "mode": "render",
- "dest": "render/cats-p1-v2/inbox",
+ "dest": "render/cats-p1-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/cats-p1-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 7042,
-  "tar_gz": 2955,
-  "encrypted": 2960
+  "plain": 35457,
+  "tar_gz": 9115,
+  "encrypted": 9120
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 2960,
-   "sha256": "1c21907350dad7b9d2f43fbf4cbaf115cf5545adad586a2720e5755acc453603"
+   "bytes": 9120,
+   "sha256": "64f61a42690fa1e63a24bc0340ff85b8518a3cddf1895f2956b8c3f4be0a565c"
   }
  ],
- "hmac_sha256": "b47dc2bcb245d1828baebbe557dfc21bdc8136a31b5d2dea0b6e519113e31ec9",
+ "hmac_sha256": "9a071a5b929d7eda148c763c583feb5094dab751d7d4a4348354accb6ed4ccf7",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-28T13:21:14+00:00",
+ "created_at": "2026-10-28T13:27:27+00:00",
  "nonce": "b8ffb60eb12356277ee85a92"
 }
