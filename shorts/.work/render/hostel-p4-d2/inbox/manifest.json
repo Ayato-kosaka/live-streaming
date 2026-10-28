@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__hostel-p4-d2",
+ "mode": "render",
+ "dest": "render/hostel-p4-d2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/hostel-p4-d2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 20120,
+  "tar_gz": 7663,
+  "encrypted": 7664
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 7664,
+   "sha256": "49520782d1776691412df4055117c68f0b4a506be6061a51718e20ff2c9ab82b"
+  }
+ ],
+ "hmac_sha256": "8f0ac8153dbc210570d222b5d5ba079d32704e9d51e5ca0b0a231a7ebd139c3d",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-28T08:42:00+00:00",
+ "nonce": "d8cc5fcfe1a14408f524db2b"
+}
