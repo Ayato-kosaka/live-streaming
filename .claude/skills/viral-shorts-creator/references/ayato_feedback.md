@@ -858,3 +858,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6456092039（セッションが書いた原稿 p2 の提出。同上）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1045#issuecomment-6481805956（完成の承認と時刻「2026/10/29 21:30に出して」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1047#issuecomment-6481872005（完成の承認と時刻「2026/10/30 21:30にだして」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1046#issuecomment-6483220474（相席の画の3案から「C」（v2 のまま）と時刻「2026/10/31 21:30にだして」）

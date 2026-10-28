@@ -485,7 +485,19 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False, sound=Non
         opened = click_text(t, "Edit cover") or click_text(t, "カバーを編集")
         time.sleep(3)
         log("cover modal opened", opened, "|", (t.js("(() => { const m = [...document.querySelectorAll('[role=dialog], .TUXModal, [class*=modal], [class*=Modal]')].find(e => e.offsetParent); return m ? m.innerText.trim().slice(0, 200) : null; })()") or ""))
-        click_text(t, "Upload cover") or click_text(t, "カバーをアップロード")
+        # 窓の中身は遅れて出る。3秒ではまだ「Upload cover」が無い回があり、click_text が投げて
+        # 段ごと止まった（2026-10-29 グルメの回で5回中3回）。字が出るまで待ち、出なければ止めて返す
+        up = None
+        for _ in range(20):
+            up = next((l for l in ("Upload cover", "カバーをアップロード") if has_text(t, l)), None)
+            if up:
+                break
+            time.sleep(1)
+        if not up:
+            shot(t, "tt_cover_noupload")
+            result({"ok": False, "error": "cover_upload_tab"})
+            return
+        click_text(t, up)
         time.sleep(2)
         try:
             t.set_files("input[type=file][accept*='image']", [cover])

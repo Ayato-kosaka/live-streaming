@@ -178,7 +178,9 @@ def cmd_tt_post(a):
     if getattr(a, "draft", False):
         # 下書きで止める。投稿 ID が無いので台帳は pending のまま残る（あやとが出したら mark で done にする）
         extra += " --draft"
-    body = f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra}\n"
+    # 2>&1: EC2 の側で例外が出ても、ec2.run(quiet) は stderr を返さない。段が黙って止まって見え、
+    # 予約まで押せたかが分からなくなる（2026-10-29 グルメの回）。traceback ごと持ち帰る
+    body = f"cd {CDP} && timeout 500 python3 tt_post.py post {d}/{a.option}.mp4 {d}/tt_caption_{a.option}.txt{extra} 2>&1\n"
     if a.dry:
         # 投稿の手前までの確かめ。出さないので台帳は見ない・書かない
         if a.sha and not remote_sha_ok(a, a.sha):
