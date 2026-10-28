@@ -1,0 +1,710 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/10_1-38-20_1-40-50.mp4",
+   "watermark": "prism_live",
+   "t0": 5900.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/01_0-02-45_0-04-00.mp4",
+   "watermark": "prism_live",
+   "t0": 165.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/02_0-09-50_0-11-40.mp4",
+   "watermark": "prism_live",
+   "t0": 590.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/03_0-23-50_0-25-30.mp4",
+   "watermark": "prism_live",
+   "t0": 1430.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/04_0-28-50_0-30-30.mp4",
+   "watermark": "prism_live",
+   "t0": 1730.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/09_1-36-00_1-37-45.mp4",
+   "watermark": "prism_live",
+   "t0": 5760.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/05_0-41-15_0-45-45.mp4",
+   "watermark": "prism_live",
+   "t0": 2475.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/06_1-07-45_1-09-45.mp4",
+   "watermark": "prism_live",
+   "t0": 4065.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/07_1-14-15_1-18-15.mp4",
+   "watermark": "prism_live",
+   "t0": 4455.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/ingest/2ij1R53ifcU/clips/08_1-22-00_1-24-20.mp4",
+   "watermark": "prism_live",
+   "t0": 4920.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c10",
+   "in": 1452,
+   "out": 1522,
+   "row": 0,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "答えを先に見せる画（F-020）: 買った龍の柄の髭剃りを、店の外の歩道で箱から出して掲げる所。龍の柄が画面のまん中に写る。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c01",
+   "in": 15,
+   "out": 63,
+   "row": 1,
+   "note": "雨の中、傘を差して歩き出しながら話す本人（髭剃りを探しに行くと話す所の手前）。盗まれた物は写らない"
+  },
+  {
+   "src": "c01",
+   "in": 1305,
+   "out": 1344,
+   "row": 1,
+   "note": "シャッターの前で手を振って出かける本人（「買いに行く！」の動き）"
+  },
+  {
+   "src": "c02",
+   "in": 2058,
+   "out": 2096,
+   "row": 2,
+   "note": "AI の答えを読むスマホの画面は窓の中に写らない。代わりに、市場へ向かって雨の通りを歩き出す画（0:10:56 はカクつき ✕ なので避けた）"
+  },
+  {
+   "src": "c02",
+   "in": 2508,
+   "out": 2547,
+   "row": 2,
+   "note": "雨の通りを歩く続き（赤い車の角）。市場へ向かう道"
+  },
+  {
+   "src": "c03",
+   "in": 540,
+   "out": 581,
+   "row": 3,
+   "note": "雨の市場に入る所。日よけの下に服の屋台が並ぶ"
+  },
+  {
+   "src": "c03",
+   "in": 1590,
+   "out": 1631,
+   "row": 3,
+   "note": "服がずらっと吊られた屋台の寄り（服ばっかり）"
+  },
+  {
+   "src": "c04",
+   "in": 300,
+   "out": 329,
+   "row": 4,
+   "note": "家電と雑貨を並べた店の前に着く所"
+  },
+  {
+   "src": "c04",
+   "in": 1650,
+   "out": 1686,
+   "row": 4,
+   "note": "店先の髭剃りの箱の列を指でなぞる所（髭剃り屋さん）"
+  },
+  {
+   "src": "c09",
+   "in": 1038,
+   "out": 1088,
+   "row": 5,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "店の人（店主）が棚から勧める髭剃りの箱（Kemei）を取って差し出す所。1:36:34 より前は店主の顔の上の端が入るので避けた。0:41〜0:43 の市場の店の画が3つ続くと似た見た目が 3秒を越える（d1 で 6.33秒）ので、同じ店に買いに戻った 1:36 の画を当てる。d2 の 1:36:32.5 は箱が写っていなかったので替えた。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c05",
+   "in": 1998,
+   "out": 2046,
+   "row": 6,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.25,
+    "x": 0.36,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "手に持った龍の柄の髭剃りの寄り。柄を見せるため髭剃りを画面のまん中に置いて 1.25倍に寄せる（寄せは止めたまま）。v1 の 0:42:21.0 は頭の 0.4秒に髭剃りがまだ入っていなかったので 0:42:21.6 から"
+  },
+  {
+   "src": "c02",
+   "in": 165,
+   "out": 211,
+   "row": 7,
+   "note": "「緊急事態発生」: 顔をしかめて手を振る本人の反応（雨の通りで話していた時刻からの差し込み。店の中には本人の顔の画が無い）。店の画が続く所に別の素材の画を挟んで、似た見た目の連続を切る"
+  },
+  {
+   "src": "c05",
+   "in": 5670,
+   "out": 5716,
+   "row": 7,
+   "note": "店の中で店の人と払い方を話す所（手元と黒いケース）。店主の顔が大きく写る 0:44:33〜0:44:55 は避けた"
+  },
+  {
+   "src": "c06",
+   "in": 210,
+   "out": 247,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "カードの使えるモールの家電屋の通路を進む所。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c06",
+   "in": 2268,
+   "out": 2314,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "髭剃りの棚（BRAUN の箱と値札）。値札の字は配信の画質では読めない。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c05",
+   "in": 3945,
+   "out": 4015,
+   "row": 9,
+   "note": "市場の店で手に持った龍の柄の髭剃りを差し込む（モールの画に龍は写らない）。モールの画を3つ続けると似た見た目が 3秒を越える（d1 で 3.70秒）ので、BRAUN の箱の画は外した"
+  },
+  {
+   "src": "c07",
+   "in": 780,
+   "out": 835,
+   "row": 10,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ATM の画面で金額（1300）を打つ指。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c07",
+   "in": 6540,
+   "out": 6579,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ノーマネーと言われたあとの本人（頭に手をやって笑う）。ATM の画面に残高不足の字は写らない（1:17:19 の画面は手数料の知らせ）。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c07",
+   "in": 4980,
+   "out": 5031,
+   "row": 12,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 1.0,
+    "y": 1.0,
+    "sx": 1.0,
+    "sy": 1.0
+   },
+   "note": "地元の客が右から袖と手を出して ATM の画面を指で押して教える所。手と袖と足元だけで顔は写らない。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で右下の端に合わせて寄せ（見せる物が右にある）、帯を画面の外に出す。v1 の 1:17:00.6 は頭の 1秒に手がまだ入っていなかったので 1:17:01.0 から"
+  },
+  {
+   "src": "c08",
+   "in": 1362,
+   "out": 1400,
+   "row": 13,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 1.0,
+    "y": 1.0,
+    "sx": 1.0,
+    "sy": 1.0
+   },
+   "note": "引き出したお札を手に持って見せる本人（ATM からお金が出た直後）。お札が右の端にあるので右の端に合わせて寄せる。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c08",
+   "in": 3858,
+   "out": 3912,
+   "row": 14,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "このATM（CREDINS BANK の ATM 24/7 の看板）。1:24:07 はカクつき ✕ なので避けた。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c08",
+   "in": 3291,
+   "out": 3321,
+   "row": 14,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.0,
+    "y": 1.0,
+    "sx": 0.0,
+    "sy": 1.0
+   },
+   "note": "スマホの明細の「両替手数料 43 JPY」（ほぼ0円）。スマホが写るのは 1:23:49.7〜1:23:51.0 だけ。d2 は右に合わせて寄せて「両替手数料」の字が左で切れたので、左の端に合わせて寄せ、字と額を両方入れる。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で左下の端に合わせて寄せ、帯を画面の外に出す。v1 は 1.33秒使ってスマホが上へ動き、手数料の行が帯の外（上）へ出て弱い画になった（帯の 31.5〜33.75秒）ので、頭の 1秒だけにする"
+  },
+  {
+   "src": "c09",
+   "in": 1128,
+   "out": 1170,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "店主が開けた青い箱の龍の髭剃りを見せる所（店主は手と袖だけ）。v1 の 1:36:38.4 は頭が箱のふたの暗い画で弱い画になったので 1:36:37.6 から。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c09",
+   "in": 2898,
+   "out": 2940,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "お札を店主に渡して払う所（顔は写らない）。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c10",
+   "in": 2445,
+   "out": 2471,
+   "row": 16,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "やっと剃れた本人: 剃り終えた顎を指で触る自撮り（顔は画面の上半分）。d2 の 1:39:31 は顔が下の端で切れ、髭剃りも写らなかったので替えた。終わりの札（最後の2秒）が顔に掛からないよう、この画は行の 3割だけ。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  },
+  {
+   "src": "c10",
+   "in": 1566,
+   "out": 1628,
+   "row": 16,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "終わりの画: 髭剃り1本（龍の柄）を掲げる所。冒頭の画（1:39:08）の呼び戻し。顔が無いので終わりの札が顔に掛からない。1:07 より後の配信は上に固定コメントの帯（視聴者さんの名前と字）が焼き込まれているので、1.3倍で下の端に合わせて寄せ、帯を画面の外に出す"
+  }
+ ],
+ "title": {
+  "text": "🇦🇱アルバニアでの髭剃り探しが大変すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "アルバニアでの髭剃り探しが大変すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/01.wav",
+    "tts_text": "アルバニアでの髭剃り探しが大変すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "ホステルで髭剃りを盗まれたから、新しいの買いに行く！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/02.wav",
+    "tts_text": "ホステルで髭剃りを盗まれたから、新しいの買いに行く！",
+    "at": 70
+   },
+   {
+    "text": "チャッピーいわく、モールより市場が安いらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/03.wav",
+    "tts_text": "チャッピーいわく、モールよりいちばが安いらしい！",
+    "at": 157
+   },
+   {
+    "text": "雨の中、行ってみたら、服とガラクタばっかりやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/04.wav",
+    "tts_text": "雨の中、行ってみたら、服とガラクタばっかりやん！",
+    "at": 234
+   },
+   {
+    "text": "歩き回って、やっと髭剃り屋さん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/05.wav",
+    "tts_text": "歩き回って、やっと髭剃り屋さん！",
+    "at": 316
+   },
+   {
+    "text": "おすすめの髭剃りこれやって。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/06.wav",
+    "tts_text": "おすすめの髭剃りこれやって。",
+    "at": 381
+   },
+   {
+    "text": "龍の柄が中二病やろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/07.wav",
+    "tts_text": "りゅうのがらが中二病やろ！",
+    "at": 431
+   },
+   {
+    "text": "緊急事態発生、この店、現金しか使えへんって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/08.wav",
+    "tts_text": "緊急事態発生、この店、現金しか使えへんって！",
+    "at": 479,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "カードの使えるモールに行ったら、髭剃りが1万円！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/09.wav",
+    "tts_text": "カードの使えるモールに行ったら、髭剃りが一万円！",
+    "at": 571,
+    "highlight": [
+     "1万円"
+    ]
+   },
+   {
+    "text": "1万円は出せん！龍が欲しなってきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/10.wav",
+    "tts_text": "一万円は出せん！りゅうが欲しなってきた！",
+    "at": 654
+   },
+   {
+    "text": "結局ATMで下ろそうとしたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/11.wav",
+    "tts_text": "結局エーティーエムで下ろそうとしたら、",
+    "at": 724
+   },
+   {
+    "text": "「ノーマネー」って言われた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/12.wav",
+    "tts_text": "ノーマネーって言われた。",
+    "at": 779,
+    "mood": "tense_still"
+   },
+   {
+    "text": "地元の人に教えてもらったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/13.wav",
+    "tts_text": "地元の人に教えてもらったら……",
+    "at": 818
+   },
+   {
+    "text": "行けた！行けた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/14.wav",
+    "tts_text": "行けた！行けた！",
+    "at": 869,
+    "mood": "up_pop"
+   },
+   {
+    "text": "しかもこのATM、手数料がほぼ0円！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/15.wav",
+    "tts_text": "しかもこのエーティーエム、手数料がほぼゼロ円！",
+    "at": 907,
+    "highlight": [
+     "ほぼ0円"
+    ]
+   },
+   {
+    "text": "ついに龍の髭剃りを、2600円でゲット！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/16.wav",
+    "tts_text": "ついにりゅうの髭剃りを、二千六百円でゲット！",
+    "at": 991,
+    "mood": "up_pop",
+    "highlight": [
+     "2600円"
+    ]
+   },
+   {
+    "text": "みんなは、髭剃り1本に2時間かけれる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/razor/voice/razor-p2-v1/p2/17.wav",
+    "tts_text": "みんなは、髭剃り一本に二時間かけれる？",
+    "at": 1075
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/wt-razor/shorts/videos/2ij1R53ifcU/p2/spec.json",
+  "fps": 30,
+  "frames": 1163,
+  "seconds": 38.767,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "1:39:08.4+2.33s"
+    ],
+    "line": "アルバニアでの髭剃り探しが大変すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 70,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "0:02:45.5+1.60s",
+     "0:03:28.5+1.30s"
+    ],
+    "line": "ホステルで髭剃りを盗まれたから、新しいの買いに行く！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 157,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:10:58.6+1.27s",
+     "0:11:13.6+1.30s"
+    ],
+    "line": "チャッピーいわく、モールより市場が安いらしい！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 234,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "0:24:08.0+1.37s",
+     "0:24:43.0+1.37s"
+    ],
+    "line": "雨の中、行ってみたら、服とガラクタばっかりやん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 316,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "0:29:00.0+0.97s",
+     "0:29:45.0+1.20s"
+    ],
+    "line": "歩き回って、やっと髭剃り屋さん！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 381,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "1:36:34.6+1.67s"
+    ],
+    "line": "おすすめの髭剃りこれやって。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 431,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "0:42:21.6+1.60s"
+    ],
+    "line": "龍の柄が中二病やろ！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 479,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "0:09:55.5+1.53s",
+     "0:44:24.0+1.53s"
+    ],
+    "line": "緊急事態発生、この店、現金しか使えへんって！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 571,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "1:07:52.0+1.23s",
+     "1:09:00.6+1.53s"
+    ],
+    "line": "カードの使えるモールに行ったら、髭剃りが1万円！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 654,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:43:26.5+2.33s"
+    ],
+    "line": "1万円は出せん！龍が欲しなってきた！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 724,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "1:14:41.0+1.83s"
+    ],
+    "line": "結局ATMで下ろそうとしたら、",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 779,
+    "frames": 39,
+    "voice_frames": 31,
+    "cuts": [
+     "1:17:53.0+1.30s"
+    ],
+    "line": "「ノーマネー」って言われた。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 818,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "1:17:01.0+1.70s"
+    ],
+    "line": "地元の人に教えてもらったら……",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 869,
+    "frames": 38,
+    "voice_frames": 30,
+    "cuts": [
+     "1:22:45.4+1.27s"
+    ],
+    "line": "行けた！行けた！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 907,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "1:24:08.6+1.80s",
+     "1:23:49.7+1.00s"
+    ],
+    "line": "しかもこのATM、手数料がほぼ0円！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 991,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "1:36:37.6+1.40s",
+     "1:37:36.6+1.40s"
+    ],
+    "line": "ついに龍の髭剃りを、2600円でゲット！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1075,
+    "frames": 88,
+    "voice_frames": 65,
+    "cuts": [
+     "1:39:41.5+0.87s",
+     "1:39:12.2+2.07s"
+    ],
+    "line": "みんなは、髭剃り1本に2時間かけれる？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 272,
+   "raw_voice_s": 47.13,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 33.73,
+   "cps_voiced": 8.06,
+   "video_s": 38.77,
+   "cps_video": 7.02
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
