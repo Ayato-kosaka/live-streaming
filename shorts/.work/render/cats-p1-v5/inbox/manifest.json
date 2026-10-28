@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__cats-p1-v5",
+ "mode": "render",
+ "dest": "render/cats-p1-v5/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/cats-p1-v5.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 3018,
+  "tar_gz": 1541,
+  "encrypted": 1552
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1552,
+   "sha256": "123484f00629766a15c7e5a6e19b2469178a354ceebf987d4d538936ef5f6eb7"
+  }
+ ],
+ "hmac_sha256": "99f6b2967184329129dfa6bede9d30f7acc48c65fae10a8268c2d62131958973",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-28T14:01:07+00:00",
+ "nonce": "ddc31416ad41153332770308"
+}
