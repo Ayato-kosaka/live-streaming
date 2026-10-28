@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "NY9pzYrA-5o__clips",
+ "mode": "clips",
+ "dest": "NY9pzYrA-5o/clips",
+ "video": "NY9pzYrA-5o",
+ "channel": null,
+ "request": "shorts/requests/cats-NY9pzYrA-5o-20261028.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 1,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 60.0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 34138189,
+  "tar_gz": 34102697,
+  "encrypted": 34102704
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 34102704,
+   "sha256": "9494e3d3b78325a1c4b23f0ea2de40d9c60a56bc78a61b713766c43f17916980"
+  }
+ ],
+ "hmac_sha256": "cb6a4f51989a73f11b78fb8e829f82a95af9f330accb22c4459f0a6dc3abe82f",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40667046757",
+ "created_at": "2026-10-28T10:04:07+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 587072,
+    "sha256": "6a38e4e3bc286c66efc652ce5cf82d51faa478afda4c519172ac400a79309247"
+   }
+  ],
+  "hmac_sha256": "bb5454f7055a9c39fcbba9303888fdc83f67b9210444614d653f51f1cd32be45",
+  "files": 5,
+  "sheets": 1,
+  "bytes": {
+   "plain": 597781,
+   "tar_gz": 587061,
+   "encrypted": 587072
+  }
+ }
+}
