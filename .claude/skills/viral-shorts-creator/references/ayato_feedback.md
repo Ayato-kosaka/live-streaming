@@ -462,6 +462,7 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - **言われた:**
   - 2026-10-21 #977 https://github.com/Ayato-kosaka/live-streaming/issues/977#issuecomment-6306110329
   - 2026-10-21 #975 https://github.com/Ayato-kosaka/live-streaming/issues/975#issuecomment-6310943175
+  - 2026-10-28 #1043 https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6463834435（チャット「簡単なCTA漏れてない？ そう言うのをレビューして欲しいと言う意図」。あやとが「落ち」と言った行を「最後の行・問いも宣伝も足さない」と読み替え、L-END の ✕ を例外にして通していた）
 - **分類:** 構成
 - **あやとの言葉:**
   > みんなやったら、ケバブ守る？あげる？
@@ -820,4 +821,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1019#issuecomment-6373811673（原稿 p2 の承認「めちゃくちゃ良い！最高😆」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6373841083（原稿 p1 の承認「良い。進めて」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1020#issuecomment-6376680974（完成の承認と時刻の指定「完璧です 2026/10/25 21:30に投稿して」）
-- https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6450787450（2026-10-27・チャット。制作する1案、題「海外ホステルを追い出されました！」と、新しい宿の到着後「なんかやばそうなホステルや」で締める指定）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1043#issuecomment-6450787450（2026-10-27・チャット。制作する1案、題「海外ホステルを追い出されました！」と、新しい宿に着いて「なんかやばそうなホステルや」と言うのが落ち、の指定。**落ちの指定であって、締めの CTA を外す指定ではない**——「問いも宣伝も足さない」は前の担当の読み替えだった。F-032 の 2026-10-28）
