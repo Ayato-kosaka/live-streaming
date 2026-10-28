@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__razor-p2-d2",
  "mode": "render",
- "dest": "render/razor-p2-d2/inbox",
+ "dest": "render/razor-p2-d2",
  "video": null,
  "channel": null,
  "request": "shorts/render/razor-p2-d2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1185,
-  "encrypted": 1200
+  "plain": 26836,
+  "tar_gz": 7269,
+  "encrypted": 7280
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1200,
-   "sha256": "683349596ac2f457ed72ac08e60183180115332740ab3f784bdb008a28e6838d"
+   "bytes": 7280,
+   "sha256": "a1d99baf5d7cdedacfb6c9ff70cd03d828cf2f0cd4d7042a3863a115b8419878"
   }
  ],
- "hmac_sha256": "2f92ac1a513c4deb63ad1abe043412d95a500a643375f0f76726dd1ba1d06e47",
+ "hmac_sha256": "36b9229530d380ed6c0f7e3da4905906780f3a8449e04d761116beef8ce7df86",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-28T13:10:11+00:00",
+ "created_at": "2026-10-28T13:12:56+00:00",
  "nonce": "4b744d3db5d4e21347da15bf"
 }
