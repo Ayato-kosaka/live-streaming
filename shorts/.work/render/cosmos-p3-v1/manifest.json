@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__cosmos-p3-v1",
  "mode": "render",
- "dest": "render/cosmos-p3-v1/inbox",
+ "dest": "render/cosmos-p3-v1",
  "video": null,
  "channel": null,
  "request": "shorts/render/cosmos-p3-v1.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1182,
-  "encrypted": 1184
+  "plain": 37041,
+  "tar_gz": 9477,
+  "encrypted": 9488
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "45fb91c99cedca3865affb85a86e81181a6945b07402bfd6f2092028cd678c8b"
+   "bytes": 9488,
+   "sha256": "22324054c50276514ea8aa916f82141a7bd49a84089a982ab050268fc20d8771"
   }
  ],
- "hmac_sha256": "7f9f3e5cc1f1911f05958502c74206f3d587844473c7a96e9ea3e3eab93212cd",
+ "hmac_sha256": "1bde3df642a8ac6638923525d66b2f7a56f4700f5d00e00186be6a400b8c957f",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-28T13:24:20+00:00",
+ "created_at": "2026-10-28T13:33:12+00:00",
  "nonce": "83145d7c9d951003557f1fee"
 }
