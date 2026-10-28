@@ -1,0 +1,82 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "UQdkUSro9Ck__clips",
+ "mode": "clips",
+ "dest": "UQdkUSro9Ck/clips",
+ "video": "UQdkUSro9Ck",
+ "channel": null,
+ "request": "shorts/requests/cosmos-UQdkUSro9Ck-20261028-p3-sekiseki-clips.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 10,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 2,
+  "clips_ok": 2,
+  "clip_seconds": 570.0,
+  "channel_entries": 0,
+  "files": 20
+ },
+ "bytes": {
+  "plain": 189262875,
+  "tar_gz": 188832485,
+  "encrypted": 188832496
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "b2f1402743bee4b7ae9d582e5405b1e51b1a2d06c6b18e98854e68a5f25e6410"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "1d4570849ef99bcc8b39f33c05073b004f87a9542aa2f13ae61100ac4088f069"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "635e694f63904fd30e4199c31f1a179b5c6fb6b6e7fe9548b5424393329d0b58"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "44d74150c7eaff1bc743881449092bd7fd4966d0896de1cc25b7a649e1dc8dcb"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 88816,
+   "sha256": "658c3ee77fdcc9af2326201bd7187a6cb118aa4dbdafd7c82ce01ec5998ea9ae"
+  }
+ ],
+ "hmac_sha256": "7c6d78e73d3294c532c35dd9705c948ddde26e1dd3261cc0ca581e41d6c21373",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40691707682",
+ "created_at": "2026-10-28T13:10:09+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 3774496,
+    "sha256": "3e9bb7aaafbcf23e3070664d3cc985452408caa7d5f964cafa541df43f6c3fa4"
+   }
+  ],
+  "hmac_sha256": "ca4e13ba7b8ff53434333c23a7cee815457eebfcf2d3c0b860f89335c99b3f52",
+  "files": 14,
+  "sheets": 10,
+  "bytes": {
+   "plain": 3888046,
+   "tar_gz": 3774487,
+   "encrypted": 3774496
+  }
+ }
+}
