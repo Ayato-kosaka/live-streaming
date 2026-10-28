@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "YjiWI5reVCo__clips",
+ "mode": "clips",
+ "dest": "YjiWI5reVCo/clips",
+ "video": "YjiWI5reVCo",
+ "channel": null,
+ "request": "shorts/requests/cats-YjiWI5reVCo-20261028.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 1,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 60.0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 23452329,
+  "tar_gz": 23409635,
+  "encrypted": 23409648
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 23409648,
+   "sha256": "44586e09a8737b85fe249f9c26787edfd5ca604113d3e2da891f7261bef955da"
+  }
+ ],
+ "hmac_sha256": "00c8b1905b34d5096b137e19a13eac2d2e4976ef16519f7b99e83c2934455ae7",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40667046757",
+ "created_at": "2026-10-28T10:04:15+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 433536,
+    "sha256": "05e691c37db48469fc84760270b6371385a5280c71e8fc59c115ffb26ffa4fe2"
+   }
+  ],
+  "hmac_sha256": "a8502e077eb8a9fab57691e302b28527986713bd47ec049d3a66329fbf261ac4",
+  "files": 5,
+  "sheets": 1,
+  "bytes": {
+   "plain": 444789,
+   "tar_gz": 433535,
+   "encrypted": 433536
+  }
+ }
+}
