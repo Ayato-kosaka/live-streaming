@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EC2 の上で動く。fish の Chrome（~/cdp-fish）を、fish.audio の「Googleで続行」から入り直す。
 
-    python3 /home/ubuntu/cdp/fish_login.py      # ec2.py put で ~/cdp/ に置き、列 fish の札を取って回す
+    python3 ~/cdp/fish_login.py      # ec2.py put で ~/cdp/ に置き、列 fish の札を取って回す
 
 - あやとの決め（2026-10-28 #1044）: kosaka.ayato@gmail.com で入る。パスワードが要らない所はこちらで押す。
   パスワード欄・dp 以外の本人確認で止まるのは `google_login.py` の決まりのまま。スマホの数字は
@@ -12,7 +12,9 @@
   「ログイン」が無いだけで見ると、Google の選択の窓が開く前に入れたと読んでしまう（2026-10-28 に1回踏んだ）
 """
 import sys, time, json
-sys.path.insert(0, "/home/ubuntu/cdp")
+# EC2 の ubuntu のホーム。SSM のコマンドは root で走るので `~` に頼らず、ここから組む（fish_web.py と同じ）
+EC2_HOME = "/home/ubuntu"
+sys.path.insert(0, f"{EC2_HOME}/cdp")
 from cdp import up, where, pages, Tab, _port
 from google_login import run, _click
 
