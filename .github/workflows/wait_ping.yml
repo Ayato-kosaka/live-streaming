@@ -1,0 +1,191 @@
+name: 待ち札が付いたらあやとを呼ぶ
+
+# **issue に `待ち-あやと` が付いたら、機械が必ずあやとに通知を飛ばす。**
+#
+# あやと（2026-10-28・チャット）:
+#
+# > なぜ通知してない？運用徹底してよ
+#
+# ## なぜ要るか
+#
+# 2026-10-28、4本の issue に `待ち-あやと` を付けたまま、`call_ayato.yml` を
+# 1本も回していなかった（`docs/island-misses.md` #306）。札を付ける手順と
+# 鳴らす手順が別々で、**鳴らす側がセッションの記憶にしか無かった。**
+# 手順に書き足しても同じことが起きる（`docs/island-tickets.md`）。
+# だから**札そのものを引き金にする。**
+#
+# ## いつ鳴らすか
+#
+# - 札 `待ち-あやと` が付いた（`labeled`。札を付けて開いたときの `opened` も）
+# - `待ち-あやと` の issue に、**システムが**書き足した（`issue_comment` の `created`
+#   で、末尾がシステムの署名）。あやと本人の返事では鳴らさない
+#
+# **重ねない。** 最後にあやとのアカウントで書かれたもの（システムの問いでも、
+# あやと本人の返事でも）より後に、**通知の飛ぶ** `@` が既に在れば鳴らさない。
+# 人が `call_ayato.yml` を回したあと・同じ issue に続けて書いたあと・
+# 機械が本文で呼んで開いた issue がこれに当たる。
+#
+# **セッションが書いた `@Ayato-kosaka` は「呼んだ」に数えない。** セッションは
+# あやと本人のトークンで書いていて、GitHub は自分で自分を呼んでも通知を
+# 飛ばさない。字として在るのに1通も飛んでいない——#306 の根はここ。
+#
+# 鳴らすのは GITHUB_TOKEN（`github-actions[bot]`）。だから通知が飛ぶ。
+# そしてこの書き込みは、ほかのワークフロー（この yaml も `wait_flip` も）を
+# 起こさない（GITHUB_TOKEN の書き込みは、GitHub がワークフローを起こさない）。
+# 同じ理由で、**機械が付けた札ではここは起きない。** あちらは自分で鳴らす
+# （`ticket_labels.should_ping()`）。
+#
+# ## 判定はここに持たない
+#
+# 見分けは `python/ticket_labels.py` の `wait_ping_verdict()` ひとつ。
+# ここがするのは「受け取りを読む」「待つ」「並びを読む」「返ってきた字を書く」だけ。
+# **札の名前も、署名も、待つ秒数も、鳴らす字も、この yaml には1文字も書かない**
+# ——書くと、片方を直した日にもう片方が黙って置いていかれる
+# （`wait_flip.yml` の頭と同じ理由）。job の `if:` に札の名前を置かないのも同じ。
+#
+# ## 待ってから読む
+#
+# 札を付けた人は、たいてい続けて問いを書き足すか `call_ayato.yml` を回す。
+# すぐ読むと、あちらの書き込みが載る前に「まだ呼んでいない」と見えて2通鳴る。
+# だから**鳴らす見込みがあるときだけ**、`PING_SETTLE_SECONDS` 待ってから
+# 並びを読む。札と状態も**読み直したほう**で決める（待つあいだにあやとが
+# 答えて札が裏返る・閉じられる、がありうる）。
+#
+# 対象外の受け取り（ほかの札・機械・署名なし・札の無い issue）は、
+# **口を1回も叩かずに、待たずに帰る。**
+#
+# 同じ issue の回は1本ずつ流す（`concurrency`）。続けて2本書いたとき、
+# 2本目の回は1本目の回が鳴らしたあとの並びを読むので、重ならない。
+#
+# ## 公開のログに素性を出さない
+#
+# このリポジトリは公開で、Actions のログも誰でも読める。
+# **本文も題名も、1文字もログへ出さない。** 受け取りは `$GITHUB_EVENT_PATH`
+# （ファイル）から読む。要約に出すのは issue の**番号**と `PING_WHY` の短い訳だけ。
+# 鳴らす字にも issue の中身を入れない（`ticket_labels.wait_ping_text()`）。
+
+run-name: >-
+  ${{ format('#{0} の待ち札', github.event.issue.number) }}
+
+on:
+  issues:
+    types: [labeled, opened]
+  issue_comment:
+    types: [created]
+
+# 同じ issue の回は1本ずつ。**走っている回（待っている最中の回）は取り消さない**
+# ——取り消すと、鳴らすはずだった回が消える。後から来た回は、走っている回が
+# 終わるまで並ぶ。さらに後から来れば、並んでいた古いほうは GitHub が取り消すが、
+# 残った新しいほうが最新の並びを読むので抜けない
+concurrency:
+  group: wait-ping-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # コメントを1本書くぶんだけ。札には触らない
+  issues: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # **判定の1ファイルだけ取る。** 対象外の受け取りでも走るので、
+      # ここは軽いほどよい
+      - name: 判定だけチェックアウト
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: python/ticket_labels.py
+          sparse-checkout-cone-mode: false
+
+      # **ここまでで GitHub の口は1回も叩いていない。**
+      # 対象外のもの（ほかの札・機械・署名なし・札が無い）は、ここで答えが出て終わる
+      - name: 鳴らす見込みがあるか
+        id: judge
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, "python")
+          from ticket_labels import PING, PING_WHY, ping_trigger_from_event
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as f:
+              event = json.load(f)
+          verdict, number = ping_trigger_from_event(os.environ["GITHUB_EVENT_NAME"], event)
+          go = verdict == PING
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("go=%s\n" % ("true" if go else "false"))
+              f.write("issue=%s\n" % (number or ""))
+
+          # **0件の回も「何を見たか」を出す**（`docs/island-standards.md` §15）。
+          # 本文も題名も出さない。出すのは番号と訳だけ
+          if not go:
+              line = "#%s: 鳴らしません（%s）" % (number, PING_WHY.get(verdict, verdict))
+              print(line)
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+                  f.write(line + "\n")
+          PY
+
+      - name: 待って、並びを読み直して、まだなら鳴らす
+        if: steps.judge.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ steps.judge.outputs.issue }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, sys, time
+          sys.path.insert(0, "python")
+          from ticket_labels import PING, PING_SETTLE_SECONDS, PING_WHY, ping_from_event
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          number = int(os.environ["NUMBER"])
+
+          def gh(*args, body=None):
+              """`gh api` を呼んで JSON で返す。**本文は1文字もログに出さない。**"""
+              r = subprocess.run(["gh", "api", *args], input=body, text=True,
+                                 capture_output=True, check=True)
+              return json.loads(r.stdout) if r.stdout.strip() else None
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as f:
+              event = json.load(f)
+
+          # 続けて書かれる問い・`call_ayato` の書き込みが載るのを待つ
+          time.sleep(PING_SETTLE_SECONDS)
+
+          # **札と状態は読み直したほうで決める**（待つあいだに裏返る・閉じる）
+          issue = gh("repos/%s/issues/%d" % (repo, number))
+          comments = gh("--paginate", "--method", "GET",
+                        "repos/%s/issues/%d/comments" % (repo, number),
+                        "-F", "per_page=100")
+          verdict, text, _ = ping_from_event(os.environ["GITHUB_EVENT_NAME"],
+                                             event, issue, comments or [])
+
+          if verdict == PING:
+              gh("--silent", "--method", "POST",
+                 "repos/%s/issues/%d/comments" % (repo, number),
+                 "--input", "-", body=json.dumps({"body": text}, ensure_ascii=False))
+              line = "#%d: 呼びました（%s）" % (number, PING_WHY[PING])
+          else:
+              line = "#%d: 鳴らしません（%s）" % (number, PING_WHY.get(verdict, verdict))
+          print(line)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(line + "\n")
+          PY
+
+      # **黙って赤くならない。** issue ごとに走るものは、落ちたことに誰も気づかない。
+      # せめてどこで落ちたかと、手で鳴らす口を残す
+      - name: 落ちたときに、手で鳴らす口を残す
+        if: failure()
+        env:
+          NUMBER: ${{ steps.judge.outputs.issue }}
+        run: |
+          {
+            echo "### #${NUMBER} であやとを呼べたか分かりません"
+            echo ""
+            echo '判定（`python/ticket_labels.py`）か GitHub の口のどちらかで落ちました。'
+            echo '手元で見張り（`python/wait_ping_selftest.py`）を回すと、どちらかが分かります。'
+            echo '鳴らし直すときは `call_ayato.yml` を手で押します（`/ask-ayato`）。'
+          } >> "$GITHUB_STEP_SUMMARY"

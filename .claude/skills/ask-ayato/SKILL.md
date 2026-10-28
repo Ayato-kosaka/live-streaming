@@ -60,6 +60,9 @@ gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/call_ayato.ym
 `待ち-あやと` を付けたら、その issue に**何を待っているか**を1行書く。
 書かないと、札だけ在って何待ちか分からない札になる。
 
+**札を付ければ、機械が鳴らす**（`.github/workflows/wait_ping.yml`。2分待って、まだ呼んでいなければ bot が1本書く。
+待ち札の issue にシステムが書き足したときも同じ）。`call_ayato.yml` を回したあとなら重ねて鳴らさない（`docs/island-tickets.md` 6章）。
+
 ## 5. 答えを待つあいだは止まらない
 
 **1件の回答待ちで全部を止めない。** 他の作業を進める。
