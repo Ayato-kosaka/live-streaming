@@ -222,6 +222,14 @@ REPO_CASES: list[dict] = [
      "file": "tools/sprites/hitbox.mjs",
      "old": "===", "new": "!==", "all": True,
      "why": "指の届きを測るところ（hitbox.measure）の等しさを全部ひっくり返す"},
+    # `wait_ping_selftest.py` の守る実物は隣の `wait_ping.py` ではなく
+    # `ticket_labels.py`（判定はあちらに1か所。`wait_flip` と同じ置き方）なので、
+    # 字からは当てられない。**鳴らないほうへ壊す**——#306 そのものの形
+    {"watch": "python/wait_ping_selftest.py",
+     "file": "python/ticket_labels.py",
+     "old": "    if wait_of(issue_labels) != WAIT_AYATO:\n        return QUIET_NO_WAIT",
+     "new": "    if wait_of(issue_labels) == WAIT_AYATO:\n        return QUIET_NO_WAIT",
+     "why": "待ち札の issue を「札が無い」と読ませる（鳴るべきところで鳴らない形）"},
     {"watch": "python/cron_lag_selftest.py",
      "file": "python/cron_lag.py",
      "old": "d = (t - p).total_seconds() / 3600",
