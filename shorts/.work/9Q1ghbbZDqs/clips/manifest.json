@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "9Q1ghbbZDqs__clips",
+ "mode": "clips",
+ "dest": "9Q1ghbbZDqs/clips",
+ "video": "9Q1ghbbZDqs",
+ "channel": null,
+ "request": "shorts/requests/cats-9Q1ghbbZDqs-20261028.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 1,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 60.0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 30420687,
+  "tar_gz": 30378128,
+  "encrypted": 30378144
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 30378144,
+   "sha256": "477db436aaf5cbd4084ebb888db8292cd645ae5d0666d38897013a020c53eb35"
+  }
+ ],
+ "hmac_sha256": "d017bd06d79e85e5e5d3d2db2fdfdb65c44d8d259332c62eca97485b2a5be779",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40668810908",
+ "created_at": "2026-10-28T10:19:15+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 423488,
+    "sha256": "b628a914a01fa65002157b39ad958361ae26ed2510b8a4f23eedcf67548f58f7"
+   }
+  ],
+  "hmac_sha256": "90f05483c99e65b507ba1da42bc4a300a0af504daa2266f31edd3e21a4a2f4f5",
+  "files": 5,
+  "sheets": 1,
+  "bytes": {
+   "plain": 437748,
+   "tar_gz": 423478,
+   "encrypted": 423488
+  }
+ }
+}
