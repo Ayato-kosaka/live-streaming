@@ -33,6 +33,6 @@
  {"plan": "nordic-shinkiro/p2", "place": "youtube", "state": "done", "id": "_3-HD96xiXI", "sha256": "13932e2d5aa26805519cb5b3a5a9cbdaf84aa8b6d0183dc0b7830e3cbdbb6028", "at": "2026-10-24T00:33:56Z", "note": "非公開の下書き。web から媒体の音源を付けられないので、あやとの言葉（2026-10-24 チャット「消して良いよ」）で 2026-10-24 01:24 UTC に完全に削除した。YouTube はあやとがアプリで出す"},
  {"plan": "nordic-shinkiro/p2tt", "place": "tiktok", "state": "pending", "id": null, "sha256": "bd55c51d9650156b3eb2ea8a8518507918a08cf6d964e2ba395486b9eb718efe", "at": "2026-10-24T01:03:31Z", "note": "TikTok の下書き（音源 mirage · hakane）。地図とキャラクターを足した p2tt2 に差し替え、2026-10-24 01:57 UTC に下書きを消した"},
  {"plan": "nordic-shinkiro/p2tt2", "place": "tiktok", "state": "done", "id": "7700052319756406068", "sha256": "d0fc7362cd1f6011827feed46f5ce8d9ad33c84d5ed7f6a7dd5be4f26b81fb66", "at": "2026-10-24T01:54:19Z", "note": "TikTok の下書き（音源 mirage · hakane、1段落目に地図・吹き出しにキャラクター27人）から公開。2026-10-24 にあやとの「出して」のあと、投稿の一覧（Posts 94・Drafts 0）で公開を確かめた"},
- {"plan": "vZ2O8pabk1g/p4", "place": "youtube", "state": "pending", "id": null, "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:47:32Z"},
+ {"plan": "vZ2O8pabk1g/p4", "place": "youtube", "state": "done", "id": "CSE9FVCRdlw", "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:47:32Z"},
  {"plan": "vZ2O8pabk1g/p4", "place": "tiktok", "state": "done", "id": "7701684666276793618", "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:48:20Z"}
 ]
