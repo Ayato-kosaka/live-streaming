@@ -114,6 +114,23 @@ GitHub はコードブロックの中・引用（`>`）の中・バッククォ�
 ぶんを翌日までに拾う」ことで、**昔のコメントを読み直して札を付け替えること
 ではない。** 窓を外して本番に当てたら、2026-09-22 にあやとが書いた備忘1行
 （#147。答えではなく控え）で、審査待ちの issue が「システムの番」になった。
+
+## 札が付いたら、機械が**必ず**鳴らす
+
+あやと（2026-10-28・チャット）:
+
+> なぜ通知してない？運用徹底してよ
+
+`待ち-あやと` を付けたまま `call_ayato.yml` を回し忘れた issue が4本あった
+（`docs/island-misses.md` #306）。**付ける手順と鳴らす手順が別々で、鳴らす側が
+セッションの記憶にしか無かった。** `wait_ping_verdict()` が、札が付いたとき・
+待ち札の issue にシステムが書き足したときに、**鳴らすか**と**鳴らす字**を答える
+（`.github/workflows/wait_ping.yml`）。
+
+**重ねない。** 最後にあやとのアカウントで書かれたもの（システムの問いでも、
+あやと本人の返事でも）より後に、**通知の飛ぶ** `@` が在れば鳴らさない
+（`already_called()`）。飛ぶのは**あやと以外が書いた**生きたメンションだけ——
+セッションが書いた `@Ayato-kosaka` は、字として在っても1通も飛んでいない。
 """
 
 import re
@@ -491,3 +508,266 @@ def _within(at: str, now: datetime, days: int) -> bool:
     if t.tzinfo is None:
         t = t.replace(tzinfo=timezone.utc)
     return (now - t) <= timedelta(days=days)
+
+
+# ---- 札が付いたら、機械が鳴らす（`.github/workflows/wait_ping.yml`）------
+#
+# あやと（2026-10-28・チャット）:
+#
+# > なぜ通知してない？運用徹底してよ
+#
+# 札を付けたのに `call_ayato.yml` を回し忘れて、4本が「返事待ち」のまま
+# 黙っていた（`docs/island-misses.md` #306）。**札を付ける人と、鳴らす人が
+# 別の手順だった**のが根で、手順に書き足しても同じことが起きる。
+# だから**札そのものを引き金にする。**
+
+# `wait_ping_verdict()` が返す答え。**鳴らすのは `PING` のときだけ。**
+# 残りは「なぜ鳴らさなかったか」で、0件の回に何を見たかを要約に出すために
+# 名前を分けてある（`VERDICT_WHY` と同じ考え方。`docs/island-standards.md` §15）
+PING = "ping"
+QUIET_EVENT = "not-ask"
+QUIET_OTHER_LABEL = "other-label"
+QUIET_CLOSED = "closed"
+QUIET_NO_WAIT = "no-wait-ayato"
+QUIET_BOT = "bot"
+QUIET_NOT_OWNER = "not-owner"
+QUIET_NOT_SIGNED = "not-signed"
+QUIET_ALREADY = "already-called"
+
+# 要約欄に出す1行。**本文も題名も出さない**（公開のログに素性を流さない）
+PING_WHY = {
+    PING: "あやと待ちなのに、まだ呼んでいない → 呼ぶ",
+    QUIET_EVENT: "札が付いた・システムが書き足した、のどちらでもない",
+    QUIET_OTHER_LABEL: "付いた札が 待ち-あやと ではない",
+    QUIET_CLOSED: "閉じた issue",
+    QUIET_NO_WAIT: "待ち-あやと が付いていない",
+    QUIET_BOT: "機械が書いたコメント",
+    QUIET_NOT_OWNER: "あやとのアカウント以外が書いたコメント",
+    QUIET_NOT_SIGNED: "署名の無いコメント。あやと本人の返事",
+    QUIET_ALREADY: "もう呼んである。最後の書き込みのあとに、飛ぶメンションが在る",
+}
+
+# 札が付いて（書き足されて）から、書き込みの並びを読みに行くまで待つ秒数。
+#
+# **すぐ読むと、重なって2通鳴る。** 札を付けた人は、たいてい続けて問いを
+# 書き足すか `call_ayato.yml` を回す。あちらの書き込みが載る前に読むと
+# 「まだ呼んでいない」に見える。`call_ayato` は押してから書き込むまで
+# 十数秒〜1分かかるので、それより長く待つ。
+# 待つのは**鳴らす見込みがあるときだけ**（`wait_ping_trigger()` が通したあと）。
+# 対象外のコメントは待たずに帰る
+PING_SETTLE_SECONDS = 120
+
+
+def _flat(c) -> dict:
+    """書き込み1つを `{"login", "type", "body"}` にそろえる。
+
+    GitHub が返す形（`{"user": {"login", "type"}, "body"}`）でも、
+    そろえたあとの形でも読む。
+    """
+    c = c or {}
+    user = c.get("user")
+    if isinstance(user, dict):
+        return {"login": user.get("login") or "", "type": user.get("type") or "",
+                "body": c.get("body") or ""}
+    return {"login": c.get("login") or "", "type": c.get("type") or "",
+            "body": c.get("body") or ""}
+
+
+def _is_owner(login) -> bool:
+    """あやとのアカウントか。**セッションもこのアカウントで書く。**"""
+    return (login or "").lower() == OWNER_LOGIN.lower()
+
+
+def wait_ping_trigger(event_name: str, action: str, label, issue_labels,
+                      comment=None, state: str = "open") -> str:
+    """受け取り1つだけで決まるところ。**GitHub の口を1回も叩かない。**
+
+    ここで `PING` が出たものだけが、待って（`PING_SETTLE_SECONDS`）
+    書き込みの並びを読みに行く。いちばん多いのは「札の無い issue への
+    コメント」なので、そこで早く帰る。
+
+    | 受け取り | 鳴らす見込み |
+    | --- | --- |
+    | `issues` の `labeled` で、付いた札が `待ち-あやと` | **在る** |
+    | `issues` の `opened` で、`待ち-あやと` を付けて開いた | **在る**（札つきで開いたとき、`labeled` が来ない日のため） |
+    | `issue_comment` の `created` で、`待ち-あやと` の issue に**システムの署名つき**のコメント | **在る** |
+    | それ以外（ほかの札・書き直し・閉じた issue・あやと本人の返事・機械・ほかの人） | 無い |
+
+    **あやと本人の返事では鳴らさない。** 答えた人を呼んでも意味が無いし、
+    答えた時点で札は `wait_flip` が裏返す。
+
+    Args:
+        event_name: `issues` か `issue_comment`（`$GITHUB_EVENT_NAME`）
+        action: 受け取りの `action`
+        label: `labeled` のとき付いた札（`{"name": …}` でも名前だけでも）
+        issue_labels: その issue に付いている札
+        comment: `issue_comment` のときのコメント（GitHub の形でも、そろえた形でも）
+        state: issue の状態（`open` / `closed`）
+
+    Returns:
+        `PING` なら鳴らす見込みが在る。それ以外は `PING_WHY` に理由が入っている
+    """
+    if event_name == "issues":
+        if action == "labeled":
+            name = label.get("name") if isinstance(label, dict) else label
+            if name != WAIT_AYATO:
+                return QUIET_OTHER_LABEL
+        elif action != "opened":
+            return QUIET_EVENT
+    elif event_name == "issue_comment":
+        if action != "created":
+            return QUIET_EVENT
+    else:
+        return QUIET_EVENT
+    if (state or "open") != "open":
+        return QUIET_CLOSED
+    if wait_of(issue_labels) != WAIT_AYATO:
+        return QUIET_NO_WAIT
+    if event_name == "issue_comment":
+        c = _flat(comment)
+        # `type` を載せてこない経路でも落ちないように、login の `[bot]` も見る
+        if c["type"] == "Bot" or c["login"].endswith("[bot]"):
+            return QUIET_BOT
+        if not _is_owner(c["login"]):
+            return QUIET_NOT_OWNER
+        if not signed_by_system(c["body"]):
+            return QUIET_NOT_SIGNED
+    return PING
+
+
+def ping_history(issue, comments) -> list:
+    """issue の**本文を先頭に置いた**書き込みの並び（古い順）。
+
+    **本文も1本に数える。** 機械（`donor_calls` ほか）が本文に
+    `@Ayato-kosaka` を入れて開いた issue は、開いた時点で鳴っている。
+    コメントだけを見ると「まだ呼んでいない」に見えて、重ねて鳴らす。
+
+    Args:
+        issue: GitHub が返す issue（`user` と `body` を見る）。無ければ本文は数えない
+        comments: その issue のコメント。**古い順**（GitHub が返す順）
+
+    Returns:
+        `{"login", "type", "body"}` の並び
+    """
+    out = []
+    if issue:
+        out.append(_flat(issue))
+    for c in comments or []:
+        out.append(_flat(c))
+    return out
+
+
+def already_called(history) -> bool:
+    """**もう呼んであるか。** 重ねて鳴らさないための見分け。
+
+    「最後に**あやとのアカウントで**書かれたものより後に、**通知の飛ぶ**
+    メンションが在るか」で決める。
+
+    - **通知が飛ぶのは、あやと以外が書いた生きたメンションだけ。**
+      セッションも、あやと本人のトークンで書いている。GitHub は自分で自分を
+      呼んでも通知を飛ばさないので、セッションが書いた `@Ayato-kosaka` は
+      **字として在るのに1通も飛んでいない**（#306 の根）。だから数えない。
+      囲い・引用・バッククォートの中のものも数えない（`mention_live()`）
+    - **あやとのアカウントで書かれたら、前の呼び出しは使い終わり。**
+      システムの新しい問いなら、その問いはまだ誰も呼んでいない。
+      あやと本人の返事なら、前の呼び出しはもう読まれている。どちらも、
+      そのあとに札が付けば**新しく呼ぶ**
+
+    Args:
+        history: `ping_history()` が作った並び（古い順）
+
+    Returns:
+        もう呼んであれば True
+    """
+    called = False
+    for c in history or []:
+        c = _flat(c)
+        if _is_owner(c["login"]):
+            called = False
+        elif mention_live(c["body"]):
+            called = True
+    return called
+
+
+def wait_ping_text() -> str:
+    """鳴らすときのコメント。**中身は1行と署名だけ。**
+
+    **issue の中身を1文字も入れない。** 題名にも本文にも視聴者さんの素性が
+    在りうるし、鳴らす字は bot の書き込みとして残る。何を待っているかは
+    すぐ上に書いてあるので、繰り返さない。
+
+    `HANDLE` を行の先頭に置くのは、囲いや引用に巻き込まれないため。
+    署名は `call_ayato.yml` と同じ（あやとから見て、呼んでいるのは
+    いつも同じ相手）。
+    """
+    return (f"{HANDLE} 返事をお願いします（すぐ上の書き込みです）。\n"
+            "\n---\n_あやと島案内鳥が呼んでいます_\n")
+
+
+def wait_ping_verdict(event_name: str, action: str, label, issue_labels,
+                      comment, history, state: str = "open") -> tuple:
+    """**鳴らすか**と**鳴らす字**を決める。GitHub を触らない素の関数。
+
+    1. 受け取りだけで決まるところ（`wait_ping_trigger()`）
+    2. **重ねない**: もう呼んであれば鳴らさない（`already_called()`）。
+       人が `call_ayato.yml` を回したあと・同じ issue に続けて書いたあと・
+       機械が本文で呼んで開いた issue がこれに当たる
+
+    Args:
+        event_name, action, label, comment: `wait_ping_trigger()` と同じ
+        issue_labels: その issue に**いま**付いている札（待ったあとに読み直したもの）
+        history: `ping_history()` が作った並び（古い順）
+        state: issue の**いまの**状態
+
+    Returns:
+        （答え, 鳴らす字）。鳴らさないときの字は空
+    """
+    v = wait_ping_trigger(event_name, action, label, issue_labels,
+                          comment, state)
+    if v != PING:
+        return v, ""
+    if already_called(history):
+        return QUIET_ALREADY, ""
+    return PING, wait_ping_text()
+
+
+def ping_trigger_from_event(event_name: str, event) -> tuple:
+    """受け取り一式から、**口を叩く前の**答えと相手を取り出す。
+
+    Args:
+        event_name: `$GITHUB_EVENT_NAME`
+        event: `$GITHUB_EVENT_PATH` の中身
+
+    Returns:
+        （`wait_ping_trigger()` の答え, issue の番号）
+    """
+    ev = event or {}
+    issue = ev.get("issue") or {}
+    v = wait_ping_trigger(event_name, ev.get("action"), ev.get("label"),
+                          issue.get("labels"), ev.get("comment"),
+                          issue.get("state"))
+    return v, issue.get("number")
+
+
+def ping_from_event(event_name: str, event, issue, comments) -> tuple:
+    """待ったあとに読み直した issue とコメントで、最後まで決める。
+
+    **札と状態は読み直したほうを使う。** 待っているあいだに、あやとが
+    答えて札が裏返る（`wait_flip`）・閉じられる、がありうる。受け取りに
+    載っている札は、起きた瞬間のもの。
+
+    Args:
+        event_name: `$GITHUB_EVENT_NAME`
+        event: `$GITHUB_EVENT_PATH` の中身
+        issue: いま GitHub から読んだ issue（無ければ受け取りのものを使う）
+        comments: いま GitHub から読んだコメント（古い順）
+
+    Returns:
+        （答え, 鳴らす字, issue の番号）
+    """
+    ev = event or {}
+    now = issue or ev.get("issue") or {}
+    v, text = wait_ping_verdict(event_name, ev.get("action"), ev.get("label"),
+                                now.get("labels"), ev.get("comment"),
+                                ping_history(now, comments), now.get("state"))
+    return v, text, (now.get("number") or (ev.get("issue") or {}).get("number"))

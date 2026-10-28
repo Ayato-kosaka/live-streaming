@@ -1,0 +1,603 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p3",
+ "style": "style_v3.json",
+ "sources": {
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/ingest/UQdkUSro9Ck/clips/02_1-05-30_1-15-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3930.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/ingest/UQdkUSro9Ck/clips/01_0-55-30_1-05-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3330.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/ingest/UQdkUSro9Ck/clips/05_1-30-00_1-33-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5400.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/ingest2/UQdkUSro9Ck/clips/02_1-23-00_1-30-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4980.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c02",
+   "in": 5415,
+   "out": 5499,
+   "row": 0,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "来たばかりの卓を上から（パン・チェバピ・豆の鍋）。題の札の下に料理が来る。顔は無い"
+  },
+  {
+   "src": "c01",
+   "in": 1449,
+   "out": 1502,
+   "row": 1,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.16,
+    "x": 0.45,
+    "y": 0.3,
+    "sx": 0.5,
+    "sy": 0.35
+   },
+   "note": "KOSMOS SINCE 1952 の看板と、焼き場の窓（座っている人が入らない所まで）"
+  },
+  {
+   "src": "c01",
+   "in": 954,
+   "out": 997,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.6,
+    "y": 0.45
+   },
+   "note": "引いて見た店先。赤い看板の前に人が集まって並んでいる（人は小さい）"
+  },
+  {
+   "src": "c01",
+   "in": 5169,
+   "out": 5233,
+   "row": 2,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "持ち帰りの窓口の前で待つ人の後ろ姿（窓の中に豆の土鍋）。v1 の 0:57:42.5 は並ぶ人の横顔が中くらいの大きさで写るので、顔の写らない後ろ姿に替えた"
+  },
+  {
+   "src": "c05",
+   "in": 2634,
+   "out": 2721,
+   "row": 3,
+   "zoom": {
+    "from": 1.03,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "空を見上げて考える本人（「分からへん」）。店の前の行列の画（窓の木の茶色）と続けると似た見た目で落ちる（v1。同じ素材のファイルは全部同じ場面と数える）ので、別の素材（店を出たあとの外の自撮り）の顔を当てた"
+  },
+  {
+   "src": "c01",
+   "in": 2445,
+   "out": 2515,
+   "row": 4,
+   "zoom": {
+    "from": 1.35,
+    "to": 1.45,
+    "x": 0.72,
+    "y": 0.42,
+    "sx": 0.5,
+    "sy": 0.38
+   },
+   "note": "あやとの指定「外から見える炭で焼いてる映像」。窓ごしの焼き場（煙の立つ網の上のチェバピ）に寄せる。焼く人の顔が出る 0:56:55.5 より前で止める"
+  },
+  {
+   "src": "c01",
+   "in": 11685,
+   "out": 11716,
+   "row": 5,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "席に着いた空の卓"
+  },
+  {
+   "src": "c01",
+   "in": 14415,
+   "out": 14461,
+   "row": 5,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.18,
+    "x": 0.4,
+    "y": 0.65,
+    "sx": 0.5,
+    "sy": 0.55
+   },
+   "note": "卓に置かれたパンのかご"
+  },
+  {
+   "src": "c02",
+   "in": 2949,
+   "out": 3011,
+   "row": 6,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "スマホのメニュー: KEBAB から BAKED BEANS へ送る"
+  },
+  {
+   "src": "c02",
+   "in": 4695,
+   "out": 4757,
+   "row": 7,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "チェバピの皿が卓に来る → パンと並ぶ卓。上の端に奥の席の客の顔が入るので、下に合わせて寄せて外す"
+  },
+  {
+   "src": "c02",
+   "in": 4500,
+   "out": 4539,
+   "row": 8,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "頭に手をやって驚く本人"
+  },
+  {
+   "src": "c02",
+   "in": 3405,
+   "out": 3452,
+   "row": 9,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "相席の人が本人の卓の椅子を引いて座る所（手と胴だけ。顔は写らない）"
+  },
+  {
+   "src": "c02",
+   "in": 1320,
+   "out": 1366,
+   "row": 9,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "メニューの PAPER MIX（パプリカのグリル）。相席の人の皿は配信に写っていないので、同じ料理をメニューの写真で見せる"
+  },
+  {
+   "src": "c2_02",
+   "in": 54,
+   "out": 100,
+   "row": 9,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.3,
+    "y": 0.35,
+    "sx": 0.5,
+    "sy": 0.45
+   },
+   "note": "本人がスマホで見せた、白いご飯の皿が写った料理の写真（「この人は多分こういうの頼む」の所）"
+  },
+  {
+   "src": "c02",
+   "in": 9675,
+   "out": 9746,
+   "row": 10,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.4,
+    "y": 0.35
+   },
+   "note": "かじったチェバピの断面の寄り"
+  },
+  {
+   "src": "c02",
+   "in": 12120,
+   "out": 12200,
+   "row": 11,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "フォークのチェバピをカメラに寄せる"
+  },
+  {
+   "src": "c02",
+   "in": 14730,
+   "out": 14793,
+   "row": 12,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.45,
+    "y": 0.6,
+    "sx": 0.5,
+    "sy": 0.55
+   },
+   "note": "豆の煮込みの土鍋を持ち上げて見せる（グラタンのような見た目）"
+  },
+  {
+   "src": "c02",
+   "in": 15495,
+   "out": 15558,
+   "row": 12,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "スプーンですくった豆"
+  },
+  {
+   "src": "c02",
+   "in": 16770,
+   "out": 16827,
+   "row": 13,
+   "zoom": {
+    "from": 1.03,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "豆を食べてカメラに話す本人（字幕 [1:14:30]「これ当たり。すごい当たり」の所）。v1 の 1:17:30.5 は後ろに立つ客の顔が写るので、本当に言った所の画に替えた"
+  },
+  {
+   "src": "c02",
+   "in": 5775,
+   "out": 5864,
+   "row": 14,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "チェバピと豆の煮込みが並んだ卓（二択の2品）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアの行列店の大衆食堂を食べてみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアの行列店の大衆食堂を食べてみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/01.wav",
+    "tts_text": "北マケドニアの行列店の大衆食堂を食べてみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "人気と噂の大衆食堂コスモスというお店にやってきた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/02.wav",
+    "tts_text": "人気と噂の大衆食堂コスモスというお店にやってきた。",
+    "at": 84
+   },
+   {
+    "text": "行列で5分ぐらい待ちって言われたけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/03.wav",
+    "tts_text": "行列で五分ぐらい待ちって言われたけど、",
+    "at": 180
+   },
+   {
+    "text": "海外の5分やから、1分か15分か分からへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/04.wav",
+    "tts_text": "海外のごふんやから、一分か十五分か分からへん！",
+    "at": 244,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "この炭で焼いてるチェバピって言うのが食べたい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/05.wav",
+    "tts_text": "このすみで焼いてるチェバピって言うのが食べたい！",
+    "at": 331
+   },
+   {
+    "text": "席に着いた瞬間、無料のパンが出てきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/06.wav",
+    "tts_text": "席に着いた瞬間、無料のパンが出てきた！",
+    "at": 401
+   },
+   {
+    "text": "チェバピ5本と豆の煮込みを頼んだら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/07.wav",
+    "tts_text": "チェバピ五本と豆の煮込みを頼んだら、",
+    "at": 478
+   },
+   {
+    "text": "1分も経たんうちに、料理が来た！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/08.wav",
+    "tts_text": "一分もたたんうちに、料理が来た！",
+    "at": 540,
+    "mood": "up_pop"
+   },
+   {
+    "text": "吉野家より早いやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/09.wav",
+    "tts_text": "吉野家より早いやん！",
+    "at": 602
+   },
+   {
+    "text": "海外あるあるの相席で、この人パプリカのグリルと白いビリヤニみたいなご飯頼んでた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/10.wav",
+    "tts_text": "海外あるあるの相席で、この人パプリカのグリルと白いビリヤニみたいなご飯頼んでた！",
+    "at": 641
+   },
+   {
+    "text": "チェバピを1口噛んだら、肉汁ブシャー！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/11.wav",
+    "tts_text": "チェバピをひとくち噛んだら、肉汁ブシャー！",
+    "at": 780,
+    "mood": "up_pop"
+   },
+   {
+    "text": "炭の香りで、完全にバーベキューのソーセージや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/12.wav",
+    "tts_text": "すみの香りで、完全にバーベキューのソーセージや！",
+    "at": 851
+   },
+   {
+    "text": "豆のグラタンみたいなのは、トマトパスタとクリームパスタを、融合さしたみたいな味！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/13.wav",
+    "tts_text": "豆のグラタンみたいなのは、トマトパスタとクリームパスタを、ゆうごうさしたみたいな味！",
+    "at": 931
+   },
+   {
+    "text": "これ当たり！すごい当たり！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/14.wav",
+    "tts_text": "これ当たり！すごい当たり！",
+    "at": 1057,
+    "mood": "up_pop"
+   },
+   {
+    "text": "みんなは、チェバピと豆、どっち食べたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/voice/cosmos-p3-v1/p3/15.wav",
+    "tts_text": "みんなは、チェバピと豆、どっち食べたい？",
+    "at": 1114
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cosmos3/wt/shorts/videos/UQdkUSro9Ck/p3/spec.json",
+  "fps": 30,
+  "frames": 1203,
+  "seconds": 40.1,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "1:08:30.5+2.80s"
+    ],
+    "line": "北マケドニアの行列店の大衆食堂を食べてみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 84,
+    "frames": 96,
+    "voice_frames": 88,
+    "cuts": [
+     "0:56:18.3+1.77s",
+     "0:56:01.8+1.43s"
+    ],
+    "line": "人気と噂の大衆食堂コスモスというお店にやってきた。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 180,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:58:22.3+2.13s"
+    ],
+    "line": "行列で5分ぐらい待ちって言われたけど、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 244,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "1:31:27.8+2.90s"
+    ],
+    "line": "海外の5分やから、1分か15分か分からへん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 331,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:56:51.5+2.33s"
+    ],
+    "line": "この炭で焼いてるチェバピって言うのが食べたい！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 401,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "1:01:59.5+1.03s",
+     "1:03:30.5+1.53s"
+    ],
+    "line": "席に着いた瞬間、無料のパンが出てきた！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 478,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "1:07:08.3+2.07s"
+    ],
+    "line": "チェバピ5本と豆の煮込みを頼んだら、",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 540,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "1:08:06.5+2.07s"
+    ],
+    "line": "1分も経たんうちに、料理が来た！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 602,
+    "frames": 39,
+    "voice_frames": 31,
+    "cuts": [
+     "1:08:00.0+1.30s"
+    ],
+    "line": "吉野家より早いやん！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 641,
+    "frames": 139,
+    "voice_frames": 131,
+    "cuts": [
+     "1:07:23.5+1.57s",
+     "1:06:14.0+1.53s",
+     "1:23:01.8+1.53s"
+    ],
+    "line": "海外あるあるの相席で、この人パプリカのグリルと白いビリヤニみたいなご飯頼んでた！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 780,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "1:10:52.5+2.37s"
+    ],
+    "line": "チェバピを1口噛んだら、肉汁ブシャー！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 851,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "1:12:14.0+2.67s"
+    ],
+    "line": "炭の香りで、完全にバーベキューのソーセージや！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 931,
+    "frames": 126,
+    "voice_frames": 118,
+    "cuts": [
+     "1:13:41.0+2.10s",
+     "1:14:06.5+2.10s"
+    ],
+    "line": "豆のグラタンみたいなのは、トマトパスタとクリームパスタを、融合さしたみたいな味！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1057,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "1:14:49.0+1.90s"
+    ],
+    "line": "これ当たり！すごい当たり！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1114,
+    "frames": 89,
+    "voice_frames": 66,
+    "cuts": [
+     "1:08:42.5+2.97s"
+    ],
+    "line": "みんなは、チェバピと豆、どっち食べたい？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 303,
+   "raw_voice_s": 49.8,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 35.6,
+   "cps_voiced": 8.51,
+   "video_s": 40.1,
+   "cps_video": 7.56
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
