@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__edinburgh-p2A-v3",
+ "mode": "render",
+ "dest": "render/edinburgh-p2A-v3/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/edinburgh-p2A-v3.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1181,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "548b73cba65821c202a340fdddd7b9f88ea0229981e2198a02be10d6a5436153"
+  }
+ ],
+ "hmac_sha256": "ff5746aa0b56f7dd5cce4bdcd84a2e4ab8006f08e5d92474168ffca7d64b3f95",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-29T13:51:29+00:00",
+ "nonce": "08ae7716e84ead078ef6487b"
+}
