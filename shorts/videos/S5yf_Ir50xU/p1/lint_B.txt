@@ -1,4 +1,4 @@
-原稿: /tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds/wt/shorts/videos/S5yf_Ir50xU/p1/script_B.txt（15行・275字）  題: spec_B.json の title_card
+原稿: shorts/videos/S5yf_Ir50xU/p1/script_B.txt（15行・286字）  題: spec_B.json の title_card
 △ F-004 L-DESU 7行目「え、想像してたより、うまそうなんですけど！」 です・ます調（「です」）。ふざけている所か（説明口調・振り返り口調になっていないか）
 △ F-035/F-036 L-ASHI 15行目「みんなは、ドーナツ、穴あり派？穴なし派？」 【足】: 本人の言い方か（見立て・言いまとめになっていないか）・映像の枠の外でも正しいか
 結果: ✕ 0・△ 2（当てた規則 24/24）。字で拾える指摘には当たっていない（面白いかは批評役の (h) で）
