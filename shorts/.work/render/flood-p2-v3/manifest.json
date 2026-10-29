@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__flood-p2-v3",
  "mode": "render",
- "dest": "render/flood-p2-v3/inbox",
+ "dest": "render/flood-p2-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/flood-p2-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 1006,
-  "tar_gz": 817,
-  "encrypted": 832
+  "plain": 37213,
+  "tar_gz": 9510,
+  "encrypted": 9520
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 832,
-   "sha256": "005f96e55bac96efce618cc27bac368e60500117f6f236f8f7b7567a3d08c4f4"
+   "bytes": 9520,
+   "sha256": "42ed233953ca316200b715d201f3cadf1c45955f4850930299bbae88d657d568"
   }
  ],
- "hmac_sha256": "d3a5f8dec69bb1fba5bc86176e6500af8fbb8bcd859c6b3fc5bfe20f9aafa1d7",
+ "hmac_sha256": "94f5b46d4a35c8848f3ac89a4f6778d7a9acc638b5cc7865fa65f60b5b387c53",
  "pubkey_sha256": "f32d70329ee9bd6615c88e2bf23ac0999516bc878c2053f54ea1a0c6152d060d",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-29T12:56:04+00:00",
+ "created_at": "2026-10-29T13:04:20+00:00",
  "nonce": "7782ab428b18f02af801d831"
 }
