@@ -165,7 +165,14 @@ def parse_ranges(rs: list) -> list:
     return out
 
 
+# `--transcript` で渡した字幕。streams/ に無い回（毎晩の取り込みが拾っていない回。2025-01-09〜19 など）を、
+# 字幕だけの道（shorts_ingest の captions）で取って復号したもので書くため
+TRANSCRIPT_FILE: dict = {}
+
+
 def stream_file(video: str, kind: str) -> Path:
+    if kind == "transcript" and video in TRANSCRIPT_FILE:
+        return TRANSCRIPT_FILE[video]
     hits = sorted(STREAMS.rglob(f"*_{video}.{kind}.txt"))
     if not hits:
         raise FileNotFoundError(f"streams/ に {video} の {kind} が無い")
@@ -898,10 +905,17 @@ def main() -> int:
     ed.add_argument("--voice-lines", help="1枚は作らず、声に渡す字の雛形を spec の tts_text からこの道に書く")
     for p in (w, c):
         p.add_argument("--ref", action="append", default=[], help="写す参考の略号（reference_beats.md の節。何回でも）")
+        p.add_argument("--transcript", help="streams/ に無い回の字幕（`[H:MM:SS] 文` の行。captions で取って復号した captions.txt）。"
+                       "チャットが無いので、読み上げたコメントは伏せられない")
     for p in (w, c, ed):
         p.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
         p.add_argument("-o", "--out", help="書き出す先（無ければ標準出力）")
     a = ap.parse_args()
+    if getattr(a, "transcript", None):
+        if not a.video:
+            print("作れない: --transcript には --video が要る", file=sys.stderr)
+            return 2
+        TRANSCRIPT_FILE[a.video] = Path(a.transcript)
     try:
         if a.who == "critic":
             text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range, a.as_of)
