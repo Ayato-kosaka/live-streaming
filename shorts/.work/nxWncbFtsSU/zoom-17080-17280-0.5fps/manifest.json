@@ -5,7 +5,7 @@
  "dest": "nxWncbFtsSU/zoom-17080-17280-0.5fps",
  "video": "nxWncbFtsSU",
  "channel": null,
- "request": "shorts/requests/edinburgh-nxWncbFtsSU-zoom-20261029.json",
+ "request": "shorts/requests/edinburgh-nxWncbFtsSU-zoom-20261029-r2.json",
  "status": "failed",
  "stages": {
   "download": "failed"
@@ -22,7 +22,7 @@
   "files": 2
  },
  "bytes": {
-  "plain": 1351,
+  "plain": 1354,
   "tar_gz": 1074,
   "encrypted": 1088
  },
@@ -30,12 +30,12 @@
   {
    "name": "payload.enc",
    "bytes": 1088,
-   "sha256": "ec13ce44714da22c72074330df8f2303bcfe5a50f1830ff0beae2486db41b709"
+   "sha256": "924844f5b20ad65f00e9afdd43c5effa5fd930ee275d18fa4d752b28a224980e"
   }
  ],
- "hmac_sha256": "d03704504edee59b031865c32e8ec83ba15ef309842e4b3f01ae2db260701b09",
+ "hmac_sha256": "edc68428571569970cd53d5e17e23dbb4c7caa2a977f7290cd5b0f5bc94fbdd6",
  "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40839383830",
- "created_at": "2026-10-29T08:14:46+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40850244372",
+ "created_at": "2026-10-29T09:34:04+00:00"
 }
