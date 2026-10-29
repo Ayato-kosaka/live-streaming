@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "S5yf_Ir50xU__zoom-22950-23850-1fps",
+ "mode": "zoom",
+ "dest": "S5yf_Ir50xU/zoom-22950-23850-1fps",
+ "video": "S5yf_Ir50xU",
+ "channel": null,
+ "request": "shorts/requests/leeds-S5yf_Ir50xU-zoom-20261029-p1.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 76,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 8,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 84
+ },
+ "bytes": {
+  "plain": 20665934,
+  "tar_gz": 20170607,
+  "encrypted": 20170608
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 20170608,
+   "sha256": "4e97ee2600430dda9cb2b9cfa98a9a923edbc02937271bfa1c545d67ca8c88a2"
+  }
+ ],
+ "hmac_sha256": "d5d589db2c345f2dc787124d3533ef0bf3c7632dd57c52d27cc48dd6e2529879",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40854724548",
+ "created_at": "2026-10-29T10:35:54+00:00"
+}
