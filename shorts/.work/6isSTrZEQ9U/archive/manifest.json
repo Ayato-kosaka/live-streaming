@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "6isSTrZEQ9U__archive",
+ "mode": "archive",
+ "dest": "6isSTrZEQ9U/archive",
+ "video": "6isSTrZEQ9U",
+ "channel": null,
+ "request": "shorts/requests/uk4-archive-20261029.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 91,
+  "transcript_segments": 10,
+  "cuts": 7,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 16
+ },
+ "bytes": {
+  "plain": 465805,
+  "tar_gz": 323337,
+  "encrypted": 323344
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 323344,
+   "sha256": "79209a25891ff76008b1abbbb07cbcde7bade6cb3cc916b27dee6e6a1a1f7f49"
+  }
+ ],
+ "hmac_sha256": "3c535eb6cd0bf15fed05486306d14d92aa11d8bac97f9d7f5d84a64ef3aaeee8",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40838211813",
+ "created_at": "2026-10-29T08:29:13+00:00"
+}
