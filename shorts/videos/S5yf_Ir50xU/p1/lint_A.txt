@@ -1,3 +1,3 @@
-原稿: shorts/videos/S5yf_Ir50xU/p1/script_A.txt（18行・309字）  題: spec_A.json の title_card
+原稿: shorts/videos/S5yf_Ir50xU/p1/script_A.txt（18行・313字）  題: spec_A.json の title_card
 △ F-035/F-036 L-ASHI 18行目「みんなは、知らん街に行ったら、歩いて回る派？バス派？」 【足】: 本人の言い方か（見立て・言いまとめになっていないか）・映像の枠の外でも正しいか
 結果: ✕ 0・△ 1（当てた規則 24/24）。字で拾える指摘には当たっていない（面白いかは批評役の (h) で）
