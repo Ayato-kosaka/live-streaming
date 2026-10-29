@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__B-trip__shorts",
+ "mode": "channel",
+ "dest": "channels/B-trip/shorts",
+ "video": null,
+ "channel": "@B-trip",
+ "request": "shorts/requests/2026-10-29-ukref-channels-r1.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 3
+ },
+ "bytes": {
+  "plain": 2647,
+  "tar_gz": 1190,
+  "encrypted": 1200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1200,
+   "sha256": "a0db433a358d826f22f94f07931461b55e2147ef53f3f30ec575647767405dfe"
+  }
+ ],
+ "hmac_sha256": "94041494cfbc244afcdb93e358f7d22f391a45bc60405e8cc37bdabd14387cf6",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40840652981",
+ "created_at": "2026-10-29T09:12:26+00:00"
+}
