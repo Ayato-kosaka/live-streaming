@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__york-p2-v2",
  "mode": "render",
- "dest": "render/york-p2-v2/inbox",
+ "dest": "render/york-p2-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/york-p2-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 4024,
-  "tar_gz": 1899,
-  "encrypted": 1904
+  "plain": 36789,
+  "tar_gz": 9448,
+  "encrypted": 9456
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1904,
-   "sha256": "34ac0be0932c22d2eed06d9a5e10b445d2e4d9ad59a65be5956811e39576b908"
+   "bytes": 9456,
+   "sha256": "2d9762460d575517d9bac9bd04d84902d2f26201b0cdc15821895d7f73154a56"
   }
  ],
- "hmac_sha256": "afb514c4662ce660935f1dcfb199f2d83c1cece84a32c19469bf3f63cf684c8b",
+ "hmac_sha256": "67c78f291c9ba05440da87a000efcf443d5f0c8d9a548efd038b164604a2413d",
  "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-29T13:20:37+00:00",
+ "created_at": "2026-10-29T13:31:30+00:00",
  "nonce": "966f7d5a2759b8ec2c6d2cfa"
 }
