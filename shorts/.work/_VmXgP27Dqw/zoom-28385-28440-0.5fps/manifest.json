@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "_VmXgP27Dqw__zoom-28385-28440-0.5fps",
+ "mode": "zoom",
+ "dest": "_VmXgP27Dqw/zoom-28385-28440-0.5fps",
+ "video": "_VmXgP27Dqw",
+ "channel": null,
+ "request": "shorts/requests/york-_VmXgP27Dqw-zoom-20261029b.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 7,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 15
+ },
+ "bytes": {
+  "plain": 1497560,
+  "tar_gz": 1461013,
+  "encrypted": 1461024
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1461024,
+   "sha256": "88124f87f6d52d843a357b9ea6eeca76e1bcaa2102a785ddb9cb494af1dbeccb"
+  }
+ ],
+ "hmac_sha256": "cc0c49528d377e375f81efd5e62be717afa0667442bffb04f454d06adb5652b6",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/40855202801",
+ "created_at": "2026-10-29T10:38:34+00:00"
+}
