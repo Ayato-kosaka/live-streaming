@@ -17,3 +17,12 @@
 ## 公開のあとに確かめること
 
 2026-10-29 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
+
+## 公開を確かめた
+
+2026-10-29 12:54 UTC、EC2 からログインしない `curl` で:
+
+- YouTube の oEmbed → **200**、題「🐱海外の野良猫たち人懐こすぎた！」
+- TikTok の `embed/v2/7701849085640396053` → 1回目で **200・`"secret":false`**
+
+EC2 に送った動画（`~/shorts_post/cats`）は `post.py clean` で消した。
