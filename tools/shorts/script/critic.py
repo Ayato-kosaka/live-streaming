@@ -83,6 +83,7 @@ def main() -> int:
     ap.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
     ap.add_argument("--video", help="配信の videoId（streams/ の字幕を1枚に入れる）")
     ap.add_argument("--range", action="append", default=[], help="字幕の区間 H:MM:SS-H:MM:SS（省くと spec の why・src の時刻の前後30秒）")
+    ap.add_argument("--transcript", help="streams/ に無い回の字幕（captions で取って復号した captions.txt。`brief.py --help`）")
     ap.add_argument("--out", required=True, help="控えを置く場所（スクラッチパッドの下）")
     ap.add_argument("--label", default="", help="控えの名前（tally に出る）")
     ap.add_argument("--runs", help="1回1行の控え（.jsonl）に足す")
@@ -98,6 +99,8 @@ def main() -> int:
     script = Path(a.script)
     spec = Path(a.spec) if a.spec else None
     try:
+        if a.transcript and a.video:
+            brief.TRANSCRIPT_FILE[a.video] = Path(a.transcript)
         prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range, a.as_of)
     except (OSError, KeyError, ValueError) as e:
         print(f"1枚を作れない: {e}", file=sys.stderr)

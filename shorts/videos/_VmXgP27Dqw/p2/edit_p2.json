@@ -1,0 +1,789 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c24": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/24_4-51-45_4-52-35.mp4",
+   "watermark": "prism_live",
+   "t0": 17505.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/01_0-01-45_0-02-25.mp4",
+   "watermark": "prism_live",
+   "t0": 105.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/03_0-15-05_0-15-40.mp4",
+   "watermark": "prism_live",
+   "t0": 905.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/04_0-16-10_0-16-45.mp4",
+   "watermark": "prism_live",
+   "t0": 970.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/06_0-29-30_0-31-20.mp4",
+   "watermark": "prism_live",
+   "t0": 1770.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/07_0-34-25_0-34-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2065.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/05_0-27-00_0-27-20.mp4",
+   "watermark": "prism_live",
+   "t0": 1620.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/08_1-27-25_1-28-40.mp4",
+   "watermark": "prism_live",
+   "t0": 5245.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/12_1-39-40_1-41-30.mp4",
+   "watermark": "prism_live",
+   "t0": 5980.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/09_1-30-35_1-32-15.mp4",
+   "watermark": "prism_live",
+   "t0": 5435.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/13_2-25-05_2-25-50.mp4",
+   "watermark": "prism_live",
+   "t0": 8705.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/14_2-27-30_2-28-10.mp4",
+   "watermark": "prism_live",
+   "t0": 8850.0
+  },
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/15_2-29-25_2-29-55.mp4",
+   "watermark": "prism_live",
+   "t0": 8965.0
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/16_2-30-45_2-31-20.mp4",
+   "watermark": "prism_live",
+   "t0": 9045.0
+  },
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/19_3-09-00_3-09-40.mp4",
+   "watermark": "prism_live",
+   "t0": 11340.0
+  },
+  "c20": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/20_3-17-15_3-18-10.mp4",
+   "watermark": "prism_live",
+   "t0": 11835.0
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/17_2-34-30_2-35-10.mp4",
+   "watermark": "prism_live",
+   "t0": 9270.0
+  },
+  "c21": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/21_3-50-05_3-51-35.mp4",
+   "watermark": "prism_live",
+   "t0": 13805.0
+  },
+  "c26": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/26_5-03-00_5-03-50.mp4",
+   "watermark": "prism_live",
+   "t0": 18180.0
+  },
+  "c23": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/23_4-49-38_4-50-10.mp4",
+   "watermark": "prism_live",
+   "t0": 17378.0
+  },
+  "c28": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/28_5-22-55_5-24-40.mp4",
+   "watermark": "prism_live",
+   "t0": 19375.0
+  },
+  "c25": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/25_4-56-15_4-57-30.mp4",
+   "watermark": "prism_live",
+   "t0": 17775.0
+  },
+  "c29": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/29_6-16-10_6-17-10.mp4",
+   "watermark": "prism_live",
+   "t0": 22570.0
+  },
+  "c30": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/30_6-22-00_6-23-00.mp4",
+   "watermark": "prism_live",
+   "t0": 22920.0
+  },
+  "c31": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/ingest/_VmXgP27Dqw/clips/31_6-31-00_6-31-30.mp4",
+   "watermark": "prism_live",
+   "t0": 23460.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c24",
+   "in": 585,
+   "out": 665,
+   "row": 0,
+   "zoom": {
+    "from": 1.03,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "卓に置かれた三段トレー（上からマカロンとケーキ・スコーンとジャム・サンドイッチ。人は写らない）。答えを先に見せる。題の札の下にトレーが来る"
+  },
+  {
+   "src": "c01",
+   "in": 30,
+   "out": 55,
+   "row": 1,
+   "note": "朝の自撮り。後ろにヨークの古い建物（0:01:47.5 からパン屋の窓に替わるので、その手前まで）"
+  },
+  {
+   "src": "c01",
+   "in": 345,
+   "out": 383,
+   "row": 1,
+   "note": "石畳の広い通りと、レンガ造りの古い家並み（0:01:55〜）"
+  },
+  {
+   "src": "c03",
+   "in": 345,
+   "out": 385,
+   "row": 2,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.25,
+    "x": 0.72,
+    "y": 0.3
+   },
+   "note": "通りに張り出したおしゃれな時計と石畳の通り（本人「時計がおしゃれ」0:15:17。朝10時の行に時計）"
+  },
+  {
+   "src": "c04",
+   "in": 15,
+   "out": 48,
+   "row": 2,
+   "note": "古い家に挟まれた細い石畳の通りを歩く"
+  },
+  {
+   "src": "c06",
+   "in": 300,
+   "out": 334,
+   "row": 3,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.4,
+    "x": 0.62,
+    "y": 0.15
+   },
+   "note": "角の家の札「SHAMBLES」（通りの名前）に寄せる。右の端の赤い服の人は寄せで画面の外へ"
+  },
+  {
+   "src": "c06",
+   "in": 1440,
+   "out": 1485,
+   "row": 3,
+   "note": "上の階ほど張り出した木骨造りの角の家（立っている人は小さい）。「上の階ほど道に張り出してるんだけど」の字の間に、張り出しのいちばん分かる角の家を当てる（v4 で2番目へ）"
+  },
+  {
+   "src": "c07",
+   "in": 465,
+   "out": 499,
+   "row": 3,
+   "note": "シャンブルズの通り（古い家が両側から張り出す。別の素材のファイル）。「なんで？」の間（v4 で3番目へ）"
+  },
+  {
+   "src": "c06",
+   "in": 2070,
+   "out": 2107,
+   "row": 4,
+   "note": "張り出した上階を真下から見上げる（日が当たらない）"
+  },
+  {
+   "src": "c05",
+   "in": 45,
+   "out": 91,
+   "row": 4,
+   "note": "両側の古い家が迫る細い石畳の通り（別の素材のファイル）"
+  },
+  {
+   "src": "c08",
+   "in": 249,
+   "out": 282,
+   "row": 5,
+   "note": "THE YORK ROAST CO の店先（1:27:31.5〜1:27:33 は前を通る人の横顔が写るので、その後。1:27:35.3 から足が入るので手前で止める）"
+  },
+  {
+   "src": "c08",
+   "in": 1470,
+   "out": 1510,
+   "row": 5,
+   "note": "カウンターのトレーに並ぶ、平たく大きいヨークシャープディング（zoom で確かめた）"
+  },
+  {
+   "src": "c12",
+   "in": 135,
+   "out": 168,
+   "row": 6,
+   "note": "折り曲げたバカでかいプディングの生地（中にターキー）"
+  },
+  {
+   "src": "c09",
+   "in": 2415,
+   "out": 2456,
+   "row": 6,
+   "note": "店員さんがプディングにターキーを乗せて巻く手元（顔は画面の外）"
+  },
+  {
+   "src": "c12",
+   "in": 1455,
+   "out": 1489,
+   "row": 7,
+   "note": "ソースとクランベリーがたっぷりの断面の寄り"
+  },
+  {
+   "src": "c12",
+   "in": 2640,
+   "out": 2675,
+   "row": 7,
+   "note": "包みごとかぶりつく（zoom で確かめた）"
+  },
+  {
+   "src": "c13",
+   "in": 105,
+   "out": 143,
+   "row": 8,
+   "note": "見上げたヨーク大聖堂の南側（バラ窓と尖塔。人は小さい）"
+  },
+  {
+   "src": "c14",
+   "in": 330,
+   "out": 367,
+   "row": 8,
+   "note": "大聖堂の正面（西側）"
+  },
+  {
+   "src": "c15",
+   "in": 285,
+   "out": 323,
+   "row": 9,
+   "note": "入場料の案内板（YORK MINSTER の看板。値段の字は画の中の小さな字で、読み上げない）"
+  },
+  {
+   "src": "c16",
+   "in": 105,
+   "out": 142,
+   "row": 9,
+   "note": "大聖堂のまわりの庭を歩く（中には入らず外から）"
+  },
+  {
+   "src": "c19",
+   "in": 825,
+   "out": 872,
+   "row": 10,
+   "note": "住宅街の先に見える城壁（胸壁の並ぶ石の壁）"
+  },
+  {
+   "src": "c20",
+   "in": 480,
+   "out": 537,
+   "row": 10,
+   "note": "閉鎖の看板を下げた城壁の門（鉄の柵と City of York の紋）"
+  },
+  {
+   "src": "c17",
+   "in": 300,
+   "out": 365,
+   "row": 11,
+   "note": "ガチガチに凍ったプールの氷を手で触る（冬の寒さ）"
+  },
+  {
+   "src": "c21",
+   "in": 780,
+   "out": 811,
+   "row": 12,
+   "note": "ベティズの店先の看板「Bettys Café Tea Rooms」"
+  },
+  {
+   "src": "c26",
+   "in": 300,
+   "out": 337,
+   "row": 12,
+   "note": "ベティズの席で満面の笑み（本人。後ろにランプとステンドグラス）。v1・v2 の 4:38:32.5 の笑顔は顔が画面の下まで大きく、【大】の字が目と鼻に被った（寄せて上げても鼻の下端が 1,091px）。こちらは目と鼻の下端が 843px で、字（886px〜）の上に収まる（YuNet で測った）"
+  },
+  {
+   "src": "c26",
+   "in": 600,
+   "out": 627,
+   "row": 13,
+   "note": "カメラを回して見せた店内（ステンドグラスの窓と客席。客の顔は遠く小さい）"
+  },
+  {
+   "src": "c26",
+   "in": 855,
+   "out": 882,
+   "row": 13,
+   "note": "ケーキのドームと店の奥（人は遠く小さい）"
+  },
+  {
+   "src": "c23",
+   "in": 180,
+   "out": 211,
+   "row": 14,
+   "note": "銀の盆にポット・湯差し・ミルク・角砂糖（zoom で確かめた）"
+  },
+  {
+   "src": "c24",
+   "in": 960,
+   "out": 991,
+   "row": 14,
+   "note": "三段のお皿の全体（後ろにステンドグラス）"
+  },
+  {
+   "src": "c28",
+   "in": 315,
+   "out": 353,
+   "row": 15,
+   "note": "ジャムを塗ったスコーンを手に持って見せる（zoom で確かめた）"
+  },
+  {
+   "src": "c28",
+   "in": 2535,
+   "out": 2574,
+   "row": 15,
+   "note": "スコーンを割ってしっとりした中を見せる"
+  },
+  {
+   "src": "c25",
+   "in": 1635,
+   "out": 1693,
+   "row": 16,
+   "note": "本人が「ここに来たくて（ヨーク）まで来ました」と話す顔（4:57:07〜4:57:17）"
+  },
+  {
+   "src": "c29",
+   "in": 495,
+   "out": 539,
+   "row": 17,
+   "note": "ピンクのマカロンをカメラに寄せる"
+  },
+  {
+   "src": "c30",
+   "in": 1050,
+   "out": 1104,
+   "row": 17,
+   "note": "本人「今まで行ったアフタヌーンティーの店で一番」の所（6:22:25〜）の顔"
+  },
+  {
+   "src": "c25",
+   "in": 1170,
+   "out": 1210,
+   "row": 18,
+   "note": "銀のポットから紅茶を注ぐ（アフタヌーンティーの呼び戻し。トレーは3回目にしない）"
+  },
+  {
+   "src": "c31",
+   "in": 690,
+   "out": 750,
+   "row": 18,
+   "note": "日の暮れたベティズの前の広場（セント・ヘレンズ広場）。終わりの札の下"
+  }
+ ],
+ "title": {
+  "text": "🇬🇧イギリスにあるアフタヌーンティーの超本場がやばすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "イギリスにあるアフタヌーンティーの超本場がやばすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/01.wav",
+    "tts_text": "イギリスにあるアフタヌーンティーのちょうほんばがやばすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、イギリスの古都ヨーク！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/02.wav",
+    "tts_text": "やってきたのは、イギリスの古都ヨーク！",
+    "at": 80
+   },
+   {
+    "text": "まずは朝10時から中世の街を歩くで！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/03.wav",
+    "tts_text": "まずは朝じゅうじから中世の街を歩くで！",
+    "at": 143
+   },
+   {
+    "text": "ここシャンブルズって言って、上の階ほど道に張り出してるんだけど、なんで？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/04.wav",
+    "tts_text": "ここシャンブルズって言って、上の階ほど道に張り出してるんだけど、なんで？",
+    "at": 216
+   },
+   {
+    "text": "昔の肉屋通りで、肉に日を当てへんためらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/05.wav",
+    "tts_text": "昔の肉屋どおりで、肉にひを当てへんためらしい！",
+    "at": 329
+   },
+   {
+    "text": "昼は名物、ヨークシャープディングのラップ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/06.wav",
+    "tts_text": "昼は名物、ヨークシャープディングのラップ！",
+    "at": 412
+   },
+   {
+    "text": "バカでかいパン生地で、ターキーを巻いてくれる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/07.wav",
+    "tts_text": "バカでかいパンきじで、ターキーを巻いてくれる！",
+    "at": 485
+   },
+   {
+    "text": "ソースでべっちゃべちゃやけど、めっちゃうまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/08.wav",
+    "tts_text": "ソースでべっちゃべちゃやけど、めっちゃうまい！",
+    "at": 559,
+    "mood": "up_pop"
+   },
+   {
+    "text": "昼すぎに、ヨーク大聖堂！でっか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/09.wav",
+    "tts_text": "昼すぎに、ヨーク大聖堂！でっか！",
+    "at": 628
+   },
+   {
+    "text": "けど入場料が高すぎて、外から見るだけ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/10.wav",
+    "tts_text": "けど入場料が高すぎて、外から見るだけ！",
+    "at": 703
+   },
+   {
+    "text": "街を囲む城壁を歩こうとしたら、滑って危ないから閉鎖！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/11.wav",
+    "tts_text": "街を囲む城壁を歩こうとしたら、滑って危ないから閉鎖！",
+    "at": 778
+   },
+   {
+    "text": "冬のヨーク、全然やる気ないやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/12.wav",
+    "tts_text": "冬のヨーク、全然やる気ないやん！",
+    "at": 882,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "そして、大本命のベティズやぁぁぁぁ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/13.wav",
+    "tts_text": "そして、だいほんめいのベティズやーーーー！",
+    "at": 947,
+    "big": "shake_white"
+   },
+   {
+    "text": "店内はこんな感じで超いけてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/14.wav",
+    "tts_text": "店内はこんな感じでちょういけてる！",
+    "at": 1015
+   },
+   {
+    "text": "銀のポットに、三段のお皿が来た！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/15.wav",
+    "tts_text": "銀のポットに、さんだんのお皿が来た！",
+    "at": 1069
+   },
+   {
+    "text": "スコーンは、サクッやなくて、しっとり系！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/16.wav",
+    "tts_text": "スコーンは、サクッやなくて、しっとり系！",
+    "at": 1131
+   },
+   {
+    "text": "ここに来たくて、ヨークまで来てん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/17.wav",
+    "tts_text": "ここに来たくて、ヨークまできてん！",
+    "at": 1208
+   },
+   {
+    "text": "今まで行ったアフタヌーンティーで、圧倒的に一番うまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/18.wav",
+    "tts_text": "今まで行ったアフタヌーンティーで、圧倒的に一番うまい！",
+    "at": 1276,
+    "big": "glow_yellow",
+    "caption_from": 1266
+   },
+   {
+    "text": "みんなは、アフタヌーンティーのために、ヨークまで行ける？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/voice/york-p2-v1/p2/19.wav",
+    "tts_text": "みんなは、アフタヌーンティーのために、ヨークまで行ける？",
+    "at": 1364
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/york2/wt/shorts/videos/_VmXgP27Dqw/p2/spec.json",
+  "fps": 30,
+  "frames": 1464,
+  "seconds": 48.8,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "4:52:04.5+2.67s"
+    ],
+    "line": "イギリスにあるアフタヌーンティーの超本場がやばすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 80,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "0:01:46.0+0.83s",
+     "0:01:56.5+1.27s"
+    ],
+    "line": "やってきたのは、イギリスの古都ヨーク！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 143,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "0:15:16.5+1.33s",
+     "0:16:10.5+1.10s"
+    ],
+    "line": "まずは朝10時から中世の街を歩くで！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 216,
+    "frames": 113,
+    "voice_frames": 105,
+    "cuts": [
+     "0:29:40.0+1.13s",
+     "0:30:18.0+1.50s",
+     "0:34:40.5+1.13s"
+    ],
+    "line": "ここシャンブルズって言って、上の階ほど道に張り出してるんだけど、なんで？",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 329,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "0:30:39.0+1.23s",
+     "0:27:01.5+1.53s"
+    ],
+    "line": "昔の肉屋通りで、肉に日を当てへんためらしい！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 412,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "1:27:33.3+1.10s",
+     "1:28:14.0+1.33s"
+    ],
+    "line": "昼は名物、ヨークシャープディングのラップ！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 485,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:39:44.5+1.10s",
+     "1:31:55.5+1.37s"
+    ],
+    "line": "バカでかいパン生地で、ターキーを巻いてくれる！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 559,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "1:40:28.5+1.13s",
+     "1:41:08.0+1.17s"
+    ],
+    "line": "ソースでべっちゃべちゃやけど、めっちゃうまい！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 628,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "2:25:08.5+1.27s",
+     "2:27:41.0+1.23s"
+    ],
+    "line": "昼すぎに、ヨーク大聖堂！でっか！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 703,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "2:29:34.5+1.27s",
+     "2:30:48.5+1.23s"
+    ],
+    "line": "けど入場料が高すぎて、外から見るだけ！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 778,
+    "frames": 104,
+    "voice_frames": 96,
+    "cuts": [
+     "3:09:27.5+1.57s",
+     "3:17:31.0+1.90s"
+    ],
+    "line": "街を囲む城壁を歩こうとしたら、滑って危ないから閉鎖！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 882,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "2:34:40.0+2.17s"
+    ],
+    "line": "冬のヨーク、全然やる気ないやん！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 947,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "3:50:31.0+1.03s",
+     "5:03:10.0+1.23s"
+    ],
+    "line": "そして、大本命のベティズやぁぁぁぁ！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 13,
+    "from": 1015,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "5:03:20.0+0.90s",
+     "5:03:28.5+0.90s"
+    ],
+    "line": "店内はこんな感じで超いけてる！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1069,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "4:49:44.0+1.03s",
+     "4:52:17.0+1.03s"
+    ],
+    "line": "銀のポットに、三段のお皿が来た！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1131,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "5:23:05.5+1.27s",
+     "5:24:19.5+1.30s"
+    ],
+    "line": "スコーンは、サクッやなくて、しっとり系！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1208,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "4:57:09.5+1.93s"
+    ],
+    "line": "ここに来たくて、ヨークまで来てん！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1266,
+    "frames": 98,
+    "voice_frames": 80,
+    "cuts": [
+     "6:16:26.5+1.47s",
+     "6:22:35.0+1.80s"
+    ],
+    "line": "今まで行ったアフタヌーンティーで、圧倒的に一番うまい！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 18,
+    "from": 1364,
+    "frames": 100,
+    "voice_frames": 77,
+    "cuts": [
+     "4:56:54.0+1.33s",
+     "6:31:23.0+2.00s"
+    ],
+    "line": "みんなは、アフタヌーンティーのために、ヨークまで行ける？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 368,
+   "raw_voice_s": 60.0,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 42.9,
+   "cps_voiced": 8.58,
+   "video_s": 48.8,
+   "cps_video": 7.54
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": -0.5
+ }
+}

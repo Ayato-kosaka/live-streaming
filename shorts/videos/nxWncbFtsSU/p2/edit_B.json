@@ -1,0 +1,479 @@
+{
+ "_note": "build_edit.py が spec_B.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "B",
+ "style": "style_v3.json",
+ "sources": {
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/03_6-13-10_6-18-30.mp4",
+   "watermark": "prism_live",
+   "t0": 22390.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/06_2-21-40_2-23-20.mp4",
+   "watermark": "prism_live",
+   "t0": 8500.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/04_6-20-35_6-21-40.mp4",
+   "watermark": "prism_live",
+   "t0": 22835.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/01_5-54-40_5-56-45.mp4",
+   "watermark": "prism_live",
+   "t0": 21280.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/02_5-58-05_5-58-45.mp4",
+   "watermark": "prism_live",
+   "t0": 21485.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/05_6-22-00_6-22-40.mp4",
+   "watermark": "prism_live",
+   "t0": 22920.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c03",
+   "in": 8070,
+   "out": 8112,
+   "row": 0,
+   "note": "0秒目: フォークに乗せたハギスをカメラの目の前へ（hook.py の候補1。答えのひと口を先に見せる。F-020）"
+  },
+  {
+   "src": "c03",
+   "in": 6390,
+   "out": 6431,
+   "row": 0,
+   "note": "「ハギスを食べてみた！」ナイフを入れた断面（皿の寄り 1回目）"
+  },
+  {
+   "src": "c06",
+   "in": 570,
+   "out": 625,
+   "row": 1,
+   "note": "「スコットランドで有名な」ロイヤル・マイルでキルトを着てバグパイプを吹く奏者（遠め・2:22:07 まで通行人なし）"
+  },
+  {
+   "src": "c03",
+   "in": 4290,
+   "out": 4347,
+   "row": 2,
+   "note": "「羊の胃袋に、心臓とか肺とかを」皿を前に話す本人（窓ぎわの席）"
+  },
+  {
+   "src": "c03",
+   "in": 1770,
+   "out": 1817,
+   "row": 2,
+   "note": "「ぶち込んで煮込む料理や。」皿のハギスの塔の寄り（皿の寄り 2回目の頭）"
+  },
+  {
+   "src": "c03",
+   "in": 6030,
+   "out": 6068,
+   "row": 3,
+   "note": "「アメリカでは、肺が入ってるから」ナイフで割った断面のこげ茶の中身（前の塔と続けて 3秒未満）"
+  },
+  {
+   "src": "c04",
+   "in": 780,
+   "out": 817,
+   "row": 3,
+   "note": "「売られへんらしい！」話す本人（別の素材 04。6:20:52〜6:21:00 は止まった画なので避けた）"
+  },
+  {
+   "src": "c04",
+   "in": 240,
+   "out": 283,
+   "row": 4,
+   "note": "「それでも、イギリスに来る前から」笑う本人（04）"
+  },
+  {
+   "src": "c03",
+   "in": 1305,
+   "out": 1348,
+   "row": 4,
+   "note": "「一番食べたかったのがこれ。」皿を持ち上げて見せる本人"
+  },
+  {
+   "src": "c01",
+   "in": 690,
+   "out": 741,
+   "row": 5,
+   "note": "「夕方4時、石造りの渋いパブに」石の街並みの中の赤い店構え「No1 HIGH STREET」（通行人は遠い）"
+  },
+  {
+   "src": "c02",
+   "in": 450,
+   "out": 484,
+   "row": 5,
+   "note": "「やってきた。」店の中のカウンターと木の椅子"
+  },
+  {
+   "src": "c01",
+   "in": 1935,
+   "out": 2008,
+   "row": 6,
+   "note": "「メニューにハギスのタワーを見つけて、即決！」店の外のメニュー → 指でなぞる（5:55:46〜52）"
+  },
+  {
+   "src": "c03",
+   "in": 7560,
+   "out": 7602,
+   "row": 7,
+   "note": "「伝統の食べ方は、」黄色いマッシュをフォークで持ち上げる本人"
+  },
+  {
+   "src": "c04",
+   "in": 405,
+   "out": 446,
+   "row": 7,
+   "note": "「カブとマッシュポテトと一緒に。」フォークの黄色いマッシュ（04）"
+  },
+  {
+   "src": "c05",
+   "in": 720,
+   "out": 756,
+   "row": 8,
+   "note": "「出てきたら、」話す本人（05）"
+  },
+  {
+   "src": "c03",
+   "in": 2715,
+   "out": 2758,
+   "row": 8,
+   "note": "「フォークぐらいの大きさ……ちっちゃ！」フォークと並べたハギス（皿の寄り 3回目の頭）"
+  },
+  {
+   "src": "c03",
+   "in": 5610,
+   "out": 5650,
+   "row": 9,
+   "note": "「ナイフを入れたら、めっちゃ」ナイフで切ると崩れる（前のフォークと続けて 3秒未満）"
+  },
+  {
+   "src": "c04",
+   "in": 1245,
+   "out": 1266,
+   "row": 9,
+   "note": "「ホロホロ！」話す本人（04。6:21:13〜15 は止まった画なので避けた）"
+  },
+  {
+   "src": "c04",
+   "in": 1824,
+   "out": 1864,
+   "row": 10,
+   "note": "「ひと口食べたら……」フォークのハギスを口へ（04・6:21:37 で口に入る）"
+  },
+  {
+   "src": "c03",
+   "in": 8490,
+   "out": 8531,
+   "row": 10,
+   "note": "「野生の匂いがやばすぎた！」噛みしめる本人"
+  },
+  {
+   "src": "c04",
+   "in": 1500,
+   "out": 1538,
+   "row": 11,
+   "note": "「このハーブが無かったら、」フォークのハギスを見せる本人（04）"
+  },
+  {
+   "src": "c05",
+   "in": 900,
+   "out": 932,
+   "row": 11,
+   "note": "「たぶん食べられへんけど。」話す本人（05）"
+  },
+  {
+   "src": "c05",
+   "in": 249,
+   "out": 267,
+   "row": 12,
+   "note": "「みんなは、」ハギスを頬張る本人（05・6:22:08〜10）。終わりの札は最後の2秒に出るので、この画は札より前に終える"
+  },
+  {
+   "src": "c01",
+   "in": 3405,
+   "out": 3468,
+   "row": 12,
+   "note": "「ハギス、食べてみたい？無理？」店の外のメニューを指さす手（終わりの札「※YouTubeで毎日22時から配信」が左上に出る最後の2秒は顔の無い画。v1・v2 は顔に被って text_on_face で落ちた）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇧イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/01.wav",
+    "tts_text": "イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "イギリスのスコットランドで有名な",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/02.wav",
+    "tts_text": "イギリスのスコットランドで有名な",
+    "at": 83
+   },
+   {
+    "text": "羊の胃袋に、心臓とか肺とかをぶち込んで煮込む料理や。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/03.wav",
+    "tts_text": "羊の胃袋に、心臓とか肺とかをぶち込んで煮込む料理や。",
+    "at": 138
+   },
+   {
+    "text": "アメリカでは、肺が入ってるから売られへんらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/04.wav",
+    "tts_text": "アメリカでは、肺が入ってるから売られへんらしい！",
+    "at": 242
+   },
+   {
+    "text": "それでも、イギリスに来る前から一番食べたかったのがこれ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/05.wav",
+    "tts_text": "それでも、イギリスに来る前から一番食べたかったのがこれ。",
+    "at": 317
+   },
+   {
+    "text": "夕方4時、石造りの渋いパブにやってきた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/06.wav",
+    "tts_text": "夕方四時、石造りの渋いパブにやってきた。",
+    "at": 403
+   },
+   {
+    "text": "メニューにハギスのタワーを見つけて、即決！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/07.wav",
+    "tts_text": "メニューにハギスのタワーを見つけて、即決！",
+    "at": 488
+   },
+   {
+    "text": "伝統の食べ方は、カブとマッシュポテトと一緒に。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/08.wav",
+    "tts_text": "伝統の食べ方は、カブとマッシュポテトと一緒に。",
+    "at": 561
+   },
+   {
+    "text": "出てきたら、フォークぐらいの大きさ……ちっちゃ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/09.wav",
+    "tts_text": "出てきたら、フォークぐらいの大きさ……ちっちゃ！",
+    "at": 644,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "ナイフを入れたら、めっちゃホロホロ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/10.wav",
+    "tts_text": "ナイフを入れたら、めっちゃホロホロ！",
+    "at": 723
+   },
+   {
+    "text": "ひと口食べたら……野生の匂いがやばすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/11.wav",
+    "tts_text": "ひと口食べたら……野生の匂いがやばすぎた！",
+    "at": 784,
+    "mood": "up_pop"
+   },
+   {
+    "text": "このハーブが無かったら、たぶん食べられへんけど。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/12.wav",
+    "tts_text": "このハーブが無かったら、たぶん食べられへんけど。",
+    "at": 865
+   },
+   {
+    "text": "みんなは、ハギス、食べてみたい？無理？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/voice/edinburgh-p2B-v1/B/13.wav",
+    "tts_text": "みんなは、ハギス食べてみたい？無理？",
+    "at": 935
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/wt/shorts/videos/nxWncbFtsSU/p2/spec_B.json",
+  "fps": 30,
+  "frames": 1016,
+  "seconds": 33.867,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "6:17:39.0+1.40s",
+     "6:16:43.0+1.37s"
+    ],
+    "line": "イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 83,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "2:21:59.0+1.83s"
+    ],
+    "line": "イギリスのスコットランドで有名な",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 138,
+    "frames": 104,
+    "voice_frames": 96,
+    "cuts": [
+     "6:15:33.0+1.90s",
+     "6:14:09.0+1.57s"
+    ],
+    "line": "羊の胃袋に、心臓とか肺とかをぶち込んで煮込む料理や。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 242,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "6:16:31.0+1.27s",
+     "6:21:01.0+1.23s"
+    ],
+    "line": "アメリカでは、肺が入ってるから売られへんらしい！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 317,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "6:20:43.0+1.43s",
+     "6:13:53.5+1.43s"
+    ],
+    "line": "それでも、イギリスに来る前から一番食べたかったのがこれ。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 403,
+    "frames": 85,
+    "voice_frames": 77,
+    "cuts": [
+     "5:55:03.0+1.70s",
+     "5:58:20.0+1.13s"
+    ],
+    "line": "夕方4時、石造りの渋いパブにやってきた。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 488,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "5:55:44.5+2.43s"
+    ],
+    "line": "メニューにハギスのタワーを見つけて、即決！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 561,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "6:17:22.0+1.40s",
+     "6:20:48.5+1.37s"
+    ],
+    "line": "伝統の食べ方は、カブとマッシュポテトと一緒に。",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 644,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "6:22:24.0+1.20s",
+     "6:14:40.5+1.43s"
+    ],
+    "line": "出てきたら、フォークぐらいの大きさ……ちっちゃ！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 723,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "6:16:17.0+1.33s",
+     "6:21:16.5+0.70s"
+    ],
+    "line": "ナイフを入れたら、めっちゃホロホロ！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 784,
+    "frames": 81,
+    "voice_frames": 73,
+    "cuts": [
+     "6:21:35.8+1.33s",
+     "6:17:53.0+1.37s"
+    ],
+    "line": "ひと口食べたら……野生の匂いがやばすぎた！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 865,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "6:21:25.0+1.27s",
+     "6:22:30.0+1.07s"
+    ],
+    "line": "このハーブが無かったら、たぶん食べられへんけど。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 935,
+    "frames": 81,
+    "voice_frames": 58,
+    "cuts": [
+     "6:22:08.3+0.60s",
+     "5:56:33.5+2.10s"
+    ],
+    "line": "みんなは、ハギス、食べてみたい？無理？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 263,
+   "raw_voice_s": 41.83,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 29.9,
+   "cps_voiced": 8.8,
+   "video_s": 33.87,
+   "cps_video": 7.77
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

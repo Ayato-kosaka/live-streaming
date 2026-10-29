@@ -34,5 +34,13 @@
  {"plan": "nordic-shinkiro/p2tt", "place": "tiktok", "state": "pending", "id": null, "sha256": "bd55c51d9650156b3eb2ea8a8518507918a08cf6d964e2ba395486b9eb718efe", "at": "2026-10-24T01:03:31Z", "note": "TikTok の下書き（音源 mirage · hakane）。地図とキャラクターを足した p2tt2 に差し替え、2026-10-24 01:57 UTC に下書きを消した"},
  {"plan": "nordic-shinkiro/p2tt2", "place": "tiktok", "state": "done", "id": "7700052319756406068", "sha256": "d0fc7362cd1f6011827feed46f5ce8d9ad33c84d5ed7f6a7dd5be4f26b81fb66", "at": "2026-10-24T01:54:19Z", "note": "TikTok の下書き（音源 mirage · hakane、1段落目に地図・吹き出しにキャラクター27人）から公開。2026-10-24 にあやとの「出して」のあと、投稿の一覧（Posts 94・Drafts 0）で公開を確かめた"},
  {"plan": "vZ2O8pabk1g/p4", "place": "youtube", "state": "done", "id": "CSE9FVCRdlw", "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:47:32Z"},
- {"plan": "vZ2O8pabk1g/p4", "place": "tiktok", "state": "done", "id": "7701684666276793618", "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:48:20Z"}
+ {"plan": "vZ2O8pabk1g/p4", "place": "tiktok", "state": "done", "id": "7701684666276793618", "sha256": "2fd5711ca2c87ba7dbb5b5dca292bd2b423f7a48d1b21dd3bee21f4364f97aac", "at": "2026-10-28T11:48:20Z"},
+ {"plan": "cats/p1", "place": "youtube", "state": "done", "id": "2vKj9g3BAdA", "sha256": "95e6332b7b6f49b12435d0afa1ba698607587f778e7461e66430cd1ea55a11a9", "at": "2026-10-28T22:17:36Z"},
+ {"plan": "cats/p1", "place": "tiktok", "state": "done", "id": "7701849085640396053", "sha256": "95e6332b7b6f49b12435d0afa1ba698607587f778e7461e66430cd1ea55a11a9", "at": "2026-10-28T22:26:48Z"},
+ {"plan": "2ij1R53ifcU/p2", "place": "youtube", "state": "done", "id": "XMxoa-BWRME", "sha256": "07935a196be07925468f93d34ae276d766cdc4522727a5d15af324897c0bb762", "at": "2026-10-28T22:31:10Z"},
+ {"plan": "2ij1R53ifcU/p2", "place": "tiktok", "state": "done", "id": "7701852652023418118", "sha256": "07935a196be07925468f93d34ae276d766cdc4522727a5d15af324897c0bb762", "at": "2026-10-28T22:40:36Z"},
+ {"plan": "UQdkUSro9Ck/p3", "place": "youtube", "state": "done", "id": "IZpZGM5Xbyg", "sha256": "73c7c4b18fe5fc041c7c29ad77f231d24428ddf4e94bb0df83bd534cbf7c7655", "at": "2026-10-28T23:22:36Z"},
+ {"plan": "UQdkUSro9Ck/p3", "place": "tiktok", "state": "pending", "id": null, "sha256": "73c7c4b18fe5fc041c7c29ad77f231d24428ddf4e94bb0df83bd534cbf7c7655", "at": "2026-10-28T23:34:18Z"},
+ {"plan": "UQdkUSro9Ck/p3", "place": "tiktok", "state": "pending", "id": null, "sha256": "73c7c4b18fe5fc041c7c29ad77f231d24428ddf4e94bb0df83bd534cbf7c7655", "at": "2026-10-28T23:36:32Z", "again": true},
+ {"plan": "UQdkUSro9Ck/p3", "place": "tiktok", "state": "done", "id": "7701868585764916500", "sha256": "73c7c4b18fe5fc041c7c29ad77f231d24428ddf4e94bb0df83bd534cbf7c7655", "at": "2026-10-28T23:42:14Z", "again": true}
 ]
