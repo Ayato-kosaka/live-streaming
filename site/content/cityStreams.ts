@@ -1953,6 +1953,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "_XzkJJIvpOE",
         "title": "🇲🇰北マケドニアでおしゃれ街みにいこか！世界は狭いなぁ☺",
         "date": "2026-10-27"
+      },
+      {
+        "videoId": "la_OkustLkA",
+        "title": "🇲🇰北マケドニアのショッピングモールみにいこか！防寒具買いたい！",
+        "date": "2026-10-28"
       }
     ]
   }
