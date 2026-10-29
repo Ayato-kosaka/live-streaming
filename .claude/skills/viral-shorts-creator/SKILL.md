@@ -59,6 +59,8 @@ openssl pkey -in <scratch>/keys/ref_private.pem -pubout -out <scratch>/keys/ref_
 依頼ファイルの形・mode（`archive` / `reference` / `zoom` / `channel`）・復号のしかたは `tools/shorts/ingest/README.md`。
 master からは `workflow_dispatch` でも回せる。
 
+**取り込みを使う担当を何人も並べるときは、依頼文に「push の前に `shorts_ingest` の run に queued / waiting / pending が無いのを確かめる」を必ず入れる。**同じ枝の取り込みの枠は「走っている1本＋待っている1本」までで、3本目の push が待っていた run を取り消す（`tools/shorts/ingest/README.md`。2026-10-29、イギリスの4本を5人で並べて、参考調査の push がエディンバラの zoom を消した）。
+
 **文字は2系統を突き合わせて読む。** whisper は固有名詞に強く、自動字幕は数字と英単語に強かった（実測: 「SIM」を whisper は「新聞」と書いた）。
 
 配信チャットは BigQuery（`youtube_chat.chat_messages`、配信開始 `videos.actual_start_time` からの秒）。**出来事の 15〜35秒あと**に付く。
