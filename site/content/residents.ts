@@ -44,31 +44,31 @@ export type Resident = {
 };
 
 export const RESIDENTS: Resident[] = [
-  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 90, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
-  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 86, score: 0.901, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
-  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 80, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
+  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 89, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
+  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 85, score: 0.901, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
+  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 79, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
   { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", emoji: "🍃", days: 67, score: 0.985, channel: "UCfhX-rOzBe-QhWPPv03FtQA" },
-  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 65, score: 0.906, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
-  { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", emoji: "🪟", days: 63, score: 0.941, channel: "UCaHTatQmUMV4TEkSDIeSzHw" },
-  { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 48, score: 0.950, channel: "UCceC2uQXoN9wt2POovos37Q" },
+  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 65, score: 0.911, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
+  { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", emoji: "🪟", days: 62, score: 0.941, channel: "UCaHTatQmUMV4TEkSDIeSzHw" },
+  { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 47, score: 0.950, channel: "UCceC2uQXoN9wt2POovos37Q" },
   { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 46, score: 0.955, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
   { icon: "cf129e7ea06f499693a002543dcd7c290", emoji: "🐏", days: 41, score: 0.861, channel: "UCjPL5OEBxF25njVbJ1Kq_wQ" },
   { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 39, score: 0.455, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
-  { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 38, score: 0.936, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
+  { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 37, score: 0.936, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
   { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 36, score: 0.906, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
-  { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", emoji: "🐠", days: 34, score: 0.812, channel: "UCe7Vv25PNHDvDgDS5jB6Nrg" },
+  { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", emoji: "🐠", days: 33, score: 0.812, channel: "UCe7Vv25PNHDvDgDS5jB6Nrg" },
   { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 31, score: 0.891, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
-  { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 22, score: 0.431, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
-  { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 20, score: 0.802, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
+  { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 21, score: 0.431, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
+  { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 19, score: 0.802, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
   { icon: "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO", emoji: "🏀", days: 18, score: 0.421, channel: "UCszUt4VHX0G1qRJ-MJF8HNg" },
   { icon: "a43e965774df4900b7c8724c66f5deba0", emoji: "🦐", days: 17, score: 0.861, channel: "UCrfV94VGIIo6irYh5F_T0Gw" },
-  { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", emoji: "🍑", days: 14, score: 0.842, channel: "UCJPDZ4SQYonw3vZvyxVKrjg" },
-  { icon: "5cc99a90acad4e7997d92b27c5207c6c0", emoji: "🦆", days: 14, score: 0.847, channel: "UCjiF-3vPERhqlWe5VzLBENw" },
+  { icon: "5cc99a90acad4e7997d92b27c5207c6c0", emoji: "🦆", days: 14, score: 0.851, channel: "UCjiF-3vPERhqlWe5VzLBENw" },
+  { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", emoji: "🍑", days: 13, score: 0.832, channel: "UCJPDZ4SQYonw3vZvyxVKrjg" },
   { icon: "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp", emoji: "🟣", days: 11, score: 0.817, channel: "UCwmvel3_YWKhDHgt8MFmykA" },
   { icon: "508cd9231743446bb25a93ae17dd3abf0", emoji: "🇺🇸", days: 10, score: 0.762, channel: "UC0ZXhCT93ddhsTij2Jtj01A" },
-  { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", emoji: "🤤", days: 9, score: 0.748, channel: "UCPPWcswbh9XAkE7CWV0QLUg" },
-  { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", emoji: "🍊", days: 7, score: 0.797, channel: "UCwx9wGMxJo8G6Dw-dZH1b-Q" },
-  { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", emoji: "🦄", days: 6, score: 0.802, channel: "UCTcaoWz0ZBjeCF07p4YO-oQ" },
+  { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", emoji: "🤤", days: 8, score: 0.748, channel: "UCPPWcswbh9XAkE7CWV0QLUg" },
+  { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", emoji: "🦄", days: 6, score: 0.807, channel: "UCTcaoWz0ZBjeCF07p4YO-oQ" },
+  { icon: "1jwbRGK_RzFoeH1ndJhetdc9U9_0oS_vz", emoji: "🍊", days: 6, score: 0.782, channel: "UCwx9wGMxJo8G6Dw-dZH1b-Q" },
   { icon: "1m_QE_hV46Ppy50vh5ic2H89AdkRVWMLG", emoji: "🥨", days: 6, score: 0.371, channel: "UCCqqpILZ4PF5SPJvPIpxUQg" },
   { icon: "1vSGLidkOCS4jkjbBrUYbJETo3wkGd3yD", emoji: "🛡️", days: 6, score: 0.371, channel: "UCVdbtqSsMClCKKnPRxuQ1cA" },
   { icon: "c3cca678865a4021a048e617fab35db30", emoji: "🐗", days: 5, score: 0.762, channel: "UCwUzB4cF-QIotFBaHpCIEvg" },
@@ -80,13 +80,13 @@ export const RESIDENTS: Resident[] = [
   { icon: "1itaFtShGqKKOPGGFVYzdSJC-kFMCmHus", emoji: "🐦", days: 3, score: 0.327, channel: "UCQoW4IamHAH_1P0Br9D64gQ" },
   { icon: "1qh1cX0_JBfrJ5DcoLY2ZmRVdRRSOGLRh", emoji: "🧢", days: 3, score: 0.327, channel: "UCiCJBaQiVs_78Mdw_gWNjAw" },
   { icon: "7590ed1286e344a198f74674296e64d20", emoji: "🐾", days: 3, score: 0.713, channel: "UCgFtFDD9FaHGN5d0kTBiPvg" },
-  { icon: "1F9mvP0wZ0hjX4S3bzcfytUd4jBxKuAXk", emoji: "⭐️", days: 2, score: 0.307, channel: "UCD3zlvGSjgtrX5FFtXef6PA" },
-  { icon: "1cLFhOOGK9vHibsqRwbMcqXE9-28bELI1", emoji: "🛻", days: 2, score: 0.307, channel: "UC-jySjSFJkR0DRFgnhr4JfQ" },
-  { icon: "1h-O2B6oLncxDyQYVDwEsELSdGdajIc37", emoji: "🇧🇷", days: 2, score: 0.307, channel: "UC2YyGjvZk1SHNS7OTUbJXDA" },
-  { icon: "1p46JvC_wbKo-rDEzE2pRMZh2neekNvta", emoji: "🥤", days: 2, score: 0.688, channel: "UCMaBoTnnQ5DNmdvqSZrmeMw" },
+  { icon: "1F9mvP0wZ0hjX4S3bzcfytUd4jBxKuAXk", emoji: "⭐️", days: 2, score: 0.312, channel: "UCD3zlvGSjgtrX5FFtXef6PA" },
+  { icon: "1h-O2B6oLncxDyQYVDwEsELSdGdajIc37", emoji: "🇧🇷", days: 2, score: 0.312, channel: "UC2YyGjvZk1SHNS7OTUbJXDA" },
+  { icon: "1p46JvC_wbKo-rDEzE2pRMZh2neekNvta", emoji: "🥤", days: 2, score: 0.693, channel: "UCMaBoTnnQ5DNmdvqSZrmeMw" },
   { icon: "1QKJBnvPkBcoi235RWZ0THbe4D5Bly4_D", emoji: "⛰️", days: 1, score: 0.272, channel: "UC0ti1WZH58d-R7kJ_CsoQvQ" },
   { icon: "1TuP7g7puRFr5geCJpi6II9YFBeQrWXYN", emoji: "🌺", days: 1, score: 0.658, channel: "UCjTFjPteJGQzOzj8072SvbA" },
   { icon: "1Xe4pfpOYsRBZqnZtZpXnydZiOm-ijzn9", emoji: "🍍", days: 1, score: 0.272, channel: "UCb27SIfCVPfYOQE3xJscTWQ" },
+  { icon: "1cLFhOOGK9vHibsqRwbMcqXE9-28bELI1", emoji: "🛻", days: 1, score: 0.272, channel: "UC-jySjSFJkR0DRFgnhr4JfQ" },
   { icon: "1e3c_PP-qNYQf1B3ZIYX_CoJolVZkCQ2D", emoji: "🐻", days: 1, score: 0.272, channel: "UCj0wRI6A_uhjLGcU9utX7CQ" },
   { icon: "1gq-yA-KAErasYCpLqIxGTqafjv2GCaqJ", emoji: "👤", days: 1, score: 0.272, channel: "UC7PlEUhCCiy7eS86wrNmpOA" },
   { icon: "1h6oOLYFl6J1jb5_dGWcokkKw_bE78Pt_", emoji: "📚", days: 1, score: 0.272, channel: "UC3rWREGwCM8G4smBF5RsaUQ" },
@@ -149,8 +149,8 @@ export const RESIDENTS: Resident[] = [
 ];
 
 /** 直近90日で5日以上コメントしてくれた人の総数(キャラ未登録も含む) */
-export const ACTIVE_FRIENDS = 68;
+export const ACTIVE_FRIENDS = 67;
 
 /** 出席の分母。期間内に**読めた**配信日の数
  *  （配信はあったのに取り込めていない0日は、出席にも分母にも入れていない） */
-export const STREAM_DAYS = 90;
+export const STREAM_DAYS = 89;
