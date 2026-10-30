@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__york-p2-v5",
+ "mode": "render",
+ "dest": "render/york-p2-v5/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/york-p2-v5.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 8048,
+  "tar_gz": 3366,
+  "encrypted": 3376
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 3376,
+   "sha256": "8c2749261bb8ed76192d5e9657bbeb21c7b97adf444e99321a09607695a4b9b8"
+  }
+ ],
+ "hmac_sha256": "39d633c00e85778f421eb28e1b80275e681f418f325b53f873de178632836022",
+ "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-30T23:20:27+00:00",
+ "nonce": "27210c7b3eaf8112ccf98f49"
+}
