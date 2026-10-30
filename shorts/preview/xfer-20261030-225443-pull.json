@@ -1,0 +1,14 @@
+{
+ "name": "xfer-20261030-225443-pull",
+ "place": "transfer",
+ "action": "up",
+ "files": [
+  {
+   "name": "00.mp4",
+   "bytes": 23120082,
+   "sha256": "8ba9c9ef20ad4b3031eaf022bc06f8d9c252908b551a00d5fef9b499451bdc98"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAnsfxHsLlUer/X5uUxKRG\nNWGsIawuW2KQgtSYA4ylzwTreZcXh3/rS57kPJnBoVDLxe9S/UidOSMe8IBf76b5\nLGstAcAvoYGSIXgJqclgaC4BhyAOfl4GiapEq0dJxNeZH/zScnHSOEWp8Q826kBk\nEThIDCH9QH0eiQOWQcQSnLVg6732lFoEP3XOnx/+X82CuKQaIQy2eSnx4+iHceu/\n33YcNPeBoo2UufrK+PKoRmxGgSyPN/lunTjZFo6Na08W4Aia0hiFA6zfOojPtoTU\n70cnpo2AAquxZ4Ln2bV/xK5s5TIOjScNlPUV/8ynoICrjaEPAzyOBTARBdJ8RdKD\nFCdraDTxoh9qjWKL84I2lTFKNqjHUQ79ujT/IUc11RjFnmqjvD8sMqq1FuQQlrU1\naDjDsNHplsDtiWD9Eo4ElUdnf6YFxb3ujxgzmT1Kdl/eD7CUCM23Za8Xd3y74pDb\n8g7XyFwSljtZybciRFTAHkOMEYVz+ndYCOJj7i0XyRaZAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "c18f0aafc0bf4355c9850263"
+}
