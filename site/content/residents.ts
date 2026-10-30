@@ -44,26 +44,26 @@ export type Resident = {
 };
 
 export const RESIDENTS: Resident[] = [
-  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 89, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
-  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 85, score: 0.901, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
-  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 79, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
+  { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", emoji: "💙", days: 90, score: 0.950, channel: "UCNTxy7hXktoG4V6jT6A3M9A" },
+  { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", emoji: "🧩", days: 86, score: 0.901, channel: "UCQEkHcVktFFDrFJRSaN_40w" },
+  { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", emoji: "🐟", days: 80, score: 0.985, channel: "UCTXgxriwnTlJ0y1tff0yU5A" },
   { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", emoji: "🍃", days: 67, score: 0.985, channel: "UCfhX-rOzBe-QhWPPv03FtQA" },
-  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 65, score: 0.911, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
-  { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", emoji: "🪟", days: 62, score: 0.941, channel: "UCaHTatQmUMV4TEkSDIeSzHw" },
-  { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 47, score: 0.950, channel: "UCceC2uQXoN9wt2POovos37Q" },
-  { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 46, score: 0.955, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
-  { icon: "cf129e7ea06f499693a002543dcd7c290", emoji: "🐏", days: 41, score: 0.861, channel: "UCjPL5OEBxF25njVbJ1Kq_wQ" },
-  { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 39, score: 0.455, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
+  { icon: "f203e9529b7941c89940a568e03b83b00", emoji: "🫘", days: 66, score: 0.906, channel: "UCgCbojfalXxkRW9XPdoX6pQ" },
+  { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", emoji: "🪟", days: 63, score: 0.941, channel: "UCaHTatQmUMV4TEkSDIeSzHw" },
+  { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", emoji: "🐼", days: 47, score: 0.946, channel: "UCceC2uQXoN9wt2POovos37Q" },
+  { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", emoji: "🐯", days: 47, score: 0.955, channel: "UCL08aPtZiZQ5wigmTKlUjeg" },
+  { icon: "cf129e7ea06f499693a002543dcd7c290", emoji: "🐏", days: 42, score: 0.861, channel: "UCjPL5OEBxF25njVbJ1Kq_wQ" },
+  { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", emoji: "🇨🇦", days: 40, score: 0.455, channel: "UCsBjGz8D3lLxUhV_eNxN0CQ" },
   { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", emoji: "🐕", days: 37, score: 0.936, channel: "UCEw49OqT87MZEDQJVkjWNRA" },
   { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", emoji: "🐀", days: 36, score: 0.906, channel: "UCyct2GK_RiW5Ji3Y0gd9MMg" },
   { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", emoji: "🐠", days: 33, score: 0.812, channel: "UCe7Vv25PNHDvDgDS5jB6Nrg" },
-  { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 31, score: 0.891, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
+  { icon: "0c8468a6411842cdb144f70eefee5b7b0", emoji: "🐂", days: 32, score: 0.891, channel: "UCsMubXzZi2kznysLnAv5kQQ" },
   { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", emoji: "🪐", days: 21, score: 0.431, channel: "UCO1YuQIwotwvoS9zad6ZI9w" },
   { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", emoji: "🍄", days: 19, score: 0.802, channel: "UCEFc53GW9WOuIauCdV5G3dA" },
   { icon: "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO", emoji: "🏀", days: 18, score: 0.421, channel: "UCszUt4VHX0G1qRJ-MJF8HNg" },
   { icon: "a43e965774df4900b7c8724c66f5deba0", emoji: "🦐", days: 17, score: 0.861, channel: "UCrfV94VGIIo6irYh5F_T0Gw" },
-  { icon: "5cc99a90acad4e7997d92b27c5207c6c0", emoji: "🦆", days: 14, score: 0.851, channel: "UCjiF-3vPERhqlWe5VzLBENw" },
-  { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", emoji: "🍑", days: 13, score: 0.832, channel: "UCJPDZ4SQYonw3vZvyxVKrjg" },
+  { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", emoji: "🍑", days: 14, score: 0.837, channel: "UCJPDZ4SQYonw3vZvyxVKrjg" },
+  { icon: "5cc99a90acad4e7997d92b27c5207c6c0", emoji: "🦆", days: 14, score: 0.847, channel: "UCjiF-3vPERhqlWe5VzLBENw" },
   { icon: "1qXh-o-wpSd_lHP6CjiUgsW56QDK9TbDp", emoji: "🟣", days: 11, score: 0.817, channel: "UCwmvel3_YWKhDHgt8MFmykA" },
   { icon: "508cd9231743446bb25a93ae17dd3abf0", emoji: "🇺🇸", days: 10, score: 0.762, channel: "UC0ZXhCT93ddhsTij2Jtj01A" },
   { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", emoji: "🤤", days: 8, score: 0.748, channel: "UCPPWcswbh9XAkE7CWV0QLUg" },
@@ -153,4 +153,4 @@ export const ACTIVE_FRIENDS = 67;
 
 /** 出席の分母。期間内に**読めた**配信日の数
  *  （配信はあったのに取り込めていない0日は、出席にも分母にも入れていない） */
-export const STREAM_DAYS = 89;
+export const STREAM_DAYS = 90;

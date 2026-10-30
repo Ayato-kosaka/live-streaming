@@ -1963,6 +1963,21 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "urwD3EmjTxs",
         "title": "🇲🇰北マケドニアのほったらかしパン&アヒージョの準備や！",
         "date": "2026-10-29"
+      },
+      {
+        "videoId": "nb2Cg9rmlM0",
+        "title": "🇲🇰北マケドニアのほったらかしパンの一次発酵の経過確認や！",
+        "date": "2026-10-30"
+      },
+      {
+        "videoId": "C_AABuDPw1c",
+        "title": "🇲🇰北マケドニアのほったらかしパンの二次発酵や！",
+        "date": "2026-10-30"
+      },
+      {
+        "videoId": "28Tcc0c5sNE",
+        "title": "🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！",
+        "date": "2026-10-30"
       }
     ]
   }
