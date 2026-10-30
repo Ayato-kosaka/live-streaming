@@ -86,10 +86,11 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この10本だけ**）
+# ## 毎晩ひとりでに回すもの（**この11本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
+#   build_monthly         months.ts          ※ BigQuery ＋ 投げ銭の取り置き・名簿を読む
 #   build_stream_peaks    streamPeaks.ts
 #   build_on_this_day     onThisDay.ts
 #   build_city_streams    cityStreams.ts
@@ -98,6 +99,19 @@ name: 島の数字を焼き直す
 #   build_site_stats      site.ts            ※ BigQuery ではなく**公開の口**を読む
 #   nordic_sun            nordicSun.ts       ※ BigQuery も外の口も引かない（計算だけ）
 #   suzuri_residents      suzuriGoods.ts     ※ 公開の売り場と**公開の口**を読む。鍵は要らない
+#
+# **`build_monthly` は名簿より後ろでないといけない。** 出席と順位に乗せる絵の id を
+# `site/content/residents.ts` から引く（`icons_by_channel()`）ので、名簿より先に焼くと
+# **前の晩の名簿で絵を付ける**ことになる。読む先はもう1つあって、月末配信の日は
+# 暦から当たらないため `python/build_monthly.py` の `FINALS` に人が1行足す
+# （足すまで新しい月の行は出ない。`python/stale_content_watch.py` が45日で鳴る）。
+#
+# **投げ銭の順位だけは、走者の手元に無い。** `python/data/monthly_tips` は
+# `monthly_tips_run` が Actions のログに出した JSON を人が手元へ置くもので、
+# **git に入っていない。** だから毎晩ぶんは順位を作れない——作れない月は
+# **焼いてある `months.ts` の `tipTotal` と `tips` をそのまま据え置く**
+# （焼くほうの `baked_tips()`）。据え置いた月はログに名指しで出る。
+# ここが「無ければ0件」だと、繋いだ晩に9ヶ月ぶんの順位がまるごと消える。
 #
 # **いちばん下は名簿の下流。** 住人の印 → SUZURI のデザイン番号で、焼くのは
 # 「名簿に居て、売り場にグッズが在る人」だけ。下の関所が名簿（`residents.ts`）と
@@ -320,14 +334,14 @@ jobs:
           # cron と同じ扱いにする。**片方だけ手当てすると、繋ぎ替えたあと
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
-            # 毎晩ぶん。**機械だけで答えの決まる10本**を、配るところまで。
+            # 毎晩ぶん。**機械だけで答えの決まる11本**を、配るところまで。
             # **ここは `ALL` とは別の並び。** 下の allowlist に足しただけでは
             # 毎晩には乗らない（あちらの「入力が空なら全部」は、手で押して
             # 入力欄を空にしたときだけ通る道）。**足すときは両方に足す。**
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats,nordic_sun,suzuri_residents" >> "$GITHUB_ENV"
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_monthly,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats,nordic_sun,suzuri_residents" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 10本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 11本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -351,7 +365,7 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk nordic_sun suzuri_residents"
+          ALL="build_chapter_stats build_residents build_monthly build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk nordic_sun suzuri_residents"
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`tools/`・`.py` は
           # 書かれても通す**（スマホの入力欄は勝手に頭を大文字にする。
@@ -363,7 +377,7 @@ jobs:
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので11本ぜんぶ回します"
+            echo "入力が空なので12本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -398,6 +412,12 @@ jobs:
             case "$s" in
               build_chapter_stats) p="site/content/chapterStats.ts site/content/chapterStreams.ts" ;;
               build_residents)     p="site/content/residents.ts" ;;
+              # **`months.ts` は `ALL` の中で名簿のすぐ後ろ**（絵の id を名簿から引く）。
+              # 投げ銭の取り置き（`python/data/monthly_tips`）は走者に無いので、
+              # 順位は前のまま据え置かれて焼かれる（焼くほうの `baked_tips()`）。
+              # 下の step「焼く」に名指しの case が在る（`--build` を付けないと
+              # 1バイトも書かずに 2 で帰る）
+              build_monthly)       p="site/content/months.ts" ;;
               build_stream_peaks)  p="site/content/streamPeaks.ts" ;;
               build_on_this_day)   p="site/content/onThisDay.ts" ;;
               build_city_streams)  p="site/content/cityStreams.ts" ;;
@@ -688,6 +708,20 @@ jobs:
             case "$s" in
               build_kitchen_talk)
                 echo "::warning::$s は BigQuery を引きません。python/data/kitchen_*.json の焼き直しなので、先にその JSON を取り直さないと数字は動きません"
+                python "python/$s.py" --build ;;
+              build_monthly)
+                # **`--build` が要る。** 付けないと1バイトも書かずに 2 で帰るので、
+                # 既定の枝（引数なし）に落とすとこの step ごと落ちる。
+                #
+                # 投げ銭の順位（`python/data/monthly_tips/<月>.json`）は
+                # **git に入っていないので、走者の手元には1枚も無い。**
+                # その月は焼いてある `months.ts` の `tipTotal` と `tips` を
+                # そのまま据え置く（焼くほうの `baked_tips()`）。据え置いた月は
+                # ログに名指しで出るので、順位を新しくしたいときは
+                # `monthly_tips_run` を押して、手元で焼き直して出す。
+                #
+                # 新しい月の行が出るのは、`FINALS` に月末配信の日を人が足したあと。
+                echo "$s は BigQuery を引きます。投げ銭の順位は走者に取り置きが無いので、前に焼いたぶんを据え置きます"
                 python "python/$s.py" --build ;;
               build_shorts)
                 # **ここだけ BigQuery ではなく YouTube を読む**（チャンネルのショートのタブ）。
@@ -1114,6 +1148,28 @@ jobs:
                   rule("住人", FLOOR, 1 / 1.5, r"days: (\d+)"),
                   # 絵の分かっている住人（22/22）。residents_map.json が読めないと絵だけ消える
                   rule("絵の分かっている住人", SHARE, 5.0, num=r"icon: \"", den=r"days: (\d+)"),
+              ],
+              # 2026-10-30 の本番の値を () に入れてある。
+              # **この面だけ、やせ方が2通りある。** (1) BigQuery が欠けて配信・出席が
+              # 減る (2) **投げ銭の取り置き（`python/data/monthly_tips`）が走者に
+              # 無いまま順位を焼いてしまう**。(2) は9ヶ月ぶんが一度に消えるので、
+              # 件数と合計の両方から当てる
+              "months.ts": [
+                  # 月（9）。月末配信は過ぎれば消えないので、減ったら読み落とし。
+                  # **増えるのは `FINALS` に人が1行足した晩**で、それは止めない
+                  rule("月", KEEP, 0, r'^    key: "'),
+                  # 配信（314）。累積。いちばん短い月でも20本あるので、月が1つ
+                  # 落ちれば 6% 以上動く。1本非公開になるのは 0.3%
+                  rule("配信", FLOOR, 0.95, r'\{d:"'),
+                  # 出席の行（739）。**2日以上来た人だけ**並ぶので、1日だけの人が
+                  # 増減しても動かない。名寄せ（`residents.ts` 由来）が割れると塊で動く
+                  rule("出席の行", FLOOR, 0.95, r'\{n:"'),
+                  # 投げ銭の行（133）。**取り置きが渡っていない月を 0 件で焼くと
+                  # ここが落ちる。** 据え置きが効いていれば1行も減らない
+                  rule("投げ銭の行", FLOOR, 0.95, r"\{r:\d+,"),
+                  # 貢献額の合計（325,408）。行は残ったまま額だけ 0 になる形
+                  # （JSON の `total` を読み落とす）は、件数では捕まらない
+                  rule("貢献額の合計", FLOOR, 0.95, r"tipTotal: (\d+)", mode="sum"),
               ],
               "streamPeaks.ts": [
                   # 山の出せる配信（251）。累積。取り込み直しで n が15を割る回があっても数本
@@ -1572,6 +1628,12 @@ jobs:
               "chapterStats.ts": (4, "いまの章の配信と人が毎晩増える"),
               "chapterStreams.ts": (0, "閉じた章のぶんだけ。章が閉じるまで動かないのが正常"),
               "residents.ts": (3, "直近90日の窓が毎日ずれるので、毎晩動く"),
+              "months.ts": (0, "いまの月の配信と出席は毎晩増えるが、**月末配信から"
+                               "次の月の初配信までは1バイトも動かないのが正常**。"
+                               "そのうえ新しい月の行が出るのは、`FINALS` に人が"
+                               "月末配信の日を足したあと。**日ではなく、新しい月が"
+                               "焼かれているか**で見る（`python/stale_content_watch.py` の"
+                               "`months.ts` 45日。日数を2か所に置かない）"),
               "streamPeaks.ts": (10, "山が雑音と区別できた配信だけ。出せない晩がある"),
               "onThisDay.ts": (4, "その日の代表が1本ずつ増える"),
               "cityStreams.ts": (7, "いまいる街の配信が増える。題名に街の名が出ない時期は止まる"),
