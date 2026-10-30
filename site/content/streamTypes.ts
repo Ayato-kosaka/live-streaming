@@ -51,9 +51,9 @@ export const STREAM_TYPES: StreamType[] = [
       "南蛮漬け5種やイワシ3連戦のように、1つの食材で何日も引っぱる回もある。",
     ],
     samples: [
-      { date: "2026-08-21", videoId: "xo1eYfB4RyU", title: "ジョージア料理オジャフリつくろーー！！" },
-      { date: "2026-07-16", videoId: "c6FFPcY8Tac", title: "ジョージア風南蛮漬け5種をついに食べます！" },
-      { date: "2026-07-31", videoId: "ZcchwhRE_Ks", title: "本気のクッキングや！！唐揚げ定食つくるぞ！！" },
+      { date: "2026-10-16", videoId: "E2oGYjnVQSA", title: "北マケドニアでグラムチャウダー作ります" },
+      { date: "2026-10-09", videoId: "yGEacTlskmY", title: "アルバニアでチーズケーキつくろか！" },
+      { date: "2026-10-06", videoId: "GRd0d7d7Ngg", title: "遂に遂に…暗殺者のパスタ" },
     ],
     deeper: { label: "作ってきた料理を全部見る", href: "/kitchen" },
   },
@@ -75,9 +75,9 @@ export const STREAM_TYPES: StreamType[] = [
       "たどり着けない日や、電波が切れる日もそのまま配信になる。",
     ],
     samples: [
-      { date: "2026-08-23", videoId: "v3L539GafQo", title: "海外の山の上の湖まで歩きます" },
-      { date: "2026-08-09", videoId: "53OdLlM6VIU", title: "世界で一番天国に近い教会行こ" },
-      { date: "2026-07-11", videoId: "Pnbi01M0t0I", title: "土曜やしトビリシ海まで歩こか！" },
+      { date: "2026-10-24", videoId: "eHBAnQF56-E", title: "🇲🇰北マケドニアのマトカ渓谷いこー！紅葉みながら川下りや！" },
+      { date: "2026-10-18", videoId: "TDArug_te90", title: "北マケドニアで城塞みにいこ！" },
+      { date: "2026-10-03", videoId: "hK0SwIeAxg0", title: "アルバニアの首都を待ち歩きや！" },
     ],
     /* **数を手で書かない。** `17` と書いてあって、歩いた国が増えても動かなかった
        （`docs/island-misses.md` #104）。焼き込みから出す */
@@ -105,8 +105,8 @@ export const STREAM_TYPES: StreamType[] = [
       "料理画像やランキングの整備は、視聴者さんが実際に手を動かして手伝ってくれた回もある。",
     ],
     samples: [
+      { date: "2026-08-30", videoId: "jWHxbg9IUOE", title: "今月の集大成！！アプリを大型アップデートします！！" },
       { date: "2026-08-22", videoId: "rzPoxwfm5lI", title: "アプリ作り配信や！アプリの第一印象をめっちゃよくする！" },
-      { date: "2026-07-07", videoId: "qfktydDGtIk", title: "新機能（新条件＋深堀検索）を1日で作ります" },
       { date: "2026-07-25", videoId: "iOSWFRFuAQ4", title: "チュートリアル機能と機能改善４０件出来るまで終われません！" },
     ],
     deeper: { label: "アプリの歴史を見る", href: "/apps" },
@@ -129,9 +129,9 @@ export const STREAM_TYPES: StreamType[] = [
       "月末配信の中身も、月末が近づくと企画会議で決めている。",
     ],
     samples: [
-      { date: "2026-08-24", videoId: "w5cSdSGRJ2E", title: "今週の企画会議や！月末配信なにしよー！" },
-      { date: "2026-08-11", videoId: "dRXae0mJw8M", title: "企画会議や！！" },
-      { date: "2026-07-29", videoId: "ri3_F6zhtDA", title: "今週の企画会議や！おもろい一週間にしよう！！！" },
+      { date: "2026-10-15", videoId: "CKJvprUMOgA", title: "北マケドニアで今週の企画会議や！" },
+      { date: "2026-10-07", videoId: "3zGkoi8FuwM", title: "アルバニアで今週の企画会議や！" },
+      { date: "2026-09-29", videoId: "-XSFRIeEpSw", title: "アルバニアでルーティン立て直すぞ！今週の作戦会議や！！" },
     ],
     deeper: { label: "企画を提案する", href: "/board" },
   },
@@ -155,9 +155,9 @@ export const STREAM_TYPES: StreamType[] = [
       "翌日には「タップタップ結果発表」がセットになっていることが多い。",
     ],
     samples: [
+      { date: "2026-09-26", videoId: "fuNbxQyO2Sw", title: "９月の月末配信や！！！えげつない1ヶ月やったな！！" },
+      { date: "2026-08-29", videoId: "F7iiCj2EXXg", title: "はいっ、8月月末配信でございます。" },
       { date: "2026-07-26", videoId: "d8UwWnFhjwY", title: "7月の月末配信や！！アツい1ヶ月だった！朝日みるぞ！" },
-      { date: "2026-06-28", videoId: "anL82TSPG4c", title: "６月末配信！なかなか素晴らしい1ヶ月やったんちゃう？" },
-      { date: "2026-05-31", videoId: "zLIQ9yySAas", title: "5月の月末配信！良い1ヶ月だった！" },
     ],
     /* 授賞式そのものは配信の中で終わるが、そこで数えたものは島に残してある。
        この型だけ、中身が月ごとの面としてまるごと置いてある（#809）。 */
