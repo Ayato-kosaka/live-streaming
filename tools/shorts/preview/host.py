@@ -46,6 +46,7 @@ import time
 from pathlib import Path
 
 import branch as br
+import channels as ch
 import decrypt
 from req import Bad, norm_pem
 
@@ -195,7 +196,10 @@ def firebase(tools: Path, args: list[str], cwd: Path, log: Path) -> dict:
     except json.JSONDecodeError:
         d = {}
     if r.returncode != 0 or d.get("status") != "success":
-        raise Bad(f"firebase {args[0]} が通らなかった（終了 {r.returncode}）")
+        # 理由の字は、秘密（URL・チャンネル名・アカウント・トークン）を伏せてからログと結果に出す。
+        # 2026-10-31 に両方の道で続けて落ちたとき、ここが「終了 1」だけで、原因を字で言えなかった
+        why = ch.error_of(r.stdout, log.read_text(encoding="utf-8", errors="replace"))
+        raise Bad(f"firebase {args[0]} が通らなかった（終了 {r.returncode}）: {why or '理由の字が無い'}")
     return d
 
 
@@ -317,38 +321,76 @@ def up(req: dict, branch: str, tmp: Path) -> tuple[dict, list[Path]]:
     return body, [shot] if shot else []
 
 
-def delete(req: dict, tmp: Path) -> tuple[dict, list[Path]]:
-    tools = tmp / "tools"
-    if prewarm(tools).wait() != 0:
-        raise Bad("firebase-tools を入れられなかった")
-    site = tmp / "empty"
-    site.mkdir(parents=True, exist_ok=True)
-    (site / "firebase.json").write_text('{"hosting": {"site": "%s", "public": "."}}' % SITE)
-    d = firebase(tools, ["hosting:channel:list", "--site", SITE], site, tmp / "list.log")
-    chans = (d.get("result") or {}).get("channels") or []
-    hit = None
-    for c in chans:
-        cid = str(c.get("name", "")).rsplit("/", 1)[-1]
-        if hashlib.sha256(cid.encode()).hexdigest() == req["channel_sha256"]:
-            hit = (cid, c.get("url", ""))
-    if not hit:
-        print("  そのチャンネルはもう無い（期限で消えたか、消し済み）")
-        return {"format": "shorts-preview/1", "place": "hosting", "name": req["name"],
-                "deleted": False, "gone": True}, []
-    cid, url = hit
-    if not CHANNEL.match(cid):
-        raise Bad("下見のチャンネルの形ではないので消さない")
-    firebase(tools, ["hosting:channel:delete", cid, "--site", SITE, "--force"], site,
-             tmp / "delete.log")
-    # 消したあと、ページが本当に開けなくなったかを見る（CDN に残っているあいだは 200 が返りうる）
+def gone_after(urls: list[str], limit: float = 120) -> dict[str, int]:
+    """消したチャンネルのページが 404 になるまで見る（CDN に残っているあいだは 200 が返りうる）。"""
     import requests
 
-    st, t0 = 0, time.time()
-    while url and time.time() - t0 < 120:
-        st = requests.get(url, timeout=30).status_code
-        if st == 404:
+    st = {u: 0 for u in urls if u}
+    t0 = time.time()
+    while st and time.time() - t0 < limit:
+        for u in [u for u, v in st.items() if v != 404]:
+            try:
+                st[u] = requests.get(u, timeout=30).status_code
+            except requests.RequestException:
+                st[u] = -1
+        if all(v == 404 for v in st.values()):
             break
         time.sleep(10)
-    print(f"  チャンネルを消した（そのあとページは HTTP {st}・{time.time() - t0:.0f}秒）")
-    return {"format": "shorts-preview/1", "place": "hosting", "name": req["name"],
-            "deleted": True, "gone": st == 404, "after_status": st, "page": url}, []
+    return st
+
+
+def delete(req: dict, tmp: Path) -> tuple[dict, list[Path]]:
+    """sha256 で指したチャンネルを消す（依頼にはチャンネル名を書かない。一覧から探す）。
+
+    1つ（字）でも、いくつも（並び）でも受ける。firebase-tools は入れない（REST で一覧・消す）。
+    """
+    want = req["channel_sha256"]
+    many = isinstance(want, list)
+    want = want if many else [want]
+    api = ch.Api()
+    chans = api.list()
+    by = {ch.sha(ch.cid(c)): c for c in chans}
+    rows, urls = [], []
+    for w in want:
+        c = by.get(w)
+        if c is None:
+            rows.append({"channel_sha256": w, "deleted": False, "gone": True, "why": "もう無い"})
+            continue
+        if not ch.is_preview(c):
+            rows.append({"channel_sha256": w, "deleted": False, "gone": False,
+                         "why": "下見のチャンネルの形ではないので消さない"})
+            continue
+        api.delete(ch.cid(c))
+        rows.append({"channel_sha256": w, "deleted": True, "page": c.get("url", "")})
+        urls.append(c.get("url", ""))
+    st = gone_after(urls)
+    for r in rows:
+        if r.get("deleted"):
+            r["after_status"] = st.get(r["page"], 0)
+            r["gone"] = r["after_status"] == 404
+    n_del = sum(1 for r in rows if r.get("deleted"))
+    n_gone = sum(1 for r in rows if r.get("gone"))
+    n_refused = sum(1 for r in rows if not r.get("deleted") and not r.get("gone"))
+    print(f"  {len(want)}本を頼まれて、{n_del}本を消した（もう無かった {len(want) - n_del - n_refused}本・"
+          f"断った {n_refused}本）。そのあとページが 404 になったもの {n_gone}本"
+          f"（一覧は {len(chans)} → {len(chans) - n_del}本）")
+    body = {"format": "shorts-preview/1", "place": "hosting", "name": req["name"],
+            "results": rows, "census_before": ch.census(chans)}
+    if not many:
+        # 1つのときは今までの形（put.py delete が読む）
+        r = rows[0]
+        body.update(deleted=r.get("deleted", False), gone=r.get("gone", False),
+                    after_status=r.get("after_status"), page=r.get("page"))
+    body["ok"] = n_refused == 0 and all(r.get("gone") for r in rows)
+    return body, []
+
+
+def listing(req: dict) -> tuple[dict, list[Path]]:
+    """チャンネルを数える。ログには数だけ、暗号化した結果には1本ずつ（sha256・時刻・札）。"""
+    chans = ch.Api().list()
+    c = ch.census(chans)
+    kinds = "・".join(f"{k} {v}" for k, v in sorted(c["kinds"].items())) or "なし"
+    print(f"  チャンネル {c['all']}本（下見 {c['preview']}・ほか {c['other']}。下見の内訳: {kinds}。"
+          f"1日以内に消える {c['expire_within_1d']}本。上限 {c['cap'] or '未設定'}）")
+    return {"format": "shorts-preview/1", "place": "hosting", "name": req["name"], "census": c,
+            "channels": [ch.row(x) for x in sorted(chans, key=lambda x: x.get("createTime", ""))]}, []

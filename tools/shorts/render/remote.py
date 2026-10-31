@@ -891,9 +891,13 @@ def cmd_report() -> int:
         try:
             pv = preview(req, items, bucket, prefix)
         except Exception as e:  # noqa: BLE001  下見が落ちても、書き出しと検査の結果は返す
-            pv = {"ok": False, "problems": [f"下見を置けなかった: {type(e).__name__}: {str(e)[:200]}"]}
+            pv = {"ok": False, "problems": [f"下見を置けなかった: {type(e).__name__}: {str(e)[:400]}"]}
+            # Bad の字は秘密を伏せてある（host.firebase が channels.safe_reason を通す）のでログに出す。
+            # ほかの例外は URL が混ざりうるので型だけ（2026-10-31、理由が「落ちた」しか出ず追えなかった）
+            pv["why"] = str(e)[:400] if isinstance(e, Bad) else type(e).__name__
         pv["seconds"] = round(time.time() - t_pv, 1)
-        print(f"下見: {'できた' if pv.get('ok') else '!! 落ちた'}（{pv['seconds']}秒）")
+        print(f"下見: {'できた' if pv.get('ok') else '!! 落ちた'}（{pv['seconds']}秒）"
+              + (f": {pv['why']}" if pv.get("why") else ""))
     ends = [r["timing"].get("uploaded") or r["timing"].get("rendered") for r in results.values()]
     timing = {"prepare_ready_s": round(meta["ready"] - meta["started"], 1),
               "jobs_end_s": round(max(ends) - meta["started"], 1) if ends else None,
