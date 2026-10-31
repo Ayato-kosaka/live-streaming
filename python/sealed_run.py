@@ -1,9 +1,14 @@
 """封つきの管理スクリプトを**手元から**1回押して、返ってきたものをほどく。
 
     python3 python/sealed_run.py doneru_msgs_sealed '{"from":"2026-09-26","to":"2026-10-30"}'
-    python3 python/sealed_run.py tips_sealed '{"from":"2026-09-26","to":"2026-10-30"}' --out /tmp/x.json
+    python3 python/sealed_run.py owner_handoff '{}' --out /tmp/x.json
 
 `pubkey` は**こちらが足す。** 引数に書かない。
+
+**注記で返すスクリプトしか駆れない。** `tips_sealed` は封を `print("SEALED=…")`
+でログに出すだけなので、ここからは受け取れない（ログ本体は置き場から配られて
+いて、この箱の `gh` は口から読めない）。あちらを注記に出すよう直すまでは、
+**この道具で押しても永遠に待つ。**
 
 ## なぜ要るか
 
@@ -92,7 +97,9 @@ def run(script: str, args: dict, ref: str, wait: int = WAIT):
         ほどけた中身（JSON として読めたらその値、読めなければ bytes）
     """
     pem, pub = keypair()
-    since = datetime.now(timezone.utc) - timedelta(minutes=2)
+    # **押す直前からにする。** 手前に自分の失敗した実行があると、
+    # そちらを拾って「封が無い」と言うだけで終わる
+    since = datetime.now(timezone.utc) - timedelta(seconds=20)
 
     print(f"押します: {script}（枝 {ref}）", file=sys.stderr)
     gh(
@@ -109,7 +116,10 @@ def run(script: str, args: dict, ref: str, wait: int = WAIT):
                 continue
             try:
                 plain = unseal(unpack(join(annotations(r["id"]))), pem)
-            except Exception as e:  # noqa: BLE001
+            # **SystemExit も受ける。** `_seal.join()` は足りないときに
+            # SystemExit を投げるので、`Exception` だけで受けると
+            # 「他人の実行を1本見ただけ」でこちらが丸ごと落ちる
+            except (Exception, SystemExit) as e:  # noqa: BLE001
                 # 他人の実行か、**自分の実行が封を出す前に落ちたか。**
                 # どちらか決められないので、名指しして次を見る
                 seen.add(r["id"])
