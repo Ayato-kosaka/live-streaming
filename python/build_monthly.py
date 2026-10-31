@@ -143,20 +143,24 @@ def day_before(d: str) -> str:
 # ---------------------------------------------------------------- BigQuery
 
 # **1本で済ませる。** 期間ごとに投げると回数が増えるだけで、読む列は同じ。
-# 配信日は 6:00 JST で切る（上の説明）。
+# 配信日は 6:00 JST で切る（上の説明）。**時間はここ1本で持つ。**
+# `buzzwords.py`（チャットから流行語を数える道具）が同じ境目で日を切るので、
+# あちらはこの値を import する。字で 6 と書くのは、この1行だけにする
+DAY_CUTOFF_HOUR = 6
+
 SQL = """
 WITH periods AS (
   SELECT * FROM UNNEST([{periods}])
 ),
 vraw AS (
   SELECT video_id, title, actual_start_time AS st,
-    DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL 6 HOUR), 'Asia/Tokyo') AS d,
+    DATE(TIMESTAMP_SUB(actual_start_time, INTERVAL {cut} HOUR), 'Asia/Tokyo') AS d,
     FORMAT_TIMESTAMP('%Y-%m-%d %H:%M', actual_start_time, 'Asia/Tokyo') AS jst
   FROM `{p}.{ds}.videos` WHERE actual_start_time IS NOT NULL
 ),
 cm AS (
   SELECT author_channel_id AS cid, author_name AS nm, published_at AS pa, video_id,
-    DATE(TIMESTAMP_SUB(published_at, INTERVAL 6 HOUR), 'Asia/Tokyo') AS d
+    DATE(TIMESTAMP_SUB(published_at, INTERVAL {cut} HOUR), 'Asia/Tokyo') AS d
   FROM `{p}.{ds}.chat_messages`
   WHERE event_type='TEXT' AND author_name != '{bot}' AND author_channel_id IS NOT NULL
 ),
@@ -231,7 +235,8 @@ def sql() -> str:
             p["from"], p["to"], p["final"]) if i == 0 else \
             ", DATE '%s', DATE '%s', DATE '%s')" % (p["from"], p["to"], p["final"])
         rows.append("%s'%s'%s" % (head, p["key"], tail))
-    return SQL.format(periods=",\n    ".join(rows), p=PROJECT, ds=DATASET, bot=BOT_NAME)
+    return SQL.format(periods=",\n    ".join(rows), p=PROJECT, ds=DATASET,
+                      bot=BOT_NAME, cut=DAY_CUTOFF_HOUR)
 
 
 def fetch() -> list:
