@@ -68,11 +68,13 @@ import os
 import sys
 
 from _fs import args, db, log, need, readonly
+from _seal import chunks
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import fx_rate  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from doneru.dedup import dedup_sql  # noqa: E402
 from logsafe import detail_lines, mask  # noqa: E402
 from monthly_tips import (  # noqa: E402
     Roster, fx_detail, fx_stuck, fx_superchats, merge, rank, total,
@@ -98,16 +100,26 @@ WHERE event_type = 'PAID'
 GROUP BY cid
 """
 
-# 同じ寄付が2行入っていることがあるので `donation_id` で1つにしてから足す
-SQL_DN = """
+# **寄せる口を通してから足す。** `donation_id` だけでは1件に寄らない——
+# 主キーに精算状態が入っているので、振り込まれた寄付は**別の鍵で生え直して
+# 2行になる**（`python/doneru/dedup.py`。#1067）。
+# `GROUP BY donation_id` は残す。寄せたあとでも同じ鍵が2行ありうる
+_DN_ROWS = dedup_sql(
+    "{p}", "{d}",
+    columns=["donation_id", "donor_name", "CAST(amount AS INT64) AS yen"],
+    where="donated_at IS NOT NULL\n"
+          "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
+)
+
+SQL_DN = f"""
 SELECT donor_name AS name, SUM(yen) AS yen, COUNT(*) AS n
 FROM (
   SELECT donation_id,
          ANY_VALUE(donor_name) AS donor_name,
-         ANY_VALUE(CAST(amount AS INT64)) AS yen
-  FROM `{p}.{d}.doneru_donations`
-  WHERE donated_at IS NOT NULL
-    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+         ANY_VALUE(yen) AS yen
+  FROM (
+{_DN_ROWS}
+  )
   GROUP BY donation_id
 )
 GROUP BY name
@@ -252,12 +264,25 @@ def main() -> None:
     log.info("合計 %d円 / %d人", total(rows), len(rows))
 
     # 焼き込みに貼る形。**`data.js` にそのまま入れる**
-    print("JSON=" + json.dumps(
+    out = json.dumps(
         {"period": f"{d0}〜{d1}", "total": total(rows),
          "rows": [{"handle": x["handle"] or None, "display": x["display"],
                    "yen": x["yen"], "rank": x["rank"], "icon": x["char"]}
                   for x in rows]},
-        ensure_ascii=False))
+        ensure_ascii=False)
+    print("JSON=" + out)
+
+    # **注記にも同じものを出す。** ログの本体は Azure Blob から配られるので、
+    # 作業箱の gh では読めない（`refusing a redirect to results-receiver…`）。
+    # 注記だけは `check-runs/{id}/annotations` から読めるので、月末に
+    # ページを作る担当が、ここを押して結果を持ち帰れる。
+    #
+    # **封はしない。** ここに出るのは授賞式の画面にそのまま出るもの
+    # （順位・呼び名・貢献額・図鑑のID）だけで、実額もチャンネルIDも
+    # 入っていない（上の「ログに何を出すか」）。封が要るのは
+    # オーナーの表の実額のほうで、それは `tips_sealed` の役。
+    for line in chunks(out):
+        print("::notice::" + line)
 
 
 main()

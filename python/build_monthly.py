@@ -48,6 +48,24 @@
 **月ごとの面に実額は1円も出さない**（`docs/island-money.md` 2章の例外）。
 ここに入るのも貢献額だけ。
 
+### 取り置きの無い月は、焼いてあるものを据え置く
+
+`--tips` の置き場（既定 `python/data/monthly_tips`）は **git に入っていない。**
+`monthly_tips_run` が Actions のログに出した JSON を、人が手元へ置くだけのもの。
+だから**走者（`rebake.yml`）の手元には1枚も無い。**
+
+ここが素直に「無ければ 0 件」と焼くと、毎晩の焼き直しに繋いだ瞬間に
+**9ヶ月ぶんの順位と貢献額がまるごと消えて master に入る。**
+縮みの関所（`rebake.yml` の「中の数が縮んでいないか」）は止めてくれるが、
+止まるのは commit だけで、**毎晩が赤になるだけ**で誰も得をしない。
+
+なので、**その月の JSON が無いときは、いま焼いてある `months.ts` の
+`tipTotal` と `tips` をそのまま持ち越す。** 読むのは `ts_read`（自前の
+正規表現で TS を読まない）。持ち越した月は走らせたときにログへ名指しで出す。
+
+JSON が**在って中身が空**のときは持ち越さない。あれは「その月は0円だった」と
+人が決めた結果で、取り置きが無いのとは別のこと。
+
 ## タップ数
 
 置き場は `python/data/monthly_taps.json`（取り置き）。**焼き込みに直接書かない。**
@@ -64,7 +82,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from ts_read import read_array  # noqa: E402
+from ts_read import array_body, fields, nested_body, objects, read_array  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_TS = ROOT / "site" / "content" / "months.ts"
@@ -273,12 +291,47 @@ def review_pages() -> set:
         for p in PUBLIC_DIR.glob("??????_monthly_review.html")}
 
 
-def tips_of(key: str, src_dir: Path) -> dict:
-    """その月の投げ銭ランキング（`monthly_tips_run` が出した JSON）。"""
+def tips_of(key: str, src_dir: Path):
+    """その月の投げ銭ランキング（`monthly_tips_run` が出した JSON）。
+
+    **無いときは `None`。** 「0円だった月」（中身が空の JSON）と
+    「取り置きがそもそも渡っていない月」を分ける——前者は焼いてよく、
+    後者は焼くと**前に焼いた順位が消える**（上の説明）。
+
+    Returns:
+        `{"total", "rows"}`、または取り置きが無ければ `None`
+    """
     f = src_dir / ("%s.json" % key)
     if not f.exists():
-        return {"total": 0, "rows": []}
+        return None
     return json.loads(f.read_text(encoding="utf-8"))
+
+
+def baked_tips() -> dict:
+    """**いま焼いてある `months.ts`** から、月ごとの投げ銭ぶんを読み返す。
+
+    取り置きの渡っていない月を、前の版のまま据え置くために要る。
+    読むのは `ts_read`（`python/ts_readers_selftest.py`。自前の正規表現で
+    TS を読まない）。`tips` は入れ子の配列なので、字のまま借りて
+    **1バイトも作り直さない。**
+
+    Returns:
+        `{月: {"total": 貢献額の合計, "body": tips の中身（字のまま）}}`
+    """
+    if not OUT_TS.exists():
+        return {}
+    out = {}
+    for o in objects(array_body(OUT_TS.read_text(encoding="utf-8"), "MONTHS")):
+        f = fields(o)
+        key = f.get("key")
+        if not key:
+            continue
+        total = f.get("tipTotal") or "0"
+        out[key] = {
+            "total": int(total) if total.isdigit() else 0,
+            "body": nested_body(o, "tips"),
+        }
+    return out
 
 
 def ts(v) -> str:
@@ -291,6 +344,8 @@ def build(rows: list, tips_dir: Path) -> str:
     icon = icons_by_channel()
     tap = taps()
     reviews = review_pages()
+    prev = baked_tips()
+    kept = []
     body = []
     for r in rows:
         key = r["mk"]
@@ -311,13 +366,23 @@ def build(rows: list, tips_dir: Path) -> str:
             ic = icon.get(a["c"])
             attend.append("{n:%s,d:%d%s}" % (
                 ts(a["n"]), int(a["d"]), ",i:" + ts(ic) if ic else ""))
-        t = tips_of(key, tips_dir)
-        tips = [
-            "{r:%d,n:%s,y:%d%s}" % (
-                int(x["rank"]), ts(x["display"]), int(x["yen"]),
-                ",i:" + ts(x["icon"]) if x.get("icon") else "")
-            for x in t["rows"]
-        ]
+        # **取り置きの無い月は、焼いてあるものを据え置く**（上の説明）。
+        # 走者の手元に `python/data/monthly_tips` は無いので、ここが
+        # 「無ければ0件」だと毎晩ぶんが順位をまるごと消しにかかる
+        src = tips_of(key, tips_dir)
+        if src is None:
+            was = prev.get(key) or {"total": 0, "body": ""}
+            tip_total, tips_body = was["total"], was["body"]
+            if tip_total or tips_body:
+                kept.append(key)
+        else:
+            tip_total = int(src["total"])
+            tips_body = ", ".join(
+                "{r:%d,n:%s,y:%d%s}" % (
+                    int(x["rank"]), ts(x["display"]), int(x["yen"]),
+                    ",i:" + ts(x["icon"]) if x.get("icon") else "")
+                for x in src["rows"]
+            )
         lost = [x for x in (r["lost_list"] or "").split(" ") if x]
         extra = ""
         if key in tap:
@@ -337,9 +402,13 @@ def build(rows: list, tips_dir: Path) -> str:
             "  },"
             % (ts(key), y, m, ts(r["d0"]), ts(r["d1"]), ts(r["fin"]),
                int(r["denom"]), ", ".join(ts(x) for x in lost),
-               int(r["people"]), int(r["newcomers"]), once, int(t["total"]), extra,
-               ", ".join(streams), ", ".join(attend), ", ".join(tips))
+               int(r["people"]), int(r["newcomers"]), once, tip_total, extra,
+               ", ".join(streams), ", ".join(attend), tips_body)
         )
+    # **据え置いた月は黙らない。** 黙ると「焼いたのだから新しい」と読まれる
+    if kept:
+        print("投げ銭の取り置き（%s）が無いので、焼いてあるものを据え置いた月: %s"
+              % (tips_dir, " ".join(kept)))
     # **新しい月が上。** 開いた人がまず見たいのは、いちばん近い月
     return HEADER + "\n".join(reversed(body)) + FOOTER
 
@@ -445,6 +514,13 @@ def main() -> None:
     if a.sql:
         print(sql())
         return
+    # **`--build` が無ければ1バイトも書かない。** 頭の説明にそう書いてあるのに
+    # 判定が無く、引数なしで呼ぶと BigQuery を引いて焼いていた。
+    # `rebake.yml` の「焼く」は既定の枝が `python python/<名前>.py` なので、
+    # 付け忘れると**書く気の無い回に書く**ことになる（名指しの case を置いてある）
+    if not a.build:
+        print("::error::何も書いていません。焼くときは --build を付けてください")
+        raise SystemExit(2)
     rows = json.loads(Path(a.src).read_text(encoding="utf-8")) if a.src else fetch()
     out = build(rows, Path(a.tips))
     OUT_TS.write_text(out, encoding="utf-8")

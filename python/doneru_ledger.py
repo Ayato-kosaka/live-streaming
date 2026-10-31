@@ -59,6 +59,7 @@ from config import (  # noqa: E402
     BQ_PROJECT_ID,
     BQ_TABLE_DONERU_DONATIONS,
 )
+from doneru.dedup import dedup_sql  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -83,20 +84,26 @@ MAX_TEXT = 300
 # 名前の長さ。スパチャの `who` と同じ扱い。
 MAX_WHO = 31
 
-SQL = """
-SELECT
-  donation_id,
-  FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', donated_at, 'Asia/Tokyo') AS at_iso,
-  FORMAT_TIMESTAMP('%Y-%m-%d', donated_at, 'Asia/Tokyo') AS jst_day,
-  donor_name AS who,
-  CAST(amount AS INT64) AS yen,
-  message_text AS text,
-  status,
-  viewer_pk
-FROM `{p}.{d}.{t}`
-WHERE donated_at IS NOT NULL
-  {window}
-"""
+# **寄せる口を通す。** 置き場には同じ寄付が2行入っている——主キーに精算状態が
+# 入っているので、振り込まれた寄付は**別の鍵で生え直して2行になる**
+# （`python/doneru/dedup.py`。#1067）。写し先の書類IDは `donation_id` なので、
+# 寄せないと**同じ寄付が履歴に2回並ぶ。**
+SQL = dedup_sql(
+    "{p}", "{d}",
+    table="{t}",
+    columns=[
+        "donation_id",
+        "FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', donated_at, 'Asia/Tokyo') AS at_iso",
+        "FORMAT_TIMESTAMP('%Y-%m-%d', donated_at, 'Asia/Tokyo') AS jst_day",
+        "donor_name AS who",
+        "CAST(amount AS INT64) AS yen",
+        "message_text AS text",
+        "status",
+        "viewer_pk",
+    ],
+    where="donated_at IS NOT NULL\n"
+          "    {window}",
+)
 
 # **窓を付けるかどうかだけを差し替える。** SQL を2本持つと、片方だけ直す日が来る
 WINDOW = "AND donated_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @days DAY)"

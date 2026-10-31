@@ -81,6 +81,7 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
 import fx_rate  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from doneru.dedup import dedup_sql  # noqa: E402
 from logsafe import detail_lines  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -180,6 +181,27 @@ WHERE m.event_type = 'PAID'
 # **終わりから30分の猶予を置く。** チャットが止まってから投げてくれる人が
 # いる。逆に、次の配信が始まっていたらそちらが勝つ（`started_at` の新しい
 # ほうを採る）ので、猶予で2つに当たることはない。
+#
+# **寄せる口を通してから当てる。** 置き場には同じ寄付が2行入っている——
+# 主キーに精算状態が入っているので、振り込まれた寄付は**別の鍵で生え直して
+# 2行になる**（`python/doneru/dedup.py`。#1067）。台帳の書類IDは
+# `sourceEventId`（`donation_id` から決まる）なので、寄せないと
+# **同じ投げ銭のカードが2枚立つ。**
+_DONERU_ROWS = dedup_sql(
+    BQ_PROJECT_ID, BQ_DATASET,
+    columns=[
+        "donation_id",
+        "donated_at",
+        "viewer_pk",
+        "donor_name",
+        "amount",
+        "settlement_amount",
+        "currency",
+    ],
+    where="donated_at IS NOT NULL\n"
+          "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
+)
+
 SQL_DONERU = f"""
 WITH win AS (
   SELECT
@@ -210,11 +232,11 @@ SELECT
   -- 時間帯に当たった配信。またがったら、始まりの新しいほうを採る
   ARRAY_AGG(w.video_id ORDER BY w.started_ms DESC LIMIT 1)[SAFE_OFFSET(0)] AS video_id,
   MAX(w.started_ms) AS started_ms
-FROM `{BQ_PROJECT_ID}.{BQ_DATASET}.doneru_donations` d
+FROM (
+{_DONERU_ROWS}
+) d
 LEFT JOIN win w
   ON UNIX_MILLIS(d.donated_at) BETWEEN w.started_ms AND w.ended_ms
-WHERE d.donated_at IS NOT NULL
-  AND DATE(d.donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
 GROUP BY
   d.donation_id, day, donated_ms, d.viewer_pk, d.donor_name,
   d.amount, d.settlement_amount, d.currency
