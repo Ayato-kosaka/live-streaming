@@ -295,7 +295,7 @@ jobs:
   # リンク・React の手当て**の分母と一緒に読む（§15）。どれかが 0 なら、
   # 道具は数字を出さずに 2 で落ちる。対照（台16枚）が1枚でも外れても 2。
   reachkeys:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（2026-10-31 に ubuntu-latest が 26.04 になった）
     # 道具そのものが手元で 308秒。書き出しと支度に3分。CI の2コアで倍に
     # 伸びても収まる枠にしてある
     timeout-minutes: 35

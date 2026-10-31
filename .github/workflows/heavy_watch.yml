@@ -133,7 +133,7 @@ jobs:
   #   置いてある絵に当たる回（run 35421444959）… **247秒**
   #     絵を落とすところが 1秒未満になる
   browserwatch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35。
     # 日を進めた2枚めの書き出し（`datebake`）で 35 → 40（手元で書き出し 1分17秒
     # ＋ 突き合わせ 53秒。2026-10-14 実測）
@@ -549,7 +549,7 @@ jobs:
   # `route.mjs` の `offline` が返す差し替えで足りる（`browserwatch` は図鑑の絵の
   # はみ出しを見るので要る）。そのぶんここは 345秒ぶん安い。
   reachwatch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     timeout-minutes: 30
 
     steps:
