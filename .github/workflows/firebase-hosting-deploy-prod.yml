@@ -33,7 +33,7 @@ jobs:
   build_and_deploy:
     # `wake_only` のときは、ここを丸ごと飛ばす（配らない）
     if: ${{ !inputs.wake_only }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（2026-10-31 に ubuntu-latest が 26.04 になった）
     steps:
       - uses: actions/checkout@v5
       - name: 🏗️ `.env` ファイルの作成
