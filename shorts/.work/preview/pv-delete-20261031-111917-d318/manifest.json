@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview__pv-delete-20261031-111917-d318",
+ "mode": "preview",
+ "dest": "preview/pv-delete-20261031-111917-d318",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/pv-delete-20261031-111917-d318.json",
+ "status": "ok",
+ "stages": {
+  "delete": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 7677,
+  "tar_gz": 2547,
+  "encrypted": 2560
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2560,
+   "sha256": "9a72e46963f6ad4f8c87ce7d81e816e67f63928ca4ebedffec6c717ff8a7a196"
+  }
+ ],
+ "hmac_sha256": "97b080d9b1f755731fcbd380cdac8b444d9bd30a4d54bf8d0524653f20d6b0da",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41159459488",
+ "created_at": "2026-10-31T02:19:46+00:00",
+ "nonce": "dcfe718f8d3fdc3584f31b80",
+ "place": "hosting"
+}
