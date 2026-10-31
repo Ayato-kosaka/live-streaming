@@ -74,6 +74,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import fx_rate  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from doneru.dedup import dedup_sql  # noqa: E402
 from logsafe import detail_lines, mask  # noqa: E402
 from monthly_tips import (  # noqa: E402
     Roster, fx_detail, fx_stuck, fx_superchats, merge, rank, total,
@@ -99,16 +100,26 @@ WHERE event_type = 'PAID'
 GROUP BY cid
 """
 
-# 同じ寄付が2行入っていることがあるので `donation_id` で1つにしてから足す
-SQL_DN = """
+# **寄せる口を通してから足す。** `donation_id` だけでは1件に寄らない——
+# 主キーに精算状態が入っているので、振り込まれた寄付は**別の鍵で生え直して
+# 2行になる**（`python/doneru/dedup.py`。#1067）。
+# `GROUP BY donation_id` は残す。寄せたあとでも同じ鍵が2行ありうる
+_DN_ROWS = dedup_sql(
+    "{p}", "{d}",
+    columns=["donation_id", "donor_name", "CAST(amount AS INT64) AS yen"],
+    where="donated_at IS NOT NULL\n"
+          "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
+)
+
+SQL_DN = f"""
 SELECT donor_name AS name, SUM(yen) AS yen, COUNT(*) AS n
 FROM (
   SELECT donation_id,
          ANY_VALUE(donor_name) AS donor_name,
-         ANY_VALUE(CAST(amount AS INT64)) AS yen
-  FROM `{p}.{d}.doneru_donations`
-  WHERE donated_at IS NOT NULL
-    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+         ANY_VALUE(yen) AS yen
+  FROM (
+{_DN_ROWS}
+  )
   GROUP BY donation_id
 )
 GROUP BY name

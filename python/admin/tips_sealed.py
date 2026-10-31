@@ -51,6 +51,7 @@ from _fs import args, db, log, need, readonly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from doneru.dedup import dedup_sql  # noqa: E402
 from fund_box import viewer_yen  # noqa: E402
 from monthly_tips import Roster, merge  # noqa: E402
 
@@ -69,15 +70,25 @@ WHERE event_type = 'PAID'
 GROUP BY cid
 """
 
-SQL_DN = """
+# **寄せる口を通してから足す。** `donation_id` だけでは1件に寄らない——
+# 主キーに精算状態が入っているので、振り込まれた寄付は**別の鍵で生え直して
+# 2行になる**（`python/doneru/dedup.py`。#1067）
+_DN_ROWS = dedup_sql(
+    "{p}", "{d}",
+    columns=["donation_id", "donor_name", "CAST(amount AS INT64) AS yen"],
+    where="donated_at IS NOT NULL\n"
+          "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
+)
+
+SQL_DN = f"""
 SELECT donor_name AS name, SUM(yen) AS yen
 FROM (
   SELECT donation_id,
          ANY_VALUE(donor_name) AS donor_name,
-         ANY_VALUE(CAST(amount AS INT64)) AS yen
-  FROM `{p}.{d}.doneru_donations`
-  WHERE donated_at IS NOT NULL
-    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+         ANY_VALUE(yen) AS yen
+  FROM (
+{_DN_ROWS}
+  )
   GROUP BY donation_id
 )
 GROUP BY name
