@@ -57,23 +57,43 @@ from _seal import chunks, pack, seal
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
+from doneru.dedup import dedup_sql  # noqa: E402
 from monthly_tips import Roster  # noqa: E402
 
-# 同じ寄付が2行入っていることがあるので `donation_id` で1つにする。
-# **合計ではなく1件ずつ返す**ので、まとめるのはここまで。
-SQL = """
+# **寄せる口を通す。** `donation_id` だけでは1件に寄らない——主キーに
+# 精算状態が入っているので、振り込まれた寄付は**別の鍵で生え直して2行になる**
+# （`python/doneru/dedup.py`。#1067）。1件ずつ出す口なので、ここは
+# 本文が2回並ぶ形で見えていた。
+# `GROUP BY donation_id` は残す。寄せたあとでも同じ鍵が2行ありうる
+_ROWS = dedup_sql(
+    "{p}", "{d}",
+    columns=[
+        "donation_id",
+        "FORMAT_DATE('%Y-%m-%d', DATE(donated_at, 'Asia/Tokyo')) AS day",
+        "donor_name AS name",
+        "CAST(amount AS INT64) AS yen",
+        "CAST(settlement_amount AS INT64) AS net",
+        "message_text AS text",
+        "status",
+        "platform",
+    ],
+    where="donated_at IS NOT NULL\n"
+          "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
+)
+
+SQL = f"""
 SELECT
   donation_id,
-  ANY_VALUE(FORMAT_DATE('%Y-%m-%d', DATE(donated_at, 'Asia/Tokyo'))) AS day,
-  ANY_VALUE(donor_name) AS name,
-  ANY_VALUE(CAST(amount AS INT64)) AS yen,
-  ANY_VALUE(CAST(settlement_amount AS INT64)) AS net,
-  ANY_VALUE(message_text) AS text,
+  ANY_VALUE(day) AS day,
+  ANY_VALUE(name) AS name,
+  ANY_VALUE(yen) AS yen,
+  ANY_VALUE(net) AS net,
+  ANY_VALUE(text) AS text,
   ANY_VALUE(status) AS status,
   ANY_VALUE(platform) AS platform
-FROM `{p}.{d}.doneru_donations`
-WHERE donated_at IS NOT NULL
-  AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1
+FROM (
+{_ROWS}
+)
 GROUP BY donation_id
 ORDER BY day, donation_id
 """
