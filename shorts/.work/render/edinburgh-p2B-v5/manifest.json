@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__edinburgh-p2B-v5",
  "mode": "render",
- "dest": "render/edinburgh-p2B-v5/inbox",
+ "dest": "render/edinburgh-p2B-v5",
  "video": null,
  "channel": null,
  "request": "shorts/render/edinburgh-p2B-v5.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1180,
-  "encrypted": 1184
+  "plain": 36336,
+  "tar_gz": 9282,
+  "encrypted": 9296
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "894bf80c3778a8324bef5da03f9094d62d89944186496d0270d8bc2b3ee9d07b"
+   "bytes": 9296,
+   "sha256": "2e5aa6a1fe1c87ed5fd9549e2c68d242de97c703a7679116051c1bd7a611e237"
   }
  ],
- "hmac_sha256": "81e3d6a90a38c295d69ab3ccf1e754eba6873527d3cbf59b6bd735f888cacbc0",
+ "hmac_sha256": "e1cad6139204520c6501fd7d7a53c570d994f11f8e0ecf50f924eeb941b5e633",
  "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-31T00:51:48+00:00",
+ "created_at": "2026-10-31T00:59:52+00:00",
  "nonce": "ba34c3e4ebf1217af9afc845"
 }
