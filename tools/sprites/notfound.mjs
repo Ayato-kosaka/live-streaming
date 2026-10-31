@@ -94,7 +94,7 @@ const BREAK = process.env.BREAK || "";
 const GONE_TEXT = "この道の先には、なにも無い";
 
 /** sitemap に載っていないが、島に在る面。**索引に無いものは、誰も数えていない** */
-const EXTRA_LIVE = ["/me", "/me/desk", "/me/remote", "/me/roulette", "/roulette", "/design"];
+const EXTRA_LIVE = ["/me", "/me/desk", "/me/roulette", "/roulette", "/design"];
 
 /** h1 が 404 の字で正しい面。受け皿を外しても、ここは 200 のまま在る */
 const LIVE_404 = ["/404"];

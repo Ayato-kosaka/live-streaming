@@ -407,11 +407,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const cred = GoogleAuthProvider.credentialFromResult(res);
       const channel = cred?.accessToken ? await fetchChannel(cred.accessToken) : null;
       const idToken = await res.user.getIdToken();
-      // サーバー側にも「この人が来た」と伝えておく
+      /* サーバー側にも「この人が来た」と伝えておく。
+         **送るのは合言葉（`ytToken`）で、チャンネルIDではない。**
+         長いあいだ、ここで取った `channelId` をそのまま送って、
+         サーバーはそれを確かめずに `islandUsers` へ書いていた。
+         チャンネルIDは公開の値なので、島にログインできる人なら
+         誰でも他人のIDを名乗れて、名乗った先では他人のカードが読め、
+         他人のスタンプのことばが上書きできた。
+         いまは `channels?mine=true` を**サーバーが引く**
+         （`functions/src/youtubeOwner.ts`）。
+
+         **`channelId` は、もう送らない。** 新しい口はこれが body に
+         在るだけで 400 を返す（黙って無視すると、塞がったことを外から
+         確かめられなくなるため）。
+
+         だから**配るのは Hosting が先、Functions があと。**
+         そのあいだ（新しい画面 × 古い口）は、古いほうが `channelId` を
+         見つけられないので**結びが1回ぶん増えないだけ**で、
+         いま結んである人は何も変わらない。**開くほうへは倒れない。**
+
+         `channel` は画面の表示（下の `setProfile`）にだけ使う。 */
       await fetch(`${API_BASE}/me`, {
         method: "POST",
         headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
-        body: JSON.stringify(channel ?? {}),
+        body: JSON.stringify({ ytToken: cred?.accessToken ?? undefined }),
       }).catch(() => null);
       if (channel) {
         setProfile((p) =>

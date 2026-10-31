@@ -64,7 +64,7 @@ export default function CardStrip({
       {/* **「まだ1枚もありません」と言えるのは、読めた上での0枚だけ。** */}
       {read === "ok" && some.length === 0 && (
         <p className="muted akd-note">
-          まだ1枚もありません。旅のその日の写真が貼られると、ここに並びます。
+          まだ1枚もありません。配信のあった日の写真が、ここに並びます。
         </p>
       )}
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import DirFilter from "@/components/ui/DirFilter";
@@ -9,11 +10,13 @@ import AllIsleRow from "@/components/chain/AllIsleRow";
 import { ISLE_ROW } from "@/components/chain/route";
 import Say, { SayRoom } from "@/components/ui/Say";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "all",
   title: "島のなか ぜんぶ",
   description:
     "島にある紙を、ぜんぶ1枚に並べました。名前を打つと絞れます。",
-};
+  path: "/all",
+});
 
 /**
  * 島のなか ぜんぶ。
@@ -54,7 +57,7 @@ export const metadata: Metadata = {
  */
 export default function AllPage() {
   return (
-    <PageShell atAll crumbs={[{ label: "島のなか ぜんぶ" }]}>
+    <PageShell crumbs={[{ label: "島のなか ぜんぶ" }]}>
       <PageHead
         mark={<Icon name="signpost" size={64} />}
         title="島のなか ぜんぶ"

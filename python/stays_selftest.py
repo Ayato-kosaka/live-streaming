@@ -54,7 +54,7 @@ from stays import chapter_stays, read_all, read_nordic  # noqa: E402
 #
 # | `BREAK` | 何に戻すか | 落ちる足 |
 # | --- | --- | --- |
-# | `nochapter` | 旅程ファイルの無い章から滞在を出さない（2026-10-06 より前） | アルバニアが出る／本番で albania が立つ／日に穴が無い |
+# | `nochapter` | 旅程ファイルの無い章から滞在を出さない（2026-10-06 より前） | アルバニアが出る／本番でいま歩いている国が立つ／日に穴が無い |
 # | `noclose` | 章の `to` を見ない。終わった章の滞在が開いたまま残る | 章が終わったら滞在も閉じる |
 # | `eatall` | 旅程ファイルの在る章にも受け皿が手を出す | 北欧の答えが1文字も変わらない |
 #
@@ -221,17 +221,43 @@ def check_receptacle() -> None:
 def check_production() -> None:
     print("\n5. 本番の countries.ts と chapters.ts を食わせる")
     rows = flat(read_all())
-    for slug, want_from, want_to in (
-        ("sweden", "2026-09-20", "2026-09-27"),
-        ("albania", "2026-09-28", ""),
-    ):
-        got = [r for r in rows if r["slug"] == slug]
+    # 旅程ファイルから出る側。**歩き終わって `countries.ts` へ移った国**なので、
+    # ここは日付が動かない。1件だけ名指しで凍らせておく
+    got = [r for r in rows if r["slug"] == "sweden"]
+    shown = [f'{r["from"]} → {r["to"] or "（開いたまま）"}' for r in got]
+    print(f"       sweden   {' / '.join(shown)}")
+    check("sweden の滞在が1件", len(got), 1)
+    if len(got) == 1:
+        check("sweden 2026-09-20 → 2026-09-27", (got[0]["from"], got[0]["to"]),
+              ("2026-09-20", "2026-09-27"))
+
+    # **いま歩いている国の名前と日付を、ここに並べない。**
+    # 前はアルバニアを `("albania", "2026-09-28", "")` と書いてあって、
+    # 2026-10-12 に北マケドニアへ移った日に**この見張りのほうが赤くなった**
+    # （アルバニアが前日で閉じるのが正しい答えなのに、開いたままを待っていた）。
+    # 国を越えるたびに書き換えに来る名簿は、書き換え忘れた日に嘘を言う
+    # （`docs/island-standards.md` 8章、`docs/island-misses.md` の決めごと3）。
+    #
+    # 代わりに、**国の名前を知らなくても言えること**を見る。
+    #   1. 今日までに入った国は、ぜんぶ滞在を1件ずつ持っている（＝配信の行き場がある）
+    #   2. 滞在どうしが重なっていない（同じ日に2カ国にいることにならない）
+    #   3. 開いたままでよいのは、いちばん新しく入った国だけ
+    today = date.today().isoformat()
+    walking = [a for a in sorted(stays.read_ahead(), key=lambda a: a["entered"])
+               if a["entered"] <= today
+               and a["slug"] not in {c["slug"] for c in stays.read_countries()}]
+    for a in walking:
+        got = [r for r in rows if r["slug"] == a["slug"]]
         shown = [f'{r["from"]} → {r["to"] or "（開いたまま）"}' for r in got]
-        print(f"       {slug:8} {' / '.join(shown) or '（滞在が1件も無い）'}")
-        check(f"{slug} の滞在が1件", len(got), 1)
-        if len(got) == 1:
-            check(f"{slug} {want_from} → {want_to or '（開いたまま）'}",
-                  (got[0]["from"], got[0]["to"]), (want_from, want_to))
+        print(f"       {a['slug']:16} {' / '.join(shown) or '（滞在が1件も無い）'}")
+        check(f"{a['slug']}（{a['entered']} 着）の滞在が1件", len(got), 1)
+    spans = sorted((r["from"], r["to"]) for r in rows
+                   if r["slug"] in {a["slug"] for a in walking})
+    check("歩いている最中の国の滞在が重ならない",
+          [(lo, hi) for (lo, hi), (nlo, _) in zip(spans, spans[1:]) if not hi or hi >= nlo],
+          [])
+    check("開いたままの滞在は、いちばん新しく入った国だけ",
+          [lo for lo, hi in spans[:-1] if not hi], [])
 
     # **いちばん大事な足。** 国が当たるかではなく、**どの日も行き場があるか。**
     # 行き場を失った日の配信は `p:""` の無言の行になって、赤くならないまま

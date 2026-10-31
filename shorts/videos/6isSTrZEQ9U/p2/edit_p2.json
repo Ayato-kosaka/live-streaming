@@ -1,0 +1,588 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style_v3.json",
+ "sources": {
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/03_0-01-11.5_0-01-21.5.mp4",
+   "watermark": "prism_live",
+   "t0": 71.5
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/05_0-01-31.5_0-01-40.mp4",
+   "watermark": "prism_live",
+   "t0": 91.5
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/01_0-00-15_0-00-48.mp4",
+   "watermark": "prism_live",
+   "t0": 15.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/11_0-03-44_0-03-51.mp4",
+   "watermark": "prism_live",
+   "t0": 224.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/02_0-01-02.5_0-01-08.mp4",
+   "watermark": "prism_live",
+   "t0": 62.5
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/04_0-01-21.5_0-01-28.mp4",
+   "watermark": "prism_live",
+   "t0": 81.5
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/06_0-01-40.5_0-01-46.mp4",
+   "watermark": "prism_live",
+   "t0": 100.5
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/10_0-03-00_0-03-19.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/07_0-01-50_0-01-58.mp4",
+   "watermark": "prism_live",
+   "t0": 110.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/09_0-02-47_0-02-59.8.mp4",
+   "watermark": "prism_live",
+   "t0": 167.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/13_0-04-49_0-05-19.mp4",
+   "watermark": "prism_live",
+   "t0": 289.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/ingest/6isSTrZEQ9U/clips/12_0-04-34_0-04-44.mp4",
+   "watermark": "prism_live",
+   "t0": 274.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c03",
+   "in": 15,
+   "out": 63,
+   "row": 0,
+   "note": "答えを先に見せる画（F-020）: 2階のシャワー室の戸口。床の水たまりに天井の明かりが映り、そのまま黄緑の洗面台と濡れて黒ずんだ床へ。水たまりは画面の下半分で、題の札（上）に隠れない"
+  },
+  {
+   "src": "c05",
+   "in": 93,
+   "out": 133,
+   "row": 0,
+   "note": "天井から幅木まで水が伝った壁の筋と開いた白い扉（『全館』へ広がった跡）"
+  },
+  {
+   "src": "c01",
+   "in": 240,
+   "out": 276,
+   "row": 1,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "シャワーを浴びた直後の濡れた髪の本人（スタッフは配信に写らない）。0:00:15〜0:00:23 は止まった画とカクつき（stutter.py ✕）なので避けた。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c11",
+   "in": 90,
+   "out": 125,
+   "row": 1,
+   "note": "夜中の宿の踊り場を、白いスリッパで歩く本人の足元"
+  },
+  {
+   "src": "c01",
+   "in": 750,
+   "out": 797,
+   "row": 2,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "スタッフに言われた場面を話す本人（見上げて口を開ける）。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c01",
+   "in": 855,
+   "out": 894,
+   "row": 2,
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「みたいに言われて」と話す本人（同じ自撮りの別の秒。1カットを3秒未満にする）。0:00:43.9 前後で顔が下がるので、ここだけ 1.4倍で下の端に合わせて寄せ、字幕を鼻の下に収める（v2 は 11コマ被った。F-013）"
+  },
+  {
+   "src": "c02",
+   "in": 45,
+   "out": 114,
+   "row": 3,
+   "note": "廊下の壁を天井から幅木まで伝った水の太い筋が2本・下は木の床"
+  },
+  {
+   "src": "c03",
+   "in": 54,
+   "out": 101,
+   "row": 4,
+   "note": "シャワー室の黄緑の台の洗面ボウル・ごみ箱・濡れて黒ずんだ床のタイル"
+  },
+  {
+   "src": "c03",
+   "in": 249,
+   "out": 287,
+   "row": 4,
+   "note": "洗面台の寄りと濡れた床（もう使われへん）。0:01:19.3〜0:01:19.7 は鏡に本人の影が写るので外した"
+  },
+  {
+   "src": "c04",
+   "in": 15,
+   "out": 50,
+   "row": 5,
+   "note": "戸口の木の床に水が張って光る・手前のタイルに泥水の跡"
+  },
+  {
+   "src": "c04",
+   "in": 105,
+   "out": 140,
+   "row": 5,
+   "note": "緑のブースの前の戸口の床の水の光り（床までびちゃびちゃ）"
+  },
+  {
+   "src": "c06",
+   "in": 15,
+   "out": 65,
+   "row": 6,
+   "note": "2階の廊下: 緑の扉が並ぶ客室の前の木の床（ここ2階）"
+  },
+  {
+   "src": "c05",
+   "in": 150,
+   "out": 214,
+   "row": 7,
+   "note": "天井際の壁に水の染み（上の階から来た）・開いた白い扉の奥に緑のブース"
+  },
+  {
+   "src": "c10",
+   "in": 122,
+   "out": 150,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【元の声】1回目の「どうしよう」の秒。本人の顔。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c10",
+   "in": 198,
+   "out": 242,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【元の声】2回目の「どうしよう」の秒。見上げて目をそらす本人（あいだの 1.6秒の間は詰めた）。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c04",
+   "in": 45,
+   "out": 94,
+   "row": 9,
+   "note": "シャワー室の緑のブースの前のタイルの床に、流れなかった水が泥水で広がった所（水が床にあふれて）。d1 は4行目と同じ壁の筋で、床がほとんど写っていなかった"
+  },
+  {
+   "src": "c07",
+   "in": 120,
+   "out": 169,
+   "row": 9,
+   "note": "下の階へ降りる階段（緑の壁と白い手すり）。吹き抜けは11・12行目で使うので、ここでは使わない"
+  },
+  {
+   "src": "c09",
+   "in": 276,
+   "out": 323,
+   "row": 10,
+   "note": "【元の声】「えぐいって」の秒。吹き抜けを見下ろす画から緑の壁へ振る（声と画は同じ秒）"
+  },
+  {
+   "src": "c10",
+   "in": 450,
+   "out": 498,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本人が「ホステルが全館浸水しました」と話している所（0:03:13〜0:03:18）。0:03:11〜12 の部屋番号の札は外す。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c09",
+   "in": 165,
+   "out": 214,
+   "row": 11,
+   "note": "吹き抜けを見下ろして全部の階が見える（全館）"
+  },
+  {
+   "src": "c13",
+   "in": 780,
+   "out": 820,
+   "row": 12,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「眠たいんで寝ます」と言っている本人の顔。1.3倍で下の端に合わせて寄せ、顔を上へ上げて字幕を鼻の下に収める（v1 は字が目と鼻に被った。F-013）"
+  },
+  {
+   "src": "c12",
+   "in": 180,
+   "out": 220,
+   "row": 12,
+   "note": "寝に上がる階段（暗い段と緑の板壁）"
+  },
+  {
+   "src": "c13",
+   "in": 132,
+   "out": 173,
+   "row": 13,
+   "note": "顔が小さく写る本人の自撮り（悪いのは僕？）。終わりの札（最後の2秒）より前で切る。v1 の 0:04:51 は顔が大きく、字幕と札の両方に被った"
+  },
+  {
+   "src": "c03",
+   "in": 15,
+   "out": 75,
+   "row": 13,
+   "note": "冒頭と同じシャワー室の戸口の水たまり（流れへんシャワー？）。終わりの札は顔の無いこの画に載る"
+  }
+ ],
+ "title": {
+  "text": "🇬🇧イギリスの宿でシャワーを浴びたら、全館浸水しました！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "イギリスの宿でシャワーを浴びたら、全館浸水しました！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/01.wav",
+    "tts_text": "イギリスのやどでシャワーを浴びたら、全館浸水しました！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "夜中にゆっくりシャワー浴びてたら、スタッフに",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/02.wav",
+    "tts_text": "夜中にゆっくりシャワー浴びてたら、スタッフに",
+    "at": 88
+   },
+   {
+    "text": "「浸水してる！あなた何したの！？」って言われた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/03.wav",
+    "tts_text": "「浸水してる！あなたなにしたの！？」って言われた。",
+    "at": 159,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "見に行ったら、壁に水が流れた跡が！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/04.wav",
+    "tts_text": "見に行ったら、壁に水が流れたあとが！",
+    "at": 245
+   },
+   {
+    "text": "シャワー室は、めっちゃめちゃ。もう使われへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/05.wav",
+    "tts_text": "シャワー室は、めっちゃめちゃ。もう使われへん！",
+    "at": 314
+   },
+   {
+    "text": "やばいやばいやばい、床までびちゃびちゃ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/06.wav",
+    "tts_text": "やばいやばいやばい、床までびちゃびちゃ！",
+    "at": 399,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "しかもここ、2階やねん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/07.wav",
+    "tts_text": "しかもここ、二階やねん。",
+    "at": 469
+   },
+   {
+    "text": "僕がシャワーを浴びてたのは、3階！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/08.wav",
+    "tts_text": "僕がシャワーを浴びてたのは、さんがい！",
+    "at": 519,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "どうしよう、どうしよう……",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/work/orig_p2_08.wav",
+    "at": 583,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "流れへんかった水が床にあふれて、下の階まで行ったらしい。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/10.wav",
+    "tts_text": "流れへんかった水が床にあふれて、下の階まで行ったらしい。",
+    "at": 655
+   },
+   {
+    "text": "えぐいって……",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/work/orig_p2_10.wav",
+    "at": 753,
+    "mood": "tense_still"
+   },
+   {
+    "text": "スタッフいわく「ホステル、全館浸水しました」って。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/12.wav",
+    "tts_text": "スタッフいわく「ホステル、全館浸水しました」って。",
+    "at": 800,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "僕のせいで浸水したけど、眠たいんで寝ます。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/13.wav",
+    "tts_text": "僕のせいで浸水したけど、眠たいんで寝ます。",
+    "at": 897,
+    "mood": "up_pop"
+   },
+   {
+    "text": "みんな、悪いのは僕？流れへんシャワー？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/voice/flood-p2-v1/p2/14.wav",
+    "tts_text": "みんな、悪いのは僕？流れへんシャワー？",
+    "at": 977
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/wt/shorts/videos/6isSTrZEQ9U/p2/spec.json",
+  "fps": 30,
+  "frames": 1078,
+  "seconds": 35.933,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "0:01:12.0+1.60s",
+     "0:01:34.6+1.33s"
+    ],
+    "line": "イギリスの宿でシャワーを浴びたら、全館浸水しました！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 88,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "0:00:23.0+1.20s",
+     "0:03:47.0+1.17s"
+    ],
+    "line": "夜中にゆっくりシャワー浴びてたら、スタッフに",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 159,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "0:00:40.0+1.57s",
+     "0:00:43.5+1.30s"
+    ],
+    "line": "「浸水してる！あなた何したの！？」って言われた。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 245,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "0:01:04.0+2.30s"
+    ],
+    "line": "見に行ったら、壁に水が流れた跡が！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 314,
+    "frames": 85,
+    "voice_frames": 77,
+    "cuts": [
+     "0:01:13.3+1.57s",
+     "0:01:19.8+1.27s"
+    ],
+    "line": "シャワー室は、めっちゃめちゃ。もう使われへん！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 399,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:01:22.0+1.17s",
+     "0:01:25.0+1.17s"
+    ],
+    "line": "やばいやばいやばい、床までびちゃびちゃ！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 469,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "0:01:41.0+1.67s"
+    ],
+    "line": "しかもここ、2階やねん。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 519,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:01:36.5+2.13s"
+    ],
+    "line": "僕がシャワーを浴びてたのは、3階！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 583,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "0:03:04.1+0.93s",
+     "0:03:06.6+1.47s"
+    ],
+    "line": "どうしよう、どうしよう……",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 9,
+    "from": 655,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "0:01:23.0+1.63s",
+     "0:01:54.0+1.63s"
+    ],
+    "line": "流れへんかった水が床にあふれて、下の階まで行ったらしい。",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 753,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:02:56.2+1.57s"
+    ],
+    "line": "えぐいって……",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 11,
+    "from": 800,
+    "frames": 97,
+    "voice_frames": 89,
+    "cuts": [
+     "0:03:15.0+1.60s",
+     "0:02:52.5+1.63s"
+    ],
+    "line": "スタッフいわく「ホステル、全館浸水しました」って。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 897,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "0:05:15.0+1.33s",
+     "0:04:40.0+1.33s"
+    ],
+    "line": "僕のせいで浸水したけど、眠たいんで寝ます。",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 977,
+    "frames": 101,
+    "voice_frames": 70,
+    "cuts": [
+     "0:04:53.4+1.37s",
+     "0:01:12.0+2.00s"
+    ],
+    "line": "みんな、悪いのは僕？流れへんシャワー？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 223,
+   "raw_voice_s": 39.13,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 28.0,
+   "cps_voiced": 7.96,
+   "video_s": 35.93,
+   "cps_video": 6.21
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/flood2/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

@@ -5,6 +5,8 @@ import { getState, postCurrent } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
 import { useDraft, useOnline } from "@/lib/draft";
 import { TRIP_PLACES, tripCity } from "@/content/tripPlaces";
+import { walkingCountries } from "@/content/walked";
+import { placeCountry } from "@/content/place";
 import Fold from "@/components/ui/Fold";
 import ReadAgain, { sayable } from "./ReadAgain";
 
@@ -18,6 +20,30 @@ import Icon from "@/components/ui/Icon";
    焼く。書く口を2つ持つと、片方が古くなる。
    入れる先は `site/content/nordic.ts` の `NORDIC_LOG`（焼き込み）。 */
 
+
+/**
+ * いま歩いている国。**手で書かない。**
+ *
+ * 国の出どころは `content/countries.ts` の `AHEAD_COUNTRIES` ひとつで、
+ * 国境を越えた日にそこへ1行入る（`content/walked.ts` が読む）。
+ * ここが島に出ている字（`current.place`）を見て国を決めていたころ、
+ * **9月28日に打った「アルバニア」が、10月12日に北マケドニアへ入っても
+ * そのまま残っていた。** 打ち直すまで島じゅうが前の国のままになる。
+ */
+const nowCountry = () => walkingCountries().at(-1)?.name ?? "";
+
+/**
+ * 欄に置く場所。**記録のほうが新しければ、そちらを置く。**
+ *
+ * 島に出ている字がいまの国を指していれば、そのまま（街まで打ってある字を
+ * 国だけに戻さない）。指していなければ、記録の国を置く。
+ */
+const freshPlace = (place: string) => {
+  const now = nowCountry();
+  if (!now) return place;
+  if (place && placeCountry(place)?.name === now) return place;
+  return now;
+};
 
 /** 島の景色。`docs/island-world.md` 1.3 の3つ。サーバー側の `ISLAND_THEMES` と同じ。 */
 const THEME_NAME: [string, string][] = [
@@ -116,7 +142,7 @@ export function TripPlace() {
              打った場所が、トンネルでタブを捨てられたあとに古い場所へ戻り、
              気づかずに送ると島に古い場所が出る。 */
           seed({
-            place: s.current?.place ?? "",
+            place: freshPlace(s.current?.place ?? ""),
             word: s.current?.word ?? "",
             theme: s.current?.theme || "georgia",
           });
@@ -228,6 +254,23 @@ export function TripPlace() {
           onChange={(e) => put({ place: e.target.value })}
         />
       </label>
+      {/* 押すだけで入る。**いまの国は記録から引く**（`nowCountry`）ので、
+          国境を越えた日に、ここを書き足しに来なくていい。 */}
+      {!!nowCountry() && (
+        <div className="nlog-seeds trip-cities">
+          <span>いまの国</span>
+          <button
+            type="button"
+            className={`nlog-seed${d.place.trim() === nowCountry() ? " is-on" : ""}`}
+            onClick={() => {
+              put({ place: nowCountry() });
+              setState("idle");
+            }}
+          >
+            {nowCountry()}
+          </button>
+        </div>
+      )}
       {/* 押すだけで入る。旅程に無い街に泊まる日もあるので、上の欄は残す。 */}
       <div className="nlog-seeds trip-cities">
         <span>旅程の街</span>
@@ -276,7 +319,10 @@ export function TripPlace() {
           「ここにいる、と出す」が 1,405px＝1.66画面目にあった。
           畳んでも何行あるかは見出しの横に出るので、古くなれば気づく。 */}
       <Fold
-        title="今週やること"
+        /* **「今週」と名乗らない。** 中身は人が書き足すもので、週で入れ替わらない。
+           実際に 9/28 の行が 15日残っていた。島の側（`NowLive`）も札から時制を外したので、
+           打つ側と出る側で呼び名を揃える */
+        title="やること"
         lead={
           read === "down"
             ? undefined
@@ -289,7 +335,7 @@ export function TripPlace() {
           {/* **読めなかったことを、「1行も出ていません」に倒さない。**
               押しどころは上に1つ出ているので、ここは何が欠けたかだけ言う */}
           {read === "down" ? (
-            <ReadAgain what="今週やること" quiet />
+            <ReadAgain what="やること" quiet />
           ) : week === null ? (
             <p className="trip-week-none">読んでいます…</p>
           ) : week.length === 0 ? (
@@ -320,7 +366,7 @@ export function TripPlace() {
               type="text"
               value={weekAdd}
               maxLength={120}
-              placeholder="今週やることを1行"
+              placeholder="やることを1行"
               onChange={(e) => setWeekAdd(e.target.value)}
             />
             <button
@@ -340,7 +386,7 @@ export function TripPlace() {
         </div>
       </Fold>
       {/* 送りの帯。**画面の下に貼り付けてある**（`.trip-send`）。
-          街の札を押したあと、ひとこと・島の景色・今週やることを越えないと
+          街の札を押したあと、ひとこと・島の景色・やることを越えないと
           ここへ届かなかった。街を押すのは日に何度もある動きなので、
           押した指がそのまま届くところに置く。**送った結果もここに出す。**
           出たかどうかを見るために、画面を送り直さなくていい。 */}

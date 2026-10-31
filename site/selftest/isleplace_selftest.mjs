@@ -250,19 +250,38 @@ const WANT = {
   "middle-east": "countries streams shorts legends apps facts pier",
   caucasus: "countries streams shorts legends apps facts pier",
   "iran-walk": "countries streams shorts legends facts pier",
-  nordic: "countries streams shorts facts pier",
+  /* **2026-10-13 に `legends` が増えた。** 北欧旅を `content/legends.ts` に
+     足したので、この島にも「この島の代表的な企画」が建つ。増えても減っても
+     赤くなる形なので、増えたことをここに写して通す。 */
+  nordic: "countries streams shorts legends facts pier",
   /* バルカン諸国周遊（2026-10-12 にアルバニアと北マケドニアを統合）。
-     **章の slug が `albania` から `balkans` に変わったので、焼き込み
-     （`chapterStats` / `chapterStreams`）の鍵がまだ合っていない。**
-     合うまでは配信も住人も国も拾えないので、建つのは足した2つと桟橋だけ。
 
+     **焼き直して `chapterStats` の鍵が `balkans` になったので、
+     facts（この島のこと）が建つようになった**（2026-10-12 の夜、
+     `rebake.yml` を `dry_run: false` で回したぶん。106人 / 17本 / 住人28人）。
+     上の注が「焼き直したらここを増やす」と言っていたのが、ここ。
+
+     **歩いた国（`countries`）も建つ**（2026-10-12）。章の `countries` は
+     空のままだが、島が数えるのは `content/walked.ts` の `chapterCountries`
+     に替えた——あそこは `AHEAD_COUNTRIES` の `entered` から章と国を結ぶので、
+     歩いている最中の2カ国（アルバニア・北マケドニア）がここで建つ。
+     建つまでは「0カ国 歩いた」と本番に出ていた。
+
+     - countries … この島で歩いた国（歩いている最中の国もふくむ）
+     - facts ……… この島のこと（日数・配信・来た人。`chapterStats` が要る）
      - guidebook … この国の歩きかた（`/north-macedonia`）
      - board ……… この旅に来ている付箋を読む板（`components/isle/board.ts`）
 
-     **焼き直したらここを増やす。** 増えたことに気づかないまま減らさない
-     ため、減っても増えても赤くなる形にしてある（`docs/island-misses.md` #210）。
-     鍵が合っていないことそのものは `islechapter_selftest.mjs` が名指しで言う。 */
-  balkans: "guidebook board pier",
+     **2026-10-19 に `shorts` が増えた。** この旅のショートを4本出して、
+     毎晩の焼き直し（`build_shorts`）が `content/shorts.ts` に `balkans` を
+     足したので、「ショート動画」が建つ。
+
+     **streams / legends はまだ建たない。**
+     `chapterStreams` に `balkans` の鍵が無く（焼いても1本も入らなかった）、
+     この島の企画もまだ無い。そちらが埋まったら、また増える——
+     **増えても減っても赤くなる**形にしてあるので、気づかずに痩せることはない
+     （`docs/island-misses.md` #210）。 */
+  balkans: "countries shorts facts guidebook board pier",
 };
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");

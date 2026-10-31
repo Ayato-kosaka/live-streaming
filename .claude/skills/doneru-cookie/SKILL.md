@@ -20,7 +20,7 @@ SSM の躓きはそちらに書いてある。ここに残すのは **Doneru に
 
 | ファイル | 何をするか |
 | --- | --- |
-| `ec2_exec.sh` | 土台の `ec2-chrome/ec2_exec.sh` へ渡すだけの1行。EC2 を起動 → `cdp.py` を置き直す → SSM でスクリプトを実行 → **必ず停止**。最後に `final state: stopped` を出す |
+| `ec2_exec.sh` | 土台の `ec2-chrome/ec2_exec.sh` へ渡すだけの1行。EC2 を起動 → 列 `doneru` の札を取る → `cdp.py` を置き直す → SSM でスクリプトを実行 → 札を返す → **止めてよければ止める**（ほかの人が使っていれば止めずに「idle-stop に任せる」とログに書く。`ec2-chrome` 2.5）。最後に `final state` を出す |
 | `remote_refresh.sh` | EC2 上で走る。`cdp.up("doneru")` で Chrome を起こす → `_dt` を読む → 切れていれば押してログイン → `api.doneru.jp` で 200 を確かめる → `gh secret set DONERU_COOKIE` |
 | `wait_challenge.sh` | 本人確認の数字が画面に出た瞬間に1行出して抜ける |
 
@@ -76,10 +76,10 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 合格は、出力に次の2行が**両方**あること:
 
 - `OK: DONERU_COOKIE を更新しました（_dt length=33）`
-- `final state: stopped`
+- `final state: stopped`（ほかの人が EC2 を使っていたときは `running` と「止めなかった: ほかの人が使っている…idle-stop に任せる」。それで合格）
 
-`final state` が `stopped` でなければ、手で止める:
-`aws --profile sandbox --region ap-northeast-1 ec2 stop-instances --instance-ids i-0684d39b0c1b1abb6`
+`final state` が `stopped` でなく、「idle-stop に任せる」も出ていなければ、`python3 .claude/skills/ec2-chrome/ec2.py stop` で止める
+（使っている人が居れば断られる。`aws … stop-instances` を直に打たない。ほかの人の作業ごと止まる）
 
 1回の起動は2〜7分（本人確認の待ちを含む）。**続けて回すときは、前の回の `RUN FINISHED` を待ってから。**
 
@@ -90,6 +90,7 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 | `existing _dt valid: True` と `browser fetch: 200` | 切れていない。そのまま入れる（本人確認は出ない） | — |
 | `existing _dt, browser fetch: 403 {"message":"Forbidden","userType":"streamer"}` | Doneru には入っているが**別の YouTube チャンネルで**入っている | スクリプトがログインし直す |
 | `account chooser: 2 件、一致 [0]` | Google アカウントを `ACCOUNT_SHA256` で当てた | 一致が空なら止まる |
+| `challenge/pwd -> PASSWORD` と `STOP: パスワードを求められた` | **Doneru ではなく Google のログインが切れている。** `_dt` だけの切れではない | **7章。** 複製し直しでは戻らない。あやとに入り直してもらう |
 | `challenge/dp: 画面の数字 [...]` | スマホの本人確認。**あやとに数字を伝える** | — |
 | `delegation: 押す -> ayato_arigato Youtube` | YouTube チャンネルを選んだ | 決まらなければ選択肢を書き出して5分待つ（下） |
 | `browser fetch: 200 csv` / `api.doneru.jp -> HTTP 200` | `_dt` が本物で、寄付一覧が読める | — |
@@ -168,3 +169,64 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 - **チャンネルの当てかたを緩くしない。** `ayato|あやと` で当てると3つ当たって止まる
 - 値の扱い: `_dt` は `/tmp/.doneru_dt`（600）を経由して `gh secret set` の stdin に渡すだけ。
   ログ・標準出力・issue・コミットに出すのは**長さ**と HTTP コードだけ
+
+## 7. パスワード画面で止まったとき（Google のログインごと切れている）
+
+`step N: accounts.google.com/v3/signin/challenge/pwd -> PASSWORD` で止まったら、
+**切れているのは `_dt` だけではなく、EC2 の Chrome の Google のログインそのもの。**
+ここから先へ進む道は**パスワードを打つことだけなので、こちらでは直せない**（2026-10-25 に初めて出た）。
+
+いつもの切れかた（7日で `_dt` が切れる）との違いは、**アカウント選択のあとどこへ行くか**:
+
+| アカウント選択のあと | 何が切れているか | 誰が直すか |
+| --- | --- | --- |
+| `challenge/dp`（スマホの数字） | `_dt` だけ。Google のログインは生きている | こちら（あやとは数字を1つ押すだけ） |
+| `challenge/pwd`（パスワード） | **Google のログインごと** | **あやとが EC2 の Chrome で入り直す** |
+
+### 複製し直し（reseed）で戻るかを、先に見る
+
+`up("doneru")` の複製元は既定のプロファイル（`~/.config/google-chrome/Default`）。
+**そちらが生きていれば `up("doneru", reseed=True)` で戻る**ので、あやとを呼ぶ前にここを見る。
+**`doneru-chrome` には触らない**（触ると、分かっている状態まで失う）。使い捨ての名前で複製して、
+**ボタンを押さずに**「ログインが要るページが読めるか」だけを見る:
+
+```sh
+cd /home/ubuntu/cdp && python3 - <<'EOS'
+import sys, time, re
+sys.path.insert(0, "/home/ubuntu/cdp")
+import cdp
+cdp.up("doneruprobe", "about:blank")
+t = cdp.Tab(cdp._port("doneruprobe"), cdp.pages("doneruprobe")[0], timeout=30, strict=False)
+t.call("Page.navigate", url="https://myaccount.google.com/"); time.sleep(10)
+print("landed:", re.sub(r"[?#].*", "", t.js("location.href") or ""))
+cdp.down("doneruprobe")
+EOS
+rm -rf /home/ubuntu/cdp-doneruprobe
+```
+
+- `myaccount.google.com` のまま → **既定は生きている。** `up("doneru", reseed=True)` で複製し直して、1章をもう一度
+- `accounts.google.com/v3/signin/confirmidentifier`（Sign in - Google Accounts）→ **既定も切れている。** 下へ
+
+**`SID` の cookie が在ることを「生きている」と読まない。** 2026-10-25 は `SID` も
+`__Secure-1PSID` も揃っていて、それでもサインイン画面に飛んだ。**開いたページの行き先で見る**
+（`ec2-chrome` 3 の「cookie を中身で調べに行かない」と同じ）。
+
+### 既定も切れていたら、あやとに入り直してもらう
+
+`ec2-chrome` 4 の #768（2026-10-12）と同じ形。**こちらでできることは無い**ので、札を立てて渡す:
+
+1. `ingest-down` の issue に、**何が切れて・どこで止まって・いま何日まで入っているか**を書く。
+   **閉じない**（直っていないので）
+2. **通知を飛ばす**（自分で書いた `@Ayato-kosaka` は1通も飛ばない。`/ask-ayato`）。
+   `call_ayato.yml` を `inputs[issue]=406` で叩く
+3. 頼むことは2つのどちらか。**早いほうを選んでもらう**
+   - EC2 を起こして、Chrome リモートデスクトップで**既定のプロファイル**の Google に入り直してもらう
+     → そのあとこちらが `reseed` して取り直す
+   - 手元のブラウザで `_dt` を `DONERU_COOKIE` に貼り替えてもらう（issue 本文の1〜3）
+     → そのあとこちらが取り込みを流して突き合わせる
+4. **EC2 は止めておく。** 人の返事待ちはいつ来るか分からない（`ec2-chrome` 2。1日つけっぱなしで約200円）。
+   issue には「止めてあるので起こしてから入って」と書く
+
+**このとき、あやとのスマホに通知は飛んでいない。** `/challenge/dp` を開いていないので、
+いつもの「数字を選ぶ」通知は出ない。issue には**そのことも書く**
+（「来た通知は無視してよい」とだけ書くと、在らぬ通知を探させる）。

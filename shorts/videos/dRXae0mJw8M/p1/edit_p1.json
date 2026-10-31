@@ -1,0 +1,908 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/dRXae0mJw8M/clips/03_0-35-00_0-40-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2100.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/dRXae0mJw8M/clips/01_0-11-00_0-18-30.mp4",
+   "watermark": "prism_live",
+   "t0": 660.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/geo/frames/dRXae0mJw8M/clips/02_0-28-30_0-35-00.mp4",
+   "watermark": "prism_live",
+   "t0": 1710.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c03",
+   "in": 1992,
+   "out": 2038,
+   "row": 0,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0秒目: 赤い大型トラックが牛のすぐ横を抜ける（山場の画を先に見せる。題の札の下にトラックと牛）"
+  },
+  {
+   "src": "c01",
+   "in": 585,
+   "out": 631,
+   "row": 0,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "茶色の子犬がこっちへ飛びついてくる（子犬と牛、どちらの動物もはちゃめちゃ）"
+  },
+  {
+   "src": "c01",
+   "in": 378,
+   "out": 410,
+   "row": 1,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "水色のコンテナの前に子犬が寄ってくる"
+  },
+  {
+   "src": "c01",
+   "in": 8820,
+   "out": 8858,
+   "row": 1,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "山と川と石の塔の集落（指の入らない秒。子犬の画が続かないよう後ろに置く）"
+  },
+  {
+   "src": "c01",
+   "in": 708,
+   "out": 751,
+   "row": 2,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "足元で子犬2匹が取っ組み合う（子犬が画面の真ん中に来る秒）"
+  },
+  {
+   "src": "c01",
+   "in": 3180,
+   "out": 3220,
+   "row": 3,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "木の樋の下で子犬2匹が何かをかじる"
+  },
+  {
+   "src": "c02",
+   "in": 582,
+   "out": 608,
+   "row": 3,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「よう見たら」に本人の顔（樋と骨の画は色が近いので、別の区間の自撮りを間に挟む）。本人の自撮り（道と牛の画が3秒以上続かないよう、本人の顔を挟む。本人の画は使い回しに数えない）"
+  },
+  {
+   "src": "c01",
+   "in": 3888,
+   "out": 3952,
+   "row": 4,
+   "zoom": {
+    "from": 1.94,
+    "to": 2.0,
+    "x": 0.45,
+    "y": 0.6,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "歯の並んだ大きな顎の骨をかじる子犬（2倍に寄せる。0:13:17 はカクつくので手前で切る）"
+  },
+  {
+   "src": "c01",
+   "in": 2775,
+   "out": 2830,
+   "row": 5,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "水色のコンテナの前を歩く子犬（骨の寄りと色が続かない画）"
+  },
+  {
+   "src": "c02",
+   "in": 1800,
+   "out": 1858,
+   "row": 6,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "山の下の牧草地で草を食む群れ"
+  },
+  {
+   "src": "c02",
+   "in": 3360,
+   "out": 3435,
+   "row": 7,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "茶とクリームのまだら牛を指差す"
+  },
+  {
+   "src": "c02",
+   "in": 6300,
+   "out": 6348,
+   "row": 8,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "真っ黒い牛が草を食む（パルム）"
+  },
+  {
+   "src": "c02",
+   "in": 7200,
+   "out": 7248,
+   "row": 8,
+   "zoom": {
+    "from": 2.33,
+    "to": 2.4,
+    "x": 0.52,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.45
+   },
+   "note": "クリーム色の牛を指差す（ホームランアイス。前のカットと見た目が続かないよう 2.4倍に寄せる）"
+  },
+  {
+   "src": "c02",
+   "in": 7575,
+   "out": 7629,
+   "row": 9,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "足元で草を食む黒い牛（0:32:47 はカクつくので手前で切る）"
+  },
+  {
+   "src": "c02",
+   "in": 9270,
+   "out": 9319,
+   "row": 10,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "舗装路の真ん中を歩いていく牛の群れ（奥に車）"
+  },
+  {
+   "src": "c03",
+   "in": 1455,
+   "out": 1488,
+   "row": 10,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "車道いっぱいに歩く牛の群れ（別の区間。次の行の道の画と見た目が続かない）"
+  },
+  {
+   "src": "c02",
+   "in": 8790,
+   "out": 8840,
+   "row": 11,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "紺の SUV の運転手が窓から身を乗り出し、そのそばを牛が歩く"
+  },
+  {
+   "src": "c02",
+   "in": 450,
+   "out": 491,
+   "row": 11,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「僕が飼い主やと思ってる」に本人の笑う顔。本人の自撮り（道と牛の画が3秒以上続かないよう、本人の顔を挟む。本人の画は使い回しに数えない）"
+  },
+  {
+   "src": "c03",
+   "in": 1905,
+   "out": 1994,
+   "row": 12,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "赤い大型トラックが牛のすぐ横をすり抜ける（0秒目の画はこの直後の秒）"
+  },
+  {
+   "src": "c02",
+   "in": 10245,
+   "out": 10305,
+   "row": 13,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "牛の群れのあいだを黒い SUV が目の前ですり抜ける"
+  },
+  {
+   "src": "c03",
+   "in": 3855,
+   "out": 3904,
+   "row": 14,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "毛の長い茶色の牛と黒い牛が頭を突き合わせる"
+  },
+  {
+   "src": "c03",
+   "in": 3903,
+   "out": 3943,
+   "row": 14,
+   "zoom": {
+    "from": 2.13,
+    "to": 2.2,
+    "x": 0.45,
+    "y": 0.4,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "突き合わせる頭に寄る（2.2倍）"
+  },
+  {
+   "src": "c03",
+   "in": 4050,
+   "out": 4093,
+   "row": 15,
+   "zoom": {
+    "from": 2.42,
+    "to": 2.5,
+    "x": 0.38,
+    "y": 0.45,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "黒い牛が尻尾を振る真横を紺の SUV がすり抜ける（前の行の画と見た目が続かないよう 2.5倍に寄せる）"
+  },
+  {
+   "src": "c03",
+   "in": 4920,
+   "out": 4991,
+   "row": 16,
+   "zoom": {
+    "from": 1.94,
+    "to": 2.0,
+    "x": 0.72,
+    "y": 0.4,
+    "sx": 0.5,
+    "sy": 0.45
+   },
+   "note": "止まった大型トレーラー（BPS）と乗用車の列（2倍に寄せる）"
+  },
+  {
+   "src": "c03",
+   "in": 5358,
+   "out": 5431,
+   "row": 17,
+   "zoom": {
+    "from": 2.9,
+    "to": 3.0,
+    "x": 0.61,
+    "y": 0.385,
+    "sx": 0.5,
+    "sy": 0.33
+   },
+   "note": "紺のワゴンの開いた扉と、扉の所から車道へ出る人（小さいので3倍に寄せる）"
+  },
+  {
+   "src": "c03",
+   "in": 4500,
+   "out": 4529,
+   "row": 18,
+   "zoom": {
+    "from": 1.94,
+    "to": 2.0,
+    "x": 0.75,
+    "y": 0.4,
+    "sx": 0.5,
+    "sy": 0.45
+   },
+   "note": "止まった青いトレーラーの列（2倍に寄せる。前の行のワゴンの画と見た目を変える）"
+  },
+  {
+   "src": "c03",
+   "in": 6762,
+   "out": 6805,
+   "row": 18,
+   "zoom": {
+    "from": 1.94,
+    "to": 2.0,
+    "x": 0.55,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "ワゴンの横に立つ地元の人へ、クリーム色の牛が歩いていく（2倍に寄せる。追い払う手ぶりは写っていない）"
+  },
+  {
+   "src": "c03",
+   "in": 6888,
+   "out": 6930,
+   "row": 19,
+   "zoom": {
+    "from": 1.95,
+    "to": 2.0,
+    "x": 0.45,
+    "y": 0.42,
+    "sx": 0.5,
+    "sy": 0.35
+   },
+   "note": "ワゴンの横に立つ地元の人の前を、緑の大型トラックが抜けていく（2倍に寄せる）"
+  },
+  {
+   "src": "c03",
+   "in": 7230,
+   "out": 7264,
+   "row": 19,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "地元の人の紺のワゴンが走り去る"
+  },
+  {
+   "src": "c02",
+   "in": 168,
+   "out": 210,
+   "row": 20,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "見る人に問いかける本人の顔。本人の自撮り（道と牛の画が3秒以上続かないよう、本人の顔を挟む。本人の画は使い回しに数えない）"
+  },
+  {
+   "src": "c02",
+   "in": 9600,
+   "out": 9662,
+   "row": 20,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.31,
+    "x": 0.5,
+    "y": 0.86,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "まだ牛が歩く車道（終わりの画）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇪海外の山奥に来たら、動物たちがはちゃめちゃすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "海外の山奥に来たら、動物たちがはちゃめちゃすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/01.wav",
+    "tts_text": "海外の山奥に来たら、動物たちがはちゃめちゃすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "ジョージアのカズベキって町を歩いてたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/02.wav",
+    "tts_text": "ジョージアのカズベキって町を歩いてたら",
+    "at": 92
+   },
+   {
+    "text": "子犬に襲われました！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/03.wav",
+    "tts_text": "子犬に襲われました！",
+    "at": 162,
+    "big": "shake_white"
+   },
+   {
+    "text": "2匹がかじってる物、よう見たら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/04.wav",
+    "tts_text": "二匹がかじってる物、よう見たら",
+    "at": 205
+   },
+   {
+    "text": "でっかい動物の頭の骨やんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/05.wav",
+    "tts_text": "でっかい動物の頭の骨やんか！",
+    "at": 271,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "将来有望な悪ガキやわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/06.wav",
+    "tts_text": "将来有望な悪ガキやわ！",
+    "at": 335,
+    "mood": "up_pop"
+   },
+   {
+    "text": "今度は、牛の群れがやってきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/07.wav",
+    "tts_text": "今度は、牛の群れがやってきた！",
+    "at": 390
+   },
+   {
+    "text": "この牛の色、美味しそうなアイスみたいや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/08.wav",
+    "tts_text": "この牛の色、美味しそうなアイスみたいや！",
+    "at": 448,
+    "mood": "up_pop"
+   },
+   {
+    "text": "真っ黒いのはパルム、クリーム色はホームランアイスや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/09.wav",
+    "tts_text": "真っ黒いのはパルム、クリーム色はホームランアイスや！",
+    "at": 523
+   },
+   {
+    "text": "のんきにアイス選びしてたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/10.wav",
+    "tts_text": "のんきにアイス選びしてたら",
+    "at": 619
+   },
+   {
+    "text": "牛の群れが、車道のど真ん中を歩いてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/11.wav",
+    "tts_text": "牛の群れが、車道のど真ん中を歩いてる！",
+    "at": 673,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "車の人、僕が牛の飼い主やと思ってるやろな。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/12.wav",
+    "tts_text": "車の人、僕が牛の飼い主やと思ってるやろな。",
+    "at": 755,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "大型トラックが、牛のすぐ横をかすめていく！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/13.wav",
+    "tts_text": "大型トラックが、牛のすぐ横をかすめていく！",
+    "at": 846
+   },
+   {
+    "text": "このままやったら、牛が轢かれるで！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/14.wav",
+    "tts_text": "このままやったら、牛がひかれるで！",
+    "at": 935,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "しかも牛同士が、ツンツンってケンカし始めて……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/15.wav",
+    "tts_text": "しかも牛同士が、ツンツンってケンカし始めて",
+    "at": 995
+   },
+   {
+    "text": "車に当たりかけた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/16.wav",
+    "tts_text": "車に当たりかけた！",
+    "at": 1084,
+    "big": "shake_red"
+   },
+   {
+    "text": "トラックも車も止まって、大渋滞や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/17.wav",
+    "tts_text": "トラックも車も止まって、大渋滞や！",
+    "at": 1127,
+    "mood": "tense_still"
+   },
+   {
+    "text": "止まってた車から、地元ニキが降りてきて……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/18.wav",
+    "tts_text": "止まってた車から、地元ニキが降りてきて",
+    "at": 1198
+   },
+   {
+    "text": "慣れた感じで、牛を追い払っていく！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/19.wav",
+    "tts_text": "慣れた感じで、牛を追い払っていく！",
+    "at": 1271
+   },
+   {
+    "text": "流石地元ニキ、頼もしいわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/20.wav",
+    "tts_text": "さすが地元ニキ、頼もしいわ！",
+    "at": 1353,
+    "big": "glow_yellow",
+    "caption_from": 1343
+   },
+   {
+    "text": "みんなやったら、待つ？降りて牛をどかす？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/drx-p1-v1/p1/21.wav",
+    "tts_text": "みんなやったら、待つ？降りて牛をどかす？",
+    "at": 1419
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-acd22901f45ca881f/shorts/videos/dRXae0mJw8M/p1/spec.json",
+  "fps": 30,
+  "frames": 1523,
+  "seconds": 50.767,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "0:36:06.4+1.53s",
+     "0:11:19.5+1.53s"
+    ],
+    "line": "海外の山奥に来たら、動物たちがはちゃめちゃすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 92,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:11:12.6+1.07s",
+     "0:15:54.0+1.27s"
+    ],
+    "line": "ジョージアのカズベキって町を歩いてたら……",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 162,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "0:11:23.6+1.43s"
+    ],
+    "line": "子犬に襲われました！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 3,
+    "from": 205,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "0:12:46.0+1.33s",
+     "0:28:49.4+0.87s"
+    ],
+    "line": "2匹がかじってる物、よう見たら……",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 271,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:13:09.6+2.13s"
+    ],
+    "line": "でっかい動物の頭の骨やんか！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 335,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "0:12:32.5+1.83s"
+    ],
+    "line": "将来有望な悪ガキやわ！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 390,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "0:29:30.0+1.93s"
+    ],
+    "line": "今度は、牛の群れがやってきた！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 448,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "0:30:22.0+2.50s"
+    ],
+    "line": "この牛の色、美味しそうなアイスみたいや！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 523,
+    "frames": 96,
+    "voice_frames": 88,
+    "cuts": [
+     "0:32:00.0+1.60s",
+     "0:32:30.0+1.60s"
+    ],
+    "line": "真っ黒いのはパルム、クリーム色はホームランアイスや！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 619,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "0:32:42.5+1.80s"
+    ],
+    "line": "のんきにアイス選びしてたら……",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 673,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "0:33:39.0+1.63s",
+     "0:35:48.5+1.10s"
+    ],
+    "line": "牛の群れが、車道のど真ん中を歩いてる！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 755,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "0:33:23.0+1.67s",
+     "0:28:45.0+1.37s"
+    ],
+    "line": "車の人、僕が牛の飼い主やと思ってるやろな。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 846,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "0:36:03.5+2.97s"
+    ],
+    "line": "大型トラックが、牛のすぐ横をかすめていく！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 935,
+    "frames": 60,
+    "voice_frames": 52,
+    "cuts": [
+     "0:34:11.5+2.00s"
+    ],
+    "line": "このままやったら、牛が轢かれるで！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 995,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "0:37:08.5+1.63s",
+     "0:37:10.1+1.33s"
+    ],
+    "line": "しかも牛同士が、ツンツンってケンカし始めて……",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1084,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "0:37:15.0+1.43s"
+    ],
+    "line": "車に当たりかけた！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 16,
+    "from": 1127,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "0:37:44.0+2.37s"
+    ],
+    "line": "トラックも車も止まって、大渋滞や！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1198,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "0:37:58.6+2.43s"
+    ],
+    "line": "止まってた車から、地元ニキが降りてきて……",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1271,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "0:37:30.0+0.97s",
+     "0:38:45.4+1.43s"
+    ],
+    "line": "慣れた感じで、牛を追い払っていく！",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1343,
+    "frames": 76,
+    "voice_frames": 58,
+    "cuts": [
+     "0:38:49.6+1.40s",
+     "0:39:01.0+1.13s"
+    ],
+    "line": "流石地元ニキ、頼もしいわ！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 20,
+    "from": 1419,
+    "frames": 104,
+    "voice_frames": 81,
+    "cuts": [
+     "0:28:35.6+1.40s",
+     "0:33:50.0+2.07s"
+    ],
+    "line": "みんなやったら、待つ？降りて牛をどかす？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 330,
+   "raw_voice_s": 61.9,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 44.33,
+   "cps_voiced": 7.44,
+   "video_s": 50.77,
+   "cps_video": 6.5
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

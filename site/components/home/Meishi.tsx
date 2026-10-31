@@ -51,8 +51,12 @@ export default function Meishi() {
         {/* 写真は「誰かが紙に貼ったもの」として置く（`docs/island-world.md` 6.2-3）。
             縁を付けてわずかに傾ける。裸で置かない。 */}
         <span className="mei-face">
+          {/* 出すのは 300px の枠。元は 1080px の jpg（72.7KB）で、
+              **表示の 3.6倍**を運ばせていた。760px の webp（43.1KB）に
+              落としてある（dpr2 で 2.5倍、dpr3 でも 2.5倍ぶんは残る）。
+              焼き直しは `tools/sprites/firstload.mjs` の但し書きに測り方 */}
           <img
-            src="/characters/ayato-clay.jpg"
+            src="/characters/ayato-clay.webp"
             alt="鍋をかきまぜているあやと"
             width={300}
             height={169}

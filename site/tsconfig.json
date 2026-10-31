@@ -93,6 +93,8 @@
     ".next-perf/types/**/*.ts",
     ".next-verify/types/**/*.ts",
     ".next/types/**/*.ts",
+    ".next-3202/types/**/*.ts",
+    ".next-3203/types/**/*.ts",
     "next-env.d.ts",
     ".next-dev3220/types/**/*.ts",
     ".next-3220/types/**/*.ts",

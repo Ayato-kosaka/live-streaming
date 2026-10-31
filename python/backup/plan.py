@@ -62,6 +62,17 @@ KEEP = {
         "**しかもその BigQuery 側が YouTube 側のバグで消えることがある**"
         "（あやとの言・2026-09-11）。消えたら「いくら集まったか」が分からなくなる"
     ),
+    "islandStampLine": (
+        "LINE スタンプに乗せる、住人のことば（#716）。**本人が書いた字で、"
+        "どこからも作り直せない。** `islandCharacter` の呼び名からも、"
+        "BigQuery のコメントからも戻らない——**選んだのも書いたのも人。**"
+        "\n\n"
+        "**長いあいだ、この表に名前が無かった。** 取れてはいた"
+        "（`classify()` が「分からないものは取る」に倒している）が、"
+        "そのとき出るのは `run.py` の `::warning::` 1行だけで、赤くならない。"
+        "**`island-db.md` 3.1 が「戻らない。人の字」と書いている正本のうち、"
+        "この表に無い唯一の1本だった**（2026-10-13 に数えた）"
+    ),
     "islandFundSpends": "貯金箱から出したお金。**あやとが手で入れる。**どこからも作り直せない",
     "islandFundGoals": "貯金箱の目標。人が決めた数字",
     "islandFundConfig": (
@@ -84,7 +95,11 @@ SKIP = {
         "毎日ぜんぶ書き直すと〜」）。一晩で戻る。**書類の6割がこれ**"
     ),
     "islandCards": "islandTips × islandStreamEventImage からの導出（python/island_cards.py）。焼き直せる",
-    "nordicDays": "#202 で islandTips へ移した旧。もう読んでいない（islandApi.ts:100）",
+    "nordicDays": (
+        "#202 で islandTips へ移した旧。**もう読んでいないし、書いてもいない**"
+        "（2026-10-13。毎晩2本が書き続けていたのを止めた。"
+        "`python/nordic_supporters.py` の頭に、消す前に数えた11行がある）"
+    ),
     "islandRate": "その日限りの回数カウンタ。日付が変わればどのみちリセットされる（#291 の 3-a）",
     "islandRemote": "遠隔操作のつなぎ。その場限り",
     "rouletteSessions": "ルーレット1回ぶん。その場限り",
@@ -98,6 +113,12 @@ SKIP = {
     # **自分が置いた札を、自分で取らない。** 取ると、退避の中に
     # 「その退避が通ったか」が入る入れ子になって、読むときに混乱する
     "islandBackupHealth": "この退避そのものの札（`last` 1書類）。次の晩に書き替わる",
+    "islandDoneruHealth": "Doneru の額が取れているかの札。次の晩に書き替わる",
+    "islandFundDonations": (
+        "Doneru の寄付の写し（`python/doneru_ledger.py`）。"
+        "正は BigQuery `doneru_donations`（そちらは退避している）。焼き直せる"
+    ),
+    "islandFundReplay": "配信にもう一度アラートを出すための1件。その場限り",
     "islandHere": "いま島にいる人。60秒で消える入れ物",
     "islandVotes": "#171 で口を畳んだ。本番に0件（collection_drop.py の DEAD）",
     "islandDrafts": "本番に0件。入れ物そのものが無い",

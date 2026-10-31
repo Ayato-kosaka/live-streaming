@@ -29,7 +29,6 @@ import {
 } from "./doneruYoutube";
 /* 島の遠隔操作(#165)。このファイルはもう長いので、丸ごと新しい機能は
    外に置いて、ここには取り付けだけを足す。 */
-import {handleRemote} from "./remote";
 /* あやと島カード(#173)。同じ理由で外に置いてある。
    **カードは配らない。写真と名簿から、引くときに組み立てる**(`cards.ts` 冒頭)。 */
 import {
@@ -43,9 +42,12 @@ import {
    **北欧からスマホで直せないと、毎朝の取り込みが赤いまま残る**
    (`donors.ts` 冒頭)。 */
 import {handleDonors} from "./donors";
-/* LINE スタンプの、住人のことば(#716)。同じ理由で外に置いてある。
-   **本人にだけ見せる口**で、パスに id を取らない（`stampLine.ts` 冒頭）。 */
+/* LINE スタンプの、住人のことば(#716)。**閉じた口**(#860)で、
+   410 を返すだけ（`stampLine.ts` 冒頭）。 */
 import {handleStampLine} from "./stampLine";
+/* 締め切った宛先の表(#225)。**島の表（`site/content/themes.ts`）の写し**で、
+   `functions/tools/shutthemes.mjs` が組み立てる。手で直さない。 */
+import {SHUT_THEMES} from "./shutThemes";
 /* キャラクターの絵と呼び名(#284 の C 群)。同じ理由で外に置いてある。
    **スプレッドシートとドライブに割れていた原本を、こちらへ寄せる。**
    引き方が2つ（スパチャ＝チャンネル名 / Doneru＝他の呼び名）あって、
@@ -61,7 +63,7 @@ import {handlePublicPurge} from "./publicPurge";
    **出費と目標は、いままで GitHub Actions からしか入らなかった。**
    額が動く口なので、書類IDを中身から決めて2回入れても増えない形にして、
    書いたあとに `island/state.fund.box` を焼き直す(`fundDesk.ts` 冒頭)。 */
-import {MAX_FUND_TEXT, handleFundDesk, replayFor} from "./fundDesk";
+import {MAX_FUND_TEXT, YEN_MAX, handleFundDesk, replayFor} from "./fundDesk";
 /* 企画・企画の画像・投げ銭の台帳(#202)。**カードの元がここへ移った。**
    北欧の名前(`nordicPhotos` / `nordicDays`)から切り離して、企画に寄せる。
    当たりの軸は**写真の日**（企画の日ではない。企画の立っていない日にも
@@ -83,12 +85,22 @@ import {
   resyncCardsOfImage,
   type ImageRole,
 } from "./streamEvents";
+/* **チャンネルの持ち主を確かめる唯一の道。** ここ以外から
+   `islandUsers.channelId` に値が入らないようにしてある（`POST /me` の注）。 */
+import {ownedChannel} from "./youtubeOwner";
+import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 const STATE_DOC = db.collection("island").doc("state");
 const NOTES = db.collection("islandNotes");
+/* 付箋を貼れる先のうち、机から足したぶん（2026-10-14）。
+   焼き込みの表（`site/content/themes.ts`）と**足し合わせて**使う。
+   あちらは Git を出さないと増えないので、配信の最中には間に合わない。 */
+const NOTE_THEMES = db.collection("islandNoteThemes");
+/** 足せる貼り先の数。札の並びが指で届かなくなる前に止める。 */
+const NOTE_THEMES_MAX = 40;
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const CHANNELS = db.collection("islandChannels");
@@ -133,9 +145,10 @@ const FUND_PAGE = 30;
 const FUND_PAGE_MAX = 60;
 
 /* 北欧旅の、その日の写真(docs/nordic-photos.md)。
-   **正は `islandStreamEventImage` に移った**(#202)。ここへ書くのは、
-   画面が新しい口へ移るまでのあいだの写しで、書類IDは揃えてある。
-   `/nordic` はまだこちらを読んでいるので、消すのは移り終わってから。 */
+   **正は `islandStreamEventImage`**(#202)。
+   2026-10-13 に、残っていた2本のうち**読みと書きを両方やめた。**
+   ここに残るのは**消すときだけ**——旧に在る行を道連れにするため。
+   入れ物そのものを落とすのは、旧の行が0になってから。 */
 const NPHOTOS = db.collection("nordicPhotos");
 /* **`nordicDays` はもう読まない**(#202)。その日いた人は台帳
    (`islandTips`)から引く。あちらは配信日の境目が日本時間の18時で、
@@ -188,6 +201,82 @@ const ISLAND_THEMES = ["georgia", "nordic", "desert"];
    別の行まで書き換わる。 */
 const MAX_WEEK_LINE = 120;
 const MAX_WEEK_LINES = 8;
+
+/** 書き置きの行の中の `M/D`。全角のスラッシュも拾う（スマホの入力で混ざる）。 */
+const WEEK_MD = /(\d{1,2})[/／](\d{1,2})/g;
+
+/**
+ * `M/D` を、**今日にいちばん近い年**の日付として読む（`YYYY-MM-DD`）。
+ *
+ * 欄にあるのは `9/27` までで、年は無い。12/30 を 1/3 に読んだら去年の話、
+ * 1/10 を 12/28 に読んだら来年の話。年をまたぐ日にどちらとも読めるので、
+ * 前後1年のうち今日にいちばん近いものを採る。
+ *
+ * **画面側（`site/lib/week.ts` の `readMd`）と同じ読み方。** 片方だけ直すと、
+ * 口が返した行を画面が落とす（またはその逆）という食い違いが出る。
+ *
+ * @param {number} m 月
+ * @param {number} d 日
+ * @param {number} today きょう（UTC の通し番号。ミリ秒）
+ * @return {number|null} 日付（UTC の通し番号）。日付として在りえなければ null
+ */
+function weekMdAt(m: number, d: number, today: number): number | null {
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const y0 = new Date(today).getUTCFullYear();
+  let best: number | null = null;
+  for (const y of [y0 - 1, y0, y0 + 1]) {
+    const t = Date.UTC(y, m - 1, d);
+    // 月をまたいだ日（2/30 など）は、その月に無いので採らない
+    if (new Date(t).getUTCMonth() !== m - 1) continue;
+    if (best === null || Math.abs(t - today) < Math.abs(best - today)) best = t;
+  }
+  return best;
+}
+
+/**
+ * 書き置き（`current.week`）から、**もう過ぎた日の行を落として返す。**
+ *
+ * あやと（2026-10-13 / #808）:
+ * 「これ、わたし打つの面倒なので仕組みを見直してください。
+ *  最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
+ *  おかしい**」
+ *
+ * この欄はあやとが旅先からスマホで打つ。旅のあいだは電波の細いところを
+ * 通るので、何日も打ち直せない日が続く。**けれど「9/27 が過ぎたこと」は
+ * 機械が知っている。** 知っていることを人に消させていたのが間違いだった
+ * （`python/upkeep_watch.py` が毎晩「過ぎた行が2行あります」と
+ *  あやとを呼んでいた）。
+ *
+ * **落とすのは返すときだけ。書類は書き換えない。** `current` は島の記録で、
+ * 本人が `/me` の「いまどこ」から直す欄。こちらが黙って消すと、
+ * 打った本人の控えと島の中身が食い違う。
+ *
+ * **画面の側（`site/lib/week.ts` の `weekAhead`）も同じことをしている。**
+ * 二重だが、どちらも要る——口は CDN に最大5分とどまるので日またぎの数分は
+ * 古い答えを配るし、口が落ちた日は画面が焼き込みの値で動く。
+ * **日付の判断を持つ側が1つだと、その1つが止まった日に過去が出る。**
+ *
+ * 日付を1つも持たない行（「回る先はこれから」）は**残す。**
+ * 1行に日付が2つあるとき（「9/27〜10/2」）は**いちばん遅いほう**で決める。
+ *
+ * @param {unknown} week 書類に入っている書き置き（何が来るか分からない）
+ * @param {string} todayIso きょう（JST の `YYYY-MM-DD`）
+ * @return {string[]|null} まだ過ぎていない行。元が配列でなければ null
+ */
+function weekAhead(week: unknown, todayIso: string): string[] | null {
+  if (!Array.isArray(week)) return null;
+  const today = Date.parse(`${todayIso}T00:00:00Z`);
+  if (Number.isNaN(today)) return week.map((x) => String(x));
+  return week.map((x) => String(x)).filter((row) => {
+    let last: number | null = null;
+    for (const hit of row.matchAll(WEEK_MD)) {
+      const t = weekMdAt(Number(hit[1]), Number(hit[2]), today);
+      if (t === null) continue;
+      if (last === null || t > last) last = t;
+    }
+    return last === null || last >= today;
+  });
+}
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -338,12 +427,87 @@ const POLL_VOTES_PER_DAY = 30;
    テーマの表そのものは Git（`site/content/themes.ts`）にある。
    サーバーは形だけを見て、知らないテーマも受け取る。**表と突き合わせない。**
    突き合わせると、表を1行足すたびに Functions のデプロイが要る
-   （画面だけ先に出ると、その日ぶんの付箋がまるごと 400 で消える）。 */
+   （画面だけ先に出ると、その日ぶんの付箋がまるごと 400 で消える）。
+
+   **断るのは「締め切った宛先」だけ**(#225)。許す表ではなく、断る表を持つ
+   （`SHUT_THEMES`）。上の理屈は「足したものを受ける」ための決めで、
+   「畳んだものを受け続ける」ための決めではない。 */
 const THEME_ID = /^[a-z][a-z0-9-]{1,39}$/;
+/**
+ * **その宛先は、もう締め切られているか。**
+ *
+ * 2026-10-11 に畳んだ宛先（アルバニア・北欧）は画面から消えたが、
+ * サーバーは形しか見ていなかったので、slug を直に投げれば**貼れていた。**
+ * 画面だけ閉じるのは半分しか閉じていない（`docs/island-misses.md` #225）。
+ *
+ * 表は島の側（`site/content/themes.ts`）が正本で、ここは写し
+ * （`src/shutThemes.ts`。`functions/tools/shutthemes.mjs` が組み立てる）。
+ * 値は「**この時刻から書けない**」なので、
+ *
+ *   - `closed: true` の宛先 … `0`。いつでも書けない
+ *   - 企画あての宛先 … その企画が終わった翌日 0時（JST）の epoch ms。
+ *     **日で締まるものも、ここで塞がる**（`isOpenTheme` が見ているのと
+ *     同じ瞬間。島の画面と1秒もずれない）
+ *
+ * **表に無い宛先は、いつでも書ける。** 島の表に1行足した日に Functions を
+ * 配り直さなくても貼れる、という上の決めはそのまま残す。
+ *
+ * @param {string} theme 宛先の id
+ * @param {number} now いま（epoch ms）
+ * @return {boolean} 締め切られていれば true
+ */
+function shutTheme(theme: string, now: number): boolean {
+  const at = SHUT_THEMES[theme];
+  return at !== undefined && now >= at;
+}
 /** 返信。あやとが旅の途中に親指で打つものなので、付箋より少しだけ長い。 */
 const MAX_REPLY_LEN = 300;
 /** 1日に貼れる付箋。企画の提案より軽い行為なので、提案(8)より多くしてある。 */
 const STICKIES_PER_DAY = 20;
+/**
+ * **まだこちらが何もしていない付箋**を数えるときに、さかのぼる枚数。
+ *
+ * **机の一覧と同じ 300 にしていたが、2026-10-13 に広げた。**
+ * 一覧（1ページぶん）と数（全部でいくつ）は用事が違う。同じ窓にすると、
+ * 窓が埋まった日に**数のほうだけが黙って小さく出る**——溜まっているのに
+ * 札が小さい数を言う、いちばんついてはいけない嘘になる。
+ *
+ * 実測（2026-10-13）: 本番の `islandNotes` は 88件。増え方は
+ * 9月35件・10月42件なので、**300 なら4〜5か月で届く。**
+ * 3000 は `GET /cards` の `CARDS_HARD_CAP` と同じ数で、いまの増え方で
+ * 5年ぶん。**届いたときに黙らないよう、蓋に当たったら `logger.error` を出す**
+ * （`docs/island-standards.md` §13。満たしようのない見張りではなく、
+ *  届いたその日に1回だけ鳴る）。
+ */
+const WAITING_SCAN = 3000;
+/**
+ * **テーマ1つぶんを、1回で引き切る枚数。**
+ *
+ * この枝は `more: false` / `next: null` を返す——続きの位置を持たない作り
+ * なので、画面は返ってきたものを「これで全部」と読む。だから埋まったら
+ * **嘘になる**（`capHit` が鳴る）。
+ *
+ * 数を直に書いていたのを名前にしたのは、**鳴らす側と引く側に同じ数を
+ * 2回書かない**ため。片方だけ直した日に、黙って切れる形へ戻る。
+ */
+const STICKY_THEME_SCAN = 300;
+/**
+ * **「じぶんが出したもの」を1回で引き切る枚数**（付箋・企画で共通）。
+ *
+ * 1人ぶんなので届く気配は無いが、ここも `more: false` を返す枝。
+ * 付箋と企画で別の数にすると、片方だけ鳴る形になる。
+ */
+const MINE_SCAN = 300;
+/**
+ * **名簿（`islandUsers`）を1回で引き切る人数。**
+ *
+ * 埋まると、島に立てる人・カードに名前の出る人が**黙って減る。**
+ * 実測（2026-10-14）で `/state` の `residents` は1人なので遠いが、
+ * ここは「増えたら必ず届く」側の窓。
+ */
+const RESIDENT_SCAN = 500;
+/** **その日に立っている企画**を1回で引き切る本数。1日に何本でも立つ。 */
+const DAY_EVENT_SCAN = 30;
 /* 1日に押せるハート。**押し直し（解除）も1回ぶん使う。**
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
@@ -599,9 +763,12 @@ async function listResidents(): Promise<Json[]> {
   /* 図鑑は日数（`residentDays`）と同じ5分の控えに載る。**温まっていれば
      ここで1件も読まない**ので、絵を引くために往復が増えることはない。 */
   const [snap, byChannel] = await Promise.all([
-    USERS.where("channelId", "!=", null).limit(500).get(),
+    USERS.where("channelId", "!=", null).limit(RESIDENT_SCAN).get(),
     charactersByChannel(),
   ]);
+  /* **埋まると、島に立てる人が黙って減る。** `/state` も `/cards` の
+     名前も、ここが返した名簿から引いている。 */
+  capHit("listResidents / RESIDENT_SCAN", snap.size, RESIDENT_SCAN);
   const out: Json[] = [];
   snap.forEach((d) => {
     const u = d.data() ?? {};
@@ -847,10 +1014,23 @@ const MAX_LINK_LEN = 2048;
  *
  * **空は 400 にしない。** リンクは書かなくてよい欄なので、
  * 「貼らなかった」と「貼れない字だった」を呼ぶ側で分ける。
+ *
+ * ## 長すぎる字は、切らずに落とす（2026-10-14）
+ *
+ * ほかの欄は `clean` で切ってよい——題や本文は、切れても**その人が
+ * 書いたものの一部**だから。リンクは違う。2,049字の URL を 2,048字に
+ * 切ると、**貼った先とは別の場所へ飛ぶ1本**ができる。しかも切った先が
+ * たまたま解析できてしまうので、`safeLink` は通し、画面は何事もなく
+ * `<a href>` にする。**貼った人にも読む人にも、ずれたことが分からない。**
+ *
+ * だから、切る前の長さで落とす。呼ぶ側（`POST /stickies`）は
+ * 「字が入っていたのに通らなかった」を 400 で返すので、
+ * **黙って別の場所へ飛ばすかわりに、貼った人がやり直せる。**
  * @param {unknown} v 送られてきた字
  * @return {string} `http(s)` のリンク。通せなければ空
  */
 function safeLink(v: unknown): string {
+  if (typeof v === "string" && v.length > MAX_LINK_LEN) return "";
   const s = clean(v, MAX_LINK_LEN);
   if (!s) return "";
   try {
@@ -936,12 +1116,19 @@ type FundChat = {doc: string; rec: Json};
 /**
  * 通知1件を、台帳に入れられる形にする。**入れないものは null。**
  *
- * 落とすのは4つ。どれも**額が狂う側**に倒れるものだけを見ている。
+ * 落とすのは5つ。どれも**額が狂う側**に倒れるものだけを見ている。
  *
  *   1. 通知のテスト（`test: true`）… 出ていないお金
  *   2. 円以外 … 毎晩の掃除が見ないので、入れると出どころが2通りになる
  *   3. 0円以下 … 額として意味が無い
- *   4. ほどけないID … 書類IDが決まらないと、2回投げたぶんが2件になる
+ *   4. **1,000万円超** … 机（`POST /fund/chats`）が断っている線
+ *   5. ほどけないID … 書類IDが決まらないと、2回投げたぶんが2件になる
+ *
+ * **4 はいままで見ていなかった。** 同じ台帳（`islandFundSuperChats`）に
+ * 書く口が2つあって、机の側だけが線を持っていた——つまり
+ * **口を1つ替えるだけで、桁ずれが1行そのまま貯金箱に入った。**
+ * 線は `fundDesk.ts` の `YEN_MAX` を借りる（**2か所に別の数を置かない。**
+ * `MAX_FUND_TEXT` をすでに同じ理由で借りている）。
  *
  * **落としたものを 200 で黙って飲まない。** 呼ぶ側（OBS）はしくじりを
  * ログにだけ残して先へ進む作りなので、ここで黙ると「入っているつもりで
@@ -954,7 +1141,7 @@ const fundChatOf = (b: Json, now: number): FundChat | null => {
   if (b.test === true) return null;
   if (!FUND_YEN.has(String(b.currency ?? ""))) return null;
   const yen = Math.trunc(Number(b.jpy));
-  if (!Number.isFinite(yen) || yen <= 0) return null;
+  if (!Number.isFinite(yen) || yen <= 0 || yen > YEN_MAX) return null;
   const doc = itemIdFromLcc(b.id);
   if (!doc) return null;
   const {day, at} = fundJst(now);
@@ -1046,8 +1233,15 @@ async function fetchHandle(channelId: string): Promise<string> {
     });
     return handleOf(r.data.items?.[0]?.snippet?.customUrl);
   } catch (e) {
-    // 取れなくてもログインは通す。名前が古いままなだけなので
-    logger.warn("handle lookup failed", channelId, String(e));
+    /* 取れなくてもログインは通す。名前が古いままなだけなので。
+
+       **チャンネルIDは出さない**（2026-10-14）。ここは島にログインした人の
+       ぶんを引く道なので、落ちた回のログに**その人のチャンネルIDが
+       1件ずつ並ぶ。** `youtube.com/channel/UC…` を開けば顔と名前に
+       直結する字で、Cloud Functions のログは公開のリポジトリと同じ扱い
+       （`cards.ts` の「視聴者さんの素性をログに出さない」と同じ決め）。
+       どの口で落ちたかは出すので、追うのに足りる。 */
+    logger.warn("handle lookup failed", String(e));
     return "";
   }
 }
@@ -1254,6 +1448,13 @@ type StickyShape = {
  *
  * **`cid` と `uid` は返さない。** 誰が書いたかは名乗った名前だけで足りる。
  * 端末IDを返すと、同じ人の付箋を並べて数えられる。
+ *
+ * **`seen`（既読の印）も返さない。** あれは机の側の覚書で、貼った人に
+ * 見せるものではない——見えると「読まれたが、返事はされない」が
+ * 本人に伝わる。`firestore.rules` が入れ物ごと閉じているのに加えて、
+ * **口の返事でも閉じる**（片方だけだと漏れる。`docs/island-misses.md` #225）。
+ * ここは拾う欄を名指しで並べる作りなので、**書類に欄が増えても
+ * ひとりでには出ない。** 増やすときは、この注を読んでから増やす。
  * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
  * @return {StickyShape} 付箋
  */
@@ -1322,7 +1523,11 @@ async function listStickies(q: {
      続きの位置（before）も持たない。位置は createdAt で書いてあるが、
      1テーマを1回で引き切るので送る先が無い。 */
   if (q.theme) {
-    const snap = await base.limit(300).get();
+    const snap = await base.limit(STICKY_THEME_SCAN).get();
+    /* **`more: false` を返す枝なので、切れたら嘘になる。** 続きの位置を
+       持たない作りなので、画面は「これで全部」と読む。 */
+    capHit("listStickies(theme) / STICKY_THEME_SCAN", snap.size,
+      STICKY_THEME_SCAN);
     const rows = snap.docs
       .filter((d) => d.get("hidden") !== true)
       .filter((d) => (d.get("archived") === true) === want);
@@ -1345,6 +1550,89 @@ async function listStickies(q: {
     /* テーマの無い付箋（企画に貼られた旧来のぶん）は、この口からは出さない。
        テーマ横断の新着（`theme` を渡さないとき）で混ざるのを止める。 */
     (d) => !d.get("theme") || (d.get("archived") === true) !== want,
+  );
+}
+
+/**
+ * **まだこちらが何もしていない付箋**だけを、新しい順に取る。
+ *
+ * ## 「何もしていない」の物差しは、ここ1本だけ
+ *
+ * 札に出す数（`GET /stickies/waiting` の `waiting`）と、机に並べる一覧の
+ * 絞り込みが、**同じこの関数から出る。** 数だけサーバー、絞り込みは画面、に
+ * 分けていたころの `StickyCare` は、画面の側にも同じ条件（返事がない・
+ * `byOwner` でない・自分のぶんでない）を持っていて、**片方を直すと
+ * 数と中身がずれた。** 返すのは id も込みなので、画面は数えない。
+ *
+ * ## 何を引くか
+ *
+ * | 外すもの | なぜ |
+ * | --- | --- |
+ * | 返事のあるもの | もう返した |
+ * | **既読にしたもの**（`seen`） | 読んだうえで、返さないと決めた |
+ * | 運営者が立てたもの（`byOwner`） | こちらから出した選択肢。返事を待つ問いではない |
+ * | あやと自身が貼ったもの | 自分の付箋に自分で返す用事は無い（あやと 2026-09-09） |
+ * | しまったもの・伏せたもの | 板から下ろしてある |
+ * | 宛先の無いもの | 企画に貼られた旧来のぶん。返す机はテーマ付きだけを見る |
+ *
+ * **名前で突き合わせない。** 表示名は本人が決めるもので、同じ名前の人が
+ * 2人いた事故がこの島で実際にある。`uid` で見分ける。
+ *
+ * @param {string} ownerId あやとの uid（自分の付箋を外すのに使う）
+ * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} 新しい順
+ */
+async function waitingStickies(
+  ownerId: string,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  /* **`where` を足さない。** `theme`/`seen` と `orderBy` を組むと複合索引が
+     要るが、その索引はサービスアカウントに作る権限が無くて配れない(#168)。
+     組んだ日に本番が 500 になる。並べ替えだけ Firestore に任せて、
+     絞り込みは手元でやる（`listStickies` と同じ決め）。 */
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(WAITING_SCAN)
+    .get();
+  /* **蓋に当たったら鳴らす。** ここから先は数えていないので、
+     返す数は「本当の数以下」でしかない。黙ると札が小さい数を言い続ける。
+     **鳴らしかたは `capWatch.ts` に寄せた**（2026-10-14）。同じ形の窓が
+     島に12か所あって、ここだけ自前の字で鳴っていた。 */
+  capHit("waitingStickies / WAITING_SCAN", snap.size, WAITING_SCAN);
+  return snap.docs.filter(
+    (d) =>
+      !!d.get("theme") &&
+      d.get("hidden") !== true &&
+      d.get("archived") !== true &&
+      d.get("seen") !== true &&
+      d.get("byOwner") !== true &&
+      d.get("uid") !== ownerId &&
+      !cleanText(d.get("reply"), MAX_REPLY_LEN),
+  );
+}
+
+/**
+ * **既読にした付箋**だけを、新しい順に取る。
+ *
+ * 既読は「読んだが、返信はしない」の印で、**消すものではない。**
+ * ここが無いと押し間違いが戻せず、戻せない押しどころは押されなくなる。
+ *
+ * しまったもの（`archived`）は出さない。あちらには戻す道が別にある
+ * （`GET /stickies?archived=1`）ので、2つの棚に同じ1枚を並べない。
+ *
+ * @return {Promise<FirebaseFirestore.QueryDocumentSnapshot[]>} 新しい順
+ */
+async function seenStickies():
+  Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  const snap = await NOTES.orderBy("createdAt", "desc")
+    .limit(WAITING_SCAN)
+    .get();
+  /* **兄弟（`waitingStickies`）だけが鳴っていた。** 同じ窓を同じ大きさで
+     開けているのに、こちらは黙って切れる形のまま残っていた。 */
+  capHit("seenStickies / WAITING_SCAN", snap.size, WAITING_SCAN);
+  return snap.docs.filter(
+    (d) =>
+      !!d.get("theme") &&
+      d.get("hidden") !== true &&
+      d.get("archived") !== true &&
+      d.get("seen") === true,
   );
 }
 
@@ -2168,10 +2456,9 @@ function picShape(v: unknown): PicShape | undefined {
 }
 
 /* ---- 企画に付く画像(#202) ----
-   旧 `nordicPhotos`。**書く口は当面2つ動かす。**
-   旅で毎日使っているものを出発直前に作り替えたくないので、
-   `POST /nordic/photos` はそのまま残して、中で両方に書く。
-   画面が新しい口へ移ったら、古いほうを畳む。 */
+   旧 `nordicPhotos` の行き先。**2026-10-13 に1本にした。**
+   `POST /nordic/photos` という口の名前はそのまま（画面を触らずに済む）で、
+   中で触るのは `islandStreamEventImage` だけ。 */
 
 /** 画像に添える一言。旧 `MAX_PHOTO_NOTE` と同じ。 */
 const IMAGE_NOTE = MAX_PHOTO_NOTE;
@@ -2192,7 +2479,11 @@ type EventBrief = {id: string; title: string; date: string};
  */
 async function eventsOnDay(day: string): Promise<EventBrief[]> {
   if (!isDay(day)) return [];
-  const snap = await STREAM_EVENTS.where("date", "==", day).limit(30).get();
+  const snap = await STREAM_EVENTS.where("date", "==", day)
+    .limit(DAY_EVENT_SCAN)
+    .get();
+  // 1日に30本も立たないが、立った日に黙って落ちる形にはしない
+  capHit("eventsOnDay / DAY_EVENT_SCAN", snap.size, DAY_EVENT_SCAN);
   const rows = snap.docs
     .filter((d) => d.get("hidden") !== true && d.get("archived") !== true)
     .map((d) => ({
@@ -2341,12 +2632,19 @@ async function saveEventImage(
     createdAt: at,
     updatedAt: at,
   };
-  /* **古いほうにも同じ書類IDで書く。** 画面が切り替わってから畳む。
-     `path` という欄の名前は旧来のまま（あちらを読む口がまだある）。 */
-  await Promise.all([
-    ref.set(doc),
-    NPHOTOS.doc(ref.id).set({day, path: stored, url, w, h, note, at, uid}),
-  ]);
+  /* **旧 `nordicPhotos` には、もう書かない**（2026-10-13）。
+     読む口が無くなったので、写しを作る理由が無い。
+
+     前はここが `Promise.all` で2つに書いていた。**まとめ書きでも
+     取引でもない**ので、片方だけ失敗したら新旧がずれる——そして
+     **ずれても赤くなるものが1本も無かった。**
+     正を1つにすれば、ずれようがなくなる。
+
+     旧に残っている行は消さない（下の `dropEventImage` が、写真を
+     消すときに両方から消す）。残っていても誰も読まないが、
+     **新に在って旧に無い**行が出ても困らないことは
+     `python/nordic_photo_pair_watch.py` が毎晩見ている。 */
+  await ref.set(doc);
 
   /* **企画が無くてもカードを作る。** 前はここが `if (streamEventId)` で
      囲ってあり、企画の立っていない日に貼った写真は1枚もカードにならな
@@ -2413,7 +2711,18 @@ type PhotoShape = {
  *   （その日いた人は**絵と名前だけ**。誰かを指す値は返さない）
  */
 async function listPhotoDays(): Promise<Json[]> {
-  const snap = await NPHOTOS.orderBy("at", "desc").limit(400).get();
+  /* **読むのは新しいほう**（`islandStreamEventImage`。2026-10-13）。
+     ここは長いあいだ旧 `nordicPhotos` を読んでいた。`island-db.md` の
+     責務の表は 2026-10-01 から「**新が正**」と書いていたのに、
+     **公開の面に出ていたのは旧のほう**で、宣言と実物が逆だった。
+     カードの壁（`/cards`）はこの口を土台にしているので、
+     「写真は旧・カードは新」という、同じ面の上と下が別の入れ物から
+     来る形になっていた（本番では 117 対 117 でたまたま揃っていた）。
+
+     **返す形は1バイトも変えていない。** 新しいほうは旧の持つ欄
+     （`day` `url` `w` `h` `note` `at`）を全部持っているので、
+     画面は触らずに済む。 */
+  const snap = await IMAGES.orderBy("at", "desc").limit(MAX_IMAGES).get();
   const byDay = new Map<string, PhotoShape[]>();
   snap.forEach((d) => {
     const v = d.data() ?? {};
@@ -2528,25 +2837,6 @@ export const islandApi = onRequest(
       typeof raw === "object" && raw ? (raw as Json) : ({} as Json);
 
     try {
-      /* ---------------- 島の遠隔操作(#165) ----------------
-         中身は `remote.ts`。ここは取り付けだけ。扱ったら true が返る。 */
-      const sid = req.query?.sessionId;
-      if (
-        await handleRemote(
-          {
-            method,
-            path,
-            auth: req.headers.authorization,
-            sessionId: typeof sid === "string" ? sid : "",
-            body,
-          },
-          res,
-          ownerUid,
-        )
-      ) {
-        return;
-      }
-
       /* ---------------- あやと島カード(#173) ----------------
          中身は `cards.ts`。ここは取り付けだけ。扱ったら true が返る。
          「誰か」を見るところを増やさないよう、判定は関数で渡す。 */
@@ -2561,16 +2851,9 @@ export const islandApi = onRequest(
       }
 
       /* ---------------- スタンプのことば(#716) ----------------
-         中身は `stampLine.ts`。ここは取り付けだけ。扱ったら true が返る。
-         **ログインした本人に、自分のぶんだけ。** 「誰か」を見るところと
-         1日の上限を数えるところを増やさないよう、どちらも関数で渡す。 */
-      if (
-        await handleStampLine(
-          {method, path, auth: req.headers.authorization, body},
-          res,
-          {whoIs, takeQuota},
-        )
-      ) {
+         **閉じてある**(#860)。中身は `stampLine.ts`。扱ったら true が返る。
+         合言葉を見ずに 410 を返すので、「誰か」も上限も渡さない。 */
+      if (handleStampLine({method, path}, res)) {
         return;
       }
 
@@ -2646,6 +2929,24 @@ export const islandApi = onRequest(
       /* ---------------- ログイン ---------------- */
       // ログインした直後に呼ばれる。誰が来たかを覚えておくだけ。
       if (method === "POST" && path === "/me") {
+        /* **言い値を送ってきたら、断る。黙って無視しない。**
+           無視するだけでも書かれはしないが、**塞がったことを外から
+           確かめる手がかりが1つも無くなる。** ここが 400 を返すなら、
+           本番に新しいほうが出ていることが、**1バイトも書かずに**分かる
+           （付箋の締め切りを 409 で確かめたのと同じ形）。
+
+           **合言葉を見るより前に置いてある。** あとに置くと、確かめるのに
+           本物のログインが要る——つまり**書く側を叩かないと確かめられない。**
+           ここで出るのは「この欄はもう受け取らない」だけで、
+           合言葉を持っていない人に新しく分かることは1つも無い。
+
+           古い画面（配り替えの前に開いたままのタブ）もここに当たるが、
+           そのときも**いま結んである `channelId` は消えない**——
+           書かないだけなので、読み込み直せば直る。 */
+        if (body.channelId !== undefined) {
+          res.status(400).json({error: "channelId not accepted"});
+          return;
+        }
         const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
         if (!m) {
           res.status(401).json({error: "no token"});
@@ -2658,7 +2959,24 @@ export const islandApi = onRequest(
           res.status(401).json({error: "bad token"});
           return;
         }
-        const channelId = clean(body.channelId, 64);
+        /* **チャンネルは、画面の言い値を使わない。**
+           長いあいだここは `clean(body.channelId, 64)` で、送られてきた値を
+           そのまま書いていた。チャンネルIDは公開の値なので、島にログイン
+           できる人なら誰でも他人のIDを名乗れて、名乗った先では
+           `GET /cards/mine` がその人のカードを返し、
+           `POST /stampline/mine` がその人の**戻らないことば**を上書きできた。
+
+           `/cards/mine` も `/stampline/mine` も「送られた値を信じず
+           `islandUsers` から引き直す」正しい形で書いてあったが、
+           **引き直した先がこの行**だったので、1段ぶん空回りしていた。
+
+           いまは `byOwner` と同じ形にしてある——画面には合言葉だけ送らせて、
+           `channels?mine=true` は**こちらが引く**（`youtubeOwner.ts`）。
+           `mine=true` はトークンの持ち主のチャンネルしか返さないので、
+           **「名乗る」という言葉が入口から消える。**
+           検算にしないのは、検算を1か所忘れた日に元へ戻るため。 */
+        const owned = await ownedChannel(body.ytToken);
+        const channelId = owned?.channelId ?? "";
         const now = Date.now();
         const ref = USERS.doc(t.uid);
         const prev = await ref.get();
@@ -2671,8 +2989,14 @@ export const islandApi = onRequest(
            ブラウザからハンドルが取れるのはログインを押した瞬間だけなので、
            それを逃した人はここでしか直らない。**1日に1回まで。**
            引けなかったときに毎回叩きにいくと、その人が来るたび
-           YouTube の割り当てを削ることになる。 */
-        let handle = clean(body.handle, MAX_HANDLE_LEN);
+           YouTube の割り当てを削ることになる。
+
+           **ハンドルも、確かめの取れたチャンネルから取る。**
+           `body.handle` を見ていたころは、チャンネルIDを名乗った人が
+           名前まで名乗れた（島の名札に出る字がこれ）。
+           ここで引き直す `fetchHandle` の相手は**保存してある
+           `channelId`** で、そちらはもう確かめの取れた値しか入らない。 */
+        let handle = owned?.handle ?? "";
         const known = channelId || (was.channelId as string) || "";
         if (!handle && !was.handle && known && was.handleAt !== today()) {
           patch.handleAt = today();
@@ -2684,14 +3008,15 @@ export const islandApi = onRequest(
            画面を開くたびに Google アカウントの表示名で塗り戻していた。 */
         const name =
           handle ||
-          clean(body.title, MAX_NAME_LEN) ||
+          clean(owned?.title, MAX_NAME_LEN) ||
           clean(was.name ?? t.name ?? "", MAX_NAME_LEN);
         if (handle) patch.handle = handle;
         if (name) patch.name = name;
         if (channelId) patch.channelId = channelId;
-        if (body.thumbnail !== undefined) {
-          patch.photo = clean(body.thumbnail, 300) || null;
-        }
+        /* 顔も、確かめの取れたチャンネルのもの。**`body.thumbnail` は見ない。**
+           ここだけ言い値のままにすると、他人の顔で島に立てる。
+           取れなかった回は触らない（いまの顔がそのまま残る）。 */
+        if (owned && owned.thumbnail) patch.photo = owned.thumbnail;
         // 島での見え方。出すか出さないかは、本人が決める。
         if (body.nickname !== undefined) {
           patch.nickname = clean(body.nickname, MAX_NAME_LEN) || null;
@@ -2849,6 +3174,8 @@ export const islandApi = onRequest(
           .where("streamEventId", "==", eventImages[1])
           .limit(MAX_IMAGES)
           .get();
+        capHit("GET /streamevents/:id/images / MAX_IMAGES", snap.size,
+          MAX_IMAGES);
         const images = snap.docs
           .map((d) => imageRef(d.id, d.data() ?? {}))
           .sort((a, b) => a.at - b.at);
@@ -3082,8 +3409,14 @@ export const islandApi = onRequest(
            `notes` は今までどおり配列で返して、そこに「まだ古いものが
            残っている」を添える。画面はこれを見て `/notes?before=` の
            続きを読める。**黙って切らない**のがこの役目。 */
+        /* **過ぎた日の行は、口が落としてから返す**（#808）。
+           書類は触らない——落とすのは返す字だけ。これで画面も、
+           あやとが打つ画面（`/me` の「いまどこ」）も、見張り
+           （`python/upkeep_watch.py`）も、**同じ答えを見る。** */
+        const cur = (state.current ?? null) as Json | null;
+        const ahead = cur ? weekAhead(cur.week, jstDay(Date.now())) : null;
         res.json({
-          current: state.current ?? null,
+          current: cur && ahead ? {...cur, week: ahead} : cur,
           stats: state.stats ?? null,
           notes: notes.items,
           residents,
@@ -3098,6 +3431,31 @@ export const islandApi = onRequest(
              ここが入ると、企画が「いま行っている」から「行ってきた」に変わる
              (`site/content/plans.ts` の planPhase)。 */
           nordic: state.nordic ?? null,
+          /* **字の長さの上限。ここが正。**（2026-10-13）
+             画面は長いあいだ同じ数字を自分で持っていた
+             （`Notes.tsx` の `const MAX = 120;` に「サーバー側の
+             `MAX_NOTE_LEN` と同じ」と書き添えて）。**同じ事実が2か所に
+             在って、ずれても赤くなるものが無い**形が、島じゅうに15か所あった。
+
+             止め金を15本足すのではなく、**2か所であることをやめる。**
+             先例は `/stampline/mine`（2026-10-14 に閉じた。#860）で、
+             あちらは返事に `max` と `maxLen` を乗せていて、画面は1つも
+             数字を持っていなかった。
+
+             `/state` は誰でも叩ける口で CDN にも焼くが、ここに乗るのは
+             **定数だけ**。人を指す値は1つも入らない。 */
+          limits: {
+            /** 付箋の本文（`MAX_NOTE_LEN`） */
+            note: MAX_NOTE_LEN,
+            /** 付箋への返信（`MAX_REPLY_LEN`） */
+            reply: MAX_REPLY_LEN,
+            /** 島に出す名前（`MAX_NAME_LEN`） */
+            name: MAX_NAME_LEN,
+            /** 付箋に貼るリンク（`MAX_LINK_LEN`） */
+            link: MAX_LINK_LEN,
+            /** 企画の題（`MAX_PLAN_TITLE`） */
+            planTitle: MAX_PLAN_TITLE,
+          },
           more: {
             notes: notes.more ? notes.next : null,
           },
@@ -3300,6 +3658,104 @@ export const islandApi = onRequest(
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
         res.json({notes: page.items, more: page.more, next: page.next});
+        return;
+      }
+
+      /* ---------------- 付箋を貼れる先(2026-10-14) ----------------
+         焼き込みの表(`site/content/themes.ts`)に**足す**ぶん。
+         読むのは誰でも、足す・締め切る・消すのはあやとだけ。
+
+         **`where` も `orderBy` も使わない**(#168)。索引を作る権限が
+         サービスアカウントに無いので、引いてから手元で並べる。
+         多くても `NOTE_THEMES_MAX` 件しかない。 */
+      if (method === "GET" && path === "/notes/themes") {
+        const snap = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+        const themes = snap.docs
+          .map((d) => ({
+            id: d.id,
+            name: String(d.get("name") ?? ""),
+            lead: String(d.get("lead") ?? ""),
+            placeholder: String(d.get("placeholder") ?? ""),
+            closed: d.get("closed") === true,
+            at: Number(d.get("createdAt")) || 0,
+          }))
+          .sort((a, b) => a.at - b.at)
+          .map(({at: _at, ...t}) => t);
+        res.set(
+          "Cache-Control",
+          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+        );
+        res.json({themes});
+        return;
+      }
+
+      if (method === "POST" && path === "/notes/themes") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(body.id, 40);
+        const name = clean(body.name, 24);
+        const lead = cleanText(body.lead, 80);
+        const placeholder = cleanText(body.placeholder, 80);
+        /* 鍵は付箋の `theme` 欄にそのまま入る。**打った字を信じない。**
+           形が違うものを通すと、`GET /stickies?theme=` が弾く鍵の
+           貼り先ができて、貼れるのに読めない棚になる。 */
+        if (!THEME_ID.test(id) || name.length < 2) {
+          res.status(400).json({error: "bad input"});
+          return;
+        }
+        const ref = NOTE_THEMES.doc(id);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          const all = await NOTE_THEMES.limit(NOTE_THEMES_MAX).get();
+          if (all.size >= NOTE_THEMES_MAX) {
+            res.status(409).json({error: "いっぱいです"});
+            return;
+          }
+        }
+        const now = Date.now();
+        await ref.set(
+          {
+            name,
+            lead,
+            placeholder,
+            closed: body.closed === true,
+            createdAt: cur.exists ? Number(cur.get("createdAt")) || now : now,
+            updatedAt: now,
+          },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({
+          theme: {id, name, lead, placeholder, closed: body.closed === true},
+        });
+        return;
+      }
+
+      if (method === "DELETE" && path.startsWith("/notes/themes/")) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const id = clean(path.slice("/notes/themes/".length), 40);
+        if (!THEME_ID.test(id)) {
+          res.status(400).json({error: "bad id"});
+          return;
+        }
+        /* **1枚でも貼ってあったら消さない。** 消すと、貼った人の字が
+           どこからも読めなくなる(消えてはいないが、届かない)。
+           そのときは締め切る(`closed`)——棚は残って、読むほうは今までどおり。 */
+        const used = await NOTES.where("theme", "==", id).limit(1).get();
+        if (!used.empty) {
+          res.status(409).json({error: "付箋が貼ってあります"});
+          return;
+        }
+        await NOTE_THEMES.doc(id).delete();
+        res.set("Cache-Control", "no-store");
+        res.json({ok: true});
         return;
       }
 
@@ -3602,7 +4058,11 @@ export const islandApi = onRequest(
             res.status(401).json({error: "no token"});
             return;
           }
-          const snap = await NOTES.where("uid", "==", who.uid).limit(300).get();
+          const snap = await NOTES.where("uid", "==", who.uid)
+            .limit(MINE_SCAN)
+            .get();
+          // `more: false` で返す枝（上のテーマ1つぶんと同じ理由）
+          capHit("GET /stickies?mine=1 / MINE_SCAN", snap.size, MINE_SCAN);
           const rows = snap.docs
             .filter((d) => d.get("hidden") !== true)
             .filter((d) => d.get("archived") !== true)
@@ -3611,6 +4071,23 @@ export const islandApi = onRequest(
                 (Number(b.get("createdAt")) || 0) -
                 (Number(a.get("createdAt")) || 0),
             );
+          res.set("Cache-Control", "no-store");
+          res.json({notes: rows.map(stickyShape), more: false, next: null});
+          return;
+        }
+        /* **既読にしたものを見返す**（あやとだけ）。
+           既読は「読んだが、返さない」なので、**消していない。**
+           ここが無いと押し間違いが戻せず、戻せない押しどころは押されなくなる。
+
+           **URL を分けて、`no-store` を付ける。** 呼んだ人ごとに中身の変わる
+           答えを、キャッシュに載る同じ URL で返すと、混ざって配られる
+           （`/nextplans?mine=1` と同じ決め。`docs/island-api.md` 3章）。 */
+        if (req.query.seen === "1") {
+          if (!(await ownerUid(req.headers.authorization))) {
+            res.status(403).json({error: "not allowed"});
+            return;
+          }
+          const rows = await seenStickies();
           res.set("Cache-Control", "no-store");
           res.json({notes: rows.map(stickyShape), more: false, next: null});
           return;
@@ -3641,6 +4118,30 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* **まだこちらが何もしていない付箋の数。あやとだけ。**
+         机の札（`/me/desk` の「付箋」）に出すためだけの口で、
+         **道具を開く前に1本だけ引く。** 一覧を丸ごと降ろさずに数を出せる。
+
+         返すのは数と id だけ。**本文も名前も1文字も返さない**ので、
+         札に出す用事ではここより軽いものが無い。
+         id を添えるのは、机の一覧が**同じ物差しで**絞り込めるようにするため
+         （`waitingStickies` の注。数と中身を別々に決めると必ずずれる）。
+
+         **視聴者さんには出さない。** 既読の印（`seen`）が入っているかどうかは、
+         貼った人に見せるものではない（見えると「読まれたが返事はされない」が
+         本人に伝わる）。`ownerUid` と `no-store` の両方で閉じる。 */
+      if (method === "GET" && path === "/stickies/waiting") {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const rows = await waitingStickies(uid);
+        res.set("Cache-Control", "no-store");
+        res.json({waiting: rows.length, ids: rows.map((d) => d.id)});
+        return;
+      }
+
       if (method === "POST" && path === "/stickies") {
         const who = await whoIs(req.headers.authorization);
         const theme = clean(body.theme, 40);
@@ -3650,9 +4151,34 @@ export const islandApi = onRequest(
            空は 400 にしない。字が入っていたのに通らなかったときだけ断る
            ——黙って捨てると、貼った人の画面からリンクが消えて理由が無い */
         const sent = clean(body.link, MAX_LINK_LEN);
-        const link = safeLink(sent);
+        /* **生の値を渡す。** 切ったあとの字を渡していたので、`safeLink` の
+           「長すぎたら落とす」が効かなかった——2,049字の URL は
+           2,048字の**別の URL**として通っていた（2026-10-14）。 */
+        const link = safeLink(body.link);
         if (!THEME_ID.test(theme)) {
           res.status(400).json({error: "bad theme"});
+          return;
+        }
+        /* **締め切った宛先には貼れない**(#225)。
+           **409（いまは受け取れない）で、400（形が違う）ではない。**
+           送られた字は正しい——受け取る側がもう閉じている、という話なので、
+           書いた人が直せる間違いと同じ顔をさせない。画面もそう読んで
+           「この話の付箋は、もう締め切りました。」と出す（`Notes.tsx`。
+           400 のままだと「いま貼れなかった。少し待って、もう一度。」になって、
+           **待っても二度と通らない**ことが言えない）。
+
+           **あやと（`byOwner`）も断る。** 立て札を出す窓は締め切った面に
+           出ないので（`Notes.tsx` の `shut` は誰にでも効く）、通しても
+           通り道が無い。通せば「締め切り」が人によって意味の変わるものになり、
+           島の表（`site/content/themes.ts`）が言っていることと食い違う。
+           また立てたくなったら、畳みを外すほうが正しい——あちらの1行で、
+           画面の窓とここの関所が同時に開く。
+
+           **ハート・返信はここで塞がない。** 締め切ったのは「新しく書く」
+           ことで、貼ってある付箋に反応することではない
+           （`POST /stickies/:id/heart` は今までどおり誰でも押せる）。 */
+        if (shutTheme(theme, Date.now())) {
+          res.status(409).json({error: "theme shut"});
           return;
         }
         if (text.length < 2) {
@@ -3903,6 +4429,61 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* **既読にする・戻す。あやとだけ。**
+         「読んだが、返信はしない」の印。**付箋は1文字も変わらない。**
+         板からも消えないし、ハートも返信欄も今までどおり。
+         変わるのは「まだ何もしていない」の数から外れることだけ。
+
+         ## なぜ「返信した」と別に要るのか
+         返す相手のいる付箋かどうかは、いままで**返信が入っているか**だけで
+         見ていた（`waitingStickies`）。返す言葉の要らない1枚
+         （「見てます」「ありがとう」）に返信を書かないかぎり、その1枚は
+         永久に数に残る。**数が減らないと、数そのものが読まれなくなる。**
+
+         ## 印を立てる形にした理由
+         「同じ話に運営が付箋を返したか」で当てる手もあったが、採らない。
+         あれは**本文を読んで当てる推測**で、外れたときに直す道が無い
+         （返したのに数が減らない／返していないのに減る、のどちらも起きる）。
+         印なら、押した人が押し間違いに気づいた場に戻せる。
+
+         **戻せること**が要件（あやと 2026-10-13「既読機能みたいな、
+         返信しないで未返信から減らす機能」）。消す機能ではない。
+         `GET /stickies?seen=1` で見返して、ここへ `{on:false}` で戻す。 */
+      const seenMatch = path.match(
+        /^\/stickies\/([A-Za-z0-9_-]{6,})\/seen$/,
+      );
+      if (method === "POST" && seenMatch) {
+        const uid = await ownerUid(req.headers.authorization);
+        if (!uid) {
+          res.status(403).json({error: "not allowed"});
+          return;
+        }
+        const on = body.on !== false;
+        const ref = NOTES.doc(seenMatch[1]);
+        const cur = await ref.get();
+        if (!cur.exists) {
+          res.status(404).json({error: "no note"});
+          return;
+        }
+        await ref.set(
+          on ?
+            {seen: true, seenAt: Date.now(), seenBy: uid} :
+            {
+              /* **`false` を置かずに消す。** 残しておくと「一度は既読に
+                 した」が書類に居座って、`seen !== true` の絞り込みと
+                 `seen === true` の棚の両方から外れた1枚が生まれる。
+                 戻したら、押す前と同じ書類にする（`archive` と同じ決め）。 */
+              seen: admin.firestore.FieldValue.delete(),
+              seenAt: admin.firestore.FieldValue.delete(),
+              seenBy: admin.firestore.FieldValue.delete(),
+            },
+          {merge: true},
+        );
+        res.set("Cache-Control", "no-store");
+        res.json({id: ref.id, seen: on});
+        return;
+      }
+
       /* しまう・戻す。**あやとだけ。消さない。**
          二重投稿も荒れたものもこれで片付く。ハートの数はそのまま残るので、
          戻したときに数が消えていない。 */
@@ -3975,8 +4556,10 @@ export const islandApi = onRequest(
             return;
           }
           const snap = await STREAM_EVENTS.where("uid", "==", who.uid)
-            .limit(300)
+            .limit(MINE_SCAN)
             .get();
+          // `more: false` で返す枝（付箋の `?mine=1` と同じ理由）
+          capHit("GET /nextplans?mine=1 / MINE_SCAN", snap.size, MINE_SCAN);
           const rows = snap.docs
             .filter((d) => d.get("hidden") !== true)
             .filter((d) => d.get("archived") !== true)
@@ -4891,8 +5474,14 @@ export const islandApi = onRequest(
 
       res.status(404).json({error: "not found", path});
     } catch (e) {
+      /* **道に素性が混ざっていることがある。** `POST /cards/{カードID}` の
+         カードIDは `<画像のID>__<チャンネルID>` なので、ここで道をそのまま
+         書くと、500 が出た回だけチャンネルIDがログに残る
+         （2026-10-14。`/cards` の応答からは #173 で落としてあったのに、
+         落ちた回の**道**からは出ていた）。どの口で落ちたかは、
+         潰したあとの道でも分かる。 */
       logger.error("islandApi failed", {
-        path,
+        path: path.replace(/UC[A-Za-z0-9_-]{22}/g, "UC…"),
         method,
         error: String(e),
       });

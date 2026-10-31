@@ -35,6 +35,26 @@
  * stderr へ1行出す。`ROUTE_STRICT=1` を付けると、**1枚も本物を返せなかった種類が
  * あるときに終了コードを 2 にする**（0=通った / 1=見つけた / 2=数えるものが無い）。
  *
+ * ## 差し替えの絵は、本物と同じくらい軽くする（2026-10-23。#944）
+ *
+ * ここはサムネイルと外の写真に `site/public/og.png`（1200x630・550KB）を返していた。
+ * `/island/caucasus/streams` はサムネイルが476枚あり、畳みを開いて下まで送ると
+ * **1面で 260MB 余りを差し替えに通す。** それで描画の手が固まり、120秒返ってこない
+ * （`reachwatch.mjs` の1面版・幅390で 8回中3回）。**効いているのは通したバイト数**で、
+ * 同じ 1200x630 でも 12KB の JPEG なら止まらない。下の絵に替えて 8回中0回。
+ * og.png は分かち合いの1枚で、サムネイルの代わりではない。
+ *
+ * だからサムネイルは `thumb-320x180.jpg` を返す。本物の mqdefault と同じ 320x180、
+ * 15KB。**og.png を縮めたもの**にしてあるのは、撮った絵の上で「絵が入っている」と
+ * 分かるように。無地にすると、枠が空いているのか絵が来たのか写真で見分けられない
+ * （住人を1枚に潰したときと同じ失敗）。上限 20KB・縦横・無地でないことは
+ * `--selftest` が**ブラウザに届いたバイト**で当てている。
+ * `ROUTE_BREAK=og` で直す前（og.png）に戻る。止まる側に倒れるかを見る対照用。
+ *
+ * **外の写真（1枚返し）は og.png のまま。** いちばん多い `/nordic/finland` でも
+ * 畳みを開いて下まで送って79枚・43MB で、同じ道具で8回中0回止まった（同日）。
+ * 止まる重さには届いていないので、絵を替えて写りを変えることはしない。
+ *
  * ## 自分で確かめる
  *
  *   node tools/sprites/route.mjs --selftest
@@ -42,6 +62,7 @@
  * 偽のリポジトリを2つ作り、`ayato.webp` に**違う中身**を置いて、それぞれの
  * route.mjs が**自分の側の絵を返す**ことをブラウザに届いたバイトで見る。
  * 根の無いところに置いた写しが投げることも、同じところで見ている。
+ * 本物のこの route.mjs が返すサムネイルの、バイト数・縦横・無地でないことも見る。
  */
 import { createHash } from "crypto";
 import { existsSync, readdirSync, statSync } from "fs";
@@ -120,11 +141,29 @@ function printTally() {
   }
 }
 
+/** サムネイルの差し替えの上限（バイト）。`--selftest` が届いたバイトで当てる */
+export const THUMB_MAX = 20 * 1024;
+
+/**
+ * 対照用。`ROUTE_BREAK=og` で直す前の姿（サムネイルも og.png）に戻す。
+ * **知らない名前は投げる。** 綴りを間違えたまま「戻したのに止まらない」と読むと、
+ * 対照が効いていないことに気づけない
+ */
+function breakMode() {
+  const v = process.env.ROUTE_BREAK || "";
+  if (v && v !== "og") throw new Error(`route.mjs: ROUTE_BREAK=${v} は知らない名前です（og だけ）`);
+  return v;
+}
+
 export async function offline(ctx, opts = {}) {
   const root = repoRoot();
+  const heavy = breakMode() === "og";
+  const og = `${root}/site/public/og.png`;
   const fallback = opts.avatar ?? `${root}/site/public/characters/ayato.webp`;
-  const photo = opts.photo ?? `${root}/site/public/og.png`;
-  for (const p of [fallback, photo]) {
+  const photo = opts.photo ?? og;
+  // サムネイルは写真と別に持つ。`photo` を渡してくる道具でも、ここは本物と同じ 320x180 で返す
+  const thumb = opts.thumb ?? (heavy ? og : `${root}/tools/sprites/thumb-320x180.jpg`);
+  for (const p of [fallback, photo, thumb]) {
     if (!existsSync(p)) throw new Error(`route.mjs: 差し替えに使う絵がありません: ${p}`);
   }
 
@@ -171,12 +210,13 @@ export async function offline(ctx, opts = {}) {
   // 58本が全部おなじ絵で写ると、格子を見ても「絵が縦に切れているか」しか
   // 分からない（住人を ayato.png に潰していたときと同じ失敗）。
   // 先に `python3 tools/sprites/avatars.py` で落としておくと、ここが1枚ずつ返す
+  // 落としていなければ `thumb`（320x180・15KB）。og.png を返すと配信の一覧で止まる（上の #944）
   await ctx.route(/i\.ytimg\.com\/vi\//, (r) => {
     const m = /\/vi\/([^/]+)\//.exec(r.request().url());
     const local = m && `${AVATARS}/yt-thumb/${m[1]}.jpg`;
     const hit = Boolean(local && existsSync(local));
     tick("ショート", hit);
-    r.fulfill({ path: hit ? local : photo });
+    r.fulfill({ path: hit ? local : thumb });
   });
 
   // キャラクターの絵。島も図鑑もカードも、口ごしに置き場から取る（#284）。
@@ -248,12 +288,15 @@ async function selftest() {
     (String(got) === String(want) ? ok : ng).push(`${label}: 出た=${brief(got)} ほしい=${brief(want)}`);
 
   /** 偽のリポジトリ。`mark` が `ayato.webp` の中身になる */
+  const real = repoRoot();
   const fake = (name, mark) => {
     const root = join(base, name);
     mkdirSync(join(root, "site", "public", "characters"), { recursive: true });
     mkdirSync(join(root, "tools", "sprites"), { recursive: true });
     writeFileSync(join(root, "site", "public", "characters", "ayato.webp"), mark);
     writeFileSync(join(root, "site", "public", "og.png"), `og-${mark}`);
+    // サムネイルの差し替えも、根からの相対で探しに行く。写しにも置く
+    copyFileSync(join(real, "tools", "sprites", "thumb-320x180.jpg"), join(root, "tools", "sprites", "thumb-320x180.jpg"));
     copyFileSync(me, join(root, "tools", "sprites", "route.mjs"));
     // route.mjs は根の求めかたを repo.mjs から借りているので、写しには両方要る
     copyFileSync(join(dirname(me), "repo.mjs"), join(root, "tools", "sprites", "repo.mjs"));
@@ -284,10 +327,13 @@ async function selftest() {
   }
   check("根の無いところの写し", threw, "投げた");
 
-  // 差し替えに使う絵が無ければ、撮り始める前に投げる
+  // 差し替えに使う絵が無ければ、撮り始める前に投げる（写真の og.png と、サムネイルと）
   const bare = fake("repo-bare", "x");
   rmSync(join(bare, "site", "public", "og.png"));
   const modBare = await import(`file://${join(bare, "tools", "sprites", "route.mjs")}`);
+  const nothumb = fake("repo-nothumb", "y");
+  rmSync(join(nothumb, "tools", "sprites", "thumb-320x180.jpg"));
+  const modNothumb = await import(`file://${join(nothumb, "tools", "sprites", "route.mjs")}`);
 
   // ここからブラウザ。**届いたバイトで見る**（描かれた絵に頼らない）
   const browser = await chromium.launch({
@@ -319,15 +365,58 @@ async function selftest() {
   check("b の写しが返したバイト", bodyB, "BBBB-これは b の絵");
   check("2つが違うバイトを返した", bodyA !== bodyB, "true");
 
-  const ctxBare = await browser.newContext();
-  let bareThrew = "投げなかった";
-  try {
-    await modBare.offline(ctxBare);
-  } catch {
-    bareThrew = "投げた";
-  }
-  await ctxBare.close();
-  check("差し替えの絵が欠けている写し", bareThrew, "投げた");
+  const throws = async (mod) => {
+    const c = await browser.newContext();
+    let threw = "投げなかった";
+    try {
+      await mod.offline(c);
+    } catch {
+      threw = "投げた";
+    }
+    await c.close();
+    return threw;
+  };
+  check("差し替えの絵が欠けている写し", await throws(modBare), "投げた");
+  check("サムネイルの差し替えが欠けている写し", await throws(modNothumb), "投げた");
+
+  /* **本物のこの route.mjs が返すサムネイル。** 偽のリポジトリではなく、
+     いま在る根の絵を、ブラウザに届いたバイトで見る。og.png（550KB）に戻ると
+     配信の一覧が止まる（#944）ので、上限と縦横をここで落とす。
+     **無地でないことも見る。** 1色の絵なら軽くはできるが、撮った写真で
+     「絵が入っているか」を見分けられなくなる。 */
+  const look = async (url) => {
+    const ctx = await browser.newContext();
+    await offline(ctx);
+    const page = await ctx.newPage();
+    const res = await page.goto(url);
+    const buf = await res.body();
+    // 届いたバイトを、同じ出どころの Blob にしてから描く（よその絵を canvas に描くと読めない）
+    const seen = await page.evaluate(async (b64) => {
+      const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      const bmp = await createImageBitmap(new Blob([bin]));
+      const cv = new OffscreenCanvas(bmp.width, bmp.height);
+      const g = cv.getContext("2d");
+      g.drawImage(bmp, 0, 0);
+      const d = g.getImageData(0, 0, bmp.width, bmp.height).data;
+      const colors = new Set();
+      for (let i = 0; i < d.length; i += 4) colors.add(((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4));
+      return { w: bmp.width, h: bmp.height, colors: colors.size };
+    }, buf.toString("base64"));
+    await ctx.close();
+    return { bytes: buf.length, ...seen };
+  };
+  const th = await look("https://i.ytimg.com/vi/ROUTECHECK-NOPE/mqdefault.jpg");
+  check("サムネイルの縦横", `${th.w}x${th.h}`, "320x180");
+  check(`サムネイルのバイト数（${th.bytes}）が ${THUMB_MAX} 以下`, th.bytes <= THUMB_MAX, "true");
+  check(`サムネイルが無地でない（${th.colors}色）`, th.colors >= 16, "true");
+
+  // 対照の口の綴り違いは、黙って直す前の姿にも直した姿にも落ちずに投げる
+  const saved = process.env.ROUTE_BREAK;
+  process.env.ROUTE_BREAK = "ogg";
+  const typo = await throws({ offline });
+  if (saved === undefined) delete process.env.ROUTE_BREAK;
+  else process.env.ROUTE_BREAK = saved;
+  check("ROUTE_BREAK の綴り違い", typo, "投げた");
 
   // 手元に無いものしか頼まなければ、本物は0枚。そこを黙らせない
   const t = modA.offlineTally();

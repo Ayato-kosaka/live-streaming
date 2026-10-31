@@ -90,9 +90,11 @@ tools/sprites/_*
 # OpenStreetMap の生データ（数十MB。tools/nordic/osmfetch.py が落とす）
 tools/nordic/.osmcache/
 
-# キャラクターの絵と名前の受け渡し場所（python/admin/characters_add.py）。
-# **誰の絵が誰のものかは公開リポジトリに残さない。** 流すときだけ枝に
-# `git add -f` で載せて、済んだら枝ごと落とす。
+# キャラクターの絵と名前の、**昔の**受け渡し場所。
+# いまは使わない——`characters_add.py` は git の外（既定 `~/island-char-intake`）
+# しか受け付けず、中を指すと断る（#785。2026-10-15）。
+# **消さずに残してあるのは最後の網。** 昔の手順を覚えている手が
+# ここへ置いてしまっても、`git add -A` で公開に乗らないように。
 python/admin/_incoming/
 
 # 切り抜きの mp4 を作るとき、yt-dlp が n challenge を解くのに deno を使う。
@@ -120,3 +122,6 @@ deno.lock
 # 手引きに足す前の下書きと、1回きりの書き換え script
 /.misses*.md
 /.patch_*.py
+
+# 書き出しの声の作業置き場（build_edit.py の --work を渡さないと、リポジトリの中の edit_*.narr にできる。声の素材を入れない）
+shorts/videos/**/*.narr/

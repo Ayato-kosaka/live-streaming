@@ -6,7 +6,7 @@
 要らない（`ship_down.py` が外に出る口は `Gh` の5つだけなので、そこを偽物に
 差し替える）。
 
-確かめるのは12:
+確かめるのは16:
 
   1. **もう出ているのに赤い**回に issue が1本開く（本文の**1行目が「出ている」**）
   2. **出る前に止まった**回にも開く。**1行目が 1 と違う**（本番は無事なので）
@@ -23,6 +23,8 @@
  12. **ワークフローの YAML と突き合わせる**（繋ぎ先の名前・配る step・見る step）
  13. **本番の run（#114）をそのまま食わせて**、同じ見立てになる
  14. **待ちの札が入れ替わり、変わり目でだけコメントで鳴る**
+ 15. **繋ぎだけ確かめた回（`wake_only`）を、配りの結果として読まない**
+ 16. **job が2つある run で、2本目の赤を「配る前」と読み違えない**
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
 
@@ -243,6 +245,27 @@ HAND_THEN_NIGHT = [row(20, "failure"), row(19, "success", who=HUMAN)]
 
 # **赤いあとで人が押し直して通した並び。** 保留する
 NIGHT_THEN_HAND = [row(22, "success", who=HUMAN), row(21, "failure")]
+
+
+def probe_row(n: int, who: str = HUMAN, at: str = STARTED) -> dict:
+    """**`wake_only: true` で押した回**（繋ぎが生きているかだけ試した回）。
+
+    配る job が丸ごと skip されるので、**緑で終わるのに本番には1バイトも
+    出ていない。** 見分けは run の名前（`firebase-hosting-deploy-prod.yml` の
+    `run-name:`）。
+    """
+    r = row(n, "success", who=who, at=at)
+    r["name"] = f"{ship_down.PROBE_MARK}（配っていません）"
+    return r
+
+
+# **毎晩の配りが赤く、そのあと人が繋ぎだけ試した並び。**
+# 混ぜると「人が手で押して通した」に化けて、直っていない赤が保留になる
+RED_THEN_PROBE = [probe_row(32), row(31, "failure")]
+
+# **同じことを bot が押した形。** こちらは `pick_run` が掴んで、
+# 緑なので**開いている issue を閉じにいく**
+RED_THEN_PROBE_BOT = [probe_row(42, who=ship_down.BOT), row(41, "failure")]
 
 
 # ---------------------------------------------------------------- 偽の口
@@ -797,6 +820,54 @@ def case12_yaml():
        names.get(ship_down.WORKFLOW_FILE) in linked,
        names.get(ship_down.WORKFLOW_FILE))
 
+    # ---- **毎晩のぶんを運ぶのは、この繋ぎではない**（#865）
+    #
+    # `workflow_run` は、人が手で押した配りでしか発火しない（実測 90/90 と
+    # 0/72）。毎晩のぶんは配りの側が `workflow_dispatch` で名指しに押す。
+    # **その押す側が消えても、`workflow_run` が残っているので赤くならない**
+    # ——だから、ここで在ることを見る
+    ship = docs.get(ship_down.WORKFLOW_FILE) or {}
+    pushers = [
+        (jn, s.get("name") or "")
+        for jn, job in (ship.get("jobs") or {}).items()
+        for s in (job.get("steps") or [])
+        if "gh workflow run " + SELF_YML in (s.get("run") or "")
+    ]
+    ck("配りの側が、この係を名指しで押している", len(pushers) == 1,
+       pushers or "押す step が無い")
+    if pushers:
+        jn = pushers[0][0]
+        job = (ship.get("jobs") or {})[jn]
+        ck("押す job に run を書く権限がある",
+           (job.get("permissions") or {}).get("actions") == "write",
+           job.get("permissions"))
+        # 配りが赤い回こそ押してほしい。`needs` だけだと skip される
+        ck("配りが赤くても押す（always）", "always()" in str(job.get("if") or ""),
+           job.get("if"))
+        body_ = "\n".join(s.get("run") or "" for s in (job.get("steps") or []))
+        # 押しただけで満足すると、押せなくなった日に**緑のまま静かに止まる**
+        ck("押したあと、run が増えたかまで見ている",
+           "::error::" in body_ and "exit 1" in body_, "見ている")
+
+    # この係の側に、待つための欄が在るか。無いと**ひとつ前の配りを読む**
+    me_in = (trig.get("workflow_dispatch") or {}).get("inputs") or {}
+    ck("起こし元の run を受け取る欄がある", "for_run" in me_in, sorted(me_in))
+    waits = [s.get("name") or "" for job in (me.get("jobs") or {}).values()
+             for s in (job.get("steps") or [])
+             if "inputs.for_run" in (s.get("run") or "")
+             or "inputs.for_run" in str(s.get("if") or "")]
+    ck("起こし元の終わりを待つ step がある", len(waits) >= 1, waits)
+
+    # ---- **配っていない回の印**（`wake_only`）が、両側で揃っているか。
+    # ずれると、繋ぎを試した緑を「配れた」と読む（[15] がその転び方を見ている）
+    ho_in = ((ship.get("on") if isinstance(ship.get("on"), dict)
+              else ship.get(True)) or {}).get("workflow_dispatch") or {}
+    ck("配らずに繋ぎだけ試す口がある", "wake_only" in (ho_in.get("inputs") or {}),
+       sorted((ho_in.get("inputs") or {})))
+    ck("配っていない回の印が、配りの run-name: と揃っている",
+       ship_down.PROBE_MARK in str(ship.get("run-name") or ""),
+       ship.get("run-name"))
+
     # 保険の cron（`CLAUDE.md`「cron は保険として残す」）
     ck("保険の cron が置いてある", bool(trig.get("schedule")), trig.get("schedule"))
 
@@ -951,6 +1022,121 @@ def case_grep():
        sum(logident.count(str(AFTER[0])).values()))
 
 
+def case15_probe():
+    """**繋ぎだけ確かめた回（`wake_only: true`）を、配りの結果として読まない。**
+
+    配りには「本番を1バイトも汚さずに、下流を起こせるかだけ見る」口がある
+    （#865 で足した）。あの回は配る job が丸ごと skip されるので、
+    **緑で終わるのに本番には何も出ていない。**
+
+    混ぜると、転び方が2通りある。どちらも**赤くならずに黙る**:
+
+    | 誰が押したか | 混ぜると |
+    | --- | --- |
+    | 人 | `fixed_by_hand` が「手で押して通した」と読んで、**赤を保留にする** |
+    | bot | `pick_run` が掴んで緑と読み、**開いている issue を閉じる** |
+
+    歯止めは run の名前1本なので、**外したら落ちること**まで見る
+    （`docs/island-standards.md` §15）。
+    """
+    print("\n[15] 繋ぎだけ確かめた回を、配りの結果として読まない")
+
+    gh = FakeGh()
+    _, a = once(gh, RED_THEN_PROBE, STEPS_AFTER)
+    ck("人が繋ぎを試したあとでも、赤は赤のまま", a["down"] is True,
+       (a["down"], a["what"]))
+    ck("issue が1本開く", len(gh.opened()) == 1, len(gh.opened()))
+
+    gh = FakeGh()
+    _, a = once(gh, RED_THEN_PROBE_BOT, STEPS_AFTER)
+    ck("bot が押した繋ぎ確かめも数えない", a["down"] is True,
+       (a["down"], a["what"]))
+
+    # ---- 歯止めを外す。**当たらない字にすると、両方とも化けること**
+    real = ship_down.PROBE_MARK
+    ship_down.PROBE_MARK = "この字はどの run の名前にも入っていない"
+    try:
+        gh = FakeGh()
+        _, bad1 = once(gh, RED_THEN_PROBE, STEPS_AFTER)
+        ck("歯止めを外すと、人の回は保留に化ける",
+           bad1["down"] is None and bad1["what"] == "byhand",
+           (bad1["down"], bad1["what"]))
+        gh = FakeGh()
+        _, bad2 = once(gh, RED_THEN_PROBE_BOT, STEPS_AFTER)
+        ck("歯止めを外すと、bot の回は「配れている」に化ける",
+           bad2["down"] is False, (bad2["down"], bad2["what"]))
+    finally:
+        ship_down.PROBE_MARK = real
+
+    # 名前の読めない run（古い形）は**配った扱い**。分からないものを
+    # 除きはじめると、本物の赤まで静かに消える
+    nameless = [dict(r) for r in RED_THEN_PROBE]
+    for r in nameless:
+        r.pop("name", None)
+        r.pop("display_title", None)
+    ck("名前の無い run は落とさない", len(ship_down.real_runs(nameless)) == 2,
+       len(ship_down.real_runs(nameless)))
+
+
+def case16_two_jobs():
+    """**job が2つある run で、2本目の赤を「配る前」と読まないこと。**
+
+    GitHub が返す step の `number` は **job の中での番号**なので、
+    job が2つあると 1 が2回出る。`where_broke()` は番号で「配る step より
+    前か後か」を決めているので、**2本目の job で落ちた回が
+    『まだ出ていません』に化ける。** 本番にはもう出ているのに、である。
+
+    長いあいだ当たらなかったのは、配りの job が1つしか無かったから。
+    2026-10-15 に `wake_ship_down` を足して2つになった（#865）。
+    `run_watch.Gh.steps_of` が通し番号へ振り直す。
+
+    ここは**本物の `Gh`**（口だけ偽物）で回す。偽の `FakeGh` は平らな並びを
+    そのまま返すので、振り直しを1行も通らない。
+    """
+    print("\n[16] job が2つある run で、2本目の赤を読み違えない")
+
+    # 本番と同じ形。`/actions/runs/<id>/jobs` は job ごとに 1 から数える
+    jobs = {"jobs": [
+        {"name": "build_and_deploy", "steps": [
+            {"name": "Set up job", "number": 1, "conclusion": "success"},
+            {"name": "Run npm ci && npm run build:web", "number": 2,
+             "conclusion": "success"},
+            {"name": "Run FirebaseExtended/action-hosting-deploy@v0", "number": 3,
+             "conclusion": "success"},
+            {"name": "配った面が、面として配られているか", "number": 4,
+             "conclusion": "success"},
+        ]},
+        {"name": "wake_ship_down", "steps": [
+            {"name": "Set up job", "number": 1, "conclusion": "success"},
+            {"name": "配りが赤いを issue に映す、を起こす", "number": 2,
+             "conclusion": "failure"},
+        ]},
+    ]}
+
+    gh = ship_down.Gh(FAKE_REPO, FAKE_TOKEN)
+    gh._call = lambda method, path, data=None: jobs   # 口だけ偽物
+    steps = gh.steps_of(1)
+    ck("通し番号に振り直されている",
+       [s["number"] for s in steps] == [1, 2, 3, 4, 5, 6],
+       [s["number"] for s in steps])
+
+    a = ship_down.assess(row(50, "failure"), steps)
+    ck("もう出ている側に読む", a["out"] is True, (a["out"], a["what"]))
+    ck("何を直すかは「知らせる係」", a["what"] == "wake", a["what"])
+    text = ship_down.body(a)
+    ck("本文が『島は無事』と言う", "島は無事に出ています" in text, "言う")
+    # **島は出ていて、視聴者さんに見えるものは壊れていない。** 呼ばない
+    ck("あやとを呼ばない", ship_down.OWNER not in text, "呼ばない")
+
+    # ---- 歯止めを外す。**振り直しをやめると、読み違えること**
+    flat = []
+    for j in jobs["jobs"]:
+        flat += j["steps"]
+    bad = ship_down.assess(row(50, "failure"), flat)
+    ck("振り直さないと「まだ出ていません」に化ける", bad["out"] is False,
+       (bad["out"], bad["what"]))
+
+
 def main() -> int:
     # **毎回これが走るのは Actions の中。** 公開のログに積まれるのはそのときの
     # 字なので、同じ条件で回して、その出力を最後に数える
@@ -971,6 +1157,8 @@ def main() -> int:
     case12_yaml()
     case13_real()
     case14_wait_and_ping()
+    case15_probe()
+    case16_two_jobs()
     print("\n[素性の結果]")
     case_grep()
 

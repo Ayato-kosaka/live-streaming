@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { readArray } from "./tsread.mjs";
 
 /**
  * あやと島で使うスプライトの一覧。
@@ -585,6 +586,48 @@ const legendLights = () => [
   { url: `${FK}/cake-birthday.glb`, pos: [0.02, 0.36, 0.34], scale: 0.8, plain: true },
 ];
 
+/* 北欧ヒッチハイク。
+ *
+ * 指すのは「道」ではなく「乗せてもらった車」そのもの。道しるべにすると
+ * 丘にもう1本ある道しるべ（legendWalk）と同じ絵になり、歩いた企画と
+ * 乗せてもらった企画が棚の上で見分けられない。
+ *
+ * **キットに車は無いので箱と円盤で組む**（時計・杯と同じ）。
+ * 屋根に荷物を括るのは、「自分の車ではない車に、荷物ごと乗せてもらった」を
+ * 言うため。車だけだと、ただのドライブの絵になる。
+ */
+/** タイヤ。島の杭(C.post)は茶色なので、ゴムの色をここで持つ。 */
+const TYRE = [0.08, 0.10, 0.26];
+/** 車体。北欧の空の下で沈まないよう、赤は明るめに取る。 */
+const BODY = [0.015, 0.62, 0.52];
+/** 窓。暗くすると穴に見えるので、空を映した明るい灰青にする。 */
+const GLASS = [0.556, 0.26, 0.74];
+const legendRide = () => [
+  // 車輪。円盤の既定の軸は Y なので、X まわりに90度倒して横向きにする
+  ...[[-0.56, 0.34], [-0.56, -0.34], [0.56, 0.34], [0.56, -0.34]].map(([x, z]) => (
+    { disc: { r: 0.21, h: 0.15 }, color: TYRE, pos: [x, 0.21, z], rot: [90, 0, 0] }
+  )),
+  // 車体。下half と上half に分ける。1枚の箱にすると弁当箱に見える
+  box([1.72, 0.30, 0.80], BODY, [0, 0.38, 0]),
+  box([1.84, 0.12, 0.72], BODY, [0, 0.27, 0]),
+  // 窓。車体より一回り細くして、上に屋根を乗せる
+  box([0.92, 0.26, 0.74], GLASS, [-0.12, 0.66, 0]),
+  box([0.98, 0.09, 0.80], BODY, [-0.12, 0.83, 0]),
+  // 前後の灯り。これが無いと、どちらが前か分からない
+  ...[0.30, -0.30].map((z) => box([0.07, 0.11, 0.16], C.gold, [0.88, 0.42, z])),
+  ...[0.30, -0.30].map((z) => box([0.07, 0.10, 0.15], C.red, [-0.88, 0.42, z])),
+  // 屋根に括りつけた荷物。車だけだと、ただのドライブの絵になる。
+  // **キットの鞄（bag.glb）は置かない。** 屋根に載せると白い塊にしか見えず、
+  // 地面に置くと車体の陰に入って消える。どちらも焼いて確かめた
+  box([0.86, 0.045, 0.60], TYRE, [-0.12, 0.90, 0]),
+  box([0.64, 0.24, 0.48], C.plank, [-0.12, 1.04, 0]),
+  box([0.17, 0.26, 0.50], C.post, [-0.12, 1.05, 0]),
+  // 北の森。1本では「木のそばの車」になるので2本。**車の後ろに重ねない**——
+  // 真後ろ（-z）に置くと幹が屋根の荷物から生えて見える。左右へ振って挟む
+  { url: `${NK}/tree_pineTallA.glb`, pos: [0.42, 0, -1.30], scale: 1.12 },
+  { url: `${NK}/tree_pineRoundE.glb`, pos: [-1.48, 0, -0.42], scale: 0.84 },
+];
+
 /** 表彰台。月末配信の「授賞式」の絵（#149）。
  *
  * **前は噴水だった。** 168px で出ていたころは何の絵か分からなかったが、
@@ -702,6 +745,7 @@ const SPRITES_BASE = [
   /* 月末配信の授賞式（#149）。島には置かない。図鑑の主役としてだけ出る */
   { name: "stage-award", parts: awardStage(), opts: { plain: true } },
   { name: "legend-thousand-subs", parts: legendLights() },
+  { name: "legend-nordic", parts: legendRide() },
 
   /* ---------- 島の景色 ----------
      押せない飾り。遠くに置いて島を広く見せる。 */
@@ -886,6 +930,10 @@ const SPRITES_BASE = [
     "radish", "beet", "pepper", "whole-ham", "meat-sausage", "bacon", "egg",
     "cheese-cut", "glass-wine", "soda-can", "mug", "plate-deep",
     "burger-double", "cake-birthday", "chocolate", "pizza-box",
+    // 10/26 のマルゲリータ（2品目のピザ）の主役。food-pizza は 8/14 のぶんで使っていて、
+    // 空いている絵に材料の写るものが無かった（チーズは1色の塊、ピザ箱は空の器）。
+    // ソースもオリーブオイルで作ったので、その瓶にした。トマトの輪切りは橙1色の浅い器に見えた
+    "bottle-oil",
   ].map((id) => ({ name: `food-${id}`, parts: [`${FK}/${id}.glb`], opts: { plain: true } })),
 
   /* ---------- 住人 ----------
@@ -955,12 +1003,23 @@ const SPRITES_BASE = [
 const HERO_PX = 1280;
 const CONTENT = new URL("../../site/content/", import.meta.url);
 
+/* 主役の絵を名指ししている本。**読み方は `tsread.mjs` の1本**（#694）。
+   `heroicon_selftest.mjs` が同じ3冊を読む（あちらは焼き忘れを数える側）。 */
+const HERO_BOOKS = [
+  ["recipes.ts", "RECIPES"],
+  ["legends.ts", "LEGENDS"],
+  ["streamTypes.ts", "STREAM_TYPES"],
+];
+
 const heroNames = () => {
   const out = new Set();
-  for (const f of ["recipes.ts", "legends.ts", "streamTypes.ts"]) {
-    for (const m of fs.readFileSync(new URL(f, CONTENT), "utf8").matchAll(/^\s*icon: "([^"]+)"/gm)) {
-      out.add(m[1]);
+  for (const [f, name] of HERO_BOOKS) {
+    const src = fs.readFileSync(new URL(f, CONTENT), "utf8");
+    const got = readArray(src, name, { keys: ["icon"], idKey: "slug" });
+    if (!got.declared || got.missed) {
+      throw new Error(`${f} の ${name} を読めなかった（名乗り ${got.declared} / 読めた ${got.rows.length}）`);
     }
+    for (const r of got.rows) if (r.icon) out.add(r.icon);
   }
   return [...out].sort();
 };

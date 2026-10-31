@@ -32,7 +32,7 @@ const BOX: Record<string, CharBox> = {
   "18F1UehNd5efpQztgrRqHOGnibXJQYuda": [0.1141, 0.0109, 0.8094, 0.9766, 1.0],
   "18okO58dwMaci-9R1go0Rj1dTqliSWlz3": [0.0, 0.0, 0.9844, 0.9797, 1.0],
   "18wPo2-X4hht-JKaX0Vnk-SwryEP3INL3": [0.1516, 0.0047, 0.8031, 0.9906, 1.0],
-  "1a5RFkHtQVQhVENchDxOEWbrQnJpRozM_": [0.0, 0.0, 1.0, 1.0, 1.3333],
+  "1a5RFkHtQVQhVENchDxOEWbrQnJpRozM_": [0.2094, 0.0563, 0.6047, 0.9187, 1.3333],
   "1AGGCwvD2ZSwlL69Gff_EvVnunRvKq9qp": [0.0, 0.1109, 1.0, 0.8703, 1.0],
   "1AzM8uFWB67nZ6SyinVeHHIK9OiWoXR9Y": [0.0328, 0.05, 0.9359, 0.8583, 0.6667],
   "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU": [0.0203, 0.0312, 0.9797, 0.9297, 1.0],
@@ -112,7 +112,9 @@ const BOX: Record<string, CharBox> = {
   "1Y8b2L9Y6uZSNFcv9PVLR6aDqKuAdnZE7": [0.0141, 0.0203, 0.9734, 0.9094, 1.0],
   "1Ypw31n_0wRri-oEhRpqAB3p6jZFtN7BN": [0.0656, 0.0234, 0.8047, 0.9484, 1.0],
   "1yzAcYk81VKiWiONNJnyLvTTjIv5VgpDO": [0.0266, 0.0141, 0.9703, 0.975, 1.0],
+  "508cd9231743446bb25a93ae17dd3abf0": [0.0141, 0.0138, 0.9719, 0.9724, 0.9816],
   "5cc99a90acad4e7997d92b27c5207c6c0": [0.0484, 0.0, 0.9219, 0.975, 1.0],
+  "7590ed1286e344a198f74674296e64d20": [0.0, 0.0, 1.0, 1.0, 0.9624],
   "a43e965774df4900b7c8724c66f5deba0": [0.0, 0.0, 0.9844, 1.0, 0.9624],
   "c3cca678865a4021a048e617fab35db30": [0.0766, 0.0, 0.8984, 0.9859, 1.0],
   "cf129e7ea06f499693a002543dcd7c290": [0.0047, 0.0, 0.9906, 0.996, 0.8454],
@@ -243,11 +245,11 @@ export function charFit(
  */
 export const CHARACTER_BOX_BAKED = {
   /** 焼いた日 */
-  at: "2026-10-12",
+  at: "2026-10-31",
   /** そのとき口（`/island-api/characters`）が返した人数 */
-  people: 100,
+  people: 102,
   /** そのうち、実際に測れた人数 */
-  boxes: 100,
+  boxes: 102,
   /**
    * 測れなかった人。**焼き忘れではない**——背景なしの絵が無い・絵が開けない・
    * 中身が空。名簿に居て、箱にもここにも居ない人が出たら、それが焼き忘れ。

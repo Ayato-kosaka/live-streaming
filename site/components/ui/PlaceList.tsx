@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { DOORS } from "../island/layout";
+import { usePathname } from "next/navigation";
+import { DOORS, spotOfPath, tidyPath } from "../island/layout";
 import Icon from "./Icon";
 import TripDoor from "./TripDoor";
 
@@ -23,16 +26,24 @@ export const ALL_LABEL = "島のなか ぜんぶ";
  * いま一覧が開いたまま出る場所は砂浜だけで、看板は `/all` への板1枚に
  * なった（`PageShell` の但し書き）。行き先が増えても減っても、
  * 直すのは `layout.ts` の `PLACES` 1か所。
+ *
+ * ## 「いま居る場所」は、受け取らずに自分で引く
+ *
+ * 前はここが `current` を受け取っていた。**渡すのは面の側**だったので、
+ * 面を建てた人が1行書き忘れると、その面だけ印が消える——そして気づけない
+ * （型も巡回も通る。画面にも何も出ない。軒の板がどの面でも同じ絵になるだけ）。
+ * 実際に軒の半分以上が落ちていた（#718 / `docs/island-misses.md` #234）。
+ *
+ * いまは `usePathname()` を自分で読んで、`spotOfPath` に当てる。
+ * **渡す口が無いので、渡し忘れようがない。** 面を1枚建てても、
+ * その面が軒の道の下にあるなら何も書かなくて印が出る。
  */
-export default function PlaceList({
-  current,
-  atAll,
-}: {
-  /** いま居る場所（`SpotId`）。そこだけ印を付けて、押しても同じ紙が出ないようにする。 */
-  current?: string;
-  /** この面が `/all` そのものか。自分への口は出さない。 */
-  atAll?: boolean;
-}) {
+export default function PlaceList() {
+  const path = usePathname();
+  const current = spotOfPath(path);
+  /* 自分への口は出さない。「ぜんぶ」の面そのものに居るときの `/all` がそれ。
+     ここも道から引く——面に名乗らせると、軒と同じ忘れ方をする。 */
+  const atAll = tidyPath(path) === ALL_HREF;
   return (
     <ul className="ifoot-doors">
       {/* **いま歩いている旅**は、島に建っていないので `DOORS` に入らない。

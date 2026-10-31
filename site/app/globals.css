@@ -16,6 +16,7 @@
  *   ui     … 折りたたみ・アイコン・下書きの道具・デザインの見本
  *   home   … トップページの章立て（これから／いま／これまで／見にいく）
  *   way    … 導線（現在地の行・砂浜の一覧・行き先をぜんぶ並べた面）
+ *   months … 月ごとのふりかえり（出席・投げ銭・タップ・その月の流れ）
  */
 @import "./css/fonts.css";
 @import "./css/tokens.css";
@@ -33,3 +34,4 @@
 @import "./css/live.css";
 @import "./css/today.css";
 @import "./css/way.css";
+@import "./css/months.css";

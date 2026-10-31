@@ -20,7 +20,6 @@ mkdirSync(OUT, { recursive: true });
 const PAGES = [
   ["/me.html", "me"],
   ["/me/desk.html", "desk"],
-  ["/me/remote.html", "remote"],
   ["/me/roulette.html", "roulette"],
   ["/nordic/day/4.html", "day4"],
 ];
@@ -59,7 +58,6 @@ for (const c of CASES) {
 for (const [path, name, btn] of [
   ["/me.html", "me", ".blank.is-off .blank-go"],
   ["/me/desk.html", "desk", ".blank.is-off .blank-go"],
-  ["/me/remote.html", "remote", ".blank.is-off .blank-go"],
   ["/me/roulette.html", "roulette", ".blank.is-off .blank-go"],
 ]) {
   const ctx = await newCtx(b, { admin: true, mode: "abort", memo: null });

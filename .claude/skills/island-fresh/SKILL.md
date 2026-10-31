@@ -8,8 +8,11 @@ description: 島の焼き込み（site/content/*.ts）のうち、人の判断�
 島の数字と言葉は `site/content/*.ts` に**焼き込んである。配り直しても動かない。**
 新しくする＝焼き直して commit する。
 
-**機械だけで決まる4本（`chapterStats` `residents` `streamPeaks` `onThisDay`）は
-毎晩ひとりでに焼ける**（`.github/workflows/rebake.yml`、21:30 UTC）。
+**機械だけで決まる9本（`chapterStats` / `chapterStreams` `residents` `streamPeaks`
+`onThisDay` `cityStreams` `countryStats` `shorts` `site.ts` の `STATS_FALLBACK`
+`nordicSun`）は毎晩ひとりでに焼ける**（`.github/workflows/rebake.yml`。
+下流の `characterBox` が名簿にぶら下がって10本目）。**走るのは取り込みの完了に
+繋いだとき**（`workflow_run`）で、cron の 01:00 UTC は保険。
 **ここでやるのは、機械に決めさせると嘘になるぶん。**
 仕分けの全体は `docs/island-fresh.md`。
 
@@ -187,7 +190,9 @@ python3 meta.py                                       # 余白を切って webp�
 
 `models/` と `vendor/` は git に入っていない（`.gitignore`）。**worktree を
 切った先には無い**ので、元の clone から借りる（`ln -s`）。借りた印は
-commit しない。
+commit しない。**元の clone にも無く、この箱から kenney.nl に届かないときは
+Actions で焼く**——`tools/sprites/bake-request.json` の `names` に選んだ名前を書いて
+作業枝に push する（`.github/workflows/bake_sprites.yml`。手順は `tools/sprites/README.md`）。
 
 そろったかどうかは、巡回（`crawl.mjs`）を待たずにここで分かる:
 

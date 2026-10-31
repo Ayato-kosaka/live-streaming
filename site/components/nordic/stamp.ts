@@ -55,10 +55,19 @@ export const OUT_LONG = 2048;
 /**
  * 焼く塀の大きさ（画素）。**渡さなければ写真そのままの形。**
  *
- * かべがみにするときは、見ている端末の画面の形と画素数を渡す
- * （`screenFrame()`）。写真は塀いっぱいに敷いて、はみ出すぶんを切る。
+ * かべがみにするときは、貼る先の画面の形と画素数を渡す
+ * （`wallFrame()`）。写真は塀いっぱいに敷いて、はみ出すぶんを切る。
  */
 export type Frame = { w: number; h: number };
+
+/**
+ * かべがみの行き先。**スマホ（縦長）とパソコン（横長）。**
+ *
+ * 見ている端末そのものではない。**パソコンで開いてスマホのかべがみを
+ * 作る人がいる**（カードを選ぶのは机の前で、貼るのは手元の電話）。
+ * 端末の画面しか焼けないと、その人は一生スマホのかべがみを作れない。
+ */
+export type WallKind = "tall" | "wide";
 
 /** canvas1枚に許す画素数。これを越えると、端末によっては真っ白で返る。 */
 const MAX_PIXELS = 12_000_000;
@@ -66,26 +75,40 @@ const MAX_PIXELS = 12_000_000;
 const MAX_SIDE = 4096;
 
 /**
- * この端末の画面を、そのまま塀にする。
+ * 持っていない側のかたちで使う、ふつうの画面。
  *
- * **`screen` と `devicePixelRatio` から出す。** 窓の大きさ（`innerWidth`）
- * ではない——かべがみは画面に貼るものなので、ブラウザの窓ではなく
- * 画面そのものの画素数が要る。
+ * **その端末の画面が答えにならないときだけ使う。** 縦は 9:19.5
+ * （いまのスマホはほとんどこの比）、横は 16:9。どちらも貼る先の OS が
+ * 最後に合わせるので、**比が合っていれば画素数は多少ずれてよい。**
+ */
+const STOCK: Record<WallKind, Frame> = {
+  tall: { w: 1290, h: 2796 },
+  wide: { w: 1920, h: 1080 },
+};
+
+/**
+ * かべがみを焼く塀。
+ *
+ * **いま見ている画面が、その向きのときは、その画素数ちょうどで焼く。**
+ * 端末の画面と同じ大きさなら、貼ったあとに引き伸ばされない。
+ * 向きが違うとき（パソコンでスマホのかべがみを作るとき）は `STOCK`。
  *
  * 大きすぎる画面（4K のPC）は上限で丸める。**丸めたかどうかは呼ぶ側が
  * 分かるように**、求めた値も返す（画面に出して隠さない）。
  */
-export function screenFrame(): { want: Frame; out: Frame } {
+export function wallFrame(kind: WallKind): { want: Frame; out: Frame } {
   const dpr = Math.max(1, Math.min(4, window.devicePixelRatio || 1));
   const sw = Math.max(1, Math.round((window.screen?.width || 390) * dpr));
   const sh = Math.max(1, Math.round((window.screen?.height || 844) * dpr));
-  const want = { w: sw, h: sh };
+  /* この画面の向きと、作ろうとしているかたちが同じか */
+  const 同じ向き = kind === "tall" ? sh >= sw : sw > sh;
+  const want = 同じ向き ? { w: sw, h: sh } : STOCK[kind];
   let k = 1;
-  if (sw > MAX_SIDE || sh > MAX_SIDE) k = MAX_SIDE / Math.max(sw, sh);
-  if (sw * sh * k * k > MAX_PIXELS) k = Math.sqrt(MAX_PIXELS / (sw * sh));
+  if (want.w > MAX_SIDE || want.h > MAX_SIDE) k = MAX_SIDE / Math.max(want.w, want.h);
+  if (want.w * want.h * k * k > MAX_PIXELS) k = Math.sqrt(MAX_PIXELS / (want.w * want.h));
   return {
     want,
-    out: { w: Math.max(1, Math.round(sw * k)), h: Math.max(1, Math.round(sh * k)) },
+    out: { w: Math.max(1, Math.round(want.w * k)), h: Math.max(1, Math.round(want.h * k)) },
   };
 }
 
@@ -479,8 +502,11 @@ export const stampFileName = (day: string) => `ayato-island-card-${day}.jpg`;
  * 同じ日の写真から、カードもかべがみも作れる。名前が同じだと、
  * 端末の写真フォルダで**あとから貼ったほうが前のを隠す**（同名で保存すると
  * 2枚目に `(1)` が付くだけで、どちらがどちらか分からない）。
+ *
+ * **スマホとパソコンも分ける。** 同じ日から2つ作る人がいる。
  */
-export const wallFileName = (day: string) => `ayato-island-wall-${day}.jpg`;
+export const wallFileName = (day: string, kind: WallKind = "tall") =>
+  `ayato-island-wall-${kind === "wide" ? "pc-" : ""}${day}.jpg`;
 
 /**
  * 貼るまえに縮めて焼く。既定は長辺 1600px の webp。

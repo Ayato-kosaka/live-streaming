@@ -18,7 +18,7 @@
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
+  box-shadow: 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 70%, var(--frame-dark));
   font-size: var(--fs-note);
   font-weight: 900;
   line-height: var(--lh-body);
@@ -115,8 +115,7 @@
   background: var(--paper);
   /* 彫ってある溝。押せる板（外向きの厚み）と、書き込む欄を見分けられるようにする。
      上のかげと下の照りの2本だけ。ぼかしを重ねるとスマホで描き直しが重くなる。 */
-  box-shadow:
-    inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
+  box-shadow: inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
     inset 0 -1.5px 0 rgba(255, 255, 255, 0.7);
   font: inherit;
   font-size: var(--fs-body);
@@ -136,8 +135,7 @@
   /* フォーカスの輪は水色（island-world 3.2 の色の表）。
      金の輪は「押せる板のふち」の色なので、ここに置くと
      光って押せるものが1つ増えたように見える。 */
-  box-shadow:
-    inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
+  box-shadow: inset 0 3px 5px color-mix(in srgb, var(--frame-deep) 24%, transparent),
     0 0 0 3px var(--accent-2);
 }
 .dform textarea { line-height: var(--lh-body); resize: vertical; }
@@ -375,7 +373,7 @@
   background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
   border: var(--bw-1) solid var(--frame);
   border-radius: var(--r-pill);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
+  box-shadow: 0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 58%, var(--frame-dark));
   transition: transform 0.26s cubic-bezier(0.34, 1.5, 0.64, 1), box-shadow 0.16s ease;
 }
 /* 沈む量と厚みの減る量を揃える。回っている最中も同じだけ沈む。 */
@@ -523,7 +521,7 @@
   border: 4px solid var(--frame-dark);
   border-radius: var(--r-3);
   overflow: hidden;
-  box-shadow: 0 6px 0 var(--frame-deep), var(--shadow-3);
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-deep), var(--shadow-3);
   line-height: 0;
   background: color-mix(in srgb, var(--sea-shallow) 18%, var(--paper-out));
 }
@@ -626,7 +624,7 @@
   box-shadow: var(--pop);
   transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.blank-go:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--frame-dark); }
+.blank-go:hover { transform: translateY(-2px); box-shadow: 0 var(--pop-d5) 0 var(--frame-dark); }
 .blank-go:active { transform: translateY(6px); box-shadow: none; }
 
 /* 取れなかったとき。エラーの赤にしない。
@@ -643,6 +641,15 @@
      390px で最後の1文字だけが2行目に落ちるので、行の長さを均す。 */
   text-wrap: balance;
 }
+
+/* ───────── 文節で折る（`components/ui/Phrase.tsx`） ───────── */
+
+/* 塊の中では折らない。**折れるのは塊と塊のあいだだけ。**
+   `text-wrap: balance` は行の長さを均すだけで、どこで切るかは選ばない。
+   均した結果が「日にちの決まった企画｜は、いまはありません」になって、
+   **行頭に「は、」が来ていた**（390px）。`word-break: auto-phrase` は
+   良い答えを出すが Chromium にしか無いので、折れる場所のほうを減らす。 */
+.phrase > span { white-space: nowrap; }
 
 /* ───────── 引用の吹き出し（視聴者さんが書いた文章を、書かれたまま出す） ───────── */
 
@@ -873,3 +880,29 @@
 .mp-tab.is-on .mp-tab-s { color: var(--ink); }
 
 /* 出ていないほうの面は、背も持たない */
+
+/* 視聴者さんが打った字の中の URL（`components/ui/Wrote.tsx`）。
+   あやと 2026-10-14「付箋に url が貼られた場合は別タブ起動できるようにして欲しい」。
+
+   **文の途中に出るので、板にはしない。** 行き先を入れる別欄（`.nt-link`）は
+   48px の板だが、あちらは1枚に1つで行ぜんぶを取れる。こちらは
+   「これ見て https://… すごいよ」のように**前後の字と地続き**なので、
+   板にすると文が切れる。下線と色で「押せる」を出す。
+
+   `break-all` は、120字の付箋に 60字の URL が来ても紙からはみ出さないため
+   （`crawl.mjs` が横あふれを見ている）。`Wrote` の `overflow-wrap: anywhere`
+   だけだと、`/` の無い長い1語がまれに溢れる。 */
+.wr-url {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  /* **下線を切らない。** 既定（`auto`）は `/` や `p` の下に隙間を空けるので、
+     スラッシュだらけの URL では線が点々に割れて、下線に見えなくなる
+     （390幅で撮って見た）。 */
+  text-decoration-skip-ink: none;
+  font-weight: 700;
+  word-break: break-all;
+}
+.wr-url:active { opacity: 0.7; }

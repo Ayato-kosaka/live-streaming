@@ -1,0 +1,125 @@
+name: ショートの録画を受け取る
+
+# あやとがスマホ（iPhone の Safari）か PC から、配信の録画（0.5〜10GB）を上げる URL を作り、
+# 届いたものを ffprobe で見る。使い方は `tools/shorts/upload/README.md`、作業箱の道具は
+# `tools/shorts/upload/ask.py`（あやと 2026-10-18「アップロードURLください」）。
+#
+# - page  … 非公開バケット `live-streaming-d3cac-shorts-preview` の `uploads/` の枠を署名し（7日）、
+#   1枚のページを Firebase Hosting のプレビューチャンネル（`--expires 7d`）に置く。
+#   ブラウザは GCS へ直に、細切れに上げる（resumable upload。切れても続きから）。
+#   **本番のサイト（live チャンネル）には触らない。** 本番の firebase.json・public は使わない
+# - probe … 届いた録画を署名付き URL のまま ffprobe で読み、落とし直して sha256 を出す
+# - drop  … `uploads/<name>/` を消す（消さなくても30日で消える）
+#
+# **なぜ Actions か。** 作業箱には GCP の資格情報が無く、*.web.app にも届かない。
+# 持っているのは Actions の `FIREBASE_SERVICE_ACCOUNT` だけで、新しい秘密は足さない（読むだけ）。
+# バケットの CORS と寿命の決まりも、ここでそろえる（`uploads/` の用途に要るぶんだけ）。
+#
+# **なぜ暗号化か。** ページの URL と署名は持っている人なら誰でも使える鍵。このリポジトリは公開で、
+# Actions のログも誰でも読める。結果は依頼の公開鍵で包んで作業枝に置き（`tools/shorts/ingest/seal.py`
+# と同じ形）、ログには名前・数・秒・成否だけを出す。artifact にはしない。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/upload/*.json"]
+  # master に入ってから使う
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "受け取り口の名前（英数字と . _ -）"
+        required: true
+      action:
+        description: "page / probe / drop / drive"
+        required: false
+        default: "page"
+      hash:
+        description: "probe のとき: sha256 を出すか（true / false）"
+        required: false
+        default: "true"
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      nonce:
+        description: "作業箱が作った乱数（届いた結果を見分ける）"
+        required: false
+        default: ""
+      branch:
+        description: "結果を置く枝（claude/ で始まる）"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-upload-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    # probe は 10GB を落とし直して sha256 を出すと数分。page は2分ほど
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    env:
+      IN_NAME: ${{ inputs.name }}
+      IN_ACTION: ${{ inputs.action }}
+      IN_HASH: ${{ inputs.hash }}
+      IN_PUBKEY: ${{ inputs.pubkey }}
+      IN_NONCE: ${{ inputs.nonce }}
+      IN_BRANCH: ${{ inputs.branch }}
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 依頼を読む
+        id: plan
+        run: python3 tools/shorts/upload/serve.py plan
+
+      # firebase-tools は serve.py（host.py の prewarm）が署名のあいだに入れる
+      - uses: actions/setup-node@v5
+        if: steps.plan.outputs.node == 'true'
+        with:
+          node-version: "24"
+
+      - name: ffprobe を入れる
+        if: steps.plan.outputs.ffmpeg == 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffprobe -version | head -1
+
+      - name: 道具を入れる
+        if: steps.plan.outputs.count != '0'
+        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+
+      # drive … 共有フォルダを落とす（gdown）・iPhone の HEIC を開く（heif-convert）
+      - name: Drive の道具を入れる
+        if: steps.plan.outputs.drive == 'true'
+        run: |
+          python3 -m pip install --quiet "gdown==5.2.0"
+          sudo apt-get install -y -qq libheif-examples || true
+
+      - name: Google Cloud 認証
+        if: steps.plan.outputs.count != '0'
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: こなして、結果を暗号化して作業枝へ返す
+        if: steps.plan.outputs.count != '0'
+        # 結果の push は branch.py が shorts/.work/ の下と依頼ファイルだけを積む
+        # （auth が作業ツリーに置いた gha-creds-*.json は積まない）
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 tools/shorts/upload/serve.py run
+
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json

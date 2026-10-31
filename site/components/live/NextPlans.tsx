@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { getState } from "@/lib/api";
 import { BUILT_AT, livePlans, planPhase, type Plan } from "@/content/plans";
-import { themeById } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
+import { nights } from "@/content/nights";
+import { NO_PLAN_TITLE } from "@/content/voice";
+import Phrase from "@/components/ui/Phrase";
 import Longer from "@/components/ui/Longer";
 import Notes from "./Notes";
 import PlanCard, { PlanRow } from "./PlanCard";
@@ -31,7 +34,11 @@ const byDate = (a: Plan, b: Plan) => (a.date ?? "9999").localeCompare(b.date ?? 
  * `content/themes.ts` に1行足す。
  */
 function PlanNotes({ plan }: { plan: Plan }) {
-  const theme = themeById(plan.id);
+  /* **札を出す側（`PlanCard.tsx` の `useCanNote`）と同じ一覧から決める。**
+     片方だけ重ねると、札は出るのに降りた先が無い——`PlanCard` の
+     「行き先の有無を、札の有無に写す」が、その日から嘘になる。 */
+  const { dests } = useDests();
+  const theme = destById(dests, plan.id);
   if (!theme) return null;
   return (
     <div
@@ -126,11 +133,24 @@ export default function NextPlans() {
           today が入るまでは出さない。焼き込みの日付で「予定なし」と言わない。
           **いま行っているものがあれば、ここは出さない。** 旅の最中に
           「決まっている予定はありません」と出ていた（すぐ下に旅が並んでいるのに）。 */}
+      {/* `nx-none` は飾りではなく**印**。0件の日に、この面が黙らずに
+          「無い」と言ったことを `tools/sprites/nextempty.mjs` がここで見る。
+          字で探すと、言い回しを1語直した日に見張りのほうが黙る。 */}
       {today && ahead.length === 0 && (
-        <section className="panel paper">
-          <h2>いま、決まっている予定はありません</h2>
+        <section className="panel paper nx-none">
+          {/* 字は表紙の0件の枝（`components/live/NextUp.tsx`）と**同じものを読む**。
+              同じことを2つの言い方で言うと、別のことが起きていると読める。
+              `Phrase` は折ってよい場所を1つに絞る（行頭に「は、」を来させない）。 */}
+          <h2>
+            <Phrase parts={NO_PLAN_TITLE} />
+          </h2>
           <p>
-            次の企画は、たいてい掲示板から生まれます。むちゃなものほど通るので、思いついたことをそのまま。
+            {/* **島が止まったわけではない。** 日にちの決まった企画が無いのは
+                ふつうの状態で、配信はその晩も立つ（あやと 2026-10-07「とくになし」）。
+                ここが「ありません」だけだと、島ごと終わったように読める。
+                **時刻は直に書かない**（`content/nights.ts`。旅のあいだは
+                始まる時刻が言えないので、言い方がまるごと変わる）。 */}
+            配信は{nights(today).bare}、いつもどおり。次の企画は、たいてい掲示板から生まれます。むちゃなものほど通るので、思いついたことをそのまま。
           </p>
         </section>
       )}

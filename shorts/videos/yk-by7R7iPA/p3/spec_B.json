@@ -1,0 +1,331 @@
+{
+ "id": "B",
+ "version": "p3",
+ "title_card": "アルバニア出国の朝に\nケバブ食べてみた",
+ "title_card_seconds": 4.0,
+ "narration_cps_target": 9.0,
+ "rows": [
+  {
+   "line": "アルバニア出国の朝に、ケバブ食べてみた！",
+   "src": [
+    "0:59:22"
+   ],
+   "same_as_prev": false,
+   "visual": "ポテトの見える断面",
+   "pic_note": "ポテトの見える断面（0:59:22）",
+   "big": false,
+   "card": true
+  },
+  {
+   "line": "財布に残ったアルバニアのお金、590円。",
+   "src": [
+    "0:45:30"
+   ],
+   "same_as_prev": false,
+   "visual": "現金を数える",
+   "pic_note": "現金を数える（0:45:30）",
+   "big": false,
+   "card": false,
+   "mood": "plain",
+   "face_overlap_ok": {
+    "frames": 11,
+    "why": "自撮りの顔が近く、鼻の下が画面の y 1193 まで来る。安全域の下（1248）まで 55px しか無く、2行の字幕は 36px まで小さくしても入らない。下の端がいちばん重ならない（11コマ）。画は p3 のまま（統括の決め: 財布の寄りはお金に見えないので戻す）"
+   }
+  },
+  {
+   "line": "出国したら使われへんし、ここで使い切る！",
+   "src": [
+    "0:41:10"
+   ],
+   "same_as_prev": false,
+   "visual": "バスターミナル",
+   "pic_note": "バスターミナル（0:41:10）",
+   "big": false,
+   "card": false,
+   "mood": "up_pop"
+  },
+  {
+   "line": "まずはスーパー。",
+   "src": [
+    "0:46:54"
+   ],
+   "same_as_prev": false,
+   "visual": "スーパーの通路",
+   "pic_note": "スーパーの通路（0:46:54）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "クッキー1箱で200円。",
+   "src": [
+    "0:47:00"
+   ],
+   "same_as_prev": false,
+   "visual": "クッキーの棚",
+   "pic_note": "クッキーの棚（0:47:00）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "高っ！これじゃ朝ごはんにならん。",
+   "src": [
+    "0:47:06"
+   ],
+   "same_as_prev": false,
+   "visual": "手に取る",
+   "pic_note": "手に取る（0:47:06）",
+   "big": true,
+   "card": false,
+   "big_style": "shake_red"
+  },
+  {
+   "line": "てことで、ケバブ屋。",
+   "src": [
+    "0:53:05"
+   ],
+   "same_as_prev": false,
+   "visual": "店の奥の串",
+   "pic_note": "店の奥の串（0:53:05）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "豚も鶏も、550円。",
+   "src": [
+    "0:48:38.3–0:48:40.1"
+   ],
+   "same_as_prev": false,
+   "visual": "メニューの Derri・Pule の行",
+   "pic_note": "メニューの品名（Derri＝豚・Pule＝鶏）と 280 Lekë が1枚に入る寄り（0:48:38.3〜40.1）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "残り590円やから……",
+   "src": [
+    "0:48:40"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "plain",
+   "face_overlap_ok": {
+    "frames": 9,
+    "why": "上を向いた横顔で、鼻の下が画面の y 1224 まで来る。鼻の下から安全域の下（1248）まで 24px しか無く、普通の字幕を 36px まで小さくしても置けない。下の端がいちばん重ならない（顎と小鼻のあたり。9コマ）。画は今のまま（統括の決め）"
+   }
+  },
+  {
+   "line": "ちょうどすぎるやろ！",
+   "src": [
+    "0:48:40"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上（寄る）",
+   "big": true,
+   "card": false,
+   "big_style": "shake_white"
+  },
+  {
+   "line": "しかもここのケバブ、中にポテト入りらしい。",
+   "src": [
+    "0:48:44"
+   ],
+   "same_as_prev": false,
+   "visual": "メニューの patate の字",
+   "pic_note": "メニューの patate の字（0:48:44）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "ポテト入り！？",
+   "src": [
+    "1:00:44.0–1:00:44.75"
+   ],
+   "same_as_prev": false,
+   "visual": "揚げ始めたフライヤー",
+   "pic_note": "ケバブからはみ出すポテト（1:00:44.0〜44.75、顔の下で切る寄り）",
+   "big": true,
+   "card": false,
+   "big_style": "brush_zoom"
+  },
+  {
+   "line": "「チキンで」って頼んだら、",
+   "src": [
+    "0:50:45"
+   ],
+   "same_as_prev": false,
+   "visual": "カウンター",
+   "pic_note": "カウンター（0:50:45。店員さんの顔は映さない）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "返ってきたのは「プーレ」。",
+   "src": [
+    "0:50:45"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "アルバニア語で、鶏のことやって。",
+   "src": [
+    "0:50:45"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "corner_note": "Pulë＝鶏",
+   "mood": "plain"
+  },
+  {
+   "line": "揚げたてポテトに赤いソースどばっと、",
+   "src": [
+    "0:56:44.0–0:56:45.9"
+   ],
+   "same_as_prev": false,
+   "visual": "挟む・ソース",
+   "pic_note": "ポテトにソースをどばっと（0:56:44.0〜45.9）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "パンはギュッとプレス。",
+   "src": [
+    "0:54:39.96–0:54:40.03",
+    "0:54:40.03–0:54:41.0"
+   ],
+   "same_as_prev": false,
+   "visual": "プレス",
+   "pic_note": "プレス機（0:54:39.96〜41.0、寄り）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "いただきます！",
+   "src": [
+    "0:59:22"
+   ],
+   "same_as_prev": false,
+   "visual": "かぶりつく",
+   "pic_note": "かぶりつく（0:59:22）",
+   "big": false,
+   "card": false,
+   "mood": "up_pop"
+  },
+  {
+   "line": "パン、トーストみたいにサクサク！",
+   "src": [
+    "0:59:35"
+   ],
+   "same_as_prev": false,
+   "visual": "焼き目のパン",
+   "pic_note": "焼き目のパン（0:59:35）",
+   "big": false,
+   "card": false,
+   "mood": "up_pop"
+  },
+  {
+   "line": "ソースは……ほぼビッグマック。",
+   "src": [
+    "1:00:24.0–1:00:26.1"
+   ],
+   "same_as_prev": false,
+   "visual": "食べる",
+   "pic_note": "かじった断面（1:00:24.0〜26.1、顔の下で切る寄り）",
+   "big": true,
+   "card": false,
+   "big_style": "glow_yellow"
+  },
+  {
+   "line": "日本で再現するなら、",
+   "src": [
+    "1:02:45"
+   ],
+   "same_as_prev": false,
+   "visual": "ケバブを手に",
+   "pic_note": "ケバブを手に（1:02:45）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "ケバブ屋とスタバとマクドで材料そろえてプレス。",
+   "src": [
+    "0:58:08.5–0:58:10.0",
+    "0:56:52.6–0:56:53.4"
+   ],
+   "same_as_prev": false,
+   "visual": "ケバブの寄り",
+   "pic_note": "ケバブの包み（0:58:08.5〜）→ プレス機へ運ぶ（0:56:52.6〜53.4）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "……いや、3軒はしごは大変やな。",
+   "src": [
+    "1:03:10"
+   ],
+   "same_as_prev": false,
+   "visual": "ケバブを手に",
+   "pic_note": "ケバブを手に（1:03:10）",
+   "big": true,
+   "card": false,
+   "big_style": "static_white"
+  },
+  {
+   "line": "ちなみに肉はすぐ固くなるから、熱いうちに食べてな。",
+   "src": [
+    "1:00:00"
+   ],
+   "same_as_prev": false,
+   "visual": "食べる",
+   "pic_note": "食べる（1:00:00）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "これで残りの現金、40円。",
+   "src": [
+    "0:58:10"
+   ],
+   "same_as_prev": false,
+   "visual": "ケバブの包み",
+   "pic_note": "ケバブの包み（0:58:10）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "みんなは朝からケバブ、アリ？ナシ？",
+   "src": [
+    "0:59:22"
+   ],
+   "same_as_prev": false,
+   "visual": "ポテトの見える断面",
+   "pic_note": "ポテトの見える断面（0:59:22。冒頭と同じ画に戻す）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  }
+ ]
+}

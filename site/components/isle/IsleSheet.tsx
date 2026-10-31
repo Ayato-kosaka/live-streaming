@@ -1,12 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 import Flag from "@/components/ui/Flag";
 import IsleBoard from "./IsleBoard";
 import Icon from "@/components/ui/IconCore";
 import { shortHref, shortThumb } from "@/content/shorts";
-import type { IslePlaceSpec } from "./spec";
+import { useChapterDays } from "./ChapDays";
+import type { IsleFact, IslePlaceSpec } from "./spec";
+
+/**
+ * 板の中の1つぶん。**日数の欄は、画面が出てから数え直す。**
+ *
+ * `since` を持つ欄（「この島にいた 17日」）は、焼いた数をそのまま出すと
+ * デプロイした日で止まる。札の添え字（`useSinceWord`）と同じ出どころで数える。
+ * 欄ごとに hook を呼ぶので、`map` の中ではなく部品に切ってある。
+ */
+function Fact({ f }: { f: IsleFact }) {
+  const n = useChapterDays(f.since, NaN);
+  return (
+    <li>
+      <b>
+        {f.since && Number.isFinite(n) ? n.toLocaleString() : f.n}
+        {f.unit && <span>{f.unit}</span>}
+      </b>
+      <i>{f.cap}</i>
+    </li>
+  );
+}
 
 /**
  * 建物の中。
@@ -27,6 +49,12 @@ import type { IslePlaceSpec } from "./spec";
  *
  * 押すまで出ないし、閉じるまで消えない（`docs/island-design.md` 3-6）。
  * 島の吹き出しと同じで、うしろの暗幕を押しても閉じる。
+ *
+ * **指以外の閉じかたも要る。** 暗幕を押す・×を押す、のどちらも指の動き
+ * なので、キーボードだけの人には閉じる手が1つも無かった（Esc が効かず、
+ * ×まで Tab で下りるしかない）。`/island/*` の5面ぜんぶがそうだった。
+ * 開いた板の作りは `MapZoom.tsx` と同じにそろえる——Esc で閉じる・
+ * 開いたら×に焦点を置く・閉じたら開いた所へ戻す。
  */
 export default function IsleSheet({
   place,
@@ -35,6 +63,32 @@ export default function IsleSheet({
   place: IslePlaceSpec;
   onClose: () => void;
 }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  /* 閉じる手当ては、呼ぶ側が毎回その場で作る（`onClose={() => setSheet(null)}`）。
+     そのまま deps に入れると描き直すたびに下の effect が回って、
+     開いているあいだ焦点が×に戻りつづける。中身だけ差し替える */
+  const close = useRef(onClose);
+  close.current = onClose;
+
+  useEffect(() => {
+    /* 開く前に、どこから開いたかを控える。**`focus()` より先に取る**
+       ——あとで取ると、控えるのは×そのものになる */
+    const from = document.activeElement as HTMLElement | null;
+    /* 開いたら、まず×に立つ。立たせないと Tab が板のうしろの島から
+       始まって、板の中へ下りるまでに島ぜんぶを回ることになる */
+    closeRef.current?.focus();
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close.current();
+    };
+    window.addEventListener("keydown", esc);
+    /* 閉じたら、開いた所（建物）へ焦点を返す。返さないと、閉じたあとの
+       Tab が面の頭から始まる */
+    return () => {
+      window.removeEventListener("keydown", esc);
+      if (from && from.isConnected && typeof from.focus === "function") from.focus({ preventScroll: true });
+    };
+  }, []);
+
   return (
     <div
       className="isle-sheet-wrap"
@@ -44,14 +98,14 @@ export default function IsleSheet({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="isle-sheet" role="dialog" aria-label={place.label}>
+      <div className="isle-sheet" role="dialog" aria-modal="true" aria-label={place.label}>
         <div className="isle-sheet-head">
           <img src={`/sprites/${place.icon}.webp`} alt="" width={44} height={44} />
           <span>
             <b>{place.label}</b>
             {place.note && <i>{place.note}</i>}
           </span>
-          <button className="isle-sheet-x" onClick={onClose} aria-label="閉じる">
+          <button className="isle-sheet-x" onClick={onClose} aria-label="閉じる" ref={closeRef}>
             <Icon name="close" size={16} />
           </button>
         </div>
@@ -59,13 +113,7 @@ export default function IsleSheet({
         {place.facts && (
           <ul className="isle-facts">
             {place.facts.map((f) => (
-              <li key={f.cap}>
-                <b>
-                  {f.n}
-                  {f.unit && <span>{f.unit}</span>}
-                </b>
-                <i>{f.cap}</i>
-              </li>
+              <Fact key={f.cap} f={f} />
             ))}
           </ul>
         )}

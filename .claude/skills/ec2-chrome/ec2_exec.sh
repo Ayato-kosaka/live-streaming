@@ -1,9 +1,15 @@
 #!/bin/bash
-# EC2 を起こす → SSM で渡したスクリプトを実行 → **必ず止める**、の土台。
+# EC2 を起こす → 列の札を取る → SSM で渡したスクリプトを実行 → 札を返す → **止めてよければ止める**、の土台。
 #   usage: .claude/skills/ec2-chrome/ec2_exec.sh <remote-script-file> [exec-timeout-seconds]
+#   列は EC2_QUEUE_LANE（既定 exec。doneru-cookie の入口は doneru を渡す）
 #
-# 起きっぱなしの箱を何回にも分けて触るときは ec2.py run を使う（こちらは止める）。
-# 起こしたあと、実行の前に cdp.py を EC2 へ置き直す（リポジトリの版と食い違わないように）。
+# 起きっぱなしの箱を何回にも分けて触るときは ec2.py run を使う。
+# 起こしたあと、実行の前に cdp.py を EC2 へ置き直す（リポジトリの版と食い違わないように。EC2 のほうが新しければ置かない）。
+#
+# **止めるのは ec2.py stop を通す（2026-10-24）。** 前はここで無条件に stop-instances を打っていて、
+# ほかの担当やあやとが使っている最中でも止めていた。いまは、ほかの SSM・鍵・遠隔デスクトップ・札
+# （ec2-queue）を見てから止め、使っている人が居れば止めずに「idle-stop に任せる」とログに書く
+# （誰も使わなくなって30分で、EC2 の上の見張りが止める）。
 #
 # **スクラッチパッドに毎回コピーを作らず、必ずこの固定パスから実行すること。**
 # 権限クラシファイアは「その場で生成した名前の無いスクリプト」を繰り返しブロックする。
@@ -21,68 +27,59 @@ REGION="${EC2_CHROME_REGION:-ap-northeast-1}"
 AWSP="aws --profile sandbox --region $REGION"
 LOG="${EC2_CHROME_LOG:-/tmp/ec2_exec.log}"
 PARAMS_FILE="${EC2_CHROME_PARAMS:-/tmp/ec2_exec_params.json}"
-: > "$LOG"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+EC2PY="$HERE/ec2.py"
+LANE="${EC2_QUEUE_LANE:-exec}"
 log() { echo "[$(date -u +%H:%M:%S)] $*" | tee -a "$LOG"; }
 
-STOP_DONE=0
-cleanup() {
-  local exit_code=$?
-  if [ "$STOP_DONE" -eq 0 ]; then
-    STOP_DONE=1
-    log "cleanup: stopping $INSTANCE_ID (trigger: exit code $exit_code)"
-    timeout 60 $AWSP ec2 stop-instances --instance-ids "$INSTANCE_ID" >>"$LOG" 2>&1
-    timeout 300 $AWSP ec2 wait instance-stopped --instance-ids "$INSTANCE_ID" >>"$LOG" 2>&1
-    final_state=$(timeout 30 $AWSP ec2 describe-instances --instance-ids "$INSTANCE_ID" \
-      --query 'Reservations[0].Instances[0].State.Name' --output text 2>>"$LOG")
-    log "final state: $final_state"
-    if [ "$final_state" != "stopped" ]; then
-      log "*** WARNING: 停止確認に失敗。AWSコンソールで手動確認・停止すること: $INSTANCE_ID ***"
+if [ "${EC2_EXEC_INNER:-}" != 1 ]; then
+  # ---- 外側: 札を持って内側を回し、返したあとで、止めてよければ止める ----
+  : > "$LOG"
+  STOP_DONE=0
+  cleanup() {
+    local exit_code=$?
+    if [ "$STOP_DONE" -eq 0 ]; then
+      STOP_DONE=1
+      log "cleanup: 止めてよいかを見てから止める（trigger: exit code $exit_code）"
+      local out rc=1 try
+      for try in 1 2; do
+        out=$(timeout 600 python3 "$EC2PY" stop 2>&1); rc=$?
+        printf '%s\n' "$out" | tee -a "$LOG"
+        [ "$rc" -eq 0 ] && break
+        # 終わったばかりのコマンドの worker が少し残っていることがある。1回だけ置いて見直す
+        [ "$try" -eq 1 ] && { log "止めなかった。${EC2_EXEC_RETRY_S:-20}秒おいて、もう1回だけ見る"; sleep "${EC2_EXEC_RETRY_S:-20}"; }
+      done
+      final_state=$(timeout 30 $AWSP ec2 describe-instances --instance-ids "$INSTANCE_ID" \
+        --query 'Reservations[0].Instances[0].State.Name' --output text 2>>"$LOG")
+      log "final state: $final_state"
+      if [ "$rc" -ne 0 ]; then
+        log "止めなかった: ほかの人が使っている（理由は上）。止めるのは idle-stop に任せる（誰も使わなくなって30分で EC2 の上の見張りが止める）"
+      elif [ "$final_state" != "stopped" ]; then
+        log "*** WARNING: 停止確認に失敗。AWSコンソールで手動確認・停止すること: $INSTANCE_ID ***"
+      fi
     fi
-  fi
-  log "=== RUN FINISHED (exit $exit_code) ==="
-  exit "$exit_code"
-}
-trap cleanup EXIT INT TERM
+    log "=== RUN FINISHED (exit $exit_code) ==="
+    exit "$exit_code"
+  }
+  trap cleanup EXIT INT TERM
+  [ -e "$REMOTE_FILE" ] || { log "remote script/dir $REMOTE_FILE is missing"; exit 1; }
+  log "=== 列 $LANE の札を取って回す（EC2 が止まっていれば起こす） ==="
+  # 札の待ち・心拍・返すのは ec2.py hold（心拍はそのプロセスの中のスレッド。切り離した裏では打たない）
+  python3 "$EC2PY" hold "$LANE" --who "ec2_exec:$(basename "$REMOTE_FILE")" \
+    --purpose "ec2_exec.sh $(basename "$REMOTE_FILE")" -- env EC2_EXEC_INNER=1 bash "$0" "$@" 2> >(tee -a "$LOG" >&2)
+  exit $?
+fi
 
-[ -e "$REMOTE_FILE" ] || { log "remote script/dir $REMOTE_FILE is missing"; exit 1; }
+# ---- 内側: ec2.py hold の中で回る（EC2 は起きていて、EC2_QUEUE_TICKET に札がある） ----
+log "=== 札: ${EC2_QUEUE_TICKET:-（なし）} ==="
 
-# 直前の回の stop がまだ進行中だと start-instances は IncorrectInstanceState で即死する。
-log "=== pre-flight: waiting for a startable state ==="
-for i in $(seq 1 30); do
-  CUR=$(timeout 30 $AWSP ec2 describe-instances --instance-ids "$INSTANCE_ID" \
-    --query 'Reservations[0].Instances[0].State.Name' --output text 2>>"$LOG")
-  case "${CUR:-unknown}" in
-    stopped | running) break ;;
-    *) log "current state: $CUR -- waiting"; sleep 10 ;;
-  esac
-done
-log "pre-flight state: $CUR"
-
-log "=== start-instances ==="
-timeout 60 $AWSP ec2 start-instances --instance-ids "$INSTANCE_ID" >>"$LOG" 2>&1 || { log "start failed"; exit 1; }
-timeout 300 $AWSP ec2 wait instance-running --instance-ids "$INSTANCE_ID" >>"$LOG" 2>&1 || { log "never running"; exit 1; }
-
-log "=== polling SSM Online (max 5min) ==="
-ONLINE=0
-for i in $(seq 1 30); do
-  STATUS=$(timeout 20 $AWSP ssm describe-instance-information \
-    --filters "Key=InstanceIds,Values=$INSTANCE_ID" \
-    --query 'InstanceInformationList[0].PingStatus' --output text 2>>"$LOG")
-  if [ "$STATUS" = "Online" ]; then ONLINE=1; break; fi
-  sleep 10
-done
-[ "$ONLINE" -eq 1 ] || { log "SSM never came online -- ec2-ssm-role が外れていないか確認"; exit 1; }
-log "SSM online after ~$((i * 10))s"
-
-# cdp.py（Chrome を CDP で触る道具）を毎回置き直す。EC2 に残っている古い版で動かさない
-CDP_SRC="$(dirname "$0")/cdp.py"
+# cdp.py（Chrome を CDP で触る道具）を毎回置き直す。EC2 に残っている古い版で動かさない。
+# **ただし EC2 のほうが新しい版（番号が大きい）なら置かない**（下げない）。比べるのは ec2.py put
+# （cdp_heal.sh の place）。前はここで直に base64 -d > cdp.py と書いていて、古い枝のこの道具が
+# 札を取らない版を書き戻していた（2026-10-24。いまは EC2 の cdp-heal が戻す）
+CDP_SRC="$HERE/cdp.py"
 if [ -f "$CDP_SRC" ]; then
-  jq -n --arg b "$(base64 -w0 "$CDP_SRC")" \
-    '{commands: ["mkdir -p /home/ubuntu/cdp && echo \($b) | base64 -d > /home/ubuntu/cdp/cdp.py && chown -R ubuntu:ubuntu /home/ubuntu/cdp && sha256sum /home/ubuntu/cdp/cdp.py"]}' > "$PARAMS_FILE"
-  SYNC_ID=$(timeout 30 $AWSP ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
-    --parameters "file://$PARAMS_FILE" --query 'Command.CommandId' --output text 2>>"$LOG")
-  sleep 4
-  log "cdp.py sync: $(timeout 30 $AWSP ssm get-command-invocation --command-id "$SYNC_ID" --instance-id "$INSTANCE_ID" --query StandardOutputContent --output text 2>>"$LOG" | cut -c1-16) (local $(sha256sum "$CDP_SRC" | cut -c1-16))"
+  log "cdp.py sync: $(timeout 300 python3 "$EC2PY" put "$CDP_SRC" /home/ubuntu/cdp/cdp.py 2>&1 | tail -1) (local $(sha256sum "$CDP_SRC" | cut -c1-16))"
 fi
 
 run_one_command() {
@@ -95,8 +92,14 @@ run_one_command() {
     '#TIMEOUT='*) THIS_TIMEOUT="${FIRST_LINE#'#TIMEOUT='}"; tail -n +2 "$SCRIPT_FILE" > /tmp/ec2_exec_body.sh; SCRIPT_FILE=/tmp/ec2_exec_body.sh ;;
   esac
 
-  jq -n --rawfile s "$SCRIPT_FILE" --arg t "$((THIS_TIMEOUT + 120))" \
+  # 札を EC2 の上のプロセスへ渡す（cdp.py の up() が、この札を他人の札と取り違えて待ち続けないように）
+  local WITH_TICKET
+  WITH_TICKET=$(mktemp)
+  { [ -n "${EC2_QUEUE_TICKET:-}" ] && printf 'export EC2_QUEUE_TICKET=%q EC2_QUEUE_WHO=%q\n' "$EC2_QUEUE_TICKET" "${EC2_QUEUE_WHO:-ec2_exec}"
+    cat "$SCRIPT_FILE"; } > "$WITH_TICKET"
+  jq -n --rawfile s "$WITH_TICKET" --arg t "$((THIS_TIMEOUT + 120))" \
     '{commands: [$s], executionTimeout: [$t]}' > "$PARAMS_FILE"
+  rm -f "$WITH_TICKET"
 
   log "--- send-command (timeout ${THIS_TIMEOUT}s): $1 ---"
   local CMD_ID
@@ -151,4 +154,4 @@ else
   run_one_command "$REMOTE_FILE" || log "*** single command did not succeed ***"
 fi
 
-log "=== done, cleanup (stop) will run now ==="
+log "=== done（札を返してから、外側が止めてよいかを見る） ==="

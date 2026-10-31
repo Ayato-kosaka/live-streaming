@@ -1,0 +1,151 @@
+# **ショート動画の道具の見張りを、ショートを触った PR だけで回す。**
+#
+# 品質チェック（`tools/shorts/qa/check.py`。19項目）の見張り2本は、本物の `render.py` で
+# 書き出した1本を14通りに壊し、**壊したところを見る検査だけが落ちる**ことを当てる
+# （元素材のカクつきと使い回しは、時間割と素材だけを差し替えた足11本で当てる）。
+# 書き出しと顔・透かしの検出で、2本あわせて7〜9分かかり、ffmpeg と OpenCV 4 が要る。
+# カットの長さ・似た見た目の連続・止め絵（2026-10-21）の足13本は、書き出しを通さない3本目
+# （`cuts_selftest.py`、1分ほど）に分けた。上の2本は1本 5分の上限の手前にいて、足を足す余地が無い。
+#
+# ## なぜ Selftests（`selftest.yml`）に入れないか
+#
+# あちらは全部の PR で走る。PR の多くは島（`site/`）の直しで、ショートには触らない。
+# そこに毎回7〜9分と ffmpeg の取り付けを足すと、ショートと関係ない PR まで遅くなる。
+# だから回し役（`python/selftest_runner.py`）の `SKIP` に理由つきで載せて
+# あちらでは外し、**ここで名指しで回す**。名指しにしてあるのは、見張りの棚卸し
+# （`python/watch_census_selftest.py`）が「どこからも走っていない見張り」を
+# ワークフローの `run:` の名前で数えるから——`find` で拾うと、数えられずに孤児になる。
+#
+# BGM の物差しの見張り（`tools/shorts/style/bgm_gap_selftest.py`、2026-10-16）も同じ形で
+# あちらから外し、ここで名指しで回す。こちらは数秒で遅くないが、Selftests に無い numpy が要る。
+#
+# ## いつ走るか
+#
+# `tools/shorts/` の下と、このファイルを変えた PR・master への push。
+# 品質チェックの線は `render.py`・`style.json`（どちらも `tools/shorts/render/`）に
+# ぶら下がるので、書き出しを直した PR でも走る。手で回すときは workflow_dispatch。
+name: ショートの道具の見張り
+
+on:
+  pull_request:
+    paths:
+      - "tools/shorts/**"
+      - ".github/workflows/shorts_selftest.yml"
+  push:
+    branches: [master]
+    paths:
+      - "tools/shorts/**"
+      - ".github/workflows/shorts_selftest.yml"
+  workflow_dispatch:
+
+# Selftests と同じ。PR は枝ごとに前の run を止めてよい。master は sha ごとに別の group にして、
+# 順番待ちの run が黙って差し替えられないようにする（`selftest.yml` の頭に経緯）
+concurrency:
+  group: shorts-selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  shorts-selftest:
+    runs-on: ubuntu-24.04
+    # 2本で7〜9分（4コアの箱で、ほかの書き出しと並んで 232秒と 252秒。2026-10-19）。
+    # 道具を入れるのに1分ほど。倍以上の余裕を見る
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # ffmpeg はランナーに入っていない。書体は M PLUS（書き出しの本物）を落とさず、
+      # DejaVu を見張りが同じ名前で置き直して使う（検査は字の形を見ない。和文は豆腐になる）。
+      # OpenCV は **5 未満**に止める。顔の検出に使う Haar の型が OpenCV 5 で削られた
+      # （5.0.0 の wheel に `cv2.data.haarcascades` の中身も `CascadeClassifier` も無い）。
+      # budoux は**要る**（書き出しが行を割り、字の改行の検査 line_breaks が割ってよい所を決める。無いと書き出しが止まる）。
+      # 版は 0.9.3 に止める。割ってよい所の線（仮名どうしの点）をこの版で測った。版が変わると文節の切れ目が変わり
+      # （0.10.0 は「あり？なし？」「手間すぎるやろ」を 0.9.3 と違う所で切った）、書き出しの Actions（shorts_render.yml）と
+      # 作業箱の版とも食い違う（tools/shorts/qa/linebreak.py の BUDOUX_PIN）。
+      # PyYAML は取り込みの判定の見張り（`ingest/gate_selftest.py`）が自分のワークフローを
+      # 読むのに要る。Selftests は入れているので、あちらでは落ちずにここだけ落ちていた
+      # 2026-10-23 に、ここの apt が止まって job の上限20分まで動かず、見張りが1本も回らなかった（#1015）。
+      # 取り込み・書き出しと同じく、コマンドごとに上限を置いて1回だけ取り直し（retry.sh）、ffmpeg は
+      # ffmpeg.sh（入っていれば apt に触らない・man-db の索引を止める・詰まったら静的ビルド）で入れる
+      - name: 道具を入れる（ffmpeg・OpenCV 4）
+        timeout-minutes: 12
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          bash tools/shorts/ingest/ffmpeg.sh fonts-dejavu-core
+          ffmpeg -version > /dev/null
+          $R 180 python -m pip install --upgrade pip
+          $R 300 pip install 'opencv-python-headless==4.12.0.88' numpy Pillow 'budoux==0.9.3' PyYAML
+
+      # 落ちた1本で止めない（`!cancelled()`）。全部回してから、まとめて落ちる
+      - name: 品質チェックの見張り（音・字・形式）
+        run: python3 tools/shorts/qa/qa_selftest.py
+
+      - name: 品質チェックの見張り（絵・長さ）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/qa/qa_video_selftest.py
+
+      # 同じカットの長さ・似た見た目の連続・止め絵（あやと 2026-10-21、#959）。場面の絵と時間割だけで当てる
+      - name: 品質チェックの見張り（カットの選び方）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/qa/cuts_selftest.py
+
+      # 参考の BGM の大きさを測る物差し（`tools/shorts/style/bgm_gap.py`）。作った声と BGM を
+      # 既知の差で混ぜて ±1.5dB に入るかを見る。numpy だけで数秒。Selftests は numpy を
+      # 入れないので、回し役の SKIP に理由つきで載せ、ここで名指しで回す
+      - name: BGM の物差しの見張り（声と BGM の差）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/style/bgm_gap_selftest.py
+
+      # 題の札の国旗（`tools/shorts/render/textlook.py` が `flags/` の絵を字の中に置く）。本物の書き出しの
+      # 道具で題の札を描き、国旗の色の画素が1行目の頭に出るかを数え、守りを1つずつ外して落ちるかを見る。
+      # numpy と OpenCV が要るので、BGM の物差しと同じく回し役の SKIP に載せ、ここで名指しで回す
+      - name: 題の札の国旗の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/flag_selftest.py
+
+      # BGM の頭の無音を飛ばす・最後の画に注の札（CTA）を出す（あやと F-041・F-042、2026-10-21）。
+      # 合成の素材で書き出しの音の束と時間割を見て、本物の書き出し（下書き）を1回通す。守り8つを1つずつ外して1分ほど
+      - name: BGM の頭と最後の札の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/bgm_cta_selftest.py
+
+      # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
+      # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
+      # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
+      - name: 原稿の機械の検査の見張り（帳面の規則）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/script/lint_selftest.py
+
+      - name: あやとの指摘の帳面の見張り（形・名指し）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/feedback/ledger_selftest.py
+
+      - name: 帳面の取りこぼしの見張りの見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/feedback/watch_selftest.py
+
+      # 取り込みの見張りは Selftests でも走るが、ショートを触った PR では
+      # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
+      # 上で名指しで済ませたものは除く。1本も拾えなければ 2 で落とす（0本で緑にしない）
+      - name: ほかのショートの見張り（取り込み）
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          mapfile -d '' found < <(find tools/shorts -name '*_selftest.py' \
+            ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
+            ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
+            ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
+            ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
+            ! -path 'tools/shorts/feedback/watch_selftest.py' \
+            -print0 | sort -z)
+          if [ "${#found[@]}" -eq 0 ]; then
+            echo "::error::tools/shorts の見張りを1本も拾えなかった"
+            exit 2
+          fi
+          python3 python/selftest_runner.py "${found[@]}"

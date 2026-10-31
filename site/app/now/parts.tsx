@@ -9,7 +9,7 @@ import Walked from "@/components/atlas/Walked";
 import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
-import { stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type TravelNow } from "@/lib/stay";
+import { stayAsPlace, stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type TravelNow } from "@/lib/stay";
 
 /**
  * 「いまどこ」の中身のうち、「いる国」に関わるところ。
@@ -25,6 +25,9 @@ import { stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type Trave
  *
  * 国は Firestore の `current.place`（人が打った「いまどこ」）から引く。
  * 焼き込みだと、あやとが国境を越えた日から次のビルドまで嘘をつく。
+ *
+ * **その字が古くなったら、国は機械が受ける**（`lib/stay.ts` の `stayAsPlace`）。
+ * 街までは知らないので、人の字が新しいうちは人が勝つ（#808）。
  *
  * **島の景色（`current.theme`）からは引かない。** 景色に入れてよいのは
  * `georgia` / `nordic` / `desert` の3つで、`nordic` は国ではない。
@@ -54,6 +57,12 @@ function useCurrent(): {
 } {
   const [place, setPlace] = useState<string>(NOW_FALLBACK.place);
   const [updatedAt, setUpdatedAt] = useState<string | undefined>(NOW_FALLBACK.updatedAt);
+  /* 人の字が古くなった日の受け皿（`lib/stay.ts` の `stayAsPlace`）。
+     **帯（`components/live/NowLive.tsx`）と同じものを見る**——片方だけが
+     機械の答えに入れ替わると、1つの面の上と下で国が違う。
+     日で変わるので、画面が出てから引く（静的書き出し）。 */
+  const [fb, setFb] = useState<{ name: string; slug: string } | null>(null);
+  useEffect(() => setFb(stayAsPlace(updatedAt, new Date())), [updatedAt]);
   useEffect(() => {
     getState()
       .then((s) => {
@@ -67,7 +76,7 @@ function useCurrent(): {
            前の国の旗と見どころを「いま」として並べない。** */
       });
   }, []);
-  const here = placeCountry(place);
+  const here = fb ?? placeCountry(place);
   return { country: here ? countryBySlug(here.slug) : undefined, here, updatedAt };
 }
 
@@ -205,7 +214,7 @@ function NowTrip({ trip, here }: { trip: TravelNow | null; here: PlaceCountry | 
           <img src="/sprites/tent.webp" alt="" />
           <span>
             <b>{trip.name}の島へ</b>
-            <i>この旅のこと、旅の6カ国、旅のしおり</i>
+            <i>{trip.sub}</i>
           </span>
           <Icon name="right" size={14} />
         </Link>

@@ -1,0 +1,116 @@
+{
+ "items": {
+  "castle_moon": {
+   "file": "castle_moon.png",
+   "size": [
+    874,
+    582
+   ],
+   "content": [
+    6,
+    6,
+    868,
+    576
+   ],
+   "about": "古城のシルエットと、後ろの満月（1枚）。下の辺はまっすぐ。窓が黄色く光る"
+  },
+  "carpet_roll": {
+   "file": "carpet_roll.png",
+   "size": [
+    782,
+    312
+   ],
+   "content": [
+    6,
+    6,
+    776,
+    306
+   ],
+   "about": "くるくる巻いた赤じゅうたん（両端に金のふさ）。転がって伸びる前の姿"
+  },
+  "carpet_strip": {
+   "file": "carpet_strip.png",
+   "size": [
+    225,
+    491
+   ],
+   "content": [
+    6,
+    6,
+    219,
+    485
+   ],
+   "about": "伸びた赤じゅうたんの帯。縦につなげて伸ばす（上下の辺はまっすぐ）"
+  },
+  "carpet_end": {
+   "file": "carpet_end.png",
+   "size": [
+    450,
+    425
+   ],
+   "content": [
+    5,
+    5,
+    445,
+    420
+   ],
+   "about": "赤じゅうたんの手前の端（金のふさ）。上の辺の幅が carpet_strip と同じになるよう縮めてある"
+  },
+  "confetti_star": {
+   "file": "confetti_star.png",
+   "size": [
+    194,
+    190
+   ],
+   "content": [
+    6,
+    6,
+    188,
+    184
+   ],
+   "about": "金の紙吹雪（星）"
+  },
+  "confetti_heart": {
+   "file": "confetti_heart.png",
+   "size": [
+    184,
+    162
+   ],
+   "content": [
+    6,
+    6,
+    178,
+    156
+   ],
+   "about": "金の紙吹雪（ハート）"
+  },
+  "confetti_sparkle": {
+   "file": "confetti_sparkle.png",
+   "size": [
+    167,
+    212
+   ],
+   "content": [
+    6,
+    6,
+    161,
+    206
+   ],
+   "about": "金の紙吹雪（ひし形のきらめき）"
+  },
+  "confetti_ribbon": {
+   "file": "confetti_ribbon.png",
+   "size": [
+    145,
+    276
+   ],
+   "content": [
+    6,
+    6,
+    139,
+    270
+   ],
+   "about": "金の紙吹雪（丸まったリボン）"
+  }
+ }
+}

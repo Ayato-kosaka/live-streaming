@@ -1,0 +1,314 @@
+{
+ "id": "A",
+ "version": "p3",
+ "title_card": "国際バス出発25分前に\nケバブ頼んだらまさかの事態！",
+ "title_card_seconds": 4.0,
+ "narration_cps_target": 9.0,
+ "rows": [
+  {
+   "line": "国際バス出発25分前に、ケバブ頼んだらまさかの事態！",
+   "src": [
+    "0:53:10"
+   ],
+   "same_as_prev": false,
+   "visual": "回る肉の串",
+   "pic_note": "回る肉の串（0:53:10）",
+   "big": false,
+   "card": true
+  },
+  {
+   "line": "今日はアルバニアから、北マケドニアへ移動の日。",
+   "src": [
+    "0:41:10"
+   ],
+   "same_as_prev": false,
+   "visual": "朝のバスターミナル",
+   "pic_note": "朝のバスターミナル（0:41:10）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "残った現金で、朝ごはん買うことにしたんやけど、",
+   "src": [
+    "0:45:30"
+   ],
+   "same_as_prev": false,
+   "visual": "手持ちの現金を数える",
+   "pic_note": "手持ちの現金を数える（0:45:30）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "選んだのは、550円のケバブ。",
+   "src": [
+    "0:48:40"
+   ],
+   "same_as_prev": false,
+   "visual": "メニューの 280 Lekë の行",
+   "pic_note": "メニューの 280 Lekë の行（0:48:40）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "ほんで注文したら……",
+   "src": [
+    "0:50:51"
+   ],
+   "same_as_prev": false,
+   "visual": "空のフライヤーのかご",
+   "pic_note": "空のフライヤーのかご（0:50:51）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "ポテト、今から揚げるん！？",
+   "src": [
+    "0:56:34.9–0:56:36.15"
+   ],
+   "same_as_prev": false,
+   "visual": "揚げ始めたフライヤー",
+   "pic_note": "揚がったポテトの箱とフライヤー（0:56:34.9〜36.15、寄り）",
+   "big": true,
+   "card": false,
+   "big_style": "shake_white"
+  },
+  {
+   "line": "出発まで、あと25分やで。",
+   "src": [
+    "0:53:05"
+   ],
+   "same_as_prev": false,
+   "visual": "店の奥の串と店員さんの後ろ姿",
+   "pic_note": "店の奥の串と店員さんの後ろ姿（0:53:05）",
+   "big": false,
+   "card": false,
+   "mood": "anxious"
+  },
+  {
+   "line": "車内で食べたら怒られるやろし、",
+   "src": [
+    "0:53:05"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "anxious"
+  },
+  {
+   "line": "心配心配心配……",
+   "src": [
+    "0:53:12"
+   ],
+   "same_as_prev": false,
+   "visual": "フライヤー",
+   "pic_note": "フライヤー（0:53:12）",
+   "big": false,
+   "card": false,
+   "mood": "anxious",
+   "face_overlap_ok": {
+    "frames": 2,
+    "why": "上を向いた横顔で、鼻の下が画面の y 1203 まで来る。鼻の下から安全域の下（1248）まで 33px しか無く、48px まで小さくしても置けない。下の端がいちばん重ならない（2コマ）"
+   }
+  },
+  {
+   "line": "と思ってたら、パンをギュッとプレスして、",
+   "src": [
+    "0:54:40.05–0:54:40.98",
+    "0:56:52.6–0:56:53.4"
+   ],
+   "same_as_prev": false,
+   "visual": "パンをプレス",
+   "pic_note": "プレス機（0:54:40.05〜40.98）→ プレス機へ運ぶ（0:56:52.6〜53.4）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "意外と早い！",
+   "src": [
+    "0:56:40"
+   ],
+   "same_as_prev": false,
+   "visual": "挟む手元",
+   "pic_note": "挟む手元（0:56:40）",
+   "big": true,
+   "card": false,
+   "big_style": "brush_zoom"
+  },
+  {
+   "line": "揚げたてポテトに赤いソースで、完成。",
+   "src": [
+    "0:56:44.2–0:56:45.4",
+    "0:58:03.4–0:58:04.2"
+   ],
+   "same_as_prev": false,
+   "visual": "包む",
+   "pic_note": "ポテトにソース（0:56:44.2〜45.4）→ 包みの中の完成（0:58:03.4〜04.2）",
+   "big": false,
+   "card": false,
+   "mood": "joy"
+  },
+  {
+   "line": "この時点で、あと20分。",
+   "src": [
+    "0:58:05"
+   ],
+   "same_as_prev": false,
+   "visual": "アルミ包みからのぞくケバブ",
+   "pic_note": "アルミ包みからのぞくケバブ（0:58:05）",
+   "big": false,
+   "card": false,
+   "mood": "anxious"
+  },
+  {
+   "line": "急いでかぶりつく。",
+   "src": [
+    "0:59:22"
+   ],
+   "same_as_prev": false,
+   "visual": "かぶりつく",
+   "pic_note": "かぶりつく（0:59:22）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "……うまっ。でも味わってる暇ない。",
+   "src": [
+    "0:59:35"
+   ],
+   "same_as_prev": false,
+   "visual": "焼き目のパン",
+   "pic_note": "焼き目のパン（0:59:35）",
+   "big": false,
+   "card": false,
+   "mood": "joy"
+  },
+  {
+   "line": "あった、北マケドニア行きの看板！",
+   "src": [
+    "1:07:20"
+   ],
+   "same_as_prev": false,
+   "visual": "旗の並ぶ行き先の看板",
+   "pic_note": "旗の並ぶ行き先の看板（1:07:20）",
+   "big": false,
+   "card": false,
+   "mood": "excited"
+  },
+  {
+   "line": "乗るのは、このミニバン。",
+   "src": [
+    "1:08:40"
+   ],
+   "same_as_prev": false,
+   "visual": "白いミニバン",
+   "pic_note": "白いミニバン（1:08:40）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "席は早いもん勝ちらしい。",
+   "src": [
+    "1:09:29.0–1:09:30.4"
+   ],
+   "same_as_prev": false,
+   "visual": "乗り込む",
+   "pic_note": "ミニバンの座席（1:09:29.0〜30.4）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "中、満員やん……",
+   "src": [
+    "1:09:43"
+   ],
+   "same_as_prev": false,
+   "visual": "満員の通路",
+   "pic_note": "満員の通路（1:09:43。乗客の顔は小さくぼかす）",
+   "big": false,
+   "card": false,
+   "mood": "gloom"
+  },
+  {
+   "line": "空いてる？空いてる？",
+   "src": [
+    "1:09:43"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "anxious"
+  },
+  {
+   "line": "最後の1席やった！",
+   "src": [
+    "1:09:50"
+   ],
+   "same_as_prev": false,
+   "visual": "窓際の1人席に座る",
+   "pic_note": "窓際の1人席に座る（1:09:50）",
+   "big": true,
+   "card": false,
+   "big_style": "glow_pink"
+  },
+  {
+   "line": "あと一歩遅かったら、知らん人と相席やったわ。",
+   "src": [
+    "1:10:00"
+   ],
+   "same_as_prev": false,
+   "visual": "ほっとした顔",
+   "pic_note": "ほっとした顔（1:10:00）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "正直もうちょいええバス想像してたけど、座れたら勝ち。",
+   "src": [
+    "1:10:05"
+   ],
+   "same_as_prev": false,
+   "visual": "親指を立てる",
+   "pic_note": "親指を立てる（1:10:05）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "北マケドニアまで、あと4時間。",
+   "src": [
+    "1:25:10"
+   ],
+   "same_as_prev": false,
+   "visual": "走り出したバスの窓の外",
+   "pic_note": "走り出したバスの窓の外（1:25:10）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "みんなは出発ギリギリでも食べる派？我慢する派？",
+   "src": [
+    "1:25:10"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  }
+ ]
+}

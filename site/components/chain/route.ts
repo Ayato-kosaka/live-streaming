@@ -1,26 +1,17 @@
-import { CHAPTERS, NOW_CHAPTER, type Chapter } from "@/content/chapters";
+import { CHAPTERS, type Chapter } from "@/content/chapters";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 
 /**
- * 島の行き先。
+ * 島の行き先は `content/chapters.ts` に移した。**ここからは再輸出だけ。**
  *
- * **いまいる島はトップそのもの**（`docs/island-atlas.md` 7章）。
- * だから連なりからは `/` へ送る。それ以外の章は、ぜんぶ
- * `/island/<章>/` に**歩ける島**が建っている。
+ * 中身（いまいる島は `/`、ほかは `/island/<章>`）も、`now` を渡せる理由も
+ * あちらの `chapterHref` に書いてある。
  *
- * `now` を渡せるようにしてあるのは、**「いまいる島」が日付で変わるから**。
- * 焼いた答え（`NOW_CHAPTER`＝焼いた時刻の島）だけで決めると、北欧に出発した日から
- * 誰かがビルドし直すまで、行き先が古いままになる。
- * 画面（クライアント）は `chapterNow(new Date())` を渡すこと。
- *
- * **渡さなかったときの答えは、焼いた時刻で固定されている。** そこを
- * `chapterNow()`（引数なし）にすると、ブラウザでは開いた瞬間の時計で数え直されて、
- * 焼いた HTML と最初の描画で `href` が食い違う（`content/chapters.ts` の
- * `NOW_CHAPTER`／`docs/island-misses.md` #30）。
+ * 移したのは、このファイルが `chapterStreams.ts`（毎晩焼く大きい表）を読むから。
+ * **行き先を1つ引きたいだけの面が、それを束ごと抱き込んでいた。**
+ * 既にここから読んでいる面があるので、名前はそのまま通す。
  */
-export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
-  return c.slug === now.slug ? "/" : `/island/${c.slug}`;
-}
+export { chapterHref } from "@/content/chapters";
 
 /**
  * `/island/<章>/` を持つ章 = **全部。**

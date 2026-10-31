@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
@@ -8,11 +9,13 @@ import Flag from "@/components/ui/Flag";
 import GuideNow from "@/components/nordic/GuideNow";
 import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "nordic",
   title: "旅のしおり — 北欧ヒッチハイク",
   // 品数は手で書かない（おみやげは13品なのに「20品」と書いてあった）。しおりから数える
   description: `お金、通信、服装、サウナの入り方、食べもの${G.food.length}品、おみやげ${G.souvenir.length}品、困ったとき。北欧とバルト三国を旅する前に読むもの。`,
-};
+  path: "/nordic/guide",
+});
 
 /**
  * 旅のしおり。
@@ -106,7 +109,6 @@ function Chapter({
 export default function NordicGuidePage() {
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },
@@ -151,7 +153,7 @@ export default function NordicGuidePage() {
 
         <Chapter id="clothes" n={4} title="服装" note="季節ごとの重ね方と、持ち物リスト">
           <Notes items={G.clothes.seasons} />
-          <h3 className="gsub">持ち物リスト</h3>
+          <h2 className="gsub">持ち物リスト</h2>
           <ul className="glist">
             {G.clothes.checklist.map((p) => (
               <li key={p}>{p}</li>
@@ -174,13 +176,13 @@ export default function NordicGuidePage() {
 
         <Chapter id="sauna" n={6} title="サウナの入り方" note="手順、やってはいけないこと、ことば">
           <Notes items={G.sauna.steps} />
-          <h3 className="gsub">やってはいけないこと</h3>
+          <h2 className="gsub">やってはいけないこと</h2>
           <ul className="glist is-dont">
             {G.sauna.donts.map((p) => (
               <li key={p}>{p}</li>
             ))}
           </ul>
-          <h3 className="gsub">サウナのことば</h3>
+          <h2 className="gsub">サウナのことば</h2>
           <div className="gcards">
             {G.sauna.words.map((w) => (
               <div key={w.word} className="gcard">
@@ -235,14 +237,14 @@ export default function NordicGuidePage() {
         <Chapter id="phrases" n={10} title="現地のことば" note={`${G.phrases.length}言語。挨拶と、通じる一言`}>
           {G.phrases.map((p) => (
             <div key={p.lang} className="gphrase">
-              <h3 className="gsub" id={phraseId(p.country)}>
+              <h2 className="gsub" id={phraseId(p.country)}>
                 {/* 国の名前は出さない。**5言語とも「◯◯語」なので、
                     札に国名を足すと「フィンランド語 フィンランド」になる**
                     （本番で実測）。旗は字ではないので重ならず、
                     走っている車の中でも探す手がかりになる。 */}
                 {countrySlug(p.country) && <Flag slug={countrySlug(p.country)!} size={22} />}
                 {p.lang}
-              </h3>
+              </h2>
               <p className="gpnote">{p.note}</p>
               <div className="gwords">
                 {p.items.map((w) => (

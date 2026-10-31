@@ -3,6 +3,7 @@ import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
+import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -94,6 +95,28 @@ export const SHELVES: Shelf[] = [
       note: t.short,
       q: q(t.name, t.short, t.lead, t.slug),
     })),
+  },
+  {
+    id: "months",
+    title: "月ごとのふりかえり",
+    /* **数も時制も書かない**（`docs/island-standards.md` 16章）。
+       月は毎月1つ増えるので、ここに数を焼くと翌月から嘘になる。
+       数は `/months` の中身が数える。 */
+    note: "ひと月ずつの記録。出席・投げ銭・タップ",
+    items: [
+      {
+        href: "/months",
+        name: "月ごとのふりかえり",
+        note: "ひと月ずつ、ならべて見る",
+        q: q("月ごとのふりかえり months 月末 ふりかえり 振り返り 授賞式 タップ 出席 投げ銭 ランキング"),
+      },
+      ...MONTHS.map((m) => ({
+        href: `/months/${m.key}`,
+        name: `${m.year}年${m.month}月のふりかえり`,
+        note: `${m.streams.length}本・${m.people}人`,
+        q: q(`${m.year}年${m.month}月 ${m.key} ふりかえり 月末 授賞式`),
+      })),
+    ],
   },
   {
     id: "kitchen",
@@ -217,9 +240,9 @@ export const SHELVES: Shelf[] = [
   {
     id: "atlas",
     title: "島の連なり",
-    note: "旅の章ごとに島が1つ建っている",
+    note: "これまで渡ってきた島、ぜんぶ",
     items: [
-      { href: "/atlas", name: "島の地図", note: "章ごとの島が、日付順に並ぶ", q: q("島の地図 atlas 連なり 章") },
+      { href: "/atlas", name: "島の地図", note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas 連なり 章") },
       ...ISLE_CHAPTERS.map((c) => ({
         href: `/island/${c.slug}`,
         name: c.name,
@@ -240,23 +263,35 @@ export const SHELVES: Shelf[] = [
     ],
   },
   {
-    /* グッズ（2026-10-08）。**面は1枚だが、棚を立てる。**
+    /* グッズ（2026-10-08）。**「そのほか」に混ぜずに、棚を立てる。**
        「そのほか」に混ぜると、デザインの見本と同じ段に見える。あちらは
        作る側の棚で、こちらは持って帰る人の棚。用事がまるごと違う。
-       ステッカーが増えたら、1枚ずつの面ではなく `/goods#sticker` の中で増える。 */
+       **ステッカーは自分の面を持った**（2026-10-13、`/goods/stickers`）。
+       増えるのはその面の中なので、棚に並ぶ行き先はこれ以上増えない。 */
     id: "goods",
     title: "グッズ",
     /* **時点を言わない**（`docs/island-standards.md` 16章）。
        「いま3つ」と書くと、1つ増えた日から嘘になる。 */
-    note: "島から持って帰れるものと、いっしょに決めるもの",
+    note: "島から持って帰れるものと、お店で買えるもの",
     items: [
       {
         href: "/goods",
         name: "あやとグッズ",
-        note: "ステッカー・カード・キャラクター・カレンダー・LINEスタンプ・SUZURI",
+        note: "ステッカー・カード・キャラクター・LINEスタンプ・SUZURI",
         q: q(
           "あやとグッズ goods グッズ ステッカー sticker シール LINEスタンプ line stamp " +
             "スタンプ カレンダー calendar SUZURI suzuri トートバッグ tシャツ 透かし 無料",
+        ),
+      },
+      {
+        href: "/goods/stickers",
+        name: "あやとステッカー",
+        /* **枚数を書かない**（`docs/island-standards.md` 16章）。
+           1枚足した日から嘘になる */
+        note: "落として、好きなところに貼れる1枚",
+        q: q(
+          "あやとステッカー sticker シール 無料 ダウンロード 落とす 貼る 透過 " +
+            "印刷 グッズ 図鑑 ステッカー帳",
         ),
       },
     ],
@@ -269,6 +304,16 @@ export const SHELVES: Shelf[] = [
       /* 「企画のページを作る」（`/next/new`）は、ここから外した（2026-10-01）。
          視聴者さんが企画を出す道を畳んだので、面は `/board` へ送るだけの
          1枚になっている。索引から名指しで呼ぶと、押した先で送り返される。 */
+      /* 島を直したところ（2026-10-13）。**入口はここと、掲示板の
+         「あやと島へ」の札だけ**（`content/themes.ts`）。表紙にも島にも
+         出さない——あやとの言葉「気にしてる人少ないのでさりげなく」。
+         探しに来た人が1回で着ければ足りる。 */
+      {
+        href: "/updates",
+        name: "島をなおしたところ",
+        note: "どこが変わったか。こうしてほしいも、ここから",
+        q: q("島をなおしたところ updates 変わった 直した 要望 改良 お知らせ"),
+      },
       {
         href: "/design",
         name: "デザインの見本",

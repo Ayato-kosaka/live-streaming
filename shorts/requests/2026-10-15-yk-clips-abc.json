@@ -1,0 +1,12 @@
+{
+ "mode": "clips",
+ "videos": ["yk-by7R7iPA"],
+ "ranges": [
+  "0:13:29-0:14:05", "0:14:10-0:14:38", "0:15:42-0:16:23", "0:16:43-0:17:44",
+  "0:41:08-0:41:18", "0:45:28-0:45:38", "0:46:18-0:47:13", "0:48:38-0:48:48",
+  "0:50:43-0:51:08", "0:53:00-0:53:16", "0:56:19-0:57:30", "0:58:03-0:58:13",
+  "0:59:20-1:00:20", "1:02:39-1:03:25", "1:07:18-1:07:28", "1:08:38-1:08:48",
+  "1:09:41-1:10:13", "1:25:08-1:25:18"
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAtEvgLsVXVjIhViLdWffR\nn0W3pIBU562Me1uGj0UeA7Z439yxhhsgGuA/4eQtLk0p3xrWBD8pPW+X1yEBvEd1\nKwNvPQIRJVJKPlxkSK70+yiEyeZadqXdopyTK3L+4PakgSas5fl/8NdnLSYDm2te\nFT3KilgAYoEU0QUP7B+h9K5vh/g918XQXlm3KNjkGTiLzp+znQyOIbn3xl8d4xjK\nFzuMJaJs0ZWolJxomHPWB0C4zrz5HtKyOnRiQp+4l9v4QYM6tLfwsbKVqGplezrx\nb+VMigLLgRrkrTvW/MsR5TFWzM8TJJ30s7aunkvMJYOC10NmNZUN2f2nW+59IO3s\nK8QK9qNOwkkl8pGKJrjXi4EgbFmf9PoU11rpeZaJlI1kdQQLLvMsil9XI4VSiaYv\nIUnzZ38CKcoRcvWCsX9d8LocLuuewugkG78dW+GjxkoITezvZjZWcNWI87Im8NyT\no45KJW44QkwjdRa5G0DHt0mlPpQPiNF3pFt/bzj7XFFdAgMBAAE=\n-----END PUBLIC KEY-----\n"
+}

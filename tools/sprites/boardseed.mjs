@@ -29,6 +29,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readArray } from "./tsread.mjs";
 
 /**
  * いちばん上の宛先の id を、**表そのものから**取る。
@@ -44,9 +45,16 @@ const headTheme = () => {
     join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "content", "themes.ts"),
     "utf8",
   );
-  const m = src.slice(src.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/);
-  if (!m) throw new Error("content/themes.ts から1件目の宛先の id が読めなかった");
-  return m[1];
+  /* 読み方は `tsread.mjs` の1本（#694）。前は「`export const THEMES` から先で
+     最初に当たった `id:`」という切り方で、表の外の字でも当たりえた。 */
+  const got = readArray(src, "THEMES", { keys: ["id"], idKey: "id" });
+  if (!got.rows.length || got.missed) {
+    throw new Error(
+      `content/themes.ts から1件目の宛先の id が読めなかった` +
+        `（名乗り ${got.declared} / 読めた ${got.rows.length}）`,
+    );
+  }
+  return got.rows[0].id;
 };
 
 const now = Date.now();

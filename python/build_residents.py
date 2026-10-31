@@ -135,6 +135,9 @@ logger = logging.getLogger(__name__)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# **足す円の取り出しは1本だけ**（円はそのまま／円以外は `amountJpy`）。
+# 月末（`python/admin/monthly_tips_run.py`）も同じ1本を通す。#951
+import fx_rate  # noqa: E402
 from logsafe import mask  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -150,9 +153,10 @@ CHARACTERS = "islandCharacter"
 # （BigQuery の `doneru_donations` には Doneru しか無い）。#202
 TIPS = "islandTips"
 
-# 額として足す通貨。**混ざっていても円に直さない。**
-# 為替をいつの日付で掛けるかを決めていないので、直すと
-# 「いくらだったか」が分からなくなる（`python/island_tips.py` の CURRENCY_MARKS）。
+# 額として足す通貨。**円以外は、台帳に入るときに円へ直してある**
+# （`python/island_tips.py` の `yen_of`。#951）。ここでは直さない——
+# 取り込みのときのレートと、焼くときのレートが違うと、同じ投げ銭が
+# 日によって別の額になる。**直せていない行は足さない**（0 にしない）。
 MAIN_CURRENCY = "JPY"
 
 # 1回に読む人数。`functions/src/islandCharacter.ts` の MAX_CHARACTERS と同じ
@@ -333,9 +337,15 @@ def fetch_tips(client) -> tuple:
     **足すのは総額だけ。件数は数えても重みには使わない**（あやとの決め:
     「投げ銭の頻度はどうでも良い」）。
 
-    **通貨が混ざっていても円に直さない。** 直すと為替の日付をどこに
-    置いたかが分からなくなる。円以外は足さずに、混ざっていることを
-    ログに出す。本番がどうなっているかを見てから決める。
+    **円以外は、台帳に入るときに直してある**（`python/island_tips.py` の
+    `yen_of`。#951）。ここでは引き直さない——足すたびに引くと、同じ投げ銭が
+    焼いた日によって別の額になって、月末（`monthly_tips_run.py`）と割れる。
+    取り出すのは `fx_rate.row_yen()` 1本で、**向こうも同じ1本を通す。**
+
+    **直っていない行は足さない。0 にもしない。** 足すと嘘の額になり、
+    0 にすると出してくれた人が出していない人と同じ絵になる
+    （`docs/island-standards.md` 10）。足せなかったぶんは数えて出し、
+    `python/fx_tips_watch.py` が issue にする。
 
     Args:
         client: `look()` が返す読み専用のクライアント
@@ -346,7 +356,10 @@ def fetch_tips(client) -> tuple:
     d0, d1 = window()
     total: dict = {}
     per_currency: dict = {}
-    rows = other = no_channel = no_amount = 0
+    # **足せなかった理由ごとに数える。** 「外貨 N件」だけだと、直したのに
+    # 数が減らないのか、直せていないのかが読めない
+    stuck_why: dict = {}
+    rows = fx_rows = fx_stuck = no_channel = no_amount = 0
     # **範囲の下だけ Firestore に投げる**（`day` 1本の並べ替えなので、
     # 自動でできる索引だけで引ける）。上は手元で切る
     for d in client.collection(TIPS).where("day", ">=", d0).stream():
@@ -359,25 +372,34 @@ def fetch_tips(client) -> tuple:
         # `python/island_tips.py` の fetch_doneru と同じ読み方）
         cur = str(v.get("currency") or MAIN_CURRENCY).upper()
         per_currency[cur] = per_currency.get(cur, 0) + 1
-        amount = v.get("amount")
         cid = v.get("channelId")
-        if amount is None:
+        # **足す円は1か所から取る**（円はそのまま、円以外は `amountJpy`）
+        yen, why = fx_rate.row_yen(v)
+        if cur != MAIN_CURRENCY:
+            fx_rows += 1
+        if yen is None and why == "amount":
             no_amount += 1
             continue
-        if cur != MAIN_CURRENCY:
-            other += 1
+        if yen is None:
+            # 円に直せていない行。**足さない。0 にもしない**
+            fx_stuck += 1
+            stuck_why[(cur, why)] = stuck_why.get((cur, why), 0) + 1
             continue
         if not cid:
             # Doneru で、どねID がまだ表に載っていない人。**台帳には残る**が
             # 誰のものか読めないので、額の順位には入れようがない
             no_channel += 1
             continue
-        total[cid] = total.get(cid, 0) + float(amount)
+        total[cid] = total.get(cid, 0) + float(yen)
     return total, {
         "rows": rows,
         "people": len(total),
         "currencies": per_currency,
-        "other_currency": other,
+        # 円以外の件数と、**そのうち円に直せていない件数**。
+        # 直せたぶんは額に入っているので、取りこぼしは後者だけ
+        "fx_rows": fx_rows,
+        "fx_stuck": fx_stuck,
+        "fx_why": stuck_why,
         "no_channel": no_channel,
         "no_amount": no_amount,
     }
@@ -665,15 +687,26 @@ def main() -> int:
             "台帳 %d件 / 額の付いた人 %d人（直近%d日）",
             tipped["rows"], tipped["people"], WINDOW_DAYS,
         )
-        # **通貨が混ざっていたら、黙って足さない。** 為替をどの日で掛けるかを
-        # 決めていないので円に直せない。混ざっていることだけは必ず出す
+        # **通貨が混ざっていることは必ず出す。** 直せたぶんと直せなかったぶんを
+        # 分けて出す——「外貨 N件」だけだと、足せているのかどうかが読めない
         if len(tipped["currencies"]) > 1:
-            logger.warning(
-                "投げ銭に通貨が混ざっている: %s。**円に直していない。**"
-                "%s 以外の %d件は額に足していないので、その人の順位はそのぶん下がる",
+            logger.info(
+                "投げ銭に通貨が混ざっている: %s。円以外 %d件のうち、"
+                "円に直して足したのは %d件",
                 ", ".join(f"{k}×{n}" for k, n in sorted(tipped["currencies"].items())),
-                MAIN_CURRENCY, tipped["other_currency"],
+                tipped["fx_rows"], tipped["fx_rows"] - tipped["fx_stuck"],
             )
+        if tipped["fx_stuck"]:
+            # **ここが 0 でないあいだ、その人の順位はそのぶん下がる。**
+            # ログは誰も見に行かないので、issue のほうでも知らせる
+            # （`python/fx_tips_watch.py`。#951 / `island-misses.md` #290）
+            for (cur, why), n in sorted(tipped["fx_why"].items()):
+                logger.warning(
+                    "**%s の %d件は円に直せていない**（%s）。額に足していないので、"
+                    "その人の順位はそのぶん下がる。"
+                    "直すのは python/admin/fx_backfill.py",
+                    cur, n, fx_rate.WHY.get(why, why),
+                )
         if tipped["no_channel"]:
             logger.info(
                 "チャンネルに結ばれていない投げ銭 %d件（どねID が表に無い人）。"

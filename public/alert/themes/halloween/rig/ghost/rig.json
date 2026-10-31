@@ -1,0 +1,11 @@
+{
+ "name": "ghost",
+ "size": [572, 372],
+ "parts": [
+  {"id": "body", "file": "body.png", "parent": null, "pivot": [251.2, 315.3], "at": [286.0, 301.0], "z": 10},
+  {"id": "face", "swaps": {"boo": "face-boo.png", "smile": "face-smile.png", "surprised": "face-surprised.png"}, "parent": "body", "pivot": [126.0, 79.5], "at": [251.2, 175.2], "z": 20},
+  {"id": "hand_l", "file": "hand_l.png", "parent": "body", "pivot": [136.9, 87.2], "at": [87.1, 220.8], "z": 5},
+  {"id": "hand_r", "file": "hand_r.png", "parent": "body", "pivot": [59.1, 87.2], "at": [415.3, 220.8], "z": 5}
+ ],
+ "items": {"lantern": "lantern.png", "lantern_lid": "lantern_lid.png"}
+}

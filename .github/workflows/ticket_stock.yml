@@ -15,11 +15,16 @@
 #
 # ## cron を当てにしない
 #
-# このリポジトリで定時実行が実際に発火した実績があるのは
-# `schedule_fetch_chat.yml`（20:00 UTC）と `fetch_doneru_donations.yml`
-# （20:30 UTC）の**古参2本だけ**で、しかも**1時間49分〜3時間32分遅れる**。
-# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
-# 待っても発火しなかった。
+# **cron を当てにしない。** 定時実行は、このリポジトリでは**何時間も遅れて**走る。
+# `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`（20:30 UTC）は
+# 数十分〜数時間、01:00〜04:30 UTC に置いた保険は**一度の例外もなく4時間以上**
+# （2026-10-13 の実測。**数はここに書かない**——`python3 python/cron_lag.py` が出す）。
+# 下の cron は**保険**として置いてある。
+#
+# **「発火しない cron がある」は、もう当たらない。** 前はここに
+# 「実績があるのは古参2本だけ」と書いてあったが、2026-10-13 に
+# `event=schedule` の run を数えたら、**cron を持つ14本ぜんぶに実績があった**
+# （`rebake.yml` の 01:00 UTC も33回）。**遅れるのは本当。発火しないのは嘘。**
 #
 # だから**実績のあるものの完了に繋ぐ**（`workflow_run`）。cron は保険。
 # 繋ぎかたと落とし穴は `rebake.yml` の 190〜210行に全部書いてある。
@@ -32,15 +37,35 @@
 #   - 繋ぎが生きているかは `Fetch Doneru Donations` を `probe: true` で
 #     押して確かめられる（1バイトも書かずに40秒で終わる）
 #
-# ## 毎晩は多すぎるので、週1に間引く
+# ## 毎晩は多すぎるので、週1に間引く——ただし**曜日では間引かない**
 #
 # 繋ぎ先は毎晩終わるので、そのままだと毎晩まとめを書き換えることになる。
-# **曜日で落とす**（下の「今週の回か」）。cron はもともと週1なので、
-# 遅れて火曜に来ても通す——落とすと、その週が丸ごと抜ける。
 #
-# 同じ週に2回走ることはある（繋ぎ先が2本あるので）。本文は同じものを
-# 書くだけなので害は無いし、あやとを呼ぶコメントは
-# `python/ticket_stock.py` の `PING_COOLDOWN_DAYS` が止める。
+# **前はここで曜日を見ていた**（`date -u +%u` が 1 か）。それをやめた。
+# 繋ぎ先が終わるのは 23:00〜02:00 UTC で揺れるので、**月曜に着くかどうかが
+# 運**になる。直近の run を数えた（2026-10-15）:
+#
+# | 起こしたもの | 回数 | 関所を通った |
+# | --- | ---: | ---: |
+# | `workflow_run`（ここが「**本命**」と書いていたほう） | **57** | **2** |
+# | `schedule`（ここが「**当てにしない**」と書いていたほう） | 4 | 4 |
+#
+# **57回中55回が落ちていて、直近3週はゼロ。** 着地の曜日は
+# 月2 / 火13 / 水8 / 木7 / 金9 / 土10 / 日8 でほぼ一様——**1/7 の賭け**だった。
+# 結果として、**自分で「当てにするな」と書いた cron が週1を1本で背負って
+# いた。** 月曜の cron が1回こけたら、棚卸しは静かに何週間も止まる。
+# **どこも赤くならない**（#865 とまったく同じ形）。
+#
+# いまは間引きを**こちらではなく `python/ticket_stock.py` が持つ。**
+# 見るのは「今日は月曜か」ではなく「**前に書いてから7日たったか**」
+# （`STOCK_EVERY_DAYS`）。前に書いた日は、まとめの本文の見えない印が持っている。
+#
+# **そして走るたびに、前に書いたのがいつかを言う。** 言わないと、
+# 関所で落ち続けている回と正常に書いた回が、run の一覧で同じ顔になる。
+# 10日あいたら **1 で落ちる**（`STOCK_OVERDUE_DAYS`）。
+#
+# 同じ日に2回走ることはある（繋ぎ先が2本あるので）。2回目は関所で
+# 「もう書いてある」と言って1バイトも書かない。
 #
 # ## PR でも1回走る（書かずに）
 #
@@ -102,53 +127,38 @@ jobs:
           echo "$line"
           echo "$line" >> "$GITHUB_STEP_SUMMARY"
 
-      # **毎晩は多すぎる。曜日で落とす。**
-      #
-      # 繋ぎ（`workflow_run`）は毎晩来るので、月曜だけ通す。
-      # cron はもともと週1なので、遅れて火曜に着いても通す——落とすと、
-      # 遅れた週が丸ごと抜ける（このリポジトリの定時は3時間半遅れる）。
-      # 手押しと PR は、押した人が見たいときなので always
-      - name: 今週の回か
-        id: gate
-        env:
-          EV: ${{ github.event_name }}
-        run: |
-          set -euo pipefail
-          dow="$(date -u +%u)"   # 1=月曜
-          go=0
-          case "$EV" in
-            workflow_dispatch|pull_request|schedule) go=1 ;;
-            workflow_run) [ "$dow" = "1" ] && go=1 ;;
-          esac
-          echo "go=$go" >> "$GITHUB_OUTPUT"
-          echo "きょうは UTC の曜日 ${dow}／回すか: ${go}"
-
+      # **曜日の関所はここに置かない**（上の「毎晩は多すぎる」）。
+      # 間引きは `python/ticket_stock.py` が、前に書いた日を見て決める。
+      # ここに置いていたあいだ、繋ぎで来た 57回のうち 55回が落ちていた
       - uses: actions/checkout@v5
-        if: steps.gate.outputs.go == '1'
 
       - uses: actions/setup-python@v6
-        if: steps.gate.outputs.go == '1'
         with:
           python-version: '3.11'
 
       # **PR の回は `--apply` を付けない。** 1バイトも書かずに、
       # 本物の GitHub を読んで本文を組み立てるところまで通す。
-      # 書けているかどうかは、下で run の要約に出したものを見る
+      # 書けているかどうかは、下で run の要約に出したものを見る。
+      #
+      # **手で押した回は `--force`。** 押した人は「いま見たい」ので、
+      # 7日あいていなくても書く（押さないかぎり通らない道なので、
+      # 間引きの意味は変わらない）
       - name: 開いている issue を棚卸しして、まとめに書く
-        if: steps.gate.outputs.go == '1'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           APPLY: ${{ (github.event_name == 'pull_request' || github.event.inputs.apply == 'false') && '0' || '1' }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
         run: |
           set -euo pipefail
           args=(--out /tmp/stock.md)
           if [ "$APPLY" = "1" ]; then args+=(--apply); fi
+          if [ "$FORCE" = "1" ]; then args+=(--force); fi
           python3 python/ticket_stock.py "${args[@]}"
 
       # **出来上がりを run に残す。** 「走った」だけでは、中身が空でも同じ顔
       - name: 書き上がったまとめを、この run にも出す
-        if: steps.gate.outputs.go == '1'
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           {

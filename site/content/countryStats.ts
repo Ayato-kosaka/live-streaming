@@ -47,6 +47,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "jordan": { lives: 37, people: 49, msgs: 5987, days: 29, top: ["2025-05-31", "Jk8jWqh1iQU", "【神回】ペトラ遺跡で限界街歩き！ペトラでシークを抜け、秘境モナストリー、ペトラ飯、夕日まで全部盛り！！", 14] },
   "latvia": { lives: 4, people: 54, msgs: 2202, days: 2, top: ["2026-09-17", "k4DxGQlkD6U", "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日", 37] },
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
+  "north-macedonia": { lives: 22, people: 144, msgs: 8811, days: 19, top: ["2026-10-23", "vZ2O8pabk1g", "【緊急】ホステル追い出されました", 42] },
   "poland": { lives: 6, people: 57, msgs: 2624, days: 2, top: ["2026-09-12", "hrXYXcu9IDE", "【一日目】親友に会いにスウェーデンまで、ワルシャワまで", 44] },
   "slovakia": { lives: 2, people: 7, msgs: 52, days: 2, top: ["2024-12-03", "uylUHvF_1WM", "チェコに着いたので、魅力を探りませう", 5] },
   "sweden": { lives: 8, people: 76, msgs: 3732, days: 8, top: ["2026-09-20", "GBYHxJQGlCY", "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム", 38] },
@@ -71,4 +72,4 @@ export const countryStat = (slug: string): CountryStat | undefined => COUNTRY_ST
  * **数そのものを焼いてある。** 上の表を参照する形にすると、この数字を1つ
  * 読むだけの島の吹き出しに、表 4KB ぶんが丸ごと付いてくる。
  */
-export const COUNTRIES_WALKED = 24;
+export const COUNTRIES_WALKED = 25;

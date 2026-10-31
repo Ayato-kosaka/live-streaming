@@ -1,0 +1,11 @@
+{
+ "name": "props",
+ "size": [959, 589],
+ "parts": [
+  {"id": "coffin", "file": "coffin.png", "parent": null, "pivot": [488.0, 540.0], "at": [479.0, 575.0], "z": 10},
+  {"id": "coins", "file": "coins.png", "parent": "coffin", "pivot": [364.0, 383.0], "at": [467.0, 338.0], "z": 15},
+  {"id": "coffin_front", "file": "coffin_front.png", "parent": "coffin", "pivot": [3.0, 3.0], "at": [3.0, 3.0], "z": 20},
+  {"id": "lid", "file": "lid.png", "parent": "coffin", "pivot": [38.0, 99.0], "at": [58.0, 111.0], "z": 30}
+ ],
+ "items": {"coin": "coin.png"}
+}

@@ -265,6 +265,62 @@ webp にするのは軽いから。実測で 256px が **19.5KB**（ドライブ
 {"apply": true, "only": "🐟"}  … 絵文字で1人だけ
 ```
 
+### 新しい人を足す — **絵は公開リポジトリに通さない**（2026-10-15 / #785）
+
+`python/admin/characters_add.py`。表にもドライブにもいない人
+（今日はじめてコメントした人）はこちら。**ここだけ、Actions から回さない。**
+
+```bash
+export BQ_PROJECT_ID=live-streaming-d3cac
+ARGS='{}'             python3 python/admin/characters_add.py   # 下見
+ARGS='{"apply":true}' python3 python/admin/characters_add.py   # 書く
+```
+
+置き場は **git の外**（既定 `~/island-char-intake`）。
+
+    <置き場>/manifest.json   [{channelName, emoji, aliases, channelId,
+                              plain: "…png", scene: "…png"}, …]
+    <置き場>/*.png           絵そのもの
+
+**git の中を指すと、引数で渡しても断る。** 手引きに「置かないこと」と
+書くだけでは足りない——置ける道が在るかぎり、いつか置かれる。
+
+#### なぜ、わざわざ手元から回すのか
+
+前の手順は「流すときだけ枝に載せて、その枝を指して起動し、済んだら枝を
+落とす」だった。**この箱からは枝が落とせない**（`git push --delete` も
+`DELETE /git/refs/*` も 403）。落とせないまま回したので、視聴者さんの絵2枚と
+ハンドル入りの manifest を載せた commit が公開のリポジトリに残り、
+その SHA が公開の実行ページに出た（#785）。
+
+**運ぶものを逆にした。** 絵を実行まで運ぶのではなく、**実行が持っている札を
+手元へ運ぶ。** 札は 1.5KB で封に収まるが、絵は数MBあって公開の場
+（入力・ログ・注記）には載らない。そして札を運べば、絵はどこへも出ていかない。
+
+| | 何をする | 公開の場に出るもの |
+| --- | --- | --- |
+| 手元 | 使い捨ての鍵を1組作り、**公開鍵だけ**を入力に載せて `owner_handoff` を押す | 公開鍵 |
+| 実行 | 札を2枚作り、公開鍵で封をして**注記**に出す（1バイトも書かない） | 暗号文 |
+| 手元 | ほどく → **その実行をその場で消す** → 絵は手元から島の口へ直に送る | — |
+
+札は2枚。口に付ける Bearer（`_owner.owner_token()` と同じもの）と、
+**Firestore にだけ届く**札（`auth/datastore`。書類IDを振るのと `channelId`
+の1欄に要る）。どちらも1時間で切れる。
+
+**返りを注記で受けているのは、ログが読めないから。** ログ本体は置き場
+（Azure Blob）から配られていて、この箱の `gh` は
+`refusing a redirect to results-receiver…` で断る。
+注記だけが `check-runs/{id}/annotations` から読める。
+
+道具は `python/admin/_seal.py`（包む・ほどく・切る・繋ぐ）、
+`python/admin/owner_handoff.py`（実行側）、`python/admin/_handoff.py`（手元側）。
+`python/admin/_handoff.py` をそのまま実行すると、**札が通るかだけ**を見られる。
+
+**下見（`apply` なし）は札も要らない。** 読むのは公開の口2つ
+（`GET /characters` と `GET /characters/lookup`）だけなので、手元だけで通る。
+
+守りが効いているかは `python3 python/admin/characters_add_selftest.py`。
+
 ### 形の揃っていない絵を焼き直す
 
 `python/admin/characters_rebake.py`。**既定では1バイトも書かない。**
@@ -283,6 +339,21 @@ webp にするのは軽いから。実測で 256px が **19.5KB**（ドライブ
 
 置き場の古い png も**消さない。** 書類が指す先が webp に変わるだけで、
 口は同じ幅が2つあれば webp を採る。
+
+### 背景なしの絵を、透過の PNG に差し替える
+
+`python/admin/characters_plain_swap.py`。**既定では1バイトも書かない。**
+焼き直しと違って **`full` ごと**差し替える（透過の無い元を置き換えるため。#733）。
+
+```
+{"char": "<書類ID>", "src": "python/admin/plain_swap/<書類ID>.png"}                 … 数えるだけ
+{"char": "<書類ID>", "src": "python/admin/plain_swap/<書類ID>.png", "apply": true} … 送る
+```
+
+焼き方は画面の `bake` と同じ（`full` は長辺 2048 まで、幅 128/256/640 を
+元の幅未満だけ、webp 質 0.92）。透過の判定は SUZURI と同じ `suzuri_common.transparent()`。
+送ったあとはオーナーの名簿から読み直して、指す先・寸法・透過・scene が
+変わっていないことまで確かめる。絵の置き場と片づけは `python/admin/plain_swap/README.md`。
 
 ### ログインは要らなかった
 

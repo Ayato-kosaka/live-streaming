@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { SayRoom } from "@/components/ui/Say";
@@ -17,10 +18,12 @@ import { Vid } from "@/components/streams/Vid";
 import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "streams",
   title: "配信",
   description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
-};
+  path: "/streams",
+});
 
 /**
  * 型ごとに1つだけ出す数字。
@@ -41,7 +44,7 @@ const NUM: Record<string, { n: React.ReactNode; cap: string }> = {
 export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信" }]}>
+    <PageShell crumbs={[{ label: "配信" }]}>
       {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
           「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead
@@ -147,9 +150,13 @@ export default function StreamsPage() {
                     ))}
                   </div>
                 </Fold>
-                {/* 5つの型ぶんを画面に入った時点で先読みしない。指が乗ってから読む */}
+                {/* 5つの型ぶんを画面に入った時点で先読みしない。指が乗ってから読む。
+                    **札に型の名前を入れる。** 「この型だけ見る」だと5枚とも
+                    同じ字で、読み上げでも Tab でも、どの型へ行く札か分からない
+                    （`docs/island-misses.md` #265）。「この」が指している屋根は、
+                    畳みを閉じれば目でも追えない。 */}
                 <Link className="ty-go" href={`/streams/${t.slug}`} prefetch={false}>
-                  この型だけ見る
+                  {t.name}だけ見る
                   <Icon name="right" size={15} />
                 </Link>
               </div>

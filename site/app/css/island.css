@@ -147,8 +147,7 @@
   border: 3.5px solid var(--frame-dark);
   border-radius: 999px;
   /* 押せることは厚みで言う。30px の札で 4px（`island-world.md` 3.4） */
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 9px var(--cast);
   color: var(--ink);
   white-space: nowrap;
@@ -203,8 +202,7 @@
   gap: 6px;
   border-radius: 13px;
   background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 9px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
 }
@@ -358,8 +356,7 @@
   gap: 8px;
   border-radius: 19px;
   background: linear-gradient(var(--paper) 0 44%, var(--paper-2));
-  box-shadow:
-    0 5px 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d3) 0 var(--frame-deep),
     4px 11px 13px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
   /* 揺れは2往復で止める。**押す対象が止まらないのは手ざわりとして悪い。**
@@ -429,7 +426,7 @@
   background: linear-gradient(#9c580f, #7d450c);
   border-radius: 999px;
   padding: 4px 9px 4px 10px;
-  box-shadow: 0 2px 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 var(--pop-d0) 0 rgba(76, 48, 20, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 /* 押したら沈む。アニメーションが transform を持っているので、
    押しているあいだだけ止めないと沈みが打ち消される。 */
@@ -439,7 +436,7 @@
   box-shadow: 0 1px 0 var(--frame-deep), 2px 4px 5px var(--cast);
 }
 .spot.is-on .spot-mark:active {
-  box-shadow: 0 2px 0 var(--frame-deep), 2px 5px 7px var(--cast),
+  box-shadow: 0 var(--pop-d0) 0 var(--frame-deep), 2px 5px 7px var(--cast),
     inset 0 2px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -463,7 +460,7 @@
   border: 2.5px solid var(--paper);
   border-radius: 999px;
   padding: 2px 8px;
-  box-shadow: 0 3px 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
+  box-shadow: 0 var(--pop-d1) 0 rgba(126, 38, 18, 0.32), 3px 6px 8px var(--cast);
   text-shadow: 0 1px 0 rgba(120, 30, 14, 0.4);
   animation: badgePop 2.6s ease-in-out infinite;
 }
@@ -567,7 +564,7 @@
   border-radius: 999px;
   background: rgba(255, 253, 246, 0.92);
   border: 2.5px solid var(--frame-dark);
-  box-shadow: 0 2px 0 var(--frame-deep), 2px 4px 5px var(--cast);
+  box-shadow: 0 var(--pop-d0) 0 var(--frame-deep), 2px 4px 5px var(--cast);
   /* 字の下限は 11.5px（`docs/island-world.md` 5.4）。10px は割っていた。
      名前が入る幅は、字を上げたぶん広げる。 */
   font-size: 11.5px;
@@ -804,30 +801,36 @@
    角の丸みも上下左右で違っていて、それが手描きに見せている。
    ここでもそれに倣って、枠線をやめて楕円の角丸にした。
    ========================================================= */
-/* **島の下に出す。上には出さない。**
-   ここは画面のいちばん上にいて、看板ロゴ（島の名前）と重なっていた。
-   実測で 366x126 の吹き出しがロゴの箱に 9,015px² 食い込んでいる。
-   しかも吹き出しは押さなくても勝手に開くので（`components/isle/folk.ts` の
-   `callOut`）、**降りて数秒で、島の名前と「今夜22時から」の板が両方読めなくなる。**
-   会話はおまけで、行き先を塞いではいけない（`docs/island-design.md` 3-7）ので、
-   引くのはこちら。下バー（「今日の島」の1行）の上に置く。 */
+/* **置き場所も形も `.isle-talk`（`chain.css`）に合わせる。**
+   同じ役目のものが面ごとに違う顔をしているのがいちばん困る
+   （`docs/island-world.md` 7.3）。あちらに書いた理由はそのままここにも効く:
+   スマホは上ふちへ寄せて、塞ぐのを看板のほうに替える。 */
 .talkbox {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  /* 下バー（`.island-bar` の1段目。板の背 48px ＋ 上下の余白）の上 */
-  bottom: calc(76px + env(safe-area-inset-bottom));
-  z-index: 8;
-  padding: 17px 20px 13px;
+  left: 10px;
+  right: 10px;
+  top: calc(10px + env(safe-area-inset-top));
+  bottom: auto;
+  z-index: 9;
+  padding: 20px 22px 16px;
   border: 0;
-  /* 上下左右で丸みを変える。均一な角丸だと「入力欄」に見える */
-  border-radius: 30px 36px 28px 34px / 34px 28px 36px 30px;
+  --bump: 13px;
+  --bump-w: 26px;
   background:
-    radial-gradient(120% 80% at 22% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 60%),
-    linear-gradient(var(--paper) 0 58%, var(--paper-2));
-  box-shadow:
-    0 3px 0 rgba(154, 101, 50, 0.18),
-    6px 14px 26px var(--cast-far);
+    radial-gradient(circle at 50% 100%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top left / var(--bump-w) var(--bump) round no-repeat,
+    radial-gradient(circle at 50% 0%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      bottom left / var(--bump-w) var(--bump) round no-repeat,
+    radial-gradient(circle at 100% 50%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top left / var(--bump) var(--bump-w) no-repeat round,
+    radial-gradient(circle at 0% 50%, var(--paper) var(--bump), rgba(255, 255, 255, 0) calc(var(--bump) + 0.6px))
+      top right / var(--bump) var(--bump-w) no-repeat round,
+    linear-gradient(var(--paper), var(--paper))
+      center / calc(100% - 2 * var(--bump) + 2px) calc(100% - 2 * var(--bump) + 2px) no-repeat;
+  /* ふちが四角くないので、影は形に沿うもので付ける */
+  filter:
+    drop-shadow(0 var(--pop-d1, 3px) 0 rgba(154, 101, 50, 0.2))
+    drop-shadow(4px 10px 18px var(--cast-far));
   animation: talkIn 0.26s cubic-bezier(0.24, 1.6, 0.4, 1);
   pointer-events: none;
 }
@@ -873,7 +876,7 @@
   background-image: var(--talk-face);
   background-size: cover;
   background-position: center 12%;
-  box-shadow: 0 3px 0 var(--frame-deep), inset 0 0 0 2px rgba(255, 255, 255, 0.7);
+  box-shadow: 0 var(--pop-d1) 0 var(--frame-deep), inset 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
 /* 「読み終わったら押してね」の合図。
@@ -907,9 +910,9 @@
 }
 @media (prefers-reduced-motion: reduce) { .talkbox-tap::before { animation: none; } }
 
-/* 下から出るので、入りの動きも下から */
+/* 上から出るので、入りの動きも上から */
 @keyframes talkIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.94); }
+  from { opacity: 0; transform: translateY(-12px) scale(0.94); }
   to { opacity: 1; transform: none; }
 }
 /* 話しているあいだは、島の上の**札**を引っ込める。
@@ -933,6 +936,9 @@
     right: auto;
     transform: translateX(-50%);
     width: min(560px, 62vw);
+    /* 上へ寄せるのはスマホだけ（`chain.css` の `.isle-talk` と同じ理由）。
+       `top` を戻さないと上下が両方効いて、画面の高さまで伸びる。 */
+    top: auto;
     bottom: calc(20px + env(safe-area-inset-bottom));
   }
   @keyframes talkIn {
@@ -1126,11 +1132,78 @@
 .resident { animation: bob 1.5s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-.ayato { transform-box: fill-box; }
-.ayato.walking image { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
+/* **あやとの `transform` 属性を、そのまま効かせる。**
+   -----------------------------------------------------------------
+   ここは `transform-box: fill-box` だった。島は `transform="translate(x y)
+   scale(±1 1)"` で主人公を置いていて（右を向くとき左右を反転する）、
+   SVG2 ではこの属性が CSS の transform として扱われるので、
+   **`transform-box` を変えると原点も一緒に変わる。** fill-box だと反転の軸が
+   絵のまん中ではなく絵の端になり、**右を向いた瞬間、絵が自分の横幅ぶん
+   左へ跳ぶ。**
+
+   実測（絵の中心と、足元の影の中心のずれ。影は反転しないので真の位置）:
+
+       歩ける島（寄り 232）  左向き 0px  → 右向き **-70px**
+       手で作った島（寄り 340）左向き 0px  → 右向き **-48px**
+
+   **影だけが正しい場所に残る**ので、絵と影が別々の場所に描かれていた。
+   あやとの「主人公の場所は固定して背景が動くべき」（2026-10-14）に、
+   カメラとは別口でこれも効いている。
+
+   `view-box` ＋ `0 0` にすると、属性に書いた行列がそのまま当たる（実測 0px）。
+   弾む動き（下の `hop`）は**絵のほう**に付いていて、あちらが自分で
+   `fill-box` を持っているので、ここを変えても効き方は変わらない。 */
+.ayato { transform-box: view-box; transform-origin: 0 0; }
+.ayato.walking .ayato-still { animation: hop 0.42s ease-in-out infinite; transform-origin: bottom center; transform-box: fill-box; }
 @keyframes hop {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-7px) rotate(-2deg); }
+}
+
+/* **歩き出したら、3向き×4コマのぱらぱら漫画にする**（`components/isle/AyatoSprite.tsx`。#895）。
+   -----------------------------------------------------------------
+   1枚絵を `hop` で弾ませるだけだと、足が動かないので「滑っている」に見えるし、
+   上へ歩いても横を向いたまま。シート（`/characters/ayato-walk.webp`）は
+   段が向き（横・正面・背中）、段の中の4コマが足の運び。
+   **初めて歩いたときに読む**ので、`.walk-ready` が付くまで（＝読み終わるまで）は、
+   上の1枚＋ `hop` のまま歩く。島を開いただけの人には1バイトも足さない（#876）。
+
+   - **`.walk-ready` が付いたら、止まっても1枚に戻さない。** 1枚は横向きしか
+     無いので、下へ歩いて止まった人がいきなり横を向く。止まったら、
+     最後に歩いた向きの段の「立つコマ」（`--ayato-rest`）で動かずに立つ
+   - **ここでするのは表示の付け外しと、立つコマだけ。** コマ送りは部品が
+     Web Animations で回す（CSS の animation だと、島が奥行きの並べ替えで
+     あやとの <g> を抜き差しするたびに1コマ目へ巻き戻る。部品の `play` に実測）。
+     毎フレーム動くのは、窓（入れ子の svg）の中のシートの transform 1つ。
+     窓は1コマぶんの大きさなので、描き直しもそのぶんで済む
+     （島をまたぐ大きさのものだけが高い。上の「水面」の注記）
+   - **`hop` はコマ送りのあいだ外す。** 代わりに部品が、両足のそろったコマでだけ
+     窓ごと少し持ち上げる（`AYATO_WALK_LIFT`。コマ送りと同じ時計）。`hop` は
+     コマと関係なく 0.42秒で揺れるので、重ねると足と体がばらばらに跳ねる
+     （1枚のほうを `display: none` にするので、`hop` も一緒に止まる）
+   - シートは `translateX(-100%)` まで送って、**段数はコマの数**
+     （`steps(N)`。N・1周の秒数・立つコマは、部品が `lib/ayatoArt.ts` から組む。
+     ここに 4 を写さない）。`steps` の既定は jump-end なので
+     0 / -25% / -50% / -75% の4つで止まり、-100%（何も無い5コマ目）は出ない。
+     `%` はシートの横幅に対して（`fill-box`）。**この `transform-box` は中の
+     `<image>` に付ける。** 外の `.ayato` に付けると反転の軸が絵の端に
+     なって、右を向くたびに跳ぶ（#256。上の注記）。`<image>` は
+     `transform` 属性を持たず x=0 / y=0 に置いてあるので、ここで変えても
+     置き場所はずれない
+   - **段（向き）は、ここでは選ばない。** `<image>` の外の `<g>` の `transform`
+     属性を、部品が向きの変わったときだけ書く。同じ `<image>` に載せると、
+     コマ送りの animation が段のずらしを上書きして1段目に戻る */
+.ayato-walk { display: none; }
+.ayato.walk-ready .ayato-still { display: none; }
+.ayato.walk-ready .ayato-walk { display: inline; }
+.ayato-walk-sheet {
+  transform-box: fill-box;
+  transform: translateX(var(--ayato-rest, 0));
+}
+/* 動きを減らす設定では、コマも送らず弾みもしない。部品の側でシートを
+   読まず、コマ送りも始めないので、止まった1枚のまま滑る */
+@media (prefers-reduced-motion: reduce) {
+  .ayato.walking .ayato-still { animation: none; }
 }
 
 /* =========================================================
@@ -1248,7 +1321,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 5px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d3) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1303,7 +1376,7 @@
      中のマスは軽い（/tmp/acref/ref_NH_Critterpedia_Bluegill.jpg の月の並び）。 */
   border: 2px solid var(--frame-dark);
   border-radius: 14px;
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12.5px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1346,7 +1419,7 @@
   padding: 1px 7px;
   border: 2px solid var(--paper);
   border-radius: 999px;
-  box-shadow: 0 2px 0 rgba(126, 38, 18, 0.3);
+  box-shadow: 0 var(--pop-d0) 0 rgba(126, 38, 18, 0.3);
   /* 前は --accent（桃色）から始めていて、白い字が 2.51 : 1 だった。
      濃いほうから始めて 4.79〜7.22 : 1 にする。色みは変えていない */
   background: linear-gradient(#c4123f, #96072e);
@@ -1398,7 +1471,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -1553,7 +1626,7 @@
   border: 2.5px solid var(--frame-dark);
   border-radius: 999px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow: 0 4px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.01em;

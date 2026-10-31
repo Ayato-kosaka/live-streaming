@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const c = countryBySlug(slug);
   if (!c) return {};
-  return { title: c.name, description: c.summary };
+  return share({ key: "map", title: c.name, description: c.summary, path: `/map/${slug}` });
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
@@ -95,8 +96,31 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   const staying = c.stays.find((s) => !s.to);
   const days = closedDays(c.stays);
 
+  /* 同じ日に同じ題名が2本あるぶんだけ、「その日の何本目か」を控える。
+     読み上げはリンクの字だけを並べて読むので、日付も題名も同じ2枚は
+     1文字も違わずに読まれる（エジプトは 2025-05-10 の1つの題名で6本）。
+     題名は YouTube に実在するものなので直せない
+     （`docs/island-design.md` 1章の唯一の例外）。
+     **ぶつかっていない配信には何も足さない**——どれにも「1本目」が付くと、
+     読み上げがうるさいだけで見分けの役に立たない。
+     数えるのは**この面に出る全部**（街の畳みと、出来事の畳みをまたぐ）。
+     街ごとに数えると、別の街に同じ回が出ている国で取りこぼす
+     （`app/island/[chapter]/streams/page.tsx` と同じ形）。 */
+  const sameDay = new Map<string, string[]>();
+  const seen = (date: string | undefined, videoId: string, title: string) => {
+    const key = `${date ?? ""}\u0000${title}`;
+    const ids = sameDay.get(key) ?? [];
+    if (!ids.includes(videoId)) sameDay.set(key, [...ids, videoId]);
+  };
+  for (const city of towns) for (const v of streamsOfCity(c.slug, city)) seen(v.date, v.videoId, v.title);
+  for (const h of c.highlights) if (h.videoId) seen(h.date, h.videoId, h.title);
+  const nthOf = (date: string | undefined, videoId: string, title: string) => {
+    const ids = sameDay.get(`${date ?? ""}\u0000${title}`);
+    return ids && ids.length > 1 ? ids.indexOf(videoId) + 1 : undefined;
+  };
+
   return (
-    <PageShell current="map" crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
+    <PageShell crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />
@@ -231,7 +255,13 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
                 </summary>
                 <div className="scards">
                   {vids.map((v) => (
-                    <StreamCard key={v.videoId} videoId={v.videoId} title={v.title} date={v.date} />
+                    <StreamCard
+                      key={v.videoId}
+                      videoId={v.videoId}
+                      title={v.title}
+                      date={v.date}
+                      nth={nthOf(v.date, v.videoId, v.title)}
+                    />
                   ))}
                 </div>
               </details>
@@ -248,7 +278,12 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
               <p>{h.note}</p>
               {h.videoId && (
                 <div className="scards">
-                  <StreamCard videoId={h.videoId} title={h.title} date={h.date} />
+                  <StreamCard
+                    videoId={h.videoId}
+                    title={h.title}
+                    date={h.date}
+                    nth={nthOf(h.date, h.videoId, h.title)}
+                  />
                 </div>
               )}
             </Fold>

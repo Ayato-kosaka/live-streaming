@@ -1861,6 +1861,125 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-10-11"
       }
     ]
+  },
+  "north-macedonia": {
+    "北マケドニア": [
+      {
+        "videoId": "yk-by7R7iPA",
+        "title": "北マケドニア共和国いこかー！？",
+        "date": "2026-10-12"
+      },
+      {
+        "videoId": "NY9pzYrA-5o",
+        "title": "北マケドニア共和国ついたでーーー",
+        "date": "2026-10-12"
+      },
+      {
+        "videoId": "donehL4hO68",
+        "title": "どんなもんだい！北マケドニア共和国",
+        "date": "2026-10-13"
+      },
+      {
+        "videoId": "UQdkUSro9Ck",
+        "title": "やっと晴れたぞ！北マケドニア共和国",
+        "date": "2026-10-14"
+      },
+      {
+        "videoId": "CKJvprUMOgA",
+        "title": "北マケドニアで今週の企画会議や！",
+        "date": "2026-10-15"
+      },
+      {
+        "videoId": "WJ8KEi1V-no",
+        "title": "【緊急】北マケドニアの夕日が美しすぎます",
+        "date": "2026-10-16"
+      },
+      {
+        "videoId": "E2oGYjnVQSA",
+        "title": "北マケドニアでグラムチャウダー作ります",
+        "date": "2026-10-16"
+      },
+      {
+        "videoId": "hk39U7ZEKCQ",
+        "title": "北マケドニアで新市街みにいこか！",
+        "date": "2026-10-17"
+      },
+      {
+        "videoId": "TDArug_te90",
+        "title": "北マケドニアで城塞みにいこ！",
+        "date": "2026-10-18"
+      },
+      {
+        "videoId": "misSMBhPlkc",
+        "title": "北マケドニアで遂にチャンネル登録1900人パーティーや！！",
+        "date": "2026-10-19"
+      },
+      {
+        "videoId": "DNLVmUpew48",
+        "title": "北マケドニアで聖クリメント・オフリド教会見に行きたい！",
+        "date": "2026-10-20"
+      },
+      {
+        "videoId": "0upPnKMc5po",
+        "title": "北マケドニアでフライパンパンパン作りの作戦会議&買い出しや",
+        "date": "2026-10-21"
+      },
+      {
+        "videoId": "VusdZVyjgjQ",
+        "title": "北マケドニアでチーズオリーブフォカッチャつくろー！",
+        "date": "2026-10-22"
+      },
+      {
+        "videoId": "vZ2O8pabk1g",
+        "title": "【緊急】ホステル追い出されました",
+        "date": "2026-10-23"
+      },
+      {
+        "videoId": "eHBAnQF56-E",
+        "title": "🇲🇰北マケドニアのマトカ渓谷いこー！紅葉みながら川下りや！",
+        "date": "2026-10-24"
+      },
+      {
+        "videoId": "KNgGbR0zdIc",
+        "title": "🇲🇰北マケドニアで雑談配信！これからどこの国行くか決めたいな！",
+        "date": "2026-10-25"
+      },
+      {
+        "videoId": "814E2V_257A",
+        "title": "🇲🇰北マケドニアでマルゲリータピザつくろ！",
+        "date": "2026-10-26"
+      },
+      {
+        "videoId": "_XzkJJIvpOE",
+        "title": "🇲🇰北マケドニアでおしゃれ街みにいこか！世界は狭いなぁ☺",
+        "date": "2026-10-27"
+      },
+      {
+        "videoId": "la_OkustLkA",
+        "title": "🇲🇰北マケドニアのショッピングモールみにいこか！防寒具買いたい！",
+        "date": "2026-10-28"
+      },
+      {
+        "videoId": "urwD3EmjTxs",
+        "title": "🇲🇰北マケドニアのほったらかしパン&アヒージョの準備や！",
+        "date": "2026-10-29"
+      },
+      {
+        "videoId": "nb2Cg9rmlM0",
+        "title": "🇲🇰北マケドニアのほったらかしパンの一次発酵の経過確認や！",
+        "date": "2026-10-30"
+      },
+      {
+        "videoId": "C_AABuDPw1c",
+        "title": "🇲🇰北マケドニアのほったらかしパンの二次発酵や！",
+        "date": "2026-10-30"
+      },
+      {
+        "videoId": "28Tcc0c5sNE",
+        "title": "🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！",
+        "date": "2026-10-30"
+      }
+    ]
   }
 };
 

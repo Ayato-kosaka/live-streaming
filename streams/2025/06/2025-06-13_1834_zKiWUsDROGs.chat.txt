@@ -1,0 +1,29 @@
+# 【もくもくアプリ作り】第一話 アプリデザインをAIで作ってみる
+# https://www.youtube.com/watch?v=zKiWUsDROGs
+# 開始: 2025-06-13 18:34 JST
+# 件数: 23
+# 時刻の出どころ: clock 23（msec=動画内の時刻 / clock=チャット横の時刻 / diff=書いた時刻−開始）
+
+[0:02:50] @あやとグルメアプリ: みなさん一緒に作業しましょう
+[0:08:10] @あやとグルメアプリ: ご覧の皆様、チャンネル登録＆高評価よろしくお願いします:person_bowing:！海外旅×アプリ開発の応援は、100円から投げ銭できます:megaphone:
+[0:13:41] @あやとグルメアプリ: 概要欄から出来るよ！
+[0:14:35] @ひめひめ-r9z: おは:sparkling_heart:
+[0:15:05] @ひめひめ-r9z: 今サグラダ前なんで
+[0:15:25] @ひめひめ-r9z: 応援だけさせていただきます
+[0:15:45] @ひめひめ-r9z: :sparkles::party_popper::party_popper::party_popper::hedgehog::fox::party_popper::party_popper::party_popper::sparkles:
+[0:17:13] @ひめひめ-r9z: said hi
+[0:18:25] @ひめひめ-r9z: 手で合図ありがとう:crossed_fingers::crossed_fingers::crossed_fingers::sparkles::sparkles::sparkles:
+[0:18:39] @ひめひめ-r9z: じゃあ頑張ってね:sparkles:
+[0:18:48] @ひめひめ-r9z: とりあえず見てますし聞いています:sparkles:
+[0:19:37] @かつお節ー147: こんばんは:crescent_moon:.*·̩͙.｡★*ﾟ(ᴗ͈ˬᴗ͈❀)
+[0:20:29] @ひめひめ-r9z: かっちゃーん:sparkling_heart::sparkling_heart::sparkling_heart::sparkling_heart::sparkling_heart::sparkling_heart::sparkling_heart:
+[0:20:33] @かつお節ー147: ٩(｡•̀Δ•́｡)و:megaphone:＜ﾌｧｲﾄｰ!!!
+[0:20:41] @かつお節ー147: ひめひめさーー〜ん！
+[0:21:13] @かつお節ー147: 7時までおじゃまします( 'ω')
+[0:21:54] @ひめひめ-r9z: かっちゃんひめひめ旅行中だからまた配信で会おう:sparkles:
+[0:22:17] @かつお節ー147: 了解だぁよ:thumbs_up:
+[0:35:16] @ひめひめ-r9z: YES:party_popper:ドネしかない:sparkles:
+[0:37:26] @あやとグルメアプリ: ご覧の皆様、チャンネル登録＆高評価よろしくお願いします:person_bowing:！海外旅×アプリ開発の応援は、100円から投げ銭できます:megaphone:
+[0:38:31] @あやとグルメアプリ: nenet さん 教えてくれてありがとう！表示が第二段旅行になっていたから変えたよ！
+[0:40:26] @あやとグルメアプリ: かつお節٩(｡•̀Δ•́｡)و:megaphone:＜ﾌｧｲﾄｰ!!! > ありがとう！
+[0:42:20] @ひめひめ-r9z: スペインでやっぱり 文字だけだとご飯 困ったから いいアプリができるといいですね:sparkles:

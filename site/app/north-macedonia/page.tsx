@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 
 import { crumbOf } from "@/components/island/layout";
 import Fold from "@/components/ui/Fold";
@@ -55,11 +56,13 @@ import "./nm.css";
  * あちらは画面が出てから数え直す。
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "northMacedonia",
   title: "北マケドニア — 山と湖の国",
   /* 数は手で書かない。載っている件数から作る（`/nordic/guide` と同じ） */
   description: `海に出ない、山と湖の国。首都スコピエの見どころ${NM_SKOPJE.length}つ、街の外${NM_BEYOND.length}つ、食べもの${NM_EAT.length}品、ことば${NM_WORDS.length}。`,
-};
+  path: "/north-macedonia",
+});
 
 /** 節の表。**絵はここ1か所で決める**——節の中で絵を別に書くと、ここと食い違う */
 const CHAPTERS: { id: string; icon: IconName; title: string; note: string }[] = [
@@ -146,7 +149,7 @@ function Spots({ items }: { items: NmSpot[] }) {
 
 export default function NorthMacedoniaPage() {
   return (
-    <PageShell current="next" crumbs={[crumbOf("next"), { label: "北マケドニア" }]}>
+    <PageShell crumbs={[crumbOf("next"), { label: "北マケドニア" }]}>
       <PageHead
         mark={<Icon name="mountain" size={44} />}
         title="北マケドニア"

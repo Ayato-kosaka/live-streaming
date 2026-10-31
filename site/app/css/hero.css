@@ -259,8 +259,7 @@
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
   background: linear-gradient(var(--paper) 0 46%, var(--paper-2));
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 10px var(--cast),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   color: var(--ink);

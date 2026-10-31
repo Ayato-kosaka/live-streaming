@@ -1,0 +1,102 @@
+{
+ "items": {
+  "tombstone_a": {
+   "file": "tombstone_a.png",
+   "size": [
+    368,
+    482
+   ],
+   "content": [
+    6,
+    6,
+    362,
+    476
+   ],
+   "about": "墓石（丸い頭・小さなかぼちゃ）。下の辺はまっすぐ"
+  },
+  "tombstone_b": {
+   "file": "tombstone_b.png",
+   "size": [
+    327,
+    492
+   ],
+   "content": [
+    6,
+    6,
+    321,
+    486
+   ],
+   "about": "墓石（アーチ形・こうもりの彫り）。下の辺はまっすぐ"
+  },
+  "tombstone_c": {
+   "file": "tombstone_c.png",
+   "size": [
+    295,
+    373
+   ],
+   "content": [
+    6,
+    6,
+    289,
+    367
+   ],
+   "about": "墓石（傾いた四角・つた）。下の辺はまっすぐ"
+  },
+  "hand_from_soil": {
+   "file": "hand_from_soil.png",
+   "size": [
+    394,
+    303
+   ],
+   "content": [
+    6,
+    6,
+    388,
+    297
+   ],
+   "about": "土の盛り上がりから出る手（ゾンビあやとが出る前の前ぶれ）"
+  },
+  "dirt_l": {
+   "file": "dirt_l.png",
+   "size": [
+    170,
+    168
+   ],
+   "content": [
+    6,
+    6,
+    164,
+    162
+   ],
+   "about": "飛び散る土のかけら（大）"
+  },
+  "dirt_m": {
+   "file": "dirt_m.png",
+   "size": [
+    105,
+    100
+   ],
+   "content": [
+    6,
+    6,
+    99,
+    94
+   ],
+   "about": "飛び散る土のかけら（中）"
+  },
+  "dirt_s": {
+   "file": "dirt_s.png",
+   "size": [
+    62,
+    58
+   ],
+   "content": [
+    6,
+    6,
+    56,
+    52
+   ],
+   "about": "飛び散る土のかけら（小）"
+  }
+ }
+}

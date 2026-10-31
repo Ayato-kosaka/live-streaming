@@ -1,0 +1,34 @@
+{
+  "_note": "編集指示書（PoC）。in/out は元素材のフレーム番号（out は含まない）。at はできあがりのフレーム番号。",
+  "version": 1,
+  "id": "poc-hitchhike",
+  "style": "style.json",
+  "sources": {
+    "v": { "path": "assets/source.mp4" },
+    "h": { "path": "assets/source_h.mp4" }
+  },
+  "cuts": [
+    { "src": "v", "in": 317, "out": 557, "blur": [{ "rect": [640, 1250, 260, 260] }] },
+    { "src": "h", "in": 1203, "out": 1414, "fit": "cover", "focus_x": 0.5 },
+    { "src": "v", "in": 91, "out": 300, "audio_db": -14,
+      "blur": [{ "keys": [{ "f": 91, "rect": [100, 1300, 200, 200] }, { "f": 299, "rect": [500, 1250, 300, 300] }] }] },
+    { "src": "h", "in": 1499, "out": 1739, "fit": "blur" }
+  ],
+  "title": { "text": "ヒッチハイクで\n北欧6カ国へ！" },
+  "telops": [
+    { "from": 200, "to": 400, "text": "1台目 ゲット" },
+    { "from": 470, "to": 640, "text": "待ち時間 60分" }
+  ],
+  "narration": {
+    "engine": "open_jtalk",
+    "speed": 1.1,
+    "lines": [
+      { "at": 9, "text": "ヒッチハイクで、北欧まで行ってみた。" },
+      { "at": 200, "text": "一台目は、親切なおっちゃん。" },
+      { "at": 400, "text": "でも一時間、一台も止まらない。" },
+      { "at": 610, "text": "作戦変更で、バスに乗ることに。" },
+      { "at": 780, "text": "そしてついに、到着！" }
+    ]
+  },
+  "bgm": { "path": "assets/bgm.wav" }
+}

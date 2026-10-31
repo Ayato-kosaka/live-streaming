@@ -1,0 +1,97 @@
+{
+  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scores", "score_why", "checked", "alone", "outsider", "tsunagi", "questions", "turns", "numbers",
+               "ledger", "leave", "fixes", "verdict"],
+  "properties": {
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["a", "b", "c", "d", "e", "f"],
+      "properties": {
+        "a": {"type": "integer", "minimum": 1, "maximum": 5},
+        "b": {"type": "integer", "minimum": 1, "maximum": 5},
+        "c": {"type": "integer", "minimum": 1, "maximum": 5},
+        "d": {"type": "integer", "minimum": 1, "maximum": 5},
+        "e": {"type": "integer", "minimum": 1, "maximum": 5},
+        "f": {"type": "integer", "minimum": 1, "maximum": 5}
+      }
+    },
+    "score_why": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["a", "b", "c", "d", "e", "f"],
+      "properties": {
+        "a": {"type": "string"}, "b": {"type": "string"}, "c": {"type": "string"},
+        "d": {"type": "string"}, "e": {"type": "string"}, "f": {"type": "string"}
+      }
+    },
+    "checked": {"type": "array", "items": {"type": "string", "pattern": "^(F-[0-9]{3}|X[0-9]+)$"}},
+    "alone": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "ok", "why"],
+        "properties": {"line": {"type": "integer"}, "ok": {"type": "boolean"}, "why": {"type": "string"}}
+      }
+    },
+    "outsider": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "who"],
+        "properties": {"line": {"type": "integer"}, "who": {"type": "string"}}
+      }
+    },
+    "tsunagi": {"type": "array", "items": {"type": "string", "enum": ["題", "答", "反", "足", "前", "転", "外", "跳", "締"]}},
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "answered_by", "moved"],
+        "properties": {"line": {"type": "integer"}, "answered_by": {"type": "integer"}, "moved": {"type": "boolean"}}
+      }
+    },
+    "turns": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "kind", "mark", "reason", "erases", "back"],
+        "properties": {
+          "line": {"type": "integer"},
+          "kind": {"type": "string", "enum": ["取消", "動"]},
+          "mark": {"type": "string"},
+          "reason": {"type": "boolean"},
+          "erases": {"type": "array", "items": {"type": "integer"}},
+          "back": {"type": "boolean"}
+        }
+      }
+    },
+    "numbers": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "said_before"],
+        "properties": {"line": {"type": "integer"}, "said_before": {"type": "boolean"}}
+      }
+    },
+    "ledger": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "line", "why"],
+        "properties": {"id": {"type": "string", "pattern": "^(F-[0-9]{3}|X[0-9]+)$"}, "line": {"type": "integer"}, "why": {"type": "string"}}
+      }
+    },
+    "leave": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "why"],
+        "properties": {"line": {"type": "integer"}, "why": {"type": "string"}}
+      }
+    },
+    "fixes": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["line", "text", "ashi"],
+        "properties": {"line": {"type": "integer"}, "text": {"type": "string"}, "ashi": {"type": "boolean"}}
+      }
+    },
+    "verdict": {"type": "string", "enum": ["通る", "通らない"]}
+  }
+}

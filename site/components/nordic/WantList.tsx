@@ -64,7 +64,13 @@ export type WantItem = {
 /** 見どころの種類。印の字は `content/nordic.ts` の `CATS` と同じもの。 */
 const CAT: Record<string, string> = { see: "見る", eat: "食べる", do: "やる", buy: "買う" };
 
-export default function WantList({ items }: { items: WantItem[] }) {
+/**
+ * @param city この一覧が載っている街の名前。**番号の札の読み上げに入れる。**
+ *   1日に2つの街へ寄る日は、同じ面に地図が2枚並ぶ（9/19 はヘルシンキと
+ *   ストックホルム）。「地図の1番を見る」だけだと、どちらの地図の1番なのかが
+ *   読み上げでも Tab でも分からない（`docs/island-misses.md` #265）。
+ */
+export default function WantList({ items, city }: { items: WantItem[]; city?: string }) {
   /* **地図に番号を打ったものは、畳みの向こうへ入れない。**
      地図は点を15個見せているのに一覧が5行だと、残り10個は
      「押しても名前が分からない番号」になる。**面が約束したぶんは、面が出す。**
@@ -91,7 +97,7 @@ export default function WantList({ items }: { items: WantItem[] }) {
                 <a
                   className={`ndsp-n cm-${s.cat}`}
                   href={s.href}
-                  aria-label={`地図の${s.n}番を見る`}
+                  aria-label={`${city ? city + "の" : ""}地図の${s.n}番を見る`}
                 >
                   {s.n}
                 </a>

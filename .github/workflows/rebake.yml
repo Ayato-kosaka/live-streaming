@@ -86,10 +86,11 @@ name: 島の数字を焼き直す
 # `onThisDay.ts` の件数は1件も減らず、**場所の字だけが61%の日から消える**。
 # だから「中身が埋まっている割合」も一緒に見ている。
 #
-# ## 毎晩ひとりでに回すもの（**この9本だけ**）
+# ## 毎晩ひとりでに回すもの（**この11本だけ**）
 #
 #   build_chapter_stats   chapterStats.ts / chapterStreams.ts
 #   build_residents       residents.ts
+#   build_monthly         months.ts          ※ BigQuery ＋ 投げ銭の取り置き・名簿を読む
 #   build_stream_peaks    streamPeaks.ts
 #   build_on_this_day     onThisDay.ts
 #   build_city_streams    cityStreams.ts
@@ -97,6 +98,27 @@ name: 島の数字を焼き直す
 #   build_shorts          shorts.ts          ※ BigQuery ではなく YouTube を読む
 #   build_site_stats      site.ts            ※ BigQuery ではなく**公開の口**を読む
 #   nordic_sun            nordicSun.ts       ※ BigQuery も外の口も引かない（計算だけ）
+#   suzuri_residents      suzuriGoods.ts     ※ 公開の売り場と**公開の口**を読む。鍵は要らない
+#
+# **`build_monthly` は名簿より後ろでないといけない。** 出席と順位に乗せる絵の id を
+# `site/content/residents.ts` から引く（`icons_by_channel()`）ので、名簿より先に焼くと
+# **前の晩の名簿で絵を付ける**ことになる。読む先はもう1つあって、月末配信の日は
+# 暦から当たらないため `python/build_monthly.py` の `FINALS` に人が1行足す
+# （足すまで新しい月の行は出ない。`python/stale_content_watch.py` が45日で鳴る）。
+#
+# **投げ銭の順位だけは、走者の手元に無い。** `python/data/monthly_tips` は
+# `monthly_tips_run` が Actions のログに出した JSON を人が手元へ置くもので、
+# **git に入っていない。** だから毎晩ぶんは順位を作れない——作れない月は
+# **焼いてある `months.ts` の `tipTotal` と `tips` をそのまま据え置く**
+# （焼くほうの `baked_tips()`）。据え置いた月はログに名指しで出る。
+# ここが「無ければ0件」だと、繋いだ晩に9ヶ月ぶんの順位がまるごと消える。
+#
+# **いちばん下は名簿の下流。** 住人の印 → SUZURI のデザイン番号で、焼くのは
+# 「名簿に居て、売り場にグッズが在る人」だけ。下の関所が名簿（`residents.ts`）と
+# 帳尻を合わせる（`match`）ので、**`build_residents` より後ろでないといけない。**
+# グッズを作っているのは別のワークフロー（`SUZURI API` の `characters`）だが、
+# 焼き直しはここに置いた——commit と push、Hosting、関所、凍りの見張りが
+# ここに全部そろっているので、あちらに同じものをもう一組作らずに済む。
 #
 # **そのうしろに、下流がもう1本ぶら下がる**（下の「回すもの」の表には並べない）。
 #
@@ -312,14 +334,14 @@ jobs:
           # cron と同じ扱いにする。**片方だけ手当てすると、繋ぎ替えたあと
           # 毎晩「見るだけ」で走って、緑なのに何も配られない状態になる。**
           if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_run" ]; then
-            # 毎晩ぶん。**機械だけで答えの決まる9本**を、配るところまで。
+            # 毎晩ぶん。**機械だけで答えの決まる11本**を、配るところまで。
             # **ここは `ALL` とは別の並び。** 下の allowlist に足しただけでは
             # 毎晩には乗らない（あちらの「入力が空なら全部」は、手で押して
             # 入力欄を空にしたときだけ通る道）。**足すときは両方に足す。**
-            echo "REBAKE_IN=build_chapter_stats,build_residents,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats,nordic_sun" >> "$GITHUB_ENV"
+            echo "REBAKE_IN=build_chapter_stats,build_residents,build_monthly,build_stream_peaks,build_on_this_day,build_city_streams,build_country_stats,build_shorts,build_site_stats,nordic_sun,suzuri_residents" >> "$GITHUB_ENV"
             echo "REBAKE_DRY=0" >> "$GITHUB_ENV"
             echo "REBAKE_DEPLOY=1" >> "$GITHUB_ENV"
-            echo "毎晩ぶん（$EVENT）: 9本を焼いて、変わっていれば配ります"
+            echo "毎晩ぶん（$EVENT）: 11本を焼いて、変わっていれば配ります"
           else
             echo "REBAKE_IN=$IN_SCRIPTS" >> "$GITHUB_ENV"
             if [ "$IN_DRY" = "false" ]; then
@@ -343,7 +365,7 @@ jobs:
           set -euo pipefail
 
           # **回してよいのはこれだけ。並びは依存の順**（上のコメント参照）
-          ALL="build_chapter_stats build_residents build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk nordic_sun"
+          ALL="build_chapter_stats build_residents build_monthly build_stream_peaks build_on_this_day build_city_streams build_country_stats build_shorts build_site_stats build_kitchen_talk nordic_sun suzuri_residents"
 
           # カンマ・空白・改行で割る。**大文字・`python/`・`tools/`・`.py` は
           # 書かれても通す**（スマホの入力欄は勝手に頭を大文字にする。
@@ -355,7 +377,7 @@ jobs:
 
           if [ -z "$raw" ]; then
             sel="$ALL"
-            echo "入力が空なので10本ぜんぶ回します"
+            echo "入力が空なので12本ぜんぶ回します"
           else
             for n in $raw; do
               # 文字の種類でまず落とす（パスを抜け出す形をここで止める）
@@ -390,11 +412,29 @@ jobs:
             case "$s" in
               build_chapter_stats) p="site/content/chapterStats.ts site/content/chapterStreams.ts" ;;
               build_residents)     p="site/content/residents.ts" ;;
+              # **`months.ts` は `ALL` の中で名簿のすぐ後ろ**（絵の id を名簿から引く）。
+              # 投げ銭の取り置き（`python/data/monthly_tips`）は走者に無いので、
+              # 順位は前のまま据え置かれて焼かれる（焼くほうの `baked_tips()`）。
+              # 下の step「焼く」に名指しの case が在る（`--build` を付けないと
+              # 1バイトも書かずに 2 で帰る）
+              build_monthly)       p="site/content/months.ts" ;;
               build_stream_peaks)  p="site/content/streamPeaks.ts" ;;
               build_on_this_day)   p="site/content/onThisDay.ts" ;;
               build_city_streams)  p="site/content/cityStreams.ts" ;;
               build_country_stats) p="site/content/countryStats.ts" ;;
-              build_shorts)        p="site/content/shorts.ts" ;;
+              # **棚の控え（`python/data/shorts.json`）も一緒に commit する。**
+              # 焼き込みではないが、`build_shorts.py` が**書き換えるファイル**で、
+              # ここに並んでいないものは `git add` されない。
+              #
+              # 2026-09-25 から10-18 まで、ここが `shorts.ts` だけだったせいで
+              # 控えは83本で止まり、**毎晩おなじ4本を足し直しては捨てていた。**
+              # 実害は2つ。(1) 手元にまだ無い扱いなので、**毎晩その4本の視聴ページを
+              # 開きに行っていた**（1本5秒。連打すると reCAPTCHA が返る相手）。
+              # (2) 公開日の取れなかった晩はその本が棚から落ちるので、
+              # **同じ1本が晩ごとに出たり消えたりしていた**（`7kdy1Mwh3ms` が
+              # 実際に cf26de19 で消えて be385d95 で戻っている）。
+              # `docs/island-misses.md` #289
+              build_shorts)        p="site/content/shorts.ts python/data/shorts.json" ;;
               # **`site.ts` は焼き込みの中で唯一、人の欄と同居している。**
               # 焼くのは `STATS_FALLBACK` の中だけで、`SITE` と `PROFILE` には
               # 1バイトも触らない（`python/build_site_stats.py` の `patch()` が
@@ -412,6 +452,14 @@ jobs:
               # 下の step「焼く」に名指しの case が在る（既定の枝に落ちると
               # `python/nordic_sun.py` を探して無い、で落ちる）
               nordic_sun)          p="site/content/nordicSun.ts" ;;
+              # **住人の印 → SUZURI のデザイン番号。** BigQuery を引かない
+              # （公開の検索の面と、公開の口 `/island-api/characters`。鍵も要らない）。
+              # **`ALL` のいちばん後ろに置いてある。** 下の「中の数が縮んでいないか」で
+              # 名簿（`residents.ts`）と帳尻を合わせる（`match`）ので、名簿を焼いたあとに
+              # 焼かないと、**前の晩の名簿と今晩のグッズを突き合わせる**ことになる。
+              # 下の step「焼く」に名指しの case が在る（落ちた晩に、同じ回の他の9本を
+              # 道連れにしないため。#105）
+              suzuri_residents)    p="site/content/suzuriGoods.ts" ;;
               *) echo "::error::$s に対応するファイルが決まっていません"; exit 1 ;;
             esac
             paths="$paths $p"
@@ -661,6 +709,20 @@ jobs:
               build_kitchen_talk)
                 echo "::warning::$s は BigQuery を引きません。python/data/kitchen_*.json の焼き直しなので、先にその JSON を取り直さないと数字は動きません"
                 python "python/$s.py" --build ;;
+              build_monthly)
+                # **`--build` が要る。** 付けないと1バイトも書かずに 2 で帰るので、
+                # 既定の枝（引数なし）に落とすとこの step ごと落ちる。
+                #
+                # 投げ銭の順位（`python/data/monthly_tips/<月>.json`）は
+                # **git に入っていないので、走者の手元には1枚も無い。**
+                # その月は焼いてある `months.ts` の `tipTotal` と `tips` を
+                # そのまま据え置く（焼くほうの `baked_tips()`）。据え置いた月は
+                # ログに名指しで出るので、順位を新しくしたいときは
+                # `monthly_tips_run` を押して、手元で焼き直して出す。
+                #
+                # 新しい月の行が出るのは、`FINALS` に月末配信の日を人が足したあと。
+                echo "$s は BigQuery を引きます。投げ銭の順位は走者に取り置きが無いので、前に焼いたぶんを据え置きます"
+                python "python/$s.py" --build ;;
               build_shorts)
                 # **ここだけ BigQuery ではなく YouTube を読む**（チャンネルのショートのタブ）。
                 # 引数なしで「取り直して焼く」。
@@ -669,30 +731,58 @@ jobs:
                 # master に入らなくなる（`docs/island-fresh.md` の止め金4と同じ考え）。
                 # 棚を前のまま戻しておいて、**run のいちばん最後で赤くする。**
                 #
-                # なお「YouTube に届かなかった」ときはスクリプト自身が 0 で終わる
-                # （焼かずに引き下がる）ので、ここに来るのは
-                # **手元にある id が一覧から消えていた**ときだけ。
                 echo "$s は BigQuery ではなく YouTube（チャンネルのショートのタブ）を読みます"
                 #
                 # **終わりかたを2つに分ける。**
                 #   3 … YouTube に届かなかった（棚は前のまま。**こちらの落ち度ではない**）
-                #   3以外の0以外 … 手元にある id が一覧から消えていた（人が見る話）
+                #   3以外の0以外 … 焼けなかった（人が見る話）
                 #
                 # 前は届かなかった晩も 0 で返っていて、「今日はショートが出なかった晩」と
                 # **まったく同じ顔**になっていた。凍りの見張りはショートを 0（見ない）に
                 # してある——4ヶ月出ない期間が実際にあるので日数では狼少年になる——ので、
                 # **ここで言わないと、何週間届いていなくても誰も気づけない。**
                 # 赤にはしない（届かないのは向こうの都合で、直しようがない晩がある）。
+                # **落ちた理由を、最後の赤まで持っていく。** 前はここで何も
+                # 控えずに「上の『焼く』を見てください」とだけ出していたので、
+                # 注記（annotation）だけ読んでも**何が駄目だったのか分からなかった。**
+                # 5晩おなじ赤が並んだとき、理由を知るには run を開いて
+                # ログを 1,500行ぶん送るしかなかった（`docs/island-misses.md` #289）。
                 set +e
-                python "python/$s.py"
-                rc=$?
+                python "python/$s.py" 2>&1 | tee /tmp/shorts-run.log
+                rc=${PIPESTATUS[0]}
                 set -e
                 if [ "$rc" = "3" ]; then
                   echo "SHORTS_UNREACHABLE=1" >> "$GITHUB_ENV"
                   echo "::warning::$s は YouTube に届きませんでした。棚は前のままです（赤にはしません）"
                 elif [ "$rc" != "0" ]; then
-                  git checkout -- site/content/shorts.ts || true
+                  git checkout -- site/content/shorts.ts python/data/shorts.json || true
+                  # 理由の1行。スクリプトが出した `::error::` の**いちばん上。**
+                  # **最後ではない。** 手元の id が消えていた晩は3種類の行が出る——
+                  # 見出し（何が起きたか）→ 内訳（消えた id）→ 直しかた（`_gone` に足す）。
+                  # 最後を採ると「`_gone` に足してください」だけが注記に出て、
+                  # **何が起きたのかが落ちる。** 見出しが先頭に来る決まりなので上を採る。
+                  # 何も出ていなければログの最後の1行（traceback なら例外の行）。
+                  # **空で終わらせない**（空だと前と同じ「見てください」に戻る）
+                  #
+                  # **`grep | head` を `$( )` に入れない。** この step は
+                  # `set -euo pipefail` の下にいる。`grep` は当たらなければ 1 を返すし、
+                  # 当たっても `head -1` が先に閉じると SIGPIPE で 141 を返す。
+                  # どちらも代入が失敗して、**`set -e` がこの step ごと殺す**——
+                  # つまり `SHORTS_BAD` が立たないまま「焼く」が落ちて、
+                  # **同じ晩の他の焼き込みまで commit されなくなる。**
+                  # 理由を1行出したいだけで棚以外を道連れにするので、
+                  # 当たらなくても 0 で終わる `awk` 1本にする。
+                  why="$(awk '/^::error::/{sub(/^::error::/, ""); print; exit}' /tmp/shorts-run.log)"
+                  if [ -z "$why" ]; then
+                    why="$(awk 'NF{last=$0} END{print last}' /tmp/shorts-run.log)"
+                  fi
+                  # 注記は1行。長いと読めないので切る（全文は下の要約に出す）。
+                  # **`cut -c` ではなく文字で切る。** coreutils の `cut -c` は
+                  # 実体がバイトなので、日本語の途中で切ると壊れた1文字が
+                  # `$GITHUB_ENV` に入る（300バイト＝日本語100字で、思ったより早く切れる）
+                  why="$(printf '%s' "$why" | python -c 'import sys; sys.stdout.write(sys.stdin.read()[:300])' || true)"
                   echo "SHORTS_BAD=1" >> "$GITHUB_ENV"
+                  echo "SHORTS_WHY=${why:-理由がログに残っていません（終了コード $rc）}" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。棚は前のまま戻しました。run の最後で赤くします"
                 fi ;;
               build_site_stats)
@@ -747,6 +837,35 @@ jobs:
                   git checkout -- site/content/nordicSun.ts || true
                   echo "NORDIC_SUN_BAD=1" >> "$GITHUB_ENV"
                   echo "::warning::$s が落ちました。日の出の表は前のまま戻しました。run の最後で赤くします"
+                fi ;;
+              suzuri_residents)
+                # **住人の印 → SUZURI のデザイン番号。** BigQuery を引かない
+                # （鍵が無ければ公開の検索の面、島の名簿は公開の口）。
+                #
+                # **鍵を渡さない。** 渡すと公式の API（`materials`）の側を引きにいき、
+                # あちらは**非公開のデザインまで返す**ので、売り場で開けない番号が
+                # 島の札になりうる。焼きたいのは「公開の売り場に出ている番号」だけ。
+                #
+                # **落ちても、ここでは止めない。** 止めると同じ晩に焼けた他の9本まで
+                # master に入らなくなる（`build_shorts` と同じ考え。#105）。
+                # 売り場から引けた数が説明のつかない減り方をしたら、焼くほうが
+                # **1バイトも書かずに 2 で引き下がる**（`suzuri_residents.gate()`）。
+                # 表は前のまま戻しておいて、**run のいちばん最後で赤くする。**
+                #
+                # **関所を2か所に置いているのではなく、層が違う**（`site.ts` と同じ形）。
+                # 焼くほうが見るのは「**売り場から引けた数が、名簿を踏まえて
+                # 説明のつく減り方か**」で、下の「中の数が縮んでいないか」が見るのは
+                # 「**焼いた結果が名簿と帳尻が合っているか**」。前者を通る道が
+                # 壊れた回を、出口でもう一度捕まえる。
+                echo "$s は BigQuery を引きません（公開の売り場と、公開の口を読みます）"
+                set +e
+                SUZURI_API_KEY="" python "python/$s.py"
+                rc=$?
+                set -e
+                if [ "$rc" != "0" ]; then
+                  git checkout -- site/content/suzuriGoods.ts || true
+                  echo "SUZURI_GOODS_BAD=1" >> "$GITHUB_ENV"
+                  echo "::warning::$s が落ちました。グッズの表は前のまま戻しました。run の最後で赤くします"
                 fi ;;
               *) python "python/$s.py" ;;
             esac
@@ -1030,6 +1149,28 @@ jobs:
                   # 絵の分かっている住人（22/22）。residents_map.json が読めないと絵だけ消える
                   rule("絵の分かっている住人", SHARE, 5.0, num=r"icon: \"", den=r"days: (\d+)"),
               ],
+              # 2026-10-30 の本番の値を () に入れてある。
+              # **この面だけ、やせ方が2通りある。** (1) BigQuery が欠けて配信・出席が
+              # 減る (2) **投げ銭の取り置き（`python/data/monthly_tips`）が走者に
+              # 無いまま順位を焼いてしまう**。(2) は9ヶ月ぶんが一度に消えるので、
+              # 件数と合計の両方から当てる
+              "months.ts": [
+                  # 月（9）。月末配信は過ぎれば消えないので、減ったら読み落とし。
+                  # **増えるのは `FINALS` に人が1行足した晩**で、それは止めない
+                  rule("月", KEEP, 0, r'^    key: "'),
+                  # 配信（314）。累積。いちばん短い月でも20本あるので、月が1つ
+                  # 落ちれば 6% 以上動く。1本非公開になるのは 0.3%
+                  rule("配信", FLOOR, 0.95, r'\{d:"'),
+                  # 出席の行（739）。**2日以上来た人だけ**並ぶので、1日だけの人が
+                  # 増減しても動かない。名寄せ（`residents.ts` 由来）が割れると塊で動く
+                  rule("出席の行", FLOOR, 0.95, r'\{n:"'),
+                  # 投げ銭の行（133）。**取り置きが渡っていない月を 0 件で焼くと
+                  # ここが落ちる。** 据え置きが効いていれば1行も減らない
+                  rule("投げ銭の行", FLOOR, 0.95, r"\{r:\d+,"),
+                  # 貢献額の合計（325,408）。行は残ったまま額だけ 0 になる形
+                  # （JSON の `total` を読み落とす）は、件数では捕まらない
+                  rule("貢献額の合計", FLOOR, 0.95, r"tipTotal: (\d+)", mode="sum"),
+              ],
               "streamPeaks.ts": [
                   # 山の出せる配信（251）。累積。取り込み直しで n が15を割る回があっても数本
                   rule("山の出せる配信", FLOOR, 0.95, r'"k":'),
@@ -1170,6 +1311,44 @@ jobs:
                   # 街ごとの明け暮れ（136 ＝ 17日 x 8街）。**街が1つ落ちると -12.5%。**
                   # 日の数は1つも減らないので、上の行では捕まらない
                   rule("街ごとの明け暮れ", FLOOR, 0.9, r'rise: "'),
+              ],
+              # 住人の印 → SUZURI のデザイン番号。**ここも物差しが「前の版」ではない。**
+              #
+              # 前の版と比べると、**正しい縮みまで止まる。** 名簿（`residents.ts` ＝
+              # 直近90日で来てくれている人）から誰かが抜けた晩は、焼くほうが
+              # `pairs` からその人を落とすので、グッズの数もそのぶん減るのが正しい。
+              # しかも止めたところで入るものは増えない——次の晩も同じ数が焼けるので、
+              # **人が来るまで毎晩止まる**（`characterBox.ts` が 2026-10-03 に
+              # 踏んだのと同じ形。103→100 は正しい縮みだった）。
+              #
+              # **正しい物差しは名簿。** この表は「名簿の人のうち、売り場に
+              # グッズが在る人」なので、**グッズ＋まだ作っていない人＝名簿**で
+              # 帳尻が合う。焼くほうが `NO_GOODS` に名指しで書いている
+              # （`characterBox.ts` の `noArt` と同じ形。書かないと、グッズの
+              # 無い人が1人いるだけで永久に止まる）。
+              #
+              # **`arg`（0.85）は、その `NO_GOODS` が膨らんで帳尻だけ合う形の止め。**
+              # 売り場から1件も引けなかった晩は全員が `NO_GOODS` に落ちるので、
+              # グッズそのものが名簿の 85% を切ったら、帳尻が合っていても止める。
+              # 85% の出どころは実測2つのあいだ（2026-10-13）:
+              #   - **検索の面を1ページ取りこぼすと 24件落ちる**（1ページ24件。
+              #     実際に引いて数えた）。名簿101人なら 76% まで落ちるので、
+              #     **床はそれより上**でないと寝ている
+              #   - **グッズをまだ作っていない人は、いまのところ2人**（2%）。
+              #     鍵（`SUZURI_API_KEY`）が Secret に入れば毎晩ひとりでに作られるが、
+              #     入るまでは手で作るので増えうる。名簿は実測で9.5晩に1人増える
+              #     （`residents.ts` の git。2026-09-25〜10-13 で +2人）ので、
+              #     15人ぶんの余白＝**誰も作らなくても4〜5ヶ月は鳴らない**
+              #
+              # **焼けなかった晩は、ここまで来ない。** 上の「焼く」が落ちた回は
+              # 表を前のまま戻してあるので、名簿と帳尻が合ったまま素通りする
+              # （落ちたこと自体は run の最後の「グッズの表を焼けたか」が言う）。
+              "suzuriGoods.ts": [
+                  rule("名簿とそろったグッズ", MATCH, 0.85, r'^\s{2}"[^"]+": "\d+",$',
+                       mate="residents.ts", mate_pat=r'emoji: "', mate_label="名簿",
+                       # まだグッズの無い人の並び。`"印",` だけの行（上の当たりは
+                       # `"印": "番号",` なので、同じ行を二重に数えることはない）
+                       spare=r'^\s{2}"[^"]+",$'),
               ],
               "site.ts": [
                   rule("配信", FLOOR, 0.98, r"^\s+streams: (\d+),$", mode="sum"),
@@ -1449,6 +1628,12 @@ jobs:
               "chapterStats.ts": (4, "いまの章の配信と人が毎晩増える"),
               "chapterStreams.ts": (0, "閉じた章のぶんだけ。章が閉じるまで動かないのが正常"),
               "residents.ts": (3, "直近90日の窓が毎日ずれるので、毎晩動く"),
+              "months.ts": (0, "いまの月の配信と出席は毎晩増えるが、**月末配信から"
+                               "次の月の初配信までは1バイトも動かないのが正常**。"
+                               "そのうえ新しい月の行が出るのは、`FINALS` に人が"
+                               "月末配信の日を足したあと。**日ではなく、新しい月が"
+                               "焼かれているか**で見る（`python/stale_content_watch.py` の"
+                               "`months.ts` 45日。日数を2か所に置かない）"),
               "streamPeaks.ts": (10, "山が雑音と区別できた配信だけ。出せない晩がある"),
               "onThisDay.ts": (4, "その日の代表が1本ずつ増える"),
               "cityStreams.ts": (7, "いまいる街の配信が増える。題名に街の名が出ない時期は止まる"),
@@ -1461,6 +1646,12 @@ jobs:
                                   "**日ではなく、旅程の日が全部焼かれているか**で見る"
                                   "（`python/stale_content_watch.py` の KEYS。日数を2か所に置かない）"),
               "shorts.ts": (0, "あやとがショートを出した晩だけ動く。4ヶ月出ない期間が実際にある"),
+              "suzuriGoods.ts": (0, "あやとが住人グッズを作った晩にしか動かない。"
+                                    "鍵（`SUZURI_API_KEY`）が Secret に入るまでは手で作るので、"
+                                    "**何週間も同じ表が焼けるのが正常**——日を当てると"
+                                    "満たしようのない赤になる（`docs/island-standards.md` §13）。"
+                                    "**日ではなく、名簿と帳尻が合っているか**で見る"
+                                    "（上の「中の数が縮んでいないか」の `match`。日数を2か所に置かない）"),
               "site.ts": (0, "表紙の受け皿の数字。**日ではなく、中に焼いた "
                              "`STATS_FALLBACK.updatedAt` が今日からどれだけ離れたか**で見る"
                              "（`python/stale_content_watch.py` の LATEST 3日。"
@@ -1941,9 +2132,13 @@ jobs:
       # commit と deploy のあとに置くのは「凍っていたら赤くする」と同じ理由で、
       # 止めても入るものが増えるわけではなく、同じ晩の他の6本を道連れにするだけだから。
       #
-      # ここが赤くなるのは「手元にある id が YouTube の一覧から消えていた」ときだけ。
-      # **非公開・削除だと分かったら `python/data/shorts.json` の `_gone` に
-      # 理由を添えて足す。** 書いてあるものは一覧に無くても止まらない。
+      # **赤に理由を載せる。** ここは長いこと「上の『焼く』を見てください」としか
+      # 言わなかった。赤くなる筋道は1つではない——
+      #   - 手元にある id が YouTube の一覧から消えていた（`_gone` に書く話）
+      #   - 焼くほうが落ちた（2026-10-17 からの5晩がこれ。`OverflowError`）
+      # どちらなのかが注記に出ないので、**run を開いてログを下まで送るまで
+      # 見分けられなかった**（`docs/island-misses.md` #289）。
+      # いまは「焼く」で拾った1行（`SHORTS_WHY`）をそのまま出す。
       - name: ショートの棚を取り直せたか
         if: ${{ !cancelled() && env.SHORTS_BAD == '1' }}
         run: |
@@ -1951,12 +2146,20 @@ jobs:
             echo ""
             echo "### ショートの棚を取り直せませんでした"
             echo ""
-            echo "手元にあるショートが、YouTube の一覧に見当たりません。**棚は前のまま**で、"
-            echo "焼き込みは1バイトも書き換わっていません。上の「焼く」に消えた id が出ています。"
-            echo "非公開・削除だと分かったら \`python/data/shorts.json\` の \`_gone\` に理由を添えて足してください。"
+            echo "\`\`\`"
+            echo "${SHORTS_WHY:-（理由が残っていません）}"
+            echo "\`\`\`"
+            echo ""
+            echo "**棚は前のまま**で、焼き込みも控え（\`python/data/shorts.json\`）も"
+            echo "1バイトも書き換わっていません。上の「焼く」に全文が出ています。"
+            echo ""
+            echo "手元にあるショートが一覧から消えていた、という理由なら、"
+            echo "非公開・削除だと分かったところで \`python/data/shorts.json\` の \`_gone\` に"
+            echo "理由を添えて足してください。書いてあるものは一覧に無くても止まりません。"
+            echo ""
             echo "**この赤は「落ちた」ではありません。** 他の焼き込みは master に入れて、配るところまで済んでいます。"
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "::error::ショートの棚を取り直せませんでした。上の「焼く」を見てください"
+          echo "::error::ショートの棚を取り直せませんでした: ${SHORTS_WHY:-理由が残っていません}"
           exit 1
 
       # 届かなかった晩は、赤にしないかわりに**必ず一言残す。**
@@ -2054,6 +2257,37 @@ jobs:
           echo "::error::旅の日の出・日の入りを焼けませんでした。表は前のままです"
           exit 1
 
+      # **住人グッズの表を焼けなかった晩を、ここで赤にする。**
+      # commit と deploy のうしろに置くのは上の2つと同じ理由で、止めても入るものが
+      # 増えるわけではなく、同じ晩の数字を道連れにするだけだから（#105）。
+      #
+      # **黙って緑にしない。** この表が止まっても画面は赤くならない——
+      # 住人ページの「グッズを買う」札は**無ければ出さない**作りなので、
+      # **新しく入った住人の札だけが、いつまでも出ないまま**になる。
+      - name: グッズの表を焼けたか
+        if: ${{ !cancelled() && env.SUZURI_GOODS_BAD == '1' }}
+        run: |
+          {
+            echo ""
+            echo "### 住人グッズの売り場（suzuriGoods.ts）を焼けませんでした"
+            echo ""
+            echo "**表は前のままです**（1バイトも書き換わっていません）。落ちた理由は上の"
+            echo "「焼く」に出ています。よくあるのは2つです。"
+            echo ""
+            echo "1. **公開の検索の面の組み方が変わった** — 売り場から引けた数が、名簿を"
+            echo "   踏まえて説明のつかない減り方をしたので、関所（\`suzuri_residents.gate()\`）が"
+            echo "   書く前に止めました。\`python/suzuri_residents.py\` の \`from_search()\` の"
+            echo "   正規表現を、いまの \`https://suzuri.jp/search\` に当て直してください"
+            echo "2. **島の口（\`/island-api/characters\`）に届かなかった** — 向こうの都合です。"
+            echo "   次の晩にひとりでに緑へ戻ります"
+            echo ""
+            echo "手で確かめるには \`python3 python/suzuri_residents.py --check\`（焼かずに差だけ）。"
+            echo "関所そのものの対照は \`python3 python/suzuri_gate_selftest.py\` です。"
+            echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::住人グッズの売り場を焼けませんでした。表は前のままです"
+          exit 1
+
       # **絵の大きさを測り直せなかった晩を、ここで赤にする。**
       # commit と deploy のうしろに置くのは「凍っていたら赤くする」と同じ理由で、
       # 止めても入るものが増えるわけではなく、同じ晩の数字を道連れにするだけだから。
@@ -2105,9 +2339,11 @@ jobs:
             echo "落ちた理由:"
             echo ""
             echo '```'
-            tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+            tail -n 40 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
             echo '```'
             echo ""
+            echo "最後の1行に**どの島を撮ったか**が入っています。島の色（水も草も）は章で"
+            echo "持ち替わるので、「きのうまで通っていたのに今晩落ちた」のいちばんありそうな理由がそれです。"
             echo "全部は、上の「分かち合う絵を撮り直す」の log に出ています。"
             echo "手元で同じものを回すには:"
             echo ""
@@ -2116,8 +2352,10 @@ jobs:
             echo "DIST=site/.next-og PORT=4519 tools/sprites/ognight.sh"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "---- 撮り直しが落ちた理由（最後の30行）----"
-          tail -n 30 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
+          # **40行。** 30 だと、住人の絵が落とせなかった行（毎晩9枚ぶん出る）で
+          # 窓が埋まって、肝心の「海 …% / 陸 …%」と島の名前が押し出される
+          echo "---- 撮り直しが落ちた理由（最後の40行）----"
+          tail -n 40 /tmp/og.log 2>/dev/null || echo "（log が残っていません）"
           echo "---------------------------------------------"
           echo "::error::分かち合う絵（og.png）を撮り直せませんでした。絵は据え置きです"
           exit 1

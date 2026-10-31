@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { SPOTS } from "../island/layout";
 import { Gull } from "../island/Guide";
+import IslandNav from "./IslandNav";
 import PlaceList, { ALL_HREF, ALL_LABEL } from "./PlaceList";
 import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
@@ -45,10 +45,8 @@ type Crumb = { label: string; href?: string };
  * **`display: none` で消すので、隠れているほうは読み上げにも出てこない。**
  */
 export function IslandHeader({
-  current,
   here,
 }: {
-  current?: string;
   /** いま居る面の名前。パンくずの最後の1つ。 */
   here?: string;
 }) {
@@ -85,19 +83,9 @@ export function IslandHeader({
 
             **到達性は落ちない。** 砂浜の「島のなか ぜんぶ」から `/all` が
             1タップ、そこから96枚が2タップ。看板に出していたときと同じ数。 */}
-        <nav className="ih-nav" aria-label="島のなか">
-          {SPOTS.map((s) => (
-            <Link
-              key={s.id}
-              href={s.href}
-              prefetch={false}
-              className={`ih-link${current === s.id ? " is-on" : ""}`}
-            >
-              <img src={`/sprites/${s.icon}.webp`} alt="" />
-              {s.label}
-            </Link>
-          ))}
-        </nav>
+        {/* **どの札が朱枠かは、面から渡さない。** 帯が自分で道を読む
+            （`components/ui/IslandNav.tsx`）。砂浜の印と同じ式。 */}
+        <IslandNav />
         {/* 自分のアイコン。**ログインしている人にだけ出る**（`MeButton`）。
             島での見え方・貼った付箋・出した企画・ログアウトは、
             この先の1か所にまとめてある（#163）。 */}
@@ -151,7 +139,9 @@ export function PageHead({
   mark?: ReactNode;
   /** 公式のアプリアイコンなど */
   logo?: string;
-  title: string;
+  /** 面の名前。**パンくずの最後と同じ字にする**（`docs/island-ux.md` 4.3）。
+      折ってよい場所を選びたい面は `Phrase` を渡す（`components/ui/Phrase.tsx`）。 */
+  title: ReactNode;
   /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
       （`app/map/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
       ほとんどの面は文字列のまま渡す。 */
@@ -186,7 +176,7 @@ export function PageHead({
  * 看板からも島の上からも外したので、行き先の索引はこの1か所が持つ。
  * 一覧を書くのは `PlaceList` なので、行き先が増えても直すのは1か所。
  */
-export function IslandFooter({ current, atAll }: { current?: string; atAll?: boolean }) {
+export function IslandFooter() {
   return (
     <footer className="ifoot">
       {/* 上の帯の「あやと島」と同じ行き先。二重に先読みしても意味がない */}
@@ -194,7 +184,7 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
         <Gull size={24} shadow={false} /> {UI.backToIsland}
       </Link>
       <nav aria-label="島に建っているもの">
-        <PlaceList current={current} atAll={atAll} />
+        <PlaceList />
       </nav>
       {/* **背を先に取る**（`components/ui/Say.tsx` の `SayRoom`）。
           ここは `<Say>` を素で置いてあって、焼いた HTML には空白1文字しか
@@ -212,15 +202,10 @@ export function IslandFooter({ current, atAll }: { current?: string; atAll?: boo
 
 export default function PageShell({
   children,
-  current,
   crumbs,
-  atAll,
 }: {
   children: ReactNode;
-  current?: string;
   crumbs?: Crumb[];
-  /** この面が `/all` そのものか。自分への口を出さないために渡す。 */
-  atAll?: boolean;
 }) {
   // 看板に出す現在地は、パンくずのいちばん奥。面の h1 と同じ文字列になる
   // （`docs/island-ux.md` 4.3「1つの場所には1つの名前」）。
@@ -231,7 +216,7 @@ export default function PageShell({
           ブラウザ任せでは着かない**（`components/ui/HashJump.tsx`）。
           島の面はどこも中身を取りにいくので、ここ1か所で持つ。 */}
       <HashJump />
-      <IslandHeader current={current} here={here} />
+      <IslandHeader here={here} />
       <main className="page">
         {/* 現在地の行。残るのはパンくずだけなので、
             狭い画面で「島 › ○○」の1段しかない面では
@@ -244,7 +229,7 @@ export default function PageShell({
         )}
         {children}
       </main>
-      <IslandFooter current={current} atAll={atAll} />
+      <IslandFooter />
     </>
   );
 }

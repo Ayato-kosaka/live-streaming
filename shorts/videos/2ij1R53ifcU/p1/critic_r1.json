@@ -1,0 +1,241 @@
+{
+ "scores": {
+  "a": 4,
+  "b": 4,
+  "c": 4,
+  "d": 4,
+  "e": 4,
+  "f": 4
+ },
+ "score_why": {
+  "a": "龍の髭剃りの画と「髭剃りに2時間」の札で、なぜそんなにかかったかが気になる",
+  "b": "2〜3秒ごとに市場、店、現金だけ、モール、ATMと場面が動き、説明の行が続かない",
+  "c": "「中二病すぎる」「1万円は出せん！」「入ってるやん！」が短く刺さる",
+  "d": "11行目の手数料500円を19行目の「ほぼ0円」で拾い、13行目の龍への未練も20行目で回収する",
+  "e": "AIもATMもモールも誰でも分かる。銀行名もその場で紹介している",
+  "f": "題の「2時間」に戻る問いで閉じていて、コメントしやすい"
+ },
+ "checked": [
+  "F-004",
+  "F-005",
+  "F-006",
+  "F-007",
+  "F-008",
+  "F-014",
+  "F-015",
+  "F-019",
+  "F-022",
+  "F-025",
+  "F-030",
+  "F-031",
+  "F-032",
+  "F-033",
+  "F-034",
+  "F-035",
+  "F-036",
+  "F-037",
+  "F-039",
+  "F-040",
+  "F-043",
+  "F-047",
+  "F-048",
+  "F-049",
+  "F-050",
+  "F-051",
+  "F-052",
+  "F-054",
+  "X2"
+ ],
+ "alone": [
+  {
+   "line": 1,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 2,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 3,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 4,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 5,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 6,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 7,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 8,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 9,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 10,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 11,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 12,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 13,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 14,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 15,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 16,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 17,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 18,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 19,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 20,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 21,
+   "ok": true,
+   "why": ""
+  }
+ ],
+ "outsider": [],
+ "tsunagi": [
+  "題",
+  "前",
+  "足",
+  "転",
+  "外",
+  "転",
+  "前",
+  "足",
+  "答",
+  "外",
+  "足",
+  "転",
+  "反",
+  "転",
+  "答",
+  "反",
+  "前",
+  "答",
+  "足",
+  "答",
+  "締"
+ ],
+ "questions": [
+  {
+   "line": 7,
+   "answered_by": 9,
+   "moved": false
+  },
+  {
+   "line": 14,
+   "answered_by": 15,
+   "moved": false
+  },
+  {
+   "line": 17,
+   "answered_by": 18,
+   "moved": false
+  }
+ ],
+ "turns": [
+  {
+   "line": 10,
+   "kind": "動",
+   "mark": "けど",
+   "reason": true,
+   "erases": [],
+   "back": false
+  },
+  {
+   "line": 15,
+   "kind": "動",
+   "mark": "",
+   "reason": true,
+   "erases": [],
+   "back": false
+  },
+  {
+   "line": 18,
+   "kind": "動",
+   "mark": "",
+   "reason": true,
+   "erases": [],
+   "back": false
+  }
+ ],
+ "numbers": [
+  {
+   "line": 13,
+   "said_before": true
+  },
+  {
+   "line": 19,
+   "said_before": true
+  },
+  {
+   "line": 21,
+   "said_before": true
+  }
+ ],
+ "ledger": [],
+ "leave": [],
+ "fixes": [],
+ "verdict": "通る"
+}

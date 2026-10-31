@@ -342,6 +342,45 @@ export function chapterNow(now: Date = new Date()): Chapter {
 export const NOW_CHAPTER = chapterNow(BUILT_AT);
 
 /**
+ * slug から章を引く。**無い slug は投げる。**
+ *
+ * `undefined` を返して呼び手に任せると、受けた側が `""` や `null` に畳んで
+ * **黙って1行消える。** 実際に `app/about/page.tsx` がそうなっていた——
+ * #224 で `albania` が章でなくなった日に `chapterFrom("albania")` が `""` を返し、
+ * 年表の `filter((x) => x.date)` が行ごと捨てて、**「ここまでと、いま」を名乗る面が
+ * 2026-09-11 で止まった。** 型でもビルドでも巡回でも赤くならない。
+ *
+ * **章の slug を手で書く所は、ここを通す。** 統合や改名でその slug が消えた日に
+ * `next build` が止まるので、配る前に必ず気づく（`docs/island-misses.md` #224 決め2）。
+ */
+export function chapterOf(slug: string): Chapter {
+  const c = CHAPTERS.find((x) => x.slug === slug);
+  if (!c) {
+    throw new Error(
+      `content/chapters.ts に章 "${slug}" がありません。` +
+        `統合か改名で消えた slug を、どこかが手で名指ししています。` +
+        `いまの章: ${CHAPTERS.map((x) => x.slug).join(", ")}`,
+    );
+  }
+  return c;
+}
+
+/**
+ * 島の行き先。**いまいる島はトップそのもの**（`docs/island-atlas.md` 7章）。
+ *
+ * **ここに置いてあるのは、章の表のとなりだから。** 前は
+ * `components/chain/route.ts` にあったが、あのファイルは `chapterStreams.ts`
+ * （毎晩焼く大きい表）を読むので、**行き先を1つ引きたいだけの面まで
+ * それを束に抱き込む。** `components/chain/route.ts` からは再輸出してある。
+ *
+ * `now` を渡せるようにしてあるのは、**「いまいる島」が日付で変わるから**。
+ * 画面（クライアント）は `chapterNow(new Date())` を渡すこと。
+ */
+export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
+  return c.slug === now.slug ? "/" : `/island/${c.slug}`;
+}
+
+/**
  * 次の島。**日付で決める。**
  *
  * `from` の空欄だけで決めていたころ、出発しても誰かが `chapters.ts` に

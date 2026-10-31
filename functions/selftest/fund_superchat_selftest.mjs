@@ -34,7 +34,8 @@
  * | --- | --- | --- |
  * | `notest` | 通知のテストを見ない | test: true は入らない |
  * | `nocurrency` | 通貨を見ない | 円以外は入らない |
- * | `noyen` | 額を見ない | 0円以下は入らない |
+ * | `noyen` | 下の線を見ない | 0円以下は入らない |
+ * | `nomax` | **上の線を見ない** | YEN_MAX を超えると入らない |
  * | `noshape` | 26文字の形を見ない | ほどけないIDは入らない |
  * | `nonce` | 書類IDに時刻を混ぜる | 2回投げても件数／合計が動かない |
  * | `noguard` | 32桁の形を見ずに引きに行く | 32桁でなければ Firestore を引かない |
@@ -73,7 +74,9 @@ function nothing(why) {
 /* ---------------- 本体を切り出す ---------------- */
 
 console.log("# tsc を回して、いまの src から切り出す");
-execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), {cwd: FUNCTIONS});
+// -b: src が lib より新しいときだけ書き出す（src を変えれば作り直し、型の誤りでは今までどおり落ちる）。
+// Selftests では functions/selftest の見張りが同じ src から同じ lib を1本ずつ作り直していて、1本 10秒がほぼそれだった
+execFileSync(join(FUNCTIONS, "node_modules/.bin/tsc"), ["-b"], {cwd: FUNCTIONS});
 const js = readFileSync(join(FUNCTIONS, "lib/islandApi.js"), "utf8");
 
 /**
@@ -111,6 +114,12 @@ const fd = readFileSync(join(FUNCTIONS, "lib/fundDesk.js"), "utf8");
 const tm = /exports\.MAX_FUND_TEXT = (\d+);|MAX_FUND_TEXT = (\d+)/.exec(fd);
 if (!tm) nothing("MAX_FUND_TEXT が見つからない");
 const MAX_FUND_TEXT = Number(tm[1] ?? tm[2]);
+/* 額の上限も同じ（2026-10-14）。**こちらも本物の数を読んで渡す。**
+   決め打ちにすると、向こうを上げた日にこの見張りだけ古い線で通る。
+   `10_000_000` は tsc が `10000000` に書き出す。 */
+const ym = /exports\.YEN_MAX = (\d+);|YEN_MAX = (\d+)/.exec(fd);
+if (!ym) nothing("YEN_MAX が見つからない");
+const YEN_MAX = Number(ym[1] ?? ym[2]);
 
 for (const [name, src] of [["FUND", FUND], ["GUARD", GUARD]]) {
   for (const want of name === "FUND" ?
@@ -136,10 +145,20 @@ const BREAKS = {
     /if \(!FUND_YEN\.has\([\s\S]*?\)\)\s*return null;/,
     "",
   ],
+  /* **下の線と上の線は、同じ `if` に並んでいる。** 別々に外せるように
+     片方ずつ当てる（まとめて外すと、どちらが効いていたか分からない）。 */
   noyen: [
     "FUND",
-    /if \(!Number\.isFinite\(yen\) \|\| yen <= 0\)\s*return null;/,
-    "",
+    /\|\| yen <= 0 /,
+    "|| false ",
+  ],
+  /* 上の線（2026-10-14）。机の口（`POST /fund/chats`）が断っている
+     1,000万円を、配信の口も同じ数で断る。`fundDesk.ts` の `YEN_MAX` を
+     借りているので、tsc は `fundDesk_1.YEN_MAX` に書き出す。 */
+  nomax: [
+    "FUND",
+    /\|\| yen > fundDesk_1\.YEN_MAX/,
+    "|| false",
   ],
   noshape: [
     "FUND",
@@ -258,7 +277,7 @@ async function run(breaks) {
     "MAX_HANDLE_LEN",
     "fundDesk_1",
     `${CLEAN}\n${fund}\nreturn {fundChatOf, itemIdFromLcc};`,
-  )(MAX_HANDLE_LEN, {MAX_FUND_TEXT});
+  )(MAX_HANDLE_LEN, {MAX_FUND_TEXT, YEN_MAX});
   const users = fakeUsers();
   const {alertboxExists} = new Function(
     "USERS",
@@ -330,6 +349,15 @@ async function run(breaks) {
     "0円以下は入らない",
     !post({...YEN, jpy: 0}, 1) && !post({...YEN, jpy: -100}, 1),
   );
+  /* **上の線**（2026-10-14）。机の口は前から 1,000万円超を断っていたのに、
+     こちらは上限を1つも見ていなかった——**口を1つ替えるだけで、桁ずれの
+     1行がそのまま貯金箱に入った。** 線は `fundDesk.ts` の `YEN_MAX`。 */
+  check(
+    `${YEN_MAX.toLocaleString()}円を超えると入らない`,
+    !post({...YEN, jpy: YEN_MAX + 1}, 1) &&
+      !post({...YEN, jpy: YEN_MAX * 10}, 1),
+  );
+  check("線のちょうどは入る", post({...YEN, jpy: YEN_MAX}, 1));
   /* ほどけないID。**3通りとも別の落ち方をする。**
        1. `LCC.` で始まらない（表に書いていたころの `unknown-…` がこれ）
        2. ほどけるが 26文字に足りない
@@ -379,6 +407,7 @@ const EXPECT = {
   notest: ["test: true は入らない"],
   nocurrency: ["円以外は入らない"],
   noyen: ["0円以下は入らない"],
+  nomax: [`${YEN_MAX.toLocaleString()}円を超えると入らない`],
   noshape: ["ほどけないIDは入らない"],
   nonce: [
     "同じ item id を2回投げても件数が動かない",

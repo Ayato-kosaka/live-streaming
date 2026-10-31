@@ -1,9 +1,8 @@
 /**
- * 配信で使う3面を数える。**直さない。数えて絵を残すだけ。**
+ * 配信で使う2面を数える。**直さない。数えて絵を残すだけ。**
  *
  *   /roulette     … OBS に入れる表示。**視聴者さん全員が見る**
- *   /me/remote    … 島の遠隔操作。**配信中にあやとが片手で押す**
- *   /me/roulette  … ルーレットの操作。同上
+ *   /me/roulette  … ルーレットの操作。配信中にあやとが片手で押す
  *
  *   tools/build.sh 3500
  *   python3 -m http.server 4500 --directory site/.next-3500 &
@@ -21,7 +20,7 @@
  *    ここには `hitbox.mjs` の写しが置いてあって、「閉じた畳みの中は飛ばす」まで
  *    一緒に写っていた。2026-09-14 に `hitbox.mjs` を直しても、
  *    **写しのほうは直らなかった**（`docs/island-misses.md` #83）。
- *    畳みは**測る前に全部開く**。`/me/remote` `/me/roulette` は配信中に
+ *    畳みは**測る前に全部開く**。`/me/roulette` は配信中に
  *    あやとが片手で押す面で、**畳みの中の押しどころも指で押される。**
  *    畳みのある面では、開く前の数も同じ回に出して並べる
  * 3. **横あふれ** — `documentElement.scrollWidth > clientWidth`
@@ -72,7 +71,6 @@ const SCENES = [
   /* `open: true`（畳みを手で開く）は要らなくなった。**どの場面でも
      `openFolds()` が開いてから測る。** 手で書いた場面にだけ付ける形だと、
      付け忘れた場面が黙って漏れる（実際に `mesweep.mjs` がそうなっていた）。 */
-  { id: "me-remote", url: "/me/remote.html", seed: { admin: true }, widths: [[360, 844], [390, 844]] },
   { id: "me-roulette", url: "/me/roulette.html", seed: { admin: true }, widths: [[360, 844], [390, 844]] },
 ];
 

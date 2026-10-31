@@ -90,7 +90,7 @@ const PARTIAL = [
       "ログインしていない人の姿（器と見出しだけ）で測っている。付箋も企画も投げ銭も " +
       "画面が出てから読むので、ここには出ていない。**開けない面ではないので測るが、" +
       "ここの 0 は「中身を見て 0」ではない。** 中身のある姿は `mesweep.mjs` / `meink.mjs` " +
-      "（`asme.mjs` で差し込む。`/me/remote` `/me/roulette` は `livecheck.mjs` / `liveink.mjs`）が見る",
+      "（`asme.mjs` で差し込む。`/me/roulette` は `livecheck.mjs` / `liveink.mjs`）が見る",
   },
   {
     re: /^\/design$/,

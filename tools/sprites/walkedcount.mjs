@@ -63,25 +63,35 @@ import { chromium } from "playwright-core";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 import { repoPath, fromRoot } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4170";
 const DIST = fromRoot(process.env.DIST || "site/.next-3170");
 const BREAK = process.env.BREAK || "";
 const SELFTEST = process.argv.includes("--selftest");
 
-/** 見る日。**国境を越える日の前後を必ず入れる**（そこで焼き込みと画面が割れる） */
-const DAYS = (process.env.DAYS || "2026-09-13,2026-09-17,2026-09-18,2026-09-19,2026-09-26,2026-09-27,2026-09-28").split(",");
 
 // ---------------------------------------------------------------- ほしい数
 
 const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
 
+/* 読み方は `tsread.mjs` の1本（#694）。前は**字下げの深さ**（`^    slug:`）と
+   **1行に収まっていること**（`{ slug: …, name: …, entered: … }`）を当てにして
+   いた。どちらも書き方が変わるだけで黙って減る——そして**減ったぶんは
+   「ほしい数」から消える**ので、画面の数と食い違わず緑が出る。 */
+
 /** 歩き終わった国。**`-border` は国ではない**（`python/stays.py` の `is_country`） */
-const DONE = [...src.matchAll(/^    slug: "([^"]+)",$/gm)].map((m) => m[1]).filter((s) => !s.endsWith("-border"));
+const DONE = must(
+  readArray(src, "COUNTRIES", { keys: ["slug"], idKey: "slug" }),
+  "countries.ts の COUNTRIES",
+)
+  .map((r) => r.slug)
+  .filter((s) => !s.endsWith("-border"));
 /** いま歩いている旅の国と、入った日 */
-const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d{4}-\d{2}-\d{2})" \}/g)].map(
-  (m) => ({ slug: m[1], entered: m[2] }),
-);
+const AHEAD = must(
+  readArray(src, "AHEAD_COUNTRIES", { keys: ["slug", "entered"], idKey: "slug" }),
+  "countries.ts の AHEAD_COUNTRIES",
+).map((r) => ({ slug: r.slug, entered: r.entered }));
 
 /**
  * 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。**
@@ -110,13 +120,15 @@ const AHEAD = [...src.matchAll(/\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d
  */
 function itineraryMatches() {
   const n = readFileSync(repoPath("site/content/nordic.ts"), "utf8");
+  /* 入国する区間は `ROUTE` の1件。前は行を上から舐めて「直前に見た `date:`」を
+     その国の入国日にしていたので、**区間の外の `date:` を拾いえた**
+     （`fare` や `fork` の中に日付が入った日に、静かに別の日を言う）。 */
   const want = new Map();
-  let date = "";
-  for (const line of n.split("\n")) {
-    const d = line.match(/^\s*date: "(\d{4}-\d{2}-\d{2})",/);
-    if (d) date = d[1];
-    const e = line.match(/^\s*enters: "([a-z-]+)",/);
-    if (e && !want.has(e[1])) want.set(e[1], date);
+  for (const leg of must(
+    readArray(n, "ROUTE", { keys: ["date", "enters"], idKey: "id" }),
+    "nordic.ts の ROUTE",
+  )) {
+    if (leg.enters && !want.has(leg.enters)) want.set(leg.enters, leg.date);
   }
   const done = new Set(DONE);
   const bad = [];
@@ -137,6 +149,26 @@ function itineraryMatches() {
 
 /** 旅の土地の暦（UTC+2）で、その瞬間の日付 */
 const tripDate = (iso) => new Date(Date.parse(iso) + 2 * 3600_000).toISOString().slice(0, 10);
+
+/**
+ * 見る日。**国境を越える日の前後を必ず入れる**（そこで焼き込みと画面が割れる）。
+ *
+ * **越える日を手で並べない。** ここは日付の名簿を直書きしていて、北欧の7日で
+ * 止まっていた。そのあいだに国を2つ越えている（アルバニア 09-28、北マケドニア
+ * 10-12）のに、**新しい切れ目を1つも見ていなかった**——名簿を手で持つと、
+ * 新しい日がそこに載るまで見えない（`docs/island-standards.md` 8章、#165 と同じ形）。
+ * いまは `AHEAD_COUNTRIES` の `entered` から、その日と前日を自分で足す。
+ * 国が増えれば、次の回から勝手に増える。
+ *
+ * 直書きのほうに残してあるのは、**もう `AHEAD_COUNTRIES` に居ない国の切れ目**
+ * （歩き終わって `COUNTRIES` へ移った北欧の6カ国）。過去に割れた日なので、
+ * 導出では出てこないが、見つづける値がある。
+ */
+const PAST_EDGES = ["2026-09-13", "2026-09-17", "2026-09-18", "2026-09-19", "2026-09-26"];
+const prevDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
+const DAYS = process.env.DAYS
+  ? process.env.DAYS.split(",")
+  : [...new Set([...PAST_EDGES, ...AHEAD.flatMap((a) => [prevDay(a.entered), a.entered])])].sort();
 
 const want = (iso) => DONE.length + AHEAD.filter((a) => a.entered <= tripDate(iso)).length;
 
@@ -323,13 +355,37 @@ async function contextAt(iso) {
 
 const READ_ARGS = { read: BREAK === "innertext" ? "innerText" : "textContent", only: BREAK === "band" ? ".mei-num" : null };
 
-/** 1面ぶん開いて、名乗りとそれ以外を拾う */
+/**
+ * 1面ぶん開いて、名乗りとそれ以外を拾う。
+ *
+ * **一度読んで終わりにしない。** この数は画面が出てから数え直されるので
+ * （`components/atlas/Walked.tsx`）、水あわせ（hydration）が済む前に読むと
+ * **焼いた数**が返る。前はここが 700ms の待ちひとつで、箱が混んでいると
+ * 間に合わなかった——2026-10-12 に `/about` の2か所だけ焼いた数（25）のまま
+ * 読んで、**直っているものを食い違いとして報告しかけた。** 同じ条件で
+ * もう一度回したら緑だった。待つ時間を伸ばしても、混み具合は測れない
+ * （`CLAUDE.md`「描画の速さを、壁の時計で測らない」）ので、
+ * **答えが2回続けて同じになるまで**読む。
+ */
 async function look(p, page) {
   await p.goto(`http://localhost:${SPORT}${page}`, { waitUntil: "domcontentloaded", timeout: 45000 });
   // 畳みの中の数は開かないと読めない（`CLAUDE.md`「畳んだ中の絵を数えない」）
   await p.evaluate(() => document.querySelectorAll("details").forEach((d) => (d.open = true)));
-  await p.waitForTimeout(700);
-  return await p.evaluate(harvest, READ_ARGS);
+  /* **面ごとの読みかた（`EXTRA`）も、ここで一緒に読む。** 外に出して後から
+     読んでいたので、`/map` だけ落ち着きを待たずに読んでいた——`/map` は
+     自分への名乗りを持たないので、名乗りの側は空のまま即座に落ち着いてしまう。
+     実際に 09-18 の行で `/map の札` だけ焼いた数（25）が出た。 */
+  let last = null;
+  for (let i = 0; i < 8; i++) {
+    await p.waitForTimeout(400);
+    const r = await p.evaluate(harvest, READ_ARGS);
+    r.extra = {};
+    for (const [label, fn] of EXTRA[page] || []) r.extra[label] = await p.evaluate(fn);
+    const key = JSON.stringify([r.claims.map((c) => [c.where, c.n]).sort(), r.extra]);
+    if (last && last.key === key) return r;
+    last = { key, r };
+  }
+  return last.r;
 }
 
 /**
@@ -420,7 +476,7 @@ for (const day of DAYS) {
   for (const page of WATCH) {
     const r = await look(p, page);
     for (const c of r.claims) got.set(`${page}|${c.where}`, c.n);
-    for (const [label, fn] of EXTRA[page] || []) got.set(`${page}|${label}`, await p.evaluate(fn));
+    for (const [label, v] of Object.entries(r.extra || {})) got.set(`${page}|${label}`, v);
   }
   await ctx.close();
   const w = want(iso);

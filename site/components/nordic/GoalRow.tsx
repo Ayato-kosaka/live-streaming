@@ -72,8 +72,20 @@ function useNordicDates() {
  * 旅をしている土地の暦で、きょうの日付。**画面が出てから入る**（最初は `null`）。
  *
  * 静的書き出しなので、焼いた HTML に今日を入れるわけにいかない
- * （焼いた日の答えが、旅が終わっても残る）。最初の描画はよていの字のまま、
- * 画面が出てから暦で締める。
+ * （焼いた日の答えが、旅が終わっても残る）。画面が出てから暦で締める。
+ *
+ * ## だから、**締まる前の字に時制を置かない**（2026-10-13）
+ *
+ * ここが `null` のあいだに出る字が、**焼いた HTML にそのまま入る。**
+ * 旅が終わって16日たっても `/nordic.html` は
+ * 「7泊したあと、ストックホルムを発ちます」と言っていた
+ * （`tools/sprites/preclaim.mjs` が拾った1件）。JS が入れば正しくなるので、
+ * **ブラウザで見ても分からない。**
+ *
+ * `docs/island-standards.md` 16章の決めごと1と同じ——**時制を名乗るのは
+ * 中身（日付が入った側）だけ。** 入らなかった側は、
+ * **旅の前に読んでも、旅のあとに読んでも本当のこと**しか言わない。
+ * 次の旅の行をここに足すときも同じ。よていの字を「これから」で書かない。
  */
 function useTripDate(): string | null {
   const [d, setD] = useState<string | null>(null);
@@ -130,7 +142,8 @@ export function ArrivedRow({
     <div className="ndayr is-flat">
       <span className="ndayr-body">
         <span className="ndayr-top">
-          <b>{arrived ? "着いた" : "着く"}</b>
+          {/* 日が入っていない側は時制を名乗らない（`useTripDate` の上） */}
+          <b>{arrived ? "着いた" : "着く日"}</b>
           <time dateTime={arrived ?? arrive}>{when(arrived ?? arrive)}</time>
         </span>
         <span className="ndayr-way">
@@ -139,7 +152,7 @@ export function ArrivedRow({
         <span className="ndayr-say">
           {arrived
             ? `ポーランドから${took ? `${took}日` : ""}、ぜんぶ人の車と船で来ました。ここに、会いたい人がいます。`
-            : "船が着く朝。ここに、会いたい人がいます。ここからが、この旅のいちばん長い滞在。"}
+            : "船で渡って降りる街。ここに、会いたい人がいます。この旅でいちばん長い滞在。"}
         </span>
         {owner && (
           <span className="nlog-acts">
@@ -177,8 +190,8 @@ export function EndRow({ leave, fixed }: { leave: string; fixed: string }) {
   const { token } = useAuth();
   const [busy, setBusy] = useState(false);
   /* 発つ日を過ぎたら、押されていなくても旅は終わっている（`where.ts` の `planOver`）。
-     押されるのを待っていると、この行は旅の1ヶ月後も
-     「7泊したあと、ストックホルムを発ちます」と、これからのことのように言う。 */
+     押されるのを待っていると、この行は旅の1ヶ月後も「旅のおわり」のままで、
+     発った日がいつなのかを言えない。 */
   const today = useTripDate();
   const ended = pressed ?? (planOver(today, leave) ? leave : null);
 
@@ -209,7 +222,7 @@ export function EndRow({ leave, fixed }: { leave: string; fixed: string }) {
         <span className="ndayr-say">
           {ended
             ? "ストックホルムを発ちました。ここまでが北欧旅です。"
-            : "7泊したあと、ストックホルムを発ちます。出るまでが北欧旅。"}
+            : "ストックホルムに7泊。この街を出るまでが北欧旅。"}
         </span>
         <span className="ndayr-fixed">{fixed}</span>
         {/* 着いてもいないうちに「おわった」を押せると、事故で旅が終わる。

@@ -23,6 +23,7 @@
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { repoPath } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4140";
 const WIDE = process.env.WIDE === "1";
@@ -49,7 +50,13 @@ await offline(ctx, { photo: repoPath("tools/sprites/photo-480.jpg") });
 if (STATE) {
   const { readFileSync } = await import("fs");
   const src = readFileSync(repoPath("site/content/residents.ts"), "utf8");
-  const chans = [...src.matchAll(/channel:\s*"([^"]+)"/g)].map((m) => m[1]);
+  /* 読み方は `tsread.mjs` の1本（#694）。名乗りと読めた数が合わなければ 2 で止まる */
+  const chans = must(
+    readArray(src, "RESIDENTS", { keys: ["channel"], idKey: "icon" }),
+    "residents.ts の RESIDENTS",
+  )
+    .map((r) => r.channel)
+    .filter(Boolean);
   const names = ["ゆき", "たかし", "みどり", "こうへい", "さくら", "けんた", "あおい", "りょう", "なな", "だいち", "ひなた", "しょう", "まゆ", "とおる", "えみ", "かい", "つばさ", "のぞみ", "はると", "りん", "そら", "みなと"];
   await ctx.route(/island-api\/state/, (r) =>
     r.fulfill({

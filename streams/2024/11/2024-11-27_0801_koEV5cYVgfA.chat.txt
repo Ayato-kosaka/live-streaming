@@ -1,0 +1,9 @@
+# ウィーンが綺麗すぎたので、ライブします
+# https://www.youtube.com/watch?v=koEV5cYVgfA
+# 開始: 2024-11-27 08:01 JST
+# 件数: 3
+# 時刻の出どころ: clock 3（msec=動画内の時刻 / clock=チャット横の時刻 / diff=書いた時刻−開始）
+
+[0:02:43] @sNBRlove: what is your name
+[0:10:22] @らあ-j5s: こんにちは！
+[0:11:43] @らあ-j5s: そうです！

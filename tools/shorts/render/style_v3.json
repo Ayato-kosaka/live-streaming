@@ -1,0 +1,69 @@
+{
+  "_note": "北マケドニアの回の v3（B・C）の様式。style_p3.json（v2。A はこのまま出す）との違いだけを書く。あやとの直し（#926、2026-10-16 23:31 UTC）: 「キラキラは男のショートには合わない」「字幕のフォントのバリエーションが多すぎる」「なんの感情もないナレーションは基本の字幕で良い」「色合いがごちゃごちゃしないで欲しい」「大きさとかアニメーションは色々変えて良い」「感情ある系もある程度系統束ねて色のばらつきを抑えて欲しい」。感情の字幕は1書体・2系統の色にまとめ、キラキラはやめる。大きい字の色は白・黒・黄・赤だけ",
+  "extends": "style_p3.json",
+  "moods": {
+    "_note": "感情の字幕（spec の行の mood）。書体は Dela Gothic One の1つ。色は2系統だけで、動きと大きさは感情で変える。張りつめる系（不安・困惑・落胆）は白い字に濃紺の縁、上がる系（喜び・ワクワク・決意）は黄の字に黒に近い茶の縁。キラキラは付けない。感情の動かない行は plain（普通の字幕）。v2 の5つの見た目（anxious ほか）は A のために style_p3.json に残る",
+    "looks": {
+      "tense_shake": {
+        "_note": "張りつめる系・不安: 白に濃紺の縁、小さく震える（1〜2px・15fps）",
+        "font": "DelaGothicOne-Regular.ttf", "size": 68, "min_size": 56, "face_min_size": 48,
+        "look": { "fill": "#FFFFFF", "outline": [{ "color": "#1E3A8A", "width_em": 0.085 }], "tracking": -0.03, "line_pitch_em": 1.12 },
+        "anim": { "hold": { "type": "shake", "first_hold": 2, "update_every": 2, "dx_sd": 1.2, "dx_max": 2, "dy_sd": 1.2, "dy_max": 2 } }
+      },
+      "tense_still": {
+        "_note": "張りつめる系・落胆: 白に濃紺の縁、止まったまま",
+        "font": "DelaGothicOne-Regular.ttf", "size": 68, "min_size": 56, "face_min_size": 48,
+        "look": { "fill": "#FFFFFF", "outline": [{ "color": "#1E3A8A", "width_em": 0.085 }], "tracking": -0.03, "line_pitch_em": 1.12 }
+      },
+      "tense_tilt": {
+        "_note": "張りつめる系・困惑: 白に濃紺の縁、少し傾ける（−4°。傾けた絵を止めたまま出す）",
+        "font": "DelaGothicOne-Regular.ttf", "size": 68, "min_size": 56, "face_min_size": 48, "rotate": -4,
+        "look": { "fill": "#FFFFFF", "outline": [{ "color": "#1E3A8A", "width_em": 0.085 }], "tracking": -0.03, "line_pitch_em": 1.12 }
+      },
+      "up_pop": {
+        "_note": "上がる系・喜び・ワクワク・決意: 黄に黒に近い茶の縁、出るとき弾む 0.8 → 1.06 → 1.0（頭の2コマは同じ絵: 字幕の出を測る検査が、同じ絵が2コマ続くことで出たと読む）",
+        "font": "DelaGothicOne-Regular.ttf", "size": 76, "min_size": 60, "face_min_size": 48,
+        "look": { "fill": "#FFE14D", "outline": [{ "color": "#2A1600", "width_em": 0.09 }], "tracking": -0.03, "line_pitch_em": 1.12 },
+        "anim": { "in": { "frames": 4, "first_hold": 2, "scale": { "keys": [[0, 0.8], [2, 1.06], [3, 1.0]] } } }
+      },
+      "chat": {
+        "_note": "感情ではなく、コメントの札（視聴者さんのチャットを読み上げる所）。ライブのチャット欄に見えるよう、字幕の書体の白い字を半透明の黒い角丸の地に載せる（左上の注 note と同じ地）。名前は出さない。動かさない（字幕の出を測る検査が、出たコマを1コマで読める）。spec の caption_parts で、チャットの文の頁だけに付ける",
+        "font": "caption", "size": 60, "min_size": 48, "face_min_size": 44,
+        "look": { "fill": "#FFFFFF", "box": { "color": "#000000", "alpha": 0.72, "radius": 22 }, "pad": [30, 16], "line_pitch_em": 1.2 }
+      }
+    }
+  },
+  "big": {
+    "_note_v3": "大きい字の色は白・黒・黄・赤だけにまとめる（あやと #926）。d3 は黄の字に茶の縁と淡い黄の光（キラキラ無し）、d2 は白い字に黒縁で止まったまま（淡々としたツッコミ）。d1・d4・d5 は v2 のまま",
+    "looks": {
+      "glow_yellow": {
+        "_note": "(d3 の色替え) 黄の字に黒に近い茶の縁、淡い黄の光。濃さとぼかしが参考の曲線で 0.4秒かけて締まる（動きは v2 の d3 のまま）。キラキラは付けない",
+        "font": "caption", "size": 100, "min_size": 60, "wrap_below": 88, "pre_roll_frames": 10,
+        "look": {
+          "fill": "#FFE14D",
+          "outline": [{ "color": "#FFE14D", "width": 0.75 }, { "color": "#2A1600", "width_em": 0.06 }],
+          "glow": { "stops": [[0.5, "#FFF6C2"], [3, "#FFF0A0"], [6, "#FFE680"], [18, "transparent"]] },
+          "tracking": -0.07,
+          "line_pitch_em": 1.1
+        },
+        "anim": {
+          "sharp_blur_em": 0.10,
+          "_pre_roll": "声は出だしの 10 コマ目（濃さ 0.98）に合わせる。v2 の白い字（8）と違い、茶の縁は薄いうちは地と見分けがつくので、品質チェックが「出た」と読むのは 10 コマ目（B20 の白い包み紙の上で、9 コマ目は差 42・10 コマ目は 12）。8 のままだと声より 2 コマ遅く出る",
+          "in": { "frames": 12,
+                  "alpha": { "keys": [[0, 0.0], [2, 0.06], [4, 0.44], [8, 0.76], [9, 0.9], [10, 0.98], [11, 1.0]] },
+                  "sharp": { "keys": [[0, 0.15], [8, 0.29], [9, 0.63], [10, 0.87], [11, 0.98], [12, 1.0]] } }
+        }
+      },
+      "static_white": {
+        "_note": "(d2 の色替え) 白い字に黒縁。止まったまま（淡々としたツッコミ）",
+        "font": "caption", "size": 87, "min_size": 60,
+        "look": {
+          "fill": "#FFFFFF",
+          "outline": [{ "color": "#FFFFFF", "width": 0.75 }, { "color": "#000000", "width_em": 0.075 }],
+          "tracking": -0.06,
+          "line_pitch_em": 1.1
+        }
+      }
+    }
+  }
+}

@@ -65,8 +65,31 @@
 **貼る前に「25人そろったか・入れ物といまの式が食い違っていないか」を
 確かめられる。**
 
+## 2026-10-12 から、**決まったセリフの表**を貼る
+
+あやと（#716）: 「これでセリフは確定なので **セリフを表にまとめてください**」
+
+候補を並べる表（`mode: candidates`）は、話し合いのための表だった。
+決まったあとに要るのは**1人1行で、名前とセリフ**の表なので、
+既定をそちらに替えた（`mode: decided`）。
+
+**元の字がどうだったかを、同じ行に出す。** あやと「元の字と、直した字の
+両方を表に出す」。3つに分かれる:
+
+| | どういうことか |
+| --- | --- |
+| **そのまま** | その人がチャットでそう打った字。1文字も直していない |
+| **手を入れた** | 元の字から削った・抜き出した（元の字も並べる） |
+| **あやとの字** | **チャットに無い**。配信中の声で言っていたぶんで、あやとの字が正 |
+
+見分けは**データで付ける**。`suggestedFrom` と `suggested` が違えば
+「手を入れた」、同じなら**その字がその人のチャットに在るか**を数え上げ
+（`counts.said`）に聞く。在れば「そのまま」、無ければ「あやとの字」。
+**印を手で持たない**——持つと、入れ直すたびに合わなくなる。
+
 入力:
   {}                      … 下見（**1文字も貼らない**）
+  {"mode": "candidates"}  … 候補を並べる古い表（話し合い用）
   {"apply": true}         … 貼る
   {"issue": 716}          … どの issue に貼るか（既定 716）
   {"days": 365}           … さかのぼる日数（既定は全期間）
@@ -163,6 +186,9 @@ def fetch_rows(client) -> list:
             "from": src,
             "lines": [x for x in (v.get("lines") or [])
                       if isinstance(x, str) and x.strip()],
+            # **候補から外した人**（`stamp_line_arrange` の `drop`）。
+            # 書類は消していないので、数えたうえで行から外す
+            "dropped": bool(v.get("dropped")),
             "nochar": not c.exists,
         })
     return out
@@ -628,6 +654,118 @@ def body_of(rows: list, counts, hits: list, top: int) -> str:
     return "\n".join(p)
 
 
+def decided_of(r: dict) -> tuple:
+    """その人の**決まったセリフ**と、元の字がどうだったか。
+
+    **本人の字がいちばん強い**（`lines`）。次が、1本に絞られた提案。
+    提案が2本以上あるなら、**まだ決まっていない**。
+
+    Args:
+        r: `fetch_rows()` の1件
+
+    Returns:
+        `(セリフ, 元の字, どこから来たか)`。`どこから` は
+        `本人` / `決定` / `未決`
+    """
+    if r["lines"]:
+        # **本人が `/me` で書いた字。** こちらの決定より強い
+        return (r["lines"][0], "", "本人")
+    sug = r["suggested"]
+    if len(sug) == 1:
+        src = r["from"][0] if r["from"] else ""
+        return (sug[0], src, "決定")
+    return ("", "", "未決")
+
+
+def how_of(r: dict, text: str, src: str, counts) -> tuple:
+    """元の字がどうだったかを、**データで**決める。
+
+    **印を手で持たない。** 持つと、入れ直すたびに合わなくなる。
+
+    Args:
+        r: `fetch_rows()` の1件
+        text: 出す字
+        src: 元の字（`suggestedFrom`）
+        counts: `tally()` の結果
+
+    Returns:
+        `(読める字, 元の字として並べるもの)`
+    """
+    if src and src != text:
+        return ("**手を入れた**", src)
+    said = counts.said(r["channelId"], text) if r["channelId"] else {}
+    if said:
+        # その人がチャットでそう打っている（回数まで出す）
+        return (f"そのまま（{said.get('n')}回）", "")
+    # **チャットに無い。** 配信中の声で言っていたぶん
+    return ("**あやとの字**（チャットに無い）", "")
+
+
+def decided_body(rows: list, counts) -> str:
+    """**決まったセリフの表**。1人1行。
+
+    Args:
+        rows: `fetch_rows()` の結果
+        counts: `tally()` の結果
+
+    Returns:
+        markdown
+    """
+    live = [r for r in rows if not r["dropped"]]
+    out = [r for r in rows if r["dropped"]]
+    got, left = [], []
+    for r in sorted(live, key=lambda r: (r["name"] or "￿", r["id"])):
+        text, src, how = decided_of(r)
+        (left if how == "未決" else got).append((r, text, src, how))
+
+    p = ["## スタンプのことば（確定ぶん）", ""]
+    p.append(f"**{len(got)}人ぶん決まりました。**"
+             + (f" 残り **{len(left)}人**。" if left else " "
+                "全員ぶん決まっています。")
+             + (f" 候補から外した人が {len(out)}人。" if out else ""))
+    p.append("")
+    p.append("| | 名前 | **ことば** | 元の字 | |")
+    p.append("| :--: | :-- | --- | --- | :-- |")
+    for r, text, src, how in got:
+        read, show = how_of(r, text, src, counts)
+        if how == "本人":
+            read, show = "**本人が決めた字**", ""
+        p.append(f"| {r['emoji']} | {cell(r['name'])} | "
+                 f"**{cell(text)}** | {cell(show) or '—'} | {read} |")
+    for r, _t, _s, _h in left:
+        # **決まっていない人を、表から落とさない。**
+        # 落とすと「決まった」と同じ顔になる（island-standards §10）
+        p.append(f"| {r['emoji']} | {cell(r['name'])} | "
+                 f"**まだ決まっていません** | — | — |")
+    p.append("")
+    p.append("「元の字」の欄は、**こちらが手を入れたときだけ**埋めてあります。")
+    p.append("")
+    p.append("| 右端の字 | どういうことか |")
+    p.append("| --- | --- |")
+    p.append("| そのまま（◯回） | その人がチャットでそう打った字。"
+             "**1文字も直していません**（◯回はその人が打った回数） |")
+    p.append("| **手を入れた** | 元の字から削った・抜き出した。"
+             "**元の字も同じ行に出してあります** |")
+    p.append("| **あやとの字** | **チャットには1本もありません。**"
+             "配信中の声で言っていたぶんで、あやとの字が正です |")
+    p.append("| **本人が決めた字** | 本人が `/me` から書いた字。"
+             "**こちらからは触りません** |")
+    p.append("")
+    if out:
+        p.append(f"**候補から外した人が {len(out)}人います。** "
+                 "書類は消していません（印を立てただけ）ので、"
+                 "**戻すのはいつでもできます**。"
+                 "本人の `/me` の画面も、いままでどおり出ます。")
+        p.append("")
+    if left:
+        p.append("### まだ決まっていないぶん")
+        p.append("")
+        for r, _t, _s, _h in left:
+            p.append(f"- {r['emoji']} {cell(r['name'])}")
+        p.append("")
+    return "\n".join(p)
+
+
 def chunks(text: str, limit: int = CHUNK) -> list:
     """長すぎるときに**行の境で**切り分ける。
 
@@ -721,6 +859,11 @@ def main() -> int:
     comment = int(a.get("comment") or 0)
     days = int(a.get("days") or 0)
     top = int(a.get("top") or TOP)
+    # **既定は決まったセリフの表**（2026-10-12 から。あやと「セリフは確定」）
+    mode = str(a.get("mode") or "decided").strip().lower()
+    if mode not in ("decided", "candidates"):
+        log.error("mode は decided か candidates です")
+        return 2
 
     rows = fetch_rows(db())
     if not rows:
@@ -791,12 +934,13 @@ def main() -> int:
             "**入れ物の中身と、いま選び直したものが %d 人ぶん食い違います。** "
             "先に stamp_line_suggest を apply で流してください", stale)
 
-    body = body_of(rows, counts, hits, top)
+    body = (decided_body(rows, counts) if mode == "decided"
+            else body_of(rows, counts, hits, top))
     parts = chunks(body)
     log.info("本文: %d 字 / %d コメント", len(body), len(parts))
     # **名前が引けない人数も注記に出す。** ログは置き場から配られて
     # 口からは読めないので、下見で確かめられるのは注記だけ
-    notice(f"セリフの表{'（下見）' if not apply else ''}: "
+    notice(f"セリフの表{'（下見）' if not apply else ''}［{mode}］: "
            f"{len(rows)}人 / 候補あり {len(got)}人 / 候補なし {len(non)}人 / "
            f"重複 {len(dups)}人 / 回数不明 {unknown}本 / "
            f"名前が引けない {len(noname)}人 / 図鑑に居ない {len(nochar)}人 / "

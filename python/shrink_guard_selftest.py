@@ -712,13 +712,17 @@ def run_charbox_step(td: Path, charbox_rc: int, paths: list[str]) -> tuple[str, 
     env_f.write_text("", encoding="utf-8")
     sum_f.write_text("", encoding="utf-8")
 
-    # `git checkout --` が効くように、ちゃんとした木にする
+    # `git checkout --` が効くように、ちゃんとした木にする。
+    # 作業箱の ~/.gitconfig は commit に署名させ、署名は箱の外の口に頼む。口が1回黙ると守りと関係の無い
+    # 「種」の commit で落ちるので、箱の設定から切り離す（CI の素の git と同じ）
+    genv = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    genv.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     for cmd in (["git", "init", "-q"],
                 ["git", "config", "user.email", "t@example.com"],
                 ["git", "config", "user.name", "t"],
                 ["git", "add", "-A"],
                 ["git", "commit", "-q", "-m", "種"]):
-        subprocess.run(cmd, cwd=work, check=True, capture_output=True)
+        subprocess.run(cmd, cwd=work, check=True, capture_output=True, env=genv)
     # 焼いたあと（通った回はここが残り、落ちた回は戻される）
     (work / "site" / "content" / "characterBox.ts").write_text("焼いた後\n", encoding="utf-8")
 

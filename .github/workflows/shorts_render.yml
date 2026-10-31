@@ -1,0 +1,189 @@
+name: ショートを並べて書き出す
+
+# 作業箱（4コア）で3本を順に回すと、1本 書き出し4分＋双子4分＋検査5分で1周 約42分かかった。
+# ランナーを 本数 × (本体・双子) 台並べて、1周を「いちばん遅い1本の 書き出し＋検査」にする
+# （あやと 2026-10-16「GitHub actions に汎用並列マシン作っても良いよ」）。
+# 使い方と流れは `tools/shorts/render/remote.py` の頭と `tools/shorts/render/README.md` の「Actions で並べる」。
+#
+# **受け渡しは GCS の非公開バケットだけ**（live-streaming-d3cac-shorts-preview。#938 で付与）。
+# 素材は作業箱が署名付き URL で直に上げ、出来たものはランナーが置いて、見る URL（7日）を
+# 依頼の公開鍵で包んで作業枝に返す。毎周 数百MB を git に積まない。
+#
+# **担当は「指示書を置く → 要約（summary.json）と絵を読む」だけ**（#1011）。本体の job が書き出し・
+# 品質チェック20項目・1秒ごとのコマ一覧・字の切り抜き・顔の切り抜き・頭の BGM と終わりの札の数（proof.py）まで作り、
+# report が下見（Hosting のプレビューチャンネル。7日）を置く。前は担当が手元の4コアで順に回し、1本 約2時間だった。
+# **artifact にはしない**（公開リポジトリの artifact は誰でも落とせる）。
+#
+# 道具の版は作業箱にそろえる（ubuntu-24.04 の apt の ffmpeg 6.1.1、Python 3.13、下の pip の版）。
+# 同じ指示書から作業箱と同じバイト列が出るかは、双子と sha256 で見る。
+#
+# **道具を入れる段は、コマンドごとに上限を置いて1回だけ取り直す**（取り込みの retry.sh・ffmpeg.sh を
+# 写さずに呼ぶ。checkout が tools/shorts を取るので在る）。2026-10-23 のフォカッチャの回（run 39884210053）で、
+# 本体の job だけが「道具を入れる」で21分止まった（双子は同じ段を数十秒で抜け、取り消して回し直すと通った）。
+# 見張り: tools/shorts/render/install_selftest.py
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/render/*.json"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-render-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    # 箱の版を止める: ubuntu-latest は Ubuntu 26 へ移り、apt の ffmpeg が作業箱（6.1.1）と変わる。
+    # 版が変わると同じ指示書でも書き出しのバイト列が変わり、作業箱で通した検査と揃わない（ingest も同じ）
+    runs-on: ubuntu-24.04
+    # 作業箱が素材を上げ終わるのを最長25分待つ（remote.py の UPLOAD_WAIT）
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      # JSON の matrix は渡せない（鍵の「{」「}」の行が伏せ字なので捨てられる。remote.py の prepare）
+      ids: ${{ steps.prep.outputs.ids }}
+      roles: ${{ steps.prep.outputs.roles }}
+      prefix: ${{ steps.prep.outputs.prefix }}
+    steps:
+      # **作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。** 素のままの checkout は先の木を全部
+      # 落とし、prepare の checkout だけで 2分39秒かかった（r1011-ng4-ckj8）。道具（tools/shorts）と依頼
+      # （shorts/render）だけを取り、ほかの中身は要るときに git が取りに行く（branch.py の extract・push は
+      # 木だけで回る）
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる
+        # ふだん数秒。止まったら上限で切って1回だけ取り直す（retry.sh）
+        timeout-minutes: 8
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: 無い素材の上げる URL を渡し、上がるのを待つ
+        id: prep
+        env:
+          PYTHONUNBUFFERED: "1"
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/shorts/render/remote.py prepare
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
+
+  render:
+    needs: prepare
+    name: ${{ matrix.id }}-${{ matrix.role }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        id: ${{ fromJSON(needs.prepare.outputs.ids) }}
+        role: ${{ fromJSON(needs.prepare.outputs.roles) }}
+    steps:
+      # 暗号文を落とさない（prepare の頭）
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      # budoux は 0.9.3 から動かさない。行を割ってよい所の線（仮名どうしの点）をこの版で測り、品質チェックの
+      # line_breaks も同じ版で割れ目を決める（tools/shorts/qa/linebreak.py の BUDOUX_PIN。自己テストの CI も同じ版）
+      #
+      # ふだん40秒ほど。2026-10-23 に本体の job だけがここで21分止まった（run 39884210053）。コマンドごとに
+      # 上限を置き、止まったら切って1回だけ取り直す（retry.sh）。ffmpeg は ffmpeg.sh: 入っていれば apt に
+      # 触らない・man-db の索引の作り直しを止める・apt が詰まったら GitHub の静的ビルドに切り替える。
+      # **静的ビルドは作業箱（apt の 6.1.1）と別の版で、同じ指示書でもバイト列が変わる。** job が版を控え、
+      # 要約に「!! ffmpeg が作業箱と違う版」と出す（remote.py の ffmpeg_version）
+      - name: 道具を入れる（作業箱と同じ版）
+        timeout-minutes: 15
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          bash tools/shorts/ingest/ffmpeg.sh
+          ffmpeg -version | head -1
+          $R 300 python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0" \
+            "opencv-python-headless==5.0.0.93" "budoux==0.9.3" "google-cloud-storage==3.17.1" requests
+          # 書体と YuNet。落としかけは本物の名前で残らない（fetch_fonts.sh は .part に落としてから名前を付ける）
+          $R 180 bash -c 'bash tools/shorts/render/fetch_fonts.sh > /dev/null'
+          grep -m1 "model name" /proc/cpuinfo
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: 書き出す（本体は検査・帯の絵まで）
+        env:
+          PYTHONUNBUFFERED: "1"
+          # x264 は CPU（AMD EPYC と Intel Xeon）で別のバイト列を出す。どのランナーに当たっても
+          # 同じものが出るように cpu-independent を付ける（render.py の X264_PARAMS）
+          SHORTS_X264_CPU_INDEPENDENT: "1"
+          ITEM_ID: ${{ matrix.id }}
+          ROLE: ${{ matrix.role }}
+          PREFIX: ${{ needs.prepare.outputs.prefix }}
+        run: python3 tools/shorts/render/remote.py job
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
+
+  report:
+    needs: [prepare, render]
+    # 1本落ちても、出来たぶんと落ちた理由を返す
+    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
+    runs-on: ubuntu-24.04
+    # 下見（Hosting のプレビューチャンネル）を置いて確かめるぶん、firebase-tools を入れて配って再生まで 2〜3分
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      # 暗号文を落とさない（prepare の頭）
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/render
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      # 下見を配る firebase-tools と、スマホ幅の再生を見る playwright-core（remote.py の preview。
+      # 入れるのは tools/shorts/preview/host.py の prewarm。ブラウザはランナーの Google Chrome）
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+      - name: 道具を入れる
+        # prepare と同じ（retry.sh）。firebase-tools と playwright-core は下の段の中で入れる
+        # （remote.py の wait_tools。npm にも上限と1回の取り直しがある）
+        timeout-minutes: 8
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      # 本番の段は、本体の mp4 を GCS から読んで Hosting のプレビューチャンネル（7日）に並べる。
+      # 担当が受け取るのは要約（summary.json）と目で見る絵だけ（#1011）
+      - name: 結果を集め、下見を置き、要約と見る URL を暗号化して作業枝へ返す
+        env:
+          PYTHONUNBUFFERED: "1"
+          GH_TOKEN: ${{ github.token }}
+          PREFIX: ${{ needs.prepare.outputs.prefix }}
+        run: python3 tools/shorts/render/remote.py report
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json

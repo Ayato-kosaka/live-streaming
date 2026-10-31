@@ -56,9 +56,11 @@ python3 $E put .claude/skills/youtube-live-ads/ledger.json /home/ubuntu/cdp/ledg
 3. 本番。**1本につき画面を押すので90秒ほどかかる**（`resolve_claim_ui`）。50本なら1時間を超え、
    SSM の1回（600秒）に収まらないので、EC2 の上で切り離して流す:
    ```sh
-   cd /home/ubuntu/cdp && setsid nohup python3 live_ads.py ledger.json /home/ubuntu/shots/ledger.out.json \
-     > /home/ubuntu/shots/out.log 2>&1 < /dev/null &
+   cd /home/ubuntu/cdp && setsid nohup /usr/local/sbin/ec2-queue hold ytstudio --who live-ads --purpose '曲の消去の一括' -- \
+     python3 live_ads.py ledger.json /home/ubuntu/shots/ledger.out.json > /home/ubuntu/shots/out.log 2>&1 < /dev/null &
    ```
+   列 `ytstudio` の札を一括の pid で持つ（`ec2-chrome` 2.5）。ほかの人が Studio の Chrome を持っていれば空くまで待ち、
+   一括が終われば札も消える。見張り（idle-stop）は札を見て止めない
    進み具合は `ledger.out.json.progress`（1本1行）を `wc -l` で見る。終わると `out.log` に件数が出る。
    **曲の消去は元に戻せない。** 何本に送るかを、流す前にあやとへ一言添える
 4. `ec2.py get` で `ledger.out.json` を持ち帰り、`ledger.json` に上書きしてコミット
@@ -115,6 +117,13 @@ python3 $E put .claude/skills/youtube-live-ads/ledger.json /home/ubuntu/cdp/ledg
   同じコマンドを流し直せば続きから進む
 - **配信の数日後に付く申し立て。** 前回より14日さかのぼって見直しているが、それより後に付いたものは拾えない。
   ときどき `--all` で全件を見る
+
+## 4.5 収益化をオンにするのは、あやとが Studio で一括で押す
+
+このセッションからは、収益化をオンにする操作（1本ずつも、一括編集を開くところも）が安全判定で止められる
+（2026-10-12、理由は「お金に関わる現実の操作」）。なので `enable` がたまったら、#757 の手順で
+あやとに一括でオンにしてもらう。**絞り込み「収益化対象外」は、スイッチがオフなだけの動画を全部は拾わない**
+（2026-10-12 に一括でオンにしてもらって、43本は戻り35本が残った）。絞り込まずに全部選んでオンにしてもらうのが確実
 
 ## 5. 2026-10-10（はじめての見回り）の数
 

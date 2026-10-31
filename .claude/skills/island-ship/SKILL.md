@@ -44,9 +44,16 @@ python3 -m py_compile python/*.py         ; echo "py=$?"
 cd site && NEXT_DIST_DIR=.next-verify npx next build
 python3 -m http.server 4321 --directory .next-verify &
 cd ../tools/sprites && node crawl.mjs     # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
+cd ../.. && DIST=site/.next-verify node tools/sprites/orphanpage.mjs   # どこからも入れない面（同じく 0/1/2）
 ```
 
 `bad 0` / リンク切れ 0 が条件。終わったら開発サーバーは落とす（3.7GB まで膨らむ）。
+
+**`orphanpage.mjs` は `crawl.mjs` の裏返し。** あちらは「行き先の無いリンク」、
+こちらは「**リンクの無い行き先**」——面は在って索引にも載っていて、島のどこを
+押しても辿り着けない面。リンクは切れていないし 200 で返るので、巡回では出ない
+（2026-10-13 に1枚あった。`/island/balkans`）。ブラウザは要らず1秒で終わるので、
+巡回を待つあいだに回せる。
 
 ## 2. 本番データを触るなら、先に dry-run
 
@@ -89,6 +96,8 @@ git branch --show-current     # master だったら、そこでコミットし�
 git log --oneline origin/master..HEAD
 ```
 
+**ショートの取り込みの返し先を兼ねる枝（`shorts/requests/` を push した枝）の PR は、マージの前に `gh run list -w shorts_ingest.yml -b <ブランチ> --json status,url -q '.[]|select(.status!="completed")'` が空かを見て、空でなければ終わるまでマージしない**（マージで枝が消え、走っている解析の結果が置き場を失う。`island-misses.md` #291）。
+
 マージのあとはブランチに master を取り込んでおく:
 
 ```bash
@@ -97,6 +106,39 @@ git push -u origin claude/streaming-website-concept-jhpv28
 ```
 
 push が network で落ちたら 2s → 4s → 8s → 16s で4回まで。
+
+### 視聴者さんから見える変更なら、`site/content/updates.ts` に1行足す
+
+**面（`site/app`）か部品（`site/components`）を触ったなら、PR に1行足す。**
+島を直したところを並べる紙（`/updates`）がそこを読んでいる。
+
+```ts
+  {
+    on: "2026-10-13",            // **本番に配る日**（master に入れた日ではない）
+    text: "北マケドニアでやってほしいことを、付箋に書けるようにしました。",
+  },
+```
+
+書くのは**その人に何ができるようになったか**だけ。「`POST /me` の検証を
+足しました」ではなく「自分のことが、ほかの人に書き換えられないように
+しました」。「〜できます」と書かず「〜しました」で言い切る
+（`docs/island-design.md` 5章）。**全部は載せない**——その人に何が
+できるようになったかが言えないものは、載せないほうが正しい。
+
+足さない側（`functions/` だけ・`python/` だけ・`docs/` だけ・見張りだけ）は、
+**何もしない。** 内側の直しまで並べると、この紙が読まれなくなる。
+
+**忘れても鳴る。** `python/upkeep_watch.py` の引き金「島の直したところ」が、
+面か部品の入った最後のコミットより表のいちばん新しい日付が古いと、
+整備の札（#664）に出す。**鳴るのは翌朝で、PR は止めない**——
+内側だけの PR まで赤くする見張りは、いつも通る見張りと同じだけ悪い
+（`docs/island-standards.md` 13章 / 15章）。
+
+いま鳴るかどうかは、その場で見られる:
+
+```bash
+python3 python/upkeep_watch.py --no-github 2>&1 | grep 島の直したところ
+```
 
 ## 4. デプロイして、ログの最後まで見る
 

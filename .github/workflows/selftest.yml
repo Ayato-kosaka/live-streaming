@@ -31,6 +31,30 @@
 # PR の時点とは見ているものが違う。**両方で走ってよい**（どれも数秒）。
 # `site/selftest/*.mjs` の4本もあちらに残してある——**出る口が2つあるなら
 # 見張りも2つ**（`docs/island-misses.md` #126 の決めごと2）。
+#
+# ## 重い2本は、ここに居ない（2026-10-16。#273）
+#
+# あやとの言葉:「CIがめっちゃ時間使っててマージがなかなかできない…
+# 正直CIって最低限でよいよ」。直近300回を job ごとに数えたら、本当だった:
+#
+# | job | 回数 | 赤 | 打切 | 所要の中央 | 最長 |
+# | --- | ---: | ---: | ---: | ---: | ---: |
+# | `selftest` | 295 | **49** | 21 | 9.7分 | 10.5分 |
+# | `browserwatch` | 295 | 9 | 37 | **18.4分** | 19.0分 |
+# | `reachkeys` | 60 | 2 | 7 | 5.5分 | 10.1分 |
+# | `reachwatch` | 124 | **0** | 25 | 4.7分 | **31.2分** |
+#
+# **順番待ちは中央 0.1分**（ランナーの取り合いではない）。job は並列なので、
+# **PR が緑になるまでの壁時計は `browserwatch` の 18.4分がそのまま**だった。
+#
+# だから `browserwatch` と `reachwatch` を `heavy_watch.yml`（`重い見張り`）へ
+# 移した。**消していない。通り道を変えただけ**で、あちらは `push: master` と
+# 毎晩の繋ぎで回る。**外したぶん、落ちたときに気づける道を1本足してある**
+# （あちらの `watch_down` job が `watch-down` の issue を開き続ける）。
+#
+# ここに残したのは2本。`selftest` は**295回で49回捕まえている**ので外せない。
+# `reachkeys` は 5.5分で、`selftest` の 9.7分に隠れる（並列なので壁時計が
+# 伸びない）。**狙いは 18.7分 → 10分。**
 name: Selftests
 
 on:
@@ -40,18 +64,43 @@ on:
   workflow_dispatch:
 
 # 同じ枝に続けて push したら、前の run は止めてよい。
-# master は止めない——「master が緑だったか」は1回ずつ残したい
+# master は止めない——「master が緑だったか」は1回ずつ残したい。
+#
+# **`cancel-in-progress: false` だけでは足りなかった。** GitHub は
+# 「走っている run」を止めないだけで、**同じ group で順番待ちしている run は
+# 無条件に差し替える。** master に続けて push した日は、待っていたほうが
+# `cancelled` のまま消える——**緑でも赤でもない、何も言っていない run** になる。
+#
+# 実測（2026-10-13）: master への push 40回のうち **4回（10%）がそれで消えていた。**
+# この見張りを作った理由そのもの（`docs/island-misses.md` #126 の「赤い master が
+# 2日残った」）が、別の道でまた起きる形だった。
+#
+# だから **master は sha ごとに別の group にする。** 順番待ちが起きないので
+# 差し替えられない。PR は今までどおり枝ごとで、続けて push したら前のが止まる。
 concurrency:
-  group: selftest-${{ github.ref }}
+  group: selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+  # **繋ぎ（`workflow_run`）が実際に走っているかを数えるのに要る。**
+  # 名前が合っていても、繋ぎ先が止まれば黙って動かなくなる——そこは
+  # YAML を読むだけでは分からず、run の実績を引くしかない
+  # （`python/chain_alive_watch.py`）。**読むだけ。1バイトも書かない**
+  actions: read
 
 jobs:
   selftest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 15分では足りなくなった（2026-10-24）。見張りを全部回す step が 14分14秒で、その後ろの
+    # 繋ぎの見張りの途中で上限に当たって取り消された。EC2 の札の見張り（ec2_queue_selftest.py。
+    # 守りを1つずつ外す対照が26通り）が128秒増やした。対照を削って縮めるより、上限を上げる
+    #
+    # 上げた同じ日に、上げるのをやめて中身を速くした。1本ずつ回していて、4コアのうち1つしか
+    # 使っていなかった（PR #1031 の run で全部回す step が17分）。いまは回し役が CPU の数だけ並べる
+    # （`python/selftest_runner.py` の「並べて回す」）。上限はそのまま置いておく——止まった見張りを
+    # 早く切るのは、回し役の1本ごとの上限（300秒）の仕事
+    timeout-minutes: 20
 
     steps:
       # **何がこの run を起こしたかを、run そのものに残す。**
@@ -151,11 +200,17 @@ jobs:
       # 回し役は `--only-drill` を渡さなくても対照を先に回す。
       # ここで**別の step として**もう一度回しておくのは、対照が外れた回に
       # 「どこで落ちたか」がログの先頭で分かるようにするため
+      # （2回目の値段は2秒ほど。並べかたの対照を足したぶん、0.5秒から増えた）
       - name: 回し役が落ちられるかを、先に見る
         run: python3 python/selftest_runner.py --only-drill
 
       # 落ちた1本で止めない。**全部回してから、まとめて落ちる。**
       # 最初の1本で止まると、2本目以降が見えない
+      #
+      # **CPU の数だけ並べて回す**（ランナーは4コア）。同じものに書く見張りは
+      # 回し役の `LANES` で1本ずつにしてある（見張りの環境は1本ずつ回していたときと同じ）。
+      # 行は終わった順に出る。最後に「遅かった順（上位10本）」が出るので、
+      # 次に伸びてきたら、そこから縮める
       - name: 見張りを全部回す
         run: python3 python/selftest_runner.py
 
@@ -183,40 +238,67 @@ jobs:
       - name: ログを数える道具の探し方が効いているか（0.1秒）
         run: python3 tools/logident.py --selftest
 
-  # **書き出しとブラウザが要る判定器を、ここで回す。**
+      # **繋ぎ（`workflow_run`）が生きているかを、本物の run で当てる。**
+      #
+      # `python/workflow_link_selftest.py`（上の回し役が拾う）が見ているのは
+      # **名前だけ**で、繋ぎ先が実在する `name:` を指しているかで止まる。
+      # 名前が合っていても死ぬ道が3つある——繋ぎ先が走らなくなった／こちらが
+      # 一度も繋ぎで起きていない／`conclusion` で絞って赤い晩だけ落ちる。
+      # そこは GitHub の run を引かないと分からないので、**ここだけ外に出る。**
+      #
+      # だから回し役からは外してある（あちらは「ネットにも鍵にも触らない」を
+      # 守っている場所）。落ちられるかは `chain_alive_watch_selftest.py` が
+      # 作り物の表で毎回確かめていて、そちらは回し役が拾う。
+      #
+      # 境目の3日は実測から決めた（2026-10-14。繋ぎ先5本の連続する run の
+      # 間隔はいちばん空いて **1.22日**、繋ぎで起きた回の間隔は **1.10日**。
+      # 定時そのものの遅れは最長 8.0時間）。**3日はその 2.5倍。**
+      #
+      # **前の step が落ちても回す。** 繋ぎの図は「他のどこかが赤い日」にこそ
+      # 読みたい——名前を変えた PR は上の回し役（`workflow_link_selftest.py`）で
+      # 先に落ちるので、`always` が無いとこの報告が**いちばん要る日に出ない。**
+      # 落ちたらこの step も赤くなるので、見逃しにはならない
+      - name: 繋ぎ（workflow_run）が生きているか（API を読む。この箱で12秒）
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 python/chain_alive_watch.py --days 3
+
+  # **キーボードだけで島を一周できるか／読み上げで意味が通るか**を、
+  # 書き出した面ぜんぶで数える（`tools/sprites/reachkeys.mjs`）。
   #
-  # 2026-09-19 まで、`tools/sprites/*.mjs` は1本も CI に乗っていなかった。
-  # 名前が `_selftest` でないので棚卸しからも見えず、**「どこからも走らない
-  # 見張り 0本」が33本を隠していた**（`docs/island-misses.md` #171）。
+  # ## なぜ別の job なのか
   #
-  # ここに載せたのは2本だけ。どちらも「面ごとに数がそろっているか」
-  # 「絵が器から落ちていないか」を数える道具で、**人が目で見つけた穴を
-  # 機械で止めるために作ったもの**。回っていないなら作った意味がない。
+  # 面を1枚ずつ開いて、**実際に Tab を押して一周する**（147面で Tab 7,137回）。
+  # 手元の4コアの箱で**308秒**（2026-10-15 実測）。`browserwatch` は書き出しを2枚焼いたうえで
+  # 5本の道具を回していて40分の枠をほぼ使い切るので、相乗りさせると
+  # **先に時間で切られる。** `reachwatch` を別に立てたのと同じ理由。
+  # （その2本は 2026-10-16 に `heavy_watch.yml` へ移した。下の「重い2本は
+  # ここに居ない」。**ここに残っているのは、安いほう1本だけ**）
   #
-  #   walkedcount … 表紙・`/now`・`/map` の「◯カ国」が食い違わないか。
-  #                 2026-09-19 の本番で 23 と 22 が同じ面に出ていた（#165）
-  #   dexfit      … 図鑑の絵が自分のマスからはみ出していないか（#167）
+  # ## なぜいま繋げたか（2026-10-15 / #883）
   #
-  # 台所の `kdfit.mjs` は**当ててみて、外した**。ここへ足したら 2 で落ちた
-  # （run 35422246754）。あれは住人・視聴者・ショートの絵も要って、
-  # `chars.py` が落とすキャラの絵だけでは**対照に使う平たい絵が1枚も揃わない**。
-  # 絵の無いまま数字を出さずに落ちるのは、あの道具が正しい。
-  # 断りは `python/watch_excuses.py` に、測った日つきで置いた
+  # 道具は 2026-10-14 に出来ていたが、**島のほうが緑でなかった**ので
+  # 繋いでいなかった。初日から赤い見張りは「いつもの赤」に化けて、
+  # 本当に新しく壊れた日に見分けがつかなくなる
+  # （`docs/island-standards.md` §13。`dead_stream_watch` と同じ形）。
   #
-  # 残りは `python/watch_excuses.py` に**理由つきで**断ってある。
-  # 土台（書き出し＋ブラウザ＋住人の絵）はここに在るので、次に載せるならここへ足す。
+  # 残っていたのは「同じ字のリンクが別の先を指している」17件（9面）と、
+  # **道具の側の嘘7件**（React が開いた姿と閉じた姿で同じ節点を使い回すのを
+  # 「Esc で閉じない」と読んでいた）。両方を片づけて 0件 にしてから繋いだ。
   #
-  # 別の job にしてあるのは、上の見張り（196秒）を待たせないため。並んで走る。
+  # ## 読みかた
   #
-  # **CI の実測**（2026-09-19）:
-  #   絵を落とし直す回（run 35418964922）… **588秒**
-  #     site の npm ci 13秒 / 書き出し 42秒 / ブラウザ 19秒 /
-  #     絵を落とす 345秒 / walkedcount ＋ dexfit で 163秒
-  #   置いてある絵に当たる回（run 35421444959）… **247秒**
-  #     絵を落とすところが 1秒未満になる
-  browserwatch:
+  # 終了コードで読む（0=通った / 1=見つかった / 2=数えるものが無い）。
+  # **`| tail` を挟まない。** 挟むと終了コードが消える（#124）。
+  # 「違反0件」は、**見た面・押せるもの・Tab で止まれたところ・絵・見出し・
+  # リンク・React の手当て**の分母と一緒に読む（§15）。どれかが 0 なら、
+  # 道具は数字を出さずに 2 で落ちる。対照（台16枚）が1枚でも外れても 2。
+  reachkeys:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 道具そのものが手元で 308秒。書き出しと支度に3分。CI の2コアで倍に
+    # 伸びても収まる枠にしてある
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v5
@@ -233,8 +315,7 @@ jobs:
         working-directory: site
         run: npm ci --no-audit --no-fund
 
-      # 手元の箱で1分10秒、**CI で 42秒**（2026-09-19 実測。run 35418964922）。
-      # **開発サーバーでは測らない**——先読みも束ね方も本番と違う（`CLAUDE.md`）
+      # **開発サーバーでは測らない。** 先読みも束ね方も本番と違う（`CLAUDE.md`）
       - name: 書き出す
         working-directory: site
         env:
@@ -245,10 +326,8 @@ jobs:
         working-directory: tools/sprites
         run: npm ci --no-audit --no-fund
 
-      # **置き場をこの箱と同じにする。** 道具は
-      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている。
-      # 版を上げると番号が変わって外れるので、`playwright-core` は 1.56.0 で
-      # 止めてある（`CLAUDE.md`）。入った先が違ったら、数字を出す前に落とす
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
       - name: ブラウザを入れる
         env:
           PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
@@ -260,110 +339,20 @@ jobs:
           chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
           if [ ! -x "$chrome" ]; then
             echo "::error::$chrome が無い。道具が名指ししている場所と違う"
-            ls -la /opt/pw-browsers || true
             exit 2
           fi
 
-      - name: 住人の名簿を取る（絵の置き場が書いてある）
-        run: |
-          set -euo pipefail
-          mkdir -p .cikey
-          curl -sS --max-time 60 \
-            https://live-streaming-d3cac.web.app/island-api/characters \
-            > .cikey/characters.json
-          cp .cikey/characters.json /tmp/ch.json
-
-      # **落とし直しに 345秒**かかっていた（2026-09-19 の CI 実測。392枚）。
-      # 当たると1秒未満で、この job が 588秒 → 247秒になる（run 35421444959）。
-      # 毎 PR で同じ絵を落とすので、置きっぱなしにする。
-      #
-      # 鍵は名簿の JSON の指紋でよい。絵の URL に Firebase の `token=` が
-      # 入っていて、**絵を差し替えると token が変わる**ので、差し替えた日だけ
-      # 鍵が外れて落とし直す。日付を鍵にすると「その日のうちに差し替えた絵」を
-      # 丸一日見のがす——そちらは取らない。
-      # 外れても下の step がそのまま落とすので、**当たらない日でも結果は同じ**。
-      #
-      # **置き場は PR ごとに別**（GitHub は `pull_request` の回を
-      # `refs/pull/<番号>/merge` に閉じ込める）。手で押した回からは
-      # PR の回が置いたものが見えない——2026-09-19 に、当たるはずの回が
-      # 253秒かけて落とし直したのがそれ。**同じ PR に積み直した回で当たる。**
-      # master に入ったあとは、master の置き場が全部の PR から読める
-      - name: 落とした絵を使いまわす
-        uses: actions/cache@v4
-        with:
-          path: /tmp/chars
-          key: island-chars-${{ hashFiles('.cikey/characters.json') }}
-
-      # **絵を落とさないと、dexfit は103人ぜんぶを同じ1枚で測る。**
-      # それでも最後まで走って「はみ出し 0件」と言う——いちばん悪い嘘。
-      # だから枚数を数えて、落ちていなければここで止める。
-      # `chars.py` は既に在るぶんを飛ばすので、当たった回は0枚落として帰る
-      - name: 住人の絵を落とす（落ちていなければ止める）
-        run: |
-          set -euo pipefail
-          python3 tools/sprites/chars.py
-          n="$(ls /tmp/chars | wc -l)"
-          echo "手元にある絵 ${n} 枚"
-          if [ "$n" -lt 50 ]; then
-            echo "::error::絵が落ちていない。dexfit は全員おなじ顔で「はみ出し 0件」と言う"
-            exit 2
-          fi
-
-      # 落ちた1本で止めない。**2本とも回してから、まとめて落ちる。**
-      # 配るのは書き出したもの（開発サーバーは使わない）。4190 は使わない
-      # ——Chrome も node も「危ない口」として塞いでいる（`dexfit.mjs`）
-      - name: 歩いた国の数と、図鑑の絵を数える
+      - name: キーボードで一周できるか・読み上げで意味が通るか
         run: |
           set -uo pipefail
-          python3 -m http.server 4211 --directory site/.next-ci >/tmp/serve.log 2>&1 &
+          python3 -m http.server 4213 --directory site/.next-ci >/tmp/serve-rk.log 2>&1 &
           sv=$!
           trap 'kill "$sv" 2>/dev/null || true' EXIT
           for _ in $(seq 30); do
-            curl -sf -o /dev/null "http://127.0.0.1:4211/index.html" && break
+            curl -sf -o /dev/null "http://127.0.0.1:4213/index.html" && break
             sleep 1
           done
-          rc1=0
-          SPORT=4211 DIST=site/.next-ci node tools/sprites/walkedcount.mjs || rc1=$?
-          echo "── walkedcount 終了コード ${rc1}"
-          rc2=0
-          SPORT=4211 node tools/sprites/dexfit.mjs || rc2=$?
-          echo "── dexfit 終了コード ${rc2}"
-          # 札が、行き先の中身について嘘をついていないか（あやと 2026-10-01
-          # 「ルーティングが下手すぎ。根本的に再発しないように」）。
-          # **ここに在ることが効き目の全部。** 札は固定の字で、中身は日付で
-          # 動くので、両者はいつか必ず食い違う。食い違った日に赤くなる場所が
-          # 無いと、あやとが見つけるまで出たままになる（実測で半月立っていた）
-          rc3=0
-          BASE=http://127.0.0.1:4211 DIST=site/.next-ci \
-            node tools/sprites/navtruth.mjs || rc3=$?
-          echo "── navtruth 終了コード ${rc3}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ] && [ "$rc3" = 0 ]
-
-      # 振り返り資料（`public/nordic/review.html`）は**配信で一発目に出す1枚**で、
-      # 47区画ある。誰かが1行触っただけで字が溢れても、出すまで誰も気づかない。
-      # ここで歩かせる。書き出し（site/.next-ci）は要らない——資料は public/ に
-      # 在る静的な1枚なので、**本番と同じ並び**（public/ に site/public/fonts を
-      # 重ねたもの）で配れば足りる。`deckserve.sh` がその並びを作る。
-      #
-      # **2本とも回してから、まとめて落ちる。**
-      #   deckwalk … 全区画・全ステップの はみ出し / 絵文字 / JSエラー
-      #   deckctrl … 進行の画面（?role=ctrl）にクイズの答えが出ていないか
-      #              （あやとが視聴者さんと一緒に答えるので、手元にだけは出さない）
-      - name: 振り返り資料を歩く
-        run: |
-          set -uo pipefail
-          tools/sprites/deckserve.sh 4733 >/tmp/deckserve.log 2>&1 &
-          sv=$!
-          trap 'kill "$sv" 2>/dev/null || true' EXIT
-          for _ in $(seq 30); do
-            curl -sf -o /dev/null "http://127.0.0.1:4733/nordic/review.html" && break
-            sleep 1
-          done
-          rc1=0
-          SHOTS=/tmp/deckshots URL=http://127.0.0.1:4733/nordic/review.html \
-            node tools/sprites/deckwalk.mjs || rc1=$?
-          echo "── deckwalk 終了コード ${rc1}"
-          rc2=0
-          node tools/sprites/deckctrl.mjs || rc2=$?
-          echo "── deckctrl 終了コード ${rc2}"
-          [ "$rc1" = 0 ] && [ "$rc2" = 0 ]
+          rc=0
+          DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs || rc=$?
+          echo "── reachkeys 終了コード ${rc}"
+          exit "$rc"

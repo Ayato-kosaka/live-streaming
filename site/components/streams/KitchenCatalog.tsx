@@ -5,7 +5,6 @@ import Link from "next/link";
 import Flag from "@/components/ui/Flag";
 import { KINDS, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
 import Icon from "@/components/ui/Icon";
-import { H } from "./Sheet";
 import { ArtShelf } from "./Art";
 
 /**
@@ -56,6 +55,8 @@ export default function KitchenCatalog({
   const [kind, setKind] = useState<RecipeKind | "all">("all");
   const [order, setOrder] = useState<Order>("new");
   const [page, setPage] = useState(0);
+  /** しぼりの欄を出しているか。**焼いた姿は閉じたまま**（開くと背が 417px 伸びる） */
+  const [sift, setSift] = useState(false);
   // ページを送ったとき、目が迷子にならないよう格子の頭へ戻す。
   // 最初に開いたときは動かさない（勝手にスクロールしない）。
   const gridTop = useRef<HTMLDivElement>(null);
@@ -99,15 +100,64 @@ export default function KitchenCatalog({
   const used = countries.filter((c) => byCountry.has(c.slug));
   const reset = country === "all" && kind === "all";
 
+  /**
+   * 畳んだ札に出す「いま何でしぼっているか」。
+   *
+   * **手で書かない。** 選んでいるものから組む。軸を1つ足した日に、
+   * ここの字だけが古くなるのを避ける（`docs/island-standards.md` 8章）。
+   * 絞っていないときは「ぜんぶ」と言う——**黙らない。**
+   * 黙ると、閉じている札が「絞り込みが効いていない」と見分けがつかない。
+   */
+  const sifting = [
+    country === "all" ? "ぜんぶ" : (countries.find((c) => c.slug === country)?.name ?? "ぜんぶ"),
+    kind === "all" ? null : KINDS.find((k) => k.id === kind)?.label,
+    ORDERS.find((o) => o.id === order)!.label,
+  ]
+    .filter(Boolean)
+    .join("・");
+
   return (
     <>
       <div className="zk-zone is-tight">
-        {/* カモメがすぐ上で「押すと3日ぶんが出てくる」と言っている。
-            同じことを2行つづけて読ませないよう、ここは絞り込みの軸だけを言う。 */}
-        <H art={<ArtShelf size={32} />} note={`${recipes.length}品を、国と種類でしぼる`}>
-          どれから見る
-        </H>
-        <div className="kt-tools">
+        {/* **絞り込みは畳んで置く。**
+
+            開いたまま置いていたら、390px の1画面目（844px）に料理の絵が
+            1画素も入っていなかった（実測。1画面目の絵は面積の 5.2% で、
+            いちばん大きいのは見出しの小屋 70x70。棚の絵は 806px の位置で、
+            38px しか顔を出していない）。**ここはスタンプ帳なので、
+            開いて最初に出るのは押したスタンプそのもの**
+            （`docs/island-standards.md` 1章。住民図鑑が同じ理由で
+            数字と説明を絵の下へ回している——`app/friends/page.tsx`）。
+
+            軸そのものは消さない。**畳んだ札に、いま何でしぼっているかを出す**
+            ので、閉じていても「ぜんぶ見ているのか、絞っているのか」は分かる。
+            品数とページ目は畳みの外に置いて、**畳んでも消えない。** */}
+        {/* **`<details>` では畳まない。**
+
+            畳んだ `<details>` の中は `content-visibility: hidden` で描かれない。
+            旗（`components/ui/Flag.tsx`）の三日月は `<mask id="cm-az">` を
+            自分の svg の中に持っていて、id は文書ぜんぶで1つの名前空間なので、
+            **文書順のいちばん先にあるもの**に解決される。畳みの中の国チップが
+            その1つ目になると、**描かれていない型**を指すことになり、
+            後ろのマスのアゼルバイジャン旗が3枚とも**白い四角**で出た
+            （実測。畳んだまま最終ページで 208B / 開いてから 411B）。
+            消さずに「畳む」とこうなるので、**閉じているあいだは置かない。**
+
+            しぼりは JS でやっているので、JS の無い人には押しても何も起きない。
+            置かないほうが正しい。 */}
+        <button
+          type="button"
+          className="kt-sift-sum"
+          aria-expanded={sift}
+          onClick={() => setSift(!sift)}
+        >
+          <ArtShelf size={26} />
+          <b>しぼる</b>
+          <span className="kt-sift-now">{sifting}</span>
+          <Icon name="chevron" size={14} className={`kt-sift-arw${sift ? " is-up" : ""}`} />
+        </button>
+        {sift && (
+          <div className="kt-tools">
           <div className="zk-picks">
             <b className="zk-picks-t">どこで</b>
             <button type="button" className={`zk-pick${country === "all" ? " is-on" : ""}`} onClick={() => setCountry("all")}>
@@ -149,25 +199,29 @@ export default function KitchenCatalog({
             ))}
           </div>
 
-          <p className="kt-count">
-            <b>{shown.length}</b> 品ならんでる
-            {pages > 1 && <span className="kt-pageof">{at + 1} / {pages} ページ目</span>}
-            {/* 0品のときは空っぽの枠のほうが「ぜんぶ出す」を出す。
-                同じボタンが1画面に2つ並ばないようにする。 */}
-            {!reset && shown.length > 0 && (
-              <button
-                type="button"
-                className="kt-clear"
-                onClick={() => {
-                  setCountry("all");
-                  setKind("all");
-                }}
-              >
-                ぜんぶ出す
-              </button>
-            )}
-          </p>
-        </div>
+          </div>
+        )}
+
+        {/* **品数とページ目は、畳みの外。** 「何品あって、いま何ページ目か」は
+            畳んでいても要る（`docs/island-standards.md` の「送らなくても分かる」）。 */}
+        <p className="kt-count">
+          <b>{shown.length}</b> 品ならんでる
+          {pages > 1 && <span className="kt-pageof">{at + 1} / {pages} ページ目</span>}
+          {/* 0品のときは空っぽの枠のほうが「ぜんぶ出す」を出す。
+              同じボタンが1画面に2つ並ばないようにする。 */}
+          {!reset && shown.length > 0 && (
+            <button
+              type="button"
+              className="kt-clear"
+              onClick={() => {
+                setCountry("all");
+                setKind("all");
+              }}
+            >
+              ぜんぶ出す
+            </button>
+          )}
+        </p>
       </div>
 
       <div className="zk-zone is-flush">

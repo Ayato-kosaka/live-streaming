@@ -58,12 +58,14 @@
 /* まだ何も決まっていないもの。**色を1つ足さない**——蛍光ペンの帯
    （`--marker`）は島のほかの面でも「ここが今の話」を表す印なので、
    そのまま借りる */
-.gd-sec[data-tag="検討中"] > .gd-h > .gd-tag {
+/* 審査中（LINEスタンプ。2026-10-14）。まだ手に入らず、いま動いている話。
+   「検討中」の札を持っていたカレンダーの欄は 2026-10-14 に消した */
+.gd-sec[data-tag="審査中"] > .gd-h > .gd-tag {
   background: var(--marker);
   color: var(--marker-ink);
 }
-/* 島の外。押すと出ていく、は板のほうの印（`.gd-out`）が言うので、
-   札は一段おとす */
+/* 島の外。押すと出ていくことは、欄の一行と升目の題の右の印（`external`）が
+   言うので、札は一段おとす */
 .gd-sec[data-tag="お店"] > .gd-h > .gd-tag {
   background: color-mix(in srgb, var(--rule) 40%, var(--paper));
   color: var(--ink-2);
@@ -125,78 +127,31 @@
 }
 .gd-go > svg { flex: none; }
 
-/* 外の店。**写真は横に並べる。**
-   1枚だけ添えていたころは、その1枚の商品しか無い店に見えていた
-   （あやと 2026-10-08、2回目の指摘）。
-   押すと出ていくことは印（external）が言う。 */
-.gd-shop {
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--sp-3);
-}
+/* ---- 外の店（升目） ----------------------------------------------------- */
 
-/* 枚数は決め打ちしない。`auto-fit` なので、`shots` を増やしても
-   1行に収まるぶんだけ細くなる（2枚でも3枚でも同じ書き方で並ぶ） */
-.gd-shopshots {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  gap: var(--sp-2);
-  /* PC では、写真が板の幅いっぱい（403px角）に伸びて、
-     同じ面のほかの札より大きくなっていた。**店は主役ではない。**
-     スマホ（390px）では板のほうが狭いので、ここは効かない */
-  max-width: 360px;
-}
-.gd-shopshots > img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--r-0);
-  object-fit: cover;
-  background: var(--paper-2);
-}
+/* **ステッカーの升目（`.gd-stickers`）と同じ寸法にそろえる。**
+   同じ面の中に升目が2通りあると、別の仕掛けに見える。
+   390px で2列、広い画面で4列。**数で割らない**ので、`SHOP_GOODS` が
+   増えても減っても、ここは並べるだけ。
 
-.gd-shopside {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-.gd-shopside > span {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.gd-shopside > svg { flex: none; }
-
-/* ---- ステッカー --------------------------------------------------------- */
-
-/* **升目にする**（2026-10-10。3枚が8枚になった）。
-   1枚ずつ横に寝かせていた形は1枚で 150px あり、8枚で 1,200px ——
-   スマホで3画面ぶん送ることになる（`docs/island-standards.md` 7章）。
-   390px で2列、広い画面で4列。**枚数で割らない**ので、足しても減っても
-   ここは触らない */
-.gd-stickers {
+   **マスぜんぶが押せるので、1マスずつに厚みは付けない**
+   （`docs/island-design.md` 3-3 の例外）。**この並びに押せないマスを
+   1つでも混ぜてはいけない**——先頭の「全部見る」も押せるマス。 */
+.gd-shopgrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
   gap: var(--sp-3);
   margin: var(--sp-3) 0 0;
   padding: 0;
   list-style: none;
-  /* 広い画面で絵が間延びしないところで止める（4列ぶん） */
   max-width: 680px;
 }
 
-/* 1マス。**マスぜんぶが押しどころ**（絵・名前・「おとす」でひとかたまり）。
-   押す場所は物そのもの（`docs/island-design.md` 3-1）。
+/* **マスは背を揃える。** 題が1行のものと3行のものが並ぶので、
+   絵の高さに任せると、押せる箱の下端が1マスずつ別の高さに来る */
+.gd-shopgrid > li { display: flex; }
 
-   **1枚ずつに厚みは付けない。** 並びのマスが全部押せるときは、並びそのものが
-   合図になる（同 3-3 の例外。料理32マス・住人22マスと同じ）。
-   **この並びに押せないマスを混ぜてはいけない。** */
-/* **マスは背を揃える。** 縦長の1枚（島にいるあやと 442×640）と丸い1枚が
-   並ぶので、絵の高さに任せると名前と「おとす」が1枚ずつ別の高さに来る。
-   列ごとに段違いになって、並びに見えない（撮って直した） */
-.gd-stickers > li { display: flex; }
-
-.gd-sticker {
+.gd-shopitem {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -207,18 +162,36 @@
   text-decoration: none;
   color: var(--ink);
 }
-.gd-sticker > b {
+.gd-shopname {
+  /* 題と、外へ出る印。**印は題の終わりに1つ**（字の「お店で見る」は消した。
+     あやと 2026-10-14）。印は最後の1字とくっつけて置く（`ShopName`） */
   font-size: var(--fs-note);
   font-weight: 900;
   line-height: 1.5;
   text-align: center;
   color: var(--ink);
+  /* 題は SUZURI に出ている字そのまま。**折るのは空白と、渡した切れ目で**
+     （「TRAVELING NOW／Tシャツ」「あやとの／イギリスぶらぶら」。切れ目は
+     `content/goods.ts` の `nameParts`）。`auto-phrase` は使わない——
+     「あやとのイギリスぶら／ぶら」で折った（Chromium 141、390px）。
+     それでも収まらない題は、マスからはみ出さないように最後はどこでも折る */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
+.gd-shoptail { white-space: nowrap; }
+/* 印は題より一段うすく。**押せる合図ではない**（合図は厚みだけ。
+   `island-design.md` 3-3）。行き先が島の外だという添え書き */
+.gd-shoptail > svg {
+  margin-left: 3px;
+  vertical-align: -2px;
+  color: var(--ink-2);
+}
+/* 押した手ごたえは**マスごと**沈む（ステッカーの升目と同じ） */
+.gd-shopitem:active { transform: translateY(3px); }
 
-.gd-stickerart {
+.gd-shopart {
   width: 100%;
-  /* **枠は正方形で固定。** 絵の比に任せると、上と同じ段違いが出る。
-     中身は縮めずに収める（`contain`。切ると、丸の字が欠ける） */
+  /* **枠は正方形で固定。** 焼いてある絵も 560角なので、縮めて収める */
   aspect-ratio: 1 / 1;
   height: auto;
   object-fit: contain;
@@ -229,49 +202,138 @@
   border: 1px solid var(--rule);
 }
 
-/* 落とすところ。**マスの中の字**で、ここだけが押しどころではない
-   （マスぜんぶが押せる）。だから厚みは持たせない。
-   色は掲示板の「はりだす」（`app/css/pages.css` の `.bbtn`）と同じ recipe。
-   はじめ `--accent`（桃）の上に `--accent-ink` を置いていたら、描いた画素で
-   **2.85 : 1** だった（`tools/sprites/inkpx.mjs`）。桃は「いま・今日」を
-   言う飾りの色で、字を乗せる地ではない。濃い桃にクリームの字で 4.8 : 1。 */
-.gd-get {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-1);
-  /* 名前が1行の1枚と2行の1枚が並ぶので、下に寄せて段を揃える */
-  margin-top: auto;
-  min-height: 32px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-pill);
-  background: linear-gradient(180deg,
-    var(--accent-deep) 0%,
-    color-mix(in srgb, var(--accent-deep) 88%, var(--ink)) 100%);
-  color: var(--paper);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  letter-spacing: var(--ls-head);
+/* 店そのもののマス。**並びのいちばん前**（題は「全部見る」）。
+   ほかのマスは「この1つを見る」、ここだけ「ぜんぶ見る」なので、
+   地を一段おとして、同じ並びの中で用事が違うことを言う。
+   **色は足さない**（罫を紙に混ぜただけ。`data-tag="お店"` の札と同じ作り） */
+.gd-shopall {
+  background: color-mix(in srgb, var(--rule) 22%, var(--paper));
 }
-/* 押した手ごたえは**マスごと**沈む */
-.gd-sticker:active { transform: translateY(3px); }
+.gd-shopall > .gd-shopart {
+  background: var(--paper);
+}
+
+/* ---- ステッカー --------------------------------------------------------- */
+
+/* **升目はこの面から出した**（2026-10-13。`/goods/stickers` へ）。
+   索引に残したのは、名簿の頭の数枚と行き先の札だけ。
+   `.gd-stickers` / `.gd-sticker` / `.gd-stickerart` は、それと一緒に
+   消えている（着るものが1つも無くなったため）。`.gd-get` も 2026-10-14 に
+   消えた——外の店の升目の「お店で見る」の行が、あやとの指示で無くなった。
+
+   並べかたは外の店の札（`.gd-shop`）と同じ形。**絵は切らない**ので、
+   `object-fit` だけ別（丸い1枚の字が欠ける）。 */
+.gd-peek {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+}
+
+/* 枚数で割らない。`auto-fit` なので、残す枚数（`PEEK`）を変えても
+   1行に収まるぶんだけ細くなる。
+
+   **狭い画面は2つずつ、広い画面は4つ横に。** `minmax(0, 1fr)` だと
+   枚数ぶんの列がいつでも立つので、390px では1枚 70x70 まで痩せていた。
+   この面は6つの欄が縦に並ぶ索引で、**1画面目に出る絵はここの数枚しかない**
+   ——実測で1画面目の絵は面積の 8.7%、いちばん大きいのがその 70px だった
+   （`docs/island-standards.md` 1章。図鑑とスタンプ帳と同じで、
+   棚の面は絵が主役）。2つずつなら 1枚 160px になる。
+
+   **`min(140px, 100%)` の `min()` は要る。** 素の `minmax(140px, 1fr)` は
+   紙より狭い入れ物に入ったときに格子のほうがはみ出す。 */
+.gd-peekshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  gap: var(--sp-2);
+  /* 広い画面で、絵が札の幅いっぱいに伸びないところで止める
+     （`.gd-shopshots` と同じ理由。ここは索引で、主役ではない）。
+     4つ横に並ぶぶんだけ空ける */
+  max-width: 620px;
+}
+.gd-peekshots > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  /* **切らずに収める。** 丸い1枚は、切るとふちの字が欠ける */
+  object-fit: contain;
+  padding: 5px;
+  border-radius: var(--r-0);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.gd-peekside {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.gd-peekside > span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.gd-peekside > svg { flex: none; }
+
+/* ---- ステッカー帳（`/goods/stickers`）--------------------------------- */
+
+/* 型は住民図鑑（`app/css/live.css` の `.rzk-*`）をそのまま着る。
+   ここに書くのは、**ステッカーだからずれるところだけ。**
+
+   住人は地面に立っているので、図鑑の絵は下寄せで、足もとに台座が敷いてある。
+   ステッカーは貼るものなので、立たせず中央に置いて、下に紙を1枚敷く。 */
+/* 題名の札。**折り返させる。** 住人の名前は短いので図鑑の札は1行
+   （`white-space: nowrap` で、あふれたら「…」）だが、ステッカーの題は
+   「思い出ステッカー（ストックホルム）」まである。**名前が切れた札は、
+   その1枚が何かを言えていない**（390px で実際に「思い出ステッカー（ジ…」
+   と出ていた）。 */
+.gsk .rzk-page > .rzk-tag {
+  white-space: normal;
+  max-width: 92%;
+}
+
+.gsk-art { place-items: center; }
+.gsk-art img {
+  object-position: center;
+  /* 透過の絵がほとんどなので、地が無いと紙の上で浮いて見える。
+     升目（`.gd-peekshots`）と同じ敷き紙を、同じ罫で止める */
+  padding: var(--sp-3);
+  border-radius: var(--r-0);
+  border: 1px solid var(--pap-line);
+  background: var(--paper);
+}
+
+/* 図鑑の押しどころ（`.rzk-get`）は `<button>` 向けに書いてある。
+   ここは落とす先と外の店なので `<a>`。下線だけ外す */
+.gsk .rzk-get { text-decoration: none; }
+.gsk .rzk-get > svg { flex: none; }
+
+/* 押しどころの下に付く一言。欄の `dd > i` は行の右に寄る書き方なので、
+   ここだけ行を分ける（`.rzk-take dd > i` と同じ） */
+.gsk .rzk-fields dd > i { display: block; margin: var(--sp-2) 0 0; }
 
 /* ---- LINEスタンプの10枚 ------------------------------------------------- */
 
 .gd-stamps { margin-top: var(--sp-3); }
 
+/* **列の数を幅ごとに決め打ちする。** `auto-fill` に任せていたら、
+   はじめに出す6枚（`StampVotes.tsx` の `Longer`）が PC で
+   **5枚＋1枚**に割れて、2段目に1枚だけ残っていた
+   （`docs/island-standards.md` の「同じ役の箱は同じ位置に」）。
+   2・3・6 はどれも6を割り切るので、畳んでいるあいだは必ず行が埋まる。
+
+   **1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと1枚が
+   60px まで痩せて、焼いた透かしが読めなくなる。6列で1枚 104px。 */
 .gd-grid {
   display: grid;
-  /* 390px では3枚ならび（4段）、広い画面では5枚ならび（2段）。
-     **10枚が1列に伸びきらないよう、紙の幅の中で止める**——伸ばすと
-     1枚が 60px まで痩せて、焼いた透かしが読めなくなる */
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--sp-3);
   margin: 0;
   padding: 0;
   list-style: none;
-  max-width: 608px;
+  max-width: 700px;
 }
+@media (min-width: 560px) { .gd-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 860px) { .gd-grid { grid-template-columns: repeat(6, 1fr); } }
 
 .gd-grid > li {
   display: flex;
@@ -326,9 +388,9 @@
    場所だけ取る（`docs/island-design.md` 4章の「読み込み中」）。
    ハート（48px）と同じ背にして、数が入ったときに行が飛ばないようにする。
 
-   **スタンプとカレンダーで同じもの**（`components/goods/wordVotes.tsx` の
-   `VoteHeart` が出す）。名前が `gd-stamp…` のままだと、カレンダーの側が
-   「スタンプの板」を借りているように見えるので `gd-vote…` にしてある。 */
+   **いいねを使う欄で共通のもの**（`components/goods/wordVotes.tsx` の
+   `VoteHeart` が出す）。いま使うのは LINEスタンプだけだが、ほかの欄が
+   使った日に「スタンプの板」を借りているように見えないよう `gd-vote…` にしてある。 */
 .gd-votewait {
   display: block;
   width: 62px;
@@ -340,70 +402,20 @@
   background: color-mix(in srgb, var(--rule) 30%, transparent);
 }
 
-/* ---- カレンダーの試作 --------------------------------------------------- */
-
-/* 型は**縦**に並べる。390px で3つを横に並べると、1枚が小指の爪になる */
-.gd-cals {
-  display: grid;
-  gap: var(--sp-4);
-  margin-top: var(--sp-3);
-}
-
-/* **名前・ハート・絵を、同じ幅の中に入れる。**
-   絵だけを止めてハートを板の右端に置くと、押しどころが何も無い余白に
-   ぽつんと浮いて、どの型のハートか分からなくなる。
-
-   **止める幅は絵の原寸**（`--cal-w`。`CalendarTries` が `content/goods.ts` の
-   `CAL_SHOT_W` から入れる）。1枚になって、これより広げると絵が伸びてぼやける。
-   2枚ならんでいたころはスタンプの並びに合わせて 608px で止めていたが、
-   いまは3つとも同じ `--cal-w` なので、**別の縮尺になるのは面の中ではなく
-   絵どうしのあいだ**——そちらは揃っている。
-   この面の紙は 900px に届かないので、実際に効くのは紙の幅のほう */
-.gd-cal {
-  max-width: var(--cal-w);
-}
-
-/* 型の名前とハート。**ハートは型に1つ**（絵1枚ずつには付けない）。
-   知りたいのは「イラストか、風景か、スクショか」なので、押しどころも
-   型と同じ数だけ置く */
-.gd-calh {
-  display: flex;
+/* 締め切ったあとの、押せないハート（`wordVotes.tsx` の `VoteTally`）。
+   **枠も厚みも付けない**——厚みは押せる合図（`docs/island-design.md` 3-3）。
+   ハートの絵と数は `.nt-heart` と同じ大きさにして、同じものの数だと分かるようにする */
+.gd-votetally {
+  display: inline-flex;
   align-items: center;
-  gap: var(--sp-2);
-}
-.gd-calh > b {
-  font-size: 14px;
-  font-weight: 900;
+  gap: var(--sp-1);
+  min-height: 32px;
   color: var(--ink);
 }
-/* ハートは右端。読めていないあいだ場所を取る板も同じ場所に置く */
-.gd-calh > .nt-heart,
-.gd-calh > .gd-votewait {
-  flex: none;
-  margin-left: auto;
-}
-
-/* 絵は型に1枚。**横に2枚ならべていたころの決まりは置かない**——
-   並ぶものが1つなので、列の数も、幅で1枚ずつに折り返す決まりも要らない
-   （あやと 2026-10-10、#759）。板の幅いっぱいに出す */
-.gd-calshots {
-  margin-top: var(--sp-2);
-}
-
-.gd-calshots > img {
-  display: block;
-  width: 100%;
-  /* 縦横比は `content/goods.ts` の1本から（`style` で入る）。
-     **ここに数を書かない**——焼き直した日に、ここだけ古くなる */
-  height: auto;
-  border-radius: var(--r-0);
-  /* 紙の面なので、影ではなく細い罫で止める（`.panel.paper` の決まり）。
-     **押せないので厚みは付けない**（`island-design.md` 3-3） */
-  border: 1px solid var(--rule);
-  background: var(--paper-2);
-  object-fit: cover;
-}
-
+.gd-votetally svg { width: 17px; height: 16px; color: var(--accent); }
+.gd-votetally b { font-size: var(--fs-body); font-weight: 900; }
+/* 読んでいるあいだの場所取り。**押せないハートと同じ背**にそろえる */
+.gd-votewait.is-still { width: 44px; height: 32px; }
 
 /* 押したのに動かなかったときの1行。**読めなかったときの札とは別の顔**にする
    （あちらは灰色の「もうすぐ出る」ではなく、もう一度読みに行く押しどころを持つ） */

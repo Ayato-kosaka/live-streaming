@@ -57,10 +57,14 @@ Object.defineProperty(window.HTMLMediaElement.prototype, "load", {
   value: jest.fn(),
 });
 
-/** OBS の URL。テストごとに `still` を差し替える */
-const urlParams: { k: string; source: string; still?: string } = {
+/** OBS の URL。テストごとに `still` を差し替える。
+    `theme: "none"` で季節の外に固定する。ここで見たいのは動画と絵の出し分けで、
+    季節の中はその段の絵の準備を最大 1.5 秒待ってから出すため、日付しだいで
+    「届いた瞬間に絵がある」が崩れる */
+const urlParams: { k: string; source: string; still?: string; theme: string } = {
   k: "0123456789abcdef0123456789abcdef",
   source: "doneru",
+  theme: "none",
 };
 jest.mock("expo-router", () => ({
   Stack: { Screen: () => null },

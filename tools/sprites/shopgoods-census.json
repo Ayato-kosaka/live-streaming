@@ -1,0 +1,837 @@
+{
+ "_": "SUZURI（suzuri.jp/ayato_arigato）に在るデザインの台帳。tools/sprites/shopgoods_selftest.mjs が読む。手で書き換えない——取り直しかたは同じファイルの頭に書いてある",
+ "takenAt": "2026-10-20",
+ "takenBy": "SUZURI API ワークフロー（suzuri_api.yml / command: materials）",
+ "designs": [
+  {
+   "id": 21191983,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21191982,
+   "title": "COME des NO RETURN Tシャツ",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21191111,
+   "title": "ayt earth スウェット",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21188379,
+   "title": "カサ・アヤトの住人 🇺🇸",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21154518,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154517,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154516,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154515,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154514,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154513,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154512,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154511,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154510,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154509,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154508,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21154506,
+   "title": "あやと 旅の思い出カレンダー 2027",
+   "published": true,
+   "route": "shop",
+   "note": "2026-10-14 の materials（run 38594639807）では非公開。2026-10-15 21:00 JST に公開する（#890）。この台帳は公開と同じ日に出る島に合わせて、公開した形で書いてある。21154508〜21154518 の題なし11件は同じ日に作った非公開のもの"
+  },
+  {
+   "id": 21142972,
+   "title": "カサ・アヤトの住人 🐾",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21142970,
+   "title": "カサ・アヤトの住人 🃏",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21142564,
+   "title": "無帰国フェイスタオル",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21142563,
+   "title": "たいせつなものポーチ",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21142561,
+   "title": "DON'T BURN OUT JUST CHILL OUT ポーチ",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21142560,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142558,
+   "title": "TRAVELING NOW Tシャツ",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21142557,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142556,
+   "title": "いつ帰ってくるの？ Tシャツ",
+   "published": true,
+   "route": "shop"
+  },
+  {
+   "id": 21142541,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142538,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142530,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142506,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21142481,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 21116745,
+   "title": "あやと ― みんな大好き AYATO（カラー）",
+   "published": true,
+   "route": "sticker"
+  },
+  {
+   "id": 21116656,
+   "title": "あやと ― みんな大好き AYATO（モノクロ）",
+   "published": true,
+   "route": "sticker"
+  },
+  {
+   "id": 21116653,
+   "title": "あやと ― ヒッチハイクするあやと",
+   "published": true,
+   "route": "sticker"
+  },
+  {
+   "id": 21116648,
+   "title": "あやと ― 歩いているあやと",
+   "published": true,
+   "route": "sticker"
+  },
+  {
+   "id": 21116647,
+   "title": "あやと ― 島にいるあやと",
+   "published": true,
+   "route": "sticker"
+  },
+  {
+   "id": 21116544,
+   "title": "カサ・アヤトの住人 🐏",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116542,
+   "title": "カサ・アヤトの住人 🦐",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116540,
+   "title": "カサ・アヤトの住人 🐠",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116539,
+   "title": "カサ・アヤトの住人 🦌",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116538,
+   "title": "カサ・アヤトの住人 🐗",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116537,
+   "title": "カサ・アヤトの住人 🐂",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116536,
+   "title": "カサ・アヤトの住人 🦆",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116534,
+   "title": "カサ・アヤトの住人 🌱",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116532,
+   "title": "カサ・アヤトの住人 🫘",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116531,
+   "title": "カサ・アヤトの住人 🤟",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116528,
+   "title": "カサ・アヤトの住人 👤",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116527,
+   "title": "カサ・アヤトの住人 🌸",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116525,
+   "title": "カサ・アヤトの住人 🍍",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116524,
+   "title": "カサ・アヤトの住人 🍣🥢",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116523,
+   "title": "カサ・アヤトの住人 🍑",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116522,
+   "title": "カサ・アヤトの住人 🐮",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116521,
+   "title": "カサ・アヤトの住人 🚛",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116520,
+   "title": "カサ・アヤトの住人 🐱",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116519,
+   "title": "カサ・アヤトの住人 🛡️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116517,
+   "title": "カサ・アヤトの住人 🧱",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116515,
+   "title": "カサ・アヤトの住人 🍄",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116514,
+   "title": "カサ・アヤトの住人 🪻",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116512,
+   "title": "カサ・アヤトの住人 🧢",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116508,
+   "title": "カサ・アヤトの住人 🟣",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116505,
+   "title": "カサ・アヤトの住人 🧩",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116503,
+   "title": "カサ・アヤトの住人 🪐",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116502,
+   "title": "カサ・アヤトの住人 🥤",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116501,
+   "title": "カサ・アヤトの住人 🐕",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116499,
+   "title": "カサ・アヤトの住人 🐰",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116497,
+   "title": "カサ・アヤトの住人 🇮🇱",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116496,
+   "title": "カサ・アヤトの住人 🥙",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116493,
+   "title": "カサ・アヤトの住人 🐀",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116492,
+   "title": "カサ・アヤトの住人 😺",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116488,
+   "title": "カサ・アヤトの住人 ❌",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116487,
+   "title": "カサ・アヤトの住人 🍊",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116485,
+   "title": "カサ・アヤトの住人 🐻‍❄️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116484,
+   "title": "カサ・アヤトの住人 🐦",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116483,
+   "title": "カサ・アヤトの住人 🇧🇷",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116482,
+   "title": "カサ・アヤトの住人 🐯",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116480,
+   "title": "カサ・アヤトの住人 🐻",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116479,
+   "title": "カサ・アヤトの住人 🕰️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116478,
+   "title": "カサ・アヤトの住人 🛻",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116477,
+   "title": "カサ・アヤトの住人 1️⃣",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116476,
+   "title": "カサ・アヤトの住人 🧟‍♀️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116475,
+   "title": "カサ・アヤトの住人 🫎",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116473,
+   "title": "カサ・アヤトの住人 🧠",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116470,
+   "title": "カサ・アヤトの住人 🍃",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116467,
+   "title": "カサ・アヤトの住人 🌺",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116465,
+   "title": "カサ・アヤトの住人 🎲",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116464,
+   "title": "カサ・アヤトの住人 💦",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116463,
+   "title": "カサ・アヤトの住人 😸",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116461,
+   "title": "カサ・アヤトの住人 🪭",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116460,
+   "title": "カサ・アヤトの住人 ⛰️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116458,
+   "title": "カサ・アヤトの住人 🍯",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116457,
+   "title": "カサ・アヤトの住人 🧞‍♀️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116453,
+   "title": "カサ・アヤトの住人 🌻",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116452,
+   "title": "カサ・アヤトの住人 🤤",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116450,
+   "title": "カサ・アヤトの住人 🐼",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116449,
+   "title": "カサ・アヤトの住人 🪆",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116447,
+   "title": "カサ・アヤトの住人 ⭐️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116445,
+   "title": "カサ・アヤトの住人 😴",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116443,
+   "title": "カサ・アヤトの住人 🕺",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116441,
+   "title": "カサ・アヤトの住人 🏷️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116440,
+   "title": "カサ・アヤトの住人 🏎️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116439,
+   "title": "カサ・アヤトの住人 🐩",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116437,
+   "title": "カサ・アヤトの住人 🐈‍⬛",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116435,
+   "title": "カサ・アヤトの住人 🎨",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116433,
+   "title": "カサ・アヤトの住人 ❄️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116431,
+   "title": "カサ・アヤトの住人 💙",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116430,
+   "title": "カサ・アヤトの住人 🪽",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116427,
+   "title": "カサ・アヤトの住人 🛸",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116423,
+   "title": "カサ・アヤトの住人 🍙",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116422,
+   "title": "カサ・アヤトの住人 🇨🇦",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 21116414,
+   "title": "カサ・アヤトの住人 ✝️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 19167263,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 19161385,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 19161331,
+   "title": "",
+   "published": false,
+   "route": "draft"
+  },
+  {
+   "id": 19161318,
+   "title": "カサ・アヤトの住人 🦔 一周年㊗️",
+   "published": true,
+   "route": "resident",
+   "note": "題が「カサ・アヤトの住人 🦔 一周年㊗️」で、ほかの住人グッズと字が違う。🦔 の住人グッズはこれ1つなので resident 扱い。住人の面が題を頭から見ていれば行ける（2026-10-13 に確かめること）"
+  },
+  {
+   "id": 18855523,
+   "title": "カサ・アヤトの住人 🦄",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392275,
+   "title": "カサ・アヤトの住人 🌞",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392255,
+   "title": "カサ・アヤトの住人 🧳",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392232,
+   "title": "カサ・アヤトの住人 🎃",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392206,
+   "title": "カサ・アヤトの住人 ☕",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392186,
+   "title": "カサ・アヤトの住人 📢",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392173,
+   "title": "カサ・アヤトの住人 🎭",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392110,
+   "title": "カサ・アヤトの住人 🍔",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392094,
+   "title": "カサ・アヤトの住人 😏",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392049,
+   "title": "カサ・アヤトの住人 🥊",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392036,
+   "title": "カサ・アヤトの住人 🍌",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392017,
+   "title": "カサ・アヤトの住人 🍷",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392009,
+   "title": "カサ・アヤトの住人 🇬🇧",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17392006,
+   "title": "カサ・アヤトの住人 📚",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391964,
+   "title": "カサ・アヤトの住人 🍣",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391938,
+   "title": "カサ・アヤトの住人 🎩",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391934,
+   "title": "カサ・アヤトの住人 🏀",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391929,
+   "title": "カサ・アヤトの住人 👂",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391926,
+   "title": "カサ・アヤトの住人 🐘",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391922,
+   "title": "カサ・アヤトの住人 🦊",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391892,
+   "title": "カサ・アヤトの住人 🧘‍♂️",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391873,
+   "title": "カサ・アヤトの住人 🪟",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391817,
+   "title": "カサ・アヤトの住人 🐟",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391794,
+   "title": "カサ・アヤトの住人 🥨",
+   "published": true,
+   "route": "resident"
+  },
+  {
+   "id": 17391744,
+   "title": "あやとのイギリスぶらぶら",
+   "published": true,
+   "route": "shop"
+  }
+ ]
+}

@@ -1,17 +1,24 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { PiggyBank } from "./PiggyBank";
+import type { Season } from "../../season/useSeason";
+import { ThemedGauge } from "../../season/ThemedGauge";
+import { KuroBank } from "../../season/bank/KuroBank";
+import { useStableWindow } from "../../season/useBoxSize";
 
 export type PiggyGaugeProps = {
   currentAmount: number; // 現在（例: 65000）
   targetAmount: number; // 目標金額
   label: string; // ラベル（例: "なに食べよの広告費"）
+  /** 季節テーマ。無い日・絵が読めなかった日は豚のまま */
+  season?: Season;
 };
 
 export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   currentAmount,
   targetAmount,
   label,
+  season,
 }) => {
   // 進捗計算（0〜1にクランプ）
   const progress = useMemo(() => {
@@ -28,10 +35,52 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
     return amount.toLocaleString("ja-JP") + "円";
   };
 
-  // 画面幅の120%を使用
-  const { width: screenWidth } = useWindowDimensions();
+  // 画面幅の120%を使用。数は useWindowDimensions と同じで、変わったときだけ描き直す
+  // （PRISM は大きさが変わらなくても resize を絶えず送ってくる。`useBoxSize.ts`）
+  const { width: screenWidth } = useStableWindow();
   const gaugeWidth = screenWidth * 1.2;
   const gaugeHeight = (gaugeWidth * 260) / 600; // viewBoxのアスペクト比を維持
+
+  /* 季節の貯金箱。絵を読んでいる途中は何も出さない（豚を一瞬出してから
+     差し替えると、OBS を開いた直後に豚がちらつく）。読めなかったら豚 */
+  if (season?.theme && season.bank === "loading") return null;
+  /* 切り絵の貯金箱（クロとバケツ）。部品を読み終えるまで待ち、読めた組があれば
+     こちらを出す。読めなければ下のコマ送り（→ 豚）に落ちる */
+  const rb = season?.theme?.rigBank;
+  if (season?.theme && rb) {
+    if (!season.rigsSettled) return null;
+    const mascot = season.rigs.get(rb.mascot);
+    const bucket = season.rigs.get(rb.bucket);
+    if (mascot && bucket) {
+      return (
+        <View style={styles.container}>
+          <KuroBank
+            theme={season.theme}
+            mascot={mascot}
+            bucket={bucket}
+            visitor={rb.visitor ? season.rigs.get(rb.visitor) ?? null : null}
+            currentAmount={currentAmount}
+            targetAmount={targetAmount}
+            label={label}
+          />
+        </View>
+      );
+    }
+  }
+  if (season?.theme && season.bank && season.bank !== "loading") {
+    return (
+      <View style={styles.container}>
+        <ThemedGauge
+          theme={season.theme}
+          bank={season.bank}
+          progress={progress}
+          currentText={formatAmount(currentAmount)}
+          targetText={formatAmount(targetAmount)}
+          label={label}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

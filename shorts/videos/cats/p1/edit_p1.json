@@ -1,0 +1,697 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "cats-p1",
+ "style": "style_p1.json",
+ "sources": {
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/d8UwWnFhjwY/clips/06_1-20-00_1-21-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4800.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4b/DZN5GUQ-y1g/clips/01_0-01-30_0-02-30.mp4",
+   "watermark": "prism_live",
+   "t0": 36090.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/CjTL9CgWP5I/clips/01_0-02-00_0-03-00.mp4",
+   "watermark": "prism_live",
+   "t0": 72120.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/-gaULSsv63Y/clips/01_0-36-30_0-37-30.mp4",
+   "watermark": "prism_live",
+   "t0": 110190.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4b/DZN5GUQ-y1g/clips/02_0-05-00_0-06-30.mp4",
+   "watermark": "prism_live",
+   "t0": 36300.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/lWYu2B8Nob8/clips/02_0-44-30_0-45-30.mp4",
+   "watermark": "prism_live",
+   "t0": 146670.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/d8UwWnFhjwY/clips/05_1-18-00_1-19-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4680.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/d8UwWnFhjwY/clips/04_1-11-30_1-12-30.mp4",
+   "watermark": "prism_live",
+   "t0": 4290.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/mp4/d8UwWnFhjwY/clips/03_1-03-30_1-04-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3810.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c06",
+   "in": 312,
+   "out": 399,
+   "row": 0,
+   "zoom": {
+    "from": 1.17,
+    "to": 1.22,
+    "x": 0.45,
+    "y": 0.4,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "膝のねるねが頭を反らして見上げる（あくびの秒）。題の札は柵に重ね、猫の頭を札の下に出す。窓の下端 1019 で右下の豚 y≥1030 を外す"
+  },
+  {
+   "src": "c2_01",
+   "in": 832,
+   "out": 876,
+   "row": 1,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.19,
+    "x": 0.5,
+    "y": 0.52,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "切り株の白キジ猫とあやとの2ショット。猫がカメラを見る"
+  },
+  {
+   "src": "c2_01",
+   "in": 1698,
+   "out": 1741,
+   "row": 1,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.17,
+    "x": 0.36,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "同じ庭で香箱座りする別の猫（「猫が多いです」に2匹目）"
+  },
+  {
+   "src": "c3_01",
+   "in": 1192,
+   "out": 1219,
+   "row": 2,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.24,
+    "x": 0.42,
+    "y": 0.54,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "白黒の子猫キャバにゃんの横顔（上の帯と右の札を外す寄せ）"
+  },
+  {
+   "src": "c3_01",
+   "in": 1307,
+   "out": 1368,
+   "row": 2,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.56,
+    "x": 0.55,
+    "y": 0.62,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "袋の木の実を嗅ぎに来るキャバにゃん"
+  },
+  {
+   "src": "c4_01",
+   "in": 656,
+   "out": 696,
+   "row": 3,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.56,
+    "x": 0.5,
+    "y": 0.62,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "足のまわりを回るキャバにゃん"
+  },
+  {
+   "src": "c4_01",
+   "in": 696,
+   "out": 738,
+   "row": 3,
+   "zoom": {
+    "from": 1.75,
+    "to": 1.8,
+    "x": 0.5,
+    "y": 0.64,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "同じ秒の続きを寄せて（足にすり寄る）"
+  },
+  {
+   "src": "c2_02",
+   "in": 1539,
+   "out": 1566,
+   "row": 4,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.12,
+    "x": 0.55,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "紫の箱で寝ている猫を撫でる手（声の 0:05:37 は箱の端しか写らない）"
+  },
+  {
+   "src": "c2_02",
+   "in": 1732,
+   "out": 1761,
+   "row": 5,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.34,
+    "x": 0.78,
+    "y": 0.58,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "箱の端から顔を上げる猫"
+  },
+  {
+   "src": "c2_02",
+   "in": 1812,
+   "out": 1843,
+   "row": 6,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "笑うあやと（オチ。1秒まで）"
+  },
+  {
+   "src": "c2_02",
+   "in": 947,
+   "out": 1006,
+   "row": 7,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.12,
+    "x": 0.55,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "紫の箱で丸まって寝る猫（声の 0:06:23 はあやとの顔だけなので、52秒前の同じ猫に差し替え）"
+  },
+  {
+   "src": "c5_02",
+   "in": 802,
+   "out": 842,
+   "row": 8,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.1,
+    "x": 0.55,
+    "y": 0.45,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "画面に割り込むラブブの顔のアップ（声の 0:44:49.9 はあやとの顔だけなので、7秒後の割り込みに差し替え）"
+  },
+  {
+   "src": "c5_02",
+   "in": 1169,
+   "out": 1214,
+   "row": 9,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.34,
+    "x": 0.3,
+    "y": 0.58,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "柵の上からこちらを見るラブブ（声の 0:44:57 の画は前の行で使ったので、12秒後の柵の上に差し替え）"
+  },
+  {
+   "src": "c05",
+   "in": 718,
+   "out": 752,
+   "row": 10,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.34,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "逆さに見上げて目を丸くするねるね"
+  },
+  {
+   "src": "c05",
+   "in": 844,
+   "out": 888,
+   "row": 10,
+   "zoom": {
+    "from": 1.34,
+    "to": 1.4,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "手が来ると見上げるねるね"
+  },
+  {
+   "src": "c04",
+   "in": 366,
+   "out": 426,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "膝の上で目を開けるねるねの顔（声の 1:11:32 は朝日だけなので、10秒後の膝の上に差し替え）"
+  },
+  {
+   "src": "c06",
+   "in": 394,
+   "out": 432,
+   "row": 12,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.34,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "膝のねるね（あくびの終わり）"
+  },
+  {
+   "src": "c06",
+   "in": 457,
+   "out": 488,
+   "row": 12,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.55,
+    "x": 0.5,
+    "y": 0.42,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "同じ場面の続き（間を詰めて寄せる）"
+  },
+  {
+   "src": "c04",
+   "in": 654,
+   "out": 689,
+   "row": 13,
+   "zoom": {
+    "from": 1.4,
+    "to": 1.46,
+    "x": 0.37,
+    "y": 0.52,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "撫でられるねるね（耳と手。右下の豚を窓の外へ）"
+  },
+  {
+   "src": "c03",
+   "in": 720,
+   "out": 807,
+   "row": 13,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "膝で眠るねるねの寝顔（声の無い秒）。ここに問いのテロップ"
+  }
+ ],
+ "title": {
+  "text": "海外の野良猫たち\n人懐こすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [
+  {
+   "from": 817,
+   "to": 904,
+   "text": "みんなはどの子が好き？"
+  }
+ ],
+ "narration": {
+  "engine": "files",
+  "lines": [
+   {
+    "text": "海外の野良猫たち人懐こすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice/out-v1/p1/01.wav",
+    "tts_text": "海外の野良猫たち、ひとなつこすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "猫が多いです。かわいいでしょ",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/02.wav",
+    "at": 87
+   },
+   {
+    "text": "キャバにゃん。俺のフルーツに…おい！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_02.wav",
+    "at": 174
+   },
+   {
+    "text": "また、キャバクラ猫が来ました",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_03.wav",
+    "at": 262
+   },
+   {
+    "text": "ずっと寝てんねん",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/03.wav",
+    "at": 344
+   },
+   {
+    "text": "怒ってんのか？",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_05.wav",
+    "at": 371
+   },
+   {
+    "text": "怒られました",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_06.wav",
+    "at": 400
+   },
+   {
+    "text": "勝手に嫌われました",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/04.wav",
+    "at": 431
+   },
+   {
+    "text": "ラブブ、ラブブ、邪魔すんな",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/05.wav",
+    "at": 490
+   },
+   {
+    "text": "配信しよう",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/06.wav",
+    "at": 530
+   },
+   {
+    "text": "頭撫でようとすると、撫でるなっていう顔してくる",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_10.wav",
+    "at": 575
+   },
+   {
+    "text": "寝てます。僕の膝の上で",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/voice5/p1/07.wav",
+    "at": 653
+   },
+   {
+    "text": "生意気にも、僕の膝の上にいます",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_12.wav",
+    "at": 713,
+    "face_overlap_ok": {
+     "frames": 4,
+     "why": "逆さに見上げるねるね（猫）の顔を、顔の検出が人の顔と読んだ。猫の顔が画面いっぱいで、字幕を避けて置ける所が無い"
+    }
+   },
+   {
+    "text": "ほれ、かわいいな",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/narr5/orig_p1_13.wav",
+    "at": 782
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/wt-cats5/shorts/videos/cats/p1/spec.json",
+  "fps": 30,
+  "frames": 904,
+  "seconds": 30.133,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 87,
+    "voice_frames": 84,
+    "cuts": [
+     "1:20:10.4+2.90s"
+    ],
+    "line": "海外の野良猫たち人懐こすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 87,
+    "frames": 87,
+    "voice_frames": 84,
+    "cuts": [
+     "10:01:57.8+1.47s",
+     "10:02:26.6+1.43s"
+    ],
+    "line": "猫が多いです。かわいいでしょ",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 174,
+    "frames": 88,
+    "voice_frames": 85,
+    "cuts": [
+     "20:02:39.7+0.90s",
+     "20:02:43.6+2.03s"
+    ],
+    "line": "キャバにゃん。俺のフルーツに…おい！",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 3,
+    "from": 262,
+    "frames": 82,
+    "voice_frames": 79,
+    "cuts": [
+     "30:36:51.9+1.33s",
+     "30:36:53.2+1.40s"
+    ],
+    "line": "また、キャバクラ猫が来ました",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 4,
+    "from": 344,
+    "frames": 27,
+    "voice_frames": 24,
+    "cuts": [
+     "10:05:51.3+0.90s"
+    ],
+    "line": "ずっと寝てんねん",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 371,
+    "frames": 29,
+    "voice_frames": 26,
+    "cuts": [
+     "10:05:57.7+0.97s"
+    ],
+    "line": "怒ってんのか？",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 6,
+    "from": 400,
+    "frames": 31,
+    "voice_frames": 28,
+    "cuts": [
+     "10:06:00.4+1.03s"
+    ],
+    "line": "怒られました",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 7,
+    "from": 431,
+    "frames": 59,
+    "voice_frames": 56,
+    "cuts": [
+     "10:05:31.6+1.97s"
+    ],
+    "line": "勝手に嫌われました",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 490,
+    "frames": 40,
+    "voice_frames": 37,
+    "cuts": [
+     "40:44:56.8+1.33s"
+    ],
+    "line": "ラブブ、ラブブ、邪魔すんな",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 530,
+    "frames": 45,
+    "voice_frames": 42,
+    "cuts": [
+     "40:45:09.0+1.50s"
+    ],
+    "line": "配信しよう",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 575,
+    "frames": 78,
+    "voice_frames": 75,
+    "cuts": [
+     "1:18:23.9+1.13s",
+     "1:18:28.1+1.47s"
+    ],
+    "line": "頭撫でようとすると、撫でるなっていう顔してくる",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 11,
+    "from": 653,
+    "frames": 60,
+    "voice_frames": 57,
+    "cuts": [
+     "1:11:42.2+2.00s"
+    ],
+    "line": "寝てます。僕の膝の上で",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 713,
+    "frames": 69,
+    "voice_frames": 66,
+    "cuts": [
+     "1:20:13.1+1.27s",
+     "1:20:15.2+1.03s"
+    ],
+    "line": "生意気にも、僕の膝の上にいます",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 13,
+    "from": 782,
+    "frames": 122,
+    "voice_frames": 104,
+    "cuts": [
+     "1:11:51.8+1.17s",
+     "1:03:54.0+2.90s"
+    ],
+    "line": "ほれ、かわいいな",
+    "telop": {
+     "text": "みんなはどの子が好き？",
+     "coverage": 0.0,
+     "shown": true
+    },
+    "orig_voice": true
+   }
+  ]
+ },
+ "notes": [
+  {
+   "from": 87,
+   "to": 174,
+   "text": "🇬🇪トビリシの宿の猫たち"
+  },
+  {
+   "from": 174,
+   "to": 262,
+   "text": "🇦🇿バクーの宿のキャバにゃん"
+  },
+  {
+   "from": 262,
+   "to": 344,
+   "text": "🇦🇿キャバにゃん（スリスリ）"
+  },
+  {
+   "from": 344,
+   "to": 371,
+   "text": "🇬🇪トビリシ・寝てる猫を撫でたら…"
+  },
+  {
+   "from": 371,
+   "to": 400,
+   "text": "🇬🇪トビリシ・寝てる猫を撫でたら…"
+  },
+  {
+   "from": 431,
+   "to": 490,
+   "text": "🇬🇪トビリシ・寝てる猫を撫でたら…"
+  },
+  {
+   "from": 490,
+   "to": 530,
+   "text": "🇬🇪バトゥミの宿・愛猫ラブブ"
+  },
+  {
+   "from": 530,
+   "to": 575,
+   "text": "🇬🇪バトゥミの宿・愛猫ラブブ"
+  },
+  {
+   "from": 575,
+   "to": 653,
+   "text": "🇬🇪トビリシの公園・ツンデレねるね"
+  },
+  {
+   "from": 653,
+   "to": 713,
+   "text": "🇬🇪ねるね（膝で寝る）"
+  },
+  {
+   "from": 713,
+   "to": 782,
+   "text": "🇬🇪ねるね"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats/bgm/yurufuwa.mp3",
+  "db": -3.0
+ }
+}

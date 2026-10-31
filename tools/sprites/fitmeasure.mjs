@@ -31,16 +31,12 @@
  */
 import { readFileSync } from "fs";
 import { repoPath } from "./repo.mjs";
+import { cutBlock } from "./tsread.mjs";
 
 /* ───────── 焼き直しで消えないか（ブラウザの前に、字で） ───────── */
 
-/** 2つのファイルから `charFit` の本文だけを切り出す */
-function cutFit(src) {
-  const i = src.indexOf("export function charFit(");
-  if (i < 0) return null;
-  const j = src.indexOf("\n}", i);
-  return j < 0 ? null : src.slice(i, j + 2);
-}
+/** 2つのファイルから `charFit` の本文だけを切り出す。切り方は `tsread.mjs` の1本（#694） */
+const cutFit = (src) => cutBlock(src, "export function charFit(");
 
 /**
  * `charFit` は `tools/sprites/charbox.py` が `characterBox.ts` ごと焼き直す。

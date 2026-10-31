@@ -1,0 +1,310 @@
+name: Fetch Stream Transcripts
+
+# 配信アーカイブの文字起こし（YouTube の自動字幕）と、その配信のチャットを
+# `streams/` に置いて、走った枝にコミットする。中身の形は `streams/README.md`。
+# 取り方は `python/stream_transcripts.py` の頭。
+#
+# **なぜ Actions か。** 作業箱からは YouTube の字幕が 429 で断られ、BigQuery にも届かない。
+#
+# **形は plan → fetch（3つ並べて）→ commit（1回だけ）→ 残りがあれば自分をもう一度起こす。**
+# 1本ずつ順に、1晩40本、429 が2本続いたら打ち切り、の形では、溜まった配信が
+# 何晩たっても減らなかった。字幕は1本ごとに数十秒待つ仕事なので、ランナーを分けて
+# 並べ、締め出しは待って越え、残りは続きの run に渡す。
+#
+# **Cookie は `YOUTUBE_COOKIES` を読むだけ。書き戻さない**（毎晩の取り込みが掴む Cookie が
+# 変わる。docs/clip-download.md）。Cookie を使うほかの取り込みとは同時に使わない——
+# 同じ ref なら下の concurrency（毎晩の取り込みと同じ枠）が並ばせ、ref が違うとき
+# （作業枝で走ったとき・ショートの取り込み）は、1本ごとに gate.py が Actions の状態を見て待つ。
+# 並べた3つは同じ run なので、gate.py は互いを「ほかの取り込み」と数えない。
+#
+# **ログに視聴者さんの名前やコメントを出さない。** このリポジトリは公開で、ログも誰でも読める。
+# スクリプトが出すのは動画ID・本数・字数・件数・理由だけ。
+
+on:
+  # **曲の区間は伏せて置く（#969）。** 自動字幕は配信で流した曲の歌詞まで字に起こすことがあり、
+  # 公開リポジトリにそのまま置くと歌詞を公開することになる。`[音楽]` / `♪` のある30秒は
+  # `[h:mm:ss] [音楽]` だけにしてから書く（python/stream_text.py の mask_music。見張りは下の
+  # 「整え方の見張り」）。伏せが入ったので、毎晩ひとりでに走らせる形に戻した
+  # 毎晩の取り込みが終わったら（チャットが BQ に入ったあと）。**conclusion は見ない。**
+  # 毎晩の取り込みは「表に無い どねID」が来た晩に最後の step が exit 1 で終わるが、
+  # チャットは入っている。成功のときだけ繋ぐと、その晩だけ取られない（CLAUDE.md）。
+  # 続きを起こすのを譲った晩（毎晩の取り込みが枠で待っていた）も、ここでまた起きる
+  workflow_run:
+    workflows: ["Fetch YouTube Chat Data"]
+    types: [completed]
+  # 保険。繋ぎが切れた晩の受け皿（この時間帯の cron は4時間以上遅れて来る）
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "1回に取る本数の上限（新しい順。3つに分けて並べて取る。150 が上限）"
+        required: false
+        default: "150"
+      chain:
+        # 中身は変わらない。ログと要約で「続きの回か」を読めるようにするためだけ
+        description: "前の回が、残りを取るために自分で起こした回か"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+  # gate.py が、Cookie を使うほかのワークフローの run の状態を読む。
+  # write は、残りがあるとき自分をもう一度起こす（workflow_dispatch）ため。
+  # GITHUB_TOKEN が起こした workflow_dispatch は再帰よけの外で、新しい run が立つ
+  actions: write
+
+# 毎晩の取り込み・ショートの取り込みと同じ枠（同じ Cookie を使うので）。
+# **job ごとではなく run ごとに置く。** job に置くと並べた3つが同じ枠で1つずつになり、
+# 名前を分けると毎晩の取り込みと重なる
+concurrency:
+  group: fetch-chat-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # count は続きの回に引き継ぐ。毎晩の起動（workflow_run / schedule）は inputs が空なので既定
+  COUNT: ${{ inputs.count || '150' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    outputs:
+      count: ${{ steps.plan.outputs.count }}
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # BigQuery だけで足りるが、下の素性の見張りが requirements 一式を読む
+      # （入れずに起こすと見張りが ModuleNotFoundError で落ちる。python/logsafe_wiring_selftest.py の [7]）
+      - name: 必要なパッケージを入れる
+        run: python3 -m pip install --quiet -r python/requirements.txt pyyaml
+
+      # 中身をログに出さない作りだが、公開のログに素性が出ない側が効いているかは
+      # 口の手前で見ておく（同じ job に置くことが要る。python/logsafe_wiring_selftest.py）
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      - name: 整え方の見張り
+        run: python3 python/stream_text_selftest.py
+
+      # 分け方が重なる・取りこぼすと、続きを起こし続けて止まらない。取る前に見る
+      - name: 分け方と続きの判定の見張り
+        run: python3 python/stream_transcripts_selftest.py
+
+      - name: 何を取るか決めて、3つに分ける
+        id: plan
+        run: python3 python/stream_transcripts.py plan --count "$COUNT" --out-dir "$RUNNER_TEMP/plan"
+
+      - name: 分けたものを渡す
+        if: steps.plan.outputs.count != '0'
+        uses: actions/upload-artifact@v6
+        with:
+          name: plan
+          path: ${{ runner.temp }}/plan
+          retention-days: 1
+
+  fetch:
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy:
+      # 1つが落ちても、ほかの2つは最後まで取る（取れたぶんは commit が集める）
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    # 50本 × (字幕 数十秒 + あけ 8秒) ＋ ほかの取り込みを待つ最長60分 ＋ 429 の待ち。
+    # スクリプトは 125分で新しい配信に手を付けなくなる（--budget-min）。
+    # ここで殺されると rows.json を上げる step が走るとは限らないので、そちらが先に止まる
+    timeout-minutes: 150
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージを入れる
+        run: python3 -m pip install --quiet -r python/requirements.txt pyyaml
+
+      # **job ごとに置く。** ランナーが別なので、plan の job で通っていてもこちらは守られない
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      - name: 自分のぶんを受け取る
+        uses: actions/download-artifact@v5
+        with:
+          name: plan
+          path: ${{ runner.temp }}/plan
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # PO Token を作る bgutil の依存を入れるためだけ（走らせるのは deno）
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: yt-dlp を入れる
+        # shorts_ingest.yml と同じ組
+        run: |
+          python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
+          python3 -m yt_dlp --version
+          git clone --depth 1 --branch 2.0.0 \
+            https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil
+          npm --prefix /tmp/bgutil/server install --silent
+          deno run --allow-all /tmp/bgutil/server/src/generate_once.ts --version
+
+      - name: Cookie があれば置く
+        # **読むだけ。** 中身はログに出さない（shorts_ingest.yml と同じ形）
+        env:
+          CK: ${{ secrets.YOUTUBE_COOKIES }}
+        run: |
+          if [ -n "$CK" ]; then
+            printf '%s' "$CK" | base64 -d > /tmp/clip_cookies.txt 2>/dev/null \
+              || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            grep -q "youtube" /tmp/clip_cookies.txt || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            echo "CLIP_COOKIES_FILE=/tmp/clip_cookies.txt" >> "$GITHUB_ENV"
+            echo "Cookie あり（$(wc -l < /tmp/clip_cookies.txt) 行）"
+          else
+            echo "Cookie なし。無いまま走る"
+          fi
+
+      # 書くのは $RUNNER_TEMP/out の下だけ。manifest.tsv は commit の job が1か所で足す
+      # （3つが同じ manifest を書くと、最後の1つしか残らない）
+      - name: 字幕とチャットを取る
+        id: fetch
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+          GH_TOKEN: ${{ github.token }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          python3 python/stream_transcripts.py fetch "$RUNNER_TEMP/plan/todo-$SHARD.json" \
+            --out-dir "$RUNNER_TEMP/out" --budget-min 125
+
+      - name: Cookie の写しを消す
+        if: always()
+        run: rm -f /tmp/clip_cookies.txt
+
+      # **取れたぶんは、途中で落ちても渡す。** rows.json は1本ごとに書き直してある
+      - name: 取れたぶんを渡す
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: shard-${{ matrix.shard }}
+          path: ${{ runner.temp }}/out
+          if-no-files-found: ignore
+          retention-days: 1
+
+  commit:
+    needs: [plan, fetch]
+    # 1つが落ちても、取れたぶんはコミットする。止められた（cancel）ときだけ走らない
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 必要なパッケージを入れる
+        run: python3 -m pip install --quiet -r python/requirements.txt pyyaml
+
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      # 3つとも上げる前に落ちた回は、集めるものが無い。赤いのは落ちた fetch の側で
+      # もう見えているので、ここは通して進む（足す行が0なら、続きも起こさない）
+      - name: 取れたぶんを集める
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          pattern: shard-*
+          path: ${{ runner.temp }}/got
+
+      # 置くのは字幕とチャットの .txt だけ。議事録（.md）は人が書くので触らない
+      - name: streams/ と manifest に足す
+        id: merge
+        run: |
+          mkdir -p "$RUNNER_TEMP/got"
+          python3 python/stream_transcripts.py merge "$RUNNER_TEMP/got"
+
+      - name: 走った枝にコミットする
+        id: commit
+        env:
+          REF: ${{ github.ref_name }}
+          OK: ${{ steps.merge.outputs.ok }}
+        run: |
+          set -euo pipefail
+          git add streams
+          if git diff --cached --quiet; then
+            echo "変わったものは無い"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "配信の文字起こしとチャットを足す（字幕が取れたもの ${OK:-0}本）" \
+            -m "あとから AI が配信の中身を読めるように、Actions で取った自動字幕とチャットを streams/ に置く。取れなかったものも manifest.tsv に残して、次の回に取り直す。"
+          git diff --stat HEAD~1 | tail -1
+          # 取っているあいだに誰かが同じ枝へ入れていることがある。取り込んでから押す
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase --autostash origin "$REF" && git push -q origin "HEAD:$REF" && exit 0
+            echo "push が断られた（${i}回目）。取り直して押し直す"
+            sleep $((i * 7))
+          done
+          exit 1
+
+      # **push が通ったときだけ数える。** 通らなかった回に続きを起こすと、同じ配信を
+      # 「取れた」と数えたまま取り直し続けて止まらない
+      - name: 残りを数えて、続きを起こすか決める
+        id: next
+        if: steps.commit.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OK: ${{ steps.merge.outputs.ok || '0' }}
+        run: python3 python/stream_transcripts.py next --ok "$OK"
+
+      # ファイル名で押す（name: の書き換えで切れない）。枠は同じなので、この run が
+      # 終わるまで新しい run は待つ
+      - name: 続きを起こす
+        if: steps.next.outputs.chain == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref_name }}
+          LEFT: ${{ steps.next.outputs.remaining }}
+        run: |
+          set -euo pipefail
+          gh workflow run stream_transcripts.yml --repo "$REPO" --ref "$REF" \
+            -f count="$COUNT" -f chain=true
+          echo "続きを起こした（count=$COUNT・残り ${LEFT}本）"

@@ -82,6 +82,7 @@
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {youtube} from "./youtubeClient";
+import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -478,6 +479,9 @@ export async function handleDonors(
     res.set("Cache-Control", "no-store");
     try {
       const snap = await DONORS.limit(MAX_DONORS).get();
+      /* **埋まると、結べていない行が黙って表から消える。**
+         画面は「赤い行がいちばん上」で全部出ている前提で読む。 */
+      capHit("GET /donors / MAX_DONORS", snap.size, MAX_DONORS);
       const rows: {id: string; v: Json}[] = [];
       snap.forEach((d) => rows.push({id: d.id, v: d.data() ?? {}}));
       const names = await nameOf(

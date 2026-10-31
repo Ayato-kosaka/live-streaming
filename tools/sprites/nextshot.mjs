@@ -1,5 +1,5 @@
 /**
- * 表紙の「いま、いちばん近い企画」と、`/now` の「今週、なにをするんだろう」を撮る。
+ * 表紙の「いま、いちばん近い企画」と、`/now` の島だより（「あやとが書いていった、やること」）を撮る。
  *
  *   python3 -m http.server 4171 --directory site/.next-3171 &
  *   STATE=/tmp/claude-0/next/state-prod.json SPORT=4171 OUT=/tmp/claude-0/next/after \
@@ -7,7 +7,7 @@
  *
  * ## なぜ本番の `state` を差し込むか
  *
- * 「今週、なにをするんだろう」は `/island-api/state` が返ったときだけ本番の字になる。
+ * 島だよりの中身は `/island-api/state` が返ったときだけ本番の字になる。
  * 静的に配ると口が無いので、焼き込みの受け皿（`content/site.ts` の `NOW_FALLBACK`）が
  * 出る。あれは日付を1つも持たない2行なので、**過ぎた日の行が落ちるかどうかを
  * 1行も確かめられない。** 差し込む値は `STATE` に渡した**本番そのもの**

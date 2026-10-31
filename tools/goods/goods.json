@@ -1,0 +1,61 @@
+[
+  {
+    "key": "tshirt-a",
+    "title": "いつ帰ってくるの？ Tシャツ",
+    "description": "「いつ日本に帰ってくるの？」「帰らないよ。みんなが一緒だから大丈夫」\n海外から配信しているあやとの、旅の合言葉をTシャツにしました。\n胸元にはAYATO_APPのワンポイント、背中にはスマホのやりとり。\nあやと島のみんなで、帰らない旅のおともに🏝️✨",
+    "itemId": 1,
+    "variant": 1,
+    "front": "tools/goods/art/out/tshirt-a-front.png",
+    "back": "tools/goods/art/out/tshirt-a-back.png"
+  },
+  {
+    "key": "tshirt-b",
+    "title": "TRAVELING NOW Tシャツ",
+    "description": "いまも旅の途中。AYT／NO RETURN のワンポイントと、背中には旅の名所がぎっしり詰まった小さな地球。\n配信で訪れた国や街の思い出を、日常に連れて帰れるTシャツです。\nあやと島のみんなで、地球を歩きましょう🌍✨",
+    "itemId": 1,
+    "variant": 1,
+    "front": "tools/goods/art/out/tshirt-b-front.png",
+    "back": "tools/goods/art/out/tshirt-b-back.png"
+  },
+  {
+    "key": "pouch-a",
+    "title": "DON'T BURN OUT JUST CHILL OUT ポーチ",
+    "description": "「燃え尽きるまで頑張らないで、肩の力を抜いて気楽にいこう」\nサビの浮いた古いバスに、旅人と猫がのんびり揺られています。\nあやと島の合言葉を、毎日のポーチに🚌✨",
+    "itemId": 885,
+    "variant": 5432,
+    "front": "tools/goods/art/out/pouch-a.png"
+  },
+  {
+    "key": "pouch-b",
+    "title": "たいせつなものポーチ",
+    "description": "数字の形にポーズをとるあやとを、ポーチいっぱいに敷き詰めました。\n大切なものを入れて、いつでも持ち歩けます。\nあやと島から、ちいさなお守りに🏝️✨",
+    "itemId": 885,
+    "variant": 5432,
+    "front": "tools/goods/art/out/pouch-b.png"
+  },
+  {
+    "key": "towel",
+    "title": "無帰国フェイスタオル",
+    "description": "NO RETURN。ヒッチハイクで旅を続けるあやとの、帰らない宣言をフェイスタオルにしました。\n目をひく黄色の警告標識デザイン。旅のおともに、ライブ配信のおともに。\nあやと島から🌏✨",
+    "itemId": 393,
+    "variant": 3416,
+    "front": "tools/goods/art/out/towel.png"
+  },
+  {
+    "key": "sweat-aytearth",
+    "title": "ayt earth スウェット",
+    "description": "胸いっぱいに、まあるい字で「ayt earth」。\nあやとと、あやとが歩く地球のこと。\n色も着る人も選ばない、いつもの一枚にどうぞ。\nあやと島から、旅のおともに🌍✨",
+    "itemId": 5,
+    "variant": 183,
+    "front": "tools/goods/art/out/sweat-aytearth.png"
+  },
+  {
+    "key": "tshirt-noreturn",
+    "title": "COME des NO RETURN Tシャツ",
+    "description": "胸に「COME des NO RETURN」、背中に「TRAVELING WITH NO RETURN DATE」。\n帰る日を決めずに旅を続けるあやとの、合言葉を白い字1行ずつに。\n黒にも白にも合わせやすい、毎日の一枚にどうぞ。\nあやと島から、帰らない旅のおともに🌏✨",
+    "itemId": 1,
+    "variant": 2,
+    "front": "tools/goods/art/out/tshirt-noreturn-front.png",
+    "back": "tools/goods/art/out/tshirt-noreturn-back.png"
+  }
+]

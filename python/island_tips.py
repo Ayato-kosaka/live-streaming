@@ -37,6 +37,21 @@ Doneru と突き合わせるのに要る。**代わりに2つ守る。**
 1. **島の画面で、金額で並べない・出さない。** 決めは生きている
 2. **`islandTips` はクライアントから読めない**（`firestore.rules` で閉じてある）
 
+## 円以外は、その日のレートで円に直して**一緒に持つ**（#951）
+
+2026-10-18 まで、円以外はどこでも足されていなかった（落とすほうが正しいと
+決めていた。為替の日付を置く場所が無かったので）。あやとが
+「**レートが無料で引けるなら、Firestore に入れるときに直して入れて**」と
+決めたので、取り込みのここで直す（`python/fx_rate.py`）。
+
+- **元の表記（`amount` / `currency`）は消さない。** 直した値だけ持つと、
+  あとでレートを引き直して検算できない
+- 足すのは `amountJpy` と、**使ったレート**（`fxRate`）と、
+  **そのレートの日**（`fxDate`）。土日は ECB がレートを出さないので、
+  `fxDate` は**直前の営業日**になる（頼んだ日ではない）
+- **直せなかったら 0 にしない。** `amountJpy` は None のまま、
+  `fxWhy` に理由を残す。issue のほうで知らせる（`python/fx_tips_watch.py`）
+
 ## Doneru はチャンネルIDを持っていない
 
 `viewer_pk`（どねID）しか無いので、`islandDonors` の対応表を通す。
@@ -64,6 +79,7 @@ from google.cloud import bigquery, firestore
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
+import fx_rate  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 from logsafe import detail_lines  # noqa: E402
 
@@ -98,8 +114,10 @@ BATCH = 400
 
 # スパチャの金額表記から通貨を読む。**円だけを前提にしない。**
 # 本番の380件に ₪6.00（イスラエル）と CA$2.79（カナダ）が混ざっていた。
-# 円に直さない。為替の日付をどこに置くかを決めていないので、
-# 直すと「いくらだったか」が分からなくなる。
+#
+# **円に直すのは `yen_of()`**（2026-10-18。#951。あやとが「レートが無料で
+# 引けるならそれで」と決めた）。元の表記と通貨は**そのまま残す**——
+# 直した値だけ持つと、あとでレートを引き直して検算できない。
 CURRENCY_MARKS = [
     ("¥", "JPY"),
     ("￥", "JPY"),
@@ -231,6 +249,34 @@ def parse_amount(text: Optional[str]) -> tuple:
     return (int(v) if cur == "JPY" and v == int(v) else v), cur
 
 
+def yen_of(amount, currency, day: str) -> dict:
+    """円以外なら、**その日のレートで円に直す。** 円のときは何もしない。
+
+    直せなかったとき（対応していない通貨・口が落ちている）は
+    **0 ではなく None** を入れて、理由を残す。足すほうは None を飛ばすので、
+    その人の額には入らない——そのぶんは `python/fx_tips_watch.py` が
+    issue にして知らせる。**黙って 0円 にしない**
+    （`docs/island-standards.md` 10）。
+
+    Args:
+        amount: 元の額
+        currency: 元の通貨（`CAD`）
+        day: 投げてくれた日（日本時間で切ったもの）
+
+    Returns:
+        台帳に足す4つ。**円の行は4つとも None**（欄が増えないので、
+        既に入っている行を書き換えずに済む）
+    """
+    blank = {"amountJpy": None, "fxRate": None, "fxDate": None, "fxWhy": None}
+    cur = str(currency or fx_rate.TARGET).upper()
+    if amount is None or cur == fx_rate.TARGET:
+        return blank
+    got = fx_rate.to_jpy(amount, cur, day)
+    return {"amountJpy": got["yen"], "fxRate": got["rate"],
+            # **頼んだ日ではなく、レートの返ってきた日**（土日は直前の営業日）
+            "fxDate": got["date"], "fxWhy": got["why"] or None}
+
+
 def jst_day(ms: int) -> str:
     """ミリ秒を日本時間の日付に切る。**ここが配信日の境目**（#201・#202）。
 
@@ -297,6 +343,9 @@ def fetch_youtube(d0: str, d1: str) -> List[dict]:
                 "videoStartedAt": int(r["started_ms"]) if r["started_ms"] else None,
                 "amount": amount,
                 "currency": cur,
+                # 円以外は、その日のレートで直した円も持つ（#951）。
+                # **元の表記と通貨はそのまま残す**ので、あとで検算できる
+                **yen_of(amount, cur, r["day"]),
                 "settlementAmount": None,
                 "displayNameSnapshot": r["name"] or None,
             }
@@ -348,6 +397,13 @@ def fetch_doneru(d0: str, d1: str, donors: Dict[str, dict]) -> List[dict]:
                 "amount": float(r["amount"]) if r["amount"] is not None else None,
                 # 本番データは全件 NULL（＝円）。NULL のときは JPY と読む
                 "currency": r["currency"] or "JPY",
+                # 円のときは口を1回も叩かない（`yen_of` が先に帰る）ので、
+                # 本番ではここで1件も外に出ない。将来 Doneru が外貨を
+                # 返してきた晩に、スパチャと同じ直し方になる
+                **yen_of(
+                    float(r["amount"]) if r["amount"] is not None else None,
+                    r["currency"] or "JPY", r["day"],
+                ),
                 "settlementAmount": (
                     float(r["settlement_amount"])
                     if r["settlement_amount"] is not None
@@ -385,6 +441,13 @@ def same(had: dict, want: dict) -> bool:
         "videoStartedAt",
         "amount",
         "currency",
+        # 円に直したぶん。**ここを見ないと、レートを入れた日に
+        # 古い行が書き換わらない**（#951 の埋め直しが効かない）。
+        # 円の行は4つとも None なので、入れても書き換えは起きない
+        "amountJpy",
+        "fxRate",
+        "fxDate",
+        "fxWhy",
         "settlementAmount",
         "displayNameSnapshot",
     )
@@ -417,6 +480,29 @@ def main() -> int:
 
     rows = fetch_youtube(d0, d1) + fetch_doneru(d0, d1, donors)
     logger.info("BigQuery: %d件", len(rows))
+
+    # **円以外を、直せたぶんと直せなかったぶんに分けて出す。**
+    # 「0件」と「直せなかった」を同じ顔にしない（`island-standards.md` §15）。
+    # 直せなかったぶんは額に入らないので、issue のほうにも出る
+    # （`python/fx_tips_watch.py`）。**人を指す字は1つも出さない**
+    fx = [r for r in rows
+          if str(r.get("currency") or fx_rate.TARGET).upper() != fx_rate.TARGET]
+    if fx:
+        done = [r for r in fx if r.get("amountJpy") is not None]
+        logger.info("円以外の投げ銭 %d件 → 円に直せた %d件 / 直せなかった %d件",
+                    len(fx), len(done), len(fx) - len(done))
+        for r in done:
+            logger.info("  %s %s → 円（レート %s / レートの日 %s）",
+                        r["day"], r["currency"], r["fxRate"], r["fxDate"])
+        stuck: dict = {}
+        for r in fx:
+            if r.get("amountJpy") is None:
+                k = (r["currency"], r.get("fxWhy") or "?")
+                stuck[k] = stuck.get(k, 0) + 1
+        for (cur, why), n in sorted(stuck.items()):
+            logger.warning("  **%s の %d件は円に直せていない**（%s）。"
+                           "額に足されないので、その人の順位はそのぶん下がる",
+                           cur, n, fx_rate.WHY.get(why, why))
     if not rows:
         logger.info("入れるものはありません")
         return 0

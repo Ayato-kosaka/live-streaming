@@ -1,0 +1,20 @@
+{
+ "name": "kuro",
+ "size": [503, 471],
+ "parts": [
+  {"id": "body", "file": "body.png", "parent": null, "pivot": [181.8, 110.6], "at": [250.0, 334.2], "z": 50},
+  {"id": "head", "file": "head.png", "parent": "body", "pivot": [155.1, 262.9], "at": [223.9, 87.9], "z": 40},
+  {"id": "eye", "swaps": {"open": "eye-open.png", "closed": "eye-closed.png", "smile": "eye-smile.png", "surprised": "eye-surprised.png"}, "parent": "head", "pivot": [53.0, 55.5], "at": [243.0, 172.2], "z": 44},
+  {"id": "mouth", "swaps": {"closed": "mouth-closed.png", "open": "mouth-open.png", "omega": "mouth-omega.png"}, "parent": "head", "pivot": [32.0, 16.3], "at": [297.7, 202.5], "z": 44},
+  {"id": "ear_far", "file": "ear_far.png", "parent": "head", "pivot": [92.6, 139.0], "at": [230.0, 74.4], "z": 30},
+  {"id": "ear_near", "file": "ear_near.png", "parent": "head", "pivot": [99.6, 159.6], "at": [181.1, 94.6], "z": 60},
+  {"id": "hat", "file": "hat.png", "parent": "head", "pivot": [186.8, 182.2], "at": [123.5, 97.4], "z": 70},
+  {"id": "hat_tip", "file": "hat_tip.png", "parent": "hat", "pivot": [199.3, 86.8], "at": [106.1, 96.6], "z": 65},
+  {"id": "leg_f_far", "file": "leg_f_far.png", "parent": "body", "pivot": [89.1, 62.1], "at": [253.0, 81.4], "z": 35},
+  {"id": "leg_b_far", "file": "leg_b_far.png", "parent": "body", "pivot": [82.9, 55.6], "at": [126.7, 84.7], "z": 36},
+  {"id": "leg_f_near", "file": "leg_f_near.png", "parent": "body", "pivot": [89.1, 62.1], "at": [227.1, 84.7], "z": 45},
+  {"id": "leg_b_near", "file": "leg_b_near.png", "parent": "body", "pivot": [82.9, 55.6], "at": [102.1, 87.9], "z": 46},
+  {"id": "tail_root", "file": "tail_root.png", "parent": "body", "pivot": [200.2, 162.5], "at": [86.5, 104.8], "z": 20},
+  {"id": "tail_tip", "file": "tail_tip.png", "parent": "tail_root", "pivot": [123.6, 130.5], "at": [123.6, 130.5], "z": 18}
+ ]
+}

@@ -1,0 +1,127 @@
+name: ショートの下見を置く
+
+# 書き出したショートの下見を、あやとがスマホで開ける URL（7日で見られなくなる）で渡す。
+# 使い方は `tools/shorts/preview/README.md`。作業箱の道具は `tools/shorts/preview/put.py`。
+# 前は EC2 の Chrome からあやとのドライブへ上げていて、作業箱 → EC2 の転送で3本95MB に
+# 約35分かかった（あやと 2026-10-16「ドライブに置く → Firebase storage か GCS に置いたら？」）。
+#
+# **置き場は2つ。既定は hosting（動画を並べたページが1枚で渡せる）。**
+# - hosting … Firebase Hosting のプレビューチャンネル（`--expires 7d`。チャンネル名は乱数）。
+#   **本番のサイト（live チャンネル）には触らない。** 本番の firebase.json・public は使わず、
+#   ランナーの一時の場所に動画と1枚のページだけを置いて配る（`tools/shorts/preview/host.py`）。
+#   動画は作業箱から git で受け取る。包む鍵はこのランナーがその場で作り、ランナーと一緒に消える
+# - gcs … 非公開バケットの署名付き URL（`gcs.py`）。サービスアカウントはプロジェクト全体の
+#   Storage には何もできず（2026-10-16 の実測）、このバケットだけあやとが作って付与した（#938）。
+#   作業箱から直に上げるので速い（v2 の3本で37秒）が、並べたページは無い
+# - transfer … 同じバケットの `transfer/`。下見ではなく、EC2 へ動画を渡す受け渡し
+#   （`tools/shorts/post/send.py`）。SSM のコマンドに中身を載せず URL だけを載せるための道で、
+#   URL は3時間・置いたものは1日で消える
+#
+# **なぜ Actions か。** 作業箱には GCP の資格情報が無く、*.web.app にも届かない。持っているのは
+# Actions の `FIREBASE_SERVICE_ACCOUNT` だけで、新しい秘密は足さない（読むだけ）。
+#
+# **なぜ暗号化か。** URL は持っている人なら誰でも開ける鍵。このリポジトリは公開で、
+# Actions のログも誰でも読める。URL は依頼の公開鍵で包んで作業枝に置き
+# （`tools/shorts/ingest/seal.py` と同じ形）、ログには出さない。出すのは名前・数・秒・成否・
+# 権限の ○/✕ だけ。firebase-tools の出力もファイルにだけ受ける。artifact にはしない。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/preview/*.json"]
+  # master に入ってから使う
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "下見の名前（英数字と . _ -）"
+        required: true
+      place:
+        description: "hosting / gcs / transfer"
+        required: false
+        default: "hosting"
+      action:
+        description: "up / delete（delete は hosting だけ）"
+        required: false
+        default: "up"
+      files:
+        description: "置くファイル。JSON の並び（名前・bytes・sha256）。gcs は名前のカンマ区切りでもよい"
+        required: false
+        default: "[]"
+      channel_sha256:
+        description: "delete のとき: 消すチャンネル名の sha256"
+        required: false
+        default: ""
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      nonce:
+        description: "作業箱が作った乱数（届いた結果を見分ける）"
+        required: false
+        default: ""
+      branch:
+        description: "結果を置く枝（claude/ で始まる）"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shorts-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    # hosting は作業箱の荷物を最長20分待つ（host.py の UPLOAD_WAIT）。配る・確かめるに数分
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      # 作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。素のままの checkout は先の木を全部落とし、
+      # 書き出しの Actions では checkout だけで 2分39秒かかった。道具と依頼だけを取り、荷物（upload/）は
+      # branch.py の extract が要るときに取りに行く
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/preview
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # firebase-tools と playwright-core は host.py が荷物を待つあいだに入れる
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: 道具を入れる
+        run: python3 -m pip install --quiet "google-cloud-storage==3.17.1" requests
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 置いて、URL を暗号化して作業枝へ返す
+        # 結果の push は branch.py が shorts/.work/ の下と依頼ファイルだけを積む
+        # （auth が作業ツリーに置いた gha-creds-*.json は積まない）
+        env:
+          # 荷物を待つあいだも、段ごとの1行がその場でログに出るように
+          PYTHONUNBUFFERED: "1"
+          IN_NAME: ${{ inputs.name }}
+          IN_PLACE: ${{ inputs.place }}
+          IN_ACTION: ${{ inputs.action }}
+          IN_FILES: ${{ inputs.files }}
+          IN_CHANNEL_SHA256: ${{ inputs.channel_sha256 }}
+          IN_PUBKEY: ${{ inputs.pubkey }}
+          IN_NONCE: ${{ inputs.nonce }}
+          IN_BRANCH: ${{ inputs.branch }}
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 tools/shorts/preview/serve.py
+
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json

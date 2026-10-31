@@ -34,11 +34,16 @@ name: 配りが赤いを issue に映す
 #
 # ## 繋ぎ先（`workflow_run`）
 #
-# **cron を当てにしない。** このリポジトリで定時実行が実際に発火した実績が
-# あるのは `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`
-# （20:30 UTC）の古参2本だけで、しかも1時間49分〜3時間32分遅れて走る。
-# 2026-09-10 に載せた `rebake.yml` の cron（01:00 UTC）は、翌朝 03:45 まで
-# 待っても発火しなかった。下の cron は**保険**として置いてある。
+# **cron を当てにしない。** 定時実行は、このリポジトリでは**何時間も遅れて**走る。
+# `Fetch YouTube Chat Data`（20:00 UTC）と `Fetch Doneru Donations`（20:30 UTC）は
+# 数十分〜数時間、01:00〜04:30 UTC に置いた保険は**一度の例外もなく4時間以上**
+# （2026-10-13 の実測。**数はここに書かない**——`python3 python/cron_lag.py` が出す）。
+# 下の cron は**保険**として置いてある。
+#
+# **「発火しない cron がある」は、もう当たらない。** 前はここに
+# 「実績があるのは古参2本だけ」と書いてあったが、2026-10-13 に
+# `event=schedule` の run を数えたら、**cron を持つ14本ぜんぶに実績があった**
+# （`rebake.yml` の 01:00 UTC も33回）。**遅れるのは本当。発火しないのは嘘。**
 #
 # 繋ぎ先を3本にしてあるのは、**1本が消えても止まらないようにする**ため。
 # `Fetch YouTube Chat Data` と `Fetch Doneru Donations` は**発火の実績がある**ので、
@@ -80,12 +85,26 @@ name: 配りが赤いを issue に映す
 # ＝**この仕組みそのものが動いていない**ときだけ。
 
 on:
+  # **毎晩の配りは、ここからは来ない**（#865）。
+  #
+  # 1本目（`Firebase Hosting Deploy`）の繋ぎは、**人が手で押した配りでしか
+  # 発火しない。** 毎晩の配りは `rebake.yml` が `GITHUB_TOKEN` で押していて、
+  # GitHub の再帰よけで、その完了が次を起こさないから。
+  # 2026-10-15 に run を1本ずつ寄せて数えた（3分窓・1対1。帰属不明 0件）——
+  # **人が押した配り 90/90 が起こし、bot が押した配り 0/72。**
+  #
+  # だから**毎晩のぶんは、配りの側から名指しで押してもらう**
+  # （`firebase-hosting-deploy-prod.yml` の `wake_ship_down` job → 下の
+  # `workflow_dispatch`）。あちらは押したあと run が増えたかまで見て、
+  # 増えなければ赤くなる。**静かには止まらない。**
+  #
+  # ここの3本は**受け皿として残す。** あちらの job が丸ごと落ちた日
+  # （ランナーが死ぬ・権限が消える）に、人が押した配りと、毎晩の取り込み2本が
+  # 拾う。3本目を入れてあるのは、**繋ぎが生きているかを本番を汚さずに
+  # 確かめられる**から——`Fetch Doneru Donations` は `probe: true` で押すと
+  # 1バイトも書かずに40秒で終わる（`CLAUDE.md`）。
+  # 配りの側の繋ぎを汚さずに試すのは `wake_only: true`。
   workflow_run:
-    # 読む元は1本目の run。あとの2本は、1本目の繋ぎが切れたときの受け皿
-    # （どちらも発火の実績あり）。3本目を入れてあるのは、**繋ぎが生きているかを
-    # 本番を汚さずに確かめられる**から——`Fetch Doneru Donations` は
-    # `probe: true` で押すと1バイトも書かずに40秒で終わる（`CLAUDE.md`）。
-    # 配りを押して確かめると、本番へ配ってしまう
     workflows: ["Firebase Hosting Deploy", "Fetch YouTube Chat Data",
                 "Fetch Doneru Donations"]
     types: [completed]
@@ -102,6 +121,19 @@ on:
         required: false
         default: false
         type: boolean
+      for_run:
+        # **配りの側が、自分の run 番号を置いていく欄。**
+        #
+        # 配りは、自分がまだ走っているあいだに（最後の job から）ここを押す。
+        # ところが `python/ship_down.py` が読むのは `?status=completed` なので、
+        # そのまま走ると**ひとつ前の配りを読む**——起こしても意味が無い。
+        # だから番号を受け取って、**その run が終わるまで待ってから**読む。
+        #
+        # 人が押すときは空でよい（待たずに、いちばん新しい完了した run を読む）
+        description: "この run が終わるまで待ってから読む（配りの側が入れる。手で押すときは空）"
+        required: false
+        default: ""
+        type: string
 
 # 配りと取り込みが続けて終わった日に2本同時に走ると、
 # 同じ issue を2本立てにいく。1本ずつ通す
@@ -168,6 +200,34 @@ jobs:
       # 偽物で回すだけなので、外へは出ない
       - name: 土台を共有している相手も、いっしょに回す
         run: python python/bake_down_selftest.py
+
+      # **起こしてくれた配りが、終わるまで待つ。**
+      #
+      # 配りは自分の最後の job からここを押すので、押された時点では
+      # まだ `in_progress`。`ship_down.py` は終わった run しか読まないので、
+      # 待たずに走ると**ひとつ前の配りを読んで、いまの赤を見落とす。**
+      #
+      # 待つのは最大5分。押してくるのは配りの**最後の job** なので、ふつうは
+      # 10〜30秒で終わる。5分来なければ**赤くする**——「配りが赤い」ではなく、
+      # **この仕組みのほうが動いていない**ので、黙らせない
+      - name: 起こしてくれた配りの終わりを待つ
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.for_run != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          FOR_RUN: ${{ inputs.for_run }}
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            st="$(gh api "repos/$REPO/actions/runs/$FOR_RUN" --jq '.status')"
+            if [ "$st" = "completed" ]; then
+              echo "run $FOR_RUN は終わっています。読みに行きます"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::起こしてくれた run $FOR_RUN が5分たっても終わりません"
+          exit 1
 
       - name: いまの配りを見て、issue を合わせる
         env:

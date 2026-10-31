@@ -40,6 +40,12 @@ event で見ると毎晩の配りが全部「手押し」に見えて、**一生
 分かれ目は**押した人**のほう。毎晩のぶんは `github-actions[bot]` が押していて、
 検品で押したぶんには人の名前が付く。実測（直近20本）でも、この2つしか無い。
 
+**そして、毎晩の配りは `workflow_run` では届かない**（#865）。GITHUB_TOKEN が
+起こした run の完了は、再帰よけで次を起こさない。2026-10-15 に run を1本ずつ
+寄せて数えたら、**人が押した配り 90/90 が起こし、bot が押した配り 0/72**だった。
+いまは配りの側（`wake_ship_down` job）が `workflow_dispatch` で名指しに押す。
+こちらから見える違いは**入力 `for_run` が付く**ことだけで、読み方は同じ。
+
 手で押したぶんを混ぜない理由は、`bake_down.py` と同じ——**押した人がその場で
 見ている。** 見ている赤を issue にしても、気づかないことは1つも減らない。
 そのうえ検品の押しは**出してよくない木から押すことがある**ので、そこが赤くても
@@ -170,6 +176,20 @@ LINKED_NAMES = ("Firebase Hosting Deploy", "Fetch YouTube Chat Data",
 # **人が検品で押したぶんには、人の名前が付く**（実測でこの2つしか無い）
 BOT = "github-actions[bot]"
 
+# **配っていない run の印。**
+#
+# 配りには `wake_only: true` がある（繋ぎが生きているかを、本番を1バイトも
+# 汚さずに試す口）。あの回は書き出しも配りも丸ごと skip するので、
+# **緑で終わるのに、本番には何も出ていない。**
+#
+# 混ぜると何が壊れるか: 赤い晩のあとに人が繋ぎを試すと、`fixed_by_hand` が
+# あの緑を「人が手で押して通した」と読んで、**直っていない赤を保留にする。**
+#
+# 見分けは run の名前（`firebase-hosting-deploy-prod.yml` の `run-name:`）。
+# **両者が揃っているかは `python/ship_down_selftest.py` が毎 PR で見ている**
+# ——字を変えるなら、あちらの `run-name:` と一緒に
+PROBE_MARK = "繋ぎだけ確かめる"
+
 # event で無人と分かるぶん。配りにはいまこの2つの入口が無いが、
 # **あとで cron を足した日に、黙って手押し扱いにしない**ために見ておく
 UNATTENDED_EVENTS = ("schedule", "workflow_run")
@@ -189,6 +209,9 @@ WHAT = {
     "🔎 Firestore インデックスのデプロイ": "rules",
     "無い道が、ちゃんと 404 で返っているか": "notfound",
     "配った面が、面として配られているか": "sweep",
+    # **島ではなく、この仕組みのほうが壊れている回。**
+    # 配りは通っているが、下流（＝この係）を起こせなかった（#865）
+    "配りが赤いを issue に映す、を起こす": "wake",
 }
 
 # 書き出しのところ。ここが落ちるのは「配れなかった」ではなく「作れなかった」
@@ -231,6 +254,25 @@ def unattended(r: dict) -> bool:
         return True
     who = (r.get("triggering_actor") or r.get("actor") or {}).get("login")
     return who == BOT
+
+
+def deployed(r: dict) -> bool:
+    """**その run は、ほんとうに配ろうとしたか。**
+
+    `wake_only: true`（繋ぎを試すだけ）の回は、配る job が丸ごと skip される。
+    **緑で終わるのに、本番には1バイトも出ていない。** 配りの結果として
+    読むと、赤い晩を「人が手で押して通した」に化けさせる。
+
+    見分けは run の名前（`PROBE_MARK`）。名前が読めない古い run は
+    **配った扱い**——分からないものを除くと、本物の赤まで静かに消える。
+    """
+    name = r.get("name") or r.get("display_title") or ""
+    return PROBE_MARK not in name
+
+
+def real_runs(runs: list) -> list:
+    """配っていない run（繋ぎを試しただけの回）を落とす。"""
+    return [r for r in (runs or []) if deployed(r)]
 
 
 def pick_run(runs: list):
@@ -385,14 +427,20 @@ def body(a: dict) -> str:
                     "戻っていないか見てください。",
         "sweep": "配った面をひと回りしたところで、面として配られていないものが"
                  "見つかりました。run を開くと、どの面かが出ています。",
+        "wake": "**島は無事に出ています。** 落ちたのは、配り終わりをこの係に"
+                "知らせるところです。放っておくと、**次に配りが赤くなった晩に"
+                "誰も気づきません。** `Firebase Hosting Deploy` を"
+                "`wake_only` で押すと、本番を汚さずに同じところを試せます。",
     }.get(a.get("what"), "run を開いて、赤い step を見てください。")
 
     tail = ["", "直したら `Firebase Hosting Deploy` を手で押し直します。",
             "次の配りが通れば、この issue はひとりでに閉じます。"]
 
     # **呼ぶのは「もう出ている」ときだけ**（docstring「メンションは…」）。
-    # 出る前に止まった赤は1晩待てるので、通知を積まない
-    if out is True:
+    # 出る前に止まった赤は1晩待てるので、通知を積まない。
+    # **知らせる係が落ちただけの回も呼ばない**——島は出ていて、視聴者さんに
+    # 見えているものは何も壊れていない。下ろす／配り直すの判断は要らない
+    if out is True and a.get("what") != "wake":
         tail += ["", f"{OWNER} 本番に出てしまっているので、"
                      "下ろすか配り直すかの判断が要ります。"]
 
@@ -457,8 +505,14 @@ def read_state(gh) -> dict:
     Returns:
         `assess()` の返り値
     """
-    runs = gh.runs(WORKFLOW_FILE)
-    logger.info("%s の終わった run を %d本 読めました", WORKFLOW_FILE, len(runs))
+    got = gh.runs(WORKFLOW_FILE)
+    # **配っていない回（`wake_only`）は、ここで落とす。**
+    # `pick_run` にも `fixed_by_hand` にも渡さない——どちらに混ざっても、
+    # 本番に出ていないものを「出た」と読むことになる
+    runs = real_runs(got)
+    logger.info("%s の終わった run を %d本 読めました"
+                "（うち配っていない回 %d本は数えません）",
+                WORKFLOW_FILE, len(got), len(got) - len(runs))
 
     run = pick_run(runs)
     if run is None:

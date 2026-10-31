@@ -32,6 +32,7 @@
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
 import { viaCurl, blocked, ORIGIN } from "./prod.mjs";
+import { readConst } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "";
 const BASE = SPORT ? `http://localhost:${SPORT}` : ORIGIN;
@@ -43,7 +44,13 @@ const NIGHTS = process.env.NIGHTS || new URL("../../site/content/nights.ts", imp
 const PATHS = SPORT ? ["/index.html", "/"] : ["/"];
 
 /** `content/nights.ts` から `eyebrow` を2つとも拾う（平常時・旅のあいだ）。 */
-const words = [...readFileSync(NIGHTS, "utf8").matchAll(/^\s*eyebrow:\s*"([^"]+)"/gm)].map((m) => m[1]);
+/* 読み方は `tsread.mjs` の1本（#694）。前は行の頭を当てていたので、
+   字下げが変わった日や、どちらかの表から `eyebrow` が落ちた日に、
+   「2件のはず」で止まるのではなく**別の表の字を測りに行く**ことがありえた。 */
+const nightsSrc = readFileSync(NIGHTS, "utf8");
+const words = [readConst(nightsSrc, "FIXED").eyebrow, readConst(nightsSrc, "TRIP").eyebrow].filter(
+  Boolean,
+);
 if (words.length !== 2) {
   console.error(`nights.ts の eyebrow が ${words.length} 件でした（2件のはず）。測る文言が決まりません。`);
   process.exit(2);

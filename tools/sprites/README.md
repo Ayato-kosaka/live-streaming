@@ -34,7 +34,7 @@ pkill -f "next dev -p 3011"
 | `page.mjs <パス> <出力> [幅] [高さ] [スクロール]` | 好きなページを1枚 |
 | `island.mjs` | 島の寄り・引きと fps |
 | `og.mjs` | 分かち合うときに出る絵（`site/public/og.png`、1200×630）を撮り直す。**顔を先に落としてから**（`avatars.py` / `chars.py`）。終わりに `ogcheck.py` を呼ぶ |
-| `ogcheck.py` | その絵が**ちゃんと島に見えるか**を画素で（海・陸・ひろがり・のっぺり・色の種類）。対照11枚。0/1/2 |
+| `ogcheck.py` | その絵が**ちゃんと島に見えるか**を画素で（海・陸・ひろがり・のっぺり・色の種類）。島をかこむ水は青とはかぎらない（内陸の島は湖の翡翠）。縦のつなぎ目も見る。対照14枚。0/1/2 |
 | `ogframe.mjs` | その絵の枠に、**島をどれだけの大きさで置くか**の計算だけ。`og.mjs` から切り出してある——あちらは開くだけでブラウザを起こすので、毎 PR で当てられない |
 | `ogframe_selftest.mjs` | 置き方を両側から挟む（弱めると丸い島が枠を埋めず、強めると縦に細い島が動く）。ブラウザ不要。0/1/2 |
 | `talk.mjs` | 住人に話しかける流れ |
@@ -96,11 +96,96 @@ python3 tools/sprites/inkpx.py mefoot360 _mefoot
 
 ## スプライトを焼く
 
+**焼く前に、元の素材と three を落とす。** どちらも `.gitignore` に入っていて
+clone にも worktree にも無い（`tools/sprites/models/` と `tools/sprites/vendor/`）。
+`.gitignore` は「README.md の手順で取得する」と書いているのに、**その手順が
+どこにも無かった**（2026-10-13 に書いた。無いあいだは、絵を1枚足すだけで
+行き止まりになる）。
+
+```bash
+cd tools/sprites
+# three（r155 以降なら動く。実際に焼いて確かめたのは 0.168.0）
+mkdir -p vendor/jsm/loaders vendor/jsm/utils
+V=0.168.0
+curl -sS -o vendor/three.module.js            "https://unpkg.com/three@$V/build/three.module.js"
+curl -sS -o vendor/jsm/loaders/GLTFLoader.js  "https://unpkg.com/three@$V/examples/jsm/loaders/GLTFLoader.js"
+curl -sS -o vendor/jsm/utils/BufferGeometryUtils.js \
+  "https://unpkg.com/three@$V/examples/jsm/utils/BufferGeometryUtils.js"
+
+# Kenney のキット5つ（CC0）。zip の在りかは各ページの中に書いてある
+#   https://kenney.nl/assets/{nature-kit,holiday-kit,building-kit,food-kit,mini-characters}
+#   curl -sS "https://kenney.nl/assets/nature-kit" | grep -oE 'https://[^\x27]*\.zip'
+# 置き場（`manifest.mjs` の NK / HK / BK / FK と同じ）
+#   models/gltf/   ← nature-kit の「GLTF format」
+#   models/holiday/← holiday-kit の「GLB format」
+#   models/        ← building-kit と mini-characters の「GLB format」
+#   models/food/   ← food-kit の「GLB format」
+```
+
+上の手順は `bash fetchkits.sh food-kit [nature-kit …]` に1本にしてある（three も一緒に落とす）。
+
+### 作業箱から届かないときは、Actions で焼く
+
+**この作業箱からは kenney.nl に届かない**（プロキシで 000/403。迂回しない）。
+そのときは `.github/workflows/bake_sprites.yml` が、ランナーで素材を落として焼き、
+**焼けた絵と寸法表（`sprites.json`・`heroWide.json`）だけ**を起こした枝にコミットして戻す。
+起こしかたはどちらも1手:
+
+```bash
+# 作業枝（claude/…）から。bake-request.json を書いて push すると走る
+#   names = 焼いてコミットする絵 / check = 見比べに焼くだけの絵（コミットしない）
+cat tools/sprites/bake-request.json   # {"why": "…", "names": ["food-cheese-cut"], "check": ["food-pepper"]}
+git add tools/sprites/bake-request.json && git commit -m "…" && git push
+
+# master に入ったあとは、ボタンでも
+gh workflow run bake_sprites.yml --ref <claude/…> -f names=food-cheese-cut
+```
+
+終わると github-actions[bot] のコミットが枝に積まれるので、`git pull --rebase` で受け取る。
+主役（`recipes.ts` などの `icon`）なら `hero/` の2枚もいっしょに焼ける。
+
+- **名前はぴったり当てる**（`EXACT=1`）。手元の `bake.mjs` は「名前の一部」で絞るので、
+  `food-cheese` が `food-cheese-cut` や `food-burger-cheese` まで拾って、頼んでいない絵を
+  いまのキットで焼き直してしまう
+- **`check` の絵は別の置き場に焼き、いまの絵と画素で比べる**（`bakecheck.py`）。
+  色が抜けていたら止めてコミットしない（`Textures/` が置けていない）。形や色が違うだけなら
+  止めずに「違う」と出す——キットの版が違う、という知らせなので、出た絵を自分で見る。
+  比べるのは**接地影を除いた物そのもの**。影の薄い裾は焼く箱で数px動く
+  （作業箱で焼いた `food-pepper` 320x173 が、ランナーでは 320x177）ので、外枠で比べると
+  形も色も同じなのに「違う」と出る
+- **並べた絵はログに base64 で出る。** この箱からは artifact もログの zip も落とせない
+  （blob の宛先で 403）。`mcp__github__get_job_logs`（`return_content: true`）で読んで
+  ファイルに置き、`python3 bakecheck.py unsheet <ログ> /tmp/sheet.png` で絵に戻す
+- 焼くのに使ったキットの zip の在りか（＝版）は、run の要約に残る
+
+**zip の `Textures/` も一緒に置く。無いと、焼いた絵が色を失う。**
+food-kit の glb は色を持っておらず、`Textures/colormap.png` の1枚を全員で
+共有している（`models/food/Textures/colormap.png`）。これが欠けていても
+**焼くほうは何も言わずに通る**ので、まっ白な料理の絵が焼ける
+（2026-10-17 に人参がそうなった。まっ白な人参が `hero/` に入りかけた）。
+`node bake.mjs /tmp/bake-test food-pepper` で**色の付いているはずの絵を1枚**
+焼いて、オレンジに出るかを先に見る。
+
+**いま配られているキットは、この manifest を書いたときのものより新しい。**
+building-kit は部品の名前が変わっていて、`wall-window-small.glb` がもう無い
+（`legend-kazbegi` の礼拝堂がそれを呼ぶ）。**いま在る絵をそのまま焼き直すと
+落ちるものがある。** 1枚足すぶんには、落としたキットに在る部品だけで組めばよい。
+
+焼けることの確かめは、**すでに在る絵を1枚、別の場所へ焼いて見比べる**のが早い
+（`legend-newyear-24h` は箱と円盤だけなのでキットが要らない）。
+
 ```bash
 cd tools/sprites
 (nohup python3 -m http.server 8904 > /dev/null 2>&1 &)
-node bake.mjs && python3 meta.py
+node bake.mjs /tmp/bake-test legend-newyear-24h   # 1枚だけ焼いて見比べる
+node bake.mjs && python3 meta.py                  # ぜんぶ焼く
 ```
+
+**1枚だけ足すときも `meta.py` まで通す。** webp に直して
+`site/content/sprites.json` に寸法を書くのがあちらで、通さないと画面に出ない。
+図鑑の主役（`recipes.ts` / `legends.ts` / `streamTypes.ts` の `icon`）は
+`hero/` にも要る——`bake.mjs` がその2枚を焼き、
+`node tools/sprites/heroicon_selftest.mjs` が通し忘れを捕まえる。
 
 ## 配信で使う3面（`/roulette` `/me/remote` `/me/roulette`）を数える
 

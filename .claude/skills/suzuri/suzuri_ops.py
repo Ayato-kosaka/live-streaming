@@ -30,7 +30,7 @@ SUZURI 自身のアップロード処理（presign → lens へ送る → デザ
 """
 import json, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
-from cdp import Tab, down, up, tab, where  # noqa: E402
+from cdp import Tab, down, hold, up, tab, where  # noqa: E402
 from suzuri_common import *  # noqa: E402,F401,F403  大きさ・下ごしらえ・透過・題と本文
 
 BASE = "https://suzuri.jp"
@@ -198,6 +198,86 @@ def delete(t, mid):
     return _ajax(t, "DELETE", f"/account/materials/{mid}")
 
 
+def _anon_status(url):
+    """ログインなし（cookie なし）で開けるか。売り場が**だれにでも**見えるかは、これで決める。
+    持ち主のタブで開くと、非公開でも見えることがあるので使わない"""
+    import urllib.request, urllib.error
+    try:
+        return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=60).status
+    except urllib.error.HTTPError as e:
+        return e.code
+    except Exception as e:  # noqa: BLE001
+        return repr(e)[:120]
+
+
+def publish(t, mid, dry=True, wait=90):
+    """非公開で用意したデザインを、作ってある品目ごと公開にする（2027年の卓上カレンダーを 2026-10-15 21:00 に出すために足した）。
+
+    するのは2つだけ。画面の「公開」と「品目の✓」が送るのと同じ要求:
+    1. `PUT /account/materials/{id}` に `published: true`（題・本文・利益は読んだ値をそのまま返す）
+    2. `bulk_upsert` に、**品目として作ってある（id のある）もの全部**を `published: true` で
+    そのあと売り場の URL を**ログインなしで**開き、200 になるまで待つ。
+
+    `dry=True`（空打ち）は、同じ2つの要求を **`published: false` のまま**送る。中身は変わらないが、
+    向こうがその形を受け付けるか（品目 733 のような API で触れない品目でも 200 が返るか）までは確かめられる。
+    戻り値は結果の dict（`ok` が真なら公開できて、売り場が開けた）"""
+    m, ps = read(t, mid)
+    if not m:
+        return {"ok": False, "error": f"デザイン {mid} が読めない（ログイン切れか、id 違い）"}
+    made = [p for p in ps if p.get("id")]
+    if not made:
+        return {"ok": False, "error": "品目が1つも作られていない（公開するものが無い）"}
+    out = {"id": mid, "title": m["title"], "dry_run": dry, "before": {"material": m["published"]},
+           "products": {p["item"]["name"]: {"published": p["published"], "url": p.get("sampleUrl")} for p in made}}
+    # 卓上カレンダーは12か月ぶんの絵が揃っていないと、画面が公開させない（hasAllDeskCalendarMonthImages）。
+    # 同じことをこちらでも先に見る。揃っていないまま出すと、白い月のある暦が売られる
+    for p in made:
+        if p["item"]["name"] == "desk-calendar":
+            places = {pr.get("place") for pr in (p.get("prints") or []) if pr.get("material")}
+            missing = [x for x in ("january", "february", "march", "april", "may", "june", "july", "august",
+                                   "september", "october", "november", "december") if x not in places]
+            if missing:
+                out.update(ok=False, error=f"卓上カレンダーの絵が無い月がある: {missing}")
+                return out
+    flag = not dry
+    st, r = _ajax(t, "PUT", f"/account/materials/{mid}",
+                  {"material": {"title": m["title"], "description": m["description"], "price": m["price"], "published": flag}})
+    out["material_put"] = st
+    if st != 200:
+        out.update(ok=False, error=f"material PUT {st}: {str(r)[:300]}")
+        return out
+    attrs = [{"published": flag, "itemId": p["item"]["id"],
+              "exemplaryItemVariantId": (p.get("sampleItemVariant") or {}).get("id"),
+              "exemplaryAngle": p.get("exemplaryAngle"), "scale": p.get("scale"), "offsetX": p.get("offsetX"),
+              "offsetY": p.get("offsetY"), "quantityLimit": p.get("quantityLimit"), "secret": False} for p in made]
+    st, r = _ajax(t, "POST", f"/account/materials/{mid}/products/bulk_upsert", {"attrs": attrs})
+    out["bulk_upsert"] = st
+    if st != 200:
+        out.update(ok=False, error=f"bulk_upsert {st}: {str(r)[:300]}")
+        return out
+    m2, ps2 = read(t, mid)
+    out["after"] = {"material": m2["published"],
+                    "products": {p["item"]["name"]: p["published"] for p in ps2 if p.get("id")}}
+    urls = [p.get("sampleUrl") for p in made if p.get("sampleUrl")]
+    end = time.time() + (wait if not dry else 0)
+    while True:
+        out["anon"] = {u: _anon_status(u) for u in urls}
+        if dry or all(s == 200 for s in out["anon"].values()) or time.time() > end:
+            break
+        time.sleep(10)
+    if dry:
+        # 空打ちは何も変えていないはず。変わっていたら、それ自体が事故
+        unchanged = (m2["published"] == m["published"]
+                     and all(out["after"]["products"].get(p["item"]["name"]) == p["published"] for p in made))
+        out["ok"] = unchanged
+        if not unchanged:
+            out["error"] = "空打ちのはずが、公開の状態が変わった"
+    else:
+        out["ok"] = (m2["published"] and all(out["after"]["products"].values())
+                     and all(s == 200 for s in out["anon"].values()))
+    return out
+
+
 def product_images(t, mid):
     """売り場の見本の絵（lens が描いた 500x500）を品目ごとに返す。確かめる用。
     `sampleImageUrl` は向こうが署名（h=）まで付けて返してくれるので、そのまま開ける"""
@@ -288,5 +368,24 @@ def finish(t, mid, src, title=None, description=None, price=300):
         raise RuntimeError(f"品目が揃っていない: {pub}")
     if title is not None and (m["title"] != title or m["price"] != price or not m["published"]):
         raise RuntimeError(f"題・利益・公開が入っていない: {m['title']!r} {m['price']} {m['published']}")
+
+
+if __name__ == "__main__":
+    # 決まった時刻に1手で出せるように、コマンドからも呼べる形を置く（ec2.py run で送る。ubuntu として回す）:
+    #   python3 suzuri_ops.py publish <デザインid> [--dry-run]
+    # 列 suzuri の札をこのプロセスの pid で持って回し（cdp.py の hold。ほかの人が持っていれば空くまで待つ）、
+    # 終わったら Chrome を閉じる（閉じないとセッションが書き戻らない）。札はこのプロセスが終われば消える
+    # （前は鍵 ~/locks/suzuri-publish-<id> を置いて消していたが、kill -9 では消えずに6時間残った）
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 2 or args[0] != "publish" or not args[1].isdigit():
+        sys.exit("使いかた: python3 suzuri_ops.py publish <デザインid> [--dry-run]")
+    hold("suzuri", purpose=f"suzuri_ops.py publish {args[1]}")
+    try:
+        res = retrying(publish, int(args[1]), dry="--dry-run" in sys.argv)
+    finally:
+        down("suzuri")
+    print(json.dumps(res, ensure_ascii=False, indent=1))
+    print("RESULT", "OK" if res.get("ok") else "NG", "(空打ち)" if res.get("dry_run") else "")
+    sys.exit(0 if res.get("ok") else 1)
 
 

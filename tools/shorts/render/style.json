@@ -1,0 +1,175 @@
+{
+  "_note": "全ショートで使い回すテロップの様式。座標は 1080x1920 の画素。安全領域の出典は README.md の「安全領域」。",
+  "canvas": { "width": 1080, "height": 1920, "fps": 30 },
+  "fonts": {
+    "_note": "どちらも OFL。tools/shorts/render/fetch_fonts.sh が google/fonts から落とす",
+    "title": "MPLUSRounded1c-ExtraBold.ttf",
+    "caption": "MPLUSRounded1c-Black.ttf"
+  },
+  "safe": {
+    "_note": "UI に隠れない範囲。上はショートの上部タブ、下は説明文・チャンネル名、右はボタン列",
+    "top": 360,
+    "bottom": 1248,
+    "left": 120,
+    "right": 960,
+    "right_column_from_y": 840,
+    "right_column_x": 888
+  },
+  "avoid_faces": {
+    "_note": "字幕と【大】の字を、ぼかしていない顔（＝配信者本人）に被せない。自撮りの画が多く、縦のまん中に置いた字は顔のど真ん中（目・口元）に乗る（あやとの決め 2026-10-16）。字なしで1回書き、その全コマの顔を YuNet で探し、行のどのコマかで顔の箱に掛かる行だけ、行ごとに1回、顔の下へ（下の安全域を越えるなら上へ）ずらす。YuNet の箱は額から顎までなので、足すのは pad_x・pad_y（箱の幅・高さの割合）と gap（px）だけ。顔は品質チェック（qa/textface.py）と同じ式で選ぶが、先にチェックより緩い線（点 score・肌色 skin_ratio 倍・ぼかし blur_ratio 倍）で避け、それで置けない行だけチェックと同じ線で置き直す。続けて3コマ出ない箱は顔として数えない（チェックと同じ）。【大】の字は置けなければ shrink_step px ずつ小さくする。alpha_min は字の箱の線（チェックと同じ）",
+    "enabled": true,
+    "score": 0.5,
+    "skin_ratio": 0.6,
+    "blur_ratio": 0.5,
+    "det_scale": 0.5,
+    "pad_x": 0.02,
+    "pad_y": 0.02,
+    "gap": 12,
+    "alpha_min": 16,
+    "shrink_step": 4
+  },
+  "title": {
+    "font": "title",
+    "size": 76,
+    "color": "#141414",
+    "bg": "#F9D342",
+    "pad_x": 32,
+    "pad_y": 18,
+    "radius": 28,
+    "line_gap": 10,
+    "max_width": 840,
+    "max_lines": 2,
+    "top": 380
+  },
+  "title_card": {
+    "_note": "頭の数秒だけ出す題の札（指示書の title.look = card）。黒い箱に白い太丸ゴシック。改行は題のとおりで、いちばん長い行が幅に収まるまで size から min_size へ小さくする",
+    "_note_end": "end_with_line: 題の読み上げ（札が兼ねる行）が終わるコマ＝次の行の字幕が出るコマで、カットで消す。指示書の to（title_card_seconds、既定 4秒）は上限。参考のショートも題は 2.3秒で、最初の字幕と同じコマで消える。4秒出すと、2行目の字幕が札と顔に挟まれて置き場が無くなった（p3 の B）",
+    "end_with_line": true,
+    "font": "caption",
+    "size": 84,
+    "min_size": 64,
+    "color": "#FFFFFF",
+    "bg": "#000000",
+    "bg_alpha": 1.0,
+    "pad_x": 34,
+    "pad_y": 22,
+    "radius": 28,
+    "line_gap": 12,
+    "max_width": 840,
+    "max_lines": 3,
+    "top": 380
+  },
+  "big": {
+    "_note": "【大】の行の字幕（オチ・ツッコミ）。別のテロップにせず字幕そのものを大きく出す。見た目は order の順に出るたびに替える。looks の各見た目は look（textlook.py の形）と anim（出入り）。font・size・min_size も見た目ごとに書ける。centers は置く中心の候補（下から順に試す）",
+    "font": "caption",
+    "size": 124,
+    "min_size": 76,
+    "max_width": 840,
+    "max_lines": 2,
+    "top": 420,
+    "centers": [960, 900, 840, 780, 720, 660, 620],
+    "order": ["grad", "pop", "box"],
+    "looks": {
+      "grad": {
+        "look": { "fill": ["#FFE45C", "#FF8A1F"], "strokes": [{ "width": 16, "color": "#2A1200" }], "shadow": { "dy": 10, "alpha": 0.5 }, "line_gap": 6 },
+        "anim": { "in": { "frames": 3, "step": 2, "scale": [0.84, 1.08, 1.0] } }
+      },
+      "pop": {
+        "look": { "fill": "#FFFFFF", "strokes": [{ "width": 15, "color": "#000000" }], "shadow": { "dy": 8, "alpha": 0.45 }, "line_gap": 6 },
+        "anim": { "in": { "frames": 4, "step": 2, "scale": [0.7, 1.14, 0.98, 1.0] } }
+      },
+      "box": {
+        "look": { "fill": "#FFFFFF", "strokes": [{ "width": 7, "color": "#5A0000" }], "box": { "color": "#E8332A", "radius": 26 }, "pad": [30, 14], "line_gap": 6 },
+        "anim": { "in": { "frames": 3, "step": 2, "scale": [0.9, 1.05, 1.0] } }
+      }
+    }
+  },
+  "note": {
+    "_note": "言葉にしない小さな注（spec の corner_note。例: Pulë＝鶏）。安全領域の左上に、半透明の黒い札で",
+    "font": "caption",
+    "size": 56,
+    "color": "#FFFFFF",
+    "bg": "#000000",
+    "bg_alpha": 0.72,
+    "pad_x": 22,
+    "pad_y": 12,
+    "radius": 18,
+    "line_gap": 6,
+    "max_width": 600,
+    "x": 120,
+    "y": 400
+  },
+  "end_note": {
+    "_note": "最後の画に出す注の札（CTA。読み上げない）。あやと F-042「最後のテロップ『※YouTubeで毎日22時から配信』に変えて」「このCTAテロップ、次から全部入れて」（#975）。どの回にも書き出しが足す（spec にも指示書にも書かない）。見た目と置き場は note のまま（回の様式が note を動かしていれば、それに従う）。replaces の注は外してこれに替える。最後のカットが min_s より短ければ、終わりの min_s 前から出す",
+    "text": "※YouTubeで毎日22時から配信",
+    "replaces": ["※生配信のアーカイブ"],
+    "min_s": 2.0
+  },
+  "telop": {
+    "_note": "強調の字（絵コンテの「中央: …」）。黄色い字に黒の縁、数字だけ大きく。タイトルの下端と字幕2行ぶんの上端の間に、同時に1つだけ。pop は出だしの数コマの大きさ（ポンと出す）",
+    "font": "caption",
+    "size": 100,
+    "min_size": 52,
+    "min_size_1line": 72,
+    "color": "#F9D342",
+    "stroke": 12,
+    "stroke_color": "#141414",
+    "digit_scale": 1.3,
+    "line_gap": 4,
+    "pad": 2,
+    "shadow_dy": 8,
+    "shadow_alpha": 0.45,
+    "gap": 20,
+    "pop": [0.7, 0.92, 1.06, 1.02, 1.0]
+  },
+  "caption": {
+    "_note": "白い字に黒の縁（依頼の「セリフは中央配置で文字枠あり」の文字枠＝縁取り）。箱は敷かない（bg_alpha 0）。強調（行の highlight）はタイトルの箱と同じ黄色で少し大きく",
+    "highlight_color": "#F9D342",
+    "highlight_scale": 1.12,
+    "font": "caption",
+    "size": 66,
+    "color": "#FFFFFF",
+    "stroke": 8,
+    "stroke_color": "#000000",
+    "bg": "#000000",
+    "bg_alpha": 0,
+    "pad_x": 6,
+    "pad_y": 6,
+    "radius": 18,
+    "line_gap": 8,
+    "max_width": 696,
+    "max_lines": 2,
+    "center_y": 1000,
+    "hold_frames": 6,
+    "bridge_frames": 12
+  },
+  "watermarks": {
+    "_note": "配信アーカイブに焼き込まれた透かし。rect は size の元素材での画素 [x, y, w, h]（yk-by7R7iPA の18窓・273コマの、どの場面でも明るい画素の外枠）。crop はその帯より上だけを使う（跡が残らない）、inpaint は周りから描き埋める",
+    "prism_live": { "size": [720, 1280], "rect": [405, 1204, 270, 39], "margin": 12, "mode": "crop" }
+  },
+  "narration": {
+    "_note": "max_tempo は声を速める倍率の上限（render.py が越えた指示書を止める）。Fish の声（素で毎秒 6.2 拍）を 1.4倍にすると毎秒 8.6 拍で、参考の西園寺さん（Open JTalk の 1.33倍 ≒ 毎秒 8.9 拍）に並ぶ。1本目の 1.76倍は毎秒 10.6 拍で、あやとに「早送りで違和感」と言われた（docs/island-misses.md #285）。上限で尺に入らない原稿は、字を減らす（viral-shorts-creator の script_writing.md 6）",
+    "max_tempo": 1.4
+  },
+  "audio": {
+    "_note": "*_rms_dbfs は鳴っている間の RMS の目標。ダッキングは「ナレーションの間だけ BGM を duck_db 下げる」。BGM の duck_hi_hz より高い側（子音の帯域）は、さらに duck_hi_db 下げる。元の音は既定で消し、カットの audio_db で入れたものも duck_db だけ下げる",
+    "narration_rms_dbfs": -16,
+    "bgm_rms_dbfs": -22,
+    "duck_db": -12,
+    "attack_s": 0.12,
+    "release_s": 0.35,
+    "bgm_fade_out_s": 1.2,
+    "_bgm_head": "BGM は最初の1コマから鳴らす（あやと F-041「BGM の初めのミュート部分は切ってください」）。曲の頭の無音は書き出しが測って飛ばす（bgm_head_trim。5ms の窓の RMS が、曲の鳴っている間から rel_db 下の線を初めて越えた所の keep_s 前から。線は floor_dbfs より下に引かない）。頭の上げ（fade_in）は前の 0.3秒だと最初のコマが −24dB でほぼ鳴らないので、つなぎ目の音割れを防ぐだけの 1コマにした",
+    "bgm_head_trim": { "rel_db": -40, "floor_dbfs": -70, "keep_s": 0.005 },
+    "bgm_fade_in_s": 0.033,
+    "duck_hi_db": -6,
+    "duck_hi_hz": [1500, 2500],
+    "master_lufs": -14.0,
+    "master_tp_dbtp": -1.5
+  },
+  "encode": {
+    "crf": 20,
+    "preset": "medium",
+    "audio_bitrate": "192k"
+  }
+}

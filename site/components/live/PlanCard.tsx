@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BUILT_AT, planDaysLeft, planPhase, type Plan, type PlanPhase } from "@/content/plans";
-import { shutDest, themeById } from "@/content/themes";
+import { shutDest } from "@/content/themes";
+import { destById, useDests } from "@/lib/dests";
 import { LINKS } from "@/content/site";
 import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
@@ -305,9 +306,13 @@ function Links({ plan, mapDone }: { plan: Plan; mapDone?: boolean }) {
   if (!plan.links?.length && (!plan.place?.map || mapDone)) return null;
   return (
     <div className="chips" style={{ marginTop: "var(--sp-3)" }}>
+      {/* **行き先の名前を札に入れる。** この面には企画が何件も並ぶので、
+          「地図で見る」だけだと別々の場所へ飛ぶ札が同じ字で2つ3つ並ぶ
+          （`docs/island-misses.md` #265）。`place.name` は地図が指す場所
+          そのものなので、ここで足しても二重に持つことにはならない。 */}
       {plan.place?.map && !mapDone && (
         <a className="chip link" href={plan.place.map} target="_blank" rel="noopener noreferrer">
-          地図で見る
+          {plan.place.name}を地図で見る
           <Icon name="external" size={12} />
         </a>
       )}
@@ -366,7 +371,13 @@ function Reached({ plan }: { plan: Plan }) {
 function useCanNote(plan: Plan): boolean {
   const [today, setToday] = useState<Date | null>(null);
   useEffect(() => setToday(new Date()), []);
-  const theme = themeById(plan.id);
+  /* **重ねた側で見る**（`lib/dests.ts`）。ここは字を出しているのではなく
+     「付箋を貼る」の札を出すかどうかを決めているので、机で締め切った日に
+     焼き込みだけを見ていると、**押せるのに窓の無いところへ飛ばす。**
+     行き先（`NextPlans.tsx` の `PlanNotes`）も同じ一覧を見ている——
+     札と行き先は、必ず同じものから決める。 */
+  const { dests } = useDests();
+  const theme = destById(dests, plan.id);
   return !!theme && !shutDest(theme, today);
 }
 
@@ -396,12 +407,17 @@ function Doing({ plan }: { plan: Plan }) {
             </span>
           </a>
         )}
+        {/* **行き先の名前を、札が名乗る。** ここは長いこと「企画のページを見る／
+            ルート・行き先・見どころ」と固定の字で、行き先は企画ごとに
+            `/nordic` `/map/georgia` `/about` と別だった。読み上げで見分けが
+            つかないだけでなく、「ルート・行き先」はそのうち1つにしか
+            当てはまっていない（`docs/island-misses.md` #265）。 */}
         {plan.href && (
           <Link className="nx-do-b" href={plan.href} prefetch={false}>
             <Icon name="signpost" size={26} />
             <span>
-              <b>企画のページを見る</b>
-              <i>ルート・行き先・見どころ</i>
+              <b>{plan.hrefName ?? "この企画のページへ"}</b>
+              {plan.hrefNote && <i>{plan.hrefNote}</i>}
             </span>
           </Link>
         )}
@@ -555,7 +571,15 @@ export default function PlanCard({ plan, children }: { plan: Plan; children?: Re
 
       {hasBody(plan, 1) && (
         <div style={{ margin: "var(--sp-4) 0" }}>
-          <Fold title="どんなところなんだろう" lead={plan.place?.area ?? plan.tags.join(" / ")}>
+          {/* **畳みの題は、中身が何の話かで決める。** 企画はずっと「行く場所」
+              だったので「どんなところなんだろう」で足りていたが、配信の回そのものが
+              企画になると（`content/plans.ts` の `streamType`）、場所の話は1行も
+              入っていない。読む人の頭の中の問いに合わせる
+              （`docs/island-design.md` 5章の3）。 */}
+          <Fold
+            title={plan.streamType ? "どんな夜になるんだろう" : "どんなところなんだろう"}
+            lead={plan.place?.area ?? plan.tags.join(" / ")}
+          >
             <PlanBody plan={plan} from={1} />
           </Fold>
         </div>
@@ -622,12 +646,14 @@ export function PlanRow({ plan, children }: { plan: Plan; children?: React.React
 
           <PlanBody plan={plan} />
 
+          {/* この面には企画が何枚も畳んで並ぶ。札が「この企画のページへ」だと、
+              **全部同じ字で、行き先だけが違う札**になる（上の `Doing` と同じ）。 */}
           {plan.href && (
             <Link className="tile" href={plan.href} prefetch={false} style={{ marginTop: "var(--sp-4)" }}>
               <img className="tile-icon" src="/sprites/signpost.webp" alt="" />
               <span className="tile-text">
-                <b>この企画のページへ</b>
-                <i>ルート・行き先・国ごとの見どころ</i>
+                <b>{plan.hrefName ?? "この企画のページへ"}</b>
+                {plan.hrefNote && <i>{plan.hrefNote}</i>}
               </span>
               <Icon name="right" size={15} className="tile-go" />
             </Link>

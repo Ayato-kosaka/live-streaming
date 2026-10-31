@@ -1,0 +1,758 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p4",
+ "style": "style_v3.json",
+ "sources": {
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/01_0-00-00_0-05-20.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/02_0-05-20_0-10-35.mp4",
+   "watermark": "prism_live",
+   "t0": 320.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/03_0-15-50_0-16-40.mp4",
+   "watermark": "prism_live",
+   "t0": 950.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/04_1-26-20_1-27-20.mp4",
+   "watermark": "prism_live",
+   "t0": 5180.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/07_2-00-00_2-05-15.mp4",
+   "watermark": "prism_live",
+   "t0": 7200.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/06_1-54-00_2-00-00.mp4",
+   "watermark": "prism_live",
+   "t0": 6840.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/ingest/vZ2O8pabk1g/clips/05_1-34-30_1-37-20.mp4",
+   "watermark": "prism_live",
+   "t0": 5670.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c01",
+   "in": 120,
+   "out": 178,
+   "row": 0,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "旧宿のテラスで困った顔の本人。題の札の下に顔が来る"
+  },
+  {
+   "src": "c02",
+   "in": 1950,
+   "out": 2001,
+   "row": 1,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "指を2本立てる本人（おじさん２人）。別の窓 02"
+  },
+  {
+   "src": "c01",
+   "in": 6804,
+   "out": 6862,
+   "row": 1,
+   "zoom": {
+    "from": 1.22,
+    "to": 1.28,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0.0
+   },
+   "blur": [
+    {
+     "keys": [
+      {
+       "f": 6798,
+       "rect": [
+        360,
+        595,
+        240,
+        85
+       ]
+      },
+      {
+       "f": 6810,
+       "rect": [
+        325,
+        640,
+        280,
+        95
+       ]
+      },
+      {
+       "f": 6822,
+       "rect": [
+        320,
+        615,
+        320,
+        95
+       ]
+      },
+      {
+       "f": 6834,
+       "rect": [
+        285,
+        630,
+        335,
+        110
+       ]
+      },
+      {
+       "f": 6846,
+       "rect": [
+        340,
+        653,
+        345,
+        105
+       ]
+      },
+      {
+       "f": 6858,
+       "rect": [
+        355,
+        673,
+        355,
+        105
+       ]
+      },
+      {
+       "f": 6870,
+       "rect": [
+        350,
+        690,
+        345,
+        105
+       ]
+      },
+      {
+       "f": 6882,
+       "rect": [
+        370,
+        693,
+        345,
+        110
+       ]
+      }
+     ],
+     "note": "貼り紙の WhatsApp の電話番号（宿の連絡先。広めない）"
+    }
+   ],
+   "note": "受付の貼り紙 RECEPTION IS CLOSED（宿を閉める）。上の端に合わせて寄せ、貼り紙を字幕の下に置く。電話番号はぼかす"
+  },
+  {
+   "src": "c01",
+   "in": 5922,
+   "out": 5996,
+   "row": 2,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "指を3本立てる（3日分）"
+  },
+  {
+   "src": "c02",
+   "in": 105,
+   "out": 148,
+   "row": 3,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "ほかの宿泊者から聞いた話をする本人（テラス・0:05〜0:06 がその話）。別の窓 02"
+  },
+  {
+   "src": "c01",
+   "in": 2898,
+   "out": 2941,
+   "row": 3,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "廊下と部屋の扉（ほかの宿泊者）"
+  },
+  {
+   "src": "c03",
+   "in": 660,
+   "out": 708,
+   "row": 4,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "ビザの話をする本人（取り込み直した 0:15:50〜）"
+  },
+  {
+   "src": "c04",
+   "in": 738,
+   "out": 797,
+   "row": 5,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "ソファで強制送還の話（取り込み直した 1:26:20〜）。1:26:43 の止まった画を避ける"
+  },
+  {
+   "src": "c01",
+   "in": 3285,
+   "out": 3335,
+   "row": 6,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "カメラを見て話す本人（白い部屋）。v1 の 0:09:31.5（額に手）は顔が下にあり、字が目と鼻に被った"
+  },
+  {
+   "src": "c01",
+   "in": 7059,
+   "out": 7113,
+   "row": 7,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "誰もいない食堂から廊下へ"
+  },
+  {
+   "src": "c02",
+   "in": 3240,
+   "out": 3304,
+   "row": 8,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "顔をしかめる本人"
+  },
+  {
+   "src": "c01",
+   "in": 7710,
+   "out": 7761,
+   "row": 9,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "話す本人。後ろの壁に Hostel の落書き（今日の宿もない）"
+  },
+  {
+   "src": "c07",
+   "in": 3364,
+   "out": 3397,
+   "row": 10,
+   "note": "緑の鞄と白い袋（荷物）。2:01:53.3〜53.6 は白い袋と手を顔と読み違えて字が被るので、その手前で切る"
+  },
+  {
+   "src": "c03",
+   "in": 210,
+   "out": 255,
+   "row": 10,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "話す本人（青と赤の貼り紙の前・窓 03）。v1 の 0:10:19.8 は顔が下にあり、字が目と鼻に被った"
+  },
+  {
+   "src": "c04",
+   "in": 1215,
+   "out": 1259,
+   "row": 11,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "出ると決めたころの本人（1:27:00）。顔の無い画が 9秒続いていたのを切る"
+  },
+  {
+   "src": "c06",
+   "in": 1122,
+   "out": 1159,
+   "row": 12,
+   "note": "足もとの緑の鞄（左下）"
+  },
+  {
+   "src": "c05",
+   "in": 4530,
+   "out": 4560,
+   "row": 12,
+   "zoom": {
+    "from": 1.24,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.44,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "店の並ぶ通りを歩く（別の窓 05。1:54 の通りと続けない）"
+  },
+  {
+   "src": "c06",
+   "in": 9,
+   "out": 65,
+   "row": 13,
+   "note": "宿の見当たらない通りを見回す"
+  },
+  {
+   "src": "c07",
+   "in": 2526,
+   "out": 2570,
+   "row": 14,
+   "note": "新しい宿の中（台所と廊下。別の窓 07。1:54 の通りと続けない）"
+  },
+  {
+   "src": "c06",
+   "in": 9675,
+   "out": 9743,
+   "row": 15,
+   "note": "前に立つ住人（顔は写らない）"
+  },
+  {
+   "src": "c07",
+   "in": 6030,
+   "out": 6078,
+   "row": 16,
+   "note": "頭を抱える本人"
+  },
+  {
+   "src": "c07",
+   "in": 7560,
+   "out": 7643,
+   "row": 17,
+   "zoom": {
+    "from": 1.03,
+    "to": 1.05,
+    "x": 0.0,
+    "y": 0.5,
+    "sx": 0.0,
+    "sy": 0.5
+   },
+   "note": "上を見上げて笑う本人の横顔（2:04 以降の続き）。顔が右へ寄っている 2:04:12〜14.8 だけを使い、左を基点に 1.03→1.05 倍へ軽く寄せて、終わりの札（左上）と顔を離す。v2 の 2:04:48.5（カメラ向き）は札が目に、v3 の 2:04:13.5〜16.3 は髪の端に被った"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰海外ホステルを追い出されました！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "海外ホステルを追い出されました！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/01.wav",
+    "tts_text": "海外ホステルを追い出されました！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "おじさん２人が来て、宿を閉めるから30分で出ていけって。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/02.wav",
+    "tts_text": "おじさん二人が来て、宿を閉めるから三十分で出ていけって。",
+    "at": 58
+   },
+   {
+    "text": "まだ３日分、5000円ぐらい払ってるのに！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/03.wav",
+    "tts_text": "まだ三日分、五千円ぐらい払ってるのに！",
+    "at": 167,
+    "mood": "tense_still"
+   },
+   {
+    "text": "なんで閉鎖するんか、他の宿泊者に聞いたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/04.wav",
+    "tts_text": "なんで閉鎖するんか、他の宿泊者に聞いたら、",
+    "at": 241
+   },
+   {
+    "text": "オーナーがビザの関係で、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/05.wav",
+    "tts_text": "オーナーがビザの関係で、",
+    "at": 327
+   },
+   {
+    "text": "トルコに強制送還されたらしい。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/06.wav",
+    "tts_text": "トルコに強制送還されたらしい。",
+    "at": 375
+   },
+   {
+    "text": "お金を返してほしいけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/07.wav",
+    "tts_text": "お金を返してほしいけど、",
+    "at": 434
+   },
+   {
+    "text": "オーナーも代理の人もおらへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/08.wav",
+    "tts_text": "オーナーも代理の人もおらへん。",
+    "at": 484
+   },
+   {
+    "text": "安い宿に泊まってる意味ないやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/09.wav",
+    "tts_text": "安い宿に泊まってる意味ないやん！",
+    "at": 538,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "しかも、今日の宿もない。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/10.wav",
+    "tts_text": "しかも、今日の宿もない。",
+    "at": 602
+   },
+   {
+    "text": "荷物も重いし、移動する準備もできてへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/11.wav",
+    "tts_text": "荷物も重いし、移動する準備もできてへん。",
+    "at": 653
+   },
+   {
+    "text": "それでも出るしかなくて、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/12.wav",
+    "tts_text": "それでも出るしかなくて、",
+    "at": 731
+   },
+   {
+    "text": "荷物を背負って30分歩いたのに、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/13.wav",
+    "tts_text": "荷物を背負って三十分歩いたのに、",
+    "at": 775
+   },
+   {
+    "text": "次のホステルが、見つからへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/14.wav",
+    "tts_text": "次のホステルが、見つからへん！",
+    "at": 842,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "やっと次の宿が取れた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/15.wav",
+    "tts_text": "やっと次の宿が取れた！",
+    "at": 898,
+    "mood": "up_pop"
+   },
+   {
+    "text": "来た瞬間、他の住人に絡まれた",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/16.wav",
+    "tts_text": "来た瞬間、他の住人に絡まれた",
+    "at": 942
+   },
+   {
+    "text": "なんかやばそうなホステルや",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/17.wav",
+    "tts_text": "なんかやばそうなホステルや",
+    "at": 1010,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "この後どうなったかは、アーカイブで見てな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/hostel/voice/hostel-p4-v1/p4/18.wav",
+    "tts_text": "この後どうなったかは、アーカイブで見てな！",
+    "at": 1058
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/vZ2O8pabk1g/p4/spec.json",
+  "fps": 30,
+  "frames": 1141,
+  "seconds": 38.033,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "0:00:04.0+1.93s"
+    ],
+    "line": "海外ホステルを追い出されました！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 58,
+    "frames": 109,
+    "voice_frames": 101,
+    "cuts": [
+     "0:06:25.0+1.70s",
+     "0:03:46.8+1.93s"
+    ],
+    "line": "おじさん２人が来て、宿を閉めるから30分で出ていけって。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 167,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "0:03:17.4+2.47s"
+    ],
+    "line": "まだ３日分、5000円ぐらい払ってるのに！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 241,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "0:05:23.5+1.43s",
+     "0:01:36.6+1.43s"
+    ],
+    "line": "なんで閉鎖するんか、他の宿泊者に聞いたら、",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 327,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "0:16:12.0+1.60s"
+    ],
+    "line": "オーナーがビザの関係で、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 375,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "1:26:44.6+1.97s"
+    ],
+    "line": "トルコに強制送還されたらしい。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 434,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "0:01:49.5+1.67s"
+    ],
+    "line": "お金を返してほしいけど、",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 484,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "0:03:55.3+1.80s"
+    ],
+    "line": "オーナーも代理の人もおらへん。",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 538,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:07:08.0+2.13s"
+    ],
+    "line": "安い宿に泊まってる意味ないやん！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 602,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "0:04:17.0+1.70s"
+    ],
+    "line": "しかも、今日の宿もない。",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 653,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "2:01:52.1+1.10s",
+     "0:15:57.0+1.50s"
+    ],
+    "line": "荷物も重いし、移動する準備もできてへん。",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 731,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "1:27:00.5+1.47s"
+    ],
+    "line": "それでも出るしかなくて、",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 775,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "1:54:37.4+1.23s",
+     "1:37:01.0+1.00s"
+    ],
+    "line": "荷物を背負って30分歩いたのに、",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 842,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "1:54:00.3+1.87s"
+    ],
+    "line": "次のホステルが、見つからへん！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 898,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "2:01:24.2+1.47s"
+    ],
+    "line": "やっと次の宿が取れた！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 942,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "1:59:22.5+2.27s"
+    ],
+    "line": "来た瞬間、他の住人に絡まれた",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1010,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "2:03:21.0+1.60s"
+    ],
+    "line": "なんかやばそうなホステルや",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1058,
+    "frames": 83,
+    "voice_frames": 60,
+    "cuts": [
+     "2:04:12.0+2.77s"
+    ],
+    "line": "この後どうなったかは、アーカイブで見てな！",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 266,
+   "raw_voice_s": 45.63,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 32.73,
+   "cps_voiced": 8.13,
+   "video_s": 38.03,
+   "cps_video": 6.99
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

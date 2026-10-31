@@ -1,0 +1,105 @@
+{
+  "_why": "貼られたときに出る1枚と、その面の呼び名。site/lib/share.ts と tools/sprites/ogcards.mjs と tools/sprites/ogmeta.mjs が、ここ1つを読む。手で増やすときは tools/sprites/ogcards.mjs の CAST にも絵を足す（足さないと絵が焼かれず、見張りが赤くなる）",
+  "cards": {
+    "home": {
+      "file": "/og.png",
+      "label": "あやと島",
+      "alt": "空から見たあやと島",
+      "made": false
+    },
+    "streams": {
+      "file": "/og/streams.png",
+      "label": "配信",
+      "alt": "島の配信の塔"
+    },
+    "kitchen": {
+      "file": "/og/kitchen.png",
+      "label": "クッキング",
+      "alt": "島の台所と、作った料理"
+    },
+    "map": {
+      "file": "/og/map.png",
+      "label": "歩いた国",
+      "alt": "地球儀と、行き先の書かれた道しるべ"
+    },
+    "apps": {
+      "file": "/og/apps.png",
+      "label": "アプリ",
+      "alt": "島の工房"
+    },
+    "legends": {
+      "file": "/og/legends.png",
+      "label": "伝説の企画",
+      "alt": "島の表彰台"
+    },
+    "months": {
+      "file": "/og/months.png",
+      "label": "ふりかえり",
+      "alt": "島の広場の噴水とベンチ"
+    },
+    "friends": {
+      "file": "/og/friends.png",
+      "label": "愉快な仲間達",
+      "alt": "島に住んでいる人たち"
+    },
+    "board": {
+      "file": "/og/board.png",
+      "label": "やってほしいこと",
+      "alt": "付箋の貼られた島の掲示板",
+      "wrap": 3
+    },
+    "next": {
+      "file": "/og/next.png",
+      "label": "企画",
+      "alt": "島に立てたテントと屋台"
+    },
+    "now": {
+      "file": "/og/now.png",
+      "label": "いま何してる",
+      "alt": "島のたき火とテント"
+    },
+    "cards": {
+      "file": "/og/cards.png",
+      "label": "あやと島カード",
+      "alt": "島の写真が1枚ずつ並んだ壁",
+      "wrap": 4
+    },
+    "nordic": {
+      "file": "/og/nordic.png",
+      "label": "ヒッチハイク",
+      "alt": "雪の木とトナカイとそり"
+    },
+    "atlas": {
+      "file": "/og/atlas.png",
+      "label": "島の地図",
+      "alt": "島の資料館と石柱"
+    },
+    "goods": {
+      "file": "/og/goods.png",
+      "label": "あやとグッズ",
+      "alt": "島の屋台と荷車"
+    },
+    "about": {
+      "file": "/og/about.png",
+      "label": "あやとのこと",
+      "alt": "あやとの家"
+    },
+    "all": {
+      "file": "/og/all.png",
+      "label": "島のなか ぜんぶ",
+      "alt": "行き先の書かれた道しるべ",
+      "wrap": 4
+    },
+    "updates": {
+      "file": "/og/updates.png",
+      "label": "島をなおしたところ",
+      "alt": "島の普請道具",
+      "wrap": 6
+    },
+    "northMacedonia": {
+      "file": "/og/north-macedonia.png",
+      "label": "北マケドニア",
+      "alt": "山と湖の国"
+    }
+  }
+}

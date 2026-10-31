@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const t = streamTypeBySlug(slug);
   if (!t) return {};
-  return { title: t.name, description: t.lead };
+  return share({ key: "streams", title: t.name, description: t.lead, path: `/streams/${slug}` });
 }
 
 /**
@@ -108,7 +109,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   const recs = figures(t.slug);
 
   return (
-    <PageShell current="streams" crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
+    <PageShell crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
       {/*
         5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
         蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて

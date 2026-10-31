@@ -1,0 +1,892 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "CKJvprUMOgA-p2",
+ "style": "style_p2.json",
+ "sources": {
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/06_0-33-50_0-34-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2030.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/02_0-19-20_0-20-50.mp4",
+   "watermark": "prism_live",
+   "t0": 1160.0
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/05_0-30-20_0-32-10.mp4",
+   "watermark": "prism_live",
+   "t0": 1820.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/03_0-20-55_0-21-50.mp4",
+   "watermark": "prism_live",
+   "t0": 1255.0
+  },
+  "c2_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/07_0-36-10_0-37-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2170.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/04_0-27-50_0-29-10.mp4",
+   "watermark": "prism_live",
+   "t0": 1670.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/CKJvprUMOgA/clips/01_0-11-50_0-12-20.mp4",
+   "watermark": "prism_live",
+   "t0": 710.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/WJ8KEi1V-no/clips/01_0-00-00_0-01-40.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/hk39U7ZEKCQ/clips/02_1-08-00_1-09-50.mp4",
+   "watermark": "prism_live",
+   "t0": 4080.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/hk39U7ZEKCQ/clips/03_1-11-25_1-12-50.mp4",
+   "watermark": "prism_live",
+   "t0": 4285.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/hk39U7ZEKCQ/clips/01_0-49-20_0-50-00.mp4",
+   "watermark": "prism_live",
+   "t0": 2960.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/WJ8KEi1V-no/clips/04_0-04-10_0-05-40.mp4",
+   "watermark": "prism_live",
+   "t0": 250.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/WJ8KEi1V-no/clips/02_0-02-35_0-02-55.mp4",
+   "watermark": "prism_live",
+   "t0": 155.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/WJ8KEi1V-no/clips/03_0-03-35_0-03-55.mp4",
+   "watermark": "prism_live",
+   "t0": 215.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_06",
+   "in": 1215,
+   "out": 1276,
+   "row": 0,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "列柱の下にずらりと並ぶ銅像（影の入る前）"
+  },
+  {
+   "src": "c2_02",
+   "in": 2370,
+   "out": 2432,
+   "row": 0,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "噴水の柱の上の巨大な騎馬像を真下から"
+  },
+  {
+   "src": "c2_05",
+   "in": 15,
+   "out": 47,
+   "row": 1,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "欄干に銅像が並ぶ橋を博物館へ"
+  },
+  {
+   "src": "c2_03",
+   "in": 525,
+   "out": 562,
+   "row": 2,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "噴水のライオン像の寄り"
+  },
+  {
+   "src": "c2_07",
+   "in": 690,
+   "out": 754,
+   "row": 3,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "欄干のスーツの銅像を指で順に指す"
+  },
+  {
+   "src": "c2_04",
+   "in": 1680,
+   "out": 1728,
+   "row": 4,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "何人も並んで立つ群像"
+  },
+  {
+   "src": "c2_01",
+   "in": 249,
+   "out": 291,
+   "row": 5,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "昼の噴水の上の像（札）"
+  },
+  {
+   "src": "c01",
+   "in": 1080,
+   "out": 1122,
+   "row": 5,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "夕焼けの噴水の像の影（札）"
+  },
+  {
+   "src": "c3_02",
+   "in": 147,
+   "out": 196,
+   "row": 6,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "通りの牛の銅像に近づく（ちょっと待って、緊急！）。入りの0.3秒は右の端を通りがかりの人が抜けるので 0.4秒遅らせた"
+  },
+  {
+   "src": "c3_02",
+   "in": 1260,
+   "out": 1310,
+   "row": 6,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "真顔の自撮り（この国の闇、発見）"
+  },
+  {
+   "src": "c3_02",
+   "in": 1959,
+   "out": 2015,
+   "row": 7,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "牛のお尻を手で指す"
+  },
+  {
+   "src": "c3_02",
+   "in": 2340,
+   "out": 2426,
+   "row": 8,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "尻尾の切り口の寄り。中が空洞"
+  },
+  {
+   "src": "c3_02",
+   "in": 510,
+   "out": 574,
+   "row": 9,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "角と鼻の光る牛の頭"
+  },
+  {
+   "src": "c3_03",
+   "in": 570,
+   "out": 596,
+   "row": 9,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "言い切る顔"
+  },
+  {
+   "src": "c3_02",
+   "in": 2580,
+   "out": 2619,
+   "row": 10,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "空洞の切り口を引きで"
+  },
+  {
+   "src": "c3_03",
+   "in": 960,
+   "out": 999,
+   "row": 10,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "真顔"
+  },
+  {
+   "src": "c3_01",
+   "in": 300,
+   "out": 352,
+   "row": 11,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.44,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "台座の上の人物の銅像を見上げる（牛の回の別の像）"
+  },
+  {
+   "src": "c01",
+   "in": 1770,
+   "out": 1842,
+   "row": 12,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "真っ赤な空と街灯"
+  },
+  {
+   "src": "c04",
+   "in": 1749,
+   "out": 1800,
+   "row": 13,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "夕焼けの噴水の像。len で止める"
+  },
+  {
+   "src": "c04",
+   "in": 1491,
+   "out": 1521,
+   "row": 13,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "暗がりでうつむいて動かない顔（行のあとの間と15行目まで続く）。噴水の像を len で止め、顔は 1.0秒ここで出して15行目へ続ける"
+  },
+  {
+   "src": "c04",
+   "in": 1521,
+   "out": 1568,
+   "row": 14,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "前の行の画の続き"
+  },
+  {
+   "src": "c02",
+   "in": 90,
+   "out": 132,
+   "row": 15,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "座った銅像の影と赤い空の水面"
+  },
+  {
+   "src": "c2_05",
+   "in": 1755,
+   "out": 1797,
+   "row": 15,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "博物館の前、台座の上の銅像"
+  },
+  {
+   "src": "c03",
+   "in": 238,
+   "out": 318,
+   "row": 16,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "夕焼けの噴水の縁を歩く"
+  },
+  {
+   "src": "c02",
+   "in": 270,
+   "out": 307,
+   "row": 16,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "座った銅像の影（同じ像の6秒あと）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰 北マケドニアに来たら、\n1,200億円かけて\n銅像だらけにした国だった",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/01.wav",
+    "tts_text": "北マケドニアに来たら、千二百億円かけて銅像だらけにした国だった。",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "作りすぎやろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/02.wav",
+    "tts_text": "作りすぎやろ！",
+    "at": 123,
+    "big": "shake_white"
+   },
+   {
+    "text": "全部数えたろ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/03.wav",
+    "tts_text": "全部数えたろ。",
+    "at": 155,
+    "mood": "up_pop"
+   },
+   {
+    "text": "スーツの銅像だけで、30体。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/04.wav",
+    "tts_text": "スーツの銅像だけで、三十体。",
+    "at": 192,
+    "highlight": [
+     "30体"
+    ]
+   },
+   {
+    "text": "会社の集合写真か！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/05.wav",
+    "tts_text": "会社の集合写真か！",
+    "at": 256,
+    "big": "static_white"
+   },
+   {
+    "text": "配信のコメントで「夜になったら動くんちゃう？」",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/06.wav",
+    "tts_text": "配信のコメントで、夜になったら動くんちゃう？",
+    "at": 304,
+    "parts": [
+     {
+      "text": "配信のコメントで"
+     },
+     {
+      "text": "夜になったら動くんちゃう？",
+      "mood": "chat"
+     }
+    ]
+   },
+   {
+    "text": "ちょっと待って、緊急！この国の闇、発見。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/07.wav",
+    "tts_text": "ちょっと待って、緊急！この国の闇、発見。",
+    "at": 388,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "牛の尻尾が、折れてて……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/08.wav",
+    "tts_text": "牛のしっぽが、折れてて……",
+    "at": 487,
+    "mood": "tense_still"
+   },
+   {
+    "text": "1,200億かけて、中身スカスカやないかい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/09.wav",
+    "tts_text": "千二百億かけて、中身スカスカやないかい！",
+    "at": 543,
+    "parts": [
+     {
+      "text": "1,200億かけて、"
+     },
+     {
+      "text": "中身スカスカやないかい！",
+      "big": "shake_red",
+      "split": "中身｜スカスカやないかい！"
+     }
+    ]
+   },
+   {
+    "text": "北マケドニアの銅像は、手抜きです。完全に。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/10.wav",
+    "tts_text": "北マケドニアの銅像は、手抜きです。完全に。",
+    "at": 629,
+    "big": "static_white"
+   },
+   {
+    "text": "……え、銅像て、中身空っぽが普通なん？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/11.wav",
+    "tts_text": "え、銅像て、中身からっぽが普通なん？",
+    "at": 719
+   },
+   {
+    "text": "北マケドニアさん、すいません。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/12.wav",
+    "tts_text": "北マケドニアさん、すいません。",
+    "at": 797,
+    "mood": "tense_still"
+   },
+   {
+    "text": "夕日の生配信で、顔映したら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/13.wav",
+    "tts_text": "夕日の生配信で、顔、映したら、",
+    "at": 849
+   },
+   {
+    "text": "「こわっ！銅像になってしまったんか」って。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/14.wav",
+    "tts_text": "こわっ、銅像になってしまったんかって。",
+    "at": 921,
+    "parts": [
+     {
+      "text": "こわっ！銅像になってしまったんか",
+      "mood": "chat"
+     }
+    ],
+    "face_overlap_ok": {
+     "frames": 14,
+     "why": "暗がりでうつむいた顔が画面いっぱいに寄った画（夕日の配信 0:04:59〜。コメント「銅像になってしまったんか」が言った顔そのもので、ほかの画に替えられない）。鼻の下が安全域の下端（1248）より下に来るので、字を下へ逃がせない。字は鼻の先より下・口のあたりに乗る（あやとの「口くらいなら被っても良い」、F-013）。コメントの札は顔の出る最後の1.0秒だけ被る"
+    }
+   },
+   {
+    "text": "……101体目、僕。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/15.wav",
+    "tts_text": "百一体目、僕。",
+    "at": 1002,
+    "big": "static_white",
+    "face_overlap_ok": {
+     "frames": 15,
+     "why": "暗がりでうつむいた顔が画面いっぱいに寄った画（夕日の配信 0:04:59〜。コメント「銅像になってしまったんか」が言った顔そのもので、ほかの画に替えられない）。鼻の下が安全域の下端（1248）より下に来るので、字を下へ逃がせない。字は鼻の先より下・口のあたりに乗る（あやとの「口くらいなら被っても良い」、F-013）。14行目の顔の続き"
+    }
+   },
+   {
+    "text": "いや、この国にまだ1ミリも貢献してへんて！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/16.wav",
+    "tts_text": "いや、この国にまだ一ミリも貢献してへんて！",
+    "at": 1049,
+    "parts": [
+     {
+      "text": "いや、この国にまだ"
+     },
+     {
+      "text": "1ミリも貢献してへんて！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "text": "1,200億かけた銅像の街、あり？なし？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/statue/voice/lines/p2/17.wav",
+    "tts_text": "千二百億かけた銅像の街、あり？なし？",
+    "at": 1133
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a96ea5bee056e5c0e/shorts/videos/CKJvprUMOgA/p2/spec.json",
+  "fps": 30,
+  "frames": 1250,
+  "seconds": 41.667,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 123,
+    "voice_frames": 115,
+    "cuts": [
+     "0:34:30.5+2.03s",
+     "0:20:39.0+2.07s"
+    ],
+    "line": "北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった。",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 123,
+    "frames": 32,
+    "voice_frames": 24,
+    "cuts": [
+     "0:30:20.5+1.07s"
+    ],
+    "line": "作りすぎやろ！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 2,
+    "from": 155,
+    "frames": 37,
+    "voice_frames": 29,
+    "cuts": [
+     "0:21:12.5+1.23s"
+    ],
+    "line": "全部数えたろ。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 192,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:36:33.0+2.13s"
+    ],
+    "line": "スーツの銅像だけで、30体。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 256,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "0:28:46.0+1.60s"
+    ],
+    "line": "会社の集合写真か！",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 5,
+    "from": 304,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "0:11:58.3+1.40s",
+     "0:00:36.0+1.40s"
+    ],
+    "line": "配信のコメントで「夜になったら動くんちゃう？」",
+    "telop": null,
+    "parts": [
+     {
+      "text": "配信のコメントで"
+     },
+     {
+      "text": "夜になったら動くんちゃう？",
+      "mood": "chat"
+     }
+    ]
+   },
+   {
+    "row": 6,
+    "from": 388,
+    "frames": 99,
+    "voice_frames": 91,
+    "cuts": [
+     "1:08:04.9+1.63s",
+     "1:08:42.0+1.67s"
+    ],
+    "line": "ちょっと待って、緊急！この国の闇、発見。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 487,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "1:09:05.3+1.87s"
+    ],
+    "line": "牛の尻尾が、折れてて……",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 543,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "1:09:18.0+2.87s"
+    ],
+    "line": "1,200億かけて、中身スカスカやないかい！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "1,200億かけて、"
+     },
+     {
+      "text": "中身スカスカやないかい！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "row": 9,
+    "from": 629,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "1:08:17.0+2.13s",
+     "1:11:44.0+0.87s"
+    ],
+    "line": "北マケドニアの銅像は、手抜きです。完全に。",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 10,
+    "from": 719,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:09:26.0+1.30s",
+     "1:11:57.0+1.30s"
+    ],
+    "line": "……え、銅像て、中身空っぽが普通なん？",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 797,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "0:49:30.0+1.73s"
+    ],
+    "line": "北マケドニアさん、すいません。",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 849,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "0:00:59.0+2.40s"
+    ],
+    "line": "夕日の生配信で、顔映したら、",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 921,
+    "frames": 81,
+    "voice_frames": 59,
+    "cuts": [
+     "0:05:08.3+1.70s",
+     "0:04:59.7+1.00s"
+    ],
+    "line": "「こわっ！銅像になってしまったんか」って。",
+    "telop": null,
+    "parts": [
+     {
+      "text": "こわっ！銅像になってしまったんか",
+      "mood": "chat"
+     }
+    ]
+   },
+   {
+    "row": 14,
+    "from": 1002,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:05:00.7+1.57s"
+    ],
+    "line": "……101体目、僕。",
+    "telop": null,
+    "big": "static_white",
+    "same_as_prev": true
+   },
+   {
+    "row": 15,
+    "from": 1049,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "0:02:38.0+1.40s",
+     "0:31:18.5+1.40s"
+    ],
+    "line": "いや、この国にまだ1ミリも貢献してへんて！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "いや、この国にまだ"
+     },
+     {
+      "text": "1ミリも貢献してへんて！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "row": 16,
+    "from": 1133,
+    "frames": 117,
+    "voice_frames": 94,
+    "cuts": [
+     "0:03:42.9+2.67s",
+     "0:02:44.0+1.23s"
+    ],
+    "line": "1,200億かけた銅像の街、あり？なし？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 242,
+   "raw_voice_s": 50.43,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 36.17,
+   "cps_voiced": 6.69,
+   "video_s": 41.67,
+   "cps_video": 5.81
+  }
+ },
+ "notes": [
+  {
+   "from": 719,
+   "to": 797,
+   "text": "一般的に銅像の中は空洞らしいです"
+  },
+  {
+   "from": 797,
+   "to": 849,
+   "text": "一般的に銅像の中は空洞らしいです"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

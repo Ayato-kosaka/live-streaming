@@ -1,0 +1,22 @@
+{
+ "schema": 1,
+ "video": "Hc-z52fs108",
+ "option": "p2",
+ "version": "p2",
+ "youtube": {
+  "file": "p2.mp4",
+  "title": "アプリ作り始めて1年、ついに1日4700人突破！",
+  "description": "人が来ない1年、使われた分の請求が25万円。やめようかと思った個人開発のグルメアプリが、友達のショートでバズって1日4700人。目標の食べログを、グルメアプリの順位で抜けるかの夜。\n\n配信のアーカイブ（全編）: https://www.youtube.com/watch?v=Hc-z52fs108\n一部に、リリースの日の配信（https://www.youtube.com/watch?v=LjE5Zen0f7g）と、2026年6月の配信（https://www.youtube.com/watch?v=wxaQlQHchYQ）の画も使っています。\n\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#個人開発 #アプリ開発 #食べログ #グルメアプリ #なに食べよ",
+  "visibility": "public",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない",
+  "related_video": "https://www.youtube.com/watch?v=Hc-z52fs108"
+ },
+ "tiktok": {
+  "file": "p2.mp4",
+  "caption": "アプリ作り始めて1年、ついに1日4700人突破！\nYouTube「@あやとグルメアプリ」の生配信から\n人が来ない1年、使われた分の請求が25万円。やめようかと思った個人開発のグルメアプリが、友達のショートでバズって1日4700人。目標の食べログを、グルメアプリの順位で抜けるかの夜。\nナレーションは AI 音声を使用しています。\nBGM: OtoLogic（CC BY 4.0）\n#個人開発 #アプリ開発 #食べログ #グルメアプリ #なに食べよ",
+  "music": "動画に入れた「クシコス・ポスト」（OtoLogic・Csikos_Post-Xy02 の Fast）。媒体の音源は付けない"
+ },
+ "cover_at_s": 1.0,
+ "_cover_note": "サムネイル（YouTube）とカバー（TikTok）は題の札が見えるコマ。post.py cover --cover-at 1.0（題の札は 0〜3.9秒。1.0秒は札と跳ねた棒グラフが両方見える）",
+ "file": "p2.mp4"
+}

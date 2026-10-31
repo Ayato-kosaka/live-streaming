@@ -9,6 +9,8 @@ name: スタンプのことば
 #             提案（`suggested`）として置く
 #   table   … 入っている中身を**あやとと話すための表**にして issue に貼る
 #   arrange … 提案のことばを、**人が手で直したもの**に差し替える
+#   dig     … **決めかねている人だけ**を深く掘って、候補を増やして issue に貼る
+#             （門を外した側・緩めた側・語で探した側。**1バイトも書かない**）
 #
 # ## なぜ `run_admin_script.yml` ではなく、別のワークフローなのか
 #
@@ -38,6 +40,17 @@ name: スタンプのことば
 # `seed` と `arrange` を `workflow_dispatch` から押すことはできない——
 # **入力に名簿もことばも取る口を作らない**（`workflow_dispatch` の入力は
 # 公開のログに出る）。あちらは `repository_dispatch` の `client_payload` だけ。
+#
+# **`repository_dispatch` は、既定ブランチのワークフローしか走らせない。**
+# 枝に載せただけの新しい口は、`client_payload` では押せない（2026-10-12 に
+# ここで詰まった）。枝のまま試すには `workflow_dispatch`——あちらは
+# `ref` を選べる。ただし**入力は公開のログに出る**ので、名簿は渡せない。
+#
+# `dig` は押せる。**名前を1つも取らない道があるから**——誰を掘るかを
+# 渡さないと、`suggested` が2本以上残っている人（＝まだ決めかねている人）を
+# 入れ物から自分で集める。`words`（探す語）は名前ではないので入力でよい
+# （その語で探した結果は、どのみち issue の表に出る）。
+# **名前で指したいときは `repository_dispatch` から。**
 #
 # ## 採点表（`check`）も `client_payload` だけ
 #
@@ -74,20 +87,36 @@ on:
   workflow_dispatch:
     inputs:
       op:
-        description: "何をするか。**seed は押せません**（名簿を入力に取らない）"
+        description: "何をするか。**seed と arrange は押せません**（名簿とことばを入力に取らない）"
         required: true
         default: suggest
         type: choice
-        options: [suggest, table]
+        options: [suggest, table, dig]
       apply:
         description: "書くか（既定は下見で、1バイトも書かない）"
         required: false
         default: false
         type: boolean
       issue:
-        description: "table のとき、どの issue に貼るか（番号だけ）"
+        description: "table / dig のとき、どの issue に貼るか（番号だけ）"
         required: false
         default: "716"
+        type: string
+      mode:
+        description: "table のとき、どちらの表か（既定は決まったセリフの表）"
+        required: false
+        default: decided
+        type: choice
+        options: [decided, candidates]
+      words:
+        description: "dig のとき、掘る人ぜんぶに当てる語（読点区切り。**名前は書かない**——入力は公開のログに出ます）"
+        required: false
+        default: ""
+        type: string
+      top:
+        description: "dig のとき、1人あたり「その人だけ」を何本出すか（数字だけ）"
+        required: false
+        default: ""
         type: string
 
 # `table` が issue にコメントを貼る。**それ以外は読むだけ。**
@@ -119,17 +148,29 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          # 伏せるのは3つ。名簿（`picks`）・**手で直したことば
-          # （`fix[].lines[]`）**・**採点表（`check[]`。あやとが
-          # 「この字が名セリフだ」と挙げた、名前とことばの組）**。
-          # あとから足したものを入れ忘れると、そこだけ素通りする道ができる
+          # 伏せるのは5つ（下の drop を入れて）。名簿（`picks`）・**手で直したことば
+          # （`fix[].id` `fix[].name` `fix[].lines[]`）**・**採点表
+          # （`check[]`。あやとが「この字が名セリフだ」と挙げた、名前と
+          # ことばの組）**・**深掘りの相手（`who[]`。名前と探す語）**。
+          # あとから足したものを入れ忘れると、そこだけ素通りする道ができる。
+          #
+          # **`drop[].name` も同じ。** 「候補から外す」も名前で指すので、
+          # 2026-10-13 に 🤤 を外したとき、ここに入っていないのが分かった
+          # （そのときはスクリプトが名前を1字も出さないので漏れなかった）
+          #
+          # **`fix[].name` を入れ忘れない。** 2026-10-12 に「書類IDの
+          # 代わりに名前で指せる」道を足したので、`fix` の中に名前が
+          # 入るようになった（前は `id` しか無かった）
           if ! raw="$(jq -r '
             [ (.client_payload.picks // [])[],
               (.inputs.picks // [])[],
-              ((.client_payload.fix // [])[] | (.id, ((.lines // [])[]
-                 | (.text, .from)))),
+              ((.client_payload.fix // [])[] | (.id, .name,
+                 ((.lines // [])[] | (.text, .from)))),
               ((.client_payload.check // [])[]
-                 | (.name, ((.lines // [])[]), ((.words // [])[]))) ]
+                 | (.name, ((.lines // [])[]), ((.words // [])[]))),
+              ((.client_payload.who // [])[]
+                 | (.name, ((.words // [])[]))),
+              ((.client_payload.drop // [])[] | (.name, .id)) ]
             | map(select(type == "string"))
             | .[]
           ' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
@@ -162,8 +203,9 @@ jobs:
             suggest) script=stamp_line_suggest ;;
             table)   script=stamp_line_table ;;
             arrange) script=stamp_line_arrange ;;
+            dig)     script=stamp_line_dig ;;
             *)
-              echo "::error::op は seed / suggest / table / arrange です: $op"
+              echo "::error::op は seed / suggest / table / arrange / dig です: $op"
               exit 1
               ;;
           esac
@@ -190,6 +232,29 @@ jobs:
             ''|*[!0-9]*) echo "::error::issue は番号だけ: $issue"; exit 1 ;;
           esac
           echo "issue=$issue" >> "$GITHUB_OUTPUT"
+          # **ARGS は jq に組ませる。** 入力の字をそのまま YAML の中の
+          # JSON へ差し込むと、引用符ひとつで形が壊れる（`words` は
+          # 人が打つ字なので、そこに `"` が入りうる）。
+          #
+          # **`words` と `top` は、渡されたときだけ入れる。**
+          # いつも入れると、`table` のような別の op まで本数が変わる
+          # （あちらも ARGS の `top` を読む）。
+          args="$(jq -cn \
+            --argjson apply "$apply" \
+            --argjson issue "$issue" \
+            --arg words "$(jq -r '(.inputs.words // "") | tostring' \
+                           "$GITHUB_EVENT_PATH")" \
+            --arg top "$(jq -r '(.inputs.top // "") | tostring' \
+                         "$GITHUB_EVENT_PATH")" \
+            --arg mode "$(jq -r '(.inputs.mode // "") | tostring' \
+                          "$GITHUB_EVENT_PATH")" \
+            '{apply: $apply, issue: $issue}
+             + (if $words == "" then {} else {words: $words} end)
+             + (if ($top | test("^[0-9]+$")) then {top: ($top | tonumber)}
+                else {} end)
+             + (if ($mode | test("^(decided|candidates)$"))
+                then {mode: $mode} else {} end)')"
+          echo "args=$args" >> "$GITHUB_OUTPUT"
           echo "走らせるもの: $script / 書く: $apply / 行き先: #$issue"
 
       - name: Python 環境のセットアップ
@@ -224,6 +289,7 @@ jobs:
           python3 python/admin/stamp_line_suggest_selftest.py
           python3 python/admin/stamp_line_table_selftest.py
           python3 python/admin/stamp_line_arrange_selftest.py
+          python3 python/admin/stamp_line_dig_selftest.py
           python3 python/stamp_line_pick_selftest.py
 
       - name: 実行
@@ -231,9 +297,7 @@ jobs:
         # **ARGS に名簿を入れない。** 真偽値だけを渡す。
         # 名簿は `$GITHUB_EVENT_PATH` からスクリプトが読む
         env:
-          ARGS: >-
-            {"apply": ${{ steps.pick.outputs.apply }},
-             "issue": ${{ steps.pick.outputs.issue }}}
+          ARGS: ${{ steps.pick.outputs.args }}
           # `table` が issue に貼るのに使う。**値はログに出ない**
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

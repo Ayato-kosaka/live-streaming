@@ -1,0 +1,784 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "nGgoJ753rBw-p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG3/nGgoJ753rBw/clips/01_1-06-35_1-06-55.mp4",
+   "watermark": "prism_live",
+   "t0": 3995.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG/nGgoJ753rBw/clips/02_0-36-45_0-45-10.mp4",
+   "watermark": "prism_live",
+   "t0": 2205.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG/nGgoJ753rBw/clips/01_0-03-15_0-06-35.mp4",
+   "watermark": "prism_live",
+   "t0": 195.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG/nGgoJ753rBw/clips/03_0-47-55_0-52-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2875.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG2/nGgoJ753rBw/clips/01_1-18-50_1-20-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4730.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG/nGgoJ753rBw/clips/04_1-04-20_1-05-05.mp4",
+   "watermark": "prism_live",
+   "t0": 3860.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_nG/nGgoJ753rBw/clips/05_1-25-55_1-29-20.mp4",
+   "watermark": "prism_live",
+   "t0": 5155.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_dW/dWAQsv5jKzY/clips/01_1-33-50_1-39-10.mp4",
+   "watermark": "prism_live",
+   "t0": 41630.0
+  },
+  "c4_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest_dW/dWAQsv5jKzY/clips/05_1-49-50_1-50-10.mp4",
+   "watermark": "prism_live",
+   "t0": 42590.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c3_01",
+   "in": 30,
+   "out": 66,
+   "row": 0,
+   "zoom": {
+    "from": 1.7,
+    "to": 1.76,
+    "x": 0.5,
+    "y": 0.176,
+    "sx": 0.5,
+    "sy": 0.0
+   },
+   "note": "0秒目: 本人が「絵はがきになりそう」と言った港の家並み（1:06:37〜50。12行目の 1:04:28・1:04:50 とは別の瞬間・別の見え方）。家並みが題の札の下に来るよう、上の固定の帯の下の端（元の y 225px）を画面の上の端に合わせて 1.7倍に寄せる"
+  },
+  {
+   "src": "c02",
+   "in": 13770,
+   "out": 13807,
+   "row": 0,
+   "zoom": {
+    "from": 1.6,
+    "to": 1.66,
+    "x": 0.5,
+    "y": 0.176,
+    "sx": 0.5,
+    "sy": 0.0
+   },
+   "note": "入ってくる青白の電車（題の地下鉄）。電車が題の札の下に来るよう、上の固定の帯の下の端（元の y 225px）を画面の上の端に合わせて寄せる"
+  },
+  {
+   "src": "c01",
+   "in": 480,
+   "out": 535,
+   "row": 1,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "本人の自撮り（配信の頭。街を歩きながら話す）"
+  },
+  {
+   "src": "c03",
+   "in": 3270,
+   "out": 3312,
+   "row": 1,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "赤く光る電車のドアと車内（人は写らない。「地下鉄、なんと」に当てる）"
+  },
+  {
+   "src": "c03",
+   "in": 4170,
+   "out": 4217,
+   "row": 2,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "地上に出た電車の窓に街（3本目の素材）"
+  },
+  {
+   "src": "c02",
+   "in": 3150,
+   "out": 3185,
+   "row": 3,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "困った顔"
+  },
+  {
+   "src": "c2_01",
+   "in": 1605,
+   "out": 1662,
+   "row": 4,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "黄土色と赤れんがの家並み・石畳・青空（人は遠くの点）"
+  },
+  {
+   "src": "c02",
+   "in": 5390,
+   "out": 5478,
+   "row": 5,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ガラスの改札（手を振ってから、最後に指でピッの手つき）"
+  },
+  {
+   "src": "c03",
+   "in": 4635,
+   "out": 4688,
+   "row": 6,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "緑に光る電車のドアと車内（人は写らない）"
+  },
+  {
+   "src": "c02",
+   "in": 150,
+   "out": 202,
+   "row": 7,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "決めた顔"
+  },
+  {
+   "src": "c02",
+   "in": 7530,
+   "out": 7591,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "乗る駅のホーム（人は遠く）"
+  },
+  {
+   "src": "c02",
+   "in": 8220,
+   "out": 8265,
+   "row": 8,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ドアへ歩いて乗り込む（背中だけ。0:41:21 から本人のスマホが入る）"
+  },
+  {
+   "src": "c02",
+   "in": 9690,
+   "out": 9726,
+   "row": 9,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "走る車内のドア（窓は真っ暗）"
+  },
+  {
+   "src": "c02",
+   "in": 11850,
+   "out": 11869,
+   "row": 10,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ドアへ伸ばす手"
+  },
+  {
+   "src": "c02",
+   "in": 12390,
+   "out": 12432,
+   "row": 10,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "出ていく電車"
+  },
+  {
+   "src": "c02",
+   "in": 14340,
+   "out": 14365,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "次の電車に乗り込む（緑の上着の人の背中。0:44:45 からは座る人の顔）"
+  },
+  {
+   "src": "c04",
+   "in": 240,
+   "out": 265,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "広い港と市庁舎の塔"
+  },
+  {
+   "src": "c04",
+   "in": 900,
+   "out": 925,
+   "row": 11,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "緑の尖塔と橋（旧市街）"
+  },
+  {
+   "src": "c05",
+   "in": 375,
+   "out": 421,
+   "row": 12,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "カフェのドアの取っ手を引いて開ける（中の灯り。1:26:10 からは子どもと女の人の顔）"
+  },
+  {
+   "src": "c05",
+   "in": 2250,
+   "out": 2296,
+   "row": 12,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "電卓に 720（画面に映るのは本人の顔）"
+  },
+  {
+   "src": "c05",
+   "in": 3150,
+   "out": 3192,
+   "row": 13,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ケーキの棚"
+  },
+  {
+   "src": "c02",
+   "in": 7845,
+   "out": 7888,
+   "row": 14,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "電車へ向かうホームの人の流れ（背中）"
+  },
+  {
+   "src": "c03",
+   "in": 7170,
+   "out": 7214,
+   "row": 14,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.9,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "駅を出た先の赤れんがの建物と石畳（人は遠くの点。0:51:44 前後は正面から来る人の顔）"
+  },
+  {
+   "src": "c4_01",
+   "in": 7815,
+   "out": 7865,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.78,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【9/23 の回 1:38:10.5】フェリーへ渡る2人の背中と、その先の旗の立つフェリー（1:38:12.4 から前の人が横を向き、1:38:14.9 からサングラスの人が正面を向く）"
+  },
+  {
+   "src": "c4_05",
+   "in": 315,
+   "out": 380,
+   "row": 16,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.36,
+    "x": 0.5,
+    "y": 0.88,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "【9/23 の回 1:50:00】船から見る青い海と街並み・帆船（終わりの画）"
+  }
+ ],
+ "title": {
+  "text": "🇸🇪 ストックホルム来たら、\n地下鉄が高すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ストックホルム来たら、地下鉄が高すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/01.wav",
+    "tts_text": "ストックホルム来たら、地下鉄が高すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "親友んちに居候中。地下鉄、なんと……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/02.wav",
+    "tts_text": "しんゆうんちに居候中。地下鉄、なんと",
+    "at": 73
+   },
+   {
+    "text": "1回700円やって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/03.wav",
+    "tts_text": "一回七百円やって！",
+    "at": 170,
+    "big": "shake_white",
+    "split": "1回｜700円やって！"
+   },
+   {
+    "text": "もう引きこもろ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/04.wav",
+    "tts_text": "もう引きこもろ。",
+    "at": 217,
+    "mood": "tense_still"
+   },
+   {
+    "text": "でもこの街、好きすぎる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/05.wav",
+    "tts_text": "でもこの街、好きすぎる！",
+    "at": 252,
+    "mood": "up_pop"
+   },
+   {
+    "text": "1週間乗り放題、7800円課金や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/06.wav",
+    "tts_text": "一週間乗り放題、七千八百円課金や！",
+    "at": 309
+   },
+   {
+    "text": "12回乗ったら元取れる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/07.wav",
+    "tts_text": "十二回乗ったら、もと取れる。",
+    "at": 397
+   },
+   {
+    "text": "街に出まくったる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/08.wav",
+    "tts_text": "街に出まくったる！",
+    "at": 460,
+    "big": "glow_yellow",
+    "caption_from": 450
+   },
+   {
+    "text": "まずは親友おすすめの景色へ。どっち？……乗っちゃお！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/09.wav",
+    "tts_text": "まずは親友おすすめの景色へ。どっち？　乗っちゃお！",
+    "at": 502,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "完全に逆！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/10.wav",
+    "tts_text": "完全に逆！",
+    "at": 608,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "乗ろ！あかん、乗られへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/11.wav",
+    "tts_text": "乗ろ！あかん、乗られへん！",
+    "at": 644,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "着いた！待って待って……絵はがきやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/12.wav",
+    "tts_text": "着いた！待って待って、絵はがきやん！",
+    "at": 705,
+    "mood": "up_pop"
+   },
+   {
+    "text": "ほんでカフェ覗いてみたら、コーヒー720円。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/13.wav",
+    "tts_text": "ほんでカフェ覗いてみたら、コーヒー七百二十円。",
+    "at": 780,
+    "mood": "tense_still"
+   },
+   {
+    "text": "日本の三倍や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/14.wav",
+    "tts_text": "日本の三倍や！",
+    "at": 872,
+    "big": "shake_red"
+   },
+   {
+    "text": "でもこの7800円の乗り放題、なんと……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/15.wav",
+    "tts_text": "でもこの七千八百円の乗り放題、なんと",
+    "at": 914,
+    "mood": "tense_still"
+   },
+   {
+    "text": "船も乗れるねん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/16.wav",
+    "tts_text": "船も乗れるねん！",
+    "at": 1011,
+    "big": "glow_yellow",
+    "caption_from": 1001
+   },
+   {
+    "text": "続きはアーカイブ見てな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/nG_voice/out/p1/17.wav",
+    "tts_text": "続きはアーカイブ見てな！",
+    "at": 1051
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a4a4aa75ecdb08476/shorts/videos/nGgoJ753rBw/p1/spec.json",
+  "fps": 30,
+  "frames": 1116,
+  "seconds": 37.2,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "1:06:36.0+1.20s",
+     "0:44:24.0+1.23s"
+    ],
+    "line": "ストックホルム来たら、地下鉄が高すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 73,
+    "frames": 97,
+    "voice_frames": 89,
+    "cuts": [
+     "0:03:31.0+1.83s",
+     "0:49:44.0+1.40s"
+    ],
+    "line": "親友んちに居候中。地下鉄、なんと……",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 170,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:50:14.0+1.57s"
+    ],
+    "line": "1回700円やって！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 3,
+    "from": 217,
+    "frames": 35,
+    "voice_frames": 27,
+    "cuts": [
+     "0:38:30.0+1.17s"
+    ],
+    "line": "もう引きこもろ。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 252,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "1:19:43.5+1.90s"
+    ],
+    "line": "でもこの街、好きすぎる！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 309,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "0:39:44.7+2.93s"
+    ],
+    "line": "1週間乗り放題、7800円課金や！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 397,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "0:50:29.5+1.77s"
+    ],
+    "line": "12回乗ったら元取れる。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 450,
+    "frames": 52,
+    "voice_frames": 34,
+    "cuts": [
+     "0:36:50.0+1.73s"
+    ],
+    "line": "街に出まくったる！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 8,
+    "from": 502,
+    "frames": 106,
+    "voice_frames": 98,
+    "cuts": [
+     "0:40:56.0+2.03s",
+     "0:41:19.0+1.50s"
+    ],
+    "line": "まずは親友おすすめの景色へ。どっち？……乗っちゃお！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 608,
+    "frames": 36,
+    "voice_frames": 28,
+    "cuts": [
+     "0:42:08.0+1.20s"
+    ],
+    "line": "完全に逆！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 10,
+    "from": 644,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "0:43:20.0+0.63s",
+     "0:43:38.0+1.40s"
+    ],
+    "line": "乗ろ！あかん、乗られへん！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 705,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "0:44:43.0+0.83s",
+     "1:04:28.0+0.83s",
+     "1:04:50.0+0.83s"
+    ],
+    "line": "着いた！待って待って……絵はがきやん！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 780,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "1:26:07.5+1.53s",
+     "1:27:10.0+1.53s"
+    ],
+    "line": "ほんでカフェ覗いてみたら、コーヒー720円。",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 872,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "1:27:40.0+1.40s"
+    ],
+    "line": "日本の三倍や！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 14,
+    "from": 914,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "0:41:06.5+1.43s",
+     "0:51:54.0+1.47s"
+    ],
+    "line": "でもこの7800円の乗り放題、なんと……",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1001,
+    "frames": 50,
+    "voice_frames": 32,
+    "cuts": [
+     "11:38:10.5+1.67s"
+    ],
+    "line": "船も乗れるねん！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 16,
+    "from": 1051,
+    "frames": 65,
+    "voice_frames": 42,
+    "cuts": [
+     "11:50:00.5+2.17s"
+    ],
+    "line": "続きはアーカイブ見てな！",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 203,
+   "raw_voice_s": 44.0,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 31.5,
+   "cps_voiced": 6.44,
+   "video_s": 37.2,
+   "cps_video": 5.46
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

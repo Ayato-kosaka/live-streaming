@@ -72,6 +72,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readArray } from "../../tools/sprites/tsread.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SITE = join(HERE, "..");
@@ -125,7 +126,18 @@ console.log(`# 組み立てた本体: ${SHAPES}`);
 /* `content/chapters.ts` の slug を拾う。**書き出しの中にある章の表が正。**
    ここに写しを置くと、章を足した日に見張りだけが古いまま通る。 */
 const chapterSrc = readFileSync(CHAPTERS, "utf8");
-const slugs = [...chapterSrc.matchAll(/^\s{4}slug: "([a-z0-9-]+)",$/gm)].map((m) => m[1]);
+/* 読み方は `tools/sprites/tsread.mjs` の1本（#694）。前は**字下げが4つ**で
+   あることと**行末が `,`** であることを当てにしていた。 */
+const chapterRead = readArray(chapterSrc, "CHAPTERS", { keys: ["slug"], idKey: "slug" });
+const slugs = chapterRead.rows.map((r) => r.slug);
+/* **読み落としは「対照が1つ落ちた」ではなく「数えられなかった」。**
+   `check` に混ぜると落ちた回が 1（見つかった）に見えるので、ここで 2 で止める */
+if (chapterRead.missed) {
+  console.log(
+    `::error::章の表を ${chapterRead.missed} 章 読み落とした（名乗り ${chapterRead.declared} / 読めた ${slugs.length}）`,
+  );
+  process.exit(2);
+}
 check("章の表を読めている（拾えた章が5つ以上）", slugs.length >= 5, `拾えたのは ${slugs.length}件`);
 const missing = slugs.filter((s) => !ISLAND_ART[s]);
 check(

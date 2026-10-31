@@ -1,0 +1,132 @@
+# **見張りが「落ちるときに落ちる」かを、守っている実物を壊して確かめる。**
+#
+# 120本の見張りはどれも緑だが、緑は2通りに読める——「守れている」と
+# 「何も見ていない」。見分けるには、守っている実物をわざと壊して赤くなるかを
+# 見るしかない（`docs/island-standards.md` §15）。
+#
+# ## なぜ毎 PR に載せないか
+#
+# **実物を壊すから。** 同じ置き場でほかの job が走っていると巻き添えになる
+# （2026-10-13 に手で回したとき、関係のない `ts_readers` が1本、嘘の赤を出した。
+#  §13「測るために作った仕掛けが、測る対象を変えてしまっている」）。
+# 道具の側でも鍵と `ps` で止めているが、**毎 PR に置く理由のほうが無い**——
+# 見張りの対照は、見張りを書き換えた日に見ればよくて、PR ごとに要るものではない。
+#
+# ## cron を足していない
+#
+# このリポジトリは 01:00〜04:30 UTC 帯の定時実行が4〜7時間遅れている
+# （`python3 python/cron_lag.py`）。**そこへ1本足すと、遅れている列に
+# 並ぶものが1本増えるだけ。** 手で押す口にしてある。
+#
+# 走らせると、こう出る:
+#
+#   当てた N本 / 赤くなった N本 / **緑のまま N本** / 当てられなかった N本
+#
+# **「緑のまま」が1本でも在れば赤くなる**（終了コード 1）。
+# 当てられなかったものは、**理由つきで一覧に出る**（0 に混ぜない。§15）。
+name: 見張りの対照を当てる
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "当てかたを選ぶ（空なら全部）"
+        required: false
+        default: ""
+        type: choice
+        options: ["", "py", "mjs", "repo"]
+      list_only:
+        description: "当てずに、何に当てるかだけ出す"
+        required: false
+        default: false
+        type: boolean
+
+# 実物を壊すので、同じ置き場で2本走らせない
+concurrency:
+  group: mutation-drill
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    # `functions` の見張りは1本10秒ほどかかる。全部当てると長い
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # **`git checkout --` で戻すので、`git` が使える状態が要る。**
+      # checkout@v4 はそのままで使える（`.git` が在る）
+      - name: 戻せる置き場か確かめる
+        run: |
+          git -C . rev-parse --is-inside-work-tree
+          test -z "$(git status --porcelain)" \
+            || { echo "::error::置き場が汚れている。戻せないので当てない"; exit 2; }
+
+      # 見張りが要るもの。回し役（`selftest_runner.py`）と同じ並び
+      - name: 下ごしらえ（site）
+        run: npm ci --prefix site
+
+      - name: 下ごしらえ（functions）
+        run: npm ci --prefix functions
+
+      - name: 下ごしらえ（直下の typescript）
+        run: npm install --no-save typescript
+
+      - name: PyYAML
+        run: python3 -m pip install --quiet pyyaml
+
+      # **ブラウザの道具にも当てる**（2026-10-16。#273）。
+      # `tools/sprites/reachwatch.mjs` は `REPO_CASES` に `FIXONLY=1` で
+      # 載せてあり、**対照の台だけ**を測って帰る（書き出しも配り先も要らない）。
+      # ここを入れないと「壊す前から緑ではない」で毎回飛ばされる
+      # ——当てられなかったものは一覧に出るが、**出ているだけでは守りではない**
+      - name: 下ごしらえ（tools/sprites の playwright-core）
+        run: npm ci --prefix tools/sprites --no-audit --no-fund
+
+      # 置き場をこの箱と同じにする。道具は
+      # `/opt/pw-browsers/chromium-1194/chrome-linux/chrome` を名指ししている
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome=/opt/pw-browsers/chromium-1194/chrome-linux/chrome
+          if [ ! -x "$chrome" ]; then
+            echo "::error::$chrome が無い。道具が名指ししている場所と違う"
+            exit 2
+          fi
+
+      - name: 対照を当てる
+        env:
+          BQ_PROJECT_ID: mutation-drill-no-such-project
+        run: |
+          python3 python/mutation_drill.py \
+            ${{ inputs.list_only && '--list' || '' }} \
+            ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
+
+      # **壊したまま終わっていないこと**を、job の側からも見る。
+      # 道具が戻しているはずだが、戻し忘れを道具自身に申告させない
+      - name: 壊したものが残っていないか
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::壊したものが残っている。下の差分を見て手で戻す"
+            git status --porcelain
+            git diff | head -200
+            exit 1
+          fi
+          echo "置き場はきれい（壊したものは全部戻っている）"

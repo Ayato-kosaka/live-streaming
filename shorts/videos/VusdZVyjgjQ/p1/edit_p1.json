@@ -1,0 +1,688 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/07_2-47-15_2-51-00.mp4",
+   "watermark": "prism_live",
+   "t0": 10035.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/04_2-29-15_2-32-00.mp4",
+   "watermark": "prism_live",
+   "t0": 8955.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/03_2-02-45_2-04-30.mp4",
+   "watermark": "prism_live",
+   "t0": 7365.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/01_0-41-20_0-43-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2480.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/05_2-37-45_2-41-30.mp4",
+   "watermark": "prism_live",
+   "t0": 9465.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/02_1-40-45_1-43-30.mp4",
+   "watermark": "prism_live",
+   "t0": 6045.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/06_2-43-15_2-45-00.mp4",
+   "watermark": "prism_live",
+   "t0": 9795.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/08_3-03-45_3-05-00.mp4",
+   "watermark": "prism_live",
+   "t0": 11025.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/09_3-14-45_3-16-30.mp4",
+   "watermark": "prism_live",
+   "t0": 11685.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/10_3-16-45_3-20-30.mp4",
+   "watermark": "prism_live",
+   "t0": 11805.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/11_3-25-15_3-27-00.mp4",
+   "watermark": "prism_live",
+   "t0": 12315.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/VusdZVyjgjQ/clips/12_3-41-45_3-44-00.mp4",
+   "watermark": "prism_live",
+   "t0": 13305.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c07",
+   "in": 4761,
+   "out": 4813,
+   "row": 0,
+   "note": "0秒目: 揚げ焼きのフライパンを宙で返す（いちばん動く画・まさかの事態の答えの側）"
+  },
+  {
+   "src": "c04",
+   "in": 1395,
+   "out": 1448,
+   "row": 0,
+   "note": "崩れた生地からチーズが糸を引く（まさかの事態そのもの）"
+  },
+  {
+   "src": "c03",
+   "in": 600,
+   "out": 640,
+   "row": 1,
+   "note": "コンロの上の蓋をした鍋に手を伸ばす（弱火で温めて。顔の無い画にして、字が顔に乗らないようにする）"
+  },
+  {
+   "src": "c01",
+   "in": 585,
+   "out": 624,
+   "row": 1,
+   "note": "蓋をした鍋を上から（発酵させる鍋。前の画と別の素材なので、似た見た目が続かない）"
+  },
+  {
+   "src": "c04",
+   "in": 4500,
+   "out": 4544,
+   "row": 2,
+   "note": "青い壁の台所のコンロ（ここのホステルのコンロ。0:41 のコンロは五徳が顔に誤検出されて字が被るので使わない）"
+  },
+  {
+   "src": "c05",
+   "in": 5295,
+   "out": 5340,
+   "row": 2,
+   "note": "コンロに載せたフライパン（あったまんのに時間かかんのよ。本人の顔の画をやめてコンロの画に）"
+  },
+  {
+   "src": "c02",
+   "in": 900,
+   "out": 952,
+   "row": 3,
+   "note": "チーズを練り込んだ生地を手でこねる（これで＝この生地。前の行の画と別の素材で、蓋の鍋の画と続けない）"
+  },
+  {
+   "src": "c03",
+   "in": 1149,
+   "out": 1201,
+   "row": 4,
+   "note": "蓋を持ち上げて開ける（スポーン）"
+  },
+  {
+   "src": "c01",
+   "in": 3885,
+   "out": 3911,
+   "row": 5,
+   "note": "頭を抱える本人（……全くもって。鍋の寄りが3つ続くのを、見た目の違う反応の画で割る）"
+  },
+  {
+   "src": "c03",
+   "in": 1929,
+   "out": 1954,
+   "row": 5,
+   "note": "平たいままの生地の寄り（膨らんでへん）"
+  },
+  {
+   "src": "c03",
+   "in": 2580,
+   "out": 2604,
+   "row": 6,
+   "note": "指で生地を押す（ベチャベチャ）"
+  },
+  {
+   "src": "c02",
+   "in": 1284,
+   "out": 1300,
+   "row": 6,
+   "note": "手にべったり付いて伸びる生地（ベチャベチャ。別の素材を挟んで、鍋の寄りが続かないようにする）"
+  },
+  {
+   "src": "c04",
+   "in": 24,
+   "out": 41,
+   "row": 7,
+   "note": "本人がへらで生地を返す（ひっくり返したら。鍋の上からの画と見た目を変える）"
+  },
+  {
+   "src": "c04",
+   "in": 588,
+   "out": 608,
+   "row": 7,
+   "note": "鍋を持ち上げて中の生地を返す（ひっくり返したら）"
+  },
+  {
+   "src": "c04",
+   "in": 1335,
+   "out": 1394,
+   "row": 8,
+   "note": "崩れた生地からチーズが糸を引いて出る"
+  },
+  {
+   "src": "c05",
+   "in": 5604,
+   "out": 5634,
+   "row": 9,
+   "note": "生地の鍋をコンロに載せ、つまみを回す手（火つけたけど。崩れた生地の寄りが3つ続くのを、別の素材の画で割る）"
+  },
+  {
+   "src": "c04",
+   "in": 3420,
+   "out": 3456,
+   "row": 9,
+   "note": "スプーンで触ると生のまま（焼けてへん）"
+  },
+  {
+   "src": "c04",
+   "in": 2049,
+   "out": 2081,
+   "row": 10,
+   "note": "崩れた生地をへらで寄せる"
+  },
+  {
+   "src": "c05",
+   "in": 3459,
+   "out": 3491,
+   "row": 10,
+   "note": "生地を手に持ってのぞき込む本人（初の失敗かと焦る顔）"
+  },
+  {
+   "src": "c05",
+   "in": 4665,
+   "out": 4695,
+   "row": 11,
+   "note": "フライパンを持ち出す（作戦変更）"
+  },
+  {
+   "src": "c06",
+   "in": 1944,
+   "out": 1975,
+   "row": 11,
+   "note": "生地を油を引いたフライパンへ滑らせる（揚げ焼き）"
+  },
+  {
+   "src": "c06",
+   "in": 3039,
+   "out": 3065,
+   "row": 12,
+   "note": "フライパンに蓋をして待つ（ちょっと待ったら。返す画と別の素材）"
+  },
+  {
+   "src": "c07",
+   "in": 4767,
+   "out": 4799,
+   "row": 12,
+   "note": "フライパンの上でパンを宙に返して着地まで（くるっとな。あやとの指示の画）"
+  },
+  {
+   "src": "c07",
+   "in": 5334,
+   "out": 5382,
+   "row": 13,
+   "note": "焼き色のついた面の寄り（ハンバーグみたい）"
+  },
+  {
+   "src": "c08",
+   "in": 285,
+   "out": 337,
+   "row": 14,
+   "note": "皿の焼き上がりを指で押してみる（どうやろか）"
+  },
+  {
+   "src": "c09",
+   "in": 2235,
+   "out": 2260,
+   "row": 15,
+   "note": "手を合わせる（いただきます）"
+  },
+  {
+   "src": "c10",
+   "in": 1635,
+   "out": 1660,
+   "row": 15,
+   "note": "両手でかぶりつく（うまい）"
+  },
+  {
+   "src": "c09",
+   "in": 1125,
+   "out": 1172,
+   "row": 16,
+   "note": "表面の焼き色の寄り（外サク）"
+  },
+  {
+   "src": "c10",
+   "in": 3489,
+   "out": 3536,
+   "row": 16,
+   "note": "割った中身を見せる（中ドロ・ライ麦パン）"
+  },
+  {
+   "src": "c11",
+   "in": 1389,
+   "out": 1429,
+   "row": 17,
+   "note": "皿ごと持ち上げて重さを見せる"
+  },
+  {
+   "src": "c10",
+   "in": 3795,
+   "out": 3834,
+   "row": 17,
+   "note": "ずっしりしたパンを両手で持つ（3倍重い）"
+  },
+  {
+   "src": "c12",
+   "in": 309,
+   "out": 383,
+   "row": 18,
+   "note": "笑って話す本人（リベンジ）"
+  },
+  {
+   "src": "c09",
+   "in": 945,
+   "out": 1019,
+   "row": 18,
+   "note": "皿の上の丸い焼き上がり（配信見にきてね。終わりの注は左上の決まった所に出て動かないので、最後の画は顔の無い画にする。2.0秒以上あれば注が最後のカットの頭から出る）"
+  }
+ ],
+ "title": {
+  "text": "海外キッチンでワンパンチーズフォカッチャ\n作ったらまさかの事態に！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "海外キッチンでワンパンチーズフォカッチャ作ったらまさかの事態に！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/01.wav",
+    "tts_text": "海外キッチンでワンパンチーズフォカッチャ作ったらまさかの事態に！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "弱火で温めて、10分発酵させる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/02.wav",
+    "tts_text": "弱火で温めて、じゅっぷん発酵させる。",
+    "at": 105
+   },
+   {
+    "text": "ここのホステルのコンロ、あったまんのに時間かかんのよ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/03.wav",
+    "tts_text": "ここのホステルのコンロ、あったまんのに時間かかんのよ。",
+    "at": 184
+   },
+   {
+    "text": "これで膨らんでたら成功よ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/04.wav",
+    "tts_text": "これで膨らんでたら成功よ。",
+    "at": 273
+   },
+   {
+    "text": "ワンツー、スポーン！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/05.wav",
+    "tts_text": "ワンツー、スポーン！",
+    "at": 325,
+    "big": "shake_white"
+   },
+   {
+    "text": "……全くもって膨らんでへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/06.wav",
+    "tts_text": "全くもって膨らんでへん。",
+    "at": 377,
+    "mood": "tense_still"
+   },
+   {
+    "text": "ベチャベチャしてるよ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/07.wav",
+    "tts_text": "ベチャベチャしてるよ。",
+    "at": 428
+   },
+   {
+    "text": "ひっくり返したら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/08.wav",
+    "tts_text": "ひっくり返したら……",
+    "at": 468
+   },
+   {
+    "text": "チーズがドローンって出てきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/09.wav",
+    "tts_text": "チーズがドローンって出てきた！",
+    "at": 513,
+    "big": "glow_pink",
+    "caption_from": 505
+   },
+   {
+    "text": "火つけたけど全く焼けてへんやんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/10.wav",
+    "tts_text": "火つけたけど全く焼けてへんやんか！",
+    "at": 564
+   },
+   {
+    "text": "クッキングチャンネル、初の失敗ちゃう？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/11.wav",
+    "tts_text": "クッキングチャンネル、初の失敗ちゃう？",
+    "at": 630,
+    "mood": "tense_still"
+   },
+   {
+    "text": "作戦変更して揚げ焼きにする！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/12.wav",
+    "tts_text": "作戦変更して揚げ焼きにする！",
+    "at": 694
+   },
+   {
+    "text": "ちょっと待ったら……くるっとな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/13.wav",
+    "tts_text": "ちょっと待ったら……くるっとな！",
+    "at": 755
+   },
+   {
+    "text": "ハンバーグみたいになった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/14.wav",
+    "tts_text": "ハンバーグみたいになった！",
+    "at": 813,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "どうやろかどうやろか？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/15.wav",
+    "tts_text": "どうやろか、どうやろか？",
+    "at": 861
+   },
+   {
+    "text": "いただきます……うまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/16.wav",
+    "tts_text": "いただきます……うまい！",
+    "at": 913,
+    "big": "shake_red"
+   },
+   {
+    "text": "味は外サク中ドロのヨーロッパライ麦パンや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/17.wav",
+    "tts_text": "味は、そとサクなかドロの、ヨーロッパライむぎパンや！",
+    "at": 963
+   },
+   {
+    "text": "ただ発酵してへんから、見た目の3倍重い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/18.wav",
+    "tts_text": "ただ発酵してへんから、見た目の三倍重い！",
+    "at": 1057,
+    "big": "static_darkred"
+   },
+   {
+    "text": "リベンジにワンパンピザを本日22時から作るので配信見にきてね！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/vusd/voice/vus-p1-v1/p1/19.wav",
+    "tts_text": "リベンジにワンパンピザを、本日二十二時から作るので、配信見にきてね！",
+    "at": 1136
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-aae3a3d8437272051/shorts/videos/VusdZVyjgjQ/p1/spec.json",
+  "fps": 30,
+  "frames": 1284,
+  "seconds": 42.8,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 105,
+    "voice_frames": 97,
+    "cuts": [
+     "2:49:53.7+1.73s",
+     "2:30:01.5+1.77s"
+    ],
+    "line": "海外キッチンでワンパンチーズフォカッチャ作ったらまさかの事態に！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 105,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "2:03:05.0+1.33s",
+     "0:41:39.5+1.30s"
+    ],
+    "line": "弱火で温めて、10分発酵させる。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 184,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "2:31:45.0+1.47s",
+     "2:40:41.5+1.50s"
+    ],
+    "line": "ここのホステルのコンロ、あったまんのに時間かかんのよ。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 273,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "1:41:15.0+1.73s"
+    ],
+    "line": "これで膨らんでたら成功よ。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 325,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "2:03:23.3+1.73s"
+    ],
+    "line": "ワンツー、スポーン！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 5,
+    "from": 377,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "0:43:29.5+0.87s",
+     "2:03:49.3+0.83s"
+    ],
+    "line": "……全くもって膨らんでへん。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 428,
+    "frames": 40,
+    "voice_frames": 32,
+    "cuts": [
+     "2:04:11.0+0.80s",
+     "1:41:27.8+0.53s"
+    ],
+    "line": "ベチャベチャしてるよ。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 468,
+    "frames": 37,
+    "voice_frames": 29,
+    "cuts": [
+     "2:29:15.8+0.57s",
+     "2:29:34.6+0.67s"
+    ],
+    "line": "ひっくり返したら……",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 505,
+    "frames": 59,
+    "voice_frames": 43,
+    "cuts": [
+     "2:29:59.5+1.97s"
+    ],
+    "line": "チーズがドローンって出てきた！",
+    "telop": null,
+    "big": "glow_pink"
+   },
+   {
+    "row": 9,
+    "from": 564,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "2:40:51.8+1.00s",
+     "2:31:09.0+1.20s"
+    ],
+    "line": "火つけたけど全く焼けてへんやんか！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 630,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "2:30:23.3+1.07s",
+     "2:39:40.3+1.07s"
+    ],
+    "line": "クッキングチャンネル、初の失敗ちゃう？",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 694,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "2:40:20.5+1.00s",
+     "2:44:19.8+1.03s"
+    ],
+    "line": "作戦変更して揚げ焼きにする！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 755,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "2:44:56.3+0.87s",
+     "2:49:53.9+1.07s"
+    ],
+    "line": "ちょっと待ったら……くるっとな！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 813,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "2:50:12.8+1.60s"
+    ],
+    "line": "ハンバーグみたいになった！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 14,
+    "from": 861,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "3:03:54.5+1.73s"
+    ],
+    "line": "どうやろかどうやろか？",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 913,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "3:15:59.5+0.83s",
+     "3:17:39.5+0.83s"
+    ],
+    "line": "いただきます……うまい！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 16,
+    "from": 963,
+    "frames": 94,
+    "voice_frames": 86,
+    "cuts": [
+     "3:15:22.5+1.57s",
+     "3:18:41.3+1.57s"
+    ],
+    "line": "味は外サク中ドロのヨーロッパライ麦パンや！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1057,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "3:26:01.3+1.33s",
+     "3:18:51.5+1.30s"
+    ],
+    "line": "ただ発酵してへんから、見た目の3倍重い！",
+    "telop": null,
+    "big": "static_darkred"
+   },
+   {
+    "row": 18,
+    "from": 1136,
+    "frames": 148,
+    "voice_frames": 125,
+    "cuts": [
+     "3:41:55.3+2.47s",
+     "3:15:16.5+2.47s"
+    ],
+    "line": "リベンジにワンパンピザを本日22時から作るので配信見にきてね！",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 291,
+   "raw_voice_s": 51.67,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 36.97,
+   "cps_voiced": 7.87,
+   "video_s": 42.8,
+   "cps_video": 6.8
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

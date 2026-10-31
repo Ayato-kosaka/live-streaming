@@ -39,6 +39,7 @@ import { chromium } from "playwright-core";
 import { viaCurl, ORIGIN } from "./prod.mjs";
 import { apply } from "./asme.mjs";
 import { offline } from "./route.mjs";
+import { AYATO_BOX_FN } from "./ayatobox.mjs";
 
 /** 見る幅。スマホ・タブレット・PC で島の組み替わりかたが違う。
     直している最中は `WIDTHS=390` で1幅だけに絞れる（3幅で1分半かかる） */
@@ -53,8 +54,21 @@ const SIZES = PICK.length ? ALL.filter((s) => PICK.includes(s.w)) : ALL;
 const SIGNS = Number(process.env.SIGNS || 6);
 /** 島の下半分で、地面に届く点がこれを切ったら落とす */
 const FREE = Number(process.env.FREE || 0.3);
-/** 南へ進んだと認める量（島の座標）。カメラの揺り戻しを拾わない大きさ */
-const SOUTH = Number(process.env.SOUTH || 60);
+/**
+ * 南へ進んだと認める量。**島の座標ではなく、画面のpxで持つ。**
+ *
+ * 2026-10-14 まで「島の座標で 60」だった。寄りの倍率を 340 → 232 ワールド単位へ
+ * 上げたら、**1タップで進める最大が 1280px で 81、押している点までは 48** になり、
+ * 歩けているのに落ちた（実測 +54 / +33 / +16。合計 98 は進んでいる）。
+ *
+ * 数が倍率に貼り付いていたのが原因なので、**押した点までどれだけ詰めたか**で見る。
+ * 押した点より手前で止まっていたら落ちる、という読み方は倍率が変わっても同じ。
+ * あやとの絵は 60 ワールド単位（`IsleStage` の `AYATO_H`）なので、
+ * 画面での背丈からワールド↔px の倍率が出る。
+ */
+const SOUTH_PART = Number(process.env.SOUTH_PART || 0.6);
+/** それでも、これだけは進んでいること（島の座標。カメラの揺り戻しを拾わない大きさ） */
+const SOUTH_MIN = Number(process.env.SOUTH || 20);
 /** 島は curl 経由で1本ずつ取るので、描き終わるまで待つ */
 const DRAW = 9000;
 
@@ -136,13 +150,37 @@ const MARKS = `() => {
   });
 }`;
 
+/**
+ * 代表の札を数える。**落ちかたを2つに分ける。**
+ *
+ * ここは長いこと「見えているのが6枚未満なら赤」の1本だった。それだと
+ * 2つの別のことが同じ赤になる。
+ *
+ *   島に看板が6軒建っていない … `spec.ts` の `sign: true` が減った
+ *   建っているのに札が出ていない … 置き場所が無くて `data-far` で引っ込んだ
+ *
+ * **直す先がまるで違う。** 前者は島の作り（何を看板にするか）、後者は
+ * 札の逃がし方（`plates.ts`）。1本にまとめてあると、赤を見た人がどちらかを
+ * 当てに行くことになる（`docs/island-misses.md` #87「数だけ出して名前を
+ * 出さないと、直す側が推定で当たりを付ける」と同じ形）。
+ *
+ * **数は下げない。** `docs/island-design.md` 3-4／6章が「引きで名前を出すのは
+ * 看板の6つ」「6つを超えない」と決めていて、表紙の `spec.ts` はちょうど
+ * 6軒に `sign: true` を付けている。**6 は島の決まりであって、
+ * 届かないから下げてよい目標ではない。**
+ */
 function checkMarks(marks) {
   const on = marks.filter((m) => m.vis && !m.far);
   const off = marks.filter((m) => !(m.vis && !m.far));
-  console.log(`  [引き] 代表の札: 見えている ${on.length}枚 / DOM に ${marks.length}枚`);
+  console.log(`  [引き] 代表の札: 見えている ${on.length}枚 / DOM に ${marks.length}枚（島の決まりは ${SIGNS}枚）`);
   console.log(`         出ている: ${on.map((m) => m.name).join("・") || "(なし)"}`);
   if (off.length) console.log(`         消えている: ${off.map((m) => `${m.name}（${m.far ? "data-far" : "見えない"}）`).join("・")}`);
-  if (on.length < SIGNS) ng(`[引き] 代表の札が ${on.length}枚しか見えていない（${SIGNS}枚必要）。消えているのは ${off.map((m) => m.name).join("・")}`);
+  /* (1) 島の作り。看板の軒数そのものが決まりと違う */
+  if (marks.length !== SIGNS)
+    ng(`[引き] 島に看板が ${marks.length}軒しか建っていない（島の決まりは ${SIGNS}軒。'spec.ts' の sign）`);
+  /* (2) 札の逃がし方。建っているのに札が出ていない */
+  if (off.length)
+    ng(`[引き] 建っている看板 ${marks.length}軒のうち ${off.length}枚の札が出ていない（${off.map((m) => `${m.name}：${m.far ? "置き場所が無くて引っ込んだ(data-far)" : "見えない"}`).join("・")}）`);
 }
 
 /* ---- 判定 (C) 下半分の地面の空きと、南へ歩けるか -------------------------- */
@@ -178,6 +216,15 @@ const AYATO = `() => {
   const t = document.querySelector("g.ayato")?.getAttribute("transform") || "";
   return Number(t.match(/translate\\(([-\\d.]+) ([-\\d.]+)\\)/)?.[2] ?? NaN);
 }`;
+/** あやとの、画面での足元の y と背丈（px）。倍率を出すのに使う */
+const AYATO_BOX = `() => {
+  ${AYATO_BOX_FN}
+  const g = document.querySelector("g.ayato");
+  if (!g) return null;
+  /* 見えている箱。g の箱は、歩くときの窓の外（シートの残り11コマ）まで含む（ayatobox.mjs） */
+  const b = ayatoBox(g);
+  return { foot: b.bottom, h: b.height };
+}`;
 
 async function checkGround(p) {
   const g = await run(p, GROUND);
@@ -202,19 +249,25 @@ async function checkGround(p) {
   const log = [];
   for (const [x, y] of tries) {
     await shut();
+    const box = await run(p, AYATO_BOX);
     const before = await run(p, AYATO);
     await p.mouse.click(x, y);
     await p.waitForTimeout(2500);
     const after = await run(p, AYATO);
     const d = after - before;
-    log.push(`(${x},${y}) y ${before.toFixed(0)}→${after.toFixed(0)}（${d >= 0 ? "+" : ""}${d.toFixed(0)}）`);
-    if (d >= SOUTH) {
+    /* 押した点までは、島の座標でどれだけあるか。あやとの背丈（60）から倍率を出す */
+    const perPx = box && box.h > 4 ? 60 / box.h : 0;
+    const want = box ? Math.max(SOUTH_MIN, (y - box.foot) * perPx * SOUTH_PART) : SOUTH_MIN;
+    log.push(
+      `(${x},${y}) y ${before.toFixed(0)}→${after.toFixed(0)}（${d >= 0 ? "+" : ""}${d.toFixed(0)} / 要 ${want.toFixed(0)}）`,
+    );
+    if (d >= want) {
       console.log(`  [寄り] 南へ歩けた: ${log.join(" / ")}`);
       return;
     }
   }
   console.log(`  [寄り] 押した記録: ${log.join(" / ")}`);
-  ng(`[寄り] 下半分を ${tries.length}点押しても、あやとが南へ ${SOUTH} 進まない（${log.join(" / ")}）。指が地面に届いていない`);
+  ng(`[寄り] 下半分を ${tries.length}点押しても、押した点まで南へ詰めない（${log.join(" / ")}）。指が地面に届いていない`);
 }
 
 /* ---- 回す ---------------------------------------------------------------- */
@@ -257,6 +310,13 @@ for (const s of SIZES) {
   await p.waitForTimeout(2500);
   await p.screenshot({ path: `/tmp/islenav-${s.w}-引き.png` });
   checkCorners("[引き]", await run(p, CORNERS));
+  /* **この見張りが、落ちるべきときに落ちるか。**（`BREAK=far` / `BREAK=sign`）
+     緑を見るだけでは、見張りが生きていることの証拠にならない
+     （`docs/island-misses.md` #79 #83）。当てると必ず赤になる。 */
+  if (process.env.BREAK === "far")
+    await run(p, `() => { document.querySelector(".isle-spot.is-sign").setAttribute("data-far", "1"); }`);
+  if (process.env.BREAK === "sign")
+    await run(p, `() => { document.querySelector(".isle-spot.is-sign").classList.remove("is-sign"); }`);
   checkMarks(await run(p, MARKS));
 
   // 寄りに戻して、地面を押して歩けるかを見る

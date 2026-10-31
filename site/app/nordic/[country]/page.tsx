@@ -1,5 +1,6 @@
 import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -39,11 +40,13 @@ export async function generateMetadata({
   const c = nordicCountry(country);
   if (!c) return {};
   const go = visitCitiesOf(c.slug);
-  return {
+  return share({
+    key: "nordic",
     title: `${c.name} — 北欧ヒッチハイク`,
     // 降りる街を先に言う。国の名前だけだと、国じゅうを回るように読める。
     description: `${c.catch} 行くのは${go.join("・")}。見どころ${c.spots}件と、この国であやとにやってほしいこと。`,
-  };
+    path: `/nordic/${country}`,
+  });
 }
 
 /**
@@ -191,10 +194,12 @@ function Cats({ list, keys, hero }: { list: NordicSpot[]; keys?: Record<string, 
         .filter((g) => g.list.length > 0)
         .map((g) => (
           <div key={g.label} className="ncat">
-            <h4>
+            {/* 上は h2（`<Zone>` の見出し）。h4 にすると読み上げの目次で
+                段が1つ飛ぶので h3（`docs/island-misses.md` #253） */}
+            <h3>
               {g.label}
               <em>{g.list.length}件</em>
-            </h4>
+            </h3>
             <div className="folds">
               {g.list.map((s) => (
                 <Spot key={s.id} s={s} k={keys?.[s.id]} thumb={s.big && s.big === hero ? s.big : undefined} />
@@ -273,7 +278,6 @@ export default async function NordicCountryPage({
 
   return (
     <PageShell
-      current="next"
       crumbs={[
         crumbOf("next"),
         { label: "北欧ヒッチハイク", href: "/nordic" },

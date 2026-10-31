@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import GoTo from "@/components/ui/GoTo";
 import Icon from "@/components/ui/Icon";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "next",
   title: "企画のページを作る",
   description: "やってほしいことは、掲示板の付箋から。",
-  alternates: { canonical: "/board" },
+  canonical: "/board",
   robots: { index: false, follow: true },
-};
+  path: "/next/new",
+});
 
 /**
  * 企画のページを書くところ。**畳んだ（2026-10-01）。送るだけ。**
@@ -40,7 +43,6 @@ export const metadata: Metadata = {
 export default function NewPlanPage() {
   return (
     <PageShell
-      current="board"
       crumbs={[{ label: "やってほしいこと", href: "/board" }, { label: "企画のページを作る" }]}
     >
       <GoTo to="/board" />

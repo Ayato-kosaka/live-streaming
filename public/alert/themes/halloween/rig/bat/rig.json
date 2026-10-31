@@ -1,0 +1,9 @@
+{
+ "name": "bat",
+ "size": [960, 384],
+ "parts": [
+  {"id": "body", "file": "body.png", "parent": null, "pivot": [178.8, 235.0], "at": [480.0, 230.0], "z": 10},
+  {"id": "wing_r", "file": "wing_r.png", "parent": "body", "pivot": [49.5, 174.8], "at": [281.6, 291.5], "z": 5},
+  {"id": "wing_l", "file": "wing_l.png", "parent": "body", "pivot": [380.5, 174.8], "at": [75.9, 291.5], "z": 4}
+ ]
+}

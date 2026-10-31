@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
@@ -6,11 +7,13 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import Icon from "@/components/ui/Icon";
 import { AnvilArt, DishArt, HeadphoneArt } from "@/components/atlas/art";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "apps",
   title: "アプリ",
   description:
     "旅先で作っている自作アプリ「なに食べよ」と「なにこれオーディオガイド」、そして日本を出るきっかけになった「スペリーブ」。",
-};
+  path: "/apps",
+});
 
 /**
  * アプリ。**いま動いている2本を見くらべる作業台と、その前に1本。**
@@ -39,7 +42,7 @@ const fmt = (d: string) => d.replace(/-/g, "/");
 
 export default function AppsPage() {
   return (
-    <PageShell current="apps" crumbs={[{ label: "アプリ" }]}>
+    <PageShell crumbs={[{ label: "アプリ" }]}>
       <PageHead
         mark={<AnvilArt size={74} />}
         title="アプリ"
@@ -127,7 +130,17 @@ export default function AppsPage() {
 
               <div className="aapp-badges">
                 {a.links.map((l) => (
-                  <a key={l.href} className="abadge" href={l.href} target="_blank" rel="noopener noreferrer">
+                  /* ここはアプリが縦に並ぶので、同じ「App Store」が2つ出る。
+                     読み上げがリンクだけを並べて読むと、どちらの店か分からない。
+                     **見える字は変えずに**、読み上げる名前にアプリの名を足す */
+                  <a
+                    key={l.href}
+                    className="abadge"
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${a.name} を ${l.label} で見る`}
+                  >
                     <Icon
                       name={l.label.includes("Google") ? "googleplay" : "appstore"}
                       size={18}

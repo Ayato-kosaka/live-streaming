@@ -31,6 +31,21 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 
 ## 1. 型（この4つが無い依頼文は投げない）
 
+**ショートの担当へは、あやとの指摘の帳面 `.claude/skills/viral-shorts-creator/references/ayato_feedback.md` を必ず届ける。** 渡さなければ、担当は前に言われたことを知らない。
+届けかたは担当で違う（#1011。全文を毎回読ませると、批評役1人が約14〜19万トークン・6〜12分になった）。
+
+| 担当 | 渡すもの | 渡さないもの |
+| --- | --- | --- |
+| 作文者 | `python3 tools/shorts/script/brief.py writer --video <id> --range <区間> --ref <参考> --about "…" -o <scratch>/brief.md` の1枚のパスと、書き出す先。頼む文の雛形は `references/writer_prompt.md`（1枚の中に入る） | 帳面の全文・参考の書き起こし全文・手引きの全文（効く所は1枚に入っている） |
+| 批評役 | **Agent で頼まない。** `python3 tools/shorts/script/critic.py <git show で書き出した script.txt> --ref <参考> --about "…" --out <scratch>/critic/<名前>` で回す（`brief.py critic` の1枚だけを `claude -p` に渡し、JSON を返させ、`critic_gate.py` が合否を数える。`script_writing.md` 7.4） | 往復の記録・ほかの批評役の点・作文者の3列の表（1枚に入らないので、見ようがない） |
+| 書き出し（本編集） | `python3 tools/shorts/script/brief.py edit --episode <回> --pattern <案> --about "…" --scratch <scratch> -o <scratch>/brief_edit.md` の1枚のパスだけ（原稿と素材の表・帳面の画・音・投稿の項目・企画の節のどこを読むか・声から下見までの呼び出しの形）。頼む文の雛形は `references/editor_prompt.md`（1枚の中に入る） | 手引きの全文（`SKILL.md`・`production.md`・`render/README.md`・`voice/README.md`・`ec2-chrome`）・道具のソース・帳面の全文（効く所は1枚に入っている） |
+
+- 批評役は**1案に2人まで、直しは2回まで**（`script_writing.md` 7.3）。2人目は、1人目の ✕ に帳面・(h)・(i) が残ったときだけ。点の 3・離れる行の △ では呼ばない
+- 編集長の役は置かない（批評役の JSON が添削で、採るものを決めるのはまとめ役）
+- `--about` には、何の配信か・この案の狙いを1〜3行で書く。**あやとの返事や、前の批評役の結論を書かない**（往復を知らない担当でなくなる）
+- Agent でしか回せないときは、`brief.py critic -o <scratch>/critic_prompt.md` の1枚のパスだけを渡し、`SubagentHandback` に JSON だけを返させて、
+  `python3 tools/shorts/script/critic_gate.py <json> <script.txt>` に掛ける
+
 ### ① 合格の条件
 
 **「前より良い」は条件ではない**（`docs/island-standards.md`）。
@@ -74,6 +89,25 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 ```
 
 ### ④ 出しかた
+
+**いちばん上に、これを書く。**
+
+```
+- **動くようになった時点で、確認の前に一度 push する。** 確認はそのあと。
+  「全部終わってから1回」にしない
+```
+
+**2026-10-15、箱が再起動して担当2人が消えた。** 片方は 590行、もう片方は 436行
+書き終わっていて、**どちらも1行も push していなかった。** worktree が
+たまたまディスクに残っていたので拾えたが、**運で助かっただけ**で、
+箱が作り直されていたら 1,000行まるごと無かったことになっていた。
+
+落ちる理由はこちらで選べない（箱の再起動は中から止められないし、
+**原因も中からは出せない**——カーネルのログは再起動で消える）。
+**選べるのは「落ちたときに何が残るか」だけ。** 押してあれば残る。
+
+途中の枝が増えることを嫌がらない。**確認の通っていない枝は PR にしなければよい**
+だけで、消えた作業より安い。
 
 ```
 - ブランチ `claude/<短い名前>` を master から切る（`git fetch origin master` してから）
@@ -147,3 +181,8 @@ python/admin/
 - worktree を切るなら `functions/node_modules` は symlink 可、
   **`tools/sprites/node_modules` は実体を複製**（CLAUDE.md の表。symlink だと1本落ちる）
 - ビルドは `tools/build.sh` から。**並列で `next build` を3本回すと箱が止まる**
+- **終わった担当の worktree は、その日のうちに片づける。** 担当の worktree
+  （`.claude/worktrees/agent-*`）は、担当が終わっても残る。2026-10-21 に30個・約8GB 溜まっていて、
+  ショートの暗号文（作業枝に1.5GB）を開いた担当が「unable to write file」で止まった（空き 1.3MB）。
+  片づける前に1本ずつ `git -C <wt> status --porcelain` が空なのを見て、`git worktree remove <wt>`
+  （`--force` は使わない。枝は残るのでコミットは消えない）。動いている担当と、ロックの掛かったものは残す

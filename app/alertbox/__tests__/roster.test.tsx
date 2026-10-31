@@ -28,6 +28,8 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: () => ({
     k: "0123456789abcdef0123456789abcdef",
     source: "doneru",
+    // 季節の外に固定する（季節の中は段の絵の準備を待ってから出すので、日付で結果が変わる）
+    theme: "none",
   }),
 }));
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { GUIDE } from "@/content/voice";
 import Board from "@/components/live/Board";
@@ -7,13 +8,15 @@ import Board from "@/components/live/Board";
    「企画をだす」だったころ、面の名前と中の札1枚（企画）が同じ字だったので、
    付箋はその枝に見えていた。板の仕事は注文を受けること。
    URL（`/board`）も変えない。外から貼られたリンクが死ぬ。 */
-export const metadata: Metadata = {
+export const metadata: Metadata = share({
+  key: "board",
   /* **「企画」を名乗らない（2026-10-01）。** 前は「付箋1枚でも、1日つかう企画でも」で、
      その2つを選ばせる札がこの面にあった。札を畳んで付箋ひとつにしたので、
      ここに企画の字が残っていると、検索から来た人が無い欄を探すことになる。 */
   title: "やってほしいこと",
   description: "「これ見てきて」「これやって」を書く板。ひとことでいい。ログイン不要。",
-};
+  path: "/board",
+});
 
 /* 付箋の棚割りは、ここで組まなくなった。
    宛先は `content/themes.ts` が持っている（#160）。前は「どの企画に貼られたか」と
@@ -23,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function BoardPage() {
   return (
-    <PageShell current="board" crumbs={[{ label: "やってほしいこと" }]}>
+    <PageShell crumbs={[{ label: "やってほしいこと" }]}>
       <PageHead
         icon="signboard"
         title="やってほしいこと"

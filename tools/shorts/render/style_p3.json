@@ -1,0 +1,196 @@
+{
+  "_note": "北マケドニアの回の p3（参考の骨組みの原稿）の様式。style.json との違いだけを書く。字の見た目・動き・BGM の量は参考のショート HPJrXDpkfuo を測った値（scratchpad/research/style_HPJrXDpkfuo/style_spec.json、2026-10-16）。参考は M PLUS Rounded 1c Black より字の高さの約1%太いので、同じ色の 0.75px の縁で太らせる",
+  "extends": "style.json",
+  "audio": {
+    "_note_p3": "参考の案4: BGM をナレーションで上げ下げせず（duck_db 0）、子音の帯だけはナレーションの間 6dB 下げる。参考の BGM と同じく大小をならす（bgm_level）。初めは参考の差（13.6dB）に合わせて −29.8（話している間 13.8dB）にしたが、あやとが2回「BGM もう少し大きく」と言った（#926、2026-10-16）ので、あやとの好みを取って +3dB の −26.8 にした（話している間 10.8dB 前後・いちばん小さい行 9.1dB。品質チェックの行ごとの線は 9dB に下げた）",
+    "bgm_rms_dbfs": -26.8,
+    "bgm_level": { "window_s": 1.0, "smooth_s": 2.0, "max_db": 6 },
+    "duck_db": 0,
+    "duck_hi_db": -6,
+    "duck_hi_hz": [1500, 2500]
+  },
+  "caption": {
+    "_note_p3": "参考の (c): 48px・字間 −0.04em・白に黒縁 3px。行のかたまりの中心を画面の縦のまん中（960）に。2行は行の送り 51.5px。出入りはカット（anim 無し）。幅は右のボタン列（y≥840 で x>888）を避けて 696 まで",
+    "font": "caption",
+    "size": 48,
+    "max_width": 696,
+    "max_lines": 2,
+    "center_y": 960,
+    "anchor": "ink_center",
+    "face_min_size": 36,
+    "_face_min_size": "目と鼻の下に置けないとき、ここまで小さくしてよい（あやとの直し #926: 字幕が顔に被ったら下へ。上へは逃がさない）",
+    "look": {
+      "fill": "#FDFDFD",
+      "outline": [{ "color": "#FDFDFD", "width": 0.75 }, { "color": "#000000", "width_em": 0.0625 }],
+      "tracking": -0.04,
+      "line_pitch_em": 1.0729,
+      "pad": [2, 2],
+      "highlight": { "fill": "#F9D342", "scale": 1.0 }
+    }
+  },
+  "title_card": {
+    "_note_p3": "あやとの決め: 上の箱・地は黒・頭の4秒だけ・出る動き無し・カットで消える。箱の中の字だけ参考の題に寄せる。1行目＝参考の (a)、2行目＝参考の (b)。箱に収まる大きさまで縮め、2行目は 88px を切るなら文節で2行に割る",
+    "top": 380,
+    "max_width": 840,
+    "max_lines": 4,
+    "pad": [26, 18],
+    "max_height": 456,
+    "gap": 2,
+    "box": { "color": "#000000", "radius": 28 },
+    "lines": [
+      {
+        "font": "caption", "size": 82, "min_size": 52,
+        "look": {
+          "fill": "#FDFDFD",
+          "outline": [{ "color": "#FDFDFD", "width": 0.75 }, { "color": "#000000", "width_em": 0.055 }],
+          "tracking": -0.04
+        }
+      },
+      {
+        "font": "caption", "size": 114, "min_size": 64, "wrap_below": 88,
+        "look": {
+          "fill": { "stops": [[0.0, "#FBEE1E"], [0.2, "#FEF21D"], [0.3, "#FDF674"], [0.35, "#FDFCA1"], [0.45, "#FDF758"],
+                              [0.55, "#FCEE06"], [0.75, "#FDE103"], [1.0, "#FAE707"]] },
+          "outline": [{ "color": "#EF0101", "width_em": 0.057 }, { "color": "#000000", "width_em": 0.079 }],
+          "glow": { "color": "#EBD050", "half_px": 16, "extent_px": 35 },
+          "tracking": -0.07,
+          "line_pitch_em": 1.105
+        }
+      }
+    ]
+  },
+  "moods": {
+    "_note": "感情の字幕（spec の行の mood）。字幕と同じ置き場（縦のまん中・顔は下へ）に、字幕より大きく、感情で書体と色と動きを変える。カットで出て消える（動きは出ている間だけ）。あやとの直し（#926、2026-10-16「もっと感情に合わせてフォントとか色変えて欲しい」）を受けて統括が決めた割り当て。plain は普通の字幕",
+    "max_width": 696,
+    "max_lines": 2,
+    "looks": {
+      "anxious": {
+        "_note": "不安・焦り: 水色に濃紺の縁、Yusei Magic、細かく震える（1〜2px・15fps）",
+        "font": "YuseiMagic-Regular.ttf", "size": 72, "min_size": 60, "face_min_size": 48,
+        "look": { "fill": "#9FD3FF", "outline": [{ "color": "#9FD3FF", "width": 0.75 }, { "color": "#0B1E46", "width_em": 0.075 }],
+                  "tracking": -0.02, "line_pitch_em": 1.1 },
+        "anim": { "hold": { "type": "shake", "first_hold": 2, "update_every": 2, "dx_sd": 1.2, "dx_max": 2, "dy_sd": 1.2, "dy_max": 2 } }
+      },
+      "gloom": {
+        "_note": "落胆: 灰青に濃紺の縁、Yusei Magic、止まったまま",
+        "font": "YuseiMagic-Regular.ttf", "size": 72, "min_size": 60, "face_min_size": 48,
+        "look": { "fill": "#A9B8C9", "outline": [{ "color": "#A9B8C9", "width": 0.75 }, { "color": "#0B1E46", "width_em": 0.075 }],
+                  "tracking": -0.02, "line_pitch_em": 1.1 }
+      },
+      "puzzled": {
+        "_note": "困惑: 白に紫の縁、Yusei Magic、少し傾ける（−4°。傾けた絵を止めたまま出す）",
+        "font": "YuseiMagic-Regular.ttf", "size": 72, "min_size": 60, "face_min_size": 48, "rotate": -4,
+        "look": { "fill": "#FFFFFF", "outline": [{ "color": "#FFFFFF", "width": 0.75 }, { "color": "#7A4FD0", "width_em": 0.075 }],
+                  "tracking": -0.02, "line_pitch_em": 1.1 }
+      },
+      "joy": {
+        "_note": "喜び・おいしい: ピンクに白縁 → 濃いピンクの縁、Hachi Maru Pop、まわりにキラキラ",
+        "font": "HachiMaruPop-Regular.ttf", "size": 72, "min_size": 60, "face_min_size": 48, "sparkles": "sparkle",
+        "look": { "fill": "#FF8FD1",
+                  "outline": [{ "color": "#FF8FD1", "width": 0.75 }, { "color": "#FFFFFF", "width_em": 0.05 }, { "color": "#C2187A", "width_em": 0.06 }],
+                  "tracking": -0.02, "line_pitch_em": 1.1 }
+      },
+      "excited": {
+        "_note": "ワクワク・決意: 黄に茶の縁、Mochiy Pop One、出るとき 0.8 → 1.06 → 1.0（5コマ。頭の2コマは同じ絵: 字幕の出を測る検査が、同じ絵が2コマ続くことで出たと読む）",
+        "font": "MochiyPopOne-Regular.ttf", "size": 72, "min_size": 60, "face_min_size": 48,
+        "look": { "fill": "#FFE14D", "outline": [{ "color": "#FFE14D", "width": 0.75 }, { "color": "#7A3E00", "width_em": 0.08 }],
+                  "tracking": -0.03, "line_pitch_em": 1.1 },
+        "anim": { "in": { "frames": 4, "first_hold": 2, "scale": { "keys": [[0, 0.8], [2, 1.06], [3, 1.0]] } } }
+      }
+    }
+  },
+  "sparkles": {
+    "sparkle": {
+      "_note": "字のまわりで瞬くキラキラ（参考の 12.8〜13.4秒の粒: 白〜淡い黄の四角い星）。字の見える箱を margin_em（字の大きさの割合）だけ広げた中に count 個。粒ごとに period コマで明るくなって消える。字の真ん中（core の楕円）には置かない。乱数の種は行の字で決まる（毎回同じ）。画の効果だが字の置き場に付くので、字なしの書き出しには入れない",
+      "_note_v2": "初めの 22個・10〜26px・白い光だけでは、明るい地（店の台・空）で溶けて見えなかった。数と大きさを上げ、光を金色にして縁取る",
+      "count": 30,
+      "size_px": [14, 34],
+      "colors": ["#FFFFFF", "#FFF6C8", "#FFE680"],
+      "period": [12, 24],
+      "margin_em": [0.55, 0.6],
+      "core": 0.9,
+      "glow_px": 6,
+      "glow_color": "#E8A800",
+      "glow_alpha": 0.85
+    }
+  },
+  "big": {
+    "_note_p3": "【大】の行。spec の行の big_style でどの見た目かを決める。位置は画面の縦のまん中（960）。参考の (d1)〜(d5)",
+    "top": 420,
+    "max_width": 840,
+    "max_lines": 2,
+    "centers": [960, 1000, 920, 1040, 880],
+    "order": ["shake_white", "glow_pink", "brush_zoom", "shake_red", "static_darkred"],
+    "looks": {
+      "shake_white": {
+        "_note": "(d1) 白・黒縁・外に白縁、集中線。カットで出て消え、いる間は位置だけ毎コマでたらめに跳ねる。参考は 123px。1行で 123px に届かなければ縮めずに折る（2行で 96px に届かなければ3行）",
+        "font": "KaiseiTokumin-ExtraBold.ttf", "size": 123, "min_size": 60, "wrap_below": 123, "fold_floor": 96, "max_lines": 3,
+        "look": {
+          "fill": "#FEFEFE",
+          "outline": [{ "color": "#000000", "width_em": 0.086 }, { "color": "#FFFFFF", "width_em": 0.056 }],
+          "tracking": 0.0,
+          "line_pitch_em": 1.08
+        },
+        "anim": { "hold": { "type": "shake", "first_hold": 2, "dx_sd": 13.5, "dx_max": 21, "dy_sd": 19, "dy_max": 36 } },
+        "speedlines": { "count": 64, "inner_rx": 420, "inner_ry": 600, "width_px": [3, 10], "color": "#FFFFFF", "alpha": 0.85 }
+      },
+      "shake_red": {
+        "_note": "(d5) 赤・外側がざらついた黒縁。揺れは d5 の値",
+        "font": "caption", "size": 74, "min_size": 56,
+        "look": {
+          "fill": "#EE0404",
+          "outline": [{ "color": "#EE0404", "width": 0.75 },
+                      { "color": "#000000", "width_em": 0.115, "rough": { "amp": 2.2, "scale": 1.6 } }],
+          "tracking": -0.03,
+          "line_pitch_em": 1.1
+        },
+        "anim": { "hold": { "type": "shake", "first_hold": 2, "dx_sd": 9.5, "dx_max": 21, "dy_sd": 11, "dy_max": 24 } }
+      },
+      "glow_pink": {
+        "_note": "(d3) 白にピンクの発光。濃さとぼかしが参考の曲線で 0.4秒かけて締まる。まわりにキラキラの粒（参考の 12.8〜13.4秒。あやとの直し #926「参考動画のようにキラキラ入れても良さそう」）。絵文字は付けない",
+        "font": "caption", "size": 100, "min_size": 60, "wrap_below": 88, "pre_roll_frames": 8,
+        "sparkles": "sparkle",
+        "look": {
+          "fill": "#FDFBFB",
+          "outline": [{ "color": "#FDFBFB", "width": 0.75 }],
+          "glow": { "stops": [[0.5, "#F9B4EA"], [2, "#FC85D8"], [3.5, "#FD66CB"], [5, "#F84EB4"], [6.5, "#F24BAB"], [18, "transparent"]] },
+          "tracking": -0.07,
+          "line_pitch_em": 1.1
+        },
+        "anim": {
+          "sharp_blur_em": 0.10,
+          "_pre_roll": "声は出だしの 8 コマ目に合わせる（build_edit が行の頭に 8 コマ足す）。品質チェックが「出た」と読むコマは地で変わる: 暗い地（A21 の手元）では 9 コマ目（濃さ 0.9）、白い包み紙の上（B20 の断面）では 7 コマ目（濃さ 0.68。白い字の画素が地の白とほぼ同じで、字なしでも差が 57〜63 しかない）。9 に合わせると白い地で 2 コマ早く、どちらでも ±1 に入るのは 8。11 に合わせた最初の版は 0.9 の絵を読まれて 2 コマ早かった",
+          "in": { "frames": 12,
+                  "alpha": { "keys": [[0, 0.0], [2, 0.06], [4, 0.44], [8, 0.76], [9, 0.9], [10, 0.98], [11, 1.0]] },
+                  "sharp": { "keys": [[0, 0.15], [8, 0.29], [9, 0.63], [10, 0.87], [11, 0.98], [12, 1.0]] } }
+        }
+      },
+      "brush_zoom": {
+        "_note": "(d4) 黒の筆字に白いかすれた地。0.29 → 1.09 → 1.00 倍（13コマ）。動きのぼかしは付けない（品質チェックが拡大中の字を字幕として見つけられなくなる）",
+        "font": "KaiseiTokumin-ExtraBold.ttf", "size": 174, "min_size": 70, "wrap_below": 130,
+        "look": {
+          "fill": "#151313",
+          "backing": { "type": "grunge", "color": "#FFFFFF", "extent_px": 35 },
+          "tracking": -0.03,
+          "line_pitch_em": 1.05
+        },
+        "anim": {
+          "in": { "frames": 13, "first_hold": 2,
+                  "scale": { "keys": [[0, 0.29], [1, 0.39], [2, 0.48], [3, 0.67], [4, 0.81], [5, 0.93], [6, 1.02],
+                                      [7, 1.06], [8, 1.09], [9, 1.07], [10, 1.04], [11, 1.02], [12, 1.01]] } }
+        }
+      },
+      "static_darkred": {
+        "_note": "(d2) 上が暗い赤 → 下が黒のグラデ、白縁 → 黒縁、暗い赤のにじみ。止まったまま",
+        "font": "caption", "size": 87, "min_size": 60,
+        "look": {
+          "fill": { "stops": [[0.0, "#350B0C"], [0.15, "#5A0406"], [0.35, "#370506"], [0.5, "#290304"], [0.65, "#0F0202"], [1.0, "#040202"]] },
+          "outline": [{ "color": "#FFFFFF", "width_em": 0.03 }, { "color": "#000000", "width_em": 0.034 }],
+          "glow": { "color": "#865F5F", "half_px": 2, "extent_px": 5, "alpha": 0.6 },
+          "tracking": -0.06,
+          "line_pitch_em": 1.1
+        }
+      }
+    }
+  }
+}

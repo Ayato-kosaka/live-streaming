@@ -1,0 +1,6 @@
+# トビリシ海まで歩きます
+# https://www.youtube.com/watch?v=CivhSffnPXE
+# 開始: 2026-06-07 21:32 JST
+# 件数: 0
+# 時刻の出どころ: なし（msec=動画内の時刻 / clock=チャット横の時刻 / diff=書いた時刻−開始）
+

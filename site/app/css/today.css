@@ -39,8 +39,7 @@
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
   /* 板の厚み。ぼかさない下向きの影が側面、ぼかしたほうが落ち影 */
-  box-shadow:
-    0 4px 0 var(--frame-deep),
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep),
     3px 8px 10px var(--cast),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   -webkit-tap-highlight-color: transparent;
@@ -123,7 +122,7 @@
   background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   animation: todayOpen 0.2s cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
 @keyframes todayOpen {
@@ -174,7 +173,7 @@
   color: var(--ink);
   font-size: 12px;
   font-weight: 900;
-  box-shadow: 0 3px 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 var(--pop-d1) 0 var(--frame-deep), 2px 5px 6px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .today-go:active {
   transform: translateY(3px);
@@ -342,8 +341,12 @@
    `docs/island-design.md` 3-7 は「重なったときは 入口＞住人。住人との会話は
    おまけなので、行き先を塞いではいけない」と決めている。塞いでいたのがその
    行き先そのものなので、**引くのは吹き出しのほうにする。**
-   吹き出しは島の下（この板の上）へ移した（`chain.css` の `.isle-talk`、
-   `island.css` の `.talkbox`）。
+   吹き出しは島の下（この板の上）へ移した（`island.css` の `.talkbox`）。
+   **歩ける島（`chain.css` の `.isle-talk`）は、2026-10-14 に上へ戻した。**
+   字の出る場所を画面の上1か所に固定したため（あやと「文字を出す場所は
+   上に固定」）。上へ戻しても看板には乗らない——置き場所を数字で書かずに、
+   上半分に居るものの下ふちを測って決めている（`IsleStage` の `--isle-top`）。
+   この板は下ふちにいるので、もう取り合いにならない。
 
    建物の板（`.is-sheet`）だけは別。あれは島ぜんぶを覆う面なので、下に板が
    残ると、閉じるまで押せない板が居座ることになる。 */
@@ -366,7 +369,7 @@
   background: linear-gradient(var(--paper) 0 60%, var(--paper-2));
   border: 3px solid var(--frame-dark);
   border-radius: 16px;
-  box-shadow: 0 4px 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 var(--pop-d2) 0 var(--frame-deep), 3px 9px 12px var(--cast), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* 板の名前。「今日の島」と同じ扱いにして、主役（問い）を邪魔しない */
@@ -414,7 +417,7 @@
   background: var(--paper-out);
   border: 3px solid var(--frame-dark);
   border-radius: 12px;
-  box-shadow: 0 3px 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 var(--pop-d1) 0 var(--frame-deep), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   -webkit-tap-highlight-color: transparent;
 }
 .poll-pick:active:not(:disabled) {

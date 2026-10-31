@@ -94,8 +94,10 @@ FIND = r"""(() => {
   const diag = () => 'clickables=[' + clickables().map(e => e.tagName.toLowerCase() + ':' + txt(e).slice(0, 25) + (e.pathname ? '(' + e.pathname + ')' : '')).slice(0, 30).join(' | ').replace(/\S+@\S+/g, '<mail>') +
     '] iframes=[' + [...document.querySelectorAll('iframe')].filter(vis).map(f => { try { const u = new URL(f.src); return u.host + u.pathname; } catch (_) { return '?'; } }).join(' | ') + ']';
   if (location.host.includes('accounts.google.com') && location.pathname.includes('/oauth/delegation')) {
-    const opts = [...document.querySelectorAll('[data-identifier],li,[role=link],[role=button],button')].filter(vis)
-      .map(e => ({text: txt(e).replace(/\S+@\S+/g, '<mail>').slice(0, 60), ...(r0 => ({x: r0.x + r0.width / 2, y: r0.y + r0.height / 2}))(e.getBoundingClientRect())}))
+    // 押す直前に画面の中へ送れるように、要素を窓に控えておく（座標は送ったあとに取り直す）
+    const els = [...document.querySelectorAll('[data-identifier],li,[role=link],[role=button],button')].filter(vis);
+    window.__dlg = els;
+    const opts = els.map((e, i) => ({i, text: txt(e).replace(/\S+@\S+/g, '<mail>').slice(0, 60), ...(r0 => ({x: r0.x + r0.width / 2, y: r0.y + r0.height / 2}))(e.getBoundingClientRect())}))
       .filter(o => o.text);
     return {kind: 'google:delegation', options: opts};
   }
@@ -197,7 +199,10 @@ if not dt:
                 if not hit:
                     print("STOP: チャンネルを決められなかった。何も押さずに止める"); sys.exit(3)
             print("  delegation: 押す ->", hit[0]["text"])
-            click(cur, hit[0]["x"], hit[0]["y"]); time.sleep(6); continue
+            # チャンネルが7つに増えて、ayato_arigato が窓の下にはみ出した（2026-10-18）。
+            # 窓の外の座標を押しても何も起きず、同じ画面で4回空振りしたので、送ってから押す
+            p = cur.js(f"(() => {{ const e = (window.__dlg || [])[{hit[0]['i']}]; if (!e) return null; e.scrollIntoView({{block: 'center'}}); const r = e.getBoundingClientRect(); return {{x: r.x + r.width / 2, y: r.y + r.height / 2}}; }})()") or hit[0]
+            time.sleep(1); click(cur, p["x"], p["y"]); time.sleep(6); continue
         if r["kind"] == "google:chooser":
             hit = [i for i, a in enumerate(r["accounts"]) if hashlib.sha256(a["id"].encode()).hexdigest() == ACCOUNT_SHA256]
             print(f"  account chooser: {len(r['accounts'])} 件、一致 {hit}")

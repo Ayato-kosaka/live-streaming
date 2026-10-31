@@ -1,9 +1,12 @@
 """キャラクターを**手元の絵から1人ずつ足す**（#284 の C 群の追加口）。
 
-ARGS 例:
-  {}                            … 下見。**1バイトも書かない**
-  {"apply": true}               … 口に頼んで Storage と Firestore に書く
-  {"dir": "_incoming"}          … 置き場所を変える（既定はこれ）
+**これは手元から回す道具。** Actions からは回らない（下の「回しかた」）。
+
+    export BQ_PROJECT_ID=live-streaming-d3cac      # 手元では自分で渡す
+    ARGS='{}'               python3 python/admin/characters_add.py  … 下見。**1バイトも書かない**
+    ARGS='{"apply":true}'   python3 python/admin/characters_add.py  … 置き場と Firestore に書く
+    ARGS='{"dir":"/…/x"}'   … 置き場所を変える（**絶対パスだけ。git の外**）
+    ARGS='{"apply":true,"keep":true}'  … 足したあとも手元の絵を残す
 
 ## なぜ移行の道具と別に要るか
 
@@ -21,19 +24,49 @@ Actions のサービスアカウントには `storage.objects.create` が無い�
 置き場に書けるのは Functions のサービスアカウントなので、口に頼む。
 通ることは `characters_probe` が本番で1回通して確かめてある。
 
-## 出どころ（絵と名前）は、リポジトリに残さない
+## 絵と名前は、**公開リポジトリに1バイトも入れない**（#785）
 
 **このリポジトリは公開。** 誰の絵が誰のものかは、図鑑が公開していない
-（`islandCharacter.ts`「名前は、誰にでも見せるものではない」）。だから
-**絵と名前の対応表を master に置かない。** 流すときだけ枝に載せて、
-流し終えたら枝ごと落とす。ここに置くのはその読み手だけ。
+（`islandCharacter.ts`「名前は、誰にでも見せるものではない」）。
+
+前の手順は「流すときだけ枝に載せて、流し終えたら枝を落とす」だった。
+**落とせなかった。** このセッションの GitHub プロキシは
+`git push --delete` も `DELETE /git/refs/*` も 403 で断る。結果、絵2枚と
+ハンドル入りの manifest を載せた commit が公開のリポジトリに残り、
+その SHA が公開の実行ページに出た（#785）。
+
+**落とせない前提で組み直した。絵はリポジトリに入れない。**
+入れる代わりに、**札のほうを Actions から手元へ持ってくる**（`_handoff.py`）。
+
+    手元: 使い捨ての鍵を作り、公開鍵だけを入力に載せて `owner_handoff` を押す
+    実行: 札を2枚作り、公開鍵で封をして注記に出す
+    手元: ほどく → **その実行を消す** → 絵は手元から島の口へ直に送る
+
+公開の場に出るのは**公開鍵と暗号文だけ**。絵もハンドルもチャンネルIDも、
+入力にもログにも注記にも1文字も出ない。
+
+### 置き場は、リポジトリの外（既定 `~/island-char-intake`）
 
     <dir>/manifest.json   [{channelName, emoji, aliases, channelId,
                             plain: "…png", scene: "…png"}, …]
     <dir>/*.png           絵そのもの
 
+**git の中にある置き場は、引数で渡しても断る**（`check_outside_git`）。
+手引きに「置かないこと」と書くだけでは、置ける道が在るかぎりいつか置かれる。
+**通らないようにしてある。**
+
+**流し終えたら、手元の絵も消す**（`{"keep": true}` で残せる）。
+預かったものを置きっぱなしにしない。
+
 **ログにも名前を出さない。** 出すのは絵文字と書類IDと、置けたバイト数。
 絵文字と書類IDは図鑑が誰にでも返している値なので、出してよい。
+
+## 回しかた
+
+- **下見（`apply` なし）は札が要らない。** 読むのは公開の口2つ
+  （`GET /characters` と `GET /characters/lookup`）だけなので、手元だけで通る
+- **書くとき（`apply`）だけ** `_handoff.fetch()` が Actions を1回押して、
+  札をほどいて、その実行を消す
 
 ## 足すだけ。上書きしない
 
@@ -58,13 +91,14 @@ import uuid
 
 import requests
 
-from _fs import args, db, log
-from _owner import API_BASE, call, owner_token, reachable
+from _fs import args, log
+from _handoff import fetch, firestore
+from _owner import API_BASE, call, reachable
 
 COLLECTION = "islandCharacter"
 
-#: 既定の置き場。**master には無い**（流すときだけ枝に載る）
-DEFAULT_DIR = "_incoming"
+#: 既定の置き場。**リポジトリの外**（#785）
+DEFAULT_DIR = os.path.join(os.path.expanduser("~"), "island-char-intake")
 
 #: 表示用に焼く幅。`islandCharacter.ts` の `WIDTHS` と同じ並び。
 #: **背景ありも3つとも焼く。** 画面（`me/Characters.tsx`）がそうしている
@@ -87,6 +121,54 @@ def norm(s) -> str:
     s = unicodedata.normalize("NFKC", str(s or ""))
     s = INVISIBLE.sub("", s)
     return re.sub(r"\s+", " ", s.strip()).lower()
+
+
+def check_outside_git(path: str) -> str:
+    """置き場が **git の中でない**ことを見る（#785）。
+
+    手引きに「リポジトリに置かないこと」と書くだけでは、同じことが起きる。
+    置けてしまう道が在るかぎり、いつか置かれる。**通らないようにする。**
+
+    Args:
+        path: 置き場
+
+    Returns:
+        絶対パスに直した置き場
+
+    Raises:
+        SystemExit: git の中にある
+    """
+    p = os.path.realpath(path)
+    cur = p
+    while True:
+        # worktree では `.git` はファイル。`exists` でどちらも見る
+        if os.path.exists(os.path.join(cur, ".git")):
+            raise SystemExit(
+                f"置き場が git の中にあります（{cur}）。"
+                "絵とハンドルはリポジトリに入れません（#785）。"
+                f"{DEFAULT_DIR} のような、git の外に置いてください"
+            )
+        nxt = os.path.dirname(cur)
+        if nxt == cur:
+            return p
+        cur = nxt
+
+
+def wipe(base: str, people: list) -> None:
+    """預かったものを手元からも消す。**名前は1つも出さない。**"""
+    gone = 0
+    for p in people:
+        for role in ROLES:
+            fn = p.get(role)
+            if not fn:
+                continue
+            try:
+                os.remove(os.path.join(base, fn))
+                gone += 1
+            except FileNotFoundError:
+                pass
+    os.remove(os.path.join(base, "manifest.json"))
+    log.info("手元の置き場を片づけました（絵 %d枚と manifest）", gone)
 
 
 def bake(buf: bytes, widths=WIDTHS) -> list:
@@ -134,20 +216,25 @@ def new_id(client) -> str:
     raise SystemExit("書類IDが振れませんでした")
 
 
-def taken(client, channel_name: str) -> bool:
-    """そのチャンネル名で、もう誰か入っていないか。**上書きしないため。**"""
-    k = norm(channel_name)
-    if not k:
+def taken(channel_name: str) -> bool:
+    """そのチャンネル名で、もう誰か入っていないか。**上書きしないため。**
+
+    **手元には Firestore の札が無い**（下見は札を取りに行かない）ので、
+    口に聞く。`GET /characters/lookup` は配信の画面がスパチャの絵を引くのに
+    使っているのと同じ道で、別名（`lookupKeys`）まで見てくれる。
+
+    **落ちたら「空いている」と答えない。** 読めなかっただけの回に人を足すと、
+    上書きへ向かって進む（`docs/island-misses.md` の決めごと9）。
+    """
+    if not norm(channel_name):
         return False
-    hits = list(
-        client.collection(COLLECTION)
-        # **Python 側は `array_contains`（下線）。** Firestore の REST や
-        # JS 側の `array-contains` を写すと ValueError で落ちる
-        .where("channelKeys", "array_contains", k)
-        .limit(1)
-        .stream()
+    r = requests.get(
+        f"{API_BASE}/characters/lookup",
+        params={"channel": channel_name},
+        timeout=60,
     )
-    return bool(hits)
+    r.raise_for_status()
+    return bool((r.json() or {}).get("character"))
 
 
 def total() -> tuple:
@@ -216,20 +303,26 @@ def check_images(cid: str, ch: dict, roles) -> bool:
 
 
 def main() -> None:
+    if os.getenv("GITHUB_ACTIONS"):
+        # **Actions からは回さない。** 回すには絵をリポジトリに載せることに
+        # なり、それが #785 そのもの
+        raise SystemExit(
+            "これは手元から回す道具です（絵をリポジトリに載せないため。#785）。"
+            "ARGS='{}' python3 python/admin/characters_add.py"
+        )
     a = args()
     apply = a.get("apply") is True
-    here = os.path.dirname(os.path.abspath(__file__))
-    base = os.path.join(here, a.get("dir") or DEFAULT_DIR)
+    want = a.get("dir") or DEFAULT_DIR
+    if not os.path.isabs(want):
+        raise SystemExit(f"dir は絶対パスで渡してください（既定は {DEFAULT_DIR}）")
+    base = check_outside_git(want)
     if not os.path.isdir(base):
-        raise SystemExit(
-            f"{base} がありません。絵と manifest.json を枝に載せてください"
-        )
+        raise SystemExit(f"{base} がありません。絵と manifest.json を置いてください")
     with open(os.path.join(base, "manifest.json"), encoding="utf-8") as f:
         people = json.load(f)
     if not isinstance(people, list) or not people:
         raise SystemExit("manifest.json は [{…}, …] の形で書いてください")
 
-    client = db()
     before, before_ids = total()
     log.info("いま図鑑に出ているのは %d人", before)
 
@@ -240,7 +333,7 @@ def main() -> None:
         channel = str(p.get("channelName") or "")
         if not channel or not emoji:
             raise SystemExit("channelName と emoji は要ります")
-        if taken(client, channel):
+        if taken(channel):
             # **名前は出さない。** 絵文字だけで、どの行かは分かる
             raise SystemExit(f"{emoji} のチャンネル名は、もう誰かが持っています")
         send = {}
@@ -284,8 +377,10 @@ def main() -> None:
         log.info('書くには {"apply": true} を付けてください')
         return
 
-    token = owner_token(client)
-    log.info("口に頼む札を取りました")
+    # **ここで初めて札を取りに行く。** 取れたら、押した実行はその場で消える
+    tok = fetch()
+    token = tok["id"]
+    client = firestore(tok)
 
     made = []
     try:
@@ -340,6 +435,11 @@ def main() -> None:
     if after != before + len(made) or lost:
         raise SystemExit(f"人数が合いません（欠けた書類 {len(lost)}件）")
     log.info("足した書類ID: %s", " ".join(made))
+    # **預かったものを置きっぱなしにしない。** 絵はもう島の置き場にある
+    if a.get("keep") is True:
+        log.info("手元の置き場はそのままにします（keep）")
+    else:
+        wipe(base, people)
 
 
 if __name__ == "__main__":

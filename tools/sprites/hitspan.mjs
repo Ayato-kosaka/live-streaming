@@ -33,7 +33,7 @@ const PAGES = [
   "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
   "/board", "/map", "/map/france", "/atlas", "/nordic", "/nordic/guide", "/nordic/finland",
   "/nordic/photos", "/nordic/day/2", "/cards", "/all", "/friends", "/now", "/design",
-  "/privacy", "/me", "/me/desk", "/me/roulette", "/me/remote", "/roulette",
+  "/privacy", "/me", "/me/desk", "/me/roulette", "/roulette",
 ];
 /** 机の道具は札を押さないと作られない。1面の中で9つ押して回る。 */
 const TABS = ["付箋", "企画", "カード", "写真", "いまどこ", "配信", "投げ銭", "キャラ", "スパチャ", "OBS"];

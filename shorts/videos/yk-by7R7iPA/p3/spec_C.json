@@ -1,0 +1,255 @@
+{
+ "id": "C",
+ "version": "p3",
+ "title_card": "アルバニアの路線バスは\n対面払い！？",
+ "title_card_seconds": 4.0,
+ "narration_cps_target": 9.0,
+ "rows": [
+  {
+   "line": "アルバニアの路線バスは、対面払い！？",
+   "src": [
+    "0:14:22"
+   ],
+   "same_as_prev": false,
+   "visual": "向かってくる路線バス",
+   "pic_note": "向かってくる路線バス（0:14:22）",
+   "big": false,
+   "card": true
+  },
+  {
+   "line": "アルバニアで路線バス乗るの、今日が初めて。",
+   "src": [
+    "0:13:31"
+   ],
+   "same_as_prev": false,
+   "visual": "早朝のバス停",
+   "pic_note": "早朝のバス停（0:13:31）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "運賃は80円らしいんやけど、",
+   "src": [
+    "0:13:45"
+   ],
+   "same_as_prev": false,
+   "visual": "大通り",
+   "pic_note": "大通り（0:13:45）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "誰に払うんか、マジで分からへん。",
+   "src": [
+    "0:13:45"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "tense_shake"
+  },
+  {
+   "line": "チャッピーに聞いた80円握りしめて、",
+   "src": [
+    "0:13:55"
+   ],
+   "same_as_prev": false,
+   "visual": "バス停",
+   "pic_note": "バス停（0:13:55）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "「少ないわ」って怒られたらどうしよ。",
+   "src": [
+    "0:13:55"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": true,
+   "card": false,
+   "big_style": "shake_red"
+  },
+  {
+   "line": "来た！……けど、1Aって書いてある。",
+   "src": [
+    "0:14:12"
+   ],
+   "same_as_prev": false,
+   "visual": "近づくバス",
+   "pic_note": "近づくバス（0:14:12）",
+   "big": false,
+   "card": false,
+   "mood": "tense_tilt"
+  },
+  {
+   "line": "めっちゃ人乗ってるし、これは違うやんな？",
+   "src": [
+    "0:14:35.8–0:14:37.7"
+   ],
+   "same_as_prev": false,
+   "visual": "通り過ぎるバス",
+   "pic_note": "見送る 1A のバス（0:14:35.8〜37.7）。目の前を過ぎる横の窓（0:14:25.5〜27.5）は、乗客の顔が窓いっぱいに並び、顔だけの小さいぼかしでは隠しきれないので使わない",
+   "big": false,
+   "card": false,
+   "mood": "tense_shake"
+  },
+  {
+   "line": "予定の時間も、もう過ぎてるし……",
+   "src": [
+    "0:15:44"
+   ],
+   "same_as_prev": false,
+   "visual": "来ないバスを待つ通り",
+   "pic_note": "来ないバスを待つ通り（0:15:44）",
+   "big": false,
+   "card": false,
+   "mood": "tense_still"
+  },
+  {
+   "line": "さっき聞いた人、「イエローバス」って言うてたな。",
+   "src": [
+    "0:15:44"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "来た来た来た！",
+   "src": [
+    "0:15:58"
+   ],
+   "same_as_prev": false,
+   "visual": "黄色いバスが近づく",
+   "pic_note": "黄色いバスが近づく（0:15:58）",
+   "big": false,
+   "card": false,
+   "mood": "up_pop"
+  },
+  {
+   "line": "イエローバスやんか！",
+   "src": [
+    "0:16:02"
+   ],
+   "same_as_prev": false,
+   "visual": "黄色いバスが止まる",
+   "pic_note": "黄色いバスが止まる（0:16:02）",
+   "big": true,
+   "card": false,
+   "big_style": "shake_white"
+  },
+  {
+   "line": "……ドア開かへん。え、こっち？",
+   "src": [
+    "0:16:10"
+   ],
+   "same_as_prev": false,
+   "visual": "ドアの前",
+   "pic_note": "ドアの前（0:16:10）",
+   "big": false,
+   "card": false,
+   "mood": "tense_shake"
+  },
+  {
+   "line": "ほんで運賃は、運転手？それとも機械？",
+   "src": [
+    "0:16:59.9–0:17:02.1"
+   ],
+   "same_as_prev": false,
+   "visual": "車内",
+   "pic_note": "車内（0:16:59.9〜0:17:02.1）",
+   "big": false,
+   "card": false,
+   "mood": "tense_tilt"
+  },
+  {
+   "line": "と思ってたら、車内のお兄さんが集金に来た。",
+   "src": [
+    "0:17:02.1–0:17:02.8",
+    "0:16:43.05–0:16:44.42"
+   ],
+   "same_as_prev": false,
+   "visual": "係の人にお金を渡す手",
+   "pic_note": "車内の続き（0:17:02.1〜02.8）→ 集金に来た係の人（0:16:43.05〜44.42）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "まさかの対面払い！",
+   "src": [
+    "0:16:44.4–0:16:45.6"
+   ],
+   "same_as_prev": false,
+   "visual": "同上",
+   "pic_note": "お金を渡す手（0:16:44.4〜45.6）",
+   "big": true,
+   "card": false,
+   "big_style": "brush_zoom"
+  },
+  {
+   "line": "お金渡したら、紙のきっぷくれるねん。",
+   "src": [
+    "0:16:45.6–0:16:46.7",
+    "0:16:46.7–0:16:49.0"
+   ],
+   "same_as_prev": false,
+   "visual": "切符",
+   "pic_note": "紙のきっぷを受け取る手元（0:16:45.6〜46.7）→ 車内",
+   "big": false,
+   "card": false,
+   "mood": "plain",
+   "face_overlap_ok": {
+    "frames": 5,
+    "keep_size": true,
+    "why": "顔ではない: 床と扉を顔と誤検出した箱（きっぷの手元の左下の、バスの床と扉の縁。点 0.52〜0.72・肌色 0.8〜0.9）。字を避けさせると 36px まで縮むので、48px のまま置く（統括の決め）。5コマ掛かる"
+   }
+  },
+  {
+   "line": "日本やったら、ICカードでピッやのにな。",
+   "src": [
+    "0:17:20"
+   ],
+   "same_as_prev": false,
+   "visual": "走り出したバスの窓の外",
+   "pic_note": "走り出したバスの窓の外（0:17:20）",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  },
+  {
+   "line": "80円で、怒られへんかった。よかった。",
+   "src": [
+    "0:17:20"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "up_pop"
+  },
+  {
+   "line": "みんなは海外の路線バス、ひとりで乗れる派？タクシー派？",
+   "src": [
+    "0:17:20"
+   ],
+   "same_as_prev": true,
+   "visual": "同上",
+   "pic_note": "同上",
+   "big": false,
+   "card": false,
+   "mood": "plain"
+  }
+ ]
+}

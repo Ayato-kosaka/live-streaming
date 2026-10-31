@@ -5,6 +5,7 @@ import { ArrivedRow, EndRow } from "./GoalRow";
 import {
   ARRIVE,
   DAYS,
+  DAY_PAGES,
   DEPART,
   LEAVE,
   NORDIC_LOG,
@@ -14,6 +15,16 @@ import {
   type Day,
   type Leg,
 } from "@/content/nordic";
+
+/**
+ * その日に、1日ぶんの面が在るか。**`DAY_PAGES` に決めさせる。**
+ *
+ * ここで `NORDIC_LOG` を直に見ると、面を建てる条件（`content/nordic.ts`）と
+ * **2か所に同じ決まりを持つ**ことになる。片方だけ変わった日に、
+ * 旅程表が**面の無い日へリンクを出す**（巡回が「行き先が無い」で赤くなる）か、
+ * **在る面へ道が無い**（`tools/sprites/orphanpage.mjs` が赤くなる）。
+ */
+const hasPage = (d: Day) => DAY_PAGES.includes(d);
 
 /**
  * 旅のよてい。**1日1行だけ。中身は1日ぶんのページにある。**
@@ -191,19 +202,30 @@ function GroupRow({ days }: { days: Day[] }) {
         </span>
         {/* 日ごとの面への入口。**その日の話が書かれた札には印が付く。** */}
         <span className="ndayg-days">
-          {days.map((d) => (
-            <Link prefetch={false}
-              key={d.id}
-              className="ndayc"
-              id={d.id}
-              href={dayHref(d)}
-              /* まとめた行は本体に印を付けられない（6日ぶんが1行なので、
-                 どの日の話か分からなくなる）。**札のほうに付ける。** */
-              data-log={NORDIC_LOG[d.id] ? "" : undefined}
-            >
-              {d.n}
-            </Link>
-          ))}
+          {days.map((d) =>
+            /* **面の無い日は、押せない札のまま置く。**
+               ストックホルムの7泊は日誌が入らなかったので面を畳んだ
+               （`content/nordic.ts` の `DAY_PAGES`）。ここで押せるままに
+               しておくと、行き先の無いリンクが7本出る。
+               行そのものは残す——旅程に何日あったかは、読む人に要る。 */
+            hasPage(d) ? (
+              <Link prefetch={false}
+                key={d.id}
+                className="ndayc"
+                id={d.id}
+                href={dayHref(d)}
+                /* まとめた行は本体に印を付けられない（6日ぶんが1行なので、
+                   どの日の話か分からなくなる）。**札のほうに付ける。** */
+                data-log={NORDIC_LOG[d.id] ? "" : undefined}
+              >
+                {d.n}
+              </Link>
+            ) : (
+              <span key={d.id} className="ndayc is-flat" id={d.id}>
+                {d.n}
+              </span>
+            ),
+          )}
         </span>
       </span>
     </div>
@@ -219,7 +241,7 @@ function DayLi({ day }: { day: Day }) {
       /* その日の話が書かれた行の印。焼いてあるので、ここで決まる */
       data-log={NORDIC_LOG[day.id] ? "" : undefined}
     >
-      {day.legs?.length || day.city ? (
+      {hasPage(day) ? (
         <Row day={day} />
       ) : (
         /* 面を持たない行。**押せないので、厚みも矢印も付けない。**

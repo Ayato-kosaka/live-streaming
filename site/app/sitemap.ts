@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
+import { MONTHS } from "@/content/months";
 import { APPS, PAST_APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -19,6 +20,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 検索の側から見ても島の索引になる。
     "/all",
     "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    // 月ごとのふりかえり（#844）。**足し忘れて、配ったあとの見回りが赤くなった**（#872）
+    "/months",
+    /* あやと島案内鳥からのお知らせ（#851）。あやとの「気にしてる人少ないので、
+       さりげなく」は**島の中での出しかた**の話で、検索から探せなくてよい、
+       ではない。`robots` も `index: false` を持っていない。 */
+    "/updates",
     // その日いてくれた人に渡る1枚（#173）。誰でも見られる面
     "/cards",
     // 「企画のページを作る」（`/next/new`）は並べない（2026-10-01）。
@@ -30,9 +37,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // ここを忘れて、配ったあとの見張りで見つかった。面を1枚増やす仕事は3か所ある。
     "/nordic", "/nordic/guide",
     "/north-macedonia",
-    // 島から持って帰れるものと、いっしょに決めるもの（2026-10-08）。
+    // 島から持って帰れるものと、お店で買えるもの（2026-10-08。言い方は 2026-10-14）。
     // **面を1枚増やす仕事は3か所**（上の注）。ここが3か所目
     "/goods",
+    // ステッカーの面（2026-10-13）。`/goods` の索引から1枚だけ分かれた面で、
+    // **行き先は `/goods` と別**（あやと「あやとステッカーとして個別ページ一枚ね」）
+    "/goods/stickers",
+    // 島を直したところ（2026-10-08 の注と同じ。**面を1枚増やす仕事は3か所**）。
+    // さりげなく置く面だが、索引から落とすと「あの変更どこに書いてあった」で
+    // 検索して来た人が着けない。表紙に帯を立てないことと、探せないことは別
+    "/updates",
     // 読み物ではないが、Google の OAuth 審査に URL を出す都合で持っている
     "/privacy",
     // **看板の6つは全部ここに並べる。** `/about` は頭のバーにも名刺にも
@@ -52,6 +66,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
        1件直したら横を見に行く（`docs/island-misses.md` #73・#76）。 */
     ...[...APPS, ...PAST_APPS].map((a) => ({ url: url(`/apps/${a.slug}`), lastModified: now, priority: 0.6 })),
     ...LEGENDS.map((l) => ({ url: url(`/legends/${l.slug}`), lastModified: now, priority: 0.6 })),
+    // 月ごとのふりかえり、1か月ぶん
+    ...MONTHS.map((m) => ({ url: url(`/months/${m.key}`), lastModified: now, priority: 0.5 })),
     ...NORDIC_COUNTRIES.map((c) => ({ url: url(`/nordic/${c.slug}`), lastModified: now, priority: 0.6 })),
     // 旅の1日ぶん。出発の日と1日目から7日目まで。
     ...DAY_PAGES.map((d) => ({ url: url(dayHref(d)), lastModified: now, priority: 0.6 })),

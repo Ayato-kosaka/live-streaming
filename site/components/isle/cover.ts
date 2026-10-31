@@ -5,7 +5,12 @@ import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
+/* 「あと◯日」の日を引くためだけ。**`content/plans.ts` の `nextPlan()` は
+   読まない**——あちらは先の予定が0件になると行ってきた企画を返すので、
+   島が過ぎた日からシールを数えることになる（`lib/leadPlan.ts` の注・#673）。 */
+import { leadPlan } from "@/lib/leadPlan";
 import { pier } from "./pier";
+import { chapterCountries } from "@/content/walked";
 /* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
    表紙の束に配信の一覧や伝説が付いてくることはない（`spec.ts` の `nordicSpec`
    の注と同じ心配をしたが、ここは島を組む側＝サーバだけが通る道。
@@ -46,6 +51,33 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
 }));
 
 /**
+ * 「あと◯日」のシールを貼る入口と、その日。
+ *
+ * `components/island/layout.ts` は「これから」のテントに `countdown: true` と
+ * 書いているのに、上の写しがその欄を落としていた。**島に1枚だけ出してよい
+ * シール**（`docs/island-design.md` 3-4「あと◯日」）が、表紙の島には
+ * 1度も出ていなかった——手で作った島にも、章が入れ替わった島にも。
+ *
+ * **渡すのは日付だけ。** 数えるのは画面が出てから（`IsleStage` の `left` が
+ * 1分ごとに数え直す）。日数を焼くと、配った日の数で止まる。
+ *
+ * **日本時間の0時**にそろえる。日付だけ（`2026-10-31`）を渡すと UTC の0時＝
+ * 9時 JST になり、その日の朝9時まで「あと1日」と出る（`/next` の
+ * `daysUntil` は JST の暦日で切っている。`content/plans.ts`）。
+ *
+ * 近い予定が無ければ欄ごと落とす。`IsleStage` は過ぎた日のシールを出さないが、
+ * **出すものが無い日に空の欄を渡さない**ほうが、読む側の分岐が1つ減る。
+ */
+function withCountdown(today: Date): IslePlaceSpec[] {
+  const day = leadPlan(today)?.date;
+  if (!day) return HOME_PLACES;
+  const at = `${day}T00:00:00+09:00`;
+  return HOME_PLACES.map((p) =>
+    PLACES.find((x) => x.id === p.id)?.countdown ? { ...p, countdown: at } : p,
+  );
+}
+
+/**
  * 表紙の島の大きさ。**日数からは出さない。**
  *
  * `isleRadius` は「何日いたか」で島を大きくする式で、`/atlas` の連なりで
@@ -67,7 +99,7 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
 const COVER_R = 410;
 
 /** その旅そのものの入口。中身は章によって変わる */
-function tripPlace(c: Chapter, days: number): IslePlaceSpec {
+function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
   /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
   if (c.slug === "nordic") {
@@ -122,17 +154,23 @@ function tripPlace(c: Chapter, days: number): IslePlaceSpec {
      行き先を減らさずに軒数を増やさない形が、この板の中。
      **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
   const st = CHAPTER_STATS[c.slug];
-  const countries = c.countries.length;
+  /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
+     章の `countries` は歩き終わってからしか埋まらない。 */
+  const countries = chapterCountries(c, today).length;
   const g = guideOf(c.slug);
   return {
     id: "trip",
     label: "この島のこと",
+    /* **数は焼かない。** 字にしてから渡すと、表紙の札がデプロイした日の数で
+       止まる（`since` と `ChapDays.tsx`）。表紙は島がまるごとブラウザへ渡る
+       ので、`blurb` が焼いた字のまま配られていた。 */
     blurb: `${days.toLocaleString()}日目`,
+    since: { chapter: c.slug, tail: "日目" },
     icon: "statue",
     size: 54,
     note: c.note,
     facts: [
-      { n: String(days), unit: "日", cap: "この島にいる" },
+      { n: String(days), unit: "日", cap: "この島にいる", since: c.slug },
       ...(st ? [{ n: String(st.streams), unit: "本", cap: "配信した" }] : []),
       ...(st ? [{ n: st.people.toLocaleString(), unit: "人", cap: "来てくれた" }] : []),
       ...(countries ? [{ n: String(countries), unit: "カ国", cap: "歩いた" }] : []),
@@ -182,7 +220,7 @@ export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
        あちらは建つものが少なく、船着き場が出口の名前を持っている。 */
     /* **島に建てるものは増やさない**（`COVER_R` の注）。いまいる国の案内は
        「この島のこと」の板の中（`tripPlace`）。 */
-    places: [tripPlace(c, days), ...HOME_PLACES, { ...pier(), sign: undefined }],
+    places: [tripPlace(c, days, today), ...withCountdown(today), { ...pier(), sign: undefined }],
     /* 住人。その章の顔ぶれがまだ数えられていない島（出発したばかりの島）は、
        いまの島の顔ぶれをそのまま立たせる。**表紙に誰もいない日を作らない。**
 

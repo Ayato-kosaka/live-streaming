@@ -5,7 +5,7 @@
 #
 # 説明:
 #   - google-cloud-bigquery: BigQuery クライアント（videos管理、chat_messages MERGE）
-#   - requests: HTTP通信（将来の拡張用、現在は未使用）
+#   - requests: HTTP通信（`python/admin/` の8本が使っている。2026-10-13 実測）
 
 # BigQuery 操作
 google-cloud-bigquery>=3.11.0
@@ -13,7 +13,7 @@ google-cloud-bigquery>=3.11.0
 # YouTube Data API v3
 google-api-python-client>=2.100.0
 
-# HTTP通信（オプション、将来の拡張用）
+# HTTP通信。公開の口を叩くのに使う（`admin/_owner.py` `characters_add.py` ほか）
 requests>=2.31.0
 
 # Firestore（あやと島の数字の書き込み）

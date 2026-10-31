@@ -472,64 +472,90 @@ if (前.人 && 前.あやと) {
   if (!回) missing.push("回しの目盛り（input[data-tune=rot]）が無い");
 }
 
-/* ---- 4 出すかたち（かべがみ） ---- */
+/* ---- 4 出すかたち（かべがみ） ----
+   かたちは3つ（カードのまま / スマホ / パソコン）。**見ている端末で
+   決まらない**のがここの要——机のパソコンで選んで手元の電話に貼る人が
+   いるので、縦の画面でも横のかべがみが、横の画面でも縦のかべがみが焼ける。
+   2026-10-13 まで札は「スマホのかべがみ」1枚で、**パソコンで押すと
+   横長の1枚**が落ちてきていた（札が嘘をついていた）。 */
 const 画面 = await p.evaluate(() => ({
   w: Math.round(screen.width * devicePixelRatio),
   h: Math.round(screen.height * devicePixelRatio),
+  縦: screen.height >= screen.width,
 }));
+/** 向きの合わない側で使う、ふつうの画面（`stamp.ts` の `STOCK` と同じ値） */
+const STOCK = { tall: { w: 1290, h: 2796 }, wide: { w: 1920, h: 1080 } };
 const かたち札 = p.locator(".akd-shape");
-if ((await かたち札.count()) < 2) {
-  missing.push(`かたちの札（.akd-shape）が ${await かたち札.count()} 枚`);
+const 札数 = await かたち札.count();
+console.log(`\nこの端末の画面: ${画面.w}x${画面.h}（${画面.縦 ? "縦" : "横"}）/ かたちの札 ${札数}枚`);
+let 壁位置 = null;
+if (札数 < 3) {
+  missing.push(`かたちの札（.akd-shape）が ${札数} 枚（カードのまま／スマホ／パソコンで3枚）`);
 } else {
-  was = await nowUrl();
-  await かたち札.nth(1).click();
-  await settle(was);
-  const 壁 = await fingerprint();
-  const 文 = await p.evaluate(() => {
-    const el = [...document.querySelectorAll(".akd-sheet-body .nstudio-note")].pop();
-    return el?.textContent?.trim() ?? "";
-  });
-  console.log(`\nこの端末の画面: ${画面.w}x${画面.h}`);
-  console.log(`かべがみの焼き上がり: ${JSON.stringify(壁)}`);
-  console.log(`画面に出た字: ${文}`);
-  if (!壁 || 壁.w !== 画面.w || 壁.h !== 画面.h) {
-    bad.push(`かべがみの大きさが画面と違う（画面 ${画面.w}x${画面.h} / 焼き ${壁?.w}x${壁?.h}）`);
-  }
-  /* **広げた倍率を隠していないか。** 元が長辺 1600 しか無いので、
-     いまのスマホでは 1.5〜1.8倍に広がる。そこを黙って焼くと、
-     「なんだか眠い壁紙」になった理由が誰にも分からない。 */
-  if (!/倍に広げ|分の1に縮め/.test(文)) {
-    bad.push(`広げた倍率が画面に出ていない（出ていた字: ${文 || "なし"}）`);
-  }
-  /* とけい・ボタンの居場所が出ているか（置くときに避けられるように） */
-  const 目印 = await p.evaluate(() =>
-    [...document.querySelectorAll(".akd-stage .akd-safe")].map((e) => e.textContent?.trim()),
-  );
-  console.log(`よけるところの目印: ${JSON.stringify(目印)}`);
-  await layers("かべがみのかたち");
-  if (目印.length < 2) bad.push(`とけい／ボタンの目印が ${目印.length} 個`);
-  if (SHOTS) {
-    await p.screenshot({ path: join(SHOTS, `wall-${W}x${H}-lag${LAG}.png`) });
-    const png = await p.evaluate(() => {
-      const cv = document.querySelector(".akd-modal .akd-stage > canvas");
-      return cv ? cv.toDataURL("image/png") : null;
+  for (const [i, kind, 名] of [
+    [1, "tall", "スマホのかべがみ"],
+    [2, "wide", "パソコンのかべがみ"],
+  ]) {
+    was = await nowUrl();
+    await かたち札.nth(i).click();
+    await settle(was);
+    const 壁 = await fingerprint();
+    const 文 = await p.evaluate(() => {
+      const el = [...document.querySelectorAll(".akd-sheet-body .nstudio-note")].pop();
+      return el?.textContent?.trim() ?? "";
     });
-    if (png) {
-      writeFileSync(
-        join(SHOTS, `wallbaked-${W}x${H}-lag${LAG}.png`),
-        Buffer.from(png.slice(png.indexOf(",") + 1), "base64"),
-      );
+    /* 向きが合っていればその端末の画素数ちょうど、合っていなければ `STOCK` */
+    const 合う = kind === "tall" ? 画面.縦 : !画面.縦;
+    const 期待 = 合う ? { w: 画面.w, h: 画面.h } : STOCK[kind];
+    console.log(`\n${名}: 焼き上がり ${JSON.stringify(壁)} / 期待 ${期待.w}x${期待.h}`);
+    console.log(`画面に出た字: ${文}`);
+    if (!壁 || 壁.w !== 期待.w || 壁.h !== 期待.h) {
+      bad.push(`${名}の大きさが違う（期待 ${期待.w}x${期待.h} / 焼き ${壁?.w}x${壁?.h}）`);
     }
+    /* **向きそのものも見る。** 縦の札で横長が焼けていたら、札が嘘をついている */
+    if (壁 && (kind === "tall") !== (壁.h > 壁.w)) {
+      bad.push(`${名}なのに ${壁.w}x${壁.h}（向きが逆）`);
+    }
+    /* **広げた倍率を隠していないか。** 元が長辺 1600 しか無いので、
+       いまのスマホでは 1.5〜1.8倍に広がる。そこを黙って焼くと、
+       「なんだか眠い壁紙」になった理由が誰にも分からない。 */
+    if (!/倍に広げ|分の1に縮め/.test(文)) {
+      bad.push(`${名}: 広げた倍率が画面に出ていない（出ていた字: ${文 || "なし"}）`);
+    }
+    /* とけい・ボタンの居場所。**縦のときだけ出す**——机の画面に
+       とけいもライトのボタンも無いので、横で出すと避けなくていいものを避ける */
+    const 目印 = await p.evaluate(() =>
+      [...document.querySelectorAll(".akd-stage .akd-safe")].map((e) => e.textContent?.trim()),
+    );
+    console.log(`よけるところの目印: ${JSON.stringify(目印)}`);
+    await layers(名);
+    if (kind === "tall" && 目印.length < 2) bad.push(`${名}: とけい／ボタンの目印が ${目印.length} 個`);
+    if (kind === "wide" && 目印.length > 0) {
+      bad.push(`${名}なのに、スマホのとけい／ボタンの目印が出ている（${JSON.stringify(目印)}）`);
+    }
+    if (SHOTS) {
+      await p.screenshot({ path: join(SHOTS, `wall-${kind}-${W}x${H}-lag${LAG}.png`) });
+      const png = await p.evaluate(() => {
+        const cv = document.querySelector(".akd-modal .akd-stage > canvas");
+        return cv ? cv.toDataURL("image/png") : null;
+      });
+      if (png) {
+        writeFileSync(
+          join(SHOTS, `wallbaked-${kind}-${W}x${H}-lag${LAG}.png`),
+          Buffer.from(png.slice(png.indexOf(",") + 1), "base64"),
+        );
+      }
+    }
+    if (kind === "tall") 壁位置 = await boxes();
   }
   /* **カードのかたちへ戻したら、立ち位置も戻ること。**
      かたちごとに別に覚えているので、行って帰ってきたら同じ絵になる */
-  const 壁位置 = await boxes();
   was = await nowUrl();
   await かたち札.nth(0).click();
   await settle(was);
   const 戻り = await boxes();
-  console.log(`かべがみでの立ち位置: ${JSON.stringify(壁位置.人)}`);
-  console.log(`カードへ戻したあと  : ${JSON.stringify(戻り.人)}`);
+  console.log(`\nかべがみ（縦）での立ち位置: ${JSON.stringify(壁位置?.人)}`);
+  console.log(`カードへ戻したあと        : ${JSON.stringify(戻り.人)}`);
   if (後2?.人 && 戻り.人 && Math.abs(戻り.人.x - 後2.人.x) > 0.005) {
     bad.push(
       `かたちを往復したら、カードのほうの立ち位置が変わった（${後2.人.x} → ${戻り.人.x}）`,

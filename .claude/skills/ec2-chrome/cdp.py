@@ -5,7 +5,7 @@
 `ec2.py run` で送る短い python から `sys.path.insert(0, "/home/ubuntu/cdp"); from cdp import *`
 で使う。
 
-    up("suzuri")            # ~/cdp-suzuri で Chrome を起動（無ければ既定のプロファイルから1回だけ複製）
+    up("suzuri")            # ~/cdp-suzuri で Chrome を起動（無ければ既定のプロファイルから1回だけ複製。拡張などは写さない）
     t = tab()               # いちばん手前のタブ
     t.go("https://suzuri.jp/")
     t.js("document.title")
@@ -25,13 +25,128 @@ Chrome は `setsid nohup` で SSM のコマンドから切り離して起動す�
 1回の send-command が終わっても Chrome は残るので、次の send-command で
 同じタブの続きから触れる。**閉じるのは `down(name)`**（Browser.close で閉じる。
 pkill だけだとセッションが書き戻されなかった回がある＝Doneru で踏んだ）。
+
+## 束を2人で同時に触らない（札。2026-10-24）
+
+同じ束（`~/cdp-<名前>`）を2人が同時に触ると、タブを閉じ合い、入力が混ざる（10-24 01:01 UTC、投稿の担当2人が
+fish の Chrome で同時に `tt_post.py` を回し、片方の `fresh_tab` がもう片方のタブを閉じた）。呼ぶ側が札を取るのを
+覚えていてくれる形では守れないので、Chrome を開く・タブを拾う共通の所で守る。`up(name)`・`tab(name)`・`pages(name)` は、
+**列 `name` の札を持っていなければ、このプロセスの pid で取る**（`hold(name)`。持てるまで待つ。
+ほかの人が持っていれば、何番目で誰が持っているかを出す）。pid の札なので、このプロセスが終われば
+（kill -9 でも）次の確かめで消える。手元のセッションが `ec2.py lease` / `ec2.py hold` で取った札は、
+`ec2.py run` が `EC2_QUEUE_TICKET` で渡してくるので、取り直さずにそれを使う（自分の札を待って詰まらない）。
+EC2 に `ec2-queue` が無い・答えないときは、札なしで進む（Chrome の道具を止めない。止める側の守りは idle-stop が持つ）。
+
+## 版の番号（CDP_VERSION。2026-10-24）
+
+札を入れた日のうちに、EC2 の `/home/ubuntu/cdp/cdp.py` が札を取らない古い版に戻っていた。古い枝のセッションが、
+使うたびに手元の版を置き直す道具（`ec2_exec.sh`・`post.py send`）で書き戻した。だから EC2 の上の `cdp-heal`
+（`cdp_heal.sh`）が、ここが**正の版**（`ec2.py guard` が `/usr/local/lib/ec2-chrome/cdp.py` に置く）より小さい番号に
+なったら、すぐ正の版に戻す。手元から置く道具（`ec2.py put`・`ec2_exec.sh`・`ec2.py guard`）も、EC2 のほうが
+大きい番号なら置かない。**中身を変えて master に入れるときは番号を上げる**（上げないと、EC2 に残っている
+同じ番号の古い中身が戻されずに残る）。番号の行が無い版は 0（札の前の版と、札を入れた最初の版 #1027）。
+呼び名（`up(name)` など）は変えない。古い枝の道具が、戻された版をそのまま呼ぶ。
 """
-import base64, json, os, re, subprocess, time, urllib.request
+import atexit, base64, json, os, re, subprocess, sys, time, urllib.request
+
+# 版の番号（上の「版の番号」）。行の形は `cdp_heal.sh` の ver() が読む（行頭から `CDP_VERSION = <数>`）
+CDP_VERSION = 2
 
 HOME = "/home/ubuntu"
 SRC_UDD = f"{HOME}/.config/google-chrome"
 # サイト名 → ポート。並べて起動しても奪い合わないように、名前ごとに固定する
 PORTS = {"doneru": 9222, "suzuri": 9223}
+# 既定の Chrome から写さないもの（rsync の --exclude。Default の下）。
+# あやとが遠隔デスクトップで使う普段の Chrome には、拡張（AdBlock・画面録画・VPN）・
+# Google ドキュメントのオフライン・サービスワーカーのキャッシュが溜まっていて、まるごと写すと
+# サイトごとに 1.2〜2.0G、7つで 10G を超えた（EC2 のディスク 29G のうち。#1013）。
+# どれもログインとは関係が無い（ログインは Network/ の Cookie・Local Storage・Login Data）
+SEED_SKIP = ["Extensions", "Local Extension Settings", "Extension State", "Extension Rules",
+             "Extension Scripts", "Service Worker", "File System",
+             "IndexedDB/https_drive.google.com_0.indexeddb.*", "IndexedDB/https_docs.google.com_0.indexeddb.*"]
+
+
+QUEUE = "/usr/local/sbin/ec2-queue"
+QUEUE_WAIT_S = int(os.environ.get("EC2_QUEUE_WAIT", "1800"))
+QUEUE_POLL_S = 2     # 待ち札の聞き直しの間（EC2 の上なので安い）
+_HELD = {}       # 列 → 札（このプロセスが持っているもの。取ったもの・渡されたもの）
+_TAKEN = set()   # このプロセスが取った札（終わるときに返す）
+
+
+def _q(*args, timeout=30):
+    """ec2-queue を1回呼んで (終了コード, 答え) を返す。答えが読めなければ {"state": "error"}"""
+    try:
+        r = subprocess.run([QUEUE, "--json", *map(str, args)], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return 1, {"state": "error", "why": repr(e)}
+    for ln in reversed(r.stdout.splitlines()):
+        if ln.startswith("EC2Q "):
+            try:
+                return r.returncode, json.loads(ln[5:])
+            except ValueError:
+                break
+    return r.returncode, {"state": "error", "why": (r.stdout + r.stderr).strip()[-200:]}
+
+
+def _say(msg):
+    print(f"cdp: {msg}", file=sys.stderr, flush=True)
+
+
+def _release_all():
+    for tk in list(_TAKEN):
+        _q("release", tk)
+        _TAKEN.discard(tk)
+
+
+def hold(name, purpose=None, wait=None):
+    """列 name の札をこのプロセスで持つ（無ければ pid で取る。持てるまで待つ）。戻り値は札（無ければ None）"""
+    if name in _HELD:
+        return _HELD[name]
+    mine = dict(x.split(":", 1) for x in os.environ.get("EC2_QUEUE_TICKET", "").split() if ":" in x)
+    if name in mine and _q("owns", mine[name], name)[0] == 0:
+        _HELD[name] = mine[name]
+        return mine[name]
+    if not os.access(QUEUE, os.X_OK):
+        _say(f"{QUEUE} が無いので、列 {name} の札を取らずに進む（手元で ec2.py guard）")
+        return None
+    who = os.environ.get("EC2_QUEUE_WHO") or f"pid {os.getpid()}"
+    prog = sys.argv[0] if sys.argv and sys.argv[0] not in ("", "-", "-c") else "python3 の標準入力"
+    purpose = purpose or os.environ.get("EC2_QUEUE_PURPOSE") or f"{os.path.basename(prog)} の up({name})"
+    end = time.time() + (QUEUE_WAIT_S if wait is None else wait)
+    tk, said = None, None
+    while True:
+        args = ["take", name, "--pid", os.getpid(), "--who", who, "--purpose", purpose] + (["--ticket", tk] if tk else [])
+        _, r = _q(*args)
+        s = r.get("state")
+        if s == "held":
+            tk = r["ticket"]
+            _HELD[name] = tk
+            if not _TAKEN:
+                atexit.register(_release_all)
+            _TAKEN.add(tk)
+            # 子のプロセスが同じ束を触っても、この札で通るように
+            os.environ["EC2_QUEUE_TICKET"] = (os.environ.get("EC2_QUEUE_TICKET", "") + f" {name}:{tk}").strip()
+            return tk
+        if s == "waiting":
+            tk = r["ticket"]
+            h = r.get("holder") or {}
+            msg = (f"列 {name} は {h.get('who')}（{h.get('purpose')}）が持っている。{r.get('pos')}番目に待つ" if h
+                   else f"列 {name} の頭の待ち人を待つ（{r.get('pos')}番目）")
+            if msg != said:
+                _say(msg)
+                said = msg
+        elif s == "gone":
+            tk = None
+        elif s == "stopping":
+            raise RuntimeError(f"EC2 を止めている最中（{r.get('by')}）。止まりきってから起こし直して流し直す")
+        else:
+            _say(f"ec2-queue が答えないので、列 {name} の札を取らずに進む（{r.get('why')}）")
+            return None
+        if time.time() > end:
+            if tk:
+                _q("release", tk)
+            raise RuntimeError(f"列 {name} が空かない: {said}")
+        time.sleep(QUEUE_POLL_S)
 
 
 def _port(name):
@@ -52,7 +167,8 @@ def _alive(port):
 
 
 def up(name, url="about:blank", reseed=False):
-    """Chrome を起動する。もう動いていれば何もしない。戻り値はポート"""
+    """Chrome を起動する。もう動いていれば何もしない。戻り値はポート。先に列 name の札を持つ（hold）"""
+    hold(name)
     port, udd = _port(name), _udd(name)
     if _alive(port):
         return port
@@ -62,12 +178,20 @@ def up(name, url="about:blank", reseed=False):
     if reseed or not os.path.isdir(f"{udd}/Default"):
         subprocess.run(["rm", "-rf", udd])
         os.makedirs(udd, exist_ok=True)
-        subprocess.run(["cp", "-a", f"{SRC_UDD}/Default", f"{SRC_UDD}/Local State", udd + "/"], check=True)
+        skip = [f"--exclude=/Default/{p}" for p in SEED_SKIP]
+        subprocess.run(["rsync", "-a", *skip, f"{SRC_UDD}/Default", f"{SRC_UDD}/Local State", udd + "/"], check=True)
         subprocess.run(["chown", "-R", "ubuntu:ubuntu", udd])
         print(f"seed: {SRC_UDD}/Default -> {udd}")
     subprocess.run(["sh", "-c", f"rm -f {udd}/Singleton*"])
+    # --disable-extensions: 写した Preferences に拡張が載っていると、ファイルを消しても起動のたびに
+    #   ウェブストアから入れ直す（cdp-fish で、消して 764M → 起動2回で 1.3G に戻った。2026-10-22）。
+    #   CDP で触るのに拡張は要らない
+    # --disable-component-update: Chrome が自分で落とす部品（component_crx_cache ほか）を増やさない
+    # --disable-background-networking は足さない。同期やログインの更新まで止めるおそれがあり、
+    #   Google のログインは一度まとめて切れている（#768）
     cmd = (f"export DISPLAY=:20; setsid nohup google-chrome --user-data-dir={udd} "
            f"--remote-debugging-port={port} --remote-allow-origins=http://localhost:{port} "
+           f"--disable-extensions --disable-component-update "
            f"--no-first-run --no-default-browser-check --window-size=1280,900 '{url}' "
            f">/tmp/chrome-{name}.log 2>&1 < /dev/null & disown")
     subprocess.run(["sudo", "-u", "ubuntu", "-i", "--", "bash", "-c", cmd])
@@ -201,10 +325,13 @@ class Tab:
 
 
 def pages(name):
+    """束のタブの一覧。ほかのタブを全部閉じる道具（各スキルの fresh_tab）はこれで閉じる相手を拾うので、ここでも札を持つ"""
+    hold(name)
     return [t for t in json.load(urllib.request.urlopen(f"http://localhost:{_port(name)}/json/list")) if t["type"] == "page"]
 
 
 def tab(name="suzuri", index=0, new=False):
+    hold(name)
     port = _port(name)
     if new:
         t = json.loads(urllib.request.urlopen(urllib.request.Request(f"http://localhost:{port}/json/new?about:blank", method="PUT")).read())

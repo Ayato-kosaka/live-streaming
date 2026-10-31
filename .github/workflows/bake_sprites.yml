@@ -1,0 +1,202 @@
+name: 島の絵を焼く
+
+# 島の絵（スプライト。`site/public/sprites/`）を Actions で焼いて、焼けた絵と寸法表だけを
+# 起こした枝にコミットする。焼き方そのものは `tools/sprites/README.md`「スプライトを焼く」。
+#
+# **なぜ Actions か。** 焼くには Kenney のキット（CC0）と three が要るが、どちらも `.gitignore` で
+# clone に無く、**作業箱からは kenney.nl に届かない**（プロキシで 000/403）。料理を1品足すたびに
+# 主役の絵（`hero/`）が焼けずに行き止まりになっていた（2026-10-24、10/22 のフォカッチャで
+# `hero/food-cheese-cut` が無く、料理の面の主役が 404 になるところだった）。
+#
+# ## 起こしかた（どちらも1手）
+#
+# - **作業枝から**: `tools/sprites/bake-request.json` の `names`（焼いてコミット）と `check`
+#   （見比べに焼くだけ）を書いて、`claude/**` の枝に push する。`shorts_render.yml` と同じ形で、
+#   master にこのファイルが無いうちから使える
+# - **master に入ったあと**: `gh workflow run bake_sprites.yml --ref <claude/…> -f names=food-x`
+#
+# コミットするのは `claude/` の枝で走ったときだけ。それ以外の枝では焼いて見比べるところまで。
+#
+# ## 見比べ（コミットしない）
+#
+# 焼くほうは素材が欠けても黙って通る（`Textures/` が無いとまっ白な絵が焼ける）。
+# `check` の絵（既定は `food-pepper`、オレンジに出るはず）を**別の置き場に**焼き、いまの絵と
+# 画素で比べる。色が抜けていたら止めて、コミットに進まない。形や色が違うだけなら止めない
+# （キットの版が違う、と大きく出す）。並べた絵はログに base64 で出る——この作業箱からは
+# artifact もログの zip も落とせないので、`mcp__github__get_job_logs` で読んで
+# `python3 tools/sprites/bakecheck.py unsheet <ログ> <絵>` で戻す。
+#
+# **秘密は使わない。** 落とすものは公開の CC0 / MIT。push は既定の GITHUB_TOKEN だけで、
+# それが起こした push は次のワークフローを起こさない（同じ枝に戻しても回り続けない）。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["tools/sprites/bake-request.json"]
+  workflow_dispatch:
+    inputs:
+      names:
+        description: "焼いてコミットする絵（manifest.mjs の name。カンマ区切り。主役なら hero/ も焼く）"
+        required: true
+        type: string
+      check:
+        description: "見比べに焼き直すだけの、すでに在る絵（コミットしない）。food-pepper はオレンジに出るはず"
+        required: false
+        default: "food-pepper"
+        type: string
+
+permissions:
+  contents: write
+
+# 同じ枝に2回押したとき、2本が同じ寸法表を書いて push が競らないように1本ずつ
+concurrency:
+  group: bake-sprites-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bake:
+    # 箱の版を止める（shorts_render.yml と同じ。ubuntu-latest は版が動く）
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      # 作業枝には暗号文（shorts/.work/）が数百MB ある。焼くのに要る3か所だけ取る
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/sprites
+            site/public/sprites
+            site/content
+
+      # 作業箱と同じ版（node 22 / Python 3.13 / Pillow 12.3.0）
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # 名前の打ち間違いは、素材を落とす前にここで止める
+      - name: 何を焼くか決める
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_NAMES: ${{ inputs.names }}
+          IN_CHECK: ${{ inputs.check }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            node tools/sprites/bakeplan.mjs --names "$IN_NAMES" --check "$IN_CHECK"
+          else
+            node tools/sprites/bakeplan.mjs tools/sprites/bake-request.json
+          fi
+
+      # playwright-core は 1.56.0 で止めてある（chromium-1194 = Chromium 141）。版を上げない
+      - name: 道具を入れる（作業箱と同じ版）
+        timeout-minutes: 10
+        working-directory: tools/sprites
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -m pip install --quiet "pillow==12.3.0"
+          npx playwright-core install chromium
+          chrome="$(node -e 'import("playwright-core").then((m) => console.log(m.chromium.executablePath()))')"
+          test -x "$chrome"
+          echo "CHROME=$chrome" >> "$GITHUB_ENV"
+          echo "ブラウザ: $chrome"
+
+      - name: 素材を落とす（three と Kenney のキット）
+        timeout-minutes: 10
+        env:
+          KITS: ${{ steps.plan.outputs.kits }}
+        run: |
+          echo "### 落としたキット" >> "$GITHUB_STEP_SUMMARY"
+          # KITS は bakeplan.mjs が知っているキットの名前だけを空白で並べたもの
+          bash tools/sprites/fetchkits.sh $KITS
+
+      - name: render.html を配る
+        working-directory: tools/sprites
+        run: |
+          (nohup python3 -m http.server 8904 > "$RUNNER_TEMP/http.log" 2>&1 &)
+          for i in $(seq 30); do
+            curl -fsS -o /dev/null http://localhost:8904/render.html && exit 0
+            sleep 1
+          done
+          echo "render.html を配れなかった" >&2
+          exit 1
+
+      - name: 焼く前の絵を控える
+        run: cp -r site/public/sprites "$RUNNER_TEMP/before"
+
+      # いまの絵を書き換えないように、別の置き場に焼く
+      - name: 見比べの絵を別の置き場に焼く（コミットしない）
+        if: steps.plan.outputs.check != ''
+        working-directory: tools/sprites
+        env:
+          EXACT: "1"
+          CHECK: ${{ steps.plan.outputs.check }}
+        run: |
+          node bake.mjs "$RUNNER_TEMP/check" "$CHECK"
+          python3 meta.py "$RUNNER_TEMP/check" "$RUNNER_TEMP/check/sprites.json"
+
+      - name: 焼く
+        working-directory: tools/sprites
+        env:
+          EXACT: "1"
+          NAMES: ${{ steps.plan.outputs.names }}
+        run: |
+          node bake.mjs ../../site/public/sprites "$NAMES"
+          python3 meta.py
+
+      - name: 焼く前と並べる（色が抜けていたら止める）
+        env:
+          NAMES: ${{ steps.plan.outputs.names }}
+          CHECK: ${{ steps.plan.outputs.check }}
+        run: |
+          python3 tools/sprites/bakecheck.py --before "$RUNNER_TEMP/before" --after site/public/sprites \
+            --check-dir "$RUNNER_TEMP/check" --names "$NAMES" --check "$CHECK" \
+            --sheet "$RUNNER_TEMP/sheet.png" --b64
+
+      # 主役の絵の通し忘れ。ほかの品の欠けで赤くなりうるので、ここでは止めずに出すだけ
+      - name: 主役の絵がそろったか
+        continue-on-error: true
+        run: node tools/sprites/heroicon_selftest.mjs
+
+      - name: この枝にコミットして push
+        if: startsWith(github.ref, 'refs/heads/claude/')
+        env:
+          NAMES: ${{ steps.plan.outputs.names }}
+          BRANCH: ${{ github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A site/public/sprites site/content/sprites.json site/content/heroWide.json
+
+          # 頼まれた絵とその hero/・寸法表のほかが書き換わっていたら、コミットしない
+          allowed="site/content/sprites.json site/content/heroWide.json"
+          for n in ${NAMES//,/ }; do
+            allowed="$allowed site/public/sprites/$n.webp site/public/sprites/hero/$n.webp site/public/sprites/hero/$n@2x.webp"
+          done
+          extra=""
+          for f in $(git diff --cached --name-only); do
+            case " $allowed " in *" $f "*) ;; *) extra="$extra $f" ;; esac
+          done
+          if [ -n "$extra" ]; then
+            echo "::error::頼んでいないファイルが書き換わった:$extra"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "焼いた絵がいまの絵と同じバイト列。コミットするものが無い"
+            exit 0
+          fi
+          git --no-pager diff --cached --stat | tee -a "$GITHUB_STEP_SUMMARY"
+
+          git commit -q -m "島の絵を焼く: ${NAMES//,/, }" \
+            -m "作業箱からは素材（Kenney のキット）に届かないので、Actions で焼いて持ち帰った。焼いた絵と寸法表だけを入れる（見比べに焼いた絵は入れない）。" \
+            -m "$RUN_URL"
+          # 焼いているあいだに作業枝が進んでいることがある。重ねてから押す
+          for i in 1 2 3; do
+            git pull -q --rebase origin "$BRANCH" && git push -q origin "HEAD:$BRANCH" && exit 0
+            sleep $((i * 10))
+          done
+          echo "::error::push できなかった"
+          exit 1

@@ -1,0 +1,25 @@
+{
+ "schema": 1,
+ "video": "CKJvprUMOgA",
+ "option": "p2",
+ "version": "p2 v8",
+ "_source": "完成の下見（#976 のコメント 6314881528）で「説明欄とキャプションに BGM：ポケットサウンド – https://pocket-se.info/ を入れます」と書いた形。字の並びは城塞の回 p1（TDArug_te90/p1/post_p1.json）を写し、BGM の行をポケットサウンドに替えた。あやとの「2026/10/23 19時に出して。」（#976 のコメント 6315324737、2026-10-21 11:57 UTC）→ 2026-10-23 19:00 JST（10:00 UTC）に出す。動画は大きい字の改行だけを直した v7（言葉と画は下見と同じ）。2026-10-21 に v8 へ差し替えた（BGM の頭の無音を切った F-041 と、最後の注の札「※YouTubeで毎日22時から配信」F-042。言葉と画は承認された版と同じ）。YouTube はファイルを差し替えられないので、v7 の予約（yYBqfXBhkCg・TikTok 7699123679808015617）を消して上げ直す。投稿文は変えない",
+ "youtube": {
+  "file": "p2.mp4",
+  "title": "🇲🇰 北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった",
+  "description": "首都スコピエを1,200億円かけて作り替えた北マケドニア。広場も橋も銅像だらけで、スーツの銅像だけで30体。尻尾の折れた牛の銅像は中が空洞で、夕日の生配信で顔を映したら「銅像になってしまったんか」とコメントが来た。\n\n配信のアーカイブ（全編）: https://www.youtube.com/watch?v=CKJvprUMOgA\n一部に、夕日の配信（https://www.youtube.com/watch?v=WJ8KEi1V-no）と、新市街の配信（https://www.youtube.com/watch?v=hk39U7ZEKCQ）の画も使っています。\n\nナレーションは AI 音声を使用しています。\nBGM：ポケットサウンド – https://pocket-se.info/\n#北マケドニア #銅像 #海外旅行 #一人旅 #バックパッカー",
+  "visibility": "public",
+  "publish_at": "2026-10-23T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（ポケットサウンド、https://pocket-se.info/archives/1223/）。媒体の音源は付けない",
+  "related_video": "https://www.youtube.com/watch?v=CKJvprUMOgA"
+ },
+ "tiktok": {
+  "file": "p2.mp4",
+  "caption": "🇲🇰 北マケドニアに来たら、1,200億円かけて銅像だらけにした国だった\nYouTube「@あやとグルメアプリ」の生配信から\n首都スコピエを1,200億円かけて作り替えた北マケドニア。広場も橋も銅像だらけで、スーツの銅像だけで30体。尻尾の折れた牛の銅像は中が空洞で、夕日の生配信で顔を映したら「銅像になってしまったんか」とコメントが来た。\nナレーションは AI 音声を使用しています。\nBGM：ポケットサウンド – https://pocket-se.info/\n#北マケドニア #銅像 #海外旅行 #一人旅 #バックパッカー #ポケットサウンド",
+  "publish_at": "2026-10-23T10:00:00Z",
+  "music": "動画に入れた「クシコス・ポスト」（ポケットサウンド、https://pocket-se.info/archives/1223/）。媒体の音源は付けない"
+ },
+ "cover_at_s": 1.0,
+ "_cover_note": "サムネイル（YouTube）とカバー（TikTok）は題の札が見えるコマ。post.py cover --cover-at 1.0（題の札の下に、列柱のあいだに並ぶ銅像が4体見える）",
+ "file": "p2.mp4"
+}

@@ -1,0 +1,8 @@
+{
+ "name": "broom",
+ "size": [982, 273],
+ "parts": [
+  {"id": "broom", "file": "broom.png", "parent": null, "pivot": [335.1, 120.9], "at": [323.0, 108.0], "z": 10}
+ ],
+ "anchors": {"seat": {"part": "broom", "at": [362, 107]}, "tail": {"part": "broom", "at": [584, 105]}}
+}

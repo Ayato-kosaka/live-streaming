@@ -1,0 +1,11 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><title>対照: 返ってこない面</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- `reachkeys.mjs` の「返ってこない面」の対照。**着いてから固まる。**
+     #963 では `/me/desk` で描画の手が返らなくなり、使い回したタブで残り43面が
+     `Page crashed` になった。ここは着いて 300ms 後に手を回しっぱなしにして、
+     `goto` は通るが、そのあとの `evaluate` が二度と返ってこない形を作る。 -->
+<body style="margin:0">
+<h1>返ってこない面</h1>
+<p><a href="/ok.html">となりの台へ</a></p>
+<script>setTimeout(() => { for (;;) {} }, 300);</script>
+</body></html>

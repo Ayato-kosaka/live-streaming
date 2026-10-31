@@ -1,0 +1,417 @@
+name: ショートの材料を作る
+
+# バズるショートの見どころ探しの材料（文字起こし・コンタクトシート・数値の時系列）を
+# 配信アーカイブと参考ショートから作り、**暗号化して**作業枝の `shorts/.work/` に置く。
+# 使い方・依頼ファイルの形・出力の列・復号のしかたは `tools/shorts/ingest/README.md`。
+#
+# **なぜ Actions か。** 作業箱からは YouTube に届かない（www.youtube.com への CONNECT が
+# 403）。huggingface.co にも届かない。artifact の実体も持ち帰れない。届くのは git だけ。
+# だから YouTube に触るのも重い計算もここでやり、結果は git で持ち帰る。
+#
+# **なぜ暗号化か。** このリポジトリは公開。平文の字幕やフレームを積むと誰でも読める。
+# 依頼ファイルに入れた公開鍵でだけ開けるようにして置く（tools/shorts/ingest/seal.py）。
+# 平文で置くのは「何がいくつ・何バイト・成否」だけの manifest.json。
+#
+# **Cookie は `YOUTUBE_COOKIES` を読むだけ。`cookies/update` は絶対に使わない。**
+# 書き換えると毎晩の取り込みが掴む Cookie が変わる（docs/clip-download.md）。
+# Cookie を握るのは `fetch` の job だけで、そこでは1本ずつ順に取る。
+# 解析（matrix）は Cookie を持たない。2本の配信を並べて取ると、同じセッションを
+# 2か所から同時に使うことになるので。
+#
+# **Cookie を使うほかの取り込み（毎晩の取り込みほか）と同時に取らない。** 時計では
+# 決めない（毎晩の取り込みは cron から数時間遅れ、時計の枠の外に来る晩もある。
+# 遅れは `python3 python/cron_lag.py` で測る）。plan と download.py が Actions の API で、`YOUTUBE_COOKIES`
+# を使うワークフローの run が動いていないかを見て、動いていれば1分ごとに見直して
+# 最長60分待つ（tools/shorts/ingest/gate.py）。そのために `actions: read` を足してある。
+# API が読めないときだけ、前の時計の枠（21:15〜23:59 UTC は取り始めない）に戻る。
+#
+# 取ったものは Actions のキャッシュで解析の job へ渡し、最後に消す。
+# artifact にしないのは、公開リポジトリの artifact は誰でも落とせるから
+# （他人のショートの実物をそこに置かない）。
+#
+# **clips だけは材料ではなく編集の素材**（頼んだ区間ごとの mp4。元の縦横・fps・音つき）。
+# 区間ごとに取らず、配信を1本まるごと元の画質で取ってから、解析の job で1コマ単位に
+# 切る（区間取りは頭がキーフレームに寄り、配信の何秒から始まるかが確かめられない）。
+# 数百MB になるので、暗号文は 45MB ずつに切って置く（seal.py）。
+# 切った mp4 ごとに、画を選ぶための見る用のシート（2秒に1コマ・帯に配信の時刻）も作り、
+# シートと index.json だけを mp4 とは別の小さな封（sheets.key.enc・sheets.enc。数MB）にも包む。
+# 本編集の担当は `decrypt.py --sheets --branch …` で、mp4 の暗号文を落とさずにシートを読む（#1011）。
+#
+# **captions は媒体を落とさない道**（#1014・F-046）。YouTube の自動字幕と題・長さだけを取り、
+# その job の中で封をして置く（quick_captions.py。数分）。archive は字幕を最初の4分で取って
+# いても、whisper まで終わらないと1つの封にならず、フォカッチャの回は1時間を越えても届かなかった。
+# 区間を決めて原稿に入るには自動字幕で足りるので、まずこれで頼む。
+# fetch はこの job が終わってから走る（Cookie を同じ run の2つの job で同時に握らない）。
+#
+# **道具を入れる段は、コマンドごとに上限を置いて1回だけ取り直す**（retry.sh）。
+# ふだん20〜40秒の段が、apt か pip で32分止まったことがある（2026-10-22）。
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["shorts/requests/**"]
+  # master に入ってから使う。入力は依頼ファイルと同じ意味
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "archive / reference / zoom / channel / clips / captions"
+        required: true
+        type: choice
+        options: [archive, reference, zoom, channel, clips, captions]
+        default: archive
+      videos:
+        description: "動画ID（channel のときは @ハンドル か UC…）。カンマ区切り"
+        required: true
+      range:
+        description: "zoom / clips の区間（例 0:12:00-0:14:00。clips はカンマ区切りで何区間でも）"
+        required: false
+        default: ""
+      fps:
+        description: "zoom の fps（0〜5）"
+        required: false
+        default: "1"
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      branch:
+        description: "結果を置く枝（claude/ で始まる。master には置かない）"
+        required: true
+
+permissions:
+  contents: read
+  # gate.py が、Cookie を使うほかのワークフローの run の状態を読む（読めないと時計の枠に戻る）
+  actions: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    # ほかの取り込みが動いていれば、ここで最長60分待つ（gate.py の MAX_WAIT）
+    timeout-minutes: 70
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      fetch: ${{ steps.plan.outputs.fetch }}
+      count: ${{ steps.plan.outputs.count }}
+      captions: ${{ steps.plan.outputs.captions }}
+      captions_count: ${{ steps.plan.outputs.captions_count }}
+      branch: ${{ steps.plan.outputs.branch }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 依頼を読む
+        id: plan
+        # 入力は env で渡す（`run:` の中に式を直に埋めない）
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_VIDEOS: ${{ inputs.videos }}
+          IN_RANGE: ${{ inputs.range }}
+          IN_FPS: ${{ inputs.fps }}
+          IN_PUBKEY: ${{ inputs.pubkey }}
+          IN_BRANCH: ${{ inputs.branch }}
+          # 枝を作った push は commits が空で来るので、既定の枝との compare を引くのに使う。
+          # ほかの取り込みの run の状態を読むのにも使う（gate.py）
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/shorts/ingest/plan.py
+
+  # 字幕だけの道（mode captions）。媒体を落とさず、字幕と題・長さだけを取って封をして置く
+  captions:
+    needs: plan
+    if: needs.plan.outputs.captions_count != '0'
+    runs-on: ubuntu-24.04
+    # ほかの取り込みを待つ60分（gate.py）＋取って封をして置く数分
+    timeout-minutes: 80
+    # **fetch と同じ枠。** Cookie を握るので、同じ ref のほかの run の fetch と並ばせる
+    concurrency:
+      group: fetch-chat-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      # gate.py が、Cookie を使うほかのワークフローの run の状態を読む
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: 道具を入れる
+        # fetch の job と同じ組から ffmpeg を抜いたもの（媒体を落とさないので要らない）
+        timeout-minutes: 12
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
+          python3 -m yt_dlp --version
+          $R 90 bash -c 'rm -rf /tmp/bgutil && git clone --depth 1 --branch 2.0.0 \
+            https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil'
+          $R 180 npm --prefix /tmp/bgutil/server install --silent
+
+      - name: PO Token が本当に作れるか見る
+        run: deno run --allow-all /tmp/bgutil/server/src/generate_once.ts --version
+
+      - name: Cookie があれば置く
+        # **読むだけ。** 中身はログに出さない（fetch の job と同じ形）
+        env:
+          CK: ${{ secrets.YOUTUBE_COOKIES }}
+        run: |
+          if [ -n "$CK" ]; then
+            printf '%s' "$CK" | base64 -d > /tmp/clip_cookies.txt 2>/dev/null \
+              || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            grep -q "youtube" /tmp/clip_cookies.txt || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            echo "CLIP_COOKIES_FILE=/tmp/clip_cookies.txt" >> "$GITHUB_ENV"
+            echo "Cookie あり（$(wc -l < /tmp/clip_cookies.txt) 行）"
+          else
+            echo "Cookie なし。無いまま走る"
+          fi
+
+      - name: 字幕だけ取って封をする
+        id: grab
+        continue-on-error: true
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+          ITEMS: ${{ needs.plan.outputs.captions }}
+          # 1本ごとに、ほかの取り込みの run の状態を読む（gate.py）
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          printf '%s' "$ITEMS" > "$RUNNER_TEMP/captions-items.json"
+          python3 tools/shorts/ingest/quick_captions.py "$RUNNER_TEMP/captions-items.json" \
+            "$RUNNER_TEMP/sealed-captions"
+
+      - name: Cookie の写しを消す
+        if: always()
+        run: rm -f /tmp/clip_cookies.txt
+
+      - name: 作業枝に置く
+        # 字幕が取れなかった回も「取れなかった」封を置く（理由は封の中の run.json）
+        if: ${{ !cancelled() }}
+        env:
+          BRANCH: ${{ needs.plan.outputs.branch }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          # push.sh は置くたびに枝の先を checkout し直す（作業木が動く）ので、写してから回す
+          cp tools/shorts/ingest/push.sh "$RUNNER_TEMP/push.sh"
+          n=0
+          for d in "$RUNNER_TEMP"/sealed-captions/*/; do
+            [ -f "$d/manifest.json" ] || continue
+            KEY=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["key"])' "$d/manifest.json")
+            DEST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["dest"])' "$d/manifest.json")
+            SEALED="${d%/}" KEY="$KEY" DEST="$DEST" bash "$RUNNER_TEMP/push.sh"
+            n=$((n + 1))
+          done
+          echo "置いた封: ${n}"
+          [ "$n" -gt 0 ]
+
+      - name: 字幕が取れなかったら赤くする
+        if: steps.grab.outcome != 'success'
+        run: |
+          echo "字幕が取れなかったものがある（manifest.json の stages と、復号した run.json の fetch を見る）"
+          exit 1
+
+  fetch:
+    # 字幕だけの道が先（同じ run の2つの job で Cookie を同時に握らない）。字幕の道が
+    # 無い・落ちた回でも走る（`!cancelled()`）。走る条件は前と同じ（plan が通って count が 0 でない）
+    needs: [plan, captions]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
+    runs-on: ubuntu-24.04
+    # 取るぶん（前と同じ120分）＋ほかの取り込みを待つ60分（download.py が1本ごとに待つ）
+    timeout-minutes: 180
+    # **毎晩の取り込み・切り抜きと同じ枠。** 名前を揃えてあるので、同じ ref で
+    # 片方が走っているあいだ、もう片方は待つ（clip_fetch.yml と同じ考え）。
+    # 作業枝から push で走るときは ref が master と違うので枠も別になる。
+    # そのときに毎晩の取り込みと重ならないことは、download.py が1本ごとに
+    # Actions の API で見る（gate.py）。
+    concurrency:
+      group: fetch-chat-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # PO Token を作る bgutil の依存を入れるためだけ（走らせるのは deno）
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      - name: 道具を入れる
+        # clip_fetch.yml と同じ組（2026-09-22 に通った組）。コマンドごとに上限を置き、
+        # 止まったら1回だけ取り直す（retry.sh。ふだんは全部で30秒ほど）
+        timeout-minutes: 15
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet --upgrade yt-dlp yt-dlp-ejs bgutil-ytdlp-pot-provider
+          python3 -m yt_dlp --version
+          # apt が詰まったら GitHub の静的ビルドに切り替える（ffmpeg.sh。2026-10-22 に apt が止まった）
+          bash tools/shorts/ingest/ffmpeg.sh
+          ffmpeg -version > /dev/null
+          $R 90 bash -c 'rm -rf /tmp/bgutil && git clone --depth 1 --branch 2.0.0 \
+            https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /tmp/bgutil'
+          $R 180 npm --prefix /tmp/bgutil/server install --silent
+
+      - name: PO Token が本当に作れるか見る
+        run: deno run --allow-all /tmp/bgutil/server/src/generate_once.ts --version
+
+      - name: Cookie があれば置く
+        # **読むだけ。** 中身はログに出さない（clip_fetch.yml と同じ形）
+        env:
+          CK: ${{ secrets.YOUTUBE_COOKIES }}
+        run: |
+          if [ -n "$CK" ]; then
+            printf '%s' "$CK" | base64 -d > /tmp/clip_cookies.txt 2>/dev/null \
+              || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            grep -q "youtube" /tmp/clip_cookies.txt || printf '%s' "$CK" > /tmp/clip_cookies.txt
+            echo "CLIP_COOKIES_FILE=/tmp/clip_cookies.txt" >> "$GITHUB_ENV"
+            echo "Cookie あり（$(wc -l < /tmp/clip_cookies.txt) 行）"
+          else
+            echo "Cookie なし。無いまま走る"
+          fi
+
+      - name: 1本ずつ取る
+        env:
+          BGUTIL_HOME: /tmp/bgutil/server
+          ITEMS: ${{ needs.plan.outputs.fetch }}
+          # 1本ごとに、ほかの取り込みの run の状態を読む（gate.py）
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "$ITEMS" > "$RUNNER_TEMP/items.json"
+          python3 tools/shorts/ingest/download.py "$RUNNER_TEMP/items.json" "$HOME/shorts-media"
+          du -sh "$HOME/shorts-media"
+
+      - name: Cookie の写しを消す
+        if: always()
+        run: rm -f /tmp/clip_cookies.txt
+
+      - name: 解析の job へ渡す（キャッシュ）
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/shorts-media
+          key: shorts-media-${{ github.run_id }}
+
+  analyze:
+    needs: [plan, fetch]
+    # fetch が落ちても走る（取れなかったものは「取れなかった」manifest を置く）。
+    # ただし回ごと取り消したときは走らない（`always()` だと取り消しても7本とも走った）
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.count != '0' }}
+    name: ${{ matrix.key }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 道具を入れる
+        if: matrix.mode != 'channel'
+        # ふだん20〜40秒。2026-10-22 に apt か pip で32分止まった（VusdZVyjgjQ の archive）。
+        # コマンドごとに上限を置き、止まったら1回だけ取り直す（retry.sh）
+        timeout-minutes: 20
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          # apt が詰まったら GitHub の静的ビルドに切り替える（ffmpeg.sh。書体は無くても進む）
+          bash tools/shorts/ingest/ffmpeg.sh fonts-dejavu-core
+          ffmpeg -version > /dev/null
+          $R 180 python3 -m pip install --quiet numpy pillow
+          # whisper を使うのは archive と reference だけ（zoom と clips は書き起こさない）
+          case "$MODE" in
+            archive|reference) $R 300 python3 -m pip install --quiet "faster-whisper==1.2.1" ;;
+          esac
+
+      # whisper のモデル（large-v3-turbo で 1.6GB）を毎回 HF から落とさない
+      - name: whisper のモデル
+        if: matrix.mode == 'archive' || matrix.mode == 'reference'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: faster-whisper-${{ matrix.whisper.model }}-v1
+
+      - name: 取ったものを受け取る
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/shorts-media
+          key: shorts-media-${{ github.run_id }}
+
+      - name: 解析する
+        id: analyze
+        continue-on-error: true
+        env:
+          ITEM: ${{ toJSON(matrix) }}
+          KEY: ${{ matrix.key }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          printf '%s' "$ITEM" > "$RUNNER_TEMP/item.json"
+          python3 tools/shorts/ingest/analyze.py "$RUNNER_TEMP/item.json" "$HOME/shorts-media" \
+            "$RUNNER_TEMP/out"
+
+      - name: 暗号化する
+        id: seal
+        env:
+          KEY: ${{ matrix.key }}
+          DEST: ${{ matrix.dest }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 tools/shorts/ingest/seal.py "$RUNNER_TEMP/item.json" "$RUNNER_TEMP/out" \
+            "$RUNNER_TEMP/sealed" "$RUNNER_TEMP/stages-$KEY.json"
+          ls -la "$RUNNER_TEMP/sealed"
+          # **平文はここで捨てる。** 下の commit は sealed だけを見る
+          rm -rf "$RUNNER_TEMP/out"
+
+      - name: 作業枝に置く
+        env:
+          BRANCH: ${{ needs.plan.outputs.branch }}
+          DEST: ${{ matrix.dest }}
+          KEY: ${{ matrix.key }}
+          RUN_ID: ${{ github.run_id }}
+        run: bash tools/shorts/ingest/push.sh
+
+      - name: 解析の段が落ちていたら赤くする
+        if: steps.analyze.outcome != 'success'
+        run: |
+          echo "解析の段に落ちたものがある（manifest.json の stages と、復号した run.json を見る）"
+          exit 1
+
+  cleanup:
+    needs: [plan, fetch, analyze]
+    if: always() && needs.fetch.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: 受け渡しのキャッシュを消す
+        # 動画の実物を10GBの枠に置いたままにしない（ほかのワークフローのキャッシュが押し出される）。
+        # **自分の回のぶんだけでなく、もう終わった回のぶんも掃く。** 取り消した回は
+        # ここまで来ないので、2.2GB が残った（2026-10-15 に実測）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/caches?per_page=100" \
+            --jq '.actions_caches[] | select(.key | startswith("shorts-media-")) | "\(.id) \(.key)"' \
+            > "$RUNNER_TEMP/caches.txt"
+          echo "受け渡しのキャッシュ: $(wc -l < "$RUNNER_TEMP/caches.txt") 個"
+          while read -r id key; do
+            rid="${key#shorts-media-}"
+            st=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$rid" --jq .status 2>/dev/null || echo gone)
+            if [ "$rid" = "$GITHUB_RUN_ID" ] || [ "$st" = "completed" ] || [ "$st" = "gone" ]; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/caches/$id" > /dev/null \
+                && echo "消した: $key（$st）"
+            else
+              echo "残す: $key（$st。まだ走っている回のもの）"
+            fi
+          done < "$RUNNER_TEMP/caches.txt"

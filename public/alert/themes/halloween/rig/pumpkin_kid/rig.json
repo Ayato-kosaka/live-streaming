@@ -1,0 +1,16 @@
+{
+ "name": "pumpkin_kid",
+ "size": [750, 757],
+ "parts": [
+  {"id": "body", "file": "body.png", "parent": null, "pivot": [171.1, 130.8], "at": [371.0, 513.0], "z": 10},
+  {"id": "head", "swaps": {"smile": "head-smile.png", "open": "head-open.png", "wink": "head-wink.png"}, "parent": "body", "pivot": [283.0, 376.0], "at": [171.1, 106.8], "z": 20},
+  {"id": "hat_stem", "file": "hat_stem.png", "parent": "head", "pivot": [186.0, 226.0], "at": [283.0, 86.0], "z": 15},
+  {"id": "leg_l", "file": "leg_l.png", "parent": "body", "pivot": [106.0, 81.0], "at": [135.1, 154.7], "z": 5},
+  {"id": "leg_r", "file": "leg_r.png", "parent": "body", "pivot": [106.0, 81.0], "at": [203.1, 158.7], "z": 9},
+  {"id": "arm_l", "file": "arm_l.png", "parent": "head", "pivot": [264.9, 198.2], "at": [129.0, 236.0], "z": 8},
+  {"id": "arm_r", "file": "arm_r.png", "parent": "head", "pivot": [93.1, 180.0], "at": [441.0, 226.0], "z": 18}
+ ],
+ "items": {"hat_pointy": "hat_pointy.png", "hat_ribbon": "hat_ribbon.png", "hat_leaf": "hat_leaf.png", "pole": "pole.png"},
+ "itemAnchors": {"hat_pointy": [298.0, 231], "hat_ribbon": [213.5, 197], "hat_leaf": [245.5, 195], "pole": [73.0, 314]},
+ "anchors": {"hatOn": {"part": "head", "at": [275, 92]}, "grip": {"part": "arm_r", "at": [247.6, 143.8]}, "gripL": {"part": "arm_l", "at": [241.6, 195.9]}}
+}

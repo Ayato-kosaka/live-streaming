@@ -27,12 +27,14 @@
 import {
   CHAPTERS,
   chapterDayNo,
+  chapterHref,
   chapterNow,
   chapterRunning,
   chapterSpan,
   type Chapter,
 } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
+import { chapterCountries } from "@/content/walked";
 /* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
    （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
    ここに置いたままだと国の表まで面の JS に付いてくる（実測 8kB）。
@@ -64,8 +66,15 @@ export type TravelNow = {
   /** 章の名前。そのまま「いまどこ」になる */
   name: string;
   slug: string;
-  /** その旅の島 */
+  /** その旅の島。**いまいる章の島はトップそのもの**（`chapterHref`） */
   href: string;
+  /**
+   * 入口の札に添える1行。**押した先に何が在るか。**
+   *
+   * **呼ぶ側で書かない。** 面ごとに書いてあったせいで、章が変わった日に
+   * 見出しだけ新しくなって中身が前の旅のまま残った（`travelNow` の注）。
+   */
+  sub: string;
   /** 章の一行（`content/chapters.ts` の note） */
   note: string;
   /**
@@ -173,10 +182,32 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
   if (stayNow(now)) return null;
   const c = chapterNow(now);
   if (!c || !chapterRunning(c, now)) return null;
+  /* **行き先を手で組み立てない。** ここは `/island/${c.slug}` と書いていた。
+     いまいる章の島はトップそのものなので（`chapterHref`）、その写しの面
+     ——**141面で唯一どこからもリンクの来ていない面**——へ送っていた。
+     `chapterHref` に決めさせる。 */
+  const href = chapterHref(c, chapterNow(now));
+  /* **「旅の◯カ国」を字に焼かない。** 下の `sub` を作る前は、呼ぶ側2か所
+     （`app/now/parts.tsx` と `components/live/NowLive.tsx`）が
+     「この旅のこと、旅の6カ国、旅のしおり」を**それぞれベタ書き**していた。
+     見出し（`{trip.name}の島へ`）は章から引いていたので、#224 で章が
+     バルカン諸国周遊に変わった日に**見出しだけ変わって、中身が北欧のまま**
+     残った。バルカンは2カ国で、旅のしおりは北欧の面にしか無い。
+
+     数は `chapterCountries` から引く。**章の `countries` だけでは足りない**
+     ——あれは歩き終わった国の欄で、歩いている最中の国はまだ入らない
+     （`content/walked.ts` にその理由が書いてある）。
+
+     **0カ国とは書かない。** まだ1国も記録の無い章では、数ごと落とす
+     （`docs/island-standards.md` 16章「0件になりうる数を札に入れない」）。
+     **「旅のしおり」も書かない。** あれは北欧の面が持っているもので、
+     章ぜんぶに在るものではない。島に建っているものは、押した先が並べる。 */
+  const kuni = chapterCountries(c, now).length;
   return {
     name: c.name,
     slug: c.slug,
-    href: `/island/${c.slug}`,
+    href,
+    sub: kuni > 0 ? `この旅のこと、旅の${kuni}カ国` : "この旅のこと",
     note: c.note,
     days: chapterDayNo(c, now),
   };
@@ -192,6 +223,35 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
 export function tripAsPlace(updatedAt: string | undefined, now: Date = new Date()): TravelNow | null {
   const t = travelNow(now);
   return t && placeOutdated(updatedAt, now) ? t : null;
+}
+
+/**
+ * 人の字が古くなった日に、**国までは機械が受ける。**
+ *
+ * `tripAsPlace` は旅のあいだ（章が走っていて、国が引けない日）しか返さない。
+ * **落ち着いて国に居る日は、受け皿が無かった。** `stayNow()` が国を知って
+ * いるのに、画面の大きい字だけが人の打った古い場所を出しつづける。
+ * 実際に起こりうる形はこう——
+ *
+ *     いまどこ … ジョージア・トビリシ   ← 2週間前に打たれた字
+ *     札       … アルバニアに来て 5日目  ← 機械が数えた、本当のこと
+ *
+ * **同じ面が2つのことを言う。** あやとの言葉（2026-10-13 / #808）
+ * 「機械が知っていることは機械が埋める」。国は知っているので、ここで埋める。
+ *
+ * 街までは知らないので、**人の字が新しいうちは人が勝つ**（そちらが細かい）。
+ * 返すのは、人の字が古くなった日の答えだけ。
+ *
+ * 旅に出ている日は `tripAsPlace` のほうが先（章のほうが細かい）なので `null`。
+ */
+export function stayAsPlace(
+  updatedAt: string | undefined,
+  now: Date = new Date(),
+): { name: string; slug: string } | null {
+  if (tripAsPlace(updatedAt, now)) return null;
+  if (!placeOutdated(updatedAt, now)) return null;
+  const s = stayNow(now);
+  return s ? { name: s.name, slug: s.slug } : null;
 }
 
 /**
@@ -211,5 +271,7 @@ export function placeWord(
   now: Date = new Date(),
 ): string {
   const t = tripAsPlace(updatedAt, now);
-  return t ? `${t.name}のとちゅう` : place;
+  if (t) return `${t.name}のとちゅう`;
+  // 旅に出ていない日も、人の字が古ければ国までは機械が知っている
+  return stayAsPlace(updatedAt, now)?.name ?? place;
 }

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { getState, type IslandState, type IslandStats, type ResidentShow } from "@/lib/api";
+import {
+  getState,
+  type IslandLimits,
+  type IslandState,
+  type IslandStats,
+  type ResidentShow,
+} from "@/lib/api";
 import { uidNow } from "@/lib/auth";
 import { hereKey } from "@/lib/hereKey";
 import { STATS_FALLBACK } from "@/content/site";
@@ -140,6 +146,33 @@ function useStateGen(): number {
 }
 
 export type StatKey = keyof typeof STATS_FALLBACK | "activeFriends";
+
+/**
+ * 字の長さの上限。**正はサーバー**（`GET /state` の `limits`）。
+ *
+ * **届くまでは空の表を返す。** ここで既定の数字を置かない——置いた瞬間に
+ * 「同じ事実が2か所」へ戻る（それを畳むためにこの口を足した）。
+ * 入力欄は `maxLength={limits.note}` のように書けばよく、
+ * `undefined` のあいだはブラウザ側の上限が付かないだけで、
+ * **上限そのものはサーバーが必ずかける。**
+ *
+ * `useLiveStats` と同じ `load()` を使うので、**往復は増えない。**
+ * @return {Partial<IslandLimits>} 届いていれば中身、まだなら空
+ */
+export function useLimits(): Partial<IslandLimits> {
+  const [limits, setLimits] = useState<Partial<IslandLimits> | null>(null);
+  const gen = useStateGen();
+  useEffect(() => {
+    let alive = true;
+    load().then((s) => {
+      if (alive && s?.limits) setLimits(s.limits);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [gen]);
+  return limits ?? {};
+}
 
 /** 焼き込みの値をまず返し、最新値が取れたら差し替える。 */
 export function useLiveStats(): IslandStats {

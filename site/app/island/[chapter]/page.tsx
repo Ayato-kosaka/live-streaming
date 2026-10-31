@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { share } from "@/lib/share";
 import Link from "next/link";
 
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
@@ -48,10 +49,15 @@ export async function generateMetadata({
   const { chapter } = await params;
   const c = ISLE_CHAPTERS.find((x) => x.slug === chapter);
   if (!c) return {};
-  return {
+  return share({
+    key: "atlas",
     title: c.name,
     description: c.from ? `${c.from} から ${c.to || "いま"} まで。${c.note}` : c.note,
-  };
+    /* **手で `/island/<章>` と組まない。** いまいる章の島はトップそのものなので、
+       手で組むと `og:url` と canonical が**どこからもリンクの来ていない写しの面**を
+       指す（`site/selftest/chapterkey_selftest.mjs` が数えている） */
+    path: chapterHref(c),
+  });
 }
 
 const near = (c?: Chapter): Neighbour | undefined =>

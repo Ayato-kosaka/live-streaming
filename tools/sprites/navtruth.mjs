@@ -35,9 +35,17 @@
  *
  * | 札の時制 | 行き先に要るもの |
  * | --- | --- |
- * | これから・次・もうすぐ・予定 | **今日より後の日付が1つ以上** |
+ * | これから・次・もうすぐ・予定 | **今日をふくむ、これから先の日付が1つ以上** |
  * | いま・いまの・現在 | **今日を含む期間、または今日の日付** |
  * | 行ってきた・やった・終わった | 今日より後の日付が**無い**こと |
+ *
+ * **今日は「これから」の側に数える。** 配信は日本時間の22時からなので、
+ * 今日の企画は朝から夜までずっと、まだ起きていない。`d > today` で数えていた
+ * あいだは、**企画がその日に来ただけで嘘と出ていた**（#770。2026-10-12 の
+ * 北マケドニア行きがそれで、`/next` を指す札が2枚とも赤くなった）。
+ * 「行ってきた」側は今までどおり `d > today` が無いことで見る——今日の予定が
+ * 1件あるだけで「もう行ってきた」の棚を赤くすると、終わったものを並べた面が
+ * 毎回落ちる。**今日は、どちらの言い方でも嘘にしない。**
  *
  * 日付は行き先の面から拾う（`YYYY-MM-DD` と `M/D` と `YYYY年M月D日`）。
  * **拾えなかった面は「嘘」と言わない。** 判定できないものを赤にすると、
@@ -51,11 +59,22 @@
  */
 
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const BASE = process.env.BASE || "https://live-streaming-d3cac.web.app";
 const SELFTEST = process.argv.includes("--selftest");
-/** 今日（JST）。行き先の日付と見比べる基準。 */
+/**
+ * 今日（JST）。行き先の日付と見比べる基準。
+ *
+ * **島の日付は、どこも日本時間で切る**（`site/lib/nightly.ts` の `jstNow`）。
+ * 配信が22時からで、企画の `date` も料理も歩いた国もその線で決まっている。
+ * ここを UTC で切ると、日本の 00:00〜09:00 のあいだ「今日」が前の日を指して、
+ * 昨日の企画がまだ「これから」に見える。
+ *
+ * `TODAY=2026-10-20` を渡すと、その日に立ってみた答えが出る。
+ * **焼いた札が何日もつか**は、これで前へ進めて見る（#770）。
+ */
 const TODAY = process.env.TODAY ||
   new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 
@@ -121,7 +140,9 @@ export function judge(want, dates, today = TODAY) {
   const future = dates.filter((d) => d > today);
   const past = dates.filter((d) => d < today);
   const istoday = dates.includes(today);
-  if (want === "future") return future.length > 0;
+  /* **今日は「これから」。** 配信は22時からなので、今日の企画は一日じゅう
+     まだ起きていない（上の表の注）。 */
+  if (want === "future") return future.length > 0 || istoday;
   if (want === "past") return future.length === 0;
   if (want === "now") return istoday || (past.length > 0 && future.length > 0);
   return null;
@@ -199,8 +220,18 @@ function selftest() {
 
   ck("これから＋過去だけ → 嘘", judge("future", ["2026-09-06"], T), false);
   ck("これから＋未来あり → 正", judge("future", ["2026-09-06", "2026-12-01"], T), true);
+  /* **今日ちょうどの企画**（#770）。ここが false だったので、企画がその日に
+     来ただけで `/next` の札が2枚とも赤くなった。両側から当てる——
+     今日だけでも通ること、過ぎた日だけなら通らないこと。 */
+  ck("これから＋今日だけ → 正", judge("future", [T], T), true);
+  ck("これから＋きのうだけ → 嘘", judge("future", ["2026-09-30"], T), false);
+  ck("これから＋今日と過去 → 正", judge("future", ["2026-09-06", T], T), true);
   ck("行ってきた＋未来あり → 嘘", judge("past", ["2026-12-01"], T), false);
   ck("行ってきた＋過去だけ → 正", judge("past", ["2026-09-06"], T), true);
+  /* 今日は「これから」に数えるが、**「行ってきた」を赤くもしない。**
+     終わったものを並べた面に今日の予定が1行混ざるだけで落ちると、
+     毎回出る嘘になって本物の赤を埋める（`island-standards.md` の #200）。 */
+  ck("行ってきた＋今日だけ → 赤くしない", judge("past", [T], T), true);
   ck("日付が無ければ判定しない", judge("future", [], T), null);
 
   for (const l of ok) console.log("  ○", l);
@@ -330,4 +361,9 @@ async function main() {
   process.exit(lies.length ? 1 : 0);
 }
 
-main();
+/* **直に叩かれたときだけ回す。** `tenseOf` を他の道具から import できるように
+   しておく（時制を名乗る語の一覧を2か所に持つと、片方だけ古くなる）。
+   `tools/sprites/nextempty.mjs` がここを読んでいる。 */
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  await main();
+}

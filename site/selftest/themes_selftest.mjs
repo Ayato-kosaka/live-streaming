@@ -73,7 +73,7 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
   THEMES_TS=/tmp/themes-dup.ts node site/selftest/themes_selftest.mjs   # → 1
 
   # 2) 行き先の面が無い href を書く
-  sed 's|href: "/goods#sticker"|href: "/goodz#sticker"|' \\
+  sed 's|href: "/goods#suzuri"|href: "/goodz#suzuri"|' \\
     site/content/themes.ts > /tmp/themes-href.ts
   THEMES_TS=/tmp/themes-href.ts node site/selftest/themes_selftest.mjs   # → 1
 

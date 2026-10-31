@@ -2,17 +2,29 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import Icon from "./Icon";
 
-/** YouTube のサムネ + 再生リンク。埋め込みはクリックしてから読み込む(軽さのため)。 */
+/**
+ * YouTube のサムネ + 再生リンク。埋め込みはクリックしてから読み込む(軽さのため)。
+ *
+ * `nth` は「その日の何本目か」。**同じ日に同じ題名の配信が2本ある**ことが
+ * あって（止まって立て直した回。2025-05-10 のエジプト・シワがそれ）、
+ * 読み上げがリンクの字だけを並べて読むと、2枚が1文字も違わない。
+ * 題名は YouTube に実在するものなので直せない（`docs/island-design.md` 1章の
+ * 唯一の例外）ので、**読み上げる名前のほうに順番を足して見分けをつける。**
+ * ぶつかっていない配信には渡さない——どの配信にも「1本目」が付くと、
+ * 読み上げがうるさいだけで何も分からない。
+ */
 export function StreamCard({
   videoId,
   title,
   date,
   tag,
+  nth,
 }: {
   videoId: string;
   title: string;
   date?: string;
   tag?: string;
+  nth?: number;
 }) {
   return (
     <a
@@ -20,6 +32,7 @@ export function StreamCard({
       href={`https://www.youtube.com/watch?v=${videoId}`}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={nth ? `${date ? date.replace(/-/g, "/") + " " : ""}${title}（この日の${nth}本目）` : undefined}
     >
       <span className="scard-thumb">
         <img

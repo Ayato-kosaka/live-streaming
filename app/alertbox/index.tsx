@@ -12,7 +12,14 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { View, Text, Animated, Image, TextStyle, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Animated,
+  Image,
+  TextStyle,
+  Platform,
+} from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
@@ -24,7 +31,17 @@ import {
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
-import { sendLog } from "@/lib/log";
+import { sendLog as sendLogRaw } from "@/lib/log";
+import { useSeason } from "./season/useSeason";
+import { useBoxSize } from "./season/useBoxSize";
+import { SeasonEffects } from "./season/SeasonEffects";
+import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
+import { TierShow } from "./season/show/TierShow";
+import { RichText } from "./season/plate/RichText";
+import type { PlateStyle } from "./themes";
+import { CharBox } from "./season/plate/CharBox";
+import { CharFit } from "./components/CharFit";
+import { splitPlateText } from "./season/plate/plateText";
 import {
   describeNickname,
   matchViewerByNickname,
@@ -75,6 +92,58 @@ const REPLAY_POLL_MS = 3000;
    **待っているあいだ、画面はその人の絵。** 何も出ない時間は作らない。 */
 const VIDEO_START_TIMEOUT_MS = 3000;
 
+/* 試し表示（`?preview=`）のあいだは、ログを1行も送らない。
+   ログの口は本番の台帳と同じ所へ行くので、見た目を撮るたびに
+   「投げ銭が来た」が残ると、あとで本物と見分けられない。
+   ここで止めれば、下の呼び出しを1つずつ書き換えずに済む。 */
+let quiet = false;
+const sendLog: typeof sendLogRaw = (...args) =>
+  quiet ? Promise.resolve() : sendLogRaw(...args);
+
+/** `?preview=` の読み方。`1` は偽の投げ銭を1件、`bank` は貯金箱だけ */
+/**
+ * 季節の外の字（飾り無し）。色は設定（config.ts）の色、大きさと縁取りは季節の段と同じ読みやすさ
+ * （前は 20px 固定で、明るい地・キャラ絵の柄の上で読めなかった）
+ */
+function plainPlate(type: NotificationData["type"]): PlateStyle {
+  const s = settings[type] as { fontColor?: string; fontHighlightColor?: string };
+  const hi = s.fontHighlightColor ?? "#37a9fd";
+  return {
+    frame: "round",
+    edge: hi,
+    ink: "#06101C",
+    stroke: 0.2,
+    glow: 0,
+    nameColor: hi,
+    textColor: s.fontColor ?? "#FFFFFF",
+    amountColor: hi,
+  };
+}
+
+/**
+ * 投げ銭が来てから、その段の絵の展開を待つ上限（ms）。過ぎたら台本に乗せない（小物の演出で出す）。
+ * アラートの頭がこのぶん遅れる。展開は 1 段ぶん（数枚）なので、ふつうは数十〜数百 ms
+ */
+const DECODE_WAIT_MS = 1500;
+/**
+ * 試し表示の上限。試し表示は貯金箱が出た直後に偽の投げ銭を出すので、段の絵をまだ落としていない
+ * （本番は落とし終えたあとに投げ銭が来る）。録画・見張りで台本が撮れないと困るので長めに待つ
+ */
+const PREVIEW_DECODE_WAIT_MS = 8000;
+
+function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
+  const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
+  if (v === "1" || v === "true" || v === "alert") return "alert";
+  if (v === "bank") return "bank";
+  return null;
+}
+
+/** URL の数。読めなければ既定値 */
+function numParam(raw: string | string[] | undefined, fallback: number): number {
+  const v = Number(Array.isArray(raw) ? raw[0] : raw);
+  return raw != null && raw !== "" && Number.isFinite(v) ? v : fallback;
+}
+
 export default function AlertBox() {
   // Parse URL parameters for source selection
   /* `k` は OBS の URL に載せる 32 桁の合言葉（#180）。
@@ -84,7 +153,52 @@ export default function AlertBox() {
     source?: string;
     k?: string;
     still?: string;
+    /** 季節テーマを固定する（`halloween` / `none`）。無ければ日付で決まる */
+    theme?: string;
+    /** 試し表示。外の口・ログ・WebSocket には繋がない */
+    preview?: string;
+    /** 試し表示の貯金箱の溜まり具合（%）と、偽の投げ銭の額 */
+    fill?: string;
+    amount?: string;
+    /** 試し表示で、貯金箱を 0 から `fill` まで何秒かけて溜めるか（溜まる様子を録るため） */
+    rise?: string;
+    /** 試し表示の名前とメッセージ（長い名前・3行のメッセージで並べ方を確かめるため） */
+    name?: string;
+    msg?: string;
+    /** 試し表示で、その名前の人が動画（URL）・絵文字を持っていることにする */
+    video?: string;
+    emoji?: string;
+    /** 試し表示で、面を開いてから偽の投げ銭を出すまでの秒（段の絵を落とし終えたあとを測るため） */
+    at?: string;
   }>();
+
+  const preview = previewMode(params.preview);
+  quiet = preview !== null;
+
+  /* 今日の季節テーマと、その絵。貯金箱とアラートの後ろの小物の両方に渡す。
+     テーマが無い日は何も足さない（いつもの豚のまま）。 */
+  const season = useSeason(params.theme);
+  /* 通知を出す関数は、キューが変わったときにしか作り直されない。季節はその外で
+     変わる（絵を読み終わる）ので、出す瞬間の季節を ref で読む */
+  const seasonRef = useRef(season);
+  seasonRef.current = season;
+
+  /* 出している通知の「段と出し方」（台本・札・その人の絵を出す秒）。
+     通知1件のあいだは決めたままにする（途中で絵が読み終わっても組み直さない） */
+  const [stage, setStage] = useState<AlertStage | null>(null);
+  /* 面の大きさ（季節の演出・札・その人の絵の箱に渡す）。変わったときだけ描き直す。
+     useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
+     （豚も）が描き直された（`season/useBoxSize.ts`） */
+  const { width: winW, height: winH } = useBoxSize();
+  /* その人のキャラ絵は面いっぱいに（中身の外接矩形で contain・真ん中）。字（名前・額・メッセージ）は
+     キャラ絵の上下中央に重ねる（オーナーの元の仕様。2026-10-24 に戻した）。
+     台本のある段は、主役が滞在中にいる帯（面の上の端）を空けて、その下にキャラ絵を置く。主役が
+     キャラ絵の顔の前を通らないように（主役の居場所は字のブロックとキャラ絵の顔を避けた上の端・角） */
+  const charTop = Math.round(winH * (stage?.show ? stage.show.headroom : 0.02));
+  const charBottom = Math.round(winH * 0.02);
+  const charAreaH = Math.max(0, winH - charTop - charBottom);
+  /** 字のブロックの真ん中の高さ。キャラ絵は四角の真ん中に置くので、中身の真ん中もここ */
+  const textCenterY = charTop + charAreaH / 2;
 
   /* 名前ごとに1つ。**1人が名前を何個も持つ**（チャンネル名 + 他の呼び名）
      ので、当てる相手はここで開いて並べ直したもの。 */
@@ -205,6 +319,85 @@ export default function AlertBox() {
   }, [params.still]);
 
   useEffect(() => {
+    /* 試し表示。**外へは1本も繋がない**（名簿・額の口、どねる・YouTube、
+       もう一度出しての聞き取り、ログ）。貯金箱は `fill`（%）で、
+       投げ銭は `amount`（円）で、配信に出さずに見た目だけを撮れる。 */
+    if (preview) {
+      const target = 50000;
+      // 100 を超えた「あふれ」も撮れるように、150% まで受ける
+      const fill = Math.max(0, Math.min(150, numParam(params.fill, 60)));
+      const goalAt = (ratio: number) => ({
+        currentAmount: Math.round((target * fill * ratio) / 100),
+        targetAmount: target,
+        label: "おためし表示",
+      });
+      /* `rise` 秒かけて額を上げていく。本番の溜まり方（2.2秒で今の額まで）は
+         一瞬で終わって録画では見えないので、試し表示のときだけ額のほうを動かす */
+      const rise = Math.max(0, numParam(params.rise, 0));
+      if (rise > 0 && preview === "bank") {
+        const started = Date.now();
+        setGoal(goalAt(0));
+        const tick = setInterval(() => {
+          const r = Math.min(1, (Date.now() - started) / (rise * 1000));
+          setGoal(goalAt(r));
+          if (r >= 1) clearInterval(tick);
+        }, 100);
+        return () => clearInterval(tick);
+      }
+      setGoal(goalAt(1));
+      if (preview !== "alert") return;
+      const amount = Math.max(0, Math.round(numParam(params.amount, 500)));
+      const nickname = typeof params.name === "string" && params.name ? params.name : "おためし";
+      /* `video`（動画の URL）・`emoji` を渡すと、その名前の人が名簿に1人だけいることにする。
+         動画の人・絵文字の花火と雨の人の並び方を、外へ繋がずに撮るため */
+      const pv = (v: unknown) => (typeof v === "string" && v ? v : null);
+      if (pv(params.video) || pv(params.emoji)) {
+        const v = toViewers([
+          {
+            id: "preview",
+            emoji: pv(params.emoji) ?? "",
+            channelName: nickname,
+            aliases: [],
+            plain: null,
+            scene: null,
+            videoUrl: pv(params.video),
+          },
+        ]);
+        normViewersRef.current = v;
+        setNormViewers(v);
+      }
+      /* 季節の部品が読み終わるまで待ってから出す（最長 8 秒）。読み終わる前に出すと、その段は
+         台本の無い小物の演出に落ちて、撮りたいものが撮れない。本番は面を開いてから投げ銭が
+         来るまで間があるので、待たない */
+      const startedAt = Date.now();
+      /* `at`（秒）を渡すと、面を開いてからその秒まで待って出す。段の絵を落とし終わったあとに
+         投げ銭が来る本番の順（貯金箱 → 4 秒後に落とす → 投げ銭で展開）を、そのまま測るため */
+      const at = Math.max(0, numParam(params.at, 0)) * 1000;
+      let timer: ReturnType<typeof setTimeout>;
+      const fire = () => {
+        const sn = seasonRef.current;
+        if (sn.theme && !sn.rigsSettled && Date.now() - startedAt < 8000) {
+          timer = setTimeout(fire, 100);
+          return;
+        }
+        setNotificationQueue((q) => [
+          ...q,
+          {
+            id: `preview-${amount}`,
+            type: "donation",
+            amount,
+            assetID: null,
+            message: typeof params.msg === "string" ? params.msg : "これは試し表示です",
+            messageType: 1,
+            nickname,
+            test: true,
+          },
+        ]);
+      };
+      timer = setTimeout(fire, Math.max(800, at));
+      return () => clearTimeout(timer);
+    }
+
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount", { enabledSources });
 
@@ -519,7 +712,8 @@ export default function AlertBox() {
       // 画面離脱ログ
       sendLog("AlertBox", sessionId, "unmount");
     };
-  }, [enabledSources, alertboxId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledSources, alertboxId, preview]);
 
   /**
    * 金額に応じてアラート時間を調整
@@ -678,6 +872,54 @@ export default function AlertBox() {
     }
     showSource(source);
 
+    // 金額に応じて調整された表示時間
+    const adjustedAlertDuration =
+      calculateAdjustedAlertDuration(currentNotification);
+
+    /* 段と出し方。季節が無い日は null（今までどおり）。
+       その段の絵（台本の切り絵・ポーズ絵か小物）を、ここで展開してから出す（上限つきで待つ）。
+       展開が間に合わなかった・読めなかった台本は、その段は前の小物の演出に落ちる（欠けた絵を出さない） */
+    const sn = seasonRef.current;
+    const isMoney =
+      currentNotification.type === "donation" ||
+      currentNotification.type === "superchat";
+    const yen =
+      currentNotification.type === "superchat"
+        ? currentNotification.jpy
+        : currentNotification.type === "donation"
+          ? currentNotification.amount
+          : 0;
+    if (isMoney && sn.theme) {
+      /* 展開にかかった時間を User Timing に残す（`season:ensure`。tools/sprites/alert-decode.mjs が
+         CPU を絞って読む）。待ちの上限を超えたかどうかは、ここを見ないと分からない */
+      const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+      const ensured = sn
+        .ensureFor(yen)
+        .catch(() => false)
+        .then((ok) => {
+          try {
+            performance.measure("season:ensure", { start: t0, detail: { yen, ok } });
+          } catch {
+            // 測れない環境では何もしない
+          }
+          return ok;
+        });
+      await Promise.race([ensured, new Promise((r) => setTimeout(r, preview ? PREVIEW_DECODE_WAIT_MS : DECODE_WAIT_MS))]);
+    }
+    const nextStage = isMoney
+      ? stageFor(
+          sn.theme,
+          currentNotification.type === "superchat"
+            ? currentNotification.jpy
+            : currentNotification.amount,
+          adjustedAlertDuration,
+          (name, kind) => (kind === "rig" ? sn.rigs : kind === "pose" ? sn.poses : sn.items).has(name)
+        )
+      : null;
+    setStage(nextStage);
+    /* その人の絵と読み上げを出す秒。0 なら今どおり（すぐ） */
+    const revealSec = nextStage?.revealSec ?? 0;
+
     // 表示開始（フェードイン）
     setNotification(currentNotification);
     Animated.timing(opacity, {
@@ -686,19 +928,19 @@ export default function AlertBox() {
       useNativeDriver: true,
     }).start();
 
-    // 読み上げ（設定が有効な donation/superchat のみ）
+    // 読み上げ（設定が有効な donation/superchat のみ）。台本があれば、その人の絵が出る秒から
     if (
       currentNotification.type === "donation" ||
       currentNotification.type === "superchat"
     )
-      if (settings[currentNotification.type]?.tts.enable === 1)
-        speak(currentNotification.message, (e) =>
-          sendLog("AlertBox", sessionId, "ttsError", { message: e.message })
-        );
-
-    // 金額に応じて調整された表示時間
-    const adjustedAlertDuration =
-      calculateAdjustedAlertDuration(currentNotification);
+      if (settings[currentNotification.type]?.tts.enable === 1) {
+        const say = () =>
+          speak(currentNotification.message, (e) =>
+            sendLog("AlertBox", sessionId, "ttsError", { message: e.message })
+          );
+        if (revealSec > 0) setTimeout(say, revealSec * 1000);
+        else say();
+      }
 
     // 指定時間後にフェードアウト→完了後に通知をクリア＆キュー先頭を削除
     setTimeout(() => {
@@ -709,6 +951,7 @@ export default function AlertBox() {
       }).start();
       setTimeout(() => {
         setNotification(null);
+        setStage(null);
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
       }, 500);
     }, adjustedAlertDuration * 1000);
@@ -885,6 +1128,41 @@ export default function AlertBox() {
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
               <View style={styles.alertContainer}>
+                {/* 季節の小物。**キャラの絵より後ろ**（いちばん奥の飾り） */}
+                {season.theme && stage?.show && (
+                  <TierShow
+                    key={notification.id}
+                    show={stage.show}
+                    rigs={season.rigs}
+                    poses={season.poses}
+                    items={season.items}
+                    durationSec={calculateAdjustedAlertDuration(notification)}
+                    W={winW}
+                    H={winH}
+                  />
+                )}
+                {season.theme && !stage?.show && (
+                  <SeasonEffects
+                    theme={season.theme}
+                    fx={season.fx}
+                    durationSec={calculateAdjustedAlertDuration(notification)}
+                    yen={
+                      notification.type === "superchat"
+                        ? notification.jpy
+                        : notification.amount
+                    }
+                    seed={notification.id}
+                  />
+                )}
+
+                <CharBox
+                  key={`char-${notification.id}`}
+                  top={charTop}
+                  bottom={charBottom}
+                  revealAt={stage?.revealSec ?? 0}
+                  /* 台本のある段は、キャラ絵の真ん中（字・魔法陣・あやとの着地と同じ中心。season/show/common.ts）からふくらむ */
+                  originY={stage?.show ? textCenterY : undefined}
+                >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
                     ref={videoRef}
@@ -903,7 +1181,13 @@ export default function AlertBox() {
                        Android の WebView が ▶ の板を画面いっぱいに描く。
                        あやとが撮った絵がそれ。透明にしておけば、下に置いた
                        その人の絵がそのまま見えている。 */
-                    style={{ ...styles.image, opacity: videoStarted ? 1 : 0 }}
+                    /* 動画は中身を測れないので、枠ごと箱に収める（真ん中） */
+                    style={{
+                      ...styles.image,
+                      objectFit: "contain",
+                      objectPosition: "50% 50%",
+                      opacity: videoStarted ? 1 : 0,
+                    }}
                     onLoadStart={() =>
                       sendLog("AlertBox", sessionId, "videoLoadStart", {
                         url: displaySource.url,
@@ -949,12 +1233,10 @@ export default function AlertBox() {
                     }}
                   />
                 ) : (
-                  <Image
-                    resizeMode="contain"
-                    style={{ ...styles.image }}
-                    source={{
-                      uri: displaySource.url || imageUrl(notification.type),
-                    }}
+                  <CharFit
+                    url={displaySource.url || imageUrl(notification.type)}
+                    width={winW}
+                    height={charAreaH}
                   />
                 )}
 
@@ -966,17 +1248,22 @@ export default function AlertBox() {
                 {displaySource.type === "video" &&
                   !!displaySource.url &&
                   !videoStarted && (
-                    <Image
-                      resizeMode="contain"
-                      style={{ ...styles.image }}
-                      source={{
-                        uri:
-                          iconUrl(notification) || imageUrl(notification.type),
-                      }}
+                    <CharFit
+                      url={iconUrl(notification) || imageUrl(notification.type)}
+                      width={winW}
+                      height={charAreaH}
                     />
                   )}
+                </CharBox>
 
-                {/* 視聴者に絵文字設定がある場合の花火エフェクト */}
+                {/* 視聴者に絵文字設定がある場合の花火・雨。**キャラ絵の後ろ**（zIndex 0）。
+                    粒はキャラ絵の顔の前を通さない（オーナーの決まり。前は花火が zIndex 2 で顔の前に出ていた） */}
+                {emoji && (
+                <div
+                  data-show="emoji"
+                  aria-hidden
+                  style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", zIndex: 0, pointerEvents: "none", overflow: "hidden" }}
+                >
                 {emoji && (
                   <FireworkDisplay
                     style={styles.fireworkExplosion}
@@ -1005,62 +1292,45 @@ export default function AlertBox() {
                       />
                     )
                   )}
+                </div>
+                )}
 
-                {/* テキスト部（テンプレートの {名前} / {金額} / {単位} を置換） */}
-                <View style={styles.textContainer}>
-                  <Text style={{ ...styles.message, ...mainTextStyle }}>
-                    {mainTextTemplate.split(/(\{.*?\})/).map((part, index) => {
-                      if (part === "{名前}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.nickname}
-                          </Text>
-                        );
-                      } else if (part === "{金額}") {
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {notification.amount.toLocaleString()}
-                          </Text>
-                        );
-                      } else if (part === "{単位}") {
-                        // Handle currency unit - donation uses JPY, superchat uses its currency
-                        const currency =
-                          notification.type === "superchat"
-                            ? notification.currency
-                            : "円";
-                        return (
-                          <Text
-                            key={index}
-                            style={{
-                              color:
-                                settings[notification.type].fontHighlightColor,
-                            }}
-                          >
-                            {currency}
-                          </Text>
-                        );
-                      }
-                      return part; // 通常のテキスト
+                {/* 字（名前・額・メッセージ）。キャラ絵の上下中央に重ねる。背景の箱は無い。
+                    季節の段は段の飾り（縁の光・1字ずつ弾む・数え上げ）、季節の外は飾り無しの同じ読みやすい字 */}
+                <div
+                  data-plate="slot"
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    top: textCenterY,
+                    transform: "translateY(-50%)",
+                    zIndex: 3,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <RichText
+                    key={`text-${notification.id}`}
+                    plate={stage?.plate ?? plainPlate(notification.type)}
+                    plain={!stage?.plate}
+                    /* 字のブロックはキャラ絵の真ん中に置くので、上下の短いほうの2倍まで（箱の縁で切らない） */
+                    maxH={Math.max(0, 2 * Math.min(textCenterY, winH - textCenterY) - winH * 0.03)}
+                    lines={splitPlateText(mainTextTemplate, {
+                      name: notification.nickname,
+                      amount: notification.amount,
+                      unit:
+                        notification.type === "superchat"
+                          ? notification.currency
+                          : "円",
                     })}
-                  </Text>
-
-                  {/* メッセージ本文（寄付/スパチャ時のコメント） */}
-                  <Text style={{ ...styles.message, ...messageStyle }}>
-                    {notification.message}
-                  </Text>
-                </View>
+                    message={notification.message}
+                    W={winW}
+                    {...(stage?.plate ? plateTiming(stage) : { appearAt: 0 })}
+                  />
+                </div>
               </View>
             )}
 
@@ -1118,6 +1388,7 @@ export default function AlertBox() {
               currentAmount={goal.currentAmount}
               targetAmount={goal.targetAmount}
               label={goal.label}
+              season={season}
             />
           </View>
         )}

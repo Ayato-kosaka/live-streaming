@@ -258,6 +258,75 @@ def case_run() -> None:
        "書かなくても、読んで数えるところは通る")
 
 
+def case_every_gate() -> None:
+    """**週1に間引く関所が、曜日ではなく「前に書いてから何日か」で効く。**
+
+    前はワークフローの側で曜日を見ていて、繋ぎで来た **57回のうち55回**が
+    そこで落ちていた（直近3週はゼロ）。落ちていることに**どこも赤くならない**
+    ので、自分で「当てにするな」と書いた cron が週1を1本で背負っていた。
+
+    見るのは4つ:
+
+    1. 前に書いた日が、まとめの本文から**読んで戻せる**
+    2. 3日しかたっていなければ **1バイトも書かない**（曜日は見ない）
+    3. 7日たっていれば書く
+    4. 手で押したとき（`force`）は、3日でも書く
+
+    そして**外したら落ちること**——`BREAK=noevery` で関所を抜くと、
+    3日でも書いてしまうこと（`docs/island-standards.md` §15）。
+    """
+    print("\n[8] 週1に間引く関所（曜日ではなく、前に書いてからの日数）")
+    rows = [i for i in FAKE if i["number"] != 300]
+
+    # 1. 本文に埋めた印から、書いた日を読んで戻せる
+    s = ts.summarize(ts.survey(rows, TODAY), TODAY)
+    text = ts.body(s)
+    ok(ts.last_stock_day({"body": text}) == TODAY,
+       "書いた日が、本文の印から読んで戻せる")
+    ok(ts.MARK in text, "同じ1本を引く印は、そのまま残っている")
+    ok(ts.last_stock_day({"body": "印の無い本文"}) is None,
+       "印が無ければ「まだ1度も無い」（読めない日付で黙らない）")
+
+    def stock_at(day):
+        """その日に書いたことになっている、まとめ1本。"""
+        s2 = ts.summarize(ts.survey(rows, day), day)
+        return issue(300, ts.TITLE, ["ticket-stock"], "2026-09-01", day,
+                     body=ts.body(s2))
+
+    # 2. 3日しかたっていない → 1バイトも書かない
+    gh = FakeGh(rows, stock_at("2026-09-16"))
+    got = ts.run(gh, TODAY, apply=True)
+    ok(gh.did == [], "3日しかたっていなければ、書く口を1つも押さない")
+    ok(got["action"] == "wait" and got["gap"] == 3,
+       f"そう言う（{got['action']} / {got['gap']}日）")
+
+    # 3. 7日たっている → 書く
+    gh = FakeGh(rows, stock_at("2026-09-12"))
+    got = ts.run(gh, TODAY, apply=True)
+    ok([w for w, _ in gh.did][:1] == ["patch"], "7日たっていれば書く")
+    ok(got["gap"] == 7, f"何日あいたかを言う（{got['gap']}日）")
+
+    # 4. 手で押した回は、3日でも書く
+    gh = FakeGh(rows, stock_at("2026-09-16"))
+    ts.run(gh, TODAY, apply=True, force=True)
+    ok([w for w, _ in gh.did][:1] == ["patch"], "手で押した回は、3日でも書く")
+
+    # ---- 歯止めを外す。**関所を抜くと、3日でも書いてしまうこと**
+    gh = FakeGh(rows, stock_at("2026-09-16"))
+    ts.run(gh, TODAY, apply=True, breaks={"noevery"})
+    ok([w for w, _ in gh.did][:1] == ["patch"],
+       "BREAK=noevery で関所を抜くと、3日でも書く（関所が効いている証拠）")
+
+    # ---- **止まっていることに気づけるか。** 10日を超えたら赤くする側
+    ok(not ts.stock_due("2026-09-16", TODAY), "3日では書かない")
+    ok(ts.stock_due("2026-09-12", TODAY), "7日なら書く")
+    ok(ts.overdue_days("2026-09-01", TODAY) == 18
+       and 18 > ts.STOCK_OVERDUE_DAYS,
+       "18日あいていれば、見過ごしの線を超えていると分かる")
+    ok(ts.overdue_days("2026-09-12", TODAY) <= ts.STOCK_OVERDUE_DAYS,
+       "ふつうの週（7日）は、線を超えない")
+
+
 def main() -> int:
     print("=== 毎週の棚卸しを、こしらえた一覧で動かして確かめる ===")
     print("（GitHub に1バイトも出ません）")
@@ -268,6 +337,7 @@ def main() -> int:
     case_break_nolabel()
     case_ping_gate()
     case_run()
+    case_every_gate()
 
     print()
     if CHECKED == 0:

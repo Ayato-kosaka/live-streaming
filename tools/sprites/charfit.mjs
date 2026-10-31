@@ -32,6 +32,7 @@
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { apply } from "./asme.mjs";
+import { must, readArray } from "./tsread.mjs";
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -78,9 +79,19 @@ if (process.env.ME === "1") {
   mkdirSync(OUT, { recursive: true });
   /* 誰の絵があるかは名簿だけが持っている。**ここで並べ直さない**
      （`docs/island-misses.md` 決めごと3）。 */
+  /* 読み方は `tsread.mjs` の1本に寄せてある（#694）。前はここで
+     `/icon:\s*"…"[^}]*channel:\s*"…"/` と書いていて、**`icon` と `channel` が
+     同じ `{}` の中で隣り合っていること**を当てにしていた。`[^}]*` は `}` を
+     跨げないので、あいだに注釈が1つ入るだけでその人が消える——しかも
+     **消えたぶんは分母からも消える**ので「全員おさまっています」と緑が出る。
+     いまは名乗りと読めた数が合わなければ `must()` が 2 で止める。 */
   const src = readFileSync(`${ROOT}/site/content/residents.ts`, "utf8");
-  const folk = [...src.matchAll(/icon:\s*"([^"]+)"[^}]*channel:\s*"([^"]+)"/g)]
-    .map((m) => ({ icon: m[1], channel: m[2] }));
+  const folk = must(
+    readArray(src, "RESIDENTS", { keys: ["icon", "channel"], idKey: "icon" }),
+    "residents.ts の RESIDENTS",
+  )
+    .filter((r) => r.channel)
+    .map((r) => ({ icon: r.icon, channel: r.channel }));
 
   const shots = [];
   let cut = 0;

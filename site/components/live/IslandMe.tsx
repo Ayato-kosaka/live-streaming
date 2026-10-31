@@ -151,7 +151,7 @@ export default function IslandMe() {
       <button className="me-save" onClick={save} disabled={state === "saving"}>
         {state === "saving" ? "保存しています…" : "これでいく"}
       </button>
-      {state === "done" && <p className="me-ok">保存しました。島に反映されます。</p>}
+      {state === "done" && <p className="me-ok">保存しました。</p>}
       {state === "error" && <p className="err">保存できませんでした。もう一度ためしてみてください。</p>}
     </div>
   );
