@@ -1,0 +1,24 @@
+{
+ "name": "xfer-20261031-212043-c52cce",
+ "place": "transfer",
+ "action": "up",
+ "files": [
+  {
+   "name": "00.json",
+   "bytes": 2524,
+   "sha256": "7eef579040415475d531cc13e5f2fb6f821da7a49f5dcbd994897dc1bab9b88d"
+  },
+  {
+   "name": "01.txt",
+   "bytes": 777,
+   "sha256": "287ee9a780aafbaf3c9cd8ea6bfeeba7d2e73a738afc0cf54935dd7fdb8d98cf"
+  },
+  {
+   "name": "02.mp4",
+   "bytes": 19974881,
+   "sha256": "c57ff6ed19971e4c0de90937e351b7aaf2b273adb377d0a509a2e030fc6dfa41"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAwawZhG4TAVC9AaCF3slP\nrsJupkAUjBpOKtlmZnltnic/A4Go4bCb0778MDrtjlTheVjg/HmoODNACNykcirZ\nBIKfkyjasR8kBJjiM10v7HUPOkQ9kEKc4nKC9plikz9FhzoflNaHJcVFh7dBsl9h\nCkMfJ8OX9YJ4mh1IooSqr5bCLkEq22iReQagG8nLv+ki9dxIM6K9kcZwR4BsZmCE\nFRhSX3ih/8vMZgXemPhnh3gew8cMrzDfS/WT8x2/HfAoKXelGyuic7H0yc5HjuQv\nmQiV8BjcDSFmusXtJRLMH2c4QMw75Nb6FkhnsEL3aDRD19x2c/zUC/l8WKEZ2WhS\nmAeo4eGRnSjW2Hys8oT6jagv4BPkShFBJXM4kMqpJtkyjpvaJWU6p4mIqmjwtVgs\n1Y3CH+rRY7pm8iV2Tu/6MQrVFkquag7aIKWHZ1cfdeC2Zu3wg9ngT4z8iEOkn3DD\nRvI+lDL1YPazVdqkM2k/jeA8iMFTglGIYi9N87erlxH/AgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "0a6e9f328b8b80ce6d480a12"
+}
