@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview-in__pvcheck-v1",
+ "mode": "preview-in",
+ "dest": "preview-in/pvcheck-v1",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/pvcheck-v1.json",
+ "status": "ok",
+ "stages": {
+  "upload": "ok"
+ },
+ "counts": {
+  "files": 2
+ },
+ "bytes": {
+  "plain": 13127,
+  "tar_gz": 10632,
+  "encrypted": 10640
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 10640,
+   "sha256": "196fd326b4fdfb8b39bbd30d0dd88cb228ad6fe156eb99b3ffa9822d2fb8bda9"
+  }
+ ],
+ "hmac_sha256": "c8d0ab821d8a3f1ea6ce7b2e6a911e7af47527404bd298967ed62310c738cf7c",
+ "pubkey_sha256": "fe9805b3c79aa2174b39ba810b7b1655516dd05a7b9df65aa6aa4f13eeb12a47",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-10-31T02:23:47+00:00",
+ "nonce": "27fd8670a883dd3502e20e61"
+}
