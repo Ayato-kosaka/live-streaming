@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__leeds-p3-v2",
  "mode": "render",
- "dest": "render/leeds-p3-v2/inbox",
+ "dest": "render/leeds-p3-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/leeds-p3-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 3018,
-  "tar_gz": 1541,
-  "encrypted": 1552
+  "plain": 34234,
+  "tar_gz": 8895,
+  "encrypted": 8896
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1552,
-   "sha256": "89c78db2d1dc8596c769307ca56ff650e24aec72302d5a8e52370c37410dfdb9"
+   "bytes": 8896,
+   "sha256": "2074d1c53974150ef70e5641b20c84dfa86f7696d6a583b1b6b64f177bc5d300"
   }
  ],
- "hmac_sha256": "39f5ca3c2594b4d6eacd3ae0b29954513cc5c4d10d304913b55c625597990bb1",
+ "hmac_sha256": "5f7a4426e2ac0687160d2b99fc8d5d0a62ed918d46ad9ae61743bd9bcd27c4e4",
  "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-10-31T01:31:40+00:00",
+ "created_at": "2026-10-31T01:41:01+00:00",
  "nonce": "f2e817cc4f645d4c65224fea"
 }
