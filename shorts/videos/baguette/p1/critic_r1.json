@@ -1,0 +1,250 @@
+{
+ "scores": {
+  "a": 4,
+  "b": 4,
+  "c": 4,
+  "d": 4,
+  "e": 3,
+  "f": 4
+ },
+ "score_why": {
+  "a": "札が約束を言い、焼き上がった2本が画に出る。続きが気になる",
+  "b": "2〜3秒ごとに手が進む。説明の行は2つ続かない",
+  "c": "Google試験・パン屋さんすぎる。短く、本人の言葉で刺さっている",
+  "d": "ほったらかしの振りを10・11で拾う。潰れたあと打ち粉で立て直して焼き上がりへ",
+  "e": "15のもう1個は、生地が2つあると前で言っていない。地球一周は数を先に置く",
+  "f": "簡単の気持ちで着地。旅先で焼くかは答えやすい"
+ },
+ "checked": [
+  "F-004",
+  "F-005",
+  "F-006",
+  "F-007",
+  "F-008",
+  "F-014",
+  "F-015",
+  "F-019",
+  "F-022",
+  "F-025",
+  "F-030",
+  "F-031",
+  "F-032",
+  "F-033",
+  "F-034",
+  "F-035",
+  "F-036",
+  "F-037",
+  "F-039",
+  "F-040",
+  "F-043",
+  "F-047",
+  "F-048",
+  "F-049",
+  "F-050",
+  "F-051",
+  "F-052",
+  "F-054",
+  "F-055",
+  "F-056",
+  "F-057",
+  "F-059",
+  "X2"
+ ],
+ "alone": [
+  {
+   "line": 1,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 2,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 3,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 4,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 5,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 6,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 7,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 8,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 9,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 10,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 11,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 12,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 13,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 14,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 15,
+   "ok": true,
+   "why": "もう1個は画の2つめの生地で取れる"
+  },
+  {
+   "line": 16,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 17,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 18,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 19,
+   "ok": true,
+   "why": ""
+  },
+  {
+   "line": 20,
+   "ok": true,
+   "why": ""
+  }
+ ],
+ "outsider": [],
+ "tsunagi": [
+  "題",
+  "前",
+  "答",
+  "転",
+  "外",
+  "足",
+  "反",
+  "転",
+  "答",
+  "転",
+  "答",
+  "転",
+  "外",
+  "足",
+  "足",
+  "転",
+  "答",
+  "前",
+  "答",
+  "締"
+ ],
+ "questions": [
+  {
+   "line": 2,
+   "answered_by": 3,
+   "moved": false
+  },
+  {
+   "line": 4,
+   "answered_by": 5,
+   "moved": false
+  },
+  {
+   "line": 8,
+   "answered_by": 9,
+   "moved": false
+  },
+  {
+   "line": 12,
+   "answered_by": 13,
+   "moved": false
+  },
+  {
+   "line": 16,
+   "answered_by": 17,
+   "moved": false
+  },
+  {
+   "line": 18,
+   "answered_by": 19,
+   "moved": false
+  }
+ ],
+ "turns": [
+  {
+   "line": 5,
+   "kind": "動",
+   "mark": "けど",
+   "reason": true,
+   "erases": [],
+   "back": false
+  },
+  {
+   "line": 13,
+   "kind": "動",
+   "mark": "やのに",
+   "reason": true,
+   "erases": [],
+   "back": false
+  }
+ ],
+ "numbers": [
+  {
+   "line": 15,
+   "said_before": false
+  }
+ ],
+ "ledger": [
+  {
+   "id": "F-008",
+   "line": 15,
+   "why": "生地が2つあると前で言わずに、もう1個が出る"
+  }
+ ],
+ "leave": [],
+ "fixes": [
+  {
+   "line": 12,
+   "text": "あとは2つの生地を鉄板に移すだけやのに",
+   "ashi": false
+  }
+ ],
+ "verdict": "通らない"
+}
