@@ -1,0 +1,35 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "preview__pvcheck-v1",
+ "mode": "preview",
+ "dest": "preview/pvcheck-v1",
+ "video": null,
+ "channel": null,
+ "request": "shorts/preview/pvcheck-v1.json",
+ "status": "ok",
+ "stages": {
+  "up": "ok"
+ },
+ "counts": {
+  "files": 3
+ },
+ "bytes": {
+  "plain": 20361,
+  "tar_gz": 8386,
+  "encrypted": 8400
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 8400,
+   "sha256": "f0360e682ea22ef47b6657844f44f5a9820d90f1a2be8861c948bb33c9c605c1"
+  }
+ ],
+ "hmac_sha256": "49cbca15ce493f406e908c21e627286462c0e5dea1c21cfefc6ed2c0a520e5e1",
+ "pubkey_sha256": "175d9688e89d316da7c3272194c26b9448ae3d3c92f9d71dacc069d6a70cf704",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41159792096",
+ "created_at": "2026-10-31T02:24:43+00:00",
+ "nonce": "27fd8670a883dd3502e20e61",
+ "place": "hosting"
+}
