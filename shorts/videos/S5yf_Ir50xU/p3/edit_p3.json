@@ -1,0 +1,729 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p3",
+ "style": "style_v3.json",
+ "sources": {
+  "c31": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/31_6-49-48_6-51-02.mp4",
+   "watermark": "prism_live",
+   "t0": 24588.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest2/S5yf_Ir50xU/clips/03_5-18-27_5-18-40.mp4",
+   "watermark": "prism_live",
+   "t0": 19107.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/01_0-52-20_0-53-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3140.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/04_1-00-52_1-01-42.mp4",
+   "watermark": "prism_live",
+   "t0": 3652.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/02_0-55-10_0-55-55.mp4",
+   "watermark": "prism_live",
+   "t0": 3310.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/03_1-00-04_1-00-44.mp4",
+   "watermark": "prism_live",
+   "t0": 3604.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/07_4-03-40_4-04-04.mp4",
+   "watermark": "prism_live",
+   "t0": 14620.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/09_4-06-22_4-06-52.mp4",
+   "watermark": "prism_live",
+   "t0": 14782.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/12_4-11-40_4-12-24.mp4",
+   "watermark": "prism_live",
+   "t0": 15100.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/10_4-08-52_4-09-40.mp4",
+   "watermark": "prism_live",
+   "t0": 14932.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/13_4-13-18_4-13-30.mp4",
+   "watermark": "prism_live",
+   "t0": 15198.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/14_4-15-32_4-15-54.mp4",
+   "watermark": "prism_live",
+   "t0": 15332.0
+  },
+  "c21": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/21_6-23-28_6-24-00.mp4",
+   "watermark": "prism_live",
+   "t0": 23008.0
+  },
+  "c28": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/28_6-40-36_6-41-50.mp4",
+   "watermark": "prism_live",
+   "t0": 24036.0
+  },
+  "c22": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/22_6-24-18_6-24-56.mp4",
+   "watermark": "prism_live",
+   "t0": 23058.0
+  },
+  "c30": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/30_6-47-32_6-47-50.mp4",
+   "watermark": "prism_live",
+   "t0": 24452.0
+  },
+  "c32": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/32_6-51-40_6-52-20.mp4",
+   "watermark": "prism_live",
+   "t0": 24700.0
+  },
+  "c34": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/34_8-17-36_8-18-02.mp4",
+   "watermark": "prism_live",
+   "t0": 29856.0
+  },
+  "c33": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/33_8-16-40_8-17-00.mp4",
+   "watermark": "prism_live",
+   "t0": 29800.0
+  },
+  "c35": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/35_8-18-36_8-19-30.mp4",
+   "watermark": "prism_live",
+   "t0": 29916.0
+  },
+  "c37": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/37_8-22-26_8-23-26.mp4",
+   "watermark": "prism_live",
+   "t0": 30146.0
+  },
+  "c20": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/20_5-47-00_5-48-30.mp4",
+   "watermark": "prism_live",
+   "t0": 20820.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/05_1-13-12_1-13-50.mp4",
+   "watermark": "prism_live",
+   "t0": 4392.0
+  },
+  "c18": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/18_5-20-55_5-21-15.mp4",
+   "watermark": "prism_live",
+   "t0": 19255.0
+  },
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/19_5-40-40_5-41-30.mp4",
+   "watermark": "prism_live",
+   "t0": 20440.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest2/S5yf_Ir50xU/clips/02_5-08-18_5-08-40.mp4",
+   "watermark": "prism_live",
+   "t0": 18498.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c31",
+   "in": 1335,
+   "out": 1386,
+   "row": 0,
+   "note": "J 金の模様の鎧の寄り（博物館）。この街でいちばん止まる画を0秒目に。題の札の下に胸当ての金の彫りが来る"
+  },
+  {
+   "src": "c2_03",
+   "in": 135,
+   "out": 176,
+   "row": 0,
+   "note": "H ヴィクトリア・ゲートの波打つ天井と金のランタンとジグザグの床。見どころの多い街だと先に見せる"
+  },
+  {
+   "src": "c01",
+   "in": 945,
+   "out": 993,
+   "row": 1,
+   "note": "M 着いて歩いた赤レンガとガラスの街並み（青空）。自撮りは当てない（F-058）"
+  },
+  {
+   "src": "c04",
+   "in": 345,
+   "out": 392,
+   "row": 1,
+   "note": "B 石造りの建物と大観覧車の通り。コンパクトな街の中心"
+  },
+  {
+   "src": "c02",
+   "in": 225,
+   "out": 260,
+   "row": 2,
+   "note": "M 歩く通りの先に市庁舎の時計塔が見えてくる（「歩いて…へ」）"
+  },
+  {
+   "src": "c03",
+   "in": 720,
+   "out": 762,
+   "row": 2,
+   "note": "A 曇り空に立つ市庁舎の時計塔の正面。足元に工事の囲いが見え始める"
+  },
+  {
+   "src": "c03",
+   "in": 60,
+   "out": 103,
+   "row": 3,
+   "note": "名指す物は工事（F-014）: 時計塔の足元をぐるりと塞ぐ白と赤の囲い（奥に観覧車）"
+  },
+  {
+   "src": "c04",
+   "in": 1290,
+   "out": 1333,
+   "row": 3,
+   "note": "赤い柵ごしの足場と黄色いベストの作業員（背中・小さい）"
+  },
+  {
+   "src": "c07",
+   "in": 435,
+   "out": 475,
+   "row": 4,
+   "note": "D 「doh'hut DONUTS・SANDWICHES・COFFEE」の店先（人が通らない秒）"
+  },
+  {
+   "src": "c09",
+   "in": 570,
+   "out": 618,
+   "row": 4,
+   "zoom": {
+    "from": 1.7,
+    "to": 1.78,
+    "x": 0.5,
+    "y": 1.0
+   },
+   "note": "E 店内の白いショーケースに並ぶドーナツ（店の空気。F-055）。奥の店員さんの顔が入らないよう、ケースに寄せて下を切り出す"
+  },
+  {
+   "src": "c12",
+   "in": 105,
+   "out": 141,
+   "row": 5,
+   "note": "F 砂糖をまぶした丸いドーナツにチョコの塊（穴が無い形。店内の寄りでいちばんくっきりした秒）"
+  },
+  {
+   "src": "c10",
+   "in": 90,
+   "out": 125,
+   "row": 5,
+   "note": "F 砂糖をまぶした丸い生地の横（給食の揚げパンの見た目）"
+  },
+  {
+   "src": "c13",
+   "in": 285,
+   "out": 322,
+   "row": 6,
+   "note": "顔が話の中身の行（食べた判定。F-058）: ひと口目を噛みしめる顔。顔が画面の上にある秒で、字が目と鼻に被らない"
+  },
+  {
+   "src": "c14",
+   "in": 201,
+   "out": 232,
+   "row": 6,
+   "note": "「一番うまい！」で、揚げパンの部分に大きくかぶりつく"
+  },
+  {
+   "src": "c21",
+   "in": 189,
+   "out": 248,
+   "row": 7,
+   "note": "夕暮れの道の「Royal Armouries」の茶色い案内標識（歩いて向かう。向こうから来る人が大きく写る前で切る）"
+  },
+  {
+   "src": "c28",
+   "in": 120,
+   "out": 179,
+   "row": 7,
+   "note": "K 吹き抜けを見下ろす、鎧の騎馬の兵の大きな展示（国の武器と防具）"
+  },
+  {
+   "src": "c22",
+   "in": 30,
+   "out": 73,
+   "row": 8,
+   "note": "暗くなり始めた空の下、灯りのともる工事の囲いの細い道を急ぐ（夕方で時間が無い空気）"
+  },
+  {
+   "src": "c22",
+   "in": 450,
+   "out": 493,
+   "row": 8,
+   "note": "囲いと鉄の柵のあいだの道を、さらに急ぐ"
+  },
+  {
+   "src": "c31",
+   "in": 114,
+   "out": 135,
+   "row": 9,
+   "note": "剣: サーベルが並ぶガラスのケースの寄り（ぶれの少ない秒）"
+  },
+  {
+   "src": "c30",
+   "in": 120,
+   "out": 142,
+   "row": 9,
+   "note": "銃: 「EARLY MACHINE GUNS」の機関銃の列"
+  },
+  {
+   "src": "c31",
+   "in": 1425,
+   "out": 1447,
+   "row": 9,
+   "note": "鎧: 金の模様の鎧（0秒目と別の秒・別の向き）"
+  },
+  {
+   "src": "c32",
+   "in": 225,
+   "out": 269,
+   "row": 10,
+   "note": "閉館前、出口へ向かう赤い絨毯の廊下（追い出されて歩く。ぶれの少ない秒）"
+  },
+  {
+   "src": "c32",
+   "in": 375,
+   "out": 419,
+   "row": 10,
+   "note": "絵の並ぶ廊下を急いで出る"
+  },
+  {
+   "src": "c34",
+   "in": 60,
+   "out": 101,
+   "row": 11,
+   "note": "夜の運河沿いの道（案内の柱と、先の灯り）"
+  },
+  {
+   "src": "c34",
+   "in": 360,
+   "out": 401,
+   "row": 11,
+   "note": "運河の水面の先に灯りが見える道を歩く"
+  },
+  {
+   "src": "c33",
+   "in": 135,
+   "out": 167,
+   "row": 12,
+   "note": "「そうでもなくね？」と言った秒の、灯りの少ない煉瓦の広場（エモくない画）"
+  },
+  {
+   "src": "c35",
+   "in": 135,
+   "out": 191,
+   "row": 13,
+   "note": "L 赤レンガの倉庫の窓の灯りと青く光る高層が、水面に映る（名指す物は反射。F-014）"
+  },
+  {
+   "src": "c37",
+   "in": 90,
+   "out": 145,
+   "row": 13,
+   "note": "L 暖かい灯りの建物が、水面に長く映る"
+  },
+  {
+   "src": "c20",
+   "in": 150,
+   "out": 181,
+   "row": 14,
+   "note": "I コーン・エクスチェンジの円いドームと吹き抜け（原稿に出ない見どころ）"
+  },
+  {
+   "src": "c05",
+   "in": 345,
+   "out": 376,
+   "row": 14,
+   "note": "C 美術館の赤い壁の展示室（無料）"
+  },
+  {
+   "src": "c18",
+   "in": 165,
+   "out": 195,
+   "row": 14,
+   "note": "H ヴィクトリア・クォーターのアーケード"
+  },
+  {
+   "src": "c19",
+   "in": 1185,
+   "out": 1243,
+   "row": 15,
+   "note": "I コーン・エクスチェンジの外観（石の柱と時計）"
+  },
+  {
+   "src": "c2_02",
+   "in": 285,
+   "out": 342,
+   "row": 15,
+   "note": "H アーケードのジグザグの床を歩く人たち（歩いて回る）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇧イギリス第三の街を、1日歩いて回ったらやばかった！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "イギリス第三の街を、1日歩いて回ったらやばかった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/01.wav",
+    "tts_text": "イギリスだいさんのまちを、いちにち歩いて回ったらやばかった！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、福岡くらいのコンパクトな街、リーズ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/02.wav",
+    "tts_text": "やってきたのは、ふくおかくらいのコンパクトなまち、リーズ！",
+    "at": 92
+   },
+   {
+    "text": "まずは歩いて、一番有名な市庁舎へ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/03.wav",
+    "tts_text": "まずは歩いて、いちばん有名なしちょうしゃへ！",
+    "at": 187
+   },
+   {
+    "text": "着いたら、めちゃくちゃ工事してて、見せる気ないやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/04.wav",
+    "tts_text": "着いたら、めちゃくちゃこうじしてて、見せる気ないやん！",
+    "at": 264,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "おやつは、イギリスの大会で優勝したドーナツ屋さん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/05.wav",
+    "tts_text": "おやつは、イギリスのたいかいでゆうしょうしたドーナツやさん！",
+    "at": 350
+   },
+   {
+    "text": "穴が無い！給食の揚げパンみたいや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/06.wav",
+    "tts_text": "あなが無い！きゅうしょくのあげパンみたいや！",
+    "at": 438
+   },
+   {
+    "text": "今まで食べたドーナツで、一番うまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/07.wav",
+    "tts_text": "今まで食べたドーナツで、いちばんうまい！",
+    "at": 509,
+    "mood": "up_pop"
+   },
+   {
+    "text": "夕方は歩いて、国の武器と防具を集めた博物館！しかもタダ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/08.wav",
+    "tts_text": "ゆうがたは歩いて、くにのぶきとぼうぐを集めたはくぶつかん！しかもタダ！",
+    "at": 577
+   },
+   {
+    "text": "けど、ボケボケしてたら、もう閉まる45分前！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/09.wav",
+    "tts_text": "けど、ボケボケしてたら、もう閉まるよんじゅうごふんまえ！",
+    "at": 695
+   },
+   {
+    "text": "剣に銃に鎧に、盛り上がってたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/10.wav",
+    "tts_text": "けんに銃に鎧に、盛り上がってたら、",
+    "at": 781
+   },
+   {
+    "text": "「あと15分で閉まるから出てくれ」って、今来たとこやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/11.wav",
+    "tts_text": "あとじゅうごふんで閉まるから出てくれって、いま来たとこやん！",
+    "at": 846,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "夜は、エモいと噂の運河沿いを歩いてみた、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/12.wav",
+    "tts_text": "よるは、エモいとうわさのうんがぞいを歩いてみた、",
+    "at": 934
+   },
+   {
+    "text": "……そうでもなくね？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/13.wav",
+    "tts_text": "そうでもなくね？",
+    "at": 1016
+   },
+   {
+    "text": "と思って進んだら、水面に反射して、今日見た中で一番綺麗！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/14.wav",
+    "tts_text": "と思って進んだら、すいめんにはんしゃして、きょう見た中でいちばんきれい！",
+    "at": 1048,
+    "mood": "up_pop"
+   },
+   {
+    "text": "見どころいっぱいやのに、バスに1回も乗らんと回れた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/15.wav",
+    "tts_text": "見どころいっぱいやのに、バスにいっかいも乗らんと回れた！",
+    "at": 1159
+   },
+   {
+    "text": "みんなは、知らん街に行ったら、歩いて回る派？バス派？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/voice/leeds-p3-v1/p3/16.wav",
+    "tts_text": "みんなは、知らんまちに行ったら、歩いて回る派？バス派？",
+    "at": 1251
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/wt/shorts/videos/S5yf_Ir50xU/p3/spec.json",
+  "fps": 30,
+  "frames": 1366,
+  "seconds": 45.533,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "6:50:32.5+1.70s",
+     "5:18:31.5+1.37s"
+    ],
+    "line": "イギリス第三の街を、1日歩いて回ったらやばかった！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 92,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "0:52:51.5+1.60s",
+     "1:01:03.5+1.57s"
+    ],
+    "line": "やってきたのは、福岡くらいのコンパクトな街、リーズ！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 187,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:55:17.5+1.17s",
+     "1:00:28.0+1.40s"
+    ],
+    "line": "まずは歩いて、一番有名な市庁舎へ！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 264,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "1:00:06.0+1.43s",
+     "1:01:35.0+1.43s"
+    ],
+    "line": "着いたら、めちゃくちゃ工事してて、見せる気ないやん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 350,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "4:03:54.5+1.33s",
+     "4:06:41.0+1.60s"
+    ],
+    "line": "おやつは、イギリスの大会で優勝したドーナツ屋さん！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 438,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "4:11:43.5+1.20s",
+     "4:08:55.0+1.17s"
+    ],
+    "line": "穴が無い！給食の揚げパンみたいや！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 509,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "4:13:27.5+1.23s",
+     "4:15:38.7+1.03s"
+    ],
+    "line": "今まで食べたドーナツで、一番うまい！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 577,
+    "frames": 118,
+    "voice_frames": 110,
+    "cuts": [
+     "6:23:34.3+1.97s",
+     "6:40:40.0+1.97s"
+    ],
+    "line": "夕方は歩いて、国の武器と防具を集めた博物館！しかもタダ！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 695,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "6:24:19.0+1.43s",
+     "6:24:33.0+1.43s"
+    ],
+    "line": "けど、ボケボケしてたら、もう閉まる45分前！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 781,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "6:49:51.8+0.70s",
+     "6:47:36.0+0.73s",
+     "6:50:35.5+0.73s"
+    ],
+    "line": "剣に銃に鎧に、盛り上がってたら、",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 846,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "6:51:47.5+1.47s",
+     "6:51:52.5+1.47s"
+    ],
+    "line": "「あと15分で閉まるから出てくれ」って、今来たとこやん！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 934,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "8:17:38.0+1.37s",
+     "8:17:48.0+1.37s"
+    ],
+    "line": "夜は、エモいと噂の運河沿いを歩いてみた、",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 1016,
+    "frames": 32,
+    "voice_frames": 24,
+    "cuts": [
+     "8:16:44.5+1.07s"
+    ],
+    "line": "……そうでもなくね？",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1048,
+    "frames": 111,
+    "voice_frames": 103,
+    "cuts": [
+     "8:18:40.5+1.87s",
+     "8:22:29.0+1.83s"
+    ],
+    "line": "と思って進んだら、水面に反射して、今日見た中で一番綺麗！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1159,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "5:47:05.0+1.03s",
+     "1:13:23.5+1.03s",
+     "5:21:00.5+1.00s"
+    ],
+    "line": "見どころいっぱいやのに、バスに1回も乗らんと回れた！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1251,
+    "frames": 115,
+    "voice_frames": 92,
+    "cuts": [
+     "5:41:19.5+1.93s",
+     "5:08:27.5+1.90s"
+    ],
+    "line": "みんなは、知らん街に行ったら、歩いて回る派？バス派？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 316,
+   "raw_voice_s": 56.87,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 40.77,
+   "cps_voiced": 7.75,
+   "video_s": 45.53,
+   "cps_video": 6.94
+  }
+ },
+ "notes": [
+  {
+   "from": 92,
+   "to": 187,
+   "text": "10:35 リーズ"
+  },
+  {
+   "from": 350,
+   "to": 438,
+   "text": "13:46 ドーナツ屋"
+  },
+  {
+   "from": 695,
+   "to": 781,
+   "text": "16:06 武器博物館へ"
+  },
+  {
+   "from": 934,
+   "to": 1016,
+   "text": "17:59 運河"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
