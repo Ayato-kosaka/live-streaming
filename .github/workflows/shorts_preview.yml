@@ -9,7 +9,9 @@ name: ショートの下見を置く
 # - hosting … Firebase Hosting のプレビューチャンネル（`--expires 7d`。チャンネル名は乱数）。
 #   **本番のサイト（live チャンネル）には触らない。** 本番の firebase.json・public は使わず、
 #   ランナーの一時の場所に動画と1枚のページだけを置いて配る（`tools/shorts/preview/host.py`）。
-#   動画は作業箱から git で受け取る。包む鍵はこのランナーがその場で作り、ランナーと一緒に消える
+#   動画は作業箱から git で受け取る。包む鍵はこのランナーがその場で作り、ランナーと一緒に消える。
+#   チャンネルの上限は50本（2026-10-31 に当たった）。配る前に期限切れを消し、配って確かめが通ったら
+#   同じ回の古い版を消す（`tools/shorts/preview/channels.py`。一覧・札・消すは REST で、同じ資格情報）
 # - gcs … 非公開バケットの署名付き URL（`gcs.py`）。サービスアカウントはプロジェクト全体の
 #   Storage には何もできず（2026-10-16 の実測）、このバケットだけあやとが作って付与した（#938）。
 #   作業箱から直に上げるので速い（v2 の3本で37秒）が、並べたページは無い
@@ -40,7 +42,7 @@ on:
         required: false
         default: "hosting"
       action:
-        description: "up / delete（delete は hosting だけ）"
+        description: "up / delete / list（delete と list は hosting だけ）"
         required: false
         default: "up"
       files:
@@ -48,7 +50,7 @@ on:
         required: false
         default: "[]"
       channel_sha256:
-        description: "delete のとき: 消すチャンネル名の sha256"
+        description: "delete のとき: 消すチャンネル名の sha256（いくつもならカンマ区切り）"
         required: false
         default: ""
       pubkey:

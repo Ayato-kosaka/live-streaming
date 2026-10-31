@@ -52,14 +52,15 @@ from req import Bad, norm_pem
 
 HERE = Path(__file__).resolve().parent
 PROJECT = SITE = "live-streaming-d3cac"
-EXPIRES = "7d"
+# 寿命は名前で決める（下書きは1日。`channels.expires_for`）。これは本番の版の寿命
+EXPIRES = ch.EXPIRES["final"]
 # 本番の配り（firebase-hosting-deploy-prod.yml）と同じ大きな版にそろえる
 FIREBASE_TOOLS = "firebase-tools@13"
 # 確認の道具（tools/sprites）と同じ版。ブラウザはランナーにある Google Chrome を使う
 # （Playwright の Chromium は H.264 を再生できない）
 PLAYWRIGHT = "playwright-core@1.56.0"
 CHROME = "/usr/bin/google-chrome"
-CHANNEL = re.compile(r"^sp-[0-9a-f]{20}$")
+CHANNEL = ch.CHANNEL
 UPLOAD_WAIT = 1200
 
 
@@ -214,6 +215,69 @@ def find_url(d) -> tuple[str, str]:
     return "", ""
 
 
+def place(tools: Path, site: Path, name: str, log: Path, api=None) -> dict:
+    """片づけてから、新しいチャンネルに配って札を付ける（2つの道で同じ形。`channels.py` の頭）。
+
+    返すのは channel・url・expire・expires（`7d` / 下書きは `1d`）・tidy（片づけの数）・labelled。
+    片づけと札が落ちても配りは続ける。配りが上限で落ちたら、そのときの数を字に添える。
+    """
+    try:
+        api = api or ch.Api()
+    except Exception as e:  # noqa: BLE001  資格情報が読めなくても、配りは firebase-tools が別に読む
+        api, tidy = None, {"error": type(e).__name__}
+    else:
+        try:
+            tidy = ch.tidy(api)
+        except Exception as e:  # noqa: BLE001  片づけられなくても、空きがあれば配れる
+            tidy = {"error": type(e).__name__}
+    if "error" in tidy:
+        print(f"  ::warning::配る前の片づけができなかった（{tidy['error']}）。そのまま配る")
+    else:
+        print(f"  配る前のチャンネル {tidy['before']}本（上限 {tidy['cap']}）。期限切れ {tidy['dead']}本"
+              f"・空けるために {len(tidy['room'])}本を消して {tidy['after']}本"
+              + (f"・消せなかった {tidy['failed']}本" if tidy["failed"] else ""))
+    channel = "sp-" + secrets.token_hex(10)
+    assert CHANNEL.match(channel) and channel != "live"
+    expires = ch.expires_for(name)
+    try:
+        d = firebase(tools, ["hosting:channel:deploy", channel, "--expires", expires], site, log)
+    except Bad as e:
+        if "quota" in str(e) and "error" not in tidy:
+            raise Bad(f"{e}（配る前 {tidy['after']}本・上限 {tidy['cap']}。消してよいもの"
+                      "（期限切れ・下書き・同じ回の古い版）が無かった）") from None
+        raise
+    url, expire = find_url(d.get("result"))
+    if not url:
+        raise Bad("配ったが URL が返ってこなかった")
+    labelled = False
+    if api is not None:
+        try:
+            api.label(channel, ch.labels_for(name))
+            labelled = True
+        except Exception as e:  # noqa: BLE001  札が無くても見られる。片づけの対象にならないだけ
+            print(f"  ::warning::札を付けられなかった（{type(e).__name__}）。このチャンネルは期限まで残る")
+    return {"channel": channel, "url": url, "expire": expire, "expires": expires, "tidy": tidy,
+            "labelled": labelled, "api": api}
+
+
+def settle(placed: dict, name: str, ok: bool) -> dict:
+    """確かめが通ったら、同じ回の古い版を消す。落ちた版は前の版を消さない（見られるものを残す）。"""
+    if not ok:
+        print("  確かめで落ちたので、同じ回の前の版は消さない")
+        return {"retired": [], "failed": 0, "skipped": "確かめで落ちた"}
+    if placed.get("api") is None or not placed.get("labelled"):
+        return {"retired": [], "failed": 0, "skipped": "札が無い"}
+    try:
+        r = ch.retire(placed["api"], name, placed["channel"])
+    except Exception as e:  # noqa: BLE001  古い版は7日で消える。新しい版は配れている
+        print(f"  ::warning::同じ回の古い版を片づけられなかった（{type(e).__name__}）")
+        return {"retired": [], "failed": 0, "error": type(e).__name__}
+    print(f"  同じ回の古い版を {len(r['retired'])}本消した"
+          + (f"（{', '.join(r['retired'])}）" if r["retired"] else "")
+          + (f"・消せなかった {r['failed']}本" if r["failed"] else ""))
+    return r
+
+
 def verify_http(url: str, req: dict) -> list[dict]:
     import requests
 
@@ -287,15 +351,11 @@ def up(req: dict, branch: str, tmp: Path) -> tuple[dict, list[Path]]:
     if npm.wait() != 0:
         raise Bad("firebase-tools / playwright-core を入れられなかった")
     T["tools"] = time.time() - t0
-    channel = "sp-" + secrets.token_hex(10)
-    assert CHANNEL.match(channel) and channel != "live"
-    d = firebase(tools, ["hosting:channel:deploy", channel, "--expires", EXPIRES], site,
-                 tmp / "deploy.log")
-    url, expire = find_url(d.get("result"))
-    if not url:
-        raise Bad("配ったが URL が返ってこなかった")
+    placed = place(tools, site, req["name"], tmp / "deploy.log")
+    channel, url, expire = placed["channel"], placed["url"], placed["expire"]
     T["deployed"] = time.time() - t0
-    print(f"  チャンネルに配った（{T['deployed']:.0f}秒・{EXPIRES}で消える）")
+    print(f"  チャンネルに配った（{T['deployed']:.0f}秒・{placed['expires']}で消える"
+          f"・札 {'○' if placed['labelled'] else '✕'}）")
     checks = verify_http(url, req)
     T["verified"] = time.time() - t0
     for c in checks:
@@ -311,12 +371,14 @@ def up(req: dict, branch: str, tmp: Path) -> tuple[dict, list[Path]]:
     n_vid = sum(1 for f in req["files"] if f["name"].lower().endswith((".mp4", ".mov", ".m4v")))
     if len([v for v in vids if v.get("played")]) < n_vid:
         bad.append("スマホ幅で再生できないものがある")
+    settled = settle(placed, req["name"], not bad)
     body = {"format": "shorts-preview/1", "place": "hosting", "name": req["name"],
             "channel": channel, "channel_sha256": hashlib.sha256(channel.encode()).hexdigest(),
             "page": url + "/", "get_expires": expire or (
                 dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=7)).isoformat(),
             "files": [dict(f, get=f"{url}/{f['name']}") for f in req["files"]],
             "checks": checks, "playback": play, "ok": not bad, "problems": bad,
+            "channels": {"tidy": placed["tidy"], "labelled": placed["labelled"], "retire": settled},
             "timing": {k: round(v, 1) for k, v in T.items()}}
     return body, [shot] if shot else []
 

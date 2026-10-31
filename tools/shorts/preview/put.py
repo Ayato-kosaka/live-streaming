@@ -274,8 +274,17 @@ def up_hosting(a, files: list[Path], ents: list[dict], meta: dict, T: dict, t0: 
     T["result"] = time.time() - t0
     body, run, dest = open_result(a, sha)
     if not body:
+        # 結果は開いた（--out の run.json）。作業枝に暗号文を残さない
+        cleanup_branch(a)
         raise RuntimeError(f"Actions で置けなかった: {run.get('error')}")
     print(f"結果が来た（{T['result']:.0f}秒・status={rman.get('status')}）。ランナーで確かめたこと:")
+    chs = body.get("channels") or {}
+    if chs:
+        td, rt = chs.get("tidy") or {}, chs.get("retire") or {}
+        print(f"  チャンネル: 配る前 {td.get('before', '?')}本（上限 {td.get('cap', '?')}）・期限切れ {td.get('dead', 0)}本"
+              f"・空けるために {len(td.get('room') or [])}本を消した・札 {'○' if chs.get('labelled') else '✕'}"
+              f"・同じ回の古い版 {len(rt.get('retired') or [])}本を消した"
+              + (f"（{', '.join(rt['retired'])}）" if rt.get("retired") else ""))
     for c in body.get("checks") or []:
         print(f"  {c['name']}: 落とし直し HTTP {c['status']}  sha256 "
               f"{'一致' if c['sha256_ok'] else '!! 不一致'}  範囲 {c['range_status']}"

@@ -979,22 +979,22 @@ def preview(req: dict, items: list[dict], bucket, prefix: str) -> dict:
         site = host.make_site(preq, got, {"title": f"下見 {req['name']}", "items": meta}, tmp)
         if not wait_tools(npm, lambda: host.prewarm(tools)):
             raise Bad("firebase-tools / playwright-core を入れられなかった（上限で2回切った）")
-        channel = "sp-" + secrets.token_hex(10)
-        assert host.CHANNEL.match(channel) and channel != "live"
-        d = host.firebase(tools, ["hosting:channel:deploy", channel, "--expires", host.EXPIRES], site,
-                          tmp / "deploy.log")
-        url, expire = host.find_url(d.get("result"))
-        if not url:
-            raise Bad("配ったが URL が返ってこなかった")
+        # 片づけ（期限切れ・上限が近いときの下書きと古い版）→ 配る → 札、は put.py の道と同じ（host.place）。
+        # 2026-10-31 に、版ごとに作ったチャンネルが上限（50本）に当たって、ここが続けて落ちた
+        placed = host.place(tools, site, req["name"], tmp / "deploy.log")
+        channel, url, expire = placed["channel"], placed["url"], placed["expire"]
         checks = host.verify_http(url, preq)
         play = host.playback(url, tools, tmp)
         play.pop("shot", None)
         bad = [c["name"] for c in checks if not (c["sha256_ok"] and c["range_status"] == 206)]
         if len([v for v in play.get("videos") or [] if v.get("played")]) < len(files):
             bad.append("スマホ幅で再生できないものがある")
+        # 確かめが通ったときだけ、同じ回の古い版を消す
+        settled = host.settle(placed, req["name"], not bad)
         return {"ok": not bad, "problems": bad, "page": url + "/", "expires": expire,
                 "channel_sha256": hashlib.sha256(channel.encode()).hexdigest(),
                 "files": {f["name"]: f"{url}/{f['name']}" for f in files}, "checks": checks,
+                "channels": {"tidy": placed["tidy"], "labelled": placed["labelled"], "retire": settled},
                 "playback": host.summarize_play(play) if "videos" in play else play.get("error")}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -1031,7 +1031,7 @@ def summary(rep: dict) -> dict:
     return {"format": "shorts-render-summary/1", "name": rep["name"], "status": rep["status"],
             "draft": rep["draft"], "run": rep.get("run"), "expires": rep.get("expires"), "timing": rep.get("timing"),
             "preview": {k: pv.get(k) for k in ("ok", "problems", "page", "expires", "playback", "seconds",
-                                                "channel_sha256")} if pv else None,
+                                                "channel_sha256", "channels")} if pv else None,
             "items": out}
 
 
