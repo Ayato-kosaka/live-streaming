@@ -96,7 +96,7 @@ python3 tools/shorts/preview/put.py delete --key <同じ> --out <同じ> --sha25
 | いつ | 何を消す |
 | --- | --- |
 | 配る前に、いつも | 期限を過ぎたもの。もう誰にも見えないのに、消えるまで上限に数えられる |
-| 配る前に、45本（50 − 空き5）を越えそうなとき | 下書き → 札の上で古い版になっているもの、の順に古いものから |
+| 配る前に、配ったあとの数が `CAP − ROOM`（50 − 5）を越えそうなとき | 下書き → 札の上で古い版になっているもの、の順に古いものから |
 | 配って、落とし直し・範囲・スマホ幅の再生が全部通ったあと | **同じ回の、それより古い版で、それより前に作ったもの** |
 
 - 下書き（名前の終わりが `d1` `d2` …）は**1日**で置く
@@ -118,8 +118,10 @@ python3 tools/shorts/preview/put.py delete --key <同じ> --out <同じ> --sha25
 - 回ごとに1つのチャンネルへ版を上書きする案も取らない。issue では「v6 の URL」で話していて、同じ URL の
   中身が黙って変わると、どの版を見ているかが分からなくなる（CDN に前の版が残ることもある）
 
-**見張り:** `channels_selftest.py`（決まり。13本）と `host_selftest.py`（2つの道が決まりを通るか。8本）。
-どちらも Hosting に触らない（偽の API と偽の firebase-tools）。
+**見張り:** `channels_selftest.py`（決まり。消しすぎと消さなすぎの両方）と `host_selftest.py`
+（2つの道が決まりを通るか）。どちらも Hosting に触らない（偽の API と偽の firebase-tools）。
+足を書き換えたら `python3 python/mutation_drill.py tools/shorts/preview/channels_selftest.py
+tools/shorts/preview/host_selftest.py` で、守っている実物を壊して赤くなるかを見る。
 
 **録画を受け取るページ（`tools/shorts/upload/serve.py`）も同じ上限を食う。** あちらは下見ではないので
 この片づけを通らず、7日で消えるのを待つ（期限切れは、下見を配るときにここが消す）。
