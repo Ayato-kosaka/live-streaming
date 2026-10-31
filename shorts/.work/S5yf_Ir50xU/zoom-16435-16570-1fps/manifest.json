@@ -5,37 +5,39 @@
  "dest": "S5yf_Ir50xU/zoom-16435-16570-1fps",
  "video": "S5yf_Ir50xU",
  "channel": null,
- "request": "shorts/requests/leeds-S5yf_Ir50xU-p3-zoom-20261030.json",
- "status": "failed",
+ "request": "shorts/requests/leeds-S5yf_Ir50xU-p3-zoom-20261031-r2.json",
+ "status": "ok",
  "stages": {
-  "download": "failed"
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
  },
  "counts": {
-  "sheets": 0,
+  "sheets": 12,
   "caption_segments": 0,
   "transcript_segments": 0,
-  "cuts": 0,
+  "cuts": 28,
   "clips": 0,
   "clips_ok": 0,
   "clip_seconds": 0,
   "channel_entries": 0,
-  "files": 3
+  "files": 20
  },
  "bytes": {
-  "plain": 10684,
-  "tar_gz": 3618,
-  "encrypted": 3632
+  "plain": 3153244,
+  "tar_gz": 3062409,
+  "encrypted": 3062416
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 3632,
-   "sha256": "914c1fea1dc6c8d54d8e8d34d712fe39afe078cff58daf4055177896b4e7341a"
+   "bytes": 3062416,
+   "sha256": "7648046521cb6e8207bd56c485d5f6236026e4142b13a7a282697039fd640fcf"
   }
  ],
- "hmac_sha256": "6fb0506b7ddd22cca9aa98239190ee1e245df3cec1d48907f3909661dcf453af",
+ "hmac_sha256": "10a038190099b99540c0fe295a24d4b8138bc7a5d400e6b1c3dfcb55875b795d",
  "pubkey_sha256": "3fe29a724fcf1c7520ad1fc783644a9837a496e8f622cf6f58ff1945e390f4a7",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41142424246",
- "created_at": "2026-10-30T23:57:52+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41147940516",
+ "created_at": "2026-10-31T00:37:21+00:00"
 }
