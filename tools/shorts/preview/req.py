@@ -7,7 +7,7 @@
 | 欄 | 意味 |
 | --- | --- |
 | `place` | `hosting`（Firebase Hosting のプレビューチャンネル。いまの既定）/ `gcs`（非公開バケットの署名付き URL。#938 で付与）/ `transfer`（同じバケットの `transfer/`。EC2 へ渡す受け渡し。URL は3時間・置いたものは1日で消える。`tools/shorts/post/send.py`） |
-| `action` | `up`（置く）/ `delete`（hosting のチャンネルを消す。`channel_sha256` で指す） |
+| `action` | `up`（置く）/ `delete`（hosting のチャンネルを消す。`channel_sha256` で指す。いくつも消すときは `channel_sha256` を並び（64桁の16進の list）にする）/ `list`（hosting のチャンネルを数えて、sha256・作った時刻・消える時刻・札を暗号化して返す） |
 | `files` | 置くファイル。hosting は大きさと sha256 が要る（ランナーが受け取ったものと、配ったあと落とし直したものを突き合わせる） |
 | `pubkey` | 結果（URL）を包む作業箱の公開鍵。RSA 2048bit 以上 |
 | `nonce` | 届いた結果がこの依頼のものかを、作業箱が平文の manifest で見分ける |
@@ -31,7 +31,9 @@ from plan import Bad, compare_files, norm_pem  # noqa: E402,F401
 ROOT = HERE.parents[2]
 REQ_DIR = "shorts/preview/"
 PLACES = ("hosting", "gcs", "transfer")
-ACTIONS = ("up", "delete")
+ACTIONS = ("up", "delete", "list")
+# 1回の delete で消せる数（下見のチャンネルの上限より多くは無い）
+MAX_DELETE = 100
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 SEG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -76,8 +78,8 @@ def read_request(req: dict, origin: str) -> dict:
     action = req.get("action") or "up"
     if place not in PLACES:
         raise Bad(f"{origin}: place は {PLACES} のどれか")
-    if action not in ACTIONS or (action == "delete" and place != "hosting"):
-        raise Bad(f"{origin}: action は up / delete（delete は hosting だけ）")
+    if action not in ACTIONS or (action in ("delete", "list") and place != "hosting"):
+        raise Bad(f"{origin}: action は up / delete / list（delete と list は hosting だけ）")
     pem, fp = norm_pem(req.get("pubkey", ""))
     nonce = str(req.get("nonce") or "")
     if not re.match(r"^[A-Za-z0-9_-]{8,64}$", nonce):
@@ -85,10 +87,19 @@ def read_request(req: dict, origin: str) -> dict:
     out = {"name": name, "place": place, "action": action, "pubkey": pem,
            "pubkey_sha256": fp, "nonce": nonce, "req": origin}
     if action == "delete":
-        ch = str(req.get("channel_sha256") or "")
-        if not HEX64.match(ch):
-            raise Bad(f"{origin}: delete は channel_sha256（チャンネル名の sha256）が要る")
-        out["channel_sha256"] = ch
+        chs = req.get("channel_sha256") or ""
+        if isinstance(chs, str):
+            # workflow_dispatch の入力欄は1行なので、カンマか空白で区切って並べてもよい
+            chs = [c for c in re.split(r"[,\s]+", chs) if c]
+        chs = [str(c) for c in chs]
+        if not chs or not all(HEX64.match(c) for c in chs):
+            raise Bad(f"{origin}: delete は channel_sha256（チャンネル名の sha256。いくつもなら並び）が要る")
+        if len(chs) > MAX_DELETE or len(set(chs)) != len(chs):
+            raise Bad(f"{origin}: channel_sha256 は重ならずに {MAX_DELETE} 個まで")
+        # 1つのときは今までどおり字のまま（put.py delete の結果の読みかたを変えない）
+        out["channel_sha256"] = chs[0] if len(chs) == 1 else chs
+        out["files"] = []
+    elif action == "list":
         out["files"] = []
     else:
         out["files"] = check_files(req.get("files"), origin, need_hash=place == "hosting")

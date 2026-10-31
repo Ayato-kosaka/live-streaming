@@ -527,6 +527,9 @@ ALLOW: dict[str, tuple[int, str]] = {
     # --- TS ではないもの ---
     "python/channel_alias_nightly_selftest.py": (1, "ワークフローの YAML を読む（TS ではない）"),
     "python/failed_reentry_nightly_selftest.py": (2, "ワークフローの YAML を読む（TS ではない）"),
+    "tools/shorts/preview/host_selftest.py": (
+        1, "偽の firebase-tools を書き出す生の文字列に JSON の鍵が入る（TS ではない。何も読まない）",
+    ),
 }
 
 

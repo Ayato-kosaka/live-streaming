@@ -71,6 +71,8 @@ def one(req: dict, branch: str, tmp: Path) -> bool:
             print(f"  署名した: {len(body['files'])}本")
         elif req["action"] == "delete":
             body, attach = host.delete(req, tmp)
+        elif req["action"] == "list":
+            body, attach = host.listing(req)
         else:
             body, attach = host.up(req, branch, tmp)
     except Exception as e:  # noqa: BLE001  落ちたことも暗号化して返す（作業箱が待ち続けないように）

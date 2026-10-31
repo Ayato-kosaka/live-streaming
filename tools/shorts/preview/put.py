@@ -7,6 +7,10 @@
     python3 tools/shorts/preview/put.py delete --name yk-v2 --key <同じ> --out <同じ>
     # GCS の道だけ: 見られるか・非公開のままかをもう一度見る
     python3 tools/shorts/preview/put.py check  --name yk-v2 --out <同じ>
+    # hosting のチャンネルを数える（sha256・作った時刻・消える時刻・札。名前は手元の記録と突き合わせる）
+    python3 tools/shorts/preview/put.py list --key <同じ> --out <同じ> [--known <sha256→名前の json>]
+    # sha256 で指していくつも消す（依頼にチャンネル名を書かない）
+    python3 tools/shorts/preview/put.py delete --key <同じ> --out <同じ> --sha256 <64桁> --sha256 <64桁>
 
 置き場は2つ（`--place`）。いまは **hosting**（Firebase Hosting のプレビューチャンネル）。
 **gcs**（非公開バケットの署名付き URL。#938 で 2026-10-17 から）は作業箱から直に上げるので速い（37秒）が、
@@ -85,8 +89,9 @@ def request(a, req: dict) -> None:
                 "-f", f"inputs[branch]={a.branch}"]
         for k in ("name", "place", "action", "pubkey", "nonce"):
             args += ["-f", f"inputs[{k}]={req.get(k, '')}"]
+        chs = req.get("channel_sha256", "")
         args += ["-f", f"inputs[files]={json.dumps(req.get('files', []))}",
-                 "-f", f"inputs[channel_sha256]={req.get('channel_sha256', '')}"]
+                 "-f", f"inputs[channel_sha256]={','.join(chs) if isinstance(chs, list) else chs}"]
         subprocess.run(args, check=True, capture_output=True)
         return
     body = json.dumps(req, ensure_ascii=False, indent=1) + "\n"
@@ -269,8 +274,17 @@ def up_hosting(a, files: list[Path], ents: list[dict], meta: dict, T: dict, t0: 
     T["result"] = time.time() - t0
     body, run, dest = open_result(a, sha)
     if not body:
+        # 結果は開いた（--out の run.json）。作業枝に暗号文を残さない
+        cleanup_branch(a)
         raise RuntimeError(f"Actions で置けなかった: {run.get('error')}")
     print(f"結果が来た（{T['result']:.0f}秒・status={rman.get('status')}）。ランナーで確かめたこと:")
+    chs = body.get("channels") or {}
+    if chs:
+        td, rt = chs.get("tidy") or {}, chs.get("retire") or {}
+        print(f"  チャンネル: 配る前 {td.get('before', '?')}本（上限 {td.get('cap', '?')}）・期限切れ {td.get('dead', 0)}本"
+              f"・空けるために {len(td.get('room') or [])}本を消した・札 {'○' if chs.get('labelled') else '✕'}"
+              f"・同じ回の古い版 {len(rt.get('retired') or [])}本を消した"
+              + (f"（{', '.join(rt['retired'])}）" if rt.get("retired") else ""))
     for c in body.get("checks") or []:
         print(f"  {c['name']}: 落とし直し HTTP {c['status']}  sha256 "
               f"{'一致' if c['sha256_ok'] else '!! 不一致'}  範囲 {c['range_status']}"
@@ -407,9 +421,59 @@ def cmd_check(a) -> int:
     return 1 if bad else 0
 
 
+def list_name(a, verb: str) -> str:
+    return a.name or f"pv-{verb}-{dt.datetime.now(JST):%Y%m%d-%H%M%S}-{secrets.token_hex(2)}"
+
+
+def cmd_list(a) -> int:
+    a.name = list_name(a, "list")
+    nonce = secrets.token_hex(12)
+    request(a, {"name": a.name, "place": "hosting", "action": "list", "files": [],
+                "pubkey": pubkey_of(Path(a.key)), "nonce": nonce})
+    print("数える依頼を出した。Actions を待つ")
+    sha, _ = wait_result(a, nonce, a.timeout)
+    res, run, dest = open_result(a, sha)
+    cleanup_branch(a)
+    if not res:
+        print(f"!! 数えられなかった: {run.get('error')}")
+        return 1
+    known = json.loads(Path(a.known).read_text(encoding="utf-8")) if a.known else {}
+    c = res["census"]
+    print(f"チャンネル {c['all']}本（下見 {c['preview']}・ほか {c['other']}）  内訳 "
+          f"{json.dumps(c['kinds'], ensure_ascii=False)}  上限 {c.get('cap')}")
+    for r in res["channels"]:
+        name = (r.get("labels") or {}).get("shorts-name") or (known.get(r["channel_sha256"]) or {}).get("name")
+        print(f"  {r['channel_sha256'][:12]}  {'live' if r['live'] else '下見' if r['preview'] else 'ほか'}"
+              f"  作った {str(r.get('create'))[:16]}  消える {str(r.get('expire') or '-')[:16]}"
+              f"  {name or '（手元に記録なし）'}")
+    print(f"一覧の全部: {dest / 'urls.json'}")
+    return 0
+
+
 def cmd_delete(a) -> int:
     import requests
 
+    if a.sha256:
+        # sha256 で指して消す（いくつでも）。チャンネル名は依頼（公開）に書かない
+        a.name = list_name(a, "delete")
+        nonce = secrets.token_hex(12)
+        request(a, {"name": a.name, "place": "hosting", "action": "delete", "files": [],
+                    "channel_sha256": a.sha256, "pubkey": pubkey_of(Path(a.key)), "nonce": nonce})
+        print(f"{len(a.sha256)}本を消す依頼を出した。Actions を待つ")
+        sha, _ = wait_result(a, nonce, a.timeout)
+        res, run, _ = open_result(a, sha)
+        cleanup_branch(a)
+        if not res:
+            print(f"!! 消せなかった: {run.get('error')}")
+            return 1
+        for r in res.get("results") or []:
+            print(f"  {r['channel_sha256'][:12]}  "
+                  f"{'消した' if r.get('deleted') else r.get('why', '消していない')}"
+                  f"  そのあと HTTP {r.get('after_status', '-')}  {'404 を見た' if r.get('gone') else '!! まだ見える'}")
+        return 0 if res.get("ok") else 1
+    if not a.name:
+        print("!! --name（up のときの名前）か --sha256 を渡す")
+        return 1
     body = load_body(a)
     if body.get("place") == "hosting":
         # チャンネル名そのものは依頼（公開）に書かない。sha256 で指して、ランナーが一覧から探す
@@ -443,17 +507,22 @@ def cmd_delete(a) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("up", "check", "delete"):
+    for name in ("up", "check", "delete", "list"):
         p = sub.add_parser(name)
-        p.add_argument("--name", required=True, help="下見の名前（英数字と . _ -）")
+        p.add_argument("--name", required=name in ("up", "check"), help="下見の名前（英数字と . _ -）")
         p.add_argument("--out", required=True, help="開いた URL を置く場所（リポジトリの外）")
-        if name in ("up", "delete"):
-            p.add_argument("--key", required=name == "up", help="RSA 秘密鍵（PEM）")
+        if name in ("up", "delete", "list"):
+            p.add_argument("--key", required=name in ("up", "list"), help="RSA 秘密鍵（PEM）")
             p.add_argument("--branch", default=BRANCH, help="依頼と結果を置く作業枝（claude/…）")
             p.add_argument("--via", choices=("push", "dispatch"), default="push",
                            help="push＝依頼ファイルを作業枝に置く / dispatch＝master のワークフローを起こす")
             p.add_argument("--timeout", type=float, default=900)
             p.add_argument("--keep-branch", action="store_true", help="作業枝の暗号文を残す")
+        if name == "delete":
+            p.add_argument("--sha256", action="append", default=[],
+                           help="消すチャンネル名の sha256（64桁。いくつも渡せる。put.py list で見る）")
+        if name == "list":
+            p.add_argument("--known", default="", help="sha256 → {name} の json（手元の記録。名前を添えるだけ）")
         if name == "up":
             p.add_argument("--urls", required=True, help="見る URL の一覧を書くファイル（リポジトリの外）")
             p.add_argument("--place", choices=("hosting", "gcs"), default="hosting",
@@ -463,10 +532,10 @@ def main() -> int:
                            help="動画の題 NAME=題（無ければ同じフォルダの post_<名前>.json の題）")
             p.add_argument("files", nargs="+")
     a = ap.parse_args()
-    if a.cmd in ("up", "delete") and not a.branch.startswith("claude/"):
+    if a.cmd in ("up", "delete", "list") and not a.branch.startswith("claude/"):
         print("!! 作業枝は claude/ で始まる名前にする")
         return 1
-    return {"up": cmd_up, "check": cmd_check, "delete": cmd_delete}[a.cmd](a)
+    return {"up": cmd_up, "check": cmd_check, "delete": cmd_delete, "list": cmd_list}[a.cmd](a)
 
 
 if __name__ == "__main__":

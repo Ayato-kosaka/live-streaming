@@ -4,60 +4,80 @@
  "id": "A",
  "style": "style_v3.json",
  "sources": {
-  "c17": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/17_5-18-35_5-19-50.mp4",
+  "c3_11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/11_5-22-35_5-23-50.mp4",
    "watermark": "prism_live",
-   "t0": 19115.0
+   "t0": 19355.0
   },
-  "c10": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/10_0-36-00_0-38-00.mp4",
+  "c3_09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/09_4-24-35_4-25-55.mp4",
    "watermark": "prism_live",
-   "t0": 2160.0
+   "t0": 15875.0
   },
-  "c19": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/19_6-51-25_6-53-10.mp4",
+  "c3_16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/16_7-00-15_7-00-55.mp4",
    "watermark": "prism_live",
-   "t0": 24685.0
+   "t0": 25215.0
   },
-  "c07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/07_0-12-35_0-13-15.mp4",
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/02_1-10-15_1-11-15.mp4",
    "watermark": "prism_live",
-   "t0": 755.0
+   "t0": 4215.0
   },
-  "c09": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/09_0-34-35_0-35-15.mp4",
+  "c3_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/07_3-39-50_3-40-15.mp4",
    "watermark": "prism_live",
-   "t0": 2075.0
-  },
-  "c08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/08_0-24-55_0-25-35.mp4",
-   "watermark": "prism_live",
-   "t0": 1495.0
-  },
-  "c11": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/11_2-20-05_2-21-05.mp4",
-   "watermark": "prism_live",
-   "t0": 8405.0
-  },
-  "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/06_2-21-40_2-23-20.mp4",
-   "watermark": "prism_live",
-   "t0": 8500.0
+   "t0": 13190.0
   },
   "c2_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest2/nxWncbFtsSU/clips/01_3-28-36_3-29-04.mp4",
    "watermark": "prism_live",
    "t0": 12516.0
   },
-  "c12": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/12_2-56-40_2-58-20.mp4",
+  "c3_17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/17_7-16-10_7-16-45.mp4",
    "watermark": "prism_live",
-   "t0": 10600.0
+   "t0": 26170.0
   },
-  "c13": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/13_2-59-10_2-59-40.mp4",
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/01_0-40-55_0-42-10.mp4",
    "watermark": "prism_live",
-   "t0": 10750.0
+   "t0": 2455.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/09_0-34-35_0-35-15.mp4",
+   "watermark": "prism_live",
+   "t0": 2075.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/10_0-36-00_0-38-00.mp4",
+   "watermark": "prism_live",
+   "t0": 2160.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/08_0-24-55_0-25-35.mp4",
+   "watermark": "prism_live",
+   "t0": 1495.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/03_2-23-35_2-25-10.mp4",
+   "watermark": "prism_live",
+   "t0": 8615.0
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/06_3-33-05_3-33-45.mp4",
+   "watermark": "prism_live",
+   "t0": 12785.0
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/04_2-44-55_2-45-15.mp4",
+   "watermark": "prism_live",
+   "t0": 9895.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/05_2-59-50_3-00-10.mp4",
+   "watermark": "prism_live",
+   "t0": 10790.0
   },
   "c14": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/14_3-36-05_3-36-55.mp4",
@@ -74,10 +94,15 @@
    "watermark": "prism_live",
    "t0": 13970.0
   },
-  "c18": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/18_5-19-55_5-20-15.mp4",
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/17_5-18-35_5-19-50.mp4",
    "watermark": "prism_live",
-   "t0": 19195.0
+   "t0": 19115.0
+  },
+  "c3_10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/10_5-20-25_5-21-35.mp4",
+   "watermark": "prism_live",
+   "t0": 19225.0
   },
   "c01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/01_5-54-40_5-56-45.mp4",
@@ -89,94 +114,113 @@
    "watermark": "prism_live",
    "t0": 22390.0
   },
-  "c20": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/20_7-11-45_7-12-55.mp4",
+  "c3_15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/15_6-50-10_6-50-45.mp4",
    "watermark": "prism_live",
-   "t0": 25905.0
+   "t0": 24610.0
   },
-  "c21": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/21_7-16-40_7-17-05.mp4",
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest/nxWncbFtsSU/clips/19_6-51-25_6-53-10.mp4",
    "watermark": "prism_live",
-   "t0": 26200.0
+   "t0": 24685.0
+  },
+  "c3_18": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/ingest3/nxWncbFtsSU/clips/18_7-25-35_7-26-15.mp4",
+   "watermark": "prism_live",
+   "t0": 26735.0
   }
  },
  "cuts": [
   {
-   "src": "c17",
-   "in": 600,
-   "out": 628,
+   "src": "c3_11",
+   "in": 1320,
+   "out": 1348,
    "row": 0,
-   "note": "0秒目: 青い店構えのヴィクトリア通り（店が札の下まで来る秒。一日の見どころの先出し 1/3）"
+   "note": "0秒目: ヴィクトリア通りのオレンジと青の店構え（一日の見どころの先出し 1/3。5:23:10〜13 は素材がカクつくので避けた）"
   },
   {
-   "src": "c10",
-   "in": 3270,
-   "out": 3297,
+   "src": "c3_09",
+   "in": 1866,
+   "out": 1893,
    "row": 0,
-   "note": "丘の上の神殿の柱を真下から（2/3）"
+   "note": "城の大広間の暖炉と鎧と白黒の床（2/3）"
   },
   {
-   "src": "c19",
-   "in": 420,
-   "out": 447,
+   "src": "c3_16",
+   "in": 486,
+   "out": 513,
    "row": 0,
-   "note": "夜の赤い電話ボックスと店の灯り（3/3）。城の画はどれも城が画面の上の札の後ろに隠れるので使わない"
+   "note": "夜のセント・ジェームズの紫の灯り（3/3）"
   },
   {
-   "src": "c07",
-   "in": 60,
-   "out": 97,
-   "row": 1,
-   "note": "「下調べによると」話す本人（駅前）"
-  },
-  {
-   "src": "c07",
+   "src": "c3_02",
    "in": 540,
-   "out": 596,
+   "out": 563,
    "row": 1,
-   "note": "「見どころ多すぎて、1日じゃ無理らしい！」街の案内図を指でなぞる"
+   "note": "「下調べによると」カールトン・ヒルの塔と旧市街の眺め（話す自撮りと案内図をやめ、一日の見どころを速く並べる 1/4）"
   },
   {
-   "src": "c09",
-   "in": 420,
-   "out": 467,
+   "src": "c3_07",
+   "in": 474,
+   "out": 497,
+   "row": 1,
+   "note": "「見どころ多すぎて、」エディンバラ城の正面と人の列（2/4）"
+  },
+  {
+   "src": "c2_01",
+   "in": 234,
+   "out": 258,
+   "row": 1,
+   "note": "「1日じゃ」緑の扉の前で吹くバグパイプ奏者（3/4）"
+  },
+  {
+   "src": "c3_17",
+   "in": 561,
+   "out": 584,
+   "row": 1,
+   "note": "「無理らしい！」夜に照らされたスコット記念塔（4/4）"
+  },
+  {
+   "src": "c3_01",
+   "in": 1728,
+   "out": 1767,
    "row": 2,
-   "note": "「朝10時、まずは丘の上から」丘の上の草地と街"
+   "note": "「朝10時、まずは丘の上から」丘の上のネルソン記念塔と芝生（下書きでは1行目と同じ塔の画が続いたので替えた）"
   },
   {
    "src": "c09",
    "in": 900,
-   "out": 939,
+   "out": 947,
    "row": 2,
    "note": "「街を見下ろす。」丘から見下ろした街並みと海"
   },
   {
+   "src": "c3_01",
+   "in": 1896,
+   "out": 1932,
+   "row": 3,
+   "note": "「なぜか、ギリシャの神殿が」神殿の正面の引き（人が小さく、大きさが分かる。前の版の自撮りをやめた）"
+  },
+  {
    "src": "c10",
    "in": 1890,
-   "out": 1926,
+   "out": 1914,
    "row": 3,
-   "note": "「なぜか、ギリシャの神殿が」丘の上の神殿の柱の正面"
+   "note": "「建ってる！」神殿の柱の正面"
   },
   {
-   "src": "c08",
-   "in": 480,
-   "out": 504,
-   "row": 3,
-   "note": "「建ってる！」神殿を背に指さす本人の自撮り"
-  },
-  {
-   "src": "c10",
-   "in": 2490,
-   "out": 2532,
+   "src": "c3_01",
+   "in": 297,
+   "out": 339,
    "row": 4,
-   "note": "「作る途中でお金が尽きて、」柱を下から"
+   "note": "「作る途中でお金が尽きて、」柱を横から見上げる"
   },
   {
    "src": "c10",
    "in": 3270,
    "out": 3312,
    "row": 4,
-   "note": "「200年近くこのまま。」柱を真下から見上げる（前と続けて3秒未満）"
+   "note": "「200年近くこのまま。」柱を真下から見上げる"
   },
   {
    "src": "c08",
@@ -186,53 +230,46 @@
    "note": "「作る前に予算決めとこうや！」神殿と大砲の前で拳を上げる本人"
   },
   {
-   "src": "c11",
-   "in": 540,
-   "out": 576,
+   "src": "c3_03",
+   "in": 723,
+   "out": 759,
    "row": 6,
-   "note": "「お昼は、旧市街の大通り」石畳の大通り（遠くに尖塔）"
+   "note": "「お昼は、旧市街の大通り」石畳の坂と古い建物"
   },
   {
-   "src": "c11",
-   "in": 1530,
-   "out": 1567,
+   "src": "c3_03",
+   "in": 2478,
+   "out": 2515,
    "row": 6,
-   "note": "「ロイヤル・マイル。」赤い2階建てバスが通る大通り"
-  },
-  {
-   "src": "c06",
-   "in": 570,
-   "out": 629,
-   "row": 7,
-   "note": "「バグパイプの生演奏に出くわした！」店の前でキルトを着て吹く奏者（遠め・通行人なし）"
+   "note": "「ロイヤル・マイル。」スコットランドの旗の並ぶ土産物屋の通り"
   },
   {
    "src": "c2_01",
-   "in": 150,
-   "out": 186,
+   "in": 393,
+   "out": 452,
+   "row": 7,
+   "note": "「バグパイプの生演奏に出くわした！」緑の扉の前でキルトを着て吹く奏者（前の版の遠い奏者より近い）"
+  },
+  {
+   "src": "c3_06",
+   "in": 783,
+   "out": 856,
    "row": 8,
-   "note": "「息継ぎしてるのに、」緑の扉の前で吹く奏者（同じ日のロイヤル・マイルの2人目。2:22 の奏者の画を3秒以上続けないため）"
+   "note": "「息継ぎしてるのに、音がずっと止まらへん！」木の扉の前で吹く2人目の奏者（前の版の、奏者を背にした自撮りをやめた）"
   },
   {
-   "src": "c06",
-   "in": 2580,
-   "out": 2617,
-   "row": 8,
-   "note": "「音がずっと止まらへん！」奏者を背にした本人の自撮り（2:23:04〜05 は通行人が横に入るので 2:23:06 から）"
-  },
-  {
-   "src": "c12",
-   "in": 1920,
-   "out": 1952,
+   "src": "c3_04",
+   "in": 99,
+   "out": 131,
    "row": 9,
-   "note": "「昼ごはんは、ジャムがゴロゴロの」ピンクの皿の砂糖まぶしのドーナツ"
+   "note": "「昼ごはんは、ジャムがゴロゴロの」ガラスの棚に並んだドーナツ"
   },
   {
-   "src": "c13",
-   "in": 174,
-   "out": 207,
+   "src": "c3_05",
+   "in": 303,
+   "out": 336,
    "row": 9,
-   "note": "「ドーナツ。」紙に包んだドーナツを目の前に寄せる（真ん中の穴にジャム）。本人の顔の画は、左上の注「12:25 ドーナツ屋」と下の字幕のあいだに目と鼻が収まらない（2:59:21 は注に、2:59:29.2 は字幕に被った）ので、顔の無い寄りにした"
+   "note": "「ドーナツ。」割ったドーナツの中のブルーベリーのジャム"
   },
   {
    "src": "c14",
@@ -264,31 +301,31 @@
   },
   {
    "src": "c17",
-   "in": 120,
-   "out": 156,
+   "in": 225,
+   "out": 261,
    "row": 12,
-   "note": "「3時、カラフルな坂の」赤や黒の店の並ぶ石畳の坂"
+   "note": "「3時、カラフルな坂の」赤い店の並ぶ石畳の坂"
   },
   {
-   "src": "c17",
-   "in": 960,
-   "out": 995,
+   "src": "c3_11",
+   "in": 1170,
+   "out": 1205,
    "row": 12,
-   "note": "「ヴィクトリア通り。」青やピンクの店"
+   "note": "「ヴィクトリア通り。」オレンジと青の店構え（カクつかない 5:23:14〜17）"
   },
   {
-   "src": "c18",
-   "in": 180,
-   "out": 220,
+   "src": "c3_10",
+   "in": 1125,
+   "out": 1165,
    "row": 13,
-   "note": "「ハリポタの横丁のモデルらしいけど、」杖が並ぶ店の飾り窓"
+   "note": "「ハリポタの横丁のモデルらしいけど、」ハリポタの店の棚（城や家の置物・人形。前の版の赤い映り込みの飾り窓をやめた）"
   },
   {
    "src": "c17",
    "in": 1890,
    "out": 1938,
    "row": 13,
-   "note": "「ハリポタ見たことない！」店の前で指を立てる本人"
+   "note": "「ハリポタ見たことない！」店の前で指を立てる本人（ツッコミ。顔が中身）"
   },
   {
    "src": "c01",
@@ -299,10 +336,10 @@
   },
   {
    "src": "c03",
-   "in": 1800,
-   "out": 1840,
+   "in": 2097,
+   "out": 2137,
    "row": 14,
-   "note": "「名物のハギス！」皿のハギスの塔"
+   "note": "「名物のハギス！」皿のハギスの塔（前の版より、ぶれの少ない秒）"
   },
   {
    "src": "c03",
@@ -319,39 +356,39 @@
    "note": "「野生の匂いのするハンバーグや！」ナイフで割った断面のひき肉（6:16:43 は断面の模様を顔と取り違えて字と被りに数えられたので、取り違えの出ない 6:16:45.7 から）"
   },
   {
+   "src": "c3_15",
+   "in": 201,
+   "out": 232,
+   "row": 16,
+   "note": "「外に出たら、5時で」パブを出てすぐのロイヤル・マイルの夕暮れ"
+  },
+  {
    "src": "c19",
    "in": 120,
    "out": 151,
    "row": 16,
-   "note": "「外に出たら、5時で」夜の大通りと尖塔"
+   "note": "「もうすっかり夜。」青く照らされた夜の通りと尖塔"
   },
   {
-   "src": "c19",
-   "in": 1740,
-   "out": 1771,
-   "row": 16,
-   "note": "「もうすっかり夜。」青く照らされた夜の通り"
-  },
-  {
-   "src": "c20",
-   "in": 1560,
-   "out": 1605,
+   "src": "c3_16",
+   "in": 1101,
+   "out": 1146,
    "row": 17,
-   "note": "「でも、まだ5時。」ライトアップの塔と夜の街"
+   "note": "「でも、まだ5時。」夜のセント・ジェームズの灯りと人の流れ（スコット記念塔の暗い画をやめた）"
   },
   {
-   "src": "c21",
-   "in": 240,
-   "out": 285,
+   "src": "c3_18",
+   "in": 663,
+   "out": 708,
    "row": 17,
-   "note": "「意外と1日で回れるやん！」照らされた建物と夜の広場"
+   "note": "「意外と1日で回れるやん！」照らされた国立美術館の柱の列"
   },
   {
    "src": "c17",
-   "in": 480,
-   "out": 524,
+   "in": 1698,
+   "out": 1742,
    "row": 18,
-   "note": "「みんなは、この1日コース、」色の店の並ぶ坂（呼び戻し）"
+   "note": "「みんなは、この1日コース、」赤・緑・黄の店の並ぶヴィクトリア通り（呼び戻し）"
   },
   {
    "src": "c09",
@@ -494,7 +531,7 @@
   ]
  },
  "meta": {
-  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/wt/shorts/videos/nxWncbFtsSU/p2/spec_A.json",
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edinburgh2/wt3/shorts/videos/nxWncbFtsSU/p2/spec_A.json",
   "fps": 30,
   "frames": 1428,
   "seconds": 47.6,
@@ -505,9 +542,9 @@
     "frames": 82,
     "voice_frames": 74,
     "cuts": [
-     "5:18:55.0+0.93s",
-     "0:37:49.0+0.90s",
-     "6:51:39.0+0.90s"
+     "5:23:19.0+0.93s",
+     "4:25:37.2+0.90s",
+     "7:00:31.2+0.90s"
     ],
     "line": "イギリスのエディンバラを、1日で回ったらやばかった！",
     "telop": null
@@ -518,8 +555,10 @@
     "frames": 93,
     "voice_frames": 85,
     "cuts": [
-     "0:12:37.0+1.23s",
-     "0:12:53.0+1.87s"
+     "1:10:33.0+0.77s",
+     "3:40:05.8+0.77s",
+     "3:28:43.8+0.80s",
+     "7:16:28.7+0.77s"
     ],
     "line": "下調べによると見どころ多すぎて、1日じゃ無理らしい！",
     "telop": null
@@ -530,8 +569,8 @@
     "frames": 86,
     "voice_frames": 78,
     "cuts": [
-     "0:34:49.0+1.57s",
-     "0:35:05.0+1.30s"
+     "0:41:52.6+1.30s",
+     "0:35:05.0+1.57s"
     ],
     "line": "朝10時、まずは丘の上から街を見下ろす。",
     "telop": null
@@ -542,8 +581,8 @@
     "frames": 60,
     "voice_frames": 52,
     "cuts": [
-     "0:37:03.0+1.20s",
-     "0:25:11.0+0.80s"
+     "0:41:58.2+1.20s",
+     "0:37:03.0+0.80s"
     ],
     "line": "なぜか、ギリシャの神殿が建ってる！",
     "telop": null
@@ -554,7 +593,7 @@
     "frames": 84,
     "voice_frames": 76,
     "cuts": [
-     "0:37:23.0+1.40s",
+     "0:41:04.9+1.40s",
      "0:37:49.0+1.40s"
     ],
     "line": "作る途中でお金が尽きて、200年近くこのまま。",
@@ -577,8 +616,8 @@
     "frames": 73,
     "voice_frames": 65,
     "cuts": [
-     "2:20:23.0+1.20s",
-     "2:20:56.0+1.23s"
+     "2:23:59.1+1.20s",
+     "2:24:57.6+1.23s"
     ],
     "line": "お昼は、旧市街の大通りロイヤル・マイル。",
     "telop": null
@@ -589,7 +628,7 @@
     "frames": 59,
     "voice_frames": 51,
     "cuts": [
-     "2:21:59.0+1.97s"
+     "3:28:49.1+1.97s"
     ],
     "line": "バグパイプの生演奏に出くわした！",
     "telop": null
@@ -600,8 +639,7 @@
     "frames": 73,
     "voice_frames": 65,
     "cuts": [
-     "3:28:41.0+1.20s",
-     "2:23:06.0+1.23s"
+     "3:33:31.1+2.43s"
     ],
     "line": "息継ぎしてるのに、音がずっと止まらへん！",
     "telop": null
@@ -612,8 +650,8 @@
     "frames": 65,
     "voice_frames": 57,
     "cuts": [
-     "2:57:44.0+1.07s",
-     "2:59:15.8+1.10s"
+     "2:44:58.3+1.07s",
+     "3:00:00.1+1.10s"
     ],
     "line": "昼ごはんは、ジャムがゴロゴロのドーナツ。",
     "telop": null
@@ -648,8 +686,8 @@
     "frames": 71,
     "voice_frames": 63,
     "cuts": [
-     "5:18:39.0+1.20s",
-     "5:19:07.0+1.17s"
+     "5:18:42.5+1.20s",
+     "5:23:14.0+1.17s"
     ],
     "line": "3時、カラフルな坂のヴィクトリア通り。",
     "telop": null
@@ -660,7 +698,7 @@
     "frames": 88,
     "voice_frames": 80,
     "cuts": [
-     "5:20:01.0+1.33s",
+     "5:21:02.5+1.33s",
      "5:19:38.0+1.60s"
     ],
     "line": "ハリポタの横丁のモデルらしいけど、ハリポタ見たことない！",
@@ -673,7 +711,7 @@
     "voice_frames": 64,
     "cuts": [
      "5:55:04.0+1.07s",
-     "6:14:10.0+1.33s"
+     "6:14:19.9+1.33s"
     ],
     "line": "4時やけど、夜ごはんに名物のハギス！",
     "telop": null
@@ -696,8 +734,8 @@
     "frames": 62,
     "voice_frames": 54,
     "cuts": [
-     "6:51:29.0+1.03s",
-     "6:52:23.0+1.03s"
+     "6:50:16.7+1.03s",
+     "6:51:29.0+1.03s"
     ],
     "line": "外に出たら、5時でもうすっかり夜。",
     "telop": null
@@ -708,8 +746,8 @@
     "frames": 90,
     "voice_frames": 82,
     "cuts": [
-     "7:12:37.0+1.50s",
-     "7:16:48.0+1.50s"
+     "7:00:51.7+1.50s",
+     "7:25:57.1+1.50s"
     ],
     "line": "でも、まだ5時。意外と1日で回れるやん！",
     "telop": null
@@ -720,7 +758,7 @@
     "frames": 89,
     "voice_frames": 66,
     "cuts": [
-     "5:18:51.0+1.47s",
+     "5:19:31.6+1.47s",
      "0:35:05.0+1.50s"
     ],
     "line": "みんなは、この1日コース、歩いてみたい？",

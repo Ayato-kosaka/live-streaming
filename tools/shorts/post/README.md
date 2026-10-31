@@ -16,6 +16,11 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 
 ## 手順（1本ぶん）
 
+**手元の mp4 は、本編集の担当が出す版を決めたその場で落としておく**。出しそうな版は、はじめの取りに行きを `python3 tools/shorts/render/remote.py fetch --name <版> --key <その担当の鍵> --out <置き場> --all` で回す（ふつうの fetch は暗号文を作業枝から下ろすので、あとから `--all` を回すと manifest を待ったまま戻らない。あとで落とすかもしれないなら、ふつうの fetch に `--keep-branch` を付けておく）。
+この作業箱からは下見の置き場（`*.web.app`・`*.firebaseapp.com`）がプロキシで 403 になり、あとから下見の URL で落とせない
+（2026-10-30 浸水の回。投稿の担当が EC2 に落とさせ、題の札のコマを切るためだけに作業箱へ持ち帰る回り道になった）。
+ほかの担当の鍵と暗号文を投稿の担当が開き直さない。
+
 ```bash
 D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
 python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 1分ほど（ほとんどが Actions の URL 待ち）
