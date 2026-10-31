@@ -25,3 +25,9 @@
 ## 公開のあとに確かめること
 
 2026-10-31 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
+
+## 公開を確かめた（2026-10-31 12:45 UTC）
+
+- YouTube: oEmbed が 200 で、題「🇲🇰北マケドニアの行列店の大衆食堂を食べてみた！」が返った
+- TikTok: `embed/v2/7701868585764916500` が 200 で `"secret":false`（はじめの6回は 503、15秒あけて取り直した7回目で 200）
+- EC2 の `~/shorts_post/UQdkUSro9Ck` は `post.py clean` で消した
