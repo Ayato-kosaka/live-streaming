@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "urwD3EmjTxs__zoom-2910-3150-0.5fps",
+ "mode": "zoom",
+ "dest": "urwD3EmjTxs/zoom-2910-3150-0.5fps",
+ "video": "urwD3EmjTxs",
+ "channel": null,
+ "request": "shorts/requests/baguette-urwD3EmjTxs-zoom-20261031.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 4,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 13
+ },
+ "bytes": {
+  "plain": 1577393,
+  "tar_gz": 1497930,
+  "encrypted": 1497936
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1497936,
+   "sha256": "a667abdadb89bc357ed78cffbfa6a28b48827e736506cc1d5e1f9b902c7829c7"
+  }
+ ],
+ "hmac_sha256": "f0c493e32396a4b130c534f55d13c887447f2a3bf4dc273076e77d6d9f3bb7c2",
+ "pubkey_sha256": "8316c5ee5b963bd1aec46d2e2e1d0b75dd553d8d7e20f508588ccf7486540265",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41243623137",
+ "created_at": "2026-10-31T22:07:13+00:00"
+}
