@@ -1978,6 +1978,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "28Tcc0c5sNE",
         "title": "🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！",
         "date": "2026-10-30"
+      },
+      {
+        "videoId": "dv6hDuR0teU",
+        "title": "🇲🇰北マケドニアで１０月の月末配信や！",
+        "date": "2026-10-31"
       }
     ]
   }
