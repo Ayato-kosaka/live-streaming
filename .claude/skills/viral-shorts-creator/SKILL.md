@@ -78,6 +78,9 @@ master からは `workflow_dispatch` でも回せる。
 
 コマを切り出す・並べる道具: `tools/shorts/plan/frame_at.py`（指定の秒の1コマ）、`tools/shorts/plan/mont.py`（並べて1枚に）
 
+**刺し素材（コードで描く差し込み）: `tools/shorts/hookmap/`。** 国の地図に街の位置を出して寄り、その日の道のりを線で伸ばすアニメーションを、回ごとの `hookmap.json`（街・場所・絵・時間）から mp4 にして、`build_edit.py --clips` で行の画として使う。
+街を回る回のフックは必ずこれ（帳面 F-060）。場所や道のりを見せると伝わる回なら、ほかの行でも使う。あやと（2026-10-31）「刺し素材すごく良い！これからも必要に応じて使えるようにしたい」。手本はリーズ `shorts/videos/S5yf_Ir50xU/p3/hookmap.json`
+
 ## 4. 企画3案
 
 `references/planning.md` に従う。要点だけ:
