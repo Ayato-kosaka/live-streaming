@@ -1,0 +1,77 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "nb2Cg9rmlM0__clips",
+ "mode": "clips",
+ "dest": "nb2Cg9rmlM0/clips",
+ "video": "nb2Cg9rmlM0",
+ "channel": null,
+ "request": "shorts/requests/baguette-nb2Cg9rmlM0-p2-clips-20261031.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 9,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 4,
+  "clips_ok": 4,
+  "clip_seconds": 426.0,
+  "channel_entries": 0,
+  "files": 21
+ },
+ "bytes": {
+  "plain": 142619857,
+  "tar_gz": 142300386,
+  "encrypted": 142300400
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "aeb00eac8684d2b96b993b43500be6fc719c49ecab45b940c68caf980e5fdbef"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "b2c1dad013033942ee32e677c9bd0d101ec3dbd6d1da508f9ba0ae2e027b011a"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "11541a4b814b6aecc00c93eb443435bb39458a6faae5124b69647795135e7a1e"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 742640,
+   "sha256": "7dcb883e5073b26349353cd37d4fc0e1d0e3dab481b5317bdff2f8b716e313d0"
+  }
+ ],
+ "hmac_sha256": "1224fd8f59cfe428459ebe0b1d05a3d69ac9d475c9ec362268ec9d3171ab1a5e",
+ "pubkey_sha256": "8316c5ee5b963bd1aec46d2e2e1d0b75dd553d8d7e20f508588ccf7486540265",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41251885198",
+ "created_at": "2026-10-31T23:39:27+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 2357728,
+    "sha256": "c16df03de06050d7ecba50bb6d2a448b56b43f46f9f3b66c6a01a995442a3ce4"
+   }
+  ],
+  "hmac_sha256": "e417b1176f43c18e43b13b5dab05a22b5c637c504e8ba89407bb33d298e57440",
+  "files": 13,
+  "sheets": 9,
+  "bytes": {
+   "plain": 2445285,
+   "tar_gz": 2357717,
+   "encrypted": 2357728
+  }
+ }
+}
