@@ -1,0 +1,141 @@
+{
+ "_note": "エディンバラ p2 A v5 のフック（0〜2.73秒・1行目＝題の札の間）の地図（帳面 F-060 の2回目・#1052 6550265898「フックがあまりに画質低いので差し替えて」）。tools/shorts/hookmap/hookmap.py が読む。場所の緯度・経度は公の座標（カールトン・ヒルのナショナル・モニュメント・エディンバラ城・ヴィクトリア通りの中ほど）と、配信で確かめた所: ロイヤル・マイルはバグパイプの奏者のいた High Street の中ほど（2:20:21・3:28:41）、ドーナツ屋は店の名が配信に出ないので、2:41〜2:44 に Jeffrey Street を下りて New Waverley のガラスの建物と鉄道越しのカールトン・ヒルが見える East Market Street の中ほど（±100m）、パブは本人の読む「No.1 High Street」（5:55:01。High Street の東の端、St Mary's Street の角）。順はこの日の道順（highlights.md・翌日の配信の議事録と同じ）",
+ "seconds": 2.73,
+ "lat0": 54.7,
+ "countries": [
+  "GBR",
+  "IRL",
+  "FRA",
+  "BEL",
+  "NLD",
+  "IMN",
+  "NOR"
+ ],
+ "focus": "GBR",
+ "focus_units": [
+  "SCT"
+ ],
+ "unit_labels": [
+  {
+   "name": "スコットランド",
+   "lat": 57.25,
+   "lon": -4.5
+  }
+ ],
+ "national": {
+  "lon": -1.6,
+  "lat": 54.7,
+  "cy": 1000,
+  "scale": 105,
+  "zoom_to": 2.6
+ },
+ "city": {
+  "card": [
+   70,
+   650,
+   1010,
+   1345
+  ],
+  "box": [
+   280,
+   800,
+   840,
+   1230
+  ]
+ },
+ "cities": [
+  {
+   "name": "エディンバラ",
+   "lat": 55.9533,
+   "lon": -3.1883,
+   "rank": 1,
+   "mark": "★",
+   "note": "スコットランドの首都",
+   "label": "right"
+  },
+  {
+   "name": "ロンドン",
+   "lat": 51.5074,
+   "lon": -0.1278,
+   "rank": 2,
+   "mark": "",
+   "label": "left"
+  }
+ ],
+ "hero": "エディンバラ",
+ "stop_radius": 30,
+ "stops": [
+  {
+   "name": "カールトン・ヒル",
+   "lat": 55.9551,
+   "lon": -3.1816,
+   "icon": "monument",
+   "label": "left"
+  },
+  {
+   "name": "ロイヤル・マイル",
+   "lat": 55.95,
+   "lon": -3.1878,
+   "icon": "bagpipe",
+   "label": "left"
+  },
+  {
+   "name": "ドーナツ屋",
+   "lat": 55.9515,
+   "lon": -3.184,
+   "icon": "donut",
+   "label": "above"
+  },
+  {
+   "name": "エディンバラ城",
+   "lat": 55.9486,
+   "lon": -3.2008,
+   "icon": "castle",
+   "label": "below"
+  },
+  {
+   "name": "ヴィクトリア通り",
+   "lat": 55.9484,
+   "lon": -3.1934,
+   "icon": "shops",
+   "label": "right"
+  },
+  {
+   "name": "パブ",
+   "lat": 55.9505,
+   "lon": -3.1856,
+   "icon": "haggis",
+   "label": "right"
+  }
+ ],
+ "timeline": {
+  "pins": [
+   0.0,
+   0.25
+  ],
+  "zoom": [
+   0.72,
+   1.02
+  ],
+  "route": [
+   0.95,
+   2.66
+  ]
+ },
+ "scale_bar_m": 500,
+ "town_label": "エディンバラの中心部",
+ "layout": {
+  "title_band": [
+   380,
+   600
+  ],
+  "scale_bar_xy": [
+   660,
+   1310
+  ],
+  "town_label_xy": [
+   130,
+   702
+  ]
+ }
+}

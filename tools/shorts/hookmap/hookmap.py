@@ -33,7 +33,8 @@ Natural Earth の 1:50m の国境（`ne_50m_admin_0_countries.geojson`、版 v5.
 
 字は M PLUS Rounded 1c Black（`tools/shorts/render/fonts/`。OFL。無ければ `render/fetch_fonts.sh`）。
 場所の絵（`icon`）はここでコードで描く: townhall（時計塔の建物）・donut（穴の無い丸いドーナツ）・
-helmet（騎士の兜）・water（水面と灯り）・pin（汎用）。絵文字の書体は使わない（字形が版で変わる）。
+helmet（騎士の兜）・water（水面と灯り）・monument（神殿風の柱の列）・bagpipe・castle・shops（色の店の並び）・
+haggis（皿のハギスの塔）・pin（汎用）。絵文字の書体は使わない（字形が版で変わる）。
 """
 from __future__ import annotations
 
@@ -55,6 +56,9 @@ NE_TAG = "v5.1.2"
 NE_FILE = "ne_50m_admin_0_countries.geojson"
 NE_URL = f"https://raw.githubusercontent.com/nvkelso/natural-earth-vector/{NE_TAG}/geojson/{NE_FILE}"
 NE_SHA256 = "3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb"
+# 国の中の地方（スコットランド・イングランドなど。GU_A3）を光らせるときだけ読む。同じ版・同じ公有の素材
+NE_UNITS_FILE = "ne_50m_admin_0_map_units.geojson"
+NE_UNITS_SHA256 = "b8d421aca6e9e08e8cdf09cc26af111cc3e0deba4fe915611d58ade71e8a4db0"
 M_PER_DEG = 111_320.0
 SS = 2                      # 2倍で描いて縮める（縁のギザギザを消す）
 # 配信の時間軸の外の秒（配信は10時間まで。100000秒 = 27:46:40）。build_edit.py の窓の一覧は秒で引くので、
@@ -71,25 +75,27 @@ COL = {
 
 # ---------------------------------------------------------------- 素材
 
-def natural_earth(cache: Path) -> dict:
+def natural_earth(cache: Path, name: str = NE_FILE, sha: str = NE_SHA256) -> dict:
     cache.mkdir(parents=True, exist_ok=True)
-    p = cache / f"{NE_TAG}_{NE_FILE}"
+    p = cache / f"{NE_TAG}_{name}"
     if not p.exists():
         tmp = p.with_suffix(".part")
-        with urllib.request.urlopen(NE_URL, timeout=120) as r, open(tmp, "wb") as f:
+        url = f"https://raw.githubusercontent.com/nvkelso/natural-earth-vector/{NE_TAG}/geojson/{name}"
+        with urllib.request.urlopen(url, timeout=120) as r, open(tmp, "wb") as f:
             shutil.copyfileobj(r, f)
         tmp.rename(p)
     got = hashlib.sha256(p.read_bytes()).hexdigest()
-    if got != NE_SHA256:
+    if got != sha:
         sys.exit(f"Natural Earth の中身が控えと違う（{got}）。版 {NE_TAG} を取り直すか、控えを確かめて書き換える")
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def polygons(ne: dict, codes: list[str]) -> dict[str, list[list[tuple[float, float]]]]:
-    """国の記号（ADM0_A3。France の ISO_A3 は -99 なので ISO は使わない）→ 外周の輪の並び（経度, 緯度）。"""
+def polygons(ne: dict, codes: list[str], key: str = "ADM0_A3") -> dict[str, list[list[tuple[float, float]]]]:
+    """国の記号（ADM0_A3。France の ISO_A3 は -99 なので ISO は使わない）→ 外周の輪の並び（経度, 緯度）。
+    key="GU_A3" なら map units の地方（SCT＝スコットランドなど）。"""
     out: dict[str, list] = {c: [] for c in codes}
     for f in ne["features"]:
-        c = f["properties"].get("ADM0_A3")
+        c = f["properties"].get(key)
         if c not in out:
             continue
         g = f["geometry"]
@@ -202,6 +208,52 @@ def icon(kind: str, size: float) -> Image.Image:
         for x, y in ((28, 36), (50, 30), (70, 38), (40, 52), (62, 56)):
             d.ellipse([(x - 3) * u, (y - 3) * u, (x + 3) * u, (y + 3) * u], fill=(255, 214, 110))
             d.line([(x * u, (y + 5) * u), (x * u, (y + 14) * u)], fill=(255, 214, 110), width=int(2 * u))
+    elif kind == "monument":
+        # ギリシャの神殿風の柱の列（カールトン・ヒルのナショナル・モニュメント。上の梁だけで屋根は無い）
+        stone, dark = (206, 200, 188), (110, 104, 96)
+        d.rectangle([10 * u, 78 * u, 90 * u, 90 * u], fill=stone, outline=dark, width=int(2 * u))
+        d.rectangle([12 * u, 22 * u, 88 * u, 34 * u], fill=stone, outline=dark, width=int(2 * u))
+        for i in range(6):
+            x = 16 * u + i * 13.4 * u
+            d.rectangle([x, 34 * u, x + 7 * u, 78 * u], fill=(228, 222, 210), outline=dark, width=int(1.5 * u))
+    elif kind == "bagpipe":
+        # バグパイプ（タータンの袋と3本の筒）
+        d.ellipse([18 * u, 40 * u, 74 * u, 88 * u], fill=(196, 40, 52), outline=(110, 20, 30), width=int(2 * u))
+        for k in range(4):
+            d.line([(18 * u + k * 14 * u, 42 * u), (24 * u + k * 14 * u, 86 * u)], fill=(40, 70, 40), width=int(3 * u))
+        d.line([(30 * u, 52 * u), (70 * u, 76 * u)], fill=(240, 200, 60), width=int(2 * u))
+        for x0, y0, x1, y1 in ((40, 44, 30, 6), (54, 42, 52, 4), (66, 48, 76, 12)):
+            d.line([(x0 * u, y0 * u), (x1 * u, y1 * u)], fill=(60, 40, 30), width=int(6 * u))
+            d.ellipse([(x1 - 4) * u, (y1 - 4) * u, (x1 + 4) * u, (y1 + 4) * u], fill=(230, 220, 200))
+        d.line([(72 * u, 74 * u), (90 * u, 96 * u)], fill=(60, 40, 30), width=int(6 * u))
+    elif kind == "castle":
+        stone, dark = (170, 160, 150), (90, 84, 78)
+        d.polygon([(4 * u, 96 * u), (20 * u, 70 * u), (80 * u, 66 * u), (96 * u, 96 * u)], fill=(120, 110, 96))
+        d.rectangle([20 * u, 40 * u, 80 * u, 72 * u], fill=stone, outline=dark, width=int(2 * u))
+        for x in (14, 66):
+            d.rectangle([x * u, 22 * u, (x + 20) * u, 72 * u], fill=stone, outline=dark, width=int(2 * u))
+            for k in range(3):
+                d.rectangle([(x + k * 7) * u, 16 * u, (x + k * 7 + 4) * u, 22 * u], fill=stone, outline=dark)
+        d.pieslice([42 * u, 52 * u, 58 * u, 80 * u], 180, 360, fill=dark)
+        d.rectangle([42 * u, 66 * u, 58 * u, 72 * u], fill=dark)
+        d.line([(24 * u, 16 * u), (24 * u, 4 * u)], fill=dark, width=int(2 * u))
+        d.polygon([(24 * u, 4 * u), (36 * u, 8 * u), (24 * u, 12 * u)], fill=(0, 94, 184))
+    elif kind == "shops":
+        # 色の店の並ぶ坂（ヴィクトリア通り）: 色違いの4軒の正面
+        cols = [(214, 60, 60), (40, 110, 190), (240, 150, 50), (60, 150, 90)]
+        for i, c in enumerate(cols):
+            x0, top = (8 + i * 21) * u, (30 - i * 5) * u
+            d.rectangle([x0, top, x0 + 21 * u, 90 * u], fill=c, outline=(50, 40, 40), width=int(1.5 * u))
+            d.rectangle([x0 + 4 * u, top + 8 * u, x0 + 17 * u, top + 22 * u], fill=(250, 236, 190))
+            d.rectangle([x0 + 6 * u, 66 * u, x0 + 15 * u, 90 * u], fill=(60, 40, 30))
+    elif kind == "haggis":
+        # ハギスの塔（こげ茶の丸い山に白いソースとハーブ）を皿に
+        d.ellipse([6 * u, 62 * u, 94 * u, 94 * u], fill=(120, 180, 210), outline=(70, 120, 150), width=int(2 * u))
+        d.rounded_rectangle([26 * u, 34 * u, 74 * u, 80 * u], radius=10 * u, fill=(92, 58, 38), outline=(60, 36, 22))
+        d.rectangle([26 * u, 66 * u, 74 * u, 80 * u], fill=(236, 150, 50))
+        d.ellipse([22 * u, 26 * u, 78 * u, 46 * u], fill=(248, 240, 220))
+        for x, y in ((34, 34), (46, 30), (58, 36), (66, 31), (40, 40)):
+            d.ellipse([(x - 2) * u, (y - 2) * u, (x + 2) * u, (y + 2) * u], fill=(70, 130, 60))
     else:
         d.ellipse([20 * u, 10 * u, 80 * u, 70 * u], fill=COL["route"])
         d.polygon([(28 * u, 56 * u), (50 * u, 94 * u), (72 * u, 56 * u)], fill=COL["route"])
@@ -209,12 +261,12 @@ def icon(kind: str, size: float) -> Image.Image:
     return im
 
 
-def stop_card(img: Image.Image, x: float, y: float, kind: str, label: str, t: float, side: str):
-    """道のりの場所: 白い丸に絵、横に名前。t は出てくる途中（0→1）。"""
+def stop_card(img: Image.Image, x: float, y: float, kind: str, label: str, t: float, side: str, r0: float = 56):
+    """道のりの場所: 白い丸に絵、横に名前。t は出てくる途中（0→1）。r0 は丸の半径（1倍の画素）。"""
     if t <= 0:
         return
     k = ease_out_back(t)
-    r = 56 * SS * k
+    r = r0 * SS * k
     a = min(1.0, t * 2)
     lay = Image.new("RGBA", img.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
@@ -227,14 +279,15 @@ def stop_card(img: Image.Image, x: float, y: float, kind: str, label: str, t: fl
     if t > 0.35:
         d2 = ImageDraw.Draw(img)
         f = font(50 * SS)
+        g, gv = (r0 + 14) * SS, (r0 + 22) * SS
         if side == "right":
-            stroke_text(d2, (x + 70 * SS, y), label, f, COL["ink"], sw=9 * SS, anchor="lm")
+            stroke_text(d2, (x + g, y), label, f, COL["ink"], sw=9 * SS, anchor="lm")
         elif side == "left":
-            stroke_text(d2, (x - 70 * SS, y), label, f, COL["ink"], sw=9 * SS, anchor="rm")
+            stroke_text(d2, (x - g, y), label, f, COL["ink"], sw=9 * SS, anchor="rm")
         elif side == "below":
-            stroke_text(d2, (x, y + 78 * SS), label, f, COL["ink"], sw=9 * SS, anchor="mt")
+            stroke_text(d2, (x, y + gv), label, f, COL["ink"], sw=9 * SS, anchor="mt")
         else:
-            stroke_text(d2, (x, y - 78 * SS), label, f, COL["ink"], sw=9 * SS, anchor="mb")
+            stroke_text(d2, (x, y - gv), label, f, COL["ink"], sw=9 * SS, anchor="mb")
 
 
 # ---------------------------------------------------------------- 1コマ
@@ -302,17 +355,43 @@ def city_pins(img: Image.Image, cfg: dict, cam: Cam, t: float, fade: float):
                                             outline=COL["glow"] + (int(230 * (1 - ph) * fade),), width=int(10 * SS))
                 img.alpha_composite(lay)
         r = (50 if is_hero else 36) * SS * k
-        badge(img, x, y, r, COL["hero"] if is_hero else COL["city"], str(c["rank"]) if r > 10 * SS else None, fade)
+        mark = c.get("mark", str(c["rank"]))   # 順位に意味の無い回は "★" や "" を書く
+        badge(img, x, y, r, COL["hero"] if is_hero else COL["city"], (mark or None) if r > 10 * SS else None, fade)
         if k > 0.5:
             f = font((84 if is_hero else 54) * SS)
             off = (70 if is_hero else 52) * SS
             col = (COL["hero"] if is_hero else COL["ink"]) + (int(255 * fade),)
             sw = (12 if is_hero else 9) * SS
             d = ImageDraw.Draw(img)
-            if c.get("label", "right") == "right":
-                stroke_text(d, (x + off, y), c["name"], f, col, sw=sw, anchor="lm")
-            else:
-                stroke_text(d, (x - off, y), c["name"], f, col, sw=sw, anchor="rm")
+            right = c.get("label", "right") == "right"
+            stroke_text(d, (x + off if right else x - off, y), c["name"], f, col, sw=sw, anchor="lm" if right else "rm")
+            if c.get("note"):   # 名前の下の小さな字（「スコットランドの首都」など）
+                fn = font((44 if is_hero else 36) * SS)
+                stroke_text(d, (x + off if right else x - off, y + (62 if is_hero else 44) * SS), c["note"], fn,
+                            COL["ink"] + (int(255 * fade),), sw=8 * SS, anchor="lm" if right else "rm")
+
+
+def unit_glow(img: Image.Image, cfg: dict, upolys: dict, cam: Cam, t: float, fade: float):
+    """国の段: 国の中の地方（focus_units。スコットランドなど）を、金色に脈打たせて光らせ、名前（unit_labels）を出す。"""
+    if not upolys or fade <= 0:
+        return
+    W, H = img.size
+    pulse = 0.5 + 0.5 * math.sin(t * 2 * math.pi * 1.4)
+    k = min(1.0, t / 0.25) * fade
+    fill = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    edge = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    df, de = ImageDraw.Draw(fill), ImageDraw.Draw(edge)
+    for rings in upolys.values():
+        for ring in rings:
+            pts = [cam.xy(lo, la) for lo, la in ring]
+            df.polygon(pts, fill=COL["glow"] + (int((90 + 70 * pulse) * k),))
+            de.line(pts + pts[:1], fill=COL["glow"] + (int(255 * k),), width=int(10 * SS), joint="curve")
+    img.alpha_composite(edge.filter(ImageFilter.GaussianBlur(8 * SS)))
+    img.alpha_composite(fill)
+    d = ImageDraw.Draw(img)
+    for u in cfg.get("unit_labels", []):
+        x, y = cam.xy(u["lon"], u["lat"])
+        stroke_text(d, (x, y), u["name"], font(58 * SS), (150, 92, 0, int(255 * k)), sw=10 * SS, anchor="mm")
 
 
 def city_layer(cfg: dict, t: float, W: int, H: int) -> Image.Image:
@@ -364,7 +443,8 @@ def city_layer(cfg: dict, t: float, W: int, H: int) -> Image.Image:
         if i > 0:
             acc += seg[i - 1]
         t_at = r0 + (acc / total) * walk if total else r0
-        stop_card(img, pts[i][0], pts[i][1], s["icon"], s["name"], (t - t_at) / 0.25, s.get("label", "right"))
+        stop_card(img, pts[i][0], pts[i][1], s["icon"], s["name"], (t - t_at) / 0.25, s.get("label", "right"),
+                  cfg.get("stop_radius", 56))
     sb = cfg.get("scale_bar_m")
     if sb:
         px = sb / M_PER_DEG * cam.scale
@@ -381,11 +461,12 @@ def city_layer(cfg: dict, t: float, W: int, H: int) -> Image.Image:
     return img
 
 
-def frame(cfg: dict, polys: dict, t: float, W: int, H: int, bg: Image.Image) -> Image.Image:
+def frame(cfg: dict, polys: dict, t: float, W: int, H: int, bg: Image.Image, upolys: dict | None = None) -> Image.Image:
     tl = cfg["timeline"]
     z0, z1 = tl["zoom"]
     img, cam = national_layer(cfg, polys, t, W, H, bg)
     fade = 1.0 - ease((t - z0) / (0.5 * (z1 - z0))) if t > z0 else 1.0
+    unit_glow(img, cfg, upolys or {}, cam, t, fade)
     city_pins(img, cfg, cam, t, fade)
     if t <= z0:
         return img
@@ -475,6 +556,8 @@ def main() -> int:
     prepare(cfg)
     ne = natural_earth(a.cache)
     polys = polygons(ne, cfg["countries"])
+    upolys = polygons(natural_earth(a.cache, NE_UNITS_FILE, NE_UNITS_SHA256), cfg["focus_units"], key="GU_A3") \
+        if cfg.get("focus_units") else {}
     fr = a.out / "frames"
     if fr.exists():
         shutil.rmtree(fr)
@@ -482,7 +565,7 @@ def main() -> int:
     bg = sea(W, H)
     n = round(cfg["seconds"] * a.fps)
     for i in range(n):
-        img = frame(cfg, polys, i / a.fps, W, H, bg)
+        img = frame(cfg, polys, i / a.fps, W, H, bg, upolys)
         img.convert("RGB").resize((1080, 1920), Image.LANCZOS).save(fr / f"{i:04d}.png")
     # 確かめ用: 0.25秒ごとのコマを並べる
     picks = list(range(0, n, max(1, a.fps // 4)))

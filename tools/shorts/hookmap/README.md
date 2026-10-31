@@ -28,12 +28,15 @@ python3 tools/shorts/hookmap/hookmap.py shorts/videos/<回>/<版>/hookmap.json -
 | `lat0` | 投影の基準の緯度（横に cos を掛ける。国の真ん中あたり） |
 | `countries` | 陸に塗る国（Natural Earth の `ADM0_A3`。France は ISO_A3 が -99 なので `FRA` を ADM0_A3 で） |
 | `focus` | 明るく塗って影を付ける国 |
+| `focus_units` | 国の中の地方を金色に脈打たせて光らせる（Natural Earth の map units の `GU_A3`。スコットランドは `SCT`）。無ければ光らせない |
+| `unit_labels` | 光らせた地方の名前: `name`・`lat`・`lon`（国の段だけ） |
 | `national` | 国の段のカメラ: `lon`・`lat`（画面の `cy` に置く点）・`scale`（緯度1度の画素）・`zoom_to`（寄る段の倍率） |
 | `city.card` | 街の札の枠 [x0, y0, x1, y1]（画素。札は主役の街の印から広がる） |
 | `city.box` | 場所の印を収める枠（札の中）。場所の緯度・経度から、この枠に収まる倍率を決める |
-| `cities` | 国の段の街: `name`（日本語）・`lat`・`lon`・`rank`（印の数字と出る順）・`label`（left / right） |
+| `cities` | 国の段の街: `name`（日本語）・`lat`・`lon`・`rank`（印の数字と出る順）・`label`（left / right）・`mark`（数字の代わりの字。順位に意味の無い回は `★` や空）・`note`（名前の下の小さな字。「スコットランドの首都」） |
 | `hero` | 主役の街の `name`（大きく光らせて寄る） |
-| `stops` | 回った場所を回った順に: `name`・`lat`・`lon`・`icon`（townhall / donut / helmet / water / pin）・`label`（left / right / above / below） |
+| `stops` | 回った場所を回った順に: `name`・`lat`・`lon`・`icon`（townhall / donut / helmet / water / monument / bagpipe / castle / shops / haggis / pin）・`label`（left / right / above / below） |
+| `stop_radius` | 場所の丸の半径（画素。既定 56）。場所どうしが近くて丸が重なる回は小さくする |
 | `timeline` | `pins`（街の印が出る秒。rank の順）・`zoom`（寄る段の始めと終わり）・`route`（道のりの始めと終わり） |
 | `scale_bar_m` | 縮尺の棒の長さ（m。場所と同じ投影から長さを出す） |
 | `town_label` | 札の上の見出し（「リーズの中心部」） |
