@@ -4,15 +4,15 @@
  "id": "p3",
  "style": "style_v3.json",
  "sources": {
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/hookmap/hook_map.mp4",
+   "watermark": null,
+   "t0": 100000.0
+  },
   "c31": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/31_6-49-48_6-51-02.mp4",
    "watermark": "prism_live",
    "t0": 24588.0
-  },
-  "c2_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest2/S5yf_Ir50xU/clips/03_5-18-27_5-18-40.mp4",
-   "watermark": "prism_live",
-   "t0": 19107.0
   },
   "c01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/leeds3/ingest/S5yf_Ir50xU/clips/01_0-52-20_0-53-30.mp4",
@@ -137,18 +137,18 @@
  },
  "cuts": [
   {
-   "src": "c31",
-   "in": 1335,
-   "out": 1386,
+   "src": "c3_01",
+   "in": 0,
+   "out": 75,
    "row": 0,
-   "note": "J 金の模様の鎧の寄り（博物館）。この街でいちばん止まる画を0秒目に。題の札の下に胸当ての金の彫りが来る"
+   "note": "地図のアニメーション（hookmap.py・F-060）: イギリスの地図にロンドン①・バーミンガム②・リーズ③が順に出て、リーズが光る → リーズへ寄って街の札が広がる → 市庁舎 → ドーナツ屋 → 武器博物館 → 運河の道のりが伸びる。配信に無い素材（秒は配信の時間軸の外）"
   },
   {
-   "src": "c2_03",
-   "in": 135,
-   "out": 176,
+   "src": "c31",
+   "in": 1335,
+   "out": 1352,
    "row": 0,
-   "note": "H ヴィクトリア・ゲートの波打つ天井と金のランタンとジグザグの床。見どころの多い街だと先に見せる"
+   "note": "J 金の模様の鎧の寄り（「やばかった！」で、この街のいちばん止まる画を一瞬）"
   },
   {
    "src": "c01",
@@ -501,8 +501,8 @@
     "frames": 92,
     "voice_frames": 84,
     "cuts": [
-     "6:50:32.5+1.70s",
-     "5:18:31.5+1.37s"
+     "27:46:40.0+2.50s",
+     "6:50:32.5+0.57s"
     ],
     "line": "イギリス第三の街を、1日歩いて回ったらやばかった！",
     "telop": null

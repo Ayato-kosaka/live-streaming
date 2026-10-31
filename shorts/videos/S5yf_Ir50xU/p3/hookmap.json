@@ -1,0 +1,120 @@
+{
+ "_note": "リーズ p3 v4 のフック（0〜2.55秒）の地図（帳面 F-060・#1051 6549167210）。tools/shorts/hookmap/hookmap.py が読む。街と場所の緯度・経度は、市庁舎・ロイヤル・アーマリーズ・グラナリー・ワーフが公の座標（度分秒を十進に直した値）、doh'hut は店のある Trevelyan Square（Boar Lane の南。highlights.md の A）。並びは配信と合う: 市庁舎の隣に美術館（1:11）、博物館へは「遠い」（6:10）南東へ歩き、運河は駅の裏（8:29 の案内図にリーズ駅）。順位はイギリスの街の人口の並び（ロンドン・バーミンガム・リーズ）で、題の「第三の街」と本人の言葉（9:53:14）に合わせた",
+ "seconds": 2.55,
+ "lat0": 53.5,
+ "countries": [
+  "GBR",
+  "IRL",
+  "FRA",
+  "BEL",
+  "NLD",
+  "IMN"
+ ],
+ "focus": "GBR",
+ "national": {
+  "lon": -1.5,
+  "lat": 53.8,
+  "cy": 880,
+  "scale": 135,
+  "zoom_to": 2.4
+ },
+ "city": {
+  "card": [
+   110,
+   640,
+   970,
+   1260
+  ],
+  "box": [
+   220,
+   820,
+   830,
+   1160
+  ]
+ },
+ "cities": [
+  {
+   "name": "ロンドン",
+   "lat": 51.5074,
+   "lon": -0.1278,
+   "rank": 1,
+   "label": "left"
+  },
+  {
+   "name": "バーミンガム",
+   "lat": 52.4862,
+   "lon": -1.8904,
+   "rank": 2,
+   "label": "left"
+  },
+  {
+   "name": "リーズ",
+   "lat": 53.7997,
+   "lon": -1.5492,
+   "rank": 3,
+   "label": "right"
+  }
+ ],
+ "hero": "リーズ",
+ "stops": [
+  {
+   "name": "市庁舎",
+   "lat": 53.8003,
+   "lon": -1.5492,
+   "icon": "townhall",
+   "label": "right"
+  },
+  {
+   "name": "ドーナツ屋",
+   "lat": 53.7955,
+   "lon": -1.5447,
+   "icon": "donut",
+   "label": "right"
+  },
+  {
+   "name": "武器博物館",
+   "lat": 53.7919,
+   "lon": -1.5319,
+   "icon": "helmet",
+   "label": "left"
+  },
+  {
+   "name": "運河",
+   "lat": 53.7939,
+   "lon": -1.5486,
+   "icon": "water",
+   "label": "left"
+  }
+ ],
+ "timeline": {
+  "pins": [
+   -0.1,
+   0.08,
+   0.24
+  ],
+  "zoom": [
+   0.8,
+   1.15
+  ],
+  "route": [
+   1.1,
+   2.42
+  ]
+ },
+ "scale_bar_m": 500,
+ "town_label": "リーズの中心部",
+ "layout": {
+  "title_band": [
+   380,
+   600
+  ],
+  "scale_bar_xy": [
+   160,
+   1222
+  ],
+  "town_label_xy": [
+   160,
+   692
+  ]
+ }
+}
