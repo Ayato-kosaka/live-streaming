@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "C_AABuDPw1c__captions",
+ "mode": "captions",
+ "dest": "C_AABuDPw1c/captions",
+ "video": "C_AABuDPw1c",
+ "channel": null,
+ "request": "shorts/requests/baguette-C_AABuDPw1c-captions-20261031.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 443,
+  "caption_lines": 580,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 207996,
+  "tar_gz": 34282,
+  "encrypted": 34288
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 34288,
+   "sha256": "c10f3f544dfee1c57d69209d1a200135cbe02658fe11ff7f466d8468b9fbba16"
+  }
+ ],
+ "hmac_sha256": "2a5e46498e6eef03a0a28538ae6286d42f23e73e43d84ee9d9d8cd18fb0620f6",
+ "pubkey_sha256": "8316c5ee5b963bd1aec46d2e2e1d0b75dd553d8d7e20f508588ccf7486540265",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41243293550",
+ "created_at": "2026-10-31T21:23:43+00:00"
+}
