@@ -1,0 +1,912 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "baguette-p2",
+ "style": "style_p2.json",
+ "sources": {
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/05_0-51-44_0-52-34.mp4",
+   "watermark": "prism_live",
+   "t0": 3104.0
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/05_1-13-44_1-14-30.mp4",
+   "watermark": "prism_live",
+   "t0": 40424.0
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/06_1-18-36_1-19-30.mp4",
+   "watermark": "prism_live",
+   "t0": 40716.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/C_AABuDPw1c/clips/02_0-29-38_0-30-22.mp4",
+   "watermark": "prism_live",
+   "t0": 109778.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/06_0-53-10_0-53-22.mp4",
+   "watermark": "prism_live",
+   "t0": 3190.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/01_0-21-56_0-22-12.mp4",
+   "watermark": "prism_live",
+   "t0": 37316.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/02_0-26-38_0-27-14.mp4",
+   "watermark": "prism_live",
+   "t0": 37598.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/03_0-48-28_0-49-20.mp4",
+   "watermark": "prism_live",
+   "t0": 38908.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest2/urwD3EmjTxs/clips/01_0-58-20_1-01-10.mp4",
+   "watermark": "prism_live",
+   "t0": 39500.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest2/urwD3EmjTxs/clips/02_1-05-20_1-09-30.mp4",
+   "watermark": "prism_live",
+   "t0": 39920.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest2/urwD3EmjTxs/clips/03_1-26-20_1-31-00.mp4",
+   "watermark": "prism_live",
+   "t0": 41180.0
+  },
+  "c2_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/07_1-19-54_1-20-10.mp4",
+   "watermark": "prism_live",
+   "t0": 40794.0
+  },
+  "c2_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/urwD3EmjTxs/clips/08_1-24-04_1-24-24.mp4",
+   "watermark": "prism_live",
+   "t0": 41044.0
+  },
+  "c4_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/nb2Cg9rmlM0/clips/03_0-14-58_0-15-44.mp4",
+   "watermark": "prism_live",
+   "t0": 72898.0
+  },
+  "c4_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/nb2Cg9rmlM0/clips/04_0-16-20_0-18-40.mp4",
+   "watermark": "prism_live",
+   "t0": 72980.0
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/nb2Cg9rmlM0/clips/02_0-12-20_0-14-00.mp4",
+   "watermark": "prism_live",
+   "t0": 72740.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/C_AABuDPw1c/clips/01_0-21-22_0-23-20.mp4",
+   "watermark": "prism_live",
+   "t0": 109282.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/02_0-22-08_0-22-26.mp4",
+   "watermark": "prism_live",
+   "t0": 1328.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/03_0-24-58_0-25-12.mp4",
+   "watermark": "prism_live",
+   "t0": 1498.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/04_0-36-44_0-36-58.mp4",
+   "watermark": "prism_live",
+   "t0": 2204.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/07_0-55-46_0-56-38.mp4",
+   "watermark": "prism_live",
+   "t0": 3346.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/08_0-57-06_0-58-42.mp4",
+   "watermark": "prism_live",
+   "t0": 3426.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/ingest/28Tcc0c5sNE/clips/09_1-00-58_1-01-56.mp4",
+   "watermark": "prism_live",
+   "t0": 3658.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c05",
+   "in": 420,
+   "out": 499,
+   "row": 0,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "オーブンから引き出した天板の丸い2つの焼き上がり。答えを先に見せる0秒目（題の札の下に焼き上がり）"
+  },
+  {
+   "src": "c2_05",
+   "in": 60,
+   "out": 98,
+   "row": 1,
+   "note": "粉にペットボトルで水を注ぐ（量る）"
+  },
+  {
+   "src": "c2_05",
+   "in": 360,
+   "out": 399,
+   "row": 1,
+   "note": "粉と水を手で混ぜる、まだぼろぼろ（パンは難しそう）"
+  },
+  {
+   "src": "c2_06",
+   "in": 60,
+   "out": 105,
+   "row": 2,
+   "note": "容器の中でこねる手元（こねたら）"
+  },
+  {
+   "src": "c5_02",
+   "in": 810,
+   "out": 849,
+   "row": 2,
+   "note": "丸めた生地に、皿を逆さに被せて置いておく（あとはほったらかす）。v2 は準備の回のどんぶりの止まった画（1:24:14）で弱かったので、二次発酵の回の皿を被せる動きに替えた"
+  },
+  {
+   "src": "c06",
+   "in": 60,
+   "out": 108,
+   "row": 2,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "宿の共用キッチン、オーブンとコンロ（海外ホステルでも）"
+  },
+  {
+   "src": "c2_01",
+   "in": 60,
+   "out": 100,
+   "row": 3,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "スーパーの粉の棚から強力粉の袋を取る手元（0:21:54 より前は買い物客の顔が大きい）"
+  },
+  {
+   "src": "c2_02",
+   "in": 780,
+   "out": 820,
+   "row": 3,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "帰り道、落ち葉の歩道とキリル文字の看板の売店（北マケドニアの空気）"
+  },
+  {
+   "src": "c2_03",
+   "in": 390,
+   "out": 437,
+   "row": 4,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "宿の部屋のテーブル。ペットボトルを持った手が入ってくる（はかりは無いので、量る道具の代わりのペットボトル）"
+  },
+  {
+   "src": "c2_03",
+   "in": 1500,
+   "out": 1547,
+   "row": 5,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "500ml のペットボトルの水をマグに注ぐ（ペットボトル1本ぶんの量をマグで測る）"
+  },
+  {
+   "src": "c3_01",
+   "in": 2580,
+   "out": 2637,
+   "row": 5,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "粉の袋からマグに強力粉を満たす。ペットボトルに粉を入れる画は配信に無い（粉はマグに入れた）"
+  },
+  {
+   "src": "c3_02",
+   "in": 2520,
+   "out": 2551,
+   "row": 6,
+   "note": "スプーンに乗せた塩の寄り（あやとの指定「スプーンに乗せた映像」）"
+  },
+  {
+   "src": "c3_03",
+   "in": 8160,
+   "out": 8194,
+   "row": 6,
+   "note": "スプーンに乗せたドライイーストの寄り（2個目の生地のとき。1個目の 1:08:36 は塩・砂糖と同じ場面が続いて似た見た目の連続 3.37秒になったので、場面の違う2個目のマグの上に替えた）"
+  },
+  {
+   "src": "c3_02",
+   "in": 4860,
+   "out": 4896,
+   "row": 6,
+   "note": "砂糖を指でつまんで入れる（砂糖はスプーンでなく指でふたつまみ。配信のとおり）"
+  },
+  {
+   "src": "c2_05",
+   "in": 780,
+   "out": 841,
+   "row": 7,
+   "note": "両手で生地を混ぜてこねる手元（うどんと一緒）"
+  },
+  {
+   "src": "c2_07",
+   "in": 60,
+   "out": 111,
+   "row": 8,
+   "note": "容器の中で丸くまとまった生地（パン屋さんの動画で見る生地）"
+  },
+  {
+   "src": "c2_08",
+   "in": 195,
+   "out": 271,
+   "row": 9,
+   "note": "皿の生地に、どんぶりを逆さに被せる（v2 の 1:24:06 は、被せてあったどんぶりを一度持ち上げて生地を直す所で、蓋をする画に見えなかった）"
+  },
+  {
+   "src": "c4_03",
+   "in": 60,
+   "out": 103,
+   "row": 10,
+   "note": "一晩あと、皿の上のどんぶりに手をかける（開ける前）"
+  },
+  {
+   "src": "c4_03",
+   "in": 900,
+   "out": 931,
+   "row": 11,
+   "note": "どんぶりを持ち上げると、どんぶりいっぱいに膨らんだ生地が糸を引く"
+  },
+  {
+   "src": "c4_04",
+   "in": 480,
+   "out": 511,
+   "row": 11,
+   "note": "膨らんだ生地を持ち上げると、糸を引いて伸びる（ガスまみれ。v1 は 11・12行目が同じどんぶりの場面で似た見た目 3.50秒になったので、12行目の後半を少しあとのたたむ所の素材に替えた）"
+  },
+  {
+   "src": "c4_02",
+   "in": 840,
+   "out": 869,
+   "row": 12,
+   "note": "刻んだオリーブを生地の上に落とす手元"
+  },
+  {
+   "src": "c4_02",
+   "in": 1200,
+   "out": 1229,
+   "row": 12,
+   "note": "オリーブを生地に押し込む手元（かけ声のところ。訳のテロップはこのカット）"
+  },
+  {
+   "src": "c4_04",
+   "in": 60,
+   "out": 96,
+   "row": 13,
+   "note": "膨らんだ生地を押して、たたみ直す手元"
+  },
+  {
+   "src": "c4_04",
+   "in": 3900,
+   "out": 3934,
+   "row": 13,
+   "note": "丸めた生地に、またどんぶりを被せる（ほったらかし再開）"
+  },
+  {
+   "src": "c5_01",
+   "in": 90,
+   "out": 131,
+   "row": 14,
+   "note": "次の日、皿の蓋を開けると広がった生地"
+  },
+  {
+   "src": "c5_01",
+   "in": 840,
+   "out": 885,
+   "row": 14,
+   "note": "指で打ち粉を振る"
+  },
+  {
+   "src": "c02",
+   "in": 120,
+   "out": 162,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "生地が容器から天板へすとんと落ちる（鉄板に移して）"
+  },
+  {
+   "src": "c03",
+   "in": 120,
+   "out": 165,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "2つ並んだ生地を天板ごとオーブンへ"
+  },
+  {
+   "src": "c04",
+   "in": 60,
+   "out": 113,
+   "row": 15,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "オーブンのガラス越し、赤い熱線の下でふくらむ生地（230℃で30分。かけ声と訳のテロップはこのカット）"
+  },
+  {
+   "src": "c05",
+   "in": 60,
+   "out": 91,
+   "row": 16,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "オーブンを開けて天板を引く"
+  },
+  {
+   "src": "c07",
+   "in": 480,
+   "out": 526,
+   "row": 17,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "黒いテーブルの皿2枚の焼き上がりを上から（0:54:38〜0:55:46 はスマホが伏せられて袋しか写っていない）"
+  },
+  {
+   "src": "c08",
+   "in": 60,
+   "out": 106,
+   "row": 18,
+   "note": "両手で焼き上がりを割る"
+  },
+  {
+   "src": "c08",
+   "in": 2340,
+   "out": 2404,
+   "row": 19,
+   "note": "自撮り。かじって、噛みながら目を見開く（食べた瞬間なので顔）"
+  },
+  {
+   "src": "c09",
+   "in": 60,
+   "out": 114,
+   "row": 20,
+   "note": "粉をまとった丸いオリーブパンを手に持って見せる、十字の切り込み（v2 の 1:01:50 はパンがレンズに近くてぼけていた）"
+  },
+  {
+   "src": "c07",
+   "in": 1140,
+   "out": 1194,
+   "row": 20,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "皿の2つの焼き上がりを上から"
+  }
+ ],
+ "title": {
+  "text": "海外旅行中に作ったバケットが簡単すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [
+  {
+   "from": 942,
+   "to": 971,
+   "text": "（さあ、行こう！）"
+  },
+  {
+   "from": 1214,
+   "to": 1267,
+   "text": "（行け、行け〜！）"
+  }
+ ],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "海外旅行中に作ったバケットが簡単すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/01.wav",
+    "tts_text": "海外旅行中に作ったバケットが、簡単すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "パンって、量るのも発酵も難しいやん？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/02.wav",
+    "tts_text": "パンって、はかるのも、はっこうも難しいやん？",
+    "at": 79
+   },
+   {
+    "text": "今回のレシピ、こねたらあとはほったらかすだけやから海外ホステルでも作れるらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/03.wav",
+    "tts_text": "今回のレシピ、こねたらあとは、ほったらかすだけやから、海外ホステルでも作れるらしい！",
+    "at": 156
+   },
+   {
+    "text": "北マケドニアのスーパーで、強力粉を買ってきたけど",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/04.wav",
+    "tts_text": "北マケドニアのスーパーで、きょうりきこを買ってきたけど",
+    "at": 288
+   },
+   {
+    "text": "宿には、はかりが無い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/05.wav",
+    "tts_text": "宿には、はかりが無い！",
+    "at": 368
+   },
+   {
+    "text": "500ミリのペットボトル満タンで強力粉300gや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/06.wav",
+    "tts_text": "ごひゃくミリのペットボトル満タンで、きょうりきこ、さんびゃくグラムや！",
+    "at": 415
+   },
+   {
+    "text": "塩4gに、イーストは1gに、砂糖ふたつまみ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/07.wav",
+    "tts_text": "塩よんグラムに、イーストはいちグラムに、砂糖ふたつまみ！",
+    "at": 519
+   },
+   {
+    "text": "うどんと一緒やと思て、こねたら",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/08.wav",
+    "tts_text": "うどんと一緒やと思て、こねたら",
+    "at": 620
+   },
+   {
+    "text": "パン屋さんの動画で見る生地やん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/09.wav",
+    "tts_text": "パン屋さんの動画で見る生地やん！",
+    "at": 681,
+    "mood": "up_pop"
+   },
+   {
+    "text": "どんぶりを蓋にして、一晩ほったらかし！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/10.wav",
+    "tts_text": "どんぶりを蓋にして、ひとばん、ほったらかし！",
+    "at": 732
+   },
+   {
+    "text": "様子見てみようかな...",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/11.wav",
+    "tts_text": "様子見てみようかな…",
+    "at": 808
+   },
+   {
+    "text": "ガスまみれでめっちゃでかくなってる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/12.wav",
+    "tts_text": "ガスまみれで、めっちゃでかくなってる！",
+    "at": 851,
+    "mood": "up_pop"
+   },
+   {
+    "text": "片方にはオリーブを Jammo Jà!",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/13.wav",
+    "tts_text": "かたほうにはオリーブを、ヤンモ・ヤ！",
+    "at": 913
+   },
+   {
+    "text": "丸め直して、またほったらかし再開！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/14.wav",
+    "tts_text": "丸め直して、またほったらかし再開！",
+    "at": 971
+   },
+   {
+    "text": "朝起きて打ち粉して1時間2次発酵すると...",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/15.wav",
+    "tts_text": "朝起きて打ち粉して、一時間、二次発酵すると…",
+    "at": 1041
+   },
+   {
+    "text": "いい感じや！あとは鉄板に移して230℃で30分 Vai! Vai!",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/16.wav",
+    "tts_text": "いい感じや！あとは鉄板に移して、二百三十度で三十分。ヴァイ！ヴァイ！",
+    "at": 1127
+   },
+   {
+    "text": "焼き上がったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/17.wav",
+    "tts_text": "焼き上がったら……",
+    "at": 1267
+   },
+   {
+    "text": "マジでパン屋さんすぎる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/18.wav",
+    "tts_text": "マジでパン屋さんすぎる！",
+    "at": 1298,
+    "mood": "up_pop"
+   },
+   {
+    "text": "問題は味やんな……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/19.wav",
+    "tts_text": "問題は味やんな……",
+    "at": 1344
+   },
+   {
+    "text": "外はサクサク、中はふんわり！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/20.wav",
+    "tts_text": "外はサクサク、中はふんわり！",
+    "at": 1390,
+    "mood": "up_pop"
+   },
+   {
+    "text": "初めての僕ですら作れたし、みんなも焼いてはどーやろか！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/voice/p2set/p2/21.wav",
+    "tts_text": "初めての僕ですら作れたし、みんなも焼いてはどうやろか？",
+    "at": 1454
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/wt2/shorts/videos/baguette/p2/spec.json",
+  "fps": 30,
+  "frames": 1562,
+  "seconds": 52.067,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "0:51:58.0+2.63s"
+    ],
+    "line": "海外旅行中に作ったバケットが簡単すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 79,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "11:13:46.0+1.27s",
+     "11:13:56.0+1.30s"
+    ],
+    "line": "パンって、量るのも発酵も難しいやん？",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 156,
+    "frames": 132,
+    "voice_frames": 124,
+    "cuts": [
+     "11:18:38.0+1.50s",
+     "30:30:05.0+1.30s",
+     "0:53:12.0+1.60s"
+    ],
+    "line": "今回のレシピ、こねたらあとはほったらかすだけやから海外ホステルでも作れるらしい！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 288,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "10:21:58.0+1.33s",
+     "10:27:04.0+1.33s"
+    ],
+    "line": "北マケドニアのスーパーで、強力粉を買ってきたけど",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 368,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "10:48:41.0+1.57s"
+    ],
+    "line": "宿には、はかりが無い！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 415,
+    "frames": 104,
+    "voice_frames": 96,
+    "cuts": [
+     "10:49:18.0+1.57s",
+     "10:59:46.0+1.90s"
+    ],
+    "line": "500ミリのペットボトル満タンで強力粉300gや！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 519,
+    "frames": 101,
+    "voice_frames": 93,
+    "cuts": [
+     "11:06:44.0+1.03s",
+     "11:30:52.0+1.13s",
+     "11:08:02.0+1.20s"
+    ],
+    "line": "塩4gに、イーストは1gに、砂糖ふたつまみ！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 620,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "11:14:10.0+2.03s"
+    ],
+    "line": "うどんと一緒やと思て、こねたら",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 681,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "11:19:56.0+1.70s"
+    ],
+    "line": "パン屋さんの動画で見る生地やん！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 732,
+    "frames": 76,
+    "voice_frames": 68,
+    "cuts": [
+     "11:24:10.5+2.53s"
+    ],
+    "line": "どんぶりを蓋にして、一晩ほったらかし！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 808,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "20:15:00.0+1.43s"
+    ],
+    "line": "様子見てみようかな...",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 851,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "20:15:28.0+1.03s",
+     "20:16:36.0+1.03s"
+    ],
+    "line": "ガスまみれでめっちゃでかくなってる！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 913,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "20:12:48.0+0.97s",
+     "20:13:00.0+0.97s"
+    ],
+    "line": "片方にはオリーブを Jammo Jà!",
+    "telop": {
+     "text": "（さあ、行こう！）",
+     "coverage": 0.0,
+     "shown": true
+    }
+   },
+   {
+    "row": 13,
+    "from": 971,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "20:16:22.0+1.20s",
+     "20:18:30.0+1.13s"
+    ],
+    "line": "丸め直して、またほったらかし再開！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1041,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "30:21:25.0+1.37s",
+     "30:21:50.0+1.50s"
+    ],
+    "line": "朝起きて打ち粉して1時間2次発酵すると...",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1127,
+    "frames": 140,
+    "voice_frames": 132,
+    "cuts": [
+     "0:22:12.0+1.40s",
+     "0:25:02.0+1.50s",
+     "0:36:46.0+1.77s"
+    ],
+    "line": "いい感じや！あとは鉄板に移して230℃で30分 Vai! Vai!",
+    "telop": {
+     "text": "（行け、行け〜！）",
+     "coverage": 0.0,
+     "shown": true
+    }
+   },
+   {
+    "row": 16,
+    "from": 1267,
+    "frames": 31,
+    "voice_frames": 23,
+    "cuts": [
+     "0:51:46.0+1.03s"
+    ],
+    "line": "焼き上がったら……",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1298,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "0:56:02.0+1.53s"
+    ],
+    "line": "マジでパン屋さんすぎる！",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1344,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "0:57:08.0+1.53s"
+    ],
+    "line": "問題は味やんな……",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1390,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:58:24.0+2.13s"
+    ],
+    "line": "外はサクサク、中はふんわり！",
+    "telop": null
+   },
+   {
+    "row": 20,
+    "from": 1454,
+    "frames": 108,
+    "voice_frames": 85,
+    "cuts": [
+     "1:01:00.0+1.80s",
+     "0:56:24.0+1.80s"
+    ],
+    "line": "初めての僕ですら作れたし、みんなも焼いてはどーやろか！？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 360,
+   "raw_voice_s": 64.13,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 45.97,
+   "cps_voiced": 7.83,
+   "video_s": 52.07,
+   "cps_video": 6.91
+  }
+ },
+ "notes": [
+  {
+   "from": 1127,
+   "to": 1267,
+   "text": "※命令形、二人称単数"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/baguette/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
