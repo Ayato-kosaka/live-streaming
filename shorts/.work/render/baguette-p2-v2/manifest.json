@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__baguette-p2-v2",
  "mode": "render",
- "dest": "render/baguette-p2-v2/inbox",
+ "dest": "render/baguette-p2-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/baguette-p2-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 3018,
-  "tar_gz": 1536,
-  "encrypted": 1552
+  "plain": 35195,
+  "tar_gz": 9089,
+  "encrypted": 9104
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1552,
-   "sha256": "934a924bc606b1e7b38b0eac12ac8bdbddbd2db9f2f5e5b12b39ea991c17be0d"
+   "bytes": 9104,
+   "sha256": "98c3bee3a1e94589555507e7e3a6e424234c4d59155ceba62db05ad8f7e24197"
   }
  ],
- "hmac_sha256": "f32985f536e75c87fb3be3e8dd1dc1e5e828d51293cead404c6fbb6b856e8184",
+ "hmac_sha256": "49e71107319f70734ec08f66498af6a83a915bde502eaf89a480114e09449269",
  "pubkey_sha256": "8316c5ee5b963bd1aec46d2e2e1d0b75dd553d8d7e20f508588ccf7486540265",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-01T00:22:34+00:00",
+ "created_at": "2026-11-01T00:33:30+00:00",
  "nonce": "4e36d8fb80faabb74575bf50"
 }
