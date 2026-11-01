@@ -172,8 +172,9 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 .li .n { font-family:var(--num); font-weight:700; font-size:var(--t-num);
          color:var(--gold); }
 .li .v { font-family:var(--num); font-weight:700; font-size:var(--t-num); }
-.card { position:relative; border-radius:18px; overflow:hidden;
-        box-shadow:0 40px 90px rgba(0,0,0,.6); aspect-ratio:3/4; max-height:760px; }
+.card { position:relative; border-radius:calc(18*var(--u)); overflow:hidden;
+        box-shadow:0 calc(40*var(--u)) calc(90*var(--u)) rgba(0,0,0,.6);
+        aspect-ratio:3/4; max-height:calc(880*var(--u)); margin-left:auto; }
 .card img.bg { width:100%; height:100%; object-fit:cover; display:block; }
 .pin { position:absolute; width:104px; height:104px; border-radius:50%;
        border:5px solid var(--paper); background:var(--paper);
@@ -182,8 +183,8 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 .card-note { position:absolute; left:0; right:0; bottom:0; padding:24px 28px;
              background:linear-gradient(transparent,rgba(10,8,6,.88) 42%);
              font-size:var(--t-sub); font-weight:700; color:var(--text); }
-.two { flex:1; display:grid; grid-template-columns:1fr 560px; gap:56px;
-       align-items:center; }
+.two { flex:1; display:grid; grid-template-columns:1fr calc(640*var(--u));
+       gap:calc(64*var(--u)); align-items:center; }
 /* 面の名札は確認用。本番では出さない */
 /* ── 段。`data-step` を持つ要素は、その段まで送られたら出る。
    **めくる間（ま）がこのページの本体**で、静止画では良し悪しが分からない */
@@ -280,20 +281,48 @@ by_photo = {}
 for c in D["cards"]:
     by_photo.setdefault(c["photoId"], []).append(c)
 top = sorted(by_photo.values(), key=lambda v: -len(v))[:3]
+def spread(grp):
+    """立ち位置が重なっているぶんをほどく。
+
+    **置いたのは本人たち**なので位置は動かしたくないが、既定の置き場
+    （`python/island_cards.py` の初期値）のまま動かしていない人が多いと、
+    9人が同じところで団子になって誰が居るのか分からなくなる（実測）。
+    **動かしていない人だけ**を、その周りへ円く逃がす。
+    """
+    import math
+    out, used = [], []
+    for c in grp:
+        x, y = (c.get("x") or .5), (c.get("y") or .5)
+        if c.get("moved"):              # 自分で動かした人はそのまま
+            out.append((x, y, c)); used.append((x, y)); continue
+        for k in range(len(grp) + 1):
+            if all(abs(x - a) > .085 or abs(y - b) > .085 for a, b in used):
+                break
+            t = math.radians(32 * k)    # 周りへ円く逃がす
+            x = min(.9, max(.1, (c.get("x") or .5) + .17 * math.cos(t)))
+            y = min(.88, max(.12, (c.get("y") or .5) + .17 * math.sin(t)))
+        out.append((x, y, c)); used.append((x, y))
+    return out
+
+
 for k, grp in enumerate(top):
     pins = "".join('<span class="pin" style="left:%.1f%%;top:%.1f%%"><img src="%s" alt=""></span>'
-                   % ((c.get("x") or .5) * 100, (c.get("y") or .5) * 100, ICON % c["icon"])
-                   for c in grp)
+                   % (x * 100, y * 100, ICON % c["icon"])
+                   for x, y, c in spread(grp))
     scene("""<div class="kicker">あやと島カード</div>
       <h2>%s</h2>
       <div class="two">
         <div class="card"><img class="bg" src="%s" alt=""><span data-step="1">%s</span>
-          <div class="card-note">%s・%d人が立っています</div></div>
-        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">%d</b> 枚。<br>
-        写真 %d枚に、%d人が思い思いの場所に立ちました。</p></div>
+          </div>
+        <div><div class="when">%s の写真・%d人が立っています</div>
+        <p class="lede">この35日であやとが撮った写真は
+        <b style="color:var(--ochre);font-family:var(--num)">%d</b> 枚。<br>
+        %d日ぶんの写真に、<b style="color:var(--ochre);font-family:var(--num)">%d</b> 人が
+        思い思いの場所に立ちました。</p></div>
       </div>""" % (e(grp[0]["note"] or "この日の1枚"), grp[0]["url"], pins,
                    grp[0]["day"][5:].replace("-", "/"), len(grp),
-                   len(D["cards"]), len(D["photos"]), len({c["icon"] for c in D["cards"]})),
+                   len(D["photos"]), len({p["day"] for p in D["photos"]}),
+                   len({c["icon"] for c in D["cards"]})),
           "カード%d" % (k + 1), total=1)
 
 # ── クイズ（1問1面 ×10）
@@ -431,31 +460,40 @@ for i in range(0, len(NEW), 2):
 # ── 投げ銭（上位3人は1人1面、4位以下は一覧）
 TIPS = json.loads((ROOT / "python" / "data" / "monthly_tips"
                    / ("%s.json" % MONTH)).read_text(encoding="utf-8"))["rows"]
-for r in TIPS[:3]:
-    scene("""<div class="kicker">投げ銭ありがとう　第%d位</div>
-      <div class="mid" style="align-items:center">
-        <img src="%s" alt="" style="width:260px;height:260px;border-radius:50%%;
-             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
-        <div style="font-family:var(--disp);font-weight:800;
-             font-size:calc(64*var(--u));margin-top:32px">%s</div>
-        <div style="font-family:var(--num);font-weight:700;
-             font-size:var(--t-hero);color:var(--gold);margin-top:18px">%s<small
-             style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
-      </div>""" % (r["rank"], ICON % r["icon"], e(r["display"]),
-                   "{:,}".format(r["yen"])), "投げ銭%d位" % r["rank"])
+# 低いページから高いほうへ。**いちばん下の一覧 → … → 3位 → 2位 → 1位**
+#（あやと 2026-11-01「投げ銭は低いページから高い方に」）。
+# 授賞式なので、下から積み上げて最後に1位を出す
 rest = [r for r in TIPS if r["rank"] >= 4]
 PER = 6   # 1行 88px + すき間。1080 の面に入るのはここまで（10行で 1,211px あふれた）
-for k in range(0, len(rest), PER):
+pages = [rest[k:k + PER] for k in range(0, len(rest), PER)]
+for k, page in enumerate(reversed(pages)):
+    lo, hi = page[-1]["rank"], page[0]["rank"]
     rows = "".join(
         '<div class="li"><span class="n">%d</span>%s<span>%s</span>'
         '<span class="v">%s</span></div>'
         % (r["rank"], ('<img src="%s" alt="">' % (ICON % r["icon"])) if r.get("icon")
            else '<span></span>', e(r["display"]), "{:,}".format(r["yen"]))
-        for r in rest[k:k + PER])
+        # 面の中も低いほうを上にする
+        for r in reversed(page))
     scene("""<div class="kicker">投げ銭ありがとう %d / %d</div>
-      <h2>4位から</h2><div class="list">%s</div>"""
-          % (k // PER + 1, (len(rest) + PER - 1) // PER, rows),
-          "投げ銭一覧%d" % (k // PER + 1))
+      <h2>%d位 〜 %d位</h2><div class="list">%s</div>"""
+          % (k + 1, len(pages) + 3, lo, hi, rows),
+          "投げ銭一覧%d" % (k + 1))
+
+for n, r in enumerate(reversed(TIPS[:3])):
+    scene("""<div class="kicker">投げ銭ありがとう　第%d位</div>
+      <div class="mid" style="align-items:center">
+        <img src="%s" alt="" data-step="1"
+             style="width:calc(260*var(--u));height:calc(260*var(--u));border-radius:50%%;
+             border:calc(8*var(--u)) solid var(--paper);background:var(--paper);object-fit:cover">
+        <div data-step="1" style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:calc(32*var(--u))">%s</div>
+        <div data-step="2" style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:calc(18*var(--u))">%s<small
+             style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
+      </div>""" % (r["rank"], ICON % r["icon"], e(r["display"]),
+                   "{:,}".format(r["yen"])),
+          "投げ銭%d位" % r["rank"], total=2, confetti=(r["rank"] == 1))
 
 # ── 手紙 → エンディング
 scene("""<div class="kicker">あやと島案内鳥 から</div>
