@@ -91,8 +91,9 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 .li .n { font-family:var(--num); font-weight:700; font-size:var(--t-num);
          color:var(--gold); }
 .li .v { font-family:var(--num); font-weight:700; font-size:var(--t-num); }
-.card { position:relative; border-radius:18px; overflow:hidden;
-        box-shadow:0 40px 90px rgba(0,0,0,.6); aspect-ratio:3/4; max-height:760px; }
+.card { position:relative; border-radius:calc(18*var(--u)); overflow:hidden;
+        box-shadow:0 calc(40*var(--u)) calc(90*var(--u)) rgba(0,0,0,.6);
+        aspect-ratio:3/4; max-height:calc(880*var(--u)); margin-left:auto; }
 .card img.bg { width:100%; height:100%; object-fit:cover; display:block; }
 .pin { position:absolute; width:104px; height:104px; border-radius:50%;
        border:5px solid var(--paper); background:var(--paper);
@@ -101,8 +102,8 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 .card-note { position:absolute; left:0; right:0; bottom:0; padding:24px 28px;
              background:linear-gradient(transparent,rgba(10,8,6,.88) 42%);
              font-size:var(--t-sub); font-weight:700; color:var(--text); }
-.two { flex:1; display:grid; grid-template-columns:1fr 560px; gap:56px;
-       align-items:center; }
+.two { flex:1; display:grid; grid-template-columns:1fr calc(640*var(--u));
+       gap:calc(64*var(--u)); align-items:center; }
 /* 面の名札は確認用。本番では出さない */
 /* ── 段。`data-step` を持つ要素は、その段まで送られたら出る。
    **めくる間（ま）がこのページの本体**で、静止画では良し悪しが分からない */
@@ -182,24 +183,33 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
       <p class="lede" data-step="1">マトカ渓谷は紅葉と岩山と清流が揃ったのに、のんびり歩きすぎて川下りの最終便に4分間に合わず、帰りは通りがかりの車が無料で街まで乗せてくれた。冬が来たスコピエのダイヤモンドモールでは、埃まみれで売れ残っていた黒い長いマフラーが300円。手袋1,200円と合わせて、予算2,500円が1,500円で済んだ。月末のクッキングはほったらかしパン。はかりが無いので500mlのペットボトルとコップで強力粉300gを割り出し、焼き上がりに「マジでパン屋さんすぎる」。材料費はパン1個25円だった。</p></div><div class="tag-scene">ふりかえり6</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">あやと島カード</div>
       <h2>城塞</h2>
       <div class="two">
-        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FGugKAbGMIpH8hP8dWASP.jpeg?alt=media&token=7dd90008-fc32-4ea4-88e6-43cb2771d0dc" alt=""><span data-step="1"><span class="pin" style="left:68.1%;top:94.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:68.8%;top:93.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:81.4%;top:95.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:73.3%;top:89.1%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:65.2%;top:95.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:81.7%;top:95.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:77.9%;top:92.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:62.1%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:67.8%;top:91.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
-          <div class="card-note">10/18・9人が立っています</div></div>
-        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
-        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FGugKAbGMIpH8hP8dWASP.jpeg?alt=media&token=7dd90008-fc32-4ea4-88e6-43cb2771d0dc" alt=""><span data-step="1"><span class="pin" style="left:68.1%;top:94.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:85.8%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:69.2%;top:84.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:57.3%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:48.6%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:87.0%;top:79.3%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:83.2%;top:76.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:49.9%;top:79.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:63.7%;top:75.4%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
+          </div>
+        <div><div class="when">10/18 の写真・9人が立っています</div>
+        <p class="lede">この35日であやとが撮った写真は
+        <b style="color:var(--ochre);font-family:var(--num)">102</b> 枚。<br>
+        29日ぶんの写真に、<b style="color:var(--ochre);font-family:var(--num)">22</b> 人が
+        思い思いの場所に立ちました。</p></div>
       </div></div><div class="tag-scene">カード1</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">あやと島カード</div>
       <h2>城塞</h2>
       <div class="two">
-        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FZD5XZHieGZS0sP1WWIHH.jpeg?alt=media&token=5553fdc0-fdd0-45c1-8aff-25d9e66e8728" alt=""><span data-step="1"><span class="pin" style="left:72.9%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:79.2%;top:90.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:73.7%;top:95.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:87.9%;top:89.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:87.4%;top:90.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:65.8%;top:93.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:88.0%;top:89.1%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:80.1%;top:88.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:65.5%;top:89.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
-          <div class="card-note">10/18・9人が立っています</div></div>
-        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
-        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FZD5XZHieGZS0sP1WWIHH.jpeg?alt=media&token=5553fdc0-fdd0-45c1-8aff-25d9e66e8728" alt=""><span data-step="1"><span class="pin" style="left:72.9%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:90.0%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:63.2%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:75.7%;top:77.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:90.0%;top:73.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:49.8%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:90.0%;top:72.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:85.4%;top:72.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:53.3%;top:77.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
+          </div>
+        <div><div class="when">10/18 の写真・9人が立っています</div>
+        <p class="lede">この35日であやとが撮った写真は
+        <b style="color:var(--ochre);font-family:var(--num)">102</b> 枚。<br>
+        29日ぶんの写真に、<b style="color:var(--ochre);font-family:var(--num)">22</b> 人が
+        思い思いの場所に立ちました。</p></div>
       </div></div><div class="tag-scene">カード2</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">あやと島カード</div>
       <h2>城塞</h2>
       <div class="two">
-        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FYOaz2mT0PfQYcvBEkw79.jpeg?alt=media&token=c316ec2e-1551-468c-b656-5061f23d8527" alt=""><span data-step="1"><span class="pin" style="left:68.0%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:65.5%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:85.1%;top:90.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:76.9%;top:91.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:74.5%;top:90.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:69.8%;top:95.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:78.6%;top:90.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:74.8%;top:91.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:72.0%;top:89.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
-          <div class="card-note">10/18・9人が立っています</div></div>
-        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
-        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FYOaz2mT0PfQYcvBEkw79.jpeg?alt=media&token=c316ec2e-1551-468c-b656-5061f23d8527" alt=""><span data-step="1"><span class="pin" style="left:68.0%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:82.5%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:72.9%;top:78.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:82.2%;top:75.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:58.5%;top:88.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:75.1%;top:79.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:83.9%;top:74.4%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:62.6%;top:79.4%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:77.3%;top:73.3%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span></span>
+          </div>
+        <div><div class="when">10/18 の写真・9人が立っています</div>
+        <p class="lede">この35日であやとが撮った写真は
+        <b style="color:var(--ochre);font-family:var(--num)">102</b> 枚。<br>
+        29日ぶんの写真に、<b style="color:var(--ochre);font-family:var(--num)">22</b> 人が
+        思い思いの場所に立ちました。</p></div>
       </div></div><div class="tag-scene">カード3</div></section><section class="scene" data-total="2"><div class="pad"><div class="kicker">クイズ 1 / 10</div>
       <div class="mid"><div class="qq">9/28、9月の月末配信のタップタップ結果発表。目標は5万タップでしたが、実際はいくつ集まったでしょう？</div>
         <div class="ch" data-step="1"><div class=""><b>A</b>5万2,480タップ</div><div class="ok ans"><b>B</b>8万4,893タップ</div><div class=""><b>C</b>12万1,300タップ</div></div>
@@ -277,41 +287,41 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
         <div class="by" data-step="1">あやと</div>
       </div></div></div><div class="tag-scene">名言5</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 1</div>
       <div class="mid"><div class="sheet tilt">
+        <span class="tag">街歩き部門</span>
+        <div class="quote">聖クリメント・オフリド教会</div>
+        <div class="by">名乗らずに貼ってくれた人・♥ 5</div><div class="after" data-step="1">10/20 に到着。中は礼拝の最中で観光客が一人もおらず、全員が真剣だったので「マナー違反したかも」といったん外へ出て、観光客が入り始めてから再入場した。壁一面の壁画を見て、内観の写真を1枚だけ島に上げている。</div>
+      </div></div></div><div class="tag-scene">付箋1</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 2</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">街歩き部門</span>
+        <div class="quote">ヴォドノ山頂に建つ
+大きな十字架⛪️✝️</div>
+        <div class="by">まこも🍭・♥ 8</div><div class="after" data-step="1">10/20 の企画会議で「31日は十字架の山の上でサンドイッチと豆を挽いたコーヒー」と月末配信の行き先に決まり、10/30 には19時開始・ロープウェイが故障なので徒歩・焼いたパンを持参、まで段取りが決まった。今日これから登る山は、この付箋から決まった。</div>
+      </div></div></div><div class="tag-scene">付箋2</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 3</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">LINEスタンプ部門</span>
+        <div class="quote">ネクストレベル</div>
+        <div class="by">名乗らずに貼ってくれた人・♥ 6</div><div class="after" data-step="1">40種のうちの1枚「ネクストレベル」として出来上がり、気持ちの並びの「うれしい → すごいよ → ネクストレベル」に入っている。階段の絵の中に閉じた白があるため、絵の地を抜く道具の手引きにまで名指しで残った（tools/goods/linecut.py）。</div>
+      </div></div></div><div class="tag-scene">付箋3</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 4</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">グッズ部門</span>
+        <div class="quote">1.卓上カレンダー
+2.今年行った旅の写真のベストショットをあやとさんが、何点かセレクトして、
+カレンダーに載せたい写真を選ぶ!</div>
+        <div class="by">まこも・♥ 4</div><div class="after" data-step="1">10/15 に「あやと 旅の思い出カレンダー 2027」としてSUZURIで発売。暦1〜10月は2026年の同じ月、11・12月は2025年、住人はその月の投げ銭上位7人（docs/goods-calendar.md）。10/20 にまこもさん本人が注文し、10/29 に @dekobokov6229 が発送のメール、10/30 に「今日カレンダー届いたよ。かわいいカレンダーめちゃよかったよ」。</div>
+      </div></div></div><div class="tag-scene">付箋4</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 5</div>
+      <div class="mid"><div class="sheet tilt">
         <span class="tag">ショート部門</span>
         <div class="quote">あやとと猫の触れ合い集！
 今まで猫が登場した動画をまとめてショートにする！
 あやとの愛猫やツンデレ猫、人懐っこい猫などなど猫好きにはたまらない！そしてあやとが猫を可愛がるかわええな〜がまた萌え萌えや！！
 ※動物系・可愛い系</div>
         <div class="by">もっと豆挽けコーヒー商店・♥ 1</div><div class="after" data-step="1">10/29 に「これまでの猫の映像を集めたショート」を公開。過去の配信に一瞬映っていた愛猫をAIが見つけてきて「残っててよかった」。翌日その結果を豆さん自身が付箋で報告し、あやとが「ほんとそれな！！！再生数も良かったわ！！！！豆は天才やな！」と返した。</div>
-      </div></div></div><div class="tag-scene">付箋1</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 2</div>
-      <div class="mid"><div class="sheet tilt">
-        <span class="tag">カレンダー部門</span>
-        <div class="quote">1.卓上カレンダー
-2.今年行った旅の写真のベストショットをあやとさんが、何点かセレクトして、
-カレンダーに載せたい写真を選ぶ!</div>
-        <div class="by">まこも・♥ 4</div><div class="after" data-step="1">10/15 に「あやと 旅の思い出カレンダー 2027」としてSUZURIで発売。暦1〜10月は2026年の同じ月、11・12月は2025年、住人はその月の投げ銭上位7人（docs/goods-calendar.md）。10/20 にまこもさん本人が注文し、10/29 に @dekobokov6229 が発送のメール、10/30 に「今日カレンダー届いたよ。かわいいカレンダーめちゃよかったよ」。</div>
-      </div></div></div><div class="tag-scene">付箋2</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 3</div>
-      <div class="mid"><div class="sheet tilt">
-        <span class="tag">ステッカー部門</span>
-        <div class="quote">地球の歩き方</div>
-        <div class="by">nakamura・♥ 3</div><div class="after" data-step="1">あやとステッカー「地球をめぐるあやと」になった。届いた元絵が437×480のjpegでにじんでいたので、構図・旗・名所をそのままにChatGPTで描き直して配っている。同じ絵がSUZURIの「TRAVELING NOW Tシャツ」（背中に旅の名所がつまった地球）にもなった。</div>
-      </div></div></div><div class="tag-scene">付箋3</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 4</div>
-      <div class="mid"><div class="sheet tilt">
-        <span class="tag">LINEスタンプ部門</span>
-        <div class="quote">ネクストレベル</div>
-        <div class="by">名乗らずに貼ってくれた人・♥ 6</div><div class="after" data-step="1">40種のうちの1枚「ネクストレベル」として出来上がり、気持ちの並びの「うれしい → すごいよ → ネクストレベル」に入っている。階段の絵の中に閉じた白があるため、絵の地を抜く道具の手引きにまで名指しで残った（tools/goods/linecut.py）。</div>
-      </div></div></div><div class="tag-scene">付箋4</div></section><section class="scene" data-total="1"><div class="pad"><div class="kicker">付箋大賞 部門賞 5</div>
-      <div class="mid"><div class="sheet tilt">
-        <span class="tag">街歩き部門</span>
-        <div class="quote">聖クリメント・オフリド教会</div>
-        <div class="by">名乗らずに貼ってくれた人・♥ 5</div><div class="after" data-step="1">10/20 に到着。中は礼拝の最中で観光客が一人もおらず、全員が真剣だったので「マナー違反したかも」といったん外へ出て、観光客が入り始めてから再入場した。壁一面の壁画を見て、内観の写真を1枚だけ島に上げている。</div>
       </div></div></div><div class="tag-scene">付箋5</div></section><section class="scene" data-total="1" data-confetti="1"><div class="pad"><div class="kicker">あやと島 付箋大賞</div>
   <div class="mid"><div class="sheet">
     <span class="tag gold">大賞</span>
-    <div class="quote">ヴォドノ山頂に建つ
-大きな十字架⛪️✝️</div>
-    <div class="by">まこも🍭・♥ 8</div>
-    <div class="after" data-step="1">10/20 の企画会議で「31日は十字架の山の上でサンドイッチと豆を挽いたコーヒー」と月末配信の行き先に決まり、10/30 には19時開始・ロープウェイが故障なので徒歩・焼いたパンを持参、まで段取りが決まった。今日これから登る山は、この付箋から決まった。</div>
+    <div class="quote">地球の歩き方</div>
+    <div class="by">nakamura・♥ 3</div>
+    <div class="after" data-step="1">あやとステッカー「地球をめぐるあやと」になった。届いた元絵が437×480のjpegでにじんでいたので、構図・旗・名所をそのままにChatGPTで描き直して配っている。同じ絵がSUZURIの「TRAVELING NOW Tシャツ」（背中に旅の名所がつまった地球）にもなった。</div>
   </div></div></div><div class="tag-scene">付箋大賞</div></section><section class="scene" data-total="2"><div class="pad"><div class="kicker">調べもの大賞 1 / 4</div>
       <div class="mid"><div class="sheet">
         <span class="tag red">@まつしきtuckgene</span>
@@ -407,38 +417,41 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
              <div class="quote" style="font-size:calc(38*var(--u))">はじめてききました、北マケドニアは国なんですね</div>
              <div class="by">@ttya7197・10/12</div></div><div class="sheet" style="padding:44px 52px">
              <div class="quote" style="font-size:calc(38*var(--u))">初見ですどこにいるのですか？</div>
-             <div class="by">@4_djm・10/12</div></div></div></div><div class="tag-scene">はじめまして4</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう　第1位</div>
+             <div class="by">@4_djm・10/12</div></div></div></div><div class="tag-scene">はじめまして4</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 1 / 7</div>
+      <h2>22位 〜 22位</h2><div class="list"><div class="li"><span class="n">22</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_/plain-128.webp" alt=""><span>@元キノコさん</span><span class="v">50</span></div></div></div><div class="tag-scene">投げ銭一覧1</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 2 / 7</div>
+      <h2>21位 〜 16位</h2><div class="list"><div class="li"><span class="n">21</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1y17p0D56itwNXWWEzo94jF4ThNETczQg/plain-128.webp" alt=""><span>@ももしろう-y2z</span><span class="v">150</span></div><div class="li"><span class="n">20</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""><span>@Jessincma</span><span class="v">158</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1p46JvC_wbKo-rDEzE2pRMZh2neekNvta/plain-128.webp" alt=""><span>@チャイナモンスター</span><span class="v">160</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/c3cca678865a4021a048e617fab35db30/plain-128.webp" alt=""><span>@YOKOHAMA_Night</span><span class="v">160</span></div><div class="li"><span class="n">17</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb/plain-128.webp" alt=""><span>@ゆずたつ-q3n</span><span class="v">200</span></div><div class="li"><span class="n">16</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/7590ed1286e344a198f74674296e64d20/plain-128.webp" alt=""><span>@シモタシロヨシコ</span><span class="v">500</span></div></div></div><div class="tag-scene">投げ銭一覧2</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 3 / 7</div>
+      <h2>15位 〜 10位</h2><div class="list"><div class="li"><span class="n">15</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/cf129e7ea06f499693a002543dcd7c290/plain-128.webp" alt=""><span>@まつしきtuckgene</span><span class="v">640</span></div><div class="li"><span class="n">14</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU/plain-128.webp" alt=""><span>@まーさん7286</span><span class="v">900</span></div><div class="li"><span class="n">13</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""><span>@えびっち-m7r</span><span class="v">960</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""><span>@鴨川小夜</span><span class="v">1,200</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f203e9529b7941c89940a568e03b83b00/plain-128.webp" alt=""><span>@もっと豆挽けコーヒー商店</span><span class="v">1,200</span></div><div class="li"><span class="n">10</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1bGJUOx4NJU112oix9BwSVrZQJgsakGIq/plain-128.webp" alt=""><span>@スカイライン-t2w</span><span class="v">1,500</span></div></div></div><div class="tag-scene">投げ銭一覧3</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 4 / 7</div>
+      <h2>9位 〜 4位</h2><div class="list"><div class="li"><span class="n">9</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""><span>@moimoilove6331</span><span class="v">2,500</span></div><div class="li"><span class="n">8</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""><span>@dekobokov6229</span><span class="v">2,800</span></div><div class="li"><span class="n">7</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""><span>@desora-t5n</span><span class="v">2,900</span></div><div class="li"><span class="n">6</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""><span>@kana3019</span><span class="v">3,600</span></div><div class="li"><span class="n">5</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS/plain-128.webp" alt=""><span>@らん-x2m8e</span><span class="v">3,750</span></div><div class="li"><span class="n">4</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""><span>@まこも-z3i</span><span class="v">8,000</span></div></div></div><div class="tag-scene">投げ銭一覧4</div></section><section class="scene" data-total="2"><div class="pad"><div class="kicker">投げ銭ありがとう　第3位</div>
       <div class="mid" style="align-items:center">
-        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1wQzpWPNZKnty7DIiEkrSyib145QIWy4K/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
-             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
-        <div style="font-family:var(--disp);font-weight:800;
-             font-size:calc(64*var(--u));margin-top:32px">@aoi1685</div>
-        <div style="font-family:var(--num);font-weight:700;
-             font-size:var(--t-hero);color:var(--gold);margin-top:18px">13,000<small
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt="" data-step="1"
+             style="width:calc(260*var(--u));height:calc(260*var(--u));border-radius:50%;
+             border:calc(8*var(--u)) solid var(--paper);background:var(--paper);object-fit:cover">
+        <div data-step="1" style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:calc(32*var(--u))">@田中とら-f6x</div>
+        <div data-step="2" style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:calc(18*var(--u))">9,920<small
              style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
-      </div></div><div class="tag-scene">投げ銭1位</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう　第2位</div>
+      </div></div><div class="tag-scene">投げ銭3位</div></section><section class="scene" data-total="2"><div class="pad"><div class="kicker">投げ銭ありがとう　第2位</div>
       <div class="mid" style="align-items:center">
-        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
-             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
-        <div style="font-family:var(--disp);font-weight:800;
-             font-size:calc(64*var(--u));margin-top:32px">@かこ-e</div>
-        <div style="font-family:var(--num);font-weight:700;
-             font-size:var(--t-hero);color:var(--gold);margin-top:18px">10,000<small
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz/plain-128.webp" alt="" data-step="1"
+             style="width:calc(260*var(--u));height:calc(260*var(--u));border-radius:50%;
+             border:calc(8*var(--u)) solid var(--paper);background:var(--paper);object-fit:cover">
+        <div data-step="1" style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:calc(32*var(--u))">@かこ-e</div>
+        <div data-step="2" style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:calc(18*var(--u))">10,000<small
              style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
-      </div></div><div class="tag-scene">投げ銭2位</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう　第3位</div>
+      </div></div><div class="tag-scene">投げ銭2位</div></section><section class="scene" data-total="2" data-confetti="1"><div class="pad"><div class="kicker">投げ銭ありがとう　第1位</div>
       <div class="mid" style="align-items:center">
-        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
-             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
-        <div style="font-family:var(--disp);font-weight:800;
-             font-size:calc(64*var(--u));margin-top:32px">@田中とら-f6x</div>
-        <div style="font-family:var(--num);font-weight:700;
-             font-size:var(--t-hero);color:var(--gold);margin-top:18px">9,920<small
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1wQzpWPNZKnty7DIiEkrSyib145QIWy4K/plain-128.webp" alt="" data-step="1"
+             style="width:calc(260*var(--u));height:calc(260*var(--u));border-radius:50%;
+             border:calc(8*var(--u)) solid var(--paper);background:var(--paper);object-fit:cover">
+        <div data-step="1" style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:calc(32*var(--u))">@aoi1685</div>
+        <div data-step="2" style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:calc(18*var(--u))">13,000<small
              style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
-      </div></div><div class="tag-scene">投げ銭3位</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 1 / 4</div>
-      <h2>4位から</h2><div class="list"><div class="li"><span class="n">4</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""><span>@まこも-z3i</span><span class="v">8,000</span></div><div class="li"><span class="n">5</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS/plain-128.webp" alt=""><span>@らん-x2m8e</span><span class="v">3,750</span></div><div class="li"><span class="n">6</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""><span>@kana3019</span><span class="v">3,600</span></div><div class="li"><span class="n">7</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""><span>@desora-t5n</span><span class="v">2,900</span></div><div class="li"><span class="n">8</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""><span>@dekobokov6229</span><span class="v">2,800</span></div><div class="li"><span class="n">9</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""><span>@moimoilove6331</span><span class="v">2,500</span></div></div></div><div class="tag-scene">投げ銭一覧1</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 2 / 4</div>
-      <h2>4位から</h2><div class="list"><div class="li"><span class="n">10</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1bGJUOx4NJU112oix9BwSVrZQJgsakGIq/plain-128.webp" alt=""><span>@スカイライン-t2w</span><span class="v">1,500</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f203e9529b7941c89940a568e03b83b00/plain-128.webp" alt=""><span>@もっと豆挽けコーヒー商店</span><span class="v">1,200</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""><span>@鴨川小夜</span><span class="v">1,200</span></div><div class="li"><span class="n">13</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""><span>@えびっち-m7r</span><span class="v">960</span></div><div class="li"><span class="n">14</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU/plain-128.webp" alt=""><span>@まーさん7286</span><span class="v">900</span></div><div class="li"><span class="n">15</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/cf129e7ea06f499693a002543dcd7c290/plain-128.webp" alt=""><span>@まつしきtuckgene</span><span class="v">640</span></div></div></div><div class="tag-scene">投げ銭一覧2</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 3 / 4</div>
-      <h2>4位から</h2><div class="list"><div class="li"><span class="n">16</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/7590ed1286e344a198f74674296e64d20/plain-128.webp" alt=""><span>@シモタシロヨシコ</span><span class="v">500</span></div><div class="li"><span class="n">17</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb/plain-128.webp" alt=""><span>@ゆずたつ-q3n</span><span class="v">200</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/c3cca678865a4021a048e617fab35db30/plain-128.webp" alt=""><span>@YOKOHAMA_Night</span><span class="v">160</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1p46JvC_wbKo-rDEzE2pRMZh2neekNvta/plain-128.webp" alt=""><span>@チャイナモンスター</span><span class="v">160</span></div><div class="li"><span class="n">20</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""><span>@Jessincma</span><span class="v">158</span></div><div class="li"><span class="n">21</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1y17p0D56itwNXWWEzo94jF4ThNETczQg/plain-128.webp" alt=""><span>@ももしろう-y2z</span><span class="v">150</span></div></div></div><div class="tag-scene">投げ銭一覧3</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">投げ銭ありがとう 4 / 4</div>
-      <h2>4位から</h2><div class="list"><div class="li"><span class="n">22</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_/plain-128.webp" alt=""><span>@元キノコさん</span><span class="v">50</span></div></div></div><div class="tag-scene">投げ銭一覧4</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">あやと島案内鳥 から</div>
+      </div></div><div class="tag-scene">投げ銭1位</div></section><section class="scene" data-total="0"><div class="pad"><div class="kicker">あやと島案内鳥 から</div>
   <div class="mid"><div class="sheet">
     <div class="quote" style="font-size:calc(40*var(--u))">この35日で、島に写真が102枚貼られました。
 そこに22人が立って、カードは430枚になりました。
