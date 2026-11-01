@@ -640,9 +640,12 @@ def delete(t, vid, needle, at_utc, probe=False, dry=False):
         result({"ok": gone and not probe, "error": None if gone else "row_not_found", "already_gone": gone, "hits": hits, "rows": n})
         return
     label = schedule_label(at_utc)
-    text = t.js(f"(() => {{ const r = {row}; return r ? r.innerText.replace(/[\\s\\u00a0\\u202f]+/g, ' ').trim().slice(0, 300) : null; }})()")
+    # 行の字は丸ごと見る。キャプションが長いと、予約の時刻の札は300字より後ろに出る（2026-11-01 エディンバラ A で、
+    # 予約中の行を300字で切って見て row_not_scheduled で止まった）。書き出すのは頭と尻だけ
+    full = t.js(f"(() => {{ const r = {row}; return r ? r.innerText.replace(/[\\s\\u00a0\\u202f]+/g, ' ').trim() : null; }})()") or ""
+    text = full if len(full) <= 300 else full[:240] + " … " + full[-60:]
     log("row:", text)
-    if needle not in (text or "") or label not in (text or ""):
+    if needle not in full or label not in full:
         result({"ok": False, "error": "row_not_scheduled", "row": text, "want_label": label})
         return
     c = t.center(row)

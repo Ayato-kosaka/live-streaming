@@ -5,11 +5,12 @@
 `ec2.py put` で `~/cdp/yt_post.py` に置き、手元の `post.py` から呼ぶ（README.md）。
 
     python3 yt_post.py dup <題>                       # 同じ題のショートがもう在るか
-    python3 yt_post.py draft <mp4> <post.json>        # 上げて、題・説明・子ども向けでない・改変なし → 非公開で保存
+    python3 yt_post.py draft <mp4> <post.json> [--replaces <古い動画ID>]  # 上げて、題・説明・子ども向けでない・改変なし → 非公開で保存
     python3 yt_post.py resume <動画ID> <post.json>    # 途中で閉じた下書きを開き直して続きから
     python3 yt_post.py related <動画ID> <元の動画ID>   # 「関連動画」に元のアーカイブを付けて保存
     python3 yt_post.py publish <動画ID> [--at <UTC の ISO> [--dry]]  # 公開（--at で一般公開の予約。--dry は欄を入れてキャンセル）
     python3 yt_post.py status <動画ID>                # 題・説明・公開範囲・関連動画を読み直す
+    python3 yt_post.py unschedule <動画ID> <題> [--dry]  # 予約を差し替えるときに、古い動画の予約を外して非公開のまま残す
     python3 yt_post.py delete <動画ID> <題> [--dry]   # 予約を差し替えるときに、古い（非公開の）動画を完全に削除する
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す（手元はそこだけ読む）。
@@ -149,15 +150,25 @@ def video_link(t):
     return None, None
 
 
-def draft(t, mp4, post):
+def draft(t, mp4, post, replaces=None):
     title = post["youtube"]["title"]
     if not os.path.exists(mp4):
         raise RuntimeError(f"no file: {mp4}")
     hits, seen = dup(t, title)
     log("dup check", seen, "shorts seen, hits:", hits)
     if hits:
-        result({"ok": False, "error": "duplicate", "hits": hits})
-        return
+        # 予約の差し替えで古い版を消さずに残す回（unschedule）は、同じ題の古い版が必ず当たる。
+        # 通すのは「当たったのが --replaces の1本だけで、それが非公開・予約なし」のときだけ。
+        # 予約が残っていれば、新しい版と2本とも出てしまうので止める
+        others = [h for h in hits if h["id"] != replaces]
+        old_ok = False
+        if replaces and not others:
+            v = get_videos(t, [replaces], mask=READ)[0]
+            old_ok = v.get("privacy") == "VIDEO_PRIVACY_PRIVATE" and scheduled_public_at(v) is None
+            log("replaces", replaces, v.get("privacy"), "scheduled", scheduled_public_at(v))
+        if others or not old_ok:
+            result({"ok": False, "error": "duplicate", "hits": hits, "replaces": replaces})
+            return
     t.go(f"{BASE}/channel/{CH}/videos/upload?d=ud", wait=6)
     guard_login(t)
     _wait(t, f"!!{DLG} && !!{DLG}.querySelector('input[type=file]')", 40)
@@ -344,6 +355,73 @@ def publish(t, vid, at=None, dry=False):
     v = get_videos(t, [vid], mask=READ)[0]
     result({"ok": v.get("privacy") == "VIDEO_PRIVACY_PUBLIC", "video_id": vid, "privacy": v.get("privacy"),
             "published": v.get("timePublishedSeconds"), "title": v.get("title"), "changed": True})
+
+
+def unschedule(t, vid, title, dry=False):
+    """予約を差し替えるとき、古い版を消さずに残す: 一般公開の予約を外して、非公開のまま保存する。
+
+    消すと取り戻せない（delete）。差し替えた新しい版に何かあったときに戻せるよう、古い版は非公開で置いておく
+    （2026-11-01 エディンバラ A v4 → v5b）。公開済み・限定公開・題が控えと違うものは触らない。予約が無ければ何もしない。
+    読み直しは get_creator_videos の privacy が PRIVATE のままで、SET_PUBLIC の予約が無いこと
+    """
+    v = get_videos(t, [vid], mask=READ)[0]
+    if (v.get("title") or "").strip() != title.strip():
+        result({"ok": False, "error": "title_mismatch", "video_id": vid, "title": v.get("title")})
+        return
+    if v.get("privacy") != "VIDEO_PRIVACY_PRIVATE":
+        result({"ok": False, "error": "not_private", "video_id": vid, "privacy": v.get("privacy")})
+        return
+    before = scheduled_public_at(v)
+    if before is None:
+        result({"ok": True, "video_id": vid, "privacy": v.get("privacy"), "scheduled": None, "changed": False})
+        return
+    t.go(f"{BASE}/video/{vid}/edit", wait=8)
+    guard_login(t)
+    sel = "(document.querySelector('ytcp-video-metadata-visibility #select-button') || document.querySelector('ytcp-video-metadata-visibility'))"
+    _wait(t, f"!!{sel}", 30)
+    t.click(sel)
+    time.sleep(3)
+    d = "(document.querySelector('ytcp-video-visibility-select') || null)"
+    if not t.js(f"!!({d})"):
+        result({"ok": False, "error": "visibility_dialog"})
+        return
+    priv = f"({d}).querySelector('tp-yt-paper-radio-button[name=\"PRIVATE\"]')"
+    sched = f"((({d}).querySelector('#second-container') || {{}}).innerText || '')"
+    sched_before = t.js(sched)
+    # 予約のある動画でも、窓を開くと「非公開」はもう選ばれて見えている（予約中は非公開なので）。そのまま「完了」を押しても
+    # 変更にならず、保存は押せないまま予約が残る（2026-11-01 に見た）。「保存または公開」の見出しを押してから「非公開」を押すと、
+    # 「スケジュールを設定」の中の日付が消え、保存が押せるようになる
+    t.click(f"({d}).querySelector('#first-container-expand-button')")
+    time.sleep(2)
+    if not t.js(f"!!{priv}"):
+        result({"ok": False, "error": "private_radio", "radios": radio_names(t, f"({d})")})
+        return
+    t.click(priv)
+    time.sleep(1.5)
+    ok = t.js(f"{priv}.getAttribute('aria-checked')") == "true"
+    sched_after = t.js(sched)
+    cleared = not re.search(r"\d{4}/\d{1,2}/\d{1,2}", sched_after or "")
+    log("PRIVATE selected", ok, "| schedule before", json.dumps(sched_before, ensure_ascii=False), "| after", json.dumps(sched_after, ensure_ascii=False))
+    shot(t, "yt_unsched_1_private")
+    if not (ok and cleared):
+        result({"ok": False, "error": "schedule_not_cleared", "private": ok, "schedule_after": sched_after})
+        return
+    if dry:
+        t.js(f"""(() => {{ const root = ({d}).closest('tp-yt-paper-dialog') || ({d}); const b = [...root.querySelectorAll('ytcp-button, button')].find(b => /^(キャンセル|Cancel)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
+        result({"ok": True, "dry": True, "video_id": vid, "scheduled_before": before, "schedule_cleared_in_dialog": cleared})
+        return
+    t.js(f"""(() => {{ const root = ({d}).closest('tp-yt-paper-dialog') || ({d}); const b = [...root.querySelectorAll('ytcp-button, button')].find(b => /^(完了|Done)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
+    time.sleep(2)
+    if t.js(f"(() => {{ const b = {SAVE}; return !b || b.hasAttribute('disabled') || b.getAttribute('aria-disabled') === 'true'; }})()"):
+        result({"ok": False, "error": "save_disabled", "video_id": vid})
+        return
+    t.click(SAVE)
+    time.sleep(8)
+    shot(t, "yt_unsched_2_saved")
+    v = get_videos(t, [vid], mask=READ)[0]
+    after = scheduled_public_at(v)
+    result({"ok": v.get("privacy") == "VIDEO_PRIVACY_PRIVATE" and after is None, "video_id": vid, "privacy": v.get("privacy"),
+            "scheduled_before": before, "scheduled_after": after, "scheduled": v.get("scheduledPublishingDetails"), "changed": True})
 
 
 def scheduled_public_at(v):
@@ -579,7 +657,7 @@ if __name__ == "__main__":
     elif cmd == "draft":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)
-        draft(t, sys.argv[2], json.load(open(sys.argv[3])))
+        draft(t, sys.argv[2], json.load(open(sys.argv[3])), replaces=sys.argv[sys.argv.index("--replaces") + 1] if "--replaces" in sys.argv else None)
     elif cmd == "resume":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)
@@ -596,6 +674,11 @@ if __name__ == "__main__":
         t = studio(url_of("videos/short"), wait=6)
         guard_login(t)
         status(t, sys.argv[2])
+    elif cmd == "unschedule":
+        # python3 yt_post.py unschedule <動画ID> <題> [--dry]（題は控えの post_*.json の youtube.title）
+        t = studio(url_of("videos/short"), wait=6)
+        guard_login(t)
+        unschedule(t, sys.argv[2], sys.argv[3], dry="--dry" in sys.argv)
     elif cmd == "delete":
         # python3 yt_post.py delete <動画ID> <題> [--dry]（題は控えの post_*.json の youtube.title）
         t = studio(url_of("videos/short"), wait=6)

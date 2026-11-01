@@ -6,6 +6,8 @@
     python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A --sha <sha256>
     python3 tools/shorts/post/post.py yt-related --video yk-by7R7iPA --id <ショートのID>
     python3 tools/shorts/post/post.py yt-publish --id <ショートのID> [--at 2026-10-17T05:00:00Z]
+    python3 tools/shorts/post/post.py yt-unschedule --id <古いショートのID> --post-json <手元の post_A.json> [--dry]
+    python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A --sha <sha256> --replaces <古いショートのID>
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --dry
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --sha <sha256> [--at 2026-10-17T05:00:00Z]
     python3 tools/shorts/post/post.py mark       --place tiktok --sha <sha256> --done --id <投稿ID>
@@ -152,7 +154,25 @@ def posting(a, place, body, timeout):
 
 def cmd_yt_draft(a):
     d = f"{REMOTE}/{a.video}"
-    return posting(a, "youtube", f"cd {CDP} && timeout 400 python3 yt_post.py draft {d}/{a.option}.mp4 {d}/post_{a.option}.json\n", 450)
+    rep = ""
+    if a.replaces:
+        # 予約の差し替えで、古い版を消さずに非公開で残した回（yt-unschedule のあと）。同じ題の見張りを、その1本だけ通す
+        if not re.fullmatch(r"[\w-]{11}", a.replaces):
+            print(f"止めた: --replaces が動画 ID の形ではない: {a.replaces}")
+            return 1
+        rep = f" --replaces {a.replaces}"
+    return posting(a, "youtube", f"cd {CDP} && timeout 400 python3 yt_post.py draft {d}/{a.option}.mp4 {d}/post_{a.option}.json{rep}\n", 450)
+
+
+def cmd_yt_unschedule(a):
+    """予約を差し替えるとき、古い版の一般公開の予約を外して非公開のまま残す（消さない）。題は手元の投稿文から"""
+    if not (a.id and a.post_json):
+        print("止めた: yt-unschedule は --id <古い動画の ID> と --post-json <手元の post_<案>.json> が要る")
+        return 1
+    title = json.load(open(a.post_json))["youtube"]["title"]
+    dry = " --dry" if a.dry else ""
+    r = remote_run(f"cd {CDP} && timeout 300 python3 yt_post.py unschedule {a.id} {shlex.quote(title)}{dry}\n", 350, LANES["youtube"])
+    return 0 if r.get("ok") else 1
 
 
 def cmd_yt_related(a):
@@ -255,10 +275,11 @@ def main(argv=None):
     p.add_argument("--again", action="store_true", help="yt-draft / tt-post: 台帳に記録があっても出す（投稿先で出ていないのを見たときだけ）")
     p.add_argument("--draft", action="store_true", help="tt-post: 投稿せず TikTok の下書きに保存する")
     p.add_argument("--post-json", help="tt-post: 投稿文（tiktok.sound を読む）。手元の post_<案>.json")
+    p.add_argument("--replaces", help="yt-draft: 予約を差し替える回の、非公開で残した古い動画の ID（同じ題の見張りをその1本だけ通す）")
     p.add_argument("--place", help="mark: youtube / tiktok")
     p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
     a = p.parse_args(argv)
-    fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-related": cmd_yt_related,
+    fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-unschedule": cmd_yt_unschedule, "yt-related": cmd_yt_related,
           "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover,
           "mark": cmd_mark, "clean": cmd_clean}.get(a.cmd)
     if not fn:
