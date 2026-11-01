@@ -955,3 +955,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1053#issuecomment-6534829956（完成の承認と日の指定「11/03に出して」。時刻の指定は無いので、これまでの回と同じ 21:30 JST で予約した）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1050#issuecomment-6536357560（ヨーク p2 v6 の完成の承認と時刻「2026/11/02 21:30」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1052#issuecomment-6549123667（完成の承認と日の指定「A 2026/11/01・B 2026/11/04」。前の「B→A の順」はこの日付で置き換わった。時刻の指定は無いので 21:30 JST で予約）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1071#issuecomment-6555288416（バゲット p2 v6 の完成の承認と時刻「2026/11/05 21:30」）
