@@ -65,7 +65,11 @@ export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.ap
    「1枚だけ落ちた」が混み具合で出たり消えたりして、**確かめが揺れる。**
    揺れる確かめは、無いほうがまし（#106 と同じ理由）。外してあるので
    あの絵は「飢え」に数えられ、`??`（見ていない）と出る。**それが本当。** */
-const PASS = /live-streaming-d3cac\.web\.app|ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net/;
+// 書体を足した（2026-10-31）。授賞式のページが Google Fonts を読むようになり、
+// 通していないと**控えの書体で写る**。それでいて `document.fonts.check()` は
+// true を返す（@font-face の規則そのものが届いていないので、控えで描けてしまう）。
+// **「書体が当たった」と嘘の緑が出る**ので、宛先のほうで塞ぐ。
+const PASS = /live-streaming-d3cac\.web\.app|ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/;
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };
@@ -206,8 +210,17 @@ export async function viaCurl(ctx) {
       }
       /* 種類は**行き着いた先**の拡張子で決める。`/a.png` → `/b.webp` と
          追ったときに、元の名前で決めると別物として流し込むことになる */
-      const ext = ((final || u).split("?")[0].match(/\.([a-z0-9]+)$/i)?.[1] || "html").toLowerCase();
-      await r.fulfill({ status: 200, contentType: TYPE[ext] || "text/html", body });
+      const ext = ((final || u).split("?")[0].match(/\.([a-z0-9]+)$/i)?.[1] || "").toLowerCase();
+      /* **拡張子が無い口は、求められ方で決める。** `fonts.googleapis.com/css2?family=…`
+         には拡張子が無く、既定の `text/html` で流し込むと**ブラウザが
+         スタイルシートとして読まない**（標準モードでは型の違う css は無視される）。
+         それでいて要求は 200 で返るので、`blocked()` にも `requestfailed` にも
+         出ない——**書体が控えのまま、どこにも赤が出ない**状態になる。
+         2026-10-31 に授賞式のページを撮って、まるごと1面がこれだった。 */
+      const WANT = { stylesheet: "text/css", script: "application/javascript",
+        font: "font/woff2", image: "image/png", document: "text/html" };
+      const type = TYPE[ext] || WANT[r.request().resourceType()] || "text/html";
+      await r.fulfill({ status: 200, contentType: type, body });
     } catch {
       /* **取れなかったぶんも「止めた」に数える。** 通してあっても向こうが
          断れば、面は同じように飢える。壊れと混ぜない。 */
