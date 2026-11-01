@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__baguette-p2-v3",
+ "mode": "render",
+ "dest": "render/baguette-p2-v3/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/baguette-p2-v3.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 3018,
+  "tar_gz": 1542,
+  "encrypted": 1552
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1552,
+   "sha256": "4077bf5617fcca3e276f9ee126d375efea1098f88cb9c8bc63871e72ef7c4a9c"
+  }
+ ],
+ "hmac_sha256": "4d856a9aa09d4e09cd7cc3f1fcbd3c21693263451d4785bf9e32d7806ee819b5",
+ "pubkey_sha256": "8316c5ee5b963bd1aec46d2e2e1d0b75dd553d8d7e20f508588ccf7486540265",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-01T00:46:27+00:00",
+ "nonce": "a6ec53d1c709dea1a49afc3c"
+}
