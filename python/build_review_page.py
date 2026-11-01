@@ -185,6 +185,26 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 .two { flex:1; display:grid; grid-template-columns:1fr 560px; gap:56px;
        align-items:center; }
 /* 面の名札は確認用。本番では出さない */
+/* ── 段。`data-step` を持つ要素は、その段まで送られたら出る。
+   **めくる間（ま）がこのページの本体**で、静止画では良し悪しが分からない */
+[data-step] { opacity:0; transform:translateY(calc(14*var(--u)));
+              transition:opacity .42s ease, transform .42s ease; }
+[data-step].on { opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce) { [data-step] { transition:none; } }
+.scene { display:none; }
+.scene.live { display:block; }
+@media (max-width: 1000px) { .scene.live { display:flex; } }
+/* 進みの点。いま何面目かが配信画面の隅に出る */
+.dots { position:fixed; right:calc(26*var(--u)); bottom:calc(22*var(--u));
+        display:flex; gap:calc(7*var(--u)); z-index:9; }
+.dots i { width:calc(9*var(--u)); height:calc(9*var(--u)); border-radius:50%;
+          background:rgba(247,241,230,.26); }
+.dots i.now { background:var(--ochre); transform:scale(1.5); }
+.conf { position:fixed; inset:0; pointer-events:none; z-index:8; overflow:hidden; }
+.conf b { position:absolute; width:calc(12*var(--u)); height:calc(18*var(--u));
+          animation:fall 2.6s linear forwards; }
+@keyframes fall { to { transform:translateY(110vh) rotate(760deg); opacity:0; } }
+
 .tag-scene { position:absolute; left:40px; bottom:26px; font-size:var(--t-micro);
              color:#6b6054; letter-spacing:.2em; }
 
@@ -216,11 +236,17 @@ h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
 S = []
 
 
-def scene(body, label, photos="", half=False):
-    S.append('<section class="scene">%s%s<div class="pad%s">%s</div>'
+def scene(body, label, photos="", total=0, confetti=False):
+    """1面ぶん。`total` は**段の数**（`data-step="1"` が出るまでに何回送るか）。
+
+    送りの作法は 2026-10 版と同じにしてある（`data-step` を付けた要素が
+    段ごとに出る）。**Firestore 越しの遠隔操作をあとから同じ形で挿せる。**
+    """
+    S.append('<section class="scene" data-total="%d"%s>%s<div class="pad%s">%s</div>'
              '<div class="tag-scene">%s</div></section>'
-             % (('<div class="strip">%s</div><div class="veil"></div>' % photos)
-                if photos else "", "", " half" if photos else "", body, e(label)))
+             % (total, ' data-confetti="1"' if confetti else "",
+                ('<div class="strip">%s</div><div class="veil"></div>' % photos)
+                if photos else "", " half" if photos else "", body, e(label)))
 
 
 # ── 0 表紙
@@ -228,7 +254,7 @@ scene("""<div class="kicker">2026年10月・9/26 → 10/30</div>
   <h1>10月の<br>ふりかえり授賞式</h1>
   <p class="lede">アルバニアから北マケドニアへ。スマホが消えて戻ってきて、宿を追い出されて、
   チーズケーキもパンも焼いた35日。</p>
-  <div class="stats">
+  <div class="stats" data-step="1">
     <div class="stat"><b>%d<small>日</small></b><span>配信のあった日</span></div>
     <div class="stat hi"><b>%s</b><span>配信した時間</span></div>
     <div class="stat hi"><b>%s</b><span>1日あたり</span></div>
@@ -237,17 +263,17 @@ scene("""<div class="kicker">2026年10月・9/26 → 10/30</div>
     <div class="stat"><b>%s<small>円</small></b><span>みんなの貢献</span></div>
   </div>""" % (COVER["days"], hm(COVER["seconds"]), hm(COVER["secondsPerDay"]),
                COVER["people"], COVER["newcomers"], "{:,}".format(COVER["tipTotal"])),
-      "表紙", strip(["2026-10-15"]))
+      "表紙", strip(["2026-10-15"]), total=1)
 
 # ── 1〜6 6分割ふりかえり（1コマ1面）
 for i, r in enumerate(C["recap"], 1):
     scene("""<div class="kicker">ふりかえり %d / 6</div>
       <h2>%s</h2>
       <div class="when">%s → %s</div>
-      <p class="lede">%s</p>""" % (i, e(r["head"]),
+      <p class="lede" data-step="1">%s</p>""" % (i, e(r["head"]),
                                    r["from"][5:].replace("-", "/"),
                                    r["to"][5:].replace("-", "/"), e(r["body"])),
-          "ふりかえり%d" % i, strip(days_between(r["from"], r["to"])))
+          "ふりかえり%d" % i, strip(days_between(r["from"], r["to"])), total=1)
 
 # ── 7〜9 あやと島カード（大きい1枚ずつ）
 by_photo = {}
@@ -261,23 +287,26 @@ for k, grp in enumerate(top):
     scene("""<div class="kicker">あやと島カード</div>
       <h2>%s</h2>
       <div class="two">
-        <div class="card"><img class="bg" src="%s" alt="">%s
+        <div class="card"><img class="bg" src="%s" alt=""><span data-step="1">%s</span>
           <div class="card-note">%s・%d人が立っています</div></div>
         <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">%d</b> 枚。<br>
         写真 %d枚に、%d人が思い思いの場所に立ちました。</p></div>
       </div>""" % (e(grp[0]["note"] or "この日の1枚"), grp[0]["url"], pins,
                    grp[0]["day"][5:].replace("-", "/"), len(grp),
                    len(D["cards"]), len(D["photos"]), len({c["icon"] for c in D["cards"]})),
-          "カード%d" % (k + 1))
+          "カード%d" % (k + 1), total=1)
 
 # ── クイズ（1問1面 ×10）
 for i, q in enumerate(Q, 1):
     ch = "".join('<div class="%s"><b>%s</b>%s</div>'
-                 % ("ok" if j == q["answer"] else "", "ABC"[j], e(c))
+                 % ("ok ans" if j == q["answer"] else "", "ABC"[j], e(c))
                  for j, c in enumerate(q["choices"]))
     scene("""<div class="kicker">クイズ %d / 10</div>
-      <div class="mid"><div class="qq">%s</div><div class="ch">%s</div></div>"""
-          % (i, e(q["q"]), ch), "クイズ%d" % i)
+      <div class="mid"><div class="qq">%s</div>
+        <div class="ch" data-step="1">%s</div>
+        <div class="after" data-step="2"
+             style="color:var(--text);border-top-color:rgba(247,241,230,.2)">%s</div>
+      </div>""" % (i, e(q["q"]), ch, e(q.get("note") or "")), "クイズ%d" % i, total=2)
 
 # ── 名言（1つ1面）
 for i, m in enumerate(C["meigen"], 1):
@@ -285,33 +314,33 @@ for i, m in enumerate(C["meigen"], 1):
       <div class="mid"><div class="sheet tilt">
         <span class="tag">%s</span>
         <div class="quote">%s</div>
-        <div class="by">%s</div>
+        <div class="by" data-step="1">%s</div>
       </div></div>""" % (i, e(m.get("when") or ""), e(m["text"]), e(m["who"])),
-          "名言%d" % i)
+          "名言%d" % i, total=1)
 
 # ── 付箋大賞（部門賞 → 大賞）
 st = C["stickies"]
 for i, n in enumerate(st["nominees"], 1):
-    after = ('<div class="after">%s</div>' % e(n["after"])) if n.get("after") else ""
+    after = ('<div class="after" data-step="1">%s</div>' % e(n["after"])) if n.get("after") else ""
     scene("""<div class="kicker">付箋大賞 部門賞 %d</div>
       <div class="mid"><div class="sheet tilt">
         <span class="tag">%s</span>
         <div class="quote">%s</div>
         <div class="by">%s・♥ %s</div>%s
       </div></div>""" % (i, e(n.get("label") or n.get("theme") or ""), e(n["text"]),
-                         e(n.get("by") or "名前を出していない付箋"),
+                         e(n.get("by") or "名乗らずに貼ってくれた人"),
                          n.get("hearts", 0), after),
-          "付箋%d" % i)
+          "付箋%d" % i, total=1 if n.get("after") else 0)
 pz = st["prize"]
 scene("""<div class="kicker">あやと島 付箋大賞</div>
   <div class="mid"><div class="sheet">
     <span class="tag gold">大賞</span>
     <div class="quote">%s</div>
     <div class="by">%s・♥ %s</div>
-    <div class="after">%s</div>
-  </div></div>""" % (e(pz["text"]), e(pz.get("by") or "名前を出していない付箋"),
+    <div class="after" data-step="1">%s</div>
+  </div></div>""" % (e(pz["text"]), e(pz.get("by") or "名乗らずに貼ってくれた人"),
                      pz.get("hearts", 0), e(pz.get("after") or "")),
-      "付箋大賞")
+      "付箋大賞", total=1, confetti=True)
 
 # ── 調べもの大賞（1件1面。**1ページに収める**ので4件まで）
 for i, g in enumerate(C["guides"], 1):
@@ -320,12 +349,12 @@ for i, g in enumerate(C["guides"], 1):
         <span class="tag red">%s</span>
         <div class="rows3">
           <div><b>困っていたこと</b>　%s</div>
-          <div><b>教えてくれたこと</b>　%s</div>
-          <div><b>そのあと</b>　%s</div>
+          <div data-step="1"><b>教えてくれたこと</b>　%s</div>
+          <div data-step="2"><b>そのあと</b>　%s</div>
         </div>
       </div></div>""" % (i, len(C["guides"]), e(g["who"]), e(g["stuck"]),
                          e(g["told"]), e(g["moved"])),
-          "調べもの%d" % i)
+          "調べもの%d" % i, total=2)
 
 # ── 流行語大賞（ノミネート5 → グランプリ1）
 # **30語ぜんぶは出さない**（SKILL.md §6-2-3）。1行読んで分かるものを選ぶ。
@@ -348,22 +377,23 @@ for i, w in enumerate(NOMI, 1):
       <div class="mid"><div class="sheet">
         <div class="quote">%s</div>
         <div class="by">%d回・%d人が使った　／　はじめて出たのは %s</div>
-        <div class="after">%s</div>
+        <div class="after" data-step="1">%s</div>
       </div></div>""" % (i, e(w), b["count"], b["speakers"],
                          b["first_day"][5:].replace("-", "/") if b.get("first_day") else "この月",
                          e(BUZZ_WHY[w])),
-          "流行語%d" % i)
+          "流行語%d" % i, total=1)
 g = BW[GP]
 scene("""<div class="kicker">流行語大賞</div>
   <div class="mid"><div class="sheet">
     <span class="tag gold">グランプリ</span>
     <div class="quote" style="font-size:var(--t-hero);line-height:1.25">%s</div>
-    <div class="by">%d回・%d人が使った　／　10/01 から</div>
+    <div class="by" data-step="1">%d回・%d人が使った　／　10/01 から</div>
     <div class="after">靴屋を3軒まわって、4万円のオンと3万6,000円のHOKAを履き比べて、
     30%%引きのアディダス8,600円に決めた日。@ゆずたつ-q3n さんが
     「月末配信で流行語決まったわ、ぼくのくつ」と書きました。
     <b>賞のほうが、自分で名前を言っていました。</b></div>
-  </div></div>""" % (e(GP), g["count"], g["speakers"]), "流行語大賞")
+  </div></div>""" % (e(GP), g["count"], g["speakers"]),
+      "流行語大賞", total=1, confetti=True)
 
 # ── 皆勤賞
 KINKIN = [("@dekobokov6229", 3, "18okO58dwMaci-9R1go0Rj1dTqliSWlz3"),
@@ -446,13 +476,106 @@ scene("""<div class="mid" style="align-items:center;text-align:center">
     <p class="lede" style="margin-top:28px">11月は、北マケドニアのつづきから。</p>
   </div>""", "エンディング", strip(["2026-10-30"]))
 
+
+ENGINE = """
+<div class="conf" id="conf"></div>
+<div class="dots" id="dots"></div>
+<script>
+/* 送り。作法は 2026-10 版と同じにしてある（`data-step` を付けた要素が段ごとに出る）。
+   Enter / → / ↓ / Space で進み、Backspace / ← / ↑ で戻る。
+   数字キーはコーナーの頭出し（リハーサル用）。
+   **Firestore 越しの遠隔操作は、ここに同じ形で挿せる**（gotoScene を呼ぶだけ）。 */
+(function () {
+  var S = [].slice.call(document.querySelectorAll("section.scene"));
+  var conf = document.getElementById("conf"), dots = document.getElementById("dots");
+  var i = 0, step = 0;
+  var slow = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  S.forEach(function () { var b = document.createElement("i"); dots.appendChild(b); });
+  var CORNER = S.map(function (s) {
+    return (s.querySelector(".kicker") || {}).textContent || "";
+  });
+
+  function total(n) { return Number(S[n].dataset.total || 0); }
+
+  function paint() {
+    S.forEach(function (s, n) { s.classList.toggle("live", n === i); });
+    [].forEach.call(dots.children, function (b, n) { b.classList.toggle("now", n === i); });
+    S[i].querySelectorAll("[data-step]").forEach(function (el) {
+      el.classList.toggle("on", Number(el.dataset.step) <= step);
+    });
+    if (S[i].dataset.confetti && step >= total(i)) burst();
+  }
+  function goto_(n, st) {
+    i = Math.max(0, Math.min(S.length - 1, n));
+    step = Math.max(0, Math.min(total(i), st || 0));
+    paint();
+  }
+  function fwd() {
+    if (step < total(i)) { step++; paint(); }
+    else if (i < S.length - 1) { goto_(i + 1, 0); }
+  }
+  function back() {
+    if (step > 0) { step--; paint(); }
+    else if (i > 0) { goto_(i - 1, total(i - 1)); }
+  }
+  /* 紙吹雪。**賞の面だけ。** 毎面で降らせると、頂点が頂点に見えなくなる */
+  function burst() {
+    if (conf.childElementCount || slow) return;
+    var c = ["#e0b64e", "#c8442f", "#4e7a52", "#f7f1e6"];
+    for (var k = 0; k < 90; k++) {
+      var b = document.createElement("b");
+      b.style.left = (Math.random() * 100) + "vw";
+      b.style.top = (-10 - Math.random() * 20) + "vh";
+      b.style.background = c[k % c.length];
+      b.style.animationDelay = (Math.random() * 0.8) + "s";
+      conf.appendChild(b);
+    }
+    setTimeout(function () { conf.innerHTML = ""; }, 4200);
+  }
+
+  addEventListener("keydown", function (ev) {
+    var k = ev.key;
+    if (k === "Enter" || k === " " || k === "ArrowRight" || k === "ArrowDown") {
+      ev.preventDefault(); fwd();
+    } else if (k === "Backspace" || k === "ArrowLeft" || k === "ArrowUp") {
+      ev.preventDefault(); back();
+    } else if (/^[0-9]$/.test(k)) {
+      /* コーナーの頭出し。同じ見出しが続くぶんは、その先頭へ */
+      var seen = [], at = -1;
+      for (var n = 0; n < S.length; n++) {
+        if (CORNER[n] && CORNER[n] !== CORNER[n - 1]) seen.push(n);
+      }
+      if (seen[Number(k)] != null) goto_(seen[Number(k)], 0);
+    }
+  });
+  addEventListener("pointerdown", function (ev) { if (ev.button !== 2) fwd(); });
+  addEventListener("contextmenu", function (ev) { ev.preventDefault(); back(); });
+
+  /* 確かめ用の口。2026-10 版と同じ名前にしてある */
+  window.__jump = function (n, st) { goto_(n, st == null ? 0 : st); };
+  window.__sceneCount = S.length;
+  window.__state = function () { return { scene: i, step: step, total: total(i) }; };
+
+  /* **狭い画面は読むためのもの。** 送りを使わず、全部出して縦に並べる */
+  if (matchMedia("(max-width: 1000px)").matches) {
+    S.forEach(function (s) {
+      s.classList.add("live");
+      s.querySelectorAll("[data-step]").forEach(function (el) { el.classList.add("on"); });
+    });
+    dots.style.display = "none";
+  } else { goto_(0, 0); }
+})();
+</script>
+"""
+
 doc = ('<!doctype html><meta charset="utf-8"><title>10月のふりかえり授賞式（組み直し）</title>'
        '<link rel="preconnect" href="https://fonts.googleapis.com">'
        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
        'family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900'
        '&family=Roboto+Mono:wght@700&display=swap">'
-       '<style>%s</style>%s' % (CSS, "".join(S)))
+       '<style>%s</style>%s%s' % (CSS, "".join(S), ENGINE))
 out = OUT
 out.write_text(doc, encoding="utf-8")
 print("書いた", out, "%.0f KB / %d面" % (out.stat().st_size / 1024, len(S)))
