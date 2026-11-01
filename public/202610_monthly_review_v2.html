@@ -1,0 +1,396 @@
+<!doctype html><meta charset="utf-8"><title>10月のふりかえり授賞式（組み直し）</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Roboto+Mono:wght@700&display=swap"><style>
+:root {
+  --ground:#14110d; --paper:#f7f1e6; --ink:#231d16; --text:#f3ece1;
+  --dim:#a2988a; --red:#c8442f; --ochre:#d99a2b; --moss:#4e7a52; --gold:#e0b64e;
+  --disp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans",system-ui,sans-serif;
+  --num:"Roboto Mono",ui-monospace,monospace;
+  /* 字の段は7つだけ（design_spec.md 3章）。段ごとに clamp を生やさない */
+  /* 面は 1920×1080 で組むが、画面が狭ければそのぶん全部が縮む。
+     段ごとに clamp を書かずに済むのはこれのおかげ（design_spec.md 3章）。
+     OBS は 1920 ちょうどなので、上限を 1px に止める */
+  --u: min(1px, calc(100vw / 1920));
+  --t-hero:calc(92*var(--u)); --t-head:calc(68*var(--u)); --t-sub:calc(40*var(--u));
+  --t-body:calc(30*var(--u)); --t-note:calc(24*var(--u)); --t-micro:calc(20*var(--u));
+  --t-num:calc(56*var(--u));
+}
+* { box-sizing:border-box; margin:0; }
+body { background:#0b0907; color:var(--text); font-family:var(--body); }
+.scene { width:min(1920px, 100vw); aspect-ratio:16/9; position:relative;
+         overflow:hidden; background:var(--ground); margin:0 auto; }
+/* 面の継ぎ目。スクロールして見るときに、どこで切れているかが分かる */
+.scene + .scene { border-top:1px solid rgba(247,241,230,.12); }
+html, body { max-width:100%; overflow-x:hidden; }
+.strip { position:absolute; right:0; top:0; bottom:0; width:37%; display:flex;
+         gap:10px; padding:10px 10px 10px 0; }
+.strip img { flex:1; min-width:0; height:100%; object-fit:cover; border-radius:4px;
+             display:block; }
+.veil { position:absolute; inset:0; background:linear-gradient(90deg,
+        rgba(20,17,13,1) 0 58%, rgba(20,17,13,.5) 64%, rgba(20,17,13,0) 72%); }
+.pad { position:absolute; inset:0; padding:calc(80*var(--u)) calc(96*var(--u));
+       display:flex; flex-direction:column; }
+/* 写真は右 37%。字は 60% までに収める。63% まで伸ばすと**写真の下に潜る** */
+.pad.half { width:60%; padding-right:24px; }
+.kicker { font-size:var(--t-micro); letter-spacing:.34em; color:var(--ochre);
+          font-weight:700; }
+h1 { font-family:var(--disp); font-weight:800; font-size:calc(86*var(--u));
+     line-height:1.14; letter-spacing:.02em; margin-top:16px; }
+h2 { font-family:var(--disp); font-weight:800; font-size:var(--t-head);
+     line-height:1.2; letter-spacing:.03em; margin-top:10px; }
+.lede { font-size:var(--t-body); line-height:1.8; color:#e4dbcc; margin-top:20px; }
+.when { font-family:var(--num); font-size:var(--t-note); color:var(--ochre);
+        letter-spacing:.06em; margin-top:18px; }
+.stats { margin-top:auto; display:grid; grid-template-columns:repeat(3,auto);
+         justify-content:start; gap:30px 64px; }
+.stat b { display:block; font-family:var(--num); font-weight:700;
+          font-size:var(--t-hero); line-height:1; letter-spacing:-.02em;
+          font-variant-numeric:tabular-nums; white-space:nowrap; }
+.stat b small { font-family:var(--body); font-size:calc(36*var(--u));
+                font-weight:700; margin:0 .08em; }
+.stat span { display:block; font-size:var(--t-note); color:var(--dim); margin-top:10px; }
+.stat.hi b { color:var(--ochre); }
+.mid { flex:1; display:flex; flex-direction:column; justify-content:center; }
+/* 紙の上の1枚。**1画面に1枚だけ** */
+.sheet { background:var(--paper); color:var(--ink); border-radius:12px;
+         padding:60px 72px; max-width:1420px; width:100%;
+         box-shadow:0 36px 80px rgba(0,0,0,.55); }
+.sheet.tilt { transform:rotate(-.5deg); }
+.tag { display:inline-block; font-size:var(--t-micro); font-weight:700;
+       letter-spacing:.16em; color:#fff; background:var(--moss);
+       border-radius:999px; padding:9px 22px; }
+.tag.gold { background:var(--gold); color:#2b2209; }
+.tag.red { background:var(--red); }
+.quote { font-family:var(--disp); font-weight:600; font-size:calc(50*var(--u));
+         line-height:1.6; margin-top:26px; white-space:pre-wrap; }
+.by { margin-top:24px; font-size:var(--t-note); color:#6b6054; }
+.after { margin-top:30px; padding-top:26px; border-top:2px solid #e2d8c8;
+         font-size:var(--t-body); line-height:1.7; }
+.rows3 { display:grid; gap:22px; margin-top:26px; }
+.rows3 div { font-size:var(--t-body); line-height:1.65; }
+.rows3 b { color:var(--red); }
+/* クイズ */
+.qq { font-family:var(--disp); font-weight:600; font-size:calc(46*var(--u));
+      line-height:1.55; }
+.ch { display:grid; gap:20px; margin-top:40px; }
+.ch div { font-size:var(--t-sub); background:rgba(247,241,230,.07); border-radius:14px;
+          padding:26px 34px; min-height:96px; display:flex; align-items:center; gap:24px; }
+.ch b { font-family:var(--num); color:var(--ochre); }
+.ch div.ok { background:rgba(224,182,78,.2); outline:3px solid var(--gold); }
+/* 一覧（最後の1面だけ。1行 64px 以上） */
+/* 一覧は面の縦の真ん中に置く。上に詰めると下半分が空いて、
+   「1枚ずつ大きく見せる」はずの面が寂しく見える */
+.list { display:grid; gap:18px; margin:auto 0; }
+/* **1行に入るのは4つ**（順位・絵・名前・数）。3列で組むと4つめが次の行へ回り、
+   あふれた1列目が1文字ずつ縦に折れる（実測 1行 502px。面が 816px あふれた） */
+.li { display:grid; grid-template-columns:auto 96px 1fr auto; gap:28px;
+      align-items:center; min-height:88px; background:rgba(247,241,230,.06);
+      border-radius:14px; padding:0 32px; font-size:var(--t-sub); }
+.li .n, .li .v { white-space:nowrap; }
+.li img { width:88px; height:88px; border-radius:50%; object-fit:cover;
+          border:4px solid var(--paper); background:var(--paper); }
+.li .n { font-family:var(--num); font-weight:700; font-size:var(--t-num);
+         color:var(--gold); }
+.li .v { font-family:var(--num); font-weight:700; font-size:var(--t-num); }
+.card { position:relative; border-radius:18px; overflow:hidden;
+        box-shadow:0 40px 90px rgba(0,0,0,.6); aspect-ratio:3/4; max-height:760px; }
+.card img.bg { width:100%; height:100%; object-fit:cover; display:block; }
+.pin { position:absolute; width:104px; height:104px; border-radius:50%;
+       border:5px solid var(--paper); background:var(--paper);
+       box-shadow:0 10px 26px rgba(0,0,0,.45); transform:translate(-50%,-50%); }
+.pin img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+.card-note { position:absolute; left:0; right:0; bottom:0; padding:24px 28px;
+             background:linear-gradient(transparent,rgba(10,8,6,.88) 42%);
+             font-size:var(--t-sub); font-weight:700; color:var(--text); }
+.two { flex:1; display:grid; grid-template-columns:1fr 560px; gap:56px;
+       align-items:center; }
+/* 面の名札は確認用。本番では出さない */
+.tag-scene { position:absolute; left:40px; bottom:26px; font-size:var(--t-micro);
+             color:#6b6054; letter-spacing:.2em; }
+
+/* ── 狭い画面（見るとき用）。
+   **出す先は OBS の 1920×1080** だが、あやとが見るのはスマホ。
+   16:9 のまま縮めると、本文 30px が **4.5px** まで落ちて読めない（実測）。
+   なので狭いところでは 16:9 をやめ、**面を縦に伸ばして字の大きさを守る。**
+   --u を 1/620 にすると、430px の画面で本文が 20px になる */
+@media (max-width: 1000px) {
+  :root { --u: calc(100vw / 620); }
+  .scene { aspect-ratio:auto; min-height:0; }
+  .pad, .pad.half { position:static; width:auto;
+                    padding:calc(56*var(--u)) calc(44*var(--u)); }
+  /* 写真は右に立てず、字の上に横一列で置く */
+  .strip { position:static; width:auto; height:calc(430*var(--u));
+           padding:0 0 calc(28*var(--u)); }
+  .veil { display:none; }
+  .scene { display:flex; flex-direction:column; }
+  .two { grid-template-columns:1fr; gap:calc(36*var(--u)); }
+  .card { max-height:none; max-width:calc(520*var(--u)); margin:0 auto; }
+  .li { grid-template-columns:auto calc(96*var(--u)) 1fr auto;
+        gap:calc(18*var(--u)); padding:0 calc(20*var(--u)); }
+  .sheet { padding:calc(44*var(--u)) calc(40*var(--u)); }
+  .mid { gap:calc(24*var(--u)); }
+  .tag-scene { position:static; margin-top:calc(20*var(--u)); }
+}
+</style><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-15%2FNyAueLDpF5CO4pLNWqwj.jpeg?alt=media&token=87a9b694-6401-4a21-953e-a6a98815e267" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-15%2Fsq99ubuvCvg7Q1O25pq6.jpeg?alt=media&token=074bb4ed-5b0d-4c4e-9d41-cc7590f64c4a" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-15%2FgcQbbkU01CrTYgTJVCJB.jpeg?alt=media&token=826cb11a-4a91-4a22-ba23-82d879f15ec0" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">2026年10月・9/26 → 10/30</div>
+  <h1>10月の<br>ふりかえり授賞式</h1>
+  <p class="lede">アルバニアから北マケドニアへ。スマホが消えて戻ってきて、宿を追い出されて、
+  チーズケーキもパンも焼いた35日。</p>
+  <div class="stats">
+    <div class="stat"><b>35<small>日</small></b><span>配信のあった日</span></div>
+    <div class="stat hi"><b>88<small>時間</small>8<small>分</small></b><span>配信した時間</span></div>
+    <div class="stat hi"><b>2<small>時間</small>31<small>分</small></b><span>1日あたり</span></div>
+    <div class="stat"><b>199<small>人</small></b><span>来てくれた人</span></div>
+    <div class="stat"><b>100<small>人</small></b><span>はじめまして</span></div>
+    <div class="stat"><b>64,248<small>円</small></b><span>みんなの貢献</span></div>
+  </div></div><div class="tag-scene">表紙</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-26%2FZUk9hs2WyqD4X6SMLRUZ.jpeg?alt=media&token=56b202a0-f7fb-4ee2-8998-78f5235268f5" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-26%2FH7zh3wxx98zChEeJNyVX.jpeg?alt=media&token=587e6a1e-a9c6-422e-873d-b615b5e2256e" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-26%2FvEy7Yex36nGZvZ917X8g.jpeg?alt=media&token=ad66a7d7-c6f5-4bc7-a55d-202dca885083" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 1 / 6</div>
+      <h2>北欧、最後の夕日</h2>
+      <div class="when">09/26 → 09/28</div>
+      <p class="lede">スウェーデン最終日は、行きそびれていた野外博物館スカンセン。ろくろ体験は159クローナ、トイレは250円、軽食のサンドイッチが2000円で「IKEA以外信用してない」と逃げ、締めはそのIKEAのシナモンロールだった。「今までで一番濃い1ヶ月」で9月を閉じ、日曜深夜の空港で発表した素敵な町ランキングは1位ストックホルム・2位リガ・3位ヴィリニュス。最後の一言は「また来ような、ストックホルム」。</p></div><div class="tag-scene">ふりかえり1</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-29%2FI02gybuSviif0Zc69Usq.jpeg?alt=media&token=1f8cdf1d-20f5-4db0-8859-95079558f532" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-29%2FtBw031JY3tzkTMh4sddl.jpeg?alt=media&token=5dc71bc6-5c71-4362-a78d-ae8e05100a85" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-09-30%2FUSzbtXe3VuMreeA5OF6T.jpeg?alt=media&token=afa723bb-6b89-4a08-bdb0-3b1e0b8b668f" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 2 / 6</div>
+      <h2>屋外ベッドの宿</h2>
+      <div class="when">09/28 → 09/30</div>
+      <p class="lede">アルバニア・ティラナ着。宿代1泊を浮かせようと空港の床で寝たが、床が冷たくて30分ずつのマイクロスリープが2回だけ。朝のカフェで「キャッシュのみ」と言われて発狂したら、店主が隠していたカードリーダーを出してきて一件落着。泊まった宿は屋上に屋外ベッドがあり、そこで受付のおじさんが寝ていた1泊1,400円ほどの「史上最悪」で、34軒ぐらい回って初めて見た形だという。それでも同年代の友達ができて残留を決め、タジキスタン人の口癖「ネクストレベル」が一晩で島の流行語になった。</p></div><div class="tag-scene">ふりかえり2</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-01%2FJViVGrrYxVa2AEaM6efk.jpeg?alt=media&token=3385b087-303e-4cf0-9584-37305f5ea0e3" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-01%2FTHfTuviea3uXtvDTj4Hx.jpeg?alt=media&token=f83cd307-5912-4f4c-9058-db6b090a9f9d" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-02%2FrY8Q7wldfPgQoHYrmirA.jpeg?alt=media&token=4fc6b235-2625-40c0-88b4-c12457a7ce67" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 3 / 6</div>
+      <h2>ぼくのくつの週</h2>
+      <div class="when">10/01 → 10/06</div>
+      <p class="lede">モールの靴屋を3軒回って、30%引きの棚にあったアディダス8,600円を購入。4万円のオンと3万6,000円のHOKAに「布団の上歩いてるみたい」と唸りながら「僕には1万円ぐらいの靴が似合う」と決め、@ゆずたつ-q3n が「月末配信で流行語決まったわ、ぼくのくつ」と名付けた。4ヶ月でつま先に穴が開いたリーボックにはお礼を言って履き替え。土曜は @もっと豆挽けコーヒー商店 の「デートプラン」としてティラナの建築を巡り、大階段の夕日で締め。ガスが止まって三度延びた「暗殺者のパスタ」は弱いIHで1時間かけて完成し、「今まで食べたトマトパスタで一番うまい」。</p></div><div class="tag-scene">ふりかえり3</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-07%2FrqVwTLuYBsiuJfztIdZk.jpeg?alt=media&token=fb22ebdd-7066-42a5-b6be-29783c409857" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-09%2FoYdo9TnBIIQulkdx3DC5.jpeg?alt=media&token=8e545337-077f-4240-877e-81c1c9e4cb75" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-10%2FzbjsgNKRvgVKEOX2sRPA.jpeg?alt=media&token=47727f3b-c416-4b8c-81ab-37faf01bf7d2" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 4 / 6</div>
+      <h2>グッズ会議の1週間</h2>
+      <div class="when">10/07 → 10/11</div>
+      <p class="lede">@まこも-z3i の「あやとさんとおそろいのト―トバック注文したよぅ～」からグッズ会議が始まり、@田中とら-f6x の「ラインスタンプでみんなキャラクターとかいいんしゃないかな。」でLINEスタンプ、@aoi1685 の「一年ずれてもいいもおもうー思い出だし、記録にもなるし。おすすめ観光ひとこと入り」で2027年カレンダーが決まった。チーズケーキのクリームチーズは3軒目でやっと見つかり、最初900円と言われたのが実は340円。盗まれた髭剃りの代わりは、現金のみとATM不調を越えて2時間がかり、市場の龍柄「Geemy T9 Dragon」を1,300レクで。</p></div><div class="tag-scene">ふりかえり4</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-12%2F1Zq233DoN191y1XGz0Mz.jpeg?alt=media&token=0258b4fc-a038-42c7-916d-510b1e3fa63f" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-12%2FUmZ1SC4EW7HsILH1RlLD.jpeg?alt=media&token=0f6b1d31-ce11-430d-90ac-4c455baafccc" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-12%2FOtHW6odCwS5YrZ4RAs1q.jpeg?alt=media&token=50b16706-f90d-4f43-b92b-4fd5bcc086cf" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 5 / 6</div>
+      <h2>1900人と銅像の国</h2>
+      <div class="when">10/12 → 10/19</div>
+      <p class="lede">アルバニアを出る長距離バスが走り出したその瞬間に、チャンネル登録が1900人へ。2週間の総括は「変な人が多いけど憎めない、西成みたいな国」だった。着いたスコピエは雨で8度。行列の食堂の名を @もっと豆挽けコーヒー商店 が「コスモス」と当てて「下調べ大魔王」と呼ばれ、翌日そこでチェバピ5本を食べた。銅像の橋では「マケドニア政府観光のために1200億円突っ込んで銅像ミュージアム作りやがった」。19日のお祝いはベーカリーJOYのキャロットケーキで、アメリカーノと合わせて750円ぐらい。</p></div><div class="tag-scene">ふりかえり5</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-20%2FjcCnzKJurUjUKZmeTJt3.jpeg?alt=media&token=69728732-f85e-452f-80a8-13c0ef27dcb9" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-20%2F25mGXOAJinUGpNSqiRRv.jpeg?alt=media&token=a0370801-b412-4d32-ba24-e339f039f411" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-20%2F1R2ni4Wx4iLu2cH5EY46.jpeg?alt=media&token=9068bb46-3f48-4c03-b1bb-bf775041a745" alt=""></div><div class="veil"></div><div class="pad half"><div class="kicker">ふりかえり 6 / 6</div>
+      <h2>冬が来て、パン屋</h2>
+      <div class="when">10/20 → 10/30</div>
+      <p class="lede">マトカ渓谷は紅葉と岩山と清流が揃ったのに、のんびり歩きすぎて川下りの最終便に4分間に合わず、帰りは通りがかりの車が無料で街まで乗せてくれた。冬が来たスコピエのダイヤモンドモールでは、埃まみれで売れ残っていた黒い長いマフラーが300円。手袋1,200円と合わせて、予算2,500円が1,500円で済んだ。月末のクッキングはほったらかしパン。はかりが無いので500mlのペットボトルとコップで強力粉300gを割り出し、焼き上がりに「マジでパン屋さんすぎる」。材料費はパン1個25円だった。</p></div><div class="tag-scene">ふりかえり6</div></section><section class="scene"><div class="pad"><div class="kicker">あやと島カード</div>
+      <h2>城塞</h2>
+      <div class="two">
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FGugKAbGMIpH8hP8dWASP.jpeg?alt=media&token=7dd90008-fc32-4ea4-88e6-43cb2771d0dc" alt=""><span class="pin" style="left:68.1%;top:94.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:68.8%;top:93.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:81.4%;top:95.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:73.3%;top:89.1%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:65.2%;top:95.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:81.7%;top:95.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:77.9%;top:92.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:62.1%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:67.8%;top:91.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span>
+          <div class="card-note">10/18・9人が立っています</div></div>
+        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
+        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+      </div></div><div class="tag-scene">カード1</div></section><section class="scene"><div class="pad"><div class="kicker">あやと島カード</div>
+      <h2>城塞</h2>
+      <div class="two">
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FZD5XZHieGZS0sP1WWIHH.jpeg?alt=media&token=5553fdc0-fdd0-45c1-8aff-25d9e66e8728" alt=""><span class="pin" style="left:72.9%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:79.2%;top:90.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:73.7%;top:95.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:87.9%;top:89.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:87.4%;top:90.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:65.8%;top:93.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:88.0%;top:89.1%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:80.1%;top:88.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:65.5%;top:89.0%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span>
+          <div class="card-note">10/18・9人が立っています</div></div>
+        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
+        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+      </div></div><div class="tag-scene">カード2</div></section><section class="scene"><div class="pad"><div class="kicker">あやと島カード</div>
+      <h2>城塞</h2>
+      <div class="two">
+        <div class="card"><img class="bg" src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-18%2FYOaz2mT0PfQYcvBEkw79.jpeg?alt=media&token=c316ec2e-1551-468c-b656-5061f23d8527" alt=""><span class="pin" style="left:68.0%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""></span><span class="pin" style="left:65.5%;top:90.8%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""></span><span class="pin" style="left:85.1%;top:90.7%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt=""></span><span class="pin" style="left:76.9%;top:91.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""></span><span class="pin" style="left:74.5%;top:90.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""></span><span class="pin" style="left:69.8%;top:95.9%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""></span><span class="pin" style="left:78.6%;top:90.6%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""></span><span class="pin" style="left:74.8%;top:91.2%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""></span><span class="pin" style="left:72.0%;top:89.5%"><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""></span>
+          <div class="card-note">10/18・9人が立っています</div></div>
+        <div><p class="lede">この35日で <b style="color:var(--ochre);font-family:var(--num)">430</b> 枚。<br>
+        写真 102枚に、22人が思い思いの場所に立ちました。</p></div>
+      </div></div><div class="tag-scene">カード3</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 1 / 10</div>
+      <div class="mid"><div class="qq">9/28、9月の月末配信のタップタップ結果発表。目標は5万タップでしたが、実際はいくつ集まったでしょう？</div><div class="ch"><div class=""><b>A</b>5万2,480タップ</div><div class="ok"><b>B</b>8万4,893タップ</div><div class=""><b>C</b>12万1,300タップ</div></div></div></div><div class="tag-scene">クイズ1</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 2 / 10</div>
+      <div class="mid"><div class="qq">9/30、アルバニアのケバブ「スフラキ」を食べて点数を付けました。ビッグマックを100点とすると、何点だったでしょう？</div><div class="ch"><div class=""><b>A</b>85点</div><div class="ok"><b>B</b>115点</div><div class=""><b>C</b>150点</div></div></div></div><div class="tag-scene">クイズ2</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 3 / 10</div>
+      <div class="mid"><div class="qq">10/2、ホステルのガスが止まってパスタを断念し、代わりにピザを食べました。1切れのつもりが丸ごと1枚来ましたが、いくらだったでしょう？</div><div class="ch"><div class=""><b>A</b>380円</div><div class="ok"><b>B</b>660円</div><div class=""><b>C</b>1,300円</div></div></div></div><div class="tag-scene">クイズ3</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 4 / 10</div>
+      <div class="mid"><div class="qq">10/5の配信で明かされた事件です。その前の晩、ホステルの屋上で料理をしているあいだに、カバンに入れていたスマホが消えました。このスマホはどうなったでしょう？</div><div class="ch"><div class="ok"><b>A</b>その晩のうちに戻ってきた</div><div class=""><b>B</b>闇市で見つけて買い戻した</div><div class=""><b>C</b>結局見つからず買い直した</div></div></div></div><div class="tag-scene">クイズ4</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 5 / 10</div>
+      <div class="mid"><div class="qq">10/9、量りもオーブンも無いキッチンで、電子レンジだけでチーズケーキを作りました。食べた本人の感想は「想像の何倍うまい」だったでしょう？</div><div class="ch"><div class=""><b>A</b>10倍</div><div class=""><b>B</b>100倍</div><div class="ok"><b>C</b>500倍</div></div></div></div><div class="tag-scene">クイズ5</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 6 / 10</div>
+      <div class="mid"><div class="qq">10/16、本配信を終えて休んでいたら空が真っ赤に焼けて、その場で緊急配信を立てました。この配信、何分で終わったでしょう？</div><div class="ch"><div class="ok"><b>A</b>6分</div><div class=""><b>B</b>25分</div><div class=""><b>C</b>1時間10分</div></div></div></div><div class="tag-scene">クイズ6</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 7 / 10</div>
+      <div class="mid"><div class="qq">10/22、配信が始まって9分で投げ銭の貯金箱が満タンになりました。満タンはいくらだったでしょう？</div><div class="ch"><div class=""><b>A</b>3万2,100円</div><div class="ok"><b>B</b>5万770円</div><div class=""><b>C</b>8万3,590円</div></div></div></div><div class="tag-scene">クイズ7</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 8 / 10</div>
+      <div class="mid"><div class="qq">10/23、ホステルが突然閉鎖して30分で退去を言い渡されました。いちばん困ったのは日本から届くはずのパソコンの送り先。そのパソコン、いくらだったでしょう？</div><div class="ch"><div class=""><b>A</b>約9万円</div><div class=""><b>B</b>約16万円</div><div class="ok"><b>C</b>約26万円</div></div></div></div><div class="tag-scene">クイズ8</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 9 / 10</div>
+      <div class="mid"><div class="qq">10/27、ジョージアで知り合ったトルコのおじさんと、北マケドニアのホステルでばったり再会しました。おじさんはあやとさんを何と呼んだでしょう？</div><div class="ch"><div class="ok"><b>A</b>「タカシ」</div><div class=""><b>B</b>「アヤト」</div><div class=""><b>C</b>「ブラザー」</div></div></div></div><div class="tag-scene">クイズ9</div></section><section class="scene"><div class="pad"><div class="kicker">クイズ 10 / 10</div>
+      <div class="mid"><div class="qq">10/30のお昼、12時間寝かせた「ほったらかしパン」の生地2つのうち、ベタベタで膨らまなかったほうをどうしたでしょう？</div><div class="ch"><div class="ok"><b>A</b>抱いて一緒に寝て、室温で発酵させた</div><div class=""><b>B</b>捨てて最初から作り直した</div><div class=""><b>C</b>お湯につけて温めた</div></div></div></div><div class="tag-scene">クイズ10</div></section><section class="scene"><div class="pad"><div class="kicker">名言・いい話 1 / 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">10/12 アルバニアを出る朝のバス。窓の汚れで画質が悪いと謝っていたところへ</span>
+        <div class="quote">一生行くことのない国の景色が、自室に居ながらにして見れるの贅沢✨👀</div>
+        <div class="by">@Omacha_おまっちゃ</div>
+      </div></div></div><div class="tag-scene">名言1</div></section><section class="scene"><div class="pad"><div class="kicker">名言・いい話 2 / 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">10/30 ほったらかしパンが焼き上がったあと、後半から車で合流して</span>
+        <div class="quote">ごめん、今日楽しみにしてたのに来れなかった😣色々あって心身ともに疲れきってたけど、配信やってるの見てなんかホッとしたわ🥹成功したんだね、良かったー‼</div>
+        <div class="by">@ゆずたつ-q3n</div>
+      </div></div></div><div class="tag-scene">名言2</div></section><section class="scene"><div class="pad"><div class="kicker">名言・いい話 3 / 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">10/22 フォカッチャが膨らまず、ひっくり返してチーズが流出した夜</span>
+        <div class="quote">失敗から学ぶから、失敗も成功なんだよ</div>
+        <div class="by">@aoi1685</div>
+      </div></div></div><div class="tag-scene">名言3</div></section><section class="scene"><div class="pad"><div class="kicker">名言・いい話 4 / 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">10/1 北欧旅の企画が終わったのに投げ銭が続いたことを、本人が不思議がっていたところで</span>
+        <div class="quote">あやとさんみてると応援したくなるからね。</div>
+        <div class="by">@田中とら-f6x</div>
+      </div></div></div><div class="tag-scene">名言4</div></section><section class="scene"><div class="pad"><div class="kicker">名言・いい話 5 / 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">10/6 暗殺者のパスタの回。ホステルの友達から「作ったものは一人で食べず人と一緒に食べなさい」というイスラムの教えを聞いた話から</span>
+        <div class="quote">それ以外でも独り占めせえへんように生きていこうと思いました</div>
+        <div class="by">あやと</div>
+      </div></div></div><div class="tag-scene">名言5</div></section><section class="scene"><div class="pad"><div class="kicker">付箋大賞 部門賞 1</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">ショート部門</span>
+        <div class="quote">あやとと猫の触れ合い集！
+今まで猫が登場した動画をまとめてショートにする！
+あやとの愛猫やツンデレ猫、人懐っこい猫などなど猫好きにはたまらない！そしてあやとが猫を可愛がるかわええな〜がまた萌え萌えや！！
+※動物系・可愛い系</div>
+        <div class="by">もっと豆挽けコーヒー商店・♥ 1</div><div class="after">10/29 に「これまでの猫の映像を集めたショート」を公開。過去の配信に一瞬映っていた愛猫をAIが見つけてきて「残っててよかった」。翌日その結果を豆さん自身が付箋で報告し、あやとが「ほんとそれな！！！再生数も良かったわ！！！！豆は天才やな！」と返した。</div>
+      </div></div></div><div class="tag-scene">付箋1</div></section><section class="scene"><div class="pad"><div class="kicker">付箋大賞 部門賞 2</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">カレンダー部門</span>
+        <div class="quote">1.卓上カレンダー
+2.今年行った旅の写真のベストショットをあやとさんが、何点かセレクトして、
+カレンダーに載せたい写真を選ぶ!</div>
+        <div class="by">まこも・♥ 4</div><div class="after">10/15 に「あやと 旅の思い出カレンダー 2027」としてSUZURIで発売。暦1〜10月は2026年の同じ月、11・12月は2025年、住人はその月の投げ銭上位7人（docs/goods-calendar.md）。10/20 にまこもさん本人が注文し、10/29 に @dekobokov6229 が発送のメール、10/30 に「今日カレンダー届いたよ。かわいいカレンダーめちゃよかったよ」。</div>
+      </div></div></div><div class="tag-scene">付箋2</div></section><section class="scene"><div class="pad"><div class="kicker">付箋大賞 部門賞 3</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">ステッカー部門</span>
+        <div class="quote">地球の歩き方</div>
+        <div class="by">nakamura・♥ 3</div><div class="after">あやとステッカー「地球をめぐるあやと」になった。届いた元絵が437×480のjpegでにじんでいたので、構図・旗・名所をそのままにChatGPTで描き直して配っている。同じ絵がSUZURIの「TRAVELING NOW Tシャツ」（背中に旅の名所がつまった地球）にもなった。</div>
+      </div></div></div><div class="tag-scene">付箋3</div></section><section class="scene"><div class="pad"><div class="kicker">付箋大賞 部門賞 4</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">LINEスタンプ部門</span>
+        <div class="quote">ネクストレベル</div>
+        <div class="by">名前を出していない付箋・♥ 6</div><div class="after">40種のうちの1枚「ネクストレベル」として出来上がり、気持ちの並びの「うれしい → すごいよ → ネクストレベル」に入っている。階段の絵の中に閉じた白があるため、絵の地を抜く道具の手引きにまで名指しで残った（tools/goods/linecut.py）。</div>
+      </div></div></div><div class="tag-scene">付箋4</div></section><section class="scene"><div class="pad"><div class="kicker">付箋大賞 部門賞 5</div>
+      <div class="mid"><div class="sheet tilt">
+        <span class="tag">街歩き部門</span>
+        <div class="quote">聖クリメント・オフリド教会</div>
+        <div class="by">名前を出していない付箋・♥ 5</div><div class="after">10/20 に到着。中は礼拝の最中で観光客が一人もおらず、全員が真剣だったので「マナー違反したかも」といったん外へ出て、観光客が入り始めてから再入場した。壁一面の壁画を見て、内観の写真を1枚だけ島に上げている。</div>
+      </div></div></div><div class="tag-scene">付箋5</div></section><section class="scene"><div class="pad"><div class="kicker">あやと島 付箋大賞</div>
+  <div class="mid"><div class="sheet">
+    <span class="tag gold">大賞</span>
+    <div class="quote">ヴォドノ山頂に建つ
+大きな十字架⛪️✝️</div>
+    <div class="by">まこも🍭・♥ 8</div>
+    <div class="after">10/20 の企画会議で「31日は十字架の山の上でサンドイッチと豆を挽いたコーヒー」と月末配信の行き先に決まり、10/30 には19時開始・ロープウェイが故障なので徒歩・焼いたパンを持参、まで段取りが決まった。今日これから登る山は、この付箋から決まった。</div>
+  </div></div></div><div class="tag-scene">付箋大賞</div></section><section class="scene"><div class="pad"><div class="kicker">調べもの大賞 1 / 4</div>
+      <div class="mid"><div class="sheet">
+        <span class="tag red">@まつしきtuckgene</span>
+        <div class="rows3">
+          <div><b>困っていたこと</b>　クラムチャウダーの買い出しで、牛乳を手に取ったつもりがケフィアだった。棚に牛乳が見つからず、ルーが作れない。</div>
+          <div><b>教えてくれたこと</b>　ムレコっていうらしい</div>
+          <div><b>そのあと</b>　現地語の名前で探して牛乳を発見。翌日のルーがちゃんと作れて、CoCo壱比250点という採点3回ぶんの最高記録になった。</div>
+        </div>
+      </div></div></div><div class="tag-scene">調べもの1</div></section><section class="scene"><div class="pad"><div class="kicker">調べもの大賞 2 / 4</div>
+      <div class="mid"><div class="sheet">
+        <span class="tag red">@mum1430</span>
+        <div class="rows3">
+          <div><b>困っていたこと</b>　そのクラムチャウダーで、薄力粉とバターを「無くてもいけるやろ」と省こうとしていた。</div>
+          <div><b>教えてくれたこと</b>　薄力粉ないとクリーム作れないですよ！</div>
+          <div><b>そのあと</b>　「自己流全部却下された」とレシピ通りに買い直し。ルーから手作りして「お店の味」に着地した。</div>
+        </div>
+      </div></div></div><div class="tag-scene">調べもの2</div></section><section class="scene"><div class="pad"><div class="kicker">調べもの大賞 3 / 4</div>
+      <div class="mid"><div class="sheet">
+        <span class="tag red">@aoi1685</span>
+        <div class="rows3">
+          <div><b>困っていたこと</b>　フォカッチャが何度待っても膨らまない。発酵を2回やり直しても緩いまま、原因が誰にも分からなかった。</div>
+          <div><b>教えてくれたこと</b>　強力粉じゃなくて薄力粉だから、柔らかくはなるよね</div>
+          <div><b>そのあと</b>　その晩の敗因が「発酵のやり直しが多い／強力粉でなく薄力粉／40度を保てない」の3つに絞れた。1週間後のほったらかしパンは強力粉で仕込み、10/30 に「マジでパン屋さんすぎる」の大成功。</div>
+        </div>
+      </div></div></div><div class="tag-scene">調べもの3</div></section><section class="scene"><div class="pad"><div class="kicker">調べもの大賞 4 / 4</div>
+      <div class="mid"><div class="sheet">
+        <span class="tag red">@まーさん7286</span>
+        <div class="rows3">
+          <div><b>困っていたこと</b>　宿を30分で追い出された日、パソコンの受け取り先を変えに郵便局へ行ったら閉まっていた。なぜ閉まっているのか分からず「下には下があるわ」で止まった。</div>
+          <div><b>教えてくれたこと</b>　マケドニア革命闘争の日だって！</div>
+          <div><b>そのあと</b>　祝日だと分かり、土曜は13時までという開き時間まで判明。粘るのをやめて、翌朝いちばんに1人で行く段取りに切り替えた。</div>
+        </div>
+      </div></div></div><div class="tag-scene">調べもの4</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞 ノミネート 1 / 5</div>
+      <div class="mid"><div class="sheet">
+        <div class="quote">ネクストレベル</div>
+        <div class="by">27回・4人が使った　／　はじめて出たのは 09/30</div>
+        <div class="after">アルバニアの宿で出会った親友の口ぐせ。皿洗いも、スマホを取り返した芝居も「ネクストレベル」。LINEスタンプ40種の1枚になった</div>
+      </div></div></div><div class="tag-scene">流行語1</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞 ノミネート 2 / 5</div>
+      <div class="mid"><div class="sheet">
+        <div class="quote">コネコネ</div>
+        <div class="by">12回・5人が使った　／　はじめて出たのは 10/16</div>
+        <div class="after">パン作りの手つきにチャットが付けた音。生地をさわるたび流れた</div>
+      </div></div></div><div class="tag-scene">流行語2</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞 ノミネート 3 / 5</div>
+      <div class="mid"><div class="sheet">
+        <div class="quote">暗殺者のパスタ</div>
+        <div class="by">8回・6人が使った　／　はじめて出たのは 10/02</div>
+        <div class="after">ガスが止まって三度延びた一皿。弱いIHで1時間かけて完成し「今まで食べたトマトパスタで一番うまい」</div>
+      </div></div></div><div class="tag-scene">流行語3</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞 ノミネート 4 / 5</div>
+      <div class="mid"><div class="sheet">
+        <div class="quote">ひげ剃り</div>
+        <div class="by">11回・7人が使った　／　はじめて出たのは 10/09</div>
+        <div class="after">アルバニアで盗られて、北マケドニアで龍の絵の「Geemy T9 Dragon」を1,300レクで買い直すまでの3週間</div>
+      </div></div></div><div class="tag-scene">流行語4</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞 ノミネート 5 / 5</div>
+      <div class="mid"><div class="sheet">
+        <div class="quote">LINEスタンプ</div>
+        <div class="by">24回・6人が使った　／　はじめて出たのは 10/08</div>
+        <div class="after">島の付箋から始まって、40種のスタンプになった</div>
+      </div></div></div><div class="tag-scene">流行語5</div></section><section class="scene"><div class="pad"><div class="kicker">流行語大賞</div>
+  <div class="mid"><div class="sheet">
+    <span class="tag gold">グランプリ</span>
+    <div class="quote" style="font-size:var(--t-hero);line-height:1.25">ぼくのくつ</div>
+    <div class="by">14回・5人が使った　／　10/01 から</div>
+    <div class="after">靴屋を3軒まわって、4万円のオンと3万6,000円のHOKAを履き比べて、
+    30%引きのアディダス8,600円に決めた日。@ゆずたつ-q3n さんが
+    「月末配信で流行語決まったわ、ぼくのくつ」と書きました。
+    <b>賞のほうが、自分で名前を言っていました。</b></div>
+  </div></div></div><div class="tag-scene">流行語大賞</div></section><section class="scene"><div class="pad"><div class="kicker">皆勤賞</div>
+  <h2>35日ぜんぶに来てくれた3人</h2>
+  <p class="lede">配信のあった35日、1日も欠かさずコメントをくれました。</p>
+  <div class="list"><div class="li"><span class="n" style="font-size:var(--t-note)">皆勤</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""><span>@dekobokov6229</span><span class="v">3ヶ月連続</span></div><div class="li"><span class="n" style="font-size:var(--t-note)">皆勤</span><span></span><span>@さおり-k1n</span><span class="v">2ヶ月連続</span></div><div class="li"><span class="n" style="font-size:var(--t-note)">皆勤</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f203e9529b7941c89940a568e03b83b00/plain-128.webp" alt=""><span>@もっと豆挽けコーヒー商店</span><span class="v">はじめて</span></div></div>
+  <p class="when" style="color:var(--dim)">あと1日だったのは @ゆずたつ-q3n さんと
+  @清志郎-n1s さん（34日）。</p></div><div class="tag-scene">皆勤賞</div></section><section class="scene"><div class="pad"><div class="kicker">はじめまして 1 / 4</div>
+      <h2>今月はじめて来てくれた人</h2>
+      <div class="mid" style="gap:30px"><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">古いレク（old lek）で話す人がいると、価格のゼロを一つ多く言う習慣が残っているらしいです、値段を確認するときは注意した方がいいそうです</div>
+             <div class="by">@Omacha_おまっちゃ・09/28</div></div><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">hi you hair suteki</div>
+             <div class="by">@TelurKampung-w6x・09/30</div></div></div></div><div class="tag-scene">はじめまして1</div></section><section class="scene"><div class="pad"><div class="kicker">はじめまして 2 / 4</div>
+      <h2>今月はじめて来てくれた人</h2>
+      <div class="mid" style="gap:30px"><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">くるくる髪の旅人、めっちゃ会いたかったよ</div>
+             <div class="by">@Jessincma・10/15</div></div><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">私面白いよ熊本だけど</div>
+             <div class="by">@シモタシロヨシコ・09/26</div></div></div></div><div class="tag-scene">はじめまして2</div></section><section class="scene"><div class="pad"><div class="kicker">はじめまして 3 / 4</div>
+      <h2>今月はじめて来てくれた人</h2>
+      <div class="mid" style="gap:30px"><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">猫がオシャレ</div>
+             <div class="by">@tajikoba・10/03</div></div><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">祈ってました</div>
+             <div class="by">@きらぼし債権回収株・10/12</div></div></div></div><div class="tag-scene">はじめまして3</div></section><section class="scene"><div class="pad"><div class="kicker">はじめまして 4 / 4</div>
+      <h2>今月はじめて来てくれた人</h2>
+      <div class="mid" style="gap:30px"><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">はじめてききました、北マケドニアは国なんですね</div>
+             <div class="by">@ttya7197・10/12</div></div><div class="sheet" style="padding:44px 52px">
+             <div class="quote" style="font-size:calc(38*var(--u))">初見ですどこにいるのですか？</div>
+             <div class="by">@4_djm・10/12</div></div></div></div><div class="tag-scene">はじめまして4</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう　第1位</div>
+      <div class="mid" style="align-items:center">
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1wQzpWPNZKnty7DIiEkrSyib145QIWy4K/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
+             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
+        <div style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:32px">@aoi1685</div>
+        <div style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:18px">13,000<small
+             style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
+      </div></div><div class="tag-scene">投げ銭1位</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう　第2位</div>
+      <div class="mid" style="align-items:center">
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
+             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
+        <div style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:32px">@かこ-e</div>
+        <div style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:18px">10,000<small
+             style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
+      </div></div><div class="tag-scene">投げ銭2位</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう　第3位</div>
+      <div class="mid" style="align-items:center">
+        <img src="https://live-streaming-d3cac.web.app/island-api/characters/1ekFUI08fLxau-_-f3YOlizDLLYpYi21x/plain-128.webp" alt="" style="width:260px;height:260px;border-radius:50%;
+             border:8px solid var(--paper);background:var(--paper);object-fit:cover">
+        <div style="font-family:var(--disp);font-weight:800;
+             font-size:calc(64*var(--u));margin-top:32px">@田中とら-f6x</div>
+        <div style="font-family:var(--num);font-weight:700;
+             font-size:var(--t-hero);color:var(--gold);margin-top:18px">9,920<small
+             style="font-family:var(--body);font-size:var(--t-sub)">円</small></div>
+      </div></div><div class="tag-scene">投げ銭3位</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう 1 / 4</div>
+      <h2>4位から</h2><div class="list"><div class="li"><span class="n">4</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-/plain-128.webp" alt=""><span>@まこも-z3i</span><span class="v">8,000</span></div><div class="li"><span class="n">5</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS/plain-128.webp" alt=""><span>@らん-x2m8e</span><span class="v">3,750</span></div><div class="li"><span class="n">6</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt/plain-128.webp" alt=""><span>@kana3019</span><span class="v">3,600</span></div><div class="li"><span class="n">7</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/0c8468a6411842cdb144f70eefee5b7b0/plain-128.webp" alt=""><span>@desora-t5n</span><span class="v">2,900</span></div><div class="li"><span class="n">8</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/18okO58dwMaci-9R1go0Rj1dTqliSWlz3/plain-128.webp" alt=""><span>@dekobokov6229</span><span class="v">2,800</span></div><div class="li"><span class="n">9</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f003927aa7df4f5599a6bd58e2d324450/plain-128.webp" alt=""><span>@moimoilove6331</span><span class="v">2,500</span></div></div></div><div class="tag-scene">投げ銭一覧1</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう 2 / 4</div>
+      <h2>4位から</h2><div class="list"><div class="li"><span class="n">10</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1bGJUOx4NJU112oix9BwSVrZQJgsakGIq/plain-128.webp" alt=""><span>@スカイライン-t2w</span><span class="v">1,500</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/f203e9529b7941c89940a568e03b83b00/plain-128.webp" alt=""><span>@もっと豆挽けコーヒー商店</span><span class="v">1,200</span></div><div class="li"><span class="n">11</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/5cc99a90acad4e7997d92b27c5207c6c0/plain-128.webp" alt=""><span>@鴨川小夜</span><span class="v">1,200</span></div><div class="li"><span class="n">13</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/a43e965774df4900b7c8724c66f5deba0/plain-128.webp" alt=""><span>@えびっち-m7r</span><span class="v">960</span></div><div class="li"><span class="n">14</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU/plain-128.webp" alt=""><span>@まーさん7286</span><span class="v">900</span></div><div class="li"><span class="n">15</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/cf129e7ea06f499693a002543dcd7c290/plain-128.webp" alt=""><span>@まつしきtuckgene</span><span class="v">640</span></div></div></div><div class="tag-scene">投げ銭一覧2</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう 3 / 4</div>
+      <h2>4位から</h2><div class="list"><div class="li"><span class="n">16</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/7590ed1286e344a198f74674296e64d20/plain-128.webp" alt=""><span>@シモタシロヨシコ</span><span class="v">500</span></div><div class="li"><span class="n">17</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb/plain-128.webp" alt=""><span>@ゆずたつ-q3n</span><span class="v">200</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/c3cca678865a4021a048e617fab35db30/plain-128.webp" alt=""><span>@YOKOHAMA_Night</span><span class="v">160</span></div><div class="li"><span class="n">18</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1p46JvC_wbKo-rDEzE2pRMZh2neekNvta/plain-128.webp" alt=""><span>@チャイナモンスター</span><span class="v">160</span></div><div class="li"><span class="n">20</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/508cd9231743446bb25a93ae17dd3abf0/plain-128.webp" alt=""><span>@Jessincma</span><span class="v">158</span></div><div class="li"><span class="n">21</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1y17p0D56itwNXWWEzo94jF4ThNETczQg/plain-128.webp" alt=""><span>@ももしろう-y2z</span><span class="v">150</span></div></div></div><div class="tag-scene">投げ銭一覧3</div></section><section class="scene"><div class="pad"><div class="kicker">投げ銭ありがとう 4 / 4</div>
+      <h2>4位から</h2><div class="list"><div class="li"><span class="n">22</span><img src="https://live-streaming-d3cac.web.app/island-api/characters/1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_/plain-128.webp" alt=""><span>@元キノコさん</span><span class="v">50</span></div></div></div><div class="tag-scene">投げ銭一覧4</div></section><section class="scene"><div class="pad"><div class="kicker">あやと島案内鳥 から</div>
+  <div class="mid"><div class="sheet">
+    <div class="quote" style="font-size:calc(40*var(--u))">この35日で、島に写真が102枚貼られました。
+そこに22人が立って、カードは430枚になりました。
+
+付箋は67枚。そのうちの1枚に書いてあった
+「ヴォドノ山頂に建つ 大きな十字架」へ、
+きょう、ほんとうに登りました。
+
+貼った場所に、配信が行きました。
+来月もどこかへ連れていってください。</div>
+    <div class="by">あやと島案内鳥</div>
+  </div></div></div><div class="tag-scene">手紙</div></section><section class="scene"><div class="strip"><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-30%2FqDWMMlHjx7LP1eeGEwsP.jpeg?alt=media&token=ef7b34ce-a340-4b09-a579-c6cf2fe261bc" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-30%2FlpSDhPME5WSFTxNEWiEM.jpeg?alt=media&token=c7f797c0-ea9a-4564-859e-26a4c602bb23" alt=""><img src="https://firebasestorage.googleapis.com/v0/b/live-streaming-d3cac.firebasestorage.app/o/nordic%2Fphotos%2F2026-10-30%2FieuFQ6RPl2LejRBv5OKe.jpeg?alt=media&token=21df1565-6802-4f7f-85cf-8c3d5c668079" alt=""></div><div class="veil"></div><div class="pad half"><div class="mid" style="align-items:center;text-align:center">
+    <h1 style="font-size:calc(96*var(--u))">また来月</h1>
+    <p class="lede" style="margin-top:28px">11月は、北マケドニアのつづきから。</p>
+  </div></div><div class="tag-scene">エンディング</div></section>
