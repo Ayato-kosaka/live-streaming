@@ -141,6 +141,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "2vKj9g3BAdA", date: "2026-10-29", title: "🐱海外の野良猫たち人懐こすぎた！" },
     { id: "XMxoa-BWRME", date: "2026-10-30", title: "🇦🇱アルバニアでの髭剃り探しが大変すぎた！" },
     { id: "IZpZGM5Xbyg", date: "2026-10-31", title: "🇲🇰北マケドニアの行列店の大衆食堂を食べてみた！" },
+    { id: "wACcdJnOv18", date: "2026-11-01", title: "🇬🇧イギリスのエディンバラを、1日で回ったらやばかった！" },
   ],
 };
 

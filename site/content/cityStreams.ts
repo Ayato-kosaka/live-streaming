@@ -1983,6 +1983,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "dv6hDuR0teU",
         "title": "🇲🇰北マケドニアで１０月の月末配信や！",
         "date": "2026-10-31"
+      },
+      {
+        "videoId": "EKTCLeoiQMA",
+        "title": "🇲🇰北マケドニアで１１月なってもーたなー！タップタップ結果発表やーーー",
+        "date": "2026-11-01"
       }
     ]
   }
