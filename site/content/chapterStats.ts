@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-10-31
+ * 数えた日: 2026-11-01
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
