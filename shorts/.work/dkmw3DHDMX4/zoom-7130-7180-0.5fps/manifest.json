@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "dkmw3DHDMX4__zoom-7130-7180-0.5fps",
+ "mode": "zoom",
+ "dest": "dkmw3DHDMX4/zoom-7130-7180-0.5fps",
+ "video": "dkmw3DHDMX4",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-dkmw3DHDMX4.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 496428,
+  "tar_gz": 475023,
+  "encrypted": 475024
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 475024,
+   "sha256": "fdf9c20aea6b7b899e1008f8d8016fb5243d4ab7626d5691087af4c6ed6047be"
+  }
+ ],
+ "hmac_sha256": "8349bbb1caba9765e00ec543d8ff41516540ba023ca720962dd453a0527512f0",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:39:02+00:00"
+}
