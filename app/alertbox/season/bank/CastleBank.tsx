@@ -624,7 +624,7 @@ const CastleScene: React.FC<Props & { parts: Loaded }> = ({ theme, bank, current
         const turns = 1.5 + rnd();
         const frames = pts.map((p, j) => {
           const t = j / (pts.length - 1);
-          const sz = 1 - 0.5 * t;
+          const sz = 1 - 0.55 * t;
           // くるくる回る（横幅だけ縮める）。真横（幅 0）にはしない
           const spin = Math.max(0.18, Math.abs(Math.cos(t * Math.PI * turns)));
           return { transform: `${tr(p.x, p.y)} scale(${sz * spin}, ${sz})`, opacity: j === pts.length - 1 ? 0 : 1 };
@@ -683,6 +683,8 @@ const CastleScene: React.FC<Props & { parts: Loaded }> = ({ theme, bank, current
         live.current = { level: lv, amount, overflow: over };
         // アラートを出す前の増えは、アラート明けに金貨と一緒に見せる（ここでは「前の額」を書き換えない）
         if (!started || (pending.current && amount > shown.amount)) return;
+        // 数え上げの途中なら止める（止めないと、数え上げが古い額を書き続けて、新しい額を上書きする）
+        cancelAnimationFrame(countRaf);
         shown.level = lv;
         shown.amount = amount;
         if (amountRef.current) amountRef.current.textContent = fmt(amount);
@@ -821,7 +823,7 @@ const CastleScene: React.FC<Props & { parts: Loaded }> = ({ theme, bank, current
   const fh = def.flag.h * s;
   const fw = (flagIm.width / flagIm.height) * fh;
   const coinIm = imgs.get(def.coin.file)!;
-  const coinW = box.width * 0.1;
+  const coinW = box.width * 0.13;
 
   const tone = (t: TextTone, w: number): React.CSSProperties => ({ color: t.color, textShadow: outline(t.shadow, w) });
   const P = box.width;
