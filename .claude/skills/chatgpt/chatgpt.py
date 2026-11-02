@@ -112,6 +112,9 @@ const md = (n, depth = 0) => {
   if (n.nodeType !== 1) return '';
   const tag = n.tagName, kids = () => [...n.childNodes].map(c => md(c, depth)).join('');
   if (n.hasAttribute('data-md-skip') || tag === 'BUTTON' || tag === 'svg') return '';
+  // 読み上げ用の知らせ（「Loading images…」など）は本文ではない。読み直した直後の絵の返事は、絵が出るまで
+  // 数秒これだけになり、本文として返すと絵だけの返事を「Loading images…」という字の返事と読む（2026-11-03）
+  if (n.getAttribute('role') === 'status') return '';
   if (tag === 'PRE') {
     const code = (n.querySelector('code') || n).innerText.replace(/\n$/, '');
     let lang = '', box = n.parentElement;
@@ -323,34 +326,151 @@ def attach(t, paths, timeout=120):
     raise TimeoutError("付けたファイルの札が出ない")
 
 
-def wait_reply(t, n_before, timeout=600, poll=3, reload_every=45, want_images=False):
-    """n_before 本より後ろに、書き終わった返事が来るまで待って本文を返す。
+# ChatGPT が描いた絵（2026-10〜11 の画面は alt「Generated image N」、[data-testid=generated-image-gallery] の中）
+GEN_IMG = '[data-testid=generated-image-gallery] img, img[alt^="Generated image"]'
+
+# 返事の絵を、どの返事のものか・描き終わったかと一緒に読む。
+# - **どの返事か**は「いちばん後ろの問いより後ろにあるか」で決める。会話の中の位置で数えない
+#   （長い会話は画面の外の往復を外すので、往復の数が送る前と後で同じになることがある）
+# - **識別**は src から。署名付きの URL なら id（無ければ origin＋path）、blob: ならそのまま
+#   （blob: は読み直すと変わるので、読み直したあとは「問いより後ろか」だけが効く）
+# - **描いている途中の絵**は、絵かその先祖が ぼかし（filter / backdrop-filter の blur）か aria-busy のとき、
+#   または先祖の兄弟に backdrop-filter のぼかし（絵に重なる覆い）があるとき
+# - **描いている途中の箱**（pending）は、問いより後ろ・入力欄の外にある、見えている
+#   [data-testid*=loading]・[aria-busy=true]・[role=progressbar]。
+#   2026-11-03 の画面は、描いているあいだ絵の img を出さず、`image-gen-loading-game-board`（canvas の遊び）と
+#   「Creating image 13%」→「Sketching it out 37%」→「Making the first draft 53%」を出して、描き終わると一度に
+#   絵（1536×1024・ぼかし無し）に替わった。止めるボタン（Stop）と in_progress も、そのあいだ出ていた
+_REPLY_IMGS = r"""((minPx, GEN, USER_HEAD) => {
+  const order = (a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? -1 : 1;
+  const users = [...document.querySelectorAll('[data-user-message-bubble], [data-message-author-role=user], li[data-message-role=user], h1[data-conversation-role=user], h2[data-conversation-role=user], h3[data-conversation-role=user], h4[data-conversation-role=user], h5[data-conversation-role=user], h6[data-conversation-role=user]')];
+  for (const h of document.querySelectorAll('main h1, main h2, main h3, main h4, main h5, main h6'))
+    if (new RegExp(USER_HEAD, 'i').test((h.innerText || h.textContent || '').trim())) users.push(h);
+  const last = users.sort(order).pop() || null;
+  const after = e => !last || (!last.contains(e) && !!(last.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING));
+  const keyOf = i => {
+    const s = i.currentSrc || i.src || '';
+    try { const u = new URL(s); if (u.protocol === 'blob:') return s;
+          return u.searchParams.get('id') || (u.origin + u.pathname); } catch (e) { return s; }
+  };
+  const blurred = v => /blur\((?!0(px)?\))/.test(v || '');
+  const drawing = i => {
+    for (let e = i, k = 0; e && e !== document.body && k < 8; e = e.parentElement, k++) {
+      const cs = getComputedStyle(e);
+      if (blurred(cs.filter) || blurred(cs.backdropFilter)) return 'blur';
+      if (e.getAttribute('aria-busy') === 'true') return 'aria-busy';
+      // 絵に重なる覆い（兄弟の backdrop-filter）
+      if (e.parentElement) for (const s of e.parentElement.children)
+        if (s !== e && blurred(getComputedStyle(s).backdropFilter)) return 'overlay';
+    }
+    return '';
+  };
+  const shown = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const pending = [...document.querySelectorAll('[data-testid*="loading" i], [aria-busy="true"], [role="progressbar"]')]
+      .filter(e => after(e) && !e.closest('form') && shown(e))
+      .map(e => e.getAttribute('data-testid') || e.getAttribute('role') || 'aria-busy');
+  const all = [...new Set(document.querySelectorAll(GEN))];
+  return {found: !!last, keys: all.map(keyOf), pending,
+          reply: all.filter(after).map(i => ({src: i.currentSrc || i.src, key: keyOf(i), w: i.naturalWidth, h: i.naturalHeight,
+                                              ok: i.complete && i.naturalWidth >= minPx, drawing: drawing(i)}))};
+})"""
+
+
+def _reply_imgs(t, min_px=256):
+    """{found: 問いが見つかったか, keys: 会話の中の絵の識別ぜんぶ, pending: 描いている途中の箱,
+    reply: いちばん後ろの問いより後ろの絵 [{src,key,w,h,ok,drawing}]}"""
+    return (t.js(f"{_REPLY_IMGS}({min_px}, {json.dumps(GEN_IMG)}, {json.dumps(USER_HEAD)})")
+            or {"found": False, "keys": [], "pending": [], "reply": []})
+
+
+def _norm(s):
+    return "".join((s or "").split())[:300]
+
+
+def mark(t):
+    """**送る前に呼ぶ。** いまの会話の終わり（往復の数・いちばん後ろの問い・もう出ている絵）を控えて返す。
+    wait_reply / images に渡すと、送ったあとに出たものだけを返事として見る"""
+    ts = turns(t)
+    idx = max((i for i, x in enumerate(ts) if x[0] == "user"), default=None)
+    return {"n": len(ts), "last_user": _norm(ts[idx][1]) if idx is not None else None,
+            "last_reply": _norm(" ".join(x[1] for x in ts[idx + 1:] if x[0] == "assistant")) if idx is not None else None,
+            "keys": set(_reply_imgs(t)["keys"])}
+
+
+def _reply(ts, before):
+    """送ったあとの返事（いちばん後ろの問いより後ろの、アシスタントの片側）。まだ自分の問いが画面に出ていなければ None。
+    **往復の数では決めない**（長い会話は画面の外の往復を外すので、送る前と後で数が同じになりうる）。
+    自分の問いかは、いちばん後ろの問いの字が送る前と違うかで見る。同じ問いを送り直したときだけ、
+    往復の数が増えたか・その後ろの返事の字が送る前と違うかで見る"""
+    idx = max((i for i, x in enumerate(ts) if x[0] == "user"), default=None)
+    if idx is None or before.get("last_user", False) is False:
+        # 問いが1つも読めない画面（または last_user の無い控え）。数で見るしかない
+        return [x for x in ts[before["n"]:] if x[0] == "assistant"] if len(ts) > before["n"] else None
+    after = [x for x in ts[idx + 1:] if x[0] == "assistant"]
+    if (before["last_user"] is not None and _norm(ts[idx][1]) == before["last_user"] and len(ts) <= before["n"]
+            and _norm(" ".join(x[1] for x in after)) == before.get("last_reply")):
+        return None
+    return after
+
+
+def wait_reply(t, before, timeout=600, poll=3, reload_every=45, want_images=False, settle=2):
+    """送ったあとの返事が書き終わるまで待って、本文を返す（絵だけの返事なら ""）。
+    before は送る前に取った mark(t)。前の呼び方（送る前の往復の数）も受ける。
+
+    **書き終わり**は次のどちらか。どちらも、止めるボタンが出ておらず、1往復の箱が in_progress でなく（busy）、
+    問いより後ろに描いている途中の箱（_REPLY_IMGS の pending）が無いとき:
+      - 字の返事: 返事の字が空でなく、書き終わりの印があり、前の見回りと同じ。字と絵の両方なら、絵も下の形で描き終わっている
+      - 絵の返事: 送る前に無かった絵が、いちばん後ろの問いより後ろにあり、どれも読み込み済み（256px 以上）・
+        描いている途中の印（ぼかし・aria-busy・重なった覆い）が無く、settle 回の見回りで変わらない
+    **返事を、往復の数で探さない。絵だけの返事を、字で待たない。** 前の作りは返事を「送る前の往復の数より後ろ」で探し、
+    「字が空でない」か「いちばん後ろの1往復の箱に絵がある」を待っていた。長い会話は画面の外の往復を外す
+    （2026-11-03 に数えた続きの会話は、いちばん下で 10・上へ送って 12・下へ戻して 8）ので、往復の数が送る前を
+    超えないことがある。絵だけの返事が時間切れまで待った2回（2026-11-03）は、どちらもその長い会話の続きだった。
+    新しい会話なら前の作りでも絵が出た時点で終わりと読めていた（同じ日に画面を2秒ごとに控えて確かめた）。
 
     **タブの上の返事は途中で止まることがある。** ログインして考える型（Thinking）で頼むと、
     サーバーでは書き終わっているのに、タブは「Thinking」のまま7分動かなかった（2026-10-12）。
-    なので reload_every 秒ごとにページを読み直して確かめる。返事はサーバーに残るので、読み直しても消えない
-    （ログインしていて、ふつうの会話かプロジェクトのとき。未ログインの会話は読み直すと消える）。
+    なので reload_every 秒のあいだ返事に何も変わりが無ければ、ページを読み直して確かめる。返事はサーバーに残るので、
+    読み直しても消えない（ログインしていて、ふつうの会話かプロジェクトのとき。未ログインの会話は読み直すと消える）。
     want_images=True なら、絵が出そろうまで待つ"""
+    if not isinstance(before, dict):
+        # 前の呼び方（送る前の往復の数）。数だけで探すと長い会話で待ち続けるので、送ってすぐのいまを控えて足す
+        # （問いがもう出ていれば、その後ろの返事の字が変わったら自分の返事。絵は描くのに数十秒かかるので、
+        #  いまある絵は「前からあった」とみなせる）
+        before = dict(mark(t), n=int(before))
     end = time.time() + timeout
     url = None
-    last_reload = time.time()
-    # 返事の字が、前に読んだときと同じか（書き終わりを、画面の印だけに頼らない。印の名前が変わると、
-    # 書いている途中を「書き終わった」と読むことがある。2026-11-02）
-    prev = None
+    last_reload = last_change = time.time()
+    prev, same = None, 0
     while time.time() < end:
         time.sleep(poll)
         u = t.url()
         if "/c/" in u:
             url = u
-        ts = turns(t)
-        new = [x for x in ts[n_before:] if x[0] == "assistant"]
-        text = new[-1][1] if new else None
-        steady = text is not None and text == prev
-        prev = text
-        # 考えているあいだは返事の箱が空のまま止まって見える（止めるボタンも出ないことがある）。空は、絵が出るまで受け取らない
-        if new and new[-1][2] and steady and not busy(t) and (text or images(t)) and (not want_images or images(t)):
-            return new[-1][1]
-        if url and time.time() - last_reload > reload_every:
+        reply = _reply(turns(t), before)
+        # 返事の絵は「いちばん後ろの問いより後ろ」で、送る前に無かったもの。自分の問いがまだ出ていない一瞬は、
+        # 前の問いの後ろにある前の絵が入るが、識別が送る前と同じなので外れる。読み直すと blob: の識別は変わるが、
+        # そのときはもう自分の問いが出ていて、前の絵は問いより前に居る
+        r = _reply_imgs(t)
+        imgs = [i for i in r["reply"] if i["key"] not in before["keys"]]
+        # 止めるボタン・in_progress（busy）と、描いている途中の箱（pending）。どちらかが出ているあいだは終わりにしない
+        bz = busy(t) or bool(r.get("pending"))
+        text = reply[-1][1] if reply else None
+        sig = json.dumps([text, [(i["key"], i["w"], i["h"], i["ok"], i["drawing"]) for i in imgs], bz, r.get("pending")],
+                         ensure_ascii=False)
+        if sig == prev:
+            same += 1
+        else:
+            prev, same, last_change = sig, 0, time.time()
+        drawn = bool(imgs) and all(i["ok"] and not i["drawing"] for i in imgs)
+        if not bz:
+            # 字の返事（考えているあいだは箱が空のまま止まって見えるので、空は字の返事として受け取らない）
+            if text and reply[-1][2] and same >= 1 and (not imgs or (drawn and same >= settle)) and (not want_images or drawn):
+                return text
+            # 絵の返事（字が空でもよい）
+            if drawn and same >= settle:
+                return text or ""
+        if url and time.time() - max(last_change, last_reload) > reload_every:
             t.call("Page.reload", ignoreCache=True)
             t.wait_ready()
             time.sleep(4)
@@ -359,10 +479,10 @@ def wait_reply(t, n_before, timeout=600, poll=3, reload_every=45, want_images=Fa
 
 
 def ask(t, text, timeout=600, want_images=False):
-    """1往復。返事の本文を返す。同じタブで続けて呼べば、同じ会話の続きになる"""
-    n = len(turns(t))
+    """1往復。返事の本文を返す（絵だけの返事なら ""）。同じタブで続けて呼べば、同じ会話の続きになる"""
+    m = mark(t)
     send(t, text)
-    return wait_reply(t, n, timeout, want_images=want_images)
+    return wait_reply(t, m, timeout, want_images=want_images)
 
 
 def in_project(t):
@@ -488,6 +608,32 @@ def ask_once(question, title, timeout=600, url=PROJECT):
     return a
 
 
+def images(t, min_px=256, before=None):
+    """いちばん後ろの返事の、描き終わった絵を [(src, 幅, 高さ)] で返す。読み込み中・描いている途中の絵は数えない。
+    「いちばん後ろの返事」は、いちばん後ろの問いより後ろ（_reply_imgs）。before（mark の戻り値）を渡せば、
+    送る前からあった絵も外す。src は blob: のことがあるので、取るときは save_image でページの中から取る"""
+    keys = (before or {}).get("keys") or set()
+    return [(i["src"], i["w"], i["h"]) for i in _reply_imgs(t, min_px)["reply"]
+            if i["ok"] and not i["drawing"] and i["key"] not in keys]
+
+
+def save_image(t, src, out):
+    """絵を**ページの中の fetch で**取ってファイルに書く。戻り値は (形式, バイト数)。
+    絵の URL は署名付きで短い時間で切れるうえ、ログインの cookie が要るので、手元からは取りに行けない"""
+    import base64, os
+    r = t.js(f"""(async () => {{
+        const b = await (await fetch({json.dumps(src)}, {{credentials: 'include'}})).blob();
+        const d = await new Promise(res => {{ const f = new FileReader(); f.onload = () => res(f.result.split(',')[1]); f.readAsDataURL(b); }});
+        return [b.type, d];
+    }})()""", await_promise=True)
+    data = base64.b64decode(r[1])
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
+    open(out, "wb").write(data)
+    return r[0], len(data)
+
+
+# **いちばん後ろに置く。** 前は images() / save_image() がこの下にあって、`chatgpt.py ask` で返事の字が空のとき
+# （絵だけの返事）wait_reply が images() を呼ぶと、まだ定義されていなくて NameError で落ちた
 if __name__ == "__main__":
     # python3 chatgpt.py ask <問いを書いたファイル> <会話の題> [待つ秒]
     #   … プロジェクトの新しい会話で1往復して、題を付け直し、返事を標準出力へ
@@ -505,32 +651,3 @@ if __name__ == "__main__":
         print(holder())
     else:
         print("usage: chatgpt.py ask <file> <title> [timeout] | lock <owner> [what] | unlock <owner> | who")
-
-
-def images(t, min_px=256):
-    """いちばん後ろの返事に入っている絵を [(src, 幅, 高さ)] で返す。読み込み中の絵（幅0）は数えない。
-    作った絵は [data-testid=generated-image-gallery] の中の img（alt「Generated image N」）。
-    src は blob: なので、取るときは save_image でページの中から取る"""
-    return t.js(f"""(() => {{
-        const boxes = [...document.querySelectorAll('[data-talvt-turn-state], li[data-message-role=assistant]')];
-        const last = boxes.pop();
-        if (!last) return [];
-        return [...last.querySelectorAll('[data-testid=generated-image-gallery] img, img[alt^="Generated image"]')]
-            .filter((i, k, a) => a.indexOf(i) === k && i.complete && i.naturalWidth >= {min_px})
-            .map(i => [i.currentSrc || i.src, i.naturalWidth, i.naturalHeight]);
-    }})()""") or []
-
-
-def save_image(t, src, out):
-    """絵を**ページの中の fetch で**取ってファイルに書く。戻り値は (形式, バイト数)。
-    絵の URL は署名付きで短い時間で切れるうえ、ログインの cookie が要るので、手元からは取りに行けない"""
-    import base64, os
-    r = t.js(f"""(async () => {{
-        const b = await (await fetch({json.dumps(src)}, {{credentials: 'include'}})).blob();
-        const d = await new Promise(res => {{ const f = new FileReader(); f.onload = () => res(f.result.split(',')[1]); f.readAsDataURL(b); }});
-        return [b.type, d];
-    }})()""", await_promise=True)
-    data = base64.b64decode(r[1])
-    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
-    open(out, "wb").write(data)
-    return r[0], len(data)
