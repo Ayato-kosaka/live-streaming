@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "5DCVhyPVibM__clips",
+ "mode": "clips",
+ "dest": "5DCVhyPVibM/clips",
+ "video": "5DCVhyPVibM",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-p2-clips-5DCVhyPVibM.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 2,
+  "clips_ok": 2,
+  "clip_seconds": 46.0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 25672605,
+  "tar_gz": 25634281,
+  "encrypted": 25634288
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 25634288,
+   "sha256": "5289cbb0849009c23ce2e9feeb4e791c38c5275d1d937f3d4281ff981069d481"
+  }
+ ],
+ "hmac_sha256": "abf994800a12759606edb8c1577b99756b49315d1504836b66a4acf594d99a58",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41472296700",
+ "created_at": "2026-11-02T16:25:31+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 316544,
+    "sha256": "f866d6775b4136b0cbb447d65bf38e17244a9500b0d29a4c55900d51bc2c83a8"
+   }
+  ],
+  "hmac_sha256": "95859a008a4c5db4dc01aa7a8abaaa22a66741d75cc6be08b6d6bee27b6a6c2c",
+  "files": 6,
+  "sheets": 2,
+  "bytes": {
+   "plain": 331002,
+   "tar_gz": 316531,
+   "encrypted": 316544
+  }
+ }
+}
