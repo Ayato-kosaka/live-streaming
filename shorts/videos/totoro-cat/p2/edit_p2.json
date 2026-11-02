@@ -1,18 +1,18 @@
 {
- "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字 原稿の 3・6・7・9・10 行目は voice_src（本人の声を配信の別の秒から取った行）なので、組んだあとに narration.lines へ orig_voice の印を足した（書き出しが元の声として整えて揃える）",
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
  "version": 2,
  "id": "p2",
- "style": "style.json",
+ "style": "style_p2.json",
  "sources": {
   "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/06_1-18-18_1-18-38.mp4",
    "watermark": "prism_live",
    "t0": 4698.0
   },
-  "c04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/04_1-03-44_1-04-04.mp4",
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/05_1-11-36_1-12-14.mp4",
    "watermark": "prism_live",
-   "t0": 3824.0
+   "t0": 4296.0
   },
   "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/03_0-52-46_0-52-58.mp4",
@@ -24,20 +24,15 @@
    "watermark": "prism_live",
    "t0": 2238.0
   },
-  "c05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/05_1-11-36_1-12-14.mp4",
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/07_1-20-08_1-20-31.mp4",
    "watermark": "prism_live",
-   "t0": 4296.0
+   "t0": 4808.0
   },
   "c02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/02_0-41-24_0-41-41.mp4",
    "watermark": "prism_live",
    "t0": 2484.0
-  },
-  "c07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/07_1-20-08_1-20-31.mp4",
-   "watermark": "prism_live",
-   "t0": 4808.0
   },
   "c09": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/09_1-59-16_1-59-40.mp4",
@@ -58,8 +53,8 @@
  "cuts": [
   {
    "src": "c06",
-   "in": 198,
-   "out": 262,
+   "in": 162,
+   "out": 220,
    "row": 0,
    "zoom": {
     "from": 1.43,
@@ -69,12 +64,12 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "膝の上から目を丸くしてこちらを見上げる子猫（0秒目。「生意気子猫」と「膝」が1枚に。題の札の下に顔）。v5: v4 までの 1:11:42.5 は寄りが暗くぼやけ、帯の検査で弱い画（e8 0.786）と出た"
+   "note": "膝の上から目を丸くしてこちらを見上げる子猫（0秒目）。v6: 題の札（箱の下端 y1012）の下に目が出る秒から。1:18:25 を過ぎると目が上へ動くので 4.5割"
   },
   {
-   "src": "c04",
-   "in": 360,
-   "out": 425,
+   "src": "c05",
+   "in": 1017,
+   "out": 1088,
    "row": 0,
    "zoom": {
     "from": 1.28,
@@ -84,12 +79,12 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "膝で爆睡する寝顔の大写し（題の「膝で爆睡」）。draft3 の 1:04:00 はカメラが離れていく所でぶれていた"
+   "note": "膝の上で前足をたたんで眠る寝顔（題の「膝で爆睡」）。顔は窓の下半分で、札の下に出る。1:12:12.9 で指が入る前に終わる"
   },
   {
    "src": "c03",
    "in": 60,
-   "out": 114,
+   "out": 104,
    "row": 1,
    "zoom": {
     "from": 1.28,
@@ -99,12 +94,12 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "自撮り。膝に子猫を乗せた僕（「僕」と「猫」が1枚に）。窓の上端を 0 にして目まで入れる（v2: v1 の 0:52:48.6 はカメラが上を向いて目が切れていたので 0.6秒前から）"
+   "note": "自撮り。膝に子猫を乗せた僕（「僕」と「猫」が1枚に）。窓の上端を 0 にして目まで入れる（v2: v1 の 0:52:48.6 はカメラが上を向いて目が切れていたので 0.6秒前から）。v6: 子猫が早く写るように4割"
   },
   {
    "src": "c03",
-   "in": 282,
-   "out": 337,
+   "in": 198,
+   "out": 263,
    "row": 1,
    "zoom": {
     "from": 1.28,
@@ -114,7 +109,7 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "膝の上で頭を上げる子猫"
+   "note": "膝の上で耳を掻く子猫（顔まで写る）。0:52:55.6 は締めの行で使う"
   },
   {
    "src": "c01",
@@ -147,9 +142,9 @@
    "note": "手すりの脇にちょこんと座ってこちらを見る子猫（draft3 は窓の左の端に切れていた）"
   },
   {
-   "src": "c04",
-   "in": 6,
-   "out": 39,
+   "src": "c05",
+   "in": 942,
+   "out": 1003,
    "row": 3,
    "zoom": {
     "from": 1.28,
@@ -159,12 +154,12 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "トビリシの街から昇る朝日（「初めて会った」朝）"
+   "note": "膝の上で前足をたたんで眠る寝顔（目を閉じた顔と前足が分かる）。題の 1:12:09.9 とは重ねない"
   },
   {
-   "src": "c04",
-   "in": 135,
-   "out": 213,
+   "src": "c07",
+   "in": 108,
+   "out": 158,
    "row": 3,
    "zoom": {
     "from": 1.28,
@@ -174,22 +169,22 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "膝の上で眠る子猫の寝顔の大写し（「膝で爆睡」）"
+   "note": "膝の上で大あくびする子猫。次の行（1:11:41.4、同じ素材 05）と隣り合わないように、ここは素材 07 から"
   },
   {
    "src": "c05",
-   "in": 342,
-   "out": 395,
+   "in": 162,
+   "out": 215,
    "row": 4,
    "zoom": {
     "from": 1.28,
     "to": 1.28,
-    "x": 0.0,
+    "x": 0.11,
     "y": 0.02,
     "sx": 0,
     "sy": 0
    },
-   "note": "元の声「何にらんでんねん」の秒。目を開けて見上げる子猫"
+   "note": "膝の上で仰向けのまま、目を開けてこちらを見上げる子猫（「何にらんでんねん」。声は 1:11:47.4〜48.9 を声の一覧から）"
   },
   {
    "src": "c02",
@@ -313,8 +308,8 @@
   },
   {
    "src": "c07",
-   "in": 120,
-   "out": 191,
+   "in": 270,
+   "out": 355,
    "row": 10,
    "zoom": {
     "from": 1.28,
@@ -324,26 +319,26 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "膝の上にちょこんと座る子猫の後ろ姿"
+   "note": "膝の上で丸くなる子猫の全身（後ろ姿）。1:20:14.4〜16.9 は耳と背中を YuNet が顔と読む（v6 の1本目で字に5コマ重なった）。17.0 からは 0.07秒ごとに当てて顔なし"
   },
   {
-   "src": "c05",
-   "in": 900,
-   "out": 971,
+   "src": "c02",
+   "in": 93,
+   "out": 150,
    "row": 10,
    "zoom": {
-    "from": 1.28,
-    "to": 1.28,
-    "x": 0.11,
+    "from": 1.6,
+    "to": 1.6,
+    "x": 0.15,
     "y": 0.02,
     "sx": 0,
     "sy": 0
    },
-   "note": "膝の上で丸くなって眠る子猫と前足（懐いた猫）"
+   "note": "ベンチの僕の隣で、こちらをまっすぐ見てから横を向く子猫（懐いた猫）。1.6倍（窓 x108-558・y25-825。豚と PRISM の上）で寄せると、目と鼻が y1129 より下に来て字幕（y913〜1088）に掛からない。1.28倍だと y999〜1091 で掛かる。0:41:29.0 でカメラが膝へ振れる"
   }
  ],
  "title": {
-  "text": "🇬🇪ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！",
+  "text": "🇬🇪ジョージアの生意気子猫が、\n膝で爆睡したくせに僕をすぐ忘れやがった！",
   "look": "card",
   "from": 0,
   "line": 0,
@@ -381,9 +376,10 @@
    },
    {
     "text": "何にらんでんねん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_05.wav",
+    "at": 436,
     "orig_voice": true,
-    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/narr/orig_p2_04.wav",
-    "at": 436
+    "voice_src": true
    },
    {
     "text": "こいつ、頭撫でようとすると、撫でるなっていう顔してくる。",
@@ -439,8 +435,8 @@
     "frames": 129,
     "voice_frames": 121,
     "cuts": [
-     "1:18:24.6+2.13s",
-     "1:03:56.0+2.17s"
+     "1:18:23.4+1.93s",
+     "1:12:09.9+2.37s"
     ],
     "line": "ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！",
     "telop": null
@@ -451,8 +447,8 @@
     "frames": 109,
     "voice_frames": 101,
     "cuts": [
-     "0:52:48.0+1.80s",
-     "0:52:55.4+1.83s"
+     "0:52:48.0+1.47s",
+     "0:52:52.6+2.17s"
     ],
     "line": "日本では、猫なんか大嫌いやった僕やけど、",
     "telop": null
@@ -475,8 +471,8 @@
     "frames": 111,
     "voice_frames": 103,
     "cuts": [
-     "1:03:44.2+1.10s",
-     "1:03:48.5+2.60s"
+     "1:12:07.4+2.03s",
+     "1:20:11.6+1.67s"
     ],
     "line": "野良やのに、初めて会った僕の膝で爆睡。",
     "telop": null
@@ -487,11 +483,10 @@
     "frames": 53,
     "voice_frames": 45,
     "cuts": [
-     "1:11:47.4+1.77s"
+     "1:11:41.4+1.77s"
     ],
     "line": "何にらんでんねん。",
-    "telop": null,
-    "orig_voice": true
+    "telop": null
    },
    {
     "row": 5,
@@ -557,8 +552,8 @@
     "frames": 142,
     "voice_frames": 119,
     "cuts": [
-     "1:20:12.0+2.37s",
-     "1:12:06.0+2.37s"
+     "1:20:17.0+2.83s",
+     "0:41:27.1+1.90s"
     ],
     "line": "みんなも、懐いた猫にすぐ忘れられたことある？",
     "telop": null
