@@ -14,6 +14,9 @@
   - 演出は試し表示（`?preview=`）で流す。外の口・ログ・どねるには1本も繋がない
   - 季節は日付で決まる（本番と同じ）。`?theme=halloween` を付けると、そのテーマで流す
   - `?n=2` で各場面を2回ずつ流す
+  - 「1,500円 ハロウィン」「1,500円 試作」の2場面は、日付や `?theme=` に関係なくハロウィンで流す。
+    試作は演出の質の作り直しの試し（`?fx=lux`。光を焼いた絵を合成だけで動かす。#1079）で、
+    いまの段4と同じ条件で並べて、スマホでの重さを比べる
   - 最後の場面だけ、測っているあいだに箱を手で広げたり戻したりしてもらう（画面に頼みを出す）。
     季節テーマを入れてから、アラートは箱の大きさが変わるたびに字を描き直すようになり、
     この箱では広げているあいだの CPU がハロウィン前の 3〜4 倍になった（#1079）
@@ -90,6 +93,9 @@
     { name: "1,000円 絵文字", q: { preview: "1", amount: "1000", emoji: "🌸" }, sec: 12 },
     { name: "5,000円 絵文字", q: { preview: "1", amount: "5000", emoji: "🌸" }, sec: 12 },
     { name: "10,000円 絵文字", q: { preview: "1", amount: "10000", emoji: "🌸" }, sec: 12 },
+    // 演出の質の試作（#1079）。いまの段4と並べる。テーマは固定（ページの ?theme= で上書きしない）
+    { name: "1,500円 ハロウィン", q: { preview: "1", amount: "1500", theme: "halloween" }, sec: 12 },
+    { name: "1,500円 試作", q: { preview: "1", amount: "1500", theme: "halloween", fx: "lux" }, sec: 12 },
     // 投げ銭のときに箱を手で広げる、をそのまま測る（ここだけ、測っているあいだに手を動かしてもらう）
     { name: "1,000円 箱を動かす", q: { preview: "1", amount: "1000", emoji: "🌸" }, sec: 12, ask: "箱を広げたり戻したりしてください" }
   ];
@@ -135,7 +141,7 @@
 
   function open(step) {
     var p = new URLSearchParams(step.q);
-    if (theme) p.set("theme", theme);
+    if (theme && !step.q.theme) p.set("theme", theme);
     return new Promise(function (resolve) {
       f.onload = function () {
         matchScale(f.contentWindow);

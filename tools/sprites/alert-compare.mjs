@@ -5,6 +5,7 @@
  *   node alert-compare.mjs --base http://localhost:4349 --bg /path/to/prism-street.jpg \
  *        --char /path/to/panda.png --out /tmp/compare.png
  *   node alert-compare.mjs ... --amounts 1500,10000 --times 0.5,2,3,4.5,8,20
+ *   node alert-compare.mjs ... --amounts 1500 --fx ,lux      # 額ごとに、いまの段と試作（?fx=lux）を2行で
  *
  * - 時計は `alert-overlap.mjs` の FREEZE で止める（そのまま読んで使う。写さない）。秒は
  *   キャラ絵の箱が置かれた瞬間（アラートの頭）から数える
@@ -49,6 +50,8 @@ const theme = arg("theme", "halloween");
 const name = arg("name", "おためし");
 const msg = arg("msg", "これは試し表示です");
 const out = resolve(arg("out", "/tmp/alert-compare.png"));
+/* 試作の旗（`?fx=<名前>`。#1079）。`--fx ,lux` なら、額ごとに「旗なし」と「lux」の2行を並べる */
+const fxRows = arg("fx", "").split(",").map((s) => s.trim());
 const exe = chromePath() ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : null);
 if (!exe) die("ブラウザが見つからない（chrome.mjs）");
 
@@ -64,7 +67,7 @@ const W = Math.round(fw / zoom);
 const H = Math.round(fh / zoom);
 const b64 = (buf) => buf.toString("base64");
 
-async function shotsFor(browser, amount) {
+async function shotsFor(browser, amount, fxName) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: zoom });
   await prism(ctx);
   await ctx.addInitScript(FREEZE);
@@ -76,6 +79,7 @@ async function shotsFor(browser, amount) {
   });
   const page = await ctx.newPage();
   const q = new URLSearchParams({ preview: "1", theme, amount: String(amount), name, msg });
+  if (fxName) q.set("fx", fxName);
   const cells = [];
   try {
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
@@ -98,8 +102,10 @@ async function main() {
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const rows = [];
   for (const a of amounts) {
-    console.log(`  ${a}円`);
-    rows.push({ a, cells: await shotsFor(browser, a) });
+    for (const f of fxRows) {
+      console.log(`  ${a}円${f ? ` fx=${f}` : ""}`);
+      rows.push({ a, f, cells: await shotsFor(browser, a, f) });
+    }
   }
   // 並べる: 配信画面の箱の部分を地にして、その上にアラートの面を重ねる
   const cw = Math.round(fw * scale);
@@ -116,14 +122,14 @@ table{border-collapse:separate;border-spacing:6px}td{padding:0;vertical-align:mi
 .c{position:relative;overflow:hidden}.c img{position:absolute;left:0;top:0}
 th{font-weight:700;padding:4px}.amt{writing-mode:vertical-rl;padding:0 4px}
 </style><table><tr><th></th>${times.map((t) => `<th>${t}秒</th>`).join("")}</tr>
-${rows.map((r) => `<tr><th class="amt">${r.a.toLocaleString()}円</th>${r.cells.map(cell).join("")}</tr>`).join("\n")}
+${rows.map((r) => `<tr><th class="amt">${r.a.toLocaleString()}円${r.f ? ` ${r.f}` : ""}</th>${r.cells.map(cell).join("")}</tr>`).join("\n")}
 </table>`;
   const ctx = await browser.newContext({ viewport: { width: 60 + (cw + 6) * times.length, height: 600 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await page.setContent(html, { waitUntil: "load" });
   writeFileSync(out, await page.screenshot({ fullPage: true }));
   await browser.close();
-  console.log(`一覧 ${out}（${amounts.length} 段 × ${times.length} 秒）`);
+  console.log(`一覧 ${out}（${rows.length} 行 × ${times.length} 秒）`);
 }
 
 main().catch((e) => {

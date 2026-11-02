@@ -30,6 +30,8 @@ import { resolveScript } from "./script";
 import { runDracula } from "./dracula";
 import { runMarch } from "./march";
 import { runWizard } from "./wizard";
+import { runWizardLux } from "./wizardLux";
+import { showKind } from "./lux";
 import { runGhost } from "./ghost";
 import { runBroom } from "./broom";
 import { runReaper } from "./reaper";
@@ -101,7 +103,10 @@ export const TierShow: React.FC<Props> = ({ show, rigs, poses, items, durationSe
     try {
       const LL = { root, ...(L as Required<{ [K in keyof typeof L]: NonNullable<(typeof L)[K]> }>) };
       const script = resolveScript(show.script, durationSec, false);
-      if (show.kind === "ghost") {
+      /* 試作の旗（`?fx=<名前>`）。段がその名前の試作を持っているときだけ差し替える（#1079） */
+      if (showKind(show) === "wizardLux") {
+        stop = runWizardLux(m, LL, { poses: poses.get("wizard")! }, script, STAGE_W, STAGE_H);
+      } else if (show.kind === "ghost") {
         stop = runGhost(m, LL, { ghost: rigs.get("ghost")!, bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
       } else if (show.kind === "broom") {
         stop = runBroom(m, LL, { kuro: rigs.get("kuro")!, broom: rigs.get("broom")!, bat: rigs.get("bat")! }, script, STAGE_W, STAGE_H);
