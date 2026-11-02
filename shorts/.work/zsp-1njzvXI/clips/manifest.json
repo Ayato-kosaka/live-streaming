@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "zsp-1njzvXI__clips",
+ "mode": "clips",
+ "dest": "zsp-1njzvXI/clips",
+ "video": "zsp-1njzvXI",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-p2-clips-zsp-1njzvXI.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 1,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 28.0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 11353429,
+  "tar_gz": 11327343,
+  "encrypted": 11327344
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 11327344,
+   "sha256": "1dce369583a3d38b8f40c4c3373edc5a5ff2f3d31ee3f3da1a82da6f50e6364f"
+  }
+ ],
+ "hmac_sha256": "37a08807591bb3929e4da031fd6115a5471e1d2c307578037c326b0aa147d81f",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41472296700",
+ "created_at": "2026-11-02T16:22:34+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 182096,
+    "sha256": "0862b6dd943ce3c3251e731d5cfc71bb36c7b77616a5d6863494967ebebc68dd"
+   }
+  ],
+  "hmac_sha256": "44dfa2ae14d5cfa93141979d35288adccf392bed389dc69cc62365024b3a203d",
+  "files": 5,
+  "sheets": 1,
+  "bytes": {
+   "plain": 191958,
+   "tar_gz": 182092,
+   "encrypted": 182096
+  }
+ }
+}
