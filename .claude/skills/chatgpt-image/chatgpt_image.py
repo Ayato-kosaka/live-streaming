@@ -13,7 +13,7 @@
 """
 import json, os, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
-from chatgpt import fresh, attach, send, turns, wait_reply, images, save_image, logged_in, where, in_project, rename_or_warn, PROJECT
+from chatgpt import fresh, attach, send, mark, wait_reply, images, save_image, logged_in, where, in_project, rename_or_warn, PROJECT
 
 
 def make(prompt, out_prefix, title, files=(), url=PROJECT, timeout=600):
@@ -26,16 +26,18 @@ def make(prompt, out_prefix, title, files=(), url=PROJECT, timeout=600):
     t0 = time.time()
     if files:
         attach(t, list(files))
-    n = len(turns(t))
+    # 書き終わりの見分けは chatgpt.wait_reply の1か所に置く（絵だけの返事も、そこで終わりと分かる）。
+    # ここで自前に待たない——同じことを2か所で数えると、画面が変わった日に片方だけ直って片方が待ち続ける
+    before = mark(t)
     tries = send(t, prompt)
-    text = wait_reply(t, n, timeout=timeout, want_images=True)
+    text = wait_reply(t, before, timeout=timeout, want_images=True)
     # **絵を先に保存し、題はそのあと。** 前は題を先に付け直していて、右上のボタンの名前が変わった日
     # （2026-11-02）に付け直しで落ち、描けた絵が保存されずに終わった。題の付け直しは落ちても警告で済ませ、
     # 保存のほうが落ちても（finally）題は付け直す——題は、あとからその会話へ絵を取りに戻るための手がかり
     out = []
     rename_error = None
     try:
-        for k, (src, w, h) in enumerate(images(t)):
+        for k, (src, w, h) in enumerate(images(t, before=before)):
             path = f"{out_prefix}-{k}.png"
             kind, size = save_image(t, src, path)
             out.append({"path": path, "w": w, "h": h, "type": kind, "bytes": size})
