@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "zsp-1njzvXI__zoom-3910-3970-0.5fps",
+ "mode": "zoom",
+ "dest": "zsp-1njzvXI/zoom-3910-3970-0.5fps",
+ "video": "zsp-1njzvXI",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-zsp-1njzvXI.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 517581,
+  "tar_gz": 490296,
+  "encrypted": 490304
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 490304,
+   "sha256": "feaf1d47f164ffd508dc700abc2603c2e10146ec3ca69b70f50b27f11a72c446"
+  }
+ ],
+ "hmac_sha256": "e53506135537da7a49c2d26cb2ee136c3b82c7bd8b6308de46981048b1a9a3bc",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:39:54+00:00"
+}
