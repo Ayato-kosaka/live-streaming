@@ -1,0 +1,572 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字 原稿の 3・6・7・9・10 行目は voice_src（本人の声を配信の別の秒から取った行）なので、組んだあとに narration.lines へ orig_voice の印を足した（書き出しが元の声として整えて揃える）",
+ "version": 2,
+ "id": "p2",
+ "style": "style.json",
+ "sources": {
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/06_1-18-18_1-18-38.mp4",
+   "watermark": "prism_live",
+   "t0": 4698.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/04_1-03-44_1-04-04.mp4",
+   "watermark": "prism_live",
+   "t0": 3824.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/03_0-52-46_0-52-58.mp4",
+   "watermark": "prism_live",
+   "t0": 3166.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/01_0-37-18_0-37-58.mp4",
+   "watermark": "prism_live",
+   "t0": 2238.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/05_1-11-36_1-12-14.mp4",
+   "watermark": "prism_live",
+   "t0": 4296.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/02_0-41-24_0-41-41.mp4",
+   "watermark": "prism_live",
+   "t0": 2484.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/07_1-20-08_1-20-31.mp4",
+   "watermark": "prism_live",
+   "t0": 4808.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/09_1-59-16_1-59-40.mp4",
+   "watermark": "prism_live",
+   "t0": 7156.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/08_1-58-48_1-59-10.mp4",
+   "watermark": "prism_live",
+   "t0": 7128.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/ingest/d8UwWnFhjwY/clips/10_2-00-08_2-00-56.mp4",
+   "watermark": "prism_live",
+   "t0": 7208.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c06",
+   "in": 198,
+   "out": 262,
+   "row": 0,
+   "zoom": {
+    "from": 1.43,
+    "to": 1.43,
+    "x": 0.0,
+    "y": 0.238,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝の上から目を丸くしてこちらを見上げる子猫（0秒目。「生意気子猫」と「膝」が1枚に。題の札の下に顔）。v5: v4 までの 1:11:42.5 は寄りが暗くぼやけ、帯の検査で弱い画（e8 0.786）と出た"
+  },
+  {
+   "src": "c04",
+   "in": 360,
+   "out": 425,
+   "row": 0,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝で爆睡する寝顔の大写し（題の「膝で爆睡」）。draft3 の 1:04:00 はカメラが離れていく所でぶれていた"
+  },
+  {
+   "src": "c03",
+   "in": 60,
+   "out": 114,
+   "row": 1,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "自撮り。膝に子猫を乗せた僕（「僕」と「猫」が1枚に）。窓の上端を 0 にして目まで入れる（v2: v1 の 0:52:48.6 はカメラが上を向いて目が切れていたので 0.6秒前から）"
+  },
+  {
+   "src": "c03",
+   "in": 282,
+   "out": 337,
+   "row": 1,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝の上で頭を上げる子猫"
+  },
+  {
+   "src": "c01",
+   "in": 126,
+   "out": 170,
+   "row": 2,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "石畳の上、僕の足元に寄ってきた黒い子猫（声は 0:37:50.72〜53.35 の本人の声）"
+  },
+  {
+   "src": "c01",
+   "in": 534,
+   "out": 577,
+   "row": 2,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.0,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "手すりの脇にちょこんと座ってこちらを見る子猫（draft3 は窓の左の端に切れていた）"
+  },
+  {
+   "src": "c04",
+   "in": 6,
+   "out": 39,
+   "row": 3,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "トビリシの街から昇る朝日（「初めて会った」朝）"
+  },
+  {
+   "src": "c04",
+   "in": 135,
+   "out": 213,
+   "row": 3,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝の上で眠る子猫の寝顔の大写し（「膝で爆睡」）"
+  },
+  {
+   "src": "c05",
+   "in": 342,
+   "out": 395,
+   "row": 4,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.0,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「何にらんでんねん」の秒。目を開けて見上げる子猫"
+  },
+  {
+   "src": "c02",
+   "in": 390,
+   "out": 455,
+   "row": 5,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "ベンチの上の子猫に、撫でようと伸ばす手（「頭撫でようとすると」。声は 1:18:22.85〜25.10 の本人の声）"
+  },
+  {
+   "src": "c06",
+   "in": 315,
+   "out": 369,
+   "row": 5,
+   "zoom": {
+    "from": 1.43,
+    "to": 1.43,
+    "x": 0.0,
+    "y": 0.238,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "伸びてきた指から顔をそむける子猫（「撫でるなっていう顔」。声は 1:18:28.05〜29.60）（v2: v1 の 1:18:28.1 は頭の6コマで子猫の顔に字幕が重なり text_on_face が落ちたので 0.4秒あとから）"
+  },
+  {
+   "src": "c07",
+   "in": 420,
+   "out": 455,
+   "row": 6,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝にちょこんと座った子猫を撫でる手（「撫でさせろ！」。声は 1:18:31.05〜31.95）"
+  },
+  {
+   "src": "c09",
+   "in": 78,
+   "out": 157,
+   "row": 7,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "帰ろうとした小道で、手すりのほうへ歩いていく子猫（「着いてくるか……？」と問う画）"
+  },
+  {
+   "src": "c08",
+   "in": 165,
+   "out": 200,
+   "row": 8,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.0,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "石畳の小道を、僕のあとについて歩いてくる子猫（「来た来た来た」）"
+  },
+  {
+   "src": "c10",
+   "in": 435,
+   "out": 501,
+   "row": 8,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.8,
+    "x": 0.2,
+    "y": 0.22,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "歩き出した僕の後ろで、小道の地面（アリ）に夢中の子猫。小さく写るので 1.8倍の窓で寄せる（窓 x144-544・y282-993。豚 x510-・y1035- の上）。draft3 は窓が子猫の右にずれていた"
+  },
+  {
+   "src": "c09",
+   "in": 0,
+   "out": 41,
+   "row": 9,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "振り向きもせず、石畳の小道を自分の行きたいほうへ歩いていく子猫。v5: v4 の 1:59:24.6（手すりの向こうの草むら）は子猫が画面の端に小さくしか写らなかった"
+  },
+  {
+   "src": "c10",
+   "in": 540,
+   "out": 573,
+   "row": 9,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.8,
+    "x": 0.2,
+    "y": 0.22,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "小道でアリに夢中のまま、こっちを見もしない子猫（1.8倍の窓）"
+  },
+  {
+   "src": "c07",
+   "in": 120,
+   "out": 191,
+   "row": 10,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝の上にちょこんと座る子猫の後ろ姿"
+  },
+  {
+   "src": "c05",
+   "in": 900,
+   "out": 971,
+   "row": 10,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.11,
+    "y": 0.02,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "膝の上で丸くなって眠る子猫と前足（懐いた猫）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇪ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "lines": [
+   {
+    "text": "ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/totoro-cat-p2-v1/p2/01_x1.4.wav",
+    "tts_text": "ジョージアの、なまいきこねこが、ひざで爆睡したくせに、僕をすぐ忘れやがった！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "日本では、猫なんか大嫌いやった僕やけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/totoro-cat-p2-v1/p2/02.wav",
+    "tts_text": "日本では、猫なんか大嫌いやった僕やけど、",
+    "at": 129
+   },
+   {
+    "text": "食べ物持ってへんのに懐いてくる猫は、好きやで。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_03.wav",
+    "at": 238,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "野良やのに、初めて会った僕の膝で爆睡。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/totoro-cat-p2-v1/p2/04.wav",
+    "tts_text": "野良やのに、初めて会った、僕のひざで爆睡。",
+    "at": 325
+   },
+   {
+    "text": "何にらんでんねん。",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/narr/orig_p2_04.wav",
+    "at": 436
+   },
+   {
+    "text": "こいつ、頭撫でようとすると、撫でるなっていう顔してくる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_06.wav",
+    "at": 489,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "撫でさせろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_07.wav",
+    "at": 608,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "そろそろ帰るけど、着いてくるか……？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/totoro-cat-p2-v1/p2/08.wav",
+    "tts_text": "そろそろ帰るけど、ついてくるか？",
+    "at": 643
+   },
+   {
+    "text": "あ、来た来た来た。……来たと思ったら、アリに夢中です。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_09.wav",
+    "at": 722,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "これやから猫は、すぐ忘れる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/vsrc/vsrc_10.wav",
+    "at": 823,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "みんなも、懐いた猫にすぐ忘れられたことある？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/voice/totoro-cat-p2-v1/p2/11.wav",
+    "tts_text": "みんなも、なついた猫に、すぐ忘れられたこと、ある？",
+    "at": 897
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/wt/shorts/videos/totoro-cat/p2/spec.json",
+  "fps": 30,
+  "frames": 1039,
+  "seconds": 34.633,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 129,
+    "voice_frames": 121,
+    "cuts": [
+     "1:18:24.6+2.13s",
+     "1:03:56.0+2.17s"
+    ],
+    "line": "ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 129,
+    "frames": 109,
+    "voice_frames": 101,
+    "cuts": [
+     "0:52:48.0+1.80s",
+     "0:52:55.4+1.83s"
+    ],
+    "line": "日本では、猫なんか大嫌いやった僕やけど、",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 238,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "0:37:22.2+1.47s",
+     "0:37:35.8+1.43s"
+    ],
+    "line": "食べ物持ってへんのに懐いてくる猫は、好きやで。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 325,
+    "frames": 111,
+    "voice_frames": 103,
+    "cuts": [
+     "1:03:44.2+1.10s",
+     "1:03:48.5+2.60s"
+    ],
+    "line": "野良やのに、初めて会った僕の膝で爆睡。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 436,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "1:11:47.4+1.77s"
+    ],
+    "line": "何にらんでんねん。",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 5,
+    "from": 489,
+    "frames": 119,
+    "voice_frames": 111,
+    "cuts": [
+     "0:41:37.0+2.17s",
+     "1:18:28.5+1.80s"
+    ],
+    "line": "こいつ、頭撫でようとすると、撫でるなっていう顔してくる。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 608,
+    "frames": 35,
+    "voice_frames": 27,
+    "cuts": [
+     "1:20:22.0+1.17s"
+    ],
+    "line": "撫でさせろ！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 643,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "1:59:18.6+2.63s"
+    ],
+    "line": "そろそろ帰るけど、着いてくるか……？",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 722,
+    "frames": 101,
+    "voice_frames": 93,
+    "cuts": [
+     "1:58:53.5+1.17s",
+     "2:00:22.5+2.20s"
+    ],
+    "line": "あ、来た来た来た。……来たと思ったら、アリに夢中です。",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 823,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:59:16.0+1.37s",
+     "2:00:26.0+1.10s"
+    ],
+    "line": "これやから猫は、すぐ忘れる。",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 897,
+    "frames": 142,
+    "voice_frames": 119,
+    "cuts": [
+     "1:20:12.0+2.37s",
+     "1:12:06.0+2.37s"
+    ],
+    "line": "みんなも、懐いた猫にすぐ忘れられたことある？",
+    "telop": null
+   }
+  ]
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/cats2/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
