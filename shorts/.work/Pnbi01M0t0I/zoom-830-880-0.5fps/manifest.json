@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Pnbi01M0t0I__zoom-830-880-0.5fps",
+ "mode": "zoom",
+ "dest": "Pnbi01M0t0I/zoom-830-880-0.5fps",
+ "video": "Pnbi01M0t0I",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-Pnbi01M0t0I.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 4,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 492234,
+  "tar_gz": 463520,
+  "encrypted": 463536
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 463536,
+   "sha256": "21f158d54e7982b9395c5b98aa6e5f6bf02de45223ee1ff58c8475e18a8368fd"
+  }
+ ],
+ "hmac_sha256": "ef196b26359811a63f66de1104e42ceb0b41681f10788a2a47c71fac6b1757e8",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:37:55+00:00"
+}
