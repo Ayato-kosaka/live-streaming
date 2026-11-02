@@ -108,7 +108,12 @@ export type TierShow = {
    * "march" 段3 かぼちゃ坊やの行進 / "wizard" 段4 魔法使いのあやと / "reaper" 段5 死神のあやと /
    * "zombie" 段6 ゾンビのあやと / "dracula" 段7 ドラキュラのあやと
    */
-  kind: "ghost" | "broom" | "march" | "wizard" | "reaper" | "zombie" | "dracula";
+  kind: "ghost" | "broom" | "march" | "wizard" | "reaper" | "zombie" | "dracula" | "wizardLux";
+  /**
+   * 試作の振付け（URL の `?fx=<名前>` のときだけ `kind` の代わりに使う）。旗が無ければ `kind` のまま。
+   * 使う絵の組（rigs / poses / items）と台本は同じ（物語と時間割を変えずに、見た目の質だけを比べるため。#1079）
+   */
+  fx?: Record<string, TierShow["kind"]>;
   /** 使う切り絵（`rigDir` の名前）。1つでも読めなければ、この段は小物の演出に落ちる */
   rigs: string[];
   /** 使うポーズ絵の組（`posesDir` の名前。あやとの仮装）。読めなければ同じく小物の演出に落ちる */
@@ -537,6 +542,8 @@ export const THEMES: SeasonTheme[] = [
            ポーズ絵が読めなかった日の控え */
         show: {
           kind: "wizard",
+          /* 質の試作（#1079）。`?fx=lux` のときだけ、光を焼いた絵の振付けで出す */
+          fx: { lux: "wizardLux" },
           rigs: [],
           poses: ["wizard"],
           revealSec: 4.3,

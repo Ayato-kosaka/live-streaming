@@ -10,6 +10,7 @@
  *   node alert-overlap.mjs ... --control face    # 対照: 顔の前に手前の層の四角を置く → 1 で落ちる
  *   node alert-overlap.mjs ... --control hero    # 対照: 主役の顔の枠を字の真ん中に置く → 1 で落ちる
  *   node alert-overlap.mjs ... --theme none --emoji 🎃   # 絵文字を持つ人（花火と雨）として出す
+ *   node alert-overlap.mjs ... --amounts 1500 --fx lux   # 試作の旗（`?fx=lux`）を付けて数える
  *
  * `--emoji` を渡すと、試し表示の名前の人が「その絵文字を持つ人」になり、花火と雨
  * （`app/alertbox/components.tsx`）が出る。渡さなければ花火も雨も出ない。
@@ -82,6 +83,8 @@ const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
 if (control && control !== "face" && control !== "hero") die(`--control は face か hero（${control}）`);
 const emoji = arg("emoji", "");
+/* 試作の旗（`?fx=<名前>`。#1079）。段がその名前の試作を持っていれば、その振付けで数える */
+const fxName = arg("fx", "");
 
 /* 名前とメッセージ。長い名前は全角 12 字（本物の視聴者さんの名前）。
    3行は本物の配信で届いたメッセージ（いまの字の大きさで 3〜4 行に折り返す） */
@@ -609,6 +612,7 @@ async function runOne(browser, job) {
   const q = new URLSearchParams({ preview: "1", theme, amount: String(amount), name: text.name, msg: text.msg });
   if (vfile) q.set("video", `${base}/__ovl__/video.webm`);
   if (emoji) q.set("emoji", emoji);
+  if (fxName) q.set("fx", fxName);
   const res = { char: ch.id, amount, size: `${W}x${H}`, text: text.key, frames: [], errors, video: !!vfile };
   try {
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
