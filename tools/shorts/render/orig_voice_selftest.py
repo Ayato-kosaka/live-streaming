@@ -30,7 +30,7 @@
 | `measure` | 物差し: 1kHz の正弦（振幅 0.1）が −23.01dB。45Hz の揺れ（振幅 0.5）や 6kHz を足しても動かない（声の帯の外）。半分が無音でも動かない（門）。12dB 小さい後半は数え、26dB 小さい後半は数えない（いちばん大きい窓から 20dB の門） |
 | `clean` | 整える: 50Hz より下が声の帯より 20dB 以上下がる・120〜250Hz のこもりが 3dB 以上下がる・言葉のない所の雑音が話している所に比べて 3〜12dB 下がる・言葉の帯（500〜3000Hz）の形は元のまま（相関 0.9 以上）・長さが同じ |
 | `plan_flag` | 書き出しの時間割（`plan`）が、指示書の行の `orig_voice` を音の束の行まで運ぶ（AI の声の行には付けない） |
-| `caption` | 元の声の行（頭の 0.1秒は雑音だけ）の字幕が、音の束の声の出だしのコマと1コマ以内で出る（行の頭からではない）。AI の声の行は行の頭から |
+| `caption` | 元の声の行（頭の 0.1秒は雑音だけ）の字幕が、音の束の声の出だしのコマと1コマ以内で出る（行の頭からではない）。AI の声の行は行の頭から。前の行の字幕は元の声の行の頭（カットの切れ目）で消える（遅らせたぶん延ばさない） |
 | `stems` | 書き出しの声の束（`audio_stems`）: 元の声の行が、AI の声の行の真ん中より 0〜+1dB（声の帯の話している所）。AI の声の行は前のまま「話している間の RMS」−16dBFS。元の声の行の 50Hz より下は声の帯より 15dB 以上下・頂点は 0.95 以下で平らな頂点が無い。AI の声の行が無い回も落ちずに揃う |
 | `qa_rows` | 品質チェックの比べ方（`orig_voice_rows`）: 揃えた束は落ちない。前の書き出し（行全体の RMS で −16dBFS）の束は「元の声」で落ちる・+5dB の叫びも落ちる・元の声の行が無ければ何も言わない・AI の声の行が無ければ比べない |
 | `qa_check` | 品質チェックの「声と BGM の差」そのもの（`check_voice_vs_bgm`）: 前の書き出しの束で fail（理由に「元の声」）・揃えた束で pass（要約に「元の声」） |
@@ -68,9 +68,12 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "flag": ("render.py", "                      **({\"orig_voice\": True} if ln.get(\"orig_voice\") else {})})\n",
              "                      })\n",
              {"plan_flag"}, "時間割に元の声の印を運ばない（音の束で AI の声と同じ揃え方になる）"),
-    "caption": ("render.py", "                starts[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
+    "caption": ("render.py", "                own[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
                 "                pass\n",
                 {"caption"}, "元の声の行の字幕を行の頭から出す（声の出だしより先に出る）"),
+    "caption_prev": ("render.py", "                own[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
+                     "                own[i] = starts[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
+                     {"caption"}, "元の声の行の字幕を遅らせたぶん、前の行の字幕を延ばす（前の行の字幕が元の声の画に掛かる）"),
     "fit": ("render.py", "        y, got = OV.fit(y, target, ov_cfg)\n",
             "        y = y * db(au[\"narration_rms_dbfs\"]) / max(speech_rms(y), 1e-9)\n"
             "        got = {\"gain_db\": 0.0, \"voice_db\": 0.0, \"limited_db\": 0.0}\n",
@@ -459,6 +462,9 @@ def leg_caption(R, OV, A, case: Case) -> list[tuple[str, bool]]:
     c = caps.get(1)
     out.append((f"元の声の行の字幕（{c}コマ目）が、束の声の出だし（{v}コマ目。行の頭 {at} から間がある）と1コマ以内",
                 c is not None and v > at and abs(c - v) <= 1))
+    # 前の行の字幕は、元の声の行の頭（カットの切れ目）で消える。遅らせたぶん延ばさない
+    ends = {cp["line"]: cp["to"] for cp in p["captions"]}
+    out.append((f"前の行（AI の声）の字幕は、元の声の行の頭 {at} で消える（{ends.get(0)}）", ends.get(0) == at))
     return out
 
 

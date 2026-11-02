@@ -855,15 +855,19 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     # 字幕が声より先に出る。そこで、音の束に入るのと同じ揃え方（level_narration）をした声の出だしから出す
     # （出だしの決め方は AI の声の詰め方と同じ: いちばん大きい所から −30dB を越えたサンプルの入っているコマ）。
     # 前は配信の雑音が行の頭から −30dB の線を越えていて、たまたま行の頭と合っていた。雑音を下げたら、
-    # 浸水の回の「どうしよう」の声は行の頭から 2コマあとに出ていた（品質チェックの字幕と声のずれで落ちた）
+    # 浸水の回の「どうしよう」の声は行の頭から 2コマあとに出ていた（品質チェックの字幕と声のずれで落ちた）。
+    # 遅らせるのはその行の字幕の出はじめ（own）だけ。前の行の字幕は、今までどおり行の頭（カットの切れ目）で消す
+    # （遅らせたぶん前の行を延ばすと、前の行の字幕が元の声の行の画（本人の顔の寄り）に2コマ掛かり、
+    # 顔よけがその行の字幕を丸ごと下へ動かした。flood-p2-v5）
     nl = narr.get("lines", [])
+    own = list(starts[:-1])
     if any(ln.get("orig_voice") and "caption_from" not in ln for ln in nl):
         xs = level_narration([{"file": str(narration_wav(ln, narr, base, work)),
                                **({"orig_voice": True} if ln.get("orig_voice") else {})} for ln in nl],
                              {**style["audio"], **(edit.get("audio") or {})})
         for i, ln in enumerate(nl):
             if ln.get("orig_voice") and "caption_from" not in ln:
-                starts[i] = ln["at"] + voice_onset_frame(xs[i], spf)
+                own[i] = ln["at"] + voice_onset_frame(xs[i], spf)
     for i, ln in enumerate(narr.get("lines", [])):
         wav = narration_wav(ln, narr, base, work)
         x = decode_audio(wav, 1)[:, 0]
@@ -925,7 +929,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         nxt = starts[i + 1]
         if ln["at"] + frames <= nxt <= min(total, ln["at"] + frames + cap_st.get("bridge_frames", 0)):
             end = nxt
-        bounds = [starts[i]]
+        bounds = [own[i]]
         if len(pages) > 1:
             # 字数の比で見当をつけ、いちばん近い「声の間のあと、次に声が出るコマ」に合わせる
             weights = [reading_weight("".join(pg)) for pg in pages]
