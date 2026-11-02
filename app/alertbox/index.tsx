@@ -33,7 +33,7 @@ import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
 import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
-import { useBoxSize } from "./season/useBoxSize";
+import { useSettledBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
@@ -188,8 +188,11 @@ export default function AlertBox() {
   const [stage, setStage] = useState<AlertStage | null>(null);
   /* 面の大きさ（季節の演出・札・その人の絵の箱に渡す）。変わったときだけ描き直す。
      useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
-     （豚も）が描き直された（`season/useBoxSize.ts`） */
-  const { width: winW, height: winH } = useBoxSize();
+     （豚も）が描き直された（`season/useBoxSize.ts`）。
+     箱を手で広げているあいだは並べ直さず、アラートの面（alertRef）を transform で拡げる。
+     止まってから並べ直す（並べ直すたびに字を描き直すと重い。#1079） */
+  const alertRef = useRef<HTMLElement | null>(null);
+  const { width: winW, height: winH } = useSettledBoxSize(alertRef);
   /* その人のキャラ絵は面いっぱいに（中身の外接矩形で contain・真ん中）。字（名前・額・メッセージ）は
      キャラ絵の上下中央に重ねる（オーナーの元の仕様。2026-10-24 に戻した）。
      台本のある段は、主役が滞在中にいる帯（面の上の端）を空けて、その下にキャラ絵を置く。主役が
@@ -1123,7 +1126,7 @@ export default function AlertBox() {
         {dead && <DeadMark />}
 
         {notification && (
-          <Animated.View style={[styles.alertBox, { opacity }]}>
+          <Animated.View ref={alertRef as never} style={[styles.alertBox, { opacity }]}>
             {/* 寄付（donation）とスーパーチャット（superchat）の統合表示 */}
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
@@ -1152,6 +1155,8 @@ export default function AlertBox() {
                         : notification.amount
                     }
                     seed={notification.id}
+                    W={winW}
+                    H={winH}
                   />
                 )}
 

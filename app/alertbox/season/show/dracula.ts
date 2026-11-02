@@ -34,7 +34,7 @@ import { buildRig, type LoadedRig, type RigHandle } from "../rig/RigView";
 import { restOrigin } from "../rig/rig";
 import type { TimedCue } from "./script";
 import { Coins, dustPuffs, makeBat, pathFrames, partImage, sparkle } from "./fx";
-import { bandBottomOf, div, edgeFade, outerBoxOf, plateBoxOf, softDark, type ShowLayers } from "./layers";
+import { bandBottomOf, div, edgeFade, liveScale, outerBoxOf, plateBoxOf, softDark, type ShowLayers } from "./layers";
 import { makePoseActor } from "./poseActor";
 import { centerOf, curtainCall, every, stayAura } from "./common";
 import type { LoadedPoses } from "./poses";
@@ -408,7 +408,9 @@ export function runDracula(m: Motion, L: ShowLayers, A: DraculaAssets, cues: Tim
   /* 登場のあいだ、字はキャラ絵の上下中央ではなく上の帯に吊るす（あやとの体に字を重ねない）。
      その人の番になったら、キャラ絵の上下中央へ落とす。字の枠（index.tsx）を縦にずらすだけ */
   const slot = L.root.querySelector<HTMLElement>('[data-plate="slot"]');
-  const screenK = () => L.dark.getBoundingClientRect().width / W || 1;
+  /* 舞台の1px が面の何 px か。字の枠のずらし（面の px）と舞台の px を行き来する。
+     箱を広げている途中は面ごと拡げてあるので、その倍率（liveScale）は除く */
+  const screenK = () => (L.dark.getBoundingClientRect().width / W || 1) / liveScale(L);
   let hangDy = 0;
   const hang = () => {
     if (!slot) return;

@@ -42,6 +42,20 @@ export const UNROLL_CLOSED = "inset(-40% 100% -40% 0%)";
 export const outerBoxOf = (layer: HTMLElement): HTMLElement => layer.parentElement?.parentElement ?? layer;
 
 /**
+ * アラートの面が、いま transform で何倍に拡げられているか（ふだんは 1）。
+ *
+ * 箱を手で広げているあいだ、面は落ち着いた大きさで並べたまま transform で拡げてある
+ * （`useBoxSize.ts` の `useSettledBoxSize`）。そのあいだは画面の上の距離（getBoundingClientRect）が
+ * この倍率ぶん大きく、offset（並びの px）は変わらない。両方を足す所では offset にこれを掛けて揃える。
+ * 1% 未満は 1 に丸める（ふだんの計算を1桁も変えない）
+ */
+export function liveScale(L: ShowLayers): number {
+  const w = L.root.offsetWidth;
+  const s = w > 0 ? L.root.getBoundingClientRect().width / w : 1;
+  return Math.abs(s - 1) < 0.01 ? 1 : s;
+}
+
+/**
  * 箱の縁へ向かって 0 に溶ける、真ん中が濃い楕円の塗り（暗転・閃光）。`stops` は真ん中からの
  * [位置 %, 色] の並び。最後は必ず透明（箱の縁）。ウィジェットは画面いっぱいではないので、
  * 縁まで暗いと配信の上に暗い四角が浮く（オーナーの指摘 2026-10-24）
@@ -79,7 +93,7 @@ export function bandBottomOf(L: ShowLayers, W: number, H: number): number {
   const k = sr.width / W || 1;
   if (!el) return H * 0.2;
   const parent = el.offsetParent as HTMLElement | null;
-  const top = (parent ? parent.getBoundingClientRect().top : 0) + el.offsetTop;
+  const top = (parent ? parent.getBoundingClientRect().top : 0) + el.offsetTop * liveScale(L);
   return (top - sr.top) / k;
 }
 
@@ -109,12 +123,14 @@ export function plateBoxOf(L: ShowLayers, W: number, H: number) {
   // 枠まで辿れなかった（並びが変わった）ときは、見えている位置で
   const r = el.getBoundingClientRect();
   const at = slot && p === slot ? slot.getBoundingClientRect() : null;
-  const left = at ? at.left + x : r.left;
-  const top = at ? at.top + y : r.top;
+  // offset の和は面の並びの px。箱を広げている途中は画面の上でこの倍率ぶん大きい（liveScale）
+  const ls = liveScale(L);
+  const left = at ? at.left + x * ls : r.left;
+  const top = at ? at.top + y * ls : r.top;
   return {
     l: (left - sr.left) / k,
     t: (top - sr.top) / k,
-    r: (left + el.offsetWidth - sr.left) / k,
-    b: (top + el.offsetHeight - sr.top) / k,
+    r: (left + el.offsetWidth * ls - sr.left) / k,
+    b: (top + el.offsetHeight * ls - sr.top) / k,
   };
 }

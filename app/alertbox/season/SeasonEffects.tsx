@@ -9,7 +9,6 @@
  */
 import React, { useEffect, useMemo } from "react";
 import { Platform } from "react-native";
-import { useBoxSize } from "./useBoxSize";
 import type { SeasonTheme } from "../themes";
 import type { LoadedImage } from "./useSeason";
 import { planEffects, type BatSpawn, type FxSpawn } from "./plan";
@@ -24,10 +23,16 @@ type Props = {
   yen: number;
   /** 通知の id。同じ通知からは同じ段取りが出る */
   seed: string;
+  /**
+   * アラートの面の大きさ（px）。index.tsx の落ち着いた大きさをもらう（自分で測らない）。
+   * 箱を広げているあいだ、面は落ち着いた大きさのまま transform で拡げられているので、
+   * ここで今の大きさを測ると、拡げたうえにさらに大きく描いてしまう
+   */
+  W: number;
+  H: number;
 };
 
-export const SeasonEffects: React.FC<Props> = ({ theme, fx, durationSec, yen, seed }) => {
-  const { width: W, height: H } = useBoxSize();
+export const SeasonEffects: React.FC<Props> = ({ theme, fx, durationSec, yen, seed, W, H }) => {
 
   useEffect(() => {
     ensureSeasonCss();
