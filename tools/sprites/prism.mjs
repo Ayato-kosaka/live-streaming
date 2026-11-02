@@ -6,6 +6,7 @@
  *   console.log(prismNote());                  // 何の条件で撮ったかを1行（数に必ず添える）
  *   const ctx = await browser.newContext({ ... });
  *   await prism(ctx);                          // ページを開く前に。--no-prism なら何もしない
+ *   await prism(ctx, { scale: 0.36 });         // PRISM 100% の scale（--prism-scale 0.36 でも同じ）
  *
  * ## なぜ要るか（2026-11-02。#1078 / `docs/island-misses.md` #311）
  *
@@ -38,13 +39,56 @@
  *
  * `--no-prism` を渡すと何もしない（scale は 1 のまま）。**外した数は対照で、それで判断しない。**
  * 「この道具なしで測ると豚が2倍に写る」を見せるためだけに使う。
+ *
+ * ## scale は PRISM の % で変わる（2026-11-02。#1078）
+ *
+ * あやとのスマホで測ると、**PRISM 100% のとき scale は 0.36**、140% のとき 0.5。% に比例する。
+ * PRISM の % は「ページを何倍に拡げて見せるか」で、枠の見た目の大きさは変わらない（`nov-ref/prism-100.jpg`
+ * と `prism-160.jpg` で、枠は同じ大きさのまま豚だけが 1.6 倍に写っている）。なので
+ *
+ * - `<html>` の幅（CSS px）は % に反比例する（140% で 436 なら、100% で約 606）
+ * - Dimensions の幅（`<html>` の幅 × scale）は % に依らずほぼ一定（約 218）。**豚は CSS px で同じ大きさに描かれ、
+ *   それが % 倍に拡げて見える**
+ * - `<html>` の幅で大きさを決める部品（ハロウィンの貯金箱）は、% に依らず枠に対して同じ割合に見える。
+ *   だから **% を変えると、豚との比が変わる**（100% では 140% のときの 1.4 倍、豚より大きく見える）
+ *
+ * `--prism-scale 0.36` で scale を選べる（既定は 0.5）。箱の大きさは道具の側で合わせる
+ * （`boxAt`。140% の箱 436×776 を、Dimensions の幅が同じになるように拡げる）。
  */
 
-/** PRISM で測った `visualViewport.scale` */
+/** PRISM で測った `visualViewport.scale`（140%。今までの既定） */
 export const PRISM_SCALE = 0.5;
+
+/** PRISM の % ごとに測った scale（あやとのスマホ。100% は `/alert/perf` の「拡大 0.36」、140% は `/alert/probe`） */
+export const PRISM_SCALES = Object.freeze({ 100: 0.36, 140: 0.5 });
 
 /** `--no-prism` が渡されたか（外すのは対照だけ） */
 export const prismOff = (argv = process.argv) => argv.includes("--no-prism");
+
+/**
+ * `--prism-scale <s>` で選んだ scale（無ければ 0.5）。0 より大きく 1 以下でなければ止める
+ * （打ち間違いのまま、別の条件で撮った数を出さない）
+ */
+export function prismScale(argv = process.argv) {
+  const i = argv.indexOf("--prism-scale");
+  if (i < 0) return PRISM_SCALE;
+  const v = Number(argv[i + 1]);
+  if (!(v > 0 && v <= 1)) {
+    console.error(`--prism-scale は 0 より大きく 1 以下の数で（${argv[i + 1]}）`);
+    process.exit(2);
+  }
+  return v;
+}
+
+/**
+ * scale `s` のときの箱の大きさ。`[w, h]` は scale 0.5（PRISM 140%）のときの箱で、
+ * **Dimensions の幅（箱の幅 × scale）が同じになるように**拡げる（枠の見た目の大きさは % で変わらないので）。
+ * 例: 436×776 → scale 0.36 で 606×1078
+ */
+export function boxAt(s, [w, h]) {
+  const k = PRISM_SCALE / s;
+  return [Math.round(w * k), Math.round(h * k)];
+}
 
 /**
  * 撮る context（か page）に、PRISM の縮み方を入れる。**ページを開く前に呼ぶ。**
@@ -52,21 +96,27 @@ export const prismOff = (argv = process.argv) => argv.includes("--no-prism");
  * @param {{ off?: boolean }} [o]
  * @returns {Promise<number>} 入れた scale（外したなら 1）
  */
-export async function prism(target, { off = prismOff() } = {}) {
+export async function prism(target, { off = prismOff(), scale = prismScale() } = {}) {
   if (off) return 1;
   await target.addInitScript((s) => {
     const VV = globalThis.VisualViewport;
     if (!VV) return;
     Object.defineProperty(VV.prototype, "scale", { get: () => s, configurable: true });
-  }, PRISM_SCALE);
-  return PRISM_SCALE;
+  }, scale);
+  return scale;
 }
 
+/** scale から PRISM の何%か（測った2点を通る比例。表に無い値は「約」） */
+const zoomOf = (s) => {
+  const hit = Object.entries(PRISM_SCALES).find(([, v]) => v === s);
+  return hit ? `${hit[0]}%` : `約${Math.round((s / PRISM_SCALES[100]) * 100)}%`;
+};
+
 /** 何の条件で撮ったかの1行。**数を出すときは必ず添える**（#311 の決めごと3） */
-export function prismNote(off = prismOff()) {
+export function prismNote(off = prismOff(), scale = prismScale()) {
   return off
     ? "PRISM の縮み方: 外した（--no-prism。visualViewport.scale = 1。豚が PRISM の2倍に写る。対照の数で、これで判断しない）"
-    : `PRISM の縮み方: 入れた（visualViewport.scale = ${PRISM_SCALE}。豚は本物の配信と同じ大きさ。外すのは --no-prism）`;
+    : `PRISM の縮み方: 入れた（visualViewport.scale = ${scale}＝PRISM ${zoomOf(scale)}。豚は本物の配信と同じ大きさ。外すのは --no-prism）`;
 }
 
 /**

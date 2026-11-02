@@ -2,17 +2,32 @@
  * 投げ銭アラートの**貯金箱の大きさ**を、季節テーマと豚で並べて数で出す。
  *
  *   cd tools/sprites
- *   node alert-banksize.mjs --base http://127.0.0.1:4587                      # halloween を豚と比べる
- *   node alert-banksize.mjs --base ... --themes halloween,xmas --out /tmp/bank # 重ねた絵も残す
- *   node alert-banksize.mjs --base ... --max 3                                # 上限を広げて数だけ見る
- *   node alert-banksize.mjs --base ... --no-prism                             # 対照: 豚が 82% 前後（PRISM の2倍）に写る
+ *   node alert-banksize.mjs --base http://127.0.0.1:4587 --themes castle       # 11月の城を豚と比べる（scale 0.5 と 0.36）
+ *   node alert-banksize.mjs --base ... --themes castle --out /tmp/bank         # 重ねた絵も残す
+ *   node alert-banksize.mjs --base ... --max 3 --min 0                         # 幅を広げて数だけ見る
+ *   node alert-banksize.mjs --base ... --scales 0.5                            # PRISM 140% だけ（半分の時間）
+ *   node alert-banksize.mjs --base ... --no-prism                              # 対照: 豚が 82% 前後（PRISM の2倍）に写る
  *
  * ## 決まり（#1078、あやと 2026-11-02）
  *
- * 季節の貯金箱は、**動く範囲も含めて、幅・高さとも豚の 1.2 倍まで**。動く範囲には
- * **ときどき横切るもの（こうもりなどの通りすがり）も含める**（2026-11-02 に決めた）。
- * あやとの「邪魔」は画面に出ているもの全部の話で、通りすがりだけ外すと同じ外し方になる。
+ * 季節の貯金箱は、**動く範囲も含めて、幅・高さとも豚の 1.6 倍くらい**（既定で 1.5〜1.7 倍）。
+ * あやとの言葉は「100%のときに、豚を160%にした大きさが良い」。「くらい」なので、**小さすぎても落とす**。
+ * 動く範囲には**ときどき横切るもの（こうもりなどの通りすがり）も含める**（あやとの「邪魔」は
+ * 画面に出ているもの全部の話で、通りすがりだけ外すと同じ外し方になる）。
  * この道具で数えて通すまで、オーナーに見せない。
+ *
+ * （ハロウィンのときの上限は「1.2 倍まで」だった。11月の城から 1.6 倍くらいに改めた。ハロウィンを
+ * 今の既定で測ると、幅 2.2 倍で落ちる——10月のテーマなので、そのまま置いておく）
+ *
+ * ## PRISM の % が何でも、豚との比が同じか（scale 0.5 と 0.36）
+ *
+ * PRISM の % で `visualViewport.scale` が変わる（100% で 0.36、140% で 0.5。`prism.mjs`）。
+ * 豚は Dimensions（`<html>` の幅 × scale）で大きさを決めるので、% を変えても CSS px では同じ大きさ。
+ * `<html>` の幅で大きさを決める貯金箱は、% で豚との比が変わる（100% で 1.4 倍大きく見える）。
+ * **11月の城からは豚と同じ物差しで決める**ので、比はどの % でも同じはず。それを数で確かめるため、
+ * 既定で scale 0.5 と 0.36 の両方で撮り、**比が 5% より大きく食い違ったら落とす**（`--drift`）。
+ * 箱の大きさは scale ごとに、Dimensions の幅が同じになるように拡げる（`prism.mjs` の `boxAt`。
+ * 436×776 → 0.36 で 606×1078）。枠の見た目の大きさは % で変わらないので
  *
  * ## なぜ PRISM の条件で測るか（`docs/island-misses.md` #311）
  *
@@ -43,14 +58,14 @@
  * 走る先と芸もくじなので、15 秒で重ねていたころは、同じ条件で幅 87〜94%・高さ 32〜36% 揺れた
  * （ハロウィン、箱 436×776 で9回。2026-11-02）。境目に近いときは `--runs 3` で開き直して重ねる。
  *
- * 終了コード: 0 = 全部上限内 / 1 = 上限を超えた季節の貯金箱がある / 2 = 測れなかった
+ * 終了コード: 0 = 全部 1.5〜1.7 倍で、scale で比が変わらない / 1 = 外れた（大きすぎ・小さすぎ・scale で比が変わる） / 2 = 測れなかった
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { PNG } from "pngjs";
 import { chromePath } from "./chrome.mjs";
-import { prism, prismNote, prismOff, prismProbe, PRISM_SCALE } from "./prism.mjs";
+import { boxAt, prism, prismNote, prismOff, prismProbe, prismScale, PRISM_SCALE, PRISM_SCALES } from "./prism.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -71,12 +86,23 @@ const fill = arg("fill", "60");
 const frames = Math.max(2, Math.round(Number(arg("frames", "180"))));
 const every = Number(arg("every", "500"));
 const runs = Math.max(1, Math.round(Number(arg("runs", "1"))));
-const MAX = Number(arg("max", "1.2"));
+const MAX = Number(arg("max", "1.7"));
+const MIN = Number(arg("min", "1.5"));
 if (!(MAX > 0)) die(`--max は正の数で（${arg("max")}）`);
+if (!(MIN >= 0 && MIN <= MAX)) die(`--min は 0 以上 --max 以下で（${arg("min")}）`);
+/** scale ごとの比の食い違いの上限（相対）。豚と同じ物差しなら 0 に近い */
+const DRIFT = Number(arg("drift", "0.05"));
 const ALPHA = Number(arg("alpha", "8"));
 const outArg = arg("out", null);
 const out = outArg ? resolve(outArg) : null;
 const off = prismOff();
+/* scale は `--scales`（既定 0.5 と 0.36）。`--prism-scale` だけ渡されたら、その1つ。外すとき（--no-prism）は1回だけ */
+const scales = off
+  ? [1]
+  : process.argv.includes("--prism-scale") && !process.argv.includes("--scales")
+    ? [prismScale()]
+    : arg("scales", `${PRISM_SCALE},${PRISM_SCALES[100]}`).split(",").map(Number);
+if (!scales.every((v) => v > 0 && v <= 1)) die(`--scales は 0 より大きく 1 以下の数をカンマで（${arg("scales")}）`);
 /** 通りすがりが必ず1回横切りきる長さ（上の「なぜ 90 秒か」） */
 const VISITOR_MS = 90000;
 
@@ -152,11 +178,11 @@ function savePng(acc, s, path) {
   writeFileSync(path, PNG.sync.write(img));
 }
 
-async function measureOnce(browser, theme, [W, H], acc) {
+async function measureOnce(browser, theme, [W, H], acc, scale) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   try {
     // ページを開く前に入れる（Dimensions は読み込みの最初に読まれる）
-    await prism(ctx, { off });
+    await prism(ctx, { off, scale });
     await ctx.route("**/*", (r) => {
       const u = r.request().url();
       return u.startsWith(base) || u.startsWith("data:") || u.startsWith("blob:") ? r.continue() : r.abort();
@@ -167,7 +193,7 @@ async function measureOnce(browser, theme, [W, H], acc) {
     const q = new URLSearchParams({ preview: "bank", fill, theme });
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
     const probe = await prismProbe(page);
-    const want = off ? 1 : PRISM_SCALE;
+    const want = off ? 1 : scale;
     if (probe.scale !== want) throw new Error(`visualViewport.scale が ${probe.scale}（${want} のはず。PRISM の縮み方が効いていない）`);
 
     const shoot = async () => PNG.sync.read(await page.screenshot({ omitBackground: true, animations: "allow" }));
@@ -202,14 +228,14 @@ async function measureOnce(browser, theme, [W, H], acc) {
 }
 
 /** `runs` 回開き直して（走る先と芸はくじなので、回ごとに道が違う）、全部を1枚に重ねる */
-async function measure(browser, theme, size) {
+async function measure(browser, theme, size, scale) {
   const [W, H] = size;
   const acc = makeAcc(W, H);
   let one;
   let themeFiles = 0;
   let span = 0;
   for (let k = 0; k < runs; k++) {
-    one = await measureOnce(browser, theme, size, acc);
+    one = await measureOnce(browser, theme, size, acc, scale);
     themeFiles = Math.min(k === 0 ? Infinity : themeFiles, one.themeFiles);
     span += one.span;
   }
@@ -218,7 +244,7 @@ async function measure(browser, theme, size) {
   if (s.w >= W && s.h >= H) throw new Error("箱いっぱいが塗られている（地が透明になっていない）");
   let png = null;
   if (out) {
-    png = join(out, `${W}x${H}-${theme}${off ? "-noprism" : ""}.png`);
+    png = join(out, `${W}x${H}-${theme}${off ? "-noprism" : `-s${scale}`}.png`);
     savePng(acc, s, png);
   }
   return { theme, W, H, ...s, themeFiles, span, probe: one.probe, png };
@@ -229,8 +255,11 @@ const times = (x) => `${x.toFixed(2)}倍`;
 
 async function main() {
   if (out) mkdirSync(out, { recursive: true });
-  console.log(prismNote(off));
-  console.log(`上限: 動く範囲も含めて、幅・高さとも豚の ${MAX} 倍まで（fill ${fill}%、${every / 1000} 秒おき ${frames} コマ${runs > 1 ? ` × 開き直し ${runs} 回` : ""}を重ねる）`);
+  console.log(scales.map((sc) => prismNote(off, sc)).join("\n"));
+  console.log(
+    `合格: 動く範囲も含めて、幅・高さとも豚の ${MIN}〜${MAX} 倍（fill ${fill}%、${every / 1000} 秒おき ${frames} コマ${runs > 1 ? ` × 開き直し ${runs} 回` : ""}を重ねる）` +
+      (scales.length > 1 ? `。scale ごとの比の食い違いは ${Math.round(DRIFT * 100)}% まで` : "")
+  );
   if (frames * every < VISITOR_MS) {
     console.log(
       `※ 重ねる長さが ${((frames * every) / 1000).toFixed(0)} 秒で、${VISITOR_MS / 1000} 秒より短い。` +
@@ -238,73 +267,103 @@ async function main() {
     );
   }
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
-  const over = [];
+  const bad = [];
   const broken = [];
-  const settle = (theme, size) =>
-    measure(browser, theme, size).then(
+  /** テーマ × 箱（scale 0.5 のときの大きさ）ごとに、scale → 比 */
+  const ratios = new Map();
+  const settle = (theme, size, sc) =>
+    measure(browser, theme, size, sc).then(
       (r) => ({ r }),
       (e) => ({ err: String(e.message ?? e).slice(0, 200) })
     );
   try {
-    // 箱ごと・テーマごとに同時に撮り始める（どれも 90 秒かかる）。出すのは箱の順
-    const pending = sizes.map((size) => Promise.all([settle("none", size), ...themes.map((th) => settle(th, size))]));
-    for (const [k, size] of sizes.entries()) {
-      const [W, H] = size;
-      const [pigGot, ...got] = await pending[k];
-      if (pigGot.err) {
-        broken.push(`${W}x${H} 豚: ${pigGot.err}`);
-        continue;
-      }
-      const pig = pigGot.r;
-      console.log(`\n■ 箱 ${W}×${H}（Dimensions の幅 ${pig.probe.dimW} / <html> の幅 ${pig.probe.boxW}。${pig.span.toFixed(1)} 秒ぶん重ねた）`);
-      const row = (r) =>
-        `幅 ${String(r.w).padStart(4)}px（${pct(r.w, W).padStart(6)}）  高さ ${String(r.h).padStart(4)}px（${pct(r.h, H).padStart(6)}）  面積 ${pct(r.painted, W * H).padStart(6)}`;
-      console.log(`  ${"豚".padEnd(10)} ${row(pig)}${pig.png ? `  ${pig.png}` : ""}`);
-      for (const [i, theme] of themes.entries()) {
-        if (got[i].err) {
-          broken.push(`${W}x${H} ${theme}: ${got[i].err}`);
-          console.log(`  ${theme.padEnd(10)} 測れない: ${got[i].err}`);
+    // scale は順に（同時に撮る数を、前と同じ 箱の数 ×（豚＋テーマ）に抑える）。箱ごと・テーマごとは同時に
+    for (const sc of scales) {
+      const boxes = sizes.map((base) => ({ base, size: off ? base : boxAt(sc, base) }));
+      const pending = boxes.map(({ size }) => Promise.all([settle("none", size, sc), ...themes.map((th) => settle(th, size, sc))]));
+      for (const [k, { base, size }] of boxes.entries()) {
+        const [W, H] = size;
+        const [pigGot, ...got] = await pending[k];
+        if (pigGot.err) {
+          broken.push(`scale ${sc} ${W}x${H} 豚: ${pigGot.err}`);
           continue;
         }
-        const r = got[i].r;
-        if (!r.themeFiles) {
-          broken.push(`${W}x${H} ${theme}: 季節の絵を1枚も読んでいない（テーマの名前が違う？）`);
-          console.log(`  ${theme.padEnd(10)} 測れない: 季節の絵を1枚も読んでいない`);
-          continue;
-        }
-        if (r.l === pig.l && r.t === pig.t && r.r === pig.r && r.b === pig.b && r.painted === pig.painted) {
-          broken.push(`${W}x${H} ${theme}: 重ねた形が豚と同じ（季節の貯金箱が出ずに豚に落ちた）`);
-          console.log(`  ${theme.padEnd(10)} 測れない: 豚に落ちた`);
-          continue;
-        }
-        const kw = r.w / pig.w;
-        const kh = r.h / pig.h;
-        const ka = r.painted / pig.painted;
-        const bad = kw > MAX || kh > MAX;
+        const pig = pigGot.r;
         console.log(
-          `  ${theme.padEnd(10)} ${row(r)}  豚に対して 幅 ${times(kw)} / 高さ ${times(kh)} / 面積 ${times(ka)}` +
-            (bad ? `  ← 上限 ${MAX} 倍を超えた（幅 ${Math.floor(pig.w * MAX)}px・高さ ${Math.floor(pig.h * MAX)}px まで）` : "") +
-            (r.png ? `  ${r.png}` : "")
+          `\n■ scale ${sc}・箱 ${W}×${H}（Dimensions の幅 ${pig.probe.dimW} / <html> の幅 ${pig.probe.boxW}。${pig.span.toFixed(1)} 秒ぶん重ねた）`
         );
-        if (bad) over.push(`${W}x${H} ${theme}: 幅 ${times(kw)} / 高さ ${times(kh)}`);
+        const row = (r) =>
+          `幅 ${String(r.w).padStart(4)}px（${pct(r.w, W).padStart(6)}）  高さ ${String(r.h).padStart(4)}px（${pct(r.h, H).padStart(6)}）  面積 ${pct(r.painted, W * H).padStart(6)}`;
+        console.log(`  ${"豚".padEnd(10)} ${row(pig)}${pig.png ? `  ${pig.png}` : ""}`);
+        for (const [i, theme] of themes.entries()) {
+          const tag = `scale ${sc} ${W}x${H} ${theme}`;
+          if (got[i].err) {
+            broken.push(`${tag}: ${got[i].err}`);
+            console.log(`  ${theme.padEnd(10)} 測れない: ${got[i].err}`);
+            continue;
+          }
+          const r = got[i].r;
+          if (!r.themeFiles) {
+            broken.push(`${tag}: 季節の絵を1枚も読んでいない（テーマの名前が違う？）`);
+            console.log(`  ${theme.padEnd(10)} 測れない: 季節の絵を1枚も読んでいない`);
+            continue;
+          }
+          if (r.l === pig.l && r.t === pig.t && r.r === pig.r && r.b === pig.b && r.painted === pig.painted) {
+            broken.push(`${tag}: 重ねた形が豚と同じ（季節の貯金箱が出ずに豚に落ちた）`);
+            console.log(`  ${theme.padEnd(10)} 測れない: 豚に落ちた`);
+            continue;
+          }
+          const kw = r.w / pig.w;
+          const kh = r.h / pig.h;
+          const ka = r.painted / pig.painted;
+          const why = [];
+          if (kw > MAX || kh > MAX) why.push(`上限 ${MAX} 倍を超えた（幅 ${Math.floor(pig.w * MAX)}px・高さ ${Math.floor(pig.h * MAX)}px まで）`);
+          if (kw < MIN || kh < MIN) why.push(`下限 ${MIN} 倍に届かない（幅 ${Math.ceil(pig.w * MIN)}px・高さ ${Math.ceil(pig.h * MIN)}px から）`);
+          console.log(
+            `  ${theme.padEnd(10)} ${row(r)}  豚に対して 幅 ${times(kw)} / 高さ ${times(kh)} / 面積 ${times(ka)}` +
+              (why.length ? `  ← ${why.join("・")}` : "") +
+              (r.png ? `  ${r.png}` : "")
+          );
+          if (why.length) bad.push(`${tag}: 幅 ${times(kw)} / 高さ ${times(kh)}`);
+          const key = `${theme} ${base[0]}x${base[1]}`;
+          if (!ratios.has(key)) ratios.set(key, []);
+          ratios.get(key).push({ sc, kw, kh });
+        }
       }
     }
   } finally {
     await browser.close();
   }
+  // scale を変えても、豚との比が同じか（豚と同じ物差しなら食い違わない）
+  if (scales.length > 1) {
+    console.log("\n■ scale ごとの比（PRISM の % を変えても、豚との比が同じか）");
+    for (const [key, rs] of ratios) {
+      if (rs.length < 2) continue;
+      const span = (k) => Math.max(...rs.map((x) => x[k])) / Math.min(...rs.map((x) => x[k])) - 1;
+      const dw = span("kw");
+      const dh = span("kh");
+      const ng = dw > DRIFT || dh > DRIFT;
+      console.log(
+        `  ${key.padEnd(22)} ${rs.map((x) => `scale ${x.sc}: 幅 ${times(x.kw)}・高さ ${times(x.kh)}`).join(" / ")}` +
+          `  食い違い 幅 ${(dw * 100).toFixed(1)}%・高さ ${(dh * 100).toFixed(1)}%` +
+          (ng ? `  ← ${Math.round(DRIFT * 100)}% を超えた（豚と物差しが違う）` : "")
+      );
+      if (ng) bad.push(`${key}: scale で比が ${(Math.max(dw, dh) * 100).toFixed(1)}% 変わる（豚と物差しが違う）`);
+    }
+  }
   console.log("");
   if (off) console.log("（対照）PRISM の縮み方を外した数。豚が PRISM の2倍に写っている。これで判断しない");
-  if (over.length) {
-    console.log(`上限 ${MAX} 倍を超えた ${over.length}:`);
-    for (const o of over) console.log(`  ${o}`);
+  if (bad.length) {
+    console.log(`外れた ${bad.length}:`);
+    for (const o of bad) console.log(`  ${o}`);
   }
   if (broken.length) {
     console.log(`測れなかった ${broken.length}:`);
     for (const b of broken) console.log(`  ${b}`);
     process.exit(2);
   }
-  if (!over.length) console.log(`全部、豚の ${MAX} 倍まで`);
-  process.exit(over.length ? 1 : 0);
+  if (!bad.length) console.log(`全部、豚の ${MIN}〜${MAX} 倍${scales.length > 1 ? `で、scale を変えても比が ${Math.round(DRIFT * 100)}% 以内` : ""}`);
+  process.exit(bad.length ? 1 : 0);
 }
 
 main().catch((e) => {
