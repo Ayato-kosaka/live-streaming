@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__flood-p2-v4",
+ "mode": "render",
+ "dest": "render/flood-p2-v4/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/flood-p2-v4.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 1006,
+  "tar_gz": 818,
+  "encrypted": 832
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 832,
+   "sha256": "f7a37ae1f849b5e7134836315c1544a094c61df23be4edbab0f6104ea16663e0"
+  }
+ ],
+ "hmac_sha256": "baa2286e033cf5dc272cb5d897be5454575fe3a27f8178295491797fa76dafc4",
+ "pubkey_sha256": "f32d70329ee9bd6615c88e2bf23ac0999516bc878c2053f54ea1a0c6152d060d",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-02T18:07:22+00:00",
+ "nonce": "836db86f578fcd90e05936da"
+}
