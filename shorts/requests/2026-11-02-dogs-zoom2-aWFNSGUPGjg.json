@@ -1,0 +1,11 @@
+{
+ "mode": "zoom",
+ "video": "aWFNSGUPGjg",
+ "ranges": [
+  "0:15:20-0:16:10"
+ ],
+ "fps": 0.5,
+ "grid": "5x4",
+ "tile": 360,
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAlYbIelcEJW0k1gO7nyj0\ns/RDttJUHGLhySRvozysf7F4MJsRChR/r331OkZuMLrxuIyBdoqAzgjxKDvwJxOG\nVaw6byPmEll5KUDSFbJVLDTVOB9yAUWnHK5T8IPKzQfGIdaKyWkVWoL3pw3F4yNM\ntBY+QQSixGYhOKzuDh61PtfxxslBAtqXdjmyjzJhYhnBAk/Z+9JVBkTOcYznUC6f\nLDTtL1M3S2Mj6PDNyjzsudE4L4w65h9sQrzg72aNgBD42XP+TLaIYA8j7vazUbls\nqRhN9OBwQdCAwlS1ALFzmsW48XnAPAsLGEUyWpfrljTR3T7YIGCOXHmcEhcYKz3c\ndaJ9nQu8YEdkgwQ41xTS2qdwhdyCPCSFXaNIm9us+y/y1YI5S5icl8dukABfWw+O\nuVJ+D8awqi5ZMJRnjMw17vPYZBabJrV6nHrSSiOb70owAADJ1ldPLXxHsZQ4Deyb\nFlqC4bl1mG5BTkhzdyhuu8xvmms16/wHMM/46l5W+1ENAgMBAAE=\n-----END PUBLIC KEY-----\n"
+}
