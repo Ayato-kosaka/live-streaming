@@ -29,10 +29,10 @@
 | --- | --- |
 | `measure` | 物差し: 1kHz の正弦（振幅 0.1）が −23.01dB。45Hz の揺れ（振幅 0.5）や 6kHz を足しても動かない（声の帯の外）。半分が無音でも動かない（門）。12dB 小さい後半は数え、26dB 小さい後半は数えない（いちばん大きい窓から 20dB の門） |
 | `clean` | 整える: 50Hz より下が声の帯より 20dB 以上下がる・120〜250Hz のこもりが 3dB 以上下がる・言葉のない所の雑音が話している所に比べて 3〜12dB 下がる・言葉の帯（500〜3000Hz）の形は元のまま（相関 0.9 以上）・長さが同じ |
-| `plan_flag` | 書き出しの時間割（`plan`）が、指示書の行の `orig_voice` を音の束の行まで運ぶ（AI の声の行には付けない） |
+| `plan_flag` | 書き出しの時間割（`plan`）が、指示書の行の `orig_voice`・`voice_src`（声だけを配信の別の秒から取った行）を音の束の行まで運ぶ（AI の声の行には付けない） |
 | `caption` | 元の声の行（頭の 0.1秒は雑音だけ）の字幕が、音の束の声の出だしのコマと1コマ以内で出る（行の頭からではない）。AI の声の行は行の頭から。前の行の字幕は元の声の行の頭（カットの切れ目）で消える（遅らせたぶん延ばさない） |
 | `stems` | 書き出しの声の束（`audio_stems`）: 元の声の行が、AI の声の行の真ん中より 0〜+1dB（声の帯の話している所）。AI の声の行は前のまま「話している間の RMS」−16dBFS。元の声の行の 50Hz より下は声の帯より 15dB 以上下・頂点は 0.95 以下で平らな頂点が無い。AI の声の行が無い回も落ちずに揃う |
-| `qa_rows` | 品質チェックの比べ方（`orig_voice_rows`）: 揃えた束は落ちない。前の書き出し（行全体の RMS で −16dBFS）の束は「元の声」で落ちる・+5dB の叫びも落ちる・元の声の行が無ければ何も言わない・AI の声の行が無ければ比べない |
+| `qa_rows` | 品質チェックの比べ方（`orig_voice_rows`）: 揃えた束は落ちない。前の書き出し（行全体の RMS で −16dBFS）の束は「元の声」で落ちる・+5dB の叫びも落ちる・元の声の行が無ければ何も言わない・AI の声の行が無ければ比べない・voice_src の行も元の声として比べて、行に voice_src と書く |
 | `qa_check` | 品質チェックの「声と BGM の差」そのもの（`check_voice_vs_bgm`）: 前の書き出しの束で fail（理由に「元の声」）・揃えた束で pass（要約に「元の声」） |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
@@ -65,9 +65,15 @@ SPF = SR // FPS
 # 雑音（nr）を外すと、話していない所の雑音が物差しの門（いちばん大きい窓から 20dB）に入り、やはり届かない（−0.8dB）。
 # 揺れ（hpf）だけを外したときは声の帯は届く（+0.4dB）ので、品質チェックではなく束の「50Hz より下」で落ちる
 CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
-    "flag": ("render.py", "                      **({\"orig_voice\": True} if ln.get(\"orig_voice\") else {})})\n",
-             "                      })\n",
+    "flag": ("render.py", "                      **({\"orig_voice\": True} if ln.get(\"orig_voice\") else {}),\n",
+             "",
              {"plan_flag"}, "時間割に元の声の印を運ばない（音の束で AI の声と同じ揃え方になる）"),
+    "flag_vsrc": ("render.py", "                      **({\"voice_src\": True} if ln.get(\"voice_src\") else {})})\n",
+                  "                      })\n",
+                  {"plan_flag"}, "時間割に voice_src の印を運ばない（品質チェックの行に、声だけ別の秒の行だと出ない）"),
+    "qa_vsrc": ("../qa/audio.py", "                     **({\"voice_src\": True} if lines[i].get(\"voice_src\") else {})})\n",
+                "                     })\n",
+                {"qa_rows"}, "品質チェックの行に voice_src と書かない"),
     "caption": ("render.py", "                own[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
                 "                pass\n",
                 {"caption"}, "元の声の行の字幕を行の頭から出す（声の出だしより先に出る）"),
@@ -421,7 +427,7 @@ def plan_of(R, case: Case) -> dict:
          "cuts": [{"src": "s", "in": 0, "out": 110}],
          "narration": {"engine": "files", "lines": [
              {"at": 0, "text": "テスト", "file": str(case.files[0])},
-             {"at": 55, "text": "テスト", "file": str(case.quiet), "orig_voice": True}]}}
+             {"at": 55, "text": "テスト", "file": str(case.quiet), "orig_voice": True, "voice_src": True}]}}
     ep = d / "edit_orig.json"
     ep.write_text(json.dumps(e, ensure_ascii=False), encoding="utf-8")
     ed, style, base = R.load(ep)
@@ -448,7 +454,8 @@ def onset_frame(x) -> int:
 def leg_plan_flag(R, OV, A, case: Case) -> list[tuple[str, bool]]:
     ln = plan_of(R, case)["plan"]["narration"]
     return [(f"元の声の行に印（{ln[1].get('orig_voice')}）", ln[1].get("orig_voice") is True),
-            (f"AI の声の行には印が無い（{ln[0].get('orig_voice')}）", "orig_voice" not in ln[0])]
+            (f"声だけを配信の別の秒から取った行の印 voice_src も運ぶ（{ln[1].get('voice_src')}）", ln[1].get("voice_src") is True),
+            (f"AI の声の行には印が無い（{ln[0].get('orig_voice')}）", "orig_voice" not in ln[0] and "voice_src" not in ln[0])]
 
 
 def leg_caption(R, OV, A, case: Case) -> list[tuple[str, bool]]:
@@ -530,6 +537,12 @@ def leg_qa_rows(R, OV, A, case: Case) -> list[tuple[str, bool]]:
     only = {**plan, "narration": [dict(ln, orig_voice=True) for ln in plan["narration"]]}
     o5, b5 = A.orig_voice_rows(case.mono, only, SPF)
     out.append((f"AI の声の行が無ければ比べない（{(o5 or {}).get('note')} / {b5}）", o5 is not None and "note" in o5 and b5 == []))
+    # voice_src の行（声だけを配信の別の秒から取った行。build_edit.py が orig_voice の印も付ける）も元の声として比べ、そう書く
+    vs = {**plan, "narration": [dict(ln, voice_src=True) if ln.get("orig_voice") else ln for ln in plan["narration"]]}
+    o6, b6 = A.orig_voice_rows(case.old_stem(), vs, SPF)
+    r6 = (o6 or {}).get("lines", [{}])[0]
+    out.append((f"voice_src の行も元の声として比べて落とし、行に voice_src と書く（{r6.get('voice_src')}・{len(b6)}件）",
+                r6.get("voice_src") is True and len(b6) == 1))
     return out
 
 

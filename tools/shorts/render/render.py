@@ -874,7 +874,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         frames = math.ceil(len(x) / spf)
         # 元の声の行（F-051）の印は音の束まで運ぶ（audio_stems が AI の声と別の揃え方をする。品質チェックも読む）
         lines.append({"at": ln["at"], "frames": frames, "file": str(wav), "text": ln["text"],
-                      **({"orig_voice": True} if ln.get("orig_voice") else {})})
+                      **({"orig_voice": True} if ln.get("orig_voice") else {}),
+                      **({"voice_src": True} if ln.get("voice_src") else {})})
         if ln["at"] + frames > total:
             print(f"注意: {i}行目のナレーションが動画の終わりを越える（{ln['at'] + frames} > {total}）",
                   file=sys.stderr)

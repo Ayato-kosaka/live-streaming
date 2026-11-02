@@ -21,6 +21,7 @@
 | `over_cap_fits` | 上限を越えるが、上限で読んで59秒以内 → 上限で読ませ、注意を1行出して組む（終了コード 0）。注意に出す見込みの尺が、組んだ指示書の尺と同じ。上限は様式から読む（様式を 1.3 にすれば 1.3） |
 | `over_60_stops` | 上限で読んでも59秒を越える（声だけなら入るが、行の間と末尾を足すと越える）→ 指示書を書かずに終了コード 2。尺・何%・何字を出し、その数が下の手計算と合う。言われたとおり減らせば通る |
 | `card_own` | 題の札が1行目と同じ言葉（国旗・改行・句読点だけ違う）なら、札が1行目の字幕を兼ねる（字幕を出さない・札に line）。別の言葉（あやと F-043「札は手段と日数、1行目は回れた中身」）なら兼ねない（1行目の字幕を出す・札に line を持たせない・札は題の行の終わりか4秒の早いほうで消す） |
+| `voice_src` | 声だけを配信の別の秒から取った行（spec の `voice_src`。画は別の秒。猫の回 p2）: 本番の声で組むと、その行に `orig_voice`・`voice_src` の印が行の最後に付く（書き出しが元の声として揃える）・声は声の一覧のその行の音（`audio`）で、元の音は切らない・ほかの行には付かない・仮の声（`--voice` 無し）なら付けない・`orig_voice` と両方ある行は元の声の行として組む |
 | `orig_voice` | 元の声の行（あやと F-051「叫びは配信の本人の声で」）: 声の一覧にその行のぶんが無くても組む（あれば止まる）・その行の声はカットと同じ区間の元の音（`file`）で、仮の声にも倍率にも数えない・画は声と同じコマから取り、最後のカットだけ行の間ぶん延ばす・【大】でも声を遅らせない・延ばした画が until を越えるなら入りをずらさずに止まる |
 
 数の手計算（`expect_frames`）は `build_edit.py` の関数を使わずに書く。見張りの側が本物と同じ式を
@@ -84,12 +85,13 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "card_to": ("            edit[\"title\"][\"to\"] = min(edit[\"title\"][\"to\"], row[\"from\"] + row[\"frames\"])\n",
                 "            pass\n",
                 {"card_own"}, "兼ねない札を題の行の終わりで消さない（2行目の字幕と並ぶ）"),
-    # 元の声の行（帳面 F-051。叫びは配信の本人の声で流す）
+    # 元の声の行（帳面 F-051。叫びは配信の本人の声で流す）。voice_src の足も「orig_voice と両方ある行は元の声の行」を
+    # 当てるので、元の声の行が組めなくなる2つ（orig_count・orig_tts）ではそちらも落ちる
     "orig_count": ("        if len(voice) != len(rows) - len(orig_rows):\n", "        if len(voice) != len(rows):\n",
-                   {"orig_voice"}, "元の声の行のぶんまで声の数を求める（その行の声は作らないので、組めない）"),
+                   {"orig_voice", "voice_src"}, "元の声の行のぶんまで声の数を求める（その行の声は作らないので、組めない）"),
     "orig_tts": ("        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True, \"file\": str(wav)}\n",
                  "        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True}\n",
-                 {"orig_voice"}, "元の声の行に元の音を置かない（字を AI の声か仮の声で読ませる）"),
+                 {"orig_voice", "voice_src"}, "元の声の行に元の音を置かない（字を AI の声か仮の声で読ませる）"),
     "orig_tempo": ("        chars = sum(spoken_chars(lines[k][\"text\"]) for k in spoken)\n",
                    "        chars = sum(spoken_chars(ln[\"text\"]) for ln in lines)\n",
                    {"orig_voice"}, "喋る速さの倍率に、速めない元の声の行の字まで数える"),
@@ -98,6 +100,15 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                    {"orig_voice"}, "元の声の行のカットも until に合わせて入りをずらす（声と画の秒がずれる）"),
     "orig_peak": ("    return ORIG_PEAK / peak if peak > ORIG_PEAK else 1.0\n", "    return 1.0\n",
                   {"orig_voice"}, "元の声の 1.0 を越える頂点を下げない（16bit に書くと平らに割れる）"),
+    # 声だけを配信の別の秒から取った行（spec の voice_src。猫の回 p2、#1086）
+    "vsrc_mark": ("            lines[i][\"orig_voice\"] = True\n            lines[i][\"voice_src\"] = True\n",
+                  "            pass\n",
+                  {"voice_src"}, "voice_src の行に元の声の印を付けない（AI の声と同じ行全体の RMS で揃い、小さく聞こえる）"),
+    "vsrc_draft": ("    if voice is not None:\n        # voice_src の行も、", "    if True:\n        # voice_src の行も、",
+                   {"voice_src"}, "仮の声（--voice 無し）の行にも元の声の印を付ける（Open JTalk の声を配信の声として整える）"),
+    "vsrc_both": ("    vsrc_rows = {i for i, r in enumerate(rows) if r.get(\"voice_src\") and i not in orig_rows}\n",
+                  "    vsrc_rows = {i for i, r in enumerate(rows) if r.get(\"voice_src\")}\n",
+                  {"voice_src"}, "orig_voice と voice_src の両方がある行にも voice_src の印を付ける（声と画が同じ秒の行なのに、別の秒の声と読まれる）"),
     "orig_pre": ("            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
@@ -158,12 +169,15 @@ class Bench:
         self.clips = clips
 
     def run(self, per_line: list[int], natural: float, cap: float = CAP,
-            card: tuple[str, str] | None = None, orig: dict | None = None) -> dict:
+            card: tuple[str, str] | None = None, orig: dict | None = None,
+            vsrc: dict | None = None) -> dict:
         """1回組む。終了コード・標準出力と標準エラー・できた指示書（無ければ None）・測った倍率。
 
         card =（1行目の読み上げ, 題の札）を渡すと、1行目を題の札の行にする。
         orig = {"row", "cuts", "voices"（声の一覧に入れる文の数。None なら仮の声）, "big"} を渡すと、
         その行を元の声の行（orig_voice）にする。
+        vsrc = {"row", "voices"（True なら全部の行の声を声の一覧に入れる。False なら仮の声）} を渡すと、
+        その行を声だけが配信の音の行（voice_src）にする（orig と同じ行にしてもよい）。
         """
         self.n += 1
         d = self.tmp / f"run{self.n}"
@@ -192,6 +206,13 @@ class Bench:
                     vs.append({"plan": "T", "file": "extra.wav", "caption": ORIG_LINE})
                 vp = d / "lines.json"
                 vp.write_text(json.dumps(vs, ensure_ascii=False))
+                extra += ["--voice", str(vp)]
+        if vsrc is not None:
+            rows[vsrc["row"]]["voice_src"] = "配信の声（0:03:00.0〜0:03:02.0。画は別の秒）"
+            if vsrc.get("voices") and orig is None:
+                vp = d / "lines.json"
+                vp.write_text(json.dumps([{"plan": "T", "file": f"v{k:02d}.wav", "caption": rr["line"]}
+                                          for k, rr in enumerate(rows)], ensure_ascii=False))
                 extra += ["--voice", str(vp)]
         spec = d / "spec_T.json"
         spec.write_text(json.dumps(sp, ensure_ascii=False))
@@ -381,12 +402,48 @@ def leg_orig_voice(b: Bench):
     return out
 
 
+VSRC_ROW = 4                # voice_src の行（hold・【大】・元の声の行とは別の行）
+
+
+def leg_voice_src(b: Bench):
+    """声だけを配信の別の秒から取った行（spec の voice_src）: 本番の声で組めば、書き出しが元の声として揃える印が付く"""
+    per_line, natural = [17] * 10, 6.6
+    ra = b.run(per_line, natural, vsrc={"row": VSRC_ROW, "voices": True})
+    lines = (((ra["edit"] or {}).get("narration") or {}).get("lines") or [])
+    ln = lines[VSRC_ROW] if len(lines) > VSRC_ROW else {}
+    others = [x for k, x in enumerate(lines) if k != VSRC_ROW]
+    out = [(f"組む（終了コード {ra['rc']}）・声の一覧は voice_src の行のぶんも入れて {len(per_line)}文",
+            ra["rc"] == 0 and len(lines) == len(per_line)),
+           (f"その行に orig_voice・voice_src の印（{ {k: ln.get(k) for k in ('orig_voice', 'voice_src')} }）",
+            ln.get("orig_voice") is True and ln.get("voice_src") is True),
+           (f"印は行の最後（担当の手の印と同じ並び。{list(ln)}）", list(ln)[-2:] == ["orig_voice", "voice_src"]),
+           (f"声は声の一覧のその行の音（audio {str(ln.get('audio', ''))[-7:]}）・元の音は切らない（{ra['orig_calls']}）",
+            str(ln.get("audio", "")).endswith(f"v{VSRC_ROW:02d}.wav") and "file" not in ln and ra["orig_calls"] == []),
+           ("ほかの行には印が付かない", all("orig_voice" not in x and "voice_src" not in x for x in others))]
+    # 仮の声（--voice 無し）: Open JTalk の声は配信の声ではないので印を付けない
+    rb = b.run(per_line, natural, vsrc={"row": VSRC_ROW, "voices": False})
+    lb = (((rb["edit"] or {}).get("narration") or {}).get("lines") or [])
+    out.append((f"仮の声で組むと印を付けない（終了コード {rb['rc']}・{sorted(lb[VSRC_ROW]) if len(lb) > VSRC_ROW else None}）",
+                rb["rc"] == 0 and len(lb) > VSRC_ROW and "orig_voice" not in lb[VSRC_ROW]
+                and "voice_src" not in lb[VSRC_ROW]))
+    # orig_voice と voice_src の両方がある行は、元の声の行（声と画が同じ秒）として組む
+    cuts = [{"t": "0:02:00.0", "len": 1.6}]
+    rc_ = b.run(per_line, natural, orig={"row": ORIG_ROW, "cuts": cuts, "voices": len(per_line) - 1},
+                vsrc={"row": ORIG_ROW})
+    lc = (((rc_["edit"] or {}).get("narration") or {}).get("lines") or [])
+    lo = lc[ORIG_ROW] if len(lc) > ORIG_ROW else {}
+    out.append((f"orig_voice と両方ある行は元の声の行（終了コード {rc_['rc']}・{sorted(lo)}）",
+                rc_["rc"] == 0 and lo.get("orig_voice") is True and "voice_src" not in lo and "file" in lo))
+    return out
+
+
 LEGS = {
     "under_cap": leg_under_cap,
     "over_cap_fits": leg_over_cap_fits,
     "over_60_stops": leg_over_60_stops,
     "card_own": leg_card_own,
     "orig_voice": leg_orig_voice,
+    "voice_src": leg_voice_src,
 }
 
 

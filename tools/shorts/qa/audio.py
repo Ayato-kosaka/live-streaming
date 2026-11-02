@@ -106,6 +106,8 @@ def voice_level_db(x: np.ndarray) -> float:
 def orig_voice_rows(narr: np.ndarray, plan: dict, spf: int) -> tuple[dict | None, list[str]]:
     """元の声の行を、AI の声の行の真ん中と同じ物差しで比べる。(測った値, 落ちた理由) を返す。
 
+    元の声の行は、時間割の行の orig_voice の印で見分ける（声と画が同じ秒の行も、声だけを配信の別の秒から取った
+    voice_src の行も、build_edit.py が印を付ける）。印の無い行は AI の声として真ん中に数える。
     元の声の行が無い・AI の声の行が無い（比べる相手が無い）ときは (None か理由だけの値, [])。
     narr は声の束（1ch）。行の区間は時間割の at〜at+frames（その行の声だけが鳴っている）。
     """
@@ -125,7 +127,9 @@ def orig_voice_rows(narr: np.ndarray, plan: dict, spf: int) -> tuple[dict | None
     rows, problems = [], []
     for i in orig:
         d = round(lv[i] - ref, 2) if math.isfinite(lv[i]) else -math.inf
-        rows.append({"line": i, "at": lines[i]["at"], "voice_db": round(lv[i], 2), "minus_ai_db": d})
+        # voice_src: 声だけを配信の別の秒から取った行（画は別の秒）。測り方は元の声の行と同じ
+        rows.append({"line": i, "at": lines[i]["at"], "voice_db": round(lv[i], 2), "minus_ai_db": d,
+                     **({"voice_src": True} if lines[i].get("voice_src") else {})})
         if not ORIG_VS_AI_MIN_DB <= d <= ORIG_VS_AI_MAX_DB:
             problems.append(f"{i}行目（元の声・{lines[i]['at']}コマ目〜）: 話している所の声の帯 {round(lv[i], 2)}dBFS、"
                             f"AI の声の真ん中 {round(ref, 2)} より {d:+}dB（{ORIG_VS_AI_MIN_DB:+}〜{ORIG_VS_AI_MAX_DB:+}dB）")
