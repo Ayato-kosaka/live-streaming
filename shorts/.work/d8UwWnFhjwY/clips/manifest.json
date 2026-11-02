@@ -5,7 +5,7 @@
  "dest": "d8UwWnFhjwY/clips",
  "video": "d8UwWnFhjwY",
  "channel": null,
- "request": "shorts/requests/2026-11-02-dogs-p2-clips-d8UwWnFhjwY.json",
+ "request": "shorts/requests/totoro-cat-p2-clips-20261102.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,49 +14,59 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 1,
+  "sheets": 10,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 1,
-  "clips_ok": 1,
-  "clip_seconds": 40.0,
+  "clips": 10,
+  "clips_ok": 10,
+  "clip_seconds": 264.0,
   "channel_entries": 0,
-  "files": 10
+  "files": 28
  },
  "bytes": {
-  "plain": 17771608,
-  "tar_gz": 17737445,
-  "encrypted": 17737456
+  "plain": 133166951,
+  "tar_gz": 132978348,
+  "encrypted": 132978352
  },
  "encrypted_files": [
   {
-   "name": "payload.enc",
-   "bytes": 17737456,
-   "sha256": "8bddbe17db050561d7cea3c0f8d4d707a78c14bebcca58f221dd9fef409b42c4"
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "86ae642e7921222611e3975be925bde6bec7659f9f2f5937bef84ddf6a5ed1d4"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "56620bf2e1472950bcbae4ae2b63b56fe576fd22af3739aaa478559a0918144f"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 38606512,
+   "sha256": "2c5c7b6c70cdfc26f7864f900ce8d608b60009dc875061e8aa0759b2cc120bdf"
   }
  ],
- "hmac_sha256": "3901cc1cdf0eb9556586647beabcdf519926bf75bfa77b154993d2b99b499e6c",
- "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "hmac_sha256": "96b131f191692f9a347359aa626d5b665174fe57e759c3b2ea9edf0e101630ca",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41472296700",
- "created_at": "2026-11-02T16:23:58+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41491112897",
+ "created_at": "2026-11-02T17:36:02+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 354288,
-    "sha256": "647d3c53ca8a19fd3a1fdd9f763202c679a1ee5b4038124f547352749a55786b"
+    "bytes": 2041040,
+    "sha256": "e9aae6c583ac4935b30ff676af251555a9e62c52e1da70b6bb16943393bef4e9"
    }
   ],
-  "hmac_sha256": "6ef7a50de80a6974483c1ec45ed335d74a9a815a1ff422023d0610e95cf5b1a7",
-  "files": 5,
-  "sheets": 1,
+  "hmac_sha256": "54e4ecc912ad42b7c3e89358ef75e1aa3da2ee2f41e57b3cca8979bd95a9e213",
+  "files": 14,
+  "sheets": 10,
   "bytes": {
-   "plain": 366647,
-   "tar_gz": 354286,
-   "encrypted": 354288
+   "plain": 2099203,
+   "tar_gz": 2041027,
+   "encrypted": 2041040
   }
  }
 }
