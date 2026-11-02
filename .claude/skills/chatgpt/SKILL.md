@@ -25,7 +25,7 @@ description: ChatGPT（chatgpt.com）を、EC2 のログイン済み Chrome か�
 **`fresh()` の既定はプロジェクト**（`PROJECT`）。`fresh("https://chatgpt.com/")` や、手で `chatgpt.com/` を開いて送ると、
 あやとの履歴の本流に会話ができる（2026-10-13 に別のセッションがそうなった。あやとが見つけた）。
 送る前に `in_project(t)` が True かを見る（`chatgpt.py ask` と `chatgpt_image.py` は見てから送る）。
-外に作ってしまったら、会話の右上の「More」→「Move to project」→「あやと島案内鳥」で戻す。
+外に作ってしまったら、会話の右上の「…」（2026-11-02 の名前は「Chat actions」）→「Move to project」→「あやと島案内鳥」で戻す。
 
 ### ほかのセッションと同じ時間に使わない（鍵）
 
@@ -65,6 +65,15 @@ ChatGPT が自分で付ける題は「イラスト作成」「絵の描き直し
 - 視聴者さんの名前・ハンドルは入れない（あやとの画面に並ぶだけだが、念のため）
 - 採用・不採用が決まったら、括弧の中を書き足して付け直す
 
+**付け直しで、その前後の大事な処理を巻き添えにしない。** 2026-11-02、右上のボタンの名前が「More」から
+「Chat actions」に変わっていて付け直しが落ち、`chatgpt_image.py` が**描けた絵を保存せずに終わった**
+（題を先に付け直していたため）。いまは:
+
+- 道具の中では `rename_or_warn(t, 題)` を使う。落ちても止めず、`警告: 会話の題を付け直せなかった（2回）。<何がどう落ちたか> ／
+  付けたかった題・いまの題・会話の URL` を標準エラーに**1行**出して先へ進む。戻り値は落ちた理由（通れば None）
+- 絵は**保存してから**題を付け直す（保存が落ちても、題は付け直す）。`chatgpt.py ask` は付け直しが落ちても返事を出す
+- 警告が出たら、その会話を `fresh(会話のURL)` で開き直して `rename` し直す。**黙って題無しのまま置かない**
+
 ## 1. 使いかた
 
 最初に置く（`cdp.py` と一緒に）:
@@ -101,7 +110,9 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | `busy(t)` | 書いている途中か |
 | `logged_in(t)` / `in_project(t)` | ログインしているか・プロジェクトの中か |
 | `lock(名前, 用事)` / `unlock(名前)` / `holder()` | 鍵を置く・外す・いま誰が持っているか（上の「鍵」） |
-| `rename(t, 題)` | 会話の題を付け直す（右上の「More」→「Rename」→「Chat title」→「Save」） |
+| `rename(t, 題)` | 会話の題を付け直す（右上の「Chat actions」→「Rename」→「Chat title」→「Save」）。落ちたら例外 |
+| `rename_or_warn(t, 題)` | 同じことを2回まで試し、落ちたら警告を1行出して先へ進む（上の 0「会話の題」） |
+| `ask_once(問い, 題, url=PROJECT)` | `chatgpt.py ask` の中身。開いて1往復して題を付け直し、返事を返す |
 | `attach(t, [EC2のパス])` | ファイルを入力欄に付ける（無いパスは先に弾く） |
 | `images(t)` / `save_image(t, src, out)` | いちばん後ろの返事の絵を並べる・ページの中から取ってファイルに書く（絵を作るのは `chatgpt-image`） |
 
@@ -109,6 +120,10 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 
 **class では探さない。** 2026-10 の画面は class が stylex の乱数（`x1gnnqk1 x9f619 …`）で、
 出し直しのたびに変わる。aria-label と data-* 属性で探す。
+
+**ただし aria-label も変わる**（右上の「More」が 2026-11-02 に「Chat actions」になり、題の付け直しが落ちた）。
+押すものを名前1つで決め打ちしない。**知っている名前で探し、当たらなければ形（どこにあって何をするボタンか）で探す。**
+押したあとは、開いたもの（メニューの項目・ダイアログの欄）で当たりかを確かめる。
 
 **ログインの有無で、画面のつくりが別物になる。** `chatgpt.py` は両方を読む。
 
@@ -121,7 +136,9 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | 返事 | `h4[data-conversation-role=assistant]` の次の箱 | `section[aria-label="DIL content"]` |
 | 書いている途中 | **止めるボタンが出ないことがある**。箱が `in_progress` | `button[aria-label="Stop generating"]` |
 | 作った絵 | `[data-testid=generated-image-gallery] img`（alt「Generated image N」、src は `blob:`） | 作れない |
-| ファイルを渡す | `input[type=file][aria-label="Attach files"]` | 渡せない |
+| ファイルを渡す | `input[type=file][aria-label="Attach files"]`。同じ form に絵だけの口が3つ並ぶ（Take a photo など。どれも `accept=image/*…`）。名前で当たらなければ、`accept` の無い口 | 渡せない |
+| 右上のメニュー | `main header` の `button[aria-haspopup=menu]`。aria-label は **2026-10「More」→ 2026-11-02「Chat actions」**。名前（`MENU_LABELS`）で当たらなければ形（`MENU_SHAPE`）で探し、開いた中に目当ての項目（「Rename」など）があるかで確かめる | — |
+| 題を付け直す | 「Rename」で出るダイアログの `input[aria-label="Chat title"]`（無ければ、送る（submit）ボタンのあるダイアログのただ1つの字の欄）→「Save」（無ければ submit） | — |
 
 - **`innerText` で読まない。** コードブロックの囲い（```）が落ち、言語名の札（`python`）が
   本文の1行に混ざる。`turns()` が DOM を Markdown に戻している

@@ -246,8 +246,19 @@ def attach(t, paths, timeout=120):
     for p in paths:
         if not os.path.isfile(p):
             raise FileNotFoundError(p)
-    css = 'input[type=file][aria-label="Attach files"], input#octane-mobile-composer-files-input'
-    t.set_files(css, paths)
+    # ファイルの口は入力欄の form に4つある（2026-11-02: Take a photo・Attach photos or videos・Attach photos・
+    # Attach files）。絵に限らない口は「Attach files」だけで、accept が空。名前が変わっても拾えるよう、
+    # 名前で当たらなければ、入力欄の form の中で accept の無い口を使う（_menu と同じく、名前1つに頼らない）
+    if not t.js(f"""(() => {{
+        document.querySelectorAll('[data-cg-attach]').forEach(e => e.removeAttribute('data-cg-attach'));
+        const c = document.querySelector({json.dumps(COMPOSER)});
+        const f = (c && c.closest('form')) || document;
+        const e = document.querySelector('input[type=file][aria-label="Attach files"], input#octane-mobile-composer-files-input')
+            || [...f.querySelectorAll('input[type=file]')].find(i => !i.getAttribute('accept'));
+        if (!e) return false;
+        e.setAttribute('data-cg-attach', ''); return true; }})()"""):
+        raise RuntimeError("ファイルを付ける口（input[type=file]）が見つからない")
+    t.set_files("input[data-cg-attach]", paths)
     # 付けた絵の札（サムネイル）が出るまで待つ
     end = time.time() + timeout
     while time.time() < end:
@@ -298,28 +309,77 @@ def in_project(t):
     return "/g/g-p-6acd4f935b848191ba03fdbf6c8eedd2" in (t.url() or "")
 
 
+# 会話の右上の「…」ボタン。**名前は画面の出し直しで変わる。** 2026-10 は「More」、2026-11-02 には
+# 「Chat actions」になっていて、名前1つで探していた題の付け直しが落ち、描けた絵が保存されずに終わった。
+# 名前で見つからなければ、会話の上の帯（main の header）でメニューを開くボタンを使う
+# （2026-11-02 に見た帯の中は「Chat actions」（aria-haspopup=menu）と「Share」の2つだけ。
+#  モードの切り替えは左のサイドバー＝nav の中にあって main の外）。
+# どのボタンで開いたかは、開いた中に目当ての項目があるかで確かめ、無ければ閉じて次を試す
+MENU_LABELS = ("Chat actions", "More")
+MENU_SHAPE = "main header button[aria-haspopup=menu]"
+
+
 def _menu(t, item):
-    """会話の右上の「More」を開いて、項目を押す（Rename / Move to project / Archive …）"""
+    """会話の右上のメニューを開いて、項目を押す（Rename / Move to project / Archive …）。
+    戻り値は開いたボタンの aria-label。見つからなければ、何を試して何が開いたかを書いて RuntimeError"""
     t.key("Escape")
-    t.click("[...document.querySelectorAll('button[aria-label=More]')].find(b => b.getBoundingClientRect().y < 60)")
-    time.sleep(1.2)
-    t.click(f"[...document.querySelectorAll('[role=menuitem]')].find(e => (e.innerText || '').trim() === {json.dumps(item)})")
-    time.sleep(1.2)
+    # 試す順に印（data-cg-menu）を付ける。名前で当たったものが先、形で当たったものは右から
+    cands = t.js(f"""(() => {{
+        const shown = b => {{ const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.y < 60; }};
+        const all = [...document.querySelectorAll('button')].filter(shown);
+        const byName = {json.dumps(list(MENU_LABELS))}.flatMap(l => all.filter(b => b.getAttribute('aria-label') === l));
+        const shape = {json.dumps(MENU_SHAPE or "")};
+        const byShape = shape ? [...document.querySelectorAll(shape)].filter(shown)
+            .sort((a, b) => b.getBoundingClientRect().x - a.getBoundingClientRect().x) : [];
+        const out = [...new Set([...byName, ...byShape])];
+        document.querySelectorAll('[data-cg-menu]').forEach(e => e.removeAttribute('data-cg-menu'));
+        out.forEach((b, i) => b.setAttribute('data-cg-menu', String(i)));
+        return out.map(b => [b.getAttribute('aria-label'), byName.includes(b) ? '名前' : '形']);
+    }})()""") or []
+    seen = []
+    for i, (label, how) in enumerate(cands):
+        try:
+            t.click(f"document.querySelector('[data-cg-menu=\"{i}\"]')")
+        except RuntimeError:
+            seen.append(f"{label!r}（{how}）: 押せなかった")
+            continue
+        time.sleep(1.2)
+        items = t.js("[...document.querySelectorAll('[role=menuitem]')].map(e => (e.innerText || '').trim().slice(0, 30))") or []
+        if item in items:
+            t.click(f"[...document.querySelectorAll('[role=menuitem]')].find(e => (e.innerText || '').trim() === {json.dumps(item)})")
+            time.sleep(1.2)
+            return label
+        seen.append(f"{label!r}（{how}）: {items[:10]}")
+        t.key("Escape")
+        time.sleep(0.5)
+    raise RuntimeError(f"右上のメニューに「{item}」が見つからない（名前 {list(MENU_LABELS)}・形 {MENU_SHAPE!r} で"
+                       f"{len(cands)}個のボタンを試した: {'; '.join(seen) or '当たるボタンが無い'}）")
 
 
 def rename(t, title):
     """会話の題を付け直す。**送って返事が来たあと、毎回呼ぶ**（あやと 2026-10-13「チャット名は毎回わかりやすく」）。
     ChatGPT が自分で付ける題（「背景透過PNG化」「絵の描き直し依頼」）では、あとから何の会話か分からない。
-    題の形は SKILL.md 1。戻り値は付け直したあとの題"""
+    題の形は SKILL.md 1。戻り値は付け直したあとの題。落ちたら RuntimeError（落ちても先へ進めたいときは rename_or_warn）"""
     if "/c/" not in (t.url() or ""):
         raise RuntimeError("まだ会話ができていない（送って返事が来てから付け直す）")
     _menu(t, "Rename")
-    # 「Rename chat」のダイアログの「Chat title」欄に、いまの題が選ばれた状態で入っている
-    t.js("""(() => { const e = document.querySelector('[role=dialog] input[aria-label="Chat title"]');
-        e.focus(); e.select(); })()""")
+    # 「Rename chat」のダイアログの「Chat title」欄に、いまの題が選ばれた状態で入っている。
+    # 欄の名前が変わっても拾えるよう、送るボタン（type=submit）のあるダイアログの、ただ1つの字の欄でもよしとする
+    # （2026-11-02 に見たダイアログは、欄「Chat title」1つと Cancel・Save（submit）・Close dialog）
+    if not t.js("""(() => {
+        document.querySelectorAll('[data-cg-title]').forEach(e => e.removeAttribute('data-cg-title'));
+        const one = d => { const s = [...d.querySelectorAll('input[type=text], input:not([type])')];
+            return d.querySelector('button[type=submit]') && s.length === 1 ? s[0] : null; };
+        const e = document.querySelector('[role=dialog] input[aria-label="Chat title"]')
+            || [...document.querySelectorAll('[role=dialog]')].map(one).find(Boolean);
+        if (!e) return false;
+        e.setAttribute('data-cg-title', ''); e.focus(); e.select(); return true; })()"""):
+        raise RuntimeError("「Rename」を押したが、題を入れる欄が出ない")
     t.type(title)
     time.sleep(0.5)
-    t.click("[...document.querySelectorAll('[role=dialog] button')].find(b => b.innerText.trim() === 'Save')")
+    t.click("""(() => { const e = document.querySelector('[data-cg-title]');
+        const d = (e && e.closest('[role=dialog]')) || document;
+        return [...d.querySelectorAll('button')].find(b => b.innerText.trim() === 'Save') || d.querySelector('button[type=submit]'); })()""")
     for _ in range(10):
         time.sleep(0.8)
         if t.js("document.title") == title:
@@ -327,9 +387,44 @@ def rename(t, title):
     raise RuntimeError(f"題が付け直らない: いまは {t.js('document.title')!r}")
 
 
+def rename_or_warn(t, title, tries=2):
+    """題を付け直す。**落ちても止めずに、何がどう落ちたかを標準エラーに1行出して先へ進む。**
+    付け直しの前後にある大事な処理（返事を出す・描けた絵を保存する）を、題のせいで失わないため
+    （2026-11-02、右上のボタンの名前が変わって付け直しが落ち、描けた絵が保存されずに終わった）。
+    題はあとから会話を引くための大事な手順なので、黙っては捨てない。戻り値は、落ちたときの理由（通れば None）"""
+    err = None
+    for k in range(tries):
+        try:
+            rename(t, title)
+            return None
+        except Exception as e:  # 画面の作りが変わったときに出るのは RuntimeError だけとは限らない
+            err = f"{type(e).__name__}: {e}"
+            if k + 1 < tries:
+                time.sleep(2)
+    try:
+        now, url = t.js("document.title"), where(t.url())
+    except Exception:
+        now, url = "?", "?"
+    print(f"警告: 会話の題を付け直せなかった（{tries}回）。{err} ／ 付けたかった題 {title!r}・いまの題 {now!r}・"
+          f"会話 {url}（あとで fresh(会話のURL) から rename し直す）", file=sys.stderr, flush=True)
+    return err
+
+
 def logged_in(t):
     """ログインしているか。未ログインの画面は右上と左下に「Log in」のボタンを出す"""
     return not t.js("[...document.querySelectorAll('button')].some(b => b.innerText.trim() === 'Log in')")
+
+
+def ask_once(question, title, timeout=600, url=PROJECT):
+    """プロジェクトの新しい会話（url を渡せばその会話の続き）で1往復して、題を付け直し、返事を返す。
+    題の付け直しが落ちても返事は返す（警告を1行出す。rename_or_warn）"""
+    t = fresh(url)
+    if logged_in(t) and not in_project(t):
+        raise SystemExit(f"プロジェクトの外を開いている: {where(t.url())}")
+    a = ask(t, question, timeout=timeout)
+    if logged_in(t):
+        rename_or_warn(t, title)
+    return a
 
 
 if __name__ == "__main__":
@@ -337,13 +432,8 @@ if __name__ == "__main__":
     #   … プロジェクトの新しい会話で1往復して、題を付け直し、返事を標準出力へ
     # 問いと題はファイル・引数で渡す（SSM のコマンドに日本語や引用符を直に入れると崩れる）
     if len(sys.argv) >= 4 and sys.argv[1] == "ask":
-        t = fresh(PROJECT)
-        if logged_in(t) and not in_project(t):
-            raise SystemExit(f"プロジェクトの外を開いている: {where(t.url())}")
-        a = ask(t, open(sys.argv[2], encoding="utf-8").read().strip(), timeout=int(sys.argv[4]) if len(sys.argv) > 4 else 600)
-        if logged_in(t):
-            rename(t, sys.argv[3])
-        print(a)
+        print(ask_once(open(sys.argv[2], encoding="utf-8").read().strip(), sys.argv[3],
+                       timeout=int(sys.argv[4]) if len(sys.argv) > 4 else 600))
     elif len(sys.argv) >= 3 and sys.argv[1] == "lock":
         lock(sys.argv[2], " ".join(sys.argv[3:]))
         print("locked", holder())
