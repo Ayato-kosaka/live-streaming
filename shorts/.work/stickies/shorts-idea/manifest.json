@@ -1,0 +1,37 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "stickies__shorts-idea",
+ "mode": "stickies",
+ "dest": "stickies/shorts-idea",
+ "video": null,
+ "channel": null,
+ "request": "shorts/stickies/2026-11-02-totoro-cat.json",
+ "status": "ok",
+ "stages": {
+  "fetch": "ok"
+ },
+ "counts": {
+  "notes": 11,
+  "replied": 8,
+  "newest_jst": "2026-11-02",
+  "more": false,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 6062,
+  "tar_gz": 2968,
+  "encrypted": 2976
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2976,
+   "sha256": "d42992040206ec6c8b0f383459c996eabffc124aa825708b4e2ee089828d0c8b"
+  }
+ ],
+ "hmac_sha256": "20d2d95c4a8c3fcab951e92e90424fded69e69bb59b7757ee57da2d939e9c74b",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41444137859",
+ "created_at": "2026-11-02T12:22:30+00:00"
+}
