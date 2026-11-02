@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "KAgYIsACo50__zoom-4250-4310-0.5fps",
+ "mode": "zoom",
+ "dest": "KAgYIsACo50/zoom-4250-4310-0.5fps",
+ "video": "KAgYIsACo50",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom-KAgYIsACo50.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 399861,
+  "tar_gz": 381940,
+  "encrypted": 381952
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 381952,
+   "sha256": "28936083aa084d5b90e99c051a610152b23f897471ac3b4295005db0ef8ca190"
+  }
+ ],
+ "hmac_sha256": "deb604d6e797b7a632d867f196a9b5297e04b48180e56e4966f8bfe5485230b0",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41448690410",
+ "created_at": "2026-11-02T14:05:32+00:00"
+}
