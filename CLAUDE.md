@@ -326,6 +326,19 @@ symlink だと `playwright-core/cli.js` が**元の clone の絶対パス**に�
 この箱では走らせない）。版は `1.56.0` で止めてある。`chromium-1194`（Chromium 141）に
 合わせた版なので、**上げると各スクリプトの `executablePath` が外れる。**
 
+**2026-10-22 に作業箱のイメージが替わって、`chromium-1194` が無くなった。**
+在るのは `chromium-1243` の `chrome-linux64/chrome`（Chrome for Testing 153）と、
+そこを指す `/opt/pw-browsers/chromium` だけ。**道具は書き換えずに、
+セッションの頭（`.claude/hooks/session-start.sh`）が、名指しの場所
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome` に本物への symlink を置く。**
+置いたときだけ「ブラウザ: …へ繋いだ」と1行出る。1194 が実在する箱と CI の上
+（`CI` / `GITHUB_ACTIONS`）では何もしない——runner は今も `playwright-core` に
+1194 を自分で入れている。`playwright-core` は 1.56.0 のままで、この組み合わせで
+`crawl.mjs`（全面）と `alert-compare.mjs` が通ることを 2026-11-02 に確かめた。
+道具が「ブラウザが無い」で起きないときは、まず `ls -la /opt/pw-browsers` で
+何が在るかを見る。hook の見張りは `python/session_start_browser_selftest.py`
+（本物の置き場には触らず、偽の置き場で回す）。
+
 **`tools/sprites/_` で始まるものは使い捨てで、git に入っていない**
 （`.gitignore` の `tools/sprites/_*`）。その場で測って捨てる用なので、
 **`docs/` から名指しで呼ばない。** `_` 付きは全部こちら側なので、
