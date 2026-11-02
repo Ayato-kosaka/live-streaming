@@ -85,9 +85,13 @@ python3 .claude/skills/ec2-chrome/ec2.py run <(echo 'cd /home/ubuntu/cdp && pyth
 python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/chatgpt/out-0.png <手元>
 ```
 
-3つ目の引数は**会話の題**（`chatgpt` スキル 0 の形）。返事が来たら付け直す。プロジェクトの外を開いていたら送らずに止まる。
+3つ目の引数は**会話の題**（`chatgpt` スキル 0 の形）。**絵を保存してから**付け直す。プロジェクトの外を開いていたら送らずに止まる。
 最後に JSON で `url`（会話の URL）・`title`・`seconds`・`send_tries`・`images` が出る。直しを頼むときは、その URL の続きに送る
 （`chatgpt_image.py --more <url> <頼みごと> <書き出しの頭> [題]`）。採用・不採用が決まったら、題の括弧に書き足す。
+
+**題の付け直しが落ちても、絵は保存される。** 標準エラーに `警告: 会話の題を付け直せなかった…` が1行出て、JSON に
+`rename_error` が入る（2026-11-02 に、右上のボタンの名前が変わって付け直しが落ち、前の作り＝題が先だと**描けた絵が保存されずに終わった**）。
+警告が出たら、`chatgpt` スキルの `fresh(url)` → `rename(t, 題)` で付け直しておく。
 
 > `chatgpt_image.py` は、2026-10-13 にほかのセッションで使って通った（あやと）。
 > 題の付け直し（`rename`）とプロジェクトの確かめ（`in_project`）は、そのあと足した。

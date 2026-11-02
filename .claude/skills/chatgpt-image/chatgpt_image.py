@@ -13,7 +13,7 @@
 """
 import json, os, sys, time
 sys.path.insert(0, "/home/ubuntu/cdp")
-from chatgpt import fresh, attach, send, turns, wait_reply, images, save_image, logged_in, where, in_project, rename, PROJECT
+from chatgpt import fresh, attach, send, turns, wait_reply, images, save_image, logged_in, where, in_project, rename_or_warn, PROJECT
 
 
 def make(prompt, out_prefix, title, files=(), url=PROJECT, timeout=600):
@@ -29,15 +29,23 @@ def make(prompt, out_prefix, title, files=(), url=PROJECT, timeout=600):
     n = len(turns(t))
     tries = send(t, prompt)
     text = wait_reply(t, n, timeout=timeout, want_images=True)
-    if title:
-        rename(t, title)
+    # **絵を先に保存し、題はそのあと。** 前は題を先に付け直していて、右上のボタンの名前が変わった日
+    # （2026-11-02）に付け直しで落ち、描けた絵が保存されずに終わった。題の付け直しは落ちても警告で済ませ、
+    # 保存のほうが落ちても（finally）題は付け直す——題は、あとからその会話へ絵を取りに戻るための手がかり
     out = []
-    for k, (src, w, h) in enumerate(images(t)):
-        path = f"{out_prefix}-{k}.png"
-        kind, size = save_image(t, src, path)
-        out.append({"path": path, "w": w, "h": h, "type": kind, "bytes": size})
+    rename_error = None
+    try:
+        for k, (src, w, h) in enumerate(images(t)):
+            path = f"{out_prefix}-{k}.png"
+            kind, size = save_image(t, src, path)
+            out.append({"path": path, "w": w, "h": h, "type": kind, "bytes": size})
+    finally:
+        if title:
+            rename_error = rename_or_warn(t, title)
     r = {"url": where(t.url()), "title": t.js("document.title"), "seconds": round(time.time() - t0, 1), "send_tries": tries,
          "text": text[:500], "images": out}
+    if rename_error:
+        r["rename_error"] = rename_error
     print(json.dumps(r, ensure_ascii=False, indent=1))
     return r
 
