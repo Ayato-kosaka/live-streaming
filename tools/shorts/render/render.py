@@ -46,6 +46,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import live_badge as LB  # noqa: E402
+import orig_voice as OV  # noqa: E402
 import textlook as TL  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -850,11 +852,31 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     lines, captions = [], []
     # 字幕の出はじめ（ふつうは声の頭。caption_from があればそこ。前の行の字幕はそこまで）
     starts = [ln.get("caption_from", ln["at"]) for ln in narr.get("lines", [])] + [total]
+    # 元の声の行（F-051）の声は、画と同じ秒から取るので頭を詰めない。行の頭から声の出だしまでに間があると、
+    # 字幕が声より先に出る。そこで、音の束に入るのと同じ揃え方（level_narration）をした声の出だしから出す
+    # （出だしの決め方は AI の声の詰め方と同じ: いちばん大きい所から −30dB を越えたサンプルの入っているコマ）。
+    # 前は配信の雑音が行の頭から −30dB の線を越えていて、たまたま行の頭と合っていた。雑音を下げたら、
+    # 浸水の回の「どうしよう」の声は行の頭から 2コマあとに出ていた（品質チェックの字幕と声のずれで落ちた）。
+    # 遅らせるのはその行の字幕の出はじめ（own）だけ。前の行の字幕は、今までどおり行の頭（カットの切れ目）で消す
+    # （遅らせたぶん前の行を延ばすと、前の行の字幕が元の声の行の画（本人の顔の寄り）に2コマ掛かり、
+    # 顔よけがその行の字幕を丸ごと下へ動かした。flood-p2-v5）
+    nl = narr.get("lines", [])
+    own = list(starts[:-1])
+    if any(ln.get("orig_voice") and "caption_from" not in ln for ln in nl):
+        xs = level_narration([{"file": str(narration_wav(ln, narr, base, work)),
+                               **({"orig_voice": True} if ln.get("orig_voice") else {})} for ln in nl],
+                             {**style["audio"], **(edit.get("audio") or {})})
+        for i, ln in enumerate(nl):
+            if ln.get("orig_voice") and "caption_from" not in ln:
+                own[i] = ln["at"] + voice_onset_frame(xs[i], spf)
     for i, ln in enumerate(narr.get("lines", [])):
         wav = narration_wav(ln, narr, base, work)
         x = decode_audio(wav, 1)[:, 0]
         frames = math.ceil(len(x) / spf)
-        lines.append({"at": ln["at"], "frames": frames, "file": str(wav), "text": ln["text"]})
+        # 元の声の行（F-051）の印は音の束まで運ぶ（audio_stems が AI の声と別の揃え方をする。品質チェックも読む）
+        lines.append({"at": ln["at"], "frames": frames, "file": str(wav), "text": ln["text"],
+                      **({"orig_voice": True} if ln.get("orig_voice") else {}),
+                      **({"voice_src": True} if ln.get("voice_src") else {})})
         if ln["at"] + frames > total:
             print(f"注意: {i}行目のナレーションが動画の終わりを越える（{ln['at'] + frames} > {total}）",
                   file=sys.stderr)
@@ -909,7 +931,7 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         nxt = starts[i + 1]
         if ln["at"] + frames <= nxt <= min(total, ln["at"] + frames + cap_st.get("bridge_frames", 0)):
             end = nxt
-        bounds = [starts[i]]
+        bounds = [own[i]]
         if len(pages) > 1:
             # 字数の比で見当をつけ、いちばん近い「声の間のあと、次に声が出るコマ」に合わせる
             weights = [reading_weight("".join(pg)) for pg in pages]
@@ -1547,8 +1569,12 @@ def busy_bands(it: dict, p: dict, pad: int = 16) -> list[tuple[float, float]]:
 
 
 def top_limit(it: dict, p: dict, base: float, pad: int = 24) -> float:
-    """行 it の字の上端の限り。題の札が同じ時に出ていれば、その下。"""
+    """行 it の字の上端の限り。題の札が同じ時に出ていれば、その下。YouTube ライブの札を出す回は、その下。"""
     lim = base
+    lb = p.get("live_badge")
+    if lb:
+        # 札は0コマ目から最後まで、上・左寄せに出ている。字はどの行でもその下から
+        lim = max(lim, lb["y"] + lb["h"] + pad)
     for t in p["titles"]:
         if t["from"] < it["to"] and it["from"] < t["to"] and "h" in t:
             lim = max(lim, t["y"] + t["h"] + pad)
@@ -1621,6 +1647,12 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
     # 2回呼ばれる（顔を探す前と後）。前の回の効果と記録を持ち越さない
     p["fx"] = []
     p.pop("face_avoid", None)
+    p.pop("live_badge", None)
+    # YouTube ライブの札（様式の live_badge）。出さない回（既定）は None で、様式も時間割も触らない。
+    # 出す回は、札の下へ題の札・全編のタイトル・左上の注を下げた様式の写しで、以下の置き場を決める
+    badge = LB.place(style, p["frames"], lambda k: font_path(style, k), work)
+    if badge:
+        p["live_badge"], badge_img, style = badge
 
     def still(kind: str, it: dict, img: Image.Image, anim: dict | None) -> dict:
         """出来上がりの絵を (x, y) に置く層。動きは真ん中を基準にする。"""
@@ -1628,6 +1660,10 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 "cx": it["x"] + img.width / 2, "cy": it["y"] + img.height / 2}
 
     title_bottom = safe["top"]
+    if badge:
+        # テロップの置き場の上端も札の下から
+        title_bottom = max(title_bottom, p["live_badge"]["y"] + p["live_badge"]["h"])
+        out.append(still("badge", p["live_badge"], badge_img, None))
     for i, it in enumerate(p["titles"]):
         if it.get("look") == "card":
             ti_st = style["title_card"]
@@ -1938,6 +1974,63 @@ def bgm_head_silence(x: np.ndarray, cfg: dict) -> int:
     return max(0, int(on[0]) * w - int(cfg.get("keep_s", 0.005) * SR))
 
 
+def voice_onset_frame(x: np.ndarray, spf: int) -> int:
+    """声の出だしのコマ（行の頭から）。出だしは trim_voice と同じ決め方（2.5ms の後ろ向き RMS が、いちばん大きい所から
+    TRIM_ONSET_DB を越えた最初のサンプル）で、そのサンプルの入っているコマを返す。AI の声は出だしの 20ms 前で詰めて
+    行の頭に置くので、行の頭のコマ＝声の出だしのコマになる。元の声の行もそれと同じにする（字幕と声が同じコマで出る）。"""
+    if len(x) < 240:
+        return 0
+    w = int(SR * 0.0025)
+    c = np.concatenate([[0.0], np.cumsum(x.astype(np.float64) ** 2)])
+    idx = np.arange(len(x))
+    lo = np.maximum(0, idx + 1 - w)
+    r = np.sqrt((c[idx + 1] - c[lo]) / (idx + 1 - lo))
+    if r.max() <= 0:
+        return 0
+    return int(np.argmax(r >= r.max() * db(TRIM_ONSET_DB))) // spf
+
+
+def level_narration(lines: list[dict], au: dict) -> list[np.ndarray]:
+    """行ごとの声を、音の束に入れる大きさに揃えて返す（行の dict に gain_db・元の声の行は orig_level も書く）。
+
+    声の大きさは**1行ずつ**「話している間の RMS」で揃える。Fish Audio の声は1文ずつ作るので、
+    行ごとに -28〜-21 LUFS とばらつき、全体で1つの倍率を掛けると行の変わり目で音量が跳ねた。
+    ファイルの音量ではなく目標値から決めるので、声の版や話者が変わっても仕上がりは動かない。
+    """
+    clips = [decode_audio(Path(ln["file"]), 1)[:, 0] for ln in lines]
+    leveled: list[np.ndarray | None] = [None] * len(clips)
+    for i, (ln, x) in enumerate(zip(lines, clips)):
+        if ln.get("orig_voice"):
+            continue
+        g_line = db(au["narration_rms_dbfs"]) / max(speech_rms(x), 1e-9)
+        ln["gain_db"] = round(20 * math.log10(g_line), 2)
+        leveled[i] = x * g_line
+    # 元の声の行（F-051）は RMS で揃えない。配信の音は話している所のエネルギーが低い側（部屋鳴り・こもり・揺れ）に
+    # 寄っていて、RMS を AI の声と同じにしても言葉の帯が小さいまま残った（浸水の回 v3。声の帯で AI の声より
+    # 0.8dB・3.1dB 小さく、あやとに「聞こえづらかった」と言われた。#1086）。整えてから、同じ動画の AI の声の行を
+    # 同じ物差し（話している所の声の帯。orig_voice.voice_level_db）で測った真ん中に over_ai_db を足して揃える
+    ov_cfg = au.get("orig_voice") or {}
+    ai_db = [OV.voice_level_db(leveled[i]) for i in range(len(clips)) if leveled[i] is not None]
+    ai_db = [v for v in ai_db if math.isfinite(v)]
+    ref = float(np.median(ai_db)) if ai_db else None
+    for i, (ln, x) in enumerate(zip(lines, clips)):
+        if not ln.get("orig_voice"):
+            continue
+        y, info = OV.clean(x, ov_cfg)
+        if ref is None:
+            # AI の声の行が無い回（全部が元の声）: 比べる相手が無いので、前と同じ「話している間の RMS」の目標から
+            target = OV.voice_level_db(y * db(au["narration_rms_dbfs"]) / max(speech_rms(y), 1e-9))
+        else:
+            target = ref + OV.cfg_of(ov_cfg)["over_ai_db"]
+        y, got = OV.fit(y, target, ov_cfg)
+        ln["gain_db"] = got["gain_db"]
+        ln["orig_level"] = {**info, "ai_median_voice_db": None if ref is None else round(ref, 2),
+                            "target_voice_db": round(target, 2), "voice_db": got["voice_db"],
+                            "limited_db": got["limited_db"]}
+        leveled[i] = y.astype(np.float32)
+    return leveled
+
+
 def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Path, Path]:
     """ナレーションの束・ダッキング済みの BGM・元の音（使うカットだけ）を、サンプル単位で作る。
 
@@ -1950,14 +2043,8 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     n = p["frames"] * spf
     t = np.arange(n) / SR
     narr = np.zeros((n, 2), dtype=np.float32)
-    # 声の大きさは**1行ずつ**「話している間の RMS」で揃える。Fish Audio の声は1文ずつ作るので、
-    # 行ごとに -28〜-21 LUFS とばらつき、全体で1つの倍率を掛けると行の変わり目で音量が跳ねた。
-    # ファイルの音量ではなく目標値から決めるので、声の版や話者が変わっても仕上がりは動かない。
-    clips = [decode_audio(Path(ln["file"]), 1)[:, 0] for ln in p["narration"]]
-    for i, (ln, x) in enumerate(zip(p["narration"], clips)):
-        g_line = db(au["narration_rms_dbfs"]) / max(speech_rms(x), 1e-9)
-        ln["gain_db"] = round(20 * math.log10(g_line), 2)
-        x = x * g_line
+    leveled = level_narration(p["narration"], au)
+    for i, (ln, x) in enumerate(zip(p["narration"], leveled)):
         # 音量を揃えた1行ぶんも残す（Remotion・CapCut の下書きなど、ほかの書き出し先が使う）
         ln["norm_file"] = str(write_wav(x[:, None], work / f"narr_norm_{i:02d}.wav"))
         s = ln["at"] * spf
@@ -2745,7 +2832,7 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                       + (f"（例外の印あり: {ok['frames']}コマまで）" if ok else ""), file=sys.stderr)
 
     # コマごとに、重ねる字の絵を引けるようにする（タイトル → テロップ → 字幕 の順に重ねる）
-    order = {"title": 0, "note": 1, "telop": 2, "caption": 3}
+    order = {"badge": -1, "title": 0, "note": 1, "telop": 2, "caption": 3}
     timeline: list[list[Overlay]] = [[] for _ in range(p["frames"])]
     p["overlays"] = []
     kind_count: dict[str, int] = {}

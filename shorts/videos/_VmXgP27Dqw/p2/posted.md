@@ -19,3 +19,9 @@
 2026-11-02 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直し、
 EC2 の `~/shorts_post/_VmXgP27Dqw` を `post.py clean` で消す。
+
+## 公開を確かめた（2026-11-02 12:50 UTC）
+
+- YouTube: oEmbed が 200 で、題「🇬🇧イギリスにあるアフタヌーンティーの超本場がやばすぎた！」が返った
+- TikTok: `embed/v2/7702624928511708468` が 200 で `"secret":false`（1回目は 503、15秒あけて取り直した2回目で 200）
+- EC2 の `~/shorts_post/_VmXgP27Dqw` は `post.py clean` で消した

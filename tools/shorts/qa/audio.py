@@ -1,17 +1,18 @@
-"""音の検査: 音量（LUFS・トゥルーピーク）／声と BGM の差／無音／音割れ／元音声の漏れ。
+"""音の検査: 音量（LUFS・トゥルーピーク）／声と BGM の差（元の声の行の大きさも）／無音／音割れ／元音声の漏れ。
 
 声と BGM を分けて測れるのは、書き出しが work に音の束（stem_*.f32）を残しているときだけ。
 束が無ければ、仕上がりの音から見当をつける（そのときは合格と言い切らず needs-human に倒す）。
 """
 from __future__ import annotations
 
+import importlib.util
 import math
 import re
 import subprocess
 
 import numpy as np
 
-from common import (FAIL, HUMAN, NA, PASS, SR, Ctx, envelope_db, mono, narration_windows, near,
+from common import (FAIL, HUMAN, NA, PASS, RENDER, SR, Ctx, envelope_db, mono, narration_windows, near,
                     result, rms_db, runs)
 
 # ---------------------------------------------------------------- 線
@@ -31,6 +32,14 @@ TP_MAX = -1.0
 # （話している間で 10.5dB 前後）を取るので、行ごとの線は 9dB に下げる。9 を切るのは、その好みから
 # さらに BGM が 1.5dB 以上上がった行（サビに埋もれた行・指示書の bgm.db の付け間違い）
 VOICE_OVER_BGM_MIN_DB = 9.0
+# 元の声の行（spec の orig_voice。帳面 F-051）の、話している所の声の帯の大きさ − 同じ動画の AI の声の行の真ん中。
+# 物差しは書き出しが揃えるのと同じ1本（render/orig_voice.py の voice_level_db。写さずに読む）。
+# 浸水の回 v3 は行全体の RMS では AI の声と同じだったが、この物差しで −0.8dB・−3.1dB で、あやとに
+# 「配信の声の音量が前回小さくて聞こえづらかった」と言われた（#1086）。書き出しは +0.5dB に揃える。
+# −0.5 を切るのは「揃え忘れ（RMS のまま）」か「こもった声をそのまま」（v3 は2行とも切る）。+3 を越えるのは
+# 叫びだけが飛び出す（揃えの倍率の二重掛け・様式の over_ai_db の付け間違い）
+ORIG_VS_AI_MIN_DB = -0.5
+ORIG_VS_AI_MAX_DB = 3.0
 # 無音: 声も BGM も鳴っていない間が 1.5 秒を超えたら落とす（あやとの決め）
 SILENCE_DBFS = -50.0
 SILENCE_MAX_SEC = 1.5
@@ -81,9 +90,56 @@ def check_loudness(ctx: Ctx) -> dict:
 
 # ---------------------------------------------------------------- 声と BGM
 
+_OV: list = []
+
+
+def voice_level_db(x: np.ndarray) -> float:
+    """話している所だけの、声の帯の大きさ（render/orig_voice.py の1本を読む。書き出しの揃えと同じ物差し）。"""
+    if not _OV:
+        spec = importlib.util.spec_from_file_location("render_orig_voice", RENDER / "orig_voice.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _OV.append(mod)
+    return _OV[0].voice_level_db(x, SR)
+
+
+def orig_voice_rows(narr: np.ndarray, plan: dict, spf: int) -> tuple[dict | None, list[str]]:
+    """元の声の行を、AI の声の行の真ん中と同じ物差しで比べる。(測った値, 落ちた理由) を返す。
+
+    元の声の行は、時間割の行の orig_voice の印で見分ける（声と画が同じ秒の行も、声だけを配信の別の秒から取った
+    voice_src の行も、build_edit.py が印を付ける）。印の無い行は AI の声として真ん中に数える。
+    元の声の行が無い・AI の声の行が無い（比べる相手が無い）ときは (None か理由だけの値, [])。
+    narr は声の束（1ch）。行の区間は時間割の at〜at+frames（その行の声だけが鳴っている）。
+    """
+    lines = plan.get("narration") or []
+    orig = [i for i, ln in enumerate(lines) if ln.get("orig_voice")]
+    if not orig:
+        return None, []
+    lv = []
+    for ln in lines:
+        s, e = ln["at"] * spf, (ln["at"] + ln["frames"]) * spf
+        lv.append(voice_level_db(narr[s:e]))
+    ai = [v for i, v in enumerate(lv) if i not in orig and math.isfinite(v)]
+    if not ai:
+        return {"lines": [{"line": i, "voice_db": round(lv[i], 2)} for i in orig],
+                "note": "AI の声の行が無いので比べない"}, []
+    ref = float(np.median(ai))
+    rows, problems = [], []
+    for i in orig:
+        d = round(lv[i] - ref, 2) if math.isfinite(lv[i]) else -math.inf
+        # voice_src: 声だけを配信の別の秒から取った行（画は別の秒）。測り方は元の声の行と同じ
+        rows.append({"line": i, "at": lines[i]["at"], "voice_db": round(lv[i], 2), "minus_ai_db": d,
+                     **({"voice_src": True} if lines[i].get("voice_src") else {})})
+        if not ORIG_VS_AI_MIN_DB <= d <= ORIG_VS_AI_MAX_DB:
+            problems.append(f"{i}行目（元の声・{lines[i]['at']}コマ目〜）: 話している所の声の帯 {round(lv[i], 2)}dBFS、"
+                            f"AI の声の真ん中 {round(ref, 2)} より {d:+}dB（{ORIG_VS_AI_MIN_DB:+}〜{ORIG_VS_AI_MAX_DB:+}dB）")
+    return {"ai_median_voice_db": round(ref, 2), "ai_lines": len(ai), "lines": rows}, problems
+
+
 def check_voice_vs_bgm(ctx: Ctx) -> dict:
     title = "声と BGM の差"
-    th = {"min_db_each_line": VOICE_OVER_BGM_MIN_DB}
+    th = {"min_db_each_line": VOICE_OVER_BGM_MIN_DB,
+          "orig_voice_minus_ai_db": [ORIG_VS_AI_MIN_DB, ORIG_VS_AI_MAX_DB]}
     plan = ctx.plan
     if not plan or not plan.get("narration"):
         return result("voice_vs_bgm", title, NA, "時間割（plan.json）にナレーションが無い", thresholds=th)
@@ -113,8 +169,16 @@ def check_voice_vs_bgm(ctx: Ctx) -> dict:
                     f"差 {r_['margin_db']}dB" for r_ in bad]
         # 話している間ぜんぶでの差（声の間をつないで測る。あやとの好みの 10.5dB 前後と比べる値）
         m["overall_margin_db"] = round(m["narration_dbfs"] - m["bgm_during_narration_dbfs"], 2)
-        return result("voice_vs_bgm", title, FAIL if bad else PASS,
-                      f"話している間 {m['overall_margin_db']}dB・いちばん小さい行 {worst}dB（{len(rows)}行）",
+        summ = f"話している間 {m['overall_margin_db']}dB・いちばん小さい行 {worst}dB（{len(rows)}行）"
+        # 元の声の行（F-051）は、行全体の RMS では AI の声と同じでも、話している所の言葉の帯が小さいことがある
+        ov, ov_bad = orig_voice_rows(narr, plan, spf)
+        if ov is not None:
+            m["orig_voice"] = ov
+            ds = [r_["minus_ai_db"] for r_ in ov.get("lines", []) if "minus_ai_db" in r_]
+            if ds:
+                summ += f"・元の声 {len(ds)}行は AI の声より {min(ds):+}〜{max(ds):+}dB"
+            problems += ov_bad
+        return result("voice_vs_bgm", title, FAIL if bad or ov_bad else PASS, summ,
                       measured=m, thresholds=th, problems=problems)
 
     # 束が無い: 仕上がりの音の、ナレーションの間の 50ms ごとの音量から見当をつける。
@@ -131,6 +195,11 @@ def check_voice_vs_bgm(ctx: Ctx) -> dict:
     est = round(speech - floor, 2)
     m = {"method": "mix_estimate", "why_no_stems": why, "speech_dbfs": round(speech, 2),
          "floor_p10_dbfs": round(floor, 2), "margin_lower_bound_db": est}
+    if any(ln.get("orig_voice") for ln in plan["narration"]):
+        # 元の声の行の大きさは声の束でしか AI の声と比べられない（仕上がりでは BGM と混ざっている）
+        return result("voice_vs_bgm", title, HUMAN,
+                      f"見積もりの下限 {est}dB。元の声の行が AI の声と同じ大きさかは束が無いと測れない（耳で聞く）",
+                      measured=m, thresholds=th, problems=[why])
     if est >= VOICE_OVER_BGM_MIN_DB:
         return result("voice_vs_bgm", title, PASS, f"見積もりで {est}dB 以上（束が無いので下限の見積もり）",
                       measured=m, thresholds=th)

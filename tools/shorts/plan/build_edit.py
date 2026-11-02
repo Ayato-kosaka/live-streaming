@@ -24,6 +24,10 @@
   声の行の `file`（詰めない・速めない声）にする。画と声は同じ秒から取るので、カットごとに `len` か区間の `t` が要り、
   窓や `until` に合わせて入りをずらさない（越えるなら止まる）。行の間と hold のぶんは最後のカットの画を延ばす。
   喋る速さの倍率はこの行を数えずに決める。字幕は原稿の字（叫びの字）
+- spec の行に `voice_src` があれば**声だけが配信の音の行**（画は別の秒）。声は声の一覧のその行の音（担当が配信から
+  切ったもの）で、ふつうの行と同じく詰めて置く。指示書の行に `orig_voice`・`voice_src` の印を付けるので、書き出しが
+  元の声として整えて AI の声の真ん中 +0.5dB に揃え、字幕を声の出だしから出す（render/orig_voice.py）。
+  印は本番の声（`--voice`）のときだけ付ける。喋る速さの倍率には、いまはこの行の字も数える（倍率を掛ける回で使うと速まる）
 
 ## 人が決めること（overrides）
 
@@ -505,7 +509,8 @@ ORIG_PEAK = 0.9
 def orig_gain(peak: float) -> float:
     """元の声の wav に掛ける倍率。頂点が ORIG_PEAK を越えるときだけ、そこまで下げる。
 
-    上げはしない（大きさは書き出しが行ごとに「話している間の RMS」で揃えるので、ここで下げても仕上がりは同じ）。
+    上げはしない（大きさは書き出しが揃える。元の声の行は整えてから、話している所の声の帯を AI の声の真ん中 +0.5dB に。
+    render/orig_voice.py。ここで下げても仕上がりは同じ）。
     """
     return ORIG_PEAK / peak if peak > ORIG_PEAK else 1.0
 
@@ -515,7 +520,9 @@ def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
 
     取り方は書き出しが元の音を入れるとき（render.py の audio_stems の audio_db）と同じ
     （入りの1秒前から開いて、コマの境目で切る）。つなぎ目は 12ms ずつ上げ下げして、プツッと鳴らさない。
-    声の行の `file`（詰めない・速めない声）として渡すので、ナレーションと同じ大きさに揃い、BGM もその間は下がる。
+    声の行の `file`（詰めない・速めない声）として渡すので、BGM もその間は下がる。大きさは書き出しが、行の `orig_voice` の
+    印を見て、AI の声と同じ物差し（話している所の声の帯）で揃える（render/orig_voice.py。行全体の RMS で揃えると、
+    こもった配信の声は言葉の帯が小さいまま残った。浸水の回 v3・#1086）。
     """
     sys.path.insert(0, str(RENDER))
     import numpy as np  # noqa: E402
@@ -548,6 +555,10 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     rows = spec["rows"]
     # 元の声の行（帳面 F-051）: AI の声を作らず、その秒の元の音を声の行に置く。声の一覧にはこの行のぶんが無い
     orig_rows = {i for i, r in enumerate(rows) if r.get("orig_voice")}
+    # 声だけを配信の別の秒から取った行（spec の voice_src。画は子猫の写る別の秒、のように声と画の秒が違う）。
+    # 声は声の一覧に入れてもらう（詰めてよい・画と秒を合わせなくてよい）。書き出しが元の声として揃えるように、
+    # 指示書の行に orig_voice の印を付ける（下の edit を組む直前）。orig_voice と両方あれば orig_voice の行として組む
+    vsrc_rows = {i for i, r in enumerate(rows) if r.get("voice_src") and i not in orig_rows}
     orig_specs = {i: rows_ov.get(str(i), {}).get("cuts") or [{"t": s} for s in rows[i]["src"]] for i in orig_rows}
     pieces = {i: orig_pieces(i, orig_specs[i], clips) for i in sorted(orig_rows)}
 
@@ -845,6 +856,14 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                           **({"same_as_prev": True} if r.get("same_as_prev") else {})})
         t += n
 
+    if voice is not None:
+        # voice_src の行も、書き出し（render.py）が元の声として整えて、AI の声の真ん中 +0.5dB に揃え、字幕を声の出だしから
+        # 出す。印が無いと AI の声と同じ「行全体の RMS」で揃い、配信の声は言葉の帯が小さいまま残る（浸水の回 v3 と同じ。
+        # 猫の回 p2 は担当が組んだあとに手で印を足していた。#1086）。仮の声（--voice 無し）の行は配信の声ではないので付けない。
+        # 印は行の最後に付ける（担当の手の印 mark_voice_src.py と同じ並び。組み直しても同じ指示書になる）
+        for i in sorted(vsrc_rows):
+            lines[i]["orig_voice"] = True
+            lines[i]["voice_src"] = True
     edit = {
         "_note": f"build_edit.py が {Path(args.spec).name} から組んだ。人が直すのは overrides か、この指示書の数字",
         "version": 2,

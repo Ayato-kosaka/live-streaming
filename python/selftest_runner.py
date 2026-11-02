@@ -356,6 +356,19 @@ SKIP: dict[str, str] = {
     "tools/shorts/render/bgm_cta_selftest.py":
         "ffmpeg と numpy・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # 元の声の行の大きさ（あやと #1086「配信の声の音量が前回小さくて聞こえづらかった」、2026-11-02）。合成の声を
+    # 本物の書き出しの音の束（audio_stems）と品質チェックに通すので、ffmpeg・numpy・Pillow が要る。守り17個を外して1分ほど
+    "tools/shorts/render/orig_voice_selftest.py":
+        "ffmpeg と numpy・Pillow が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ と tools/shorts/qa/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # YouTube ライブの札（帳面 F-064・#1097、2026-11-02）。書き出しの側は本物の書き出し（下書き）を1回通し、
+    # 検査の側は札を重ねた mp4 を ffmpeg で作るので、どちらも ffmpeg・numpy・Pillow が要る。守りを1つずつ外して2分ほど
+    "tools/shorts/render/live_badge_selftest.py":
+        "ffmpeg と numpy・Pillow・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ と tools/shorts/qa/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    "tools/shorts/qa/badge_selftest.py":
+        "ffmpeg と numpy・Pillow が要る（Selftests は入れていない）。守る実物は tools/shorts/qa/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

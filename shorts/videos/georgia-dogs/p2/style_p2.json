@@ -1,0 +1,10 @@
+{
+ "_note": "犬の回 p2 の様式。style_v3.json に、終わりの札（※YouTubeで毎日22時から配信）と注の置き場を字幕2行の下（y 1140）に下げたものを足しただけ（猫の回 style_p1.json・バゲットの回 style_p2.json と同じ。左上だと犬の顔に重なりうる）",
+ "extends": "style_v3.json",
+ "note": {
+  "size": 44,
+  "x": 124,
+  "y": 1140,
+  "max_width": 764
+ }
+}
