@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "TLBRBVpJb-0__zoom-2770-2820-0.5fps",
+ "mode": "zoom",
+ "dest": "TLBRBVpJb-0/zoom-2770-2820-0.5fps",
+ "video": "TLBRBVpJb-0",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-TLBRBVpJb-0.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 2,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 469531,
+  "tar_gz": 451630,
+  "encrypted": 451632
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 451632,
+   "sha256": "bc617bdf4924d40e1b4eb9b8e0787870aae0a8d3062058612a623bb88ea2a269"
+  }
+ ],
+ "hmac_sha256": "478ec1714829dca779852abff7a1ea038cdd82848cf86623b2837fe0920f07d2",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:37:51+00:00"
+}
