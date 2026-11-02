@@ -356,6 +356,11 @@ SKIP: dict[str, str] = {
     "tools/shorts/render/bgm_cta_selftest.py":
         "ffmpeg と numpy・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # 元の声の行の大きさ（あやと #1086「配信の声の音量が前回小さくて聞こえづらかった」、2026-11-02）。合成の声を
+    # 本物の書き出しの音の束（audio_stems）と品質チェックに通すので、ffmpeg・numpy・Pillow が要る。守り13個を外して40秒ほど
+    "tools/shorts/render/orig_voice_selftest.py":
+        "ffmpeg と numpy・Pillow が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ と tools/shorts/qa/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

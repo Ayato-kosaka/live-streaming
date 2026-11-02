@@ -505,7 +505,8 @@ ORIG_PEAK = 0.9
 def orig_gain(peak: float) -> float:
     """元の声の wav に掛ける倍率。頂点が ORIG_PEAK を越えるときだけ、そこまで下げる。
 
-    上げはしない（大きさは書き出しが行ごとに「話している間の RMS」で揃えるので、ここで下げても仕上がりは同じ）。
+    上げはしない（大きさは書き出しが揃える。元の声の行は整えてから、話している所の声の帯を AI の声の真ん中 +0.5dB に。
+    render/orig_voice.py。ここで下げても仕上がりは同じ）。
     """
     return ORIG_PEAK / peak if peak > ORIG_PEAK else 1.0
 
@@ -515,7 +516,9 @@ def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
 
     取り方は書き出しが元の音を入れるとき（render.py の audio_stems の audio_db）と同じ
     （入りの1秒前から開いて、コマの境目で切る）。つなぎ目は 12ms ずつ上げ下げして、プツッと鳴らさない。
-    声の行の `file`（詰めない・速めない声）として渡すので、ナレーションと同じ大きさに揃い、BGM もその間は下がる。
+    声の行の `file`（詰めない・速めない声）として渡すので、BGM もその間は下がる。大きさは書き出しが、行の `orig_voice` の
+    印を見て、AI の声と同じ物差し（話している所の声の帯）で揃える（render/orig_voice.py。行全体の RMS で揃えると、
+    こもった配信の声は言葉の帯が小さいまま残った。浸水の回 v3・#1086）。
     """
     sys.path.insert(0, str(RENDER))
     import numpy as np  # noqa: E402

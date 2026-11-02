@@ -46,6 +46,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import orig_voice as OV  # noqa: E402
 import textlook as TL  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -854,7 +855,9 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         wav = narration_wav(ln, narr, base, work)
         x = decode_audio(wav, 1)[:, 0]
         frames = math.ceil(len(x) / spf)
-        lines.append({"at": ln["at"], "frames": frames, "file": str(wav), "text": ln["text"]})
+        # 元の声の行（F-051）の印は音の束まで運ぶ（audio_stems が AI の声と別の揃え方をする。品質チェックも読む）
+        lines.append({"at": ln["at"], "frames": frames, "file": str(wav), "text": ln["text"],
+                      **({"orig_voice": True} if ln.get("orig_voice") else {})})
         if ln["at"] + frames > total:
             print(f"注意: {i}行目のナレーションが動画の終わりを越える（{ln['at'] + frames} > {total}）",
                   file=sys.stderr)
@@ -1954,10 +1957,37 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     # 行ごとに -28〜-21 LUFS とばらつき、全体で1つの倍率を掛けると行の変わり目で音量が跳ねた。
     # ファイルの音量ではなく目標値から決めるので、声の版や話者が変わっても仕上がりは動かない。
     clips = [decode_audio(Path(ln["file"]), 1)[:, 0] for ln in p["narration"]]
+    leveled: list[np.ndarray | None] = [None] * len(clips)
     for i, (ln, x) in enumerate(zip(p["narration"], clips)):
+        if ln.get("orig_voice"):
+            continue
         g_line = db(au["narration_rms_dbfs"]) / max(speech_rms(x), 1e-9)
         ln["gain_db"] = round(20 * math.log10(g_line), 2)
-        x = x * g_line
+        leveled[i] = x * g_line
+    # 元の声の行（F-051）は RMS で揃えない。配信の音は話している所のエネルギーが低い側（部屋鳴り・こもり・揺れ）に
+    # 寄っていて、RMS を AI の声と同じにしても言葉の帯が小さいまま残った（浸水の回 v3。声の帯で AI の声より
+    # 0.8dB・3.1dB 小さく、あやとに「聞こえづらかった」と言われた。#1086）。整えてから、同じ動画の AI の声の行を
+    # 同じ物差し（話している所の声の帯。orig_voice.voice_level_db）で測った真ん中に over_ai_db を足して揃える
+    ov_cfg = au.get("orig_voice") or {}
+    ai_db = [OV.voice_level_db(leveled[i]) for i in range(len(clips)) if leveled[i] is not None]
+    ai_db = [v for v in ai_db if math.isfinite(v)]
+    ref = float(np.median(ai_db)) if ai_db else None
+    for i, (ln, x) in enumerate(zip(p["narration"], clips)):
+        if not ln.get("orig_voice"):
+            continue
+        y, info = OV.clean(x, ov_cfg)
+        if ref is None:
+            # AI の声の行が無い回（全部が元の声）: 比べる相手が無いので、前と同じ「話している間の RMS」の目標から
+            target = OV.voice_level_db(y * db(au["narration_rms_dbfs"]) / max(speech_rms(y), 1e-9))
+        else:
+            target = ref + OV.cfg_of(ov_cfg)["over_ai_db"]
+        y, got = OV.fit(y, target, ov_cfg)
+        ln["gain_db"] = got["gain_db"]
+        ln["orig_level"] = {**info, "ai_median_voice_db": None if ref is None else round(ref, 2),
+                            "target_voice_db": round(target, 2), "voice_db": got["voice_db"],
+                            "limited_db": got["limited_db"]}
+        leveled[i] = y.astype(np.float32)
+    for i, (ln, x) in enumerate(zip(p["narration"], leveled)):
         # 音量を揃えた1行ぶんも残す（Remotion・CapCut の下書きなど、ほかの書き出し先が使う）
         ln["norm_file"] = str(write_wav(x[:, None], work / f"narr_norm_{i:02d}.wav"))
         s = ln["at"] * spf
