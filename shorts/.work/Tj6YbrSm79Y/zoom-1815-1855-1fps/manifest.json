@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Tj6YbrSm79Y__zoom-1815-1855-1fps",
+ "mode": "zoom",
+ "dest": "Tj6YbrSm79Y/zoom-1815-1855-1fps",
+ "video": "Tj6YbrSm79Y",
+ "channel": null,
+ "request": "shorts/requests/totoro-cat-zoom2-Tj6YbrSm79Y-20261102.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 4,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 679106,
+  "tar_gz": 648938,
+  "encrypted": 648944
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 648944,
+   "sha256": "c4ec0c16887099ddb24ff35a1c3c9f25ebf1d6cb1726af25d3ef63a2a4a4096c"
+  }
+ ],
+ "hmac_sha256": "44ab9cc1dd70b113a1eecdfc50d4a738759ae67f7107efe020bd4ecbcdab576d",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41470337919",
+ "created_at": "2026-11-02T15:24:42+00:00"
+}
