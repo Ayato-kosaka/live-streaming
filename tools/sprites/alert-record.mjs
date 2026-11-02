@@ -32,9 +32,17 @@
  *   PRISM では貯金箱が右下に小さく出ている。`--outline` で箱に線を引く
  * - `--zoom 1.5` … 面を 幅/1.5 × 高さ/1.5 で描いてから、箱いっぱいに拡げる（既定 1）。
  *   ウィジェットの本当の大きさ（ふだん 436×776）は `--frame 401,722,607,1082 --zoom 1.39`。
- *   PRISM の縮み方を入れると、この箱で豚が幅 249px（箱の 41%）に出て、本物の配信の豚と揃う
- *   （2026-11-02 に測った）。2026-10-23 に豚の外形で合わせた `--frame 633,1622,310,180 --zoom 1.25`
+ *   PRISM の縮み方を入れると、この箱で豚が幅 249px（箱の 41%）に出る（PRISM 140% の箱）。
+ *   2026-10-23 に豚の外形で合わせた `--frame 633,1622,310,180 --zoom 1.25`
  *   は、**豚を2倍に描いたまま箱を小さく取って**釣り合わせたもので、ウィジェットの大きさではない
+ * - **本物の配信写真（`bg/prism-street.jpg`）の豚に合わせるなら** `--frame 455,597,685,1218 --zoom 1.57`
+ *   （2026-11-02。PRISM の条件で描いた豚を写真の豚に当てはめて出した。140% の枠より右に約 95px・1.13 倍。
+ *   写真の日は PRISM が約 158% だったと読める）。**貯金箱（豚・季節の貯金箱）を録るときはこちら**:
+ *   豚と11月の城は Dimensions の幅と面の下の真ん中だけで決まるので、その日の枠の幅が分からなくても
+ *   写真の豚とぴったり重なる。アラート（`<html>` の幅で決まる）はこの枠では合わない（枠の幅が分からない）
+ * - `--beside-pig <配信の px>` … 貯金箱の横に、豚（`theme=none`）をもう1枚並べて録る（大きさの比べ）。
+ *   負なら左。豚は同じ枠・同じ拡げ方で、横にずらすだけ
+ * - `--phone-font` … スマホと同じ字体（英数字 Roboto・日本語 Noto Sans JP。`phonefont.mjs`）で録る
  *
  * `--base` は Expo の web を書き出したもの（`npx expo export --platform web`）を
  * 静的に配っている先。開発サーバーでは録らない（`CLAUDE.md`「測るときは開発サーバーを
@@ -89,6 +97,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
+import { phoneFont } from "./phonefont.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -237,6 +246,14 @@ const q = new URLSearchParams({
   ...(arg("fx", null) ? { fx: arg("fx") } : {}),
 });
 const target = `${base}/alertbox/?${q}`;
+/* 豚を横に並べる（貯金箱の大きさの比べ）。同じ条件で theme だけ none にした面を、横にずらして置く */
+const besidePig = arg("beside-pig", null) != null ? Number(arg("beside-pig")) : null;
+if (besidePig != null && !Number.isFinite(besidePig)) die(`--beside-pig は配信の px で（${arg("beside-pig")}）`);
+const pigTarget = (() => {
+  const p = new URLSearchParams(q);
+  p.set("theme", "none");
+  return `${base}/alertbox/?${p}`;
+})();
 
 /* PRISM の上乗せ。アラートの面（iframe）より上に置く（本物もアラートの上に出る）。
    大きさは画面の幅（vw）で決めて、縮めた版でも同じ見え方にする。
@@ -275,11 +292,14 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#222}
 body{background:url(backdrop) center/cover no-repeat}
 iframe{position:fixed;left:${frame.x}px;top:${frame.y}px;width:${frame.w / zoom}px;height:${frame.h / zoom}px;
   border:0;background:transparent;transform:scale(${zoom});transform-origin:0 0}
+iframe.pig{left:${frame.x + (besidePig ?? 0)}px}
 .outline{position:fixed;z-index:11;pointer-events:none;box-sizing:border-box;
   left:${frame.x}px;top:${frame.y}px;width:${frame.w}px;height:${frame.h}px;
   outline:2px dashed rgba(0,255,200,.9);outline-offset:0}
 ${ui ? uiCss : ""}
-</style></head><body><iframe allowtransparency="true" src="${target}"></iframe>${
+</style></head><body>${
+  besidePig != null ? `<iframe class="pig" allowtransparency="true" src="${pigTarget}"></iframe>` : ""
+}<iframe allowtransparency="true" src="${target}"></iframe>${
   ui ? uiHtml : ""
 }${flag("outline") ? '<div class="outline"></div>' : ""}</body></html>`;
 
@@ -293,6 +313,9 @@ const ctx = await browser.newContext({ viewport: { width: W, height: H }, device
 /* 舞台の iframe の中（アラートの面）にも効く。init script は frame ごとに走る */
 await prism(ctx);
 console.log(prismNote());
+/* 字体の route は、下の「全部ここで止める」route より先に登録する（あとの route が先に効くので、
+   止める route が __phonefont を fallback で回してくる） */
+if (flag("phone-font")) console.log(await phoneFont(ctx));
 
 const external = [];
 await ctx.route("**/*", async (route) => {
@@ -315,6 +338,8 @@ await ctx.route("**/*", async (route) => {
       headers: { "access-control-allow-origin": "*" },
     });
   }
+  // スマホと同じ字体（--phone-font）は phonefont.mjs の route が返す
+  if (url.includes("/__phonefont/")) return route.fallback();
   if (url.startsWith(base)) return route.continue();
   if (url.startsWith("data:")) return route.continue();
   // 試し表示は外へ繋がないはず。来たら数えて、繋がずに落とす
