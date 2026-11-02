@@ -1,0 +1,16 @@
+{
+  "size": [560, 470],
+  "content": [2, 2, 558, 466],
+  "light": { "bottom": 314, "top": 78 },
+  "pole": { "x": 511, "bottom": 238, "top": 52 },
+  "flag": { "file": "flag.png", "h": 46 },
+  "pipo": {
+    "wait": { "file": "pipo-wait.png", "x": 170, "y": 334, "h": 150 },
+    "peek": { "file": "pipo-peek.png", "x": 268, "y": 0, "h": 118 },
+    "cheer": { "file": "pipo-cheer.png", "x": 182, "y": 334, "h": 160 }
+  },
+  "plates": {
+    "ribbon": { "file": "ribbon.png", "text": [0.13, 0.27, 0.87, 0.66] },
+    "plaque": { "file": "plaque.png", "text": [0.16, 0.27, 0.84, 0.72] }
+  }
+}

@@ -21,9 +21,10 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 | 隠さない（厳禁） | **演出（主役・粒・光）は、その人のキャラ絵の顔に乗せない。字は、あやと（主役）の顔に乗せない** |
 | 前兆の暗さ | ウィジェットは画面いっぱいではない。暗さは**箱の縁で 0 に溶かす**（四角い暗い箱を浮かせない） |
 | 音 | **配信に出ない**ので作らない |
+| 貯金箱の字 | いまの額・目標・旅の名前の3つ（豚と同じ）。**豚と同じ字体**（react-native-web の既定。スマホでは英数字 Roboto・日本語ゴシック）で、大きさも豚の字（いまの額 20px・目標 16px・旅の名前 14px）を基準にする（ハロウィンは額が 37px で大きすぎた）。**絵の上に直に乗せない**: 11月の城は、刺繍のリボンの旗を絵の一部として城の足もとに描き、その帯に載せた（`season/bank/castle.ts` の `castleLayout`。石の銘板・夜空も作って比べた。#1078） |
 | 期間外 | **豚に戻る**（今の豚と画素まで同じ） |
 | 見せ方 | **動画で見せる**。止めた絵は「描けた」の報告まで |
-| 貯金箱の大きさ | **動く範囲も含めて、幅・高さとも豚の 1.2 倍まで**（あやと 2026-11-02「豚の貯金箱より少し大きいくらい」、#1078）。動く範囲には**ときどき横切るもの（こうもりなどの通りすがり）も含める**（「邪魔」は画面に出ているもの全部の話）。PRISM の条件で、ふだんの箱 436×776 なら 213×135px まで。**`alert-banksize.mjs` で数えて通すまで見せない**（既定で 90 秒重ねる＝通りすがりが必ず1回入る）。**11月からは通りすがりを箱の外まで飛ばさない**: 箱の端から端へ横切ると、それだけで幅が箱いっぱい（豚の約2.4倍）になり、上限を超えるから（ハロウィンのこうもり込みで幅 100%・豚の 2.45 倍） |
+| 貯金箱の大きさ | **動く範囲も字も含めて、幅・高さとも豚の 1.6 倍くらい**（1.5〜1.7 倍。あやと 2026-11-02「100%のときに、豚を160%にした大きさが良い」、#1078）。**大きさは豚と同じ物差し（Dimensions＝`useStableWindow`）で決める**: PRISM の % で `visualViewport.scale` が変わり（100% で 0.36、140% で 0.5。比例する）、`<html>` の幅で決めた部品だけ豚との比が % ごとに変わるから（ハロウィンの貯金箱は 140% で豚の 2.3 倍、100% で 3.1 倍に見えた）。豚の外接矩形は Dimensions の幅 218 のとき 178×113px なので、城は 285×181px 前後（`season/bank/castle.ts` の `castleBox`）。動く範囲には**ときどき横切るもの（こうもりなどの通りすがり）も含める**（「邪魔」は画面に出ているもの全部の話）。**`alert-banksize.mjs` で、scale 0.5 と 0.36 の両方で数えて通すまで見せない**（既定で 90 秒重ねる＝通りすがりが必ず1回入る。両方で比が 5% 以内）。**通りすがりは豚の 1.6 倍の外まで飛ばさない**: 箱の端から端へ横切ると、それだけで幅が箱いっぱい（豚の約2.4倍）になるから（ハロウィンのこうもり込みで幅 100%・豚の 2.45 倍）。（10月のハロウィンは「1.2 倍まで」で測っていた。11月に、あやとの指定が 1.6 倍になった） |
 
 ### 演出の水準（あやと 2026-11-02、#1079）
 
@@ -56,13 +57,16 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
   | 部品 | 物差し | PRISM では |
   | --- | --- | --- |
   | 豚（`PiggyGauge`・`ThemedGauge`） | `useStableWindow`（Dimensions） | **半分**（箱 436 で幅 178px・41%） |
-  | 季節の貯金箱（`KuroBank`） | `useBoxSize`（`<html>` の幅） | 縮まない |
+  | 季節の貯金箱（`KuroBank`。10月） | `useBoxSize`（`<html>` の幅） | 縮まない |
+  | 季節の貯金箱（`CastleBank`。11月から） | `useStableWindow`（Dimensions） | **豚と同じに縮む**（いつも豚の 1.6 倍） |
   | アラート（段の演出・字・キャラ絵・季節の小物） | `useSettledBoxSize`（同じ `<html>` の幅。広げているあいだは止まった大きさ） | 縮まない |
   | 絵文字の雨（`components.tsx` の `RainEffect`） | `Dimensions.get("window").height` | 落ちる先が箱の半分の高さ |
 
   ふつうの Chromium では scale は 1 なので、入れずに撮ると**豚だけが PRISM の2倍に写る**（41% → 82%）。**`tools/sprites/alert-*.mjs` は全部、既定でこの縮み方を入れて撮る**（`tools/sprites/prism.mjs`）。`--no-prism` で外せるが、それは「外すとこう外れる」を見せる対照だけ。**外して測った数で判断しない。** 新しく撮る道具を足すときも、context を作ったらページを開く前に `await prism(ctx)` を通す
+- **scale は PRISM の % に比例する**（2026-11-02、あやとのスマホで 100% のとき 0.36。`/alert/perf` の「拡大」）。% は「ページを何倍に拡げて見せるか」で、枠の見た目の大きさは変わらない。なので `<html>` の幅は % に反比例し（140% で 436 なら 100% で約 606）、Dimensions の幅（`<html>` の幅 × scale）は % に依らず約 218。**豚は CSS px で同じ大きさに描かれて、% 倍に拡げて見える。** `<html>` の幅で決めた部品は枠に対して同じ割合に見えるので、% を変えると豚との比が変わる。道具では `--prism-scale 0.36`（箱は `prism.mjs` の `boxAt` で拡げる）
 - 迷ったら測る: ウィジェットの URL を一時的に `https://live-streaming-d3cac.web.app/alert/probe` に向けてもらい、2枚撮ってもらう（`public/alert/probe.html`）
-- 録画の箱（1080×1920 の配信画面の座標）: ふだん `--frame 401,722,607,1082 --zoom 1.39`、広げたとき `--frame 76,445,927,1452 --zoom 1.40`
+- 録画の箱（1080×1920 の配信画面の座標）: ふだん `--frame 401,722,607,1082 --zoom 1.39`、広げたとき `--frame 76,445,927,1452 --zoom 1.40`（どちらも PRISM 140%）
+  - **配信の写真（`bg/prism-street.jpg`）の豚とは合わない**（2026-11-02。右に約 95px・1.13 倍）。写真の豚に、PRISM の条件で描いた豚を当てはめると、CSS px 1 つが配信の 1.57px（140% の 1.39 の 1.13 倍）で、豚の下の端の真ん中が (800, 1815)。写真の日は PRISM が約 158% だった、と読むと揃う（scale が % に比例するのと同じ比）。**貯金箱（豚・城）だけを写真に重ねて録るなら** `--frame 455,597,685,1218 --zoom 1.57`（箱 436×776 のまま、豚が写真の豚にぴったり乗る）。豚と城は Dimensions と下の端の真ん中だけで決まるので、枠の幅が分からなくても位置と大きさは合う。**アラート（`<html>` の幅で決まる）はこの枠では合わない**: その日の枠の幅が分からないから
 - 配信画面の背景（`--bg street|face|alert-now|alert-fish`）はスクラッチの `bg/` に置く。**本人の顔が写っているので git に入れない**
 
 ## 2. 提案する（issue で）
@@ -137,7 +141,7 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 
 ```bash
 export ALERT_BG_DIR=<スクラッチ>/bg
-node alert-banksize.mjs --base http://127.0.0.1:PORT --themes <id> --out <置き場>       # 貯金箱が豚の 1.2 倍まで（動く範囲・通りすがりも含む。90 秒）。超えたら 1。境目なら --runs 3
+node alert-banksize.mjs --base http://127.0.0.1:PORT --themes <id> --out <置き場>       # 貯金箱が豚の 1.5〜1.7 倍（動く範囲・通りすがり・字も含む。90 秒）を scale 0.5 と 0.36 の両方で。外れたら・scale で比が変わったら 1。境目なら --runs 3
 node alert-banksize.mjs ... --no-prism                                                  # 対照: 豚が 82% 前後（PRISM の2倍）に写る。これで判断しない
 node alert-record.mjs --base http://127.0.0.1:PORT --portrait --ui --also-small --sheet 6 \
      --amount 20000 --frame 401,722,607,1082 --zoom 1.39 --out <置き場>/t7.mp4      # 縦の録画
@@ -146,6 +150,9 @@ node alert-overlap.mjs --base ... --chars <キャラの置き場> --theme <id> -
      --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 --out <置き場> --sheet   # 顔×演出・主役の顔×字が全部 0
 node alert-overlap.mjs ... --control face ; node alert-overlap.mjs ... --control hero          # 対照は 1 で落ちる
 node alert-ink.mjs --base ... --bg-dir <bg> --chars <キャラ> --amounts ... --out <置き場>      # 字の濃さ 4.5 以上
+node alert-bankink.mjs --base ... --bg-dir <bg> --themes <id> --phone-font --out <置き場>     # 貯金箱の字の濃さ 4.5 以上（溜まり 0・50・100・120%）。対照は --control flat（全部割れて 1）
+node alert-record.mjs --base ... --mode bank --theme <id> --portrait --phone-font --rise 12 \
+     --backdrop <スクラッチ>/bg-nopig/prism-street.jpg --frame 455,597,685,1218 --zoom 1.57 --beside-pig -383 --out <置き場>/bank.mp4   # 豚と並べた貯金箱の縦の録画（豚は左に 383px）
 node alert-textfit.mjs --base ... --out <置き場>                                                # 名前・額・メッセージの切れが 0
 node alert-decode.mjs --dist <dist> --amounts ... --rates 1,4,6 --runs 3                         # 段の頭の展開が上限内
 node alert-cpu.mjs --base ... --char <キャラ> --amounts ... --rounds 3                           # CPU ms/秒
