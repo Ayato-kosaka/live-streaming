@@ -23,7 +23,7 @@ import {
 import { Stack, useLocalSearchParams } from "expo-router";
 import { settings } from "./config";
 import { styles } from "./styles";
-import { FireworkDisplay, RainEffect } from "./components";
+import { EmojiEffects } from "./components";
 import {
   NotificationData,
   AlertViewer,
@@ -1259,40 +1259,12 @@ export default function AlertBox() {
                 {/* 視聴者に絵文字設定がある場合の花火・雨。**キャラ絵の後ろ**（zIndex 0）。
                     粒はキャラ絵の顔の前を通さない（オーナーの決まり。前は花火が zIndex 2 で顔の前に出ていた） */}
                 {emoji && (
-                <div
-                  data-show="emoji"
-                  aria-hidden
-                  style={{ position: "absolute", left: 0, top: 0, width: "100%", height: "100%", zIndex: 0, pointerEvents: "none", overflow: "hidden" }}
-                >
-                {emoji && (
-                  <FireworkDisplay
-                    style={styles.fireworkExplosion}
+                  <EmojiEffects
                     emoji={emoji}
-                    count={effectCounts?.fireworksCount || 0}
+                    fireworksCount={effectCounts?.fireworksCount || 0}
+                    rainsCount={effectCounts?.rainsCount || 0}
                     alertDuration={calculateAdjustedAlertDuration(notification)}
                   />
-                )}
-
-                {/* 視聴者に絵文字設定がある場合の雨エフェクト */}
-                {emoji &&
-                  Array.from({ length: effectCounts?.rainsCount || 0 }).map(
-                    (_, i) => (
-                      <RainEffect
-                        key={i}
-                        index={i}
-                        emoji={emoji}
-                        // 表示時間全体に均等配置（最初と最後を少し余白）
-                        delay={
-                          ((calculateAdjustedAlertDuration(notification) *
-                            1000 -
-                            2000) /
-                            (effectCounts?.rainsCount || 1)) *
-                          i
-                        }
-                      />
-                    )
-                  )}
-                </div>
                 )}
 
                 {/* 字（名前・額・メッセージ）。キャラ絵の上下中央に重ねる。背景の箱は無い。
