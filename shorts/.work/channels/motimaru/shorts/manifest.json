@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__motimaru__shorts",
+ "mode": "channel",
+ "dest": "channels/motimaru/shorts",
+ "video": null,
+ "channel": "@motimaru",
+ "request": "shorts/requests/totoro-cat-research-channels-20261102.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 3
+ },
+ "bytes": {
+  "plain": 2686,
+  "tar_gz": 1186,
+  "encrypted": 1200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1200,
+   "sha256": "ebe54d34d92d6c1b3adb18cb825f689d860bec258c474eec9287b32ff410285e"
+  }
+ ],
+ "hmac_sha256": "f99fa6d89381979abcf8d8d30c902658602b778b3a2e1ef2a87d123df9ff8856",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41445458071",
+ "created_at": "2026-11-02T13:13:44+00:00"
+}
