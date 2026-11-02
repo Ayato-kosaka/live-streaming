@@ -5,7 +5,8 @@
  *
  *   1. 期間（JST）。`from` から `until` の**手前まで**
  *   2. 絵の置き場（`dir`）。名前の決まりは下の `bankFrameUrl` / `fxUrl` / `rigDir`
- *   3. 貯金箱。切り絵の部品で動かすもの（`rigBank`）と、読めなかったときのコマ送り（`bank`）
+ *   3. 貯金箱。切り絵の部品で動かすもの（`rigBank`）か、絵を重ねて溜めるもの（`castleBank`）と、
+ *      読めなかったときのコマ送り（`bank`）
  *   4. 金額の段（`tiers`）。段ごとに、後ろで出す小物（`fx`）か、**演出の台本**（`show`）と、
  *      名前の札の飾り（`plate`）を持つ
  *   5. 締めの群れ（`finale`）
@@ -170,6 +171,24 @@ export type RigBankDef = {
   visitor?: string;
 };
 
+/**
+ * 絵を重ねる貯金箱（11月のブラン城、#1078）。描くのは `season/bank/CastleBank.tsx`。
+ *
+ * - 0% の絵（`bank-base-0.png`。窓が暗い）と 100% の絵（`bank-fill-0.png`。全部の窓が光る）を同じ構図で描き、
+ *   100% の絵を**下から切り抜いて**溜まり具合を見せる（下の階から窓に灯りがともる）。2枚は `bank` のコマとして読む
+ * - 城の目印（灯りが上がる範囲・旗竿）と、ピポ・旗・字の台の絵は `castle.json`（`dir` の中）
+ * - **大きさは豚と同じ物差し（Dimensions）で決める。** PRISM の % が何でも、いつも豚の 1.6 倍
+ *   （あやと 2026-11-02「100%のときに、豚を160%にした大きさが良い」。`docs/island-misses.md` #311）
+ */
+export type CastleBankDef = {
+  kind: "castle";
+  /**
+   * 字（いまの額・目標・旅の名前）の載せ方。"ribbon" 城の足もとを横切るリボンの旗 /
+   * "plaque" 城の足もとの石の銘板 / "sky" 城の後ろの夜空に縁取りの字
+   */
+  text: "ribbon" | "plaque" | "sky";
+};
+
 export type SeasonTheme = {
   id: string;
   /** JST の開始（含む）。`YYYY-MM-DDTHH:mm` */
@@ -200,6 +219,11 @@ export type SeasonTheme = {
    * 下の `bank`（コマ送り）に落ちる。それも読めなければ豚
    */
   rigBank?: RigBankDef;
+  /**
+   * 絵を重ねる貯金箱。あればこちらを先に使う。`bank` の0%・100% の絵か `castle.json` が読めなければ、
+   * 下の `bank`（コマ送り。0% の絵に 100% の絵を下から溜める）に落ちる。それも読めなければ豚
+   */
+  castleBank?: CastleBankDef;
   /** 貯金箱の字。上（目標）・中（いまの額）・下（ラベル） */
   text: { top: TextTone; center: TextTone; bottom: TextTone };
   /** 出しうる小物ぜんぶ。どれを出すかは段（`tiers`）が決める */
@@ -665,6 +689,34 @@ export const THEMES: SeasonTheme[] = [
       size: 0.11,
       toward: "right",
     },
+  },
+  {
+    id: "castle",
+    /* 11月。ルーマニアのブラン城の、小さな城主ピポ（#1078、あやとが D 案を選んだ）。
+       溜まるほど下の階から窓に灯りがともり、横の旗竿のルーマニアの旗が上がる。
+       **投げ銭の演出は今のまま**（段は1つで、台本も小物も札も持たない＝季節の外と同じアラート）。
+       11月の演出は別に試作している */
+    from: "2026-11-01T00:00",
+    // 11/30 23:59 まで。12/1 0:00 からは豚に戻る
+    until: "2026-12-01T00:00",
+    dir: "/alert/themes/castle",
+    castleBank: { kind: "castle", text: "ribbon" },
+    bank: {
+      /* 城の部品が読めなかった日のコマ送り。0%（base）に 100%（fill）を下から溜める。1枚なので送らない */
+      frames: 1,
+      sequence: [[0, 60000]],
+      fallbackSize: { width: 640, height: 452 },
+    },
+    text: {
+      top: { color: "#FFF4DC", shadow: "#2A1206" },
+      /* いまの額は窓の灯りの黄色。地が何色でも読めるように、濃いこげ茶の縁を付ける */
+      center: { color: "#FFD54A", shadow: "#2A1206" },
+      bottom: { color: "#FFF4DC", shadow: "#2A1206" },
+    },
+    fx: [],
+    slots: [],
+    tiers: [{ min: 0, accent: "#1565C0", slots: 0, files: [], bats: 0, waves: 0 }],
+    finale: null,
   },
 ];
 
