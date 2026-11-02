@@ -17,7 +17,7 @@
  *   node alert-record.mjs --portrait --ui --also-small --sheet 6 \
  *        --amount 7000 --out /tmp/v/halloween-7000.mp4
  *   node alert-record.mjs --portrait --ui --mode bank --theme none --fill 60 \
- *        --frame 633,1622,310,180 --zoom 1.25 --outline --seconds 4 --shots 3 --out /tmp/v/pig-corner.mp4
+ *        --frame 401,722,607,1082 --zoom 1.39 --outline --seconds 4 --shots 3 --out /tmp/v/pig.mp4
  *
  * - `--bg street|face|alert-now|alert-fish` … 背景の配信画面（既定 street）。
  *   置き場は `--bg-dir` か `ALERT_BG_DIR`。**本人の顔が写っているので git には入れない。**
@@ -31,9 +31,10 @@
  * - `--frame 左,上,幅,高さ` … アラートの面（iframe）を置く箱。px か `%`。既定は画面いっぱい。
  *   PRISM では貯金箱が右下に小さく出ている。`--outline` で箱に線を引く
  * - `--zoom 1.5` … 面を 幅/1.5 × 高さ/1.5 で描いてから、箱いっぱいに拡げる（既定 1）。
- *   本物の配信（prism-street）の豚といちばん重なったのは `--frame 633,1622,310,180 --zoom 1.25`
- *   （2026-10-23 に満杯の豚の外形と、字と豚の幅の比で合わせた）。300×150 を等倍で描くと、
- *   豚の背と足が箱で切れて、字も本物より小さく出る
+ *   ウィジェットの本当の大きさ（ふだん 436×776）は `--frame 401,722,607,1082 --zoom 1.39`。
+ *   PRISM の縮み方を入れると、この箱で豚が幅 249px（箱の 41%）に出て、本物の配信の豚と揃う
+ *   （2026-11-02 に測った）。2026-10-23 に豚の外形で合わせた `--frame 633,1622,310,180 --zoom 1.25`
+ *   は、**豚を2倍に描いたまま箱を小さく取って**釣り合わせたもので、ウィジェットの大きさではない
  *
  * `--base` は Expo の web を書き出したもの（`npx expo export --platform web`）を
  * 静的に配っている先。開発サーバーでは録らない（`CLAUDE.md`「測るときは開発サーバーを
@@ -61,6 +62,10 @@
  * `--also-small` で、短い辺を 720 に縮めた版（縦なら 720×1280）を `-small.mp4` で並べて出す。
  * `--sheet 6`（コマ数）か `--sheet 2,8,20`（秒）で、録れた mp4 からコマ一覧の PNG を `-sheet.png` で出す。
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 録れた / 1 = 録れたが中身がおかしい（コマが 10 枚未満・コマの大きさ違い・
  * 書き出しの形が違う） / 2 = 録れなかった
  */
@@ -82,6 +87,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -281,6 +287,9 @@ const browser = await chromium.launch({
   args: ["--no-sandbox", "--no-proxy-server"],
 });
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+/* 舞台の iframe の中（アラートの面）にも効く。init script は frame ごとに走る */
+await prism(ctx);
+console.log(prismNote());
 
 const external = [];
 await ctx.route("**/*", async (route) => {

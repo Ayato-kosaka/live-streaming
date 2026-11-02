@@ -14,11 +14,16 @@
  * 絶対値ではなく、段どうし・貯金箱との比で読む。
  *
  * 箱はふだんの大きさ（437×778）、スマホに寄せて画素の密度 3。
+ *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
  */
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -53,6 +58,7 @@ const targets = [
 
 async function once(browser, t) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DSF, isMobile: true });
+  await prism(ctx);
   const body = readFileSync(charFile);
   await ctx.route("**/*", (r) => {
     const u = r.request().url();
@@ -87,6 +93,7 @@ async function once(browser, t) {
 }
 
 async function main() {
+  console.log(prismNote());
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const all = new Map(targets.map((t) => [t.key, []]));
   for (let r = 0; r < rounds; r++) {

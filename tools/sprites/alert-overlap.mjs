@@ -9,6 +9,10 @@
  *        --out /tmp/overlap --sheet
  *   node alert-overlap.mjs ... --control face    # 対照: 顔の前に手前の層の四角を置く → 1 で落ちる
  *   node alert-overlap.mjs ... --control hero    # 対照: 主役の顔の枠を字の真ん中に置く → 1 で落ちる
+ *   node alert-overlap.mjs ... --theme none --emoji 🎃   # 絵文字を持つ人（花火と雨）として出す
+ *
+ * `--emoji` を渡すと、試し表示の名前の人が「その絵文字を持つ人」になり、花火と雨
+ * （`app/alertbox/components.tsx`）が出る。渡さなければ花火も雨も出ない。
  *
  * ## 決まり（オーナー、2026-10-24。厳禁扱い）
  *
@@ -44,6 +48,10 @@
  * 中身の矩形が無い・キャラ絵の画素が中身の 1 割に満たない・演出のある段で演出の層が無い、
  * 滞在のコマが1つも無い、のどれかなら「測れていない」で 2 で抜ける。
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 全部 0 / 1 = 顔に乗った（対照ではこれが正しい） / 2 = 測れなかった
  */
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
@@ -51,6 +59,7 @@ import { join, resolve, basename, extname } from "node:path";
 import { chromium } from "playwright-core";
 import { PNG } from "pngjs";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -72,6 +81,7 @@ const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
 if (control && control !== "face" && control !== "hero") die(`--control は face か hero（${control}）`);
+const emoji = arg("emoji", "");
 
 /* 名前とメッセージ。長い名前は全角 12 字（本物の視聴者さんの名前）。
    3行は本物の配信で届いたメッセージ（いまの字の大きさで 3〜4 行に折り返す） */
@@ -574,6 +584,7 @@ async function runOne(browser, job) {
   const { ch, amount, size, text } = job;
   const [W, H] = size;
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+  await prism(ctx);
   await ctx.addInitScript(FREEZE);
   const charBody = readFileSync(ch.file);
   const vfile = videos.get(ch.id);
@@ -597,6 +608,7 @@ async function runOne(browser, job) {
   page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
   const q = new URLSearchParams({ preview: "1", theme, amount: String(amount), name: text.name, msg: text.msg });
   if (vfile) q.set("video", `${base}/__ovl__/video.webm`);
+  if (emoji) q.set("emoji", emoji);
   const res = { char: ch.id, amount, size: `${W}x${H}`, text: text.key, frames: [], errors, video: !!vfile };
   try {
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
@@ -637,7 +649,11 @@ async function main() {
   for (const ch of chars) for (const amount of amounts) for (const size of sizes) for (const text of texts) queue.push({ ch, amount, size, text });
   // 長いもの（台本のある段）から先に回す（最後に1本だけ長いのが残らないように）
   queue.sort((a, b) => alertSec(b.amount) - alertSec(a.amount));
-  console.log(`${queue.length} 本（キャラ ${chars.length} × 段 ${amounts.length} × 大きさ ${sizes.length} × 字 ${texts.length}）を ${jobs} 本ずつ`);
+  console.log(prismNote());
+  console.log(
+    `${queue.length} 本（キャラ ${chars.length} × 段 ${amounts.length} × 大きさ ${sizes.length} × 字 ${texts.length}）を ${jobs} 本ずつ` +
+      `（テーマ ${theme}${emoji ? `・絵文字 ${emoji}（花火と雨）` : ""}）`
+  );
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server", "--autoplay-policy=no-user-gesture-required"] });
   const results = [];
   let done = 0;

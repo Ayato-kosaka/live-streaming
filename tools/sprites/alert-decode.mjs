@@ -19,6 +19,10 @@
  * CPU の絞りはそれ自体が CPU を食う（CLAUDE.md）。ここで見るのは「読み込み・展開の速さ」なので、
  * 絞ったまま測ってよい。描画の重さはこの道具では見ない。
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 全部上限内 / 1 = 超えた・台本が出なかった / 2 = 測れなかった
  */
 import { createServer } from "node:http";
@@ -27,6 +31,7 @@ import { existsSync } from "node:fs";
 import { extname, join, normalize, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -101,6 +106,7 @@ async function one(browser, base, amount, rate) {
   // 段ごとに新しい箱（控えを持ち越さない。毎回「面を開いたばかり」から）
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   try {
+    await prism(ctx);
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate });
@@ -139,6 +145,7 @@ async function one(browser, base, amount, rate) {
 }
 
 async function main() {
+  console.log(prismNote());
   const srv = await serve();
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const rows = [];
