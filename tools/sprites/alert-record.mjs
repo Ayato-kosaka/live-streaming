@@ -245,6 +245,9 @@ const q = new URLSearchParams({
   // 試作の旗（`?fx=<名前>`。#1079）。段がその名前の試作を持っていれば、その振付けで録る
   ...(arg("fx", null) ? { fx: arg("fx") } : {}),
 });
+/* そのほかの試し表示の旗を、そのまま足す（`--query 'pipoSeed=3&at=4'`）。11月の城のピポの動きを
+   くじの並びで決める（`pipoSeed`）・最初の動きを名指しする（`pipoAct`）・投げ銭を出す秒（`at`）など */
+for (const [k, v] of new URLSearchParams(arg("query", ""))) q.set(k, v);
 const target = `${base}/alertbox/?${q}`;
 /* 豚を横に並べる（貯金箱の大きさの比べ）。同じ条件で theme だけ none にした面を、横にずらして置く */
 const besidePig = arg("beside-pig", null) != null ? Number(arg("beside-pig")) : null;

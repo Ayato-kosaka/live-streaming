@@ -13,6 +13,8 @@ export type PiggyGaugeProps = {
   label: string; // ラベル（例: "なに食べよの広告費"）
   /** 季節テーマ。無い日・絵が読めなかった日は豚のまま */
   season?: Season;
+  /** 出す前のアラートがあるか（11月の城が、アラート明けまで額の増えを取っておくため。豚は使わない） */
+  alertPending?: boolean;
 };
 
 export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
@@ -20,6 +22,7 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
   targetAmount,
   label,
   season,
+  alertPending,
 }) => {
   // 進捗計算（0〜1にクランプ）
   const progress = useMemo(() => {
@@ -87,11 +90,11 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
         <View style={styles.container}>
           <CastleBank
             theme={season.theme}
-            def={cb}
             bank={season.bank}
             currentAmount={currentAmount}
             targetAmount={targetAmount}
             label={label}
+            alertPending={!!alertPending}
             fallback={themed}
           />
         </View>
