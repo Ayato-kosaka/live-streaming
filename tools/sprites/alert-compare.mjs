@@ -12,6 +12,10 @@
  *   `--zoom 1.39`。alert-record.mjs の録画と同じ）の大きさで描き、配信画面のその部分に重ねる
  * - 行の頭に段の額、列の頭に秒を書く
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 撮れた / 2 = 撮れなかった
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -19,6 +23,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 function arg(name, fallback) {
@@ -61,6 +66,7 @@ const b64 = (buf) => buf.toString("base64");
 
 async function shotsFor(browser, amount) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: zoom });
+  await prism(ctx);
   await ctx.addInitScript(FREEZE);
   const charBody = readFileSync(charFile);
   await ctx.route("**/*", (r) => {
@@ -88,6 +94,7 @@ async function shotsFor(browser, amount) {
 }
 
 async function main() {
+  console.log(prismNote());
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const rows = [];
   for (const a of amounts) {

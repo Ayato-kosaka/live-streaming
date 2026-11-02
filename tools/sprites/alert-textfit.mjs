@@ -12,12 +12,17 @@
  * 行の矩形が箱の中にあるか（DOM）と、メッセージの全文が描かれているか（textContent）も見る。
  * 撮る秒は、字が出そろって止まったあと（段7の数え上げ・段4の書き終わりのあと）。
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 全部収まった / 1 = 切れた組がある / 2 = 測れなかった
  */
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -50,6 +55,7 @@ const settleAt = (theme, a) => (theme !== "halloween" ? 3 : a >= 10000 ? 12 : a 
 async function one(browser, { theme, a, size: [W, H], text }) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
   try {
+    await prism(ctx);
     await ctx.route("**/*", (r) => {
       const u = r.request().url();
       return u.startsWith(base) || u.startsWith("data:") ? r.continue() : r.abort();
@@ -128,6 +134,7 @@ async function one(browser, { theme, a, size: [W, H], text }) {
 }
 
 async function main() {
+  console.log(prismNote());
   const browser = await chromium.launch({ executablePath: chromePath() ?? "/opt/pw-browsers/chromium", args: ["--no-sandbox", "--no-proxy-server"] });
   const queue = [];
   for (const theme of ["halloween", "none"])

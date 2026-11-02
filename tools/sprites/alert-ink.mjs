@@ -14,12 +14,17 @@
  * 合格: どの字も、字の芯の中央値が 4.5 以上で、**地のいちばん明るいところ（上位 5%）に対しても**
  * 4.5 以上。季節の段（`--theme halloween`）と季節の外（`none`）の両方を回す。
  *
+ * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
+ * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
+ * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
  * 終了コード: 0 = 全部 4.5 以上 / 1 = 割れた字がある / 2 = 測れなかった（字を拾えない・2枚が違う）
  */
 import { mkdirSync, readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, resolve, basename, extname } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
+import { prism, prismNote } from "./prism.mjs";
 import { judgeInk } from "./inkjudge.mjs";
 import { serveDirectory } from "./fixserve.mjs";
 
@@ -75,6 +80,7 @@ const exe = chromePath() ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-
 if (!exe) die("ブラウザが見つからない（chrome.mjs）");
 
 async function main() {
+  console.log(prismNote());
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const shots = await serveDirectory(out);
   const judgePage = await (await browser.newContext()).newPage();
@@ -131,6 +137,7 @@ async function main() {
 async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
   try {
+    await prism(ctx);
     await ctx.route("**/*", (r) => {
       const u = r.request().url();
       if (u.includes("cloudfront.net")) return r.fulfill({ contentType: "image/png", body: ch.body, headers: { "access-control-allow-origin": "*" } });
