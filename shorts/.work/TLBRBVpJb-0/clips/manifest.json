@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "TLBRBVpJb-0__clips",
+ "mode": "clips",
+ "dest": "TLBRBVpJb-0/clips",
+ "video": "TLBRBVpJb-0",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-p2-clips-TLBRBVpJb-0.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 1,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 1,
+  "clips_ok": 1,
+  "clip_seconds": 20.0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 12741290,
+  "tar_gz": 12724796,
+  "encrypted": 12724800
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 12724800,
+   "sha256": "4aea1a3a06ae679097d27af386417183ca95d6385a86b1c8a2fa90464822632d"
+  }
+ ],
+ "hmac_sha256": "ad1ad15c1f2636c08ef7a7129109b9dd87879c3878463375187a4244d5e023c3",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41472296700",
+ "created_at": "2026-11-02T16:23:01+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 161136,
+    "sha256": "6334bc6619c7e8081350633e1610b6798ae33aa41fb21b1ac16fab117eed2834"
+   }
+  ],
+  "hmac_sha256": "be130e07099aab2505f9baee4607c88f3df663e252160e8aed64a0255d95f367",
+  "files": 5,
+  "sheets": 1,
+  "bytes": {
+   "plain": 168053,
+   "tar_gz": 161122,
+   "encrypted": 161136
+  }
+ }
+}
