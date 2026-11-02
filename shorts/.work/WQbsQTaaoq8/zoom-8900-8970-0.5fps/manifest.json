@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "WQbsQTaaoq8__zoom-8900-8970-0.5fps",
+ "mode": "zoom",
+ "dest": "WQbsQTaaoq8/zoom-8900-8970-0.5fps",
+ "video": "WQbsQTaaoq8",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom-WQbsQTaaoq8.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 680752,
+  "tar_gz": 653048,
+  "encrypted": 653056
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 653056,
+   "sha256": "94f3a9e6e9f61700ee99bdb5f2807321e668752e9b5df986317e5a63d6be229e"
+  }
+ ],
+ "hmac_sha256": "e11d0239531aaaeeb9573aa2aaa98b9caca2e0bfa9b6978946d76769b712a575",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41448690410",
+ "created_at": "2026-11-02T14:05:40+00:00"
+}
