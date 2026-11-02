@@ -20,6 +20,18 @@
   - 最後の場面だけ、測っているあいだに箱を手で広げたり戻したりしてもらう（画面に頼みを出す）。
     季節テーマを入れてから、アラートは箱の大きさが変わるたびに字を描き直すようになり、
     この箱では広げているあいだの CPU がハロウィン前の 3〜4 倍になった（#1079）
+  - 「動画 …」の3場面は、光の演出（魔法陣 → 光の柱 → ぼけの玉。7秒・720×1280・30コマ/秒）を
+    動画で流す試し（#1079。試し専用の `/alert/fxtest/`）。季節の外の 1,000円の上に重ねて、
+    スマホで何コマ出るかと、配信に写るかを一度に取る。直前の「1,000円 季節の外」が動画なしの物差し。
+    重ね方は3通り:
+    - 透明WebM … 透明つきの VP8（yuva420p）。色と透明の2本の VP8 を、スマホでも CPU で展開するはず
+      （ハードウェアに乗りやすいのは H.264 のほう。この箱では確かめられない）
+    - 黒地MP4 … 黒地の H.264 を `mix-blend-mode: screen` で重ねる。**screen はページの中の下地としか
+      混ざらない**ので、透明なウィジェットでは黒がそのまま黒い四角で写るはず（それを配信で見て確かめる）
+    - 抜きMP4 … 左に色・右に透明の濃さを並べた H.264 を、SVG のフィルタで右半分を透明に読み替える。
+      H.264 はハードウェアが展開できる
+    動画は始まる前にまとめて読む（「動画を読み込み中」）。表の「動画」は `playing` が来たか
+    （来るまでは透明。3秒来なければ「動かず」）。`?only=video` で動画の4場面だけ流す
 
   測り方:
   - 演出は全面の iframe で開く（同じ出どころなので、コマは親と同じ流れで作られる）。
@@ -59,22 +71,51 @@
   .card[hidden] { display: none; }
   h1 { margin: 0 0 2vw; font-size: 5.4vw; font-weight: 800; color: #ffd166; text-align: center; }
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-  th, td { padding: 0.9vw 1vw; font-size: 4vw; text-align: right; white-space: nowrap; }
+  /* 動画の列を足したので、字を少し小さく、見出しは2行に、単位は見出しへ（「1,000円 箱を動かす」の行で右端が切れた。436×776） */
+  th, td { padding: 0.9vw 0.8vw; font-size: 3.7vw; text-align: right; white-space: nowrap; vertical-align: bottom; }
   th { font-size: 3.2vw; color: #c9c9d6; font-weight: 600; }
   td:first-child, th:first-child { text-align: left; }
   td.bad { color: #ff7a8a; font-weight: 800; }
+  table.vid { margin-top: 2vw; }
+  table.vid td { font-size: 3.4vw; color: #d6d6e2; }
+  table.vid td.bad { color: #ff7a8a; }
   .row { margin-top: 2vw; font-size: 3.4vw; color: #d6d6e2; text-align: center; font-variant-numeric: tabular-nums; }
   .foot { margin-top: 2.4vw; font-size: 4.4vw; font-weight: 800; text-align: center; color: #06d6a0; }
+  /* 光の動画（試し）。アラートの上に重ねる。`playing` が来るまで透明（▶ を出さない。#438） */
+  .fx {
+    position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none; opacity: 0; z-index: 1;
+  }
+  .fx.screen { mix-blend-mode: screen; }
+  /* 左右に並べた動画は、9:16 の枠で左半分だけ見せる（右半分は SVG のフィルタが透明に読み替える） */
+  .fxpack {
+    position: fixed; left: 50%; top: 50%; width: max(100vw, 56.25vh); aspect-ratio: 9 / 16;
+    transform: translate(-50%, -50%); overflow: hidden; pointer-events: none; opacity: 0; z-index: 1;
+  }
+  .fxpack video { position: absolute; left: 0; top: 0; width: 200%; height: 100%; filter: url(#fxpack); }
 </style>
 </head>
 <body>
+<!-- 右半分（透明の濃さ）を左へずらして、左半分（色）の透明にする。
+     透明の濃さは H.264 の黒のぶれ（2/255 まで。2026-11-02 に書き出しで測った）を消すために、1.2% 下を 0 に落とす -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="fxpack" x="0" y="0" width="1" height="1" primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">
+    <feOffset in="SourceGraphic" dx="-0.5" dy="0" result="right"/>
+    <feColorMatrix in="right" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.337 0.338 0.337 0 -0.012" result="a"/>
+    <feComposite in="SourceGraphic" in2="a" operator="in"/>
+  </filter>
+</svg>
 <iframe id="f" title="アラート" allow="autoplay"></iframe>
 <div class="tag" id="tag">表が出るまでそのまま</div>
 <div class="card" id="card" hidden>
   <h1>アラートのなめらかさ</h1>
   <table>
-    <thead><tr><th>場面</th><th>コマ/秒</th><th>カクつき</th><th>最長コマ</th></tr></thead>
+    <thead><tr><th>場面</th><th>コマ<br>/秒</th><th>カク<br>つき</th><th>最長<br>ms</th><th>動画</th></tr></thead>
     <tbody id="rows"></tbody>
+  </table>
+  <table class="vid" id="vid" hidden>
+    <thead><tr><th>動画</th><th>大きさ</th><th>読込</th><th>動き出し</th><th>落ちたコマ</th></tr></thead>
+    <tbody></tbody>
   </table>
   <div class="row" id="dev">-</div>
   <div class="foot">この画面を撮って送ってください</div>
@@ -96,9 +137,27 @@
     // 演出の質の試作（#1079）。いまの段4と並べる。テーマは固定（ページの ?theme= で上書きしない）
     { name: "1,500円 ハロウィン", q: { preview: "1", amount: "1500", theme: "halloween" }, sec: 12 },
     { name: "1,500円 試作", q: { preview: "1", amount: "1500", theme: "halloween", fx: "lux" }, sec: 12 },
+    // 光の演出を動画で流す試し（#1079）。季節の外の 1,000円の上に重ねる。1行目は動画なしの物差し
+    { name: "1,000円 季節の外", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video" },
+    { name: "動画 透明WebM", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video", video: "webm" },
+    { name: "動画 黒地MP4", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video", video: "screen" },
+    { name: "動画 抜きMP4", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video", video: "pack" },
     // 投げ銭のときに箱を手で広げる、をそのまま測る（ここだけ、測っているあいだに手を動かしてもらう）
     { name: "1,000円 箱を動かす", q: { preview: "1", amount: "1000", emoji: "🌸" }, sec: 12, ask: "箱を広げたり戻したりしてください" }
   ];
+  if (q.get("only") === "video") {
+    STEPS = STEPS.filter(function (s) { return s.group === "video"; });
+  }
+  /* 光の動画（試し）。どれも 720×1280・7秒・30コマ/秒（`tools/alert-theme/fx_video.py` で焼いた同じ絵）。kb は大きさ */
+  var VIDEOS = {
+    webm: { label: "透明WebM", src: "/alert/fxtest/glow-720.webm", kb: 4048 },
+    screen: { label: "黒地MP4", src: "/alert/fxtest/glow-720-black.mp4", kb: 1181 },
+    pack: { label: "抜きMP4", src: "/alert/fxtest/glow-720-pack.mp4", kb: 2889 }
+  };
+  /* 動画が動き出すのを待つ長さ（#438 と同じ）。過ぎたら「動かず」として出さない */
+  var VIDEO_WAIT_MS = 3000;
+  /* 動画を読み終わるのを待つ長さ。過ぎたら読めたところまでで流す */
+  var WARM_MS = 20000;
   /* 演出が始まるまでの間（試し表示は開いてから 0.8 秒で投げ銭を出す。季節の絵を読む間もある） */
   var LEAD_MS = 1500;
   var STUTTER_MS = 50;
@@ -156,6 +215,96 @@
     return s.length ? s[Math.floor(s.length / 2)] : 0;
   }
 
+  // ---- 光の動画（試し）
+  var players = null;
+
+  function makePlayer(kind) {
+    var v = document.createElement("video");
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.setAttribute("playsinline", "");
+    v.setAttribute("webkit-playsinline", "");
+    v.loop = true;
+    v.preload = "auto";
+    var shown = v;
+    if (kind === "pack") {
+      shown = document.createElement("div");
+      shown.className = "fxpack";
+      shown.appendChild(v);
+    } else {
+      v.className = "fx" + (kind === "screen" ? " screen" : "");
+    }
+    // iframe の上、字（tag・card）の下
+    document.body.insertBefore(shown, tag);
+    var p = { kind: kind, v: v, shown: shown, t0: performance.now(), ready: null, err: null };
+    v.addEventListener("canplaythrough", function () {
+      if (p.ready == null) p.ready = performance.now() - p.t0;
+    });
+    v.addEventListener("error", function () {
+      p.err = "読めず" + (v.error ? "(" + v.error.code + ")" : "");
+    });
+    v.src = VIDEOS[kind].src;
+    v.load();
+    return p;
+  }
+
+  /* 3本を一度に読みはじめ、全部が「最後まで流せる」になるまで待つ（測る場面に読み込みを混ぜない） */
+  async function warm() {
+    tag.textContent = "動画を読み込み中";
+    tag.className = "tag";
+    players = {};
+    Object.keys(VIDEOS).forEach(function (k) { players[k] = makePlayer(k); });
+    var until = performance.now() + WARM_MS;
+    while (performance.now() < until) {
+      var settled = Object.keys(players).every(function (k) { return players[k].ready != null || players[k].err; });
+      if (settled) break;
+      await wait(200);
+    }
+  }
+
+  function playback(v) {
+    try {
+      var x = v.getVideoPlaybackQuality();
+      return { dropped: x.droppedVideoFrames, total: x.totalVideoFrames };
+    } catch (e) {
+      return { dropped: NaN, total: NaN };
+    }
+  }
+
+  function startVideo(p) {
+    var st = { p: p, asked: performance.now(), playing: null, failed: p.err, q0: playback(p.v) };
+    p.shown.style.opacity = "0";
+    if (st.failed) return st;
+    var onPlaying = function () {
+      if (st.playing != null || st.failed) return;
+      st.playing = performance.now() - st.asked;
+      p.shown.style.opacity = "1";
+    };
+    p.v.addEventListener("playing", onPlaying);
+    st.off = function () { p.v.removeEventListener("playing", onPlaying); };
+    try { p.v.currentTime = 0; } catch (e) { /* 読めていなくても流すのは続ける */ }
+    var pr = p.v.play();
+    if (pr && pr.catch) pr.catch(function (e) { if (st.playing == null) st.failed = "止められた"; });
+    st.timer = setTimeout(function () {
+      if (st.playing != null || st.failed) return;
+      st.failed = "動かず";
+      p.v.pause();
+    }, VIDEO_WAIT_MS);
+    return st;
+  }
+
+  function stopVideo(st) {
+    clearTimeout(st.timer);
+    if (st.off) st.off();
+    var q1 = playback(st.p.v);
+    st.dropped = q1.dropped - st.q0.dropped;
+    st.frames = q1.total - st.q0.total;
+    st.size = st.p.v.videoWidth + "×" + st.p.v.videoHeight;
+    st.p.v.pause();
+    st.p.shown.style.opacity = "0";
+  }
+
   async function run() {
     var results = [];
     var total = STEPS.length * reps;
@@ -164,26 +313,34 @@
       for (var i = 0; i < STEPS.length; i++) {
         var step = STEPS[i];
         done++;
+        if (step.group === "video" && !players) await warm();
         tag.textContent = done + " / " + total + "　" + step.name + "　表が出るまでそのまま";
         tag.className = "tag";
         await open(step);
+        // 動画はアラートの面が開いたら流しはじめる（試し表示は 0.8 秒後に投げ銭を出す）
+        var vs = step.video ? startVideo(players[step.video]) : null;
         await wait(LEAD_MS);
         if (step.ask) {
           tag.textContent = step.ask;
           tag.className = "tag ask";
         }
         rec = [];
+        // 測っている場面の名前（この箱の道具 `tools/alert-theme/fx_video_check.mjs` が CPU を場面ごとに割るのに読む）
+        document.body.setAttribute("data-measuring", step.name);
         var t0 = performance.now();
         await wait(step.sec * 1000);
+        document.body.removeAttribute("data-measuring");
         var gaps = rec;
         rec = null;
         var sec = (performance.now() - t0) / 1000;
         var stutter = gaps.filter(function (g) { return g > STUTTER_MS; }).length;
+        if (vs) stopVideo(vs);
         results.push({
           name: step.name,
           fps: gaps.length / sec,
           stutter: stutter,
-          max: gaps.length ? Math.max.apply(null, gaps) : 0
+          max: gaps.length ? Math.max.apply(null, gaps) : 0,
+          video: vs ? { kind: step.video, playing: vs.playing, failed: vs.failed, dropped: vs.dropped, frames: vs.frames, size: vs.size } : null
         });
       }
     }
@@ -192,6 +349,7 @@
   }
 
   function show(results) {
+    window.__perf = results;
     var rows = document.getElementById("rows");
     var hz = 1000 / (median(all) || 16.7);
     results.forEach(function (x) {
@@ -200,10 +358,31 @@
       tr.innerHTML =
         "<td>" + x.name + "</td>" +
         "<td class='" + (low ? "bad" : "") + "'>" + x.fps.toFixed(0) + "</td>" +
-        "<td class='" + (x.stutter > 0 ? "bad" : "") + "'>" + x.stutter + "回</td>" +
-        "<td class='" + (x.max > 100 ? "bad" : "") + "'>" + Math.round(x.max) + "ms</td>";
+        "<td class='" + (x.stutter > 0 ? "bad" : "") + "'>" + x.stutter + "</td>" +
+        "<td class='" + (x.max > 100 ? "bad" : "") + "'>" + Math.round(x.max) + "</td>" +
+        (x.video
+          ? "<td class='" + (x.video.failed ? "bad" : "") + "'>" + (x.video.failed || "出た") + "</td>"
+          : "<td></td>");
       rows.appendChild(tr);
     });
+    // 動画ごとに: 大きさ・読み終わるまで（「動画を読み込み中」から）・動き出すまで・落ちたコマ / 出したコマ
+    var vids = results.filter(function (x) { return x.video; });
+    if (vids.length) {
+      var el = document.getElementById("vid");
+      vids.forEach(function (x) {
+        var v = x.video;
+        var p = players && players[v.kind];
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          "<td>" + VIDEOS[v.kind].label + "</td>" +
+          "<td>" + (VIDEOS[v.kind].kb / 1024).toFixed(1) + "MB</td>" +
+          "<td>" + (p && p.err ? p.err : p && p.ready != null ? (p.ready / 1000).toFixed(1) + "秒" : "-") + "</td>" +
+          "<td>" + (v.playing == null ? "-" : (v.playing / 1000).toFixed(2) + "秒") + "</td>" +
+          "<td class='" + (v.dropped > v.frames * 0.05 ? "bad" : "") + "'>" + v.dropped + "/" + v.frames + "</td>";
+        el.tBodies[0].appendChild(tr);
+      });
+      el.hidden = false;
+    }
     var vv = window.visualViewport;
     document.getElementById("dev").textContent =
       innerWidth + "×" + innerHeight +
