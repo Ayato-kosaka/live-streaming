@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "ipb-A26Y1Zk__zoom-2120-2180-0.5fps",
+ "mode": "zoom",
+ "dest": "ipb-A26Y1Zk/zoom-2120-2180-0.5fps",
+ "video": "ipb-A26Y1Zk",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-ipb-A26Y1Zk.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 566397,
+  "tar_gz": 542806,
+  "encrypted": 542816
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 542816,
+   "sha256": "cb31a426fb0d092ecacd51e12763e4c5eaaaa1ae6adbc3dd7adca835db6db8e0"
+  }
+ ],
+ "hmac_sha256": "3ffd89fbe4225a2c88484f3e60cd725aa0ebf7e4fe60d2c5c05cabce48616328",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:39:05+00:00"
+}
