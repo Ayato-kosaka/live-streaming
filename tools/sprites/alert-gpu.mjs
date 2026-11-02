@@ -9,7 +9,10 @@
  *   node alert-gpu.mjs ... --variants now:,lux:fx=lux,lux-noback:fx=lux \
  *        --tcss '{"lux-noback":"[data-show=\"layer\"]:nth-child(2) *{visibility:hidden!important}"}'
  *
- * - `--variants 名前:クエリ,…` … 版の名前と、URL に足すクエリ（`fx=lux` など）。空なら旗なし（いまの段）
+ * - `--variants 名前:クエリ,…` … 版の名前と、URL に足すクエリ（`fx=lux` など）。空なら旗なし（いまの段）。
+ *   クエリの `theme=` と `amount=` はその版だけ上書きする。`plain:theme=none&amount=1000` で
+ *   **季節の外のいつものアラート**（重さの物差し。あやとのスマホで 55 コマ・カクつき3回だった）を同じ道で並べる
+ * - `--ref plain` … 表に、CPU と GPU がその版の何倍かを足す
  * - 窓は投げ銭から 0〜8 秒（登場）と 12〜20 秒（滞在）。`--windows 0-8,12-20` で変えられる
  * - 条件は PRISM（箱 436×776・`visualViewport.scale` 0.5・密度 3）。`prism.mjs` を通す
  * - GPU の数は CDP の `SystemInfo.getProcessInfo` で取った GPU プロセスの CPU 秒（描画プロセスの
@@ -53,6 +56,8 @@ const out = arg("out", "");
 const charDir = resolve(arg("chars", ""));
 const wins = arg("windows", "0-8,12-20").split(",").map((w) => w.split("-").map(Number));
 const msg = arg("msg", "あやとさんこんばんは！いつも楽しい配信ありがとうございます");
+/** 物差しにする版（`--ref plain`）。表に、CPU と GPU がその版の何倍かを足す */
+const ref = arg("ref", "");
 /** 版ごとに足す CSS（部品を1つずつ外して効き目を測る）。{"版の名前":"…"} */
 const tcss = JSON.parse(arg("tcss", "{}"));
 const exe = chromePath() ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : null);
@@ -79,6 +84,10 @@ async function gpuTime() {
 }
 
 async function once(browser, v) {
+  // 版ごとの上書き（theme・amount）。amount は URL ではなく、偽の WebSocket で送る額
+  const vq = new URLSearchParams(v.query);
+  const yen = vq.has("amount") ? Number(vq.get("amount")) : amount;
+  vq.delete("amount");
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DSF, isMobile: true, hasTouch: true });
   await prism(ctx);
   const img = (body) => ({ status: 200, contentType: "image/png", body, headers: { "access-control-allow-origin": "*", "cache-control": "max-age=3600" } });
@@ -129,14 +138,15 @@ async function once(browser, v) {
   await cdp.send("Performance.enable");
   const met = async () => Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value]));
 
-  const q = new URLSearchParams(`k=${K}&source=doneru&theme=${theme}${v.query ? `&${v.query}` : ""}`);
+  const q = new URLSearchParams({ k: K, source: "doneru", theme });
+  for (const [k, val] of vq) q.set(k, val);
   await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
   const tLoad = Date.now();
-  const res = { variant: v.key, query: v.query, amount, windows: {} };
+  const res = { variant: v.key, query: v.query, amount: yen, windows: {} };
   const wsWait = tLoad + sendAt * 1000 - Date.now();
   if (wsWait > 0) await p.waitForTimeout(wsWait);
   if (!holder.ws) throw new Error(`${v.key}: WebSocket に繋がっていない`);
-  holder.ws.send(JSON.stringify({ id: `gpu-${Date.now()}`, type: "donation", amount, assetID: null, message: msg, messageType: 1, nickname: "ぱんだ", test: true }));
+  holder.ws.send(JSON.stringify({ id: `gpu-${Date.now()}`, type: "donation", amount: yen, assetID: null, message: msg, messageType: 1, nickname: "ぱんだ", test: true }));
   const tSend = Date.now();
   for (const [a, z] of wins) {
     const wait = tSend + a * 1000 - Date.now();
@@ -191,14 +201,17 @@ async function main() {
     }
   }
   await browser.close();
-  console.log("\n| 版 | 窓（秒） | CPU ms/秒 | メイン ms/秒 | GPU ms/秒 | コマ/秒 | 34ms超 | 回数 |");
-  console.log("| --- | --- | --- | --- | --- | --- | --- | --- |");
+  const med = (key, k, f) => median(all.filter((x) => x.variant === key).map((x) => x.windows[k][f]));
+  const hasRef = ref && variants.some((v) => v.key === ref);
+  console.log(`\n| 版 | 窓（秒） | CPU ms/秒 | メイン ms/秒 | GPU ms/秒 | コマ/秒 | 34ms超 | 回数 |${hasRef ? ` CPU（${ref} の何倍） | GPU（${ref} の何倍） |` : ""}`);
+  console.log(`| --- | --- | --- | --- | --- | --- | --- | --- |${hasRef ? " --- | --- |" : ""}`);
   for (const v of variants) {
     const rs = all.filter((x) => x.variant === v.key);
     for (const [a, z] of wins) {
       const k = `${a}-${z}`;
-      const m = (f) => median(rs.map((x) => x.windows[k][f]));
-      console.log(`| ${v.key} | ${k} | ${m("cpu").toFixed(0)} | ${m("main").toFixed(0)} | ${m("gpu").toFixed(0)} | ${m("fps").toFixed(1)} | ${m("l34").toFixed(0)} | ${rs.length} |`);
+      const m = (f) => med(v.key, k, f);
+      const x = (f) => (m(f) / med(ref, k, f)).toFixed(1);
+      console.log(`| ${v.key} | ${k} | ${m("cpu").toFixed(0)} | ${m("main").toFixed(0)} | ${m("gpu").toFixed(0)} | ${m("fps").toFixed(1)} | ${m("l34").toFixed(0)} | ${rs.length} |${hasRef ? ` ${x("cpu")} | ${x("gpu")} |` : ""}`);
     }
   }
 }
