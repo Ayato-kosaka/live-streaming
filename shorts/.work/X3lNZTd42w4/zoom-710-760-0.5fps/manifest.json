@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "X3lNZTd42w4__zoom-710-760-0.5fps",
+ "mode": "zoom",
+ "dest": "X3lNZTd42w4/zoom-710-760-0.5fps",
+ "video": "X3lNZTd42w4",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-X3lNZTd42w4.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 261822,
+  "tar_gz": 243539,
+  "encrypted": 243552
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 243552,
+   "sha256": "7dde42d8392596e1665c4ae3a96e708637c245e80a372d71d59078542f634cc2"
+  }
+ ],
+ "hmac_sha256": "e5dcfc9b3251da84eed2383864ead56a6279dba5d52a241e3c6ffed1af247d41",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:38:03+00:00"
+}
