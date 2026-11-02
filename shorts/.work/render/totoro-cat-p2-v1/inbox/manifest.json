@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__totoro-cat-p2-v1",
+ "mode": "render",
+ "dest": "render/totoro-cat-p2-v1/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/totoro-cat-p2-v1.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 3018,
+  "tar_gz": 1539,
+  "encrypted": 1552
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1552,
+   "sha256": "7046cd0a04f6cf206d058d56ce34f334351b259ef00d70c630dcf0c594d3ac80"
+  }
+ ],
+ "hmac_sha256": "f47428f89a5fdf832acd64ccb7723ad04a22f21993dcb41e3aea50a815b0791c",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-02T18:16:22+00:00",
+ "nonce": "68542b58d8b0211d31e16050"
+}
