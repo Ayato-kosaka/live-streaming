@@ -16,6 +16,8 @@
 - 字の箱は、時間割（plan.json）の字の絵の、濃さ 16 以上の画素の外接矩形（縁・発光を含む）。
   揺れ・出入りの動きの途中の絵（overlays_anim）も1枚ずつ数える
 - 題の札（頭の4秒）は数えない（置き場を決めてある札で、字幕とは別。被りの数は measured に出す）
+- YouTube ライブの札（様式の live_badge。上・左寄せに全編）も、題の札と同じく数えない（置き場を決めた札で動かせない。
+  自撮りの寄りでは額〜眉に掛かる。浸水の回 v6 に A を出すと 231コマ）。被りのコマ数は measured の badge_frames_on_face と要約に出す
 - 1コマでも重なれば fail。ただし spec の行に `face_overlap_ok: {"frames": N, "why": …}`（顔が画面いっぱいで
   置き場が無い、と人が決めた例外）があれば、その行（字幕が2枚に割れても行で足す）は N コマまで通し、超えたら落とす
 """
@@ -31,7 +33,7 @@ from facetrack import HAAR_ZONE, MIN_RUN, NOSE_TO_MOUTH, RUN_GAP, RUN_IOU, guard
 from common import FAIL, NA, PASS, RENDER, Ctx, frame_memo, iter_frames, result
 
 ALPHA_MIN = 16            # 字の箱の線（safe_area の Card.bbox と同じ）
-SKIP_KINDS = ("title",)   # 題の札。字幕を兼ねる札の写し（card: True）も数えない
+SKIP_KINDS = ("title", "badge")   # 題の札・YouTube ライブの札。字幕を兼ねる札の写し（card: True）も数えない
 RENDER_YUNET = RENDER / "models" / "face_detection_yunet_2023mar.onnx"
 
 
@@ -55,10 +57,10 @@ def text_boxes(plan: dict) -> list[dict]:
     return out
 
 
-def title_boxes(plan: dict) -> list[dict]:
+def title_boxes(plan: dict, kind: str = "title") -> list[dict]:
     out = []
     for o in plan.get("overlays") or []:
-        if o.get("kind") == "title" and not o.get("card"):
+        if o.get("kind") == kind and not o.get("card"):
             out.append({"from": int(o["from"]), "to": int(o["to"]),
                         "box": [int(o["x"]), int(o["y"]), int(o["x"]) + int(o["w"]), int(o["y"]) + int(o["h"])]})
     return out
@@ -153,13 +155,19 @@ def check(ctx: Ctx) -> dict:
             rows.append(row)
     title_hits = sum(1 for t in titles for f in range(max(0, t["from"]), min(n, t["to"]))
                      if any(overlap(t["box"], fb) > 0 for fb in faces[f]))
+    # YouTube ライブの札は全編に出るので、顔を探したコマ（字の出ているコマ）の範囲で数える
+    seen = set(want)
+    badge_hits = sum(1 for t in title_boxes(ctx.plan, "badge") for f in range(max(0, t["from"]), min(n, t["to"]))
+                     if f in seen and any(overlap(t["box"], fb) > 0 for fb in faces[f]))
     m = {"detector": name, "frames": len(want), "frames_total": n, "frames_with_face": sum(1 for x in faces if x),
          "detections": sum(len(x) for x in raw), "dropped": dropped,
          "dropped_short": sum(len(x) for x in raw) - sum(len(x) for x in faces),
          "text_boxes": len(boxes), "lines_on_face": rows, "lines_allowed": allowed,
-         "title_card_frames_on_face": title_hits}
+         "title_card_frames_on_face": title_hits, "badge_frames_on_face": badge_hits}
     note = (f"・例外の印で通した行 {len(allowed)}（" + "、".join(f"「{a['text'][:10]}」{a['frames']}/{a['ok']['frames']}コマ"
                                                   for a in allowed) + "）") if allowed else ""
+    if badge_hits:
+        note += f"・YouTube ライブの札が目と鼻に重なるコマ {badge_hits}（題の札と同じく数えるだけ）"
     if rows:
         return result("text_on_face", title, FAIL,
                       f"字が顔に被っている行 {len(rows)}（{sum(r['frames'] for r in rows)}コマ）" + note,

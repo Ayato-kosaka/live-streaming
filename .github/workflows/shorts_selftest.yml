@@ -52,7 +52,9 @@ jobs:
     runs-on: ubuntu-24.04
     # 2本で7〜9分（4コアの箱で、ほかの書き出しと並んで 232秒と 252秒。2026-10-19）。
     # 道具を入れるのに1分ほど。倍以上の余裕を見る
-    timeout-minutes: 20
+    # 2026-11-02: 見張りが増え、job 全体で 15〜19.5分（2026-10-31〜11-01 の8回。上限 20分の手前）になっていたところへ、
+    # 元の声（1分ほど）と YouTube ライブの札の2本（あわせて3分ほど）を足すので、上限を 30分にした
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -122,6 +124,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/render/orig_voice_selftest.py
 
+      # YouTube ライブの札（帳面 F-064・#1097、2026-11-02）。出さない回（既定）は書き出しが何も変えず、出す回は上・左寄せに
+      # 全編出して題の札・左上の注を札の下へ空けるか（書き出しの側）と、品質チェックが札の見えないコマ・ぶつかりを落とすか（検査の側）。
+      # 守り10個・9個を1つずつ外して、それぞれ2分ほど。ffmpeg と numpy が要るので回し役の SKIP に載せ、ここで名指しで回す
+      - name: YouTube ライブの札の見張り（書き出し）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/live_badge_selftest.py
+
+      - name: YouTube ライブの札の見張り（品質チェック）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/qa/badge_selftest.py
+
       # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
       # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
       # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
@@ -149,6 +162,7 @@ jobs:
             ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
             ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
             ! -path 'tools/shorts/render/orig_voice_selftest.py' \
+            ! -path 'tools/shorts/render/live_badge_selftest.py' ! -path 'tools/shorts/qa/badge_selftest.py' \
             ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
             ! -path 'tools/shorts/feedback/watch_selftest.py' \
             -print0 | sort -z)

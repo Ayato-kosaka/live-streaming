@@ -105,6 +105,49 @@
     "replaces": ["※生配信のアーカイブ"],
     "min_s": 2.0
   },
+  "live_badge": {
+    "_note": "「YouTube ライブから切り出した動画」と分かる小さな札（あやと 2026-11-02「YouTubeライブってわかる表紙を上部左寄せに入れたいなぁ」・帳面 F-064・#1097）。上・左寄せに0コマ目から最後まで出す。enabled が false（既定）の回は書き出しが何も足さない（1バイトも変わらない）。出す回は enabled を true にして look（A/B/C）を選ぶ。置き場の根拠（YouTube の上のチップの下端 355・TikTok の上の帯 240）と、題の札・左上の注を札の下へ下げる決まりは README の「YouTube ライブの札」と live_badge.py の頭。scale で全体の大きさ、x・y で置き場、gap で札と下げた部品の間を変える",
+    "enabled": false,
+    "look": "A",
+    "x": 120,
+    "y": 372,
+    "gap": 16,
+    "scale": 1.0,
+    "looks": {
+      "A": {
+        "_note": "赤い札に白い「● LIVE」、続けて半透明の黒に白い字「YouTube ライブより」。いちばん目に入る（ニュースの中継の札の形）。「より」で、いま生配信中ではなく切り出しだと分かるようにする",
+        "text": "● LIVE｜YouTube ライブより",
+        "height": 56,
+        "segments": [
+          { "bg": "#E5322D", "pad": [20, 18], "gap": 9,
+            "items": [ { "dot": { "color": "#FFFFFF", "d": 13 } },
+                       { "text": "LIVE", "font": "caption", "size": 31, "color": "#FFFFFF", "tracking": 0.06 } ] },
+          { "bg": "#000000", "bg_alpha": 0.62, "pad": [16, 22],
+            "items": [ { "text": "YouTube ライブより", "font": "title", "size": 30, "color": "#FFFFFF" } ] }
+        ]
+      },
+      "B": {
+        "_note": "地を敷かず、字幕と同じ白に黒縁の字で「YouTube ライブ」、前にこちらで描いた赤い再生の三角（白と黒の縁）。公式のアイコン（赤い角丸の四角に白い三角）にはしない。画面の字と同じ系統で、札より軽く見える",
+        "text": "▶ YouTube ライブ",
+        "height": 56,
+        "segments": [
+          { "pad": [0, 0], "gap": 10,
+            "items": [ { "play": { "color": "#E5322D", "w": 30, "h": 34, "round": 0.14, "outline": { "color": "#FFFFFF", "width": 3 } } },
+                       { "text": "YouTube ライブ", "font": "caption", "size": 36, "color": "#FFFFFF", "outline": { "color": "#000000", "width": 5 } } ] }
+        ]
+      },
+      "C": {
+        "_note": "半透明の黒い札に、赤い点（淡い輪つき）と白い字「配信アーカイブ」。左上の注と同じ地で、いちばん控えめ。YouTube の名前を出さない（TikTok にも同じファイルを出す）",
+        "text": "● 配信アーカイブ",
+        "height": 54,
+        "segments": [
+          { "bg": "#000000", "bg_alpha": 0.58, "pad": [18, 22], "gap": 11,
+            "items": [ { "dot": { "color": "#FF3B30", "d": 14, "ring": { "color": "#FF3B30", "alpha": 0.32, "d": 24 } } },
+                       { "text": "配信アーカイブ", "font": "title", "size": 31, "color": "#FFFFFF" } ] }
+        ]
+      }
+    }
+  },
   "telop": {
     "_note": "強調の字（絵コンテの「中央: …」）。黄色い字に黒の縁、数字だけ大きく。タイトルの下端と字幕2行ぶんの上端の間に、同時に1つだけ。pop は出だしの数コマの大きさ（ポンと出す）",
     "font": "caption",

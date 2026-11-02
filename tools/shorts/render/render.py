@@ -46,6 +46,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import live_badge as LB  # noqa: E402
 import orig_voice as OV  # noqa: E402
 import textlook as TL  # noqa: E402
 
@@ -1568,8 +1569,12 @@ def busy_bands(it: dict, p: dict, pad: int = 16) -> list[tuple[float, float]]:
 
 
 def top_limit(it: dict, p: dict, base: float, pad: int = 24) -> float:
-    """行 it の字の上端の限り。題の札が同じ時に出ていれば、その下。"""
+    """行 it の字の上端の限り。題の札が同じ時に出ていれば、その下。YouTube ライブの札を出す回は、その下。"""
     lim = base
+    lb = p.get("live_badge")
+    if lb:
+        # 札は0コマ目から最後まで、上・左寄せに出ている。字はどの行でもその下から
+        lim = max(lim, lb["y"] + lb["h"] + pad)
     for t in p["titles"]:
         if t["from"] < it["to"] and it["from"] < t["to"] and "h" in t:
             lim = max(lim, t["y"] + t["h"] + pad)
@@ -1642,6 +1647,12 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
     # 2回呼ばれる（顔を探す前と後）。前の回の効果と記録を持ち越さない
     p["fx"] = []
     p.pop("face_avoid", None)
+    p.pop("live_badge", None)
+    # YouTube ライブの札（様式の live_badge）。出さない回（既定）は None で、様式も時間割も触らない。
+    # 出す回は、札の下へ題の札・全編のタイトル・左上の注を下げた様式の写しで、以下の置き場を決める
+    badge = LB.place(style, p["frames"], lambda k: font_path(style, k), work)
+    if badge:
+        p["live_badge"], badge_img, style = badge
 
     def still(kind: str, it: dict, img: Image.Image, anim: dict | None) -> dict:
         """出来上がりの絵を (x, y) に置く層。動きは真ん中を基準にする。"""
@@ -1649,6 +1660,10 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
                 "cx": it["x"] + img.width / 2, "cy": it["y"] + img.height / 2}
 
     title_bottom = safe["top"]
+    if badge:
+        # テロップの置き場の上端も札の下から
+        title_bottom = max(title_bottom, p["live_badge"]["y"] + p["live_badge"]["h"])
+        out.append(still("badge", p["live_badge"], badge_img, None))
     for i, it in enumerate(p["titles"]):
         if it.get("look") == "card":
             ti_st = style["title_card"]
@@ -2817,7 +2832,7 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
                       + (f"（例外の印あり: {ok['frames']}コマまで）" if ok else ""), file=sys.stderr)
 
     # コマごとに、重ねる字の絵を引けるようにする（タイトル → テロップ → 字幕 の順に重ねる）
-    order = {"title": 0, "note": 1, "telop": 2, "caption": 3}
+    order = {"badge": -1, "title": 0, "note": 1, "telop": 2, "caption": 3}
     timeline: list[list[Overlay]] = [[] for _ in range(p["frames"])]
     p["overlays"] = []
     kind_count: dict[str, int] = {}

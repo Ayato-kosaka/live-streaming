@@ -27,6 +27,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import audio  # noqa: E402
+import badge  # noqa: E402
 import container  # noqa: E402
 import cuts  # noqa: E402
 import faces  # noqa: E402
@@ -50,6 +51,7 @@ CHECKS = {
     "text_dup": textdup.check,
     "line_breaks": linebreak.check,
     "safe_area": text.check_safe_area,
+    "live_badge": badge.check,
     "watermark": watermark.check,
     "faces": faces.check,
     "text_on_face": textface.check,
@@ -65,7 +67,7 @@ CHECKS = {
     "original_audio": audio.check_original_audio,
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
-VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "frozen", "cut_length", "similar_run",
+VIDEO_ONLY = ("safe_area", "live_badge", "watermark", "faces", "text_on_face", "black", "frozen", "cut_length", "similar_run",
               "still_image", "source_stutter", "shot_reuse")
 # 下書き（render.py --draft）で回す最低限。中身を直している間に崩れやすいものだけ:
 # 字幕と声のずれ・字が安全域から出ていないか・真っ黒なコマ・強調の字の言い直し（時間割だけで測るので速い）。
@@ -78,7 +80,9 @@ VIDEO_ONLY = ("safe_area", "watermark", "faces", "text_on_face", "black", "froze
 # 元素材の読みを使い回し、似た見た目は使い回しと同じコマの要約を使い回すので、足してもほとんど遅くならない。
 # 顔・透かし・字と顔は字なしの版と本番の画素で見るので、本番の段で回す。
 # 字の改行（語の途中で割れていないか）は、字を直している下書きの段で崩れやすく、時間割の字だけで測るので一瞬
-DRAFT_CHECKS = ("subtitle_sync", "safe_area", "black", "text_dup", "line_breaks", "cut_length", "similar_run",
+# YouTube ライブの札（出す回だけ。出さない回は対象外で pass）も、字の置き場が決まる下書きの段でぶつかりが分かる。
+# 1秒に1コマを読むだけで軽い
+DRAFT_CHECKS = ("subtitle_sync", "safe_area", "live_badge", "black", "text_dup", "line_breaks", "cut_length", "similar_run",
                 "still_image", "source_stutter", "shot_reuse")
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
