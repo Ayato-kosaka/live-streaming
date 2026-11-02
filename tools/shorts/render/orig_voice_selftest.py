@@ -12,7 +12,8 @@
 話している所だけを測ると AI の声より 0.8dB・3.1dB 小さかった。直したのは3か所:
 
 - `orig_voice.py` — 物差し（`voice_level_db`）と、配信の声を整える処理（`clean`）・揃える処理（`fit`）
-- `render.py` — 時間割に元の声の印を運び（`plan`）、元の声の行だけ「整える → AI の声の真ん中 + 0.5dB」で揃える（`audio_stems`）
+- `render.py` — 時間割に元の声の印を運び、字幕を声の出だしから出し（`plan`）、元の声の行だけ「整える → AI の声の真ん中
+  + 0.5dB」で揃える（`level_narration`）
 - `../qa/audio.py` — 「声と BGM の差」に、元の声の行を AI の声の行と同じ物差しで比べる線（−0.5〜+3dB）
 
 要るのは ffmpeg・numpy・Pillow（書き出しの `render.py` を読む）。Selftests には numpy が無いので、回し役
@@ -29,6 +30,7 @@
 | `measure` | 物差し: 1kHz の正弦（振幅 0.1）が −23.01dB。45Hz の揺れ（振幅 0.5）や 6kHz を足しても動かない（声の帯の外）。半分が無音でも動かない（門）。12dB 小さい後半は数え、26dB 小さい後半は数えない（いちばん大きい窓から 20dB の門） |
 | `clean` | 整える: 50Hz より下が声の帯より 20dB 以上下がる・120〜250Hz のこもりが 3dB 以上下がる・言葉のない所の雑音が話している所に比べて 3〜12dB 下がる・言葉の帯（500〜3000Hz）の形は元のまま（相関 0.9 以上）・長さが同じ |
 | `plan_flag` | 書き出しの時間割（`plan`）が、指示書の行の `orig_voice` を音の束の行まで運ぶ（AI の声の行には付けない） |
+| `caption` | 元の声の行（頭の 0.1秒は雑音だけ）の字幕が、音の束の声の出だしのコマと1コマ以内で出る（行の頭からではない）。AI の声の行は行の頭から |
 | `stems` | 書き出しの声の束（`audio_stems`）: 元の声の行が、AI の声の行の真ん中より 0〜+1dB（声の帯の話している所）。AI の声の行は前のまま「話している間の RMS」−16dBFS。元の声の行の 50Hz より下は声の帯より 15dB 以上下・頂点は 0.95 以下で平らな頂点が無い。AI の声の行が無い回も落ちずに揃う |
 | `qa_rows` | 品質チェックの比べ方（`orig_voice_rows`）: 揃えた束は落ちない。前の書き出し（行全体の RMS で −16dBFS）の束は「元の声」で落ちる・+5dB の叫びも落ちる・元の声の行が無ければ何も言わない・AI の声の行が無ければ比べない |
 | `qa_check` | 品質チェックの「声と BGM の差」そのもの（`check_voice_vs_bgm`）: 前の書き出しの束で fail（理由に「元の声」）・揃えた束で pass（要約に「元の声」） |
@@ -59,11 +61,16 @@ SPF = SR // FPS
 # 名前: (ファイル（render/ からの道）, 本物の字, 外した字, 落ちるはずの足, 何を外したか)
 # 書き出しの声が AI の声より 0.5dB 以上小さくなる外し方では、品質チェックの足（qa_rows の「揃えた束は落ちない」・
 # qa_check の「揃えた束で pass」）も落ちるのが正しい。品質チェックが書き出しの崩れを拾った、ということ。
-# 揺れ（hpf）・整え（no_clean）を外すと、揺れと打音が頂点を食って、上げても声の帯が届かない（−5〜−6dB）
+# 整え（no_clean）・こもり（deboom）を外すと、揺れ・こもり・打音が頂点を食って、上げても声の帯が届かない（−2〜−6dB）。
+# 雑音（nr）を外すと、話していない所の雑音が物差しの門（いちばん大きい窓から 20dB）に入り、やはり届かない（−0.8dB）。
+# 揺れ（hpf）だけを外したときは声の帯は届く（+0.4dB）ので、品質チェックではなく束の「50Hz より下」で落ちる
 CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "flag": ("render.py", "                      **({\"orig_voice\": True} if ln.get(\"orig_voice\") else {})})\n",
              "                      })\n",
              {"plan_flag"}, "時間割に元の声の印を運ばない（音の束で AI の声と同じ揃え方になる）"),
+    "caption": ("render.py", "                starts[i] = ln[\"at\"] + voice_onset_frame(xs[i], spf)\n",
+                "                pass\n",
+                {"caption"}, "元の声の行の字幕を行の頭から出す（声の出だしより先に出る）"),
     "fit": ("render.py", "        y, got = OV.fit(y, target, ov_cfg)\n",
             "        y = y * db(au[\"narration_rms_dbfs\"]) / max(speech_rms(y), 1e-9)\n"
             "        got = {\"gain_db\": 0.0, \"voice_db\": 0.0, \"limited_db\": 0.0}\n",
@@ -72,11 +79,11 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
                  "        y, info = x.astype(np.float64), {}\n",
                  {"stems", "qa_rows", "qa_check"}, "元の声を整えずに揃える（揺れ・こもり・雑音がそのまま）"),
     "hpf": ("orig_voice.py", "    hp = ramp(f, *c[\"hpf_hz\"])\n", "    hp = 1.0\n",
-            {"clean", "stems", "qa_rows", "qa_check"}, "80Hz より下の揺れを切らない"),
+            {"clean", "stems"}, "80Hz より下の揺れを切らない"),
     "deboom": ("orig_voice.py", "    deboom = 10 ** (c[\"deboom_db\"] * (1 - ramp(f, *c[\"deboom_hz\"])) / 20)\n",
-               "    deboom = 1.0\n", {"clean", "stems"}, "こもりの帯を下げない（こもりが頂点を食って、声の帯が目標に 0.7dB 届かない）"),
+               "    deboom = 1.0\n", {"clean", "stems", "qa_rows", "qa_check"}, "こもりの帯を下げない（こもりが頂点を食って、声の帯が届かない）"),
     "nr": ("orig_voice.py", "    y, nr = denoise(y, c)\n", "    nr = 0.0\n",
-           {"clean"}, "話していない所の雑音を下げない"),
+           {"clean", "stems", "qa_rows", "qa_check"}, "話していない所の雑音を下げない"),
     "band": ("orig_voice.py", "    y = band(x, *VOICE_BAND_HZ, sr=sr)\n", "    y = x\n",
              {"measure", "stems", "qa_rows", "qa_check"}, "物差しが声の帯の外（揺れ・こもり）まで数える（v3 の揃え方と同じ見落とし）"),
     "gate": ("orig_voice.py", "    keep = p >= top * 10 ** (-GATE_DB / 10)\n", "    keep = p >= 0\n",
@@ -263,20 +270,20 @@ def ai_voice(level: float, f0: float = 120.0):
     return level * vowel(n, f0, [(600, 250, 1.0), (1500, 400, 0.8), (2600, 500, 0.5)]) * syllables(n, SPANS)
 
 
-def stream_voice():
+def stream_voice(noise_std: float = 0.004, clicks_on: bool = True, rumble_on: bool = True):
     """配信の声: 同じ形の声に、揺れ・こもり・薄い言葉の帯・途切れない雑音・打音を足す。音節の大きさも揃っていない。"""
     import numpy as np
     n = int(DUR * SR)
     t = np.arange(n) / SR
     env = syllables(n, SPANS) * np.where(t < 0.5, 1.0, np.where(t < 0.9, 0.5, 0.3))  # 叫んで、尻すぼみ
     speech = 0.12 * vowel(n, 125.0, [(180, 60, 3.0), (600, 250, 0.45), (1500, 400, 0.3), (2600, 500, 0.2)]) * env
-    rumble = 0.08 * np.sin(2 * np.pi * 45 * t)
+    rumble = 0.08 * np.sin(2 * np.pi * 45 * t) * rumble_on
     rng = np.random.default_rng(1086)
     noise = rng.normal(0, 1, n)
     noise = np.fft.irfft(np.fft.rfft(noise) * (np.fft.rfftfreq(n, 1 / SR) < 8000), n)
-    noise *= 0.004 / max(float(np.std(noise)), 1e-12)
+    noise *= noise_std / max(float(np.std(noise)), 1e-12)
     clicks = np.zeros(n)
-    for c in CLICKS:
+    for c in CLICKS if clicks_on else ():
         i = int(c * SR)
         m = int(0.002 * SR)
         clicks[i:i + m] += 0.9 * np.exp(-np.arange(m) / (0.0004 * SR)) * np.sin(2 * np.pi * 2000 * np.arange(m) / SR)
@@ -300,6 +307,9 @@ class Case:
         self.raw, self.speech = stream_voice()
         self.files = [write(d / "ai0.wav", ai_voice(0.10)), write(d / "ai1.wav", ai_voice(0.03, 110.0)),
                       write(d / "orig.wav", self.raw), write(d / "ai2.wav", ai_voice(0.06, 130.0))]
+        # 字幕の出だしを見る足の元の声: 揺れ・打音が無く、雑音が声の頭より十分小さい（頭の 0.1秒は雑音だけ）。
+        # 整える処理を外す対照（hpf・no_clean）で、揺れが出だしに化けて足の前提（行の頭から間がある）が崩れないように
+        self.quiet = write(d / "orig_quiet.wav", stream_voice(0.0005, False, False)[0])
         self.orig_row = 2
         self.style = R.load_style("style.json", R.HERE)
         frames = math.ceil(DUR * FPS)
@@ -395,27 +405,61 @@ def leg_clean(R, OV, A, case: Case) -> list[tuple[str, bool]]:
     return out
 
 
-def leg_plan_flag(R, OV, A, case: Case) -> list[tuple[str, bool]]:
+def plan_of(R, case: Case) -> dict:
+    """AI の声1行と元の声1行の指示書を、本物の時間割（plan）に通す（2つの足で使い回す）。字幕は「テスト」"""
+    if getattr(case, "_plan", None) is not None:
+        return case._plan
     d = case.d
     src = d / "src.mp4"
-    if not src.exists():
-        subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
-                        "color=c=0x808080:s=180x320:r=30", "-t", "4", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                        str(src)], check=True)
+    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
+                    "color=c=0x808080:s=180x320:r=30", "-t", "4", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    str(src)], check=True)
     e = {"version": 2, "id": "selftest-orig", "style": "style.json", "sources": {"s": {"path": str(src)}},
          "cuts": [{"src": "s", "in": 0, "out": 110}],
          "narration": {"engine": "files", "lines": [
-             {"at": 0, "text": "AI", "caption": "", "file": str(case.files[0])},
-             {"at": 55, "text": "元", "caption": "", "file": str(case.files[2]), "orig_voice": True}]}}
+             {"at": 0, "text": "テスト", "file": str(case.files[0])},
+             {"at": 55, "text": "テスト", "file": str(case.quiet), "orig_voice": True}]}}
     ep = d / "edit_orig.json"
     ep.write_text(json.dumps(e, ensure_ascii=False), encoding="utf-8")
     ed, style, base = R.load(ep)
     work = d / "w_plan"
     work.mkdir(exist_ok=True)
     p = R.plan(ed, style, base, work)
-    ln = p["narration"]
+    narr_p, _, _ = R.audio_stems(p, style, base, work)
+    import numpy as np
+    case._plan = {"plan": p, "stem": np.fromfile(narr_p, dtype="<f4").reshape(-1, 2).mean(axis=1)}
+    return case._plan
+
+
+def onset_frame(x) -> int:
+    """声の出だしのコマ: 2.5ms の後ろ向き RMS が、いちばん大きい所から 30dB 下の線を越えた最初のサンプル
+    （品質チェックの「字幕と声のずれ」と同じ決め方を、ここで書く）"""
+    import numpy as np
+    w = int(SR * 0.0025)
+    e = np.asarray(x, dtype=np.float64) ** 2
+    c = np.concatenate([[0.0], np.cumsum(e)])
+    r = np.sqrt(np.maximum(c[w:] - c[:-w], 0) / w)
+    return int(np.flatnonzero(r >= r.max() * 10 ** (-30 / 20))[0] + w - 1) // SPF
+
+
+def leg_plan_flag(R, OV, A, case: Case) -> list[tuple[str, bool]]:
+    ln = plan_of(R, case)["plan"]["narration"]
     return [(f"元の声の行に印（{ln[1].get('orig_voice')}）", ln[1].get("orig_voice") is True),
             (f"AI の声の行には印が無い（{ln[0].get('orig_voice')}）", "orig_voice" not in ln[0])]
+
+
+def leg_caption(R, OV, A, case: Case) -> list[tuple[str, bool]]:
+    """元の声は画と同じ秒から取るので頭を詰めない。字幕は、音の束の声の出だしのコマから出す"""
+    got = plan_of(R, case)
+    p, stem = got["plan"], got["stem"]
+    caps = {c["line"]: c["from"] for c in p["captions"]}
+    out = [(f"AI の声の行の字幕は行の頭から（{caps.get(0)}）", caps.get(0) == p["narration"][0]["at"])]
+    at = p["narration"][1]["at"]
+    v = at + onset_frame(stem[at * SPF:(at + p["narration"][1]["frames"]) * SPF])
+    c = caps.get(1)
+    out.append((f"元の声の行の字幕（{c}コマ目）が、束の声の出だし（{v}コマ目。行の頭 {at} から間がある）と1コマ以内",
+                c is not None and v > at and abs(c - v) <= 1))
+    return out
 
 
 def leg_stems(R, OV, A, case: Case) -> list[tuple[str, bool]]:
@@ -514,6 +558,7 @@ LEGS = {
     "measure": leg_measure,
     "clean": leg_clean,
     "plan_flag": leg_plan_flag,
+    "caption": leg_caption,
     "stems": leg_stems,
     "qa_rows": leg_qa_rows,
     "qa_check": leg_qa_check,

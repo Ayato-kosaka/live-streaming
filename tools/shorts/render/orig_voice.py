@@ -228,29 +228,42 @@ def clean(x: np.ndarray, over: dict | None = None, sr: int = SR) -> tuple[np.nda
                "noise_reduced_db": nr, "comp_max_db": gr}
 
 
+# 頂点を抑えたぶんを取り返すために足してよい倍率の上限（dB）。届かない目標を追いかけると、倍率だけが上がって
+# 雑音まで持ち上がり、声は抑えに潰される（合成の声で、こもりを残すと +60dB まで上がった）。届かなければ
+# 届かないまま返し、品質チェック（AI の声より −0.5dB 未満）に落としてもらう
+MAX_MAKEUP_DB = 6.0
+
+
 def fit(x: np.ndarray, target_db: float, over: dict | None = None, sr: int = SR) -> tuple[np.ndarray, dict]:
     """整えた声を、声の帯の大きさが target_db になるように上げ下げし、頂点を peak に収める。
 
     頂点を抑えると大きさが下がる（打音の多い声ほど、上げた倍率の一部が抑えに食われる）ので、測り直して倍率を
     直す。2回目からは割線法（前の2回の「倍率 → 大きさ」の傾き）で寄せ、0.05dB 以内か 8回で止める。
+    足す倍率は MAX_MAKEUP_DB まで。傾きが 0.3 を切る（上げた倍率の 7割より多くが抑えに食われる）なら、それ以上は上げない。
     """
     c = cfg_of(over)
     now = voice_level_db(x, sr)
     if not math.isfinite(now):
         return x, {"gain_db": 0.0, "voice_db": now, "limited_db": 0.0}
-    tried: list[tuple[float, float]] = []
+    tried: list[tuple[float, float, np.ndarray, float]] = []
     gain = target_db - now
+    top = gain + MAX_MAKEUP_DB
     for _ in range(8):
         y, lim = limit_peak(x * 10 ** (gain / 20), c["peak"], sr)
         got = voice_level_db(y, sr)
-        tried.append((gain, got))
+        tried.append((gain, got, y, lim))
         if abs(got - target_db) <= 0.05:
             break
-        if len(tried) >= 2 and abs(tried[-1][1] - tried[-2][1]) > 1e-6:
+        step = target_db - got
+        if len(tried) >= 2 and abs(tried[-1][0] - tried[-2][0]) > 1e-9:
             slope = (tried[-1][1] - tried[-2][1]) / (tried[-1][0] - tried[-2][0])
-            step = (target_db - got) / max(slope, 0.05)
-        else:
-            step = target_db - got
-        gain += float(np.clip(step, -12.0, 12.0))
-    return y, {"gain_db": round(gain if abs(got - target_db) > 0.05 else tried[-1][0], 2),
-               "voice_db": round(got, 2), "limited_db": lim}
+            if slope < 0.3 and step > 0:
+                break
+            step /= max(slope, 0.3)
+        nxt = min(gain + step, top)
+        if abs(nxt - gain) < 1e-6:
+            break
+        gain = nxt
+    # 目標にいちばん近かった回を返す
+    gain, got, y, lim = min(tried, key=lambda t: abs(t[1] - target_db))
+    return y, {"gain_db": round(gain, 2), "voice_db": round(got, 2), "limited_db": lim}
