@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "ov0mr-2GCpA__zoom-100-240-0.5fps",
+ "mode": "zoom",
+ "dest": "ov0mr-2GCpA/zoom-100-240-0.5fps",
+ "video": "ov0mr-2GCpA",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom-ov0mr-2GCpA.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 4,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 1700150,
+  "tar_gz": 1654377,
+  "encrypted": 1654384
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1654384,
+   "sha256": "a05da63c89c91781d7dda7af4dcc15207752581b2bde5475af3f7cf64d05c984"
+  }
+ ],
+ "hmac_sha256": "a72308939c1fc1407f3c0df484aa68dc8abdab2f9e489442a422836cb2f0c3d4",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41448690410",
+ "created_at": "2026-11-02T14:06:50+00:00"
+}
