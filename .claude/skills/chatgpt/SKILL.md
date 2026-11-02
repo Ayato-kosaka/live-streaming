@@ -140,6 +140,14 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | 右上のメニュー | `main header` の `button[aria-haspopup=menu]`。aria-label は **2026-10「More」→ 2026-11-02「Chat actions」**。名前（`MENU_LABELS`）で当たらなければ形（`MENU_SHAPE`）で探し、開いた中に目当ての項目（「Rename」など）があるかで確かめる | — |
 | 題を付け直す | 「Rename」で出るダイアログの `input[aria-label="Chat title"]`（無ければ、送る（submit）ボタンのあるダイアログのただ1つの字の欄）→「Save」（無ければ submit） | — |
 
+- **会話を読む印も、名前1つで決め打ちしない**（2026-11-02、`data-message-author-role` が無くなって `turns()` が空を返し、
+  `wait_reply` が時間切れまで待った）。`turns()` は名前（`data-talvt-turn-state`・`data-message-author-role`・
+  `li[data-message-role]`）で探し、どれも当たらなければ**形で拾う**: 会話の中の読み上げ用の見出し（`h4.sr-only`
+  「You said:」「ChatGPT said:」）の次の箱が本文。役は見出しか先祖の属性（値が user / assistant）、無ければ見出しの字から。
+  書き終わったかは、1往復の箱の状態が無ければ「止めるボタンが出ていないか」で見て、`wait_reply` は**返事の字が
+  1回ぶん落ち着いて、空でない**（絵なら絵が出た）ことも待つ。確かめ方: ページの中で名前を消し続ける
+  （`Page.addScriptToEvaluateOnNewDocument` で MutationObserver を入れる）と、直す前の `turns()` は `[]`、
+  直したものは同じ中身を返し、`ask()` が 10 秒で返事を返した（2026-11-02）
 - **`innerText` で読まない。** コードブロックの囲い（```）が落ち、言語名の札（`python`）が
   本文の1行に混ざる。`turns()` が DOM を Markdown に戻している
 - **画面の字をまるごと出さない。** ログインした画面のサイドバーには、あやとの会話の題が並んでいる。
