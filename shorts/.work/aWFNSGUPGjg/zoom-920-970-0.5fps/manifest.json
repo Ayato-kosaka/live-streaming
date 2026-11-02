@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "aWFNSGUPGjg__zoom-920-970-0.5fps",
+ "mode": "zoom",
+ "dest": "aWFNSGUPGjg/zoom-920-970-0.5fps",
+ "video": "aWFNSGUPGjg",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom2-aWFNSGUPGjg.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 522157,
+  "tar_gz": 500823,
+  "encrypted": 500832
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 500832,
+   "sha256": "9581624b66f8379f18f1a44cc4103cae5597bdbad819b0e8194d3656ca3fbb37"
+  }
+ ],
+ "hmac_sha256": "e64a9bcd2a3a936a9d55345b89db8419dc880f00249c965c2d1cdad0115e34a0",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41451255832",
+ "created_at": "2026-11-02T14:38:22+00:00"
+}
