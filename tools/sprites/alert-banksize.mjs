@@ -9,7 +9,9 @@
  *
  * ## 決まり（#1078、あやと 2026-11-02）
  *
- * 季節の貯金箱は、**動く範囲も含めて、幅・高さとも豚の 1.2 倍まで**。
+ * 季節の貯金箱は、**動く範囲も含めて、幅・高さとも豚の 1.2 倍まで**。動く範囲には
+ * **ときどき横切るもの（こうもりなどの通りすがり）も含める**（2026-11-02 に決めた）。
+ * あやとの「邪魔」は画面に出ているもの全部の話で、通りすがりだけ外すと同じ外し方になる。
  * この道具で数えて通すまで、オーナーに見せない。
  *
  * ## なぜ PRISM の条件で測るか（`docs/island-misses.md` #311）
@@ -23,19 +25,23 @@
  * ## 測り方
  *
  * - `/alertbox/?preview=bank&fill=60&theme=<id>` を開く（豚は `theme=none`）。地を透明にして撮る
- * - **描かれ始めたコマから** 0.5 秒おきに 30 コマ（`--frames` `--every`）。開いた直後に
- *   マスコットがバケツへ飛び乗るところも入る
+ * - **描かれ始めたコマから** 0.5 秒おきに 180 コマ＝90 秒（`--frames` `--every`）。開いた直後に
+ *   マスコットがバケツへ飛び乗るところと、通りすがりが1回横切るところを、必ず含む長さ
+ * - 箱2つ × （豚と季節の貯金箱）を、並べて同時に撮る（90 秒ずつ順に撮ると 6 分かかる）
  * - 透明でない画素（alpha > 8）を全コマで重ね、**外接矩形の幅・高さ**と、**塗られた面積**
  *   （どれかのコマで塗られた画素の数）を、箱に対する割合で出す。字（額・目標・ラベル）も入る
  * - 箱は 436×776（ふだん）と 664×1180（投げ銭のとき手で広げた）。どちらも 9:16
  * - 季節の絵を1枚も読んでいない・重ねた形が豚と同じ（豚に落ちた）なら、測れていない（2）
  *
- * 走る先と芸はくじなので、同じ条件でも回ごとに数が揺れる（ハロウィンを箱 436×776 で9回:
- * 幅 87〜94%・高さ 32〜36%。2026-11-02）。境目に近いときは `--runs 3` で開き直して重ね、
- * いちばん広い範囲で見る。
+ * ## なぜ 90 秒か
  *
- * 30 コマ（15 秒）には、ときどき横切る客（ハロウィンのこうもり。約 45 秒に1回、最初は
- * 20〜32 秒後）は入らない。入れて測るなら `--frames 120 --every 500` のように延ばす。
+ * 通りすがりの周期はテーマの設定（`themes.ts` の `rigBank.visitor`）には無く、名前しか
+ * 書いていない。ハロウィンのこうもりは `season/bank/kuroBrain.ts` で、最初が動き出して
+ * 20〜32 秒後、そのあと 38〜52 秒おき。周期を読めないので、どのくじでも1回は横切りきる
+ * 90 秒を既定にした。**90 秒より短く重ねた数では通さない**（短くすると1行で言う）。
+ *
+ * 走る先と芸もくじなので、15 秒で重ねていたころは、同じ条件で幅 87〜94%・高さ 32〜36% 揺れた
+ * （ハロウィン、箱 436×776 で9回。2026-11-02）。境目に近いときは `--runs 3` で開き直して重ねる。
  *
  * 終了コード: 0 = 全部上限内 / 1 = 上限を超えた季節の貯金箱がある / 2 = 測れなかった
  */
@@ -62,7 +68,7 @@ if (themes.includes("none")) die("豚（none）は毎回測って比べる相手
 const sizes = arg("sizes", "436x776,664x1180").split(",").map((s) => s.split("x").map(Number));
 if (!sizes.every(([w, h]) => w > 0 && h > 0)) die(`--sizes は 幅x高さ をカンマで（${arg("sizes")}）`);
 const fill = arg("fill", "60");
-const frames = Math.max(2, Math.round(Number(arg("frames", "30"))));
+const frames = Math.max(2, Math.round(Number(arg("frames", "180"))));
 const every = Number(arg("every", "500"));
 const runs = Math.max(1, Math.round(Number(arg("runs", "1"))));
 const MAX = Number(arg("max", "1.2"));
@@ -71,6 +77,8 @@ const ALPHA = Number(arg("alpha", "8"));
 const outArg = arg("out", null);
 const out = outArg ? resolve(outArg) : null;
 const off = prismOff();
+/** 通りすがりが必ず1回横切りきる長さ（上の「なぜ 90 秒か」） */
+const VISITOR_MS = 90000;
 
 const exe = chromePath() ?? "/opt/pw-browsers/chromium";
 
@@ -223,32 +231,42 @@ async function main() {
   if (out) mkdirSync(out, { recursive: true });
   console.log(prismNote(off));
   console.log(`上限: 動く範囲も含めて、幅・高さとも豚の ${MAX} 倍まで（fill ${fill}%、${every / 1000} 秒おき ${frames} コマ${runs > 1 ? ` × 開き直し ${runs} 回` : ""}を重ねる）`);
+  if (frames * every < VISITOR_MS) {
+    console.log(
+      `※ 重ねる長さが ${((frames * every) / 1000).toFixed(0)} 秒で、${VISITOR_MS / 1000} 秒より短い。` +
+        "ときどき横切る通りすがりが入らないことがあるので、この数で通さない"
+    );
+  }
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const over = [];
   const broken = [];
+  const settle = (theme, size) =>
+    measure(browser, theme, size).then(
+      (r) => ({ r }),
+      (e) => ({ err: String(e.message ?? e).slice(0, 200) })
+    );
   try {
-    for (const size of sizes) {
+    // 箱ごと・テーマごとに同時に撮り始める（どれも 90 秒かかる）。出すのは箱の順
+    const pending = sizes.map((size) => Promise.all([settle("none", size), ...themes.map((th) => settle(th, size))]));
+    for (const [k, size] of sizes.entries()) {
       const [W, H] = size;
-      let pig;
-      try {
-        pig = await measure(browser, "none", size);
-      } catch (e) {
-        broken.push(`${W}x${H} 豚: ${String(e.message ?? e).slice(0, 200)}`);
+      const [pigGot, ...got] = await pending[k];
+      if (pigGot.err) {
+        broken.push(`${W}x${H} 豚: ${pigGot.err}`);
         continue;
       }
+      const pig = pigGot.r;
       console.log(`\n■ 箱 ${W}×${H}（Dimensions の幅 ${pig.probe.dimW} / <html> の幅 ${pig.probe.boxW}。${pig.span.toFixed(1)} 秒ぶん重ねた）`);
       const row = (r) =>
         `幅 ${String(r.w).padStart(4)}px（${pct(r.w, W).padStart(6)}）  高さ ${String(r.h).padStart(4)}px（${pct(r.h, H).padStart(6)}）  面積 ${pct(r.painted, W * H).padStart(6)}`;
       console.log(`  ${"豚".padEnd(10)} ${row(pig)}${pig.png ? `  ${pig.png}` : ""}`);
-      for (const theme of themes) {
-        let r;
-        try {
-          r = await measure(browser, theme, size);
-        } catch (e) {
-          broken.push(`${W}x${H} ${theme}: ${String(e.message ?? e).slice(0, 200)}`);
-          console.log(`  ${theme.padEnd(10)} 測れない: ${String(e.message ?? e).slice(0, 200)}`);
+      for (const [i, theme] of themes.entries()) {
+        if (got[i].err) {
+          broken.push(`${W}x${H} ${theme}: ${got[i].err}`);
+          console.log(`  ${theme.padEnd(10)} 測れない: ${got[i].err}`);
           continue;
         }
+        const r = got[i].r;
         if (!r.themeFiles) {
           broken.push(`${W}x${H} ${theme}: 季節の絵を1枚も読んでいない（テーマの名前が違う？）`);
           console.log(`  ${theme.padEnd(10)} 測れない: 季節の絵を1枚も読んでいない`);
