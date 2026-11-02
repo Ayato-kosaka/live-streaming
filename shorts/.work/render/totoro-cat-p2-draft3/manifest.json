@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__totoro-cat-p2-draft3",
  "mode": "render",
- "dest": "render/totoro-cat-p2-draft3/inbox",
+ "dest": "render/totoro-cat-p2-draft3",
  "video": null,
  "channel": null,
  "request": "shorts/render/totoro-cat-p2-draft3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 5030,
-  "tar_gz": 2255,
-  "encrypted": 2256
+  "plain": 26444,
+  "tar_gz": 7280,
+  "encrypted": 7296
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 2256,
-   "sha256": "86c9acde74d9932c56ddc9389f1c07fe00201c3f851204fb6f7f66c28a878df0"
+   "bytes": 7296,
+   "sha256": "c02b40ffa6d37ca7fff7c67e6cb87b5e5235dffd982f2e77c3444a8286d3a46a"
   }
  ],
- "hmac_sha256": "929938d116ef736fea79b75a6fca289eda414e9cd31fd760f6ec2691e0e8b80a",
+ "hmac_sha256": "0ea4d5e4ed441b0c169912649d2419cd8123d7a5f9754212c18e0096ba92fc00",
  "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-02T18:10:04+00:00",
+ "created_at": "2026-11-02T18:13:25+00:00",
  "nonce": "656b57a08eb0249b56c1d91b"
 }
