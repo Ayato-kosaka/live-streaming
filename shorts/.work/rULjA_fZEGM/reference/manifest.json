@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "rULjA_fZEGM__reference",
+ "mode": "reference",
+ "dest": "rULjA_fZEGM/reference",
+ "video": "rULjA_fZEGM",
+ "channel": null,
+ "request": "shorts/requests/totoro-cat-research-refs-20261102.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "skipped",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 1,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 15
+ },
+ "bytes": {
+  "plain": 718839,
+  "tar_gz": 694908,
+  "encrypted": 694912
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 694912,
+   "sha256": "a57a6b2f817a7aaf54206fc1304381cdbcd48c8eeebffd4680d0bb483938e452"
+  }
+ ],
+ "hmac_sha256": "143c1fa37d61b8f9e6bf652d7b6b916ca3808ec5932d81c47c789ecc02236d43",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41458978149",
+ "created_at": "2026-11-02T15:01:48+00:00"
+}
