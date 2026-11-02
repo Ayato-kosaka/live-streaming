@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "nzf06yFqIkk__zoom-770-890-0.5fps",
+ "mode": "zoom",
+ "dest": "nzf06yFqIkk/zoom-770-890-0.5fps",
+ "video": "nzf06yFqIkk",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-zoom-nzf06yFqIkk.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 4,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 1293880,
+  "tar_gz": 1258439,
+  "encrypted": 1258448
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1258448,
+   "sha256": "223ec7045434776b004871f865f8f5c3e7ac0df475dd397342097d05784231e2"
+  }
+ ],
+ "hmac_sha256": "17a82f8af1f8cc0b723c148abe802f5eb9eb574e5b870885e7ca21d90c8989c4",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41448690410",
+ "created_at": "2026-11-02T14:06:27+00:00"
+}
