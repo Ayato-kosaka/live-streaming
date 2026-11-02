@@ -5,7 +5,7 @@
  "dest": "channels/TheDodo/shorts",
  "video": null,
  "channel": "@TheDodo",
- "request": "shorts/requests/2026-11-02-dogs-channels.json",
+ "request": "shorts/requests/totoro-cat-research-channels-20261102.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -23,20 +23,20 @@
   "files": 5
  },
  "bytes": {
-  "plain": 121348,
-  "tar_gz": 25064,
-  "encrypted": 25072
+  "plain": 120755,
+  "tar_gz": 24703,
+  "encrypted": 24704
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 25072,
-   "sha256": "1ff777af27860731561146792813df0f5e98572d7c3d8c55eba1989aa1a96e85"
+   "bytes": 24704,
+   "sha256": "860136fd9c7878381cc384281fb25f923e429bd1af147603b6283e242e5783e6"
   }
  ],
- "hmac_sha256": "e28e54dbb1b0bf8a209a1bb3c91adafb906f736429933df0d6b0ba4ecf372968",
- "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "hmac_sha256": "3a82e9873a897436a7f8fcb7e69b8e16e6cbdc4f1b4004aa6af14c747375b42e",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41444994426",
- "created_at": "2026-11-02T12:49:28+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41445458071",
+ "created_at": "2026-11-02T13:13:27+00:00"
 }
