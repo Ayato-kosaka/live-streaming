@@ -1,0 +1,769 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style_p2.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/UeDyvW4zAgo/clips/01_0-16-02_0-16-28.mp4",
+   "watermark": "prism_live",
+   "t0": 36962.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/nzf06yFqIkk/clips/01_0-13-36_0-14-08.mp4",
+   "watermark": "prism_live",
+   "t0": 816.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/TLBRBVpJb-0/clips/01_0-46-30_0-46-50.mp4",
+   "watermark": "prism_live",
+   "t0": 146790.0
+  },
+  "c9_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/NCb2zLT5s2A/clips/01_0-10-58_0-11-32.mp4",
+   "watermark": "prism_live",
+   "t0": 288658.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/0H3Ub8AE7ho/clips/01_0-04-00_0-04-14.mp4",
+   "watermark": "prism_live",
+   "t0": 72240.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/O6bFt956rnA/clips/01_0-04-42_0-04-58.mp4",
+   "watermark": "prism_live",
+   "t0": 108282.0
+  },
+  "c6_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/zsp-1njzvXI/clips/01_1-05-08_1-05-36.mp4",
+   "watermark": "prism_live",
+   "t0": 183908.0
+  },
+  "c7_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/d8UwWnFhjwY/clips/01_3-40-40_3-41-20.mp4",
+   "watermark": "prism_live",
+   "t0": 229240.0
+  },
+  "c8_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/5DCVhyPVibM/clips/02_0-15-12_0-15-30.mp4",
+   "watermark": "prism_live",
+   "t0": 252912.0
+  },
+  "c8_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/5DCVhyPVibM/clips/01_0-13-12_0-13-40.mp4",
+   "watermark": "prism_live",
+   "t0": 252792.0
+  },
+  "c10_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/ingest/mXs3RCOS1JQ/clips/01_0-13-18_0-13-40.mp4",
+   "watermark": "prism_live",
+   "t0": 324798.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 195,
+   "out": 267,
+   "row": 0,
+   "zoom": {
+    "from": 1.2995,
+    "to": 1.2995,
+    "x": 0.11111,
+    "y": 0.09375,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "0秒目: 公園の広場の真ん中で、あお向けで脚を上げて転がる白い犬（犬が何かしている瞬間・研究の原則1）。下の端の貯金箱の印（y1148-）と PRISM の字を窓の外に（窓 x80 y120 高さ985）"
+  },
+  {
+   "src": "c01",
+   "in": 255,
+   "out": 300,
+   "row": 1,
+   "zoom": {
+    "from": 1.6,
+    "to": 1.6,
+    "x": 0.08333,
+    "y": 0.20312,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "首都の大通りの店のガラス戸の前で、丸まって寝る犬（赤い袋と戸の貼り紙が見える寄り）。右下の印（y1172-）は窓の外（窓 x60 y260 高さ800）"
+  },
+  {
+   "src": "c5_01",
+   "in": 15,
+   "out": 52,
+   "row": 1,
+   "zoom": {
+    "from": 1.3115,
+    "to": 1.3115,
+    "x": 0.0,
+    "y": 0.18125,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「店の…寝てる！」: パン屋の前の歩道に寝そべる犬2匹（別の街の店先。次の行の電柱の犬と同じ素材が続くと似た見た目が3秒を越えるので、ここで素材を替える）。上の投げ銭の帯（y172-224）と下の PRISM（y1220-）を窓の外に（窓 x0 y232 高さ976）"
+  },
+  {
+   "src": "c01",
+   "in": 585,
+   "out": 660,
+   "row": 2,
+   "zoom": {
+    "from": 1.6495,
+    "to": 1.6495,
+    "x": 0.0,
+    "y": 0.31875,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "歩道の電柱の横で、お腹を出してあお向けに寝る犬の寄り（「深夜3時の渋谷の酔っ払い」）。右下の印（x404-・y1196-）を窓の外に（窓 x0 y408 高さ776）"
+  },
+  {
+   "src": "c9_01",
+   "in": 582,
+   "out": 622,
+   "row": 3,
+   "zoom": {
+    "from": 1.28,
+    "to": 1.28,
+    "x": 0.0,
+    "y": 0.18125,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「日本ではまず見いひんのに」: 人の行き交う首都の石畳の歩道で、車止めの横に座る白茶の犬（前を横切る人の顔が抜けたあとの秒から）。上の流れる字と投げ銭の帯（y0-224）を窓の外に。右の丸い印の列（x620-）と細い線（x592-）に掛からないよう、窓の右端を x562 で切る（窓 x0 y232 高さ1000）"
+  },
+  {
+   "src": "c3_01",
+   "in": 108,
+   "out": 163,
+   "row": 3,
+   "zoom": {
+    "from": 1.3675,
+    "to": 1.3675,
+    "x": 0.16667,
+    "y": 0.14844,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「体感50メートルに1匹！」: 公園のベンチに寄ってきた、毛の長い大きな茶色い犬の顔（4:03.6〜4:05.4。4:06〜4:08 は配信の画が止まっていて止め絵になる。4:05.5 からは手ぶれ）。右下の投げ銭の貯金箱（y1136-）を窓の外に（窓 x120 y190 高さ936）"
+  },
+  {
+   "src": "c2_01",
+   "in": 285,
+   "out": 356,
+   "row": 4,
+   "zoom": {
+    "from": 1.2995,
+    "to": 1.2995,
+    "x": 0.11111,
+    "y": 0.09375,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "同じ白い犬が、あお向けで背中をこすりつけて転がる（0秒目の続きの秒）。窓は0秒目と同じ（窓 x80 y120 高さ985）"
+  },
+  {
+   "src": "c4_01",
+   "in": 210,
+   "out": 279,
+   "row": 5,
+   "zoom": {
+    "from": 1.2995,
+    "to": 1.2995,
+    "x": 0.06944,
+    "y": 0.15625,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "小石の浜で座る本人の真横に、犬の顔が来る（相席＝本人と犬の両方が話の中身）。本人の顔を画面の上に寄せて、字幕を顔の下に置けるようにする。下の PRISM（y1220-）を窓の外に（窓 x50 y200 高さ985）"
+  },
+  {
+   "src": "c5_01",
+   "in": 117,
+   "out": 189,
+   "row": 6,
+   "zoom": {
+    "from": 1.3115,
+    "to": 1.3115,
+    "x": 0.13889,
+    "y": 0.18125,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "パン屋の前に寝そべる茶色い犬。前足と顔から、目を細めた顔の寄りへ（撫でたくなる顔）。上の投げ銭の帯（y172-224）と下の PRISM（y1220-）を窓の外に"
+  },
+  {
+   "src": "c6_01",
+   "in": 180,
+   "out": 229,
+   "row": 7,
+   "zoom": {
+    "from": 1.3061,
+    "to": 1.3061,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "脚の長い大きな茶色い犬が、少し離れて立ってこちらを見る。右下の投げ銭の貯金箱（y1104-）を窓の外に（窓 x0 y0 高さ980）"
+  },
+  {
+   "src": "c6_01",
+   "in": 315,
+   "out": 374,
+   "row": 7,
+   "zoom": {
+    "from": 1.2308,
+    "to": 1.2308,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "同じ犬がカメラの上からのぞき込むように近づく（大きさと少しの緊張。噛む・吠える画ではない）（窓 x0 y0 高さ1040）"
+  },
+  {
+   "src": "c7_01",
+   "in": 420,
+   "out": 474,
+   "row": 8,
+   "zoom": {
+    "from": 1.7778,
+    "to": 1.7778,
+    "x": 0.0,
+    "y": 0.29688,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "公園のベンチで、本人の足の陰から大きな茶色い犬がこちらを見る（「でかいのに寄られると…」）。右下の貯金箱と PRISM（x376-・y1172-）を窓の外に（窓 x0 y380 高さ720）"
+  },
+  {
+   "src": "c7_01",
+   "in": 657,
+   "out": 701,
+   "row": 9,
+   "zoom": {
+    "from": 1.8286,
+    "to": 1.8286,
+    "x": 0.45278,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「どどどどどうしよう」の秒（声の出る 3:41:01.9〜03.35 だけを取る。頭を声の出はじめに合わせて、字幕と声のずれを0コマに）。顔の寄りにして、前後の犬の画と見た目を分ける（同じ素材の続きが似た見た目で3秒を越えないように）。犬を見て固まる本人の顔（顔が話の中身の行。F-058）（窓 x326 y0 高さ700）"
+  },
+  {
+   "src": "c7_01",
+   "in": 747,
+   "out": 795,
+   "row": 9,
+   "zoom": {
+    "from": 1.8286,
+    "to": 1.8286,
+    "x": 0.45278,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「でかいよ」の秒（3:41:05.0〜06.15）。同じ本人の顔（窓 x326 y0 高さ700）"
+  },
+  {
+   "src": "c7_01",
+   "in": 195,
+   "out": 247,
+   "row": 10,
+   "zoom": {
+    "from": 1.7778,
+    "to": 1.7778,
+    "x": 0.0,
+    "y": 0.29688,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "口を開けてこちらを見上げる同じ犬（「ソーセージくれよ、って顔」）。右下の貯金箱と PRISM を窓の外に（窓 x0 y380 高さ720）"
+  },
+  {
+   "src": "c8_02",
+   "in": 330,
+   "out": 364,
+   "row": 11,
+   "zoom": {
+    "from": 1.2929,
+    "to": 1.2929,
+    "x": 0.0,
+    "y": 0.17188,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「大雨の日」: 大雨の海辺の遊歩道を渡る黒い犬（引き）。右上の「海外カフェまで残り高評価」の箱（x360-・y0-210）と下の PRISM（y1220-）を窓の外に（窓 x0 y220 高さ990）"
+  },
+  {
+   "src": "c8_01",
+   "in": 420,
+   "out": 447,
+   "row": 11,
+   "zoom": {
+    "from": 1.3333,
+    "to": 1.3333,
+    "x": 0.15278,
+    "y": 0.17969,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「傘をあげようとしたら…」: 大雨の公園で、耳に黄色いタグの黒い犬に傘を差し出す本人の手。右上の箱と下の PRISM を窓の外に（窓 x110 y230 高さ960）"
+  },
+  {
+   "src": "c8_01",
+   "in": 585,
+   "out": 640,
+   "row": 12,
+   "zoom": {
+    "from": 1.3333,
+    "to": 1.3333,
+    "x": 0.15278,
+    "y": 0.17969,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "傘を差し出されて、じっと見返す黒い犬（「傘をさす手がないんですけど、みたいな顔」）（窓 x110 y230 高さ960）"
+  },
+  {
+   "src": "c8_02",
+   "in": 150,
+   "out": 172,
+   "row": 12,
+   "zoom": {
+    "from": 1.2929,
+    "to": 1.2929,
+    "x": 0.0,
+    "y": 0.17188,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "傘はいらんと、大雨の中を荒れた海のほうへ歩いていく同じ犬。上の箱を窓の外に（窓 x0 y220 高さ990）"
+  },
+  {
+   "src": "c01",
+   "in": 45,
+   "out": 83,
+   "row": 13,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.25,
+    "x": 0.0,
+    "y": 0.07812,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「実は首都では」: 首都の大通りの歩道（奥の店先に寝そべる犬）。右下の印（y1172-）を窓の外に（窓 x0 y100 高さ1024）"
+  },
+  {
+   "src": "c9_01",
+   "in": 765,
+   "out": 835,
+   "row": 13,
+   "zoom": {
+    "from": 1.4222,
+    "to": 1.4222,
+    "x": 0.27778,
+    "y": 0.29688,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「よう見たら耳にタグが付いてる子」: 首都の歩道に座る白茶の大きな犬の顔と、耳の青いタグ。上の帯（y0-224）と右上の丸い印の列（y252-372）より下で窓を切る（窓 x200 y380 高さ900）"
+  },
+  {
+   "src": "c8_01",
+   "in": 189,
+   "out": 235,
+   "row": 14,
+   "zoom": {
+    "from": 1.2929,
+    "to": 1.2929,
+    "x": 0.13889,
+    "y": 0.17188,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「これ、」: 大雨の公園に立ち止まってこちらを見る黒い犬の耳の黄色いタグ（傘の犬と同じ子。立ち止まってタグがはっきり写る秒）。右上の箱と下の PRISM を窓の外に（窓 x100 y220 高さ990）"
+  },
+  {
+   "src": "c9_01",
+   "in": 93,
+   "out": 157,
+   "row": 14,
+   "zoom": {
+    "from": 1.4222,
+    "to": 1.4222,
+    "x": 0.0,
+    "y": 0.29688,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「街に戻した印やねん」: 首都の歩道を、こちらへ歩いてきて向きを変える、耳に黄色いタグの黒い犬（11:02.1 でタグがいちばんはっきり写る）。上の帯（y0-224）と右上の丸い印の列（x620-・y252-372）より下で窓を切る（窓 x0 y380 高さ900）"
+  },
+  {
+   "src": "c10_01",
+   "in": 90,
+   "out": 169,
+   "row": 15,
+   "zoom": {
+    "from": 1.4004,
+    "to": 1.4004,
+    "x": 0.0,
+    "y": 0.19531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "宿の前の岩の間で寝そべる、毛のふわふわの子犬（カズベギ）。右下の PRISM（y1200-）を窓の外に（窓 x0 y250 高さ914）"
+  }
+ ],
+ "title": {
+  "text": "🇬🇪ジョージアに来たら、\n野良犬が共存してた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ジョージアに来たら、野良犬が共存してた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/01.wav",
+    "tts_text": "ジョージアに来たら、野良犬が共存してた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "首都の大通りでも、店の冷房を浴びて寝てる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/02.wav",
+    "tts_text": "首都の大通りでも、店の冷房を浴びて寝てる！",
+    "at": 72
+   },
+   {
+    "text": "こっちは、深夜3時の渋谷の酔っ払いか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/03.wav",
+    "tts_text": "こっちは、深夜三時の渋谷の酔っ払いか！",
+    "at": 154,
+    "mood": "up_pop"
+   },
+   {
+    "text": "日本ではまず見いひんのに、体感50メートルに1匹！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/04.wav",
+    "tts_text": "日本ではまず見いひんのに、体感五十メートルに一匹！",
+    "at": 229
+   },
+   {
+    "text": "公園のど真ん中で転がって、何してんねん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/05.wav",
+    "tts_text": "公園のど真ん中で転がって、何してんねん！",
+    "at": 324,
+    "mood": "up_pop"
+   },
+   {
+    "text": "海で座ってたら、なぜか相席してきた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/06.wav",
+    "tts_text": "海で座ってたら、なぜか相席してきた。",
+    "at": 395
+   },
+   {
+    "text": "よしよししたいけど、触らんと見るだけ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/07.wav",
+    "tts_text": "よしよししたいけど、触らんと見るだけ。",
+    "at": 464
+   },
+   {
+    "text": "この野良犬に噛まれたら狂犬病っていうめっちゃ怖い病気にかかるから、、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/08.wav",
+    "tts_text": "この野良犬に噛まれたら、狂犬病っていう、めっちゃ怖い病気にかかるから、、",
+    "at": 536,
+    "mood": "tense_still"
+   },
+   {
+    "text": "やから、でかいのに寄られると…",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/09.wav",
+    "tts_text": "やから、でかいのに寄られると…",
+    "at": 644,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "どどどどどうしよう！でかいよ！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/wt/shorts/videos/georgia-dogs/p2/edit_p2.narr/orig_p2_09.wav",
+    "at": 698,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "…ソーセージくれよ、って顔してた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/11.wav",
+    "tts_text": "…ソーセージくれよ、って顔してた。",
+    "at": 790,
+    "parts": [
+     {
+      "text": "…ソーセージ",
+      "mood": "up_pop"
+     },
+     {
+      "text": "くれよ、って顔してた。",
+      "mood": "up_pop"
+     }
+    ]
+   },
+   {
+    "text": "大雨の日、傘をあげようとしたら…",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/12.wav",
+    "tts_text": "大雨の日、傘をあげようとしたら…",
+    "at": 842
+   },
+   {
+    "text": "傘をさす手がないんですけど、みたいな顔された！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/13.wav",
+    "tts_text": "傘をさす手がないんですけど、みたいな顔された！",
+    "at": 903,
+    "mood": "up_pop"
+   },
+   {
+    "text": "実は首都では、よう見たら耳にタグが付いてる子がおって…",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/14.wav",
+    "tts_text": "実は、しゅとでは、よう見たら耳にタグが付いてる子がおって…",
+    "at": 980
+   },
+   {
+    "text": "これ、市が不妊手術とワクチンをして、街に戻した印やねん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/15.wav",
+    "tts_text": "これ、市が不妊手術とワクチンをして、街に戻した印やねん。",
+    "at": 1088
+   },
+   {
+    "text": "みんなは、どの子のくつろぎ方が好き？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/voice/georgia-dogs-p2-v1/p2/16.wav",
+    "tts_text": "みんなは、どの子のくつろぎ方が好き？",
+    "at": 1198
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dogs/wt/shorts/videos/georgia-dogs/p2/spec.json",
+  "fps": 30,
+  "frames": 1277,
+  "seconds": 42.567,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "10:16:08.5+2.40s"
+    ],
+    "line": "ジョージアに来たら、野良犬が共存してた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 72,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "0:13:44.5+1.50s",
+     "40:46:30.5+1.23s"
+    ],
+    "line": "首都の大通りでも、店の冷房を浴びて寝てる！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 154,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "0:13:55.5+2.50s"
+    ],
+    "line": "こっちは、深夜3時の渋谷の酔っ払いか！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 229,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "80:11:17.4+1.33s",
+     "20:04:03.6+1.83s"
+    ],
+    "line": "日本ではまず見いひんのに、体感50メートルに1匹！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 324,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "10:16:11.5+2.37s"
+    ],
+    "line": "公園のど真ん中で転がって、何してんねん！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 395,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "30:04:49.0+2.30s"
+    ],
+    "line": "海で座ってたら、なぜか相席してきた。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 464,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "40:46:33.9+2.40s"
+    ],
+    "line": "よしよししたいけど、触らんと見るだけ。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 536,
+    "frames": 108,
+    "voice_frames": 100,
+    "cuts": [
+     "51:05:14.0+1.63s",
+     "51:05:18.5+1.97s"
+    ],
+    "line": "この野良犬に噛まれたら狂犬病っていうめっちゃ怖い病気にかかるから、、",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 644,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "63:40:54.0+1.80s"
+    ],
+    "line": "やから、でかいのに寄られると…",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 698,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "63:41:01.9+1.47s",
+     "63:41:04.9+1.60s"
+    ],
+    "line": "どどどどどうしよう！でかいよ！",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 10,
+    "from": 790,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "63:40:46.5+1.73s"
+    ],
+    "line": "…ソーセージくれよ、って顔してた。",
+    "telop": null,
+    "parts": [
+     {
+      "text": "…ソーセージ",
+      "mood": "up_pop"
+     },
+     {
+      "text": "くれよ、って顔してた。",
+      "mood": "up_pop"
+     }
+    ]
+   },
+   {
+    "row": 11,
+    "from": 842,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "70:15:23.0+1.13s",
+     "70:13:26.0+0.90s"
+    ],
+    "line": "大雨の日、傘をあげようとしたら…",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 903,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "70:13:31.5+1.83s",
+     "70:15:17.0+0.73s"
+    ],
+    "line": "傘をさす手がないんですけど、みたいな顔された！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 980,
+    "frames": 108,
+    "voice_frames": 100,
+    "cuts": [
+     "0:13:37.5+1.27s",
+     "80:11:23.5+2.33s"
+    ],
+    "line": "実は首都では、よう見たら耳にタグが付いてる子がおって…",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1088,
+    "frames": 110,
+    "voice_frames": 102,
+    "cuts": [
+     "70:13:18.3+1.53s",
+     "80:11:01.1+2.13s"
+    ],
+    "line": "これ、市が不妊手術とワクチンをして、街に戻した印やねん。",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1198,
+    "frames": 79,
+    "voice_frames": 56,
+    "cuts": [
+     "90:13:21.0+2.63s"
+    ],
+    "line": "みんなは、どの子のくつろぎ方が好き？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 288,
+   "raw_voice_s": 48.87,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 35.0,
+   "cps_voiced": 8.23,
+   "video_s": 42.57,
+   "cps_video": 6.77
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
