@@ -143,6 +143,14 @@ const md = (n, depth = 0) => {
 """
 
 
+# 名前（data-* 属性）で当たらないときに、形で拾う手がかり。
+# どの会話の画面にも、読み上げ用の見出し（sr-only の h4「You said:」「ChatGPT said:」）が1往復の片側ごとにあり、
+# 本文はその見出しの次の箱（2026-11-02 に見た）。役は見出しか先祖の属性（値が user / assistant）から、無ければ見出しの字から決める
+ROLE_ATTRS = ["data-conversation-role", "data-message-author-role", "data-message-role"]
+USER_HEAD = r"^(You said|You:|あなた)"
+ASSISTANT_HEAD = r"^(ChatGPT said|ChatGPT:|ChatGPT の|アシスタント)"
+
+
 def turns(t):
     """会話を [(role, 本文, 書き終わったか)] で返す。
 
@@ -150,10 +158,17 @@ def turns(t):
       未ログイン: <li data-message-role> の並び。書き終わると data-message-complete
       ログイン:   1往復ごとに <div data-talvt-turn-state="in_progress|complete">。
                   問いは [data-user-message-bubble]、返事は h4[data-conversation-role=assistant] の次の箱
+    **名前で当たらなければ形で拾う**（2026-11-02 に `data-message-author-role` が無くなって、`turns()` が空を返し
+    `wait_reply` が時間切れまで待った）。形は「読み上げ用の見出し（You said: / ChatGPT said:）の次の箱が本文」。
+    書き終わったかは、1往復の箱の状態が無ければ「止めるボタンが出ていないか」で見る（`wait_reply` は字が
+    落ち着くのも待つ）
     """
     # 何度も呼ぶので、const md が二重に宣言されないよう関数で包む
     return t.js("(() => {" + _MD + f"""
       const tidy = s => s.replace(/\\n{{3,}}/g, '\\n\\n').trim();
+      const ROLE_ATTRS = {json.dumps(ROLE_ATTRS)};
+      const busyNow = !!document.querySelector({json.dumps(STOP)});
+      // 1. 名前で（ログイン）: 1往復ごとの箱
       const boxes = [...document.querySelectorAll('[data-talvt-turn-state]')];
       if (boxes.length) {{
         const out = [];
@@ -164,16 +179,55 @@ def turns(t):
           for (const h of c.querySelectorAll('h4[data-conversation-role=assistant]'))
             out.push(['assistant', h.nextElementSibling ? tidy(md(h.nextElementSibling)) : '', done]);
         }}
-        return out;
+        if (out.length) return out;
       }}
-      return [...document.querySelectorAll({json.dumps(TURNS)})].map(li => {{
-        // 返事は本文の section だけを読む。問いは「You said:」の見出しを外して読む
-        const body = li.querySelector('section[aria-label="DIL content"]');
-        let text = body ? tidy(md(body)) : li.innerText;
-        const h = li.querySelector('[data-message-attribution]');
-        if (!body && h) text = text.replace(h.innerText, '');
-        return [li.dataset.messageRole, text.trim(), li.hasAttribute('data-message-complete')];
-      }});
+      // 2. 名前で（前の画面）: data-message-author-role
+      const authored = [...document.querySelectorAll('[data-message-author-role]')];
+      if (authored.length) {{
+        return authored.map((el, i) => {{
+          const role = el.getAttribute('data-message-author-role');
+          const body = el.querySelector('.markdown, [data-markdown-text-style]') || el;
+          return [role, role === 'assistant' ? tidy(md(body)) : el.innerText.trim(), !(busyNow && i === authored.length - 1)];
+        }});
+      }}
+      // 3. 名前で（未ログイン）
+      const lis = [...document.querySelectorAll({json.dumps(TURNS)})];
+      if (lis.length) {{
+        return lis.map(li => {{
+          // 返事は本文の section だけを読む。問いは「You said:」の見出しを外して読む
+          const body = li.querySelector('section[aria-label="DIL content"]');
+          let text = body ? tidy(md(body)) : li.innerText;
+          const h = li.querySelector('[data-message-attribution]');
+          if (!body && h) text = text.replace(h.innerText, '');
+          return [li.dataset.messageRole, text.trim(), li.hasAttribute('data-message-complete')];
+        }});
+      }}
+      // 4. 形で: 会話の中の、読み上げ用の見出しごとに片側
+      const root = document.querySelector('[aria-label=Conversation], [data-thread-find-target=conversation]') || document.querySelector('main');
+      if (!root) return [];
+      const roleOf = h => {{
+        for (let e = h, k = 0; e && k < 6; e = e.parentElement, k++)
+          for (const a of ROLE_ATTRS) {{
+            const v = e.getAttribute && e.getAttribute(a);
+            if (v === 'user' || v === 'assistant') return v;
+          }}
+        const s = (h.innerText || h.textContent || '').trim();
+        if (new RegExp({json.dumps(USER_HEAD)}, 'i').test(s)) return 'user';
+        if (new RegExp({json.dumps(ASSISTANT_HEAD)}, 'i').test(s)) return 'assistant';
+        return null;
+      }};
+      const out = [];
+      for (const h of root.querySelectorAll('h1,h2,h3,h4,h5,h6')) {{
+        const box = h.nextElementSibling;
+        const role = box && roleOf(h);
+        if (!role) continue;
+        const state = h.closest('[data-talvt-turn-state]');
+        const done = state ? state.getAttribute('data-talvt-turn-state') === 'complete' : true;
+        out.push([role, role === 'assistant' ? tidy(md(box)) : (box.querySelector('[dir=auto]') || box).innerText.trim(), done]);
+      }}
+      // 止めるボタンが出ているあいだは、いちばん後ろの返事は書いている途中
+      if (busyNow && out.length && out[out.length - 1][0] === 'assistant') out[out.length - 1][2] = false;
+      return out;
     }})()""") or []
 
 
@@ -280,6 +334,9 @@ def wait_reply(t, n_before, timeout=600, poll=3, reload_every=45, want_images=Fa
     end = time.time() + timeout
     url = None
     last_reload = time.time()
+    # 返事の字が、前に読んだときと同じか（書き終わりを、画面の印だけに頼らない。印の名前が変わると、
+    # 書いている途中を「書き終わった」と読むことがある。2026-11-02）
+    prev = None
     while time.time() < end:
         time.sleep(poll)
         u = t.url()
@@ -287,7 +344,11 @@ def wait_reply(t, n_before, timeout=600, poll=3, reload_every=45, want_images=Fa
             url = u
         ts = turns(t)
         new = [x for x in ts[n_before:] if x[0] == "assistant"]
-        if new and new[-1][2] and not busy(t) and (not want_images or images(t)):
+        text = new[-1][1] if new else None
+        steady = text is not None and text == prev
+        prev = text
+        # 考えているあいだは返事の箱が空のまま止まって見える（止めるボタンも出ないことがある）。空は、絵が出るまで受け取らない
+        if new and new[-1][2] and steady and not busy(t) and (text or images(t)) and (not want_images or images(t)):
             return new[-1][1]
         if url and time.time() - last_reload > reload_every:
             t.call("Page.reload", ignoreCache=True)
