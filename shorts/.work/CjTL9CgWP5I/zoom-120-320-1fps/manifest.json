@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "CjTL9CgWP5I__zoom-120-320-1fps",
+ "mode": "zoom",
+ "dest": "CjTL9CgWP5I/zoom-120-320-1fps",
+ "video": "CjTL9CgWP5I",
+ "channel": null,
+ "request": "shorts/requests/totoro-cat-zoom-CjTL9CgWP5I-20261102.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 17,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 25
+ },
+ "bytes": {
+  "plain": 6069837,
+  "tar_gz": 5994782,
+  "encrypted": 5994784
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 5994784,
+   "sha256": "84605cd51228cc9f64e81ee7024e1b59571e87c685c92e117deb5aa15ee1dbc0"
+  }
+ ],
+ "hmac_sha256": "37a7b891203b81a7ccd79de62be91d1897cddb6079c990e6b0622e4007cebf8b",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41458978149",
+ "created_at": "2026-11-02T15:04:36+00:00"
+}
