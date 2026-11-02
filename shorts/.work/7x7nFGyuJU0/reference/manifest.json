@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "7x7nFGyuJU0__reference",
+ "mode": "reference",
+ "dest": "7x7nFGyuJU0/reference",
+ "video": "7x7nFGyuJU0",
+ "channel": null,
+ "request": "shorts/requests/2026-11-02-dogs-ref.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 22,
+  "transcript_segments": 3,
+  "cuts": 9,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 19
+ },
+ "bytes": {
+  "plain": 1784795,
+  "tar_gz": 1714575,
+  "encrypted": 1714576
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1714576,
+   "sha256": "0b99c7734b3da9a838b988dcc964fcfa082bfa7101e0671d280aea315a1aefce"
+  }
+ ],
+ "hmac_sha256": "580d589cd6fd5b989a14a9f97a6c81e9ea3dbf4608560baa1fe10d1b53d2b823",
+ "pubkey_sha256": "d20c473b1b35f5a5a334a1a7543b364d0c9e74b2c1d7668a88c45e653dd99050",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41444994426",
+ "created_at": "2026-11-02T12:52:48+00:00"
+}
