@@ -20,9 +20,9 @@
 | --- | --- |
 | `off_default` | 様式のまま（`enabled: false`）では、時間割に札が無く・重ね物に札が無く・題の札は y 380・注は y 400。様式から `live_badge` を丸ごと消した版と、字の絵（PNG のバイト）と置き場が全部同じ |
 | `on_place` | 出すと、札が x 120・y 372 に 0コマ目から最後のコマまで1枚（`layer_at` が0コマ目と最後のコマで札を返す） |
-| `room` | 題の札と左上の注（終わりの札）が、札の下端＋gap（16）へ下がる。題の札の下端は元の限り（380+456=836）を越えない。札と、題の札・注の見える画素が 8px より近づかない |
+| `room` | 題の札と左上の注（終わりの札）が、札の下端＋gap（16）へ下がる。題の札の下端は元の限り（380+456=836）を越えず、様式の限り（top + max_height）も 836 のまま。札と、題の札・注の見える画素が 8px より近づかない |
 | `limits` | 字幕・【大】の字の上端の限り（`top_limit`）が札の下端＋24 より下。テロップの置き場の上端が札の下端＋20 より下 |
-| `looks` | A・B・C が描ける（高さ 54〜56・幅 280〜480）。A は赤い札と白い字、B は地が無く赤い三角、C は半透明の黒い地と赤い点。2回描いて同じバイト。scale 1.5 で高さが 1.5倍 |
+| `looks` | A・B・C が描ける（高さ 54〜56・幅 280〜480。和文の無い代わりの書体では幅は高さの3倍〜480）。A は赤い札と白い字、B は地が無く赤い三角、C は半透明の黒い地と赤い点。2回描いて同じバイト。scale 1.5 で高さが 1.5倍 |
 | `bad_look` | looks に無い look を選ぶと、書き出さずに止まる |
 | `e2e` | 本物の書き出し（下書き）の mp4 を品質チェック（`qa/badge.py`・字の置き場）に通すと、札が最初と最後のコマに見えて、ぶつかりが無い |
 
@@ -252,10 +252,16 @@ def leg_room(R, d: Path) -> list[tuple[str, bool]]:
     bottom = lb["y"] + lb["h"] + lb["gap"]
     t, n = p["titles"][0], p["notes"][0]
     lim = 380 + 456
+    # 下げたぶん縮めたかは、書き出しの様式（make_room の返り）の数で見る。描いた題の高さでは見ない——
+    # M PLUS なら犬の回の題は 453px で縮むが、Actions の代わりの書体（DejaVu・和文は豆腐）では 384px で
+    # 限り 392px に届かず、縮めを外しても描いた題が限りの内に収まって落ちなかった（2026-11-02 PR #1098）
+    import live_badge as LB
+    tc = LB.make_room(st, bottom, lb["x"] + lb["w"])[0]["title_card"]
     bb = vis(lb["png"], lb["x"], lb["y"])
     tb, nb = vis(t["png"], t["x"], t["y"]), vis(n["png"], n["x"], n["y"])
     return [(f"題の札が札の下（y {t['y']}、欲しいのは {bottom}）", t["y"] == bottom),
             (f"題の札の下端 {t['y'] + t['h']} が元の限り {lim} を越えない", t["y"] + t["h"] <= lim),
+            (f"題の札の限り（top {tc['top']} + max_height {tc['max_height']}）が元の {lim} のまま", tc["top"] + tc["max_height"] == lim),
             (f"終わりの札（注の置き場）が札の下（y {n['y']}、欲しいのは {bottom}）", n["y"] == bottom),
             (f"札と題の札の見える画素が {MARGIN}px より近づかない（{bb} と {tb}）", not near(bb, tb, MARGIN)),
             (f"札と終わりの札が {MARGIN}px より近づかない（{bb} と {nb}）", not near(bb, nb, MARGIN))]
@@ -281,13 +287,29 @@ def leg_looks(R, d: Path) -> list[tuple[str, bool]]:
     fp = lambda k: R.font_path(st, k)  # noqa: E731
     out = []
     imgs = {}
+    # 幅は字の書体で決まる。Actions の見張りは M PLUS を落とさず DejaVu を同じ名前で置く（shorts_selftest.yml）ので、
+    # 和文が豆腐になり、C（「配信アーカイブ」）は 292px が 206px に縮む（2026-11-02 PR #1098 で落ちた）。
+    # 本物の書体のときだけ設計の幅を当て、代わりの書体では「字が載っている（高さの3倍より広い）」と上限だけを見る。
+    # 本物かどうかは置き場の名前ではなく、和文の2字が別の形に描けるかで決める（豆腐は全部同じ形）
+    from PIL import Image, ImageDraw, ImageFont
+    jf = ImageFont.truetype(str(fp("caption")), 40)
+
+    def glyph(ch: str) -> bytes:
+        im = Image.new("L", (60, 60))
+        ImageDraw.Draw(im).text((5, 5), ch, font=jf, fill=255)
+        return im.tobytes()
+    real = glyph("配") != glyph("信")
     for look in "ABC":
         s = json.loads(json.dumps(st))
         s["live_badge"].update({"enabled": True, "look": look})
         cfg = LB.config(s)
         im = LB.badge_img(cfg, fp)
         imgs[look] = np.asarray(im)
-        out.append((f"{look}: 高さ 54〜56・幅 280〜480（{im.size}）", 54 <= im.height <= 56 and 280 <= im.width <= 480))
+        if real:
+            out.append((f"{look}: 高さ 54〜56・幅 280〜480（{im.size}）", 54 <= im.height <= 56 and 280 <= im.width <= 480))
+        else:
+            out.append((f"{look}: 高さ 54〜56・幅は高さの3倍〜480（和文の無い代わりの書体。{im.size}）",
+                        54 <= im.height <= 56 and im.height * 3 < im.width <= 480))
         out.append((f"{look}: 2回描いて同じバイト", im.tobytes() == LB.badge_img(cfg, fp).tobytes()))
     a = imgs["A"]
     red = (a[:, :, 0] > 200) & (a[:, :, 1] < 90) & (a[:, :, 2] < 90) & (a[:, :, 3] > 250)
