@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "GzMdQfh_c8o__zoom-0-60-4fps",
+ "mode": "zoom",
+ "dest": "GzMdQfh_c8o/zoom-0-60-4fps",
+ "video": "GzMdQfh_c8o",
+ "channel": null,
+ "request": "shorts/requests/totoro-cat-zoom-GzMdQfh_c8o-20261102.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 21,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 29
+ },
+ "bytes": {
+  "plain": 10060919,
+  "tar_gz": 9975769,
+  "encrypted": 9975776
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 9975776,
+   "sha256": "1e8ba8547c27d230a6a734365215a33f8976f6bf48b7ad5781508c5b48f25e31"
+  }
+ ],
+ "hmac_sha256": "5848bba6c0c7bd32b132edf55474ec51ce0f0baab679540d89a49ef053d5b076",
+ "pubkey_sha256": "8719c3b710813c0171aadf9cc1171d3eb47642ab26f02e37a3eee6b47d948717",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41444506188",
+ "created_at": "2026-11-02T12:27:57+00:00"
+}
