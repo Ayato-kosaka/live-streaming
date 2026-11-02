@@ -383,6 +383,9 @@ export default function AlertBox() {
           timer = setTimeout(fire, 100);
           return;
         }
+        /* 本番と同じく、投げ銭を受けた時点で貯金箱の額に足す（`handleNotification`）。アラートが明けて
+           貯金箱が出直すと、前の額から今の額まで上がる（11月の城は、金貨が城に入る）のを、試し表示でも撮れるように */
+        setGoal((g) => (g ? { ...g, currentAmount: g.currentAmount + amount } : g));
         setNotificationQueue((q) => [
           ...q,
           {
@@ -1366,6 +1369,9 @@ export default function AlertBox() {
               targetAmount={goal.targetAmount}
               label={goal.label}
               season={season}
+              /* 投げ銭は額を足してからアラートを出す。そのすきまに貯金箱が額の増えを受け取らないように、
+                 出す前のアラートがあることを渡す（11月の城は、アラート明けに金貨を入れて上げる） */
+              alertPending={notificationQueue.length > 0}
             />
           </View>
         )}

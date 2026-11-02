@@ -4,8 +4,14 @@
  *
  *   cd tools/sprites
  *   node alert-bankink.mjs --base http://127.0.0.1:4591 --bg-dir <スクラッチ>/bg --themes castle --out /tmp/bankink
- *   node alert-bankink.mjs ... --texts ribbon,plaque,sky     # 11月の城の字の載せ方を全部（試し表示の bankText）
- *   node alert-bankink.mjs ... --control flat                # 対照: 字の色を縁取りに近い暗い赤にする。全部割れて 1 で終われば正しい
+ *   node alert-bankink.mjs ... --control flat                # 対照: 字の色を縁取りに近い暗い赤にする。いまの額が割れて 1 で終われば正しい
+ *
+ * ## いまの額と、控えめな字（11月の城の2版目。あやと 2026-11-02「今の金額以外の文字はよく見たら見えるくらいで良い」）
+ *
+ * 字に `data-ink-role` が付いていれば、役で分けて数える。
+ * - `amount`（いまの額）と、役の付いていない字: **4.5 以上で合格**（今までどおり）
+ * - `target`（目標）・`label`（旅の名前）: **控えめにする字なので合否にしない。** 大きさと濃さを、いまの額と並べて出す
+ *   （「いまの額より明らかに控えめか」を数で見るため）
  *
  * `alert-ink.mjs` はアラート（投げ銭が来たときの名前・額・メッセージ）だけを測る。貯金箱の字は
  * 測っていなかったので、11月の城（字を絵の台に載せた。#1078）から足した。
@@ -45,7 +51,6 @@ const bgDir = resolve(arg("bg-dir", process.env.ALERT_BG_DIR ?? ""));
 const BGS = ["street", "face", "alert-now", "alert-fish"];
 for (const b of BGS) if (!existsSync(join(bgDir, `prism-${b}.jpg`))) die(`配信画面が無い: ${join(bgDir, `prism-${b}.jpg`)}`);
 const themes = arg("themes", "castle").split(",");
-const texts = arg("texts", "").split(",").filter(Boolean);
 const fills = arg("fills", "0,50,100,120").split(",").map(Number);
 const [W, H] = arg("size", "436x776").split("x").map(Number);
 const DPR = Number(arg("dpr", "2"));
@@ -59,7 +64,7 @@ mkdirSync(out, { recursive: true });
 const exe = chromePath() ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : null);
 if (!exe) die("ブラウザが見つからない（chrome.mjs）");
 
-async function one(browser, judgePage, shots, { theme, text, fill, bg }) {
+async function one(browser, judgePage, shots, { theme, fill, bg }) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
   try {
     await prism(ctx);
@@ -76,7 +81,7 @@ async function one(browser, judgePage, shots, { theme, text, fill, bg }) {
       });
     }, data);
     const p = await ctx.newPage();
-    const q = new URLSearchParams({ preview: "bank", fill: String(fill), theme, ...(text ? { bankText: text } : {}) });
+    const q = new URLSearchParams({ preview: "bank", fill: String(fill), theme });
     await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
     await p.waitForSelector('[data-ink="fill"]', { timeout: 20000 });
     // 灯りが上がりきって（0.3 + 1.5 秒）、数え上げが終わるまで
@@ -98,12 +103,12 @@ async function one(browser, judgePage, shots, { theme, text, fill, bg }) {
         const r = el.getBoundingClientRect();
         if (r.width < 2 || r.height < 2) return;
         el.setAttribute("data-inkmark", String(i));
-        res.push({ t: (el.textContent || "").trim().slice(0, 14), c: "", tag: el.tagName, color: getComputedStyle(el).color, size: getComputedStyle(el).fontSize, x: r.x, y: r.y, w: r.width, h: r.height });
+        res.push({ t: (el.textContent || "").trim().slice(0, 14), c: el.getAttribute("data-ink-role") || "", tag: el.tagName, color: getComputedStyle(el).color, size: getComputedStyle(el).fontSize, x: r.x, y: r.y, w: r.width, h: r.height });
       });
       return res;
     });
     if (!boxes.length) throw new Error("字を1つも拾えなかった");
-    const nm = `${theme}-${text || "default"}-${fill}-${bg}`;
+    const nm = `${theme}-${fill}-${bg}`;
     await p.screenshot({ path: join(out, `${nm}.shot.png`) });
     await p.addStyleTag({ content: "[data-inkmark]{color:transparent!important;-webkit-text-fill-color:transparent!important}" });
     await p.waitForTimeout(120);
@@ -111,7 +116,7 @@ async function one(browser, judgePage, shots, { theme, text, fill, bg }) {
     const j = await judgeInk(judgePage, { shotUrl: `${shots.base}/${nm}.shot.png`, bgUrl: `${shots.base}/${nm}.bg.png`, boxes, dpr: DPR, lim: LIM });
     if (j.err) throw new Error(j.err);
     if (j.rows.length !== boxes.length) throw new Error(`拾えなかった字がある ${JSON.stringify(j.dropped)}`);
-    return j.rows.map((r) => ({ key: `${theme}${text ? `/${text}` : ""}`, fill, bg, t: r.t, size: r.size, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
+    return j.rows.map((r) => ({ key: theme, role: r.c || "", fill, bg, t: r.t, size: r.size, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
   } finally {
     await ctx.close();
   }
@@ -125,8 +130,8 @@ async function main() {
   const judgePage = await (await browser.newContext()).newPage();
   await judgePage.goto(`${shots.base}/`).catch(() => {});
   const queue = [];
-  for (const theme of themes) for (const text of texts.length ? texts : [""]) for (const fill of fills) for (const bg of BGS) queue.push({ theme, text, fill, bg });
-  console.log(`${queue.length} 枚（${themes.join("・")}${texts.length ? ` × 字の載せ方 ${texts.join("・")}` : ""} × 溜まり ${fills.join("・")}% × 配信画面 ${BGS.length}）`);
+  for (const theme of themes) for (const fill of fills) for (const bg of BGS) queue.push({ theme, fill, bg });
+  console.log(`${queue.length} 枚（${themes.join("・")} × 溜まり ${fills.join("・")}% × 配信画面 ${BGS.length}）`);
   const rows = [];
   const errs = [];
   const jobs = 3;
@@ -136,15 +141,40 @@ async function main() {
       try {
         rows.push(...(await one(browser, judgePage, shots, job)));
       } catch (e) {
-        errs.push(`${job.theme} ${job.text} ${job.fill}% ${job.bg}: ${String(e).slice(0, 160)}`);
+        errs.push(`${job.theme} ${job.fill}% ${job.bg}: ${String(e).slice(0, 160)}`);
       }
     }
   }
   await Promise.all(Array.from({ length: jobs }, worker));
   shots.close();
   await browser.close();
-  const fails = rows.filter((r) => r.mid < LIM || r.rhi < LIM);
+  /** 合否にするのは、いまの額と役の付いていない字（目標・旅の名前は控えめにする字なので並べて出すだけ） */
+  const judged = (r) => r.role === "" || r.role === "amount";
+  const fails = rows.filter((r) => judged(r) && (r.mid < LIM || r.rhi < LIM));
   console.log(`\n測れた字 ${rows.length}`);
+  // 役ごとに、大きさと濃さを並べる（いまの額だけが目立っているか）
+  const roles = [...new Set(rows.map((r) => r.role).filter(Boolean))];
+  if (roles.length) {
+    const NAME = { amount: "いまの額", target: "目標", label: "旅の名前" };
+    const med = (xs) => {
+      const s = [...xs].sort((a, b) => a - b);
+      return s.length ? s[Math.floor(s.length / 2)] : NaN;
+    };
+    console.log("役ごと（大きさは CSS px、濃さは字の芯と地の比。中央値の 中央値 / いちばん低い / いちばん高い）:");
+    const amt = rows.filter((r) => r.role === "amount");
+    const amtSize = med(amt.map((r) => parseFloat(r.size)));
+    const amtInk = med(amt.map((r) => r.mid));
+    for (const role of roles) {
+      const rs = rows.filter((r) => r.role === role);
+      const size = med(rs.map((r) => parseFloat(r.size)));
+      const ink = med(rs.map((r) => r.mid));
+      const rel = role === "amount" ? "" : `  ← いまの額に対して 大きさ ${(size / amtSize).toFixed(2)} 倍・濃さ ${(ink / amtInk).toFixed(2)} 倍`;
+      console.log(
+        `  ${(NAME[role] ?? role).padEnd(5)} ${rs.length} 枚: 大きさ ${size.toFixed(1)}px / 濃さ ${ink.toFixed(2)}・${Math.min(...rs.map((r) => r.mid)).toFixed(2)}・${Math.max(...rs.map((r) => r.mid)).toFixed(2)}` +
+          `${judged(rs[0]) ? "（4.5 以上で合格）" : "（控えめにする字。合否にしない）"}${rel}`
+      );
+    }
+  }
   const keys = [...new Set(rows.map((r) => r.key))];
   for (const k of keys) {
     for (const t of [...new Set(rows.filter((r) => r.key === k).map((r) => r.t.replace(/[\d,]+/g, "#")))]) {

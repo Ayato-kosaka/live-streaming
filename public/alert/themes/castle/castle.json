@@ -1,16 +1,30 @@
 {
-  "size": [560, 470],
-  "content": [2, 2, 558, 466],
-  "light": { "bottom": 314, "top": 78 },
-  "pole": { "x": 511, "bottom": 238, "top": 52 },
-  "flag": { "file": "flag.png", "h": 46 },
-  "pipo": {
-    "wait": { "file": "pipo-wait.png", "x": 170, "y": 334, "h": 150 },
-    "peek": { "file": "pipo-peek.png", "x": 268, "y": 0, "h": 118 },
-    "cheer": { "file": "pipo-cheer.png", "x": 182, "y": 334, "h": 160 }
-  },
-  "plates": {
-    "ribbon": { "file": "ribbon.png", "text": [0.13, 0.27, 0.87, 0.66] },
-    "plaque": { "file": "plaque.png", "text": [0.16, 0.27, 0.84, 0.72] }
+ "size": [560, 470],
+ "content": [2, 2, 558, 466],
+ "light": {"bottom": 314, "top": 78},
+ "pole": {"x": 511, "bottom": 238, "top": 52},
+ "flag": {"file": "flag.png", "h": 46},
+ "coin": {"file": "coin.png"},
+ "ribbon": {"file": "ribbon.png", "text": [0.12, 0.14, 0.88, 0.8]},
+ "pipo": {
+  "face": 0.135,
+  "gate": {"x": 288, "y": 412},
+  "peeks": [{"x": 462, "y": 178}, {"x": 62, "y": 180}],
+  "ledges": [{"x": 182, "y": 338}, {"x": 398, "y": 334}],
+  "coinIn": [0.72, 0.36],
+  "poses": {
+   "wait": {"file": "pipo-wait.png", "size": [137, 170], "foot": [0.511, 0.976], "face": [26.4, 4.6, 126.4, 86.8]},
+   "sit": {"file": "pipo-sit.png", "size": [139, 174], "foot": [0.493, 0.971], "face": [17.5, 5.1, 117.5, 54.7]},
+   "walk0": {"file": "pipo-walk0.png", "size": [159, 162], "foot": [0.421, 0.969], "face": [54.3, 4.8, 154.3, 93.7]},
+   "walk1": {"file": "pipo-walk1.png", "size": [154, 162], "foot": [0.396, 0.969], "face": [49.1, 4.8, 149.1, 93.7]},
+   "jump": {"file": "pipo-jump.png", "size": [170, 150], "foot": [0.5, 0.95], "face": [64.5, 5.1, 164.5, 88.8]},
+   "peek": {"file": "pipo-peek.png", "size": [120, 117], "foot": [0.487, 1.0], "face": [8.4, 4.2, 108.4, 52.3]},
+   "peekWave": {"file": "pipo-peek-wave.png", "size": [138, 144], "foot": [0.454, 1.0], "face": [12.7, 7.3, 112.7, 101.8]},
+   "flag": {"file": "pipo-flag.png", "size": [164, 204], "foot": [0.457, 0.975], "face": [17.6, 7.8, 117.6, 96.1]},
+   "yawn": {"file": "pipo-yawn.png", "size": [159, 187], "foot": [0.522, 0.973], "face": [23.3, 7.8, 123.3, 93.0]},
+   "sleep": {"file": "pipo-sleep.png", "size": [181, 161], "foot": [0.522, 0.963], "face": [18.4, 8.2, 118.4, 106.1]},
+   "catch": {"file": "pipo-catch.png", "size": [190, 223], "foot": [0.447, 0.978], "face": [9.1, 7.3, 109.1, 109.1]},
+   "cheer": {"file": "pipo-cheer.png", "size": [178, 192], "foot": [0.525, 0.974], "face": [38.1, 9.9, 138.1, 95.2]}
   }
+ }
 }

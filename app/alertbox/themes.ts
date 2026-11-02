@@ -176,17 +176,13 @@ export type RigBankDef = {
  *
  * - 0% の絵（`bank-base-0.png`。窓が暗い）と 100% の絵（`bank-fill-0.png`。全部の窓が光る）を同じ構図で描き、
  *   100% の絵を**下から切り抜いて**溜まり具合を見せる（下の階から窓に灯りがともる）。2枚は `bank` のコマとして読む
- * - 城の目印（灯りが上がる範囲・旗竿）と、ピポ・旗・字の台の絵は `castle.json`（`dir` の中）
+ * - 城の目印（灯りが上がる範囲・旗竿）と、ピポ（ポーズの絵・居場所）・旗・金貨・字のリボンの絵は `castle.json`（`dir` の中）
  * - **大きさは豚と同じ物差し（Dimensions）で決める。** PRISM の % が何でも、いつも豚の 1.6 倍
  *   （あやと 2026-11-02「100%のときに、豚を160%にした大きさが良い」。`docs/island-misses.md` #311）
+ * - 字は城の足もとの細いリボンに載せる（2版目で、石の銘板・夜空の案は外した。#1078）
  */
 export type CastleBankDef = {
   kind: "castle";
-  /**
-   * 字（いまの額・目標・旅の名前）の載せ方。"ribbon" 城の足もとを横切るリボンの旗 /
-   * "plaque" 城の足もとの石の銘板 / "sky" 城の後ろの夜空に縁取りの字
-   */
-  text: "ribbon" | "plaque" | "sky";
 };
 
 export type SeasonTheme = {
@@ -700,7 +696,7 @@ export const THEMES: SeasonTheme[] = [
     // 11/30 23:59 まで。12/1 0:00 からは豚に戻る
     until: "2026-12-01T00:00",
     dir: "/alert/themes/castle",
-    castleBank: { kind: "castle", text: "ribbon" },
+    castleBank: { kind: "castle" },
     bank: {
       /* 城の部品が読めなかった日のコマ送り。0%（base）に 100%（fill）を下から溜める。1枚なので送らない */
       frames: 1,
