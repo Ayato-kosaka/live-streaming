@@ -13,7 +13,7 @@
  * どれも transform と opacity だけを動かす（合成のスレッドで回る）。
  */
 import { EASE, range, type Motion } from "../rig/motion";
-import { div, edgeFade, type ShowLayers } from "./layers";
+import { div, edgeFade, liveScale, type ShowLayers } from "./layers";
 
 export type Center = {
   /** キャラ絵の四角の真ん中（舞台の px） */
@@ -36,10 +36,12 @@ export function centerOf(L: ShowLayers, W: number, H: number): Center {
   if (!el) return { x: W / 2, y: H * 0.6, top: H * 0.2, bottom: H * 0.98, w: W };
   const parent = el.offsetParent as HTMLElement | null;
   const pr = parent ? parent.getBoundingClientRect() : { left: 0, top: 0 };
-  const left = (pr.left + el.offsetLeft - sr.left) / k;
-  const top = (pr.top + el.offsetTop - sr.top) / k;
-  const w = el.offsetWidth / k;
-  const h = el.offsetHeight / k;
+  // offset は面の並びの px。箱を広げている途中は画面の上でこの倍率ぶん大きい（layers.ts の liveScale）
+  const ls = liveScale(L);
+  const left = (pr.left + el.offsetLeft * ls - sr.left) / k;
+  const top = (pr.top + el.offsetTop * ls - sr.top) / k;
+  const w = (el.offsetWidth * ls) / k;
+  const h = (el.offsetHeight * ls) / k;
   return { x: left + w / 2, y: top + h / 2, top, bottom: top + h, w };
 }
 
