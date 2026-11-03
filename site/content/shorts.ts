@@ -143,6 +143,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "IZpZGM5Xbyg", date: "2026-10-31", title: "🇲🇰北マケドニアの行列店の大衆食堂を食べてみた！" },
     { id: "wACcdJnOv18", date: "2026-11-01", title: "🇬🇧イギリスのエディンバラを、1日で回ったらやばかった！" },
     { id: "jz5RjaX-H6Q", date: "2026-11-02", title: "🇬🇧イギリスにあるアフタヌーンティーの超本場がやばすぎた！" },
+    { id: "wDtTjwEd0Pg", date: "2026-11-03", title: "🇬🇧イギリスの宿でシャワーを浴びたら、全館浸水しました！" },
   ],
 };
 
