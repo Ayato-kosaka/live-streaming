@@ -4,7 +4,7 @@ name: ショートの数字を BigQuery に入れる
 # `youtube_chat.shorts_metrics` に入れる。作業箱の道具は `tools/shorts/metrics/shorts_metrics.py ship`、
 # ここで回すのは `tools/shorts/metrics/serve.py`。
 #
-# - Studio を読むのは EC2 の Chrome（読むだけ）。生の数字は EC2 の `/home/ubuntu/shorts-metrics/rows.json` に貯まる
+# - Studio を読むのは EC2 の Chrome（読むだけ）。生の数字は EC2 の `~/shorts-metrics/rows.json`（ubuntu のホーム）に貯まる
 # - ここは非公開バケットの `transfer/metrics/` に PUT できる署名付き URL（1時間）を作り、依頼の公開鍵で包んで
 #   作業枝に置く → EC2 が上げるのを待つ → 形を見て `CREATE TABLE IF NOT EXISTS` と MERGE で入れる → GCS のものを消す
 #   → 結果（時点ごとの行の数）を包んで作業枝に置く

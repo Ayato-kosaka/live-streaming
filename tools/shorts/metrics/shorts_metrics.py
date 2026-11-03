@@ -16,7 +16,7 @@
 
 | 置き場 | 何 | 書くのは |
 | --- | --- | --- |
-| EC2 `/home/ubuntu/shorts-metrics/rows.json` | 行の正の写し（鍵ごとに1行）。Studio から読んだ生の返事は同じ置き場の `raw/` | `collect`（EC2 の上の `remote`） |
+| EC2 の `~/shorts-metrics/rows.json`（ubuntu のホーム） | 行の正の写し（鍵ごとに1行）。Studio から読んだ生の返事は同じ置き場の `raw/` | `collect`（EC2 の上の `remote`） |
 | GCS の非公開バケットの `transfer/metrics/` | Actions へ渡すあいだだけ。入れたら消す（消し損ねても1日で消える。`preview/gcs.py` の TRANSFER） | EC2 が、Actions の作った署名付き URL へ PUT |
 | BigQuery `youtube_chat.shorts_metrics` | 集計する置き場 | Actions（`serve.py`）だけ |
 

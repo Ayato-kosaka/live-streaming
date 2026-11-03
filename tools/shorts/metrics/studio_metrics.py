@@ -2,14 +2,14 @@
 """公開したショートの数字を、YouTube Studio の裏の youtubei から**読むだけ**で取る（EC2 の上で動く）。
 
 手元の入口は同じ置き場の `shorts_metrics.py`（台帳を読み、これを EC2 に置いて回し、EC2 の JSON に貯め、
-Actions に BigQuery へ入れてもらう）。EC2 では `/home/ubuntu/cdp/studio_metrics.py` に置かれ、
+Actions に BigQuery へ入れてもらう）。EC2 では ubuntu のホームの `~/cdp/studio_metrics.py` に置かれ、
 `yt_studio.py` の `api()` で次の2つだけを送る。
 ほかの口は `READ_ONLY` で断る（Studio に書き込む要求を、この道具からは1本も出さない）。
 
 - `creator/get_creator_videos` … 公開の状態と公開時刻（予約中・非公開・消したものはここで外す）
 - `yta_web/get_cards` … 指標
 
-    cd /home/ubuntu/cdp && python3 studio_metrics.py --ids Do04EoViYdU,rVGC150Y3hA --out /home/ubuntu/shorts-metrics/x.json
+    cd ~/cdp && python3 studio_metrics.py --ids Do04EoViYdU,rVGC150Y3hA --out ~/shorts-metrics/x.json
 
 ## 時点の値は「公開から N 日で区切った期間」で聞く
 
@@ -227,7 +227,8 @@ def main(argv=None):
     ap.add_argument("--ids", required=True, help="動画 ID をカンマで")
     ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
-    sys.path.insert(0, "/home/ubuntu/cdp")
+    # yt_studio は EC2 で同じ置き場（~/cdp）に居る。置き場の名前を直に書かず、この道具の在りかから引く
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from yt_studio import api, studio, url_of
     t = studio(url_of("videos/short"), wait=6)
     if "accounts.google.com" in t.url():
