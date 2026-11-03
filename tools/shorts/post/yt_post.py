@@ -471,8 +471,15 @@ def schedule(t, vid, at, dry=False):
     if not t.js(f"!!{d}"):
         result({"ok": False, "error": "visibility_dialog"})
         return
-    t.click(f"{d}.querySelector('#second-container-expand-button')")
-    time.sleep(2)
+    # 予約済みの動画（時刻を変えるとき）は「スケジュールを設定」がもう開いていて、開くボタンは幅0で隠れている。
+    # 隠れたボタンを押すと中心が (0,0) になって窓の外を押し、タイムゾーンの札が読めずに止まる（2026-11-03 エディンバラ B の入れ換え）。
+    # 見えているときだけ押す
+    exp = f"{d}.querySelector('#second-container-expand-button')"
+    if t.js(f"(() => {{ const b = {exp}; if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0; }})()"):
+        t.click(exp)
+        time.sleep(2)
+    else:
+        log("schedule container already open:", t.js(f"(({d}.querySelector('#second-container') || {{}}).innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 80)"))
     # タイムゾーンの札（窓を開かずに読めないので、窓を開いて選ばれている行を読み、閉じる）
     tzb = f"[...{d}.querySelectorAll('ytcp-button, button')].find(b => /タイムゾーン|Time zone/.test(b.innerText || ''))"
     t.click(tzb)
