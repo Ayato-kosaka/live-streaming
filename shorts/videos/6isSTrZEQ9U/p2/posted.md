@@ -39,3 +39,12 @@ v3 は 2026-10-30 に予約した版（この箱から下見の web.app に届�
 2026-11-03 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る（v6 の ID で）。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直す。
 残した v3（jH5SZqTP3M8）が非公開のままなのも見る。そのあと EC2 の `~/shorts_post/6isSTrZEQ9U` を `post.py clean` で消す。
+
+## 公開を確かめた（2026-11-03）
+
+予約の時刻（12:30 UTC）のあと、EC2 からログインしない `curl` で 12:42〜12:43 UTC に見た。
+
+- YouTube `wDtTjwEd0Pg`（v6）: oEmbed が 200 で題「🇬🇧イギリスの宿でシャワーを浴びたら、全館浸水しました！」を返した（`post_p2.json` の youtube.title と1字ずつ一致）→ 公開
+- TikTok `7703655878980848916`（v6）: `embed/v2` が 200・`"secret":false` → 公開。1回目は 503 で、15秒あけて取り直すと 200 だった（一時的なもの）
+- 取り下げた v3 の YouTube `jH5SZqTP3M8`: oEmbed が 403（非公開のまま。公開されていない）
+- EC2 の `~/shorts_post/6isSTrZEQ9U` を消した（`post.py clean` と同じ中身を、確かめと同じ1回の起動で回した。EC2 の空き 10G）

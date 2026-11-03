@@ -1,0 +1,103 @@
+name: ショートの数字を BigQuery に入れる
+
+# 公開したショートの数字（24時間・72時間・7日・14日。#921）を、EC2 の JSON から BigQuery の
+# `youtube_chat.shorts_metrics` に入れる。作業箱の道具は `tools/shorts/metrics/shorts_metrics.py ship`、
+# ここで回すのは `tools/shorts/metrics/serve.py`。
+#
+# - Studio を読むのは EC2 の Chrome（読むだけ）。生の数字は EC2 の `~/shorts-metrics/rows.json`（ubuntu のホーム）に貯まる
+# - ここは非公開バケットの `transfer/metrics/` に PUT できる署名付き URL（1時間）を作り、依頼の公開鍵で包んで
+#   作業枝に置く → EC2 が上げるのを待つ → 形を見て `CREATE TABLE IF NOT EXISTS` と MERGE で入れる → GCS のものを消す
+#   → 結果（時点ごとの行の数）を包んで作業枝に置く
+#
+# **なぜ Actions か。** 作業箱からは BigQuery に書かない決まり。持っているのは Actions の
+# `FIREBASE_SERVICE_ACCOUNT` だけで、新しい秘密は足さない。Actions から EC2 へは届かない（AWS の鍵が無い）ので、
+# EC2 のほうから上げてもらう。
+#
+# **なぜ暗号化か。** 署名付き URL は持っている人なら誰でも使える鍵。このリポジトリは公開で、
+# Actions のログも誰でも読める。URL は依頼の公開鍵で包んで置き（`tools/shorts/ingest/seal.py` と同じ形）、
+# ログには名前・行の数・秒・成否だけを出す。数字そのものも、落ちた理由の本文も出さない。artifact にはしない。
+
+on:
+  push:
+    branches: ["claude/**"]
+    # 取り込みが見ている `shorts/requests/` とは別の置き場
+    paths: ["shorts/metrics/*.json"]
+  # master に入ってから使う
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "依頼の名前（英数字と . _ -）"
+        required: true
+      pubkey:
+        description: "RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: true
+      nonce:
+        description: "作業箱が作った乱数（届いた結果を見分ける）"
+        required: true
+      branch:
+        description: "結果を置く枝（claude/ で始まる）"
+        required: true
+
+permissions:
+  contents: read
+
+# MERGE を同じ表に2本同時に流さない（同じ鍵を取り合う）
+concurrency:
+  group: shorts-metrics
+  cancel-in-progress: false
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    # EC2 が上げるのを最長20分待つ（serve.py の WAIT_S）。入れるのは数十秒
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      IN_NAME: ${{ inputs.name }}
+      IN_PUBKEY: ${{ inputs.pubkey }}
+      IN_NONCE: ${{ inputs.nonce }}
+      IN_BRANCH: ${{ inputs.branch }}
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      # 作業枝の暗号文（数百MB）を落とさない
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            tools/shorts
+            shorts/metrics
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 依頼を読む
+        id: plan
+        run: python3 tools/shorts/metrics/serve.py plan
+
+      - name: 道具を入れる
+        if: steps.plan.outputs.count != '0'
+        timeout-minutes: 8
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          $R 180 python3 -m pip install --quiet "google-cloud-storage==3.17.1" "google-cloud-bigquery==3.40.1"
+
+      - name: Google Cloud 認証
+        if: steps.plan.outputs.count != '0'
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 上げる URL を渡し、届いたものを BigQuery に入れる
+        if: steps.plan.outputs.count != '0'
+        # 結果の push は branch.py が shorts/.work/ の下と依頼ファイルだけを積む
+        # （auth が作業ツリーに置いた gha-creds-*.json は積まない）
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 tools/shorts/metrics/serve.py run
+
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json
