@@ -51,6 +51,8 @@ METRICS = {
     "SHORTS_FEED_IMPRESSIONS": ("shorts_feed_impressions", 1),
     "RATINGS_LIKES": ("likes", 1),
     "COMMENTS": ("comments", 1),
+    # 2026-11-03 に19本・69行を取ったら、これだけ全行 0 だった（エンゲージビューが中央値の6倍の本でも）。
+    # 名前は通る（400 にならない）が、Studio の「共有」を指していない疑いがある。画面の値と突き合わせるまで物差しにしない
     "SHARINGS": ("shares", 1),
     "SUBSCRIBERS_GAINED": ("subs_gained", 1),
     "SUBSCRIBERS_LOST": ("subs_lost", 1),
