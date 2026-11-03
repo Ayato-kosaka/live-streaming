@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "metrics__m20261103T160015Z__inbox",
+ "mode": "metrics",
+ "dest": "metrics/m20261103T160015Z/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/metrics/m20261103T160015Z.json",
+ "status": "ok",
+ "stages": {
+  "inbox": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 1007,
+  "tar_gz": 855,
+  "encrypted": 864
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 864,
+   "sha256": "1a8ebb235b2186094722ff0295cc9029eb4e55898c374b0d6aae8b0fbba36217"
+  }
+ ],
+ "hmac_sha256": "50cb15bf0bcd07d1a35d247ef098dbc1391dda37f6b3f897973fce9740bbdfb8",
+ "pubkey_sha256": "b9d745124b8a9da97d238fbc5af7f531e9b872a7248c565f84009e7a0cdec5ed",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41669659648",
+ "created_at": "2026-11-03T16:00:34+00:00",
+ "nonce": "237217fef74fe0d74e0fbdd0"
+}
