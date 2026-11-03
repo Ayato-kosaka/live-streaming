@@ -287,9 +287,19 @@ def related(t, vid, target, dry=False):
         key(t, "Enter", "Enter", 13, "\r")
         time.sleep(4)
     shot(t, "yt_4_picker")
+    # 同じ題の配信が何本もある（ジョージアの「…マーケットいきます」は3本が同じ題。2026-11-03 の犬の回で、題で選んだら
+    # 先頭の別の回 lxnJu5iQ_rU に付いた）。札（ytcp-entity-card）は video.videoId を持つので、まず ID で選ぶ。
+    # ID が読めない形のときだけ、題がちょうど1つに当たるなら押す（2つ以上なら押さずに止まる）
+    tid = json.dumps(target)
     item = f"""(() => {{ const d = {d}; if (!d) return null;
+        const cards = [...d.querySelectorAll('ytcp-entity-card')].filter(e => e.offsetParent);
+        const own = e => {{ try {{ if (e.video && e.video.videoId) return e.video.videoId; }} catch (x) {{}}
+          const m = e.outerHTML.match(/vi(?:_webp)?\\/([\\w-]{{11}})\\//); return m ? m[1] : null; }};
+        const byId = cards.filter(e => own(e) === {tid});
+        if (byId.length === 1) return byId[0];
+        if (byId.length > 1 || cards.some(e => own(e))) return null;
         const hit = [...d.querySelectorAll('*')].filter(e => e.offsetParent && e.children.length === 0 && (e.innerText || '').trim() === {json.dumps(title)});
-        if (!hit.length) return null; let e = hit[0];
+        if (hit.length !== 1) return null; let e = hit[0];
         for (let i = 0; i < 8 && e.parentElement; i++) {{ if (/^(YTCP-ENTITY-CARD|TP-YT-PAPER-ITEM|BUTTON)$/.test(e.tagName) || e.getAttribute('role') === 'button' || e.getAttribute('tabindex') === '0') break; e = e.parentElement; }}
         return e; }})()"""
     log("item:", t.js(f"(() => {{ const e = {item}; return e ? e.tagName + ' ' + e.innerText.trim().replace(/\\s+/g, ' ').slice(0, 80) : null; }})()"))
@@ -299,6 +309,10 @@ def related(t, vid, target, dry=False):
         return
     t.click(item)
     time.sleep(3)
+    # 前に別の回が付いていた動画で、選び直したときに古い札が選ばれたまま残らないかを見られるように
+    log("cards selected:", t.js(f"""(() => {{ const d = {d}; if (!d) return null; return [...d.querySelectorAll('ytcp-entity-card')].filter(e => e.offsetParent)
+        .map(e => {{ let id = null; try {{ id = e.video && e.video.videoId; }} catch (x) {{}} return [id, (e.getAttribute('aria-label') || '').split(', ').pop()]; }})
+        .filter(x => !/未選択/.test(x[1])); }})()"""))
     # 選んだあとに確定の押しどころがあれば押す
     t.js(f"""(() => {{ const d = {d}; if (!d) return; const b = [...d.querySelectorAll('ytcp-button, button')].find(b => b.offsetParent && /^(完了|選択|保存|Done|Select)$/.test((b.innerText || '').trim())); if (b) b.click(); }})()""")
     time.sleep(2)
@@ -471,8 +485,15 @@ def schedule(t, vid, at, dry=False):
     if not t.js(f"!!{d}"):
         result({"ok": False, "error": "visibility_dialog"})
         return
-    t.click(f"{d}.querySelector('#second-container-expand-button')")
-    time.sleep(2)
+    # 予約済みの動画（時刻を変えるとき）は「スケジュールを設定」がもう開いていて、開くボタンは幅0で隠れている。
+    # 隠れたボタンを押すと中心が (0,0) になって窓の外を押し、タイムゾーンの札が読めずに止まる（2026-11-03 エディンバラ B の入れ換え）。
+    # 見えているときだけ押す
+    exp = f"{d}.querySelector('#second-container-expand-button')"
+    if t.js(f"(() => {{ const b = {exp}; if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0; }})()"):
+        t.click(exp)
+        time.sleep(2)
+    else:
+        log("schedule container already open:", t.js(f"(({d}.querySelector('#second-container') || {{}}).innerText || '').trim().replace(/\\s+/g, ' ').slice(0, 80)"))
     # タイムゾーンの札（窓を開かずに読めないので、窓を開いて選ばれている行を読み、閉じる）
     tzb = f"[...{d}.querySelectorAll('ytcp-button, button')].find(b => /タイムゾーン|Time zone/.test(b.innerText || ''))"
     t.click(tzb)

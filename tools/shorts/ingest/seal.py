@@ -36,6 +36,7 @@ import hashlib
 import hmac
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -100,7 +101,10 @@ def _encrypt(tgz: Path, pub: Path, dest: Path, key_name: str, data_name: str) ->
     parts = []
     if data_len <= PART:
         target = dest / data_name
-        enc.replace(target)
+        # 暗号文は /tmp の一時の置き場にあり、dest は runner の作業場（RUNNER_TEMP）のことがある。
+        # 器が別の runner では rename が Invalid cross-device link で落ちる（2026-11-03、下見の transfer で踏んだ）。
+        # move は器をまたぐと写して消す
+        shutil.move(str(enc), str(target))
         parts.append(target)
     else:
         with open(enc, "rb") as f:
