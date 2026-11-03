@@ -1,12 +1,13 @@
 # バゲットの回 p2 — 出したもの
 
 あやとの「2026/11/05 21:30」（[#1071 のコメント](https://github.com/Ayato-kosaka/live-streaming/issues/1071#issuecomment-6555288416)。v6 の下見への返事）を受けて、
-`baguette-p2-v6` を **2026-11-05 21:30 JST（12:30 UTC）の予約投稿**にした。投稿先が時刻に出すので、セッションが止まっていても出る。
+`baguette-p2-v6` を 2026-11-05 21:30 JST の予約投稿にした。そのあと、あやとの「11月4日(水)分と11/5分を入れ換えて」で
+**2026-11-04 21:30 JST（12:30 UTC）**に動かした（下の「11/4 と 11/5 の入れ換え」）。投稿先が時刻に出すので、セッションが止まっていても出る。
 
 | 場所 | URL | 予約の時刻（読み直した値） |
 | --- | --- | --- |
-| YouTube | https://youtube.com/shorts/As4LP4FPzPw | `scheduledTimeSeconds` 1793881800 ＝ 2026-11-05T12:30:00Z（一般公開・予約済み。それまでは非公開） |
-| TikTok | https://www.tiktok.com/@ayato_arigato/video/7703115629053627654 | TikTok Studio の一覧の行に `Nov 5, 12:30 PM`（一覧は UTC） |
+| YouTube | https://youtube.com/shorts/As4LP4FPzPw | `scheduledTimeSeconds` 1793795400 ＝ 2026-11-04T12:30:00Z（一般公開・予約済み。それまでは非公開） |
+| TikTok | https://www.tiktok.com/@ayato_arigato/video/7704039579623410996 | TikTok Studio の一覧の行に `Nov 4, 12:30 PM`（一覧は UTC）。入れ直した投稿（前の ID は 7703115629053627654） |
 
 - 動画は `baguette-p2-v6`（52.07秒）。sha256 `6ed7cca14c25278e8d0ea60bd7999285f4757f9806d68fb46b54378625ccc29c` を、`qa_p2.md` の控えの全桁と照らしてから使い、EC2 に送ったあとも EC2 の上で照らした
 - 投稿文: `post_p2.json`（題「海外旅行中に作ったバケットが簡単すぎた！」。`publish_at` を両方 2026-11-05T12:30:00Z にした。字は変えていない）
@@ -16,10 +17,24 @@
   （1.0秒はミトンと腕が画面の半分を占めていた）。`post.py cover --cover-at 2.0` で切った（`post_p2.json` の `cover_at_s` は 1.0 のまま）
 - YouTube: 題・説明が投稿文と一致、子ども向けでない、改変されたコンテンツ「いいえ」、関連動画は焼いた回 28Tcc0c5sNE（🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！）。状態は `PROCESSED`（53秒）
 - TikTok: キャプション一致（題の行の下に「YouTube「@あやとグルメアプリ」の生配信から」）、カバーは同じ 2.0秒のコマ、公開範囲 Everyone、AI 生成の印と投稿内容の開示はオフ。`--dry` で日時の欄（2026-11-05・12:30）まで確かめてから予約した。読み直しで、この題の行は1本だけ
-- 台帳: `tools/shorts/post/posted.json`（YouTube `done` As4LP4FPzPw・TikTok `done` 7703115629053627654。どちらも `note` に予約の時刻）
+- 台帳: `tools/shorts/post/posted.json`（YouTube `done` As4LP4FPzPw・TikTok `done` 7704039579623410996（入れ直し。消した 7703115629053627654 の行は消さずに `note` に消したことと読み直した値）。どの行も `note` に予約の時刻）
+
+## 11/4 と 11/5 の入れ換え（2026-11-03）
+
+あやとの「11月4日(水)分と11/5分を入れ換えて」（チャット。[#1071 の書き置き](https://github.com/Ayato-kosaka/live-streaming/issues/1071#issuecomment-6613552874)）で、
+バゲットを 11/5 → **11/4 21:30 JST**、エディンバラ B（#1052）を 11/4 → 11/5 にした。途中で落ちても 11/4 に2本出ないよう、どちらの媒体も**エディンバラ B を先に 11/5 へ動かしてから**バゲットを動かした。
+
+- **YouTube（動画は差し替えていない。時刻だけ）**: `yt_post.py publish As4LP4FPzPw --at 2026-11-04T12:30:00Z` を `--dry` で日時の欄（2026/11/04・12:30、タイムゾーン「（GMT+0000）現地時間」）まで確かめてから保存した（2026-11-03T19:51Z）。
+  読み直した: `scheduledTimeSeconds` 1793795400・`SCHEDULED_PUBLISHING_STATUS_SCHEDULED`・`VIDEO_PRIVACY_PRIVATE`
+- **TikTok（予約ごと消して入れ直した）**: TikTok Studio の予約中の行は編集が押せず（鉛筆が灰色。「…」は Download と Delete だけ）、時刻を変えられない。
+  1. `tt_post.py delete 7703115629053627654 バケットが簡単すぎた 2026-11-05T12:30:00Z` を `--dry`（念押しの窓まで）→ 本番（2026-11-03T20:04Z）。読み直した: 一覧（`check`）に同じ題の行が0本
+  2. EC2 の同じ mp4（`~/shorts_post/baguette/p2.mp4`、sha256 `6ed7cca14c25278e8d0ea60bd7999285f4757f9806d68fb46b54378625ccc29c` を上の控えと全桁で照らした。手元の `/tmp/cc-work/final/baguette-p2-v6.mp4` も同じ）・
+     同じ投稿文（`tt_caption_p2.txt` の sha256 が手元の `post_p2.json` から組んだキャプションと一致）・同じカバー（11/1 に切った `p2_cover.jpg`、2.0秒のコマ）で、
+     `post.py tt-post --video baguette --option p2 --cover --sha … --at 2026-11-04T12:30` を `--dry`（日時の欄 2026-11-04・12:30）→ 一覧に古い行が無いのを読んだうえで `--again` で予約した。
+     新しい投稿 ID は **7704039579623410996**。読み直しで、この題の行は1本だけ・`Nov 4, 12:30 PM`
 
 ## 公開のあとに確かめること
 
-2026-11-05 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
+**2026-11-04 12:30 UTC** を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直し、
 EC2 の `~/shorts_post/baguette` を `post.py clean --video baguette` で消す。
