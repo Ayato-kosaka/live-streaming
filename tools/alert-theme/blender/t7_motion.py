@@ -145,8 +145,8 @@ def ayato_plane(name):
 PIPO_FOOT = (3.35, -0.05, B + 8.6 + 0.85)
 PIPO_H = 4.4
 PIPO_M_PER_PX = PIPO_H / 204
-# キャラ絵が出る瞬間の大ジャンプの高さ（m）
-PIPO_LEAP = 4.2
+# キャラ絵が出る前に跳び乗る、塔の屋根の高さ（露台から m。屋根の裾 B+12.6 より上の、円錐の前）
+PIPO_PERCH = 4.0
 # 板の原点（足の真ん中）が絵のどこか（px）。足の x は、下の端 8px の不透明の真ん中を測った（2026-11-04）
 PIPO_BOARDS = {
     "pipo": {"file": "public/alert/themes/castle/pipo-flag.png", "size": (164, 204), "foot": (75.0, 198.9)},
@@ -562,12 +562,17 @@ def pipo(clip, t, out):
             # 跳ぶときに伸び、降りるときにつぶれる
             csy = 1 + 0.08 * math.cos(math.pi * u) * (u < 0.85) - 0.10 * pulse(t, 4.93, 0.025)
             csx = 1 / csy
-        # キャラ絵が門の光から出る瞬間に、満月の前へ大ジャンプ。名前の札が上から降りてきて抜けるまで
-        # （5.58〜5.82 秒）、顔の下の端を箱の上 10.5% より上に保つ（2026-11-04。札がピポの顔にも掛かった）
-        elif 5.26 <= t < 6.22:
+        # キャラ絵が門の光から出る前に、塔の屋根へ跳び乗って、満月の前で万歳する。名前の札が上から降りてくる
+        # あいだ（5.4〜6.0 秒。読み込みで動画が遅れると札は早めに出る）、顔の下の端を箱の上 10.5% より上に保ち、
+        # 6.0 秒に露台へ跳び戻る（2026-11-04。札がピポの顔にも掛かった）
+        elif 4.95 <= t < 6.32:
             cheer = 1.0
-            cheer_dz = PIPO_LEAP * max(0.0, 1 - ((t - 5.70) / 0.38) ** 2)
-            csy = 1 - 0.12 * pulse(t, 5.29, 0.03) + 0.07 * pulse(t, 5.42, 0.06) - 0.12 * pulse(t, 6.10, 0.03)
+            up = ease_out(ramp(t, 5.0, 5.22), 2.2) + 0.06 * math.sin(math.pi * ramp(t, 5.0, 5.22)) ** 2
+            down = ease_in(ramp(t, 6.0, 6.28), 2.0)
+            bounce = 0.08 * abs(math.sin(TAU * (t - 5.22) / 0.4)) * (5.22 <= t < 6.0)
+            cheer_dz = PIPO_PERCH * up * (1 - down) + bounce + 0.5 * math.sin(math.pi * ramp(t, 6.0, 6.28))
+            csy = (1 - 0.12 * pulse(t, 4.99, 0.03) + 0.07 * pulse(t, 5.08, 0.05) - 0.08 * pulse(t, 5.23, 0.03)
+                   - 0.12 * pulse(t, 6.30, 0.03))
             csx = 1 / csy
     else:
         dz, s, op = 0.0, 1.0, 1.0
@@ -609,7 +614,7 @@ PIPO_FACE = {"pipo": (30, 35, 112, 92), "pipo_cheer": (53, 40, 135, 85)}
 # 顔の下の端の線（箱の高さに対する割合）。いつも 15% より上・札が降りてくるあいだは 10.5% より上
 FACE_LINE = 0.15
 FACE_LINE_PLATE = 0.105
-PLATE_WINDOW = (5.55, 5.85)
+PLATE_WINDOW = (5.4, 6.0)
 
 
 def ayato(clip, t, out):
@@ -644,9 +649,9 @@ def ayato(clip, t, out):
             sxy = (lerp(AYATO_HOVER[0], AYATO_STAY[0], x), lerp(AYATO_HOVER[1], AYATO_STAY[1], x))
             tilt = 0.0
             s = lerp(1.0, 0.9, x)
-        # キャラ絵が門の光から出る前に、杯を掲げて浮かび上がる。名前の札が上から降りてきて抜けるまで（〜5.9 秒）、
+        # キャラ絵が門の光から出る前に、杯を掲げて浮かび上がる。名前の札が上から降りてくるあいだ（5.4〜6.0 秒）、
         # 顔の下の端を箱の上 10.5% より上に保つ（札の上の端は、長い名前・3行で 11.5% から降りてくる）
-        sxy = (sxy[0], sxy[1] - AYATO_LIFT * (ease_io(ramp(t, 5.15, 5.5)) - ease_io(ramp(t, 5.9, 6.6))))
+        sxy = (sxy[0], sxy[1] - AYATO_LIFT * (ease_io(ramp(t, 5.0, 5.35)) - ease_io(ramp(t, 6.0, 6.6))))
         # つぶれ（足が着いた 4.46 秒）と、伸び（跳ね返り 4.62 秒）
         sq_y = 1 - 0.08 * pulse(t, 4.47, 0.045) + 0.05 * pulse(t, 4.63, 0.06)
         sq_x = 1 + 0.06 * pulse(t, 4.47, 0.045) - 0.03 * pulse(t, 4.63, 0.06)
