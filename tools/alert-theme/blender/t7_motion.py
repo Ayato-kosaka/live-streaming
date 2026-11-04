@@ -113,7 +113,9 @@ COIN_SINK = screen(BANK_X + BANK_W * 0.5, BANK_Y + BANK_H * 0.45, 22.0)
 AYATO_DEPTH = 17.0
 AYATO_FROM = (-160, -300)
 # 城の左の塔の上（画面の y 330 あたり）より上に足が来るように（2026-11-04 の試しで、塔の上に立って見えた）
-AYATO_HOVER = (190, 214)
+# 2026-11-04: 名前の札が上から降りてくる瞬間（5.63〜5.68 秒）に、あやとの顔の下の端に掛かった（長い名前・3行のとき）。
+# 降り立つ所を 14px 上げて（足の裏が小塔の頂に乗る）、降り立ってからは顔の下の端が箱の上 15% より上にあるようにする
+AYATO_HOVER = (190, 194)
 AYATO_STAY = (176, 198)
 AYATO_W_PX = 300  # 広げたマントの絵（1239px）の幅が、ふつうの大きさで画面の何 px か
 AYATO_M_PER_PX = AYATO_W_PX / ((P.CAM["lens"] / 12.0) * (P.H / 2) / AYATO_DEPTH) / 1239
@@ -143,6 +145,8 @@ def ayato_plane(name):
 PIPO_FOOT = (3.35, -0.05, B + 8.6 + 0.85)
 PIPO_H = 4.4
 PIPO_M_PER_PX = PIPO_H / 204
+# キャラ絵が出る瞬間の大ジャンプの高さ（m）
+PIPO_LEAP = 4.2
 # 板の原点（足の真ん中）が絵のどこか（px）。足の x は、下の端 8px の不透明の真ん中を測った（2026-11-04）
 PIPO_BOARDS = {
     "pipo": {"file": "public/alert/themes/castle/pipo-flag.png", "size": (164, 204), "foot": (75.0, 198.9)},
@@ -558,6 +562,13 @@ def pipo(clip, t, out):
             # 跳ぶときに伸び、降りるときにつぶれる
             csy = 1 + 0.08 * math.cos(math.pi * u) * (u < 0.85) - 0.10 * pulse(t, 4.93, 0.025)
             csx = 1 / csy
+        # キャラ絵が門の光から出る瞬間に、満月の前へ大ジャンプ。名前の札が上から降りてきて抜けるまで
+        # （5.58〜5.82 秒）、顔の下の端を箱の上 10.5% より上に保つ（2026-11-04。札がピポの顔にも掛かった）
+        elif 5.26 <= t < 6.22:
+            cheer = 1.0
+            cheer_dz = PIPO_LEAP * max(0.0, 1 - ((t - 5.70) / 0.38) ** 2)
+            csy = 1 - 0.12 * pulse(t, 5.29, 0.03) + 0.07 * pulse(t, 5.42, 0.06) - 0.12 * pulse(t, 6.10, 0.03)
+            csx = 1 / csy
     else:
         dz, s, op = 0.0, 1.0, 1.0
     fx, fy, fz = PIPO_FOOT
@@ -588,8 +599,17 @@ def _ayato_foot(name):
     return ayato_plane(name)[3]
 
 
-# 接地の影を置く奥行き（左の四角い塔の前の面・小塔のあたり。カメラから前へ m）
+# 接地の影を置く奥行き（左の四角い塔の前の面・小塔のあたり。カメラから前へ m）と、画面の高さ（小塔の頂。px）
 SHADOW_DEPTH = 32.6
+SHADOW_Y = 318
+# 札が降りてくるあいだ、あやとが浮かび上がる高さ（px）
+AYATO_LIFT = 40
+# 顔の四角（絵の px）。あやとは poses.json の face、ピポは目と口を囲む（2026-11-04 に測った）
+PIPO_FACE = {"pipo": (30, 35, 112, 92), "pipo_cheer": (53, 40, 135, 85)}
+# 顔の下の端の線（箱の高さに対する割合）。いつも 15% より上・札が降りてくるあいだは 10.5% より上
+FACE_LINE = 0.15
+FACE_LINE_PLATE = 0.105
+PLATE_WINDOW = (5.55, 5.85)
 
 
 def ayato(clip, t, out):
@@ -612,10 +632,10 @@ def ayato(clip, t, out):
             tilt = math.radians(-14) * (1 - ease_out(x))
             s = lerp(0.88, 1.0, ease_out(x))
         elif t < 5.6:
-            # 降り立つ: 46px 上から、18px 沈んで（つぶれ）、戻る（伸び）
+            # 降り立つ: 46px 上から、8px 沈んで（つぶれ）、戻る（伸び）
             u = ramp(t, 4.30, 4.46)
             v = ramp(t, 4.46, 4.80)
-            dy = lerp(-46, 18, ease_in(u, 1.6)) if t < 4.46 else lerp(18, 0, ease_io(v))
+            dy = lerp(-46, 8, ease_in(u, 1.6)) if t < 4.46 else lerp(8, 0, ease_io(v))
             sxy = (AYATO_HOVER[0], AYATO_HOVER[1] + dy)
             tilt = 0.0
             s = 1.0
@@ -624,9 +644,12 @@ def ayato(clip, t, out):
             sxy = (lerp(AYATO_HOVER[0], AYATO_STAY[0], x), lerp(AYATO_HOVER[1], AYATO_STAY[1], x))
             tilt = 0.0
             s = lerp(1.0, 0.9, x)
+        # キャラ絵が門の光から出る前に、杯を掲げて浮かび上がる。名前の札が上から降りてきて抜けるまで（〜5.9 秒）、
+        # 顔の下の端を箱の上 10.5% より上に保つ（札の上の端は、長い名前・3行で 11.5% から降りてくる）
+        sxy = (sxy[0], sxy[1] - AYATO_LIFT * (ease_io(ramp(t, 5.15, 5.5)) - ease_io(ramp(t, 5.9, 6.6))))
         # つぶれ（足が着いた 4.46 秒）と、伸び（跳ね返り 4.62 秒）
-        sq_y = 1 - 0.12 * pulse(t, 4.47, 0.045) + 0.05 * pulse(t, 4.63, 0.06)
-        sq_x = 1 + 0.07 * pulse(t, 4.47, 0.045) - 0.03 * pulse(t, 4.63, 0.06)
+        sq_y = 1 - 0.08 * pulse(t, 4.47, 0.045) + 0.05 * pulse(t, 4.63, 0.06)
+        sq_x = 1 + 0.06 * pulse(t, 4.47, 0.045) - 0.03 * pulse(t, 4.63, 0.06)
         env = ramp(t, 4.4, 5.0)
         p = vadd(screen(sxy[0], sxy[1], AYATO_DEPTH), tuple(v_ * env for v_ in bob))
         rot_y = tilt + sway * env
@@ -679,10 +702,14 @@ def ayato(clip, t, out):
         sh_op = 0.75 * (1 - ramp(t, 0.0, 0.3))
     k = SHADOW_DEPTH / fd
     # 光は左上から来るので、影は足から少し右へ。幅は足の幅ほど（塔の左の縁から空へはみ出さない）
-    # 靴の底は、板の下の端より 12px ほど上（絵の白い縁の外の余白）。そこへ置く（2026-11-04 の試しで 16px 下にずれていた）
-    out["obj:ayato_shadow:loc"] = screen(fsx + 10, fsy - 10, SHADOW_DEPTH)
+    # 影は小塔の頂（画面の y SHADOW_Y）に置き、足の裏（板の下の端より 12px 上）が離れるほど薄く・小さくする
+    gap = max(0.0, SHADOW_Y - (fsy - 12))
+    near = clamp(1 - gap / 55)
+    sh_op *= 0.25 + 0.75 * near
+    out["obj:ayato_shadow:loc"] = screen(fsx + 10, SHADOW_Y, SHADOW_DEPTH)
     out["obj:ayato_shadow:rot"] = (math.radians(90 + P.CAM["pitch_deg"]), 0.0, yaw)
-    out["obj:ayato_shadow:scale"] = (0.46 * w_m * s * sq_x * k, 0.085 * w_m * s * k, 1.0) if sh_op > 0 else HIDE
+    sw = 0.46 * w_m * s * sq_x * k * (0.7 + 0.3 * near)
+    out["obj:ayato_shadow:scale"] = (sw, 0.085 * w_m * s * k, 1.0) if sh_op > 0 else HIDE
     out["val:ayato_shadow_op"] = sh_op
     w = TAU * tau / 1.5
     out["key:ayato_spread:flap_s"] = flap_a * math.cos(w)
@@ -983,6 +1010,44 @@ def ayato_face_box(clip, t):
     return (sx + (fx0 - cx) * kx, sy + (fy0 - cy) * ky, sx + (fx1 - cx) * kx, sy + (fy1 - cy) * ky)
 
 
+def pipo_face_box(clip, t):
+    """そのコマの、ピポの顔の四角（画面の px）。見えている方の板（旗 / cheer）で"""
+    p = pose(clip, t)
+    name = "pipo_cheer" if p["val:pipo_cheer_op"] > 0 else "pipo"
+    if p[f"val:{name}_op"] <= 0:
+        return None
+    sv = p[f"obj:{name}:scale"]
+    sv = sv if isinstance(sv, tuple) else (sv, sv, sv)
+    foot = p[f"obj:{name}:loc"]
+    fsx, fsy, depth = P.project(foot)
+    k0 = (p["cam:lens"] / 12.0) * (P.H / 2) / depth * PIPO_M_PER_PX
+    fx, fy = PIPO_BOARDS[name]["foot"]
+    x0, y0, x1, y1 = PIPO_FACE[name]
+    return (fsx + (x0 - fx) * k0 * sv[0], fsy + (y0 - fy) * k0 * sv[1], fsx + (x1 - fx) * k0 * sv[0], fsy + (y1 - fy) * k0 * sv[1])
+
+
+def face_lines():
+    """intro・stay で、あやととピポの顔の下の端（箱の高さに対する割合）がいちばん低い所。全部と、札が降りてくるあいだ"""
+    worst = {}
+    for who, fn in (("あやと", ayato_face_box), ("ピポ", pipo_face_box)):
+        allw, plate = (0.0, None), (0.0, None)
+        for clip in ("intro", "stay"):
+            for i in range(P.CLIPS[clip]):
+                t = i / P.FPS
+                if clip == "intro" and t < 4.34:
+                    continue  # 飛んでくるあいだ・露台に出る前（札はまだ無い）
+                b = fn(clip, t)
+                if not b:
+                    continue
+                v = b[3] / P.H
+                if v > allw[0]:
+                    allw = (v, (clip, i))
+                if clip == "intro" and PLATE_WINDOW[0] <= t <= PLATE_WINDOW[1] and v > plate[0]:
+                    plate = (v, (clip, i))
+        worst[who] = (allw, plate)
+    return worst
+
+
 # ---------------------------------------------------------------- 確かめる（この箱で）
 def _hidden(p, name):
     s = p.get(f"obj:{name}:scale")
@@ -1051,6 +1116,14 @@ def check():
                 worst = (clip, i, box)
     print(f"{'OK ' if not worst else 'NG '} あやとの顔 × 字の帯: {worst}")
     bad += bool(worst)
+    # 名前の札（上から降りてくる）と、あやと・ピポの顔。ピポは露台で旗を振るあいだ 15% より下に居るので、
+    # いつもの線はあやとだけで見る。札が降りてくるあいだは、2人とも 10.5% の線で見る
+    for who, ((v_all, at_all), (v_pl, at_pl)) in face_lines().items():
+        ok_all = who != "あやと" or v_all <= FACE_LINE
+        ok_pl = v_pl <= FACE_LINE_PLATE
+        print(f"{'OK ' if ok_all and ok_pl else 'NG '} {who}の顔の下の端: いちばん低い所 {v_all * 100:.1f}%（{at_all}）・"
+              f"札が降りてくるあいだ {v_pl * 100:.1f}%（{at_pl}。線 {FACE_LINE_PLATE * 100:.1f}%）")
+        bad += not (ok_all and ok_pl)
     return 1 if bad else 0
 
 
