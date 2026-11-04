@@ -35,7 +35,7 @@ import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
 import { useSettledBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
-import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, type AlertStage } from "./season/show/stage";
+import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
 import { VideoShow } from "./season/show/VideoShow";
 import { useTierVideo } from "./season/show/useTierVideo";
@@ -200,7 +200,10 @@ export default function AlertBox() {
      台本のある段は、主役が滞在中にいる帯（面の上の端）を空けて、その下にキャラ絵を置く。主役が
      キャラ絵の顔の前を通らないように（主役の居場所は字のブロックとキャラ絵の顔を避けた上の端・角） */
   const charTop = Math.round(winH * (stage?.headroom ?? PLAIN_HEADROOM));
-  const charBottom = Math.round(winH * 0.02);
+  /* 下に空ける高さ（px）。動画の段が箱の下の端を上げていれば（〜999円。下の隅の猫の家族を隠さない）そこまで。
+     字はキャラ絵の真ん中なので、一緒に動く。いつもの段は前と同じ式（1 − 0.98 は浮動小数で 0.02 と揃わない） */
+  const bottomAt = stage?.charBottom ?? PLAIN_CHAR_BOTTOM;
+  const charBottom = Math.round(winH * (bottomAt === PLAIN_CHAR_BOTTOM ? 0.02 : 1 - bottomAt));
   const charAreaH = Math.max(0, winH - charTop - charBottom);
   /** 字のブロックの真ん中の高さ。キャラ絵は四角の真ん中に置くので、中身の真ん中もここ */
   const textCenterY = charTop + charAreaH / 2;

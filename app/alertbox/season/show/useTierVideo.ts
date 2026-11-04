@@ -136,7 +136,7 @@ export function useTierVideo(
     if (!s || s.used || s.key !== `${tv.tier}-${th.fxVariant}`) return null;
     // この通知が持っていく（1回流したら捨てる。同じ要素を2件で使い回さない）
     slot.current = null;
-    return { key: s.key, revealAt: s.entry.revealAt, headroom: tv.headroom, text: tv.text, kit: s };
+    return { key: s.key, revealAt: s.entry.revealAt, headroom: tv.headroom, charBottom: s.entry.charBottom, text: tv.text, kit: s };
   }, []);
 
   /* 1. 温める。貯金箱が出て 4 秒おいてから、1本ずつ */
