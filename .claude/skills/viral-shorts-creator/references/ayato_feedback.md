@@ -1005,3 +1005,8 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1087#issuecomment-6613440947（犬 p2 v5 の日の指定「次の日付で出して」。猫の次で 11/8 21:30 JST。札なしの v5 のまま）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1071#issuecomment-6613552874（2026-11-03・チャット「11月4日(水)分と11/5分を入れ換えて」の書き置き。バゲットを 11/4・エディンバラ B を 11/5、どちらも 21:30 JST）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1052#issuecomment-6613553596（同じチャットの書き置きを、エディンバラ B の issue にも）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1104（2026-11-04・チャット「視聴者さんから届いたショート動画作って欲しい件、対応お願いします。6時間後に作業開始して欲しい」の書き置き。付箋 5件のうち①ワルテミスさんとの対談）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1105（同じチャットの書き置き。②北欧ヒッチハイクで夫婦の車を濡らした件。「この人の提案版といつもの版の両方欲しい」＝付箋の流れを骨にした案と、こちらが組む案の2本）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1106（同じチャットの書き置き。③スウェーデンで人生初の IKEA）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1107（同じチャットの書き置き。④ほったらかしパンの準備。「付箋の添付画像は関係なさそう」「この人の提案版といつもの版の両方欲しい」。バゲットのショート #1071 と同じ配信）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1108（同じチャットの書き置き。⑤クラムチャウダー。「付箋の添付画像は関係なさそう」。見た人が作れるレシピの型）

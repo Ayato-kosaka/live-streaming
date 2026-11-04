@@ -1,0 +1,544 @@
+{
+ "spec": "shorts/videos/E2oGYjnVQSA/p1/spec.json（前日の回 CKJvprUMOgA の src を外した写しで測った）",
+ "candidates": 933,
+ "current_t": 6578.5,
+ "picked": [
+  {
+   "t": 5180.5,
+   "src": "窓 23_1-25-56_1-26-22.mp4",
+   "m": {
+    "colorful": 56.45,
+    "warm": 0.3935,
+    "sharp": 1771.2,
+    "face": 0.4516,
+    "faces": 1,
+    "bright": 99.4,
+    "motion": 14.77
+   },
+   "row": null,
+   "payoff": false,
+   "score": 3.01,
+   "ranks": {
+    "colorful": 0.94,
+    "warm": 0.98,
+    "sharp": 0.45,
+    "motion": 0.74,
+    "face": 0.99
+   },
+   "scene": 18
+  },
+  {
+   "t": 5636.5,
+   "src": "窓 26_1-33-50_1-34-20.mp4",
+   "m": {
+    "colorful": 45.64,
+    "warm": 0.3155,
+    "sharp": 2635.9,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 83.3,
+    "motion": 17.28
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.868,
+   "ranks": {
+    "colorful": 0.78,
+    "warm": 0.94,
+    "sharp": 0.95,
+    "motion": 0.82,
+    "face": 0.53
+   },
+   "scene": 22
+  },
+  {
+   "t": 3325.5,
+   "src": "窓 09_0-55-15_0-55-31.mp4",
+   "m": {
+    "colorful": 69.27,
+    "warm": 0.4047,
+    "sharp": 2299.8,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 88.5,
+    "motion": 16.59
+   },
+   "row": 3,
+   "payoff": false,
+   "score": 2.832,
+   "ranks": {
+    "colorful": 0.99,
+    "warm": 0.99,
+    "sharp": 0.82,
+    "motion": 0.79,
+    "face": 0.09
+   },
+   "scene": 9
+  }
+ ],
+ "top20": [
+  {
+   "t": 5180.5,
+   "src": "窓 23_1-25-56_1-26-22.mp4",
+   "m": {
+    "colorful": 56.45,
+    "warm": 0.3935,
+    "sharp": 1771.2,
+    "face": 0.4516,
+    "faces": 1,
+    "bright": 99.4,
+    "motion": 14.77
+   },
+   "row": null,
+   "payoff": false,
+   "score": 3.01,
+   "ranks": {
+    "colorful": 0.94,
+    "warm": 0.98,
+    "sharp": 0.45,
+    "motion": 0.74,
+    "face": 0.99
+   },
+   "scene": 18
+  },
+  {
+   "t": 5636.5,
+   "src": "窓 26_1-33-50_1-34-20.mp4",
+   "m": {
+    "colorful": 45.64,
+    "warm": 0.3155,
+    "sharp": 2635.9,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 83.3,
+    "motion": 17.28
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.868,
+   "ranks": {
+    "colorful": 0.78,
+    "warm": 0.94,
+    "sharp": 0.95,
+    "motion": 0.82,
+    "face": 0.53
+   },
+   "scene": 22
+  },
+  {
+   "t": 3325.5,
+   "src": "窓 09_0-55-15_0-55-31.mp4",
+   "m": {
+    "colorful": 69.27,
+    "warm": 0.4047,
+    "sharp": 2299.8,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 88.5,
+    "motion": 16.59
+   },
+   "row": 3,
+   "payoff": false,
+   "score": 2.832,
+   "ranks": {
+    "colorful": 0.99,
+    "warm": 0.99,
+    "sharp": 0.82,
+    "motion": 0.79,
+    "face": 0.09
+   },
+   "scene": 9
+  },
+  {
+   "t": 5274.5,
+   "src": "窓 24_1-27-36_1-27-56.mp4",
+   "m": {
+    "colorful": 50.74,
+    "warm": 0.314,
+    "sharp": 2356.5,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 87.0,
+    "motion": 14.05
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.826,
+   "ranks": {
+    "colorful": 0.86,
+    "warm": 0.94,
+    "sharp": 0.86,
+    "motion": 0.72,
+    "face": 0.47
+   }
+  },
+  {
+   "t": 5469.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 51.71,
+    "warm": 0.3341,
+    "sharp": 1891.7,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 97.9,
+    "motion": 18.95
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.807,
+   "ranks": {
+    "colorful": 0.88,
+    "warm": 0.96,
+    "sharp": 0.57,
+    "motion": 0.86,
+    "face": 0.51
+   }
+  },
+  {
+   "t": 5639.5,
+   "src": "窓 26_1-33-50_1-34-20.mp4",
+   "m": {
+    "colorful": 44.71,
+    "warm": 0.3374,
+    "sharp": 2560.6,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 76.5,
+    "motion": 13.61
+   },
+   "row": 13,
+   "payoff": false,
+   "score": 2.807,
+   "ranks": {
+    "colorful": 0.77,
+    "warm": 0.96,
+    "sharp": 0.92,
+    "motion": 0.69,
+    "face": 0.53
+   }
+  },
+  {
+   "t": 5478.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 46.68,
+    "warm": 0.2535,
+    "sharp": 2236.6,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 102.7,
+    "motion": 20.74
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.801,
+   "ranks": {
+    "colorful": 0.8,
+    "warm": 0.9,
+    "sharp": 0.78,
+    "motion": 0.91,
+    "face": 0.52
+   }
+  },
+  {
+   "t": 5638.5,
+   "src": "窓 26_1-33-50_1-34-20.mp4",
+   "m": {
+    "colorful": 47.73,
+    "warm": 0.3645,
+    "sharp": 2600.6,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 85.4,
+    "motion": 10.86
+   },
+   "row": 13,
+   "payoff": false,
+   "score": 2.788,
+   "ranks": {
+    "colorful": 0.82,
+    "warm": 0.98,
+    "sharp": 0.94,
+    "motion": 0.52,
+    "face": 0.53
+   }
+  },
+  {
+   "t": 5468.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 51.03,
+    "warm": 0.3158,
+    "sharp": 1884.9,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 95.9,
+    "motion": 19.1
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.778,
+   "ranks": {
+    "colorful": 0.87,
+    "warm": 0.94,
+    "sharp": 0.56,
+    "motion": 0.87,
+    "face": 0.51
+   }
+  },
+  {
+   "t": 5476.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 53.79,
+    "warm": 0.4226,
+    "sharp": 1732.0,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 94.0,
+    "motion": 16.87
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.769,
+   "ranks": {
+    "colorful": 0.91,
+    "warm": 0.99,
+    "sharp": 0.42,
+    "motion": 0.8,
+    "face": 0.52
+   }
+  },
+  {
+   "t": 5474.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 50.13,
+    "warm": 0.3401,
+    "sharp": 1831.9,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 85.3,
+    "motion": 19.44
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.762,
+   "ranks": {
+    "colorful": 0.85,
+    "warm": 0.96,
+    "sharp": 0.51,
+    "motion": 0.88,
+    "face": 0.51
+   }
+  },
+  {
+   "t": 3322.5,
+   "src": "窓 09_0-55-15_0-55-31.mp4",
+   "m": {
+    "colorful": 62.87,
+    "warm": 0.3069,
+    "sharp": 2254.8,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 85.6,
+    "motion": 17.19
+   },
+   "row": 3,
+   "payoff": false,
+   "score": 2.748,
+   "ranks": {
+    "colorful": 0.97,
+    "warm": 0.93,
+    "sharp": 0.79,
+    "motion": 0.81,
+    "face": 0.09
+   }
+  },
+  {
+   "t": 5456.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 51.63,
+    "warm": 0.355,
+    "sharp": 1720.3,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 96.4,
+    "motion": 19.32
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.739,
+   "ranks": {
+    "colorful": 0.88,
+    "warm": 0.97,
+    "sharp": 0.41,
+    "motion": 0.87,
+    "face": 0.49
+   }
+  },
+  {
+   "t": 5632.5,
+   "src": "窓 26_1-33-50_1-34-20.mp4",
+   "m": {
+    "colorful": 47.44,
+    "warm": 0.3187,
+    "sharp": 2818.8,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 90.5,
+    "motion": 9.62
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.729,
+   "ranks": {
+    "colorful": 0.82,
+    "warm": 0.94,
+    "sharp": 0.98,
+    "motion": 0.44,
+    "face": 0.52
+   }
+  },
+  {
+   "t": 5173.5,
+   "src": "窓 23_1-25-56_1-26-22.mp4",
+   "m": {
+    "colorful": 51.78,
+    "warm": 0.3609,
+    "sharp": 1646.5,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 105.6,
+    "motion": 21.84
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.716,
+   "ranks": {
+    "colorful": 0.88,
+    "warm": 0.97,
+    "sharp": 0.35,
+    "motion": 0.92,
+    "face": 0.44
+   }
+  },
+  {
+   "t": 3323.5,
+   "src": "窓 09_0-55-15_0-55-31.mp4",
+   "m": {
+    "colorful": 62.72,
+    "warm": 0.3451,
+    "sharp": 2129.8,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 88.5,
+    "motion": 15.29
+   },
+   "row": 3,
+   "payoff": false,
+   "score": 2.714,
+   "ranks": {
+    "colorful": 0.97,
+    "warm": 0.96,
+    "sharp": 0.72,
+    "motion": 0.76,
+    "face": 0.09
+   }
+  },
+  {
+   "t": 5264.5,
+   "src": "窓 24_1-27-36_1-27-56.mp4",
+   "m": {
+    "colorful": 60.96,
+    "warm": 0.3703,
+    "sharp": 1481.1,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 102.7,
+    "motion": 17.77
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.714,
+   "ranks": {
+    "colorful": 0.96,
+    "warm": 0.98,
+    "sharp": 0.24,
+    "motion": 0.84,
+    "face": 0.46
+   }
+  },
+  {
+   "t": 5181.5,
+   "src": "窓 23_1-25-56_1-26-22.mp4",
+   "m": {
+    "colorful": 57.09,
+    "warm": 0.4267,
+    "sharp": 1651.6,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 94.1,
+    "motion": 14.81
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.711,
+   "ranks": {
+    "colorful": 0.94,
+    "warm": 0.99,
+    "sharp": 0.36,
+    "motion": 0.74,
+    "face": 0.45
+   }
+  },
+  {
+   "t": 3321.5,
+   "src": "窓 09_0-55-15_0-55-31.mp4",
+   "m": {
+    "colorful": 56.19,
+    "warm": 0.2648,
+    "sharp": 2346.0,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 83.7,
+    "motion": 16.61
+   },
+   "row": 3,
+   "payoff": false,
+   "score": 2.704,
+   "ranks": {
+    "colorful": 0.93,
+    "warm": 0.9,
+    "sharp": 0.86,
+    "motion": 0.79,
+    "face": 0.09
+   }
+  },
+  {
+   "t": 5479.5,
+   "src": "窓 25_1-30-00_1-31-20.mp4",
+   "m": {
+    "colorful": 46.02,
+    "warm": 0.194,
+    "sharp": 2480.9,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 101.7,
+    "motion": 13.86
+   },
+   "row": null,
+   "payoff": false,
+   "score": 2.704,
+   "ranks": {
+    "colorful": 0.79,
+    "warm": 0.85,
+    "sharp": 0.9,
+    "motion": 0.71,
+    "face": 0.52
+   }
+  }
+ ]
+}

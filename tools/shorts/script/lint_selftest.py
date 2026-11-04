@@ -60,10 +60,10 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `num` | 銅像 p2（17行）の15行目「101体目」を △。「1回目」のあとの「2回目」・「30体」のあとの「31体目」は出さない。✕ にはしない（L-NUM） |
 | `quote` | 城塞 p1 の「」2つ（って・言うたら）は出さない。前の行が「返事」なら出さない。印の無い「全然似てへん」を △。2字の札「1A」は見ない。「コメント」は印に数えない（L-QUOTE） |
 | `ask` | 銅像 p2（17行）の終わり「…あり？なし？」を △。城塞 p1（みんな → アーカイブ）・地下鉄の形（アーカイブだけ）は出さない。アーカイブの前の「どっち派？」は △（L-ASK） |
-| `desu` | 銅像 p2（17行）の10・12行目を △。城塞 p1 の「」の中の「閉まってますよ」は見ない（L-DESU） |
+| `desu` | 銅像 p2（17行）の10・12行目を △。城塞 p1 の「」の中の「閉まってますよ」は見ない。語の途中（「別茹でする」「別茹でした」「僕ですら」「ますます」）は拾わず、「茹でます」「〜なんです」「〜でした」は拾う（L-DESU） |
 | `title_read` | フォカッチャの下書きの1行目（札と違う字）を ✕。あやとの添削版・城塞 p1（札は国旗と改行つき）は通す。札が無ければ「見ていない」。10-22 の決まりでは当てない（T-READ） |
 | `next_time` | 下書きの最後「…配信見にきてね！」（時刻なし）を ✕。添削版（22時）は通す。spec の next_stream と違う時刻・「3時間」（時刻ではない）は ✕。アーカイブの1行・問いの終わりは見ない（L-NEXT） |
-| `inner` | 滝の回 p1 の8行目「配信のコメントで…」・銅像 p2 の6行目・「チャットで」・題の札の「リスナー」を ✕。締めの問い・アーカイブ・次の配信への誘いは見ない（L-INNER） |
+| `inner` | 滝の回 p1 の8行目「配信のコメントで…」・銅像 p2 の6行目・「チャットで」・題の札の「リスナー」を ✕。締めの問い・アーカイブ・次の配信への誘いは見ない。本人が人の動画に「コメントした（ら）」は見ず、「コメントしてくれた」「コメントした人」「みんながコメントしたら」「コメントしてね」は ✕（L-INNER） |
 | `nick` | 滝の回 p1 の2・10・12行目「ポチ」を ✕。城塞 p1 の13行目は今日の決まりで ✕・承認の時点では当てない。「ポチっと」「ポチった」・直した「野良犬」は見ない。帳面に `呼び名「…」→「…」` を足すと辞書が増え、帳面に1つも無ければ「見ていない」（L-NICK） |
 | `particle` | 題「滝観に」「ストックホルム来たら」を ✕（札が無ければ1行目を題として ✕）。直した題・「乗り放題」「花見に」「パリ行き」は見ない。行の「路線バス乗るの」は △ だけ（L-PARTICLE） |
 | `ate` | 当て表（spec の promises）にカードの ID が全部あれば通る。1つ欠ける・note が「なし」・行の番号が原稿の外・promises が無い、をそれぞれ ✕。spec が無ければ「見ていない」（L-ATE） |
@@ -151,6 +151,11 @@ CUTS = {
     "desu": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = None\n", {"desu"}, "です・ます調を拾わない"),
     "desu_quote": ("lint.py", '        m = DESU.search(QUOTE.sub("", ln))\n', "        m = DESU.search(ln)\n",
                    {"desu"}, "「」の中のです・ますまで拾う"),
+    # ---- 2026-11-04: 語の途中の「です」「でした」（別茹でする・僕ですら） ----
+    "desu_word": ("lint.py", 'DESU = re.compile(r"(?<![茹撫奏愛詣秀])で(?:す(?![るら])|した|しょう)|(?<!ます)ます(?!ます)|ました|ません")\n',
+                  'DESU = re.compile(r"です|ます|でした|ました|ません|でしょう")\n', {"desu"}, "語の途中の「です」「でした」まで拾う（前の形）"),
+    "desu_stem": ("lint.py", '(?<![茹撫奏愛詣秀])で(?:す', '(?<![茹撫奏愛詣秀])(?:で|茹で)(?:す', {"desu"},
+                  "「茹で」のあとでも、です・でしたを拾う"),
     # ---- 2026-10-23（#1014、F-047）に足した規則 ----
     "read_any": ("lint.py", "    if card == first:\n", "    if True:\n", {"title_read"}, "1行目が題の札と違っても通す"),
     "read_norm": ("lint.py", '    return TITLE_NOISE.sub("", FLAG_PAIR.sub("", s or ""))\n', '    return s or ""\n',
@@ -165,7 +170,15 @@ CUTS = {
     "quote_comment": ("lint.py", 'ATTR = re.compile(r"って|言われ|', 'ATTR = re.compile(r"コメント|って|言われ|', {"quote"},
                       "「コメント」を、誰の言葉かの印に数える（前の形）"),
     # ---- 2026-10-23（#1019、F-048・F-049・F-050）に足した規則 ----
-    "inner": ("lint.py", "        m = INNER.search(ln)\n", "        m = None\n", {"inner"}, "内輪の言葉を拾わない"),
+    "inner": ("lint.py", "        m = next((x for x in INNER.finditer(ln) if not self_comment(ln, x)), None)\n", "        m = None\n",
+              {"inner"}, "内輪の言葉を拾わない"),
+    # ---- 2026-11-04: 本人が人の動画に「コメントした」は内輪ではない ----
+    "inner_self": ("lint.py", "    return bool(SELF_COMMENT.match(ln, m.start())) and not OTHERS.search(ln[: m.start()])\n",
+                   "    return False\n", {"inner"}, "本人がした「コメントした」まで内輪にする（前の形）"),
+    "inner_others": ("lint.py", "    return bool(SELF_COMMENT.match(ln, m.start())) and not OTHERS.search(ln[: m.start()])\n",
+                     "    return bool(SELF_COMMENT.match(ln, m.start()))\n", {"inner"}, "みんなが「コメントした」まで本人の言葉として通す"),
+    "inner_person": ("lint.py", 'SELF_COMMENT = re.compile(r"コメントした(?!人|ひと|方|かた|子|奴|やつ)")\n',
+                     'SELF_COMMENT = re.compile(r"コメントした")\n', {"inner"}, "「コメントした人」まで本人の言葉として通す"),
     "card_lines": ("lint.py", '    return ([(0, c.title_card.replace("\\n", ""))] if c.title_card else []) + list(enumerate(c.lines, 1))\n',
                    "    return list(enumerate(c.lines, 1))\n", {"inner", "nick"}, "題の札の内輪・呼び名を見ない"),
     "nick": ("lint.py", "            if nick_at(ln, bad):\n", "            if False:\n", {"nick"}, "呼び名を拾わない"),
@@ -484,8 +497,15 @@ def leg_ask(L):
 def leg_desu(L):
     p2 = hits_of(L, fix(L, "rejected/CKJvprUMOgA_p2_17"), "L-DESU")
     castle = hits_of(L, fix(L, "approved/TDArug_te90_p1"), "L-DESU")
+    # 語の途中（2026-11-04 のクラムチャウダーの回の「別茹で」、バゲットの回の「僕ですら」）。こしらえた行で見る
+    word = hits_of(L, ctx(L, ["題", "鶏だけ別茹でする！", "鶏は冷凍のまま別茹でした。", "僕ですら作れた。", "ますます寒くなった。",
+                              "みんなは？"]), "L-DESU")
+    still = hits_of(L, ctx(L, ["題", "鶏を茹でます。", "うまそうなんですけど！", "大雨でした。", "スープは別茹でです。", "みんなは？"]), "L-DESU")
     return [("銅像 p2（17行）の10・12行目を △", [h.line for h in p2] == [10, 12] and all(h.look for h in p2)),
-            ("城塞 p1 の「」の中の「閉まってますよ」は見ない", not castle)]
+            ("城塞 p1 の「」の中の「閉まってますよ」は見ない", not castle),
+            ("語の途中「別茹でする」「別茹でした」「僕ですら」「ますます」は拾わない", not word),
+            ("「茹でます」「〜なんですけど」「大雨でした」「別茹でです」は今までどおり △",
+             [h.line for h in still] == [2, 3, 4, 5] and all(h.look for h in still))]
 
 
 VUSD_NG = "rejected/VusdZVyjgjQ_p1"   # フォカッチャの下書き（あやと「台本の品質が悪い」#1014）
@@ -531,12 +551,20 @@ def leg_inner(L):
     invite = hits_of(L, ctx(L, ["題", "うまい！", "リベンジに本日22時から作るので配信見にきてね！"]), "L-INNER")
     chat = hits_of(L, ctx(L, ["題", "チャットで教えてもらった店。", "みんなは？"]), "L-INNER")
     card = hits_of(L, ctx(L, ["題", "みんなは？"], title_card="リスナーさんに言われて来た店"), "L-INNER")
+    # 本人が書き込んだ話（こしらえた行）と、書いたのが本人でない・頼む形・名詞の「コメント」
+    mine = hits_of(L, ctx(L, ["題", "相手の動画に、うちの近所は1個10円やでってコメントしたら、", "僕がコメントした動画。", "みんなは？"]),
+                   "L-INNER")
+    others = hits_of(L, ctx(L, ["コメントしてくれた人がいて、", "コメントした人が教えてくれた店。", "みんながコメントしたら、",
+                                "コメントしてね！", "コメントで教えてもらった。", "みんなは？"]), "L-INNER")
     return [("滝の回 p1 の8行目「配信のコメントで…」を ✕", [(h.line, h.look) for h in wf] == [(8, False)]),
             ("銅像 p2（17行・公開済み）の6行目「配信のコメントで…」も今日の決まりでは ✕", [h.line for h in statue] == [6]),
             ("締めの「みんなやったら…？」「配信のアーカイブ見てね」は内輪ではない", not closing),
             ("次の配信への誘い「…配信見にきてね！」も内輪ではない", not invite),
             ("「チャットで」を ✕", [h.line for h in chat] == [2]),
-            ("題の札の「リスナー」も ✕（行 0）", [h.line for h in card] == [0])]
+            ("題の札の「リスナー」も ✕（行 0）", [h.line for h in card] == [0]),
+            ("本人が人の動画に「コメントした（ら）」は内輪ではない（ワルテミスさんとの対談の回）", not mine),
+            ("「コメントしてくれた」「コメントした人」「みんながコメントしたら」「コメントしてね」「コメントで」は ✕ のまま",
+             [h.line for h in others] == [1, 2, 3, 4, 5])]
 
 
 def leg_nick(L):

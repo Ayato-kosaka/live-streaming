@@ -271,7 +271,12 @@
    ```bash
    python3 tools/shorts/script/brief.py writer --video <id> --range 2:38:00-3:00:30 --ref vJo --ref HPJ \
        --title "<題の札>" --next "本日22時" --about "…" -o <scratch>/brief_writer.md     # 題の札・次の配信が決まっていれば（F-047）
+   # 回をまたぐ原稿: --video を回の数だけ。区間は <videoId>@H:MM:SS-H:MM:SS（回を書かない区間は最初の --video の回）
+   python3 tools/shorts/script/brief.py writer --video <1本目> --video <2本目> \
+       --range <1本目>@0:00:00-0:45:00 --range <2本目>@0:03:00-0:20:00 --ref OEF --about "…" -o <scratch>/brief_writer.md
    ```
+   字幕の中の、本人が読み上げた視聴者さんの書き込みは〔コメントの読み上げ〕に伏せてある（6字から。かな ↔ 漢字・長音・句読点の違いも当てる。F-048）。
+   どの回の字幕にも、その回のチャットで効く。whisper などの写しを `--extra` で足すときは `--extra <videoId>=<道>` と回を書く（書かないと伏せられない）
 2. **書いたら `python3 tools/shorts/script/lint.py <script.txt>` を通す。✕ が残っているうちは批評役に回さない。** lint は帳面のうち字で拾えるものを見る
    （題に場所も数字も無い・見立て・現地の通貨・外の語り手・1行目が題の札の字か・最後の行の形と次の配信の時刻・題の札の秒・1行の字と秒・答えのあとの行（【答】の印から数える）・
    配信の内輪の言葉（L-INNER）・配信の中の呼び名（L-NICK）・題の助詞の抜け（L-PARTICLE）・当て表の欠け（L-ATE）…）。spec に `rows` が無いと、当てずに止まる。
@@ -325,6 +330,10 @@ git show <作文者が push した SHA>:shorts/videos/<id>/p1/script.txt > <scra
 python3 tools/shorts/script/critic.py <scratch>/gate/script.txt --ref vJo --ref HPJ --video <配信の videoId> --about "…" \
     --out <scratch>/critic/<案>_r1 --runs <scratch>/critic/runs.jsonl
 ```
+
+**回をまたぐ原稿は `--video` を回の数だけ渡す**（spec の why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに前後30秒を切る。
+why・src で名指した前日の回なども、streams/ に字幕があれば入る）。`--range` は `<videoId>@H:MM:SS-H:MM:SS`、足す写しは `--extra <videoId>=<道>`。
+2026-11-04 まではスクラッチの包みで2本目からを足していた（夫婦の車の回・バゲットの回）。
 
 **`--video` を必ず渡す。** 1枚に配信の字幕（`--range` か、spec の why・src に書いた時刻の前後30秒）が入り、批評役は (h) の F-047 で、
 【足】の無い行が本人の言葉か・要らないつなぎと決め台詞・飾り・言い換えた説明・画とずれた動きの行を、字幕と並べて当てる。

@@ -1,0 +1,20 @@
+{
+ "mode": "zoom",
+ "video": "urwD3EmjTxs",
+ "ranges": [
+  "0:03:00-0:05:00",
+  "0:11:00-0:13:00",
+  "0:21:00-0:23:00",
+  "0:44:00-0:53:00",
+  "1:00:30-1:03:00",
+  "1:15:30-1:19:00",
+  "1:21:00-1:26:30",
+  "1:31:00-1:37:00",
+  "1:41:30-1:54:30",
+  "2:04:00-2:11:00"
+ ],
+ "fps": 0.5,
+ "grid": "6x5",
+ "tile": 320,
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAqGmSil1Q+U0d/PU+uqND\nQxaAiEowYM2XjGRLR42YjgK/nbH2C3fFU5r6ySu6dhtA76oNJLdSPEjDByDEX0fv\noWk33qPs+lh9jB3Gs5Fk1vaS4EqVxvTvGK8+lhDjSg9G0A4fNG99OfXMXlyskdVE\n/VuXeAtdCpls3SoCGrGrxZMF90Rch8F2q4uxNnEspLV543gkhFPmmi2mmKUb+JPn\nhUjvIlTkkSoMo7T9C3hivRqshoA/ejHWvMKHDVk7DltCcDRtzim1gO8KajdFBh1l\nlkmCibHTDxMWiSQ424t1Mp7ZfJUGkLsv68cC1qa3S6GD4hMnD5twAUBJ+d8snHiG\nm8Q8uR7knce79lxk+SXcXm4gRVQOi7t+2jQBDSXEFOW6DFCJc0bqYiq/5dugNvbK\nBPF0cgG2Ng6c21P0px8cS0hH8el4PBmB7JObatvTIwIl9Jif6tHmgcldxzKAR532\ntSbW4D+I1qW8WHMDxPxk7fh9WiRsbuZ47igq1ZNipKTnAgMBAAE=\n-----END PUBLIC KEY-----\n"
+}

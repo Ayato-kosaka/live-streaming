@@ -324,7 +324,7 @@ def objects(body: str) -> list[str]:
 
 
 def nested_body(obj: str, key: str) -> str:
-    """`{…}` の中の `key: [ … ]` / `key: { … }` の**中身**。無ければ空。
+    r"""`{…}` の中の `key: [ … ]` / `key: { … }` の**中身**。無ければ空。
 
     `fields()` は入れ子をわざと飛ばす（`note:` の本文に `to: "…"` と書いて
     あるのを欄と読まないため）。入れ子をまるごと欲しいときはこちら。

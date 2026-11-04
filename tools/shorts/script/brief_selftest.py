@@ -27,6 +27,12 @@
 | `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」。表は4欄（4欄目が「選んだ理由」。あやと #1019） |
 | `w_order` | 作文者の1枚は、約束のカード → 方針 → 書く形 → 当て表 → 材料（配信の字幕）の順。カードが先頭で、字幕はいちばん後ろ |
 | `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても、本人が読み上げて自動字幕に入っていても。読み上げは〔コメントの読み上げ〕に伏せる）。`--chat` を渡すと止まる（F-048） |
+| `w_read` | 本人が読み上げた書き込みを伏せる（こしらえた字幕とチャットで）: 6字のそのまま・かな ↔ 漢字（漢字の側まで伏せる）・長音と句読点と絵文字の名前・1行に2回・長い書き込みの一部（切れ目なく12字）。伏せないもの: 書き込みから80秒を越えた読み上げ・本人が先に言った字（前の行・同じ行の前のほう）・5字以下と挨拶・合う字が少ない書き込み。伏せた所の前後の本人の言葉は残す |
+| `w_real` | クラムチャウダーの回（E2oGYjnVQSA）の本物の字幕とチャットで、1:11:29・1:16:48 の書き込みを本人が読み上げた 1:12:00・1:17:00 の行が伏せられ、行の残りの字は残る（字は写さない。2026-11-04 に作文者が本人の言葉として拾った所） |
+| `w_multi` | 作文者の1枚に、`--video` 2本ぶんの字幕が回ごとの見出しで入り、2本目の回の読み上げも伏せる。区間の頭の `<videoId>@` で回を名指し、書かない区間は最初の回。区間の無い回は止まる。表の行の数は `--lines` のまま（伏せた数で上書きしない） |
+| `c_multi` | 批評役の1枚: spec の why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに区間を切る（回を書かない時刻は最初の回）。why で名指した、`--video` に無い回も入る。2本目にも伏せ字が効く |
+| `c_extra` | 批評役の1枚に `--extra` の写しが入る。`<videoId>=<道>` ならその回のチャットで伏せ、回を書かなければ「伏せていない」と書く |
+| `c_pending` | spec の画に「確認中」のある行に【画は確認中】の印。批評役の1枚の表の印の列にも出て、雛形の (h) に「確認中は当てない・回に無い画は『回に無い:』で挙げる」の線引きがある |
 | `w_ate` | 当て表の雛形（表と spec の promises の形）に、カードの ID が全部・1回ずつ並ぶ |
 | `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及があれば、時刻と言葉だけを書く（字幕の文は写さない） |
 
@@ -59,6 +65,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from difflib import SequenceMatcher
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -90,7 +97,45 @@ CUTS = {
     "w_reason": ("brief.py", ' | 残した本人の言葉 | 選んだ理由 |\",\n', ' | 残した本人の言葉 |\",\n', {"w_fixed"},
                  "表の4欄目（選んだ理由）を外す"),
     "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
-    "w_mask": ("brief.py", "            if b in ln:\n", "            if False:\n", {"w_nochat"}, "字幕の中のコメントの読み上げを伏せない"),
+    "w_mask": ("brief.py", "            for s0, s1, left, right in read_spans(b, s):\n", "            for s0, s1, left, right in ():\n",
+               {"w_nochat", "w_read", "w_real", "w_multi", "c_multi", "c_extra"}, "字幕の中のコメントの読み上げを伏せない"),
+    # 読み上げの伏せ字（2026-11-04。クラムチャウダーの回で、6字・かな ↔ 漢字・絵文字の名前つきの書き込みが素通りした）
+    "read_min": ("brief.py", "READ_MIN = 6        #", "READ_MIN = 8        #", {"w_read", "w_real"}, "8字に満たない書き込みを伏せない（前の形）"),
+    "read_cover": ("brief.py", "    need = n if short_ else max(READ_MIN, math.ceil(n * READ_COVER))\n", "    need = n\n", {"w_read", "w_real"},
+                   "長い書き込みも、字幕にそのまま入っているときだけ伏せる（かな ↔ 漢字の聞き取りを落とす）"),
+    "read_emoji": ("brief.py", "    return folded(EMOJI_NAME.sub(\"\", body))\n", "    return folded(body)\n", {"w_read", "w_real"},
+                   "書き込みの絵文字の名前（:smiling_face:）を落とさずに比べる"),
+    "read_kana": ("brief.py", "            if \"ァ\" <= c <= \"ヶ\":\n", "            if False:\n", {"w_read"}, "カタカナとひらがなの違いを吸わない"),
+    "read_lag": ("brief.py", "for lag, s0, s1, left, right in got if lag < hi]", "for lag, s0, s1, left, right in got]", {"w_read"},
+                 "書き込みから80秒を越えた読み上げまで伏せる"),
+    "read_first": ("brief.py", "                first[k] = any(end <= c and b in x for end, x in said)\n", "                first[k] = False\n",
+                   {"w_read"}, "本人が先に言った字（視聴者さんが本人の口ぐせを返した字）まで伏せる"),
+    "read_sameline": ("brief.py", "            if any(lag < lo for lag, *_ in got):\n", "            if False:\n", {"w_read"},
+                      "同じ行の前のほうで本人がもう言っている字まで伏せる"),
+    "read_greet": ("brief.py", "        if len(GREET.sub(\"\", b)) >= READ_MIN:\n", "        if len(b) >= READ_MIN:\n", {"w_read"},
+                   "挨拶だけの書き込みも当てる（本人の挨拶まで伏せる）"),
+    "read_part": ("brief.py", "            part = not short_ and top >= READ_PART\n", "            part = False\n", {"w_read"},
+                  "長い書き込みの一部だけを読んだ所を伏せない"),
+    "read_widen": ("brief.py", "spans += [_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right)",
+                   "spans += [(pairs[s0][1], pairs[s1 - 1][1] + 1)", {"w_read"},
+                   "かな ↔ 漢字の端（「ひとり」↔「一人」）を伏せ残す"),
+    # 回をまたぐ原稿（2026-11-04。夫婦の車の回・バゲットの回）
+    "w_multi": ("brief.py", "    for v, rs in per.items():\n", "    for v, rs in list(per.items())[:1]:\n", {"w_multi"},
+                "2本目からの回の字幕を作文者の1枚に入れない（前の形）"),
+    "w_prefix": ("brief.py", "        vid, sep, rest = r.rpartition(\"@\")\n", "        vid, sep, rest = \"\", \"\", r\n", {"w_multi"},
+                 "区間の頭の <videoId>@ を読まない"),
+    "w_bare": ("brief.py", "    if bare:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_multi"},
+               "区間の無い回を黙って落とす"),
+    "w_table_n": ("brief.py", "        note = f\"。{masked_note(k)}\" if k else \"\"\n", "        note, n = (f\"。{masked_note(k)}\" if k else \"\"), k\n",
+                  {"w_multi"}, "表の行の数を伏せた数で上書きする（2026-11-04 まで）"),
+    "c_token": ("brief.py", "                    if videos and (v in videos or VID.fullmatch(v)):\n", "                    if False:\n", {"c_multi"},
+                "why・src の回の名前を読まず、全部の時刻を最初の回のものにする"),
+    "c_named": ("brief.py", "    named = [v for v in cited if v not in videos]", "    named = []", {"c_multi"},
+                "why・src で名指した、--video に無い回を入れない"),
+    "c_extra_mask": ("brief.py", "    if vid:\n        lines, n = mask_read", "    if False:\n        lines, n = mask_read", {"c_extra"},
+                     "回を書いた写しも伏せない"),
+    # 1次の原稿の画（2026-11-04。批評役が「画は確認中」の行を F-014 の ✕ に当てた）
+    "c_pending": ("brief.py", "    if pending_visual(r):\n", "    if False:\n", {"c_pending"}, "画が確認中の行に印を付けない"),
     "w_watch": ("brief.py", "        at = [ln.split(\"]\", 1)[0].lstrip(\"[\") for ln in lines if lint_mod.nick_at(ln, bad)]\n",
                 "        at = []\n", {"w_watch"}, "字幕の呼び名を作文者に書かない"),
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
@@ -98,9 +143,10 @@ CUTS = {
     "fill": ("brief.py", "    if left:\n", "    if False:\n", {"fill"}, "埋めていない所を見逃す"),
     "ayato": ("brief.py", '    if AYATO.search(why):\n', "    if False:\n", {"ayato"}, "【あやと】を付けない"),
     # 批評役の1枚の配信の字幕（#1014、F-047）
-    "c_video": ("brief.py", "    if not video:\n", "    if True:\n", {"c_source"}, "批評役の1枚に配信の字幕を入れない"),
-    "c_cited": ("brief.py", '        pts += [hms(t) for t in CITED.findall(text)]\n', "        pass\n", {"c_ranges", "c_source"},
-                "spec の why・src の時刻を読まない"),
+    "c_video": ("brief.py", "    if not videos and not extra:\n", "    if True:\n", {"c_source", "c_multi", "c_extra"},
+                "批評役の1枚に配信の字幕を入れない"),
+    "c_cited": ("brief.py", '                pts.setdefault(cur, []).append(hms(m.group("t")))\n', "                pass\n",
+                {"c_ranges", "c_source", "c_multi"}, "spec の why・src の時刻を読まない"),
     "c_merge": ("brief.py", "        if out and a <= out[-1][1]:\n", "        if False:\n", {"c_ranges"}, "重なる区間をまとめない"),
     "c_leak": ("brief.py", "            if any(n[i:i + k] in body for i in range(len(n) - k + 1)):\n", "            if False:\n",
                {"c_leak"}, "雛形が対照の行を引いても見逃す"),
@@ -361,6 +407,53 @@ def fake_streams(B, td: Path):
         encoding="utf-8")
     (d / "2026-08-04_2159_ZZZZZZZZZZ1.chat.txt").write_text(
         "[0:00:10] みはりやく: こしらえたチャットの本文その一\n[0:00:40] ¥500 みはりやく: こしらえたチャットの本文その二\n", encoding="utf-8")
+    # 読み上げの伏せ字を当てる2本目（`w_read`・`w_multi`・`c_multi`・`c_extra`）。字幕もチャットも、こしらえた字
+    (d / "2026-08-05_2200_Zzzzzzzzzz2.transcript.txt").write_text("# 見張りの回\n" + "\n".join(READ_TR) + "\n", encoding="utf-8")
+    (d / "2026-08-05_2200_Zzzzzzzzzz2.chat.txt").write_text("\n".join(READ_CHAT) + "\n", encoding="utf-8")
+
+
+# 読み上げの伏せ字の、こしらえた字幕（30秒ごと）とチャット。行の頭の時刻 → (伏せる所の数, 伏せたあとに残る本人の言葉)
+READ_TR = [
+    "[0:00:00] 今日はカレーを作ります。ここ最高やな。",
+    "[0:00:30] 玉ねぎを切っていきます。",
+    "[0:01:00] 鍋に油を入れて、",
+    "[0:01:30] こうね。じっくり煮る。こうね、弱めにする。",               # 6字をそのまま（0:01:20 の書き込み）
+    "[0:02:00] 一人で鍋を全部食べきった。もう少し待つ。",                 # かな ↔ 漢字（0:01:40）
+    "[0:02:30] スープ全部飲みたい。いや、まだ熱い。",                     # ひらがな ↔ カタカナ・長音・句読点・絵文字の名前（0:02:20）
+    "[0:03:00] よいしょ。ことこと煮込む。ことこと煮込む。いい感じ。",     # 1行に2回（0:02:50）
+    "[0:03:30] 玉ねぎは飴色になるまで炒めると。へえ、そうなんや。",       # 長い書き込みの一部（0:03:20）
+    "[0:04:30] ここ最高やな。",                                           # 本人が 0:00:00 に先に言った（0:04:10）
+    "[0:05:00] 大丈夫？ほんまに大丈夫？おやすみなさい。",                 # 5字以下・挨拶（0:04:40・0:04:50）
+    "[0:05:30] 火を止めた。混ぜるで。",                                   # 合う字が少ない（0:05:10）
+    "[0:06:00] あとはじっくり煮る。",                                     # 0:01:20 の書き込みから4分あと
+    "[0:06:30] この鍋でかい。ほんまにでかい鍋やなあ、びっくりしたわ。",   # 同じ行の前のほうで本人が先に言った（0:06:55）
+    "[0:07:00] この鍋でかい。",
+    "[0:07:30] 卵は半熟がいちばんうまい。せやな。",                       # 長い書き込みをそのまま（0:07:20。回をまたぐ足もここを見る）
+    "[0:10:00] ずっと混ぜてたらいい感じになってきた。とろとろの卵。",     # 書き込み（0:08:41）から80秒を越えた所
+]
+READ_CHAT = [
+    "[0:01:20] @みはり1: じっくり煮る",
+    "[0:01:40] @みはり2: ひとりで鍋を全部食べきった！",
+    "[0:02:20] ¥300 @みはり3: すーぷ、全部飲みたーい:smiling_face:",
+    "[0:02:50] @みはり1: ことこと煮込む",
+    "[0:03:20] @みはり2: 玉ねぎは飴色になるまで炒めるとコクが出て甘くなるよ",
+    "[0:04:10] @みはり3: ここ最高やな",
+    "[0:04:40] @みはり1: 大丈夫？",
+    "[0:04:50] @みはり2: おやすみなさい:sparkles:",
+    "[0:05:10] @みはり3: 火を止めてからゆっくり混ぜてね",
+    "[0:06:55] @みはり1: この鍋でかい",
+    "[0:07:20] @みはり3: 卵は半熟がいちばんうまい",
+    "[0:08:41] @みはり2: とろとろの卵",
+]
+READ_WANT = {
+    "0:01:30": (1, "こうね。〔コメントの読み上げ〕。こうね、弱めにする。"),
+    "0:02:00": (1, "〔コメントの読み上げ〕。もう少し待つ。"),
+    "0:02:30": (1, "〔コメントの読み上げ〕。いや、まだ熱い。"),
+    "0:03:00": (2, "よいしょ。〔コメントの読み上げ〕。〔コメントの読み上げ〕。いい感じ。"),
+    "0:03:30": (1, "〔コメントの読み上げ〕。へえ、そうなんや。"),
+    "0:07:30": (1, "〔コメントの読み上げ〕。せやな。"),
+}
+PLAIN = "〔コメントの読み上げ〕。せやな。"   # 0:07:30 の伏せたあと（字数の下限・合いかた・窓のどれを動かしても変わらない所）
 
 
 def with_streams(B, fn):
@@ -393,6 +486,135 @@ def leg_w_nochat(B):
             ("本人が読み上げて字幕に入ったコメントは〔コメントの読み上げ〕に伏せ、伏せた数を書く",
              "〔コメントの読み上げ〕" in w and "コメント 1 か所は" in w),
             ("--chat を渡すと止まる（F-048）", stopped)]
+
+
+def read_lines(B) -> dict:
+    """こしらえた2本目の字幕を、伏せ字を当てて {時刻: 行の字}。"""
+    got = with_streams(B, lambda: B.masked_lines("Zzzzzzzzzz2", [(0, 900)]))[1]
+    return {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in got}
+
+
+def leg_w_read(B):
+    got = read_lines(B)
+    src = {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in READ_TR}
+    kept = ("0:04:30", "0:05:00", "0:05:30", "0:06:00", "0:06:30", "0:07:00", "0:10:00")
+    names = {"0:01:30": "6字をそのまま", "0:02:00": "かな ↔ 漢字（漢字の側まで）", "0:02:30": "ひらがな ↔ カタカナ・長音・句読点・絵文字の名前",
+             "0:03:00": "1行に2回", "0:03:30": "長い書き込みの一部（切れ目なく12字）", "0:07:30": "長い書き込みをそのまま"}
+    why = {"0:04:30": "本人が前の行で先に言った字", "0:05:00": "5字以下と挨拶", "0:05:30": "合う字が少ない書き込み",
+           "0:06:00": "書き込みから4分あと", "0:06:30": "同じ行の前のほうで本人が先に言った字", "0:07:00": "その続きの行",
+           "0:10:00": "書き込みから80秒を越えた読み上げ"}
+    return ([(f"伏せる: {names[t]}（{t}。{k} か所・前後の本人の言葉は残る）",
+              got.get(t, "").count(B.READ_MARK) == k and got.get(t) == want) for t, (k, want) in READ_WANT.items()]
+            + [(f"伏せない: {why[t]}（{t}）", got.get(t) == src[t]) for t in kept])
+
+
+# クラムチャウダーの回（E2oGYjnVQSA）。1:11:29・1:16:48 の書き込みを、本人が 1:12:00・1:17:00 の行で読み上げた（2026-11-04 に
+# 作文者が本人の言葉として原稿に入れた所）。本物の字幕とチャットで当てる。字は写さず、伏せた所の数と残りの字の数だけを見る
+REAL = ("E2oGYjnVQSA", "1:11:00-1:18:00", ("1:12:00", "1:17:00"))
+
+
+REAL_POSTS = (("1:11:29", "1:12:00"), ("1:16:48", "1:17:00"))   # 書き込みの時刻 → 読み上げた行
+
+
+def leg_w_real(B):
+    vid, rng, _ = REAL
+    _, got, _ = B.masked_lines(vid, B.parse_ranges([rng]))
+    rows = {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in got}
+    chat = {}
+    for ln in B.stream_file(vid, "chat").read_text(encoding="utf-8").splitlines():
+        m = B.TIME.match(ln)
+        if m:
+            chat.setdefault(f"{int(m.group(1))}:{m.group(2)}:{m.group(3)}", B.post_body(m.group(4)))
+    out = []
+    for at, t in REAL_POSTS:
+        rest = B.folded(rows.get(t, "").replace(B.READ_MARK, "／"))
+        b = chat.get(at, "")
+        # 伏せ残りは、伏せる側（read_spans）とは別の物差しで見る: 書き込みと行の残りに、切れ目なく6字の同じ字があるか
+        left = SequenceMatcher(None, b, rest, autojunk=False).find_longest_match(0, len(b), 0, len(rest)).size if b else 99
+        out.append((f"{vid} の {at} の書き込みを {t} の行で読み上げた字が残らない（残った切れ目の無い字 {left}）・行の残りの本人の言葉は残る",
+                    len(b) >= 6 and left < 6 and len(rest) >= 10))
+    return out
+
+
+def leg_w_multi(B):
+    vids = ["ZZZZZZZZZZ1", "Zzzzzzzzzz2"]
+
+    def build(rng, n=3):
+        return with_streams(B, lambda: B.build_writer(vids, rng, [], "x", n, False, [], "題"))
+    w = build(["0:00:00-0:01:30", "Zzzzzzzzzz2@0:01:00-0:08:00"])
+    src = w.split("## 6. 材料", 1)[-1]
+    one = src.split("### ZZZZZZZZZZ1", 1)[-1].split("### Zzzzzzzzzz2", 1)[0]
+    two = src.split("### Zzzzzzzzzz2", 1)[-1]
+    try:
+        build(["ZZZZZZZZZZ1@0:00:00-0:01:30"])   # 2本目の回の区間が無い
+        stopped = False
+    except ValueError:
+        stopped = True
+    rows = [ln for ln in w.split("## 4. 書く形", 1)[-1].split("## 5.", 1)[0].splitlines() if re.match(r"^\| \d+ \|", ln)]
+    return [("2本の字幕が回ごとの見出しで入る（回を書かない区間は最初の回）", "[0:00:30]" in one and "[0:01:30]" in two
+             and "### ZZZZZZZZZZ1（" in src and "### Zzzzzzzzzz2（見張りの回）" in src),
+            ("2本目の回の読み上げも伏せる（0:07:30）", f"[0:07:30] {PLAIN}" in two),
+            ("区間の無い回（Zzzzzzzzzz2）があれば止まる", stopped),
+            (f"表の行の数は --lines の 3 のまま（伏せた数で上書きしない。いま {len(rows)}）", len(rows) == 3)]
+
+
+def critic_with(B, rows: list, videos: list, extra: list | None = None) -> str:
+    """こしらえた原稿と spec（rows）で批評役の1枚を組み、配信の字幕の節だけを返す。"""
+    with tempfile.TemporaryDirectory() as td:
+        sc = Path(td) / "script.txt"
+        sc.write_text("題\nうまい！\nみんなは？\n", encoding="utf-8")
+        spec = Path(td) / "spec.json"
+        spec.write_text(json.dumps({"title_card": "題", "rows": rows}, ensure_ascii=False), encoding="utf-8")
+        text = with_streams(B, lambda: B.build_critic(sc, spec, [], "x", videos, [], None, extra))
+    return text.split(SOURCE_HEAD, 1)[-1]
+
+
+MULTI_ROWS = [{"why": "0:00:30「道を教えてもらいました」", "visual": "草原"},
+              {"why": "Zzzzzzzzzz2 0:01:30「じっくり煮る」", "src": ["Zzzzzzzzzz2@0:07:30"], "visual": "鍋"},
+              {"why": "【足】問い", "visual": "顔"}]
+
+
+def leg_c_multi(B):
+    pts = B.cited_points(MULTI_ROWS, ["ZZZZZZZZZZ1", "Zzzzzzzzzz2"])
+    both = critic_with(B, MULTI_ROWS, ["ZZZZZZZZZZ1", "Zzzzzzzzzz2"])
+    named = critic_with(B, MULTI_ROWS, ["ZZZZZZZZZZ1"])
+    two = both.split("### Zzzzzzzzzz2", 1)[-1]
+    return [("回を書かない時刻は最初の回、「Zzzzzzzzzz2 0:01:30」「Zzzzzzzzzz2@0:07:30」は2本目",
+             pts == {"ZZZZZZZZZZ1": [30], "Zzzzzzzzzz2": [90, 450]}),
+            ("--video 2本で、回ごとの見出しの下に、その回の時刻の行が入る",
+             "### ZZZZZZZZZZ1" in both and "[0:00:30]" in both.split("### Zzzzzzzzzz2", 1)[0] and "[0:01:30]" in two),
+            ("2本目にも読み上げの伏せ字が効く", f"[0:07:30] {PLAIN}" in two),
+            ("--video が1本でも、why で名指した回（Zzzzzzzzzz2）の字幕が入る", "### Zzzzzzzzzz2" in named and "[0:01:30]" in named)]
+
+
+def leg_c_extra(B):
+    with tempfile.TemporaryDirectory() as td:
+        ex = Path(td) / "day2.txt"
+        ex.write_text("[0:07:30] 卵は半熟がいちばんうまい。せやな。\n[0:07:40] 鍋を見る。\n", encoding="utf-8")
+        named = critic_with(B, MULTI_ROWS[:1] + [{}, {}], ["ZZZZZZZZZZ1"], [f"Zzzzzzzzzz2={ex}"])
+        bare = critic_with(B, MULTI_ROWS[:1] + [{}, {}], ["ZZZZZZZZZZ1"], [str(ex)])
+    return [("--extra <videoId>=<道> の写しが入り、その回のチャットで伏せる", "day2.txt（Zzzzzzzzzz2 の写し。" in named
+             and f"[0:07:30] {PLAIN}" in named and "[0:07:40] 鍋を見る。" in named),
+            ("回を書かない写しは伏せず、「伏せていない」と書く", "伏せていない" in bare and "半熟がいちばんうまい" in bare)]
+
+
+def leg_c_pending(B):
+    rows = [{"why": "x", "visual": "【画は確認中】0:01:00 鍋の中"}, {"why": "x", "visual": "鍋の前の顔（画は確認中。顔が写ればぼかす）"},
+            {"why": "x", "visual": "0:02:00 鍋をかき混ぜる手元"}]
+    text = critic_with(B, rows, [])
+    full = None
+    with tempfile.TemporaryDirectory() as td:
+        sc = Path(td) / "script.txt"
+        sc.write_text("題\nうまい！\nみんなは？\n", encoding="utf-8")
+        (Path(td) / "spec.json").write_text(json.dumps({"title_card": "題", "rows": rows}, ensure_ascii=False), encoding="utf-8")
+        full = B.build_critic(sc, None, [], "x")
+    table = [ln for ln in full.split("## 3. 原稿の表", 1)[-1].split("\n## ", 1)[0].splitlines() if re.match(r"^\| \d+ \|", ln)]
+    h = full.split("### (h)", 1)[-1].split("\n### ", 1)[0]
+    return [("画に「確認中」のある行に【画は確認中】の印（頭でも、括弧の中でも）",
+             "【画は確認中】" in B.marks(rows[0]) and "【画は確認中】" in B.marks(rows[1]) and "【画は確認中】" not in B.marks(rows[2])),
+            ("批評役の1枚の表の印の列に出る（1・2行目だけ）", [ln.rstrip(" |").endswith("【画は確認中】") for ln in table] == [True, True, False]),
+            ("雛形の (h) に、F-014 は確認中の行を当てず、その回に無い画は「回に無い:」で挙げる線引き",
+             "**F-014" in h and "【画は確認中】の行" in h and "「回に無い:」" in h and "渡していない" in text)]
 
 
 def leg_w_ate(B):
@@ -649,6 +871,8 @@ LEGS = {
     "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
     "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
     "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
+    "w_read": leg_w_read, "w_real": leg_w_real, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
+    "c_pending": leg_c_pending,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
     "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}

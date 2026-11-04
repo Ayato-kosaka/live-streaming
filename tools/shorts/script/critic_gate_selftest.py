@@ -25,6 +25,7 @@
 | `ayato` | 【あやと】の行（spec の why が「あやとの題」など）に当たった ✕ は △ にする（まとめ役が裁く） |
 | `as_of` | 城塞 p1 の承認（2026-10-21:6306110329）で読み直すと、あとでできた F-037（09:28）の ✕ は △。前からある F-008 は ✕ のまま。as_of 無しなら F-037 も ✕ |
 | `i_side` | (h) の F-039・F-040 は、同じ行に (i)(j)(k) の当たりがあれば ✕、無ければ △（批評役自身の見かたでは渡れている） |
+| `pending` | (h) F-014 が、画の「確認中」の行（1次の原稿。spec の visual に「確認中」）に当たったら △。why が「回に無い:」で始まれば（その回に無い画を当てにしている）✕ のまま。確認中でない行の F-014 は ✕（2026-11-04） |
 | `cli` | 終了コード: 通る 0・落ちる 1・形が違う 2 |
 | `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、添削の時点（2026-10-23:6354242835）の決まりでも、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は同じ時点で lint の ✕ 0（日付だけにすると夕方の規則まで当たる）。批評役の (h) F-047 は ✕ |
 """
@@ -80,6 +81,10 @@ CUTS = {
     "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato", "alone"}, "【あやと】の行でも ✕ にする"),
     "i_side": ("critic_gate.py", "        if fid in I_SIDE and ln not in i_lines:\n", "        if False:\n",
                {"i_side"}, "(i) で渡れている行の F-039 も ✕ にする"),
+    "pending": ("critic_gate.py", "        if fid == PICTURE and 1 <= ln <= len(rows) and brief.pending_visual(rows[ln - 1])",
+                "        if False and brief.pending_visual(rows[ln - 1])", {"pending"}, "画が確認中の行の F-014 も ✕ にする（前の形）"),
+    "pending_absent": ("critic_gate.py", ' and not ABSENT.match(h.get("why") or ""):\n', ":\n", {"pending"},
+                       "その回に無い画を当てにした行まで △ にする"),
     "as_of": ("critic_gate.py", "        if not in_force(known[fid], as_of):\n", "        if False:\n",
               {"as_of"}, "承認より後にできた決まりでも ✕ にする"),
     "lint_in": ("critic_gate.py", '    return [h for h in lint_mod.lint(c, as_of_text(as_of))["hits"] if not h.look]\n',
@@ -263,6 +268,21 @@ def leg_i_side(G):
             ("F-039・F-040 でない ID は、(i) が無くても ✕", [x[1] for x in other["fail"]] == ["(h) F-008"])]
 
 
+def leg_pending(G):
+    c, rows = G.brief.rows_of(SCRIPT, None)
+    rows = copy.deepcopy(rows)
+    rows[4]["visual"] = "【画は確認中】0:12:00 店の前"           # 5行目
+    rows[6]["visual"] = "店の前の顔（画は確認中。顔はぼかす）"  # 7行目
+    wait = G.judge(with_(ledger=[{"id": "F-014", "line": 5, "why": "まだ確かめていない"},
+                                 {"id": "F-014", "line": 7, "why": "写るか分からない"}]), c, rows)
+    absent = G.judge(with_(ledger=[{"id": "F-014", "line": 5, "why": "回に無い: 名指した店が字幕のどこにも出てこない"}]), c, rows)
+    plain = G.judge(with_(ledger=[{"id": "F-014", "line": 6, "why": "名指した物が写っていない"}]), c, rows)
+    return [("画が確認中の行（5・7行目）の F-014 は ✕ にせず △",
+             not wait["fail"] and [x[0] for x in wait["look"] if "画は確認中" in x[2]] == [5, 7]),
+            ("確認中の行でも「回に無い:」の当たり（その回に無い画を当てにしている）は ✕", [x[0] for x in absent["fail"]] == [5]),
+            ("確認中でない行（6行目）の F-014 は ✕ のまま", [x[0] for x in plain["fail"]] == [6])]
+
+
 def leg_as_of(G):
     castle = G.parse_as_of("2026-10-21:6306110329")
     f037 = with_(ledger=[{"id": "F-037", "line": 18, "why": "言い直し"}])
@@ -309,7 +329,7 @@ def leg_focaccia(G):
 LEGS = {
     "shape": leg_shape, "count": leg_count, "jump": leg_jump, "question": leg_question, "cancel": leg_cancel,
     "outsider": leg_outsider, "alone": leg_alone, "checked": leg_checked, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
-    "i_side": leg_i_side, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
+    "i_side": leg_i_side, "pending": leg_pending, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
 }
 
 if __name__ == "__main__":

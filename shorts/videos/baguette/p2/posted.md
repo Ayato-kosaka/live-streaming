@@ -38,3 +38,12 @@
 **2026-11-04 12:30 UTC** を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直し、
 EC2 の `~/shorts_post/baguette` を `post.py clean --video baguette` で消す。
+
+## 公開を確かめた（2026-11-04）
+
+予約の時刻（12:30 UTC。あやとのチャットで 11/5 から入れ換えた）のあと、EC2 からログインしない `curl` で 12:41〜12:43 UTC に見た。
+
+- YouTube `As4LP4FPzPw`: oEmbed が 200 で題「海外旅行中に作ったバケットが簡単すぎた！」を返した（`post_p2.json` の youtube.title と1字ずつ一致）→ 公開
+- TikTok `7704039579623410996`（入れ直した予約）: `embed/v2` が 200・`"secret":false` → 公開。1回目は 503 で、15秒あけて取り直すと 200
+- 消した古い TikTok `7703115629053627654`: `embed/v2` が 400（無い）。2本は出ていない
+- EC2 の `~/shorts_post/baguette` を消した（`post.py clean` と同じ中身を、確かめと同じ1回の起動で回した。EC2 の空き 9.0G）
