@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "E2oGYjnVQSA__zoom-6530-7320-1fps",
+ "mode": "zoom",
+ "dest": "E2oGYjnVQSA/zoom-6530-7320-1fps",
+ "video": "E2oGYjnVQSA",
+ "channel": null,
+ "request": "shorts/requests/chowder-E2oGYjnVQSA-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 40,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 48
+ },
+ "bytes": {
+  "plain": 8951521,
+  "tar_gz": 8640024,
+  "encrypted": 8640032
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 8640032,
+   "sha256": "7b937477dd6b31eed650635638c2c98926829d3920ace23f335cd7ad14a90e4b"
+  }
+ ],
+ "hmac_sha256": "16cb90cf8bf37007a7a2761a700c0dea2fea995a32b576d49d185aa37f57b888",
+ "pubkey_sha256": "5ac110c258c63be087c7773283dde65c447fbe4159bca4db187ec760e8df8a02",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41800632689",
+ "created_at": "2026-11-04T09:38:23+00:00"
+}
