@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "AZwmL3H25TA__clips",
+ "mode": "clips",
+ "dest": "AZwmL3H25TA/clips",
+ "video": "AZwmL3H25TA",
+ "channel": null,
+ "request": "shorts/requests/waltemis-AZwmL3H25TA-p1-clips-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 3,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 3,
+  "clips_ok": 3,
+  "clip_seconds": 20.0,
+  "channel_entries": 0,
+  "files": 14
+ },
+ "bytes": {
+  "plain": 6544811,
+  "tar_gz": 6518899,
+  "encrypted": 6518912
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 6518912,
+   "sha256": "1a178a50bdbb740779ed6f655e229860fe84efd0a5a23bb51aa9f489bda821b6"
+  }
+ ],
+ "hmac_sha256": "75d0627b3ee88fc05e0025268fd2b0f0c3557bb6238163981c7280c0ccb3f031",
+ "pubkey_sha256": "c2c7432f1eddfe794568c82d4804c705e5ab57b947dd0fa74a6fe60801d6da5c",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41854547917",
+ "created_at": "2026-11-04T15:17:38+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 149968,
+    "sha256": "4a9850c03934c85a9eba5bab5d3f069630ba98deb7d05fd64ebcc58697db4dc4"
+   }
+  ],
+  "hmac_sha256": "3791bb6f3505ff8c1b8bbe8f321162f1a2e4970b3b4147f275f33b24fba5372a",
+  "files": 7,
+  "sheets": 3,
+  "bytes": {
+   "plain": 159356,
+   "tar_gz": 149960,
+   "encrypted": 149968
+  }
+ }
+}
