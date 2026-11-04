@@ -567,7 +567,18 @@ def check(out, work=None):
                 print(f"  {v}-{layer} {c0} → {c1} の境目 {j:.2f}（端の隣どうし {step:.2f}）")
                 if j > max(2.5 * step, 1.0):
                     bad.append(f"{v}-{layer} の {c0} → {c1} の境目 {j:.2f} > 隣どうし {step:.2f} の 2.5 倍")
-    man = json.load(open(os.path.join(out, "manifest-t7.json")))["7"]
+    # 書き出し先なら manifest-t7.json、public（install のあと）なら manifest.json の段7
+    mp = os.path.join(out, "manifest-t7.json")
+    if os.path.exists(mp):
+        man = json.load(open(mp))["7"]
+    elif os.path.exists(os.path.join(out, "manifest.json")):
+        man = json.load(open(os.path.join(out, "manifest.json"))).get("tiers", {}).get("7")
+        if man is None:
+            print("manifest.json に段7が無い")
+            return 2
+    else:
+        print("manifest が無い")
+        return 2
     for k, want in (("introDur", P.INTRO), ("stayDur", P.STAY), ("outroDur", P.OUTRO)):
         if abs(man[k] - want) > 1e-6:
             bad.append(f"manifest の {k}")
