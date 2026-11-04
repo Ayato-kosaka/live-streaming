@@ -282,6 +282,11 @@
 .nx-notes > li:nth-child(2n) { transform: rotate(1.2deg); }
 .nx-notes > li:nth-child(3n) { transform: rotate(-0.5deg); }
 .nx-notes > li:nth-child(4n) { transform: rotate(1.8deg); }
+/* **開いた1枚に、隣の紙を引き伸ばさせない**（2026-11-04）。並びは flex の
+   既定（stretch）で、同じ段の紙は背がそろう。2,000字の1枚を開くと、
+   同じ段の短い付箋まで 4,000px の空の紙になった（PC 幅で実測）。
+   開いているあいだだけ、開いていない紙は自分の背に戻す。 */
+.nx-notes:has(.wr-fold.is-open) > li:not(:has(.wr-fold.is-open)) { align-self: flex-start; }
 .nx-notes .nx-pin { position: absolute; top: -7px; left: 50%; transform: translateX(-50%); }
 /* 取りに行っているあいだの灰色。付箋と同じ形・同じ傾きで、色だけ抜く */
 .nx-notes.is-wait > li {

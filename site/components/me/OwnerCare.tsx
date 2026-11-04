@@ -25,7 +25,7 @@ import ReadAgain from "./ReadAgain";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import { jstDay } from "@/lib/nightly";
-import Wrote from "@/components/ui/Wrote";
+import WroteFold from "@/components/ui/WroteFold";
 import NotePic from "@/components/live/NotePic";
 
 
@@ -470,7 +470,10 @@ function StickyRow({
     <li>
       {/* **書いてくれたまま出す**（#83）。返すときに、貼った人の改行が見えていないと
           何に答えているのか分からなくなる */}
-      <Wrote t={note.text} as="p" className="mp-care-text" />
+      {/* 長いときは8行で畳む（`WroteFold.tsx`）。返す机は上から順に片づける
+          ところなので、1枚が机を埋めると次の1枚にたどり着けない。
+          返す前に全文を読むのは「つづきを読む」から */}
+      <WroteFold t={note.text} as="p" className="mp-care-text" />
       {/* 貼られた絵（2026-10-08）。**ここに出さないと、荒れた絵を見つける
           場所が板しかなくなる。** 返す机は、あやとが上から順に片づける
           ところなので、外す押しどころも下に並べてある */}

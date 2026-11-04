@@ -30,6 +30,7 @@ import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import Longer from "@/components/ui/Longer";
 import Wrote from "@/components/ui/Wrote";
+import WroteFold from "@/components/ui/WroteFold";
 import { Pin } from "./art";
 import NotePic from "./NotePic";
 import SignIn from "./SignIn";
@@ -68,7 +69,7 @@ import { pickPic, type PickedPic } from "./notePic";
  *
  * **1本だけ。** 何本も貼れる欄にすると、本文より長い付箋ができる。
  * 出す字は行き先の名前だけにする（`linkLabel`。素の URL を出すと、
- * 120字の本文が 2,048字の URL に埋まる）。
+ * 本文が 2,048字の URL に埋まる）。
  * 通してよい字は `okLink` で、**守りはサーバー側**（`safeLink`）。
  *
  * ## 絵1枚（2026-10-08）
@@ -177,7 +178,7 @@ function okLink(s: string): boolean {
 /**
  * リンクに出す札の字。**URL をそのまま出さない。**
  *
- * 付箋は120字で、URL は2048字まで入る。素で出すと、1枚が URL で埋まって
+ * URL は2048字まで入る。素で出すと、1枚が URL で埋まって
  * 本文が読めなくなる。出すのは行き先の名前（`hostname`）だけにする。
  */
 function linkLabel(href: string): string {
@@ -548,8 +549,14 @@ export default function Notes({
     } catch (e) {
       const s = String(e);
       setErr(
+        /* **429 は、いまは絵の枠だけ**（1日6枚。サーバー側の `PICS_PER_DAY`）。
+           字の枚数は 2026-11-04 に数えるのをやめた（性善説。不正が出たら戻す）。
+           絵が通らなかっただけなので、**字だけなら貼れる**と言う。
+           絵の無い 429 は、字の枠を戻した日にだけ来る */
         s.includes("429") ?
-          "今日はたくさん貼ってくれた。また明日おねがい。" :
+          pic ?
+            "絵は、今日はここまで。字だけなら貼れるよ。" :
+            "今日はたくさん貼ってくれた。また明日おねがい。" :
           /* **409 は「もう締め切った」**（サーバー側の `shutTheme`）。
              畳んだ宛先には書く段そのものが出ないので、ここへ来るのは
              **開いたまま日をまたいだ人**——企画あての宛先は、その日が
@@ -812,8 +819,8 @@ export default function Notes({
               placeholder={dest.placeholder}
             />
           </label>
-          {/* **1本だけ。** 企画の欄は8本まで持てたが、こちらは本文が120字しか
-              ない。URL は 2,048字まで入るので、何本も置ける欄にすると
+          {/* **1本だけ。** 企画の欄は8本まで持てたが、付箋は短い頼みごとを
+              貼るところ。URL は 2,048字まで入るので、何本も置ける欄にすると
               頼みごとより行き先のほうが長い付箋ができる。 */}
           <label className="nt-field">
             <span>リンク（なくてもいい）</span>
@@ -1017,8 +1024,12 @@ export default function Notes({
                   誰が立てたのかを言わないと、押された数の意味が変わる */}
               {n.byOwner && <em className="nt-owner">あやとから</em>}
               {/* **書いてくれたまま出す。** 改行を潰すと、行末と次の行頭が
-                  くっついて別の語に読める（#83） */}
-              <Wrote t={n.text} />
+                  くっついて別の語に読める（#83）。
+                  **長いときは10行で畳む**（2,000字まで入る。`WroteFold.tsx`）。
+                  1枚が板を埋めると、その下の付箋が1枚も見えなくなる。
+                  10行は、前の上限（120字）の1枚がスマホの紙幅でちょうど収まる背——
+                  いままで貼られた付箋には「つづき」が付かない */}
+              <WroteFold t={n.text} lines={10} />
               {/* 貼られたリンク。**出す字はこちらで決める**（`linkLabel`）。
                   URL を素で出すと、付箋1枚が URL で埋まる。
                   島の外へ出るので、新しいタブで開いて、こちらの窓への

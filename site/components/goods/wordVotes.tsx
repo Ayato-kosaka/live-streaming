@@ -106,8 +106,9 @@ export function useWordVotes(theme: string, words: VoteWord[]): WordVotes {
    * 押したのに動かなかったときの1行。
    *
    * **黙って何も起きない押しどころは「壊れている」と読まれる**
-   * （`docs/island-design.md` 3-1）。いちばん起きるのは、まだ札の無い字を
-   * その日21枚目に押したとき——付箋は1日20枚までなので、立てるところで断られる。
+   * （`docs/island-design.md` 3-1）。いちばん起きるのは、立てるところで
+   * 電波が落ちたとき。付箋の1日の枚数は 2026-11-04 に数えるのをやめた
+   * （性善説。不正が出たら戻す）ので、429 の言い方は枠を戻した日のために残してある。
    */
   const [why, setWhy] = useState<string | null>(null);
   const { token } = useAuth();
