@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "urwD3EmjTxs__captions",
+ "mode": "captions",
+ "dest": "urwD3EmjTxs/captions",
+ "video": "urwD3EmjTxs",
+ "channel": null,
+ "request": "shorts/requests/macedonia-urwD3EmjTxs-p1-captions-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 1683,
+  "caption_lines": 2275,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 852892,
+  "tar_gz": 137237,
+  "encrypted": 137248
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 137248,
+   "sha256": "47b0d705e8b549c686725e8fea43ddb08893828337671dc7282185b3778d36a2"
+  }
+ ],
+ "hmac_sha256": "a6cd4e151f9a8ca39c1f8a192602801963c45e4a3814d3006626bdadda1d97b3",
+ "pubkey_sha256": "d3aa890de5894406ed21bc08c724fd2bb46f0eafda14cf5c9cbd8b133a43f11a",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41832440499",
+ "created_at": "2026-11-04T12:49:50+00:00"
+}
