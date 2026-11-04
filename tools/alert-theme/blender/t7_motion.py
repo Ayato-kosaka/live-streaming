@@ -117,6 +117,27 @@ AYATO_STAY = (168, 276)
 AYATO_W_PX = 270  # 広げたマントの絵（1239px）の幅が、ふつうの大きさで画面の何 px か
 AYATO_M_PER_PX = AYATO_W_PX / ((P.CAM["lens"] / 12.0) * (P.H / 2) / AYATO_DEPTH) / 1239
 
+# あやとの2枚の絵（ドラキュラ。顔の幅は2枚でそろえてある）。顔の真ん中が同じ所に来るように板の原点を決める
+AYATO_POSES = {
+    "ayato_spread": {"file": "public/alert/themes/halloween/poses/dracula/spread.webp", "size": (1239, 1183), "face": (632.5, 275.0)},
+    "ayato_rise": {"file": "public/alert/themes/halloween/poses/dracula/rise.webp", "size": (820, 1102), "face": (395.5, 227.0)},
+}
+
+
+def ayato_plane(name):
+    """板の (幅, 高さ, 原点の x, 原点の z)（m）。spread は絵の真ん中が原点、rise は顔が spread の顔と重なる所が原点"""
+    mpp = AYATO_M_PER_PX
+    pz = AYATO_POSES[name]
+    size, face = pz["size"], pz["face"]
+    w, h = size[0] * mpp, size[1] * mpp
+    sp = AYATO_POSES["ayato_spread"]
+    sfx = (sp["face"][0] - sp["size"][0] / 2) * mpp
+    sfy = (sp["size"][1] / 2 - sp["face"][1]) * mpp
+    fx = (face[0] - size[0] / 2) * mpp
+    fy = (size[1] / 2 - face[1]) * mpp
+    return w, h, w / 2 + (fx - sfx), h / 2 + (fy - sfy)
+
+
 # ピポ（城の露台）
 PIPO_FOOT = (3.35, -0.05, B + 8.6 + 0.35)
 PIPO_H = 3.0

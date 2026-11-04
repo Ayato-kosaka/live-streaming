@@ -9,8 +9,8 @@
 
 `check` の終了コード: 0 = 約束どおり / 1 = 外れている所が在る / 2 = 数えられなかった（動画が無い・読めない）
 
-## 層の重ね方（Blender の4つの層 → 動画の2つの層）
-- back = あやと の下に 城、その下に 空（`castle_t7.py` の view layer）。front = 前の粒
+## 層（Blender の view layer がそのまま動画の層）
+- back = 空・城・あやと（`castle_t7.py`）。front = 前の粒
 - Blender の色は「黒の上に重ねた色」（光のにじみ込み）。透明は物の透明だけなので、
   にじみの所は **色の明るさを透明にする**（`A = max(物の透明, 色のいちばん明るい成分 × GLOW_ALPHA)`、色は `C / A`）。
   暗い配信の上では光が足し算に近く乗り、明るい配信の上でも白く溶けない
@@ -20,7 +20,8 @@
 ## full と light（`scratchpad/novfx/CONTRACT.md`）
 - full … 叩き台どおり。城が画面いっぱいのまま滞在する
 - light … 門の光からキャラ絵が出たら（`REVEAL`）、城と夜空を 0.9 秒で薄くし、縁（左右の木・下の石畳・上の月と星）だけ残す。
-  あやとと前の粒は残す。締めで城が貯金箱へ縮むときに、また見える。**登場までは full と同じ**（あやとの意見「キャラが出たら薄く」）
+  あやとと前の粒は残す。あやとの形は、振付け（`t7_motion.pose`）の板の位置から作る（`ayato_mask`。Blender で別に描くと、
+  城をもう1回組み立てることになって1コマの秒が倍になる）。締めで城が貯金箱へ縮むときに、また見える。**登場までは full と同じ**（あやとの意見「キャラが出たら薄く」）
 """
 import argparse
 import glob
@@ -36,10 +37,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import t7_motion as MO  # noqa: E402
 import t7_plan as P  # noqa: E402
 
 W, H = P.W, P.H
-LAYERS = ("sky", "scene", "ayato", "front")
+ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+LAYERS = ("back", "front")
 VARIANTS = ("full", "light")
 GLOW_ALPHA = 1.0
 
@@ -59,8 +62,8 @@ def masks():
     sides = 1 - smoothstep(0.09 * W, 0.2 * W, side)
     bottom = 1 - smoothstep(0.07 * H, 0.15 * H, H - 1 - yy)
     band = 0.8 * np.maximum(sides, bottom)
-    skyband = 0.7 * (1 - smoothstep(0.12 * H, 0.3 * H, yy))
-    return dict(edge=edge, face=face, band=band, skyband=skyband)
+    skyband = 0.7 * (1 - smoothstep(0.1 * H, 0.26 * H, yy))
+    return dict(edge=edge, face=face, band=np.maximum(band, skyband))
 
 
 def ease_io(x):
@@ -70,6 +73,57 @@ def ease_io(x):
 
 def ramp(t, a, b):
     return min(1.0, max(0.0, (t - a) / (b - a)))
+
+
+def _rot_xyz(rx, ry, rz):
+    """Blender の Euler XYZ（X → Y → Z の順に回す）"""
+    cx, sx, cy, sy, cz, sz = math.cos(rx), math.sin(rx), math.cos(ry), math.sin(ry), math.cos(rz), math.sin(rz)
+    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    return Rz @ Ry @ Rx
+
+
+def _persp_coeffs(dst, src):
+    """PIL の PERSPECTIVE 用: 出来上がり（画面）の点 dst → 元の絵の点 src に写す8つの数"""
+    A, b = [], []
+    for (x, y), (u, v) in zip(dst, src):
+        A.append([x, y, 1, 0, 0, 0, -u * x, -u * y])
+        A.append([0, 0, 0, x, y, 1, -v * x, -v * y])
+        b += [u, v]
+    return np.linalg.solve(np.array(A, float), np.array(b, float)).tolist()
+
+
+_AY = {}
+
+
+def ayato_mask(clip, t):
+    """そのコマで、あやとの絵が画面のどこを覆うか（0〜1）。Blender の板と同じ寸法・同じカメラの式で写す"""
+    p = MO.pose(clip, t)
+    out = np.zeros((H, W), np.float32)
+    cam = p["obj:cam:loc"]
+    lens = p["cam:lens"]
+    for name in MO.AYATO_POSES:
+        op = p[f"val:{name}_op"]
+        if op <= 0:
+            continue
+        if name not in _AY:
+            _AY[name] = Image.open(os.path.join(ROOT, MO.AYATO_POSES[name]["file"])).convert("RGBA").split()[3]
+        al = _AY[name]
+        w, h, ox, oz = MO.ayato_plane(name)
+        s = p[f"obj:{name}:scale"]
+        R = _rot_xyz(*p[f"obj:{name}:rot"])
+        loc = np.array(p[f"obj:{name}:loc"])
+        local = [(-ox, -oz), (w - ox, -oz), (w - ox, h - oz), (-ox, h - oz)]
+        src = [(0, al.height), (al.width, al.height), (al.width, 0), (0, 0)]
+        dst = []
+        for lx, ly in local:
+            q = loc + s * (R @ np.array([lx, ly, 0.0]))
+            sx, sy, _ = P.project(tuple(q), cam, lens)
+            dst.append((sx, sy))
+        m = al.transform((W, H), Image.PERSPECTIVE, _persp_coeffs(dst, src), Image.BILINEAR)
+        out = np.maximum(out, np.asarray(m).astype(np.float32) / 255 * op)
+    return out
 
 
 def light_weight(clip, t):
@@ -146,11 +200,12 @@ def _compose_one(job):
     (clip, i), rec, work = job
     t = P.clip_time(clip, i)
     L = {name: read_layer(rec, name) for name in LAYERS}
+    wl = light_weight(clip, t)
+    ay = ayato_mask(clip, t) if wl > 0 else None
     for v in VARIANTS:
-        w = light_weight(clip, t) if v == "light" else 0.0
-        msc = _M["edge"] * (1 - w + w * _M["band"])
-        msk = _M["edge"] * (1 - w + w * _M["skyband"])
-        back = over(scale(L["ayato"], _M["edge"]), over(scale(L["scene"], msc), scale(L["sky"], msk)))
+        w = wl if v == "light" else 0.0
+        keep = _M["band"] if ay is None else np.maximum(_M["band"], ay)
+        back = scale(L["back"], _M["edge"] * (1 - w + w * keep))
         front = scale(L["front"], _M["edge"] * _M["face"] * (1 - 0.3 * w))
         save_rgba(straight(back), os.path.join(work, v, "back", clip, f"{i:04d}.png"))
         save_rgba(straight(front), os.path.join(work, v, "front", clip, f"{i:04d}.png"))
@@ -231,7 +286,7 @@ def load_rgba(p):
     return np.asarray(Image.open(p).convert("RGBA")).astype(np.float32) / 255.0
 
 
-def sheet(work, path, bg=None, picks=None):
+def sheet(work, path, bg=None, picks=None, frames_dir=None):
     fr = json.load(open(os.path.join(work, "frames.json")))
     have = fr["have"]
     if picks is None:
@@ -256,6 +311,10 @@ def sheet(work, path, bg=None, picks=None):
                 if not os.path.exists(pb):
                     continue
                 x = comp_on(comp_on(b, load_rgba(pb)), load_rgba(pf))
+                if frames_dir and b is bgs[-1] and (v == "full" or c != "intro" or i / P.FPS >= P.REVEAL):
+                    os.makedirs(frames_dir, exist_ok=True)
+                    Image.fromarray((np.clip(x, 0, 1) * 255).astype(np.uint8)).save(
+                        os.path.join(frames_dir, f"{v}-{c}-{i:03d}.jpg"), quality=84)
                 t = Image.fromarray((np.clip(x, 0, 1) * 255).astype(np.uint8)).resize((W // 4, H // 4), Image.LANCZOS)
                 ImageDraw.Draw(t).text((4, 4), f"{v} {c} {i / P.FPS:.1f}s", fill=(255, 255, 0))
                 row.append(t)
@@ -466,13 +525,14 @@ def main():
     ap.add_argument("--out")
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--loops", type=int, default=4)
+    ap.add_argument("--frames-dir")
     x = ap.parse_args()
     if x.cmd == "compose":
         return compose(x.a, x.b, x.jobs)
     if x.cmd == "encode":
         return encode(x.a, x.b)
     if x.cmd == "sheet":
-        return sheet(x.a, x.b, x.bg)
+        return sheet(x.a, x.b, x.bg, frames_dir=x.frames_dir)
     if x.cmd == "check":
         return check(x.a)
     return demo(x.a, x.bg, x.char, x.out, x.loops)

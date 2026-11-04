@@ -115,16 +115,17 @@ def shards(n, only=None):
 
 
 # ---- 画面に写す（Blender のカメラと同じ式。shift は画面の高さに対する割合） ----
-def project(p):
-    cx, cy, cz = CAM["loc"]
+def project(p, cam_loc=None, lens=None):
+    """世界の点が画面のどこに写るか（px）と奥行き。cam_loc・lens を渡すと、その時のカメラで"""
+    cx, cy, cz = cam_loc or CAM["loc"]
     a = math.radians(CAM["pitch_deg"])
     fwd = (0.0, math.cos(a), math.sin(a))
     up = (0.0, -math.sin(a), math.cos(a))
     d = (p[0] - cx, p[1] - cy, p[2] - cz)
     x = d[0]
-    y = d[0] * 0 + d[1] * up[1] + d[2] * up[2]
+    y = d[1] * up[1] + d[2] * up[2]
     z = d[1] * fwd[1] + d[2] * fwd[2]
-    k = CAM["lens"] / (CAM["sensor_h"] / 2)
+    k = (lens or CAM["lens"]) / (CAM["sensor_h"] / 2)
     sx = W / 2 + (x / z) * k * (H / 2)
     sy = H / 2 - (y / z) * k * (H / 2) + CAM["shift_y"] * H
     return sx, sy, z

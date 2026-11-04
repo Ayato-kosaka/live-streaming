@@ -50,9 +50,9 @@ QUALITY = {
     # 書けるか・壊れていないかだけ（plan の job が最初に回す）
     "smoke": dict(pct=12, scene=2, other=1, denoise=False, blur=False, thr=0.1),
     # 目線合わせ（半分の大きさ）
-    "preview": dict(pct=50, scene=20, other=8, denoise=True, blur=True, thr=0.04),
+    "preview": dict(pct=50, scene=16, other=8, denoise=True, blur=True, thr=0.05),
     # 本番
-    "final": dict(pct=100, scene=128, other=32, denoise=True, blur=True, thr=0.02),
+    "final": dict(pct=100, scene=64, other=16, denoise=True, blur=True, thr=0.03),
 }
 
 RND = random.Random(1_0000)
@@ -329,7 +329,7 @@ def ctl_node(name, mat, N, start=0.0):
 
 
 # ================================================================ 材質
-def mat_wall(name="wall", c1=(0.84, 0.82, 0.8), c2=(0.72, 0.70, 0.70), mortar=(0.42, 0.41, 0.43), scale=1.7):
+def mat_wall(name="wall", c1=(0.74, 0.72, 0.7), c2=(0.63, 0.61, 0.62), mortar=(0.36, 0.35, 0.37), scale=1.7):
     """白い石積みの壁（大きな石の目地・汚れ・凹凸）"""
     m, N, out = new_mat(name)
     uv = N.uv()
@@ -448,7 +448,7 @@ def mat_window():
     glow = N.math("MULTIPLY", N.math("MULTIPLY", win, flick), N.maprange(v, 0.0, 1.0, 1.4, 0.7))
     glow = N.math("MULTIPLY", glow, N.math("ADD", 0.7, N.math("MULTIPLY", r1, 0.6)))
     em = N.n("ShaderNodeEmission")
-    N.set(em, Color=(1.0, 0.6, 0.22), Strength=N.math("MULTIPLY", glow, 14.0))
+    N.set(em, Color=(1.0, 0.6, 0.22), Strength=N.math("MULTIPLY", glow, 5.5))
     frame = principled(N, Base_Color=(0.05, 0.03, 0.02), Roughness=0.7)
     mx = N.n("ShaderNodeMixShader")
     N.put(mx, 0, mull)
@@ -486,7 +486,12 @@ def mat_ground():
     N.set(noise, Vector=tc.outputs["Object"], Scale=0.5, Detail=8.0)
     col = N.ramp(N.sock(noise, "Fac", out=True), [(0.35, (0.012, 0.016, 0.01)), (0.7, (0.05, 0.05, 0.03))])
     bs = principled(N, Base_Color=col, Roughness=0.95)
-    N.nt.links.new(bs.outputs[0], out.inputs["Surface"])
+    # 地面は城のまわりだけ。外へ行くほど透明に（城が貯金箱の大きさに縮んだとき、四角い暗い板が浮かないように）
+    x, y, _ = N.xyz(tc.outputs["Object"])
+    d = N.math("SQRT", N.math("ADD", N.math("MULTIPLY", x, x), N.math("MULTIPLY", N.math("MULTIPLY", y, y), 1.8)))
+    alpha = N.maprange(d, 26.0, 15.0)
+    tr = N.n("ShaderNodeBsdfTransparent")
+    N.nt.links.new(mix_shader(N, alpha, tr.outputs[0], bs.outputs[0]), out.inputs["Surface"])
     return m
 
 
@@ -557,7 +562,7 @@ def mat_gate_glow():
     N.set(nz, Vector=N.comb(N.math("MULTIPLY", ang, 4.0), N.math("MULTIPLY", N.math("SINE", N.math("MULTIPLY", ph, TAU)), 0.4), 0.0), Scale=2.2, Detail=2.0)
     rays = N.maprange(N.sock(nz, "Fac", out=True), 0.35, 0.7, 0.55, 1.25)
     col = N.mix(core, (1.0, 0.5, 0.15), (1.0, 0.88, 0.66))
-    st = N.math("MULTIPLY", G, N.math("MULTIPLY", rays, N.math("ADD", 5.0, N.math("MULTIPLY", core, 38.0))))
+    st = N.math("MULTIPLY", G, N.math("MULTIPLY", rays, N.math("ADD", 2.2, N.math("MULTIPLY", core, 14.0))))
     em = N.n("ShaderNodeEmission")
     N.set(em, Color=col, Strength=st)
     N.nt.links.new(em.outputs[0], out.inputs["Surface"])
@@ -608,12 +613,12 @@ def mat_fog(name, warm=1.0):
     u, v, _ = N.xyz(N.uv())
     vfade = N.math("MULTIPLY", N.maprange(v, 0.0, 0.25), N.maprange(v, 1.0, 0.4))
     hfade = N.math("MULTIPLY", N.maprange(u, 0.0, 0.15), N.maprange(u, 1.0, 0.85))
-    alpha = N.math("MULTIPLY", N.math("MULTIPLY", dens, N.math("MULTIPLY", vfade, hfade)), N.math("MULTIPLY", fog, 0.62))
+    alpha = N.math("MULTIPLY", N.math("MULTIPLY", dens, N.math("MULTIPLY", vfade, hfade)), N.math("MULTIPLY", fog, 0.38))
     near = N.math("EXPONENT", N.math("MULTIPLY", N.math("ABSOLUTE", x), -0.28))
     warmk = N.math("MULTIPLY", N.math("MULTIPLY", near, G), warm)
     col = N.mix(N.math("MINIMUM", warmk, 1.0), (0.16, 0.16, 0.32), (1.0, 0.6, 0.28))
     em = N.n("ShaderNodeEmission")
-    N.set(em, Color=col, Strength=N.math("ADD", 0.25, N.math("MULTIPLY", warmk, 1.6)))
+    N.set(em, Color=col, Strength=N.math("ADD", 0.18, N.math("MULTIPLY", warmk, 0.9)))
     tr = N.n("ShaderNodeBsdfTransparent")
     N.nt.links.new(mix_shader(N, alpha, tr.outputs[0], em.outputs[0]), out.inputs["Surface"])
     return m
@@ -1063,10 +1068,10 @@ class Builder:
             self.rock(k, ball, loc, strength=(0.7, 0.3), size=(1.8, 0.7), levels=2)
         # 地面・石畳
         g = Geo()
-        g.face([(-70, -80, -0.02), (70, -80, -0.02), (70, 40, -0.02), (-70, 40, -0.02)])
+        g.face([(-34, -32, -0.02), (34, -32, -0.02), (34, 22, -0.02), (-34, 22, -0.02)])
         place(g.finish("ground"), "ground", self.c["scene"], self.m["ground"], self.root)
         g = Geo()
-        g.face([(-3.4, -60, 0.0), (3.4, -60, 0.0), (HW + 0.6, GY + 0.9, 0.0), (-HW - 0.6, GY + 0.9, 0.0)])
+        g.face([(-3.4, -31, 0.0), (3.4, -31, 0.0), (HW + 0.6, GY + 0.9, 0.0), (-HW - 0.6, GY + 0.9, 0.0)])
         place(g.finish("path"), "path", self.c["scene"], self.m["path"], self.root)
         # 灯籠（門の両脇）
         for side in (-1, 1):
@@ -1183,10 +1188,10 @@ def build(quality):
         "bark": mat_stone("bark", (0.04, 0.025, 0.018), (0.1, 0.06, 0.035)),
         "window": mat_window(), "path": mat_path(), "ground": mat_ground(),
         "leaf": mat_leaf(), "bat": mat_bat(),
-        "lamp": mat_emit("lamp", (1.0, 0.62, 0.28), 9.0, "uplight"),
+        "lamp": mat_emit("lamp", (1.0, 0.62, 0.28), 4.0, "uplight"),
         "gate_glow": mat_gate_glow(),
-        "rays": mat_additive("rays", (1.0, 0.68, 0.3), 1.1, "rays"),
-        "pool": mat_additive("pool", (1.0, 0.62, 0.26), 0.9, "pool"),
+        "rays": mat_additive("rays", (1.0, 0.68, 0.3), 0.45, "rays"),
+        "pool": mat_additive("pool", (1.0, 0.62, 0.26), 0.4, "pool"),
         "spark": mat_emit("spark", (1.0, 0.8, 0.46), 40.0),
         "spark_front": mat_emit("spark_front", (1.0, 0.84, 0.55), 26.0),
         "fog_near": mat_fog("fog_near", 1.0), "fog_far": mat_fog("fog_far", 0.4),
@@ -1301,17 +1306,12 @@ def build(quality):
     place(sm, "sticker", s, mats["sticker"])
 
     # ---- あやと（2枚の板。顔の真ん中をそろえる）
-    mpp = MO.AYATO_M_PER_PX
-    for name, size, face in (("ayato_spread", (1239, 1183), (632.5, 275.0)), ("ayato_rise", (820, 1102), (395.5, 227.0))):
-        w, h = size[0] * mpp, size[1] * mpp
-        # spread の顔の真ん中を基準に、rise の顔をそこへ合わせる
-        sfx, sfy = (632.5 - 619.5) * mpp, (591.5 - 275.0) * mpp
-        fx, fy = (face[0] - size[0] / 2) * mpp, (size[1] / 2 - face[1]) * mpp
-        ox = w / 2 + (fx - sfx)
-        oz = h / 2 + (fy - sfy)
+    # 板の寸法と原点は t7_motion.ayato_plane（書き出しの側が、同じ数で light の版のあやとの形を作る）
+    for name in MO.AYATO_POSES:
+        w, h, ox, oz = MO.ayato_plane(name)
         me = plane_mesh(name, w, h, ox=ox, oz=oz)
         pose = "spread" if name.endswith("spread") else "rise"
-        mats[name] = mat_card(name, os.path.join(THEMES, "halloween", "poses", "dracula", f"{pose}.webp"),
+        mats[name] = mat_card(name, os.path.join(ROOT, MO.AYATO_POSES[name]["file"]),
                               os.path.join(ASSETS, f"ayato-{pose}-rim.png"), emit=0.86, diffuse=0.22, rim_col=(0.85, 0.82, 1.0))
         place(me, name, cols["ayato"], mats[name])
 
@@ -1483,13 +1483,13 @@ def build(quality):
     ctl("key", L, "energy", k=0.9)
     L, _ = light("gate_area", "AREA", 0.0, (1.0, 0.66, 0.3), (0, GY + 2.0, 3.2), Euler((math.radians(-90), 0, 0)), root,
                  shape="RECTANGLE", size=2 * HW, size_y=SPRING + HW)
-    ctl("gate", L, "energy", k=14000.0)
+    ctl("gate", L, "energy", k=7000.0)
     L, _ = light("gate_point", "POINT", 0.0, (1.0, 0.68, 0.34), (0, GY - 3.2, 1.3), None, root, shadow_soft_size=1.2)
-    ctl("gate", L, "energy", k=2600.0)
+    ctl("gate", L, "energy", k=1400.0)
     for k2, (lx, ly, lz) in enumerate(((-3.2, 0.1, B + 0.3), (2.2, -0.1, B + 0.3), (-7.0, 0.0, B - 2.0), (7.0, 0.6, B - 1.8), (-4.3, 0.4, B + 0.2))):
         L, _ = light(f"uplight{k2}", "SPOT", 0.0, (1.0, 0.72, 0.42), (lx, ly - 1.4, lz), aim((0.0, 0.45, 1.0)), root,
                      spot_size=math.radians(80), spot_blend=0.9, shadow_soft_size=0.5)
-        ctl("uplight", L, "energy", k=2600.0)
+        ctl("uplight", L, "energy", k=1500.0)
     L, ob = light("ayato_flash", "POINT", 0.0, (1.0, 0.75, 0.4), (0, 0, 0), None, None, shadow_soft_size=1.0)
     ctl("flash", L, "energy", k=9000.0)
 
@@ -1524,21 +1524,23 @@ def setup_render(sc, cols, q):
     sc.cycles.samples = Q["scene"]
     sc.cycles.use_adaptive_sampling = True
     sc.cycles.adaptive_threshold = Q["thr"]
+    sc.cycles.adaptive_min_samples = max(4, Q["scene"] // 4)
     sc.cycles.use_denoising = Q["denoise"]
     try:
         sc.cycles.denoiser = "OPENIMAGEDENOISE"
     except TypeError:
         pass
-    sc.cycles.max_bounces = 6
-    sc.cycles.diffuse_bounces = 2
-    sc.cycles.glossy_bounces = 3
-    sc.cycles.transmission_bounces = 2
-    sc.cycles.transparent_max_bounces = 32
+    # 夜の場面で、光は門・窓・月からしか来ない。跳ね返りは少なくてよい（1コマの秒をいちばん食うのは透明の重なり）
+    sc.cycles.max_bounces = 4
+    sc.cycles.diffuse_bounces = 1
+    sc.cycles.glossy_bounces = 2
+    sc.cycles.transmission_bounces = 1
+    sc.cycles.transparent_max_bounces = 24
     sc.cycles.volume_bounces = 0
     sc.cycles.caustics_reflective = False
     sc.cycles.caustics_refractive = False
     sc.cycles.blur_glossy = 1.0
-    sc.cycles.sample_clamp_indirect = 6.0
+    sc.cycles.sample_clamp_indirect = 4.0
     sc.render.film_transparent = True
     sc.render.use_motion_blur = Q["blur"]
     sc.render.motion_blur_shutter = 0.5
@@ -1562,19 +1564,16 @@ def setup_render(sc, cols, q):
     sc.display_settings.display_device = "sRGB"
     META["view_transform"] = view
 
+    # 層は2つ。back（空・城・あやと）を1回で描き、front（前の粒だけ）は粒のほかを読み込まない。
+    # 2026-11-04 の試し（4層: 空・城・あやと・前）は、あやとの層が城を holdout で読み込むぶん、城を2回組み立てていた。
+    # light の版で城だけを薄くしてあやとを残すための形は、振付けから書き出しの側で作る（t7_pack.py の ayato_mask）
     vl0 = sc.view_layers[0]
-    vl0.name = "scene"
-    layers = {"scene": vl0}
-    for name in ("sky", "ayato", "front"):
-        layers[name] = sc.view_layers.new(name)
+    vl0.name = "back"
+    layers = {"back": vl0, "front": sc.view_layers.new("front")}
     for name, vl in layers.items():
         for cname, lc in vl.layer_collection.children.items():
-            if name == "ayato":
-                lc.exclude = cname in ("front", "sky")
-                lc.holdout = cname == "scene"
-            else:
-                lc.exclude = cname != name
-        if name != "scene":
+            lc.exclude = (cname == "front") if name == "back" else (cname != "front")
+        if name == "front":
             vl.samples = Q["other"]
     compositor(sc, Q)
 
@@ -1591,45 +1590,43 @@ def compositor(sc, Q):
     fo.format.color_depth = "8"
     fo.format.compression = 30
     fo.file_slots.clear()
-    glow = {"sky": (0.9, 9, 0.8, None), "scene": (1.0, 8, 0.9, 2.6), "ayato": None, "front": (0.7, 7, 1.0, 2.0)}
+    # (にじみの閾値, 大きさ, 足す量, 十字の光の閾値, 足す量)。にじみは半分の大きさで作る（MEDIUM。光のにじみには細かさが要らない）
+    glow = {"back": (1.6, 8, 0.4, 5.0, 0.25), "front": (0.9, 7, 0.8, 2.5, 0.35)}
     alpha_mode = "raw"
-    for name in ("sky", "scene", "ayato", "front"):
+    for name in ("back", "front"):
         rl = nt.nodes.new("CompositorNodeRLayers")
         rl.scene = sc
         rl.layer = name
         img = rl.outputs["Image"]
-        g = glow[name]
-        if g:
-            thr, size, k, streak_thr = g
-            fg = nt.nodes.new("CompositorNodeGlare")
-            fg.glare_type = "FOG_GLOW"
-            fg.quality = "HIGH"
-            fg.threshold = thr
-            fg.size = size
-            fg.mix = 1.0
-            nt.links.new(img, fg.inputs["Image"])
-            add = nt.nodes.new("CompositorNodeMixRGB")
-            add.blend_type = "ADD"
-            add.inputs[0].default_value = k
-            nt.links.new(img, add.inputs[1])
-            nt.links.new(fg.outputs["Image"], add.inputs[2])
-            img = add.outputs["Image"]
-            if streak_thr:
-                st = nt.nodes.new("CompositorNodeGlare")
-                st.glare_type = "STREAKS"
-                st.quality = "HIGH"
-                st.threshold = streak_thr
-                st.streaks = 4
-                st.angle_offset = math.radians(45)
-                st.fade = 0.9
-                st.mix = 1.0
-                nt.links.new(rl.outputs["Image"], st.inputs["Image"])
-                add2 = nt.nodes.new("CompositorNodeMixRGB")
-                add2.blend_type = "ADD"
-                add2.inputs[0].default_value = 0.45
-                nt.links.new(img, add2.inputs[1])
-                nt.links.new(st.outputs["Image"], add2.inputs[2])
-                img = add2.outputs["Image"]
+        thr, size, k, streak_thr, sk = glow[name]
+        fg = nt.nodes.new("CompositorNodeGlare")
+        fg.glare_type = "FOG_GLOW"
+        fg.quality = "MEDIUM"
+        fg.threshold = thr
+        fg.size = size
+        fg.mix = 1.0
+        nt.links.new(img, fg.inputs["Image"])
+        add = nt.nodes.new("CompositorNodeMixRGB")
+        add.blend_type = "ADD"
+        add.inputs[0].default_value = k
+        nt.links.new(img, add.inputs[1])
+        nt.links.new(fg.outputs["Image"], add.inputs[2])
+        img = add.outputs["Image"]
+        st = nt.nodes.new("CompositorNodeGlare")
+        st.glare_type = "STREAKS"
+        st.quality = "MEDIUM"
+        st.threshold = streak_thr
+        st.streaks = 4
+        st.angle_offset = math.radians(45)
+        st.fade = 0.88
+        st.mix = 1.0
+        nt.links.new(rl.outputs["Image"], st.inputs["Image"])
+        add2 = nt.nodes.new("CompositorNodeMixRGB")
+        add2.blend_type = "ADD"
+        add2.inputs[0].default_value = sk
+        nt.links.new(img, add2.inputs[1])
+        nt.links.new(st.outputs["Image"], add2.inputs[2])
+        img = add2.outputs["Image"]
         ao = nt.nodes.new("CompositorNodeAlphaOver")
         ao.inputs[1].default_value = (0.0, 0.0, 0.0, 1.0)
         nt.links.new(img, ao.inputs[2])
@@ -1649,9 +1646,10 @@ def compositor(sc, Q):
             log("!! 透明の書き出しを Raw にできなかった", e)
             alpha_mode = "view"
         nt.links.new(rl.outputs["Alpha"], fo.inputs[len(fo.inputs) - 1])
-        if name == "scene":
+        if name == "back":
             nt.links.new(ao.outputs["Image"], comp.inputs["Image"])
     META["alpha_encoding"] = alpha_mode
+    META["layers"] = ["back", "front"]
 
 
 # ================================================================ 動きをキーにする
