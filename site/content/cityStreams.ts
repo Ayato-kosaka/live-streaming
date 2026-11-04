@@ -1993,6 +1993,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "nRsDFgZmBqQ",
         "title": "🇲🇰北マケドニアでレーズンくるみパンつくっちゃおかなーーー",
         "date": "2026-11-02"
+      },
+      {
+        "videoId": "yNA44SQbYjM",
+        "title": "🇲🇰北マケドニアでパン三種の実験結果みよか",
+        "date": "2026-11-03"
       }
     ]
   }
