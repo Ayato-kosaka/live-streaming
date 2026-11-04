@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "GBYHxJQGlCY__captions",
+ "mode": "captions",
+ "dest": "GBYHxJQGlCY/captions",
+ "video": "GBYHxJQGlCY",
+ "channel": null,
+ "request": "shorts/requests/ikea-GBYHxJQGlCY-p1-captions-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 3285,
+  "caption_lines": 5016,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 1427512,
+  "tar_gz": 246831,
+  "encrypted": 246832
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 246832,
+   "sha256": "55d6b2ff5d9550547871f44b9ac54ce5dd9b050017c077faefec110ec909a89a"
+  }
+ ],
+ "hmac_sha256": "fa1e2da204eb0aca494f8aeae0665ca87528132ea0a6384b6e09d32173b7c09e",
+ "pubkey_sha256": "607d964973679437f2cf1c62e65bc3944ba95a9e88913ff88ffb3b32e955615e",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41796782343",
+ "created_at": "2026-11-04T08:06:23+00:00"
+}
