@@ -401,7 +401,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 466,
     h: 480,
-    suzuri: null,
+    suzuri: 21298348,
   },
   {
     /* 車は実在の車種に似ている。**題・本文に車の会社や車種の名前を入れない**
@@ -414,7 +414,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 449,
     h: 480,
-    suzuri: null,
+    suzuri: 21298358,
   },
   {
     /* 届いたのは 584px と小さかったので、描き直しで 1254px にした */
@@ -426,7 +426,7 @@ export const STICKERS: Sticker[] = [
     canFlip: false,
     w: 480,
     h: 469,
-    suzuri: null,
+    suzuri: 21298361,
   },
 ];
 
