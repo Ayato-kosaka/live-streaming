@@ -35,8 +35,10 @@ import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
 import { useSettledBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
-import { stageFor, plateTiming, type AlertStage } from "./season/show/stage";
+import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
+import { VideoShow } from "./season/show/VideoShow";
+import { useTierVideo } from "./season/show/useTierVideo";
 import { RichText } from "./season/plate/RichText";
 import type { PlateStyle } from "./themes";
 import { CharBox } from "./season/plate/CharBox";
@@ -197,7 +199,7 @@ export default function AlertBox() {
      キャラ絵の上下中央に重ねる（オーナーの元の仕様。2026-10-24 に戻した）。
      台本のある段は、主役が滞在中にいる帯（面の上の端）を空けて、その下にキャラ絵を置く。主役が
      キャラ絵の顔の前を通らないように（主役の居場所は字のブロックとキャラ絵の顔を避けた上の端・角） */
-  const charTop = Math.round(winH * (stage?.show ? stage.show.headroom : 0.02));
+  const charTop = Math.round(winH * (stage?.headroom ?? PLAIN_HEADROOM));
   const charBottom = Math.round(winH * 0.02);
   const charAreaH = Math.max(0, winH - charTop - charBottom);
   /** 字のブロックの真ん中の高さ。キャラ絵は四角の真ん中に置くので、中身の真ん中もここ */
@@ -320,6 +322,17 @@ export default function AlertBox() {
     const v = String(raw ?? "").trim().toLowerCase();
     return v === "1" || v === "true";
   }, [params.still]);
+
+  /* 段の演出の動画（11月から。#1095）。旗（`?fx=full` / `?fx=light`）か、配信に出すと決めた日だけ、
+     段を動画の段に差し替える。`still=1` の日は動画を出さず、1バイトも落とさない */
+  const tierVideo = useTierVideo(season.theme, { still: stillOnly, bankReady: season.rigsSettled });
+  const tierVideoRef = useRef(tierVideo);
+  tierVideoRef.current = tierVideo;
+  /* 動画が動かなかった（3 秒動かない・止められた）。その段は動画なしの見せ方に落とす（アラートは出したまま） */
+  const onVideoFail = useCallback((sec: number) => {
+    sendLog("AlertBox", sessionId, "fxVideoFailed", { sec });
+    setStage((st) => (st ? withoutVideo(st, sec) : st));
+  }, []);
 
   useEffect(() => {
     /* 試し表示。**外へは1本も繋がない**（名簿・額の口、どねる・YouTube、
@@ -886,6 +899,7 @@ export default function AlertBox() {
        その段の絵（台本の切り絵・ポーズ絵か小物）を、ここで展開してから出す（上限つきで待つ）。
        展開が間に合わなかった・読めなかった台本は、その段は前の小物の演出に落ちる（欠けた絵を出さない） */
     const sn = seasonRef.current;
+    const tv = tierVideoRef.current;
     const isMoney =
       currentNotification.type === "donation" ||
       currentNotification.type === "superchat";
@@ -899,12 +913,10 @@ export default function AlertBox() {
       /* 展開にかかった時間を User Timing に残す（`season:ensure`。tools/sprites/alert-decode.mjs が
          CPU を絞って読む）。待ちの上限を超えたかどうかは、ここを見ないと分からない */
       const t0 = typeof performance !== "undefined" ? performance.now() : 0;
-      const ensured = sn
-        .ensureFor(yen)
-        .catch(() => false)
-        .then((ok) => {
+      const ensured = Promise.all([sn.ensureFor(yen).catch(() => false), tv.ensureFor(yen).catch(() => false)])
+        .then(([ok, video]) => {
           try {
-            performance.measure("season:ensure", { start: t0, detail: { yen, ok } });
+            performance.measure("season:ensure", { start: t0, detail: { yen, ok, video } });
           } catch {
             // 測れない環境では何もしない
           }
@@ -914,12 +926,14 @@ export default function AlertBox() {
     }
     const nextStage = isMoney
       ? stageFor(
-          sn.theme,
+          // 動画の段に差し替えた日は、差し替えたテーマ（差し替えない日は sn.theme そのもの）
+          tv.theme,
           currentNotification.type === "superchat"
             ? currentNotification.jpy
             : currentNotification.amount,
           adjustedAlertDuration,
-          (name, kind) => (kind === "rig" ? sn.rigs : kind === "pose" ? sn.poses : sn.items).has(name)
+          (name, kind) => (kind === "rig" ? sn.rigs : kind === "pose" ? sn.poses : sn.items).has(name),
+          tv.planFor
         )
       : null;
     setStage(nextStage);
@@ -1147,7 +1161,16 @@ export default function AlertBox() {
                     H={winH}
                   />
                 )}
-                {season.theme && !stage?.show && (
+                {/* 段の演出の動画（11月から）。back はキャラ絵の後ろ、front はキャラ絵と字のあいだ */}
+                {season.theme && stage?.video && (
+                  <VideoShow
+                    key={`fxv-${notification.id}`}
+                    plan={stage.video}
+                    durationSec={calculateAdjustedAlertDuration(notification)}
+                    onFail={onVideoFail}
+                  />
+                )}
+                {season.theme && !stage?.show && !stage?.video && (
                   <SeasonEffects
                     theme={season.theme}
                     fx={season.fx}
@@ -1164,12 +1187,13 @@ export default function AlertBox() {
                 )}
 
                 <CharBox
-                  key={`char-${notification.id}`}
+                  /* 動画が動かずに落ちたとき（`withoutVideo`）は、出す秒が変わるので組み直す */
+                  key={`char-${notification.id}-${stage?.revealSec ?? 0}`}
                   top={charTop}
                   bottom={charBottom}
                   revealAt={stage?.revealSec ?? 0}
                   /* 台本のある段は、キャラ絵の真ん中（字・魔法陣・あやとの着地と同じ中心。season/show/common.ts）からふくらむ */
-                  originY={stage?.show ? textCenterY : undefined}
+                  originY={stage?.show || stage?.video ? textCenterY : undefined}
                 >
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
@@ -1293,7 +1317,7 @@ export default function AlertBox() {
                   }}
                 >
                   <RichText
-                    key={`text-${notification.id}`}
+                    key={`text-${notification.id}-${stage?.revealSec ?? 0}`}
                     plate={stage?.plate ?? plainPlate(notification.type)}
                     plain={!stage?.plate}
                     /* 字のブロックはキャラ絵の真ん中に置くので、上下の短いほうの2倍まで（箱の縁で切らない） */
