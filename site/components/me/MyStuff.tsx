@@ -17,6 +17,7 @@ import CardPeek from "@/components/cards/CardPeek";
 import type { PlanDays, ShownCard } from "@/components/cards/cards";
 import ReadAgain, { Waiting } from "./ReadAgain";
 import Wrote from "@/components/ui/Wrote";
+import WroteFold from "@/components/ui/WroteFold";
 
 /**
  * 取りに行った結果。**3つを別のものとして持つ。**
@@ -155,8 +156,9 @@ function Notes({
         return (
           <li key={n.id}>
             <Pin tone={["#e8879a", "#5fbde0", "#8dd06a", "#f2b53d"][i % 4]} />
-            {/* **自分が書いたまま出す**（#83） */}
-            <Wrote t={n.text} as="p" className="mp-note-text" />
+            {/* **自分が書いたまま出す**（#83）。長いときは6行で畳む（`WroteFold.tsx`）。
+                1件の背が伸びると、3件で止めている一覧（`Longer`）が意味をなさない */}
+            <WroteFold t={n.text} lines={6} as="p" className="mp-note-text" />
             {/* 貼った絵。**ここにも出す**——自分の付箋を見に来た人の手元で
                 絵が消えていると、貼れていないように読める（`NotePic.tsx`） */}
             {n.pic && <NotePic pic={n.pic} />}

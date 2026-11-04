@@ -1296,7 +1296,8 @@ const BREAKS = [
     "islandApi.js",
     "const text = cleanText(body.text, MAX_NOTE_LEN);",
     "const text = String(body.text ?? \"\");",
-    "企画の付箋も、置き場で 120 字",
+    /* 数（いまは 2,000）は口の `limits.note` から入るので、ここには書かない */
+    "企画の付箋も、置き場で ",
   ],
   [
     "窓が埋まっても鳴らさない",

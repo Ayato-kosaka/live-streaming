@@ -349,6 +349,44 @@ for i, m in enumerate(C["meigen"], 1):
 
 # ── 付箋大賞（部門賞 → 大賞）
 st = C["stickies"]
+
+
+def stage_px(text, after):
+    """付箋の面で、本文（`.quote`）と後日談（`.after`）が食う背の**見積もり**（px）。
+
+    **付箋の本文は 2026-11-04 から 2,000字まで入る**（前は 120字）。この面は
+    OBS の 1920×1080 にそのまま出るので、長い1枚を選ぶと紙が面の上下へ抜けて、
+    見出し（「付箋大賞 部門賞」）にかぶり、配信の画面を字で埋める。
+    **切って出さない。** 本文を黙って切ると、貼った人の字が配信で途中から
+    消える。組む前に止めて、選ぶ人に「どこを読むか」を決めてもらう。
+
+    1行の字数は紙の中の幅から: 本文 50px で約25字、後日談 30px で約42字
+    （半角は 0.55字ぶん）。1行の背は 本文 80px・後日談 51px。
+    **校正は 2026-10 の6枚**（字の届かない箱で、代わりの書体で測った）:
+    見積もり 524px の1枚は下に 25px 余り、633px の1枚は見出しに 6px かぶった。
+    本番の書体は少しだけ詰まるので、上限は出した版（633px）が通る 640px に置く。
+    """
+    import math
+
+    def wide(s):
+        return sum(0.55 if ord(c) < 0x2000 else 1 for c in s)
+
+    def rows(t, per):
+        return sum(max(1, math.ceil(wide(x) / per)) for x in t.split("\n")) if t else 0
+
+    return rows(text, 25) * 80 + rows(after or "", 42) * 51
+
+
+STAGE_MAX_PX = 640
+too_long = [(n.get("label") or n.get("theme") or "大賞", n["text"][:16], stage_px(n["text"], n.get("after")))
+            for n in st["nominees"] + [st["prize"]]
+            if stage_px(n["text"], n.get("after")) > STAGE_MAX_PX]
+if too_long:
+    sys.exit("付箋大賞の面に収まらない付箋がある（組まずに止めた）:\n" + "\n".join(
+        "  %s「%s…」 見積もり %dpx / 入るのは %dpx まで" % (lab, head, px, STAGE_MAX_PX)
+        for lab, head, px in too_long) +
+        "\ncontent.json の text に、配信で読むところだけを抜いて入れる"
+        "（抜いたことが分かるように、切ったところに「…」を置く）。後日談（after）を短くしてもよい。")
 for i, n in enumerate(st["nominees"], 1):
     after = ('<div class="after" data-step="1">%s</div>' % e(n["after"])) if n.get("after") else ""
     scene("""<div class="kicker">付箋大賞 部門賞 %d</div>

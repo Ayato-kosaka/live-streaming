@@ -38,6 +38,20 @@
   box-shadow: none;
 }
 
+/* --- 長い字を数行で畳む（`components/ui/WroteFold.tsx`・2026-11-04） ---
+   付箋の本文が 2,000字まで入るようになった。字は全部置いたまま、
+   見た目だけ切る（ページ内検索と読み上げには全文が届く）。
+   押しどころは上の `.longer` をそのまま使う——並びの畳みと同じ形。 */
+.wr-fold:not(.is-open) > * {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--wr-lines);
+  line-clamp: var(--wr-lines);
+  overflow: hidden;
+}
+/* 紙の中に置くので、並びの下にぶら下がるときより詰める */
+.longer.wr-more { margin-top: var(--sp-2); }
+
 /* --- 企画ページの下書きを書く道具 ------------------------------------
    完成形が見えないまま書かせると情報の足りない下書きになるので、
    書いたそばから同じ部品でプレビューを出す。
