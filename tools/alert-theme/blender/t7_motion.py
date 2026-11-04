@@ -327,6 +327,17 @@ def _leaf_spec():
 LEAVES = _leaf_spec()
 
 
+def _leaves_behind_ayato():
+    """伯爵あやとの顔の列（画面の x 60〜340）を通る手前の葉は、あやとの後ろへ下げる（画面の上の通り道は変わらない）。
+    2026-11-04 の試しで、降り立つ山場と滞在の両方で、紅葉があやとの顔を横切った"""
+    for lf in LEAVES:
+        if lf["depth"] < AYATO_DEPTH + 1.0 and lf["sx"] - lf["sway"] < 340 and lf["sx"] + lf["sway"] > 60:
+            lf["depth"] = AYATO_DEPTH + 1.5 + 0.25 * (lf["depth"] - 5)
+
+
+_leaves_behind_ayato()
+
+
 def _spark_spec():
     gate = []  # 門の光から立ちのぼる（城の子）
     for i in range(40):
@@ -570,6 +581,10 @@ def _ayato_foot(name):
     return ayato_plane(name)[3]
 
 
+# 接地の影を置く奥行き（左の四角い塔の前の面・小塔のあたり。カメラから前へ m）
+SHADOW_DEPTH = 32.6
+
+
 def ayato(clip, t, out):
     """伯爵あやと。飛んできて（rise。マントの裾がなびく）、塔の上に降り立つ（spread に替わってマントがばさっと開き、
     沈んでつぶれ、伸びて戻る）。滞在中はマントが風にはためき、ゆっくり浮き沈みする"""
@@ -642,6 +657,25 @@ def ayato(clip, t, out):
         out[f"obj:{name}:scale"] = (s * sq_x, s * sq_y, s) if op > 0 else HIDE
         out[f"val:{name}_op"] = op
     out["obj:ayato_flash:loc"] = vadd(p, (0.4, 2.0, 0.6))
+    # 接地の影: 足が画面で乗っている左の四角い塔の胸壁に、薄い楕円を置く（あやとは城より 16m 手前の空に浮いていて、
+    # 本物の影の落ちる面が無い。画面で「塔の上に立つ」を見せるための影）。降り立つ瞬間に濃くなり、飛び去ると消える
+    sp = "ayato_spread"
+    w_m, _, _, oz_m = ayato_plane(sp)
+    feet = tuple(p[i] - up[i] * oz_m * s for i in range(3))
+    fsx, fsy, fd = P.project(feet)
+    sh_op = 0.0
+    if clip == "intro":
+        sh_op = 0.55 * ease_out(ramp(t, 4.40, 4.48)) + 0.25 * pulse(t, 4.47, 0.05)
+    elif clip == "stay":
+        sh_op = 0.55
+    else:
+        sh_op = 0.55 * (1 - ramp(t, 0.0, 0.3))
+    k = SHADOW_DEPTH / fd
+    # 光は左上から来るので、影は足から少し右へ。幅は足の幅ほど（塔の左の縁から空へはみ出さない）
+    out["obj:ayato_shadow:loc"] = screen(fsx + 14, fsy + 4, SHADOW_DEPTH)
+    out["obj:ayato_shadow:rot"] = (math.radians(90 + P.CAM["pitch_deg"]), 0.0, yaw)
+    out["obj:ayato_shadow:scale"] = (0.32 * w_m * s * sq_x * k, 0.075 * w_m * s * k, 1.0) if sh_op > 0 else HIDE
+    out["val:ayato_shadow_op"] = sh_op
     w = TAU * tau / 1.5
     out["key:ayato_spread:flap_s"] = flap_a * math.cos(w)
     out["key:ayato_spread:flap_c"] = flap_a * math.sin(w)

@@ -429,9 +429,9 @@ def sheet(work, path, bg=None, picks=None, frames_dir=None):
     have = fr["have"]
     if picks is None:
         picks = [(c, i) for c in P.CLIPS for i in have[c]]
-        if len(picks) > 14:
-            step = len(picks) / 14
-            picks = [picks[int(k * step)] for k in range(14)]
+        if len(picks) > 24:
+            step = len(picks) / 24
+            picks = [picks[int(k * step)] for k in range(24)]
     if bg:
         im = Image.open(bg).convert("RGB")
         # 配信画面（1080×1920）の、広げたアラートの箱のあたり（76,445 から幅 927）を 720×1280 に

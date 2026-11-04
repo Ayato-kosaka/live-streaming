@@ -1146,7 +1146,10 @@ class Builder:
         g.face([(-34, -32, -0.02), (34, -32, -0.02), (34, 22, -0.02), (-34, 22, -0.02)])
         place(g.finish("ground"), "ground", self.c["scene"], self.m["ground"], self.root)
         g = Geo()
-        g.face([(-3.4, -31, 0.0), (3.4, -31, 0.0), (HW + 0.6, GY + 0.9, 0.0), (-HW - 0.6, GY + 0.9, 0.0)])
+        # カメラの近くで広げる（ふだんの画角は ±3.5m で、外は写らない）。カメラが回り込むと（t7_motion.orbit_yaw）、
+        # 画面の左下に地面の外（夜空の板）が出た（2026-11-04 の試し）
+        g.face([(-13.0, -31, 0.0), (13.0, -31, 0.0), (9.0, -16, 0.0), (HW + 0.6, GY + 0.9, 0.0), (-HW - 0.6, GY + 0.9, 0.0),
+                (-9.0, -16, 0.0)])
         place(g.finish("path"), "path", self.c["scene"], self.m["path"], self.root)
         # 灯籠（門の両脇）
         for side in (-1, 1):
@@ -1394,6 +1397,22 @@ def build(quality):
         ob = place(board_mesh(name, w, h, ox, oz, nx, ny), name, cols["ayato"], mats[name])
         board_keys(ob, name, MO.AYATO_POSES[name]["size"], ox, oz, MO.AYATO_M_PER_PX)
 
+    # ---- あやとの接地の影（足の下の胸壁に乗る薄い楕円。t7_motion の ayato の最後）
+    m, N, out = new_mat("ayato_shadow")
+    op = ctl_node("ayato_shadow_op", m, N, 0.0)
+    u, v, _ = N.xyz(N.uv())
+    du = N.math("MULTIPLY", N.math("SUBTRACT", u, 0.5), 2.0)
+    dv = N.math("MULTIPLY", N.math("SUBTRACT", v, 0.5), 2.0)
+    r = N.math("SQRT", N.math("ADD", N.math("MULTIPLY", du, du), N.math("MULTIPLY", dv, dv)))
+    fall = N.maprange(r, 1.0, 0.15)
+    em = N.n("ShaderNodeEmission")
+    N.set(em, Color=(0.0, 0.0, 0.0), Strength=0.0)
+    tr = N.n("ShaderNodeBsdfTransparent")
+    N.nt.links.new(mix_shader(N, N.math("MULTIPLY", N.math("MULTIPLY", fall, fall), op), tr.outputs[0], em.outputs[0]),
+                   out.inputs["Surface"])
+    sh_ob = place(plane_mesh("ayato_shadow", 1.0, 1.0, 0.5, 0.5), "ayato_shadow", s, m)
+    sh_ob.visible_shadow = False
+
     # ---- 夜空・月・雲
     sky_depth = 220.0
     corners = [P.unproject(sx, sy, sky_depth, P.LENS_FROM - 1.0) for sx, sy in ((-60, 1340), (780, 1340), (780, -60), (-60, -60))]
@@ -1576,6 +1595,10 @@ def build(quality):
     L, _ = light("char_key", "SPOT", 0.0, (0.75, 0.8, 1.0), (-10.0, -34.0, 30.0), aim((10.0, 27.0, -15.0)), None,
                  spot_size=math.radians(62), spot_blend=0.6, shadow_soft_size=0.4)
     ctl("key", L, "energy", k=14000.0)
+    # ピポに当てる狭い光（左上の前から）。露台の戸のまわりの壁が明るくなり、ピポの影（振る旗ごと）が右下へ落ちる
+    L, _ = light("pipo_key", "SPOT", 0.0, (1.0, 0.93, 0.84), (-2.0, -14.0, 28.0), aim((5.35, 13.95, -9.35)), root,
+                 spot_size=math.radians(22), spot_blend=0.5, shadow_soft_size=0.15)
+    ctl("key", L, "energy", k=7000.0)
 
     # ---- カメラ
     cd_ = bpy.data.cameras.new("cam")
