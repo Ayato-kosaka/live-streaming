@@ -515,10 +515,34 @@ def mat_leaf(name="leaf", stops=None):
 
 
 def mat_bat():
+    """こうもり。黒いままだと門の光の前で黒い影（汚れ）に見えた（2026-11-04 の採点）。縁を薄紫に光らせ、体も少しだけ自分で光る"""
     m, N, out = new_mat("bat")
-    bs = principled(N, Base_Color=(0.02, 0.012, 0.026), Roughness=0.5)
+    bs = principled(N, Base_Color=(0.035, 0.02, 0.05), Roughness=0.5)
     N.set(bs, Sheen_Weight=0.8, Sheen_Tint=(0.55, 0.4, 0.9))
-    N.nt.links.new(bs.outputs[0], out.inputs["Surface"])
+    lw = N.n("ShaderNodeLayerWeight")
+    N.set(lw, Blend=0.4)
+    rim = N.math("POWER", N.sock(lw, "Facing", out=True), 2.2)
+    em = N.n("ShaderNodeEmission")
+    N.set(em, Color=(0.78, 0.6, 1.0), Strength=N.math("ADD", N.math("MULTIPLY", rim, 1.6), 0.05))
+    N.nt.links.new(add_shader(N, bs.outputs[0], em.outputs[0]), out.inputs["Surface"])
+    return m
+
+
+def mat_coin():
+    """金貨。暗い夜の場では映すものが無く、金属が平らな黄色（ぼけ玉）に見えた（2026-11-04 の採点）。
+    映り込みの帯（上は月の夜空の青白・地平に門の灯りの金・下は暗い）を材質に持たせ、回るたびに帯が金の面を滑るようにする"""
+    m, N, out = new_mat("coin")
+    gold = (1.0, 0.78, 0.34)
+    bs = principled(N, Base_Color=gold, Metallic=1.0, Roughness=0.16)
+    tc = N.n("ShaderNodeTexCoord")
+    rx, _, rz = N.xyz(N.sock(tc, "Reflection", out=True))
+    env = N.ramp(N.maprange(rz, -1.0, 1.0), [(0.0, (0.02, 0.012, 0.0)), (0.40, (0.16, 0.09, 0.02)), (0.47, (1.0, 0.72, 0.32)),
+                                             (0.53, (1.0, 0.86, 0.55)), (0.58, (0.12, 0.08, 0.05)), (0.80, (0.42, 0.48, 0.66)),
+                                             (1.0, (0.85, 0.9, 1.0))])
+    side = N.maprange(rx, -1.0, 1.0, 0.6, 1.3)
+    em = N.n("ShaderNodeEmission")
+    N.set(em, Color=N.mix(1.0, env, gold, "MULTIPLY"), Strength=N.math("MULTIPLY", side, 2.4))
+    N.nt.links.new(add_shader(N, bs.outputs[0], em.outputs[0]), out.inputs["Surface"])
     return m
 
 
@@ -706,8 +730,11 @@ def load_image(path, non_color=False):
 
 
 def mat_card(name, img_path, rim_path=None, emit=0.8, diffuse=0.35, rim_col=(0.78, 0.84, 1.0), rim_k=2.2,
-             windows_path=None):
-    """ステッカーの絵の板。絵の色を光らせたまま（絵柄を崩さない）、場面の光を少し受け、縁に月の光を乗せる"""
+             windows_path=None, normal_path=None, lit=0.0):
+    """ステッカーの絵の板。絵の色を光らせたまま（絵柄を崩さない）、場面の光を少し受け、縁に月の光を乗せる。
+
+    normal_path を渡すと、場面の光を「縁の厚み」の法線で受ける（lit が受ける強さ）。門の光・灯り・前からの月の光が、
+    縁の向きごとに当たって、板が立体に見える（2026-11-04 の採点「主役が動かない板」の続き）"""
     m, N, out = new_mat(name)
     op = ctl_node(f"{name}_op", m, N, 1.0)
     tex = N.n("ShaderNodeTexImage", image=load_image(img_path), interpolation="Cubic", extension="CLIP")
@@ -737,6 +764,16 @@ def mat_card(name, img_path, rim_path=None, emit=0.8, diffuse=0.35, rim_col=(0.7
         df = N.n("ShaderNodeBsdfDiffuse")
         N.set(df, Color=N.mix(1.0, col, (diffuse, diffuse, diffuse), "MULTIPLY"))
         sh = add_shader(N, sh, df.outputs[0])
+    if normal_path and lit > 0:
+        nt_ = N.n("ShaderNodeTexImage", image=load_image(normal_path, True), interpolation="Linear", extension="CLIP")
+        N.put(nt_, "Vector", N.uv())
+        nm = N.n("ShaderNodeNormalMap", space="TANGENT", uv_map="UVMap")
+        N.put(nm, "Color", N.sock(nt_, "Color", out=True))
+        N.put(nm, "Strength", 1.0)
+        bs = principled(N, Base_Color=N.mix(1.0, col, (lit, lit, lit), "MULTIPLY"), Roughness=0.5)
+        N.set(bs, Specular_IOR_Level=0.35)
+        N.put(bs, "Normal", nm.outputs["Normal"])
+        sh = add_shader(N, sh, bs.outputs[0])
     tr = N.n("ShaderNodeBsdfTransparent")
     N.nt.links.new(mix_shader(N, N.math("MULTIPLY", al, op), tr.outputs[0], sh), out.inputs["Surface"])
     return m
@@ -773,6 +810,43 @@ def plane_mesh(name, w, h, ox=0.0, oz=0.0):
     pts = [(x, z, 0.0) for x, _, z in pts]
     g.face(pts, [(0, 0), (1, 0), (1, 1), (0, 1)])
     return g.finish(name)
+
+
+def board_mesh(name, w, h, ox, oz, nx, ny):
+    """キャラの板。絵の形を少し動かす（シェイプキー）ので格子に割る。原点 (ox, oz)・UV は 0〜1（plane_mesh と同じ向き）"""
+    verts = [(i / nx * w - ox, j / ny * h - oz, 0.0) for j in range(ny + 1) for i in range(nx + 1)]
+    faces = []
+    for j in range(ny):
+        for i in range(nx):
+            a = j * (nx + 1) + i
+            faces.append((a, a + 1, a + nx + 2, a + nx + 1))
+    me = bpy.data.meshes.new(name)
+    me.from_pydata(verts, [], faces)
+    uvl = me.uv_layers.new(name="UVMap")
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            x, y, _ = verts[me.loops[li].vertex_index]
+            uvl.data[li].uv = ((x + ox) / w, (y + oz) / h)
+    me.update()
+    return me
+
+
+def board_keys(ob, name, size_px, ox, oz, mpp):
+    """t7_motion.deform_px の形を、板のシェイプキーにする。値は振付けの `key:<板>:<形>` が動かす"""
+    keys = MO.BOARD_KEYS.get(name)
+    if not keys:
+        return
+    ob.shape_key_add(name="Basis", from_mix=False)
+    me = ob.data
+    for key in keys:
+        kb = ob.shape_key_add(name=key, from_mix=False)
+        kb.slider_min, kb.slider_max = -4.0, 4.0
+        for i, v in enumerate(me.vertices):
+            x, y, z = v.co
+            px, py = (x + ox) / mpp, size_px[1] - (y + oz) / mpp
+            dx, dy, dn = MO.deform_px(name, key, px, py)
+            kb.data[i].co = (x + dx * mpp, y - dy * mpp, z + dn * mpp)
+        ctl(f"key_{name}_{key}", me.shape_keys, f'key_blocks["{key}"].value')
 
 
 def arch_pts(hw, spring, n=18, a0=math.pi, a1=0.0):
@@ -1186,7 +1260,7 @@ def build(quality):
         "stone_dark": mat_stone("stone_dark", (0.06, 0.055, 0.055), (0.14, 0.13, 0.12)),
         "iron": mat_metal("iron", (0.05, 0.05, 0.055), 0.45, 0.9),
         "gold": mat_metal("gold", (1.0, 0.72, 0.28), 0.18, 1.0),
-        "coin": mat_metal("coin", (1.0, 0.8, 0.36), 0.13, 1.0, emit=0.14),
+        "coin": mat_coin(),
         "bark": mat_stone("bark", (0.04, 0.025, 0.018), (0.1, 0.06, 0.035)),
         "window": mat_window(), "path": mat_path(), "ground": mat_ground(),
         "leaf": mat_leaf(), "bat": mat_bat(),
@@ -1290,12 +1364,13 @@ def build(quality):
         g.face([(-w / 2, y, z0), (w / 2, y, z0), (w / 2, y, z0 + h), (-w / 2, y, z0 + h)], [(0, 0), (1, 0), (1, 1), (0, 1)])
         place(g.finish(f"fog{k}"), f"fog{k}", s, mats[mat], root)
 
-    # ---- ピポ（露台。足が原点）
-    pw = MO.PIPO_H * 164 / 204
-    pm = plane_mesh("pipo", pw, MO.PIPO_H, ox=0.457 * pw, oz=0.025 * MO.PIPO_H)
-    mats["pipo"] = mat_card("pipo", os.path.join(THEMES, "castle", "pipo-flag.png"), os.path.join(ASSETS, "pipo-flag-rim.png"),
-                            emit=0.78, diffuse=0.35)
-    place(pm, "pipo", s, mats["pipo"], root)
+    # ---- ピポ（露台。足が原点）。旗の板は形が動く（旗を振る）。cheer の板は、あやとが降り立った瞬間に跳ねるときだけ
+    for name, asset, (nx, ny) in (("pipo", "pipo-flag", (34, 42)), ("pipo_cheer", "pipo-cheer", (2, 2))):
+        w, h, ox, oz = MO.pipo_plane(name)
+        mats[name] = mat_card(name, os.path.join(ROOT, MO.PIPO_BOARDS[name]["file"]), os.path.join(ASSETS, f"{asset}-rim.png"),
+                              emit=0.55, diffuse=0.0, normal_path=os.path.join(ASSETS, f"{asset}-normal.png"), lit=0.75)
+        ob = place(board_mesh(name, w, h, ox, oz, nx, ny), name, s, mats[name], root)
+        board_keys(ob, name, MO.PIPO_BOARDS[name]["size"], ox, oz, MO.PIPO_M_PER_PX)
 
     # ---- 貯金箱の城（前兆の絵）
     bx, by, bw, bh = P.BANK_RECT
@@ -1309,13 +1384,15 @@ def build(quality):
 
     # ---- あやと（2枚の板。顔の真ん中をそろえる）
     # 板の寸法と原点は t7_motion.ayato_plane（書き出しの側が、同じ数で light の版のあやとの形を作る）
-    for name in MO.AYATO_POSES:
+    # マントがはためくので格子に割る（spread は裾の波が見える細かさ。rise は裾だけ）
+    for name, (nx, ny) in (("ayato_spread", (48, 46)), ("ayato_rise", (32, 44))):
         w, h, ox, oz = MO.ayato_plane(name)
-        me = plane_mesh(name, w, h, ox=ox, oz=oz)
         pose = "spread" if name.endswith("spread") else "rise"
         mats[name] = mat_card(name, os.path.join(ROOT, MO.AYATO_POSES[name]["file"]),
-                              os.path.join(ASSETS, f"ayato-{pose}-rim.png"), emit=0.86, diffuse=0.22, rim_col=(0.85, 0.82, 1.0))
-        place(me, name, cols["ayato"], mats[name])
+                              os.path.join(ASSETS, f"ayato-{pose}-rim.png"), emit=0.6, diffuse=0.0, rim_col=(0.85, 0.82, 1.0),
+                              normal_path=os.path.join(ASSETS, f"ayato-{pose}-normal.png"), lit=0.7)
+        ob = place(board_mesh(name, w, h, ox, oz, nx, ny), name, cols["ayato"], mats[name])
+        board_keys(ob, name, MO.AYATO_POSES[name]["size"], ox, oz, MO.AYATO_M_PER_PX)
 
     # ---- 夜空・月・雲
     sky_depth = 220.0
@@ -1494,6 +1571,11 @@ def build(quality):
         ctl("uplight", L, "energy", k=1500.0)
     L, ob = light("ayato_flash", "POINT", 0.0, (1.0, 0.75, 0.4), (0, 0, 0), None, None, shadow_soft_size=1.0)
     ctl("flash", L, "energy", k=9000.0)
+    # 前の上（カメラの左上）からの月の光。ピポとあやとの板に当たって縁の厚み（法線の絵）で陰ができ、
+    # ピポの影が露台の戸と塔の壁に落ちる。城の上のほうも少し明るくなる
+    L, _ = light("char_key", "SPOT", 0.0, (0.75, 0.8, 1.0), (-10.0, -34.0, 30.0), aim((10.0, 27.0, -15.0)), None,
+                 spot_size=math.radians(62), spot_blend=0.6, shadow_soft_size=0.4)
+    ctl("key", L, "energy", k=14000.0)
 
     # ---- カメラ
     cd_ = bpy.data.cameras.new("cam")
@@ -1513,6 +1595,13 @@ def build(quality):
     cam.rotation_euler = (math.radians(90 + P.CAM["pitch_deg"]), 0, 0)
     sc.camera = cam
     ctl("cam_lens", cd_, "lens")
+    # 夜空・雲・満月はカメラの子にする。カメラが城のまわりを回り込んでも（t7_motion.orbit_yaw）、空の板の縁が画面に入らない
+    from mathutils import Matrix
+    base = Matrix.Translation(cam.location) @ cam.rotation_euler.to_matrix().to_4x4()
+    for nm in ("sky", "clouds", "moon"):
+        ob = bpy.data.objects[nm]
+        ob.parent = cam
+        ob.matrix_parent_inverse = base.inverted()
 
     setup_render(sc, cols, quality)
     return sc, cols
@@ -1545,7 +1634,8 @@ def setup_render(sc, cols, q):
     sc.cycles.sample_clamp_indirect = 4.0
     sc.render.film_transparent = True
     sc.render.use_motion_blur = Q["blur"]
-    sc.render.motion_blur_shutter = 0.4
+    # 0.4 だと金貨が落ちる速さでぶれて、黄色いぼけ玉に見えた（2026-11-04 の採点）
+    sc.render.motion_blur_shutter = 0.25
     sc.render.resolution_x = P.W
     sc.render.resolution_y = P.H
     sc.render.resolution_percentage = Q["pct"]
@@ -1713,14 +1803,16 @@ def bake():
                 kp.interpolation = "LINEAR"
         fc.update()
         n_key += len(frames)
-    unused = sorted(set(CTL) - {k.split(":", 1)[1] for k in MO.pose("stay", 0.0) if k.startswith("val:")} - {"cam_lens"})
+    sent = {k.split(":", 1)[1] if k.startswith("val:") else k.replace(":", "_") for k in MO.pose("stay", 0.0)}
+    unused = sorted(set(CTL) - sent)
     log(f"キー {n_key} 個・曲線 {len(chans)} 本・{time.time() - t0:.1f} 秒。振付けの来ない口: {unused}")
 
 
 def _assign(idd, path, v):
-    if path.startswith("nodes["):
-        node_name = path.split('"')[1]
-        idd.nodes[node_name].outputs[0].default_value = v
+    # `nodes["x"].outputs[0].default_value`・`key_blocks["flap_s"].value` のような道も、最後の名前の手前まで辿って入れる
+    if "." in path:
+        head, attr = path.rsplit(".", 1)
+        setattr(idd.path_resolve(head), attr, v)
     else:
         setattr(idd, path, v)
 
