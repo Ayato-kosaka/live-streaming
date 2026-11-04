@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "gHTWAMKCITo__zoom-4800-5040-0.5fps",
+ "mode": "zoom",
+ "dest": "gHTWAMKCITo/zoom-4800-5040-0.5fps",
+ "video": "gHTWAMKCITo",
+ "channel": null,
+ "request": "shorts/requests/waltemis-gHTWAMKCITo-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 2,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 13
+ },
+ "bytes": {
+  "plain": 1775251,
+  "tar_gz": 1703772,
+  "encrypted": 1703776
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1703776,
+   "sha256": "09f2a01b5ad0afef3bd95777c96455c20d17d2e5d4930487bdde81d55b033499"
+  }
+ ],
+ "hmac_sha256": "b7daa3bcfcb97faa685ff788744d656e6a942357b668d85198df59839dac81b2",
+ "pubkey_sha256": "c2c7432f1eddfe794568c82d4804c705e5ab57b947dd0fa74a6fe60801d6da5c",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41847540050",
+ "created_at": "2026-11-04T14:57:01+00:00"
+}
