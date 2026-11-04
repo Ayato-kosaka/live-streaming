@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "AZwmL3H25TA__captions",
+ "mode": "captions",
+ "dest": "AZwmL3H25TA/captions",
+ "video": "AZwmL3H25TA",
+ "channel": null,
+ "request": "shorts/requests/waltemis-gHTWAMKCITo-p1-captions-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 1150,
+  "caption_lines": 1327,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 523568,
+  "tar_gz": 87798,
+  "encrypted": 87808
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 87808,
+   "sha256": "05a3577a887d29e2923cdb84f4a906e14cc189863a1ef57a3fc924e5272fe956"
+  }
+ ],
+ "hmac_sha256": "5d7ecdd847a398d6bd2878d2071aefa7507acd3e29a7ed0733da085cfbc2a919",
+ "pubkey_sha256": "c2c7432f1eddfe794568c82d4804c705e5ab57b947dd0fa74a6fe60801d6da5c",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41847540050",
+ "created_at": "2026-11-04T14:28:02+00:00"
+}
