@@ -168,7 +168,7 @@ class Geo:
         return me
 
 
-def place(me, name, col, mat=None, parent=None, loc=(0, 0, 0), smooth=None):
+def place(me, name, col, mat=None, parent=None, loc=(0, 0, 0)):
     ob = bpy.data.objects.new(name, me)
     col.objects.link(ob)
     if mat is not None:
