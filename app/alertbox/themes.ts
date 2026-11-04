@@ -135,6 +135,26 @@ export type TierShow = {
   script: Cue[];
 };
 
+/** 動画の段の見比べる2通り（#1095）。full は叩き台どおりの全面、light は光の線で描いてキャラが出たら薄くする */
+export type FxVideoVariant = "full" | "light";
+
+/**
+ * 段の演出を透明つきの動画で流す（11月から。#1095）。動画の名前と秒は `manifest.json`（`fxVideo.dir` の中）が持ち、
+ * ここは段ごとの並べ方だけを持つ。流すのは `season/show/VideoShow.tsx`
+ */
+export type TierVideo = {
+  /** `manifest.json` の段の名前（`tiers` のキー） */
+  tier: string;
+  /** キャラ絵の箱の上に空ける高さ（面の高さに対する割合）。ハロウィン2版目の同じ段と同じ */
+  headroom: number;
+  /**
+   * 字の出し方。ハロウィン2版目の同じ段に合わせる（杖で書く・斬撃で切り出すは振付けが字を開くので、1字ずつ弾むにする）。
+   * pop 1字ずつ弾む（段1〜3）/ don 弾んだあと「ドン」（段4〜6）/
+   * count 札が上から降りて揺れ、額を数え上げて「ドン」（段7。ハロウィン2版目の段7 の札の出方。こうもりは描かない）
+   */
+  text: "pop" | "don" | "count";
+};
+
 export type FxTier = {
   /** この額（JPY）以上でこの段 */
   min: number;
@@ -147,6 +167,8 @@ export type FxTier = {
   plate?: PlateStyle;
   /** 演出の台本。あれば小物（`slots` / `files`）の代わりにこれを出す */
   show?: TierShow;
+  /** 演出の動画。動画がそろっていれば、小物の代わりにこれを流す（そろわなければ字とキャラ絵だけ） */
+  video?: TierVideo;
   /** 使う枠の数（`slots` の頭から） */
   slots: number;
   /** この段で出してよい小物（`fx` の `file`） */
@@ -185,6 +207,22 @@ export type CastleBankDef = {
   kind: "castle";
 };
 
+/**
+ * 投げ銭の演出を動画で流す段の組（11月から。#1095）。**`tiers`（ふだんの段）とは別に持つ。**
+ * 配信に出すのは `live` が true で `variant` が決まっているときだけ。それまでは `?fx=full` / `?fx=light` の旗が
+ * 付いたページ（試し表示・録画・`/alert/perf`）でだけ、`tiers` の代わりにこちらの段で出す（`season/show/fxVideo.ts`）
+ */
+export type FxVideoDef = {
+  /** 動画と `manifest.json` の置き場（公開側のパス） */
+  dir: string;
+  /** 配信に出すか。false なら旗の付いたページだけ */
+  live: boolean;
+  /** 配信で使う通り。あやとが2通りを見比べて選ぶまで決めない（null） */
+  variant: FxVideoVariant | null;
+  /** 動画の段（`tiers` と同じ形。`min` の切れ目もスパチャの7色） */
+  tiers: FxTier[];
+};
+
 export type SeasonTheme = {
   id: string;
   /** JST の開始（含む）。`YYYY-MM-DDTHH:mm` */
@@ -220,6 +258,13 @@ export type SeasonTheme = {
    * 下の `bank`（コマ送り。0% の絵に 100% の絵を下から溜める）に落ちる。それも読めなければ豚
    */
   castleBank?: CastleBankDef;
+  /** 投げ銭の演出を動画で流す段の組。無ければ `tiers` だけ */
+  fxVideo?: FxVideoDef;
+  /**
+   * 動画の段に差し替えたテーマにだけ付く印（どちらの通りで流すか）。`THEMES` に書くものではない。
+   * 差し替えは `season/show/fxVideo.ts` の `withFxVideo`
+   */
+  fxVariant?: FxVideoVariant;
   /** 貯金箱の字。上（目標）・中（いまの額）・下（ラベル） */
   text: { top: TextTone; center: TextTone; bottom: TextTone };
   /** 出しうる小物ぜんぶ。どれを出すかは段（`tiers`）が決める */
@@ -398,6 +443,90 @@ const DRACULA: Cue[] = [
   { at: 8.9, do: "stay" },
   // 締め（終わりの4秒前から）
   { at: -4.0, do: "finale", dur: 4 },
+];
+
+/**
+ * 11月の投げ銭の演出7段（#1095）。中身は透明つきの動画（`public/alert/themes/castle/fx/`）で、ここは段の切れ目・色・字だけ。
+ *
+ * - 切れ目と色はスパチャの7色（ハロウィンと同じ）
+ * - **字はハロウィン2版目の同じ段のまま**（色・縁・光の札を写した。あやと「字はハロウィン2版目のままでよい」#1079）。
+ *   ハロウィンの札を直しても、ここは2版目のまま残る（写しなので）。同じであることは `fxvideo.test.ts` が見る
+ * - キャラ絵の箱の上の空き（`headroom`）もハロウィン2版目の同じ段と同じ
+ * - アラートの長さは段で変わらない（index.tsx の `calculateAdjustedAlertDuration`。ハロウィン2版目と同じ 30・45・60 秒）。
+ *   動画の登場が短くても、滞在をくり返して締めを終わりに合わせる
+ * - 小物（`slots` / `files`）は持たない。動画がそろわない日は、字とキャラ絵だけ（いまの城の演出と同じ出し方）
+ */
+const CASTLE_FX_TIERS: FxTier[] = [
+  {
+    min: 0,
+    accent: "#1565C0",
+    plate: { frame: "round", edge: "#42A5F5", ink: "#020A18", stroke: 0.18, glow: 0.0, nameColor: "#FFFFFF", amountColor: "#E3F2FD", amountColor2: "#64B5F6", appearAt: 0.8 },
+    video: { tier: "1", headroom: 0.17, text: "pop" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 200,
+    accent: "#00B8D4",
+    plate: { frame: "round", edge: "#00E5FF", ink: "#00141A", stroke: 0.19, glow: 0.0, nameColor: "#FFFFFF", amountColor: "#E0F7FA", amountColor2: "#26C6DA", appearAt: 0.8 },
+    video: { tier: "2", headroom: 0.22, text: "pop" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 500,
+    accent: "#00C853",
+    plate: { frame: "round", edge: "#1DE9B6", ink: "#01160C", stroke: 0.2, glow: 0.25, nameColor: "#FFFFFF", amountColor: "#E8F5E9", amountColor2: "#69F0AE", appearAt: 0.8 },
+    video: { tier: "3", headroom: 0.2, text: "pop" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 1000,
+    accent: "#FFCA28",
+    plate: { frame: "round", edge: "#FFCA28", ink: "#1C1300", stroke: 0.21, glow: 0.4, nameColor: "#FFFFFF", amountColor: "#FFFDE7", amountColor2: "#FFCA28", appearAt: 0.8 },
+    video: { tier: "4", headroom: 0.2, text: "don" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 2000,
+    accent: "#FF9100",
+    plate: { frame: "round", edge: "#FF9100", ink: "#1C0B00", stroke: 0.22, glow: 0.55, nameColor: "#FFFFFF", amountColor: "#FFF3E0", amountColor2: "#FFA726", appearAt: 0.8 },
+    video: { tier: "5", headroom: 0.2, text: "don" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 5000,
+    accent: "#E91E63",
+    plate: { frame: "round", edge: "#FF4081", ink: "#1A0109", stroke: 0.23, glow: 0.75, nameColor: "#FFFFFF", amountColor: "#FCE4EC", amountColor2: "#FF5C93", appearAt: 0.8 },
+    video: { tier: "6", headroom: 0.2, text: "don" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
+  {
+    min: 10000,
+    accent: "#D50000",
+    plate: { frame: "gold", edge: "#F4C24E", ink: "#2A0208", stroke: 0.24, glow: 1.0, nameColor: "#FFF1C9", amountColor: "#FFF8E1", amountColor2: "#FFC107" },
+    video: { tier: "7", headroom: 0.2, text: "count" },
+    slots: 0,
+    files: [],
+    bats: 0,
+    waves: 0,
+  },
 ];
 
 export const THEMES: SeasonTheme[] = [
@@ -691,7 +820,7 @@ export const THEMES: SeasonTheme[] = [
     /* 11月。ルーマニアのブラン城の、小さな城主ピポ（#1078、あやとが D 案を選んだ）。
        溜まるほど下の階から窓に灯りがともり、横の旗竿のルーマニアの旗が上がる。
        **投げ銭の演出は今のまま**（段は1つで、台本も小物も札も持たない＝季節の外と同じアラート）。
-       11月の演出は別に試作している */
+       11月の演出（動画の7段）は下の `fxVideo`。配信に出すまでは旗の付いたページだけ */
     from: "2026-11-01T00:00",
     // 11/30 23:59 まで。12/1 0:00 からは豚に戻る
     until: "2026-12-01T00:00",
@@ -712,6 +841,10 @@ export const THEMES: SeasonTheme[] = [
     fx: [],
     slots: [],
     tiers: [{ min: 0, accent: "#1565C0", slots: 0, files: [], bats: 0, waves: 0 }],
+    /* 11月の演出7段（動画。#1095）。**まだ配信には出さない**（live: false）。上の `tiers`（いまの演出）のまま配信し、
+       `?fx=full` / `?fx=light` の旗が付いたページでだけ7段に差し替える。あやとが2通りを見比べて選んだら、
+       `variant` にその通りを書き、`live: true` にする */
+    fxVideo: { dir: "/alert/themes/castle/fx", live: false, variant: null, tiers: CASTLE_FX_TIERS },
     finale: null,
   },
 ];

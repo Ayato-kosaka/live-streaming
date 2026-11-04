@@ -1,0 +1,193 @@
+{
+  "_": "ひな形（#1095）。秒と front の有無（無ければ null）は、作る担当が実の動画の長さに合わせて書き換える。〜999円の3段は full だけ",
+  "tiers": {
+    "1": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t1-full-back-intro.webm",
+            "stay": "t1-full-back-stay.webm",
+            "outro": "t1-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t1-full-front-intro.webm",
+            "stay": "t1-full-front-stay.webm",
+            "outro": "t1-full-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 0.8,
+      "introDur": 1.4,
+      "stayDur": 2.0,
+      "outroDur": 1.0
+    },
+    "2": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t2-full-back-intro.webm",
+            "stay": "t2-full-back-stay.webm",
+            "outro": "t2-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t2-full-front-intro.webm",
+            "stay": "t2-full-front-stay.webm",
+            "outro": "t2-full-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 1.0,
+      "introDur": 1.8,
+      "stayDur": 2.0,
+      "outroDur": 1.0
+    },
+    "3": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t3-full-back-intro.webm",
+            "stay": "t3-full-back-stay.webm",
+            "outro": "t3-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t3-full-front-intro.webm",
+            "stay": "t3-full-front-stay.webm",
+            "outro": "t3-full-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 1.4,
+      "introDur": 2.2,
+      "stayDur": 2.5,
+      "outroDur": 1.0
+    },
+    "4": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t4-full-back-intro.webm",
+            "stay": "t4-full-back-stay.webm",
+            "outro": "t4-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t4-full-front-intro.webm",
+            "stay": "t4-full-front-stay.webm",
+            "outro": "t4-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t4-light-back-intro.webm",
+            "stay": "t4-light-back-stay.webm",
+            "outro": "t4-light-back-outro.webm"
+          },
+          "front": {
+            "intro": "t4-light-front-intro.webm",
+            "stay": "t4-light-front-stay.webm",
+            "outro": "t4-light-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 2.8,
+      "introDur": 3.4,
+      "stayDur": 3.0,
+      "outroDur": 1.2
+    },
+    "5": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t5-full-back-intro.webm",
+            "stay": "t5-full-back-stay.webm",
+            "outro": "t5-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t5-full-front-intro.webm",
+            "stay": "t5-full-front-stay.webm",
+            "outro": "t5-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t5-light-back-intro.webm",
+            "stay": "t5-light-back-stay.webm",
+            "outro": "t5-light-back-outro.webm"
+          },
+          "front": {
+            "intro": "t5-light-front-intro.webm",
+            "stay": "t5-light-front-stay.webm",
+            "outro": "t5-light-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 2.0,
+      "introDur": 3.2,
+      "stayDur": 3.0,
+      "outroDur": 1.2
+    },
+    "6": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t6-full-back-intro.webm",
+            "stay": "t6-full-back-stay.webm",
+            "outro": "t6-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t6-full-front-intro.webm",
+            "stay": "t6-full-front-stay.webm",
+            "outro": "t6-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t6-light-back-intro.webm",
+            "stay": "t6-light-back-stay.webm",
+            "outro": "t6-light-back-outro.webm"
+          },
+          "front": {
+            "intro": "t6-light-front-intro.webm",
+            "stay": "t6-light-front-stay.webm",
+            "outro": "t6-light-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 3.4,
+      "introDur": 4.0,
+      "stayDur": 3.0,
+      "outroDur": 1.2
+    },
+    "7": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t7-full-back-intro.webm",
+            "stay": "t7-full-back-stay.webm",
+            "outro": "t7-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t7-full-front-intro.webm",
+            "stay": "t7-full-front-stay.webm",
+            "outro": "t7-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t7-light-back-intro.webm",
+            "stay": "t7-light-back-stay.webm",
+            "outro": "t7-light-back-outro.webm"
+          },
+          "front": {
+            "intro": "t7-light-front-intro.webm",
+            "stay": "t7-light-front-stay.webm",
+            "outro": "t7-light-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 4.8,
+      "introDur": 5.5,
+      "stayDur": 4.0,
+      "outroDur": 1.5
+    }
+  }
+}
