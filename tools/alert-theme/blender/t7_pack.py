@@ -191,10 +191,30 @@ def scale(layer, m):
     return C * m[..., None], A * m
 
 
-def straight(layer):
+# ごくかすかな透明を 0 に落とす境と、色を平らにする透明の幅（層ごと。0〜1）。
+# back は城の縁の溶け（EDGE）にも掛かるので幅を狭く。front は金の粒だけで、平らにする色もほぼ同じ金
+FAINT = {"back": 1 / 255, "front": 2 / 255}
+FLAT_A = {"back": 0.06, "front": 0.12}
+
+
+def straight(layer, faint=0.0, flat=0.0):
+    """黒の上に重ねた色 → 色と透明（straight）。焼く動画を小さくするため、見えない所を整える
+
+    - 透明が `faint` 以下の所は 0 にする（光のにじみの裾。見えないのに、画面の6割に透明 1〜2/255 が広がっていた）
+    - 透明がかすかな所（`flat` まで）の色は、そのコマの見えている所の平均の色に寄せて平らにする。
+      `C / A` は透明がかすかな所でも明るい色相のまま広がるので、見えない所の色に符号量を払っていた。
+      2026-11-04 の final で、front の intro が同じ焼き方のまま 4,199KB → 1,221KB（見た目の差は最大 7.9/255）
+    """
     C, A = layer
     A = np.maximum(A, np.clip(C.max(axis=2) * GLOW_ALPHA, 0, 1))
     S = np.clip(C / np.maximum(A, 1e-4)[..., None], 0, 1)
+    if faint > 0:
+        A = np.clip((A - faint) / (1 - faint), 0, 1)
+    if flat > 0:
+        vis = A > 0.2
+        base = S[vis].mean(axis=0) if vis.any() else np.array([1.0, 0.84, 0.55], np.float32)
+        w = smoothstep(0.0, flat, A)[..., None]
+        S = S * w + base * (1 - w)
     return np.dstack([S, A])
 
 
@@ -223,8 +243,8 @@ def _compose_one(job):
             # 薄くなる途中だけ、城が金の光の線になって消える（あやとの「光の線で描いて、キャラが出たら薄く」）
             back = over(gold_lines(L["back"], math.sin(math.pi * w) ** 1.2 * (1 - keep)), back)
         front = scale(L["front"], _M["edge"] * _M["face"] * (1 - 0.3 * w))
-        save_rgba(straight(back), os.path.join(work, v, "back", clip, f"{i:04d}.png"))
-        save_rgba(straight(front), os.path.join(work, v, "front", clip, f"{i:04d}.png"))
+        save_rgba(straight(back, FAINT["back"], FLAT_A["back"]), os.path.join(work, v, "back", clip, f"{i:04d}.png"))
+        save_rgba(straight(front, FAINT["front"], FLAT_A["front"]), os.path.join(work, v, "front", clip, f"{i:04d}.png"))
     return clip, i
 
 
@@ -247,8 +267,15 @@ def compose(raw, work, jobs=4):
 
 
 # ---------------------------------------------------------------- 動画にする
-BITRATE = {("back", "intro"): 3000, ("back", "stay"): 2600, ("back", "outro"): 2400,
-           ("front", "intro"): 900, ("front", "stay"): 700, ("front", "outro"): 700}
+# 1本ごとの大きさの予算（KB）。1通り（full / light）の6本で 5,270KB ≒ 5.4MB。約束の 6MB に余裕を残す。
+# 2026-11-04 の final は「-b:v＋-crf 10」で焼き、-b:v の目標を無視して full 15.1MB・light 16.1MB になった
+# （透明の流れが色と同じ率で別に焼かれるので、実の大きさは -b:v の 1.5〜2 倍に出る）。率ではなく大きさで決める
+BUDGET_KB = {("back", "intro"): 2600, ("back", "stay"): 900, ("back", "outro"): 550,
+             ("front", "intro"): 750, ("front", "stay"): 330, ("front", "outro"): 140}
+# 予算から -b:v を出すときの、実の大きさ ÷ 名目（-b:v × 秒）の見込み。外れたら焼き直しで合わせる
+OVERSHOOT = 1.6
+# 率の限り（kbps）。上げ下げは1回につき2倍まで
+KBPS = (40, 8000)
 
 
 def ff(*args):
@@ -259,9 +286,46 @@ def name_of(v, layer, clip):
     return f"t7-{v}-{layer}-{clip}.webm"
 
 
-def encode(work, out):
+def _encode_one(src, p, kbps):
+    # 透明は別の VP8 の流れ。キーフレームを2秒おきに固定して色とそろえる（PR #1089 の頭出しの崩れ）
+    ff("-framerate", str(P.FPS), "-i", os.path.join(src, "%04d.png"), "-vf", "format=yuva420p",
+       "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{kbps}k",
+       "-maxrate", f"{kbps * 3 // 2}k", "-bufsize", f"{kbps * 3}k",
+       "-qmin", "4", "-qmax", "63", "-deadline", "good", "-cpu-used", "0", "-g", str(P.FPS * 2),
+       "-keyint_min", str(P.FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", p)
+    return os.path.getsize(p) / 1024
+
+
+def _encode_budget(job):
+    """予算の大きさに収まるまで、率を直して焼き直す（4回まで）。予算の 75% を切ったら、上げて焼き直す"""
+    src, p, layer, clip, n = job
+    budget = BUDGET_KB[(layer, clip)]
+    kbps = min(KBPS[1], max(KBPS[0], int(budget * 8.192 / (n / P.FPS) / OVERSHOOT)))
+    tries = []
+    for _ in range(4):
+        kb = _encode_one(src, p, kbps)
+        tries.append((kbps, round(kb)))
+        if 0.75 * budget <= kb <= budget:
+            break
+        nxt = min(KBPS[1], max(KBPS[0], int(kbps * min(2.0, max(0.5, budget / kb * 0.96)))))
+        if nxt == kbps:
+            break
+        kbps = nxt
+    if kb > budget:
+        # 最後が予算を超えたら、いちばん大きかった予算内の率で焼き直す（無ければ、そのまま。check が合計で落とす）
+        ok = [t for t in tries if t[1] <= budget]
+        if ok:
+            kbps = max(ok, key=lambda t: t[1])[0]
+            kb = _encode_one(src, p, kbps)
+            tries.append((kbps, round(kb)))
+    return p, budget, tries
+
+
+def encode(work, out, jobs=4):
+    from concurrent.futures import ThreadPoolExecutor
     os.makedirs(out, exist_ok=True)
     done = {}
+    todo = []
     for v in VARIANTS:
         for layer in ("back", "front"):
             for clip, n in P.CLIPS.items():
@@ -270,15 +334,12 @@ def encode(work, out):
                 if have != n:
                     print(f"  {v}/{layer}/{clip}: {have}/{n} コマしか無いので焼かない")
                     continue
-                p = os.path.join(out, name_of(v, layer, clip))
-                kb = BITRATE[(layer, clip)]
-                # 透明は別の VP8 の流れ。キーフレームを2秒おきに固定して色とそろえる（PR #1089 の頭出しの崩れ）
-                ff("-framerate", str(P.FPS), "-i", os.path.join(src, "%04d.png"), "-vf", "format=yuva420p",
-                   "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{kb}k", "-crf", "10",
-                   "-qmin", "4", "-qmax", "42", "-deadline", "good", "-cpu-used", "0", "-g", str(P.FPS * 2),
-                   "-keyint_min", str(P.FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", p)
-                done.setdefault(v, {}).setdefault(layer, {})[clip] = os.path.basename(p)
-                print(f"  {os.path.basename(p):28s} {os.path.getsize(p) / 1024:7.0f}KB")
+                todo.append((src, os.path.join(out, name_of(v, layer, clip)), layer, clip, n))
+                done.setdefault(v, {}).setdefault(layer, {})[clip] = name_of(v, layer, clip)
+    # libvpx は1本につき CPU 1本しか使わないので、本ごとに並べる
+    with ThreadPoolExecutor(jobs) as ex:
+        for p, budget, tries in ex.map(_encode_budget, todo):
+            print(f"  {os.path.basename(p):28s} {tries[-1][1]:6d}KB（予算 {budget}KB・焼いた率と大きさ {tries}）", flush=True)
     entry = {"variants": done, "revealAt": P.REVEAL, "introDur": P.INTRO, "stayDur": P.STAY, "outroDur": P.OUTRO}
     json.dump({"7": entry}, open(os.path.join(out, "manifest-t7.json"), "w"), ensure_ascii=False, indent=1)
     return 0
