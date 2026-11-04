@@ -3,6 +3,7 @@
 
     python3 tools/shorts/script/critic.py shorts/videos/<id>/p1/script.txt --ref vJo --video <id> --about "…" --out <scratch>/critic/<名前>
     python3 tools/shorts/script/critic.py <script.txt> --ref HPJ --about "…" --out <dir> --runs <scratch>/critic/runs.jsonl
+    python3 tools/shorts/script/critic.py <script.txt> --video Xvdk_P4gKoU --video kunXt2sXnFQ --about "…" --out <dir>   # 回をまたぐ原稿
 
 終了コード: `critic_gate.py` と同じ（0=通る / 1=落ちる / 2=回せない・JSON が読めない）。
 
@@ -14,6 +15,9 @@
 **`--video` を渡す。** 渡さないと1枚に配信の字幕が入らず、批評役は【足】の無い行を「本人が言った言葉」と信じて読むしかない
 （2026-10-23 のフォカッチャの下書きは、それで配信に無い・要らないつなぎと決め台詞を素通りした。帳面 F-047）。
 `--range` を省くと、spec の why・src に書いた時刻の前後30秒を入れる（作文者が根拠に挙げた所）。
+**回をまたぐ原稿は `--video` を回の数だけ渡す**（2026-11-04、夫婦の車の回は2本・バゲットの回は4本をまたぎ、担当がスクラッチの包みで
+2本目からを足していた）。why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに切り、どの回にも読み上げの伏せ字が効く。
+`--range` は `<videoId>@H:MM:SS-H:MM:SS` で回を名指す。前日の回の写し（whisper など）は `--extra <videoId>=<道>`。
 **道具を持たせない**（`--tools ""`）・**MCP も設定も読ませない**・**リポジトリの外の空の置き場で起こす**（CLAUDE.md を拾わせない）。
 往復の記録・ほかの批評役の点・作文者の4欄の表と当て表は、1枚に入らないので、見ようがない（7.4 の「往復を知らない」を、字ではなく仕組みで守る）。
 
@@ -81,9 +85,14 @@ def main() -> int:
     ap.add_argument("--spec", help="spec.json（既定は原稿の隣）")
     ap.add_argument("--ref", action="append", default=[], help="写した参考の略号（reference_beats.md の節）")
     ap.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
-    ap.add_argument("--video", help="配信の videoId（streams/ の字幕を1枚に入れる）")
-    ap.add_argument("--range", action="append", default=[], help="字幕の区間 H:MM:SS-H:MM:SS（省くと spec の why・src の時刻の前後30秒）")
-    ap.add_argument("--transcript", help="streams/ に無い回の字幕（captions で取って復号した captions.txt。`brief.py --help`）")
+    ap.add_argument("--video", action="append", default=[],
+                    help="配信の videoId（streams/ の字幕を1枚に入れる）。回をまたぐ原稿は何回でも")
+    ap.add_argument("--range", action="append", default=[],
+                    help="字幕の区間 [<videoId>@]H:MM:SS-H:MM:SS（省くと spec の why・src にその回で書いた時刻の前後30秒）")
+    ap.add_argument("--transcript", action="append", default=[],
+                    help="[<videoId>=]<道>: streams/ に無い回の字幕（captions で取って復号した captions.txt。`brief.py --help`）")
+    ap.add_argument("--extra", action="append", default=[],
+                    help="[<videoId>=]<道>: 足す写し（前日の回・whisper など、[H:MM:SS] 形式）。回を書くと、その回のチャットで読み上げを伏せる")
     ap.add_argument("--out", required=True, help="控えを置く場所（スクラッチパッドの下）")
     ap.add_argument("--label", default="", help="控えの名前（tally に出る）")
     ap.add_argument("--runs", help="1回1行の控え（.jsonl）に足す")
@@ -99,9 +108,8 @@ def main() -> int:
     script = Path(a.script)
     spec = Path(a.spec) if a.spec else None
     try:
-        if a.transcript and a.video:
-            brief.TRANSCRIPT_FILE[a.video] = Path(a.transcript)
-        prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range, a.as_of)
+        brief.use_transcripts(a.transcript, a.video)
+        prompt = brief.build_critic(script, spec, a.ref, a.about, a.video, a.range, a.as_of, a.extra)
     except (OSError, KeyError, ValueError) as e:
         print(f"1枚を作れない: {e}", file=sys.stderr)
         return 2

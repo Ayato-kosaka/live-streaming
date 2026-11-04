@@ -5,9 +5,15 @@
     python3 tools/shorts/script/brief.py writer --video LdgTh1DC3Jk --range 0:00:00-0:21:30 --ref IhF --ref f8t \\
         --title "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！" --about "…" -o <scratch>/brief_writer.md
 
+    # 回をまたぐ原稿: --video を回の数だけ。区間は <videoId>@H:MM:SS-H:MM:SS（回を書かない区間は最初の --video の回）
+    python3 tools/shorts/script/brief.py writer --video Xvdk_P4gKoU --video kunXt2sXnFQ \\
+        --range Xvdk_P4gKoU@0:00:00-0:45:00 --range kunXt2sXnFQ@0:03:00-0:20:00 --ref OEF -o <scratch>/brief_writer.md
+
     # 批評役へ（関所）: 雛形（references/critic_prompt.md）に、同じ約束のカード・原稿の表・lint の結果・参考の拍・配信の字幕を差し込む
     python3 tools/shorts/script/brief.py critic shorts/videos/TDArug_te90/p1/script.txt --ref vJo \\
         --video TDArug_te90 --about "…" -o <scratch>/critic_prompt.md     # --range を省くと、spec の why・src の時刻の前後30秒
+    # 回をまたぐ原稿は --video を回の数だけ（spec の why・src の「videoId H:MM:SS」から回ごとに切る）。前日の回の写しは
+    # --extra <videoId>=<道>（その回のチャットで伏せる）
 
     # 本編集の担当へ: 雛形（references/editor_prompt.md）に、原稿の表・素材の表・帳面の画・音・投稿の項目・企画の節の地図を差し込む
     python3 tools/shorts/script/brief.py edit --episode shorts/videos/france-2025 --pattern A \\
@@ -36,6 +42,14 @@
 作文者と**同じカード**を入れる。批評役は当てた ID を全部 `checked` に並べ、欠けたら `critic_gate.py` が ✕ にする。
 いま見ている原稿の行を引いている直しの例だけは、伏せる（例との一致で落とす・通すのを避ける。`quotes_script`）。
 `--video` で配信の字幕を入れる（#1014、帳面 F-047。作文者が根拠に挙げた時刻の前後30秒か `--range`）。
+画が「確認中」の行（1次の原稿）には【画は確認中】の印を付ける（`critic_gate.py` が F-014 の当たりを △ にする。その回に無い画を当てにした行は ✕）。
+
+## 字幕の中の、本人が読み上げた書き込み
+
+作文者・批評役の字幕からは、本人が読み上げた視聴者さんの書き込みを〔コメントの読み上げ〕に伏せる（帳面 F-048）。
+字を畳んで比べ、6字から当てる。かな ↔ 漢字・長音・句読点・絵文字の名前の違いは、合いかたの度合いで吸う。
+書き込みから読み上げまでの近さ（短い書き込みは −10〜80秒・長い書き込みは −20〜120秒）で当て、本人が先に言った字は伏せない
+（窓と下限を測った数は `mask_read` の上）。
 
 **spec に `rows` が無い・行の数が原稿と違うときは、作らずに止まる**（`lint.build` が止める）。滝の回 p1 は spec が `lines` の鍵で書かれていて、
 批評役の1枚の画の列が空のまま回っていた。
@@ -52,9 +66,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import subprocess
 import sys
+import unicodedata
+from difflib import SequenceMatcher
+from itertools import pairwise
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -170,6 +188,17 @@ def parse_ranges(rs: list) -> list:
 TRANSCRIPT_FILE: dict = {}
 
 
+def use_transcripts(items: list, videos: list) -> None:
+    """`--transcript [<videoId>=]<道>` を TRANSCRIPT_FILE に。回を書かなければ最初の --video の回。"""
+    for it in items:
+        vid, sep, p = it.partition("=")
+        if not (sep and re.fullmatch(r"[A-Za-z0-9_-]{11}", vid)):
+            if not videos:
+                raise ValueError("--transcript には --video が要る（か、<videoId>=<道> で回を書く）")
+            vid, p = videos[0], it
+        TRANSCRIPT_FILE[vid] = Path(p)
+
+
 def stream_file(video: str, kind: str) -> Path:
     if kind == "transcript" and video in TRANSCRIPT_FILE:
         return TRANSCRIPT_FILE[video]
@@ -193,48 +222,274 @@ def cut(path: Path, ranges: list, step: int = 30) -> list:
     return out
 
 
-# 本人が配信でコメントを読み上げると、視聴者さんの書き込みの字が自動字幕に入る。2026-10-23 の滝の回の1枚には、
-# チャットを入れなくても、同じ区間のチャットの本文が2行、字幕の側から入っていた。8字に満たない字（「こんばんは」）は伏せない
-READ_MIN = 8
-READ_PAD = 90     # 読み上げはチャットの少しあと（〜1分半）になる。区間の前後この秒のチャットまで見る
+# ---------- 本人が読み上げた視聴者さんの書き込みを伏せる（F-048） ----------
+#
+# 本人が配信でコメントを読み上げると、視聴者さんの書き込みの字が自動字幕に入り、作文者は本人の言葉として拾う
+# （2026-10-23 の滝の回の1枚には、チャットを入れなくても、同じ区間のチャットの本文が2行、字幕の側から入っていた）。
+#
+# 2026-11-04 まで伏せていたのは「8字以上の書き込みが、字幕にそのまま入っている所」だけだった。クラムチャウダーの回（E2oGYjnVQSA）の
+# 1:11:29・1:16:48 の書き込みは、6字だったのと、かなと漢字の違う聞き取り・絵文字の名前（`:sparkles:` の形）が付いていたので素通りし、
+# 作文者が本人の言葉として原稿に入れた。いまは字を畳んで（句読点・記号・空白・長音・絵文字の名前を落とし、カタカナをひらがなに）比べ、
+# **字の合いかた**と**書き込みから読み上げまでの近さ**の両方で当てる。
+#
+# 窓と下限は、2026-09・10 の配信77本で測った（書き込みの時刻 → 字幕の行の中の位置から見積もった読み上げの時刻）:
+# - 10字以上の書き込み（ほぼ確かに読み上げ）の遅れは 0〜70秒に集まり、120秒でほぼ尽きる。行の中の位置の見積もりの誤差で −20秒まで出る
+# - 6〜7字の一致は、0〜70秒に10秒あたり60件前後、その外は2〜3件。ただしこれは「本人が先に言った字」を除いたあとで、
+#   除く前はその外が15件前後あった（本人の口ぐせを視聴者さんが返した字）→ 本人が先に言った字は伏せない
+# - 5字以下で当たるのは、挨拶・相づち・擬音（こんばんは・すごいね・わくわく）がほとんど。伏せると本人の反応まで消えるので、下限は6字
+READ_MIN = 6        # 畳んだ字で数える。挨拶を除いてこれに満たない書き込みは当てない
+READ_LONG = 8       # これより短い書き込みは、字幕に切れ目なくそのまま入っているときだけ当てる
+READ_COVER = 0.75   # 長い書き込みは、字の 3/4 が合えば当てる（かな ↔ 漢字・聞き違いの分）
+READ_PART = 12      # 長い書き込みの一部だけを読んだとき: 切れ目なく12字合えば、その所だけ伏せる
+READ_GAP = 3        # 合った字の塊どうしの間に挟まってよい字（かな ↔ 漢字の置き換わり）
+READ_LAG = ((-10, 80), (-20, 120))   # 書き込みから読み上げまでの窓（秒）: 短い書き込み / 長い書き込み
+READ_EDGE = 4       # 書き込みの端の合わなかった字（「ひとり」↔「一人」）のぶん、字幕の側を伸ばしてよい字の上限
+READ_STEP = 30      # 字幕の1行の幅（秒）。次の行の時刻が分かれば、その差
 READ_MARK = "〔コメントの読み上げ〕"
+EMOJI_NAME = re.compile(r":[A-Za-z0-9_+\-]+:")
+# 挨拶は本人も視聴者さんも同じ字を言う。挨拶を除いて6字に満たない書き込みは当てない（畳んだ字＝ひらがなと漢字で書く）
+GREET = re.compile(r"こんばんは|こんにちは|おはよう(?:ございます)?|お(?:やすみ|休み)(?:なさい)?|お(?:つかれ|疲れ)(?:さま|様)?(?:でした|です)?|"
+                   r"(?:いって|行って)(?:らっしゃい|きます)|(?:いただ|頂)きます|ごちそうさま(?:でした)?|ありがとう(?:ございます)?|"
+                   r"おかえり(?:なさい)?|ただいま|はじめまして|初めまして|よろしく|お(?:願|ねが)いします")
+BOUND = set("。、，,．.！!？?…‥「」『』（）()[]【】〔〕 　\t")   # 伏せる所を端で伸ばすとき、越えない字
 
 
-def comment_bodies(video: str, ranges: list, pad: int = READ_PAD) -> list:
-    """区間（の前後 pad 秒）のチャットの本文（名前と投げ銭の額を落とす）。長い順。字はここで使うだけで、どこにも出さない。"""
+def fold(text: str) -> list:
+    """比べる字の並び [(字, 元の位置)]。句読点・記号・空白・長音・`[鼻息]` の注を落とし、カタカナをひらがなに、全角を半角に。"""
+    out, depth = [], 0
+    for i, ch in enumerate(text):
+        if ch == "[":
+            depth += 1
+            continue
+        if ch == "]":
+            depth = max(0, depth - 1)
+            continue
+        if depth:
+            continue
+        for c in unicodedata.normalize("NFKC", ch).lower():
+            if unicodedata.category(c)[0] in "PSZC" or c == "ー":
+                continue
+            if "ァ" <= c <= "ヶ":
+                c = chr(ord(c) - 0x60)
+            out.append((c, i))
+    return out
+
+
+def folded(text: str) -> str:
+    return "".join(c for c, _ in fold(text))
+
+
+def post_body(raw: str) -> str:
+    """チャットの1行の本文を、畳んだ字で（投げ銭の額・名前・絵文字の名前を落とす）。"""
+    body = re.sub(r"^[¥$€£][\d,.]+\s+", "", raw)
+    body = body.split(": ", 1)[1] if ": " in body else body
+    return folded(EMOJI_NAME.sub("", body))
+
+
+def comment_posts(video: str) -> list:
+    """その回のチャット [(秒, 畳んだ本文)]。挨拶を除いて6字に満たないものは落とす。字はここで比べるだけで、どこにも出さない。"""
     try:
         ch = stream_file(video, "chat")
     except FileNotFoundError:
         return []
-    out = set()
+    out = []
     for ln in ch.read_text(encoding="utf-8").splitlines():
         m = TIME.match(ln)
         if not m:
             continue
-        t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
-        if not any(a - pad <= t <= b + pad for a, b in ranges):
-            continue
-        body = re.sub(r"^[¥$€£][\d,]+\s+", "", m.group(4))
-        body = body.split(": ", 1)[1] if ": " in body else body
-        if len(body.strip()) >= READ_MIN:
-            out.add(body.strip())
-    return sorted(out, key=len, reverse=True)
+        b = post_body(m.group(4))
+        if len(GREET.sub("", b)) >= READ_MIN:
+            out.append((int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)), b))
+    return out
 
 
-def mask_read(lines: list, bodies: list) -> tuple:
-    """字幕の行の中の、チャットの本文と同じ字を伏せる。（伏せた行, 伏せた数）。"""
-    out, n = [], 0
+def timed(lines: list) -> list:
+    """`[h:mm:ss] 字` の行ごとに（始めの秒, 幅, 字）。時刻の無い行は None。幅は次の行までの秒（READ_STEP まで）。"""
+    out = []
     for ln in lines:
-        for b in bodies:
-            if b in ln:
-                n += ln.count(b)
-                ln = ln.replace(b, READ_MARK)
-        out.append(ln)
+        m = TIME.match(ln)
+        out.append([int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)), READ_STEP, m.group(4)] if m else None)
+    rows = [r for r in out if r]
+    for a, b in pairwise(rows):
+        a[1] = min(READ_STEP, max(1, b[0] - a[0]))
+    return [tuple(r) if r else None for r in out]
+
+
+def _clusters(blocks: list) -> list:
+    groups = []
+    for m in blocks:
+        p = groups[-1][-1] if groups else None
+        if p and m.a - (p.a + p.size) <= READ_GAP and m.b - (p.b + p.size) <= READ_GAP:
+            groups[-1].append(m)
+        else:
+            groups.append([m])
+    return groups
+
+
+def read_spans(b: str, s: str) -> list:
+    """畳んだ字幕 s の中で、畳んだ書き込み b を読んだ所。[(始め, 終わり, b の頭で合わなかった字数, お尻で合わなかった字数)]。何度読んでも全部。
+
+    短い書き込み（READ_LONG 未満）は、切れ目なくそのまま入っているときだけ。長い書き込みは、字の READ_COVER が合うか
+    （合った塊どうしの間は READ_GAP 字まで）、一部だけ読んでも切れ目なく READ_PART 字合えば、その塊だけ。
+    """
+    n, out, work = len(b), [], s
+    short_ = n < READ_LONG
+    need = n if short_ else max(READ_MIN, math.ceil(n * READ_COVER))
+    while True:
+        blocks = [m for m in SequenceMatcher(None, b, work, autojunk=False).get_matching_blocks() if m.size >= 2]
+        best = None
+        for g in _clusters(blocks):
+            got, top = sum(m.size for m in g), max(m.size for m in g)
+            whole = top == n if short_ else (got >= need and top >= 4)
+            part = not short_ and top >= READ_PART
+            if (whole or part) and (best is None or got > best[0]):
+                best = (got, g if whole else [max(g, key=lambda m: m.size)], whole)
+        if best is None:
+            return out
+        _, g, whole = best
+        s0, s1 = g[0].b, g[-1].b + g[-1].size
+        out.append((s0, s1, g[0].a if whole else 0, n - (g[-1].a + g[-1].size) if whole else 0))
+        work = work[:s0] + "\0" * (s1 - s0) + work[s1:]
+
+
+def _kanji(ch: str) -> bool:
+    return "一" <= ch <= "鿿" or ch in "々〆"
+
+
+def _widen(text: str, o0: int, o1: int, left: int, right: int) -> tuple:
+    """書き込みの端の合わなかった字（かな ↔ 漢字）のぶん、字幕の側を句読点を越えずに伸ばす。漢字1字はかな2字に数える。"""
+    budget, j = min(left, READ_EDGE), o0 - 1
+    while budget > 0 and j >= 0 and text[j] not in BOUND:
+        budget -= 2 if _kanji(text[j]) else 1
+        o0, j = j, j - 1
+    budget, j = min(right, READ_EDGE), o1
+    while budget > 0 and j < len(text) and text[j] not in BOUND:
+        budget -= 2 if _kanji(text[j]) else 1
+        o1, j = j + 1, j + 1
+    return o0, o1
+
+
+def mask_read(lines: list, posts: list, hist: list | None = None) -> tuple:
+    """字幕の行（`[h:mm:ss] 字`）の中の、本人が読み上げた視聴者さんの書き込みを伏せる。（伏せた行, 伏せた所の数）。
+
+    posts は `comment_posts` の [(秒, 畳んだ本文)]。hist は「本人が先に言った字」を探す行（その回の字幕まるごと。既定は lines）。
+    書き込みより前に終わった行に本人がもう言っている字は、本人の言葉（視聴者さんが本人の口ぐせを返した字）なので伏せない。
+    """
+    said = [(t + w, folded(x)) for t, w, x in filter(None, timed(hist if hist is not None else lines))]
+    first: dict = {}   # 書き込みごとに「本人が先に言ったか」（行ごとに数え直さない）
+    out, n = [], 0
+    for ln, row in zip(lines, timed(lines)):
+        if not row:
+            out.append(ln)
+            continue
+        t, w, text = row
+        pairs = fold(text)
+        s = "".join(c for c, _ in pairs)
+        spans = []
+        for k, (c, b) in enumerate(posts):
+            lo, hi = READ_LAG[len(b) >= READ_LONG]
+            if not (t - hi < c < t + w - lo):
+                continue
+            if k not in first:
+                first[k] = any(end <= c and b in x for end, x in said)
+            if first[k]:
+                continue
+            got = []
+            for s0, s1, left, right in read_spans(b, s):
+                lag = t + w * s0 / max(1, len(s)) - c   # 行の中の位置から見積もった、読み上げの秒 − 書き込みの秒
+                got.append((lag, s0, s1, left, right))
+            if any(lag < lo for lag, *_ in got):
+                first[k] = True   # 同じ行の中で、書き込みより前に本人がもう言っている（画に映った物の名前など）
+                continue
+            spans += [_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right) for lag, s0, s1, left, right in got if lag < hi]
+        merged = []
+        for a, b2 in sorted(spans):
+            if merged and a <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], b2))
+            else:
+                merged.append((a, b2))
+        for a, b2 in reversed(merged):
+            text = text[:a] + READ_MARK + text[b2:]
+        n += len(merged)
+        out.append(ln[: len(ln) - len(row[2])] + text if merged else ln)
     return out, n
 
 
 def masked_note(n: int) -> str:
     return f"本人が読み上げた視聴者さんのコメント {n} か所は{READ_MARK}に伏せた。F-048" if n else ""
+
+
+def masked_lines(video: str, ranges: list) -> tuple:
+    """その回の字幕のうち区間に掛かる行を、読み上げた書き込みを伏せて。（字幕の置き場, 行, 伏せた数）。"""
+    tr = stream_file(video, "transcript")
+    got, n = mask_read(cut(tr, ranges), comment_posts(video), tr.read_text(encoding="utf-8").splitlines())
+    return tr, got, n
+
+
+# ---------- 2本以上の回をまたぐ原稿（2026-11-04） ----------
+#
+# 夫婦の車の回は 5日目（Xvdk_P4gKoU）と7日目の朝（kunXt2sXnFQ）をまたいだ。`--video` が1本しか取れず、担当はスクラッチの包みで
+# 2本目を切って伏せていた（バゲットの回は4本）。いまは `--video` を何回でも渡せ、区間は `<videoId>@H:MM:SS-H:MM:SS` で回を名指す
+# （回を書かない区間は、最初の `--video` の回）。どの回の字幕にも、その回のチャットで伏せ字が効く。
+
+VIDEO_ID = re.compile(r"[A-Za-z0-9_-]{11}")   # 区間の頭・`--transcript` の頭に書く回（大文字の無い videoId もあるので、形だけ見る）
+
+
+def videos_of(video) -> list:
+    """`--video` の1本（字）か何本か（並び）を、重ねずに並びで。"""
+    if not video:
+        return []
+    out = []
+    for v in [video] if isinstance(video, str) else video:
+        if v not in out:
+            out.append(v)
+    return out
+
+
+def video_ranges(videos: list, ranges: list) -> dict:
+    """`--range` を回ごとに {videoId: [(始め, 終わり)]}。`<videoId>@` の無い区間は最初の `--video` の回。"""
+    out = {v: [] for v in videos}
+    for r in ranges:
+        vid, sep, rest = r.rpartition("@")
+        if sep and not VIDEO_ID.fullmatch(vid):
+            raise ValueError(f"区間の頭の回が videoId の形でない: {r}（<videoId>@H:MM:SS-H:MM:SS）")
+        if not sep:
+            if not videos:
+                raise ValueError(f"区間 {r} の回が分からない（--video を渡すか、<videoId>@{r} と書く）")
+            vid, rest = videos[0], r
+        out.setdefault(vid, []).extend(parse_ranges([rest]))
+    return out
+
+
+def stream_title(path: Path) -> str:
+    """字幕の頭の `# 題` の行（配信の題）。"""
+    for ln in path.read_text(encoding="utf-8").splitlines()[:3]:
+        if ln.startswith("# ") and not ln.startswith("# http"):
+            return ln[2:].strip()
+    return ""
+
+
+def extra_block(arg: str) -> tuple:
+    """`--extra` の1本（`[H:MM:SS] 文` の写し。復号した whisper など）。`<videoId>=<道>` と書けば、その回のチャットで伏せる。
+
+    （見出しと本文, 時刻のある行）。回を書かない写しはチャットと突き合わせられないので、伏せていないと書く。
+    """
+    vid, sep, p = arg.partition("=")
+    if not (sep and VIDEO_ID.fullmatch(vid)):
+        vid, p = "", arg
+    text = Path(p).read_text(encoding="utf-8").strip()
+    lines = text.splitlines()
+    if vid:
+        lines, n = mask_read(lines, comment_posts(vid))
+        note = f"（{vid} の写し。{masked_note(n)}）" if n else f"（{vid} の写し。読み上げた書き込みは見つからなかった）"
+    else:
+        note = "（どの回の写しか書いていないので、読み上げた書き込みは伏せていない。`<videoId>=<道>` で渡す）"
+    return f"{Path(p).name}{note}:\n\n```\n" + "\n".join(lines) + "\n```", [ln for ln in lines if TIME.match(ln)]
+
+
+def labeled(video: str, lines: list) -> list:
+    """回をまたぐとき、時刻の頭に回を付ける（`[kunXt2sXnFQ 0:14:00] …`。watch_block が時刻と一緒に名指す）。"""
+    return [f"[{video} {ln[1:]}" if TIME.match(ln) else ln for ln in lines]
 
 
 # ---------- 原稿の表 ----------
@@ -268,7 +523,20 @@ def marks(r: dict) -> str:
         m.append("【答】")
     if r.get("orig_voice"):
         m.append("【元の声】")   # AI の声で読まず、配信の本人の声（叫び）を流す行（帳面 F-051）
+    if pending_visual(r):
+        m.append("【画は確認中】")
     return "".join(m)
+
+
+# 1次の原稿は、画を「画は確認中」と書いて出してよい（`planning.md` 0 の3。素材は、あやとの返事を待つあいだに取り込む）。
+# 2026-11-04、批評役がその行を F-014（写っていない画）の ✕ に当て、まだ取り込んでいない素材のせいで関所が落ちた。
+# 表の画の列は70字で切るので、「確認中」が後ろにあると批評役に見えない。印の列に出す
+PENDING = "確認中"
+
+
+def pending_visual(r: dict) -> bool:
+    """spec の行の画（visual）が、まだ素材で確かめていない狙い（「画は確認中」）か。"""
+    return PENDING in str(r.get("visual") or "")
 
 
 def short(s: str, n: int) -> str:
@@ -313,15 +581,33 @@ CITED = re.compile(r"(?<![\d:])(\d{1,2}:\d{2}:\d{2})(?:\.\d+)?(?![\d:])")
 PAD = 30       # 書いた時刻の前後に足す秒（字幕は30秒ごとの行なので、前後の1行ずつが入る）
 
 
-def cited_ranges(rows: list, pad: int = PAD) -> list:
-    """spec の行の why・src に書いた時刻の前後 pad 秒を、重なりをまとめて（始め, 終わり）で。
+# why・src の中の回の名前（`Xvdk_P4gKoU 0:38:00`・`kunXt2sXnFQ@0:15:00`）と時刻
+TOKEN = re.compile(r"(?P<vid>(?<![A-Za-z0-9_-])[A-Za-z0-9_-]{11}(?![A-Za-z0-9_-]))|"
+                   r"(?<![\d:])(?P<t>\d{1,2}:\d{2}:\d{2})(?:\.\d+)?(?![\d:])")
 
-    **作文者が根拠に挙げた所を、そのまま批評役に見せる。** 挙げた時刻に、その言葉が無ければ、批評役は「配信に無い」と読める。
+
+def cited_points(rows: list, videos: list | None) -> dict:
+    """spec の行の why・src に書いた時刻（秒）を回ごとに {回: [秒]}。
+
+    時刻は、その欄（why・src の1つずつ）で前に書いた回のもの（`Xvdk_P4gKoU 0:38:00`・`kunXt2sXnFQ@0:15:00`）。
+    回をまだ書いていない時刻は最初の回のもの。videos が None なら回を見ない（全部を None の回に）。
     """
-    pts = []
+    pts = {}
     for r in rows:
-        text = " ".join([str(r.get("why") or "")] + [str(x) for x in (r.get("src") or [])])
-        pts += [hms(t) for t in CITED.findall(text)]
+        for field in [str(r.get("why") or "")] + [str(x) for x in (r.get("src") or [])]:
+            cur = videos[0] if videos else None
+            for m in TOKEN.finditer(field):
+                v = m.group("vid")
+                if v:
+                    if videos and (v in videos or VID.fullmatch(v)):
+                        cur = v
+                    continue
+                pts.setdefault(cur, []).append(hms(m.group("t")))
+    return pts
+
+
+def merge_ranges(pts: list, pad: int = PAD) -> list:
+    """時刻の前後 pad 秒を、重なりをまとめて（始め, 終わり）で。"""
     out = []
     for t in sorted(set(pts)):
         a, b = max(0, t - pad), t + pad
@@ -332,18 +618,51 @@ def cited_ranges(rows: list, pad: int = PAD) -> list:
     return out
 
 
-def critic_source(video: str | None, ranges: list, rows: list) -> str:
-    """批評役に見せる配信の字幕（`--video` が無ければ、無いと書く）。"""
-    if not video:
+def cited_ranges(rows: list, pad: int = PAD) -> list:
+    """spec の行の why・src に書いた時刻の前後 pad 秒を、重なりをまとめて（始め, 終わり）で（回を見ない）。
+
+    **作文者が根拠に挙げた所を、そのまま批評役に見せる。** 挙げた時刻に、その言葉が無ければ、批評役は「配信に無い」と読める。
+    """
+    return merge_ranges(cited_points(rows, None).get(None, []), pad)
+
+
+def cited_by_video(rows: list, videos: list, pad: int = PAD) -> dict:
+    """回ごとの cited_ranges {回: [(始め, 終わり)]}。why・src で名指した、videos の外の回も入る。"""
+    return {v: merge_ranges(p, pad) for v, p in cited_points(rows, videos).items()}
+
+
+def critic_source(video, ranges: list, rows: list, extra: list | tuple = ()) -> str:
+    """批評役に見せる配信の字幕（`--video` が無ければ、無いと書く）。回をまたぐときは回ごとに切る。"""
+    videos = videos_of(video)
+    if not videos and not extra:
         return "（配信の字幕は渡していない。【足】の印と表の画だけで読み、(h) F-047 の「配信に無い言葉」「言い換えた説明」は当てない）"
-    rs = parse_ranges(ranges) if ranges else cited_ranges(rows)
-    if not rs:
-        return "（字幕の区間が決まらない。`--range` を渡すか、spec の why に配信の時刻を書く）"
-    tr = stream_file(video, "transcript")
-    got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
-    how = "まとめ役が渡した区間" if ranges else f"spec の why・src に書いた時刻の前後{PAD}秒"
-    note = f"。{masked_note(n)}" if n else ""
-    return f"自動字幕（{rel(tr)}、30秒ごと。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"
+    given = video_ranges(videos, ranges) if ranges else {}
+    videos += [v for v in given if v not in videos]
+    cited = cited_by_video(rows, videos) if videos else {}
+    named = [v for v in cited if v not in videos]   # `--video` に無いが、作文者が why・src で根拠に名指した回（前日の回など）
+    blocks = []
+    for v in videos + named:
+        rs = given.get(v) or cited.get(v) or []
+        if not rs:
+            blocks.append((v, None, "（字幕の区間が決まらない。`--range` を渡すか、spec の why に配信の時刻を書く）"))
+            continue
+        try:
+            tr, got, n = masked_lines(v, rs)
+        except FileNotFoundError:
+            if v not in named:
+                raise
+            blocks.append((v, None, "（why・src で名指した回だが、streams/ に字幕が無い）"))
+            continue
+        how = "まとめ役が渡した区間" if given.get(v) else f"spec の why・src に書いた時刻の前後{PAD}秒"
+        note = f"。{masked_note(n)}" if n else ""
+        blocks.append((v, tr, f"自動字幕（{rel(tr)}、30秒ごと。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"))
+    if len(blocks) == 1 and not extra:
+        return blocks[0][2]
+    parts = [f"### {v}" + (f"（{stream_title(tr)}）" if tr else "") + "\n\n" + body for v, tr, body in blocks]
+    parts += [extra_block(e)[0] for e in extra]
+    head = ("回をまたぐ。字幕は回ごとに切ってある（時刻はそれぞれの回の中の時刻。spec の why・src の「videoId H:MM:SS」で回を名指す）。\n\n"
+            if len(blocks) > 1 else "")
+    return head + "\n\n".join(parts)
 
 
 FIXTURES = HERE / "fixtures"
@@ -373,8 +692,9 @@ def leaks(text: str, k: int = 8) -> list:
     return out
 
 
-def build_critic(script: Path, spec: Path | None, refs: list, about: str, video: str | None = None,
-                 ranges: list | None = None, as_of: str | None = None) -> str:
+def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=None,
+                 ranges: list | None = None, as_of: str | None = None, extra: list | None = None) -> str:
+    """video は1本（字）か何本か（並び）。extra は足す写し（`[<videoId>=]<道>`。前日の回の whisper など）。"""
     c, rows = rows_of(script, spec)
     sp = spec or lint_mod.spec_for(script)
     tmpl = CRITIC_TMPL.read_text(encoding="utf-8")
@@ -390,7 +710,7 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video:
         "cards": cards(avoid=c.lines),
         "ids": ids_line(),
         "refs": beats(refs) if refs else "（参考の指定なし）",
-        "source": critic_source(video, ranges or [], rows),
+        "source": critic_source(video, ranges or [], rows, extra or []),
     })
 
 
@@ -459,21 +779,31 @@ def ate_template(led=None) -> str:
     return "\n".join(head + rows) + "\n\nspec.json の `promises`（同じ中身。lint の L-ATE が、ID の欠け・空の note・原稿の外の行の番号を ✕ にする）:\n\n```json\n\"promises\": {\n" + skel + "\n}\n```"
 
 
-def build_writer(video: str | None, ranges: list, refs: list, about: str, n: int, chat: bool,
+def build_writer(video, ranges: list, refs: list, about: str, n: int, chat: bool,
                  extra: list, title: str | None = None, nxt: str | None = None) -> str:
+    """video は1本（字）か何本か（並び）。区間は `[<videoId>@]H:MM:SS-H:MM:SS`（回を書かなければ最初の回）。"""
     if chat:
         raise ValueError("作文者の1枚にチャットの本文は入れない（視聴者の書き込みで話を動かさない。帳面 F-048）。--chat を外す")
+    per = video_ranges(videos_of(video), ranges) if ranges else {}
+    bare = [v for v, rs in per.items() if not rs]
+    if bare:
+        raise ValueError(f"区間の無い回がある: {'・'.join(bare)}（--range {bare[0]}@H:MM:SS-H:MM:SS で渡す）")
+    multi = len(per) > 1
     parts, got = [], []
-    if video and ranges:
-        rs = parse_ranges(ranges)
-        tr = stream_file(video, "transcript")
-        got, n = mask_read(cut(tr, rs), comment_bodies(video, rs))
-        note = f"。{masked_note(n)}" if n else ""
-        parts.append(f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(got) + "\n```")
+    for v, rs in per.items():
+        # 伏せた数は k に（n は表の行の数。2026-11-04 まで、ここで n を上書きしていて、伏せた数の行の表になっていた）
+        tr, lines, k = masked_lines(v, rs)
+        note = f"。{masked_note(k)}" if k else ""
+        body = f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(lines) + "\n```"
+        parts.append(f"### {v}（{stream_title(tr)}）\n\n{body}" if multi else body)
+        got += labeled(v, lines) if multi else lines
+    if multi:
+        parts.insert(0, "回をまたぐ。字幕は回ごとに切ってある（時刻はそれぞれの回の中の時刻。元の出来事の欄と spec の why には"
+                        "「videoId H:MM:SS」で回を名指して書く）")
     for p in extra:
-        text = Path(p).read_text(encoding="utf-8").strip()
-        got += [ln for ln in text.splitlines() if TIME.match(ln)]
-        parts.append(f"{Path(p).name}:\n\n```\n" + text + "\n```")
+        block, lines = extra_block(p)
+        parts.append(block)
+        got += lines
     return fill(WRITER_TMPL.read_text(encoding="utf-8"), {
         "about": about.strip() or "（まとめ役が1〜3行で書く: どの配信のどの出来事か・企画の型・伝えたいこと）",
         "cards": cards(),
@@ -883,19 +1213,21 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="作文者・批評役・本編集の担当に渡す1枚を作る")
     sub = ap.add_subparsers(dest="who", required=True)
     w = sub.add_parser("writer", help="作文者へ（書く前）")
-    w.add_argument("--video", help="配信の videoId（streams/ の書き起こしから切る）")
-    w.add_argument("--range", action="append", default=[], help="H:MM:SS-H:MM:SS（何回でも）")
+    w.add_argument("--video", action="append", default=[],
+                   help="配信の videoId（streams/ の書き起こしから切る）。回をまたぐ原稿は何回でも")
+    w.add_argument("--range", action="append", default=[],
+                   help="[<videoId>@]H:MM:SS-H:MM:SS（何回でも）。回を書かなければ最初の --video の回")
     w.add_argument("--chat", action="store_true", help="使わない（作文者の1枚にチャットの本文は入れない。帳面 F-048）。渡すと止まる")
-    w.add_argument("--extra", action="append", default=[], help="足す書き起こし（復号した whisper など、[H:MM:SS] 形式）")
     w.add_argument("--lines", type=int, default=18, help="4欄の表の雛形の行数")
     w.add_argument("--title", help="題の札の字（決まっていれば。1行目でそのまま読む・表の1行目に入れる。助詞の抜けがあれば1枚に書く）")
     w.add_argument("--next", help="最後の行で言う次の配信（「本日22時」。決まっていれば）")
     c = sub.add_parser("critic", help="批評役へ（関所）")
     c.add_argument("script")
     c.add_argument("--spec", help="spec.json（既定は原稿の隣）")
-    c.add_argument("--video", help="配信の videoId（streams/ の字幕を1枚に入れる。配信に無い言葉を批評役が当てるため）")
+    c.add_argument("--video", action="append", default=[],
+                   help="配信の videoId（streams/ の字幕を1枚に入れる。配信に無い言葉を批評役が当てるため）。回をまたぐ原稿は何回でも")
     c.add_argument("--range", action="append", default=[],
-                   help="H:MM:SS-H:MM:SS（何回でも）。省くと spec の why・src に書いた時刻の前後30秒")
+                   help="[<videoId>@]H:MM:SS-H:MM:SS（何回でも）。区間の無い回は、spec の why・src にその回で書いた時刻の前後30秒")
     c.add_argument("--as-of", help="承認済みの原稿を読み直すとき（lint の結果をその時点の決まりで出す。`lint.py --help`）")
     ed = sub.add_parser("edit", help="本編集の担当へ（声 → spec → 書き出し → 直す → 下見）")
     ed.add_argument("--episode", required=True, help="回の置き場（shorts/videos/<回> か、その版 p1）")
@@ -905,20 +1237,21 @@ def main() -> int:
     ed.add_argument("--voice-lines", help="1枚は作らず、声に渡す字の雛形を spec の tts_text からこの道に書く")
     for p in (w, c):
         p.add_argument("--ref", action="append", default=[], help="写す参考の略号（reference_beats.md の節。何回でも）")
-        p.add_argument("--transcript", help="streams/ に無い回の字幕（`[H:MM:SS] 文` の行。captions で取って復号した captions.txt）。"
-                       "チャットが無いので、読み上げたコメントは伏せられない")
+        p.add_argument("--transcript", action="append", default=[],
+                       help="[<videoId>=]<道>: streams/ に無い回の字幕（`[H:MM:SS] 文` の行。captions で取って復号した captions.txt）。"
+                       "回を書かなければ最初の --video の回。streams/ にその回のチャットが無ければ、読み上げたコメントは伏せられない")
+        p.add_argument("--extra", action="append", default=[],
+                       help="[<videoId>=]<道>: 足す書き起こし（復号した whisper・前日の回など、[H:MM:SS] 形式）。"
+                       "回を書くと、その回のチャットで読み上げを伏せる")
     for p in (w, c, ed):
         p.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
         p.add_argument("-o", "--out", help="書き出す先（無ければ標準出力）")
     a = ap.parse_args()
-    if getattr(a, "transcript", None):
-        if not a.video:
-            print("作れない: --transcript には --video が要る", file=sys.stderr)
-            return 2
-        TRANSCRIPT_FILE[a.video] = Path(a.transcript)
     try:
+        use_transcripts(getattr(a, "transcript", None) or [], getattr(a, "video", None) or [])
         if a.who == "critic":
-            text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range, a.as_of)
+            text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range, a.as_of,
+                                a.extra)
         elif a.who == "edit" and a.voice_lines:
             vdir, _, sfx = pick(Path(a.episode), a.pattern)
             items = voice_lines(json.loads((vdir / f"spec{sfx}.json").read_text(encoding="utf-8")))
