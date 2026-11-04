@@ -3,7 +3,9 @@ name: 投げ銭の演出を Blender で描く
 # 1万円の段（段7「ドラキュラ城が本気を出す」）の連番の絵を、runner で Blender（Cycles・CPU）を回して描く（#1095）。
 # **作業箱には Blender を入れない**（入れる依頼は許可の判定で止まった）。ここで入れて、ここで描く。
 # 場面は tools/alert-theme/blender/castle_t7.py、振付けは t7_motion.py、秒とコマの分けかたは t7_plan.py。
-# 出来た連番の絵は artifact（t7-<質>-<番号>）に置く。作業箱で落として、透明つき WebM に書き出す（t7_pack.py）。
+# 描いた連番の絵（4つの層）は artifact（t7-<質>-<番号>）に置き、pack の job が重ねて full / light の透明つき WebM に焼く
+# （t7_pack.py）。焼いたものと一覧の絵は枝 blender/out-t7 に置き、作業箱はそこを git で取る（artifact は落とせない）。
+# 1コマの秒は各 artifact の meta.json と、run の頁の要約に出る。
 #
 # - 秘密の鍵は使わない（このリポジトリの絵と、公式の Blender だけ）。ほかのワークフローとは繋がない
 # - コマを matrix で分けて並べる（重いコマが固まらないよう順に配る。t7_plan.py の shards）
@@ -27,6 +29,9 @@ on:
         default: "20"
       frames:
         description: '描くコマ（例 "intro:0,40 stay:0-89"）。空なら quality が preview のとき既定の試しのコマ、final のとき全部'
+        default: ""
+      pack_run:
+        description: "描かずに、この run の絵（同じ quality）を重ね直すだけ（重ね方・薄さを直したとき）"
         default: ""
   push:
     branches: ["blender/**"]
@@ -89,8 +94,9 @@ jobs:
         env:
           SHARDS: ${{ inputs.shards || '4' }}
           FRAMES: ${{ inputs.frames }}
+          PACK_RUN: ${{ inputs.pack_run }}
         run: |
-          if [ "$QUALITY" = "smoke" ]; then
+          if [ "$QUALITY" = "smoke" ] || [ -n "$PACK_RUN" ]; then
             echo 'shards=[]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -140,3 +146,57 @@ jobs:
           retention-days: 7
           # PNG は縮まないので、包むだけにする（上げる時間を短く）
           compression-level: 0
+
+  # 層を重ねて full / light の透明つき WebM に焼き、一覧の絵と一緒に枝 blender/out-t7 へ置く。
+  # **作業箱は artifact を落とせない**（置き場の blob の宛先が、作業箱の外への出口で止められている。2026-11-04）。
+  # git の枝なら作業箱から fetch できる。中身はどうせ public/ に出す動画と、合成の配信画面ではない一覧だけ（顔は無い）。
+  # 枝は毎回 1 コミットに作り直して上書きする（重い絵を積まない）。押すのは GITHUB_TOKEN なので、ほかのワークフローは起きない
+  pack:
+    needs: [plan, render]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && inputs.quality != 'smoke' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる
+        timeout-minutes: 15
+        run: |
+          bash tools/shorts/ingest/ffmpeg.sh
+          ffmpeg -version | head -1
+          python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: t7-${{ env.QUALITY }}-*
+          path: raw
+          run-id: ${{ inputs.pack_run || github.run_id }}
+          github-token: ${{ github.token }}
+      - name: 重ねる・焼く・一覧にする
+        run: |
+          python3 tools/alert-theme/blender/t7_pack.py compose raw work
+          mkdir -p out/fx out/sheets out/meta
+          python3 tools/alert-theme/blender/t7_pack.py encode work out/fx
+          python3 tools/alert-theme/blender/t7_pack.py sheet work out/sheets/sheet.jpg
+          cp work/frames.json out/meta/
+          for m in raw/*/meta.json; do cp "$m" "out/meta/$(basename "$(dirname "$m")").json"; done
+          if ls out/fx/*.webm > /dev/null 2>&1; then
+            python3 tools/alert-theme/blender/t7_pack.py check out/fx | tee out/meta/check.txt || true
+          fi
+          du -sh out/* | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 作業箱へ渡す（枝 blender/out-t7）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ inputs.pack_run || github.run_id }}
+        run: |
+          cd out
+          git init -q -b out
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "段7 の書き出し（絵は run $RUN・${QUALITY}）"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" out:refs/heads/blender/out-t7
+          echo "枝 blender/out-t7 に置いた（$(git rev-parse --short HEAD)）" >> "$GITHUB_STEP_SUMMARY"
