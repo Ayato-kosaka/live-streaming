@@ -1,0 +1,24 @@
+{
+ "name": "xfer-20261104-004106-b6528f",
+ "place": "transfer",
+ "action": "up",
+ "files": [
+  {
+   "name": "00.jpeg",
+   "bytes": 193694,
+   "sha256": "19f4c805c0e4547090d24dc8bde22d7de0b3d06797797e150633655029a8552f"
+  },
+  {
+   "name": "01.jpeg",
+   "bytes": 239753,
+   "sha256": "8c1944ca17063ca18086d92118ce22d5567f61d188cbb194da7ec2c5c3687428"
+  },
+  {
+   "name": "02.jpeg",
+   "bytes": 94359,
+   "sha256": "539f3e2a7844f48689139bbeddc576ff19ce987b805d7754c6e5b9b2243cd201"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAszX7pyNG7Cq2tC5Qkk0B\n8WbYiUAG9N6rlct6HKFbh/VK70/ZSfBeNUFmE8T8/NAwkfJh5zviU/hvBZzWmCZh\n079aIgR9qD5pzz+w+WlacfuiweyEY2KJ6ZjsT96lWS+MRf6Snq1tLdoMifdvgKCy\n1hur3NQFUvkHg+co+CqDfas0fepx4kWgP4XFkxGIy9Gdd6nc+BwEScPIY5ydd3Ns\n5izpxqiEVRQj5wuEmEhGqAqMLDPQd58tpsYDfApa6ufybQA/Ia+bEJi7ULF3dYLE\nC7YZKYmoa0lS+ul6URyFuKiD4da6z19SPkJKb3Xtu4ofKX+xwCOYBdVMVO9yP8m5\nrGlK2H2rDA7mz1y2qxTfAUO5n5eSXLKbjRPc2BZsWPspNNHT9qwb0BHQFIgl7fbC\nqkMuRyhGPDdQ2RZSSb41xzrUpFCH299gWedITHnDBpYQUoJSZdEFfi9e2IylAsbv\nRuDqGqwLIhNp3VE8+HpONSI6H4jMhzEK/qHUOZ/R0KOnAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "0ad4f6616d30225c6ecd14a1"
+}
