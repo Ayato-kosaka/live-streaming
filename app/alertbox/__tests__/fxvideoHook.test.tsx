@@ -7,11 +7,12 @@
  *
  *   npx jest app/alertbox/__tests__/fxvideoHook.test.tsx
  *
- * 守りたいのは4つ。
+ * 守りたいのは5つ。
  *   1. 旗が無い（本番の URL）日は、**1バイトも落とさない**（manifest も読まない）。段も差し替えない
  *   2. `still=1`（iPhone の日）は、旗があっても1バイトも落とさない。段は差し替えるが、動画は渡さない
  *   3. 旗がある日は、貯金箱が出て 4 秒おいてから manifest → 温める順に1本ずつ落とす
  *   4. 投げ銭の段の動画を用意してから渡す。渡したら手元に残さない（同じ要素を2件で使い回さない）
+ *   5. 段取りに、manifest の段のキャラ絵の箱の下の端（`charBottom`）を載せる（〜999円の3段。書いていない段は null）
  *
  * jsdom の `<video>` は読み込まないので、readyState を「最後まで流せる」(4) に差し替えて、用意が済んだことにする。
  */
@@ -143,4 +144,23 @@ it("投げ銭の段の動画を用意してから渡す。渡したら手元に�
   expect(k.back!.outro.getAttribute("src")).toBeNull();
   // 渡したら手元に残さない
   expect(got.v!.planFor(tierOf(10000))).toBeNull();
+});
+
+it("段取りに、manifest の段のキャラ絵の箱の下の端（charBottom）を載せる。書いていない段は null", async () => {
+  const raised = JSON.parse(MANIFEST);
+  raised.tiers["1"].charBottom = 0.72;
+  delete raised.tiers["7"].charBottom;
+  (global as { fetch?: unknown }).fetch = jest.fn(async (url: string) =>
+    url.endsWith("manifest.json") ? { ok: true, json: async () => raised } : { ok: true, arrayBuffer: async () => new ArrayBuffer(1024) }
+  );
+  window.history.replaceState({}, "", "/?fx=full");
+  const { got } = mount(castle, { still: false, bankReady: false });
+  await act(async () => {
+    await got.v!.ensureFor(100);
+  });
+  expect(got.v!.planFor(tierOf(100))!.charBottom).toBe(0.72);
+  await act(async () => {
+    await got.v!.ensureFor(10000);
+  });
+  expect(got.v!.planFor(tierOf(10000))!.charBottom).toBeNull();
 });
