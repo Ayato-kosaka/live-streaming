@@ -282,8 +282,10 @@ KBPS = (40, 8000)
 # 2秒おきにレンガの模様が消えて窓の色までずれた（run 41790472318。PSNR がキーフレームで 3〜4dB 落ちる）。
 # 上限（QMIN）も決めるのは、頭のコマだけ飛び抜けて良く焼かれ、輪の継ぎ目で「くっきり → ぼやけ」が毎回出るのを防ぐため。
 # back は、率で決まるふだんの画質（PSNR 31〜33dB）に近い 32。26 だと stay の頭が尻より 3.8dB 良く、3秒ごとに城がくっきりした
-# （run 41794553426）。front は光の粒だけで軽いので 10。粗く焼くと、締めの最後のコマに透明 8/255 が残った
-QMIN = {"back": 32, "front": 10}
+# （run 41794553426）。front は光の粒だけで軽いので 10。粗く焼くと、締めの最後のコマに透明 8/255 が残った。
+# back の締めも 32 だと最後のコマに透明 7/255 が残った（run 41796475424）。締めは1回しか流れず、輪の頭の跳ねが無いので 16
+QMIN = {("back", "intro"): 32, ("back", "stay"): 32, ("back", "outro"): 16,
+        ("front", "intro"): 10, ("front", "stay"): 10, ("front", "outro"): 10}
 QMAX = (50, 56, 60)
 
 
@@ -313,7 +315,7 @@ def _encode_budget(job):
     qi = 0
     tries = []
     for _ in range(5):
-        kb = _encode_one(src, p, kbps, QMIN[layer], QMAX[qi])
+        kb = _encode_one(src, p, kbps, QMIN[(layer, clip)], QMAX[qi])
         tries.append((kbps, QMAX[qi], round(kb)))
         if 0.88 * budget <= kb <= budget:
             break
@@ -329,7 +331,7 @@ def _encode_budget(job):
         ok = [t for t in tries if t[2] <= budget]
         if ok:
             kbps, qmax, _ = max(ok, key=lambda t: t[2])
-            kb = _encode_one(src, p, kbps, QMIN[layer], qmax)
+            kb = _encode_one(src, p, kbps, QMIN[(layer, clip)], qmax)
             tries.append((kbps, qmax, round(kb)))
     return p, budget, tries
 
@@ -473,8 +475,16 @@ def _psnr_dips(ps, loop):
     return out
 
 
+def _seen(f):
+    """見えている色（色 × 透明）と透明。透明な所の色は画面に出ないので、継ぎ目の差に数えない"""
+    f = f.astype(np.float32)
+    return np.dstack([f[..., :3] * f[..., 3:4] / 255, f[..., 3:4]])
+
+
 def _jump(a, b):
-    return float(np.mean(np.abs(a.astype(np.float32) - b.astype(np.float32))))
+    """2コマの差（0〜255）。見えている色と透明で測る（2026-11-04: light の front で、見えない所の色の差だけで
+    境目が隣どうしの 2.5 倍になった。見えている色では 0.92 と 0.89 で、跳ねは無かった）"""
+    return float(np.mean(np.abs(_seen(a) - _seen(b))))
 
 
 def check(out, work=None):
@@ -533,10 +543,8 @@ def check(out, work=None):
                 bad.append(f"{os.path.basename(p)} の顔の穴に {fz:.3f}")
         if clip == "stay":
             # 継ぎ目: 最後のコマ → 頭のコマの差が、ふつうの隣どうしの差と比べて大きすぎないか
-            f32 = [f.astype(np.float32) for f in (frames[-1], frames[0], frames[len(frames) // 2], frames[len(frames) // 2 + 1])]
-            seam = float(np.mean(np.abs(f32[0] - f32[1])))
-            step = float(np.median([np.mean(np.abs(frames[k + 1].astype(np.float32) - frames[k].astype(np.float32)))
-                                    for k in range(0, len(frames) - 1, 9)]))
+            seam = _jump(frames[-1], frames[0])
+            step = float(np.median([_jump(frames[k + 1], frames[k]) for k in range(0, len(frames) - 1, 9)]))
             msg += f" 継ぎ目 {seam:.2f}（隣どうし {step:.2f}）"
             if seam > max(2.5 * step, 1.0):
                 bad.append(f"{os.path.basename(p)} の継ぎ目 {seam:.2f} > 隣どうし {step:.2f} の 2.5 倍")
