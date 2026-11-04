@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "AZwmL3H25TA__zoom-210-360-0.5fps",
+ "mode": "zoom",
+ "dest": "AZwmL3H25TA/zoom-210-360-0.5fps",
+ "video": "AZwmL3H25TA",
+ "channel": null,
+ "request": "shorts/requests/waltemis-AZwmL3H25TA-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 3,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 11
+ },
+ "bytes": {
+  "plain": 819188,
+  "tar_gz": 768093,
+  "encrypted": 768096
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 768096,
+   "sha256": "e414f9d2eed3f2499e52849cc24ea45a008b8ae8070b672b4ebb9d788581ff2e"
+  }
+ ],
+ "hmac_sha256": "8c8b787e5e476836acf922995b4752e8351ad5ba5cc851229b06145a00cfa7e1",
+ "pubkey_sha256": "c2c7432f1eddfe794568c82d4804c705e5ab57b947dd0fa74a6fe60801d6da5c",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41847540050",
+ "created_at": "2026-11-04T14:57:03+00:00"
+}
