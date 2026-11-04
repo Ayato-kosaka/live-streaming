@@ -273,9 +273,16 @@ def compose(raw, work, jobs=4):
 BUDGET_KB = {("back", "intro"): 2600, ("back", "stay"): 900, ("back", "outro"): 550,
              ("front", "intro"): 750, ("front", "stay"): 330, ("front", "outro"): 140}
 # 予算から -b:v を出すときの、実の大きさ ÷ 名目（-b:v × 秒）の見込み。外れたら焼き直しで合わせる
-OVERSHOOT = 1.6
+# （2026-11-04 の run 41790472318 で 1.9〜2.2 倍だった）
+OVERSHOOT = 2.0
 # 率の限り（kbps）。上げ下げは1回につき2倍まで
 KBPS = (40, 8000)
+# 画質の上限と下限（VP8 の量子化の段。小さいほど良い）。
+# **率に -maxrate / -bufsize の枠を付けない。** 付けると、絵を丸ごと描き直すキーフレームに符号量が回らず、
+# 2秒おきにレンガの模様が消えて窓の色までずれた（run 41790472318。PSNR がキーフレームで 3〜4dB 落ちる）。
+# 上限（QMIN）も決めるのは、頭のコマだけ飛び抜けて良く焼かれ、輪の継ぎ目で「くっきり → ぼやけ」が毎回出るのを防ぐため
+QMIN = 26
+QMAX = (50, 56, 60)
 
 
 def ff(*args):
@@ -286,38 +293,42 @@ def name_of(v, layer, clip):
     return f"t7-{v}-{layer}-{clip}.webm"
 
 
-def _encode_one(src, p, kbps):
+def _encode_one(src, p, kbps, qmax):
     # 透明は別の VP8 の流れ。キーフレームを2秒おきに固定して色とそろえる（PR #1089 の頭出しの崩れ）
     ff("-framerate", str(P.FPS), "-i", os.path.join(src, "%04d.png"), "-vf", "format=yuva420p",
        "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{kbps}k",
-       "-maxrate", f"{kbps * 3 // 2}k", "-bufsize", f"{kbps * 3}k",
-       "-qmin", "4", "-qmax", "63", "-deadline", "good", "-cpu-used", "0", "-g", str(P.FPS * 2),
-       "-keyint_min", str(P.FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", p)
+       "-crf", str(QMIN), "-qmin", str(QMIN), "-qmax", str(qmax), "-deadline", "good", "-cpu-used", "0",
+       "-g", str(P.FPS * 2), "-keyint_min", str(P.FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", p)
     return os.path.getsize(p) / 1024
 
 
 def _encode_budget(job):
-    """予算の大きさに収まるまで、率を直して焼き直す（4回まで）。予算の 75% を切ったら、上げて焼き直す"""
+    """予算の大きさに収まるまで、率を直して焼き直す（5回まで）。予算の 75% を切ったら、上げて焼き直す。
+    率を下げても縮まなくなったら（画質の下限 QMAX に当たっている）、下限を1段ゆるめる"""
     src, p, layer, clip, n = job
     budget = BUDGET_KB[(layer, clip)]
     kbps = min(KBPS[1], max(KBPS[0], int(budget * 8.192 / (n / P.FPS) / OVERSHOOT)))
+    qi = 0
     tries = []
-    for _ in range(4):
-        kb = _encode_one(src, p, kbps)
-        tries.append((kbps, round(kb)))
+    for _ in range(5):
+        kb = _encode_one(src, p, kbps, QMAX[qi])
+        tries.append((kbps, QMAX[qi], round(kb)))
         if 0.75 * budget <= kb <= budget:
             break
+        if kb > budget and len(tries) >= 2 and tries[-2][1] == QMAX[qi] and tries[-2][2] - kb < 0.03 * kb and qi + 1 < len(QMAX):
+            qi += 1
+            continue
         nxt = min(KBPS[1], max(KBPS[0], int(kbps * min(2.0, max(0.5, budget / kb * 0.96)))))
         if nxt == kbps:
             break
         kbps = nxt
     if kb > budget:
-        # 最後が予算を超えたら、いちばん大きかった予算内の率で焼き直す（無ければ、そのまま。check が合計で落とす）
-        ok = [t for t in tries if t[1] <= budget]
+        # 最後が予算を超えたら、いちばん大きかった予算内の焼き方で焼き直す（無ければ、そのまま。check が合計で落とす）
+        ok = [t for t in tries if t[2] <= budget]
         if ok:
-            kbps = max(ok, key=lambda t: t[1])[0]
-            kb = _encode_one(src, p, kbps)
-            tries.append((kbps, round(kb)))
+            kbps, qmax, _ = max(ok, key=lambda t: t[2])
+            kb = _encode_one(src, p, kbps, qmax)
+            tries.append((kbps, qmax, round(kb)))
     return p, budget, tries
 
 
@@ -339,7 +350,7 @@ def encode(work, out, jobs=4):
     # libvpx は1本につき CPU 1本しか使わないので、本ごとに並べる
     with ThreadPoolExecutor(jobs) as ex:
         for p, budget, tries in ex.map(_encode_budget, todo):
-            print(f"  {os.path.basename(p):28s} {tries[-1][1]:6d}KB（予算 {budget}KB・焼いた率と大きさ {tries}）", flush=True)
+            print(f"  {os.path.basename(p):28s} {tries[-1][2]:6d}KB（予算 {budget}KB・焼いた率・画質の下限・大きさ {tries}）", flush=True)
     entry = {"variants": done, "revealAt": P.REVEAL, "introDur": P.INTRO, "stayDur": P.STAY, "outroDur": P.OUTRO}
     json.dump({"7": entry}, open(os.path.join(out, "manifest-t7.json"), "w"), ensure_ascii=False, indent=1)
     return 0
@@ -427,17 +438,35 @@ def probe_dur(path):
     return int(out.stdout.strip() or 0)
 
 
-def _alpha_vs_src(frames, src_dir):
-    """焼いた動画を libvpx で読み戻した透明と、焼く前の絵（work の PNG）の透明の差（0〜1）。
-    平均と、いちばん悪いコマの平均を返す。Chrome も透明の流れは libvpx で読むので、ここで合えば画面でも合う"""
-    per = []
+def _vs_src(frames, src_dir):
+    """焼いた動画を libvpx で読み戻して、焼く前の絵（work の PNG）と比べる。Chrome も透明の流れは libvpx で読むので、
+    ここで合えば画面でも合う。返すのは (透明の差の平均, 透明の差がいちばん悪いコマ, コマごとの PSNR)。
+    PSNR は黒の上に重ねた色（色 × 透明）で取る。見えない所の色（平らにしてある）は数えない"""
+    da, ps = [], []
     for k, f in enumerate(frames):
         sp = os.path.join(src_dir, f"{k:04d}.png")
         if not os.path.exists(sp):
             return None
-        sa = np.asarray(Image.open(sp).getchannel("A")).astype(np.float32) / 255
-        per.append(float(np.mean(np.abs(f[..., 3].astype(np.float32) / 255 - sa))))
-    return float(np.mean(per)), float(np.max(per))
+        s = np.asarray(Image.open(sp).convert("RGBA")).astype(np.float32) / 255
+        g = f.astype(np.float32) / 255
+        da.append(float(np.mean(np.abs(g[..., 3] - s[..., 3]))))
+        mse = float(np.mean((g[..., :3] * g[..., 3:4] - s[..., :3] * s[..., 3:4]) ** 2))
+        ps.append(min(60.0, 10 * math.log10(1 / max(mse, 1e-10))))
+    return float(np.mean(da)), float(np.max(da)), ps
+
+
+# 画質の決まり（焼く前の絵との PSNR）。キーフレーム（2秒おき）で崩れると、その1つ前のコマから大きく落ちる。
+# 中央からの落ちでは見ない（消えていく本は、空に近いコマの PSNR が高すぎて中央が当てにならない）
+PSNR_MIN = 30.0
+PSNR_DIP = 3.0
+
+
+def _psnr_dips(ps, loop):
+    """キーフレームの所の (コマ, 前のコマからの落ち dB)。loop なら輪の尻 → 頭も（頭が飛び抜けて良い・悪いも跳ねに見える）"""
+    out = [(k, ps[k - 1] - ps[k]) for k in range(P.FPS * 2, len(ps), P.FPS * 2)]
+    if loop:
+        out.append((0, abs(ps[-1] - ps[0])))
+    return out
 
 
 def _jump(a, b):
@@ -474,13 +503,22 @@ def check(out, work=None):
             [_jump(frames[k + 1], frames[k]) for k in range(max(0, len(frames) - 10), len(frames) - 1)]
             + [_jump(frames[k + 1], frames[k]) for k in range(0, min(9, len(frames) - 1))])))
         if work:
-            r = _alpha_vs_src(frames, os.path.join(work, v, layer, clip))
+            r = _vs_src(frames, os.path.join(work, v, layer, clip))
             if r is None:
                 bad.append(f"{os.path.basename(p)} の焼く前の絵が work に無い")
             else:
-                print(f"  {os.path.basename(p):28s} 透明の差（焼く前の絵と） 平均 {r[0]:.4f}・いちばん悪いコマ {r[1]:.4f}")
+                ps = r[2]
+                med = float(np.median(ps))
+                kmin = int(np.argmin(ps))
+                print(f"  {os.path.basename(p):28s} 焼く前の絵と: 透明の差 平均 {r[0]:.4f}・いちばん悪いコマ {r[1]:.4f}"
+                      f" / PSNR 中央 {med:.1f}dB・最低 {ps[kmin]:.1f}dB（{kmin} コマ目）")
                 if r[0] > 0.01:
                     bad.append(f"{os.path.basename(p)} の透明が焼く前の絵と {r[0]:.4f} 違う（0.01 まで）")
+                if med < PSNR_MIN:
+                    bad.append(f"{os.path.basename(p)} の画質 PSNR 中央 {med:.1f}dB（{PSNR_MIN}dB から）")
+                for k, d in _psnr_dips(ps, clip == "stay"):
+                    if d > PSNR_DIP:
+                        bad.append(f"{os.path.basename(p)} の {k} コマ目（キーフレーム）で画質が {d:.1f}dB 変わる")
         a = np.stack([f[..., 3] for f in frames]).astype(np.float32) / 255
         cover = float(np.mean(a > 0.1))
         msg = f"  {os.path.basename(p):28s} {os.path.getsize(p) / 1024:6.0f}KB 覆う {cover * 100:4.1f}%"
