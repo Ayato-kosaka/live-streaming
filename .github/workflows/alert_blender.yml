@@ -14,6 +14,7 @@ name: 投げ銭の演出を Blender で描く
 # 起こしかた:
 #   gh workflow run alert_blender.yml --ref <枝> -f quality=final -f shards=20
 #   gh workflow run alert_blender.yml --ref <枝> -f quality=preview -f frames="intro:0,40,80 stay:0"
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=final -f pack_run="<run> <描き直した run>"   # 欠けた台を足して重ねる
 # blender/** の枝に場面を push すると、試しの絵（preview・既定のコマ）だけ描く
 
 on:
@@ -31,7 +32,7 @@ on:
         description: '描くコマ（例 "intro:0,40 stay:0-89"）。空なら quality が preview のとき既定の試しのコマ、final のとき全部'
         default: ""
       pack_run:
-        description: "描かずに、この run の絵（同じ quality）を重ね直すだけ（重ね方・薄さを直したとき）"
+        description: "描かずに、この run の絵（同じ quality）を重ね直すだけ（重ね方・薄さを直したとき）。空白で区切って複数の run を合わせられる"
         default: ""
   push:
     branches: ["blender/**"]
@@ -170,12 +171,18 @@ jobs:
           bash tools/shorts/ingest/ffmpeg.sh
           ffmpeg -version | head -1
           python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0"
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: t7-${{ env.QUALITY }}-*
-          path: raw
-          run-id: ${{ inputs.pack_run || github.run_id }}
-          github-token: ${{ github.token }}
+      # pack_run には run を空白で区切って並べられる。runner が途中で止められて（shutdown signal）1台ぶんの絵が
+      # 欠けたとき、そのコマだけ別の run で描き直して、元の run の絵と合わせて重ねるため（2026-11-04 に render-7 で起きた）。
+      # run ごとに置き場を分けるので、同じ名前の artifact（t7-final-0 など）がぶつからない
+      - name: 描いた絵を落とす
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNS: ${{ inputs.pack_run || github.run_id }}
+        run: |
+          for r in $RUNS; do
+            gh run download "$r" -R "$GITHUB_REPOSITORY" -p "t7-${QUALITY}-*" -D "raw/$r"
+          done
+          find raw -name meta.json | wc -l
       - name: 重ねる・焼く・一覧にする
         run: |
           python3 tools/alert-theme/blender/t7_pack.py compose raw work
