@@ -39,7 +39,7 @@ from PIL import Image, ImageDraw
 W, H, FPS = 720, 1280, 30
 FACE = (360.0, 590.0, 74.0)
 MAX_TIER_BYTES = 6 * 1024 * 1024
-LOW_TOP = {1: 0.70, 2: 2 / 3, 3: 0.5}  # これより上（割合）に物を出さない
+LOW_TOP = {1: 0.70, 2: 2 / 3, 3: 0.5}  # 箱の高さのこの割合より上に物を出さない（段1は下 30%・段2は下 1/3・段3は下 1/2）
 
 
 class Unchecked(Exception):
@@ -152,9 +152,10 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             if solid > 0.02:
                 bad.append(f"{name}: 透明 0.6 超の面が {solid * 100:.1f}%（光と粒だけなら 2% 以下）")
         if tier in LOW_TOP and layer == "back":
-            top = int(H * (1 - LOW_TOP[tier]))
+            # 下の何割だけを使ってよいか。それより上（箱の上から LOW_TOP の割合まで）を数える
+            top = int(H * LOW_TOP[tier])
             over = float(((fr[:, :top, :, 3] > 25).mean(axis=(1, 2))).max())
-            notes.append(f"{name}: 上の {int((1 - LOW_TOP[tier]) * 100)}% に出た量 最大 {over * 100:.2f}%")
+            notes.append(f"{name}: 上の {round(LOW_TOP[tier] * 100)}% に出た量 最大 {over * 100:.2f}%")
             if over > 0.005:
                 bad.append(f"{name}: 〜999円の段なのに、箱の上のほうに {over * 100:.1f}% 出ている")
         cov = (fr[..., 3] > 25).mean(axis=(1, 2))
