@@ -52,7 +52,7 @@ QUALITY = {
     # 目線合わせ（半分の大きさ）
     "preview": dict(pct=50, scene=16, other=8, denoise=True, blur=True, thr=0.05),
     # 本番
-    "final": dict(pct=100, scene=64, other=16, denoise=True, blur=True, thr=0.03),
+    "final": dict(pct=100, scene=48, other=16, denoise=True, blur=True, thr=0.03),
 }
 
 RND = random.Random(1_0000)
@@ -400,8 +400,9 @@ def mat_rock():
     _, _, nz = N.xyz(geo.outputs["Normal"])
     moss = N.math("MULTIPLY", N.maprange(nz, 0.45, 0.8), N.maprange(nf, 0.42, 0.62))
     col = N.mix(moss, col, (0.07, 0.13, 0.04))
-    crack = N.maprange(N.sock(vor, "Distance", out=True), 0.0, 0.06, 0.0, 1.0)
-    col = N.mix(N.math("SUBTRACT", 1.0, crack), col, (0.04, 0.04, 0.045))
+    # 割れ目は細く、黒くしすぎない（太く黒いと、岩が石畳の目地のように見えた。2026-11-04 の試し）
+    crack = N.maprange(N.sock(vor, "Distance", out=True), 0.0, 0.03, 0.0, 1.0)
+    col = N.mix(N.math("MULTIPLY", N.math("SUBTRACT", 1.0, crack), 0.55), col, (0.06, 0.06, 0.065))
     bump = N.n("ShaderNodeBump")
     N.set(bump, Strength=0.7, Distance=0.12, Height=N.math("ADD", nf, N.math("MULTIPLY", crack, 0.5)))
     bs = principled(N, Base_Color=col, Roughness=0.9, Normal=bump.outputs[0])
@@ -685,7 +686,7 @@ def mat_moon():
     N.set(vor, Vector=obj, Scale=5.0)
     maria = N.maprange(N.sock(n1, "Fac", out=True), 0.45, 0.65)
     crat = N.maprange(N.sock(vor, "Distance", out=True), 0.0, 0.25, 0.85, 1.0)
-    col = N.mix(maria, (1.0, 0.95, 0.84), (0.86, 0.78, 0.64))
+    col = N.mix(maria, (1.0, 0.95, 0.84), (0.74, 0.66, 0.54))
     col = N.mix(1.0, col, N.comb(crat, crat, crat), "MULTIPLY")
     r = N.vmath("LENGTH", obj)
     limb = N.maprange(r, 0.55, 1.0, 1.0, 0.78)
@@ -727,7 +728,7 @@ def mat_card(name, img_path, rim_path=None, emit=0.8, diffuse=0.35, rim_col=(0.7
         winv = ctl_node("sticker_win", m, N, 1.0)
         u, _, _ = N.xyz(N.uv())
         lit = N.math("MULTIPLY", N.math("SUBTRACT", N.math("MULTIPLY", sweep, 1.25), u), 8.0, clamp=True)
-        wk = N.math("MULTIPLY", N.math("MULTIPLY", N.sock(wt, "Color", out=True), lit), N.math("MULTIPLY", winv, 6.0))
+        wk = N.math("MULTIPLY", N.math("MULTIPLY", N.sock(wt, "Color", out=True), lit), N.math("MULTIPLY", winv, 9.0))
         ecol = N.mix(wk, ecol, (1.0, 0.62, 0.22), "ADD")
     em = N.n("ShaderNodeEmission")
     N.set(em, Color=ecol, Strength=1.0)
@@ -1153,11 +1154,12 @@ def _window_xf(p, x, y, z, ang, cx, cy, r):
 def _leaf_outline():
     """もみじの葉（5つの切れ込み）。半径 0.5 の中に、(x, y, z)"""
     pts = []
-    n = 30
+    n = 45
     for i in range(n):
         a = TAU * i / n
-        lobe = abs(math.cos(2.5 * (a - math.pi / 2))) ** 0.7
-        r = 0.18 + 0.32 * lobe
+        # 尖った5つの葉先と、深い切れ込み・細かいぎざぎざ（丸い指数だと星の形に見えた）
+        lobe = abs(math.cos(2.5 * (a - math.pi / 2))) ** 2.2
+        r = 0.16 + 0.34 * lobe + 0.025 * abs(math.cos(12.5 * (a - math.pi / 2)))
         if math.sin(a) < -0.85:
             r *= 0.6
         pts.append((r * math.cos(a), r * math.sin(a), 0.03 * math.cos(3 * a)))
@@ -1184,7 +1186,7 @@ def build(quality):
         "stone_dark": mat_stone("stone_dark", (0.06, 0.055, 0.055), (0.14, 0.13, 0.12)),
         "iron": mat_metal("iron", (0.05, 0.05, 0.055), 0.45, 0.9),
         "gold": mat_metal("gold", (1.0, 0.72, 0.28), 0.18, 1.0),
-        "coin": mat_metal("coin", (1.0, 0.70, 0.24), 0.2, 1.0, emit=0.08),
+        "coin": mat_metal("coin", (1.0, 0.8, 0.36), 0.13, 1.0, emit=0.14),
         "bark": mat_stone("bark", (0.04, 0.025, 0.018), (0.1, 0.06, 0.035)),
         "window": mat_window(), "path": mat_path(), "ground": mat_ground(),
         "leaf": mat_leaf(), "bat": mat_bat(),
@@ -1543,7 +1545,7 @@ def setup_render(sc, cols, q):
     sc.cycles.sample_clamp_indirect = 4.0
     sc.render.film_transparent = True
     sc.render.use_motion_blur = Q["blur"]
-    sc.render.motion_blur_shutter = 0.5
+    sc.render.motion_blur_shutter = 0.4
     sc.render.resolution_x = P.W
     sc.render.resolution_y = P.H
     sc.render.resolution_percentage = Q["pct"]

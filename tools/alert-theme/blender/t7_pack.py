@@ -19,8 +19,9 @@
 
 ## full と light（`scratchpad/novfx/CONTRACT.md`）
 - full … 叩き台どおり。城が画面いっぱいのまま滞在する
-- light … 門の光からキャラ絵が出たら（`REVEAL`）、城と夜空を 0.9 秒で薄くし、縁（左右の木・下の石畳・上の月と星）だけ残す。
-  あやとと前の粒は残す。あやとの形は、振付け（`t7_motion.pose`）の板の位置から作る（`ayato_mask`。Blender で別に描くと、
+- light … 門の光からキャラ絵が出たら（`REVEAL`）、城と夜空が 0.9 秒で金の光の線になって消え、右上の満月と塔の先
+  （紋章のように）・あやと・前の粒（縁のきらめき）だけ残す。2026-11-04 の試しで「左右と下の帯を残す」にしたら、
+  城に四角い穴が開いたように見えたのでやめた。あやとの形は、振付け（`t7_motion.pose`）の板の位置から作る（`ayato_mask`。Blender で別に描くと、
   城をもう1回組み立てることになって1コマの秒が倍になる）。締めで城が貯金箱へ縮むときに、また見える。**登場までは full と同じ**（あやとの意見「キャラが出たら薄く」）
 """
 import argparse
@@ -33,7 +34,7 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -59,11 +60,10 @@ def masks():
     edge = smoothstep(0, 0.07 * W, side) * smoothstep(0, 0.035 * H, yy) * smoothstep(0, 0.03 * H, H - 1 - yy)
     d = np.sqrt(((xx - 360) / 195) ** 2 + ((yy - 600) / 185) ** 2)
     face = smoothstep(1.0, 1.4, d)
-    sides = 1 - smoothstep(0.09 * W, 0.2 * W, side)
-    bottom = 1 - smoothstep(0.07 * H, 0.15 * H, H - 1 - yy)
-    band = 0.8 * np.maximum(sides, bottom)
-    skyband = 0.7 * (1 - smoothstep(0.1 * H, 0.26 * H, yy))
-    return dict(edge=edge, face=face, band=np.maximum(band, skyband))
+    # light の版で残す所: 満月と、その前の高い塔の先（右上の紋章のように）
+    dm = np.hypot(xx - 512, yy - 200)
+    moon = 0.9 * (1 - smoothstep(175, 245, dm))
+    return dict(edge=edge, face=face, moon=moon)
 
 
 def ease_io(x):
@@ -124,6 +124,18 @@ def ayato_mask(clip, t):
         m = al.transform((W, H), Image.PERSPECTIVE, _persp_coeffs(dst, src), Image.BILINEAR)
         out = np.maximum(out, np.asarray(m).astype(np.float32) / 255 * op)
     return out
+
+
+def gold_lines(layer, amt):
+    """絵の明るさの縁を、金の光の線にする（足し算に近い層）。amt は 0〜1（場所ごとでもよい）"""
+    C, _ = layer
+    lum = C @ np.array([0.3, 0.59, 0.11], np.float32)
+    gy, gx = np.gradient(lum)
+    e = np.clip((np.hypot(gx, gy) - 0.022) * 10, 0, 1)
+    e = np.asarray(Image.fromarray((e * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(0.8))).astype(np.float32) / 255
+    a = np.clip(e * 1.3, 0, 1) * amt
+    gold = np.array([1.0, 0.8, 0.42], np.float32)
+    return a[..., None] * gold, a
 
 
 def light_weight(clip, t):
@@ -204,8 +216,11 @@ def _compose_one(job):
     ay = ayato_mask(clip, t) if wl > 0 else None
     for v in VARIANTS:
         w = wl if v == "light" else 0.0
-        keep = _M["band"] if ay is None else np.maximum(_M["band"], ay)
+        keep = _M["moon"] if ay is None else np.maximum(_M["moon"], ay)
         back = scale(L["back"], _M["edge"] * (1 - w + w * keep))
+        if 0.0 < w < 1.0:
+            # 薄くなる途中だけ、城が金の光の線になって消える（あやとの「光の線で描いて、キャラが出たら薄く」）
+            back = over(gold_lines(L["back"], math.sin(math.pi * w) ** 1.2 * (1 - keep)), back)
         front = scale(L["front"], _M["edge"] * _M["face"] * (1 - 0.3 * w))
         save_rgba(straight(back), os.path.join(work, v, "back", clip, f"{i:04d}.png"))
         save_rgba(straight(front), os.path.join(work, v, "front", clip, f"{i:04d}.png"))

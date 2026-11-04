@@ -112,9 +112,9 @@ COIN_SINK = screen(BANK_X + BANK_W * 0.5, BANK_Y + BANK_H * 0.45, 22.0)
 # あやと（板）。画面のどこに居るか（絵の真ん中）
 AYATO_DEPTH = 17.0
 AYATO_FROM = (-160, -300)
-AYATO_HOVER = (185, 300)
-AYATO_STAY = (168, 276)
-AYATO_W_PX = 270  # 広げたマントの絵（1239px）の幅が、ふつうの大きさで画面の何 px か
+AYATO_HOVER = (192, 262)
+AYATO_STAY = (176, 242)
+AYATO_W_PX = 300  # 広げたマントの絵（1239px）の幅が、ふつうの大きさで画面の何 px か
 AYATO_M_PER_PX = AYATO_W_PX / ((P.CAM["lens"] / 12.0) * (P.H / 2) / AYATO_DEPTH) / 1239
 
 # あやとの2枚の絵（ドラキュラ。顔の幅は2枚でそろえてある）。顔の真ん中が同じ所に来るように板の原点を決める
@@ -139,8 +139,8 @@ def ayato_plane(name):
 
 
 # ピポ（城の露台）
-PIPO_FOOT = (3.35, -0.05, B + 8.6 + 0.35)
-PIPO_H = 3.0
+PIPO_FOOT = (3.35, -0.05, B + 8.6 + 0.85)
+PIPO_H = 4.4
 
 # 高い塔（こうもりの渦の軸）
 TOWER = (3.6, 2.4)
@@ -148,9 +148,9 @@ TOWER = (3.6, 2.4)
 
 def _coin_spec():
     burst = []
-    for i in range(150):
+    for i in range(110):
         burst.append(dict(
-            name=f"coin_b{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(7, 14), R.uniform(12, 32), R.uniform(12, 32)]),
+            name=f"coin_b{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(14, 32)]),
             ts=R.uniform(4.35, 5.05), dur=R.uniform(1.05, 1.6), drift=R.uniform(-60, 60),
             axis=(R.uniform(-1, 1), R.uniform(-1, 1), R.uniform(-1, 1)), spin=R.uniform(2.0, 5.0) * R.choice([-1, 1]),
             rot0=(R.uniform(0, TAU), R.uniform(0, TAU), R.uniform(0, TAU)), size=R.uniform(0.8, 1.2)))
@@ -160,10 +160,10 @@ def _coin_spec():
             name=f"coin_f{i:03d}", ts=R.uniform(3.0, 3.5), v=(R.uniform(-5.5, 5.5), R.uniform(-13, -7), R.uniform(8.5, 13.5)),
             spin=(R.uniform(-14, 14), R.uniform(-14, 14), R.uniform(-14, 14)), size=R.uniform(0.85, 1.15)))
     stay = []
-    for i in range(64):
+    for i in range(54):
         Pd = R.choice([1.5, 1.5, 1.0])
         stay.append(dict(
-            name=f"coin_s{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(8, 14), R.uniform(12, 32), R.uniform(14, 32)]),
+            name=f"coin_s{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(16, 32)]),
             period=Pd, phase=R.random(), drift=R.uniform(-40, 40),
             # 3.0 秒で整数回まわる（輪が継ぎ目なくつながる）
             turns=(R.choice([-2, -1, 1, 2]), R.choice([-3, -2, 2, 3]), R.choice([-1, 1])),
