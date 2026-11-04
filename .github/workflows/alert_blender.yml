@@ -185,7 +185,7 @@ jobs:
           cp work/frames.json out/meta/
           for m in raw/*/meta.json; do cp "$m" "out/meta/$(basename "$(dirname "$m")").json"; done
           if ls out/fx/*.webm > /dev/null 2>&1; then
-            python3 tools/alert-theme/blender/t7_pack.py check out/fx | tee out/meta/check.txt || true
+            python3 tools/alert-theme/blender/t7_pack.py check out/fx --work work | tee out/meta/check.txt || true
           fi
           du -sh out/* | tee -a "$GITHUB_STEP_SUMMARY"
       - name: 作業箱へ渡す（枝 blender/out-t7）

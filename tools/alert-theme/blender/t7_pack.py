@@ -4,7 +4,7 @@
     python3 tools/alert-theme/blender/t7_pack.py compose <描いた絵の置き場> <作業の置き場>
     python3 tools/alert-theme/blender/t7_pack.py encode  <作業の置き場> <書き出し先>      # t7-*.webm と manifest-t7.json
     python3 tools/alert-theme/blender/t7_pack.py sheet   <作業の置き場> <一覧.jpg> [--bg <配信画面.jpg>]
-    python3 tools/alert-theme/blender/t7_pack.py check   <書き出し先>                      # 秒・大きさ・継ぎ目・顔の穴
+    python3 tools/alert-theme/blender/t7_pack.py check   <書き出し先> [--work <作業の置き場>]  # 秒・大きさ・継ぎ目（本の境目も）・顔の穴・透明の差
     python3 tools/alert-theme/blender/t7_pack.py demo    <書き出し先> --bg <配信画面.jpg> --char <キャラ絵.png> --out <録画.mp4>
     python3 tools/alert-theme/blender/t7_pack.py install <書き出し先> public/alert/themes/castle/fx   # 動画を置き、manifest.json の段7だけ書く
 
@@ -366,8 +366,27 @@ def probe_dur(path):
     return int(out.stdout.strip() or 0)
 
 
-def check(out):
-    """約束（CONTRACT.md）どおりか。0 = 約束どおり / 1 = 外れている / 2 = 数えられない"""
+def _alpha_vs_src(frames, src_dir):
+    """焼いた動画を libvpx で読み戻した透明と、焼く前の絵（work の PNG）の透明の差（0〜1）。
+    平均と、いちばん悪いコマの平均を返す。Chrome も透明の流れは libvpx で読むので、ここで合えば画面でも合う"""
+    per = []
+    for k, f in enumerate(frames):
+        sp = os.path.join(src_dir, f"{k:04d}.png")
+        if not os.path.exists(sp):
+            return None
+        sa = np.asarray(Image.open(sp).getchannel("A")).astype(np.float32) / 255
+        per.append(float(np.mean(np.abs(f[..., 3].astype(np.float32) / 255 - sa))))
+    return float(np.mean(per)), float(np.max(per))
+
+
+def _jump(a, b):
+    return float(np.mean(np.abs(a.astype(np.float32) - b.astype(np.float32))))
+
+
+def check(out, work=None):
+    """約束（CONTRACT.md）どおりか。0 = 約束どおり / 1 = 外れている / 2 = 数えられない
+
+    `work`（重ねた PNG の置き場）を渡すと、焼いた動画の透明が焼く前の絵と合っているかも数える（runner の pack で回す）"""
     bad = []
     files = {(v, layer, clip): os.path.join(out, name_of(v, layer, clip)) for v in VARIANTS for layer in ("back", "front") for clip in P.CLIPS}
     missing = [os.path.basename(p) for p in files.values() if not os.path.exists(p)]
@@ -381,6 +400,8 @@ def check(out):
         print(f"{v}: 合計 {tot / 1e6:.2f}MB（目安 6MB）")
         if tot > 6.0e6:
             bad.append(f"{v} の合計 {tot / 1e6:.2f}MB")
+    # 本と本の境目（intro の尻 → stay の頭、stay の尻 → outro の頭）に使う、端のコマと隣どうしの差
+    ends = {}
     for (v, layer, clip), p in files.items():
         n = probe_dur(p)
         want = P.CLIPS[clip]
@@ -388,6 +409,17 @@ def check(out):
         if n != want or len(frames) != want:
             bad.append(f"{os.path.basename(p)} のコマ数 {n}/{len(frames)}（{want}）")
             continue
+        ends[(v, layer, clip)] = (frames[0], frames[-1], float(np.median(
+            [_jump(frames[k + 1], frames[k]) for k in range(max(0, len(frames) - 10), len(frames) - 1)]
+            + [_jump(frames[k + 1], frames[k]) for k in range(0, min(9, len(frames) - 1))])))
+        if work:
+            r = _alpha_vs_src(frames, os.path.join(work, v, layer, clip))
+            if r is None:
+                bad.append(f"{os.path.basename(p)} の焼く前の絵が work に無い")
+            else:
+                print(f"  {os.path.basename(p):28s} 透明の差（焼く前の絵と） 平均 {r[0]:.4f}・いちばん悪いコマ {r[1]:.4f}")
+                if r[0] > 0.01:
+                    bad.append(f"{os.path.basename(p)} の透明が焼く前の絵と {r[0]:.4f} 違う（0.01 まで）")
         a = np.stack([f[..., 3] for f in frames]).astype(np.float32) / 255
         cover = float(np.mean(a > 0.1))
         msg = f"  {os.path.basename(p):28s} {os.path.getsize(p) / 1024:6.0f}KB 覆う {cover * 100:4.1f}%"
@@ -411,6 +443,19 @@ def check(out):
             if last > 0.02:
                 bad.append(f"{os.path.basename(p)} の最後のコマが透明でない（{last:.3f}）")
         print(msg)
+    # 本と本の境目。再生の側は intro → stay（くり返し）→ outro と途切れずにつなぐので、そこで跳ねないか
+    for v in VARIANTS:
+        for layer in ("back", "front"):
+            for c0, c1 in (("intro", "stay"), ("stay", "outro")):
+                if (v, layer, c0) not in ends or (v, layer, c1) not in ends:
+                    continue
+                _, last, s0 = ends[(v, layer, c0)]
+                first, _, s1 = ends[(v, layer, c1)]
+                j = _jump(last, first)
+                step = max(s0, s1)
+                print(f"  {v}-{layer} {c0} → {c1} の境目 {j:.2f}（端の隣どうし {step:.2f}）")
+                if j > max(2.5 * step, 1.0):
+                    bad.append(f"{v}-{layer} の {c0} → {c1} の境目 {j:.2f} > 隣どうし {step:.2f} の 2.5 倍")
     man = json.load(open(os.path.join(out, "manifest-t7.json")))["7"]
     for k, want in (("introDur", P.INTRO), ("stayDur", P.STAY), ("outroDur", P.OUTRO)):
         if abs(man[k] - want) > 1e-6:
@@ -561,6 +606,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=4)
     ap.add_argument("--loops", type=int, default=4)
     ap.add_argument("--frames-dir")
+    ap.add_argument("--work", help="check: 重ねた PNG の置き場（焼いた動画の透明を、焼く前の絵と突き合わせる）")
     x = ap.parse_args()
     if x.cmd == "compose":
         return compose(x.a, x.b, x.jobs)
@@ -569,7 +615,7 @@ def main():
     if x.cmd == "sheet":
         return sheet(x.a, x.b, x.bg, frames_dir=x.frames_dir)
     if x.cmd == "check":
-        return check(x.a)
+        return check(x.a, x.work)
     if x.cmd == "install":
         return install(x.a, x.b)
     return demo(x.a, x.bg, x.char, x.out, x.loops)
