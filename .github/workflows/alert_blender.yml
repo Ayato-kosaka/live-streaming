@@ -206,5 +206,13 @@ jobs:
           git add -A
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
             commit -qm "段7 の書き出し（絵は run $RUN・${QUALITY}）"
-          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" out:refs/heads/blender/out-t7
+          # GitHub が push を Internal Server Error で断ることが続いた（2026-11-04 に3回。回し直すと通った）。間を空けて押し直す
+          for wait in 0 20 45 90; do
+            sleep "$wait"
+            if git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" out:refs/heads/blender/out-t7; then
+              ok=1
+              break
+            fi
+          done
+          test -n "${ok:-}"
           echo "枝 blender/out-t7 に置いた（$(git rev-parse --short HEAD)）" >> "$GITHUB_STEP_SUMMARY"

@@ -96,10 +96,48 @@ def _persp_coeffs(dst, src):
 
 
 _AY = {}
+# light の版のあやとの形は、絵の半分の大きさで作る（画面のあやとは幅 300px ほど。絵は 1239px あって細かすぎる）
+AY_DOWN = 2
+
+
+def _bilinear(img, sx, sy):
+    h, w = img.shape
+    x0 = np.clip(np.floor(sx).astype(np.int32), 0, w - 2)
+    y0 = np.clip(np.floor(sy).astype(np.int32), 0, h - 2)
+    fx, fy = np.clip(sx - x0, 0, 1), np.clip(sy - y0, 0, 1)
+    a = img[y0, x0] * (1 - fx) + img[y0, x0 + 1] * fx
+    b = img[y0 + 1, x0] * (1 - fx) + img[y0 + 1, x0 + 1] * fx
+    return a * (1 - fy) + b * fy
+
+
+# 形が動いて絵の四角の外へ出る分の余白（絵の px・元の大きさで）。マントが開くと裾が外へ 70px ほど出る
+AY_PAD = 96
+
+
+def warp_board(al, name, vals, down=1, pad=0):
+    """板の形の動き（面の中の dx, dy）を、絵の透明に当てる。t7_motion.deform_px と同じ式（Blender のシェイプキーと同じ形）。
+    動いた先の画素は、元の p - d(p) から取る（動きは絵の数 % なので、逆写像の近似で足りる）。
+    al は周りに pad（縮めた後の px）の余白を足した絵。Blender の板は格子ごと外へ動くので、ここでも四角の外へ出す"""
+    if not any(abs(v) > 1e-6 for v in vals.values()):
+        return al
+    h, w = al.shape
+    g = 48
+    xs, ys = np.linspace(0, w - 1, g), np.linspace(0, h - 1, g)
+    DX = np.zeros((g, g), np.float32)
+    DY = np.zeros((g, g), np.float32)
+    for j, y in enumerate(ys):
+        for i, x in enumerate(xs):
+            dx, dy, _ = MO.board_offset_px(name, vals, (x - pad) * down, (y - pad) * down)
+            DX[j, i], DY[j, i] = dx / down, dy / down
+    DX = np.asarray(Image.fromarray(DX, "F").resize((w, h), Image.BILINEAR))
+    DY = np.asarray(Image.fromarray(DY, "F").resize((w, h), Image.BILINEAR))
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    return _bilinear(al, xx - DX, yy - DY).astype(np.float32)
 
 
 def ayato_mask(clip, t):
-    """そのコマで、あやとの絵が画面のどこを覆うか（0〜1）。Blender の板と同じ寸法・同じカメラの式で写す"""
+    """そのコマで、あやとの絵が画面のどこを覆うか（0〜1）。Blender の板と同じ寸法・同じカメラの式で写す。
+    縦と横の大きさが別のとき（降り立つときのつぶれ）と、マントのはためき（シェイプキー）も同じに当てる"""
     p = MO.pose(clip, t)
     out = np.zeros((H, W), np.float32)
     cam = p["obj:cam:loc"]
@@ -109,20 +147,28 @@ def ayato_mask(clip, t):
         if op <= 0:
             continue
         if name not in _AY:
-            _AY[name] = Image.open(os.path.join(ROOT, MO.AYATO_POSES[name]["file"])).convert("RGBA").split()[3]
-        al = _AY[name]
+            im = Image.open(os.path.join(ROOT, MO.AYATO_POSES[name]["file"])).convert("RGBA").split()[3]
+            im = im.resize((im.width // AY_DOWN, im.height // AY_DOWN), Image.LANCZOS)
+            _AY[name] = np.pad(np.asarray(im).astype(np.float32) / 255, AY_PAD // AY_DOWN)
+        al = warp_board(_AY[name], name, MO.board_vals(p, name), AY_DOWN, AY_PAD // AY_DOWN)
+        ah, aw = al.shape
         w, h, ox, oz = MO.ayato_plane(name)
-        s = p[f"obj:{name}:scale"]
+        # 余白のぶん、板の四角を広げる（m）
+        pm = (AY_PAD // AY_DOWN) * AY_DOWN * MO.AYATO_M_PER_PX
+        w, h, ox, oz = w + 2 * pm, h + 2 * pm, ox + pm, oz + pm
+        sv = p[f"obj:{name}:scale"]
+        sv = sv if isinstance(sv, tuple) else (sv, sv, sv)
         R = _rot_xyz(*p[f"obj:{name}:rot"])
         loc = np.array(p[f"obj:{name}:loc"])
         local = [(-ox, -oz), (w - ox, -oz), (w - ox, h - oz), (-ox, h - oz)]
-        src = [(0, al.height), (al.width, al.height), (al.width, 0), (0, 0)]
+        src = [(0, ah), (aw, ah), (aw, 0), (0, 0)]
         dst = []
         for lx, ly in local:
-            q = loc + s * (R @ np.array([lx, ly, 0.0]))
+            q = loc + R @ np.array([lx * sv[0], ly * sv[1], 0.0])
             sx, sy, _ = P.project(tuple(q), cam, lens)
             dst.append((sx, sy))
-        m = al.transform((W, H), Image.PERSPECTIVE, _persp_coeffs(dst, src), Image.BILINEAR)
+        img = Image.fromarray((np.clip(al, 0, 1) * 255).astype(np.uint8), "L")
+        m = img.transform((W, H), Image.PERSPECTIVE, _persp_coeffs(dst, src), Image.BILINEAR)
         out = np.maximum(out, np.asarray(m).astype(np.float32) / 255 * op)
     return out
 
@@ -152,7 +198,12 @@ def light_weight(clip, t):
 def index_raw(raw):
     """{(本, コマ): {"dir": 置き場, "frame": Blender のコマ, "enc": 透明の入れ方}}"""
     out = {}
-    for meta in glob.glob(os.path.join(raw, "**", "meta.json"), recursive=True):
+
+    def run_of(path):
+        # raw/<run>/<artifact>/meta.json。あとの run（描き直し）の絵が、前の run の同じコマに勝つように順に読む
+        parts = os.path.relpath(path, raw).split(os.sep)
+        return (int(parts[0]) if parts[0].isdigit() else 0, path)
+    for meta in sorted(glob.glob(os.path.join(raw, "**", "meta.json"), recursive=True), key=run_of):
         m = json.load(open(meta))
         d = os.path.dirname(meta)
         for f in m["frames"]:
@@ -383,9 +434,9 @@ def sheet(work, path, bg=None, picks=None, frames_dir=None):
     have = fr["have"]
     if picks is None:
         picks = [(c, i) for c in P.CLIPS for i in have[c]]
-        if len(picks) > 14:
-            step = len(picks) / 14
-            picks = [picks[int(k * step)] for k in range(14)]
+        if len(picks) > 24:
+            step = len(picks) / 24
+            picks = [picks[int(k * step)] for k in range(24)]
     if bg:
         im = Image.open(bg).convert("RGB")
         # 配信画面（1080×1920）の、広げたアラートの箱のあたり（76,445 から幅 927）を 720×1280 に

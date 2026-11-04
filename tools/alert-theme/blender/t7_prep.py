@@ -10,6 +10,11 @@
 - `<名前>-rim.png` … キャラの板（ピポ・あやと）の縁の光。絵の透明の縁から内へ数 px の帯を、
   光の来る向き（`RIM` の向き）ほど明るくした白黒の絵。Blender の板の材質で「縁が光る」に使う。
   板には法線の変化が無いので、縁の光は絵の側に持たせる
+- `<名前>-normal.png` … キャラの板の法線の絵（接空間・OpenGL の向き）。透明の縁を丸く盛り上げ、絵の線をわずかにへこませた
+  高さから作る。板が城の光（門・灯り・前からの月の光）を、縁の向きごとに受けて立体に見えるように（2026-11-04。
+  「板が動かない」の採点の続き）。あやとは絵の半分の大きさで持つ（光の向きだけなので細かさは要らない）
+- `pipo-<ポーズ>-shadow.png` … ピポの落ち影（絵の透明をぼかした白黒）。ピポは塔の幅をほぼ覆うので、前からの光の
+  本物の影は板の陰に隠れて見えない。壁の手前に右下へずらして置く
 
 なぜ Blender の中で作らないか: Blender はこの箱に入れない（runner の中だけで動く）。
 絵の処理は numpy だけで済むので、ここで作って git に入れ、runner では読むだけにする（試せる所を増やす）。
@@ -80,6 +85,34 @@ def rim_mask(path, direction, width=0.012):
     return np.clip(gaussian_filter(rim, 0.7), 0, 1)
 
 
+def normal_map(path, width=0.022, relief=0.08):
+    """透明の縁を丸く盛り上げた高さ（縁から内へ width の帯でドームの断面）と、絵の線のへこみから、法線の絵（0〜1 の RGB）"""
+    im = Image.open(path).convert("RGBA")
+    arr = np.asarray(im).astype(np.float32) / 255
+    a = arr[..., 3]
+    inside = a > 0.5
+    px = max(3.0, width * max(a.shape))
+    u = np.clip(distance_transform_edt(inside) / px, 0, 1)
+    h = np.sqrt(np.clip(1 - (1 - u) ** 2, 0, 1)) * inside
+    lum = arr[..., :3] @ np.array([0.299, 0.587, 0.114], np.float32)
+    h = h + relief * gaussian_filter(lum, 1.0) * inside
+    h = gaussian_filter(h, 1.2)
+    gy, gx = np.gradient(h)
+    # 高さは「帯の幅 px」を 1 とした単位。画像の y は下向きなので、上向きの傾きは -gy
+    nx, ny, nz = -gx * px, gy * px, np.ones_like(h)
+    n = np.dstack([nx, ny, nz])
+    n /= np.linalg.norm(n, axis=2, keepdims=True)
+    n[~(gaussian_filter(inside.astype(np.float32), 2.0) > 0.01)] = (0.0, 0.0, 1.0)
+    return n * 0.5 + 0.5
+
+
+def save_rgb(arr, path, half=False):
+    im = Image.fromarray((np.clip(arr, 0, 1) * 255 + 0.5).astype(np.uint8), "RGB")
+    if half:
+        im = im.resize((im.width // 2, im.height // 2), Image.LANCZOS)
+    im.save(path, optimize=True)
+
+
 def save_gray(arr, path):
     Image.fromarray((np.clip(arr, 0, 1) * 255 + 0.5).astype(np.uint8), "L").save(path, optimize=True)
 
@@ -97,18 +130,35 @@ def main():
         p = os.path.join(OUT, f"{name}-rim.png")
         save_gray(rim_mask(src, direction), p)
         made.append((p, src))
+        p = os.path.join(OUT, f"{name}-normal.png")
+        save_rgb(normal_map(src), p, half=name.startswith("ayato"))
+        made.append((p, src))
+        if name.startswith("pipo"):
+            p = os.path.join(OUT, f"{name}-shadow.png")
+            a = np.asarray(Image.open(src).convert("RGBA")).astype(np.float32)[..., 3] / 255
+            save_gray(gaussian_filter(a, 2.5), p)
+            made.append((p, src))
     for p, _ in made:
         print(f"{os.path.relpath(p, ROOT)}  {os.path.getsize(p) / 1024:.0f}KB")
     if args.check:
         tiles = []
         for p, src in made:
             base = Image.open(src).convert("RGBA")
-            m = np.asarray(Image.open(p)).astype(np.float32) / 255
+            mi = Image.open(p)
+            if mi.size != base.size:
+                mi = mi.resize(base.size, Image.LANCZOS)
+            m = np.asarray(mi).astype(np.float32) / 255
             bg = np.zeros((base.height, base.width, 3), np.float32) + np.array([0.05, 0.06, 0.14])
             rgb = np.asarray(base).astype(np.float32)[..., :3] / 255
             al = np.asarray(base).astype(np.float32)[..., 3:] / 255
             comp = rgb * al + bg * (1 - al)
-            comp = np.clip(comp + m[..., None] * np.array([1.0, 0.75, 0.3]), 0, 1)
+            if m.ndim == 3:
+                # 法線の絵は、左上からの光で陰をつけて見る
+                nrm = m * 2 - 1
+                lit = np.clip(nrm @ np.array([-0.5, 0.5, 0.7], np.float32) / 0.995, 0, 1)
+                comp = np.clip(comp * (0.35 + 0.9 * lit[..., None]), 0, 1)
+            else:
+                comp = np.clip(comp + m[..., None] * np.array([1.0, 0.75, 0.3]), 0, 1)
             t = Image.fromarray((comp * 255).astype(np.uint8))
             t.thumbnail((360, 360))
             tiles.append(t)
