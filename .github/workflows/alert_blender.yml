@@ -1,0 +1,142 @@
+name: 投げ銭の演出を Blender で描く
+
+# 1万円の段（段7「ドラキュラ城が本気を出す」）の連番の絵を、runner で Blender（Cycles・CPU）を回して描く（#1095）。
+# **作業箱には Blender を入れない**（入れる依頼は許可の判定で止まった）。ここで入れて、ここで描く。
+# 場面は tools/alert-theme/blender/castle_t7.py、振付けは t7_motion.py、秒とコマの分けかたは t7_plan.py。
+# 出来た連番の絵は artifact（t7-<質>-<番号>）に置く。作業箱で落として、透明つき WebM に書き出す（t7_pack.py）。
+#
+# - 秘密の鍵は使わない（このリポジトリの絵と、公式の Blender だけ）。ほかのワークフローとは繋がない
+# - コマを matrix で分けて並べる（重いコマが固まらないよう順に配る。t7_plan.py の shards）
+# - Blender の版は 4.2 LTS の中の最新を、その日に決めて控える（plan の job の出力と、各 artifact の meta.json）
+#
+# 起こしかた:
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=final -f shards=20
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=preview -f frames="intro:0,40,80 stay:0"
+# blender/** の枝に場面を push すると、試しの絵（preview・既定のコマ）だけ描く
+
+on:
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: "smoke（壊れていないか）/ preview（半分の大きさ）/ final（本番）"
+        type: choice
+        options: [preview, final, smoke]
+        default: preview
+      shards:
+        description: "何台に分けるか"
+        default: "20"
+      frames:
+        description: '描くコマ（例 "intro:0,40 stay:0-89"）。空なら quality が preview のとき既定の試しのコマ、final のとき全部'
+        default: ""
+  push:
+    branches: ["blender/**"]
+    paths: ["tools/alert-theme/blender/**", ".github/workflows/alert_blender.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alert-blender-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BLENDER_SERIES: "4.2"
+  QUALITY: ${{ inputs.quality || 'preview' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      version: ${{ steps.bl.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: 継ぎ目の確かめ（intro の終わり = stay の頭 など）
+        run: python3 tools/alert-theme/blender/t7_motion.py check
+      - name: Blender の版を決める（4.2 LTS の最新）
+        id: bl
+        run: |
+          v=$(curl -fsSL --retry 3 "https://download.blender.org/release/Blender${BLENDER_SERIES}/" \
+            | grep -o "blender-${BLENDER_SERIES}\.[0-9]*-linux-x64\.tar\.xz" | sort -uV | tail -1 \
+            | sed 's/^blender-//; s/-linux-x64\.tar\.xz$//')
+          test -n "$v"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Blender $v" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: ~/blender.tar.xz
+          key: blender-${{ steps.bl.outputs.version }}
+      - name: Blender を落とす
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 3 -o ~/blender.tar.xz \
+            "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${{ steps.bl.outputs.version }}-linux-x64.tar.xz"
+      - name: 入れて、小さく1コマ描く（場面が組めるか）
+        run: |
+          bash tools/alert-theme/blender/install.sh ~/blender.tar.xz
+          ~/blender/blender -b --factory-startup -noaudio --python-exit-code 1 \
+            --python tools/alert-theme/blender/castle_t7.py -- --out "$RUNNER_TEMP/smoke" --quality smoke --frames "intro:150"
+          ls -la "$RUNNER_TEMP/smoke"/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t7-smoke
+          path: ${{ runner.temp }}/smoke
+          retention-days: 3
+      - name: コマを分ける
+        id: plan
+        env:
+          SHARDS: ${{ inputs.shards || '4' }}
+          FRAMES: ${{ inputs.frames }}
+        run: |
+          if [ "$QUALITY" = "smoke" ]; then
+            echo 'shards=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$FRAMES" ] && [ "$QUALITY" != "final" ]; then FRAMES=preview; fi
+          # shellcheck disable=SC2086
+          s=$(python3 tools/alert-theme/blender/t7_plan.py shards "$SHARDS" --only $FRAMES)
+          echo "shards=$s" >> "$GITHUB_OUTPUT"
+          python3 tools/alert-theme/blender/t7_plan.py count "$s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  render:
+    needs: plan
+    if: ${{ needs.plan.outputs.shards != '[]' }}
+    name: render-${{ strategy.job-index }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        frames: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ~/blender.tar.xz
+          key: blender-${{ needs.plan.outputs.version }}
+      - name: Blender を落とす（置いてなければ）
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 3 -o ~/blender.tar.xz \
+            "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${{ needs.plan.outputs.version }}-linux-x64.tar.xz"
+      - name: Blender を入れる
+        run: bash tools/alert-theme/blender/install.sh ~/blender.tar.xz
+      - name: 描く
+        env:
+          FRAMES: ${{ matrix.frames }}
+        run: |
+          grep -m1 "model name" /proc/cpuinfo; nproc
+          ~/blender/blender -b --factory-startup -noaudio --python-exit-code 1 \
+            --python tools/alert-theme/blender/castle_t7.py -- --out "$RUNNER_TEMP/out" --quality "$QUALITY" --frames "$FRAMES"
+          python3 tools/alert-theme/blender/t7_plan.py meta "$RUNNER_TEMP/out/meta.json" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t7-${{ env.QUALITY }}-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/out
+          retention-days: 7
+          # PNG は縮まないので、包むだけにする（上げる時間を短く）
+          compression-level: 0
