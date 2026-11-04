@@ -23,6 +23,7 @@
 | `card_own` | 題の札が1行目と同じ言葉（国旗・改行・句読点だけ違う）なら、札が1行目の字幕を兼ねる（字幕を出さない・札に line）。別の言葉（あやと F-043「札は手段と日数、1行目は回れた中身」）なら兼ねない（1行目の字幕を出す・札に line を持たせない・札は題の行の終わりか4秒の早いほうで消す） |
 | `voice_src` | 声だけを配信の別の秒から取った行（spec の `voice_src`。画は別の秒。猫の回 p2）: 本番の声で組むと、その行に `orig_voice`・`voice_src` の印が行の最後に付く（書き出しが元の声として揃える）・声は声の一覧のその行の音（`audio`）で、元の音は切らない・ほかの行には付かない・仮の声（`--voice` 無し）なら付けない・`orig_voice` と両方ある行は元の声の行として組む |
 | `orig_voice` | 元の声の行（あやと F-051「叫びは配信の本人の声で」）: 声の一覧にその行のぶんが無くても組む（あれば止まる）・その行の声はカットと同じ区間の元の音（`file`）で、仮の声にも倍率にも数えない・画は声と同じコマから取り、最後のカットだけ行の間ぶん延ばす・【大】でも声を遅らせない・延ばした画が until を越えるなら入りをずらさずに止まる |
+| `named_src` | ほかの回の秒（`OTHERvid_02 0:01:00–…`。夫婦の車の回 A・クラムチャウダーの回）: 名前の付いた秒はその回の窓から・名前の無い秒は同じ秒を持つほかの回の窓を取らずにこの回の窓から・地図の行（`27:46:40.0`）は地図の窓から・「同上」の続きは前の行と同じ回から・ぼかしの帳面は名前の付いた回の窓にだけ掛かる・index.json に video が無い一覧は `<videoId>=<index.json>` で名指せる・窓の無い回は止まる |
 
 数の手計算（`expect_frames`）は `build_edit.py` の関数を使わずに書く。見張りの側が本物と同じ式を
 借りると、本物の式が壊れても一緒に壊れて、緑のままになる。
@@ -112,6 +113,22 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "orig_pre": ("            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
+    # ほかの回の秒（spec の src に回の名前。2026-11-04 の絵コンテ5件で、担当が回ごとにずらした一覧の写しを作っていた）
+    "named_pool": ("        if video and video != self.default:\n", "        if False:\n",
+                   {"named_src"}, "回の名前を付けた秒も、どの回の窓からでも引く（同じ秒を持つ別の回の画を取る）"),
+    "default_pool": ("        return [c for c in self.clips\n"
+                     "                if not c.get(\"video\") or c.get(\"video\") == self.default or c.get(\"video\") not in self.named]\n",
+                     "        return list(self.clips)\n",
+                     {"named_src"}, "名前の無い秒を、名前で呼んだほかの回の窓からも引く"),
+    "named_cont": ("            cont = {\"t\": M.ref(prev_video, fmt_exact(prev_end)), \"note\": \"前の行の画の続き\"}\n",
+                   "            cont = {\"t\": fmt_exact(prev_end), \"note\": \"前の行の画の続き\"}\n",
+                   {"named_src"}, "「同上」の続きを、前の行の回ではなくこの回から取る"),
+    "named_lib": ("        if pools is not None and not any(c is clip for c in pools.get(src_video(str(r[\"from_t\"])))):\n",
+                  "        if False:\n",
+                  {"named_src"}, "ぼかしの帳面の箱を、秒だけで突き合わせる（別の回の同じ秒のカットに掛かる）"),
+    "index_video": ("        video = m.group(1) if m else M.index_video(path, d)\n",
+                    "        video = m.group(1) if m else None\n",
+                    {"named_src"}, "窓の一覧がどの回のものかを index.json の video から読まない"),
 }
 
 FPS = 30
@@ -437,6 +454,91 @@ def leg_voice_src(b: Bench):
     return out
 
 
+MAIN_V, OTHER_V = "MAINvideo01", "OTHERvid_02"   # 11字の videoId（この回・ほかの回）
+MAP_T = 100000.0                                # 地図の素材の秒（hookmap.py の T_BASE。見張りの側でも書いておく）
+
+
+def run_named(b: Bench, rows: list[dict], clips: list[str], lib: list | None = None) -> dict:
+    """ほかの回の秒を含む spec で1回組む（仮の声。どの行も声 45コマ）。終了コード・出力・指示書"""
+    b.n += 1
+    d = b.tmp / f"run{b.n}"
+    d.mkdir()
+    spec = d / "spec_N.json"
+    spec.write_text(json.dumps({"id": "N", "title": "見張り", "rows": rows}, ensure_ascii=False))
+    args = [str(spec)] + [x for c in clips for x in ("--clips", c)] + ["--out", str(d / "edit_N.json"),
+                                                                      "--work", str(d / "work")]
+    if lib is not None:
+        (d / "blur.json").write_text(json.dumps({"regions": lib}, ensure_ascii=False))
+        args += ["--blur", str(d / "blur.json")]
+    sys.modules["render"] = fake_render(CAP)
+    b.be.narration_frames = lambda lines, narr, work: [(45, []) for _ in lines]
+    buf = io.StringIO()
+    try:
+        with redirect_stdout(buf), redirect_stderr(buf):
+            rc = b.be.main(args)
+    except SystemExit as e:
+        rc = e.code if isinstance(e.code, int) else 1
+        if not isinstance(e.code, int) and e.code is not None:
+            buf.write(str(e.code))
+    except Exception:
+        rc = 1
+        buf.write(traceback.format_exc())
+    out = d / "edit_N.json"
+    return {"rc": rc, "text": buf.getvalue(), "edit": json.loads(out.read_text()) if out.exists() else None}
+
+
+def leg_named_src(b: Bench):
+    """ほかの回の秒（spec の src に回の名前）: その回の窓から引く。名前の無い秒・地図の行・続き・ぼかしの帳面も取り違えない"""
+    d = b.tmp / "named"
+    d.mkdir(exist_ok=True)
+    # 2つの回の窓は同じ秒（0〜600秒）を持つ。ほかの回の一覧を先に渡す（並びの頭から探すと、ほかの回の窓を先に見つける）
+    other = d / "other_index.json"
+    other.write_text(json.dumps({"video": OTHER_V, "clips": [{"n": 1, "start": 0, "end": 600, "file": "o01.mp4"}]}))
+    main_ = d / "main_index.json"
+    main_.write_text(json.dumps({"video": MAIN_V, "clips": [{"n": 1, "start": 0, "end": 600, "file": "m01.mp4"}]}))
+    hmap = d / "map_index.json"
+    hmap.write_text(json.dumps({"clips": [{"n": 1, "start": MAP_T, "end": MAP_T + 3, "file": "hook_map.mp4"}]}))
+    rows = [{"line": "あいうえおかきくけこ。", "src": ["0:01:00–0:01:02"]},
+            {"line": "さしすせそたちつてと。", "src": [f"{OTHER_V} 0:01:00–0:01:02"]},
+            {"line": "なにぬねのはひふへほ。", "src": [f"{OTHER_V} 0:05:00"], "same_as_prev": True},
+            {"line": "まみむめもやゆよらり。", "src": ["27:46:40.0–27:46:41.5"]}]
+    lib = [{"from_t": "0:00:59", "to_t": "0:01:10", "rect": [0.1, 0.1, 0.2, 0.2], "note": "この回の人"},
+           {"from_t": f"{OTHER_V} 0:00:59", "to_t": f"{OTHER_V} 0:01:10", "rect": [0.5, 0.5, 0.6, 0.6],
+            "note": "ほかの回の人"}]
+    r = run_named(b, rows, [str(other), str(main_), str(hmap)], lib)
+    e = r["edit"] or {}
+    src = e.get("sources") or {}
+    cuts = e.get("cuts") or []
+    path_of = [Path(src.get(c.get("src"), {}).get("path", "")).name for c in cuts]
+    notes = [[x.get("note") for x in c.get("blur", [])] for c in cuts]
+    rows_n = [c.get("row") for c in cuts]
+    want = ["m01.mp4", "o01.mp4", "o01.mp4", "hook_map.mp4"]
+    out = [(f"組む（終了コード {r['rc']}）{'' if r['rc'] == 0 else r['text'][-300:]}", r["rc"] == 0 and bool(e)),
+           (f"行ごとの窓（{list(zip(rows_n, path_of))} / 欲しいのは {want}）", path_of == want and rows_n == [0, 1, 2, 3]),
+           ("名前の付いた秒は、その回の窓の 60秒（1800コマ）から", len(cuts) > 1 and cuts[1].get("in") == 1800),
+           ("「同上」の続きは前の行と同じ回の、前のカットの次のコマから",
+            len(cuts) > 2 and cuts[2].get("in") == cuts[1].get("out")),
+           ("地図の行は地図の窓の頭から（0コマ目）", len(cuts) > 3 and cuts[3].get("in") == 0),
+           (f"ぼかしの帳面は名前の付いた回の窓にだけ掛かる（{notes[:2]}）",
+            notes[:2] == [["この回の人"], ["ほかの回の人"]]),
+           ("meta の行のカットに回の名前が出る",
+            any(OTHER_V in s for s in (((e.get("meta") or {}).get("rows") or [{}, {}])[1].get("cuts") or [])))]
+    # index.json に video の無い一覧は <videoId>=<index.json> で名指す
+    bare = d / "bare_index.json"
+    bare.write_text(json.dumps({"clips": [{"n": 1, "start": 0, "end": 600, "file": "o01.mp4"}]}))
+    r2 = run_named(b, rows[:2], [f"{OTHER_V}={bare}", str(main_)])
+    c2 = (r2["edit"] or {}).get("cuts") or []
+    s2 = (r2["edit"] or {}).get("sources") or {}
+    p2 = [Path(s2.get(c.get("src"), {}).get("path", "")).name for c in c2]
+    out.append((f"<videoId>=<index.json> で名指した一覧から引く（終了コード {r2['rc']}・{p2}）",
+                r2["rc"] == 0 and p2 == ["m01.mp4", "o01.mp4"]))
+    # 窓を渡していない回の秒は、止まってその回の名前を言う
+    r3 = run_named(b, rows[:2], [str(main_)])
+    out.append((f"窓の無い回の秒は止まる（終了コード {r3['rc']}）",
+                r3["rc"] != 0 and r3["edit"] is None and f"{OTHER_V} の窓が無い" in r3["text"]))
+    return out
+
+
 LEGS = {
     "under_cap": leg_under_cap,
     "over_cap_fits": leg_over_cap_fits,
@@ -444,6 +546,7 @@ LEGS = {
     "card_own": leg_card_own,
     "orig_voice": leg_orig_voice,
     "voice_src": leg_voice_src,
+    "named_src": leg_named_src,
 }
 
 

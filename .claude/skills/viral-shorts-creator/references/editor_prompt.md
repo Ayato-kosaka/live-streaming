@@ -57,12 +57,13 @@
      （コマ一覧だけなら `…/clips/manifest.json` と `'…/clips/sheets.*'` だけ戻し、`--branch` を付けずに `--sheets`）→ 開いたら
      `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）
    - `index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）
-   - **配信が2本以上**なら、`build_edit.py` は時刻を1本の時間軸で引くので、spec の時刻の頭の時間 k で配信を分ける（上の時間軸）。
-     k 本目の一覧を k×3600 秒ずらした写しを隣に作り（`index_k.json`）、それを `--clips` に渡す:
-     `python3 -c 'import json,sys;p,k=sys.argv[1],int(sys.argv[2]);d=json.load(open(p));[c.update(start=c["start"]+k*3600,end=c["end"]+k*3600) for c in d["clips"]];json.dump(d,open(p.replace("index.json",f"index_{k}.json"),"w"))' <index.json> <k>`
+   - **配信が2本以上**なら、ほかの配信の秒は spec の `src`（overrides の `cuts[].t`）の頭に videoId を付けて書く（`kunXt2sXnFQ 0:17:23.5–0:17:26`）。
+     `build_edit.py` は名前の付いた秒をその配信の窓の一覧（index.json の `video`）から引くので、配信ごとに `--clips` を重ねるだけ（一覧の写しは作らない）。
+     名前の無い秒はこの回の窓から引く。前の回の「頭の時間 k で配信を分けた」spec（`_note` の `k:=videoId`）は、k×3600 秒ずらした一覧の写しのまま通る
    - **カクつき**: 使う区間は先に `python3 tools/shorts/qa/stutter.py <窓の mp4> --from <秒> --to <秒>` で測り、✕（繰り返し 60% 越え）の秒を避ける
-   - **0秒目**: `python3 tools/shorts/plan/hook.py {{spec}} --material $S/ingest/<videoId> --clips <index.json> --out $S/hook`
-     （配信1本の回だけ。つないだ回は、0秒目の候補の時刻を行ごとの帯で見て、題の札（y 380〜580）の下に本体が来る時刻を選ぶ）
+   - **0秒目**: `python3 tools/shorts/plan/hook.py {{spec}} --material $S/ingest/<videoId> --out $S/hook`
+     （開いたままの clips・zoom から読む。archive も mp4 も要らない。ほかの配信の秒の行はその配信の置き場 `$S/ingest/<その videoId>` から、地図の行は外して回る。
+     顔の重みが無ければ取りに行き、取れなければ止まる）
 2. **声**（Fish Audio・Holiday Twist。EC2 の Chrome）: 声に渡す字は `{{vl}}`（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）。
    無ければ `python3 tools/shorts/script/brief.py edit --episode $V{{pat_arg}} --voice-lines {{vl}}` が spec の `tts_text` から作る。
    直すのは読み違えそうな所だけ（数・英字・読みが割れる漢字）。**言う中身は字幕と同じ。** かなの数が助詞と紛れるときは漢数字

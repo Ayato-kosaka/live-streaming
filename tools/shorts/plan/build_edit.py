@@ -33,6 +33,15 @@
 
 spec に書けない「どこに寄るか」「誰の顔をぼかすか」は overrides に書く。形は README の「build_edit の overrides」。
 時刻は元動画の時刻（`H:MM:SS.s`）で書く。指示書に入るときに、窓の頭からのコマ番号に直す。
+
+## 配信が2本以上の回（ほかの回の秒）
+
+spec の `src`（と overrides の `cuts[].t`）に回の名前を付けて書いた秒（`kunXt2sXnFQ 0:17:23.5–0:17:26`。書きかたは
+`material.py`）は、**その回の窓の一覧からだけ**引く。窓の一覧がどの回のものかは、取り込みが index.json に書く `video`
+（無い一覧は `--clips <videoId>=<index.json>` で名指す）。名前の無い秒は、この回（`--video`、無ければ名前で呼ばれていない回）の窓と、
+地図の素材（`hookmap.py` の index.json）から引く。どちらの窓も同じ秒を持ちうるので、名前で分けないと別の回の画を取る。
+「同上」の続きも、前の行と同じ回から取る。前は1本の時間軸でしか引けず、担当が回ごとに k×3600 秒ずらした一覧の写しを作っていた
+（その書きかた・名前の無い spec はそのまま通る）。
 """
 from __future__ import annotations
 
@@ -45,6 +54,9 @@ import unicodedata
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import material as M  # noqa: E402
+
 RENDER = HERE.parent / "render"
 
 FPS = 30
@@ -61,19 +73,52 @@ FIT_S = 59.0
 # ---------------------------------------------------------------- 時刻と文
 
 def sec(s: str) -> float:
-    """'0:53:10' / '1:09:43.5' / '53:10' → 秒。"""
-    p = [float(x) for x in s.strip().split(":")]
-    while len(p) < 3:
-        p.insert(0, 0.0)
-    return p[0] * 3600 + p[1] * 60 + p[2]
+    """'0:53:10' / '1:09:43.5' / '53:10' / 'kunXt2sXnFQ 0:17:23.5' → 秒（回の名前は読み飛ばす。回は src_video）。"""
+    return M.sec(s)
 
 
 def src_span(s: str) -> tuple[float, float | None]:
-    """spec の元動画の時刻。'0:53:10–0:53:13' は区間、'0:51:00' は点（終わりは None）。"""
-    parts = re.split(r"\s*[–—\-~〜]\s*", s.strip())
-    if len(parts) == 2 and parts[1]:
-        return sec(parts[0]), sec(parts[1])
-    return sec(parts[0]), None
+    """spec の元動画の時刻。'0:53:10–0:53:13' は区間、'0:51:00' は点（終わりは None）。回の名前が付いていても読む。"""
+    _, a, b = M.span(s)
+    return a, b
+
+
+def src_video(s: str) -> str | None:
+    """spec の元動画の時刻に付けた回の名前（'kunXt2sXnFQ 0:17:23–…' → 'kunXt2sXnFQ'）。無ければ None"""
+    return M.split_ref(s)[0]
+
+
+class Pools:
+    """どの秒をどの回の窓から引くか。名前の付いた秒はその回の窓だけ、名前の無い秒は「この回」の窓と地図の素材から。
+
+    この回は --video、無ければ窓の一覧の回のうち spec が名前で呼んでいない回（1つに決まるとき）。名前で分けないと、
+    同じ秒を持つ別の回の窓（7日目の 0:17:23 と 5日目の 0:17:23）を先に見つけて、別の回の画を取る。"""
+
+    def __init__(self, clips: list[dict], named: set[str], video: str | None) -> None:
+        self.clips, self.named = clips, named
+        own = {c.get("video") for c in clips if c.get("video") and c.get("video") not in named}
+        self.default = video or (own.pop() if len(own) == 1 else None)
+
+    def get(self, video: str | None) -> list[dict]:
+        if video and video != self.default:
+            got = [c for c in self.clips if c.get("video") == video]
+            if not got:
+                sys.exit(f"{video} の窓が無い（--clips にその回の index.json を足す。index.json に video が無ければ "
+                         f"--clips {video}=<index.json>）")
+            return got
+        return [c for c in self.clips
+                if not c.get("video") or c.get("video") == self.default or c.get("video") not in self.named]
+
+    def tag(self, video: str | None) -> str | None:
+        """続きの秒に付ける回の名前（この回なら付けない）"""
+        return video if video and video != self.default else None
+
+
+def named_videos(rows: list[dict], rows_ov: dict) -> set[str]:
+    """spec と overrides が名前で呼んでいる回"""
+    out = {src_video(s) for r in rows for s in r.get("src") or []}
+    out |= {src_video(str(c.get("t", ""))) for ro in rows_ov.values() for c in ro.get("cuts") or []}
+    return {v for v in out if v}
 
 
 def parse_telop(s: str) -> tuple[str | None, str | None]:
@@ -237,15 +282,19 @@ def sentence_split_ratio(text: str) -> float | None:
 
 # ---------------------------------------------------------------- 入力
 
-def load_clips(paths: list[Path] | Path) -> list[dict]:
+def load_clips(paths: list[Path | str] | Path) -> list[dict]:
     """取り込んだ窓の一覧。clips[] = {n, start, end（元動画の秒）, file, fps, frames, ok}。
 
-    一覧は複数渡せる（あとから足した区間を別の置き場 clips2/ に取り込んだとき）。窓の番号 n は一覧ごとに
+    一覧は複数渡せる（あとから足した区間を別の置き場 clips2/ に取り込んだとき・ほかの回の窓）。窓の番号 n は一覧ごとに
     1 から振られるので、指示書の素材の名前は2つ目から一覧の番号を付けて分ける（c03 と c2_03）。
+    どの回の窓かは index.json の `video`（取り込みが書く）。`<videoId>=<index.json>` と渡せば、それで名指す。
     """
     out = []
-    for k, path in enumerate([paths] if isinstance(paths, Path) else paths):
+    for k, item in enumerate([paths] if isinstance(paths, Path) else paths):
+        m = re.fullmatch(r"([A-Za-z0-9_-]{11})=(.+)", str(item))
+        path = Path(m.group(2)) if m else Path(item)
         d = json.loads(path.read_text())
+        video = m.group(1) if m else M.index_video(path, d)
         clips = d["clips"] if isinstance(d, dict) else d
         for c in clips:
             if c.get("ok") is False:
@@ -255,7 +304,8 @@ def load_clips(paths: list[Path] | Path) -> list[dict]:
                 f = (path.parent / f).resolve()
             n = int(c.get("n", len(out) + 1))
             out.append({**c, "path": str(f), "start": float(c["start"]), "end": float(c["end"]),
-                        "key": f"c{n:02d}" if k == 0 else f"c{k + 1}_{n:02d}"})
+                        "key": f"c{n:02d}" if k == 0 else f"c{k + 1}_{n:02d}",
+                        **({"video": video} if video else {})})
     return sorted(out, key=lambda c: c["start"])
 
 
@@ -280,11 +330,12 @@ def load_voice(path: Path, plan_id: str) -> list[dict]:
     return out
 
 
-def find_clip(clips: list[dict], t0: float, dur: float) -> tuple[dict, float]:
-    """t0 から dur 秒を取れる窓と、取り始める時刻。窓の終わりを越えるなら前にずらす。
+def find_clip(clips: list[dict], t0: float, dur: float, video: str | None = None) -> tuple[dict, float]:
+    """t0 から dur 秒を取れる窓と、取り始める時刻。窓の終わりを越えるなら前にずらす。clips は引く回の窓だけ（Pools.get）。
 
     一覧が2つあって窓が重なるときは、t0 から dur 秒をまるごと含む窓を先に選ぶ（前にずらさずに済む）。
     """
+    at = M.ref(video, fmt(t0))
     for c in clips:
         if c["start"] - 1e-6 <= t0 and t0 + dur <= c["end"] + 1e-6:
             return c, t0
@@ -294,11 +345,11 @@ def find_clip(clips: list[dict], t0: float, dur: float) -> tuple[dict, float]:
                 return c, t0
             t1 = c["end"] - dur
             if t1 >= c["start"] - 1e-6:
-                print(f"  注意: {fmt(t0)} から {dur:.2f}秒は窓（〜{fmt(c['end'])}）を越えるので、"
+                print(f"  注意: {at} から {dur:.2f}秒は窓（〜{fmt(c['end'])}）を越えるので、"
                       f"{fmt(t1)} からにした", file=sys.stderr)
                 return c, max(t1, c["start"])
-            sys.exit(f"窓が短すぎる: {fmt(t0)} から {dur:.2f}秒（窓 {fmt(c['start'])}–{fmt(c['end'])}）")
-    sys.exit(f"{fmt(t0)} を含む窓が無い（clips/index.json に足して取り込み直す）")
+            sys.exit(f"窓が短すぎる: {at} から {dur:.2f}秒（窓 {fmt(c['start'])}–{fmt(c['end'])}）")
+    sys.exit(f"{at} を含む窓が無い（その回の clips/index.json に足して取り込み直す）")
 
 
 def fmt(t: float) -> str:
@@ -441,21 +492,25 @@ def blur_regions(regs: list[dict], clip: dict) -> list[dict]:
     return out
 
 
-def library_for(lib: list[dict], clip: dict, t0: float, t1: float) -> list[dict]:
+def library_for(lib: list[dict], clip: dict, t0: float, t1: float, pools: "Pools | None" = None) -> list[dict]:
     """ぼかしの帳面（元動画の時刻で書いた顔の箱）のうち、このカット [t0, t1) に掛かるもの。
 
     顔は「元動画のこの時刻に、この人が写っている」という事実なので、案ごとではなく動画ごとに1冊にする。
     同じ店・同じバスを3案が使い回しても、1回決めた箱がどの案にも効く。カットの入りを動かしても外れない。
+    ほかの回の箱は from_t に回の名前を付けて書く（'kunXt2sXnFQ 0:17:20'）。名前の無い箱はこの回の窓にだけ掛ける
+    （秒だけで突き合わせると、別の回の同じ秒のカットに、関係の無い顔の箱が掛かる）。
     """
     out = []
     for r in lib:
+        if pools is not None and not any(c is clip for c in pools.get(src_video(str(r["from_t"])))):
+            continue
         a, b = sec(r["from_t"]), sec(r["to_t"])
         if a < t1 and b > t0:
             out.append(r)
     return blur_regions(out, clip)
 
 
-def orig_pieces(i: int, specs: list[dict], clips: list[dict]) -> list[dict]:
+def orig_pieces(i: int, specs: list[dict], clips: list[dict], pools: "Pools | None" = None) -> list[dict]:
     """元の声の行（spec の `orig_voice`。帳面 F-051）の、声と画に使う元動画の区間。
 
     叫びのような本人の声を、AI の声で読まずにその秒の元の音で流す行。画と声は同じ秒から取る
@@ -475,7 +530,8 @@ def orig_pieces(i: int, specs: list[dict], clips: list[dict]) -> list[dict]:
                      f"（画と声を同じ秒から取るので、声の長さが先に要る）")
         if m < MIN_CUT:
             sys.exit(f"{i}行目（元の声）: カット {k} が {m}コマ（{MIN_CUT}コマより短い）")
-        clip = next((c for c in clips if c["start"] - 1e-6 <= t0 and t0 + m / FPS <= c["end"] + 1e-6), None)
+        pool = pools.get(src_video(cs["t"])) if pools is not None else clips
+        clip = next((c for c in pool if c["start"] - 1e-6 <= t0 and t0 + m / FPS <= c["end"] + 1e-6), None)
         if clip is None:
             sys.exit(f"{i}行目（元の声）: {fmt(t0)} から {m / FPS:.2f}秒をまるごと含む窓が無い"
                      f"（窓に合わせて入りをずらすと、声と画が合わなくなる）")
@@ -559,8 +615,10 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     # 声は声の一覧に入れてもらう（詰めてよい・画と秒を合わせなくてよい）。書き出しが元の声として揃えるように、
     # 指示書の行に orig_voice の印を付ける（下の edit を組む直前）。orig_voice と両方あれば orig_voice の行として組む
     vsrc_rows = {i for i, r in enumerate(rows) if r.get("voice_src") and i not in orig_rows}
+    # 回の名前を付けた秒（ほかの回の画）は、その回の窓からだけ引く（Pools）
+    pools = Pools(clips, named_videos(rows, rows_ov), getattr(args, "video", None))
     orig_specs = {i: rows_ov.get(str(i), {}).get("cuts") or [{"t": s} for s in rows[i]["src"]] for i in orig_rows}
-    pieces = {i: orig_pieces(i, orig_specs[i], clips) for i in sorted(orig_rows)}
+    pieces = {i: orig_pieces(i, orig_specs[i], clips, pools) for i in sorted(orig_rows)}
 
     if voice is not None:
         if len(voice) != len(rows) - len(orig_rows):
@@ -659,6 +717,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     mood_looks = (st_all.get("moods") or {}).get("looks", {})
     notes = []
     prev_end: float | None = None  # 1つ前の行の最後のカットが、元動画のどこで終わったか（「同上」の続き）
+    prev_video: str | None = None  # その回（ほかの回の画の続きは、同じ回から取る）
     prev_spec: dict = {}
 
     sources: dict[str, dict] = {}
@@ -746,7 +805,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         if not specs and r.get("same_as_prev") and prev_end is not None:
             # 「同上」の行は前の行の画をそのまま続ける（切れ目を作らない。元動画の続きのコマから）。
             # 寄り・明るさ・札も引き継ぐ（引き継がないと、つなぎ目で寄りが外れて隠していた顔が出る）
-            cont = {"t": fmt_exact(prev_end), "note": "前の行の画の続き"}
+            cont = {"t": M.ref(prev_video, fmt_exact(prev_end)), "note": "前の行の画の続き"}
             for k in ("gamma", "inset", "focus_x", "focus_y", "audio_db"):
                 if k in prev_spec:
                     cont[k] = prev_spec[k]
@@ -757,7 +816,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             specs = [cont]
         elif specs and specs[0].get("continue") and prev_end is not None:
             # overrides で「前の行の画の続き」を選んだとき（spec は別の画を指しているが、続けたほうが良い所）
-            specs = [{**specs[0], "t": fmt_exact(prev_end)}] + specs[1:]
+            specs = [{**specs[0], "t": M.ref(prev_video, fmt_exact(prev_end))}] + specs[1:]
         specs = specs or [{"t": s} for s in r["src"]]
         if i in orig_rows:
             # 元の声の行は、声を取ったカットそのもの（「同上」で前の行の続きにはしない。声と画の秒がずれる）
@@ -794,16 +853,17 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         row_cuts = []
         for k, (cs, m) in enumerate(zip(specs, lens)):
             t0, _ = src_span(cs["t"])
+            video = pools.tag(src_video(cs["t"]))
             if i in orig_rows:
                 clip, t0 = orig_place(i, k, cs, pieces[i][k], m)
             else:
                 if cs.get("until") and t0 + m / FPS > sec(cs["until"]) + 1e-6:
                     # ここより後ろは使えない（指が映る・場面が変わる）。足りないぶんは入りを前にずらす
                     t1 = sec(cs["until"]) - m / FPS
-                    print(f"  注意: {i}行目 {fmt(t0)} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
+                    print(f"  注意: {i}行目 {M.ref(video, fmt(t0))} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
                           f"{fmt(t1)} からにした", file=sys.stderr)
                     t0 = t1
-                clip, t0 = find_clip(clips, t0, m / FPS)
+                clip, t0 = find_clip(pools.get(video), t0, m / FPS, video)
             key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
             sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
             fin = round((t0 - clip["start"]) * FPS)
@@ -817,7 +877,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                     cut["zoom"] = {"from": 1.0, "to": ZOOM_TO, **cs["zoom"]}
             elif zooms[k]:
                 cut["zoom"] = {"from": 1.0, "to": ZOOM_TO}
-            blur = blur_regions(cs.get("blur"), clip) + library_for(lib, clip, t0, t0 + m / FPS)
+            blur = blur_regions(cs.get("blur"), clip) + library_for(lib, clip, t0, t0 + m / FPS, pools)
             if blur:
                 cut["blur"] = blur
             if cs.get("audio_db") is not None:
@@ -834,8 +894,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             if cs.get("note"):
                 cut["note"] = cs["note"]  # なぜこの画にしたか（人が直すときに読む。書き出しは読まない）
             cuts.append(cut)
-            row_cuts.append(f"{fmt(t0)}+{m / FPS:.2f}s")
+            row_cuts.append(f"{M.ref(video, fmt(t0))}+{m / FPS:.2f}s")
         prev_end = clip["start"] + cuts[-1]["out"] / FPS
+        prev_video = video
         prev_spec = specs[-1]
         if center:
             # テロップを出すカット。既定は行ぜんぶ。inset（札で見せる画）のカットとは同じ帯を取り合うので、
@@ -908,7 +969,8 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("spec")
     ap.add_argument("--clips", required=True, type=Path, action="append",
-                    help="取り込んだ窓の一覧（index.json）。あとから足した区間の一覧があれば、もう一度 --clips で渡す")
+                    help="取り込んだ窓の一覧（index.json）。あとから足した区間・ほかの回の一覧も、もう一度 --clips で渡す"
+                         "（回は index.json の video。無い一覧は <videoId>=<index.json>）")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--voice", type=Path, help="声の一覧（lines.json）。無ければ open_jtalk で下書き")
     ap.add_argument("--plan", help="声の一覧のどの案か（既定: spec の id）")
