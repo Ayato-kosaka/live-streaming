@@ -156,21 +156,27 @@ export function layersFor(entry: FxTierEntry, variant: FxVideoVariant): FxLayers
 export const FX_WARM_BUDGET = 12 * 1024 * 1024;
 
 /**
- * 温める順（ファイル名）。決め方は3つ:
+ * 温める順（ファイル名）。決め方は4つ:
  *
  * 1. **その日に流す通りだけ**（2通りのうち片方しか出ないので、もう片方は1バイトも落とさない）
- * 2. **段の低い順**（段1 → 段7）。来る回数の順（〜999円は毎配信、1,000円〜は3日に1回、5,000円〜は月1、1万円〜は年2）
- * 3. 1段の中は **登場（back → front）→ 滞在（back → front）**。締めは温めない:
- *    締めはアラートの終わりの1〜1.5秒で、要るのは投げ銭から 25 秒以上あと。アラートが出たときに読み始めれば間に合う
+ * 2. **全段の登場を先に、滞在はそのあと。** アラートの頭で読み終えていなければならないのは登場だけで、
+ *    滞在は頭のコマが出れば始められる（残りは登場が流れている 1.4〜7 秒のあいだに読める）。
+ *    段ごとに登場と滞在を組で落とすと、full では段1〜6 だけで上限に近づき、**いちばん大きい段7 の登場が
+ *    上限の外に出る**（段4・5 の実の動画と、描く担当の書き出しの速さで数えた）。段7 は年2回なので、
+ *    控えに無ければその日の1回目は動画なしで出てしまう
+ * 3. 登場どうし・滞在どうしは **段の低い順**（段1 → 段7）。来る回数の順（〜999円は毎配信、1,000円〜は3日に1回、
+ *    5,000円〜は月1、1万円〜は年2）。上限で切れるのは、高い段の滞在から
+ * 4. 1段の中は back → front。締めは温めない:
+ *    締めはアラートの終わりの0.6〜1.5秒で、要るのは投げ銭から 25 秒以上あと。アラートが出たときに読み始めれば間に合う
  */
 export function fxWarmOrder(tiers: readonly FxTier[], m: FxManifest, variant: FxVideoVariant): string[] {
   const out: string[] = [];
   const keys = [...tiers].sort((a, b) => a.min - b.min).map((t) => t.video?.tier).filter((k): k is string => !!k);
-  for (const k of keys) {
-    const e = m[k];
-    const l = e && layersFor(e, variant);
-    if (!l) continue;
-    for (const part of ["intro", "stay"] as const) {
+  for (const part of ["intro", "stay"] as const) {
+    for (const k of keys) {
+      const e = m[k];
+      const l = e && layersFor(e, variant);
+      if (!l) continue;
       for (const name of FX_LAYERS) {
         const f = l[name]?.[part];
         if (f && !out.includes(f)) out.push(f);

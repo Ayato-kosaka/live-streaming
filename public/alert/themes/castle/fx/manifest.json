@@ -9,17 +9,13 @@
             "stay": "t1-full-back-stay.webm",
             "outro": "t1-full-back-outro.webm"
           },
-          "front": {
-            "intro": "t1-full-front-intro.webm",
-            "stay": "t1-full-front-stay.webm",
-            "outro": "t1-full-front-outro.webm"
-          }
+          "front": null
         }
       },
-      "revealAt": 0.8,
+      "revealAt": 0.6,
       "introDur": 1.4,
       "stayDur": 2.0,
-      "outroDur": 1.0
+      "outroDur": 0.6
     },
     "2": {
       "variants": {
@@ -29,17 +25,13 @@
             "stay": "t2-full-back-stay.webm",
             "outro": "t2-full-back-outro.webm"
           },
-          "front": {
-            "intro": "t2-full-front-intro.webm",
-            "stay": "t2-full-front-stay.webm",
-            "outro": "t2-full-front-outro.webm"
-          }
+          "front": null
         }
       },
       "revealAt": 1.0,
       "introDur": 1.8,
       "stayDur": 2.0,
-      "outroDur": 1.0
+      "outroDur": 0.6
     },
     "3": {
       "variants": {
@@ -49,17 +41,13 @@
             "stay": "t3-full-back-stay.webm",
             "outro": "t3-full-back-outro.webm"
           },
-          "front": {
-            "intro": "t3-full-front-intro.webm",
-            "stay": "t3-full-front-stay.webm",
-            "outro": "t3-full-front-outro.webm"
-          }
+          "front": null
         }
       },
       "revealAt": 1.4,
       "introDur": 2.2,
-      "stayDur": 2.5,
-      "outroDur": 1.0
+      "stayDur": 3.0,
+      "outroDur": 0.7
     },
     "4": {
       "variants": {
@@ -81,17 +69,13 @@
             "stay": "t4-light-back-stay.webm",
             "outro": "t4-light-back-outro.webm"
           },
-          "front": {
-            "intro": "t4-light-front-intro.webm",
-            "stay": "t4-light-front-stay.webm",
-            "outro": "t4-light-front-outro.webm"
-          }
+          "front": null
         }
       },
-      "revealAt": 2.8,
+      "revealAt": 2.6,
       "introDur": 3.4,
       "stayDur": 3.0,
-      "outroDur": 1.2
+      "outroDur": 1.0
     },
     "5": {
       "variants": {
@@ -113,14 +97,10 @@
             "stay": "t5-light-back-stay.webm",
             "outro": "t5-light-back-outro.webm"
           },
-          "front": {
-            "intro": "t5-light-front-intro.webm",
-            "stay": "t5-light-front-stay.webm",
-            "outro": "t5-light-front-outro.webm"
-          }
+          "front": null
         }
       },
-      "revealAt": 2.0,
+      "revealAt": 2.2,
       "introDur": 3.2,
       "stayDur": 3.0,
       "outroDur": 1.2
@@ -145,14 +125,10 @@
             "stay": "t6-light-back-stay.webm",
             "outro": "t6-light-back-outro.webm"
           },
-          "front": {
-            "intro": "t6-light-front-intro.webm",
-            "stay": "t6-light-front-stay.webm",
-            "outro": "t6-light-front-outro.webm"
-          }
+          "front": null
         }
       },
-      "revealAt": 3.4,
+      "revealAt": 3.2,
       "introDur": 4.0,
       "stayDur": 3.0,
       "outroDur": 1.2
@@ -184,9 +160,9 @@
           }
         }
       },
-      "revealAt": 4.8,
-      "introDur": 5.5,
-      "stayDur": 4.0,
+      "revealAt": 5.6,
+      "introDur": 7.0,
+      "stayDur": 3.0,
       "outroDur": 1.5
     }
   }

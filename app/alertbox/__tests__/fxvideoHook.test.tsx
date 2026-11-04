@@ -92,7 +92,7 @@ it("still=1 は旗があっても1バイトも落とさない（段は差し替�
   expect(fetched).toEqual([]);
 });
 
-it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → 段の低い順に1本ずつ落とす（締めは落とさない）", async () => {
+it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → 全段の登場 → 全段の滞在の順に1本ずつ落とす（締めは落とさない）", async () => {
   window.history.replaceState({}, "", "/?fx=light");
   const { got, update } = mount(castle, { still: false, bankReady: false });
   expect(got.v!.theme?.fxVariant).toBe("light");
@@ -105,13 +105,17 @@ it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → �
   await advance(200);
   expect(fetched[0]).toBe("/alert/themes/castle/fx/manifest.json");
   const videos = fetched.slice(1);
-  expect(videos.slice(0, 4)).toEqual([
-    "/alert/themes/castle/fx/t1-full-back-intro.webm",
-    "/alert/themes/castle/fx/t1-full-front-intro.webm",
-    "/alert/themes/castle/fx/t1-full-back-stay.webm",
-    "/alert/themes/castle/fx/t1-full-front-stay.webm",
-  ]);
-  expect(videos).toHaveLength(28);
+  // 置いてある manifest の、light の登場と滞在（〜999円は full）。front の有無は作る担当が決めるので、数は manifest から
+  const m = JSON.parse(MANIFEST).tiers as Record<string, { variants: Record<string, Record<string, unknown>> }>;
+  const want = (part: string) =>
+    Object.keys(m)
+      .sort()
+      .flatMap((k) => {
+        const l = m[k].variants.light ?? m[k].variants.full;
+        return ["back", "front"].filter((n) => l[n]).map((n) => `/alert/themes/castle/fx/t${k}-${m[k].variants.light ? "light" : "full"}-${n}-${part}.webm`);
+      });
+  expect(videos).toEqual([...want("intro"), ...want("stay")]);
+  expect(videos[0]).toBe("/alert/themes/castle/fx/t1-full-back-intro.webm");
   expect(videos.filter((u) => /outro|t[4-7]-full/.test(u))).toEqual([]);
   expect(new Set(videos).size).toBe(videos.length);
 });

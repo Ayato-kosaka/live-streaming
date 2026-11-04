@@ -12,7 +12,8 @@
  *      配信に出すと決めるまで（`live: false`・`variant: null`）7段は出ない
  *   2. 7段の切れ目・色・字は、ハロウィン2版目の同じ段と同じ（写しが崩れていない）
  *   3. manifest.json の読み方（約束の名前・置き場の外を指さない・秒の決まり）と、置いてあるひな形が読める
- *   4. 温める順と量: その日に流す通りだけ・段の低い順・登場と滞在だけ（締めは温めない）・同じ URL は二度落とさない・上限で止まる
+ *   4. 温める順と量: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順。締めは温めない）・
+ *      同じ URL は二度落とさない・上限で止まる
  *   5. キャラ絵と字は `revealAt` に出る（字の出し方はハロウィン2版目の同じ段）。動画が用意できなければ動画なしで、すぐ出る
  *   6. 流す順番: `playing` まで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
@@ -187,18 +188,35 @@ describe("3. manifest.json", () => {
 describe("4. 温める順と量", () => {
   const m = parseFxManifest(MANIFEST);
   const tiers = castle.fxVideo!.tiers;
-  it("その日に流す通りだけ・段の低い順・1段の中は 登場（奥→手前）→ 滞在（奥→手前）。締めは温めない", () => {
-    const light = fxWarmOrder(tiers, m, "light");
-    expect(light.slice(0, 4)).toEqual(["t1-full-back-intro.webm", "t1-full-front-intro.webm", "t1-full-back-stay.webm", "t1-full-front-stay.webm"]);
-    expect(light.filter((f) => /outro/.test(f))).toEqual([]);
-    // 1,000円〜は light だけ（full は1本も落とさない）
-    expect(light.filter((f) => /^t[4-7]-full/.test(f))).toEqual([]);
-    expect(light.filter((f) => /^t[4-7]-light/.test(f))).toHaveLength(16);
-    const tierOf = (f: string) => Number(f[1]);
-    expect(light.map(tierOf)).toEqual([...light.map(tierOf)].sort((a, b) => a - b));
-    expect(light).toHaveLength(7 * 4);
-    const full = fxWarmOrder(tiers, m, "full");
-    expect(full.filter((f) => /light/.test(f))).toEqual([]);
+  /* 置いてある manifest の、その通りの登場と滞在の本数（front の有無は作る担当が決めるので、数は manifest から） */
+  const countOf = (variant: "full" | "light") =>
+    Object.values(m).reduce((n, e) => {
+      const l = layersFor(e, variant)!;
+      return n + 2 * ((l.back ? 1 : 0) + (l.front ? 1 : 0));
+    }, 0);
+  const tierOf = (f: string) => Number(f[1]);
+  const partOf = (f: string) => f.match(/-(intro|stay|outro)\.webm$/)![1];
+  it.each(["full", "light"] as const)("%s: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順・奥→手前）。締めは温めない", (variant) => {
+    const order = fxWarmOrder(tiers, m, variant);
+    expect(order[0]).toBe("t1-full-back-intro.webm");
+    expect(order.filter((f) => /outro/.test(f))).toEqual([]);
+    expect(order).toHaveLength(countOf(variant));
+    expect(new Set(order).size).toBe(order.length);
+    // 1,000円〜は、その通りだけ（もう片方は1本も落とさない）。〜999円は full しか無い
+    const other = variant === "full" ? "light" : "full";
+    expect(order.filter((f) => new RegExp(`^t[4-7]-${other}`).test(f))).toEqual([]);
+    // 登場がぜんぶ先（段7 の登場が、段1 の滞在より前）
+    const parts = order.map(partOf);
+    expect(parts).toEqual([...parts].sort((a, b) => (a === b ? 0 : a === "intro" ? -1 : 1)));
+    expect(order.indexOf(`t7-${variant}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
+    // 登場どうし・滞在どうしは段の低い順
+    for (const p of ["intro", "stay"]) {
+      const ts = order.filter((f) => partOf(f) === p).map(tierOf);
+      expect(ts).toEqual([...ts].sort((a, b) => a - b));
+    }
+    // 1段の中は奥 → 手前
+    for (const f of order.filter((x) => /-front-/.test(x)))
+      expect(order.indexOf(f.replace("-front-", "-back-"))).toBeLessThan(order.indexOf(f));
   });
 
   it("同じ URL は二度落とさない。上限を超えたら止める。しくじったものは次に試す", async () => {
