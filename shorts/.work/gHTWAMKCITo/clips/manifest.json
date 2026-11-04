@@ -1,0 +1,67 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "gHTWAMKCITo__clips",
+ "mode": "clips",
+ "dest": "gHTWAMKCITo/clips",
+ "video": "gHTWAMKCITo",
+ "channel": null,
+ "request": "shorts/requests/waltemis-gHTWAMKCITo-p1-clips-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 16,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 16,
+  "clips_ok": 16,
+  "clip_seconds": 160.0,
+  "channel_entries": 0,
+  "files": 40
+ },
+ "bytes": {
+  "plain": 86185090,
+  "tar_gz": 86032897,
+  "encrypted": 86032912
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "3a8f468f81eb6fff066fcf6642b279983468b1dd21339f4d0f0f0cd686a0aba2"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 38846992,
+   "sha256": "a1c60d5080a1a9b0591d1b7536abd046c80093a179af6286dd03ffa76a4c80c0"
+  }
+ ],
+ "hmac_sha256": "199f1723872ba7917f7b2e29eed978420842053597bab86b02ee13c715fd7455",
+ "pubkey_sha256": "c2c7432f1eddfe794568c82d4804c705e5ab57b947dd0fa74a6fe60801d6da5c",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41854547917",
+ "created_at": "2026-11-04T15:19:52+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 1381120,
+    "sha256": "9a568f2e6c2a2bf9b6dc7490ce2b0f1189e67b3ffda480700986d99e3e106727"
+   }
+  ],
+  "hmac_sha256": "df6ae22ba08ded62dfeea6ad53745f7b379addb5a6706fff0edc268d713d28e4",
+  "files": 20,
+  "sheets": 16,
+  "bytes": {
+   "plain": 1434429,
+   "tar_gz": 1381108,
+   "encrypted": 1381120
+  }
+ }
+}
