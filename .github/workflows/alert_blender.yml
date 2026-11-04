@@ -190,7 +190,8 @@ jobs:
           python3 tools/alert-theme/blender/t7_pack.py encode work out/fx
           python3 tools/alert-theme/blender/t7_pack.py sheet work out/sheets/sheet.jpg --frames-dir out/frames
           cp work/frames.json out/meta/
-          for m in raw/*/meta.json; do cp "$m" "out/meta/$(basename "$(dirname "$m")").json"; done
+          # raw/<run>/<artifact>/meta.json（run ごとに分けて落とすので、名前に run も付ける）
+          for m in raw/*/*/meta.json; do cp "$m" "out/meta/$(basename "$(dirname "$(dirname "$m")")")-$(basename "$(dirname "$m")").json"; done
           if ls out/fx/*.webm > /dev/null 2>&1; then
             python3 tools/alert-theme/blender/t7_pack.py check out/fx --work work | tee out/meta/check.txt || true
           fi
