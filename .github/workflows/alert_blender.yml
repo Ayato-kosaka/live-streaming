@@ -1,0 +1,210 @@
+name: 投げ銭の演出を Blender で描く
+
+# 1万円の段（段7「ドラキュラ城が本気を出す」）の連番の絵を、runner で Blender（Cycles・CPU）を回して描く（#1095）。
+# **作業箱には Blender を入れない**（入れる依頼は許可の判定で止まった）。ここで入れて、ここで描く。
+# 場面は tools/alert-theme/blender/castle_t7.py、振付けは t7_motion.py、秒とコマの分けかたは t7_plan.py。
+# 描いた連番の絵（4つの層）は artifact（t7-<質>-<番号>）に置き、pack の job が重ねて full / light の透明つき WebM に焼く
+# （t7_pack.py）。焼いたものと一覧の絵は枝 blender/out-t7 に置き、作業箱はそこを git で取る（artifact は落とせない）。
+# 1コマの秒は各 artifact の meta.json と、run の頁の要約に出る。
+#
+# - 秘密の鍵は使わない（このリポジトリの絵と、公式の Blender だけ）。ほかのワークフローとは繋がない
+# - コマを matrix で分けて並べる（重いコマが固まらないよう順に配る。t7_plan.py の shards）
+# - Blender の版は 4.2 LTS の中の最新を、その日に決めて控える（plan の job の出力と、各 artifact の meta.json）
+#
+# 起こしかた:
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=final -f shards=20
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=preview -f frames="intro:0,40,80 stay:0"
+#   gh workflow run alert_blender.yml --ref <枝> -f quality=final -f pack_run="<run> <描き直した run>"   # 欠けた台を足して重ねる
+# blender/** の枝に場面を push すると、試しの絵（preview・既定のコマ）だけ描く
+
+on:
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: "smoke（壊れていないか）/ preview（半分の大きさ）/ final（本番）"
+        type: choice
+        options: [preview, final, smoke]
+        default: preview
+      shards:
+        description: "何台に分けるか"
+        default: "20"
+      frames:
+        description: '描くコマ（例 "intro:0,40 stay:0-89"）。空なら quality が preview のとき既定の試しのコマ、final のとき全部'
+        default: ""
+      pack_run:
+        description: "描かずに、この run の絵（同じ quality）を重ね直すだけ（重ね方・薄さを直したとき）。空白で区切って複数の run を合わせられる"
+        default: ""
+  push:
+    branches: ["blender/**"]
+    paths: ["tools/alert-theme/blender/**", ".github/workflows/alert_blender.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alert-blender-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BLENDER_SERIES: "4.2"
+  QUALITY: ${{ inputs.quality || 'preview' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      version: ${{ steps.bl.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: 継ぎ目の確かめ（intro の終わり = stay の頭 など）
+        run: python3 tools/alert-theme/blender/t7_motion.py check
+      - name: Blender の版を決める（4.2 LTS の最新）
+        id: bl
+        run: |
+          v=$(curl -fsSL --retry 3 "https://download.blender.org/release/Blender${BLENDER_SERIES}/" \
+            | grep -o "blender-${BLENDER_SERIES}\.[0-9]*-linux-x64\.tar\.xz" | sort -uV | tail -1 \
+            | sed 's/^blender-//; s/-linux-x64\.tar\.xz$//')
+          test -n "$v"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Blender $v" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: ~/blender.tar.xz
+          key: blender-${{ steps.bl.outputs.version }}
+      - name: Blender を落とす
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 3 -o ~/blender.tar.xz \
+            "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${{ steps.bl.outputs.version }}-linux-x64.tar.xz"
+      - name: 入れて、小さく1コマ描く（場面が組めるか）
+        run: |
+          bash tools/alert-theme/blender/install.sh ~/blender.tar.xz
+          ~/blender/blender -b --factory-startup -noaudio --python-exit-code 1 \
+            --python tools/alert-theme/blender/castle_t7.py -- --out "$RUNNER_TEMP/smoke" --quality smoke --frames "intro:150"
+          ls -la "$RUNNER_TEMP/smoke"/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t7-smoke
+          path: ${{ runner.temp }}/smoke
+          retention-days: 3
+      - name: コマを分ける
+        id: plan
+        env:
+          SHARDS: ${{ inputs.shards || '4' }}
+          FRAMES: ${{ inputs.frames }}
+          PACK_RUN: ${{ inputs.pack_run }}
+        run: |
+          if [ "$QUALITY" = "smoke" ] || [ -n "$PACK_RUN" ]; then
+            echo 'shards=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$FRAMES" ] && [ "$QUALITY" != "final" ]; then FRAMES=preview; fi
+          # shellcheck disable=SC2086
+          s=$(python3 tools/alert-theme/blender/t7_plan.py shards "$SHARDS" --only $FRAMES)
+          echo "shards=$s" >> "$GITHUB_OUTPUT"
+          python3 tools/alert-theme/blender/t7_plan.py count "$s" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  render:
+    needs: plan
+    if: ${{ needs.plan.outputs.shards != '[]' }}
+    name: render-${{ strategy.job-index }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        frames: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: ~/blender.tar.xz
+          key: blender-${{ needs.plan.outputs.version }}
+      - name: Blender を落とす（置いてなければ）
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL --retry 3 -o ~/blender.tar.xz \
+            "https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${{ needs.plan.outputs.version }}-linux-x64.tar.xz"
+      - name: Blender を入れる
+        run: bash tools/alert-theme/blender/install.sh ~/blender.tar.xz
+      - name: 描く
+        env:
+          FRAMES: ${{ matrix.frames }}
+        run: |
+          grep -m1 "model name" /proc/cpuinfo; nproc
+          ~/blender/blender -b --factory-startup -noaudio --python-exit-code 1 \
+            --python tools/alert-theme/blender/castle_t7.py -- --out "$RUNNER_TEMP/out" --quality "$QUALITY" --frames "$FRAMES"
+          python3 tools/alert-theme/blender/t7_plan.py meta "$RUNNER_TEMP/out/meta.json" | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: t7-${{ env.QUALITY }}-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/out
+          retention-days: 7
+          # PNG は縮まないので、包むだけにする（上げる時間を短く）
+          compression-level: 0
+
+  # 層を重ねて full / light の透明つき WebM に焼き、一覧の絵と一緒に枝 blender/out-t7 へ置く。
+  # **作業箱は artifact を落とせない**（置き場の blob の宛先が、作業箱の外への出口で止められている。2026-11-04）。
+  # git の枝なら作業箱から fetch できる。中身はどうせ public/ に出す動画と、合成の配信画面ではない一覧だけ（顔は無い）。
+  # 枝は毎回 1 コミットに作り直して上書きする（重い絵を積まない）。押すのは GITHUB_TOKEN なので、ほかのワークフローは起きない
+  pack:
+    needs: [plan, render]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && inputs.quality != 'smoke' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: 道具を入れる
+        timeout-minutes: 15
+        run: |
+          bash tools/shorts/ingest/ffmpeg.sh
+          ffmpeg -version | head -1
+          python3 -m pip install --quiet "numpy==2.5.3" "pillow==12.3.0"
+      # pack_run には run を空白で区切って並べられる。runner が途中で止められて（shutdown signal）1台ぶんの絵が
+      # 欠けたとき、そのコマだけ別の run で描き直して、元の run の絵と合わせて重ねるため（2026-11-04 に render-7 で起きた）。
+      # run ごとに置き場を分けるので、同じ名前の artifact（t7-final-0 など）がぶつからない
+      - name: 描いた絵を落とす
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNS: ${{ inputs.pack_run || github.run_id }}
+        run: |
+          for r in $RUNS; do
+            gh run download "$r" -R "$GITHUB_REPOSITORY" -p "t7-${QUALITY}-*" -D "raw/$r"
+          done
+          find raw -name meta.json | wc -l
+      - name: 重ねる・焼く・一覧にする
+        run: |
+          python3 tools/alert-theme/blender/t7_pack.py compose raw work
+          mkdir -p out/fx out/sheets out/meta
+          python3 tools/alert-theme/blender/t7_pack.py encode work out/fx
+          python3 tools/alert-theme/blender/t7_pack.py sheet work out/sheets/sheet.jpg --frames-dir out/frames
+          cp work/frames.json out/meta/
+          # raw/<run>/<artifact>/meta.json（run ごとに分けて落とすので、名前に run も付ける）
+          for m in raw/*/*/meta.json; do cp "$m" "out/meta/$(basename "$(dirname "$(dirname "$m")")")-$(basename "$(dirname "$m")").json"; done
+          if ls out/fx/*.webm > /dev/null 2>&1; then
+            python3 tools/alert-theme/blender/t7_pack.py check out/fx --work work | tee out/meta/check.txt || true
+          fi
+          du -sh out/* | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 作業箱へ渡す（枝 blender/out-t7）
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ inputs.pack_run || github.run_id }}
+        run: |
+          cd out
+          git init -q -b out
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -qm "段7 の書き出し（絵は run $RUN・${QUALITY}）"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" out:refs/heads/blender/out-t7
+          echo "枝 blender/out-t7 に置いた（$(git rev-parse --short HEAD)）" >> "$GITHUB_STEP_SUMMARY"
