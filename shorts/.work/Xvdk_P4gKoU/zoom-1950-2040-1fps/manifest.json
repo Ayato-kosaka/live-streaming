@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "Xvdk_P4gKoU__zoom-1950-2040-1fps",
+ "mode": "zoom",
+ "dest": "Xvdk_P4gKoU/zoom-1950-2040-1fps",
+ "video": "Xvdk_P4gKoU",
+ "channel": null,
+ "request": "shorts/requests/hitch-Xvdk_P4gKoU-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 13
+ },
+ "bytes": {
+  "plain": 1166294,
+  "tar_gz": 1111920,
+  "encrypted": 1111936
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1111936,
+   "sha256": "85a87c7b19cd70684e4a163cea45c5f9a35c233ad0a0fcb155176d684d3a8035"
+  }
+ ],
+ "hmac_sha256": "094c67f6dea1017c50d31a4dc40ad0cb498dc0d26e8ac2c8c4a62ff199317d70",
+ "pubkey_sha256": "db4a326ea3919a174c2ff994a2e1594b5bd013728c56a458870d98347c652178",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41815635041",
+ "created_at": "2026-11-04T11:39:02+00:00"
+}
