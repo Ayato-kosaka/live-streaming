@@ -915,6 +915,9 @@ class Stage:
     FRONT = {"full": True}
     # 1通りの大きさの予算（KB）。無ければ VARIANT_BUDGET_KB。焼き方は encode_budget
     BUDGET_KB = {}
+    # 投げた人のキャラ絵の箱の下の端（箱の高さに対する割合）。None なら再生の側の既定（0.98）。
+    # 〜999円の3段は 0.72（下の 28% が猫の帯。CONTRACT.md の追記 2026-11-04）。manifest.json の段に書く
+    CHAR_BOTTOM = None
 
     def __init__(self, variant):
         self.variant = variant
@@ -1169,6 +1172,8 @@ def write_manifest(script, out):
         "stayDur": round(next(iter(durs["stay"])) / FPS, 3),
         "outroDur": round(next(iter(durs["outro"])) / FPS, 3),
     }
+    if getattr(S, "CHAR_BOTTOM", None) is not None:
+        man["tiers"][str(S.TIER)]["charBottom"] = S.CHAR_BOTTOM
     man["tiers"] = dict(sorted(man["tiers"].items(), key=lambda kv: int(kv[0])))
     with open(path, "w", encoding="utf-8") as f:
         json.dump(man, f, ensure_ascii=False, indent=2)

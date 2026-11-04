@@ -2,7 +2,7 @@
 """投げ銭の段の主役（あやと）が、投げた人のキャラ絵の後ろに隠れていないかを数える（#1095）。
 
     python3 tools/alert-theme/fx_hero.py <台本> --chars <キャラ絵.png>… [--variants full,light] [--step 0.2]
-           [--headroom 0.2] [--min 0.95] [--sheet <一覧.jpg>]
+           [--headroom 0.2] [--char-bottom 0.98] [--min 0.95] [--sheet <一覧.jpg>]
 
 終了コード:
     0 = どのキャラ絵・どのコマでも、主役の見えている割合が --min 以上
@@ -11,12 +11,14 @@
 
 キャラ絵の置き方は再生の側と同じにしてある（ここがずれると、数が本物と合わない）:
 
-- 箱は面の幅いっぱい、上から headroom（段4〜7 は 0.2）〜下から 2%（`app/alertbox/index.tsx` の charTop・charBottom）
+- 箱は面の幅いっぱい、上から headroom（段4〜7 は 0.2）〜下の端 char-bottom（`app/alertbox/index.tsx` の charTop・charBottom）。
+  下の端は台本の `CHAR_BOTTOM`（manifest の段の `charBottom`。〜999円の3段は 0.72）、無ければ 0.98
 - 絵の中身（透明 24/255 超の外接矩形）が箱に収まるいちばん大きな倍率で、縦も横も真ん中（`CharFit.tsx` の fitContent）
 - 出る秒（revealAt）から 0.85 秒かけて、0.18 → 1.05（0.6 の所）→ 1.0 にふくらむ。全体の進みは
   cubic-bezier(0.2, 0.8, 0.3, 1)（`season/plate/CharBox.tsx`）。ふくらむ中心は箱の真ん中の高さ
 
-主役の画素は、台本が `Stage.finish_hero` で残した主役だけの層（`last_hero`）の、透明 0.5 超。
+主役の画素は、台本が `Stage.finish_hero` で残した主役だけの層（`last_hero`）の、透明 0.5 超
+（段4〜6 はあやと、〜999円の3段は猫の家族と、その手前の小物）。
 見るのは revealAt から滞在の終わりまで（締めは主役が帰っていくので見ない）。
 back の層の主役はキャラ絵の後ろにいるので、顔に乗らない代わりに、キャラ絵の形によっては隠れる。
 叩き台の枠（中央の 446×538）で置くと、縦長の絵（箱の高さいっぱい・上の端が headroom）を見落とす（2026-11-04）。
@@ -73,7 +75,7 @@ def pop_scale(age):
 class CharLayout:
     """1人ぶんのキャラ絵を、再生の側と同じ置き方で 720×1280 の覆い（透明 0〜1）にする"""
 
-    def __init__(self, path, headroom):
+    def __init__(self, path, headroom, char_bottom=0.98):
         im = Image.open(path).convert("RGBA")
         a = np.asarray(im, np.float32)[..., 3] / 255
         ys, xs = np.nonzero(a > 24 / 255)
@@ -82,7 +84,7 @@ class CharLayout:
         nh, nw = a.shape
         bx0, by0, bx1, by1 = max(0, xs.min() - 1), max(0, ys.min() - 1), min(nw, xs.max() + 2), min(nh, ys.max() + 2)
         top = round(H * headroom)
-        bottom = round(H * 0.02)
+        bottom = round(H * (1 - char_bottom))
         aw, ah = W, H - top - bottom
         cw, ch = bx1 - bx0, by1 - by0
         s = min(aw / cw, ah / ch)
@@ -131,14 +133,16 @@ def main():
     ap.add_argument("--variants", default=None)
     ap.add_argument("--step", type=float, default=0.2)
     ap.add_argument("--headroom", type=float, default=0.2)
+    ap.add_argument("--char-bottom", type=float, default=None, help="無ければ台本の CHAR_BOTTOM、それも無ければ 0.98")
     ap.add_argument("--min", type=float, default=0.95)
     ap.add_argument("--sheet", default=None)
     o = ap.parse_args()
     try:
         S = fs.load_script(o.script).Scene
-        chars = [CharLayout(p, o.headroom) for p in o.chars]
+        cb = o.char_bottom if o.char_bottom is not None else (getattr(S, "CHAR_BOTTOM", None) or 0.98)
+        chars = [CharLayout(p, o.headroom, cb) for p in o.chars]
         variants = o.variants.split(",") if o.variants else list(S.VARIANTS)
-        print(f"段{S.TIER}: キャラ絵の箱 上 {o.headroom:.0%}〜下 2%・幅いっぱい（再生の側と同じ置き方）・"
+        print(f"段{S.TIER}: キャラ絵の箱 上 {o.headroom:.0%}〜下の端 {cb:.0%}・幅いっぱい（再生の側と同じ置き方）・"
               f"revealAt {S.REVEAL}秒から滞在の終わりまで {o.step}秒おき")
         for ch in chars:
             x, y, w, h = ch.content

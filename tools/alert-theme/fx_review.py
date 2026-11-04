@@ -12,7 +12,7 @@
 - 流す順は 登場 → 滞在を `--reps` 回 → 締め
 - 1,000円〜（2通りある段）は、full と light を左右に並べる。上が昼の街、下が顔
 
-キャラ絵は再生の側と同じ置き方（箱の上 headroom〜下 2%・幅いっぱい・中身で収める・revealAt から 0.85 秒でふくらむ。
+キャラ絵は再生の側と同じ置き方（箱の上 headroom〜下の端 manifest の charBottom（無ければ 0.98）・幅いっぱい・中身で収める・revealAt から 0.85 秒でふくらむ。
 `fx_hero.py` の CharLayout）。叩き台の枠（中央の 446×538）で置いていた間は、縦長の絵があやとを隠すのが見えなかった。
 字はキャラ絵の真ん中の高さ。再生の側が描くもの（縁取り・1字ずつ弾む）とは違う、位置を見るための仮の字。
 """
@@ -99,7 +99,7 @@ def main():
         im = Image.open(os.path.join(o.bg, f"prism-{nm}.jpg")).convert("RGB").resize(CELL, Image.LANCZOS)
         bgs.append(np.asarray(im, np.float32) / 255)
     # キャラ絵（再生の側と同じ置き方。出るときのふくらみも）
-    lay = fx_hero.CharLayout(o.char, HEADROOM.get(o.tier, 0.2))
+    lay = fx_hero.CharLayout(o.char, HEADROOM.get(o.tier, 0.2), e.get("charBottom", 0.98))
     char_cache = {}
 
     def char_at(scale):
