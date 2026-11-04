@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "kunXt2sXnFQ__zoom-750-1320-1fps",
+ "mode": "zoom",
+ "dest": "kunXt2sXnFQ/zoom-750-1320-1fps",
+ "video": "kunXt2sXnFQ",
+ "channel": null,
+ "request": "shorts/requests/hitch-kunXt2sXnFQ-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 29,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 13,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 37
+ },
+ "bytes": {
+  "plain": 6869991,
+  "tar_gz": 6554300,
+  "encrypted": 6554304
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 6554304,
+   "sha256": "db6b806aa271d02f3e822286aa9e63923d5ea8c7d60fabc1a04865b6dd730b04"
+  }
+ ],
+ "hmac_sha256": "5db523dc8f140bc92187a2dda24673e24026d6bf0a28d98cfa4725383cf37101",
+ "pubkey_sha256": "db4a326ea3919a174c2ff994a2e1594b5bd013728c56a458870d98347c652178",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41815635041",
+ "created_at": "2026-11-04T11:33:18+00:00"
+}
