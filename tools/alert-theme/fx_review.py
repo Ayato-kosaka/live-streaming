@@ -12,22 +12,28 @@
 - 流す順は 登場 → 滞在を `--reps` 回 → 締め
 - 1,000円〜（2通りある段）は、full と light を左右に並べる。上が昼の街、下が顔
 
-キャラ絵と字の置き場は叩き台ペラ一の枠（キャラ絵 137,486〜583,1024・字 44,694〜676,822、720×1280 の座標）。
-字は再生の側が描くもの（縁取り・1字ずつ弾む）とは違う、位置を見るための仮の字。
+キャラ絵は再生の側と同じ置き方（箱の上 headroom〜下 2%・幅いっぱい・中身で収める・revealAt から 0.85 秒でふくらむ。
+`fx_hero.py` の CharLayout）。叩き台の枠（中央の 446×538）で置いていた間は、縦長の絵があやとを隠すのが見えなかった。
+字はキャラ絵の真ん中の高さ。再生の側が描くもの（縁取り・1字ずつ弾む）とは違う、位置を見るための仮の字。
 """
 import argparse
 import json
 import os
 import subprocess
 
+import sys
+
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fx_hero  # noqa: E402  キャラ絵の置き方（再生の側と同じ）
 
 W, H, FPS = 720, 1280, 30
 BOX = (76, 445, 927)  # 配信画面（1080×1920）の上の、広げた箱
 CELL = (540, 960)
-CHAR_BOX = (137, 486, 583, 1024)
-TEXT_BOX = (44, 694, 676, 822)
+# 段ごとのキャラ絵の箱の上の空き（再生の側の themes.ts の video.headroom と同じ）
+HEADROOM = {1: 0.17, 2: 0.22, 3: 0.2, 4: 0.2, 5: 0.2, 6: 0.2, 7: 0.2}
 FONT = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
 
 
@@ -57,14 +63,14 @@ def over(dst, src, x=0, y=0):
     dst[y0:y1, x0:x1] = s[..., :3] * a + dst[y0:y1, x0:x1] * (1 - a)
 
 
-def text_layer(name, amount, size):
-    """名前と額（仮の字。白に黒の縁）"""
+def text_layer(name, amount, size, cy):
+    """名前と額（仮の字。白に黒の縁）。cy はキャラ絵の真ん中の高さ"""
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     f1 = ImageFont.truetype(FONT, 46)
     f2 = ImageFont.truetype(FONT, 64)
-    cx = (TEXT_BOX[0] + TEXT_BOX[2]) / 2
-    for txt, f, y, col in ((name, f1, TEXT_BOX[1] + 6, (255, 255, 255)), (f"¥{amount:,}", f2, TEXT_BOX[1] + 56, (255, 196, 64))):
+    cx = W / 2
+    for txt, f, y, col in ((name, f1, cy - 58, (255, 255, 255)), (f"¥{amount:,}", f2, cy - 6, (255, 196, 64))):
         tw = d.textlength(txt, font=f)
         d.text((cx - tw / 2, y), txt, font=f, fill=col, stroke_width=6, stroke_fill=(20, 12, 30))
     return np.asarray(im.resize(size, Image.LANCZOS))
@@ -92,15 +98,21 @@ def main():
     for nm in ("street", "face"):
         im = Image.open(os.path.join(o.bg, f"prism-{nm}.jpg")).convert("RGB").resize(CELL, Image.LANCZOS)
         bgs.append(np.asarray(im, np.float32) / 255)
-    # キャラ絵（枠に収め、枠の下にそろえる）
-    ch = Image.open(o.char).convert("RGBA")
-    cw, chh = CHAR_BOX[2] - CHAR_BOX[0], CHAR_BOX[3] - CHAR_BOX[1]
-    k = min(cw / ch.size[0], chh / ch.size[1])
-    s = bw / W
-    ch_full = ch.resize((max(1, round(ch.size[0] * k * s)), max(1, round(ch.size[1] * k * s))), Image.LANCZOS)
-    ch_x = bx + round((CHAR_BOX[0] + (cw - ch.size[0] * k) / 2) * s)
-    ch_y = by + round((CHAR_BOX[1] + (chh - ch.size[1] * k)) * s)
-    txt = text_layer(o.name, amount, (bw, bh))
+    # キャラ絵（再生の側と同じ置き方。出るときのふくらみも）
+    lay = fx_hero.CharLayout(o.char, HEADROOM.get(o.tier, 0.2))
+    char_cache = {}
+
+    def char_at(scale):
+        key = round(scale, 3)
+        if key not in char_cache:
+            _, pm = lay.mask(scale)
+            a = np.clip(pm[..., 3:4], 1e-4, 1)
+            rgba = np.dstack([np.where(pm[..., 3:4] > 1e-4, pm[..., :3] / a, 0), pm[..., 3:4]])
+            im = Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").resize((bw, bh), Image.LANCZOS)
+            char_cache[key] = np.asarray(im)
+        return char_cache[key]
+
+    txt = text_layer(o.name, amount, (bw, bh), lay.origin[1])
     n_i = round(e["introDur"] * FPS)
     n_s = round(e["stayDur"] * FPS)
     n_o = round(e["outroDur"] * FPS)
@@ -124,14 +136,11 @@ def main():
         for i in range(n):
             T = t_all / FPS
             fr = {kk: next(g, None) for kk, g in rd.items()}
-            # キャラ絵: revealAt でぽんと出て、締めで消える
-            if T < e["revealAt"]:
-                ck = 0.0
-            else:
-                ck = min(1.0, (T - e["revealAt"]) / 0.22)
+            # キャラ絵: revealAt からふくらんで出て（再生の側と同じ）、締めで消える
+            sc = fx_hero.pop_scale(T - e["revealAt"])
+            ck = 0.0 if sc is None else min(1.0, (T - e["revealAt"]) / 0.12)
             if clip == "outro":
                 ck *= 1 - i / max(1, n - 1)
-            pop = 0.75 + 0.25 * (1 + 2.2 * (ck - 1) ** 3 + 1.2 * (ck - 1) ** 2) if ck < 1 else 1.0
             canvas = np.zeros((out_h, out_w, 3), np.float32)
             for ci, v in enumerate(variants):
                 for ri, bg in enumerate(bgs):
@@ -140,12 +149,9 @@ def main():
                     if b is not None:
                         over(cell, b, bx, by)
                     if ck > 0:
-                        cimg = ch_full
-                        if pop != 1.0:
-                            cimg = ch_full.resize((max(1, round(ch_full.size[0] * pop)), max(1, round(ch_full.size[1] * pop))))
-                        ca = np.asarray(cimg).copy()
+                        ca = char_at(sc).copy()
                         ca[..., 3] = (ca[..., 3] * ck).astype(np.uint8)
-                        over(cell, ca, ch_x + (ch_full.size[0] - cimg.size[0]) // 2, ch_y + (ch_full.size[1] - cimg.size[1]))
+                        over(cell, ca, bx, by)
                         ta = txt.copy()
                         ta[..., 3] = (ta[..., 3] * ck).astype(np.uint8)
                         over(cell, ta, bx, by)

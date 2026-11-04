@@ -25,8 +25,9 @@ class Scene(Stage):
     TIER = 2
     INTRO, STAY, OUTRO, REVEAL = 1.8, 2.0, 1.0, 1.0
     VARIANTS = ("full",)
+    # 〜999円の段は隅の小さな絵なので、予算は小さく（画質の段が QBEST に当たって、たいていこれより小さく焼ける）
+    BUDGET_KB = {"full": 1500}
     FRONT = {"full": False}
-    KBPS = {"full-back": 800}
 
     BOTTOM = SAFE_BOTTOM
 

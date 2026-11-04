@@ -13,9 +13,11 @@
 | 項目 | 合格 |
 | --- | --- |
 | 形 | 720×1280・30コマ/秒・VP8・透明の流れつき（`alpha_mode=1`）。manifest の秒がコマ数と合う |
-| 大きさ | 1段の合計 6MB 以内 |
+| 大きさ | 1通り（full / light）の合計 6MB（6,000,000 バイト）以内 |
+| 画質 | `--work` に焼く前の連番の絵が全部あれば（`fx_stage.py all --keep`）、コマごとに PSNR（黒の上に重ねた色）を取る。中央 PSNR_MIN 以上。キーフレーム（2秒おき）で前のコマから PSNR_DIP を超えて落ちない。滞在は尻 → 頭でも PSNR_DIP を超えて変わらない（どちらも、低い側が PSNR_SEEN 以上なら見ない）。透明の差の平均 0.01 以下 |
+| 本のつなぎ | 登場の尻 → 滞在の頭、滞在の尻 → 締めの頭の差が、端の隣どうしの差の 2.5 倍（と 1.0）を超えない |
+| 締めの尻 | 最後のコマの透明の最大 0.02 以下（消えきる） |
 | 滞在の継ぎ目 | 尻のコマ → 頭のコマの差が、滞在の中のいちばん大きいコマ送りの差（2秒のキーフレームの段を含む）以下。頭は必ずキーフレームなので、尻→頭には圧縮の質の段が乗る。動きそのものの継ぎ目は `--script` で圧縮の前に測る |
-| 本のつなぎ | 登場の尻 → 滞在の頭、滞在の尻 → 締めの頭も同じ物差しで出す（目安。合否には入れない） |
 | 透明 | 焼いたコマ（`<work>/_samples`）と読み直した透明の差の平均 0.02 以下。透明だった所（0.02 未満）が 97% 以上 透明のまま |
 | front の顔 | front の全コマで、キャラ絵の顔の丸（中心 360,590・半径 74）の透明の最大が 6/255 以下 |
 | front は光と粒だけ | front の各コマで、透明 0.6 超の所が箱の 2% 以下（物の面が無い） |
@@ -38,7 +40,14 @@ from PIL import Image, ImageDraw
 
 W, H, FPS = 720, 1280, 30
 FACE = (360.0, 590.0, 74.0)
-MAX_TIER_BYTES = 6 * 1024 * 1024
+MAX_VARIANT_BYTES = 6_000_000
+# 画質の決まり（1万円の段の `blender/t7_pack.py` の check と同じ見方）。前の焼き方（2パスの VBR）は、段5 の滞在で
+# 輪の頭が尻より 3.2dB 良く（31.4 → 28.2）、2秒おきにくっきりさが変わった。跳ねの物差しはそれより厳しく 1.5dB にした。
+# 中央の下限は、絵の細かい段（霧・粒・窓）が 1通り 6MB に収まる所（段5 の滞在で 29〜30dB）から。
+# 前の焼き方は同じ大きさで 29.0dB だった
+PSNR_MIN = 28.0
+PSNR_DIP = 1.5
+PSNR_SEEN = 40.0
 LOW_TOP = {1: 0.70, 2: 2 / 3, 3: 0.5}  # 箱の高さのこの割合より上に物を出さない（段1は下 30%・段2は下 1/3・段3は下 1/2）
 
 
@@ -80,6 +89,19 @@ def diff(a, b):
     return float(np.abs(premul(a) - premul(b)).mean() * 255)
 
 
+def psnr_vs(frames, src_dir):
+    """読み直したコマと、焼く前の絵（連番の PNG）の PSNR（黒の上に重ねた色。見えない所の色は数えない）と透明の差の平均"""
+    ps, da = [], []
+    names = sorted(f for f in os.listdir(src_dir) if f.endswith(".png"))
+    for g8, nm in zip(frames, names):
+        s = np.asarray(Image.open(os.path.join(src_dir, nm)).convert("RGBA"), np.float32) / 255
+        g = g8.astype(np.float32) / 255
+        mse = float(np.mean((g[..., :3] * g[..., 3:4] - s[..., :3] * s[..., 3:4]) ** 2))
+        ps.append(min(60.0, 10 * np.log10(1 / max(mse, 1e-10))))
+        da.append(float(np.mean(np.abs(g[..., 3] - s[..., 3]))))
+    return ps, float(np.mean(da))
+
+
 def face_mask():
     yy, xx = np.mgrid[0:H, 0:W]
     return np.hypot(xx - FACE[0], yy - FACE[1]) <= FACE[2]
@@ -101,9 +123,12 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
                 files.add(p)
                 clips[(variant, layer, clip)] = p
     total = sum(os.path.getsize(p) for p in files)
-    notes.append(f"大きさ 合計 {total / 1024 / 1024:.2f}MB（{len(files)}本）")
-    if total > MAX_TIER_BYTES:
-        bad.append(f"1段の合計が {total / 1024 / 1024:.2f}MB（6MB を超えた）")
+    notes.append(f"大きさ 合計 {total / 1e6:.2f}MB（{len(files)}本）")
+    for variant in entry["variants"]:
+        vt = sum(os.path.getsize(p) for (v, _, _), p in clips.items() if v == variant)
+        notes.append(f"大きさ {variant} {vt / 1e6:.2f}MB")
+        if vt > MAX_VARIANT_BYTES:
+            bad.append(f"{variant} の合計が {vt / 1e6:.2f}MB（6MB を超えた）")
     hole = face_mask()
     dec = {}
     for key, p in clips.items():
@@ -160,6 +185,46 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
                 bad.append(f"{name}: 〜999円の段なのに、箱の上のほうに {over * 100:.1f}% 出ている")
         cov = (fr[..., 3] > 25).mean(axis=(1, 2))
         notes.append(f"{name}: 画面の占め方（透明 0.1 超）平均 {cov.mean() * 100:.1f}%・最大 {cov.max() * 100:.1f}%")
+    # 画質（焼く前の連番の絵が全部あるときだけ）
+    for (variant, layer, clip), fr in dec.items():
+        name = f"{variant}-{layer}-{clip}"
+        src = os.path.join(work, variant, clip, layer) if work else None
+        if not src or not os.path.isdir(src) or len([f for f in os.listdir(src) if f.endswith(".png")]) != len(fr):
+            continue
+        ps, da = psnr_vs(fr, src)
+        med = float(np.median(ps))
+        kf = [(k, ps[k - 1] - ps[k]) for k in range(2 * FPS, len(ps), 2 * FPS) if ps[k] < PSNR_SEEN]
+        worst_kf = max((d for _, d in kf), default=0.0)
+        msg = f"{name}: 画質 PSNR 中央 {med:.1f}dB・最低 {min(ps):.1f}dB・キーフレームの落ち 最大 {worst_kf:.2f}dB・透明の差 {da:.4f}"
+        if clip == "stay":
+            msg += f"・頭 {ps[0]:.1f}／尻 {ps[-1]:.1f}dB"
+            if min(ps[0], ps[-1]) < PSNR_SEEN and abs(ps[-1] - ps[0]) > PSNR_DIP:
+                bad.append(f"{name}: 滞在の頭と尻で画質が {abs(ps[-1] - ps[0]):.2f}dB 違う（輪の継ぎ目で跳ねる）")
+        notes.append(msg)
+        if med < PSNR_MIN:
+            bad.append(f"{name}: 画質 PSNR 中央 {med:.1f}dB（{PSNR_MIN}dB から）")
+        for k, d in kf:
+            if d > PSNR_DIP:
+                bad.append(f"{name}: {k}コマ目（キーフレーム）で画質が {d:.2f}dB 落ちる")
+        if da > 0.01:
+            bad.append(f"{name}: 透明が焼く前の絵と {da:.4f} 違う（0.01 まで）")
+    # 本と本のつなぎ（再生の側は 登場 → 滞在のくり返し → 締め と途切れずにつなぐ）
+    for variant in entry["variants"]:
+        for layer in ("back", "front"):
+            for c0, c1 in (("intro", "stay"), ("stay", "outro")):
+                a_, b_ = dec.get((variant, layer, c0)), dec.get((variant, layer, c1))
+                if a_ is None or b_ is None:
+                    continue
+                j = diff(a_[-1], b_[0])
+                step = max(float(np.median([diff(a_[k], a_[k + 1]) for k in range(max(0, len(a_) - 10), len(a_) - 1)])),
+                           float(np.median([diff(b_[k], b_[k + 1]) for k in range(0, min(9, len(b_) - 1))])))
+                if j > max(2.5 * step, 1.0):
+                    bad.append(f"{variant}-{layer}: {c0} → {c1} のつなぎの差 {j:.2f} が、端の隣どうし {step:.2f} の 2.5 倍を超えた")
+    for (variant, layer, clip), fr in dec.items():
+        if clip == "outro":
+            last = int(fr[-1][..., 3].max())
+            if last > 5:
+                bad.append(f"{variant}-{layer}-outro: 最後のコマに透明 {last}/255 が残る（消えきっていない）")
     # 透明が正しく抜けたか（焼いたコマと比べる）
     samp = os.path.join(work, "_samples") if work else None
     if samp and os.path.isdir(samp):

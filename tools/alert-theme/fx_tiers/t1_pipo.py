@@ -26,8 +26,9 @@ class Scene(Stage):
     TIER = 1
     INTRO, STAY, OUTRO, REVEAL = 1.4, 2.0, 1.0, 0.6
     VARIANTS = ("full",)
+    # 〜999円の段は隅の小さな絵なので、予算は小さく（画質の段が QBEST に当たって、たいていこれより小さく焼ける）
+    BUDGET_KB = {"full": 1500}
     FRONT = {"full": False}
-    KBPS = {"full-back": 700}
 
     X, BOTTOM = 130.0, SAFE_BOTTOM  # 落ち葉の山の真ん中と、下の端（キャラ絵の枠 137〜583 の左の外に寄せる）
 

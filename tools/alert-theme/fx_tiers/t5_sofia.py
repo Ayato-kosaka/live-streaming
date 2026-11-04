@@ -9,6 +9,10 @@
 
 full は叩き台どおりの全面（空・大聖堂・広場・バラ）。light は大聖堂を光の線で描き、キャラが出たら線を消して
 箱の縁のきらめきとあやとだけを残す（配信の景色がほぼそのまま見える）。
+
+あやとは、投げた人のキャラ絵が出る直前に左上の角（キャラ絵の箱より上の帯）へ舞い上がる。キャラ絵は再生の側で
+箱の上 20%〜下 2% に幅いっぱいで置かれ、出て 0.2 秒でほぼ出きるので、真ん中の高さに残ると後ろに隠れる
+（段4 で再生の担当が見つけた。2026-11-04）。full も light も同じ。隠れていないかは `fx_hero.py` で数える。
 """
 import math
 import os
@@ -32,7 +36,6 @@ class Scene(Stage):
     INTRO, STAY, OUTRO, REVEAL = 3.2, 3.0, 1.2, 2.2
     VARIANTS = ("full", "light")
     FRONT = {"full": True, "light": False}
-    KBPS = {"full-back": 2800, "full-front": 420, "light-back": 1100}
 
     # 落ち着いたときのカメラ（大聖堂の真ん中を見る）
     CAM_END = ((0.0, 0.0, 2.6), (0.0, 24.0, 5.6))
@@ -133,8 +136,9 @@ class Scene(Stage):
         else:
             self.draw_light_back(c, cam, back, sp_b, M, dst, cat_pos, lit, out_k, foot_y)
 
-        # ---- あやと（バラの祭り）: 左上から舞い降り、滞在は上でふわふわ
-        self.draw_ayato(c, cam, back, sp_b, full)
+        # ---- あやと（バラの祭り）: 左上から舞い降り、キャラ絵が出る前に左上の角へ。主役だけの層に描く
+        hero = Canvas()
+        self.draw_ayato(c, cam, hero, sp_b, full)
 
         # ---- 鐘の光の輪（2.1・2.35、そして滞在の輪で 1回ずつ）
         rings = [(T - 2.1, 1.0, 0.85), (T - 2.35, 0.75, 0.85)] if c.clip == "intro" else []
@@ -196,7 +200,7 @@ class Scene(Stage):
             sx, sy, _ = cam.project(self.sky_pos[None])
             gk = (0.25 + 0.75 * pulse(Ti, 2.15, 0.5) + 0.12 * c.osc(1)) * ease(ramp(Ti, 0.6, 1.6)) * out_k
             rays = (float(sx[0]), float(sy[0]), gk, 0.95)
-        out_b = back.finish(bloom=0.9 if full else 0.5, edge=self.edge, rays=rays)
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.9 if full else 0.5, edge=self.edge, rays=rays))
 
         if not self.has_front():
             return out_b, None
@@ -335,14 +339,16 @@ class Scene(Stage):
         x = lerp(-160, 205, ease_out(ramp(Ti, 1.0, 1.85)))
         y = lerp(-260, 270, arrive)
         hgt = 430.0
-        if not full:
-            # light: キャラが出たら、左上の角へ小さく退く
-            back_k = ease(ramp(Ti, self.REVEAL + 0.1, self.REVEAL + 0.9))
-            x = lerp(x, 96, back_k)
-            y = lerp(y, 150, back_k)
-            hgt = lerp(hgt, 240, back_k)
-        y += 9 * c.osc(1) * ease(ramp(Ti, 1.9, 2.6))
-        x += 5 * c.osc(1, 0.25) * ease(ramp(Ti, 1.9, 2.6))
+        # キャラ絵が出る前（1.9〜2.35）に、左上の角へ小さく舞い上がる（キャラ絵の箱より上の帯。full も light も）
+        back_k = ease(ramp(Ti, 1.9, 2.35))
+        x = lerp(x, 118, back_k)
+        y = lerp(y, 130, back_k)
+        hgt = lerp(hgt, 232, back_k)
+        y += 5 * c.osc(1) * ease(ramp(Ti, 1.9, 2.6))
+        x += 4 * c.osc(1, 0.25) * ease(ramp(Ti, 1.9, 2.6))
+        # 花びらを撒く手（絵の真ん中から左上へ。大きさに合わせて）
+        s_ = hgt / 430.0
+        self.hand = (x - 120 * s_, y - 150 * s_)
         if c.clip == "outro":
             x += 160 * ease_in(u) * 0.4
             y -= 520 * ease_in(ramp(u, 0.0, 0.85))
@@ -366,7 +372,7 @@ class Scene(Stage):
     def draw_petals(self, c, cam, cv, amb, full):
         f = self.fall
         ages = f.age(c)
-        hx, hy = 205 - 120, 270 - 150  # あやとの手（撒く所）
+        hx, hy = self.hand  # あやとの手（撒く所）。draw_ayato が決める
         for j in range(f.n):
             r = f.r[j]
             a = ages[j]

@@ -7,6 +7,11 @@
 - 滞在（3秒の輪）: 舟は湖の上でゆれ、湖面がきらめき、霧が流れ、紅葉が舞う
 - 締め 1.0秒: 霧が閉じて、舟の灯りが小さくなって消える
 
+投げた人のキャラ絵は、再生の側で箱の上 20%〜下 2% に幅いっぱいで置かれる（`app/alertbox/index.tsx`）。
+舟はキャラ絵の後ろ（back）なので、湖の真ん中に置いたままだと、人によっては頭の後ろに半分隠れた（2026-11-04、
+再生の担当が本物で確かめた）。キャラ絵が出るあいだに、カメラが湖面へ降りて（画面を上へずらし、少し低く）、
+舟は少し奥の左へ寄る。滞在のあいだ、舟はキャラ絵の箱より上の帯にいる（`fx_hero.py` で数える）。
+
 full は叩き台どおりの全面（空と遠い山・崖と修道院・湖・手前の紅葉）。light は崖と修道院を光の線で描き、湖面は光のさざ波だけ。
 キャラが出たら線を消し、あやとの舟は左の奥へ小さく退いて、縁のきらめきだけを残す。
 """
@@ -32,7 +37,6 @@ class Scene(Stage):
     INTRO, STAY, OUTRO, REVEAL = 3.4, 3.0, 1.0, 2.6
     VARIANTS = ("full", "light")
     FRONT = {"full": True, "light": False}
-    KBPS = {"full-back": 2600, "full-front": 380, "light-back": 1000}
 
     CAM_END = ((0.0, 0.0, 2.3), (0.0, 40.0, 2.5))
 
@@ -40,7 +44,7 @@ class Scene(Stage):
         full = self.variant == "full"
         self.boat = art("ayato", "boat.webp")
         self.cliffs = art("t4", "cliffs.webp")
-        ref = self.cam_at(self.INTRO)
+        ref = self.cam_at(self.INTRO, settle=False)
         self.ref = ref
         # 崖の板: 絵の 0.68 の高さが湖面。奥行き 34 に、画面の幅より少し広く
         self.cliff_depth = 34.0
@@ -56,7 +60,8 @@ class Scene(Stage):
             self.sky_depth = 220.0
             self.sky_h = 1500 * self.sky_depth / ref.foc
             self.sky_pos = unproject(ref, 360, 250, depth=self.sky_depth)  # 絵の光の筋の元（上の真ん中）が、谷の上に
-            self.lake_quad = floor_rect(ref, -420, self.water_y - 3, W + 420, H + 450)
+            # 手前の端は、カメラが降りても画面の下まで届く近さまで（届かないと、湖の下に空の板が見えた）
+            self.lake_quad = floor_rect(ref, -420, self.water_y - 3, W + 420, H + 2600)
             self.fg_pos = unproject(ref, 360, H - 70, depth=5.0)
             self.fg_h = 1380 * 5.0 / ref.foc
             lk = self.lake.levels[0]
@@ -102,18 +107,29 @@ class Scene(Stage):
         self.splash = dict(v=np.stack([(R.random(400) - 0.5) * 3.0, -R.random(400) * 1.5, 1.0 + R.random(400) * 2.6], -1),
                            life=0.6 + R.random(400) * 0.8, col=np.where(R.random(400)[:, None] < 0.7, GOLD, WHITE))
 
-    # ---------------- カメラ: 湖の上を低く、ゆっくり寄る。滞在は小さく漂う
-    def cam_at(self, Ti, c=None):
+    # キャラ絵が出るあいだに、画面をどれだけ上へずらすか（px）と、カメラをどれだけ下げるか。
+    # 舟の水際がキャラ絵の箱の上の端（y 256）より上に来る量
+    # キャラ絵は出て 0.2 秒でほぼ出きる（CharBox の cubic-bezier(0.2, 0.8, 0.3, 1)）ので、降りきるのは revealAt の直後。
+    # 光の道が手前へ走るのに合わせて降りる
+    SETTLE_SHIFT, SETTLE_DROP = 198.0, 1.0
+    SETTLE = (2.05, 2.75)
+
+    # ---------------- カメラ: 湖の上を低く、ゆっくり寄る。キャラ絵が出るとき湖面へ降りる。滞在は小さく漂う
+    def cam_at(self, Ti, c=None, settle=True):
         u = ease_out(ramp(Ti, 0.0, 3.3))
         p0, t0 = np.array([0.9, -1.5, 3.1]), np.array([0.4, 40.0, 2.4])
         p1, t1 = np.array(self.CAM_END[0]), np.array(self.CAM_END[1])
         pos = p0 + (p1 - p0) * u
         tgt = t0 + (t1 - t0) * u
+        k = ease(ramp(Ti, *self.SETTLE)) if settle else 0.0
+        pos = pos - np.array([0, 0, self.SETTLE_DROP * k])
+        tgt = tgt - np.array([0, 0, self.SETTLE_DROP * k])
+        cy = H * 0.27 - self.SETTLE_SHIFT * k
         if c is not None:
             pos = pos + np.array([0.35 * c.bump(1), 0.0, 0.10 * c.bump(1, 0.5)])
             if c.clip == "outro":
                 pos = pos + np.array([0.0, 1.5, 0.3]) * ease(c.u)
-        return Cam(pos, tgt, foc=1250, cy=H * 0.27, focus=float(np.linalg.norm(tgt - pos)), dof=24.0)
+        return Cam(pos, tgt, foc=1250, cy=cy, focus=float(np.linalg.norm(tgt - pos)), dof=24.0)
 
     # 舟（あやと）の世界の位置。霧の奥（y=70）から、湖の手前（y=16）へ。滞在は湖の上でゆれる
     def boat_at(self, c):
@@ -121,10 +137,10 @@ class Scene(Stage):
         a = ease_out(ramp(Ti, 0.7, 2.3))
         y = lerp(75.0, 19.0, a)
         x = lerp(2.4, -1.0, a)
-        if self.variant == "light":
-            k = ease(ramp(Ti, self.REVEAL + 0.1, self.REVEAL + 0.8))
-            x = lerp(x, -5.2, k)
-            y = lerp(y, 30.0, k)
+        # キャラ絵が出るあいだに、少し奥の左へ（light は角まで）。カメラが降りるので、画面では上の帯へ上がる
+        k = ease(ramp(Ti, *self.SETTLE))
+        x = lerp(x, -2.0 if self.variant == "full" else -4.4, k)
+        y = lerp(y, 22.5, k)
         bob = 0.06 * c.osc(1) + 0.03 * c.osc(2, 0.3)
         if c.clip == "outro":
             y += 26 * ease_in(c.u)
@@ -144,7 +160,8 @@ class Scene(Stage):
         else:
             self.draw_light_scene(c, cam, back, out_k)
 
-        # ---- 舟とあやと
+        # ---- 舟とあやと（主役だけの層に描き、最後に back の上へ重ねる）
+        hero = Canvas()
         bp = self.boat_at(c)
         bh = 3.9  # 世界の高さ（櫂の先まで）
         boat_k = ease(ramp(Ti, 0.75, 1.3)) * (1 - ease(ramp(u, 0.3, 1.0)))
@@ -154,7 +171,7 @@ class Scene(Stage):
             raise_ = pulse(Ti, 2.25, 0.18) * (c.clip == "intro")
             pos = pos + np.array([0, 0, 0.25 * raise_])
             _, fy, _ = cam.project((bp + np.array([0, 0, 0.0]))[None])
-            draw_board(back, cam, self.boat, pos, bh, k=boat_k, sharp=True, rim=0.8 if full else 0.6, light_dir=(0.1, -1.0),
+            draw_board(hero, cam, self.boat, pos, bh, k=boat_k, sharp=True, rim=0.8 if full else 0.6, light_dir=(0.1, -1.0),
                        floor_fade=(float(fy[0]) + 10, 16))
             # 舟のまわりの波紋（光）
             self.draw_wake(c, cam, back, bp, boat_k * (1.0 if full else 0.7))
@@ -163,8 +180,8 @@ class Scene(Stage):
                 M, dst, _ = board_map(cam, self.boat.w, self.boat.h, pos, bh)
                 ox, oy = map_point(M, 0.14 * self.boat.w, 0.06 * self.boat.h)
                 fl = pulse(Ti, 2.25, 0.12)
-                fxv.stamp(back.L, self.kit.flare, ox, oy, 0.75 * fl)
-                streak(back, ox, oy, 0.7 * fl)
+                fxv.stamp(hero.L, self.kit.flare, ox, oy, 0.75 * fl)
+                streak(hero, ox, oy, 0.7 * fl)
 
         # ---- 光の道（2.2〜2.6 に舟から手前へ走る）。full は湖の描かれたきらめきを光らせ、light は光のさざ波
         self.draw_path(c, cam, back, sp_b, bp, full, out_k)
@@ -213,7 +230,7 @@ class Scene(Stage):
             sx, sy, _ = cam.project(self.sky_pos[None])
             gk = (0.35 + 0.55 * pulse(Ti, 2.3, 0.6) + 0.1 * c.osc(1)) * ease(ramp(Ti, 0.2, 1.0)) * out_k
             rays = (float(sx[0]), float(sy[0]) - 220, gk, 0.95)
-        out_b = back.finish(bloom=0.85 if full else 0.5, edge=self.edge, rays=rays)
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.85 if full else 0.5, edge=self.edge, rays=rays))
         if not self.has_front():
             return out_b, None
 
@@ -308,8 +325,10 @@ class Scene(Stage):
                     for hx, hy in self.lines.heads(prog):
                         px, py = map_point(M, hx, hy)
                         fxv.stamp(cv.L, self.kit.flare_s, px, py, 0.22 * k)
-        # 湖面のさざ波を光の線で（奥から手前へ順に現れる）
-        if k > 0.003:
+        # 湖面のさざ波を光の線で（奥から手前へ順に現れる）。カメラが湖面へ降りるあいだに消す
+        # （降りると奥のさざ波が水平線の近くに詰まって、横一本の光の帯に見える）
+        k_rip = k * (1 - ease(ramp(Ti, self.SETTLE[0], self.SETTLE[0] + 0.45)))
+        if k_rip > 0.003:
             sp = Splat()
             R = np.random.default_rng(4049)
             for j in range(16):
@@ -325,7 +344,7 @@ class Scene(Stage):
                 P = np.stack([xs, np.full(n, depth) + wob, np.full(n, 0.02)], -1)
                 env_ = np.sin(np.linspace(0, math.pi, n)) ** 1.5
                 col = (EMERALD * 0.5 + WHITE * 0.35 + GOLD * 0.25)
-                sp.add(cam, P, np.tile(col, (n, 1)) * (env_ * 0.9 * show * k)[:, None], soft=True)
+                sp.add(cam, P, np.tile(col, (n, 1)) * (env_ * 0.9 * show * k_rip)[:, None], soft=True)
             sp.into(cv)
         ek = ease(ramp(Ti, 2.1, 3.0)) * out_k
         if ek > 0.003:
