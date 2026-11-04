@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "GBYHxJQGlCY__zoom-6200-6280-1fps",
+ "mode": "zoom",
+ "dest": "GBYHxJQGlCY/zoom-6200-6280-1fps",
+ "video": "GBYHxJQGlCY",
+ "channel": null,
+ "request": "shorts/requests/ikea-GBYHxJQGlCY-p1-zoom-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 13
+ },
+ "bytes": {
+  "plain": 1638740,
+  "tar_gz": 1601559,
+  "encrypted": 1601568
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1601568,
+   "sha256": "0191b8b39e354f01b95f8f6aa7658c43aab468015da9c452dddaed8fdc4f4e7d"
+  }
+ ],
+ "hmac_sha256": "1c2c6124faba2021869248bf4e48e7e3ae5835d17a75dbc76e8286ddcd504d0c",
+ "pubkey_sha256": "607d964973679437f2cf1c62e65bc3944ba95a9e88913ff88ffb3b32e955615e",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41789567271",
+ "created_at": "2026-11-04T07:47:27+00:00"
+}
