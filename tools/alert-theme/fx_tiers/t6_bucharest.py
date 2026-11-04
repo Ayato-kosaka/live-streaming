@@ -10,6 +10,10 @@
 full は叩き台どおりの全面（夜空・議事堂・大通り。縁を暗く）。light は議事堂を光の線で描き、花火は光だけ。
 キャラが出たら線と大きな花火を消し、滞在は上の角の小さな花火と縁のきらめき、角のあやとだけにする。
 
+あやとは、投げた人のキャラ絵が出る直前に左上の角（キャラ絵の箱より上の帯）へ跳び上がる（full も light も）。
+キャラ絵は再生の側で箱の上 20%〜下 2% に幅いっぱいで置かれ、出て 0.2 秒でほぼ出きるので、真ん中の高さに残ると
+後ろに隠れる（段4 で再生の担当が見つけた。2026-11-04）。隠れていないかは `fx_hero.py` で数える。
+
 花火は「粒が少し前にいた所」を何点もたどって尾にする（`Shell`）。点の丸を散らすだけだと、
 開いた花火が「ぼやけた玉」に見えた（2026-11-04 の下書き）。尾は点の間が 2px を超えないように
 明るさを割り振るので、速く飛ぶ開きはじめも、止まりかけて垂れる終わりも、同じ太さの光の筋に見える。
@@ -133,7 +137,6 @@ class Scene(Stage):
     INTRO, STAY, OUTRO, REVEAL = 4.0, 3.0, 1.2, 3.2
     VARIANTS = ("full", "light")
     FRONT = {"full": True, "light": False}
-    KBPS = {"full-back": 2600, "full-front": 420, "light-back": 1100}
 
     def setup(self):
         full = self.variant == "full"
@@ -352,8 +355,9 @@ class Scene(Stage):
         sp_b.add(cam, P, col * (kd * rain_k)[:, None], back.Z if full else None)
         sp_b.into(back)
 
-        # ---- あやと（手持ち花火）。花火より手前なので、花火の光を足したあとに重ねる
-        self.draw_ayato(c, cam, back, full)
+        # ---- あやと（手持ち花火）。主役だけの層に描き、back の仕上げの上に重ねる
+        hero = Canvas()
+        self.draw_ayato(c, cam, hero, full)
 
         # light の滞在の縁のきらめき
         if not full:
@@ -374,7 +378,7 @@ class Scene(Stage):
             back.emit(band[..., None] * (MAGENTA * 0.8 + GOLD * 0.7 + WHITE * 0.4) * 1.2)
             glow(back, 360, 760, 220, MAGENTA * 0.5 + GOLD * 0.4, 0.6 * (1 - rv) ** 2)
 
-        out_b = back.finish(bloom=0.95 if full else 0.6, edge=self.edge)
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.95 if full else 0.6, edge=self.edge))
         if not self.has_front():
             return out_b, None
         # ---- front（光と粒だけ）: 手前を降る火の粉・ぼけ玉・キャラ絵のふちの星
@@ -505,12 +509,12 @@ class Scene(Stage):
         x = lerp(-180, 190, ease_out(ramp(Ti, 1.5, 2.3)))
         y = lerp(-300, 260, arrive)
         hgt = 380.0
-        if not full:
-            back_k = ease(ramp(Ti, self.REVEAL + 0.1, self.REVEAL + 0.75))
-            x = lerp(x, 100, back_k)
-            y = lerp(y, 150, back_k)
-            hgt = lerp(hgt, 220, back_k)
-        y += 10 * c.osc(1) * ease(ramp(Ti, 2.3, 3.0))
+        # キャラ絵が出る前（2.8〜3.3）に、左上の角へ小さく跳び上がる（キャラ絵の箱より上の帯。full も light も）
+        back_k = ease(ramp(Ti, 2.8, 3.3))
+        x = lerp(x, 125, back_k)
+        y = lerp(y, 132, back_k)
+        hgt = lerp(hgt, 232, back_k)
+        y += lerp(10, 5, back_k) * c.osc(1) * ease(ramp(Ti, 2.3, 3.0))
         if c.clip == "outro":
             y -= 520 * ease_in(ramp(u, 0.0, 0.85))
         if a <= 0.002:
