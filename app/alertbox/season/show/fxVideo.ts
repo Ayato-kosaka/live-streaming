@@ -42,8 +42,20 @@ export type FxTierEntry = {
   introDur: number;
   stayDur: number;
   outroDur: number;
+  /**
+   * 投げた人のキャラ絵の箱の下の端（面の高さに対する割合）。書いていない段は null で、いつもの 0.98
+   * （`stage.ts` の `PLAIN_CHAR_BOTTOM`）。〜999円の3段は、下の隅の猫の家族がキャラ絵の後ろに隠れないように上げる
+   */
+  charBottom: number | null;
 };
 export type FxManifest = Record<string, FxTierEntry>;
+
+/**
+ * `charBottom` として受ける幅。下の半分より上に箱の底を上げると、キャラ絵が小さくなりすぎる（上の帯は 0.2 まで
+ * 空いている）ので受けない。範囲の外は書いていないのと同じ（いつもの並べ方）
+ */
+export const CHAR_BOTTOM_MIN = 0.5;
+export const CHAR_BOTTOM_MAX = 1;
 
 /** 動画が動き出すのを待つ上限（#438 と同じ 3 秒。アラートは 30 秒以上あるので、3 秒待っても残りは出る） */
 export const FX_START_TIMEOUT_MS = 3000;
@@ -133,7 +145,9 @@ export function parseFxManifest(json: unknown): FxManifest {
       if (l) variants[name] = l;
     }
     if (!variants.full && !variants.light) continue;
-    out[k] = { variants, revealAt, introDur, stayDur, outroDur };
+    const cb = o.charBottom;
+    const charBottom = typeof cb === "number" && Number.isFinite(cb) && cb >= CHAR_BOTTOM_MIN && cb <= CHAR_BOTTOM_MAX ? cb : null;
+    out[k] = { variants, revealAt, introDur, stayDur, outroDur, charBottom };
   }
   return out;
 }
@@ -244,6 +258,8 @@ export type VideoPlan = {
   key: string;
   revealAt: number;
   headroom: number;
+  /** キャラ絵の箱の下の端（面の高さに対する割合）。manifest に無ければ null（いつもの並べ方） */
+  charBottom: number | null;
   text: "pop" | "don" | "count";
   kit: FxKit;
 };

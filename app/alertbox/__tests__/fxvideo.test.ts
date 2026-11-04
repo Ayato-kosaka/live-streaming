@@ -23,7 +23,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { THEMES, themeAt, tierFor, type FxTier, type SeasonTheme } from "../themes";
-import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM } from "../season/show/stage";
+import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM } from "../season/show/stage";
 import { scriptProblems } from "../season/show/script";
 import {
   FX_START_TIMEOUT_MS,
@@ -70,6 +70,7 @@ describe("1. 配信はいまのまま（旗が無ければ 7段は出ない）",
       expect(st.video).toBeNull();
       expect(st.revealSec).toBe(0);
       expect(st.headroom).toBe(PLAIN_HEADROOM);
+      expect(st.charBottom).toBe(PLAIN_CHAR_BOTTOM);
     }
   });
 
@@ -178,6 +179,21 @@ describe("3. manifest.json", () => {
   ])("読まない: %s", (_why, o) => {
     expect(one(o as Record<string, unknown>)["1"]).toBeUndefined();
   });
+  it("キャラ絵の箱の下の端（charBottom）: 書いてあれば読む・書いていなければ null（いつもの並べ方）", () => {
+    expect(one({})["1"]?.charBottom).toBeNull();
+    expect(one({ charBottom: 0.72 })["1"]?.charBottom).toBe(0.72);
+    expect(one({ charBottom: 1 })["1"]?.charBottom).toBe(1);
+  });
+  it.each([
+    ["下の半分より上", 0.3],
+    ["面の外", 1.2],
+    ["数でない", "0.72"],
+    ["NaN", NaN],
+  ])("charBottom を受けない（段は読む・並べ方はいつもの）: %s", (_why, v) => {
+    const e = one({ charBottom: v })["1"];
+    expect(e).toBeDefined();
+    expect(e!.charBottom).toBeNull();
+  });
   it("形の違うものは空", () => {
     expect(parseFxManifest(null)).toEqual({});
     expect(parseFxManifest({ tiers: [] })).toEqual({});
@@ -253,7 +269,7 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
   const m = parseFxManifest(MANIFEST);
   const planOf = (t: FxTier): VideoPlan => {
     const e = m[t.video!.tier];
-    return { key: `${t.video!.tier}-full`, revealAt: e.revealAt, headroom: t.video!.headroom, text: t.video!.text, kit: { key: "", layers: { back: null, front: null }, entry: e, used: false } };
+    return { key: `${t.video!.tier}-full`, revealAt: e.revealAt, headroom: t.video!.headroom, charBottom: e.charBottom, text: t.video!.text, kit: { key: "", layers: { back: null, front: null }, entry: e, used: false } };
   };
 
   it.each([
@@ -274,6 +290,25 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
     expect(st.headroom).toBe(tierFor(halloween, yen).show!.headroom);
     // 時刻表の決まり（札より先にキャラ絵が出ない・数え終わりとドンが同じ）
     expect(scriptProblems(st.cues!.map(({ t: _t, ...c }) => c), durationFor(yen), st.revealSec)).toEqual([]);
+  });
+
+  it("キャラ絵の箱の下の端は manifest の段の charBottom。書いていない段は今のまま（0.98）", () => {
+    // 置いてある manifest のまま: 書いてある段だけがその値
+    for (const yen of [100, 300, 700, 1500, 3000, 7000, 10000]) {
+      const st = stageFor(nov, yen, durationFor(yen), allRigs, planOf)!;
+      expect(st.charBottom).toBe(m[st.tier.video!.tier].charBottom ?? PLAIN_CHAR_BOTTOM);
+    }
+    // 〜999円の3段に 0.72 を書いた manifest（管理側の決め。描く担当が書く）: 段1〜3 だけ上がり、段4〜7 は 0.98 のまま
+    const raised = JSON.parse(JSON.stringify(MANIFEST));
+    for (const k of ["1", "2", "3"]) raised.tiers[k].charBottom = 0.72;
+    const m2 = parseFxManifest(raised);
+    const planOf2 = (t: FxTier): VideoPlan => ({ ...planOf(t), charBottom: m2[t.video!.tier].charBottom });
+    for (const yen of [100, 300, 700]) expect(stageFor(nov, yen, durationFor(yen), allRigs, planOf2)!.charBottom).toBe(0.72);
+    for (const yen of [1500, 3000, 7000, 10000]) expect(stageFor(nov, yen, durationFor(yen), allRigs, planOf2)!.charBottom).toBe(PLAIN_CHAR_BOTTOM);
+    // 途中で動画が動かなくなったら: キャラ絵がまだならいつもの並べ方へ・もう出ていればそのまま（跳ねない）
+    const st = stageFor(nov, 300, 30, allRigs, planOf2)!;
+    expect(withoutVideo(st, 0.1).charBottom).toBe(PLAIN_CHAR_BOTTOM);
+    expect(withoutVideo(st, st.revealSec + 1).charBottom).toBe(0.72);
   });
 
   it("字の出し方はハロウィン2版目の同じ段: 段1〜3 弾むだけ・段4〜6 0.9 秒あとにドン・段7 札ごと降りて数え上げてドン", () => {
@@ -304,6 +339,7 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
       expect(st.cues).toBeNull();
       expect(st.plate).toEqual(tierFor(halloween, yen).plate);
       expect(st.headroom).toBe(PLAIN_HEADROOM);
+      expect(st.charBottom).toBe(PLAIN_CHAR_BOTTOM);
     }
   });
 
@@ -323,6 +359,7 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
     expect(early.revealSec).toBe(0);
     expect(early.cues).toBeNull();
     expect(early.headroom).toBe(PLAIN_HEADROOM);
+    expect(early.charBottom).toBe(PLAIN_CHAR_BOTTOM);
     const late = withoutVideo(st, st.revealSec + 1);
     expect(late.video).toBeNull();
     expect(late.revealSec).toBe(st.revealSec);
@@ -362,7 +399,7 @@ function fakeVideo(duration: number): FakeVideo {
 const fire = (v: HTMLVideoElement, ev: string) => v.dispatchEvent(new Event(ev));
 const flush = () => Promise.resolve().then(() => Promise.resolve());
 
-const ENTRY: FxTierEntry = { variants: {}, revealAt: 2, introDur: 3.2, stayDur: 3, outroDur: 1.2 };
+const ENTRY: FxTierEntry = { variants: {}, revealAt: 2, introDur: 3.2, stayDur: 3, outroDur: 1.2, charBottom: null };
 type FakeLayer = Record<keyof FxLayerKit, FakeVideo>;
 function makeKit(front = true): { kit: FxKit; back: FakeLayer; front: FakeLayer | null } {
   const layer = (): FakeLayer => {

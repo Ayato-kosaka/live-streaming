@@ -10,6 +10,9 @@
  * - 段が動画（`video`。11月から）を持っていて、その動画が用意できていれば、動画で流す。キャラ絵と字は
  *   動画の `revealAt` 秒に出す（台本の代わりに、`reveal` と字の出来事だけの時刻表を作る）。
  *   用意できていなければ動画なしで、字とキャラ絵をすぐ出す（台本が読めなかった段と同じ）
+ * - 動画の段は、キャラ絵の箱の下の端も manifest の段（`charBottom`）から取る。〜999円の3段は、下の隅を歩く
+ *   猫の家族がキャラ絵の後ろに隠れないように箱の底を上げる（管理側の決め 2026-11-04。段が上がるほど主役も大きく）。
+ *   書いていない段・動画なしで出す段は、いつもの 0.98
  */
 import { tierFor, type FxTier, type PlateStyle, type SeasonTheme, type TierShow } from "../../themes";
 import { cueOf, resolveScript, type TimedCue } from "./script";
@@ -28,10 +31,14 @@ export type AlertStage = {
   video: VideoPlan | null;
   /** キャラ絵の箱の上に空ける高さ（面の高さに対する割合）。台本か動画で流すときはその段の値、ほかは 0.02 */
   headroom: number;
+  /** キャラ絵の箱の下の端（面の高さに対する割合）。動画の段が manifest に書いていればその値、ほかは 0.98 */
+  charBottom: number;
 };
 
 /** 台本も動画も無いときの、キャラ絵の箱の上の空き（index.tsx の前からの値） */
 export const PLAIN_HEADROOM = 0.02;
+/** キャラ絵の箱の下の端のいつもの高さ（下 2% を空ける。index.tsx の前からの値） */
+export const PLAIN_CHAR_BOTTOM = 0.98;
 
 /** 札がいつ出て、いつ数え上げて、いつ「ドン」か */
 export type PlateTiming = {
@@ -71,12 +78,30 @@ export function stageFor(
   // 動画は台本の無い段だけ（両方を持つ段は作らない。持っていたら台本が先）
   const video = !show && tier.video && videoPlan ? videoPlan(tier) : null;
   if (video) {
-    return { tier, show: null, plate: tier.plate ?? null, revealSec: video.revealAt, cues: videoCues(video), video, headroom: video.headroom };
+    return {
+      tier,
+      show: null,
+      plate: tier.plate ?? null,
+      revealSec: video.revealAt,
+      cues: videoCues(video),
+      video,
+      headroom: video.headroom,
+      charBottom: video.charBottom ?? PLAIN_CHAR_BOTTOM,
+    };
   }
   const cues = show ? resolveScript(show.script, durationSec) : null;
   const reveal = cues ? cueOf(cues, "reveal") : null;
   const revealSec = show && show.revealSec > 0 ? reveal?.t ?? show.revealSec : 0;
-  return { tier, show, plate: tier.plate ?? null, revealSec, cues, video: null, headroom: show ? show.headroom : PLAIN_HEADROOM };
+  return {
+    tier,
+    show,
+    plate: tier.plate ?? null,
+    revealSec,
+    cues,
+    video: null,
+    headroom: show ? show.headroom : PLAIN_HEADROOM,
+    charBottom: PLAIN_CHAR_BOTTOM,
+  };
 }
 
 /**
@@ -111,7 +136,7 @@ export function videoCues(v: Pick<VideoPlan, "revealAt" | "text">): TimedCue[] {
 export function withoutVideo(st: AlertStage, elapsedSec: number): AlertStage {
   if (!st.video) return st;
   if (elapsedSec >= st.revealSec) return { ...st, video: null };
-  return { ...st, video: null, revealSec: 0, cues: null, headroom: PLAIN_HEADROOM };
+  return { ...st, video: null, revealSec: 0, cues: null, headroom: PLAIN_HEADROOM, charBottom: PLAIN_CHAR_BOTTOM };
 }
 
 export function plateTiming(st: AlertStage): PlateTiming {
