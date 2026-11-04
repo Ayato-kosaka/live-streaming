@@ -14,7 +14,8 @@
       "revealAt": 0.6,
       "introDur": 1.4,
       "stayDur": 2.0,
-      "outroDur": 1.0
+      "outroDur": 1.0,
+      "charBottom": 0.72
     },
     "2": {
       "variants": {
@@ -30,7 +31,8 @@
       "revealAt": 1.0,
       "introDur": 1.8,
       "stayDur": 2.0,
-      "outroDur": 1.0
+      "outroDur": 1.0,
+      "charBottom": 0.72
     },
     "3": {
       "variants": {
@@ -46,7 +48,8 @@
       "revealAt": 1.4,
       "introDur": 2.2,
       "stayDur": 3.0,
-      "outroDur": 1.0
+      "outroDur": 1.0,
+      "charBottom": 0.72
     },
     "4": {
       "variants": {

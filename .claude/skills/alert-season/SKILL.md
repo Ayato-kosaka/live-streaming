@@ -140,6 +140,31 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 - **この箱の合成はソフトウェア（SwiftShader）なので、数は比べ合いとして読む。** スマホの数は `/alert/perf`（`public/alert/perf.html`。`?theme=<id>` でそのテーマを流す。最後の場面だけ箱を手で動かしてもらう）
 - 1コアで頭打ち（970 前後）になると、1つ外しても減らない。そのときは「1つだけ残す」でも測る
 
+### 透明つきの動画で作る（11月から。#1095）
+
+11月の7段は、CSS で絵を動かさず、**描いて焼いた透明つきの動画**を流す。CSS の作りは 51〜53コマ、透明つきの動画は あやとのスマホで60コマ・カクつき0だった（#1079）。
+決まりの元は、管理側の約束の紙（3人で共通）。ここはそれを次の季節でも同じに回すための写し。
+
+- **1段 = 3本 × 層 × 通り**
+  - 本: 登場（intro。1回）→ 滞在（stay。アラートが出ているあいだ くり返す。2〜4秒）→ 締め（outro。1〜1.5秒）。合計の秒はハロウィン2版目の同じ段と同じにし、足りない分は滞在のくり返しで埋める
+  - 層: back（投げた人のキャラ絵の後ろ）と front（前。**光と粒だけ**。物を乗せない）。front は無くてもよい
+  - 通り: 1,000円〜は full（全面）と light（光の線で描いて、キャラが出たら薄くする）の2つ。〜999円は full だけ
+  - 720×1280・30コマ・VP8 の透明つき（yuva420p・`-auto-alt-ref 0`・キーフレーム2秒おき）。名前は `t{段}-{通り}-{層}-{本}.webm`。1通りの合計 6MB 以内
+- **`public/alert/themes/<id>/fx/manifest.json`** に、段ごとの動画の名前と `revealAt`（キャラ絵が出る秒）・`introDur`・`stayDur`・`outroDur`（動画の実のコマ数から）、〜999円の段は `charBottom` を書く。再生の側（`season/show/fxVideo.ts`・`VideoShow.tsx`）がこれだけを読む
+- **顔の穴は再生の側が開ける**（`season/show/faceHole.ts`）。顔の場所は人ごとに違うので、焼き込んだ穴では覆いきれない（段4 の front で 30組のうち 30組が顔に乗った）
+- **キャラ絵の置き方は再生の側と同じ物差しで決める**: 箱の上 headroom〜下の端 `charBottom`（既定 0.98）に幅いっぱい、中身で収めて真ん中（`index.tsx`・`CharFit`）。出て 0.2 秒でほぼ出きり、途中で 1.05 倍にふくらむ
+  - 段4〜7 の主役（あやと）は、**キャラ絵が出る前に上の帯（headroom）へ**。叩き台の枠（中央の 446×538）で置き場を決めたら、人によっては頭の後ろに隠れた（段4 で見えていたのが 17%）
+  - 〜999円の猫の家族は、**下の 28% の帯**（`charBottom` 0.72。帯の上の端より 20px 下から）。光と粒は帯の上に出てよい
+- 道具（`tools/alert-theme/`）:
+  - `fx_stage.py`: ChatGPT の絵を板にして1つのカメラで写し、光・霧・粒・ぼけを足して焼く。段ごとの中身は台本 `fx_tiers/t<段>_<町>.py`、層の絵は `fx_art/`
+    - 滞在で動き続けるものは全部、滞在の位相の周期関数で書く（尻の次のコマが頭につながる）。一度きりの動きは登場の終わりまでに終える
+    - 主役は `Stage.finish_hero` の層に描く（縁の溶かしが細い。`fx_hero.py` がこの層を数える）
+  - 焼き方: **1本の中で画質の段（`-crf`＝`-qmin`）を1つに決め、率の天井は当てない**。予算（1通り 5.3MB）に収まるいちばん良い段を探して焼き直す。締めの最後のコマはキーフレーム
+    - 2パスの VBR で焼いたら、輪の頭（必ずキーフレーム）だけ尻より 3.2dB 良く、2秒おきにくっきりさが変わった
+    - 天井を当てても、同じ跳ねが戻る
+    - 前のコマからの差で焼いた締めは、透明が 6/255 で止まって消えきらなかった
+  - 1万円の段だけは Blender で描く（`tools/alert-theme/blender/`・`t7_pack.py`。GitHub Actions で回す）
+
 ## 5. 確かめる（数える。目だけで決めない）
 
 ビルドを静的に配って（`npx expo export --platform web`）、`tools/sprites/` から。
@@ -166,6 +191,21 @@ node alert-record.mjs --base ... --theme castle --portrait --ui --phone-font --a
 node alert-textfit.mjs --base ... --out <置き場>                                                # 名前・額・メッセージの切れが 0
 node alert-decode.mjs --dist <dist> --amounts ... --rates 1,4,6 --runs 3                         # 段の頭の展開が上限内
 node alert-cpu.mjs --base ... --char <キャラ> --amounts ... --rounds 3                           # CPU ms/秒
+```
+
+透明つきの動画の段（11月から）は、焼いた動画そのものも数える。**連番の絵を残して焼き、数えてから消す**（720×1280 の PNG は1段で 400MB ほど）:
+
+```bash
+python3 tools/alert-theme/fx_stage.py all <台本> --work <置き場> --out public/alert/themes/<id>/fx --keep    # 焼いて、連番の絵を残す
+python3 tools/alert-theme/fx_check.py public/alert/themes/<id>/fx --tiers <段> --work <段>=<置き場> --script <段>=<台本> --sheet <一覧.jpg>
+    # 形・秒・1通り 6MB・滞在の継ぎ目（台本の位相 0 と 1 の差も）・本のつなぎ・締めの消えきり・透明（紫と緑の地の一覧も）・
+    # front の顔の丸・light の滞在の覆い・〜999円の帯・画質（焼く前の絵との PSNR。キーフレームと輪の頭尻で 1.5dB を超えて跳ねない）
+python3 tools/alert-theme/fx_stage.py clean <台本> --work <置き場>                                         # 数えたら連番の絵を消す（_samples は残る）
+python3 tools/alert-theme/fx_hero.py <台本> --headroom <段の headroom> --chars <キャラ絵…> --min 1.0 --sheet <一覧.jpg>
+    # 主役（段4〜7 のあやと・〜999円の猫の家族）が、再生の側と同じ置き方のキャラ絵に隠れていないか。
+    # 縦長・横長・大きい頭と、箱の高さいっぱいの縦長の四角も入れる。対照: --char-bottom 0.98（〜999円）や直す前の置き場で 1 に落ちる
+python3 tools/alert-theme/fx_review.py public/alert/themes/<id>/fx --tier <段> --bg <スクラッチ>/bg --char <キャラ絵> --out <録画.mp4>
+    # 配信画面に重ねた縦の録画（2通りの段は左右に並べる。キャラ絵は再生の側と同じ置き方。本人の顔が写るので外へ上げない）
 ```
 
 - **キャラ絵は本物で**: 名簿の絵は Google ドライブのファイル（`site/content/residents.ts` の `icon`）。この箱からは lh3 に出られないので、Google ドライブの接続で落とす。形（縦長・横長・余白）と画風（3D風・ステッカー風）を散らして10人以上
