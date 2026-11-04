@@ -112,8 +112,9 @@ COIN_SINK = screen(BANK_X + BANK_W * 0.5, BANK_Y + BANK_H * 0.45, 22.0)
 # あやと（板）。画面のどこに居るか（絵の真ん中）
 AYATO_DEPTH = 17.0
 AYATO_FROM = (-160, -300)
-AYATO_HOVER = (192, 262)
-AYATO_STAY = (176, 242)
+# 城の左の塔の上（画面の y 330 あたり）より上に足が来るように（2026-11-04 の試しで、塔の上に立って見えた）
+AYATO_HOVER = (190, 214)
+AYATO_STAY = (176, 198)
 AYATO_W_PX = 300  # 広げたマントの絵（1239px）の幅が、ふつうの大きさで画面の何 px か
 AYATO_M_PER_PX = AYATO_W_PX / ((P.CAM["lens"] / 12.0) * (P.H / 2) / AYATO_DEPTH) / 1239
 

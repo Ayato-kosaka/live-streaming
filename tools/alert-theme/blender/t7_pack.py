@@ -6,6 +6,7 @@
     python3 tools/alert-theme/blender/t7_pack.py sheet   <作業の置き場> <一覧.jpg> [--bg <配信画面.jpg>]
     python3 tools/alert-theme/blender/t7_pack.py check   <書き出し先>                      # 秒・大きさ・継ぎ目・顔の穴
     python3 tools/alert-theme/blender/t7_pack.py demo    <書き出し先> --bg <配信画面.jpg> --char <キャラ絵.png> --out <録画.mp4>
+    python3 tools/alert-theme/blender/t7_pack.py install <書き出し先> public/alert/themes/castle/fx   # 動画を置き、manifest.json の段7だけ書く
 
 `check` の終了コード: 0 = 約束どおり / 1 = 外れている所が在る / 2 = 数えられなかった（動画が無い・読めない）
 
@@ -62,7 +63,7 @@ def masks():
     face = smoothstep(1.0, 1.4, d)
     # light の版で残す所: 満月と、その前の高い塔の先（右上の紋章のように）
     dm = np.hypot(xx - 512, yy - 200)
-    moon = 0.9 * (1 - smoothstep(175, 245, dm))
+    moon = 0.9 * (1 - smoothstep(140, 260, dm))
     return dict(edge=edge, face=face, moon=moon)
 
 
@@ -424,7 +425,7 @@ def check(out):
 
 # ---------------------------------------------------------------- 見せる用の録画
 def font(size):
-    for p in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", "/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc",
+    for p in ("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc", "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf", "/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc",
               "/usr/share/fonts/opentype/noto/NotoSansCJK-Black.ttc", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"):
         if os.path.exists(p):
             return ImageFont.truetype(p, size)
@@ -530,9 +531,28 @@ def demo(out, bg, char, path, stay_loops=4, name="テストさん", amount="¥10
     return 0
 
 
+def install(src, dest):
+    """焼いた動画を public へ置き、manifest.json の段7だけを書き換える（ほかの段は別の担当が書くので触らない）"""
+    import shutil
+    os.makedirs(dest, exist_ok=True)
+    for p in sorted(glob.glob(os.path.join(src, "t7-*.webm"))):
+        shutil.copyfile(p, os.path.join(dest, os.path.basename(p)))
+        print("置いた", os.path.basename(p))
+    frag = json.load(open(os.path.join(src, "manifest-t7.json")))
+    mp = os.path.join(dest, "manifest.json")
+    man = json.load(open(mp)) if os.path.exists(mp) else {}
+    man.setdefault("tiers", {})["7"] = frag["7"]
+    man["tiers"] = dict(sorted(man["tiers"].items(), key=lambda kv: int(kv[0])))
+    with open(mp, "w", encoding="utf-8") as fh:
+        json.dump(man, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    print(mp)
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["compose", "encode", "sheet", "check", "demo"])
+    ap.add_argument("cmd", choices=["compose", "encode", "sheet", "check", "demo", "install"])
     ap.add_argument("a")
     ap.add_argument("b", nargs="?")
     ap.add_argument("--bg")
@@ -550,6 +570,8 @@ def main():
         return sheet(x.a, x.b, x.bg, frames_dir=x.frames_dir)
     if x.cmd == "check":
         return check(x.a)
+    if x.cmd == "install":
+        return install(x.a, x.b)
     return demo(x.a, x.bg, x.char, x.out, x.loops)
 
 
