@@ -380,6 +380,54 @@ export const STICKERS: Sticker[] = [
     /* SUZURI には出さない1枚（#780 Q3: A）。だから永く `null` のまま */
     suzuri: null,
   },
+  /* **あや猫の3枚**（2026-11-04）。視聴者さんが goods-art の付箋に貼ってくれた絵で、
+     あやとの言葉は「ステッカー＆グッズを作って」。題は付箋の字そのまま、作者名は出さない
+     （`globe` と同じ）。
+
+     3枚とも画面を撮った絵で、絵でないものが写り込んでいた（1枚目は ChatGPT の
+     「考えました」の字と丸い共有ボタン、2・3枚目は Tシャツの見本の袖と枠）。
+     `stickercut.py` の手（`find_share` など）は、袖のように**絵に接した大きな白い布**を
+     消せないので、**ChatGPT に構図・猫の顔・「AYA FUN」の字・線の太さをそのままに
+     描き直してもらった**（1254px・透過。元と並べて見比べてから採った）。
+     地はもう透過なので、ここでは中身で切って余白を足し、長辺480 を焼いただけ。
+
+     3枚とも「AYA FUN」の字が入っているので、返さない（返すと鏡字になる） */
+  {
+    id: "ayaneko-campagne",
+    name: "あや猫とカンパーニュ作るわたしたち",
+    art: "/goods/ayaneko-campagne.webp",
+    file: "/goods/ayaneko-campagne.png",
+    saveAs: "ayato-ayaneko-campagne.png",
+    canFlip: false,
+    w: 466,
+    h: 480,
+    suzuri: 21298348,
+  },
+  {
+    /* 車は実在の車種に似ている。**題・本文に車の会社や車種の名前を入れない**
+       （SUZURI のルール Q4。`.claude/skills/suzuri/ayato.md`） */
+    id: "ayaneko-drive",
+    name: "あや猫と旅するわたし達",
+    art: "/goods/ayaneko-drive.webp",
+    file: "/goods/ayaneko-drive.png",
+    saveAs: "ayato-ayaneko-drive.png",
+    canFlip: false,
+    w: 449,
+    h: 480,
+    suzuri: 21298358,
+  },
+  {
+    /* 届いたのは 584px と小さかったので、描き直しで 1254px にした */
+    id: "ayaneko-hitchhike",
+    name: "あや猫と、旅する私たち",
+    art: "/goods/ayaneko-hitchhike.webp",
+    file: "/goods/ayaneko-hitchhike.png",
+    saveAs: "ayato-ayaneko-hitchhike.png",
+    canFlip: false,
+    w: 480,
+    h: 469,
+    suzuri: 21298361,
+  },
 ];
 
 /**
