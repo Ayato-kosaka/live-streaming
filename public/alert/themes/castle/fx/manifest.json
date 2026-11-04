@@ -1,5 +1,5 @@
 {
-  "_": "ひな形（#1095）。秒と front の有無（無ければ null）は、作る担当が実の動画の長さに合わせて書き換える。〜999円の3段は full だけ",
+  "_": "段1〜6 は描く担当が焼いた動画の実の長さ（#1109）。段7 はひな形（秒は Blender の段取り。担当が書き換える）",
   "tiers": {
     "1": {
       "variants": {
@@ -15,7 +15,7 @@
       "revealAt": 0.6,
       "introDur": 1.4,
       "stayDur": 2.0,
-      "outroDur": 0.6
+      "outroDur": 1.0
     },
     "2": {
       "variants": {
@@ -31,7 +31,7 @@
       "revealAt": 1.0,
       "introDur": 1.8,
       "stayDur": 2.0,
-      "outroDur": 0.6
+      "outroDur": 1.0
     },
     "3": {
       "variants": {
@@ -47,7 +47,7 @@
       "revealAt": 1.4,
       "introDur": 2.2,
       "stayDur": 3.0,
-      "outroDur": 0.7
+      "outroDur": 1.0
     },
     "4": {
       "variants": {
