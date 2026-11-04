@@ -1,0 +1,136 @@
+{
+  "tiers": {
+    "1": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t1-full-back-intro.webm",
+            "stay": "t1-full-back-stay.webm",
+            "outro": "t1-full-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 0.6,
+      "introDur": 1.4,
+      "stayDur": 2.0,
+      "outroDur": 1.0
+    },
+    "2": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t2-full-back-intro.webm",
+            "stay": "t2-full-back-stay.webm",
+            "outro": "t2-full-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 1.0,
+      "introDur": 1.8,
+      "stayDur": 2.0,
+      "outroDur": 1.0
+    },
+    "3": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t3-full-back-intro.webm",
+            "stay": "t3-full-back-stay.webm",
+            "outro": "t3-full-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 1.4,
+      "introDur": 2.2,
+      "stayDur": 3.0,
+      "outroDur": 1.0
+    },
+    "4": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t4-full-back-intro.webm",
+            "stay": "t4-full-back-stay.webm",
+            "outro": "t4-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t4-full-front-intro.webm",
+            "stay": "t4-full-front-stay.webm",
+            "outro": "t4-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t4-light-back-intro.webm",
+            "stay": "t4-light-back-stay.webm",
+            "outro": "t4-light-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 2.6,
+      "introDur": 3.4,
+      "stayDur": 3.0,
+      "outroDur": 1.0
+    },
+    "5": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t5-full-back-intro.webm",
+            "stay": "t5-full-back-stay.webm",
+            "outro": "t5-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t5-full-front-intro.webm",
+            "stay": "t5-full-front-stay.webm",
+            "outro": "t5-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t5-light-back-intro.webm",
+            "stay": "t5-light-back-stay.webm",
+            "outro": "t5-light-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 2.2,
+      "introDur": 3.2,
+      "stayDur": 3.0,
+      "outroDur": 1.2
+    },
+    "6": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t6-full-back-intro.webm",
+            "stay": "t6-full-back-stay.webm",
+            "outro": "t6-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t6-full-front-intro.webm",
+            "stay": "t6-full-front-stay.webm",
+            "outro": "t6-full-front-outro.webm"
+          }
+        },
+        "light": {
+          "back": {
+            "intro": "t6-light-back-intro.webm",
+            "stay": "t6-light-back-stay.webm",
+            "outro": "t6-light-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 3.2,
+      "introDur": 4.0,
+      "stayDur": 3.0,
+      "outroDur": 1.2
+    }
+  }
+}
