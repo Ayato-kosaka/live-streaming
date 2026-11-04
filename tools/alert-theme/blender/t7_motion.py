@@ -942,7 +942,10 @@ def sparks(clip, t, out):
         Pd = s["period"]
         ph = frac(tau / Pd + s["phase"])
         tw = math.sin(math.pi * ph) ** 2
-        out[f"obj:{n}:loc"] = screen(s["sx"] + 12 * math.sin(TAU * ph), s["sy"] - s["rise"] * ph, s["depth"])
+        # 前の閃きは、画面の上で顔の場所（キャラ絵）を避けて置いてある。カメラが回り込んでもその場所を保つよう、
+        # カメラといっしょに回す（2026-11-04 の final で、回り込みのあいだ顔の穴に透明 0.051 が漏れた）
+        out[f"obj:{n}:loc"] = orbit(screen(s["sx"] + 12 * math.sin(TAU * ph), s["sy"] - s["rise"] * ph, s["depth"]),
+                                    orbit_yaw(clip, t))
         k = s["size"] * tw * on_front
         out[f"obj:{n}:scale"] = k if k > 1e-3 else HIDE
     gx, gy = 360.0, 880.0

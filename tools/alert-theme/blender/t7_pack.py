@@ -198,7 +198,12 @@ def light_weight(clip, t):
 def index_raw(raw):
     """{(本, コマ): {"dir": 置き場, "frame": Blender のコマ, "enc": 透明の入れ方}}"""
     out = {}
-    for meta in glob.glob(os.path.join(raw, "**", "meta.json"), recursive=True):
+
+    def run_of(path):
+        # raw/<run>/<artifact>/meta.json。あとの run（描き直し）の絵が、前の run の同じコマに勝つように順に読む
+        parts = os.path.relpath(path, raw).split(os.sep)
+        return (int(parts[0]) if parts[0].isdigit() else 0, path)
+    for meta in sorted(glob.glob(os.path.join(raw, "**", "meta.json"), recursive=True), key=run_of):
         m = json.load(open(meta))
         d = os.path.dirname(meta)
         for f in m["frames"]:
