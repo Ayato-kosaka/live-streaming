@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "CKJvprUMOgA__captions",
+ "mode": "captions",
+ "dest": "CKJvprUMOgA/captions",
+ "video": "CKJvprUMOgA",
+ "channel": null,
+ "request": "shorts/requests/chowder-E2oGYjnVQSA-p1-captions-20261104.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 1429,
+  "caption_lines": 2192,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 727982,
+  "tar_gz": 121986,
+  "encrypted": 122000
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 122000,
+   "sha256": "f297ee540f45e99b9d5fe9357496f082ad21399c88584b6a0f5706170a2963e3"
+  }
+ ],
+ "hmac_sha256": "5ff56a83ab5e82c725b66bdfee082b03a6a60a30be0d8393892a158d5a3b44ea",
+ "pubkey_sha256": "5ac110c258c63be087c7773283dde65c447fbe4159bca4db187ec760e8df8a02",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41800632689",
+ "created_at": "2026-11-04T08:36:41+00:00"
+}
