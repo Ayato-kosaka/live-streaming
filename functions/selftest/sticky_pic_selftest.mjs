@@ -8,8 +8,9 @@
  * ## なぜ要るか
  *
  * 付箋は**ログイン不要で誰でも貼れる**口で、貼られたものは
- * あやとのチャンネルに紐づく公開の面に即出る。字は1日20枚の枠があって
- * 「しまう」で下ろせるが、**絵は置き場（Storage）に実体が残る。**
+ * あやとのチャンネルに紐づく公開の面に即出る。字は「しまう」で下ろせる
+ * （1日の枚数は 2026-11-04 に外した。性善説）が、**絵は置き場（Storage）に
+ * 実体が残る。**
  * だから絵だけは
  *
  *   1. ログインした人だけ
@@ -625,6 +626,48 @@ console.log("\n## 1日の枠（絵は字より少ない）");
   STORE.set(`islandRate/stickypic_${DAY}_uid-hito`, {n: limit});
   const t = await call("POST", "/stickies", post({}), "hito");
   check("絵の枠が切れても、字だけなら貼れる", t.code === 200, `code=${t.code}`);
+}
+
+/* ---------------- 4b. 字は数えない ---------------- */
+
+/* **字の付箋は、1日の枚数を数えない**（あやと 2026-11-04「文字列制限とか
+   連投制限無くしましょう。不正が出てきてからで良い」）。
+   **絵の枠だけ外して字の枠を戻した**、あるいは**字の枠を外したつもりで
+   絵の枠まで外した**、のどちらも上の 4 とここの2つで赤くなる。
+   前の枠（20枚）を少し越える25枚を、ログインせずに同じ端末から貼る。 */
+console.log("\n## 字の付箋は、1日の枚数を数えない");
+{
+  freeQuota();
+  PUT.clear();
+  let fine = 0;
+  for (let i = 0; i < 25; i++) {
+    const r = await call("POST", "/stickies", post({text: `たくさん貼る ${i}`}));
+    if (r.code === 200) fine += 1;
+  }
+  check("ログインせずに同じ端末から25枚 → 25枚とも貼れる", fine === 25, `${fine}/25`);
+  const marks = [...STORE.keys()].filter((k) => k.startsWith("islandRate/sticky_"));
+  check("字の付箋で、1日の枠の印を数えていない", marks.length === 0, marks.join(", "));
+}
+
+console.log("\n## 付箋の本文は、長くても改行ごと残る");
+{
+  const m = /const MAX_NOTE_LEN = (\d+);/.exec(
+    readFileSync(join(LIB, "islandApi.js"), "utf8"),
+  );
+  if (!m) nothing("MAX_NOTE_LEN が読めない");
+  const max = Number(m[1]);
+  check("本文の上限は 2,000 字（120 に戻っていない）", max === 2000, `${max}`);
+  freeQuota();
+  // 1行目・空行・2行目……を、上限を越えるまで積む（改行も1字に数える）
+  const line = "書ききれなかったので続きを書きます。";
+  const long = Array.from({length: 200}, (_, i) => `${i + 1}. ${line}`).join("\n");
+  const r = await call("POST", "/stickies", post({text: long}));
+  const kept = (STORE.get(`islandNotes/${r.body?.note?.id}`) ?? {}).text ?? "";
+  check(`${long.length}字を送ると、置き場で ${max} 字に収まる`,
+    r.code === 200 && kept.length <= max && kept.length >= max - line.length,
+    `code=${r.code} 置き場=${kept.length}字`);
+  check("長い本文でも、改行が残る", kept.split("\n").length > 20,
+    `${kept.split("\n").length}行`);
 }
 
 /* ---------------- 5. 消す口 ---------------- */

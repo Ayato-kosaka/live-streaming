@@ -95,7 +95,10 @@ function slice(from, to) {
 }
 
 // 鍵を読むところ。**`db` と `logger` を外から渡す**
-const KEY = slice("const DONERU_KEY_DOC = ", "const MAX_NOTE_LEN = 120;");
+/* 終わりの目印は、鍵を読む関数の**次に在る定数の名前**だけにする。
+   値まで書くと、付箋の上限を動かした日（2026-11-04 に 120 → 2,000）に
+   ここが空振りする。 */
+const KEY = slice("const DONERU_KEY_DOC = ", "const MAX_NOTE_LEN = ");
 // Doneru を叩くところ
 const NOW = slice("async function doneruNow() {", "function doneruStaleDay(");
 // 台帳の焼き直しを読むところ（`/fund` と豚の口の両方が使う）

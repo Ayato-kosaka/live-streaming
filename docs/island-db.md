@@ -433,7 +433,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 
 | 動かした | 画面 | サーバー |
 | --- | --- | --- |
-| ○ | `live/Notes.tsx` 付箋の本文 | `MAX_NOTE_LEN`（120） |
+| ○ | `live/Notes.tsx` 付箋の本文 | `MAX_NOTE_LEN`（2,000。2026-11-04 に 120 から上げた） |
 | ○ | `live/Notes.tsx` 付箋のリンク | `MAX_LINK_LEN`（2048） |
 | ○ | `live/Notes.tsx` 付箋への返信 | `MAX_REPLY_LEN`（300） |
 
@@ -1494,7 +1494,7 @@ Doneru の鍵も `islandFundConfig/doneru` へ移った。**
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
 | `theme` | string | 宛先。`content/themes.ts` の id（`nordic` `lithuania` `island`…）。**畳んだ宛先には新しく書けない**（`POST /stickies` が 409。写しは `functions/src/shutThemes.ts`） |
-| `text` | string | 中身（120字まで）。**改行が残る**（「改行」） |
+| `text` | string | 中身（2,000字まで。2026-11-04 に 120 から上げた）。**改行が残る**（「改行」） |
 | `by` | string \| null | 名乗った名前（なくてもいい） |
 | `cid` / `uid` | string | 端末ID／ログインしていれば本人 |
 | ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。企画（上）と同じ理由で、欄ごと落とした（`python/admin/ip_purge.py`） |

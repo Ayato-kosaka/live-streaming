@@ -10,7 +10,7 @@ import ReadAgain from "@/components/me/ReadAgain";
 import { getStickies, type Sticky } from "@/lib/api";
 import { withRead, type Read } from "@/lib/auth";
 import type { IsleBoardSpec } from "./board";
-import Wrote from "@/components/ui/Wrote";
+import WroteFold from "@/components/ui/WroteFold";
 
 /**
  * 島の板の中に出す掲示板。
@@ -35,7 +35,8 @@ import Wrote from "@/components/ui/Wrote";
  *
  * ## ここでは押せない
  *
- * ハートも書き込みも置いていない。島の板は**その旅に何が来ているかを見る**
+ * ハートも書き込みも置いていない（長い付箋の「つづきを読む」は、読むための
+ * 押しどころなので置く）。島の板は**その旅に何が来ているかを見る**
  * ところで、押す・書くは掲示板（`components/live/Notes.tsx`）の仕事。
  * 同じ機能を2か所に置くと、押した数がどちらで動いたのか読めなくなる。
  *
@@ -219,8 +220,10 @@ export default function IsleBoard({ themes, blank }: IsleBoardSpec) {
               <span className="nx-pin">
                 <Pin tone={PINS[i % PINS.length]} size={19} />
               </span>
-              {/* **書いてくれたまま出す**（#83） */}
-              <Wrote t={n.text} />
+              {/* **書いてくれたまま出す**（#83）。長いときは掲示板と同じく10行で畳む
+                  （`WroteFold.tsx`）。島の板は狭いので、1枚が板を埋めると
+                  ほかの付箋も下の棚も見えなくなる */}
+              <WroteFold t={n.text} lines={10} />
               {/* 貼られた絵。**ここも板と同じ姿で出す**（`NotePic.tsx`）。
                   出さないでおくと、絵のある付箋が島の板では字だけになって、
                   同じ1枚が面によって別のものに見える。

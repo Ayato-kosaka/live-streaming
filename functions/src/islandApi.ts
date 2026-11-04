@@ -410,13 +410,27 @@ async function doneruKeyOnly(): Promise<string> {
   return k;
 }
 
-const MAX_NOTE_LEN = 120;
+/**
+ * 付箋の本文（`POST /stickies` と `POST /notes` の両方）の上限。
+ *
+ * **2026-11-04 に 120 から 2,000 に上げた。** あやと:「1枚に書ききれない時が
+ * あるから、もっと文字数入れられるようにして欲しい」「文字列制限とか連投制限
+ * 無くしましょう。不正が出てきてからで良い。いまは性善説でまわってる」。
+ *
+ * **無限にしないのは、置き場と一覧の重さを守るため。** `GET /stickies` は
+ * 1回で最大300枚を返すので、1枚の背がそのまま一覧の重さになる
+ * （2,000字×300枚で 1.8MB 前後。Firestore の書類1枚の上限 1MiB にも遠い）。
+ * 荒れたら、ここを下げれば画面は `GET /state` の `limits.note` から受け直す。
+ */
+const MAX_NOTE_LEN = 2000;
 const MAX_NAME_LEN = 20;
 /* YouTube のハンドル(`@あやとグルメアプリ`)。
    ハンドルは最大30文字なので、`@` を足して31。名前(20)より長い。
    **切り詰めると別人の名前になる**ので、覚えておく側はここまで受ける。 */
 const MAX_HANDLE_LEN = 31;
-const NOTES_PER_DAY = 20;
+/* **企画の付箋の1日の枚数は、数えない**（あやと 2026-11-04。性善説で外した。
+   不正が出たら戻す）。戻すときは `takeQuota(…, "note", 20)` を `POST /notes` に
+   入れ直す。付箋（`POST /stickies`）の枠と同じ日に外したので、片方だけ戻さない。 */
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
@@ -462,8 +476,12 @@ function shutTheme(theme: string, now: number): boolean {
 }
 /** 返信。あやとが旅の途中に親指で打つものなので、付箋より少しだけ長い。 */
 const MAX_REPLY_LEN = 300;
-/** 1日に貼れる付箋。企画の提案より軽い行為なので、提案(8)より多くしてある。 */
-const STICKIES_PER_DAY = 20;
+/* **付箋の1日の枚数は、数えない**（あやと 2026-11-04。性善説で外した。
+   不正が出たら戻す）。前は1日20枚（`STICKIES_PER_DAY`）。
+   戻すときは `POST /stickies` の `takeQuota(who?.uid ?? cid, "sticky", 20)` を
+   絵の枠（`stickypic`）の前に入れ直す。荒れた1枚は、今までどおり
+   あやとの「しまう」で下ろせる。**絵の枠（`PICS_PER_DAY`）は外していない**
+   ——あちらは置き場（Storage）に実体が残る話で、数の性善説とは別。 */
 /**
  * **まだこちらが何もしていない付箋**を数えるときに、さかのぼる枚数。
  *
@@ -2256,7 +2274,7 @@ const photoUrl = (path: string, token: string): string =>
    > でなんか見るときは邪魔にならないようにしてほしいんですけど。
 
    **字の付箋はログイン不要のまま。絵だけ、ログインが要る側にする。**
-   字は1日20枚の枠があって、荒れたら「しまう」で下ろせる。絵は
+   字は荒れたら「しまう」で下ろせる（1日の枚数は 2026-11-04 に外した）。絵は
    **あやとのチャンネルに紐づく公開の面に即出る**ので、
    誰が貼ったか辿れない状態では受けない。
 
@@ -2356,7 +2374,7 @@ type PicBytes =
  */
 function picBytes(v: unknown, max: number): PicBytes {
   /* **1枚まで。** 配列で来たら、ここで落ちる（`typeof` が "object"）。
-     何枚も貼れる欄にすると、本文120字の付箋が絵の棚になる。 */
+     何枚も貼れる欄にすると、付箋が字ではなく絵の棚になる。 */
   if (typeof v !== "string") return {ok: false, error: "one picture only"};
   const b64 = v.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
   if (!b64 || !BASE64.test(b64)) return {ok: false, error: "bad image"};
@@ -4004,10 +4022,7 @@ export const islandApi = onRequest(
           res.status(400).json({error: "bad cid"});
           return;
         }
-        if (!(await takeQuota(who?.uid ?? cid, "note", NOTES_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
+        /* 1日の枚数は数えない（上の `MAX_NOTE_LEN` のそば。2026-11-04） */
         const now = Date.now();
         const ref = await NOTES.add({
           planId,
@@ -4232,15 +4247,10 @@ export const islandApi = onRequest(
             return;
           }
         }
-        if (
-          !byOwner &&
-          !(await takeQuota(who?.uid ?? cid, "sticky", STICKIES_PER_DAY))
-        ) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        /* 絵の枠は、字の枠とは別に数える。**字を20枚貼れることと、
-           置き場に絵を20枚置けることは、別の話。** */
+        /* **字の枚数は数えない**（あやと 2026-11-04。性善説で外した。
+           不正が出たら戻す）。前はここで1日20枚を数えていた。
+           絵の枠は残す。**字を何枚貼れても、置き場に絵を何枚でも置けることには
+           ならない**——絵は Storage に実体が残る。 */
         if (
           sentPic &&
           who &&
