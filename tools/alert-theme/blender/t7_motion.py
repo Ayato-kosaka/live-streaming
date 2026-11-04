@@ -376,7 +376,10 @@ SPARKS_BACK = SPK_GATE + SPK_CAPE
 SPARKS_FRONT = SPK_FRONT + SPK_BURST + SPK_BANK
 
 # 城の子（castle_root の座標で動かすもの）
-ROOT_KIDS = {b["name"] for b in BAT_CASTLE} | {s["name"] for s in SPK_GATE} | {"pipo", "pipo_cheer"}
+ROOT_KIDS = {b["name"] for b in BAT_CASTLE} | {s["name"] for s in SPK_GATE} | {"pipo", "pipo_cheer", "pipo_shadow",
+                                                                                "pipo_cheer_shadow"}
+# ピポの落ち影を、板からどれだけずらすか（m。光は左上の前から。奥へ 0.25m・右へ・下へ）
+PIPO_SHADOW_OFF = (0.24, 0.25, -0.18)
 
 HIDE = 1e-4  # 大きさ 0 の代わり（0 だと行列が潰れる）
 
@@ -569,6 +572,10 @@ def pipo(clip, t, out):
     out["obj:pipo_cheer:rot"] = (rot[0], 0.0, yaw)
     out["obj:pipo_cheer:scale"] = (csx, csy, 1.0) if cheer else HIDE
     out["val:pipo_cheer_op"] = cheer
+    for nm in ("pipo", "pipo_cheer"):
+        out[f"obj:{nm}_shadow:loc"] = vadd(out[f"obj:{nm}:loc"], PIPO_SHADOW_OFF)
+        out[f"obj:{nm}_shadow:rot"] = out[f"obj:{nm}:rot"]
+        out[f"obj:{nm}_shadow:scale"] = out[f"obj:{nm}:scale"]
     out["key:pipo:swing"] = swing
     # 布の波は 0.5 秒で1回（3.0 秒に6回。輪がつながる）
     w = TAU * tau / 0.5
@@ -665,16 +672,17 @@ def ayato(clip, t, out):
     fsx, fsy, fd = P.project(feet)
     sh_op = 0.0
     if clip == "intro":
-        sh_op = 0.55 * ease_out(ramp(t, 4.40, 4.48)) + 0.25 * pulse(t, 4.47, 0.05)
+        sh_op = 0.75 * ease_out(ramp(t, 4.40, 4.48)) + 0.2 * pulse(t, 4.47, 0.05)
     elif clip == "stay":
-        sh_op = 0.55
+        sh_op = 0.75
     else:
-        sh_op = 0.55 * (1 - ramp(t, 0.0, 0.3))
+        sh_op = 0.75 * (1 - ramp(t, 0.0, 0.3))
     k = SHADOW_DEPTH / fd
     # 光は左上から来るので、影は足から少し右へ。幅は足の幅ほど（塔の左の縁から空へはみ出さない）
-    out["obj:ayato_shadow:loc"] = screen(fsx + 14, fsy + 4, SHADOW_DEPTH)
+    # 靴の底は、板の下の端より 12px ほど上（絵の白い縁の外の余白）。そこへ置く（2026-11-04 の試しで 16px 下にずれていた）
+    out["obj:ayato_shadow:loc"] = screen(fsx + 10, fsy - 10, SHADOW_DEPTH)
     out["obj:ayato_shadow:rot"] = (math.radians(90 + P.CAM["pitch_deg"]), 0.0, yaw)
-    out["obj:ayato_shadow:scale"] = (0.32 * w_m * s * sq_x * k, 0.075 * w_m * s * k, 1.0) if sh_op > 0 else HIDE
+    out["obj:ayato_shadow:scale"] = (0.46 * w_m * s * sq_x * k, 0.085 * w_m * s * k, 1.0) if sh_op > 0 else HIDE
     out["val:ayato_shadow_op"] = sh_op
     w = TAU * tau / 1.5
     out["key:ayato_spread:flap_s"] = flap_a * math.cos(w)

@@ -1374,6 +1374,21 @@ def build(quality):
                               emit=0.55, diffuse=0.0, normal_path=os.path.join(ASSETS, f"{asset}-normal.png"), lit=0.75)
         ob = place(board_mesh(name, w, h, ox, oz, nx, ny), name, s, mats[name], root)
         board_keys(ob, name, MO.PIPO_BOARDS[name]["size"], ox, oz, MO.PIPO_M_PER_PX)
+        # 落ち影: ぼかした形の暗い板を、塔の壁の手前に右下へずらして置く（形の動きも同じ値でなぞる）。
+        # 前からの光の本物の影は、ピポの板が塔の幅をほぼ覆うので板の陰に隠れて見えなかった（2026-11-04 の試し）
+        m, N, out = new_mat(f"{name}_shadow")
+        op = ctl_node(f"{name}_op", m, N, 0.0)
+        st = N.n("ShaderNodeTexImage", image=load_image(os.path.join(ASSETS, f"{asset}-shadow.png"), True),
+                 interpolation="Linear", extension="CLIP")
+        N.put(st, "Vector", N.uv())
+        em = N.n("ShaderNodeEmission")
+        N.set(em, Color=(0.0, 0.0, 0.0), Strength=0.0)
+        tr = N.n("ShaderNodeBsdfTransparent")
+        fac = N.math("MULTIPLY", N.math("MULTIPLY", N.sock(st, "Color", out=True), op), 0.55)
+        N.nt.links.new(mix_shader(N, fac, tr.outputs[0], em.outputs[0]), out.inputs["Surface"])
+        so = place(board_mesh(f"{name}_shadow", w, h, ox, oz, nx, ny), f"{name}_shadow", s, m, root)
+        so.visible_shadow = False
+        board_keys(so, name, MO.PIPO_BOARDS[name]["size"], ox, oz, MO.PIPO_M_PER_PX)
 
     # ---- 貯金箱の城（前兆の絵）
     bx, by, bw, bh = P.BANK_RECT
@@ -1595,10 +1610,6 @@ def build(quality):
     L, _ = light("char_key", "SPOT", 0.0, (0.75, 0.8, 1.0), (-10.0, -34.0, 30.0), aim((10.0, 27.0, -15.0)), None,
                  spot_size=math.radians(62), spot_blend=0.6, shadow_soft_size=0.4)
     ctl("key", L, "energy", k=14000.0)
-    # ピポに当てる狭い光（左上の前から）。露台の戸のまわりの壁が明るくなり、ピポの影（振る旗ごと）が右下へ落ちる
-    L, _ = light("pipo_key", "SPOT", 0.0, (1.0, 0.93, 0.84), (-2.0, -14.0, 28.0), aim((5.35, 13.95, -9.35)), root,
-                 spot_size=math.radians(22), spot_blend=0.5, shadow_soft_size=0.15)
-    ctl("key", L, "energy", k=7000.0)
 
     # ---- カメラ
     cd_ = bpy.data.cameras.new("cam")

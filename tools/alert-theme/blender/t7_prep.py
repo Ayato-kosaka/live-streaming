@@ -13,6 +13,8 @@
 - `<名前>-normal.png` … キャラの板の法線の絵（接空間・OpenGL の向き）。透明の縁を丸く盛り上げ、絵の線をわずかにへこませた
   高さから作る。板が城の光（門・灯り・前からの月の光）を、縁の向きごとに受けて立体に見えるように（2026-11-04。
   「板が動かない」の採点の続き）。あやとは絵の半分の大きさで持つ（光の向きだけなので細かさは要らない）
+- `pipo-<ポーズ>-shadow.png` … ピポの落ち影（絵の透明をぼかした白黒）。ピポは塔の幅をほぼ覆うので、前からの光の
+  本物の影は板の陰に隠れて見えない。壁の手前に右下へずらして置く
 
 なぜ Blender の中で作らないか: Blender はこの箱に入れない（runner の中だけで動く）。
 絵の処理は numpy だけで済むので、ここで作って git に入れ、runner では読むだけにする（試せる所を増やす）。
@@ -131,6 +133,11 @@ def main():
         p = os.path.join(OUT, f"{name}-normal.png")
         save_rgb(normal_map(src), p, half=name.startswith("ayato"))
         made.append((p, src))
+        if name.startswith("pipo"):
+            p = os.path.join(OUT, f"{name}-shadow.png")
+            a = np.asarray(Image.open(src).convert("RGBA")).astype(np.float32)[..., 3] / 255
+            save_gray(gaussian_filter(a, 2.5), p)
+            made.append((p, src))
     for p, _ in made:
         print(f"{os.path.relpath(p, ROOT)}  {os.path.getsize(p) / 1024:.0f}KB")
     if args.check:
