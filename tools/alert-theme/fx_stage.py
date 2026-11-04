@@ -8,6 +8,7 @@ ChatGPT の絵を層（奥の景色・中の建物・地面・手前・あやと
     python3 tools/alert-theme/fx_stage.py render <台本> --variant full --clip intro --work <置き場> [--jobs 2]
     python3 tools/alert-theme/fx_stage.py encode <台本> --work <置き場> --out <書き出し先>
     python3 tools/alert-theme/fx_stage.py all    <台本> --work <置き場> --out public/alert/themes/castle/fx [--jobs 2] [--keep]
+    python3 tools/alert-theme/fx_stage.py clean  <台本> --work <置き場>      # --keep で残した連番の絵を消す（画質を数えたあと）
     python3 tools/alert-theme/fx_stage.py still  <台本> --variant full --t 2.2 --out <絵.png>      # 1コマだけ（目で見る）
 
 `all` は 段の全部の通り × 3本（登場・滞在・締め）を焼いて書き出し、`manifest.json` の段を書き、連番の絵を消す
@@ -912,13 +913,21 @@ class Stage:
     INTRO, STAY, OUTRO, REVEAL = 3.0, 3.0, 1.2, 2.0
     VARIANTS = ("full",)
     FRONT = {"full": True}
-    KBPS = {"back": 2200, "front": 1200}
+    # 1通りの大きさの予算（KB）。無ければ VARIANT_BUDGET_KB。焼き方は encode_budget
+    BUDGET_KB = {}
+    # 投げた人のキャラ絵の箱の下の端（箱の高さに対する割合）。None なら再生の側の既定（0.98）。
+    # 〜999円の3段は 0.72（下の 28% が猫の帯。CONTRACT.md の追記 2026-11-04）。manifest.json の段に書く
+    CHAR_BOTTOM = None
 
     def __init__(self, variant):
         self.variant = variant
         self.kit = Kit()
         self.edge = box_edge()
+        # 主役（あやと）の層の縁は細く溶かす。主役はキャラ絵が出たら上の帯（headroom）へ退くので、
+        # ほかの層と同じ幅（上 120px）で溶かすと、顔が縁で薄くなる
+        self.hero_edge = box_edge(left=14, right=14, top=14, bottom=80)
         self.hole = face_hole()
+        self.last_hero = None
         self.setup()
 
     def setup(self):
@@ -937,10 +946,22 @@ class Stage:
     def has_front(self):
         return bool(self.FRONT.get(self.variant))
 
+    def finish_hero(self, cv: Canvas, bloom=0.4):
+        """主役だけの層を仕上げて覚えておく（`fx_hero.py` がこの層で、キャラ絵に隠れていないかを数える）。
+        台本はこれを back の仕上げの上に `over_rgba` で重ねる"""
+        rgba = cv.finish(bloom=bloom, edge=self.hero_edge)
+        self.last_hero = rgba
+        return rgba
+
     def finish_front(self, cv: Canvas, bloom=0.8):
         """front は光と粒だけ。顔の丸に穴を開け、箱の縁で溶かす"""
         rgba = cv.finish(bloom=bloom, edge=self.edge * self.hole)
         return rgba
+
+
+def over_rgba(top, base):
+    """前掛けの RGBA どうしを重ねる（top が上）"""
+    return (top + base * (1 - top[..., 3:4])).astype(np.float32)
 
 
 # ------------------------------------------------------------------ 焼く・書き出す
@@ -1001,47 +1022,117 @@ def ff(*args):
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *args], check=True)
 
 
-def encode_one(src_dir, out_path, kbps):
-    """透明つき VP8。透明の流れのキーフレームを色とそろえる（2秒おきに固定。PR #1089）。
-    **2パスで、狙いの速さ（VBR）に合わせる。** 1パスは狙いを 1.5〜3倍こえ、同じ大きさなら 2パスのほうが
-    金の色が濁らなかった（段5の滞在、2026-11-04 に並べて見た）。`-crf` は付けない（狙いを超えて溜め込む）。
-    透明の流れも同じ速さを狙うので、出来上がりは色だけのおよそ 1.6〜1.9 倍"""
-    log = os.path.join(src_dir, "_2pass")
-    common = ["-framerate", str(FPS), "-i", os.path.join(src_dir, "%04d.png"), "-vf", "format=yuva420p",
-              "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{kbps}k",
-              "-qmin", "4", "-qmax", "56", "-deadline", "good", "-cpu-used", "0", "-g", str(FPS * 2),
-              "-keyint_min", str(FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", "-passlogfile", log]
-    ff(*common, "-pass", "1", "-f", "webm", os.devnull)
-    ff(*common, "-pass", "2", out_path)
-    for f in os.listdir(src_dir):
-        if f.startswith("_2pass"):
-            os.remove(os.path.join(src_dir, f))
+# ---- 焼き方（2026-11-04 に直した。1万円の段の `blender/t7_pack.py` と同じ考え方）
+# 前は 2パスの VBR（`-b:v` と `-qmin 4 -qmax 56`）で焼いていた。率に合わせて1コマずつ画質を上げ下げするので、
+# 輪の頭（必ずキーフレーム）だけ尻より 3.2dB 良く焼かれ（段5 の滞在。焼く前の絵との PSNR 31.4 → 28.2）、
+# 2秒おきに階段や窓枠のくっきりさが変わった（1万円の段の担当が等倍で見つけた）。
+# いまは画質の段（`-crf`＝`-qmin`）を1本の中で1つに決めて焼く。`-b:v` は天井を高くして（KBPS_CEIL）当てない。
+# 当てると率の側が画質を上げ下げして、同じ跳ねが戻る（天井 2,400k で頭と尻 2.3dB、天井なしで 0.2dB。段5 の滞在）。
+# 大きさは画質の段で決まるので、予算に収まる段を探して焼き直す（encode_budget）。
+# 大きさは段が 13 上がるとおよそ半分（段5 の滞在: 24 で 2,942KB・30 で 2,133KB・36 で 1,642KB）
+QSTART = {"back": 32, "front": 18}
+QBEST = {"back": 16, "front": 10}   # これより良くしない（大きさが増えるだけで、見た目は変わらない）
+QWORST = 50
+Q_PER_HALF = 13.0
+KBPS_CEIL = 12000
+# 1通り（full / light）の合計の予算（KB）。約束は 1通り 6MB 以内（6,000,000 バイト）。余裕を残す
+VARIANT_BUDGET_KB = 5300
+
+
+def encode_one(src_dir, out_path, q, last_key=False):
+    """透明つき VP8 を、画質の段 q で1本焼く。透明のキーフレームを色とそろえる（2秒おきに固定。PR #1089）。返す: KB
+    last_key: 最後のコマもキーフレームにする（締め）。前のコマからの差で焼くと、消えていく透明が 6/255 で止まって
+    消えきらなかった（段5 の締め。焼く前の絵は 0。画質の段 16 でも同じ）"""
+    n = len([f for f in os.listdir(src_dir) if f.endswith(".png")])
+    keys = "expr:gte(t,n_forced*2)" + (f"+eq(n,{n - 1})" if last_key else "")
+    ff("-framerate", str(FPS), "-i", os.path.join(src_dir, "%04d.png"), "-vf", "format=yuva420p",
+       "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{KBPS_CEIL}k",
+       "-crf", str(q), "-qmin", str(q), "-qmax", "56", "-deadline", "good", "-cpu-used", "0",
+       "-g", str(FPS * 2), "-keyint_min", str(FPS * 2), "-force_key_frames", keys, "-an", out_path)
+    return os.path.getsize(out_path) / 1024
+
+
+def encode_budget(src_dir, out_path, budget_kb, n, layer, clip):
+    """予算に収まるいちばん良い画質の段を探して焼く（4回まで）。予算の 85〜100% に入るか、
+    QBEST で予算に収まれば止める。返す: [(段, KB), …]（最後が書き出したもの）"""
+    q = QSTART[layer]
+    tries = []
+    for _ in range(4):
+        kb = encode_one(src_dir, out_path, q, clip == "outro")
+        tries.append((q, round(kb)))
+        if kb <= budget_kb and (kb >= 0.85 * budget_kb or q <= QBEST[layer]):
+            break
+        if kb > budget_kb and q >= QWORST:
+            break
+        # 大きさと段の関係（2回焼いていれば、その2点の傾き）から、予算の 93% になる段を見込む
+        slope = Q_PER_HALF
+        if len(tries) >= 2 and tries[-1][0] != tries[-2][0] and tries[-1][1] != tries[-2][1]:
+            slope = max(4.0, min(30.0, (tries[-1][0] - tries[-2][0]) / max(1e-6, math.log2(tries[-2][1] / tries[-1][1]))))
+        nq = int(round(q + slope * math.log2(kb / (0.93 * budget_kb))))
+        nq = max(QBEST[layer], min(QWORST, nq))
+        if nq == q:
+            nq = q + (1 if kb > budget_kb else -1)
+            nq = max(QBEST[layer], min(QWORST, nq))
+        if any(t[0] == nq for t in tries) or nq == q:
+            break
+        q = nq
+    # 最後が予算を超えていたら、予算に収まった中でいちばん良い段で焼き直す
+    if tries[-1][1] > budget_kb:
+        ok = [t for t in tries if t[1] <= budget_kb]
+        if ok:
+            q = min(t[0] for t in ok)
+            tries.append((q, round(encode_one(src_dir, out_path, q, clip == "outro"))))
+    elif any(t[1] <= budget_kb and t[0] < tries[-1][0] for t in tries[:-1]):
+        # 前に焼いた、より良い段が予算に収まっていたら、そちらで焼き直す
+        q = min(t[0] for t in tries if t[1] <= budget_kb)
+        tries.append((q, round(encode_one(src_dir, out_path, q, clip == "outro"))))
+    return tries
 
 
 def name_of(tier, variant, layer, clip):
     return f"t{tier}-{variant}-{layer}-{clip}.webm"
 
 
-def encode(script, work, out):
+def budgets(S, work):
+    """1本ごとの予算（KB）: 1通りの予算を、層（back 85%・front 15%。front が無ければ back に全部）と
+    本のコマ数で割る。締めは1回しか流れないので軽く"""
+    out = {}
+    w_clip = {"intro": 1.0, "stay": 1.0, "outro": 0.7}
+    for variant in S.VARIANTS:
+        total = getattr(S, "BUDGET_KB", {}).get(variant, VARIANT_BUDGET_KB)
+        have = {(layer, clip): len([f for f in os.listdir(os.path.join(work, variant, clip, layer)) if f.endswith(".png")])
+                for layer in ("back", "front") for clip in ("intro", "stay", "outro")
+                if os.path.isdir(os.path.join(work, variant, clip, layer))}
+        have = {k: v for k, v in have.items() if v}
+        front = any(k[0] == "front" for k in have)
+        share = {"back": 0.85 if front else 1.0, "front": 0.15}
+        for layer in ("back", "front"):
+            ks = [k for k in have if k[0] == layer]
+            wsum = sum(have[k] * w_clip[k[1]] for k in ks)
+            for k in ks:
+                out[(variant, k[0], k[1])] = (total * share[layer] * have[k] * w_clip[k[1]] / max(wsum, 1), have[k])
+    return out
+
+
+def encode(script, work, out, jobs=2):
+    from concurrent.futures import ThreadPoolExecutor
     mod = load_script(script)
     S = mod.Scene
     os.makedirs(out, exist_ok=True)
+    plan = budgets(S, work)
+    todo = []
+    for (variant, layer, clip), (bud, n) in plan.items():
+        d = os.path.join(work, variant, clip, layer)
+        todo.append((d, os.path.join(out, name_of(S.TIER, variant, layer, clip)), bud, n, layer, clip))
+    # libvpx は1本につきほぼ CPU 1本なので、本ごとに並べる（箱は4コアで、ほかの担当も動くので2本まで）
     made = []
+    with ThreadPoolExecutor(jobs) as ex:
+        for job, tries in zip(todo, ex.map(lambda j: encode_budget(*j), todo)):
+            made.append(job[1])
+            print(f"{os.path.basename(job[1]):34s} {tries[-1][1]:6d}KB（予算 {job[2]:.0f}KB・画質の段と大きさ {tries}）", flush=True)
     for variant in S.VARIANTS:
-        for clip in ("intro", "stay", "outro"):
-            for layer in ("back", "front"):
-                d = os.path.join(work, variant, clip, layer)
-                if not os.path.isdir(d) or not os.listdir(d):
-                    continue
-                kb = S.KBPS.get(f"{variant}-{layer}", S.KBPS.get(layer, 1500))
-                p = os.path.join(out, name_of(S.TIER, variant, layer, clip))
-                encode_one(d, p, kb)
-                made.append(p)
-    tot = 0
-    for p in made:
-        tot += os.path.getsize(p)
-        print(f"{os.path.basename(p):34s} {os.path.getsize(p) / 1024:7.0f}KB")
-    print(f"段{S.TIER} 合計 {tot / 1024 / 1024:.2f}MB")
+        tot = sum(os.path.getsize(p) for p in made if f"-{variant}-" in os.path.basename(p))
+        print(f"段{S.TIER} {variant} 合計 {tot / 1e6:.2f}MB")
     return made
 
 
@@ -1081,6 +1172,8 @@ def write_manifest(script, out):
         "stayDur": round(next(iter(durs["stay"])) / FPS, 3),
         "outroDur": round(next(iter(durs["outro"])) / FPS, 3),
     }
+    if getattr(S, "CHAR_BOTTOM", None) is not None:
+        man["tiers"][str(S.TIER)]["charBottom"] = S.CHAR_BOTTOM
     man["tiers"] = dict(sorted(man["tiers"].items(), key=lambda kv: int(kv[0])))
     with open(path, "w", encoding="utf-8") as f:
         json.dump(man, f, ensure_ascii=False, indent=2)
@@ -1142,6 +1235,9 @@ def main():
     a.add_argument("--jobs", type=int, default=2)
     a.add_argument("--keep", action="store_true")
     a.add_argument("--variants", default=None)
+    cl = sub.add_parser("clean")
+    cl.add_argument("script")
+    cl.add_argument("--work", required=True)
     s = sub.add_parser("still")
     s.add_argument("script")
     s.add_argument("--variant", default="full")
@@ -1160,6 +1256,12 @@ def main():
         write_manifest(o.script, o.out)
     elif o.cmd == "still":
         still(o.script, o.variant, o.t, o.out, o.clip)
+    elif o.cmd == "clean":
+        # `all --keep` で残した連番の絵を、fx_check.py で画質を数えたあとに消す（_samples だけ残す）
+        keep_samples(o.script, o.work)
+        for v in load_script(o.script).Scene.VARIANTS:
+            shutil.rmtree(os.path.join(o.work, v), ignore_errors=True)
+        print("連番の絵を消した（_samples だけ残す）")
     else:
         S = load_script(o.script).Scene
         vs = o.variants.split(",") if o.variants else S.VARIANTS

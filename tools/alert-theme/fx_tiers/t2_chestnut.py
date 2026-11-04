@@ -7,7 +7,8 @@
 - 滞在（2秒の輪）: ふたりが交互に跳ね、栗から湯気がゆらゆら、火の粉が昇る
 - 締め 1.0秒: 栗を抱えて、反対の端へ走って行く
 
-ふたりは投げた人のキャラ絵の枠（137〜583）の左右の外、栗は枠の下（1024 より下）に置く（キャラ絵に隠れない）。
+ふたりと栗は、下の 28% の帯（キャラ絵の箱の下の端 0.72 より下。CONTRACT.md の追記 2026-11-04）の中。
+キャラ絵は出るとき 1.05 倍にふくらむので、帯の上の端より 20px 下（944）から。湯気と火の粉は帯の上に出てよい。
 """
 import math
 import os
@@ -25,8 +26,10 @@ class Scene(Stage):
     TIER = 2
     INTRO, STAY, OUTRO, REVEAL = 1.8, 2.0, 1.0, 1.0
     VARIANTS = ("full",)
+    # 〜999円の段は隅の小さな絵なので、予算は小さく（画質の段が QBEST に当たって、たいていこれより小さく焼ける）
+    BUDGET_KB = {"full": 1500}
     FRONT = {"full": False}
-    KBPS = {"full-back": 800}
+    CHAR_BOTTOM = 0.72
 
     BOTTOM = SAFE_BOTTOM
 
@@ -45,6 +48,7 @@ class Scene(Stage):
     def draw(self, c):
         Ti, T, u = c.Ti, c.T, c.u
         cv = Canvas()
+        hero = Canvas()  # ふたりと栗だけ（fx_hero.py が、キャラ絵に隠れていないかを数える。重ねはしない）
         out_k = 1 - ease(ramp(u, 0.55, 1.0))
         run = ease_in(ramp(u, 0.1, 1.0)) * 760  # 締め: 右の端へ走って行く
         come = ease_out(ramp(Ti, 0.3, 1.0))
@@ -54,7 +58,7 @@ class Scene(Stage):
         rot = -360 * 1.6 * (1 - come) if not opened else 0.0
         pop = math.exp(-((Ti - 1.02) / 0.08) ** 2) * (c.clip == "intro")
         nut = self.nut_open if opened else self.nut
-        nh = 118 * (1 + 0.12 * pop)
+        nh = 106 * (1 + 0.12 * pop)
         sq = 1 + 0.18 * pop
         # 滞在: 栗の上の湯気（ゆらゆら昇る）
         steam_k = ease(ramp(Ti, 1.05, 1.5)) * out_k
@@ -69,25 +73,27 @@ class Scene(Stage):
                     cv.over(p * col[..., None] * 0.85, a * col * 0.85)
         contact_shadow(cv, nx, self.BOTTOM - 4, 70, 0.3 * ease(ramp(Ti, 0.3, 0.5)) * out_k)
         nk = ease(ramp(Ti, 0.3, 0.42)) * out_k
-        if opened:
-            sprite(cv, nut, nx, self.BOTTOM - 2, nh, anchor=(0.5, 1.0), sx=sq, sy=2 - sq, k=nk, rim=0.3)
-        else:
-            # 転がる: 真ん中のまわりに回す
-            sprite(cv, nut, nx, self.BOTTOM - 2 - nh / 2, nh, anchor=(0.5, 0.5), rot=rot, k=nk, rim=0.3)
+        for tgt in (cv, hero):
+            if opened:
+                sprite(tgt, nut, nx, self.BOTTOM - 2, nh, anchor=(0.5, 1.0), sx=sq, sy=2 - sq, k=nk, rim=0.3)
+            else:
+                # 転がる: 真ん中のまわりに回す
+                sprite(tgt, nut, nx, self.BOTTOM - 2 - nh / 2, nh, anchor=(0.5, 0.5), rot=rot, k=nk, rim=0.3)
         glow(cv, nx, self.BOTTOM - 60, 70, GOLD * 0.6 + AMBER * 0.3, (0.6 * pop + 0.25 * steam_k))
         # ふたり: 押してくる → ばんざい。滞在は交互に跳ねる
         for who, (push, banz, x_end, x_from, ph) in {"j": (self.jp, self.jb, 112, -200, 0.0), "o": (self.op, self.ob, 604, 900, 0.5)}.items():
             x = lerp(x_from, x_end, ease_out(ramp(Ti, 0.3, 0.95))) + run
             hop = 0.0
             if opened:
-                hop = 26 * max(0.0, math.sin(math.pi * clamp01((Ti - 1.0) / 0.32))) * (c.clip == "intro")
-                hop += 14 * max(0.0, c.osc(2, ph)) * (c.clip != "intro")
-            walk = 6 * abs(math.sin(Ti * 18)) * (1 - ease(ramp(Ti, 0.85, 1.0))) if not opened else 0.0
+                hop = 14 * max(0.0, math.sin(math.pi * clamp01((Ti - 1.0) / 0.32))) * (c.clip == "intro")
+                hop += 10 * max(0.0, c.osc(2, ph)) * (c.clip != "intro")
+            walk = 5 * abs(math.sin(Ti * 18)) * (1 - ease(ramp(Ti, 0.85, 1.0))) if not opened else 0.0
             art = banz if opened else push
             k = ease(ramp(Ti, 0.3, 0.45)) * out_k
             contact_shadow(cv, x, self.BOTTOM - 2, 90, 0.28 * k)
-            sprite(cv, art, x, self.BOTTOM - hop - walk, 205.0, k=k, sy=1 + 0.04 * math.sin(math.pi * clamp01((Ti - 1.0) / 0.32)) * (c.clip == "intro"),
-                   rim=0.3, light_dir=(0.0, -1.0))
+            for tgt in (cv, hero):
+                sprite(tgt, art, x, self.BOTTOM - hop - walk, 178.0, k=k, sy=1 + 0.04 * math.sin(math.pi * clamp01((Ti - 1.0) / 0.32)) * (c.clip == "intro"),
+                       rim=0.3, light_dir=(0.0, -1.0))
         # 火の粉: 前兆の1つ・割れた瞬間のはじけ・滞在で昇る
         if c.clip == "intro" and 0.05 < Ti < 0.45:
             a = (Ti - 0.05) / 0.4
@@ -125,4 +131,5 @@ class Scene(Stage):
             kd = np.sin(np.pi * a_) ** 2 * (0.6 + 1.6 * g.r[:, 2]) * amb
             sp.add_screen(x[ok], y[ok], (np.where(g.r[:, 3:4] < 0.7, GOLD, AMBER) * kd[:, None] * 3.6)[ok])
             sp.into(cv)
+        self.finish_hero(hero, bloom=0.0)
         return cv.finish(bloom=0.55, edge=self.edge), None

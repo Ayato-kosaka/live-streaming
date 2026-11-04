@@ -8,7 +8,9 @@
 - 締め 1.0秒: 落ち葉の中へもぐり、葉が1枚だけ舞って消える
 
 箱の下 30%（y 896 より下）から出さない（配信の景色を汚さない）。手で広げた箱は配信画面の下で切れるので、
-山の下の端は SAFE_BOTTOM（1140）に置く。見えるのは 896〜1140 の帯なので、ピポは山から上半身だけ出す大きさにした。
+山の下の端は SAFE_BOTTOM（1140）に置く。ピポと山は、下の 28% の帯（キャラ絵の箱の下の端 0.72 より下。
+CONTRACT.md の追記 2026-11-04）の中。キャラ絵は出るとき 1.05 倍にふくらむので、帯の上の端より 20px 下（944）から。
+舞う葉・星・ぼけ玉は帯の上に出てよい（896 まで）。
 """
 import math
 import os
@@ -26,8 +28,10 @@ class Scene(Stage):
     TIER = 1
     INTRO, STAY, OUTRO, REVEAL = 1.4, 2.0, 1.0, 0.6
     VARIANTS = ("full",)
+    # 〜999円の段は隅の小さな絵なので、予算は小さく（画質の段が QBEST に当たって、たいていこれより小さく焼ける）
+    BUDGET_KB = {"full": 1500}
     FRONT = {"full": False}
-    KBPS = {"full-back": 700}
+    CHAR_BOTTOM = 0.72
 
     X, BOTTOM = 130.0, SAFE_BOTTOM  # 落ち葉の山の真ん中と、下の端（キャラ絵の枠 137〜583 の左の外に寄せる）
 
@@ -68,6 +72,7 @@ class Scene(Stage):
     def draw(self, c):
         Ti, T, u = c.Ti, c.T, c.u
         cv = Canvas()
+        hero = Canvas()  # ピポと山だけ（fx_hero.py が、キャラ絵に隠れていないかを数える。重ねはしない）
         out_k = 1 - ease(ramp(u, 0.35, 1.0))
         # 落ち葉の山: かさっと揺れて現れる
         pk = ease(ramp(Ti, 0.0, 0.15)) * (1 - ease(ramp(u, 0.6, 1.0)))
@@ -78,7 +83,7 @@ class Scene(Stage):
         # ピポ（山の後ろ）: 0.2〜0.75 でぴょこっと
         rise = back_out(ramp(Ti, 0.2, 0.62), 2.0)
         down = ease_in(ramp(u, 0.12, 0.5))
-        dy = (1 - rise) * 190 + down * 200
+        dy = (1 - rise) * 170 + down * 180
         in_toss = False
         tossing = [a for a, _ in c.events(0.82, self.STAY, first=0.82, dur=1.9)]
         if c.clip == "intro":
@@ -91,17 +96,17 @@ class Scene(Stage):
         art = self.jump if in_toss or (c.clip == "outro" and u > 0.12) else self.look
         hop = 0.0
         for age in tossing:
-            hop = max(hop, math.sin(math.pi * clamp01(age / 0.35)) * 16)
-        bob = 4 * c.osc(1) if c.clip != "intro" else 0.0
-        h = 180.0 if art is self.jump else 160.0
-        x = self.X + (6 if art is self.jump else 0) + wob
-        y = self.BOTTOM - 50 + dy - hop + bob
-        clip_y = self.BOTTOM - 44
-        sprite(cv, art, x, y, h, anchor=(0.5, 0.92), k=ease(ramp(Ti, 0.18, 0.3)) * out_k,
-               sy=1 + 0.05 * math.sin(math.pi * clamp01((Ti - 0.2) / 0.3)) * (c.clip == "intro"), clip_below=clip_y + 60,
-               rim=0.35, light_dir=(0.6, -1.0))
-        # 山（手前）。ピポの下半分を隠す
-        sprite(cv, self.pile, self.X + wob * 0.5, self.BOTTOM, 112.0, anchor=(0.5, 1.0), sx=sq, sy=2 - sq, k=pk, rim=0.3, light_dir=(0.3, -1.0))
+            hop = max(hop, math.sin(math.pi * clamp01(age / 0.35)) * 10)
+        bob = 3 * c.osc(1) if c.clip != "intro" else 0.0
+        h = 150.0 if art is self.jump else 136.0
+        x = self.X + (5 if art is self.jump else 0) + wob
+        y = self.BOTTOM - 44 + dy - hop + bob
+        for tgt in (cv, hero):
+            sprite(tgt, art, x, y, h, anchor=(0.5, 0.92), k=ease(ramp(Ti, 0.18, 0.3)) * out_k,
+                   sy=1 + 0.05 * math.sin(math.pi * clamp01((Ti - 0.2) / 0.3)) * (c.clip == "intro"), clip_below=self.BOTTOM + 16,
+                   rim=0.35, light_dir=(0.6, -1.0))
+            # 山（手前）。ピポの下半分を隠す
+            sprite(tgt, self.pile, self.X + wob * 0.5, self.BOTTOM, 100.0, anchor=(0.5, 1.0), sx=sq, sy=2 - sq, k=pk, rim=0.3, light_dir=(0.3, -1.0))
         # 舞い上がる紅葉（山場と、滞在の輪で1回ずつ）
         for age in tossing:
             self.leaf_toss(cv, age, out_k, 1.0 if age < 9 else 0.6)
@@ -143,4 +148,5 @@ class Scene(Stage):
             if y > H * 0.70 + 16 and kk > 0.003:
                 spr = self.kit.bokeh_spr(7 + r[3] * 7, j % 2, (GOLD * 0.9 + AMBER * 0.3) if j % 2 else (WHITE * 0.6 + GOLD * 0.5), 2.5)
                 fxv.stamp(cv.L, spr, x, y, kk)
+        self.finish_hero(hero, bloom=0.0)
         return cv.finish(bloom=0.5, edge=self.edge), None
