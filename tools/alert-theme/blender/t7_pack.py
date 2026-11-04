@@ -280,8 +280,10 @@ KBPS = (40, 8000)
 # 画質の上限と下限（VP8 の量子化の段。小さいほど良い）。
 # **率に -maxrate / -bufsize の枠を付けない。** 付けると、絵を丸ごと描き直すキーフレームに符号量が回らず、
 # 2秒おきにレンガの模様が消えて窓の色までずれた（run 41790472318。PSNR がキーフレームで 3〜4dB 落ちる）。
-# 上限（QMIN）も決めるのは、頭のコマだけ飛び抜けて良く焼かれ、輪の継ぎ目で「くっきり → ぼやけ」が毎回出るのを防ぐため
-QMIN = 26
+# 上限（QMIN）も決めるのは、頭のコマだけ飛び抜けて良く焼かれ、輪の継ぎ目で「くっきり → ぼやけ」が毎回出るのを防ぐため。
+# back は、率で決まるふだんの画質（PSNR 31〜33dB）に近い 32。26 だと stay の頭が尻より 3.8dB 良く、3秒ごとに城がくっきりした
+# （run 41794553426）。front は光の粒だけで軽いので 10。粗く焼くと、締めの最後のコマに透明 8/255 が残った
+QMIN = {"back": 32, "front": 10}
 QMAX = (50, 56, 60)
 
 
@@ -293,17 +295,17 @@ def name_of(v, layer, clip):
     return f"t7-{v}-{layer}-{clip}.webm"
 
 
-def _encode_one(src, p, kbps, qmax):
+def _encode_one(src, p, kbps, qmin, qmax):
     # 透明は別の VP8 の流れ。キーフレームを2秒おきに固定して色とそろえる（PR #1089 の頭出しの崩れ）
     ff("-framerate", str(P.FPS), "-i", os.path.join(src, "%04d.png"), "-vf", "format=yuva420p",
        "-c:v", "libvpx", "-pix_fmt", "yuva420p", "-auto-alt-ref", "0", "-b:v", f"{kbps}k",
-       "-crf", str(QMIN), "-qmin", str(QMIN), "-qmax", str(qmax), "-deadline", "good", "-cpu-used", "0",
+       "-crf", str(qmin), "-qmin", str(qmin), "-qmax", str(qmax), "-deadline", "good", "-cpu-used", "0",
        "-g", str(P.FPS * 2), "-keyint_min", str(P.FPS * 2), "-force_key_frames", "expr:gte(t,n_forced*2)", "-an", p)
     return os.path.getsize(p) / 1024
 
 
 def _encode_budget(job):
-    """予算の大きさに収まるまで、率を直して焼き直す（5回まで）。予算の 75% を切ったら、上げて焼き直す。
+    """予算の大きさに収まるまで、率を直して焼き直す（5回まで）。予算の 88% を切ったら、上げて焼き直す。
     率を下げても縮まなくなったら（画質の下限 QMAX に当たっている）、下限を1段ゆるめる"""
     src, p, layer, clip, n = job
     budget = BUDGET_KB[(layer, clip)]
@@ -311,9 +313,9 @@ def _encode_budget(job):
     qi = 0
     tries = []
     for _ in range(5):
-        kb = _encode_one(src, p, kbps, QMAX[qi])
+        kb = _encode_one(src, p, kbps, QMIN[layer], QMAX[qi])
         tries.append((kbps, QMAX[qi], round(kb)))
-        if 0.75 * budget <= kb <= budget:
+        if 0.88 * budget <= kb <= budget:
             break
         if kb > budget and len(tries) >= 2 and tries[-2][1] == QMAX[qi] and tries[-2][2] - kb < 0.03 * kb and qi + 1 < len(QMAX):
             qi += 1
@@ -327,7 +329,7 @@ def _encode_budget(job):
         ok = [t for t in tries if t[2] <= budget]
         if ok:
             kbps, qmax, _ = max(ok, key=lambda t: t[2])
-            kb = _encode_one(src, p, kbps, qmax)
+            kb = _encode_one(src, p, kbps, QMIN[layer], qmax)
             tries.append((kbps, qmax, round(kb)))
     return p, budget, tries
 
@@ -456,15 +458,17 @@ def _vs_src(frames, src_dir):
 
 
 # 画質の決まり（焼く前の絵との PSNR）。キーフレーム（2秒おき）で崩れると、その1つ前のコマから大きく落ちる。
-# 中央からの落ちでは見ない（消えていく本は、空に近いコマの PSNR が高すぎて中央が当てにならない）
+# 中央からの落ちでは見ない（消えていく本は、空に近いコマの PSNR が高すぎて中央が当てにならない）。
+# 低い側が PSNR_SEEN 以上なら見ない（46dB の front で 3dB 変わっても、差は 1/255 ほどで目に見えない）
 PSNR_MIN = 30.0
 PSNR_DIP = 3.0
+PSNR_SEEN = 40.0
 
 
 def _psnr_dips(ps, loop):
     """キーフレームの所の (コマ, 前のコマからの落ち dB)。loop なら輪の尻 → 頭も（頭が飛び抜けて良い・悪いも跳ねに見える）"""
-    out = [(k, ps[k - 1] - ps[k]) for k in range(P.FPS * 2, len(ps), P.FPS * 2)]
-    if loop:
+    out = [(k, ps[k - 1] - ps[k]) for k in range(P.FPS * 2, len(ps), P.FPS * 2) if ps[k] < PSNR_SEEN]
+    if loop and min(ps[-1], ps[0]) < PSNR_SEEN:
         out.append((0, abs(ps[-1] - ps[0])))
     return out
 
