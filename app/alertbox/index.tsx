@@ -333,7 +333,8 @@ export default function AlertBox() {
   tierVideoRef.current = tierVideo;
   /* 動画の段は、動画が revealAt に来た知らせ（`VideoShow` の onReveal）で、その通知のキャラ絵と札を組む。
      壁の時計で出していたころは、動画が遅れた日に主役が出きる前に札が出て、主役の上に「0円」が乗った（#1117）。
-     知らせが来ないまま revealAt を 3 秒過ぎたら出す（下の setTimeout。動画が止まって落ちたときは withoutVideo が先に出す） */
+     動画が止まれば runFxShow が 3 秒で層を消し、全部消えたら withoutVideo がすぐ出す。それでも知らせが来ないまま
+     revealAt を 10 秒過ぎたら出す（下の setTimeout。名前が最後まで出ない、を作らない） */
   const [revealedFor, setRevealedFor] = useState<NotificationData | null>(null);
   /* 動画が動かなかった（3 秒動かない・止められた）。その段は動画なしの見せ方に落とす（アラートは出したまま） */
   const onVideoFail = useCallback((sec: number) => {
@@ -946,7 +947,7 @@ export default function AlertBox() {
     setStage(nextStage);
     /* その人の絵と読み上げを出す秒。0 なら今どおり（すぐ） */
     const revealSec = nextStage?.revealSec ?? 0;
-    if (nextStage?.video) setTimeout(() => setRevealedFor(currentNotification), (revealSec + 3) * 1000);
+    if (nextStage?.video) setTimeout(() => setRevealedFor(currentNotification), (revealSec + 10) * 1000);
 
     // 表示開始（フェードイン）
     setNotification(currentNotification);

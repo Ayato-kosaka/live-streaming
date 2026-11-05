@@ -447,6 +447,46 @@ describe("6. 流す順番", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
+  /* 動画の時計を手で進める（読み込みで動画が遅れた日を作る） */
+  const clock = (v: HTMLVideoElement, start = 0) => {
+    const c = { t: start };
+    Object.defineProperty(v, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    return c;
+  };
+
+  it("キャラ絵と札の合図（onReveal）は動画の時計で。壁の時計で revealAt を過ぎても、登場が revealAt に来るまで呼ばない（#1117）", () => {
+    const { kit, back } = makeKit(false);
+    const c = clock(back.intro);
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, jest.fn(), onReveal);
+    fire(back.intro, "playing");
+    // 壁の時計で 2.5 秒（revealAt は 2 秒）。動画は読み込みで遅れて 0.5 秒にいる（少しずつは進んでいる）
+    for (let i = 0; i < 25; i++) {
+      c.t += 0.02;
+      jest.advanceTimersByTime(100);
+    }
+    expect(onReveal).not.toHaveBeenCalled();
+    c.t = 1.99;
+    jest.advanceTimersByTime(50);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(1000);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("登場が途中で 3 秒動かなくなった層は消す。全部消えたら onFail（札は動画なしの見せ方ですぐ出る）。合図は出さない", () => {
+    const { kit, back } = makeKit(false);
+    clock(back.intro);
+    const onFail = jest.fn();
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, onFail, onReveal);
+    fire(back.intro, "playing");
+    jest.advanceTimersByTime(2500);
+    expect(onFail).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    expect(onFail).toHaveBeenCalledTimes(1);
+    expect(onReveal).not.toHaveBeenCalled();
+  });
+
   it("置いた瞬間は全部透明。登場は両方の層で同時に流し始め、`playing` が来た層だけ見せる", () => {
     const { kit, back, front } = makeKit();
     const h = hosts();

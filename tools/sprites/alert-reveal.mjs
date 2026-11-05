@@ -82,7 +82,8 @@ const SAMPLER = `(() => {
       const vis = seen(plate) > 0.05 && r.bottom > 0 && r.top < innerHeight && r.width > 0 ? 1 : 0;
       const vids = [...document.querySelectorAll('[data-fx-video="back"] video')];
       const shown = vids.find((v) => v.style.opacity !== "0");
-      const part = shown ? ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?" : vids.length ? "wait" : "none";
+      // 消された層（止めて透明にした）は「無い」と同じ。まだ流れ始めていない層だけが「待ち」
+      const part = shown ? ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?" : vids.some((v) => !v.paused) ? "wait" : "none";
       // 額の字（数え上げが書き換える字の箱）が「0」。札の字は縁取りの写しと重ねてあり、textContent では「000円円円」になる
       const zero = [...plate.querySelectorAll('[data-ink="fill"]')].some((e) => (e.textContent || "").trim() === "0") || /^[^0-9]*0円/.test(plate.textContent || "") ? 1 : 0;
       R.f.push([+(performance.now() - R.t0).toFixed(1), vis, part, shown ? +shown.currentTime.toFixed(3) : -1, zero, +(r.top / innerHeight).toFixed(3)]);

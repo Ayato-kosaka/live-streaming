@@ -561,17 +561,36 @@ export function runFxShow(
 
   /* キャラ絵と札を出す合図。**先導の層の登場が revealAt に来たら**（壁の時計ではなく動画の時計で）。
      読み込みや展開で動画が遅れた日に、主役が出きる前に札が出ないように（alert-reveal.mjs が数える）。
+     **登場の途中で 3 秒動かなくなった層は消す**（流れ始めの 3 秒と同じ決まり）。回線が細い日に登場が途中で
+     止まり、待ちきれずに札を先に出していた（2026-11-05、往復 300ms・下り 4Mbps で5回中5回）。
      先導が消えたら次の層で見る。全部消えたら onFail（index.tsx が動画なしの見せ方に落とし、すぐ出す） */
   let revealed = false;
   let rvHandle: ReturnType<typeof setTimeout> | number | null = null;
+  let lastAt = -1;
+  let lastMove = performance.now();
+  let watched: Layer | null = null;
   const nextTick = (f: () => void) =>
     typeof requestAnimationFrame === "function" ? requestAnimationFrame(f) : setTimeout(f, 16);
   const watchReveal = () => {
     rvHandle = null;
     if (revealed || stopped || failed || !onReveal) return;
     const L = leader();
-    if (L && (L.phase !== "intro" || (L.shown === "intro" && L.k.intro.currentTime >= entry.revealAt - 0.02))) {
+    const now = performance.now();
+    if (L && L.phase !== "intro") {
       revealed = true;
+    } else if (L && L.shown === "intro") {
+      const ct = L.k.intro.currentTime;
+      if (ct >= entry.revealAt - 0.02) revealed = true;
+      else if (L !== watched || ct !== lastAt) {
+        watched = L;
+        lastAt = ct;
+        lastMove = now;
+      } else if (now - lastMove > FX_START_TIMEOUT_MS) {
+        kill(L, "stalled");
+        lastMove = now;
+      }
+    } else lastMove = now;
+    if (revealed) {
       mark("fxv:reveal", { t: sec() });
       onReveal();
       return;
