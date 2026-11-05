@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "9lrvXP7NMo8__reference",
+ "mode": "reference",
+ "dest": "9lrvXP7NMo8/reference",
+ "video": "9lrvXP7NMo8",
+ "channel": null,
+ "request": "shorts/requests/talk-research-refs-20261105.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 5,
+  "caption_segments": 19,
+  "transcript_segments": 3,
+  "cuts": 8,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 19
+ },
+ "bytes": {
+  "plain": 2039942,
+  "tar_gz": 1868613,
+  "encrypted": 1868624
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1868624,
+   "sha256": "b9e6d3238fdfba4de59f98198f9616e5417b4ac8a87c06ab94497594d7fa1b72"
+  }
+ ],
+ "hmac_sha256": "1e793014a289bf27db91c166bf078e43006ce1ac5e7d08e6457251adbc6a9222",
+ "pubkey_sha256": "5cf255213cae5ac1bedb59ac8f43994660be4908600d1ff49ed55eb5f038492d",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41951402315",
+ "created_at": "2026-11-05T03:27:11+00:00"
+}
