@@ -1998,6 +1998,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "yNA44SQbYjM",
         "title": "🇲🇰北マケドニアでパン三種の実験結果みよか",
         "date": "2026-11-03"
+      },
+      {
+        "videoId": "ndhRAwZv918",
+        "title": "🇲🇰北マケドニアでパソコンが受け取れなくて困ってしもたぁ",
+        "date": "2026-11-04"
       }
     ]
   }

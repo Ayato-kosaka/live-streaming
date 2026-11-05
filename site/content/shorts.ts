@@ -144,6 +144,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "wACcdJnOv18", date: "2026-11-01", title: "🇬🇧イギリスのエディンバラを、1日で回ったらやばかった！" },
     { id: "jz5RjaX-H6Q", date: "2026-11-02", title: "🇬🇧イギリスにあるアフタヌーンティーの超本場がやばすぎた！" },
     { id: "wDtTjwEd0Pg", date: "2026-11-03", title: "🇬🇧イギリスの宿でシャワーを浴びたら、全館浸水しました！" },
+    { id: "As4LP4FPzPw", date: "2026-11-04", title: "海外旅行中に作ったバケットが簡単すぎた！" },
   ],
 };
 
