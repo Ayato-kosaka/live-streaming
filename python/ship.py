@@ -335,6 +335,25 @@ def checks_verdict(checks: list[dict], status: dict, own_suites: set) -> tuple[s
     return "green", f"checks {len(mine) + len(sts)}本ぜんぶ緑"
 
 
+def latest_checks(checks: list[dict], suite_path: dict) -> list[dict]:
+    """**同じ check が同じ head で何度も走ったら、いちばん新しいものだけを読む。**
+
+    PR の本文を書き直すと `Closes Check` が同じ head でもう1本走り、GitHub は前の結果も
+    別の check suite として残す（`filter=latest` は suite ごとの新しさしか見ない）。
+    #1121 で実際に `closes` の success と failure が並んだ。古い赤を数えると、
+    **本文を直して緑になった PR が、いつまでも赤に見える。**
+    同じものかどうかは「どのワークフローの、どの job か」で見る（job の名前だけだと、
+    別のワークフローに同じ名前の job があったときに片方が消える）。
+    """
+    best: dict = {}
+    for c in checks:
+        sid = (c.get("check_suite") or {}).get("id")
+        key = (suite_path.get(sid) or ((c.get("app") or {}).get("slug")) or "", c.get("name"))
+        if key not in best or (c.get("id") or 0) > (best[key].get("id") or 0):
+            best[key] = c
+    return list(best.values())
+
+
 @dataclass
 class Decision:
     n: int
@@ -588,9 +607,10 @@ def prod_marks(base: str, pages: list[str]) -> dict:
 # PR を読んで判断する
 # ---------------------------------------------------------------------------
 
-def own_suites(gh: Gh, sha: str) -> set:
+def suite_paths(gh: Gh, sha: str) -> dict:
+    """その head で走った run の、check suite → ワークフローのファイル。"""
     runs = gh.get(gh.r(f"/actions/runs?head_sha={sha}&per_page=100")).get("workflow_runs", [])
-    return {r.get("check_suite_id") for r in runs if r.get("path") == OWN}
+    return {r.get("check_suite_id"): r.get("path") for r in runs}
 
 
 def pr_files(gh: Gh, n: int) -> list[dict]:
@@ -625,7 +645,9 @@ def evaluate(gh: Gh, n: int, as_if: bool = False) -> Decision:
         pr = gh.get(gh.r(f"/pulls/{n}"))
     if as_if:
         pr = {**pr, "labels": [*(pr.get("labels") or []), {"name": LABEL}]}
-    k, line = decide(pr, files, checks, status, own_suites(gh, sha), branch)
+    paths = suite_paths(gh, sha)
+    own = {sid for sid, path in paths.items() if path == OWN}
+    k, line = decide(pr, files, latest_checks(checks, paths), status, own, branch)
     return Decision(n, k, line, pr, files, rows)
 
 
