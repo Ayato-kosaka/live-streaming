@@ -9,11 +9,14 @@
 - 振付け（どの物がどの秒にどこに居るか）は `t7_motion.py`、秒・カメラ・並びは `t7_plan.py`。ここは**形・材質・光**と、
   振付けの値を Blender のキーにするところ
 - 描くのは Cycles（CPU）。runner には GPU が無いので EEVEE は当てにしない
-- 層は4つ（view layer）。書き出し（`t7_pack.py`）が重ねて、full / light の2通りを作る
-  - `sky` … 夜空・星・満月・雲
-  - `scene` … 城・岩・門・木・こうもり・金貨・ピポ・門の光・霧（空は入れない）
-  - `ayato` … 伯爵のあやとだけ（手前を横切る物は穴になる）
+- 物の組（collection）は4つ。描く層（view layer）は2つ（`setup_render`）: back（空・城・あやと）と front（前の粒）。
+  書き出し（`t7_pack.py`）が重ねて透明つきの動画にする
+  - `sky` … 夜空・星・満月・雲・満月の光の筋
+  - `scene` … 城・岩・門・木・こうもり（群れも）・月の光の粒・門の火の粉・ピポ・門の光・霧（空は入れない）
+  - `ayato` … 伯爵のあやと
   - `front` … 投げた人のキャラ絵の前に置く光の粒だけ
+- **お金の形の物は置かない**（2026-11-05 にあやと「投げ銭してコイン撒くのはイメージ悪い」。金貨は月の光の粒・こうもりの群れ・
+  門の火の粉に替えた。振付けは `t7_motion.py` の「月の光の粒」）
 - 1コマにつき層ごとに2枚: `<層>/c_<コマ>.png`（黒の上に重ねた色。光のにじみ込み）と `<層>/a_<コマ>.png`（物の透明。16bit）。
   光のにじみは透明の外にも広がるので、透明は書き出しの側で「色の明るさ」と合わせて決める
 - コマの番号は Blender の時間軸（`t7_plan.BASE`）: intro は 1〜、stay は 1001〜、outro は 2001〜
@@ -528,24 +531,6 @@ def mat_bat():
     return m
 
 
-def mat_coin():
-    """金貨。暗い夜の場では映すものが無く、金属が平らな黄色（ぼけ玉）に見えた（2026-11-04 の採点）。
-    映り込みの帯（上は月の夜空の青白・地平に門の灯りの金・下は暗い）を材質に持たせ、回るたびに帯が金の面を滑るようにする"""
-    m, N, out = new_mat("coin")
-    gold = (1.0, 0.78, 0.34)
-    bs = principled(N, Base_Color=gold, Metallic=1.0, Roughness=0.16)
-    tc = N.n("ShaderNodeTexCoord")
-    rx, _, rz = N.xyz(N.sock(tc, "Reflection", out=True))
-    env = N.ramp(N.maprange(rz, -1.0, 1.0), [(0.0, (0.02, 0.012, 0.0)), (0.40, (0.16, 0.09, 0.02)), (0.47, (1.0, 0.72, 0.32)),
-                                             (0.53, (1.0, 0.86, 0.55)), (0.58, (0.12, 0.08, 0.05)), (0.80, (0.42, 0.48, 0.66)),
-                                             (1.0, (0.85, 0.9, 1.0))])
-    side = N.maprange(rx, -1.0, 1.0, 0.6, 1.3)
-    em = N.n("ShaderNodeEmission")
-    N.set(em, Color=N.mix(1.0, env, gold, "MULTIPLY"), Strength=N.math("MULTIPLY", side, 2.4))
-    N.nt.links.new(add_shader(N, bs.outputs[0], em.outputs[0]), out.inputs["Surface"])
-    return m
-
-
 def mat_emit(name, color, strength, ctl_name=None, ctl_k=1.0):
     m, N, out = new_mat(name)
     em = N.n("ShaderNodeEmission")
@@ -721,6 +706,38 @@ def mat_moon():
     return m
 
 
+# 満月の光の筋の板の大きさ（月の半径の何倍か。半分の幅で）。月（512, 196・半径 150px）から画面の下の端まで届く
+RAYS_SCALE = 8.0
+
+
+def mat_moon_rays(inner):
+    """満月の光の筋（足し算の光）。雑音を「月の真ん中からの向き」だけで引くので、筋は月から放射に伸びる。
+    向きは単位の円の上の点で渡す（角度で渡すと、左の真横で模様が切れて線が出る）。
+    3.0 秒の周期（ray_ph）で筋がゆっくり揺れる（4次元の雑音の W を円の上で回す。輪がつながる）。inner は月の縁（板の座標で）"""
+    m, N, out = new_mat("moon_rays")
+    G = ctl_node("moon_rays", m, N)
+    ph = ctl_node("ray_ph", m, N)
+    tc = N.n("ShaderNodeTexCoord")
+    x, y, _ = N.xyz(tc.outputs["Object"])
+    d = N.math("SQRT", N.math("ADD", N.math("MULTIPLY", x, x), N.math("MULTIPLY", y, y)))
+    inv = N.math("DIVIDE", 1.0, N.math("MAXIMUM", d, 1e-3))
+    a = N.math("MULTIPLY", ph, TAU)
+    nz = N.n("ShaderNodeTexNoise", noise_dimensions="4D")
+    N.set(nz, Vector=N.comb(N.math("MULTIPLY", N.math("MULTIPLY", x, inv), 2.6), N.math("MULTIPLY", N.math("MULTIPLY", y, inv), 2.6),
+                            N.math("MULTIPLY", N.math("COSINE", a), 0.35)),
+          W=N.math("MULTIPLY", N.math("SINE", a), 0.35), Scale=2.0, Detail=3.0, Roughness=0.55)
+    streak = N.math("POWER", N.maprange(N.sock(nz, "Fac", out=True), 0.42, 0.72), 2.0)
+    # 月の縁から外へだんだん弱く、板の縁では 0（四角い板の形を見せない）
+    fall = N.math("EXPONENT", N.math("MULTIPLY", d, -3.0))
+    edge = N.math("MULTIPLY", N.maprange(d, inner, inner * 1.6), N.maprange(d, 0.95, 0.6))
+    k = N.math("MULTIPLY", N.math("MULTIPLY", streak, fall), edge)
+    em = N.n("ShaderNodeEmission")
+    N.set(em, Color=(0.75, 0.8, 1.0), Strength=N.math("MULTIPLY", N.math("MULTIPLY", G, k), 1.4))
+    tr = N.n("ShaderNodeBsdfTransparent")
+    N.nt.links.new(add_shader(N, tr.outputs[0], em.outputs[0]), out.inputs["Surface"])
+    return m
+
+
 def load_image(path, non_color=False):
     im = bpy.data.images.load(path, check_existing=True)
     im.alpha_mode = "STRAIGHT"
@@ -780,7 +797,7 @@ def mat_card(name, img_path, rim_path=None, emit=0.8, diffuse=0.35, rim_col=(0.7
 
 
 def mat_world():
-    """世界の光。ふだんは暗い紺。金貨と金の飾りに映る光（つやの光線だけが見る）は、暖かい地平の帯"""
+    """世界の光。ふだんは暗い紺。金の飾りに映る光（つやの光線だけが見る）は、暖かい地平の帯"""
     w = bpy.data.worlds.new("night")
     bpy.context.scene.world = w
     w.use_nodes = True
@@ -1263,7 +1280,6 @@ def build(quality):
         "stone_dark": mat_stone("stone_dark", (0.06, 0.055, 0.055), (0.14, 0.13, 0.12)),
         "iron": mat_metal("iron", (0.05, 0.05, 0.055), 0.45, 0.9),
         "gold": mat_metal("gold", (1.0, 0.72, 0.28), 0.18, 1.0),
-        "coin": mat_coin(),
         "bark": mat_stone("bark", (0.04, 0.025, 0.018), (0.1, 0.06, 0.035)),
         "window": mat_window(), "path": mat_path(), "ground": mat_ground(),
         "leaf": mat_leaf(), "bat": mat_bat(),
@@ -1273,6 +1289,9 @@ def build(quality):
         "pool": mat_additive("pool", (1.0, 0.62, 0.26), 0.4, "pool"),
         "spark": mat_emit("spark", (1.0, 0.8, 0.46), 40.0),
         "spark_front": mat_emit("spark_front", (1.0, 0.84, 0.55), 26.0),
+        # 月の光の粒。銀（淡い紫を少し）と、シャンパンの金。光るだけの粒で、形はただの球
+        "mote_moon": mat_emit("mote_moon", (0.8, 0.85, 1.0), 30.0),
+        "mote_gold": mat_emit("mote_gold", (1.0, 0.86, 0.6), 28.0),
         "fog_near": mat_fog("fog_near", 1.0), "fog_far": mat_fog("fog_far", 0.4),
     }
     mats["leaf_bush"] = mat_leaf("leaf_bush", [(0.0, (0.05, 0.09, 0.02)), (0.4, (0.09, 0.16, 0.03)), (0.7, (0.6, 0.12, 0.02)),
@@ -1401,7 +1420,7 @@ def build(quality):
     place(sm, "sticker", s, mats["sticker"])
 
     # ---- あやと（2枚の板。顔の真ん中をそろえる）
-    # 板の寸法と原点は t7_motion.ayato_plane（書き出しの側が、同じ数で light の版のあやとの形を作る）
+    # 板の寸法と原点は t7_motion.ayato_plane
     # マントがはためくので格子に割る（spread は裾の波が見える細かさ。rise は裾だけ）
     for name, (nx, ny) in (("ayato_spread", (48, 46)), ("ayato_rise", (32, 44))):
         w, h, ox, oz = MO.ayato_plane(name)
@@ -1452,8 +1471,14 @@ def build(quality):
     me = bpy.data.meshes.new("halo")
     bm.to_mesh(me)
     bm.free()
-    halo = place(me, "halo", cols["sky"], mat_additive("halo", (0.85, 0.82, 0.95), 1.6, "halo", "moon_op"), moon, loc=(0, 0, -0.02))
+    # 暈は、こうもりの群れが月を横切るとき、ひときわ光る（moon_halo）
+    halo = place(me, "halo", cols["sky"], mat_additive("halo", (0.85, 0.82, 0.95), 1.6, "halo", "moon_halo"), moon, loc=(0, 0, -0.02))
     halo.scale = (3.2, 3.2, 3.2)
+    # 満月の光の筋。月を真ん中にした四角い板（一辺は月の半径の 2×RAYS_SCALE）。雲より奥なので、筋は雲の切れ間から差す
+    g = Geo()
+    g.face([(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0)], [(0, 0), (1, 0), (1, 1), (0, 1)])
+    rays = place(g.finish("moon_rays"), "moon_rays", cols["sky"], mat_moon_rays(1.0 / RAYS_SCALE), moon, loc=(0, 0, -0.04))
+    rays.scale = (RAYS_SCALE, RAYS_SCALE, RAYS_SCALE)
     cd = 150.0
     corners = [P.unproject(sx, sy, cd, P.LENS_FROM - 1.0) for sx, sy in ((-60, 900), (780, 900), (780, -60), (-60, -60))]
     g = Geo()
@@ -1461,30 +1486,21 @@ def build(quality):
     place(g.finish("clouds"), "clouds", cols["sky"], mat_clouds((moon_sx / 720, 1 - moon_sy / 1280)))
     ctl("moon_rise", moon, "location", 2, k=-60.0, add=mpos[2])
 
-    # ---- 金貨（1つの形を使い回す）
-    g = Geo()
-    g.lathe(0, 0, [(0.001, -0.022), (0.2, -0.022), (0.232, -0.016), (0.24, 0.0), (0.232, 0.016), (0.2, 0.022), (0.001, 0.022)], seg=36)
-    for zz, sgn in ((0.022, 1), (-0.022, -1)):
-        g.lathe(0, 0, [(0.17, zz), (0.185, zz + sgn * 0.008), (0.2, zz)], seg=36)
-        star = []
-        for i in range(10):
-            a = math.pi / 2 + TAU * i / 10
-            r = 0.12 if i % 2 == 0 else 0.05
-            star.append((r * math.cos(a), r * math.sin(a)))
-        pts = ccw(star)
-        top = [(x, y, zz + sgn * 0.007) for x, y in pts]
-        if sgn < 0:
-            top = list(reversed(top))
-        g.face(top)
-        for i in range(len(pts)):
-            j = (i + 1) % len(pts)
-            a, b2 = pts[i], pts[j]
-            q = [(a[0], a[1], zz), (b2[0], b2[1], zz), (b2[0], b2[1], zz + sgn * 0.007), (a[0], a[1], zz + sgn * 0.007)]
-            g.face(q if sgn > 0 else list(reversed(q)))
-    coin_me = g.finish("coin")
-    coin_me.materials.append(mats["coin"])
-    for c in MO.COINS:
-        ob = bpy.data.objects.new(c["name"], coin_me)
+    # ---- 月の光の粒（雨・滞在）と、門の火の粉。光るだけの小さな球（物の形は持たせない）
+    mote_me = {}
+    for key, r in (("mote_moon", 0.065), ("mote_gold", 0.065), ("spark", 0.075)):
+        bm = bmesh.new()
+        bmesh.ops.create_icosphere(bm, subdivisions=1, radius=r)
+        me = bpy.data.meshes.new(f"{key}_ball")
+        bm.to_mesh(me)
+        bm.free()
+        me.materials.append(mats[key])
+        mote_me[key] = me
+    for m in MO.MOTES:
+        ob = bpy.data.objects.new(m["name"], mote_me["mote_gold" if m["gold"] else "mote_moon"])
+        s.objects.link(ob)
+    for e in MO.EMBERS:
+        ob = bpy.data.objects.new(e["name"], mote_me["spark"])
         s.objects.link(ob)
 
     # ---- こうもり（体と、羽2枚。羽は y の軸で羽ばたく）
@@ -1632,7 +1648,7 @@ def build(quality):
     # 夜空・雲・満月はカメラの子にする。カメラが城のまわりを回り込んでも（t7_motion.orbit_yaw）、空の板の縁が画面に入らない
     from mathutils import Matrix
     base = Matrix.Translation(cam.location) @ cam.rotation_euler.to_matrix().to_4x4()
-    for nm in ("sky", "clouds", "moon"):
+    for nm in ("sky", "clouds", "moon"):  # 光の筋と暈は月の子なので、月といっしょに付いてくる
         ob = bpy.data.objects[nm]
         ob.parent = cam
         ob.matrix_parent_inverse = base.inverted()
@@ -1668,7 +1684,7 @@ def setup_render(sc, cols, q):
     sc.cycles.sample_clamp_indirect = 4.0
     sc.render.film_transparent = True
     sc.render.use_motion_blur = Q["blur"]
-    # 0.4 だと金貨が落ちる速さでぶれて、黄色いぼけ玉に見えた（2026-11-04 の採点）
+    # 0.4 だと落ちる物がぶれて、ぼけ玉に見えた（2026-11-04 の採点。前の版の金貨）。羽ばたく群れも、羽が溶けないように短く
     sc.render.motion_blur_shutter = 0.25
     sc.render.resolution_x = P.W
     sc.render.resolution_y = P.H
@@ -1691,8 +1707,7 @@ def setup_render(sc, cols, q):
     META["view_transform"] = view
 
     # 層は2つ。back（空・城・あやと）を1回で描き、front（前の粒だけ）は粒のほかを読み込まない。
-    # 2026-11-04 の試し（4層: 空・城・あやと・前）は、あやとの層が城を holdout で読み込むぶん、城を2回組み立てていた。
-    # light の版で城だけを薄くしてあやとを残すための形は、振付けから書き出しの側で作る（t7_pack.py の ayato_mask）
+    # 2026-11-04 の試し（4層: 空・城・あやと・前）は、あやとの層が城を holdout で読み込むぶん、城を2回組み立てていた
     vl0 = sc.view_layers[0]
     vl0.name = "back"
     layers = {"back": vl0, "front": sc.view_layers.new("front")}

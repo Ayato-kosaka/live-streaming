@@ -3,7 +3,8 @@ name: 投げ銭の演出を Blender で描く
 # 1万円の段（段7「ドラキュラ城が本気を出す」）の連番の絵を、runner で Blender（Cycles・CPU）を回して描く（#1095）。
 # **作業箱には Blender を入れない**（入れる依頼は許可の判定で止まった）。ここで入れて、ここで描く。
 # 場面は tools/alert-theme/blender/castle_t7.py、振付けは t7_motion.py、秒とコマの分けかたは t7_plan.py。
-# 描いた連番の絵（4つの層）は artifact（t7-<質>-<番号>）に置き、pack の job が重ねて full / light の透明つき WebM に焼く
+# 描いた連番の絵（back と front の2つの層）は artifact（t7-<質>-<番号>）に置き、pack の job が重ねて透明つき WebM に焼く
+# （通りは full だけ。光の線の版 light は 2026-11-05 にやめた。#1095）
 # （t7_pack.py）。焼いたものと一覧の絵は枝 blender/out-t7 に置き、作業箱はそこを git で取る（artifact は落とせない）。
 # 1コマの秒は各 artifact の meta.json と、run の頁の要約に出る。
 #
@@ -148,7 +149,7 @@ jobs:
           # PNG は縮まないので、包むだけにする（上げる時間を短く）
           compression-level: 0
 
-  # 層を重ねて full / light の透明つき WebM に焼き、一覧の絵と一緒に枝 blender/out-t7 へ置く。
+  # 層を重ねて透明つき WebM（full）に焼き、一覧の絵と一緒に枝 blender/out-t7 へ置く。
   # **作業箱は artifact を落とせない**（置き場の blob の宛先が、作業箱の外への出口で止められている。2026-11-04）。
   # git の枝なら作業箱から fetch できる。中身はどうせ public/ に出す動画と、合成の配信画面ではない一覧だけ（顔は無い）。
   # 枝は毎回 1 コミットに作り直して上書きする（重い絵を積まない）。押すのは GITHUB_TOKEN なので、ほかのワークフローは起きない
