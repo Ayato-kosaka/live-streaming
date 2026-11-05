@@ -18210,5 +18210,5 @@ yk B は似た見た目の 3.03秒、yk C は 3.80秒のカットと似た見た
 
 1. **アラートの `<video>` は `newVideo()`（`app/alertbox/videoGuard.ts`）で作る。JSX の `<video>` は `{...VIDEO_ATTRS}` を付ける。** どちらも透明の poster（1×1 の透明 GIF）・コントロール無し・窓（PiP・キャスト）を出させない・音なし・インライン。`public/alert/*.html` で作るときも poster を置く
 2. **見せるのは最初のコマの合図のあと**（`onFirstFrame`。`requestVideoFrameCallback`、無ければ `playing` と readyState 2 以上）。**替わり目は、次の本のコマが出るまで前の本を見せたまま**（同じ瞬間に入れ替える。透明つきなので2本見せると二重になる）
-3. **構造の見張りで守る。目で見ない。** jest は `__tests__/videoGuard.test.ts`（作られる `<video>` が全部守りを持つ・ソースを読んで守りを通さない書き方を落とす・合図まで呼ばない）と `fxvideo.test.ts` の7節（替わり目で見えている本が 0 本・2 本にならない）。alert_check は重なりの行に「`<video>` の poster 無し / コマを持つ前に見えた」（どちらも 0）、対照は `--control poster`（poster を外すと 1 で落ちる）
+3. **構造の見張りで守る。目で見ない。** jest は `__tests__/videoGuard.test.ts`（作られる `<video>` が全部守りを持つ・ソースを読んで守りを通さない書き方を落とす・合図まで呼ばない）と `fxvideo.test.ts` の7節（替わり目で見えている本が 0 本・2 本にならない）。alert_check は重なりの行に「`<video>` の poster 無し / コマを持つ前に見えた」（どちらも 0）、対照は `--control poster`（poster を外すと 1 で落ちる）。**滞在のくり返しの継ぎ目（loop の頭出し）は readyState が 20ms ほど 1 に落ちるが、最後のコマは画面に残る**ので、「コマを持つ前」には数えない（1回目の見張りはこれを 821 本数えた。`seam` に別に数える）
 4. **この箱で再現できない見た目の不具合は、出る条件（ここでは「poster が無くて、コマが無い」）を潰して、その条件を数える。** 録画に写らないことを、無いことの証にしない
