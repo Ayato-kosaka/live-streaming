@@ -189,6 +189,9 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     // 全部止める（2枚のあいだに動くと差分が嘘になる）
     await p.evaluate(() => {
       document.getAnimations().forEach((x) => x.pause());
+      // 動画の段の動画も止める。流れたままだと2枚のあいだで地が変わり、字の無い箱で比 1.0 が出る
+      // （2026-11-05、11月の7段で 63件。どれも「字の無い SPAN」で、字の芯ではなく動画のコマ送りを測っていた）
+      document.querySelectorAll("video").forEach((v) => v.pause());
       window.requestAnimationFrame = () => 0;
     });
     if (control === "flat")
