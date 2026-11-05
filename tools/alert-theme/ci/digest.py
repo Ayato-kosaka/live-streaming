@@ -80,15 +80,15 @@ def build(res):
     t = (r or {}).get("tool")
     if t:
         b = [f"{x['theme']} {x['a']}円 {x['size']} {x['text']}: 縁 {x['edge']} / 外 {x['outside']} / 全文 {'○' if x['full'] else '×'}" for x in t["bad"]] + t.get("errs", [])[:3]
-        row("字の切れ", r["exit"] == 0 and t["rows"] > 0, f"{t['rows']}組: 縁の字 {t['edge']}px / 箱の外の行 {t['outside']} / 欠け {len(t['bad'])}（全部 0）", b)
+        row("字の切れ", r["exit"] == 0 and t["rows"] > 0, f"{t['rows']}組（道具の段: ハロウィン7段・豚）: 縁の字 {t['edge']}px / 箱の外の行 {t['outside']} / 欠け {len(t['bad'])}（全部 0）", b)
     else:
         row("字の切れ", False, "回っていない", [_why(r, "textfit")])
 
     # 字の濃さ
-    rs = {n: _load(res, n) for n in ("ink-a", "ink-b")}
+    rs = {n: _load(res, n) for n in ("ink",)}
     ts = [x["tool"] for x in rs.values() if x and x.get("tool")]
     bgn = prep_bg_names(res)
-    if len(ts) == 2:
+    if len(ts) == len(rs):
         n = sum(x["rows"] for x in ts)
         mids = [x["minMid"] for x in ts if x["minMid"] is not None]
         rhis = [x["minRhi"] for x in ts if x["minRhi"] is not None]
@@ -102,7 +102,7 @@ def build(res):
         row(
             "字の濃さ",
             ok,
-            f"{n:,}字（地 {len(bgn) or 4}種 × キャラ {ts[0]['chars']}人）: 中央値の最小 {min(mids):.2f} / 明るい地に対して {min(rhis):.2f}（4.5 以上）" if mids else f"{n}字: 測れた字が無い",
+            f"{n:,}字（{(rs['ink'] or {}).get('themes', '')}・地 {len(bgn) or 4}種 × キャラ {ts[0]['chars']}人）: 中央値の最小 {min(mids):.2f} / 明るい地に対して {min(rhis):.2f}（4.5 以上）" if mids else f"{n}字: 測れた字が無い",
             b,
         )
     else:
@@ -129,7 +129,7 @@ def build(res):
     t = (r or {}).get("tool")
     if t and t["runs"]:
         b = [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['ms']:.0f}ms・そろった {x['ok']}・台本の層 {x['show']}" for x in t["bad"]] + [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['err']}" for x in t["errs"]]
-        row("展開の上限", r["exit"] == 0, f"{t['runs']}回（7段 × CPU 1・4・6倍 × 3）: いちばん遅い {t['max']:.0f}ms（{t['limit']:.0f}ms 以内・台本の層が出る）", b)
+        row("展開の上限", r["exit"] == 0, f"{t['runs']}回（ハロウィンの7段 × CPU 1・4・6倍 × 3）: いちばん遅い {t['max']:.0f}ms（{t['limit']:.0f}ms 以内・台本の層が出る）", b)
     else:
         row("展開の上限", False, "回っていない", [_why(r, "decode")])
 
@@ -146,11 +146,12 @@ def build(res):
     u = _load(res, "unit")
     if u and u.get("jest"):
         j, ty = u["jest"], u["types"]
-        row("jest app/alertbox", j["total"] > 0 and not j["nother"], f"{j['total']}件: 失敗 {j['failed']}（うち roster の時間切れ {len(j['known'])} は前から）", j["other"])
-        row("型（tsc）", not ty["nrest"], f"誤り {ty['errors']}（.svg の {ty['svg']} 件は前から・ほか {ty['nrest']}）", ty["rest"])
+        again = f"→ roster を単独で回し直して {j['again']}" if j.get("again") is not None else ""
+        row("jest app/alertbox", j["total"] > 0 and not j["nother"], f"{j['total']}件: 1回目の失敗 {j['failed']}{again}（roster の時間切れ {len(j['known'])} は前から）", j["other"])
+        row("型（tsc。app/alertbox）", not ty["nrest"], f"誤り {ty['errors']}（.svg の {ty['svg']} 件は前から・ほか {ty['nrest']}。根から見た全体 {ty.get('all', '?')} は数えない）", ty["rest"])
     else:
         row("jest app/alertbox", False, "回っていない", [_why(u, "unit")])
-        row("型（tsc）", False, "回っていない", [])
+        row("型（tsc。app/alertbox）", False, "回っていない", [])
 
     # 録画
     r = _load(res, "media")

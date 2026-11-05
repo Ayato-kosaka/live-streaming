@@ -238,13 +238,9 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # 型（tsc）はリポジトリ全体を見る（functions/ と site/ も include に入る）。依存が無いと
-      # 「モジュールが無い」が 1,869件出て、前からの .svg の2件が埋もれる（2026-11-05 の1回目がそれ）
-      - name: 依存を入れる
-        run: |
-          npm ci --no-audit --no-fund
-          npm ci --prefix functions --no-audit --no-fund
-          npm ci --prefix site --no-audit --no-fund
+      # 型は app/alertbox の中だけを数える（run.py の unit）。根の tsconfig は site/ functions/ tools/ まで
+      # include に入れていて、根から見ると 1,800件出る（2026-11-05 実測。それぞれ別の tsconfig と依存で組むもの）
+      - run: npm ci --no-audit --no-fund
 
       - name: jest app/alertbox と型
         run: python3 tools/alert-theme/ci/run.py shard unit

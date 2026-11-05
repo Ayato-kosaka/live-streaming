@@ -173,7 +173,7 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 **手元で書き出しや録画を回さない。** 作業箱で回すと長い出力と大量の絵を読むことになり、1件で 30万〜80万トークン食う。
 
 1. **PR を出す。** `app/alertbox/**`・`public/alert/**`・`tools/alert-theme/**`・`tools/sprites/alert-*.mjs` を触った PR で、ひとりでに走る
-   （1回 約1時間。shard 23本のうち重なりの14本が待たされるぶんを含む。2026-11-05 実測 57分）。PR の外なら `workflow_dispatch`（`ref`・`pr`・`theme`・`fx`）
+   （1回 約1時間。shard 22本のうち重なりの14本が順番を待つぶんを含む。2026-11-05 実測 57分）。PR の外なら `workflow_dispatch`（`ref`・`pr`・`theme`・`fx`）
 2. **alert_check のコメントの表だけ読む**（`<!-- alert-check -->`。PR に1つだけで、push のたびに同じコメントが書き換わる。30行以内）。
    1検査1行で ✅/❌・要の数字と閾値・見た数。見た数が 0 なら ❌（「0件見た」で緑にしない）
 3. **❌ の行だけ直して push する。** 表の下に、落ちた組（段・大きさ・キャラ・文）が出る。
@@ -193,11 +193,12 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 | --- | --- | --- |
 | 重なり | `alert-overlap.mjs` | キャラ12人 × 7段 × 436x776・664x1180 × 字4通り。台本の秒を道具が知らないテーマは、滞在を 1.5 秒おきに撮る秒を渡す |
 | 対照 | `alert-overlap.mjs --control face` / `hero` | どちらも 1 で落ちること |
-| 字の切れ・字の濃さ | `alert-textfit.mjs`・`alert-ink.mjs` | 地は合成（白・黒・明暗の縞・灰の雑音）。ハロウィンの7段（11月の段の札はその写し）・いまのテーマ・豚 |
+| 字の切れ | `alert-textfit.mjs` | 道具が知る段（ハロウィンの7段・豚）。11月の段の札はハロウィン2版目の写し |
+| 字の濃さ | `alert-ink.mjs` | 地は合成（白・黒・明暗の縞・灰の雑音）× 12人。いまのテーマと豚（道具が段を数えるのはハロウィンだけなので、ほかのテーマは1段。動画の7段の字の下の地は見ていない） |
 | 貯金箱の大きさ | `alert-banksize.mjs` | scale 0.5 と 0.36（PRISM の縮み方込み） |
 | 展開の上限 | `alert-decode.mjs` | 7段 × CPU 1・4・6倍 × 3回 |
 | fx の動画 | `fx_check.py <fx> --sheet` | 焼く前の連番が無いので、画質（PSNR）と焼いたコマとの透明の差は見ない（下の焼くときの手順で） |
-| jest・型 | `npx jest app/alertbox`・`tsc` | `roster.test.tsx` の時間切れと `.svg` の2件は前から（分けて数える） |
+| jest・型 | `npx jest app/alertbox`・`tsc`（`app/alertbox` の中だけ数える） | `.svg` の2件は前から。`roster.test.tsx` だけが落ちたら単独で回し直し、時間切れは前からとして分けて数える |
 | 録画 | `alert-record.mjs`（7段）・`alert-compare.mjs` | 地は合成の街の絵。キャラは縦横比が真ん中の人 |
 | キャラ絵 | `avatars.py` | 名簿の本物を CI の中で落とし、縦長・横長・余白・不透明・色の数（ステッカー風／3D風）で散らして12人。10人に届かなければ ❌ |
 
