@@ -61,10 +61,12 @@
  * その既定の絵が無いので、撮っても写らない。だから**構造を数える**（撮るコマの間も、描くたびに全部の `<video>`）:
  *
  * - `noPoster` … poster を持たない `<video>`（要素の数）
- * - `early` … 最初のコマ（requestVideoFrameCallback の合図）より前、または readyState 2 未満で見えていた `<video>`
- *   （祖先の opacity の積が 0.01 を超えた。要素の数）
+ * - `early` … 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの途中でもないのに
+ *   readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）
+ * - `seam`（合否に入れない）… 滞在のくり返しの継ぎ目（loop の頭出し。readyState が 20ms ほど 1 に落ちるが、
+ *   最後のコマは画面に残る）で見えていた `<video>`。継ぎ目を見ていることの印
  *
- * どちらも 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
+ * `noPoster`・`early` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
  *
  * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
@@ -245,6 +247,12 @@ const VIDEO_WATCH = (ctl) => `(() => {
         else n.querySelectorAll("video").forEach(hook);
       }
   }).observe(document, { childList: true, subtree: true });
+  /* コマを持っていない形: 合図がまだ・何も読んでいない・読めたところが 2 未満で頭出しの途中でもない。
+     **くり返し（loop）の継ぎ目は数えない。** 滞在の尻で頭へ戻る頭出しのあいだ（20ms ほど）readyState は 1 に
+     落ちるが、最後のコマは画面に残っている（コマを持つ前ではない）。#1134 の1回目はこれを 821 本数えた。
+     継ぎ目は seam に別に数える（合否に入れない。見ていることの印） */
+  const seam = new WeakSet();
+  st.seam = 0;
   const tick = () => {
     st.ticks++;
     for (const v of document.querySelectorAll("video")) {
@@ -255,12 +263,21 @@ const VIDEO_WATCH = (ctl) => `(() => {
         st.noPoster++;
         if (st.bad.length < 8) st.bad.push({ kind: "noPoster", v: name(v), t: +(performance.now() / 1000).toFixed(2) });
       }
+      // 軽くする: 自分が透明（アプリは見せない本を opacity 0 で置く）か、もう数えた要素は、祖先をなめない
+      if (v.style.opacity === "0" || early.has(v)) continue;
+      const nof = (st.rvfc && !framed.has(v)) || v.readyState === 0 || (v.readyState < 2 && !v.seeking);
+      const isSeam = !nof && v.readyState < 2 && v.seeking;
+      if (!nof && !(isSeam && !seam.has(v))) continue;
       const o = seen(v);
-      if (o > 0.01 && (v.readyState < 2 || (st.rvfc && !framed.has(v))) && !early.has(v)) {
-        early.add(v);
-        st.early++;
-        if (st.bad.length < 8) st.bad.push({ kind: "early", v: name(v), opacity: +o.toFixed(2), readyState: v.readyState, t: +(performance.now() / 1000).toFixed(2) });
+      if (o <= 0.01) continue;
+      if (isSeam) {
+        seam.add(v);
+        st.seam++;
+        continue;
       }
+      early.add(v);
+      st.early++;
+      if (st.bad.length < 8) st.bad.push({ kind: "early", v: name(v), opacity: +o.toFixed(2), readyState: v.readyState, seeking: v.seeking, framed: framed.has(v), t: +(performance.now() / 1000).toFixed(2) });
     }
     nRAF(tick);
   };
@@ -865,7 +882,7 @@ async function main() {
   /* `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>` は、組ごとに1つでもあれば落ちる */
   const vsum = (k) => results.reduce((s, r) => s + (r.vg?.[k] ?? 0), 0);
   const vbadRuns = results.filter((r) => r.vg && (r.vg.noPoster || r.vg.early));
-  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")} / コマを持つ前に見えた ${vsum("early")}（全部 0）`);
+  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")} / コマを持つ前に見えた ${vsum("early")}（全部 0）・くり返しの継ぎ目 ${vsum("seam")}（数えない）`);
   for (const r of vbadRuns.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.vg.bad.slice(0, 3))}`);
 
   const json = arg("json", "");
@@ -898,6 +915,7 @@ async function main() {
           rvfc: vsum("rvfc"),
           noPoster: vsum("noPoster"),
           early: vsum("early"),
+          seam: vsum("seam"),
           vbad: vbadRuns.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, noPoster: r.vg.noPoster, early: r.vg.early, bad: r.vg.bad.slice(0, 3) })),
           errors: errs.slice(0, 5),
         },

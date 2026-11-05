@@ -774,6 +774,29 @@ describe("7. コマを持つ前の `<video>` を見せない（#1133。Android �
     expect(onReveal).toHaveBeenCalledTimes(1);
   });
 
+  it("滞在のくり返しの継ぎ目（loop の頭出し。readyState が一瞬 1 に落ちる）では、見せ方を変えない（消すと継ぎ目ごとに点滅する）", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    present(back.intro);
+    fire(back.intro, "ended");
+    fire(back.stay, "playing");
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    // Chromium の loop: 尻で頭へ戻る頭出しのあいだ readyState 1・seeking → seeked・playing（#1134 の1回目で数えた形）
+    back.stay.ready = 1;
+    fire(back.stay, "seeking");
+    fire(back.stay, "waiting");
+    expect(seen(back)).toEqual(["stay"]);
+    back.stay.ready = 4;
+    fire(back.stay, "seeked");
+    fire(back.stay, "playing");
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    expect(back.stay.plays).toBe(1);
+  });
+
   it("止めたあとに合図が来ても、何も見せない", () => {
     const { kit, back } = makeKit(false);
     const present = framed(...partsOf(back));

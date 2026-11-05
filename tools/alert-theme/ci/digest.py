@@ -73,7 +73,7 @@ def build(res):
     if any(t.get("fx") for t in prep.get("themes") or []) and not sm("videos"):
         ok = False
         bad.insert(0, "動画の段のあるテーマなのに `<video>` を1本も見ていない（守りを数えていない）")
-    vid = f"。`<video>` {sm('videos'):,}本: poster 無し {sm('noPoster')} / コマを持つ前に見えた {sm('early')}（全部 0）"
+    vid = f"。`<video>` {sm('videos'):,}本: poster 無し {sm('noPoster')} / コマを持つ前に見えた {sm('early')}（全部 0。くり返しの継ぎ目 {sm('seam'):,} は数えない）"
     band = any(t.get("heroBands") for t in tools)
     hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
     if not sm("heroSeen"):
