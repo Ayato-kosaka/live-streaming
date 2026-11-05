@@ -6,10 +6,18 @@
     python3 tools/alert-theme/ci/run.py shard <名前>     # 1組回して <work>/res/<名前>.json に残す
     python3 tools/alert-theme/ci/run.py digest          # <work>/res/ から <work>/digest.md（30行以内）。❌ があれば 1
     python3 tools/alert-theme/ci/run.py all             # 手元で全部を順に（道具を直すときだけ。2時間ほどかかる）
+    python3 tools/alert-theme/ci/run.py themes          # 測るテーマ（豚を除く）を JSON で。道具の既定がこれを呼ぶ
 
-置き場は `ALERT_WORK`（既定 /tmp/alert-work）。テーマは `ALERT_THEME`（空なら `app/alertbox/themes.ts` の
-いちばん新しい `from` のテーマ）、旗は `ALERT_FX`（空ならテーマが動画の段 `fxVideo` を持つとき `full`、
-`-` で旗なし）。決めたものは prep が `in/season.json` に書き、どの shard もそれを読む（全部が同じ条件で数える）。
+置き場は `ALERT_WORK`（既定 /tmp/alert-work）。
+
+## 測るテーマ
+
+**期間がいま効いている、または 60 日以内に始まるテーマ ＋ 豚（`none`）**（日本時間で見る）。終わったテーマは測らない
+（終わったハロウィンを毎 PR で数えていた日、ハロウィンの光が字の下を通る秒で割れて、関係の無い PR が赤くなった）。
+消してはいないので、来年の日付を themes.ts に足せば 60 日前からひとりでに戻る。
+旗は、テーマが動画の段（`fxVideo`）を持てば `full`（配信に出す前の7段も、出したあとの7段も同じに数える）。
+`ALERT_THEME`（カンマ区切り）と `ALERT_FX`（`-` で旗なし）で名指しできる。
+決めたものは prep が `in/season.json` に書き、どの shard もそれを読む（全部が同じ条件で数える）。
 
 ## なぜ Actions に置くか
 
@@ -51,28 +59,73 @@ OVERLAP_KNOWS = {"halloween"}
 sys.path.insert(0, str(HERE))
 
 
-def season():
-    p = IN / "season.json"
-    if p.exists():
-        return json.loads(p.read_text(encoding="utf-8"))
-    # TS を字で読むのは python/ts_read.py だけ（ts_readers_selftest が見ている）
+SOON_DAYS = 60
+
+
+def read_themes():
+    """themes.ts の THEMES を [{id, from, until, fxVideo}] で。TS を字で読むのは python/ts_read.py だけ"""
     sys.path.insert(0, str(ROOT / "python"))
     from ts_read import array_body, code_only, fields, nested_body, objects  # noqa: PLC0415
 
     src = code_only((ROOT / "app/alertbox/themes.ts").read_text(encoding="utf-8"))
-    themes = []
+    out = []
     for o in objects(array_body(src, "THEMES")):
         f = fields(o)
-        themes.append({"id": f.get("id", ""), "from": f.get("from", ""), "fxVideo": bool(nested_body(o, "fxVideo").strip())})
-    if not themes and not os.environ.get("ALERT_THEME"):
+        out.append({"id": f.get("id", ""), "from": f.get("from", ""), "until": f.get("until", ""), "fxVideo": bool(nested_body(o, "fxVideo").strip())})
+    if not out:
         raise SystemExit("themes.ts の THEMES が読めない（置き場か形が変わった？）。ALERT_THEME で名指しする")
-    theme = os.environ.get("ALERT_THEME") or max(themes, key=lambda t: t["from"])["id"]
-    fx = os.environ.get("ALERT_FX", "")
-    if not fx:
-        fx = "full" if any(t["id"] == theme and t["fxVideo"] for t in themes) else ""
-    if fx == "-":
-        fx = ""
-    return {"theme": theme, "fx": fx}
+    return out
+
+
+def pick_themes(themes, now):
+    """期間がいま効いている、または SOON_DAYS 日以内に始まるテーマ（始まりの順）。now は日本時間の naive datetime"""
+    from datetime import datetime, timedelta  # noqa: PLC0415
+
+    def at(s):
+        try:
+            return datetime.fromisoformat(s)
+        except ValueError:
+            return None
+
+    got = []
+    for t in themes:
+        frm, until = at(t["from"]), at(t["until"])
+        if frm is None:
+            continue
+        live = frm <= now and (until is None or now < until)
+        soon = now < frm <= now + timedelta(days=SOON_DAYS)
+        if live or soon:
+            got.append(t)
+    return sorted(got, key=lambda t: t["from"])
+
+
+def season(fresh=False):
+    p = IN / "season.json"
+    if p.exists() and not fresh:
+        return json.loads(p.read_text(encoding="utf-8"))
+    from datetime import datetime  # noqa: PLC0415
+    from zoneinfo import ZoneInfo  # noqa: PLC0415
+
+    named = [x for x in os.environ.get("ALERT_THEME", "").split(",") if x]
+    all_themes = read_themes() if not named else []
+    if named:
+        picked = [{"id": x, "fxVideo": True} for x in named]
+    else:
+        picked = pick_themes(all_themes, datetime.now(ZoneInfo("Asia/Tokyo")).replace(tzinfo=None))
+    fx_env = os.environ.get("ALERT_FX", "")
+    themes = []
+    for t in picked:
+        fx = fx_env or ("full" if t["fxVideo"] else "")
+        themes.append({"theme": t["id"], "fx": "" if fx == "-" else fx})
+    # いちばん先に始まったもの（いま配信に出ているもの）を、録画と対照に使う。無ければ豚
+    first = themes[0] if themes else {"theme": "none", "fx": ""}
+    return {"themes": themes, "theme": first["theme"], "fx": first["fx"]}
+
+
+def ink_label(s):
+    """表に出す「何を測ったか」。動画の旗が付けば7段"""
+    parts = [f"{t['theme']}・{'7段' if t['fx'] or t['theme'] == 'halloween' else '1段'}" for t in s["themes"]]
+    return " ＋ ".join(parts + ["豚"])
 
 
 def alert_sec(a):
@@ -91,9 +144,14 @@ def stay_frames(a):
     return ",".join(str(x) for x in ts)
 
 
-def plan():
-    s = [f"overlap-{a}-{sz}" for a in AMOUNTS for sz in SIZES]
-    return s + ["overlap-control", "textfit", "ink", "banksize", "decode", "fx", "media"]
+def overlap_themes(s):
+    return s["themes"] or [{"theme": "none", "fx": ""}]
+
+
+def plan(s=None):
+    s = s or season()
+    out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
+    return out + ["controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
 
 
 # ---------------------------------------------------------------- 支度
@@ -128,8 +186,8 @@ def prep():
     for d in (RES, PUB, TMP):
         d.mkdir(parents=True, exist_ok=True)
     log = RES / "prep.log"
-    s = season()
-    info = {"theme": s["theme"], "fx": s["fx"], "steps": {}}
+    s = season(fresh=True)
+    info = {"theme": s["theme"], "fx": s["fx"], "themes": s["themes"], "label": ink_label(s), "shards": plan(s), "steps": {}}
     if not (DIST / "alertbox").exists():
         inputs.clear(DIST)
         code, sec = sh(["npx", "expo", "export", "--platform", "web", "--output-dir", DIST], log, cwd=ROOT)
@@ -192,6 +250,12 @@ def fxargs(s):
     return ["--fx", s["fx"]] if s["fx"] else []
 
 
+def any_fx(s):
+    """複数のテーマを1本で測る道具（textfit・ink）に渡す旗。どれかが動画の段を持てば full"""
+    fx = next((t["fx"] for t in s["themes"] if t["fx"]), "")
+    return ["--fx", fx] if fx else []
+
+
 def load(p):
     try:
         return json.loads(Path(p).read_text(encoding="utf-8"))
@@ -207,7 +271,7 @@ def shard(name):
     log.write_text("", encoding="utf-8")
     out = TMP / name
     inputs_clear(out)
-    res = {"shard": name, "theme": s["theme"], "fx": s["fx"]}
+    res = {"shard": name, "theme": s["theme"], "fx": s["fx"], "label": ink_label(s)}
     t0 = time.time()
     try:
         if name == "unit":
@@ -215,8 +279,7 @@ def shard(name):
         elif name == "fx":
             res |= fx(s, log, out)
         elif name == "decode":
-            code, _ = sh(node("alert-decode.mjs", "--dist", DIST, "--amounts", ",".join(map(str, AMOUNTS)), "--rates", "1,4,6", "--runs", "3", "--json", out / "out.json"), log, cwd=SPRITES)
-            res |= {"exit": code, "tool": load(out / "out.json")}
+            res |= decode(s, log, out)
         else:
             with Server() as srv:
                 res |= browser_shard(name, s, srv.base, log, out)
@@ -236,12 +299,65 @@ def inputs_clear(p):
     p.mkdir(parents=True)
 
 
+def decode(s, log, out):
+    """テーマごとに順に（CPU を絞るので並べない）。台本の段も動画の段も、段の頭で用意しきるまで"""
+    runs = {}
+    code = 0
+    for t in overlap_themes(s):
+        j = out / f"{t['theme']}.json"
+        c, _ = sh(node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", ",".join(map(str, AMOUNTS)), "--rates", "1,4,6", "--runs", "3", "--json", j), log, cwd=SPRITES)
+        runs[t["theme"]] = {"exit": c, "tool": load(j)}
+        code = max(code, c)
+    tools = [v["tool"] for v in runs.values() if v["tool"]]
+    merged = None
+    if tools:
+        merged = {
+            "runs": sum(x["runs"] for x in tools),
+            "max": max((x["max"] for x in tools if x["max"] is not None), default=None),
+            "limit": tools[0]["limit"],
+            "bad": [b for x in tools for b in x["bad"]],
+            "errs": [e for x in tools for e in x["errs"]],
+            "byTheme": {k: v["tool"]["runs"] for k, v in runs.items() if v["tool"]},
+        }
+    return {"exit": code, "tool": merged}
+
+
+def controls(s, base, log, out):
+    """壊すと落ちるか（どれも 1 で落ちるのが正しい）。いちばん先のテーマの段4（1,500円）で1本ずつ"""
+    t = {"theme": s["theme"], "fx": s["fx"]}
+    one = sorted((IN / "chars").glob("*.png"))[0]
+    onedir = out / "one"
+    onedir.mkdir(parents=True)
+    shutil.copy(one, onedir / one.name)
+    frames = [] if t["theme"] in OVERLAP_KNOWS else ["--frames", "4.5,6,9"]
+    jobs = {
+        # 顔の前に手前の層の四角を置く / 主役の顔の枠を字の真ん中に置く / 主役の帯を字の高さに置く
+        "face": node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "face", *frames),
+        "hero": node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "hero", *frames),
+        "band": node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "band", *frames),
+        # 字の層を左へずらして縁で切る / 字の色を縁取りに近い暗い赤にする / 展開の上限を 1ms にする
+        "textfit": node("alert-textfit.mjs", "--base", base, "--themes", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--control", "edge"),
+        "ink": node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", onedir, "--themes", t["theme"], *fxargs(t), "--amounts", "1500", "--control", "flat"),
+        "decode": node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--rates", "1", "--runs", "1", "--limit", "1"),
+    }
+    got = {}
+    for kind, cmd in jobs.items():
+        o = out / kind
+        o.mkdir(parents=True)
+        if kind != "decode":
+            cmd = [*cmd, "--out", o]
+        code, _ = sh([*cmd, "--json", o / "out.json"], log, cwd=SPRITES)
+        got[kind] = {"exit": code, "tool": load(o / "out.json")}
+    return {"exit": 0 if all(v["exit"] == 1 for v in got.values()) else 1, "controls": got}
+
+
 def browser_shard(name, s, base, log, out):
     chars = IN / "chars"
-    if name.startswith("overlap-") and name != "overlap-control":
-        _, a, size = name.split("-")
-        extra = [] if s["theme"] in OVERLAP_KNOWS else ["--frames", stay_frames(int(a))]
-        cmd = node("alert-overlap.mjs", "--base", base, "--chars", chars, "--theme", s["theme"], *fxargs(s), "--amounts", a, "--sizes", size, "--texts", TEXTS, "--out", out, "--json", out / "out.json", *extra)
+    if name.startswith("overlap-"):
+        _, theme, a, size = name.split("-")
+        t = next((x for x in overlap_themes(s) if x["theme"] == theme), {"theme": theme, "fx": ""})
+        extra = [] if theme in OVERLAP_KNOWS else ["--frames", stay_frames(int(a))]
+        cmd = node("alert-overlap.mjs", "--base", base, "--chars", chars, "--theme", theme, *fxargs(t), "--amounts", a, "--sizes", size, "--texts", TEXTS, "--out", out, "--json", out / "out.json", *extra)
         code, _ = sh(cmd, log, cwd=SPRITES)
         tool = load(out / "out.json")
         # 落ちたコマの絵を3枚まで、録画の枝に載せる（ほかの絵は捨てる）
@@ -252,31 +368,20 @@ def browser_shard(name, s, base, log, out):
                 shutil.copy(h["png"], dst)
                 h["png"] = f"fail/{dst.name}"
         return {"exit": code, "tool": tool}
-    if name == "overlap-control":
-        first = sorted(chars.glob("*.png"))[0]
-        got = {}
-        for kind in ("face", "hero"):
-            o = out / kind
-            o.mkdir(parents=True)
-            extra = [] if s["theme"] in OVERLAP_KNOWS else ["--frames", "4.5,6,9"]
-            cmd = node("alert-overlap.mjs", "--base", base, "--chars", first, "--theme", s["theme"], *fxargs(s), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", kind, "--out", o, "--json", o / "out.json", *extra)
-            code, _ = sh(cmd, log, cwd=SPRITES)
-            got[kind] = {"exit": code, "tool": load(o / "out.json")}
-        # 対照は 1（顔に乗った）で落ちるのが正しい
-        return {"exit": 0 if all(v["exit"] == 1 for v in got.values()) else 1, "controls": got}
+    if name == "controls":
+        return controls(s, base, log, out)
+    themes = ",".join([t["theme"] for t in s["themes"]] + ["none"])
     if name == "textfit":
-        code, _ = sh(node("alert-textfit.mjs", "--base", base, "--out", out, "--json", out / "out.json"), log, cwd=SPRITES)
+        code, _ = sh(node("alert-textfit.mjs", "--base", base, "--themes", themes, *any_fx(s), "--out", out, "--json", out / "out.json"), log, cwd=SPRITES)
         return {"exit": code, "tool": load(out / "out.json")}
     if name == "ink":
-        # いまのテーマと豚（季節の外）。道具が段を数えるのはハロウィンだけ（ほかのテーマは額の先頭の1段）。
-        # 終わったハロウィンを毎 PR で数えると、ハロウィンの光が字の下を通る秒で割れて（2026-11-05 に
-        # 3000円の段で 3〜10件）、関係の無い PR が赤くなる。偽の赤は CI を無視する癖を付けるので、入れない
-        themes = ",".join(dict.fromkeys([s["theme"], "none"]))
-        cmd = node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", chars, "--themes", themes, "--amounts", ",".join(map(str, AMOUNTS)), "--out", out, "--json", out / "out.json")
+        cmd = node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", chars, "--themes", themes, *any_fx(s), "--amounts", ",".join(map(str, AMOUNTS)), "--out", out, "--json", out / "out.json")
         code, _ = sh(cmd, log, cwd=SPRITES)
         return {"exit": code, "tool": load(out / "out.json"), "themes": themes}
     if name == "banksize":
-        code, _ = sh(node("alert-banksize.mjs", "--base", base, "--themes", s["theme"], "--json", out / "out.json"), log, cwd=SPRITES)
+        if not s["themes"]:
+            return {"exit": None, "na": "季節のテーマが無い（豚だけ）"}
+        code, _ = sh(node("alert-banksize.mjs", "--base", base, "--themes", ",".join(t["theme"] for t in s["themes"]), "--json", out / "out.json"), log, cwd=SPRITES)
         return {"exit": code, "tool": load(out / "out.json")}
     if name == "media":
         return media(s, base, log, out)
@@ -322,10 +427,15 @@ def probe(p):
 
 
 def fx(s, log, out):
-    d = ROOT / "public/alert/themes" / s["theme"] / "fx"
-    if not (d / "manifest.json").exists():
-        return {"exit": None, "na": f"{s['theme']} は動画の段を持たない"}
-    code, _ = sh([sys.executable, ROOT / "tools/alert-theme/fx_check.py", d, "--sheet", PUB / "fx-sheet.jpg"], log, cwd=ROOT, timeout=3600)
+    have = [t["theme"] for t in s["themes"] if t["fx"] and (ROOT / "public/alert/themes" / t["theme"] / "fx/manifest.json").exists()]
+    if not have:
+        return {"exit": None, "na": "動画の段を持つテーマが無い"}
+    code = 0
+    for th in have:
+        d = ROOT / "public/alert/themes" / th / "fx"
+        c, _ = sh([sys.executable, ROOT / "tools/alert-theme/fx_check.py", d, "--sheet", PUB / f"fx-sheet-{th}.jpg"], log, cwd=ROOT, timeout=3600)
+        code = max(code, c)
+    d = ROOT / "public/alert/themes" / have[0] / "fx"
     text = open(log, encoding="utf-8", errors="replace").read()
     tiers = re.findall(r"^== 段(\d+)", text, re.M)
     bad, tier = [], "?"
@@ -399,6 +509,9 @@ def main(argv):
         return prep()
     if cmd == "plan":
         print(json.dumps(plan()))
+        return 0
+    if cmd == "themes":
+        print(json.dumps(season(fresh=True)["themes"]))
         return 0
     if cmd == "shard" and len(argv) > 2:
         return shard(argv[2])

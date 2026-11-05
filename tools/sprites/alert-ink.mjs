@@ -18,6 +18,9 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * テーマは `--themes`（既定: 期間がいま効いている・60日以内に始まるテーマ ＋ 豚。`alertseason.mjs`）。動画の段は
+ * `--fx full`。段を回すのはハロウィンと動画の段、ほかは1段。`--control flat` は対照: 字の色を縁取りに近い暗い赤にする → 1 で落ちる。
+ *
  * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
  *
  * 終了コード: 0 = 全部 4.5 以上 / 1 = 割れた字がある / 2 = 測れなかった（字を拾えない・2枚が違う）
@@ -29,6 +32,7 @@ import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
 import { judgeInk } from "./inkjudge.mjs";
 import { serveDirectory } from "./fixserve.mjs";
+import { fxManifest, seasonThemes, settleFor, tiered } from "./alertseason.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -51,7 +55,11 @@ const chars = readdirSync(charDir)
   .map((f) => ({ id: basename(f, extname(f)), body: readFileSync(join(charDir, f)) }));
 if (!chars.length) die("キャラ絵が1枚も無い");
 const amounts = arg("amounts", "100,300,700,1500,3000,7000,10000").split(",").map(Number);
-const themes = arg("themes", "halloween,none").split(",");
+const themes = (arg("themes", null) ?? [...seasonThemes().map((t) => t.theme), "none"].join(",")).split(",").filter(Boolean);
+const fx = arg("fx", "");
+const control = arg("control", "");
+if (control && control !== "flat") die(`--control は flat（${control}）`);
+const mans = {};
 const [W, H] = arg("size", "436x776").split("x").map(Number);
 const DPR = Number(arg("dpr", "2"));
 const out = resolve(arg("out", "/tmp/alert-ink"));
@@ -61,10 +69,8 @@ mkdirSync(out, { recursive: true });
 
 /* 字が出そろって止まる秒（キャラ絵が出たあと）。段7は数え上げ「ドン」のあと、段4は書き終えたあと、
    段5（死神）・段6（ゾンビ）はキャラ絵がふくらみ終えたあと */
-const settleAt = (theme, a) =>
-  theme !== "halloween"
-    ? 2.5
-    : a >= 10000
+const halloweenAt = (a) =>
+  a >= 10000
       ? 12
       : a >= 5000
         ? 9
@@ -75,6 +81,7 @@ const settleAt = (theme, a) =>
             : a >= 500
               ? 4
               : 3;
+const settleAt = (theme, a) => settleFor({ theme, fx: theme === "none" ? "" : fx, man: mans[theme], amount: a, halloween: halloweenAt, plain: 2.5 });
 const NAME = "もっと豆挽けコーヒー商店";
 const MSG = "今日はマジ緊急の緊急で疲れてしもたな！パンパンでパンと豆挽こうぜ！！";
 
@@ -88,7 +95,10 @@ async function main() {
   const judgePage = await (await browser.newContext()).newPage();
   await judgePage.goto(`${shots.base}/`).catch(() => {});
   const queue = [];
-  for (const theme of themes) for (const a of theme === "halloween" ? amounts : [amounts[0]]) for (const bg of BGS) for (const ch of chars) queue.push({ theme, a, bg, ch });
+  for (const theme of themes) {
+    mans[theme] = theme === "none" ? null : await fxManifest(base, theme);
+    for (const a of tiered(theme, fx, mans[theme]) ? amounts : [amounts[0]]) for (const bg of BGS) for (const ch of chars) queue.push({ theme, a, bg, ch });
+  }
   console.log(`${queue.length} 枚（${themes.join("・")} × 段 × 配信画面 ${BGS.length} × キャラ ${chars.length}）`);
   const rows = [];
   const fails = [];
@@ -140,7 +150,12 @@ async function main() {
     writeFileSync(
       resolve(json),
       JSON.stringify(
-        { tool: "alert-ink", exit: code, lim: LIM, shots: done, rows: rows.length, minMid: lo("mid"), minRhi: lo("rhi"), bgs: BGS, chars: chars.length, fails, errs },
+        {
+          tool: "alert-ink", exit: code, lim: LIM, shots: done, rows: rows.length, minMid: lo("mid"), minRhi: lo("rhi"), bgs: BGS, chars: chars.length, themes, fx,
+          byTheme: Object.fromEntries(themes.map((t) => [t, rows.filter((r) => r.theme === t).length])),
+          tiers: Object.fromEntries(themes.map((t) => [t, new Set(rows.filter((r) => r.theme === t).map((r) => r.tier)).size])),
+          fails, errs,
+        },
         null,
         1
       )
@@ -167,14 +182,23 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     }, data);
     const p = await ctx.newPage();
     const q = new URLSearchParams({ preview: "1", theme, amount: String(a), name: NAME, msg: MSG });
+    if (fx && theme !== "none") q.set("fx", fx);
     await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
     await p.waitForSelector('[data-char="box"]', { timeout: 20000 });
     await p.waitForTimeout(settleAt(theme, a) * 1000);
     // 全部止める（2枚のあいだに動くと差分が嘘になる）
     await p.evaluate(() => {
       document.getAnimations().forEach((x) => x.pause());
+      // 動画の段の動画も止める。流れたままだと2枚のあいだで地が変わり、字の無い箱で比 1.0 が出る
+      // （2026-11-05、11月の7段で 63件。どれも「字の無い SPAN」で、字の芯ではなく動画のコマ送りを測っていた）
+      document.querySelectorAll("video").forEach((v) => v.pause());
       window.requestAnimationFrame = () => 0;
     });
+    if (control === "flat")
+      await p.addStyleTag({
+        // 縁取り（字の後ろに重ねた濃い字）に近い暗い赤（比は 2 前後）。縁取りと同じ色にすると字の画素が拾えず「測れない」になる
+        content: '[data-ink="fill"]{color:#8A1A1A!important;-webkit-text-fill-color:#8A1A1A!important}',
+      });
     await p.waitForTimeout(200);
     const boxes = await p.evaluate(() => {
       const out = [];
@@ -197,7 +221,7 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     const j = await judgeInk(judgePage, { shotUrl: `${shots.base}/${nm}.shot.png`, bgUrl: `${shots.base}/${nm}.bg.png`, boxes, dpr: DPR, lim: LIM });
     if (j.err) throw new Error(j.err);
     if (!j.rows.length) throw new Error(`測れた字が無い ${JSON.stringify(j.dropped)}`);
-    const tier = theme === "halloween" ? `${a}円` : "季節の外";
+    const tier = tiered(theme, fx, mans[theme]) ? `${a}円` : theme === "none" ? "季節の外" : theme;
     return j.rows.map((r) => ({ tier, theme, bg, char: ch.id, t: r.t, tag: r.tag, size: r.size, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
   } finally {
     await ctx.close();
