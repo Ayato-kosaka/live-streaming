@@ -8,9 +8,9 @@ Blender は要らない（素の Python）。`castle_t7.py` がこれを読ん�
 終了コード: 0 = つながる / 1 = つながらない所が在る
 
 ## 決まり
-- stay の動きは全部 3.0 秒で1周する（`per()`）。金貨・葉・粒は 1.5 / 1.0 秒の周期も使う（3.0 の約数）
+- stay の動きは全部 3.0 秒で1周する（`per()`）。月の光の粒・葉・粒は 1.5 / 1.0 秒の周期も使う（3.0 の約数）
 - intro の後半は、stay と同じ式に `τ = t - 7.0` を入れて動かす。だから intro の終わりがそのまま stay の頭になる
-- 画面の外へ出て頭に戻る物（金貨・葉）は、戻るコマの前後で大きさを 0 にする（動きのぶれで画面を縦に横切る筋が出ないように）
+- 頭に戻る物（月の光の粒・葉）は、戻るコマの前後で大きさを 0 にする（動きのぶれで画面を縦に横切る筋が出ないように）
 - 値の名前:
   `obj:<名前>:loc` / `:rot`（度ではなくラジアン）/ `:scale`（数1つか3つ）、`val:<名前>`（材質・光の強さ）、`cam:lens`
 
@@ -106,8 +106,8 @@ GATE_DEPTH = 29.6
 CASTLE_H = B + 18.2
 S_BANK = (STICKER_GATE[1] * BANK_H) / ((P.LENS_FROM / 12.0) * (P.H / 2) / GATE_DEPTH) / CASTLE_H
 Q_BANK = screen(BANK_GATE_SCREEN[0], BANK_GATE_SCREEN[1], GATE_DEPTH, P.LENS_FROM)
-# 金貨が吸い込まれる先（貯金箱の城の窓のあたり）
-COIN_SINK = screen(BANK_X + BANK_W * 0.5, BANK_Y + BANK_H * 0.45, 22.0)
+# 締めで、月の光の粒が吸い込まれる先（貯金箱の城の窓のあたり）
+LIGHT_SINK = screen(BANK_X + BANK_W * 0.5, BANK_Y + BANK_H * 0.45, 22.0)
 
 # あやと（板）。画面のどこに居るか（絵の真ん中）
 AYATO_DEPTH = 17.0
@@ -164,7 +164,7 @@ def pipo_plane(name):
 # ---------------------------------------------------------------- 板の形の変わり方（シェイプキー）
 # 板は絵のまま（描き直さない）。形を少し動かして生きて見せる: あやとのマントがはためく・ピポが旗を振る。
 # 形は絵の画素の座標で書く（x は右、y は下が正）。値 1 のときの動き (dx, dy, dn) を返す（絵の px。dn はカメラへ向かう向き）。
-# Blender（castle_t7.py）はこれでシェイプキーを作り、書き出し（t7_pack.py）は light の版のあやとの形を同じ式で曲げる
+# Blender（castle_t7.py）はこれでシェイプキーを作る
 BOARD_KEYS = {
     "ayato_spread": ("flap_s", "flap_c", "open"),
     "ayato_rise": ("flut_s", "flut_c"),
@@ -262,36 +262,71 @@ def orbit(p, yaw):
 TOWER = (3.6, 2.4)
 
 
-def _coin_spec():
-    burst = []
+# ---------------------------------------------------------------- 月の光の粒（金貨の代わり）
+# 2026-11-05 にあやとから「投げ銭してコイン撒くのはイメージ悪いので変えてほしい」（#1095）。
+# 金貨の雨・門から噴き上がる金貨・滞在中に降り続ける金貨・締めで貯金箱へ吸い込まれる金貨を、全部お金でないものに替えた:
+#   - 伯爵が降り立ってマントを広げると、マントの陰から**こうもりの群れ**が満月へ飛び立つ（`_swarm_spec`）
+#   - 群れが満月を横切ると、月がひときわ光って**光の筋**が走り、**月の光の粒**が城へ降りそそぐ（`MOTE_RAIN`）
+#   - 門が開く瞬間に噴き上がるのは、門の灯りの**火の粉**（`EMBERS`。上へ昇って消える。地面に落ちない）
+#   - 滞在中は月の光の粒がまたたきながら舞い降り（`MOTE_STAY`）、締めでは城が貯金箱へ縮むのといっしょに、
+#     その光が城の窓へ吸い込まれる（窓が灯る）
+# バラの花びらは段5（ソフィアのバラの祭り）が使っているので、段を被らせないために選ばなかった。
+# 金の粉も段5が昇らせている。月の光（銀と淡い紫に、少しだけシャンパンの金）は、この段の主役の満月から来る
+#
+# **乱数を引く回数と順は、前の版（金貨）のまま変えない。** あとに引くこうもり・葉・粒の並び（顔の線・顔の穴・
+# あやとの後ろを通す葉で確かめ済み）を崩さないため。金貨の並びの数を、そのまま粒の並びに読み替える
+def _mote_spec():
+    rain = []
     for i in range(110):
-        burst.append(dict(
-            name=f"coin_b{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(14, 32)]),
-            # 落ちる速さと回る速さは、動きのぶれで金貨が「黄色いぼけ玉」に見えないところまで落とした（2026-11-04 の採点）。
-            # 乱数を引く回数は変えない（こうもり・葉・粒の並びが変わらないように）
+        rain.append(dict(
+            name=f"mote_r{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(14, 32)]),
             ts=R.uniform(4.35, 5.05), dur=R.uniform(1.4, 1.9), drift=R.uniform(-60, 60),
             axis=(R.uniform(-1, 1), R.uniform(-1, 1), R.uniform(-1, 1)), spin=R.uniform(1.2, 2.8) * R.choice([-1, 1]),
             rot0=(R.uniform(0, TAU), R.uniform(0, TAU), R.uniform(0, TAU)), size=R.uniform(1.0, 1.4)))
-    fountain = []
+    embers = []
     for i in range(36):
-        fountain.append(dict(
-            name=f"coin_f{i:03d}", ts=R.uniform(3.0, 3.5), v=(R.uniform(-5.5, 5.5), R.uniform(-13, -7), R.uniform(8.5, 13.5)),
+        embers.append(dict(
+            name=f"ember_{i:02d}", ts=R.uniform(3.0, 3.5), v=(R.uniform(-5.5, 5.5), R.uniform(-13, -7), R.uniform(8.5, 13.5)),
             spin=(R.uniform(-14, 14), R.uniform(-14, 14), R.uniform(-14, 14)), size=R.uniform(0.85, 1.15)))
     stay = []
     for i in range(54):
         Pd = R.choice([3.0, 1.5, 1.5])
         stay.append(dict(
-            name=f"coin_s{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(16, 32)]),
+            name=f"mote_s{i:03d}", sx=R.uniform(-30, 750), depth=R.choice([R.uniform(11, 16), R.uniform(14, 32), R.uniform(16, 32)]),
             period=Pd, phase=R.random(), drift=R.uniform(-40, 40),
-            # 3.0 秒で整数回まわる（輪が継ぎ目なくつながる）
             turns=(R.choice([-2, -1, 1, 2]), R.choice([-3, -2, 2, 3]), R.choice([-1, 1])),
             rot0=(R.uniform(0, TAU), R.uniform(0, TAU), R.uniform(0, TAU)), size=R.uniform(1.0, 1.35),
             sink_delay=R.uniform(0.0, 0.18)))
-    return burst, fountain, stay
+    # 読み替え（乱数は引かない）
+    for k, m in enumerate(rain + stay):
+        # 粒はあやとの後ろを通す（顔の前でまたたかない）。手前の粒は、あやとのすぐ後ろへ寄せる
+        if m["depth"] < AYATO_DEPTH + 1.5:
+            m["depth"] = AYATO_DEPTH + 1.5 + 0.5 * (m["depth"] - 11)
+        # 銀（月の光）2 に、シャンパンの金 1
+        m["gold"] = k % 3 == 2
+    for m in rain:
+        u0, u1, _ = (a / TAU for a in m["rot0"])
+        # 大きさをばらす（2割ほどが大きく光り、3割ほどが小さな点）。そろった点が並ぶと、雪か画面の汚れに見えた
+        # （試しの絵 run 41951972137）
+        m["size"] *= 1.8 if m["axis"][2] > 0.6 else (0.7 if m["axis"][2] < -0.4 else 1.0)
+        # 満月のあたり（画面の上 1/3）で生まれて、ゆっくり舞い降りる。群れが月を横切るころ（4.75 秒）から
+        m["sy0"] = -30 + 470 * u0 ** 1.4
+        m["fall"] = 300 + 260 * u1
+        m["tb"] = 4.75 + 0.85 * (m["ts"] - 4.35) / 0.7
+        # intro の終わり（6.95 秒）までに消えきる（stay の頭には居ない）
+        m["life"] = min(m["dur"], 6.93 - m["tb"])
+        m["tw"] = 1.5 + abs(m["spin"])
+    for m in stay:
+        u0, u1, _ = (a / TAU for a in m["rot0"])
+        m["size"] *= 1.8 if m["sink_delay"] > 0.144 else (0.7 if m["sink_delay"] < 0.054 else 1.0)
+        m["sy0"] = -40 + 1100 * u0
+        # 1周で舞い降りる量（px）。3.0 秒の粒は 1.5 秒の粒の倍の距離をゆっくり
+        m["fall"] = 90 * m["period"] * (0.7 + 0.6 * u1)
+    return rain, embers, stay
 
 
-COIN_BURST, COIN_FOUNTAIN, COIN_STAY = _coin_spec()
-COINS = COIN_BURST + COIN_FOUNTAIN + COIN_STAY
+MOTE_RAIN, EMBERS, MOTE_STAY = _mote_spec()
+MOTES = MOTE_RAIN + MOTE_STAY
 
 
 def _bat_spec():
@@ -368,7 +403,7 @@ def _spark_spec():
                 break
         burst.append(dict(name=f"spk_r{i:02d}", a=a, dist=R.uniform(230, 430), depth=R.uniform(7, 11), size=R.uniform(0.7, 1.3),
                           delay=R.uniform(0, 0.12)))
-    bank = []  # 前の層: 締めで貯金箱に金貨が入りきったとき
+    bank = []  # 前の層: 締めで月の光が貯金箱の城に入りきったとき
     for i in range(14):
         a = R.uniform(-math.pi, 0)
         bank.append(dict(name=f"spk_k{i:02d}", a=a, dist=R.uniform(60, 150), size=R.uniform(0.6, 1.1), delay=R.uniform(0, 0.08)))
@@ -450,6 +485,10 @@ def sticker(clip, t, out):
     out["val:sticker_win"] = win
 
 
+# 滞在中に残す、満月の光の筋の強さ（山の 1 に対して）
+MOON_RAYS_STAY = 0.35
+
+
 def sky(clip, t, out):
     if clip == "intro":
         op = 0.55 * ease_io(ramp(t, 0.25, 1.2)) + 0.38 * ease_io(ramp(t, 1.15, 1.45)) - 0.05 * ramp(t, 1.6, 2.6)
@@ -466,11 +505,21 @@ def sky(clip, t, out):
         # 配信の上に灰色の円として見えた（2026-11-04 の縦の録画。顔の映った画面で、配信者の顔の横に）
         mop = 1 - ease_io(ramp(t, 0.0, 0.5))
         rise = 0.3 * f
+    # こうもりの群れが満月を横切ると、月がひときわ光って光の筋が走り（4.95 秒が山）、滞在中は筋がうっすら残る
+    if clip == "intro":
+        rays = ease_out(ramp(t, 4.62, 4.95)) * (1 - (1 - MOON_RAYS_STAY) * ease_io(ramp(t, 5.0, 5.9)))
+        halo = mop * (1 + 0.8 * pulse(t, 4.98, 0.25))
+    elif clip == "stay":
+        rays, halo = MOON_RAYS_STAY, mop
+    else:
+        rays, halo = MOON_RAYS_STAY * mop, mop
     tau = per(clip, t)
     out["val:sky_op"] = op
     out["val:sky_det"] = det
     out["val:sky_ph"] = tau / 1.5
     out["val:moon_op"] = mop
+    out["val:moon_halo"] = halo
+    out["val:moon_rays"] = rays
     out["val:moon_rise"] = rise
 
 
@@ -725,83 +774,81 @@ def ayato(clip, t, out):
     out["key:ayato_rise:flut_c"] = flut_a * math.sin(wf)
 
 
-def _fall_pos(sx, sy, depth):
-    return screen(sx, sy, depth)
+def _mote_stay_pos(m, ph):
+    """滞在の粒の、周期の中の位置（ph は 0〜1。締めでは 1 を越えてそのまま舞い降り続ける）"""
+    sy = m["sy0"] + m["fall"] * ph
+    sx = m["sx"] + m["drift"] * math.sin(TAU * ph + m["rot0"][2])
+    return screen(sx, sy, m["depth"])
 
 
-def coins(clip, t, out):
+def _mote_stay_env(m, ph):
+    """またたき（周期の頭と尻で 0。1周に整数回またたくので、輪がつながる）"""
+    return math.sin(math.pi * ph) ** 1.3 * (0.7 + 0.3 * math.sin(TAU * m["turns"][1] * ph + m["rot0"][1]))
+
+
+def motes(clip, t, out):
+    """月の光の粒（雨・滞在）と、門の火の粉。どれも光るだけの粒で、お金に見える形を持たない"""
     tau = per(clip, t)
-    # 降り始め（-120）から下の外（1400）まで
-    Y0, Y1 = -140.0, 1420.0
-    for c in COIN_BURST:
-        n = c["name"]
-        if clip != "intro":
+    # ---- 月の光の粒の雨: 群れが満月を横切るころ、月のあたりで生まれて、またたきながらゆっくり舞い降りる（intro だけ）
+    for m in MOTE_RAIN:
+        n = m["name"]
+        u = (t - m["tb"]) / m["life"] if clip == "intro" else -1.0
+        if not 0.0 <= u <= 1.0:
+            out[f"obj:{n}:loc"] = screen(m["sx"], m["sy0"], m["depth"])
             out[f"obj:{n}:scale"] = HIDE
-            out[f"obj:{n}:loc"] = _fall_pos(c["sx"], Y1, c["depth"])
-            out[f"obj:{n}:rot"] = c["rot0"]
             continue
-        u = (t - c["ts"]) / c["dur"]
-        uc = clamp(u)
-        sy = Y0 + (Y1 - Y0) * (0.45 * uc + 0.55 * uc * uc)
-        sx = c["sx"] + c["drift"] * uc
-        out[f"obj:{n}:loc"] = _fall_pos(sx, sy, c["depth"])
-        a = c["spin"] * (t - c["ts"])
-        ax = c["axis"]
-        out[f"obj:{n}:rot"] = (c["rot0"][0] + a * ax[0] * 2.2, c["rot0"][1] + a * ax[1] * 2.2, c["rot0"][2] + a * ax[2])
-        out[f"obj:{n}:scale"] = c["size"] if 0.0 <= u <= 1.0 else HIDE
-    g = 18.0
-    for c in COIN_FOUNTAIN:
-        n = c["name"]
-        start = (0.0, P.GATE["y"] - 0.6, 2.0)
-        if clip != "intro":
-            out[f"obj:{n}:scale"] = HIDE
+        sy = m["sy0"] + m["fall"] * (0.55 * u + 0.45 * u * u)
+        sx = m["sx"] + m["drift"] * u + 14 * math.sin(TAU * (0.8 * u + m["axis"][0]))
+        # 生まれる瞬間にぽっと光り（1.6 倍）、またたいて、終わりの 4 割で消えていく
+        bloom = ease_out(ramp(u, 0.0, 0.07)) * (1 + 0.6 * pulse(u, 0.07, 0.05))
+        tw = 0.72 + 0.28 * math.sin(TAU * (m["tw"] * u * m["life"] + m["axis"][1]))
+        k = m["size"] * bloom * tw * (1 - ease_in(ramp(u, 0.6, 1.0), 2.0))
+        out[f"obj:{n}:loc"] = screen(sx, sy, m["depth"])
+        out[f"obj:{n}:scale"] = k if k > 1e-3 else HIDE
+    # ---- 門の火の粉: 扉が開く瞬間に噴き上がり、空気に速さを奪われてふわりと漂い、昇りながら消える（地面に落ちない）
+    start = (0.0, P.GATE["y"] - 0.6, 2.0)
+    for e in EMBERS:
+        n = e["name"]
+        life = 1.2 + 0.5 * abs(e["spin"][0]) / 14
+        dt = t - e["ts"] if clip == "intro" else -1.0
+        if not 0.0 <= dt <= life:
             out[f"obj:{n}:loc"] = start
-            out[f"obj:{n}:rot"] = (0.0, 0.0, 0.0)
+            out[f"obj:{n}:scale"] = HIDE
             continue
-        dt = max(0.0, t - c["ts"])
-        vx, vy, vz = c["v"]
-        p = (start[0] + vx * dt, start[1] + vy * dt, start[2] + vz * dt - 0.5 * g * dt * dt)
-        alive = t >= c["ts"] and p[2] > -0.5 and dt < 1.8
-        out[f"obj:{n}:loc"] = p if alive or t < c["ts"] else out.get(f"obj:{n}:loc", p)
-        out[f"obj:{n}:rot"] = tuple(s * dt for s in c["spin"])
-        out[f"obj:{n}:scale"] = c["size"] if alive else HIDE
-    for c in COIN_STAY:
-        n = c["name"]
-        Pd = c["period"]
+        kd = 1.7
+        f = (1 - math.exp(-kd * dt)) / kd
+        vx, vy, vz = e["v"]
+        out[f"obj:{n}:loc"] = (start[0] + vx * f, start[1] + vy * f, start[2] + vz * f + 0.6 * dt * dt)
+        u = dt / life
+        k = (e["size"] * ease_out(ramp(u, 0.0, 0.06)) * (0.75 + 0.25 * math.sin(TAU * abs(e["spin"][1]) / 3 * dt))
+             * (1 - ease_in(ramp(u, 0.5, 1.0), 1.6)))
+        out[f"obj:{n}:scale"] = k if k > 1e-3 else HIDE
+    # ---- 滞在の粒: 画面じゅうで、またたきながら舞い降りる（3.0 秒 / 1.5 秒の周期）。
+    # intro では、雨が降り始めるころ（4.75 秒）から 5.6 秒までに出そろう（7.0 秒で stay の頭と同じ姿）
+    fade_in = ease_io(ramp(t, 4.75, 5.6)) if clip == "intro" else 1.0
+    for m in MOTE_STAY:
+        n = m["name"]
+        Pd = m["period"]
+        edge = 1.0 / (P.FPS * Pd) + 1e-6
         if clip == "outro":
-            # 周期で頭に戻さず、そのまま貯金箱へ吸い込む
-            ph = c["phase"] + t / Pd
-            k = ease_in(ramp(t, 0.05 + c["sink_delay"], 0.85 + c["sink_delay"] * 0.5), 2.4)
-            sy = Y0 + (Y1 - Y0) * ph
-            sx = c["sx"] + c["drift"] * math.sin(TAU * ph)
-            p0 = _fall_pos(sx, sy, c["depth"])
-            # 渦を巻いて吸い込まれる
+            # 周期で頭に戻さず、城が貯金箱へ縮むのといっしょに、渦を巻いて城の窓へ吸い込まれる（光が城に収まる）
+            ph = m["phase"] + t / Pd
+            k = ease_in(ramp(t, 0.05 + m["sink_delay"], 0.85 + m["sink_delay"] * 0.5), 2.4)
+            p0 = _mote_stay_pos(m, ph)
             sw = 1.6 * (1 - k) * k
-            p = vlerp(p0, COIN_SINK, k)
-            p = (p[0] + sw * math.cos(TAU * (k * 1.5 + c["phase"])), p[1], p[2] + sw * math.sin(TAU * (k * 1.5 + c["phase"])))
-            edge = 1.0 / (P.FPS * Pd) + 1e-6
-            # 頭は stay の 0 秒と同じ見え方。下の外へ出きる前か、吸い込まれ始めたら見せる
-            vis = (edge < c["phase"] and ph < 1 - edge) or k > 0.02
-            s = c["size"] * (1 - ramp(k, 0.82, 1.0)) if vis else HIDE
-            if s <= 1e-3:
-                s = HIDE
+            p = vlerp(p0, LIGHT_SINK, k)
+            p = (p[0] + sw * math.cos(TAU * (k * 1.5 + m["phase"])), p[1], p[2] + sw * math.sin(TAU * (k * 1.5 + m["phase"])))
+            # 頭は stay の 0 秒と同じ見え方。吸い込まれ始めたら、またたきをやめて光りきる
+            vis = (edge < m["phase"] and ph < 1 - edge) or k > 0.02
+            s = m["size"] * max(_mote_stay_env(m, frac(ph)), ease_io(k)) * (1 - ramp(k, 0.82, 1.0)) if vis else 0.0
         else:
-            ph = frac(tau / Pd + c["phase"])
-            sy = Y0 + (Y1 - Y0) * ph
-            sx = c["sx"] + c["drift"] * math.sin(TAU * ph)
-            p = _fall_pos(sx, sy, c["depth"])
+            ph = frac(tau / Pd + m["phase"])
+            p = _mote_stay_pos(m, ph)
             # 頭に戻るコマの前後は消す（ぶれで縦の筋が出ないように）
-            edge = 1.0 / (P.FPS * Pd) + 1e-6
             vis = edge < ph < 1 - edge
-            if clip == "intro":
-                # 落ち始めが 4.5 秒より後の物だけ（周期 3.0 秒の物は 4.0 秒から。7.0 秒で stay の頭と同じ顔ぶれになるように）
-                start_abs = t - ph * Pd
-                vis = vis and start_abs >= min(4.5, INTRO - Pd)
-            s = c["size"] if vis else HIDE
-        a = TAU * tau / STAY
+            s = m["size"] * _mote_stay_env(m, ph) * fade_in if vis else 0.0
         out[f"obj:{n}:loc"] = p
-        out[f"obj:{n}:rot"] = tuple(c["rot0"][i] + a * c["turns"][i] for i in range(3))
-        out[f"obj:{n}:scale"] = s
+        out[f"obj:{n}:scale"] = s if s > 1e-3 else HIDE
 
 
 def _bat_heading(p0, p1):
@@ -844,6 +891,110 @@ def _bat_near_pos(b, clip, t):
     sx = lerp(x0, x1, uc)
     sy = lerp(b["y0"], b["y1"], uc) - 60 * math.sin(math.pi * uc)
     return screen(sx, sy, b["depth"]), vis
+
+
+# ---- こうもりの群れ（伯爵がマントを広げると、マントの陰から満月へ飛び立つ）
+# あやとのすぐ後ろ（奥行き +0.8m）から出るので、あやとの顔の前は通らない。ピポの顔の前も通さない
+# （顔の四角に掛かる所では、ピポより奥＝塔の陰に居る。並びを引くときに当てて、当たったら引き直す）
+SWARM_DEPTH0 = AYATO_DEPTH + 0.8
+RW = random.Random(7_0011)  # 足した物は別の種で引く（R の並びを崩さない）
+
+
+def _bat_swarm_pos(b, clip, t):
+    """群れの1匹の (世界の位置, 大きさ, 画面の x, 画面の y, 奥行き)"""
+    if clip != "intro":
+        return screen(b["ex"], b["ey"], b["d1"]), 0.0, b["ex"], b["ey"], b["d1"]
+    u = ramp(t, b["t0"], b["t0"] + b["dur"])
+    e = ease_out(u, 1.7)
+    # 2次のベジェ。なかほどを持ち上げて、弧を描いて昇る
+    x0, y0, x1, y1 = b["x0"], b["y0"], b["ex"], b["ey"]
+    dx, dy = x1 - x0, y1 - y0
+    ln = math.hypot(dx, dy) or 1.0
+    cx = (x0 + x1) / 2 - dy / ln * b["bend"]
+    cy = (y0 + y1) / 2 + dx / ln * b["bend"] - b["lift"]
+    sx = (1 - e) ** 2 * x0 + 2 * (1 - e) * e * cx + e * e * x1
+    sy = (1 - e) ** 2 * y0 + 2 * (1 - e) * e * cy + e * e * y1
+    d = lerp(SWARM_DEPTH0, b["d1"], ease_in(u, 1.5))
+    # 遠ざかるほど小さく写るが、物の大きさも少し上げて、遠くの群れが点にならないように
+    s = b["size"] * (d / SWARM_DEPTH0) ** 0.5 * ease_out(ramp(u, 0.0, 0.1)) * (1 - ease_in(ramp(u, 0.8, 1.0)))
+    if not 0.0 < u < 1.0:
+        s = 0.0
+    return screen(sx, sy, d), s, sx, sy, d
+
+
+def _pipo_face_from(p):
+    """振付けの値（カメラとピポがあればよい）から、ピポの顔の四角（画面の px）"""
+    name = "pipo_cheer" if p["val:pipo_cheer_op"] > 0 else "pipo"
+    if p[f"val:{name}_op"] <= 0:
+        return None
+    sv = p[f"obj:{name}:scale"]
+    sv = sv if isinstance(sv, tuple) else (sv, sv, sv)
+    foot = p[f"obj:{name}:loc"]
+    fsx, fsy, depth = P.project(foot)
+    k0 = (p["cam:lens"] / 12.0) * (P.H / 2) / depth * PIPO_M_PER_PX
+    fx, fy = PIPO_BOARDS[name]["foot"]
+    x0, y0, x1, y1 = PIPO_FACE[name]
+    return (fsx + (x0 - fx) * k0 * sv[0], fsy + (y0 - fy) * k0 * sv[1], fsx + (x1 - fx) * k0 * sv[0], fsy + (y1 - fy) * k0 * sv[1])
+
+
+def _pipo_face_now(t):
+    """intro の t 秒のピポの顔の四角（画面の px）と奥行き。振付けの全部は回さず、カメラとピポだけ"""
+    p = {}
+    camera("intro", t, p)
+    pipo("intro", t, p)
+    box = _pipo_face_from(p)
+    return box, P.project(PIPO_FOOT)[2]
+
+
+BAT_SPAN_M = 0.92  # 羽を広げた幅（castle_t7.py の bat_meshes）
+
+
+def swarm_hits(b, pipo_at):
+    """群れの1匹が、ピポの顔の前を横切るコマ（intro のコマの番号）。顔の四角を、こうもりの半分の幅だけ広げて見る"""
+    hits = []
+    for i in range(int(b["t0"] * P.FPS), int((b["t0"] + b["dur"]) * P.FPS) + 2):
+        t = i / P.FPS
+        _, s, sx, sy, d = _bat_swarm_pos(b, "intro", t)
+        if s <= 1e-3 or i not in pipo_at:
+            continue
+        box, pd = pipo_at[i]
+        if box is None or d >= pd + 0.5:
+            continue
+        r = 0.5 * BAT_SPAN_M * s * (P.CAM["lens"] / 12.0) * (P.H / 2) / d
+        if box[0] - r < sx < box[2] + r and box[1] - r < sy < box[3] + r:
+            hits.append(i)
+    return hits
+
+
+def _swarm_spec(n=36):
+    pipo_at = {i: _pipo_face_now(i / P.FPS) for i in range(int(4.3 * P.FPS), int(6.2 * P.FPS))}
+    out = []
+    redraw = 0
+    for i in range(n):
+        while True:
+            r = RW.random()
+            if r < 0.6:
+                # 満月の前を横切って、右の外へ（月の上の半分を、影絵になって渡る）
+                ex, ey, d1, dur, lift = RW.uniform(760, 900), RW.uniform(-60, 170), RW.uniform(24, 40), RW.uniform(0.9, 1.2), RW.uniform(20, 90)
+            elif r < 0.8:
+                # 満月へ向かって、奥へ小さく消える（塔の陰を通る）
+                ex, ey, d1, dur, lift = RW.uniform(400, 660), RW.uniform(70, 300), RW.uniform(70, 130), RW.uniform(0.8, 1.05), RW.uniform(10, 60)
+            else:
+                # 左上の外へ
+                ex, ey, d1, dur, lift = RW.uniform(-170, 120), RW.uniform(-190, -40), RW.uniform(22, 34), RW.uniform(0.75, 0.95), RW.uniform(20, 80)
+            b = dict(name=f"bat_w{i:02d}", x0=RW.uniform(130, 250), y0=RW.uniform(150, 290), ex=ex, ey=ey, d1=d1,
+                     t0=4.38 + 0.24 * i / n + RW.uniform(0.0, 0.05), dur=dur,
+                     bend=RW.uniform(-50, 50), lift=lift, flap=RW.choice([6, 7]), ph=RW.random(),
+                     size=RW.uniform(1.0, 1.45))
+            if not swarm_hits(b, pipo_at):
+                break
+            redraw += 1
+        out.append(b)
+    return out, redraw
+
+
+BAT_SWARM, SWARM_REDRAWN = _swarm_spec()
+BATS = BATS + BAT_SWARM
 
 
 def bats(clip, t, out):
@@ -892,6 +1043,18 @@ def bats(clip, t, out):
         out[f"obj:{n}:loc"] = p
         out[f"obj:{n}:rot"] = (pitch, 0.0, yaw)
         out[f"obj:{n}:scale"] = b["size"] if vis else HIDE
+        out[f"val:{n}_flap"] = math.sin(TAU * (b["flap"] * tau + b["ph"]))
+    for b in BAT_SWARM:
+        n = b["name"]
+        p, s, _, _, _ = _bat_swarm_pos(b, clip, t)
+        q = _bat_swarm_pos(b, clip, t + dt)[0]
+        pitch, yaw = _bat_heading(p, q)
+        out[f"obj:{n}:loc"] = p
+        # 飛び立つ向きへ少し体を傾ける
+        out[f"obj:{n}:rot"] = (pitch, 0.35 * math.copysign(1, b["bend"]), yaw)
+        out[f"obj:{n}:scale"] = s if s > 1e-3 else HIDE
+        # 羽ばたきは整数の Hz × 3.0 秒（輪がつながる）。9〜11 Hz だと1コマに羽の向きが大きく変わり、
+        # 試しの絵で紫のにじみに見えた（run 41951972137）。お城のこうもりと同じ 6〜7 Hz
         out[f"val:{n}_flap"] = math.sin(TAU * (b["flap"] * tau + b["ph"]))
 
 
@@ -984,7 +1147,7 @@ def sway(clip, t, out):
         out[f"obj:tree{i}_crown:rot"] = (0.012 * math.sin(TAU * tau / STAY + i), 0.0, 0.015 * math.sin(TAU * tau / STAY * 2 + i * 0.7))
 
 
-PARTS = (castle_root, sticker, sky, castle_lights, camera, pipo, ayato, coins, bats, leaves, sparks, sway)
+PARTS = (castle_root, sticker, sky, castle_lights, camera, pipo, ayato, motes, bats, leaves, sparks, sway)
 
 
 def pose(clip, t):
@@ -1020,18 +1183,7 @@ def ayato_face_box(clip, t):
 
 def pipo_face_box(clip, t):
     """そのコマの、ピポの顔の四角（画面の px）。見えている方の板（旗 / cheer）で"""
-    p = pose(clip, t)
-    name = "pipo_cheer" if p["val:pipo_cheer_op"] > 0 else "pipo"
-    if p[f"val:{name}_op"] <= 0:
-        return None
-    sv = p[f"obj:{name}:scale"]
-    sv = sv if isinstance(sv, tuple) else (sv, sv, sv)
-    foot = p[f"obj:{name}:loc"]
-    fsx, fsy, depth = P.project(foot)
-    k0 = (p["cam:lens"] / 12.0) * (P.H / 2) / depth * PIPO_M_PER_PX
-    fx, fy = PIPO_BOARDS[name]["foot"]
-    x0, y0, x1, y1 = PIPO_FACE[name]
-    return (fsx + (x0 - fx) * k0 * sv[0], fsy + (y0 - fy) * k0 * sv[1], fsx + (x1 - fx) * k0 * sv[0], fsy + (y1 - fy) * k0 * sv[1])
+    return _pipo_face_from(pose(clip, t))
 
 
 def face_lines():
@@ -1103,7 +1255,7 @@ def check():
         ok = d < 1e-6
         bad += not ok
         print(f"{'OK ' if ok else 'NG '} {label}: いちばん違う所 {d:.2e}（{k}）")
-    # outro の最後は、城もあやとも金貨も消えている
+    # outro の最後は、城もあやとも光の粒も消えている
     last = pose("outro", (P.CLIPS["outro"] - 1) / P.FPS)
     root_gone = _hidden(last, "castle_root")
     left = [k for k, v in last.items() if k.endswith(":scale") and (v if not isinstance(v, tuple) else max(v)) > 2e-4
@@ -1124,6 +1276,15 @@ def check():
                 worst = (clip, i, box)
     print(f"{'OK ' if not worst else 'NG '} あやとの顔 × 字の帯: {worst}")
     bad += bool(worst)
+    # こうもりの群れが、ピポの顔の前を横切らないか・あやとより手前に出ないか（あやとの後ろから出て、奥へ飛ぶ）
+    pipo_at = {i: _pipo_face_now(i / P.FPS) for i in range(P.CLIPS["intro"])}
+    hits = [(b["name"], swarm_hits(b, pipo_at)[:3]) for b in BAT_SWARM]
+    hits = [h for h in hits if h[1]]
+    near = [b["name"] for b in BAT_SWARM
+            if min(_bat_swarm_pos(b, "intro", i / P.FPS)[4] for i in range(P.CLIPS["intro"])) < AYATO_DEPTH + 0.5]
+    print(f"{'OK ' if not hits and not near else 'NG '} こうもりの群れ {len(BAT_SWARM)} 匹 × ピポの顔: {hits}・"
+          f"あやとより手前: {near}（並びを引くときに引き直した {SWARM_REDRAWN} 回）")
+    bad += bool(hits or near)
     # 名前の札（上から降りてくる）と、あやと・ピポの顔。ピポは露台で旗を振るあいだ 15% より下に居るので、
     # いつもの線はあやとだけで見る。札が降りてくるあいだは、2人とも 10.5% の線で見る
     for who, ((v_all, at_all), (v_pl, at_pl)) in face_lines().items():
