@@ -296,3 +296,4 @@ class Scene(Stage):
             sp.into(cv)
         self.finish_hero(hero, bloom=0.0)
         return cv.finish(bloom=0.55, edge=self.edge), None
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）

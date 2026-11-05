@@ -150,3 +150,4 @@ class Scene(Stage):
                 fxv.stamp(cv.L, spr, x, y, kk)
         self.finish_hero(hero, bloom=0.0)
         return cv.finish(bloom=0.5, edge=self.edge), None
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）

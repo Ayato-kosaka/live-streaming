@@ -468,3 +468,4 @@ class Scene(Stage):
         sp2.add_screen(xs, ys, col * kk[:, None])
         sp2.into(cv)
         glow(cv, tx, ty, 10 * hgt / 380, WHITE * 1.2 + GOLD * 0.6, 0.9 * a)
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）

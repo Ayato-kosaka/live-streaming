@@ -352,3 +352,4 @@ class Scene(Stage):
             tw = max(0.0, math.sin(6.283 * (c.ph * (1 + j % 3) + ph[j]))) ** 8
             if tw > 0.05:
                 fxv.stamp(cv.L, self.kit.star["white" if j % 2 else "gold"], xs[j], ys[j], 0.55 * tw * k)
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）

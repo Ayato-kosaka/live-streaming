@@ -407,3 +407,4 @@ class Scene(Stage):
                     fxv.stamp(cv.L, self.kit.star["white" if j % 3 else "cyan"], cx + math.cos(ang) * d, hand_y + 6 + math.sin(ang) * d * 0.8,
                               0.85 * (1 - age) ** 1.3 * out_k)
                 glow(cv, cx, hand_y + 6, 30, CYAN * 0.5 + WHITE * 0.5, 0.7 * (1 - age) ** 2 * out_k)
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）

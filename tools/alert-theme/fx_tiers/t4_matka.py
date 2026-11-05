@@ -404,3 +404,4 @@ class Scene(Stage):
             sc = 0.32 + 0.3 * r[3]
             spr = sprite_rot(self.leaves[j % 6], 6.283 * (a * (0.6 + r[4]) + r[5]), sc)
             put_sprite(cv, spr, x, y, k, blur=1.5 if r[6] < 0.3 else 0.0)
+# alert_fx_render の試し: 台本は master のまま（全部の段を焼き直す）
