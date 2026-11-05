@@ -26,3 +26,4 @@
  * （`docs/island-misses.md` #22 と同じ形）。ここは何も import しない。
  */
 export const BUILT_AT = new Date(process.env.NEXT_PUBLIC_BUILT_AT ?? 0);
+// ship.yml の判断を当てるための試し（#1117）。マージしない
