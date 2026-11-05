@@ -5,7 +5,7 @@
  "dest": "GBYHxJQGlCY/clips",
  "video": "GBYHxJQGlCY",
  "channel": null,
- "request": "shorts/requests/ikea-GBYHxJQGlCY-p1-clips-mcd-20261105.json",
+ "request": "shorts/requests/ikea-GBYHxJQGlCY-p1-clips-seat-20261105.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,59 +14,49 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 5,
+  "sheets": 1,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
   "clips": 1,
   "clips_ok": 1,
-  "clip_seconds": 260.0,
+  "clip_seconds": 60.0,
   "channel_entries": 0,
-  "files": 14
+  "files": 10
  },
  "bytes": {
-  "plain": 139765793,
-  "tar_gz": 139591315,
-  "encrypted": 139591328
+  "plain": 32669734,
+  "tar_gz": 32633877,
+  "encrypted": 32633888
  },
  "encrypted_files": [
   {
-   "name": "payload.enc.000",
-   "bytes": 47185920,
-   "sha256": "3e21635b53270e85b8d3378e2267a72bd28e9633e3975f54c8eca44f8c93eb9c"
-  },
-  {
-   "name": "payload.enc.001",
-   "bytes": 47185920,
-   "sha256": "e26e7a59d666941568ebe040dd28221af43817481a2b95d3c8c1db40d137b346"
-  },
-  {
-   "name": "payload.enc.002",
-   "bytes": 45219488,
-   "sha256": "990140dd465406d7dbe760d9ab85b15c5da340baa9d4aff23d40379fd5194193"
+   "name": "payload.enc",
+   "bytes": 32633888,
+   "sha256": "5adeb26be1ec07f0ee1f8a9e12d4661065650f3c17e69b048fa5c1f8056da733"
   }
  ],
- "hmac_sha256": "c345744fb4195ff30166067251f2964f598d4f04af886208f2d00cb5c1db30ee",
+ "hmac_sha256": "8ff30bcd2c7cc66b760877e646a26237207a6d9b0cf93c8420226859564c0459",
  "pubkey_sha256": "607d964973679437f2cf1c62e65bc3944ba95a9e88913ff88ffb3b32e955615e",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41951258310",
- "created_at": "2026-11-05T02:56:53+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41962884897",
+ "created_at": "2026-11-05T03:49:24+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 2089824,
-    "sha256": "473887077a6bb4329b699a0e721cc140af0aea81064e698a93b62653cc5e8e8b"
+    "bytes": 435472,
+    "sha256": "cea19c4da3f99a520a1b5d9d2deddec128fd00da0ed87b004408ebcb0b5f1d73"
    }
   ],
-  "hmac_sha256": "d7dd6727e25786cdef238b1982184616d98ef044c0a614e8fab304beddcc0ae8",
-  "files": 9,
-  "sheets": 5,
+  "hmac_sha256": "d31779727d25327833e5ee516d673d10c63b28ff35c7cf8665a66265a5855764",
+  "files": 5,
+  "sheets": 1,
   "bytes": {
-   "plain": 2150535,
-   "tar_gz": 2089815,
-   "encrypted": 2089824
+   "plain": 447046,
+   "tar_gz": 435459,
+   "encrypted": 435472
   }
  }
 }
