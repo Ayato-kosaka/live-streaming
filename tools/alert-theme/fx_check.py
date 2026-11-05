@@ -23,6 +23,7 @@
 | front は光と粒だけ | front の各コマで、透明 0.6 超の所が箱の 2% 以下（物の面が無い） |
 | light の滞在 | light の back の滞在で、覆い（透明の平均）が 0.06 以下（配信の景色がほぼ見える） |
 | 〜999円の場所 | 段1は箱の下 30%・段2は下 1/3・段3は下 1/2 より上に、透明 0.1 超が 0.5% 以下 |
+| キャラが出たら薄く（段4） | 登場のキャラ絵が出る直前のコマは全面（back の透明の平均 0.5 以上）。滞在の back は縁だけ: 透明の平均 0.2 以下、真ん中（キャラ絵と字の所 x 140〜580・y 300〜1100）の透明の平均 0.03 以下 |
 
 `--script` を渡すと、台本から滞在の「最後の次のコマ」（位相 1）を焼いて、頭のコマ（位相 0）と比べる
 （動画の圧縮を通さない、継ぎ目そのものの差。0 に近いほどよい）。
@@ -49,6 +50,12 @@ PSNR_MIN = 28.0
 PSNR_DIP = 1.5
 PSNR_SEEN = 40.0
 LOW_TOP = {1: 0.70, 2: 2 / 3, 3: 0.5}  # 箱の高さのこの割合より上に物を出さない（段1は下 30%・段2は下 1/3・段3は下 1/2）
+# 全面の景色で出て、キャラ絵が出たら縁だけに薄く引く段（あやと 2026-11-05「1,000は、キャラが登場したら背景薄くする」。#1095）。
+# 段 → (出る前の全面の下限, 滞在の透明の平均の上限, 滞在の真ん中の透明の平均の上限)。
+# 真ん中はキャラ絵と字が出る所。縁（左右の崖・上の帯の舟のまわり・下の隅）は少し残してよいので、全体の上限は真ん中より緩い。
+# 2026-11-05 に焼いた段4: 出る直前 0.81・滞在 0.14・真ん中 0.009（前の全面のままの版は滞在 0.81 で、ここで落ちる）
+THIN = {4: (0.5, 0.2, 0.03)}
+MID = (slice(300, 1100), slice(140, 580))
 
 
 class Unchecked(Exception):
@@ -183,6 +190,21 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             notes.append(f"{name}: 上の {round(LOW_TOP[tier] * 100)}% に出た量 最大 {over * 100:.2f}%")
             if over > 0.005:
                 bad.append(f"{name}: 〜999円の段なのに、箱の上のほうに {over * 100:.1f}% 出ている")
+        if tier in THIN and layer == "back" and clip in ("intro", "stay"):
+            full_lo, stay_hi, mid_hi = THIN[tier]
+            if clip == "intro":
+                i = max(0, int(round((entry["revealAt"] - 0.1) * FPS)))
+                a0 = float(fr[min(i, len(fr) - 1)][..., 3].mean() / 255)
+                notes.append(f"{name}: キャラ絵が出る直前（{i}コマ目）の透明の平均 {a0:.3f}（全面）")
+                if a0 < full_lo:
+                    bad.append(f"{name}: キャラ絵が出る前が全面になっていない（透明の平均 {a0:.3f}・{full_lo} から）")
+            else:
+                a_all = float(fr[..., 3].mean() / 255)
+                a_mid = float(fr[:, MID[0], MID[1], 3].mean() / 255)
+                notes.append(f"{name}: 薄く引いたあとの透明の平均 {a_all:.3f}・真ん中 {a_mid:.3f}")
+                if a_all > stay_hi or a_mid > mid_hi:
+                    bad.append(f"{name}: キャラが出たあとに薄く引けていない（透明の平均 {a_all:.3f}・真ん中 {a_mid:.3f}。"
+                               f"{stay_hi}・{mid_hi} まで）")
         cov = (fr[..., 3] > 25).mean(axis=(1, 2))
         notes.append(f"{name}: 画面の占め方（透明 0.1 超）平均 {cov.mean() * 100:.1f}%・最大 {cov.max() * 100:.1f}%")
     # 画質（焼く前の連番の絵が全部あるときだけ）
