@@ -1,0 +1,22 @@
+{
+ "7": {
+  "variants": {
+   "full": {
+    "back": {
+     "intro": "t7-full-back-intro.webm",
+     "stay": "t7-full-back-stay.webm",
+     "outro": "t7-full-back-outro.webm"
+    },
+    "front": {
+     "intro": "t7-full-front-intro.webm",
+     "stay": "t7-full-front-stay.webm",
+     "outro": "t7-full-front-outro.webm"
+    }
+   }
+  },
+  "revealAt": 5.6,
+  "introDur": 7.0,
+  "stayDur": 3.0,
+  "outroDur": 1.5
+ }
+}

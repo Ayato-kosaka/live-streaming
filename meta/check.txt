@@ -1,0 +1,18 @@
+full: 合計 5.08MB（目安 6MB）
+  t7-full-back-intro.webm      焼く前の絵と: 透明の差 平均 0.0018・いちばん悪いコマ 0.0042 / PSNR 中央 31.4dB・最低 29.0dB（133 コマ目）
+  t7-full-back-intro.webm        2393KB 覆う 88.2%
+  t7-full-back-stay.webm       焼く前の絵と: 透明の差 平均 0.0016・いちばん悪いコマ 0.0018 / PSNR 中央 31.1dB・最低 30.6dB（83 コマ目）
+  t7-full-back-stay.webm          846KB 覆う 95.5% 継ぎ目 4.33（隣どうし 2.26）
+  t7-full-back-outro.webm      焼く前の絵と: 透明の差 平均 0.0021・いちばん悪いコマ 0.0044 / PSNR 中央 34.7dB・最低 30.5dB（8 コマ目）
+  t7-full-back-outro.webm         556KB 覆う 64.0% 最後のコマの濃さ最大 0.012
+  t7-full-front-intro.webm     焼く前の絵と: 透明の差 平均 0.0008・いちばん悪いコマ 0.0029 / PSNR 中央 49.8dB・最低 42.3dB（192 コマ目）
+  t7-full-front-intro.webm        704KB 覆う  4.7% 顔の穴の濃さ最大 0.027
+  t7-full-front-stay.webm      焼く前の絵と: 透明の差 平均 0.0015・いちばん悪いコマ 0.0021 / PSNR 中央 45.7dB・最低 43.9dB（75 コマ目）
+  t7-full-front-stay.webm         327KB 覆う  7.6% 顔の穴の濃さ最大 0.008 継ぎ目 1.32（隣どうし 1.26）
+  t7-full-front-outro.webm     焼く前の絵と: 透明の差 平均 0.0006・いちばん悪いコマ 0.0017 / PSNR 中央 50.8dB・最低 45.1dB（6 コマ目）
+  t7-full-front-outro.webm        137KB 覆う  2.9% 顔の穴の濃さ最大 0.008 最後のコマの濃さ最大 0.000
+  full-back intro → stay の境目 4.42（端の隣どうし 2.47）
+  full-back stay → outro の境目 4.47（端の隣どうし 2.29）
+  full-front intro → stay の境目 1.30（端の隣どうし 1.19）
+  full-front stay → outro の境目 1.32（端の隣どうし 1.19）
+OK

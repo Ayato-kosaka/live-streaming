@@ -1,0 +1,124 @@
+{
+ "view_transform": "Khronos PBR Neutral",
+ "alpha_encoding": "raw",
+ "layers": [
+  "back",
+  "front"
+ ],
+ "quality": "final",
+ "blender": "4.2.23 LTS",
+ "frames": [
+  {
+   "clip": "intro",
+   "i": 11,
+   "frame": 12,
+   "sec": 27.06
+  },
+  {
+   "clip": "intro",
+   "i": 31,
+   "frame": 32,
+   "sec": 26.58
+  },
+  {
+   "clip": "intro",
+   "i": 51,
+   "frame": 52,
+   "sec": 101.44
+  },
+  {
+   "clip": "intro",
+   "i": 71,
+   "frame": 72,
+   "sec": 175.53
+  },
+  {
+   "clip": "intro",
+   "i": 91,
+   "frame": 92,
+   "sec": 191.65
+  },
+  {
+   "clip": "intro",
+   "i": 111,
+   "frame": 112,
+   "sec": 194.52
+  },
+  {
+   "clip": "intro",
+   "i": 131,
+   "frame": 132,
+   "sec": 204.87
+  },
+  {
+   "clip": "intro",
+   "i": 151,
+   "frame": 152,
+   "sec": 208.16
+  },
+  {
+   "clip": "intro",
+   "i": 171,
+   "frame": 172,
+   "sec": 207.96
+  },
+  {
+   "clip": "intro",
+   "i": 191,
+   "frame": 192,
+   "sec": 207.7
+  },
+  {
+   "clip": "stay",
+   "i": 1,
+   "frame": 1002,
+   "sec": 207.25
+  },
+  {
+   "clip": "stay",
+   "i": 21,
+   "frame": 1022,
+   "sec": 207.05
+  },
+  {
+   "clip": "stay",
+   "i": 41,
+   "frame": 1042,
+   "sec": 205.54
+  },
+  {
+   "clip": "stay",
+   "i": 61,
+   "frame": 1062,
+   "sec": 207.51
+  },
+  {
+   "clip": "stay",
+   "i": 81,
+   "frame": 1082,
+   "sec": 207.12
+  },
+  {
+   "clip": "outro",
+   "i": 11,
+   "frame": 2012,
+   "sec": 224.66
+  },
+  {
+   "clip": "outro",
+   "i": 31,
+   "frame": 2032,
+   "sec": 30.93
+  }
+ ],
+ "build_sec": 7.2,
+ "samples": {
+  "pct": 100,
+  "scene": 48,
+  "other": 16,
+  "denoise": true,
+  "blur": true,
+  "thr": 0.03
+ },
+ "fps": 30
+}
