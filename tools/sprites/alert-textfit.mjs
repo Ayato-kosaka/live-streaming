@@ -16,6 +16,10 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * テーマは `--themes`（既定: 期間がいま効いている・60日以内に始まるテーマ ＋ 豚。`alertseason.mjs`）。
+ * 動画の段は `--fx full` で（段ごとの待つ秒は manifest の revealAt から）。段を回すのはハロウィンと動画の段、
+ * ほかは1段（1,500円）。`--control edge` は対照: 字の層を左へずらして縁で切る → 1 で落ちる。
+ *
  * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
  *
  * 終了コード: 0 = 全部収まった / 1 = 切れた組がある / 2 = 測れなかった
@@ -25,6 +29,7 @@ import { join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
+import { fxManifest, seasonThemes, settleFor, tiered } from "./alertseason.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -36,6 +41,13 @@ const amounts = arg("amounts", "100,300,700,1500,3000,7000,10000").split(",").ma
 const sizes = arg("sizes", "436x776,664x1180").split(",").map((s) => s.split("x").map(Number));
 const DPR = Number(arg("dpr", "2"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
+const fx = arg("fx", "");
+const control = arg("control", "");
+if (control && control !== "edge") {
+  console.error(`--control は edge（${control}）`);
+  process.exit(2);
+}
+const themes = (arg("themes", null) ?? [...seasonThemes().map((t) => t.theme), "none"].join(",")).split(",").filter(Boolean);
 const BAND = 2;
 mkdirSync(out, { recursive: true });
 
@@ -52,7 +64,9 @@ const TEXTS = [
   { key: "short", name: "おためし", msg: "ありがと〜！" },
 ];
 /* 字が出そろって止まる秒 */
-const settleAt = (theme, a) => (theme !== "halloween" ? 3 : a >= 10000 ? 12 : a >= 5000 ? 10 : a >= 1000 ? 9 : 4);
+const halloweenAt = (a) => (a >= 10000 ? 12 : a >= 5000 ? 10 : a >= 1000 ? 9 : 4);
+const mans = {};
+const settleAt = (theme, a) => settleFor({ theme, fx: theme === "none" ? "" : fx, man: mans[theme], amount: a, halloween: halloweenAt, plain: 3 });
 
 async function one(browser, { theme, a, size: [W, H], text }) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR });
@@ -64,9 +78,12 @@ async function one(browser, { theme, a, size: [W, H], text }) {
     });
     const p = await ctx.newPage();
     const q = new URLSearchParams({ preview: "1", theme, amount: String(a), name: text.name, msg: text.msg });
+    if (fx && theme !== "none") q.set("fx", fx);
     await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
     await p.waitForSelector('[data-plate="slot"]', { state: "attached", timeout: 30000 });
     await p.waitForTimeout(settleAt(theme, a) * 1000);
+    if (control === "edge")
+      await p.addStyleTag({ content: '[data-plate="slot"]{transform:translateX(-45vw)!important}' });
     await p.evaluate(() => {
       document.getAnimations().forEach((x) => x.pause());
       window.requestAnimationFrame = () => 0;
@@ -139,8 +156,12 @@ async function main() {
   console.log(prismNote());
   const browser = await chromium.launch({ executablePath: chromePath() ?? "/opt/pw-browsers/chromium", args: ["--no-sandbox", "--no-proxy-server"] });
   const queue = [];
-  for (const theme of ["halloween", "none"])
-    for (const a of theme === "none" ? [1500] : amounts) for (const size of sizes) for (const text of TEXTS) queue.push({ theme, a, size, text });
+  for (const theme of themes) {
+    mans[theme] = theme === "none" ? null : await fxManifest(base, theme);
+    const each = tiered(theme, fx, mans[theme]) ? amounts : amounts.includes(1500) ? [1500] : [amounts[0]];
+    for (const a of each) for (const size of sizes) for (const text of TEXTS) queue.push({ theme, a, size, text });
+  }
+  console.log(`テーマ ${themes.join("・")}${fx ? `（旗 fx=${fx}）` : ""}・${queue.length} 組${control ? `・対照 ${control}` : ""}`);
   const rows = [];
   const errs = [];
   const worker = async () => {
@@ -173,6 +194,10 @@ async function main() {
           tool: "alert-textfit",
           exit: code,
           rows: rows.length,
+          themes,
+          fx,
+          byTheme: Object.fromEntries(themes.map((t) => [t, rows.filter((r) => r.theme === t).length])),
+          tiers: Object.fromEntries(themes.map((t) => [t, new Set(rows.filter((r) => r.theme === t).map((r) => r.a)).size])),
           edge: rows.reduce((s, r) => s + r.edge, 0),
           outside: rows.reduce((s, r) => s + r.outside, 0),
           bad: bad.map(({ nm, theme, a, W, H, text, edge, outside, full, ink }) => ({ nm, theme, a, size: `${W}x${H}`, text, edge, outside, full, ink })),

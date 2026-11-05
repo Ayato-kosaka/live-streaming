@@ -34,6 +34,11 @@
  *   見えている字の行の矩形が重なった面積（画素）。**登場中も数える**（字が出る瞬間に主役の顔が
  *   字の上端より上にいること。オーナーの決まり: 主役の顔は字で隠さない）
  *
+ *   動画の段（`--fx full`）は主役が動画の中に居て印を置けないので、**主役の居る帯**を顔の枠の代わりに置く
+ *   （`public/alert/themes/<id>/fx/manifest.json` の `heroBands`。段4〜7 のあやとは上 20%、〜999円の猫の家族は
+ *   下 28%。動画の枠（720×1280 を cover で敷いた矩形）に対する割合）。帯は動画の層が出ているコマだけ置く。
+ *   `--control band` は対照: 帯を字の札の高さに置く → 1 で落ちる
+ *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
  *
@@ -63,6 +68,7 @@ import { chromium } from "playwright-core";
 import { PNG } from "pngjs";
 import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
+import { fxManifest, tierOf } from "./alertseason.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -83,7 +89,9 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && control !== "face" && control !== "hero") die(`--control は face か hero（${control}）`);
+if (control && !["face", "hero", "band"].includes(control)) die(`--control は face・hero・band（${control}）`);
+/* 動画の段の主役の帯（main で manifest から読む） */
+let heroBands = null;
 const emoji = arg("emoji", "");
 /* 試作の旗（`?fx=<名前>`。#1079）。段がその名前の試作を持っていれば、その振付けで数える */
 const fxName = arg("fx", "");
@@ -623,7 +631,9 @@ async function runOne(browser, job) {
     for (const s of framesFor(amount)) {
       await page.waitForFunction((s) => performance.now() - window.__ovl.t0 >= s * 1000, s, { timeout: (s + 30) * 1000, polling: 30 });
       await page.evaluate(() => window.__ovl.freeze());
-      if (control && !controlled) {
+      const band = heroBands?.[String(tierOf(amount))];
+      if (band) await page.evaluate(placeBand, { band, ctl: control });
+      if (control && control !== "band" && !controlled) {
         await applyControl(page, control);
         controlled = true;
       }
@@ -649,8 +659,51 @@ function bad(f) {
   return (f.entrance ? 0 : f.front + f.cover) + (f.heroText ?? 0);
 }
 
+/* 主役の帯を、顔の枠の印（`data-hero-face`）として置く。動画の層が無いコマでは置かない（外す） */
+function placeBand({ band, ctl }) {
+  let d = document.querySelector("[data-hero-band]");
+  const layer = document.querySelector('[data-fx-video="back"]');
+  if (!layer || !layer.querySelector("video")) {
+    if (d) d.remove();
+    return 0;
+  }
+  const r = layer.getBoundingClientRect();
+  // 動画は 720×1280 を cover で敷く（season/show/fxVideo.ts）。その枠に対する割合で帯を置く
+  const k = Math.max(r.width / 720, r.height / 1280);
+  const vw = 720 * k;
+  const vh = 1280 * k;
+  const vx = r.left + (r.width - vw) / 2;
+  const vy = r.top + (r.height - vh) / 2;
+  let top = vy + band[0] * vh;
+  let bot = vy + band[1] * vh;
+  if (ctl === "band") {
+    const p = document.querySelector('[data-plate="box"]')?.getBoundingClientRect();
+    if (p) {
+      top = p.top;
+      bot = p.bottom;
+    }
+  }
+  if (!d) {
+    d = document.createElement("div");
+    d.setAttribute("data-hero-face", "");
+    d.setAttribute("data-hero-band", "");
+    d.style.position = "fixed";
+    d.style.pointerEvents = "none";
+    document.body.appendChild(d);
+  }
+  const l = Math.max(r.left, vx);
+  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
+  return 1;
+}
+
 async function main() {
   mkdirSync(out, { recursive: true });
+  if (fxName) {
+    const man = await fxManifest(base, theme);
+    heroBands = man?.heroBands ?? null;
+    console.log(heroBands ? `主役の帯（動画の段）: ${JSON.stringify(heroBands)}` : "主役の帯: manifest に heroBands が無い（動画の段の主役の顔×字は見ない）");
+    if (control === "band" && !heroBands) die("--control band は heroBands の在るテーマで");
+  }
   const queue = [];
   for (const ch of chars) for (const amount of amounts) for (const size of sizes) for (const text of texts) queue.push({ ch, amount, size, text });
   // 長いもの（台本のある段）から先に回す（最後に1本だけ長いのが残らないように）
@@ -746,6 +799,7 @@ async function main() {
           cover: sum("cover"),
           heroText: heroAll,
           heroSeen,
+          heroBands: !!heroBands,
           minCharShare: shares.length ? Math.min(...shares.map((x) => x.s)) : null,
           hits: hit.map((r) => {
             const f = worst(r);

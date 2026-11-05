@@ -43,8 +43,15 @@ def build(res):
     prep = _load(res, "prep") or {}
     import run  # noqa: PLC0415 shard の並びは run.py の1か所で決める
 
-    # 重なり
-    names = [n for n in run.plan() if n.startswith("overlap-") and n != "overlap-control"]
+    def what(tool):
+        """道具の --json の byTheme・tiers から「castle 7段 28・豚 4」。数が 0 のテーマが1つでもあれば ok=False"""
+        by, tiers = tool.get("byTheme") or {}, tool.get("tiers") or {}
+        parts = [f"{'豚' if k == 'none' else k}{'' if k == 'none' else f' {tiers.get(k, 0)}段'} {v:,}" for k, v in by.items()]
+        return "・".join(parts), bool(by) and all(v > 0 for v in by.values())
+
+    # 重なり（shard の並びは prep が決めたもの。日付をまたいでも同じ並びで読む）
+    names = [n for n in (prep.get("shards") or run.plan()) if n.startswith("overlap-")]
+    olabel = "・".join(dict.fromkeys(n.split("-")[1] for n in names)) + f"・{len({n.split('-')[2] for n in names})}段"
     got = {n: _load(res, n) for n in names}
     tools = [r["tool"] for r in got.values() if r and r.get("tool")]
     sm = lambda k: sum(t.get(k) or 0 for t in tools)  # noqa: E731
@@ -57,30 +64,52 @@ def build(res):
         for h in ((r or {}).get("tool") or {}).get("hits") or []:
             bad.append(f"{h['amount']}円 {h['size']} {h['char']} {h['text']} {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h['heroText']}" + (f"（{h['png']}）" if h.get("png") else ""))
     ok = len(tools) == len(names) and all(r["exit"] == 0 for r in got.values() if r) and sm("stay") > 0
-    hero = f"主役の顔が見えたコマ {sm('heroSeen'):,}" if sm("heroSeen") else "主役の顔の印が無い段＝字×主役は見ていない"
+    band = any(t.get("heroBands") for t in tools)
+    hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
+    if not sm("heroSeen"):
+        ok = False
+        bad.insert(0, "主役の顔の枠も帯も1コマも置けなかった（字×主役を見ていない）")
     row(
         "重なり（顔×演出・主役の顔×字）",
         ok,
-        f"{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}",
+        f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}",
         bad,
     )
 
     # 対照
-    c = _load(res, "overlap-control")
+    c = _load(res, "controls")
     if c and c.get("controls"):
         cc = c["controls"]
-        f = (cc["face"].get("tool") or {}).get("front", 0) + (cc["face"].get("tool") or {}).get("cover", 0)
-        h = (cc["hero"].get("tool") or {}).get("heroText", 0)
-        row("対照（わざと重ねる）", c["exit"] == 0 and f > 0 and h > 0, f"face: 終了 {cc['face']['exit']}・{f}px / hero: 終了 {cc['hero']['exit']}・{h}px（どちらも 1 で落ちること）", [_why(c, "overlap-control")])
+        tl = lambda k: cc.get(k, {}).get("tool") or {}  # noqa: E731
+        # 落ちたうえで、落ちた数が 0 でないこと（「測れずに 1」を通さない）
+        hit = {
+            "顔": tl("face").get("front", 0) + tl("face").get("cover", 0),
+            "主役": tl("hero").get("heroText", 0),
+            "帯": tl("band").get("heroText", 0),
+            "字の切れ": len(tl("textfit").get("bad") or []),
+            "濃さ": len(tl("ink").get("fails") or []),
+            "展開": len(tl("decode").get("bad") or []),
+        }
+        keys = dict(zip(hit, ["face", "hero", "band", "textfit", "ink", "decode"]))
+        nok = [k for k, v in hit.items() if cc.get(keys[k], {}).get("exit") != 1 or not v]
+        row(
+            "対照（壊すと落ちる）",
+            not nok,
+            "・".join(f"{k} 終了{cc.get(keys[k], {}).get('exit')}（{v:,}）" for k, v in hit.items()) + "（どれも 1 で落ちること）",
+            [f"{k}: 落ちなかった・数が 0" for k in nok] or [_why(c, "controls")],
+        )
     else:
-        row("対照（わざと重ねる）", False, "回っていない", [_why(c, "overlap-control")])
+        row("対照（壊すと落ちる）", False, "回っていない", [_why(c, "controls")])
 
     # 字の切れ
     r = _load(res, "textfit")
     t = (r or {}).get("tool")
     if t:
         b = [f"{x['theme']} {x['a']}円 {x['size']} {x['text']}: 縁 {x['edge']} / 外 {x['outside']} / 全文 {'○' if x['full'] else '×'}" for x in t["bad"]] + t.get("errs", [])[:3]
-        row("字の切れ", r["exit"] == 0 and t["rows"] > 0, f"{t['rows']}組（道具の段: ハロウィン7段・豚）: 縁の字 {t['edge']}px / 箱の外の行 {t['outside']} / 欠け {len(t['bad'])}（全部 0）", b)
+        lab, every = what(t)
+        if not every:
+            b.insert(0, "数が 0 のテーマがある")
+        row("字の切れ", r["exit"] == 0 and t["rows"] > 0 and every, f"{t['rows']}組（{lab}）: 縁の字 {t['edge']}px / 箱の外の行 {t['outside']} / 欠け {len(t['bad'])}（全部 0）", b)
     else:
         row("字の切れ", False, "回っていない", [_why(r, "textfit")])
 
@@ -98,11 +127,14 @@ def build(res):
                 what = f"「{f['t']}」" if f["t"] else f"（字の無い {f.get('tag', '?')} {f.get('size', '')}）"
                 b.append(f"{f.get('theme', '')} {f['tier']} 地:{bgn.get(f['bg'], f['bg'])} {f['char']} {what} 中央値 {f['mid']:.2f} 明るい地 {f['rhi']:.2f}")
             b += x.get("errs", [])[:2]
-        ok = all(x["exit"] == 0 for x in rs.values()) and n > 0
+        lab, every = what(ts[0])
+        if not every:
+            b.insert(0, "数が 0 のテーマがある")
+        ok = all(x["exit"] == 0 for x in rs.values()) and n > 0 and every
         row(
             "字の濃さ",
             ok,
-            f"{n:,}字（{(rs['ink'] or {}).get('themes', '')}・地 {len(bgn) or 4}種 × キャラ {ts[0]['chars']}人）: 中央値の最小 {min(mids):.2f} / 明るい地に対して {min(rhis):.2f}（4.5 以上）" if mids else f"{n}字: 測れた字が無い",
+            f"{n:,}字（{lab}・地 {len(bgn) or 4}種 × キャラ {ts[0]['chars']}人）: 中央値の最小 {min(mids):.2f} / 明るい地に対して {min(rhis):.2f}（4.5 以上）" if mids else f"{n}字: 測れた字が無い",
             b,
         )
     else:
@@ -111,7 +143,9 @@ def build(res):
     # 貯金箱
     r = _load(res, "banksize")
     t = (r or {}).get("tool")
-    if t and t["rows"]:
+    if r and r.get("na"):
+        row("貯金箱の大きさ（PRISM の scale 込み）", None, r["na"])
+    elif t and t["rows"]:
         kw = [x["kw"] for x in t["rows"]]
         kh = [x["kh"] for x in t["rows"]]
         dr = max([max(x["dw"], x["dh"]) for x in t["drifts"]] or [0])
@@ -128,8 +162,11 @@ def build(res):
     r = _load(res, "decode")
     t = (r or {}).get("tool")
     if t and t["runs"]:
-        b = [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['ms']:.0f}ms・そろった {x['ok']}・台本の層 {x['show']}" for x in t["bad"]] + [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['err']}" for x in t["errs"]]
-        row("展開の上限", r["exit"] == 0, f"{t['runs']}回（ハロウィンの7段 × CPU 1・4・6倍 × 3）: いちばん遅い {t['max']:.0f}ms（{t['limit']:.0f}ms 以内・台本の層が出る）", b)
+        b = [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['ms']:.0f}ms・そろった {x['ok']}・動画 {x.get('video')}・台本の層 {x['show']}" for x in t["bad"]] + [f"{x['a']}円 CPU{x['rate']}倍 #{x['i']}: {x['err']}" for x in t["errs"]]
+        by = t.get("byTheme") or {}
+        lab = "・".join(f"{'豚' if k == 'none' else k} {v}回" for k, v in by.items())
+        every = bool(by) and all(v > 0 for v in by.values())
+        row("展開の上限", r["exit"] == 0 and every, f"{t['runs']}回（{lab}。7段 × CPU 1・4・6倍 × 3）: いちばん遅い {t['max']:.0f}ms（{t['limit']:.0f}ms 以内・台本か動画の層が出る）", b)
     else:
         row("展開の上限", False, "回っていない", [_why(r, "decode")])
 
@@ -203,7 +240,7 @@ def main(res, out):
     lines = [
         MARK,
         f"### 投げ銭アラートの確かめ — {head}",
-        f"テーマ `{prep.get('theme', '?')}`・旗 `fx={prep.get('fx') or 'なし'}`・PRISM の縮み方は道具の既定（scale 0.5）{sha}{took}{run}",
+        f"測ったもの `{prep.get('label', '?')}`（期間が効いている・60日以内に始まるテーマ＋豚）・PRISM の縮み方は道具の既定（scale 0.5）{sha}{took}{run}",
         "",
         "| 検査 | | 数字（閾値） |",
         "| --- | --- | --- |",

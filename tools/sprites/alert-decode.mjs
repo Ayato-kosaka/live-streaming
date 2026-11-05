@@ -23,6 +23,9 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * テーマは `--theme`（既定: 期間がいま効いているテーマのいちばん先。`alertseason.mjs`）。動画の段は `--fx full` で、
+ * そのときは動画の用意（`season:ensure` の detail.video）がそろったかも合否に入れる。
+ *
  * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
  *
  * 終了コード: 0 = 全部上限内 / 1 = 超えた・台本が出なかった / 2 = 測れなかった
@@ -34,6 +37,7 @@ import { extname, join, normalize, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
+import { seasonThemes } from "./alertseason.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -52,6 +56,8 @@ const runs = Math.max(1, Number(arg("runs", "3")));
 const at = Number(arg("at", "12"));
 const LIMIT = Number(arg("limit", "1500"));
 const [W, H] = arg("size", "436x776").split("x").map(Number);
+const theme = arg("theme", null) ?? seasonThemes()[0]?.theme ?? "none";
+const fx = arg("fx", "");
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -112,7 +118,8 @@ async function one(browser, base, amount, rate) {
     const page = await ctx.newPage();
     const cdp = await ctx.newCDPSession(page);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate });
-    const q = new URLSearchParams({ preview: "1", theme: "halloween", amount: String(amount), at: String(at), name: "aoi", msg: "ハッピーハロウィン！" });
+    const q = new URLSearchParams({ preview: "1", theme, amount: String(amount), at: String(at), name: "aoi", msg: "ありがとう！" });
+    if (fx) q.set("fx", fx);
     // "load" は待たない（試し表示の既定のキャラ絵は外の CDN にあり、この箱からは届かずに止まる）
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "domcontentloaded" });
     const got = await page
@@ -134,6 +141,7 @@ async function one(browser, base, amount, rate) {
       return {
         ms: m.duration,
         ok: m.detail?.ok ?? null,
+        video: m.detail?.video ?? null,
         firedAt: t0,
         refetchKB: res.reduce((s, r) => s + (r.transferSize || 0), 0) / 1024,
         refetchN: res.filter((r) => r.transferSize > 0).length,
@@ -157,6 +165,7 @@ async function main() {
   const jbad = [];
   const jerr = [];
   let seen = 0;
+  console.log(`テーマ ${theme}${fx ? `（旗 fx=${fx}）` : ""}`);
   console.log(`段 ${amounts.join("・")}円 × CPU ${rates.map((r) => `${r}倍`).join("・")} × ${runs} 回（投げ銭は ${at} 秒後。上限 ${LIMIT}ms）`);
   for (const rate of rates)
     for (const a of amounts) {
@@ -170,12 +179,13 @@ async function main() {
           continue;
         }
         ms.push(r.ms);
-        const over = r.ms > LIMIT || r.ok !== true || r.show === 0;
+        // 動画の段は、動画の用意がそろったことも見る（そろわなければ、その段は動画なしで出る）
+        const over = r.ms > LIMIT || r.ok !== true || r.show === 0 || (fx && r.video !== true);
         if (over) bad++;
         seen++;
-        if (over) jbad.push({ a, rate, i: i + 1, ms: r.ms, ok: r.ok, show: r.show });
+        if (over) jbad.push({ a, rate, i: i + 1, ms: r.ms, ok: r.ok, video: r.video, show: r.show });
         console.log(
-          `  ${a}円 CPU${rate}倍 #${i + 1}: 展開 ${r.ms.toFixed(0)}ms  そろった ${r.ok}  台本の層 ${r.show}  ` +
+          `  ${a}円 CPU${rate}倍 #${i + 1}: 展開 ${r.ms.toFixed(0)}ms  そろった ${r.ok}${fx ? `  動画 ${r.video}` : ""}  台本の層 ${r.show}  ` +
             `先に落とした絵 ${r.prefetched}  投げ銭のあと読み直し ${r.refetchN}本 ${r.refetchKB.toFixed(0)}KB${over ? "  ← だめ" : ""}`
         );
       }
@@ -193,7 +203,7 @@ async function main() {
     writeFileSync(
       resolve(json),
       JSON.stringify(
-        { tool: "alert-decode", exit: errs ? 2 : bad ? 1 : 0, limit: LIMIT, runs: seen, max: rows.length ? Math.max(...rows.map((r) => r.max)) : null, rows, bad: jbad, errs: jerr },
+        { tool: "alert-decode", exit: errs ? 2 : bad ? 1 : 0, theme, fx, tiers: amounts.length, limit: LIMIT, runs: seen, max: rows.length ? Math.max(...rows.map((r) => r.max)) : null, rows, bad: jbad, errs: jerr },
         null,
         1
       )
