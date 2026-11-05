@@ -7,12 +7,12 @@
 - 滞在（3秒の輪）: あやとが上から花びらを降らせ、窓が瞬き、金の粉が昇る。鐘の輪が1回
 - 締め 1.2秒: 窓が順に灯り、大聖堂ごと霧へ沈む
 
-full は叩き台どおりの全面（空・大聖堂・広場・バラ）。light は大聖堂を光の線で描き、キャラが出たら線を消して
-箱の縁のきらめきとあやとだけを残す（配信の景色がほぼそのまま見える）。
+通りは full（叩き台どおりの全面。空・大聖堂・広場・バラ）だけ。前は「光の線で描く light」と見比べたが、
+あやとが「光の線の案は見ごたえない」「2,000以上は全面背景ありで良い」と決めた（2026-11-05、#1095）。
 
 あやとは、投げた人のキャラ絵が出る直前に左上の角（キャラ絵の箱より上の帯）へ舞い上がる。キャラ絵は再生の側で
 箱の上 20%〜下 2% に幅いっぱいで置かれ、出て 0.2 秒でほぼ出きるので、真ん中の高さに残ると後ろに隠れる
-（段4 で再生の担当が見つけた。2026-11-04）。full も light も同じ。隠れていないかは `fx_hero.py` で数える。
+（段4 で再生の担当が見つけた。2026-11-04）。隠れていないかは `fx_hero.py` で数える。
 """
 import math
 import os
@@ -34,20 +34,18 @@ def art(*p, **kw):
 class Scene(Stage):
     TIER = 5
     INTRO, STAY, OUTRO, REVEAL = 3.2, 3.0, 1.2, 2.2
-    VARIANTS = ("full", "light")
-    FRONT = {"full": True, "light": False}
+    VARIANTS = ("full",)
+    FRONT = {"full": True}
 
     # 落ち着いたときのカメラ（大聖堂の真ん中を見る）
     CAM_END = ((0.0, 0.0, 2.6), (0.0, 24.0, 5.6))
 
     def setup(self):
-        full = self.variant == "full"
         self.cat = art("t5", "cathedral.webp")
         self.aya = art("ayato", "rose_fly.webp")  # バラの祭りの仮装の、舞い降りる全身（設定画と同じ顔で描き直したもの）
-        if full:
-            self.sky = art("t5", "sky.webp")
-            self.plaza = art("t5", "plaza.webp")
-            self.roses = art("t5", "roses.webp")
+        self.sky = art("t5", "sky.webp")
+        self.plaza = art("t5", "plaza.webp")
+        self.roses = art("t5", "roses.webp")
         self.petals = [load_rgba(os.path.join(ART, "t5", f"petal{i}.webp"), 120) for i in (0, 1)]
         ref = self.cam_at(self.INTRO)
         self.ref = ref
@@ -61,37 +59,22 @@ class Scene(Stage):
         self.dome_uv = (0.405, 0.16)
         hw = self.cat_h * self.cat.w / self.cat.h
         self.dome_world = self.cat_pos + np.array([(self.dome_uv[0] - 0.5) * hw, 0, (1 - self.dome_uv[1]) * self.cat_h])
-        if full:
-            # 空: 夕日の点（絵の 0.5, 0.43）が、ドームのすぐ後ろに来るように
-            self.sky_h = 200.0
-            self.sky_pos = unproject(ref, 330, 250, depth=170.0)
-            # 広場: 基準のカメラで「大聖堂の足もとから下」に見える矩形を床へ戻す
-            bx, by, _ = ref.project(self.cat_pos[None])
-            self.base_y = float(by[0])
-            self.plaza_quad = floor_rect(ref, -90, self.base_y - 6, W + 90, H + 40)
-            self.rose_pos = unproject(ref, 360, H - 90, depth=6.5)
-            self.rose_h = 1360 * 6.5 / ref.foc
-            yy = np.arange(H, dtype=np.float32)[:, None]
-            # 空の濃さ: 上ほど薄く（配信の上のほうが少し透ける）。箱の縁では 0
-            self.sky_mul = (np.clip(0.62 + 0.4 * (yy / 300), 0.62, 0.95) * np.ones((1, W), np.float32)) * self.edge
-        else:
-            self.lines = LineArt(lvl, start=(0.5, 1.0), lo=60, hi=150, min_len=24, work_w=820, blur=1.6)
-            yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-            g = np.exp(-(((xx - 360) / 330) ** 2 + ((yy - 470) / 300) ** 2))
-            self.shade_map = (g * self.edge).astype(np.float32)
-            # 箱の縁のきらめき（滞在で残すもの）。左右の帯と上の帯に散らす
-            R = np.random.default_rng(55)
-            pts = []
-            while len(pts) < 22:
-                x, y = R.random() * W, 60 + R.random() * 1040
-                if (x < 105 or x > W - 105 or y < 170) and not (x < 330 and y < 430):
-                    pts.append((x, y))
-            self.edge_pts = np.array(pts)
-            self.edge_tw = R.random((len(pts), 3))
+        # 空: 夕日の点（絵の 0.5, 0.43）が、ドームのすぐ後ろに来るように
+        self.sky_h = 200.0
+        self.sky_pos = unproject(ref, 330, 250, depth=170.0)
+        # 広場: 基準のカメラで「大聖堂の足もとから下」に見える矩形を床へ戻す
+        bx, by, _ = ref.project(self.cat_pos[None])
+        self.base_y = float(by[0])
+        self.plaza_quad = floor_rect(ref, -90, self.base_y - 6, W + 90, H + 40)
+        self.rose_pos = unproject(ref, 360, H - 90, depth=6.5)
+        self.rose_h = 1360 * 6.5 / ref.foc
+        yy = np.arange(H, dtype=np.float32)[:, None]
+        # 空の濃さ: 上ほど薄く（配信の上のほうが少し透ける）。箱の縁では 0
+        self.sky_mul = (np.clip(0.62 + 0.4 * (yy / 300), 0.62, 0.95) * np.ones((1, W), np.float32)) * self.edge
         self.mist = Mist(505)
         self.dust = Loop(900, 5051, cycles=(1, 2))
         self.near = Loop(70, 5052, cycles=(1, 1))
-        self.fall = Loop(26 if full else 10, 5053, cycles=(1, 2))
+        self.fall = Loop(26, 5053, cycles=(1, 2))
         self.bok = Loop(12, 5054, cycles=(1, 1))
         R = np.random.default_rng(5055)
         gy, gx = np.nonzero(self.gold > 0.6)
@@ -114,7 +97,6 @@ class Scene(Stage):
 
     # ---------------- 1コマ
     def draw(self, c):
-        full = self.variant == "full"
         cam = self.cam_at(c.Ti, c)
         Ti, T, u = c.Ti, c.T, c.u
         out_k = 1 - ease(u)  # 締めで全部が消える
@@ -131,27 +113,21 @@ class Scene(Stage):
         dx, dy, _ = cam.project(cat_pos[None])
         foot_y = float(dy[0])
 
-        if full:
-            self.draw_full_back(c, cam, back, sp_b, M, dst, cat_pos, lit, out_k, foot_y)
-        else:
-            self.draw_light_back(c, cam, back, sp_b, M, dst, cat_pos, lit, out_k, foot_y)
+        self.draw_full_back(c, cam, back, sp_b, M, dst, cat_pos, lit, out_k, foot_y)
 
         # ---- あやと（バラの祭り）: 左上から舞い降り、キャラ絵が出る前に左上の角へ。主役だけの層に描く
         hero = Canvas()
-        self.draw_ayato(c, cam, hero, sp_b, full)
+        self.draw_ayato(c, cam, hero, sp_b)
 
         # ---- 鐘の光の輪（2.1・2.35、そして滞在の輪で 1回ずつ）
         rings = [(T - 2.1, 1.0, 0.85), (T - 2.35, 0.75, 0.85)] if c.clip == "intro" else []
-        if full:
-            # 3つ目は滞在の輪でくり返す出来事（登場の山場から、そのまま滞在へ続く）
-            rings += [(age, 0.62, 1.3) for age, _ in c.events(2.62, self.STAY, first=2.62, dur=1.3)]
-        elif c.clip == "intro":
-            rings.append((T - 2.6, 0.55, 0.6))  # light は登場のうちに終える（滞在は配信の景色のまま）
+        # 3つ目は滞在の輪でくり返す出来事（登場の山場から、そのまま滞在へ続く）
+        rings += [(age, 0.62, 1.3) for age, _ in c.events(2.62, self.STAY, first=2.62, dur=1.3)]
         for age, kk, dur in rings:
             if 0 <= age < dur:
                 tau = age / dur
                 r = 1.25 + 5.0 * ease_out(tau)
-                kk2 = kk * (1 - tau) ** 1.3 * out_k * (1.0 if full else 0.8)
+                kk2 = kk * (1 - tau) ** 1.3 * out_k
                 ring3d(sp_b, cam, self.dome_world + np.array([0, 0, z_off - 0.9]), r, kk2, WHITE * 0.8 + GOLD * 0.8 + MAGENTA * 0.15,
                        zbuf=back.Z, seed=int(age * 7))
 
@@ -167,10 +143,10 @@ class Scene(Stage):
         tw = (0.5 + 0.5 * np.sin(6.283 * (a_ * (3 + 5 * r[:, 4]) + r[:, 5]))) ** 2
         kd = np.sin(np.pi * a_) ** 1.5 * (0.35 + 0.9 * tw) * (0.4 + 2.2 * r[:, 6] ** 3)
         col = np.where(r[:, 7:8] < 0.7, GOLD, np.where(r[:, 7:8] < 0.88, WHITE, PINK))
-        sp_b.add(cam, P, col * (kd * amb * (1.0 if full else 0.55))[:, None], back.Z)
+        sp_b.add(cam, P, col * (kd * amb)[:, None], back.Z)
 
         # ---- 花びら（滞在の輪で降り続ける。奥は小さくぼけ、手前は大きく）
-        self.draw_petals(c, cam, back, amb, full)
+        self.draw_petals(c, cam, back, amb)
 
         sp_b.into(back)
 
@@ -178,11 +154,9 @@ class Scene(Stage):
         fl = pulse(Ti, 2.08, 0.11) if c.clip == "intro" else 0.0
         fxp, fyp = map_point(M, self.dome_uv[0] * self.cat.w, (self.dome_uv[1] - 0.12) * self.cat.h)
         if fl > 0.01:
-            fx_tgt = front if full else back
-            fk = 1.0 if full else 0.6
-            fxv.stamp(fx_tgt.L, self.kit.flare, fxp, fyp, 0.8 * fl * fk)
-            streak(fx_tgt, fxp, fyp, 0.9 * fl * fk)
-            glow(back, fxp, fyp, 60, WHITE * 1.0 + GOLD * 0.6, 0.55 * fl * fk)
+            fxv.stamp(front.L, self.kit.flare, fxp, fyp, 0.8 * fl)
+            streak(front, fxp, fyp, 0.9 * fl)
+            glow(back, fxp, fyp, 60, WHITE * 1.0 + GOLD * 0.6, 0.55 * fl)
 
         # ---- キャラ絵が出る瞬間: 後ろから光の輪が広がる（キャラ絵の後ろ＝back）
         cx_, cy_ = 360.0, 760.0
@@ -195,12 +169,10 @@ class Scene(Stage):
             back.emit(band[..., None] * (GOLD * 1.3 + WHITE * 0.6) * 1.3)
             glow(back, cx_, cy_, 230, GOLD * 0.8 + PINK * 0.3, 0.7 * (1 - rv) ** 2)
 
-        rays = None
-        if full:
-            sx, sy, _ = cam.project(self.sky_pos[None])
-            gk = (0.25 + 0.75 * pulse(Ti, 2.15, 0.5) + 0.12 * c.osc(1)) * ease(ramp(Ti, 0.6, 1.6)) * out_k
-            rays = (float(sx[0]), float(sy[0]), gk, 0.95)
-        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.9 if full else 0.5, edge=self.edge, rays=rays))
+        sx, sy, _ = cam.project(self.sky_pos[None])
+        gk = (0.25 + 0.75 * pulse(Ti, 2.15, 0.5) + 0.12 * c.osc(1)) * ease(ramp(Ti, 0.6, 1.6)) * out_k
+        rays = (float(sx[0]), float(sy[0]), gk, 0.95)
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.9, edge=self.edge, rays=rays))
 
         if not self.has_front():
             return out_b, None
@@ -304,34 +276,8 @@ class Scene(Stage):
         draw_board(cv, cam, self.roses, self.rose_pos + sway, self.rose_h, k=ro_k, blur=1.6,
                    grade=np.array([1.0, 0.9, 0.9], np.float32) * (0.6 + 0.4 * lit), rim=0.6 * lit, light_dir=(0.3, -1.0))
 
-    # ---------------- light の後ろ: 光の線で描く大聖堂。キャラが出たら消えて、縁のきらめきだけ残る
-    def draw_light_back(self, c, cam, cv, sp, M, dst, cat_pos, lit, out_k, foot_y):
-        Ti, T, u = c.Ti, c.T, c.u
-        sh = 0.24 * env(Ti, 0.0, 0.5, self.REVEAL, self.REVEAL + 0.7) * (c.clip == "intro")
-        if sh > 0.003:
-            cv.shade(self.shade_map * sh)
-        prog = ease(ramp(Ti, 0.15, 1.9))
-        fade = 1 - ease(ramp(Ti, self.REVEAL + 0.05, self.REVEAL + 0.85))
-        k = fade * (0.85 + 0.45 * pulse(Ti, 2.08, 0.15))
-        if k > 0.003:
-            draw_lines(cv, cam, self.lines, cat_pos, self.cat_h, prog, k=k * 0.95, heads_k=1.0, flare=self.kit.flare_s)
-            # ドームの金が、光で満ちる（描き終わり → 閃き）
-            fill = ease(ramp(Ti, 1.6, 2.05)) * k
-            s = ease(ramp(Ti, 1.7, 2.25))
-            sw = fs.sweep(self.gold, s, -0.25, 1.25, width=0.10) * (2.2 * env(Ti, 1.65, 1.8, 2.2, 2.45))
-            emis = (self.gold * 0.32 * fill + sw * fade)[..., None] * (GOLD * 1.0 + WHITE * 0.4)
-            emit_mapped(cv, emis.astype(np.float32), M, dst)
-        # 箱の縁のきらめき（キャラが出てから残る。滞在の輪で瞬く）
-        ek = ease(ramp(Ti, 1.9, 2.8)) * out_k
-        if ek > 0.003:
-            for j, (x, y) in enumerate(self.edge_pts):
-                r = self.edge_tw[j]
-                tw = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r[0] * 2)) + r[1]))) ** 4
-                fxv.stamp(cv.L, self.kit.star["gold" if j % 4 else "pink"], x, y + 6 * c.osc(1, r[2]), (0.35 + 0.4 * r[2]) * tw * ek)
-                glow(cv, x, y, 10, GOLD * 0.6, 0.12 * tw * ek)
-
     # ---------------- あやと
-    def draw_ayato(self, c, cam, cv, sp, full):
+    def draw_ayato(self, c, cam, cv, sp):
         Ti, u = c.Ti, c.u
         a = ease(ramp(Ti, 1.0, 1.95))
         arrive = back_out(ramp(Ti, 1.0, 1.95), 1.2)
@@ -339,7 +285,7 @@ class Scene(Stage):
         x = lerp(-160, 205, ease_out(ramp(Ti, 1.0, 1.85)))
         y = lerp(-260, 270, arrive)
         hgt = 430.0
-        # キャラ絵が出る前（1.9〜2.35）に、左上の角へ小さく舞い上がる（キャラ絵の箱より上の帯。full も light も）
+        # キャラ絵が出る前（1.9〜2.35）に、左上の角へ小さく舞い上がる（キャラ絵の箱より上の帯）
         back_k = ease(ramp(Ti, 1.9, 2.35))
         x = lerp(x, 118, back_k)
         y = lerp(y, 130, back_k)
@@ -359,7 +305,7 @@ class Scene(Stage):
         h = hgt * depth / self.ref.foc
         tilt_k = 1 - ease(ramp(Ti, 1.6, 2.1))
         draw_board(cv, cam, self.aya, pos, h, anchor=(0.5, 1.0), k=a * (1 - ease(ramp(u, 0.6, 1.0))), sharp=True,
-                   rim=0.9 if full else 0.6, light_dir=(1.0, -0.3))
+                   rim=0.9, light_dir=(1.0, -0.3))
         # 降りてくる尾（光の粒）
         if 1.0 < Ti < 2.1 and c.clip == "intro":
             for k in range(14):
@@ -369,14 +315,14 @@ class Scene(Stage):
                 fxv.stamp(cv.L, self.kit.star["pink" if k % 2 else "gold"], xx + 40, yy + hgt * 0.1, 0.5 * (1 - k / 14) * tilt_k)
 
     # ---------------- 花びら
-    def draw_petals(self, c, cam, cv, amb, full):
+    def draw_petals(self, c, cam, cv, amb):
         f = self.fall
         ages = f.age(c)
         hx, hy = self.hand  # あやとの手（撒く所）。draw_ayato が決める
         for j in range(f.n):
             r = f.r[j]
             a = ages[j]
-            near = r[0] < 0.25 and full
+            near = r[0] < 0.25
             x0 = hx + (r[1] - 0.3) * 80
             y0 = hy + (r[2] - 0.5) * 40
             vx = 60 + r[3] * 260
@@ -387,14 +333,10 @@ class Scene(Stage):
                 x = (40 + r[1] * 110) if j % 2 else (W - 40 - r[1] * 110)
                 x += 30 * math.sin(6.283 * (a * 2 + r[4]))
                 y = -60 + a * 1250
-            if not full:
-                # light: 左右の縁だけに落とす
-                x = (W - 70 if j % 2 else 70) + 40 * math.sin(6.283 * (a + r[4]))
-                y = 120 + a * 1000
-            k = math.sin(math.pi * a) ** 0.6 * amb * (1 if full else 0.8)
+            k = math.sin(math.pi * a) ** 0.6 * amb
             if k <= 0.01:
                 continue
-            sc = (0.45 + 0.5 * r[6]) * (1.8 if near else 1.0) * (0.9 if full else 0.7)
+            sc = (0.45 + 0.5 * r[6]) * (1.8 if near else 1.0) * 0.9
             spr = sprite_rot(self.petals[j % 2], 6.283 * (a * (1 + r[7]) + r[7]), sc)
             put_sprite(cv, spr, x, y, k, blur=2.5 if near else 0.0)
 

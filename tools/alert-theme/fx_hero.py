@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """投げ銭の段の主役（あやと）が、投げた人のキャラ絵の後ろに隠れていないかを数える（#1095）。
 
-    python3 tools/alert-theme/fx_hero.py <台本> --chars <キャラ絵.png>… [--variants full,light] [--step 0.2]
+    python3 tools/alert-theme/fx_hero.py <台本> --chars <キャラ絵.png>… [--variants full] [--step 0.2]
            [--headroom 0.2] [--char-bottom 0.98] [--min 0.95] [--sheet <一覧.jpg>]
 
 終了コード:

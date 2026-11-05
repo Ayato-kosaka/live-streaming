@@ -17,7 +17,8 @@ ChatGPT の絵を層（奥の景色・中の建物・地面・手前・あやと
 ## 動画の約束（scratchpad の CONTRACT.md。3人で共通）
 
 - 1段は「登場（intro）→ 滞在（stay）をくり返す → 締め（outro）」の3本。層は back（投げた人のキャラ絵の後ろ）と
-  front（前。光と粒だけ）の2つまで。1,000円〜は full（全面）と light（光の線で描いてキャラが出たら薄くする）の2通り
+  front（前。光と粒だけ）の2つまで。通りは full（全面）だけ。1,000円〜の light（光の線で描いてキャラが出たら薄くする）は
+  2026-11-05 にやめた（あやと「光の線の案は見ごたえない」。#1095）。1,000円の段は full のまま、キャラが出たら景色を薄く引く
 - 720×1280・30コマ/秒・透明つき WebM（VP8・yuva420p・`-auto-alt-ref 0`・キーフレーム2秒おきに固定）
 - 名前 `t{段}-{通り}-{層}-{本}.webm`。秒（`introDur` など）は動画の実のコマ数から書く
 
@@ -804,6 +805,66 @@ def sprite(cv, art: Art, x, y, h, anchor=(0.5, 1.0), rot=0.0, sx=1.0, sy=1.0, k=
     return dst
 
 
+def sprite_top(art: Art, h, anchor=(0.5, 1.0), rot=0.0, sx=1.0, sy=1.0):
+    """`sprite` で (x, y) に置いたとき、絵の中身（透明 0.5 超の外接矩形）の上の端が y から何 px 上か（正の数）。
+    〜999円の猫たちを下の帯（キャラ絵の箱の下の端より下）に収めるのに使う。跳ねる・回る・伸びると上の端が動くので、
+    置く前にこれで測って、帯からはみ出す分だけ下げる"""
+    if not hasattr(art, "_box"):
+        a = art.levels[0][..., 3]
+        ys, xs = np.nonzero(a > 0.5)
+        art._box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1) if len(ys) else (0, 0, art.w, art.h)
+    x0, y0, x1, y1 = art._box
+    sc = h / art.h
+    c_, s_ = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+    A = np.array([[c_ * sc * sx, -s_ * sc * sy], [s_ * sc * sx, c_ * sc * sy]])
+    pts = np.array([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], np.float64) - [anchor[0] * art.w, anchor[1] * art.h]
+    return float(-(pts @ A.T)[:, 1].min())
+
+
+# ------------------------------------------------------------------ 〜999円の猫たち（下の帯の中で跳ねる・転がる）
+def arc(p, h):
+    """0→1 の放物線（頂で h）"""
+    p = clamp01(p)
+    return 4 * h * p * (1 - p)
+
+
+def hops(t, t0, t1, n, h):
+    """t0〜t1 に n 回跳ねる（頂 h）。返す: (持ち上がり, 着地のつぶれ 0〜1)"""
+    if not (t0 <= t < t1):
+        return 0.0, 0.0
+    q = ((t - t0) / (t1 - t0) * n) % 1.0
+    land = math.exp(-(q / 0.12) ** 2) + math.exp(-((q - 1.0) / 0.12) ** 2)
+    return arc(q, h), min(1.0, land)
+
+
+class Pose:
+    """猫1匹の1コマぶん: 絵・高さ（px）・足もとの x・持ち上がり・回転（度）・伸び縮み・体の真ん中で回すか・左右を返すか。
+    ground は地面の線を上げる量（奥を回るときに少し上に置く）、k は濃さ"""
+
+    def __init__(self, art, h, x, lift=0.0, rot=0.0, sx=1.0, sy=1.0, spin=False, flip=False, ground=0.0, k=1.0):
+        self.art, self.h, self.x, self.lift, self.rot = art, h, x, lift, rot
+        self.sx, self.sy, self.spin, self.flip, self.ground, self.k = sx, sy, spin, flip, ground, k
+
+
+def put_pose(tgts, pose: Pose, bottom, ceiling, k=1.0, rim=0.3, light_dir=(0.0, -1.0)):
+    """猫を、絵の中身の上の端が ceiling より下に来るよう（はみ出す分だけ下げて）、tgts の面ぜんぶに描く。
+    返す: 絵の中身の上の端の y（描かなかったら None）"""
+    if pose is None or k * pose.k <= 0.002:
+        return None
+    k = k * pose.k
+    sx = -pose.sx if pose.flip else pose.sx
+    if pose.spin:
+        anchor, y = (0.5, 0.5), bottom - pose.ground - pose.lift - pose.h * 0.5 * pose.sy
+    else:
+        anchor, y = (0.5, 1.0), bottom - pose.ground - pose.lift
+    top = sprite_top(pose.art, pose.h, anchor, pose.rot, abs(sx), pose.sy)
+    y = max(y, ceiling + top)
+    for tgt in tgts:
+        sprite(tgt, pose.art, pose.x, y, pose.h, anchor=anchor, rot=pose.rot, sx=sx, sy=pose.sy, k=k,
+               rim=rim, light_dir=light_dir)
+    return y - top
+
+
 def contact_shadow(cv, x, y, w, k=0.35):
     """足もとの影（楕円のやわらかい暗さ）。物が地に立って見える"""
     if k <= 0.003:
@@ -1035,7 +1096,7 @@ QBEST = {"back": 16, "front": 10}   # これより良くしない（大きさが
 QWORST = 50
 Q_PER_HALF = 13.0
 KBPS_CEIL = 12000
-# 1通り（full / light）の合計の予算（KB）。約束は 1通り 6MB 以内（6,000,000 バイト）。余裕を残す
+# 1通り（full）の合計の予算（KB）。約束は 1通り 6MB 以内（6,000,000 バイト）。余裕を残す
 VARIANT_BUDGET_KB = 5300
 
 

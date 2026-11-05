@@ -106,7 +106,8 @@ it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → �
   await advance(200);
   expect(fetched[0]).toBe("/alert/themes/castle/fx/manifest.json");
   const videos = fetched.slice(1);
-  // 置いてある manifest の、light の登場と滞在（〜999円は full）。front の有無は作る担当が決めるので、数は manifest から
+  // 置いてある manifest の、light の登場と滞在（light の無い段は full。2026-11-05 から段1〜6 は full だけ）。
+  // front の有無は作る担当が決めるので、数は manifest から
   const m = JSON.parse(MANIFEST).tiers as Record<string, { variants: Record<string, Record<string, unknown>> }>;
   const want = (part: string) =>
     Object.keys(m)
@@ -117,7 +118,14 @@ it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → �
       });
   expect(videos).toEqual([...want("intro"), ...want("stay")]);
   expect(videos[0]).toBe("/alert/themes/castle/fx/t1-full-back-intro.webm");
-  expect(videos.filter((u) => /outro|t[4-7]-full/.test(u))).toEqual([]);
+  expect(videos.filter((u) => /outro/.test(u))).toEqual([]);
+  // 段ごとに、light があれば light だけ、無ければ full だけを落とす（light が無くても full で出る）
+  for (const k of Object.keys(m)) {
+    const used = m[k].variants.light ? "light" : "full";
+    const unused = used === "light" ? "full" : "light";
+    expect(videos.filter((u) => u.includes(`/t${k}-${unused}-`))).toEqual([]);
+    expect(videos).toContain(`/alert/themes/castle/fx/t${k}-${used}-back-intro.webm`);
+  }
   expect(new Set(videos).size).toBe(videos.length);
 });
 
