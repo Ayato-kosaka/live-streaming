@@ -124,8 +124,8 @@ def build(res):
         b = []
         for x in ts:
             for f in sorted(x["fails"], key=lambda f: min(f["mid"], f["rhi"])):
-                what = f"「{f['t']}」" if f["t"] else f"（字の無い {f.get('tag', '?')} {f.get('size', '')}）"
-                b.append(f"{f.get('theme', '')} {f['tier']} 地:{bgn.get(f['bg'], f['bg'])} {f['char']} {what} 中央値 {f['mid']:.2f} 明るい地 {f['rhi']:.2f}")
+                glyph = f"「{f['t']}」" if f["t"] else f"（字の無い {f.get('tag', '?')} {f.get('size', '')}）"
+                b.append(f"{f.get('theme', '')} {f['tier']} 地:{bgn.get(f['bg'], f['bg'])} {f['char']} {glyph} 中央値 {f['mid']:.2f} 明るい地 {f['rhi']:.2f}")
             b += x.get("errs", [])[:2]
         lab, every = what(ts[0])
         if not every:
@@ -228,7 +228,10 @@ def prep_bg_names(res):
 
 def main(res, out):
     res = Path(res)
-    prep, rows, fails = build(res)
+    try:
+        prep, rows, fails = build(res)
+    except Exception as e:  # noqa: BLE001 表を組めないことも表に出す（コメントが黙って無くなるのがいちばん悪い）
+        prep, rows, fails = _load(res, "prep") or {}, [f"| 表を組む | ❌ | digest.py が落ちた: {type(e).__name__}: {str(e)[:150]} |"], [("表を組む", [])]
     nfail = len(fails)
     head = "✅ 全部通った" if not nfail else f"❌ {nfail}件落ちた"
     env = os.environ
