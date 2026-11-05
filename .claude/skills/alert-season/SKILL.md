@@ -160,7 +160,8 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 - **段の動画は手元で焼かない**（作業箱で焼いて確かめると、段2〜4 の直しで1人 55万トークンかかった。#1117）。
   台本（`fx_tiers/t<段>_*.py`）を直して master 以外の枝に push → `alert_fx_render.yml` が段ごとに焼いて
   `fx_check`・`fx_motion`・`fx_hero`（本物のキャラ絵10人＋形の見本）を回し、**通った段だけ** public に置いて枝に1コミットで戻す →
-  表（job summary と PR のコメント `<!-- alert-fx-render -->`）を読む → **❌の行だけ直して** push。手元は `git pull` で動画を受け取る
+  20行の表（PR のコメント `<!-- alert-fx-render -->`。PR の無い枝は report の job の log の末尾）を読む → **❌の行だけ直して** push。
+  手元は `git pull` で動画を受け取る（コマが今と同じ段は置かない）。段1つ 約4分・ランナー待ちは別
   - 絵（`fx_art/`）や `fx_stage.py` だけを直したときは push では起きない: `gh workflow run alert_fx_render.yml -f ref=<枝> -f tiers=<段>`
   - 一覧の絵（`t<段>-sheet.jpg`・`t<段>-hero.jpg`）と縦の短い録画（`t<段>.mp4`。合成の地）は枝 `review-media/fx-<枝>`。開くのは❌の段の絵だけ
 - 道具（`tools/alert-theme/`）:

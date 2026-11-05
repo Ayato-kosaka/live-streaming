@@ -303,6 +303,11 @@ def compare_to(old_dir, new_dir, names):
         if len(fa) != len(fb):
             rows[nm] = {"state": "frames", "old": len(fa), "new": len(fb)}
             continue
+        # WebM の入れ物は焼くたびに SegmentUID（16 バイトの乱数）が変わる。中のコマが1画素も違わなければ同じとみなす
+        # （2026-11-05、master の段2 を焼き直したら、違いは3本ともこの 16 バイトだけだった）
+        if np.array_equal(fa, fb):
+            rows[nm] = {"state": "same_frames"}
+            continue
         mse, mx, moved = 0.0, 0, 0.0
         for x, y in zip(fa, fb):
             px, py = fx_check.premul(x), fx_check.premul(y)
@@ -316,6 +321,8 @@ def compare_to(old_dir, new_dir, names):
     st = [r["state"] for r in rows.values()]
     if all(s == "same" for s in st):
         summ = "同じ"
+    elif all(s in ("same", "same_frames") for s in st):
+        summ = "コマが同じ"
     elif all(s == "new" for s in st):
         summ = "新しい段"
     else:
@@ -428,7 +435,11 @@ def cmd_tier(o):
     r["secs"]["media"] = round(time.time() - t)
 
     r["ok"] = not r["reasons"]
-    if r["ok"] and final and entry:
+    old_entry = ((load(os.path.join(pub, "manifest.json")) or {}).get("tiers") or {}).get(str(tier))
+    files = (r.get("vs_public_files") or {}).values()
+    # コマも manifest も今の public と同じなら置かない（入れ物の乱数だけが違うコミットを枝に積まない）
+    r["unchanged"] = bool(files) and all(f["state"] in ("same", "same_frames") for f in files) and old_entry == entry
+    if r["ok"] and final and entry and not r["unchanged"]:
         for nm in names:
             shutil.copy(os.path.join(stage, nm), os.path.join(place, nm))
         json.dump({"tier": str(tier), "entry": entry}, open(os.path.join(place, f"t{tier}-entry.json"), "w"), ensure_ascii=False)
@@ -539,7 +550,7 @@ def cmd_digest(o):
                if h.get("visible") is not None else "—")
         if str(t) in placed:
             pl = "✅"
-        elif str(t) in same_only:
+        elif str(t) in same_only or (ok and x.get("unchanged")):
             pl = "同じ"
         else:
             pl = "—"

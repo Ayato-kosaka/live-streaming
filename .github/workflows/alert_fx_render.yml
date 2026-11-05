@@ -347,6 +347,10 @@ jobs:
         run: |
           echo "::error::段の動画で通らなかったものがある（表は job summary と PR のコメント。public には置いていない）"
           exit 1
+      # 作業箱は job summary を読めない。PR の無い枝では、この job の log の末尾（get_job_logs の tail）で表を読む
+      - name: 表（log の末尾に）
+        if: always()
+        run: cat "$RUNNER_TEMP/digest.md"
 
   cleanup:
     if: github.event_name == 'pull_request'
