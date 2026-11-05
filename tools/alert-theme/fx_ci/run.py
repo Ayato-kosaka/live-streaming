@@ -78,16 +78,16 @@ def scripts_of(theme):
 
 def headroom_of(theme, tier):
     """キャラ絵の箱の上の空き。再生の側（app/alertbox/themes.ts の fxVideo.tiers の video.headroom）から読む"""
+    # TS を字で読むのは python/ts_read.py だけ（ts_readers_selftest が見ている）
     sys.path.insert(0, os.path.join(ROOT, "python"))
     try:
-        from ts_read import array_body, fields, nested_body, objects
-        src = open(os.path.join(ROOT, "app/alertbox/themes.ts"), encoding="utf-8").read()
-        i = src.find(f'id: "{theme}"')
-        j = src.find('id: "', i + 1)
-        part = src[i:j if j > 0 else len(src)]
-        m = re.search(r"fxVideo:\s*\{[^}]*?tiers:\s*([A-Z_][A-Z0-9_]*)", part)
-        if i >= 0 and m:
-            for o in objects(array_body(src, m.group(1))):
+        from ts_read import array_body, code_only, fields, nested_body, objects
+        src = code_only(open(os.path.join(ROOT, "app/alertbox/themes.ts"), encoding="utf-8").read())
+        for t in objects(array_body(src, "THEMES")):
+            if fields(t).get("id") != theme:
+                continue
+            name = fields(nested_body(t, "fxVideo")).get("tiers", "")
+            for o in objects(array_body(src, name)) if name else []:
                 v = fields(nested_body(o, "video"))
                 if v.get("tier") == str(tier):
                     return float(v["headroom"])
