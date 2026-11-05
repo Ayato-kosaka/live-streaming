@@ -1,0 +1,62 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "E2oGYjnVQSA__clips",
+ "mode": "clips",
+ "dest": "E2oGYjnVQSA/clips",
+ "video": "E2oGYjnVQSA",
+ "channel": null,
+ "request": "shorts/requests/chowder-E2oGYjnVQSA-p1-clips-edit2-20261105.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 2,
+  "clips_ok": 2,
+  "clip_seconds": 24.0,
+  "channel_entries": 0,
+  "files": 12
+ },
+ "bytes": {
+  "plain": 11152162,
+  "tar_gz": 11127760,
+  "encrypted": 11127776
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 11127776,
+   "sha256": "eecf18f3ae05a6492dfd013c7e5fcb63a3f940f143111c032ed4153f53d44d99"
+  }
+ ],
+ "hmac_sha256": "5f4e5176a37aa4fa3d17d8c4eafeec0b93cc75723abdff5c2fd61d62ea33c8d2",
+ "pubkey_sha256": "5ac110c258c63be087c7773283dde65c447fbe4159bca4db187ec760e8df8a02",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/41970449763",
+ "created_at": "2026-11-05T04:58:13+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 197712,
+    "sha256": "be2151982e1b2fa6785b2583fb0b667f08ef3d47553829cf494e14896104d2f9"
+   }
+  ],
+  "hmac_sha256": "218d4c219fe56d2bb2be029cae0ab564db895d50b3302bf3e2d4b22de7062a79",
+  "files": 6,
+  "sheets": 2,
+  "bytes": {
+   "plain": 207575,
+   "tar_gz": 197708,
+   "encrypted": 197712
+  }
+ }
+}
