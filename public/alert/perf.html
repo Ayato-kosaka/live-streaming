@@ -237,6 +237,11 @@
 
   function makePlayer(kind) {
     var v = document.createElement("video");
+    // 本物（app/alertbox/videoGuard.ts）と同じ守り。poster は透明（Android の WebView の灰色の地と ▶ を出さない。#1133）
+    v.setAttribute("poster", "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+    v.setAttribute("disablepictureinpicture", "");
+    v.setAttribute("disableremoteplayback", "");
+    v.controls = false;
     v.muted = true;
     v.defaultMuted = true;
     v.setAttribute("muted", "");

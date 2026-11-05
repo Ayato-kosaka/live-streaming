@@ -30,6 +30,7 @@ import React from "react";
 import renderer, { act } from "react-test-renderer";
 import { Image, Platform } from "react-native";
 import type { AlertboxCharacter, NotificationData } from "../types";
+import { CLEAR_POSTER } from "../videoGuard";
 
 /* jsdom には `setImmediate` が無い。react-native の `InteractionManager`
    （`Animated.timing(...).start()` の中）がそれを呼ぶので、先に敷いておく。
@@ -213,7 +214,7 @@ let AlertBox: React.ComponentType;
 
 /** `videoRef` の中身。react-test-renderer は host の実体を作らないので手で渡す */
 const fakeVideoEl = {
-  readyState: 0,
+  readyState: 4,
   networkState: 0,
   paused: true,
   duration: 3,
@@ -363,6 +364,70 @@ describe("動画を持つ人", () => {
 
     const [v] = videos(tree);
     expect(v.props.muted).toBe(true);
+  });
+});
+
+/* ---------------------------------------------------------------- #1133 */
+
+describe("灰色の地と ▶ を出さない（#1133。Android の WebView は poster の無い `<video>` に既定の絵を描く）", () => {
+  it("置く `<video>` は透明の poster を持ち、コントロールも窓も出さない", async () => {
+    const tree = await mount();
+    await fire(tree, "@mov");
+
+    const [v] = videos(tree);
+    expect(v.props.poster).toBe(CLEAR_POSTER);
+    expect(v.props.controls).toBe(false);
+    expect(v.props.disablePictureInPicture).toBe(true);
+    expect(v.props.disableRemotePlayback).toBe(true);
+    expect(v.props.playsInline).toBe(true);
+  });
+
+  it("温める `<video>`（画面に置かない）も、透明の poster を持つ（作った数が 0 でないこと）", async () => {
+    const made: HTMLVideoElement[] = [];
+    const orig = document.createElement.bind(document);
+    const spy = jest.spyOn(document, "createElement").mockImplementation(((tag: string, o?: ElementCreationOptions) => {
+      const el = orig(tag, o);
+      if (String(tag).toLowerCase() === "video") made.push(el as HTMLVideoElement);
+      return el;
+    }) as typeof document.createElement);
+    try {
+      await mount();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(made).toHaveLength(1);
+    expect(made[0].getAttribute("poster")).toBe(CLEAR_POSTER);
+    expect(made[0].hasAttribute("controls")).toBe(false);
+  });
+
+  it("コマの合図を持つ端末: `playing` が来ても、最初のコマの合図が来るまで見せない（その人の絵のまま）", async () => {
+    const queued: ((now: number, meta: unknown) => void)[] = [];
+    const el = fakeVideoEl as typeof fakeVideoEl & {
+      requestVideoFrameCallback?: (cb: (now: number, meta: unknown) => void) => number;
+      cancelVideoFrameCallback?: (id: number) => void;
+    };
+    el.requestVideoFrameCallback = (cb) => queued.push(cb);
+    el.cancelVideoFrameCallback = () => {};
+    try {
+      const tree = await mount();
+      await fire(tree, "@mov");
+      await firePlaying(tree);
+
+      expect(videoVisible(tree)).toBe(false);
+      expect(images(tree)).toContain(MOV_ICON);
+
+      await act(async () => {
+        queued.splice(0).forEach((cb) => cb(0, {}));
+      });
+      await settle(2);
+
+      expect(videoVisible(tree)).toBe(true);
+      expect(images(tree)).not.toContain(MOV_ICON);
+      expect(logsOf("videoFirstFrame")).toHaveLength(1);
+    } finally {
+      delete el.requestVideoFrameCallback;
+      delete el.cancelVideoFrameCallback;
+    }
   });
 });
 

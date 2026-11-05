@@ -64,6 +64,16 @@ def build(res):
         for h in ((r or {}).get("tool") or {}).get("hits") or []:
             bad.append(f"{h['amount']}円 {h['size']} {h['char']} {h['text']} {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h['heroText']}" + (f"（{h['png']}）" if h.get("png") else ""))
     ok = len(tools) == len(names) and all(r["exit"] == 0 for r in got.values() if r) and sm("stay") > 0
+    # `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>`。動画の段のあるテーマで1本も見ていなければ落とす
+    for t in tools:
+        for v in t.get("vbad") or []:
+            bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: `<video>` poster 無し {v['noPoster']}・コマ前に見えた {v['early']} {json.dumps(v.get('bad', [])[:1], ensure_ascii=False)[:90]}")
+    if sm("noPoster") or sm("early"):
+        ok = False
+    if any(t.get("fx") for t in prep.get("themes") or []) and not sm("videos"):
+        ok = False
+        bad.insert(0, "動画の段のあるテーマなのに `<video>` を1本も見ていない（守りを数えていない）")
+    vid = f"。`<video>` {sm('videos'):,}本: poster 無し {sm('noPoster')} / コマを持つ前に見えた {sm('early')}（全部 0。くり返しの継ぎ目 {sm('seam'):,} は数えない）"
     band = any(t.get("heroBands") for t in tools)
     hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
     if not sm("heroSeen"):
@@ -87,9 +97,9 @@ def build(res):
         early = "。札の出る順: 測れなかった"
         bad.append(_why(rv, "reveal"))
     row(
-        "重なり（顔×演出・主役の顔×字）",
+        "重なり（顔×演出・主役の顔×字・`<video>` の守り）",
         ok,
-        f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}{early}",
+        f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}{vid}{early}",
         bad,
     )
 
@@ -99,6 +109,7 @@ def build(res):
         cc = c["controls"]
         tl = lambda k: cc.get(k, {}).get("tool") or {}  # noqa: E731
         # 落ちたうえで、落ちた数が 0 でないこと（「測れずに 1」を通さない）
+        keys = {"顔": "face", "主役": "hero", "帯": "band", "字の切れ": "textfit", "濃さ": "ink", "展開": "decode"}
         hit = {
             "顔": tl("face").get("front", 0) + tl("face").get("cover", 0),
             "主役": tl("hero").get("heroText", 0),
@@ -108,8 +119,11 @@ def build(res):
             "展開": len(tl("decode").get("bad") or []),
         }
         if "reveal" in cc:
+            keys["札が先"] = "reveal"
             hit["札が先"] = tl("reveal").get("early", 0)
-        keys = dict(zip(hit, ["face", "hero", "band", "textfit", "ink", "decode", "reveal"]))
+        if "poster" in cc:
+            keys["poster"] = "poster"
+            hit["poster"] = tl("poster").get("noPoster", 0)
         nok = [k for k, v in hit.items() if cc.get(keys[k], {}).get("exit") != 1 or not v]
         row(
             "対照（壊すと落ちる）",
