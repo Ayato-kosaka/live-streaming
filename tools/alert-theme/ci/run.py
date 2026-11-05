@@ -55,14 +55,17 @@ def season():
     p = IN / "season.json"
     if p.exists():
         return json.loads(p.read_text(encoding="utf-8"))
-    src = (ROOT / "app/alertbox/themes.ts").read_text(encoding="utf-8")
-    body = src[src.index("export const THEMES") :]
+    # TS を字で読むのは python/ts_read.py だけ（ts_readers_selftest が見ている）
+    sys.path.insert(0, str(ROOT / "python"))
+    from ts_read import array_body, code_only, fields, nested_body, objects  # noqa: PLC0415
+
+    src = code_only((ROOT / "app/alertbox/themes.ts").read_text(encoding="utf-8"))
     themes = []
-    for m in re.finditer(r'^    id: "([\w-]+)"', body, re.M):
-        nxt = re.search(r'^    id: "', body[m.end() :], re.M)
-        block = body[m.end() : m.end() + (nxt.start() if nxt else len(body))]
-        frm = re.search(r'^    from: "([^"]+)"', block, re.M)
-        themes.append({"id": m.group(1), "from": frm.group(1) if frm else "", "fxVideo": bool(re.search(r"^    fxVideo:", block, re.M))})
+    for o in objects(array_body(src, "THEMES")):
+        f = fields(o)
+        themes.append({"id": f.get("id", ""), "from": f.get("from", ""), "fxVideo": bool(nested_body(o, "fxVideo").strip())})
+    if not themes and not os.environ.get("ALERT_THEME"):
+        raise SystemExit("themes.ts の THEMES が読めない（置き場か形が変わった？）。ALERT_THEME で名指しする")
     theme = os.environ.get("ALERT_THEME") or max(themes, key=lambda t: t["from"])["id"]
     fx = os.environ.get("ALERT_FX", "")
     if not fx:
