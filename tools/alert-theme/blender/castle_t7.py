@@ -531,6 +531,21 @@ def mat_bat():
     return m
 
 
+def mat_bat_swarm():
+    """伯爵のマントから飛び立つ群れのこうもり。満月の前を影絵になって渡るので、体は暗いまま、縁だけ細く淡い紫に光らせる。
+    お城のこうもり（mat_bat）の光り方だと、試しの絵で群れが紫のにじみに見えた（run 41951972137）"""
+    m, N, out = new_mat("bat_swarm")
+    bs = principled(N, Base_Color=(0.02, 0.012, 0.03), Roughness=0.55)
+    N.set(bs, Sheen_Weight=0.4, Sheen_Tint=(0.55, 0.4, 0.9))
+    lw = N.n("ShaderNodeLayerWeight")
+    N.set(lw, Blend=0.25)
+    rim = N.math("POWER", N.sock(lw, "Facing", out=True), 3.5)
+    em = N.n("ShaderNodeEmission")
+    N.set(em, Color=(0.72, 0.58, 1.0), Strength=N.math("ADD", N.math("MULTIPLY", rim, 0.9), 0.012))
+    N.nt.links.new(add_shader(N, bs.outputs[0], em.outputs[0]), out.inputs["Surface"])
+    return m
+
+
 def mat_emit(name, color, strength, ctl_name=None, ctl_k=1.0):
     m, N, out = new_mat(name)
     em = N.n("ShaderNodeEmission")
@@ -732,7 +747,7 @@ def mat_moon_rays(inner):
     edge = N.math("MULTIPLY", N.maprange(d, inner, inner * 1.6), N.maprange(d, 0.95, 0.6))
     k = N.math("MULTIPLY", N.math("MULTIPLY", streak, fall), edge)
     em = N.n("ShaderNodeEmission")
-    N.set(em, Color=(0.75, 0.8, 1.0), Strength=N.math("MULTIPLY", N.math("MULTIPLY", G, k), 1.4))
+    N.set(em, Color=(0.75, 0.8, 1.0), Strength=N.math("MULTIPLY", N.math("MULTIPLY", G, k), 1.2))
     tr = N.n("ShaderNodeBsdfTransparent")
     N.nt.links.new(add_shader(N, tr.outputs[0], em.outputs[0]), out.inputs["Surface"])
     return m
@@ -1282,7 +1297,7 @@ def build(quality):
         "gold": mat_metal("gold", (1.0, 0.72, 0.28), 0.18, 1.0),
         "bark": mat_stone("bark", (0.04, 0.025, 0.018), (0.1, 0.06, 0.035)),
         "window": mat_window(), "path": mat_path(), "ground": mat_ground(),
-        "leaf": mat_leaf(), "bat": mat_bat(),
+        "leaf": mat_leaf(), "bat": mat_bat(), "bat_swarm": mat_bat_swarm(),
         "lamp": mat_emit("lamp", (1.0, 0.62, 0.28), 4.0, "uplight"),
         "gate_glow": mat_gate_glow(),
         "rays": mat_additive("rays", (1.0, 0.68, 0.3), 0.45, "rays"),
@@ -1535,19 +1550,27 @@ def build(quality):
     body_me.materials.append(mats["bat"])
     for side in (-1, 1):
         wing_me[side].materials.append(mats["bat"])
+    # 群れ（bat_w）は同じ形に、影絵の材質
+    body_sw = body_me.copy()
+    body_sw.materials[0] = mats["bat_swarm"]
+    wing_sw = {}
+    for side in (-1, 1):
+        wing_sw[side] = wing_me[side].copy()
+        wing_sw[side].materials[0] = mats["bat_swarm"]
     for b in MO.BATS:
         parent = root if b["name"] in MO.ROOT_KIDS else None
         ob = bpy.data.objects.new(b["name"], None)
         s.objects.link(ob)
         ob.parent = parent
-        holder = bpy.data.objects.new(b["name"] + "_body", body_me)
+        swarm = b["name"].startswith("bat_w")
+        holder = bpy.data.objects.new(b["name"] + "_body", body_sw if swarm else body_me)
         s.objects.link(holder)
         holder.parent = ob
         k = 0.6 if b["name"].startswith("bat_o") else 1.0
         ob.empty_display_size = 0.2
         holder.scale = (k, k, k)
         for side in (-1, 1):
-            w = bpy.data.objects.new(f"{b['name']}_w{side}", wing_me[side])
+            w = bpy.data.objects.new(f"{b['name']}_w{side}", (wing_sw if swarm else wing_me)[side])
             s.objects.link(w)
             w.parent = holder
             w.location = (side * 0.05, 0.0, 0.02)

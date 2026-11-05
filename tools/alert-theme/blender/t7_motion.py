@@ -306,6 +306,9 @@ def _mote_spec():
         m["gold"] = k % 3 == 2
     for m in rain:
         u0, u1, _ = (a / TAU for a in m["rot0"])
+        # 大きさをばらす（2割ほどが大きく光り、3割ほどが小さな点）。そろった点が並ぶと、雪か画面の汚れに見えた
+        # （試しの絵 run 41951972137）
+        m["size"] *= 1.8 if m["axis"][2] > 0.6 else (0.7 if m["axis"][2] < -0.4 else 1.0)
         # 満月のあたり（画面の上 1/3）で生まれて、ゆっくり舞い降りる。群れが月を横切るころ（4.75 秒）から
         m["sy0"] = -30 + 470 * u0 ** 1.4
         m["fall"] = 300 + 260 * u1
@@ -315,6 +318,7 @@ def _mote_spec():
         m["tw"] = 1.5 + abs(m["spin"])
     for m in stay:
         u0, u1, _ = (a / TAU for a in m["rot0"])
+        m["size"] *= 1.8 if m["sink_delay"] > 0.144 else (0.7 if m["sink_delay"] < 0.054 else 1.0)
         m["sy0"] = -40 + 1100 * u0
         # 1周で舞い降りる量（px）。3.0 秒の粒は 1.5 秒の粒の倍の距離をゆっくり
         m["fall"] = 90 * m["period"] * (0.7 + 0.6 * u1)
@@ -980,8 +984,8 @@ def _swarm_spec(n=36):
                 ex, ey, d1, dur, lift = RW.uniform(-170, 120), RW.uniform(-190, -40), RW.uniform(22, 34), RW.uniform(0.75, 0.95), RW.uniform(20, 80)
             b = dict(name=f"bat_w{i:02d}", x0=RW.uniform(130, 250), y0=RW.uniform(150, 290), ex=ex, ey=ey, d1=d1,
                      t0=4.38 + 0.24 * i / n + RW.uniform(0.0, 0.05), dur=dur,
-                     bend=RW.uniform(-50, 50), lift=lift, flap=RW.choice([9, 10, 11]), ph=RW.random(),
-                     size=RW.uniform(0.85, 1.3))
+                     bend=RW.uniform(-50, 50), lift=lift, flap=RW.choice([6, 7]), ph=RW.random(),
+                     size=RW.uniform(1.0, 1.45))
             if not swarm_hits(b, pipo_at):
                 break
             redraw += 1
@@ -1049,7 +1053,8 @@ def bats(clip, t, out):
         # 飛び立つ向きへ少し体を傾ける
         out[f"obj:{n}:rot"] = (pitch, 0.35 * math.copysign(1, b["bend"]), yaw)
         out[f"obj:{n}:scale"] = s if s > 1e-3 else HIDE
-        # 羽ばたきは整数の Hz × 3.0 秒（輪がつながる）。群れは速く羽ばたく
+        # 羽ばたきは整数の Hz × 3.0 秒（輪がつながる）。9〜11 Hz だと1コマに羽の向きが大きく変わり、
+        # 試しの絵で紫のにじみに見えた（run 41951972137）。お城のこうもりと同じ 6〜7 Hz
         out[f"val:{n}_flap"] = math.sin(TAU * (b["flap"] * tau + b["ph"]))
 
 
