@@ -28,7 +28,7 @@ from fx_stage import *  # noqa: E402,F401,F403
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fx_art", "t2")
 
-CAT_H = 140.0
+CAT_H = 140.0  # alert_fx_render の試し: 台本は master のまま（焼き直しが今の public と揃うか。3回目）
 NUT_H = 92.0
 NUT_R = NUT_H * 0.5          # 転がるときの半径（転がった道のり ÷ 半径 = 回った角度）
 ON_NUT = NUT_H * 0.74        # 栗の上に乗ったときの足もとの高さ（栗の丸い頂に足が少し沈む）
