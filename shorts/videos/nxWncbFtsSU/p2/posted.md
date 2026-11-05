@@ -80,3 +80,12 @@ B を 11/4 → **11/5 21:30 JST**、バゲット（#1071）を 11/5 → 11/4 に
 それぞれの時刻（A は 2026-11-01 12:30 UTC、B は **2026-11-05 12:30 UTC**）を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直す。
 EC2 の `~/shorts_post/nxWncbFtsSU` は A・B の両方が入っているので、**B の公開を確かめてから** `post.py clean` で消す。
+
+## B の公開を確かめた（2026-11-05）
+
+予約の時刻（12:30 UTC。あやとのチャットで 11/4 から入れ換えた）のあと、EC2 からログインしない `curl` で 12:45〜12:47 UTC に見た。
+
+- YouTube `YJvEbZ3dmEQ`: oEmbed が 200 で題「🇬🇧イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！」を返した（`post_B.json` の youtube.title と1字ずつ一致）→ 公開
+- TikTok `7704036972335041798`（入れ直した予約）: `embed/v2` が 200・`"secret":false` → 公開。はじめの2回は 503 で、15秒あけて取り直した3回目で 200
+- 消した古い TikTok `7702951050025717012`: `embed/v2` が 400（無い）。2本は出ていない
+- A（11/1）・B（11/5）とも公開を確かめたので、EC2 の `~/shorts_post/nxWncbFtsSU` を消した（`post.py clean` と同じ中身を、確かめと同じ1回の起動で回した。EC2 の空き 8.9G）
