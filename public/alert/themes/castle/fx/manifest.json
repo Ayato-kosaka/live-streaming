@@ -148,18 +148,6 @@
             "stay": "t7-full-front-stay.webm",
             "outro": "t7-full-front-outro.webm"
           }
-        },
-        "light": {
-          "back": {
-            "intro": "t7-light-back-intro.webm",
-            "stay": "t7-light-back-stay.webm",
-            "outro": "t7-light-back-outro.webm"
-          },
-          "front": {
-            "intro": "t7-light-front-intro.webm",
-            "stay": "t7-light-front-stay.webm",
-            "outro": "t7-light-front-outro.webm"
-          }
         }
       },
       "revealAt": 5.6,
