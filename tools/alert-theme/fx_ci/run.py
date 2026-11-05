@@ -32,8 +32,7 @@ import subprocess
 import sys
 import time
 
-import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+# numpy と PIL は焼く・確かめる job にだけ入れる（place・report の job は入れない）ので、使う関数の中で読む
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.dirname(HERE)
@@ -159,6 +158,7 @@ def cmd_plan(o):
 
 # ------------------------------------------------------------------ chars（キャラ絵と地）
 def content_box(a):
+    import numpy as np
     ys, xs = np.nonzero(a > 24)
     if len(ys) == 0:
         return None
@@ -172,6 +172,7 @@ def shape_name(w, h):
 def synth_chars(d):
     """形の見本（自分で描いたもの。git の枝に置く絵・録画にはこちらだけを使う）。
     縦長で箱の高さいっぱいになる四角・横長・大きい頭（fx_hero.py の見本の決まり）"""
+    from PIL import Image, ImageDraw
     os.makedirs(d, exist_ok=True)
     im = Image.new("RGBA", (400, 1300), (0, 0, 0, 0))
     ImageDraw.Draw(im).rounded_rectangle((10, 10, 390, 1290), 40, fill=(214, 120, 160, 255), outline=(60, 20, 40, 255), width=12)
@@ -189,6 +190,8 @@ def synth_chars(d):
 def synth_bg(d):
     """縦の録画の地（1080×1920）。fx_review.py は <bg>/prism-street.jpg と prism-face.jpg を読むので、その名前で置く。
     中身は合成: 明るい昼の街（空・建物・窓・道）と、暗い部屋（明かりの塊）。本物の配信画面は使わない"""
+    import numpy as np
+    from PIL import Image, ImageDraw, ImageFilter
     os.makedirs(d, exist_ok=True)
     W, H = 1080, 1920
     R = np.random.default_rng(1117)
@@ -222,6 +225,8 @@ def synth_bg(d):
 
 def cmd_chars(o):
     """本物のキャラ絵（tools/sprites/avatars.py が /tmp/avatars に落とした住人の絵）から、形と余白が散るように選ぶ"""
+    import numpy as np
+    from PIL import Image
     real = os.path.join(o.out, "real")
     os.makedirs(real, exist_ok=True)
     info = []
@@ -283,6 +288,7 @@ def load(p):
 
 def compare_to(old_dir, new_dir, names):
     """今の public の同じ名前の動画と比べる。返す: (要約, 本ごと)"""
+    import numpy as np
     import fx_check
     rows = {}
     for nm in names:
