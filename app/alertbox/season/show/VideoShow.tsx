@@ -54,7 +54,7 @@ export const VideoShow: React.FC<Props> = ({ plan, durationSec, onFail }) => {
 
   return (
     <>
-      <div ref={back} data-show="layer" data-fx-video="back" data-fx-key={plan.key} aria-hidden style={{ ...layer, zIndex: 0 }} />
+      <div ref={back} data-show="layer" data-fx-video="back" data-fx-key={plan.key} aria-hidden style={{ ...layer, zIndex: 3 }} />
       <div ref={front} data-show="layer" data-fx-video="front" data-fx-key={plan.key} aria-hidden style={{ ...layer, zIndex: 2 }} />
     </>
   );
