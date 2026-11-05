@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__xvd-p1a-v1",
  "mode": "render",
- "dest": "render/xvd-p1a-v1/inbox",
+ "dest": "render/xvd-p1a-v1",
  "video": null,
  "channel": null,
  "request": "shorts/render/xvd-p1a-v1.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 3018,
-  "tar_gz": 1542,
-  "encrypted": 1552
+  "plain": 36010,
+  "tar_gz": 9248,
+  "encrypted": 9264
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1552,
-   "sha256": "7f1a463c9b064e7bacc030b729c67036d306d61955ab3a020cddd91da9ecb398"
+   "bytes": 9264,
+   "sha256": "c1bd9738de49823c23cd88a8332b6a4d024ecffdeb7d8f902d3b14365f60118f"
   }
  ],
- "hmac_sha256": "7c8deebc1737401f5098d062ea98ee62320ba06a9c0f5e85c1e5615dface6f85",
+ "hmac_sha256": "d1c97ed902ddd9fa533cdd5243ab9f3a5a404b5e3eb93f72ebeafa8a5d9e0775",
  "pubkey_sha256": "db4a326ea3919a174c2ff994a2e1594b5bd013728c56a458870d98347c652178",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-05T03:12:38+00:00",
+ "created_at": "2026-11-05T03:27:07+00:00",
  "nonce": "3e74018f7cae96d68e4e992a"
 }
