@@ -91,7 +91,17 @@ gh api -X POST repos/Ayato-kosaka/live-streaming/issues/<PR>/labels -f 'labels[]
 
 **何もコメントが来ないのは「まだ待っている」。** checks が走っている間・枝でショートの取り込みが
 走っている間（#291）・mergeable が分からない間は、黙って次の完了を待つ。
-いつまでも来なければ、ship.yml が起きていない（5章の手で回す）。
+
+**ship.yml が入る前に切った枝は、札を付けても起きないことがある**（PR の merge ref が古いと、
+札の event が ship.yml を持たない。#1121 がそれで、次にどこかの CI が終わったときに拾われた）。
+すぐ動かしたいときは、手で1回押す（`dry_run=false`。判断は同じで、緑でなければ何もしない）:
+
+```bash
+gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/ship.yml/dispatches \
+  -f ref=master -f 'inputs[pr]=<PR>' -f 'inputs[dry_run]=false'
+```
+
+それでも来なければ、ship.yml が起きていない（5章の手で回す）。
 
 ### 付ける前に「付けたらどうなるか」を見る
 

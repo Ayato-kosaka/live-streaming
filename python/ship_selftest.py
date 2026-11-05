@@ -32,6 +32,7 @@
 | 11 | 本番の HTML の作り物 | entry と書き出しの印が引ける。印が無ければ None |
 | 12 | `chain_alive_watch` の実績の見張り | ship.yml の繋ぎは数えない。**外す札を剥がすと赤くなる** |
 | 13 | 落ちたときのコメント | 5行以内で、札の名前が入る |
+| 14 | 同じ head で同じ check が2回（本文の書き直し） | **新しいほうだけ**読む。別のワークフローの同じ名前は消さない |
 
 2・3・4 は「落ちること」だけでなく、**落ちる先が狙ったぶんだけ**かを見る
 （`docs/island-misses.md` #128）。
@@ -52,7 +53,8 @@ import chain_alive_watch as ca  # noqa: E402
 import ship  # noqa: E402
 from ship import (  # noqa: E402
     OWN, after_merge, build_mark, checks_verdict, clean_path, decide, entry_of, fail_body,
-    glob_re, hand, listed_wakes, load_docs, name_of, public_candidates, route, site_routes,
+    glob_re, hand, latest_checks, listed_wakes, load_docs, name_of, public_candidates, route,
+    site_routes,
     wake_drift, wake_names,
 )
 
@@ -334,6 +336,27 @@ def main() -> int:
         print("[13] ○ 落ちたときのコメントは5行以内で、札の名前が入る")
     else:
         print(f"[13] ✕ 落ちたときのコメントが {len(body.splitlines())}行 / {body!r}")
+        ng += 1
+
+    # [14] 同じ head で同じ check が2回走った（本文を書き直して Closes Check がもう1本）。
+    # 新しいほうだけを読むこと。**古い赤で、直した PR を赤く見せない**（#1121 で実際に並んだ）
+    old_red = {**ck("closes", conclusion="failure", suite=10), "id": 1}
+    new_ok = {**ck("closes", suite=11), "id": 2}
+    other = {**ck("closes", conclusion="failure", suite=12), "id": 3}   # 別のワークフローの同じ名前
+    paths = {10: ".github/workflows/closes_check.yml", 11: ".github/workflows/closes_check.yml",
+             12: ".github/workflows/zz.yml"}
+    fixed = latest_checks(GREEN + [old_red, new_ok], paths)
+    broke = latest_checks(GREEN + [{**new_ok, "id": 1}, {**old_red, "id": 2}], paths)
+    both = latest_checks(GREEN + [old_red, new_ok, other], paths)
+    if (checks_verdict(fixed, {}, set())[0] == "green"
+            and checks_verdict(broke, {}, set())[0] == "red"
+            and checks_verdict(both, {}, set())[0] == "red"
+            and checks_verdict(GREEN + [old_red, new_ok], {}, set())[0] == "red"):
+        print("[14] ○ 同じ check が2回走ったら新しいほうだけを読む（古い赤で直した PR を赤くしない）。"
+              "別のワークフローの同じ名前は消さない。畳まずに読むと赤に見える")
+    else:
+        print(f"[14] ✕ 直したあと {checks_verdict(fixed, {}, set())} / 赤くなったあと "
+              f"{checks_verdict(broke, {}, set())} / 別のワークフロー {checks_verdict(both, {}, set())}")
         ng += 1
 
     print()
