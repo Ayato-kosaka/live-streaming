@@ -193,7 +193,7 @@ class Scene(Stage):
 
     def put(self, c, tgts, pose, k):
         """帯の天井からはみ出さないよう下げて、両方の面（back と主役だけの層）に描く。返す: 絵の上の端の y"""
-        return put_pose(tgts, pose, self.BOTTOM - 2, self.ceiling(c), k=k)
+        return put_pose(tgts, pose, self.BOTTOM - 402, 0.0, k=k)  # わざと壊す: 猫を帯の上（キャラ絵の後ろ）へ。3回目
 
     def draw(self, c):
         Ti, T, u = c.Ti, c.T, c.u
