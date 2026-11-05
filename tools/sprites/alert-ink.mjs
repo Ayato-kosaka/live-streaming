@@ -198,7 +198,7 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     if (j.err) throw new Error(j.err);
     if (!j.rows.length) throw new Error(`測れた字が無い ${JSON.stringify(j.dropped)}`);
     const tier = theme === "halloween" ? `${a}円` : "季節の外";
-    return j.rows.map((r) => ({ tier, theme, bg, char: ch.id, t: r.t, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
+    return j.rows.map((r) => ({ tier, theme, bg, char: ch.id, t: r.t, tag: r.tag, size: r.size, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
   } finally {
     await ctx.close();
   }

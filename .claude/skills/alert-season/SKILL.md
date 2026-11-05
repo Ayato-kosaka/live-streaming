@@ -173,7 +173,7 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 **手元で書き出しや録画を回さない。** 作業箱で回すと長い出力と大量の絵を読むことになり、1件で 30万〜80万トークン食う。
 
 1. **PR を出す。** `app/alertbox/**`・`public/alert/**`・`tools/alert-theme/**`・`tools/sprites/alert-*.mjs` を触った PR で、ひとりでに走る
-   （1回 約 __MIN__ 分）。PR の外なら `workflow_dispatch`（`ref`・`pr`・`theme`・`fx`）
+   （1回 約1時間。shard 23本のうち重なりの14本が待たされるぶんを含む。2026-11-05 実測 57分）。PR の外なら `workflow_dispatch`（`ref`・`pr`・`theme`・`fx`）
 2. **alert_check のコメントの表だけ読む**（`<!-- alert-check -->`。PR に1つだけで、push のたびに同じコメントが書き換わる。30行以内）。
    1検査1行で ✅/❌・要の数字と閾値・見た数。見た数が 0 なら ❌（「0件見た」で緑にしない）
 3. **❌ の行だけ直して push する。** 表の下に、落ちた組（段・大きさ・キャラ・文）が出る。

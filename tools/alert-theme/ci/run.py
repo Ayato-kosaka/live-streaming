@@ -323,7 +323,14 @@ def fx(s, log, out):
     code, _ = sh([sys.executable, ROOT / "tools/alert-theme/fx_check.py", d, "--sheet", PUB / "fx-sheet.jpg"], log, cwd=ROOT, timeout=3600)
     text = open(log, encoding="utf-8", errors="replace").read()
     tiers = re.findall(r"^== 段(\d+)", text, re.M)
-    bad = [x.strip() for x in re.findall(r"^\s+✗ (.+)$", text, re.M)]
+    bad, tier = [], "?"
+    for line in text.splitlines():
+        m = re.match(r"^== 段(\d+)", line)
+        if m:
+            tier = m.group(1)
+        m = re.match(r"^\s+✗ (.+)$", line)
+        if m:
+            bad.append(f"段{tier} {m.group(1).strip()}")
     videos = len(list(d.glob("*.webm")))
     return {"exit": code, "tiers": len(tiers), "videos": videos, "bad": bad[:20], "nbad": len(bad)}
 
@@ -368,7 +375,8 @@ def main(argv):
     if cmd == "pushed" and len(argv) > 2:
         # 録画の枝に置いたもの（alert_check.yml の media の job が、push のあとに呼ぶ）
         RES.mkdir(parents=True, exist_ok=True)
-        files = sorted(str(p.relative_to(PUB)) for p in PUB.rglob("*") if p.is_file() and ".git" not in p.parts)
+        num = lambda f: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", f)]  # noqa: E731 t300 を t1500 より先に
+        files = sorted((str(p.relative_to(PUB)) for p in PUB.rglob("*") if p.is_file() and ".git" not in p.parts), key=num)
         mb = sum((PUB / f).stat().st_size for f in files) / 1e6
         err = argv[3] if len(argv) > 3 else ""
         (RES / "push.json").write_text(json.dumps({"branch": None if err else argv[2], "error": err, "files": files, "mb": mb}, ensure_ascii=False), encoding="utf-8")

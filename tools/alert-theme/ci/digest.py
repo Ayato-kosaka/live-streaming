@@ -95,7 +95,8 @@ def build(res):
         b = []
         for x in ts:
             for f in sorted(x["fails"], key=lambda f: min(f["mid"], f["rhi"])):
-                b.append(f"{f.get('theme', '')} {f['tier']} 地:{bgn.get(f['bg'], f['bg'])} {f['char']} 「{f['t']}」 中央値 {f['mid']:.2f} 明るい地 {f['rhi']:.2f}")
+                what = f"「{f['t']}」" if f["t"] else f"（字の無い {f.get('tag', '?')} {f.get('size', '')}）"
+                b.append(f"{f.get('theme', '')} {f['tier']} 地:{bgn.get(f['bg'], f['bg'])} {f['char']} {what} 中央値 {f['mid']:.2f} 明るい地 {f['rhi']:.2f}")
             b += x.get("errs", [])[:2]
         ok = all(x["exit"] == 0 for x in rs.values()) and n > 0
         row(
