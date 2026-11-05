@@ -146,10 +146,12 @@ describe("2. 7段はハロウィン2版目の同じ段と同じ切れ目・色�
 
 describe("3. manifest.json", () => {
   const m = parseFxManifest(MANIFEST);
-  it("置いてあるひな形が7段とも読める。〜999円は full だけ、1,000円〜は full と light", () => {
+  /* 光の線（light）の版は 2026-11-05 にやめた（あやと「光の線の案は見ごたえない」「2,000以上は全面背景あり」。#1095）。
+     段1〜6 は full だけ。段7 は別の担当が直すので、light があってもなくても通す（どの段にも full はある） */
+  it("置いてあるひな形が7段とも読める。段1〜6 は full だけ、どの段にも full がある", () => {
     expect(Object.keys(m).sort()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
-    for (const k of ["1", "2", "3"]) expect(Object.keys(m[k].variants)).toEqual(["full"]);
-    for (const k of ["4", "5", "6", "7"]) expect(Object.keys(m[k].variants).sort()).toEqual(["full", "light"]);
+    for (const k of ["1", "2", "3", "4", "5", "6"]) expect(Object.keys(m[k].variants)).toEqual(["full"]);
+    for (const k of Object.keys(m)) expect(m[k].variants.full).toBeDefined();
   });
   it("名前は約束どおり t{段}-{通り}-{層}-{本}.webm", () => {
     for (const [k, e] of Object.entries(m))
@@ -157,12 +159,23 @@ describe("3. manifest.json", () => {
         for (const [l, parts] of Object.entries(layers!))
           for (const [p, f] of Object.entries(parts ?? {})) expect(f).toBe(`t${k}-${v}-${l}-${p}.webm`);
   });
-  it("〜999円で light を頼まれたら full を使う", () => {
-    expect(layersFor(m["2"], "light")).toBe(m["2"].variants.full);
-    expect(layersFor(m["5"], "light")).toBe(m["5"].variants.light);
+  it("light の無い段（段1〜6）で light を頼まれたら full を使う（旗 ?fx=light の日も full で出る）", () => {
+    for (const k of ["1", "2", "3", "4", "5", "6"]) {
+      expect(layersFor(m[k], "light")).toBe(m[k].variants.full);
+      expect(layersFor(m[k], "light")).not.toBeNull();
+    }
+  });
+  it("対照: light がある段なら light を使う（置いてある manifest に頼らず、作った1段で）", () => {
+    const parts = (v: string) => ({ intro: `t1-${v}-back-intro.webm`, stay: `t1-${v}-back-stay.webm`, outro: `t1-${v}-back-outro.webm` });
+    const both = parseFxManifest({
+      tiers: { "1": { variants: { full: { back: parts("full"), front: null }, light: { back: parts("light"), front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1 } },
+    })["1"];
+    expect(layersFor(both, "light")).toBe(both.variants.light);
+    expect(layersFor(both, "light")).not.toBe(both.variants.full);
+    expect(layersFor(both, "full")).toBe(both.variants.full);
   });
 
-  const one = (o: Record<string, unknown>) => parseFxManifest({ tiers: { "1": { variants: { full: { back: { intro: "a.webm", stay: "b.webm", outro: "c.webm" }, front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1, ...o } } });
+  const one =(o: Record<string, unknown>) => parseFxManifest({ tiers: { "1": { variants: { full: { back: { intro: "a.webm", stay: "b.webm", outro: "c.webm" }, front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1, ...o } } });
   it("対照: 正しい1段は読める（front は null でよい）", () => {
     expect(one({})["1"]?.variants.full?.front).toBeNull();
   });
@@ -218,13 +231,19 @@ describe("4. 温める順と量", () => {
     expect(order.filter((f) => /outro/.test(f))).toEqual([]);
     expect(order).toHaveLength(countOf(variant));
     expect(new Set(order).size).toBe(order.length);
-    // 1,000円〜は、その通りだけ（もう片方は1本も落とさない）。〜999円は full しか無い
-    const other = variant === "full" ? "light" : "full";
-    expect(order.filter((f) => new RegExp(`^t[4-7]-${other}`).test(f))).toEqual([]);
+    // 段ごとに、その通りがあればその通りだけ、無ければ full だけ（もう片方は1本も落とさない）。
+    // 段1〜6 は full しか無いので、light の日も full を落とす（light が無くても full で出る）
+    const used = (k: string) => (m[k].variants[variant] ? variant : "full");
+    for (const k of Object.keys(m)) {
+      const unused = used(k) === "full" ? "light" : "full";
+      expect(order.filter((f) => f.startsWith(`t${k}-${unused}-`))).toEqual([]);
+      expect(order).toContain(`t${k}-${used(k)}-back-intro.webm`);
+    }
+    for (const k of ["1", "2", "3", "4", "5", "6"]) expect(used(k)).toBe("full");
     // 登場がぜんぶ先（段7 の登場が、段1 の滞在より前）
     const parts = order.map(partOf);
     expect(parts).toEqual([...parts].sort((a, b) => (a === b ? 0 : a === "intro" ? -1 : 1)));
-    expect(order.indexOf(`t7-${variant}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
+    expect(order.indexOf(`t7-${used("7")}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
     // 登場どうし・滞在どうしは段の低い順
     for (const p of ["intro", "stay"]) {
       const ts = order.filter((f) => partOf(f) === p).map(tierOf);

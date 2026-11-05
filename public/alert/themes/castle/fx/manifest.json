@@ -30,7 +30,7 @@
       },
       "revealAt": 1.0,
       "introDur": 1.8,
-      "stayDur": 2.0,
+      "stayDur": 4.0,
       "outroDur": 1.0,
       "charBottom": 0.72
     },
@@ -47,7 +47,7 @@
       },
       "revealAt": 1.4,
       "introDur": 2.2,
-      "stayDur": 3.0,
+      "stayDur": 4.0,
       "outroDur": 1.0,
       "charBottom": 0.72
     },
@@ -64,14 +64,6 @@
             "stay": "t4-full-front-stay.webm",
             "outro": "t4-full-front-outro.webm"
           }
-        },
-        "light": {
-          "back": {
-            "intro": "t4-light-back-intro.webm",
-            "stay": "t4-light-back-stay.webm",
-            "outro": "t4-light-back-outro.webm"
-          },
-          "front": null
         }
       },
       "revealAt": 2.6,
@@ -92,14 +84,6 @@
             "stay": "t5-full-front-stay.webm",
             "outro": "t5-full-front-outro.webm"
           }
-        },
-        "light": {
-          "back": {
-            "intro": "t5-light-back-intro.webm",
-            "stay": "t5-light-back-stay.webm",
-            "outro": "t5-light-back-outro.webm"
-          },
-          "front": null
         }
       },
       "revealAt": 2.2,
@@ -120,14 +104,6 @@
             "stay": "t6-full-front-stay.webm",
             "outro": "t6-full-front-outro.webm"
           }
-        },
-        "light": {
-          "back": {
-            "intro": "t6-light-back-intro.webm",
-            "stay": "t6-light-back-stay.webm",
-            "outro": "t6-light-back-outro.webm"
-          },
-          "front": null
         }
       },
       "revealAt": 3.2,
