@@ -16,9 +16,11 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
+ *
  * 終了コード: 0 = 全部収まった / 1 = 切れた組がある / 2 = 測れなかった
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
@@ -161,7 +163,26 @@ async function main() {
     console.log(`測れなかった ${errs.length}:`);
     for (const e of errs) console.log("  " + e);
   }
-  process.exit(errs.length || !rows.length ? 2 : bad.length ? 1 : 0);
+  const code = errs.length || !rows.length ? 2 : bad.length ? 1 : 0;
+  const json = arg("json", "");
+  if (json)
+    writeFileSync(
+      resolve(json),
+      JSON.stringify(
+        {
+          tool: "alert-textfit",
+          exit: code,
+          rows: rows.length,
+          edge: rows.reduce((s, r) => s + r.edge, 0),
+          outside: rows.reduce((s, r) => s + r.outside, 0),
+          bad: bad.map(({ nm, theme, a, W, H, text, edge, outside, full, ink }) => ({ nm, theme, a, size: `${W}x${H}`, text, edge, outside, full, ink })),
+          errs,
+        },
+        null,
+        1
+      )
+    );
+  process.exit(code);
 }
 
 main().catch((e) => {

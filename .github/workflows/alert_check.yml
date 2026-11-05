@@ -1,0 +1,379 @@
+# 投げ銭アラート（app/alertbox）の確かめを、丸ごとここで回す（#1117）。
+#
+# ## なぜ Actions か
+#
+# 書き出し・録画・重なりの検査を作業箱で回すと、長い出力と大量の絵を読むことになり、
+# 1件で 30万〜80万トークン食っていた。Actions は無料なので、重い処理と長い出力は全部ここに置き、
+# 作業箱は **PR に1つだけ貼られる表（digest、30行以内）** だけを読めば合否が分かる形にした。
+# 中身の手順は `.claude/skills/alert-season/SKILL.md` §5 と同じ。入口は `tools/alert-theme/ci/run.py`
+# （手元でも同じ入口で回せる。手元で回すのは道具を直すときだけ）。
+#
+# ## 流れ
+#
+#   prep   … 書き出し（expo export + public）・名簿のキャラ絵を落として12人選ぶ・地を合成する
+#   check  … 検査を shard に割って並べて回す（重なりは 段×大きさ の14本。ほかは1本ずつ）
+#   unit   … jest app/alertbox と型（prep と並べて）
+#   media  … 7段の縦の録画と一覧の絵を、枝 `review-media/pr-<番号>` に1コミットだけ置く（orphan・force push）。
+#            作業箱は Actions の artifact を落とせないので、git で取れる形にする
+#   report … 表を組んで job summary と PR のコメント（目印 `<!-- alert-check -->` のものを書き換える）に出す。
+#            検査が1つでも落ちたら、この job が赤くなる
+#   cleanup… PR が閉じたら `review-media/pr-<番号>` を消す
+#
+# **配信画面の写真（本人の顔が写る）は使わない。** 地は prep が合成する（白・黒・明暗の縞・灰の雑音・街の絵）。
+# 秘密の鍵は使わない。権限は job ごとに最小（枝に置く job だけ contents: write、コメントする job だけ pull-requests: write）。
+name: 投げ銭アラートの確かめ
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths:
+      - 'app/alertbox/**'
+      - 'public/alert/**'
+      - 'tools/alert-theme/**'
+      - 'tools/sprites/alert-*.mjs'
+      - '.github/workflows/alert_check.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 確かめる枝・タグ・コミット
+        required: true
+        default: master
+      pr:
+        description: 表を貼る PR の番号（空なら、その枝の開いている PR を探す。無ければ job summary だけ）
+        required: false
+        default: ''
+      theme:
+        description: テーマの id（空なら themes.ts のいちばん新しいテーマ）
+        required: false
+        default: ''
+      fx:
+        description: 試作の旗 ?fx=…（空ならテーマが動画の段を持つとき full。- で旗なし）
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alert-check-${{ github.event.pull_request.number || inputs.ref }}
+  # 閉じたときの片づけは、走っている確かめを止めずに後ろで待つ（録画を置いたあとに消す）
+  cancel-in-progress: ${{ github.event.action != 'closed' }}
+
+env:
+  ALERT_WORK: /tmp/alert-work
+
+jobs:
+  prep:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（selftest.yml と同じ）
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      pr: ${{ steps.pr.outputs.pr }}
+      branch: ${{ steps.pr.outputs.branch }}
+      sha: ${{ steps.pr.outputs.sha }}
+      start: ${{ steps.start.outputs.start }}
+    steps:
+      - id: start
+        run: echo "start=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || '' }}
+
+      # 表を貼る PR と、録画を置く枝を決める
+      - id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EV_PR: ${{ github.event.pull_request.number }}
+          IN_PR: ${{ inputs.pr }}
+          IN_REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          pr="${EV_PR:-$IN_PR}"
+          if [ -z "$pr" ] && [ -n "$IN_REF" ]; then
+            pr="$(gh pr list -R "$GITHUB_REPOSITORY" --head "$IN_REF" --state open --json number -q '.[0].number' || true)"
+          fi
+          if [ -n "$pr" ]; then
+            branch="review-media/pr-$pr"
+          else
+            branch="review-media/ref-$(printf '%s' "$IN_REF" | tr -c 'A-Za-z0-9._-' '-')"
+          fi
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "PR ${pr:-なし}・録画の枝 $branch・$(git rev-parse --short HEAD)"
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 依存を入れる
+        run: |
+          pip install -q numpy pillow
+          npm ci --no-audit --no-fund
+
+      - name: 書き出し・キャラ絵・地
+        id: plan
+        env:
+          ALERT_THEME: ${{ inputs.theme }}
+          ALERT_FX: ${{ inputs.fx }}
+        run: |
+          set -euo pipefail
+          python3 tools/alert-theme/ci/run.py prep
+          echo "shards=$(python3 tools/alert-theme/ci/run.py plan)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alert-in
+          path: |
+            /tmp/alert-work/dist
+            /tmp/alert-work/in
+          retention-days: 1
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alert-res-prep
+          path: /tmp/alert-work/res
+          retention-days: 3
+          overwrite: true
+
+  check:
+    needs: prep
+    if: needs.prep.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.prep.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.prep.outputs.sha }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 道具の依存を入れる
+        run: |
+          pip install -q numpy pillow
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+
+      # 置き場は作業箱・selftest.yml と同じ /opt/pw-browsers。在りかは playwright-core に聞いて CHROME に渡す
+      # （道具は chrome.mjs で CHROME を先に見る。番号を誰も書かない）
+      - name: ブラウザを入れる
+        if: matrix.shard != 'fx'
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome="$(cd tools/sprites && node -e 'import("playwright-core").then((m) => console.log(m.chromium.executablePath()))')"
+          test -x "$chrome"
+          echo "CHROME=$chrome" >> "$GITHUB_ENV"
+
+      - name: ffmpeg を入れる
+        if: matrix.shard == 'media' || matrix.shard == 'fx'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q ffmpeg
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: alert-in
+          path: /tmp/alert-work
+
+      # 道具の終了コードは res/<shard>.json に残し、ここでは赤くしない（赤くするのは report）
+      - name: 確かめる
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: python3 tools/alert-theme/ci/run.py shard "$SHARD"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alert-res-${{ matrix.shard }}
+          path: /tmp/alert-work/res
+          retention-days: 3
+          overwrite: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alert-pub-${{ matrix.shard }}
+          path: /tmp/alert-work/pub
+          if-no-files-found: ignore
+          retention-days: 3
+          overwrite: true
+
+  unit:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || '' }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: jest app/alertbox と型
+        run: python3 tools/alert-theme/ci/run.py shard unit
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alert-res-unit
+          path: /tmp/alert-work/res
+          retention-days: 3
+          overwrite: true
+
+  media:
+    needs: [prep, check]
+    if: always() && needs.prep.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.prep.outputs.sha }}
+
+      # 録画の shard が落ちていれば、置くものが無い（それは表の「録画」の行に出る）
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: alert-pub-*
+          path: /tmp/alert-work/pub
+          merge-multiple: true
+
+      # 1コミットだけの orphan を force push する（前の版は残さない。枝が太らない）。
+      # GITHUB_TOKEN の push はワークフローを起こさない
+      - name: 録画と絵を枝に置く
+        env:
+          BRANCH: ${{ needs.prep.outputs.branch }}
+          SHA: ${{ needs.prep.outputs.sha }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          pub=/tmp/alert-work/pub
+          mkdir -p "$pub"
+          if [ -z "$(ls -A "$pub")" ]; then
+            python3 tools/alert-theme/ci/run.py pushed "$BRANCH" "置くものが無い（録画の shard が落ちた）"
+            exit 0
+          fi
+          who=(-c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com')
+          git -C "$pub" init -q -b media
+          git -C "$pub" add -A
+          git -C "$pub" "${who[@]}" commit -q -m "投げ銭アラートの録画と絵（${SHA:0:7}）"
+          if git -C "$pub" push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"; then
+            python3 tools/alert-theme/ci/run.py pushed "$BRANCH"
+          else
+            python3 tools/alert-theme/ci/run.py pushed "$BRANCH" "push に失敗した"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alert-res-push
+          path: /tmp/alert-work/res
+          retention-days: 3
+          overwrite: true
+
+  report:
+    needs: [prep, check, unit, media]
+    if: always() && github.event.action != 'closed'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.prep.outputs.sha || inputs.ref || '' }}
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: alert-res-*
+          path: /tmp/alert-work/res
+          merge-multiple: true
+
+      - name: 表を組む
+        id: digest
+        env:
+          ALERT_START: ${{ needs.prep.outputs.start }}
+          ALERT_SHA: ${{ needs.prep.outputs.sha }}
+          ALERT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          python3 tools/alert-theme/ci/run.py digest > /dev/null
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/alert-work/digest.md >> "$GITHUB_STEP_SUMMARY"
+
+      # PR には1つだけ。次の push では同じコメントを書き換える（目印の付いた、github-actions のもの）
+      - name: PR に貼る
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.prep.outputs.pr || github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          [ -n "$PR" ] || { echo "PR が無いので job summary だけ"; exit 0; }
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- alert-check -->"))) | .id' | head -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@/tmp/alert-work/digest.md > /dev/null
+            echo "書き換えた: $id"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@/tmp/alert-work/digest.md > /dev/null
+            echo "貼った: #$PR"
+          fi
+
+      - name: 落ちた検査があれば赤に
+        if: steps.digest.outputs.code != '0'
+        run: |
+          echo "::error::投げ銭アラートの確かめで落ちた検査がある（表は job summary と PR のコメント）"
+          exit 1
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: 録画の枝を消す
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/review-media/pr-$PR" 2>/dev/null; then
+            echo "消した: review-media/pr-$PR"
+          else
+            echo "review-media/pr-$PR は無かった（録画を置く前に閉じた）"
+          fi
