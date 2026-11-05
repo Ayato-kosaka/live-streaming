@@ -18,9 +18,11 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
+ *
  * 終了コード: 0 = 全部 4.5 以上 / 1 = 割れた字がある / 2 = 測れなかった（字を拾えない・2枚が違う）
  */
-import { mkdirSync, readFileSync, readdirSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve, basename, extname } from "node:path";
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
@@ -131,7 +133,20 @@ async function main() {
     console.log(`測れなかった ${errs.length}:`);
     for (const e of errs.slice(0, 10)) console.log("  " + e);
   }
-  process.exit(errs.length || !rows.length ? 2 : fails.length ? 1 : 0);
+  const code = errs.length || !rows.length ? 2 : fails.length ? 1 : 0;
+  const json = arg("json", "");
+  if (json) {
+    const lo = (k) => (rows.length ? Math.min(...rows.map((r) => r[k])) : null);
+    writeFileSync(
+      resolve(json),
+      JSON.stringify(
+        { tool: "alert-ink", exit: code, lim: LIM, shots: done, rows: rows.length, minMid: lo("mid"), minRhi: lo("rhi"), bgs: BGS, chars: chars.length, fails, errs },
+        null,
+        1
+      )
+    );
+  }
+  process.exit(code);
 }
 
 async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
@@ -183,7 +198,7 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     if (j.err) throw new Error(j.err);
     if (!j.rows.length) throw new Error(`測れた字が無い ${JSON.stringify(j.dropped)}`);
     const tier = theme === "halloween" ? `${a}円` : "季節の外";
-    return j.rows.map((r) => ({ tier, bg, char: ch.id, t: r.t, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
+    return j.rows.map((r) => ({ tier, theme, bg, char: ch.id, t: r.t, tag: r.tag, size: r.size, mid: r.mid, rhi: Math.min(r.rhi, r.rlo) }));
   } finally {
     await ctx.close();
   }

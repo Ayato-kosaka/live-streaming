@@ -66,6 +66,8 @@
  * 走る先と芸もくじなので、15 秒で重ねていたころは、同じ条件で幅 87〜94%・高さ 32〜36% 揺れた
  * （ハロウィン、箱 436×776 で9回。2026-11-02）。境目に近いときは `--runs 3` で開き直して重ねる。
  *
+ * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
+ *
  * 終了コード: 0 = 全部 1.5〜1.7 倍で、scale で比が変わらない / 1 = 外れた（大きすぎ・小さすぎ・scale で比が変わる） / 2 = 測れなかった
  */
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -277,6 +279,9 @@ async function main() {
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server"] });
   const bad = [];
   const broken = [];
+  /** `--json` に書く行（合否は下の bad / broken と同じ） */
+  const jrows = [];
+  const jdrift = [];
   /** テーマ × 箱（scale 0.5 のときの大きさ）ごとに、scale → 比 */
   const ratios = new Map();
   const settle = (theme, size, sc) =>
@@ -333,6 +338,7 @@ async function main() {
               (r.png ? `  ${r.png}` : "")
           );
           if (why.length) bad.push(`${tag}: 幅 ${times(kw)} / 高さ ${times(kh)}`);
+          jrows.push({ scale: sc, size: `${W}x${H}`, theme, kw, kh, ka, span: r.span, ok: !why.length });
           const key = `${theme} ${base[0]}x${base[1]}`;
           if (!ratios.has(key)) ratios.set(key, []);
           ratios.get(key).push({ sc, kw, kh });
@@ -357,9 +363,20 @@ async function main() {
           (ng ? `  ← ${Math.round(DRIFT * 100)}% を超えた（豚と物差しが違う）` : "")
       );
       if (ng) bad.push(`${key}: scale で比が ${(Math.max(dw, dh) * 100).toFixed(1)}% 変わる（豚と物差しが違う）`);
+      jdrift.push({ key, dw, dh, ok: !ng });
     }
   }
   console.log("");
+  const json = arg("json", null);
+  if (json)
+    writeFileSync(
+      resolve(json),
+      JSON.stringify(
+        { tool: "alert-banksize", exit: broken.length ? 2 : bad.length ? 1 : 0, prism: !off, min: MIN, max: MAX, drift: DRIFT, scales, themes, rows: jrows, drifts: jdrift, bad, broken },
+        null,
+        1
+      )
+    );
   if (off) console.log("（対照）PRISM の縮み方を外した数。豚が PRISM の2倍に写っている。これで判断しない");
   if (bad.length) {
     console.log(`外れた ${bad.length}:`);

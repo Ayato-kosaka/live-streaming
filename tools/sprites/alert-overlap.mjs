@@ -53,6 +53,8 @@
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
  *
+ * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
+ *
  * 終了コード: 0 = 全部 0 / 1 = 顔に乗った（対照ではこれが正しい） / 2 = 測れなかった
  */
 import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, statSync } from "node:fs";
@@ -725,6 +727,38 @@ async function main() {
   const errs = [...new Set(results.flatMap((r) => r.errors))];
   if (errs.length) console.log("JS の例外:", errs.slice(0, 5));
 
+  const json = arg("json", "");
+  if (json) {
+    const worst = (r) => r.frames.reduce((m, f) => (bad(f) > bad(m) ? f : m), r.frames[0]);
+    writeFileSync(
+      resolve(json),
+      JSON.stringify(
+        {
+          tool: "alert-overlap",
+          exit: invalid.length ? 2 : hit.length ? 1 : 0,
+          theme,
+          fx: fxName,
+          control,
+          runs: results.length,
+          frames: all.length,
+          stay: frames.length,
+          front: sum("front"),
+          cover: sum("cover"),
+          heroText: heroAll,
+          heroSeen,
+          minCharShare: shares.length ? Math.min(...shares.map((x) => x.s)) : null,
+          hits: hit.map((r) => {
+            const f = worst(r);
+            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png };
+          }),
+          invalid: invalid.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, why: r.fatal ?? [...new Set(r.frames.flatMap((f) => f.invalid))].join("・") })),
+          errors: errs.slice(0, 5),
+        },
+        null,
+        1
+      )
+    );
+  }
   if (flag("sheet")) await sheet(results);
   if (invalid.length) process.exit(2);
   process.exit(hit.length ? 1 : 0);
