@@ -8,7 +8,8 @@
  *   npx jest app/alertbox/__tests__/fxvideoHook.test.tsx
  *
  * 守りたいのは5つ。
- *   1. 旗が無い（本番の URL）日は、**1バイトも落とさない**（manifest も読まない）。段も差し替えない
+ *   1. 出すと決めていないテーマは、旗が無い（本番の URL）日に**1バイトも落とさない**（manifest も読まない）。段も差し替えない
+ *      （11月の城は配信に出したので、旗なしでも温める。その日の決まりは `fxliveHook.test.tsx`）
  *   2. `still=1`（iPhone の日）は、旗があっても1バイトも落とさない。段は差し替えるが、動画は渡さない
  *   3. 旗がある日は、貯金箱が出て 4 秒おいてから manifest → 温める順に1本ずつ落とす
  *   4. 投げ銭の段の動画を用意してから渡す。渡したら手元に残さない（同じ要素を2件で使い回さない）
@@ -72,9 +73,10 @@ const tierOf = (yen: number): FxTier => {
   return hit;
 };
 
-it("対照: 旗が無い（本番の URL）日は、段を差し替えず、1バイトも落とさない", async () => {
-  const { got } = mount(castle, { still: false, bankReady: true });
-  expect(got.v!.theme).toBe(castle);
+it("対照: 出すと決めていないテーマは、旗が無い（本番の URL）日に段を差し替えず、1バイトも落とさない", async () => {
+  const draft: SeasonTheme = { ...castle, id: "castle-draft", fxVideo: { ...castle.fxVideo!, live: false, variant: null } };
+  const { got } = mount(draft, { still: false, bankReady: true });
+  expect(got.v!.theme).toBe(draft);
   await advance(10000);
   expect(fetched).toEqual([]);
   expect(await got.v!.ensureFor(3000)).toBe(false);

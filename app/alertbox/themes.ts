@@ -135,7 +135,11 @@ export type TierShow = {
   script: Cue[];
 };
 
-/** 動画の段の見比べる2通り（#1095）。full は叩き台どおりの全面、light は光の線で描いてキャラが出たら薄くする */
+/**
+ * 動画の段の通り（#1095）。full は叩き台どおりの全面、light は光の線で描いてキャラが出たら薄くする。
+ * 11月は2通りを見比べて full に決めた（light はやめた）。light は旗 `?fx=light` の見比べにだけ残し、
+ * manifest に light が無い段は full で流す
+ */
 export type FxVideoVariant = "full" | "light";
 
 /**
@@ -215,9 +219,9 @@ export type CastleBankDef = {
 export type FxVideoDef = {
   /** 動画と `manifest.json` の置き場（公開側のパス） */
   dir: string;
-  /** 配信に出すか。false なら旗の付いたページだけ */
+  /** 配信に出すか。false なら旗の付いたページだけ（作っているあいだはこちら。出すときに true） */
   live: boolean;
-  /** 配信で使う通り。あやとが2通りを見比べて選ぶまで決めない（null） */
+  /** 配信で使う通り。決まるまでは null（`live` が true でも出ない） */
   variant: FxVideoVariant | null;
   /** 動画の段（`tiers` と同じ形。`min` の切れ目もスパチャの7色） */
   tiers: FxTier[];
@@ -819,8 +823,9 @@ export const THEMES: SeasonTheme[] = [
     id: "castle",
     /* 11月。ルーマニアのブラン城の、小さな城主ピポ（#1078、あやとが D 案を選んだ）。
        溜まるほど下の階から窓に灯りがともり、横の旗竿のルーマニアの旗が上がる。
-       **投げ銭の演出は今のまま**（段は1つで、台本も小物も札も持たない＝季節の外と同じアラート）。
-       11月の演出（動画の7段）は下の `fxVideo`。配信に出すまでは旗の付いたページだけ */
+       投げ銭の演出は下の `fxVideo`（動画の7段）。期間のあいだは日付で配信に出て、12/1 0:00 に豚と
+       季節の外のアラートへ戻る。`tiers` の1段（台本も小物も札も持たない＝季節の外と同じアラート）は、
+       旗 `?fx=off` で7段を止めて見比べるときだけ出る */
     from: "2026-11-01T00:00",
     // 11/30 23:59 まで。12/1 0:00 からは豚に戻る
     until: "2026-12-01T00:00",
@@ -841,10 +846,12 @@ export const THEMES: SeasonTheme[] = [
     fx: [],
     slots: [],
     tiers: [{ min: 0, accent: "#1565C0", slots: 0, files: [], bats: 0, waves: 0 }],
-    /* 11月の演出7段（動画。#1095）。**まだ配信には出さない**（live: false）。上の `tiers`（いまの演出）のまま配信し、
-       `?fx=full` / `?fx=light` の旗が付いたページでだけ7段に差し替える。あやとが2通りを見比べて選んだら、
-       `variant` にその通りを書き、`live: true` にする */
-    fxVideo: { dir: "/alert/themes/castle/fx", live: false, variant: null, tiers: CASTLE_FX_TIERS },
+    /* 11月の演出7段（動画。#1095）。**配信に出す。全段 full**（あやと 2026-11-05「光の線の案は見ごたえないから
+       やめてほしい」。光の線の版はやめた）。
+       - 旗 `?fx=light` が来ても、light の無い段は full で流れる（`fxVideo.ts` の `layersFor`）
+       - `still=1`（iPhone の日）と、動画が読めない・動かないときは、動画を出さずにキャラ絵と字をすぐ出す
+         （字はこの段の札のまま。`stage.ts` の `stageFor` / `withoutVideo`） */
+    fxVideo: { dir: "/alert/themes/castle/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
     finale: null,
   },
 ];

@@ -10,8 +10,8 @@
  * 3. **渡す**: 用意できていれば、その通知の段取り（`planFor`）に要素ごと渡す。1回流したら捨てる。
  *    用意が間に合わなければ渡さない（その段は動画なしで、字とキャラ絵だけ出る）
  *
- * `still=1`（iPhone の日）・動画の段にしない日（旗が無い・配信に出すと決めていない）は、どれも何もしない。
- * 1バイトも落とさない
+ * `still=1`（iPhone の日）・動画の段にしない日（季節の外・ハロウィン・旗 `?fx=off`・配信に出すと決めていないテーマ）は、
+ * どれも何もしない。1バイトも落とさない
  */
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Platform } from "react-native";
