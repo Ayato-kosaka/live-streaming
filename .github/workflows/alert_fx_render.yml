@@ -1,0 +1,367 @@
+name: 投げ銭の段の動画を焼く
+
+# 投げ銭アラートの段の動画（透明つき WebM。public/alert/themes/<theme>/fx/）を、**作業箱ではなくここで焼いて確かめる**（#1117）。
+# 作業箱で絵を重ねて焼いて確かめると、11月の段2〜4 の直しで1人 55万トークンかかった。ここは無料なので、
+# 焼く・確かめる・一覧の絵を作るは全部ここでやり、作業箱は「台本を直して push → 表を読む → ❌の行だけ直す」だけにする。
+#
+#   plan   … どの段を焼くか（push は変わった台本の段、手で起こすときは tiers）・戻す枝・PR を決める。キャラ絵を落とす
+#   render … 段ごとに matrix で、焼く → fx_check・fx_motion・fx_hero → 今の public と比べる → 一覧の絵と縦の短い録画
+#            （中身は tools/alert-theme/fx_ci/run.py tier）
+#   place  … 通った段だけ public の fx に置き、manifest を足して、**押した枝に1コミットで戻す**（master には戻さない）。
+#            戻したら、その枝で alert_check（投げ銭アラートの確かめ）を起こす。一覧の絵と録画は枝 review-media/fx-<枝> に orphan・1コミットで置く（作業箱は artifact を落とせないので git で取る）
+#   report … 20行以内の表を job summary と PR のコメント（目印 <!-- alert-fx-render -->。次からは書き換え）に。❌があれば赤
+#   cleanup… PR が閉じたら review-media/fx-<枝> を消す
+#
+# 起こしかた:
+#   台本（tools/alert-theme/fx_tiers/t<段>_*.py）を直して、master 以外の枝に push する（その段だけ焼く）
+#   gh workflow run alert_fx_render.yml -f ref=<枝> -f tiers=2,3      # 絵（fx_art）や fx_stage.py だけ直したとき
+#   gh workflow run alert_fx_render.yml -f ref=master -f tiers=all    # master を焼き直して、今の public と揃うかだけ見る（戻さない）
+#
+# - 秘密の鍵は使わない。権限は job ごとに最小（枝に置く job だけ contents: write、コメントする job だけ pull-requests: write）
+# - **配信画面の写真（本人の顔が写る）は使わない。** 録画の地は合成。本物のキャラ絵（住人の絵）は fx_hero で数えるだけで、
+#   枝に置く絵・録画には入れない（形の見本だけを重ねる）
+# - 押すのは GITHUB_TOKEN なので、戻したコミットでこのワークフローもほかのワークフローも起きない
+# - 段7（1万円）は Blender で描く（alert_blender.yml）。ここでは焼かない
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 焼く枝・タグ・コミット（master なら戻さない）
+        required: true
+        default: master
+      theme:
+        description: テーマ（public/alert/themes/<theme>/fx）
+        required: true
+        default: castle
+      tiers:
+        description: 焼く段（例 "2,3"。"all" なら台本のある段ぜんぶ）
+        required: true
+        default: all
+      quality:
+        description: final（予算を探して焼く。通れば枝に戻す）/ preview（速く焼いて見るだけ。戻さない）
+        type: choice
+        options: [final, preview]
+        default: final
+  push:
+    branches-ignore: [master]
+    paths: ['tools/alert-theme/fx_tiers/**']
+  pull_request:
+    types: [closed]
+    paths: ['tools/alert-theme/fx_tiers/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  # 同じ枝なら、push で起きたものと手で起こしたものを同じ組に（後から来たほうが前のを止める）
+  group: alert-fx-render-${{ github.event_name == 'pull_request' && 'cleanup-' || '' }}${{ inputs.ref && format('refs/heads/{0}', inputs.ref) || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      tiers: ${{ steps.plan.outputs.tiers }}
+      theme: ${{ steps.plan.outputs.theme }}
+      quality: ${{ steps.plan.outputs.quality }}
+      target: ${{ steps.plan.outputs.target }}
+      pr: ${{ steps.plan.outputs.pr }}
+      media: ${{ steps.plan.outputs.media }}
+      notes: ${{ steps.plan.outputs.notes }}
+      start: ${{ steps.plan.outputs.start }}
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/alert-theme/fx_ci/requirements.txt
+      - run: python3 -m pip install --quiet -r tools/alert-theme/fx_ci/requirements.txt
+      - name: どの段を焼くか
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ steps.sha.outputs.sha }}
+          IN_REF: ${{ inputs.ref }}
+          IN_THEME: ${{ inputs.theme }}
+          IN_TIERS: ${{ inputs.tiers }}
+          IN_QUALITY: ${{ inputs.quality }}
+        run: python3 tools/alert-theme/fx_ci/run.py plan
+      # 住人の絵は lh3（本番の名簿と同じ絵）から。作業箱からは出られないが、ここからは出られる
+      - name: キャラ絵を落とす（本物10人＋形の見本）と、録画の地を合成する
+        run: |
+          python3 tools/sprites/avatars.py > /tmp/avatars.log 2>&1 || true
+          grep -v '^取れなかった' /tmp/avatars.log | tail -5
+          python3 tools/alert-theme/fx_ci/run.py chars --src /tmp/avatars --out "$RUNNER_TEMP/chars"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fx-chars
+          path: ${{ runner.temp }}/chars
+          retention-days: 1
+
+  render:
+    needs: plan
+    if: needs.plan.outputs.tiers != '[]'
+    name: render-${{ matrix.tier }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        tier: ${{ fromJSON(needs.plan.outputs.tiers) }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/alert-theme/fx_ci/requirements.txt
+      # ffmpeg は apt のもの（ubuntu-24.04 は 6.1.1・libvpx 1.14。作業箱と同じ）。焼いた動画が作業箱のものと揃うように。
+      # apt が詰まったときだけ静的ビルドに落ちる（その日は焼き直しの画素が揃わない。表の下に ffmpeg の版が出る）
+      - name: 道具を入れる
+        timeout-minutes: 15
+        run: |
+          bash tools/shorts/ingest/ffmpeg.sh fonts-ipafont-gothic
+          ffmpeg -version | head -1
+          python3 -m pip install --quiet -r tools/alert-theme/fx_ci/requirements.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: fx-chars
+          path: ${{ runner.temp }}/chars
+      - name: 焼いて確かめる（段${{ matrix.tier }}）
+        run: |
+          python3 tools/alert-theme/fx_ci/run.py tier --theme "${{ needs.plan.outputs.theme }}" --tier "${{ matrix.tier }}" \
+            --quality "${{ needs.plan.outputs.quality }}" --chars "$RUNNER_TEMP/chars" --work "$RUNNER_TEMP/work" --res "$RUNNER_TEMP/res"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fx-res-${{ matrix.tier }}
+          path: |
+            ${{ runner.temp }}/res/result-t*.json
+            ${{ runner.temp }}/res/logs
+          retention-days: 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fx-media-${{ matrix.tier }}
+          path: ${{ runner.temp }}/res/media
+          retention-days: 3
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fx-tier-${{ matrix.tier }}
+          path: ${{ runner.temp }}/res/place
+          retention-days: 3
+          if-no-files-found: ignore
+          compression-level: 0
+
+  place:
+    needs: [plan, render]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.tiers != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      actions: write  # alert_check を起こすだけ
+    outputs:
+      placed: ${{ steps.put.outputs.placed }}
+      same: ${{ steps.put.outputs.same }}
+      commit: ${{ steps.push.outputs.commit }}
+      note: ${{ steps.put.outputs.note }}
+      media_ok: ${{ steps.media.outputs.ok }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.plan.outputs.target || needs.plan.outputs.sha }}
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: fx-tier-*
+          path: ${{ runner.temp }}/art
+      # 焼いたあとに枝が進んでいたら、台本と絵と道具が焼いたときと同じときだけ、枝の先に足す
+      - name: 通った段を public に置いて、枝に戻す
+        id: put
+        if: needs.plan.outputs.target != ''
+        env:
+          SHA: ${{ needs.plan.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$(git rev-parse HEAD)" != "$SHA" ]; then
+            git fetch -q --depth=1 origin "$SHA"
+            if ! git diff --quiet "$SHA" HEAD -- tools/alert-theme/fx_tiers tools/alert-theme/fx_art tools/alert-theme/fx_stage.py tools/alert-theme/fx_video.py; then
+              echo "note=焼いたあとに枝の台本が変わったので置かなかった（新しい run が焼く）" >> "$GITHUB_OUTPUT"
+              echo "placed=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          mkdir -p "$RUNNER_TEMP/art"
+          python3 tools/alert-theme/fx_ci/run.py place --theme "${{ needs.plan.outputs.theme }}" --art "$RUNNER_TEMP/art"
+      - name: コミットして押す
+        id: push
+        if: steps.put.outputs.placed != ''
+        env:
+          TARGET: ${{ needs.plan.outputs.target }}
+          PLACED: ${{ steps.put.outputs.placed }}
+          SHA: ${{ needs.plan.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git add -A "public/alert/themes/${{ needs.plan.outputs.theme }}/fx"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q \
+            -m "段${PLACED//,/・} の動画を台本どおりに焼いて置く" \
+            -m "台本（${SHA:0:7}）を Actions で焼き、fx_check と fx_hero が通った段だけを置いた。作業箱では焼かない（#1117）。" \
+            -m "$RUN_URL"
+          # GitHub が push を Internal Server Error で断ることがある（alert_blender.yml と同じ）。間を空けて押し直す
+          for wait in 0 15 40; do
+            sleep "$wait"
+            if git push -q origin "HEAD:refs/heads/$TARGET"; then ok=1; break; fi
+          done
+          test -n "${ok:-}"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      # GITHUB_TOKEN で押したコミットでは pull_request のワークフローが起きない。置いた動画を確かめる alert_check を
+      # 手で起こす（workflow_dispatch だけは GITHUB_TOKEN でも起きる）。起こさないと、PR の先頭に check が1本も無く、
+      # ship.yml が「checks がまだ1本も無い」で待ち続ける
+      - name: 置いた動画で投げ銭アラートの確かめを起こす
+        if: steps.push.outputs.commit != '' && hashFiles('.github/workflows/alert_check.yml') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ needs.plan.outputs.target }}
+          PR: ${{ needs.plan.outputs.pr }}
+        run: |
+          gh workflow run alert_check.yml -R "$GITHUB_REPOSITORY" --ref "$TARGET" -f ref="$TARGET" -f pr="$PR" \
+            && echo "alert_check を $TARGET で起こした" >> "$GITHUB_STEP_SUMMARY" \
+            || echo "::warning::alert_check を起こせなかった（PR の先頭に check が無いまま）"
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: fx-media-*
+          path: ${{ runner.temp }}/media
+          merge-multiple: true
+      # 前に置いた段の絵は残す（段3 だけ焼き直したら、段2 の絵は前のまま）。枝はいつも1コミット
+      - name: 一覧の絵と録画を枝に置く
+        id: media
+        env:
+          MEDIA: ${{ needs.plan.outputs.media }}
+          SHA: ${{ needs.plan.outputs.sha }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          new="$RUNNER_TEMP/media"
+          [ -d "$new" ] && [ -n "$(ls -A "$new")" ] || { echo "置くものが無い"; exit 0; }
+          pub="$RUNNER_TEMP/media-pub"
+          mkdir -p "$pub"
+          url="https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch -q --depth=1 "$url" "refs/heads/$MEDIA" 2>/dev/null; then
+            git archive FETCH_HEAD | tar -x -C "$pub"
+          fi
+          cp -f "$new"/* "$pub"/
+          who=(-c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com')
+          git -C "$pub" init -q -b media
+          git -C "$pub" add -A
+          git -C "$pub" "${who[@]}" commit -q -m "段の動画の一覧と録画（${SHA:0:7}）"
+          for wait in 0 15 40; do
+            sleep "$wait"
+            if git -C "$pub" push -q -f "$url" "HEAD:refs/heads/$MEDIA"; then
+              echo "ok=1" >> "$GITHUB_OUTPUT"
+              ls "$pub" | tee -a "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+          echo "::warning::一覧の絵と録画を $MEDIA に置けなかった"
+
+  report:
+    needs: [plan, render, place]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: fx-res-*
+          path: ${{ runner.temp }}/res
+      - name: 表を組む
+        id: digest
+        env:
+          TIERS: ${{ needs.plan.outputs.tiers }}
+          THEME: ${{ needs.plan.outputs.theme }}
+          QUALITY: ${{ needs.plan.outputs.quality }}
+          SHA: ${{ needs.plan.outputs.sha }}
+          START: ${{ needs.plan.outputs.start }}
+          PLACED: ${{ needs.place.outputs.placed }}
+          SAME: ${{ needs.place.outputs.same }}
+          COMMIT: ${{ needs.place.outputs.commit }}
+          MEDIA: ${{ needs.plan.outputs.media }}
+          MEDIA_OK: ${{ needs.place.outputs.media_ok }}
+          NOTES: ${{ needs.plan.outputs.notes }}${{ needs.place.outputs.note && ' / ' || '' }}${{ needs.place.outputs.note }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set +e
+          python3 tools/alert-theme/fx_ci/run.py digest --res "$RUNNER_TEMP/res" --out "$RUNNER_TEMP/digest.md" > /dev/null
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/digest.md" >> "$GITHUB_STEP_SUMMARY"
+      # PR には1つだけ。次の run では同じコメントを書き換える（目印の付いた、github-actions のもの）
+      - name: PR に貼る
+        if: needs.plan.outputs.pr != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.plan.outputs.pr }}
+        run: |
+          set -euo pipefail
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- alert-fx-render -->"))) | .id' | head -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$RUNNER_TEMP/digest.md" > /dev/null
+            echo "書き換えた: $id"
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@"$RUNNER_TEMP/digest.md" > /dev/null
+            echo "貼った: #$PR"
+          fi
+      - name: ❌ があれば赤に
+        if: steps.digest.outputs.code != '0'
+        run: |
+          echo "::error::段の動画で通らなかったものがある（表は job summary と PR のコメント。public には置いていない）"
+          exit 1
+
+  cleanup:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          b="review-media/fx-$(printf '%s' "$HEAD" | tr -c 'A-Za-z0-9._-' '-')"
+          if gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$b" 2>/dev/null; then
+            echo "消した: $b"
+          else
+            echo "$b は無かった"
+          fi

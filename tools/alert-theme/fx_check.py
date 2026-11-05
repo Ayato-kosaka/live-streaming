@@ -2,6 +2,7 @@
 """投げ銭の段の動画（`fx_stage.py` が書き出したもの）を、約束どおりかを数で確かめる（#1095）。
 
     python3 tools/alert-theme/fx_check.py <fx の置き場> [--tiers 5,4] [--work <焼いた置き場>] [--sheet <一覧.jpg>] [--script <台本>…]
+           [--json <結果.json>]     # Actions（alert_fx_render.yml）が表を組むための、機械向けの結果
 
 終了コード:
     0 = 見た段は全部、約束どおり
@@ -114,8 +115,12 @@ def face_mask():
     return np.hypot(xx - FACE[0], yy - FACE[1]) <= FACE[2]
 
 
-def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
+def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None, metrics=None):
+    """metrics に dict を渡すと、表に載せる数（1通りの大きさ・本ごとの PSNR）をそこへ入れる（--json 用）"""
     bad, notes = [], []
+    metrics = {} if metrics is None else metrics
+    metrics.setdefault("bytes", {})
+    metrics.setdefault("psnr", {})
     files = set()
     clips = {}
     for variant, v in entry["variants"].items():
@@ -134,6 +139,7 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
     for variant in entry["variants"]:
         vt = sum(os.path.getsize(p) for (v, _, _), p in clips.items() if v == variant)
         notes.append(f"大きさ {variant} {vt / 1e6:.2f}MB")
+        metrics["bytes"][variant] = vt
         if vt > MAX_VARIANT_BYTES:
             bad.append(f"{variant} の合計が {vt / 1e6:.2f}MB（6MB を超えた）")
     hole = face_mask()
@@ -223,6 +229,7 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             if min(ps[0], ps[-1]) < PSNR_SEEN and abs(ps[-1] - ps[0]) > PSNR_DIP:
                 bad.append(f"{name}: 滞在の頭と尻で画質が {abs(ps[-1] - ps[0]):.2f}dB 違う（輪の継ぎ目で跳ねる）")
         notes.append(msg)
+        metrics["psnr"][name] = {"median": round(med, 2), "min": round(min(ps), 2), "kf_drop": round(worst_kf, 2)}
         if med < PSNR_MIN:
             bad.append(f"{name}: 画質 PSNR 中央 {med:.1f}dB（{PSNR_MIN}dB から）")
         for k, d in kf:
@@ -325,7 +332,18 @@ def main():
     ap.add_argument("--work", action="append", default=[], help="段ごとに 5=<置き場> の形で")
     ap.add_argument("--script", action="append", default=[], help="段ごとに 5=<台本> の形で")
     ap.add_argument("--sheet", default=None)
+    ap.add_argument("--json", default=None, help="機械向けの結果（段ごとの合否・外れ・大きさ・PSNR）をこのファイルへ")
     o = ap.parse_args()
+    out = {"code": None, "tiers": {}, "unchecked": None}
+    code = _run(o, out)
+    out["code"] = code
+    if o.json:
+        with open(o.json, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=1)
+    return code
+
+
+def _run(o, out):
     try:
         mp = os.path.join(o.fx, "manifest.json")
         if not os.path.exists(mp):
@@ -340,7 +358,9 @@ def main():
             entry = man["tiers"].get(str(t))
             if entry is None:
                 raise Unchecked(f"manifest に段{t} が無い")
-            bad, notes = check_tier(o.fx, t, entry, works.get(str(t)), scripts.get(str(t)), rows)
+            m = {}
+            bad, notes = check_tier(o.fx, t, entry, works.get(str(t)), scripts.get(str(t)), rows, m)
+            out["tiers"][str(t)] = {"ok": not bad, "bad": bad, "notes": notes, **m}
             print(f"== 段{t}  revealAt {entry['revealAt']}・登場 {entry['introDur']}秒・滞在 {entry['stayDur']}秒・締め {entry['outroDur']}秒")
             for n in notes:
                 print("  ", n)
@@ -353,6 +373,7 @@ def main():
             make_sheet(rows, o.sheet)
     except Unchecked as e:
         print("確かめられなかった:", e)
+        out["unchecked"] = str(e)
         return 2
     return 1 if allbad else 0
 

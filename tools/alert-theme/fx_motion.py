@@ -4,7 +4,7 @@
 あやと 2026-11-05「200,500は動きがもうちょいほしい」。目だけで「前より動いた」と言わないために数える。
 
     # 焼いた動画どうしで比べる（帯の中の、動いている画素の割合）
-    python3 tools/alert-theme/fx_motion.py <fx の置き場> --old <前の版の fx の置き場> --tiers 2,3 [--min 1.5]
+    python3 tools/alert-theme/fx_motion.py <fx の置き場> --old <前の版の fx の置き場> --tiers 2,3 [--min 1.5] [--json <結果.json>]
     # 台本どうしで比べる（主役＝猫の家族だけの層。雪や火の粉を数えない）
     python3 tools/alert-theme/fx_motion.py --script <台本> --old-script <前の版の台本> [--min 1.5]
 
@@ -140,7 +140,18 @@ def main():
     ap.add_argument("--script")
     ap.add_argument("--old-script")
     ap.add_argument("--min", type=float, default=1.5)
+    ap.add_argument("--json", default=None, help="機械向けの結果（段ごとの滞在の倍率と、前・今の数）をこのファイルへ")
     o = ap.parse_args()
+    out = {"code": None, "tiers": {}, "unchecked": None}
+    code = _run(o, out)
+    out["code"] = code
+    if o.json:
+        with open(o.json, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=1)
+    return code
+
+
+def _run(o, out):
     try:
         if o.script:
             if not o.old_script:
@@ -154,6 +165,7 @@ def main():
             what = f"焼いた動画の、隣のコマとの差が {THR}/255 を超えた画素"
     except (Unchecked, fx_check.Unchecked) as e:
         print("確かめられなかった:", e)
+        out["unchecked"] = str(e)
         return 2
     print(f"数えたもの: {what}（帯の中の割合）")
     bad = []
@@ -169,6 +181,9 @@ def main():
         pn, sn = got[("今", "stay")]
         rp, rs = pn / max(po, 1e-6), sn / max(so, 1e-6)
         print(f"   滞在: 動いている画素 {rp:.2f} 倍 ・ 1秒で動いた所 {rs:.2f} 倍（合格は {o.min} 倍から）")
+        out["tiers"][str(t)] = {"ok": not (rp < o.min or rs < o.min), "ratio_pixels": round(rp, 3), "ratio_sec": round(rs, 3),
+                                **{f"{'old' if tag == '前' else 'new'}_{clip}": [round(a, 3), round(b, 2)]
+                                   for (tag, clip), (a, b) in got.items()}}
         if rp < o.min or rs < o.min:
             bad.append(t)
             print(f"  ✗ 段{t}: 滞在の動きが前の版の {o.min} 倍に届かない")

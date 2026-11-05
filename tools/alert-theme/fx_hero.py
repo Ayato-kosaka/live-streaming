@@ -2,7 +2,7 @@
 """投げ銭の段の主役（あやと）が、投げた人のキャラ絵の後ろに隠れていないかを数える（#1095）。
 
     python3 tools/alert-theme/fx_hero.py <台本> --chars <キャラ絵.png>… [--variants full] [--step 0.2]
-           [--headroom 0.2] [--char-bottom 0.98] [--min 0.95] [--sheet <一覧.jpg>]
+           [--headroom 0.2] [--char-bottom 0.98] [--min 0.95] [--sheet <一覧.jpg>] [--json <結果.json>]
 
 終了コード:
     0 = どのキャラ絵・どのコマでも、主役の見えている割合が --min 以上
@@ -136,7 +136,19 @@ def main():
     ap.add_argument("--char-bottom", type=float, default=None, help="無ければ台本の CHAR_BOTTOM、それも無ければ 0.98")
     ap.add_argument("--min", type=float, default=0.95)
     ap.add_argument("--sheet", default=None)
+    ap.add_argument("--json", default=None, help="機械向けの結果（いちばん少なく見えた割合・どの絵の何秒か・外れたコマ数）をこのファイルへ")
     o = ap.parse_args()
+    out = {"code": None, "unchecked": None}
+    code = _run(o, out)
+    out["code"] = code
+    if o.json:
+        import json
+        with open(o.json, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=1)
+    return code
+
+
+def _run(o, out):
     try:
         S = fs.load_script(o.script).Scene
         cb = o.char_bottom if o.char_bottom is not None else (getattr(S, "CHAR_BOTTOM", None) or 0.98)
@@ -192,9 +204,15 @@ def main():
             print(f"  ✗ ほか {len(bad) - 40} コマ")
         if not bad:
             print(f"  ○ どのキャラ絵でも、主役の {o.min:.0%} 以上が見えている")
+        out.update(tier=S.TIER, chars=len(chars), min_required=o.min, bad_frames=len(bad), bad=bad[:10],
+                   worst={v: {"visible": round(lo[0], 4),
+                              **({} if lo[1] is None else {"clip": lo[1][0], "t": round(lo[1][2], 2), "who": lo[1][3]})}
+                          for v, lo in worst.items()})
+        out["visible_min"] = min((w["visible"] for w in out["worst"].values()), default=1.0)
         return 1 if bad else 0
     except Unchecked as e:
         print("確かめられなかった:", e)
+        out["unchecked"] = str(e)
         return 2
 
 
