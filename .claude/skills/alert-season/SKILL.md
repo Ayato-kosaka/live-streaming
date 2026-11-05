@@ -200,7 +200,8 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 | 表の行 | 道具 | 条件 |
 | --- | --- | --- |
 | 重なり | `alert-overlap.mjs` | キャラ12人 × 7段 × 436x776・664x1180 × 字4通り。台本の秒を道具が知らないテーマは、滞在を 1.5 秒おきに撮る秒を渡す。**動画の段の主役の顔×字は、主役の居る帯を顔の枠の代わりに置いて数える**（manifest の `heroBands`。段4〜7 は上 20%・〜999円は下 28%。帯の中身を描き直したら帯も直す） |
-| 対照 | overlap `--control face`・`hero`・`band`、textfit `--control edge`、ink `--control flat`、decode `--limit 1` | どれも 1 で落ち、落ちた数が 0 でないこと |
+| 札の出る順（重なりの行に出る） | `alert-reveal.mjs` | 動画の段の1万円 × 436x776・664x1180 × CPU 1・4・6倍 × 回線の遅れ あり/なし × 5回を、止めずに毎コマ。札が動画の revealAt より前に見えたコマ・額が「0」のまま見えたコマが 0。キャラ絵と札は**動画が revealAt に来た知らせ**で組む（`VideoShow` の onReveal。#1117） |
+| 対照 | overlap `--control face`・`hero`・`band`、reveal `--control early`、textfit `--control edge`、ink `--control flat`、decode `--limit 1` | どれも 1 で落ち、落ちた数が 0 でないこと |
 | 字の切れ | `alert-textfit.mjs` | テーマの7段（動画の段は manifest の `revealAt` から待つ秒を決める）・豚 × 2サイズ × 長い字/短い字 |
 | 字の濃さ | `alert-ink.mjs` | テーマの7段・豚 × 地は合成（白・黒・明暗の縞・灰の雑音）× 12人 |
 | 貯金箱の大きさ | `alert-banksize.mjs` | scale 0.5 と 0.36（PRISM の縮み方込み） |

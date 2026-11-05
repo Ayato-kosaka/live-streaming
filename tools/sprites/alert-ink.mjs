@@ -184,7 +184,8 @@ async function one(browser, judgePage, shots, { theme, a, bg, ch }) {
     const q = new URLSearchParams({ preview: "1", theme, amount: String(a), name: NAME, msg: MSG });
     if (fx && theme !== "none") q.set("fx", fx);
     await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
-    await p.waitForSelector('[data-char="box"]', { timeout: 20000 });
+    // アラートの頭（動画の段はキャラ絵の箱が revealAt まで組まれないので、動画の層が先に出る）
+    await p.waitForSelector('[data-char="box"], [data-fx-video="back"]', { timeout: 20000 });
     await p.waitForTimeout(settleAt(theme, a) * 1000);
     // 全部止める（2枚のあいだに動くと差分が嘘になる）
     await p.evaluate(() => {

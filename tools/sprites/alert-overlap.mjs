@@ -271,7 +271,7 @@ const FREEZE = `(() => {
   };
   // キャラ絵の箱が置かれた時刻（止めた時計で）。滞在中のコマはここから数える
   new MutationObserver((_, mo) => {
-    if (W.__ovl.t0 == null && document.querySelector('[data-char="box"]')) { W.__ovl.t0 = performance.now(); mo.disconnect(); }
+    if (W.__ovl.t0 == null && document.querySelector('[data-char="box"], [data-fx-video="back"]')) { W.__ovl.t0 = performance.now(); mo.disconnect(); }
   }).observe(document, { childList: true, subtree: true });
 })();`;
 

@@ -80,7 +80,8 @@ async function one(browser, { theme, a, size: [W, H], text }) {
     const q = new URLSearchParams({ preview: "1", theme, amount: String(a), name: text.name, msg: text.msg });
     if (fx && theme !== "none") q.set("fx", fx);
     await p.goto(`${base}/alertbox/?${q}`, { waitUntil: "load" });
-    await p.waitForSelector('[data-plate="slot"]', { state: "attached", timeout: 30000 });
+    // アラートの頭（動画の段は札が revealAt まで組まれないので、動画の層が先に出る）
+    await p.waitForSelector('[data-plate="slot"], [data-fx-video="back"]', { state: "attached", timeout: 30000 });
     await p.waitForTimeout(settleAt(theme, a) * 1000);
     if (control === "edge")
       await p.addStyleTag({ content: '[data-plate="slot"]{transform:translateX(-45vw)!important}' });
