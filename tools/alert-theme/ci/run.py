@@ -151,7 +151,7 @@ def overlap_themes(s):
 def plan(s=None):
     s = s or season()
     out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
-    return out + ["controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
+    return out + ["reveal", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
 
 
 # ---------------------------------------------------------------- 支度
@@ -340,11 +340,14 @@ def controls(s, base, log, out):
         "ink": node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", onedir, "--themes", t["theme"], *fxargs(t), "--amounts", "1500", "--control", "flat"),
         "decode": node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--rates", "1", "--runs", "1", "--limit", "1"),
     }
+    # 札を最初から見せる（動画の段のあるテーマのときだけ）
+    if t["fx"]:
+        jobs["reveal"] = node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--char", one, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--control", "early")
     got = {}
     for kind, cmd in jobs.items():
         o = out / kind
         o.mkdir(parents=True)
-        if kind != "decode":
+        if kind not in ("decode", "reveal"):
             cmd = [*cmd, "--out", o]
         code, _ = sh([*cmd, "--json", o / "out.json"], log, cwd=SPRITES)
         got[kind] = {"exit": code, "tool": load(o / "out.json")}
@@ -370,6 +373,23 @@ def browser_shard(name, s, base, log, out):
         return {"exit": code, "tool": tool}
     if name == "controls":
         return controls(s, base, log, out)
+    if name == "reveal":
+        # 動画の段で、札が revealAt より前に見えていないか・額が数え上げ前の 0 で見えていないか。毎コマ数える。
+        # CPU の絞り × 回線の遅れ × 箱 × 5回（動画が遅れる日に札が先に出る、を当てる）
+        vt = [t for t in s["themes"] if t["fx"]]
+        if not vt:
+            return {"exit": None, "na": "動画の段を持つテーマが無い"}
+        info = load(IN / "chars.json") or {}
+        ch = IN / "chars" / f"{info.get('typical')}.png"
+        if not ch.exists():
+            ch = sorted(chars.glob("*.png"))[0]
+        code, got = 0, {}
+        for t in vt:
+            j = out / f"{t['theme']}.json"
+            c, _ = sh(node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--amount", "10000", "--char", ch, "--json", j), log, cwd=SPRITES, timeout=5400)
+            got[t["theme"]] = load(j)
+            code = max(code, c)
+        return {"exit": code, "tool": next(iter(got.values())), "tools": got}
     themes = ",".join([t["theme"] for t in s["themes"]] + ["none"])
     if name == "textfit":
         code, _ = sh(node("alert-textfit.mjs", "--base", base, "--themes", themes, *any_fx(s), "--out", out, "--json", out / "out.json"), log, cwd=SPRITES)

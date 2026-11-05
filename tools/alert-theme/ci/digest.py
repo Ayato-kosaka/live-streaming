@@ -69,10 +69,27 @@ def build(res):
     if not sm("heroSeen"):
         ok = False
         bad.insert(0, "主役の顔の枠も帯も1コマも置けなかった（字×主役を見ていない）")
+    # 札が revealAt より前に見えたコマ・額が 0 のまま見えたコマ（alert-reveal.mjs。止めずに毎コマ）
+    rv = _load(res, "reveal")
+    rt = (rv or {}).get("tool")
+    early = ""
+    if rv and rv.get("na"):
+        early = "。札の出る順は動画の段が無いので見ない"
+    elif rt and rt.get("video"):
+        early = f"。札が revealAt より前 {rt['early']}コマ・0円 {rt['zero']}コマ（{rt['runs']}回 × CPU・回線、動画の出た回 {rt['video']}）"
+        if rv["exit"] != 0:
+            ok = False
+            for k, b in (rt.get("by") or {}).items():
+                if b["earlyRuns"] or b["zeroRuns"]:
+                    bad.append(f"{k}: 札が先 {b['earlyRuns']}/{b['runs']}回（最大 {b['worst']}秒早い）・0円 {b['zeroRuns']}/{b['runs']}回")
+    else:
+        ok = False
+        early = "。札の出る順: 測れなかった"
+        bad.append(_why(rv, "reveal"))
     row(
         "重なり（顔×演出・主役の顔×字）",
         ok,
-        f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}",
+        f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}{early}",
         bad,
     )
 
@@ -90,7 +107,9 @@ def build(res):
             "濃さ": len(tl("ink").get("fails") or []),
             "展開": len(tl("decode").get("bad") or []),
         }
-        keys = dict(zip(hit, ["face", "hero", "band", "textfit", "ink", "decode"]))
+        if "reveal" in cc:
+            hit["札が先"] = tl("reveal").get("early", 0)
+        keys = dict(zip(hit, ["face", "hero", "band", "textfit", "ink", "decode", "reveal"]))
         nok = [k for k, v in hit.items() if cc.get(keys[k], {}).get("exit") != 1 or not v]
         row(
             "対照（壊すと落ちる）",
