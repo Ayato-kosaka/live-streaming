@@ -15,8 +15,10 @@
  *   4. 温める順と量: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順。締めは温めない）・
  *      同じ URL は二度落とさない・上限で止まる
  *   5. キャラ絵と字は `revealAt` に出る（字の出し方はハロウィン2版目の同じ段）。動画が用意できなければ動画なしで、すぐ出る
- *   6. 流す順番: `playing` まで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
+ *   6. 流す順番: 最初のコマまで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
+ *   7. コマを持つ前の `<video>` を見せない（#1133）: コマの合図（requestVideoFrameCallback）まで透明・
+ *      替わり目は次の本のコマが出るまで前の本が見えたまま（見えている本が 0 本・2 本になる瞬間が無い）
  *
  * **対照を先に置く**（`island-misses.md` #99）。「出すと決めていないと7段にならない」を見てから「出すと決めたら7段になる」を見る。
  */
@@ -398,14 +400,20 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
 
 /* ---------------------------------------------------------------- 流す順番 */
 
-/** jsdom の <video> に、再生の出来事を手で起こせる仕掛けを付ける */
-type FakeVideo = HTMLVideoElement & { plays: number; reject?: string };
+/**
+ * jsdom の <video> に、再生の出来事を手で起こせる仕掛けを付ける。
+ * 読めたところ（readyState）は「最後まで流せる」(4)。用意（prepareFxKit）を通った要素はそうなっている。
+ * jsdom には `requestVideoFrameCallback` が無いので、最初のコマは `playing` と readyState で決まる（無い端末の道）
+ */
+type FakeVideo = HTMLVideoElement & { plays: number; reject?: string; ready: number };
 function fakeVideo(duration: number): FakeVideo {
   const v = document.createElement("video") as FakeVideo;
   v.plays = 0;
+  v.ready = 4;
   let paused = true;
   Object.defineProperty(v, "duration", { configurable: true, get: () => (v.getAttribute("src") ? duration : NaN) });
   Object.defineProperty(v, "paused", { configurable: true, get: () => paused });
+  Object.defineProperty(v, "readyState", { configurable: true, get: () => v.ready });
   v.play = jest.fn(() => {
     v.plays++;
     paused = false;
@@ -666,5 +674,113 @@ describe("6. 流す順番", () => {
     jest.advanceTimersByTime(60000);
     expect(onFail).not.toHaveBeenCalled();
     expect(back.outro.plays).toBe(0);
+  });
+});
+
+/* ---------------------------------------------------------------- コマを持つ前の <video> を見せない（#1133） */
+
+/**
+ * fake の要素に `requestVideoFrameCallback` を付ける（Android の WebView・Chrome は持っている）。
+ * 返す関数で「その要素のコマが描画に渡った」を起こす
+ */
+function framed(...vs: FakeVideo[]) {
+  const q = new Map<HTMLVideoElement, ((now: number, meta: unknown) => void)[]>();
+  for (const v of vs) {
+    q.set(v, []);
+    Object.assign(v, {
+      requestVideoFrameCallback: jest.fn((cb: (now: number, meta: unknown) => void) => q.get(v)!.push(cb)),
+      cancelVideoFrameCallback: jest.fn(),
+    });
+  }
+  return (v: HTMLVideoElement) => q.get(v)!.splice(0).forEach((cb) => cb(0, {}));
+}
+const partsOf = (L: FakeLayer) => [L.intro, L.stay, L.outro];
+/** 層の中で見えている本（opacity が 0 でないもの） */
+const seen = (L: FakeLayer) => (["intro", "stay", "outro"] as const).filter((p) => op(L[p]) !== "0");
+
+describe("7. コマを持つ前の `<video>` を見せない（#1133。Android の WebView は灰色の地と ▶ を描く）", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it("対照: コマの合図を持たない端末（jsdom の素）では、`playing` が来ても読めたところが 2 未満なら見せない", () => {
+    const { kit, back } = makeKit(false);
+    back.intro.ready = 1;
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    expect(op(back.intro)).toBe("0");
+    back.intro.ready = 2;
+    fire(back.intro, "canplay");
+    expect(op(back.intro)).toBe("1");
+  });
+
+  it("`playing` が来ても、最初のコマの合図（requestVideoFrameCallback）が来るまで透明。層ごとに自分の合図で", () => {
+    const { kit, back, front } = makeKit();
+    const present = framed(...partsOf(back), ...partsOf(front!));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    fire(front!.intro, "playing");
+    jest.advanceTimersByTime(500);
+    expect(seen(back)).toEqual([]);
+    expect(seen(front!)).toEqual([]);
+    present(back.intro);
+    expect(seen(back)).toEqual(["intro"]);
+    expect(seen(front!)).toEqual([]);
+    present(front!.intro);
+    expect(seen(front!)).toEqual(["intro"]);
+  });
+
+  it("替わり目（登場 → 滞在 → 締め）: 次の本のコマが出るまで前の本が見えたまま。見えている本が 0 本・2 本になる瞬間が無い", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    present(back.intro);
+    expect(seen(back)).toEqual(["intro"]);
+    // 登場が終わった → 滞在を流し始める。滞在の `playing` が来ても、コマが出るまでは登場の最後のコマ
+    fire(back.intro, "ended");
+    expect(back.stay.plays).toBe(1);
+    expect(seen(back)).toEqual(["intro"]);
+    fire(back.stay, "playing");
+    expect(seen(back)).toEqual(["intro"]);
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    // 締め: 滞在の輪の切れ目から。締めのコマが出るまで滞在の最後のコマ
+    jest.advanceTimersByTime((45 - 1.2 - 3 - 0.15) * 1000 + 50);
+    fire(back.stay, "ended");
+    expect(back.outro.plays).toBe(1);
+    expect(seen(back)).toEqual(["stay"]);
+    fire(back.outro, "playing");
+    expect(seen(back)).toEqual(["stay"]);
+    expect(back.stay.pause).not.toHaveBeenCalled();
+    present(back.outro);
+    expect(seen(back)).toEqual(["outro"]);
+    expect(back.stay.pause).toHaveBeenCalled();
+  });
+
+  it("札の合図（onReveal）は、登場のコマが出てから動画の時計で（合図を待っても早まらない）", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    const c = { t: 0 };
+    Object.defineProperty(back.intro, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, jest.fn(), onReveal);
+    fire(back.intro, "playing");
+    c.t = 2.5;
+    jest.advanceTimersByTime(100);
+    // コマがまだ出ていない（見えていない）登場の時計では出さない
+    expect(onReveal).not.toHaveBeenCalled();
+    present(back.intro);
+    jest.advanceTimersByTime(50);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("止めたあとに合図が来ても、何も見せない", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    const stop = runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    stop();
+    present(back.intro);
+    expect(seen(back)).toEqual([]);
   });
 });

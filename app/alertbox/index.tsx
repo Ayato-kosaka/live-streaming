@@ -38,6 +38,7 @@ import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, revealedStage, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
 import { VideoShow } from "./season/show/VideoShow";
+import { newVideo, onFirstFrame, VIDEO_ATTRS } from "./videoGuard";
 import { useTierVideo } from "./season/show/useTierVideo";
 import { RichText } from "./season/plate/RichText";
 import type { PlateStyle } from "./themes";
@@ -241,11 +242,18 @@ export default function AlertBox() {
      見えているあいだは、その人の絵が上に乗っている。 */
   const [videoStarted, setVideoStarted] = useState(false);
 
+  /* 最初のコマ待ちをやめる関数（`onPlaying` で始める。#1133） */
+  const frameWaitRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => frameWaitRef.current?.(), []);
+
   /* 出すものを差し替える。**必ずここを通す。**
      `setDisplaySource` を直に呼ぶと、前の動画の「もう動き出している」が
      残ったまま次の動画が透明でなくなって、また ▶ の板が出る。 */
   const showSource = useCallback(
     (next: { type: "image" | "video"; url: string | null }) => {
+      // 前の動画の「最初のコマ待ち」が、次の動画を見せてしまわないように
+      frameWaitRef.current?.();
+      frameWaitRef.current = null;
       setVideoStarted(false);
       setDisplaySource(next);
     },
@@ -803,7 +811,8 @@ export default function AlertBox() {
     if (warmedVideosRef.current.has(url)) return;
     warmedVideosRef.current.add(url);
 
-    const video = document.createElement("video");
+    // 画面には置かないが、守りの付いた要素で温める（`<video>` は全部 newVideo から。#1133）
+    const video = newVideo();
     let settled = false;
 
     const finish = (ok: boolean, reason: string) => {
@@ -834,8 +843,6 @@ export default function AlertBox() {
     }, VIDEO_START_TIMEOUT_MS);
 
     video.preload = "auto";
-    video.muted = true;
-    video.playsInline = true;
     video.src = url;
 
     sendLog("AlertBox", sessionId, "videoPreloadStart", { url });
@@ -1211,15 +1218,14 @@ export default function AlertBox() {
                 {displaySource.type === "video" && displaySource.url ? (
                   <video
                     ref={videoRef}
+                    /* poster は透明・コントロールも窓も出させない・音なし・インライン（#1133。`videoGuard.ts`） */
+                    {...VIDEO_ATTRS}
                     autoPlay
-                    controls={false}
                     /* **ループする。** アラートは 30 秒出ているのに動画は
                        数秒しかない。止めると、残りは最後のコマの静止画。 */
                     loop
-                    /* **音は付けない。** 音付きの自動再生はブラウザが
+                    /* **音は付けない**（VIDEO_ATTRS の muted）。音付きの自動再生はブラウザが
                        止めるので、外すと再生そのものが始まらない。 */
-                    muted
-                    playsInline
                     preload="auto"
                     src={displaySource.url}
                     /* **動き出すまで透明。** 中身が届く前の `<video>` は、
@@ -1253,17 +1259,25 @@ export default function AlertBox() {
                         networkState: e.currentTarget.networkState,
                       })
                     }
-                    /* **ここで初めて見せる。** `canplay` ではない。
-                       `canplay` は「そろそろ出せる」でまだ止まっており、
-                       自動再生が許されるかの返事も来ていない。`playing` は
-                       再生が始まった合図で、コマが1枚できている。
-                       `videoCanPlay` と `videoPlaying` の両方をログに
-                       残してあるので、差は本番のログで測れる。 */
-                    onPlaying={() => {
-                      setVideoStarted(true);
-                      sendLog("AlertBox", sessionId, "videoPlaying", {
-                        url: displaySource.url,
-                      });
+                    /* **最初のコマが描かれてから見せる。** `canplay` ではない
+                       （「そろそろ出せる」でまだ止まっており、自動再生が許されるかの
+                       返事も来ていない）。`playing` でもない（再生が始まった合図で、
+                       コマをまだ描いていないことがある。#1133）。`playing` から
+                       `onFirstFrame` でコマの合図を待つ。`videoPlaying` と
+                       `videoFirstFrame` の両方をログに残すので、差は本番のログで測れる。 */
+                    onPlaying={(e) => {
+                      const url = displaySource.url;
+                      sendLog("AlertBox", sessionId, "videoPlaying", { url });
+                      frameWaitRef.current?.();
+                      frameWaitRef.current = onFirstFrame(
+                        videoRef.current ?? e.currentTarget,
+                        () => {
+                          frameWaitRef.current = null;
+                          setVideoStarted(true);
+                          sendLog("AlertBox", sessionId, "videoFirstFrame", { url });
+                        },
+                        { playing: true }
+                      );
                     }}
                     onError={(e) => {
                       const mediaError = e.currentTarget.error;
