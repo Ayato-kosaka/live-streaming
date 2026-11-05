@@ -64,7 +64,8 @@ export const FX_START_TIMEOUT_MS = 3000;
 
 /**
  * どちらの通りで流すか。**旗（`?fx=full` / `?fx=light`）が先。** 旗が無ければ、テーマが配信に出すと決めた通り
- * （いまは決めていないので null＝動画の段にしない）。`?fx=off` は配信に出すと決めたあとでも止める（見比べの物差し）
+ * （11月の城は full。出すと決めていないテーマは null＝動画の段にしない）。`?fx=off` は配信に出すと決めたあとでも
+ * 止める（見比べの物差し）
  */
 export function fxVariantOf(th: SeasonTheme | null, flag: string | null): FxVideoVariant | null {
   const fv = th?.fxVideo;
@@ -152,7 +153,10 @@ export function parseFxManifest(json: unknown): FxManifest {
   return out;
 }
 
-/** その通りの層。〜999円の3段は1通り（full だけ）なので、light が無ければ full を使う */
+/**
+ * その通りの層。light が無ければ full を使う（〜999円の3段は初めから full だけ。11月は light をやめたので、
+ * manifest から light が外れたあとは、旗 `?fx=light` が来ても全段 full で流れる）
+ */
 export function layersFor(entry: FxTierEntry, variant: FxVideoVariant): FxLayers | null {
   return entry.variants[variant] ?? entry.variants.full ?? null;
 }

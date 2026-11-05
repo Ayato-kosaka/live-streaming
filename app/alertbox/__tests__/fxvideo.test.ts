@@ -8,8 +8,8 @@
  *   npx jest app/alertbox/__tests__/fxvideo.test.ts
  *
  * 守りたいのは6つ。
- *   1. **配信はいまのまま。** 旗（`?fx=full` / `?fx=light`）が無ければ、11月の城の段は今の1段（札も台本も無い）。
- *      配信に出すと決めるまで（`live: false`・`variant: null`）7段は出ない
+ *   1. **出すと決めるまで（`live: false`・`variant: null`）は、旗が無ければ7段は出ない**（作っているあいだの形）。
+ *      11月の城は配信に出した（全段 full）ので、旗が無くても7段。日付・12/1・still=1 の詳しいところは `fxlive.test.ts`
  *   2. 7段の切れ目・色・字は、ハロウィン2版目の同じ段と同じ（写しが崩れていない）
  *   3. manifest.json の読み方（約束の名前・置き場の外を指さない・秒の決まり）と、置いてあるひな形が読める
  *   4. 温める順と量: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順。締めは温めない）・
@@ -18,7 +18,7 @@
  *   6. 流す順番: `playing` まで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
  *
- * **対照を先に置く**（`island-misses.md` #99）。「旗が無いと7段にならない」を見てから「旗があると7段になる」を見る。
+ * **対照を先に置く**（`island-misses.md` #99）。「出すと決めていないと7段にならない」を見てから「出すと決めたら7段になる」を見る。
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -51,13 +51,10 @@ const MANIFEST = JSON.parse(
   readFileSync(join(__dirname, "../../../public/alert/themes/castle/fx/manifest.json"), "utf8")
 );
 
-describe("1. 配信はいまのまま（旗が無ければ 7段は出ない）", () => {
-  it("11月に日付で選ばれるのは城。段は今の1段（札・台本・動画なし）", () => {
-    const th = themeAt(new Date("2026-11-15T12:00:00+09:00"))!;
-    expect(th.id).toBe("castle");
+describe("1. 出すと決めるまでは、旗が無ければ 7段は出ない（11月の城は出した）", () => {
+  it("出すと決めていない（live: false・variant: null）テーマは、旗が無いと段は今の1段（札・台本・動画なし）", () => {
+    const th: SeasonTheme = { ...castle, id: "castle-draft", fxVideo: { ...castle.fxVideo!, live: false, variant: null } };
     expect(th.tiers).toHaveLength(1);
-    expect(th.fxVideo?.live).toBe(false);
-    expect(th.fxVideo?.variant).toBeNull();
     // 旗が無い（本番の URL）ときは、差し替えずにそのまま
     const eff = withFxVideo(th, fxVariantOf(th, null));
     expect(eff).toBe(th);
@@ -74,14 +71,22 @@ describe("1. 配信はいまのまま（旗が無ければ 7段は出ない）",
     }
   });
 
+  it("11月に日付で選ばれるのは城で、配信に出してある（全段 full）。旗が無くても7段に差し替わる", () => {
+    const th = themeAt(new Date("2026-11-15T12:00:00+09:00"))!;
+    expect(th.id).toBe("castle");
+    expect(th.fxVideo?.live).toBe(true);
+    expect(th.fxVideo?.variant).toBe("full");
+    expect(withFxVideo(th, fxVariantOf(th, null))!.tiers).toHaveLength(7);
+  });
+
   it.each([
-    [null, null],
-    ["lux", null],
+    [null, "full"],
+    ["lux", "full"],
     ["off", null],
-    ["FULL", null],
+    ["FULL", "full"],
     ["full", "full"],
     ["light", "light"],
-  ])("旗 %s → 通り %s", (flag, want) => {
+  ])("旗 %s → 通り %s（配信に出した城。知らない旗は配信と同じ full、止めるのは off だけ）", (flag, want) => {
     expect(fxVariantOf(castle, flag)).toBe(want);
   });
 
