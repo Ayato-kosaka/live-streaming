@@ -407,7 +407,9 @@ export function runFxShow(
   kit: FxKit,
   hosts: Record<FxLayerName, HTMLElement>,
   durationSec: number,
-  onFail: (sec: number) => void
+  onFail: (sec: number) => void,
+  /** 先導の層の動画が `revealAt` に来た（キャラ絵と札を出してよい）。1回だけ */
+  onReveal?: () => void
 ): () => void {
   kit.used = true;
   const t0 = performance.now();
@@ -557,6 +559,27 @@ export function runFxShow(
   mark("fxv:start", { key: kit.key, durationSec });
   for (const L of layers) play(L, "intro");
 
+  /* キャラ絵と札を出す合図。**先導の層の登場が revealAt に来たら**（壁の時計ではなく動画の時計で）。
+     読み込みや展開で動画が遅れた日に、主役が出きる前に札が出ないように（alert-reveal.mjs が数える）。
+     先導が消えたら次の層で見る。全部消えたら onFail（index.tsx が動画なしの見せ方に落とし、すぐ出す） */
+  let revealed = false;
+  let rvHandle: ReturnType<typeof setTimeout> | number | null = null;
+  const nextTick = (f: () => void) =>
+    typeof requestAnimationFrame === "function" ? requestAnimationFrame(f) : setTimeout(f, 16);
+  const watchReveal = () => {
+    rvHandle = null;
+    if (revealed || stopped || failed || !onReveal) return;
+    const L = leader();
+    if (L && (L.phase !== "intro" || (L.shown === "intro" && L.k.intro.currentTime >= entry.revealAt - 0.02))) {
+      revealed = true;
+      mark("fxv:reveal", { t: sec() });
+      onReveal();
+      return;
+    }
+    rvHandle = nextTick(watchReveal);
+  };
+  if (onReveal) rvHandle = nextTick(watchReveal);
+
   // 3 秒動かなければ、その層は出さない
   timers.push(
     setTimeout(() => {
@@ -585,6 +608,10 @@ export function runFxShow(
 
   return () => {
     stopped = true;
+    if (rvHandle != null) {
+      if (typeof cancelAnimationFrame === "function" && typeof rvHandle === "number") cancelAnimationFrame(rvHandle);
+      clearTimeout(rvHandle as ReturnType<typeof setTimeout>);
+    }
     timers.forEach(clearTimeout);
     offs.forEach((f) => f());
     releaseFxKit(kit);

@@ -41,7 +41,11 @@ type Props = {
   maxH?: number;
 };
 
+/** 札と同時に始まる数え上げを、どれだけ進んだところから回すか（ms）。札が見えた最初のコマで 0 を見せない */
+const COUNT_LEAD_MS = 120;
+
 /** 字の幅のざっくりした見積もり（em）。全角 1、数字・記号・英字 0.6 */
+
 export function emWidth(s: string): number {
   let w = 0;
   for (const ch of s) w += /[\u0000-ÿ]/.test(ch) ? 0.6 : 1;
@@ -232,17 +236,21 @@ export const RichText: React.FC<Props> = ({
           if (el) el.textContent = t;
         });
       };
-      set(0);
+      /* 札と同時に始まる数え上げ（動画の段7）は、COUNT_LEAD_MS だけ進んだところから回す。札が見えた最初の
+         コマで「0」を見せない（0 から回すと、最初の rAF が来るまでの数コマ、主役の上に「0円」が乗った。#1117） */
+      const lead = count!.at <= appearAt + 0.01 ? COUNT_LEAD_MS : 0;
+      const ease = (u: number) => 1 - Math.pow(1 - u, 3);
+      set(lead ? amountSeg.value * ease(Math.min(1, lead / ms(count!.dur))) : 0);
+      const t0 = performance.now() + ms(count!.at) - lead;
       timer = setTimeout(() => {
-        const t0 = performance.now();
         const dur = ms(count!.dur);
         const tick = () => {
           const u = Math.min(1, (performance.now() - t0) / dur);
-          set(amountSeg.value * (1 - Math.pow(1 - u, 3)));
+          set(amountSeg.value * ease(u));
           if (u < 1) raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
-      }, ms(count!.at));
+      }, Math.max(0, ms(count!.at)));
     }
     return () => {
       anims.forEach((a) => a.cancel());

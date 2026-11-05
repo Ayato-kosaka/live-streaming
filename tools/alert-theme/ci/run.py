@@ -389,6 +389,9 @@ def browser_shard(name, s, base, log, out):
             c, _ = sh(node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--amount", "10000", "--char", ch, "--json", j), log, cwd=SPRITES, timeout=5400)
             got[t["theme"]] = load(j)
             code = max(code, c)
+            # 条件ごとの数は job のログにも短く出す（表は落ちた条件しか出さない）
+            for k, b in ((got[t["theme"]] or {}).get("by") or {}).items():
+                print(f"  reveal {t['theme']} {k}: 動画 {b['video']}/{b['runs']} 札が先 {b['earlyRuns']}回（最大 {b['worst']}秒） 0円 {b['zeroRuns']}回")
         return {"exit": code, "tool": next(iter(got.values())), "tools": got}
     themes = ",".join([t["theme"] for t in s["themes"]] + ["none"])
     if name == "textfit":

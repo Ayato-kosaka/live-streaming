@@ -346,13 +346,14 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
     const p7 = pt(10000);
     /* 段7 は札ごと降りる（数え上げの額は1字ずつ弾む字に入っていないので、弾むだけだと字が出る前から「0」が見える） */
     expect(p7.carried).toBe(true);
-    expect(p7.count).toEqual({ at: p7.appearAt + 0.5, dur: 1 });
+    /* 数え上げは札と同時に始め、ドンで止める（#1117）。ハロウィン2版目の間（札 → 0.5 秒で数え始め）だと、
+       札が降りてくる 0.5 秒のあいだ「0円」が主役の上に見えた。ドンの秒はハロウィン2版目と同じ */
+    expect(p7.count).toEqual({ at: p7.appearAt, dur: 1.5 });
     expect(p7.donAt).toBeCloseTo(p7.appearAt + 1.5, 5);
-    // ハロウィン2版目の段7 と同じ間（札 → 0.5 秒で数え始め → 1 秒で数え終わり＝ドン）
     const h7 = plateTiming(stageFor(halloween, 10000, 60, allRigs)!);
     expect(h7.carried).toBe(true);
-    expect(h7.count!.at - h7.appearAt).toBeCloseTo(p7.count!.at - p7.appearAt, 5);
-    expect(h7.donAt! - h7.count!.at).toBeCloseTo(p7.donAt! - p7.count!.at, 5);
+    expect(h7.donAt! - h7.appearAt).toBeCloseTo(p7.donAt! - p7.appearAt, 5);
+    expect(p7.count!.at + p7.count!.dur).toBeCloseTo(p7.donAt!, 5);
   });
 
   it("動画が用意できていなければ: 動画なし・その段の札・キャラ絵と字はすぐ（遅らせない）", () => {

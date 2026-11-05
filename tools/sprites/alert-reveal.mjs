@@ -83,7 +83,8 @@ const SAMPLER = `(() => {
       const vids = [...document.querySelectorAll('[data-fx-video="back"] video')];
       const shown = vids.find((v) => v.style.opacity !== "0");
       const part = shown ? ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?" : vids.length ? "wait" : "none";
-      const zero = /(^|[^0-9,])0円/.test(plate.textContent || "") ? 1 : 0;
+      // 額の字（数え上げが書き換える字の箱）が「0」。札の字は縁取りの写しと重ねてあり、textContent では「000円円円」になる
+      const zero = [...plate.querySelectorAll('[data-ink="fill"]')].some((e) => (e.textContent || "").trim() === "0") || /^[^0-9]*0円/.test(plate.textContent || "") ? 1 : 0;
       R.f.push([+(performance.now() - R.t0).toFixed(1), vis, part, shown ? +shown.currentTime.toFixed(3) : -1, zero, +(r.top / innerHeight).toFixed(3)]);
     }
     requestAnimationFrame(loop);
@@ -101,12 +102,17 @@ async function one(browser, { W, H, rate, net, i }, revealAt, introDur) {
       return u.startsWith(base) || u.startsWith("data:") || u.startsWith("blob:") ? r.continue() : r.abort();
     });
     await ctx.addInitScript(SAMPLER);
+    /* 対照: 「0円」の札を、ページが開いたときから面の上のほうに置く（動画の頭より先に札が見えている形）。
+       アプリの札は動画が revealAt に来るまで組まれないので、札の側を CSS で見せる対照は効かない。
+       数え方（見えているか・動画の秒・0円）が落ちるときに落ちるかを見る */
     if (control === "early")
       await ctx.addInitScript(() => {
         document.addEventListener("DOMContentLoaded", () => {
-          const s = document.createElement("style");
-          s.textContent = '[data-plate="box"],[data-plate="box"] *{opacity:1!important;transform:none!important}';
-          document.head.appendChild(s);
+          const d = document.createElement("div");
+          d.setAttribute("data-plate", "box");
+          d.textContent = "aoi 様 0円 ありやとう！！";
+          Object.assign(d.style, { position: "fixed", left: "10%", top: "8%", width: "70%", height: "60px", color: "#fff", fontSize: "24px", zIndex: "9" });
+          document.body.appendChild(d);
         });
       });
     const page = await ctx.newPage();

@@ -35,7 +35,7 @@ import { sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
 import { useSettledBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
-import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM, type AlertStage } from "./season/show/stage";
+import { stageFor, plateTiming, revealedStage, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
 import { VideoShow } from "./season/show/VideoShow";
 import { useTierVideo } from "./season/show/useTierVideo";
@@ -331,6 +331,10 @@ export default function AlertBox() {
   const tierVideo = useTierVideo(season.theme, { still: stillOnly, bankReady: season.rigsSettled });
   const tierVideoRef = useRef(tierVideo);
   tierVideoRef.current = tierVideo;
+  /* 動画の段は、動画が revealAt に来た知らせ（`VideoShow` の onReveal）で、その通知のキャラ絵と札を組む。
+     壁の時計で出していたころは、動画が遅れた日に主役が出きる前に札が出て、主役の上に「0円」が乗った（#1117）。
+     知らせが来ないまま revealAt を 3 秒過ぎたら出す（下の setTimeout。動画が止まって落ちたときは withoutVideo が先に出す） */
+  const [revealedFor, setRevealedFor] = useState<NotificationData | null>(null);
   /* 動画が動かなかった（3 秒動かない・止められた）。その段は動画なしの見せ方に落とす（アラートは出したまま） */
   const onVideoFail = useCallback((sec: number) => {
     sendLog("AlertBox", sessionId, "fxVideoFailed", { sec });
@@ -942,6 +946,7 @@ export default function AlertBox() {
     setStage(nextStage);
     /* その人の絵と読み上げを出す秒。0 なら今どおり（すぐ） */
     const revealSec = nextStage?.revealSec ?? 0;
+    if (nextStage?.video) setTimeout(() => setRevealedFor(currentNotification), (revealSec + 3) * 1000);
 
     // 表示開始（フェードイン）
     setNotification(currentNotification);
@@ -1098,7 +1103,8 @@ export default function AlertBox() {
         fallbackToImageSource();
       });
     }
-  }, [displaySource, fallbackToImageSource]);
+    // 動画の段はキャラ絵の箱を revealAt に組むので、組んだときにもう一度（revealedFor）
+  }, [displaySource, fallbackToImageSource, revealedFor]);
 
   /* 動き出さないまま待たせない。
      `videoPlayRejected` も `videoError` も来ないのに、中身だけ届かない
@@ -1171,6 +1177,7 @@ export default function AlertBox() {
                     plan={stage.video}
                     durationSec={calculateAdjustedAlertDuration(notification)}
                     onFail={onVideoFail}
+                    onReveal={() => setRevealedFor(notification)}
                   />
                 )}
                 {season.theme && !stage?.show && !stage?.video && (
@@ -1189,12 +1196,14 @@ export default function AlertBox() {
                   />
                 )}
 
+                {/* 動画の段は、動画が revealAt に来るまで組まない（来たら「いま」出す。revealedStage） */}
+                {!(stage?.video && revealedFor !== notification) && (
                 <CharBox
                   /* 動画が動かずに落ちたとき（`withoutVideo`）は、出す秒が変わるので組み直す */
                   key={`char-${notification.id}-${stage?.revealSec ?? 0}`}
                   top={charTop}
                   bottom={charBottom}
-                  revealAt={stage?.revealSec ?? 0}
+                  revealAt={(stage?.video ? revealedStage(stage) : stage)?.revealSec ?? 0}
                   /* 台本のある段は、キャラ絵の真ん中（字・魔法陣・あやとの着地と同じ中心。season/show/common.ts）からふくらむ */
                   originY={stage?.show || stage?.video ? textCenterY : undefined}
                 >
@@ -1290,6 +1299,7 @@ export default function AlertBox() {
                     />
                   )}
                 </CharBox>
+                )}
 
                 {/* 視聴者に絵文字設定がある場合の花火・雨。**キャラ絵の後ろ**（zIndex 0）。
                     粒はキャラ絵の顔の前を通さない（オーナーの決まり。前は花火が zIndex 2 で顔の前に出ていた） */}
@@ -1303,7 +1313,9 @@ export default function AlertBox() {
                 )}
 
                 {/* 字（名前・額・メッセージ）。キャラ絵の上下中央に重ねる。背景の箱は無い。
-                    季節の段は段の飾り（縁の光・1字ずつ弾む・数え上げ）、季節の外は飾り無しの同じ読みやすい字 */}
+                    季節の段は段の飾り（縁の光・1字ずつ弾む・数え上げ）、季節の外は飾り無しの同じ読みやすい字。
+                    動画の段は、キャラ絵と同じく動画が revealAt に来てから組む */}
+                {!(stage?.video && revealedFor !== notification) && (
                 <div
                   data-plate="slot"
                   style={{
@@ -1335,9 +1347,10 @@ export default function AlertBox() {
                     })}
                     message={notification.message}
                     W={winW}
-                    {...(stage?.plate ? plateTiming(stage) : { appearAt: 0 })}
+                    {...(stage?.plate ? plateTiming(stage.video ? revealedStage(stage) : stage) : { appearAt: 0 })}
                   />
                 </div>
+                )}
               </View>
             )}
 
