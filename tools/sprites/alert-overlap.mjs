@@ -50,6 +50,9 @@
  *   （`heroMiss`。札の見えている字の外接矩形が、そのときの動画の秒の顔の箱と交わったコマ）。
  *   `--control plateearly` は対照: manifest の revealAt を 3.0 秒にして、札を revealAt より前に出す → 1 で落ちる
  *   `--control platehigh` は対照: manifest の段の plateTop を外して、札を元の高さ（40vh 上）から落とす → 1 で落ちる
+ *   どちらも**札の降りる動きを10倍ゆっくりにする。** 札は 0.5 秒で顔の箱を通り抜け、札が組まれた直後は描くのが
+ *   混むので、そのままでは通り抜けるあいだに1コマも描かれない回がある（#1143 の1回目、2つとも 0 で落ちなかった）。
+ *   ゆっくりにしても通り道は同じなので、当たるかどうかの運にせず、通り道を必ず描くコマに入れる
  *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
@@ -938,6 +941,15 @@ async function runOne(browser, job) {
   await ctx.addInitScript(VIDEO_WATCH(control));
   await ctx.addInitScript(FREEZE);
   await ctx.addInitScript(FACE_WATCH(control));
+  /* 札の対照: 札の箱（data-plate="box"）の動きを10倍ゆっくりにする（通り道は同じ。描くコマに必ず入る） */
+  if (control === "plateearly" || control === "platehigh")
+    await ctx.addInitScript(() => {
+      const an = Element.prototype.animate;
+      Element.prototype.animate = function (k, o) {
+        if (this.getAttribute?.("data-plate") === "box" && o && typeof o === "object" && o.duration) o = { ...o, duration: o.duration * 10 };
+        return an.call(this, k, o);
+      };
+    });
   // 段7（顔の線のある段）だけ、主役の顔の線 × 字を描くたびに数える
   const lineBand = heroBands?.[String(tierOf(amount))];
   if (lineBand && Array.isArray(lineBand[2])) await ctx.addInitScript(HERO_WATCH(lineBand));

@@ -346,7 +346,8 @@ def controls(s, base, log, out):
         jobs["reveal"] = node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--char", one, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--control", "early")
         jobs["poster"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "poster", *frames)
         jobs["platehigh"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "664x1180", "--texts", "long:3", "--control", "platehigh", *frames)
-        jobs["plateearly"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "436x776", "--texts", "long:3", "--control", "plateearly", *frames)
+        # 札の対照は、札の背がいちばん高くて顔の箱に掛かりやすい組（664x1180・長い名前・3行）で
+        jobs["plateearly"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "664x1180", "--texts", "long:3", "--control", "plateearly", *frames)
         jobs["holelate"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "holelate", *frames)
     got = {}
     for kind, cmd in jobs.items():
