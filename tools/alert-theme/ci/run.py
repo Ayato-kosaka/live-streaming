@@ -451,7 +451,7 @@ def repeat(name, s, base, log, out):
         print(f"    {v['why'][:600]}")
     # 顔に乗ったコマ（何秒・どの層・その時の穴）と、描くたびに数えた穴の外れ（#1141）。artifact は作業箱から落とせないので、ログに出す
     for h in (tool.get("hits") or [])[:10]:
-        print(f"    重なり {h['t']}s: front {h['front']} / cover {h['cover']}・撮る前の穴 {json.dumps(h.get('hole'), ensure_ascii=False)}・撮った後 {json.dumps(h.get('holeAfter'), ensure_ascii=False)}・箱から {json.dumps(h.get('face'), ensure_ascii=False)}")
+        print(f"    重なり {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h.get('heroText')}・撮る前の穴 {json.dumps(h.get('hole'), ensure_ascii=False)}・撮った後 {json.dumps(h.get('holeAfter'), ensure_ascii=False)}・箱から {json.dumps(h.get('face'), ensure_ascii=False)}")
     print(f"    顔の穴: {tool.get('faceFrames')}コマ中 外れ {tool.get('faceMiss')}・外れた回 {len(tool.get('faceBad') or [])}/{tool.get('runs')}・箱から(秒) {json.dumps(tool.get('faceLag'), ensure_ascii=False)}")
     for b in (tool.get("faceBad") or [])[:4]:
         print(f"    外れ {b['miss']}/{b['frames']}コマ: {json.dumps(b['bad'], ensure_ascii=False)} 穴 {b['hole']}s・中身 {b['content']}s・覆う {b['fit']}s")
