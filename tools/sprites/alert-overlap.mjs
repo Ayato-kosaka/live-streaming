@@ -61,12 +61,15 @@
  * その既定の絵が無いので、撮っても写らない。だから**構造を数える**（撮るコマの間も、描くたびに全部の `<video>`）:
  *
  * - `noPoster` … poster を持たない `<video>`（要素の数）
- * - `early` … 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの途中でもないのに
- *   readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）
+ * - `early`（合否に入れない）… 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの
+ *   途中でもないのに readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）。
+ *   **#1137 から数えるだけ。** アプリは「見せてよい」の合図のどれか早いもので見せる（`playing` と readyState 2 以上を
+ *   含む）ので、この箱の Chromium ではコマより少し先に見せる。poster が透明なので、そのあいだ出るのは透明（▶ ではない）。
+ *   コマの合図だけで見せていた #1134 は、合図の来ない Android の WebView で7段を1つも出さなかった
  * - `seam`（合否に入れない）… 滞在のくり返しの継ぎ目（loop の頭出し。readyState が 20ms ほど 1 に落ちるが、
  *   最後のコマは画面に残る）で見えていた `<video>`。継ぎ目を見ていることの印
  *
- * `noPoster`・`early` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
+ * `noPoster` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
  *
  * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
@@ -217,8 +220,11 @@ const VIDEO_WATCH = (ctl) => `(() => {
   const nRAF = W.requestAnimationFrame.bind(W);
   const strip = ${JSON.stringify(ctl === "poster")};
   const hooked = new WeakSet(), framed = new WeakSet(), noPoster = new WeakSet(), early = new WeakSet();
-  const st = { videos: 0, noPoster: 0, early: 0, ticks: 0, rvfc: 0, bad: [] };
+  const st = { videos: 0, noPoster: 0, early: 0, ticks: 0, rvfc: 0, bad: [], maxGap: 0, last: 0 };
   W.__vguard = st;
+  // 本物の時計（あとで時計を止める仕掛けが performance.now を差し替える）。描くたびの間が空いた最大を持つ（主スレッドが止まったか）
+  const pNow = performance.now.bind(performance);
+  W.__vgAge = () => Math.round(pNow() - st.last);
   const name = (v) => (v.dataset && v.dataset.fxPart) || (v.currentSrc || v.getAttribute("src") || "?").split("/").pop();
   const seen = (el) => {
     let o = 1;
@@ -255,6 +261,9 @@ const VIDEO_WATCH = (ctl) => `(() => {
   st.seam = 0;
   const tick = () => {
     st.ticks++;
+    const nowR = pNow();
+    if (st.last) st.maxGap = Math.max(st.maxGap, Math.round(nowR - st.last));
+    st.last = nowR;
     for (const v of document.querySelectorAll("video")) {
       hook(v);
       if (strip && v.hasAttribute("poster")) v.removeAttribute("poster");
@@ -330,6 +339,12 @@ const FREEZE = `(() => {
   let paused = [], pausedMedia = [];
   W.__ovl = {
     t0: null,
+    /* 時間切れのときに読む（#1138）。止めたままになっていないか・預かったままの rAF と setTimeout の数 */
+    state() {
+      let heldT = 0;
+      for (const e of tmap.values()) if (e.held) heldT++;
+      return { frozen, shift: Math.round(shift), heldR: heldR.length, heldT, timers: tmap.size, rafs: rmap.size };
+    },
     freeze() {
       if (frozen) return;
       frozenAt = pNow() - shift;
@@ -684,6 +699,54 @@ function pngFile(img, path) {
   writeFileSync(path, PNG.sync.write(img));
 }
 
+/** 約束を ms で打ち切る（打ち切ったら fallback） */
+function withTimeout(p, ms, fallback) {
+  let t;
+  return Promise.race([Promise.resolve(p).catch((e) => ({ err: String(e).slice(0, 120) })), new Promise((r) => (t = setTimeout(() => r(fallback), ms)))]).finally(() => clearTimeout(t));
+}
+
+/* 時間切れのときのページの様子（#1138）。止めた時計・描くたびの間・層・札・動画・アプリの印（fxv:…） */
+function pageState() {
+  const o = window.__ovl || {};
+  const s = typeof o.state === "function" ? o.state() : {};
+  const vg = window.__vguard || {};
+  const v = [...document.querySelectorAll("video")].map((x) => {
+    const f = [`op${x.style.opacity || "-"}`, `rs${x.readyState}`, `t${Number(x.currentTime || 0).toFixed(2)}`];
+    if (x.paused) f.push("p");
+    if (x.ended) f.push("e");
+    if (x.error) f.push(`err${x.error.code}`);
+    return `${x.dataset.fxPart || "char"}:${f.join("/")}`;
+  });
+  const marks = performance
+    .getEntriesByType("mark")
+    .filter((m) => m.name.startsWith("fxv:"))
+    .map((m) => `${m.name}@${(m.startTime / 1000).toFixed(1)}${m.detail && m.detail.why ? `(${m.detail.why})` : ""}`);
+  return {
+    t: o.t0 == null ? null : +((performance.now() - o.t0) / 1000).toFixed(2),
+    frozen: s.frozen,
+    held: `rAF${s.heldR}/timer${s.heldT}/rAF待ち${s.rafs}/timer待ち${s.timers}`,
+    gap: vg.maxGap,
+    age: typeof window.__vgAge === "function" ? window.__vgAge() : null,
+    layers: document.querySelectorAll("[data-fx-video]").length,
+    plate: !!document.querySelector('[data-plate="box"]'),
+    char: !!document.querySelector('[data-char="box"]'),
+    v,
+    marks: marks.slice(-6),
+  };
+}
+
+/** 表の行に出す1行（長くしない） */
+function stateLine(st, errors) {
+  if (!st) return "様子: 読めない";
+  if (st.hung) return "様子: 5秒待っても返らない（主スレッドが止まっている）";
+  if (st.err) return `様子: ${st.err}`;
+  const e = errors.length ? ` 例外 ${errors.slice(-2).join(" / ").slice(0, 120)}` : "";
+  return (
+    `様子: t ${st.t}s・止めた時計 ${st.frozen ? "止まったまま" : "動いている"}（${st.held}）・描く間の最大 ${st.gap}ms・最後に描いてから ${st.age}ms・` +
+    `層 ${st.layers}・札 ${st.plate ? "○" : "×"}・キャラ絵 ${st.char ? "○" : "×"}・動画 ${st.v.join(" ") || "無し"}・印 ${st.marks.join(" ") || "無し"}${e}`
+  );
+}
+
 async function runOne(browser, job) {
   const { ch, amount, size, text } = job;
   const [W, H] = size;
@@ -716,12 +779,18 @@ async function runOne(browser, job) {
   if (emoji) q.set("emoji", emoji);
   if (fxName) q.set("fx", fxName);
   const res = { char: ch.id, amount, size: `${W}x${H}`, text: text.key, frames: [], errors, video: !!vfile };
+  let waiting = "読み込み";
   try {
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
-    await page.waitForFunction(() => window.__ovl && window.__ovl.t0 != null, null, { timeout: 20000, polling: 50 });
+    /* アラートの面が出るまで（試し表示は、段の絵と動画の用意を最大 8 秒待ってから出す）。3本並べて回す runner が混むと
+       読み込みと合わせて 20 秒を越える組が出た（#1138 の1回目、48組のうち1組）。alert-reveal.mjs と同じ 60 秒まで待つ */
+    waiting = "面が出る";
+    await page.waitForFunction(() => window.__ovl && window.__ovl.t0 != null, null, { timeout: 60000, polling: 50 });
     let controlled = false;
     for (const s of framesFor(amount)) {
+      waiting = `${s}秒のコマ`;
       await page.waitForFunction((s) => performance.now() - window.__ovl.t0 >= s * 1000, s, { timeout: (s + 30) * 1000, polling: 30 });
+      waiting = `${s}秒のコマを撮る`;
       await page.evaluate(() => window.__ovl.freeze());
       const band = heroBands?.[String(tierOf(amount))];
       if (band) await page.evaluate(placeBand, { band, ctl: control });
@@ -739,14 +808,12 @@ async function runOne(browser, job) {
     }
     if (!res.frames.some((f) => !f.entrance)) res.fatal = "滞在のコマが1つも無い（キャラ絵が出ていない）";
   } catch (e) {
-    res.fatal = String(e).slice(0, 300);
+    /* 何を待っていて、ページがどうだったか（#1138）。主スレッドが止まっていても抜けるよう、読むのは 5 秒まで */
+    const st = await withTimeout(page.evaluate(pageState), 5000, { hung: true });
+    res.fatal = `${String(e).split("\n")[0].slice(0, 90)} [待っていたもの: ${waiting}] ${stateLine(st, errors)}`;
   }
   // `<video>` の守り（#1133）。アラートの頭から最後に撮ったコマまで、描くたびに数えたもの
-  try {
-    res.vg = await page.evaluate(() => window.__vguard ?? null);
-  } catch {
-    res.vg = null;
-  }
+  res.vg = await withTimeout(page.evaluate(() => window.__vguard ?? null), 5000, null).catch(() => null);
   if (external.length) res.external = [...new Set(external)];
   await ctx.close();
   return res;
@@ -840,7 +907,7 @@ async function main() {
       console.log(
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
           (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
-          (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster} コマ前に見えた ${vg.early}` : "") +
+          (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster}（コマより先に見せた ${vg.early}）` : "") +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -881,8 +948,8 @@ async function main() {
   if (errs.length) console.log("JS の例外:", errs.slice(0, 5));
   /* `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>` は、組ごとに1つでもあれば落ちる */
   const vsum = (k) => results.reduce((s, r) => s + (r.vg?.[k] ?? 0), 0);
-  const vbadRuns = results.filter((r) => r.vg && (r.vg.noPoster || r.vg.early));
-  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")} / コマを持つ前に見えた ${vsum("early")}（全部 0）・くり返しの継ぎ目 ${vsum("seam")}（数えない）`);
+  const vbadRuns = results.filter((r) => r.vg && r.vg.noPoster);
+  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")}（0）・コマより先に見せた ${vsum("early")}・くり返しの継ぎ目 ${vsum("seam")}（どちらも poster が透明なので数えない）`);
   for (const r of vbadRuns.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.vg.bad.slice(0, 3))}`);
 
   const json = arg("json", "");

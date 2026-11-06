@@ -60,20 +60,22 @@ def build(res):
         if r is None or r.get("tool") is None or r.get("exit") == 2:
             bad.append(_why(r, n))
             for v in ((r or {}).get("tool") or {}).get("invalid", [])[:2]:
-                bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: 測れない {v['why'][:60]}")
+                # 時間切れは、何を待っていてページがどうだったかまで出す（#1138。alert-overlap.mjs の stateLine）
+                bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: 測れない {v['why'][:420]}")
         for h in ((r or {}).get("tool") or {}).get("hits") or []:
             bad.append(f"{h['amount']}円 {h['size']} {h['char']} {h['text']} {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h['heroText']}" + (f"（{h['png']}）" if h.get("png") else ""))
     ok = len(tools) == len(names) and all(r["exit"] == 0 for r in got.values() if r) and sm("stay") > 0
     # `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>`。動画の段のあるテーマで1本も見ていなければ落とす
     for t in tools:
         for v in t.get("vbad") or []:
-            bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: `<video>` poster 無し {v['noPoster']}・コマ前に見えた {v['early']} {json.dumps(v.get('bad', [])[:1], ensure_ascii=False)[:90]}")
-    if sm("noPoster") or sm("early"):
+            bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: `<video>` poster 無し {v['noPoster']} {json.dumps(v.get('bad', [])[:1], ensure_ascii=False)[:90]}")
+    # コマより先に見せた（early）は数えるだけ（#1137。poster が透明なので出るのは透明。コマの合図だけに頼ると Android で出ない）
+    if sm("noPoster"):
         ok = False
     if any(t.get("fx") for t in prep.get("themes") or []) and not sm("videos"):
         ok = False
         bad.insert(0, "動画の段のあるテーマなのに `<video>` を1本も見ていない（守りを数えていない）")
-    vid = f"。`<video>` {sm('videos'):,}本: poster 無し {sm('noPoster')} / コマを持つ前に見えた {sm('early')}（全部 0。くり返しの継ぎ目 {sm('seam'):,} は数えない）"
+    vid = f"。`<video>` {sm('videos'):,}本: poster 無し {sm('noPoster')}（0。コマより先に見せた {sm('early'):,}・継ぎ目 {sm('seam'):,} は poster が透明なので数えない）"
     band = any(t.get("heroBands") for t in tools)
     hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
     if not sm("heroSeen"):
@@ -102,6 +104,44 @@ def build(res):
         f"{olabel}・{sm('runs')}本・滞在 {sm('stay'):,}コマ: front {sm('front')} / cover {sm('cover')} / 字 {sm('heroText')}（全部 0）。{hero}{vid}{early}",
         bad,
     )
+
+    # 合図の来ない偽の端末（#1137）。4通り × 7段で、動画が出て（段が落ちない）札が revealAt のあと
+    r = _load(res, "devices")
+    if r and r.get("na"):
+        row("合図の来ない端末（偽の4通り × 7段）", None, r["na"])
+    elif r and r.get("rows"):
+        rs = r["rows"]
+        by = {}
+        for x in rs:
+            b = by.setdefault(x["device"], [0, 0, 0, 0])
+            b[0] += 1
+            b[1] += 1 if x["video"] else 0
+            b[2] += x["early"] or 0
+            b[3] += x.get("zero") or 0
+
+        def why(x):
+            """落ちた理由。道具の終了コードだけで落ちた組も、何で落ちたかを出す（「終了 1」だけで理由の無い行を出さない）"""
+            w = [f"終了 {x['exit']}"]
+            if not x["video"]:
+                w.append(f"動画 {x['video']}/{x['runs']}（段が落ちた）")
+            if x["early"]:
+                w.append(f"札が先 {x['early']}コマ")
+            if x.get("zero"):
+                w.append(f"0円 {x['zero']}コマ")
+            if len(w) == 1:
+                w.append("数は全部 0（道具のログ devices.log を見る）")
+            return f"{x['device']} {x['amount']}円: " + "・".join(w)
+
+        bad = [why(x) for x in rs if x["exit"] != 0 or not x["video"] or x["early"] or x.get("zero")]
+        ok = bool(rs) and not bad and all(b[1] == b[0] for b in by.values())
+        row(
+            "合図の来ない端末（偽の4通り × 7段）",
+            ok,
+            "・".join(f"{k} 動画 {b[1]}/{b[0]}段・札が先 {b[2]}・0円 {b[3]}" for k, b in by.items()) + "（7段とも動画が出て、札が先 0・0円 0）",
+            bad,
+        )
+    else:
+        row("合図の来ない端末（偽の4通り × 7段）", False, "回っていない", [_why(r, "devices")])
 
     # 対照
     c = _load(res, "controls")

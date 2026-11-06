@@ -38,7 +38,7 @@ import { SeasonEffects } from "./season/SeasonEffects";
 import { stageFor, plateTiming, revealedStage, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM, type AlertStage } from "./season/show/stage";
 import { TierShow } from "./season/show/TierShow";
 import { VideoShow } from "./season/show/VideoShow";
-import { newVideo, onFirstFrame, VIDEO_ATTRS } from "./videoGuard";
+import { newVideo, onShowable, VIDEO_ATTRS } from "./videoGuard";
 import { useTierVideo } from "./season/show/useTierVideo";
 import { RichText } from "./season/plate/RichText";
 import type { PlateStyle } from "./themes";
@@ -1259,17 +1259,17 @@ export default function AlertBox() {
                         networkState: e.currentTarget.networkState,
                       })
                     }
-                    /* **最初のコマが描かれてから見せる。** `canplay` ではない
+                    /* **再生が始まってから見せる。** `canplay` ではない
                        （「そろそろ出せる」でまだ止まっており、自動再生が許されるかの
-                       返事も来ていない）。`playing` でもない（再生が始まった合図で、
-                       コマをまだ描いていないことがある。#1133）。`playing` から
-                       `onFirstFrame` でコマの合図を待つ。`videoPlaying` と
-                       `videoFirstFrame` の両方をログに残すので、差は本番のログで測れる。 */
+                       返事も来ていない）。`playing` から `onShowable` で、読めたところが
+                       2 以上・コマの合図・時計が進んだ、のどれか早いもので見せる
+                       （1つの合図に頼らない。#1137。poster は透明なので ▶ は出ない）。
+                       `videoPlaying` と `videoFirstFrame` の両方をログに残すので、差は本番のログで測れる。 */
                     onPlaying={(e) => {
                       const url = displaySource.url;
                       sendLog("AlertBox", sessionId, "videoPlaying", { url });
                       frameWaitRef.current?.();
-                      frameWaitRef.current = onFirstFrame(
+                      frameWaitRef.current = onShowable(
                         videoRef.current ?? e.currentTarget,
                         () => {
                           frameWaitRef.current = null;

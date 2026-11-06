@@ -17,8 +17,9 @@
  *   5. キャラ絵と字は `revealAt` に出る（字の出し方はハロウィン2版目の同じ段）。動画が用意できなければ動画なしで、すぐ出る
  *   6. 流す順番: 最初のコマまで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
- *   7. コマを持つ前の `<video>` を見せない（#1133）: コマの合図（requestVideoFrameCallback）まで透明・
- *      替わり目は次の本のコマが出るまで前の本が見えたまま（見えている本が 0 本・2 本になる瞬間が無い）
+ *   7. 1つの合図に頼らない（#1133 #1137）: 見せるのはコマの合図・`playing` と readyState 2 以上・時計が進んだ・
+ *      play() が解けて 250ms のどれか早いもの。動いているか・札の合図は登場の時計で。替わり目は次の本が
+ *      見せてよくなるまで前の本が見えたまま（見えている本が 0 本・2 本になる瞬間が無い）
  *
  * **対照を先に置く**（`island-misses.md` #99）。「出すと決めていないと7段にならない」を見てから「出すと決めたら7段になる」を見る。
  */
@@ -27,6 +28,7 @@ import { join } from "path";
 import { THEMES, themeAt, tierFor, type FxTier, type SeasonTheme } from "../themes";
 import { stageFor, plateTiming, withoutVideo, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM } from "../season/show/stage";
 import { scriptProblems } from "../season/show/script";
+import { SHOW_AFTER_PLAY_MS } from "../videoGuard";
 import {
   FX_START_TIMEOUT_MS,
   FX_WARM_BUDGET,
@@ -405,7 +407,7 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
  * 読めたところ（readyState）は「最後まで流せる」(4)。用意（prepareFxKit）を通った要素はそうなっている。
  * jsdom には `requestVideoFrameCallback` が無いので、最初のコマは `playing` と readyState で決まる（無い端末の道）
  */
-type FakeVideo = HTMLVideoElement & { plays: number; reject?: string; ready: number };
+type FakeVideo = HTMLVideoElement & { plays: number; reject?: string; ready: number; hang?: boolean };
 function fakeVideo(duration: number): FakeVideo {
   const v = document.createElement("video") as FakeVideo;
   v.plays = 0;
@@ -417,6 +419,8 @@ function fakeVideo(duration: number): FakeVideo {
   v.play = jest.fn(() => {
     v.plays++;
     paused = false;
+    // play() が解けない端末（返事を待たせたまま）
+    if (v.hang) return new Promise<void>(() => {});
     if (v.reject) {
       const e = Object.assign(new Error(v.reject), { name: v.reject });
       return Promise.reject(e);
@@ -598,12 +602,17 @@ describe("6. 流す順番", () => {
     expect(back.outro.plays).toBe(1);
   });
 
-  it("3 秒動かない層は消す。全部の層が消えたら落ちる（その秒を渡す）", () => {
+  it("登場の時計が 3 秒進まない層は消す。全部の層が消えたら落ちる（その秒を渡す）", () => {
     const { kit, back, front } = makeKit();
+    const c = clock(back.intro);
     const onFail = jest.fn();
     runFxShow(kit, hosts(), 30, onFail);
     fire(back.intro, "playing");
-    jest.advanceTimersByTime(FX_START_TIMEOUT_MS + 10);
+    // 奥の時計だけが進む
+    for (let i = 0; i < 31; i++) {
+      c.t += 0.05;
+      jest.advanceTimersByTime(100);
+    }
     // 手前だけ動かなかった: 手前は消える・奥は出たまま・落ちない
     expect(op(front!.intro)).toBe("0");
     expect(front!.intro.pause).toHaveBeenCalled();
@@ -615,7 +624,8 @@ describe("6. 流す順番", () => {
     runFxShow(k2.kit, hosts(), 30, onFail2);
     jest.advanceTimersByTime(FX_START_TIMEOUT_MS - 10);
     expect(onFail2).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(20);
+    // 時計は描くたびに読む（1コマぶんの遅れまで）
+    jest.advanceTimersByTime(50);
     expect(onFail2).toHaveBeenCalledTimes(1);
   });
 
@@ -698,78 +708,136 @@ const partsOf = (L: FakeLayer) => [L.intro, L.stay, L.outro];
 /** 層の中で見えている本（opacity が 0 でないもの） */
 const seen = (L: FakeLayer) => (["intro", "stay", "outro"] as const).filter((p) => op(L[p]) !== "0");
 
-describe("7. コマを持つ前の `<video>` を見せない（#1133。Android の WebView は灰色の地と ▶ を描く）", () => {
+describe("7. 見せる合図・動いているか・札の合図を、1つの合図に頼らない（#1133 #1137）", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
+  /* 動画の時計を手で進める */
+  const clockOf = (v: HTMLVideoElement) => {
+    const c = { t: 0 };
+    Object.defineProperty(v, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    return c;
+  };
+  /** Android の WebView の形（#1137）: コマの合図を呼び返さず、置いてある間は readyState 1 のまま */
+  const android = (...vs: FakeVideo[]) => {
+    framed(...vs);
+    for (const v of vs) v.ready = 1;
+  };
 
-  it("対照: コマの合図を持たない端末（jsdom の素）では、`playing` が来ても読めたところが 2 未満なら見せない", () => {
+  it("対照: 合図が何も来ない層（`playing` だけ・readyState 1・時計 0・play() が解けない）は見せず、3 秒で消す", async () => {
     const { kit, back } = makeKit(false);
-    back.intro.ready = 1;
-    runFxShow(kit, hosts(), 45, jest.fn());
+    android(...partsOf(back));
+    back.intro.hang = true;
+    const onFail = jest.fn();
+    runFxShow(kit, hosts(), 45, onFail);
+    await flush();
     fire(back.intro, "playing");
-    expect(op(back.intro)).toBe("0");
-    back.intro.ready = 2;
-    fire(back.intro, "canplay");
-    expect(op(back.intro)).toBe("1");
+    jest.advanceTimersByTime(FX_START_TIMEOUT_MS - 100);
+    expect(seen(back)).toEqual([]);
+    expect(onFail).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(200);
+    expect(onFail).toHaveBeenCalledTimes(1);
   });
 
-  it("`playing` が来ても、最初のコマの合図（requestVideoFrameCallback）が来るまで透明。層ごとに自分の合図で", () => {
+  it("コマの合図を呼び返さず readyState 1 のままの端末でも、時計が進めば見せる。札は revealAt で。落ちない", () => {
     const { kit, back, front } = makeKit();
-    const present = framed(...partsOf(back), ...partsOf(front!));
-    runFxShow(kit, hosts(), 45, jest.fn());
+    android(...partsOf(back), ...partsOf(front!));
+    back.intro.hang = true;
+    front!.intro.hang = true;
+    const cb = clockOf(back.intro);
+    const cf = clockOf(front!.intro);
+    const onFail = jest.fn();
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, onFail, onReveal);
     fire(back.intro, "playing");
     fire(front!.intro, "playing");
-    jest.advanceTimersByTime(500);
     expect(seen(back)).toEqual([]);
-    expect(seen(front!)).toEqual([]);
-    present(back.intro);
+    for (let i = 0; i < 19; i++) {
+      cb.t += 0.1;
+      cf.t += 0.1;
+      jest.advanceTimersByTime(100);
+    }
     expect(seen(back)).toEqual(["intro"]);
-    expect(seen(front!)).toEqual([]);
-    present(front!.intro);
     expect(seen(front!)).toEqual(["intro"]);
+    // revealAt は 2 秒。動画の時計で 1.9 秒ではまだ
+    expect(onReveal).not.toHaveBeenCalled();
+    cb.t = 2;
+    jest.advanceTimersByTime(50);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+    // 登場を流し終えて滞在へ（滞在も合図が来ない。play() が解けて 250ms で見せる）
+    fire(back.intro, "ended");
+    fire(front!.intro, "ended");
+    jest.advanceTimersByTime(5000);
+    expect(onFail).not.toHaveBeenCalled();
   });
 
-  it("替わり目（登場 → 滞在 → 締め）: 次の本のコマが出るまで前の本が見えたまま。見えている本が 0 本・2 本になる瞬間が無い", () => {
+  it("コマの合図も readyState も時計も来ない端末: play() が解けて 250ms で見せる（見せると描き始める）", async () => {
+    const { kit, back } = makeKit(false);
+    android(...partsOf(back));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    await flush();
+    jest.advanceTimersByTime(SHOW_AFTER_PLAY_MS - 20);
+    expect(seen(back)).toEqual([]);
+    jest.advanceTimersByTime(40);
+    expect(seen(back)).toEqual(["intro"]);
+  });
+
+  it("コマの合図を持つ端末では、`playing` より先に合図で見せる（readyState 1 でも）", () => {
     const { kit, back } = makeKit(false);
     const present = framed(...partsOf(back));
+    back.intro.ready = 1;
+    back.intro.hang = true;
     runFxShow(kit, hosts(), 45, jest.fn());
-    fire(back.intro, "playing");
+    expect(seen(back)).toEqual([]);
     present(back.intro);
     expect(seen(back)).toEqual(["intro"]);
-    // 登場が終わった → 滞在を流し始める。滞在の `playing` が来ても、コマが出るまでは登場の最後のコマ
+  });
+
+  it("替わり目（登場 → 滞在 → 締め）: 次の本が見せてよくなるまで前の本が見えたまま。見えている本が 0 本・2 本になる瞬間が無い", async () => {
+    const { kit, back } = makeKit(false);
+    android(...partsOf(back));
+    back.stay.hang = true;
+    back.outro.hang = true;
+    const ci = clockOf(back.intro);
+    const cs = clockOf(back.stay);
+    const co = clockOf(back.outro);
+    runFxShow(kit, hosts(), 45, jest.fn());
+    ci.t = 0.1;
+    jest.advanceTimersByTime(50);
+    expect(seen(back)).toEqual(["intro"]);
+    // 登場が終わった → 滞在を流し始める。滞在は合図が来ず readyState 1・play() も解けない: 時計が進むまで登場の最後のコマ
     fire(back.intro, "ended");
     expect(back.stay.plays).toBe(1);
-    expect(seen(back)).toEqual(["intro"]);
     fire(back.stay, "playing");
+    jest.advanceTimersByTime(1000);
     expect(seen(back)).toEqual(["intro"]);
-    present(back.stay);
+    cs.t = 0.05;
+    jest.advanceTimersByTime(50);
     expect(seen(back)).toEqual(["stay"]);
-    // 締め: 滞在の輪の切れ目から。締めのコマが出るまで滞在の最後のコマ
-    jest.advanceTimersByTime((45 - 1.2 - 3 - 0.15) * 1000 + 50);
+    // 締め: 滞在の輪の切れ目から。締めの時計が進むまで滞在の最後のコマ
+    jest.advanceTimersByTime((45 - 1.2 - 3 - 0.15) * 1000);
     fire(back.stay, "ended");
     expect(back.outro.plays).toBe(1);
-    expect(seen(back)).toEqual(["stay"]);
-    fire(back.outro, "playing");
+    jest.advanceTimersByTime(500);
     expect(seen(back)).toEqual(["stay"]);
     expect(back.stay.pause).not.toHaveBeenCalled();
-    present(back.outro);
+    co.t = 0.05;
+    jest.advanceTimersByTime(50);
     expect(seen(back)).toEqual(["outro"]);
     expect(back.stay.pause).toHaveBeenCalled();
   });
 
-  it("札の合図（onReveal）は、登場のコマが出てから動画の時計で（合図を待っても早まらない）", () => {
+  it("札の合図（onReveal）は、見せたかどうかではなく登場の時計で（合図を待たない・早まらない）", () => {
     const { kit, back } = makeKit(false);
-    const present = framed(...partsOf(back));
-    const c = { t: 0 };
-    Object.defineProperty(back.intro, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    framed(...partsOf(back));
+    back.intro.ready = 1;
+    back.intro.hang = true;
+    const c = clockOf(back.intro);
     const onReveal = jest.fn();
     runFxShow(kit, hosts(), 45, jest.fn(), onReveal);
-    fire(back.intro, "playing");
-    c.t = 2.5;
+    c.t = 1.5;
     jest.advanceTimersByTime(100);
-    // コマがまだ出ていない（見えていない）登場の時計では出さない
     expect(onReveal).not.toHaveBeenCalled();
-    present(back.intro);
+    c.t = 2.0;
     jest.advanceTimersByTime(50);
     expect(onReveal).toHaveBeenCalledTimes(1);
   });
@@ -797,13 +865,42 @@ describe("7. コマを持つ前の `<video>` を見せない（#1133。Android �
     expect(back.stay.plays).toBe(1);
   });
 
+  it("止めるとき・替わり目で、rAF の番号を clearTimeout に渡さない（同じ番号のアラートの時計を消してしまう。#1138）", () => {
+    const RAF_ID = 987654;
+    const raf = jest.spyOn(window, "requestAnimationFrame").mockImplementation(() => RAF_ID);
+    const caf = jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    const ct = jest.spyOn(global, "clearTimeout");
+    try {
+      const { kit, back } = makeKit(false);
+      const stop = runFxShow(kit, hosts(), 45, jest.fn(), jest.fn());
+      fire(back.intro, "playing"); // 見せてよくなった（中で合図の見張りを止める）
+      fire(back.intro, "ended");
+      fire(back.stay, "playing");
+      stop();
+      expect(caf).toHaveBeenCalledWith(RAF_ID);
+      expect(ct.mock.calls.map((c) => c[0])).not.toContain(RAF_ID);
+    } finally {
+      raf.mockRestore();
+      caf.mockRestore();
+      ct.mockRestore();
+    }
+  });
+
   it("止めたあとに合図が来ても、何も見せない", () => {
     const { kit, back } = makeKit(false);
     const present = framed(...partsOf(back));
+    back.intro.ready = 1;
+    back.intro.hang = true;
+    const c = { t: 0 };
+    Object.defineProperty(back.intro, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
     const stop = runFxShow(kit, hosts(), 45, jest.fn());
     fire(back.intro, "playing");
     stop();
     present(back.intro);
+    back.intro.ready = 4;
+    fire(back.intro, "canplay");
+    c.t = 1;
+    jest.advanceTimersByTime(1000);
     expect(seen(back)).toEqual([]);
   });
 });
