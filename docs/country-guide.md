@@ -241,12 +241,35 @@ const GUIDES: Record<string, Guide[]> = {
 | 3 | `site/content/directory.ts`（`/all` の棚） | 索引から着けない |
 | 4 | `site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つ | 貼ったときの絵が 404 |
 
-4つめは `ONLY=<鍵> node tools/sprites/ogcards.mjs` で1枚だけ焼く。
+…と、**字の束**（下）。4つめは `ONLY=<鍵> node tools/sprites/ogcards.mjs` で1枚だけ焼く。
 **全部焼くと、触っていない18枚まで差分に出る。**
 
 ```bash
 ONLY=bulgaria node tools/sprites/ogcards.mjs
 ```
+
+## 6-2. 字の束を焼き直す（忘れると、その面だけ別の書体になる）
+
+`site/public/fonts/*.woff2` は「島で実際に出てくる字だけ」を切り分けて焼いた丸ゴシック。
+切り分けの元は `tools/fonts/weights.json`（面ごと・太さごとに画面に出る字）で、
+**面を1枚足したら数え直して焼き直す。** しないと、その面にしか出ない字が
+端末の書体に落ちる（`fontbudget_selftest` が赤くなる）。
+
+```bash
+tools/build.sh 3130
+python3 -m http.server 4130 --directory site/.next-3130 &
+DIST=site/.next-3130 SPORT=4130 node tools/sprites/fontweigh.mjs   # 153面を1枚ずつ。20分ほど
+python3 tools/fonts/subset.py --export site/.next-3130
+```
+
+**`fontweigh` を2本同時に回さない。** どちらも `weights.json` を書くので、
+あとから書いたほうが勝つ（1回やって、途中で止めて回し直した）。
+
+**面を1枚足すと、触っていない面が太る。** 束は「どの面で使われるか」が同じ字どうしを
+まとめて作るので、字の多い面が増えるとまとめかたが変わって、ほかの面が巻き添えで払う。
+ソフィアを足したとき `/nordic/guide` が 850 → 931KB になった。
+`fontbudget_selftest` の上限に当たったら、**まず `subset.py --dry --buckets N` を
+いくつか当てて、切り分けで直るのかを確かめてから**上限を動かす。
 
 ---
 
@@ -285,6 +308,10 @@ DIST=site/.next-3130 SPORT=4130 node tools/sprites/crawl.mjs
   絵は面の側（サーバ）で描いて props で渡す
 - **星の数と `rank` は逆。** `rank: 1` が「必見」なので、塗る★は `4 - rank` 個。
   素直に `rank` 個にすると、いちばん大事なものが★1つで出る（一度そう出た）
+- **`fontTools` と `Pillow` がこの箱に無い／壊れていることがある。**
+  `subset.py` は `fontTools`、`ogcards.mjs` は `Pillow` を呼ぶ。
+  `python3 -m pip install --break-system-packages fonttools brotli Pillow`。
+  **`pip` と `python3` でバージョンが食い違う**ので、必ず `python3 -m pip` から入れる
 - **`Pillow` がこの箱で壊れていることがある**（`ImportError: cannot import name '_imaging'`）。
   `python3 -m pip install --break-system-packages --force-reinstall Pillow`。
   `pip` と `python3` でバージョンが食い違うので、必ず `python3 -m pip` から入れる
