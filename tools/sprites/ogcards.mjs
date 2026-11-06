@@ -155,6 +155,13 @@ const CAST = {
     { s: "firewood-large", h: 170, cx: 952, y: 90 },
     { s: "barrel", h: 190, cx: 1043, y: 74 },
   ],
+  /* ソフィアの3つ。**ローマの柱・湧いている湯・市場**——
+     この街を一言で言うとこの3つで、面の中身（遺跡／温泉／ジェンスキ・パザール）とも合う */
+  bulgaria: [
+    { s: "statue-column", h: 300, cx: 762, y: 140 },
+    { s: "fountain-square", h: 220, cx: 946, y: 96 },
+    { s: "stall-green", h: 190, cx: 1052, y: 78 },
+  ],
   northMacedonia: [
     { s: "rock-tall", h: 290, cx: 764, y: 136 },
     { s: "tree-pine-tall", h: 250, cx: 946, y: 112 },

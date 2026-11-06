@@ -30,6 +30,7 @@ import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
 import { chapterCountries } from "@/content/walked";
 import { ALBANIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP } from "@/content/themes";
+import type { IconName } from "@/components/ui/icons";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { boardPlate, type IsleBoardSpec } from "./board";
 import { isleIcon } from "./icons";
@@ -438,28 +439,79 @@ const BALKAN_BOARDS: { name: string; group: string }[] = [
  *   アルバニアがここに無いのは、`/albania` という面が無いから
  * - **章の外へ持ち越さない。** 章が変われば、この表に無い章になって札は建たない。
  *   持ち越すと、次の島に前の国の案内が建つ
+ * - **滞在の決まっている国は、期間を書いて先頭に置く。** `from`〜`to` のあいだだけ
+ *   そちらが選ばれ、過ぎれば**ひとりでに**下の国へ戻る（`guideOf`）。
+ *   期間の無い行は「いつでも当たる」ので、いちばん下に1つだけ置く
  *
  * 行き先が本当に在るかは `site/selftest/islechapter_selftest.mjs` が数える。
  */
-const GUIDES: Record<string, { name: string; href: string; lead: string }[]> = {
+type Guide = {
+  name: string;
+  href: string;
+  lead: string;
+  /** 行き先の面が頭に出している印と同じ絵（その国の `page.tsx` の `PageHead`） */
+  icon: IconName;
+  /** 出しはじめる日（JST の `YYYY-MM-DD`、その日を含む）。無ければ「いつでも」 */
+  from?: string;
+  /** 出しおわる日（その日を含む）。無ければ「ずっと」 */
+  to?: string;
+};
+
+const GUIDES: Record<string, Guide[]> = {
   balkans: [
+    {
+      name: "ブルガリア・ソフィア",
+      href: "/bulgaria",
+      lead: "ローマの遺跡と、ただで湧く温泉の首都。見どころと食べものに、好みの印つき",
+      icon: "church",
+      /* あやとの滞在（2026-11-12 に移動、1週間ほど）。
+         **過ぎたら北マケドニアへ戻る。** 戻すために誰かが手を入れる必要は無い */
+      from: "2026-11-12",
+      to: "2026-11-19",
+    },
     {
       name: "北マケドニア",
       href: "/north-macedonia",
       /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
          国を越えた日にも、何ヶ月たっても本当のことだけ。 */
       lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",
+      icon: "mountain",
     },
   ],
 };
+
+/** JST のその日（`YYYY-MM-DD`）。**ブラウザの時間帯で切らない**——
+    日本の夜に見ている人と、現地（UTC+2）で見ているあやとで、入れ替わる日が1日ずれる */
+const jstDay = (d: Date) =>
+  new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
+
+/** その章の案内ぜんぶ（期間の行も含む）。**入れ替わりを面の側で決めるため**に出す
+    （`components/live/GuideLink.tsx`。焼いた日で決めると、次のビルドまで戻らない） */
+export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
 
 /**
  * その章で、いま案内の面を持っている国。**無ければ `null`。**
  *
  * 島の札（`guidePlace`）も、島の下の紙の板（`app/page.tsx`）も、ここから引く。
  * 国の名前を紙のほうへ書き写すと、国を越えた日に**紙だけが前の国を指す。**
+ *
+ * **呼ぶ側によって「いま」が違う。**
+ *
+ * | | |
+ * | --- | --- |
+ * | トップの板（`GuideLink`） | 画面が出てからの今日。期間が来た日に、その場で入れ替わる |
+ * | 島の札（`guidePlace`） | **焼いた日。** 次のビルドまで前の国を指す |
+ *
+ * 島の札まで画面の側で入れ替えるには、島の絵を作る仕掛け（`isleSpec`）ごと
+ * ブラウザへ持っていくことになるので、そこまではしない。
+ * 毎晩の配りがあるので、札が追いつくのは遅くとも翌日。
  */
-export const guideOf = (slug?: string) => (slug && GUIDES[slug]?.[0]) || null;
+export const guideOf = (slug?: string, on?: Date): Guide | null => {
+  const list = (slug && GUIDES[slug]) || [];
+  const day = jstDay(on ?? new Date());
+  /* 上から見て、**その日に当たる最初の1つ。** 期間を書いていない行はいつでも当たる */
+  return list.find((g) => (!g.from || day >= g.from) && (!g.to || day <= g.to)) || null;
+};
 
 /**
  * 案内の札の字。**島の建物でも、板の中の1行でも、同じ字にする**

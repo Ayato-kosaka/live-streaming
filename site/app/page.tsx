@@ -4,13 +4,14 @@ import IslandStage from "@/components/island/IslandStage";
 import Cover from "@/components/isle/Cover";
 import { HAND_MADE_CHAPTER } from "@/components/isle/handmade";
 import { coverSpec } from "@/components/isle/cover";
-import { guideOf } from "@/components/isle/spec";
 import { NOW_CHAPTER } from "@/content/chapters";
 import { RESIDENTS } from "@/content/residents";
 import { LiveNumber } from "@/lib/liveStats";
 import { IslandFooter } from "@/components/ui/PageShell";
 import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { HERO, HOME } from "@/content/voice";
+import GuideLink from "@/components/live/GuideLink";
+import { guidesOf } from "@/components/isle/spec";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
@@ -87,8 +88,6 @@ export default function Home() {
      今日が食い違うので、画面が出てから入れ替わる（`Cover.tsx`）。 */
   const baked = NOW_CHAPTER;
   const cover = baked.slug === HAND_MADE_CHAPTER ? null : coverSpec(baked);
-  /** いまいる国の案内。島の札と同じ1本から引く（`components/isle/spec.ts` の `GUIDES`） */
-  const guide = guideOf(baked.slug);
 
   return (
     <main>
@@ -245,19 +244,25 @@ export default function Home() {
               **国の名前をここに書かない。** `components/isle/spec.ts` の `GUIDES`
               （島の札と同じ1本）から引く。書き写すと、国を越えた日に紙だけが
               前の国を指す（`docs/island-standards.md` 8章）。
-              案内の面を持たない章では、この板ごと出ない。 */}
-          {guide && (
-            <Link prefetch={false} className="hjoin" href={guide.href}>
-              {/* 行き先の面が頭に出している印と同じ絵にする（`app/north-macedonia/page.tsx`）。
-                  寸法は `.hjoin-art` の 72px に合わせる（カードの板と同じ理由） */}
-              <Icon name="mountain" size={72} className="hjoin-art" />
-              <span className="hjoin-body">
-                <b>{guide.name}</b>
-                <i>{guide.lead}</i>
-              </span>
-              <Icon name="right" size={16} className="hjoin-go" />
-            </Link>
-          )}
+              案内の面を持たない章では、この板ごと出ない。
+
+              **どの国かを、焼いた日で決めない。** 滞在の決まっている国は
+              `GUIDES` に期間つきで入っていて、入れ替わりは**画面が出てから**
+              今日の日付で選び直す（`components/live/GuideLink.tsx`）。
+              ここで決め打つと、ビルドした日の国が焼き込まれて、
+              滞在が終わっても次のビルドまで戻らない。 */}
+          <GuideLink
+            items={guidesOf(baked.slug).map((g) => ({
+              href: g.href,
+              name: g.name,
+              lead: g.lead,
+              from: g.from,
+              to: g.to,
+              /* 絵はここ（サーバ）で描く。寸法は `.hjoin-art` の 72px に合わせる
+                 （カードの板と同じ理由）。なぜ部品の中で描かないかは `GuideLink` の注 */
+              art: <Icon name={g.icon} size={72} className="hjoin-art" />,
+            }))}
+          />
         </Chapter>
 
         <Chapter
