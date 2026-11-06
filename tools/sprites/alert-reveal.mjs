@@ -6,6 +6,7 @@
  *   node alert-reveal.mjs --base http://127.0.0.1:4387 --theme castle --fx full --amount 10000 \
  *        --sizes 436x776,664x1180 --rates 1,4,6 --nets off,slow --runs 5 --char <キャラ絵.png> --json <結果.json>
  *   node alert-reveal.mjs ... --control early      # 対照: 札を最初から見せる → 1 で落ちる
+ *   node alert-reveal.mjs ... --device android     # 偽の端末（合図の来ない形。#1137）: 動画が出ないと 2 で落ちる
  *
  * ## なぜ要るか
  *
@@ -56,6 +57,41 @@ const runs = Math.max(1, Number(arg("runs", "5")));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
 if (control && control !== "early") die(`--control は early（${control}）`);
+/* 偽の端末（#1137）。合図の来ない端末で、動画が出て（段が落ちない）札が revealAt のあとに出るかを見る。
+   11/6 の配信（Android の WebView）で7段が1つも出なかった。この箱の Chromium はどの合図も来るので、来ない形を作る:
+   - norvfc   … requestVideoFrameCallback が無い
+   - mutervfc … requestVideoFrameCallback を呼び返さない
+   - rs1      … 面に置かれて opacity 0 のあいだ、readyState が 1 のまま（描かない要素のコマは作らない端末）
+   - android  … mutervfc と rs1 の両方（見立て: Android の WebView は opacity 0 の `<video>` に、どちらも来ない） */
+const DEVICES = ["norvfc", "mutervfc", "rs1", "android"];
+const device = arg("device", "");
+if (device && !DEVICES.includes(device)) die(`--device は ${DEVICES.join("・")}（${device}）`);
+function fakeDevice(kind) {
+  const P = HTMLVideoElement.prototype;
+  if (kind === "norvfc") {
+    delete P.requestVideoFrameCallback;
+    delete P.cancelVideoFrameCallback;
+  }
+  if (kind === "mutervfc" || kind === "android") {
+    let n = 0;
+    P.requestVideoFrameCallback = function () {
+      return ++n;
+    };
+    P.cancelVideoFrameCallback = function () {};
+  }
+  if (kind === "rs1" || kind === "android") {
+    const M = HTMLMediaElement.prototype;
+    const d = Object.getOwnPropertyDescriptor(M, "readyState");
+    Object.defineProperty(M, "readyState", {
+      configurable: true,
+      get() {
+        const r = d.get.call(this);
+        // 用意（面に置く前）のあいだは本物のまま。置いて透明なあいだだけ 1 で止める
+        return this instanceof HTMLVideoElement && this.isConnected && this.style.opacity === "0" ? Math.min(r, 1) : r;
+      },
+    });
+  }
+}
 const charFile = arg("char", "../../site/public/goods/ayato-walk.png");
 if (!existsSync(resolve(charFile))) die(`キャラ絵が無い: ${charFile}`);
 const charBody = readFileSync(resolve(charFile));
@@ -102,6 +138,7 @@ async function one(browser, { W, H, rate, net, i }, revealAt, introDur) {
       if (u.includes("cloudfront.net")) return r.fulfill({ contentType: "image/png", body: charBody, headers: { "access-control-allow-origin": "*" } });
       return u.startsWith(base) || u.startsWith("data:") || u.startsWith("blob:") ? r.continue() : r.abort();
     });
+    if (device) await ctx.addInitScript(fakeDevice, device);
     await ctx.addInitScript(SAMPLER);
     /* 対照: 「0円」の札を、ページが開いたときから面の上のほうに置く（動画の頭より先に札が見えている形）。
        アプリの札は動画が revealAt に来るまで組まれないので、札の側を CSS で見せる対照は効かない。
@@ -169,7 +206,7 @@ async function main() {
   const man = await fxManifest(base, theme);
   const tier = man?.tiers?.[String(tierOf(amount))];
   if (!tier) die(`${theme} の manifest に段${tierOf(amount)} が無い（--fx の動画の段で回す道具）`);
-  console.log(`テーマ ${theme}・旗 fx=${fx}・${amount}円（段${tierOf(amount)}・revealAt ${tier.revealAt}秒）${control ? `・対照 ${control}` : ""}`);
+  console.log(`テーマ ${theme}・旗 fx=${fx}・${amount}円（段${tierOf(amount)}・revealAt ${tier.revealAt}秒）${control ? `・対照 ${control}` : ""}${device ? `・偽の端末 ${device}` : ""}`);
   const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server", "--autoplay-policy=no-user-gesture-required"] });
   const queue = [];
   for (const [W, H] of sizes) for (const rate of rates) for (const net of nets) for (let i = 1; i <= runs; i++) queue.push({ W, H, rate, net, i });
@@ -217,7 +254,7 @@ async function main() {
       resolve(json),
       JSON.stringify(
         {
-          tool: "alert-reveal", exit: code, theme, fx, amount, revealAt: tier.revealAt, control, runs: rows.length, video: withVideo.length,
+          tool: "alert-reveal", exit: code, theme, fx, amount, revealAt: tier.revealAt, control, device, runs: rows.length, video: withVideo.length,
           frames: rows.reduce((s, r) => s + r.frames, 0), early: rows.reduce((s, r) => s + r.early, 0), zero: rows.reduce((s, r) => s + r.zero, 0),
           band: rows.reduce((s, r) => s + r.band, 0), by, bad: bad.slice(0, 20), errs,
         },
