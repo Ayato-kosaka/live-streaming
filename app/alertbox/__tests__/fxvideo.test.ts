@@ -865,6 +865,27 @@ describe("7. 見せる合図・動いているか・札の合図を、1つの合
     expect(back.stay.plays).toBe(1);
   });
 
+  it("止めるとき・替わり目で、rAF の番号を clearTimeout に渡さない（同じ番号のアラートの時計を消してしまう。#1138）", () => {
+    const RAF_ID = 987654;
+    const raf = jest.spyOn(window, "requestAnimationFrame").mockImplementation(() => RAF_ID);
+    const caf = jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    const ct = jest.spyOn(global, "clearTimeout");
+    try {
+      const { kit, back } = makeKit(false);
+      const stop = runFxShow(kit, hosts(), 45, jest.fn(), jest.fn());
+      fire(back.intro, "playing"); // 見せてよくなった（中で合図の見張りを止める）
+      fire(back.intro, "ended");
+      fire(back.stay, "playing");
+      stop();
+      expect(caf).toHaveBeenCalledWith(RAF_ID);
+      expect(ct.mock.calls.map((c) => c[0])).not.toContain(RAF_ID);
+    } finally {
+      raf.mockRestore();
+      caf.mockRestore();
+      ct.mockRestore();
+    }
+  });
+
   it("止めたあとに合図が来ても、何も見せない", () => {
     const { kit, back } = makeKit(false);
     const present = framed(...partsOf(back));

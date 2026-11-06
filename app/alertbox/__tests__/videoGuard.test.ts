@@ -314,6 +314,28 @@ describe("2. 見せてよい合図は4つのどれか早いもの（onShowable�
     expect(cbb).toHaveBeenCalledTimes(1);
   });
 
+  it("止めるとき、rAF の番号を clearTimeout に渡さない（同じ番号の別の setTimeout を消してしまう。#1138）", () => {
+    const RAF_ID = 987654;
+    const raf = jest.spyOn(window, "requestAnimationFrame").mockImplementation(() => RAF_ID);
+    const caf = jest.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    const ct = jest.spyOn(global, "clearTimeout");
+    try {
+      const f = fake({ rvfc: true, ready: 1 });
+      const stop = onShowable(f.v, jest.fn(), { played: never() });
+      stop();
+      expect(caf).toHaveBeenCalledWith(RAF_ID);
+      // 見せてよくなったとき（中で止める）も同じ
+      const g = fake({ rvfc: true, ready: 1 });
+      onShowable(g.v, jest.fn(), { played: never() });
+      g.present();
+      expect(ct.mock.calls.map((c) => c[0])).not.toContain(RAF_ID);
+    } finally {
+      raf.mockRestore();
+      caf.mockRestore();
+      ct.mockRestore();
+    }
+  });
+
   it("やめたら呼ばない（合図も外す・時計も読まない）", async () => {
     const f = fake({ rvfc: true, ready: 1 });
     const cb = jest.fn();

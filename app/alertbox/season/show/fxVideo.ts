@@ -570,8 +570,9 @@ export function runFxShow(
        全部消えたら onFail（index.tsx が動画なしの見せ方に落とし、すぐ出す） */
   let revealed = !onReveal;
   let pgHandle: ReturnType<typeof setTimeout> | number | null = null;
-  const nextTick = (f: () => void) =>
-    typeof requestAnimationFrame === "function" ? requestAnimationFrame(f) : setTimeout(f, 16);
+  // rAF で回したものは rAF でだけ取り消す（止める関数を見る。videoGuard.ts の onShowable と同じ理由）
+  const useRaf = typeof requestAnimationFrame === "function";
+  const nextTick = (f: () => void) => (useRaf ? requestAnimationFrame(f) : setTimeout(f, 16));
   const clock = (v: HTMLVideoElement) => {
     try {
       return Number(v.currentTime) || 0;
@@ -628,9 +629,11 @@ export function runFxShow(
 
   return () => {
     stopped = true;
+    /* 番号は rAF と setTimeout で別々に数えるので、rAF の番号を clearTimeout に渡すと同じ番号の別の setTimeout を消す
+       （#1131 から止めるたびに1つ消していた。#1138 で見せる合図が rAF を使うようになり、毎回の替わり目で起きていた） */
     if (pgHandle != null) {
-      if (typeof cancelAnimationFrame === "function" && typeof pgHandle === "number") cancelAnimationFrame(pgHandle);
-      clearTimeout(pgHandle as ReturnType<typeof setTimeout>);
+      if (useRaf) cancelAnimationFrame(pgHandle as number);
+      else clearTimeout(pgHandle as ReturnType<typeof setTimeout>);
     }
     timers.forEach(clearTimeout);
     offs.forEach((f) => f());

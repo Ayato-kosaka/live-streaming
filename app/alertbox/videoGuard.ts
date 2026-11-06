@@ -114,9 +114,11 @@ export function onShowable(
       }
       handle = null;
     }
+    /* rAF の番号は rAF でだけ取り消す。clearTimeout に渡すと、同じ番号の**別の** setTimeout を消してしまう
+       （番号は rAF と setTimeout で別々に 1 から数える）。#1138 で、アラートの時計や道具の待ちが黙って止まった */
     if (tick != null) {
-      if (raf && typeof tick === "number") cancelAnimationFrame(tick);
-      clearTimeout(tick as ReturnType<typeof setTimeout>);
+      if (raf) cancelAnimationFrame(tick as number);
+      else clearTimeout(tick as ReturnType<typeof setTimeout>);
       tick = null;
     }
     if (timer) clearTimeout(timer);
