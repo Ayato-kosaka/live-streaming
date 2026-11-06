@@ -18,4 +18,4 @@
 
 - YouTube `GLmdZ6wkaqA`: Studio で `VIDEO_PRIVACY_PUBLIC`・`timePublishedSeconds` 1793968210（12:30:10Z）。ログインしない oEmbed が 200 で題「🇲🇰北マケドニアで、チキンシチューを作ったらお店の味やった！」
 - TikTok `7705027200134679829`: ログインしない `embed/v2` が 200・`"secret":false`（1回目は 503、15秒あけて取り直して 200）
-- あとで EC2 の `~/shorts_post/E2oGYjnVQSA` を `post.py clean` で消す
+- 確かめたあと、EC2 の `~/shorts_post/E2oGYjnVQSA` を `post.py clean` で消した（12:35Z）
