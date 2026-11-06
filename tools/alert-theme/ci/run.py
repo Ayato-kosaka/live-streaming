@@ -434,7 +434,7 @@ def devices(s, base, log, out):
             r = load(j) or {}
             rows.append({"device": d, "amount": a, "exit": c, "video": r.get("video", 0), "runs": r.get("runs", 0), "early": r.get("early", 0), "zero": r.get("zero", 0)})
             code = max(code, c)
-            print(f"  devices {d} {a}円: 終了 {c}・動画 {r.get('video', 0)}/{r.get('runs', 0)}・札が先 {r.get('early', 0)}")
+            print(f"  devices {d} {a}円: 終了 {c}・動画 {r.get('video', 0)}/{r.get('runs', 0)}・札が先 {r.get('early', 0)}・0円 {r.get('zero', 0)}")
     return {"exit": code, "theme": t["theme"], "rows": rows}
 
 

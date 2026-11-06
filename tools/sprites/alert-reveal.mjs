@@ -120,8 +120,13 @@ const SAMPLER = `(() => {
       const shown = vids.find((v) => v.style.opacity !== "0");
       // 消された層（止めて透明にした）は「無い」と同じ。まだ流れ始めていない層だけが「待ち」
       const part = shown ? ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?" : vids.some((v) => !v.paused) ? "wait" : "none";
-      // 額の字（数え上げが書き換える字の箱）が「0」。札の字は縁取りの写しと重ねてあり、textContent では「000円円円」になる
-      const zero = [...plate.querySelectorAll('[data-ink="fill"]')].some((e) => (e.textContent || "").trim() === "0") || /^[^0-9]*0円/.test(plate.textContent || "") ? 1 : 0;
+      /* 額が「0」。札の字は縁取りの写しと重ねてあり、textContent では「000円円円」になるので、字の箱（data-ink="fill"）だけを
+         順につないで「…N円」の N を読む。弾む・ドンの段は1字ずつの箱なので、箱1つが「0」でも額は 0 ではない（100円の「0」。
+         #1137 の1回目は、これで 100〜7,000円を全部「0円」と数えていた）。数え上げの段は額まるごとで1つの箱 */
+      const fills = [...plate.querySelectorAll('[data-ink="fill"]')];
+      const joined = fills.length ? fills.map((e) => e.textContent || "").join("") : plate.textContent || "";
+      const amt = joined.match(/(\\d[\\d,]*)\\s*円/);
+      const zero = amt && Number(amt[1].replace(/,/g, "")) === 0 ? 1 : 0;
       R.f.push([+(performance.now() - R.t0).toFixed(1), vis, part, shown ? +shown.currentTime.toFixed(3) : -1, zero, +(r.top / innerHeight).toFixed(3)]);
     }
     requestAnimationFrame(loop);
