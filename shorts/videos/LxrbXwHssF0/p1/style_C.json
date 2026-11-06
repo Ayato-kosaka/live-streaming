@@ -1,0 +1,25 @@
+{
+  "_note": "ワルテミスさんとの対談 C 案（#1104）の様式。対談系の切り抜き（帳面 F-065）。あやと 2026-11-06「対談系にも、いつもの決まりを当てるか →おすすめで」= 3秒のカットの決まり（F-028・F-029）と BGM（F-038）は外し、題の帯は最後まで（F-015 の4秒は外す）、最後の札（F-042）は声を足さずに最後の1秒だけ。style_v3.json との違い: talk（話し手ごとの字幕の色。品質チェックが3秒のカットと BGM の無い回の声と BGM の差を対象外にする印）・題の札（2行とも白、「歩きました」だけ黄。帯の上の TikTok の札を隠す）・字幕の置き場（2人の顔の下）・終わりの札（最後の1秒・字幕の下）",
+  "extends": "style_v3.json",
+  "talk": {
+    "enabled": true,
+    "speakers": {
+      "A": {"name": "あやと", "fill": "#F9D342"},
+      "W": {"name": "ワルテミスさん", "fill": "#7FD8FF"}
+    }
+  },
+  "title_card": {
+    "_note_c": "黒地に2行。参考の対談の切り抜きの題の帯（全編・強調は1〜2語）。2行とも白で、色を変えるのは指示書の title.highlight の語だけ",
+    "lines": [
+      {"font": "caption", "size": 56, "min_size": 44,
+       "look": {"fill": "#FDFDFD", "outline": [{"color": "#FDFDFD", "width": 0.75}, {"color": "#000000", "width_em": 0.055}], "tracking": -0.04}},
+      {"font": "caption", "size": 56, "min_size": 44,
+       "look": {"fill": "#FDFDFD", "outline": [{"color": "#FDFDFD", "width": 0.75}, {"color": "#000000", "width_em": 0.055}], "tracking": -0.04}}
+    ],
+    "highlight": {"fill": "#F9D342"},
+    "gap": 6
+  },
+  "caption": {"center_y": 1100},
+  "end_note": {"last_s": 1.0},
+  "note": {"size": 36, "x": 124, "y": 1170, "max_width": 764}
+}
