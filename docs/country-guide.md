@@ -230,9 +230,9 @@ const GUIDES: Record<string, Guide[]> = {
 
 ---
 
-## 6. 面を1枚増やす仕事は、面だけではない
+## 6. 面を1枚増やす仕事は、面だけではない（7か所）
 
-**4か所ある。** 忘れると、配ったあとの見張り（`prodsweep.mjs`）が赤くする。
+**7か所ある。** 忘れると CI の見張りが赤くする（配ったあとに `prodsweep.mjs` が拾うものもある）。
 
 | | どこ | 忘れるとどうなるか |
 | --- | --- | --- |
@@ -240,6 +240,18 @@ const GUIDES: Record<string, Guide[]> = {
 | 2 | `site/app/sitemap.ts` | 「sitemap.xml に無い」で赤 |
 | 3 | `site/content/directory.ts`（`/all` の棚） | 索引から着けない |
 | 4 | `site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つ | 貼ったときの絵が 404 |
+| 5 | `site/components/island/layout.ts` の `under` | 砂浜の「いま居る場所」が決まらない（`here_selftest`） |
+| 6 | `python/stale_content_watch.py` の `BOOKS` | 「仕分けを決めて足してください」で止まる |
+| 7 | `tools/fonts/weights.json`（下の 6-2） | その面だけ端末の書体に落ちる |
+
+**6 の仕分けは「日数で測らない（SKIP）」にする。** 円の数字はレートから出しているので
+実勢とは離れていくが、面の頭に取った日を書いてあるので嘘にはならない。
+日数で見ると**滞在が終わった日から消しようのない赤**が立つ——行ってしまえば
+取り直す理由の無い表なので、誰にも直せない。
+
+**その日が来ると嘘になる字**（`python/text_expires_watch.py`）にも引っかかりうる。
+行事の説明に「前年は11月14日に開き、12月21日まで」のような**過去の記録**を書くと
+拾われるので、`ALLOW` に理由つきで入れる（鍵は「ファイル＋本文の頭40文字」）。
 
 …と、**字の束**（下）。4つめは `ONLY=<鍵> node tools/sprites/ogcards.mjs` で1枚だけ焼く。
 **全部焼くと、触っていない18枚まで差分に出る。**
