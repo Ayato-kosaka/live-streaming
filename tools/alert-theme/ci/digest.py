@@ -87,6 +87,17 @@ def build(res):
         ok = False
         bad.insert(0, "動画の段のあるテーマなのに、顔の穴を1コマも数えていない（手前の層か箱が見つからない）")
     vid += f"。顔の穴（描くたび）{sm('faceFrames'):,}コマ: 外れ {sm('faceMiss')}（0）"
+    # 段7 の主役の顔の線 × 字（#1141）。動画の秒で線を引き、描くたびに数える。顔の線のある段を測ったのに1コマも数えていなければ落とす
+    for t in tools:
+        for v in t.get("heroBad") or []:
+            bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: 主役の顔の線に字 {v['miss']}/{v['frames']}コマ {json.dumps(v.get('bad', [])[:1], ensure_ascii=False)[:90]}")
+    if sm("heroMiss"):
+        ok = False
+    if any(t.get("heroLine") for t in tools):
+        if not sm("heroFrames"):
+            ok = False
+            bad.insert(0, "段7 の主役の顔の線を、札の出ているコマで1つも数えていない")
+        vid += f"。段7 の主役の顔の線（動画の秒・描くたび）{sm('heroFrames'):,}コマ: 字 {sm('heroMiss')}（0）"
     band = any(t.get("heroBands") for t in tools)
     hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
     if not sm("heroSeen"):
@@ -175,6 +186,9 @@ def build(res):
         if "poster" in cc:
             keys["poster"] = "poster"
             hit["poster"] = tl("poster").get("noPoster", 0)
+        if "plateearly" in cc:
+            keys["札が先（主役の顔の線）"] = "plateearly"
+            hit["札が先（主役の顔の線）"] = tl("plateearly").get("heroMiss", 0)
         if "holelate" in cc:
             keys["穴が1コマ遅れる"] = "holelate"
             hit["穴が1コマ遅れる"] = tl("holelate").get("faceMiss", 0)
