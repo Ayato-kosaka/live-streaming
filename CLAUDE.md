@@ -204,6 +204,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
   人しかできないこと・触ってはいけないもの・止まったときのいちばん短い直しかた
 - [`docs/island-fresh.md`](docs/island-fresh.md) — **何が機械で新しくなり、何が人しか新しくできないか。**
   焼き込み（`site/content/*.ts`）が古いと思ったらここ
+- [`docs/country-guide.md`](docs/country-guide.md) — **行く国の案内ページ（`/bulgaria` `/north-macedonia`）の作りかた。**
+  好みを議事録から実測する → 現地の事実を出どころつきで集める → 突き合わせて印を機械で付ける →
+  地図を焼く → トップページに出す期間を切り替える。**面を1枚増やす仕事は4か所**と、出す前に測る6つ
 - [`docs/goods-calendar.md`](docs/goods-calendar.md) — **卓上カレンダー（SUZURI）の作りかた。**
   思い出のテーマ決め → 月ごとの上位7人 → ChatGPT で描く → 一言を焼いて出す。来年も同じ形で回す
 - [`docs/shorts.md`](docs/shorts.md) — **配信アーカイブからショートを作る仕組み。** この箱から YouTube に

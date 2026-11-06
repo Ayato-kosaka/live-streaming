@@ -100,6 +100,11 @@
       "file": "/og/north-macedonia.png",
       "label": "北マケドニア",
       "alt": "山と湖の国"
+    },
+    "bulgaria": {
+      "file": "/og/bulgaria.png",
+      "label": "ブルガリア",
+      "alt": "ソフィアの歩きかた"
     }
   }
 }

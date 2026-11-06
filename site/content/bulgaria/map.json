@@ -1,0 +1,184 @@
+{
+ "w": 1000,
+ "h": 601,
+ "center": {
+  "lat": 42.6967,
+  "lon": 23.32137,
+  "name": "聖ネデリャ教会"
+ },
+ "kmPerPx": 0.00109647,
+ "cx": 269.7,
+ "cy": 354.3,
+ "pins": [
+  {
+   "id": "Katedralen hram Sveta Nedelya",
+   "letter": "A",
+   "name": "聖ネデリャ教会",
+   "mark": "good",
+   "star": 2,
+   "x": 269.7,
+   "y": 354.3
+  },
+  {
+   "id": "Sveta Petka Samardzhiyska",
+   "letter": "B",
+   "name": "聖ペトカ地下教会",
+   "mark": "good",
+   "star": 3,
+   "x": 311.7,
+   "y": 270.0
+  },
+  {
+   "id": "Antichna Serdika",
+   "letter": "C",
+   "name": "古代セルディカ遺跡（ラルゴの地下）",
+   "mark": "ok",
+   "star": 1,
+   "x": 308.7,
+   "y": 223.5
+  },
+  {
+   "id": "Rotonda Sveti Georgi",
+   "letter": "D",
+   "name": "聖ゲオルギ教会（円堂）",
+   "mark": "good",
+   "star": 1,
+   "x": 346.7,
+   "y": 336.1
+  },
+  {
+   "id": "Sofiyska sinagoga",
+   "letter": "E",
+   "name": "ソフィア・シナゴーグ",
+   "mark": "ok",
+   "star": 2,
+   "x": 255.5,
+   "y": 108.7
+  },
+  {
+   "id": "Zhenski pazar",
+   "letter": "F",
+   "name": "女性市場（ジェンスキ・パザール）",
+   "mark": "good",
+   "star": 3,
+   "x": 96.8,
+   "y": 58.1
+  },
+  {
+   "id": "Tsentralni sofiyski hali",
+   "letter": "G",
+   "name": "中央市場ホール（ハリ）",
+   "mark": "good",
+   "star": 2,
+   "x": 293.1,
+   "y": 109.1
+  },
+  {
+   "id": "Banya Bashi dzhamiya",
+   "letter": "H",
+   "name": "バーニャ・バシ・モスク",
+   "mark": "good",
+   "star": 2,
+   "x": 331.5,
+   "y": 150.1
+  },
+  {
+   "id": "Tsentralna mineralna banya / Regionalen istoricheski muzey – Sofia",
+   "letter": "I",
+   "name": "中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口",
+   "mark": "good",
+   "star": 1,
+   "x": 396.0,
+   "y": 155.8
+  },
+  {
+   "id": "Natsionalen arheologicheski muzey",
+   "letter": "J",
+   "name": "国立考古学博物館",
+   "mark": "ok",
+   "star": 3,
+   "x": 445.1,
+   "y": 376.7
+  },
+  {
+   "id": "Tsarkva Sveta Sofia",
+   "letter": "K",
+   "name": "聖ソフィア教会",
+   "mark": "good",
+   "star": 2,
+   "x": 824.7,
+   "y": 368.0
+  },
+  {
+   "id": "Hram-pametnik Sveti Aleksandar Nevski",
+   "letter": "L",
+   "name": "アレクサンドル・ネフスキー大聖堂",
+   "mark": "warn",
+   "star": 1,
+   "x": 903.2,
+   "y": 418.8
+  },
+  {
+   "id": "bulevard Vitosha",
+   "letter": "M",
+   "name": "ヴィトシャ大通り（歩行者区間）",
+   "mark": "good",
+   "star": 2,
+   "x": 247.1,
+   "y": 453.8
+  },
+  {
+   "id": "Naroden teatar Ivan Vazov / Gradska gradina",
+   "letter": "N",
+   "name": "イヴァン・ヴァゾフ国立劇場と市庭園",
+   "mark": "good",
+   "star": 3,
+   "x": 544.1,
+   "y": 542.7
+  },
+  {
+   "id": "Ruska tsarkva Sveti Nikolay Chudotvorets",
+   "letter": "O",
+   "name": "ロシア教会（奇蹟者聖ニコライ聖堂）",
+   "mark": "good",
+   "star": 3,
+   "x": 683.3,
+   "y": 429.1
+  },
+  {
+   "id": "Katedrala Sveti Yosif",
+   "letter": "P",
+   "name": "聖ヨシフ大聖堂",
+   "mark": "good",
+   "star": 3,
+   "x": 179.6,
+   "y": 212.1
+  }
+ ],
+ "far": [
+  {
+   "name": "国立文化宮殿（NDK）",
+   "km": 1.3
+  },
+  {
+   "name": "ボリス公園",
+   "km": 1.9
+  },
+  {
+   "name": "国立歴史博物館（ボヤナ）",
+   "km": 6.2
+  },
+  {
+   "name": "ボヤナ教会（世界遺産）",
+   "km": 7.3
+  },
+  {
+   "name": "ヴィトシャ山（チェルニ・ヴラフ）",
+   "km": 15.2
+  },
+  {
+   "name": "リラ修道院（日帰り）",
+   "km": 62.4
+  }
+ ]
+}
