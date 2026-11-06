@@ -106,7 +106,7 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && !["face", "hero", "band", "poster"].includes(control)) die(`--control は face・hero・band・poster（${control}）`);
+if (control && !["face", "hero", "band", "poster", "holelate"].includes(control)) die(`--control は face・hero・band・poster・holelate（${control}）`);
 /* 動画の段の主役の帯（main で manifest から読む） */
 let heroBands = null;
 const emoji = arg("emoji", "");
@@ -291,6 +291,82 @@ const VIDEO_WATCH = (ctl) => `(() => {
     nRAF(tick);
   };
   nRAF(tick);
+})();`;
+
+/* 顔の穴の守り（#1141。止めずに毎コマ）。撮るコマは 1.5 秒おきなので、そのあいだに出る1コマの重なりは絵では
+   拾えない（1万円の同じ組を30回で1回）。だから**構造を描くたびに数える**:
+   キャラ絵の箱が置かれていて、手前の層（`[data-fx-video="front"]`）に見せている `<video>` があるのに、その人の顔
+   （中身の印の置き場の上 45%。アプリの faceHole.ts と同じ決め。印が無ければ箱）の4つの角が、手前の層の穴
+   （mask-image の楕円）の内側に無いコマを `miss` に数える。**箱が置かれた最初のコマから数える**（ふくらむ途中も）。
+   rAF は時計を止める仕掛けのものを使うので、撮っているあいだ（止めている間）は数えない。
+   1回ごとに、箱が置かれてから 穴が開いた・中身の印が置かれた・穴が中身の顔を覆った までの秒も持つ。
+   `holelate`（対照）: 穴（`radial-gradient(ellipse …)` の mask-image）を、書かれてから2回描いたあとに付ける
+   （穴が1コマ遅れる形）→ 1 で落ちる */
+const FACE_WATCH = (ctl) => `(() => {
+  const W = window;
+  if (${JSON.stringify(ctl === "holelate")}) {
+    const set = CSSStyleDeclaration.prototype.setProperty;
+    CSSStyleDeclaration.prototype.setProperty = function (p, v, pr) {
+      if (/mask-image$/.test(String(p)) && /^radial-gradient\\(ellipse /.test(String(v))) {
+        const self = this;
+        W.requestAnimationFrame(() => W.requestAnimationFrame(() => set.call(self, p, v, pr)));
+        return;
+      }
+      return set.call(this, p, v, pr);
+    };
+  }
+  const st = { frames: 0, miss: 0, bad: [], boxAt: null, holeAt: null, contentAt: null, fitAt: null };
+  W.__face = st;
+  const lay = (el) => {
+    let x = 0, y = 0;
+    for (let e = el; e; e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
+    return { x, y, w: el.offsetWidth, h: el.offsetHeight };
+  };
+  const holeOf = (host) => {
+    const css = host.style.getPropertyValue("mask-image") || host.style.getPropertyValue("-webkit-mask-image");
+    const m = css && css.match(/radial-gradient\\((?:ellipse\\s+)?([\\d.]+)px\\s+([\\d.]+)px\\s+at\\s+(-?[\\d.]+)px\\s+(-?[\\d.]+)px/);
+    return m ? { rx: +m[1], ry: +m[2], cx: +m[3], cy: +m[4] } : null;
+  };
+  /* いまのコマの様子。null は「数えない」（箱か手前の層が無い・手前に見せている動画が無い） */
+  const now = () => {
+    const box = document.querySelector('[data-char="box"]');
+    const host = document.querySelector('[data-fx-video="front"]');
+    if (!box || !host) return null;
+    const v = [...host.querySelectorAll("video")].find((x) => x.style.opacity !== "0");
+    const mark = box.querySelector('[data-char="content"]');
+    const c = lay(mark || box);
+    const o = lay(host);
+    if (c.w <= 0 || c.h <= 0) return null;
+    const f = { x: c.x - o.x, y: c.y - o.y, w: c.w, h: c.h * 0.45 };
+    const h = holeOf(host);
+    const inside = !!h && [[f.x, f.y], [f.x + f.w, f.y], [f.x, f.y + f.h], [f.x + f.w, f.y + f.h]].every(([x, y]) => ((x - h.cx) / h.rx) ** 2 + ((y - h.cy) / h.ry) ** 2 <= 1.0001);
+    return { shown: v ? v.dataset.fxPart || "?" : null, hole: !!h, inside, content: !!mark, op: +Number(getComputedStyle(box).opacity).toFixed(2) };
+  };
+  const sec = (t) => (t == null ? null : +((t - st.boxAt) / 1000).toFixed(3));
+  W.__faceNow = () => {
+    const s = now();
+    return s && { ...s, sinceBox: st.boxAt == null ? null : sec(performance.now()) };
+  };
+  W.__faceSum = () => ({ frames: st.frames, miss: st.miss, bad: st.bad, hole: sec(st.holeAt), content: sec(st.contentAt), fit: sec(st.fitAt) });
+  const tick = () => {
+    const s = now();
+    if (s) {
+      const t = performance.now();
+      if (st.boxAt == null) st.boxAt = t;
+      if (s.hole && st.holeAt == null) st.holeAt = t;
+      if (s.content && st.contentAt == null) st.contentAt = t;
+      if (s.content && s.inside && st.fitAt == null) st.fitAt = t;
+      if (s.shown) {
+        st.frames++;
+        if (!s.inside) {
+          st.miss++;
+          if (st.bad.length < 4) st.bad.push({ t: sec(t), hole: s.hole ? "ずれ" : "無し", part: s.shown, content: s.content, op: s.op });
+        }
+      }
+    }
+    W.requestAnimationFrame(tick);
+  };
+  W.requestAnimationFrame(tick);
 })();`;
 
 /* 時計を止める仕掛け。アラートの面が読み込まれる前に差し込む */
@@ -754,6 +830,7 @@ async function runOne(browser, job) {
   await prism(ctx);
   await ctx.addInitScript(VIDEO_WATCH(control));
   await ctx.addInitScript(FREEZE);
+  await ctx.addInitScript(FACE_WATCH(control));
   const charBody = readFileSync(ch.file);
   const vfile = videos.get(ch.id);
   const external = [];
@@ -794,11 +871,18 @@ async function runOne(browser, job) {
       await page.evaluate(() => window.__ovl.freeze());
       const band = heroBands?.[String(tierOf(amount))];
       if (band) await page.evaluate(placeBand, { band, ctl: control });
-      if (control && control !== "band" && control !== "poster" && !controlled) {
+      if (control && control !== "band" && control !== "poster" && control !== "holelate" && !controlled) {
         await applyControl(page, control);
         controlled = true;
       }
+      /* そのコマの穴の様子（#1141。顔に乗ったコマが、穴が無い・ずれている・覆っているのどれだったか）。
+         撮るあいだにアプリの setInterval（止める仕掛けが預からない）が穴を書き換えることがあるので、撮る前と後の両方 */
+      const faceNow = () => (window.__faceNow ? window.__faceNow() : null);
+      const h0 = await page.evaluate(faceNow);
       const m = await measureFrame(page, W, H, showTier(amount));
+      const h1 = await page.evaluate(faceNow);
+      m.hole = h0;
+      if (JSON.stringify(h1) !== JSON.stringify(h0)) m.holeAfter = h1;
       await page.evaluate(() => window.__ovl.unfreeze());
       const { A, ...rest } = m;
       rest.t = s;
@@ -814,6 +898,8 @@ async function runOne(browser, job) {
   }
   // `<video>` の守り（#1133）。アラートの頭から最後に撮ったコマまで、描くたびに数えたもの
   res.vg = await withTimeout(page.evaluate(() => window.__vguard ?? null), 5000, null).catch(() => null);
+  // 顔の穴の守り（#1141）。キャラ絵の箱が置かれてから最後に撮ったコマまで、描くたびに数えたもの
+  res.face = await withTimeout(page.evaluate(() => (window.__faceSum ? window.__faceSum() : null)), 5000, null).catch(() => null);
   if (external.length) res.external = [...new Set(external)];
   await ctx.close();
   return res;
@@ -908,6 +994,7 @@ async function main() {
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
           (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
           (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster}（コマより先に見せた ${vg.early}）` : "") +
+          (r.face && r.face.frames ? `  穴 ${r.face.frames}コマ中 外れ ${r.face.miss}（箱から 穴 ${r.face.hole}s・中身 ${r.face.content}s・覆う ${r.face.fit}s）` : "") +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -951,6 +1038,15 @@ async function main() {
   const vbadRuns = results.filter((r) => r.vg && r.vg.noPoster);
   console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")}（0）・コマより先に見せた ${vsum("early")}・くり返しの継ぎ目 ${vsum("seam")}（どちらも poster が透明なので数えない）`);
   for (const r of vbadRuns.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.vg.bad.slice(0, 3))}`);
+  /* 顔の穴の守り（#1141）。手前の層を見せていて、キャラ絵の箱が置かれているのに、顔が穴の内側に無かったコマ */
+  const fsum = (k) => results.reduce((s, r) => s + (r.face?.[k] ?? 0), 0);
+  const faceBad = results.filter((r) => r.face && r.face.miss);
+  const lag = (k) => results.map((r) => r.face?.[k]).filter((x) => x != null).sort((a, b) => a - b);
+  const p = (xs, q) => (xs.length ? xs[Math.min(xs.length - 1, Math.floor(q * xs.length))] : null);
+  const lags = Object.fromEntries(["hole", "content", "fit"].map((k) => { const xs = lag(k); return [k, { n: xs.length, p50: p(xs, 0.5), p95: p(xs, 0.95), max: xs.at(-1) ?? null }]; }));
+  console.log(`  顔の穴 ${fsum("frames")}コマ（手前の層を見せていて箱があるコマ）: 外れ ${fsum("miss")}（0）・外れた回 ${faceBad.length}/${results.length}`);
+  console.log(`  箱が置かれてから（秒。中央値 / p95 / 最大）: 穴 ${JSON.stringify(lags.hole)}・中身の印 ${JSON.stringify(lags.content)}・穴が中身の顔を覆う ${JSON.stringify(lags.fit)}`);
+  for (const r of faceBad.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.face.bad.slice(0, 2))}`);
 
   const json = arg("json", "");
   if (json) {
@@ -960,7 +1056,7 @@ async function main() {
       JSON.stringify(
         {
           tool: "alert-overlap",
-          exit: invalid.length ? 2 : hit.length || vbadRuns.length ? 1 : 0,
+          exit: invalid.length ? 2 : hit.length || vbadRuns.length || faceBad.length ? 1 : 0,
           theme,
           fx: fxName,
           control,
@@ -975,7 +1071,7 @@ async function main() {
           minCharShare: shares.length ? Math.min(...shares.map((x) => x.s)) : null,
           hits: hit.map((r) => {
             const f = worst(r);
-            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png };
+            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png, hole: f.hole ?? null, holeAfter: f.holeAfter ?? null, face: r.face ? { hole: r.face.hole, content: r.face.content, fit: r.face.fit, miss: r.face.miss } : null };
           }),
           invalid: invalid.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, why: r.fatal ?? [...new Set(r.frames.flatMap((f) => f.invalid))].join("・") })),
           videos: vsum("videos"),
@@ -984,6 +1080,10 @@ async function main() {
           early: vsum("early"),
           seam: vsum("seam"),
           vbad: vbadRuns.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, noPoster: r.vg.noPoster, early: r.vg.early, bad: r.vg.bad.slice(0, 3) })),
+          faceFrames: fsum("frames"),
+          faceMiss: fsum("miss"),
+          faceLag: lags,
+          faceBad: faceBad.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, miss: r.face.miss, frames: r.face.frames, bad: r.face.bad.slice(0, 2), hole: r.face.hole, content: r.face.content, fit: r.face.fit })),
           errors: errs.slice(0, 5),
         },
         null,
@@ -993,7 +1093,7 @@ async function main() {
   }
   if (flag("sheet")) await sheet(results);
   if (invalid.length) process.exit(2);
-  process.exit(hit.length || vbadRuns.length ? 1 : 0);
+  process.exit(hit.length || vbadRuns.length || faceBad.length ? 1 : 0);
 }
 
 /* 一覧の絵: 行 = キャラ、列 = 段（大きさ・字ごとに1枚ずつ）。字のブロック（水色）・中身の矩形（桃）・

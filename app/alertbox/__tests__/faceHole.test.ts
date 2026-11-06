@@ -10,7 +10,8 @@
  * 守りたいのは3つ。
  *   1. 顔（中身の外接矩形の上 45%。alert-overlap と同じ決め）の4つの角まで、穴の内側（透明）に入る。
  *      顔より下（字の下・体）は穴の外（front はそのまま見える）
- *   2. 穴を開けるのはキャラ絵が出る秒（`revealAt`）から。それまでは開けない
+ *   2. 穴を開けるのはキャラ絵の箱が置かれてから。**置かれたその場で**開ける（測り直しの間隔を待たない。
+ *      待つと、箱が出てから最大 1/4 秒は顔の上に front が乗る。#1141）
  *   3. キャラ絵の置き場が変わったら（箱を手で広げた）穴も動く。止めたら動かない。
  *      中身を測れない人（動画の人）は、キャラ絵の箱を中身とみなす
  *
@@ -83,13 +84,43 @@ describe("1. 顔の4つの角まで穴の内側。顔より下は穴の外", () 
   });
 });
 
-describe("2. 穴はキャラ絵が出る秒から", () => {
-  it("revealAt の前は開けない。revealAt で開ける", () => {
-    const { front } = face({ box: { x: 0, y: 155, w: 436, h: 605 }, content: { x: 60, y: 5, w: 316, h: 600 } });
-    const stop = holdFaceHole(front, 2.6);
-    jest.advanceTimersByTime(2590);
+/** 書き換えの知らせ（MutationObserver）は、いまの処理が終わった直後（microtask）に回る。描画はそのあと */
+const settle = () => Promise.resolve();
+
+/** 箱の無い面（動画の段は、動画が revealAt に来るまで箱を組まない） */
+function bare() {
+  const root = document.createElement("div");
+  const front = document.createElement("div");
+  root.append(front);
+  document.body.append(root);
+  place(front, { x: 0, y: 0, w: 436, h: 776 }, root);
+  return { root, front };
+}
+
+/** 箱（と中身の印）を組む。index.tsx が revealAt に組むのと同じ並び */
+function addBox(root: HTMLElement, box: Rect, content: Rect | null) {
+  const b = document.createElement("div");
+  b.setAttribute("data-char", "box");
+  place(b, box, root);
+  if (content) {
+    const c = document.createElement("div");
+    c.setAttribute("data-char", "content");
+    place(c, content, b);
+    b.append(c);
+  }
+  root.append(b);
+  return b;
+}
+
+describe("2. 穴はキャラ絵の箱が置かれたその場で", () => {
+  it("箱が無いあいだは開けない（front は画面を使ってよい）。置かれたら、測り直しを待たずに開ける", async () => {
+    const { root, front } = bare();
+    const stop = holdFaceHole(front);
+    jest.advanceTimersByTime(FACE_RECHECK_MS * 20);
     expect(front.dataset.faceHole).toBeUndefined();
-    jest.advanceTimersByTime(20);
+    addBox(root, { x: 0, y: 155, w: 436, h: 605 }, { x: 60, y: 5, w: 316, h: 600 });
+    await settle();
+    // 時計は1ms も進めていない（測り直しの間隔ではなく、箱が置かれた知らせで開いた）
     const h = parse(front.dataset.faceHole!);
     // 中身は面の (60, 160) から 316×600。顔はその上 45%
     expect(reach(h, 60, 160)).toBeLessThanOrEqual(1);
@@ -98,11 +129,43 @@ describe("2. 穴はキャラ絵が出る秒から", () => {
     stop();
   });
 
-  it("対照: revealAt が 0 なら、すぐ開ける", () => {
-    const { front } = face({ box: { x: 0, y: 155, w: 436, h: 605 }, content: { x: 60, y: 5, w: 316, h: 600 } });
-    const stop = holdFaceHole(front, 0);
-    jest.advanceTimersByTime(0);
-    expect(front.dataset.faceHole).toBeDefined();
+  it("中身の印があとから置かれたら（絵を測り終えた）、その場で中身の顔へ開け直す", async () => {
+    const { root, front } = bare();
+    const stop = holdFaceHole(front);
+    const box = addBox(root, { x: 0, y: 155, w: 436, h: 605 }, null);
+    await settle();
+    const first = front.dataset.faceHole;
+    expect(first).toBeDefined();
+    // 箱の下寄りに小さく置かれた中身。箱の上 45% の穴では、中身の顔の下の角が穴の外に出る
+    const c = document.createElement("div");
+    c.setAttribute("data-char", "content");
+    place(c, { x: 118, y: 300, w: 200, h: 300 }, box);
+    box.append(c);
+    await settle();
+    const h = parse(front.dataset.faceHole!);
+    expect(front.dataset.faceHole).not.toBe(first);
+    expect(reach(h, 118, 455)).toBeLessThanOrEqual(1);
+    expect(reach(h, 318, 455 + 300 * FACE_SHARE)).toBeLessThanOrEqual(1);
+    stop();
+  });
+
+  it("対照: 動画の層の中の書き換え（コマの替わり目）では測り直さない", async () => {
+    const { root, front } = bare();
+    const stop = holdFaceHole(front);
+    front.setAttribute("data-fx-video", "front");
+    const box = addBox(root, { x: 0, y: 155, w: 436, h: 605 }, null);
+    await settle();
+    const first = front.dataset.faceHole;
+    // 置き場だけ動かして（DOM は書き換えない）、動画の層の中だけ書き換える
+    place(box, { x: 0, y: 300, w: 436, h: 400 }, root);
+    const v = document.createElement("video");
+    front.append(v);
+    v.style.opacity = "1";
+    await settle();
+    expect(front.dataset.faceHole).toBe(first);
+    // 測り直しの間隔では動く
+    jest.advanceTimersByTime(FACE_RECHECK_MS);
+    expect(front.dataset.faceHole).not.toBe(first);
     stop();
   });
 });
@@ -110,8 +173,7 @@ describe("2. 穴はキャラ絵が出る秒から", () => {
 describe("3. 置き場が変わったら穴も動く・止めたら動かない・中身を測れない人は箱", () => {
   it("箱を広げてキャラ絵が動いたら、次の測り直しで穴が動く。止めたら動かない", () => {
     const { front, content } = face({ box: { x: 0, y: 155, w: 436, h: 605 }, content: { x: 60, y: 5, w: 316, h: 600 } });
-    const stop = holdFaceHole(front, 1);
-    jest.advanceTimersByTime(1000);
+    const stop = holdFaceHole(front);
     const first = front.dataset.faceHole;
     place(content!, { x: 100, y: 40, w: 236, h: 450 }, content!.offsetParent as HTMLElement);
     jest.advanceTimersByTime(FACE_RECHECK_MS);
@@ -126,29 +188,20 @@ describe("3. 置き場が変わったら穴も動く・止めたら動かない�
 
   it("中身の印が無い人（動画の人）は、キャラ絵の箱を中身とみなす", () => {
     const { front } = face({ box: { x: 0, y: 155, w: 436, h: 605 }, content: null });
-    const stop = holdFaceHole(front, 0);
-    jest.advanceTimersByTime(0);
+    const stop = holdFaceHole(front);
     const h = parse(front.dataset.faceHole!);
     expect(reach(h, 0, 155)).toBeLessThanOrEqual(1);
     expect(reach(h, 436, 155 + 605 * FACE_SHARE)).toBeLessThanOrEqual(1);
     stop();
   });
 
-  it("キャラ絵の箱がまだ無ければ開けず、置かれたら次の測り直しで開ける", () => {
-    const root = document.createElement("div");
-    const front = document.createElement("div");
-    root.append(front);
-    document.body.append(root);
-    place(front, { x: 0, y: 0, w: 436, h: 776 }, root);
-    const stop = holdFaceHole(front, 0);
-    jest.advanceTimersByTime(FACE_RECHECK_MS * 2);
-    expect(front.dataset.faceHole).toBeUndefined();
-    const box = document.createElement("div");
-    box.setAttribute("data-char", "box");
-    root.append(box);
-    place(box, { x: 0, y: 155, w: 436, h: 605 }, root);
-    jest.advanceTimersByTime(FACE_RECHECK_MS);
-    expect(front.dataset.faceHole).toBeDefined();
+  it("止めたら、箱が置かれても開けない（書き換えの知らせも外す）", async () => {
+    const { root, front } = bare();
+    const stop = holdFaceHole(front);
     stop();
+    addBox(root, { x: 0, y: 155, w: 436, h: 605 }, null);
+    await settle();
+    jest.advanceTimersByTime(FACE_RECHECK_MS * 4);
+    expect(front.dataset.faceHole).toBeUndefined();
   });
 });
