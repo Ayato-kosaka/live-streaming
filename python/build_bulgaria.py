@@ -132,6 +132,14 @@ def mark_spot(d: dict):
     return "ok", ""
 
 
+#: 「1時間30分」の形。**`(?:` のうしろに `\\s*(` を続けない。**
+#: 続けると `python/ts_readers_selftest.py` の「TS の欄を字で読んでいそうな正規表現」
+#: の形（`:\\s*([0-9`）と1字違わず同じになって、**TS を読む気の無いこの焼き役が
+#: 読み手として数えられる**（実際に赤くなった）。ここは2本に分けてある
+_HM = re.compile(r"([0-9]+)\s*時間\s*(?:([0-9]+)\s*分)?")
+_M = re.compile(r"([0-9]+)\s*分")
+
+
 def _minutes(stay: str) -> int:
     """滞在の字から分を拾う。**いちばん短い言い方のほうを採る。**
 
@@ -139,12 +147,11 @@ def _minutes(stay: str) -> int:
     ある。合計に長いほうを足すと「丸2日」になって、コースとして読めなくなるので、
     **先に出てくる数**（＝基本の見学）だけを拾う。読めなければ 0。
     """
-    m = re.search(r"([0-9]+)\s*時間(?:\s*([0-9]+)\s*分)?|([0-9]+)\s*分", stay or "")
-    if not m:
-        return 0
-    if m.group(1):
-        return int(m.group(1)) * 60 + int(m.group(2) or 0)
-    return int(m.group(3))
+    hm = _HM.search(stay or "")
+    m = _M.search(stay or "")
+    if hm and (not m or hm.start() <= m.start()):
+        return int(hm.group(1)) * 60 + int(hm.group(2) or 0)
+    return int(m.group(1)) if m else 0
 
 
 def esc(s) -> str:

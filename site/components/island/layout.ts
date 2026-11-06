@@ -77,8 +77,8 @@ export type Place = {
    * 砂浜の「いま居る場所」は、いま開いている道から決める（`spotOfPath`）。
    * `/kitchen/…` `/map/…` のように軒の道の下に居る面は、それだけで決まる。
    * 決まらないのは「中身としてはその軒のものなのに、別の道に立っている面」——
-   * 北欧ヒッチハイクと北マケドニアは企画だが `/nordic` `/north-macedonia` に
-   * 立っている。**そこだけここに書く。**
+   * 北欧ヒッチハイクも、行く国の案内も企画だが `/nordic` `/north-macedonia`
+   * `/bulgaria` に立っている。**そこだけここに書く。**
    *
    * **長いほうが勝つ。** `/next/new` は `/next` の下にあるが、中身は
    * 掲示板へ送るだけの1枚なので、掲示板の側に書いてそちらが取る。
@@ -123,7 +123,7 @@ export const PLACES: Place[] = [
     countdown: true,
     /* 企画そのものの面。道の名前は企画ごとに違うので、ここで引き受ける。
        増やすのは「企画1つにつき面を1枚作った」ときだけ。 */
-    under: ["/nordic", "/north-macedonia"],
+    under: ["/nordic", "/north-macedonia", "/bulgaria"],
   },
   {
     id: "now",
