@@ -48,6 +48,7 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import live_badge as LB  # noqa: E402
 import orig_voice as OV  # noqa: E402
+import talk as TK  # noqa: E402
 import textlook as TL  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -813,7 +814,13 @@ def end_note(notes: list[dict], cuts: list[dict], total: int, style: dict) -> li
     out = [n for n in notes if n["text"] not in drop]
     if any(n["text"] == text for n in out):
         return out
-    a = min(cuts[-1]["at"], max(0, total - round(float(cfg.get("min_s", 2.0)) * style["canvas"]["fps"])))
+    if cfg.get("last_s"):
+        # 終わりの last_s 秒だけ出す（対談系 #1104。あやと「おすすめで」= 声を足さず、最後の1秒だけ札）。
+        # 対談系の最後のカットは聞き手の寄りの4秒ほどで、頭から出すと、題の回収の一言の間ずっと札が重なる。
+        # 書かない回（既定）は今までどおり最後のカットの頭から
+        a = max(0, total - round(float(cfg["last_s"]) * style["canvas"]["fps"]))
+    else:
+        a = min(cuts[-1]["at"], max(0, total - round(float(cfg.get("min_s", 2.0)) * style["canvas"]["fps"])))
     return out + [{"from": a, "to": total, "text": text, "end_note": True}]
 
 
@@ -887,6 +894,10 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         big = ln.get("big")
         mood = ln.get("mood")
         ment = (style.get("moods") or {}).get("looks", {}).get(mood) if mood and mood != "plain" else None
+        # 話し手の印（対談系 #1104。talk.py）。印の無い行（対談系の前の回は全部）は何もしない
+        spk = TK.speaker_of(ln, style, f"{i}行目")
+        if spk is not None and (big or ment or ln.get("parts")):
+            sys.exit(f"{i}行目: 話し手の色（speaker）は、ふつうの字幕の行だけに書ける（【大】・感情・頁を分ける行は見た目が別）")
         # 頁ごとの見た目（parts の行だけ頁ごとに違う。ほかの行は行の big・mood が全頁に掛かる）
         attrs: list[dict] | None = None
         if ln.get("parts"):
@@ -956,6 +967,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
                 cap["face_overlap_ok"] = ln["face_overlap_ok"]
             if ln.get("highlight"):
                 cap["hl"] = list(ln["highlight"])
+            if spk is not None:
+                cap["speaker"] = spk
             if attrs is not None:
                 cap.update(attrs[k])
             elif big:
@@ -988,6 +1001,10 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             ti["font_size"] = ti_size
         if look:
             ti["look"] = look
+        if title.get("highlight"):
+            # 題の中の1〜2語だけ色を変える（対談系 #1104「『歩きました』じゃないんですよ」の「歩きました」。
+            # 参考の題の帯は、強調を1〜2語に絞っていた）。書かない回は今までどおり1色
+            ti["hl"] = [str(h) for h in title["highlight"]]
         if "line" in title:
             # 札がそのナレーションの行の字幕を兼ねる（同じ言葉を札と字幕で2回出さない）
             ti["line"] = int(title["line"])
@@ -1135,12 +1152,16 @@ def _spread(lines: list[str], lk: dict, fpath: Path, s: int) -> float:
     return max(ws) - min(ws)
 
 
-def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None) -> Image.Image:
+def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None,
+                   hl: list[str] | None = None) -> Image.Image:
     """題の札。黒い箱の中に、題の行ごとに様式の lines[k] の見た目で字を積む（参考の題は1行目と2行目で見た目が違う）。
 
     題の改行（\\n）ごとに1つの見た目。箱の幅に収まる大きさまで縮め、2つ目からは縮めすぎるなら文節で2行に割る。
     lines が無い古い様式では、全部の行を1つの見た目で出す。
     drawn を渡すと、実際に描いた行（題の改行のうえに文節で折った行）を入れて返す（品質チェックが割れ目を見る）。
+    hl（題の中で色を変える語。指示書の title.highlight）があれば、その字だけ強調の色にする。色は行の見た目の
+    highlight、無ければ札の様式の highlight、無ければ字幕の強調と同じ黄（大きさは変えない。札の幅で決めた大きさを崩さない）。
+    どの行にも当たらない語は止める（書いたのに色が付かないまま出さない）。hl が無い回は今までと同じ絵。
     """
     parts = [s for s in text.split("\n") if s]
     pad_x, pad_y = st.get("pad", [st.get("pad_x", 30), st.get("pad_y", 20)])
@@ -1148,6 +1169,7 @@ def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None) 
     styles = st.get("lines") or [{"font": st["font"], "size": st["size"], "min_size": st["min_size"],
                                   "look": {k: v for k, v in TL.look_of(st).items() if k != "box"}}]
     gap = st.get("gap", 0)
+    hit = [False]   # 色を変える語が、どれかの行に当たったか
 
     def build(shrink: int) -> list[Image.Image]:
         imgs = []
@@ -1164,7 +1186,14 @@ def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None) 
                                     ls.get("max_lines", 2), min(top, ls.get("wrap_below", 0)))
             if drawn is not None:
                 drawn.extend(lines)
-            im = TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=TL.text_seed(part))
+            if hl:
+                marks = highlight_marks(lines, hl)
+                hit[0] = hit[0] or any(any(m) for m in marks)
+                hlk = {**(lk.get("highlight") or st.get("highlight") or {"fill": "#F9D342"}), "scale": 1.0}
+                im = TL.text_img(lines, {**lk, "highlight": hlk}, ImageFont.truetype(str(fpath), size), marks,
+                                 seed=TL.text_seed(part))
+            else:
+                im = TL.text_img(lines, lk, ImageFont.truetype(str(fpath), size), seed=TL.text_seed(part))
             if im.width > st["max_width"]:
                 cut = (im.width - st["max_width"]) // 2
                 im = im.crop((cut, 0, cut + st["max_width"], im.height))
@@ -1178,6 +1207,8 @@ def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None) 
             and shrink < 80:
         shrink += 4
         imgs = build(shrink)
+    if hl and not hit[0]:
+        sys.exit(f"題の札の強調（highlight）{hl} が、題「{text}」のどの行にも無い")
     w = max(min(st["max_width"], max(i.width for i in imgs) + 2 * pad_x), max(i.width for i in imgs))
     h = sum(i.height for i in imgs) + gap * (len(imgs) - 1) + 2 * pad_y
     card_img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
@@ -1668,12 +1699,14 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
         if it.get("look") == "card":
             ti_st = style["title_card"]
             drawn: list[str] = []
-            img = title_card_img("\n".join(it["lines"]), ti_st, style, drawn)
+            img = title_card_img("\n".join(it["lines"]), ti_st, style, drawn, hl=it.get("hl"))
             it["drawn"] = drawn   # 題の改行のうえに、札の幅で文節に折った行（品質チェックが割れ目を見る）
         else:
             ti_st = style["title"]
+            if it.get("hl") and not any(any(m) for m in highlight_marks(it["lines"], it["hl"])):
+                sys.exit(f"題の強調（highlight）{it['hl']} が、題「{it['text']}」に無い")
             img = card(it["lines"], ti_st, ImageFont.truetype(str(font_path(style, ti_st["font"])),
-                                                              it.get("font_size", ti_st["size"])))
+                                                              it.get("font_size", ti_st["size"])), hl=it.get("hl"))
         top = ti_st["top"]
         path = work / f"title_{i:02d}.png"
         img.save(path)
@@ -1767,10 +1800,12 @@ def layout(p: dict, style: dict, work: Path, faces: list | None = None) -> list[
             # fit_size: 文節が字幕の幅に入らないので、割らずに小さくした行（plan の paginate_fit）
             s0 = it.get("fit_size", cap_st["size"])
             floor = s0 if keep_size else min(s0, cap_st.get("face_min_size", s0))
+            # 話し手の色（対談系 #1104）。印の無い行は cap_st そのもの
+            c_st = TK.caption_style(cap_st, style, it.get("speaker"))
 
-            def build(cap, it=it):
+            def build(cap, it=it, c_st=c_st):
                 f = cap_font if cap == cap_st["size"] else ImageFont.truetype(str(font_path(style, cap_st["font"])), cap)
-                return card(it["lines"], cap_st, f, hl=it.get("hl")), cap, it["lines"]
+                return card(it["lines"], c_st, f, hl=it.get("hl")), cap, it["lines"]
         smax = anim_scale_max(anim)
         mx, my = TL.shake_margin(anim)
         amin = af.get("alpha_min", 16)

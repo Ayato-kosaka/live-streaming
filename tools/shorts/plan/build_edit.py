@@ -29,6 +29,18 @@
   元の声として整えて AI の声の真ん中 +0.5dB に揃え、字幕を声の出だしから出す（render/orig_voice.py）。
   印は本番の声（`--voice`）のときだけ付ける。喋る速さの倍率には、いまはこの行の字も数える（倍率を掛ける回で使うと速まる）
 
+## 対談系の切り抜き（#1104。帳面 F-065）
+
+2人の元の声だけで組む回。どれも**書いた回だけ**効く（書かない回の指示書は1バイトも変わらない）。
+
+- 行の `speaker`（話し手の印）→ 指示書の声の行の `speaker`。字幕の色は回の様式の `talk.speakers`（`render/talk.py`）
+- spec の `title_card_full: true` → 題の札を0コマ目から最後まで（F-015 の4秒を外す。字幕は兼ねない）
+- spec の `title_card_highlight: ["語"]` → 題の札のその語だけ色を変える（指示書の `title.highlight`）
+- overrides の `views: {"band": {"crop": [x, y, w, h], "fit": "blur"}, "A": {...}}` と `view_default`、カットの `view`
+  → 同じ窓を、名前ごとの切り出し（素材の名前 `c01@band`・`crop`）とカットの `fit` で使い分ける（2人の帯と、話す人の寄り）
+- 全部の行が元の声なら `--gap 0 --tail 0`（行の間に声の無い間を足さない・最後の画を延ばさない。会話のテンポを崩さない。
+  終わりの札は様式の `end_note.last_s` で最後の画の上に出す）
+
 ## 人が決めること（overrides）
 
 spec に書けない「どこに寄るか」「誰の顔をぼかすか」は overrides に書く。形は README の「build_edit の overrides」。
@@ -643,6 +655,11 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     for i in sorted(orig_rows):
         wav = orig_audio(pieces[i], work, f"orig_{spec.get('id', 'X')}_{i:02d}")
         lines[i] = {"text": rows[i]["line"], "orig_voice": True, "file": str(wav)}
+    for i, r in enumerate(rows):
+        if r.get("speaker") is not None:
+            # 話し手の印（対談系 #1104）。書き出しが様式の talk.speakers の色で字幕を描く（render/talk.py）。
+            # 印の無い回（対談系の前の回は全部）は、指示書に何も足さない
+            lines[i]["speaker"] = str(r["speaker"])
     spoken = [k for k in range(len(rows)) if k not in orig_rows]
 
     def measure(narr_: dict) -> list[tuple[int, list[tuple[int, int]]]]:
@@ -722,6 +739,11 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
 
     sources: dict[str, dict] = {}
     cuts, telops, meta_rows = [], [], []
+    # 画の切り出しかた（対談系 #1104）。overrides の views に名前ごとの crop（元の画の使う範囲）と fit を書き、カットの view
+    # （書かなければ view_default）で選ぶ。同じ窓でも、2人の帯（blur で全体）と話す人の寄り（cover で1人ぶん）を切り替える。
+    # views を書かない回（対談系の前の回は全部）は、素材の名前も中身も今までどおり
+    views = ov.get("views") or {}
+    view_default = ov.get("view_default")
     t = 0
     for i, (r, ln, (vf, pauses)) in enumerate(zip(rows, lines, measured)):
         ro = rows_ov.get(str(i), {})
@@ -806,7 +828,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             # 「同上」の行は前の行の画をそのまま続ける（切れ目を作らない。元動画の続きのコマから）。
             # 寄り・明るさ・札も引き継ぐ（引き継がないと、つなぎ目で寄りが外れて隠していた顔が出る）
             cont = {"t": M.ref(prev_video, fmt_exact(prev_end)), "note": "前の行の画の続き"}
-            for k in ("gamma", "inset", "focus_x", "focus_y", "audio_db"):
+            for k in ("gamma", "inset", "focus_x", "focus_y", "audio_db", "view"):
                 if k in prev_spec:
                     cont[k] = prev_spec[k]
             if prev_spec.get("zoom"):
@@ -865,9 +887,19 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                     t0 = t1
                 clip, t0 = find_clip(pools.get(video), t0, m / FPS, video)
             key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
-            sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
+            vname = cs.get("view", view_default) if views else None
+            if vname is not None:
+                if vname not in views:
+                    sys.exit(f"{i}行目: view {vname!r} が overrides の views に無い（{', '.join(views)}）")
+                key = f"{key}@{vname}"
+                sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"],
+                                         "crop": [int(v) for v in views[vname]["crop"]]})
+            else:
+                sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
             fin = round((t0 - clip["start"]) * FPS)
             cut = {"src": key, "in": fin, "out": fin + m, "row": i}
+            if vname is not None and views[vname].get("fit"):
+                cut["fit"] = views[vname]["fit"]
             if "focus_x" in cs:
                 cut["focus_x"] = cs["focus_x"]
             if "focus_y" in cs:
@@ -914,6 +946,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                           **({"big": ln["big"]} if ln.get("big") else {}),
                           **({"parts": ln["parts"]} if ln.get("parts") else {}),
                           **({"orig_voice": True} if i in orig_rows else {}),
+                          **({"speaker": ln["speaker"]} if ln.get("speaker") else {}),
                           **({"same_as_prev": True} if r.get("same_as_prev") else {})})
         t += n
 
@@ -949,6 +982,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             row = meta_rows[card_row]
             del edit["title"]["line"]
             edit["title"]["to"] = min(edit["title"]["to"], row["from"] + row["frames"])
+    if spec.get("title_card_full"):
+        # 題の札を0コマ目から最後まで出す（対談系 #1104。あやと「おすすめで」= 題の帯は最後まで、F-015 の4秒は外す。
+        # 参考の対談の切り抜きで伸びた6本は、6本とも題の帯が全編）。札は読み上げの行の字幕を兼ねない（line を持たせない。
+        # 様式の end_with_line は line を見る仕組みなので、これで最後まで残る）。書かない回は今までどおり頭の4秒まで
+        if not spec.get("title_card"):
+            sys.exit("title_card_full は題の札（spec の title_card）を全編に出す印。title_card が無い")
+        edit["title"] = {"text": title, "look": "card", "from": 0, "to": t}
+    if spec.get("title_card_highlight"):
+        # 題の中で色を変える1〜2語（書き出しの title.highlight。render.py の title_card_img）
+        edit["title"]["highlight"] = [str(h) for h in spec["title_card_highlight"]]
     if notes:
         edit["notes"] = notes
     if speech:

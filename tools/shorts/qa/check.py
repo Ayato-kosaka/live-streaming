@@ -87,6 +87,38 @@ DRAFT_CHECKS = ("subtitle_sync", "safe_area", "live_badge", "black", "text_dup",
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 
+# 対談系の切り抜き（様式の talk.enabled。帳面 F-065・#1104・render/talk.py）に当てない検査と、その理由。
+# あやと（2026-11-06、#1104）「対談系にも、いつもの決まりを当てるか →おすすめで」。おすすめは、3秒の決まりと BGM を外す:
+# 参考の対談の切り抜きは同じ画のまま3秒以上が普通（伸びた6本の場面の変わりめの間の中央 約7.5秒）で、2人の帯は全編同じ
+# 見た目。BGM は入れない（声は2人の元の声だけ）。対象外にした検査も回して、当てた場合の判定と値は measured に残す
+# （黙って外さない）。様式に talk の無い回・talk.enabled が false の回（既定）は、どの検査も今までどおり
+TALK_EXEMPT = {
+    "cut_length": "対談系は「同じカット3秒未満」（F-028）を当てない（話の切れ目で、2人の帯と話す人の寄りを切り替える）",
+    "similar_run": "対談系は「似た見た目も続けて3秒未満」（F-029）を当てない（2人の帯は全編同じ見た目）",
+    "voice_vs_bgm": "対談系で BGM を入れない回（F-038 を外す）。声は2人の元の声だけで、比べる BGM も AI の声も無い",
+}
+
+
+def exempt_of(ctx: Ctx) -> dict:
+    """この動画で対象外にする検査 → 理由。対談系の様式でなければ空。"""
+    tk = (ctx.style or {}).get("talk") or {}
+    if not tk.get("enabled"):
+        return {}
+    out = dict(TALK_EXEMPT)
+    if not ctx.plan or ctx.plan.get("bgm"):
+        # BGM を入れた対談系の回（と、時間割が無くて BGM の有無が分からない動画）は、声と BGM の差を見る
+        out.pop("voice_vs_bgm")
+    return out
+
+
+def exempted(r: dict, why: str) -> dict:
+    """検査の結果を「対象外（合格）」にする。当てた場合の判定・要約・問題は measured に残す。"""
+    m = dict(r.get("measured") or {})
+    m["exempt"] = {"why": why, "status_if_applied": r["status"], "summary_if_applied": r["summary"],
+                   "problems_if_applied": r.get("problems") or []}
+    return {**r, "status": PASS, "summary": f"対象外（対談系の様式）: {why}。当てた場合は {LABEL[r['status']]}（{r['summary']}）",
+            "measured": m, "problems": []}
+
 
 def make_ctx(mp4: Path, work: Path | None, *, plate: Path | None = None, style: Path | None = None,
              crops: Path | None = None) -> Ctx:
@@ -114,6 +146,7 @@ def make_ctx(mp4: Path, work: Path | None, *, plate: Path | None = None, style: 
 
 def run_checks(ctx: Ctx, only: list[str] | None = None, skip: list[str] | None = None) -> dict:
     results, times = [], {}
+    ex = exempt_of(ctx)
     for cid, fn in CHECKS.items():
         if (only and cid not in only) or (skip and cid in skip):
             continue
@@ -123,6 +156,8 @@ def run_checks(ctx: Ctx, only: list[str] | None = None, skip: list[str] | None =
         except Exception as e:  # 1本の検査が落ちても、ほかは回す。落ちたことは隠さない
             r = {"id": cid, "title": cid, "status": NA, "summary": f"検査が途中で止まった: {type(e).__name__}: {e}",
                  "measured": {}, "thresholds": {}, "problems": [f"{type(e).__name__}: {e}"], "artifacts": []}
+        if cid in ex:
+            r = exempted(r, ex[cid])
         times[cid] = round(time.monotonic() - t0, 2)
         r["seconds"] = times[cid]
         results.append(r)
