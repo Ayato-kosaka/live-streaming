@@ -148,13 +148,23 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 - **1段 = 3本 × 層 × 通り**
   - 本: 登場（intro。1回）→ 滞在（stay。アラートが出ているあいだ くり返す。2〜4秒）→ 締め（outro。1〜1.5秒）。合計の秒はハロウィン2版目の同じ段と同じにし、足りない分は滞在のくり返しで埋める
   - 層: back（投げた人のキャラ絵の後ろ）と front（前。**光と粒だけ**。物を乗せない）。front は無くてもよい
-  - 通り: 1,000円〜は full（全面）と light（光の線で描いて、キャラが出たら薄くする）の2つ。〜999円は full だけ
+    - 段7 だけは front に不透明なこうもりの影絵と伯爵のマントが乗るのが意図。`fx_check.py` の不透明の面の上限は段7 だけ 4%（ほかは 2%）。顔は再生の側の穴と重なりの検査が守る
+  - 通り: どの段も full（全面）だけ。光の線で描く light は見比べたが、あやとが「見ごたえない」とやめた（2026-11-05、#1095）
+    - 2,000円〜は、全面の景色のまま
+    - 1,000円の段は、全面の景色で出て、投げた人のキャラ絵が出たら（`revealAt`）景色がすっと引いて縁だけ残る。演出の秒は変えない（`fx_check.py` が「出る前は全面・滞在は縁だけ」を数える）
   - 720×1280・30コマ・VP8 の透明つき（yuva420p・`-auto-alt-ref 0`・キーフレーム2秒おき）。名前は `t{段}-{通り}-{層}-{本}.webm`。1通りの合計 6MB 以内
 - **`public/alert/themes/<id>/fx/manifest.json`** に、段ごとの動画の名前と `revealAt`（キャラ絵が出る秒）・`introDur`・`stayDur`・`outroDur`（動画の実のコマ数から）、〜999円の段は `charBottom` を書く。再生の側（`season/show/fxVideo.ts`・`VideoShow.tsx`）がこれだけを読む
 - **顔の穴は再生の側が開ける**（`season/show/faceHole.ts`）。顔の場所は人ごとに違うので、焼き込んだ穴では覆いきれない（段4 の front で 30組のうち 30組が顔に乗った）
 - **キャラ絵の置き方は再生の側と同じ物差しで決める**: 箱の上 headroom〜下の端 `charBottom`（既定 0.98）に幅いっぱい、中身で収めて真ん中（`index.tsx`・`CharFit`）。出て 0.2 秒でほぼ出きり、途中で 1.05 倍にふくらむ
   - 段4〜7 の主役（あやと）は、**キャラ絵が出る前に上の帯（headroom）へ**。叩き台の枠（中央の 446×538）で置き場を決めたら、人によっては頭の後ろに隠れた（段4 で見えていたのが 17%）
   - 〜999円の猫の家族は、**下の 28% の帯**（`charBottom` 0.72。帯の上の端より 20px 下から）。光と粒は帯の上に出てよい
+- **段の動画は手元で焼かない**（作業箱で焼いて確かめると、段2〜4 の直しで1人 55万トークンかかった。#1117）。
+  台本（`fx_tiers/t<段>_*.py`）を直して master 以外の枝に push → `alert_fx_render.yml` が段ごとに焼いて
+  `fx_check`・`fx_motion`・`fx_hero`（本物のキャラ絵10人＋形の見本）を回し、**通った段だけ** public に置いて枝に1コミットで戻す →
+  20行の表（PR のコメント `<!-- alert-fx-render -->`。PR の無い枝は report の job の log の末尾）を読む → **❌の行だけ直して** push。
+  手元は `git pull` で動画を受け取る（コマが今と同じ段は置かない）。段1つ 約4分・ランナー待ちは別
+  - 絵（`fx_art/`）や `fx_stage.py` だけを直したときは push では起きない: `gh workflow run alert_fx_render.yml -f ref=<枝> -f tiers=<段>`
+  - 一覧の絵（`t<段>-sheet.jpg`・`t<段>-hero.jpg`）と縦の短い録画（`t<段>.mp4`。合成の地）は枝 `review-media/fx-<枝>`。開くのは❌の段の絵だけ
 - 道具（`tools/alert-theme/`）:
   - `fx_stage.py`: ChatGPT の絵を板にして1つのカメラで写し、光・霧・粒・ぼけを足して焼く。段ごとの中身は台本 `fx_tiers/t<段>_<町>.py`、層の絵は `fx_art/`
     - 滞在で動き続けるものは全部、滞在の位相の周期関数で書く（尻の次のコマが頭につながる）。一度きりの動きは登場の終わりまでに終える
@@ -167,55 +177,79 @@ description: 投げ銭アラート（app/alertbox）の季節テーマ（ふだ�
 
 ## 5. 確かめる（数える。目だけで決めない）
 
-ビルドを静的に配って（`npx expo export --platform web`）、`tools/sprites/` から。
-**どれも PRISM の縮み方（scale 0.5）を既定で入れて撮る**（1節。出力の1行目に条件が出る）:
+**確かめは Actions で回す**（`.github/workflows/alert_check.yml`・入口は `tools/alert-theme/ci/run.py`。#1117）。
+**手元で書き出しや録画を回さない。** 作業箱で回すと長い出力と大量の絵を読むことになり、1件で 30万〜80万トークン食う。
 
-```bash
-export ALERT_BG_DIR=<スクラッチ>/bg
-node alert-banksize.mjs --base http://127.0.0.1:PORT --themes <id> --out <置き場>       # 貯金箱が豚の 1.5〜1.7 倍（動く範囲・通りすがり・字も含む。90 秒）を scale 0.5 と 0.36 の両方で。外れたら・scale で比が変わったら 1。境目なら --runs 3。アラート明けの金貨は数えない（アラートの直後だけの出来事。?preview=bank なので出ない）
-node alert-banksize.mjs ... --no-prism                                                  # 対照: 豚が 82% 前後（PRISM の2倍）に写る。これで判断しない
-node alert-record.mjs --base http://127.0.0.1:PORT --portrait --ui --also-small --sheet 6 \
-     --amount 20000 --frame 401,722,607,1082 --zoom 1.39 --out <置き場>/t7.mp4      # 縦の録画
-node alert-compare.mjs --base ... --bg <bg>/prism-street.jpg --char <キャラ> --out <置き場>/compare.png   # 全段を同じ秒で
-node alert-overlap.mjs --base ... --chars <キャラの置き場> --theme <id> --amounts 100,300,700,1500,3000,7000,10000 \
-     --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 --out <置き場> --sheet   # 顔×演出・主役の顔×字が全部 0
-node alert-overlap.mjs ... --control face ; node alert-overlap.mjs ... --control hero          # 対照は 1 で落ちる
-node alert-ink.mjs --base ... --bg-dir <bg> --chars <キャラ> --amounts ... --out <置き場>      # 字の濃さ 4.5 以上
-node alert-bankink.mjs --base ... --bg-dir <bg> --themes <id> --phone-font --out <置き場>     # 貯金箱の字の濃さ（溜まり 0・50・100・120%）。いまの額は 4.5 以上で合格、目標・旅の名前（data-ink-role）は大きさと濃さを いまの額と並べて出す。対照は --control flat（いまの額が割れて 1）
-node alert-pipoface.mjs --base ... --old-base <前の版を配っている先> --fills 0,60,120         # マスコットの顔の幅を配信の実寸で、前の版と比べる（目安 1.5 倍以上）
-node alert-bankperf.mjs --base ... [--perf-page]                                              # アラート明けに金貨が入るところと、そのあとのピポのカクつき（/alert/perf は金貨を流さない）
-node alert-record.mjs --base ... --mode bank --theme <id> --portrait --phone-font --rise 12 \
-     --backdrop <スクラッチ>/bg-nopig/prism-street.jpg --frame 455,597,685,1218 --zoom 1.57 --beside-pig -383 --out <置き場>/bank.mp4   # 豚と並べた貯金箱の縦の録画（豚は左に 383px）
-node alert-record.mjs --base ... --theme castle --portrait --ui --phone-font --amount 5000 --fill 40 \
-     --frame 401,722,607,1082 --zoom 1.39 --query 'at=2' --seconds 56 --out <置き場>/coin.mp4    # 投げ銭のアラートが明けて金貨が入るところ（`--query` で試し表示の旗を足す。pipoSeed=数 でピポの動きを決める・pipoAct=peek:0,nap,… で最初の動きを名指し）
-node alert-textfit.mjs --base ... --out <置き場>                                                # 名前・額・メッセージの切れが 0
-node alert-decode.mjs --dist <dist> --amounts ... --rates 1,4,6 --runs 3                         # 段の頭の展開が上限内
-node alert-cpu.mjs --base ... --char <キャラ> --amounts ... --rounds 3                           # CPU ms/秒
-```
+1. **PR を出す。** `app/alertbox/**`・`public/alert/**`・`tools/alert-theme/**`・`tools/sprites/alert-*.mjs` を触った PR で、ひとりでに走る
+   （1回 約1時間。shard 22本のうち重なりの14本が順番を待つぶんを含む。2026-11-05 実測 57分）。PR の外なら `workflow_dispatch`（`ref`・`pr`・`theme`・`fx`）
+2. **alert_check のコメントの表だけ読む**（`<!-- alert-check -->`。PR に1つだけで、push のたびに同じコメントが書き換わる。30行以内）。
+   1検査1行で ✅/❌・要の数字と閾値・見た数。見た数が 0 なら ❌（「0件見た」で緑にしない）
+3. **❌ の行だけ直して push する。** 表の下に、落ちた組（段・大きさ・キャラ・文）が出る。
+   ログ（artifact `alert-res-<shard>` の `<shard>.log`）は読まない。開くのは「測れなかった（終了コード 2）」の行だけ、末尾だけ
+4. **録画と絵が要るときは git で取る**（この箱は Actions の artifact を落とせない）:
 
-透明つきの動画の段（11月から）は、焼いた動画そのものも数える。**連番の絵を残して焼き、数えてから消す**（720×1280 の PNG は1段で 400MB ほど）:
+   ```bash
+   git fetch origin review-media/pr-<N> && git worktree add /tmp/media-<N> FETCH_HEAD
+   # t100.mp4 … t10000.mp4（7段の縦の録画、720×1280）・t<額>-sheet.png・compare.png（同じ秒の一覧）・fx-sheet.jpg・fail/（落ちたコマ）
+   ```
 
-```bash
-python3 tools/alert-theme/fx_stage.py all <台本> --work <置き場> --out public/alert/themes/<id>/fx --keep    # 焼いて、連番の絵を残す
-python3 tools/alert-theme/fx_check.py public/alert/themes/<id>/fx --tiers <段> --work <段>=<置き場> --script <段>=<台本> --sheet <一覧.jpg>
-    # 形・秒・1通り 6MB・滞在の継ぎ目（台本の位相 0 と 1 の差も）・本のつなぎ・締めの消えきり・透明（紫と緑の地の一覧も）・
-    # front の顔の丸・light の滞在の覆い・〜999円の帯・画質（焼く前の絵との PSNR。キーフレームと輪の頭尻で 1.5dB を超えて跳ねない）
-python3 tools/alert-theme/fx_stage.py clean <台本> --work <置き場>                                         # 数えたら連番の絵を消す（_samples は残る）
-python3 tools/alert-theme/fx_hero.py <台本> --headroom <段の headroom> --chars <キャラ絵…> --min 1.0 --sheet <一覧.jpg>
-    # 主役（段4〜7 のあやと・〜999円の猫の家族）が、再生の側と同じ置き方のキャラ絵に隠れていないか。
-    # 縦長・横長・大きい頭と、箱の高さいっぱいの縦長の四角も入れる。対照: --char-bottom 0.98（〜999円）や直す前の置き場で 1 に落ちる
-python3 tools/alert-theme/fx_review.py public/alert/themes/<id>/fx --tier <段> --bg <スクラッチ>/bg --char <キャラ絵> --out <録画.mp4>
-    # 配信画面に重ねた縦の録画（2通りの段は左右に並べる。キャラ絵は再生の側と同じ置き方。本人の顔が写るので外へ上げない）
-```
+   1コミットだけの枝（push のたびに置き直す）。PR が閉じると消える
 
-- **キャラ絵は本物で**: 名簿の絵は Google ドライブのファイル（`site/content/residents.ts` の `icon`）。この箱からは lh3 に出られないので、Google ドライブの接続で落とす。形（縦長・横長・余白）と画風（3D風・ステッカー風）を散らして10人以上
+回しているもの。**測るテーマは「期間がいま効いている、または 60 日以内に始まるテーマ ＋ 豚」**（`run.py themes`。道具の既定も同じ。終わったテーマは測らない。来年の日付を themes.ts に足せば 60 日前からひとりでに戻る）。動画の段（`fxVideo`）を持つテーマは `fx=full` の7段で数える:
+
+| 表の行 | 道具 | 条件 |
+| --- | --- | --- |
+| 重なり | `alert-overlap.mjs` | キャラ12人 × 7段 × 436x776・664x1180 × 字4通り。台本の秒を道具が知らないテーマは、滞在を 1.5 秒おきに撮る秒を渡す。**動画の段の主役の顔×字は、主役の居る帯を顔の枠の代わりに置いて数える**（manifest の `heroBands`。段4〜7 は上 20%・〜999円は下 28%。帯の中身を描き直したら帯も直す） |
+| 札の出る順（重なりの行に出る） | `alert-reveal.mjs` | 動画の段の1万円 × 436x776・664x1180 × CPU 1・4・6倍 × 回線の遅れ あり/なし × 5回を、止めずに毎コマ。札が動画の revealAt より前に見えたコマ・額が「0」のまま見えたコマが 0。キャラ絵と札は**動画が revealAt に来た知らせ**で組む（`VideoShow` の onReveal。#1117） |
+| 対照 | overlap `--control face`・`hero`・`band`、reveal `--control early`、textfit `--control edge`、ink `--control flat`、decode `--limit 1` | どれも 1 で落ち、落ちた数が 0 でないこと |
+| 字の切れ | `alert-textfit.mjs` | テーマの7段（動画の段は manifest の `revealAt` から待つ秒を決める）・豚 × 2サイズ × 長い字/短い字 |
+| 字の濃さ | `alert-ink.mjs` | テーマの7段・豚 × 地は合成（白・黒・明暗の縞・灰の雑音）× 12人 |
+| 貯金箱の大きさ | `alert-banksize.mjs` | scale 0.5 と 0.36（PRISM の縮み方込み） |
+| 展開の上限 | `alert-decode.mjs` | テーマの7段 × CPU 1・4・6倍 × 3回。動画の段は動画の用意がそろったことも合否に入れる |
+| fx の動画 | `fx_check.py <fx> --sheet` | 焼く前の連番が無いので、画質（PSNR）と焼いたコマとの透明の差は見ない（下の焼くときの手順で） |
+| jest・型 | `npx jest app/alertbox`・`tsc`（`app/alertbox` の中だけ数える） | `.svg` の2件は前から。`roster.test.tsx` だけが落ちたら単独で回し直し、時間切れは前からとして分けて数える |
+| 録画 | `alert-record.mjs`（7段）・`alert-compare.mjs` | 地は合成の街の絵。キャラは縦横比が真ん中の人 |
+| キャラ絵 | `avatars.py` | 名簿の本物を CI の中で落とし、縦長・横長・余白・不透明・色の数（ステッカー風／3D風）で散らして12人。10人に届かなければ ❌ |
+
+- **配信画面の写真（スクラッチの `bg/`。本人の顔が写る）は Actions に上げない・git に入れない。** 写真の上での見え方は、手元の `fx_review.py`（下）で見る
 - 豚（`theme=none`・期間の外）が今と画素まで同じ。季節の外のいつものアラートも撮って並べる（絵文字を持つ人の花火と雨は `alert-overlap.mjs --theme none --emoji 🎃` で出る）
 - **数をオーナーに出すときは、何の条件で撮ったか（PRISM の縮み方・箱の大きさ・何秒ぶん重ねたか）を添える。** 数がオーナーの目と食い違ったら、数のほうを先に疑う（#311）
-- `npx jest app/alertbox`（`roster.test.tsx` の時間切れ 1〜3件は前から落ちる）・型は `.svg` の2件だけ
+
+### 道具を直すときだけ（手元）
+
+同じ入口が手元でも回る（置き場は `ALERT_WORK`、既定 /tmp/alert-work。全部なら2時間ほど。1本なら shard の名前で）:
+
+```bash
+python3 tools/alert-theme/ci/run.py prep && python3 tools/alert-theme/ci/run.py plan     # 書き出し・キャラ絵・地 → shard の名前
+python3 tools/alert-theme/ci/run.py shard textfit && python3 tools/alert-theme/ci/run.py digest
+```
+
+道具を1本ずつ手で回すときの引数（書き出しを静的に配った先を `--base` に。どれも PRISM の縮み方を既定で入れる）:
+
+```bash
+node alert-overlap.mjs --base … --chars <置き場> --theme <id> [--fx full] --amounts … --sizes 436x776,664x1180 --texts short:none,short:3,long:1,long:3 --out <置き場> --json <結果.json>
+node alert-ink.mjs --base … --bg-dir <bg> --chars <置き場> --amounts … --out <置き場> --json <結果.json>     # textfit・banksize・decode も --json を持つ
+node alert-record.mjs --base … --portrait --ui --also-small --sheet 6 --amount 20000 --frame 401,722,607,1082 --zoom 1.39 --out <置き場>/t7.mp4
+node alert-bankink.mjs --base … --bg-dir <bg> --themes <id> --phone-font --out <置き場>     # 貯金箱の字（CI には入れていない）
+node alert-pipoface.mjs --base … --old-base <前の版> --fills 0,60,120 ; node alert-bankperf.mjs --base … ; node alert-cpu.mjs --base … --char <キャラ> --rounds 3
+node alert-record.mjs --base … --mode bank --theme <id> --portrait --phone-font --rise 12 --backdrop <スクラッチ>/bg-nopig/prism-street.jpg \
+     --frame 455,597,685,1218 --zoom 1.57 --beside-pig -383 --out <置き場>/bank.mp4                                  # 豚と並べた貯金箱
+```
+
+透明つきの動画の段を**焼くとき**は、焼いた動画そのものも数える（連番の絵は git に無いので CI では見られない）。
+**連番の絵を残して焼き、数えてから消す**（720×1280 の PNG は1段で 400MB ほど）:
+
+```bash
+python3 tools/alert-theme/fx_stage.py all <台本> --work <置き場> --out public/alert/themes/<id>/fx --keep
+python3 tools/alert-theme/fx_check.py public/alert/themes/<id>/fx --tiers <段> --work <段>=<置き場> --script <段>=<台本> --sheet <一覧.jpg>   # 画質（PSNR）・透明の差まで
+python3 tools/alert-theme/fx_stage.py clean <台本> --work <置き場>
+python3 tools/alert-theme/fx_hero.py <台本> --headroom <段の headroom> --chars <キャラ絵…> --min 1.0 --sheet <一覧.jpg>   # 主役がキャラ絵に隠れていないか。対照: --char-bottom 0.98
+python3 tools/alert-theme/fx_review.py public/alert/themes/<id>/fx --tier <段> --bg <スクラッチ>/bg --char <キャラ絵> --out <録画.mp4>   # 本人の顔が写るので外へ上げない
+```
 
 ## 6. 出す
 
-1. 全段の縦の録画と同じ秒の一覧を**自分で見て**、届いていなければ出さない
-2. `/island-ship` で出す（`app/` と `public/` なので `Firebase Hosting Deploy`）。期間の始まりより前に出しておけば、その日の 0:00 にひとりでに切り替わる
+1. alert_check の表が全部 ✅ で、全段の同じ秒の一覧と、指摘された段の録画を**自分で見て**、届いていなければ出さない
+2. PR に札 `出す` を付ける（`/island-ship`。ship.yml が緑になりしだいマージ → Hosting → 本番の突き合わせまでやる。11月の7段は札から11分）。期間の始まりより前に出しておけば、その日の 0:00 にひとりでに切り替わる
 3. 出したら issue に録画（Artifact の `assets` に置くとスマホでも再生できる。チャットに付けた mp4 はアプリで再生できない）と数字を置いて報告
 4. 期間が終わると豚に戻る。**終わったテーマは消さない**（来年の使い回し。年を持つので、来年は日付だけ足す）

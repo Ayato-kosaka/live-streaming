@@ -2,6 +2,7 @@
 """投げ銭の段の動画（`fx_stage.py` が書き出したもの）を、約束どおりかを数で確かめる（#1095）。
 
     python3 tools/alert-theme/fx_check.py <fx の置き場> [--tiers 5,4] [--work <焼いた置き場>] [--sheet <一覧.jpg>] [--script <台本>…]
+           [--json <結果.json>]     # Actions（alert_fx_render.yml）が表を組むための、機械向けの結果
 
 終了コード:
     0 = 見た段は全部、約束どおり
@@ -20,9 +21,10 @@
 | 滞在の継ぎ目 | 尻のコマ → 頭のコマの差が、滞在の中のいちばん大きいコマ送りの差（2秒のキーフレームの段を含む）以下。頭は必ずキーフレームなので、尻→頭には圧縮の質の段が乗る。動きそのものの継ぎ目は `--script` で圧縮の前に測る |
 | 透明 | 焼いたコマ（`<work>/_samples`）と読み直した透明の差の平均 0.02 以下。透明だった所（0.02 未満）が 97% 以上 透明のまま |
 | front の顔 | front の全コマで、キャラ絵の顔の丸（中心 360,590・半径 74）の透明の最大が 6/255 以下 |
-| front は光と粒だけ | front の各コマで、透明 0.6 超の所が箱の 2% 以下（物の面が無い） |
+| front は光と粒だけ | front の各コマで、透明 0.6 超の所が箱の 2% 以下（物の面が無い）。段7 だけ 4%（こうもりの影絵とマント。`FRONT_SOLID`） |
 | light の滞在 | light の back の滞在で、覆い（透明の平均）が 0.06 以下（配信の景色がほぼ見える） |
 | 〜999円の場所 | 段1は箱の下 30%・段2は下 1/3・段3は下 1/2 より上に、透明 0.1 超が 0.5% 以下 |
+| キャラが出たら薄く（段4） | 登場のキャラ絵が出る直前のコマは全面（back の透明の平均 0.5 以上）。滞在の back は縁だけ: 透明の平均 0.2 以下、真ん中（キャラ絵と字の所 x 140〜580・y 300〜1100）の透明の平均 0.03 以下 |
 
 `--script` を渡すと、台本から滞在の「最後の次のコマ」（位相 1）を焼いて、頭のコマ（位相 0）と比べる
 （動画の圧縮を通さない、継ぎ目そのものの差。0 に近いほどよい）。
@@ -49,6 +51,17 @@ PSNR_MIN = 28.0
 PSNR_DIP = 1.5
 PSNR_SEEN = 40.0
 LOW_TOP = {1: 0.70, 2: 2 / 3, 3: 0.5}  # 箱の高さのこの割合より上に物を出さない（段1は下 30%・段2は下 1/3・段3は下 1/2）
+# 全面の景色で出て、キャラ絵が出たら縁だけに薄く引く段（あやと 2026-11-05「1,000は、キャラが登場したら背景薄くする」。#1095）。
+# 段 → (出る前の全面の下限, 滞在の透明の平均の上限, 滞在の真ん中の透明の平均の上限)。
+# 真ん中はキャラ絵と字が出る所。縁（左右の崖・上の帯の舟のまわり・下の隅）は少し残してよいので、全体の上限は真ん中より緩い。
+# 2026-11-05 に焼いた段4: 出る直前 0.81・滞在 0.14・真ん中 0.009（前の全面のままの版は滞在 0.81 で、ここで落ちる）
+THIN = {4: (0.5, 0.2, 0.03)}
+MID = (slice(300, 1100), slice(140, 580))
+# front の「透明 0.6 超の面」の上限（箱の割合）。段の名前が無ければ FRONT_SOLID_MAX。
+# 段7 だけ 4%: front のこうもりの影絵と伯爵のマントは不透明なのが意図（焼いた版で 登場 3.2%・滞在 2.0%）。顔は
+# 再生の側の穴（faceHole.ts）と重なりの検査（alert-overlap.mjs）が守るので、ここで物の面を 2% に縛る理由が無い
+FRONT_SOLID_MAX = 0.02
+FRONT_SOLID = {7: 0.04}
 
 
 class Unchecked(Exception):
@@ -107,8 +120,12 @@ def face_mask():
     return np.hypot(xx - FACE[0], yy - FACE[1]) <= FACE[2]
 
 
-def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
+def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None, metrics=None):
+    """metrics に dict を渡すと、表に載せる数（1通りの大きさ・本ごとの PSNR）をそこへ入れる（--json 用）"""
     bad, notes = [], []
+    metrics = {} if metrics is None else metrics
+    metrics.setdefault("bytes", {})
+    metrics.setdefault("psnr", {})
     files = set()
     clips = {}
     for variant, v in entry["variants"].items():
@@ -127,6 +144,7 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
     for variant in entry["variants"]:
         vt = sum(os.path.getsize(p) for (v, _, _), p in clips.items() if v == variant)
         notes.append(f"大きさ {variant} {vt / 1e6:.2f}MB")
+        metrics["bytes"][variant] = vt
         if vt > MAX_VARIANT_BYTES:
             bad.append(f"{variant} の合計が {vt / 1e6:.2f}MB（6MB を超えた）")
     hole = face_mask()
@@ -174,8 +192,9 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             notes.append(f"{name}: 顔の丸の透明 最大 {fmax}/255 ／ 透明 0.6 超の面 最大 {solid * 100:.2f}%")
             if fmax > 6:
                 bad.append(f"{name}: キャラ絵の顔の丸に {fmax}/255 の物がある")
-            if solid > 0.02:
-                bad.append(f"{name}: 透明 0.6 超の面が {solid * 100:.1f}%（光と粒だけなら 2% 以下）")
+            lim = FRONT_SOLID.get(tier, FRONT_SOLID_MAX)
+            if solid > lim:
+                bad.append(f"{name}: 透明 0.6 超の面が {solid * 100:.1f}%（段{tier} は {lim * 100:.0f}% 以下）")
         if tier in LOW_TOP and layer == "back":
             # 下の何割だけを使ってよいか。それより上（箱の上から LOW_TOP の割合まで）を数える
             top = int(H * LOW_TOP[tier])
@@ -183,6 +202,21 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             notes.append(f"{name}: 上の {round(LOW_TOP[tier] * 100)}% に出た量 最大 {over * 100:.2f}%")
             if over > 0.005:
                 bad.append(f"{name}: 〜999円の段なのに、箱の上のほうに {over * 100:.1f}% 出ている")
+        if tier in THIN and layer == "back" and clip in ("intro", "stay"):
+            full_lo, stay_hi, mid_hi = THIN[tier]
+            if clip == "intro":
+                i = max(0, int(round((entry["revealAt"] - 0.1) * FPS)))
+                a0 = float(fr[min(i, len(fr) - 1)][..., 3].mean() / 255)
+                notes.append(f"{name}: キャラ絵が出る直前（{i}コマ目）の透明の平均 {a0:.3f}（全面）")
+                if a0 < full_lo:
+                    bad.append(f"{name}: キャラ絵が出る前が全面になっていない（透明の平均 {a0:.3f}・{full_lo} から）")
+            else:
+                a_all = float(fr[..., 3].mean() / 255)
+                a_mid = float(fr[:, MID[0], MID[1], 3].mean() / 255)
+                notes.append(f"{name}: 薄く引いたあとの透明の平均 {a_all:.3f}・真ん中 {a_mid:.3f}")
+                if a_all > stay_hi or a_mid > mid_hi:
+                    bad.append(f"{name}: キャラが出たあとに薄く引けていない（透明の平均 {a_all:.3f}・真ん中 {a_mid:.3f}。"
+                               f"{stay_hi}・{mid_hi} まで）")
         cov = (fr[..., 3] > 25).mean(axis=(1, 2))
         notes.append(f"{name}: 画面の占め方（透明 0.1 超）平均 {cov.mean() * 100:.1f}%・最大 {cov.max() * 100:.1f}%")
     # 画質（焼く前の連番の絵が全部あるときだけ）
@@ -201,6 +235,7 @@ def check_tier(fx, tier, entry, work=None, script=None, sheet_rows=None):
             if min(ps[0], ps[-1]) < PSNR_SEEN and abs(ps[-1] - ps[0]) > PSNR_DIP:
                 bad.append(f"{name}: 滞在の頭と尻で画質が {abs(ps[-1] - ps[0]):.2f}dB 違う（輪の継ぎ目で跳ねる）")
         notes.append(msg)
+        metrics["psnr"][name] = {"median": round(med, 2), "min": round(min(ps), 2), "kf_drop": round(worst_kf, 2)}
         if med < PSNR_MIN:
             bad.append(f"{name}: 画質 PSNR 中央 {med:.1f}dB（{PSNR_MIN}dB から）")
         for k, d in kf:
@@ -303,7 +338,18 @@ def main():
     ap.add_argument("--work", action="append", default=[], help="段ごとに 5=<置き場> の形で")
     ap.add_argument("--script", action="append", default=[], help="段ごとに 5=<台本> の形で")
     ap.add_argument("--sheet", default=None)
+    ap.add_argument("--json", default=None, help="機械向けの結果（段ごとの合否・外れ・大きさ・PSNR）をこのファイルへ")
     o = ap.parse_args()
+    out = {"code": None, "tiers": {}, "unchecked": None}
+    code = _run(o, out)
+    out["code"] = code
+    if o.json:
+        with open(o.json, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=1)
+    return code
+
+
+def _run(o, out):
     try:
         mp = os.path.join(o.fx, "manifest.json")
         if not os.path.exists(mp):
@@ -318,7 +364,9 @@ def main():
             entry = man["tiers"].get(str(t))
             if entry is None:
                 raise Unchecked(f"manifest に段{t} が無い")
-            bad, notes = check_tier(o.fx, t, entry, works.get(str(t)), scripts.get(str(t)), rows)
+            m = {}
+            bad, notes = check_tier(o.fx, t, entry, works.get(str(t)), scripts.get(str(t)), rows, m)
+            out["tiers"][str(t)] = {"ok": not bad, "bad": bad, "notes": notes, **m}
             print(f"== 段{t}  revealAt {entry['revealAt']}・登場 {entry['introDur']}秒・滞在 {entry['stayDur']}秒・締め {entry['outroDur']}秒")
             for n in notes:
                 print("  ", n)
@@ -331,6 +379,7 @@ def main():
             make_sheet(rows, o.sheet)
     except Unchecked as e:
         print("確かめられなかった:", e)
+        out["unchecked"] = str(e)
         return 2
     return 1 if allbad else 0
 

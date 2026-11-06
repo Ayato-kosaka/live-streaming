@@ -1,31 +1,26 @@
 ---
 name: island-ship
-description: あやと島の直したものを本番に出すまでの手順。型・lint・全面巡回で確かめ、本番データに対して dry-run し、PR を作ってマージし、Hosting / Functions を手で起動して、出たものを本番で突き合わせる。トリガー語:「本番に出す」「デプロイ」「マージして出して」「ship」。
+description: あやと島の直したものを本番に出すまでの手順。既定は PR に札 `出す` を付けて ship.yml に任せる（緑になりしだいマージ → Hosting / Functions を起こして終わるまで待つ → 本番と突き合わせる → PR に1コメント）。こちらは札を付けて、そのコメントを読むだけ。ワークフロー・Firestore のルールなど ship.yml で出せないものだけ手で回す。トリガー語:「本番に出す」「デプロイ」「マージして出して」「ship」。
 ---
 
 # 直したものを本番に出す
 
-**デプロイは `push` では起きない。** どちらも `workflow_dispatch` で手で起動する。
+**出すかどうかを決めるのは、こちらの責務のまま。札 `出す` を付けることが、その判断。**
+`ship.yml` は「緑なら出す」を機械的に回すだけで、何も決めない。品質が届いているかは
+付ける前に自分で見る（0章）。
 
-| 何を変えたか | 走らせるワークフロー |
-| --- | --- |
-| `site/` `public/` `app/`（画面） | `firebase-hosting-deploy-prod.yml` |
-| `functions/`（API） | `firebase-functions-deploy.yml` |
-| `python/` `.github/workflows/`（毎晩のジョブ） | **デプロイ不要**。次の回から master のものが走る |
-
-`firestore.rules` は Hosting のワークフローが配る。**ルールを変えたら Hosting を走らせる。**
+**既定の出しかた: PR を作る → 札 `出す` を付ける → 待つ（ポーリングしない）→ コメントを読む。**
+CI の待ち・マージ・デプロイの起動と待ち・本番との突き合わせは、全部 Actions の中で回る
+（#1117。それまでセッションが何十回も API を叩き、長いログを読んで回していた）。
 
 ## 0. **まず `docs/island-standards.md` を開く**
 
 **この章を飛ばさない。** 求められている水準と、出す前のチェックがそこにある。
-数字が通っただけで出して、あとで下ろしたことが何度もある。
-
-いちばん効くのは1行目:
 
 > **「前より良い」は基準ではない。基準は、見た人がワクワクするか。**
 > 出す前に**自分の目で見る**（撮る）。見て「弱い」と思ったら、それは弱い。**出さない。**
 
-チェックを1つずつ潰してから、下へ進む。**潰せないものがあるなら、出さない。**
+チェックを1つずつ潰してから、下へ進む。**潰せないものがあるなら、札を付けない。**
 
 ## 1. 出す前に確かめる
 
@@ -41,212 +36,155 @@ python3 -m py_compile python/*.py         ; echo "py=$?"
 画面を触ったなら、書き出したものを静的に配って全面を巡回する（開発サーバーでは測らない）:
 
 ```bash
-cd site && NEXT_DIST_DIR=.next-verify npx next build
-python3 -m http.server 4321 --directory .next-verify &
-cd ../tools/sprites && node crawl.mjs     # 全ページの 絵・h1・JSエラー・横あふれ・リンク切れ（0=通った/1=見つかった/2=数えるものが無い）
-cd ../.. && DIST=site/.next-verify node tools/sprites/orphanpage.mjs   # どこからも入れない面（同じく 0/1/2）
+tools/build.sh 3130
+python3 -m http.server 4130 --directory site/.next-3130 &
+DIST=site/.next-3130 SPORT=4130 node tools/sprites/crawl.mjs   # 絵・h1・JSエラー・横あふれ・リンク切れ（0/1/2）
+DIST=site/.next-3130 node tools/sprites/orphanpage.mjs         # どこからも入れない面（0/1/2）
 ```
 
-`bad 0` / リンク切れ 0 が条件。終わったら開発サーバーは落とす（3.7GB まで膨らむ）。
-
-**`orphanpage.mjs` は `crawl.mjs` の裏返し。** あちらは「行き先の無いリンク」、
-こちらは「**リンクの無い行き先**」——面は在って索引にも載っていて、島のどこを
-押しても辿り着けない面。リンクは切れていないし 200 で返るので、巡回では出ない
-（2026-10-13 に1枚あった。`/island/balkans`）。ブラウザは要らず1秒で終わるので、
-巡回を待つあいだに回せる。
+`bad 0` / リンク切れ 0 が条件。`orphanpage.mjs` は `crawl.mjs` の裏返し（リンクの無い行き先）で、
+1秒で終わる。終わったら配った箱を落とす。
 
 ## 2. 本番データを触るなら、先に dry-run
 
 `python/admin/*.py` は**既定が dry-run**。`args` に `{"apply": true}` を渡すまで書かない。
-
-**master にマージする前に、ブランチのまま本番データで試せる。**
-`run_admin_script.yml` は `actions/checkout` が dispatch した ref を見るので、
-ブランチを push してからそのブランチで起動すればよい。
+`run_admin_script.yml` は dispatch した ref を見るので、**master に入れる前に枝のまま**試せる:
 
 ```
-mcp__github__actions_run_trigger  method=run_workflow
-  workflow_id=run_admin_script.yml
-  ref=claude/streaming-website-concept-jhpv28
-  inputs={"script":"cards_build","args":"{}"}            ← dry-run
-  inputs={"script":"cards_build","args":"{\"apply\": true}"}  ← 書く
+mcp__github__actions_run_trigger  method=run_workflow  workflow_id=run_admin_script.yml
+  ref=<枝>  inputs={"script":"cards_build","args":"{}"}             ← dry-run
+  ref=<枝>  inputs={"script":"cards_build","args":"{\"apply\": true}"}  ← 書く
 ```
 
 **dry-run の件数を読んでから apply する。** 狙った件数と違ったら止まる。
-（#209 では「素性を足す2枚 / そのまま1枚」= 狙った2枚だけ、新しく増えるカード0、
-を確かめてから apply した）
 
-## 3. コミットと PR
+## 3. PR を作る
 
-- コミットメッセージは日本語。**何をしたかではなく、なぜそうしたかを書く**
-- **モデル名（Claude / Opus など）を入れない**（コミット・PR・コードコメントすべて）
-- `git add -A` は使わない。触ったファイルを名指しで add する
-- **型が通らない状態は push しない**（同じブランチを他の担当が使っている）
+- コミットメッセージは日本語。**何をしたかではなく、なぜそうしたかを書く**。モデル名を入れない
+- `git add -A` は使わない。触ったファイルを名指しで add する。**型が通らない状態は push しない**
+- **押す前に、いまどこに居るかを見る**（`git branch --show-current`）。master の上でコミットして
+  枝の名前を押すと、**新しいコミットが1つも載らないまま PR ができる**（#100）
+- 本文に **`Closes #NNN`** を書く。マージで GitHub が閉じ、`ship.yml` が閉じた issue に同じ1行を書く。
+  指してはいるが閉じないなら `#NNN は閉じない` と1行（書かないと `Closes Check` が赤い）
+- 面（`site/app`）か部品（`site/components`）を触ったら、`site/content/updates.ts` に
+  **その人に何ができるようになったか**を1行（`on` は**本番に配る日**。「〜しました」で言い切る）。
+  内側だけの直しは足さない。忘れても `python/upkeep_watch.py` が翌朝鳴らす
 
-master は squash マージで進むので、ブランチとは履歴が割れる。
-`git log origin/master..HEAD` が何十件あっても、`git diff origin/master --stat` が
-空なら中身は同じ。**差分の行数で見る。**
+マージは**マージコミット**（squash しない）。
 
-**`git push origin <ブランチ名>` は、HEAD ではなくそのブランチの指す先を押す。**
-`master` の上でコミットしてからブランチ名を押すと、**新しいコミットが1つも
-載らないまま PR ができる**（緑になり、マージも通る）。2026-09-15 に実際に
-やった（`island-misses.md` #100）。押す前に、いまどこに居るかを見る:
+## 4. 札 `出す` を付けて、待つ（既定）
 
 ```bash
-git branch --show-current     # master だったら、そこでコミットしていないか疑う
-git log --oneline origin/master..HEAD
+gh api -X POST repos/Ayato-kosaka/live-streaming/issues/<PR>/labels -f 'labels[]=出す'
 ```
 
-**ショートの取り込みの返し先を兼ねる枝（`shorts/requests/` を push した枝）の PR は、マージの前に `gh run list -w shorts_ingest.yml -b <ブランチ> --json status,url -q '.[]|select(.status!="completed")'` が空かを見て、空でなければ終わるまでマージしない**（マージで枝が消え、走っている解析の結果が置き場を失う。`island-misses.md` #291）。
+付けたら **`subscribe_pr_activity` で待つ。ポーリングしない**（`gh pr checks` も `actions_list` も
+叩かない。叩くほどトークンが減る。それをやめるための仕組み）。結果は `github-actions[bot]` の
+コメントで届く。読んだら `unsubscribe_pr_activity`。
 
-マージのあとはブランチに master を取り込んでおく:
+| コメントの1行目 | 意味 | こちらがやること |
+| --- | --- | --- |
+| `出しました: #N をマージ（…）→ Hosting` | マージ・配り・突き合わせまで済んだ | 報告する（7章）。3行目の `本番の突き合わせ: n/n` が割れていないか見る |
+| `出しました: … → 配り先なし（…だけ）` | マージだけ（配るものが無い） | 報告する |
+| `出せませんでした: …` | マージしていない。札 `出す` は外れ、`待ち-システム` が付いた | 書いてある行だけ直して、**札を付け直す**（それが「もう一度出す」の判断） |
+| `出しきれませんでした: …` | マージはした。配りか突き合わせが落ちた | 書いてある行を見て、直したものを新しい PR で出す |
+
+**何もコメントが来ないのは「まだ待っている」。** checks が走っている間・枝でショートの取り込みが
+走っている間（#291）・mergeable が分からない間は、黙って次の完了を待つ。
+
+**ship.yml が入る前に切った枝は、札を付けても起きないことがある**（PR の merge ref が古いと、
+札の event が ship.yml を持たない。#1121 がそれで、次にどこかの CI が終わったときに拾われた）。
+すぐ動かしたいときは、手で1回押す（`dry_run=false`。判断は同じで、緑でなければ何もしない）:
 
 ```bash
-git fetch origin master && git merge origin/master -m "master を取り込む"
-git push -u origin claude/streaming-website-concept-jhpv28
+gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/ship.yml/dispatches \
+  -f ref=master -f 'inputs[pr]=<PR>' -f 'inputs[dry_run]=false'
 ```
 
-push が network で落ちたら 2s → 4s → 8s → 16s で4回まで。
+それでも来なければ、ship.yml が起きていない（5章の手で回す）。
 
-### 視聴者さんから見える変更なら、`site/content/updates.ts` に1行足す
+### 付ける前に「付けたらどうなるか」を見る
 
-**面（`site/app`）か部品（`site/components`）を触ったなら、PR に1行足す。**
-島を直したところを並べる紙（`/updates`）がそこを読んでいる。
-
-```ts
-  {
-    on: "2026-10-13",            // **本番に配る日**（master に入れた日ではない）
-    text: "北マケドニアでやってほしいことを、付箋に書けるようにしました。",
-  },
-```
-
-書くのは**その人に何ができるようになったか**だけ。「`POST /me` の検証を
-足しました」ではなく「自分のことが、ほかの人に書き換えられないように
-しました」。「〜できます」と書かず「〜しました」で言い切る
-（`docs/island-design.md` 5章）。**全部は載せない**——その人に何が
-できるようになったかが言えないものは、載せないほうが正しい。
-
-足さない側（`functions/` だけ・`python/` だけ・`docs/` だけ・見張りだけ）は、
-**何もしない。** 内側の直しまで並べると、この紙が読まれなくなる。
-
-**忘れても鳴る。** `python/upkeep_watch.py` の引き金「島の直したところ」が、
-面か部品の入った最後のコミットより表のいちばん新しい日付が古いと、
-整備の札（#664）に出す。**鳴るのは翌朝で、PR は止めない**——
-内側だけの PR まで赤くする見張りは、いつも通る見張りと同じだけ悪い
-（`docs/island-standards.md` 13章 / 15章）。
-
-いま鳴るかどうかは、その場で見られる:
+**付けた瞬間に動く。** 迷ったら先に dry-run で見る（既定が dry-run。マージも配りもしない）:
 
 ```bash
-python3 python/upkeep_watch.py --no-github 2>&1 | grep 島の直したところ
+gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/ship.yml/dispatches \
+  -f ref=master -f 'inputs[pr]=<PR>' -f 'inputs[dry_run]=true'
 ```
 
-## 4. デプロイして、ログの最後まで見る
+run の要約に「札を付けたら → go / wait / fail」と、**何をマージし、どの配りを起こし、
+何を本番と突き合わせるか**が出る（いまの本番の entry と書き出しの印も）。
 
-```
-mcp__github__actions_run_trigger  method=run_workflow  workflow_id=<yml>  ref=master
-mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  minimal_output=true
-```
+### ship.yml がやること
 
-**`minimal_output=true` を必ず付ける**（付けないと巨大なコミット本文が返る）。
+1. **見る**（書かない）: open・札・base が master・手で出す面に触れていない・head の check が
+   自分以外ぜんぶ success か skipped（**neutral は緑にしない**）・枝で他の run が走っていない・mergeable
+2. **マージ**（merge commit。head の sha を名指しするので、見たあとに動いた head はマージしない）
+3. GITHUB_TOKEN のマージでは `push: master` が起きないので、**`Selftests` と `重い見張り` を名指しで起こす**
+4. 変えた場所で配り先を決めて、master で workflow_dispatch し、**終わるまで runner の中で待つ**
 
-**Hosting は緑で終わるのが正常。** 2026-09-08 にあやとがサービスアカウントへ
-`roles/datastore.indexAdmin` を付けたので（#168 解決）、最後の
-`firestore:indexes` も通るようになった。**赤かったら本物の異常。**
+   | 変えたもの | 配り先 |
+   | --- | --- |
+   | `site/` `public/` `app/`、Expo の書き出しに入るもの（`lib/` `components/` `hooks/` `constants/` `assets/` `web/` と直下の設定）、`firebase.json` | Hosting |
+   | `functions/` | Functions |
+   | それ以外（`docs/` `python/` `.claude/` …） | 配らない |
 
-（それまでは索引の step が必ず 403 で落ちていて、赤いのが正常だった。
-最後尾に置いてあるのは、落ちても前のルールと画面が配られるようにするため。
-その並びは残してある）
+5. **本番と突き合わせる**（`live-streaming-d3cac.web.app`。`.firebaserc` から読む）:
+   `public/` の変えたファイル最大20本を sha256 で / Expo を変えたら `/expo-app` の entry が引けて変わったか /
+   `site/` を変えたら `/` と触った面が 200 で新しい書き出しの印を持つか / Functions は配りの結論
+6. PR に1コメント（5行以内）、`Closes #N` で閉じた issue に同じ1行。落ちたら落ちた行だけ
 
-ログで `firestore:rules`・Storage のルール・`firestore:indexes` の3つが
-緑になっていることまで見る。`continue-on-error` は外してある。
+配りは1本ずつ（`concurrency`）。中身と判断の表は `python/ship.py` の頭、対照は `python/ship_selftest.py`。
 
-## 5. 出たものを本番で見る
+## 5. ship.yml が使えないとき（手で回す）
 
-**まず、マージしたコミットに変更ファイルが在るかを見る。**
+| 面 | なぜ使えないか |
+| --- | --- |
+| `.github/workflows/` を触る PR | GITHUB_TOKEN は `workflows` の権限を持てない。**マージの時点で GitHub に断られる**（ship.yml は「手で出す面」と1行返す） |
+| `firestore.rules` `storage.rules` | 配る前に手で dry-run する面。Hosting を押すと本番のルールが差し替わる |
+| PR の checks が無い面・PR を経ないもの | 起こすものが無い |
+| コメントがいつまでも来ない | ship.yml が起きていない（名前の繋ぎが切れた・Actions が止まっている） |
 
-```bash
-git fetch -q origin master && git show --stat --format='%s' origin/master | head -3
-```
+手で回すときは:
 
-**ファイルが1件も出てこないマージは、何もしていない。**
-PR が緑でも、マージが通っても、中身が空なら出ていない（#100）。
-ここを飛ばすと、あやとに「出しました」と嘘を言うことになる。
+1. **マージ**（merge commit）。手でマージすると `push: master` で `Selftests` と `重い見張り` が走る
+2. **まず、マージしたコミットに変更ファイルが在るかを見る**（`git show --stat origin/master | head -3`）。
+   ファイルが1件も出てこないマージは、何もしていない（#100）
+3. **配る**（`push` では起きない。両方とも手で起動する）
 
+   ```
+   mcp__github__actions_run_trigger  method=run_workflow  workflow_id=<yml>  ref=master
+   mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  minimal_output=true
+   ```
 
-**必ずキャッシュバスタを付ける。** `/island-api/*` は CDN に乗るので、
-付けないと `x-cache: HIT` で古い返事を読む（それで「本番0件」と誤報したことがある）。
+   `minimal_output=true` を必ず付ける。Hosting は**緑で終わるのが正常**（`firestore:rules`・Storage の
+   ルール・`firestore:indexes` の3つが緑か）。赤かったら本物の異常。ログは `failed_only`・`tail_lines` で読む
+4. **本番で見る。必ずキャッシュバスタを付ける**（`/island-api/*` は CDN に乗る）。
+   Functions は2〜3分かかるので、デプロイ緑を見てから叩く
 
-```bash
-B="https://live-streaming-d3cac.web.app"; C="cb=$(date +%s)"
-curl -s "$B/island-api/cards?$C" | head -c 400
-for u in / /me /cards /friends /about /next /nordic/photos; do
-  printf "%-16s %s\n" "$u" "$(curl -s -o /dev/null -w '%{http_code}' "$B$u")"
-done
-```
+   ```bash
+   B="https://live-streaming-d3cac.web.app"; C="cb=$(date +%s)"
+   curl -s "$B/island-api/cards?$C" | head -c 400
+   ```
 
-Functions のデプロイは2〜3分かかる。**デプロイ緑を見てから叩く。**
-
-**`firebase.json` を触ったら、無い道が 404 で返るところまで見る**
-（`node tools/sprites/notfound.mjs`。0＝通った / 1＝見つかった / 2＝数えるものが無い。
-在る道ぜんぶが 200 で h1 付き・わざと作った道が 404 の紙、の両側を見る。
-`| tail` を挟まない。受け皿を足し直すと 1 で落ちる。`docs/island-routing.md`）。
-配る前は `--dist` を付けて、書き出した `dist/` の側で同じことを数える。
-
-**Hosting を配ったら、本番の面を一周する**（`node tools/sprites/prodsweep.mjs`。
-0＝通った / 1＝見つかった / 2＝数えるものが無い）。上の `for u in …` は
-**手で並べた7面**なので、面が増えた日に増えない。こちらは本番の `sitemap.xml` と
-`site/app/**/page.tsx` から126面を出して、HTTP・`h1`・`<title>`・本文の痩せ・
-リダイレクトの5つを分母つきで数える（6秒）。
-**配ったあとにワークフローからも自動で走る**ので、ここで手で回すのは
-デプロイのログを待たずに見たいときだけ。
+   `firebase.json` を触ったら `node tools/sprites/notfound.mjs`（無い道が 404。配る前は `--dist`）。
+   本番の面を一周するのは `node tools/sprites/prodsweep.mjs`（配りのワークフローからも自動で走る）
 
 ## 6. issue を閉じる（飛ばさない）
 
-### まず、PR の本文に `Closes #NNN` を書く
-
-**書いてあれば、マージした瞬間に GitHub がひとりでに閉じる。**
-ここを書いておけば、下の手順は「言い残すこと」だけになる。
-
-書き忘れると `Closes Check` が赤くなる（**いま開いている issue を指していて
-`Closes` が無い PR だけ**。`docs/island-misses.md` の節番号では落ちない）。
-指してはいるが閉じないなら、本文に `#147 は閉じない` と1行書けば通る。
-
-### 待ちの相手の札を付ける
-
-新しく issue を立てたら、**`待ち-あやと` / `待ち-システム` / `旅のあと` の
-どれかを付ける。** 題名の【あやとの操作】は機械からは読めないので、
-札が無いと毎週の棚卸しから「札が無い」として名指しされる。
-**迷ったら `待ち-システム`**（放置されにくい側）。
-
-**あやとにしかできないことなら、本文に `@Ayato-kosaka` を1行書く。**
-題名に【あやとの操作】と書いても通知は1通も飛ばない。
-囲い（``` や `` ` ``）や引用（`>`）の中に入れると、字は在るのに飛ばない。
+- `Closes #NNN` を書いておけば、マージで閉じ、ship.yml が同じ1行を残す。**手で閉じるぶんは、出したその場で**
+  （あとでまとめて、にしない。#159 #160 #161 #163 が2日開いたままだった）
+- 新しく立てた issue には `待ち-あやと` / `待ち-システム` / `旅のあと` のどれか（迷ったら `待ち-システム`）。
+  あやとにしかできないことなら `/ask-ayato`（自分のトークンの `@Ayato-kosaka` は通知が飛ばない）
+- 閉じるときは**何を出したかを1行**。やっていないことが残るなら、**残りがどこで追えるか**を書く
 
 仕組みは `docs/island-tickets.md`。
 
-### 手で閉じるぶん
-
-**出したら、その場で issue を閉じる。** あとでまとめて、にしない。
-セッションが変わると「出したかどうか」が分からなくなって、開いたまま何日も残る。
-実際に #159 #160 #161 #163 が、出し終わってから2日開いたままだった。
-
-**閉じ忘れても、週に1回は表に出る**（`Ticket Stock`。開いたままのものを
-1本のまとめに映し続ける）。ただし**あれは気づかせるだけで、閉じてはくれない。**
-
-閉じるときは**何を出したかをコメントに残してから**閉じる。1行でいい。
-本文の「確かめたいこと」に答えていないものが残っていたら、
-**閉じる前にそれだけ書く**（「これはやっていない」も含めて）。
-
-やり残しがあるまま閉じるなら、**残りがどこで追えるかを書く**（親 issue に移す、
-新しく立てる、のどちらか）。黙って閉じると、やり残しが消える。
-
 ## 7. 報告する
 
-CLAUDE.md の決まり: **聞かずに進めてよいが、やったことは必ず報告する。**
-落ちたテストや飛ばした手順は、飛ばしたと書く。緑なら緑と書く。
+**聞かずに進めてよいが、やったことは必ず報告する。** ship.yml のコメント（マージ・配り先・
+デプロイの run・突き合わせ n/n）をそのまま使ってよい。落ちたテストや飛ばした手順は、飛ばしたと書く。
 
-このサンドボックスから**ブラウザでは** `lh3.googleusercontent.com` と
-`upload.wikimedia.org` に届かない（curl では取れる）。
-本番の見た目を撮るときは先に `python3 tools/sprites/avatars.py` で落として、
-`tools/sprites/route.mjs` の `offline(ctx)` で差し替える。
-やらないと**島の12人が全員そっくり同じに写る。**
+本番の見た目を撮るときは、先に `python3 tools/sprites/avatars.py` で住人の絵を落として、
+`tools/sprites/route.mjs` の `offline(ctx)` で差し替える（このサンドボックスのブラウザからは
+`lh3.googleusercontent.com` に届かない。やらないと島の12人が全員そっくり同じに写る）。

@@ -7,10 +7,10 @@
 - 滞在（3秒の輪）: 降る火の粉の中で、次の花火が2つ開く（1周に2つ。登場の2つと同じ玉が3秒ごとに）
 - 締め 1.2秒: 最後の大輪が開いて、光が雪のように降りて消える
 
-full は叩き台どおりの全面（夜空・議事堂・大通り。縁を暗く）。light は議事堂を光の線で描き、花火は光だけ。
-キャラが出たら線と大きな花火を消し、滞在は上の角の小さな花火と縁のきらめき、角のあやとだけにする。
+通りは full（叩き台どおりの全面。夜空・議事堂・大通り。縁を暗く）だけ。前は「光の線で描く light」と見比べたが、
+あやとが「光の線の案は見ごたえない」「2,000以上は全面背景ありで良い」と決めた（2026-11-05、#1095）。
 
-あやとは、投げた人のキャラ絵が出る直前に左上の角（キャラ絵の箱より上の帯）へ跳び上がる（full も light も）。
+あやとは、投げた人のキャラ絵が出る直前に左上の角（キャラ絵の箱より上の帯）へ跳び上がる。
 キャラ絵は再生の側で箱の上 20%〜下 2% に幅いっぱいで置かれ、出て 0.2 秒でほぼ出きるので、真ん中の高さに残ると
 後ろに隠れる（段4 で再生の担当が見つけた。2026-11-04）。隠れていないかは `fx_hero.py` で数える。
 
@@ -135,16 +135,15 @@ def eglow(cv, x, y, rx, ry, col, k, y_min=None):
 class Scene(Stage):
     TIER = 6
     INTRO, STAY, OUTRO, REVEAL = 4.0, 3.0, 1.2, 3.2
-    VARIANTS = ("full", "light")
-    FRONT = {"full": True, "light": False}
+    VARIANTS = ("full",)
+    FRONT = {"full": True}
 
     def setup(self):
-        full = self.variant == "full"
         # 議事堂の絵の下の帯（歩道の縁）は切る。帯のぶん、足もとに横一直線の線が出た（2026-11-04 の下書き）
         hard = load_rgba(os.path.join(ART, "t6", "palace.webp"))[:512].copy()
         fade = np.clip((511 - np.arange(512, dtype=np.float32)) / 8.0, 0, 1)[:, None]
         self.pal = Art(hard * fade[..., None])
-        # 光の線は切り口を溶かさない絵から取る（溶かした下の端が、外形の線として横一直線に光る）
+        # 屋根の線は切り口を溶かさない絵から取る（溶かした下の端が、外形の線として横一直線に光る）
         hard = cv2.resize(hard, (self.pal.w, self.pal.h), interpolation=cv2.INTER_AREA) if hard.shape[1] != self.pal.w else hard
         self.aya = art("ayato", "spark.webp")
         ref = self.cam_at(self.INTRO)
@@ -157,35 +156,21 @@ class Scene(Stage):
         self.base_y = float(by[0])
         lvl = self.pal.levels[0]
         self.win = fs.window_mask(lvl)
-        if full:
-            self.sky = art("t6", "sky.webp")
-            self.road = art("t6", "road.webp")
-            self.sky_depth = 220.0
-            self.sky_h = 1500 * self.sky_depth / ref.foc
-            self.sky_pos = unproject(ref, 360, 600, depth=self.sky_depth)
-            self.road_depth = 14.0
-            sc = 840 / self.road.w
-            self.road_h = self.road.h * sc * self.road_depth / ref.foc
-            self.road_pos = unproject(ref, 360, self.base_y + 4, depth=self.road_depth)
-            yy = np.arange(H, dtype=np.float32)[:, None]
-            self.sky_mul = (np.clip(0.72 + 0.28 * (yy / 300), 0.72, 0.95) * np.ones((1, W), np.float32)) * self.edge
-        else:
-            yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-            g = np.exp(-(((xx - 360) / 380) ** 2 + ((yy - 430) / 420) ** 2))
-            self.shade_map = (g * self.edge).astype(np.float32)
-            R = np.random.default_rng(66)
-            pts = []
-            while len(pts) < 22:
-                x, y = R.random() * W, 60 + R.random() * 1040
-                if (x < 105 or x > W - 105 or y < 170) and not (x < 330 and y < 430):
-                    pts.append((x, y))
-            self.edge_pts = np.array(pts)
-            self.edge_tw = R.random((len(pts), 3))
-            self.lines = LineArt(hard, start=(0.5, 1.0), lo=70, hi=160, min_len=24, work_w=900, blur=1.6)
+        self.sky = art("t6", "sky.webp")
+        self.road = art("t6", "road.webp")
+        self.sky_depth = 220.0
+        self.sky_h = 1500 * self.sky_depth / ref.foc
+        self.sky_pos = unproject(ref, 360, 600, depth=self.sky_depth)
+        self.road_depth = 14.0
+        sc = 840 / self.road.w
+        self.road_h = self.road.h * sc * self.road_depth / ref.foc
+        self.road_pos = unproject(ref, 360, self.base_y + 4, depth=self.road_depth)
+        yy = np.arange(H, dtype=np.float32)[:, None]
+        self.sky_mul = (np.clip(0.72 + 0.28 * (yy / 300), 0.72, 0.95) * np.ones((1, W), np.float32)) * self.edge
         # 屋根の線（前兆）: 外形だけ。左下の端から屋根をなぞって右下の端へ
         self.outline = LineArt(hard, start=(0.0, 1.0), lo=250, hi=255, min_len=10, work_w=900, blur=1.0,
                                inner=np.zeros(hard.shape[:2], np.float32), outer_blur=2.0)
-        self.shells, self.when = self.make_shells(full)
+        self.shells, self.when = self.make_shells()
         self.rain = Loop(300, 6061, cycles=(1, 2))
         self.near = Loop(80, 6062, cycles=(1, 1))
         self.bok = Loop(10, 6063, cycles=(1, 1))
@@ -196,38 +181,26 @@ class Scene(Stage):
     def at(self, sx, sy, depth):
         return unproject(self.ref, sx, sy, depth=depth)
 
-    def make_shells(self, full):
+    def make_shells(self):
         """花火の玉と、打ち上げの時刻。('once', t) は登場だけ、('loop', t) は滞在の周期でくり返す"""
         f = self.ref.foc
         mk = lambda seed, sx, sy, r, d, **kw: Shell(seed, self.at(sx, sy, d), r * d / f, px=f / d, **kw)
         S, when = {}, {}
-        lp = "loop" if full else "once"
         # A: マゼンタの牡丹（内に金）。右上
         S["A"] = mk(61, 560, 255, 210, 85, head=MAGENTA * 1.5, tail=MAGENTA * 0.45 + VIOLET * 0.3, n=160,
                     life=1.35, core=(0.45, GOLD_HOT, AMBER * 0.6, 64), trail=0.17)
         when["A"] = ("once", 2.15)
         # B: 金の柳（いちばん大きい）。真ん中の上。長く垂れる
         S["B"] = mk(62, 385, 180, 245, 95, head=GOLD_HOT, tail=AMBER * 0.55 + MAGENTA * 0.1, n=170,
-                    life=2.2 if full else 1.2, trail=0.45, drag=4.2, gravity=3.6, glitter=0.45)
-        when["B"] = (lp, 2.3)
+                    life=2.2, trail=0.45, drag=4.2, gravity=3.6, glitter=0.45)
+        when["B"] = ("loop", 2.3)
         # C: 紫がかったマゼンタに金の瞬き。右の翼の屋根の向こう（下半分は議事堂に隠れる）
         S["C"] = mk(63, 610, 440, 170, 80, head=MAGENTA * 1.1 + VIOLET * 0.5, tail=VIOLET * 0.5, n=130,
-                    life=1.9 if full else 1.05, core=(0.6, GOLD_HOT, GOLD * 0.5, 50), glitter=0.4, trail=0.15)
-        when["C"] = (lp, 2.45)
-        if not full:
-            # light の滞在: 上の角の小さな花火（1周に2つ。どちらも滞在の中で開いて消える）
-            S["D"] = mk(64, 585, 205, 100, 85, head=GOLD_HOT, tail=AMBER * 0.5, n=90, life=1.4, glitter=0.4, trail=0.15)
-            when["D"] = ("loop", 4.15)
-            S["E"] = mk(65, 430, 125, 85, 85, head=MAGENTA * 1.4, tail=VIOLET * 0.4, n=80, life=1.4,
-                        core=(0.5, GOLD_HOT, AMBER * 0.5, 30), trail=0.15)
-            when["E"] = ("loop", 5.0)
+                    life=1.9, core=(0.6, GOLD_HOT, GOLD * 0.5, 50), glitter=0.4, trail=0.15)
+        when["C"] = ("loop", 2.45)
         # 締めの大輪（締めの 0.08 秒に開く）
-        if full:
-            S["F"] = mk(66, 360, 260, 280, 90, head=GOLD_HOT, tail=MAGENTA * 0.6, n=200, life=1.15, launch=0.0,
-                        core=(0.5, MAGENTA * 1.5, VIOLET * 0.5, 80), glitter=0.6, trail=0.3, drag=4.0, gravity=3.5)
-        else:
-            S["F"] = mk(66, 470, 175, 150, 90, head=GOLD_HOT, tail=MAGENTA * 0.5, n=130, life=1.15, launch=0.0,
-                        core=(0.5, MAGENTA * 1.4, VIOLET * 0.4, 50), glitter=0.6, trail=0.25, drag=4.0, gravity=3.0)
+        S["F"] = mk(66, 360, 260, 280, 90, head=GOLD_HOT, tail=MAGENTA * 0.6, n=200, life=1.15, launch=0.0,
+                    core=(0.5, MAGENTA * 1.5, VIOLET * 0.5, 80), glitter=0.6, trail=0.3, drag=4.0, gravity=3.5)
         when["F"] = ("outro", 0.08)
         return S, when
 
@@ -271,7 +244,6 @@ class Scene(Stage):
         return out
 
     def draw(self, c):
-        full = self.variant == "full"
         cam = self.cam_at(c.Ti, c)
         Ti, T, u = c.Ti, c.T, c.u
         out_k = 1 - ease(u)
@@ -280,23 +252,16 @@ class Scene(Stage):
         amb = ease(ramp(Ti, 2.4, 3.4)) * out_k
         lit = ease(ramp(Ti, 1.2, 2.5))
         fl = self.flashes(c, cam)
-        # light は、キャラが出たら大きなものを消す
-        calm = 1 - ease(ramp(T, self.REVEAL + 0.1, self.REVEAL + 0.75)) if c.clip == "intro" else 0.0
-        if full:
-            calm = 1.0
 
         # 暗転（箱の縁で 0 に溶かす）
-        dark = (0.5 if full else 0.3) * ease(ramp(Ti, 0.0, 0.6)) * out_k * (1.0 if full else calm)
+        dark = 0.5 * ease(ramp(Ti, 0.0, 0.6)) * out_k
         if dark > 0.003:
-            back.shade((self.edge if full else self.shade_map) * dark, col=(0.03, 0.01, 0.06))
+            back.shade(self.edge * dark, col=(0.03, 0.01, 0.06))
 
         M, dst, _ = board_map(cam, self.pal.w, self.pal.h, self.pal_pos, self.pal_h)
-        if full:
-            self.draw_full_world(c, cam, back, M, dst, lit, out_k, fl)
-        else:
-            self.draw_light_world(c, cam, back, M, dst, lit, calm)
+        self.draw_full_world(c, cam, back, M, dst, lit, out_k, fl)
 
-        # 屋根の線を光がなぞる（前兆。full も light も）
+        # 屋根の線を光がなぞる（前兆）
         lap = ease(ramp(Ti, 0.2, 1.3))
         lk = env(Ti, 0.15, 0.3, 2.2, 3.1) * (c.clip == "intro")
         if lk > 0.003:
@@ -319,10 +284,8 @@ class Scene(Stage):
         for key, sh in self.shells.items():
             big = key in ("A", "B", "C")
             k_sh = out_k if key != "F" else (1 - ease(ramp(u, 0.55, 1.0)))
-            if not full and big:
-                k_sh *= calm
             for age in self.ages(c, key):
-                r = sh.light(age, k_sh * (1.0 if full else 1.15))
+                r = sh.light(age, k_sh)
                 if r is not None:
                     Ps.append(r[0])
                     Cs.append(r[1])
@@ -334,7 +297,7 @@ class Scene(Stage):
                     fxv.stamp(back.L, self.kit.flare if big or key == "F" else self.kit.flare_s, float(x[0]), float(y[0]), 0.4 * f * k_sh)
         if Ps:
             P_, C_ = np.concatenate(Ps), np.concatenate(Cs)
-            zb = back.Z if full else None
+            zb = back.Z
             # くっきりした筋と、その筋をくるむ柔らかい光（太さが出る）
             sp_b.add(cam, P_, C_ * 3.6, zb, sharp=True, max_gain=2.0)
             sp_b.add(cam, P_, C_ * 1.4, zb, soft=True, max_gain=2.0)
@@ -348,25 +311,16 @@ class Scene(Stage):
         tw = (0.5 + 0.5 * np.sin(6.283 * (a_ * (4 + 5 * r[:, 4]) + r[:, 5]))) ** 3
         kd = np.sin(np.pi * a_) * (0.3 + 1.2 * tw) * (0.4 + 1.4 * r[:, 6] ** 2)
         col = np.where(r[:, 7:8] < 0.5, GOLD, np.where(r[:, 7:8] < 0.8, MAGENTA, WHITE))
-        rain_k = amb * (1.0 if full else 0.3)
+        rain_k = amb
         if c.clip == "outro":
             # 締め: 大輪のあと、光が雪のように降りる
             rain_k = rain_k + 1.2 * ease(ramp(u, 0.15, 0.45)) * (1 - ease(ramp(u, 0.6, 1.0)))
-        sp_b.add(cam, P, col * (kd * rain_k)[:, None], back.Z if full else None)
+        sp_b.add(cam, P, col * (kd * rain_k)[:, None], back.Z)
         sp_b.into(back)
 
         # ---- あやと（手持ち花火）。主役だけの層に描き、back の仕上げの上に重ねる
         hero = Canvas()
-        self.draw_ayato(c, cam, hero, full)
-
-        # light の滞在の縁のきらめき
-        if not full:
-            ek = ease(ramp(Ti, 2.8, 3.6)) * out_k
-            if ek > 0.003:
-                for j, (x, y) in enumerate(self.edge_pts):
-                    rr = self.edge_tw[j]
-                    tw_ = max(0.0, math.sin(6.283 * (c.ph * (1 + int(rr[0] * 2)) + rr[1]))) ** 4
-                    fxv.stamp(back.L, self.kit.star["magenta" if j % 3 == 0 else "gold"], x, y + 6 * c.osc(1, rr[2]), (0.35 + 0.4 * rr[2]) * tw_ * ek)
+        self.draw_ayato(c, cam, hero)
 
         # ---- キャラ絵が出る瞬間: 後ろから光の輪
         rv = (T - self.REVEAL) / 0.7 if c.clip == "intro" else 9
@@ -378,7 +332,7 @@ class Scene(Stage):
             back.emit(band[..., None] * (MAGENTA * 0.8 + GOLD * 0.7 + WHITE * 0.4) * 1.2)
             glow(back, 360, 760, 220, MAGENTA * 0.5 + GOLD * 0.4, 0.6 * (1 - rv) ** 2)
 
-        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.95 if full else 0.6, edge=self.edge))
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.95, edge=self.edge))
         if not self.has_front():
             return out_b, None
         # ---- front（光と粒だけ）: 手前を降る火の粉・ぼけ玉・キャラ絵のふちの星
@@ -451,32 +405,6 @@ class Scene(Stage):
             eglow(cv, 360 + (x - 360) * 0.8, yr, 46, 230, col * 0.5 + WHITE * 0.1, 0.55 * f * road_k, y_min=self.base_y + 8)
         self.road_streaks(c, cv, road_k)
 
-    # ---------------- light: 光の線で描く議事堂。キャラが出たら消える
-    def draw_light_world(self, c, cam, cv, M, dst, lit, calm):
-        Ti = c.Ti
-        prog = ease(ramp(Ti, 1.2, 2.55))
-        fade = calm
-        if fade <= 0.003:
-            return
-        w = self.pal_h * self.lines.w / self.lines.h
-        ldst, _ = board_quad(cam, self.pal_pos, w, self.pal_h, (0.5, 1.0), True)
-        img = self.lines.image(prog, core=WHITE * 0.85 + GOLD * 0.6, glow=GOLD * 0.7 + MAGENTA * 0.5) * fade * 1.25
-        src = np.float32([[0, 0], [self.lines.w, 0], [self.lines.w, self.lines.h], [0, self.lines.h]])
-        r = fs.warp_into(img, src, ldst)
-        if r is not None:
-            im, x0, y0 = r
-            cv.emit(im[..., :3], x0, y0)
-            if 0 < prog < 1:
-                Mm = cv2.getPerspectiveTransform(src, ldst.astype(np.float32))
-                for hx, hy in self.lines.heads(prog, n=10):
-                    px, py = map_point(Mm, hx, hy)
-                    fxv.stamp(cv.L, self.kit.flare_s, px, py, 0.22 * fade)
-        # 描き終わった線の中で、窓が下から灯る
-        vv = np.linspace(1, 0, self.pal.h, dtype=np.float32)[:, None]
-        on = np.clip((Ti - 1.6 - vv * 0.9) / 0.25, 0, 1)
-        emis = (self.win * on)[..., None] * (GOLD * 0.9 + WHITE * 0.3) * 0.5 * fade
-        emit_mapped(cv, emis.astype(np.float32), M, dst)
-
     def road_streaks(self, c, cv, k):
         """大通りを駆け上がる光の筋（1.3〜2.3。滞在は1周に2本）"""
         if k <= 0.003:
@@ -502,14 +430,14 @@ class Scene(Stage):
             sp.add_screen(xs, ys, (np.asarray(col) * 1.6 + WHITE * 0.5)[None] * kk[:, None] * 2.2, soft=True)
             sp.into(cv)
 
-    def draw_ayato(self, c, cam, cv, full):
+    def draw_ayato(self, c, cam, cv):
         Ti, u = c.Ti, c.u
         a = ease(ramp(Ti, 1.5, 2.2))
         arrive = back_out(ramp(Ti, 1.5, 2.4), 1.3)
         x = lerp(-180, 190, ease_out(ramp(Ti, 1.5, 2.3)))
         y = lerp(-300, 260, arrive)
         hgt = 380.0
-        # キャラ絵が出る前（2.8〜3.3）に、左上の角へ小さく跳び上がる（キャラ絵の箱より上の帯。full も light も）
+        # キャラ絵が出る前（2.8〜3.3）に、左上の角へ小さく跳び上がる（キャラ絵の箱より上の帯）
         back_k = ease(ramp(Ti, 2.8, 3.3))
         x = lerp(x, 125, back_k)
         y = lerp(y, 132, back_k)

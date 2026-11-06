@@ -18,12 +18,14 @@
  *
  * ## #438 の教え（動画の人のキャラ動画と同じ守り）
  *
- * - `playing` が来るまで透明（届く前の `<video>` は Android の WebView が ▶ の板を描く）
+ * - 最初のコマが実際に描かれるまで透明・poster は透明（届く前の `<video>` は Android の WebView が灰色の地と ▶ を描く。
+ *   `playing` は「再生が始まった」で、まだ描いていないことがある。#1133。守りは `../../videoGuard.ts`）
  * - 3秒動かなければ、その層は出さない。全部の層が動かなければ、いまの段の見せ方（字とキャラ絵）に落ちる
  * - 同じ URL は二度落とさない（温めは1回きり。アラートでは控えから読む）
  * - `still=1`（iPhone の日）は動画を1回も出さず、1バイトも落とさない（呼ぶ側が止める）
  */
 import type { FxTier, FxVideoVariant, SeasonTheme } from "../../themes";
+import { newVideo, onFirstFrame } from "../../videoGuard";
 
 export type FxPart = "intro" | "stay" | "outro";
 export const FX_PARTS: readonly FxPart[] = ["intro", "stay", "outro"];
@@ -64,7 +66,8 @@ export const FX_START_TIMEOUT_MS = 3000;
 
 /**
  * どちらの通りで流すか。**旗（`?fx=full` / `?fx=light`）が先。** 旗が無ければ、テーマが配信に出すと決めた通り
- * （いまは決めていないので null＝動画の段にしない）。`?fx=off` は配信に出すと決めたあとでも止める（見比べの物差し）
+ * （11月の城は full。出すと決めていないテーマは null＝動画の段にしない）。`?fx=off` は配信に出すと決めたあとでも
+ * 止める（見比べの物差し）
  */
 export function fxVariantOf(th: SeasonTheme | null, flag: string | null): FxVideoVariant | null {
   const fv = th?.fxVideo;
@@ -152,7 +155,10 @@ export function parseFxManifest(json: unknown): FxManifest {
   return out;
 }
 
-/** その通りの層。〜999円の3段は1通り（full だけ）なので、light が無ければ full を使う */
+/**
+ * その通りの層。light が無ければ full を使う（〜999円の3段は初めから full だけ。11月は light をやめたので、
+ * manifest から light が外れたあとは、旗 `?fx=light` が来ても全段 full で流れる）
+ */
 export function layersFor(entry: FxTierEntry, variant: FxVideoVariant): FxLayers | null {
   return entry.variants[variant] ?? entry.variants.full ?? null;
 }
@@ -264,18 +270,9 @@ export type VideoPlan = {
   kit: FxKit;
 };
 
-/** 動画の要素を1つ作る。音なし・インライン・最初は透明（`playing` で見せる） */
+/** 動画の要素を1つ作る。音なし・インライン・poster は透明・最初は透明（最初のコマが描かれてから見せる） */
 export function makeFxVideo(src: string | null, loop: boolean, name: string): HTMLVideoElement {
-  const v = document.createElement("video");
-  v.muted = true;
-  v.defaultMuted = true;
-  v.setAttribute("muted", "");
-  v.playsInline = true;
-  v.setAttribute("playsinline", "");
-  v.setAttribute("webkit-playsinline", "");
-  v.setAttribute("disablepictureinpicture", "");
-  v.setAttribute("disableremoteplayback", "");
-  v.controls = false;
+  const v = newVideo();
   v.preload = "auto";
   v.loop = loop;
   // 道具（alert-overlap・録画の秒の確かめ）が、どの動画かを読む印
@@ -394,7 +391,8 @@ const finite = (v: number) => (Number.isFinite(v) && v > 0 ? v : null);
  * - 層ごとに 登場 → 滞在（くり返し）→ 締め。**移るのは先導の層（奥。奥が無ければ手前）の切れ目で、全部の層いっしょに。**
  *   層ごとに自分の終わりで移らせると、展開の遅れとループの継ぎ目のぶんだけずれていき、締めの頭で奥と手前が
  *   0.1〜0.3 秒ずれた（この箱で測った）。手前が先に終わったら最後のコマのまま待ち、奥が先なら手前を切る
- * - 次の本は、前の本の最後のコマを出したまま始め、`playing` が来てから入れ替える（すき間に何も出ない、を作らない）
+ * - 次の本は、前の本の最後のコマを出したまま始め、**次の本の最初のコマが描かれてから**入れ替える（`onFirstFrame`。
+ *   すき間に何も出ない・既定の絵が出る、を作らない。`playing` で入れ替えると、コマを持つ前の次の本が見えることがある。#1133）
  * - 締め: 締めが終わりまでに収まる最後の滞在の輪の切れ目で、くり返しを止めて締めへ。切れ目が来なければ
  *   （止まった・読めない）終わりの outroDur 秒前に切り替える
  * - 3 秒動かない・しくじった層は消す。**全部の層が消えたら `onFail`（その秒）**
@@ -403,7 +401,9 @@ export function runFxShow(
   kit: FxKit,
   hosts: Record<FxLayerName, HTMLElement>,
   durationSec: number,
-  onFail: (sec: number) => void
+  onFail: (sec: number) => void,
+  /** 先導の層の動画が `revealAt` に来た（キャラ絵と札を出してよい）。1回だけ */
+  onReveal?: () => void
 ): () => void {
   kit.used = true;
   const t0 = performance.now();
@@ -432,7 +432,7 @@ export function runFxShow(
     if (!k) continue;
     layers.push({ name, k, phase: "intro", shown: null, started: false, dead: false, noOutro: false, introEnded: false });
     for (const p of FX_PARTS) {
-      // 作り方によらず、`playing` が来るまで透明（▶ の板を出さない）
+      // 作り方によらず、最初のコマが描かれるまで透明（▶ の板を出さない）
       k[p].style.opacity = "0";
       hosts[name].appendChild(k[p]);
     }
@@ -474,6 +474,16 @@ export function runFxShow(
       else if (N.phase === "stay" && armed && !N.noOutro) N.k.stay.loop = false;
     }
   };
+  /* その本の最初のコマが描かれた。いまの本だけを見せる（前の本は最後のコマのまま、ここまで出ている）。
+     前の本を消すのは同じ瞬間（透明つきの動画なので、両方を見せると1コマだけ二重に重なる） */
+  const shown = (L: Layer, p: FxPart) => {
+    if (L.dead || stopped || L.phase !== p || L.shown === p) return;
+    for (const q of FX_PARTS) L.k[q].style.opacity = q === p ? "1" : "0";
+    L.shown = p;
+    if (p === "intro") L.started = true;
+    if (p === "outro") L.k.stay.pause();
+    mark(`fxv:${L.name}:${p}`, { t: sec() });
+  };
   const play = (L: Layer, part: FxPart) => {
     if (L.dead || stopped) return;
     L.phase = part;
@@ -484,6 +494,7 @@ export function runFxShow(
     } catch {
       // 頭出しできなくても流すのは続ける
     }
+    offs.push(onFirstFrame(v, () => shown(L, part)));
     const pr = v.play();
     /* 止められた（自動再生が許されない・形が読めない）ときだけ消す。`AbortError` は「始まる前に pause() か
        src の差し替えが来た」で、そのあと play() し直せば流れる（止めて撮る道具がそうする）ので、消さない */
@@ -508,16 +519,6 @@ export function runFxShow(
   for (const L of layers) {
     for (const p of FX_PARTS) {
       const v = L.k[p];
-      /* その本の最初のコマが出た。いまの本だけを見せる（前の本は最後のコマのまま、ここまで出ている）。
-         `playing` は止めて再開するたびに来るので、2回目からは何もしない */
-      on(v, "playing", () => {
-        if (L.dead || stopped || L.phase !== p || L.shown === p) return;
-        for (const q of FX_PARTS) L.k[q].style.opacity = q === p ? "1" : "0";
-        L.shown = p;
-        if (p === "intro") L.started = true;
-        if (p === "outro") L.k.stay.pause();
-        mark(`fxv:${L.name}:${p}`, { t: sec() });
-      });
       on(v, "error", () => {
         // 締めだけが読めないなら、締めを出さずに滞在のまま終わる（読み始めは滞在の頭なので、まだ締めの前）
         if (p === "outro" && L.phase !== "outro") {
@@ -553,6 +554,46 @@ export function runFxShow(
   mark("fxv:start", { key: kit.key, durationSec });
   for (const L of layers) play(L, "intro");
 
+  /* キャラ絵と札を出す合図。**先導の層の登場が revealAt に来たら**（壁の時計ではなく動画の時計で）。
+     読み込みや展開で動画が遅れた日に、主役が出きる前に札が出ないように（alert-reveal.mjs が数える）。
+     **登場の途中で 3 秒動かなくなった層は消す**（流れ始めの 3 秒と同じ決まり）。回線が細い日に登場が途中で
+     止まり、待ちきれずに札を先に出していた（2026-11-05、往復 300ms・下り 4Mbps で5回中5回）。
+     先導が消えたら次の層で見る。全部消えたら onFail（index.tsx が動画なしの見せ方に落とし、すぐ出す） */
+  let revealed = false;
+  let rvHandle: ReturnType<typeof setTimeout> | number | null = null;
+  let lastAt = -1;
+  let lastMove = performance.now();
+  let watched: Layer | null = null;
+  const nextTick = (f: () => void) =>
+    typeof requestAnimationFrame === "function" ? requestAnimationFrame(f) : setTimeout(f, 16);
+  const watchReveal = () => {
+    rvHandle = null;
+    if (revealed || stopped || failed || !onReveal) return;
+    const L = leader();
+    const now = performance.now();
+    if (L && L.phase !== "intro") {
+      revealed = true;
+    } else if (L && L.shown === "intro") {
+      const ct = L.k.intro.currentTime;
+      if (ct >= entry.revealAt - 0.02) revealed = true;
+      else if (L !== watched || ct !== lastAt) {
+        watched = L;
+        lastAt = ct;
+        lastMove = now;
+      } else if (now - lastMove > FX_START_TIMEOUT_MS) {
+        kill(L, "stalled");
+        lastMove = now;
+      }
+    } else lastMove = now;
+    if (revealed) {
+      mark("fxv:reveal", { t: sec() });
+      onReveal();
+      return;
+    }
+    rvHandle = nextTick(watchReveal);
+  };
+  if (onReveal) rvHandle = nextTick(watchReveal);
+
   // 3 秒動かなければ、その層は出さない
   timers.push(
     setTimeout(() => {
@@ -581,6 +622,10 @@ export function runFxShow(
 
   return () => {
     stopped = true;
+    if (rvHandle != null) {
+      if (typeof cancelAnimationFrame === "function" && typeof rvHandle === "number") cancelAnimationFrame(rvHandle);
+      clearTimeout(rvHandle as ReturnType<typeof setTimeout>);
+    }
     timers.forEach(clearTimeout);
     offs.forEach((f) => f());
     releaseFxKit(kit);

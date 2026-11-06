@@ -21,6 +21,8 @@ type Props = {
   durationSec: number;
   /** 動画が1つも動かなかった（その秒）。index.tsx が、いまの段の見せ方に落とす */
   onFail: (sec: number) => void;
+  /** 動画が revealAt に来た。index.tsx が、ここでキャラ絵と札を組む（動画が遅れても順番が変わらない） */
+  onReveal?: () => void;
 };
 
 const layer: React.CSSProperties = {
@@ -33,15 +35,23 @@ const layer: React.CSSProperties = {
   pointerEvents: "none",
 };
 
-export const VideoShow: React.FC<Props> = ({ plan, durationSec, onFail }) => {
+export const VideoShow: React.FC<Props> = ({ plan, durationSec, onFail, onReveal }) => {
   const back = useRef<HTMLDivElement | null>(null);
   const front = useRef<HTMLDivElement | null>(null);
   const failRef = useRef(onFail);
   failRef.current = onFail;
+  const revealRef = useRef(onReveal);
+  revealRef.current = onReveal;
 
   useEffect(() => {
     if (!back.current || !front.current) return;
-    const stop = runFxShow(plan.kit, { back: back.current, front: front.current }, durationSec, (s) => failRef.current(s));
+    const stop = runFxShow(
+      plan.kit,
+      { back: back.current, front: front.current },
+      durationSec,
+      (s) => failRef.current(s),
+      () => revealRef.current?.()
+    );
     // front を持たない段（〜999円・1,000〜9,999円の light）は、穴も開けない（何も描かれない層に mask を掛けない）
     const unhole = plan.kit.layers.front ? holdFaceHole(front.current, plan.revealAt) : () => {};
     return () => {

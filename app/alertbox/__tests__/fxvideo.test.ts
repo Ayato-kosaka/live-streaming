@@ -8,17 +8,19 @@
  *   npx jest app/alertbox/__tests__/fxvideo.test.ts
  *
  * 守りたいのは6つ。
- *   1. **配信はいまのまま。** 旗（`?fx=full` / `?fx=light`）が無ければ、11月の城の段は今の1段（札も台本も無い）。
- *      配信に出すと決めるまで（`live: false`・`variant: null`）7段は出ない
+ *   1. **出すと決めるまで（`live: false`・`variant: null`）は、旗が無ければ7段は出ない**（作っているあいだの形）。
+ *      11月の城は配信に出した（全段 full）ので、旗が無くても7段。日付・12/1・still=1 の詳しいところは `fxlive.test.ts`
  *   2. 7段の切れ目・色・字は、ハロウィン2版目の同じ段と同じ（写しが崩れていない）
  *   3. manifest.json の読み方（約束の名前・置き場の外を指さない・秒の決まり）と、置いてあるひな形が読める
  *   4. 温める順と量: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順。締めは温めない）・
  *      同じ URL は二度落とさない・上限で止まる
  *   5. キャラ絵と字は `revealAt` に出る（字の出し方はハロウィン2版目の同じ段）。動画が用意できなければ動画なしで、すぐ出る
- *   6. 流す順番: `playing` まで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
+ *   6. 流す順番: 最初のコマまで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
+ *   7. コマを持つ前の `<video>` を見せない（#1133）: コマの合図（requestVideoFrameCallback）まで透明・
+ *      替わり目は次の本のコマが出るまで前の本が見えたまま（見えている本が 0 本・2 本になる瞬間が無い）
  *
- * **対照を先に置く**（`island-misses.md` #99）。「旗が無いと7段にならない」を見てから「旗があると7段になる」を見る。
+ * **対照を先に置く**（`island-misses.md` #99）。「出すと決めていないと7段にならない」を見てから「出すと決めたら7段になる」を見る。
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -51,13 +53,10 @@ const MANIFEST = JSON.parse(
   readFileSync(join(__dirname, "../../../public/alert/themes/castle/fx/manifest.json"), "utf8")
 );
 
-describe("1. 配信はいまのまま（旗が無ければ 7段は出ない）", () => {
-  it("11月に日付で選ばれるのは城。段は今の1段（札・台本・動画なし）", () => {
-    const th = themeAt(new Date("2026-11-15T12:00:00+09:00"))!;
-    expect(th.id).toBe("castle");
+describe("1. 出すと決めるまでは、旗が無ければ 7段は出ない（11月の城は出した）", () => {
+  it("出すと決めていない（live: false・variant: null）テーマは、旗が無いと段は今の1段（札・台本・動画なし）", () => {
+    const th: SeasonTheme = { ...castle, id: "castle-draft", fxVideo: { ...castle.fxVideo!, live: false, variant: null } };
     expect(th.tiers).toHaveLength(1);
-    expect(th.fxVideo?.live).toBe(false);
-    expect(th.fxVideo?.variant).toBeNull();
     // 旗が無い（本番の URL）ときは、差し替えずにそのまま
     const eff = withFxVideo(th, fxVariantOf(th, null));
     expect(eff).toBe(th);
@@ -74,14 +73,22 @@ describe("1. 配信はいまのまま（旗が無ければ 7段は出ない）",
     }
   });
 
+  it("11月に日付で選ばれるのは城で、配信に出してある（全段 full）。旗が無くても7段に差し替わる", () => {
+    const th = themeAt(new Date("2026-11-15T12:00:00+09:00"))!;
+    expect(th.id).toBe("castle");
+    expect(th.fxVideo?.live).toBe(true);
+    expect(th.fxVideo?.variant).toBe("full");
+    expect(withFxVideo(th, fxVariantOf(th, null))!.tiers).toHaveLength(7);
+  });
+
   it.each([
-    [null, null],
-    ["lux", null],
+    [null, "full"],
+    ["lux", "full"],
     ["off", null],
-    ["FULL", null],
+    ["FULL", "full"],
     ["full", "full"],
     ["light", "light"],
-  ])("旗 %s → 通り %s", (flag, want) => {
+  ])("旗 %s → 通り %s（配信に出した城。知らない旗は配信と同じ full、止めるのは off だけ）", (flag, want) => {
     expect(fxVariantOf(castle, flag)).toBe(want);
   });
 
@@ -146,10 +153,12 @@ describe("2. 7段はハロウィン2版目の同じ段と同じ切れ目・色�
 
 describe("3. manifest.json", () => {
   const m = parseFxManifest(MANIFEST);
-  it("置いてあるひな形が7段とも読める。〜999円は full だけ、1,000円〜は full と light", () => {
+  /* 光の線（light）の版は 2026-11-05 にやめた（あやと「光の線の案は見ごたえない」「2,000以上は全面背景あり」。#1095）。
+     段1〜6 は full だけ。段7 は別の担当が直すので、light があってもなくても通す（どの段にも full はある） */
+  it("置いてあるひな形が7段とも読める。段1〜6 は full だけ、どの段にも full がある", () => {
     expect(Object.keys(m).sort()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
-    for (const k of ["1", "2", "3"]) expect(Object.keys(m[k].variants)).toEqual(["full"]);
-    for (const k of ["4", "5", "6", "7"]) expect(Object.keys(m[k].variants).sort()).toEqual(["full", "light"]);
+    for (const k of ["1", "2", "3", "4", "5", "6"]) expect(Object.keys(m[k].variants)).toEqual(["full"]);
+    for (const k of Object.keys(m)) expect(m[k].variants.full).toBeDefined();
   });
   it("名前は約束どおり t{段}-{通り}-{層}-{本}.webm", () => {
     for (const [k, e] of Object.entries(m))
@@ -157,12 +166,23 @@ describe("3. manifest.json", () => {
         for (const [l, parts] of Object.entries(layers!))
           for (const [p, f] of Object.entries(parts ?? {})) expect(f).toBe(`t${k}-${v}-${l}-${p}.webm`);
   });
-  it("〜999円で light を頼まれたら full を使う", () => {
-    expect(layersFor(m["2"], "light")).toBe(m["2"].variants.full);
-    expect(layersFor(m["5"], "light")).toBe(m["5"].variants.light);
+  it("light の無い段（段1〜6）で light を頼まれたら full を使う（旗 ?fx=light の日も full で出る）", () => {
+    for (const k of ["1", "2", "3", "4", "5", "6"]) {
+      expect(layersFor(m[k], "light")).toBe(m[k].variants.full);
+      expect(layersFor(m[k], "light")).not.toBeNull();
+    }
+  });
+  it("対照: light がある段なら light を使う（置いてある manifest に頼らず、作った1段で）", () => {
+    const parts = (v: string) => ({ intro: `t1-${v}-back-intro.webm`, stay: `t1-${v}-back-stay.webm`, outro: `t1-${v}-back-outro.webm` });
+    const both = parseFxManifest({
+      tiers: { "1": { variants: { full: { back: parts("full"), front: null }, light: { back: parts("light"), front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1 } },
+    })["1"];
+    expect(layersFor(both, "light")).toBe(both.variants.light);
+    expect(layersFor(both, "light")).not.toBe(both.variants.full);
+    expect(layersFor(both, "full")).toBe(both.variants.full);
   });
 
-  const one = (o: Record<string, unknown>) => parseFxManifest({ tiers: { "1": { variants: { full: { back: { intro: "a.webm", stay: "b.webm", outro: "c.webm" }, front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1, ...o } } });
+  const one =(o: Record<string, unknown>) => parseFxManifest({ tiers: { "1": { variants: { full: { back: { intro: "a.webm", stay: "b.webm", outro: "c.webm" }, front: null } }, revealAt: 1, introDur: 2, stayDur: 2, outroDur: 1, ...o } } });
   it("対照: 正しい1段は読める（front は null でよい）", () => {
     expect(one({})["1"]?.variants.full?.front).toBeNull();
   });
@@ -218,13 +238,19 @@ describe("4. 温める順と量", () => {
     expect(order.filter((f) => /outro/.test(f))).toEqual([]);
     expect(order).toHaveLength(countOf(variant));
     expect(new Set(order).size).toBe(order.length);
-    // 1,000円〜は、その通りだけ（もう片方は1本も落とさない）。〜999円は full しか無い
-    const other = variant === "full" ? "light" : "full";
-    expect(order.filter((f) => new RegExp(`^t[4-7]-${other}`).test(f))).toEqual([]);
+    // 段ごとに、その通りがあればその通りだけ、無ければ full だけ（もう片方は1本も落とさない）。
+    // 段1〜6 は full しか無いので、light の日も full を落とす（light が無くても full で出る）
+    const used = (k: string) => (m[k].variants[variant] ? variant : "full");
+    for (const k of Object.keys(m)) {
+      const unused = used(k) === "full" ? "light" : "full";
+      expect(order.filter((f) => f.startsWith(`t${k}-${unused}-`))).toEqual([]);
+      expect(order).toContain(`t${k}-${used(k)}-back-intro.webm`);
+    }
+    for (const k of ["1", "2", "3", "4", "5", "6"]) expect(used(k)).toBe("full");
     // 登場がぜんぶ先（段7 の登場が、段1 の滞在より前）
     const parts = order.map(partOf);
     expect(parts).toEqual([...parts].sort((a, b) => (a === b ? 0 : a === "intro" ? -1 : 1)));
-    expect(order.indexOf(`t7-${variant}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
+    expect(order.indexOf(`t7-${used("7")}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
     // 登場どうし・滞在どうしは段の低い順
     for (const p of ["intro", "stay"]) {
       const ts = order.filter((f) => partOf(f) === p).map(tierOf);
@@ -322,13 +348,14 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
     const p7 = pt(10000);
     /* 段7 は札ごと降りる（数え上げの額は1字ずつ弾む字に入っていないので、弾むだけだと字が出る前から「0」が見える） */
     expect(p7.carried).toBe(true);
-    expect(p7.count).toEqual({ at: p7.appearAt + 0.5, dur: 1 });
+    /* 数え上げは札と同時に始め、ドンで止める（#1117）。ハロウィン2版目の間（札 → 0.5 秒で数え始め）だと、
+       札が降りてくる 0.5 秒のあいだ「0円」が主役の上に見えた。ドンの秒はハロウィン2版目と同じ */
+    expect(p7.count).toEqual({ at: p7.appearAt, dur: 1.5 });
     expect(p7.donAt).toBeCloseTo(p7.appearAt + 1.5, 5);
-    // ハロウィン2版目の段7 と同じ間（札 → 0.5 秒で数え始め → 1 秒で数え終わり＝ドン）
     const h7 = plateTiming(stageFor(halloween, 10000, 60, allRigs)!);
     expect(h7.carried).toBe(true);
-    expect(h7.count!.at - h7.appearAt).toBeCloseTo(p7.count!.at - p7.appearAt, 5);
-    expect(h7.donAt! - h7.count!.at).toBeCloseTo(p7.donAt! - p7.count!.at, 5);
+    expect(h7.donAt! - h7.appearAt).toBeCloseTo(p7.donAt! - p7.appearAt, 5);
+    expect(p7.count!.at + p7.count!.dur).toBeCloseTo(p7.donAt!, 5);
   });
 
   it("動画が用意できていなければ: 動画なし・その段の札・キャラ絵と字はすぐ（遅らせない）", () => {
@@ -373,14 +400,20 @@ describe("5. キャラ絵と字は revealAt に出る", () => {
 
 /* ---------------------------------------------------------------- 流す順番 */
 
-/** jsdom の <video> に、再生の出来事を手で起こせる仕掛けを付ける */
-type FakeVideo = HTMLVideoElement & { plays: number; reject?: string };
+/**
+ * jsdom の <video> に、再生の出来事を手で起こせる仕掛けを付ける。
+ * 読めたところ（readyState）は「最後まで流せる」(4)。用意（prepareFxKit）を通った要素はそうなっている。
+ * jsdom には `requestVideoFrameCallback` が無いので、最初のコマは `playing` と readyState で決まる（無い端末の道）
+ */
+type FakeVideo = HTMLVideoElement & { plays: number; reject?: string; ready: number };
 function fakeVideo(duration: number): FakeVideo {
   const v = document.createElement("video") as FakeVideo;
   v.plays = 0;
+  v.ready = 4;
   let paused = true;
   Object.defineProperty(v, "duration", { configurable: true, get: () => (v.getAttribute("src") ? duration : NaN) });
   Object.defineProperty(v, "paused", { configurable: true, get: () => paused });
+  Object.defineProperty(v, "readyState", { configurable: true, get: () => v.ready });
   v.play = jest.fn(() => {
     v.plays++;
     paused = false;
@@ -421,6 +454,46 @@ const op = (v: HTMLVideoElement) => v.style.opacity;
 describe("6. 流す順番", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
+
+  /* 動画の時計を手で進める（読み込みで動画が遅れた日を作る） */
+  const clock = (v: HTMLVideoElement, start = 0) => {
+    const c = { t: start };
+    Object.defineProperty(v, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    return c;
+  };
+
+  it("キャラ絵と札の合図（onReveal）は動画の時計で。壁の時計で revealAt を過ぎても、登場が revealAt に来るまで呼ばない（#1117）", () => {
+    const { kit, back } = makeKit(false);
+    const c = clock(back.intro);
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, jest.fn(), onReveal);
+    fire(back.intro, "playing");
+    // 壁の時計で 2.5 秒（revealAt は 2 秒）。動画は読み込みで遅れて 0.5 秒にいる（少しずつは進んでいる）
+    for (let i = 0; i < 25; i++) {
+      c.t += 0.02;
+      jest.advanceTimersByTime(100);
+    }
+    expect(onReveal).not.toHaveBeenCalled();
+    c.t = 1.99;
+    jest.advanceTimersByTime(50);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(1000);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("登場が途中で 3 秒動かなくなった層は消す。全部消えたら onFail（札は動画なしの見せ方ですぐ出る）。合図は出さない", () => {
+    const { kit, back } = makeKit(false);
+    clock(back.intro);
+    const onFail = jest.fn();
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, onFail, onReveal);
+    fire(back.intro, "playing");
+    jest.advanceTimersByTime(2500);
+    expect(onFail).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    expect(onFail).toHaveBeenCalledTimes(1);
+    expect(onReveal).not.toHaveBeenCalled();
+  });
 
   it("置いた瞬間は全部透明。登場は両方の層で同時に流し始め、`playing` が来た層だけ見せる", () => {
     const { kit, back, front } = makeKit();
@@ -601,5 +674,136 @@ describe("6. 流す順番", () => {
     jest.advanceTimersByTime(60000);
     expect(onFail).not.toHaveBeenCalled();
     expect(back.outro.plays).toBe(0);
+  });
+});
+
+/* ---------------------------------------------------------------- コマを持つ前の <video> を見せない（#1133） */
+
+/**
+ * fake の要素に `requestVideoFrameCallback` を付ける（Android の WebView・Chrome は持っている）。
+ * 返す関数で「その要素のコマが描画に渡った」を起こす
+ */
+function framed(...vs: FakeVideo[]) {
+  const q = new Map<HTMLVideoElement, ((now: number, meta: unknown) => void)[]>();
+  for (const v of vs) {
+    q.set(v, []);
+    Object.assign(v, {
+      requestVideoFrameCallback: jest.fn((cb: (now: number, meta: unknown) => void) => q.get(v)!.push(cb)),
+      cancelVideoFrameCallback: jest.fn(),
+    });
+  }
+  return (v: HTMLVideoElement) => q.get(v)!.splice(0).forEach((cb) => cb(0, {}));
+}
+const partsOf = (L: FakeLayer) => [L.intro, L.stay, L.outro];
+/** 層の中で見えている本（opacity が 0 でないもの） */
+const seen = (L: FakeLayer) => (["intro", "stay", "outro"] as const).filter((p) => op(L[p]) !== "0");
+
+describe("7. コマを持つ前の `<video>` を見せない（#1133。Android の WebView は灰色の地と ▶ を描く）", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it("対照: コマの合図を持たない端末（jsdom の素）では、`playing` が来ても読めたところが 2 未満なら見せない", () => {
+    const { kit, back } = makeKit(false);
+    back.intro.ready = 1;
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    expect(op(back.intro)).toBe("0");
+    back.intro.ready = 2;
+    fire(back.intro, "canplay");
+    expect(op(back.intro)).toBe("1");
+  });
+
+  it("`playing` が来ても、最初のコマの合図（requestVideoFrameCallback）が来るまで透明。層ごとに自分の合図で", () => {
+    const { kit, back, front } = makeKit();
+    const present = framed(...partsOf(back), ...partsOf(front!));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    fire(front!.intro, "playing");
+    jest.advanceTimersByTime(500);
+    expect(seen(back)).toEqual([]);
+    expect(seen(front!)).toEqual([]);
+    present(back.intro);
+    expect(seen(back)).toEqual(["intro"]);
+    expect(seen(front!)).toEqual([]);
+    present(front!.intro);
+    expect(seen(front!)).toEqual(["intro"]);
+  });
+
+  it("替わり目（登場 → 滞在 → 締め）: 次の本のコマが出るまで前の本が見えたまま。見えている本が 0 本・2 本になる瞬間が無い", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    present(back.intro);
+    expect(seen(back)).toEqual(["intro"]);
+    // 登場が終わった → 滞在を流し始める。滞在の `playing` が来ても、コマが出るまでは登場の最後のコマ
+    fire(back.intro, "ended");
+    expect(back.stay.plays).toBe(1);
+    expect(seen(back)).toEqual(["intro"]);
+    fire(back.stay, "playing");
+    expect(seen(back)).toEqual(["intro"]);
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    // 締め: 滞在の輪の切れ目から。締めのコマが出るまで滞在の最後のコマ
+    jest.advanceTimersByTime((45 - 1.2 - 3 - 0.15) * 1000 + 50);
+    fire(back.stay, "ended");
+    expect(back.outro.plays).toBe(1);
+    expect(seen(back)).toEqual(["stay"]);
+    fire(back.outro, "playing");
+    expect(seen(back)).toEqual(["stay"]);
+    expect(back.stay.pause).not.toHaveBeenCalled();
+    present(back.outro);
+    expect(seen(back)).toEqual(["outro"]);
+    expect(back.stay.pause).toHaveBeenCalled();
+  });
+
+  it("札の合図（onReveal）は、登場のコマが出てから動画の時計で（合図を待っても早まらない）", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    const c = { t: 0 };
+    Object.defineProperty(back.intro, "currentTime", { configurable: true, get: () => c.t, set: (x: number) => (c.t = x) });
+    const onReveal = jest.fn();
+    runFxShow(kit, hosts(), 45, jest.fn(), onReveal);
+    fire(back.intro, "playing");
+    c.t = 2.5;
+    jest.advanceTimersByTime(100);
+    // コマがまだ出ていない（見えていない）登場の時計では出さない
+    expect(onReveal).not.toHaveBeenCalled();
+    present(back.intro);
+    jest.advanceTimersByTime(50);
+    expect(onReveal).toHaveBeenCalledTimes(1);
+  });
+
+  it("滞在のくり返しの継ぎ目（loop の頭出し。readyState が一瞬 1 に落ちる）では、見せ方を変えない（消すと継ぎ目ごとに点滅する）", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    present(back.intro);
+    fire(back.intro, "ended");
+    fire(back.stay, "playing");
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    // Chromium の loop: 尻で頭へ戻る頭出しのあいだ readyState 1・seeking → seeked・playing（#1134 の1回目で数えた形）
+    back.stay.ready = 1;
+    fire(back.stay, "seeking");
+    fire(back.stay, "waiting");
+    expect(seen(back)).toEqual(["stay"]);
+    back.stay.ready = 4;
+    fire(back.stay, "seeked");
+    fire(back.stay, "playing");
+    present(back.stay);
+    expect(seen(back)).toEqual(["stay"]);
+    expect(back.stay.plays).toBe(1);
+  });
+
+  it("止めたあとに合図が来ても、何も見せない", () => {
+    const { kit, back } = makeKit(false);
+    const present = framed(...partsOf(back));
+    const stop = runFxShow(kit, hosts(), 45, jest.fn());
+    fire(back.intro, "playing");
+    stop();
+    present(back.intro);
+    expect(seen(back)).toEqual([]);
   });
 });

@@ -8,7 +8,8 @@
  *   npx jest app/alertbox/__tests__/fxvideoHook.test.tsx
  *
  * 守りたいのは5つ。
- *   1. 旗が無い（本番の URL）日は、**1バイトも落とさない**（manifest も読まない）。段も差し替えない
+ *   1. 出すと決めていないテーマは、旗が無い（本番の URL）日に**1バイトも落とさない**（manifest も読まない）。段も差し替えない
+ *      （11月の城は配信に出したので、旗なしでも温める。その日の決まりは `fxliveHook.test.tsx`）
  *   2. `still=1`（iPhone の日）は、旗があっても1バイトも落とさない。段は差し替えるが、動画は渡さない
  *   3. 旗がある日は、貯金箱が出て 4 秒おいてから manifest → 温める順に1本ずつ落とす
  *   4. 投げ銭の段の動画を用意してから渡す。渡したら手元に残さない（同じ要素を2件で使い回さない）
@@ -72,9 +73,10 @@ const tierOf = (yen: number): FxTier => {
   return hit;
 };
 
-it("対照: 旗が無い（本番の URL）日は、段を差し替えず、1バイトも落とさない", async () => {
-  const { got } = mount(castle, { still: false, bankReady: true });
-  expect(got.v!.theme).toBe(castle);
+it("対照: 出すと決めていないテーマは、旗が無い（本番の URL）日に段を差し替えず、1バイトも落とさない", async () => {
+  const draft: SeasonTheme = { ...castle, id: "castle-draft", fxVideo: { ...castle.fxVideo!, live: false, variant: null } };
+  const { got } = mount(draft, { still: false, bankReady: true });
+  expect(got.v!.theme).toBe(draft);
   await advance(10000);
   expect(fetched).toEqual([]);
   expect(await got.v!.ensureFor(3000)).toBe(false);
@@ -106,7 +108,8 @@ it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → �
   await advance(200);
   expect(fetched[0]).toBe("/alert/themes/castle/fx/manifest.json");
   const videos = fetched.slice(1);
-  // 置いてある manifest の、light の登場と滞在（〜999円は full）。front の有無は作る担当が決めるので、数は manifest から
+  // 置いてある manifest の、light の登場と滞在（light の無い段は full。2026-11-05 から段1〜6 は full だけ）。
+  // front の有無は作る担当が決めるので、数は manifest から
   const m = JSON.parse(MANIFEST).tiers as Record<string, { variants: Record<string, Record<string, unknown>> }>;
   const want = (part: string) =>
     Object.keys(m)
@@ -117,7 +120,14 @@ it("旗がある日は、貯金箱が出て 4 秒おいてから manifest → �
       });
   expect(videos).toEqual([...want("intro"), ...want("stay")]);
   expect(videos[0]).toBe("/alert/themes/castle/fx/t1-full-back-intro.webm");
-  expect(videos.filter((u) => /outro|t[4-7]-full/.test(u))).toEqual([]);
+  expect(videos.filter((u) => /outro/.test(u))).toEqual([]);
+  // 段ごとに、light があれば light だけ、無ければ full だけを落とす（light が無くても full で出る）
+  for (const k of Object.keys(m)) {
+    const used = m[k].variants.light ? "light" : "full";
+    const unused = used === "light" ? "full" : "light";
+    expect(videos.filter((u) => u.includes(`/t${k}-${unused}-`))).toEqual([]);
+    expect(videos).toContain(`/alert/themes/castle/fx/t${k}-${used}-back-intro.webm`);
+  }
   expect(new Set(videos).size).toBe(videos.length);
 });
 

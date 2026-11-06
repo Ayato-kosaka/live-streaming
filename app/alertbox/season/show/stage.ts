@@ -119,7 +119,10 @@ export function videoCues(v: Pick<VideoPlan, "revealAt" | "text">): TimedCue[] {
   const out: TimedCue[] = [{ at: r, t: r, do: "reveal" }];
   if (v.text === "count") {
     out.push({ at: r, t: r, do: "plateIn", dur: 0.6 });
-    out.push({ at: r + 0.5, t: r + 0.5, do: "count", dur: 1.0 });
+    /* 数え上げは札と同時に始めて、「ドン」で止める。0.5 秒あとから数えていたころは、札が降りてくる 0.5 秒の
+       あいだ「0円」が主役の上に見えていた（2026-11-05、alert_check の段7）。見えた最初のコマから 0 でないのは
+       RichText（札と同時に始まる数え上げは、少し進んだところから回す） */
+    out.push({ at: r, t: r, do: "count", dur: 1.5 });
     out.push({ at: r + 1.5, t: r + 1.5, do: "don" });
     return out;
   }
@@ -139,6 +142,20 @@ export function withoutVideo(st: AlertStage, elapsedSec: number): AlertStage {
   return { ...st, video: null, revealSec: 0, cues: null, headroom: PLAIN_HEADROOM, charBottom: PLAIN_CHAR_BOTTOM };
 }
 
+/**
+ * 動画の段で、**動画が `revealAt` に来た知らせ**を受けてからキャラ絵と札を組むときの段（index.tsx）。
+ * 出す秒をすべて `revealSec` だけ前に寄せる（キャラ絵と札は「いま」出る）。
+ *
+ * キャラ絵と札は、アラートの頭から `revealAt` 秒という壁の時計で出していた。動画は読み込みや展開が遅れると
+ * その分だけ遅れて流れるので、**遅れた日は主役が出きる前に札が出た**（alert-reveal.mjs が数える）。
+ * 動画の時計で出せば、遅れても順番は変わらない。キャラ絵がふくらむ動きは残す（0 だと動かないので、ほぼ 0）
+ */
+export function revealedStage(st: AlertStage): AlertStage {
+  const r = st.revealSec;
+  if (!st.video || r <= 0) return st;
+  return { ...st, revealSec: 0.001, cues: st.cues ? st.cues.map((c) => ({ ...c, at: c.at - r, t: c.t - r })) : null };
+}
+
 export function plateTiming(st: AlertStage): PlateTiming {
   const appear = st.cues ? cueOf(st.cues, "plateIn") : null;
   const textIn = st.cues ? cueOf(st.cues, "textIn") : null;
@@ -146,7 +163,7 @@ export function plateTiming(st: AlertStage): PlateTiming {
   const count = st.cues ? cueOf(st.cues, "count") : null;
   const don = st.cues ? cueOf(st.cues, "don") : null;
   return {
-    appearAt: appear?.t ?? textIn?.t ?? write?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT,
+    appearAt: Math.max(0, appear?.t ?? textIn?.t ?? write?.t ?? st.plate?.appearAt ?? PLATE_DEFAULT_AT),
     carried: !!appear,
     wipe: appear ? null : write ? "write" : null,
     count: count ? { at: count.t, dur: count.dur ?? 1 } : null,

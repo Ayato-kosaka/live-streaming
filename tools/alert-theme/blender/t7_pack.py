@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""1万円の段（段7）: Blender が描いた層を重ねて、full / light の2通りの透明つき WebM にする。
+"""1万円の段（段7）: Blender が描いた層を重ねて、透明つき WebM（full の1通り）にする。
 
     python3 tools/alert-theme/blender/t7_pack.py compose <描いた絵の置き場> <作業の置き場>
     python3 tools/alert-theme/blender/t7_pack.py encode  <作業の置き場> <書き出し先>      # t7-*.webm と manifest-t7.json
@@ -7,6 +7,7 @@
     python3 tools/alert-theme/blender/t7_pack.py check   <書き出し先> [--work <作業の置き場>]  # 秒・大きさ・継ぎ目（本の境目も）・顔の穴・透明の差
     python3 tools/alert-theme/blender/t7_pack.py demo    <書き出し先> --bg <配信画面.jpg> --char <キャラ絵.png> --out <録画.mp4>
     python3 tools/alert-theme/blender/t7_pack.py install <書き出し先> public/alert/themes/castle/fx   # 動画を置き、manifest.json の段7だけ書く
+                                                                                                  # （段7の古い動画は消す）
 
 `check` の終了コード: 0 = 約束どおり / 1 = 外れている所が在る / 2 = 数えられなかった（動画が無い・読めない）
 
@@ -18,12 +19,10 @@
 - 箱の縁で 0 に溶かす（`EDGE`。四角い暗い箱を浮かせない）
 - front は、投げた人のキャラ絵の顔のあたりに穴（`FACE`）。キャラごとの顔の位置は再生の側が持つので、ここは広めに
 
-## full と light（`scratchpad/novfx/CONTRACT.md`）
+## 通りは full だけ
 - full … 叩き台どおり。城が画面いっぱいのまま滞在する
-- light … 門の光からキャラ絵が出たら（`REVEAL`）、城と夜空が 0.9 秒で金の光の線になって消え、右上の満月と塔の先
-  （紋章のように）・あやと・前の粒（縁のきらめき）だけ残す。2026-11-04 の試しで「左右と下の帯を残す」にしたら、
-  城に四角い穴が開いたように見えたのでやめた。あやとの形は、振付け（`t7_motion.pose`）の板の位置から作る（`ayato_mask`。Blender で別に描くと、
-  城をもう1回組み立てることになって1コマの秒が倍になる）。締めで城が貯金箱へ縮むときに、また見える。**登場までは full と同じ**（あやとの意見「キャラが出たら薄く」）
+- 光の線で描いてキャラが出たら薄くする版（light）は、2026-11-05 にやめた（あやと「光の線の案は見ごたえないからやめてほしくて、
+  2,000以上は全面背景ありで良いです」。#1095）。焼くのも確かめるのも full だけ（重ねて焼く時間が半分になる）
 """
 import argparse
 import glob
@@ -35,17 +34,16 @@ import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-import t7_motion as MO  # noqa: E402
 import t7_plan as P  # noqa: E402
 
 W, H = P.W, P.H
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 LAYERS = ("back", "front")
-VARIANTS = ("full", "light")
+VARIANTS = ("full",)
 GLOW_ALPHA = 1.0
 
 
@@ -61,137 +59,7 @@ def masks():
     edge = smoothstep(0, 0.07 * W, side) * smoothstep(0, 0.035 * H, yy) * smoothstep(0, 0.03 * H, H - 1 - yy)
     d = np.sqrt(((xx - 360) / 195) ** 2 + ((yy - 600) / 185) ** 2)
     face = smoothstep(1.0, 1.4, d)
-    # light の版で残す所: 満月と、その前の高い塔の先（右上の紋章のように）
-    dm = np.hypot(xx - 512, yy - 200)
-    moon = 0.9 * (1 - smoothstep(140, 260, dm))
-    return dict(edge=edge, face=face, moon=moon)
-
-
-def ease_io(x):
-    x = min(1.0, max(0.0, x))
-    return 0.5 - 0.5 * math.cos(math.pi * x)
-
-
-def ramp(t, a, b):
-    return min(1.0, max(0.0, (t - a) / (b - a)))
-
-
-def _rot_xyz(rx, ry, rz):
-    """Blender の Euler XYZ（X → Y → Z の順に回す）"""
-    cx, sx, cy, sy, cz, sz = math.cos(rx), math.sin(rx), math.cos(ry), math.sin(ry), math.cos(rz), math.sin(rz)
-    Rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
-    Ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
-    Rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
-    return Rz @ Ry @ Rx
-
-
-def _persp_coeffs(dst, src):
-    """PIL の PERSPECTIVE 用: 出来上がり（画面）の点 dst → 元の絵の点 src に写す8つの数"""
-    A, b = [], []
-    for (x, y), (u, v) in zip(dst, src):
-        A.append([x, y, 1, 0, 0, 0, -u * x, -u * y])
-        A.append([0, 0, 0, x, y, 1, -v * x, -v * y])
-        b += [u, v]
-    return np.linalg.solve(np.array(A, float), np.array(b, float)).tolist()
-
-
-_AY = {}
-# light の版のあやとの形は、絵の半分の大きさで作る（画面のあやとは幅 300px ほど。絵は 1239px あって細かすぎる）
-AY_DOWN = 2
-
-
-def _bilinear(img, sx, sy):
-    h, w = img.shape
-    x0 = np.clip(np.floor(sx).astype(np.int32), 0, w - 2)
-    y0 = np.clip(np.floor(sy).astype(np.int32), 0, h - 2)
-    fx, fy = np.clip(sx - x0, 0, 1), np.clip(sy - y0, 0, 1)
-    a = img[y0, x0] * (1 - fx) + img[y0, x0 + 1] * fx
-    b = img[y0 + 1, x0] * (1 - fx) + img[y0 + 1, x0 + 1] * fx
-    return a * (1 - fy) + b * fy
-
-
-# 形が動いて絵の四角の外へ出る分の余白（絵の px・元の大きさで）。マントが開くと裾が外へ 70px ほど出る
-AY_PAD = 96
-
-
-def warp_board(al, name, vals, down=1, pad=0):
-    """板の形の動き（面の中の dx, dy）を、絵の透明に当てる。t7_motion.deform_px と同じ式（Blender のシェイプキーと同じ形）。
-    動いた先の画素は、元の p - d(p) から取る（動きは絵の数 % なので、逆写像の近似で足りる）。
-    al は周りに pad（縮めた後の px）の余白を足した絵。Blender の板は格子ごと外へ動くので、ここでも四角の外へ出す"""
-    if not any(abs(v) > 1e-6 for v in vals.values()):
-        return al
-    h, w = al.shape
-    g = 48
-    xs, ys = np.linspace(0, w - 1, g), np.linspace(0, h - 1, g)
-    DX = np.zeros((g, g), np.float32)
-    DY = np.zeros((g, g), np.float32)
-    for j, y in enumerate(ys):
-        for i, x in enumerate(xs):
-            dx, dy, _ = MO.board_offset_px(name, vals, (x - pad) * down, (y - pad) * down)
-            DX[j, i], DY[j, i] = dx / down, dy / down
-    DX = np.asarray(Image.fromarray(DX, "F").resize((w, h), Image.BILINEAR))
-    DY = np.asarray(Image.fromarray(DY, "F").resize((w, h), Image.BILINEAR))
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    return _bilinear(al, xx - DX, yy - DY).astype(np.float32)
-
-
-def ayato_mask(clip, t):
-    """そのコマで、あやとの絵が画面のどこを覆うか（0〜1）。Blender の板と同じ寸法・同じカメラの式で写す。
-    縦と横の大きさが別のとき（降り立つときのつぶれ）と、マントのはためき（シェイプキー）も同じに当てる"""
-    p = MO.pose(clip, t)
-    out = np.zeros((H, W), np.float32)
-    cam = p["obj:cam:loc"]
-    lens = p["cam:lens"]
-    for name in MO.AYATO_POSES:
-        op = p[f"val:{name}_op"]
-        if op <= 0:
-            continue
-        if name not in _AY:
-            im = Image.open(os.path.join(ROOT, MO.AYATO_POSES[name]["file"])).convert("RGBA").split()[3]
-            im = im.resize((im.width // AY_DOWN, im.height // AY_DOWN), Image.LANCZOS)
-            _AY[name] = np.pad(np.asarray(im).astype(np.float32) / 255, AY_PAD // AY_DOWN)
-        al = warp_board(_AY[name], name, MO.board_vals(p, name), AY_DOWN, AY_PAD // AY_DOWN)
-        ah, aw = al.shape
-        w, h, ox, oz = MO.ayato_plane(name)
-        # 余白のぶん、板の四角を広げる（m）
-        pm = (AY_PAD // AY_DOWN) * AY_DOWN * MO.AYATO_M_PER_PX
-        w, h, ox, oz = w + 2 * pm, h + 2 * pm, ox + pm, oz + pm
-        sv = p[f"obj:{name}:scale"]
-        sv = sv if isinstance(sv, tuple) else (sv, sv, sv)
-        R = _rot_xyz(*p[f"obj:{name}:rot"])
-        loc = np.array(p[f"obj:{name}:loc"])
-        local = [(-ox, -oz), (w - ox, -oz), (w - ox, h - oz), (-ox, h - oz)]
-        src = [(0, ah), (aw, ah), (aw, 0), (0, 0)]
-        dst = []
-        for lx, ly in local:
-            q = loc + R @ np.array([lx * sv[0], ly * sv[1], 0.0])
-            sx, sy, _ = P.project(tuple(q), cam, lens)
-            dst.append((sx, sy))
-        img = Image.fromarray((np.clip(al, 0, 1) * 255).astype(np.uint8), "L")
-        m = img.transform((W, H), Image.PERSPECTIVE, _persp_coeffs(dst, src), Image.BILINEAR)
-        out = np.maximum(out, np.asarray(m).astype(np.float32) / 255 * op)
-    return out
-
-
-def gold_lines(layer, amt):
-    """絵の明るさの縁を、金の光の線にする（足し算に近い層）。amt は 0〜1（場所ごとでもよい）"""
-    C, _ = layer
-    lum = C @ np.array([0.3, 0.59, 0.11], np.float32)
-    gy, gx = np.gradient(lum)
-    e = np.clip((np.hypot(gx, gy) - 0.022) * 10, 0, 1)
-    e = np.asarray(Image.fromarray((e * 255).astype(np.uint8), "L").filter(ImageFilter.GaussianBlur(0.8))).astype(np.float32) / 255
-    a = np.clip(e * 1.3, 0, 1) * amt
-    gold = np.array([1.0, 0.8, 0.42], np.float32)
-    return a[..., None] * gold, a
-
-
-def light_weight(clip, t):
-    """light の版の薄さ（0 = full と同じ / 1 = 縁だけ）"""
-    if clip == "intro":
-        return ease_io(ramp(t, P.REVEAL, P.REVEAL + 0.9))
-    if clip == "stay":
-        return 1.0
-    return 1 - ease_io(ramp(t, 0.15, 0.7))
+    return dict(edge=edge, face=face)
 
 
 # ---------------------------------------------------------------- 描いた絵を読む
@@ -228,13 +96,6 @@ def read_layer(rec, layer):
         a = np.asarray(Image.fromarray(a, "F").resize((W, H), Image.LANCZOS))
     C = np.asarray(c).astype(np.float32) / 255.0
     return C, np.clip(a, 0, 1)
-
-
-def over(top, bot):
-    Ct, At = top
-    Cb, Ab = bot
-    k = (1 - At)[..., None]
-    return Ct + k * Cb, At + (1 - At) * Ab
 
 
 def scale(layer, m):
@@ -282,18 +143,10 @@ def _compose_one(job):
     if _M is None:
         _M = masks()
     (clip, i), rec, work = job
-    t = P.clip_time(clip, i)
     L = {name: read_layer(rec, name) for name in LAYERS}
-    wl = light_weight(clip, t)
-    ay = ayato_mask(clip, t) if wl > 0 else None
+    back = scale(L["back"], _M["edge"])
+    front = scale(L["front"], _M["edge"] * _M["face"])
     for v in VARIANTS:
-        w = wl if v == "light" else 0.0
-        keep = _M["moon"] if ay is None else np.maximum(_M["moon"], ay)
-        back = scale(L["back"], _M["edge"] * (1 - w + w * keep))
-        if 0.0 < w < 1.0:
-            # 薄くなる途中だけ、城が金の光の線になって消える（あやとの「光の線で描いて、キャラが出たら薄く」）
-            back = over(gold_lines(L["back"], math.sin(math.pi * w) ** 1.2 * (1 - keep)), back)
-        front = scale(L["front"], _M["edge"] * _M["face"] * (1 - 0.3 * w))
         save_rgba(straight(back, FAINT["back"], FLAT_A["back"]), os.path.join(work, v, "back", clip, f"{i:04d}.png"))
         save_rgba(straight(front, FAINT["front"], FLAT_A["front"]), os.path.join(work, v, "front", clip, f"{i:04d}.png"))
     return clip, i
@@ -318,7 +171,7 @@ def compose(raw, work, jobs=4):
 
 
 # ---------------------------------------------------------------- 動画にする
-# 1本ごとの大きさの予算（KB）。1通り（full / light）の6本で 5,270KB ≒ 5.4MB。約束の 6MB に余裕を残す。
+# 1本ごとの大きさの予算（KB）。1通りの6本で 5,270KB ≒ 5.4MB。約束の 6MB に余裕を残す。
 # 2026-11-04 の final は「-b:v＋-crf 10」で焼き、-b:v の目標を無視して full 15.1MB・light 16.1MB になった
 # （透明の流れが色と同じ率で別に焼かれるので、実の大きさは -b:v の 1.5〜2 倍に出る）。率ではなく大きさで決める
 BUDGET_KB = {("back", "intro"): 2600, ("back", "stay"): 900, ("back", "outro"): 550,
@@ -454,7 +307,7 @@ def sheet(work, path, bg=None, picks=None, frames_dir=None):
                 if not os.path.exists(pb):
                     continue
                 x = comp_on(comp_on(b, load_rgba(pb)), load_rgba(pf))
-                if frames_dir and b is bgs[-1] and (v == "full" or c != "intro" or i / P.FPS >= P.REVEAL):
+                if frames_dir and b is bgs[-1]:
                     os.makedirs(frames_dir, exist_ok=True)
                     Image.fromarray((np.clip(x, 0, 1) * 255).astype(np.uint8)).save(
                         os.path.join(frames_dir, f"{v}-{c}-{i:03d}.jpg"), quality=84)
@@ -533,7 +386,7 @@ def _seen(f):
 
 
 def _jump(a, b):
-    """2コマの差（0〜255）。見えている色と透明で測る（2026-11-04: light の front で、見えない所の色の差だけで
+    """2コマの差（0〜255）。見えている色と透明で測る（2026-11-04: 前の版の light の front で、見えない所の色の差だけで
     境目が隣どうしの 2.5 倍になった。見えている色では 0.92 と 0.89 で、跳ねは無かった）"""
     return float(np.mean(np.abs(_seen(a) - _seen(b))))
 
@@ -548,6 +401,10 @@ def check(out, work=None):
     if missing:
         print("無い:", missing)
         return 2
+    # 約束に無い段7の動画（やめた light の版の残りなど）。誰も読まないのに配られ続ける
+    stray = sorted(os.path.basename(p) for p in glob.glob(os.path.join(out, "t7-*.webm")) if p not in files.values())
+    if stray:
+        bad.append(f"約束に無い段7の動画 {stray}")
     M = masks()
     face = M["face"] < 0.05
     for v in VARIANTS:
@@ -635,6 +492,11 @@ def check(out, work=None):
             bad.append(f"manifest の {k}")
     if not (0 < man["revealAt"] < man["introDur"]):
         bad.append("revealAt が intro の中に無い")
+    if sorted(man["variants"]) != sorted(VARIANTS):
+        bad.append(f"manifest の段7の通り {sorted(man['variants'])}（{list(VARIANTS)} だけ）")
+    named = {f for layers in man["variants"].values() for clips in layers.values() if clips for f in clips.values()}
+    if named != {os.path.basename(p) for p in files.values()}:
+        bad.append(f"manifest の段7の動画の名前が、焼いた動画と合わない: {sorted(named)}")
     for b in bad:
         print("NG", b)
     print("OK" if not bad else f"外れ {len(bad)} 件")
@@ -671,7 +533,7 @@ def char_layer(char_path, name, amount):
 
 
 def demo(out, bg, char, path, stay_loops=4, name="テストさん", amount="¥10,000"):
-    """配信画面に、full（左）と light（右）を並べた縦の録画。キャラ絵は revealAt で出す"""
+    """配信画面に重ねた縦の録画（通りごとに横に並べる。いまは full の1つ）。キャラ絵は revealAt で出す"""
     im = Image.open(bg).convert("RGB")
     # 広げた箱（幅 927）に 9:16 の動画を、画面の下の端まで（上は 272 から）
     BX, BY, BW = 76, 272, 927
@@ -680,7 +542,7 @@ def demo(out, bg, char, path, stay_loops=4, name="テストさん", amount="¥10
     CL, TX = char_layer(char, name, amount)
     seq = [("intro", 0)] + [("stay", k) for k in range(stay_loops)] + [("outro", 0)]
     enc = subprocess.Popen(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
-                            "-s", "1440x1280", "-r", str(P.FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+                            "-s", f"{720 * len(VARIANTS)}x1280", "-r", str(P.FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "20",
                             "-pix_fmt", "yuv420p", "-movflags", "+faststart", path], stdin=subprocess.PIPE)
     lbl = font(40)
     t_all = 0.0
@@ -740,7 +602,7 @@ def demo(out, bg, char, path, stay_loops=4, name="テストさん", amount="¥10
         for g in gens.values():
             for _ in g:
                 pass
-    still = np.hstack([np.asarray(Image.fromarray((base * 255).astype(np.uint8)).resize((720, 1280), Image.BILINEAR))] * 2)
+    still = np.hstack([np.asarray(Image.fromarray((base * 255).astype(np.uint8)).resize((720, 1280), Image.BILINEAR))] * len(VARIANTS))
     for _ in range(pad):
         enc.stdin.write(still.tobytes())
     enc.stdin.close()
@@ -750,13 +612,26 @@ def demo(out, bg, char, path, stay_loops=4, name="テストさん", amount="¥10
 
 
 def install(src, dest):
-    """焼いた動画を public へ置き、manifest.json の段7だけを書き換える（ほかの段は別の担当が書くので触らない）"""
+    """焼いた動画を public へ置き、manifest.json の段7だけを書き換える（ほかの段は別の担当が書くので触らない）。
+    段7の動画のうち、新しい manifest に無いもの（やめた light の版など）は消す。残すと、誰も読まない動画が配られ続ける"""
     import shutil
     os.makedirs(dest, exist_ok=True)
+    frag = json.load(open(os.path.join(src, "manifest-t7.json")))
+    keep = {f for layers in frag["7"]["variants"].values() for clips in layers.values() if clips for f in clips.values()}
+    # 焼けていない本がある書き出し（manifest-t7.json の通りが欠けている）では置かない。置くと、今の動画を消してしまう
+    lack = [f for f in keep if not os.path.exists(os.path.join(src, f))]
+    if sorted(frag["7"]["variants"]) != sorted(VARIANTS) or len(keep) != 6 * len(VARIANTS) or lack:
+        print("書き出しが揃っていないので置かない:", sorted(frag["7"]["variants"]), len(keep), lack)
+        return 2
     for p in sorted(glob.glob(os.path.join(src, "t7-*.webm"))):
+        if os.path.basename(p) not in keep:
+            continue
         shutil.copyfile(p, os.path.join(dest, os.path.basename(p)))
         print("置いた", os.path.basename(p))
-    frag = json.load(open(os.path.join(src, "manifest-t7.json")))
+    for p in sorted(glob.glob(os.path.join(dest, "t7-*.webm"))):
+        if os.path.basename(p) not in keep:
+            os.remove(p)
+            print("消した", os.path.basename(p))
     mp = os.path.join(dest, "manifest.json")
     man = json.load(open(mp)) if os.path.exists(mp) else {}
     man.setdefault("tiers", {})["7"] = frag["7"]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """投げ銭の段の動画を、本物の配信画面に重ねた**縦の確かめ用の録画**にする（#1095。仮の重ね）。
 
-    python3 tools/alert-theme/fx_review.py <fx の置き場> --tier 5 --bg <配信画面の置き場> --char <キャラ絵.png> --out <録画.mp4>
+    python3 tools/alert-theme/fx_review.py <fx の置き場> --tier 5 --bg <配信画面の置き場> --char <キャラ絵.png>… --out <録画.mp4>
            [--reps 3] [--name なまえ] [--amount 2000]
 
 再生の土台は別の担当が作る。ここは「書き出した動画が、配信の上でどう見えるか」を先に見るための仮の重ね:
@@ -10,7 +10,8 @@
   投げ銭のとき手で広げた箱（1080×1920 の 76,445 から幅 927。下は画面の端で切れる）に、
   back → 投げた人のキャラ絵（`revealAt` でぽんと出る）→ 名前と額 → front の順に重ねる
 - 流す順は 登場 → 滞在を `--reps` 回 → 締め
-- 1,000円〜（2通りある段）は、full と light を左右に並べる。上が昼の街、下が顔
+- 列はキャラ絵ごと（`--char` に何人でも。大きい頭・縦長・横長を混ぜて、主役が隠れないかを同じ秒で見比べる）。
+  2通りある段は通りごとにも列を分ける。上が昼の街、下が顔。3列を超えたら1マスを小さくする
 
 キャラ絵は再生の側と同じ置き方（箱の上 headroom〜下の端 manifest の charBottom（無ければ 0.98）・幅いっぱい・中身で収める・revealAt から 0.85 秒でふくらむ。
 `fx_hero.py` の CharLayout）。叩き台の枠（中央の 446×538）で置いていた間は、縦長の絵があやとを隠すのが見えなかった。
@@ -32,6 +33,7 @@ import fx_hero  # noqa: E402  キャラ絵の置き方（再生の側と同じ�
 W, H, FPS = 720, 1280, 30
 BOX = (76, 445, 927)  # 配信画面（1080×1920）の上の、広げた箱
 CELL = (540, 960)
+CELL_SMALL = (360, 640)  # 3列を超えるとき（1マスを小さくして、横に並べる）
 # 段ごとのキャラ絵の箱の上の空き（再生の側の themes.ts の video.headroom と同じ）
 HEADROOM = {1: 0.17, 2: 0.22, 3: 0.2, 4: 0.2, 5: 0.2, 6: 0.2, 7: 0.2}
 FONT = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
@@ -81,7 +83,7 @@ def main():
     ap.add_argument("fx")
     ap.add_argument("--tier", type=int, required=True)
     ap.add_argument("--bg", required=True)
-    ap.add_argument("--char", required=True)
+    ap.add_argument("--char", nargs="+", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--name", default="テストさん")
@@ -91,41 +93,42 @@ def main():
     e = man["tiers"][str(o.tier)]
     variants = list(e["variants"])
     amount = o.amount or {1: 100, 2: 300, 3: 700, 4: 1500, 5: 3000, 6: 7000, 7: 10000}.get(o.tier, 1000)
-    bw = round(BOX[2] * CELL[0] / 1080)
+    # 列: (通り, キャラ絵)。行: 配信画面（昼の街・顔）
+    cols = [(v, ci) for v in variants for ci in range(len(o.char))]
+    cell = CELL if len(cols) <= 3 else CELL_SMALL
+    bw = round(BOX[2] * cell[0] / 1080)
     bh = round(bw * 16 / 9)
-    bx, by = round(BOX[0] * CELL[0] / 1080), round(BOX[1] * CELL[1] / 1920)
+    bx, by = round(BOX[0] * cell[0] / 1080), round(BOX[1] * cell[1] / 1920)
     bgs = []
     for nm in ("street", "face"):
-        im = Image.open(os.path.join(o.bg, f"prism-{nm}.jpg")).convert("RGB").resize(CELL, Image.LANCZOS)
+        im = Image.open(os.path.join(o.bg, f"prism-{nm}.jpg")).convert("RGB").resize(cell, Image.LANCZOS)
         bgs.append(np.asarray(im, np.float32) / 255)
     # キャラ絵（再生の側と同じ置き方。出るときのふくらみも）
-    lay = fx_hero.CharLayout(o.char, HEADROOM.get(o.tier, 0.2), e.get("charBottom", 0.98))
+    lays = [fx_hero.CharLayout(p, HEADROOM.get(o.tier, 0.2), e.get("charBottom", 0.98)) for p in o.char]
     char_cache = {}
 
-    def char_at(scale):
-        key = round(scale, 3)
+    def char_at(ci, scale):
+        key = (ci, round(scale, 3))
         if key not in char_cache:
-            _, pm = lay.mask(scale)
+            _, pm = lays[ci].mask(scale)
             a = np.clip(pm[..., 3:4], 1e-4, 1)
             rgba = np.dstack([np.where(pm[..., 3:4] > 1e-4, pm[..., :3] / a, 0), pm[..., 3:4]])
             im = Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA").resize((bw, bh), Image.LANCZOS)
             char_cache[key] = np.asarray(im)
         return char_cache[key]
 
-    txt = text_layer(o.name, amount, (bw, bh), lay.origin[1])
+    txts = [text_layer(o.name, amount, (bw, bh), lay.origin[1]) for lay in lays]
     n_i = round(e["introDur"] * FPS)
     n_s = round(e["stayDur"] * FPS)
     n_o = round(e["outroDur"] * FPS)
     seq = [("intro", n_i)] + [("stay", n_s)] * o.reps + [("outro", n_o)]
-    cols = len(variants)
-    out_w, out_h = CELL[0] * cols, CELL[1] * 2
-    if cols == 1:
-        out_w, out_h = CELL[0] * 2, CELL[1]
+    out_w, out_h = cell[0] * len(cols), cell[1] * len(bgs)
+    out_w += out_w % 2
     enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{out_w}x{out_h}",
                             "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-crf", "21", "-preset", "medium",
                             "-pix_fmt", "yuv420p", "-movflags", "+faststart", o.out], stdin=subprocess.PIPE)
     t_all = 0
-    font = ImageFont.truetype(FONT, 22)
+    font = ImageFont.truetype(FONT, 22 if cell == CELL else 17)
     for clip, n in seq:
         rd = {}
         for v in variants:
@@ -142,39 +145,34 @@ def main():
             if clip == "outro":
                 ck *= 1 - i / max(1, n - 1)
             canvas = np.zeros((out_h, out_w, 3), np.float32)
-            for ci, v in enumerate(variants):
+            for col, (v, ci) in enumerate(cols):
                 for ri, bg in enumerate(bgs):
-                    cell = bg.copy()
+                    c_ = bg.copy()
                     b = fr.get((v, "back"))
                     if b is not None:
-                        over(cell, b, bx, by)
+                        over(c_, b, bx, by)
                     if ck > 0:
-                        ca = char_at(sc).copy()
+                        ca = char_at(ci, sc).copy()
                         ca[..., 3] = (ca[..., 3] * ck).astype(np.uint8)
-                        over(cell, ca, bx, by)
-                        ta = txt.copy()
+                        over(c_, ca, bx, by)
+                        ta = txts[ci].copy()
                         ta[..., 3] = (ta[..., 3] * ck).astype(np.uint8)
-                        over(cell, ta, bx, by)
+                        over(c_, ta, bx, by)
                     f = fr.get((v, "front"))
                     if f is not None:
-                        over(cell, f, bx, by)
-                    if cols == 1:
-                        x0, y0 = ri * CELL[0], 0
-                    else:
-                        x0, y0 = ci * CELL[0], ri * CELL[1]
-                    canvas[y0:y0 + CELL[1], x0:x0 + CELL[0]] = cell
+                        over(c_, f, bx, by)
+                    canvas[ri * cell[1]:(ri + 1) * cell[1], col * cell[0]:(col + 1) * cell[0]] = c_
             im = Image.fromarray((np.clip(canvas, 0, 1) * 255 + 0.5).astype(np.uint8))
             d = ImageDraw.Draw(im)
-            labels = variants if cols > 1 else ["昼の街", "顔"]
-            for ci, lab in enumerate(labels):
-                tag = {"full": "full（全面）", "light": "light（光の線・キャラが出たら薄く）"}.get(lab, lab)
-                d.text((ci * CELL[0] + 10, 8), f"段{o.tier} {tag}  {T:4.1f}秒 {clip}", font=font, fill=(255, 255, 255),
+            for col, (v, ci) in enumerate(cols):
+                tag = f"{v} " if len(variants) > 1 else ""
+                d.text((col * cell[0] + 8, 6), f"段{o.tier} {tag}{lays[ci].name}  {T:4.1f}秒 {clip}", font=font, fill=(255, 255, 255),
                        stroke_width=3, stroke_fill=(0, 0, 0))
             enc.stdin.write(np.asarray(im).tobytes())
             t_all += 1
     enc.stdin.close()
     enc.wait()
-    print(o.out, f"{t_all / FPS:.1f}秒", f"{os.path.getsize(o.out) / 1024 / 1024:.1f}MB")
+    print(o.out, f"{t_all / FPS:.1f}秒", f"{out_w}x{out_h}", f"{os.path.getsize(o.out) / 1024 / 1024:.1f}MB")
 
 
 if __name__ == "__main__":

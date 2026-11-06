@@ -1,0 +1,185 @@
+# **PR に札 `出す` を付けたら、緑になりしだいマージして本番に出し、出たことを確かめる**（#1117）。
+#
+# それまでは、CI の待ち・マージ・デプロイの起動・デプロイの待ち・本番との突き合わせを
+# セッションが何十回も API を叩き、長いログを読んで回していた。**待っているあいだも
+# トークンは減る。** Actions は無料なので、待ちと突き合わせは全部ここでやる。
+# セッションに残るのは「札を1つ付ける」と「結果の1行（PR へのコメント）を読む」だけ。
+#
+# **札を付けることが「出す」という判断。** 判断は今までどおりセッションの責務で、
+# ここは「緑なら出す」を機械的に回すだけ（中身と判断の表は `python/ship.py` の頭）。
+#
+# ## 流れ
+#
+#   見る（書かない）: PR が open・札・base が master・手で出す面に触れていない・
+#                     head の check が自分以外ぜんぶ success/skipped・枝で run が走っていない・mergeable
+#                     → 1つでも走っていれば**何もせず終わる**（次の完了でまた起きる）
+#   出す（1本ずつ）: マージ（merge commit）→ 変えた場所で配り先を決める → master で
+#                     workflow_dispatch → **終わるまでここで待つ** → 本番と突き合わせる
+#                     → PR に1コメント（5行以内）、`Closes #N` で閉じた issue にも同じ1行
+#   落ちたら:        落ちた行だけ書いて、札 `出す` を外し `待ち-システム` を付ける
+#
+# ## GITHUB_TOKEN でマージすることの副作用（2つ。どちらも手当てしてある）
+#
+# 1. **`push: master` で起きるものが起きない**（GitHub の再帰よけ）。人がマージしていたときに
+#    走っていた `Selftests` と `重い見張り` は、マージのあと名指しで起こし直す
+#    （起こす先は `push: master` を持つワークフローを YAML から毎回読む）
+# 2. **`.github/workflows/` を触った PR はマージできない**（`workflows` の権限を持てない）。
+#    札が付いていても「手で出す面」として1行返す。この ship.yml 自身もそう
+#
+# ## 起こしの一覧は、名前で繋がる
+#
+# `workflow_run` は**ワークフローの `name:` で解決される。名前を変えると黙って切れる。**
+# 赤くならない。札を付けた PR が、緑になっても出なくなるだけ。だから2本で見張る。
+#
+# - `python/workflow_link_selftest.py`（毎 PR）: 並べた名前が**実在するか**
+# - `python/ship_selftest.py`（毎 PR）: **PR の枝で走るものが全部並んでいるか**（漏れ・余り）。
+#   `pull_request` を持つものと、`claude/**` などの枝への `push` で走るもの
+#   （ショートの取り込みなど。走っているあいだはマージしないので、終わったら起こしてもらう）
+#
+# 走るたびに `python/ship.py look` も同じ照合をして、ずれていれば赤い注記を残す。
+#
+# `python/chain_alive_watch.py` の「繋ぎが実績で生きているか」からは、ここを外してある
+# （`PR_WAKES`）。ここの繋ぎ先は PR を触った日にしか走らないので、3日 PR が無いだけで
+# 「切れている」と読まれ、毎 PR が赤くなる。
+name: 出す
+
+run-name: "${{ github.event_name == 'workflow_dispatch' && (inputs.dry_run && '出す（dry-run。何も書かない）' || '出す（手で押した）') || github.event_name == 'pull_request' && format('出す（#{0} に札）', github.event.pull_request.number) || format('出す（{0} が終わった）', github.event.workflow_run.name) }}"
+
+on:
+  pull_request:
+    types: [labeled]
+
+  workflow_run:
+    # **PR の枝で走るもの全部。** 名前を変えたら、ここも変える（変えないと黙って切れる）
+    workflows:
+      - "Selftests"
+      - "Closes Check"
+      - "Ticket Stock"
+      - "ショートの道具の見張り"
+      - "ショートの材料を作る"
+      - "ショートの下見を置く"
+      - "ショートを並べて書き出す"
+      - "ショートの録画を受け取る"
+      - "ショートの数字を BigQuery に入れる"
+      - "付箋を読む"
+      - "投げ銭の段の動画を焼く"
+      - "島の絵を焼く"
+      - "投げ銭の演出を Blender で描く"
+      - "投げ銭アラートの確かめ"
+    types: [completed]
+
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR の番号（空なら札 `出す` の付いた開いている PR ぜんぶ）"
+        required: false
+        type: string
+      dry_run:
+        # **既定は見るだけ。** 押し間違えてもマージも配りも起きない
+        description: "判断と「何をするか」だけ出す（マージも配りもしない）"
+        required: false
+        default: true
+        type: boolean
+
+# 既定は何も持たせない。job ごとに要るものだけ
+permissions: {}
+
+jobs:
+  look:
+    name: 見る
+    # 札の付け外しは何でも届く。`出す` 以外の札では起きない
+    if: ${{ github.event_name != 'pull_request' || github.event.label.name == '出す' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # **読むだけ。** dry-run はこの job で終わるので、押し間違えても1バイトも書けない
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      checks: read
+      statuses: read
+      actions: read
+    outputs:
+      prs: ${{ steps.look.outputs.prs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # リポジトリは大きい（作業木で 369MB）。読むのは python/ と .github/ と直下の設定だけ
+          sparse-checkout: |
+            python
+            .github
+          filter: blob:none
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: PyYAML を入れる
+        run: python -m pip install --quiet PyYAML==6.0.2
+
+      # **入力は環境変数で渡す。** `${{ }}` を `run:` に直に展開すると、中身がシェルとして走る
+      - name: 判断する
+        id: look
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EV: ${{ github.event_name }}
+          PR_EVENT: ${{ github.event.pull_request.number }}
+          PR_INPUT: ${{ inputs.pr }}
+          DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: |
+          set -euo pipefail
+          pr="${PR_EVENT:-${PR_INPUT:-}}"
+          # **数字だけ通す。** `12 && curl …` のようなものを後ろへ渡さない
+          if [ -n "$pr" ] && ! [[ "$pr" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr は番号だけ: $pr"
+            exit 2
+          fi
+          args=(look --event "$EV")
+          [ -n "$pr" ] && args+=(--pr "$pr")
+          [ "$DRY" = "1" ] && args+=(--dry-run)
+          python3 python/ship.py "${args[@]}"
+
+  ship:
+    name: 出す
+    needs: look
+    if: ${{ needs.look.outputs.prs != '' && !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+    runs-on: ubuntu-latest
+    # Hosting は実測 4〜5分。配りを待つ上限は python/ship.py の DEPLOY_WAIT_S（45分）
+    timeout-minutes: 75
+    # **配りは1本ずつ。** 順番待ちの run は新しいものに差し替えられるが、どの回も
+    # 「札の付いた PR ぜんぶ」を見直すので、差し替えで取りこぼす PR は無い
+    concurrency:
+      group: ship
+      cancel-in-progress: false
+    permissions:
+      # マージする
+      contents: write
+      # PR にコメントを書き、札を付け替える
+      pull-requests: write
+      # 閉じた issue に同じ1行を書く・札 `出す` が無ければ作る
+      issues: write
+      # 配りと master の見張りを workflow_dispatch で押す・run を待つ
+      actions: write
+      # head の check を見直す（読むだけ）
+      checks: read
+      statuses: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            python
+            .github
+          filter: blob:none
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: PyYAML を入れる
+        run: python -m pip install --quiet PyYAML==6.0.2
+
+      - name: マージして、配って、確かめる
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRS: ${{ needs.look.outputs.prs }}
+        run: python3 python/ship.py go --prs "$PRS"

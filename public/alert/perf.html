@@ -33,11 +33,12 @@
     動画は始まる前にまとめて読む（「動画を読み込み中」）。表の「動画」は `playing` が来たか
     （来るまでは透明。3秒来なければ「動かず」）。`?only=video` で動画の4場面だけ流す
   - 「11月 …」の3場面は、11月の投げ銭の演出（#1095。透明つきの動画を、キャラ絵の後ろと前の2層で流す）の重さ。
-    `?only=nov` で3場面だけ流す。どれも 1,500円・城のテーマ・字は11月の段（ハロウィン2版目と同じ字）:
-    - 11月 動画なし … 物差し（`fx=full&still=1`。同じ段の字とキャラ絵だけ）
+    `?only=nov` で3場面だけ流す。どれも 1,500円・城のテーマ・字は11月の段（ハロウィン2版目と同じ字）。
+    **旗（`fx`）は付けない**: 11月の7段は全段 full で配信に出ているので、旗なしが配信と同じ条件:
+    - 11月 動画なし … 物差し（`still=1`。iPhone の日と同じ、同じ段の字とキャラ絵だけ）
     - 11月 2層（仮） … 仮の動画（上の光の動画）を2本、アラートの後ろ（奥）と前（手前）に重ねて流す。
       本物の動画がまだ無いうちに、2層ぶんの展開と合成がスマホで何コマ出るかを見る
-    - 11月 本物 … アラートの中の再生（`fx=full`）が、置いてある本物の動画を流す。動画がまだ置かれていなければ
+    - 11月 本物 … アラートの中の再生（配信と同じ full）が、置いてある本物の動画を流す。動画がまだ置かれていなければ
       「動画」の列が「無し」で、中身は「動画なし」と同じ
 
   測り方:
@@ -152,9 +153,9 @@
     { name: "動画 黒地MP4", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video", video: "screen" },
     { name: "動画 抜きMP4", q: { preview: "1", amount: "1000", theme: "none" }, sec: 12, group: "video", video: "pack" },
     // 11月の演出の動画（#1095）。2層で流したときの重さ。1行目が動画なしの物差し（同じ段の字とキャラ絵）
-    { name: "11月 動画なし", q: { preview: "1", amount: "1500", theme: "castle", fx: "full", still: "1" }, sec: 12, group: "nov" },
-    { name: "11月 2層（仮）", q: { preview: "1", amount: "1500", theme: "castle", fx: "full", still: "1" }, sec: 12, group: "nov", videos: ["novback", "novfront"] },
-    { name: "11月 本物", q: { preview: "1", amount: "1500", theme: "castle", fx: "full" }, sec: 12, group: "nov", real: true },
+    { name: "11月 動画なし", q: { preview: "1", amount: "1500", theme: "castle", still: "1" }, sec: 12, group: "nov" },
+    { name: "11月 2層（仮）", q: { preview: "1", amount: "1500", theme: "castle", still: "1" }, sec: 12, group: "nov", videos: ["novback", "novfront"] },
+    { name: "11月 本物", q: { preview: "1", amount: "1500", theme: "castle" }, sec: 12, group: "nov", real: true },
     // 投げ銭のときに箱を手で広げる、をそのまま測る（ここだけ、測っているあいだに手を動かしてもらう）
     { name: "1,000円 箱を動かす", q: { preview: "1", amount: "1000", emoji: "🌸" }, sec: 12, ask: "箱を広げたり戻したりしてください" }
   ];
@@ -236,6 +237,11 @@
 
   function makePlayer(kind) {
     var v = document.createElement("video");
+    // 本物（app/alertbox/videoGuard.ts）と同じ守り。poster は透明（Android の WebView の灰色の地と ▶ を出さない。#1133）
+    v.setAttribute("poster", "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+    v.setAttribute("disablepictureinpicture", "");
+    v.setAttribute("disableremoteplayback", "");
+    v.controls = false;
     v.muted = true;
     v.defaultMuted = true;
     v.setAttribute("muted", "");

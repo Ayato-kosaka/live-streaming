@@ -4,7 +4,8 @@
 - 前兆 0〜0.8: 縁が少し暗くなり、霧が湧いて、崖の上から光の筋が差す
 - 登場 0.8〜2.2: 霧の奥から、あやとが小舟でエメラルドの湖を漕いでくる（カメラがゆっくり寄る）
 - 山場 2.2〜3.4: あやとが櫂を掲げると、湖面に光の道が走り、しぶきが金の粒になる。2.6 で投げた人のキャラ絵
-- 滞在（3秒の輪）: 舟は湖の上でゆれ、湖面がきらめき、霧が流れ、紅葉が舞う
+- キャラ絵が出たら（2.6〜3.3）: 景色がすっと薄く引いて、縁（左右の崖・上の帯の舟のまわりの湖・下の隅の紅葉）だけが少し残る
+- 滞在（3秒の輪）: 配信の景色がほぼ見えるまま。上の帯の舟がゆれ、縁の紅葉が舞い、縁がきらめく
 - 締め 1.0秒: 霧が閉じて、舟の灯りが小さくなって消える
 
 投げた人のキャラ絵は、再生の側で箱の上 20%〜下 2% に幅いっぱいで置かれる（`app/alertbox/index.tsx`）。
@@ -12,8 +13,9 @@
 再生の担当が本物で確かめた）。キャラ絵が出るあいだに、カメラが湖面へ降りて（画面を上へずらし、少し低く）、
 舟は少し奥の左へ寄る。滞在のあいだ、舟はキャラ絵の箱より上の帯にいる（`fx_hero.py` で数える）。
 
-full は叩き台どおりの全面（空と遠い山・崖と修道院・湖・手前の紅葉）。light は崖と修道院を光の線で描き、湖面は光のさざ波だけ。
-キャラが出たら線を消し、あやとの舟は左の奥へ小さく退いて、縁のきらめきだけを残す。
+通りは full だけ（全面の景色で出て、キャラが出たら薄くする）。前は「光の線で描く light」と見比べたが、
+あやとが「光の線の案は見ごたえない」「1,000 は、キャラが登場したら背景薄くするって話」と決めた（2026-11-05、#1095）。
+薄く引くのは見え方だけで、演出の秒は変えない（登場 3.4・滞在 3.0・締め 1.0）。
 """
 import math
 import os
@@ -35,13 +37,14 @@ def art(*p, **kw):
 class Scene(Stage):
     TIER = 4
     INTRO, STAY, OUTRO, REVEAL = 3.4, 3.0, 1.0, 2.6
-    VARIANTS = ("full", "light")
-    FRONT = {"full": True, "light": False}
+    VARIANTS = ("full",)
+    FRONT = {"full": True}
+    # キャラ絵が出たら、景色が薄く引く秒（一度きりの動きなので、登場の終わり 3.4 までに引ききる）
+    THIN = (2.62, 3.3)
 
     CAM_END = ((0.0, 0.0, 2.3), (0.0, 40.0, 2.5))
 
     def setup(self):
-        full = self.variant == "full"
         self.boat = art("ayato", "boat.webp")
         self.cliffs = art("t4", "cliffs.webp")
         ref = self.cam_at(self.INTRO, settle=False)
@@ -53,54 +56,39 @@ class Scene(Stage):
         self.cliff_pos = np.array([p[0], self.cliff_depth, 0.0])
         _, wy, _ = ref.project(self.cliff_pos[None])
         self.water_y = float(wy[0])
-        if full:
-            self.sky = art("t4", "sky.webp")
-            self.lake = art("t4", "lake.webp")
-            self.fg = art("t4", "branches.webp")
-            self.sky_depth = 220.0
-            self.sky_h = 1500 * self.sky_depth / ref.foc
-            self.sky_pos = unproject(ref, 360, 250, depth=self.sky_depth)  # 絵の光の筋の元（上の真ん中）が、谷の上に
-            # 手前の端は、カメラが降りても画面の下まで届く近さまで（届かないと、湖の下に空の板が見えた）
-            self.lake_quad = floor_rect(ref, -420, self.water_y - 3, W + 420, H + 2600)
-            self.fg_pos = unproject(ref, 360, H - 70, depth=5.0)
-            self.fg_h = 1380 * 5.0 / ref.foc
-            lk = self.lake.levels[0]
-            c = lk[..., :3]
-            lum = c.max(-1)
-            self.lake_hi = np.clip((lum - 0.72) / 0.25, 0, 1).astype(np.float32)  # 湖の光の道（描かれた明るいきらめき）
-            cl = self.cliffs.levels[0]
-            cut = int(0.68 * cl.shape[0])
-            self.cliff_flip = Art(np.ascontiguousarray(cl[:cut][::-1][: int(cut * 0.32 / 0.68 * 1.0) + 1]))
-            yy = np.arange(H, dtype=np.float32)[:, None]
-            self.sky_mul = (np.clip(0.62 + 0.3 * (yy / 400), 0.62, 0.94) * np.ones((1, W), np.float32)) * self.edge
-        else:
-            self.cliff_flip = None
-            lvl = self.cliffs.levels[0]
-            # 湖面より下（透明）を切った崖の絵から線を取る
-            # 崖は外形だけ（なめらかに）。中の線は修道院のまわりだけ取る
-            # 崖は外形と大きな割れ目だけ（なめらかに）。修道院は細かく取る（別の線にして、あとから描く）
-            self.lines = LineArt(lvl, start=(0.5, 0.68), lo=80, hi=180, min_len=50, work_w=700, blur=2.0, outer_blur=4.0)
-            inner = np.zeros(lvl.shape[:2], np.float32)
-            h_, w_ = inner.shape
-            inner[int(0.2 * h_):int(0.42 * h_), int(0.66 * w_):int(0.99 * w_)] = 1
-            mon = lvl * inner[..., None]
-            self.lines_mon = LineArt(mon, start=(0.82, 0.42), lo=50, hi=130, min_len=12, work_w=700, blur=1.2)
-            yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-            g = np.exp(-(((xx - 360) / 360) ** 2 + ((yy - 430) / 360) ** 2))
-            self.shade_map = (g * self.edge).astype(np.float32)
-            R = np.random.default_rng(44)
-            pts = []
-            while len(pts) < 20:
-                x, y = R.random() * W, 60 + R.random() * 1040
-                if (x < 105 or x > W - 105 or y < 170) and not (x < 300 and 300 < y < 520):
-                    pts.append((x, y))
-            self.edge_pts = np.array(pts)
-            self.edge_tw = R.random((len(pts), 3))
+        self.sky = art("t4", "sky.webp")
+        self.lake = art("t4", "lake.webp")
+        self.fg = art("t4", "branches.webp")
+        self.sky_depth = 220.0
+        self.sky_h = 1500 * self.sky_depth / ref.foc
+        self.sky_pos = unproject(ref, 360, 250, depth=self.sky_depth)  # 絵の光の筋の元（上の真ん中）が、谷の上に
+        # 手前の端は、カメラが降りても画面の下まで届く近さまで（届かないと、湖の下に空の板が見えた）
+        self.lake_quad = floor_rect(ref, -420, self.water_y - 3, W + 420, H + 2600)
+        self.fg_pos = unproject(ref, 360, H - 70, depth=5.0)
+        self.fg_h = 1380 * 5.0 / ref.foc
+        lk = self.lake.levels[0]
+        c = lk[..., :3]
+        lum = c.max(-1)
+        self.lake_hi = np.clip((lum - 0.72) / 0.25, 0, 1).astype(np.float32)  # 湖の光の道（描かれた明るいきらめき）
+        cl = self.cliffs.levels[0]
+        cut = int(0.68 * cl.shape[0])
+        self.cliff_flip = Art(np.ascontiguousarray(cl[:cut][::-1][: int(cut * 0.32 / 0.68 * 1.0) + 1]))
+        yy = np.arange(H, dtype=np.float32)[:, None]
+        self.sky_mul = (np.clip(0.62 + 0.3 * (yy / 400), 0.62, 0.94) * np.ones((1, W), np.float32)) * self.edge
+        self.keep = self.thin_keep()
+        R = np.random.default_rng(44)
+        pts = []
+        while len(pts) < 22:
+            x, y = R.random() * W, 60 + R.random() * 1040
+            if self.keep[int(y), int(x)] > 0.2:
+                pts.append((x, y))
+        self.edge_pts = np.array(pts)
+        self.edge_tw = R.random((len(pts), 3))
         self.leaves = [load_rgba(os.path.join(ART, "t1", f"leaf{i}.webp"), 96) for i in range(6)]
         self.mist = Mist(404)
         self.spark = Loop(500, 4041, cycles=(1, 2))
         self.near = Loop(60, 4042, cycles=(1, 1))
-        self.fall = Loop(16 if full else 8, 4043, cycles=(1, 1))
+        self.fall = Loop(16, 4043, cycles=(1, 1))
         self.bok = Loop(10, 4044, cycles=(1, 1))
         self.ripple = Loop(160, 4045, cycles=(1, 3))
         R = np.random.default_rng(4046)
@@ -137,32 +125,58 @@ class Scene(Stage):
         a = ease_out(ramp(Ti, 0.7, 2.3))
         y = lerp(75.0, 19.0, a)
         x = lerp(2.4, -1.0, a)
-        # キャラ絵が出るあいだに、少し奥の左へ（light は角まで）。カメラが降りるので、画面では上の帯へ上がる
+        # キャラ絵が出るあいだに、少し奥の左へ。カメラが降りるので、画面では上の帯へ上がる
         k = ease(ramp(Ti, *self.SETTLE))
-        x = lerp(x, -2.0 if self.variant == "full" else -4.4, k)
+        x = lerp(x, -2.0, k)
         y = lerp(y, 22.5, k)
         bob = 0.06 * c.osc(1) + 0.03 * c.osc(2, 0.3)
         if c.clip == "outro":
             y += 26 * ease_in(c.u)
         return np.array([x, y, bob])
 
+    def thin_keep(self):
+        """景色が薄く引いたあとに残す縁（0〜1。画面の濃さに掛ける）。真ん中（キャラ絵と字の所）は 0。
+        - 上の帯: 舟のまわりの湖と崖（舟が水に浮いて見える。なければ舟が宙に浮く）
+        - 左右の端: 崖の切り立った縁
+        - 下の隅: 手前の紅葉の枝"""
+        yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+        sm = lambda v: v * v * (3 - 2 * v)
+        # 左右の崖は上の帯（湖の奥の端がある所）より下だけ。上まで残すと、湖の奥の端が横一本の線で顔の上に残った
+        side = sm(np.clip((150 - np.minimum(xx, W - 1 - xx)) / 110, 0, 1)) * sm(np.clip((yy - 250) / 120, 0, 1)) * 0.45
+        top = sm(np.clip((250 - yy) / 160, 0, 1)) * 0.3
+        # 舟の足もとの水だけ（横に長く取ると、湖の奥の端が顔の上にまっすぐな線で残った）
+        pool = np.exp(-(((xx - 248) / 150) ** 2 + ((yy - 224) / 36) ** 2)) * 0.85
+        corner = np.maximum(*(sm(np.clip((320 - np.hypot(xx - cx, yy - H)) / 180, 0, 1)) for cx in (0.0, float(W)))) * 0.7
+        return np.maximum(np.maximum(side, top), np.maximum(pool, corner)).astype(np.float32)
+
+    def thin_at(self, c):
+        """景色の引き（0 = 全面のまま、1 = 縁だけ）。キャラ絵が出たら引き、滞在と締めは引いたまま"""
+        return ease(ramp(c.Ti, *self.THIN))
+
     def draw(self, c):
-        full = self.variant == "full"
         cam = self.cam_at(c.Ti, c)
         Ti, T, u = c.Ti, c.T, c.u
         out_k = 1 - ease(u)
         back, front = Canvas(), Canvas()
         sp_b, sp_f = Splat(), Splat()
         amb = ease(ramp(Ti, 1.4, 2.6)) * out_k
+        thin = self.thin_at(c)
 
-        if full:
-            self.draw_full_scene(c, cam, back, out_k)
-        else:
-            self.draw_light_scene(c, cam, back, out_k)
+        self.draw_full_scene(c, cam, back, out_k)
+        # ---- 光の道（2.2〜2.6 に舟から手前へ走る。湖の描かれたきらめきを光らせる）。湖ごと薄く引く
+        bp = self.boat_at(c)
+        self.draw_path(c, cam, back, sp_b, bp, out_k * (1 - thin))
+        # ---- キャラ絵が出たら、景色を縁だけに引く（前掛けなので、色・覆い・光を同じ濃さで掛ければ層ごと薄くなる）
+        if thin > 0.002:
+            m = 1 - thin * (1 - self.keep)
+            back.P *= m[..., None]
+            back.A *= m
+            back.L *= m[..., None]
+            # 薄くなった崖の後ろに、粒を隠さない
+            back.Z[m < 0.3] = 1e6
 
         # ---- 舟とあやと（主役だけの層に描き、最後に back の上へ重ねる）
         hero = Canvas()
-        bp = self.boat_at(c)
         bh = 3.9  # 世界の高さ（櫂の先まで）
         boat_k = ease(ramp(Ti, 0.75, 1.3)) * (1 - ease(ramp(u, 0.3, 1.0)))
         if boat_k > 0.002:
@@ -171,10 +185,10 @@ class Scene(Stage):
             raise_ = pulse(Ti, 2.25, 0.18) * (c.clip == "intro")
             pos = pos + np.array([0, 0, 0.25 * raise_])
             _, fy, _ = cam.project((bp + np.array([0, 0, 0.0]))[None])
-            draw_board(hero, cam, self.boat, pos, bh, k=boat_k, sharp=True, rim=0.8 if full else 0.6, light_dir=(0.1, -1.0),
+            draw_board(hero, cam, self.boat, pos, bh, k=boat_k, sharp=True, rim=0.8, light_dir=(0.1, -1.0),
                        floor_fade=(float(fy[0]) + 10, 16))
             # 舟のまわりの波紋（光）
-            self.draw_wake(c, cam, back, bp, boat_k * (1.0 if full else 0.7))
+            self.draw_wake(c, cam, back, bp, boat_k)
             # 櫂の先の閃き（山場）
             if c.clip == "intro" and 2.0 < Ti < 2.7:
                 M, dst, _ = board_map(cam, self.boat.w, self.boat.h, pos, bh)
@@ -182,9 +196,6 @@ class Scene(Stage):
                 fl = pulse(Ti, 2.25, 0.12)
                 fxv.stamp(hero.L, self.kit.flare, ox, oy, 0.75 * fl)
                 streak(hero, ox, oy, 0.7 * fl)
-
-        # ---- 光の道（2.2〜2.6 に舟から手前へ走る）。full は湖の描かれたきらめきを光らせ、light は光のさざ波
-        self.draw_path(c, cam, back, sp_b, bp, full, out_k)
 
         # ---- しぶきが金の粒に（2.25）
         tau = T - 2.25
@@ -209,11 +220,20 @@ class Scene(Stage):
         tw = (0.5 + 0.5 * np.sin(6.283 * (a_ * (3 + 4 * r[:, 4]) + r[:, 5]))) ** 2
         kd = np.sin(np.pi * a_) ** 1.5 * (0.3 + 0.9 * tw) * (0.3 + 1.6 * r[:, 6] ** 3)
         col = np.where(r[:, 7:8] < 0.6, GOLD, np.where(r[:, 7:8] < 0.85, WHITE, EMERALD))
-        sp_b.add(cam, P, col * (kd * amb * (0.9 if full else 0.45))[:, None], back.Z)
+        # 景色が引いたら、谷の粒も控えめに（配信の景色の上に、金の粒が少し漂うくらい）
+        sp_b.add(cam, P, col * (kd * amb * 0.9 * (1 - 0.6 * thin))[:, None], back.Z)
 
-        # ---- 紅葉が舞う
-        self.draw_leaves(c, back, amb, full)
+        # ---- 紅葉が舞う（左右の端だけなので、景色が引いても縁に残る）
+        self.draw_leaves(c, back, amb)
         sp_b.into(back)
+
+        # ---- 引いたあとの縁のきらめき（残した縁の上で、滞在の輪で瞬く）
+        ek = thin * out_k
+        if ek > 0.003:
+            for j, (x, y) in enumerate(self.edge_pts):
+                r = self.edge_tw[j]
+                tw = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r[0] * 2)) + r[1]))) ** 4
+                fxv.stamp(back.L, self.kit.star["gold" if j % 3 else "cyan"], x, y + 6 * c.osc(1, r[2]), (0.3 + 0.35 * r[2]) * tw * ek)
 
         # ---- キャラ絵が出る瞬間: 光の道の先（キャラ絵の後ろ）から光の輪
         rv = (T - self.REVEAL) / 0.7 if c.clip == "intro" else 9
@@ -225,12 +245,10 @@ class Scene(Stage):
             back.emit(band[..., None] * (GOLD * 1.1 + EMERALD * 0.35 + WHITE * 0.5) * 1.2)
             glow(back, 360, 760, 220, GOLD * 0.7 + EMERALD * 0.2, 0.6 * (1 - rv) ** 2)
 
-        rays = None
-        if full:
-            sx, sy, _ = cam.project(self.sky_pos[None])
-            gk = (0.35 + 0.55 * pulse(Ti, 2.3, 0.6) + 0.1 * c.osc(1)) * ease(ramp(Ti, 0.2, 1.0)) * out_k
-            rays = (float(sx[0]), float(sy[0]) - 220, gk, 0.95)
-        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.85 if full else 0.5, edge=self.edge, rays=rays))
+        sx, sy, _ = cam.project(self.sky_pos[None])
+        gk = (0.35 + 0.55 * pulse(Ti, 2.3, 0.6) + 0.1 * c.osc(1)) * ease(ramp(Ti, 0.2, 1.0)) * out_k * (1 - 0.75 * thin)
+        rays = (float(sx[0]), float(sy[0]) - 220, gk, 0.95)
+        out_b = over_rgba(self.finish_hero(hero, bloom=0.5), back.finish(bloom=0.85, edge=self.edge, rays=rays))
         if not self.has_front():
             return out_b, None
 
@@ -241,14 +259,15 @@ class Scene(Stage):
         P = np.stack([(r[:, 0] - 0.5) * 6.5 + 0.5 * np.sin(6.283 * (a_ + r[:, 1])), 3.0 + r[:, 2] * 4.5, 0.4 + a_ * 3.5 + r[:, 3]], -1)
         kd = np.sin(np.pi * a_) ** 2 * (0.4 + 1.5 * r[:, 4] ** 2)
         col = np.where(r[:, 5:6] < 0.6, GOLD, np.where(r[:, 5:6] < 0.85, WHITE, EMERALD))
-        sp_f.add(cam, P, col * (kd * amb * 0.45)[:, None], max_gain=3.0)
+        calm = 1 - 0.55 * thin  # 景色が引いたら、手前の粒とぼけ玉も控えめに（配信の景色を見せる）
+        sp_f.add(cam, P, col * (kd * amb * 0.45 * calm)[:, None], max_gain=3.0)
         sp_f.into(front)
         for j in range(self.bok.n):
             rr_ = self.bok.r[j]
             a1 = self.bok.age(c)[j]
             x = (rr_[0] * 1.2 - 0.1) * W + 26 * math.sin(6.283 * (a1 + rr_[1]))
             y = H * (0.92 - 0.75 * a1) - rr_[2] * 180
-            kk = math.sin(math.pi * a1) ** 2 * (0.05 + 0.06 * rr_[3]) * amb
+            kk = math.sin(math.pi * a1) ** 2 * (0.05 + 0.06 * rr_[3]) * amb * calm
             spr = self.kit.bokeh_spr(28 + rr_[4] * 44, j % 3, [GOLD, EMERALD * 0.7 + WHITE * 0.3, WHITE][j % 3] * 0.8 + WHITE * 0.2, 6 + rr_[5] * 6)
             fxv.stamp(front.L, spr, x, y, kk)
         if c.clip == "intro":
@@ -299,60 +318,6 @@ class Scene(Stage):
         draw_board(cv, cam, self.fg, self.fg_pos + sway, self.fg_h, k=fg_k, blur=1.4, rim=0.5 * lit, light_dir=(0.2, -1.0),
                    grade=np.array([1.0, 0.95, 0.9], np.float32) * (0.65 + 0.35 * lit))
 
-    # ---------------- light: 崖と修道院の光の線。キャラが出たら消えて、縁のきらめきだけ
-    def draw_light_scene(self, c, cam, cv, out_k):
-        Ti = c.Ti
-        sh = 0.2 * env(Ti, 0.0, 0.5, self.REVEAL, self.REVEAL + 0.7) * (c.clip == "intro")
-        if sh > 0.003:
-            cv.shade(self.shade_map * sh)
-        prog = ease(ramp(Ti, 0.1, 1.9))
-        fade = 1 - ease(ramp(Ti, self.REVEAL + 0.05, self.REVEAL + 0.75))
-        k = fade * (0.85 + 0.35 * pulse(Ti, 2.25, 0.2))
-        if k > 0.003:
-            col_c = WHITE * 0.75 + GOLD * 0.45 + EMERALD * 0.25
-            col_g = GOLD * 0.55 + EMERALD * 0.45
-            w = self.cliff_h * self.lines.w / self.lines.h
-            dst, _ = board_quad(cam, self.cliff_pos, w, self.cliff_h, (0.5, 0.68), True)
-            img = self.lines.image(prog, core=col_c, glow=col_g) * k
-            img = img + self.lines_mon.image(ease(ramp(Ti, 0.9, 2.0)), core=WHITE * 0.8 + GOLD * 0.6, glow=GOLD * 0.8 + AMBER * 0.2) * k
-            src = np.float32([[0, 0], [self.lines.w, 0], [self.lines.w, self.lines.h], [0, self.lines.h]])
-            r = fs.warp_into(img, src, dst)
-            if r is not None:
-                im, x0, y0 = r
-                cv.emit(im[..., :3], x0, y0)
-                if 0 < prog < 1:
-                    M = cv2.getPerspectiveTransform(src, dst.astype(np.float32))
-                    for hx, hy in self.lines.heads(prog):
-                        px, py = map_point(M, hx, hy)
-                        fxv.stamp(cv.L, self.kit.flare_s, px, py, 0.22 * k)
-        # 湖面のさざ波を光の線で（奥から手前へ順に現れる）。カメラが湖面へ降りるあいだに消す
-        # （降りると奥のさざ波が水平線の近くに詰まって、横一本の光の帯に見える）
-        k_rip = k * (1 - ease(ramp(Ti, self.SETTLE[0], self.SETTLE[0] + 0.45)))
-        if k_rip > 0.003:
-            sp = Splat()
-            R = np.random.default_rng(4049)
-            for j in range(16):
-                depth = 26 - j * 1.45
-                show = ease(ramp(Ti, 0.6 + j * 0.07, 0.9 + j * 0.07))
-                if show <= 0:
-                    continue
-                cx_ = (R.random() - 0.5) * 6
-                half = 1.0 + R.random() * 2.4 + j * 0.15
-                n = 260
-                xs = np.linspace(cx_ - half, cx_ + half, n)
-                wob = 0.08 * np.sin(xs * 2.3 + 6.283 * (c.ph + R.random()))
-                P = np.stack([xs, np.full(n, depth) + wob, np.full(n, 0.02)], -1)
-                env_ = np.sin(np.linspace(0, math.pi, n)) ** 1.5
-                col = (EMERALD * 0.5 + WHITE * 0.35 + GOLD * 0.25)
-                sp.add(cam, P, np.tile(col, (n, 1)) * (env_ * 0.9 * show * k_rip)[:, None], soft=True)
-            sp.into(cv)
-        ek = ease(ramp(Ti, 2.1, 3.0)) * out_k
-        if ek > 0.003:
-            for j, (x, y) in enumerate(self.edge_pts):
-                r = self.edge_tw[j]
-                tw = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r[0] * 2)) + r[1]))) ** 4
-                fxv.stamp(cv.L, self.kit.star["gold" if j % 3 else "cyan"], x, y + 6 * c.osc(1, r[2]), (0.35 + 0.4 * r[2]) * tw * ek)
-
     def draw_wake(self, c, cam, cv, bp, k):
         """舟のまわりの光の波紋（湖面に広がる楕円）。滞在の輪で一定の間隔で生まれる"""
         sp = Splat()
@@ -365,13 +330,13 @@ class Scene(Stage):
             sp.add(cam, P, np.tile(WHITE * 0.5 + EMERALD * 0.5, (n, 1)) * (0.22 * (1 - tau) ** 1.5 * k), soft=True)
         sp.into(cv)
 
-    def draw_path(self, c, cam, cv, sp, bp, full, out_k):
+    def draw_path(self, c, cam, cv, sp, bp, out_k):
         Ti = c.Ti
         run = ease_out(ramp(Ti, 2.2, 2.65))
         if run <= 0:
             return
         hold = (0.55 + 0.25 * c.osc(1)) if c.clip != "intro" or Ti > 2.9 else 1.0
-        k = run * out_k * (1.0 if full else 0.0 if c.clip != "intro" else 1 - ease(ramp(Ti, self.REVEAL + 0.1, self.REVEAL + 0.8)))
+        k = run * out_k
         if k <= 0.003:
             return
         # 舟から手前（y=2）へ伸びる光の帯。きらめきは滞在の輪で流れる
@@ -424,21 +389,18 @@ class Scene(Stage):
             if tw > 0.05:
                 fxv.stamp(cv.L, self.kit.star["white" if j % 2 else "gold"], xs[j], ys[j], 0.5 * tw * k)
 
-    def draw_leaves(self, c, cv, amb, full):
+    def draw_leaves(self, c, cv, amb):
         f = self.fall
         ages = f.age(c)
         for j in range(f.n):
             r = f.r[j]
             a = ages[j]
-            if full:
-                x = (r[0] * 0.25 if j % 2 else 0.75 + r[0] * 0.25) * W
-            else:
-                x = (40 + r[0] * 60) if j % 2 else (W - 40 - r[0] * 60)
+            x = (r[0] * 0.25 if j % 2 else 0.75 + r[0] * 0.25) * W
             x += 50 * math.sin(6.283 * (a * 1.5 + r[1]))
             y = -40 + a * (1150 + 200 * r[2])
             k = math.sin(math.pi * a) ** 0.5 * amb
             if k <= 0.01:
                 continue
-            sc = (0.32 + 0.3 * r[3]) * (1.0 if full else 0.8)
+            sc = 0.32 + 0.3 * r[3]
             spr = sprite_rot(self.leaves[j % 6], 6.283 * (a * (0.6 + r[4]) + r[5]), sc)
             put_sprite(cv, spr, x, y, k, blur=1.5 if r[6] < 0.3 else 0.0)

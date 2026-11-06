@@ -166,6 +166,27 @@ PAIR_PAGE = 100
 BOT = "github-actions[bot]"
 UNATTENDED_EVENTS = ("schedule", "workflow_run")
 
+# **PR の完了で起きる口は、ここで生き死にを測らない**（#1117）。
+#
+# `ship.yml` の `workflow_run` は毎晩の鎖ではなく、「札を付けた PR の checks が終わったら
+# 起きる」口。繋ぎ先は PR を触った日にしか走らないもの（`ショートの道具の見張り` は
+# `tools/shorts/` を触った PR だけ、`ショートの材料を作る` は `claude/**` への依頼の push だけ）と、
+# bot が枝に積んだコミットで走るもの（その完了は GITHUB_TOKEN 由来なので次を起こさない）が混ざる。
+# 数えると、[3] は「3日 PR が無い」を「繋ぎ先が切れた」と読み、[5] は bot の push で走った回を
+# 「無人の上流」に数えて、**島が健全なまま毎 PR を赤くする**（3日たって新顔を抜けた日から）。
+#
+# 外すのは実績の3つ（[3][4][5]）だけ。名前の切れ（[1]）と `conclusion` の絞り（[2]）は
+# これまでどおり見る。起きなかったときは、札を付けた PR にコメントが来ないのでその場で見える。
+# ここに入れてよいのは、**PR の札で動き、毎晩ひとりでに走ることを期待されていないもの**だけ
+PR_WAKES = {".github/workflows/ship.yml"}
+
+
+def wake_only(docs: dict[str, dict], linked: list[str]) -> set[str]:
+    """`PR_WAKES` からしか繋がれていない繋ぎ先の名前。ほかの下流も繋いでいれば、そちらで見る。"""
+    by_pr = {w for p in linked if p in PR_WAKES for w in wanted(docs[p])}
+    by_rest = {w for p in linked if p not in PR_WAKES for w in wanted(docs[p])}
+    return by_pr - by_rest
+
 
 def repo_name() -> str:
     """どのリポジトリを読むか。Actions の中では環境が教えてくれる。"""
@@ -347,10 +368,12 @@ def live_pairs(docs: dict[str, dict], gh: Gh) -> dict:
     targets = sorted({w for p in linked for w in wanted(docs[p]) if w in names})
 
     made = gh.made_on()
+    # `PR_WAKES` の繋ぎは [5] で見ないので、引きにいかない（1本 100 run ぶんの API を省く）
+    skip = wake_only(docs, linked)
 
     ups: dict[str, list[dict]] = {}
     for want in targets:
-        if names[want] not in made:
+        if names[want] not in made or want in skip:
             continue          # GitHub がまだ知らない。下で「新顔」に落ちる
         rows = []
         for r in gh.recent(names[want]):
@@ -363,6 +386,8 @@ def live_pairs(docs: dict[str, dict], gh: Gh) -> dict:
 
     downs: dict[str, dict] = {}
     for p in linked:
+        if p in PR_WAKES:
+            continue
         if p not in made:
             downs[p] = {"at": [], "oldest": None, "absent": True}
             continue
@@ -401,7 +426,7 @@ def judge_pairs(docs: dict[str, dict], pairs: dict, days: int,
                           "rates": [(下流, 上流, 起きた数, 上流の数)]})
     """
     rows: list[str] = []
-    seen = {"judged": 0, "thin": 0, "missing": 0, "ok": 0, "new": 0, "rates": []}
+    seen = {"judged": 0, "thin": 0, "missing": 0, "ok": 0, "new": 0, "wake": 0, "rates": []}
     limit = now - timedelta(days=days)
     ups_t = (pairs or {}).get("ups") or {}
     downs_t = (pairs or {}).get("downs") or {}
@@ -414,6 +439,10 @@ def judge_pairs(docs: dict[str, dict], pairs: dict, days: int,
     names = {name_of(p, d): p for p, d in docs.items()}
 
     for p in linked:
+        if p in PR_WAKES:
+            # PR の札で起きる口（上の `PR_WAKES`）。無人の上流のあとに起きないのが正常
+            seen["wake"] += len(wanted(docs[p]))
+            continue
         down = downs_t.get(p)
         born = made_t.get(p)
         # `absent` は **GitHub がまだ知らないファイル**（`created_at` すら
@@ -473,7 +502,8 @@ def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
     names = {name_of(p, d): p for p, d in docs.items()}
     targets = sorted({w for p in linked for w in wanted(docs[p]) if w in names})
     limit = now - timedelta(days=days)
-    seen = {"links": 0, "targets": 0, "downstream": 0, "new": 0, "missing": 0}
+    seen = {"links": 0, "targets": 0, "downstream": 0, "new": 0, "missing": 0, "wake": 0}
+    only_pr = wake_only(docs, linked)
 
     for p in linked:
         seen["links"] += len(wanted(docs[p]))
@@ -495,6 +525,10 @@ def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
             # 本物の切れが埋もれる（[4] の「新顔は数えない」と同じ決め）
             seen["new"] += 1
             continue
+        if want in only_pr:
+            # PR を触った日にしか走らない繋ぎ先（`PR_WAKES`）。3日走らないのは PR が無いだけ
+            seen["wake"] += 1
+            continue
         last = row.get("last")
         seen["targets"] += 1
         who = ", ".join(sorted(p for p in linked if want in wanted(docs[p])))
@@ -513,6 +547,9 @@ def judge(docs: dict[str, dict], table: dict[str, dict], days: int,
         row = table.get(p)
         if row is None:
             seen["missing"] += 1
+            continue
+        if p in PR_WAKES:
+            seen["wake"] += 1
             continue
         made = row.get("created")
         # **新顔は数えない。** 足した当日の PR で赤くなると、

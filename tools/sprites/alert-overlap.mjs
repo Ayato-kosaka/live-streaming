@@ -9,6 +9,7 @@
  *        --out /tmp/overlap --sheet
  *   node alert-overlap.mjs ... --control face    # 対照: 顔の前に手前の層の四角を置く → 1 で落ちる
  *   node alert-overlap.mjs ... --control hero    # 対照: 主役の顔の枠を字の真ん中に置く → 1 で落ちる
+ *   node alert-overlap.mjs ... --control poster  # 対照: `<video>` の poster を外す → 1 で落ちる（#1133）
  *   node alert-overlap.mjs ... --theme none --emoji 🎃   # 絵文字を持つ人（花火と雨）として出す
  *   node alert-overlap.mjs ... --amounts 1500 --fx lux   # 試作の旗（`?fx=lux`）を付けて数える
  *
@@ -34,6 +35,11 @@
  *   見えている字の行の矩形が重なった面積（画素）。**登場中も数える**（字が出る瞬間に主役の顔が
  *   字の上端より上にいること。オーナーの決まり: 主役の顔は字で隠さない）
  *
+ *   動画の段（`--fx full`）は主役が動画の中に居て印を置けないので、**主役の居る帯**を顔の枠の代わりに置く
+ *   （`public/alert/themes/<id>/fx/manifest.json` の `heroBands`。段4〜7 のあやとは上 20%、〜999円の猫の家族は
+ *   下 28%。動画の枠（720×1280 を cover で敷いた矩形）に対する割合）。帯は動画の層が出ているコマだけ置く。
+ *   `--control band` は対照: 帯を字の札の高さに置く → 1 で落ちる
+ *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
  *
@@ -49,9 +55,24 @@
  * 中身の矩形が無い・キャラ絵の画素が中身の 1 割に満たない・演出のある段で演出の層が無い、
  * 滞在のコマが1つも無い、のどれかなら「測れていない」で 2 で抜ける。
  *
+ * ## `<video>` の守り（#1133。止めずに毎コマ）
+ *
+ * Android の WebView は、poster の無い `<video>` がコマを持つ前に灰色の地と ▶ を描く。この箱の Chromium には
+ * その既定の絵が無いので、撮っても写らない。だから**構造を数える**（撮るコマの間も、描くたびに全部の `<video>`）:
+ *
+ * - `noPoster` … poster を持たない `<video>`（要素の数）
+ * - `early` … 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの途中でもないのに
+ *   readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）
+ * - `seam`（合否に入れない）… 滞在のくり返しの継ぎ目（loop の頭出し。readyState が 20ms ほど 1 に落ちるが、
+ *   最後のコマは画面に残る）で見えていた `<video>`。継ぎ目を見ていることの印
+ *
+ * `noPoster`・`early` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
+ *
  * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
  * 外したときの数を見る対照だけ。外した数で判断しない。
+ *
+ * `--json <置き場>` で、同じ数を機械向けに書き出す（`tools/alert-theme/ci/` が読む。合否は終了コードと同じ）。
  *
  * 終了コード: 0 = 全部 0 / 1 = 顔に乗った（対照ではこれが正しい） / 2 = 測れなかった
  */
@@ -61,6 +82,7 @@ import { chromium } from "playwright-core";
 import { PNG } from "pngjs";
 import { chromePath } from "./chrome.mjs";
 import { prism, prismNote } from "./prism.mjs";
+import { fxManifest, tierOf } from "./alertseason.mjs";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -81,7 +103,9 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && control !== "face" && control !== "hero") die(`--control は face か hero（${control}）`);
+if (control && !["face", "hero", "band", "poster"].includes(control)) die(`--control は face・hero・band・poster（${control}）`);
+/* 動画の段の主役の帯（main で manifest から読む） */
+let heroBands = null;
 const emoji = arg("emoji", "");
 /* 試作の旗（`?fx=<名前>`。#1079）。段がその名前の試作を持っていれば、その振付けで数える */
 const fxName = arg("fx", "");
@@ -183,6 +207,83 @@ function framesFor(a) {
 const exe = chromePath() ?? (existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : null);
 if (!exe) die("ブラウザが見つからない（chrome.mjs）");
 
+/* `<video>` の守りを数える仕掛け（#1133）。時計を止める仕掛けより先に差し込み、本物の rAF で描くたびに見る
+   （止めているあいだも数える。止めた時計の rAF は預けられて回らない）。
+   最初のコマは、要素を初めて見た時に掛けた requestVideoFrameCallback の合図で知る。合図は「描く」の手順の中で
+   rAF より先に回るので、同じ描画で見せたものは、見る時にはもう合図が来ている。
+   `poster`（対照）: 見つけた `<video>` から poster を外し続ける（poster を付け忘れた形） */
+const VIDEO_WATCH = (ctl) => `(() => {
+  const W = window;
+  const nRAF = W.requestAnimationFrame.bind(W);
+  const strip = ${JSON.stringify(ctl === "poster")};
+  const hooked = new WeakSet(), framed = new WeakSet(), noPoster = new WeakSet(), early = new WeakSet();
+  const st = { videos: 0, noPoster: 0, early: 0, ticks: 0, rvfc: 0, bad: [] };
+  W.__vguard = st;
+  const name = (v) => (v.dataset && v.dataset.fxPart) || (v.currentSrc || v.getAttribute("src") || "?").split("/").pop();
+  const seen = (el) => {
+    let o = 1;
+    for (let p = el; p && p.nodeType === 1; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.display === "none" || cs.visibility === "hidden") return 0;
+      o *= Number(cs.opacity);
+    }
+    return o;
+  };
+  const hook = (v) => {
+    if (hooked.has(v)) return;
+    hooked.add(v);
+    st.videos++;
+    if (typeof v.requestVideoFrameCallback === "function") {
+      st.rvfc++;
+      v.requestVideoFrameCallback(() => framed.add(v));
+    }
+  };
+  /* 置かれたその場で合図を掛ける（置いた同じ処理の中で再生が始まり、次の描画でコマが出ても取りこぼさない） */
+  new MutationObserver((recs) => {
+    for (const r of recs)
+      for (const n of r.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.tagName === "VIDEO") hook(n);
+        else n.querySelectorAll("video").forEach(hook);
+      }
+  }).observe(document, { childList: true, subtree: true });
+  /* コマを持っていない形: 合図がまだ・何も読んでいない・読めたところが 2 未満で頭出しの途中でもない。
+     **くり返し（loop）の継ぎ目は数えない。** 滞在の尻で頭へ戻る頭出しのあいだ（20ms ほど）readyState は 1 に
+     落ちるが、最後のコマは画面に残っている（コマを持つ前ではない）。#1134 の1回目はこれを 821 本数えた。
+     継ぎ目は seam に別に数える（合否に入れない。見ていることの印） */
+  const seam = new WeakSet();
+  st.seam = 0;
+  const tick = () => {
+    st.ticks++;
+    for (const v of document.querySelectorAll("video")) {
+      hook(v);
+      if (strip && v.hasAttribute("poster")) v.removeAttribute("poster");
+      if (!v.getAttribute("poster") && !noPoster.has(v)) {
+        noPoster.add(v);
+        st.noPoster++;
+        if (st.bad.length < 8) st.bad.push({ kind: "noPoster", v: name(v), t: +(performance.now() / 1000).toFixed(2) });
+      }
+      // 軽くする: 自分が透明（アプリは見せない本を opacity 0 で置く）か、もう数えた要素は、祖先をなめない
+      if (v.style.opacity === "0" || early.has(v)) continue;
+      const nof = (st.rvfc && !framed.has(v)) || v.readyState === 0 || (v.readyState < 2 && !v.seeking);
+      const isSeam = !nof && v.readyState < 2 && v.seeking;
+      if (!nof && !(isSeam && !seam.has(v))) continue;
+      const o = seen(v);
+      if (o <= 0.01) continue;
+      if (isSeam) {
+        seam.add(v);
+        st.seam++;
+        continue;
+      }
+      early.add(v);
+      st.early++;
+      if (st.bad.length < 8) st.bad.push({ kind: "early", v: name(v), opacity: +o.toFixed(2), readyState: v.readyState, seeking: v.seeking, framed: framed.has(v), t: +(performance.now() / 1000).toFixed(2) });
+    }
+    nRAF(tick);
+  };
+  nRAF(tick);
+})();`;
+
 /* 時計を止める仕掛け。アラートの面が読み込まれる前に差し込む */
 const FREEZE = `(() => {
   const W = window;
@@ -261,7 +362,7 @@ const FREEZE = `(() => {
   };
   // キャラ絵の箱が置かれた時刻（止めた時計で）。滞在中のコマはここから数える
   new MutationObserver((_, mo) => {
-    if (W.__ovl.t0 == null && document.querySelector('[data-char="box"]')) { W.__ovl.t0 = performance.now(); mo.disconnect(); }
+    if (W.__ovl.t0 == null && document.querySelector('[data-char="box"], [data-fx-video="back"]')) { W.__ovl.t0 = performance.now(); mo.disconnect(); }
   }).observe(document, { childList: true, subtree: true });
 })();`;
 
@@ -588,6 +689,7 @@ async function runOne(browser, job) {
   const [W, H] = size;
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   await prism(ctx);
+  await ctx.addInitScript(VIDEO_WATCH(control));
   await ctx.addInitScript(FREEZE);
   const charBody = readFileSync(ch.file);
   const vfile = videos.get(ch.id);
@@ -621,7 +723,9 @@ async function runOne(browser, job) {
     for (const s of framesFor(amount)) {
       await page.waitForFunction((s) => performance.now() - window.__ovl.t0 >= s * 1000, s, { timeout: (s + 30) * 1000, polling: 30 });
       await page.evaluate(() => window.__ovl.freeze());
-      if (control && !controlled) {
+      const band = heroBands?.[String(tierOf(amount))];
+      if (band) await page.evaluate(placeBand, { band, ctl: control });
+      if (control && control !== "band" && control !== "poster" && !controlled) {
         await applyControl(page, control);
         controlled = true;
       }
@@ -637,6 +741,12 @@ async function runOne(browser, job) {
   } catch (e) {
     res.fatal = String(e).slice(0, 300);
   }
+  // `<video>` の守り（#1133）。アラートの頭から最後に撮ったコマまで、描くたびに数えたもの
+  try {
+    res.vg = await page.evaluate(() => window.__vguard ?? null);
+  } catch {
+    res.vg = null;
+  }
   if (external.length) res.external = [...new Set(external)];
   await ctx.close();
   return res;
@@ -647,8 +757,51 @@ function bad(f) {
   return (f.entrance ? 0 : f.front + f.cover) + (f.heroText ?? 0);
 }
 
+/* 主役の帯を、顔の枠の印（`data-hero-face`）として置く。動画の層が無いコマでは置かない（外す） */
+function placeBand({ band, ctl }) {
+  let d = document.querySelector("[data-hero-band]");
+  const layer = document.querySelector('[data-fx-video="back"]');
+  if (!layer || !layer.querySelector("video")) {
+    if (d) d.remove();
+    return 0;
+  }
+  const r = layer.getBoundingClientRect();
+  // 動画は 720×1280 を cover で敷く（season/show/fxVideo.ts）。その枠に対する割合で帯を置く
+  const k = Math.max(r.width / 720, r.height / 1280);
+  const vw = 720 * k;
+  const vh = 1280 * k;
+  const vx = r.left + (r.width - vw) / 2;
+  const vy = r.top + (r.height - vh) / 2;
+  let top = vy + band[0] * vh;
+  let bot = vy + band[1] * vh;
+  if (ctl === "band") {
+    const p = document.querySelector('[data-plate="box"]')?.getBoundingClientRect();
+    if (p) {
+      top = p.top;
+      bot = p.bottom;
+    }
+  }
+  if (!d) {
+    d = document.createElement("div");
+    d.setAttribute("data-hero-face", "");
+    d.setAttribute("data-hero-band", "");
+    d.style.position = "fixed";
+    d.style.pointerEvents = "none";
+    document.body.appendChild(d);
+  }
+  const l = Math.max(r.left, vx);
+  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
+  return 1;
+}
+
 async function main() {
   mkdirSync(out, { recursive: true });
+  if (fxName) {
+    const man = await fxManifest(base, theme);
+    heroBands = man?.heroBands ?? null;
+    console.log(heroBands ? `主役の帯（動画の段）: ${JSON.stringify(heroBands)}` : "主役の帯: manifest に heroBands が無い（動画の段の主役の顔×字は見ない）");
+    if (control === "band" && !heroBands) die("--control band は heroBands の在るテーマで");
+  }
   const queue = [];
   for (const ch of chars) for (const amount of amounts) for (const size of sizes) for (const text of texts) queue.push({ ch, amount, size, text });
   // 長いもの（台本のある段）から先に回す（最後に1本だけ長いのが残らないように）
@@ -683,9 +836,11 @@ async function main() {
       done++;
       const worst = r.frames.reduce((m, f) => Math.max(m, bad(f)), 0);
       const inval = r.fatal ? `測れない: ${r.fatal}` : r.frames.some((f) => f.invalid.length) ? `測れない: ${[...new Set(r.frames.flatMap((f) => f.invalid))].join("・")}` : "";
+      const vg = r.vg;
       console.log(
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
           (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
+          (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster} コマ前に見えた ${vg.early}` : "") +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -724,10 +879,54 @@ async function main() {
   }
   const errs = [...new Set(results.flatMap((r) => r.errors))];
   if (errs.length) console.log("JS の例外:", errs.slice(0, 5));
+  /* `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>` は、組ごとに1つでもあれば落ちる */
+  const vsum = (k) => results.reduce((s, r) => s + (r.vg?.[k] ?? 0), 0);
+  const vbadRuns = results.filter((r) => r.vg && (r.vg.noPoster || r.vg.early));
+  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")} / コマを持つ前に見えた ${vsum("early")}（全部 0）・くり返しの継ぎ目 ${vsum("seam")}（数えない）`);
+  for (const r of vbadRuns.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.vg.bad.slice(0, 3))}`);
 
+  const json = arg("json", "");
+  if (json) {
+    const worst = (r) => r.frames.reduce((m, f) => (bad(f) > bad(m) ? f : m), r.frames[0]);
+    writeFileSync(
+      resolve(json),
+      JSON.stringify(
+        {
+          tool: "alert-overlap",
+          exit: invalid.length ? 2 : hit.length || vbadRuns.length ? 1 : 0,
+          theme,
+          fx: fxName,
+          control,
+          runs: results.length,
+          frames: all.length,
+          stay: frames.length,
+          front: sum("front"),
+          cover: sum("cover"),
+          heroText: heroAll,
+          heroSeen,
+          heroBands: !!heroBands,
+          minCharShare: shares.length ? Math.min(...shares.map((x) => x.s)) : null,
+          hits: hit.map((r) => {
+            const f = worst(r);
+            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png };
+          }),
+          invalid: invalid.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, why: r.fatal ?? [...new Set(r.frames.flatMap((f) => f.invalid))].join("・") })),
+          videos: vsum("videos"),
+          rvfc: vsum("rvfc"),
+          noPoster: vsum("noPoster"),
+          early: vsum("early"),
+          seam: vsum("seam"),
+          vbad: vbadRuns.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, noPoster: r.vg.noPoster, early: r.vg.early, bad: r.vg.bad.slice(0, 3) })),
+          errors: errs.slice(0, 5),
+        },
+        null,
+        1
+      )
+    );
+  }
   if (flag("sheet")) await sheet(results);
   if (invalid.length) process.exit(2);
-  process.exit(hit.length ? 1 : 0);
+  process.exit(hit.length || vbadRuns.length ? 1 : 0);
 }
 
 /* 一覧の絵: 行 = キャラ、列 = 段（大きさ・字ごとに1枚ずつ）。字のブロック（水色）・中身の矩形（桃）・
