@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__urw-p1a-d2",
+ "mode": "render",
+ "dest": "render/urw-p1a-d2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/urw-p1a-d2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1183,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "dc3831a7c23c89a63d4dd18b42bef23b9be6ec994230dc5d44be409a5ec3a687"
+  }
+ ],
+ "hmac_sha256": "c8bfe48bc8782d6d1bb66aa1383b8654a14d832721e799192a4a79f6e56652c3",
+ "pubkey_sha256": "d3aa890de5894406ed21bc08c724fd2bb46f0eafda14cf5c9cbd8b133a43f11a",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-06T01:17:49+00:00",
+ "nonce": "81a8e47570b75f276c6b75ae"
+}
