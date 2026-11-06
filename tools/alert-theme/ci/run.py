@@ -341,10 +341,11 @@ def controls(s, base, log, out):
         "decode": node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--rates", "1", "--runs", "1", "--limit", "1"),
     }
     # 札を最初から見せる / `<video>` の poster を外す（#1133）/ 顔の穴を1コマ遅らせる（#1141）/
-    # 段7 の札を revealAt より前に出す（主役の顔の線。#1141）（動画の段のあるテーマのときだけ）
+    # 段7 の札を revealAt より前に出す・元の高さから落とす（主役の顔の箱。#1141）（動画の段のあるテーマのときだけ）
     if t["fx"]:
         jobs["reveal"] = node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--char", one, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--control", "early")
         jobs["poster"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "poster", *frames)
+        jobs["platehigh"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "664x1180", "--texts", "long:3", "--control", "platehigh", *frames)
         jobs["plateearly"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "436x776", "--texts", "long:3", "--control", "plateearly", *frames)
         jobs["holelate"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "holelate", *frames)
     got = {}

@@ -97,7 +97,7 @@ def build(res):
         if not sm("heroFrames"):
             ok = False
             bad.insert(0, "段7 の主役の顔の線を、札の出ているコマで1つも数えていない")
-        vid += f"。段7 の主役の顔の線（動画の秒・描くたび）{sm('heroFrames'):,}コマ: 字 {sm('heroMiss')}（0）"
+        vid += f"。段7 の主役の顔の箱 × 字（動画の秒・描くたび）{sm('heroFrames'):,}コマ: {sm('heroMiss')}（0）"
     band = any(t.get("heroBands") for t in tools)
     hero = f"主役の{'帯（動画の段）' if band else '顔'}が見えたコマ {sm('heroSeen'):,}"
     if not sm("heroSeen"):
@@ -186,6 +186,9 @@ def build(res):
         if "poster" in cc:
             keys["poster"] = "poster"
             hit["poster"] = tl("poster").get("noPoster", 0)
+        if "platehigh" in cc:
+            keys["札が元の高さ（主役の顔の箱）"] = "platehigh"
+            hit["札が元の高さ（主役の顔の箱）"] = tl("platehigh").get("heroMiss", 0)
         if "plateearly" in cc:
             keys["札が先（主役の顔の線）"] = "plateearly"
             hit["札が先（主役の顔の線）"] = tl("plateearly").get("heroMiss", 0)

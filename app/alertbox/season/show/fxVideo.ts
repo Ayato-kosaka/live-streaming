@@ -50,6 +50,11 @@ export type FxTierEntry = {
    * （`stage.ts` の `PLAIN_CHAR_BOTTOM`）。〜999円の3段は、下の隅の猫の家族がキャラ絵の後ろに隠れないように上げる
    */
   charBottom: number | null;
+  /**
+   * 運ばれてくる札（段7）が落ちてくる道の、いちばん上（動画の枠の高さに対する割合）。札の字の上の端は、
+   * 降りてくるあいだずっとこれより下を通る。主役（あやと）の顔の箱の下の端＋2%（#1141）。書いていない段は無し（いつもの 40vh から落ちる）
+   */
+  plateTop?: number;
 };
 export type FxManifest = Record<string, FxTierEntry>;
 
@@ -151,7 +156,9 @@ export function parseFxManifest(json: unknown): FxManifest {
     if (!variants.full && !variants.light) continue;
     const cb = o.charBottom;
     const charBottom = typeof cb === "number" && Number.isFinite(cb) && cb >= CHAR_BOTTOM_MIN && cb <= CHAR_BOTTOM_MAX ? cb : null;
-    out[k] = { variants, revealAt, introDur, stayDur, outroDur, charBottom };
+    const pt = o.plateTop;
+    const plateTop = typeof pt === "number" && Number.isFinite(pt) && pt > 0 && pt < 0.5 ? pt : null;
+    out[k] = { variants, revealAt, introDur, stayDur, outroDur, charBottom, ...(plateTop != null ? { plateTop } : {}) };
   }
   return out;
 }
@@ -267,6 +274,8 @@ export type VideoPlan = {
   headroom: number;
   /** キャラ絵の箱の下の端（面の高さに対する割合）。manifest に無ければ null（いつもの並べ方） */
   charBottom: number | null;
+  /** 運ばれてくる札の道のいちばん上（動画の枠の高さに対する割合。`FxTierEntry.plateTop`）。無ければいつもの高さから */
+  plateTop?: number;
   text: "pop" | "don" | "count";
   kit: FxKit;
 };

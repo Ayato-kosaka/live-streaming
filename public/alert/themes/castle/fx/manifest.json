@@ -129,7 +129,8 @@
       "revealAt": 5.6,
       "introDur": 7.0,
       "stayDur": 3.0,
-      "outroDur": 1.5
+      "outroDur": 1.5,
+      "plateTop": 0.125
     }
   },
   "heroBands": {
@@ -205,6 +206,10 @@
           6.6,
           0.131
         ]
+      ],
+      [
+        0.197,
+        0.333
       ]
     ]
   }

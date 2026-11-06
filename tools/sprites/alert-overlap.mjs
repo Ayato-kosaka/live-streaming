@@ -43,11 +43,13 @@
  *   **段7 は帯ではなく顔の線**（#1141）。`heroBands` の3つ目が「あやとの顔の下の端」の線で、**動画の秒**で変わる
  *   （登場の秒と線の組の並び。`tools/alert-theme/blender/t7_motion.py` の `ayato_face_box` を、どのコマでも下回らない
  *   折れ線で上から包んだもの。札が上から降りてくる 5.3〜6.0 秒は顔を浮かせて 9.3〜9.6%、滞在は 13.1%。
- *   振付けを描き直したら、この線も引き直す）。主役の顔は帯の上の端からこの線まで。
+ *   振付けを描き直したら、この線も引き直す）。4つ目は顔の箱の横（幅に対する割合。登場の 4.34 秒から滞在までを包む
+ *   20〜33%）。**主役の顔は「帯の上の端からこの線まで × この横」の箱**で、横に離れた字は重なりに数えない。
  *   札は動画の currentTime が revealAt に来た知らせで出るので（#1138）、道具の止めた時計の秒ではなく、そのコマの
  *   動画の秒で線を引く。撮るコマ（1.5 秒おき）は札が降りてくる 0.15 秒に当たらないので、**描くたびにも数える**
- *   （`heroMiss`。札の字の行が、そのときの動画の秒の顔の線より上に掛かったコマ）。
+ *   （`heroMiss`。札の見えている字の外接矩形が、そのときの動画の秒の顔の箱と交わったコマ）。
  *   `--control plateearly` は対照: manifest の revealAt を 3.0 秒にして、札を revealAt より前に出す → 1 で落ちる
+ *   `--control platehigh` は対照: manifest の段の plateTop を外して、札を元の高さ（40vh 上）から落とす → 1 で落ちる
  *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
@@ -115,7 +117,7 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && !["face", "hero", "band", "poster", "holelate", "plateearly"].includes(control)) die(`--control は face・hero・band・poster・holelate・plateearly（${control}）`);
+if (control && !["face", "hero", "band", "poster", "holelate", "plateearly", "platehigh"].includes(control)) die(`--control は face・hero・band・poster・holelate・plateearly・platehigh（${control}）`);
 /* 動画の段の主役の帯（main で manifest から読む） */
 let heroBands = null;
 const emoji = arg("emoji", "");
@@ -321,8 +323,8 @@ function faceLineAt(pts, part, ct) {
 
 /* 主役の顔の線 × 字を、描くたびに数える（#1141）。段7 の札は上から降りてきて 0.15 秒ほど上 20% を通るので、
    1.5 秒おきの撮るコマでは当たるか当たらないかの運になる。奥の層の見せている動画の秒で顔の線を引き、
-   札の見えている字の行（祖先の opacity の積 0.05 以上・祖先の overflow で切った所）が、帯の上の端から線までに
-   掛かったコマを数える。rAF は時計を止める仕掛けのものなので、撮っているあいだは数えない */
+   札の見えている字の行（祖先の opacity の積 0.05 以上・祖先の overflow で切った所）の外接矩形が、顔の箱
+   （帯の上の端から線まで × 顔の横）と交わったコマを数える。rAF は時計を止める仕掛けのものなので、撮っているあいだは数えない */
 const HERO_WATCH = (band) => `(() => {
   const W = window;
   const band = ${JSON.stringify(band)};
@@ -361,8 +363,9 @@ const HERO_WATCH = (band) => `(() => {
       const k = Math.max(r.width / 720, r.height / 1280);
       const vw = 720 * k, vh = 1280 * k;
       const vx = r.left + (r.width - vw) / 2, vy = r.top + (r.height - vh) / 2;
-      const hero = { l: Math.max(r.left, vx), r: Math.min(r.right, vx + vw), t: vy + band[0] * vh, b: vy + line * vh };
-      let area = 0, top = Infinity, any = false;
+      const xr = band[3] || [0, 1];
+      const hero = { l: Math.max(r.left, vx + xr[0] * vw), r: Math.min(r.right, vx + xr[1] * vw), t: vy + band[0] * vh, b: vy + line * vh };
+      let top = Infinity, bot = -Infinity, lft = Infinity, rgt = -Infinity, any = false;
       const range = document.createRange();
       const walk = document.createTreeWalker(slot, NodeFilter.SHOW_TEXT);
       for (let n = walk.nextNode(); n; n = walk.nextNode()) {
@@ -376,10 +379,14 @@ const HERO_WATCH = (band) => `(() => {
           if (rr - l <= 0 || b - t <= 0) continue;
           any = true;
           top = Math.min(top, t);
-          const w = Math.min(rr, hero.r) - Math.max(l, hero.l), h = Math.min(b, hero.b) - Math.max(t, hero.t);
-          if (w > 0 && h > 0) area += w * h;
+          bot = Math.max(bot, b);
+          lft = Math.min(lft, l);
+          rgt = Math.max(rgt, rr);
         }
       }
+      // 字の外接矩形 × 顔の箱
+      const w = Math.min(rgt, hero.r) - Math.max(lft, hero.l), h = Math.min(bot, hero.b) - Math.max(top, hero.t);
+      const area = any && w > 0 && h > 0 ? w * h : 0;
       if (any) {
         st.frames++;
         if (area > 0) {
@@ -945,11 +952,17 @@ async function runOne(browser, job) {
       return route.fulfill({ contentType: ch.type, body: charBody, headers: { "access-control-allow-origin": "*" } });
     }
     /* 対照 plateearly: 段の revealAt を 3.0 秒にした manifest を渡す（札が、本物の revealAt より前に出る）。
-       道具が線を引く manifest（main で読んだもの）は本物のまま */
-    if (control === "plateearly" && url.startsWith(base) && /\/fx\/manifest\.json(\?|$)/.test(url)) {
+       対照 platehigh: 段の plateTop を外した manifest を渡す（札が元の高さから落ちる）。
+       道具が顔の箱を引く manifest（main で読んだもの）は本物のまま */
+    if ((control === "plateearly" || control === "platehigh") && url.startsWith(base) && /\/fx\/manifest\.json(\?|$)/.test(url)) {
       const resp = await route.fetch();
       const j = await resp.json();
-      for (const t of Object.values(j.tiers ?? {})) if (t && typeof t.revealAt === "number") t.revealAt = Math.min(t.revealAt, 3.0);
+      for (const t of Object.values(j.tiers ?? {})) {
+        if (!t) continue;
+        if (control === "plateearly" && typeof t.revealAt === "number") t.revealAt = Math.min(t.revealAt, 3.0);
+        // 対照 platehigh: 札の道のいちばん上を外す（元の 40vh 上から落ちる）
+        if (control === "platehigh") delete t.plateTop;
+      }
       return route.fulfill({ response: resp, contentType: "application/json", body: JSON.stringify(j) });
     }
     if (url.startsWith(`${base}/__ovl__/video`)) {
@@ -1063,8 +1076,10 @@ function placeBand({ band, ctl, lineSrc }) {
     d.style.pointerEvents = "none";
     document.body.appendChild(d);
   }
-  const l = Math.max(r.left, vx);
-  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
+  // 段7 は顔の横だけ（4つ目）。ほかの段は動画の幅いっぱいの帯
+  const xr = Array.isArray(band[3]) && ctl !== "band" ? band[3] : [0, 1];
+  const l = Math.max(r.left, vx + xr[0] * vw);
+  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + xr[1] * vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
   return { part, ct: +ct.toFixed(3), line: line == null ? null : +line.toFixed(3) };
 }
 
