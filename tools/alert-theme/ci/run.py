@@ -421,6 +421,15 @@ REPEATS = {
     "repeat-a": {"amount": 10000, "size": "664x1180", "text": "long:1", "char": "c07-big", "n": 30},
     "repeat-b": {"amount": 100, "size": "664x1180", "text": "long:3", "char": "c03-pad", "n": 30},
 }
+# 顔に乗った1コマ（#1141。1万円・664x1180・c07-big・long:1 で30回に1回）を、1万円の4組 × 100回で数える。
+# 1組100回を1本で回すと 90 分を越えるので、25回ずつ4本に割る（face-a1〜a4 …）
+FACE_REPEATS = {
+    "a": {"amount": 10000, "size": "664x1180", "text": "long:1", "char": "c07-big"},
+    "b": {"amount": 10000, "size": "436x776", "text": "long:1", "char": "c07-big"},
+    "c": {"amount": 10000, "size": "664x1180", "text": "short:3", "char": "c01-tall"},
+    "d": {"amount": 10000, "size": "664x1180", "text": "long:3", "char": "c03-pad"},
+}
+REPEATS.update({f"face-{k}{i}": {**v, "n": 25} for k, v in FACE_REPEATS.items() for i in range(1, 5)})
 
 
 def repeat(name, s, base, log, out):
@@ -439,6 +448,12 @@ def repeat(name, s, base, log, out):
     print(f"  {name} {a}円 {spec['size']} {ch.stem} {spec['text']}: {tool.get('runs')}回・測れない {len(inv)}回・重なり {len(tool.get('hits') or [])}組")
     for v in inv[:6]:
         print(f"    {v['why'][:600]}")
+    # 顔に乗ったコマ（何秒・どの層・その時の穴）と、描くたびに数えた穴の外れ（#1141）。artifact は作業箱から落とせないので、ログに出す
+    for h in (tool.get("hits") or [])[:10]:
+        print(f"    重なり {h['t']}s: front {h['front']} / cover {h['cover']}・撮る前の穴 {json.dumps(h.get('hole'), ensure_ascii=False)}・撮った後 {json.dumps(h.get('holeAfter'), ensure_ascii=False)}・箱から {json.dumps(h.get('face'), ensure_ascii=False)}")
+    print(f"    顔の穴: {tool.get('faceFrames')}コマ中 外れ {tool.get('faceMiss')}・外れた回 {len(tool.get('faceBad') or [])}/{tool.get('runs')}・箱から(秒) {json.dumps(tool.get('faceLag'), ensure_ascii=False)}")
+    for b in (tool.get("faceBad") or [])[:4]:
+        print(f"    外れ {b['miss']}/{b['frames']}コマ: {json.dumps(b['bad'], ensure_ascii=False)} 穴 {b['hole']}s・中身 {b['content']}s・覆う {b['fit']}s")
     return {"exit": code, "tool": tool, "spec": spec}
 
 
