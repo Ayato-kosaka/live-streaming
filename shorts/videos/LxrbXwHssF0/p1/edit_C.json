@@ -1,0 +1,580 @@
+{
+ "_note": "build_edit.py が spec_C.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "C",
+ "style": "style_C.json",
+ "sources": {
+  "c01@band": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/01_0-05-33_0-06-00.mp4",
+   "watermark": "prism_live",
+   "t0": 333.0,
+   "crop": [
+    16,
+    8,
+    1048,
+    974
+   ]
+  },
+  "c01@W": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/01_0-05-33_0-06-00.mp4",
+   "watermark": "prism_live",
+   "t0": 333.0,
+   "crop": [
+    20,
+    0,
+    524,
+    932
+   ]
+  },
+  "c01@A": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/01_0-05-33_0-06-00.mp4",
+   "watermark": "prism_live",
+   "t0": 333.0,
+   "crop": [
+    548,
+    0,
+    540,
+    960
+   ]
+  },
+  "c02@band": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/02_0-06-09_0-06-23.mp4",
+   "watermark": "prism_live",
+   "t0": 369.0,
+   "crop": [
+    16,
+    8,
+    1048,
+    974
+   ]
+  },
+  "c03@band": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/03_0-06-59_0-07-05.mp4",
+   "watermark": "prism_live",
+   "t0": 419.0,
+   "crop": [
+    16,
+    8,
+    1048,
+    974
+   ]
+  },
+  "c02@A": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/02_0-06-09_0-06-23.mp4",
+   "watermark": "prism_live",
+   "t0": 369.0,
+   "crop": [
+    548,
+    0,
+    540,
+    960
+   ]
+  },
+  "c05@band": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/05_0-20-11_0-20-38.mp4",
+   "watermark": "prism_live",
+   "t0": 1211.0,
+   "crop": [
+    16,
+    8,
+    1048,
+    974
+   ]
+  },
+  "c05@A": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/05_0-20-11_0-20-38.mp4",
+   "watermark": "prism_live",
+   "t0": 1211.0,
+   "crop": [
+    548,
+    0,
+    540,
+    960
+   ]
+  },
+  "c05@W": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/05_0-20-11_0-20-38.mp4",
+   "watermark": "prism_live",
+   "t0": 1211.0,
+   "crop": [
+    20,
+    0,
+    524,
+    932
+   ]
+  },
+  "c06@band": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/06_0-21-16_0-21-49.mp4",
+   "watermark": "prism_live",
+   "t0": 1276.0,
+   "crop": [
+    16,
+    8,
+    1048,
+    974
+   ]
+  },
+  "c06@A": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/06_0-21-16_0-21-49.mp4",
+   "watermark": "prism_live",
+   "t0": 1276.0,
+   "crop": [
+    548,
+    0,
+    540,
+    960
+   ]
+  },
+  "c06@W": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/ingest30/06_0-21-16_0-21-49.mp4",
+   "watermark": "prism_live",
+   "t0": 1276.0,
+   "crop": [
+    20,
+    0,
+    524,
+    932
+   ]
+  }
+ },
+ "cuts": [
+  {
+   "src": "c01@band",
+   "in": 86,
+   "out": 124,
+   "row": 0,
+   "fit": "blur",
+   "note": "2人の帯。0秒目は聞き手の問い（参考の伸びた6本は、会話の途中の問いから入る）"
+  },
+  {
+   "src": "c01@W",
+   "in": 136,
+   "out": 207,
+   "row": 0,
+   "fit": "cover",
+   "note": "問いを重ねる聞き手の寄り（「なんかその」を抜いた切れ目で寄りに替える）"
+  },
+  {
+   "src": "c01@band",
+   "in": 254,
+   "out": 292,
+   "row": 1,
+   "fit": "blur",
+   "note": "答え始め。2人の帯"
+  },
+  {
+   "src": "c01@A",
+   "in": 412,
+   "out": 450,
+   "row": 1,
+   "fit": "cover",
+   "note": "「国境で、あの国境の」の言い直しを抜いた切れ目で、話すあやとの寄り"
+  },
+  {
+   "src": "c01@band",
+   "in": 490,
+   "out": 504,
+   "row": 1,
+   "fit": "blur",
+   "note": "ワルテミスさんの「はい」を抜いた切れ目で帯へ"
+  },
+  {
+   "src": "c01@A",
+   "in": 583,
+   "out": 620,
+   "row": 2,
+   "fit": "cover",
+   "note": "あやとの寄り"
+  },
+  {
+   "src": "c01@band",
+   "in": 638,
+   "out": 710,
+   "row": 2,
+   "fit": "blur",
+   "note": "間を詰めた切れ目で帯（聞き手の顔も入る）"
+  },
+  {
+   "src": "c01@A",
+   "in": 732,
+   "out": 754,
+   "row": 2,
+   "fit": "cover",
+   "note": "「入れられて」で寄り"
+  },
+  {
+   "src": "c02@band",
+   "in": 52,
+   "out": 128,
+   "row": 3,
+   "fit": "blur",
+   "note": "2人の帯。聞き手が笑い出すのが横に写る。0:06:16.9 からのスマホの音量の表示より前"
+  },
+  {
+   "src": "c03@band",
+   "in": 71,
+   "out": 96,
+   "row": 4,
+   "fit": "blur",
+   "note": "「そうです」の後ろから。2人の帯"
+  },
+  {
+   "src": "c02@A",
+   "in": 135,
+   "out": 226,
+   "row": 5,
+   "fit": "cover",
+   "note": "声の秒（0:19:15）は録画の端末のキーボードが開いて2人の画が隠れているので、画は笑うあやとの寄り（0:06:13.5〜。音量の表示が出る 0:06:16.9 より前）。言われている本人の反応の画"
+  },
+  {
+   "src": "c05@band",
+   "in": 57,
+   "out": 92,
+   "row": 6,
+   "fit": "blur",
+   "note": "2人の帯（「ま、」の後ろから・聞き手の相づちの前まで）"
+  },
+  {
+   "src": "c05@A",
+   "in": 311,
+   "out": 374,
+   "row": 6,
+   "fit": "cover",
+   "note": "「アルメニアにたまたま来てて」「あの」を抜いた切れ目で寄り"
+  },
+  {
+   "src": "c05@band",
+   "in": 506,
+   "out": 559,
+   "row": 6,
+   "fit": "blur",
+   "note": "「そのイランの方に」「あの」を抜いた切れ目で帯"
+  },
+  {
+   "src": "c05@W",
+   "in": 584,
+   "out": 649,
+   "row": 6,
+   "fit": "cover",
+   "note": "聞き手の寄り（黙って聞いている顔）"
+  },
+  {
+   "src": "c05@band",
+   "in": 719,
+   "out": 743,
+   "row": 6,
+   "fit": "blur",
+   "note": "「なんか すごい」を抜いた切れ目で帯"
+  },
+  {
+   "src": "c05@A",
+   "in": 776,
+   "out": 799,
+   "row": 6,
+   "fit": "cover",
+   "note": "「あの なんか」を抜き、「気まずさ」をあやとの寄りで"
+  },
+  {
+   "src": "c06@band",
+   "in": 70,
+   "out": 87,
+   "row": 7,
+   "fit": "blur",
+   "note": "「で、なんか」の後ろから。2人の帯"
+  },
+  {
+   "src": "c06@A",
+   "in": 100,
+   "out": 180,
+   "row": 7,
+   "fit": "cover",
+   "note": "間を詰めた切れ目であやとの寄り"
+  },
+  {
+   "src": "c06@band",
+   "in": 191,
+   "out": 225,
+   "row": 7,
+   "fit": "blur",
+   "note": "「持っ…てない」の詰まる音の中で切る（言葉は割れない）"
+  },
+  {
+   "src": "c06@A",
+   "in": 233,
+   "out": 254,
+   "row": 7,
+   "fit": "cover",
+   "note": "「自負、してた」の間を詰めて寄り。聞き手の「うん」の前まで"
+  },
+  {
+   "src": "c06@W",
+   "in": 422,
+   "out": 471,
+   "row": 8,
+   "fit": "cover",
+   "note": "あやとの画にスマホの音量の表示が出ている（0:21:30.8〜0:21:34.5）ので、聞いている聞き手の寄り"
+  },
+  {
+   "src": "c06@band",
+   "in": 578,
+   "out": 624,
+   "row": 8,
+   "fit": "blur",
+   "note": "表示が消えたあと。2人の帯"
+  },
+  {
+   "src": "c06@A",
+   "in": 705,
+   "out": 734,
+   "row": 8,
+   "fit": "cover",
+   "note": "落ち。「歩きました」の前の 0.3秒の間を残して、あやとの寄り"
+  },
+  {
+   "src": "c06@W",
+   "in": 799,
+   "out": 865,
+   "row": 9,
+   "fit": "cover",
+   "note": "題の回収。聞き手の寄り。「すごいすごい」の前で切る"
+  }
+ ],
+ "title": {
+  "text": "『歩きました』じゃないんですよ\n偏見をなくしたくて、🇮🇷イラン国境まで",
+  "look": "card",
+  "from": 0,
+  "to": 1127,
+  "highlight": [
+   "歩きました"
+  ]
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "lines": [
+   {
+    "text": "危ない目に合わなかったですか？捕らえられたりとか、こう尋問されたりとか、なかったですか？",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_00.wav",
+    "speaker": "W",
+    "at": 0
+   },
+   {
+    "text": "1回、国境で、検問所みたいなところに、捕らえられて",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_01.wav",
+    "speaker": "A",
+    "at": 109
+   },
+   {
+    "text": "1時間ぐらい、なんか留置所みたいな檻の中に、入れられて",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_02.wav",
+    "speaker": "A",
+    "at": 199
+   },
+   {
+    "text": "でっかいアサルトライフルみたいなのを、背負ってんですよ",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_03.wav",
+    "speaker": "A",
+    "at": 330
+   },
+   {
+    "text": "解放されました",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_04.wav",
+    "speaker": "A",
+    "at": 406
+   },
+   {
+    "text": "めちゃくちゃやばいことやってんのに、喋ったら普通の人",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/voice/C_06_w.wav",
+    "speaker": "W",
+    "at": 431,
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "今回イランに行ったのも、ホステルで会ったイランの方がいて、どこ出身ですかって聞いた時に、イラン出身ですって言われた時に、自分の中で、気まずさというか",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_06.wav",
+    "speaker": "A",
+    "at": 522
+   },
+   {
+    "text": "僕はもう1年半も海外いるし、そんな偏見とか持ってないだろうって、自負してたんですけど",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_07.wav",
+    "speaker": "A",
+    "at": 785
+   },
+   {
+    "text": "あるなぁ、偏見あるなぁと思って。なくしたいなぁと思って……歩きました",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_08.wav",
+    "speaker": "A",
+    "at": 937
+   },
+   {
+    "text": "はあ。いやいや、歩きましたじゃないんですよ",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/w1104c/narr/orig_C_09.wav",
+    "speaker": "W",
+    "at": 1061
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a12f80ca5c61073e4/shorts/videos/LxrbXwHssF0/p1/spec_C.json",
+  "fps": 30,
+  "frames": 1127,
+  "seconds": 37.567,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 109,
+    "voice_frames": 109,
+    "cuts": [
+     "0:05:35.9+1.27s",
+     "0:05:37.5+2.37s"
+    ],
+    "line": "危ない目に合わなかったですか？捕らえられたりとか、こう尋問されたりとか、なかったですか？",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "W"
+   },
+   {
+    "row": 1,
+    "from": 109,
+    "frames": 90,
+    "voice_frames": 90,
+    "cuts": [
+     "0:05:41.5+1.27s",
+     "0:05:46.7+1.27s",
+     "0:05:49.3+0.47s"
+    ],
+    "line": "1回、国境で、検問所みたいなところに、捕らえられて",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 2,
+    "from": 199,
+    "frames": 131,
+    "voice_frames": 131,
+    "cuts": [
+     "0:05:52.4+1.23s",
+     "0:05:54.3+2.40s",
+     "0:05:57.4+0.73s"
+    ],
+    "line": "1時間ぐらい、なんか留置所みたいな檻の中に、入れられて",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 3,
+    "from": 330,
+    "frames": 76,
+    "voice_frames": 76,
+    "cuts": [
+     "0:06:10.7+2.53s"
+    ],
+    "line": "でっかいアサルトライフルみたいなのを、背負ってんですよ",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 4,
+    "from": 406,
+    "frames": 25,
+    "voice_frames": 25,
+    "cuts": [
+     "0:07:01.4+0.83s"
+    ],
+    "line": "解放されました",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 5,
+    "from": 431,
+    "frames": 91,
+    "voice_frames": 91,
+    "cuts": [
+     "0:06:13.5+3.03s"
+    ],
+    "line": "めちゃくちゃやばいことやってんのに、喋ったら普通の人",
+    "telop": null,
+    "speaker": "W"
+   },
+   {
+    "row": 6,
+    "from": 522,
+    "frames": 263,
+    "voice_frames": 263,
+    "cuts": [
+     "0:20:12.9+1.17s",
+     "0:20:21.4+2.10s",
+     "0:20:27.9+1.77s",
+     "0:20:30.5+2.17s",
+     "0:20:35.0+0.80s",
+     "0:20:36.9+0.77s"
+    ],
+    "line": "今回イランに行ったのも、ホステルで会ったイランの方がいて、どこ出身ですかって聞いた時に、イラン出身ですって言われた時に、自分の中で、気まずさというか",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 7,
+    "from": 785,
+    "frames": 152,
+    "voice_frames": 152,
+    "cuts": [
+     "0:21:18.3+0.57s",
+     "0:21:19.3+2.67s",
+     "0:21:22.4+1.13s",
+     "0:21:23.8+0.70s"
+    ],
+    "line": "僕はもう1年半も海外いるし、そんな偏見とか持ってないだろうって、自負してたんですけど",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 8,
+    "from": 937,
+    "frames": 124,
+    "voice_frames": 124,
+    "cuts": [
+     "0:21:30.1+1.63s",
+     "0:21:35.3+1.53s",
+     "0:21:39.5+0.97s"
+    ],
+    "line": "あるなぁ、偏見あるなぁと思って。なくしたいなぁと思って……歩きました",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "A"
+   },
+   {
+    "row": 9,
+    "from": 1061,
+    "frames": 66,
+    "voice_frames": 66,
+    "cuts": [
+     "0:21:42.6+2.20s"
+    ],
+    "line": "はあ。いやいや、歩きましたじゃないんですよ",
+    "telop": null,
+    "orig_voice": true,
+    "speaker": "W"
+   }
+  ]
+ }
+}

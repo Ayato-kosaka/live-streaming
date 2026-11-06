@@ -369,6 +369,12 @@ SKIP: dict[str, str] = {
     "tools/shorts/qa/badge_selftest.py":
         "ffmpeg と numpy・Pillow が要る（Selftests は入れていない）。守る実物は tools/shorts/qa/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # 対談系の切り抜き（帳面 F-065・#1104、2026-11-06）。話し手の色の字幕・全編の題の札・終わりの1秒の札を描き、
+    # build_edit で組み、本物の書き出し（下書き）を品質チェックに通すので、ffmpeg・numpy・Pillow・OpenCV・budoux が要る。
+    # 守り23個を1つずつ外して3分ほど（子1本 7秒）
+    "tools/shorts/render/talk_selftest.py":
+        "ffmpeg と numpy・Pillow・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/・"
+        "tools/shorts/plan/build_edit.py・tools/shorts/qa/ の下だけで、そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

@@ -135,6 +135,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/qa/badge_selftest.py
 
+      # 対談系の切り抜き（帳面 F-065・#1104、2026-11-06）。使わない回（既定）は書き出し・build_edit・品質チェックが何も変えず、
+      # 使う回は話し手ごとの字幕の色・全編の題の札とその1語の色・終わりの1秒の札・帯と寄りの切り出し・行の間なしで組み、
+      # 品質チェックが3秒のカットと BGM の無い回の声と BGM の差だけを対象外にするか。守り23個を1つずつ外して3分ほど。
+      # ffmpeg と numpy が要るので回し役の SKIP に載せ、ここで名指しで回す
+      - name: 対談系の切り抜きの見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/talk_selftest.py
+
       # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
       # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
       # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
@@ -163,6 +171,7 @@ jobs:
             ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
             ! -path 'tools/shorts/render/orig_voice_selftest.py' \
             ! -path 'tools/shorts/render/live_badge_selftest.py' ! -path 'tools/shorts/qa/badge_selftest.py' \
+            ! -path 'tools/shorts/render/talk_selftest.py' \
             ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
             ! -path 'tools/shorts/feedback/watch_selftest.py' \
             -print0 | sort -z)

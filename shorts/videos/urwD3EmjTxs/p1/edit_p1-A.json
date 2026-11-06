@@ -1,0 +1,765 @@
+{
+ "_note": "build_edit.py が spec_A.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1-A",
+ "style": "style_p1-A.json",
+ "sources": {
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/06_0-50-10_0-50-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3010.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/08_1-00-28_1-00-42.mp4",
+   "watermark": "prism_live",
+   "t0": 3628.0
+  },
+  "c20": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/20_1-33-00_1-33-16.mp4",
+   "watermark": "prism_live",
+   "t0": 5580.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/14_1-18-10_1-18-36.mp4",
+   "watermark": "prism_live",
+   "t0": 4690.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/01_0-12-06_0-12-14.mp4",
+   "watermark": "prism_live",
+   "t0": 726.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/02_0-12-26_0-12-34.mp4",
+   "watermark": "prism_live",
+   "t0": 746.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/03_0-21-56_0-22-14.mp4",
+   "watermark": "prism_live",
+   "t0": 1316.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/04_0-44-46_0-45-06.mp4",
+   "watermark": "prism_live",
+   "t0": 2686.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/05_0-49-04_0-49-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2944.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/07_0-51-20_0-51-50.mp4",
+   "watermark": "prism_live",
+   "t0": 3080.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/12_1-02-36_1-02-58.mp4",
+   "watermark": "prism_live",
+   "t0": 3756.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/11_1-02-16_1-02-24.mp4",
+   "watermark": "prism_live",
+   "t0": 3736.0
+  },
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/15_1-22-16_1-22-30.mp4",
+   "watermark": "prism_live",
+   "t0": 4936.0
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/16_1-39-50_1-41-10.mp4",
+   "watermark": "prism_live",
+   "t0": 5990.0
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/ingest/urwD3EmjTxs/clips/17_2-19-28_2-19-49.mp4",
+   "watermark": "prism_live",
+   "t0": 8368.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c06",
+   "in": 90,
+   "out": 149,
+   "row": 0,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.0,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "0秒目（F-020・hook.py の候補2の場面）: 宿の部屋で、残りが4分の1のペットボトルを掲げる手元と、手前のマグ（量りかたの道具が2つとも写る）。真ん中の箱（y447-566）の下 y570 から窓（x0・高さ618）。右下のかぼちゃ（x590-・y1000-）にかからない"
+  },
+  {
+   "src": "c08",
+   "in": 258,
+   "out": 298,
+   "row": 0,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.18056,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "同じマグに緑の強力粉の袋から粉を注ぐ（はかり無しで量っている所）。箱の下（窓 x130 y570 高さ618）"
+  },
+  {
+   "src": "c20",
+   "in": 174,
+   "out": 217,
+   "row": 1,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.13889,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「こねたら」: 2つ目の生地の、ぼろぼろの粉と水を手で混ぜてまとめる手元（窓の明かりで手と粉の粒が見える）。v2 の 1:35:35.8〜 は手が動いた瞬間でぶれて何が写っているか分からなかった（窓の中のラプラシアンの分散の中央 12）ので、同じ2つ目の生地で手がぶれていない秒（中央 48）に替えた。箱の下（窓 x100 y570）"
+  },
+  {
+   "src": "c14",
+   "in": 84,
+   "out": 136,
+   "row": 1,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.23611,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「一晩ほったらかすだけのパン」: 容器の中の1つ目の生地のかたまり（指は箱の上にあり、窓には止まった生地だけが入る）。v1・v2 の 1:18:33〜・1:18:29.6〜 は手が動いた瞬間でぶれて何が写っているか分からなかった（中央 10）ので、同じ窓で生地が止まって見える秒（中央 53）に替えた（バゲットの 1:18:51.4 より前）。箱の下（窓 x170 y570）"
+  },
+  {
+   "src": "c01",
+   "in": 162,
+   "out": 202,
+   "row": 2,
+   "zoom": {
+    "from": 1.6648,
+    "to": 1.6648,
+    "x": 0.27778,
+    "y": 0.21406,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「スーパーで」: 赤い K の看板のスーパー（KAM）の入口。上の端の箱（y151-266）の下 y274 から、下へ降りていくかぼちゃの貯金箱と「バルカン半島旅」の帯（この秒は y1010-）の上 y990 まで（窓 x200 高さ716）。入口の人は小さく顔は分からない"
+  },
+  {
+   "src": "c02",
+   "in": 207,
+   "out": 233,
+   "row": 2,
+   "zoom": {
+    "from": 1.4608,
+    "to": 1.4608,
+    "x": 0.15278,
+    "y": 0.21406,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「材料探し」: 赤い買い物かごと、瓶や袋の並ぶ棚（人は写らない）。v1 の 0:12:27.6〜 の通路は奥の買い物客の顔を顔の検査が3つ拾った（小さいが写っている）ので、通路を抜けて棚の前に来た所にした。上の端の箱の下 y274 から、下の魔女（y1090-）の上 y1090 まで（窓 x110 高さ816）"
+  },
+  {
+   "src": "c03",
+   "in": 255,
+   "out": 329,
+   "row": 3,
+   "zoom": {
+    "from": 1.6884,
+    "to": 1.6884,
+    "x": 0.20833,
+    "y": 0.21406,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「強力粉の袋は、すぐ漏れてるからチェック」: TORTILLA の札の下の棚から強力粉の袋を取り、カメラの前で回して見る（バゲットの 0:21:58〜0:21:59.3 の6秒あと。買い物客は写らない）。上の端の箱（y150-266）の下 y274 から、下の魔女（y990-）の上 y980 まで（窓 x150 高さ706）"
+  },
+  {
+   "src": "c04",
+   "in": 0,
+   "out": 61,
+   "row": 4,
+   "zoom": {
+    "from": 1.4608,
+    "to": 1.4608,
+    "x": 0.08333,
+    "y": 0.21406,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「宿に戻ったら」: 宿の部屋のテレビとひまわりの前のテーブルに、白い容器と買い物袋を置く（はかりは無い）。上の端の箱（y151-266）の下 y274 から、下のかぼちゃと「バルカン半島旅」の帯（y1100-）の上 y1090 まで（窓 x60 高さ816）"
+  },
+  {
+   "src": "c08",
+   "in": 0,
+   "out": 41,
+   "row": 4,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.19444,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「粉300gを量る」: 緑の強力粉の袋をマグの上で傾ける。箱の下（窓 x140 y570）。右下の魔女（x572-）の外"
+  },
+  {
+   "src": "c05",
+   "in": 60,
+   "out": 119,
+   "row": 5,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.0,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「500ミリのペットボトルで」: 青いキャップの500mlのペットボトルを持ち上げて見せる手（バゲットの 0:48:41〜0:48:42.6 とは別の秒・別の動き）。箱の下（窓 x0 y570）"
+  },
+  {
+   "src": "c07",
+   "in": 0,
+   "out": 26,
+   "row": 5,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.30556,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「テクノロジーアするしかない」: 量る道具のマグを赤い棚の上に置く。箱の下（窓 x220 y570）"
+  },
+  {
+   "src": "c05",
+   "in": 498,
+   "out": 546,
+   "row": 6,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.31944,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「満タンのペットボトルから、コップいっぱいに注いだら」: ペットボトルの口からマグへ水が落ち、縁まで満ちていく（バゲットの 0:49:18〜0:49:19.6 の1秒あと）。箱の下（窓 x230 y570）"
+  },
+  {
+   "src": "c07",
+   "in": 660,
+   "out": 692,
+   "row": 6,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.15278,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "水を量ったマグを真上から（黒いテーブル・脇にペットボトルの青いキャップ）。箱の下（窓 x110 y570）"
+  },
+  {
+   "src": "c06",
+   "in": 300,
+   "out": 378,
+   "row": 7,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.0,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「残りは4分の1」: マグに注いだあとのペットボトルを掲げ、底に残った水を指で示す（窓は箱の下なので、水の残った底の所）。箱の下（窓 x0 y570）"
+  },
+  {
+   "src": "c07",
+   "in": 36,
+   "out": 100,
+   "row": 7,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.19444,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「このコップは375ミリや」: 残りの水をマグへ注いで確かめる（赤い棚の上）。箱の下（窓 x140 y570）"
+  },
+  {
+   "src": "c08",
+   "in": 180,
+   "out": 241,
+   "row": 8,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.18056,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「300gはだいたい500ミリやから」: 強力粉の袋からマグへ粉を注ぐ（バゲットの 0:59:46 とは別の秒）。箱の下（窓 x130 y570）"
+  },
+  {
+   "src": "c12",
+   "in": 78,
+   "out": 139,
+   "row": 8,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.20833,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「コップ1杯と3分の1」: 黒いテーブルの上、底に粉が3分の1入ったマグの寄り。箱の下（窓 x150 y570）"
+  },
+  {
+   "src": "c11",
+   "in": 30,
+   "out": 64,
+   "row": 9,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.31944,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「分からへんけど、これでたぶん300gや」: 粉が3分の1のマグを両手で持つ（前の段は顔の画にしたが、顔は箱の上にしか写らず、箱の上だけを切ると倍率 2.7 で甘いので、箱の下のマグにした）。箱の下（窓 x230 y570）。右下の魔女（x626-）の外"
+  },
+  {
+   "src": "c12",
+   "in": 432,
+   "out": 473,
+   "row": 9,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.20833,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "マグの粉を白い容器へあける（「分からへんけど入れちゃおう」の所）。箱の下（窓 x150 y570）"
+  },
+  {
+   "src": "c20",
+   "in": 30,
+   "out": 69,
+   "row": 10,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.13889,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「水を入れて」: 容器の中で粉と水を手で混ぜる（2つ目の生地の同じ手順）。箱の下（窓 x100 y570）"
+  },
+  {
+   "src": "c20",
+   "in": 435,
+   "out": 474,
+   "row": 10,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.13889,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「手がベタベタになるまでこねたら」: 生地が糸を引いてくっついた指で、2つ目の生地をつまんでこねる手元（中央 95）。v2 の 1:16:49.4〜 は手が動いた瞬間でぶれて何が写っているか分からなかった（中央 7）。前の段の 1:18:12.5 の指は箱の上にしか写らない。箱の下（窓 x100 y570）"
+  },
+  {
+   "src": "c14",
+   "in": 291,
+   "out": 337,
+   "row": 11,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.23611,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "【答】「めっちゃまとまってきてるやんか」: ひとかたまりになった1つ目の生地に指を押し込む（中央 49）。v2 の 1:18:23.6〜 は手が動いた瞬間でぶれて生地の形が分からなかった（中央 6）ので、3.9秒前の、生地も指もぶれていない秒に替えた（バゲットの 1:18:51〜1:18:53・1:19:54〜1:19:56 より前）。箱の下（窓 x170 y570）"
+  },
+  {
+   "src": "c15",
+   "in": 129,
+   "out": 196,
+   "row": 12,
+   "zoom": {
+    "from": 2.6968,
+    "to": 2.6968,
+    "x": 0.38889,
+    "y": 0.00313,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「あとは明日まで、一晩ほったらかし」: こね終えた生地を白い皿に乗せて黒いテーブルに置く。生地は箱（y447-566）の真上にしか写らないので、箱の上 y4〜446 を切る（倍率 2.70・幅 267。窓 x280）。冷蔵庫へ運ぶ画は配信に無い"
+  },
+  {
+   "src": "c16",
+   "in": 546,
+   "out": 604,
+   "row": 13,
+   "zoom": {
+    "from": 1.9288,
+    "to": 1.9288,
+    "x": 0.23611,
+    "y": 0.44531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「みんな、どんなパンになると思う？」: こね終えてつるんと丸まった2つ目の生地をカメラの前に持ち上げる。箱の下（窓 x170 y570）なので、生地の下半分と容器。下書き d1 の 1:40:07.6〜 は生地が窓の上の端にしか入らず弱い画だったので、生地が下りてくる 0.6秒あとから"
+  },
+  {
+   "src": "c17",
+   "in": 450,
+   "out": 535,
+   "row": 14,
+   "zoom": {
+    "from": 1.6196,
+    "to": 1.6196,
+    "x": 0.19167,
+    "y": 0.24531,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「続きは、次の日の配信のアーカイブで見てな」: 配信の終わり、カメラに手を振る本人（「バイバイ」の所）。この画の上に終わりの札（F-042）。上の端の箱（y190-310）の下 y314 から、下のかぼちゃと「バルカン半島旅」の帯（y1060-）の上 y1050 まで（窓 x138 高さ736）"
+  }
+ ],
+ "title": {
+  "text": "海外ホステルでの、はかり無しの量り方が天才的すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "海外ホステルでの、はかり無しの量り方が天才的すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/01.wav",
+    "tts_text": "海外ホステルでの、はかり無しの量りかたが、天才的すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "明日焼くのは、こねたら一晩ほったらかすだけのパン！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/02.wav",
+    "tts_text": "明日焼くのは、こねたら、ひとばん、ほったらかすだけのパン！",
+    "at": 99
+   },
+   {
+    "text": "まずはスーパーで、パンの材料探し！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/03.wav",
+    "tts_text": "まずはスーパーで、パンの材料探し！",
+    "at": 194
+   },
+   {
+    "text": "強力粉の袋は、すぐ漏れてるからチェック！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/04.wav",
+    "tts_text": "きょうりきこの袋は、すぐ漏れてるからチェック！",
+    "at": 260
+   },
+   {
+    "text": "宿に戻ったら、粉300gを量るはかりが無い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/05.wav",
+    "tts_text": "宿に戻ったら、粉さんびゃくグラムを、はかる、はかりが無い！",
+    "at": 334,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "500ミリのペットボトルでテクノロジーアするしかない！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/06.wav",
+    "tts_text": "ごひゃくミリのペットボトルで、テクノロジーアするしかない！",
+    "at": 436
+   },
+   {
+    "text": "満タンのペットボトルから、コップいっぱいに注いだら",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/07.wav",
+    "tts_text": "満タンのペットボトルから、コップいっぱいに注いだら",
+    "at": 521
+   },
+   {
+    "text": "残りは4分の1……てことは、このコップは375ミリや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/08.wav",
+    "tts_text": "残りは、よんぶんのいち……てことは、このコップは、さんびゃくななじゅうごミリや！",
+    "at": 601,
+    "mood": "up_pop"
+   },
+   {
+    "text": "300gはだいたい500ミリやから、コップ1杯と3分の1！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/09.wav",
+    "tts_text": "さんびゃくグラムは、だいたいごひゃくミリやから、コップいっぱいと、さんぶんのいち！",
+    "at": 743
+   },
+   {
+    "text": "分からへんけど、これでたぶん300gや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/10.wav",
+    "tts_text": "分からへんけど、これでたぶん、さんびゃくグラムや！",
+    "at": 865
+   },
+   {
+    "text": "水を入れて、手がベタベタになるまでこねたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/11.wav",
+    "tts_text": "水を入れて、手がベタベタになるまでこねたら……",
+    "at": 940
+   },
+   {
+    "text": "めっちゃまとまってきてるやんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/12.wav",
+    "tts_text": "めっちゃまとまってきてるやんか！",
+    "at": 1018,
+    "mood": "up_pop"
+   },
+   {
+    "text": "あとは明日まで、一晩ほったらかし！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/13.wav",
+    "tts_text": "あとは明日まで、ひとばん、ほったらかし！",
+    "at": 1064
+   },
+   {
+    "text": "みんな、どんなパンになると思う？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/14.wav",
+    "tts_text": "みんな、どんなパンになると思う？",
+    "at": 1131
+   },
+   {
+    "text": "続きは、次の日の配信のアーカイブで見てな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/voice/urw-p1a-v1/p1-A/15.wav",
+    "tts_text": "続きは、次の日の配信のアーカイブで見てな！",
+    "at": 1189
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a65c04ca4f5fa8ca3/shorts/videos/urwD3EmjTxs/p1/spec_A.json",
+  "fps": 30,
+  "frames": 1274,
+  "seconds": 42.467,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 99,
+    "voice_frames": 91,
+    "cuts": [
+     "0:50:13.0+1.97s",
+     "1:00:36.6+1.33s"
+    ],
+    "line": "海外ホステルでの、はかり無しの量り方が天才的すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 99,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "1:33:05.8+1.43s",
+     "1:18:12.8+1.73s"
+    ],
+    "line": "明日焼くのは、こねたら一晩ほったらかすだけのパン！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 194,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "0:12:11.4+1.33s",
+     "0:12:32.9+0.87s"
+    ],
+    "line": "まずはスーパーで、パンの材料探し！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 260,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "0:22:04.5+2.47s"
+    ],
+    "line": "強力粉の袋は、すぐ漏れてるからチェック！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 334,
+    "frames": 102,
+    "voice_frames": 94,
+    "cuts": [
+     "0:44:46.0+2.03s",
+     "1:00:28.0+1.37s"
+    ],
+    "line": "宿に戻ったら、粉300gを量るはかりが無い！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 436,
+    "frames": 85,
+    "voice_frames": 77,
+    "cuts": [
+     "0:49:06.0+1.97s",
+     "0:51:20.0+0.87s"
+    ],
+    "line": "500ミリのペットボトルでテクノロジーアするしかない！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 521,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "0:49:20.6+1.60s",
+     "0:51:42.0+1.07s"
+    ],
+    "line": "満タンのペットボトルから、コップいっぱいに注いだら",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 601,
+    "frames": 142,
+    "voice_frames": 134,
+    "cuts": [
+     "0:50:20.0+2.60s",
+     "0:51:21.2+2.13s"
+    ],
+    "line": "残りは4分の1……てことは、このコップは375ミリや！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 743,
+    "frames": 122,
+    "voice_frames": 114,
+    "cuts": [
+     "1:00:34.0+2.03s",
+     "1:02:38.6+2.03s"
+    ],
+    "line": "300gはだいたい500ミリやから、コップ1杯と3分の1！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 865,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "1:02:17.0+1.13s",
+     "1:02:50.4+1.37s"
+    ],
+    "line": "分からへんけど、これでたぶん300gや！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 940,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:33:01.0+1.30s",
+     "1:33:14.5+1.30s"
+    ],
+    "line": "水を入れて、手がベタベタになるまでこねたら……",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 1018,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "1:18:19.7+1.53s"
+    ],
+    "line": "めっちゃまとまってきてるやんか！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 1064,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "1:22:20.3+2.23s"
+    ],
+    "line": "あとは明日まで、一晩ほったらかし！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1131,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "1:40:08.2+1.93s"
+    ],
+    "line": "みんな、どんなパンになると思う？",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1189,
+    "frames": 85,
+    "voice_frames": 68,
+    "cuts": [
+     "2:19:43.0+2.83s"
+    ],
+    "line": "続きは、次の日の配信のアーカイブで見てな！",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 301,
+   "raw_voice_s": 53.4,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 38.17,
+   "cps_voiced": 7.89,
+   "video_s": 42.47,
+   "cps_video": 7.09
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ed1107/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

@@ -1,0 +1,1077 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_p1.json",
+ "sources": {
+  "c25": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/25_1-49-35_1-49-56.mp4",
+   "watermark": "prism_live",
+   "t0": 6575.0
+  },
+  "c22": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/22_1-35-01_1-35-31.mp4",
+   "watermark": "prism_live",
+   "t0": 5701.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/donehL4hO68/clips/05_1-32-49_1-32-59.mp4",
+   "watermark": "prism_live",
+   "t0": 5569.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/donehL4hO68/clips/02_1-22-50_1-23-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4970.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/donehL4hO68/clips/03_1-23-58_1-24-10.mp4",
+   "watermark": "prism_live",
+   "t0": 5038.0
+  },
+  "c3_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/donehL4hO68/clips/07_1-34-50_1-34-58.mp4",
+   "watermark": "prism_live",
+   "t0": 5690.0
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/donehL4hO68/clips/04_1-26-21_1-26-32.mp4",
+   "watermark": "prism_live",
+   "t0": 5181.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/07_0-55-21_0-55-28.mp4",
+   "watermark": "prism_live",
+   "t0": 3321.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/02_0-38-55_0-39-06.mp4",
+   "watermark": "prism_live",
+   "t0": 2335.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/04_0-42-41_0-42-48.mp4",
+   "watermark": "prism_live",
+   "t0": 2561.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/05_0-50-35_0-50-43.mp4",
+   "watermark": "prism_live",
+   "t0": 3035.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest2/E2oGYjnVQSA/clips/01_1-00-53_1-01-10.mp4",
+   "watermark": "prism_live",
+   "t0": 3653.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/09_1-02-01_1-02-10.mp4",
+   "watermark": "prism_live",
+   "t0": 3721.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/10_1-03-56_1-04-43.mp4",
+   "watermark": "prism_live",
+   "t0": 3836.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest2/E2oGYjnVQSA/clips/02_1-05-13_1-05-20.mp4",
+   "watermark": "prism_live",
+   "t0": 3913.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/12_1-08-20_1-08-28.mp4",
+   "watermark": "prism_live",
+   "t0": 4100.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/13_1-12-11_1-12-32.mp4",
+   "watermark": "prism_live",
+   "t0": 4331.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/14_1-12-58_1-13-06.mp4",
+   "watermark": "prism_live",
+   "t0": 4378.0
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/16_1-15-36_1-16-04.mp4",
+   "watermark": "prism_live",
+   "t0": 4536.0
+  },
+  "c18": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/18_1-19-34_1-19-41.mp4",
+   "watermark": "prism_live",
+   "t0": 4774.0
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/17_1-17-37_1-17-45.mp4",
+   "watermark": "prism_live",
+   "t0": 4657.0
+  },
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/19_1-27-35_1-27-43.mp4",
+   "watermark": "prism_live",
+   "t0": 5255.0
+  },
+  "c20": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/20_1-30-03_1-30-22.mp4",
+   "watermark": "prism_live",
+   "t0": 5403.0
+  },
+  "c21": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/21_1-33-58_1-34-06.mp4",
+   "watermark": "prism_live",
+   "t0": 5638.0
+  },
+  "c23": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/23_1-36-21_1-36-29.mp4",
+   "watermark": "prism_live",
+   "t0": 5781.0
+  },
+  "c24": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/24_1-38-40_1-38-50.mp4",
+   "watermark": "prism_live",
+   "t0": 5920.0
+  },
+  "c26": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/26_1-52-09_1-52-40.mp4",
+   "watermark": "prism_live",
+   "t0": 6729.0
+  },
+  "c27": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/27_1-59-07_1-59-14.mp4",
+   "watermark": "prism_live",
+   "t0": 7147.0
+  },
+  "c28": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/ingest/E2oGYjnVQSA/clips/28_1-59-34_1-59-41.mp4",
+   "watermark": "prism_live",
+   "t0": 7174.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c25",
+   "in": 105,
+   "out": 160,
+   "row": 0,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "0秒目: 出来上がったシチューの皿をカメラの前へ突き出す（題の答え・F-020）"
+  },
+  {
+   "src": "c22",
+   "in": 750,
+   "out": 786,
+   "row": 0,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.16667,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "鍋のとろりとしたシチューをスプーンで持ち上げる寄り"
+  },
+  {
+   "src": "c3_05",
+   "in": 225,
+   "out": 264,
+   "row": 1,
+   "zoom": {
+    "from": 1.468,
+    "to": 1.468,
+    "x": 0.36528,
+    "y": 0.23438,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「手羽先4本」: 冷凍ケースの上で持った CHICKEN WINGS の袋（10/13 の買い物）。v2・v3 は持ち上げる途中の袋の柄を顔と読まれ、真ん中の字幕が被ったと判定された。袋を止めて持っている秒にし、窓を下げて袋を字幕より上へ運ぶ"
+  },
+  {
+   "src": "c3_02",
+   "in": 60,
+   "out": 92,
+   "row": 1,
+   "zoom": {
+    "from": 1.0719,
+    "to": 1.0719,
+    "x": 0.06944,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「じゃがいも1個」: じゃがいもの箱（キャベツの下の段。人は写らない）"
+  },
+  {
+   "src": "c3_03",
+   "in": 60,
+   "out": 95,
+   "row": 1,
+   "zoom": {
+    "from": 1.0719,
+    "to": 1.0719,
+    "x": 0.06944,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「玉ねぎ、ニンニクと」: 玉ねぎを手に取って袋へ。ニンニクは買い物客が写る秒か書き込みの箱と重なるので画に出さない"
+  },
+  {
+   "src": "c3_07",
+   "in": 60,
+   "out": 85,
+   "row": 1,
+   "zoom": {
+    "from": 1.0719,
+    "to": 1.0719,
+    "x": 0.06944,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「冷凍チキン」: 手羽先の袋を赤いかごへ入れる"
+  },
+  {
+   "src": "c3_04",
+   "in": 75,
+   "out": 126,
+   "row": 2,
+   "zoom": {
+    "from": 1.0719,
+    "to": 1.0719,
+    "x": 0.06944,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「人参が１キロ100円」: 人参 1kg の袋の箱と上の値札（本人が「1kg 100円です」と確かめる所）"
+  },
+  {
+   "src": "c07",
+   "in": 45,
+   "out": 93,
+   "row": 2,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.34722,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「4本入れたら、人参だらけや」: 鍋いっぱいの角切りの人参（箱の上だけを寄せて切る）"
+  },
+  {
+   "src": "c02",
+   "in": 147,
+   "out": 192,
+   "row": 3,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.41667,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「鶏だけ炒めずに」: 凍って固まったままの手羽先を、赤いフライパン（鶏だけの器）へ入れる手"
+  },
+  {
+   "src": "c04",
+   "in": 102,
+   "out": 155,
+   "row": 3,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.34722,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「冷凍のまま別茹で」: フライパンの湯の中の手羽先を木べらで返す（鶏だけで茹でている）"
+  },
+  {
+   "src": "c05",
+   "in": 0,
+   "out": 31,
+   "row": 4,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.55556,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「その間に鍋で」: 野菜の鍋（人参・玉ねぎ）を上から"
+  },
+  {
+   "src": "c2_01",
+   "in": 60,
+   "out": 119,
+   "row": 4,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「ニンニクと野菜を炒めて、塩」: 鍋の野菜を木べらで炒める寄り（このすぐあと 1:01:00「で、塩ね」）"
+  },
+  {
+   "src": "c09",
+   "in": 114,
+   "out": 173,
+   "row": 5,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.34722,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「茹で汁ごと鍋へ」: 茹でた手羽先のフライパンを傾けて野菜の鍋へ"
+  },
+  {
+   "src": "c10",
+   "in": 1275,
+   "out": 1314,
+   "row": 6,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.08333,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「コンソメ入れよ思たら」: 袋の表（CHICKEN SOUP の字と鶏の絵）"
+  },
+  {
+   "src": "c10",
+   "in": 480,
+   "out": 515,
+   "row": 6,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.38889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「なんなんだこれは？？」: 袋を裏返して字を読む（v1 の顔を上げる画 1:04:00 は、倍率 2.33 で顔が画面いっぱいになり字幕が目と鼻に被った）"
+  },
+  {
+   "src": "c10",
+   "in": 960,
+   "out": 988,
+   "row": 6,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.41667,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「カップ麺やんか」: 手のひらに出した黄色い乾麺"
+  },
+  {
+   "src": "c2_02",
+   "in": 75,
+   "out": 98,
+   "row": 7,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.08333,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「しゃあない」: 乾麺を鍋へ落とす手元"
+  },
+  {
+   "src": "c12",
+   "in": 99,
+   "out": 153,
+   "row": 7,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.34722,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「ルーを手作り」: ルーに使う大きいスプーンを持ち上げて見せる"
+  },
+  {
+   "src": "c13",
+   "in": 84,
+   "out": 136,
+   "row": 8,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.27778,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「大きいスプーン山盛り2杯」: スプーンからはみ出す山盛りのマーガリン"
+  },
+  {
+   "src": "c13",
+   "in": 330,
+   "out": 394,
+   "row": 8,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.20833,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「うまくいくかマジで心配や」: マーガリンの袋を持ってカメラを見る本人"
+  },
+  {
+   "src": "c14",
+   "in": 108,
+   "out": 128,
+   "row": 9,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.27778,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「溶けたら」: フライパンで溶けたマーガリン"
+  },
+  {
+   "src": "c16",
+   "in": 144,
+   "out": 190,
+   "row": 9,
+   "zoom": {
+    "from": 2.3281,
+    "to": 2.3281,
+    "x": 0.34722,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「小麦粉も2杯、少しずつ」: 小麦粉を山にしたスプーンをフライパンの上へ"
+  },
+  {
+   "src": "c18",
+   "in": 90,
+   "out": 136,
+   "row": 10,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.27778,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「弱火で牛乳を少しずつ」: 牛乳のパックからフライパンのルーへ注ぐ"
+  },
+  {
+   "src": "c17",
+   "in": 105,
+   "out": 136,
+   "row": 10,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「高速で混ぜる」: 木べらでルーを速く混ぜる"
+  },
+  {
+   "src": "c19",
+   "in": 105,
+   "out": 149,
+   "row": 11,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「じゃがいもが柔らかくなったら」: 鍋のじゃがいもを確かめる"
+  },
+  {
+   "src": "c20",
+   "in": 405,
+   "out": 432,
+   "row": 11,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「ルーを鍋へ」: 赤いフライパンを傾けて、へらでルーを鍋へ落とす（1:30:04〜06 は奥に人が写るので使わない）"
+  },
+  {
+   "src": "c21",
+   "in": 105,
+   "out": 152,
+   "row": 12,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「牛乳でとろみを調整」: 牛乳のパックから鍋へ注ぐ"
+  },
+  {
+   "src": "c22",
+   "in": 105,
+   "out": 136,
+   "row": 12,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「これが正解や」: とろみの付いたシチューを木べらで混ぜる寄り"
+  },
+  {
+   "src": "c23",
+   "in": 105,
+   "out": 134,
+   "row": 13,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「仕上げに強火」: 強火の鍋を上から混ぜる"
+  },
+  {
+   "src": "c24",
+   "in": 135,
+   "out": 202,
+   "row": 13,
+   "zoom": {
+    "from": 1.4361,
+    "to": 1.4361,
+    "x": 0.13889,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「焦げる前に急いで混ぜて、セーフや」: 戻って白いシチューを木べらで混ぜる（1:38:46「セーフです」）"
+  },
+  {
+   "src": "c26",
+   "in": 99,
+   "out": 120,
+   "row": 14,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「いただきます」（スプーンを口へ）"
+  },
+  {
+   "src": "c26",
+   "in": 321,
+   "out": 339,
+   "row": 14,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「うわ」"
+  },
+  {
+   "src": "c26",
+   "in": 405,
+   "out": 482,
+   "row": 14,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "元の声「めちゃくちゃうまい」（噛んでいる間の 2.4秒は切る）"
+  },
+  {
+   "src": "c27",
+   "in": 90,
+   "out": 117,
+   "row": 15,
+   "zoom": {
+    "from": 1.2681,
+    "to": 1.2681,
+    "x": 0.05556,
+    "y": 0.11719,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「別茹での鶏は」: 手羽先を手で持ってかぶりつく"
+  },
+  {
+   "src": "c28",
+   "in": 90,
+   "out": 141,
+   "row": 15,
+   "zoom": {
+    "from": 1.2681,
+    "to": 1.2681,
+    "x": 0.05556,
+    "y": 0.11719,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "「骨が勝手に抜けるほろほろ」: 皿の上で骨を引くと身がするっと外れる手元"
+  },
+  {
+   "src": "c26",
+   "in": 780,
+   "out": 827,
+   "row": 16,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "【答】目を閉じて「あのお店の味です」と言う顔"
+  },
+  {
+   "src": "c25",
+   "in": 450,
+   "out": 527,
+   "row": 17,
+   "zoom": {
+    "from": 1.0936,
+    "to": 1.0936,
+    "x": 0.0,
+    "y": 0.0,
+    "sx": 0,
+    "sy": 0
+   },
+   "note": "締めの問い: シチューの皿をもう一度カメラに寄せる（0秒目の皿の呼び戻し。終わりの札が乗る）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアで、チキンシチューを作ったらお店の味やった！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアで、チキンシチューを作ったらお店の味やった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/01.wav",
+    "tts_text": "北マケドニアで、チキンシチューを作ったらお店の味やった！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "材料は、手羽先4本、じゃがいも1個、玉ねぎ、ニンニクと冷凍チキン！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/02.wav",
+    "tts_text": "材料は、手羽先四本、じゃがいも一個、玉ねぎ、ニンニクと冷凍チキン！",
+    "at": 91
+   },
+   {
+    "text": "人参が１キロ100円だったから4本入れたら、人参だらけや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/03.wav",
+    "tts_text": "人参が一キロ百円だったから四本入れたら、人参だらけや！",
+    "at": 222
+   },
+   {
+    "text": "コツは、鶏だけ炒めずに、冷凍のまま別茹でにすること！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/04.wav",
+    "tts_text": "コツは、とりだけ炒めずに、冷凍のままべつゆでにすること！",
+    "at": 321
+   },
+   {
+    "text": "その間に鍋で、ニンニクと野菜を炒めて、塩！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/05.wav",
+    "tts_text": "そのあいだに鍋で、ニンニクと野菜を炒めて、塩！",
+    "at": 419
+   },
+   {
+    "text": "茹でた鶏を、茹で汁ごと鍋へ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/06.wav",
+    "tts_text": "ゆでたとりを、ゆでじるごと鍋へ！",
+    "at": 509
+   },
+   {
+    "text": "コンソメ入れよ思たら、なんなんだこれは？？カップ麺やんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/07.wav",
+    "tts_text": "コンソメいれよおもたら、なんなんだこれは？？カップめんやんか！",
+    "at": 568,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "しゃあない！煮てる間に、ルーを手作り！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/08.wav",
+    "tts_text": "しゃあない！にてるあいだに、ルーを手作り！",
+    "at": 670
+   },
+   {
+    "text": "マーガリンは大きいスプーン山盛り2杯！うまくいくかマジで心配や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/09.wav",
+    "tts_text": "マーガリンは大きいスプーン山盛り二杯！うまくいくかマジで心配や！",
+    "at": 747,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "溶けたら、小麦粉も2杯、少しずつ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/10.wav",
+    "tts_text": "溶けたら、小麦粉も二杯、少しずつ！",
+    "at": 863
+   },
+   {
+    "text": "弱火で牛乳を少しずつ、高速で混ぜる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/11.wav",
+    "tts_text": "弱火で牛乳を少しずつ、高速で混ぜる！",
+    "at": 929
+   },
+   {
+    "text": "じゃがいもが柔らかくなったら、ルーを鍋へ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/12.wav",
+    "tts_text": "じゃがいもが柔らかくなったら、ルーを鍋へ！",
+    "at": 1006
+   },
+   {
+    "text": "牛乳でとろみを調整、これが正解や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/13.wav",
+    "tts_text": "牛乳でとろみを調整、これが正解や！",
+    "at": 1077
+   },
+   {
+    "text": "仕上げに強火！焦げる前に急いで混ぜて、セーフや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/14.wav",
+    "tts_text": "仕上げに強火！焦げる前に急いで混ぜて、セーフや！",
+    "at": 1155
+   },
+   {
+    "text": "いただきます……うわ、めちゃくちゃうまい！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/narr/orig_p1_14.wav",
+    "at": 1251,
+    "mood": "up_pop"
+   },
+   {
+    "text": "別茹での鶏は、骨が勝手に抜けるほろほろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/16.wav",
+    "tts_text": "べつゆでのとりは、骨が勝手に抜けるほろほろ！",
+    "at": 1367
+   },
+   {
+    "text": "完全にお店の味や！【答】",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/17.wav",
+    "tts_text": "完全にお店の味や！",
+    "at": 1445,
+    "mood": "up_pop"
+   },
+   {
+    "text": "みんなも、海外でシチュー作ってみる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/e2o/voice/e2o-p1-v1/p1/18.wav",
+    "tts_text": "みんなも、海外でシチュー作ってみる？",
+    "at": 1492
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a4ecad081c1ea5cc8/shorts/videos/E2oGYjnVQSA/p1/spec.json",
+  "fps": 30,
+  "frames": 1569,
+  "seconds": 52.3,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "1:49:38.5+1.83s",
+     "1:35:26.0+1.20s"
+    ],
+    "line": "北マケドニアで、チキンシチューを作ったらお店の味やった！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 91,
+    "frames": 131,
+    "voice_frames": 123,
+    "cuts": [
+     "donehL4hO68 1:32:56.5+1.30s",
+     "donehL4hO68 1:22:52.0+1.07s",
+     "donehL4hO68 1:24:00.0+1.17s",
+     "donehL4hO68 1:34:52.0+0.83s"
+    ],
+    "line": "材料は、手羽先4本、じゃがいも1個、玉ねぎ、ニンニクと冷凍チキン！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 222,
+    "frames": 99,
+    "voice_frames": 91,
+    "cuts": [
+     "donehL4hO68 1:26:23.5+1.70s",
+     "0:55:22.5+1.60s"
+    ],
+    "line": "人参が１キロ100円だったから4本入れたら、人参だらけや！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 321,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "0:38:59.9+1.50s",
+     "0:42:44.4+1.77s"
+    ],
+    "line": "コツは、鶏だけ炒めずに、冷凍のまま別茹でにすること！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 419,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "0:50:35.0+1.03s",
+     "1:00:55.0+1.97s"
+    ],
+    "line": "その間に鍋で、ニンニクと野菜を炒めて、塩！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 509,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "1:02:04.8+1.97s"
+    ],
+    "line": "茹でた鶏を、茹で汁ごと鍋へ！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 568,
+    "frames": 102,
+    "voice_frames": 94,
+    "cuts": [
+     "1:04:38.5+1.30s",
+     "1:04:12.0+1.17s",
+     "1:04:28.0+0.93s"
+    ],
+    "line": "コンソメ入れよ思たら、なんなんだこれは？？カップ麺やんか！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 670,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "1:05:15.5+0.77s",
+     "1:08:23.3+1.80s"
+    ],
+    "line": "しゃあない！煮てる間に、ルーを手作り！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 747,
+    "frames": 116,
+    "voice_frames": 108,
+    "cuts": [
+     "1:12:13.8+1.73s",
+     "1:12:22.0+2.13s"
+    ],
+    "line": "マーガリンは大きいスプーン山盛り2杯！うまくいくかマジで心配や！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 863,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "1:13:01.6+0.67s",
+     "1:15:40.8+1.53s"
+    ],
+    "line": "溶けたら、小麦粉も2杯、少しずつ！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 929,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "1:19:37.0+1.53s",
+     "1:17:40.5+1.03s"
+    ],
+    "line": "弱火で牛乳を少しずつ、高速で混ぜる！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 1006,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "1:27:38.5+1.47s",
+     "1:30:16.5+0.90s"
+    ],
+    "line": "じゃがいもが柔らかくなったら、ルーを鍋へ！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 1077,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:34:01.5+1.57s",
+     "1:35:04.5+1.03s"
+    ],
+    "line": "牛乳でとろみを調整、これが正解や！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1155,
+    "frames": 96,
+    "voice_frames": 88,
+    "cuts": [
+     "1:36:24.5+0.97s",
+     "1:38:44.5+2.23s"
+    ],
+    "line": "仕上げに強火！焦げる前に急いで混ぜて、セーフや！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1251,
+    "frames": 116,
+    "voice_frames": 108,
+    "cuts": [
+     "1:52:12.3+0.70s",
+     "1:52:19.7+0.60s",
+     "1:52:22.5+2.57s"
+    ],
+    "line": "いただきます……うわ、めちゃくちゃうまい！",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 15,
+    "from": 1367,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:59:10.0+0.90s",
+     "1:59:37.0+1.70s"
+    ],
+    "line": "別茹での鶏は、骨が勝手に抜けるほろほろ！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1445,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "1:52:35.0+1.57s"
+    ],
+    "line": "完全にお店の味や！【答】",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1492,
+    "frames": 77,
+    "voice_frames": 54,
+    "cuts": [
+     "1:49:50.0+2.57s"
+    ],
+    "line": "みんなも、海外でシチュー作ってみる？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 333,
+   "raw_voice_s": 60.83,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 43.4,
+   "cps_voiced": 7.67,
+   "video_s": 52.3,
+   "cps_video": 6.37
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}

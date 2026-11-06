@@ -1,3 +1,3 @@
-原稿: shorts/videos/GBYHxJQGlCY/p1/script.txt（20行・314字）  題: spec.json の title_card
+原稿: shorts/videos/GBYHxJQGlCY/p1/script.txt（20行・311字）  題: spec.json の title_card
 △ F-004 L-DESU 16行目「いただきます……うまっ！」 です・ます調（「ます」）。ふざけている所か（説明口調・振り返り口調になっていないか）
 結果: ✕ 0・△ 1（当てた規則 24/24）。字で拾える指摘には当たっていない（面白いかは批評役の (h) で）

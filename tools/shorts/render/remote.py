@@ -464,10 +464,14 @@ def the_request() -> dict:
     head = ev.get("after") or os.environ.get("GITHUB_SHA", "")
     if not before.strip("0"):
         before = (ev.get("repository") or {}).get("default_branch") or "master"
-    files = [f for f in compare_files(before, head)
-             if f.startswith(REQ_DIR) and f.endswith(".json") and f.count("/") == 2
-             and (ROOT / f).is_file()]
+    touched = [f for f in compare_files(before, head)
+               if f.startswith(REQ_DIR) and f.endswith(".json") and f.count("/") == 2]
+    files = [f for f in touched if (ROOT / f).is_file()]
     if not files:
+        if touched:
+            # 依頼を下ろしただけ（master に入れる前の片づけ・残った頼みの掃除）。paths の絞りは
+            # 消したファイルでも起きるので、ここで落とすと PR の頭に赤い prepare が残る（#1135）
+            raise Idle(f"依頼を下ろしただけの push（{len(touched)}件）。書き出すものは無い")
         raise Bad("この push に依頼が無い")
     if len(files) > 1:
         print(f"依頼が {len(files)}件。1回に1件だけ回す（{files[0]}）")
@@ -510,9 +514,21 @@ def seal_to(req: dict, files: dict[str, bytes], dest_rel: str, tmp: Path, status
 
 # ---------------------------------------------------------------- Actions: prepare
 
+class Idle(Exception):
+    """書き出すものが無いと分かった push。落ちではないので、prepare を緑で終えて後ろの job を起こさない。"""
+
+
 def cmd_prepare() -> int:
     t0 = time.time()
-    req = the_request()
+    try:
+        req = the_request()
+    except Idle as e:
+        print(e)
+        gh = os.environ.get("GITHUB_OUTPUT")
+        if gh:
+            with open(gh, "a", encoding="utf-8") as f:
+                f.write("idle=true\n")
+        return 0
     branch = out_branch()
     name = req["name"]
     print(f"{name}: {'下書き' if req['draft'] else '本番'}・{len(req['items'])}本"

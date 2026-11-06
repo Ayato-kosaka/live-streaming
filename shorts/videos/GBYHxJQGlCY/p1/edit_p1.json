@@ -1,0 +1,704 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/09_2-57-50_3-01-30.mp4",
+   "watermark": "prism_live",
+   "t0": 10670.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/05_2-44-20_2-45-20.mp4",
+   "watermark": "prism_live",
+   "t0": 9860.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/01_1-43-20_1-44-40.mp4",
+   "watermark": "prism_live",
+   "t0": 6200.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest_mcd/GBYHxJQGlCY/clips/01_3-47-00_3-51-20.mp4",
+   "watermark": "prism_live",
+   "t0": 13620.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/03_2-31-20_2-32-10.mp4",
+   "watermark": "prism_live",
+   "t0": 9080.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/04_2-39-50_2-41-10.mp4",
+   "watermark": "prism_live",
+   "t0": 9590.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/06_2-47-20_2-50-00.mp4",
+   "watermark": "prism_live",
+   "t0": 10040.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/07_2-51-20_2-52-10.mp4",
+   "watermark": "prism_live",
+   "t0": 10280.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest/GBYHxJQGlCY/clips/08_2-53-20_2-56-10.mp4",
+   "watermark": "prism_live",
+   "t0": 10400.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/ingest_seat/GBYHxJQGlCY/clips/01_2-56-10_2-57-10.mp4",
+   "watermark": "prism_live",
+   "t0": 10570.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c09",
+   "in": 3975,
+   "out": 4019,
+   "row": 0,
+   "note": "0秒目: シナモンロールを1個持ち上げる所（前の段で決めた画のまま）"
+  },
+  {
+   "src": "c05",
+   "in": 39,
+   "out": 84,
+   "row": 0,
+   "note": "青い IKEA の看板のある建物の角。spec の 2:44:21.0 は頭の3コマに横断歩道の男の人の顔が写るので、0.3秒遅らせた"
+  },
+  {
+   "src": "c01",
+   "in": 720,
+   "out": 781,
+   "row": 1,
+   "zoom": {
+    "from": 1.46,
+    "to": 1.46,
+    "x": 0.5,
+    "y": 1.0
+   },
+   "note": "ワッフル屋の立て看板。上の固定コメントに視聴者さんの名前と書き込みが焼き込まれているので、下を止めて 1.46倍に寄せ、上の帯（元素材 y150〜385。v2 の 1.36倍では書き込みの2〜3行目が残った）を画面の外に出す"
+  },
+  {
+   "src": "c2_01",
+   "in": 3741,
+   "out": 3775,
+   "row": 2,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 0.47,
+    "sx": 0.5,
+    "sy": 0.36
+   },
+   "note": "注文の画面のビッグマック。字幕（画面の 0.47〜0.57）がハンバーガーの写真に被るので、写真を画面の 0.36 へ上げる（65.00kr の札は字幕のすぐ上に来る）"
+  },
+  {
+   "src": "c2_01",
+   "in": 4050,
+   "out": 4083,
+   "row": 2,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.55,
+    "y": 0.46,
+    "sx": 0.55,
+    "sy": 0.36
+   },
+   "note": "電卓の 1,040。下書きでは数が字幕の裏に隠れたので、数を画面の 0.36 へ上げる"
+  },
+  {
+   "src": "c2_01",
+   "in": 2385,
+   "out": 2424,
+   "row": 3
+  },
+  {
+   "src": "c03",
+   "in": 1065,
+   "out": 1128,
+   "row": 4,
+   "zoom": {
+    "from": 1.46,
+    "to": 1.46,
+    "x": 0.5,
+    "y": 1.0
+   },
+   "note": "IKEA へ向かって歩く、王宮の石の壁沿いの遊歩道。2行目と同じ理由（固定コメントに視聴者さんの名前）で 1.46倍。spec の 2:31:22（石畳の広場）は、寄せると空と建物が切れて石畳ばかりになり、帯で弱い画（e8 0.74）と出たので、同じ窓で建物の写る秒にした"
+  },
+  {
+   "src": "c04",
+   "in": 1260,
+   "out": 1304,
+   "row": 5
+  },
+  {
+   "src": "c04",
+   "in": 2040,
+   "out": 2085,
+   "row": 5
+  },
+  {
+   "src": "c05",
+   "in": 690,
+   "out": 736,
+   "row": 6
+  },
+  {
+   "src": "c06",
+   "in": 3360,
+   "out": 3405,
+   "row": 7
+  },
+  {
+   "src": "c05",
+   "in": 1710,
+   "out": 1756,
+   "row": 7
+  },
+  {
+   "src": "c07",
+   "in": 1305,
+   "out": 1358,
+   "row": 8
+  },
+  {
+   "src": "c06",
+   "in": 3930,
+   "out": 3972,
+   "row": 9,
+   "note": "「コーヒーは、」: 注文の画面の Hot beverages（Coffee 12,00 SEK の札を指す）。別の窓の画で、マシンの前の画の続きを切る"
+  },
+  {
+   "src": "c08",
+   "in": 2310,
+   "out": 2334,
+   "row": 9,
+   "note": "「マシンで自分で入れるんやけど」: コーヒーマシンの正面。11行の2カットと合わせて似た見た目が 3秒未満になる長さ"
+  },
+  {
+   "src": "c08",
+   "in": 2460,
+   "out": 2492,
+   "row": 10
+  },
+  {
+   "src": "c08",
+   "in": 2715,
+   "out": 2748,
+   "row": 10
+  },
+  {
+   "src": "c3_01",
+   "in": 975,
+   "out": 1032,
+   "row": 11,
+   "note": "「こんなもんかって諦めかけたら、」: フードコートの通路を歩いて離れていく所（人は背中）。コーヒーマシンの前の画（同じ窓・色も近い）の続きを切るため、別の窓（2:56:10-2:57:10）の画にした"
+  },
+  {
+   "src": "c08",
+   "in": 2880,
+   "out": 2918,
+   "row": 12
+  },
+  {
+   "src": "c08",
+   "in": 3009,
+   "out": 3047,
+   "row": 12
+  },
+  {
+   "src": "c3_01",
+   "in": 1366,
+   "out": 1415,
+   "row": 13,
+   "zoom": {
+    "from": 1.7,
+    "to": 1.7,
+    "x": 1.0,
+    "y": 1.0
+   },
+   "note": "「2回押したら、山盛りや！」: 席に置いたトレーの、縁までいっぱいのカップ。13行のマシンの前の2カット（2.53秒）の続きを切るため、マシンの前の山盛りのカップ（2:55:13）から別の窓の同じカップに替えた。奥の客席の人の顔（v2 で幅 60px 前後、目鼻が分かる）を画面の外に出すため、右下を止めて 1.7倍に寄せる（元のコマで顔が残らないことを見た）"
+  },
+  {
+   "src": "c08",
+   "in": 4905,
+   "out": 4973,
+   "row": 14
+  },
+  {
+   "src": "c09",
+   "in": 5130,
+   "out": 5174,
+   "row": 15
+  },
+  {
+   "src": "c09",
+   "in": 5808,
+   "out": 5845,
+   "row": 16
+  },
+  {
+   "src": "c09",
+   "in": 1530,
+   "out": 1567,
+   "row": 16
+  },
+  {
+   "src": "c3_01",
+   "in": 1266,
+   "out": 1351,
+   "row": 17,
+   "zoom": {
+    "from": 1.3,
+    "to": 1.3,
+    "x": 1.0,
+    "y": 1.0
+   },
+   "note": "「5個とコーヒーで、なんと……」: 席のテーブルに置いたトレー（5個の袋と山盛りのカップ）へ寄っていく1カット（2.83秒。終わりは袋の寄り）。v4 では頭（2:56:51.5〜52）の奥の客席の人と、終わり（2:56:53.7〜54.1）の左上の女の人の横顔（幅 86px）が写ったので、頭を 2:56:52.2 に遅らせ、右下を止めて 1.3倍に寄せて左上を画面の外に出した。前の画は 2:55:56 のフードコートの引き（コーヒーの場面と同じ窓で、同じ画が尺の 25% を越えた）と 2:44:22.2 の IKEA の看板の建物（v2 で 1・7・8行と同じ画が4回になった）"
+  },
+  {
+   "src": "c06",
+   "in": 4275,
+   "out": 4341,
+   "row": 18,
+   "zoom": {
+    "from": 1.35,
+    "to": 1.35,
+    "x": 0.5,
+    "y": 0.62,
+    "sx": 0.5,
+    "sy": 0.75
+   },
+   "note": "注文の確かめの欄（Kanelbulle 5 pack 28,00・Kaffe 12,00・Total 40,00 SEK）。spec の crop の狙いを寄せで書き、欄を字幕の下へ置いて額を読めるようにする"
+  },
+  {
+   "src": "c09",
+   "in": 3645,
+   "out": 3683,
+   "row": 19,
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.5,
+    "y": 1.0
+   },
+   "note": "手前のシナモンロールの山とカップ。終わりの札（上の帯の下）に本人の顔が被らないよう、下を止めて 1.4倍に寄せる"
+  },
+  {
+   "src": "c09",
+   "in": 3522,
+   "out": 3561,
+   "row": 19,
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.5,
+    "y": 1.0
+   },
+   "note": "同じ席の画。同じ理由で 1.4倍"
+  }
+ ],
+ "title": {
+  "text": "🇸🇪スウェーデンで人生初の\nIKEAに行ったら、安すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "スウェーデンで人生初のIKEAに行ったら、安すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/01.wav",
+    "tts_text": "スウェーデンで人生初のイケアに行ったら、安すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "この国、物価がぶっ壊れてんねん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/02.wav",
+    "tts_text": "この国、物価がぶっ壊れてんねん。",
+    "at": 89
+   },
+   {
+    "text": "マクドのビッグマックが、1040円！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/03.wav",
+    "tts_text": "マクドのビッグマックが、千四十円！？",
+    "at": 150,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "ここは夢の国か！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/04.wav",
+    "tts_text": "ここは夢の国か！",
+    "at": 217
+   },
+   {
+    "text": "IKEAのごはんって、安いイメージやん？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/05.wav",
+    "tts_text": "イケアのごはんって、安いイメージやん？",
+    "at": 256
+   },
+   {
+    "text": "でも、この国で安いとか、にわかに信じがたいわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/06.wav",
+    "tts_text": "でも、この国で安いとか、にわかに信じがたいわ！",
+    "at": 319
+   },
+   {
+    "text": "いざ、本場のIKEAへ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/07.wav",
+    "tts_text": "いざ、本場のイケアへ！",
+    "at": 408
+   },
+   {
+    "text": "お腹ぺこぺこやし、シナモンロール5個とコーヒーを頼んだ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/08.wav",
+    "tts_text": "お腹ぺこぺこやし、シナモンロール五個とコーヒーを頼んだ！",
+    "at": 454
+   },
+   {
+    "text": "5個とか、ペロッといけるで！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/09.wav",
+    "tts_text": "五個とか、ペロッといけるで！",
+    "at": 545
+   },
+   {
+    "text": "コーヒーは、マシンで自分で入れるんやけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/10.wav",
+    "tts_text": "コーヒーは、マシンで自分で入れるんやけど、",
+    "at": 598
+   },
+   {
+    "text": "ボタンを押したら、半分しか出てこおへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/11.wav",
+    "tts_text": "ボタンを押したら、半分しか出てこおへん！",
+    "at": 664,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "こんなもんかって諦めかけたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/12.wav",
+    "tts_text": "こんなもんかって諦めかけたら、",
+    "at": 729
+   },
+   {
+    "text": "近くのおじさんが「2回押してええよ」って！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/13.wav",
+    "tts_text": "近くのおじさんが「二回押してええよ」って！",
+    "at": 786
+   },
+   {
+    "text": "2回押したら、山盛りや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/14.wav",
+    "tts_text": "二回押したら、山盛りや！",
+    "at": 862,
+    "mood": "up_pop",
+    "face_overlap_ok": {
+     "frames": 12,
+     "why": "検査が「顔」と読んだ箱は、トレーの紙袋の口のしわ（v2 の 29.2秒〜・10コマ。元素材 2:56:56.2 の x7〜331 y571〜841）。人の顔は写っていないことを元のコマで目で確かめた誤検出。v4 から 1.7倍に寄せたので、しわはほぼ画面の外"
+    }
+   },
+   {
+    "text": "知らんかったら、2回も押す勇気ないって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/15.wav",
+    "tts_text": "知らんかったら、二回も押す勇気ないって！",
+    "at": 911
+   },
+   {
+    "text": "いただきます……うまっ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/16.wav",
+    "tts_text": "いただきます……うまっ！",
+    "at": 979,
+    "mood": "up_pop"
+   },
+   {
+    "text": "シナモンの香りが強すぎて、辛いぐらいや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/17.wav",
+    "tts_text": "シナモンの香りが強すぎて、からいぐらいや！",
+    "at": 1023
+   },
+   {
+    "text": "信じてへんかったけど、5個とコーヒーで、なんと……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/18.wav",
+    "tts_text": "信じてへんかったけど、五個とコーヒーで、なんと……",
+    "at": 1097
+   },
+   {
+    "text": "640円！安すぎるやろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/19.wav",
+    "tts_text": "六百四十円！安すぎるやろ！",
+    "at": 1182,
+    "big": "shake_white"
+   },
+   {
+    "text": "みんなやったら、シナモンロール5個いける？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/voice/gby-p1-v1/p1/20.wav",
+    "tts_text": "みんなやったら、シナモンロール五個いける？",
+    "at": 1248
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a5a77b13bacfae65c/shorts/videos/GBYHxJQGlCY/p1/spec.json",
+  "fps": 30,
+  "frames": 1325,
+  "seconds": 44.167,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "3:00:02.5+1.47s",
+     "2:44:21.3+1.50s"
+    ],
+    "line": "スウェーデンで人生初のIKEAに行ったら、安すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 89,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "1:43:44.0+2.03s"
+    ],
+    "line": "この国、物価がぶっ壊れてんねん。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 150,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "3:49:04.7+1.13s",
+     "3:49:15.0+1.10s"
+    ],
+    "line": "マクドのビッグマックが、1040円！？",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 217,
+    "frames": 39,
+    "voice_frames": 31,
+    "cuts": [
+     "3:48:19.5+1.30s"
+    ],
+    "line": "ここは夢の国か！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 256,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "2:31:55.5+2.10s"
+    ],
+    "line": "IKEAのごはんって、安いイメージやん？",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 319,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "2:40:32.0+1.47s",
+     "2:40:58.0+1.50s"
+    ],
+    "line": "でも、この国で安いとか、にわかに信じがたいわ！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 408,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "2:44:43.0+1.53s"
+    ],
+    "line": "いざ、本場のIKEAへ！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 454,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "2:49:12.0+1.50s",
+     "2:45:17.0+1.53s"
+    ],
+    "line": "お腹ぺこぺこやし、シナモンロール5個とコーヒーを頼んだ！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 545,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "2:52:03.5+1.77s"
+    ],
+    "line": "5個とか、ペロッといけるで！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 598,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "2:49:31.0+1.40s",
+     "2:54:37.0+0.80s"
+    ],
+    "line": "コーヒーは、マシンで自分で入れるんやけど、",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 664,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "2:54:42.0+1.07s",
+     "2:54:50.5+1.10s"
+    ],
+    "line": "ボタンを押したら、半分しか出てこおへん！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 729,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "2:56:42.5+1.90s"
+    ],
+    "line": "こんなもんかって諦めかけたら、",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 786,
+    "frames": 76,
+    "voice_frames": 68,
+    "cuts": [
+     "2:54:56.0+1.27s",
+     "2:55:00.3+1.27s"
+    ],
+    "line": "近くのおじさんが「2回押してええよ」って！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 862,
+    "frames": 49,
+    "voice_frames": 41,
+    "cuts": [
+     "2:56:55.5+1.63s"
+    ],
+    "line": "2回押したら、山盛りや！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 911,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "2:56:03.5+2.27s"
+    ],
+    "line": "知らんかったら、2回も押す勇気ないって！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 979,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "3:00:41.0+1.47s"
+    ],
+    "line": "いただきます……うまっ！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1023,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "3:01:03.6+1.23s",
+     "2:58:41.0+1.23s"
+    ],
+    "line": "シナモンの香りが強すぎて、辛いぐらいや！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1097,
+    "frames": 85,
+    "voice_frames": 77,
+    "cuts": [
+     "2:56:52.2+2.83s"
+    ],
+    "line": "信じてへんかったけど、5個とコーヒーで、なんと……",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1182,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "2:49:42.5+2.20s"
+    ],
+    "line": "640円！安すぎるやろ！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 19,
+    "from": 1248,
+    "frames": 77,
+    "voice_frames": 54,
+    "cuts": [
+     "2:59:51.5+1.27s",
+     "2:59:47.4+1.30s"
+    ],
+    "line": "みんなやったら、シナモンロール5個いける？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 321,
+   "raw_voice_s": 53.47,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 38.33,
+   "cps_voiced": 8.37,
+   "video_s": 44.17,
+   "cps_video": 7.27
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/req5/ikea/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
