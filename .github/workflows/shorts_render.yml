@@ -50,6 +50,8 @@ jobs:
       ids: ${{ steps.prep.outputs.ids }}
       roles: ${{ steps.prep.outputs.roles }}
       prefix: ${{ steps.prep.outputs.prefix }}
+      # 依頼を下ろしただけの push は prepare を緑で終え、ここで後ろを止める（remote.py の Idle）
+      idle: ${{ steps.prep.outputs.idle }}
     steps:
       # **作業枝の暗号文（shorts/.work/、2026-10-21 に 736MB）を落とさない。** 素のままの checkout は先の木を全部
       # 落とし、prepare の checkout だけで 2分39秒かかった（r1011-ng4-ckj8）。道具（tools/shorts）と依頼
@@ -86,6 +88,7 @@ jobs:
 
   render:
     needs: prepare
+    if: ${{ needs.prepare.outputs.idle != 'true' }}
     name: ${{ matrix.id }}-${{ matrix.role }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
@@ -145,7 +148,7 @@ jobs:
   report:
     needs: [prepare, render]
     # 1本落ちても、出来たぶんと落ちた理由を返す
-    if: ${{ !cancelled() && needs.prepare.result == 'success' }}
+    if: ${{ !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.idle != 'true' }}
     runs-on: ubuntu-24.04
     # 下見（Hosting のプレビューチャンネル）を置いて確かめるぶん、firebase-tools を入れて配って再生まで 2〜3分
     timeout-minutes: 20
