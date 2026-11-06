@@ -2003,6 +2003,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "ndhRAwZv918",
         "title": "🇲🇰北マケドニアでパソコンが受け取れなくて困ってしもたぁ",
         "date": "2026-11-04"
+      },
+      {
+        "videoId": "rrGvgfbFNIc",
+        "title": "🇲🇰北マケドニアで企画会議やぁーー",
+        "date": "2026-11-05"
       }
     ]
   }
