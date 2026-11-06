@@ -3,19 +3,25 @@
  *
  * ## なぜ、ほかの国の面（`/north-macedonia`）と見た目を分けたのか
  *
- * 北マケドニアの面は、しおり（`/nordic/guide`）の「紙の型」をそのまま借りている。
- * 同じ用事の面が2通りの見た目を持つと部屋が増えて見えるからで、ふだんはそれが正しい。
+ * あやとが見た目を名指しで指定したから（2026-11-06「デザインはこんなの+添付画像の感じ」
+ * ＋ るるぶの見開き8枚 ＋ `tabiiro.jp`）。**看板・パンくず・砂浜は島のまま**
+ * （`PageShell`）なので、島の外には出ない。
  *
- * ここだけ分けているのは、**あやとが見た目を名指しで指定したから**
- * （2026-11-06「デザインはこんなの+添付画像の感じ」＋ るるぶの見開き8枚）。
- * るるぶの型は「畳まずに、見開きで全部見せる」もので、畳みの型とは作りが逆になる。
- * **ただし看板・パンくず・砂浜は島のまま**（`PageShell`）なので、島の外には出ない。
+ * ## 作り直しの要（2026-11-06・あやと「25点くらい」）
+ *
+ * 1枚目は**字で正しい面**だった。狭い画面で 44,000px あって、絵が1枚も無かった。
+ *
+ * | 直したところ | どうやって |
+ * | --- | --- |
+ * | 写真が主役 | `.bgtiles`／`.bgtile` の絵の格子。字は `<details>` を開くまで出さない |
+ * | 縦を切る | 1件800pxのカード → 絵のタイル。狭い画面で2列、広い画面で4列 |
+ * | 文字化け | 印を**字（◎○⚠）ではなく絵**にした（`page.tsx` の `Badge`） |
  *
  * ## 色はブルガリアから採る。既製の色をそのまま使わない
  *
  * バラ（この国の顔）・国旗の緑・正教会のイコンの金。
  * **島の地と字はそのまま使う**（`--paper` `--ink`）——地まで変えると、
- * 看板と中身が別のサイトに見える。変えるのは印と見出しの色だけ。
+ * 看板と中身が別のサイトに見える。
  */
 
 /* 変数はこの面の `main` ぜんぶに効かせる。`.bgsec` が在るのはこの面だけ */
@@ -29,22 +35,91 @@
   --warn-lo: #f3ddcb;
 }
 
-/* ---- 頭 ----------------------------------------------------------------- */
+/* ---- 表紙 ---------------------------------------------------------------- */
 
-.bghead-cyr {
-  display: inline-block;
-  font-weight: 900;
-  letter-spacing: 0.18em;
-  font-size: 13px;
-  color: var(--rose);
+/* **絵を先に、字をあとに。** 1枚目は字から始まっていて、
+   送る前に「行きたい」が1つも出てこなかった */
+.bghero {
+  position: relative;
+  margin: 0 0 var(--sp-3);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--kiril);
+  box-shadow: var(--shadow-2);
+  /* 縦横の比を決めておく。**絵が来る前に高さが決まる**ので、
+     出たときに下の字が飛ばない */
+  aspect-ratio: 16 / 10;
 }
 
-/* 驚く数。見開きの1枚目がどれもこの形をしている。
-   **横に流さない。** 狭い画面で横スクロールが出るのと、
-   「何件あるか」が見えなくなるので、折り返す格子にする */
+@media (min-width: 760px) {
+  .bghero { aspect-ratio: 21 / 9; }
+}
+
+/* 絵が1枚も無いとき。**穴を見せない**——国の色の地のまま字を出す */
+.bghero.is-none { aspect-ratio: auto; background: var(--kiril); }
+
+.bghero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bghero-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--sp-5) var(--sp-4) var(--sp-4);
+  color: #fff;
+  /* 絵の上に字を置くので、**下だけ暗くする。** 全面に敷くと絵が死ぬ */
+  background: linear-gradient(to top, rgba(14, 30, 22, 0.88) 0%,
+    rgba(14, 30, 22, 0.72) 42%, rgba(14, 30, 22, 0) 100%);
+}
+
+.bghero.is-none .bghero-body { position: static; background: none; }
+
+.bghero-cyr {
+  display: block;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  font-size: 11.5px;
+  opacity: 0.86;
+}
+
+.bghero-body h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(25px, 7vw, 40px);
+  line-height: 1.25;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.bghero-body p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  /* 表紙の文は、**絵を隠さない長さで切る。** 続きは中の節が持っている */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 写真の出どころ。**小さく、でも必ず出す** */
+.bgcredit {
+  margin: 4px 2px var(--sp-3);
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.bgcredit a { color: var(--ink-3); }
+
+/* ---- 驚く数（3つだけ） ---------------------------------------------------- */
+
 .bgnums {
   list-style: none;
-  margin: var(--sp-5) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -54,97 +129,40 @@
 .bgnums li {
   background: var(--paper);
   border-radius: var(--r-1);
-  padding: var(--sp-3) var(--sp-3) var(--sp-3) calc(var(--sp-3) + 5px);
+  padding: var(--sp-3);
   box-shadow: var(--shadow-1);
-  /* 左の1本だけで国の色を出す。面ぜんぶを塗ると読む字の邪魔になる */
   border-left: 5px solid var(--rose);
   min-width: 0;
 }
 
 .bgnums b {
   display: block;
-  font-size: 30px;
+  font-size: 26px;
   line-height: 1.1;
   font-weight: 900;
   color: var(--kiril);
-  /* 数は等幅で。桁が揃うと「数の表」に見える */
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
-.bgnums b i {
-  font-style: normal;
-  font-size: 14px;
-  margin-left: 3px;
-  color: var(--ink-2);
-}
-
-.bgnums span {
-  display: block;
-  margin-top: 3px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--ink-2);
-}
-
-/* ---- 読みかたの箱 -------------------------------------------------------- */
-
-.bgkey {
-  margin: var(--sp-5) 0 0;
-  padding: var(--sp-4);
-  border-radius: var(--r-2);
-  background: color-mix(in srgb, var(--paper) 86%, var(--kiril-lo));
-  border: 2px dashed color-mix(in srgb, var(--kiril) 45%, var(--paper));
-}
-
-.bgkey h2 {
-  margin: 0 0 var(--sp-2);
-  font-size: 17px;
-  color: var(--kiril);
-}
-
-.bgkey p {
-  margin: 0 0 var(--sp-2);
-  font-size: 14px;
-  line-height: 1.85;
-}
-
-.bgkey ul {
-  list-style: none;
-  margin: 0 0 var(--sp-2);
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-4);
-  font-size: 14px;
-}
-
-.bgkey li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.bgkey-why {
-  margin-bottom: 0;
-  color: var(--ink-2);
-}
+.bgnums b i { font-style: normal; font-size: 13px; margin-left: 3px; color: var(--ink-2); }
+.bgnums span { display: block; margin-top: 3px; font-size: 12.5px; line-height: 1.6; color: var(--ink-2); }
 
 /* ---- 目次 ---------------------------------------------------------------- */
 
 .bgtoc {
-  margin: var(--sp-5) 0 0;
+  margin: var(--sp-4) 0 0;
+  scroll-margin-top: 72px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--sp-2);
 }
 
 .bgtoc a {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 4px 8px;
-  /* 当たり判定を 48px 下回らせない（`docs/island-design.md`） */
+  gap: 2px 8px;
   min-height: 52px;
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-1);
@@ -155,45 +173,27 @@
 }
 
 .bgtoc a:hover { background: var(--paper-2); }
-
-.bgtoc-n {
-  font-size: 12px;
-  font-weight: 900;
-  color: var(--rose);
-  font-variant-numeric: tabular-nums;
-}
-
-.bgtoc b { font-size: 15px; min-width: 0; }
-
-.bgtoc i {
-  grid-column: 3;
-  font-style: normal;
-  font-size: 12px;
-  color: var(--ink-3);
-}
+.bgtoc svg { grid-row: 1 / 3; color: var(--kiril); }
+.bgtoc b { font-size: 14.5px; min-width: 0; }
+.bgtoc i { font-style: normal; font-size: 11.5px; color: var(--ink-3); }
 
 /* ---- 節 ------------------------------------------------------------------ */
 
-.bgsec {
-  margin: var(--sp-6) 0 0;
-  /* 追従する看板の下に見出しが潜らないように、跳び先を下げる */
-  scroll-margin-top: 72px;
-}
+.bgsec { margin: var(--sp-6) 0 0; scroll-margin-top: 72px; }
 
 .bgsec-h {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 10px;
+  gap: 6px 9px;
   margin: 0 0 var(--sp-3);
   padding-bottom: var(--sp-2);
-  font-size: 21px;
-  /* 見出しの下の1本。るるぶの章の帯を、島の紙の濃さに落としたもの */
+  font-size: 20px;
   border-bottom: 3px solid var(--rose);
 }
 
 .bgsec-n {
-  font-size: 26px;
+  font-size: 23px;
   font-weight: 900;
   color: var(--rose-lo);
   font-variant-numeric: tabular-nums;
@@ -202,18 +202,12 @@
 
 .bgsec-i { color: var(--kiril); flex: none; }
 .bgsec-t { min-width: 0; }
-
-.bgsec-note {
-  margin-left: auto;
-  font-style: normal;
-  font-size: 12px;
-  color: var(--ink-3);
-}
+.bgsec-note { margin-left: auto; font-style: normal; font-size: 12px; color: var(--ink-3); }
 
 .bgsec-lead {
   margin: 0 0 var(--sp-4);
-  font-size: 14px;
-  line-height: 1.9;
+  font-size: 13.5px;
+  line-height: 1.85;
   color: var(--ink-2);
 }
 
@@ -223,44 +217,35 @@
   flex-wrap: wrap;
   gap: 8px;
   margin: var(--sp-5) 0 var(--sp-3);
-  font-size: 16px;
+  font-size: 15px;
   color: var(--kiril);
 }
 
-.bgsub em {
-  font-style: normal;
-  font-size: 12px;
-  color: var(--ink-3);
-}
+.bgsub em { font-style: normal; font-size: 12px; color: var(--ink-3); }
+.bggroup { margin-bottom: var(--sp-5); }
 
 /* ---- 印と星 -------------------------------------------------------------- */
 
-.bgmark {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  min-width: 0;
-}
+.bgmark { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
 
 .bgmark > b {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  font-size: 14px;
-  font-weight: 900;
-  line-height: 1;
+  color: #fff;
 }
 
-.bgmark.is-good > b { background: var(--kiril); color: #fff; }
-.bgmark.is-ok > b { background: var(--paper-2); color: var(--ink-2); border: 1.5px solid var(--ink-3); }
-.bgmark.is-warn > b { background: var(--warn); color: #fff; }
+.bgmark.is-big > b { width: 28px; height: 28px; }
+.bgmark.is-good > b { background: var(--kiril); }
+.bgmark.is-ok > b { background: var(--ink-3); }
+.bgmark.is-warn > b { background: var(--warn); }
 
 .bgmark i {
   font-style: normal;
-  font-size: 12px;
+  font-size: 11.5px;
   line-height: 1.6;
   color: var(--ink-2);
   min-width: 0;
@@ -276,169 +261,225 @@
   white-space: nowrap;
 }
 
-.bgstar {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.bgstar b { color: var(--bg-gold); font-size: 16px; letter-spacing: 1px; }
+.bgstar { display: inline-flex; align-items: baseline; gap: 7px; }
+.bgstar b { color: var(--bg-gold); font-size: 15px; letter-spacing: 1px; }
 .bgstar i { font-style: normal; font-size: 15px; color: var(--ink); font-weight: 700; }
 
-/* ---- 読みもののカード ------------------------------------------------------ */
+/* ---- 絵のタイル。**この面の本体** ------------------------------------------ */
 
-.bgcards {
+.bgtiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  /* 狭い画面で2列、広い画面で3〜4列。
+     **1件800pxのカードを縦に積んでいたのをやめた**（44,000px の主犯） */
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
   gap: var(--sp-3);
+  align-items: start;
 }
 
-.bgcard {
+@media (min-width: 560px) {
+  .bgtiles { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+}
+
+.bgtile {
   background: var(--paper);
   border-radius: var(--r-1);
-  padding: var(--sp-4);
   box-shadow: var(--shadow-1);
+  overflow: hidden;
+  min-width: 0;
+  /* 印の色を、タイルの下の1本に出す。丸い印と2回言うのは、
+     格子を流し見したときに丸まで目が行かないから */
+  border-bottom: 4px solid var(--ink-3);
+}
+
+.bgtile.is-good { border-bottom-color: var(--kiril); }
+.bgtile.is-warn { border-bottom-color: var(--warn); }
+
+.bgtile > summary {
+  display: block;
+  position: relative;
+  cursor: pointer;
+  list-style: none;
+}
+
+.bgtile > summary::-webkit-details-marker { display: none; }
+
+/* 絵。**比を決めておく**ので、遅れて出ても下の字が飛ばない */
+.bgshot {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: color-mix(in srgb, var(--paper-2) 70%, var(--kiril-lo));
+}
+
+.bgshot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 絵が無いとき。**穴を開けない**——地の色で、低い帯にする */
+.bgshot.is-none { aspect-ratio: 5 / 2; }
+
+/* 印と記号は、絵の上の左肩に重ねる */
+.bgtile-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bgtile-tag .bgmark > b { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9); }
+
+.bgtile-l {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 900;
+  font-size: 13px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.bgtile-l.is-far { background: var(--ink-3); color: #fff; }
+
+.bgtile-body {
+  display: block;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
   min-width: 0;
 }
 
-.bgcard h3 {
-  margin: 0 0 var(--sp-2);
-  font-size: 16px;
+.bgtile-body b { display: block; font-size: 14px; line-height: 1.45; }
+
+.bgtile-body i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--rose);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.bgtile-body em {
+  display: block;
+  margin-top: 3px;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.bgtile-c {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  color: var(--ink-3);
+  transition: transform 0.15s;
+}
+
+.bgtile[open] .bgtile-c { transform: rotate(180deg); }
+
+.bgtile-more {
+  padding: 0 var(--sp-3) var(--sp-3);
+  border-top: 1px dashed var(--rule);
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+}
+
+.bgtile-more > p { margin: 0 0 var(--sp-3); font-size: 13px; line-height: 1.85; }
+
+/* 印の理由。**印のすぐ下に置く**——なぜその印なのかが消えないように */
+.bgtile-why {
+  font-size: 12px !important;
   color: var(--kiril);
+  font-weight: 700;
 }
 
-.bgcards.is-image .bgcard h3 { color: var(--rose); }
+.bgtile.is-warn .bgtile-why { color: var(--warn); }
 
-.bgcard p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-/* ---- ここでしたいこと ------------------------------------------------------ */
-
-.bgtodo {
+.bgfacts {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--sp-3);
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.7;
 }
 
-.bgtodo li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--sp-3);
-  align-items: start;
-  background: var(--paper);
+.bgfacts li { display: grid; grid-template-columns: auto 1fr; gap: 7px; align-items: start; min-width: 0; }
+.bgfacts svg { margin-top: 3px; color: var(--kiril); flex: none; }
+
+.bgadvice {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--paper-2) 70%, var(--bg-gold) 18%);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.bgadvice b {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--warn);
+}
+
+.bgadvice.is-food { background: var(--paper-2); }
+
+.bgmaps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--sp-3);
+  min-height: 44px;
+  padding: 0 var(--sp-3);
   border-radius: var(--r-1);
-  padding: var(--sp-4);
-  box-shadow: var(--shadow-1);
-}
-
-.bgtodo-n {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--rose);
+  background: var(--kiril);
   color: #fff;
-  font-weight: 900;
-  font-size: 17px;
-  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.bgtodo-b { min-width: 0; }
+.bgmaps:hover { background: color-mix(in srgb, var(--kiril) 85%, #000); }
 
-.bgtodo-b h3 {
+/* ---- 読みかたの箱 -------------------------------------------------------- */
+
+.bgkey p { margin: 0 0 var(--sp-3); font-size: 13.5px; line-height: 1.85; }
+
+.bgkey ul {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 2px 0 var(--sp-2);
-  font-size: 17px;
-}
-
-.bgtodo-b p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-.bgtodo-where {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: var(--sp-2) !important;
-  font-size: 13px !important;
-  color: var(--kiril);
-  font-weight: 700;
-}
-
-/* ---- その時期にあるもの ---------------------------------------------------- */
-
-.bgevents {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--sp-3);
-}
-
-.bgevent {
-  background: color-mix(in srgb, var(--paper) 88%, var(--rose-lo));
-  border-radius: var(--r-1);
-  padding: var(--sp-4);
-  min-width: 0;
-}
-
-.bgevent h4 { margin: 0 0 6px; font-size: 15px; }
-
-.bgevent p { margin: 0; font-size: 13px; line-height: 1.85; }
-
-.bgevent-when {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 6px !important;
-  color: var(--rose);
-  font-weight: 700;
-}
-
-/* ---- 基本情報 ------------------------------------------------------------- */
-
-.bgbasics {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--sp-3);
-}
-
-.bgbasics > div {
-  background: var(--paper);
-  border-radius: var(--r-1);
-  padding: var(--sp-4);
-  box-shadow: var(--shadow-1);
-  min-width: 0;
-}
-
-.bgbasics dt {
-  margin: 0 0 6px;
-  font-weight: 900;
-  font-size: 15px;
-  color: var(--kiril);
-}
-
-.bgbasics dd {
-  margin: 0;
+  gap: var(--sp-2) var(--sp-4);
   font-size: 13.5px;
-  line-height: 1.9;
 }
+
+.bgkey li { display: flex; align-items: center; gap: 7px; }
 
 /* ---- 地図 ---------------------------------------------------------------- */
 
 .bgmap { margin: 0 0 var(--sp-4); }
 
-.bgmap svg {
+.bgmap-box {
+  position: relative;
+  border-radius: var(--r-1);
+  overflow: hidden;
+  box-shadow: var(--shadow-1);
+}
+
+.bgmap-box img { display: block; width: 100%; height: auto; }
+
+/* 地図の絵の上に重ねる記号。**絵と同じ箱いっぱいに広げる** */
+.bgmap-box svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 絵がまだ無いときの、自前の地図 */
+.bgmap > svg {
   display: block;
   width: 100%;
   height: auto;
@@ -448,7 +489,6 @@
 
 .bgm-ground { fill: color-mix(in srgb, var(--paper) 78%, var(--kiril-lo)); }
 
-/* 中心からの輪。**縮尺の棒の代わり**なので、目立たせない */
 .bgm-ring {
   fill: none;
   stroke: color-mix(in srgb, var(--kiril) 32%, transparent);
@@ -456,42 +496,58 @@
   stroke-dasharray: 14 12;
 }
 
-/* **縁取りは地の色。** 丸どうしが重なったとき、前の丸が後ろの丸を
-   縁の太さぶん切り抜くので、2つだと読める */
 .bgm-pin circle { fill: var(--paper); stroke: var(--bg-gold); stroke-width: 3.5; }
 .bgm-pin text { font-family: inherit; font-weight: 900; fill: var(--ink); }
-
-.bgm-pin.is-good circle { fill: var(--kiril); stroke: color-mix(in srgb, var(--paper) 78%, var(--kiril-lo)); stroke-width: 4; }
+.bgm-pin.is-good circle { fill: var(--kiril); stroke: #fff; stroke-width: 4; }
 .bgm-pin.is-good text { fill: #fff; }
-.bgm-pin.is-warn circle { fill: var(--warn); stroke: color-mix(in srgb, var(--paper) 78%, var(--kiril-lo)); stroke-width: 4; }
+.bgm-pin.is-warn circle { fill: var(--warn); stroke: #fff; stroke-width: 4; }
 .bgm-pin.is-warn text { fill: #fff; }
+
+/* 地図に入らない遠いもの。**字の塊にしない**——並べて数が見えるようにする */
+.bgfar {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 6px;
+}
+
+.bgfar li {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 7px;
+  padding: 6px 10px;
+  border-radius: var(--r-0);
+  background: var(--paper-2);
+  font-size: 12px;
+  min-width: 0;
+}
+
+.bgfar b { font-weight: 700; }
+.bgfar i { font-style: normal; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 .bgmap figcaption {
   margin: 7px 2px 0;
-  font-size: 12.5px;
-  line-height: 1.8;
+  font-size: 12px;
+  line-height: 1.75;
   color: var(--ink-2);
 }
 
 /* ---- 歩くコース ----------------------------------------------------------- */
 
-.bgcourse {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
+.bgcourse { list-style: none; margin: 0; padding: 0; }
 
 .bgleg {
   display: flex;
   align-items: center;
   gap: 5px;
-  margin: 0;
+  margin: 0 0 0 15px;
   padding: 5px 0 5px 18px;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ink-2);
-  /* A から B へ下りる線。**点ではなく実線**——「続いている」のが要るので */
   border-left: 3px solid var(--kiril-lo);
-  margin-left: 15px;
 }
 
 .bgstop {
@@ -509,227 +565,137 @@
 .bgstop-l {
   display: grid;
   place-items: center;
-  width: 33px;
-  height: 33px;
+  width: 31px;
+  height: 31px;
   border-radius: 50%;
   background: var(--paper-2);
   border: 2px solid var(--ink-3);
   font-weight: 900;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .bgstop.is-good .bgstop-l { background: var(--kiril); border-color: var(--kiril); color: #fff; }
 .bgstop.is-warn .bgstop-l { background: var(--warn); border-color: var(--warn); color: #fff; }
 
 .bgstop-b { min-width: 0; }
-.bgstop-b b { display: block; font-size: 15px; line-height: 1.5; }
-
-.bgstop-b i {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-style: normal;
-  font-size: 12px;
-  color: var(--ink-2);
-}
+.bgstop-b b { display: block; font-size: 14px; line-height: 1.5; }
+.bgstop-b i { display: flex; align-items: center; gap: 4px; font-style: normal; font-size: 11.5px; color: var(--ink-2); }
 
 .bggoal {
   margin: var(--sp-2) 0 0 15px;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 900;
   letter-spacing: 0.1em;
   color: var(--rose);
 }
 
-.bgnote {
-  margin: var(--sp-3) 0 0;
-  font-size: 12.5px;
-  line-height: 1.85;
-  color: var(--ink-2);
-}
+.bgnote { margin: var(--sp-3) 0 0; font-size: 12px; line-height: 1.8; color: var(--ink-2); }
 
-/* ---- 見どころ・食べもの ----------------------------------------------------- */
+/* ---- ここでしたいこと ------------------------------------------------------ */
 
-.bggroup { margin-bottom: var(--sp-5); }
+.bgtodo { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; gap: var(--sp-3); }
 
-.bgspots {
+.bgtodo li {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: auto 1fr;
   gap: var(--sp-3);
-}
-
-.bgspot {
+  align-items: start;
   background: var(--paper);
   border-radius: var(--r-1);
   padding: var(--sp-4);
   box-shadow: var(--shadow-1);
-  /* 印の色を、カードの左の1本に出す。**丸い印と2回言う**のは、
-     一覧を流し見したときに丸まで目が行かないから */
-  border-left: 5px solid var(--ink-3);
-  min-width: 0;
 }
 
-.bgspot.is-good { border-left-color: var(--kiril); }
-.bgspot.is-warn { border-left-color: var(--warn); background: color-mix(in srgb, var(--paper) 93%, var(--warn-lo)); }
-
-.bgspot > header {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--sp-2) var(--sp-3);
-  align-items: start;
-  margin-bottom: var(--sp-3);
-}
-
-.bgspots.is-food .bgspot > header { grid-template-columns: 1fr; }
-
-.bgspot-l {
+.bgtodo-n {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--kiril);
+  background: var(--rose);
   color: #fff;
   font-weight: 900;
-  font-size: 15px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
-.bgspot.is-warn .bgspot-l { background: var(--warn); }
-.bgspot-l.is-far { background: var(--paper-2); color: var(--ink-2); }
+.bgtodo-b { min-width: 0; }
 
-.bgspot-ttl { min-width: 0; }
-
-.bgspot-ttl h4 { margin: 0; font-size: 16.5px; line-height: 1.5; }
-
-.bgspot-cyr {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: var(--rose);
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.bgspot-cyr i {
-  display: block;
-  font-style: normal;
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
-
-/* 印は見出しの下いっぱいに置く。**理由の1行が折り返せるように** */
-.bgspot > header > .bgmark { grid-column: 1 / -1; }
-
-.bgspot > p {
-  margin: 0 0 var(--sp-3);
-  font-size: 14px;
-  line-height: 1.9;
-}
-
-.bgfacts {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 6px;
-  font-size: 12.5px;
-  line-height: 1.75;
-}
-
-.bgfacts li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 7px;
-  align-items: start;
-  min-width: 0;
-}
-
-.bgfacts svg { margin-top: 3px; color: var(--kiril); flex: none; }
-
-.bgadvice {
-  margin: var(--sp-3) 0 0;
-  padding: var(--sp-3);
-  border-radius: var(--r-0);
-  background: color-mix(in srgb, var(--paper-2) 70%, var(--bg-gold) 18%);
-  font-size: 12.5px;
-  line-height: 1.85;
-}
-
-.bgadvice b {
-  display: block;
-  margin-bottom: 3px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--warn);
-}
-
-.bgadvice.is-food { background: var(--paper-2); }
-
-.bgmaps {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: var(--sp-3);
-  /* 押せるものは 44px を下回らせない */
-  min-height: 44px;
-  padding: 0 var(--sp-3);
-  border-radius: var(--r-1);
-  background: var(--kiril);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.bgmaps:hover { background: color-mix(in srgb, var(--kiril) 85%, #000); }
-
-/* ---- 買いたいもの ---------------------------------------------------------- */
-
-.bgbuys {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: var(--sp-3);
-}
-
-.bgbuy {
-  background: var(--paper);
-  border-radius: var(--r-1);
-  padding: var(--sp-4);
-  box-shadow: var(--shadow-1);
-  border-top: 4px solid var(--rose);
-  min-width: 0;
-}
-
-.bgbuy.is-warn { border-top-color: var(--warn); background: color-mix(in srgb, var(--paper) 93%, var(--warn-lo)); }
-.bgbuy.is-good { border-top-color: var(--kiril); }
-
-.bgbuy h3 {
+.bgtodo-b h3 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 0 var(--sp-2);
+  margin: 3px 0 var(--sp-2);
   font-size: 16px;
 }
 
-.bgbuy-why {
-  margin: 0 0 var(--sp-2) !important;
-  font-size: 12px !important;
-  color: var(--ink-2);
-}
-.bgbuy p { margin: 0; font-size: 13.5px; line-height: 1.85; }
+.bgtodo-b p { margin: 0; font-size: 13px; line-height: 1.85; }
 
-.bgbuy-meta {
-  margin-top: var(--sp-3) !important;
-  display: grid;
+.bgtodo-where {
+  display: flex;
+  align-items: center;
   gap: 5px;
+  margin-bottom: var(--sp-2) !important;
   font-size: 12.5px !important;
-  color: var(--ink-2);
+  color: var(--kiril);
+  font-weight: 700;
 }
 
-.bgbuy-meta span { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: start; }
-.bgbuy-meta svg { margin-top: 2px; color: var(--kiril); }
+/* ---- その時期にあるもの ---------------------------------------------------- */
+
+.bgevents { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-3); }
+
+.bgevent {
+  background: color-mix(in srgb, var(--paper) 88%, var(--rose-lo));
+  border-radius: var(--r-1);
+  padding: var(--sp-4);
+  min-width: 0;
+}
+
+.bgevent h4 { margin: 0 0 6px; font-size: 14.5px; }
+.bgevent p { margin: 0; font-size: 12.5px; line-height: 1.8; }
+
+.bgevent-when {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px !important;
+  color: var(--rose);
+  font-weight: 700;
+}
+
+/* ---- 読みもの ------------------------------------------------------------- */
+
+.bgcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--sp-3); }
+
+.bgcard {
+  background: var(--paper);
+  border-radius: var(--r-1);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-1);
+  min-width: 0;
+}
+
+.bgcard h4 { margin: 0 0 var(--sp-2); font-size: 15px; color: var(--kiril); }
+.bgcards.is-image .bgcard h4 { color: var(--rose); }
+.bgcard p { margin: 0; font-size: 13px; line-height: 1.85; }
+
+/* ---- 基本情報 ------------------------------------------------------------- */
+
+.bgbasics { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: var(--sp-3); }
+
+.bgbasics > div {
+  background: var(--paper);
+  border-radius: var(--r-1);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-1);
+  min-width: 0;
+}
+
+.bgbasics dt { margin: 0 0 6px; font-weight: 900; font-size: 14.5px; color: var(--kiril); }
+.bgbasics dd { margin: 0; font-size: 13px; line-height: 1.85; }
 
 /* ---- ことば ---------------------------------------------------------------- */
 
@@ -738,14 +704,13 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: var(--sp-2);
 }
 
+/* **縦に積む。** 2列にすると、長い語（`Говорите ли английски?`）が
+   列幅を全部取って、右の列が1文字ずつの梯子になる（実測） */
 .bgwords li {
-  /* **縦に積む。** 前は「キリル｜読みと意味」の2列にしていたが、
-     `Говорите ли английски?` のような長い語が来ると列幅を全部そちらに取られて、
-     右の列が1文字ずつの梯子になった（実測）。語の長さがばらばらなので、列にしない */
   background: var(--paper);
   border-radius: var(--r-1);
   padding: var(--sp-3);
@@ -753,36 +718,13 @@
   min-width: 0;
 }
 
-.bgwords b {
-  display: block;
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--kiril);
-  overflow-wrap: anywhere;
-}
+.bgwords b { display: block; font-size: 16px; line-height: 1.5; color: var(--kiril); overflow-wrap: anywhere; }
+.bgwords i { display: block; font-style: normal; font-size: 11px; color: var(--ink-3); }
+.bgwords span { display: block; margin-top: 4px; font-size: 12.5px; line-height: 1.75; }
 
-/* ローマ字とカナ。**どちらも出す**——ローマ字だけだと読めないし、
-   カナだけだと看板のラテン表記と照らせない。1行に並べる */
-.bgwords i,
-.bgwords em {
-  font-style: normal;
-  font-size: 11.5px;
-  color: var(--ink-3);
-}
+/* ---- 終わり ---------------------------------------------------------------- */
 
-.bgwords i::after { content: "／"; }
-
-.bgwords span {
-  display: block;
-  margin-top: 4px;
-  font-size: 13px;
-  line-height: 1.75;
-}
-
-.bgup {
-  margin: var(--sp-4) 0 0;
-  text-align: right;
-}
+.bgup { margin: var(--sp-4) 0 0; text-align: right; }
 
 .bgup a {
   display: inline-flex;
@@ -790,20 +732,14 @@
   gap: 5px;
   min-height: 44px;
   padding: 0 var(--sp-3);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ink-2);
   text-decoration: none;
 }
 
 .bgup a:hover { color: var(--kiril); }
 
-/* 跳び先。追従する看板の下に目次が潜らないように下げる */
-.bgtoc { scroll-margin-top: 72px; }
-
-.bgback {
-  margin: var(--sp-6) 0 0;
-  text-align: center;
-}
+.bgback { margin: var(--sp-6) 0 0; text-align: center; }
 
 .bgback a {
   display: inline-flex;
@@ -819,13 +755,9 @@
   font-size: 14px;
 }
 
-/* ---- 狭い画面 -------------------------------------------------------------- */
-
 @media (max-width: 520px) {
-  .bgnums { grid-template-columns: 1fr 1fr; }
-  .bgnums b { font-size: 24px; }
-  .bgsec-h { font-size: 19px; }
+  .bgnums { grid-template-columns: 1fr; }
+  .bgsec-h { font-size: 18px; }
   .bgsec-note { margin-left: 0; width: 100%; }
   .bgtoc { grid-template-columns: 1fr 1fr; }
-  .bgtoc i { display: none; }
 }
