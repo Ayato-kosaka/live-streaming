@@ -37,9 +37,12 @@ export default function BgMapSvg() {
           />
         ))}
         {MAP.pins.map((p) => (
+          /* **丸は小さめにする。** 中心部は 57m（E と G）まで寄っている印が
+             あって、r=30 だと丸どうしが重なって1つに見えた（実測）。
+             r=22 と、地の色の縁取りで「重なって前後にいる」と読めるようにする */
           <g key={p.id} className={`bgm-pin is-${p.mark} star-${p.star}`}>
-            <circle cx={p.x} cy={p.y} r={30} />
-            <text x={p.x} y={p.y + 11} textAnchor="middle" fontSize={32}>
+            <circle cx={p.x} cy={p.y} r={22} />
+            <text x={p.x} y={p.y + 9} textAnchor="middle" fontSize={26}>
               {p.letter}
             </text>
           </g>

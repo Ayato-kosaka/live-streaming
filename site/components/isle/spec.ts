@@ -485,16 +485,27 @@ const GUIDES: Record<string, Guide[]> = {
 const jstDay = (d: Date) =>
   new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
 
+/** その章の案内ぜんぶ（期間の行も含む）。**入れ替わりを面の側で決めるため**に出す
+    （`components/live/GuideLink.tsx`。焼いた日で決めると、次のビルドまで戻らない） */
+export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
+
 /**
  * その章で、いま案内の面を持っている国。**無ければ `null`。**
  *
  * 島の札（`guidePlace`）も、島の下の紙の板（`app/page.tsx`）も、ここから引く。
  * 国の名前を紙のほうへ書き写すと、国を越えた日に**紙だけが前の国を指す。**
+ *
+ * **呼ぶ側によって「いま」が違う。**
+ *
+ * | | |
+ * | --- | --- |
+ * | トップの板（`GuideLink`） | 画面が出てからの今日。期間が来た日に、その場で入れ替わる |
+ * | 島の札（`guidePlace`） | **焼いた日。** 次のビルドまで前の国を指す |
+ *
+ * 島の札まで画面の側で入れ替えるには、島の絵を作る仕掛け（`isleSpec`）ごと
+ * ブラウザへ持っていくことになるので、そこまではしない。
+ * 毎晩の配りがあるので、札が追いつくのは遅くとも翌日。
  */
-/** その章の案内ぜんぶ（期間の行も含む）。**入れ替わりを面の側で決めるため**に出す
-    （`components/live/GuideLink.tsx`。焼いた日で決めると、次のビルドまで戻らない） */
-export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
-
 export const guideOf = (slug?: string, on?: Date): Guide | null => {
   const list = (slug && GUIDES[slug]) || [];
   const day = jstDay(on ?? new Date());

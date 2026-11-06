@@ -456,12 +456,14 @@
   stroke-dasharray: 14 12;
 }
 
-.bgm-pin circle { fill: var(--paper); stroke: var(--ink-3); stroke-width: 4; }
+/* **縁取りは地の色。** 丸どうしが重なったとき、前の丸が後ろの丸を
+   縁の太さぶん切り抜くので、2つだと読める */
+.bgm-pin circle { fill: var(--paper); stroke: var(--bg-gold); stroke-width: 3.5; }
 .bgm-pin text { font-family: inherit; font-weight: 900; fill: var(--ink); }
 
-.bgm-pin.is-good circle { fill: var(--kiril); stroke: var(--paper); }
+.bgm-pin.is-good circle { fill: var(--kiril); stroke: color-mix(in srgb, var(--paper) 78%, var(--kiril-lo)); stroke-width: 4; }
 .bgm-pin.is-good text { fill: #fff; }
-.bgm-pin.is-warn circle { fill: var(--warn); stroke: var(--paper); }
+.bgm-pin.is-warn circle { fill: var(--warn); stroke: color-mix(in srgb, var(--paper) 78%, var(--kiril-lo)); stroke-width: 4; }
 .bgm-pin.is-warn text { fill: #fff; }
 
 .bgmap figcaption {
