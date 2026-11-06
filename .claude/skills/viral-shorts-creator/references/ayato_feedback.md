@@ -1048,3 +1048,8 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1108（同じチャットの書き置き。⑤クラムチャウダー。「付箋の添付画像は関係なさそう」。見た人が作れるレシピの型）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1107#issuecomment-6647089144（ほったらかしパンの回: A 案をあやとが書き直した原稿。題「海外ホステルでの、はかり無しの量り方が天才的すぎた！」・6行目「500ミリのペットボトルでテクノロジーアするしかない！」は読みかたを1回確かめる）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1108#issuecomment-6646860901（クラムチャウダーの回: あやとが書き直した原稿。題「チキンシチュー」・材料の行に買い物の画・人参の1キロの値段を調べて入れる・カップ麺の行の言い回し・最後の問い。バター・火を止める・鍋底の3行は、こちらが素材で直す前の字なので1回確かめる）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1104#issuecomment-6672740396（対談の切り抜きは C 案「偏見をなくしたくて、イラン国境まで歩いたお話」。対談系にいつもの決まりを当てるかは「おすすめで」＝3秒カットと題の札4秒は外す・BGM なし・最後の札は入れる）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1105#issuecomment-6672761823（夫婦の車の回 A v3 を「2026/11/09」に出す。時刻の指定は無いので 21:30 JST）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1106#issuecomment-6672782468（IKEA の回 v6 を「2026/11/10」に出す。時刻の指定は無いので 21:30 JST。配信の枠はそのまま）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1107#issuecomment-6672691821（ほったらかしパンの回 A の6行目「テクノロジーア」は「間違い無いです」＝あやとの字のまま）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1108#issuecomment-6672818460（チキンシチューの回 v4 を「2026/11/06 21:30」に出す。「元々あったやつは2026/11/16」＝11/6 に予約していたリーズの回 #1051 を 11/16 21:30 JST へ動かす）
