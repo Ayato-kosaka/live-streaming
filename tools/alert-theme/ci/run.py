@@ -396,6 +396,8 @@ def browser_shard(name, s, base, log, out):
         return {"exit": code, "tool": next(iter(got.values())), "tools": got}
     if name == "devices":
         return devices(s, base, log, out)
+    if name in REPEATS:
+        return repeat(name, s, base, log, out)
     themes = ",".join([t["theme"] for t in s["themes"]] + ["none"])
     if name == "textfit":
         code, _ = sh(node("alert-textfit.mjs", "--base", base, "--themes", themes, *any_fx(s), "--out", out, "--json", out / "out.json"), log, cwd=SPRITES)
@@ -412,6 +414,32 @@ def browser_shard(name, s, base, log, out):
     if name == "media":
         return media(s, base, log, out)
     raise ValueError(f"知らない shard: {name}")
+
+
+# 時間切れの組を、同じ条件でくり返す（#1138）。plan には入れない（対照の枝が plan を差し替えて、PR と master で比べる）
+REPEATS = {
+    "repeat-a": {"amount": 10000, "size": "664x1180", "text": "long:1", "char": "c07-big", "n": 30},
+    "repeat-b": {"amount": 100, "size": "664x1180", "text": "long:3", "char": "c03-pad", "n": 30},
+}
+
+
+def repeat(name, s, base, log, out):
+    """REPEATS の1組を n 回（3本並べて。重なりの shard と同じ混み方）。測れなかった回と、その様子を出す"""
+    spec = REPEATS[name]
+    t = next((x for x in overlap_themes(s) if x["fx"]), overlap_themes(s)[0])
+    ch = IN / "chars" / f"{spec['char']}.png"
+    if not ch.exists():
+        ch = sorted((IN / "chars").glob("*.png"))[0]
+    a = spec["amount"]
+    extra = [] if t["theme"] in OVERLAP_KNOWS else ["--frames", stay_frames(a)]
+    cmd = node("alert-overlap.mjs", "--base", base, "--chars", ",".join([str(ch)] * spec["n"]), "--theme", t["theme"], *fxargs(t), "--amounts", str(a), "--sizes", spec["size"], "--texts", spec["text"], "--out", out, "--json", out / "out.json", *extra)
+    code, _ = sh(cmd, log, cwd=SPRITES, timeout=5400)
+    tool = load(out / "out.json") or {}
+    inv = tool.get("invalid") or []
+    print(f"  {name} {a}円 {spec['size']} {ch.stem} {spec['text']}: {tool.get('runs')}回・測れない {len(inv)}回・重なり {len(tool.get('hits') or [])}組")
+    for v in inv[:6]:
+        print(f"    {v['why'][:600]}")
+    return {"exit": code, "tool": tool, "spec": spec}
 
 
 # 合図の来ない偽の端末（alert-reveal.mjs の --device。#1137）

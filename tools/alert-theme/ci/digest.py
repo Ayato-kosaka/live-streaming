@@ -60,7 +60,8 @@ def build(res):
         if r is None or r.get("tool") is None or r.get("exit") == 2:
             bad.append(_why(r, n))
             for v in ((r or {}).get("tool") or {}).get("invalid", [])[:2]:
-                bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: 測れない {v['why'][:60]}")
+                # 時間切れは、何を待っていてページがどうだったかまで出す（#1138。alert-overlap.mjs の stateLine）
+                bad.append(f"{v['amount']}円 {v['size']} {v['char']} {v['text']}: 測れない {v['why'][:420]}")
         for h in ((r or {}).get("tool") or {}).get("hits") or []:
             bad.append(f"{h['amount']}円 {h['size']} {h['char']} {h['text']} {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h['heroText']}" + (f"（{h['png']}）" if h.get("png") else ""))
     ok = len(tools) == len(names) and all(r["exit"] == 0 for r in got.values() if r) and sm("stay") > 0
