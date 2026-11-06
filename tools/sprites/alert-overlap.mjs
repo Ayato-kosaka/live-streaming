@@ -61,12 +61,15 @@
  * その既定の絵が無いので、撮っても写らない。だから**構造を数える**（撮るコマの間も、描くたびに全部の `<video>`）:
  *
  * - `noPoster` … poster を持たない `<video>`（要素の数）
- * - `early` … 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの途中でもないのに
- *   readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）
+ * - `early`（合否に入れない）… 最初のコマ（requestVideoFrameCallback の合図）より前、readyState 0、または頭出しの
+ *   途中でもないのに readyState 2 未満で見えていた `<video>`（祖先の opacity の積が 0.01 を超えた。要素の数）。
+ *   **#1137 から数えるだけ。** アプリは「見せてよい」の合図のどれか早いもので見せる（`playing` と readyState 2 以上を
+ *   含む）ので、この箱の Chromium ではコマより少し先に見せる。poster が透明なので、そのあいだ出るのは透明（▶ ではない）。
+ *   コマの合図だけで見せていた #1134 は、合図の来ない Android の WebView で7段を1つも出さなかった
  * - `seam`（合否に入れない）… 滞在のくり返しの継ぎ目（loop の頭出し。readyState が 20ms ほど 1 に落ちるが、
  *   最後のコマは画面に残る）で見えていた `<video>`。継ぎ目を見ていることの印
  *
- * `noPoster`・`early` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
+ * `noPoster` が 0 で合格。`videos`（見た `<video>` の数）が 0 なら何も見ていない（表の側で落とす）。
  *
  * PRISM の縮み方（`visualViewport.scale = 0.5`。豚だけが半分に描かれ、雨の落ちる先も半分の高さ）を
  * **既定で入れて撮る**（`prism.mjs`。`docs/island-misses.md` #311）。`--no-prism` で外すのは、
@@ -840,7 +843,7 @@ async function main() {
       console.log(
         `[${done}] ${r.char} ${r.amount}円 ${r.size} ${r.text}${r.video ? " 動画" : ""}  ` +
           (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
-          (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster} コマ前に見えた ${vg.early}` : "") +
+          (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster}（コマより先に見せた ${vg.early}）` : "") +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -881,8 +884,8 @@ async function main() {
   if (errs.length) console.log("JS の例外:", errs.slice(0, 5));
   /* `<video>` の守り（#1133）。poster の無い・コマを持つ前に見えていた `<video>` は、組ごとに1つでもあれば落ちる */
   const vsum = (k) => results.reduce((s, r) => s + (r.vg?.[k] ?? 0), 0);
-  const vbadRuns = results.filter((r) => r.vg && (r.vg.noPoster || r.vg.early));
-  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")} / コマを持つ前に見えた ${vsum("early")}（全部 0）・くり返しの継ぎ目 ${vsum("seam")}（数えない）`);
+  const vbadRuns = results.filter((r) => r.vg && r.vg.noPoster);
+  console.log(`  <video> ${vsum("videos")}本（コマの合図を掛けた ${vsum("rvfc")}）: poster の無い ${vsum("noPoster")}（0）・コマより先に見せた ${vsum("early")}・くり返しの継ぎ目 ${vsum("seam")}（どちらも poster が透明なので数えない）`);
   for (const r of vbadRuns.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.vg.bad.slice(0, 3))}`);
 
   const json = arg("json", "");

@@ -400,7 +400,7 @@ describe("灰色の地と ▶ を出さない（#1133。Android の WebView は 
     expect(made[0].hasAttribute("controls")).toBe(false);
   });
 
-  it("コマの合図を持つ端末: `playing` が来ても、最初のコマの合図が来るまで見せない（その人の絵のまま）", async () => {
+  it("`playing` が来ても読めたところが 2 未満なら、コマの合図（か時計が進む）まで見せない（その人の絵のまま）", async () => {
     const queued: ((now: number, meta: unknown) => void)[] = [];
     const el = fakeVideoEl as typeof fakeVideoEl & {
       requestVideoFrameCallback?: (cb: (now: number, meta: unknown) => void) => number;
@@ -408,6 +408,7 @@ describe("灰色の地と ▶ を出さない（#1133。Android の WebView は 
     };
     el.requestVideoFrameCallback = (cb) => queued.push(cb);
     el.cancelVideoFrameCallback = () => {};
+    el.readyState = 1;
     try {
       const tree = await mount();
       await fire(tree, "@mov");
@@ -427,6 +428,7 @@ describe("灰色の地と ▶ を出さない（#1133。Android の WebView は 
     } finally {
       delete el.requestVideoFrameCallback;
       delete el.cancelVideoFrameCallback;
+      el.readyState = 4;
     }
   });
 });

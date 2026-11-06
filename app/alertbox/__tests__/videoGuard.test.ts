@@ -13,14 +13,16 @@
  *
  *   1. アラートで作られる `<video>` は全部、透明の poster を持ち、コントロールを持たない
  *      （作り方を `newVideo()` と `{...VIDEO_ATTRS}` に絞り、ソースを読んで外れた書き方を落とす）
- *   2. 最初のコマの合図（`requestVideoFrameCallback`。無ければ `playing` と readyState 2 以上）まで見せない
- *   3. 替わり目は `fxvideo.test.ts` の 7節（次の本のコマが出るまで前の本が見えたまま）
+ *   2. 見せるのは「見せてよい」の合図のどれか早いもの（コマの合図・`playing` と readyState 2 以上・
+ *      時計が進んだ・play() が解けて 250ms）。**1つの合図に頼らない**（#1137。opacity 0 の `<video>` には
+ *      コマの合図が来ず、readyState も 2 に届かない端末で、11/6 の配信の7段が1つも出なかった）
+ *   3. 替わり目は `fxvideo.test.ts` の 7節（次の本が見せてよくなるまで前の本が見えたまま）
  *
  * **対照を先に置く**（`island-misses.md` #99）。読む道具が、守りの無い書き方を本当に拾えるかを先に見る。
  */
 import { readdirSync, readFileSync, statSync } from "fs";
 import { join, relative } from "path";
-import { CLEAR_POSTER, VIDEO_ATTRS, guardVideo, newVideo, onFirstFrame } from "../videoGuard";
+import { CLEAR_POSTER, SHOW_AFTER_PLAY_MS, VIDEO_ATTRS, guardVideo, newVideo, onShowable } from "../videoGuard";
 import { makeFxVideo, prepareFxKit, releaseFxKit, runFxShow, type FxTierEntry } from "../season/show/fxVideo";
 
 const ROOT = join(__dirname, "..");
@@ -188,7 +190,7 @@ describe("1'. app/alertbox と public/alert の `<video>` は、守りを通し�
   });
 });
 
-/* ---------------------------------------------------------------- 2. 最初のコマまで見せない */
+/* ---------------------------------------------------------------- 2. 見せてよい合図（どれか早いもの） */
 
 type Rvfc = (now: number, meta: unknown) => void;
 /** jsdom の `<video>` に再生の出来事を手で起こせる仕掛けと、コマの合図（あれば）を付ける */
@@ -223,72 +225,107 @@ function fake(opts: { rvfc: boolean; ready?: number }) {
     },
   };
 }
+/** 呼ばれない約束（play() が解けない端末） */
+const never = () => new Promise<void>(() => {});
 
-describe("2. 最初のコマの合図が来るまで見せない（onFirstFrame）", () => {
-  it("コマの合図を持つ端末: `playing` が来ても、合図が来るまで呼ばない。合図で1回だけ", () => {
-    const f = fake({ rvfc: true });
+describe("2. 見せてよい合図は4つのどれか早いもの（onShowable。#1137）", () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it("対照: どの合図も来なければ呼ばない（`playing` だけ・読めたところ 1・時計 0・play() が解けない）", () => {
+    const f = fake({ rvfc: true, ready: 1 });
     const cb = jest.fn();
-    onFirstFrame(f.v, cb);
+    onShowable(f.v, cb, { played: never() });
     f.playing();
-    f.fire("canplay");
-    f.fire("timeupdate"); // 時計がまだ 0
+    f.fire("timeupdate");
+    jest.advanceTimersByTime(5000);
     expect(cb).not.toHaveBeenCalled();
+  });
+
+  it("1. コマの合図（requestVideoFrameCallback）で。1回だけ", () => {
+    const f = fake({ rvfc: true, ready: 1 });
+    const cb = jest.fn();
+    onShowable(f.v, cb, { played: never() });
     f.present();
     expect(cb).toHaveBeenCalledTimes(1);
+    f.st.ready = 4;
+    f.playing();
     f.st.t = 1;
-    f.fire("timeupdate");
-    f.present();
+    jest.advanceTimersByTime(1000);
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
-  it("合図が来ない端末の保険: 再生中に時計が 0 を越えたら（timeupdate）呼ぶ。止まっているあいだは呼ばない", () => {
-    const f = fake({ rvfc: true });
-    const cb = jest.fn();
-    onFirstFrame(f.v, cb);
-    f.st.t = 0.3;
-    f.fire("timeupdate"); // まだ再生していない（頭出しの timeupdate）
-    expect(cb).not.toHaveBeenCalled();
-    f.playing();
-    f.fire("timeupdate");
-    expect(cb).toHaveBeenCalledTimes(1);
-  });
-
-  it("合図を持たない端末: `playing` が来て、読めたところが 2 以上で呼ぶ（2 未満なら読めるまで待つ）", () => {
+  it("2. `playing` が来ていて、読めたところが 2 以上で（2 未満なら読めるまで待つ）", () => {
     const f = fake({ rvfc: false, ready: 1 });
     const cb = jest.fn();
-    onFirstFrame(f.v, cb);
+    onShowable(f.v, cb, { played: never() });
     f.fire("loadeddata"); // `playing` の前
     expect(cb).not.toHaveBeenCalled();
     f.playing();
     expect(cb).not.toHaveBeenCalled();
     f.st.ready = 2;
-    f.fire("loadeddata");
+    f.fire("canplay");
     expect(cb).toHaveBeenCalledTimes(1);
   });
 
-  it("`playing` のあとに呼ぶとき（JSX の onPlaying）: 合図を持たない端末ではその場で・持つ端末では合図で", () => {
-    const a = fake({ rvfc: false });
+  it("3. 時計が、呼んだ時より進んだら（コマの合図を呼び返さない・readyState 1 のままの端末でも）", () => {
+    const f = fake({ rvfc: true, ready: 1 });
+    const cb = jest.fn();
+    onShowable(f.v, cb, { played: never() });
+    jest.advanceTimersByTime(100);
+    expect(cb).not.toHaveBeenCalled();
+    f.st.t = 0.04; // timeupdate は来なくても、描くたびに読む
+    jest.advanceTimersByTime(50);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it("4. play() が解けてから 250ms（ほかの合図が何も来ない端末でも）", async () => {
+    const f = fake({ rvfc: true, ready: 1 });
+    const cb = jest.fn();
+    onShowable(f.v, cb, { played: Promise.resolve() });
+    await Promise.resolve();
+    await Promise.resolve();
+    jest.advanceTimersByTime(SHOW_AFTER_PLAY_MS - 10);
+    expect(cb).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(20);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it("play() が止められたら、250ms では呼ばない（層を消すのは呼ぶ側）", async () => {
+    const f = fake({ rvfc: true, ready: 1 });
+    const cb = jest.fn();
+    onShowable(f.v, cb, { played: Promise.reject(new Error("NotAllowedError")) });
+    await Promise.resolve();
+    await Promise.resolve();
+    jest.advanceTimersByTime(1000);
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it("`playing` のあとに呼ぶとき（JSX の onPlaying）: 読めたところが 2 以上ならその場で", () => {
+    const a = fake({ rvfc: true });
     const ca = jest.fn();
-    onFirstFrame(a.v, ca, { playing: true });
+    onShowable(a.v, ca, { playing: true });
     expect(ca).toHaveBeenCalledTimes(1);
-    const b = fake({ rvfc: true });
+    const b = fake({ rvfc: true, ready: 1 });
     const cbb = jest.fn();
-    onFirstFrame(b.v, cbb, { playing: true });
+    onShowable(b.v, cbb, { playing: true });
     expect(cbb).not.toHaveBeenCalled();
     b.present();
     expect(cbb).toHaveBeenCalledTimes(1);
   });
 
-  it("やめたら呼ばない（合図も外す）", () => {
-    const f = fake({ rvfc: true });
+  it("やめたら呼ばない（合図も外す・時計も読まない）", async () => {
+    const f = fake({ rvfc: true, ready: 1 });
     const cb = jest.fn();
-    const stop = onFirstFrame(f.v, cb);
-    f.playing();
+    const stop = onShowable(f.v, cb, { played: Promise.resolve() });
     stop();
     expect(f.cancel).toHaveBeenCalled();
+    await Promise.resolve();
     f.present();
     f.st.t = 1;
-    f.fire("timeupdate");
+    f.st.ready = 4;
+    f.playing();
+    jest.advanceTimersByTime(1000);
     expect(cb).not.toHaveBeenCalled();
   });
 });

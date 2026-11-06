@@ -151,7 +151,7 @@ def overlap_themes(s):
 def plan(s=None):
     s = s or season()
     out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
-    return out + ["reveal", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
+    return out + ["reveal", "devices", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
 
 
 # ---------------------------------------------------------------- 支度
@@ -394,6 +394,8 @@ def browser_shard(name, s, base, log, out):
             for k, b in ((got[t["theme"]] or {}).get("by") or {}).items():
                 print(f"  reveal {t['theme']} {k}: 動画 {b['video']}/{b['runs']} 札が先 {b['earlyRuns']}回（最大 {b['worst']}秒） 0円 {b['zeroRuns']}回")
         return {"exit": code, "tool": next(iter(got.values())), "tools": got}
+    if name == "devices":
+        return devices(s, base, log, out)
     themes = ",".join([t["theme"] for t in s["themes"]] + ["none"])
     if name == "textfit":
         code, _ = sh(node("alert-textfit.mjs", "--base", base, "--themes", themes, *any_fx(s), "--out", out, "--json", out / "out.json"), log, cwd=SPRITES)
@@ -410,6 +412,30 @@ def browser_shard(name, s, base, log, out):
     if name == "media":
         return media(s, base, log, out)
     raise ValueError(f"知らない shard: {name}")
+
+
+# 合図の来ない偽の端末（alert-reveal.mjs の --device。#1137）
+DEVICES = ["norvfc", "mutervfc", "rs1", "android"]
+
+
+def devices(s, base, log, out):
+    """合図の来ない偽の端末 4通り × 7段で、動画が出て（段が落ちない）札が revealAt のあとに出るか。
+    11/6 の配信（Android の WebView）で7段が1つも出なかった（#1137）。この箱の Chromium はどの合図も来るので、
+    来ない形を道具の側で作る。1組1回・箱 436x776・CPU そのまま・回線そのまま"""
+    t = next((x for x in s["themes"] if x["fx"]), None)
+    if not t:
+        return {"exit": None, "na": "動画の段を持つテーマが無い"}
+    ch = sorted((IN / "chars").glob("*.png"))[0]
+    rows, code = [], 0
+    for d in DEVICES:
+        for a in AMOUNTS:
+            j = out / f"{d}-{a}.json"
+            c, _ = sh(node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--amount", str(a), "--char", ch, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--jobs", "1", "--device", d, "--json", j), log, cwd=SPRITES, timeout=600)
+            r = load(j) or {}
+            rows.append({"device": d, "amount": a, "exit": c, "video": r.get("video", 0), "runs": r.get("runs", 0), "early": r.get("early", 0), "zero": r.get("zero", 0)})
+            code = max(code, c)
+            print(f"  devices {d} {a}円: 終了 {c}・動画 {r.get('video', 0)}/{r.get('runs', 0)}・札が先 {r.get('early', 0)}")
+    return {"exit": code, "theme": t["theme"], "rows": rows}
 
 
 def media(s, base, log, out):
