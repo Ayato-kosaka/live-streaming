@@ -429,7 +429,17 @@ export default function BulgariaPage() {
                       {s.advice}
                     </p>
                   )}
-                  <a className="bgmaps" href={s.maps} target="_blank" rel="noreferrer">
+                  {/* **名前に行き先の名を入れる。** 字は22本とも「Google マップで開く」で
+                      そろえたいが、読み上げでは名前しか読まれないので、同じ名前の札が
+                      22本、別の先を指すことになる（`reachkeys` の「おなじ字」）。
+                      `aria-label` で名前だけ分ける */}
+                  <a
+                    className="bgmaps"
+                    href={s.maps}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Google マップで開く（${s.name}）`}
+                  >
                     <Icon name="map" size={15} />
                     Google マップで開く
                     <Icon name="external" size={13} />
@@ -506,10 +516,13 @@ export default function BulgariaPage() {
         <div className="bgbuys">
           {BG_BUY.map((b) => (
             <article key={b.what} className={`bgbuy is-${b.mark}`}>
-              <h4>
+              {/* **h3。** 節の見出しが h2 なので、ここを h4 にすると段が1つ飛ぶ
+                  （`reachkeys` の「みだし」。読み上げで中身の入れ子が読めなくなる）。
+                  ほかの節のカードが h4 なのは、あいだに h3（★の段）が在るから */}
+              <h3>
                 {b.what}
                 <Badge mark={b.mark as Mark} />
-              </h4>
+              </h3>
               {b.markwhy && <p className="bgbuy-why">{b.markwhy}</p>}
               <p>{b.why}</p>
               <p className="bgbuy-meta">

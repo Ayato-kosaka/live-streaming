@@ -352,9 +352,13 @@ if (guide?.href) {
      トップの紙にも1本引いてあるが、**そこに国の名前を書き写していない**こと。
      書き写すと、国を越えた日に紙だけが前の国を指す（`docs/island-standards.md` 8章）。 */
   const homeSrc = readFileSync(HOME_SRC, "utf8");
+  /* `guidesOf`（表ぜんぶ）でも通す。**滞在の期間で入れ替える面**は、
+     どの国かを焼いた日で決められないので、表ぜんぶを部品へ渡して
+     画面が出てから選び直している（`components/live/GuideLink.tsx`）。
+     見たいのは「紙が表から引いているか」なので、どちらの口でもよい。 */
   check(
     "トップの紙の1本が、案内の表から字を引いている",
-    /guideOf\s*\(/.test(homeSrc),
+    /guidesOf\s*\(|guideOf\s*\(/.test(homeSrc),
     "app/page.tsx が components/isle/spec.ts の GUIDES を読んでいない",
   );
   /* **注を落としてから見る。** あやとの言葉も、行き先の面の道も、注には出てくる。

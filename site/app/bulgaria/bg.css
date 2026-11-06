@@ -704,7 +704,7 @@
 .bgbuy.is-warn { border-top-color: var(--warn); background: color-mix(in srgb, var(--paper) 93%, var(--warn-lo)); }
 .bgbuy.is-good { border-top-color: var(--kiril); }
 
-.bgbuy h4 {
+.bgbuy h3 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
