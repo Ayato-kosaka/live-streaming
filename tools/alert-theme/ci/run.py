@@ -151,7 +151,7 @@ def overlap_themes(s):
 def plan(s=None):
     s = s or season()
     out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
-    return out + ["reveal", "devices", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
+    return [n for n in REPEATS if n.startswith("face-")]  # 対照の枝: 直したアプリで1万円の4組 × 100回だけ（#1141。マージしない）
 
 
 # ---------------------------------------------------------------- 支度
