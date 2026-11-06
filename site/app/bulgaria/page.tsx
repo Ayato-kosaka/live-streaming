@@ -495,11 +495,22 @@ export default function BulgariaPage() {
       </Sec>
 
       {/* ---- 07 買いたいもの ---------------------------------------------- */}
-      <Sec id="buy" icon="souvenir" n={7} title="買いたいもの" note={`${BG_BUY.length}つ`}>
+      <Sec
+        id="buy"
+        icon="souvenir"
+        n={7}
+        title="買いたいもの"
+        note={`${BG_BUY.length}つ`}
+        lead="⚠ が付いているのは酒です。あやとは飲まないので、人に贈るときだけ。"
+      >
         <div className="bgbuys">
           {BG_BUY.map((b) => (
-            <article key={b.what} className="bgbuy">
-              <h4>{b.what}</h4>
+            <article key={b.what} className={`bgbuy is-${b.mark}`}>
+              <h4>
+                {b.what}
+                <Badge mark={b.mark as Mark} />
+              </h4>
+              {b.markwhy && <p className="bgbuy-why">{b.markwhy}</p>}
               <p>{b.why}</p>
               <p className="bgbuy-meta">
                 <span>
@@ -536,7 +547,7 @@ export default function BulgariaPage() {
       </Sec>
 
       <p className="bgback">
-        <Link href="/">
+        <Link prefetch={false} href="/">
           <Icon name="left" size={15} />
           島へ戻る
         </Link>

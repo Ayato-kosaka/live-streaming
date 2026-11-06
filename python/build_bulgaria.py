@@ -104,6 +104,21 @@ def mark_food(d: dict):
     return "ok", ""
 
 
+def mark_buy(d: dict, alcohol: set):
+    """土産ひとつの印。
+
+    **ここにも印を出す。** 出さないと、ほかの節ぜんぶが ◎○⚠ を持っている面の中で
+    この節だけ無印になって、「酒は印の対象外」と読めてしまう。
+    ただし**土産は人に贈るもの**なので、⚠ の理由はそこまで言う。
+    """
+    if d["what"] in alcohol:
+        return "warn", "お酒。あやとは飲まないので、人に贈るときだけ"
+    for word, why in LIKE_FOOD:
+        if word in (d["what"] + d["why"]):
+            return "good", why
+    return "ok", ""
+
+
 def mark_spot(d: dict):
     """行き先ひとつの印。"""
     eur = yen_of(d.get("fee", ""))
@@ -295,7 +310,17 @@ def main() -> None:
     # 事実（`facts.json`）ではなくこちら（`fill.json`）が持つ。印も手で置いてある
     # ——規則1本では「市場でパイを買って公園で食べる」のような**組み合わせ**が出せない
     arr("BG_TODO", FILL["todo"], ["what", "where", "why", "mark"])
-    arr("BG_BUY", F["buy"], ["what", "why", "where", "price"])
+    alcohol = set(FILL["buy_alcohol"])
+    miss_a = alcohol - {x["what"] for x in F["buy"]}
+    if miss_a:
+        raise SystemExit("土産の名前が合いません: %s" % sorted(miss_a))
+    buy = []
+    for x in F["buy"]:
+        m, why = mark_buy(x, alcohol)
+        # **`why` は土産そのものの説明**（`facts.json` が持っている欄）なので、
+        # 印の理由はぶつからない名前で足す
+        buy.append({**x, "mark": m, "markwhy": why})
+    arr("BG_BUY", buy, ["what", "mark", "markwhy", "why", "where", "price"])
     arr("BG_EVENTS", F["events"], ["what", "when", "body"])
     arr("BG_WORDS", F["words"], ["cyr", "roman", "kana", "jp"])
 
