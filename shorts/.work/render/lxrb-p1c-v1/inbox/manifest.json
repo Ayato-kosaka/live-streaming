@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__lxrb-p1c-v1",
+ "mode": "render",
+ "dest": "render/lxrb-p1c-v1/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/lxrb-p1c-v1.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 18108,
+  "tar_gz": 6945,
+  "encrypted": 6960
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 6960,
+   "sha256": "a6a4d9ec42dd0d864c3b1c58adbe634d0f88b3b755b9fa55c6ded388935dea64"
+  }
+ ],
+ "hmac_sha256": "26a7b80bc8528c2129bf1f224ef4c9bd68a943e50bf11ac41bf6ea881a5ed04d",
+ "pubkey_sha256": "c7009892f97e7822feedcc7978262302adb06da3c34883f4e9c519faef2dc3d0",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-06T01:16:17+00:00",
+ "nonce": "08ffebdfbc7b31cb477eff0e"
+}
