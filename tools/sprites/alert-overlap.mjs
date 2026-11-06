@@ -41,8 +41,9 @@
  *   `--control band` は対照: 帯を字の札の高さに置く → 1 で落ちる
  *
  *   **段7 は帯ではなく顔の線**（#1141）。`heroBands` の3つ目が「あやとの顔の下の端」の線で、**動画の秒**で変わる
- *   （登場の秒と線の組の並び。`tools/alert-theme/blender/t7_motion.py` の FACE_LINE・FACE_LINE_PLATE。札が上から
- *   降りてくる 5.4〜6.0 秒は顔を 10.5% より上へ浮かせ、ふだんは 15% より上）。主役の顔は帯の上の端からこの線まで。
+ *   （登場の秒と線の組の並び。`tools/alert-theme/blender/t7_motion.py` の `ayato_face_box` を、どのコマでも下回らない
+ *   折れ線で上から包んだもの。札が上から降りてくる 5.3〜6.0 秒は顔を浮かせて 9.3〜9.6%、滞在は 13.1%。
+ *   振付けを描き直したら、この線も引き直す）。主役の顔は帯の上の端からこの線まで。
  *   札は動画の currentTime が revealAt に来た知らせで出るので（#1138）、道具の止めた時計の秒ではなく、そのコマの
  *   動画の秒で線を引く。撮るコマ（1.5 秒おき）は札が降りてくる 0.15 秒に当たらないので、**描くたびにも数える**
  *   （`heroMiss`。札の字の行が、そのときの動画の秒の顔の線より上に掛かったコマ）。
@@ -383,7 +384,7 @@ const HERO_WATCH = (band) => `(() => {
         st.frames++;
         if (area > 0) {
           st.miss++;
-          if (st.bad.length < 4) st.bad.push({ part, ct: +ct.toFixed(3), line: +line.toFixed(3), top: +((top - vy) / vh).toFixed(3), area: Math.round(area) });
+          if (st.bad.length < 4) st.bad.push({ part, ct: +ct.toFixed(3), line: +line.toFixed(4), top: +((top - vy) / vh).toFixed(4), px: Math.round((vy + line * vh) - top), op: +seen(slot).toFixed(2), area: Math.round(area) });
         }
       }
     }
