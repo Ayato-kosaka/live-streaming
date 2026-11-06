@@ -53,7 +53,7 @@ export const VideoShow: React.FC<Props> = ({ plan, durationSec, onFail, onReveal
       () => revealRef.current?.()
     );
     // front を持たない段（〜999円・1,000〜9,999円の light）は、穴も開けない（何も描かれない層に mask を掛けない）
-    const unhole = plan.kit.layers.front ? holdFaceHole(front.current, plan.revealAt) : () => {};
+    const unhole = plan.kit.layers.front ? holdFaceHole(front.current) : () => {};
     return () => {
       unhole();
       stop();

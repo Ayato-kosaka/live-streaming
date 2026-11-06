@@ -340,10 +340,11 @@ def controls(s, base, log, out):
         "ink": node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", onedir, "--themes", t["theme"], *fxargs(t), "--amounts", "1500", "--control", "flat"),
         "decode": node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--rates", "1", "--runs", "1", "--limit", "1"),
     }
-    # 札を最初から見せる / `<video>` の poster を外す（#1133）（動画の段のあるテーマのときだけ）
+    # 札を最初から見せる / `<video>` の poster を外す（#1133）/ 顔の穴を1コマ遅らせる（#1141）（動画の段のあるテーマのときだけ）
     if t["fx"]:
         jobs["reveal"] = node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--char", one, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--control", "early")
         jobs["poster"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "poster", *frames)
+        jobs["holelate"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "holelate", *frames)
     got = {}
     for kind, cmd in jobs.items():
         o = out / kind
