@@ -721,7 +721,9 @@ async function runOne(browser, job) {
   const res = { char: ch.id, amount, size: `${W}x${H}`, text: text.key, frames: [], errors, video: !!vfile };
   try {
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
-    await page.waitForFunction(() => window.__ovl && window.__ovl.t0 != null, null, { timeout: 20000, polling: 50 });
+    /* アラートの面が出るまで（試し表示は、段の絵と動画の用意を最大 8 秒待ってから出す）。3本並べて回す runner が混むと
+       読み込みと合わせて 20 秒を越える組が出た（#1138 の1回目、48組のうち1組）。alert-reveal.mjs と同じ 60 秒まで待つ */
+    await page.waitForFunction(() => window.__ovl && window.__ovl.t0 != null, null, { timeout: 60000, polling: 50 });
     let controlled = false;
     for (const s of framesFor(amount)) {
       await page.waitForFunction((s) => performance.now() - window.__ovl.t0 >= s * 1000, s, { timeout: (s + 30) * 1000, polling: 30 });

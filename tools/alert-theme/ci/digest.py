@@ -112,16 +112,31 @@ def build(res):
         rs = r["rows"]
         by = {}
         for x in rs:
-            b = by.setdefault(x["device"], [0, 0, 0])
+            b = by.setdefault(x["device"], [0, 0, 0, 0])
             b[0] += 1
             b[1] += 1 if x["video"] else 0
             b[2] += x["early"] or 0
-        bad = [f"{x['device']} {x['amount']}円: 終了 {x['exit']}・動画 {x['video']}/{x['runs']}・札が先 {x['early']}コマ" for x in rs if x["exit"] != 0 or not x["video"] or x["early"]]
+            b[3] += x.get("zero") or 0
+
+        def why(x):
+            """落ちた理由。道具の終了コードだけで落ちた組も、何で落ちたかを出す（「終了 1」だけで理由の無い行を出さない）"""
+            w = [f"終了 {x['exit']}"]
+            if not x["video"]:
+                w.append(f"動画 {x['video']}/{x['runs']}（段が落ちた）")
+            if x["early"]:
+                w.append(f"札が先 {x['early']}コマ")
+            if x.get("zero"):
+                w.append(f"0円 {x['zero']}コマ")
+            if len(w) == 1:
+                w.append("数は全部 0（道具のログ devices.log を見る）")
+            return f"{x['device']} {x['amount']}円: " + "・".join(w)
+
+        bad = [why(x) for x in rs if x["exit"] != 0 or not x["video"] or x["early"] or x.get("zero")]
         ok = bool(rs) and not bad and all(b[1] == b[0] for b in by.values())
         row(
             "合図の来ない端末（偽の4通り × 7段）",
             ok,
-            "・".join(f"{k} 動画 {b[1]}/{b[0]}段・札が先 {b[2]}" for k, b in by.items()) + "（7段とも動画が出て、札が先 0）",
+            "・".join(f"{k} 動画 {b[1]}/{b[0]}段・札が先 {b[2]}・0円 {b[3]}" for k, b in by.items()) + "（7段とも動画が出て、札が先 0・0円 0）",
             bad,
         )
     else:
