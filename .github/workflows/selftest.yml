@@ -355,4 +355,18 @@ jobs:
           rc=0
           DIST=site/.next-ci SPORT=4213 node tools/sprites/reachkeys.mjs || rc=$?
           echo "── reachkeys 終了コード ${rc}"
-          exit "$rc"
+          # **焼いた書体で描けていない字**を、画面で数える（`fontfall.mjs`）。
+          # `fontbudget_selftest`（`selftest` job）は表と束を突き合わせるだけなので、
+          # 表が面より古いと**表の中では辻褄が合ったまま緑になる。** 実際そうなって、
+          # 画面では22字が端末の書体に落ちていた（あやと「文字化けが混じってる」）。
+          #
+          # ここに相乗りさせるのは、**`next build` を通して面を配っている job が
+          # これだからで**（`reachkeys` と同じ器が要る）、1面1秒ほどで終わる。
+          # 見るのは**字の多い面**だけ——全面に広げると、落ちる字の無い面を
+          # 150回開くことになる。
+          fr=0
+          DIST=site/.next-ci SPORT=4213 node tools/sprites/fontfall.mjs \
+            /bulgaria /north-macedonia /nordic/guide || fr=$?
+          echo "── fontfall 終了コード ${fr}"
+          [ "$rc" = 0 ] || exit "$rc"
+          exit "$fr"

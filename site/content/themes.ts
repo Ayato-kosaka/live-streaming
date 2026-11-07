@@ -568,6 +568,8 @@ export type Shelf = { group: string; themes: Theme[] };
  * 書く側の並びは「北マケドニアの旅 → グッズ → そのほか」になる。
  */
 const ORDER = [
+  // **いま注文を受け付けている先が先頭**（`THEMES` の並びと同じ考え）
+  BULGARIA_GROUP,
   MACEDONIA_GROUP,
   ALBANIA_GROUP,
   NORDIC_GROUP,
