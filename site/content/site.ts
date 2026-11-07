@@ -178,10 +178,10 @@ export const NOW_FALLBACK = {
 
 /** サイトに出す数字の初期値。/island-api/state の stats で上書きされる。 */
 export const STATS_FALLBACK = {
-  streams: 834,
-  streamDays: 679,
-  comments: 161961,
-  people: 2424,
+  streams: 835,
+  streamDays: 680,
+  comments: 162243,
+  people: 2426,
   /* **歩いた国の数はここに置かない。**「焼き込みから数える」まで来ていたが、
      焼き込みでも足りなかった。この数は**日付で変わる**（旅程を今日で切って
      数える）のに、静的書き出しは焼いた日の数を固める。国境を越えた日の 00:00 から

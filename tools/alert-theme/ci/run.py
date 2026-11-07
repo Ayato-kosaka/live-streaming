@@ -340,10 +340,14 @@ def controls(s, base, log, out):
         "ink": node("alert-ink.mjs", "--base", base, "--bg-dir", IN / "bg", "--chars", onedir, "--themes", t["theme"], *fxargs(t), "--amounts", "1500", "--control", "flat"),
         "decode": node("alert-decode.mjs", "--dist", DIST, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--rates", "1", "--runs", "1", "--limit", "1"),
     }
-    # 札を最初から見せる / `<video>` の poster を外す（#1133）/ 顔の穴を1コマ遅らせる（#1141）（動画の段のあるテーマのときだけ）
+    # 札を最初から見せる / `<video>` の poster を外す（#1133）/ 顔の穴を1コマ遅らせる（#1141）/
+    # 段7 の札を revealAt より前に出す・元の高さから落とす（主役の顔の箱。#1141）（動画の段のあるテーマのときだけ）
     if t["fx"]:
         jobs["reveal"] = node("alert-reveal.mjs", "--base", base, "--theme", t["theme"], *fxargs(t), "--char", one, "--sizes", "436x776", "--rates", "1", "--nets", "off", "--runs", "1", "--control", "early")
         jobs["poster"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "poster", *frames)
+        jobs["platehigh"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "664x1180", "--texts", "long:3", "--control", "platehigh", *frames)
+        # 札の対照は、札の背がいちばん高くて顔の箱に掛かりやすい組（664x1180・長い名前・3行）で
+        jobs["plateearly"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "10000", "--sizes", "664x1180", "--texts", "long:3", "--control", "plateearly", *frames)
         jobs["holelate"] = node("alert-overlap.mjs", "--base", base, "--chars", one, "--theme", t["theme"], *fxargs(t), "--amounts", "1500", "--sizes", "436x776", "--texts", "short:3", "--control", "holelate", *frames)
     got = {}
     for kind, cmd in jobs.items():
@@ -451,8 +455,12 @@ def repeat(name, s, base, log, out):
         print(f"    {v['why'][:600]}")
     # 顔に乗ったコマ（何秒・どの層・その時の穴）と、描くたびに数えた穴の外れ（#1141）。artifact は作業箱から落とせないので、ログに出す
     for h in (tool.get("hits") or [])[:10]:
-        print(f"    重なり {h['t']}s: front {h['front']} / cover {h['cover']} / 字 {h.get('heroText')}・撮る前の穴 {json.dumps(h.get('hole'), ensure_ascii=False)}・撮った後 {json.dumps(h.get('holeAfter'), ensure_ascii=False)}・箱から {json.dumps(h.get('face'), ensure_ascii=False)}")
+        print(f"    重なり {h['t']}s（動画 {json.dumps(h.get('vt'), ensure_ascii=False)}）: front {h['front']} / cover {h['cover']} / 字 {h.get('heroText')}・撮る前の穴 {json.dumps(h.get('hole'), ensure_ascii=False)}・撮った後 {json.dumps(h.get('holeAfter'), ensure_ascii=False)}・箱から {json.dumps(h.get('face'), ensure_ascii=False)}")
     print(f"    顔の穴: {tool.get('faceFrames')}コマ中 外れ {tool.get('faceMiss')}・外れた回 {len(tool.get('faceBad') or [])}/{tool.get('runs')}・箱から(秒) {json.dumps(tool.get('faceLag'), ensure_ascii=False)}")
+    if tool.get("heroLine"):
+        print(f"    主役の顔の線（段7・描くたび・動画の秒）: {tool.get('heroFrames')}コマ中 字が掛かった {tool.get('heroMiss')}・掛かった回 {len(tool.get('heroBad') or [])}/{tool.get('runs')}")
+        for b in (tool.get("heroBad") or [])[:4]:
+            print(f"    字 {b['miss']}/{b['frames']}コマ: {json.dumps(b['bad'], ensure_ascii=False)}")
     for b in (tool.get("faceBad") or [])[:4]:
         print(f"    外れ {b['miss']}/{b['frames']}コマ: {json.dumps(b['bad'], ensure_ascii=False)} 穴 {b['hole']}s・中身 {b['content']}s・覆う {b['fit']}s")
     return {"exit": code, "tool": tool, "spec": spec}
