@@ -643,13 +643,17 @@
 
 .bgtodo-b { min-width: 0; }
 
+/* 題と印。**`flex` だと、題が2行になった瞬間に印だけが次の行へ落ちる**
+   （実測で5件中3件がそうなった）。行の中に流して、最後の字の隣に付かせる */
 .bgtodo-b h3 {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
   margin: 3px 0 var(--sp-2);
   font-size: 16px;
+  line-height: 1.5;
+}
+
+.bgtodo-b h3 .bgmark {
+  vertical-align: -5px;
+  margin-left: 6px;
 }
 
 .bgtodo-b p { margin: 0; font-size: 13px; line-height: 1.85; }
