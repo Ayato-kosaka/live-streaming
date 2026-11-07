@@ -1,0 +1,60 @@
+name: 写真の候補を探す
+
+# Wikimedia Commons から、国の案内ページに貼る写真の候補を集める（`python/commons_photos.py`）。
+#
+# **なぜ Actions か。** 作業箱から `upload.wikimedia.org`（絵そのもの）は curl で取れるのに、
+# **検索の口（`commons.wikimedia.org/w/api.php`・`api.wikimedia.org`）は 429 で断られる。**
+# 断っているのは Wikimedia 側の枚数制限で、作業箱の出口の住所が他と共用なのでこちらでは
+# 減らせない。ランナーは住所が別なので通る（`stickies_pull.yml` と同じ理由）。
+#
+# **結果は artifact に置く。** Commons の写真の出どころ・撮った人・許諾は**もともと公開**の
+# ものなので、暗号化は要らない（付箋とはそこが違う。あちらは視聴者さんの字が入る）。
+#
+# 使いかた:
+#   queries: {"焼きとうもろこし":"varena tsarevitsa boiled corn","サルマ":"sarma dolma vine leaves"}
+#   → 走り終わったら artifact `photos` を落として、`python/data/<国>/photos.json` へ移す
+#
+# **許諾の選り分けは道具が持つ。** public domain / CC0 / CC BY / CC BY-SA だけを通し、
+# NC と fair use は出さない。ここで判断しない。
+
+on:
+  workflow_dispatch:
+    inputs:
+      queries:
+        description: '{"名前":"探す言葉"} の JSON'
+        required: true
+      limit:
+        description: "1つの問いにつき、何枚まで見るか（1〜20）"
+        required: false
+        default: "8"
+
+# 置き場を読むだけ。書く先は artifact しかない
+permissions: {}
+
+concurrency:
+  group: commons-photos
+  cancel-in-progress: false
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 探す
+        env:
+          QUERIES: ${{ inputs.queries }}
+          LIMIT: ${{ inputs.limit }}
+          OUT: ${{ runner.temp }}/photos.json
+        run: python3 python/commons_photos.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: photos
+          path: ${{ runner.temp }}/photos.json
+          retention-days: 3
