@@ -65,6 +65,31 @@ def main() -> int:
     if "<" in s["note"]:
         ng.append(f"説明に札が残っている: {s['note']!r}")
 
+    # 追跡の問いと、置き場の名前。**どちらも絵は出てしまう**ので目では気づけない
+    dirty = {
+        "url": "https://thumb.wikimedia.org/wikipedia/commons/a/ab/C.jpg?utm_source=x",
+        "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/C.jpg/500px-C.jpg?utm_source=x",
+        "descriptionurl": "https://commons.wikimedia.org/wiki/File:C.jpg",
+        "extmetadata": {"LicenseShortName": {"value": "CC0"}},
+    }
+    t = c.shot(dirty, "File:C.jpg")
+    for key in ("thumb", "img", "big"):
+        if "?" in t[key]:
+            ng.append(f"{key} に追跡の問いが残っている: {t[key]}")
+        if "thumb.wikimedia.org" in t[key]:
+            ng.append(f"{key} の置き場が upload にそろっていない: {t[key]}")
+
+    # 絵でないものは候補に入れない（名前空間6には PDF も居る）
+    if not hasattr(c, "IMG_EXT"):
+        ng.append("絵の拡張子の表が無い")
+    else:
+        for name, want in [("File:A.jpg", True), ("File:B.PNG", True),
+                           ("File:C.pdf", False), ("File:D.ogv", False),
+                           ("File:E.svg", False)]:
+            got = name.lower().endswith(c.IMG_EXT)
+            if got is not want:
+                ng.append(f"{name} を {'通せ' if want else '落とせ'}なかった")
+
     # 欠けているものは出さない（出どころの無い絵は貼れない）
     bare = c.shot({"url": "", "thumburl": "", "descriptionurl": "", "extmetadata": {}}, "File:X")
     if bare["cm"] or bare["lic"]:

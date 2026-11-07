@@ -69,6 +69,29 @@ def lic_ok(short: str) -> bool:
     return any(s.startswith(x) or x in s for x in OK_LIC)
 
 
+# 絵として貼れる拡張子。**ファイル置き場（名前空間6）は絵だけではない。**
+# 「バニツァ」で探したら EU の官報（PDF）が返ってきた——中にパイの写真が
+# 載っているので当たる。PDF の1ページ目を料理の写真として貼ることになる
+IMG_EXT = (".jpg", ".jpeg", ".png", ".webp", ".gif")
+
+
+def tidy(url: str) -> str:
+    """絵の道を、島に貼れる形にそろえる。
+
+    **追跡の問いを落とす。** いまの Commons は `?utm_source=…` を付けて返す。
+    そのまま焼くと、島の面から追跡の印を配ることになる。
+
+    **置き場の名前をそろえる。** 同じ道が `thumb.wikimedia.org` でも
+    `upload.wikimedia.org` でも返る（実測で両方 200）。先に貼った53枚が
+    `upload` なので、そちらに寄せる——2つの名前が混ざると、撮るときの
+    回し先（`tools/sprites/wikipix.mjs`）が片方しか拾わない。
+    """
+    if not url:
+        return ""
+    url = url.split("?", 1)[0]
+    return url.replace("https://thumb.wikimedia.org/", "https://upload.wikimedia.org/")
+
+
 def shot(info: dict, title: str) -> dict:
     """1枚ぶんを、`photos.json` の欄の形で返す。"""
     meta = info.get("extmetadata") or {}
@@ -86,9 +109,9 @@ def shot(info: dict, title: str) -> dict:
                 out.append(ch)
         return " ".join("".join(out).split())
 
-    full = info.get("url") or ""
+    full = tidy(info.get("url") or "")
     # 縮尺つきの道は `thumburl` が持っている。幅だけ差し替えて3つ作る
-    th = info.get("thumburl") or ""
+    th = tidy(info.get("thumburl") or "")
     def at(px):
         return th.replace("/500px-", f"/{px}px-") if "/500px-" in th else ""
 
@@ -120,7 +143,10 @@ def search(q: str, limit: int) -> list:
     out = []
     for page in (d.get("query") or {}).get("pages", {}).values():
         ii = (page.get("imageinfo") or [{}])[0]
-        s = shot(ii, page.get("title", ""))
+        title = page.get("title", "")
+        if not title.lower().endswith(IMG_EXT):
+            continue
+        s = shot(ii, title)
         if not lic_ok(s["lic"]):
             continue
         if not (s["img"] and s["cm"]):
