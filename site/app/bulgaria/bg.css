@@ -273,6 +273,7 @@
      **1件800pxのカードを縦に積んでいたのをやめた**（44,000px の主犯） */
   grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
   gap: var(--sp-3);
+  /* **閉じている札の背をそろえる。** 開いた札だけが伸びる */
   align-items: start;
 }
 
@@ -349,10 +350,25 @@
   min-width: 0;
 }
 
-.bgtile-body b { display: block; font-size: 14px; line-height: 1.45; }
+/* **3つとも行数で切る。** 中身の長さがばらばらで（値段の欄に1段落入っている
+   品もある）、切らないとタイルの背が揃わず、格子がぼろぼろに見えた（実測）。
+   切った続きは、押して開けば全部出る */
+.bgtile-body b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.45;
+  /* 2行ぶんの場所を先に取る。**1行の札と2行の札で頭がずれない** */
+  min-height: calc(14px * 1.45 * 2);
+}
 
 .bgtile-body i {
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-top: 2px;
   font-style: normal;
   font-size: 11.5px;
@@ -362,11 +378,16 @@
 }
 
 .bgtile-body em {
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-top: 3px;
   font-style: normal;
   font-size: 11px;
+  line-height: 1.6;
   color: var(--ink-3);
+  min-height: calc(11px * 1.6 * 2);
 }
 
 .bgtile-c {
