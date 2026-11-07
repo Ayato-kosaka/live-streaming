@@ -146,13 +146,26 @@ function Shot({ s, eager }: { s: Shot; eager?: boolean }) {
   );
 }
 
-/** 写真の出どころ。**絵を借りたら必ず出す。** 書けない絵は載せない */
-function Credit({ s }: { s: Shot }) {
+/**
+ * 写真の出どころ。**絵を借りたら必ず出す。** 書けない絵は載せない。
+ *
+ * **名前に、何の写真かを入れる。** 同じ写真家が何枚も撮っているので、
+ * 字をそのまま名前にすると「同じ名前の札が別の先を指す」になる
+ * （`reachkeys` の「おなじ字」。9件出た）。見える字は名前のままにして、
+ * `aria-label` で分ける。
+ */
+function Credit({ s, of }: { s: Shot; of?: string }) {
   if (!s.cm) return null;
+  const who = s.by || "Wikimedia Commons";
   return (
     <p className="bgcredit">
-      <a href={s.cm} target="_blank" rel="noreferrer">
-        {s.by || "Wikimedia Commons"}
+      <a
+        href={s.cm}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={of ? `${of}の写真の出どころ（${who}）` : `写真の出どころ（${who}）`}
+      >
+        {who}
       </a>
       ／{s.lic}
     </p>
@@ -239,7 +252,7 @@ export default function BulgariaPage() {
           <p>{BG_LEAD}</p>
         </div>
       </div>
-      <Credit s={BG_HERO as unknown as Shot} />
+      <Credit s={BG_HERO as unknown as Shot} of="ソフィアの街" />
 
       {/* 驚く数は3つだけ */}
       <ul className="bgnums">
@@ -370,7 +383,7 @@ export default function BulgariaPage() {
                       Google マップで開く
                       <Icon name="external" size={13} />
                     </a>
-                    <Credit s={s as Shot} />
+                    <Credit s={s as Shot} of={s.name} />
                   </div>
                 </details>
               ))}
@@ -429,7 +442,7 @@ export default function BulgariaPage() {
                       </li>
                     </ul>
                     {d.note && <p className="bgadvice is-food">{d.note}</p>}
-                    <Credit s={d as Shot} />
+                    <Credit s={d as Shot} of={d.jp} />
                   </div>
                 </details>
               ))}
@@ -547,7 +560,7 @@ export default function BulgariaPage() {
                     <span>{b.where}</span>
                   </li>
                 </ul>
-                <Credit s={b as Shot} />
+                <Credit s={b as Shot} of={b.what} />
               </div>
             </details>
           ))}
@@ -566,7 +579,9 @@ export default function BulgariaPage() {
           <div className="bgcards">
             {BG_HISTORY.map((h) => (
               <article key={h.title} className="bgcard">
-                <h4>{h.title}</h4>
+                {/* **h3。** 節の見出しが h2 で、畳みの題は見出しではない
+                    （`Fold` は `<summary>` の中の `<b>`）。h4 にすると段が1つ飛ぶ */}
+                <h3>{h.title}</h3>
                 <p>{h.body}</p>
               </article>
             ))}
@@ -576,7 +591,7 @@ export default function BulgariaPage() {
           <div className="bgcards is-image">
             {BG_IMAGE.map((h) => (
               <article key={h.title} className="bgcard">
-                <h4>{h.title}</h4>
+                <h3>{h.title}</h3>
                 <p>{h.body}</p>
               </article>
             ))}

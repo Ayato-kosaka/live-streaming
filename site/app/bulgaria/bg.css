@@ -292,6 +292,13 @@
   border-bottom: 4px solid var(--ink-3);
 }
 
+/* **開いた札は1行を丸ごと取る。** 格子は行ごとに左から置くので、
+   開いた札の次の札が**その右（＝画面の上のほう）**に来る。すると Tab が
+   1,300px 上へ飛び戻って、どこへ行ったのか分からなくなる（`reachkeys` の
+   「じゅんばん」。3件出た）。幅いっぱいにすれば、次の札は必ず下に来る。
+   開いたときに字の置き場が広がるので、読むほうにも都合がいい */
+.bgtile[open] { grid-column: 1 / -1; }
+
 .bgtile.is-good { border-bottom-color: var(--kiril); }
 .bgtile.is-warn { border-bottom-color: var(--warn); }
 
@@ -703,8 +710,8 @@
   min-width: 0;
 }
 
-.bgcard h4 { margin: 0 0 var(--sp-2); font-size: 15px; color: var(--kiril); }
-.bgcards.is-image .bgcard h4 { color: var(--rose); }
+.bgcard h3 { margin: 0 0 var(--sp-2); font-size: 15px; color: var(--kiril); }
+.bgcards.is-image .bgcard h3 { color: var(--rose); }
 .bgcard p { margin: 0; font-size: 13px; line-height: 1.85; }
 
 /* ---- 基本情報 ------------------------------------------------------------- */
