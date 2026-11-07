@@ -24,3 +24,13 @@
 2026-11-07 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直し、
 EC2 の `~/shorts_post/totoro-cat` を `post.py clean --video totoro-cat` で消す。
+
+## 公開を確かめた（2026-11-07 12:44〜12:49 UTC）
+
+予約の時刻（12:30 UTC）のあと、EC2 から見た。
+
+- YouTube `F9BGvL10A5o`: ログインしない oEmbed が 200 で、題「🇬🇪ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！」を返した（`post_p2.json` の youtube.title と同じ）。
+  Studio でも `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null・`timePublishedSeconds` 1794054620（12:30:20Z）
+- TikTok `7704042438209424646`: ログインしない `embed/v2` は 503 が5回続き、15秒あけて取り直した6回目で 200・`"secret":false`。
+  TikTok Studio の一覧でも、この題の行は1本だけで、予約の札（`(GMT+0) UTC`）が外れて `Nov 7, 12:30 PM Everyone`、再生5
+- EC2 の `~/shorts_post/totoro-cat` を `post.py clean --video totoro-cat` で消した
