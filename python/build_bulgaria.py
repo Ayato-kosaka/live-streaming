@@ -349,10 +349,12 @@ def main() -> None:
     arr("BG_SPOTS", spots,
         ["letter", "far", "name", "cyr", "roman", "kana", "rank", "mark", "why",
          "what", "how", "walk", "stay", "fee", "advice", "maps", *PHOTO_KEYS])
-    hero = photo_of("hero", "hero") or {}
-    if not hero.get("img"):
-        hero = PHOTOS.get("hero") or {}
-        hero = {k: hero.get(k, "") for k in PHOTO_KEYS} if hero.get("img") else {k: "" for k in PHOTO_KEYS}
+    # 表紙の1枚。**入れ子でも素でも読む**——集めるほうの形に、焼くほうを縛られない
+    _h = PHOTOS.get("hero") or {}
+    _h = _h.get("hero") if isinstance(_h.get("hero"), dict) else _h
+    hero = {k: (_h or {}).get(k, "") for k in PHOTO_KEYS}
+    if not all(hero.get(k) for k in ("img", "cm", "lic")):
+        hero = {k: "" for k in PHOTO_KEYS}
     ts.append("/** 面のいちばん上に敷く1枚。**無ければ空**で、面の側が字だけの頭に落とす */")
     ts.append("export const BG_HERO = { " + ", ".join(
         '%s: "%s"' % (k, esc(hero.get(k))) for k in PHOTO_KEYS) + " } as const;")

@@ -36,11 +36,11 @@ UA = "ayato-island-guide/1.0 (https://github.com/Ayato-kosaka/live-streaming)"
 
 # 出してよいライセンス。CC BY-NC / Fair use は入れない（島は誰でも見られる面なので）
 OK_LIC = re.compile(
-    r"^(public domain|cc0|cc by(-sa)? ?[1-4]\.[05]?|cc by(-sa)? ?[1-4]\.0 ?[a-z]{0,2}|"
-    r"cc by(-sa)? ?[0-9.]+( [a-z]{2})?|pd[- ].*|copyrighted free use|attribution)$",
+    r"^(public domain|pd(-|\b).*|cc0(\b.*)?|cc by(-sa)? ?\d(\.\d)?( [a-z]{2})?|"
+    r"copyrighted free use|attribution)$",
     re.I,
 )
-NG_LIC = re.compile(r"(nc|non-?commercial|nd|no ?deriv|fair use|unknown|all rights)", re.I)
+NG_LIC = re.compile(r"(\bnc\b|non-?commercial|\bnd\b|no ?deriv|fair use|unknown|all rights)", re.I)
 
 SLEEP = 1.2  # 1秒以上あける（急ぐと 429）
 
@@ -88,6 +88,21 @@ def strip_html(s: str | None) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def artist(raw: str | None) -> str:
+    """撮った人の名前を、画面に出せる形にする。
+
+    Commons の Artist 欄は HTML まるごとで、古い絵だと
+    「No machine-readable author provided. Foo~commonswiki assumed (based on
+    copyright claims).」という機械の但し書きがそのまま入っている。
+    出すのは名前だけでいいので、その形のときは名前を抜く。"""
+    t = strip_html(raw)
+    m = re.search(r"No machine-readable author provided\.\s*(.+?)\s+assumed", t, re.I)
+    if m:
+        t = m.group(1)
+    t = re.sub(r"~(commons|[a-z]{2})wiki\b", "", t).strip()
+    return t
+
+
 def upload_url(u: str | None) -> str:
     """API は thumb.wikimedia.org や ?utm_source= 付きを返すことがある。
     配る先は upload.wikimedia.org に揃えて、クエリは落とす。"""
@@ -98,20 +113,35 @@ def upload_url(u: str | None) -> str:
     return urllib.parse.urlunsplit(("https", host, p.path, "", ""))
 
 
-def thumb_at(full_url: str, thumb_url: str, width: int, name: str) -> str:
-    """幅ちがいのサムネ URL を組む。
-    Commons のサムネは .../thumb/<a>/<ab>/<name>/<W>px-<name> という形で決まっている。"""
-    if thumb_url:
-        m = re.match(r"^(.*/)(\d+)px-(.+)$", urllib.parse.urlsplit(thumb_url).path)
-        if m:
-            return upload_url("https://upload.wikimedia.org" + f"{m.group(1)}{width}px-{m.group(3)}")
+# 2026年から、Commons が返してくれるサムネの幅は決まっている。
+# これ以外の幅を頼むと本文ごと HTTP 400 が返る（400px と 1600px は実際に落ちた）。
+ALLOWED_W = (120, 250, 330, 500, 960, 1920)
+
+
+def snap(width: int) -> int:
+    """頼める幅のうち、欲しい幅以上でいちばん近いものに寄せる。"""
+    for w in ALLOWED_W:
+        if w >= width:
+            return w
+    return ALLOWED_W[-1]
+
+
+def thumb_at(full_url: str, width: int, orig_w: int | None = None) -> str:
+    """幅ちがいの URL を組む。
+    Commons のサムネは .../thumb/<a>/<ab>/<name>/<W>px-<name> という形で決まっている。
+
+    元より大きいサムネは頼めない——これも 400 が返る（Kavarma.jpeg は 1600 幅なので、
+    1920px- が無い）。元以下のときは元のファイルをそのまま指す。"""
+    w = snap(width)
+    if orig_w and w >= orig_w:
+        return full_url
     p = urllib.parse.urlsplit(full_url).path  # /wikipedia/commons/a/ab/Name.jpg
     m = re.match(r"^(/wikipedia/commons)/([0-9a-f])/([0-9a-f]{2})/(.+)$", p)
     if not m:
         return ""
     fn = m.group(4)
     return upload_url(
-        f"https://upload.wikimedia.org{m.group(1)}/thumb/{m.group(2)}/{m.group(3)}/{fn}/{width}px-{fn}"
+        f"https://upload.wikimedia.org{m.group(1)}/thumb/{m.group(2)}/{m.group(3)}/{fn}/{w}px-{fn}"
     )
 
 
@@ -137,18 +167,16 @@ def info(title: str) -> dict | None:
         return None
     em = ii.get("extmetadata", {})
     full = upload_url(ii.get("url"))
-    th = ii.get("thumburl") or ""
-    name = p["title"].split(":", 1)[-1].replace(" ", "_")
     return {
         "title": p["title"],
         "mime": ii.get("mime", ""),
         "w": ii.get("width"),
         "h": ii.get("height"),
-        "thumb": thumb_at(full, th, 400, name),
-        "img": thumb_at(full, th, 960, name),
-        "big": thumb_at(full, th, 1600, name),
+        "thumb": thumb_at(full, 400, ii.get("width")),
+        "img": thumb_at(full, 960, ii.get("width")),
+        "big": thumb_at(full, 1600, ii.get("width")),
         "cm": ii.get("descriptionurl") or "https://commons.wikimedia.org/wiki/" + p["title"].replace(" ", "_"),
-        "by": strip_html(em.get("Artist", {}).get("value")),
+        "by": artist(em.get("Artist", {}).get("value")),
         "lic": strip_html(em.get("LicenseShortName", {}).get("value")),
         "desc": strip_html(em.get("ImageDescription", {}).get("value"))[:400],
         "obj": strip_html(em.get("ObjectName", {}).get("value"))[:120],
@@ -156,8 +184,22 @@ def info(title: str) -> dict | None:
 
 
 def search(q: str, limit: int = 8) -> list[dict]:
-    d = call(
-        {
+    """検索語で引く。`cat:ナントカ` と書くと、その分類（Category）に入っている絵を並べる。
+    全文検索は語の当たりに左右されるので、「その物にちょうど付いている分類」が分かっているときは
+    分類のほうが確実（гювеч や шевица は検索では1枚も出てこなかった）。"""
+    if q.startswith("cat:"):
+        params = {
+            "action": "query",
+            "generator": "categorymembers",
+            "gcmtitle": "Category:" + q[4:],
+            "gcmtype": "file",
+            "gcmlimit": str(limit),
+            "prop": "imageinfo",
+            "iiprop": "url|extmetadata|size|mime",
+            "iiurlwidth": "960",
+        }
+    else:
+        params = {
             "action": "query",
             "generator": "search",
             "gsrsearch": q,
@@ -167,7 +209,7 @@ def search(q: str, limit: int = 8) -> list[dict]:
             "iiprop": "url|extmetadata|size|mime",
             "iiurlwidth": "960",
         }
-    )
+    d = call(params)
     out = []
     if not d:
         return out
@@ -183,7 +225,7 @@ def search(q: str, limit: int = 8) -> list[dict]:
                 "w": ii.get("width"),
                 "h": ii.get("height"),
                 "lic": strip_html(em.get("LicenseShortName", {}).get("value")),
-                "by": strip_html(em.get("Artist", {}).get("value"))[:60],
+                "by": artist(em.get("Artist", {}).get("value"))[:60],
                 "desc": strip_html(em.get("ImageDescription", {}).get("value"))[:200],
                 "obj": strip_html(em.get("ObjectName", {}).get("value"))[:100],
             }
@@ -194,15 +236,15 @@ def search(q: str, limit: int = 8) -> list[dict]:
 # ---------------------------------------------------------------- 検索語
 
 QUERIES: dict[str, list[str]] = {
-    "hero::": ["Sofia Bulgaria panorama Vitosha", "Alexander Nevsky Cathedral Sofia aerial"],
+    "hero::": ["cat:Views of Sofia from Vitosha", "Sofia Bulgaria panorama Vitosha", "Alexander Nevsky Cathedral Sofia aerial"],
     # spots（facts.json の name をそのまま鍵にする）
     "spots::聖ゲオルギ教会（円堂）": ["Rotunda Saint George Sofia", "Ротонда Свети Георги София"],
-    "spots::古代セルディカ遺跡（ラルゴの地下）": ["Ancient Serdica Sofia archaeological complex", "Антична Сердика София"],
+    "spots::古代セルディカ遺跡（ラルゴの地下）": ["Ancient Serdica Sofia archaeological complex", "Антична Сердика София", "cat:Ancient Serdica"],
     "spots::アレクサンドル・ネフスキー大聖堂": ["Alexander Nevsky Cathedral Sofia", "Храм Свети Александър Невски"],
     "spots::中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": ["Central Mineral Baths Sofia", "Централна минерална баня София"],
     "spots::ボヤナ教会（世界遺産）": ["Boyana Church exterior", "Боянска църква"],
     "spots::聖ネデリャ教会": ["Sveta Nedelya Church Sofia", "Света Неделя София храм"],
-    "spots::聖ソフィア教会": ["Saint Sofia Church Sofia Bulgaria", "Църква Света София"],
+    "spots::聖ソフィア教会": ["Sveta Sofia basilica Sofia Bulgaria", "Saint Sofia Church Sofia Bulgaria", "Църква Света София"],
     "spots::バーニャ・バシ・モスク": ["Banya Bashi Mosque Sofia", "Баня баши джамия"],
     "spots::ソフィア・シナゴーグ": ["Sofia Synagogue", "Софийска синагога"],
     "spots::聖ヨシフ大聖堂": ["St Joseph Cathedral Sofia", "Катедрала Свети Йосиф София"],
@@ -224,14 +266,14 @@ QUERIES: dict[str, list[str]] = {
     "food::ケバプチェ": ["Kebapche Bulgarian", "кебапче"],
     "food::キュフテ": ["Kyufte Bulgarian meatball", "кюфте"],
     "food::タラトル（冷製ヨーグルトスープ）": ["Tarator soup", "таратор"],
-    "food::キセロ・ムリャコ（ブルガリアのヨーグルト）": ["Bulgarian yogurt kiselo mlyako", "кисело мляко"],
-    "food::ギュヴェチ（土鍋焼き）": ["Gyuvech Bulgarian dish", "гювеч ястие"],
+    "food::キセロ・ムリャコ（ブルガリアのヨーグルト）": ["cat:Yogurt of Bulgaria", "Bulgarian yogurt kiselo mlyako", "кисело мляко"],
+    "food::ギュヴェチ（土鍋焼き）": ["Rhodope Mountains Bulgarian food", "Gyuvech Bulgarian dish", "гювеч ястие"],
     "food::カヴァルマ": ["Kavarma Bulgarian", "кавърма"],
     "food::ムサカ": ["Moussaka Bulgarian", "мусака"],
     "food::シュケンベ・チョルバ（モツスープ）": ["Shkembe chorba", "шкембе чорба"],
-    "food::サルマ（ぶどうの葉の肉巻き）": ["Sarma vine leaves Bulgarian", "сарма лозови листа"],
+    "food::サルマ（ぶどうの葉の肉巻き）": ["cat:Sarma", "Sarma vine leaves Bulgarian", "сарма лозови листа"],
     "food::リュテニツァ": ["Lyutenitsa", "лютеница"],
-    "food::シレネとカシュカヴァル（チーズ2種）": ["Sirene Bulgarian white cheese", "кашкавал сирене"],
+    "food::シレネとカシュカヴァル（チーズ2種）": ["cat:Kashkaval", "Sirene Bulgarian white cheese", "кашкавал сирене"],
     "food::パタトニク（じゃがいものガレット）": ["Patatnik Rhodope potato", "пататник"],
     "food::ミシュ・マシュ": ["Mish-mash Bulgarian dish", "миш-маш ястие"],
     "food::ボブ・チョルバ（白いんげん豆のスープ）": ["Bob chorba bean soup Bulgarian", "боб чорба"],
@@ -239,24 +281,292 @@ QUERIES: dict[str, list[str]] = {
     "food::ボザ（穀物の発酵飲料）": ["Boza drink", "боза напитка"],
     "food::ラキヤ（果実の蒸留酒）": ["Rakia Bulgarian brandy", "ракия"],
     "food::アイリャン": ["Ayran drink", "айрян"],
-    "food::メハナ（大衆食堂・居酒屋）という場所そのもの": ["Mehana Bulgarian tavern interior", "механа ресторант"],
+    "food::メハナ（大衆食堂・居酒屋）という場所そのもの": ["cat:Restaurants in Bulgaria", "Mehana Bulgarian tavern interior", "механа ресторант"],
     "food::焼きとうもろこし（街角の屋台）": ["boiled corn street stall Bulgaria", "варена царевица"],
     # buy（facts.json の what をそのまま鍵にする）
-    "buy::バラのオイル／ローズウォーター": ["Bulgarian rose oil vial", "розово масло"],
+    "buy::バラのオイル／ローズウォーター": ["cat:Rose oil", "Bulgarian rose oil vial", "розово масло"],
     "buy::リュテニツァ（赤いペースト）": ["Lyutenitsa jar", "лютеница буркан"],
-    "buy::トロヤン焼きの陶器": ["Troyan pottery Bulgaria", "троянска керамика"],
+    "buy::トロヤン焼きの陶器": ["cat:Pottery of Bulgaria", "Troyan pottery Bulgaria", "троянска керамика"],
     "buy::ラキヤ（果実の蒸留酒）": ["Rakia bottle Bulgaria", "ракия бутилка"],
     "buy::ブルガリアワイン（マヴルッド、メルニク）": ["Bulgarian wine Mavrud bottle", "Мавруд вино"],
     "buy::マルテニツァ（赤と白の紐飾り）": ["Martenitsa", "мартеници"],
-    "buy::白チーズとカシュカヴァル（量り売り）": ["Bulgarian cheese market sirene", "кашкавал пазар"],
-    "buy::ローズジャムとローズのロクム": ["rose jam Bulgaria lokum", "сладко от рози"],
-    "buy::刺繍（シェヴィツァ）の小物": ["Bulgarian embroidery shevitsa", "шевица бродерия"],
+    "buy::白チーズとカシュカヴァル（量り売り）": ["cat:Sirene", "Bulgarian cheese market sirene", "кашкавал пазар"],
+    "buy::ローズジャムとローズのロクム": ["cat:Jams and jellies of Bulgaria", "rose jam Bulgaria lokum", "сладко от рози"],
+    "buy::刺繍（シェヴィツァ）の小物": ["cat:Embroidery of Bulgaria", "Bulgarian embroidery shevitsa", "шевица бродерия"],
 }
 
 # ---------------------------------------------------------------- 選んだもの
 # 鍵 -> (Commons のファイル名, 日本語の alt)
 # alt は「写真に何が写っているか」。ファイル名の直訳にしない（読み上げで意味が通るように）
-CHOICES: dict[str, tuple[str, str]] = {
+CHOICES: dict[str, tuple[str, str, str]] = {
+    "hero::": (
+        "File:Panoramic view over central Sofia and the Vitosha Mountain 2017-10-08.jpg",
+        "街の屋根が一面に広がり、その向こうに雪をかぶったヴィトシャ山が横たわっている",
+        "cat:Views of Sofia from Vitosha",
+    ),
+    # --- spots -------------------------------------------------------
+    "spots::聖ゲオルギ教会（円堂）": (
+        "File:StGeorgeRotundaSofia.JPG",
+        "赤れんがの丸い教会堂が、建物に囲まれた中庭に建っている。足もとに発掘された石積みが残る",
+        "Rotunda Saint George Sofia",
+    ),
+    "spots::古代セルディカ遺跡（ラルゴの地下）": (
+        "File:Ruins of Serdica (48831910108).jpg",
+        "石畳と壁の跡が残るローマ時代の街の発掘現場。奥にモスクの尖塔と今の街並みが見える",
+        "Ancient Serdica Sofia archaeological complex",
+    ),
+    "spots::アレクサンドル・ネフスキー大聖堂": (
+        "File:Saint Alexander Nevsky Cathedral, Façade from Northeast.jpg",
+        "金と緑のドームをいくつも載せた大聖堂を、広場の側から見上げたところ",
+        "Alexander Nevsky Cathedral Sofia",
+    ),
+    "spots::中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": (
+        "File:Sofia Public Mineral Baths (Sofia, Bulgaria).jpg",
+        "黄色と白の飾りのある大きな浴場の建物。前の池で噴水が上がっている",
+        "Central Mineral Baths Sofia",
+    ),
+    "spots::ボヤナ教会（世界遺産）": (
+        "File:Boyana Church 2 TB.JPG",
+        "石とれんがを積んだ小さな教会。外に木の階段が付いていて、まわりは木立に囲まれている",
+        "Boyana Church exterior",
+    ),
+    "spots::聖ネデリャ教会": (
+        "File:Sveta Nedelya Church Sofia 2021.jpg",
+        "灰色の石を積んだドームの教会を、前の広場から見たところ",
+        "Sveta Nedelya Church Sofia",
+    ),
+    "spots::聖ソフィア教会": (
+        "File:Sveta Sofia Church, Sofia (P1070749).jpg",
+        "赤れんがを積んだ古いバシリカ式の教会。前庭の芝生ごしに横から見たところ",
+        "Sveta Sofia basilica Sofia Bulgaria",
+    ),
+    "spots::バーニャ・バシ・モスク": (
+        "File:Banya Bashi Mosque Sofia.jpg",
+        "れんが造りのドームと、細い尖塔（ミナレット）が1本立つモスク",
+        "Banya Bashi Mosque Sofia",
+    ),
+    "spots::ソフィア・シナゴーグ": (
+        "File:Sofia Synagogue 11c.jpg",
+        "縞模様の壁とアーチ窓が並ぶシナゴーグの外観を、通りの側から見たところ",
+        "Sofia Synagogue",
+    ),
+    "spots::聖ヨシフ大聖堂": (
+        "File:Cathedral st joseph sofia-3.JPG",
+        "白い壁に細長い窓が並ぶ、新しいカトリック教会の中。正面に祭壇がある",
+        "St Joseph Cathedral Sofia",
+    ),
+    "spots::中央市場ホール（ハリ）": (
+        "File:Central Market Hall in Sofia 20180224.jpg",
+        "アーチ窓と時計塔のある石造りの市場の建物を、前の大通りの側から見たところ",
+        "Central Sofia Market Hall",
+    ),
+    "spots::ヴィトシャ大通り（歩行者区間）": (
+        "File:Vitosha Boulevard, Sofia, view1.jpg",
+        "車の入らない石畳の通りを、街路樹と店の間で大勢が歩いている",
+        "Vitosha Boulevard Sofia",
+    ),
+    "spots::聖ペトカ地下教会": (
+        "File:Church of St Petka of the Saddlers.jpg",
+        "地面より低いところに建つ小さな石の教会。まわりを今の建物が囲んでいる",
+        "Church St Petka of the Saddlers Sofia",
+    ),
+    "spots::国立考古学博物館": (
+        "File:National Archaeological Museum Sofia, Bulgaria (Entrance).jpg",
+        "木立の向こうに建つ石造りの博物館。もとモスクだった建物の入口",
+        "National Archaeological Museum Sofia",
+    ),
+    "spots::女性市場（ジェンスキ・パザール）": (
+        "File:Sofia Zhenski Pazar October 2012 PD 47.jpg",
+        "青い日よけの屋台が通りの両側に並び、野菜や果物を見ながら人が歩いている",
+        "Zhenski Pazar Sofia market",
+    ),
+    "spots::ロシア教会（奇蹟者聖ニコライ聖堂）": (
+        "File:Saint Nicholas Russian Church, Sofia 20180224-1.jpg",
+        "金色の玉ねぎ形のドームを載せた小さな教会。緑の尖った屋根が目印",
+        "Russian Church Sofia Saint Nicholas",
+    ),
+    "spots::イヴァン・ヴァゾフ国立劇場と市庭園": (
+        "File:IvanVazov National Theatre 7.jpg",
+        "赤と白の柱が並ぶ劇場の正面。前は木に囲まれた広場になっている",
+        "Ivan Vazov National Theatre Sofia",
+    ),
+    "spots::国立文化宮殿（NDK）": (
+        "File:National Palace of Culture, Sofia 1.jpg",
+        "夕暮れの広場で噴水がライトアップされ、奥に角ばった大きな建物が見える",
+        "National Palace of Culture Sofia",
+    ),
+    "spots::国立歴史博物館（ボヤナ）": (
+        "File:National History Museum, Sofia, Bulgaria 20090405 006.JPG",
+        "大理石の階段の上に木彫りの天井が広がる、博物館の吹き抜けの玄関ホール",
+        "National Museum of History Bulgaria building",
+    ),
+    "spots::ヴィトシャ山（チェルニ・ヴラフ）": (
+        "File:Cherni Vrah Vitosha 01.jpg",
+        "草と岩の斜面が続く山の上。遠くまで見晴らしがきく",
+        "Cherni Vrah Vitosha",
+    ),
+    "spots::ボリス公園": (
+        "File:Borisova gradina autumn.jpg",
+        "黄色く色づいた並木の下に、遊歩道とベンチが続く秋の公園",
+        "Borisova gradina Sofia park",
+    ),
+    "spots::リラ修道院（日帰り）": (
+        "File:2016-07-31 Bulgaria, Rila Monastery DSC 9213 DxO.jpg",
+        "白と黒の縞模様のアーチが何層にも重なる修道院の中庭",
+        "Rila Monastery courtyard",
+    ),
+    # --- food --------------------------------------------------------
+    "food::ショプスカ・サラダ": (
+        "File:Shopska salad 2.JPG",
+        "トマトときゅうりの上に、白いチーズを雪のように削りかけたサラダ",
+        "Shopska salad",
+    ),
+    "food::バニツァ": (
+        "File:Вкусна домашна баница.JPG",
+        "薄い生地をうず巻きに巻いて焼いたパイが、丸い型に入って焼き上がっている",
+        "баница",
+    ),
+    "food::ケバプチェ": (
+        "File:Kebapcheta.JPG",
+        "細長い棒状の挽き肉の炭火焼きが皿に並び、丸いキュフテとサラダが添えてある",
+        "Kebapche Bulgarian",
+    ),
+    "food::キュフテ": (
+        "File:Bulgarian cuisine meatballs (kyufte) (2).jpg",
+        "平たく丸い挽き肉の焼きだんごが、レタスを敷いた鉢に盛ってある",
+        "Kyufte Bulgarian meatball",
+    ),
+    "food::タラトル（冷製ヨーグルトスープ）": (
+        "File:Bulgarian dish 01.jpg",
+        "刻んだきゅうりの入った白い冷たいスープ。上に刻んだディルが散らしてある",
+        "Tarator soup",
+    ),
+    "food::キセロ・ムリャコ（ブルガリアのヨーグルト）": (
+        "File:Bulgarian yogurt.JPG",
+        "絵付けをした陶器の鉢に入った、とろりと白いヨーグルト",
+        "Bulgarian yogurt kiselo mlyako",
+    ),
+    "food::ギュヴェチ（土鍋焼き）": (
+        "File:Rhodope Mountains Bulgarian food 08.JPG",
+        "蓋つきの素焼きの土鍋が、刺繍の布を敷いた食卓に、皿ごと出てきたところ",
+        "Rhodope Mountains Bulgarian food",
+    ),
+    "food::カヴァルマ": (
+        "File:Kavarma.jpeg",
+        "黒い土鍋で煮込んだ肉と野菜の上に、卵が落としてある",
+        "Kavarma Bulgarian",
+    ),
+    "food::ムサカ": (
+        "File:Bulgarian cuisine Moussaka.jpg",
+        "じゃがいもと挽き肉を重ねて焼き、上に卵とヨーグルトの衣をかけたムサカ",
+        "Moussaka Bulgarian",
+    ),
+    "food::シュケンベ・チョルバ（モツスープ）": (
+        "File:Shkembe-chorba in Kardzhali 2011.JPG",
+        "白いスープに赤い唐辛子の油が浮かぶモツのスープを、スプーンですくったところ",
+        "Shkembe chorba",
+    ),
+    "food::サルマ（ぶどうの葉の肉巻き）": (
+        "File:Grape leaves Sarma I.JPG",
+        "ぶどうの葉で巻いた俵形の肉巻きが、鍋いっぱいに並べて煮てある",
+        "cat:Sarma",
+    ),
+    "food::リュテニツァ": (
+        "File:Лутеница 01 1.jpg",
+        "赤いパプリカのペーストが小鉢に盛られ、横に生のパプリカが置いてある",
+        "лютеница",
+    ),
+    "food::シレネとカシュカヴァル（チーズ2種）": (
+        "File:Kaschkawal Kashkaval кашкавал Balkankäse Sofia IMG 7649.JPG",
+        "黄色い半硬質チーズ（カシュカヴァル）の塊を、ソフィアの店で切り分けたところ",
+        "cat:Kashkaval",
+    ),
+    "food::パタトニク（じゃがいものガレット）": (
+        "File:Patatnik Ostrhodopen PD 2011.JPG",
+        "すりおろしたじゃがいもを丸く焼き上げたガレット。上にトマトとハーブがのっている",
+        "Patatnik Rhodope potato",
+    ),
+    "food::ミシュ・マシュ": (
+        "File:Cuisinebg mishmash.jpg",
+        "刻んだパプリカとトマトを卵でとじ、白いチーズを混ぜたフライパンの料理",
+        "Mish-mash Bulgarian dish",
+    ),
+    "food::ボブ・チョルバ（白いんげん豆のスープ）": (
+        "File:Bean soup with tomatoes and red peppers.jpeg",
+        "白いんげん豆とトマトの赤いスープを、スプーンですくったところ",
+        "Bob chorba bean soup Bulgarian",
+    ),
+    "food::メキツァ（揚げパン）": (
+        "File:Mekici.jpg",
+        "揚げたてのふくらんだ生地に粉砂糖をふった揚げパンが、皿に積んである",
+        "Mekitsa",
+    ),
+    "food::ボザ（穀物の発酵飲料）": (
+        "File:Boza bg.jpg",
+        "薄茶色のとろりとした飲みものが、背の高いグラスに注いである",
+        "Boza drink",
+    ),
+    "food::ラキヤ（果実の蒸留酒）": (
+        "File:Grozdova Rakia (bg).jpg",
+        "ぶどうから作った蒸留酒の瓶が1本、テーブルに置かれている",
+        "Rakia Bulgarian brandy",
+    ),
+    "food::アイリャン": (
+        "File:Ayran with a drinking straw.jpg",
+        "白いヨーグルトの飲みものが、ストローをさしたグラスに入っている",
+        "Ayran drink",
+    ),
+    "food::メハナ（大衆食堂・居酒屋）という場所そのもの": (
+        "File:Mehanadance.JPG",
+        "民族衣装の人たちが手をつないで輪になり、食卓を囲む客の前で踊っている店の中",
+        "cat:Restaurants in Bulgaria",
+    ),
+    # --- buy ---------------------------------------------------------
+    "buy::バラのオイル／ローズウォーター": (
+        "File:Rose oil.jpg",
+        "ばらの油を詰めた金属の容器が、札を下げて棚に並んでいる",
+        "cat:Rose oil",
+    ),
+    "buy::リュテニツァ（赤いペースト）": (
+        "File:LyutenicaAjvarPindur.jpg",
+        "赤いパプリカのペーストを盛った皿の横に、蓋を閉めた瓶詰が置いてある",
+        "Lyutenitsa jar",
+    ),
+    "buy::トロヤン焼きの陶器": (
+        "File:Rukatka.jpeg",
+        "茶色の地に白と緑の模様を流した、トロヤンの焼きものの壺",
+        "троянска керамика",
+    ),
+    "buy::ラキヤ（果実の蒸留酒）": (
+        "File:Bottles of 'rakiya'.jpg",
+        "果実の蒸留酒の瓶が、店の棚に何本も並んでいる",
+        "Rakia bottle Bulgaria",
+    ),
+    "buy::ブルガリアワイン（マヴルッド、メルニク）": (
+        "File:Mavrud.jpg",
+        "ブルガリアの赤ワインの瓶と、注いだグラスがテーブルに置かれている",
+        "Bulgarian wine Mavrud bottle",
+    ),
+    "buy::マルテニツァ（赤と白の紐飾り）": (
+        "File:Martenitsa-hand-made.jpg",
+        "赤と白の毛糸で作った房飾りのお守りが、いくつも並べてある",
+        "Martenitsa",
+    ),
+    "buy::白チーズとカシュカヴァル（量り売り）": (
+        "File:Bulgarischer Salzlakenkäse ist nicht immer Schafskäse.jpg",
+        "白いチーズの塊が、手書きの値札を立てた市場の台に積まれている",
+        "cat:Sirene",
+    ),
+    "buy::ローズジャムとローズのロクム": (
+        "File:Rose petals jam.jpg",
+        "ばらの花びらを煮たジャムが、ガラスの瓶に入っている",
+        "cat:Jams and jellies of Bulgaria",
+    ),
+    "buy::刺繍（シェヴィツァ）の小物": (
+        "File:Divotino-traditional-embroidery-1.jpg",
+        "赤と黒の幾何学模様を刺した、布の縁飾りの刺繍",
+        "cat:Embroidery of Bulgaria",
+    ),
 }
 
 
@@ -304,14 +614,18 @@ def cmd_build() -> int:
             if k not in CHOICES:
                 missing.append(k)
                 continue
-            title, alt = CHOICES[k]
+            title, alt, q = CHOICES[k]
             i = info(title)
+            if not i:
+                # 1枚ぶんの取り落としで欄が1つ消えるので、間を空けてもう一度だけ試す
+                time.sleep(10)
+                i = info(title)
             time.sleep(SLEEP)
             if not i or not i["img"]:
                 missing.append(k + " (取れず)")
                 continue
             rec = {
-                "q": QUERIES.get(k, [""])[0],
+                "q": q,
                 "thumb": i["thumb"],
                 "img": i["img"],
                 "big": i["big"],
@@ -386,7 +700,8 @@ def cmd_check() -> int:
             u = r.get(f)
             if not u:
                 continue
-            code = head(u)
+            code = probe(u)
+            time.sleep(0.3)
             if code == 200:
                 ok += 1
             else:
@@ -403,20 +718,24 @@ def cmd_check() -> int:
     return 0
 
 
-def head(url: str) -> int:
-    for t in range(3):
+def probe(url: str) -> int:
+    """その URL が本当に返るかを見る。
+
+    HEAD は使わない——upload.wikimedia.org は HEAD にだけ厳しく、
+    続けて投げると 429 しか返さなくなる。1バイトだけ貰う GET なら通る
+    （返るのは 206）。落とす量は変わらないので、確かめにはこれでいい。"""
+    for t in range(6):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            req.get_method = lambda: "HEAD"  # type: ignore[method-assign]
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Range": "bytes=0-0"})
             with urllib.request.urlopen(req, timeout=60) as r:
-                return r.status
+                return 200 if r.status in (200, 206) else r.status
         except urllib.error.HTTPError as e:
             if e.code in (429, 503):
-                time.sleep(3 * (t + 1))
+                time.sleep(5 * (t + 1))
                 continue
             return e.code
         except Exception:  # noqa: BLE001
-            time.sleep(2 * (t + 1))
+            time.sleep(3 * (t + 1))
     return 0
 
 
