@@ -147,6 +147,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "As4LP4FPzPw", date: "2026-11-04", title: "海外旅行中に作ったバケットが簡単すぎた！" },
     { id: "YJvEbZ3dmEQ", date: "2026-11-05", title: "🇬🇧イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！" },
     { id: "GLmdZ6wkaqA", date: "2026-11-06", title: "🇲🇰北マケドニアで、チキンシチューを作ったらお店の味やった！" },
+    { id: "F9BGvL10A5o", date: "2026-11-07", title: "🇬🇪ジョージアの生意気子猫が、膝で爆睡したくせに僕をすぐ忘れやがった！" },
   ],
 };
 
