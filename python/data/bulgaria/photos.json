@@ -1,0 +1,538 @@
+{
+ "hero": {
+  "q": "cat:Views of Sofia from Vitosha",
+  "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg/500px-Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg",
+  "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg/960px-Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg",
+  "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg/1920px-Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg",
+  "cm": "https://commons.wikimedia.org/wiki/File:Panoramic_view_over_central_Sofia_and_the_Vitosha_Mountain_2017-10-08.jpg",
+  "by": "Deensel",
+  "lic": "CC BY 2.0",
+  "alt": "街の屋根が一面に広がり、その向こうに雪をかぶったヴィトシャ山が横たわっている"
+ },
+ "spots": {
+  "聖ゲオルギ教会（円堂）": {
+   "q": "Rotunda Saint George Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/StGeorgeRotundaSofia.JPG/500px-StGeorgeRotundaSofia.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/StGeorgeRotundaSofia.JPG/960px-StGeorgeRotundaSofia.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/StGeorgeRotundaSofia.JPG/1920px-StGeorgeRotundaSofia.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:StGeorgeRotundaSofia.JPG",
+   "by": "No machine-readable author provided. Preslav~commonswiki assumed (based on copyright claims).",
+   "lic": "Public domain",
+   "alt": "赤れんがの丸い教会堂が、建物に囲まれた中庭に建っている。足もとに発掘された石積みが残る"
+  },
+  "古代セルディカ遺跡（ラルゴの地下）": {
+   "q": "Ancient Serdica Sofia archaeological complex",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Ruins_of_Serdica_%2848831910108%29.jpg/500px-Ruins_of_Serdica_%2848831910108%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Ruins_of_Serdica_%2848831910108%29.jpg/960px-Ruins_of_Serdica_%2848831910108%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Ruins_of_Serdica_%2848831910108%29.jpg/1920px-Ruins_of_Serdica_%2848831910108%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ruins_of_Serdica_(48831910108).jpg",
+   "by": "David Stanley from Nanaimo, Canada",
+   "lic": "CC BY 2.0",
+   "alt": "石畳と壁の跡が残るローマ時代の街の発掘現場。奥にモスクの尖塔と今の街並みが見える"
+  },
+  "アレクサンドル・ネフスキー大聖堂": {
+   "q": "Alexander Nevsky Cathedral Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg/500px-Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg/960px-Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg/1920px-Saint_Alexander_Nevsky_Cathedral%2C_Fa%C3%A7ade_from_Northeast.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Saint_Alexander_Nevsky_Cathedral,_Fa%C3%A7ade_from_Northeast.jpg",
+   "by": "Julian Lupyan",
+   "lic": "Public domain",
+   "alt": "金と緑のドームをいくつも載せた大聖堂を、広場の側から見上げたところ"
+  },
+  "中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": {
+   "q": "Central Mineral Baths Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg/500px-Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg/960px-Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg/1920px-Sofia_Public_Mineral_Baths_%28Sofia%2C_Bulgaria%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sofia_Public_Mineral_Baths_(Sofia,_Bulgaria).jpg",
+   "by": "Jaimrsilva",
+   "lic": "CC BY-SA 4.0",
+   "alt": "黄色と白の飾りのある大きな浴場の建物。前の池で噴水が上がっている"
+  },
+  "ボヤナ教会（世界遺産）": {
+   "q": "Boyana Church exterior",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Boyana_Church_2_TB.JPG/500px-Boyana_Church_2_TB.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Boyana_Church_2_TB.JPG/960px-Boyana_Church_2_TB.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Boyana_Church_2_TB.JPG/1920px-Boyana_Church_2_TB.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Boyana_Church_2_TB.JPG",
+   "by": "Todor Bozhinov / Тодор Божинов",
+   "lic": "CC BY-SA 3.0",
+   "alt": "石とれんがを積んだ小さな教会。外に木の階段が付いていて、まわりは木立に囲まれている"
+  },
+  "聖ネデリャ教会": {
+   "q": "Sveta Nedelya Church Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sveta_Nedelya_Church_Sofia_2021.jpg/500px-Sveta_Nedelya_Church_Sofia_2021.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sveta_Nedelya_Church_Sofia_2021.jpg/960px-Sveta_Nedelya_Church_Sofia_2021.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Sveta_Nedelya_Church_Sofia_2021.jpg/1920px-Sveta_Nedelya_Church_Sofia_2021.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sveta_Nedelya_Church_Sofia_2021.jpg",
+   "by": "Јакша",
+   "lic": "CC BY-SA 4.0",
+   "alt": "灰色の石を積んだドームの教会を、前の広場から見たところ"
+  },
+  "聖ソフィア教会": {
+   "q": "Sveta Sofia basilica Sofia Bulgaria",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg/500px-Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg/960px-Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg/1920px-Sveta_Sofia_Church%2C_Sofia_%28P1070749%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sveta_Sofia_Church,_Sofia_(P1070749).jpg",
+   "by": "Matti Blume",
+   "lic": "CC BY-SA 4.0",
+   "alt": "赤れんがを積んだ古いバシリカ式の教会。前庭の芝生ごしに横から見たところ"
+  },
+  "バーニャ・バシ・モスク": {
+   "q": "Banya Bashi Mosque Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Banya_Bashi_Mosque_Sofia.jpg/500px-Banya_Bashi_Mosque_Sofia.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Banya_Bashi_Mosque_Sofia.jpg/960px-Banya_Bashi_Mosque_Sofia.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Banya_Bashi_Mosque_Sofia.jpg/1920px-Banya_Bashi_Mosque_Sofia.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Banya_Bashi_Mosque_Sofia.jpg",
+   "by": "MrPanyGoff",
+   "lic": "CC BY-SA 3.0",
+   "alt": "れんが造りのドームと、細い尖塔（ミナレット）が1本立つモスク"
+  },
+  "ソフィア・シナゴーグ": {
+   "q": "Sofia Synagogue",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Sofia_Synagogue_11c.jpg/500px-Sofia_Synagogue_11c.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Sofia_Synagogue_11c.jpg/960px-Sofia_Synagogue_11c.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Sofia_Synagogue_11c.jpg/1920px-Sofia_Synagogue_11c.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sofia_Synagogue_11c.jpg",
+   "by": "Plamen Agov (Пламен Агов)",
+   "lic": "CC BY-SA 3.0",
+   "alt": "縞模様の壁とアーチ窓が並ぶシナゴーグの外観を、通りの側から見たところ"
+  },
+  "聖ヨシフ大聖堂": {
+   "q": "St Joseph Cathedral Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Cathedral_st_joseph_sofia-3.JPG/500px-Cathedral_st_joseph_sofia-3.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Cathedral_st_joseph_sofia-3.JPG/960px-Cathedral_st_joseph_sofia-3.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Cathedral_st_joseph_sofia-3.JPG/1920px-Cathedral_st_joseph_sofia-3.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Cathedral_st_joseph_sofia-3.JPG",
+   "by": "Vassil Makarinov",
+   "lic": "CC BY-SA 3.0",
+   "alt": "白い壁に細長い窓が並ぶ、新しいカトリック教会の中。正面に祭壇がある"
+  },
+  "中央市場ホール（ハリ）": {
+   "q": "Central Sofia Market Hall",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Central_Market_Hall_in_Sofia_20180224.jpg/500px-Central_Market_Hall_in_Sofia_20180224.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Central_Market_Hall_in_Sofia_20180224.jpg/960px-Central_Market_Hall_in_Sofia_20180224.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Central_Market_Hall_in_Sofia_20180224.jpg/1920px-Central_Market_Hall_in_Sofia_20180224.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Central_Market_Hall_in_Sofia_20180224.jpg",
+   "by": "Suicasmo",
+   "lic": "CC BY-SA 4.0",
+   "alt": "アーチ窓と時計塔のある石造りの市場の建物を、前の大通りの側から見たところ"
+  },
+  "ヴィトシャ大通り（歩行者区間）": {
+   "q": "Vitosha Boulevard Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vitosha_Boulevard%2C_Sofia%2C_view1.jpg/500px-Vitosha_Boulevard%2C_Sofia%2C_view1.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vitosha_Boulevard%2C_Sofia%2C_view1.jpg/960px-Vitosha_Boulevard%2C_Sofia%2C_view1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Vitosha_Boulevard%2C_Sofia%2C_view1.jpg/1920px-Vitosha_Boulevard%2C_Sofia%2C_view1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Vitosha_Boulevard,_Sofia,_view1.jpg",
+   "by": "Јакша",
+   "lic": "CC BY-SA 4.0",
+   "alt": "車の入らない石畳の通りを、街路樹と店の間で大勢が歩いている"
+  },
+  "聖ペトカ地下教会": {
+   "q": "Church St Petka of the Saddlers Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Church_of_St_Petka_of_the_Saddlers.jpg/500px-Church_of_St_Petka_of_the_Saddlers.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Church_of_St_Petka_of_the_Saddlers.jpg/960px-Church_of_St_Petka_of_the_Saddlers.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Church_of_St_Petka_of_the_Saddlers.jpg/1920px-Church_of_St_Petka_of_the_Saddlers.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Church_of_St_Petka_of_the_Saddlers.jpg",
+   "by": "Ann Wuyts",
+   "lic": "CC BY 2.0",
+   "alt": "地面より低いところに建つ小さな石の教会。まわりを今の建物が囲んでいる"
+  },
+  "国立考古学博物館": {
+   "q": "National Archaeological Museum Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg/500px-National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg/960px-National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg/1920px-National_Archaeological_Museum_Sofia%2C_Bulgaria_%28Entrance%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:National_Archaeological_Museum_Sofia,_Bulgaria_(Entrance).jpg",
+   "by": "Ann Wuyts",
+   "lic": "CC BY 2.0",
+   "alt": "木立の向こうに建つ石造りの博物館。もとモスクだった建物の入口"
+  },
+  "女性市場（ジェンスキ・パザール）": {
+   "q": "Zhenski Pazar Sofia market",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Sofia_Zhenski_Pazar_October_2012_PD_47.jpg/500px-Sofia_Zhenski_Pazar_October_2012_PD_47.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Sofia_Zhenski_Pazar_October_2012_PD_47.jpg/960px-Sofia_Zhenski_Pazar_October_2012_PD_47.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Sofia_Zhenski_Pazar_October_2012_PD_47.jpg/1920px-Sofia_Zhenski_Pazar_October_2012_PD_47.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Sofia_Zhenski_Pazar_October_2012_PD_47.jpg",
+   "by": "Bin im Garten",
+   "lic": "CC BY-SA 3.0",
+   "alt": "青い日よけの屋台が通りの両側に並び、野菜や果物を見ながら人が歩いている"
+  },
+  "ロシア教会（奇蹟者聖ニコライ聖堂）": {
+   "q": "Russian Church Sofia Saint Nicholas",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg/500px-Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg/960px-Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg/1920px-Saint_Nicholas_Russian_Church%2C_Sofia_20180224-1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Saint_Nicholas_Russian_Church,_Sofia_20180224-1.jpg",
+   "by": "Suicasmo",
+   "lic": "CC BY-SA 4.0",
+   "alt": "金色の玉ねぎ形のドームを載せた小さな教会。緑の尖った屋根が目印"
+  },
+  "イヴァン・ヴァゾフ国立劇場と市庭園": {
+   "q": "Ivan Vazov National Theatre Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/IvanVazov_National_Theatre_7.jpg/500px-IvanVazov_National_Theatre_7.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/IvanVazov_National_Theatre_7.jpg/960px-IvanVazov_National_Theatre_7.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/IvanVazov_National_Theatre_7.jpg/1920px-IvanVazov_National_Theatre_7.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:IvanVazov_National_Theatre_7.jpg",
+   "by": "Plamen Agov ( user:MrPanyGoff )",
+   "lic": "CC BY-SA 3.0",
+   "alt": "赤と白の柱が並ぶ劇場の正面。前は木に囲まれた広場になっている"
+  },
+  "国立文化宮殿（NDK）": {
+   "q": "National Palace of Culture Sofia",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/National_Palace_of_Culture%2C_Sofia_1.jpg/500px-National_Palace_of_Culture%2C_Sofia_1.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/National_Palace_of_Culture%2C_Sofia_1.jpg/960px-National_Palace_of_Culture%2C_Sofia_1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/National_Palace_of_Culture%2C_Sofia_1.jpg/1920px-National_Palace_of_Culture%2C_Sofia_1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:National_Palace_of_Culture,_Sofia_1.jpg",
+   "by": "Ivano Giambattista",
+   "lic": "CC0",
+   "alt": "夕暮れの広場で噴水がライトアップされ、奥に角ばった大きな建物が見える"
+  },
+  "国立歴史博物館（ボヤナ）": {
+   "q": "National Museum of History Bulgaria building",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG/500px-National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG/960px-National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG/1920px-National_History_Museum%2C_Sofia%2C_Bulgaria_20090405_006.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:National_History_Museum,_Sofia,_Bulgaria_20090405_006.JPG",
+   "by": "Apostoloff",
+   "lic": "CC BY-SA 3.0",
+   "alt": "大理石の階段の上に木彫りの天井が広がる、博物館の吹き抜けの玄関ホール"
+  },
+  "ヴィトシャ山（チェルニ・ヴラフ）": {
+   "q": "Cherni Vrah Vitosha",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Cherni_Vrah_Vitosha_01.jpg/500px-Cherni_Vrah_Vitosha_01.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Cherni_Vrah_Vitosha_01.jpg/960px-Cherni_Vrah_Vitosha_01.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Cherni_Vrah_Vitosha_01.jpg/1920px-Cherni_Vrah_Vitosha_01.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Cherni_Vrah_Vitosha_01.jpg",
+   "by": "Иван",
+   "lic": "CC BY-SA 4.0",
+   "alt": "草と岩の斜面が続く山の上。遠くまで見晴らしがきく"
+  },
+  "ボリス公園": {
+   "q": "Borisova gradina Sofia park",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Borisova_gradina_autumn.jpg/500px-Borisova_gradina_autumn.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Borisova_gradina_autumn.jpg/960px-Borisova_gradina_autumn.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Borisova_gradina_autumn.jpg/1920px-Borisova_gradina_autumn.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Borisova_gradina_autumn.jpg",
+   "by": "Gergana",
+   "lic": "CC BY-SA 2.5",
+   "alt": "黄色く色づいた並木の下に、遊歩道とベンチが続く秋の公園"
+  },
+  "リラ修道院（日帰り）": {
+   "q": "Rila Monastery courtyard",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg/500px-2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg/960px-2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg/1920px-2016-07-31_Bulgaria%2C_Rila_Monastery_DSC_9213_DxO.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:2016-07-31_Bulgaria,_Rila_Monastery_DSC_9213_DxO.jpg",
+   "by": "Laurens R. Krol",
+   "lic": "CC BY 4.0",
+   "alt": "白と黒の縞模様のアーチが何層にも重なる修道院の中庭"
+  }
+ },
+ "food": {
+  "ショプスカ・サラダ": {
+   "q": "Shopska salad",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Shopska_salad_2.JPG/500px-Shopska_salad_2.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Shopska_salad_2.JPG/960px-Shopska_salad_2.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Shopska_salad_2.JPG/1920px-Shopska_salad_2.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Shopska_salad_2.JPG",
+   "by": "Fayona",
+   "lic": "CC BY-SA 3.0",
+   "alt": "トマトときゅうりの上に、白いチーズを雪のように削りかけたサラダ"
+  },
+  "バニツァ": {
+   "q": "баница",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG/500px-%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG/960px-%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG/1920px-%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:%D0%92%D0%BA%D1%83%D1%81%D0%BD%D0%B0_%D0%B4%D0%BE%D0%BC%D0%B0%D1%88%D0%BD%D0%B0_%D0%B1%D0%B0%D0%BD%D0%B8%D1%86%D0%B0.JPG",
+   "by": "Sheku80",
+   "lic": "CC BY-SA 3.0",
+   "alt": "薄い生地をうず巻きに巻いて焼いたパイが、丸い型に入って焼き上がっている"
+  },
+  "ケバプチェ": {
+   "q": "Kebapche Bulgarian",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Kebapcheta.JPG/500px-Kebapcheta.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Kebapcheta.JPG/960px-Kebapcheta.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Kebapcheta.JPG/1920px-Kebapcheta.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kebapcheta.JPG",
+   "by": "Biso",
+   "lic": "CC BY 3.0",
+   "alt": "細長い棒状の挽き肉の炭火焼きが皿に並び、丸いキュフテとサラダが添えてある"
+  },
+  "キュフテ": {
+   "q": "Kyufte Bulgarian meatball",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg/500px-Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg/960px-Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg/1920px-Bulgarian_cuisine_meatballs_%28kyufte%29_%282%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bulgarian_cuisine_meatballs_(kyufte)_(2).jpg",
+   "by": "EvelinaRibarova",
+   "lic": "CC BY-SA 4.0",
+   "alt": "平たく丸い挽き肉の焼きだんごが、レタスを敷いた鉢に盛ってある"
+  },
+  "タラトル（冷製ヨーグルトスープ）": {
+   "q": "Tarator soup",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Bulgarian_dish_01.jpg/500px-Bulgarian_dish_01.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Bulgarian_dish_01.jpg/960px-Bulgarian_dish_01.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Bulgarian_dish_01.jpg/1920px-Bulgarian_dish_01.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bulgarian_dish_01.jpg",
+   "by": "Kritzolina",
+   "lic": "CC BY-SA 4.0",
+   "alt": "刻んだきゅうりの入った白い冷たいスープ。上に刻んだディルが散らしてある"
+  },
+  "キセロ・ムリャコ（ブルガリアのヨーグルト）": {
+   "q": "Bulgarian yogurt kiselo mlyako",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Bulgarian_yogurt.JPG/500px-Bulgarian_yogurt.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Bulgarian_yogurt.JPG/960px-Bulgarian_yogurt.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Bulgarian_yogurt.JPG/1920px-Bulgarian_yogurt.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bulgarian_yogurt.JPG",
+   "by": "Ned Jelyazkov",
+   "lic": "CC BY-SA 3.0",
+   "alt": "絵付けをした陶器の鉢に入った、とろりと白いヨーグルト"
+  },
+  "ギュヴェチ（土鍋焼き）": {
+   "q": "Rhodope Mountains Bulgarian food",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Rhodope_Mountains_Bulgarian_food_08.JPG/500px-Rhodope_Mountains_Bulgarian_food_08.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Rhodope_Mountains_Bulgarian_food_08.JPG/960px-Rhodope_Mountains_Bulgarian_food_08.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Rhodope_Mountains_Bulgarian_food_08.JPG/1920px-Rhodope_Mountains_Bulgarian_food_08.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rhodope_Mountains_Bulgarian_food_08.JPG",
+   "by": "Bin im Garten",
+   "lic": "CC BY-SA 3.0",
+   "alt": "蓋つきの素焼きの土鍋が、刺繍の布を敷いた食卓に、皿ごと出てきたところ"
+  },
+  "カヴァルマ": {
+   "q": "Kavarma Bulgarian",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Kavarma.jpeg/500px-Kavarma.jpeg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Kavarma.jpeg/960px-Kavarma.jpeg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Kavarma.jpeg/1920px-Kavarma.jpeg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kavarma.jpeg",
+   "by": "Jeroen Kransen , Netherlands",
+   "lic": "CC BY-SA 2.5",
+   "alt": "黒い土鍋で煮込んだ肉と野菜の上に、卵が落としてある"
+  },
+  "ムサカ": {
+   "q": "Moussaka Bulgarian",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Bulgarian_cuisine_Moussaka.jpg/500px-Bulgarian_cuisine_Moussaka.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Bulgarian_cuisine_Moussaka.jpg/960px-Bulgarian_cuisine_Moussaka.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Bulgarian_cuisine_Moussaka.jpg/1920px-Bulgarian_cuisine_Moussaka.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bulgarian_cuisine_Moussaka.jpg",
+   "by": "EvelinaRibarova",
+   "lic": "CC BY-SA 4.0",
+   "alt": "じゃがいもと挽き肉を重ねて焼き、上に卵とヨーグルトの衣をかけたムサカ"
+  },
+  "シュケンベ・チョルバ（モツスープ）": {
+   "q": "Shkembe chorba",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Shkembe-chorba_in_Kardzhali_2011.JPG/500px-Shkembe-chorba_in_Kardzhali_2011.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Shkembe-chorba_in_Kardzhali_2011.JPG/960px-Shkembe-chorba_in_Kardzhali_2011.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Shkembe-chorba_in_Kardzhali_2011.JPG/1920px-Shkembe-chorba_in_Kardzhali_2011.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Shkembe-chorba_in_Kardzhali_2011.JPG",
+   "by": "Bin im Garten",
+   "lic": "CC BY-SA 3.0",
+   "alt": "白いスープに赤い唐辛子の油が浮かぶモツのスープを、スプーンですくったところ"
+  },
+  "サルマ（ぶどうの葉の肉巻き）": {
+   "q": "cat:Sarma",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/500px-Grape_leaves_Sarma_I.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/960px-Grape_leaves_Sarma_I.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/1920px-Grape_leaves_Sarma_I.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Grape_leaves_Sarma_I.JPG",
+   "by": "Dianakc",
+   "lic": "CC BY-SA 3.0",
+   "alt": "ぶどうの葉で巻いた俵形の肉巻きが、鍋いっぱいに並べて煮てある"
+  },
+  "リュテニツァ": {
+   "q": "лютеница",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg/500px-%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg/960px-%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg/1920px-%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%D0%9B%D1%83%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0_01_1.jpg",
+   "by": "АннаМариа",
+   "lic": "CC BY-SA 4.0",
+   "alt": "赤いパプリカのペーストが小鉢に盛られ、横に生のパプリカが置いてある"
+  },
+  "シレネとカシュカヴァル（チーズ2種）": {
+   "q": "cat:Kashkaval",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG/500px-Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG/960px-Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG/1920px-Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Kaschkawal_Kashkaval_%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D0%B2%D0%B0%D0%BB_Balkank%C3%A4se_Sofia_IMG_7649.JPG",
+   "by": "Apostoloff",
+   "lic": "CC BY-SA 3.0",
+   "alt": "黄色い半硬質チーズ（カシュカヴァル）の塊を、ソフィアの店で切り分けたところ"
+  },
+  "パタトニク（じゃがいものガレット）": {
+   "q": "Patatnik Rhodope potato",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Patatnik_Ostrhodopen_PD_2011.JPG/500px-Patatnik_Ostrhodopen_PD_2011.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Patatnik_Ostrhodopen_PD_2011.JPG/960px-Patatnik_Ostrhodopen_PD_2011.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Patatnik_Ostrhodopen_PD_2011.JPG/1920px-Patatnik_Ostrhodopen_PD_2011.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Patatnik_Ostrhodopen_PD_2011.JPG",
+   "by": "Bin im Garten",
+   "lic": "CC BY-SA 3.0",
+   "alt": "すりおろしたじゃがいもを丸く焼き上げたガレット。上にトマトとハーブがのっている"
+  },
+  "ミシュ・マシュ": {
+   "q": "Mish-mash Bulgarian dish",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Cuisinebg_mishmash.jpg/500px-Cuisinebg_mishmash.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Cuisinebg_mishmash.jpg/960px-Cuisinebg_mishmash.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Cuisinebg_mishmash.jpg/1920px-Cuisinebg_mishmash.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Cuisinebg_mishmash.jpg",
+   "by": "Ikonact",
+   "lic": "Public domain",
+   "alt": "刻んだパプリカとトマトを卵でとじ、白いチーズを混ぜたフライパンの料理"
+  },
+  "ボブ・チョルバ（白いんげん豆のスープ）": {
+   "q": "Bob chorba bean soup Bulgarian",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Bean_soup_with_tomatoes_and_red_peppers.jpeg/500px-Bean_soup_with_tomatoes_and_red_peppers.jpeg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Bean_soup_with_tomatoes_and_red_peppers.jpeg/960px-Bean_soup_with_tomatoes_and_red_peppers.jpeg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Bean_soup_with_tomatoes_and_red_peppers.jpeg/1920px-Bean_soup_with_tomatoes_and_red_peppers.jpeg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bean_soup_with_tomatoes_and_red_peppers.jpeg",
+   "by": "Gillgaramond",
+   "lic": "CC BY-SA 4.0",
+   "alt": "白いんげん豆とトマトの赤いスープを、スプーンですくったところ"
+  },
+  "メキツァ（揚げパン）": {
+   "q": "Mekitsa",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Mekici.jpg/500px-Mekici.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Mekici.jpg/960px-Mekici.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Mekici.jpg/1920px-Mekici.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Mekici.jpg",
+   "by": "C00lfon",
+   "lic": "CC BY-SA 4.0",
+   "alt": "揚げたてのふくらんだ生地に粉砂糖をふった揚げパンが、皿に積んである"
+  },
+  "ボザ（穀物の発酵飲料）": {
+   "q": "Boza drink",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Boza_bg.jpg/500px-Boza_bg.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Boza_bg.jpg/960px-Boza_bg.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Boza_bg.jpg/1920px-Boza_bg.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Boza_bg.jpg",
+   "by": "Ikonact",
+   "lic": "CC BY-SA 3.0",
+   "alt": "薄茶色のとろりとした飲みものが、背の高いグラスに注いである"
+  },
+  "ラキヤ（果実の蒸留酒）": {
+   "q": "Rakia Bulgarian brandy",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Grozdova_Rakia_%28bg%29.jpg/500px-Grozdova_Rakia_%28bg%29.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Grozdova_Rakia_%28bg%29.jpg/960px-Grozdova_Rakia_%28bg%29.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Grozdova_Rakia_%28bg%29.jpg/1920px-Grozdova_Rakia_%28bg%29.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Grozdova_Rakia_(bg).jpg",
+   "by": "Popoff",
+   "lic": "CC BY-SA 3.0",
+   "alt": "ぶどうから作った蒸留酒の瓶が1本、テーブルに置かれている"
+  },
+  "アイリャン": {
+   "q": "Ayran drink",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Ayran_with_a_drinking_straw.jpg/500px-Ayran_with_a_drinking_straw.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Ayran_with_a_drinking_straw.jpg/960px-Ayran_with_a_drinking_straw.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Ayran_with_a_drinking_straw.jpg/1920px-Ayran_with_a_drinking_straw.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Ayran_with_a_drinking_straw.jpg",
+   "by": "E4024",
+   "lic": "CC BY-SA 4.0",
+   "alt": "白いヨーグルトの飲みものが、ストローをさしたグラスに入っている"
+  },
+  "メハナ（大衆食堂・居酒屋）という場所そのもの": {
+   "q": "cat:Restaurants in Bulgaria",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mehanadance.JPG/500px-Mehanadance.JPG",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mehanadance.JPG/960px-Mehanadance.JPG",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mehanadance.JPG/1920px-Mehanadance.JPG",
+   "cm": "https://commons.wikimedia.org/wiki/File:Mehanadance.JPG",
+   "by": "No machine-readable author provided. Preslav~commonswiki assumed (based on copyright claims).",
+   "lic": "Public domain",
+   "alt": "民族衣装の人たちが手をつないで輪になり、食卓を囲む客の前で踊っている店の中"
+  }
+ },
+ "buy": {
+  "バラのオイル／ローズウォーター": {
+   "q": "cat:Rose oil",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Rose_oil.jpg/500px-Rose_oil.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Rose_oil.jpg/960px-Rose_oil.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Rose_oil.jpg/1920px-Rose_oil.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rose_oil.jpg",
+   "by": "Animsaj",
+   "lic": "CC BY-SA 3.0",
+   "alt": "ばらの油を詰めた金属の容器が、札を下げて棚に並んでいる"
+  },
+  "リュテニツァ（赤いペースト）": {
+   "q": "Lyutenitsa jar",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/LyutenicaAjvarPindur.jpg/500px-LyutenicaAjvarPindur.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/LyutenicaAjvarPindur.jpg/960px-LyutenicaAjvarPindur.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/LyutenicaAjvarPindur.jpg/1920px-LyutenicaAjvarPindur.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:LyutenicaAjvarPindur.jpg",
+   "by": "Utopiah",
+   "lic": "CC BY-SA 3.0",
+   "alt": "赤いパプリカのペーストを盛った皿の横に、蓋を閉めた瓶詰が置いてある"
+  },
+  "トロヤン焼きの陶器": {
+   "q": "троянска керамика",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Rukatka.jpeg/500px-Rukatka.jpeg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Rukatka.jpeg/960px-Rukatka.jpeg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Rukatka.jpeg/1920px-Rukatka.jpeg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rukatka.jpeg",
+   "by": "Иван",
+   "lic": "CC BY-SA 3.0",
+   "alt": "茶色の地に白と緑の模様を流した、トロヤンの焼きものの壺"
+  },
+  "ラキヤ（果実の蒸留酒）": {
+   "q": "Rakia bottle Bulgaria",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Bottles_of_%27rakiya%27.jpg/500px-Bottles_of_%27rakiya%27.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Bottles_of_%27rakiya%27.jpg/960px-Bottles_of_%27rakiya%27.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Bottles_of_%27rakiya%27.jpg/1920px-Bottles_of_%27rakiya%27.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bottles_of_%27rakiya%27.jpg",
+   "by": "Hakuna.Matata",
+   "lic": "CC BY-SA 4.0",
+   "alt": "果実の蒸留酒の瓶が、店の棚に何本も並んでいる"
+  },
+  "ブルガリアワイン（マヴルッド、メルニク）": {
+   "q": "Bulgarian wine Mavrud bottle",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Mavrud.jpg/500px-Mavrud.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Mavrud.jpg/960px-Mavrud.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Mavrud.jpg/1920px-Mavrud.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Mavrud.jpg",
+   "by": "Petar Milošević",
+   "lic": "CC BY-SA 3.0",
+   "alt": "ブルガリアの赤ワインの瓶と、注いだグラスがテーブルに置かれている"
+  },
+  "マルテニツァ（赤と白の紐飾り）": {
+   "q": "Martenitsa",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Martenitsa-hand-made.jpg/500px-Martenitsa-hand-made.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Martenitsa-hand-made.jpg/960px-Martenitsa-hand-made.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Martenitsa-hand-made.jpg/1920px-Martenitsa-hand-made.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Martenitsa-hand-made.jpg",
+   "by": "Petko Yotov ( user:5ko )",
+   "lic": "CC BY-SA 3.0",
+   "alt": "赤と白の毛糸で作った房飾りのお守りが、いくつも並べてある"
+  },
+  "白チーズとカシュカヴァル（量り売り）": {
+   "q": "cat:Sirene",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg/500px-Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg/960px-Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg/1920px-Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",
+   "by": "Apostoloff",
+   "lic": "CC BY-SA 3.0",
+   "alt": "白いチーズの塊が、手書きの値札を立てた市場の台に積まれている"
+  },
+  "ローズジャムとローズのロクム": {
+   "q": "cat:Jams and jellies of Bulgaria",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Rose_petals_jam.jpg/500px-Rose_petals_jam.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Rose_petals_jam.jpg/960px-Rose_petals_jam.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Rose_petals_jam.jpg/1920px-Rose_petals_jam.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Rose_petals_jam.jpg",
+   "by": "Спасимир (Spasimir Pilev)",
+   "lic": "CC BY-SA 4.0",
+   "alt": "ばらの花びらを煮たジャムが、ガラスの瓶に入っている"
+  },
+  "刺繍（シェヴィツァ）の小物": {
+   "q": "cat:Embroidery of Bulgaria",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Divotino-traditional-embroidery-1.jpg/500px-Divotino-traditional-embroidery-1.jpg",
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Divotino-traditional-embroidery-1.jpg/960px-Divotino-traditional-embroidery-1.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Divotino-traditional-embroidery-1.jpg/1920px-Divotino-traditional-embroidery-1.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Divotino-traditional-embroidery-1.jpg",
+   "by": "Vassia Atanassova - Spiritia",
+   "lic": "CC BY-SA 3.0",
+   "alt": "赤と黒の幾何学模様を刺した、布の縁飾りの刺繍"
+  }
+ }
+}

@@ -3,63 +3,96 @@ import MAP from "@/content/bulgaria/map.json";
 /**
  * ソフィア中心部の地図。
  *
- * **記号（A・B・C…）が、一覧とコースと地図で同じ字を指す。**
- * るるぶの見開きがやっているのはこれで、地図を開かなくても位置関係が分かる。
- * 番号ではなく英字にしてあるのは、星（重要度 1〜3）と混ざらないようにするため。
+ * ## 本物の地図を敷く（2026-11-06）
  *
- * 座標は `python/build_bulgaria.py` が緯度経度から焼いている。
- * **ここで出し直さない。必ずズレる**（`components/macedonia/NmMapSvg.tsx` と同じ決まり）。
+ * 1枚目は自前の SVG で、灰色の紙に丸が16個散っているだけだった。
+ * あやと:「写真もgoogle mapもなくて、ほかの人が見てワクワクしない」。
+ * いまは **OpenStreetMap のタイルを合成した絵**（`python/build_bulgaria_map.py`）を
+ * 敷いて、その上に記号だけを重ねている。通りも公園も名前が読める。
  *
- * **歩ける範囲（中心から3km）だけを載せている。** リラ修道院は62km南にあって、
- * 同じ絵に入れると紙が 1000x10359 になり、中心部の印が1本の線に潰れた（実測）。
- * 遠い4つは地図の下に「中心から◯km」で出す。
+ * **記号（A・B・C…）が、一覧とコースと地図で同じ字を指す。** るるぶの見開きが
+ * やっているのはこれで、押さなくても位置関係が分かる。番号ではなく英字にしてあるのは、
+ * 星（重要度 1〜3）と混ざらないようにするため。
+ *
+ * 座標は `python/build_bulgaria.py` が、絵の枠（`python/data/bulgaria/tiles.json` の
+ * 緯度経度）から焼いている。**ここで出し直さない。必ずズレる**
+ * （`components/macedonia/NmMapSvg.tsx` と同じ決まり）。
+ * 緯度は **web-mercator** で引いてある——線形で割ると、焼いた絵と合わない。
+ *
+ * **歩ける範囲（中心から1km）だけを載せている。** 外へ広げるほど中心の印が潰れる。
+ * 入らないものは絵の下に「中心から◯km」で出す。
  */
 export default function BgMapSvg() {
+  const art = MAP.art as { png?: string; png2x?: string; credit?: string; licence?: string };
+  const pins = (
+    <svg
+      viewBox={`0 0 ${MAP.w} ${MAP.h}`}
+      role="img"
+      aria-label={`ソフィア中心部の見どころ ${MAP.pins.length} か所の位置関係。記号は一覧と同じ A から。`}
+    >
+      {!art.png && <rect x="0" y="0" width={MAP.w} height={MAP.h} className="bgm-ground" />}
+      {/* **輪（300m・600m）は、地の絵が無いときだけ。** 本物の地図の上に重ねると、
+          通りの線とぶつかって読みにくくなるだけだった（実測して外した）。
+          距離は一覧の「中心から徒歩◯分」が全件持っている */}
+      {!art.png &&
+        [0.3, 0.6].map((r) => (
+          <circle key={r} className="bgm-ring" cx={MAP.cx} cy={MAP.cy} r={r / MAP.kmPerPx || 0} />
+        ))}
+      {MAP.pins.map((p) => (
+        <g key={p.id} className={`bgm-pin is-${p.mark} star-${p.star}`}>
+          {/* 地図の上に置くので、丸は**地の絵より強く**する。
+              縁取りを白にして、通りの線と見分けがつくようにした */}
+          <circle cx={p.x} cy={p.y} r={26} />
+          <text x={p.x} y={p.y + 10} textAnchor="middle" fontSize={30}>
+            {p.letter}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+
   return (
     <figure className="bgmap">
-      <svg
-        viewBox={`0 0 ${MAP.w} ${MAP.h}`}
-        role="img"
-        aria-label={`ソフィア中心部の見どころ ${MAP.pins.length} か所の位置関係。記号は一覧と同じ A から。`}
-      >
-        <rect x="0" y="0" width={MAP.w} height={MAP.h} className="bgm-ground" />
-        {/* 中心（聖ネデリャ教会）から 300m・600m の輪。
-            **縮尺の代わり。** 棒の縮尺より、「ここから何分か」が直に読める。
-            半径は焼いた紙の幅から出す——緯度1度=111km で割り戻した値を
-            焼くほうが 1000px の幅に収めているので、ここは比だけ。 */}
-        {[0.3, 0.6].map((r) => (
-          <circle
-            key={r}
-            className="bgm-ring"
-            cx={MAP.cx}
-            cy={MAP.cy}
-            r={(r / MAP.kmPerPx) || 0}
+      {art.png ? (
+        <div className="bgmap-box">
+          <img
+            src={art.png}
+            srcSet={art.png2x ? `${art.png} 1x, ${art.png2x} 2x` : undefined}
+            width={MAP.w}
+            height={MAP.h}
+            alt="ソフィア中心部の地図。中央が聖ネデリャ教会の広場で、南へヴィトシャ大通りがのびる。"
+            loading="lazy"
+            decoding="async"
           />
-        ))}
-        {MAP.pins.map((p) => (
-          /* **丸は小さめにする。** 中心部は 57m（E と G）まで寄っている印が
-             あって、r=30 だと丸どうしが重なって1つに見えた（実測）。
-             r=22 と、地の色の縁取りで「重なって前後にいる」と読めるようにする */
-          <g key={p.id} className={`bgm-pin is-${p.mark} star-${p.star}`}>
-            <circle cx={p.x} cy={p.y} r={22} />
-            <text x={p.x} y={p.y + 9} textAnchor="middle" fontSize={26}>
-              {p.letter}
-            </text>
-          </g>
-        ))}
-      </svg>
+          {pins}
+        </div>
+      ) : (
+        pins
+      )}
       <figcaption>
-        中心（A・聖ネデリャ教会）からの輪は 300m と 600m。
-        丸の色は印で、濃い丸が◎（あやとの好みに合うもの）。
-        記号は下の一覧とコース表の記号と同じ。
-        {MAP.far.length > 0 && (
+        <b>A</b> が中心（聖ネデリャ教会）。記号は上の一覧とコース表と同じで、
+        緑の丸が◎（あやとの好みに合うもの）。
+        {art.credit && (
           <>
-            {" "}この絵に入らないものが{MAP.far.length}か所——
-            {MAP.far.map((f) => `${f.name} 中心から${f.km}km`).join("、")}。
-            近い順で、1〜2km なら歩ける。それより先はバスか車。
+            {" "}
+            <a href={art.licence} target="_blank" rel="noreferrer">
+              {art.credit}
+            </a>
           </>
         )}
       </figcaption>
+      {MAP.far.length > 0 && (
+        /* **この絵に入らないもの。** 字の塊にすると読み飛ばされるので、
+            名前と距離の組を1つずつの札にする */
+        <ul className="bgfar">
+          {MAP.far.map((f) => (
+            <li key={f.name}>
+              <b>{f.name}</b>
+              <i>中心から {f.km}km</i>
+            </li>
+          ))}
+        </ul>
+      )}
     </figure>
   );
 }

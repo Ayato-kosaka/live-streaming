@@ -101,6 +101,7 @@ export const ALBANIA_GROUP = "アルバニアの旅";
  * （`docs/island-standards.md` 16章。着いた日に字だけが嘘になる）。
  */
 export const MACEDONIA_GROUP = "北マケドニアの旅";
+export const BULGARIA_GROUP = "ブルガリアの旅";
 
 /**
  * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
@@ -138,6 +139,21 @@ export const OTHER_GROUP = "そのほか";
  * 次も同じものがある。
  */
 export const THEMES: Theme[] = [
+  {
+    /* ソフィア（2026-11-12 から一週間ほど）。**いちばん上に置く**——
+       いま注文を受け付けている先が先頭、という決まり（下の注）。 */
+    id: "bulgaria",
+    name: "ソフィアでこれやって",
+    group: BULGARIA_GROUP,
+    /* 行き先は `app/bulgaria/page.tsx`。**`id` は面の道と同じ字にする** */
+    href: "/bulgaria",
+    /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
+       「これから行く」と書くと、着いた日から字だけが嘘になる。
+       **決まっている2つを置く**——街と、紙に載せた見どころ。
+       書く人が「そこに無いもの」も書いていいと分かるようにする。 */
+    lead: "ソフィアでやってほしいこと。紙に載っていないお店や道でも。",
+    placeholder: "例）女性市場で、いちばん安いバニツァを買って公園で食べてほしい",
+  },
   /* **いちばん上は、いま注文を受け付けている先。**
      「いま居る国」ではない（2026-10-11 に取り違えていた。あやとはアルバニアに
      居るが、アルバニアあての注文はもう締め切っている）。
@@ -552,6 +568,8 @@ export type Shelf = { group: string; themes: Theme[] };
  * 書く側の並びは「北マケドニアの旅 → グッズ → そのほか」になる。
  */
 const ORDER = [
+  // **いま注文を受け付けている先が先頭**（`THEMES` の並びと同じ考え）
+  BULGARIA_GROUP,
   MACEDONIA_GROUP,
   ALBANIA_GROUP,
   NORDIC_GROUP,

@@ -1,14 +1,20 @@
 {
- "w": 1000,
- "h": 601,
+ "w": 1600,
+ "h": 1100,
  "center": {
   "lat": 42.6967,
   "lon": 23.32137,
   "name": "聖ネデリャ教会"
  },
- "kmPerPx": 0.00109647,
- "cx": 269.7,
- "cy": 354.3,
+ "kmPerPx": 0.00129967,
+ "cx": 800.0,
+ "cy": 550.0,
+ "art": {
+  "png": "/bulgaria/city.png",
+  "png2x": "/bulgaria/city@2x.png",
+  "credit": "© OpenStreetMap contributors",
+  "licence": "https://www.openstreetmap.org/copyright"
+ },
  "pins": [
   {
    "id": "Katedralen hram Sveta Nedelya",
@@ -16,8 +22,8 @@
    "name": "聖ネデリャ教会",
    "mark": "good",
    "star": 2,
-   "x": 269.7,
-   "y": 354.3
+   "x": 800.0,
+   "y": 550.0
   },
   {
    "id": "Sveta Petka Samardzhiyska",
@@ -25,8 +31,8 @@
    "name": "聖ペトカ地下教会",
    "mark": "good",
    "star": 3,
-   "x": 311.7,
-   "y": 270.0
+   "x": 848.3,
+   "y": 453.2
   },
   {
    "id": "Antichna Serdika",
@@ -34,8 +40,8 @@
    "name": "古代セルディカ遺跡（ラルゴの地下）",
    "mark": "ok",
    "star": 1,
-   "x": 308.7,
-   "y": 223.5
+   "x": 844.8,
+   "y": 399.9
   },
   {
    "id": "Rotonda Sveti Georgi",
@@ -43,8 +49,8 @@
    "name": "聖ゲオルギ教会（円堂）",
    "mark": "good",
    "star": 1,
-   "x": 346.7,
-   "y": 336.1
+   "x": 888.4,
+   "y": 529.1
   },
   {
    "id": "Sofiyska sinagoga",
@@ -52,8 +58,8 @@
    "name": "ソフィア・シナゴーグ",
    "mark": "ok",
    "star": 2,
-   "x": 255.5,
-   "y": 108.7
+   "x": 783.7,
+   "y": 268.1
   },
   {
    "id": "Zhenski pazar",
@@ -61,8 +67,8 @@
    "name": "女性市場（ジェンスキ・パザール）",
    "mark": "good",
    "star": 3,
-   "x": 96.8,
-   "y": 58.1
+   "x": 601.5,
+   "y": 210.0
   },
   {
    "id": "Tsentralni sofiyski hali",
@@ -70,8 +76,8 @@
    "name": "中央市場ホール（ハリ）",
    "mark": "good",
    "star": 2,
-   "x": 293.1,
-   "y": 109.1
+   "x": 826.9,
+   "y": 268.6
   },
   {
    "id": "Banya Bashi dzhamiya",
@@ -79,8 +85,8 @@
    "name": "バーニャ・バシ・モスク",
    "mark": "good",
    "star": 2,
-   "x": 331.5,
-   "y": 150.1
+   "x": 870.9,
+   "y": 315.6
   },
   {
    "id": "Tsentralna mineralna banya / Regionalen istoricheski muzey – Sofia",
@@ -88,8 +94,8 @@
    "name": "中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口",
    "mark": "good",
    "star": 1,
-   "x": 396.0,
-   "y": 155.8
+   "x": 945.1,
+   "y": 322.2
   },
   {
    "id": "Natsionalen arheologicheski muzey",
@@ -97,8 +103,8 @@
    "name": "国立考古学博物館",
    "mark": "ok",
    "star": 3,
-   "x": 445.1,
-   "y": 376.7
+   "x": 1001.4,
+   "y": 575.8
   },
   {
    "id": "Tsarkva Sveta Sofia",
@@ -106,8 +112,8 @@
    "name": "聖ソフィア教会",
    "mark": "good",
    "star": 2,
-   "x": 824.7,
-   "y": 368.0
+   "x": 1437.1,
+   "y": 565.8
   },
   {
    "id": "Hram-pametnik Sveti Aleksandar Nevski",
@@ -115,8 +121,8 @@
    "name": "アレクサンドル・ネフスキー大聖堂",
    "mark": "warn",
    "star": 1,
-   "x": 903.2,
-   "y": 418.8
+   "x": 1527.2,
+   "y": 624.0
   },
   {
    "id": "bulevard Vitosha",
@@ -124,8 +130,8 @@
    "name": "ヴィトシャ大通り（歩行者区間）",
    "mark": "good",
    "star": 2,
-   "x": 247.1,
-   "y": 453.8
+   "x": 774.1,
+   "y": 664.3
   },
   {
    "id": "Naroden teatar Ivan Vazov / Gradska gradina",
@@ -133,8 +139,8 @@
    "name": "イヴァン・ヴァゾフ国立劇場と市庭園",
    "mark": "good",
    "star": 3,
-   "x": 544.1,
-   "y": 542.7
+   "x": 1115.0,
+   "y": 766.3
   },
   {
    "id": "Ruska tsarkva Sveti Nikolay Chudotvorets",
@@ -142,8 +148,8 @@
    "name": "ロシア教会（奇蹟者聖ニコライ聖堂）",
    "mark": "good",
    "star": 3,
-   "x": 683.3,
-   "y": 429.1
+   "x": 1274.9,
+   "y": 635.9
   },
   {
    "id": "Katedrala Sveti Yosif",
@@ -151,8 +157,8 @@
    "name": "聖ヨシフ大聖堂",
    "mark": "good",
    "star": 3,
-   "x": 179.6,
-   "y": 212.1
+   "x": 696.6,
+   "y": 386.8
   }
  ],
  "far": [

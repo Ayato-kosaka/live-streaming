@@ -52,6 +52,17 @@ OUT_MAP = ROOT / "site" / "content" / "bulgaria" / "map.json"
 F = json.loads((SRC / "facts.json").read_text(encoding="utf-8"))
 FILL = json.loads((SRC / "fill.json").read_text(encoding="utf-8"))
 
+#: 写真（Wikimedia Commons）。**無くても焼ける**ようにしてある——
+#: 写真を集める仕事と面を作る仕事が別なので、片方を待って止まらないため。
+#: ただし**1枚も無いまま出さない**。足りない件数は最後に数えて出す
+_PH = SRC / "photos.json"
+PHOTOS = json.loads(_PH.read_text(encoding="utf-8")) if _PH.exists() else {}
+
+#: 本物の街の地図（OpenStreetMap のタイルを合成したもの）。
+#: `python/build_bulgaria_map.py` が焼く。**無ければ自前の丸だけの絵に落ちる**
+_TL = SRC / "tiles.json"
+TILES = json.loads(_TL.read_text(encoding="utf-8")) if _TL.exists() else None
+
 #: 高いと感じる線。あやとは 5,280円 の入場料を「5,280円するやんけ」と言って入らなかった。
 #: 1,770円（10ユーロ）はその3分の1だが、1日の買い出しが600〜700円の人なので、
 #: **2日ぶんを超えたら札を出す**という線にした
@@ -140,6 +151,19 @@ _HM = re.compile(r"([0-9]+)\s*時間\s*(?:([0-9]+)\s*分)?")
 _M = re.compile(r"([0-9]+)\s*分")
 
 
+#: 写真の欄。**出どころ（`cm`）と撮った人（`by`）とライセンス（`lic`）を必ず連れてくる。**
+#: どれか1つでも欠けたら、その写真は使わない——出どころの書けない絵を島に置かない
+PHOTO_KEYS = ("img", "thumb", "big", "cm", "by", "lic", "alt")
+
+
+def photo_of(kind: str, key: str) -> dict:
+    """その1件の写真。**欠けていたら空の欄を返す**（面の側で分岐を書かないため）。"""
+    p = (PHOTOS.get(kind) or {}).get(key) or {}
+    if not all(p.get(k) for k in ("img", "cm", "lic")):
+        return {k: "" for k in PHOTO_KEYS}
+    return {k: p.get(k, "") for k in PHOTO_KEYS}
+
+
 def _minutes(stay: str) -> int:
     """滞在の字から分を拾う。**いちばん短い言い方のほうを採る。**
 
@@ -174,13 +198,14 @@ def main() -> None:
     for s in F["spots"]:
         g = fill_spot[s["name"]]
         m, why = mark_spot({**s, **g})
-        spots.append({**s, "fee": g.get("fee", ""), "mark": m, "why": why})
+        spots.append({**s, "fee": g.get("fee", ""), "mark": m, "why": why,
+                      **photo_of("spots", s["name"])})
     # 距離は下で地図を組むときに出す（同じ計算を2回書かない）
     for d in F["food"]:
         g = fill_food[d["jp"]]
         m, why = mark_food({**d, **g})
         food.append({**d, **{k: g[k] for k in ("pork", "alcohol", "meat", "note")},
-                     "mark": m, "why": why})
+                     "mark": m, "why": why, **photo_of("food", d["jp"])})
 
     # ---- 街の地図。**緯度経度から座標を出すのはここだけ。**
     # 面の側で出し直さない（`components/macedonia/NmMapSvg.tsx` と同じ決まり）
@@ -200,14 +225,10 @@ def main() -> None:
         return {"lat": c["lat"] + (b["lat"] - a["lat"]),
                 "lon": c["lon"] + (b["lon"] - a["lon"])}
 
-    # **中心から1km の中だけを街の地図に載せる。** 外へ広げるほど、中心の印が
-    # 潰れる——リラ修道院（62km）まで入れた最初の版は 1000x10359 の紙になり、
-    # 中心部が1本の線になった。3kmでも、絵の半分以上が空いて印が左上に固まった（実測）。
-    #
-    # **1.0 は恣意的な線ではない。** 中心からの距離を並べると
-    # 0.95km（ネフスキー大聖堂）と 1.34km（NDK）のあいだに**切れ目がある**。
-    # ここで切ると、徒歩圏の16か所がちょうど絵いっぱいに散る。
-    # 入らないものは「中心から◯km」で出す（歩けない距離だとは言わない）
+    # **中心から1km の中だけを街の地図に載せる。** 外へ広げるほど中心の印が潰れる
+    # ——リラ修道院（62km）まで入れた最初の版は 1000x10359 の紙になった。
+    # **1.0 は恣意的な線ではない**: 距離を並べると 0.95km（ネフスキー大聖堂）と
+    # 1.34km（NDK）のあいだに切れ目がある。地図の絵（`tiles.json`）も同じ線で焼いてある
     WALK_KM = 1.0
     near = [s for s in spots if km(s) <= WALK_KM]
     # **近い順。** 絵の下に出す1行が「近いものから」で読めるようにする
@@ -215,9 +236,7 @@ def main() -> None:
                  key=lambda s: s["km"])
 
     # ---- 記号（A・B・C…）。**一覧と地図と道順が同じ字で対応する**のが、るるぶの要。
-    # 歩くコースの順に振るので、コースの札がそのまま A→B→C… と読める。
-    # コースに入らない近場は、そのあとに続けて振る（遠いものには振らない——
-    # 地図に載らない印に記号があると、絵の中を探すことになる）
+    # 歩くコースの順に振るので、コースの札がそのまま A→B→C… と読める
     order = {n: i for i, n in enumerate(FILL["course"])}
     near.sort(key=lambda s: (order.get(s["name"], 999), s["rank"], s["name"]))
     for i, s in enumerate(near):
@@ -225,8 +244,7 @@ def main() -> None:
     by_name = {s["name"]: s for s in near}
 
     # ---- 歩くコース。**距離はここで1回だけ出す。**
-    # 直線距離に 1.3 を掛けて道のりの目安にし、分速 80m で割る（不動産の
-    # 「徒歩1分＝80m」と同じ）。**概算だと面の側に書く**こと
+    # 直線距離に 1.3 を掛けて道のりの目安にし、分速 80m で割る
     course = []
     for i, name in enumerate(FILL["course"]):
         s = by_name[name]
@@ -237,36 +255,60 @@ def main() -> None:
             leg_min = max(1, round(leg_m / 80))
         course.append({"letter": s["letter"], "name": s["name"], "mark": s["mark"],
                        "stay": s.get("stay", ""), "m": leg_m, "min": leg_min})
-    walk_min = sum(c["min"] for c in course)
-    stay_min = sum(_minutes(c["stay"]) for c in course)
+    walk_min = sum(c2["min"] for c2 in course)
+    stay_min = sum(_minutes(c2["stay"]) for c2 in course)
     course_note = ("12か所ぜんぶで 約%d時間%d分（歩き %d分＋見学 %d分）。"
                    "まる1日ぶんなので、Eで西へ折れるところか、Jのあとで切って"
                    "2日に分けてもいい。歩きの分は直線距離に1.3を掛けた概算を"
                    "分速80mで割ったもの、見学の分は各所の目安のうち短いほう"
                    % ((walk_min + stay_min) // 60, (walk_min + stay_min) % 60,
                       walk_min, stay_min))
-    xs = [(s["lon"] - c["lon"]) * k for s in near]
-    ys = [-(s["lat"] - c["lat"]) for s in near]
-    pad = 0.12
-    x0, x1 = min(xs) - (max(xs) - min(xs)) * pad, max(xs) + (max(xs) - min(xs)) * pad
-    y0, y1 = min(ys) - (max(ys) - min(ys)) * pad, max(ys) + (max(ys) - min(ys)) * pad
-    W = 1000.0
-    H = W * (y1 - y0) / (x1 - x0)
-    pins = [{"id": s["roman"], "letter": s["letter"], "name": s["name"],
-             "mark": s["mark"], "star": s["rank"],
-             "x": round((x - x0) / (x1 - x0) * W, 1),
-             "y": round((y - y0) / (y1 - y0) * H, 1)}
-            for s, x, y in zip(near, xs, ys)]
+
+    # ---- 印を、地図の絵の画素に置く。
+    # **絵が在れば、その絵の枠（`tiles.json`）に合わせる。** 無ければ自前の紙を作る
+    if TILES:
+        # web-mercator。**緯度を線形で割らない**（焼いたほうと同じ式にする）
+        def _merc(lat):
+            return math.log(math.tan(math.pi / 4 + math.radians(lat) / 2))
+
+        T, W, H = TILES, float(TILES["w"]), float(TILES["h"])
+        ny, sy = _merc(T["north"]), _merc(T["south"])
+
+        def at(s):
+            return (round((s["lon"] - T["west"]) / (T["east"] - T["west"]) * W, 1),
+                    round((ny - _merc(s["lat"])) / (ny - sy) * H, 1))
+
+        cx, cy = at(c)
+        # 縮尺（km/px）。横幅から出す
+        kpp = (T["east"] - T["west"]) * 111.0 * k / W
+        pins = [{"id": s["roman"], "letter": s["letter"], "name": s["name"],
+                 "mark": s["mark"], "star": s["rank"],
+                 "x": at(s)[0], "y": at(s)[1]} for s in near]
+        art = {"png": T["png"], "png2x": T.get("png2x", ""),
+               "credit": T["attribution"], "licence": T["licence"]}
+    else:
+        xs = [(s["lon"] - c["lon"]) * k for s in near]
+        ys = [-(s["lat"] - c["lat"]) for s in near]
+        pad = 0.12
+        x0, x1 = min(xs) - (max(xs) - min(xs)) * pad, max(xs) + (max(xs) - min(xs)) * pad
+        y0, y1 = min(ys) - (max(ys) - min(ys)) * pad, max(ys) + (max(ys) - min(ys)) * pad
+        W = 1000.0
+        H = W * (y1 - y0) / (x1 - x0)
+        kpp = (x1 - x0) * 111.0 * k / W
+        cx = round((0 - x0) / (x1 - x0) * W, 1)
+        cy = round((0 - y0) / (y1 - y0) * H, 1)
+        pins = [{"id": s["roman"], "letter": s["letter"], "name": s["name"],
+                 "mark": s["mark"], "star": s["rank"],
+                 "x": round((x - x0) / (x1 - x0) * W, 1),
+                 "y": round((y - y0) / (y1 - y0) * H, 1)}
+                for s, x, y in zip(near, xs, ys)]
+        art = {}
+
     OUT_MAP.parent.mkdir(parents=True, exist_ok=True)
     OUT_MAP.write_text(json.dumps(
-        # **縮尺も焼く。** 絵の側で「1kmは何px」を出し直すと、紙の大きさを
-        # 変えたときに輪だけ取り残される（`BgMapSvg.tsx`）
         {"w": round(W), "h": round(H), "center": c,
-         "kmPerPx": round((x1 - x0) * 111.0 * k / W, 8),
-         # 中心（聖ネデリャ教会）が紙のどこに来るか。**紙の真ん中ではない**
-         # ——印の散らばりで枠を決めているので、中心は寄る
-         "cx": round((0 - x0) / (x1 - x0) * W, 1),
-         "cy": round((0 - y0) / (y1 - y0) * H, 1), "pins": pins,
+         "kmPerPx": round(kpp, 8), "cx": cx, "cy": cy,
+         "art": art, "pins": pins,
          "far": [{"name": s["name"], "km": s["km"]} for s in far]},
         ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -306,13 +348,23 @@ def main() -> None:
         s["far"] = kms.get(s["name"], 0)
     arr("BG_SPOTS", spots,
         ["letter", "far", "name", "cyr", "roman", "kana", "rank", "mark", "why",
-         "what", "how", "walk", "stay", "fee", "advice", "maps"])
+         "what", "how", "walk", "stay", "fee", "advice", "maps", *PHOTO_KEYS])
+    # 表紙の1枚。**入れ子でも素でも読む**——集めるほうの形に、焼くほうを縛られない
+    _h = PHOTOS.get("hero") or {}
+    _h = _h.get("hero") if isinstance(_h.get("hero"), dict) else _h
+    hero = {k: (_h or {}).get(k, "") for k in PHOTO_KEYS}
+    if not all(hero.get(k) for k in ("img", "cm", "lic")):
+        hero = {k: "" for k in PHOTO_KEYS}
+    ts.append("/** 面のいちばん上に敷く1枚。**無ければ空**で、面の側が字だけの頭に落とす */")
+    ts.append("export const BG_HERO = { " + ", ".join(
+        '%s: "%s"' % (k, esc(hero.get(k))) for k in PHOTO_KEYS) + " } as const;")
+    ts.append("")
     ts.append('export const BG_COURSE_NOTE = "%s";' % esc(course_note))
     ts.append("")
     arr("BG_COURSE", course, ["letter", "name", "mark", "stay", "m", "min"])
     arr("BG_FOOD", food,
         ["jp", "cyr", "roman", "kana", "rank", "mark", "why", "what", "where",
-         "price", "meat", "note"])
+         "price", "meat", "note", *PHOTO_KEYS])
     # **「ここでしたいこと」は、好みの実測と現地の事実を突き合わせた結論**なので、
     # 事実（`facts.json`）ではなくこちら（`fill.json`）が持つ。印も手で置いてある
     # ——規則1本では「市場でパイを買って公園で食べる」のような**組み合わせ**が出せない
@@ -326,14 +378,20 @@ def main() -> None:
         m, why = mark_buy(x, alcohol)
         # **`why` は土産そのものの説明**（`facts.json` が持っている欄）なので、
         # 印の理由はぶつからない名前で足す
-        buy.append({**x, "mark": m, "markwhy": why})
-    arr("BG_BUY", buy, ["what", "mark", "markwhy", "why", "where", "price"])
+        buy.append({**x, "mark": m, "markwhy": why, **photo_of("buy", x["what"])})
+    arr("BG_BUY", buy, ["what", "mark", "markwhy", "why", "where", "price", *PHOTO_KEYS])
     arr("BG_EVENTS", F["events"], ["what", "when", "body"])
     arr("BG_WORDS", F["words"], ["cyr", "roman", "kana", "jp"])
 
     OUT_TS.write_text("\n".join(ts), encoding="utf-8")
     g = sum(1 for x in food if x["mark"] == "good")
     w = sum(1 for x in food if x["mark"] == "warn")
+    shots = sum(1 for x in spots + food + buy if x.get("img")) + (1 if hero.get("img") else 0)
+    want = len(spots) + len(food) + len(buy) + 1
+    print("写真 %d/%d 枚" % (shots, want)
+          + ("" if shots == want else "  **足りない: "
+             + "、".join([x.get("name") or x.get("jp") or x.get("what")
+                         for x in spots + food + buy if not x.get("img")][:6]) + "**"))
     print("焼いた %s（見どころ %d・食べもの %d／◎%d ⚠%d）"
           % (OUT_TS.name, len(spots), len(food), g, w))
     print("焼いた %s（街の地図に %d本・%dx%d／遠いもの %d件）"
