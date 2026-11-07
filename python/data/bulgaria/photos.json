@@ -333,14 +333,13 @@
    "alt": "白いスープに赤い唐辛子の油が浮かぶモツのスープを、スプーンですくったところ"
   },
   "サルマ（ぶどうの葉の肉巻き）": {
-   "q": "cat:Sarma",
-   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/500px-Grape_leaves_Sarma_I.JPG",
-   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/960px-Grape_leaves_Sarma_I.JPG",
-   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Grape_leaves_Sarma_I.JPG/1920px-Grape_leaves_Sarma_I.JPG",
-   "cm": "https://commons.wikimedia.org/wiki/File:Grape_leaves_Sarma_I.JPG",
-   "by": "Dianakc",
-   "lic": "CC BY-SA 3.0",
-   "alt": "ぶどうの葉で巻いた俵形の肉巻きが、鍋いっぱいに並べて煮てある"
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg/960px-%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg/500px-%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg/1920px-%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B0%D1%80%D0%BC%D0%B0_%D0%BE%D0%B4_%D0%BB%D0%BE%D0%B7%D0%BE%D0%B2_%D0%BB%D0%B8%D1%81%D1%82_%D1%81%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D0%B5%D0%BA%D0%BE.jpg",
+   "by": "Давче",
+   "lic": "CC BY-SA 4.0",
+   "alt": "ぶどうの葉で巻いたサルマが皿に並び、横にヨーグルトの器とパン"
   },
   "リュテニツァ": {
    "q": "лютеница",
@@ -441,6 +440,15 @@
    "by": "No machine-readable author provided. Preslav~commonswiki assumed (based on copyright claims).",
    "lic": "Public domain",
    "alt": "民族衣装の人たちが手をつないで輪になり、食卓を囲む客の前で踊っている店の中"
+  },
+  "焼きとうもろこし（街角の屋台）": {
+   "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg/960px-Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg/500px-Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg",
+   "big": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg/1920px-Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg",
+   "cm": "https://commons.wikimedia.org/wiki/File:Corn_on_Cob-_Kolkata_-_West_Bengal_-_DSC_0010.jpg",
+   "by": "TAPAS KUMAR HALDER",
+   "lic": "CC BY-SA 4.0",
+   "alt": "湯気の立つ焼きとうもろこし。皮をむいた穂が木の台に並んでいる"
   }
  },
  "buy": {
