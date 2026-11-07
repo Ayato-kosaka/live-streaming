@@ -29,6 +29,11 @@ type Props = {
   appearAt: number;
   /** こうもりが運んでくる（上から落ちてきて揺れる）。字は弾まない */
   carried?: boolean;
+  /**
+   * 運ばれてくる札の道のいちばん上（動画の枠の高さに対する割合）。札の上の端（傾きぶんも）がこれより上に出ないところから
+   * 落とす。主役の顔の箱の下＋2%（#1141）。無ければいつもの 40vh 上から
+   */
+  carriedTop?: number;
   /** 振付けが左から広げる（段4 は杖の光で書く）。閉じた形で待ち、字は弾まない */
   wipe?: "write" | null;
   /** 数え上げ（秒）。無ければ額は最初から出ている */
@@ -40,6 +45,33 @@ type Props = {
   /** 字のブロックが使ってよい高さ（px）。メッセージが長くて超えるときだけ、メッセージの字を縮める */
   maxH?: number;
 };
+
+/** 運ばれてくる札がいつも落ちてくる高さ（vh）。最初のコマは 42vh（透明）、見えるのは 40vh から */
+const CARRY_VH = 40;
+/** 落ちてくるあいだのいちばん大きな傾き（度）。上の辺のまんなかで吊るので、端はこの角度ぶん上がる */
+const CARRY_TILT = 4;
+
+/**
+ * 運ばれてくる札の、落ち始めの高さ（translateY の値。透明の最初のコマと、見えるコマ）。
+ *
+ * `top`（動画の枠の高さに対する割合）があれば、札の上の端が、傾きと最初のコマの 5% 増しを含めて、その線より上に
+ * 出ないところまで落ちる距離を縮める（主役の顔の箱の下＋2%。#1141）。664x1180・長い名前・3行では、40vh 上から
+ * 落とすと字の上の端が 8.5% まで上がり、あやとの顔の下の端（9.2〜9.5%）に掛かった。
+ * 置き場は transform を含まない offset* で読む（札の箱は中身の高さで上下まんなかに置かれ、translateY(-50%) で上へ）
+ */
+export function carriedFrom(box: HTMLElement, top: number | undefined): { start: string; top: string } {
+  const slot = box.parentElement;
+  const host = slot?.parentElement;
+  if (top == null || !slot || !host || !(host.clientHeight > 0)) return { start: `-${CARRY_VH * 1.05}vh`, top: `-${CARRY_VH}vh` };
+  // 動画は 720×1280 を面いっぱいに cover で敷く（VideoShow）。線は動画の枠の高さに対する割合
+  const vh = 1280 * Math.max(host.clientWidth / 720, host.clientHeight / 1280);
+  const line = (host.clientHeight - vh) / 2 + top * vh;
+  const rest = slot.offsetTop - slot.offsetHeight / 2 + box.offsetTop;
+  const tilt = (box.offsetWidth / 2) * Math.sin((CARRY_TILT * Math.PI) / 180);
+  const usual = (CARRY_VH / 100) * (typeof window !== "undefined" && window.innerHeight > 0 ? window.innerHeight : host.clientHeight);
+  const d = Math.max(0, Math.min(usual, (rest - line - tilt) / 1.05));
+  return { start: `${(-d * 1.05).toFixed(1)}px`, top: `${(-d).toFixed(1)}px` };
+}
 
 /** 札と同時に始まる数え上げを、どれだけ進んだところから回すか（ms）。札が見えた最初のコマで 0 を見せない */
 const COUNT_LEAD_MS = 120;
@@ -132,6 +164,7 @@ export const RichText: React.FC<Props> = ({
   W,
   appearAt,
   carried,
+  carriedTop,
   wipe,
   count,
   donAt,
@@ -189,9 +222,10 @@ export const RichText: React.FC<Props> = ({
       // 広げるのは振付け。ここでは動かさない（閉じた形は下の style）
     } else if (carried) {
       // 上から運ばれてきて、掛かったところで振り子のように揺れて止まる
+      const from = carriedFrom(box, carriedTop);
       play(box, [
-        { transform: "translateY(-42vh) rotate(-4deg)", opacity: 0, offset: 0 },
-        { transform: "translateY(-40vh) rotate(-4deg)", opacity: 1, offset: 0.03, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
+        { transform: `translateY(${from.start}) rotate(-4deg)`, opacity: 0, offset: 0 },
+        { transform: `translateY(${from.top}) rotate(-4deg)`, opacity: 1, offset: 0.03, easing: "cubic-bezier(0.3, 0, 0.6, 1)" },
         { transform: "translateY(0px) rotate(3deg)", offset: 0.5, easing: "ease-in-out" },
         { transform: "translateY(0px) rotate(-2deg)", offset: 0.7, easing: "ease-in-out" },
         { transform: "translateY(0px) rotate(1deg)", offset: 0.85, easing: "ease-in-out" },

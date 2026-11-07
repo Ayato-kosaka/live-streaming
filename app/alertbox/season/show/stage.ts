@@ -51,6 +51,8 @@ export type PlateTiming = {
   wipe: "write" | null;
   count: { at: number; dur: number } | null;
   donAt: number | null;
+  /** 運ばれてくる札の道のいちばん上（動画の枠の高さに対する割合）。動画の段が manifest に書いているときだけ */
+  carriedTop?: number;
 };
 
 /** 台本の無い段で、札が出る秒（前の作りでキャラ絵がフェードインし終わるころ） */
@@ -168,5 +170,6 @@ export function plateTiming(st: AlertStage): PlateTiming {
     wipe: appear ? null : write ? "write" : null,
     count: count ? { at: count.t, dur: count.dur ?? 1 } : null,
     donAt: don?.t ?? null,
+    ...(appear && st.video?.plateTop != null ? { carriedTop: st.video.plateTop } : {}),
   };
 }

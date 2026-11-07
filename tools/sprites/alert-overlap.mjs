@@ -40,6 +40,20 @@
  *   下 28%。動画の枠（720×1280 を cover で敷いた矩形）に対する割合）。帯は動画の層が出ているコマだけ置く。
  *   `--control band` は対照: 帯を字の札の高さに置く → 1 で落ちる
  *
+ *   **段7 は帯ではなく顔の線**（#1141）。`heroBands` の3つ目が「あやとの顔の下の端」の線で、**動画の秒**で変わる
+ *   （登場の秒と線の組の並び。`tools/alert-theme/blender/t7_motion.py` の `ayato_face_box` を、どのコマでも下回らない
+ *   折れ線で上から包んだもの。札が上から降りてくる 5.3〜6.0 秒は顔を浮かせて 9.3〜9.6%、滞在は 13.1%。
+ *   振付けを描き直したら、この線も引き直す）。4つ目は顔の箱の横（幅に対する割合。登場の 4.34 秒から滞在までを包む
+ *   20〜33%）。**主役の顔は「帯の上の端からこの線まで × この横」の箱**で、横に離れた字は重なりに数えない。
+ *   札は動画の currentTime が revealAt に来た知らせで出るので（#1138）、道具の止めた時計の秒ではなく、そのコマの
+ *   動画の秒で線を引く。撮るコマ（1.5 秒おき）は札が降りてくる 0.15 秒に当たらないので、**描くたびにも数える**
+ *   （`heroMiss`。札の見えている字の外接矩形が、そのときの動画の秒の顔の箱と交わったコマ）。
+ *   `--control plateearly` は対照: manifest の revealAt を 3.0 秒にして、札を revealAt より前に出す → 1 で落ちる
+ *   `--control platehigh` は対照: manifest の段の plateTop を外して、札を元の高さ（40vh 上）から落とす → 1 で落ちる
+ *   どちらも**札の降りる動きを10倍ゆっくりにする。** 札は 0.5 秒で顔の箱を通り抜け、札が組まれた直後は描くのが
+ *   混むので、そのままでは通り抜けるあいだに1コマも描かれない回がある（#1143 の1回目、2つとも 0 で落ちなかった）。
+ *   ゆっくりにしても通り道は同じなので、当たるかどうかの運にせず、通り道を必ず描くコマに入れる
+ *
  * キャラ絵の中身の外接矩形は、画面の `data-char="content"` の印（`CharFit` が置く）から読む。
  * 動画は中身を測れないので、`<video>` の枠に contain で収めた矩形を中身とみなす。
  *
@@ -106,7 +120,7 @@ const sizes = arg("sizes", "436x776,664x1180")
 const out = resolve(arg("out", "/tmp/alert-overlap"));
 const jobs = Math.max(1, Number(arg("jobs", "3")));
 const control = arg("control", "");
-if (control && !["face", "hero", "band", "poster", "holelate"].includes(control)) die(`--control は face・hero・band・poster・holelate（${control}）`);
+if (control && !["face", "hero", "band", "poster", "holelate", "plateearly", "platehigh"].includes(control)) die(`--control は face・hero・band・poster・holelate・plateearly・platehigh（${control}）`);
 /* 動画の段の主役の帯（main で manifest から読む） */
 let heroBands = null;
 const emoji = arg("emoji", "");
@@ -291,6 +305,102 @@ const VIDEO_WATCH = (ctl) => `(() => {
     nRAF(tick);
   };
   nRAF(tick);
+})();`;
+
+/* 段7 の主役の顔の線（顔の下の端。動画の枠の高さに対する割合）を、そのコマの**動画の秒**で引く（#1141）。
+   pts は登場（intro）の秒と線の組の並び（manifest の heroBands の3つ目）。登場は点のあいだを線でつなぎ、
+   最初の点より前・最後の点よりあとは端の値。滞在と締めは最後の値（ページの中でも同じ文で回す） */
+function faceLineAt(pts, part, ct) {
+  if (!Array.isArray(pts) || !pts.length) return null;
+  if (part !== "intro") return pts[pts.length - 1][1];
+  if (ct <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) {
+    const [t1, y1] = pts[i];
+    if (ct <= t1) {
+      const [t0, y0] = pts[i - 1];
+      return t1 > t0 ? y0 + ((y1 - y0) * (ct - t0)) / (t1 - t0) : y1;
+    }
+  }
+  return pts[pts.length - 1][1];
+}
+
+/* 主役の顔の線 × 字を、描くたびに数える（#1141）。段7 の札は上から降りてきて 0.15 秒ほど上 20% を通るので、
+   1.5 秒おきの撮るコマでは当たるか当たらないかの運になる。奥の層の見せている動画の秒で顔の線を引き、
+   札の見えている字の行（祖先の opacity の積 0.05 以上・祖先の overflow で切った所）の外接矩形が、顔の箱
+   （帯の上の端から線まで × 顔の横）と交わったコマを数える。rAF は時計を止める仕掛けのものなので、撮っているあいだは数えない */
+const HERO_WATCH = (band) => `(() => {
+  const W = window;
+  const band = ${JSON.stringify(band)};
+  const lineAt = ${faceLineAt.toString()};
+  const st = { frames: 0, miss: 0, bad: [] };
+  W.__hero = st;
+  const seen = (el) => {
+    let o = 1;
+    for (let p = el; p && p.nodeType === 1; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.display === "none" || cs.visibility === "hidden") return 0;
+      o *= Number(cs.opacity);
+    }
+    return o;
+  };
+  const clipOf = (from, stop) => {
+    let c = null;
+    for (let p = from; p && p !== stop; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.overflowX !== "visible" || cs.overflowY !== "visible") {
+        const r = p.getBoundingClientRect();
+        c = c ? { l: Math.max(c.l, r.left), t: Math.max(c.t, r.top), r: Math.min(c.r, r.right), b: Math.min(c.b, r.bottom) } : { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      }
+    }
+    return c;
+  };
+  const tick = () => {
+    const slot = document.querySelector('[data-plate="slot"]');
+    const layer = document.querySelector('[data-fx-video="back"]');
+    const v = slot && layer ? [...layer.querySelectorAll("video")].find((x) => x.style.opacity !== "0") : null;
+    if (v) {
+      const part = (v.dataset.fxPart || "").split(":")[1] || "?";
+      const ct = Number(v.currentTime) || 0;
+      const line = lineAt(band[2], part, ct);
+      const r = layer.getBoundingClientRect();
+      const k = Math.max(r.width / 720, r.height / 1280);
+      const vw = 720 * k, vh = 1280 * k;
+      const vx = r.left + (r.width - vw) / 2, vy = r.top + (r.height - vh) / 2;
+      const xr = band[3] || [0, 1];
+      const hero = { l: Math.max(r.left, vx + xr[0] * vw), r: Math.min(r.right, vx + xr[1] * vw), t: vy + band[0] * vh, b: vy + line * vh };
+      let top = Infinity, bot = -Infinity, lft = Infinity, rgt = -Infinity, any = false;
+      const range = document.createRange();
+      const walk = document.createTreeWalker(slot, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+        const pe = n.parentElement;
+        if (!pe || !n.textContent.trim() || seen(pe) < 0.05) continue;
+        range.selectNodeContents(n);
+        const c = clipOf(pe, slot.parentElement);
+        for (const q of range.getClientRects()) {
+          const l = c ? Math.max(q.left, c.l) : q.left, rr = c ? Math.min(q.right, c.r) : q.right;
+          const t = c ? Math.max(q.top, c.t) : q.top, b = c ? Math.min(q.bottom, c.b) : q.bottom;
+          if (rr - l <= 0 || b - t <= 0) continue;
+          any = true;
+          top = Math.min(top, t);
+          bot = Math.max(bot, b);
+          lft = Math.min(lft, l);
+          rgt = Math.max(rgt, rr);
+        }
+      }
+      // 字の外接矩形 × 顔の箱
+      const w = Math.min(rgt, hero.r) - Math.max(lft, hero.l), h = Math.min(bot, hero.b) - Math.max(top, hero.t);
+      const area = any && w > 0 && h > 0 ? w * h : 0;
+      if (any) {
+        st.frames++;
+        if (area > 0) {
+          st.miss++;
+          if (st.bad.length < 4) st.bad.push({ part, ct: +ct.toFixed(3), line: +line.toFixed(4), top: +((top - vy) / vh).toFixed(4), px: Math.round((vy + line * vh) - top), op: +seen(slot).toFixed(2), area: Math.round(area) });
+        }
+      }
+    }
+    W.requestAnimationFrame(tick);
+  };
+  W.requestAnimationFrame(tick);
 })();`;
 
 /* 顔の穴の守り（#1141。止めずに毎コマ）。撮るコマは 1.5 秒おきなので、そのあいだに出る1コマの重なりは絵では
@@ -831,6 +941,18 @@ async function runOne(browser, job) {
   await ctx.addInitScript(VIDEO_WATCH(control));
   await ctx.addInitScript(FREEZE);
   await ctx.addInitScript(FACE_WATCH(control));
+  /* 札の対照: 札の箱（data-plate="box"）の動きを10倍ゆっくりにする（通り道は同じ。描くコマに必ず入る） */
+  if (control === "plateearly" || control === "platehigh")
+    await ctx.addInitScript(() => {
+      const an = Element.prototype.animate;
+      Element.prototype.animate = function (k, o) {
+        if (this.getAttribute?.("data-plate") === "box" && o && typeof o === "object" && o.duration) o = { ...o, duration: o.duration * 10 };
+        return an.call(this, k, o);
+      };
+    });
+  // 段7（顔の線のある段）だけ、主役の顔の線 × 字を描くたびに数える
+  const lineBand = heroBands?.[String(tierOf(amount))];
+  if (lineBand && Array.isArray(lineBand[2])) await ctx.addInitScript(HERO_WATCH(lineBand));
   const charBody = readFileSync(ch.file);
   const vfile = videos.get(ch.id);
   const external = [];
@@ -840,6 +962,20 @@ async function runOne(browser, job) {
        （CharFit が中身を測る）。CDN の既定の絵の口に、選んだ絵を差す */
     if (url.includes("cloudfront.net")) {
       return route.fulfill({ contentType: ch.type, body: charBody, headers: { "access-control-allow-origin": "*" } });
+    }
+    /* 対照 plateearly: 段の revealAt を 3.0 秒にした manifest を渡す（札が、本物の revealAt より前に出る）。
+       対照 platehigh: 段の plateTop を外した manifest を渡す（札が元の高さから落ちる）。
+       道具が顔の箱を引く manifest（main で読んだもの）は本物のまま */
+    if ((control === "plateearly" || control === "platehigh") && url.startsWith(base) && /\/fx\/manifest\.json(\?|$)/.test(url)) {
+      const resp = await route.fetch();
+      const j = await resp.json();
+      for (const t of Object.values(j.tiers ?? {})) {
+        if (!t) continue;
+        if (control === "plateearly" && typeof t.revealAt === "number") t.revealAt = Math.min(t.revealAt, 3.0);
+        // 対照 platehigh: 札の道のいちばん上を外す（元の 40vh 上から落ちる）
+        if (control === "platehigh") delete t.plateTop;
+      }
+      return route.fulfill({ response: resp, contentType: "application/json", body: JSON.stringify(j) });
     }
     if (url.startsWith(`${base}/__ovl__/video`)) {
       return route.fulfill({ contentType: "video/webm", body: readFileSync(vfile), headers: { "accept-ranges": "none" } });
@@ -870,8 +1006,8 @@ async function runOne(browser, job) {
       waiting = `${s}秒のコマを撮る`;
       await page.evaluate(() => window.__ovl.freeze());
       const band = heroBands?.[String(tierOf(amount))];
-      if (band) await page.evaluate(placeBand, { band, ctl: control });
-      if (control && control !== "band" && control !== "poster" && control !== "holelate" && !controlled) {
+      const vt = band ? await page.evaluate(placeBand, { band, ctl: control, lineSrc: faceLineAt.toString() }) : null;
+      if (control && ["face", "hero"].includes(control) && !controlled) {
         await applyControl(page, control);
         controlled = true;
       }
@@ -882,6 +1018,8 @@ async function runOne(browser, job) {
       const m = await measureFrame(page, W, H, showTier(amount));
       const h1 = await page.evaluate(faceNow);
       m.hole = h0;
+      // そのコマの動画の秒と、引いた顔の線（段7）
+      if (vt && typeof vt === "object") m.vt = vt;
       if (JSON.stringify(h1) !== JSON.stringify(h0)) m.holeAfter = h1;
       await page.evaluate(() => window.__ovl.unfreeze());
       const { A, ...rest } = m;
@@ -900,6 +1038,8 @@ async function runOne(browser, job) {
   res.vg = await withTimeout(page.evaluate(() => window.__vguard ?? null), 5000, null).catch(() => null);
   // 顔の穴の守り（#1141）。キャラ絵の箱が置かれてから最後に撮ったコマまで、描くたびに数えたもの
   res.face = await withTimeout(page.evaluate(() => (window.__faceSum ? window.__faceSum() : null)), 5000, null).catch(() => null);
+  // 主役の顔の線 × 字（#1141。段7 だけ）
+  res.hero = await withTimeout(page.evaluate(() => window.__hero ?? null), 5000, null).catch(() => null);
   if (external.length) res.external = [...new Set(external)];
   await ctx.close();
   return res;
@@ -911,13 +1051,19 @@ function bad(f) {
 }
 
 /* 主役の帯を、顔の枠の印（`data-hero-face`）として置く。動画の層が無いコマでは置かない（外す） */
-function placeBand({ band, ctl }) {
+function placeBand({ band, ctl, lineSrc }) {
   let d = document.querySelector("[data-hero-band]");
   const layer = document.querySelector('[data-fx-video="back"]');
   if (!layer || !layer.querySelector("video")) {
     if (d) d.remove();
     return 0;
   }
+  /* 段7 は顔の線（#1141）。見せている奥の動画（まだ見せていなければ登場）の秒で引く */
+  const vids = [...layer.querySelectorAll("video")];
+  const v = vids.find((x) => x.style.opacity !== "0") ?? vids.find((x) => (x.dataset.fxPart || "").endsWith(":intro")) ?? vids[0];
+  const part = (v.dataset.fxPart || "").split(":")[1] || "intro";
+  const ct = Number(v.currentTime) || 0;
+  const line = Array.isArray(band[2]) ? new Function(`return (${lineSrc})`)()(band[2], part, ct) : null;
   const r = layer.getBoundingClientRect();
   // 動画は 720×1280 を cover で敷く（season/show/fxVideo.ts）。その枠に対する割合で帯を置く
   const k = Math.max(r.width / 720, r.height / 1280);
@@ -926,7 +1072,7 @@ function placeBand({ band, ctl }) {
   const vx = r.left + (r.width - vw) / 2;
   const vy = r.top + (r.height - vh) / 2;
   let top = vy + band[0] * vh;
-  let bot = vy + band[1] * vh;
+  let bot = vy + (line ?? band[1]) * vh;
   if (ctl === "band") {
     const p = document.querySelector('[data-plate="box"]')?.getBoundingClientRect();
     if (p) {
@@ -942,9 +1088,11 @@ function placeBand({ band, ctl }) {
     d.style.pointerEvents = "none";
     document.body.appendChild(d);
   }
-  const l = Math.max(r.left, vx);
-  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
-  return 1;
+  // 段7 は顔の横だけ（4つ目）。ほかの段は動画の幅いっぱいの帯
+  const xr = Array.isArray(band[3]) && ctl !== "band" ? band[3] : [0, 1];
+  const l = Math.max(r.left, vx + xr[0] * vw);
+  Object.assign(d.style, { left: `${l}px`, width: `${Math.min(r.right, vx + xr[1] * vw) - l}px`, top: `${top}px`, height: `${Math.max(0, bot - top)}px` });
+  return { part, ct: +ct.toFixed(3), line: line == null ? null : +line.toFixed(3) };
 }
 
 async function main() {
@@ -995,6 +1143,7 @@ async function main() {
           (inval || (worst ? `顔に乗った ${r.frames.map((f) => `${f.t}s:${f.front}/${f.cover}${f.heroText ? `/字${f.heroText}` : ""}`).join(" ")}` : "0")) +
           (vg && vg.videos ? `  <video> ${vg.videos}本 poster無し ${vg.noPoster}（コマより先に見せた ${vg.early}）` : "") +
           (r.face && r.face.frames ? `  穴 ${r.face.frames}コマ中 外れ ${r.face.miss}（箱から 穴 ${r.face.hole}s・中身 ${r.face.content}s・覆う ${r.face.fit}s）` : "") +
+          (r.hero && r.hero.frames ? `  顔の線 ${r.hero.frames}コマ中 字 ${r.hero.miss}${r.hero.miss ? ` ${JSON.stringify(r.hero.bad[0])}` : ""}` : "") +
           `  (${((Date.now() - t0) / 1000).toFixed(0)}s)`
       );
     }
@@ -1047,6 +1196,12 @@ async function main() {
   console.log(`  顔の穴 ${fsum("frames")}コマ（手前の層を見せていて箱があるコマ）: 外れ ${fsum("miss")}（0）・外れた回 ${faceBad.length}/${results.length}`);
   console.log(`  箱が置かれてから（秒。中央値 / p95 / 最大）: 穴 ${JSON.stringify(lags.hole)}・中身の印 ${JSON.stringify(lags.content)}・穴が中身の顔を覆う ${JSON.stringify(lags.fit)}`);
   for (const r of faceBad.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.face.bad.slice(0, 2))}`);
+  /* 主役の顔の線 × 字（#1141。段7。動画の秒で引いた線より上に、札の字が掛かったコマ） */
+  const hsum = (k) => results.reduce((s, r) => s + (r.hero?.[k] ?? 0), 0);
+  const heroBad = results.filter((r) => r.hero && r.hero.miss);
+  const heroLine = amounts.some((a) => Array.isArray(heroBands?.[String(tierOf(a))]?.[2]));
+  if (heroLine) console.log(`  主役の顔の線（段7・描くたび・動画の秒） ${hsum("frames")}コマ: 字が掛かった ${hsum("miss")}（0）・掛かった回 ${heroBad.length}/${results.length}`);
+  for (const r of heroBad.slice(0, 10)) console.log(`  ${r.char} ${r.amount}円 ${r.size} ${r.text}: ${JSON.stringify(r.hero.bad.slice(0, 2))}`);
 
   const json = arg("json", "");
   if (json) {
@@ -1056,7 +1211,7 @@ async function main() {
       JSON.stringify(
         {
           tool: "alert-overlap",
-          exit: invalid.length ? 2 : hit.length || vbadRuns.length || faceBad.length ? 1 : 0,
+          exit: invalid.length ? 2 : hit.length || vbadRuns.length || faceBad.length || heroBad.length ? 1 : 0,
           theme,
           fx: fxName,
           control,
@@ -1071,7 +1226,7 @@ async function main() {
           minCharShare: shares.length ? Math.min(...shares.map((x) => x.s)) : null,
           hits: hit.map((r) => {
             const f = worst(r);
-            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png, hole: f.hole ?? null, holeAfter: f.holeAfter ?? null, face: r.face ? { hole: r.face.hole, content: r.face.content, fit: r.face.fit, miss: r.face.miss } : null };
+            return { char: r.char, amount: r.amount, size: r.size, text: r.text, t: f.t, front: f.entrance ? 0 : f.front, cover: f.entrance ? 0 : f.cover, heroText: f.heroText ?? 0, png: f.png, vt: f.vt ?? null, hole: f.hole ?? null, holeAfter: f.holeAfter ?? null, face: r.face ? { hole: r.face.hole, content: r.face.content, fit: r.face.fit, miss: r.face.miss } : null };
           }),
           invalid: invalid.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, why: r.fatal ?? [...new Set(r.frames.flatMap((f) => f.invalid))].join("・") })),
           videos: vsum("videos"),
@@ -1083,6 +1238,10 @@ async function main() {
           faceFrames: fsum("frames"),
           faceMiss: fsum("miss"),
           faceLag: lags,
+          heroLine,
+          heroFrames: hsum("frames"),
+          heroMiss: hsum("miss"),
+          heroBad: heroBad.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, miss: r.hero.miss, frames: r.hero.frames, bad: r.hero.bad.slice(0, 2) })),
           faceBad: faceBad.map((r) => ({ char: r.char, amount: r.amount, size: r.size, text: r.text, miss: r.face.miss, frames: r.face.frames, bad: r.face.bad.slice(0, 2), hole: r.face.hole, content: r.face.content, fit: r.face.fit })),
           errors: errs.slice(0, 5),
         },
@@ -1093,7 +1252,7 @@ async function main() {
   }
   if (flag("sheet")) await sheet(results);
   if (invalid.length) process.exit(2);
-  process.exit(hit.length || vbadRuns.length || faceBad.length ? 1 : 0);
+  process.exit(hit.length || vbadRuns.length || faceBad.length || heroBad.length ? 1 : 0);
 }
 
 /* 一覧の絵: 行 = キャラ、列 = 段（大きさ・字ごとに1枚ずつ）。字のブロック（水色）・中身の矩形（桃）・
