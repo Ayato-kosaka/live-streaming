@@ -340,12 +340,12 @@
   }
  ],
  "title": {
-  "text": "『歩きました』じゃないんですよ\n偏見をなくしたくて、🇮🇷イラン国境まで",
+  "text": "偏見をなくしたくて、\n🇮🇷イラン国境まで歩いたお話",
   "look": "card",
   "from": 0,
   "to": 1127,
   "highlight": [
-   "歩きました"
+   "イラン国境まで歩いた"
   ]
  },
  "telops": [],
@@ -426,7 +426,7 @@
   ]
  },
  "meta": {
-  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a12f80ca5c61073e4/shorts/videos/LxrbXwHssF0/p1/spec_C.json",
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-aa0ab1ab845f79d3c/shorts/videos/LxrbXwHssF0/p1/spec_C.json",
   "fps": 30,
   "frames": 1127,
   "seconds": 37.567,
