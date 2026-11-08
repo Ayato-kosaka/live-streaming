@@ -21,7 +21,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { THEMES, themeAt, tierFor, type FxTier, type SeasonTheme } from "../themes";
 import { stageFor, PLAIN_HEADROOM, PLAIN_CHAR_BOTTOM } from "../season/show/stage";
-import { fxVariantOf, fxWarmOrder, layersFor, parseFxManifest, withFxVideo, type VideoPlan } from "../season/show/fxVideo";
+import { fxVariantOf, fxHoldOrder, layersFor, parseFxManifest, withFxVideo, type VideoPlan } from "../season/show/fxVideo";
 
 const halloween = THEMES.find((t) => t.id === "halloween")!;
 const castle = THEMES.find((t) => t.id === "castle")!;
@@ -174,10 +174,10 @@ describe("3. light の無い段は full で流す", () => {
     for (const e of Object.values(m)) expect(e.variants.full?.back).toBeTruthy();
   });
 
-  it("light を外した manifest では、旗 light でも full と同じ本を同じ順に温める（落とす量が増えない）", () => {
+  it("light を外した manifest では、旗 light でも full と同じ本を同じ順に手元に持つ（落とす量が増えない）", () => {
     const n = parseFxManifest(NO_LIGHT);
-    expect(fxWarmOrder(tiers, n, "light")).toEqual(fxWarmOrder(tiers, n, "full"));
-    expect(fxWarmOrder(tiers, n, "light").some((f) => /-light-/.test(f))).toBe(false);
-    expect(fxWarmOrder(tiers, n, "full").length).toBeGreaterThan(0);
+    expect(fxHoldOrder(tiers, n, "light")).toEqual(fxHoldOrder(tiers, n, "full"));
+    expect(fxHoldOrder(tiers, n, "light").some((f) => /-light-/.test(f))).toBe(false);
+    expect(fxHoldOrder(tiers, n, "full").length).toBeGreaterThan(0);
   });
 });

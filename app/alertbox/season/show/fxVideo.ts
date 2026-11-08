@@ -22,11 +22,16 @@
  *   見せるのは「見せてよい」の合図のどれか早いもの（`onShowable`。1つの合図に頼らない。#1137）
  * - 動いているか・キャラ絵と札を出す秒は、動画の時計（currentTime）の進みで決める。コマの合図には頼らない（#1137）
  * - 3秒動かなければ、その層は出さない。全部の層が動かなければ、いまの段の見せ方（字とキャラ絵）に落ちる
- * - 同じ URL は二度落とさない（温めは1回きり。アラートでは控えから読む）
  * - `still=1`（iPhone の日）は動画を1回も出さず、1バイトも落とさない（呼ぶ側が止める）
+ *
+ * ## 動画は手元（Blob）から流す（2026-11-08 の配信から）
+ *
+ * `<video>` に渡すのは、いつも手元の URL（`fxHold.ts`）。元の URL を `<video>` に読ませない（HTTP の控えに頼らない。
+ * 11/8 は控えが使えず、7段とも黙って動画なしで出た）。持っていない段は、投げ銭が来たらその場で取り寄せる
  */
 import type { FxTier, FxVideoVariant, SeasonTheme } from "../../themes";
 import { newVideo, onShowable } from "../../videoGuard";
+import { dropFxHeld, fxHeldUrl, needFxVideos, revokeFxUrl } from "./fxHold";
 
 export type FxPart = "intro" | "stay" | "outro";
 export const FX_PARTS: readonly FxPart[] = ["intro", "stay", "outro"];
@@ -171,83 +176,49 @@ export function layersFor(entry: FxTierEntry, variant: FxVideoVariant): FxLayers
   return entry.variants[variant] ?? entry.variants.full ?? null;
 }
 
-/* ---------------------------------------------------------------- 温める順と量 */
+/* ---------------------------------------------------------------- 手元に持つ順 */
 
 /**
- * 前もって落としておく量の上限（バイト）。**超えたら、そこから先の段は投げ銭が来たときに読む。**
- *
- * PRISM のウィジェットは Android の WebView で開いていて、WebView の HTTP の控えは 20MB ほどしかない
- * （Chromium の android_webview の既定。端末では測れていない）。控えは古いものから捨てられるので、
- * 7段ぶん（約束の目安で 1段 6MB＝42MB）を全部落とすと、**先に落とした段1〜3（いちばんよく来る段）が
- * 段7（年2回）に押し出されて、落としたこと自体が無駄になる。** 貯金箱の絵と JS（約3MB）を残して 12MB まで
- */
-export const FX_WARM_BUDGET = 12 * 1024 * 1024;
-
-/**
- * 温める順（ファイル名）。決め方は4つ:
+ * 手元に持つ順（ファイル名）。量の上限は `fxHold.ts` の `FX_HOLD_BUDGET`。決め方は4つ:
  *
  * 1. **その日に流す通りだけ**（2通りのうち片方しか出ないので、もう片方は1バイトも落とさない）
- * 2. **全段の登場を先に、滞在はそのあと。** アラートの頭で読み終えていなければならないのは登場だけで、
- *    滞在は頭のコマが出れば始められる（残りは登場が流れている 1.4〜7 秒のあいだに読める）。
- *    段ごとに登場と滞在を組で落とすと、full では段1〜6 だけで上限に近づき、**いちばん大きい段7 の登場が
- *    上限の外に出る**（段4・5 の実の動画と、描く担当の書き出しの速さで数えた）。段7 は年2回なので、
- *    控えに無ければその日の1回目は動画なしで出てしまう
- * 3. 登場どうし・滞在どうしは **段の低い順**（段1 → 段7）。来る回数の順（〜999円は毎配信、1,000円〜は3日に1回、
- *    5,000円〜は月1、1万円〜は年2）。上限で切れるのは、高い段の滞在から
- * 4. 1段の中は back → front。締めは温めない:
- *    締めはアラートの終わりの0.6〜1.5秒で、要るのは投げ銭から 25 秒以上あと。アラートが出たときに読み始めれば間に合う
+ * 2. **段ごとに、登場と滞在を組で。** 段を手元から流せるのは、その段の登場と滞在（層ぜんぶ）がそろってから。
+ *    前は全段の登場を先に落としていた（滞在は登場が流れているあいだに回線で読める、という前提）。
+ *    11/8 はその前提が崩れて、滞在が読めずに7段とも外れた。いまは回線で読む本を流しながら待たない
+ * 3. 段は **低い順**（段1 → 段7）。来る回数の順（〜999円は毎配信、1,000円〜は3日に1回、5,000円〜は月1、1万円〜は年2）。
+ *    上限で切れるのは高い段から。開き直した直後に来た投げ銭も、安い段から先に手元から出せる
+ * 4. 1段の中は back → front。**締めは全段の登場と滞在のあと**（要るのは投げ銭から 25 秒以上あと。
+ *    持っていなければ、アラートが出てから取り寄せて間に合う）
  */
-export function fxWarmOrder(tiers: readonly FxTier[], m: FxManifest, variant: FxVideoVariant): string[] {
+export function fxHoldOrder(tiers: readonly FxTier[], m: FxManifest, variant: FxVideoVariant): string[] {
   const out: string[] = [];
   const keys = [...tiers].sort((a, b) => a.min - b.min).map((t) => t.video?.tier).filter((k): k is string => !!k);
-  for (const part of ["intro", "stay"] as const) {
-    for (const k of keys) {
-      const e = m[k];
-      const l = e && layersFor(e, variant);
-      if (!l) continue;
-      for (const name of FX_LAYERS) {
+  const push = (k: string, parts: readonly FxPart[]) => {
+    const e = m[k];
+    const l = e && layersFor(e, variant);
+    if (!l) return;
+    for (const name of FX_LAYERS)
+      for (const part of parts) {
         const f = l[name]?.[part];
         if (f && !out.includes(f)) out.push(f);
       }
-    }
-  }
+  };
+  for (const k of keys) push(k, ["intro", "stay"]);
+  for (const k of keys) push(k, ["outro"]);
   return out;
 }
 
-/* 落とし終えた（落としている）URL。ページに1つ。**同じ URL は二度落とさない**（しくじったものだけ外して、次に試す） */
-const warmed = new Set<string>();
-
-/** 温め終えた URL（試験と道具が見る） */
-export const fxWarmed = (): ReadonlySet<string> => warmed;
-
 export const fxUrl = (dir: string, file: string) => `${dir}/${file}`;
 
-/**
- * 順に1本ずつ落とす（HTTP の控えに乗せるだけ。展開しない）。配信しながら落とすので並べない（電波を取り合わない）。
- * `alive()` が false になったら止める（テーマが替わった・面を閉じた）。落としたバイト数を返す
- */
-export async function warmFxVideos(
-  dir: string,
-  files: readonly string[],
-  alive: () => boolean,
-  budget = FX_WARM_BUDGET
-): Promise<number> {
-  let bytes = 0;
-  for (const f of files) {
-    if (!alive() || bytes >= budget) break;
-    const url = fxUrl(dir, f);
-    if (warmed.has(url)) continue;
-    warmed.add(url);
-    try {
-      const res = await fetch(url, { cache: "force-cache" });
-      if (!res.ok) throw new Error(String(res.status));
-      bytes += (await res.arrayBuffer()).byteLength;
-    } catch {
-      // アラートのときにもう一度読みに行く
-      warmed.delete(url);
-    }
-  }
-  return bytes;
+/** 手元から流せる段（登場と滞在が層ぜんぶ手元にある段）。ログが見る */
+export function fxReadyTiers(dir: string, m: FxManifest, variant: FxVideoVariant): string[] {
+  return Object.keys(m)
+    .sort((a, b) => Number(a) - Number(b))
+    .filter((k) => {
+      const l = layersFor(m[k], variant);
+      if (!l) return false;
+      return FX_LAYERS.every((name) => !l[name] || (["intro", "stay"] as const).every((p) => !!fxHeldUrl(fxUrl(dir, l[name]![p]))));
+    });
 }
 
 /* ---------------------------------------------------------------- 1件ぶんの動画（要素）を用意する */
@@ -265,6 +236,27 @@ export type FxKit = {
   layers: Record<FxLayerName, FxLayerKit | null>;
   entry: FxTierEntry;
   used: boolean;
+  /** 締めの流す URL（滞在に入ったら読ませる）。持っていなければ取り寄せている。読めなければ null（締めなしで終わる） */
+  outro?: Record<FxLayerName, FxOutro | null>;
+  /** 上限の外で、この1件だけに渡した URL（手放すときに一緒に手放す） */
+  transient?: string[];
+  released?: boolean;
+};
+
+/** 締めの手元の URL。`url` は取り寄せが済んだら入る（undefined = まだ・null = 読めなかった） */
+export type FxOutro = { url?: string | null; p: Promise<string | null> };
+
+/** 用意の結果。ログ（index.tsx の `fxPlan`）に、そのまま載せる */
+export type FxKitResult = {
+  kit: FxKit | null;
+  /** 手元に全部あった（held）・その場で取り寄せた（fetched） */
+  from: "held" | "fetched" | null;
+  /** 外した理由（`fetch` 回線で読めない・`fetchTimeout` 取り寄せが間に合わない・`hold` 手元に置けない・`load` 手元の動画が読めない） */
+  why: string | null;
+  /** 取り寄せた本数・バイト数・かかった ms（手元にあれば 0） */
+  fetched: number;
+  bytes: number;
+  fetchMs: number;
 };
 
 /** その段の動画を流す段取り（AlertStage が持つ） */
@@ -322,8 +314,11 @@ export function fxReady(v: HTMLVideoElement, level: 2 | 4, timeoutMs: number): P
   });
 }
 
-/** 要素を手放す（再生器と読んだ中身を放す）。DOM からも外す */
+/** 要素を手放す（再生器と読んだ中身を放す）。DOM からも外す。この1件だけに渡した URL も手放す */
 export function releaseFxKit(kit: FxKit) {
+  kit.released = true;
+  for (const u of kit.transient ?? []) revokeFxUrl(u);
+  if (kit.transient) kit.transient.length = 0;
   for (const name of FX_LAYERS) {
     const L = kit.layers[name];
     if (!L) continue;
@@ -341,10 +336,14 @@ export function releaseFxKit(kit: FxKit) {
   }
 }
 
+const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
 /**
- * その段の動画を用意する。**登場は最後まで流せるところまで（canplaythrough）、滞在は頭のコマまで**読んでから返す。
- * 締めはここでは読み始めない（`runFxShow` が滞在に入ってから読む。登場・滞在と電波を取り合わない）。
- * 読めなければ（しくじり・`timeoutMs` 切れ）null を返し、作った要素は捨てる
+ * その段の動画を用意する。**登場と滞在を手元の URL で渡し、登場は最後まで流せるところまで（canplaythrough）、
+ * 滞在は頭のコマまで**読んでから返す。持っていない本は、ここで取り寄せる（`needFxVideos`）。
+ * 締めは、登場と滞在がそろってから取り寄せ始める（`runFxShow` が滞在に入ってから読ませる。登場・滞在と電波を取り合わない）。
+ * 読めなければ（しくじり・`timeoutMs` 切れ）kit は null で、理由を返す。作った要素は捨てる。
+ * 手元の動画が読めなかったら、その本を手放す（次の温めで取り直す）
  */
 export async function prepareFxKit(
   dir: string,
@@ -352,31 +351,83 @@ export async function prepareFxKit(
   layers: FxLayers,
   entry: FxTierEntry,
   timeoutMs: number
-): Promise<FxKit | null> {
+): Promise<FxKitResult> {
+  const t0 = nowMs();
+  const res: FxKitResult = { kit: null, from: null, why: null, fetched: 0, bytes: 0, fetchMs: 0 };
+  const want: string[] = [];
+  for (const name of FX_LAYERS) {
+    const parts = layers[name];
+    if (parts) want.push(fxUrl(dir, parts.intro), fxUrl(dir, parts.stay));
+  }
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const need = await Promise.race([
+    needFxVideos(want),
+    new Promise<"timeout">((r) => {
+      timer = setTimeout(() => r("timeout"), timeoutMs);
+    }),
+  ]);
+  if (timer) clearTimeout(timer);
+  res.fetchMs = Math.round(nowMs() - t0);
+  // 間に合わなくても、取り寄せは続けて手元に持つ（同じ段の次の投げ銭は手元から出る）
+  if (need === "timeout") return { ...res, why: "fetchTimeout" };
+  res.fetched = need.fetched;
+  res.bytes = need.bytes;
+  res.from = need.fetched ? "fetched" : "held";
+  if (!need.urls) {
+    for (const u of need.transient) revokeFxUrl(u);
+    return { ...res, why: need.why ?? "fetch" };
+  }
+  const urls = need.urls;
   const mk = (name: FxLayerName): FxLayerKit | null => {
     const parts = layers[name];
     if (!parts) return null;
     const outro = makeFxVideo(null, false, `${name}:outro`);
+    // 元の URL は印だけ（道具が読む）。流すのは手元の URL
     outro.dataset.src = fxUrl(dir, parts.outro);
-    return {
-      intro: makeFxVideo(fxUrl(dir, parts.intro), false, `${name}:intro`),
-      stay: makeFxVideo(fxUrl(dir, parts.stay), true, `${name}:stay`),
-      outro,
-    };
+    const intro = makeFxVideo(urls.get(fxUrl(dir, parts.intro))!, false, `${name}:intro`);
+    intro.dataset.src = fxUrl(dir, parts.intro);
+    const stay = makeFxVideo(urls.get(fxUrl(dir, parts.stay))!, true, `${name}:stay`);
+    stay.dataset.src = fxUrl(dir, parts.stay);
+    return { intro, stay, outro };
   };
-  const kit: FxKit = { key, layers: { back: mk("back"), front: mk("front") }, entry, used: false };
+  const kit: FxKit = { key, layers: { back: mk("back"), front: mk("front") }, entry, used: false, transient: [...need.transient] };
+  const left = Math.max(0, timeoutMs - (nowMs() - t0));
   const waits: Promise<boolean>[] = [];
+  const els: HTMLVideoElement[] = [];
   for (const name of FX_LAYERS) {
     const L = kit.layers[name];
     if (!L) continue;
-    waits.push(fxReady(L.intro, 4, timeoutMs), fxReady(L.stay, 2, timeoutMs));
+    waits.push(fxReady(L.intro, 4, left), fxReady(L.stay, 2, left));
+    els.push(L.intro, L.stay);
   }
   const oks = await Promise.all(waits);
   if (!oks.every(Boolean)) {
+    // 手元の動画が読めない（壊れた・捨てられた）。その本を手放して、次の温めで取り直す
+    oks.forEach((ok, i) => {
+      if (!ok && els[i].error && els[i].dataset.src) dropFxHeld(els[i].dataset.src!);
+    });
     releaseFxKit(kit);
-    return null;
+    return { ...res, why: "load" };
   }
-  return kit;
+  // 締め。登場と滞在がそろってから取り寄せる（持っていればすぐ）
+  const outroOf = (name: FxLayerName): FxOutro | null => {
+    const parts = layers[name];
+    if (!parts) return null;
+    const src = fxUrl(dir, parts.outro);
+    const o: FxOutro = {
+      p: needFxVideos([src]).then((r) => {
+        for (const u of r.transient) {
+          if (kit.released) revokeFxUrl(u);
+          else kit.transient!.push(u);
+        }
+        o.url = kit.released ? null : r.urls?.get(src) ?? null;
+        return o.url;
+      }),
+    };
+    return o;
+  };
+  kit.outro = { back: outroOf("back"), front: outroOf("front") };
+  return { ...res, kit };
 }
 
 /* ---------------------------------------------------------------- 流す */
@@ -412,7 +463,8 @@ export function runFxShow(
   kit: FxKit,
   hosts: Record<FxLayerName, HTMLElement>,
   durationSec: number,
-  onFail: (sec: number) => void,
+  /** 全部の層が消えた（その秒と、最後に消えた層の理由） */
+  onFail: (sec: number, why: string) => void,
   /** 先導の層の動画が `revealAt` に来た（キャラ絵と札を出してよい）。1回だけ */
   onReveal?: () => void
 ): () => void {
@@ -461,7 +513,7 @@ export function runFxShow(
     if (failed || stopped) return;
     failed = true;
     mark("fxv:fail", { t: sec(), why });
-    onFail(sec());
+    onFail(sec(), why);
   };
   const alive = () => layers.filter((x) => !x.dead);
   /** 先導の層（奥。奥が消えたら手前）。移る切れ目はこの層が決める */
@@ -498,11 +550,31 @@ export function runFxShow(
     if (p === "outro") L.k.stay.pause();
     mark(`fxv:${L.name}:${p}`, { t: sec() });
   };
+  /** 締めが読めない（取り寄せられなかった・まだ来ない）。滞在をくり返したまま終わる（層ごとは消さない） */
+  const noOutro = (L: Layer) => {
+    if (L.noOutro) return;
+    L.noOutro = true;
+    L.k.stay.loop = true;
+    mark(`fxv:${L.name}:noOutro`, { t: sec() });
+  };
   const play = (L: Layer, part: FxPart) => {
     if (L.dead || stopped) return;
-    L.phase = part;
     const v = L.k[part];
-    if (!v.getAttribute("src") && v.dataset.src) v.src = v.dataset.src;
+    /* 締めの手元の URL がまだ無い（取り寄せ中・読めなかった）。元の URL は読ませない（控えに頼らない）。
+       滞在の最後のコマで止まっているので、滞在をもう一度くり返して終わる */
+    if (part === "outro" && !v.getAttribute("src")) {
+      noOutro(L);
+      if (L.phase === "stay" && L.k.stay.paused) {
+        try {
+          L.k.stay.currentTime = 0;
+        } catch {
+          // 頭出しできなくても流すのは続ける
+        }
+        L.k.stay.play()?.catch?.(() => {});
+      }
+      return;
+    }
+    L.phase = part;
     try {
       if (v.currentTime > 0) v.currentTime = 0;
     } catch {
@@ -535,12 +607,7 @@ export function runFxShow(
       const v = L.k[p];
       on(v, "error", () => {
         // 締めだけが読めないなら、締めを出さずに滞在のまま終わる（読み始めは滞在の頭なので、まだ締めの前）
-        if (p === "outro" && L.phase !== "outro") {
-          L.noOutro = true;
-          L.k.stay.loop = true;
-          mark(`fxv:${L.name}:noOutro`, { t: sec() });
-          return;
-        }
+        if (p === "outro" && L.phase !== "outro") return noOutro(L);
         kill(L, `error:${p}`);
       });
     }
@@ -554,13 +621,20 @@ export function runFxShow(
       L.phase = "done";
       mark(`fxv:${L.name}:end`, { t: sec() });
     });
-    // 締めは、滞在に入ったら読み始める（要るのは 25 秒以上あと）
+    // 締めは、滞在に入ったら読み始める（要るのは 25 秒以上あと）。流すのは手元の URL（`prepareFxKit` が取り寄せている）
     on(L.k.stay, "playing", () => {
       const o = L.k.outro;
-      if (!o.getAttribute("src") && o.dataset.src) {
-        o.src = o.dataset.src;
+      const want = kit.outro?.[L.name];
+      if (o.getAttribute("src") || !want) return;
+      const give = (u: string | null) => {
+        if (stopped || o.getAttribute("src")) return;
+        if (!u) return noOutro(L);
+        o.src = u;
         o.load();
-      }
+      };
+      // 取り寄せが済んでいれば、すぐ（済んでいなければ、済んだときに）
+      if (want.url !== undefined) give(want.url);
+      else want.p.then(give);
     });
   }
 

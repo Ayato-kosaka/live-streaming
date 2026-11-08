@@ -165,6 +165,27 @@ def build(res):
     else:
         row("合図の来ない端末（偽の4通り × 7段）", False, "回っていない", [_why(r, "devices")])
 
+    # 本物の通知の道（?preview なし・どねるの WebSocket）× 遅い回線 × 控えなし × 長く置く（2026-11-08 の配信）
+    r = _load(res, "live")
+    if r and r.get("na"):
+        row("本物の通知の道（遅い回線・控えなし）", None, r["na"])
+    elif r and r.get("runs"):
+        lv = [x for x in r["runs"] if x.get("tool")]
+        t = lv[0]["tool"] if lv else {}
+        bt = t.get("byTier") or {}
+        bad = [f"{b['amount']}円 段{b['tier']}: 出なかった・札 {b.get('plateSec')}s・判断 {json.dumps(b.get('plan'), ensure_ascii=False)[:160]}" for b in (t.get("bad") or [])]
+        bad += [f"測れない: {e}" for e in (t.get("errs") or [])][:3]
+        ok = r.get("exit") == 0 and bool(t.get("alerts")) and t.get("missed") == 0 and len(bt) == len(run.AMOUNTS)
+        row(
+            "本物の通知の道（遅い回線・控えなし）",
+            ok,
+            f"下り1.5Mbps・往復300ms・投げ銭ごとに控えを空に・開いて{(t.get('open') or [{}])[0].get('sec', '-')}秒置いて: 演出 {t.get('video')}/{t.get('alerts')}件"
+            f"（{len(bt)}段）・出るまで 中央値 {t.get('median')}s・最大 {t.get('max')}s（出なかった件 0）",
+            bad or ([] if ok else [_why(r, "live")]),
+        )
+    else:
+        row("本物の通知の道（遅い回線・控えなし）", False, "回っていない", [_why(r, "live")])
+
     # 対照
     c = _load(res, "controls")
     if c and c.get("controls"):
@@ -195,6 +216,9 @@ def build(res):
         if "holelate" in cc:
             keys["穴が1コマ遅れる"] = "holelate"
             hit["穴が1コマ遅れる"] = tl("holelate").get("faceMiss", 0)
+        if "live" in cc:
+            keys["本物の通知で1.5秒"] = "live"
+            hit["本物の通知で1.5秒"] = tl("live").get("missed", 0)
         nok = [k for k, v in hit.items() if cc.get(keys[k], {}).get("exit") != 1 or not v]
         row(
             "対照（壊すと落ちる）",

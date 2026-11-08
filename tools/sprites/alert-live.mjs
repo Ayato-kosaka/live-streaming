@@ -138,7 +138,19 @@ async function serve() {
         try {
           const st = await stat(f);
           if (!st.isFile()) continue;
-          const head = { "content-type": TYPES[extname(f)] || "application/octet-stream", "cache-control": cacheOf(path), "accept-ranges": "bytes" };
+          // 印（etag・last-modified）も Firebase Hosting と同じく付ける。控えから Range で読むとき・古い控えを問い合わせるときに使われる
+          const etag = `"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
+          const head = {
+            "content-type": TYPES[extname(f)] || "application/octet-stream",
+            "cache-control": cacheOf(path),
+            "accept-ranges": "bytes",
+            etag,
+            "last-modified": st.mtime.toUTCString(),
+          };
+          if (req.headers["if-none-match"] === etag) {
+            res.writeHead(304, head).end();
+            return;
+          }
           const body = await readFile(f);
           const r = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
           if (r && (r[1] || r[2])) {

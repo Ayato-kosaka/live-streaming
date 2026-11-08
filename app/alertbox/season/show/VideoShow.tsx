@@ -19,8 +19,8 @@ type Props = {
   plan: VideoPlan;
   /** アラートが出ている秒数（フェードアウトの手前まで） */
   durationSec: number;
-  /** 動画が1つも動かなかった（その秒）。index.tsx が、いまの段の見せ方に落とす */
-  onFail: (sec: number) => void;
+  /** 動画が1つも動かなかった（その秒と、最後に消えた層の理由）。index.tsx が、いまの段の見せ方に落とす */
+  onFail: (sec: number, why: string) => void;
   /** 動画が revealAt に来た。index.tsx が、ここでキャラ絵と札を組む（動画が遅れても順番が変わらない） */
   onReveal?: () => void;
 };
@@ -49,7 +49,7 @@ export const VideoShow: React.FC<Props> = ({ plan, durationSec, onFail, onReveal
       plan.kit,
       { back: back.current, front: front.current },
       durationSec,
-      (s) => failRef.current(s),
+      (s, why) => failRef.current(s, why),
       () => revealRef.current?.()
     );
     // front を持たない段（〜999円・1,000〜9,999円の light）は、穴も開けない（何も描かれない層に mask を掛けない）

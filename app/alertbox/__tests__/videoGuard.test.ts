@@ -24,6 +24,7 @@ import { readdirSync, readFileSync, statSync } from "fs";
 import { join, relative } from "path";
 import { CLEAR_POSTER, SHOW_AFTER_PLAY_MS, VIDEO_ATTRS, guardVideo, newVideo, onShowable } from "../videoGuard";
 import { makeFxVideo, prepareFxKit, releaseFxKit, runFxShow, type FxTierEntry } from "../season/show/fxVideo";
+import { resetFxHoldForTest } from "../season/show/fxHold";
 
 const ROOT = join(__dirname, "..");
 const PUBLIC_ALERT = join(__dirname, "../../../public/alert");
@@ -97,10 +98,16 @@ describe("1. アラートの `<video>` は全部、透明の poster を持ち、
     const ld = jest.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
     const pl = jest.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(() => Promise.resolve());
     const pa = jest.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+    // 動画は手元（Blob）から流す。jsdom には Blob の URL が無いので、偽物を渡す
+    resetFxHoldForTest();
+    let n = 0;
+    (URL as unknown as { createObjectURL: () => string }).createObjectURL = () => `blob:vg-${++n}`;
+    (URL as unknown as { revokeObjectURL: () => void }).revokeObjectURL = () => {};
+    (global as { fetch?: unknown }).fetch = jest.fn(async () => ({ ok: true, blob: async () => new Blob([new Uint8Array(16)]) }));
     try {
       const parts = (L: string) => ({ intro: `t5-full-${L}-intro.webm`, stay: `t5-full-${L}-stay.webm`, outro: `t5-full-${L}-outro.webm` });
       const entry: FxTierEntry = { variants: {}, revealAt: 2, introDur: 3, stayDur: 3, outroDur: 1, charBottom: null };
-      const kit = await prepareFxKit("/fx", "5-full", { back: parts("back"), front: parts("front") }, entry, 1000);
+      const { kit } = await prepareFxKit("/fx", "5-full", { back: parts("back"), front: parts("front") }, entry, 1000);
       expect(kit).not.toBeNull();
       const back = document.createElement("div");
       const front = document.createElement("div");
@@ -110,7 +117,7 @@ describe("1. アラートの `<video>` は全部、透明の poster を持ち、
       expect(placed).toHaveLength(6);
       stop();
       const spare = await prepareFxKit("/fx", "5-full", { back: parts("back"), front: null }, entry, 1000);
-      releaseFxKit(spare!);
+      releaseFxKit(spare.kit!);
       back.remove();
       front.remove();
     } finally {

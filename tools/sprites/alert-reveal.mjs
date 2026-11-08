@@ -118,8 +118,11 @@ const SAMPLER = `(() => {
       const vis = seen(plate) > 0.05 && r.bottom > 0 && r.top < innerHeight && r.width > 0 ? 1 : 0;
       const vids = [...document.querySelectorAll('[data-fx-video="back"] video')];
       const shown = vids.find((v) => v.style.opacity !== "0");
-      // 消された層（止めて透明にした）は「無い」と同じ。まだ流れ始めていない層だけが「待ち」
-      const part = shown ? ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?" : vids.some((v) => !v.paused) ? "wait" : "none";
+      // 消された層（止めて透明にした）は「無い」と同じ。まだ流れ始めていない層だけが「待ち」。
+      // どの本かは印（data-fx-part）で読む。動画は手元（blob:）の URL で流すので、URL には本の名前が無い（2026-11-08 から）
+      const part = shown
+        ? (shown.dataset.fxPart || "").split(":")[1] || ((shown.currentSrc || shown.src).match(/-(intro|stay|outro)\\./) || [])[1] || "?"
+        : vids.some((v) => !v.paused) ? "wait" : "none";
       /* 額が「0」。札の字は縁取りの写しと重ねてあり、textContent では「000円円円」になるので、字の箱（data-ink="fill"）だけを
          順につないで「…N円」の N を読む。弾む・ドンの段は1字ずつの箱なので、箱1つが「0」でも額は 0 ではない（100円の「0」。
          #1137 の1回目は、これで 100〜7,000円を全部「0円」と数えていた）。数え上げの段は額まるごとで1つの箱 */
