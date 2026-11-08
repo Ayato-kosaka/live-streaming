@@ -360,7 +360,8 @@ def live(name, s, log, out, js=None):
         r = load(j) or {}
         got.append({"label": sc["label"], "exit": c, "sec": sec, "tool": r})
         code = max(code, c)
-        print(f"  {name} {sc['label']}: 終了 {c}・演出 {r.get('video')}/{r.get('alerts')}・中央値 {r.get('median')}s・最大 {r.get('max')}s（{sec} 秒）")
+        opened = "・".join(f"{o.get('sec')}秒/要求{o.get('fxRequests')}{'（上限で打ち切り）' if o.get('capped') else ''}" for o in (r.get("open") or []) if o)
+        print(f"  {name} {sc['label']}: 終了 {c}・演出 {r.get('video')}/{r.get('alerts')}・中央値 {r.get('median')}s・最大 {r.get('max')}s（{sec} 秒）・開いて置いた {opened}")
         for k, b in (r.get("byTier") or {}).items():
             print(f"    段{k} {b['amount']}円: {b['video']}/{b['runs']}・中央値 {b['median']}s・最大 {b['max']}s")
         for b in (r.get("bad") or [])[:7]:
