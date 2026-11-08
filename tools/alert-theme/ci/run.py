@@ -195,9 +195,6 @@ def prep():
         # 本番と同じく public/ を重ねる（`npm run copy-public`。段の絵と動画は public/alert にある）
         shutil.copytree(ROOT / "public", DIST, dirs_exist_ok=True)
     info["steps"]["dist"] = (DIST / "alertbox").exists()
-    # 本物の通知の道の対照に配る、元の形に戻した JS（動画の段のあるテーマのときだけ）
-    if info["steps"]["dist"] and any(t["fx"] for t in s["themes"]):
-        info["steps"]["control"] = build_control(log)
     code, sec = sh([sys.executable, SPRITES / "avatars.py"], log, cwd=ROOT, timeout=900)
     roster = None
     for line in open(log, encoding="utf-8", errors="replace"):
@@ -213,6 +210,9 @@ def prep():
     chars["roster"] = roster
     (IN / "chars.json").write_text(json.dumps(chars, ensure_ascii=False, indent=1), encoding="utf-8")
     (IN / "season.json").write_text(json.dumps(s, ensure_ascii=False), encoding="utf-8")
+    # 本物の通知の道の対照に配る、元の形に戻した JS（動画の段のあるテーマのときだけ。in/ を空にしたあとに置く）
+    if info["steps"]["dist"] and any(t["fx"] for t in s["themes"]):
+        info["steps"]["control"] = build_control(log)
     info["chars"] = {k: chars[k] for k in ("roster", "roster_found", "got", "used", "ok", "typical")}
     info["chars"]["shapes"] = [{k: c[k] for k in ("name", "aspect", "fill", "alpha", "colors")} for c in chars["chars"]]
     (RES / "prep.json").write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding="utf-8")
