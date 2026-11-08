@@ -151,7 +151,8 @@ def overlap_themes(s):
 def plan(s=None):
     s = s or season()
     out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
-    return out + ["reveal", "devices", "live", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
+    # 対照の枝（alert-prod-accept）: 直したもので、本物の通知の道 × 7段 × 20回だけを回す
+    return [f"live-r{i}" for i in range(1, 6)]
 
 
 # ---------------------------------------------------------------- 支度
