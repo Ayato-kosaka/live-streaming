@@ -280,6 +280,8 @@ def shard(name):
             res |= fx(s, log, out)
         elif name == "decode":
             res |= decode(s, log, out)
+        elif name in LIVE:
+            res |= live(name, s, log, out)
         else:
             with Server() as srv:
                 res |= browser_shard(name, s, srv.base, log, out)
@@ -320,6 +322,52 @@ def decode(s, log, out):
             "byTheme": {k: v["tool"]["runs"] for k, v in runs.items() if v["tool"]},
         }
     return {"exit": code, "tool": merged}
+
+
+# 本物の通知の道（`?preview` なし・どねるの WebSocket）× 遅い回線 × 控えなし（2026-11-08 の配信。alert-live.mjs）。
+# ほかの道具は試し表示で開くので、配信で通る道はここでしか測っていない。組の名前 → 回す条件の並び
+LIVE_MOBILE = {"label": "本物・下り1.5Mbps往復300ms・控えなし・長く置く", "net": "mobile", "cache": "clear", "runs": 1}
+LIVE = {
+    "live": [LIVE_MOBILE],
+    # 直す前の master で再現する（対照の枝 alert-prod-* が plan を差し替えて回す）。
+    # 速い回線・控えありで出ること（道具が演出を見られること）も並べる
+    "repro": [
+        {**LIVE_MOBILE, "runs": 2},
+        {"label": "本物・回線そのまま・控えあり", "net": "off", "cache": "keep", "runs": 1},
+        {"label": "本物・下り1.5Mbps往復300ms・控えあり（1時間以内）", "net": "mobile", "cache": "keep", "runs": 1},
+    ],
+}
+# 7段 × 20回（合格の数）。1本に 4回ずつ5本に割る（1回開いて7件で約8分。2本並べる）
+LIVE.update({f"live-r{i}": [{**LIVE_MOBILE, "runs": 4}] for i in range(1, 6)})
+
+
+def live(name, s, log, out, js=None):
+    """LIVE の1組。条件ごとに alert-live.mjs を1本。段ごとの数を job のログにも短く出す"""
+    t = next((x for x in s["themes"] if x["fx"]), None)
+    if not t:
+        return {"exit": None, "na": "動画の段を持つテーマが無い"}
+    info = load(IN / "chars.json") or {}
+    ch = IN / "chars" / f"{info.get('typical')}.png"
+    if not ch.exists():
+        ch = sorted((IN / "chars").glob("*.png"))[0]
+    got, code = [], 0
+    for i, sc in enumerate(LIVE[name]):
+        j = out / f"live-{i}.json"
+        cmd = node("alert-live.mjs", "--dist", DIST, "--theme", t["theme"], "--amounts", ",".join(map(str, AMOUNTS)), "--net", sc["net"], "--cache", sc["cache"], "--runs", str(sc["runs"]), "--char", ch, "--label", sc["label"], "--json", j)
+        if js:
+            cmd += ["--js", js]
+        c, sec = sh(cmd, log, cwd=SPRITES, timeout=5400)
+        r = load(j) or {}
+        got.append({"label": sc["label"], "exit": c, "sec": sec, "tool": r})
+        code = max(code, c)
+        print(f"  {name} {sc['label']}: 終了 {c}・演出 {r.get('video')}/{r.get('alerts')}・中央値 {r.get('median')}s・最大 {r.get('max')}s（{sec} 秒）")
+        for k, b in (r.get("byTier") or {}).items():
+            print(f"    段{k} {b['amount']}円: {b['video']}/{b['runs']}・中央値 {b['median']}s・最大 {b['max']}s")
+        for b in (r.get("bad") or [])[:7]:
+            print(f"    出なかった {b['amount']}円: 札 {b.get('plateSec')}s・判断 {json.dumps(b.get('plan'), ensure_ascii=False)}・失敗 {json.dumps(b.get('failed'), ensure_ascii=False)}")
+        for e in (r.get("errs") or [])[:3]:
+            print(f"    測れない: {e}")
+    return {"exit": code, "runs": got}
 
 
 def controls(s, base, log, out):
