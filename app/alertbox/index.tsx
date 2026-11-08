@@ -39,7 +39,7 @@ import { stageFor, plateTiming, revealedStage, withoutVideo, PLAIN_HEADROOM, PLA
 import { TierShow } from "./season/show/TierShow";
 import { VideoShow } from "./season/show/VideoShow";
 import { newVideo, onShowable, VIDEO_ATTRS } from "./videoGuard";
-import { useTierVideo } from "./season/show/useTierVideo";
+import { useTierVideo, type FxPrep } from "./season/show/useTierVideo";
 import { RichText } from "./season/plate/RichText";
 import type { PlateStyle } from "./themes";
 import { CharBox } from "./season/plate/CharBox";
@@ -95,13 +95,34 @@ const REPLAY_POLL_MS = 3000;
    **待っているあいだ、画面はその人の絵。** 何も出ない時間は作らない。 */
 const VIDEO_START_TIMEOUT_MS = 3000;
 
-/* 試し表示（`?preview=`）のあいだは、ログを1行も送らない。
+/* 試し表示（`?preview=`）のあいだは、ログを口へ1行も送らない。
    ログの口は本番の台帳と同じ所へ行くので、見た目を撮るたびに
    「投げ銭が来た」が残ると、あとで本物と見分けられない。
-   ここで止めれば、下の呼び出しを1つずつ書き換えずに済む。 */
+   ここで止めれば、下の呼び出しを1つずつ書き換えずに済む。
+   **字だけは本物と同じ形で console に出す**（道具が演出の判断 `fxPlan` を読む。送り先が違うだけで、組み立ては同じ） */
 let quiet = false;
-const sendLog: typeof sendLogRaw = (...args) =>
-  quiet ? Promise.resolve() : sendLogRaw(...args);
+const sendLog: typeof sendLogRaw = (...args) => {
+  if (!quiet) return sendLogRaw(...args);
+  try {
+    const [screen, sid, event, data] = args;
+    console.log(JSON.stringify({ timestamp: new Date().toISOString(), sessionId: sid?.current, screen, event, preview: true, data: data ?? {} }));
+  } catch {
+    // 出せなくても止めない
+  }
+  return Promise.resolve();
+};
+
+/** 端末が言う回線の様子（Android の WebView は Network Information API を持つ）。ログに添える。読めなければ null */
+function netInfo(): Record<string, unknown> | null {
+  try {
+    const c = (typeof navigator !== "undefined" ? (navigator as unknown as { connection?: Record<string, unknown> }).connection : undefined) ?? null;
+    const online = typeof navigator !== "undefined" ? navigator.onLine : null;
+    if (!c) return { online };
+    return { online, type: c.effectiveType ?? null, down: c.downlink ?? null, rtt: c.rtt ?? null, save: c.saveData ?? null };
+  } catch {
+    return null;
+  }
+}
 
 /** `?preview=` の読み方。`1` は偽の投げ銭を1件、`bank` は貯金箱だけ */
 /**
@@ -124,15 +145,20 @@ function plainPlate(type: NotificationData["type"]): PlateStyle {
 }
 
 /**
- * 投げ銭が来てから、その段の絵の展開を待つ上限（ms）。過ぎたら台本に乗せない（小物の演出で出す）。
- * アラートの頭がこのぶん遅れる。展開は 1 段ぶん（数枚）なので、ふつうは数十〜数百 ms
+ * 投げ銭が来てから、その段の絵の展開と段の動画の用意を待つ上限（ms）。**試し表示も本物の通知も同じ値。**
+ * 過ぎたら台本・動画に乗せない（小物の演出・動画なしで出す。理由はログの `fxPlan` に残る）。アラートの頭がこのぶん遅れる。
+ *
+ * 2026-11-08 までは本物の通知が 1.5 秒、試し表示だけ 8 秒だった。CI の道具はどれも試し表示で開くので、
+ * 配信で通る 1.5 秒の道は一度も測っていなかった。その日の配信（PRISM・山の上のモバイル回線）では、
+ * 動画の用意が 1.5 秒に間に合わず、7段とも黙って動画なしで出た（`docs/island-misses.md`）。
+ * **試し表示でしか通らない待ち方を作らない。** 試し表示と本物で違うのは、投げ銭がどこから来るかだけ。
+ *
+ * ふつうは数百 ms で済む: 絵の展開は1段ぶん（数枚）、動画は手元（Blob。`season/show/fxHold.ts`）から読む。
+ * 8 秒まで効くのは、手元に持ち終える前の段に投げ銭が来たとき（開き直した直後・遅い回線）で、その場で取り寄せる。
+ * 待たずに字とキャラ絵を先に出して動画を途中から重ねる形にしないのは、登場（主役が出る瞬間）を飛ばして
+ * 滞在から出すことになり、キャラ絵の箱も動画の段の高さ（〜999円は箱の底 0.72）といつもの高さ（0.98）のあいだで跳ぶから
  */
-const DECODE_WAIT_MS = 1500;
-/**
- * 試し表示の上限。試し表示は貯金箱が出た直後に偽の投げ銭を出すので、段の絵をまだ落としていない
- * （本番は落とし終えたあとに投げ銭が来る）。録画・見張りで台本が撮れないと困るので長めに待つ
- */
-const PREVIEW_DECODE_WAIT_MS = 8000;
+const HEAD_WAIT_MS = 8000;
 
 function previewMode(raw: string | string[] | undefined): "alert" | "bank" | null {
   const v = String((Array.isArray(raw) ? raw[0] : raw) ?? "").trim().toLowerCase();
@@ -189,6 +215,9 @@ export default function AlertBox() {
   /* 出している通知の「段と出し方」（台本・札・その人の絵を出す秒）。
      通知1件のあいだは決めたままにする（途中で絵が読み終わっても組み直さない） */
   const [stage, setStage] = useState<AlertStage | null>(null);
+  /* 出している段（動画が止まったときのログに、どの段だったかを添える） */
+  const stageNow = useRef<AlertStage | null>(null);
+  stageNow.current = stage;
   /* 面の大きさ（季節の演出・札・その人の絵の箱に渡す）。変わったときだけ描き直す。
      useWindowDimensions だと、PRISM が絶えず送ってくる resize のたびにアラート全体
      （豚も）が描き直された（`season/useBoxSize.ts`）。
@@ -336,7 +365,11 @@ export default function AlertBox() {
 
   /* 段の演出の動画（11月から。#1095）。旗（`?fx=full` / `?fx=light`）か、配信に出すと決めた日だけ、
      段を動画の段に差し替える。`still=1` の日は動画を出さず、1バイトも落とさない */
-  const tierVideo = useTierVideo(season.theme, { still: stillOnly, bankReady: season.rigsSettled });
+  const tierVideo = useTierVideo(season.theme, {
+    still: stillOnly,
+    bankReady: season.rigsSettled,
+    log: (event, data) => sendLog("AlertBox", sessionId, event, data),
+  });
   const tierVideoRef = useRef(tierVideo);
   tierVideoRef.current = tierVideo;
   /* 動画の段は、動画が revealAt に来た知らせ（`VideoShow` の onReveal）で、その通知のキャラ絵と札を組む。
@@ -345,8 +378,8 @@ export default function AlertBox() {
      revealAt を 10 秒過ぎたら出す（下の setTimeout。名前が最後まで出ない、を作らない） */
   const [revealedFor, setRevealedFor] = useState<NotificationData | null>(null);
   /* 動画が動かなかった（3 秒動かない・止められた）。その段は動画なしの見せ方に落とす（アラートは出したまま） */
-  const onVideoFail = useCallback((sec: number) => {
-    sendLog("AlertBox", sessionId, "fxVideoFailed", { sec });
+  const onVideoFail = useCallback((sec: number, why: string) => {
+    sendLog("AlertBox", sessionId, "fxVideoFailed", { sec, why, tier: stageNow.current?.video?.key ?? null });
     setStage((st) => (st ? withoutVideo(st, sec) : st));
   }, []);
 
@@ -924,20 +957,33 @@ export default function AlertBox() {
         : currentNotification.type === "donation"
           ? currentNotification.amount
           : 0;
+    /* 段の動画の用意の答え（待ちが明けるまでに来なければ null。そのときは「間に合わなかった」） */
+    let prep: FxPrep | null = null;
+    let rigsOk: boolean | null = null;
+    const t0 = typeof performance !== "undefined" ? performance.now() : 0;
+    let ensured: Promise<boolean> | null = null;
     if (isMoney && sn.theme) {
       /* 展開にかかった時間を User Timing に残す（`season:ensure`。tools/sprites/alert-decode.mjs が
          CPU を絞って読む）。待ちの上限を超えたかどうかは、ここを見ないと分からない */
-      const t0 = typeof performance !== "undefined" ? performance.now() : 0;
-      const ensured = Promise.all([sn.ensureFor(yen).catch(() => false), tv.ensureFor(yen).catch(() => false)])
-        .then(([ok, video]) => {
-          try {
-            performance.measure("season:ensure", { start: t0, detail: { yen, ok, video } });
-          } catch {
-            // 測れない環境では何もしない
-          }
-          return ok;
-        });
-      await Promise.race([ensured, new Promise((r) => setTimeout(r, preview ? PREVIEW_DECODE_WAIT_MS : DECODE_WAIT_MS))]);
+      ensured = Promise.all([
+        sn.ensureFor(yen).catch(() => false),
+        tv.ensureFor(yen).catch(
+          (): FxPrep => ({ ok: false, tier: null, from: null, why: "error", ms: 0, fetched: 0, bytes: 0 })
+        ),
+      ]).then(([ok, video]) => {
+        prep = video;
+        rigsOk = ok;
+        try {
+          performance.measure("season:ensure", {
+            start: t0,
+            detail: { yen, ok, video: video.ok, tier: video.tier, from: video.from, why: video.why },
+          });
+        } catch {
+          // 測れない環境では何もしない
+        }
+        return ok;
+      });
+      await Promise.race([ensured, new Promise((r) => setTimeout(r, HEAD_WAIT_MS))]);
     }
     const nextStage = isMoney
       ? stageFor(
@@ -952,6 +998,46 @@ export default function AlertBox() {
         )
       : null;
     setStage(nextStage);
+    /* 演出の判断を毎回1行残す（2026-11-08 の配信は、動画が出なかったのにログに何も無く、原因を数で追えなかった）。
+       段・動画で出したか・待った ms・用意の答え（手元か取り寄せか・外した理由）・手元に持っているもの・回線・開いてからの秒 */
+    if (isMoney && sn.theme) {
+      const p = prep as FxPrep | null;
+      const waited = Math.round((typeof performance !== "undefined" ? performance.now() : 0) - t0);
+      sendLog("AlertBox", sessionId, "fxPlan", {
+        id: currentNotification.id,
+        yen,
+        theme: tv.theme?.id ?? sn.theme.id,
+        tier: p?.tier ?? nextStage?.tier.video?.tier ?? null,
+        video: !!nextStage?.video,
+        show: !!nextStage?.show,
+        waitMs: waited,
+        limitMs: HEAD_WAIT_MS,
+        from: p?.from ?? null,
+        why: nextStage?.video ? null : p ? (p.why ?? (p.ok ? "unused" : "unknown")) : "timeout",
+        prepMs: p?.ms ?? null,
+        fetched: p?.fetched ?? null,
+        bytes: p?.bytes ?? null,
+        rigs: rigsOk,
+        held: tv.held(),
+        net: netInfo(),
+        openSec: Math.round((Date.now() - sessionId.current) / 1000),
+      });
+      /* 待ちが明けても用意が終わっていなければ、終わったときにもう1行（実際に何 ms かかったか・どこで外れたか） */
+      if (!p && ensured)
+        ensured.then(() => {
+          const late = prep as FxPrep | null;
+          sendLog("AlertBox", sessionId, "fxPrepLate", {
+            id: currentNotification.id,
+            tier: late?.tier ?? null,
+            ok: late?.ok ?? null,
+            from: late?.from ?? null,
+            why: late?.why ?? null,
+            ms: late?.ms ?? null,
+            fetched: late?.fetched ?? null,
+            bytes: late?.bytes ?? null,
+          });
+        });
+    }
     /* その人の絵と読み上げを出す秒。0 なら今どおり（すぐ） */
     const revealSec = nextStage?.revealSec ?? 0;
     if (nextStage?.video) setTimeout(() => setRevealedFor(currentNotification), (revealSec + 10) * 1000);

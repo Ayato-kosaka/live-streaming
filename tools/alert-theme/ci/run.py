@@ -151,7 +151,7 @@ def overlap_themes(s):
 def plan(s=None):
     s = s or season()
     out = [f"overlap-{t['theme']}-{a}-{sz}" for t in overlap_themes(s) for a in AMOUNTS for sz in SIZES]
-    return out + ["reveal", "devices", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
+    return out + ["reveal", "devices", "live", "controls", "textfit", "ink", "banksize", "decode", "fx", "media"]
 
 
 # ---------------------------------------------------------------- 支度
@@ -210,11 +210,56 @@ def prep():
     chars["roster"] = roster
     (IN / "chars.json").write_text(json.dumps(chars, ensure_ascii=False, indent=1), encoding="utf-8")
     (IN / "season.json").write_text(json.dumps(s, ensure_ascii=False), encoding="utf-8")
+    # 本物の通知の道の対照に配る、元の形に戻した JS（動画の段のあるテーマのときだけ。in/ を空にしたあとに置く）
+    if info["steps"]["dist"] and any(t["fx"] for t in s["themes"]):
+        info["steps"]["control"] = build_control(log)
     info["chars"] = {k: chars[k] for k in ("roster", "roster_found", "got", "used", "ok", "typical")}
     info["chars"]["shapes"] = [{k: c[k] for k in ("name", "aspect", "fill", "alpha", "colors")} for c in chars["chars"]]
     (RES / "prep.json").write_text(json.dumps(info, ensure_ascii=False, indent=1), encoding="utf-8")
     print(json.dumps({k: info[k] for k in ("theme", "fx")} | {"chars": info["chars"]["used"], "dist": info["steps"]["dist"]}, ensure_ascii=False))
     return 0 if info["steps"]["dist"] else 2
+
+
+# 本物の通知の道の対照（alert-live の `--js`）。動画の段の用意を「1.5 秒で諦める・手元に持たない」元の形
+# （2026-11-08 の配信で7段が出なかった形）に戻して書き出す。当て先が見つからなければ prep ごと落とす
+# （黙って対照を外さない。python/mutation_drill.py の REPO_CASES と同じ考え）
+LIVE_CONTROL = [
+    ("app/alertbox/index.tsx", "const HEAD_WAIT_MS = 8000;", "const HEAD_WAIT_MS = 1500;"),
+    ("app/alertbox/season/show/fxHold.ts", "export const FX_HOLD_BUDGET = 24 * 1024 * 1024;", "export const FX_HOLD_BUDGET = 0;"),
+]
+CTL = IN / "ctl"
+
+
+def build_control(log):
+    """LIVE_CONTROL を当てて書き出し、面（alertbox）と JS だけを in/ctl に置く。当てたものは必ず戻す"""
+    tmp = WORK / "ctl-dist"
+    inputs_clear(tmp)
+    originals = {}
+    try:
+        for f, old, new in LIVE_CONTROL:
+            p = ROOT / f
+            src = p.read_text(encoding="utf-8")
+            if src.count(old) != 1:
+                raise RuntimeError(f"本物の通知の道の対照の当て先が無い: {f}: {old}")
+            originals[p] = src
+            p.write_text(src.replace(old, new), encoding="utf-8")
+        code, sec = sh(["npx", "expo", "export", "--platform", "web", "--output-dir", tmp], log, cwd=ROOT)
+    finally:
+        for p, src in originals.items():
+            p.write_text(src, encoding="utf-8")
+    if CTL.exists():
+        shutil.rmtree(CTL)
+    CTL.mkdir(parents=True)
+    for name in ("alertbox", "alertbox.html"):
+        p = tmp / name
+        if p.is_dir():
+            shutil.copytree(p, CTL / name)
+        elif p.exists():
+            shutil.copy(p, CTL / name)
+    if (tmp / "_expo" / "static").exists():
+        shutil.copytree(tmp / "_expo" / "static", CTL / "_expo" / "static")
+    shutil.rmtree(tmp, ignore_errors=True)
+    return {"exit": code, "sec": sec, "ok": code == 0 and (CTL / "alertbox").exists()}
 
 
 class Server:
@@ -280,6 +325,8 @@ def shard(name):
             res |= fx(s, log, out)
         elif name == "decode":
             res |= decode(s, log, out)
+        elif name in LIVE:
+            res |= live(name, s, log, out)
         else:
             with Server() as srv:
                 res |= browser_shard(name, s, srv.base, log, out)
@@ -322,6 +369,56 @@ def decode(s, log, out):
     return {"exit": code, "tool": merged}
 
 
+# 本物の通知の道（`?preview` なし・どねるの WebSocket）× 遅い回線 × 控えなし（2026-11-08 の配信。alert-live.mjs）。
+# ほかの道具は試し表示で開くので、配信で通る道はここでしか測っていない。組の名前 → 回す条件の並び
+LIVE_MOBILE = {"label": "本物・下り1.5Mbps往復300ms・控えなし・長く置く", "net": "mobile", "cache": "clear", "runs": 1}
+LIVE = {
+    "live": [LIVE_MOBILE],
+    # 直す前の master で再現する（対照の枝 alert-prod-* が plan を差し替えて回す）。
+    # 速い回線・控えありで出ること（道具が演出を見られること）も並べる
+    "repro": [
+        {**LIVE_MOBILE, "runs": 2},
+        {"label": "本物・回線そのまま・控えあり", "net": "off", "cache": "keep", "runs": 1},
+        {"label": "本物・下り1.5Mbps往復300ms・控えあり（1時間以内）", "net": "mobile", "cache": "keep", "runs": 1},
+    ],
+}
+# 7段 × 20回（合格の数）。1本に 4回ずつ5本に割る（1回開いて7件で約8分。2本並べる）
+LIVE.update({f"live-r{i}": [{**LIVE_MOBILE, "runs": 4}] for i in range(1, 6)})
+# 対照（controls の shard から）: 元の形に戻した JS で、同じ条件。安い段・中の段・1万円の3件で、出なかった件が出ること
+LIVE["live-ctl"] = [{**LIVE_MOBILE, "label": "対照（1.5 秒で諦める・手元に持たない元の形）", "amounts": [100, 1500, 10000]}]
+
+
+def live(name, s, log, out, js=None):
+    """LIVE の1組。条件ごとに alert-live.mjs を1本。段ごとの数を job のログにも短く出す"""
+    t = next((x for x in s["themes"] if x["fx"]), None)
+    if not t:
+        return {"exit": None, "na": "動画の段を持つテーマが無い"}
+    info = load(IN / "chars.json") or {}
+    ch = IN / "chars" / f"{info.get('typical')}.png"
+    if not ch.exists():
+        ch = sorted((IN / "chars").glob("*.png"))[0]
+    got, code = [], 0
+    for i, sc in enumerate(LIVE[name]):
+        j = out / f"live-{i}.json"
+        amounts = sc.get("amounts") or AMOUNTS
+        cmd = node("alert-live.mjs", "--dist", DIST, "--theme", t["theme"], "--amounts", ",".join(map(str, amounts)), "--net", sc["net"], "--cache", sc["cache"], "--runs", str(sc["runs"]), "--char", ch, "--label", sc["label"], "--json", j)
+        if js:
+            cmd += ["--js", js]
+        c, sec = sh(cmd, log, cwd=SPRITES, timeout=5400)
+        r = load(j) or {}
+        got.append({"label": sc["label"], "exit": c, "sec": sec, "tool": r})
+        code = max(code, c)
+        opened = "・".join(f"{o.get('sec')}秒/要求{o.get('fxRequests')}{'（上限で打ち切り）' if o.get('capped') else ''}" for o in (r.get("open") or []) if o)
+        print(f"  {name} {sc['label']}: 終了 {c}・演出 {r.get('video')}/{r.get('alerts')}・中央値 {r.get('median')}s・最大 {r.get('max')}s（{sec} 秒）・開いて置いた {opened}")
+        for k, b in (r.get("byTier") or {}).items():
+            print(f"    段{k} {b['amount']}円: {b['video']}/{b['runs']}・中央値 {b['median']}s・最大 {b['max']}s")
+        for b in (r.get("bad") or [])[:7]:
+            print(f"    出なかった {b['amount']}円: 札 {b.get('plateSec')}s・判断 {json.dumps(b.get('plan'), ensure_ascii=False)}・あとで {json.dumps(b.get('late'), ensure_ascii=False)}・失敗 {json.dumps(b.get('failed'), ensure_ascii=False)}")
+        for e in (r.get("errs") or [])[:3]:
+            print(f"    測れない: {e}")
+    return {"exit": code, "runs": got}
+
+
 def controls(s, base, log, out):
     """壊すと落ちるか（どれも 1 で落ちるのが正しい）。いちばん先のテーマの段4（1,500円）で1本ずつ"""
     t = {"theme": s["theme"], "fx": s["fx"]}
@@ -357,6 +454,16 @@ def controls(s, base, log, out):
             cmd = [*cmd, "--out", o]
         code, _ = sh([*cmd, "--json", o / "out.json"], log, cwd=SPRITES)
         got[kind] = {"exit": code, "tool": load(o / "out.json")}
+    # 本物の通知の道を、元の形（1.5 秒で諦める・手元に持たない）に戻した JS で回す。出なかった件が出て 1 で落ちること
+    if t["fx"]:
+        o = out / "live"
+        o.mkdir(parents=True)
+        if (CTL / "alertbox").exists():
+            r = live("live-ctl", s, log, o, js=CTL)
+            first = (r.get("runs") or [{}])[0]
+            got["live"] = {"exit": first.get("exit"), "tool": first.get("tool")}
+        else:
+            got["live"] = {"exit": 2, "tool": None}
     return {"exit": 0 if all(v["exit"] == 1 for v in got.values()) else 1, "controls": got}
 
 

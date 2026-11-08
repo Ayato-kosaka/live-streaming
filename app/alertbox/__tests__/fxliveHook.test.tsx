@@ -9,7 +9,7 @@
  *
  * 守りたいのは4つ。
  *   1. 季節の外・ハロウィン・旗 `?fx=off`・出すと決めていないテーマは、**1バイトも落とさない**（manifest も読まない）
- *   2. 11月の本番の URL（旗なし）は、7段 full に差し替えて、貯金箱が出て 4 秒おいてから manifest → full を温める。
+ *   2. 11月の本番の URL（旗なし）は、7段 full に差し替えて、貯金箱が出て 4 秒おいてから manifest → full を手元に持つ。
  *      12/1 にテーマが外れたら（null）、差し替えも温めも止まる
  *   3. `still=1`（iPhone の日）は、旗が無くても1バイトも落とさない。段は差し替えるが、動画は渡さない
  *   4. 旗 `?fx=light` は、light のある段だけ light。light を外した manifest では全段 full を温めて流す
@@ -24,7 +24,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { THEMES, type FxTier, type SeasonTheme } from "../themes";
 import { useTierVideo, type TierVideoState } from "../season/show/useTierVideo";
-import { fxWarmed } from "../season/show/fxVideo";
+import { resetFxHoldForTest } from "../season/show/fxHold";
 
 Object.defineProperty(Platform, "OS", { value: "web", configurable: true, writable: true });
 Object.defineProperty(window.HTMLMediaElement.prototype, "readyState", { configurable: true, get: () => 4 });
@@ -41,17 +41,22 @@ const NO_LIGHT = (() => {
   return JSON.stringify(j);
 })();
 let manifestText = MANIFEST;
+/* jsdom には URL.createObjectURL が無い。手元の URL は「blob:番号」にする（どの本の URL かは要素の data-src で読む） */
+let blobN = 0;
+(URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = jest.fn(() => `blob:fx-${++blobN}`);
+(URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = jest.fn();
+const blobOf = (n: number) => async () => new Blob([new Uint8Array(n)]);
 
 let fetched: string[] = [];
 beforeEach(() => {
   fetched = [];
   manifestText = MANIFEST;
-  /* 温め終えた URL はページに1つの控え。試験ごとに空にする（前の試験で落とした本を「もう落とした」と数えない） */
-  (fxWarmed() as Set<string>).clear();
+  /* 手元はページに1つ。試験ごとに空にする（前の試験で持った本を「もう持っている」と数えない） */
+  resetFxHoldForTest();
   (global as { fetch?: unknown }).fetch = jest.fn(async (url: string) => {
     fetched.push(url);
     if (url.endsWith("manifest.json")) return { ok: true, json: async () => JSON.parse(manifestText) };
-    return { ok: true, arrayBuffer: async () => new ArrayBuffer(100 * 1024) };
+    return { ok: true, blob: blobOf(100 * 1024) };
   });
   jest.useFakeTimers();
 });
@@ -97,18 +102,18 @@ const tierOf = (yen: number): FxTier => {
   for (const t of castle.fxVideo!.tiers) if (yen >= t.min) hit = t;
   return hit;
 };
-/** その manifest で、その通りを頼んだときに温めるはずの本（全段の登場 → 全段の滞在。light の無い段は full） */
+/** その manifest で、その通りを頼んだときに手元に持つはずの本（段の低い順に登場と滞在を組で → 全段の締め。light の無い段は full） */
 const videosOf = (variant: "full" | "light", json: string) => {
   const m = JSON.parse(json).tiers as Record<string, { variants: Record<string, Record<string, unknown>> }>;
-  const want = (part: string) =>
+  const want = (parts: string[]) =>
     Object.keys(m)
       .sort()
       .flatMap((k) => {
         const flows = m[k].variants[variant] ? variant : "full";
         const l = m[k].variants[flows];
-        return ["back", "front"].filter((n) => l[n]).map((n) => `/alert/themes/castle/fx/t${k}-${flows}-${n}-${part}.webm`);
+        return ["back", "front"].filter((n) => l[n]).flatMap((n) => parts.map((part) => `/alert/themes/castle/fx/t${k}-${flows}-${n}-${part}.webm`));
       });
-  return [...want("intro"), ...want("stay")];
+  return [...want(["intro", "stay"]), ...want(["outro"])];
 };
 
 it.each([
@@ -122,12 +127,12 @@ it.each([
   expect(got.v!.theme).toBe(theme);
   await advance(10000);
   expect(fetched).toEqual([]);
-  expect(await got.v!.ensureFor(3000)).toBe(false);
+  expect((await got.v!.ensureFor(3000)).ok).toBe(false);
   expect(got.v!.planFor(tierOf(3000))).toBeNull();
   expect(fetched).toEqual([]);
 });
 
-it("11月の本番の URL（旗なし）は、7段 full に差し替え、貯金箱が出て 4 秒おいてから manifest → 全段の登場 → 全段の滞在を full で落とす", async () => {
+it("11月の本番の URL（旗なし）は、7段 full に差し替え、貯金箱が出て 4 秒おいてから manifest → 段の低い順に登場と滞在 → 締めを full で手元に持つ", async () => {
   const { got, update } = mount(castle, { still: false, bankReady: false });
   expect(got.v!.theme?.fxVariant).toBe("full");
   expect(got.v!.theme?.tiers).toHaveLength(7);
@@ -141,14 +146,20 @@ it("11月の本番の URL（旗なし）は、7段 full に差し替え、貯金
   expect(fetched[0]).toBe("/alert/themes/castle/fx/manifest.json");
   const videos = fetched.slice(1);
   expect(videos).toEqual(videosOf("full", MANIFEST));
-  expect(videos.filter((u) => /outro|-light-/.test(u))).toEqual([]);
-  // 投げ銭が来たら、その段の full を用意して渡す
+  expect(videos.filter((u) => /-light-/.test(u))).toEqual([]);
+  // 投げ銭が来たら、その段の full を手元から用意して渡す（もう1本も落とさない）
+  const before = fetched.length;
   await act(async () => {
-    expect(await got.v!.ensureFor(1500)).toBe(true);
+    const r = await got.v!.ensureFor(1500);
+    expect(r.ok).toBe(true);
+    expect(r.from).toBe("held");
   });
+  expect(fetched.length).toBe(before);
   const plan = got.v!.planFor(tierOf(1500))!;
   expect(plan.key).toBe("4-full");
-  expect(plan.kit.layers.back!.intro.getAttribute("src")).toBe("/alert/themes/castle/fx/t4-full-back-intro.webm");
+  expect(plan.kit.layers.back!.intro.dataset.src).toBe("/alert/themes/castle/fx/t4-full-back-intro.webm");
+  expect(plan.kit.layers.back!.intro.getAttribute("src")).toMatch(/^blob:/);
+  expect(got.v!.held().ready).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
 });
 
 it("12/1 にテーマが外れたら（null）、差し替えも温めも止まる（豚と季節の外のアラート）", async () => {
@@ -158,7 +169,7 @@ it("12/1 にテーマが外れたら（null）、差し替えも温めも止ま�
   expect(got.v!.theme).toBeNull();
   await advance(10000);
   expect(fetched).toEqual([]);
-  expect(await got.v!.ensureFor(10000)).toBe(false);
+  expect((await got.v!.ensureFor(10000)).ok).toBe(false);
   expect(fetched).toEqual([]);
 });
 
@@ -167,7 +178,7 @@ it("still=1 は旗が無くても（本番の URL）1バイトも落とさない
   expect(got.v!.theme?.fxVariant).toBe("full");
   expect(got.v!.theme?.tiers).toHaveLength(7);
   await advance(10000);
-  expect(await got.v!.ensureFor(3000)).toBe(false);
+  expect((await got.v!.ensureFor(3000)).ok).toBe(false);
   expect(got.v!.planFor(tierOf(3000))).toBeNull();
   expect(fetched).toEqual([]);
 });
@@ -175,7 +186,7 @@ it("still=1 は旗が無くても（本番の URL）1バイトも落とさない
 it.each([
   ["置いてある manifest", MANIFEST],
   ["light を外した manifest", NO_LIGHT],
-])("旗 fx=light（%s）: light のある段だけ light、無い段は full を温めて流す（締めは落とさない）", async (_name, json) => {
+])("旗 fx=light（%s）: light のある段だけ light、無い段は full を手元に持って流す（締めは全段の登場と滞在のあと）", async (_name, json) => {
   manifestText = json;
   window.history.replaceState({}, "", "/?fx=light");
   const { got } = mount(castle, { still: false, bankReady: true });
@@ -185,12 +196,13 @@ it.each([
   const videos = fetched.slice(1);
   expect(videos).toEqual(videosOf("light", json));
   expect(videos[0]).toBe("/alert/themes/castle/fx/t1-full-back-intro.webm");
-  expect(videos.filter((u) => /outro/.test(u))).toEqual([]);
+  const firstOutro = videos.findIndex((u) => /outro/.test(u));
+  expect(videos.slice(firstOutro).every((u) => /outro/.test(u))).toBe(true);
   expect(new Set(videos).size).toBe(videos.length);
   // 1万円の段は、その manifest で流す通りの動画を用意する
   const t7 = JSON.parse(json).tiers["7"].variants.light ? "light" : "full";
   await act(async () => {
-    expect(await got.v!.ensureFor(10000)).toBe(true);
+    expect((await got.v!.ensureFor(10000)).ok).toBe(true);
   });
-  expect(got.v!.planFor(tierOf(10000))!.kit.layers.back!.intro.getAttribute("src")).toBe(`/alert/themes/castle/fx/t7-${t7}-back-intro.webm`);
+  expect(got.v!.planFor(tierOf(10000))!.kit.layers.back!.intro.dataset.src).toBe(`/alert/themes/castle/fx/t7-${t7}-back-intro.webm`);
 });

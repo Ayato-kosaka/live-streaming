@@ -12,8 +12,8 @@
  *      11月の城は配信に出した（全段 full）ので、旗が無くても7段。日付・12/1・still=1 の詳しいところは `fxlive.test.ts`
  *   2. 7段の切れ目・色・字は、ハロウィン2版目の同じ段と同じ（写しが崩れていない）
  *   3. manifest.json の読み方（約束の名前・置き場の外を指さない・秒の決まり）と、置いてあるひな形が読める
- *   4. 温める順と量: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順。締めは温めない）・
- *      同じ URL は二度落とさない・上限で止まる
+ *   4. 手元に持つ順と量（`fxHold.ts`）: その日に流す通りだけ・段の低い順に登場と滞在を組で → 全段の締め・
+ *      同じ URL は二度落とさない・上限で止まる・投げ銭の取り寄せが来たら温めは譲る・上限の外はその1件だけ
  *   5. キャラ絵と字は `revealAt` に出る（字の出し方はハロウィン2版目の同じ段）。動画が用意できなければ動画なしで、すぐ出る
  *   6. 流す順番: 最初のコマまで透明・登場 → 滞在 → 締め（滞在の輪の切れ目から・終わりまでに収まる）・
  *      3 秒動かない層は消す・全部消えたら落ちる・止められたら消す（`AbortError` は消さない）・止めたら手放す
@@ -31,20 +31,18 @@ import { scriptProblems } from "../season/show/script";
 import { SHOW_AFTER_PLAY_MS } from "../videoGuard";
 import {
   FX_START_TIMEOUT_MS,
-  FX_WARM_BUDGET,
+  fxHoldOrder,
   fxVariantOf,
-  fxWarmOrder,
-  fxWarmed,
   layersFor,
   parseFxManifest,
   runFxShow,
-  warmFxVideos,
   withFxVideo,
   type FxKit,
   type FxLayerKit,
   type FxTierEntry,
   type VideoPlan,
 } from "../season/show/fxVideo";
+import { FX_HOLD_BUDGET, fxHeldUrl, fxHoldStats, holdFxVideos, needFxVideos, resetFxHoldForTest } from "../season/show/fxHold";
 
 const halloween = THEMES.find((t) => t.id === "halloween")!;
 const castle = THEMES.find((t) => t.id === "castle")!;
@@ -223,25 +221,22 @@ describe("3. manifest.json", () => {
   });
 });
 
-describe("4. 温める順と量", () => {
+describe("4. 手元に持つ順と量", () => {
   const m = parseFxManifest(MANIFEST);
   const tiers = castle.fxVideo!.tiers;
-  /* 置いてある manifest の、その通りの登場と滞在の本数（front の有無は作る担当が決めるので、数は manifest から） */
+  /* 置いてある manifest の、その通りの本数（front の有無は作る担当が決めるので、数は manifest から） */
   const countOf = (variant: "full" | "light") =>
     Object.values(m).reduce((n, e) => {
       const l = layersFor(e, variant)!;
-      return n + 2 * ((l.back ? 1 : 0) + (l.front ? 1 : 0));
+      return n + 3 * ((l.back ? 1 : 0) + (l.front ? 1 : 0));
     }, 0);
   const tierOf = (f: string) => Number(f[1]);
   const partOf = (f: string) => f.match(/-(intro|stay|outro)\.webm$/)![1];
-  it.each(["full", "light"] as const)("%s: その日に流す通りだけ・全段の登場 → 全段の滞在（それぞれ段の低い順・奥→手前）。締めは温めない", (variant) => {
-    const order = fxWarmOrder(tiers, m, variant);
-    expect(order[0]).toBe("t1-full-back-intro.webm");
-    expect(order.filter((f) => /outro/.test(f))).toEqual([]);
+  it.each(["full", "light"] as const)("%s: その日に流す通りだけ・段の低い順に登場と滞在を組で（奥→手前）→ 全段の締め", (variant) => {
+    const order = fxHoldOrder(tiers, m, variant);
+    expect(order.slice(0, 2)).toEqual(["t1-full-back-intro.webm", "t1-full-back-stay.webm"]);
     expect(order).toHaveLength(countOf(variant));
     expect(new Set(order).size).toBe(order.length);
-    // 段ごとに、その通りがあればその通りだけ、無ければ full だけ（もう片方は1本も落とさない）。
-    // 段1〜6 は full しか無いので、light の日も full を落とす（light が無くても full で出る）
     const used = (k: string) => (m[k].variants[variant] ? variant : "full");
     for (const k of Object.keys(m)) {
       const unused = used(k) === "full" ? "light" : "full";
@@ -249,46 +244,128 @@ describe("4. 温める順と量", () => {
       expect(order).toContain(`t${k}-${used(k)}-back-intro.webm`);
     }
     for (const k of ["1", "2", "3", "4", "5", "6"]) expect(used(k)).toBe("full");
-    // 登場がぜんぶ先（段7 の登場が、段1 の滞在より前）
+    // 締めはぜんぶ最後（段7 の滞在が、段1 の締めより前）
     const parts = order.map(partOf);
-    expect(parts).toEqual([...parts].sort((a, b) => (a === b ? 0 : a === "intro" ? -1 : 1)));
-    expect(order.indexOf(`t7-${used("7")}-back-intro.webm`)).toBeLessThan(order.indexOf("t1-full-back-stay.webm"));
-    // 登場どうし・滞在どうしは段の低い順
-    for (const p of ["intro", "stay"]) {
-      const ts = order.filter((f) => partOf(f) === p).map(tierOf);
-      expect(ts).toEqual([...ts].sort((a, b) => a - b));
-    }
+    const firstOutro = parts.indexOf("outro");
+    expect(parts.slice(firstOutro).every((x) => x === "outro")).toBe(true);
+    expect(order.indexOf(`t7-${used("7")}-back-stay.webm`)).toBeLessThan(order.indexOf("t1-full-back-outro.webm"));
+    // 登場と滞在は段の低い順で、1段がそろってから次の段（段2 の登場は段1 の滞在のあと）
+    const head = order.slice(0, firstOutro).map(tierOf);
+    expect(head).toEqual([...head].sort((a, b) => a - b));
+    expect(order.indexOf("t2-full-back-intro.webm")).toBeGreaterThan(order.indexOf("t1-full-back-stay.webm"));
     // 1段の中は奥 → 手前
     for (const f of order.filter((x) => /-front-/.test(x)))
       expect(order.indexOf(f.replace("-front-", "-back-"))).toBeLessThan(order.indexOf(f));
   });
 
-  it("同じ URL は二度落とさない。上限を超えたら止める。しくじったものは次に試す", async () => {
-    const calls: string[] = [];
-    let failOnce = new Set(["/d/c.webm"]);
-    (global as { fetch?: unknown }).fetch = jest.fn(async (url: string) => {
+  /* fetch と Blob の URL の偽物。どの本を読んだかと、作った・手放した URL を数える */
+  let calls: string[] = [];
+  let made = 0;
+  let revoked: string[] = [];
+  let hold: Map<string, () => void> | null = null;
+  beforeEach(() => {
+    resetFxHoldForTest();
+    calls = [];
+    made = 0;
+    revoked = [];
+    hold = null;
+    (URL as unknown as { createObjectURL: () => string }).createObjectURL = () => `blob:t-${++made}`;
+    (URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = (u: string) => {
+      revoked.push(u);
+    };
+  });
+  const serve = (size: number, fail = new Set<string>()) =>
+    ((global as { fetch?: unknown }).fetch = jest.fn(async (url: string, init?: { signal?: AbortSignal }) => {
       calls.push(url);
-      if (failOnce.has(url)) {
-        failOnce.delete(url);
+      if (fail.has(url)) {
+        fail.delete(url);
         throw new Error("電波");
       }
-      return { ok: true, arrayBuffer: async () => new ArrayBuffer(4 * 1024 * 1024) };
-    });
-    const before = fxWarmed().size;
-    // 4MB ずつ。上限 12MB なので3本で止まる（c はしくじるので数えない）
-    let bytes = await warmFxVideos("/d", ["a.webm", "b.webm", "c.webm", "d.webm", "e.webm"], () => true);
-    expect(bytes).toBe(12 * 1024 * 1024);
-    expect(calls).toEqual(["/d/a.webm", "/d/b.webm", "/d/c.webm", "/d/d.webm"]);
-    expect(fxWarmed().size - before).toBe(3);
-    // もう一度: a・b・d は落とさない。c（しくじった）は試す
-    calls.length = 0;
-    bytes = await warmFxVideos("/d", ["a.webm", "b.webm", "c.webm", "d.webm"], () => true);
-    expect(calls).toEqual(["/d/c.webm"]);
+      // hold が立っていれば、読み終わるのを手で待たせる（取り寄せが来たときの温めの読みかけ）
+      if (hold)
+        await new Promise<void>((r, j) => {
+          hold!.set(url, r);
+          init?.signal?.addEventListener("abort", () => j(Object.assign(new Error("abort"), { name: "AbortError" })));
+        });
+      return { ok: true, blob: async () => new Blob([new Uint8Array(size)]) };
+    }));
+
+  it("同じ本は二度落とさない。上限を超えたら止める。しくじったものは次に試す", async () => {
+    serve(4 * 1024 * 1024, new Set(["/d/c.webm"]));
+    // 4MB ずつ。上限 12MB を渡すと3本で止まる（c はしくじるので数えない）
+    let r = await holdFxVideos(["/d/a.webm", "/d/b.webm", "/d/c.webm", "/d/d.webm", "/d/e.webm", "/d/f.webm"], () => true, 12 * 1024 * 1024);
+    expect(r).toMatchObject({ got: 3, failed: 1, full: true });
+    expect(calls).toEqual(["/d/a.webm", "/d/b.webm", "/d/c.webm", "/d/d.webm", "/d/e.webm"]);
+    expect(fxHoldStats()).toEqual({ files: 3, bytes: 12 * 1024 * 1024 });
+    expect(fxHeldUrl("/d/a.webm")).toMatch(/^blob:/);
+    expect(fxHeldUrl("/d/e.webm")).toBeNull();
+    // もう一度（上限を広げて）: 持っている a・b・d は落とさない。c（しくじった）と e・f を試す
+    calls = [];
+    r = await holdFxVideos(["/d/a.webm", "/d/b.webm", "/d/c.webm", "/d/d.webm", "/d/e.webm", "/d/f.webm"], () => true);
+    expect(calls).toEqual(["/d/c.webm", "/d/e.webm", "/d/f.webm"]);
     // 止めたら落とさない
-    calls.length = 0;
-    await warmFxVideos("/d", ["z.webm"], () => false);
+    calls = [];
+    await holdFxVideos(["/d/z.webm"], () => false);
     expect(calls).toEqual([]);
-    expect(FX_WARM_BUDGET).toBe(12 * 1024 * 1024);
+    // 上限は端末の RAM の 1%（Chromium の Android の Blob）を 3GB の端末で見た 30MB の 8 割。11月の城（23.7MB）が全部入る
+    expect(FX_HOLD_BUDGET).toBe(24 * 1024 * 1024);
+  });
+
+  it("投げ銭の取り寄せ: 持っていればすぐ（1本も落とさない）。無ければ並べて取り、持つ", async () => {
+    serve(1024);
+    await holdFxVideos(["/d/a.webm"], () => true);
+    calls = [];
+    let n = await needFxVideos(["/d/a.webm"]);
+    expect(n.fetched).toBe(0);
+    expect(n.urls!.get("/d/a.webm")).toBe(fxHeldUrl("/d/a.webm"));
+    expect(calls).toEqual([]);
+    n = await needFxVideos(["/d/a.webm", "/d/b.webm", "/d/c.webm"]);
+    expect(n.fetched).toBe(2);
+    expect(calls).toEqual(["/d/b.webm", "/d/c.webm"]);
+    expect(fxHeldUrl("/d/c.webm")).toBe(n.urls!.get("/d/c.webm"));
+    expect(n.transient).toEqual([]);
+  });
+
+  it("上限の外の本は、持たずにその1件だけに渡す（流し終えたら手放す URL）", async () => {
+    serve(1024);
+    const n = await needFxVideos(["/d/a.webm", "/d/b.webm"], 1024);
+    expect(fxHeldUrl("/d/a.webm")).toBe(n.urls!.get("/d/a.webm"));
+    expect(fxHeldUrl("/d/b.webm")).toBeNull();
+    expect(n.transient).toEqual([n.urls!.get("/d/b.webm")]);
+  });
+
+  it("取り寄せが読めなければ、URL は渡さず理由を返す", async () => {
+    serve(1024, new Set(["/d/b.webm"]));
+    const n = await needFxVideos(["/d/a.webm", "/d/b.webm"]);
+    expect(n.urls).toBeNull();
+    expect(n.why).toBe("fetch");
+  });
+
+  it("取り寄せが来たら、温めは要らない読みかけを止めて待つ。取り寄せが終わったら、止めた本から続ける", async () => {
+    serve(1024);
+    hold = new Map();
+    const warm = holdFxVideos(["/d/a.webm", "/d/b.webm"], () => true);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(calls).toEqual(["/d/a.webm"]);
+    // 投げ銭: x を取り寄せる。温めの a は止まる
+    const need = needFxVideos(["/d/x.webm"]);
+    await Promise.resolve();
+    expect(calls).toEqual(["/d/a.webm", "/d/x.webm"]);
+    hold.get("/d/x.webm")!();
+    const n = await need;
+    expect(n.fetched).toBe(1);
+    // 温めは a からやり直して、b まで
+    for (let i = 0; i < 20 && !hold.has("/d/b.webm"); i++) {
+      for (const [u, r] of hold) if (u !== "/d/x.webm") r();
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    hold.get("/d/b.webm")?.();
+    const r = await warm;
+    expect(r.got).toBe(2);
+    expect(calls.filter((u) => u === "/d/a.webm")).toHaveLength(2);
+    expect(fxHeldUrl("/d/a.webm")).toMatch(/^blob:/);
+    expect(fxHeldUrl("/d/b.webm")).toMatch(/^blob:/);
   });
 });
 
@@ -450,7 +527,9 @@ function makeKit(front = true): { kit: FxKit; back: FakeLayer; front: FakeLayer 
   };
   const b = layer();
   const f = front ? layer() : null;
-  return { kit: { key: "5-full", layers: { back: b, front: f }, entry: ENTRY, used: false }, back: b, front: f };
+  // 締めの手元の URL は、用意（prepareFxKit）のあとに取り寄せ済み、の形
+  const outro = () => ({ url: "/fx/outro.webm", p: Promise.resolve("/fx/outro.webm") });
+  return { kit: { key: "5-full", layers: { back: b, front: f }, entry: ENTRY, used: false, outro: { back: outro(), front: f ? outro() : null } }, back: b, front: f };
 }
 const hosts = () => ({ back: document.createElement("div"), front: document.createElement("div") });
 const op = (v: HTMLVideoElement) => v.style.opacity;
