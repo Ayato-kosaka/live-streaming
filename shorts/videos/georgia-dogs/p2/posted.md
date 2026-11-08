@@ -29,3 +29,14 @@
 2026-11-08 12:30 UTC を過ぎたら、EC2 からログインしない `curl` で YouTube の oEmbed（200 で題）と TikTok の `embed/v2`（200 で `secret` が false）を見る。
 そのあと Studio（`privacy` が `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null）と TikTok Studio の一覧（時計の札が外れて Everyone）でも読み直し、
 EC2 の `~/shorts_post/georgia-dogs` を `post.py clean --video georgia-dogs` で消す。
+
+## 公開を確かめた（2026-11-08 12:45〜12:48 UTC）
+
+予約の時刻（12:30 UTC）のあと、EC2 から見た。
+
+- YouTube `5O7Hi-dY_-k`: ログインしない oEmbed が 200 で、題「🇬🇪ジョージアに来たら、野良犬が共存してた！」を返した（`post_p2.json` の youtube.title と同じ）。
+  Studio でも `VIDEO_PRIVACY_PUBLIC`・`scheduledPublishingDetails` が null・`timePublishedSeconds` 1794141029（12:30:29Z）。
+  **関連動画は元の配信 `nzf06yFqIkk` のまま**（`videoLinkageShortsAttribution` の `targetExternalVideoId`。同じ題の配信3本のうち、取り違えて直したほう）
+- TikTok `7704052964100476212`: ログインしない `embed/v2` が1回目で 200・`"secret":false`。
+  TikTok Studio の一覧でも、この題の行は1本だけで、予約の札（`(GMT+0) UTC`）が外れて `Nov 8, 12:30 PM Everyone`、再生28
+- EC2 の `~/shorts_post/georgia-dogs` を `post.py clean --video georgia-dogs` で消した
