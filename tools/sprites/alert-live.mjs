@@ -19,7 +19,9 @@
  * ## 条件
  *
  * - `--net mobile`: 下り 1.5Mbps・上り 0.75Mbps・往復 300ms（山の上のモバイル回線。開いてから閉じるまでずっと）。`off` はそのまま
- * - 開いて長く置く: 開いてから、動画への要求が 5 秒止むまで（温めが終わるまで。最低 `--open` 秒・最長 `--open-max` 秒）待つ
+ * - 開いて長く置く: 開いてから、温め（動画への要求）が**始まって**、5 秒止むまで待つ（最低 `--open` 秒・最長 `--open-max` 秒）。
+ *   温めは貯金箱が出て 4 秒おいてから始まり、遅い回線では貯金箱まで 30 秒以上かかる。要求が1本も出ないうちの「止んだ」は数えない
+ *   （2026-11-08 の1回目は、これを数えて温めの前に投げ銭を送っていた）
  * - `--cache clear`: 投げ銭の前に毎回、HTTP の控えを空にする（`Network.clearBrowserCache`）。配りは `max-age=3600` なので、
  *   開いて1時間たてば控えは使えない（11/8 の最初の投げ銭は、開いてから 66 分後）。Android の WebView は控えを捨てもする
  * - 1回開くごとに、`--amounts` を1件ずつ順に送る（前のアラートが明けてから次）。`--runs` 回開く（`--jobs` 本並べて）
@@ -271,10 +273,10 @@ async function session(browser, base, run) {
     for (;;) {
       const el = (Date.now() - t0) / 1000;
       const idle = inflight.size === 0 && Date.now() - lastFx > 5000;
-      if ((el >= openMin && idle && el > 10) || el > openMax) break;
+      if ((el >= openMin && fxReq > 0 && idle) || el > openMax) break;
       await sleep(500);
     }
-    out.open = { sec: Math.round((Date.now() - t0) / 1000), fxRequests: fxReq, inflight: inflight.size };
+    out.open = { sec: Math.round((Date.now() - t0) / 1000), fxRequests: fxReq, inflight: inflight.size, capped: (Date.now() - t0) / 1000 > openMax };
     for (const a of amounts) {
       if (cache === "clear") await cdp.send("Network.clearBrowserCache");
       const id = `live-${run}-${a}`;
@@ -294,6 +296,8 @@ async function session(browser, base, run) {
       const recv = logs.find((l) => l.event === "notificationReceived");
       const plan = logs.find((l) => l.event === "fxPlan");
       const failed = logs.find((l) => l.event === "fxVideoFailed");
+      // 待ちが明けたあとに用意が終わった（間に合わなかった件の、本当にかかった ms）
+      const late = logs.find((l) => l.event === "fxPrepLate");
       const video = seg.fx >= 5;
       const from = recv ? recv.t : seg.t0;
       out.alerts.push({
@@ -307,6 +311,7 @@ async function session(browser, base, run) {
         parts: Object.keys(seg.parts).sort(),
         plan: plan ? plan.data : null,
         failed: failed ? failed.data : null,
+        late: late ? late.data : null,
       });
     }
   } catch (e) {
