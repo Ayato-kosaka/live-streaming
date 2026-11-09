@@ -3,7 +3,7 @@
  "_kind": "PRIVATE=非公開（403） / LOGIN=ログインが要る（401） / GONE=消えている（404） / NO_REC=録画そのものが無い / OTHER=見たことのない返り。**戻るほう（PRIVATE / LOGIN）もここには入る。** 隠すための表ではなく、見張りが「増えたぶんだけ」を言うための表なので。隠す相手は python/data/dead_streams.json のほう（戻らないものだけ）。",
  "_deep": "2段目（youtubei/v1/player）で「押せば見られる」と分かった日。毎晩ここに無い id と、30日たった id だけを深く見る。見られないもの・測れなかったものは載せない（毎晩見直すため）。",
  "_privacy": "入れてよいのは 配信ID・種類・日付・焼き込みのファイル名 だけ。題名も、視聴者さんの名前も、チャンネルIDも書かない。",
- "_measured": "2026-11-08",
+ "_measured": "2026-11-09",
  "ids": {
   "Aea0S3WIZLU": {
    "kind": "GONE",
@@ -926,7 +926,7 @@
   "x6s9FF_lNlI": "2026-10-24",
   "x8Kbm9dDpYg": "2026-10-24",
   "xC7h20SCrlg": "2026-10-24",
-  "xNWJQCt3SLc": "2026-10-10",
+  "xNWJQCt3SLc": "2026-11-09",
   "xPoHFV5FWXY": "2026-10-24",
   "xTRLyM9Pzxg": "2026-10-24",
   "xXgh5RcI7Zk": "2026-10-24",
@@ -939,7 +939,7 @@
   "xxQ4XafROrQ": "2026-10-24",
   "y2kHYvrFOdA": "2026-10-24",
   "yDU1TxMH31c": "2026-10-24",
-  "yGEacTlskmY": "2026-10-10",
+  "yGEacTlskmY": "2026-11-09",
   "yNA44SQbYjM": "2026-11-04",
   "yab3DX7lsRM": "2026-10-24",
   "yftA1HCSLiQ": "2026-10-24",
