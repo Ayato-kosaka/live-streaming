@@ -31,7 +31,7 @@ import {
 } from "./types";
 import { PiggyGauge } from "./components/PiggyGauge";
 import { DeadMark } from "./components/DeadMark";
-import { sendLog as sendLogRaw } from "@/lib/log";
+import { copyAlertLogs, sendLog as sendLogRaw } from "@/lib/log";
 import { useSeason } from "./season/useSeason";
 import { useSettledBoxSize } from "./season/useBoxSize";
 import { SeasonEffects } from "./season/SeasonEffects";
@@ -466,6 +466,9 @@ export default function AlertBox() {
       return () => clearTimeout(timer);
     }
 
+    /* ログの写しを BigQuery へも送り始める（#1160。`lib/log.ts`）。**試し表示はここまで来ない**
+       （上の `if (preview)` で返る）ので、本物の通知の道だけが写る。合言葉が無ければ何もしない */
+    copyAlertLogs(alertboxId);
     // 画面起動ログ
     sendLog("AlertBox", sessionId, "mount", { enabledSources });
 

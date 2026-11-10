@@ -115,6 +115,9 @@ function scanRoutes() {
  * **直すときは `OWNER_ONLY` と `docs/island-api.md` の表も一緒に。**
  */
 const KNOWN_ROUTES = [
+  /* アラートのログの写し(#1160)。誰でも叩ける。断りの試験は
+     `alert_log_selftest.mjs` */
+  "alertLog.ts q.method === 'POST' && m",
   "cards.ts q.method === 'GET' && q.path === '/cards'",
   "cards.ts q.method === 'GET' && q.path === '/cards/mine'",
   "cards.ts q.method === 'POST' && move",

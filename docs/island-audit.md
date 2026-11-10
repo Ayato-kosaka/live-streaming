@@ -83,7 +83,7 @@ python3 python/audit_counts_selftest.py
 | **Viewers 表**（名前↔キャラクターの絵↔絵文字） | `app/alertbox` と `app/ve-comment` が GAS 越しに全件読んでいた | **読む側0。** 両方 `GET /alertbox/{合言葉}/characters` に移った |
 | **Goals 表**（目標金額） | `app/alertbox/api.utils.ts` が GAS の `getById` で読んでいた | **画面からは0**（#305 で落ちた）。`app/alertbox/api.utils.ts` は島の口しか叩かない |
 | **SuperChats 表**（スパチャの控え） | 同じく GAS の `insert` で書いていた | **画面からは0。** 正は Firestore（`islandFundSuperChats`）と BigQuery |
-| **画面のログ** | OBS の面がスプシへ1行ずつ POST | **残件。** 送る本は `lib/log.ts` 1本、呼ぶところは `counts.py: gas_log_calls` |
+| **画面のログ** | OBS の面がスプシへ1行ずつ POST | **残件。** 送る本は `lib/log.ts` 1本、呼ぶところは `counts.py: gas_log_calls`。**アラートの決めた出来事だけは写しが BigQuery `youtube_chat.alertbox_logs` にある**（2026-11-10。#1160。口は `POST /island-api/alertbox/{合言葉}/log`、読むのは `python3 python/alert_log_report.py --hours 24`。`docs/island-api.md` 9章）。スプシへの送りは残してある |
 | **gviz の直読み**（料理ランキング） | `public/料理ランキング変動.html` | **0本。** 面ごと消した（2026-09-21 / #388） |
 | **ドライブのキャラクター画像** | `lh3.googleusercontent.com/d/{id}=s{大きさ}` が島のほぼ全面 | **本番0。** `/island-api/characters/{icon}/plain-128.webp` に移った（残りは 1-2） |
 | **使っていない env**（`PYTHON_GAS_API_URL` / `_PW`） | 毎晩の取り込みに渡していた | **消した。** `python/fetch_chat_data_old.py` ごと無い |
@@ -141,6 +141,12 @@ python3 python/audit_counts_selftest.py
 移す先は Functions のログ（`logsafe` を通る側）だが、
 **あやとが配信のあとにスプシで見ている**のであれば、見る先ごと決める話になる。
 決める前に動かさない。
+
+**写しは足した**（2026-11-10。#1160）。スプシへの送りは1行も変えずに、アラートの
+決めた出来事（演出の記録 `fxPlan` ほか）だけを BigQuery `youtube_chat.alertbox_logs`
+へもう1本送る。**システムの側からスプシは読めない**ので、11/8 に演出が出なかった
+原因を数で追えなかった——そこを埋めるため。スプシを畳むかどうかは、上の
+「見る先ごと決める」話のまま残っている。読みかたは `docs/island-api.md` 9章。
 
 ---
 

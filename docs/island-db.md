@@ -782,6 +782,30 @@ SQL で書く名前（`INT64` / `BOOL`）で書いてある。
 `--probe` と `--dry-run` は本番の実行ではないので残さない。
 記録そのものが失敗しても取り込みは落とさない（記録は本題ではない）。
 
+#### `alertbox_logs` — 投げ銭アラートの面のログ1行＝1行（2026-11-10〜。#1160）
+
+**面（`app/alertbox`）のログの写し。** 正はあやとのスプレッドシート（`lib/log.ts` の
+`sendLog` が Apps Script へ送る）で、そこはシステムの側から読めない。決めた出来事だけを
+`POST /island-api/alertbox/{合言葉}/log` が1行ずつここへ入れる（`functions/src/alertLog.ts`。
+表が無ければ口が作る）。読むのは `python/alert_log_report.py`、見張りは `alert_watch.yml`。
+口の上限と読みかたは [`island-api.md`](./island-api.md) 9章。
+
+| 列 | 型 | NULL | 中身 |
+| --- | --- | --- | --- |
+| `received_at` | TIMESTAMP | 不可 | 口が受けた時刻。**日ごとの区切り（パーティション）の軸** |
+| `logged_at` | TIMESTAMP | 可 | 面が書いた時刻（面の時計。読めなければ NULL） |
+| `session_id` | INT64 | 不可 | 面を開いた時刻（ms）。**配信ごとの見分け** |
+| `source` | STRING | 不可 | 合言葉の sha256 の頭12桁（**合言葉そのものは入れない**） |
+| `screen` | STRING | 可 | `AlertBox` |
+| `event` | STRING | 不可 | 出来事の名前（`ALERT_LOG_EVENTS` の決め打ち） |
+| `git_commit` | STRING | 可 | 面の版 |
+| `notification_id` | STRING | 可 | `data.id`（通知のID）。Doneru の通知テストには無い |
+| `data` | JSON | 可 | 面が送った `data` そのまま。**視聴者さんの名前・メッセージを含む** |
+| `ua` | STRING | 可 | User-Agent。確かめの回は `alert-log-probe` が付く |
+
+**作り直せない。** スプレッドシートの側にも同じ行があるが、引き直す道は無い。
+**中身を公開の場に出さない**（読む道具が出すのは数と段と時刻だけ）。
+
 ### 4.2 Firestore
 
 **本番のルートコレクションは22本**（2026-09-11 に数えた）。件数はその日のもの。

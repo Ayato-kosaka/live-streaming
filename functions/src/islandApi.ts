@@ -45,6 +45,9 @@ import {handleDonors} from "./donors";
 /* LINE スタンプの、住人のことば(#716)。**閉じた口**(#860)で、
    410 を返すだけ（`stampLine.ts` 冒頭）。 */
 import {handleStampLine} from "./stampLine";
+/* 投げ銭アラートのログの写し(#1160)。中身は `alertLog.ts`。
+   合言葉の関所と1日の枠は、ここの `alertboxExists` / `takeQuota` を渡す。 */
+import {handleAlertLog} from "./alertLog";
 /* 締め切った宛先の表(#225)。**島の表（`site/content/themes.ts`）の写し**で、
    `functions/tools/shutthemes.mjs` が組み立てる。手で直さない。 */
 import {SHUT_THEMES} from "./shutThemes";
@@ -2872,6 +2875,26 @@ export const islandApi = onRequest(
          **閉じてある**(#860)。中身は `stampLine.ts`。扱ったら true が返る。
          合言葉を見ずに 410 を返すので、「誰か」も上限も渡さない。 */
       if (handleStampLine({method, path}, res)) {
+        return;
+      }
+
+      /* ---------------- アラートのログの写し(#1160) ----------------
+         中身は `alertLog.ts`。扱ったら true が返る。
+         **OBS が1行ごとに叩くので、安いところから先に断る**
+         （大きさ・名前・手元の1分の枠を見てから、合言葉を引く）。 */
+      if (
+        await handleAlertLog(
+          {
+            method,
+            path,
+            body: raw,
+            bytes: Buffer.isBuffer(req.rawBody) ? req.rawBody.length : null,
+            ua: String(req.headers["user-agent"] ?? ""),
+          },
+          res,
+          {exists: alertboxExists, takeQuota},
+        )
+      ) {
         return;
       }
 
