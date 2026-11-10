@@ -552,6 +552,7 @@ OBS に映すものと、あやとの手元のコントローラーを繋ぐ口�
 | `GET` | `/alertbox/:id/wss` | 席を知っている人 | 繋ぎ先 |
 | `POST` | `/alertbox/:id/yt-token` | 席を知っている人 | トークンを取り直す |
 | `POST` | `/alertbox/:id/superchat` | 席を知っている人 | スパチャ1件を豚の貯金箱の台帳へ（#305）。**同じ item id を2回投げても増えない**。入らないのは5つ（通知のテスト・円以外・0円以下・**1,000万円超**・ほどけないID。12章） |
+| `POST` | `/alertbox/:id/log` | 席を知っている人 | **アラートのログの写し**を BigQuery へ1行（#1160）。決めた出来事だけ・1行 8KB まで・送り元ごとに1分 120行／1日 3,000行（下） |
 | `GET` | `/alertbox/:id/fund` | 席を知っている人 | 配信の豚に出す額。**`GET /fund` を使わない**（あちらは CDN に5〜10分焼き付く） |
 | `POST` | `/remote/session` | あやとだけ | 島の遠隔操作の席を開く |
 | `POST` | `/remote` | 席の持ち主だけ | 島を動かす（見ている場所・ひとこと） |
@@ -617,6 +618,66 @@ IDを `channelId` に入れる。ふつうの表示名が来たときは引か�
 **この2つを見ないと、読めていない回が「まだ来ていません」「いま配信して
 いません」に化ける**（`docs/island-standards.md` 10、`island-misses.md` #117）。
 `down` は最初からこの口にあったが、画面が長いあいだ捨てていた。
+
+### アラートのログの写し（`POST /alertbox/{合言葉}/log`。#1160）
+
+面（`app/alertbox`）のログは `lib/log.ts` の `sendLog` がスプレッドシート（Apps Script）へ
+送っている。**そこはそのまま。** 決めた出来事だけ、もう1本ここへ送り、Functions が
+BigQuery **`live-streaming-d3cac.youtube_chat.alertbox_logs`** に1行ずつ入れる
+（中身は `functions/src/alertLog.ts`。表が無ければ口が作る）。
+**システムの側（セッション・Actions）からは、スプレッドシートは読めない。** こちらは読める。
+
+**誰でも叩ける口**（OBS はログインできないので、32桁の合言葉を知っていることが鍵）なので、
+安いものから順に断る。**Firestore を引くのは、形が通ったものだけ。**
+
+| 順 | 見るもの | 外れたら |
+| --- | --- | --- |
+| 1 | 1行の大きさ **8KB**（`ALERT_LOG_MAX_BYTES`） | 413 |
+| 2 | 出来事の名前（`ALERT_LOG_EVENTS` の**決め打ち**）・`sessionId` の形 | 400 |
+| 3 | 口ぜんぶで1分 **600行**（Functions の実例ごとに手元で数える。知らない合言葉の総当たりの栓） | 429 |
+| 4 | 1つの送り元（合言葉）で1分 **120行**（同じく手元） | 429 |
+| 5 | 合言葉が誰かの OBS のものか（当たった合言葉は10分覚える） | 404 |
+| 6 | 1つの送り元で1日 **3,000行**（`takeQuota(…, "alertlog", …)`。実例をまたいで数える） | 429 |
+
+- **鍵はブラウザに渡さない。** BigQuery へは Functions のサービスアカウントで書く。
+  `EXPO_PUBLIC_` は1つも足していない
+- **合言葉そのものは表に入れない**（`source` は sha256 の頭12桁）。IP も入れない
+- **視聴者さんの名前・メッセージは表に入る**（通知まるごとが `data` に入る。
+  スパチャがすでに `chat_messages` に入っているのと同じ扱い）。
+  **issue・ログ・Actions の出力には出さない**——読む道具が出すのは数と段と時刻だけ
+- **1秒おきに鳴りうるもの（`connectorError`）は入れない。** つなぎ直しのたびに出るので、
+  入れるとそれだけで1日の枠を食べる
+- 面は名前の並びと 8KB を口と同じに持っていて、無い名前は送りもしない・大きければ
+  `data` を `{tooBig: 長さ}` に替えて送る・429 なら1分休む。**送れなくてもアラートは
+  1ミリも止めない**（待たない・投げない）
+- **試し表示（`?preview=`）は写さない**（`copyAlertLogs` を呼ぶのは試し表示の枝を抜けた後ろ）
+
+表の列（`ALERT_LOG_SCHEMA` が正）:
+
+| 列 | 型 | 中身 |
+| --- | --- | --- |
+| `received_at` | TIMESTAMP | 口が受けた時刻。**日ごとの区切りの軸** |
+| `logged_at` | TIMESTAMP | 面が書いた時刻（面の時計） |
+| `session_id` | INT64 | 面を開いた時刻（ms）。**配信ごとの見分け** |
+| `source` | STRING | 合言葉の sha256 の頭12桁 |
+| `screen` / `event` | STRING | `AlertBox` / 出来事の名前 |
+| `git_commit` | STRING | 面の版 |
+| `notification_id` | STRING | `data.id`（通知のID）。無ければ NULL |
+| `data` | JSON | 面が送った `data` そのまま |
+| `ua` | STRING | User-Agent（PRISM のスマホか、PC の OBS か） |
+
+**読みかた**（BigQuery の権限があるところで。Actions なら `alert_watch.yml`）:
+
+```bash
+python3 python/alert_log_report.py --hours 24      # 配信ごとの表。異常があれば終了 1、読めなければ 2
+python3 python/alert_log_report.py --since 2026-11-10T13:00:00Z --json /tmp/a.json
+python3 python/alert_log_report.py --session <session_id> --include-probe --expect mount,initSuccess,fxPlan
+```
+
+配信ごとに、受けた投げ銭・演出が出た・出なかった（理由つき）・動画の段でない・
+`fxPlan` 抜け・待った ms（中央／最大）・`fxPrepLate`・`fxVideoFailed`・試しともう一度・版。
+数えかたは道具の頭に書いてある。見張りは `python/alert_log_report_selftest.py`、
+口の断りの試験は `node functions/selftest/alert_log_selftest.mjs`（大量・大きい行・知らない名前と、守りを1本ずつ外す対照）。
 
 ## 10. 畳んだ口
 
