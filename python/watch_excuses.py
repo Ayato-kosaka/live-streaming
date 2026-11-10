@@ -106,10 +106,6 @@ EXCUSES: dict[str, str] = {
     "python/chat_replay_probe.py":
         "YouTube を1本ずつ叩いて記録の有無を見る。外に出るので PR ごとには"
         "回さない（2026-09-19。回し役の SKIP と同じ「外に出る」）",
-    "python/alert_log_report.py":
-        "BigQuery の写し（alertbox_logs）を読むので鍵が要り、PR では回せない。"
-        "定時で回す alert_watch.yml は workflow を含むので ship.yml で出せず、"
-        "この道具の PR（#1162）のあとに別の PR で入れる。そこでこの断りを消す（2026-11-10。#1160）",
 
     # ---- 部品。単体では走らない ----
     # `tools/sprites/route.mjs` はここに在ったが、**借りる側が CI から走るように

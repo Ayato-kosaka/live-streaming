@@ -1,0 +1,303 @@
+name: 投げ銭アラートのログを見る
+
+# **#1160（11/6・11/8 に投げ銭の演出が出なかった）の再発を、本物の配信のログで見張る。**
+#
+# 見張る期限はここ1か所。過ぎたら何もしない（cron が残っていても1行も読まない・書かない）。
+# 延ばすときはこの1行だけを直す。
+env:
+  WATCH_UNTIL: "2026-11-13T23:59:59+09:00"
+  ISSUE: "1160"
+
+# ## 何をするか
+#
+# 面（`app/alertbox`）のログは、決めた出来事だけ BigQuery `youtube_chat.alertbox_logs` に
+# 写っている（`functions/src/alertLog.ts`）。ここはそれを `python/alert_log_report.py` で
+# 配信ごとの表にして、**新しい投げ銭があった回だけ** #1160 に短い表（数だけ）を1コメント付ける。
+#
+# - 異常（演出が出なかった・fxPlan 抜け・fxVideoFailed・fxPrepLate）があれば、同じコメントに
+#   「異常あり」と書き、札 `待ち-システム` を付ける。**札は `待ち-こちら` ではない**
+#   （2026-09-23 に改名。`docs/island-tickets.md` 1章。`python/ship.py` の頭と同じ断り）
+# - どこまで読んだかは、前のコメントの印（`<!-- alert_watch until=… -->`）から続ける。
+#   **cron は何時間も遅れる**（`python3 python/cron_lag.py`）ので、時刻で窓を切らない
+# - 手で押したとき（`workflow_dispatch`）は、新しい投げ銭が無くても「無し」と1行付ける
+#
+# ## 確かめ（`probe: true`）
+#
+# 本番の面を、この runner の Chromium で開いて、**偽の Doneru から通知テストを1件**流す。
+# 本物の通知の道（WebSocket → `handleNotification` → キュー → 演出の判断）をそのまま通るので、
+# mount・initSuccess・notificationReceived・notificationDisplayed・fxPlan が BigQuery に
+# 入ったかを見る。
+#
+# - **本物の Doneru には繋がない。** `/wss` の返りを偽の宛先に差し替える（本物に2本目が
+#   繋がると、配信中の面に何が起きるか分からない）。YouTube も繋がない（`source=doneru`）
+# - **もう一度出す（replay）は聞かない。** 机で押された1件を、この面が先に読んで控えるのを避ける
+# - **スプレッドシートには送らない。** あやとが見ている先に、確かめの行を混ぜない
+# - User-Agent に `alert-log-probe` を付ける。監視の表からは既定で外れる
+# - 合言葉は Firestore から読み、ログでは伏せる（`::add-mask::`）
+
+on:
+  schedule:
+    # 3時間おき（配信は夜。遅れても1晩のうちに1回は読む）。:00 は混むので外す
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: "本番の面を開いて、通知テストを1件流して確かめる"
+        required: false
+        default: false
+        type: boolean
+      hours:
+        description: "前の印が無いとき、何時間さかのぼるか"
+        required: false
+        default: "24"
+        type: string
+
+concurrency:
+  group: alert-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: 期限の内か
+        run: |
+          set -euo pipefail
+          now=$(date -u +%s)
+          until=$(date -u -d "$WATCH_UNTIL" +%s)
+          if [ "$now" -gt "$until" ]; then
+            echo "見張りの期限（$WATCH_UNTIL）を過ぎたので、何もしません" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "GO=0" >> "$GITHUB_ENV"
+          else
+            echo "GO=1" >> "$GITHUB_ENV"
+          fi
+
+      - uses: actions/checkout@v5
+        if: env.GO == '1'
+
+      - uses: actions/setup-python@v6
+        if: env.GO == '1'
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        if: env.GO == '1'
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # 読むのは BigQuery と（確かめのときだけ）Firestore。requirements を丸ごと入れない
+      - name: BigQuery / Firestore のクライアントを入れる
+        if: env.GO == '1'
+        run: pip install -q "google-cloud-bigquery>=3.11.0" "google-cloud-firestore>=2.16.0"
+
+      # 本番を読む前に、判断のところが生きているかを偽の行で見る（外へは出ない）
+      - name: 読む道具を偽の行で回す
+        if: env.GO == '1'
+        run: python3 python/alert_log_report_selftest.py
+
+      # ---------------- 確かめ（probe: true のときだけ） ----------------
+
+      - uses: actions/setup-node@v5
+        if: env.GO == '1' && inputs.probe
+        with:
+          node-version: "22"
+
+      - name: ブラウザを入れる
+        if: env.GO == '1' && inputs.probe
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome="$(cd tools/sprites && node -e 'import("playwright-core").then((m) => console.log(m.chromium.executablePath()))')"
+          test -x "$chrome"
+          echo "CHROME=$chrome" >> "$GITHUB_ENV"
+
+      - name: 合言葉を読む（伏せる）
+        if: env.GO == '1' && inputs.probe
+        run: |
+          set -euo pipefail
+          k="$(python3 - <<'PY'
+          from google.cloud import firestore
+          db = firestore.Client()
+          for d in db.collection("islandUsers").where("admin", "==", True).limit(5).stream():
+              k = str((d.to_dict() or {}).get("alertboxId") or "")
+              if len(k) == 32:
+                  print(k)
+                  break
+          PY
+          )"
+          if [ -z "$k" ]; then echo "::error::合言葉が読めませんでした"; exit 1; fi
+          echo "::add-mask::$k"
+          echo "ALERTBOX_K=$k" >> "$GITHUB_ENV"
+
+      - name: 本番の面を開いて、通知テストを1件流す
+        if: env.GO == '1' && inputs.probe
+        working-directory: tools/sprites
+        run: |
+          set -euo pipefail
+          cat > /tmp/alert_probe.mjs <<'JS'
+          import { chromium } from "playwright-core";
+          const K = process.env.ALERTBOX_K;
+          const BASE = "https://live-streaming-d3cac.web.app";
+          const FAKE = "wss://doneru-probe.invalid/alertbox";
+          // Doneru が「通知テスト」で送ってくるのと同じ形（app/alertbox/types.ts）。2,000円 = 動画の段
+          const TEST = { amount: 2000, assetID: null, message: "あやと島案内鳥の確かめです",
+            messageType: 1, nickname: "Doneru", test: true, type: "donation" };
+          const b = await chromium.launch({ executablePath: process.env.CHROME,
+            args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"] });
+          const tmp = await b.newPage();
+          const ua = (await tmp.evaluate(() => navigator.userAgent)) + " alert-log-probe";
+          await tmp.close();
+          const ctx = await b.newContext({ viewport: { width: 1080, height: 1920 }, userAgent: ua });
+          await ctx.route(/\/island-api\/alertbox\/[0-9a-f]{32}\/wss/, (r) =>
+            r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wss: FAKE }) }));
+          await ctx.route(/\/island-api\/alertbox\/[0-9a-f]{32}\/(replay|yt-token)/, (r) => r.abort());
+          await ctx.route(/script\.google(usercontent)?\.com/, (r) => r.abort());
+          let sent = false;
+          await ctx.routeWebSocket(/doneru-probe\.invalid/, (ws) => {
+            ws.onMessage(() => {});
+            // 季節の絵と、手元に持つ動画の温め（4秒あと）が始まってから流す
+            setTimeout(() => { ws.send(JSON.stringify(TEST)); sent = true; }, 25000);
+          });
+          const seen = {};
+          let sid = null;
+          const copied = { ok: 0, ng: 0 };
+          const p = await ctx.newPage();
+          p.on("console", (m) => {
+            try {
+              const j = JSON.parse(m.text());
+              if (j && typeof j.event === "string") {
+                seen[j.event] = (seen[j.event] ?? 0) + 1;
+                if (j.event === "mount") sid = j.sessionId;
+              }
+            } catch { /* ログ以外 */ }
+          });
+          p.on("response", (r) => {
+            if (/\/island-api\/alertbox\/[0-9a-f]{32}\/log$/.test(r.url())) copied[r.status() === 204 ? "ok" : "ng"] += 1;
+          });
+          await p.goto(`${BASE}/alertbox?k=${K}&source=doneru`, { waitUntil: "domcontentloaded" });
+          // 流してから、アラートが明けるまで（2,000円は 30+15 秒）
+          for (let i = 0; i < 120 && !(sent && seen.fxPlan && (seen.notificationDisplayed ?? 0) > 0); i++) await p.waitForTimeout(1000);
+          await p.waitForTimeout(50000);
+          await b.close();
+          // **出すのは出来事の名前と数だけ**（通知の中身・合言葉は出さない）
+          console.log(`流した: ${sent} / 開いた回: ${sid}`);
+          console.log(`面が書いた出来事: ${JSON.stringify(seen)}`);
+          console.log(`写しの口の返り: 204 ${copied.ok} / それ以外 ${copied.ng}`);
+          if (!sid) process.exit(1);
+          process.stdout.write(`\nPROBE_SID=${sid}\nPROBE_COPY_OK=${copied.ok}\nPROBE_COPY_NG=${copied.ng}\n`);
+          JS
+          node /tmp/alert_probe.mjs | tee /tmp/probe.log
+          grep -E '^PROBE_[A-Z_]+=' /tmp/probe.log >> "$GITHUB_ENV"
+
+      - name: 確かめの回の行が BigQuery に入ったか
+        if: env.GO == '1' && inputs.probe
+        run: |
+          set -uo pipefail
+          rc=1
+          # 流し込みはすぐ読めるが、念のため3回まで（30秒おき）
+          for i in 1 2 3; do
+            python3 python/alert_log_report.py --hours 1 --lag-min 0 --session "$PROBE_SID" --include-probe \
+              --expect mount,initSuccess,doneruConnectorStarted,notificationReceived,notificationDisplayed,fxPlan \
+              --md /tmp/probe.md --json /tmp/probe.json && rc=0 || rc=$?
+            [ "$rc" = "1" ] && grep -q '"expect_missing": \[\]' /tmp/probe.json && rc=0
+            [ "$rc" = "0" ] && break
+            sleep 30
+          done
+          echo "PROBE_RC=$rc" >> "$GITHUB_ENV"
+          { echo "### 確かめ（本番の面・通知テスト1件）"; echo; cat /tmp/probe.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------- 見張り ----------------
+
+      - name: 前のコメントの続きから読む
+        if: env.GO == '1'
+        run: |
+          set -euo pipefail
+          since="$(gh api "repos/$REPO/issues/$ISSUE/comments" --paginate --jq '.[].body' \
+            | grep -oE '<!-- alert_watch until=[0-9TZ:+.-]+ -->' | tail -1 \
+            | sed -E 's/<!-- alert_watch until=([^ ]+) -->/\1/' || true)"
+          echo "SINCE=$since" >> "$GITHUB_ENV"
+          echo "前の印: ${since:-（無し。さかのぼって読む）}"
+
+      - name: 配信ごとの表にする
+        if: env.GO == '1'
+        env:
+          HOURS: ${{ inputs.hours || '24' }}
+        run: |
+          set -uo pipefail
+          rc=0
+          if [ -n "${SINCE:-}" ]; then
+            python3 python/alert_log_report.py --since "$SINCE" --md /tmp/watch.md --json /tmp/watch.json || rc=$?
+          else
+            python3 python/alert_log_report.py --hours "$HOURS" --md /tmp/watch.md --json /tmp/watch.json || rc=$?
+          fi
+          echo "WATCH_RC=$rc" >> "$GITHUB_ENV"
+          echo "終了コード: $rc（0=異常なし / 1=異常あり / 2=読めなかった）"
+          { echo "### 見張り"; echo; cat /tmp/watch.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: '#1160 に書く'
+        if: env.GO == '1' && env.WATCH_RC != '2'
+        env:
+          EVENT: ${{ github.event_name }}
+          PROBE: ${{ inputs.probe }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          new=$(python3 -c 'import json;print(json.load(open("/tmp/watch.json"))["new_money"])')
+          until=$(python3 -c 'import json;print(json.load(open("/tmp/watch.json"))["until"])')
+          if [ "$new" = "0" ] && [ "$EVENT" != "workflow_dispatch" ]; then
+            echo "新しい投げ銭は無いので、書きません"
+            exit 0
+          fi
+          {
+            echo "**アラートのログ（自動）**"
+            echo
+            cat /tmp/watch.md
+            if [ "$PROBE" = "true" ]; then
+              echo
+              if [ "${PROBE_RC:-1}" = "0" ]; then
+                echo "**確かめ**: 本番の面を開いて通知テストを1件流し、写しが BigQuery に入りました（口の返り 204 が ${PROBE_COPY_OK:-?} 件・それ以外 ${PROBE_COPY_NG:-?} 件）"
+              else
+                echo "**確かめ: 写しが BigQuery にそろっていません**（口の返り 204 が ${PROBE_COPY_OK:-?} 件・それ以外 ${PROBE_COPY_NG:-?} 件）"
+              fi
+              echo
+              cat /tmp/probe.md 2>/dev/null || true
+            fi
+            echo
+            echo "[この回の記録]($RUN_URL)"
+            echo
+            echo "<!-- alert_watch until=$until -->"
+          } > /tmp/comment.md
+          gh api "repos/$REPO/issues/$ISSUE/comments" -F body=@/tmp/comment.md --jq '.html_url'
+          if [ "$WATCH_RC" = "1" ]; then
+            gh api -X POST "repos/$REPO/issues/$ISSUE/labels" -f 'labels[]=待ち-システム' --jq '.[].name' >/dev/null
+            echo "異常あり → 札 待ち-システム"
+          fi
+
+      # 落とすのは「この仕組みが動いていない」ときだけ（異常そのものは #1160 に出る）
+      - name: 読めなかった・確かめが通らなかったら赤くする
+        if: env.GO == '1'
+        run: |
+          set -euo pipefail
+          if [ "${WATCH_RC:-0}" = "2" ]; then
+            echo '### 写しの表を読めませんでした（**異常なし、という意味ではありません**）' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if [ "${{ inputs.probe }}" = "true" ] && [ "${PROBE_RC:-1}" != "0" ]; then
+            echo '### 確かめの回の行が、BigQuery にそろっていません' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
