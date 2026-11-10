@@ -1082,3 +1082,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1108#issuecomment-6672818460（チキンシチューの回 v4 を「2026/11/06 21:30」に出す。「元々あったやつは2026/11/16」＝11/6 に予約していたリーズの回 #1051 を 11/16 21:30 JST へ動かす）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1107#issuecomment-6674755664（ほったらかしパンの回 A v3（urw-p1a-v3）を「2026/11/12」に出す。時刻の指定は無いので 21:30 JST。下見を見たうえでの日付なので、6行目の声もこのまま）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1108#issuecomment-6683921689（チャットの書き置き。あやと 2026-11-06 20:35 JST「あ、ログインできてなかったのね。いま気付いた。急いで直前までやって」＝本人確認はあやとが通す。EC2 を起こして窓を出すところまでと、通ったらすぐ入れられる用意をこちらでする。21:12 JST を過ぎたら今夜はリーズのまま）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1107#issuecomment-6767342826（チャットの書き置き。あやと 2026-11-10「ほったらかしパンを11/11にかえといて」＝11/12 21:30 の予約を 11/11 21:30 JST へ。YouTube は時刻を変え、TikTok は消して入れ直す）
