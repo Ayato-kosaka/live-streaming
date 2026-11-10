@@ -177,6 +177,8 @@ jobs:
           const seen = {};
           let sid = null;
           const copied = { ok: 0, ng: 0 };
+          const statuses = {};
+          let firstNg = "";
           const p = await ctx.newPage();
           p.on("console", (m) => {
             try {
@@ -188,7 +190,12 @@ jobs:
             } catch { /* ログ以外 */ }
           });
           p.on("response", (r) => {
-            if (/\/island-api\/alertbox\/[0-9a-f]{32}\/log$/.test(r.url())) copied[r.status() === 204 ? "ok" : "ng"] += 1;
+            if (/\/island-api\/alertbox\/[0-9a-f]{32}\/log$/.test(r.url())) {
+              copied[r.status() === 204 ? "ok" : "ng"] += 1;
+              statuses[r.status()] = (statuses[r.status()] ?? 0) + 1;
+              // 落ちた返りの中身は1件だけ、頭 160 字（合言葉は URL にしか無いので、本文には出ない）
+              if (r.status() !== 204 && !firstNg) r.text().then((t) => { firstNg = `${r.status()} ${t.slice(0, 160)}`; }).catch(() => {});
+            }
           });
           await p.goto(`${BASE}/alertbox?k=${K}&source=doneru`, { waitUntil: "domcontentloaded" });
           // 流してから、アラートが明けるまで（2,000円は 30+15 秒）
@@ -199,6 +206,8 @@ jobs:
           console.log(`流した: ${sent} / 開いた回: ${sid}`);
           console.log(`面が書いた出来事: ${JSON.stringify(seen)}`);
           console.log(`写しの口の返り: 204 ${copied.ok} / それ以外 ${copied.ng}`);
+          console.log(`写しの口の返りの内訳: ${JSON.stringify(statuses)}`);
+          if (firstNg) console.log(`写しの口の最初の断り: ${firstNg}`);
           if (!sid) process.exit(1);
           process.stdout.write(`\nPROBE_SID=${sid}\nPROBE_COPY_OK=${copied.ok}\nPROBE_COPY_NG=${copied.ng}\n`);
           JS
