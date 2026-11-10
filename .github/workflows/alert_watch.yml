@@ -149,7 +149,7 @@ jobs:
         working-directory: tools/sprites
         run: |
           set -euo pipefail
-          cat > /tmp/alert_probe.mjs <<'JS'
+          cat > ./_alert_probe.mjs <<'JS'
           import { chromium } from "playwright-core";
           const K = process.env.ALERTBOX_K;
           const BASE = "https://live-streaming-d3cac.web.app";
@@ -201,7 +201,7 @@ jobs:
           if (!sid) process.exit(1);
           process.stdout.write(`\nPROBE_SID=${sid}\nPROBE_COPY_OK=${copied.ok}\nPROBE_COPY_NG=${copied.ng}\n`);
           JS
-          node /tmp/alert_probe.mjs | tee /tmp/probe.log
+          node ./_alert_probe.mjs | tee /tmp/probe.log
           grep -E '^PROBE_[A-Z_]+=' /tmp/probe.log >> "$GITHUB_ENV"
 
       - name: 確かめの回の行が BigQuery に入ったか
