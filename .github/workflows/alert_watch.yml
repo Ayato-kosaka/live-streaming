@@ -149,6 +149,7 @@ jobs:
         working-directory: tools/sprites
         run: |
           set -euo pipefail
+          ln -sfn "$PWD/node_modules" /tmp/node_modules  # /tmp の台本から playwright-core を引けるように
           cat > /tmp/alert_probe.mjs <<'JS'
           import { chromium } from "playwright-core";
           const K = process.env.ALERTBOX_K;
