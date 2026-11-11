@@ -44,6 +44,14 @@ python3 .claude/skills/ec2-chrome/ec2.py run /tmp/claude-0/scr/doneru_check.sh 3
 （このときは下の「1. 回す」を、あやとがスマホを持てる時刻に）。2026-10-09 に土台へ載せ替えたあと、
 これで `browser fetch: 200` まで通ることを確かめた。
 
+**ログインの道すじを直したときは `STOP_BEFORE_ACCOUNT=1` で。** `_dt` が生きていてもログインの道を進み、
+アカウント選択で「押す直前の座標が一致した行に当たるか」を出し、メールを伏せて押す点に赤い点を置いた絵
+（`/home/ubuntu/shots/doneru_chooser.jpg`）を撮って、**押さずに**止める。`DONERU_CHROME=<名前>` を付けると
+`~/cdp-<名前>` の Chrome を使うので、先に `doneru-chrome` をそこへ写しておけば本物を汚さない
+（キャッシュと `Singleton*` を除いて rsync。終わったら写しを消す）。札は `ec2.py hold doneru … -- python3 ec2.py run …` で取る
+（写している最中に本物の Chrome が起きないように）。**`doneru.jp/auth/youtube` を素で開く試しはしない**——
+Google が覚えたアカウントの `challenge/dp` へ直行して、その場でスマホが鳴る（6章、2026-11-11）。
+
 ## 1. 回す（あやとがスマホを手に持てるときに）
 
 **Google は毎回スマホの本人確認（数字の照合）を出す**（2026-09-23 に4回回して4回とも出た）。
@@ -89,7 +97,10 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 | --- | --- | --- |
 | `existing _dt valid: True` と `browser fetch: 200` | 切れていない。そのまま入れる（本人確認は出ない） | — |
 | `existing _dt, browser fetch: 403 {"message":"Forbidden","userType":"streamer"}` | Doneru には入っているが**別の YouTube チャンネルで**入っている | スクリプトがログインし直す |
-| `account chooser: 2 件、一致 [0]` | Google アカウントを `ACCOUNT_SHA256` で当てた | 一致が空なら止まる |
+| `open_login: … に prompt=select_account を足して開き直す` | Google の OAuth の入口で止めて、毎回アカウント選択を出させた | `STOP: …OAuth の入口ではない` / `…本人確認へ進もうとした` なら、行き先が変わった。何も開いていない |
+| `account chooser: 3 件、一致 [0]` と `[i] a***@ドメイン 一致= 状態= …` | Google アカウントを `ACCOUNT_SHA256` で当てた。各行の伏せたメール・状態の字（ログアウト等）・中心の当たり先 | 一致が空なら止まる |
+| `押す前の確かめ: [0] … 行の中=True` | 一致した行を画面の中へ送り、その座標の `elementFromPoint` がその行の中 | `STOP: 押す座標が…当たらない` なら押していない |
+| `challenge/dp: 画面のアカウント ['a***@…'] → Doneru のアカウント` | 本人確認が当てたアカウントのもの | `→ 違う／読めない` と `STOP` なら数字は出さずに about:blank へ離れた。**通知は1通出ている**ので「押さなくてよい」とあやとに書く |
 | `challenge/pwd -> PASSWORD` と `STOP: パスワードを求められた` | **Doneru ではなく Google のログインが切れている。** `_dt` だけの切れではない | **7章。** 複製し直しでは戻らない。あやとに入り直してもらう |
 | `challenge/dp: 画面の数字 [...]` | スマホの本人確認。**あやとに数字を伝える** | — |
 | `delegation: 押す -> ayato_arigato Youtube` | YouTube チャンネルを選んだ | 決まらなければ選択肢を書き出して5分待つ（下） |
@@ -104,11 +115,19 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 
 1. `https://doneru.jp/auth/youtube?type=streamer`（配信者ログイン `/auth/login?loginType=streamer` の
    「Sign in with YouTube」の行き先。あやと 2026-09-23）。`https://doneru.jp/login` は**存在しない**
-2. `accountchooser`: Google アカウントが2つ並ぶ。**Doneru に使うのは上**だが、位置では決めず
-   `ACCOUNT_SHA256`（メールを小文字にした SHA-256。公開リポジトリなのでメールそのものは置かない）で当てる
-3. `challenge/dp`: スマホに通知 → あやとが「はい」→ 数字を選ぶ
+   - doneru はここから Google の OAuth の入口（`accounts.google.com/o/oauth2/…`）へ飛ばす。
+     **スクリプトはその要求を Fetch で止め、`prompt=select_account` を足して開き直す**（2026-11-11 から。6章）。
+     足さないと、Google が前に選ばれたアカウントを覚えていれば選択を飛ばして、そのアカウントの `challenge/dp` へ直行する
+2. `accountchooser`: Google アカウントが並ぶ（2026-09〜10 は2つ、2026-11-11 は3つ）。位置では決めず
+   `ACCOUNT_SHA256`（メールを小文字にした SHA-256。公開リポジトリなのでメールそのものは置かない）で当てる。
+   押す前に、その行を画面の中へ送って座標を取り直し、`elementFromPoint` の最寄りの `[data-identifier]` が
+   その行そのものであることを確かめる。違えば押さずに止まる
+3. `challenge/dp`: スマホに通知 → あやとが「はい」→ 数字を選ぶ。**数字を出す前に、画面に出ているアカウントを
+   sha256 で照らす。** 違えば数字を出さずに about:blank へ離れて止まる
 4. `oauth/delegation`: **どの YouTube チャンネルで入るか。** 同じアカウントに「あやと」
-   「あやと と アプリ作り」「うらこう」などが並ぶ。**`ayato_arigato` だけを押す**。
+   「あやと と アプリ作り」「うらこう」などが並ぶ。**`ayato_arigato`（チャンネル ID `UCCwutAH6ieHNvdyJAfSld7w`）だけを押す**。
+   要素の中にこの ID だけが出ているものがあればそれで当て、無ければ名前（`CHANNEL_RE`）で当てる。
+   出力の `チャンネル ID の出ている要素 N 件` で、どちらで当てたかが分かる。
    先頭（個人のチャンネル）を押すと、Doneru には入れるが寄付一覧が 403 になる
 5. `oauth/id` → `consentsummary`: `Continue` を2回
 6. doneru.jp に戻って `_dt` が付く（寿命7日、httpOnly）
@@ -167,6 +186,20 @@ bash .claude/skills/doneru-cookie/wait_challenge.sh <上の出力ファイル>  
 - **本人確認の待ちは「新しい `_dt` が付いたか」で抜ける。** 「`_dt` がある」で抜けると、
   残っている古い `_dt` で毎回5秒で抜けて、押す回数の上限を食い尽くす（あやとが押した瞬間に上限に届いた回がある）
 - **チャンネルの当てかたを緩くしない。** `ayato|あやと` で当てると3つ当たって止まる
+- **Google が覚えた別のアカウントの本人確認へ直行する（2026-11-11）。** 00:51 UTC に選択（3件・一致 [0]）を
+  25回押しても同じ画面のままで、そのあと `doneru.jp/auth/youtube` を開くと、選択を飛ばして**別のアカウントの**
+  `challenge/dp` へ直行するようになった（01:02 と 01:07 にあやとのスマホが鳴り、2回とも違うアカウントだった）。
+  doneru の OAuth の入口は `prompt=consent` だけで `select_account` を付けていないので、
+  ログイン中のアカウントが1つなら、Google はそのアカウントで進める。直しは3つ:
+  入口を Fetch で止めて `prompt=select_account` を足して開き直す（`open_login`。選択より前に `/challenge` へ
+  行こうとしたら開かずに止める）・押す前に行の当たり先を確かめる・dp では数字を出す前に画面のアカウントを照らす
+  - 調べたときの形: `doneru-chrome` の選択は、ログイン中の別のアカウント1件だけで、**Doneru のアカウントが無かった。**
+    既定のプロファイルの写しでは3件とも `Signed out` で、一致は [0]。押す点の `elementFromPoint` は3行とも
+    その行の中だった（**押す点がずれていたのではない**）。00:51 に押して進まなかった理由は分かっていない
+    （そのときの画面は残っていない）。次に出たら、`[i] … 状態=` の行を見る
+  - Doneru のアカウントが選択に無いときは、`STOP: Doneru のアカウントが選択肢に無い` で止まる（何も押さない）。
+    戻すのは7章の reseed（既定のほうには `Signed out` で並んでいる）。`Signed out` の行を押したあと、
+    dp で戻れるか pwd になるかは確かめていない
 - 値の扱い: `_dt` は `/tmp/.doneru_dt`（600）を経由して `gh secret set` の stdin に渡すだけ。
   ログ・標準出力・issue・コミットに出すのは**長さ**と HTTP コードだけ
 
@@ -224,8 +257,9 @@ rm -rf /home/ubuntu/cdp-doneruprobe
      → そのあとこちらが `reseed` して取り直す
    - 手元のブラウザで `_dt` を `DONERU_COOKIE` に貼り替えてもらう（issue 本文の1〜3）
      → そのあとこちらが取り込みを流して突き合わせる
-4. **EC2 は止めておく。** 人の返事待ちはいつ来るか分からない（`ec2-chrome` 2。1日つけっぱなしで約200円）。
-   issue には「止めてあるので起こしてから入って」と書く
+4. **あやとに EC2 を起こさせない。直前まではこちらでやる**（あやと 2026-11-11「直前までやってる？まいかいやれってゆってるよな？」・`docs/island-misses.md` #320）。
+   - あやとが今チャットにいるなら: **こちらで EC2 を起こし、遠隔デスクトップの画面に既定の Chrome でアカウント選択（k*** が並ぶ画面）を出してから**「入ってパスワードを打つだけです」と頼む
+   - あやとが今いないなら: EC2 は止めておき、issue には「入る前に一言ください。こちらで起こして画面を出します（1〜2分）」と書く（1日つけっぱなしで約200円。`ec2-chrome` 2）
 
 **このとき、あやとのスマホに通知は飛んでいない。** `/challenge/dp` を開いていないので、
 いつもの「数字を選ぶ」通知は出ない。issue には**そのことも書く**
