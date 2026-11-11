@@ -342,6 +342,74 @@ def report(sessions: list[Session], since: datetime, until: datetime) -> str:
     return "\n".join(out)
 
 
+#: `--detail` で出してよい項目（出来事ごと）。**ここに無い項目は1つも出さない。**
+#: 名前・メッセージ・通知の ID・額・URL は入れない（額は段で足りる）。
+#: 面に項目を足したら、ここにも足す（足さなければ出ないだけで、漏れはしない）
+DETAIL_KEYS: dict[str, tuple[str, ...]] = {
+    "mount": ("enabledSources",),
+    "notificationReceived": ("type", "test"),
+    "notificationDisplayed": ("type", "test"),
+    "fxPlan": ("tier", "video", "show", "waitMs", "limitMs", "from", "why", "prepMs", "fetched", "bytes",
+               "rigs", "held", "net", "openSec"),
+    "fxPrepLate": ("tier", "ok", "from", "why", "ms", "fetched", "bytes"),
+    "fxHeld": ("got", "bytes", "failed", "full", "ms", "heldFiles", "heldBytes", "ready", "of"),
+    "fxVideoFailed": ("sec", "why", "tier", "from", "openSec", "net", "vis", "hiddenMs", "gapMs", "ticks",
+                      "layers", "retried", "nth"),
+    "replayPlay": ("type",),
+}
+
+
+def _ua_short(ua: str | None) -> str:
+    """UA から、OS の版・Chrome の版・WebView かだけを抜く（機種名は出さない）。"""
+    import re
+
+    u = ua or ""
+    os_ = re.search(r"Android [0-9.]+|iPhone OS [0-9_]+|Windows NT [0-9.]+|Mac OS X [0-9_]+", u)
+    ch = re.search(r"Chrome/([0-9]+)", u)
+    return " / ".join(x for x in (os_.group(0) if os_ else device_of(u), f"Chrome {ch.group(1)}" if ch else "",
+                                  "WebView" if "; wv)" in u else "") if x)
+
+
+def _pick(ev: str, d: dict) -> str:
+    keys = DETAIL_KEYS.get(ev)
+    if keys is None:
+        return ""
+    got = {k: d[k] for k in keys if k in d}
+    if ev in ("notificationReceived", "notificationDisplayed", "replayPlay"):
+        got["kind"] = kind_of(d)
+    return json.dumps(got, ensure_ascii=False, separators=(",", ":")) if got else ""
+
+
+def detail(sessions: list[Session]) -> str:
+    """回ごとの出来事の並び（`--detail`）。**段・秒・理由・回線だけ。** 名前・メッセージ・ID・額は出さない。
+
+    投げ銭のあった回だけ。時刻は「開いてからの秒」と JST。
+    """
+    out = []
+    for s in sessions:
+        if not (s.money() or s.anomalies()):
+            continue
+        ua = next((r.get("ua") for r in s.rows if r.get("ua")), None)
+        out.append(f"## 開いた {s.opened().astimezone(JST):%m/%d %H:%M:%S} JST（session {s.session_id}）"
+                   f" — {_ua_short(ua)} — 版 {', '.join(sorted(s.commits)) or '—'}")
+        out.append("")
+        for i, note in enumerate(s.notes, 1):
+            o, why = note.outcome()
+            p = note.plan or {}
+            out.append(f"- 通知{i}（{note.kind}）段 {p.get('tier', '—')} → {o}{f'（{why}）' if why else ''}")
+        out.append("")
+        out.append("| 開いてから | JST | 出来事 | 中身 |")
+        out.append("| ---: | --- | --- | --- |")
+        for r in s.rows:
+            ev = str(r.get("event") or "")
+            t = _ts(r.get("logged_at")) or _ts(r.get("received_at"))
+            rel = f"{(t - s.opened()).total_seconds():.1f}" if t else "?"
+            jst = t.astimezone(JST).strftime("%H:%M:%S.%f")[:-3] if t else "?"
+            out.append(f"| {rel} | {jst} | {ev} | {_pick(ev, _data(r.get('data')))} |")
+        out.append("")
+    return "\n".join(out) if out else "（投げ銭のあった回はありません）"
+
+
 def fetch(since: datetime, until: datetime, session: int | None) -> list[dict]:
     """BigQuery から窓の行を引く。**表が無い・届かないは投げる**（呼ぶ側が 2 にする）。"""
     from google.cloud import bigquery  # 偽の行で回すときは要らないので、ここで読む
@@ -385,6 +453,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--include-probe", action="store_true", help="確かめ（alert-log-probe）の回も入れる")
     ap.add_argument("--expect", help="選んだ行に、この出来事（カンマ区切り）がぜんぶ在るか")
     ap.add_argument("--rows", help="BigQuery を引かず、この JSONL を行として読む（試験用）")
+    ap.add_argument("--detail", action="store_true",
+                    help="投げ銭のあった回ごとに、出来事の並び（段・秒・理由・回線だけ）も出す")
     ap.add_argument("--md", help="表をこのファイルにも書く")
     ap.add_argument("--json", dest="json_out", help="要約をこのファイルに書く")
     a = ap.parse_args(argv)
@@ -426,6 +496,8 @@ def main(argv: list[str] | None = None) -> int:
         if missing:
             text += "\n**入っていない出来事: " + ", ".join(missing) + "**"
             rc = 1
+    if a.detail:
+        text += "\n\n" + detail(sessions)
     print(text)
     if a.md:
         with open(a.md, "w", encoding="utf-8") as f:

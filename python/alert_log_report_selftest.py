@@ -202,10 +202,16 @@ def suite(mod) -> dict[str, tuple[bool, str]]:
     # 素性を出さない（表・要約・異常の文のどれにも）
     leaks = []
     for rows in (good_day(), bad_day(), probe_day()):
-        _, text, d = run(mod, rows, "--include-probe")
-        blob = text + json.dumps(d, ensure_ascii=False)
-        leaks += [s for s in SECRET if s in blob]
+        for extra in ((), ("--detail",)):
+            _, text, d = run(mod, rows, "--include-probe", *extra)
+            blob = text + json.dumps(d, ensure_ascii=False)
+            leaks += [s for s in SECRET if s in blob]
     r["privacy"] = (not leaks, f"出たもの {sorted(set(leaks))}")
+
+    # 出来事の並び（--detail）に、止まった動画の秒と理由が出る
+    _, text, _ = run(mod, bad_day(), "--detail")
+    r["detail"] = ('| fxVideoFailed | {"sec":3,"why":"stall","tier":"t5"} |' in text
+                   and "missed（videoFailed:stall）" in text, "出来事の並び")
 
     # 読めなかったら 2（「異常なし」に倒さない）
     def boom(*_a, **_k):
@@ -235,7 +241,8 @@ NAMES = {
     "expect": "--expect の欠けは 1",
     "window": "窓の外の行は読まない",
     "empty": "何も無い窓は 0 で「無し」",
-    "privacy": "名前・メッセージ・通知の ID を出さない",
+    "privacy": "名前・メッセージ・通知の ID を出さない（--detail でも）",
+    "detail": "--detail に、止まった動画の秒と理由が出る",
     "unreadable": "読めなかったら 2",
 }
 
@@ -270,6 +277,15 @@ def _leak(m):
         str((n.nid or "")) for s in sessions for n in s.notes)
 
 
+def _detail_all(m):
+    # 出してよい項目の表を見ずに、中身を丸ごと出す
+    m._pick = lambda ev, d: json.dumps(d, ensure_ascii=False)
+
+
+def _detail_blind(m):
+    m.DETAIL_KEYS = {k: v for k, v in m.DETAIL_KEYS.items() if k != "fxVideoFailed"}
+
+
 def _unreadable_ok(m):
     orig = m.main
 
@@ -287,6 +303,8 @@ BREAKS = {
     "all_real": (_all_real, "good_counts"),
     "probe_mixed": (_probe_mixed, "probe_hidden"),
     "leak": (_leak, "privacy"),
+    "detail_all": (_detail_all, "privacy"),
+    "detail_blind": (_detail_blind, "detail"),
     "unreadable_ok": (_unreadable_ok, "unreadable"),
 }
 

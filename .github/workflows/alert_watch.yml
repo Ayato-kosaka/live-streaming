@@ -47,9 +47,14 @@ on:
         default: false
         type: boolean
       hours:
-        description: "前の印が無いとき、何時間さかのぼるか"
+        description: "前の印が無いとき、何時間さかのぼるか（detail のときは、そこから何時間読むか）"
         required: false
         default: "24"
+        type: string
+      detail:
+        description: "1つの回の出来事の並びを出す（session_id の13桁か、ISO の日時）。#1160 には書かない"
+        required: false
+        default: ""
         type: string
 
 concurrency:
@@ -222,10 +227,36 @@ jobs:
           echo "PROBE_RC=$rc" >> "$GITHUB_ENV"
           { echo "### 確かめ（本番の面・通知テスト1件）"; echo; cat /tmp/probe.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
 
+      # ---------------- 1つの回の出来事の並び（detail のときだけ） ----------------
+      #
+      # 段・層・秒・理由・回線だけを、この run のログと要約に出す（`--detail`。名前・メッセージ・ID・額は出さない）。
+      # 見張りの印は進めず、#1160 にも書かない（同じ窓を、あとで見張りが読み直せるように）
+
+      - name: 1つの回の出来事を並べる
+        if: env.GO == '1' && inputs.detail != ''
+        env:
+          DETAIL: ${{ inputs.detail }}
+          HOURS: ${{ inputs.hours || '24' }}
+        run: |
+          set -uo pipefail
+          if [[ "$DETAIL" =~ ^[0-9]{13}$ ]]; then
+            since=$(date -u -d "@$(( DETAIL / 1000 - 300 ))" +%FT%TZ)
+            sel=(--session "$DETAIL")
+          else
+            since=$(date -u -d "$DETAIL" +%FT%TZ) || { echo "::error::detail が読めません（13桁か ISO の日時）"; exit 1; }
+            sel=()
+          fi
+          until=$(date -u -d "$since + ${HOURS%.*} hours" +%FT%TZ)
+          rc=0
+          python3 python/alert_log_report.py --since "$since" --until "$until" "${sel[@]}" --detail \
+            --md /tmp/detail.md --json /tmp/detail.json || rc=$?
+          { echo "### 出来事の並び（$since〜$until）"; echo; cat /tmp/detail.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+          [ "$rc" = "2" ] && exit 1 || exit 0
+
       # ---------------- 見張り ----------------
 
       - name: 前のコメントの続きから読む
-        if: env.GO == '1'
+        if: env.GO == '1' && inputs.detail == ''
         run: |
           set -euo pipefail
           since="$(gh api "repos/$REPO/issues/$ISSUE/comments" --paginate --jq '.[].body' \
@@ -235,7 +266,7 @@ jobs:
           echo "前の印: ${since:-（無し。さかのぼって読む）}"
 
       - name: 配信ごとの表にする
-        if: env.GO == '1'
+        if: env.GO == '1' && inputs.detail == ''
         env:
           HOURS: ${{ inputs.hours || '24' }}
         run: |
@@ -251,7 +282,7 @@ jobs:
           { echo "### 見張り"; echo; cat /tmp/watch.md 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: '#1160 に書く'
-        if: env.GO == '1' && env.WATCH_RC != '2'
+        if: env.GO == '1' && inputs.detail == '' && env.WATCH_RC != '2'
         env:
           EVENT: ${{ github.event_name }}
           PROBE: ${{ inputs.probe }}
