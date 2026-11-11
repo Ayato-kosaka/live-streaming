@@ -226,7 +226,7 @@ HPJ（グランクラス: 数→口調・枠・？の予想→自分を落とす
 - **批評役は1人・直しは1回**（`script_writing.md` 7.3 の上限の内）。1人目に ✕ が無いので2人目は呼んでいない
 - 批評役で割れた所: 無し
 - 直したあとの版（15行）は批評役に回していない（7.3 の 3: △ を1回で直す）。lint は ✕0・△2
-- 控え: `critic_r1.json`（批評役の JSON）・`critic_gate_r1.txt`（`critic_gate.py` の出力）・`lint.txt`（最後の lint）。批評役は `critic.py` で、作文者のコミット `50095c6` の写しを読ませた（`--ref HPJ --ref f8t --video yNA44SQbYjM`）
+- 控え: `critic_r1.json`（批評役の JSON）・`critic_gate_r1.txt`（`critic_gate.py` の出力）・`lint.txt`（最後の lint）。批評役は `critic.py` で、作文者のコミット `10a9a9f` の写し（載せ直す前の番号は 50095c6）を読ませた（`--ref HPJ --ref f8t --video yNA44SQbYjM`）
 
 ### 処分表（批評役1人目）
 
