@@ -47,6 +47,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 EC2_HOME = "/home/ubuntu"
 sys.path.insert(0, f"{EC2_HOME}/cdp")
 from cdp import Tab, _port, hold, pages, up  # noqa: E402
+import importlib.util  # noqa: E402
+
+# 入っているかは fish_login.py と同じ判定を借りる（2か所に書かない）。EC2 の ~/cdp に古い fish_login.py
+# （2026-11-11 より前の版）が置かれていると、読み込んだだけで入り直しが走るので、判定の関数が在る版かを先に字で見る
+_FL = importlib.util.find_spec("fish_login")
+if not _FL or "def judge(" not in open(_FL.origin, encoding="utf-8").read():
+    raise SystemExit("fish_login.py が無いか古い（判定の関数が無い）。手元から ec2.py put tools/shorts/voice/fish_login.py "
+                     "/home/ubuntu/cdp/fish_login.py で置き直す")
+from fish_login import OUTLINE, account_links, api_facts, judge, summary  # noqa: E402
 
 NAME = "fish"
 PLAY = "https://fish.audio/ja/text-to-speech/?modelId={model}"
@@ -112,10 +121,25 @@ def open_playground(t: Tab, model: str) -> dict:
     time.sleep(1)
     st = state_of(t)
     st["credits_balance"] = balance(t)
-    if st["login_button"]:
-        raise SystemExit("ログインしていない（右上に「ログイン」）。列 fish の札を取って fish_login.py（tools/shorts/voice/）で入り直す。reseed しない（~/cdp-fish の TikTok の下書きが消える）")
+    st["login"] = require_login(t)
     if not st["editor"] or not st["generate"]:
         raise SystemExit(f"入力欄か「音声を生成する」が見つからない: {st}")
+    return st
+
+
+def require_login(t: Tab) -> str:
+    """開いたあとの要求の返事で、入っているかを fish_login.py と同じ判定で決める（値は読まない）。入っていなければ止める。
+
+    前は右上の「ログイン」の字で見ていた。2026-11-11 の本物の ~/cdp-fish は、札が残ったまま `GET /user/self` が 401 で、
+    字では入っているように見えうる。入ったつもりで「音声を生成する」を押すと、要求が出ずに失敗を重ねる（作り直しの
+    たびに記録が増え、--attempt-limit を食う）ので、声を作る前にここで止める"""
+    drain(t, 1.0)
+    f = api_facts(t.events)
+    f["account_links"] = account_links(t.js(OUTLINE) or [])
+    st = judge(f)
+    if st != "in":
+        raise SystemExit(f"入っていない（{summary(f)} -> {st}）。声は作らずに止める。fish_login.py（tools/shorts/voice/）を回して"
+                         "入り直す（入っていれば何も押さない）。reseed しない（~/cdp-fish の TikTok の下書きが消える）")
     return st
 
 
@@ -151,7 +175,6 @@ def state_of(t: Tab) -> dict:
       const slider = min => { const e = document.querySelector(`[role=slider][aria-valuemin="${min}"]`); return e ? e.getAttribute('aria-valuenow') : null; };
       const model = [...document.querySelectorAll('button,[role=combobox]')].filter(vis).map(txt).find(s => /Fish Audio|Drama|S\d/.test(s) && s.length < 40) || null;
       return {
-        login_button: [...document.querySelectorAll('a,button')].some(b => vis(b) && /^(ログイン|Log in|Sign in)$/.test(txt(b))),
         editor: !!document.querySelector('div.tiptap.ProseMirror[contenteditable=true]'),
         generate: [...document.querySelectorAll('button')].some(b => vis(b) && /音声を生成/.test(b.innerText || '')),
         model, speed: slider('0.7'), volume: slider('-5'),
@@ -482,6 +505,7 @@ def cmd_backup(a):
     t.events.clear()
     t.go("https://fish.audio/ja/app/text-to-speech/", wait=8)
     bal = balance(t)
+    require_login(t)   # 下書きを写す前に（入っていない画面の下書きを、あやとの下書きとして写さない）
     body = None
     for e in t.events:
         p = e.get("params", {})

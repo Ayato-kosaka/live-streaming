@@ -56,7 +56,6 @@ import time
 EC2_HOME = "/home/ubuntu"
 sys.path.insert(0, f"{EC2_HOME}/cdp")
 from cdp import pages, tab, up, where  # noqa: E402
-from google_login import _click, run  # noqa: E402
 
 APP = "https://fish.audio/ja/app/"
 API = "https://api.fish.audio/"
@@ -153,6 +152,12 @@ TAB = None
 RETRIES = [1]
 
 
+def _gl():
+    """google_login は入り直すときだけ要る。fish_web.py は判定（judge ほか）だけを借りるので、読み込んだだけでは呼ばない"""
+    import google_login
+    return google_login
+
+
 def drain(t, secs=2.0):
     t.ws.settimeout(secs)
     try:
@@ -213,14 +218,14 @@ def start(_t=None):
         if not e:
             print("  diag:", diag(t.js(OUTLINE) or []), flush=True)
             return
-        _click(t, e["x"], e["y"])
+        _gl()._click(t, e["x"], e["y"])
         time.sleep(3)
         g = find_google(t.js(OUTLINE) or [])
     print("start: Googleで続行", f"あり（{g['name'] or 'ロゴ'}）" if g else "無し", flush=True)
     if not g:
         print("  diag:", diag(t.js(OUTLINE) or []), flush=True)
         return
-    _click(t, g["x"], g["y"])
+    _gl()._click(t, g["x"], g["y"])
 
 
 def on_site(_t, url):
@@ -273,7 +278,7 @@ def main(argv=None) -> int:
     if a.check:
         print("RESULT out", flush=True)
         return 1
-    r = run(NAME, start, done, CHALLENGE, wait_dp=a.wait_dp, steps=15, on_site=on_site)
+    r = _gl().run(NAME, start, done, CHALLENGE, wait_dp=a.wait_dp, steps=15, on_site=on_site)
     print("RESULT", r, flush=True)
     if r == "ok":
         TAB.call("Page.close")

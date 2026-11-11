@@ -5,7 +5,7 @@
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `fish_web.py` | EC2（`~/cdp/` に `cdp.py` と並べる） | ログイン済みの Chrome（`~/cdp-fish`）で1文ずつ作り、mp3 と記録（`attempts.jsonl`）を書く |
+| `fish_web.py` | EC2（`~/cdp/` に `cdp.py`・`fish_login.py` と並べる） | ログイン済みの Chrome（`~/cdp-fish`）で1文ずつ作り、mp3 と記録（`attempts.jsonl`）を書く。入っていなければ作らずに止まる |
 | `asr_check.py` | EC2（venv の faster-whisper） | 作った声を全部聞き取り直して `asr.json` を書く |
 | `collect.py` | 手元 | 1文1ファイルに揃え、48kHz モノラル wav・長さ・音量を出し、原稿と聞き取りを比べて `lines.json` を書く |
 | `fish_login.py` | EC2（`~/cdp/` に `cdp.py`・`google_login.py` と並べる） | `~/cdp-fish` が入っているかを見て、切れていれば「Googleで続行」から入り直す（3） |
@@ -81,7 +81,11 @@ cd ~/cdp && python3 fish_login.py            # EC2 で。最後の行: RESULT in
 - **写しで入り直すと、本物が切れることがある。** 2026-11-11、`~/cdp-fish` の写しで Google から入り直したあとに、
   本物の札が 401 になった（写しを作った時点では 200）。fish.audio が前の札を無効にした見込み（1回だけで、確かめてはいない）。
   写しで試したら、最後に本物で `fish_login.py` を流しておく（その日は本物でスマホ確認は出ず、そのまま入れた）
-- `fish_web.py` の `open_playground` は、まだ右上の「ログイン」の字で入っているかを見ている（同じ形で外れうる）
+- **`fish_web.py` も同じ判定で止まる。** 再生ページを開いたとき（`gen`・`state`・`speed`・`adopt`・`restore`）と `backup` の前に、
+  `fish_login.py` の `judge` を借りて入っているかを見る。入っていなければ声を作らずに「入っていない。fish_login.py を回す」で止まる
+  （前は右上の「ログイン」の字で見ていて、札が切れていても入ったつもりで「音声を生成する」を押しうる作りだった）。
+  なので `fish_web.py` を置くときは `fish_login.py` も `~/cdp/` に置く。古い `fish_login.py`（読み込むと入り直しが走る版）が
+  置かれていれば、`fish_web.py` は読み込まずに止まる
 
 **`up("fish", reseed=True)` で複製し直さない**——`~/cdp-fish` には TikTok の下書き（約564MB）があり、消える。
 最初に作るときだけ `up("fish")` が既定のプロファイルから複製する（`ec2-chrome` スキル 3）。**あやとがリモートデスクトップで操作中は複製しない**
@@ -91,6 +95,7 @@ cd ~/cdp && python3 fish_login.py            # EC2 で。最後の行: RESULT in
 ```bash
 E=.claude/skills/ec2-chrome/ec2.py
 python3 $E put tools/shorts/voice/fish_web.py ~/cdp/fish_web.py
+python3 $E put tools/shorts/voice/fish_login.py ~/cdp/fish_login.py   # 入っているかの判定を fish_web.py が借りる
 python3 $E put lines_in.json ~/voice/<動画>-lines_in.json      # [{"key": "A/01", "tts_text": "…"}, …]
 ```
 

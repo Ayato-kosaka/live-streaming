@@ -1,4 +1,5 @@
-"""**fish.audio に入っているかの判定と、「Googleで続行」の探しかた（`fish_login.py`）の見張り。EC2 にも fish.audio にも触らない。**
+"""**fish.audio に入っているかの判定と、「Googleで続行」の探しかた（`fish_login.py`）、その判定を借りる声作り（`fish_web.py`）の
+入口の見張り。EC2 にも fish.audio にも触らない。**
 
     python3 tools/shorts/voice/fish_login_selftest.py
     BREAK=logo python3 tools/shorts/voice/fish_login_selftest.py   # 守りを1つ外した版で回す（対照の子）
@@ -35,11 +36,17 @@ G のロゴの色で探す。ここでは、その2つを偽の要求と偽の�
 | `api_no_self` | `/user/self` の道が変わっても、見出し付きの 2xx で in（見出しの字の大小も問わない） |
 | `api_unloaded` | api.fish.audio の返事が無いときだけ画面のリンクを見る。リンクも無ければ unknown |
 | `api_beats_screen` | 返事があれば画面より返事を信じる（入口の字が見えていても in・古いリンクが残っていても out） |
+| `web_in` | `fish_web.open_playground` が、入っている返事なら止まらずに進む（`login` が in） |
+| `web_401_textless` | 「ログイン」の字がどこにも無く、ログインした人のリンクも見えている画面でも、`/user/self` が 401 なら「入っていない」で止まり、`fish_login.py` を回すように言う（声の生成に進まない） |
+| `web_out_textless` | 入口の字が「ログイン」から変わった、入っていない画面でも止まる |
+| `web_backup_401` | `fish_web.py backup` も、401 なら下書きを写す前に「入っていない」で止まる（何も書かない） |
+
+`web_*` は本物の `fish_web.py` を読み込み、Chrome の代わりに偽のタブ（要求の出来事と画面の写しを返す）を渡して回す。
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
-`CUTS` が `fish_login.py` の**本物の字**を1か所だけ書き換えた写しで足を全部回し、**外した守りの足だけが落ちる**ことを
-確かめる。外す字が本物に見つからなければ 2 で落ちる。
+`CUTS` が `fish_login.py` か `fish_web.py` の**本物の字**を1か所だけ書き換えた写しで足を全部回し、**外した守りの足だけが
+落ちる**ことを確かめる。外す字が本物に見つからなければ 2 で落ちる。
 """
 
 from __future__ import annotations
@@ -273,17 +280,113 @@ API_LEGS = {
                                    ("返事が入っていないなら、古いリンクが残っていても out", m.judge(facts(m, LOGGED_OUT, links=5)) == "out")],
 }
 
+
+# ---------------------------------------------------------------- fish_web.py の入口（偽のタブで、本物の open_playground を回す）
+
+# 再生ページ（/ja/app/text-to-speech/）を開いたときの要求。入っている／2026-11-11 の本物（札が残ったまま 401）／入っていない
+TTS_IN = (("OPTIONS", "/user/self", False, 200), ("GET", "/user/self", True, 200), ("GET", "/tts-draft", True, 200),
+          ("GET", "/wallet/abc/package", True, 200), ("GET", "/model", True, 200))
+TTS_401 = (("GET", "/pricing/plans", False, 200), ("GET", "/tutorials/", False, 200), ("GET", "/user/self", True, 401),
+           ("GET", "/model", True, 200))
+TTS_OUT = (("GET", "/pricing/plans", False, 200), ("GET", "/tutorials/", False, 200), ("GET", "/model", False, 200))
+# 「ログイン」の字がどこにも無い画面（入っている人の画面のまま。切れた札でも画面は残っていることがある）
+PAGE_TEXTLESS = PAGES["page_in"][0]
+# 入口の字が変わった、入っていない画面
+PAGE_OUT_RENAMED = HEADER_OUT.replace(">ログイン<", ">はじめる<") + NAV_OUT
+
+
+class _WS:
+    def settimeout(self, s):
+        pass
+
+    def recv(self):
+        raise TimeoutError("偽のタブ: もう出来事は無い")
+
+
+class FakeTab:
+    """Chrome のタブの代わり。開くと rows の要求の出来事が積まれ、画面の写し（OUTLINE）は body から作る"""
+
+    def __init__(self, w, rows, body):
+        self.w, self.rows, self.outline = w, rows, outline_py(body)
+        self.events, self.ws, self.opened = [], _WS(), []
+
+    def call(self, method, **params):
+        return {"body": ""} if method == "Network.getResponseBody" else {}
+
+    def go(self, url, wait=0):
+        self.opened.append(url)
+        self.events += evs(*self.rows)
+
+    def js(self, expr, await_promise=False):
+        if expr == self.w.OUTLINE:
+            return self.outline
+        if "tiptap" in expr and "slider" in expr:   # state_of（入力欄・「音声を生成する」・設定）
+            return {"editor": True, "generate": True, "model": "Fish Audio S2.1 Pro", "speed": "1.1", "volume": "0", "plan": "My Team Plus"}
+        return None
+
+
+def load_web(src: Path):
+    """src の fish_web.py を読み込む。中の `from fish_login import …` も src の写しを読むように、先に覚えている分を捨てる"""
+    sys.modules.pop("fish_login", None)
+    if str(SKILL) not in sys.path:
+        sys.path.insert(0, str(SKILL))
+    name = f"fish_web_under_test_{abs(hash(str(src)))}"
+    spec = importlib.util.spec_from_file_location(name, src / "fish_web.py")
+    w = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(w)
+    w.time = type("T", (), {"sleep": staticmethod(lambda s: None), "time": staticmethod(__import__("time").time)})
+    return w
+
+
+def _stopped(fn) -> str | None:
+    """fn が SystemExit で止まれば、その字。止まらなければ None"""
+    try:
+        fn()
+    except SystemExit as e:
+        return str(e)
+    return None
+
+
+def _web_backup(w, rows, body):
+    with tempfile.TemporaryDirectory() as td:
+        w.fresh_tab = lambda timeout=120: FakeTab(w, rows, body)
+        why = _stopped(lambda: w.cmd_backup(type("A", (), {"dir": td})()))
+        return why, os.listdir(td)
+
+
+WEB_LEGS = {
+    "web_in": lambda w: [("入っている返事なら止まらずに進む（login=in）",
+                          (lambda st: st.get("login") == "in")(w.open_playground(FakeTab(w, TTS_IN, PAGE_TEXTLESS), "m")))],
+    "web_401_textless": lambda w: (lambda why: [
+        ("「ログイン」の字が無くても、/user/self が 401 なら止まる", why is not None and "入っていない" in why),
+        ("止まるときに fish_login.py を回すように言う", why is not None and "fish_login.py" in why)])(
+        _stopped(lambda: w.open_playground(FakeTab(w, TTS_401, PAGE_TEXTLESS), "m"))),
+    "web_out_textless": lambda w: [("入口の字が変わった、入っていない画面でも止まる", "入っていない" in (
+        _stopped(lambda: w.open_playground(FakeTab(w, TTS_OUT, PAGE_OUT_RENAMED), "m")) or ""))],
+    "web_backup_401": lambda w: (lambda r: [("backup も 401 なら「入っていない」で止まる", "入っていない" in (r[0] or "")),
+                                             ("下書きの写しを書かない", r[1] == [])])(_web_backup(w, TTS_401, PAGE_TEXTLESS)),
+}
+
+# 外す守りがどのファイルにあるか（書いていなければ fish_login.py）
+CUT_FILE = {"web_gate": "fish_web.py", "web_backup": "fish_web.py"}
+
 # 外す守り: 名前 → (本物の字, 書き換えた字, 落ちるはずの足, 何を外すか, JS だけか)
 CUTS: dict[str, tuple[str, str, set[str], str, bool]] = {
     "auth": ('"auth": any(k.lower() == "authorization" for k in (r.get("headers") or {}))', '"auth": True',
-             {"api_out", "api_beats_screen"}, "authorization の見出しの有無を見ない（見出しの無い 200 も入っている扱い）", False),
+             {"api_out", "api_beats_screen", "web_out_textless"},
+             "authorization の見出しの有無を見ない（見出しの無い 200 も入っている扱い）", False),
     "self": ('        if f.get("self") is not None:\n', '        if False:\n', {"api_self_wins"},
              "/user/self の返事で決めない", False),
     "no401": ('"in" if f.get("authed_ok") and not f.get("authed_401") else "out"', '"in" if f.get("authed_ok") else "out"',
               {"api_expired_noself"}, "見出し付きの 401（切れた札）を見ない", False),
     "api_first": ('    if f.get("api"):\n', '    if False:\n',
-                  {"api_in", "api_out", "api_expired", "api_self_wins", "api_expired_noself", "api_no_self", "api_beats_screen"},
+                  {"api_in", "api_out", "api_expired", "api_self_wins", "api_expired_noself", "api_no_self", "api_beats_screen",
+                   "web_401_textless", "web_backup_401"},
                   "要求の返事で決めず、画面のリンクだけで決める", False),
+    "web_gate": ('    st["login"] = require_login(t)\n', '    st["login"] = "in"\n', {"web_401_textless", "web_out_textless"},
+                 "fish_web.py の open_playground が入っているかを見ずに進む", False),
+    "web_backup": ("    require_login(t)   # 下書きを写す前に", "    pass   # 下書きを写す前に", {"web_backup_401"},
+                   "fish_web.py backup が入っているかを見ずに写す", False),
     "logo": ("GOOGLE_FILLS & {f.upper() for f in e.get(\"fills\") or []}) >= 3", "GOOGLE_FILLS & {f.upper() for f in e.get(\"fills\") or []}) >= 5",
              {"page_logo", "page_logo.js"}, "G のロゴの色で見分けない", False),
     "scope": ("    if hit or inside:\n", "    if hit:\n", {"page_no_google", "page_no_google.js"},
@@ -316,6 +419,8 @@ def run_legs(src: Path, chrome: str | None, quiet: bool) -> tuple[list[str], int
         if chrome:
             legs.append((name + ".js", lambda body=body, check=check: check(outline_js(body, m.OUTLINE, chrome), m)))
     legs += [(name, lambda fn=fn: fn(m)) for name, fn in API_LEGS.items()]
+    w = load_web(src)
+    legs += [(name, lambda fn=fn: fn(w)) for name, fn in WEB_LEGS.items()]
     for name, fn in legs:
         try:
             res = fn()
@@ -332,12 +437,17 @@ def run_legs(src: Path, chrome: str | None, quiet: bool) -> tuple[list[str], int
 
 
 def cut_copy(name: str, dst: Path) -> None:
+    """本物の fish_login.py と fish_web.py を写して、守りを1つだけ外す。外す字が無ければ 2 で落ちる"""
     old, new = CUTS[name][:2]
-    text = (HERE / "fish_login.py").read_text(encoding="utf-8")
-    if text.count(old) != 1:
-        print(f"✕ BREAK={name}: 外す字が fish_login.py に {text.count(old)} か所（1か所のはず）。字を直したら CUTS も直す")
-        sys.exit(2)
-    (dst / "fish_login.py").write_text(text.replace(old, new), encoding="utf-8")
+    target = CUT_FILE.get(name, "fish_login.py")
+    for f in ("fish_login.py", "fish_web.py"):
+        text = (HERE / f).read_text(encoding="utf-8")
+        if f == target:
+            if text.count(old) != 1:
+                print(f"✕ BREAK={name}: 外す字が {f} に {text.count(old)} か所（1か所のはず）。字を直したら CUTS も直す")
+                sys.exit(2)
+            text = text.replace(old, new)
+        (dst / f).write_text(text, encoding="utf-8")
 
 
 def child(name: str, chrome: str | None) -> int:
@@ -394,7 +504,7 @@ def main() -> int:
         if bad:
             print(f"✕ 対照が外れた: {' / '.join(bad)}（外しても、その足だけが落ちる形になっていない）")
         return 1
-    n_legs = len(PAGES) * (2 if chrome else 1) + len(API_LEGS)
+    n_legs = len(PAGES) * (2 if chrome else 1) + len(API_LEGS) + len(WEB_LEGS)
     print(f"○ {n_legs}本の足（{checked}件）が通り、守りを1つずつ外すと、その足だけが落ちた")
     return 0
 
