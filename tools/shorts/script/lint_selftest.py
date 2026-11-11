@@ -69,6 +69,9 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `ate` | 当て表（spec の promises）にカードの ID が全部あれば通る。1つ欠ける・note が「なし」・行の番号が原稿の外・promises が無い、をそれぞれ ✕。spec が無ければ「見ていない」（L-ATE） |
 | `as_of_id` | `--as-of 2026-10-23:6354242835`（朝のフォカッチャの添削）では夕方の4規則を当てず、日付だけの T-READ・L-NEXT は当てる。夕方のコメントの時点・日付だけなら当てる |
 | `spec_rows` | spec が `rows` でなく `lines` で書いてある・行の数が原稿と違う、なら当てずに止まる（何の鍵で書いてあるかを言う）。`--no-spec` なら当てる |
+| `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
+| `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
+| `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない） |
 """
 from __future__ import annotations
 
@@ -79,7 +82,10 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
 FIX = HERE / "fixtures"
+PLAYBOOK = ROOT / ".claude/skills/viral-shorts-creator/references/playbook.md"
+LEDGER_MD = ROOT / ".claude/skills/viral-shorts-creator/references/ayato_feedback.md"
 sys.path.insert(0, str(HERE.parent / "feedback"))
 import legs  # noqa: E402
 
@@ -204,6 +210,19 @@ CUTS = {
                   "同じ日の決まりの前後をコメントID で分けない"),
     "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
+    # ---- 2026-11-11（#1173、8章の論点9）: 出した本の数字から足した規則（仮説 N5） ----
+    "wide_off": ("lint.py", "            for i, n in got if i > 1 and n > WIDE_MAX]\n", "            for i, n in got if False]\n",
+                 {"wide"}, "16字以上の行を出さない"),
+    "wide_title": ("lint.py", "            for i, n in got if i > 1 and n > WIDE_MAX]\n", "            for i, n in got if n > WIDE_MAX]\n",
+                   {"wide"}, "1行目の題（札の字のまま読む行）まで出す"),
+    "wide_count": ("lint.py", "    return [(i, spoken_chars(ln)) for i, ln in", "    return [(i, chars(ln)) for i, ln in",
+                   {"wide"}, "L-SEC の数えかた（「ー」を数えない）で数える"),
+    "wide_voice": ("lint.py", '    return isinstance(r, dict) and bool(r.get("orig_voice") or r.get("voice_src"))\n', "    return False\n",
+                   {"wide", "width_median"}, "本人の声の行まで読み上げる行に数える"),
+    "wide_vsrc": ("lint.py", 'bool(r.get("orig_voice") or r.get("voice_src"))', 'bool(r.get("orig_voice"))',
+                  {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
+    "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
+    "hypo": ("lint.py", '         hypo=("N5",)),\n', "         hypo=()),\n", {"hypo_link"}, "L-WIDE が仮説の台帳の番号を持たない"),
 }
 
 
@@ -662,6 +681,71 @@ def leg_spec_rows(L):
             ("--no-spec なら spec を読まずに当てる", no_spec.lines == ["題", "みんなは？"] and not no_spec.has_spec)]
 
 
+LINE16 = "そしたら、男の子が追い払ってくれた！"   # タリンのハトの回 p1 の11行目。読み上げる字で16字
+LINE15 = "したら、男の子が追い払ってくれた！"     # 頭の1字を落とした15字
+LONG_BAR = "スーパーのレジでカードが通らへん"      # 「ー」を数えて16字（L-SEC の数えかたなら13字）
+
+
+def leg_wide(L):
+    def lines_of(c):
+        return [(h.line, h.look) for h in hits_of(L, c, "L-WIDE")]
+    be = legs.load(ROOT / "tools/shorts/plan/build_edit.py", "build_edit")
+    samples = (LINE16, LINE15, LONG_BAR, "🇪🇪エストニアでハトに", "小麦粉４００ｇと塩水200ml……", "「おいおいおい！」誰やこれ？")
+    same = [s for s in samples if L.spoken_chars(s) != be.spoken_chars(s)]
+    voice = L.build(tmp_script(["題", LINE16, LINE16, LINE16, "みんなは？"], {"rows": [
+        {"line": "題"}, {"line": LINE16, "orig_voice": "0:10:18〜0:10:21"},
+        {"line": LINE16, "voice_src": "kunXt2sXnFQ 6:40:47.66〜6:40:49.24"}, {"line": LINE16}, {"line": "みんなは？"}]}))
+    return [(f"数えかたが build_edit.py の spoken_chars と同じ（{len(samples)}つの字）" + (f" ← {same}" if same else ""), not same),
+            (f"16字の行（「{LINE16}」）は △", lines_of(ctx(L, ["題", LINE16, "みんなは？"])) == [(2, True)]),
+            (f"15字の行（「{LINE15}」）は何も出さない", not lines_of(ctx(L, ["題", LINE15, "みんなは？"]))),
+            (f"「ー」を数える（「{LONG_BAR}」は16字で △）", lines_of(ctx(L, ["題", LONG_BAR, "みんなは？"])) == [(2, True)]),
+            ("1行目の題（30字）は見ない", not lines_of(ctx(L, ["あ" * 30, "みんなは？"]))),
+            ("本人の声の行（orig_voice・voice_src）は見ず、AI が読む行だけ △", lines_of(voice) == [(4, True)])]
+
+
+def leg_width_median(L):
+    def line_of(c, as_of=TODAY):
+        rep = L.report("足", c, L.lint(c, as_of), as_of)
+        return next((ln for ln in rep.splitlines() if ln.startswith("1行の字数")), "")
+    odd = ctx(L, ["あ" * 20, "あ" * 10, "あ" * 12, "あ" * 16, "あ" * 14])
+    even = ctx(L, ["あ" * 10, "あ" * 17])
+    voice = L.build(tmp_script(["あ" * 20, "あ" * 10, "あ" * 30, "あ" * 12], {"rows": [
+        {"line": "あ" * 20}, {"line": "あ" * 10}, {"line": "あ" * 30, "orig_voice": "0:10:18〜0:10:21"}, {"line": "あ" * 12}]}))
+    return [("5行（20・10・12・16・14字）なら「中央値 14字（読み上げる5行」。題の1行目も入れる", "中央値 14字（読み上げる5行" in line_of(odd)),
+            ("2行（10・17字）なら真ん中の 13.5字", "中央値 13.5字" in line_of(even)),
+            ("本人の声の行（30字）は外す（20・10・12字で 12字・3行）", "中央値 12字（読み上げる3行" in line_of(voice)),
+            ("L-WIDE を当てない日付（2026-10-21）でも出す", "中央値 14字" in line_of(odd, "2026-10-21"))]
+
+
+def hypo_problems(rules, playbook: str) -> list:
+    """規則と仮説の台帳の名指しの崩れ。台帳の行は「| N5 | …」で始まり、その行に規則の名前がある。"""
+    out = []
+    for r in rules:
+        if not (r.ledger or r.hypo):
+            out.append(f"{r.id} が帳面の ID も仮説の番号も持たない")
+        for h in r.hypo:
+            row = next((ln for ln in playbook.splitlines() if ln.startswith(f"| {h} |")), None)
+            if row is None:
+                out.append(f"{r.id} が指す {h} が playbook.md の台帳に無い")
+            elif r.id not in row:
+                out.append(f"playbook.md の {h} の行に {r.id} が書いてない")
+    return out
+
+
+def leg_hypo_link(L):
+    pb = PLAYBOOK.read_text(encoding="utf-8")
+    got = hypo_problems(L.RULES, pb)
+    wide = next((r for r in L.RULES if r.id == "L-WIDE"), None)
+    stray = hypo_problems([L.Rule("L-NONE", (), "2026-11-11", "x", lambda _: [], hypo=("N99",))], pb)
+    bare = hypo_problems([L.Rule("L-BARE", (), "2026-11-11", "x", lambda _: [])], pb)
+    return [(f"規則 {len(L.RULES)} がどれも帳面の ID か台帳の番号を持ち、台帳の行が規則の名前を書いている" + (f" ← {got}" if got else ""),
+             not got),
+            ("L-WIDE は帳面の ID を持たず、台帳の N5 を持つ", wide is not None and wide.ledger == () and wide.hypo == ("N5",)),
+            ("帳面（ayato_feedback.md）に L-WIDE が無い（あやとの指摘ではない）", "L-WIDE" not in LEDGER_MD.read_text(encoding="utf-8")),
+            ("台帳に無い番号（N99）を指す規則を拾う", any("N99" in p for p in stray)),
+            ("どちらも持たない規則を拾う", any("L-BARE" in p for p in bare))]
+
+
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
@@ -672,6 +756,7 @@ LEGS = {
     "title_read": leg_title_read, "next_time": leg_next_time,
     "inner": leg_inner, "nick": leg_nick, "particle": leg_particle, "ate": leg_ate,
     "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
+    "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
 }
 
 if __name__ == "__main__":

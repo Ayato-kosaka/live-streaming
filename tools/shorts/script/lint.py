@@ -17,7 +17,10 @@ spec を直すか、原稿だけを当てるなら `--no-spec`。
 ## 何を見て、何を見ないか
 
 規則はどれも、帳面（`.claude/skills/viral-shorts-creator/references/ayato_feedback.md`）の項目を1つ以上持つ。
-**帳面の決まりのうち、字で拾えるものだけ**を規則にしてある。面白いか・テンポ・「？」が残るか・映像の枠の外でも
+**帳面の決まりのうち、字で拾えるものだけ**を規則にしてある。
+ただし、あやとの指摘ではなく**出した本の数字から決めた規則**（L-WIDE）は、帳面ではなく仮説の台帳
+（`references/playbook.md` の N 番号）を `hypo` に持つ。帳面には足さない（あやとが言っていない決まりを、言ったことにしない）。
+台帳の行には規則の名前（`lint.py` の L-WIDE）を書いて、名前から行き来できるようにする（`lint_selftest.py` の `hypo_link`）。面白いか・テンポ・「？」が残るか・映像の枠の外でも
 正しいか、は字では決まらない。そこは批評役の (h) で当てる（`script_writing.md` 7.4）。
 **ここが緑でも「字で拾える指摘には当たっていない」だけ**で、原稿が良いという意味ではない。
 
@@ -45,7 +48,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import statistics
 import sys
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -119,6 +124,7 @@ class Rule:
     since: str
     what: str
     run: Callable
+    hypo: tuple = ()   # 帳面の代わりに持つ、仮説の台帳（`playbook.md`）の番号。出した本の数字から決めた規則だけ
 
 
 # ---------- 場所 ----------
@@ -769,6 +775,58 @@ def l_ate(c: Ctx):
     return out
 
 
+# ---------- 2026-11-11（#1173、`docs/shorts-analytics-2026-11.md` 8章の論点9）: あやとの指摘ではなく、出した本の数字から ----------
+# 1行の字数の中央値が15字以下の7本は、24時間のエンゲージビューの比が 1.51、16字以上の18本は 0.93。行を畳んだぶん1行が伸びていた
+# （1本の字数は約300字のまま）。仮説 N5 として次の本から全部に当てる。**落とさない**（数字の向きで、あやとの決まりではない）
+
+WIDE_MAX = 15   # 1行の読み上げる字の目安（仮説 N5）
+
+
+def spoken_chars(text: str) -> int:
+    """喋る速さの物差しにする字数（`tools/shorts/plan/build_edit.py` の `spoken_chars` と同じ数えかた）。
+
+    句読点・記号・空白・国旗は数えず、長音の「ー」と数字・英字は数える。L-SEC の `chars` とは別物で、8章の数字が
+    この数えかたなので、比べる物差しを揃える。あちらを読み込まないのは、本編集の道具の書きかけで原稿の検査まで
+    止めないため（揃っているかは `lint_selftest.py` の `wide` が見る）。
+    """
+    return sum(1 for ch in unicodedata.normalize("NFKC", text) if unicodedata.category(ch)[0] in "LN")
+
+
+def own_voice(r) -> bool:
+    """spec の行が、配信の本人の声を流す行か（`orig_voice`、声だけ別の秒から取る `voice_src`。F-051）。"""
+    return isinstance(r, dict) and bool(r.get("orig_voice") or r.get("voice_src"))
+
+
+def read_lines(c: Ctx) -> list:
+    """AI の声が読む行 [(行, 字数)]。本人の声の行は外す。叫びは配信で言ったままの1息で、行を分けて縮める所ではない。"""
+    rows = c.rows or []
+    return [(i, spoken_chars(ln)) for i, ln in enumerate(c.lines, 1) if not (i <= len(rows) and own_voice(rows[i - 1]))]
+
+
+def l_wide(c: Ctx):
+    """N5 1行の読み上げる字が16字以上の行を △ で出す（1本の字数は変えずに、行を分けて15字以下にできるか）。
+
+    **1行目は見ない。** 題の札をそのまま読む行（T-READ）で、題は14〜31字ある。割ると札の字と変わり、T-READ が ✕ にする。
+    """
+    got = read_lines(c)
+    if not got:
+        return None
+    return [Hit("L-WIDE", i, c.lines[i - 1], f"{n}字。1本の字数は変えずに、行を分けて{WIDE_MAX}字以下にできるか"
+                "（分けると意味が切れるなら残してよい。仮説 N5）", look=True)
+            for i, n in got if i > 1 and n > WIDE_MAX]
+
+
+def width_line(c: Ctx) -> str | None:
+    """行の字数の中央値の1行。題の1行目も入れる（8章の数字と同じ数えかた）。読み上げる行が無ければ None。
+
+    `--as-of` で L-WIDE を当てない日でも出す。10/29 以前の原稿と比べるのに使う（8章の論点9）。
+    """
+    ns = [n for _, n in read_lines(c)]
+    if not ns:
+        return None
+    return f"1行の字数: 中央値 {statistics.median(ns):g}字（読み上げる{len(ns)}行。{WIDE_MAX}字以下が目安・仮説 N5）"
+
+
 # 規則の since。同じ日の決まりは、あやとのコメントID で前後を分ける（`--as-of 2026-10-23:6354242835` なら、朝の
 # フォカッチャの添削の時点。夕方の滝の回の直しでできた規則は当てない）
 S1019 = "2026-10-23:6370959237"
@@ -801,6 +859,9 @@ RULES = (
     Rule("L-NICK", ("F-048", "F-008"), S1019, "配信の中の呼び名（辞書は帳面の `呼び名「…」→「…」`）", l_nick),
     Rule("L-PARTICLE", ("F-049",), S1019, "助詞の抜け（名詞＋見に行く・地名＋来たら・名詞＋乗った）。題は ✕・行は △", l_particle),
     Rule("L-ATE", ("F-050",), S1019, "当て表（spec の promises）に約束のカードの ID が欠ける・中身が空", l_ate),
+    # ---- 2026-11-11（#1173、8章の論点9）: あやとの指摘ではなく、出した本の数字から。帳面ではなく仮説の台帳（playbook.md）の番号を持つ ----
+    Rule("L-WIDE", (), "2026-11-11", f"1行の読み上げる字が{WIDE_MAX + 1}字以上（△。1行目の題と本人の声の行は見ない）", l_wide,
+         hypo=("N5",)),
 )
 
 
@@ -910,6 +971,7 @@ BLIND_WHY = {
     "L-ASK": "原稿が空",
     "L-NICK": "帳面に呼び名の直し（`呼び名「…」→「…」`）が無い・帳面が読めない",
     "L-ATE": "spec が無い（当て表は spec の promises に書く）・帳面が読めない",
+    "L-WIDE": "読み上げる行が無い（全部が本人の声の行）",
 }
 
 
@@ -921,12 +983,15 @@ def report(path: str, c: Ctx, res: dict, as_of: str | None) -> str:
     for h in sorted(res["hits"], key=lambda h: (h.look, h.line if h.line is not None else 999)):
         mark = "△" if h.look else "✕"
         where = "題の札" if h.line == 0 else ("原稿ぜんぶ" if h.line is None else f"{h.line}行目")
-        ids = "/".join(rules[h.rule].ledger)
+        ids = "/".join(rules[h.rule].ledger + rules[h.rule].hypo)
         out.append(f"{mark} {ids} {h.rule} {where}「{h.text}」 {h.note}")
     for rid in res["blind"]:
         out.append(f"見ていない: {rid}（{BLIND_WHY.get(rid, '入力が無い')}）")
     if res["later"]:
         out.append(f"{as_of} より後の決まりなので当てていない: {'・'.join(res['later'])}")
+    wl = width_line(c)
+    if wl:
+        out.append(wl)
     fails = sum(1 for h in res["hits"] if not h.look)
     looks = sum(1 for h in res["hits"] if h.look)
     out.append(f"結果: ✕ {fails}・△ {looks}（当てた規則 {len(res['ran'])}/{len(RULES)}）"
@@ -947,7 +1012,7 @@ def main() -> int:
 
     if a.rules:
         for r in RULES:
-            print(f"{r.id:11s} {'/'.join(r.ledger):13s} {r.since}  {r.what}")
+            print(f"{r.id:11s} {'/'.join(r.ledger + r.hypo):13s} {r.since}  {r.what}")
         return 0
     if not a.script:
         ap.error("原稿の在りかが要る")

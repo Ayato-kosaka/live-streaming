@@ -170,6 +170,11 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
   EC2 に送った動画も、読み直したあとの同じ回で `post.py clean --video <元の動画ID>` で消す。
   **公開の時刻のあとに確かめるための予約（send_later）は置かない。確かめるためだけに EC2 を起こさない**
   （あやと 2026-11-09「予約投稿さたらクローズで良いですよ。投稿確認のためにec 2開くほどリスクはないでしょ？」・帳面 F-069）
+- **投稿や予約のために EC2 を起こしたときは、ついでに、時点を過ぎた本の数字を取る**（2026-11-11 から）。公開から数字が作りに戻るまで約5日かかっていて、
+  24時間で勝負がつくのに、学びが次の本に入らない（`docs/shorts-analytics-2026-11.md` 8章の論点15）。予約を読み直して `post.py clean` まで済ませたら、
+  同じ回で `tools/shorts/metrics/shorts_metrics.py` の `plan` → `collect` → `ship` を回す（`collect` は投稿と同じ `ytstudio` の札を自分で取る。
+  使いかたと、生の数字を公開側に書かない決まりは、その道具の頭）。**数字のためだけに EC2 は起こさない**（F-069 と同じ考え）。
+  取れた比は `playbook.md` の台帳の「結果」に足す
 - 出たかを見る必要が出たとき（あやとが聞いた・数字が来ない）の見かた（2026-10-21 に最安ホステルの回 p2 で、予約中の城塞の回と並べて見分けた）。
   どちらも EC2 で、ログインしない `curl` で見る（この箱からは youtube.com・tiktok.com に届かない）
   - YouTube: `https://www.youtube.com/oembed?url=https://www.youtube.com/shorts/<ID>&format=json` が **200 で題を返せば公開**、

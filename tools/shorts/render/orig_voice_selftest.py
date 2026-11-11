@@ -34,6 +34,7 @@
 | `stems` | 書き出しの声の束（`audio_stems`）: 元の声の行が、AI の声の行の真ん中より 0〜+1dB（声の帯の話している所）。AI の声の行は前のまま「話している間の RMS」−16dBFS。元の声の行の 50Hz より下は声の帯より 15dB 以上下・頂点は 0.95 以下で平らな頂点が無い。AI の声の行が無い回も落ちずに揃う |
 | `qa_rows` | 品質チェックの比べ方（`orig_voice_rows`）: 揃えた束は落ちない。前の書き出し（行全体の RMS で −16dBFS）の束は「元の声」で落ちる・+5dB の叫びも落ちる・元の声の行が無ければ何も言わない・AI の声の行が無ければ比べない・voice_src の行も元の声として比べて、行に voice_src と書く |
 | `qa_check` | 品質チェックの「声と BGM の差」そのもの（`check_voice_vs_bgm`）: 前の書き出しの束で fail（理由に「元の声」）・揃えた束で pass（要約に「元の声」） |
+| `vsrc_tempo` | voice_src の行（本人の声。`audio` で渡る）は、指示書に倍率 1.4 と間の詰めがあっても速めない（`narration_wav` の長さが詰めた素の声と同じ）。同じ声の AI の行は速まる（ハトのフンの回 v2 は 17・18行の叫びが 1.4倍の早送りだった。帳面 F-019） |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
@@ -112,6 +113,10 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "qa_wire": ("../qa/audio.py", "        return result(\"voice_vs_bgm\", title, FAIL if bad or ov_bad else PASS, summ,\n",
                 "        return result(\"voice_vs_bgm\", title, FAIL if bad else PASS, summ,\n",
                 {"qa_check"}, "比べた結果を「声と BGM の差」の合否に入れない"),
+    "vsrc_tempo": ("render.py",
+                   "    if line.get(\"file\") or line.get(\"voice_src\") or (abs(tempo - 1.0) < 1e-6 and not mp):\n",
+                   "    if line.get(\"file\") or (abs(tempo - 1.0) < 1e-6 and not mp):\n",
+                   {"vsrc_tempo"}, "voice_src の行も AI の声と同じ倍率で速め、間を詰める（本人の声が早送りに聞こえる。ハトのフンの回 v2）"),
 }
 
 
@@ -573,6 +578,27 @@ def leg_qa_check(R, OV, A, case: Case) -> list[tuple[str, bool]]:
              good["status"] == A.PASS and "元の声" in good["summary"])]
 
 
+def leg_vsrc_tempo(R, OV, A, case: Case) -> list[tuple[str, bool]]:
+    """voice_src の行（声だけを配信の別の秒から取った本人の声。`audio` で渡る）は、指示書に倍率と間の詰めがあっても
+    速めない。書き出しで鳴る長さ（narration_wav）が、詰めた素の声の長さと1サンプルも違わない。AI の声の行は速める"""
+    f = case.files[0]
+    work = case.d / "w_tempo"
+    work.mkdir(exist_ok=True)
+    # 速める道具は ffmpeg の atempo にする（Rubber Band は Actions の見張りの箱に無い。倍率の掛け方は同じ道を通る）
+    narr = {"engine": "files", "tempo": 1.4, "max_pause_s": 0.05, "stretch": "atempo"}
+    base = Path("/")
+
+    def secs(line: dict, nr: dict) -> int:
+        return len(R.decode_audio(R.narration_wav(line, nr, base, work), 1))
+    raw = secs({"text": "テスト", "audio": str(f)}, {"engine": "files"})
+    ai = secs({"text": "テスト", "audio": str(f)}, narr)
+    vs = secs({"text": "テスト", "audio": str(f), "orig_voice": True, "voice_src": True}, narr)
+    return [(f"voice_src の行は倍率 1.4・間の詰めがあっても素の長さ（{vs / SR:.3f}秒 / 詰めた素の声 {raw / SR:.3f}秒）",
+             vs == raw),
+            (f"同じ声の AI の行は速まる（{ai / SR:.3f}秒・素の {ai / max(raw, 1):.2f}倍。1/1.3 より短い）",
+             0 < ai < raw / 1.3)]
+
+
 LEGS = {
     "measure": leg_measure,
     "clean": leg_clean,
@@ -581,6 +607,7 @@ LEGS = {
     "stems": leg_stems,
     "qa_rows": leg_qa_rows,
     "qa_check": leg_qa_check,
+    "vsrc_tempo": leg_vsrc_tempo,
 }
 
 
