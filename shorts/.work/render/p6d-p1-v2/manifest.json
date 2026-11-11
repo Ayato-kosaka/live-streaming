@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__p6d-p1-v2",
  "mode": "render",
- "dest": "render/p6d-p1-v2/inbox",
+ "dest": "render/p6d-p1-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/p6d-p1-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 3018,
-  "tar_gz": 1538,
-  "encrypted": 1552
+  "plain": 35931,
+  "tar_gz": 9287,
+  "encrypted": 9296
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1552,
-   "sha256": "3300980326f4980f312ad018827745812be939b33f11e3445e471893e9dfdd37"
+   "bytes": 9296,
+   "sha256": "924d5b5063983538dafec1f39e4b8ab441de635eb4dd9e7de7f3ae22c91fa925"
   }
  ],
- "hmac_sha256": "6def0d58431c4f1b0465f1d2fac3e2efeff55630b006c74baaca60a0a7c0ad36",
+ "hmac_sha256": "b5a819fc9a2701e768908d937ea68a45b10eb4397922e683fa2bbf8d9a38ee23",
  "pubkey_sha256": "61e4c78bb66ae3abeb3f26d2cb757cd1eadb166262869799457ae163e9cb9f62",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-11T18:43:56+00:00",
+ "created_at": "2026-11-11T18:54:57+00:00",
  "nonce": "271981c5cb6d1597d35d54bd"
 }
