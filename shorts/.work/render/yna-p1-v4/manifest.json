@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__yna-p1-v4",
  "mode": "render",
- "dest": "render/yna-p1-v4/inbox",
+ "dest": "render/yna-p1-v4",
  "video": null,
  "channel": null,
  "request": "shorts/render/yna-p1-v4.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1180,
-  "encrypted": 1184
+  "plain": 36660,
+  "tar_gz": 9475,
+  "encrypted": 9488
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "3507ff1a8610f6b7c0662e8597211f219af026ca0c8035c2bd52f888824de12e"
+   "bytes": 9488,
+   "sha256": "55b256d83115483e505180c697a9a803fda57d198734b97f22a0e3d0304fefca"
   }
  ],
- "hmac_sha256": "caeac6a78979e617a1f5f9578852a3b35c018dba57eaa1a6a1176d403ab86edf",
+ "hmac_sha256": "798a25d133f0bd5be8b73bbf78cf8f758a752656817bcc721675f86edab57ff3",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-11T22:09:59+00:00",
+ "created_at": "2026-11-11T22:19:23+00:00",
  "nonce": "e7d02d1ce8f3a915461c0e8a"
 }
