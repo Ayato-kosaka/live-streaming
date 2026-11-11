@@ -760,6 +760,9 @@ describe("6. 流す順番", () => {
     expect(h.back.querySelectorAll("video")).toHaveLength(0);
     expect(back.intro.getAttribute("src")).toBeNull();
     expect(back.intro.load).toHaveBeenCalled();
+    // kit から要素への参照も切る（段取りがどこかに残っても、<video> と再生器の影の DOM を生かさない。#1175）
+    expect(kit.layers.back).toBeNull();
+    expect(kit.layers.front).toBeNull();
     jest.advanceTimersByTime(60000);
     expect(onFail).not.toHaveBeenCalled();
     expect(back.outro.plays).toBe(0);
