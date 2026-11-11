@@ -148,7 +148,8 @@ jobs:
           node alert-perf.mjs --dist /tmp/perf-dist --fault "$LEG" --parts "$PARTS" $EXTRA \
             --json "/tmp/perf-res/$LEG.json" --md "/tmp/perf-res/$LEG.md" || rc=$?
           echo "終了コード $rc"
-          { echo "### $LEG"; echo; cat "/tmp/perf-res/$LEG.md" 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+          # 道具が表を書かずに終わった（測れなかった・その対照を知らない）ときも、ここでは落とさない（report が決める）
+          { echo "### $LEG"; echo; cat "/tmp/perf-res/$LEG.md" 2>/dev/null || echo "（表が無い。終了コード $rc）"; } >> "$GITHUB_STEP_SUMMARY"
           exit 0
 
       - uses: actions/upload-artifact@v4
