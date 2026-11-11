@@ -9,7 +9,8 @@
 # ## 流れ
 #
 #   build   … 本番と同じ書き出し（expo export ＋ public）
-#   measure … 3本並べる。ふだん（5項目）・対照 raf（待機中に rAF を1本回す）・対照 leak（投げ銭ごとに Blob を手放さない）
+#   measure … 4本並べる。ふだん（5項目）・対照 raf（待機中に rAF を1本回す）・対照 leak（投げ銭ごとに Blob を手放さない）・
+#             対照 dom（投げ銭ごとに video を含む DOM の枝を手放さない。#1175 で見つけた漏れと同じ形）
 #   report  … 表を組んで job summary と PR のコメント（目印 `<!-- alert-perf -->` のものを書き換える）に出す。
 #             **懸念ありでは赤くしない**（測るための道具）。赤くするのは、ふだんの回が測れなかった・
 #             対照がその行を懸念ありに変えられなかった（＝その行は何も見ていない）とき
@@ -98,6 +99,9 @@ jobs:
           - leg: leak
             parts: mem,tiers,long
             extra: '--long-alerts 8 --long-hours 2'
+          - leg: dom
+            parts: mem,tiers,long
+            extra: '--long-alerts 8 --long-hours 2'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -183,7 +187,7 @@ jobs:
         id: table
         run: |
           set +e
-          node tools/sprites/alert-perf.mjs --combine /tmp/perf-res/none.json,/tmp/perf-res/raf.json,/tmp/perf-res/leak.json --md /tmp/perf.md > /dev/null
+          node tools/sprites/alert-perf.mjs --combine /tmp/perf-res/none.json,/tmp/perf-res/raf.json,/tmp/perf-res/leak.json,/tmp/perf-res/dom.json --md /tmp/perf.md > /dev/null
           echo "code=$?" >> "$GITHUB_OUTPUT"
           echo "" >> /tmp/perf.md
           echo "[run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> /tmp/perf.md
