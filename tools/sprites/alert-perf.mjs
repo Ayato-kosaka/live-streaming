@@ -5,7 +5,8 @@
  *   node alert-perf.mjs --dist <書き出し> --json base.json --md base.md                    # 5項目ぜんぶ
  *   node alert-perf.mjs --dist <書き出し> --parts idle --fault raf --json raf.json         # 対照: 待機中に rAF を1本回す
  *   node alert-perf.mjs --dist <書き出し> --parts mem,tiers,long --fault leak --json leak.json  # 対照: Blob を手放さない
- *   node alert-perf.mjs --combine base.json,raf.json,leak.json --md perf.md                # 表と、対照が赤に変わったか
+ *   node alert-perf.mjs --dist <書き出し> --parts mem,tiers,long --fault dom --json dom.json    # 対照: video を含む DOM を手放さない
+ *   node alert-perf.mjs --combine base.json,raf.json,leak.json,dom.json --md perf.md       # 表と、対照が赤に変わったか
  *
  * ## なぜ要るか
  *
@@ -19,10 +20,10 @@
  * | --- | --- | --- |
  * | mem | 記憶 | 持ち切ったあと・7段を流したあとに GC してから、JS ヒープ・object URL が握る Blob の合計・生きている `<video>`（DOM の外も。`Runtime.queryObjects`）・object URL の解放漏れ |
  * | net | 回線 | 開いた直後から1秒ごとの下り・上り（CDP の `Network.dataReceived`）。回線は `--net`（既定 mobile5 = 下り 5Mbps・上り 2Mbps・往復 80ms） |
- * | idle | 待機の CPU と描画 | 投げ銭なしの `--idle` 秒（既定 60）。描画プロセスの `ProcessTime`・GPU プロセスの CPU 秒、rAF の呼び出し・setInterval・CSS アニメーション・再生中の video の数 |
+ * | idle | 待機の CPU と描画 | 投げ銭なしの `--idle` 秒（既定 60）。描画プロセスの `ProcessTime`・GPU プロセスの CPU 秒、rAF の呼び出し・setInterval・再生中の video の数、走っている動きのうち合成で済まないもの・見えない要素の上で回るもの。続けて、わざとの動き（貯金箱のマスコット）を止めた `--still` 秒（既定 30）の CPU。CPU の線はこちら |
  * | tiers | 投げ銭中の CPU と描画 | 7段を1件ずつ。CPU（ms/秒）・50ms を超えたコマの間・頭3秒のいちばん長いコマ（Long Animation Frame）・動画の落ちたコマ（`getVideoPlaybackQuality`） |
- * | req | 待機中の通信 | 時計を進めて（`clock.runFor`）`--long-hours` 時間ぶん。口ごとの回数とバイト/時 |
- * | long | 長時間 | 同じ開き方で、時計を進めながら投げ銭を `--long-alerts` 件。1件ごとに GC してヒープ・video・Blob・タイマー・DOM が増え続けないか |
+ * | req | 待機中の通信 | 時計を進めて（`clock.runFor`）`--long-hours` 時間ぶん。口ごとの回数とバイト/時。線は面が決めて叩く分（YouTube の外）。YouTube は API の間隔どおりかを別の行で |
+ * | long | 長時間 | 同じ開き方で、時計を進めながら投げ銭を `--long-alerts` 件。1件ごとに GC してヒープ・video・Blob・タイマー・DOM が増え続けないか。最後に段2を1件流して、止まらずに動画で出るか（11/10 の配信で、開いて1時間34分後の段2が約2.45秒止まった） |
  *
  * 測りかたの決まり（CLAUDE.md）: CPU は壁の時計ではなく `Performance.ProcessTime`。CPU の絞りは下駄が乗るので掛けない。
  * **この箱と Actions の合成はソフトウェア（SwiftShader）**なので、CPU の数は比べ合いとして読む（段どうし・待機と投げ銭中）。
@@ -40,6 +41,9 @@
  *
  * - `raf` … 面を開いたら rAF の輪を1本回し続ける → 行 `idle.raf` が懸念ありに変わる
  * - `leak` … 投げ銭を受けるたびに 1MB の Blob の object URL を作って手放さない → 行 `mem.urlleak` と `long.blob` が懸念ありに変わる
+ * - `dom` … 投げ銭を受けるたびに、`<video>` 1本と 300 節の DOM の枝を作って、外したまま握る → 行 `long.dom`・`long.video`・`mem.video`
+ *   が懸念ありに変わる（#1175 で見つけた漏れと同じ形。react-native-web の `Animated` が描いた回の props を握り、段の動画の
+ *   `<video>` と再生器の影の DOM が投げ銭1件ごとに残っていた。`docs/island-misses.md`）
  *
  * 終了コード: 0 = 懸念なし / 1 = 懸念あり（`--combine` では、対照が懸念ありに変わらなかった） / 2 = 測れなかった
  */
@@ -73,14 +77,19 @@ const LINES = {
   idleCpu: 10,
   idleRaf: 0.5,
   shortInterval: 1000,
+  /** 面が自分で決めて叩く分（YouTube の外）。10 秒に1回 */
   reqPerHour: 360,
   kbPerHour: 1024,
+  /** YouTube を API の間隔より何倍まで叩いてよいか（読み直しの1回ぶんの揺れ） */
+  ytOver: 1.15,
   jank: 3,
   headFrameMs: 200,
   dropped: 0.05,
   longHeapMB: 5,
   longNodes: 200,
   longListeners: 50,
+  /** 長時間のあとの段で「止まった」とみなすコマの間（11/10 は約 2,450ms） */
+  stallMs: 1000,
 };
 
 /* ------------------------------------------------------------------ 表にする */
@@ -133,13 +142,23 @@ function rows(r) {
     const I = A.idle;
     if (!I) row("idle.cpu", "待機: CPU", "測れなかった", "—", null, A?.err ?? "");
     else {
-      row("idle.cpu", `待機: CPU（${I.sec} 秒）`, `描画 ${fmt(I.cpu)}・メイン ${fmt(I.main)}・GPU ${fmt(I.gpu)} ms/秒`, `描画 ${LINES.idleCpu} ms/秒 以下`, I.cpu > LINES.idleCpu);
+      /* 線は「わざとの動きを止めたとき」に引く。貯金箱のマスコットは待機中ずっと動いているのが仕様で（transform と opacity だけ。
+         下の idle.anim が見る）、その分はソフトウェアの合成（SwiftShader）では重く出る。止めて残る分が、止まっている面の無駄 */
+      const St = I.still;
+      row("idle.cpu", `待機: CPU（${I.sec} 秒）`,
+        `描画 ${fmt(I.cpu)}・メイン ${fmt(I.main)}・GPU ${fmt(I.gpu)} ms/秒` + (St ? `（わざとの動き ${St.held} 本を止めた ${St.sec} 秒: 描画 ${fmt(St.cpu)}・メイン ${fmt(St.main)}・GPU ${fmt(St.gpu)}）` : ""),
+        `わざとの動きを止めて 描画 ${LINES.idleCpu} ms/秒 以下`, (St ? St.cpu : I.cpu) > LINES.idleCpu);
       row("idle.raf", "待機: rAF の呼び出し", `${fmt(I.rafPerSec, 1)} 回/秒`, `${LINES.idleRaf} 回/秒 以下（0 が基準）`, I.rafPerSec > LINES.idleRaf);
       const iv = Object.entries(I.intervals).sort((a, b) => a[0] - b[0]).map(([d, c]) => `${d}ms×${c}`).join("・") || "なし";
       const short = Object.entries(I.intervals).filter(([d]) => Number(d) < LINES.shortInterval).reduce((a, [, c]) => a + c, 0);
       row("idle.interval", "待機: 回っている setInterval", iv, `${LINES.shortInterval}ms 未満が 0`, short > 0, `setTimeout ${fmt(I.timeoutsPerSec, 1)} 回/秒`);
-      row("idle.anim", "待機: 走っている CSS アニメーション・SMIL・再生中の video", `${I.anims}・${I.smil}・${I.playing}`, "0・0・0", I.anims + I.smil + I.playing > 0,
-        I.animNames.length ? `名前: ${I.animNames.join(" ")}` : "");
+      /* 走っている動きのうち、合成だけで描けないもの（transform・opacity の外を動かす）と、見えない要素の上で回っているもの。
+         transform・opacity だけで見える要素を動かすのは、わざとの動き（数は下に添える） */
+      const heavy = I.animsHeavy ?? I.anims;
+      const hidden = I.animsHidden ?? 0;
+      row("idle.anim", "待機: 合成で済まない動き・見えないのに回る動き・SMIL・再生中の video", `${heavy}・${hidden}・${I.smil}・${I.playing}`, "0・0・0・0",
+        heavy + hidden + I.smil + I.playing > 0,
+        `走っている動き ${I.anims} 本（transform・opacity だけで見えている ${Math.max(0, I.anims - heavy - hidden)} 本はわざとの動き）${I.animNames.length ? `・名前: ${I.animNames.join(" ")}` : ""}`);
     }
   }
   if (r.parts.includes("tiers") && A) {
@@ -156,12 +175,24 @@ function rows(r) {
     const q = B.req;
     if (!q) row("req.hour", "待機中の通信", "測れなかった", "—", null, B?.err ?? "");
     else {
-      const parts = Object.entries(q.byCat).sort((a, b) => b[1].n - a[1].n).map(([c, v]) => `${c} ${fmt(v.n / q.hours, 0)}`).join("・");
-      const n = q.total.n / q.hours;
-      const kb = (q.total.up + q.total.down) / 1024 / q.hours;
-      row("req.hour", `待機中の通信（${fmt(q.hours, 1)} 時間ぶん時計を進めて）`, `${fmt(n, 0)} 回/時・${fmt(kb, 0)} KB/時（${parts}）`,
+      /* 線を引くのは**面が自分で決めて叩く分**（もう一度出して・名簿・ログ…）。YouTube は API が返す pollingIntervalMillis に
+         従う決まり（`connectors/YouTubeConnector.ts`）で、回数はこちらで決めない。そちらは「API の言うとおりか」を別の行で見る
+         （前は合わせて 360 回/時の線を引いていて、API の間隔が 5 秒の日は YouTube だけで 1,440 回/時になり、何を直しても赤だった） */
+      const own = Object.entries(q.byCat).filter(([c]) => !c.startsWith("youtube"));
+      const parts = own.sort((a, b) => b[1].n - a[1].n).map(([c, v]) => `${c} ${fmt(v.n / q.hours, 0)}`).join("・") || "なし";
+      const n = own.reduce((a, [, v]) => a + v.n, 0) / q.hours;
+      const kb = own.reduce((a, [, v]) => a + v.up + v.down, 0) / 1024 / q.hours;
+      row("req.hour", `待機中の通信: 面が決めて叩く分（${fmt(q.hours, 1)} 時間ぶん時計を進めて）`, `${fmt(n, 0)} 回/時・${fmt(kb, 0)} KB/時（${parts}）`,
         `${LINES.reqPerHour} 回/時・${LINES.kbPerHour} KB/時 以下`, n > LINES.reqPerHour || kb > LINES.kbPerHour,
-        `どねるの ping ${fmt(q.pings / q.hours, 0)} 回/時（WebSocket）。YouTube は返す pollingIntervalMillis（ここでは ${q.ytPoll}ms）しだい`);
+        `どねるの ping ${fmt(q.pings / q.hours, 0)} 回/時（WebSocket）`);
+      const yt = q.byCat.youtube ?? { n: 0, up: 0, down: 0 };
+      const ytPre = q.byCat["youtube:下見"] ?? { n: 0, up: 0, down: 0 };
+      const ytN = yt.n / q.hours;
+      const ytWant = 3600e3 / q.ytPoll;
+      row("req.youtube", "待機中の通信: YouTube の読み（API が返す間隔どおりか）",
+        `読み ${fmt(ytN, 0)} 回/時・下見 ${fmt(ytPre.n / q.hours, 0)} 回/時・${fmt((yt.up + yt.down + ytPre.up + ytPre.down) / 1024 / q.hours, 0)} KB/時`,
+        `読みが API の間隔（${q.ytPoll}ms → ${fmt(ytWant, 0)} 回/時）の ${LINES.ytOver} 倍以内`, ytN > ytWant * LINES.ytOver,
+        "pollingIntervalMillis は YouTube が決める。こちらが縮めて叩いていないかだけを見る。下見（CORS の preflight）は Authorization を付けて読むぶん、読みと同じ数だけ付く");
     }
   }
   if (r.parts.includes("long") && B) {
@@ -179,6 +210,15 @@ function rows(r) {
         z.intervals > a.intervals || z.timeouts > a.timeouts + 5);
       row("long.dom", "長時間: DOM の節・イベントの受け手", `${a.nodes} → ${z.nodes}・${a.listeners} → ${z.listeners}`, `+${LINES.longNodes}・+${LINES.longListeners} 以内`,
         z.nodes - a.nodes > LINES.longNodes || z.listeners - a.listeners > LINES.longListeners);
+      const Z = B.late;
+      if (Z) {
+        const drop = Z.vTotal ? Z.vDropped / Z.vTotal : 0;
+        row("long.late", `長時間のあと: 段${Z.tier}（${fmt(Z.hours, 1)} 時間・投げ銭 ${Z.after} 件のあと）`,
+          `コマの間の最長 ${fmt(Z.maxGap, 0)}ms・長いコマ（LoAF）最長 ${fmt(Z.loafMax, 0)}ms・50ms超 ${Z.loaf50}・動画の落ち ${Z.vTotal ? `${fmt(drop * 100, 1)}%` : "—"}・動画 ${Z.video ? "○" : "×"}`,
+          `止まり（コマの間 ${LINES.stallMs}ms 超）なし・落ち ${LINES.dropped * 100}% 以下・動画で出る`,
+          !Z.video || (Z.maxGap ?? 0) > LINES.stallMs || drop > LINES.dropped,
+          "11/10 の配信で、開いて1時間34分後の段2の登場で描くことが約2.45秒止まった。時計は偽物（runFor）なので、コマの間は偽の時計の rAF・LoAF は描画の側の数");
+      }
     }
   }
   return out;
@@ -196,6 +236,7 @@ function table(rs) {
 const CONTROLS = [
   { fault: "raf", what: "待機中に rAF を1本回す", ids: ["idle.raf"] },
   { fault: "leak", what: "投げ銭ごとに 1MB の Blob を作って手放さない", ids: ["mem.urlleak", "long.blob"] },
+  { fault: "dom", what: "投げ銭ごとに video を含む DOM の枝（300 節）を外したまま握る", ids: ["long.dom", "long.video", "mem.video"] },
 ];
 
 function combine(files) {
@@ -258,7 +299,7 @@ const PARTS = ["mem", "net", "idle", "tiers", "req", "long"];
 const parts = arg("parts", PARTS.join(",")).split(",").filter(Boolean);
 for (const p of parts) if (!PARTS.includes(p)) die(`--parts は ${PARTS.join(",")} から（${p}）`);
 const fault = arg("fault", "none");
-if (!["none", "raf", "leak"].includes(fault)) die(`--fault は none・raf・leak（${fault}）`);
+if (!["none", "raf", "leak", "dom"].includes(fault)) die(`--fault は none・raf・leak・dom（${fault}）`);
 const theme = arg("theme", "");
 const NET = {
   off: null,
@@ -269,6 +310,8 @@ const netName = arg("net", "mobile5");
 if (!(netName in NET)) die(`--net は ${Object.keys(NET).join("・")}（${netName}）`);
 const amounts = arg("amounts", "100,300,700,1500,3000,7000,10000").split(",").map(Number);
 const idleSec = Number(arg("idle", "60"));
+/** わざとの動きを止めて測る秒（待機の CPU の線はこちら） */
+const stillSec = Number(arg("still", "30"));
 const holdMax = Number(arg("hold-max", "300"));
 const longAlerts = Math.max(3, Number(arg("long-alerts", "20")));
 const longHours = Number(arg("long-hours", "4"));
@@ -280,6 +323,8 @@ if (!existsSync(resolve(charFile))) die(`キャラ絵が無い: ${charFile}`);
 const charBody = readFileSync(resolve(charFile));
 const CUTS = [0, 200, 500, 1000, 2000, 5000, 10000];
 const tierOf = (a) => CUTS.filter((c) => a >= c).length;
+/** 長時間のあとに流す額（段2。11/10 に止まった段） */
+const LATE_YEN = 300;
 const alertSec = (a) => 30 + (a >= 10000 ? 30 : a >= 1000 ? 15 : 0);
 
 /** OBS の URL の合言葉（32 桁）。口はこの道具が受けるので、何でもよい */
@@ -384,6 +429,26 @@ const PERF = (fault) => `(() => {
   const cOU = URL.createObjectURL.bind(URL), rOU = URL.revokeObjectURL.bind(URL);
   URL.createObjectURL = function (o) { const u = cOU(o); P.urls.set(u, (o && o.size) || 0); P.made++; return u; };
   URL.revokeObjectURL = function (u) { if (P.urls.delete(u)) P.freed++; return rOU(u); };
+  /* 待機の CPU のうち、わざとの動きでない分を測るための「止める」。止めているあいだだけ、走っている動きと新しく
+     作られた動きを止め、明けたら流し直す（止めていないあいだは何もしない。面の動きは変えない） */
+  const EA = Element.prototype.animate;
+  P.held = null;
+  Element.prototype.animate = function () {
+    const x = EA.apply(this, arguments);
+    if (P.held) { try { x.pause(); P.held.push(x); } catch (e) {} }
+    return x;
+  };
+  P.still = (on) => {
+    if (on) {
+      P.held = document.getAnimations().filter((a) => a.playState === "running");
+      P.held.forEach((a) => a.pause());
+      return P.held.length;
+    }
+    const h = P.held || [];
+    P.held = null;
+    h.forEach((a) => { try { a.play(); } catch (e) {} });
+    return h.length;
+  };
   const L = console.log;
   console.log = function (...a) {
     try {
@@ -393,6 +458,12 @@ const PERF = (fault) => `(() => {
         P.nlog++;
         if (KEEP.has(j.event)) P.logs.push({ t: performance.now(), event: j.event, data: j.event === "fxPlan" || j.event === "fxHeld" || j.event === "fxVideoFailed" || j.event === "fxPrepLate" ? j.data : null });
         if (${JSON.stringify(fault)} === "leak" && j.event === "notificationReceived") URL.createObjectURL(new Blob([new Uint8Array(1 << 20)]));
+        if (${JSON.stringify(fault)} === "dom" && j.event === "notificationReceived") {
+          const d = document.createElement("div");
+          d.appendChild(document.createElement("video"));
+          for (let i = 0; i < 299; i++) d.appendChild(document.createElement("span"));
+          (P.domLeak ||= []).push(d);
+        }
       }
     } catch (e) {}
     return L.apply(this, a);
@@ -441,10 +512,22 @@ const PERF = (fault) => `(() => {
     let anims = [];
     try { anims = document.getAnimations().filter((a) => a.playState === "running"); } catch (e) {}
     const names = [...new Set(anims.map((a) => a.animationName || a.transitionProperty || a.id || "waapi"))].slice(0, 6);
+    /* 合成だけで描けるか（transform・opacity だけを動かす）と、見えない要素の上で回っていないか */
+    const LIGHT = ["transform", "opacity", "translate", "scale", "rotate"];
+    let heavy = 0, hidden = 0;
+    for (const a of anims) {
+      let ks = [];
+      try { ks = a.effect.getKeyframes(); } catch (e) {}
+      const props = new Set();
+      for (const k of ks) for (const x of Object.keys(k)) if (!["offset", "computedOffset", "easing", "composite"].includes(x)) props.add(x);
+      if ([...props].some((x) => !LIGHT.includes(x))) heavy++;
+      const t = a.effect && a.effect.target;
+      if (t && (!t.isConnected || (t.checkVisibility && !t.checkVisibility({ visibilityProperty: true })))) hidden++;
+    }
     const vids = [...document.querySelectorAll("video")];
     return {
       now: performance.now(), raf: P.raf, to: P.to, ivFires: P.ivFires, intervals: P.iv.size, ivs, timeouts: P.pend.size,
-      urls: P.urls.size, urlBytes, made: P.made, freed: P.freed, anims: anims.length, animNames: names,
+      urls: P.urls.size, urlBytes, made: P.made, freed: P.freed, anims: anims.length, animNames: names, animsHeavy: heavy, animsHidden: hidden,
       smil: document.querySelectorAll("animate,animateTransform,animateMotion,set").length,
       playing: vids.filter((v) => !v.paused).length, plate: !!document.querySelector('[data-plate="box"]'), nlog: P.nlog,
     };
@@ -507,7 +590,10 @@ async function setup(browser, { clock = false, net = null, scale = dpr }) {
     const up = u.length + JSON.stringify(e.request.headers || {}).length + (e.request.postData ? Buffer.byteLength(e.request.postData) : 0) + 64;
     const s = Math.floor(e.timestamp - N.t0);
     N.up.set(s, (N.up.get(s) ?? 0) + up);
-    N.reqs.push({ id: e.requestId, cat: catOf(u), t: e.timestamp, up, down: 0, phase: N.phase });
+    /* 下見（CORS の preflight）は口の名前に「:下見」を付けて分ける。YouTube は Authorization を付けて読むので、読みのたびに
+       下見が1本付く（本物でも同じ。googleapis.com は max-age 3600 を返すが、控えの鍵は URL ごとで、pageToken が毎回替わる） */
+    const pre = e.initiator?.type === "preflight" || e.type === "Preflight";
+    N.reqs.push({ id: e.requestId, cat: catOf(u) + (pre ? ":下見" : ""), t: e.timestamp, up, down: 0, phase: N.phase });
     const th = u.match(/\/alert\/themes\/([^/]+)\/fx\//)?.[1];
     if (th) N.themeName = th;
   });
@@ -681,8 +767,25 @@ async function openRun(browser, base) {
         main: ((m1.ThreadTime - m0.ThreadTime) * 1000) / sec,
         gpu: (((p1.cpu.gpu ?? 0) - (p0.cpu.gpu ?? 0)) * 1000) / sec,
         rafPerSec: (z.raf - a.raf) / sec, timeoutsPerSec: (z.to - a.to) / sec, ivFiresPerSec: (z.ivFires - a.ivFires) / sec,
-        intervals: z.ivs, anims: z.anims, animNames: z.animNames, smil: z.smil, playing: z.playing,
+        intervals: z.ivs, anims: z.anims, animNames: z.animNames, animsHeavy: z.animsHeavy, animsHidden: z.animsHidden, smil: z.smil, playing: z.playing,
         reqPerHour: (reqs.length / sec) * 3600, byCat, pingsPerHour: ((S.pings - pings0) / sec) * 3600,
+      };
+      /* わざとの動き（貯金箱のマスコットの息・旗・歩き）を止めて、もう一度。線はこちらに引く（残りは、止まっているはずの面が
+         使っている CPU）。明けたら流し直す（次の投げ銭の段に響かせない） */
+      const held = await page.evaluate(() => window.__perf.still(true));
+      const s0 = await metrics(cdp);
+      const q0 = await procs(bcdp);
+      const v0 = Date.now();
+      await sleep(stillSec * 1000);
+      const ssec = (Date.now() - v0) / 1000;
+      const s1 = await metrics(cdp);
+      const q1 = await procs(bcdp);
+      await page.evaluate(() => window.__perf.still(false));
+      out.idle.still = {
+        sec: Math.round(ssec), held,
+        cpu: ((s1.ProcessTime - s0.ProcessTime) * 1000) / ssec,
+        main: ((s1.ThreadTime - s0.ThreadTime) * 1000) / ssec,
+        gpu: (((q1.cpu.gpu ?? 0) - (q0.cpu.gpu ?? 0)) * 1000) / ssec,
       };
     }
     if (parts.includes("tiers") || parts.includes("mem")) {
@@ -740,6 +843,27 @@ async function longRun(browser, base) {
       const m = await mem(env);
       out.snaps.push({ ...m, hours: ((i + 1) * gap) / 3600e3, amount: a, video: r.video });
       console.log(`長時間 ${i + 1}/${want}（${fmt(((i + 1) * gap) / 3600e3, 1)} 時間）: ヒープ ${mb(m.heap)}MB・video ${m.videos.all}・URL ${m.urls}・setInterval ${m.intervals}・setTimeout ${m.timeouts}・節 ${m.nodes}`);
+    }
+    /* 開きっぱなしのあとの段2。11/10 の配信で、開いて1時間34分後の段2の登場で描くこと自体が約2.45秒止まった。
+       長く開いたあと（ここまでの投げ銭のあと）に、段2が止まらずに動画で出るかを見る。
+       時計は偽物（runFor で進めた）なので、コマの間は偽の時計の rAF で、長いコマは描画の側の数（Long Animation Frame）で読む。
+       LoAF の startTime は本物の時計なので、時刻で切らずに、この1件のあいだに来た分だけを読む */
+    if (parts.includes("long") && out.snaps.length) {
+      N.phase = "idle";
+      const p0 = S.pings;
+      for (let t = 0; t < gap; t += step) {
+        await page.clock.runFor(step);
+        await sleep(20);
+      }
+      await sleep(500);
+      idleMs += gap;
+      pings += S.pings - p0;
+      N.phase = "alert";
+      await page.evaluate(() => (window.__perf.loaf = []));
+      const r = await oneAlert(env, LATE_YEN, want, { frames: true });
+      const lo = await page.evaluate(() => window.__perf.loaf.map((l) => l.d));
+      out.late = { ...r, hours: ((want + 1) * gap) / 3600e3, after: want, loafMax: lo.reduce((a, d) => Math.max(a, d), 0), loaf50: lo.filter((d) => d > 50).length };
+      console.log(`長時間のあと 段${r.tier}: コマの間の最長 ${fmt(r.maxGap, 0)}ms・LoAF 最長 ${fmt(out.late.loafMax, 0)}ms・動画 ${r.video ? "○" : "×"}`);
     }
     const idle = N.reqs.slice(r0).filter((q) => q.phase === "idle");
     const byCat = {};

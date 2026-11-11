@@ -314,7 +314,12 @@ export function fxReady(v: HTMLVideoElement, level: 2 | 4, timeoutMs: number): P
   });
 }
 
-/** 要素を手放す（再生器と読んだ中身を放す）。DOM からも外す。この1件だけに渡した URL も手放す */
+/**
+ * 要素を手放す（再生器と読んだ中身を放す）。DOM からも外す。この1件だけに渡した URL も手放す。
+ * **kit から要素への参照も切る。** 段取り（`VideoPlan`）は React の state と、描いた回の props に載るので、
+ * どこかに古い回が残ると kit ごと `<video>` 6本と再生器の影の DOM が生き残る（#1175 で、投げ銭1件ごとに残っていた）。
+ * 外したあとの kit は空の箱にしておく
+ */
 export function releaseFxKit(kit: FxKit) {
   kit.released = true;
   for (const u of kit.transient ?? []) revokeFxUrl(u);
@@ -334,6 +339,8 @@ export function releaseFxKit(kit: FxKit) {
       v.remove();
     }
   }
+  kit.layers = { back: null, front: null };
+  kit.outro = { back: null, front: null };
 }
 
 const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
@@ -720,6 +727,10 @@ export function runFxShow(
     }
     timers.forEach(clearTimeout);
     offs.forEach((f) => f());
+    // 止める関数は VideoShow の後片づけが握る。要素を握る控えを空にしておく（kit と同じ理由。releaseFxKit）
+    timers.length = 0;
+    offs.length = 0;
+    layers.length = 0;
     releaseFxKit(kit);
   };
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 /**
  * アラートボックスが死んでいることを、**あやとにだけ**伝える印。
@@ -26,36 +26,39 @@ import { Animated, Easing, StyleSheet, View } from "react-native";
  *
  * **なぜ死んだかはここに書かない。** ログ（`sendLog`）にだけ残す。
  * 画面に理由を出せば、それは結局「中の話を配信に出す」ことになる。
+ *
+ * ## 明滅は WAAPI で（2026-11-11）
+ *
+ * 前は react-native-web の `Animated.loop` だった。web には native driver が無いので **JS が1コマごとに opacity を
+ * 書き続け**、しかも 0.19 の `Animated.View` は描き直すたびに props を値に残す（`index.tsx` の `FADE_MS` の頭。
+ * 死んでいるあいだも、生きている口からの投げ銭でアラートの面は何度も描き直される）。opacity だけの WAAPI にすれば、
+ * 合成だけで回り、値も持たない
  */
 export function DeadMark() {
-  const blink = useRef(new Animated.Value(0.14)).current;
+  const dot = useRef<View | null>(null);
 
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(blink, {
-          toValue: 0.85,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          // web には native driver が無い。付けると警告だけ出て動かない
-          useNativeDriver: false,
-        }),
-        Animated.timing(blink, {
-          toValue: 0.14,
-          duration: 1200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [blink]);
+    // 試験の画面（react-test-renderer）の ref は DOM ではないので何もしない（点は 0.14 のまま見える）
+    const el = dot.current as unknown as { animate?: HTMLElement["animate"] } | null;
+    if (typeof el?.animate !== "function") return;
+    let a: Animation | null = null;
+    try {
+      a = el.animate([{ opacity: 0.14 }, { opacity: 0.85 }], {
+        duration: 1200,
+        easing: "ease-in-out",
+        iterations: Infinity,
+        direction: "alternate",
+      });
+    } catch {
+      a = null;
+    }
+    return () => a?.cancel();
+  }, []);
 
   return (
     // 押しどころを奪わない。OBS のブラウザソースは触られないが、念のため
     <View pointerEvents="none" style={styles.slot}>
-      <Animated.View style={[styles.dot, { opacity: blink }]} />
+      <View ref={dot} style={[styles.dot, { opacity: 0.14 }]} />
     </View>
   );
 }

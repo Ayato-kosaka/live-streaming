@@ -8,6 +8,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
   useRef,
@@ -15,7 +16,6 @@ import React, {
 import {
   View,
   Text,
-  Animated,
   Image,
   TextStyle,
   Platform,
@@ -81,11 +81,40 @@ const SUPERCHAT_CONVERSION_RATE = 0.5;
 const CHARACTERS_REFRESH_MS = 10 * 60 * 1000;
 
 /* 「もう一度出して」を聞きにいく間隔（2026-09-25。あやとの要件）。
-   あやとが机で押してから配信に出るまでの遅れが、だいたいこの半分になる。
-   3秒にしたのは、配信4時間で 4,800回（1回の返りは数十バイト）という
-   ところで折り合うから。**押した本人が「出ない」と思う前に出る**のが
-   ここの仕事なので、10秒では遅い。 */
-const REPLAY_POLL_MS = 3000;
+   あやとが机で押してから配信に出るまでの遅れが、だいたいこの半分（いちばん遅くてこの長さ）になる。
+   2026-09-25 は 3 秒（配信4時間で 4,800回）にしていた。**面が待機中に叩く口の8割がこれ**だった
+   （#1175 の alert-perf。待機中 1,202回/時。ほかは名簿 6・ログ 6。YouTube の 1,440回/時は API の
+   pollingIntervalMillis どおりで、こちらでは決めない）。面はスマホの PRISM で配信の上りと同居しているので、
+   12 秒（300回/時）に下げた。押してから出るまで、ならして 6 秒・いちばん遅くて 12 秒（と、口の往復）。
+   二度押しは口が1分のあいだ印を進めないので、待ちきれずに押し直しても二度は出ない（`functions/src/fundDesk.ts`） */
+const REPLAY_POLL_MS = 12000;
+
+/* アラートの面を出し入れするフェード（ms）。WAAPI で面の要素の opacity だけを動かす（`fadeAlert`）。
+
+   前は react-native-web 0.19 の `Animated.View` と、面に1つの `Animated.Value` だった。0.19 の `AnimatedProps` は
+   作られたとき（constructor）と描かれたとき（useAnimatedProps の layout effect）の**2回**値に繋がり、外れるのは
+   1回だけなので、**描くたびに、その回の props ごと値に残った。** props はその回の子（段の動画の段取り
+   `stage.video.kit` ＝ `<video>` 最大6本と、それぞれの再生器の影の DOM 約170節）まで握る。値は面と同じだけ
+   生きるので、4時間・投げ銭20件で DOM の節 3,801 → 16,251、生きている video 21 → 93 本になっていた
+   （#1175 の alert-perf の表。ヒープの写しで、値の `_children` に 投げ銭1件あたり2つずつ残っていた）。
+   WAAPI なら値も子も持たない。JS が1コマごとに opacity を書くことも無くなる（アラートの頭のコマを取り合わない） */
+const FADE_MS = 500;
+
+/** 面の要素の opacity を `from` → `to` へ。試験の画面（react-test-renderer）の ref は DOM ではないので何もしない */
+function fadeAlert(el: unknown, from: number, to: number, hold: boolean): Animation | null {
+  const a = el as { animate?: HTMLElement["animate"] } | null;
+  if (typeof a?.animate !== "function") return null;
+  try {
+    return a.animate([{ opacity: from }, { opacity: to }], {
+      duration: FADE_MS,
+      easing: "ease-in-out",
+      // 消すほうだけ、外すまで 0 を握る（出すほうは終わったら素の 1 に戻す。fill を残すと値を握り続ける）
+      ...(hold ? { fill: "forwards" as const } : {}),
+    });
+  } catch {
+    return null;
+  }
+}
 
 /* 動画が**動き出すのを待つ上限**。ここを過ぎたら絵のままにする。
    - 投げ銭のアラートは 30 秒出ている（`config.ts` の `alertDuration`）ので、
@@ -306,8 +335,13 @@ export default function AlertBox() {
     [notification]
   );
 
-  // フェードイン/アウト用アニメーション値
-  const [opacity] = useState(new Animated.Value(0));
+  /* 面が出たらフェードイン（通知1件につき1回）。面の要素の ref は子のほうが先に付くので、ここでは付いている。
+     描く前に始めるので、最初のコマから 0 で出る */
+  useLayoutEffect(() => {
+    if (!notification) return;
+    const a = fadeAlert(alertRef.current, 0, 1, false);
+    return () => a?.cancel();
+  }, [notification]);
 
   // セッション識別子（ログ相関用）
   const sessionId = useRef(new Date().getTime());
@@ -726,7 +760,7 @@ export default function AlertBox() {
         ]);
       } catch (error) {
         /* 聞けなかっただけ。**配信には何も出さない**（印は進めない）。
-           1回こけても次の3秒で聞き直すので、ここでは止めない。 */
+           1回こけても次の回（REPLAY_POLL_MS）で聞き直すので、ここでは止めない。 */
         sendLog("AlertBox", sessionId, "replayError", {
           error: String(error),
         });
@@ -1045,13 +1079,8 @@ export default function AlertBox() {
     const revealSec = nextStage?.revealSec ?? 0;
     if (nextStage?.video) setTimeout(() => setRevealedFor(currentNotification), (revealSec + 10) * 1000);
 
-    // 表示開始（フェードイン）
+    // 表示開始（フェードインは面が出たときに。上の useLayoutEffect）
     setNotification(currentNotification);
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
 
     // 読み上げ（設定が有効な donation/superchat のみ）。台本があれば、その人の絵が出る秒から
     if (
@@ -1069,18 +1098,14 @@ export default function AlertBox() {
 
     // 指定時間後にフェードアウト→完了後に通知をクリア＆キュー先頭を削除
     setTimeout(() => {
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
+      fadeAlert(alertRef.current, 1, 0, true);
       setTimeout(() => {
         setNotification(null);
         setStage(null);
         setNotificationQueue((prevQueue) => prevQueue.slice(1)); // キューから通知を削除
-      }, 500);
+      }, FADE_MS);
     }, adjustedAlertDuration * 1000);
-  }, [notificationQueue, opacity, showSource]);
+  }, [notificationQueue, showSource]);
 
   // テンプレート本文（通知タイプに紐づくテンプレートを取得）
   const mainTextTemplate = useMemo(
@@ -1249,7 +1274,7 @@ export default function AlertBox() {
         {dead && <DeadMark />}
 
         {notification && (
-          <Animated.View ref={alertRef as never} style={[styles.alertBox, { opacity }]}>
+          <View ref={alertRef as never} style={styles.alertBox}>
             {/* 寄付（donation）とスーパーチャット（superchat）の統合表示 */}
             {(notification.type === "donation" ||
               notification.type === "superchat") && (
@@ -1502,7 +1527,7 @@ export default function AlertBox() {
                 <Image style={styles.image} source={{ uri: getImageUrl() }} />
               </View>
             )} */}
-          </Animated.View>
+          </View>
         )}
 
         {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
