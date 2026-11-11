@@ -5,9 +5,11 @@
 
 | ファイル | どこで動く | 何をするか |
 | --- | --- | --- |
-| `fish_web.py` | EC2（`~/cdp/` に `cdp.py` と並べる） | ログイン済みの Chrome（`~/cdp-fish`）で1文ずつ作り、mp3 と記録（`attempts.jsonl`）を書く |
+| `fish_web.py` | EC2（`~/cdp/` に `cdp.py`・`fish_login.py` と並べる） | ログイン済みの Chrome（`~/cdp-fish`）で1文ずつ作り、mp3 と記録（`attempts.jsonl`）を書く。入っていなければ作らずに止まる |
 | `asr_check.py` | EC2（venv の faster-whisper） | 作った声を全部聞き取り直して `asr.json` を書く |
 | `collect.py` | 手元 | 1文1ファイルに揃え、48kHz モノラル wav・長さ・音量を出し、原稿と聞き取りを比べて `lines.json` を書く |
+| `fish_login.py` | EC2（`~/cdp/` に `cdp.py`・`google_login.py` と並べる） | `~/cdp-fish` が入っているかを見て、切れていれば「Googleで続行」から入り直す（3） |
+| `fish_login_selftest.py` | 手元 | `fish_login.py` の判定と押す相手の探しかたを、偽の画面と偽の要求で当てる（EC2 に触らない） |
 
 この紙の `~` は、EC2 の ubuntu のホーム（SSM のコマンドは root で走るので、道具の中では `EC2_HOME` から組む）。
 
@@ -53,8 +55,38 @@ Cookie や `authorization` の値には触らない。
 
 ## 3. 作る（EC2）
 
-前提: fish の Chrome（`~/cdp-fish`）が fish.audio にログインしている。**切れていたら、列 `fish` の札を取って
-`fish_login.py` で入り直す**（「Googleで続行」→ kosaka.ayato@gmail.com。パスワードが要らない所はこちらで押す。あやと 2026-10-28 #1044）。
+前提: fish の Chrome（`~/cdp-fish`）が fish.audio にログインしている。**切れていたら `fish_login.py` で入り直す**
+（`/ja/app/` の右上の入口 →「Googleで続行」→ kosaka.ayato@gmail.com。パスワードが要らない所はこちらで押す。あやと 2026-10-28 #1044）。
+入っていれば何も押さずに `RESULT in` で終わるので、迷ったら先に流してよい（見るだけなら `--check`）。列 `fish` の札は道具の `up()` が取る。
+
+```bash
+E=.claude/skills/ec2-chrome/ec2.py
+python3 $E put tools/shorts/voice/fish_login.py /home/ubuntu/cdp/fish_login.py  # 直書き点検: 記録（EC2 の中。手元の道ではない）
+python3 $E put .claude/skills/ec2-chrome/google_login.py /home/ubuntu/cdp/google_login.py  # 直書き点検: 記録（EC2 の中。手元の道ではない）
+```
+
+```sh
+cd ~/cdp && python3 fish_login.py            # EC2 で。最後の行: RESULT in / ok / password / challenge / dp-timeout / no-account / stuck / unknown
+```
+
+- **入っているかは、画面の字ではなく、画面自身が送る要求の返事で決める。** `/ja/app/` を開いて `api.fish.audio` への要求を
+  CDP で数え、`GET /user/self` が 2xx（無ければ `authorization` の見出し付きの要求に 2xx があり 401 が無い）なら入っている。
+  値は読まない（見出しの有無と状態コードだけ）。2026-11-11 は「ログイン」の字と「Googleで続行」の字で探していて、
+  `/ja/` から「ログイン」が消え、「Googleで続行」が字の無いアイコンのボタン（名前は aria-label だけ）になって止まった
+- **切れた札は画面からは分かりにくい。** 同じ日の本物は、localStorage に札が残ったまま `GET /user/self` が 401 だった
+- **Google のスマホ確認（数字）が出ることがある。** 2026-11-11 は、使い捨ての写し（新しい Chrome）で出て、本物では出なかった。
+  数字は `/tmp/fish_challenge.txt` と標準出力に出るので、あやとに伝える。待つ秒は `--wait-dp`（既定 300）。
+  裏に回して（`nohup /usr/local/sbin/ec2-queue hold fish … -- python3 fish_login.py > ログ &`）、別の SSM でログを読めば、
+  待っているあいだに数字を拾える（SSM は1本ずつしか走らないので、前で回すと終わるまで読めない）
+- **写しで入り直すと、本物が切れることがある。** 2026-11-11、`~/cdp-fish` の写しで Google から入り直したあとに、
+  本物の札が 401 になった（写しを作った時点では 200）。fish.audio が前の札を無効にした見込み（1回だけで、確かめてはいない）。
+  写しで試したら、最後に本物で `fish_login.py` を流しておく（その日は本物でスマホ確認は出ず、そのまま入れた）
+- **`fish_web.py` も同じ判定で止まる。** 再生ページを開いたとき（`gen`・`state`・`speed`・`adopt`・`restore`）と `backup` の前に、
+  `fish_login.py` の `judge` を借りて入っているかを見る。入っていなければ声を作らずに「入っていない。fish_login.py を回す」で止まる
+  （前は右上の「ログイン」の字で見ていて、札が切れていても入ったつもりで「音声を生成する」を押しうる作りだった）。
+  なので `fish_web.py` を置くときは `fish_login.py` も `~/cdp/` に置く。古い `fish_login.py`（読み込むと入り直しが走る版）が
+  置かれていれば、`fish_web.py` は読み込まずに止まる
+
 **`up("fish", reseed=True)` で複製し直さない**——`~/cdp-fish` には TikTok の下書き（約564MB）があり、消える。
 最初に作るときだけ `up("fish")` が既定のプロファイルから複製する（`ec2-chrome` スキル 3）。**あやとがリモートデスクトップで操作中は複製しない**
 （EC2 の `/usr/local/sbin/desktop-input idle` の数が 300000（5分）以上になってから。xprintidle はこちらの Chrome が
@@ -63,6 +95,7 @@ Cookie や `authorization` の値には触らない。
 ```bash
 E=.claude/skills/ec2-chrome/ec2.py
 python3 $E put tools/shorts/voice/fish_web.py ~/cdp/fish_web.py
+python3 $E put tools/shorts/voice/fish_login.py ~/cdp/fish_login.py   # 入っているかの判定を fish_web.py が借りる
 python3 $E put lines_in.json ~/voice/<動画>-lines_in.json      # [{"key": "A/01", "tts_text": "…"}, …]
 ```
 

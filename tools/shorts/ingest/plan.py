@@ -268,8 +268,12 @@ def channel_items(req: dict, origin: str) -> list[dict]:
     return out
 
 
-def compare_files(base: str, head: str) -> list[str]:
-    """既定の枝と比べて、足された・書き換えられたファイル（GitHub の compare）。"""
+def compare_files(base: str, head: str, removed: bool = False) -> list[str]:
+    """既定の枝と比べて、足された・書き換えられたファイル（GitHub の compare）。
+
+    removed=True で消したファイルも返す。書き出しの prepare は「依頼を下ろしただけの push」を
+    消したファイルで見分けるので、ここで捨てると片づけの push が赤く落ちる（#1135 の直しが効いていなかった）。
+    """
     import urllib.request
 
     url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/compare/{base}...{head}"
@@ -280,7 +284,7 @@ def compare_files(base: str, head: str) -> list[str]:
     with urllib.request.urlopen(req, timeout=30) as r:
         d = json.load(r)
     return [f["filename"] for f in d.get("files") or []
-            if f.get("status") in ("added", "modified", "renamed", "copied")]
+            if f.get("status") in ("added", "modified", "renamed", "copied") + (("removed",) if removed else ())]
 
 
 def changed_requests() -> list[str]:
