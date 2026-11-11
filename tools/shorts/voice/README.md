@@ -61,8 +61,8 @@ Cookie や `authorization` の値には触らない。
 
 ```bash
 E=.claude/skills/ec2-chrome/ec2.py
-python3 $E put tools/shorts/voice/fish_login.py /home/ubuntu/cdp/fish_login.py
-python3 $E put .claude/skills/ec2-chrome/google_login.py /home/ubuntu/cdp/google_login.py
+python3 $E put tools/shorts/voice/fish_login.py /home/ubuntu/cdp/fish_login.py  # 直書き点検: 記録（EC2 の中。手元の道ではない）
+python3 $E put .claude/skills/ec2-chrome/google_login.py /home/ubuntu/cdp/google_login.py  # 直書き点検: 記録（EC2 の中。手元の道ではない）
 ```
 
 ```sh

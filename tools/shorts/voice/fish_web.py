@@ -54,7 +54,7 @@ import importlib.util  # noqa: E402
 _FL = importlib.util.find_spec("fish_login")
 if not _FL or "def judge(" not in open(_FL.origin, encoding="utf-8").read():
     raise SystemExit("fish_login.py が無いか古い（判定の関数が無い）。手元から ec2.py put tools/shorts/voice/fish_login.py "
-                     "/home/ubuntu/cdp/fish_login.py で置き直す")
+                     "/home/ubuntu/cdp/fish_login.py で置き直す")  # 直書き点検: 記録（EC2 の中。手元の道ではない）
 from fish_login import OUTLINE, account_links, api_facts, judge, summary  # noqa: E402
 
 NAME = "fish"

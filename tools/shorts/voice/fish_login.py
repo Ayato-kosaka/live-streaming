@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """EC2 の上で動く。fish の Chrome（~/cdp-fish）を、fish.audio の「Googleで続行」から入り直す。入っていれば何もしない。
 
-    python3 /home/ubuntu/cdp/fish_login.py                  # 入っていなければ入り直す（列 fish の札は up() が pid で取る）
-    python3 /home/ubuntu/cdp/fish_login.py --check          # 入っているかを見るだけ（何も押さない）
-    python3 /home/ubuntu/cdp/fish_login.py --name fishtest  # 使い捨ての写し（~/cdp-fishtest）で試す
+    python3 ~/cdp/fish_login.py                  # 入っていなければ入り直す（列 fish の札は up() が pid で取る）
+    python3 ~/cdp/fish_login.py --check          # 入っているかを見るだけ（何も押さない）
+    python3 ~/cdp/fish_login.py --name fishtest  # 使い捨ての写し（~/cdp-fishtest）で試す
 
 `ec2.py put` で `~/cdp/` に `cdp.py`・`google_login.py` と並べて置く。最後の行は `RESULT <結果>`:
 `in`（もともと入っていた。何も押していない）/ `ok`（入り直せた）/ `out`（--check で入っていない）/
