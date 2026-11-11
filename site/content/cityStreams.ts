@@ -2028,6 +2028,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "WiSPWzjqZZA",
         "title": "🇲🇰北マケドニアの白インゲントマトグラタンつくろか！！",
         "date": "2026-11-09"
+      },
+      {
+        "videoId": "MfQqBEzDou8",
+        "title": "🇲🇰北マケドニアの税関がめんどくさすぎるよおおお",
+        "date": "2026-11-10"
       }
     ]
   }
