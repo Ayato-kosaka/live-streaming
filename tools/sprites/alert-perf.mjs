@@ -39,7 +39,9 @@
  *
  * ## 対照（`--fault`。見張りが「落ちるときに落ちる」かを見る）
  *
- * - `raf` … 面を開いたら rAF の輪を1本回し続ける → 行 `idle.raf` が懸念ありに変わる
+ * - `raf` … 面を開いたら rAF の輪を1本回し続ける → 行 `idle.raf` が懸念ありに変わる。同じ回で、`visibility: hidden` の要素の上に
+ *   transform だけの動きを1本、終わりなく回す → 行 `idle.anim` が懸念ありに変わる（#1160 で見つけた形。城のピポが門に入って
+ *   隠れているあいだ、隠れた体の上で息が回り続けていた。待機の無駄を見る2本なので、1回にまとめて回す）
  * - `leak` … 投げ銭を受けるたびに 1MB の Blob の object URL を作って手放さない → 行 `mem.urlleak` と `long.blob` が懸念ありに変わる
  * - `dom` … 投げ銭を受けるたびに、`<video>` 1本と 300 節の DOM の枝を作って、外したまま握る → 行 `long.dom`・`long.video`・`mem.video`
  *   が懸念ありに変わる（#1175 で見つけた漏れと同じ形。react-native-web の `Animated` が描いた回の props を握り、段の動画の
@@ -153,12 +155,18 @@ function rows(r) {
       const short = Object.entries(I.intervals).filter(([d]) => Number(d) < LINES.shortInterval).reduce((a, [, c]) => a + c, 0);
       row("idle.interval", "待機: 回っている setInterval", iv, `${LINES.shortInterval}ms 未満が 0`, short > 0, `setTimeout ${fmt(I.timeoutsPerSec, 1)} 回/秒`);
       /* 走っている動きのうち、合成だけで描けないもの（transform・opacity の外を動かす）と、見えない要素の上で回っているもの。
-         transform・opacity だけで見える要素を動かすのは、わざとの動き（数は下に添える） */
-      const heavy = I.animsHeavy ?? I.anims;
-      const hidden = I.animsHidden ?? 0;
+         transform・opacity だけで見える要素を動かすのは、わざとの動き（数は下に添える）。
+         合成で済まない・見えないの2つは、待機のあいだ1秒ごとに数えたうちの最大（終わりの1回だけだと、貯金箱のマスコットが
+         門に入って隠れている数秒に当たるかがくじになる。#1160 の城のピポがそれで、隠れた体の上で息が回り続けていた） */
+      const heavy = Math.max(I.animsHeavy ?? I.anims, I.seen?.heavy ?? 0);
+      const hidden = Math.max(I.animsHidden ?? 0, I.seen?.hidden ?? 0);
+      const light = Math.max(0, I.anims - (I.animsHeavy ?? I.anims) - (I.animsHidden ?? 0));
       row("idle.anim", "待機: 合成で済まない動き・見えないのに回る動き・SMIL・再生中の video", `${heavy}・${hidden}・${I.smil}・${I.playing}`, "0・0・0・0",
         heavy + hidden + I.smil + I.playing > 0,
-        `走っている動き ${I.anims} 本（transform・opacity だけで見えている ${Math.max(0, I.anims - heavy - hidden)} 本はわざとの動き）${I.animNames.length ? `・名前: ${I.animNames.join(" ")}` : ""}`);
+        `走っている動き ${I.anims} 本（終わりの時点。transform・opacity だけで見えている ${light} 本はわざとの動き）` +
+          (I.seen ? `・待機のあいだ ${I.seen.n} 回数えた最大` : "") +
+          (I.seen?.what?.length ? `・見えないのに回る: ${I.seen.what.join(" / ")}` : "") +
+          (I.animNames.length ? `・名前: ${I.animNames.join(" ")}` : ""));
     }
   }
   if (r.parts.includes("tiers") && A) {
@@ -235,6 +243,7 @@ function table(rs) {
 
 const CONTROLS = [
   { fault: "raf", what: "待機中に rAF を1本回す", ids: ["idle.raf"] },
+  { fault: "raf", what: "待機中に、見えない要素の上で動きを1本回す（合成だけで回る transform）", ids: ["idle.anim"] },
   { fault: "leak", what: "投げ銭ごとに 1MB の Blob を作って手放さない", ids: ["mem.urlleak", "long.blob"] },
   { fault: "dom", what: "投げ銭ごとに video を含む DOM の枝（300 節）を外したまま握る", ids: ["long.dom", "long.video", "mem.video"] },
 ];
@@ -474,6 +483,15 @@ const PERF = (fault) => `(() => {
   if (${JSON.stringify(fault)} === "raf") {
     const spin = () => W.requestAnimationFrame(spin);
     W.requestAnimationFrame(spin);
+    const hide = () => {
+      const d = document.createElement("div");
+      d.style.cssText = "position:fixed;left:0;top:0;width:10px;height:10px;visibility:hidden;pointer-events:none";
+      d.setAttribute("data-perf-fault", "hidden");
+      document.body.appendChild(d);
+      d.animate([{ transform: "scale(1)" }, { transform: "scale(1.02)" }], { duration: 2600, iterations: Infinity });
+    };
+    if (document.body) hide();
+    else document.addEventListener("DOMContentLoaded", hide);
   }
   /* 投げ銭中だけ、本物の rAF でコマを数え、動画の落ちたコマを 250ms ごとに読む（要素は WeakMap で持つ。生きている数を変えない） */
   P.frameStart = () => {
@@ -504,17 +522,20 @@ const PERF = (fault) => `(() => {
     for (let i = 1; i < F.t.length; i++) { const g = F.t[i] - F.t[i - 1]; if (g > 50) jank++; if (g > maxGap) maxGap = g; }
     return { frames: F.t.length, first: F.t[0] ?? null, last: F.t.at(-1) ?? null, jank, maxGap, dropped: F.dropped, total: F.total };
   };
-  P.snap = () => {
-    const ivs = {};
-    for (const d of P.iv.values()) ivs[d] = (ivs[d] || 0) + 1;
-    let urlBytes = 0;
-    for (const b of P.urls.values()) urlBytes += b;
+  /* 走っている動き。合成だけで描けるか（transform・opacity だけを動かす）と、見えない要素の上で回っていないか。
+     見えない上で回っているものは、何かが分かるように短く書く（要素・いちばん近い data-* の印・動かす値・長さ×回数） */
+  P.animScan = () => {
     let anims = [];
     try { anims = document.getAnimations().filter((a) => a.playState === "running"); } catch (e) {}
     const names = [...new Set(anims.map((a) => a.animationName || a.transitionProperty || a.id || "waapi"))].slice(0, 6);
-    /* 合成だけで描けるか（transform・opacity だけを動かす）と、見えない要素の上で回っていないか */
     const LIGHT = ["transform", "opacity", "translate", "scale", "rotate"];
+    /* 見えるか。visibility: hidden の要素でも、中に visible の子がいれば、その子は描かれて動きにつれて動く（城の屋根ごしの
+       ピポは、首をかしげる枠の中の絵が自分で visible を持つ。しかも Chrome は動いている枠の visibility を古い hidden の
+       まま返すことがある）。要素と、その中の全部が見えないときだけ「見えないのに回る」 */
+    const seenBy = (el) => !el.checkVisibility || el.checkVisibility({ visibilityProperty: true });
+    const shows = (el) => seenBy(el) || [...el.querySelectorAll("*")].some(seenBy);
     let heavy = 0, hidden = 0;
+    const what = [];
     for (const a of anims) {
       let ks = [];
       try { ks = a.effect.getKeyframes(); } catch (e) {}
@@ -522,12 +543,31 @@ const PERF = (fault) => `(() => {
       for (const k of ks) for (const x of Object.keys(k)) if (!["offset", "computedOffset", "easing", "composite"].includes(x)) props.add(x);
       if ([...props].some((x) => !LIGHT.includes(x))) heavy++;
       const t = a.effect && a.effect.target;
-      if (t && (!t.isConnected || (t.checkVisibility && !t.checkVisibility({ visibilityProperty: true })))) hidden++;
+      const gone = t && !t.isConnected;
+      if (t && (gone || !shows(t))) {
+        hidden++;
+        let mark = "";
+        for (let up = t; up && !mark; up = up.parentElement) {
+          const d = [...up.attributes].find((x) => x.name.startsWith("data-"));
+          if (d) mark = up === t ? "[" + d.name + "]" : "[" + d.name + "] の中";
+        }
+        let tm = {};
+        try { tm = a.effect.getTiming(); } catch (e) {}
+        what.push(t.tagName.toLowerCase() + (mark ? "（" + mark + "）" : "") + " " + [...props].join("+") + " " + tm.duration + "ms×" + (tm.iterations === Infinity ? "∞" : tm.iterations) + (gone ? "・外れた要素" : ""));
+      }
     }
+    return { n: anims.length, names, heavy, hidden, what };
+  };
+  P.snap = () => {
+    const ivs = {};
+    for (const d of P.iv.values()) ivs[d] = (ivs[d] || 0) + 1;
+    let urlBytes = 0;
+    for (const b of P.urls.values()) urlBytes += b;
+    const A = P.animScan();
     const vids = [...document.querySelectorAll("video")];
     return {
       now: performance.now(), raf: P.raf, to: P.to, ivFires: P.ivFires, intervals: P.iv.size, ivs, timeouts: P.pend.size,
-      urls: P.urls.size, urlBytes, made: P.made, freed: P.freed, anims: anims.length, animNames: names, animsHeavy: heavy, animsHidden: hidden,
+      urls: P.urls.size, urlBytes, made: P.made, freed: P.freed, anims: A.n, animNames: A.names, animsHeavy: A.heavy, animsHidden: A.hidden,
       smil: document.querySelectorAll("animate,animateTransform,animateMotion,set").length,
       playing: vids.filter((v) => !v.paused).length, plate: !!document.querySelector('[data-plate="box"]'), nlog: P.nlog,
     };
@@ -753,7 +793,17 @@ async function openRun(browser, base) {
       const w0 = Date.now();
       const r0 = N.reqs.length;
       const pings0 = S.pings;
-      await sleep(idleSec * 1000);
+      /* 動きは1秒ごとに数えて最大を取る（終わりの1回だけだと、隠れた要素の上で回るのが数秒だけのときに、当たるかがくじになる） */
+      const seen = { n: 0, heavy: 0, hidden: 0, what: new Set() };
+      for (const tEnd = w0 + idleSec * 1000; Date.now() < tEnd; ) {
+        await sleep(Math.min(1000, Math.max(0, tEnd - Date.now())));
+        const s = await page.evaluate(() => window.__perf.animScan()).catch(() => null);
+        if (!s) continue;
+        seen.n++;
+        seen.heavy = Math.max(seen.heavy, s.heavy);
+        seen.hidden = Math.max(seen.hidden, s.hidden);
+        s.what.forEach((x) => seen.what.add(x));
+      }
       const sec = (Date.now() - w0) / 1000;
       const z = await page.evaluate(() => window.__perf.snap());
       const m1 = await metrics(cdp);
@@ -768,6 +818,7 @@ async function openRun(browser, base) {
         gpu: (((p1.cpu.gpu ?? 0) - (p0.cpu.gpu ?? 0)) * 1000) / sec,
         rafPerSec: (z.raf - a.raf) / sec, timeoutsPerSec: (z.to - a.to) / sec, ivFiresPerSec: (z.ivFires - a.ivFires) / sec,
         intervals: z.ivs, anims: z.anims, animNames: z.animNames, animsHeavy: z.animsHeavy, animsHidden: z.animsHidden, smil: z.smil, playing: z.playing,
+        seen: { n: seen.n, heavy: seen.heavy, hidden: seen.hidden, what: [...seen.what].slice(0, 4) },
         reqPerHour: (reqs.length / sec) * 3600, byCat, pingsPerHour: ((S.pings - pings0) / sec) * 3600,
       };
       /* わざとの動き（貯金箱のマスコットの息・旗・歩き）を止めて、もう一度。線はこちらに引く（残りは、止まっているはずの面が

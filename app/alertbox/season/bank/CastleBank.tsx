@@ -268,12 +268,22 @@ const CastleScene: React.FC<Props & { parts: Loaded }> = ({ theme, bank, current
       { transform: "skewY(2deg) scaleX(0.98)" },
       { transform: "skewY(0deg) scaleX(1)" },
     ], { duration: 1600, iterations: Infinity, easing: "ease-in-out" });
-    // ピポの息（ゆっくり。足もとを軸に）
-    m.play(breathRef.current, [
-      { transform: "scale(1, 1)" },
-      { transform: "scale(1.012, 0.986)" },
-      { transform: "scale(1, 1)" },
-    ], { duration: 2600, iterations: Infinity, easing: "ease-in-out" });
+    /* ピポの息（ゆっくり。足もとを軸に）。**ピポが見えているあいだだけ**回す（`show` が出し入れする）。
+       門から城に入って屋根ごしに顔を出すあいだ（十数秒ごとに約5秒）、前の層のピポは隠れていて、息は隠れた体の上で
+       回り続けるだけだった（#1178 の alert-perf「見えないのに回る動き」）。息は scale(1, 1) から始まるので、流し直しても継ぎ目は出ない */
+    let breath: Animation | null = null;
+    const breathe = (on: boolean) => {
+      if (!on) {
+        breath?.cancel();
+        breath = null;
+      } else if (!breath) {
+        breath = m.play(breathRef.current, [
+          { transform: "scale(1, 1)" },
+          { transform: "scale(1.012, 0.986)" },
+          { transform: "scale(1, 1)" },
+        ], { duration: 2600, iterations: Infinity, easing: "ease-in-out" });
+      }
+    };
 
     /* ---- ピポを動かす道具 ---- */
     const actor = actorRef.current!;
@@ -299,6 +309,7 @@ const CastleScene: React.FC<Props & { parts: Loaded }> = ({ theme, bank, current
         el.style.visibility = on ? "visible" : "hidden";
       }
       actor.style.visibility = p ? "visible" : "hidden";
+      breathe(!!p);
       // 隅は座ったピポが場面の端に来る所。旗を振る・バンザイのように幅の広いポーズや、これから傾ける（sway 度）・
       // 広げる（scale 倍）ポーズは、場面から出ないぶん内へ寄せる
       if (p) {
