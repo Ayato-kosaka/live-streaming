@@ -103,7 +103,16 @@ FIND = r"""(() => {
   }
   if (location.host.includes('accounts.google.com')) {
     const acct = [...document.querySelectorAll('[data-identifier]')].filter(vis);
-    if (acct.length) return {kind: 'google:chooser', accounts: acct.map(e => { const r0 = e.getBoundingClientRect(), r = {x: r0.x + r0.width / 2, y: r0.y + r0.height / 2}; return {id: (e.getAttribute('data-identifier') || '').toLowerCase(), x: r.x, y: r.y}; })};
+    // 2026-11-11、3件に増えた選択で一致 [0] を25回押しても進まなかった。原因を推測で直さないために、
+    // 押す前に各行の伏せたメール（頭1字＋ドメイン）・状態の字・押す座標で当たる要素が行の中かを返す
+    if (acct.length) return {kind: 'google:chooser', accounts: acct.map(e => {
+      const r0 = e.getBoundingClientRect(), r = {x: r0.x + r0.width / 2, y: r0.y + r0.height / 2};
+      const id = (e.getAttribute('data-identifier') || '').toLowerCase(), h = document.elementFromPoint(r.x, r.y);
+      return {id, x: r.x, y: r.y, rect: [r0.x, r0.y, r0.width, r0.height].map(Math.round),
+        mask: id.includes('@') ? id[0] + '***' + id.slice(id.indexOf('@')) : (id ? id[0] + '***' : ''),
+        state: ((e.innerText || '').match(/ログアウト[^\n]*|再度ログイン[^\n]*|Signed out|Sign in again|Session expired/i) || [''])[0],
+        hit: h ? h.tagName.toLowerCase() + (h.getAttribute('role') ? '[role=' + h.getAttribute('role') + ']' : '') : null,
+        hit_in: !!(h && e.contains(h))}; })};
     const b = clickables().find(e => /^(続行|次へ|許可|同意する|Continue|Allow|Next|I agree)$/i.test(txt(e)));
     if (b) return at(b, 'google:' + txt(b));
     return {kind: 'google:none', diag: diag()};
@@ -143,6 +152,7 @@ if not dt:
     # /auth/youtube?type=streamer（あやと 2026-09-23）。直接行けば Google のアカウント選択から始まる。
     # （/login は存在しない。Return to Home の画面になる）
     tab.call("Page.navigate", url="https://doneru.jp/auth/youtube?type=streamer"); time.sleep(8)
+    chooser_shown = False
     for step in range(25):
         # Google のログインは別窓で開くことがある。accounts.google.com の窓があればそちらを押す
         ps = pages(); g = [p for p in ps if "accounts.google.com" in p["url"]]
@@ -206,6 +216,10 @@ if not dt:
         if r["kind"] == "google:chooser":
             hit = [i for i, a in enumerate(r["accounts"]) if hashlib.sha256(a["id"].encode()).hexdigest() == ACCOUNT_SHA256]
             print(f"  account chooser: {len(r['accounts'])} 件、一致 {hit}")
+            if not chooser_shown:   # 25回同じ行を出さない。最初の1回だけ
+                chooser_shown = True
+                for i, a in enumerate(r["accounts"]):
+                    print(f"    [{i}] {a.get('mask')} 一致={i in hit} 状態={a.get('state') or '-'} 押す座標=({round(a['x'])},{round(a['y'])}) rect={a.get('rect')} elementFromPoint={a.get('hit')} 行の中={a.get('hit_in')}")
             if not hit:
                 print("STOP: Doneru のアカウントが選択肢に無い。何も押さずに止める（あやとの手が要る）"); sys.exit(3)
             r = r["accounts"][hit[0]]
