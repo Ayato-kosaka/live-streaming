@@ -1,0 +1,1113 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/02_0-24-00_0-29-00.mp4",
+   "watermark": "prism_live",
+   "t0": 1440.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/03_0-31-00_0-39-30.mp4",
+   "watermark": "prism_live",
+   "t0": 1860.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/nRsDFgZmBqQ/clips/03_1-18-30_1-22-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4710.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/04_0-47-00_0-51-45.mp4",
+   "watermark": "prism_live",
+   "t0": 2820.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/05_1-03-45_1-04-45.mp4",
+   "watermark": "prism_live",
+   "t0": 3825.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/06_1-16-15_1-22-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4575.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/ingest/yNA44SQbYjM/clips/07_1-28-30_1-31-30.mp4",
+   "watermark": "prism_live",
+   "t0": 5310.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c02",
+   "in": 5820,
+   "out": 5885,
+   "row": 0,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.62,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「北マケドニアでハードパン3種の実験をしたら」: 天板に袋入りの生地2つと、右に冷蔵庫で発酵させた生地の白い容器（3種が1つの画に揃う。F-073 の前半）。窓を右へ寄せて容器まで入れる"
+  },
+  {
+   "src": "c03",
+   "in": 945,
+   "out": 992,
+   "row": 0,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「まさかの事態に！」: 袋から出した生地が糸を引いて伸びきる（何かがおかしいとだけ分かる画。取り違えの答えは見せない。F-071・F-073 の後半）"
+  },
+  {
+   "src": "c2_03",
+   "in": 1665,
+   "out": 1723,
+   "row": 1,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "11/02 nRsDFgZmBqQ: 前の日に焼いたレーズンくるみパンを、まな板の上で手で触る（パン作りにハマっている）"
+  },
+  {
+   "src": "c2_03",
+   "in": 4005,
+   "out": 4080,
+   "row": 2,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "11/02 nRsDFgZmBqQ: 前の日のパンを切って、断面をカメラへ寄せる（中がぎっしり。F-014）"
+  },
+  {
+   "src": "c02",
+   "in": 8475,
+   "out": 8537,
+   "row": 3,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.5,
+    "x": 0.6,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「強力粉1キロ使って」: 白と緑の強力粉の袋を手で持ち上げる（袋に寄せる）"
+  },
+  {
+   "src": "c02",
+   "in": 5028,
+   "out": 5078,
+   "row": 3,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「3種類の生地で実験や」: 天板の袋入りの生地2つと、奥の白い容器の生地へ流れる"
+  },
+  {
+   "src": "c02",
+   "in": 4020,
+   "out": 4097,
+   "row": 4,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「いつものイースト4gと、減らした1gと」: LC Waikiki の袋の上に、袋入りの大きな生地2つ（4gと1g。イーストそのものは配信に写っていない）"
+  },
+  {
+   "src": "c02",
+   "in": 1875,
+   "out": 1927,
+   "row": 4,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「冷蔵庫で発酵させたの」: 冷蔵庫から出した白い容器の中の、袋入りの生地を手で触る"
+  },
+  {
+   "src": "c02",
+   "in": 4200,
+   "out": 4278,
+   "row": 5,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「イーストが多い方が膨らみそう」: 袋の中で大きく膨らんだ生地の寄り（「でっか」の所）"
+  },
+  {
+   "src": "c02",
+   "in": 8055,
+   "out": 8112,
+   "row": 6,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「入れすぎると生地が弱る」: 天板の袋入りの生地を手で押して柔らかさを見る"
+  },
+  {
+   "src": "c03",
+   "in": 570,
+   "out": 627,
+   "row": 6,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「説もあってよくわからん」: 袋から出した生地がだらりと垂れる"
+  },
+  {
+   "src": "c03",
+   "in": 5985,
+   "out": 6034,
+   "row": 7,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「料理下手男の僕が」: 袋の中の生地と両手で格闘する"
+  },
+  {
+   "src": "c03",
+   "in": 1635,
+   "out": 1684,
+   "row": 7,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「3つ一気にいけるかな」: 天板に雑に出した生地と包丁"
+  },
+  {
+   "src": "c03",
+   "in": 2865,
+   "out": 2920,
+   "row": 8,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「作ってる間に」: 打ち粉の天板で生地を丸める手元"
+  },
+  {
+   "src": "c02",
+   "in": 6120,
+   "out": 6170,
+   "row": 9,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「4gと1g」: 天板に並んだ、見た目の同じ袋入りの生地2つと手"
+  },
+  {
+   "src": "c04",
+   "in": 465,
+   "out": 519,
+   "row": 9,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「どっちがどっちか分からん」: 切り込みを入れた2つを上から、指で片方ずつ差す（どっちやったっけ）"
+  },
+  {
+   "src": "c03",
+   "in": 10665,
+   "out": 10720,
+   "row": 10,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「どん臭すぎる」: ねちゃねちゃの生地が天板からこぼれて、手で寄せきれない"
+  },
+  {
+   "src": "c03",
+   "in": 14055,
+   "out": 14095,
+   "row": 11,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「触ってみたら」: 上からの画、両手で2つの生地を触る"
+  },
+  {
+   "src": "c03",
+   "in": 6750,
+   "out": 6791,
+   "row": 11,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「片方だけねちゃねちゃ」: 丸まった方の横で、片方だけ袋から崩れて手にくっつく"
+  },
+  {
+   "src": "c04",
+   "in": 4005,
+   "out": 4080,
+   "row": 12,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「弱ってるっぽいこっちを、4gってことにした」: 上からの画、指で片方を押して決める（「こっちが4gです」）"
+  },
+  {
+   "src": "c04",
+   "in": 8250,
+   "out": 8290,
+   "row": 13,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「冷蔵庫のは後回しで」: 冷蔵庫で発酵させた生地の白い容器（電子レンジの前）"
+  },
+  {
+   "src": "c05",
+   "in": 960,
+   "out": 999,
+   "row": 13,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「この2つを焼く」: オーブンのガラス越しに、膨らんでいく2つ"
+  },
+  {
+   "src": "c06",
+   "in": 810,
+   "out": 850,
+   "row": 14,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「焼き上がって」: オーブンから出した天板の2つの焼き上がり"
+  },
+  {
+   "src": "c06",
+   "in": 6615,
+   "out": 6655,
+   "row": 14,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「1gっぽい方を割ったら」: 両手で1gっぽい方を割る"
+  },
+  {
+   "src": "c06",
+   "in": 6780,
+   "out": 6847,
+   "row": 15,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「中が今までで1番ふわふわ」: 割った断面から湯気、気泡の多いふわふわの中"
+  },
+  {
+   "src": "c06",
+   "in": 2595,
+   "out": 2635,
+   "row": 16,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「4gっぽい方は」: 天板の平たい方（4gっぽい方）を手で押す"
+  },
+  {
+   "src": "c07",
+   "in": 1980,
+   "out": 2019,
+   "row": 16,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「いつも通りぎっしり」: 4gっぽい方を割った中の寄り"
+  },
+  {
+   "src": "c06",
+   "in": 2865,
+   "out": 2909,
+   "row": 17,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「イーストは1gがベスト」: 皿に分けた2つの焼き上がり（膨らみの差）"
+  },
+  {
+   "src": "c06",
+   "in": 7515,
+   "out": 7562,
+   "row": 17,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「って言うことでいいんかな」: 1gっぽい方の割った両半分、湯気の立つ中"
+  },
+  {
+   "src": "c06",
+   "in": 8034,
+   "out": 8080,
+   "row": 18,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「みんなは、この実験」: 1gっぽい方にかぶりつく"
+  },
+  {
+   "src": "c06",
+   "in": 900,
+   "out": 945,
+   "row": 18,
+   "zoom": {
+    "from": 1.146,
+    "to": 1.146,
+    "x": 0.5,
+    "y": 0.0,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「成功？失敗？」: オーブンから出した天板の2つの焼き上がりを、もう一度引きで（実験の2つ。終わりの札が乗る）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアでハードパン3種の実験をしたら、まさかの事態に！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアでハードパン3種の実験をしたら、まさかの事態に！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/01.wav",
+    "tts_text": "北マケドニアで、ハードパン、さんしゅの実験をしたら、まさかの事態に！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "最近、パン作りにハマってるんやけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/02.wav",
+    "tts_text": "最近、パン作りにハマってるんやけど、",
+    "at": 112
+   },
+   {
+    "text": "いつも中がぎっしりで、ふわっとならへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/03.wav",
+    "tts_text": "いつも、なかがぎっしりで、ふわっとならへん！",
+    "at": 170,
+    "parts": [
+     {
+      "text": "いつも中がぎっしりで、"
+     },
+     {
+      "text": "ふわっとならへん！"
+     }
+    ]
+   },
+   {
+    "text": "ということで、強力粉1キロ使って3種類の生地で実験や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/04.wav",
+    "tts_text": "ということで、きょうりきこ、いちキロ使って、さんしゅるいの生地で実験や！",
+    "at": 245,
+    "parts": [
+     {
+      "text": "ということで、強力粉1キロ使って"
+     },
+     {
+      "text": "3種類の生地で実験や！"
+     }
+    ],
+    "highlight": [
+     "1キロ"
+    ]
+   },
+   {
+    "text": "いつものイースト4gと、減らした1gと、冷蔵庫で発酵させたの！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/05.wav",
+    "tts_text": "いつものイースト、よんグラムと、減らした、いちグラムと、冷蔵庫で発酵させたの！",
+    "at": 357,
+    "parts": [
+     {
+      "text": "いつものイースト4gと、"
+     },
+     {
+      "text": "減らした1gと、"
+     },
+     {
+      "text": "冷蔵庫で発酵させたの！"
+     }
+    ],
+    "highlight": [
+     "4g",
+     "1g"
+    ]
+   },
+   {
+    "text": "普通は、イーストが多い方が膨らみそうやん？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/06.wav",
+    "tts_text": "普通は、イーストが多いほうが、膨らみそうやん？",
+    "at": 486,
+    "parts": [
+     {
+      "text": "普通は、イーストが多い方が"
+     },
+     {
+      "text": "膨らみそうやん？"
+     }
+    ]
+   },
+   {
+    "text": "でも、入れすぎると生地が弱るって言う説もあってよくわからん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/07.wav",
+    "tts_text": "でも、入れすぎると、生地が弱るって言う説もあって、よくわからん！",
+    "at": 564,
+    "parts": [
+     {
+      "text": "でも、入れすぎると生地が弱るって"
+     },
+     {
+      "text": "言う説もあってよくわからん！"
+     }
+    ]
+   },
+   {
+    "text": "ただ、料理下手男の僕が、3つ一気にいけるかな……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/08.wav",
+    "tts_text": "ただ、りょうりべたおとこの僕が、みっつ一気にいけるかな……",
+    "at": 678,
+    "parts": [
+     {
+      "text": "ただ、料理下手男の僕が、",
+      "mood": "tense_tilt"
+     },
+     {
+      "text": "3つ一気にいけるかな……",
+      "mood": "tense_tilt"
+     }
+    ]
+   },
+   {
+    "text": "そしたら、作ってる間に……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/09.wav",
+    "tts_text": "そしたら、作ってる、あいだに……",
+    "at": 776
+   },
+   {
+    "text": "4gと1g、どっちがどっちか分からんくなってもうた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/10.wav",
+    "tts_text": "よんグラムと、いちグラム、どっちがどっちか、分からんくなってもうた！",
+    "at": 831,
+    "parts": [
+     {
+      "text": "4gと1g、どっちがどっちか",
+      "mood": "tense_shake"
+     },
+     {
+      "text": "分からんくなってもうた！",
+      "mood": "tense_shake"
+     }
+    ]
+   },
+   {
+    "text": "張り切ってたのに、どん臭すぎる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/11.wav",
+    "tts_text": "張り切ってたのに、どんくさすぎる！",
+    "at": 935,
+    "mood": "tense_still"
+   },
+   {
+    "text": "触ってみたら、片方だけねちゃねちゃ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/12.wav",
+    "tts_text": "触ってみたら、かたほうだけ、ねちゃねちゃ！",
+    "at": 990,
+    "parts": [
+     {
+      "text": "触ってみたら、"
+     },
+     {
+      "text": "片方だけねちゃねちゃ！"
+     }
+    ]
+   },
+   {
+    "text": "弱ってるっぽいこっちを、4gってことにした！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/13.wav",
+    "tts_text": "弱ってるっぽいこっちを、よんグラムってことにした！",
+    "at": 1071,
+    "parts": [
+     {
+      "text": "弱ってるっぽいこっちを、"
+     },
+     {
+      "text": "4gってことにした！"
+     }
+    ]
+   },
+   {
+    "text": "冷蔵庫のは後回しで、この2つを焼く！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/14.wav",
+    "tts_text": "冷蔵庫のは、あとまわしで、このふたつを焼く！",
+    "at": 1146,
+    "parts": [
+     {
+      "text": "冷蔵庫のは後回しで、"
+     },
+     {
+      "text": "この2つを焼く！"
+     }
+    ]
+   },
+   {
+    "text": "焼き上がって、1gっぽい方を割ったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/15.wav",
+    "tts_text": "焼き上がって、いちグラムっぽいほうを、割ったら……",
+    "at": 1225,
+    "parts": [
+     {
+      "text": "焼き上がって、"
+     },
+     {
+      "text": "1gっぽい方を割ったら……"
+     }
+    ]
+   },
+   {
+    "text": "中が今までで1番ふわふわや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/16.wav",
+    "tts_text": "なかが、今まででいちばん、ふわふわや！",
+    "at": 1305,
+    "mood": "up_pop"
+   },
+   {
+    "text": "4gっぽい方は、いつも通りぎっしり！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/17.wav",
+    "tts_text": "よんグラムっぽいほうは、いつも通り、ぎっしり！",
+    "at": 1372,
+    "parts": [
+     {
+      "text": "4gっぽい方は、"
+     },
+     {
+      "text": "いつも通りぎっしり！"
+     }
+    ]
+   },
+   {
+    "text": "イーストは1gがベストって言うことでいいんかな！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/18.wav",
+    "tts_text": "イーストは、いちグラムがベストって言うことで、いいんかな？",
+    "at": 1451,
+    "parts": [
+     {
+      "text": "イーストは1gがベストって"
+     },
+     {
+      "text": "言うことでいいんかな！？"
+     }
+    ]
+   },
+   {
+    "text": "みんなは、この実験、成功？失敗？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bread_edit/voice/yna-p1-v1/p1/19.wav",
+    "tts_text": "みんなは、この実験、成功？失敗？",
+    "at": 1542
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-a1ea9033e7d1af569/shorts/videos/yNA44SQbYjM/p1/spec.json",
+  "fps": 30,
+  "frames": 1633,
+  "seconds": 54.433,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 112,
+    "voice_frames": 104,
+    "cuts": [
+     "yNA44SQbYjM 0:27:14.0+2.17s",
+     "yNA44SQbYjM 0:31:31.5+1.57s"
+    ],
+    "line": "北マケドニアでハードパン3種の実験をしたら、まさかの事態に！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 112,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "nRsDFgZmBqQ 1:19:25.5+1.93s"
+    ],
+    "line": "最近、パン作りにハマってるんやけど、",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 170,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "nRsDFgZmBqQ 1:20:43.5+2.50s"
+    ],
+    "line": "いつも中がぎっしりで、ふわっとならへん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "いつも中がぎっしりで、"
+     },
+     {
+      "text": "ふわっとならへん！"
+     }
+    ]
+   },
+   {
+    "row": 3,
+    "from": 245,
+    "frames": 112,
+    "voice_frames": 104,
+    "cuts": [
+     "yNA44SQbYjM 0:28:42.5+2.07s",
+     "yNA44SQbYjM 0:26:47.6+1.67s"
+    ],
+    "line": "ということで、強力粉1キロ使って3種類の生地で実験や！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "ということで、強力粉1キロ使って"
+     },
+     {
+      "text": "3種類の生地で実験や！"
+     }
+    ]
+   },
+   {
+    "row": 4,
+    "from": 357,
+    "frames": 129,
+    "voice_frames": 121,
+    "cuts": [
+     "yNA44SQbYjM 0:26:14.0+2.57s",
+     "yNA44SQbYjM 0:25:02.5+1.73s"
+    ],
+    "line": "いつものイースト4gと、減らした1gと、冷蔵庫で発酵させたの！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "いつものイースト4gと、"
+     },
+     {
+      "text": "減らした1gと、"
+     },
+     {
+      "text": "冷蔵庫で発酵させたの！"
+     }
+    ]
+   },
+   {
+    "row": 5,
+    "from": 486,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "yNA44SQbYjM 0:26:20.0+2.60s"
+    ],
+    "line": "普通は、イーストが多い方が膨らみそうやん？",
+    "telop": null,
+    "parts": [
+     {
+      "text": "普通は、イーストが多い方が"
+     },
+     {
+      "text": "膨らみそうやん？"
+     }
+    ]
+   },
+   {
+    "row": 6,
+    "from": 564,
+    "frames": 114,
+    "voice_frames": 106,
+    "cuts": [
+     "yNA44SQbYjM 0:28:28.5+1.90s",
+     "yNA44SQbYjM 0:31:19.0+1.90s"
+    ],
+    "line": "でも、入れすぎると生地が弱るって言う説もあってよくわからん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "でも、入れすぎると生地が弱るって"
+     },
+     {
+      "text": "言う説もあってよくわからん！"
+     }
+    ]
+   },
+   {
+    "row": 7,
+    "from": 678,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "yNA44SQbYjM 0:34:19.5+1.63s",
+     "yNA44SQbYjM 0:31:54.5+1.63s"
+    ],
+    "line": "ただ、料理下手男の僕が、3つ一気にいけるかな……",
+    "telop": null,
+    "parts": [
+     {
+      "text": "ただ、料理下手男の僕が、",
+      "mood": "tense_tilt"
+     },
+     {
+      "text": "3つ一気にいけるかな……",
+      "mood": "tense_tilt"
+     }
+    ]
+   },
+   {
+    "row": 8,
+    "from": 776,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "yNA44SQbYjM 0:32:35.5+1.83s"
+    ],
+    "line": "そしたら、作ってる間に……",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 831,
+    "frames": 104,
+    "voice_frames": 96,
+    "cuts": [
+     "yNA44SQbYjM 0:27:24.0+1.67s",
+     "yNA44SQbYjM 0:47:15.5+1.80s"
+    ],
+    "line": "4gと1g、どっちがどっちか分からんくなってもうた！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "4gと1g、どっちがどっちか",
+      "mood": "tense_shake"
+     },
+     {
+      "text": "分からんくなってもうた！",
+      "mood": "tense_shake"
+     }
+    ]
+   },
+   {
+    "row": 10,
+    "from": 935,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "yNA44SQbYjM 0:36:55.5+1.83s"
+    ],
+    "line": "張り切ってたのに、どん臭すぎる！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 990,
+    "frames": 81,
+    "voice_frames": 73,
+    "cuts": [
+     "yNA44SQbYjM 0:38:48.5+1.33s",
+     "yNA44SQbYjM 0:34:45.0+1.37s"
+    ],
+    "line": "触ってみたら、片方だけねちゃねちゃ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "触ってみたら、"
+     },
+     {
+      "text": "片方だけねちゃねちゃ！"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 1071,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "yNA44SQbYjM 0:49:13.5+2.50s"
+    ],
+    "line": "弱ってるっぽいこっちを、4gってことにした！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "弱ってるっぽいこっちを、"
+     },
+     {
+      "text": "4gってことにした！"
+     }
+    ]
+   },
+   {
+    "row": 13,
+    "from": 1146,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "yNA44SQbYjM 0:51:35.0+1.33s",
+     "yNA44SQbYjM 1:04:17.0+1.30s"
+    ],
+    "line": "冷蔵庫のは後回しで、この2つを焼く！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "冷蔵庫のは後回しで、"
+     },
+     {
+      "text": "この2つを焼く！"
+     }
+    ]
+   },
+   {
+    "row": 14,
+    "from": 1225,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "yNA44SQbYjM 1:16:42.0+1.33s",
+     "yNA44SQbYjM 1:19:55.5+1.33s"
+    ],
+    "line": "焼き上がって、1gっぽい方を割ったら……",
+    "telop": null,
+    "parts": [
+     {
+      "text": "焼き上がって、"
+     },
+     {
+      "text": "1gっぽい方を割ったら……"
+     }
+    ]
+   },
+   {
+    "row": 15,
+    "from": 1305,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "yNA44SQbYjM 1:20:01.0+2.23s"
+    ],
+    "line": "中が今までで1番ふわふわや！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1372,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "yNA44SQbYjM 1:17:41.5+1.33s",
+     "yNA44SQbYjM 1:29:36.0+1.30s"
+    ],
+    "line": "4gっぽい方は、いつも通りぎっしり！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "4gっぽい方は、"
+     },
+     {
+      "text": "いつも通りぎっしり！"
+     }
+    ]
+   },
+   {
+    "row": 17,
+    "from": 1451,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "yNA44SQbYjM 1:17:50.5+1.47s",
+     "yNA44SQbYjM 1:20:25.5+1.57s"
+    ],
+    "line": "イーストは1gがベストって言うことでいいんかな！？",
+    "telop": null,
+    "parts": [
+     {
+      "text": "イーストは1gがベストって"
+     },
+     {
+      "text": "言うことでいいんかな！？"
+     }
+    ]
+   },
+   {
+    "row": 18,
+    "from": 1542,
+    "frames": 91,
+    "voice_frames": 68,
+    "cuts": [
+     "yNA44SQbYjM 1:20:42.8+1.53s",
+     "yNA44SQbYjM 1:16:45.0+1.50s"
+    ],
+    "line": "みんなは、この実験、成功？失敗？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 363,
+   "raw_voice_s": 68.33,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 48.87,
+   "cps_voiced": 7.43,
+   "video_s": 54.43,
+   "cps_video": 6.67
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
