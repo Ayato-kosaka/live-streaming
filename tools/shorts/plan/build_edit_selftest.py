@@ -22,6 +22,7 @@
 | `over_60_stops` | 上限で読んでも59秒を越える（声だけなら入るが、行の間と末尾を足すと越える）→ 指示書を書かずに終了コード 2。尺・何%・何字を出し、その数が下の手計算と合う。言われたとおり減らせば通る |
 | `card_own` | 題の札が1行目と同じ言葉（国旗・改行・句読点だけ違う）なら、札が1行目の字幕を兼ねる（字幕を出さない・札に line）。別の言葉（あやと F-043「札は手段と日数、1行目は回れた中身」）なら兼ねない（1行目の字幕を出す・札に line を持たせない・札は題の行の終わりか4秒の早いほうで消す） |
 | `voice_src` | 声だけを配信の別の秒から取った行（spec の `voice_src`。画は別の秒。猫の回 p2）: 本番の声で組むと、その行に `orig_voice`・`voice_src` の印が行の最後に付く（書き出しが元の声として揃える）・声は声の一覧のその行の音（`audio`）で、元の音は切らない・ほかの行には付かない・仮の声（`--voice` 無し）なら付けない・`orig_voice` と両方ある行は元の声の行として組む |
+| `vsrc_tempo` | voice_src の行（本人の声）は速めない: 本番の声で組むと、その行は素の速さの長さで組み（偽の測りは書き出しと同じく voice_src の印の行に倍率を掛けない）、喋る速さの倍率は AI の声の行の字と長さだけから決める。仮の声なら、ふつうの行として倍率に数えて速める（ハトのフンの回 v2 は 17・18行の叫びが 1.4倍の早送りだった。帳面 F-019） |
 | `orig_voice` | 元の声の行（あやと F-051「叫びは配信の本人の声で」）: 声の一覧にその行のぶんが無くても組む（あれば止まる）・その行の声はカットと同じ区間の元の音（`file`）で、仮の声にも倍率にも数えない・画は声と同じコマから取り、最後のカットだけ行の間ぶん延ばす・【大】でも声を遅らせない・延ばした画が until を越えるなら入りをずらさずに止まる |
 | `named_src` | ほかの回の秒（`OTHERvid_02 0:01:00–…`。夫婦の車の回 A・クラムチャウダーの回）: 名前の付いた秒はその回の窓から・名前の無い秒は同じ秒を持つほかの回の窓を取らずにこの回の窓から・地図の行（`27:46:40.0`）は地図の窓から・「同上」の続きは前の行と同じ回から・ぼかしの帳面は名前の付いた回の窓にだけ掛かる・index.json に video が無い一覧は `<videoId>=<index.json>` で名指せる・窓の無い回は止まる |
 
@@ -73,7 +74,7 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                  {"over_60_stops"}, "減らす割合を声ではなく動画の長さから出す"),
     # orig_voice も倍率を手計算と突き合わせる足なので、一緒に落ちる
     "always_cap": ("        tempo = min(max(raw, 1.0), args.max_tempo)\n", "        tempo = args.max_tempo\n",
-                   {"under_cap", "orig_voice"}, "要る倍率が上限以内でも、上限で読ませる"),
+                   {"under_cap", "orig_voice", "vsrc_tempo"}, "要る倍率が上限以内でも、上限で読ませる"),
     "style_cap": ("        args.max_tempo = R.tempo_cap(st_all)\n", "        args.max_tempo = 1.4\n",
                   {"over_cap_fits"}, "上限を様式から読まない"),
     # 題の札と1行目が別の言葉のとき（あやと F-043）
@@ -93,9 +94,10 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "orig_tts": ("        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True, \"file\": str(wav)}\n",
                  "        lines[i] = {\"text\": rows[i][\"line\"], \"orig_voice\": True}\n",
                  {"orig_voice", "voice_src"}, "元の声の行に元の音を置かない（字を AI の声か仮の声で読ませる）"),
-    "orig_tempo": ("        chars = sum(spoken_chars(lines[k][\"text\"]) for k in spoken)\n",
+    # voice_src の足も、倍率の字に voice_src の行を数えないことを手計算と突き合わせるので、一緒に落ちる
+    "orig_tempo": ("        chars = sum(spoken_chars(lines[k][\"text\"]) for k in paced)\n",
                    "        chars = sum(spoken_chars(ln[\"text\"]) for ln in lines)\n",
-                   {"orig_voice"}, "喋る速さの倍率に、速めない元の声の行の字まで数える"),
+                   {"orig_voice", "vsrc_tempo"}, "喋る速さの倍率に、速めない元の声の行の字まで数える"),
     "orig_shift": ("            if i in orig_rows:\n                clip, t0 = orig_place(",
                    "            if False:\n                clip, t0 = orig_place(",
                    {"orig_voice"}, "元の声の行のカットも until に合わせて入りをずらす（声と画の秒がずれる）"),
@@ -110,6 +112,14 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "vsrc_both": ("    vsrc_rows = {i for i, r in enumerate(rows) if r.get(\"voice_src\") and i not in orig_rows}\n",
                   "    vsrc_rows = {i for i, r in enumerate(rows) if r.get(\"voice_src\")}\n",
                   {"voice_src"}, "orig_voice と voice_src の両方がある行にも voice_src の印を付ける（声と画が同じ秒の行なのに、別の秒の声と読まれる）"),
+    # voice_src の行は本人の声なので速めない（ハトのフンの回 v2 は 17・18行の叫びが 1.4倍の早送りだった。帳面 F-019）
+    "vsrc_paced": ("    paced = [k for k in spoken if k not in live_vsrc]\n", "    paced = list(spoken)\n",
+                   {"vsrc_tempo"}, "喋る速さの倍率の字と長さに voice_src の行も数える（本人の声の速さで AI の声の倍率が動く）"),
+    "vsrc_measure": ("        got = dict(zip(spoken, narration_frames([dict(lines[k], voice_src=True) if k in live_vsrc else lines[k]\n",
+                     "        got = dict(zip(spoken, narration_frames([lines[k] if k in live_vsrc else lines[k]\n",
+                     {"vsrc_tempo"}, "voice_src の行を倍率を掛けた長さで測る（書き出しで鳴る素の長さとずれ、行が短く組まれる）"),
+    "vsrc_live_draft": ("    live_vsrc = vsrc_rows if voice is not None else set()\n", "    live_vsrc = vsrc_rows\n",
+                        {"vsrc_tempo"}, "仮の声（--voice 無し）の voice_src の行も速めない行として組む（Open JTalk の声は配信の声ではない）"),
     "orig_pre": ("            and i not in orig_rows else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
@@ -240,7 +250,9 @@ class Bench:
             tempo = float(narr.get("tempo") or 1.0)
             tempos.append(tempo)
             seen.extend(ln["text"] for ln in lines)
-            return [(voice_frames(self.be.spoken_chars(ln["text"]), natural, tempo), []) for ln in lines]
+            # 書き出し（render.narration_wav）と同じ決まり: voice_src の印の行（本人の声）は倍率を掛けない
+            return [(voice_frames(self.be.spoken_chars(ln["text"]), natural, 1.0 if ln.get("voice_src") else tempo), [])
+                    for ln in lines]
 
         def orig_audio(pieces, work, name):
             # 元の音を開く代わりに、どの区間を渡されたかだけ控える（ffmpeg も numpy も使わない）
@@ -454,6 +466,42 @@ def leg_voice_src(b: Bench):
     return out
 
 
+def leg_vsrc_tempo(b: Bench):
+    """voice_src の行（本人の声）は速めない: 素の速さで測って組み、喋る速さの倍率の字にも長さにも数えない。
+    仮の声（--voice 無し）なら、ふつうの行として倍率に数えて速める"""
+    per_line, natural = [17] * 10, 6.6
+    per_line[VSRC_ROW] = 30          # 長い行にして、倍率に数えたら手計算と食い違うようにする
+    vs_chars = per_line[VSRC_ROW]
+    paced = [c for k, c in enumerate(per_line) if k != VSRC_ROW]
+    raw = sum(voice_frames(c, natural, 1.0) for c in paced) / FPS / (sum(paced) / CPS)
+    tempo = round(min(max(raw, 1.0), CAP), 3)
+    ra = b.run(per_line, natural, vsrc={"row": VSRC_ROW, "voices": True})
+    e = ra["edit"] or {}
+    sp = (e.get("meta") or {}).get("speech") or {}
+    mrows = (e.get("meta") or {}).get("rows") or []
+    mv = mrows[VSRC_ROW] if len(mrows) > VSRC_ROW else {}
+    m1 = mrows[1] if len(mrows) > 1 else {}
+    want_vs = voice_frames(vs_chars, natural, 1.0) + GAP_F
+    want_1 = voice_frames(17, natural, tempo) + GAP_F
+    out = [(f"組む（終了コード {ra['rc']}）", ra["rc"] == 0 and bool(e)),
+           (f"倍率は AI の声の行だけから決める（{sp.get('tempo')} / 手計算 {tempo}）", sp.get("tempo") == tempo),
+           (f"倍率の字に voice_src の行を数えない（{sp.get('chars')} / 手計算 {sum(paced)}）", sp.get("chars") == sum(paced)),
+           (f"voice_src の行は素の速さの長さで組む（{mv.get('frames')} コマ / 手計算 {want_vs}）", mv.get("frames") == want_vs),
+           (f"AI の声の行は倍率を掛けた長さ（{m1.get('frames')} コマ / 手計算 {want_1}）", m1.get("frames") == want_1)]
+    # 仮の声: Open JTalk の声は配信の声ではないので、ふつうの行として倍率に数えて速める
+    raw_all = sum(voice_frames(c, natural, 1.0) for c in per_line) / FPS / (sum(per_line) / CPS)
+    tempo_all = round(min(max(raw_all, 1.0), CAP), 3)
+    rb = b.run(per_line, natural, vsrc={"row": VSRC_ROW, "voices": False})
+    eb = rb["edit"] or {}
+    spb = (eb.get("meta") or {}).get("speech") or {}
+    mb = ((eb.get("meta") or {}).get("rows") or [{}] * (VSRC_ROW + 1))[VSRC_ROW]
+    out += [(f"仮の声なら voice_src の行も倍率に数える（字 {spb.get('chars')} / {sum(per_line)}・倍率 {spb.get('tempo')} / {tempo_all}）",
+             rb["rc"] == 0 and spb.get("chars") == sum(per_line) and spb.get("tempo") == tempo_all),
+            (f"仮の声なら voice_src の行も速めた長さ（{mb.get('frames')} / 手計算 {voice_frames(vs_chars, natural, tempo_all) + GAP_F}）",
+             mb.get("frames") == voice_frames(vs_chars, natural, tempo_all) + GAP_F)]
+    return out
+
+
 MAIN_V, OTHER_V = "MAINvideo01", "OTHERvid_02"   # 11字の videoId（この回・ほかの回）
 MAP_T = 100000.0                                # 地図の素材の秒（hookmap.py の T_BASE。見張りの側でも書いておく）
 
@@ -546,6 +594,7 @@ LEGS = {
     "card_own": leg_card_own,
     "orig_voice": leg_orig_voice,
     "voice_src": leg_voice_src,
+    "vsrc_tempo": leg_vsrc_tempo,
     "named_src": leg_named_src,
 }
 

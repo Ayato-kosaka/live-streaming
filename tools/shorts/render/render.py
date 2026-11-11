@@ -301,12 +301,15 @@ def narration_wav(line: dict, narr: dict, base: Path, work: Path) -> Path:
     - `narration.tempo`（1 より大きい）があれば、詰めたあと音の高さを変えずにその倍率で速くする
       （上限は様式の `narration.max_tempo`。道具は `narration.stretch`、既定は STRETCH）
     - `narration.max_pause_s` があれば、行の中の間をその秒数までに縮める（速めたあとの時間で）
+    - `voice_src` の行（声だけを配信の別の秒から取った本人の声）は、`audio` でも倍率も間の詰めも掛けない。
+      AI の声の速さに合わせて 1.4倍にすると、本人の声が早送りに聞こえる（帳面 F-019・#285 と同じ傷。
+      ハトのフンの回 v2 で 17・18行の叫びが 1.4倍になっていた）。頭と尻の詰めはふつうの行と同じ
     中身と処理が同じなら作り直さない。
     """
     tempo = float(narr.get("tempo") or 1.0)
     mp = narr.get("max_pause_s")
     out = narration_wav_raw(line, narr, base, work)
-    if line.get("file") or (abs(tempo - 1.0) < 1e-6 and not mp):
+    if line.get("file") or line.get("voice_src") or (abs(tempo - 1.0) < 1e-6 and not mp):
         return out
     return tempo_wav(out, tempo, work, mp, narr.get("stretch") or STRETCH)
 

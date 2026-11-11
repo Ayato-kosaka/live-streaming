@@ -27,7 +27,9 @@
 - spec の行に `voice_src` があれば**声だけが配信の音の行**（画は別の秒）。声は声の一覧のその行の音（担当が配信から
   切ったもの）で、ふつうの行と同じく詰めて置く。指示書の行に `orig_voice`・`voice_src` の印を付けるので、書き出しが
   元の声として整えて AI の声の真ん中 +0.5dB に揃え、字幕を声の出だしから出す（render/orig_voice.py）。
-  印は本番の声（`--voice`）のときだけ付ける。喋る速さの倍率には、いまはこの行の字も数える（倍率を掛ける回で使うと速まる）
+  印は本番の声（`--voice`）のときだけ付ける。本人の声なので、書き出しは倍率も間の詰めも掛けず（render.narration_wav）、
+  組み立ても同じ素の速さで測る。喋る速さの倍率（字と長さ）には、元の声の行と同じく数えない（ハトのフンの回 v2 は
+  1.4倍の早送りになっていた。帳面 F-019）
 
 ## 対談系の切り抜き（#1104。帳面 F-065）
 
@@ -661,10 +663,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             # 印の無い回（対談系の前の回は全部）は、指示書に何も足さない
             lines[i]["speaker"] = str(r["speaker"])
     spoken = [k for k in range(len(rows)) if k not in orig_rows]
+    # voice_src の行（本番の声のときだけ。仮の声は配信の声ではない）は本人の声なので、書き出しが倍率も間の詰めも
+    # 掛けない（render.narration_wav）。測るときも同じ印を付けて、書き出しで鳴る長さと同じ長さで組む。
+    # 喋る速さの倍率（字と長さ）には、元の声の行と同じく数えない（数えると、本人の声の速さで AI の声の倍率が動く）
+    live_vsrc = vsrc_rows if voice is not None else set()
+    paced = [k for k in spoken if k not in live_vsrc]
 
     def measure(narr_: dict) -> list[tuple[int, list[tuple[int, int]]]]:
-        """行ごとの（声のコマ, 声の間）。元の声の行は区間の長さそのもの（速めない・詰めない）"""
-        got = dict(zip(spoken, narration_frames([lines[k] for k in spoken], narr_, work)))
+        """行ごとの（声のコマ, 声の間）。元の声の行は区間の長さそのもの（速めない・詰めない）。voice_src の行は素の速さ"""
+        got = dict(zip(spoken, narration_frames([dict(lines[k], voice_src=True) if k in live_vsrc else lines[k]
+                                                 for k in spoken], narr_, work)))
         return [(sum(p["frames"] for p in pieces[k]), []) if k in orig_rows else got[k] for k in range(len(rows))]
     sys.path.insert(0, str(RENDER))
     import render as R  # noqa: E402
@@ -689,16 +697,16 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     if cps:
         # 喋る速さを、伸びているショートの速さ（毎秒 cps 字）に揃える。倍率は動画に1つ
         # （行ごとに変えると、行の間で速さが揺れて不自然）。声はもとの長さを詰めたものから測る。
-        # 元の声の行は速めないので、字にも長さにも数えない（数えると、叫びの長い間で倍率が上がる）
-        chars = sum(spoken_chars(lines[k]["text"]) for k in spoken)
-        dur = sum(measured[k][0] for k in spoken) / FPS
+        # 元の声の行と voice_src の行は速めないので、字にも長さにも数えない（数えると、叫びの長い間で倍率が上がる）
+        chars = sum(spoken_chars(lines[k]["text"]) for k in paced)
+        dur = sum(measured[k][0] for k in paced) / FPS
         raw = dur / (chars / cps)
         tempo = min(max(raw, 1.0), args.max_tempo)
         narr["tempo"] = round(tempo, 3)
         if args.max_pause:
             narr["max_pause_s"] = args.max_pause
         measured = measure(narr)
-        voiced = sum(measured[k][0] for k in spoken) / FPS
+        voiced = sum(measured[k][0] for k in paced) / FPS
         if raw > args.max_tempo:
             # 上限で読ませた尺を、組み立てと同じ足しかたで見積もる。入らないなら、ここで止める。
             # 組んで書き出してから60秒を越えたと分かると、声の作り直しから書き出しまでがやり直しになる。
@@ -714,11 +722,11 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         for _ in range(2):
             # 間を縮めたぶん、声の間の速さが目標を越える。倍率を下げて合わせ直す（2回でほぼ止まる）
             want = chars / cps
-            if abs(voiced - want) < 1.0 / FPS * len(spoken) / 2:
+            if abs(voiced - want) < 1.0 / FPS * len(paced) / 2:
                 break
             narr["tempo"] = round(min(max(narr["tempo"] * voiced / want, 1.0), args.max_tempo), 3)
             measured = measure(narr)
-            voiced = sum(measured[k][0] for k in spoken) / FPS
+            voiced = sum(measured[k][0] for k in paced) / FPS
         speech = {"chars": chars, "raw_voice_s": round(dur, 2), "tempo": narr["tempo"], "target_cps": cps,
                   "voiced_s": round(voiced, 2), "cps_voiced": round(chars / voiced, 2)}
 
