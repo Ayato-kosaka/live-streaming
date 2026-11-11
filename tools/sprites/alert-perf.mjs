@@ -529,6 +529,11 @@ const PERF = (fault) => `(() => {
     try { anims = document.getAnimations().filter((a) => a.playState === "running"); } catch (e) {}
     const names = [...new Set(anims.map((a) => a.animationName || a.transitionProperty || a.id || "waapi"))].slice(0, 6);
     const LIGHT = ["transform", "opacity", "translate", "scale", "rotate"];
+    /* 見えるか。visibility: hidden の要素でも、中に visible の子がいれば、その子は描かれて動きにつれて動く（城の屋根ごしの
+       ピポは、首をかしげる枠の中の絵が自分で visible を持つ。しかも Chrome は動いている枠の visibility を古い hidden の
+       まま返すことがある）。要素と、その中の全部が見えないときだけ「見えないのに回る」 */
+    const seenBy = (el) => !el.checkVisibility || el.checkVisibility({ visibilityProperty: true });
+    const shows = (el) => seenBy(el) || [...el.querySelectorAll("*")].some(seenBy);
     let heavy = 0, hidden = 0;
     const what = [];
     for (const a of anims) {
@@ -539,7 +544,7 @@ const PERF = (fault) => `(() => {
       if ([...props].some((x) => !LIGHT.includes(x))) heavy++;
       const t = a.effect && a.effect.target;
       const gone = t && !t.isConnected;
-      if (t && (gone || (t.checkVisibility && !t.checkVisibility({ visibilityProperty: true })))) {
+      if (t && (gone || !shows(t))) {
         hidden++;
         let mark = "";
         for (let up = t; up && !mark; up = up.parentElement) {
