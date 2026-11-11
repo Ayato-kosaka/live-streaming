@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__kun-p1-v4",
  "mode": "render",
- "dest": "render/kun-p1-v4/inbox",
+ "dest": "render/kun-p1-v4",
  "video": null,
  "channel": null,
  "request": "shorts/render/kun-p1-v4.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1186,
-  "encrypted": 1200
+  "plain": 35469,
+  "tar_gz": 9135,
+  "encrypted": 9136
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1200,
-   "sha256": "c966827e7e24ca7c1a586da613540721ad7dd12fd51151a1f89243d7da3b4b0a"
+   "bytes": 9136,
+   "sha256": "1d23d83dd8b21b98738b1dac60bad92aea417be757515e158cb0087a3b80ddf5"
   }
  ],
- "hmac_sha256": "02c38f65d31213527825931b789473e79d3eaa24a22c02a7fff51a8e7f76d0fe",
+ "hmac_sha256": "7145f06396f502f3a06997b5f5512b2e2f02eff8b9e56e100ad75ec7809a2681",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-11T19:43:18+00:00",
+ "created_at": "2026-11-11T19:53:14+00:00",
  "nonce": "bd0138e9a1d25874873209f5"
 }
