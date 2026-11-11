@@ -1,0 +1,911 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_p1.json",
+ "sources": {
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/kunXt2sXnFQ/clips/02_6-35-30_6-45-30.mp4",
+   "watermark": "prism_live",
+   "t0": 23730.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ingest/kunXt2sXnFQ/clips/01_6-21-00_6-31-00.mp4",
+   "watermark": "prism_live",
+   "t0": 22860.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c02",
+   "in": 8778,
+   "out": 8862,
+   "row": 0,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.25,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "フンをかけられた直後、口をとがらせてしかめた顔（0秒目・答えを先に見せる画 F-020）。題の札（y384〜565）の下に目が来るよう、寄せは 1.25倍にとどめて下の端に合わせる（配信の題の字は画面の外、固定コメントの札は画面の上の UI の所 y0〜160 に残る）。6:40:21 はカクつく（stutter ✕）ので避けた"
+  },
+  {
+   "src": "c01",
+   "in": 4740,
+   "out": 4772,
+   "row": 1,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ヒッチハイクで乗せてくれた人の話をしている自撮り（タリンのベンチ）"
+  },
+  {
+   "src": "c01",
+   "in": 2205,
+   "out": 2243,
+   "row": 1,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "袋のパンにかぶりつく自撮り（パン休憩）"
+  },
+  {
+   "src": "c01",
+   "in": 6120,
+   "out": 6168,
+   "row": 2,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "足元の石畳に寄ってきたスズメの群れとハト（脚の先）"
+  },
+  {
+   "src": "c01",
+   "in": 9030,
+   "out": 9054,
+   "row": 3,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "脚のまわりに集まるスズメとハト（一番かわいい子）"
+  },
+  {
+   "src": "c01",
+   "in": 4920,
+   "out": 4949,
+   "row": 3,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "得意げな顔の自撮り（宣言）。足元の鳥の画が3秒を越えて続かないように挟む"
+  },
+  {
+   "src": "c01",
+   "in": 10080,
+   "out": 10112,
+   "row": 4,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "脚のまわりでパンを待つハトとスズメ（格差社会）"
+  },
+  {
+   "src": "c01",
+   "in": 11148,
+   "out": 11195,
+   "row": 5,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "手からパンを投げると、鳥が一斉に寄る（神様の目線）"
+  },
+  {
+   "src": "c01",
+   "in": 12585,
+   "out": 12642,
+   "row": 6,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ベンチの上にも横にもスズメ。カメラを回すと前にもハトとスズメ（一気に囲まれた）"
+  },
+  {
+   "src": "c01",
+   "in": 13398,
+   "out": 13486,
+   "row": 7,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "パンを投げた先から、前へ寄ってくるハトとスズメの大群（戻ってくる）。v1 の 6:28:26.0 は 6:28:26.2〜26.5 のハトを顔と見て字と顔の検査が落ちた（顔の誤検出）ので、そのあとから"
+  },
+  {
+   "src": "c01",
+   "in": 14628,
+   "out": 14674,
+   "row": 8,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "見上げると頭の上の枝にもスズメ（全方向におる）。6:29:04 に本人が「もう全方向にいるよ」"
+  },
+  {
+   "src": "c01",
+   "in": 15300,
+   "out": 15365,
+   "row": 9,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "投げ出した両脚の先に、どかない鳥（足バタバタ）"
+  },
+  {
+   "src": "c01",
+   "in": 15510,
+   "out": 15574,
+   "row": 10,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "blur": [
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 15510,
+       "rect": [
+        672,
+        592,
+        48,
+        64
+       ]
+      },
+      {
+       "f": 15522,
+       "rect": [
+        665,
+        598,
+        48,
+        64
+       ]
+      },
+      {
+       "f": 15530,
+       "rect": [
+        650,
+        566,
+        48,
+        64
+       ]
+      },
+      {
+       "f": 15537,
+       "rect": [
+        600,
+        566,
+        56,
+        72
+       ]
+      },
+      {
+       "f": 15545,
+       "rect": [
+        484,
+        580,
+        50,
+        66
+       ]
+      },
+      {
+       "f": 15552,
+       "rect": [
+        396,
+        580,
+        50,
+        66
+       ]
+      },
+      {
+       "f": 15560,
+       "rect": [
+        318,
+        600,
+        46,
+        62
+       ]
+      },
+      {
+       "f": 15567,
+       "rect": [
+        318,
+        576,
+        46,
+        62
+       ]
+      },
+      {
+       "f": 15575,
+       "rect": [
+        340,
+        560,
+        46,
+        60
+       ]
+      },
+      {
+       "f": 15582,
+       "rect": [
+        366,
+        538,
+        46,
+        60
+       ]
+      },
+      {
+       "f": 15600,
+       "rect": [
+        380,
+        530,
+        46,
+        60
+       ]
+      }
+     ],
+     "from": 15510,
+     "to": 15600,
+     "note": "鳥を追い払ってくれた男の子（第三者・子ども）の顔"
+    }
+   ],
+   "note": "リュックの男の子が群れの中を通り、鳥が一斉に飛び立つ。男の子の顔は帳面（blur.json）でぼかす"
+  },
+  {
+   "src": "c01",
+   "in": 5220,
+   "out": 5272,
+   "row": 11,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "目を細めて笑う自撮り（ヒーロー現る！優しい！の反応）。広場の画が続かないように顔で受ける"
+  },
+  {
+   "src": "c02",
+   "in": 402,
+   "out": 448,
+   "row": 12,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "袋から出したオリーブ入りのパンを、空にかざす"
+  },
+  {
+   "src": "c01",
+   "in": 5808,
+   "out": 5846,
+   "row": 12,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "パンにかぶりつく自撮り（めっちゃうまい）"
+  },
+  {
+   "src": "c02",
+   "in": 1620,
+   "out": 1656,
+   "row": 13,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "振りかぶる手"
+  },
+  {
+   "src": "c02",
+   "in": 1800,
+   "out": 1843,
+   "row": 13,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "鳥の前で、何も持っていない指をつまむ（投げるフリ）"
+  },
+  {
+   "src": "c01",
+   "in": 13620,
+   "out": 13672,
+   "row": 14,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "何も無い石畳をつつくハトとスズメ（騙されてる子）。6:36 台の広場の画を3秒以上続けないよう、窓 01 の引きから"
+  },
+  {
+   "src": "c02",
+   "in": 7740,
+   "out": 7789,
+   "row": 15,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ベンチから見た、のどかな広場と鳥（このすぐ後にフンが落ちる）"
+  },
+  {
+   "src": "c02",
+   "in": 9006,
+   "out": 9073,
+   "row": 16,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "フンの付いたコートとシャツの寄り（声は 6:40:03〜08 の本人の声。落ちた瞬間はカメラが広場を向いていて写っていない）。18行目の顔（〜6:40:28.9）と1秒以上あけて、同じ瞬間の画を続けない"
+  },
+  {
+   "src": "c02",
+   "in": 8924,
+   "out": 8966,
+   "row": 17,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "フン直後に「おい、おい」と叫ぶ顔（声は 6:40:47.66〜49.24 の「おい、おい、おい。誰やこれ」。その秒の画は空と服のぶれ）"
+  },
+  {
+   "src": "c02",
+   "in": 10521,
+   "out": 10546,
+   "row": 18,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "コートに付いた白いフン（「コートにも」）。6:41:20.6 はぶれて白が見えにくい"
+  },
+  {
+   "src": "c02",
+   "in": 10476,
+   "out": 10500,
+   "row": 18,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "シャツの黄色いフン（「シャツにも」）"
+  },
+  {
+   "src": "c02",
+   "in": 10422,
+   "out": 10446,
+   "row": 18,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.42,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "ズボンの白いフン（「ズボンにも」）"
+  },
+  {
+   "src": "c02",
+   "in": 10218,
+   "out": 10300,
+   "row": 19,
+   "zoom": {
+    "from": 1.38,
+    "to": 1.38,
+    "x": 0.5,
+    "y": 0.93,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "フンまみれのまま、カメラを見る顔（締めの問い）。v1 の 6:41:10.0 は 6:41:10.4〜10.55 に左下の小さな顔が出て終わりの札と重なったので、そのあとから"
+  }
+ ],
+ "title": {
+  "text": "🇪🇪エストニアでハトにパンをあげたら、フンまみれにされた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "エストニアでハトにパンをあげたら、フンまみれにされた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/01.wav",
+    "tts_text": "エストニアでハトにパンをあげたら、フンまみれにされた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "ヒッチハイクでタリンに着いて、パン休憩！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/02.wav",
+    "tts_text": "ヒッチハイクでタリンに着いて、パン休憩！",
+    "at": 84
+   },
+   {
+    "text": "ハトとスズメが寄ってきたけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/03.wav",
+    "tts_text": "ハトとスズメが寄ってきたけど、",
+    "at": 154
+   },
+   {
+    "text": "一番かわいい子にしかあげへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/04.wav",
+    "tts_text": "一番かわいい子にしかあげへん！",
+    "at": 202
+   },
+   {
+    "text": "格差社会や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/05.wav",
+    "tts_text": "格差社会や！",
+    "at": 255
+   },
+   {
+    "text": "これが神様の目線か……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/06.wav",
+    "tts_text": "これが神様の目線か……",
+    "at": 287
+   },
+   {
+    "text": "と思ってたら、一気に囲まれた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/07.wav",
+    "tts_text": "と思ってたら、一気に囲まれた！",
+    "at": 334,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "パンを遠くに投げても、戻ってくる！こいつら賢い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/08.wav",
+    "tts_text": "パンを遠くに投げても、戻ってくる！こいつら賢い！",
+    "at": 391
+   },
+   {
+    "text": "もう全方向におるやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/09.wav",
+    "tts_text": "もう全方向におるやん！",
+    "at": 479
+   },
+   {
+    "text": "足バタバタしても、全然効かへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/10.wav",
+    "tts_text": "足バタバタしても、全然効かへん！",
+    "at": 525,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "そしたら、男の子が追い払ってくれた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/11.wav",
+    "tts_text": "そしたら、男の子が追い払ってくれた！",
+    "at": 590
+   },
+   {
+    "text": "ヒーロー現る！優しい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/12.wav",
+    "tts_text": "ヒーローあらわる！優しい！",
+    "at": 654,
+    "mood": "up_pop"
+   },
+   {
+    "text": "気を取り直して、オリーブのパン。めっちゃうまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/13.wav",
+    "tts_text": "気を取り直して、オリーブのパン。めっちゃうまい！",
+    "at": 706,
+    "mood": "up_pop"
+   },
+   {
+    "text": "また集まってきたから、投げるフリ！ほい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/14.wav",
+    "tts_text": "また集まってきたから、投げるフリ！ほい！",
+    "at": 790
+   },
+   {
+    "text": "騙されてる子、結構おる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/15.wav",
+    "tts_text": "騙されてる子、結構おる！",
+    "at": 869
+   },
+   {
+    "text": "で、もうちょっと食べてたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/16.wav",
+    "tts_text": "で、もうちょっと食べてたら……",
+    "at": 921
+   },
+   {
+    "text": "うんこかけられてんけど。もう最悪や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/vsrc/vsrc_17.wav",
+    "at": 970,
+    "mood": "tense_shake",
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "おいおいおい！誰やこれ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/vsrc/vsrc_18.wav",
+    "at": 1037,
+    "mood": "tense_shake",
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "お気に入りのコートにも、シャツにも、ズボンにも！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/19.wav",
+    "tts_text": "お気に入りのコートにも、シャツにも、ズボンにも！",
+    "at": 1079,
+    "mood": "tense_still"
+   },
+   {
+    "text": "みんなは、鳥のフンをかけられたことある？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/voice/kun-p1-v1/p1/20.wav",
+    "tts_text": "みんなは、鳥のフンをかけられたことある？",
+    "at": 1152
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/.claude/worktrees/agent-add469103501f3e84/shorts/videos/kunXt2sXnFQ/p1/spec.json",
+  "fps": 30,
+  "frames": 1234,
+  "seconds": 41.133,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "6:40:22.6+2.80s"
+    ],
+    "line": "エストニアでハトにパンをあげたら、フンまみれにされた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 84,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "6:23:38.0+1.07s",
+     "6:22:13.5+1.27s"
+    ],
+    "line": "ヒッチハイクでタリンに着いて、パン休憩！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 154,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "6:24:24.0+1.60s"
+    ],
+    "line": "ハトとスズメが寄ってきたけど、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 202,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "6:26:01.0+0.80s",
+     "6:23:44.0+0.97s"
+    ],
+    "line": "一番かわいい子にしかあげへん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 255,
+    "frames": 32,
+    "voice_frames": 24,
+    "cuts": [
+     "6:26:36.0+1.07s"
+    ],
+    "line": "格差社会や！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 287,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "6:27:11.6+1.57s"
+    ],
+    "line": "これが神様の目線か……",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 334,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "6:27:59.5+1.90s"
+    ],
+    "line": "と思ってたら、一気に囲まれた！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 391,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "6:28:26.6+2.93s"
+    ],
+    "line": "パンを遠くに投げても、戻ってくる！こいつら賢い！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 479,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "6:29:07.6+1.53s"
+    ],
+    "line": "もう全方向におるやん！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 525,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "6:29:30.0+2.17s"
+    ],
+    "line": "足バタバタしても、全然効かへん！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 590,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "6:29:37.0+2.13s"
+    ],
+    "line": "そしたら、男の子が追い払ってくれた！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 654,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "6:23:54.0+1.73s"
+    ],
+    "line": "ヒーロー現る！優しい！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 706,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "6:35:43.4+1.53s",
+     "6:24:13.6+1.27s"
+    ],
+    "line": "気を取り直して、オリーブのパン。めっちゃうまい！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 790,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "6:36:24.0+1.20s",
+     "6:36:30.0+1.43s"
+    ],
+    "line": "また集まってきたから、投げるフリ！ほい！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 869,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "6:28:34.0+1.73s"
+    ],
+    "line": "騙されてる子、結構おる！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 921,
+    "frames": 49,
+    "voice_frames": 41,
+    "cuts": [
+     "6:39:48.0+1.63s"
+    ],
+    "line": "で、もうちょっと食べてたら……",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 970,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "6:40:30.2+2.23s"
+    ],
+    "line": "うんこかけられてんけど。もう最悪や！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1037,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "6:40:27.5+1.40s"
+    ],
+    "line": "おいおいおい！誰やこれ！",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1079,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "6:41:20.7+0.83s",
+     "6:41:19.2+0.80s",
+     "6:41:17.4+0.80s"
+    ],
+    "line": "お気に入りのコートにも、シャツにも、ズボンにも！",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1152,
+    "frames": 82,
+    "voice_frames": 59,
+    "cuts": [
+     "6:41:10.6+2.73s"
+    ],
+    "line": "みんなは、鳥のフンをかけられたことある？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 293,
+   "raw_voice_s": 49.23,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 35.3,
+   "cps_voiced": 8.3,
+   "video_s": 41.13,
+   "cps_video": 7.12
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
