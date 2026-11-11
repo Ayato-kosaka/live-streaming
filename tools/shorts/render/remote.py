@@ -464,7 +464,7 @@ def the_request() -> dict:
     head = ev.get("after") or os.environ.get("GITHUB_SHA", "")
     if not before.strip("0"):
         before = (ev.get("repository") or {}).get("default_branch") or "master"
-    touched = [f for f in compare_files(before, head)
+    touched = [f for f in compare_files(before, head, removed=True)
                if f.startswith(REQ_DIR) and f.endswith(".json") and f.count("/") == 2]
     files = [f for f in touched if (ROOT / f).is_file()]
     if not files:

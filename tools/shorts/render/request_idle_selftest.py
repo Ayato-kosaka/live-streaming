@@ -10,12 +10,18 @@ master に入れる前の片づけ（`git rm shorts/render`）の push でも pr
 3. 依頼が在る → `read_request` まで進む（片づけと取り違えない）
 4. ワークフローが `idle` を出力に持ち、render と report がそれで止まる
 
+compare_files は差し替えない。GitHub の compare の返事（status 付き）だけを差し替えて、本物の絞りを通す。
+前は compare_files ごと差し替えていて、本物が removed を捨てていることに気づけず、
+片づけの push が本番で赤く落ち続けていた（2026-11-11）。
+
     python3 tools/shorts/render/request_idle_selftest.py
 """
 from __future__ import annotations
 
+import io
 import json
 import os
+import urllib.request
 import sys
 import tempfile
 from pathlib import Path
@@ -34,8 +40,8 @@ def check(name: str, ok: bool) -> None:
         fails.append(name)
 
 
-def with_push(td: Path, changed: list[str], present: list[str]):
-    """compare_files と ROOT と push の event を差し替える。"""
+def with_push(td: Path, changed: list[tuple[str, str]], present: list[str]):
+    """GitHub の compare の返事（ファイルと status）と ROOT と push の event を差し替える。"""
     root = td / "root"
     for f in present:
         (root / f).parent.mkdir(parents=True, exist_ok=True)
@@ -47,8 +53,18 @@ def with_push(td: Path, changed: list[str], present: list[str]):
     out = td / "out.txt"
     out.write_text("", encoding="utf-8")
     os.environ["GITHUB_OUTPUT"] = str(out)
+    os.environ["GITHUB_REPOSITORY"] = "o/r"
     remote.ROOT = root
-    remote.compare_files = lambda before, head: list(changed)
+    body = json.dumps({"files": [{"filename": f, "status": st} for f, st in changed]}).encode()
+
+    class Resp(io.BytesIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    urllib.request.urlopen = lambda req, timeout=30: Resp(body)
     return out
 
 
@@ -59,7 +75,8 @@ def main() -> int:
     remote.storage = no_storage
 
     with tempfile.TemporaryDirectory() as t:
-        out = with_push(Path(t), ["shorts/render/old-p1-v3.json", "shorts/.work/render/old/x.enc"], [])
+        out = with_push(Path(t), [("shorts/render/old-p1-v3.json", "removed"),
+                                  ("shorts/.work/render/old/x.enc", "removed")], [])
         try:
             rc = remote.cmd_prepare()
             err = ""
@@ -69,7 +86,7 @@ def main() -> int:
         check("そのとき GITHUB_OUTPUT に idle=true を書く", "idle=true" in out.read_text(encoding="utf-8"))
 
     with tempfile.TemporaryDirectory() as t:
-        with_push(Path(t), ["shorts/videos/x/p1/plan.md"], [])
+        with_push(Path(t), [("shorts/videos/x/p1/plan.md", "modified")], [])
         try:
             remote.the_request()
             got = "通った"
@@ -80,7 +97,7 @@ def main() -> int:
         check(f"依頼の置き場に触れていない push は Bad で落とす（{got}）", got.startswith("Bad"))
 
     with tempfile.TemporaryDirectory() as t:
-        with_push(Path(t), ["shorts/render/new-p1-v1.json", "shorts/render/old-p1-v3.json"],
+        with_push(Path(t), [("shorts/render/new-p1-v1.json", "added"), ("shorts/render/old-p1-v3.json", "removed")],
                   ["shorts/render/new-p1-v1.json"])
         seen = []
         remote.read_request = lambda req, origin: seen.append(origin) or {"name": "x"}
