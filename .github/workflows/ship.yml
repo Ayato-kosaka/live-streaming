@@ -66,6 +66,7 @@ on:
       - "島の絵を焼く"
       - "投げ銭の演出を Blender で描く"
       - "投げ銭アラートの確かめ"
+      - "投げ銭アラートの性能を測る"
     types: [completed]
 
   workflow_dispatch:
