@@ -1,17 +1,17 @@
 {
  "spec": "shorts/videos/p6dOZMX2lAE/p1/spec.json",
- "candidates": 1534,
- "current_t": 6510.5,
- "current_video": "p6dOZMX2lAE",
+ "candidates": 1467,
+ "current_t": 5745.2,
+ "current_video": "baIpMjZRFpE",
  "videos": [
-  "p6dOZMX2lAE",
-  "baIpMjZRFpE"
+  "baIpMjZRFpE",
+  "p6dOZMX2lAE"
  ],
  "map_rows": [],
  "margin": 30.0,
  "faces": "yunet",
  "sources": {
-  "clip": 1534
+  "clip": 1467
  },
  "notes": [],
  "picked": [
@@ -29,72 +29,72 @@
     "bright": 139.2,
     "motion": null
    },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.616,
-   "ranks": {
-    "colorful": 0.91,
-    "warm": 0.91,
-    "sharp": 0.48,
-    "motion": 0.5,
-    "face": 0.63
-   },
-   "scene": "p6dOZMX2lAE#9"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 2808.5,
-   "kind": "clip",
-   "src": "窓 05_0-44-00_0-47-30.mp4",
-   "m": {
-    "colorful": 36.17,
-    "warm": 0.1527,
-    "sharp": 783.8,
-    "face": 0.0443,
-    "faces": 1,
-    "bright": 121.6,
-    "motion": null
-   },
    "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.43,
+   "score": 3.513,
    "ranks": {
-    "colorful": 0.83,
-    "warm": 0.78,
-    "sharp": 0.88,
+    "colorful": 0.84,
+    "warm": 0.87,
+    "sharp": 0.52,
     "motion": 0.5,
-    "face": 0.25
+    "face": 0.58
    },
-   "scene": "p6dOZMX2lAE#5"
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
-   "t": 1873.5,
+   "t": 1894.5,
    "kind": "clip",
    "src": "窓 02_0-23-30_0-32-00.mp4",
    "m": {
-    "colorful": 34.35,
-    "warm": 0.264,
-    "sharp": 442.3,
-    "face": 0.0634,
+    "colorful": 29.18,
+    "warm": 0.2146,
+    "sharp": 705.6,
+    "face": 0.0437,
     "faces": 1,
-    "bright": 98.5,
+    "bright": 111.2,
     "motion": null
    },
    "row": 11,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.405,
+   "score": 3.155,
    "ranks": {
-    "colorful": 0.74,
-    "warm": 0.98,
-    "sharp": 0.38,
+    "colorful": 0.45,
+    "warm": 0.89,
+    "sharp": 0.81,
     "motion": 0.5,
-    "face": 0.49
+    "face": 0.31
    },
    "scene": "p6dOZMX2lAE#2"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 232.5,
+   "kind": "clip",
+   "src": "窓 01_0-03-30_0-04-30.mp4",
+   "m": {
+    "colorful": 41.39,
+    "warm": 0.2546,
+    "sharp": 874.4,
+    "face": 0.0981,
+    "faces": 1,
+    "bright": 123.8,
+    "motion": null
+   },
+   "row": null,
+   "payoff": false,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 2.989,
+   "ranks": {
+    "colorful": 0.94,
+    "warm": 0.94,
+    "sharp": 0.9,
+    "motion": 0.5,
+    "face": 0.82
+   },
+   "scene": "p6dOZMX2lAE#1"
   }
  ],
  "top20": [
@@ -112,18 +112,18 @@
     "bright": 139.2,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.616,
+   "score": 3.513,
    "ranks": {
-    "colorful": 0.91,
-    "warm": 0.91,
-    "sharp": 0.48,
+    "colorful": 0.84,
+    "warm": 0.87,
+    "sharp": 0.52,
     "motion": 0.5,
-    "face": 0.63
+    "face": 0.58
    },
-   "scene": "p6dOZMX2lAE#9"
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -139,45 +139,18 @@
     "bright": 124.6,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.547,
+   "score": 3.45,
    "ranks": {
-    "colorful": 0.89,
-    "warm": 0.9,
-    "sharp": 0.43,
+    "colorful": 0.83,
+    "warm": 0.87,
+    "sharp": 0.48,
     "motion": 0.5,
-    "face": 0.59
+    "face": 0.54
    },
-   "scene": "p6dOZMX2lAE#9"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 6414.5,
-   "kind": "clip",
-   "src": "窓 09_1-45-30_1-53-00.mp4",
-   "m": {
-    "colorful": 37.9,
-    "warm": 0.2289,
-    "sharp": 319.8,
-    "face": 0.0746,
-    "faces": 1,
-    "bright": 131.2,
-    "motion": null
-   },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.522,
-   "ranks": {
-    "colorful": 0.9,
-    "warm": 0.95,
-    "sharp": 0.2,
-    "motion": 0.5,
-    "face": 0.64
-   },
-   "scene": "p6dOZMX2lAE#9"
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -193,18 +166,45 @@
     "bright": 128.2,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.516,
+   "score": 3.44,
    "ranks": {
-    "colorful": 0.95,
-    "warm": 0.92,
-    "sharp": 0.26,
+    "colorful": 0.91,
+    "warm": 0.88,
+    "sharp": 0.29,
     "motion": 0.5,
-    "face": 0.54
+    "face": 0.51
    },
-   "scene": "p6dOZMX2lAE#9"
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6414.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 37.9,
+    "warm": 0.2289,
+    "sharp": 319.8,
+    "face": 0.0746,
+    "faces": 1,
+    "bright": 131.2,
+    "motion": null
+   },
+   "row": 14,
+   "payoff": true,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.419,
+   "ranks": {
+    "colorful": 0.83,
+    "warm": 0.92,
+    "sharp": 0.23,
+    "motion": 0.5,
+    "face": 0.59
+   },
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -220,45 +220,18 @@
     "bright": 122.3,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.497,
+   "score": 3.4,
    "ranks": {
-    "colorful": 0.85,
-    "warm": 0.93,
-    "sharp": 0.39,
+    "colorful": 0.78,
+    "warm": 0.9,
+    "sharp": 0.44,
     "motion": 0.5,
-    "face": 0.54
+    "face": 0.51
    },
-   "scene": "p6dOZMX2lAE#9"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 6417.5,
-   "kind": "clip",
-   "src": "窓 09_1-45-30_1-53-00.mp4",
-   "m": {
-    "colorful": 37.43,
-    "warm": 0.1802,
-    "sharp": 439.6,
-    "face": 0.0717,
-    "faces": 1,
-    "bright": 142.6,
-    "motion": null
-   },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.486,
-   "ranks": {
-    "colorful": 0.88,
-    "warm": 0.87,
-    "sharp": 0.38,
-    "motion": 0.5,
-    "face": 0.6
-   },
-   "scene": "p6dOZMX2lAE#9"
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -274,18 +247,45 @@
     "bright": 121.8,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.485,
+   "score": 3.396,
    "ranks": {
-    "colorful": 0.8,
-    "warm": 0.95,
-    "sharp": 0.45,
+    "colorful": 0.74,
+    "warm": 0.92,
+    "sharp": 0.49,
     "motion": 0.5,
-    "face": 0.51
+    "face": 0.48
    },
-   "scene": "p6dOZMX2lAE#9"
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6417.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 37.43,
+    "warm": 0.1802,
+    "sharp": 439.6,
+    "face": 0.0717,
+    "faces": 1,
+    "bright": 142.6,
+    "motion": null
+   },
+   "row": 14,
+   "payoff": true,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.388,
+   "ranks": {
+    "colorful": 0.81,
+    "warm": 0.84,
+    "sharp": 0.43,
+    "motion": 0.5,
+    "face": 0.55
+   },
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -301,151 +301,18 @@
     "bright": 128.3,
     "motion": null
    },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.477,
-   "ranks": {
-    "colorful": 0.88,
-    "warm": 0.93,
-    "sharp": 0.22,
-    "motion": 0.5,
-    "face": 0.6
-   },
-   "scene": "p6dOZMX2lAE#9"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 6520.5,
-   "kind": "clip",
-   "src": "窓 09_1-45-30_1-53-00.mp4",
-   "m": {
-    "colorful": 36.44,
-    "warm": 0.1644,
-    "sharp": 1361.0,
-    "face": 0.0,
-    "faces": 0,
-    "bright": 108.8,
-    "motion": null
-   },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.432,
-   "ranks": {
-    "colorful": 0.84,
-    "warm": 0.82,
-    "sharp": 0.95,
-    "motion": 0.5,
-    "face": 0.09
-   },
-   "scene": "p6dOZMX2lAE#9"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 2808.5,
-   "kind": "clip",
-   "src": "窓 05_0-44-00_0-47-30.mp4",
-   "m": {
-    "colorful": 36.17,
-    "warm": 0.1527,
-    "sharp": 783.8,
-    "face": 0.0443,
-    "faces": 1,
-    "bright": 121.6,
-    "motion": null
-   },
    "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.43,
+   "score": 3.369,
    "ranks": {
-    "colorful": 0.83,
-    "warm": 0.78,
-    "sharp": 0.88,
+    "colorful": 0.81,
+    "warm": 0.9,
+    "sharp": 0.25,
     "motion": 0.5,
-    "face": 0.25
+    "face": 0.56
    },
-   "scene": "p6dOZMX2lAE#5"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 1873.5,
-   "kind": "clip",
-   "src": "窓 02_0-23-30_0-32-00.mp4",
-   "m": {
-    "colorful": 34.35,
-    "warm": 0.264,
-    "sharp": 442.3,
-    "face": 0.0634,
-    "faces": 1,
-    "bright": 98.5,
-    "motion": null
-   },
-   "row": 11,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.405,
-   "ranks": {
-    "colorful": 0.74,
-    "warm": 0.98,
-    "sharp": 0.38,
-    "motion": 0.5,
-    "face": 0.49
-   },
-   "scene": "p6dOZMX2lAE#2"
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 6519.5,
-   "kind": "clip",
-   "src": "窓 09_1-45-30_1-53-00.mp4",
-   "m": {
-    "colorful": 36.13,
-    "warm": 0.1598,
-    "sharp": 1246.2,
-    "face": 0.0,
-    "faces": 0,
-    "bright": 108.3,
-    "motion": null
-   },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.4,
-   "ranks": {
-    "colorful": 0.83,
-    "warm": 0.81,
-    "sharp": 0.94,
-    "motion": 0.5,
-    "face": 0.09
-   }
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 6518.5,
-   "kind": "clip",
-   "src": "窓 09_1-45-30_1-53-00.mp4",
-   "m": {
-    "colorful": 36.1,
-    "warm": 0.1584,
-    "sharp": 1182.0,
-    "face": 0.0,
-    "faces": 0,
-    "bright": 108.1,
-    "motion": null
-   },
-   "row": 16,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.387,
-   "ranks": {
-    "colorful": 0.83,
-    "warm": 0.8,
-    "sharp": 0.94,
-    "motion": 0.5,
-    "face": 0.09
-   }
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -461,17 +328,18 @@
     "bright": 109.2,
     "motion": null
    },
-   "row": 17,
+   "row": 15,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.369,
+   "score": 3.367,
    "ranks": {
-    "colorful": 0.47,
-    "warm": 0.89,
-    "sharp": 0.52,
+    "colorful": 0.48,
+    "warm": 0.86,
+    "sharp": 0.55,
     "motion": 0.5,
     "face": 1.0
-   }
+   },
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -487,17 +355,18 @@
     "bright": 111.0,
     "motion": null
    },
-   "row": 17,
+   "row": 15,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.347,
+   "score": 3.348,
    "ranks": {
-    "colorful": 0.41,
-    "warm": 0.89,
+    "colorful": 0.43,
+    "warm": 0.86,
     "sharp": 0.65,
     "motion": 0.5,
-    "face": 0.95
-   }
+    "face": 0.97
+   },
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -513,69 +382,72 @@
     "bright": 110.2,
     "motion": null
    },
-   "row": 17,
+   "row": 15,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.319,
+   "score": 3.323,
    "ranks": {
-    "colorful": 0.46,
-    "warm": 0.89,
-    "sharp": 0.5,
+    "colorful": 0.48,
+    "warm": 0.86,
+    "sharp": 0.53,
     "motion": 0.5,
-    "face": 0.92
-   }
-  },
-  {
-   "vid": "p6dOZMX2lAE",
-   "t": 3091.5,
-   "kind": "clip",
-   "src": "窓 06_0-51-30_0-53-00.mp4",
-   "m": {
-    "colorful": 32.25,
-    "warm": 0.174,
-    "sharp": 656.7,
-    "face": 0.061,
-    "faces": 1,
-    "bright": 112.0,
-    "motion": null
+    "face": 0.93
    },
-   "row": 14,
-   "payoff": true,
-   "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.309,
-   "ranks": {
-    "colorful": 0.59,
-    "warm": 0.85,
-    "sharp": 0.79,
-    "motion": 0.5,
-    "face": 0.44
-   }
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
-   "t": 6517.5,
+   "t": 6625.5,
    "kind": "clip",
    "src": "窓 09_1-45-30_1-53-00.mp4",
    "m": {
-    "colorful": 35.71,
-    "warm": 0.1416,
-    "sharp": 1152.1,
-    "face": 0.0,
-    "faces": 0,
-    "bright": 106.6,
+    "colorful": 29.86,
+    "warm": 0.1884,
+    "sharp": 319.4,
+    "face": 0.1834,
+    "faces": 1,
+    "bright": 106.3,
     "motion": null
    },
-   "row": 16,
+   "row": 15,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.307,
+   "score": 3.186,
    "ranks": {
-    "colorful": 0.81,
-    "warm": 0.74,
-    "sharp": 0.94,
+    "colorful": 0.47,
+    "warm": 0.85,
+    "sharp": 0.23,
     "motion": 0.5,
-    "face": 0.09
-   }
+    "face": 0.99
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 1894.5,
+   "kind": "clip",
+   "src": "窓 02_0-23-30_0-32-00.mp4",
+   "m": {
+    "colorful": 29.18,
+    "warm": 0.2146,
+    "sharp": 705.6,
+    "face": 0.0437,
+    "faces": 1,
+    "bright": 111.2,
+    "motion": null
+   },
+   "row": 11,
+   "payoff": true,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.155,
+   "ranks": {
+    "colorful": 0.45,
+    "warm": 0.89,
+    "sharp": 0.81,
+    "motion": 0.5,
+    "face": 0.31
+   },
+   "scene": "p6dOZMX2lAE#2"
   },
   {
    "vid": "p6dOZMX2lAE",
@@ -591,43 +463,180 @@
     "bright": 117.0,
     "motion": null
    },
-   "row": 16,
+   "row": 14,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.237,
+   "score": 3.138,
    "ranks": {
-    "colorful": 0.78,
-    "warm": 0.87,
-    "sharp": 0.15,
+    "colorful": 0.72,
+    "warm": 0.84,
+    "sharp": 0.17,
     "motion": 0.5,
-    "face": 0.53
-   }
+    "face": 0.5
+   },
+   "scene": "p6dOZMX2lAE#11"
   },
   {
    "vid": "p6dOZMX2lAE",
-   "t": 1880.5,
+   "t": 6624.5,
    "kind": "clip",
-   "src": "窓 02_0-23-30_0-32-00.mp4",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
    "m": {
-    "colorful": 30.78,
-    "warm": 0.176,
-    "sharp": 672.4,
-    "face": 0.0596,
+    "colorful": 28.66,
+    "warm": 0.1702,
+    "sharp": 360.0,
+    "face": 0.209,
     "faces": 1,
-    "bright": 107.9,
+    "bright": 106.3,
     "motion": null
    },
-   "row": 11,
+   "row": 15,
    "payoff": true,
    "motion_src": "p6dOZMX2lAE:zoom",
-   "score": 3.233,
+   "score": 3.129,
    "ranks": {
-    "colorful": 0.51,
-    "warm": 0.86,
-    "sharp": 0.8,
+    "colorful": 0.42,
+    "warm": 0.81,
+    "sharp": 0.29,
     "motion": 0.5,
-    "face": 0.43
-   }
+    "face": 1.0
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6492.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 32.82,
+    "warm": 0.2025,
+    "sharp": 317.7,
+    "face": 0.0703,
+    "faces": 1,
+    "bright": 109.6,
+    "motion": null
+   },
+   "row": 14,
+   "payoff": true,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.121,
+   "ranks": {
+    "colorful": 0.61,
+    "warm": 0.88,
+    "sharp": 0.23,
+    "motion": 0.5,
+    "face": 0.54
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6516.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 36.32,
+    "warm": 0.1212,
+    "sharp": 761.5,
+    "face": 0.0,
+    "faces": 0,
+    "bright": 111.8,
+    "motion": null
+   },
+   "row": 14,
+   "payoff": true,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.113,
+   "ranks": {
+    "colorful": 0.77,
+    "warm": 0.6,
+    "sharp": 0.85,
+    "motion": 0.5,
+    "face": 0.13
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6586.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 43.11,
+    "warm": 0.2259,
+    "sharp": 3850.0,
+    "face": 0.1475,
+    "faces": 1,
+    "bright": 125.7,
+    "motion": null
+   },
+   "row": null,
+   "payoff": false,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.106,
+   "ranks": {
+    "colorful": 0.96,
+    "warm": 0.91,
+    "sharp": 0.99,
+    "motion": 0.5,
+    "face": 0.97
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6577.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 40.06,
+    "warm": 0.2554,
+    "sharp": 3875.1,
+    "face": 0.2359,
+    "faces": 1,
+    "bright": 111.3,
+    "motion": null
+   },
+   "row": null,
+   "payoff": false,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.099,
+   "ranks": {
+    "colorful": 0.91,
+    "warm": 0.94,
+    "sharp": 0.99,
+    "motion": 0.5,
+    "face": 1.0
+   },
+   "scene": "p6dOZMX2lAE#11"
+  },
+  {
+   "vid": "p6dOZMX2lAE",
+   "t": 6573.5,
+   "kind": "clip",
+   "src": "窓 09_1-45-30_1-53-00.mp4",
+   "m": {
+    "colorful": 40.36,
+    "warm": 0.2415,
+    "sharp": 3938.1,
+    "face": 0.1535,
+    "faces": 1,
+    "bright": 118.9,
+    "motion": null
+   },
+   "row": null,
+   "payoff": false,
+   "motion_src": "p6dOZMX2lAE:zoom",
+   "score": 3.087,
+   "ranks": {
+    "colorful": 0.92,
+    "warm": 0.93,
+    "sharp": 0.99,
+    "motion": 0.5,
+    "face": 0.98
+   },
+   "scene": "p6dOZMX2lAE#11"
   }
  ]
 }
