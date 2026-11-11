@@ -1,0 +1,212 @@
+# 投げ銭アラート（app/alertbox）の性能の懸念を、本番と同じ書き出しで測って表にする（`tools/sprites/alert-perf.mjs`）。
+#
+# ## なぜ要るか
+#
+# 面はスマホの PRISM（Android の WebView）で、配信アプリと同居して 3〜4 時間開きっぱなし。#1158 から段の動画
+# 33本（約23.7MB）を Blob で手元に持つ。記憶・回線・待機と投げ銭中の CPU・待機中の通信・長時間で増え続けないか、
+# の5つを**数で**見る道が無かった。書き出し・ブラウザ・20件の投げ銭は作業箱で回すと重いので、ここで回す（#1117）。
+#
+# ## 流れ
+#
+#   build   … 本番と同じ書き出し（expo export ＋ public）
+#   measure … 3本並べる。ふだん（5項目）・対照 raf（待機中に rAF を1本回す）・対照 leak（投げ銭ごとに Blob を手放さない）
+#   report  … 表を組んで job summary と PR のコメント（目印 `<!-- alert-perf -->` のものを書き換える）に出す。
+#             **懸念ありでは赤くしない**（測るための道具）。赤くするのは、ふだんの回が測れなかった・
+#             対照がその行を懸念ありに変えられなかった（＝その行は何も見ていない）とき
+#
+# 秘密の鍵は使わない。外の口（名簿・どねる・YouTube・キャラ絵）は道具が手元で受ける。視聴者さんの名前も本物の絵も使わない。
+name: 投げ銭アラートの性能を測る
+
+on:
+  pull_request:
+    paths:
+      - 'tools/sprites/alert-perf.mjs'
+      - '.github/workflows/alert_perf.yml'
+  # 直した版を master に出す前に測る対照の枝（マージしない）
+  push:
+    branches: ['alert-perf-*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 測る枝・タグ・コミット
+        required: true
+        default: master
+      pr:
+        description: 表を貼る PR の番号（空なら job summary だけ）
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alert-perf-${{ github.event.pull_request.number || inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || '' }}
+
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      # `tools/alert-theme/ci/run.py prep` と同じ形（Hosting の build:web のうち、アラートに要る前半）
+      - name: 書き出し（expo export ＋ public）
+        env:
+          EXPO_PUBLIC_GIT_COMMIT: ${{ steps.sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          npx expo export --platform web --output-dir /tmp/perf-dist > /tmp/export.log 2>&1 || { tail -n 40 /tmp/export.log; exit 1; }
+          cp -r public/. /tmp/perf-dist/
+          test -d /tmp/perf-dist/alertbox
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perf-dist
+          path: /tmp/perf-dist
+          retention-days: 1
+          overwrite: true
+
+  measure:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - leg: none
+            parts: mem,net,idle,tiers,req,long
+            extra: ''
+          - leg: raf
+            parts: idle
+            extra: ''
+          - leg: leak
+            parts: mem,tiers,long
+            extra: '--long-alerts 8 --long-hours 2'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: 道具の依存を入れる
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      # 置き場は alert_check.yml と同じ。在りかは playwright-core に聞いて CHROME に渡す（番号を誰も書かない）
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome="$(cd tools/sprites && node -e 'import("playwright-core").then((m) => console.log(m.chromium.executablePath()))')"
+          test -x "$chrome"
+          echo "CHROME=$chrome" >> "$GITHUB_ENV"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: perf-dist
+          path: /tmp/perf-dist
+
+      # 懸念ありの 1 では落とさない（report が対照と並べて決める）
+      - name: 測る
+        working-directory: tools/sprites
+        env:
+          LEG: ${{ matrix.leg }}
+          PARTS: ${{ matrix.parts }}
+          EXTRA: ${{ matrix.extra }}
+          GIT_SHA: ${{ needs.build.outputs.sha }}
+        run: |
+          mkdir -p /tmp/perf-res
+          rc=0
+          # shellcheck disable=SC2086
+          node alert-perf.mjs --dist /tmp/perf-dist --fault "$LEG" --parts "$PARTS" $EXTRA \
+            --json "/tmp/perf-res/$LEG.json" --md "/tmp/perf-res/$LEG.md" || rc=$?
+          echo "終了コード $rc"
+          { echo "### $LEG"; echo; cat "/tmp/perf-res/$LEG.md" 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-res-${{ matrix.leg }}
+          path: /tmp/perf-res
+          retention-days: 7
+          overwrite: true
+
+  report:
+    needs: [build, measure]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.build.outputs.sha || inputs.ref || '' }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: perf-res-*
+          path: /tmp/perf-res
+          merge-multiple: true
+
+      - name: 表を組む
+        id: table
+        run: |
+          set +e
+          node tools/sprites/alert-perf.mjs --combine /tmp/perf-res/none.json,/tmp/perf-res/raf.json,/tmp/perf-res/leak.json --md /tmp/perf.md > /dev/null
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+          echo "" >> /tmp/perf.md
+          echo "[run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> /tmp/perf.md
+          cat /tmp/perf.md >> "$GITHUB_STEP_SUMMARY"
+
+      # PR には1つだけ。次の push では同じコメントを書き換える
+      - name: PR に貼る
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
+        run: |
+          set -euo pipefail
+          [ -n "$PR" ] || { echo "PR が無いので job summary だけ"; exit 0; }
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- alert-perf -->"))) | .id' | head -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@/tmp/perf.md > /dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@/tmp/perf.md > /dev/null
+          fi
+
+      - name: 測れなかった・対照が変わらなかったら赤に
+        if: steps.table.outputs.code != '0'
+        run: |
+          echo "::error::ふだんの回が測れなかったか、対照がその行を懸念ありに変えられなかった（表は job summary と PR のコメント）"
+          exit 1
