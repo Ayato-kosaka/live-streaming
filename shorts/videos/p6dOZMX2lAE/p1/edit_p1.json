@@ -9,32 +9,32 @@
    "watermark": "prism_live",
    "t0": 6330.0
   },
-  "c2_01": {
+  "c3_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/01_0-46-30_0-48-00.mp4",
    "watermark": "prism_live",
    "t0": 2790.0
   },
-  "c2_02": {
+  "c3_02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/02_0-51-30_0-53-00.mp4",
    "watermark": "prism_live",
    "t0": 3090.0
   },
-  "c2_03": {
+  "c3_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/03_0-57-00_1-00-00.mp4",
    "watermark": "prism_live",
    "t0": 3420.0
   },
-  "c2_05": {
+  "c3_05": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/05_1-29-00_1-31-00.mp4",
    "watermark": "prism_live",
    "t0": 5340.0
   },
-  "c2_06": {
+  "c3_06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/06_1-34-30_1-36-00.mp4",
    "watermark": "prism_live",
    "t0": 5670.0
   },
-  "c2_07": {
+  "c3_07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/07_1-42-00_1-45-00.mp4",
    "watermark": "prism_live",
    "t0": 6120.0
@@ -43,6 +43,11 @@
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/01_0-03-30_0-04-30.mp4",
    "watermark": "prism_live",
    "t0": 210.0
+  },
+  "c3_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/baIpMjZRFpE/clips/08_1-47-30_1-49-00.mp4",
+   "watermark": "prism_live",
+   "t0": 6450.0
   },
   "c02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/02_0-23-30_0-32-00.mp4",
@@ -64,20 +69,15 @@
    "watermark": "prism_live",
    "t0": 2640.0
   },
-  "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/06_0-51-30_0-53-00.mp4",
-   "watermark": "prism_live",
-   "t0": 3090.0
-  },
   "c07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/07_1-21-30_1-23-00.mp4",
    "watermark": "prism_live",
    "t0": 4890.0
   },
-  "c08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/08_1-32-30_1-34-00.mp4",
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest2/p6dOZMX2lAE/clips/02_1-35-30_1-38-00.mp4",
    "watermark": "prism_live",
-   "t0": 5550.0
+   "t0": 5730.0
   },
   "c10": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/ingest/p6dOZMX2lAE/clips/10_2-12-30_2-13-30.mp4",
@@ -103,8 +103,8 @@
   },
   {
    "src": "c09",
-   "in": 9045,
-   "out": 9089,
+   "in": 9022,
+   "out": 9066,
    "row": 0,
    "zoom": {
     "from": 1.0936,
@@ -114,10 +114,10 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:50:31.5〜1:50:33.5 フォークで持ち上げたチーズの絡む麺と本人"
+   "note": "1:50:30.75〜1:50:32.6 チーズの絡む麺をフォークで持ち上げる本人"
   },
   {
-   "src": "c2_01",
+   "src": "c3_01",
    "in": 690,
    "out": 735,
    "row": 1,
@@ -132,7 +132,7 @@
    "note": "baIpMjZRFpE 0:46:53〜0:46:55 ジョージアの字の小麦粉の袋を手に、宿の屋外の机で話す本人（海外に住んでいる）"
   },
   {
-   "src": "c2_02",
+   "src": "c3_02",
    "in": 300,
    "out": 345,
    "row": 1,
@@ -147,7 +147,7 @@
    "note": "0:51:40〜0:51:42 カメラに話しかける顔（日本が恋しい）"
   },
   {
-   "src": "c2_03",
+   "src": "c3_03",
    "in": 1110,
    "out": 1158,
    "row": 2,
@@ -159,12 +159,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "baIpMjZRFpE 0:57:37〜0:57:39 FLOUR の袋を傾ける"
+   "note": "baIpMjZRFpE 0:57:37〜0:57:39 FLOUR の袋を傾けてボウルへ"
   },
   {
-   "src": "c2_03",
-   "in": 1200,
-   "out": 1249,
+   "src": "c3_03",
+   "in": 1530,
+   "out": 1579,
    "row": 2,
    "zoom": {
     "from": 1.0936,
@@ -174,12 +174,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:57:40〜0:57:42.5 ボウルに小麦粉を開ける（うどんを作ってみる）"
+   "note": "0:57:51〜0:57:53.5 小麦粉を開けて、さあ作るぞと話す本人"
   },
   {
-   "src": "c2_02",
-   "in": 900,
-   "out": 939,
+   "src": "c3_03",
+   "in": 4530,
+   "out": 4583,
    "row": 3,
    "zoom": {
     "from": 1.0936,
@@ -189,12 +189,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "baIpMjZRFpE 0:52:00〜0:52:02 ペットボトルの水（塩水200ml）"
+   "note": "baIpMjZRFpE 0:59:31〜0:59:33.5 小麦粉に塩水を入れて、ボウルの中でこねる手元"
   },
   {
-   "src": "c2_03",
-   "in": 3330,
-   "out": 3369,
+   "src": "c3_05",
+   "in": 3240,
+   "out": 3293,
    "row": 3,
    "zoom": {
     "from": 1.0936,
@@ -204,12 +204,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:58:51〜0:58:53 ボウルの小麦粉に手を入れてこねる"
+   "note": "1:30:48〜1:30:50.5 体重をかけて両手で生地を押す"
   },
   {
-   "src": "c2_05",
-   "in": 1440,
-   "out": 1479,
+   "src": "c3_06",
+   "in": 840,
+   "out": 893,
    "row": 3,
    "zoom": {
     "from": 1.0936,
@@ -219,27 +219,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:29:48〜1:29:50 体重をかけて両手で押す"
+   "note": "1:34:58〜1:35:00.5 生地を折りたたむ（三つ折り）"
   },
   {
-   "src": "c2_06",
-   "in": 1170,
-   "out": 1212,
-   "row": 3,
-   "zoom": {
-    "from": 1.0936,
-    "to": 1.0936,
-    "x": 0.5,
-    "y": 0.0,
-    "sx": 0.5,
-    "sy": 0
-   },
-   "note": "1:35:09〜1:35:11 生地を折りたたむ（三つ折り）"
-  },
-  {
-   "src": "c2_07",
-   "in": 3765,
-   "out": 3804,
+   "src": "c3_07",
+   "in": 3015,
+   "out": 3054,
    "row": 4,
    "zoom": {
     "from": 1.0936,
@@ -249,12 +234,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "baIpMjZRFpE 1:44:05.5〜1:44:07.5 丸めたなめらかな生地を指でつつく手元（ぷにぷにのもち肌）"
+   "note": "baIpMjZRFpE 1:43:40.5〜1:43:43 丸めたなめらかな生地を両手で包んで見せる（ぷにぷにのもち肌）"
   },
   {
    "src": "c01",
-   "in": 30,
-   "out": 80,
+   "in": 150,
+   "out": 200,
    "row": 5,
    "zoom": {
     "from": 1.0936,
@@ -264,12 +249,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "p6dOZMX2lAE 0:03:31〜0:03:33 一晩寝かせて冷蔵庫から出した、袋の生地を見せる本人"
+   "note": "p6dOZMX2lAE 0:03:35〜0:03:37.5 一晩寝かせて冷蔵庫から出した生地を袋から出す"
   },
   {
-   "src": "c02",
-   "in": 90,
-   "out": 141,
+   "src": "c3_08",
+   "in": 1785,
+   "out": 1836,
    "row": 5,
    "zoom": {
     "from": 1.0936,
@@ -279,7 +264,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:23:33〜0:23:35 麺棒が無く、生地を手で引っぱって伸ばす"
+   "note": "baIpMjZRFpE 1:48:29.5〜1:48:31.5 こね上がった生地を持って「ラップの芯とかもないんよ」と困る顔（麺棒が無い。6/25 1:48:00〜1:49:30 に本人が言った所）"
   },
   {
    "src": "c02",
@@ -313,8 +298,8 @@
   },
   {
    "src": "c02",
-   "in": 7860,
-   "out": 7895,
+   "in": 7680,
+   "out": 7715,
    "row": 8,
    "zoom": {
     "from": 1.0936,
@@ -324,12 +309,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "p6dOZMX2lAE 0:27:52〜0:27:54 生地を机に置いて、立ち上がって探しに行く"
+   "note": "p6dOZMX2lAE 0:27:46〜0:27:48 伸びない生地の袋を手に、代わりを考える本人"
   },
   {
    "src": "c02",
-   "in": 9150,
-   "out": 9185,
+   "in": 9405,
+   "out": 9440,
    "row": 8,
    "zoom": {
     "from": 1.0936,
@@ -339,12 +324,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:28:35〜0:28:37 白い棒を持って戻ってくる（宿にあるやんか）"
+   "note": "0:28:43.5〜0:28:45.5 白い長い棒を持って戻り、机の上に構える（宿にあるやんか。棒の先のほうきはまだ見せない）"
   },
   {
    "src": "c02",
-   "in": 9765,
-   "out": 9805,
+   "in": 9756,
+   "out": 9790,
    "row": 9,
    "zoom": {
     "from": 1.0936,
@@ -354,7 +339,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "p6dOZMX2lAE 0:28:55.5〜0:28:57.5 持ってきた棒を持ち上げると、先にほうきの毛（正体）"
+   "note": "p6dOZMX2lAE 0:28:55.2〜0:28:56.4 持ってきた棒を持ち上げると、先にほうきの毛（正体）と本人の顔"
   },
   {
    "src": "c02",
@@ -373,8 +358,8 @@
   },
   {
    "src": "c02",
-   "in": 13980,
-   "out": 14016,
+   "in": 14400,
+   "out": 14436,
    "row": 11,
    "zoom": {
     "from": 1.0936,
@@ -384,7 +369,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "p6dOZMX2lAE 0:31:16〜0:31:18 薄く伸びた生地を両手で持ち上げて見せる"
+   "note": "p6dOZMX2lAE 0:31:30〜0:31:31.6 薄く大きく伸びた生地を持ち上げて見せる"
   },
   {
    "src": "c03",
@@ -403,8 +388,8 @@
   },
   {
    "src": "c03",
-   "in": 3120,
-   "out": 3154,
+   "in": 3480,
+   "out": 3514,
    "row": 12,
    "zoom": {
     "from": 1.0936,
@@ -414,7 +399,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:36:14〜0:36:16.5 切った麺がくっついて輪っかになったのを持ち上げる"
+   "note": "0:36:26〜0:36:28 切った麺がくっついて輪っかになったのを持ち上げる"
   },
   {
    "src": "c04",
@@ -433,8 +418,8 @@
   },
   {
    "src": "c04",
-   "in": 1320,
-   "out": 1357,
+   "in": 1800,
+   "out": 1837,
    "row": 13,
    "zoom": {
     "from": 1.0936,
@@ -444,7 +429,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:40:44〜0:40:46 照れ笑いする本人の顔（告白なので顔が中身）"
+   "note": "0:41:00〜0:41:01.8 照れ笑いする本人の顔（告白なので顔が中身）"
   },
   {
    "src": "c05",
@@ -462,9 +447,9 @@
    "note": "p6dOZMX2lAE 0:46:45〜0:46:47 伸ばした生地に打ち粉をたっぷり振る"
   },
   {
-   "src": "c06",
-   "in": 105,
-   "out": 160,
+   "src": "c05",
+   "in": 5415,
+   "out": 5470,
    "row": 14,
    "zoom": {
     "from": 1.0936,
@@ -474,12 +459,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "0:51:33.5〜0:51:35.5 くっつかずに長く伸びた麺を1本持ち上げる"
+   "note": "0:47:00.5〜0:47:02.5 くっつかずに長く伸びた生地を袋から持ち上げる"
   },
   {
    "src": "c07",
-   "in": 2160,
-   "out": 2202,
+   "in": 1230,
+   "out": 1272,
    "row": 15,
    "zoom": {
     "from": 1.265,
@@ -489,12 +474,12 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "p6dOZMX2lAE 1:22:42〜1:22:44.5 キッチンでバターの箱を見せる本人"
+   "note": "p6dOZMX2lAE 1:22:11〜1:22:13.5 キッチンでバターの箱を見せる本人"
   },
   {
-   "src": "c08",
-   "in": 660,
-   "out": 703,
+   "src": "c2_02",
+   "in": 3315,
+   "out": 3358,
    "row": 15,
    "zoom": {
     "from": 1.265,
@@ -504,7 +489,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:32:52〜1:32:54.5 コンロのフライパンで、バターとチーズに麺を絡める（どちらも上の固定の書き込みの帯は窓の外）"
+   "note": "1:37:20.5〜1:37:23 フライパンのバターとチーズに麺をフォークで絡める（どちらも上の固定の書き込みの帯は窓の外。1:25:30〜1:25:48 のバターの画は宿のほかの客が写るので使わない）"
   },
   {
    "src": "c09",
@@ -538,8 +523,8 @@
   },
   {
    "src": "c09",
-   "in": 5580,
-   "out": 5613,
+   "in": 5490,
+   "out": 5523,
    "row": 16,
    "zoom": {
     "from": 1.0936,
@@ -549,7 +534,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:48:36〜1:48:38 完成した皿を真上から"
+   "note": "1:48:33〜1:48:34.3 完成した皿を真上から"
   },
   {
    "src": "c09",
@@ -568,8 +553,8 @@
   },
   {
    "src": "c09",
-   "in": 8460,
-   "out": 8520,
+   "in": 8625,
+   "out": 8685,
    "row": 17,
    "zoom": {
     "from": 1.0936,
@@ -579,7 +564,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:50:12〜1:50:14 麺を口へ運ぶ（元の音）"
+   "note": "1:50:17.5〜1:50:19.5 ひと口目を噛む顔（元の音。言葉は無い）"
   },
   {
    "src": "c09",
@@ -594,7 +579,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "1:50:27.1〜1:50:27.72 元の声「うまいやんか」（噛みながら）（音は 0.62秒で切り、画は行の間のぶん 1:50:29 まで延ばす）"
+   "note": "1:50:27.1〜1:50:27.72 元の声「うまいやんか」"
   },
   {
    "src": "c09",
@@ -643,8 +628,8 @@
   },
   {
    "src": "c10",
-   "in": 840,
-   "out": 876,
+   "in": 1005,
+   "out": 1041,
    "row": 19,
    "zoom": {
     "from": 1.0936,
@@ -654,7 +639,7 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "2:12:58〜2:13:00.5 空の皿の前の本人（終わりの札が乗る）"
+   "note": "2:13:03.5〜2:13:06 空の皿の前の本人（終わりの札が乗る）"
   }
  ],
  "title": {
@@ -699,7 +684,8 @@
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/05.wav",
     "tts_text": "ぷにぷにのもちはだや！",
     "at": 434,
-    "mood": "up_pop"
+    "big": "shake_white",
+    "split": "ぷにぷにの｜もち肌や！"
    },
    {
     "text": "一晩寝かせて、伸ばそうと思ったら、この宿、麺棒が無い！",
@@ -738,75 +724,75 @@
     "text": "袋の上から伸ばしたらいけるやろ！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/11.wav",
     "tts_text": "袋の上から伸ばしたらいけるやろ！",
-    "at": 771
+    "at": 765
    },
    {
     "text": "めっちゃ薄なった！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/12.wav",
     "tts_text": "めっちゃうすなった！",
-    "at": 827,
+    "at": 821,
     "mood": "up_pop"
    },
    {
     "text": "5ミリ幅に切ったら、くっついて輪っかに！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/13.wav",
     "tts_text": "五ミリはばに切ったら、くっついてわっかに！",
-    "at": 863,
+    "at": 857,
     "mood": "tense_still"
    },
    {
     "text": "初心者臭いと思って、打ち粉をケチってた……",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/14.wav",
     "tts_text": "初心者くさいと思って、うちこをケチってた……",
-    "at": 930
+    "at": 924
    },
    {
     "text": "残りは打ち粉たっぷり。やっぱ、うどんは打ち粉に限る！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/15.wav",
     "tts_text": "残りはうちこたっぷり。やっぱ、うどんはうちこに限る！",
-    "at": 1003,
+    "at": 997,
     "mood": "up_pop"
    },
    {
     "text": "ジョージアのチーズと、破壊的な量のバターを絡めて、",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/16.wav",
     "tts_text": "ジョージアのチーズと、破壊的な量のバターを絡めて、",
-    "at": 1100
+    "at": 1094
    },
    {
     "text": "半熟卵を乗せて、ジョージア風釜玉チーズうどんの完成！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/17.wav",
     "tts_text": "半熟卵を乗せて、ジョージアふうかまたまチーズうどんの完成！",
-    "at": 1185,
+    "at": 1179,
     "mood": "up_pop"
    },
    {
     "text": "いざ実食……うまいやんか！",
     "orig_voice": true,
     "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/work/orig_p1_17.wav",
-    "at": 1284,
+    "at": 1278,
     "mood": "up_pop"
    },
    {
     "text": "けど、カルボナーラが強すぎて、日本を全然感じられへん！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/19.wav",
     "tts_text": "けど、カルボナーラが強すぎて、日本を全然感じられへん！",
-    "at": 1392,
+    "at": 1386,
     "mood": "tense_still"
    },
    {
     "text": "みんなは、カルボうどん、あり？なし？",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/udon/voice/p6d-p1-v1/p1/20.wav",
     "tts_text": "みんなは、カルボうどん、あり？なし？",
-    "at": 1489
+    "at": 1483
    }
   ]
  },
  "meta": {
   "spec": "/home/user/live-streaming/.claude/worktrees/agent-a18253dcf2fae0957/shorts/videos/p6dOZMX2lAE/p1/spec.json",
   "fps": 30,
-  "frames": 1577,
-  "seconds": 52.567,
+  "frames": 1571,
+  "seconds": 52.367,
   "rows": [
    {
     "row": 0,
@@ -815,7 +801,7 @@
     "voice_frames": 80,
     "cuts": [
      "p6dOZMX2lAE 1:48:30.5+1.47s",
-     "p6dOZMX2lAE 1:50:31.5+1.47s"
+     "p6dOZMX2lAE 1:50:30.8+1.47s"
     ],
     "line": "ジョージアでうどんを手打ちしたら、カルボナーラになってしまった！",
     "telop": null
@@ -839,7 +825,7 @@
     "voice_frames": 89,
     "cuts": [
      "baIpMjZRFpE 0:57:37.0+1.60s",
-     "baIpMjZRFpE 0:57:40.0+1.63s"
+     "baIpMjZRFpE 0:57:51.0+1.63s"
     ],
     "line": "ということで、海外ではなかなか見つからないうどんを作ってみる！",
     "telop": null
@@ -850,10 +836,9 @@
     "frames": 159,
     "voice_frames": 151,
     "cuts": [
-     "baIpMjZRFpE 0:52:00.0+1.30s",
-     "baIpMjZRFpE 0:58:51.0+1.30s",
-     "baIpMjZRFpE 1:29:48.0+1.30s",
-     "baIpMjZRFpE 1:35:09.0+1.40s"
+     "baIpMjZRFpE 0:59:31.0+1.77s",
+     "baIpMjZRFpE 1:30:48.0+1.77s",
+     "baIpMjZRFpE 1:34:58.0+1.77s"
     ],
     "line": "小麦粉400gと塩水200mlでこねて、体重をかけて押して、三つ折りを3回やると……",
     "telop": null
@@ -864,10 +849,11 @@
     "frames": 39,
     "voice_frames": 31,
     "cuts": [
-     "baIpMjZRFpE 1:44:05.5+1.30s"
+     "baIpMjZRFpE 1:43:40.5+1.30s"
     ],
     "line": "ぷにぷにのもち肌や！",
-    "telop": null
+    "telop": null,
+    "big": "shake_white"
    },
    {
     "row": 5,
@@ -875,8 +861,8 @@
     "frames": 101,
     "voice_frames": 93,
     "cuts": [
-     "p6dOZMX2lAE 0:03:31.0+1.67s",
-     "p6dOZMX2lAE 0:23:33.0+1.70s"
+     "p6dOZMX2lAE 0:03:35.0+1.67s",
+     "baIpMjZRFpE 1:48:29.5+1.70s"
     ],
     "line": "一晩寝かせて、伸ばそうと思ったら、この宿、麺棒が無い！",
     "telop": null
@@ -909,8 +895,8 @@
     "frames": 70,
     "voice_frames": 62,
     "cuts": [
-     "p6dOZMX2lAE 0:27:52.0+1.17s",
-     "p6dOZMX2lAE 0:28:35.0+1.17s"
+     "p6dOZMX2lAE 0:27:46.0+1.17s",
+     "p6dOZMX2lAE 0:28:43.5+1.17s"
     ],
     "line": "代わりの棒を探したら、宿にあるやんか！",
     "telop": null
@@ -918,17 +904,17 @@
    {
     "row": 9,
     "from": 731,
-    "frames": 40,
+    "frames": 34,
     "voice_frames": 20,
     "cuts": [
-     "p6dOZMX2lAE 0:28:55.5+1.33s"
+     "p6dOZMX2lAE 0:28:55.2+1.13s"
     ],
     "line": "……ほうきやけど！",
     "telop": null
    },
    {
     "row": 10,
-    "from": 771,
+    "from": 765,
     "frames": 56,
     "voice_frames": 48,
     "cuts": [
@@ -939,84 +925,84 @@
    },
    {
     "row": 11,
-    "from": 827,
+    "from": 821,
     "frames": 36,
     "voice_frames": 28,
     "cuts": [
-     "p6dOZMX2lAE 0:31:16.0+1.20s"
+     "p6dOZMX2lAE 0:31:30.0+1.20s"
     ],
     "line": "めっちゃ薄なった！",
     "telop": null
    },
    {
     "row": 12,
-    "from": 863,
+    "from": 857,
     "frames": 67,
     "voice_frames": 59,
     "cuts": [
      "p6dOZMX2lAE 0:35:20.0+1.10s",
-     "p6dOZMX2lAE 0:36:14.0+1.13s"
+     "p6dOZMX2lAE 0:36:26.0+1.13s"
     ],
     "line": "5ミリ幅に切ったら、くっついて輪っかに！",
     "telop": null
    },
    {
     "row": 13,
-    "from": 930,
+    "from": 924,
     "frames": 73,
     "voice_frames": 65,
     "cuts": [
      "p6dOZMX2lAE 0:40:02.0+1.20s",
-     "p6dOZMX2lAE 0:40:44.0+1.23s"
+     "p6dOZMX2lAE 0:41:00.0+1.23s"
     ],
     "line": "初心者臭いと思って、打ち粉をケチってた……",
     "telop": null
    },
    {
     "row": 14,
-    "from": 1003,
+    "from": 997,
     "frames": 97,
     "voice_frames": 89,
     "cuts": [
      "p6dOZMX2lAE 0:46:45.0+1.40s",
-     "p6dOZMX2lAE 0:51:33.5+1.83s"
+     "p6dOZMX2lAE 0:47:00.5+1.83s"
     ],
     "line": "残りは打ち粉たっぷり。やっぱ、うどんは打ち粉に限る！",
     "telop": null
    },
    {
     "row": 15,
-    "from": 1100,
+    "from": 1094,
     "frames": 85,
     "voice_frames": 77,
     "cuts": [
-     "p6dOZMX2lAE 1:22:42.0+1.40s",
-     "p6dOZMX2lAE 1:32:52.0+1.43s"
+     "p6dOZMX2lAE 1:22:11.0+1.40s",
+     "p6dOZMX2lAE 1:37:20.5+1.43s"
     ],
     "line": "ジョージアのチーズと、破壊的な量のバターを絡めて、",
     "telop": null
    },
    {
     "row": 16,
-    "from": 1185,
+    "from": 1179,
     "frames": 99,
     "voice_frames": 91,
     "cuts": [
      "p6dOZMX2lAE 1:46:53.5+1.10s",
      "p6dOZMX2lAE 1:48:13.0+1.10s",
-     "p6dOZMX2lAE 1:48:36.0+1.10s"
+     "p6dOZMX2lAE 1:48:33.0+1.10s"
     ],
     "line": "半熟卵を乗せて、ジョージア風釜玉チーズうどんの完成！",
     "telop": null
    },
    {
     "row": 17,
-    "from": 1284,
+    "from": 1278,
     "frames": 108,
     "voice_frames": 100,
     "cuts": [
      "p6dOZMX2lAE 1:50:02.9+0.70s",
-     "p6dOZMX2lAE 1:50:12.0+2.00s",
+     "p6dOZMX2lAE 1:50:17.5+2.00s",
      "p6dOZMX2lAE 1:50:27.1+0.90s"
     ],
     "line": "いざ実食……うまいやんか！",
@@ -1025,7 +1011,7 @@
    },
    {
     "row": 18,
-    "from": 1392,
+    "from": 1386,
     "frames": 97,
     "voice_frames": 89,
     "cuts": [
@@ -1037,12 +1023,12 @@
    },
    {
     "row": 19,
-    "from": 1489,
+    "from": 1483,
     "frames": 88,
     "voice_frames": 65,
     "cuts": [
      "p6dOZMX2lAE 2:12:44.0+1.73s",
-     "p6dOZMX2lAE 2:12:58.0+1.20s"
+     "p6dOZMX2lAE 2:13:03.5+1.20s"
     ],
     "line": "みんなは、カルボうどん、あり？なし？",
     "telop": null
@@ -1055,12 +1041,12 @@
    "target_cps": 9.0,
    "voiced_s": 43.0,
    "cps_voiced": 8.47,
-   "video_s": 52.57,
-   "cps_video": 6.92
+   "video_s": 52.37,
+   "cps_video": 6.95
   }
  },
  "bgm": {
   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
-  "db": 0.0
+  "db": -0.6
  }
 }
