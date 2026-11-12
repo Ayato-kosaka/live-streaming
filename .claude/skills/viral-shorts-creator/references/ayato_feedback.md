@@ -1161,3 +1161,6 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1107#issuecomment-6767342826（チャットの書き置き。あやと 2026-11-10「ほったらかしパンを11/11にかえといて」＝11/12 21:30 の予約を 11/11 21:30 JST へ。YouTube は時刻を変え、TikTok は消して入れ直す）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1169#issuecomment-6800885905（ハトのフンの回の原稿 p1 に「オッケー」＝この原稿で本編集へ。字幕の「誰やこれ」は音で確かめる・「コート」のまま）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1171#issuecomment-6804887044（パン3種の回: あやとが書き直した原稿＝この原稿で本編集へ。題「北マケドニアでハードパン3種の実験をしたら、まさかの事態に！」・「強力粉1キロ」「入れすぎると生地が弱るって言う説もあってよくわからん！」「料理下手男の僕が」「イーストは1gがベストって言うことでいいんかな！？」。字はあやとのまま）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1170#issuecomment-6814812043（うどんの回 v3（p6d-p1-v3）を「2026/11/12」に出す。時刻の指定は無いので 21:30 JST。直しの v3 の下見を見たうえでの日付）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1171#issuecomment-6814843093（パン3種の回 v4（yna-p1-v4）を「2026/11/14」に出す。時刻の指定は無いので 21:30 JST。下見で挙げた弱いところ（題の頭の引きの画・伸びる生地が7行目と同じ場面）を見たうえでの日付なので、このまま）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1169#issuecomment-6814780263（ハトのフンの回 v5（kun-p1-v5）を「2026/11/15」に出す。時刻の指定は無いので 21:30 JST）
