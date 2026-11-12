@@ -49,7 +49,9 @@
 作文者・批評役の字幕からは、本人が読み上げた視聴者さんの書き込みを〔コメントの読み上げ〕に伏せる（帳面 F-048）。
 字を畳んで比べ、6字から当てる。かな ↔ 漢字・長音・句読点・絵文字の名前の違いは、合いかたの度合いで吸う。
 書き込みから読み上げまでの近さ（短い書き込みは −10〜80秒・長い書き込みは −20〜120秒）で当て、本人が先に言った字は伏せない
-（窓と下限を測った数は `mask_read` の上）。
+（窓と下限を測った数は `mask_read` の上）。6字に満たない書き込みと、頭だけ読んだ書き込み（2/3 以上）は、**本人がふだん口にしない字**
+（この回のほかの所で本人が言わず、本人のほかの回の字幕の1%以下にしか出ない字）のときだけ、4字から当てる（2026-11-12、
+マトカ渓谷の回の 1:38:00 で、5字の書き込みと7字の書き込みの頭4字が C 案の原稿に入った。相づち・反応は伏せない）。
 
 **spec に `rows` が無い・行の数が原稿と違うときは、作らずに止まる**（`lint.build` が止める）。滝の回 p1 は spec が `lines` の鍵で書かれていて、
 批評役の1枚の画の列が空のまま回っていた。
@@ -65,11 +67,15 @@
 from __future__ import annotations
 
 import argparse
+import bisect
+import hashlib
 import json
 import math
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import unicodedata
 from difflib import SequenceMatcher
 from itertools import pairwise
@@ -237,7 +243,12 @@ def cut(path: Path, ranges: list, step: int = 30) -> list:
 # - 6〜7字の一致は、0〜70秒に10秒あたり60件前後、その外は2〜3件。ただしこれは「本人が先に言った字」を除いたあとで、
 #   除く前はその外が15件前後あった（本人の口ぐせを視聴者さんが返した字）→ 本人が先に言った字は伏せない
 # - 5字以下で当たるのは、挨拶・相づち・擬音（こんばんは・すごいね・わくわく）がほとんど。伏せると本人の反応まで消えるので、下限は6字
-READ_MIN = 6        # 畳んだ字で数える。挨拶を除いてこれに満たない書き込みは当てない
+#
+# 2026-11-12、マトカ渓谷の回（eHBAnQF56-E）で、5字の書き込み（1:38:00。13秒あとの 1:38:00 の行で読み上げ）と、
+# 7字の書き込みの頭4字（1:37:48。末尾が笑いの「w」で、本人は頭4字だけ読み、字幕は続きを聞き違えた）が、6字の下限の下と
+# 「短い書き込みはまるごと切れ目なく」の決まりの外で素通りし、C 案の原稿に2回入った。5字以下でも、読み上げは字そのものが
+# 本人の口から出ない言葉なので、見分けるのは字の長さではなく**字のありふれ具合**にした（下の「めずらしい字」）
+READ_MIN = 6        # 畳んだ字で数える。挨拶を除いてこれに満たない書き込みは、めずらしい字のときだけ当てる（READ_FLOOR〜）
 READ_LONG = 8       # これより短い書き込みは、字幕に切れ目なくそのまま入っているときだけ当てる
 READ_COVER = 0.75   # 長い書き込みは、字の 3/4 が合えば当てる（かな ↔ 漢字・聞き違いの分）
 READ_PART = 12      # 長い書き込みの一部だけを読んだとき: 切れ目なく12字合えば、その所だけ伏せる
@@ -247,11 +258,28 @@ READ_EDGE = 4       # 書き込みの端の合わなかった字（「ひとり�
 READ_STEP = 30      # 字幕の1行の幅（秒）。次の行の時刻が分かれば、その差
 READ_MARK = "〔コメントの読み上げ〕"
 EMOJI_NAME = re.compile(r":[A-Za-z0-9_+\-]+:")
-# 挨拶は本人も視聴者さんも同じ字を言う。挨拶を除いて6字に満たない書き込みは当てない（畳んだ字＝ひらがなと漢字で書く）
+# 挨拶は本人も視聴者さんも同じ字を言う。挨拶を除いて数え、6字に満たない書き込みはめずらしい字のときだけ当てる（畳んだ字＝ひらがなと漢字で書く）
 GREET = re.compile(r"こんばんは|こんにちは|おはよう(?:ございます)?|お(?:やすみ|休み)(?:なさい)?|お(?:つかれ|疲れ)(?:さま|様)?(?:でした|です)?|"
                    r"(?:いって|行って)(?:らっしゃい|きます)|(?:いただ|頂)きます|ごちそうさま(?:でした)?|ありがとう(?:ございます)?|"
                    r"おかえり(?:なさい)?|ただいま|はじめまして|初めまして|よろしく|お(?:願|ねが)いします")
 BOUND = set("。、，,．.！!？?…‥「」『』（）()[]【】〔〕 　\t")   # 伏せる所を端で伸ばすとき、越えない字
+
+# ---- めずらしい字（2026-11-12） ----
+# 6字の下限と「まるごと切れ目なく」の外でも、**本人がふだん口にしない字**を書き込みのすぐあとに本人が言っていれば、読み上げ。
+# 当てるのは、書き込み（挨拶を除く）の 2/3 以上・READ_FLOOR 字以上を切れ目なく読んだ所で、その字が次の3つを全部満たすときだけ:
+#   1. この回で、書き込みより前にも窓のあとにも、本人が言っていない（言っていれば、その回の話題か本人の口ぐせ）
+#   2. 本人のほかの回の字幕の READ_COMMON 以下にしか出ない（すごいね・やばいね・うまそう のような相づちは 1〜5割の回に出る。
+#      2026-09・10 の77本で、窓の中で本人が同じ字を言った5字以下の書き込みを、ほかの回に出る割合で分けると、1% 以下は
+#      食べ物・地名・その場の問いかけ、1割を越えるのは相づちと反応だった。相づちを伏せると本人の反応まで消える）
+#   3. 窓の中（READ_LAG。長さで決まる今の窓）。同じ行の前のほうで本人が先に言った字は伏せない
+# 同じ77本で、書き込みの時刻を ±20・30分ずらした対照に同じ決まりを当てると、本物 4,070 件（うち4〜5字 330 件）に対して対照 1.2 件。
+# 3字は、本人の短い受け答えと書き込みが同じ字になりやすく、見分けがつかない。下限は4字
+READ_FLOOR = 4      # めずらしい字として当てる、切れ目の無い一致の下限（畳んだ字）
+READ_RARE = 2 / 3   # 書き込みのうち切れ目なく読んだ字の割合の下限（7字の頭4字を読んで続きを聞き違えたもの。5字なら4字）
+READ_COMMON = 0.01  # 本人のほかの回の字幕のうち、これより多い割合に出る字は、ありふれた字として当てない
+LAUGH = re.compile(r"(?<=[^\x00-\x7f])w+$")   # 書き込みの末尾の笑いの「w」。本人は読まない（`:sparkles:` の名前と同じ扱い）
+_COMMON: dict = {}   # {(字幕の置き場, 回): {字: ありふれているか}}
+_CORPUS: dict = {}   # {字幕の置き場: corpus() の組}
 
 
 def fold(text: str) -> list:
@@ -283,11 +311,12 @@ def post_body(raw: str) -> str:
     """チャットの1行の本文を、畳んだ字で（投げ銭の額・名前・絵文字の名前を落とす）。"""
     body = re.sub(r"^[¥$€£][\d,.]+\s+", "", raw)
     body = body.split(": ", 1)[1] if ": " in body else body
-    return folded(EMOJI_NAME.sub("", body))
+    return LAUGH.sub("", folded(EMOJI_NAME.sub("", body)))
 
 
 def comment_posts(video: str) -> list:
-    """その回のチャット [(秒, 畳んだ本文)]。挨拶を除いて6字に満たないものは落とす。字はここで比べるだけで、どこにも出さない。"""
+    """その回のチャット [(秒, 畳んだ本文)]。4字に満たないものは落とす（挨拶を除いて数えるのは `mask_read`）。
+    字はここで比べるだけで、どこにも出さない。"""
     try:
         ch = stream_file(video, "chat")
     except FileNotFoundError:
@@ -298,7 +327,7 @@ def comment_posts(video: str) -> list:
         if not m:
             continue
         b = post_body(m.group(4))
-        if len(GREET.sub("", b)) >= READ_MIN:
+        if len(b) >= READ_FLOOR:
             out.append((int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)), b))
     return out
 
@@ -352,6 +381,88 @@ def read_spans(b: str, s: str) -> list:
         work = work[:s0] + "\0" * (s1 - s0) + work[s1:]
 
 
+def rare_spans(b: str, s: str) -> list:
+    """めずらしい字の候補: 畳んだ字幕 s の中で、書き込み b の READ_RARE 以上（READ_FLOOR 字以上）を切れ目なく読んだ所。
+    [(始め, 終わり, b の頭で合わなかった字数, お尻で合わなかった字数, 読んだ字)]。何度読んでも全部。ありふれているかは呼ぶ側で見る。"""
+    n, out, work = len(b), [], s
+    need = max(READ_FLOOR, math.ceil(n * READ_RARE - 1e-9))
+    while True:
+        m = SequenceMatcher(None, b, work, autojunk=False).find_longest_match(0, n, 0, len(work))
+        if m.size < need:
+            return out
+        out.append((m.b, m.b + m.size, m.a, n - m.a - m.size, b[m.a:m.a + m.size]))
+        work = work[:m.b] + "\0" * m.size + work[m.b + m.size:]
+
+
+NOTE = re.compile(r"\[[^\]\n]*\]|^#.*$", re.M)   # 時刻・[鼻息] の注・頭の題の行（題の地名で、ありふれて見えないように）
+NONWORD = re.compile(r"[\W_ー]+")
+KANA = list(range(0x30F7))   # カタカナ → ひらがなの表（str.translate。辞書の表より4割速い）
+KANA[0x30A1:] = range(0x3041, 0x3097)
+
+
+CORPUS_KEEP = 50    # これより多くの回があれば、畳んだ字を一時置き場に控える（こしらえた置き場の見張りは控えない）
+
+
+def corpus_keep() -> Path:
+    """畳んだ字の控え。字幕の置き場ごとに1つ（新しい回が足されたら、同じ名前に書き直す）。"""
+    return Path(tempfile.gettempdir()) / f"brief-corpus-{hashlib.sha1(str(STREAMS).encode()).hexdigest()[:12]}.txt"
+
+
+def corpus() -> tuple:
+    """本人の字幕を全部つないだ字（回の間は \\0）と、回の並び・回ごとの始まりの位置。字幕の置き場ごとに一度だけ読む。
+
+    比べるのは字があるか無いかだけなので、`fold` より粗く畳む（注・記号・長音を落とし、カタカナをひらがなに。全角の英数字は
+    2026-11-12 に数えて770本で32字なので NFKC はかけない）。`fold` で全部を畳むと10秒を越えた。これは1秒あまり。
+
+    畳んだ字は一時置き場に控え、字幕の名前・大きさ・時刻が同じあいだは読み直さない。見張り（brief_selftest）は守りを1つ
+    外すたびに自分を起こし直すので、控えないと1回ごとに1秒あまり足され、回し役の上限（300秒）を越えた。
+    """
+    key = str(STREAMS)
+    if key not in _CORPUS:
+        files = sorted(STREAMS.rglob("*.transcript.txt"))
+        names = [m.group(1) if (m := re.search(r"_([A-Za-z0-9_-]{11})\.transcript\.txt$", p.name)) else p.name for p in files]
+        # 畳みかた（注と記号の落としかた）を変えたときも、控えを読み直す
+        sig = hashlib.sha1((f"{NOTE.pattern}\t{NONWORD.pattern}\n"
+                            + "".join(f"{p.name}\t{p.stat().st_size}\t{p.stat().st_mtime_ns}\n" for p in files)).encode()).hexdigest()
+        keep = corpus_keep()
+        text = None
+        try:
+            head, body = keep.read_text(encoding="utf-8").split("\n", 1)
+            text = body if head == sig and body.count("\0") == max(0, len(files) - 1) else None
+        except (OSError, ValueError):
+            pass
+        if text is None:
+            text = "\0".join(NONWORD.sub("", NOTE.sub("", p.read_text(encoding="utf-8"))) for p in files).translate(KANA).lower()
+            if len(files) > CORPUS_KEEP:
+                try:
+                    tmp = keep.with_name(f"{keep.name}.{os.getpid()}")
+                    tmp.write_text(f"{sig}\n{text}", encoding="utf-8")
+                    os.replace(tmp, keep)   # 書きかけを、ほかの担当が読まないように
+                except OSError:
+                    pass
+        at = [0]
+        for part in text.split("\0") if files else []:
+            at.append(at[-1] + len(part) + 1)
+        _CORPUS[key] = (text, names, at)
+    return _CORPUS[key]
+
+
+def common(m: str, video: str | None) -> bool:
+    """畳んだ字 m が、本人の**ほかの回**の字幕の READ_COMMON を越える割合に出るか（ありふれた字か）。越えた所で数えるのをやめる。"""
+    memo = _COMMON.setdefault((str(STREAMS), video), {})
+    if m not in memo:
+        text, names, at = corpus()
+        limit = READ_COMMON * (len(names) - (video in names))
+        seen, i = set(), text.find(m)
+        while i >= 0 and len(seen) <= limit:
+            d = bisect.bisect_right(at, i) - 1
+            if names[d] != video:
+                seen.add(d)
+            i = text.find(m, at[d + 1])   # 同じ回は1回と数えて、次の回へ
+        memo[m] = len(seen) > limit
+    return memo[m]
+
+
 def _kanji(ch: str) -> bool:
     return "一" <= ch <= "鿿" or ch in "々〆"
 
@@ -369,14 +480,16 @@ def _widen(text: str, o0: int, o1: int, left: int, right: int) -> tuple:
     return o0, o1
 
 
-def mask_read(lines: list, posts: list, hist: list | None = None) -> tuple:
+def mask_read(lines: list, posts: list, hist: list | None = None, video: str | None = None) -> tuple:
     """字幕の行（`[h:mm:ss] 字`）の中の、本人が読み上げた視聴者さんの書き込みを伏せる。（伏せた行, 伏せた所の数）。
 
     posts は `comment_posts` の [(秒, 畳んだ本文)]。hist は「本人が先に言った字」を探す行（その回の字幕まるごと。既定は lines）。
     書き込みより前に終わった行に本人がもう言っている字は、本人の言葉（視聴者さんが本人の口ぐせを返した字）なので伏せない。
+    video はその回（めずらしい字を、ほかの回の字幕と比べるときに外す回）。
     """
-    said = [(t + w, folded(x)) for t, w, x in filter(None, timed(hist if hist is not None else lines))]
+    said = [(t, t + w, folded(x)) for t, w, x in filter(None, timed(hist if hist is not None else lines))]
     first: dict = {}   # 書き込みごとに「本人が先に言ったか」（行ごとに数え直さない）
+    own: dict = {}     # (書き込み, 字): 本人がこの回で、書き込みの前か窓のあとに同じ字を言ったか
     out, n = [], 0
     for ln, row in zip(lines, timed(lines)):
         if not row:
@@ -391,17 +504,29 @@ def mask_read(lines: list, posts: list, hist: list | None = None) -> tuple:
             if not (t - hi < c < t + w - lo):
                 continue
             if k not in first:
-                first[k] = any(end <= c and b in x for end, x in said)
+                first[k] = any(end <= c and b in x for _, end, x in said)
             if first[k]:
                 continue
             got = []
-            for s0, s1, left, right in read_spans(b, s):
+            core = GREET.sub("", b)   # 挨拶は本人も視聴者さんも同じ字を言うので、挨拶を除いた字で長さを数え、めずらしい字を探す
+            for s0, s1, left, right in read_spans(b, s) if len(core) >= READ_MIN else ():
                 lag = t + w * s0 / max(1, len(s)) - c   # 行の中の位置から見積もった、読み上げの秒 − 書き込みの秒
                 got.append((lag, s0, s1, left, right))
             if any(lag < lo for lag, *_ in got):
                 first[k] = True   # 同じ行の中で、書き込みより前に本人がもう言っている（画に映った物の名前など）
                 continue
             spans += [_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right) for lag, s0, s1, left, right in got if lag < hi]
+            # めずらしい字（READ_FLOOR の上）。本人が先に言ったかは、読んだ字で見て、その字だけを外す（書き込みの一部を本人が
+            # 先に言っていても、上の決まりで伏せた所は外さない。前に伏せていた読み上げを減らさないため）
+            rare = [(t + w * s0 / max(1, len(s)) - c, s0, s1, left, right, m) for s0, s1, left, right, m in rare_spans(core, s)]
+            early = {m for lag, *_, m in rare if lag < lo}   # 同じ行の前のほうで、本人がもう言っている字
+            for lag, s0, s1, left, right, m in rare:
+                if not lo <= lag < hi or m in early:
+                    continue
+                if (k, m) not in own:
+                    own[k, m] = any(m in x for st, end, x in said if end <= c or st >= c + hi)
+                if not own[k, m] and not common(m, video):
+                    spans.append(_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right))
         merged = []
         for a, b2 in sorted(spans):
             if merged and a <= merged[-1][1]:
@@ -422,7 +547,7 @@ def masked_note(n: int) -> str:
 def masked_lines(video: str, ranges: list) -> tuple:
     """その回の字幕のうち区間に掛かる行を、読み上げた書き込みを伏せて。（字幕の置き場, 行, 伏せた数）。"""
     tr = stream_file(video, "transcript")
-    got, n = mask_read(cut(tr, ranges), comment_posts(video), tr.read_text(encoding="utf-8").splitlines())
+    got, n = mask_read(cut(tr, ranges), comment_posts(video), tr.read_text(encoding="utf-8").splitlines(), video)
     return tr, got, n
 
 
@@ -480,7 +605,7 @@ def extra_block(arg: str) -> tuple:
     text = Path(p).read_text(encoding="utf-8").strip()
     lines = text.splitlines()
     if vid:
-        lines, n = mask_read(lines, comment_posts(vid))
+        lines, n = mask_read(lines, comment_posts(vid), video=vid)
         note = f"（{vid} の写し。{masked_note(n)}）" if n else f"（{vid} の写し。読み上げた書き込みは見つからなかった）"
     else:
         note = "（どの回の写しか書いていないので、読み上げた書き込みは伏せていない。`<videoId>=<道>` で渡す）"

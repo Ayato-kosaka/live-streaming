@@ -27,8 +27,11 @@
 | `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」。表は4欄（4欄目が「選んだ理由」。あやと #1019） |
 | `w_order` | 作文者の1枚は、約束のカード → 方針 → 書く形 → 当て表 → 材料（配信の字幕）の順。カードが先頭で、字幕はいちばん後ろ |
 | `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても、本人が読み上げて自動字幕に入っていても。読み上げは〔コメントの読み上げ〕に伏せる）。`--chat` を渡すと止まる（F-048） |
-| `w_read` | 本人が読み上げた書き込みを伏せる（こしらえた字幕とチャットで）: 6字のそのまま・かな ↔ 漢字（漢字の側まで伏せる）・長音と句読点と絵文字の名前・1行に2回・長い書き込みの一部（切れ目なく12字）。伏せないもの: 書き込みから80秒を越えた読み上げ・本人が先に言った字（前の行・同じ行の前のほう）・5字以下と挨拶・合う字が少ない書き込み。伏せた所の前後の本人の言葉は残す |
+| `w_read` | 本人が読み上げた書き込みを伏せる（こしらえた字幕とチャットで）: 6字のそのまま・かな ↔ 漢字（漢字の側まで伏せる）・長音と句読点と絵文字の名前・1行に2回・長い書き込みの一部（切れ目なく12字）・5字のめずらしい字・6字の頭4字（末尾の笑いの w を除いて 2/3）。伏せないもの: 書き込みから80秒を越えた読み上げ（4字の書き込みも）・本人が先に言った字（前の行・同じ行の前のほう。5字の書き込みも）・3字と挨拶・合う字が少ない書き込み・8字の書き込みの半分だけ。伏せた所の前後の本人の言葉は残す |
 | `w_real` | クラムチャウダーの回（E2oGYjnVQSA）の本物の字幕とチャットで、1:11:29・1:16:48 の書き込みを本人が読み上げた 1:12:00・1:17:00 の行が伏せられ、行の残りの字は残る（字は写さない。2026-11-04 に作文者が本人の言葉として拾った所） |
+| `w_short` | マトカ渓谷の回（eHBAnQF56-E）の本物で、6字に満たない書き込み（1:38:00 の5字・1:38:52 の5字）と、7字の書き込みの頭4字（1:37:48。末尾は笑いの w）を本人が読み上げた 1:38:00・1:39:00 の行が伏せられ、行の残りの字は残る（2026-11-12 に C 案の原稿に2回入った所） |
+| `w_keep` | 同じ回で、4〜5字の書き込みと同じ字を本人が窓の中で言った所のうち、ありふれた相づち・反応（ほかの回の1割を越える回に出る字。0:15:00・2:23:00・2:59:30）と、本人がこの回のほかの所でも言う字（1:25:00）は伏せない |
+| `w_corpus` | ほかの回の字幕を畳んだ字の控え（一時置き場）は、字幕が同じあいだは使い、1本でも変われば読み直す（控えるのは、対照の子が起き直すたびに1秒あまり読み直して、回し役の上限を越えたから） |
 | `w_multi` | 作文者の1枚に、`--video` 2本ぶんの字幕が回ごとの見出しで入り、2本目の回の読み上げも伏せる。区間の頭の `<videoId>@` で回を名指し、書かない区間は最初の回。区間の無い回は止まる。表の行の数は `--lines` のまま（伏せた数で上書きしない） |
 | `c_multi` | 批評役の1枚: spec の why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに区間を切る（回を書かない時刻は最初の回）。why で名指した、`--video` に無い回も入る。2本目にも伏せ字が効く |
 | `c_extra` | 批評役の1枚に `--extra` の写しが入る。`<videoId>=<道>` ならその回のチャットで伏せ、回を書かなければ「伏せていない」と書く |
@@ -65,6 +68,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -97,28 +101,50 @@ CUTS = {
     "w_reason": ("brief.py", ' | 残した本人の言葉 | 選んだ理由 |\",\n', ' | 残した本人の言葉 |\",\n', {"w_fixed"},
                  "表の4欄目（選んだ理由）を外す"),
     "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
-    "w_mask": ("brief.py", "            for s0, s1, left, right in read_spans(b, s):\n", "            for s0, s1, left, right in ():\n",
-               {"w_nochat", "w_read", "w_real", "w_multi", "c_multi", "c_extra"}, "字幕の中のコメントの読み上げを伏せない"),
+    "w_mask": ("brief.py", "        for a, b2 in sorted(spans):\n", "        for a, b2 in sorted([]):\n",
+               {"w_nochat", "w_read", "w_real", "w_short", "w_multi", "c_multi", "c_extra"}, "字幕の中のコメントの読み上げを伏せない"),
     # 読み上げの伏せ字（2026-11-04。クラムチャウダーの回で、6字・かな ↔ 漢字・絵文字の名前つきの書き込みが素通りした）
-    "read_min": ("brief.py", "READ_MIN = 6        #", "READ_MIN = 8        #", {"w_read", "w_real"}, "8字に満たない書き込みを伏せない（前の形）"),
-    "read_cover": ("brief.py", "    need = n if short_ else max(READ_MIN, math.ceil(n * READ_COVER))\n", "    need = n\n", {"w_read", "w_real"},
+    # 6〜7字は、めずらしい字の決まり（本人がほかで言う字・ありふれた字は当てない）でも拾える。下限を上げると、本人がこの回の
+    # ほかの所で言う字を読み上げた所（こしらえた字幕の 0:01:30）が残る
+    "read_min": ("brief.py", "READ_MIN = 6        #", "READ_MIN = 8        #", {"w_read"},
+                 "6〜7字の書き込みを、めずらしい字の決まりでしか当てない（前の形は8字から）"),
+    "read_cover": ("brief.py", "    need = n if short_ else max(READ_MIN, math.ceil(n * READ_COVER))\n", "    need = n\n", {"w_read"},
                    "長い書き込みも、字幕にそのまま入っているときだけ伏せる（かな ↔ 漢字の聞き取りを落とす）"),
-    "read_emoji": ("brief.py", "    return folded(EMOJI_NAME.sub(\"\", body))\n", "    return folded(body)\n", {"w_read", "w_real"},
+    "read_emoji": ("brief.py", "    return LAUGH.sub(\"\", folded(EMOJI_NAME.sub(\"\", body)))\n", "    return LAUGH.sub(\"\", folded(body))\n", {"w_read", "w_real"},
                    "書き込みの絵文字の名前（:smiling_face:）を落とさずに比べる"),
-    "read_kana": ("brief.py", "            if \"ァ\" <= c <= \"ヶ\":\n", "            if False:\n", {"w_read"}, "カタカナとひらがなの違いを吸わない"),
+    # 書き込みの字がカタカナのまま残ると、ひらがなに畳んだほかの回の字幕で見つからず、ありふれた反応まで「めずらしい」に見える
+    "read_kana": ("brief.py", "            if \"ァ\" <= c <= \"ヶ\":\n", "            if False:\n", {"w_read", "w_keep"},
+                  "カタカナとひらがなの違いを吸わない"),
     "read_lag": ("brief.py", "for lag, s0, s1, left, right in got if lag < hi]", "for lag, s0, s1, left, right in got]", {"w_read"},
                  "書き込みから80秒を越えた読み上げまで伏せる"),
-    "read_first": ("brief.py", "                first[k] = any(end <= c and b in x for end, x in said)\n", "                first[k] = False\n",
+    "read_first": ("brief.py", "                first[k] = any(end <= c and b in x for _, end, x in said)\n", "                first[k] = False\n",
                    {"w_read"}, "本人が先に言った字（視聴者さんが本人の口ぐせを返した字）まで伏せる"),
     "read_sameline": ("brief.py", "            if any(lag < lo for lag, *_ in got):\n", "            if False:\n", {"w_read"},
                       "同じ行の前のほうで本人がもう言っている字まで伏せる"),
-    "read_greet": ("brief.py", "        if len(GREET.sub(\"\", b)) >= READ_MIN:\n", "        if len(b) >= READ_MIN:\n", {"w_read"},
+    "read_greet": ("brief.py", "            core = GREET.sub(\"\", b)   #", "            core = b   #", {"w_read"},
                    "挨拶だけの書き込みも当てる（本人の挨拶まで伏せる）"),
     "read_part": ("brief.py", "            part = not short_ and top >= READ_PART\n", "            part = False\n", {"w_read"},
                   "長い書き込みの一部だけを読んだ所を伏せない"),
-    "read_widen": ("brief.py", "spans += [_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right)",
-                   "spans += [(pairs[s0][1], pairs[s1 - 1][1] + 1)", {"w_read"},
+    "read_widen": ("brief.py", "    budget, j = min(left, READ_EDGE), o0 - 1\n", "    return o0, o1\n", {"w_read"},
                    "かな ↔ 漢字の端（「ひとり」↔「一人」）を伏せ残す"),
+    # 6字に満たない書き込み・頭だけ読んだ書き込み（2026-11-12。マトカ渓谷の回で、5字の書き込みと7字の書き込みの頭4字が素通りした）
+    "read_rare": ("brief.py", "for s0, s1, left, right, m in rare_spans(core, s)]", "for s0, s1, left, right, m in ()]",
+                  {"w_read", "w_short"}, "めずらしい字の決まりを丸ごと外す"),
+    "read_laugh": ("brief.py", "    return LAUGH.sub(\"\", folded(EMOJI_NAME.sub(\"\", body)))\n", "    return folded(EMOJI_NAME.sub(\"\", body))\n",
+                   {"w_read", "w_short"}, "書き込みの末尾の笑いの w を残して比べる（7字になり、頭4字では 2/3 に届かない）"),
+    "read_common": ("brief.py", "                if not own[k, m] and not common(m, video):\n", "                if not own[k, m]:\n", {"w_keep"},
+                    "ありふれた相づち・反応（ほかの回の1%を越える回に出る字）まで伏せる"),
+    "read_own": ("brief.py", "                    own[k, m] = any(m in x for st, end, x in said if end <= c or st >= c + hi)\n",
+                 "                    own[k, m] = False\n", {"w_keep"}, "本人がこの回のほかの所でも言う字まで伏せる"),
+    "read_floor3": ("brief.py", "READ_FLOOR = 4      #", "READ_FLOOR = 3      #", {"w_read"},
+                    "3字の書き込みまで当てる（本人の受け答えと見分けがつかない）"),
+    "read_ratio": ("brief.py", "READ_RARE = 2 / 3   #", "READ_RARE = 1 / 2   #", {"w_read"}, "書き込みの半分を読んだだけで伏せる"),
+    "read_early": ("brief.py", "                if not lo <= lag < hi or m in early:\n", "                if not lo <= lag < hi:\n", {"w_read"},
+                   "同じ行の前のほうで本人が先に言った短い字まで伏せる"),
+    "corpus_sig": ("brief.py", "            text = body if head == sig and body.count(", "            text = body if True and body.count(", {"w_corpus"},
+                   "字幕が変わっても、ほかの回の字幕の控えを使い続ける"),
+    "read_rare_lag": ("brief.py", "                if not lo <= lag < hi or m in early:\n", "                if m in early:\n", {"w_read"},
+                      "短い書き込みから80秒を越えた所まで伏せる"),
     # 回をまたぐ原稿（2026-11-04。夫婦の車の回・バゲットの回）
     "w_multi": ("brief.py", "    for v, rs in per.items():\n", "    for v, rs in list(per.items())[:1]:\n", {"w_multi"},
                 "2本目からの回の字幕を作文者の1枚に入れない（前の形）"),
@@ -204,7 +230,26 @@ def setup(cut):
         legs.load(HERE.parent / "feedback/ledger.py", "ledger", (c[1], c[2]))
     if c and c[0] == "lint.py":
         legs.load(HERE / "lint.py", "lint", (c[1], c[2]))
-    return legs.load(HERE / "brief.py", "brief", (c[1], c[2]) if c and c[0] == "brief.py" else None)
+    return once_lint(legs.load(HERE / "brief.py", "brief", (c[1], c[2]) if c and c[0] == "brief.py" else None))
+
+
+def once_lint(B):
+    """批評役の1枚の lint（lint.py を子のプロセスで起こす。1回 0.1秒あまり）を、同じ字の原稿・spec では1度だけにする。
+
+    対照の子は足を全部回し直すので、1本の子が同じ原稿で lint を10回起こしていた（違う字は4つ）。2026-11-12 に対照を足して
+    回し役の1本の上限（300秒）の8割に届いたので、ここで畳む。子のプロセスの lint は外した字を読まない（対照は読み込んだ
+    道具にだけ当たる）ので、畳んでも足の結果は変わらない。
+    """
+    real, memo = B.lint_block, {}
+
+    def lint_block(script, spec, as_of=None):
+        sp = spec or B.lint_mod.spec_for(script)   # spec を渡さなければ、lint は原稿の隣の spec を読む
+        k = (script.read_text(encoding="utf-8"), sp.read_text(encoding="utf-8") if sp.exists() else None, as_of)
+        if k not in memo:
+            memo[k] = real(script, spec, as_of)
+        return memo[k]
+    B.lint_block = lint_block
+    return B
 
 
 # 帳面のどの直しの例も引いていない原稿（批評役の1枚で、例が伏せられないことを見る）
@@ -430,6 +475,14 @@ READ_TR = [
     "[0:07:00] この鍋でかい。",
     "[0:07:30] 卵は半熟がいちばんうまい。せやな。",                       # 長い書き込みをそのまま（0:07:20。回をまたぐ足もここを見る）
     "[0:10:00] ずっと混ぜてたらいい感じになってきた。とろとろの卵。",     # 書き込み（0:08:41）から80秒を越えた所
+    # 6字に満たない書き込み・頭だけ読んだ書き込み（めずらしい字。2026-11-12）。どの字も、この回のほかの所と1本目の回に無い
+    "[0:11:30] ルウは甘口。ほな、そうしよか。",                           # 5字をそのまま（0:11:10）
+    "[0:13:00] 隠し味はみそやって。ほんまに？",                           # 6字の頭4字・残りはかな ↔ 漢字（0:12:40）
+    "[0:14:30] 鍋の底がな、まだ大丈夫や。",                               # 8字の半分だけ（0:14:10）
+    "[0:16:00] 塩少々。ええ感じ。",                                       # 3字（0:15:40）
+    "[0:17:00] 焦がし醤油でいこか。うん、焦がし醤油。",                   # 同じ行の前のほうで本人が先に言った5字（0:17:20）
+    "[0:20:00] 火加減を見ながら、ゆっくり待ちます。ふっくら。",           # 4字の書き込み（0:18:50）から80秒を越えた所
+    "[0:22:00] 玉ねぎは弱火でじっくりいためると甘い。ほんまや。",         # 長い書き込みの真ん中だけ、かな ↔ 漢字（0:21:40）
 ]
 READ_CHAT = [
     "[0:01:20] @みはり1: じっくり煮る",
@@ -444,6 +497,13 @@ READ_CHAT = [
     "[0:06:55] @みはり1: この鍋でかい",
     "[0:07:20] @みはり3: 卵は半熟がいちばんうまい",
     "[0:08:41] @みはり2: とろとろの卵",
+    "[0:11:10] @みはり1: ルウは甘口",
+    "[0:12:40] @みはり2: 隠し味は味噌ｗｗ",
+    "[0:14:10] @みはり3: 鍋の底が焦げてる",
+    "[0:15:40] @みはり1: 塩少々",
+    "[0:17:20] @みはり2: 焦がし醤油",
+    "[0:18:50] @みはり3: ふっくら",
+    "[0:21:40] @みはり1: 玉ねぎは弱火でじっくり炒めると甘い",
 ]
 READ_WANT = {
     "0:01:30": (1, "こうね。〔コメントの読み上げ〕。こうね、弱めにする。"),
@@ -452,6 +512,9 @@ READ_WANT = {
     "0:03:00": (2, "よいしょ。〔コメントの読み上げ〕。〔コメントの読み上げ〕。いい感じ。"),
     "0:03:30": (1, "〔コメントの読み上げ〕。へえ、そうなんや。"),
     "0:07:30": (1, "〔コメントの読み上げ〕。せやな。"),
+    "0:11:30": (1, "〔コメントの読み上げ〕。ほな、そうしよか。"),
+    "0:13:00": (1, "〔コメントの読み上げ〕やって。ほんまに？"),
+    "0:22:00": (1, "〔コメントの読み上げ〕。ほんまや。"),
 }
 PLAIN = "〔コメントの読み上げ〕。せやな。"   # 0:07:30 の伏せたあと（字数の下限・合いかた・窓のどれを動かしても変わらない所）
 
@@ -490,19 +553,23 @@ def leg_w_nochat(B):
 
 def read_lines(B) -> dict:
     """こしらえた2本目の字幕を、伏せ字を当てて {時刻: 行の字}。"""
-    got = with_streams(B, lambda: B.masked_lines("Zzzzzzzzzz2", [(0, 900)]))[1]
+    got = with_streams(B, lambda: B.masked_lines("Zzzzzzzzzz2", [(0, 1800)]))[1]
     return {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in got}
 
 
 def leg_w_read(B):
     got = read_lines(B)
     src = {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in READ_TR}
-    kept = ("0:04:30", "0:05:00", "0:05:30", "0:06:00", "0:06:30", "0:07:00", "0:10:00")
+    kept = ("0:04:30", "0:05:00", "0:05:30", "0:06:00", "0:06:30", "0:07:00", "0:10:00", "0:14:30", "0:16:00", "0:17:00", "0:20:00")
     names = {"0:01:30": "6字をそのまま", "0:02:00": "かな ↔ 漢字（漢字の側まで）", "0:02:30": "ひらがな ↔ カタカナ・長音・句読点・絵文字の名前",
-             "0:03:00": "1行に2回", "0:03:30": "長い書き込みの一部（切れ目なく12字）", "0:07:30": "長い書き込みをそのまま"}
-    why = {"0:04:30": "本人が前の行で先に言った字", "0:05:00": "5字以下と挨拶", "0:05:30": "合う字が少ない書き込み",
+             "0:03:00": "1行に2回", "0:03:30": "長い書き込みの一部（切れ目なく12字）", "0:07:30": "長い書き込みをそのまま",
+             "0:11:30": "5字のめずらしい字をそのまま", "0:13:00": "6字の頭4字（2/3）・末尾の笑いの w・残りのかな ↔ 漢字の端",
+             "0:22:00": "長い書き込みの真ん中だけ、かな ↔ 漢字（切れ目の無い所は 2/3 に届かず、合う字は 3/4 を越える）"}
+    why = {"0:04:30": "本人が前の行で先に言った字", "0:05:00": "3字と挨拶", "0:05:30": "合う字が少ない書き込み",
            "0:06:00": "書き込みから4分あと", "0:06:30": "同じ行の前のほうで本人が先に言った字", "0:07:00": "その続きの行",
-           "0:10:00": "書き込みから80秒を越えた読み上げ"}
+           "0:10:00": "書き込みから80秒を越えた読み上げ", "0:14:30": "8字の書き込みの半分だけ（2/3 に届かない）",
+           "0:16:00": "3字のめずらしい字（本人の受け答えと見分けがつかない）", "0:17:00": "同じ行の前のほうで本人が先に言った5字",
+           "0:20:00": "4字の書き込みから80秒を越えた所"}
     return ([(f"伏せる: {names[t]}（{t}。{k} か所・前後の本人の言葉は残る）",
               got.get(t, "").count(B.READ_MARK) == k and got.get(t) == want) for t, (k, want) in READ_WANT.items()]
             + [(f"伏せない: {why[t]}（{t}）", got.get(t) == src[t]) for t in kept])
@@ -534,6 +601,105 @@ def leg_w_real(B):
         out.append((f"{vid} の {at} の書き込みを {t} の行で読み上げた字が残らない（残った切れ目の無い字 {left}）・行の残りの本人の言葉は残る",
                     len(b) >= 6 and left < 6 and len(rest) >= 10))
     return out
+
+
+def plain(text: str) -> str:
+    """足の物差しで畳んだ字（絵文字の名前・記号・空白・長音・末尾の笑いの w を落とし、カタカナをひらがなに）。
+
+    道具の `fold`・`post_body` を使わない。畳みかたを1つ外した対照で、足の物差しまで一緒に動くと、伏せ残りを見逃す
+    （絵文字の名前を残す対照で、反応を残す足まで落ちた）。
+    """
+    s = unicodedata.normalize("NFKC", re.sub(r":[A-Za-z0-9_+\-]+:", "", text)).lower()
+    s = "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in s)
+    return re.sub(r"(?<=[^\x00-\x7f])w+$", "", re.sub(r"[\W_ー]+", "", s))
+
+
+def chat_at(B, vid: str) -> dict:
+    """その回のチャットを {時刻: 足の物差しで畳んだ本文}（同じ秒は最初の1件）。字は比べるだけで、どこにも出さない。"""
+    out = {}
+    for ln in B.stream_file(vid, "chat").read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\[(\d+):(\d\d):(\d\d)\]\s*(?:[¥$€£][\d,.]+\s+)?(?:[^:]*?: )?(.*)$", ln)
+        if m:
+            out.setdefault(f"{int(m.group(1))}:{m.group(2)}:{m.group(3)}", plain(m.group(4)))
+    return out
+
+
+def masked_rows(B, vid: str, rng: str) -> dict:
+    """その回の字幕を区間で切って伏せ字を当て、{時刻: 行の字}。"""
+    _, got, _ = B.masked_lines(vid, B.parse_ranges([rng]))
+    return {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in got}
+
+
+# マトカ渓谷の回（eHBAnQF56-E）。6字の下限の下と「まるごと切れ目なく」の外で素通りし、2026-11-12 に C 案の原稿に2回入った読み上げ
+# （と、同じ窓のもう1件）。書き込みの時刻 → 読み上げた行。字は写さない
+SHORT = ("eHBAnQF56-E", "1:36:00-1:39:30",
+         (("1:37:48", "1:38:00", "7字（末尾の笑いの w を除いて6字）の頭4字。続きは字幕が聞き違えた"),
+          ("1:38:00", "1:38:00", "5字をそのまま、13秒あと"),
+          ("1:38:52", "1:39:00", "5字をそのまま、32秒あと")))
+
+
+def leg_w_short(B):
+    vid, rng, posts = SHORT
+    rows, chat = masked_rows(B, vid, rng), chat_at(B, vid)
+    out = []
+    for at, t, what in posts:
+        b = chat.get(at, "")
+        pieces = [plain(x) for x in rows.get(t, "").split(B.READ_MARK)]
+        # 伏せ残りは、伏せる側（rare_spans）とは別の物差しで見る: 伏せ字で切れた残りの1切れずつと、書き込みとの切れ目の無い同じ字
+        left = max((SequenceMatcher(None, b, x, autojunk=False).find_longest_match(0, len(b), 0, len(x)).size for x in pieces), default=99)
+        out.append((f"{vid} の {at} の書き込み（{what}）を {t} の行で読み上げた字が残らない（残った切れ目の無い字 {left}）・"
+                    f"行の残りの本人の言葉は残る", 4 <= len(b) <= 6 and left < 4 and sum(map(len, pieces)) >= 30))
+    return out
+
+
+# 同じ回で、4〜5字の書き込みと同じ字を、本人が書き込みのすぐあと（窓の中）で言った所。読み上げかもしれないが、本人の相づち・反応でもある。
+# 書き込みの時刻 → 本人が言った行・残す理由。字は写さない
+KEEP = ("eHBAnQF56-E", (("0:14:57", "0:15:00", "ありふれた4字の反応（本人のほかの回の1割を越える回に出る）"),
+                        ("2:22:56", "2:23:00", "ありふれた5字の反応"),
+                        ("2:58:59", "2:59:30", "ありふれた4字の擬音"),
+                        ("1:24:33", "1:25:00", "本人がこの回のほかの所でも言う4字。ほかの回では1%以下")))
+
+
+def leg_w_keep(B):
+    vid, posts = KEEP
+    chat, out = chat_at(B, vid), []
+    _, got, _ = B.masked_lines(vid, B.parse_ranges([f"{t}-{t}" for _, t, _ in posts]))   # 行ごとに1回ずつ組まない（対照の子の数だけ回る）
+    rows = {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in got}
+    for at, t, what in posts:
+        b = chat.get(at, "")
+        row = rows.get(t, "")
+        kept = any(b in plain(x) for x in row.split(B.READ_MARK))
+        out.append((f"{vid} の {at} の書き込み（{len(b)}字。{what}）と同じ本人の言葉が、{t} の行に伏せずに残る", 4 <= len(b) <= 5 and kept))
+    return out
+
+
+def leg_w_corpus(B):
+    """ほかの回の字幕を畳んだ字の控え（一時置き場）は、字幕が同じあいだは使い、1本でも変われば読み直す。"""
+    real, keep = B.STREAMS, None
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td) / "2026/08"
+            d.mkdir(parents=True)
+            for i in range(B.CORPUS_KEEP + 1):
+                (d / f"2026-08-01_2200_K{i:010d}.transcript.txt").write_text("[0:00:00] ふつうの字。\n", encoding="utf-8")
+            B.STREAMS = Path(td)
+            keep = B.corpus_keep()   # こしらえた置き場の控え（本物の控えは消さない）
+            B._CORPUS.clear()
+            first = B.corpus()[0]
+            head = keep.read_text(encoding="utf-8").split("\n", 1)[0] if keep.exists() else ""
+            keep.write_text(f"{head}\n{first.replace('ふつう', 'ひかえ')}", encoding="utf-8")   # 控えだけを書き換える
+            B._CORPUS.clear()
+            used = B.corpus()[0]
+            (d / "2026-08-01_2200_K0000000000.transcript.txt").write_text("[0:00:00] 書き足した字。\n", encoding="utf-8")
+            B._CORPUS.clear()
+            fresh = B.corpus()[0]
+    finally:
+        B.STREAMS = real
+        B._CORPUS.clear()
+        if keep:
+            keep.unlink(missing_ok=True)
+    return [(f"{B.CORPUS_KEEP + 1}本あれば控えを書き、字幕が同じあいだは控えを使う", bool(head) and "ひかえ" in used),
+            ("字幕が1本でも変われば、控えを使わずに読み直す", "書き足した字" in fresh and "ひかえ" not in fresh)]
 
 
 def leg_w_multi(B):
@@ -871,7 +1037,7 @@ LEGS = {
     "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
     "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
     "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
-    "w_read": leg_w_read, "w_real": leg_w_real, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
+    "w_read": leg_w_read, "w_real": leg_w_real, "w_short": leg_w_short, "w_keep": leg_w_keep, "w_corpus": leg_w_corpus, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
     "c_pending": leg_c_pending,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
