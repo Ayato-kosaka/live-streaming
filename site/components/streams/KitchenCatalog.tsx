@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Flag from "@/components/ui/Flag";
-import { KINDS, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
+import { KINDS, recipeDays, recipeNo, type Recipe, type RecipeKind } from "@/content/recipes";
 import Icon from "@/components/ui/Icon";
 import { ArtShelf } from "./Art";
 
@@ -290,7 +290,7 @@ export function Dish({ r }: { r: Recipe }) {
     // prefetch={false} は「読まない」ではなく「指が乗ってから読む」なので、押した速さは変わらない。
     <Link className="dish" href={`/kitchen/${r.slug}`} prefetch={false}>
       <span className="dish-no">No.{String(recipeNo(r.slug)).padStart(2, "0")}</span>
-      {r.streams.length > 1 && <span className="dish-days">{r.streams.length}日がかり</span>}
+      {recipeDays(r) > 1 && <span className="dish-days">{recipeDays(r)}日がかり</span>}
       <span className="dish-art">
         <img src={`/sprites/${r.icon}.webp`} alt="" loading="lazy" />
       </span>

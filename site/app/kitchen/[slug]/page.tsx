@@ -4,7 +4,7 @@ import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
-import { RECIPES, kindLabel, recipeBySlug, recipeNo, type RecipeStream } from "@/content/recipes";
+import { RECIPES, kindLabel, recipeBySlug, recipeDays, recipeNo, type RecipeStream } from "@/content/recipes";
 import { countryNameBySlug } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
@@ -36,6 +36,9 @@ const STEP: Record<RecipeStream["label"], { art: React.ComponentType<{ size?: nu
   配信: { art: ArtCam, note: "この日の配信" },
 };
 
+/** 1日に何本も回した日（発酵を見る回・焼く回…）は、その日いちばん先へ進んだ札で呼ぶ。 */
+const RANK: RecipeStream["label"][] = ["配信", "企画会議", "買い出し", "調理", "リベンジ"];
+
 export default async function RecipePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const r = recipeBySlug(slug);
@@ -48,6 +51,12 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const prev = sorted[i - 1];
   const next = sorted[i + 1];
   const steps = [...r.streams].sort((a, b) => (a.date < b.date ? -1 : 1));
+  /** 「かかった日数」の下の流れ。日数と同じく1日1つ（本数で並べると「2日」の下に札が4つ出る）。 */
+  const perDay = new Map<string, RecipeStream["label"]>();
+  for (const s of steps) {
+    const was = perDay.get(s.date);
+    if (!was || RANK.indexOf(s.label) > RANK.indexOf(was)) perDay.set(s.date, s.label);
+  }
   const no = recipeNo(r.slug);
 
   /** 同じ国のキッチンで作ったもの。旅の記憶はだいたい国でつながっている。 */
@@ -105,7 +114,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
                 note: `${r.date.slice(0, 4)}年`,
               },
               { n: <Flag slug={r.country} size={30} />, label: "借りたキッチン", note: c?.name },
-              { n: steps.length, unit: "日", label: "かかった日数", note: steps.map((s) => s.label).join(" → ") },
+              { n: recipeDays(r), unit: "日", label: "かかった日数", note: [...perDay.values()].join(" → ") },
               { n: kindLabel(r.kind), label: "どんな料理" },
             ]}
           />

@@ -584,6 +584,49 @@ export const RECIPES: Recipe[] = [
     ],
   },
   {
+    slug: "hottarakashi-bread",
+    name: "ほったらかしパン",
+    emoji: "🥖",
+    icon: "food-loaf-baguette",
+    country: "north-macedonia",
+    kind: "flour",
+    date: "2026-10-30",
+    note: "はかりが無く、500mlのペットボトルとコップに水を移し替えて強力粉300gを割り出した。一晩ねかせた生地をプレーンとオリーブ入りの2本に焼き、鉄板に移すときに潰したプレーンは中が詰まったが、焼き上がりに本人は「パン屋さんすぎる」と叫んだ。",
+    streams: [
+      { label: "買い出し", date: "2026-10-29", videoId: "urwD3EmjTxs", title: "🇲🇰北マケドニアのほったらかしパン&アヒージョの準備や！" },
+      { label: "配信", date: "2026-10-30", videoId: "nb2Cg9rmlM0", title: "🇲🇰北マケドニアのほったらかしパンの一次発酵の経過確認や！" },
+      { label: "配信", date: "2026-10-30", videoId: "C_AABuDPw1c", title: "🇲🇰北マケドニアのほったらかしパンの二次発酵や！" },
+      { label: "調理", date: "2026-10-30", videoId: "28Tcc0c5sNE", title: "🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！" },
+    ],
+  },
+  {
+    slug: "ajillo",
+    name: "アヒージョ",
+    emoji: "🍄",
+    icon: "food-mushroom",
+    country: "north-macedonia",
+    kind: "meat",
+    date: "2026-10-30",
+    note: "パンが焼けるのを待つあいだに、ChatGPT に聞いた作りかたで仕込んだ。ピーマンはやめてマッシュルームにし、鶏肉とフライドポテトのように切ったじゃがいもをニンニクのオリーブオイルで煮て、焼きたてのパンにつけて食べた。",
+    streams: [
+      { label: "買い出し", date: "2026-10-29", videoId: "urwD3EmjTxs", title: "🇲🇰北マケドニアのほったらかしパン&アヒージョの準備や！" },
+      { label: "調理", date: "2026-10-30", videoId: "28Tcc0c5sNE", title: "🇲🇰北マケドニアのほったらかしパン&アヒージョつくるぞー！！！" },
+    ],
+  },
+  {
+    slug: "raisin-walnut-bread",
+    name: "レーズンくるみパン",
+    emoji: "🍞",
+    icon: "food-grapes",
+    country: "north-macedonia",
+    kind: "flour",
+    date: "2026-11-02",
+    note: "前の日にこねて丸一日発酵させた生地に、オーブンでローストしたくるみと、ぬるま湯で戻したレーズンを混ぜて焼いた。フランス語のパンの動画を ChatGPT に通訳させながらまねて、焼き上がりは外がカリカリ、硬さは本人いわく「靴みたい」。",
+    streams: [
+      { label: "調理", date: "2026-11-02", videoId: "nRsDFgZmBqQ", title: "🇲🇰北マケドニアでレーズンくるみパンつくっちゃおかなーーー" },
+    ],
+  },
+  {
     slug: "tavce-gravce",
     name: "白インゲンのトマトグラタン",
     emoji: "🫘",
@@ -600,6 +643,20 @@ export const RECIPES: Recipe[] = [
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);
+
+/**
+ * 何日がかりだったか。**配信の本数ではなく、日で数える。**
+ * ほったらかしパンは 10/30 に発酵を見る回・二次発酵の回・焼く回の3本を回したので、
+ * 本数で数えると2日の品が「4日がかり」になる。
+ */
+export const recipeDays = (r: Recipe) => new Set(r.streams.map((s) => s.date)).size;
+
+/**
+ * 料理のために回した配信の本数。**同じ配信を2品で数えない。**
+ * 1本で何品も作った日（2026-08-28 の3品、2026-10-30 のパンとアヒージョ）は、
+ * どの品の `streams` にも同じ配信が入っている。足し合わせると、その日のぶんだけ多く出る。
+ */
+export const COOKING_STREAMS = new Set(RECIPES.flatMap((r) => r.streams.map((s) => s.videoId))).size;
 
 /**
  * 何品目か。図鑑の番号にあたる。

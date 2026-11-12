@@ -6,7 +6,7 @@ import { GUIDE } from "@/content/voice";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
-import { KINDS, RECIPES } from "@/content/recipes";
+import { COOKING_STREAMS, KINDS, RECIPES, recipeDays } from "@/content/recipes";
 import { AHEAD_COUNTRIES, COUNTRIES } from "@/content/countries";
 import KitchenCatalog from "@/components/streams/KitchenCatalog";
 import { H, Sheet, Zone } from "@/components/streams/Sheet";
@@ -25,11 +25,11 @@ export default function KitchenPage() {
   RECIPES.forEach((r) => byCountry.set(r.country, (byCountry.get(r.country) ?? 0) + 1));
   const ranked = [...byCountry.entries()].sort((a, b) => b[1] - a[1]);
   const top = COUNTRIES.find((c) => c.slug === ranked[0][0]);
-  const streams = RECIPES.reduce((n, r) => n + r.streams.length, 0);
+  const streams = COOKING_STREAMS;
 
-  /** いちばん手間のかかった品。同じ本数なら新しいほう。 */
+  /** いちばん手間のかかった品。日数で比べる（本数ではない）。同じ日数なら新しいほう。 */
   const hardest = [...RECIPES].sort((a, b) =>
-    a.streams.length !== b.streams.length ? b.streams.length - a.streams.length : a.date < b.date ? 1 : -1,
+    recipeDays(a) !== recipeDays(b) ? recipeDays(b) - recipeDays(a) : a.date < b.date ? 1 : -1,
   )[0];
 
   /** 種類ごとの数。多い順に。 */
@@ -109,7 +109,7 @@ export default function KitchenPage() {
             <ArtStamp size={26} />
             <span>
               {dates[0].replace(/-/g, "/")} から、{streams}本の配信で押してきました。いちばん長かったのは
-              <Link prefetch={false} href={`/kitchen/${hardest.slug}`}>{hardest.name}</Link>の{hardest.streams.length}日がかり。
+              <Link prefetch={false} href={`/kitchen/${hardest.slug}`}>{hardest.name}</Link>の{recipeDays(hardest)}日がかり。
             </span>
           </p>
         </Zone>
