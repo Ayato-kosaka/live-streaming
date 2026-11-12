@@ -583,6 +583,20 @@ export const RECIPES: Recipe[] = [
       { label: "調理", date: "2026-10-26", videoId: "814E2V_257A", title: "🇲🇰北マケドニアでマルゲリータピザつくろ！" },
     ],
   },
+  {
+    slug: "tavce-gravce",
+    name: "白インゲンのトマトグラタン",
+    emoji: "🫘",
+    icon: "food-paprika",
+    country: "north-macedonia",
+    kind: "side",
+    date: "2026-11-09",
+    note: "企画会議のルーレットで当たったのは、前に店で食べた北マケドニアの家庭料理タヴチェ・グラフチェ。じっくりゆでた白インゲンを玉ねぎとニンニク、パプリカパウダー、トマトで煮て、浅い耐熱皿が無いので小さな鍋ごと200度のオーブンで焼いた。食べてみると、本人いわく「パプリカパウダー煮込みグラタン」。",
+    streams: [
+      { label: "企画会議", date: "2026-11-06", videoId: "O2rMcC78ADg", title: "🇲🇰北マケドニアが久々に晴れたぞーー" },
+      { label: "調理", date: "2026-11-09", videoId: "WiSPWzjqZZA", title: "🇲🇰北マケドニアの白インゲントマトグラタンつくろか！！" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);
