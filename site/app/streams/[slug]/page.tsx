@@ -7,7 +7,7 @@ import PageShell from "@/components/ui/PageShell";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
-import { RECIPES } from "@/content/recipes";
+import { COOKING_STREAMS, RECIPES } from "@/content/recipes";
 import { LEGENDS } from "@/content/legends";
 import { STATS_FALLBACK } from "@/content/site";
 import Walked from "@/components/atlas/Walked";
@@ -61,7 +61,7 @@ const BEAT_ART: Record<string, React.ComponentType<{ size?: number }>[]> = {
  * 型ごとに数えられるものだけを数える。数えられない型は出さない。
  */
 function figures(slug: string) {
-  const cookingStreams = RECIPES.reduce((n, r) => n + r.streams.length, 0);
+  const cookingStreams = COOKING_STREAMS;
   const kitchens = new Set(RECIPES.map((r) => r.country)).size;
   switch (slug) {
     case "cooking":

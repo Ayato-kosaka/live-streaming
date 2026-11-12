@@ -4,7 +4,7 @@ import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
-import { RECIPES, kindLabel, recipeBySlug, recipeNo, type RecipeStream } from "@/content/recipes";
+import { RECIPES, kindLabel, recipeBySlug, recipeDays, recipeNo, type RecipeStream } from "@/content/recipes";
 import { countryNameBySlug } from "@/content/countries";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
@@ -105,7 +105,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
                 note: `${r.date.slice(0, 4)}年`,
               },
               { n: <Flag slug={r.country} size={30} />, label: "借りたキッチン", note: c?.name },
-              { n: steps.length, unit: "日", label: "かかった日数", note: steps.map((s) => s.label).join(" → ") },
+              { n: recipeDays(r), unit: "日", label: "かかった日数", note: steps.map((s) => s.label).join(" → ") },
               { n: kindLabel(r.kind), label: "どんな料理" },
             ]}
           />
