@@ -319,7 +319,9 @@ def related(t, vid, target, dry=False):
     trig = t.js(f"{TRIGGER}.innerText.trim().replace(/\\s+/g, ' ')")
     log("trigger now:", trig)
     shot(t, "yt_5_related_selected")
-    if title not in (trig or ""):
+    # 札の字は JS の \s+ で空白を1つに畳んである。題に全角の空白（U+3000）があると、そのまま比べると
+    # 選べているのに外れる（2026-11-12 ハトの回。元の配信「…タリン　まで」）。題も同じ畳みかたにしてから比べる
+    if " ".join(title.split()) not in (trig or ""):
         result({"ok": False, "error": "not_selected", "trigger": trig})
         return
     if dry:
