@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-11-11
+ * 数えた日: 2026-11-12
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -267,7 +267,7 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   // バルカン諸国周遊
   "balkans": {
     people: 229,
-    streams: 51,
+    streams: 52,
     residents: [
       { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 45 },
       { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 45 },
