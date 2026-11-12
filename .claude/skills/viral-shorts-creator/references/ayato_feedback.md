@@ -1164,3 +1164,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1170#issuecomment-6814812043（うどんの回 v3（p6d-p1-v3）を「2026/11/12」に出す。時刻の指定は無いので 21:30 JST。直しの v3 の下見を見たうえでの日付）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1171#issuecomment-6814843093（パン3種の回 v4（yna-p1-v4）を「2026/11/14」に出す。時刻の指定は無いので 21:30 JST。下見で挙げた弱いところ（題の頭の引きの画・伸びる生地が7行目と同じ場面）を見たうえでの日付なので、このまま）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1169#issuecomment-6814780263（ハトのフンの回 v5（kun-p1-v5）を「2026/11/15」に出す。時刻の指定は無いので 21:30 JST）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1187（チャットの書き置き。あやと 2026-11-12「この三つプラス、最近のこの1ヶ月くらいのパソコン壊れたから受け取れなかったの流れのショートの計４本つくって」＝ DNLVmUpew48（#1184）・eHBAnQF56-E（#1185）・qAXRe3qQyvo（#1186）と、10月〜11月のパソコンが受け取れない流れを何回もつないだ1本（#1187）。案の数の指定は無いので、どれも企画3案）
