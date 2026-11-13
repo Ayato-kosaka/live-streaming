@@ -522,7 +522,8 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
     if quote:
         pos = find_quote(quote, win_text) if offs else None
         if pos is None:
-            r.add(i, "quote", f"言い回し「{quote}」が [{sn.hms(first)}] の前後 {WIN}秒の字幕に無い")
+            # 字は出さない（字幕に無い言い回しは、チャットから写したものかもしれない。出力は公開のログに残りうる）
+            r.add(i, "quote", f"言い回し（{len(quote)}字）が [{sn.hms(first)}] の前後 {WIN}秒の字幕に無い")
         else:
             qa, qb = line_at(offs, pos[0]), line_at(offs, pos[1])
             q = squash(SUPPL.sub("", norm(quote)))
