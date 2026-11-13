@@ -123,9 +123,19 @@
    "src": "https://metroeasy.com/sofia-metro.html"
   },
   {
+   "title": "手数料無料のATM",
+   "body": "あやとは UniCredit Bulbank の ATM で、Wise のカードから手数料なしで下ろせた（2026年11月の実測）。Euronet の ATM は避ける——両替のレートで1〜1.5割持っていかれる。どの ATM でも、画面に「自分の通貨で請求しますか」と出たら必ず「ユーロで」を選ぶ。その場の両替（DCC）はレートが悪い。銀行の名前が出ている ATM を選ぶのが基本。",
+   "src": "https://wise.com/gb/blog/atms-in-bulgaria"
+  },
+  {
    "title": "物価の目安",
    "body": "クラウドソースの物価データ（2026年11月6日更新）で、安い店の食事1人15ユーロ（約2,700円）、中級店の2人前菜〜デザート60ユーロ（約10,600円）、生ビール1パイント3.50ユーロ（約620円）、カプチーノ3.13ユーロ（約550円）、レストランの水（小瓶）1.54ユーロ（約270円）。あくまで投稿の平均で、同じページのコメント欄には「実際はもっと高い」という書き込みもある。",
    "src": "https://www.numbeo.com/cost-of-living/in/Sofia"
+  },
+  {
+   "title": "いちばん安いスーパー",
+   "body": "ディスカウント系は Lidl・Kaufland・Billa の3つで、どれも中心部にある。あやとは Lidl を使った（2026年11月）。どれがいちばん安いかは出どころによって割れていて、Kaufland をいちばん安いとするガイドもあれば、Lidl のほうが少し高いとするものもある。野菜と果物だけは、スーパーより青空市場（女性市場・中央市場ホール）のほうが安い、というのはどの出どころも一致している。Fantastico と小さな専門店は、輸入ものとオーガニックで2〜4割高い。",
+   "src": "https://internationalsupermarketnews.com/europes-cheapest-supermarkets-in-2025-a-country-by-country-comparison/"
   },
   {
    "title": "言葉と文字",
@@ -151,6 +161,11 @@
    "title": "治安",
    "body": "全体としては落ち着いている。都市部でスリなどの軽犯罪があり、近寄らないほうがよい区画もある、という程度の注意で足りる。夜の中心部は人通りがあり、歩ける。緊急時の番号はEU共通の112。",
    "src": "https://ca-voir.com/bulgaria-tourism-featured-jp/"
+  },
+  {
+   "title": "旅行者として気をつける法律",
+   "body": "夜に騒ぐと警察が来る。酔って騒ぐ・大声・公共の場での立ち小便は、その場で逮捕か罰金になりうる（英国と豪州の渡航情報が、どちらも名指しで書いている）。屋内の公共の場は2012年から全面禁煙で、飲食店・バー・公共交通・ホテルすべてが対象。顔を覆うもの（目出し帽・ニカブ）は公共の場で違法で、罰金がある。街によっては路上での飲酒そのものが条例で禁止され罰金になる（プロヴディフ・ルセ）。緊急は 112。",
+   "src": "https://www.gov.uk/foreign-travel-advice/bulgaria/safety-and-security"
   },
   {
    "title": "水道水",
@@ -197,7 +212,6 @@
    "walk": "中心から徒歩2分（約120m）",
    "stay": "20分",
    "advice": "大統領府の衛兵交代は正時ごとにあるとされ、5分前に行くと見られる。ただし土日は形が違うという案内と、毎日正午だけとする記述があり、情報が割れている。礼拝中は内部に入れない。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.696944,23.322778",
    "src": "https://www.inyourpocket.com/sofia/presidency_77212v"
   },
   {
@@ -213,7 +227,6 @@
    "walk": "中心から徒歩3分（約200m）",
    "stay": "30分",
    "advice": "「遺跡公園」として囲われていないので、入口を探すより先に地下通路へ降りてしまうのが早い。雨の日はガラス屋根の下だけでも回れる。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.698457,23.322083",
    "src": "https://www.openstreetmap.org/?mlat=42.698457&mlon=23.322083"
   },
   {
@@ -229,7 +242,6 @@
    "walk": "中心から徒歩13〜15分（約950m）",
    "stay": "45分（地下の博物館を入れて1時間）",
    "advice": "内部は撮影が制限される。肩と膝を出さない服装で。聖堂前の広場に土産の露店が出ているが、同じ品が市内の店より高いことがある。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.695833,23.332956",
    "src": "https://en.wikipedia.org/wiki/Saint_Alexander_Nevsky_Cathedral,_Sofia"
   },
   {
@@ -245,7 +257,6 @@
    "walk": "中心から徒歩5〜6分（約350m）",
    "stay": "蛇口だけなら10分、博物館を入れて1時間30分",
    "advice": "月曜は博物館が閉まる（蛇口は開いている）。湯はかなり熱いので、空のペットボトルで汲んで冷ましてから飲む人が多い。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.699367,23.323681",
    "src": "https://audiala.com/en/bulgaria/sofia/regional-history-museum---sofia"
   },
   {
@@ -261,7 +272,6 @@
    "walk": "中心から7.3km。64番バス（NDKまたは地下鉄Vitosha駅から／降車は Боянско ханче）か107番バス（降車は Боянска църква）で30〜40分",
    "stay": "30分（内部は10分。待ち時間を含む）",
    "advice": "10分交代制なので、団体と重なると外で待つ。内部は撮影厳禁（外と庭は自由）。毎月最終月曜の15:00以降は無料だが、その日は混んで入れないことがある。国立歴史博物館とは徒歩15分の距離なので、必ず同じ日にまとめる。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.644672,23.266172",
    "src": "https://boyanachurch.info/en/visitors-information-en/"
   },
   {
@@ -277,7 +287,6 @@
    "walk": "ここが中心（徒歩0分）",
    "stay": "20分",
    "advice": "日曜の午前は礼拝で人が多く、見学しづらい。ヴィトシャ大通りの歩行者区間はこの教会の南側から始まるので、街歩きの起点にしやすい。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.696700,23.321370",
    "src": "https://en.wikipedia.org/wiki/Saint_Nedelya_Cathedral,_Sofia"
   },
   {
@@ -293,7 +302,6 @@
    "walk": "中心から徒歩13分（約830m）",
    "stay": "30分（地下を入れて45分）",
    "advice": "地上だけ見て帰る人が多いが、価値があるのは地下。入口は建物の横にある。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.696515,23.331520",
    "src": "https://www.wikidata.org/wiki/Q602853"
   },
   {
@@ -309,7 +317,6 @@
    "walk": "中心から徒歩5分（約320m）",
    "stay": "20分",
    "advice": "礼拝中は入れない。女性は髪を覆う布が要る（貸し出しがある）。入口で靴を脱ぐ。向かいが温泉の蛇口なので、2つまとめて。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.699444,23.322500",
    "src": "https://en.wikipedia.org/wiki/Banya_Bashi_Mosque"
   },
   {
@@ -325,7 +332,6 @@
    "walk": "中心から徒歩6分（約370m）",
    "stay": "30分",
    "advice": "安息日（金曜の日没〜土曜）は見学できない時間帯がある。入口はブロックの裏手にあり、表の正面からは入れない。男性は頭を覆うものを渡される。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.700000,23.321111",
    "src": "https://en.wikipedia.org/wiki/Sofia_Synagogue"
   },
   {
@@ -341,7 +347,6 @@
    "walk": "中心から徒歩4分（約250m）",
    "stay": "15分",
    "advice": "4つの礼拝所を1周するなら、ここ→シナゴーグ→モスク→（東へ）ネフスキー大聖堂の順が、戻らずに歩ける。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.698611,23.319722",
    "src": "https://www.wikidata.org/wiki/Q598811"
   },
   {
@@ -357,7 +362,6 @@
    "walk": "中心から徒歩6分（約370m）",
    "stay": "30分",
    "advice": "屋根があるので雨と寒さをしのげる。食事どころも入っているので、外が冷えた日の昼にちょうどいい。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.699995,23.321799",
    "src": "https://www.openstreetmap.org/?mlat=42.699995&mlon=23.321799"
   },
   {
@@ -373,7 +377,6 @@
    "walk": "中心から徒歩2分（約150m）",
    "stay": "30分（通り抜けるだけなら15分）",
    "advice": "観光客向けで、値段は1〜2割高め。地元の店で飲み食いしたいなら、東に2ブロック入ったツァル・シシュマン通り（ул. Цар Шишман）のほうが落ち着いている。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.695362,23.320958",
    "src": "https://www.euronews.com/2026/08/22/sofia-travel-guide-how-to-spend-48-hours-in-bulgarias-capital"
   },
   {
@@ -389,7 +392,6 @@
    "walk": "中心から徒歩2分（約140m）",
    "stay": "15分",
    "advice": "地上を歩いていると気づかずに通り過ぎる。地下通路から上がるのが正解。中は狭く、団体が入ると数分待つ。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.697833,23.322139",
    "src": "https://www.wikidata.org/wiki/Q1766560"
   },
   {
@@ -405,7 +407,6 @@
    "walk": "中心から徒歩4分（約270m）",
    "stay": "1時間",
    "advice": "冬期は開館日と時間が縮むことがある。円堂（聖ゲオルギ）とは中庭1つ分の距離なので、まとめて回れる。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.696398,23.324578",
    "src": "https://www.openstreetmap.org/?mlat=42.696398&mlon=23.324578"
   },
   {
@@ -421,7 +422,6 @@
    "walk": "中心から徒歩8分（約510m）",
    "stay": "45分",
    "advice": "現金が要る。午前のほうが品が多く、夕方は畳み始める。混むのでカメラと荷物は前に持つ。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.700680,23.318208",
    "src": "https://www.euronews.com/2026/08/22/sofia-travel-guide-how-to-spend-48-hours-in-bulgarias-capital"
   },
   {
@@ -437,7 +437,6 @@
    "walk": "中心から徒歩10分（約630m）",
    "stay": "15分",
    "advice": "小さいので、ネフスキー大聖堂へ歩く途中に寄る形がちょうどいい。内部は暗く、撮影が制限される。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.695694,23.328935",
    "src": "https://www.wikidata.org/wiki/Q873892"
   },
   {
@@ -453,7 +452,6 @@
    "walk": "中心から徒歩8分（約500m）",
    "stay": "20分（公演を観るなら2〜3時間）",
    "advice": "毎年11月中旬ごろから、この市庭園にドイツ・クリスマスマーケットが立つ。滞在が重なれば、ここが夜のいちばんの行き先になる。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.694167,23.326389",
    "src": "https://sofiaglobe.com/?p=125427"
   },
   {
@@ -469,7 +467,6 @@
    "walk": "中心から徒歩20分（約1.3km）",
    "stay": "30分",
    "advice": "建物の中は催しがないと閑散としている。目的は外観と広場なので、日が落ちる前に。ヴィトシャ大通りを南へ歩いていけば必ず着く。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.684722,23.318889",
    "src": "https://en.wikipedia.org/wiki/National_Palace_of_Culture"
   },
   {
@@ -485,7 +482,6 @@
    "walk": "中心から6.2km。63番・111番バスまたはトロリーバス2番で30〜40分。ボヤナ教会からは徒歩15分",
    "stay": "2時間",
    "advice": "ボヤナ教会から徒歩15分なので、必ず同じ日にまとめる。別々に行くと往復2回ぶん損をする。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.655282,23.270829",
    "src": "https://freesofiatour.com/blog/boyana-church-national-museum-of-history/"
   },
   {
@@ -501,7 +497,6 @@
    "walk": "中心から15km。バス・ゴンドラで1時間前後",
    "stay": "半日（4〜5時間）",
    "advice": "ゴンドラは運休していた時期があり、運行日・時間について情報が食い違っている。行く前に必ず当日の運行を確かめる。66番バスは「週末のみ」とする情報が複数あり、市内の乗車券が使えず運転手に払う方式。11月は市内より数段寒く、頂上は雪のことがある。防寒と靴を甘く見ない。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.563611,23.278333",
    "src": "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/"
   },
   {
@@ -517,7 +512,6 @@
    "walk": "中心から徒歩30分（約1.9km）。トラム・地下鉄で10分",
    "stay": "1時間",
    "advice": "広いので、入口を決めずに行くと迷う。暗くなると人が減るので、歩くなら日のあるうちに。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.686389,23.340556",
    "src": "https://www.wikidata.org/wiki/Q893826"
   },
   {
@@ -533,7 +527,6 @@
    "walk": "中心から南へ約120km。車・バスで片道2時間",
    "stay": "現地で2〜3時間（移動を含めて丸1日）",
    "advice": "1日がかりになるので、他の予定と同じ日に入れない。冬は山道の天候に左右される。内部は撮影が制限され、肌を出した服装では入れない。",
-   "maps": "https://www.google.com/maps/search/?api=1&query=42.134379,23.339551",
    "src": "https://www.wikidata.org/wiki/Q207945"
   }
  ],

@@ -11,8 +11,6 @@ import { share } from "@/lib/share";
 import {
   BG_BASICS,
   BG_BUY,
-  BG_COURSE,
-  BG_COURSE_NOTE,
   BG_EVENTS,
   BG_FACTS,
   BG_FOOD,
@@ -20,6 +18,7 @@ import {
   BG_HISTORY,
   BG_IMAGE,
   BG_LEAD,
+  BG_PLACES,
   BG_RATE,
   BG_SPOTS,
   BG_TODO,
@@ -47,6 +46,23 @@ import "./bg.css";
  * | **本物の地図** | 自前の丸だけの絵をやめて、通りと公園の見える地図を敷く |
  * | **縦を切る** | 狭い画面で 44,000px あった。絵の格子と畳みで、1画面に入る数を増やす |
  * | **付箋** | 視聴者さんが「ここ行って」を貼れる板（`content/themes.ts` の `bulgaria`） |
+ *
+ * ## 地図を節ごとに割った（2026-11-13・あやと、ソフィア滞在中）
+ *
+ * > 見たいもの、食べたいもの、買いたいもののところにマップを入れてほしくて、
+ * > どこにあるのか分かるようにしてほしいです。でマップが日本語じゃなくて見にくいので、
+ * > 日本語のマップに変えてほしいです。Googleマップが使いやすかった。
+ * > でアルクコースのセクションはいらないです。
+ *
+ * | | |
+ * | --- | --- |
+ * | **節ごとに地図** | 見たいもの・食べたいもの・買いたいものに1枚ずつ。載る数が減って縮尺が上がる |
+ * | **札は日本語** | OSM のタイルの字はブルガリア語。**上に重ねる札はこちらが描く** |
+ * | **Google マップ** | 場所の分かるものは全部、本物のアプリが開く（`hl=ja` 付き） |
+ * | **歩くコースを外した** | 節ごと消した。歩く順と所要時間の材料（`fill.json` の `course`）は残してある |
+ *
+ * **決まった場所の無い料理には、ピンを作らない。** 「どのレストランにもある」を
+ * どこか1軒に落とすと、現地で探して見つからない——歩いている人にいちばん効くのがそれ。
  *
  * ## 重要度は2本立てのまま
  *
@@ -179,6 +195,76 @@ function Credit({ s, of }: { s: Shot; of?: string }) {
   );
 }
 
+/** その節で使う店・市場。**番号は地図のピンと同じ** */
+function placesOf(items: readonly { readonly pins: readonly number[] }[]) {
+  const used = new Set<number>();
+  for (const it of items) for (const n of it.pins) used.add(n);
+  return BG_PLACES.filter((p) => used.has(p.n));
+}
+
+/**
+ * 地図の下の、店・市場の一覧。
+ *
+ * **地図の番号と、押して開く本物の Google マップを、ここで1つに結ぶ。**
+ * あやと（2026-11-13）:「Googleマップが使いやすかった」。島の地図は位置関係を
+ * 見るためのもので、**実際に歩くのは本物のアプリ**。
+ */
+function Places({ rows }: { rows: readonly (typeof BG_PLACES)[number][] }) {
+  return (
+    <ol className="bgplaces">
+      {rows.map((p) => (
+        <li key={p.key}>
+          <b className="bgplaces-n">{p.n}</b>
+          <span className="bgplaces-b">
+            <b>{p.label}</b>
+            {p.roman && <i>{p.roman}</i>}
+            <em>{p.what}</em>
+            {!p.on && <span className="bgplaces-far">地図の外・中心から{p.km}km</span>}
+          </span>
+          <a
+            className="bgpinmap"
+            href={p.maps}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Google マップで開く（${p.label}）`}
+          >
+            <Icon name="map" size={14} />
+            マップ
+          </a>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * 料理・土産ひとつにぶら下がる、場所への道。
+ *
+ * **決まった場所の無い品には、1つも出さない。** 「どのレストランにもある」を
+ * どこか1軒に落として「ここ」と書くと、現地で探して見つからない。
+ */
+function PinLinks({ pins }: { pins: readonly number[] }) {
+  if (!pins.length) return null;
+  return (
+    <p className="bgpins">
+      {BG_PLACES.filter((p) => pins.includes(p.n)).map((p) => (
+        <a
+          key={p.key}
+          href={p.maps}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Google マップで開く（${p.label}）`}
+        >
+          <b>{p.n}</b>
+          <Icon name="map" size={13} />
+          {p.label}
+          <Icon name="external" size={12} />
+        </a>
+      ))}
+    </p>
+  );
+}
+
 /** 節ひとつ */
 function Sec({
   id,
@@ -220,7 +306,6 @@ function Sec({
 const CHAPTERS: { id: string; icon: IconName; title: string; note: string }[] = [
   { id: "see", icon: "church", title: "見たいもの", note: `${BG_SPOTS.length}か所` },
   { id: "eat", icon: "eat", title: "食べたいもの", note: `${BG_FOOD.length}品` },
-  { id: "course", icon: "walk", title: "歩くコース", note: `${BG_COURSE.length}か所` },
   { id: "todo", icon: "sparkle", title: "したいこと", note: `${BG_TODO.length}つ` },
   { id: "buy", icon: "souvenir", title: "買いたいもの", note: `${BG_BUY.length}つ` },
   { id: "about", icon: "oldtown", title: "どんな街か", note: `${BG_HISTORY.length + BG_IMAGE.length}話` },
@@ -236,6 +321,9 @@ export default function BulgariaPage() {
   /* 頭に出す数は3つだけ。**9つ出していたのをやめた**——読む前に数の表を
      読まされると、そこで止まる（あやと「文字が多い」） */
   const facts = BG_FACTS.slice(0, 3);
+  /* 地図に出す店・市場。**節ごとに、その節で名前の出るものだけ** */
+  const eatPlaces = placesOf(BG_FOOD);
+  const buyPlaces = placesOf(BG_BUY);
 
   return (
     <PageShell crumbs={[crumbOf("next"), { label: "ブルガリア・ソフィア" }]}>
@@ -324,6 +412,7 @@ export default function BulgariaPage() {
         note={`${BG_SPOTS.length}か所`}
         lead="絵を押すと、入場料・所要時間・行きかた・ADVICE が出ます。"
       >
+        <BgMapSvg which="see" />
         {spotsBy.map((group, gi) => (
           <div key={gi} className="bggroup">
             <h3 className="bgsub">
@@ -408,6 +497,8 @@ export default function BulgariaPage() {
         note={`${BG_FOOD.length}品`}
         lead="注意の印は豚か酒です。ブルガリア料理の看板がちょうどそこなので、件数が多くなります。"
       >
+        <BgMapSvg which="eat" showFar={false} />
+        <Places rows={eatPlaces} />
         {foodBy.map((group, gi) => (
           <div key={gi} className="bggroup">
             <h3 className="bgsub">
@@ -449,6 +540,7 @@ export default function BulgariaPage() {
                       </li>
                     </ul>
                     {d.note && <p className="bgadvice is-food">{d.note}</p>}
+                    <PinLinks pins={d.pins} />
                     <Credit s={d as Shot} of={d.jp} />
                   </div>
                 </details>
@@ -458,47 +550,11 @@ export default function BulgariaPage() {
         ))}
       </Sec>
 
-      {/* ---- 03 歩くコース ------------------------------------------------ */}
-      <Sec
-        id="course"
-        icon="walk"
-        n={3}
-        title="歩くコース"
-        note={`${BG_COURSE.length}か所`}
-        lead="中心から出て、西の市場へ回り、東の大聖堂で終わる1本道。記号は上の一覧と同じです。"
-      >
-        <BgMapSvg />
-        <ol className="bgcourse">
-          {BG_COURSE.map((c, i) => (
-            <li key={c.letter}>
-              {i > 0 && (
-                <p className="bgleg">
-                  <Icon name="walk" size={14} />
-                  徒歩 約{c.min}分（{c.m}m）
-                </p>
-              )}
-              <div className={`bgstop is-${c.mark}`}>
-                <span className="bgstop-l">{c.letter}</span>
-                <span className="bgstop-b">
-                  <b>{c.name}</b>
-                  <i>
-                    <Icon name="clock" size={12} /> {c.stay}
-                  </i>
-                </span>
-                <Badge mark={c.mark as Mark} />
-              </div>
-              {i === BG_COURSE.length - 1 && <p className="bggoal">GOAL</p>}
-            </li>
-          ))}
-        </ol>
-        <p className="bgnote">{BG_COURSE_NOTE}</p>
-      </Sec>
-
-      {/* ---- 04 したいこと ------------------------------------------------ */}
+      {/* ---- 03 したいこと ------------------------------------------------ */}
       <Sec
         id="todo"
         icon="sparkle"
-        n={4}
+        n={3}
         title="ここでしたいこと"
         note={`${BG_TODO.length}つ`}
         lead="好みの実測と、現地で本当にできることを突き合わせた結論です。名物の順番とは違います。"
@@ -535,15 +591,17 @@ export default function BulgariaPage() {
         </Fold>
       </Sec>
 
-      {/* ---- 05 買いたいもの ---------------------------------------------- */}
+      {/* ---- 04 買いたいもの ---------------------------------------------- */}
       <Sec
         id="buy"
         icon="souvenir"
-        n={5}
+        n={4}
         title="買いたいもの"
         note={`${BG_BUY.length}つ`}
         lead="注意の印が付いているのは酒です。あやとは飲まないので、人に贈るときだけ。"
       >
+        <BgMapSvg which="buy" showFar={false} />
+        <Places rows={buyPlaces} />
         <div className="bgtiles">
           {BG_BUY.map((b) => (
             <details key={b.what} className={`bgtile is-${b.mark}`}>
@@ -567,6 +625,7 @@ export default function BulgariaPage() {
                     <span>{b.where}</span>
                   </li>
                 </ul>
+                <PinLinks pins={b.pins} />
                 <Credit s={b as Shot} of={b.what} />
               </div>
             </details>
@@ -574,11 +633,11 @@ export default function BulgariaPage() {
         </div>
       </Sec>
 
-      {/* ---- 06 どんな街か ------------------------------------------------ */}
+      {/* ---- 05 どんな街か ------------------------------------------------ */}
       <Sec
         id="about"
         icon="oldtown"
-        n={6}
+        n={5}
         title="どんな街か"
         note={`${BG_HISTORY.length + BG_IMAGE.length}話`}
       >
@@ -606,8 +665,8 @@ export default function BulgariaPage() {
         </Fold>
       </Sec>
 
-      {/* ---- 07 基本情報 -------------------------------------------------- */}
-      <Sec id="basics" icon="info" n={7} title="基本情報" note={`${BG_BASICS.length}件`}>
+      {/* ---- 06 基本情報 -------------------------------------------------- */}
+      <Sec id="basics" icon="info" n={6} title="基本情報" note={`${BG_BASICS.length}件`}>
         <Fold title="お金・足・治安・11月の気候" note={`${BG_BASICS.length}件`} lead={BG_RATE.slice(0, 34) + "…"}>
           <dl className="bgbasics">
             {BG_BASICS.map((b) => (
@@ -620,11 +679,11 @@ export default function BulgariaPage() {
         </Fold>
       </Sec>
 
-      {/* ---- 08 ことば ---------------------------------------------------- */}
+      {/* ---- 07 ことば ---------------------------------------------------- */}
       <Sec
         id="words"
         icon="phrase"
-        n={8}
+        n={7}
         title="ことば"
         note={`${BG_WORDS.length}語`}
         lead="キリル文字が読めないと、看板も路線図も引けません。"
