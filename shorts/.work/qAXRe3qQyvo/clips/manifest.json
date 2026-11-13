@@ -5,7 +5,7 @@
  "dest": "qAXRe3qQyvo/clips",
  "video": "qAXRe3qQyvo",
  "channel": null,
- "request": "shorts/requests/cross-qAXRe3qQyvo-p1-clips2-20261113b.json",
+ "request": "shorts/requests/cross-qAXRe3qQyvo-p1-clips1-20261113c.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,134 +14,154 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 25,
+  "sheets": 32,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 6,
-  "clips_ok": 6,
-  "clip_seconds": 1350.0,
+  "clips": 14,
+  "clips_ok": 14,
+  "clip_seconds": 1740.0,
   "channel_entries": 0,
-  "files": 39
+  "files": 54
  },
  "bytes": {
-  "plain": 821908072,
-  "tar_gz": 821062129,
-  "encrypted": 821062144
+  "plain": 1033980030,
+  "tar_gz": 1033018943,
+  "encrypted": 1033018944
  },
  "encrypted_files": [
   {
    "name": "payload.enc.000",
    "bytes": 47185920,
-   "sha256": "3aae695bd9ea591be99ff6d80cebde72ac830eb4c2082fa8dedc0acfc931cc5b"
+   "sha256": "8d7cb70b32846f60adf90e7c206138ad6cf30c6c6a8e8d06652e48604f4243d7"
   },
   {
    "name": "payload.enc.001",
    "bytes": 47185920,
-   "sha256": "1b0dd8a20219486d52d2ef37250b1c051a6627c447a40062c662ef518c21d392"
+   "sha256": "2ba47692a9682dbd917c9891a953b685153a369a723a3c666682028cf4bb9162"
   },
   {
    "name": "payload.enc.002",
    "bytes": 47185920,
-   "sha256": "b9c3aac9ffed7bba5616ed39c2e6bf71e5b39a6bbd9673dea10627b8b44536ee"
+   "sha256": "f227ee708b7f94d94e548bc2bef7500bce9d851d97f2263183e61b7ca1e1b9de"
   },
   {
    "name": "payload.enc.003",
    "bytes": 47185920,
-   "sha256": "463cfe8618407d3769c678d3899809f23f6f10ace6e3039b0fd457809e490303"
+   "sha256": "ad000a58eaa7b15e36f93729f391fbf1e2ee3d3b317d671cbfa6f6f0589810ea"
   },
   {
    "name": "payload.enc.004",
    "bytes": 47185920,
-   "sha256": "c44a8cec50befc01d78ddaa0406f9ecfea11c6a8b004ac68e93dc7576b55c713"
+   "sha256": "758c42e463e9c8a5a67a8e525f6af77a58cfa8a48c04ff40dd65cd171f157f0b"
   },
   {
    "name": "payload.enc.005",
    "bytes": 47185920,
-   "sha256": "d9f62de904cb01fd9886389c91f2500ec600261ecc2e4ba7061688f2ab0d2f52"
+   "sha256": "fe161abbd5d0d13ff3b3f329edf27da989d0f88fa5ad860f3a95566002451616"
   },
   {
    "name": "payload.enc.006",
    "bytes": 47185920,
-   "sha256": "dbe9b5c5f65be54c989ce66cc5fcd2cad565dd9a64cb4ae0ccda5fcea97dee40"
+   "sha256": "485b7d5b35ad483074627886d6e2a59a7aa3dc39a702519dbaadd2ea1243a71c"
   },
   {
    "name": "payload.enc.007",
    "bytes": 47185920,
-   "sha256": "142c0614177b2e96915aa723ac45306bc426c0e1c9c1d9318c3a7ccee7a075ea"
+   "sha256": "e95d86dad83a5acc25c199667c0b8da4792fbf5345603a29a0e104512844659e"
   },
   {
    "name": "payload.enc.008",
    "bytes": 47185920,
-   "sha256": "2606c8bf3b40a95e2692735021a5d921e3afe5384de28270459d0f81779e51e0"
+   "sha256": "98eaf275a3fd7c7484d862c1a06a3750077e1aa74e3cb3d86defd479d8fbbc36"
   },
   {
    "name": "payload.enc.009",
    "bytes": 47185920,
-   "sha256": "9f338f0e1f58c1b7a23b2819c9d4f001c0613d3650d8322dc0b2d41c71013904"
+   "sha256": "9a7c399d9da5f653b3e94dd54406d5519719808965571127c63aa447b239998d"
   },
   {
    "name": "payload.enc.010",
    "bytes": 47185920,
-   "sha256": "c0cb3b517d597068c83ce359f9e1b5d80560e2300b64f16a54d607bf70f8795a"
+   "sha256": "163c20f9d7c31049c3879631e2952de686e2ef8f7bfd87c8cce623ddb3dc370a"
   },
   {
    "name": "payload.enc.011",
    "bytes": 47185920,
-   "sha256": "5eb01fe0a496f86a3d487d356cfdb5d667285fd5e8dffa981a58397a5da18cd5"
+   "sha256": "1f94c7194a8ec608f2b0370ccd9da9bc7b746a688070e98e807b77d76b155da6"
   },
   {
    "name": "payload.enc.012",
    "bytes": 47185920,
-   "sha256": "7c19ea52771b89e976ae57943ebcbf535d5f5784a7b43e6a04f37259271220e4"
+   "sha256": "e9233c1f1b8d57c5e6c270fbfa563aca0d8f59d1ea21f2c4bdc895f3e1ce56fb"
   },
   {
    "name": "payload.enc.013",
    "bytes": 47185920,
-   "sha256": "2043e843da6c1ab5e071712967eafd46d8ed8448e4adb5b9b051c088bc68073d"
+   "sha256": "5d687e622f46299014038b1620a50b6a7dde26c2ab06b082b8e411abd11636bd"
   },
   {
    "name": "payload.enc.014",
    "bytes": 47185920,
-   "sha256": "dfe992c0eb486b257436ce84e674162473b1418838c1f12ff97b26d729f7419f"
+   "sha256": "57b5a3aa1d3e03e19126c344564989caa03dd32d85c2a04985fee4012d2ef7e8"
   },
   {
    "name": "payload.enc.015",
    "bytes": 47185920,
-   "sha256": "27724c747310613714e7d8f8e484b65d08b515b58c2c2cc543fea8b85a110575"
+   "sha256": "ec80a1ba537db2fa9b683e522a1abb006c317116184f10c8dfb93ba7f588efc0"
   },
   {
    "name": "payload.enc.016",
    "bytes": 47185920,
-   "sha256": "a761b51ee6fc6cea5d0ead49d2f81c13e13e1faa922ad2808d5707e0e3fde9fa"
+   "sha256": "d434dfab8f76de04e8373cdb8f332a1bd262fa5ccbdbe76d3e212def204a1c4a"
   },
   {
    "name": "payload.enc.017",
-   "bytes": 18901504,
-   "sha256": "d9b9f7be642dbb2a500e9ce9c3d8d6954ace56cd75126fc7dd3223cad2ec807a"
+   "bytes": 47185920,
+   "sha256": "9c2b05cb4be3a9be596cfd535900ba3968f891797e2250beec46050fcb0b30b8"
+  },
+  {
+   "name": "payload.enc.018",
+   "bytes": 47185920,
+   "sha256": "fc1a41b897d1d7726f1722a1bee6a8920da2487280721bfec6c8fb7393dadf23"
+  },
+  {
+   "name": "payload.enc.019",
+   "bytes": 47185920,
+   "sha256": "dc0377b22f070c31ecb00f23d4b39e1d18c3f7fb50d04f9f583696cabe7a2566"
+  },
+  {
+   "name": "payload.enc.020",
+   "bytes": 47185920,
+   "sha256": "36826186db2efcc1ed150e88846aa4a10724ebbc2b9a36e43b6831e64f59e157"
+  },
+  {
+   "name": "payload.enc.021",
+   "bytes": 42114624,
+   "sha256": "243dbf492bd906c1e4564330c65520698c2fe9b7ef640d00eff24ccfb36ae659"
   }
  ],
- "hmac_sha256": "c91da8a961e9256e0e6ef9e27c046ba22a21ffc70f674c117044c25dfd48ab63",
+ "hmac_sha256": "fcc5ac38a26397e1bda8a4bd46b155de5eb31eb7f9baff182ad60efa8ada6e58",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/43427298571",
- "created_at": "2026-11-13T13:03:12+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/43430964313",
+ "created_at": "2026-11-13T13:35:25+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 8167520,
-    "sha256": "67ebcedcbf88fff770f74aed7573a4d0b5934c480c35ae5bc946abdc9d1c300e"
+    "bytes": 14281968,
+    "sha256": "0ee5c05e514b78435ea6c9e5bb3889a1938e748f2cac73979a6788c345d52a7e"
    }
   ],
-  "hmac_sha256": "cd5debfd8ca711b653f5e0fc41bd86594f95e49240bb83e29714cb0128152463",
-  "files": 29,
-  "sheets": 25,
+  "hmac_sha256": "0197e179b2d183db1ad2a3e96f05139fd6ca72734ef5b82a33db595df32a1222",
+  "files": 36,
+  "sheets": 32,
   "bytes": {
-   "plain": 8462681,
-   "tar_gz": 8167515,
-   "encrypted": 8167520
+   "plain": 14612483,
+   "tar_gz": 14281957,
+   "encrypted": 14281968
   }
  }
 }
