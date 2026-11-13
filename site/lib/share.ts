@@ -88,3 +88,25 @@ export function share(opts: {
     ...(opts.robots ? { robots: opts.robots } : {}),
   };
 }
+
+/**
+ * **表紙（`/`）のぶん。足すのは「自分の居場所」（`<link rel="canonical">`）だけ。**
+ *
+ * 2026-11-13 に本番の 149面を数えたら、canonical は 148面に在って、
+ * **表紙だけ無かった。** ほかの面は上の `share()` が出していて、
+ * 表紙は `metadata` を持たずに器（`app/layout.tsx`）の指定をそのまま受けていたため。
+ *
+ * ## なぜ器に書かないか
+ *
+ * 器の `alternates` は、**自分で `alternates` を書かない面ぜんぶに引き継がれる。**
+ * `share()` を通していない面（`/me` や 404）が、表紙を正の面として名乗ることになる。
+ * だから表紙の面そのものに置く。
+ *
+ * ## なぜ `share()` を通さないか
+ *
+ * `share()` は題と一文と絵まで出す。表紙の題（`title.default`）と絵（`/og.png`）は
+ * 器が持っていて、ここで出し直すと題が `%s｜あやと島` の型に入って変わる。
+ * **表紙に足りなかったのは居場所だけ**なので、それだけを足す。
+ * Next が親と混ぜないのは `openGraph` の中身で、鍵（`alternates`）が違えば器のぶんは残る。
+ */
+export const selfOnly = (path: string): Metadata => ({ alternates: { canonical: path } });

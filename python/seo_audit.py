@@ -4,10 +4,46 @@
     python3 python/seo_audit.py --base https://… --out seo.tsv    # 面ごとの TSV も書く
     python3 python/seo_audit.py --detail /bulgaria /north-macedonia   # その面だけ。見出しの木・絵・リンク
     python3 python/seo_audit.py --html dom.html --as /bulgaria    # 落としてある HTML を同じ物差しで測る
+    python3 python/seo_audit.py --dist site/.next-3130 --no-site  # 手元の書き出しを測る（配るのも止めるのも道具がやる）
+    python3 python/seo_audit.py --expect canonical=all,sitemap-dup=0   # 線を引いて、合否を出す
 
 終了コード 0=測れた / **2=sitemap が読めない・1面も測れない**（`docs/island-standards.md` §15。
-**0件を答えとして出さない**）。**1 は返さない。** これは判定器ではなく数を出す道具なので、
+**0件を答えとして出さない**）。`--expect` を付けないあいだは **1 を返さない。** 数を出す道具なので、
 「足りない」と決めるのは読む人の仕事（`python/cron_lag.py` と同じ立ち位置）。
+
+## 線を引く（`--expect`）
+
+`--expect` を付けたときだけ判定器になる。**0=ぜんぶ通った / 1=外れた線がある / 2=測れなかった線がある。**
+
+    --expect 'canonical=all,sitemap-dup=0,lastmod-distinct>=2,lastmod-future=0,priority=0,\
+              jsonld:/=WebSite,jsonld:/about=ProfilePage+Person,jsonld-bad=0,crumbs=jsonld,time-plain<=1'
+
+| 線 | 何を数えるか | 分母（0 なら「測れない」） |
+| --- | --- | --- |
+| `canonical=all` | canonical が在る面（ちょうど1つ・絶対 URL） | sitemap の一意な URL |
+| `canonical-other<=1` | canonical が在るのに、自分ではない URL を指している面 | canonical が在る面 |
+| `sitemap-dup=0` | sitemap に2回以上載っている URL | sitemap の行 |
+| `priority=0` | `<priority>` の付いた行 | sitemap の行 |
+| `lastmod-distinct>=2` | `<lastmod>` の値が何通りか | `<lastmod>` の付いた行 |
+| `lastmod-future=0` | いまより先の `<lastmod>` | `<lastmod>` の付いた行 |
+| `lastmod-bad=0` | 日付として読めない `<lastmod>` | `<lastmod>` の付いた行 |
+| `jsonld:<道>=<型>+<型>` | その面の構造化データが、その型を全部持っているか | その面が読めたか |
+| `jsonld-bad=0` | JSON として読めない・`@context` `@type`・型ごとの必須の欄が欠けた塊 | 構造化データの塊 |
+| `crumbs=jsonld` | 見えるパンくずを持つ面と、`BreadcrumbList` を持つ面が同じ集まりか | 見えるパンくずを持つ面 |
+| `time-plain<=N` | `<time>` は在るのに `datetime` が1つも無い面 | `<time>` を持つ面 |
+| `tools-noindex=all` | `firebase.json` が noindex を付けると決めた道具の面に、`X-Robots-Tag: noindex` が返るか | 200 で返った道具の面 |
+
+数の線は `=` `>=` `<=` のどれでも書ける。`all` は分母と同じ数。
+**分母が 0 の線は通さない**（`jsonld-bad=0` は、構造化データが1つも無い面の集まりでは 2 になる）。
+**1面でも読めなかったら 2**——読めなかった面を分母から黙って抜いて「ぜんぶ通った」と言わない。
+
+## 手元の書き出しを測る（`--dist`）
+
+sitemap の `<loc>` は本番の origin で書かれている。この道具は**道だけを取って `--base` に付け替える**
+ので、`--base http://localhost:4130` と渡せば手元の書き出しも測れる（`/x` が無ければ `/x.html` を試す。
+本番の `cleanUrls` と同じ読み替え）。`--dist <置き場>` はその手間を省く——道具が自分で空いた口に配って、
+測り終えたら止める。**開発サーバは立てない**（`CLAUDE.md`「測るときは、書き出したものを静的に配る」）。
+canonical と `og:url` は、付け替える前の URL（＝本番で名乗る URL）と比べる。
 
 ## なぜ、JS を動かさずに読むか
 
@@ -58,27 +94,31 @@ JS が後から足すリンクは、JS を動かさない読み手には辿れ�
 
 本番へ `urllib` で取りに行く（この箱のプロキシと証明書は環境変数から読まれる。
 **TLS の検証は切らない**）。並びは4本まで、1本ごとに少し待つ。
-User-Agent には持ち主の名前を入れない。**見張り（selftest）からは呼ばない**——
+User-Agent には持ち主の名前を入れない。**見張り（selftest）から本番へは出ない**——
 外に出るものを毎 PR で回すと、向こうの都合で赤くなる。
 
 ## 対照（落ちるときに落ちるか）
 
-`python3 -m http.server` で、canonical 無し・h1 が2つ・JSON-LD 無し・本文が JS 頼みの
-偽の面と sitemap.xml を配って、それぞれが名指しされることを見る。
-偽の sitemap の `<loc>` は**配っている先と別のホスト**にしておく——
+`python/seo_audit_selftest.py`。手元の口に偽の島を配って、守りを1つずつ外す
+（canonical 無し・sitemap の重複・更新日が1通り・`WebSite` 無し・`datetime` 無し ほか）。
+**外した足の線だけが落ちて、ほかの線は通る**ことまで見る。
+偽の sitemap の `<loc>` は**配っている先と別のホスト**にしてある——
 この道具は `<loc>` の道を `--base` に付け替えて取りに行くので、その足も一緒に当たる。
 """
 
 from __future__ import annotations
 
 import argparse
+import functools
 import gzip
 import hashlib
 import http.client
+import http.server
 import json
 import re
 import statistics
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -86,7 +126,7 @@ import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
@@ -140,6 +180,24 @@ SKIP = {"script", "style", "noscript", "template"}
 # SVG の中で、画面に出ない字
 SVG_META = {"title", "desc", "metadata"}
 YOUTUBE = re.compile(r"(?:^|\.)(?:youtube\.com|youtu\.be|youtube-nocookie\.com)$")
+
+# 見えるパンくずの見分け。島は `<nav class="crumbs" aria-label="現在地">`
+# （`site/components/ui/PageShell.tsx` の `Crumbs`）。クラス名を変えたら、ここも変える
+# ——変え忘れると `crumbs=jsonld` の線が「分母 0＝測れない」で 2 になるので、黙っては通らない
+CRUMB_CLASS = "crumbs"
+CRUMB_LABELS = {"現在地", "パンくず", "breadcrumb"}
+
+# 構造化データの、型ごとに無いと困る欄。**増やすのは、その型を島が出すようになってから**
+# （`site/lib/jsonld.tsx`）。Google の必須の欄のうち、いちばん外せないものだけ
+LD_NEEDS: dict[str, list[str]] = {
+    "WebSite": ["name", "url"],
+    "ProfilePage": ["mainEntity"],
+    "Person": ["name"],
+    "BreadcrumbList": ["itemListElement"],
+}
+
+# このリポジトリの根。`firebase.json` と `public/` から、道具の面を数えるのに使う
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def _chars(s: str) -> int:
@@ -312,6 +370,7 @@ class Page:
     scripts: list = field(default_factory=list)     # src
     time_dt: int = 0
     time_plain: int = 0
+    crumbs: int = 0                                 # 見えるパンくず（`<nav class="crumbs">`）の数
     inline_script_bytes: int = 0
     chunks: list = field(default_factory=list)      # 本文の字そのもの（生と JS 後の DOM を引き算するとき用）
 
@@ -381,6 +440,10 @@ class _Reader(HTMLParser):
                     p.time_dt += 1
                 else:
                     p.time_plain += 1
+            elif tag == "nav":
+                if (CRUMB_CLASS in (a.get("class") or "").split()
+                        or (a.get("aria-label") or "").strip().lower() in CRUMB_LABELS):
+                    p.crumbs += 1
         if tag == "script":
             if a.get("src"):
                 p.scripts.append(a["src"])
@@ -491,6 +554,62 @@ def ld_types(blocks: list[str]) -> tuple[list[str], int]:
     return seen, bad
 
 
+def ld_problems(blocks: list[str]) -> list[str]:
+    """構造化データの塊ごとに、困るところを1行で。困らなければ空。
+
+    見るのは3つだけ: JSON として読めるか／いちばん外の入れものが `@context` と `@type` を
+    持っているか／型ごとの必須の欄（`LD_NEEDS`）が在るか。パンくずは並びの番号と、
+    **いちばん奥を除く段の行き先**（`item`）まで見る——途中の `item` が欠けた名札は、
+    読む側で丸ごと捨てられる。
+    """
+    out: list[str] = []
+
+    def need(node: dict, where: str) -> list[str]:
+        bad: list[str] = []
+        types = node.get("@type")
+        for t in (types if isinstance(types, list) else [types]):
+            for k in LD_NEEDS.get(t, []) if isinstance(t, str) else []:
+                if node.get(k) in (None, "", [], {}):
+                    bad.append(f"{where}{t} に {k} が無い")
+            if t == "BreadcrumbList":
+                items = node.get("itemListElement")
+                items = items if isinstance(items, list) else []
+                for i, it in enumerate(items):
+                    if not isinstance(it, dict) or it.get("position") != i + 1 or not it.get("name"):
+                        bad.append(f"{where}BreadcrumbList の {i + 1}段目に position か name が無い")
+                    elif i + 1 < len(items) and not it.get("item"):
+                        bad.append(f"{where}BreadcrumbList の {i + 1}段目（途中の段）に item が無い")
+        for k, v in node.items():
+            for child in (v if isinstance(v, list) else [v]):
+                if isinstance(child, dict) and "@type" in child:
+                    bad += need(child, where)
+        return bad
+
+    for n, b in enumerate(blocks, 1):
+        try:
+            data = json.loads(b)
+        except ValueError:
+            out.append(f"{n}個目が JSON として読めない")
+            continue
+        tops = data if isinstance(data, list) else [data]
+        why: list[str] = []
+        for top in tops:
+            if not isinstance(top, dict):
+                why.append("入れものが {…} ではない")
+                continue
+            if "schema.org" not in str(top.get("@context", "")):
+                why.append("@context が無い")
+            nodes = top.get("@graph") if isinstance(top.get("@graph"), list) else [top]
+            for node in nodes:
+                if not isinstance(node, dict) or not node.get("@type"):
+                    why.append("@type が無い")
+                else:
+                    why += need(node, "")
+        if why:
+            out.append(f"{n}個目: " + "・".join(dict.fromkeys(why)))
+    return out
+
+
 # ---- 1面を測る --------------------------------------------------------
 
 def norm_url(u: str) -> str:
@@ -567,6 +686,10 @@ def measure(html: str, public_url: str, hosts: set[str]) -> dict:
     types, bad = ld_types(p.jsonld)
     row["jsonld_count"] = len(p.jsonld)
     row["jsonld_types"] = ",".join(types) + (f" (読めない塊 {bad})" if bad else "")
+    row["_ld_types"] = types
+    row["_ld_problems"] = ld_problems(p.jsonld)
+    row["jsonld_bad"] = len(row["_ld_problems"])
+    row["crumbs"] = p.crumbs
 
     row["img_count"] = len(p.imgs)
     row["img_alt_missing"] = sum(1 for _, alt, _m in p.imgs if alt is None)
@@ -625,7 +748,7 @@ COLS = ["path", "type", "status", "hops", "final_url", "html_bytes", "wire_bytes
         "og_image", "og_url", "og_url_self", "twitter_card", "h1_count", "h2_count",
         "h3_count", "text_chars", "text_main_chars", "text_svg_chars", "text_hidden_chars",
         "text_folded_chars",
-        "jsonld_count", "jsonld_types", "img_count", "img_alt_missing", "img_alt_empty",
+        "jsonld_count", "jsonld_types", "jsonld_bad", "crumbs", "img_count", "img_alt_missing", "img_alt_empty",
         "img_main_count", "img_main_noalt",
         "links_internal", "links_internal_uniq", "links_fragment", "links_external",
         "links_youtube", "youtube_iframes", "time_datetime", "time_no_datetime", "hreflang",
@@ -638,15 +761,25 @@ def fetch_page(base: str, e: Entry, try_html: bool) -> dict:
     s = urlsplit(e.loc)
     path = s.path or "/"
     url = base.rstrip("/") + path + (f"?{s.query}" if s.query else "")
-    got = fetch(url)
     note = []
-    if try_html and got.status == 404 and "." not in path.rsplit("/", 1)[-1] and path != "/":
-        # 手元の `python3 -m http.server` は `/x` を `/x.html` に読み替えてくれない。
-        # **本番を測るときはここを通らない**（`<loc>` と `--base` のホストが同じなので）
-        alt = fetch(url + ".html")
-        if alt.status == 200:
-            got = alt
+    bare = "." not in path.rsplit("/", 1)[-1] and path != "/"
+    if try_html and bare and is_local(base):
+        # 手元の `python3 -m http.server` は `/x` を `/x.html` に読み替えてくれない。しかも
+        # `x/`（下の段の置き場）が在ると、`/x` は 301 → **置き場の一覧（200 の HTML）**になる。
+        # 404 を待ってから `.html` を試すと、一覧を面として測ってしまうので、**先に `.html`**
+        got = fetch(url + ".html")
+        if got.status == 200:
             note.append(".html を足して取れた")
+        else:
+            got = fetch(url)
+    else:
+        got = fetch(url)
+        if try_html and bare and got.status == 404:
+            # **本番を測るときはここを通らない**（`<loc>` と `--base` のホストが同じなので）
+            alt = fetch(url + ".html")
+            if alt.status == 200:
+                got = alt
+                note.append(".html を足して取れた")
     row = {"url": e.loc, "path": norm_path(path), "type": kind(norm_path(path)),
            "status": got.status, "hops": got.hops, "final_url": got.final if got.hops else "",
            "html_bytes": len(got.body), "wire_bytes": got.wire,
@@ -699,6 +832,286 @@ def crosslink(rows: list[dict]) -> dict:
     for r in rows:
         r["depth"] = depth.get(r["path"], "")
     return {"off_map": off_map}
+
+
+def is_local(base: str) -> bool:
+    return (urlsplit(base).hostname or "") in ("localhost", "127.0.0.1", "::1")
+
+
+def lastmod_state(val: str, now: datetime) -> str:
+    """`<lastmod>` 1つを "ok" / "future" / "bad" に。
+
+    日付だけの値（`2026-11-12`）は**日**で比べる（UTC のきょうより先なら未来）。
+    時刻つきの値は時刻で比べる（時計のずれぶん5分は見逃す）。
+    """
+    v = val.strip()
+    m = re.fullmatch(r"(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?", v)
+    try:
+        if m:
+            d = date(int(m[1]), int(m[2] or 1), int(m[3] or 1))
+            return "future" if d > now.date() else "ok"
+        t = datetime.fromisoformat(v.replace("Z", "+00:00"))
+    except ValueError:
+        return "bad"
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return "future" if t > now + timedelta(minutes=5) else "ok"
+
+
+def sitemap_facts(entries: list[Entry], now: datetime | None = None) -> dict:
+    """sitemap の行から出る数。**取りに行かない**（`--no-site` でも出す）。"""
+    now = now or datetime.now(timezone.utc)
+    locs = Counter(norm_url(e.loc) for e in entries)
+    mods = [e.lastmod for e in entries if e.lastmod]
+    states = [lastmod_state(v, now) for v in mods]
+    return {
+        "rows": len(entries),
+        "uniq": len(locs),
+        "dup": sorted(u for u, n in locs.items() if n > 1),
+        "with_mod": len(mods),
+        "distinct": len(set(mods)),
+        "oldest": min(mods) if mods else "",
+        "newest": max(mods) if mods else "",
+        "future": [v for v, st in zip(mods, states) if st == "future"],
+        "bad": [v for v, st in zip(mods, states) if st == "bad"],
+        "priority": sum(1 for e in entries if e.priority),
+    }
+
+
+def sitemap_lines(sm: dict) -> list[tuple[str, str]]:
+    rows, mod = sm["rows"], sm["with_mod"]
+    out = [("行 / 一意な URL", f"{rows}行 / {sm['uniq']}")]
+    out.append(("2回以上載っている URL", f"{len(sm['dup'])}/{sm['uniq']}"
+                + (f"（{', '.join(sm['dup'])}）" if sm["dup"] else "")))
+    line = f"付いている {mod}/{rows}"
+    if mod:
+        line += f"（{mod * 100 // rows}%）・値は {sm['distinct']}通り・{sm['oldest']} 〜 {sm['newest']}"
+        if sm["distinct"] == 1 and mod > 1:
+            line += "（**全部同じ値＝更新日として読めない**）"
+    out.append(("lastmod", line))
+    out.append(("lastmod がいまより先", f"{len(sm['future'])}/{mod}"
+                + (f"（{', '.join(sorted(set(sm['future']))[:5])}）" if sm["future"] else "")))
+    out.append(("lastmod が日付として読めない", f"{len(sm['bad'])}/{mod}"
+                + (f"（{', '.join(sorted(set(sm['bad']))[:5])}）" if sm["bad"] else "")))
+    out.append(("priority の付いた行", f"{sm['priority']}/{rows}"))
+    return out
+
+
+def glob_re(glob: str) -> re.Pattern:
+    """Firebase Hosting の `source` の glob を正規表現に。
+
+    読むのは `firebase.json` が実際に使っている形だけ（`**`・`*`・`@(a|b)`）。
+    ほかの形が来たら**当てずに落とす**——読めない glob を「当たらない」と数えると、
+    noindex が付いていない面を「付けないと決めた面」と読み違える。
+    """
+    out, i = [], 0
+    while i < len(glob):
+        c = glob[i]
+        if glob.startswith("**", i):
+            out.append(".*")
+            i += 2
+        elif c == "*":
+            out.append("[^/]*")
+            i += 1
+        elif glob.startswith("@(", i) and ")" in glob[i:]:
+            j = glob.index(")", i)
+            out.append("(?:" + "|".join(re.escape(x) for x in glob[i + 2:j].split("|")) + ")")
+            i = j + 1
+        elif c in "?+!@[]{}()|\\":
+            raise ValueError(f"この道具が読めない glob（{glob!r} の {i + 1}字目 {c!r}）")
+        else:
+            out.append(re.escape(c))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def noindex_rules(conf: dict) -> list[re.Pattern]:
+    """`firebase.json` の headers のうち、`X-Robots-Tag: noindex` を付ける行の `source`。"""
+    rules = []
+    for h in conf.get("hosting", {}).get("headers", []):
+        if not any(x.get("key", "").lower() == "x-robots-tag" and "noindex" in x.get("value", "").lower()
+                   for x in h.get("headers", [])):
+            continue
+        rules.append(glob_re(h["source"]) if "source" in h else re.compile(h["regex"]))
+    return rules
+
+
+def tool_pages(root: Path = ROOT) -> tuple[list[str], list[str]]:
+    """（noindex を付けると決めてある道具の面, 付けていない `public/` の面）。
+
+    道は**本番で開く形**（`cleanUrls` で `.html` と `/index` が落ちたあと）。数えるのは
+    Expo の面（`/expo-app.html` へ書き換える道と、その実体）と、`public/` の HTML。
+    島の面（`site/`）はここに入らない。**手で並べない**——`public/` に1枚足せば、
+    ここに出てくる（付けていない側に出るので、決め忘れが見える）。
+    """
+    conf = json.loads((root / "firebase.json").read_text(encoding="utf-8"))
+    rules = noindex_rules(conf)
+    paths: set[str] = set()
+    for r in conf.get("hosting", {}).get("rewrites", []):
+        if r.get("destination") == "/expo-app.html":
+            paths.add("/expo-app")
+            if "*" not in r.get("source", "*"):
+                paths.add(r["source"])
+    pub = root / "public"
+    for f in sorted(pub.rglob("*.html")) if pub.is_dir() else []:
+        paths.add(norm_path("/" + f.relative_to(pub).as_posix()))
+    hit = sorted(x for x in paths if any(r.match(x) for r in rules))
+    return hit, sorted(paths - set(hit))
+
+
+def probe_tools(base: str, root: Path = ROOT) -> dict:
+    """道具の面を1本ずつ取って、`X-Robots-Tag: noindex` が返るかを見る。
+
+    **配信ヘッダは Hosting の層**なので、手元の書き出しには出ない
+    （`docs/island-routing.md`）。配ったあとに本番へ向けて見る数。
+    """
+    want, left = tool_pages(root)
+    fix = base.rstrip("/")
+    with ThreadPoolExecutor(WORKERS) as ex:
+        got = list(ex.map(lambda x: fetch(fix + x), want + left))
+    live = [(x, g) for x, g in zip(want, got) if g.status == 200]
+    tagged = [x for x, g in live if "noindex" in g.headers.get("x-robots-tag", "").lower()]
+    open_ = [x for x, g in zip(left, got[len(want):]) if g.status == 200
+             and "noindex" not in g.headers.get("x-robots-tag", "").lower()]
+    return {"want": want, "live": [x for x, _ in live], "tagged": tagged,
+            "untagged": [x for x, _ in live if x not in tagged], "left": left, "open": open_}
+
+
+def tool_lines(t: dict) -> list[tuple[str, str]]:
+    return [
+        (f"道具の面（`firebase.json` が noindex を付ける {len(t['want'])}面）",
+         f"200 で返った {len(t['live'])}面のうち `X-Robots-Tag: noindex` が {len(t['tagged'])}/{len(t['live'])}"
+         + (f"（無い: {', '.join(t['untagged'][:12])}）" if t["untagged"] else "")),
+        (f"noindex を付けていない `public/` の面（{len(t['left'])}面）",
+         (", ".join(t["left"]) or "無い") + f"／うち 200 で開いている {len(t['open'])}面"),
+    ]
+
+
+class _Dist(http.server.SimpleHTTPRequestHandler):
+    """書き出した置き場を、本番の `cleanUrls` と同じ読み替えで配る（`/x` → `x.html`）。"""
+
+    def translate_path(self, path):  # noqa: D401
+        got = super().translate_path(path)
+        if not Path(got).is_file() and Path(got.rstrip("/") + ".html").is_file():
+            return got.rstrip("/") + ".html"
+        return got
+
+    def log_message(self, *args):  # 1面ごとの行は要らない
+        pass
+
+
+def serve_dist(directory: str) -> tuple[http.server.ThreadingHTTPServer, str]:
+    """空いている口に配る。止めるのは呼んだ側（`shutdown()`）。"""
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(_Dist, directory=directory))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, f"http://127.0.0.1:{srv.server_address[1]}"
+
+
+# ---- 線を引く（--expect）----------------------------------------------
+
+EXPECT_COUNTS = ("canonical", "canonical-other", "sitemap-dup", "priority", "lastmod-distinct", "lastmod-future",
+                 "lastmod-bad", "jsonld-bad", "time-plain", "tools-noindex")
+_TERM = re.compile(r"^(?P<name>[a-z-]+)(?::(?P<path>/[^=<>]*))?(?P<op>>=|<=|=)(?P<val>[^=<>]+)$")
+
+
+def parse_expect(text: str) -> list[dict]:
+    """`--expect` の字を線の並びに。**読めない線は、測る前に落とす**（黙って捨てない）。"""
+    out = []
+    for raw in (t.strip() for t in text.split(",")):
+        if not raw:
+            continue
+        m = _TERM.match(raw)
+        if not m:
+            raise ValueError(f"読めない線: {raw!r}")
+        name, path, op, val = m["name"], m["path"], m["op"], m["val"].strip()
+        if name == "jsonld" and path and op == "=":
+            out.append({"raw": raw, "kind": "types", "path": norm_path(path), "types": val.split("+")})
+        elif name == "crumbs" and not path and op == "=" and val == "jsonld":
+            out.append({"raw": raw, "kind": "crumbs"})
+        elif name in EXPECT_COUNTS and not path and (val == "all" or val.isdigit()):
+            out.append({"raw": raw, "kind": "count", "name": name, "op": op, "val": val})
+        else:
+            raise ValueError(f"知らない線: {raw!r}（数の線は {', '.join(EXPECT_COUNTS)}）")
+    if not out:
+        raise ValueError("線が1本も無い")
+    return out
+
+
+def _names(xs: list[str]) -> str:
+    return f"（{', '.join(xs[:NAME_UP_TO])}{' …' if len(xs) > NAME_UP_TO else ''}）" if xs else ""
+
+
+def judge(terms: list[dict], rows: list[dict], sm: dict, tools: dict | None) -> list[tuple[str, str, str]]:
+    """線ごとに（線, "ok" / "ng" / "na", 言い分）。**"na" は測れなかった**（分母が 0）。"""
+    ok = [r for r in rows if r["_ok"]]
+    has_time = [r for r in ok if r["time_datetime"] or r["time_no_datetime"]]
+    blocks = sum(r["jsonld_count"] for r in ok)
+
+    def counts(name: str) -> tuple[int, int, list[str], str]:
+        """（数, 分母, 名指し, 分母の呼び名）"""
+        if name == "canonical":
+            miss = [r["path"] for r in rows if not (r["_ok"] and r["canon_count"] == 1 and r["canon_abs"])]
+            return len(rows) - len(miss), len(rows), miss, "sitemap の一意な URL"
+        if name == "canonical-other":
+            has = [r for r in ok if r["canon_count"]]
+            other = [f"{r['path']} → {r['canonical']}" for r in has if not r["canon_self"]]
+            return len(other), len(has), other, "canonical が在る面"
+        if name == "sitemap-dup":
+            return len(sm["dup"]), sm["rows"], sm["dup"], "sitemap の行"
+        if name == "priority":
+            return sm["priority"], sm["rows"], [], "sitemap の行"
+        if name == "lastmod-distinct":
+            return sm["distinct"], sm["with_mod"], [], "lastmod の付いた行"
+        if name == "lastmod-future":
+            return len(sm["future"]), sm["with_mod"], sorted(set(sm["future"])), "lastmod の付いた行"
+        if name == "lastmod-bad":
+            return len(sm["bad"]), sm["with_mod"], sorted(set(sm["bad"])), "lastmod の付いた行"
+        if name == "jsonld-bad":
+            bad = [r["path"] for r in ok if r["jsonld_bad"]]
+            return sum(r["jsonld_bad"] for r in ok), blocks, bad, "構造化データの塊"
+        if name == "time-plain":
+            plain = [r["path"] for r in has_time if not r["time_datetime"]]
+            return len(plain), len(has_time), plain, "`<time>` を持つ面"
+        if name == "tools-noindex":
+            t = tools or {"tagged": [], "live": [], "untagged": []}
+            return len(t["tagged"]), len(t["live"]), t["untagged"], "200 で返った道具の面"
+        raise KeyError(name)
+
+    out: list[tuple[str, str, str]] = []
+    unread = [r["path"] for r in rows if not r["_ok"]]
+    out.append(("（読めた面）", "na" if unread else "ok",
+                f"{len(ok)}/{len(rows)}" + (f"＝読めなかった面が在る{_names(unread)}" if unread else "")))
+    for t in terms:
+        if t["kind"] == "count":
+            got, den, named, what = counts(t["name"])
+            if den == 0:
+                out.append((t["raw"], "na", f"分母が 0（{what}が1つも無い）＝測れない"))
+                continue
+            want = den if t["val"] == "all" else int(t["val"])
+            hit = {"=": got == want, ">=": got >= want, "<=": got <= want}[t["op"]]
+            # 通っていても、残っているものが数えるほどなら道を言う（「1/106」だけでは、どの面か分からない）
+            tell = named if (not hit or (t["op"] == "<=" and got)) else []
+            out.append((t["raw"], "ok" if hit else "ng", f"{got}/{den}" + _names(tell)))
+        elif t["kind"] == "types":
+            row = next((r for r in ok if r["path"] == t["path"]), None)
+            if row is None:
+                out.append((t["raw"], "na", f"{t['path']} が読めていない（sitemap に無いか、200 で返らない）"))
+                continue
+            miss = [x for x in t["types"] if x not in row["_ld_types"]]
+            out.append((t["raw"], "ng" if miss else "ok",
+                        f"在る型: {', '.join(row['_ld_types']) or '無い'}" + (f"／無い型: {', '.join(miss)}" if miss else "")))
+        else:
+            seen = {r["path"] for r in ok if r["crumbs"]}
+            told = {r["path"] for r in ok if "BreadcrumbList" in r["_ld_types"]}
+            if not seen:
+                out.append((t["raw"], "na", "見えるパンくずを持つ面が 0（見分けが外れているか、読めていない）＝測れない"))
+                continue
+            only_seen, only_told = sorted(seen - told), sorted(told - seen)
+            out.append((t["raw"], "ng" if only_seen or only_told else "ok",
+                        f"見えるパンくず {len(seen)}面・BreadcrumbList {len(told)}面"
+                        + (f"／名札が無い{_names(only_seen)}" if only_seen else "")
+                        + (f"／パンくずが見えない{_names(only_told)}" if only_told else "")))
+    return out
 
 
 def site_checks(base: str, entries: list[Entry], rows: list[dict], alt: str | None) -> list[tuple[str, str]]:
@@ -763,14 +1176,7 @@ def site_checks(base: str, entries: list[Entry], rows: list[dict], alt: str | No
             out.append((f"別の書きかた {deep}{tail}", f"{g.status or g.error}"
                         + (f" → {g.headers.get('location', '')}" if g.headers.get("location") else "")))
 
-    mods = Counter(e.lastmod for e in entries)
-    with_mod = sum(1 for e in entries if e.lastmod)
-    out.append(("sitemap の lastmod", f"付いている {with_mod}/{len(entries)}・値は {len(mods)}通り"
-                + ("（**全部同じ時刻＝更新日として読めない**: " + next(iter(mods)) + "）"
-                   if len(mods) == 1 and with_mod == len(entries) and len(entries) > 1 else "")))
-    locs = Counter(norm_url(e.loc) for e in entries)
-    dup = sorted(u for u, n in locs.items() if n > 1)
-    out.append(("sitemap に2回載っている URL", f"{len(dup)}/{len(locs)}" + (f"（{', '.join(dup)}）" if dup else "")))
+    # sitemap の重複・lastmod は `sitemap_lines` が出す（取りに行かない数なので、`--no-site` でも出る）
     off = sorted({urlsplit(e.loc).netloc for e in entries} - {host})
     if off:
         out.append(("sitemap の宛先のホスト", f"{', '.join(off)}（測ったのは {host}）"))
@@ -874,6 +1280,13 @@ def tallies(rows: list[dict]) -> list[tuple[str, list[str], list[str]]]:
 
     defs = [
         ("JSON-LD を持つ面", c(lambda r: r["jsonld_count"])),
+        ("JSON-LD に困るところが在る面（読めない・必須の欄が無い）", c(lambda r: r["jsonld_bad"])),
+        ("見えるパンくずを持つ面", c(lambda r: r["crumbs"])),
+        ("`BreadcrumbList` を持つ面", c(lambda r: "BreadcrumbList" in r["_ld_types"])),
+        ("パンくずは見えるのに `BreadcrumbList` が無い面",
+         c(lambda r: r["crumbs"] and "BreadcrumbList" not in r["_ld_types"])),
+        ("`BreadcrumbList` は在るのにパンくずが見えない面",
+         c(lambda r: not r["crumbs"] and "BreadcrumbList" in r["_ld_types"])),
         ("`<time datetime>` を持つ面", c(lambda r: r["time_datetime"])),
         ("`<time>` は在るが datetime が無い面", c(lambda r: r["time_no_datetime"] and not r["time_datetime"])),
         ("canonical が在る面", c(lambda r: r["canon_count"])),
@@ -978,8 +1391,28 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--as", dest="as_path", default="/", help="--html の面の道")
     ap.add_argument("--alt", help="同じ中身を配っていないか見る、もう1つのドメイン（既定は *.firebaseapp.com）")
     ap.add_argument("--no-site", action="store_true", help="サイト全体の検査を飛ばす")
+    ap.add_argument("--dist", metavar="DIR", help="手元の書き出し（`site/.next-<port>` や `dist/`）を、この道具が配って測る")
+    ap.add_argument("--expect", metavar="線,線,…", help="線を引いて合否を出す（頭の表）。0=通った / 1=外れた / 2=測れなかった")
     a = ap.parse_args(argv)
-    base = a.base.rstrip("/")
+    try:
+        terms = parse_expect(a.expect) if a.expect else []
+    except ValueError as e:
+        print(f"::error::--expect が読めない（{e}）", file=sys.stderr)
+        return 2
+    if not a.dist:
+        return run(a, a.base.rstrip("/"), terms)
+    if not (Path(a.dist) / "sitemap.xml").is_file():
+        print(f"::error::{a.dist} に sitemap.xml が無い（書き出しの置き場ではない）", file=sys.stderr)
+        return 2
+    srv, base = serve_dist(a.dist)
+    try:
+        return run(a, base, terms)
+    finally:
+        srv.shutdown()
+        srv.server_close()
+
+
+def run(a: argparse.Namespace, base: str, terms: list[dict]) -> int:
     host = urlsplit(base).netloc.lower()
 
     if a.html:
@@ -1026,8 +1459,13 @@ def main(argv: list[str]) -> int:
         return 2
     extra = crosslink(rows)
 
-    print(f"{base} を JS なしで読んだ（{date.today().isoformat()} に測った・{time.time() - t0:.0f}秒）")
-    print(f"sitemap {len(entries)}行 / 違う URL {len(uniq)}面 / **200 で HTML を返した {len(ok)}面**（以下の分母）\n")
+    print(f"{a.dist or base} を JS なしで読んだ（{date.today().isoformat()} に測った・{time.time() - t0:.0f}秒）")
+    print(f"sitemap {len(entries)}行 / 違う URL {len(uniq)}面 / **200 で HTML を返した {len(ok)}面**（以下の分母）")
+    named = sorted({urlsplit(e.loc).netloc for e in uniq} - {host})
+    if named:
+        print(f"sitemap が名乗っているのは {', '.join(named)}。**道だけを取って、{base} に付け替えて読んだ**"
+              "（canonical と og:url は、名乗っている URL と比べる）")
+    print()
 
     bad = [r for r in rows if not r["_ok"]]
     if bad:
@@ -1094,9 +1532,20 @@ def main(argv: list[str]) -> int:
         print(f"  …ほか {len(off) - 25}通り")
     print()
 
+    sm = sitemap_facts(entries)
+    print("== sitemap ==")
+    for name, val in sitemap_lines(sm):
+        print(f"  {name}: {val}")
+    print()
+
+    # 道具の面は、サイト全体の検査を飛ばす回でも、線（`tools-noindex`）が引いてあれば見る
+    tools = None
+    if not a.no_site or any(t.get("name") == "tools-noindex" for t in terms):
+        tools = probe_tools(base)
+
     if not a.no_site:
         print("== サイト全体 ==")
-        for name, val in site_checks(base, entries, rows, a.alt):
+        for name, val in site_checks(base, entries, rows, a.alt) + tool_lines(tools):
             print(f"  {name}: {val}")
         hl = sum(1 for r in ok if r["hreflang"])
         print(f"  hreflang: {hl}/{len(ok)}面")
@@ -1104,6 +1553,23 @@ def main(argv: list[str]) -> int:
     if a.out:
         write_tsv(Path(a.out), rows)
         print(f"\nTSV: {a.out}（{len(rows)}行・{len(COLS)}列）")
+
+    if not terms:
+        return 0
+    verdicts = judge(terms, rows, sm, tools)
+    mark = {"ok": "○", "ng": "×", "na": "？"}
+    print("\n== 合否（--expect） ==")
+    for raw, state, said in verdicts:
+        print(f"  {mark[state]} {raw}  {said}")
+    na = sum(1 for _, st, _ in verdicts if st == "na")
+    ng = sum(1 for _, st, _ in verdicts if st == "ng")
+    if na:
+        print(f"\n**測れなかった線が {na}本。** 通ったとは言っていません（終了コード 2）。", file=sys.stderr)
+        return 2
+    if ng:
+        print(f"\n外れた線が {ng}本（{len(verdicts) - 1}本中）。", file=sys.stderr)
+        return 1
+    print(f"\n{len(verdicts) - 1}本とも通った。")
     return 0
 
 

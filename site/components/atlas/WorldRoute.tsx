@@ -13,6 +13,7 @@ import Flag from "@/components/ui/Flag";
 // 印はブラウザまで運ぶぶんの表から取る。`Icon.tsx` を読むと 223種 174KB が
 // まるごと束に入る（`components/ui/IconCore.tsx` の注）。
 import Icon from "@/components/ui/IconCore";
+import { isoDay } from "@/lib/isoDay";
 
 /**
  * 日本を出てから、これまでに歩いた国ぜんぶの1枚の地図。
@@ -836,7 +837,7 @@ export default function WorldRoute({
                   </span>
                   <span className="scard-body">
                     <span className="scard-meta">
-                      {h.date && <time>{ymd(h.date)}</time>}
+                      {h.date && <time dateTime={isoDay(h.date)}>{ymd(h.date)}</time>}
                     </span>
                     {/* 実在する題名の引用（`tools/sprites/noemoji.mjs` の印） */}
                     <b data-quote="title">{h.title}</b>

@@ -2,6 +2,7 @@ import Icon from "@/components/ui/Icon";
 import type { Figure } from "@/content/legends";
 import { peakOf } from "@/content/streamPeaks";
 import { atText, watchAt } from "@/lib/peak";
+import { isoDay } from "@/lib/isoDay";
 
 /**
  * 配信カード。
@@ -57,7 +58,7 @@ export function Vid({
         {(tag || date) && (
           <span className="vid-m">
             {tag && <em>{tag}</em>}
-            {date && <time>{date.replace(/-/g, "/")}</time>}
+            {date && <time dateTime={isoDay(date)}>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
         {/* 実在する題名の引用（`tools/sprites/noemoji.mjs` の印）。
@@ -87,7 +88,7 @@ export function VidGone({ title, date, tag }: { title: string; date?: string; ta
         {(tag || date) && (
           <span className="vid-m">
             {tag && <em>{tag}</em>}
-            {date && <time>{date.replace(/-/g, "/")}</time>}
+            {date && <time dateTime={isoDay(date)}>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
         <b data-quote="title">{title}</b>
