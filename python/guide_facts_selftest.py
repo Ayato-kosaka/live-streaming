@@ -59,7 +59,7 @@ TRANSCRIPT = """# 見本の配信で旧市街へ
 
 [0:00:00] こんばんは。今日は旧止街を歩きます。
 [0:00:30] バスは60番です。片道50デナールやった。
-[0:01:00] めっちゃ綺麗やんか。[笑い]いや、ほんまに来てよかったわ。
+[0:01:00] めっちゃ綺麗やんか。[笑い]いや、ほんまに来てよかったわ。バスは60番やったな。
 [0:01:30] パスタが75円。コーラは100円やな。
 [0:02:00] スーパーで紫のラベルの梨ジュース飲んで欲しい。うまいらしい。梨ジュースは90円。
 [0:02:30] クッキーは180円ぐらい。60デナールで108円。
@@ -329,17 +329,34 @@ def check_guards(root: Path, table: Path) -> None:
     rc, got = codes(root, table, GOOD, {**HEAD, "date_local": "2026-10-19"})
     check("head: 現地の日付が違う", (rc, got), (1, {"head"}))
 
-    # 本人が言う前に、チャットに同じ額が在る（読み上げかもしれない）
+    # 本人が言う前に、チャットに同じ数字が在る（チャットが出どころの数字を読み上げただけかもしれない）
     c = root / "2026" / "10" / f"{STEM}.chat.txt"
     c.write_text(CHAT + "[0:00:20] @はなこ: 片道は50デナールやで\n", encoding="utf-8")
     rc, got = codes(root, table, GOOD)
-    check("split: 本人が言う前にチャットに同じ額", (rc, got), (1, {"split"}))
+    check("chatfirst: 本人が言う前にチャットに同じ額", (rc, got), (1, {"chatfirst"}))
+    rc, got = codes(root, table, edit(0, verify="チャットが先に額を書いている"))
+    check("chatfirst: 確かめが要るの印が在れば通す", (rc, got), (0, set()))
+    c.write_text(CHAT + "[0:00:20] @はなこ: 片道は50デナルやで\n", encoding="utf-8")
+    rc, got = codes(root, table, GOOD)
+    check("chatfirst: 単位の言いかたが違っても同じ額と見る（デナル）", (rc, got), (1, {"chatfirst"}))
     c.write_text(CHAT + "[0:00:50] @はなこ: 50デナールは安い\n", encoding="utf-8")
     rc, got = codes(root, table, GOOD)
-    check("split: 本人が言ったあとのチャット（繰り返し）は落とさない", (rc, got), (0, set()))
+    check("chatfirst: 本人が言ったあとのチャット（繰り返し）は落とさない", (rc, got), (0, set()))
     c.write_text(CHAT, encoding="utf-8")
     rc, got = codes(root, table, GOOD)
-    check("split: 配信者の側の定期の告知（50デナール）は読み上げに数えない", (rc, got), (0, set()))
+    check("chatfirst: 配信者の側の定期の告知（50デナール）は数えない", (rc, got), (0, set()))
+    # 額でない数字（「60番」）も同じ。0:00:30 の行は本人が先、0:01:00 の行はチャット（0:00:55）のあと
+    c.write_text(CHAT + "[0:00:55] @はなこ: 60番か\n", encoding="utf-8")
+    late = {"lines": ["0:01:00"], "notes": "[0:00:00] 旧市街へ"}
+    both = {"lines": ["0:00:30", "0:01:00"], "notes": "[0:00:00] 旧市街へ"}
+    rc, got = codes(root, table, edit(0, t=60, src=late))
+    check("chatfirst: チャットのあとの行だけを根拠にした数字（60番）", (rc, got), (1, {"chatfirst"}))
+    rc, got = codes(root, table, edit(0, src=both))
+    check("chatfirst: 本人が先に言った行も根拠に在れば通す", (rc, got), (0, set()))
+    c.write_text(CHAT + "[0:00:55] @はなこ: 60分かかる\n", encoding="utf-8")
+    rc, got = codes(root, table, edit(0, t=60, src=late))
+    check("chatfirst: 同じ数字でも、あとの字が違えば別の話（60分）", (rc, got), (0, set()))
+    c.write_text(CHAT, encoding="utf-8")
 
 
 def check_blind(root: Path, table: Path) -> None:

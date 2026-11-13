@@ -40,7 +40,8 @@
 | `readaloud` | 言い回しが、その前後のチャットの文と重ならない（読み上げ） |
 | `identity` | 視聴者さんの素性（@名前・チャットの投稿者名・呼びかけ・投げ銭の額と語）が無い |
 | `music` | 歌詞の印の付いた行（`[音楽]`。#969）に掛からない |
-| `split` | 1項目に同じ単位の額が2つ以上在る／根拠の行の近くに、この項目が挙げていない同じ単位の額が在る／単位が言われていない／本人が言う前にチャットに同じ額が在る——のに「確かめが要る」（`verify`）が無い |
+| `split` | 1項目に同じ単位の額が2つ以上在る／根拠の行の近くに、この項目が挙げていない同じ単位の額が在る／単位が言われていない——のに「確かめが要る」（`verify`）が無い |
+| `chatfirst` | 本文の数字・額が、本人が言う前にチャットに在る（チャットが出どころの数字を、本人が読み上げただけかもしれない）——のに `verify` が無い |
 | `place` | 場所の名前の「字幕での形」がその配信の字幕に在る（無ければ、名前が議事録か題名に在る） |
 
 終了コード: 0=通った / 1=NG がある / **2=見るものが無い**（ファイルが無い・項目が0件・材料が読めない。
@@ -102,6 +103,8 @@ ANNOT = re.compile(r"\[[^\]\d]{1,8}\]")           # 字幕の中の [笑い] [�
 SUPPL = re.compile(r"\[[^\]]*\]")                 # 言い回しの中の補い [ ]
 ELLIPSIS = re.compile(r"…+|‥+|\.{3,}")            # 言い回しの中略
 NUM = re.compile(r"\d+(?:,\d{3})*(?:\.\d+)?(?:万(?:\d+(?:,\d{3})*)?)?")
+# 数字と、すぐあとの1字（「60番」「1分」「5人」）。同じ数字でも、あとの字が違えば別の話
+NUM_UNIT = re.compile("(" + NUM.pattern + r")\s*([^\s\d、。,.!?「」（）()]?)")
 PAID_HEAD = re.compile(r"^(投げ銭|(?:[A-Z]{2,3} )?[^\s:\d]{0,4}\d[\d,.]*) (?=\S)")
 MUSIC_LINE = "[音楽]"
 
@@ -131,6 +134,10 @@ def numval(tok: str) -> str:
 
 def numbers_in(s: str) -> set[str]:
     return {numval(m.group()) for m in NUM.finditer(norm(s))}
+
+
+def number_units(s: str) -> set[tuple[str, str]]:
+    return {(numval(m.group(1)), m.group(2)) for m in NUM_UNIT.finditer(norm(s))}
 
 
 def as_num(v) -> str | None:
@@ -568,16 +575,33 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
         if left:
             why.append(f"[{sn.hms(first)}] の近くに、挙げていない額が在る: {'・'.join(left)}"
                        "（同じ品なら amounts に、別の品なら other_amounts に）")
-        for c in ctx["chat"]:
-            if c["auto"]:
-                continue
-            if first - CHAT_BEFORE <= c["t"] <= first + CHAT_LEAD:
-                if {(as_num(a["value"]), a["unit"]) for a in said} & set(money_in(c["body"], ctx["units"])):
-                    why.append(f"本人が言う前に、[{sn.hms(c['t'])}] のチャットに同じ額が在る（読み上げかもしれない）")
-                    break
     if why and not verify:
         for w in why:
             r.add(i, "split", w + "。確かめが要る（verify）の印が無い")
+
+    # --- チャットが先（数字の出どころが、読み上げたチャットかもしれない）
+    # 根拠の行のうち1行でも、チャットより先に本人がその数字を言っていれば、本人の数字と見る
+    said_money = {(as_num(a["value"]), a["unit"]) for a in said if a["unit"] is not None}
+    late: dict[str, int] = {}
+    for n in sorted(claimed):
+        own, lead = False, None
+        for lt in sorted(set(ts)):
+            mine = {x for x in number_units(by_t[lt]) if x[0] == n}
+            cash = {x for x in money_in(by_t[lt], ctx["units"]) if x in said_money and x[0] == n}
+            if not mine and not cash:
+                continue
+            hit = [c["t"] for c in ctx["chat"] if not c["auto"] and lt - CHAT_BEFORE <= c["t"] <= lt + CHAT_LEAD
+                   and (mine & number_units(c["body"]) or cash & set(money_in(c["body"], ctx["units"])))]
+            if hit:
+                lead = hit[0] if lead is None else lead
+            else:
+                own = True
+        if lead is not None and not own:
+            late[n] = lead
+    if late and not verify:
+        for n, ct in late.items():
+            r.add(i, "chatfirst", f"数字 {n} は、本人が言う前に [{sn.hms(ct)}] のチャットに在る（読み上げかもしれない）。"
+                                  "本人が先に言った行を根拠にするか、確かめが要る（verify）の印を付ける")
 
     # --- 場所の名前
     if place:
