@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "eHBAnQF56-E__zoom-12420-12660-1fps",
+ "mode": "zoom",
+ "dest": "eHBAnQF56-E/zoom-12420-12660-1fps",
+ "video": "eHBAnQF56-E",
+ "channel": null,
+ "request": "shorts/requests/2026-11-13-mk-taxi-zoom.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 61,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 69
+ },
+ "bytes": {
+  "plain": 10122691,
+  "tar_gz": 9853507,
+  "encrypted": 9853520
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 9853520,
+   "sha256": "8a6681c8a2b37276d9f35d8982b9b310a34cdbe05650b8516a1c1e19d716c52d"
+  }
+ ],
+ "hmac_sha256": "7f977bd96f452bef8310253e7ca299cba62d99aada30afb197b9b0e6b96acc1d",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/43344848676",
+ "created_at": "2026-11-13T01:33:51+00:00"
+}
