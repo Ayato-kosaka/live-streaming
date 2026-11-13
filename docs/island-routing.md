@@ -7,7 +7,7 @@
 
 上から順に、**最初に当たったところで止まる。**
 
-1. `redirects` — `/nordic/photos` → `/cards`（301）
+1. `redirects` — `/nordic/photos` → `/cards`、`/map/:slug` → `/travel/:slug`（301）
 2. **`public`（＝`dist`）の中の実ファイル** ← ここが本丸
 3. `rewrites` — `/island-api/**` は Functions、Expo の4面は `expo-app.html`
 4. どれにも当たらなければ **`dist/404.html` を、状態コード 404 で配る**
@@ -24,6 +24,23 @@
 在るものはファイルとして出て、無いものだけ `__gone__`（実ファイルが無い）に落ちる。
 そして落ちた先が **59,273 バイトの 404**——これが `dist/404.html`、
 島の「この道の先には、なにも無い」の紙そのもの。**4 の動きが既に見えている。**
+
+## 道を動かすとき（前の道は全部 301 で新しい道へ）
+
+道の作り直し（#1201。`/map` `/nordic/<国>` `/north-macedonia` → `/travel/…`）は、
+**面を動かすことと、`redirects` に前の道を足すことが1組。** 片方だけだと前の道が 404 になる
+——検索に載っている道も、LINE に貼られた道も。島の中のリンクは新しい道に揃えるので、
+`crawl.mjs` では気づけない。
+
+```bash
+node tools/sprites/routemoves.mjs                                   # 置き場から（毎 PR は routemoves_selftest.mjs）
+node tools/sprites/routemoves.mjs --dist site/.next-3130 --dist public   # 書き出しから（正確）
+```
+
+元帳は `tools/sprites/sitemap-2026-11-13.txt`（作り直す前の本番の sitemap の写し）。
+1本ずつ「実ファイルとして在る」か「転送の先が実ファイルとして在る」かを見て、
+**転送の連鎖（301 → 301）も 0 であること**を見る。足すときは既存の行の順番を変えない
+（上から順に最初に当たった1本で止まる）。
 
 ## 受け皿（`"source": "**"` → `/index.html`）を置かない
 
