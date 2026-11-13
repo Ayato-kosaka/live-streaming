@@ -191,18 +191,6 @@ def href(t):
         return ""
 
 
-def wait_loaded(t, g, sec=20):
-    end = time.time() + sec
-    while time.time() < end:
-        g.pump(0.5)
-        try:
-            if t.js("document.readyState") == "complete":
-                return True
-        except Exception:
-            pass
-    return False
-
-
 # ---------------------------------------------------------------- ダッシュボードの API（ページの中から）
 
 # ダッシュボードの画面が送るのと同じ形（2026-11-13 に cf-shared-auth の JS で見た）:
