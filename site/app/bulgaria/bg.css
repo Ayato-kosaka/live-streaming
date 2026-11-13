@@ -31,6 +31,9 @@
   --kiril: #1d6b4f;
   --kiril-lo: #cfe3da;
   --bg-gold: #c89b3c;
+  /* 白い字を乗せる金色。**#c89b3c に白だと 2.6 しか出ない**（4.5 要る）ので、
+     番号の丸・札の丸にはこちらを敷く */
+  --bg-pin: #8f6413;
   --warn: #b4531b;
   --warn-lo: #f3ddcb;
 }
@@ -501,7 +504,15 @@
   box-shadow: var(--shadow-1);
 }
 
-.bgmap-box img { display: block; width: 100%; height: auto; }
+/* 地の絵。**切り抜いた枠より大きく置いて、左上をずらす**——こうすると
+   `srcSet` が生きたまま拡大できる（SVG の `<image>` にすると 1x/2x を選べない）。
+   大きさとずれは `content/bulgaria/map.json` が持っていて、面では計算しない */
+.bgmap-art {
+  position: absolute;
+  display: block;
+  max-width: none;
+  height: auto;
+}
 
 /* 地図の絵の上に重ねる記号。**絵と同じ箱いっぱいに広げる** */
 .bgmap-box svg { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -524,12 +535,37 @@
   stroke-dasharray: 14 12;
 }
 
-.bgm-pin circle { fill: var(--paper); stroke: var(--bg-gold); stroke-width: 3.5; }
+.bgm-pin circle { fill: var(--paper); stroke: var(--bg-gold); }
 .bgm-pin text { font-family: inherit; font-weight: 900; fill: var(--ink); }
-.bgm-pin.is-good circle { fill: var(--kiril); stroke: #fff; stroke-width: 4; }
+.bgm-pin.is-good circle { fill: var(--kiril); stroke: #fff; }
 .bgm-pin.is-good text { fill: #fff; }
-.bgm-pin.is-warn circle { fill: var(--warn); stroke: #fff; stroke-width: 4; }
+.bgm-pin.is-warn circle { fill: var(--warn); stroke: #fff; }
 .bgm-pin.is-warn text { fill: #fff; }
+/* 店・市場。見どころの印（◎○注意）を持たないので、色を分ける */
+.bgm-pin.is-place circle { fill: var(--bg-pin); stroke: #fff; }
+.bgm-pin.is-place text { fill: #fff; }
+
+/* 離して置いた札へ引く線 */
+.bgm-lead { stroke: var(--ink-2); opacity: 0.65; }
+
+/* ---- 地図の上の、日本語の札 -----------------------------------------------
+   OSM のタイルに焼かれている字はブルガリア語なので、**読めるのはここだけ。**
+   地の絵の字と重ねて読ませないように、白い板ごと置く */
+
+.bgm-tag rect {
+  fill: color-mix(in srgb, #fff 93%, transparent);
+  stroke: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+.bgm-tag text {
+  font-family: inherit;
+  font-weight: 700;
+  fill: var(--ink);
+}
+
+.bgm-tag.is-good rect { stroke: var(--kiril); }
+.bgm-tag.is-warn rect { stroke: var(--warn); }
+.bgm-tag.is-place rect { stroke: var(--bg-pin); }
 
 /* 地図に入らない遠いもの。**字の塊にしない**——並べて数が見えるようにする */
 .bgfar {
@@ -542,19 +578,37 @@
 }
 
 .bgfar li {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 7px;
-  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 7px 10px;
   border-radius: var(--r-0);
   background: var(--paper-2);
   font-size: 12px;
   min-width: 0;
 }
 
+/* 名前は左の段いっぱい、距離はその下。**折れ方が件によって変わらないようにする** */
+.bgfar li b { grid-column: 1; }
+.bgfar li i { grid-column: 1; }
+.bgfar li a { grid-column: 2; grid-row: 1 / span 2; }
+
 .bgfar b { font-weight: 700; }
 .bgfar i { font-style: normal; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.bgfar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--kiril);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
 
 .bgmap figcaption {
   margin: 7px 2px 0;
@@ -563,26 +617,22 @@
   color: var(--ink-2);
 }
 
-/* ---- 歩くコース ----------------------------------------------------------- */
+/* ---- 地図の下の、店・市場の一覧 --------------------------------------------
+   番号が地図のピンと同じ。押せば本物の Google マップ（日本語）が開く */
 
-.bgcourse { list-style: none; margin: 0; padding: 0; }
-
-.bgleg {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0 0 0 15px;
-  padding: 5px 0 5px 18px;
-  font-size: 12px;
-  color: var(--ink-2);
-  border-left: 3px solid var(--kiril-lo);
+.bgplaces {
+  list-style: none;
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding: 0;
+  display: grid;
+  gap: 6px;
 }
 
-.bgstop {
+.bgplaces li {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   background: var(--paper);
   border-radius: var(--r-1);
   padding: var(--sp-2) var(--sp-3);
@@ -590,32 +640,91 @@
   min-height: 52px;
 }
 
-.bgstop-l {
+.bgplaces-n {
   display: grid;
   place-items: center;
-  width: 31px;
-  height: 31px;
+  width: 27px;
+  height: 27px;
   border-radius: 50%;
-  background: var(--paper-2);
-  border: 2px solid var(--ink-3);
+  background: var(--bg-pin);
+  color: #fff;
   font-weight: 900;
-  font-size: 15px;
+  font-size: 14px;
 }
 
-.bgstop.is-good .bgstop-l { background: var(--kiril); border-color: var(--kiril); color: #fff; }
-.bgstop.is-warn .bgstop-l { background: var(--warn); border-color: var(--warn); color: #fff; }
+.bgplaces-b { min-width: 0; }
+.bgplaces-b b { font-size: 13.5px; line-height: 1.5; }
+.bgplaces-b i {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.bgplaces-b em {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
 
-.bgstop-b { min-width: 0; }
-.bgstop-b b { display: block; font-size: 14px; line-height: 1.5; }
-.bgstop-b i { display: flex; align-items: center; gap: 4px; font-style: normal; font-size: 11.5px; color: var(--ink-2); }
+.bgplaces-far {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--paper-2);
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
 
-.bggoal {
-  margin: var(--sp-2) 0 0 15px;
-  padding-left: 18px;
-  font-size: 12.5px;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  color: var(--rose);
+.bgpinmap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 11px;
+  border-radius: var(--r-0);
+  background: var(--kiril);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* 料理・土産ひとつにぶら下がる、場所への道 */
+.bgpins {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: var(--sp-3) 0 0;
+}
+
+.bgpins a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 11px;
+  border-radius: var(--r-0);
+  background: var(--paper-2);
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bgpins a b {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--bg-pin);
+  color: #fff;
+  font-size: 11px;
 }
 
 .bgnote { margin: var(--sp-3) 0 0; font-size: 12px; line-height: 1.8; color: var(--ink-2); }
