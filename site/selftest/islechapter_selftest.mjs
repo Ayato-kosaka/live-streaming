@@ -100,6 +100,10 @@
  *
  * # (m) いま居る国の案内の行を、表から丸ごと抜く（面は在るまま）→ 3 の「国の案内がある」が落ちる
  * #     （`GUIDES` の `{ slug: "<いま居る国>", … },` を消した写しを SPEC_TS に渡す）
+ *
+ * # (n) 閉じた滞在の終わりを見ない → 3b の「歩き終わった国」が落ちる
+ * sed 's|isDay(e.left) ? e.left : ""|""|' site/components/isle/spec.ts > /tmp/spec-noleft.ts
+ * SPEC_TS=/tmp/spec-noleft.ts node site/selftest/islechapter_selftest.mjs
  * ```
  *
  * **(f) は1度、足が1本しか落ちなかった。** 期間を閉じなくても、表の並びが
@@ -638,6 +642,30 @@ if (!ROWS.length) {
       guideOf(NOW.slug, jst0(nextOn), withNext) === null &&
       guideOf(NOW.slug, jst0(addDays(nextOn, 400)), withNext) === null,
     `前の日 → ${say(hrefOf(guideOf(NOW.slug, eve, withNext)))}、その日 → ${say(hrefOf(guideOf(NOW.slug, jst0(nextOn), withNext)))}、400日先 → ${say(hrefOf(guideOf(NOW.slug, jst0(addDays(nextOn, 400)), withNext)))}`,
+  );
+
+  /* (4b) 歩き終わった国（閉じた滞在）。**出た日の翌日からは、つぎの国がまだ表に
+     無くても案内なし**——出た国の歩きかたを「いま」に出さない。国を移る日は、前の国の
+     終わりとつぎの国の頭が同じ日になるので、境目の日は入った国が取る。
+
+     いまの本番には、案内の行を持つ国がまだ `COUNTRIES`（歩き終わった国）に無い。
+     **本番の値では当たらない足**なので、ここだけは入った日の並びを作って渡す
+     （行き先は本番の行のまま。日付は 2001年——国の表のどの日とも重ならない） */
+  const walked = ROWS[0];
+  const stay = { slug: walked.slug, on: "2001-01-01", left: "2001-01-04" };
+  const ms = (day, n = 0) => new Date(jst0(day).getTime() + n);
+  const of = (at, rows) => hrefOf(guideOf(NOW.slug, at, rows));
+  const lone = [stay];
+  const moved = [stay, { slug: NEXT, on: "2001-01-04" }];
+  check(
+    "歩き終わった国の案内は、滞在の終わりの日まで。境目の日は、入った国が取る",
+    of(ms("2001-01-01"), lone) === walked.href &&
+      of(ms("2001-01-05", -1), lone) === walked.href &&
+      of(ms("2001-01-05"), lone) === null &&
+      of(ms("2001-01-04", -1), moved) === walked.href &&
+      of(ms("2001-01-04"), moved) === null,
+    `つぎの国なし: 入った日 ${say(of(ms("2001-01-01"), lone))} / 終わりの日の最後 ${say(of(ms("2001-01-05", -1), lone))} / 翌日 ${say(of(ms("2001-01-05"), lone))}。` +
+      `つぎの国あり: 前の日の最後 ${say(of(ms("2001-01-04", -1), moved))} / 境目の日 ${say(of(ms("2001-01-04"), moved))}`,
   );
 
   /* (5) 境目ぜんぶと、ずっと先。**3つの口が、同じ日に同じ国を指す**
