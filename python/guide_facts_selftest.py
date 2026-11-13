@@ -61,12 +61,12 @@ TRANSCRIPT = """# 見本の配信で旧市街へ
 [0:00:30] バスは60番です。片道50デナールやった。
 [0:01:00] めっちゃ綺麗やんか。[笑い]いや、ほんまに来てよかったわ。
 [0:01:30] パスタが75円。コーラは100円やな。
-[0:02:00] スーパーで紫のラベルの梨ジュース飲んで欲しい。うまいらしい。
+[0:02:00] スーパーで紫のラベルの梨ジュース飲んで欲しい。うまいらしい。梨ジュースは90円。
 [0:02:30] クッキーは180円ぐらい。60デナールで108円。
 [0:03:00] [音楽]
 [0:03:30] ボートは600やって。320円のお菓子も買った。
 [0:04:00] たろうさん、こんばんは。はなちゃん、こんばんは。今日も来てくれてありがとう。ランチにします。
-[0:04:30] ほなまた明日。
+[0:04:30] ほなまた明日。こっちの道はめっちゃキレイに見えるんちゃうか。帰りも歩いて帰ろうかなと思ってます。
 """
 
 CHAT = """# 見本の配信で旧市街へ
@@ -78,12 +78,14 @@ CHAT = """# 見本の配信で旧市街へ
 [0:00:15] @あやとグルメアプリ: 【:hammer_and_wrench:定期】アプリは月50デナールから
 [0:01:50] Hanako_はなこ: スーパーで紫のラベルの梨ジュース飲んでほしい！うまいらしいぞ！
 [0:03:20] ¥320 @jiro1685: おやつ代
+[0:04:05] @はなこ: こっちの道めっちゃきれいに見えるんじゃない？
+[0:04:10] @たろう-x1y: 帰りは歩いて、ゆっくり帰ろうかな
 """
 
 NOTES = """# 2026-10-18 22:02 見本の配信で旧市街へ
 - URL: https://www.youtube.com/watch?v=AAA / 長さ 0:04:30
 - 場所: テスト国・タウン（旧市街→スーパー→ボート乗り場）
-- チャット 5件
+- チャット 7件
 - 投げ銭 1件（¥320）: jiro1685 ¥320
 
 ## ひとことで
@@ -142,6 +144,10 @@ GOOD = [
     {"kind": "price", "text": "ボートは600。", "t": 210,
      "src": {"lines": ["0:03:30"], "notes": "[0:03:00] ボート"}, "what": "ボート",
      "amounts": [{"value": 600, "unit": None, "as": "said"}], "verify": "単位を言っていない"},
+    # 隣の行（0:01:30 と 0:02:30）の項目から見ると「近くの額」。ここが名乗っているので、あちらは落ちない
+    {"kind": "price", "text": "梨ジュースは90円。", "t": 120,
+     "src": {"lines": ["0:02:00"], "notes": "[0:01:30] スーパー"}, "what": "梨ジュース",
+     "amounts": [{"value": 90, "unit": "円", "as": "said"}]},
 ]
 
 
@@ -206,6 +212,8 @@ def check_units() -> None:
     check("読み上げ: 何字続けば同じ文と見るか（短い5字は4字、長いものは8字）",
           [gf.overlap_need("詐欺やんけ"), gf.overlap_need("あ" * 10), gf.overlap_need("あ" * 30)], [4, 7, 8])
     check("読み上げ: 続いた共通の字を数える", gf.lcs("紫のラベルの梨ジュース飲んで欲しい", "紫のラベルの梨ジュース飲んでほしい"), 14)
+    check("読み上げ: 同じ話題の語が1つ重なるだけ（より安いよ）なら、同じ文と見ない",
+          gf.same_sentence(gf.squash("アルバニアより安いよ"), gf.squash("日本より安いよ")), False)
 
 
 def check_table() -> None:
@@ -226,7 +234,7 @@ def check_good(root: Path, table: Path) -> None:
     rc, out = run(root, table, "check", STEM)
     check("通る形: 終了 0", rc, 0)
     check("通る形: 辿れない項目を数えて 0件と出す", "辿れない項目 0件 / NG 0件" in out, True)
-    check("通る形: 種類ごとの数", "項目 6件（move1 price2 place1 food1 quote1）額つき 4・確かめが要る 2" in out, True)
+    check("通る形: 種類ごとの数", "項目 7件（move1 price3 place1 food1 quote1）額つき 5・確かめが要る 2" in out, True)
     rc, _ = run(root, table, "check", "--month", "2026-10")
     check("月で指すと同じものを見る", rc, 0)
     rc, _ = run(root, table, "check", "--country", "testland", "--city", "town")
@@ -255,6 +263,12 @@ def check_guards(root: Path, table: Path) -> None:
         ("readaloud: 読み上げたチャットを本人の一言にする",
          extra(kind="quote", about="food", text="梨ジュースの話。", t=120,
                src={"lines": ["0:02:00"], "notes": "[0:01:30] スーパー"}, quote="紫のラベルの梨ジュース飲んで欲しい"), {"readaloud"}),
+        ("readaloud: かなとカタカナが違っても同じ文と見る（字幕は「キレイ」、チャットは「きれい」）",
+         extra(kind="quote", about="fact", text="道の話。", t=270,
+               src={"lines": ["0:04:30"], "notes": "[0:03:00] ボート"}, quote="こっちの道はめっちゃキレイに見えるんちゃうか"), {"readaloud"}),
+        ("readaloud: 間に言い足しが挟まっても同じ文と見る（続いた字は境に届かない）",
+         extra(kind="quote", about="fact", text="帰りの話。", t=270,
+               src={"lines": ["0:04:30"], "notes": "[0:03:00] ボート"}, quote="歩いて帰ろうかな"), {"readaloud"}),
         # --- 素性
         ("identity: @名前", edit(1, text="旧市街を歩いた。@よしこ に教わった。"), {"identity"}),
         ("identity: チャットの投稿者の名前（@ も尻尾も無い形）", edit(1, text="旧市街を歩いた。たろうに教わった。"), {"identity"}),
@@ -279,6 +293,7 @@ def check_guards(root: Path, table: Path) -> None:
         ("split: 同じ単位の額が2つ在るのに印が無い", edit(3, verify=None), {"split"}),
         ("split: 近くの額（コーラ100円）を挙げていない", edit(2, other_amounts=None), {"split"}),
         ("split: 単位を言っていない額に印が無い", edit(5, verify=None), {"split"}),
+        ("split: 隣の行の額（梨ジュース90円）を、どの項目も名乗っていない", copy.deepcopy(GOOD[:6]), {"split"}),
         # --- 場所の名前
         ("place: 字幕での形がこの配信の字幕に無い", edit(1, place={"name": "旧市街", "heard": ["オールドタウン"]}), {"place"}),
         ("place: 字幕にも議事録にも題名にも無い名前", edit(1, place={"name": "石の橋", "heard": []}), {"place"}),
@@ -290,7 +305,7 @@ def check_guards(root: Path, table: Path) -> None:
          edit(0, amounts=[{"value": 50, "unit": "デナール", "as": "said"},
                           {"value": 200, "unit": "円", "as": "converted", "from": {"value": 50, "unit": "デナール"}, "rate": 3}]),
          {"form"}),
-        ("form: 表に無い単位", edit(2, amounts=[{"value": 75, "unit": "ペソ", "as": "said"}]), {"form"}),
+        ("form: 表に無い単位", edit(5, amounts=[{"value": 600, "unit": "ペソ", "as": "said"}]), {"form"}),
     ]
     for name, items, want in cases:
         if items == "wide":
@@ -365,7 +380,7 @@ def check_city(root: Path, table: Path, d: Path) -> None:
           "（2026-10-18 [0:01:00](https://www.youtube.com/watch?v=AAA&t=60s)）\n"
           "- 「ほんまに来てよかったわ」— 旧市街に着いたときの一言。" in text, True)
     lines = [s for s in text.splitlines() if s.startswith("- ") or (s.startswith("| ") and "&t=" in s)]
-    check("city: どの行にも日付と時刻つきリンク", all("2026-10-18" in s and "&t=" in s for s in lines) and len(lines), 8)
+    check("city: どの行にも日付と時刻つきリンク", all("2026-10-18" in s and "&t=" in s for s in lines) and len(lines), 9)
     check("city: 視聴者さんの名前が出ない", any(n in text for n in ["たろう", "はなこ", "jiro", "さぶろう"]), False)
     put(root, edit(2, text="パスタは85円。"))
     rc, _ = run(root, table, "city", "--country", "testland", "--city", "town")
@@ -376,7 +391,14 @@ def check_city(root: Path, table: Path, d: Path) -> None:
 
 def check_new_and_read(root: Path, table: Path) -> None:
     p = root / "2026" / "10" / f"{STEM}.facts.json"
+    rc, out = run(root, table, "pending", "--country", "testland")
+    check("pending: 抜いたものは「済み」", (rc, "まだ 0本 / 済み 1本" in out), (0, True))
     p.unlink()
+    rc, out = run(root, table, "pending", "--country", "testland")
+    check("pending: まだの配信を、寄せた街と字幕の字数つきで出す",
+          (rc, f"{STEM}\ttown（名前）\t字幕 " in out, "まだ 1本 / 済み 0本" in out), (0, True, True))
+    rc, out = run(root, table, "pending", "--country", "elsewhere")
+    check("pending: ほかの国を指すと出ない", "まだ 0本 / 済み 0本" in out, True)
     rc, out = run(root, table, "new", STEM)
     made = json.loads(p.read_text(encoding="utf-8"))
     check("new: 頭を機械で埋めた空のファイルを置く", (rc, {k: made[k] for k in HEAD}, made["items"]), (0, HEAD, []))

@@ -1,5 +1,6 @@
 """**配信から抜いた「実際に行った」（`streams/YYYY/MM/<stem>.facts.json`）を、確かめる・街ごとに束ねる道具。**
 
+    python3 python/guide_facts.py pending [--country north-macedonia [--city skopje]]   # まだ抜いていない配信
     python3 python/guide_facts.py new   <stem>                    # 頭だけ埋めた空のファイルを置く（議事録の見出しを地図として出す）
     python3 python/guide_facts.py read  <stem> 0:17:00 0:24:00    # 文字起こしをその窓だけ。--chat で同じ時刻のチャットを並べる（名前は伏せる）
     python3 python/guide_facts.py check [stem ...] [--month 2026-10] [--country north-macedonia [--city skopje]]
@@ -49,6 +50,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import math
 import re
@@ -154,6 +156,28 @@ def lcs(a: str, b: str) -> int:
 def overlap_need(q: str) -> int:
     """何字続けて同じなら「同じ文」と見るか。短い言い回しは7割、長いものは8字。"""
     return max(4, min(8, math.ceil(len(q) * 0.7)))
+
+
+def kana(s: str) -> str:
+    """カタカナをひらがなに。自動字幕は「やばい」、チャットは「ヤバい」と、同じ語を別の字で書く。"""
+    return "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in s)
+
+
+def same_sentence(q: str, c: str) -> bool:
+    """言い回し q と、チャットの文 c が「同じ文」か（どちらも比べる形にしてから渡す）。
+
+    読み上げは一字一句は合わない（字幕の誤変換・本人の言い足し・かなと漢字）。見るのは2つ。
+    - 続いた共通の字が、境（`overlap_need`）以上
+    - 3字以上の共通の切れ端を足すと、言い回しの4分の3以上（間に言い足しが挟まった形）
+    2026-11 の試作で、実際の読み上げが「続いて7字・境は8字」で通りかけた（かなの違いと言い足し）。
+    """
+    q, c = kana(q), kana(c)
+    if lcs(q, c) >= overlap_need(q):
+        return True
+    if len(q) < 6:
+        return False
+    blocks = difflib.SequenceMatcher(None, q, c, autojunk=False).get_matching_blocks()
+    return sum(b.size for b in blocks if b.size >= 3) >= len(q) * 0.75
 
 
 # ---------------------------------------------------------------- 材料を読む
@@ -495,13 +519,12 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
         else:
             qa, qb = line_at(offs, pos[0]), line_at(offs, pos[1])
             q = squash(SUPPL.sub("", norm(quote)))
-            need = overlap_need(q)
             for c in ctx["chat"]:
                 if not (qa - CHAT_BEFORE <= c["t"] <= qb + CHAT_AFTER):
                     continue
-                if lcs(q, squash(c["body"])) >= need:
-                    r.add(i, "readaloud",
-                          f"言い回し「{quote}」が [{sn.hms(c['t'])}] のチャットの文と重なる（読み上げ）")
+                if same_sentence(q, squash(c["body"])):
+                    # 重なった字は出さない（視聴者さんの文なので。この出力は公開のログに残りうる）
+                    r.add(i, "readaloud", f"言い回しが [{sn.hms(c['t'])}] のチャットの文と重なる（読み上げ）")
                     break
 
     # --- 視聴者さんの素性
@@ -764,7 +787,7 @@ def cmd_city(args, root: Path, table: dict) -> int:
            f"> `python3 python/guide_facts.py city --country {args.country} --city {args.city}` が作る。**手で直さない**"
            "（元は `streams/YYYY/MM/<stem>.facts.json`）。",
            f"> 材料: 配信 {len(files)}本（{'・'.join(dates)}）／項目 {len(rows)}件。",
-           "> 額は本人が配信で口にしたまま。**円の額は、本人がその場で値札を円に直して言ったもの。**"
+           "> 額は本人が配信で口にしたまま。**円の額は、本人がその場で円に直して言ったもの（値札の額ではない）。**"
            "「要確認」の付いた行は、動画か外の出どころで確かめてから面に載せる。", ""]
     body = []
     for kind, title in KINDS.items():
@@ -816,6 +839,39 @@ def base_of(root: Path, stem: str) -> Path | None:
         name = name.removesuffix(suf)
     hit = sorted(root.glob(f"*/*/{name}.transcript.txt"))
     return Path(str(hit[0])[: -len(".transcript.txt")]) if hit else None
+
+
+def cmd_pending(args, root: Path, table: dict) -> int:
+    """議事録は在るのに、まだ抜いていない配信。街は議事録の `- 場所:` から寄せる。"""
+    todo, done, no_caption, lost = [], 0, 0, []
+    # 月の目次（streams/YYYY/MM.md）は階が1つ浅いので、ここには掛からない
+    for md in sorted(root.glob("*/*/*.md"), reverse=True):
+        name = md.name[:-3]
+        if not stem_head(name):
+            continue
+        place = read_notes(md)["place"]
+        country, city, how = resolve_place(place, table)
+        if country is None or (args.country and country != args.country):
+            continue
+        if city is None:
+            lost.append((name, place))
+            continue
+        if args.city and city != args.city:
+            continue
+        base = md.parent / name
+        if Path(f"{base}.facts.json").exists():
+            done += 1
+        elif not Path(f"{base}.transcript.txt").exists():
+            no_caption += 1
+        else:
+            _, lines = read_transcript(Path(f"{base}.transcript.txt"))
+            todo.append(f"{name}\t{city}（{how}）\t字幕 {sum(len(x) for _, x in lines)}字")
+    for line in todo:
+        print(line)
+    for name, place in lost:
+        print(f"{name}\t街を寄せられない: {place}（寄せる表 {TABLE.name} に足す）")
+    print(f"\nまだ {len(todo)}本 / 済み {done}本 / 字幕なし {no_caption}本 / 街を寄せられない {len(lost)}本")
+    return 0
 
 
 def cmd_new(args, root: Path, table: dict) -> int:
@@ -882,6 +938,9 @@ def main(argv: list[str] | None = None) -> int:
     y.add_argument("--country", required=True)
     y.add_argument("--city", required=True)
     y.add_argument("--out")
+    pd = sub.add_parser("pending")
+    pd.add_argument("--country")
+    pd.add_argument("--city")
     n = sub.add_parser("new")
     n.add_argument("stem")
     rd = sub.add_parser("read")
@@ -902,6 +961,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_check(args, root, table)
     if args.cmd == "city":
         return cmd_city(args, root, table)
+    if args.cmd == "pending":
+        return cmd_pending(args, root, table)
     return cmd_new(args, root, table)
 
 
