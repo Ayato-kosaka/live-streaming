@@ -27,6 +27,10 @@
  16. **島をなおしたところ**（`/updates`）が、出したぶんに追いついているか。
      古ければ鳴る／そろっていれば鳴らない／履歴が見えないときは鳴らない、の3方向と、
      `/island-ship` が名指ししている置き場と食い違っていないこと
+ 17. **案内を出しはじめた国が、歩いた国の表に居るか。** 表から国を抜くと
+     **こちら側**に鳴る／足すと黙る／まだ出していない案内は見ない／期間が過ぎても
+     黙らない、を仕込みで当ててから、**本番の `countries.ts` から同じ1行を抜いて**
+     もう一度当てる（2026-11-12 のブルガリアがこの形で、2日ぶん誰も鳴らなかった）
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
 
@@ -171,7 +175,85 @@ COUNTRIES_OK = """export const COUNTRIES: Country[] = [
     stays: [{ from: "2026-09-28", to: "", cities: ["ティラナ"] }],
   },
 ];
+
+export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = [
+  /* 読みにくい形をわざと残す。本番がこうなっている
+     （型の中に `;` が在って、行のあいだに `{ slug: "ghost" }` と書いた注釈が挟まる） */
+  { slug: "hajime", name: "はじめの国", entered: "2026-09-28" },
+  { slug: "tonari", name: "となりの国", entered: "2026-10-02" },
+];
 """
+
+# 歩いている最中の国の行。**下の差し替えが空振りしていないか**を見るのに使う
+# （`.replace` は当たらなくても黙って元の字を返す）
+AHEAD_HAJIME = '  { slug: "hajime", name: "はじめの国", entered: "2026-09-28" },\n'
+AHEAD_TONARI = '  { slug: "tonari", name: "となりの国", entered: "2026-10-02" },\n'
+
+# **案内を出しはじめた国（`tonari`）が、どちらの表にも居ない**
+# （2026-11-12 の本番がこれ。面を出して案内を切り替えたのに、国を足し忘れた）
+COUNTRIES_NO_TONARI = COUNTRIES_OK.replace(AHEAD_TONARI, "")
+
+# 期間の無い案内（「いつでも当たる」行）の国が居ない
+COUNTRIES_NO_HAJIME = COUNTRIES_OK.replace(AHEAD_HAJIME, "")
+
+# 行は在るのに `entered` が空。`python/stays.py` はこの行を落とすので、居ないのと同じ
+COUNTRIES_TONARI_BLANK = COUNTRIES_OK.replace(
+    AHEAD_TONARI, '  { slug: "tonari", name: "となりの国", entered: "" },\n')
+
+# 歩き終わって `COUNTRIES` へ移した形（`AHEAD_COUNTRIES` からは消す決まり）
+COUNTRIES_TONARI_DONE = COUNTRIES_NO_TONARI.replace(
+    '  {\n    slug: "albania",',
+    '  {\n    slug: "tonari",\n    name: "となりの国",\n'
+    '    stays: [{ from: "2026-10-02", to: "2026-10-09", cities: ["みやこ"] }],\n  },\n'
+    '  {\n    slug: "albania",')
+
+# 歩いている最中の国が1つも無い（**正しい状態でありうる。**ぜんぶ移したあと）
+COUNTRIES_AHEAD_EMPTY = COUNTRIES_OK.replace(AHEAD_HAJIME, "").replace(AHEAD_TONARI, "")
+
+# `AHEAD_COUNTRIES` という表そのものが無い（名前が変わった・置き場が動いた）
+COUNTRIES_NO_AHEAD = COUNTRIES_OK.split("export const AHEAD_COUNTRIES")[0]
+
+# 仕込みの案内の表（`site/components/isle/spec.ts` の `GUIDES`）。**本番と同じ形**——
+# 期間つきの行が上、期間の無い行（いつでも当たる）がいちばん下に1つ。
+# **国の表（`COUNTRIES`）に居る国を指さない。** 指すと、国の表を差し替える
+# 確かめ（`COUNTRIES_NO_ALBANIA` ほか）がこの引き金まで鳴らして、
+# 何を見ているのか分からなくなる
+SPEC_OK = """type Guide = { name: string; href: string; lead: string; from?: string; to?: string };
+
+const GUIDES: Record<string, Guide[]> = {
+  albania: [
+    {
+      name: "となりの国・みやこ",
+      href: "/tonari",
+      /* 読みにくい形をわざと残す。本番がこうなっている（欄のあいだに注釈が挟まる） */
+      lead: "from: \\"2099-01-01\\" と本文に書いてあっても、欄ではない",
+      icon: "church",
+      from: "2026-10-02",
+      to: "2026-10-09",
+    },
+    {
+      name: "はじめの国",
+      href: "/hajime",
+      lead: "海ぞいの国",
+      icon: "mountain",
+    },
+  ],
+};
+
+export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
+"""
+
+# **まだ出していない案内**（`from` が `TODAY` の翌日）。着く前の国を足させない
+SPEC_NOT_YET = SPEC_OK.replace('from: "2026-10-02",', 'from: "2026-10-04",')
+
+# 案内の面を1枚も持たない時期（**正しい状態でありうる**）
+SPEC_EMPTY = "const GUIDES: Record<string, Guide[]> = {};\n"
+
+# `GUIDES` という表そのものが無い
+SPEC_NO_GUIDES = "export const OTHER = 1;\n"
+
+# 出しはじめる日が日付として読めない
+SPEC_BAD_FROM = SPEC_OK.replace('from: "2026-10-02",', 'from: "来週",')
 
 # **閉じた章の国が、開いたまま**（2026-10-06 の本番がこれ）。
 # アルバニアの配信11本が「スウェーデン」として焼かれていた形
@@ -260,19 +342,24 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
                  about: str | None = None,
                  place: str | None = None,
                  updates: str = "2026-10-01",
-                 itinerary: str = "", legends: str | None = None) -> Path:
+                 itinerary: str = "", legends: str | None = None,
+                 spec: str | None = None) -> Path:
     """`BOOKS` の表どおりに `*.ts` を並べた置き場をこしらえる。
 
     **表に在る本を1本も欠かさない。** 欠けると `judge()` が「置き場にありません」
     で `blind` を立てて、数えられなくなる（それ自体は正しい挙動なので、
     別の確かめで踏む）。
 
-    章のほかに引き金が見るもの（国の表・年表・`PLACE_STALE_DAYS`）も、
+    章のほかに引き金が見るもの（国の表・年表・`PLACE_STALE_DAYS`・案内の表）も、
     同じ木の下に置く。`count()` は `site` の下から `app/about/page.tsx` と
-    `lib/place.ts` を引くので、**置き場の親が `site` になる。**
+    `lib/place.ts` と `components/isle/spec.ts` を引くので、
+    **置き場の親が `site` になる。**
     """
     d = tmp / "content"
     d.mkdir(parents=True, exist_ok=True)
+    (tmp / "components" / "isle").mkdir(parents=True, exist_ok=True)
+    (tmp / "components" / "isle" / "spec.ts").write_text(
+        SPEC_OK if spec is None else spec, encoding="utf-8")
     (tmp / "app" / "about").mkdir(parents=True, exist_ok=True)
     (tmp / "app" / "about" / "page.tsx").write_text(
         ABOUT_FULL if about is None else about, encoding="utf-8")
@@ -1274,6 +1361,284 @@ def case15_legend(tmp: Path):
        not c.countable and any("legends.ts" in b for b in c.blind), c.blind)
 
 
+def without_ahead_row(src: str, slug: str) -> str:
+    """`countries.ts` の字から、`AHEAD_COUNTRIES` の `slug` の行だけを抜く。
+
+    **`.replace` で抜かない。** 本番の行は注釈や改行の入りかたが変わるので、
+    字面で当てると、当たらなかった日に**抜けていない写し**で確かめることになる
+    （`.replace` は当たらなくても黙って元の字を返す）。読み口（`ts_read`）で
+    在りかを引いて、無ければここで落とす。
+    """
+    code = ts_read.code_only(src)
+    i, e = ts_read.array_span(code, "AHEAD_COUNTRIES")
+    if i < 0:
+        raise AssertionError("AHEAD_COUNTRIES が見つからない")
+    for a, b in ts_read.object_spans(code[i + 1:e]):
+        a, b = i + 1 + a, i + 1 + b
+        if ts_read.fields(code[a + 1:b]).get("slug") == slug:
+            end = b + 1
+            if src[end:end + 1] == ",":
+                end += 1
+            return src[:a] + src[end:]
+    raise AssertionError(f"AHEAD_COUNTRIES に {slug} の行が無い")
+
+
+def case17_guide(tmp: Path):
+    """**案内を出しはじめた国が、歩いた国の表に居るか。両側から当てる。**
+
+    2026-11-12 にブルガリアへ移った日、面（`/bulgaria`）を出して表紙の案内も
+    切り替えたのに、`AHEAD_COUNTRIES` に国を足していなかった。島は同じ
+    （`balkans`）なので章の欄は1文字も動かず、**引き金は1本も鳴らないまま**
+    11-12 の配信2本が北マケドニアに数えられていた。
+
+    これは**こちらの落ち**（`Count.ours`）なので、数えるのは `waiting`（札）
+    ではなく `ours`。あやとの札に1行も出ないことも、同じ重さで踏む。
+    """
+    print("\n[17] 案内を出しはじめた国が、歩いた国の表に居るか")
+
+    # **差し替えが空振りしていないこと。** 空振りすると、抜いたつもりの写しが
+    # 元の字のままで、「抜くと鳴る」が何を見ているのか分からなくなる
+    swapped = {
+        "COUNTRIES_NO_TONARI": COUNTRIES_NO_TONARI != COUNTRIES_OK,
+        "COUNTRIES_NO_HAJIME": COUNTRIES_NO_HAJIME != COUNTRIES_OK,
+        "COUNTRIES_TONARI_BLANK": COUNTRIES_TONARI_BLANK != COUNTRIES_OK,
+        "COUNTRIES_TONARI_DONE": COUNTRIES_TONARI_DONE != COUNTRIES_NO_TONARI,
+        "COUNTRIES_AHEAD_EMPTY": COUNTRIES_AHEAD_EMPTY not in (
+            COUNTRIES_NO_TONARI, COUNTRIES_NO_HAJIME),
+        "COUNTRIES_NO_AHEAD": "AHEAD_COUNTRIES" not in COUNTRIES_NO_AHEAD,
+        "SPEC_NOT_YET": SPEC_NOT_YET != SPEC_OK,
+        "SPEC_BAD_FROM": SPEC_BAD_FROM != SPEC_OK,
+    }
+    ck("仕込みの差し替えが、ぜんぶ当たっている", all(swapped.values()),
+       [k for k, v in swapped.items() if not v] or f"{len(swapped)}個")
+
+    # 日を先へ送る確かめに使う便り。**日付つきの行を持たせない**——持たせると
+    # 「過ぎた行が落ちていない」も一緒にこちら側へ鳴って、数が読めなくなる
+    quiet = make_state(week=["回る先はこれから"])
+
+    # --- 鳴る側。**表から国を抜く** ------------------------------------------
+    d = make_content(tmp / "c17a", countries=COUNTRIES_NO_TONARI)
+    c = uw.count(d, TODAY)
+    ck("数えられた（blind 0本）", c.countable, c.blind or "0本")
+    ck("表から国を抜く → **こちら側**に1件", len(c.ours) == 1, c.ours)
+    line = c.ours[0] if c.ours else ""
+    ck("どの国の行が要るかが名指しで出る", "`tonari` の行" in line, line)
+    ck("どのファイルのどの表かが出る",
+       "countries.ts" in line and "AHEAD_COUNTRIES" in line, "出る")
+    ck("どの案内が、いつから出ているかが出る",
+       "/tonari" in line and "2026-10-02" in line, "出る")
+    ck("**あやとの札には1行も出ない**", c.waiting == 0, (c.urgent, c.later))
+
+    gh = FakeGh()
+    code, said = said_while(lambda: act(gh, apply=True, d=d))
+    ck("終了コードは **1**（こちらが埋め損ねている）", code == 1, code)
+    ck("ログに ::error:: で出る",
+       "こちらが埋め損ねています" in said and "tonari" in said, "出る")
+    ck("区画（公開の issue）には出ない", "tonari" not in gh.body(), "出ない")
+
+    # --- 黙る側。**足すと消える**（満たしようのない見張りにしない）-----------
+    d_ok = make_content(tmp / "c17b")
+    c = uw.count(d_ok, TODAY)
+    ck("表に国を足すと黙る", not c.ours and c.waiting == 0, (c.ours, c.urgent, c.later))
+    ck("終了コードも 0 に戻る", act(FakeGh(), apply=True, d=d_ok) == 0, "0")
+
+    # --- まだ出していない案内は見ない ---------------------------------------
+    #
+    # 着く前の国を足させない。足すと、歩く前から歩いたことになる
+    # （`content/countries.ts` の `AHEAD_COUNTRIES` の注）
+    d = make_content(tmp / "c17c", countries=COUNTRIES_NO_TONARI, spec=SPEC_NOT_YET)
+    c = uw.count(d, TODAY)
+    ck("出しはじめる日が明日の案内 → 鳴らない", not c.ours, c.ours)
+    c = uw.count(d, date(2026, 10, 4), state=quiet)
+    ck("その日が来たら鳴る", len(c.ours) == 1 and "tonari" in c.ours[0], c.ours)
+
+    # --- 期間が過ぎても、ひとりでに黙らない ----------------------------------
+    #
+    # 案内は `to` を過ぎると下の行へ戻る。**いま指している1つだけ**を見る作りだと、
+    # 足し忘れたまま期間が過ぎた日に、この引き金も一緒に黙る
+    d = make_content(tmp / "c17d", countries=COUNTRIES_NO_TONARI)
+    c = uw.count(d, date(2026, 10, 20), state=quiet)
+    ck("案内の期間（〜10-09）を過ぎても鳴りつづける",
+       len(c.ours) == 1 and "tonari" in c.ours[0], c.ours)
+
+    # --- 期間の無い行（いつでも当たる行）は、章が始まった日から ---------------
+    d = make_content(tmp / "c17e", countries=COUNTRIES_NO_HAJIME)
+    c = uw.count(d, TODAY)
+    ck("期間の無い案内の国が居ない → 鳴る",
+       len(c.ours) == 1 and "`hajime` の行" in c.ours[0], c.ours)
+    # **期間の無い行に、出しはじめた日を言い切らない。** 知っているのは
+    # 章が始まった日までなので、そう書く
+    ck("期間を切っていない案内だと分かる字で出る（章が始まった日つき）",
+       bool(c.ours) and "期間を切らずに" in c.ours[0] and "2026-09-28" in c.ours[0],
+       c.ours)
+    c = uw.count(d, date(2026, 9, 20), state=quiet)
+    ck("章が始まる前は鳴らない", not c.ours, c.ours)
+
+    # --- 行は在るのに `entered` が空 ----------------------------------------
+    #
+    # `python/stays.py` は `entered` の無い行を落とす。行だけ在っても、
+    # 国を知らないのと同じ結果になる
+    d = make_content(tmp / "c17f", countries=COUNTRIES_TONARI_BLANK)
+    c = uw.count(d, TODAY)
+    ck("行は在るのに `entered` が空 → 鳴る",
+       len(c.ours) == 1 and "`tonari` の `entered`" in c.ours[0], c.ours)
+
+    # --- 歩き終わって `COUNTRIES` へ移した国は、どちらかに居ればよい ----------
+    d = make_content(tmp / "c17g", countries=COUNTRIES_TONARI_DONE)
+    c = uw.count(d, TODAY)
+    ck("`COUNTRIES` のほうに居れば黙る", c.countable and not c.ours, (c.blind, c.ours))
+
+    # --- 空の表は、正しい状態でありうる --------------------------------------
+    #
+    # 案内の面を1枚も持たない時期と、歩き終わってぜんぶ移したあと。
+    # **空を「読めなかった」と取り違えて止まらない**
+    d = make_content(tmp / "c17h", countries=COUNTRIES_AHEAD_EMPTY, spec=SPEC_EMPTY)
+    c = uw.count(d, TODAY)
+    ck("案内も、歩いている最中の国も空 → 数えられて0件",
+       c.countable and not c.ours, (c.blind, c.ours))
+    d = make_content(tmp / "c17i", countries=COUNTRIES_AHEAD_EMPTY)
+    c = uw.count(d, TODAY)
+    ck("歩いている最中の国が空なのに案内が2つ → 2件", len(c.ours) == 2, c.ours)
+
+    # --- 読めなかったものを、空で通さない ------------------------------------
+    #
+    # 空で渡すと、引き金が「案内は1つも出していない」と答えて毎晩通る
+    for n, (label, kw, want) in enumerate((
+        ("案内の表（`GUIDES`）が見つからない", {"spec": SPEC_NO_GUIDES}, "GUIDES"),
+        ("出しはじめる日が日付として読めない", {"spec": SPEC_BAD_FROM}, "`from`"),
+        ("`AHEAD_COUNTRIES` が見つからない", {"countries": COUNTRIES_NO_AHEAD},
+         "AHEAD_COUNTRIES"),
+    )):
+        c = uw.count(make_content(tmp / f"c17j{n}", **kw), TODAY)
+        ck(f"{label} → 数えられない",
+           not c.countable and any(want in x for x in c.blind),
+           c.blind or "数えられてしまった")
+
+    d = make_content(tmp / "c17k")
+    (d.parent / "components" / "isle" / "spec.ts").unlink()
+    c = uw.count(d, TODAY)
+    ck("`spec.ts` そのものが無い → 数えられない",
+       not c.countable and any("spec.ts" in x for x in c.blind), c.blind)
+
+    # **1件落とす読み手にすると、名乗りと合わなくなって止まる。**
+    # 名乗り（`href:` の数）は欄を読むのとは別の道で数えているので、
+    # 読み手のほうが1件落としても、名乗りは減らない
+    got = uw.read_guides(SPEC_OK)
+    ck("仕込みの案内を読み落としていない（2行）",
+       got.found and got.missed == 0 and len(got.rows) == 2,
+       f"名乗り {got.declared} / 読めた {len(got.rows)}")
+    ck("`lead:` の本文に書いた `from:` を、欄と読まない",
+       [g["from"] for g in got.rows] == ["2026-10-02", ""], [g["from"] for g in got.rows])
+    real_objects = ts_read.objects
+    ts_read.objects = lambda body: (real_objects(body)[:-1]
+                                    if len(real_objects(body)) > 1 else real_objects(body))
+    try:
+        short = uw.read_guides(SPEC_OK)
+        c = uw.count(make_content(tmp / "c17l"), TODAY)
+    finally:
+        ts_read.objects = real_objects
+    ck("1件落とす読み手 → 読み落としが数に出る", short.missed == 1,
+       f"名乗り {short.declared} / 読めた {len(short.rows)}")
+    ck("1件落とす読み手 → 数えられない",
+       not c.countable and any("案内を" in x and "読み落とし" in x for x in c.blind),
+       [x for x in c.blind if "案内" in x] or "案内の読み落としが出ていない")
+
+    # --- わざと壊すと赤くなる（引き金を外す）---------------------------------
+    d = make_content(tmp / "c17m", countries=COUNTRIES_NO_TONARI)
+    real = uw.TRIGGERS
+    before = len(uw.count(d, TODAY).ours)
+    try:
+        uw.TRIGGERS = tuple(t for t in real if t.name != "案内している国")
+        after = len(uw.count(d, TODAY).ours)
+    finally:
+        uw.TRIGGERS = real
+    ck("引き金「案内している国」を外すと、こちらの落ちが見えなくなる",
+       before > 0 and after < before, f"{before}件 → {after}件")
+
+
+def case17_real():
+    """**本番の `countries.ts` から、案内している国の1行を抜いて当てる。**
+
+    仕込みの字だけで回すと、**本番の書き方が変わった日に、対照のほうが先に
+    易しくなる**（12 と同じ理由）。本番の `spec.ts` と `countries.ts` を
+    そのまま写しに取って、**同じ読み口で読ませたうえで**1行だけ抜く。
+
+    **国の名前をここに書かない。** 書くと、国を越えるたびに書き換えに来る
+    名簿になる（`python/stays_selftest.py` が 2026-10-12 にそれで赤くなった）。
+    当てる相手は、本番の表から引く——今日までに出しはじめた案内のうち、
+    歩いている最中の国（`AHEAD_COUNTRIES` に `entered` つきで居る国）。
+
+    **いまの本番に落ちが在るかは、合否にしない**（落ちが在れば、毎晩の
+    見張りのほうが赤くなる。毎 PR で回る対照を本番の状態に縛ると、
+    関係のない PR が赤くなる）。合否にするのは「抜けば、その国が名指しで
+    鳴ること」と「居るあいだは、その国が名指しされないこと」。
+    """
+    print("\n[17b] 本番の表から、案内している国の1行を抜く")
+    import shutil
+    import tempfile
+
+    spec_path = ROOT / "site" / "components" / "isle" / "spec.ts"
+    countries_src = (CONTENT / "countries.ts").read_text(encoding="utf-8")
+    today = date.today()
+
+    guides = uw.read_guides(spec_path.read_text(encoding="utf-8"))
+    ck("本番の案内の表を読めている（読み落とし 0）",
+       guides.found and guides.missed == 0,
+       f"名乗り {guides.declared} / 読めた {len(guides.rows)}")
+    got_a = ts_read.read_ahead_countries(countries_src)
+    ck("本番の `AHEAD_COUNTRIES` を読み落としていない", got_a.missed == 0,
+       f"名乗り {got_a.declared} / 読めた {len(got_a.rows)}")
+
+    # 出しはじめた案内は、引き金と同じ口で引く（数えかたを2つ持たない）
+    shown = uw.guides_shown(uw.World(
+        today=today,
+        rows=uw.read_chapters((CONTENT / "chapters.ts").read_text(encoding="utf-8")).rows,
+        countries=[], itineraries=set(), about="", legends=[], current={},
+        stale_days=0, shown_at=None, updates_at=None,
+        guides=guides.rows, ahead=[]))
+    walking = {a["slug"] for a in got_a.rows if a["entered"]}
+    targets = [slug for slug, _since, _g in shown if slug in walking]
+    print(f"    今日（{today}）までに出しはじめた案内 {len(shown)}つ"
+          f"（{'、'.join(s + '＝' + (g['from'] + '〜' if g['from'] else '期間なし') for s, _d, g in shown) or 'なし'}）。"
+          f"うち歩いている最中の国 {len(targets)}つ")
+    if not targets:
+        # **0 を緑と読ませない**（§15）。当てる相手が居ない日は、そう印字する。
+        # 仕込みの側（17）は相手を自分で持っているので、そちらは毎回当たる
+        print("    （本番に当てる相手が居ません。この回は仕込みの側だけで当てています）")
+        return
+
+    quiet = make_state(week=["回る先はこれから"])
+    with tempfile.TemporaryDirectory() as t:
+        site = Path(t) / "site"
+        (site / "content").mkdir(parents=True)
+        for f in CONTENT.glob("*.ts"):
+            shutil.copy2(f, site / "content" / f.name)
+        for rel in ("app/about/page.tsx", "lib/place.ts", "components/isle/spec.ts"):
+            (site / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / "site" / rel, site / rel)
+
+        c0 = uw.count(site / "content", today, state=quiet)
+        ck("本番の写しを数えられる（blind 0本）", c0.countable, c0.blind or "0本")
+        print(f"    本番の表のまま: こちら待ち {len(c0.ours)}件")
+        for slug in targets:
+            ck(f"本番の表のまま → `{slug}` は名指しされない",
+               not any(f"`{slug}`" in x for x in c0.ours), c0.ours or "0件")
+            (site / "content" / "countries.ts").write_text(
+                without_ahead_row(countries_src, slug), encoding="utf-8")
+            c1 = uw.count(site / "content", today, state=quiet)
+            hit = [x for x in c1.ours if f"`{slug}` の行" in x]
+            ck(f"本番の表から `{slug}` を抜く → **こちら側に名指しで鳴る**",
+               c1.countable and len(hit) == 1, hit or c1.ours or c1.blind)
+            for x in hit:
+                print(f"      {x[:170]}")
+            ck(f"`{slug}` を抜いても、あやとの札には出ない",
+               not any(f"`{slug}`" in x for x in c1.urgent + c1.later), "出ない")
+            (site / "content" / "countries.ts").write_text(countries_src, encoding="utf-8")
+            c2 = uw.count(site / "content", today, state=quiet)
+            ck(f"`{slug}` を足し直す → 黙る",
+               not any(f"`{slug}`" in x for x in c2.ours), c2.ours or "0件")
+
+
 def case12_real():
     """**本番の `site/content` を食わせて、いま何件出るかを印字する。**
 
@@ -1339,6 +1704,11 @@ def case12_real():
                 (CONTENT / "updates.ts").read_text(encoding="utf-8"))
              if (d := uw._as_date(raw))),
             default=None),
+        guides=uw.read_guides(
+            (ROOT / "site" / "components" / "isle" / "spec.ts").read_text(
+                encoding="utf-8")).rows,
+        ahead=uw.ts_read.read_ahead_countries(
+            (CONTENT / "countries.ts").read_text(encoding="utf-8")).rows,
     )
     print(f"    引き金 {len(uw.TRIGGERS)}本の、いまの本番での立ちかた:")
     for t in uw.TRIGGERS:
@@ -1483,6 +1853,8 @@ def main() -> int:
         case14_new_triggers(tmp)
         case15_legend(tmp)
         case16_updates(tmp)
+        case17_guide(tmp)
+    case17_real()
     case12_real()
     case13_yaml()
     print("\n[素性の結果]")
