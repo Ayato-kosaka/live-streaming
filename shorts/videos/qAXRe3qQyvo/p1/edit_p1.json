@@ -1,0 +1,1001 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/down/02_3-17-00_3-20-30.mp4",
+   "watermark": "prism_live",
+   "t0": 11820.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/down/04_3-33-00_3-39-30.mp4",
+   "watermark": "prism_live",
+   "t0": 12780.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/03_0-09-00_0-11-00.mp4",
+   "watermark": "prism_live",
+   "t0": 540.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/01_0-02-30_0-05-30.mp4",
+   "watermark": "prism_live",
+   "t0": 150.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/06_1-12-00_1-13-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4320.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/04_0-25-30_0-27-30.mp4",
+   "watermark": "prism_live",
+   "t0": 1530.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/05_0-33-00_0-35-30.mp4",
+   "watermark": "prism_live",
+   "t0": 1980.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/07_1-18-30_1-22-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4710.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/08_1-25-00_1-27-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5100.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/09_1-45-30_1-47-00.mp4",
+   "watermark": "prism_live",
+   "t0": 6330.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/10_2-00-30_2-02-30.mp4",
+   "watermark": "prism_live",
+   "t0": 7230.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/11_2-03-00_2-07-00.mp4",
+   "watermark": "prism_live",
+   "t0": 7380.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/13_2-14-00_2-15-30.mp4",
+   "watermark": "prism_live",
+   "t0": 8040.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/up/14_2-17-00_2-18-30.mp4",
+   "watermark": "prism_live",
+   "t0": 8220.0
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/down/05_3-42-30_3-45-00.mp4",
+   "watermark": "prism_live",
+   "t0": 13350.0
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/ingest/down/06_3-50-30_3-52-30.mp4",
+   "watermark": "prism_live",
+   "t0": 13830.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_02",
+   "in": 5505,
+   "out": 5567,
+   "row": 0,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「山の上の十字架を見に行ったら」: 下りの山道から見た、山の上の十字架と国旗"
+  },
+  {
+   "src": "c2_04",
+   "in": 4959,
+   "out": 4997,
+   "row": 0,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「まさかの事態に！」: 暗くなった山道を、野良犬が走ってくる（答えの画。F-073・F-020）"
+  },
+  {
+   "src": "c03",
+   "in": 3030,
+   "out": 3086,
+   "row": 1,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0:10:41.0〜 スコピエの街の大通りと団地（晴れ）"
+  },
+  {
+   "src": "c01",
+   "in": 3780,
+   "out": 3850,
+   "row": 2,
+   "zoom": {
+    "from": 1.5,
+    "to": 1.5,
+    "x": 0.62,
+    "y": 0.62,
+    "sx": 0.62,
+    "sy": 0.62
+   },
+   "note": "0:04:36.0〜 街の通りから、遠くの山の上に十字架（寄せて見せる）"
+  },
+  {
+   "src": "c03",
+   "in": 240,
+   "out": 308,
+   "row": 3,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0:09:08.0〜 交差点の上に照りつける太陽"
+  },
+  {
+   "src": "c06",
+   "in": 570,
+   "out": 637,
+   "row": 4,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:12:19.0〜 昼の山道（ここを日の入りまでに下りないといけない）"
+  },
+  {
+   "src": "c04",
+   "in": 1830,
+   "out": 1888,
+   "row": 5,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0:26:31.0〜 住宅街の坂道を歩いて上る"
+  },
+  {
+   "src": "c03",
+   "in": 690,
+   "out": 716,
+   "row": 6,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「バスやなくて、」: 目の前を通る白いバス"
+  },
+  {
+   "src": "c06",
+   "in": 1110,
+   "out": 1159,
+   "row": 6,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「13時から歩いて登る！」: 山道を歩いて登る"
+  },
+  {
+   "src": "c05",
+   "in": 1830,
+   "out": 1888,
+   "row": 7,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0:34:01.0〜 スーパーの看板と入口へ近づく"
+  },
+  {
+   "src": "c05",
+   "in": 2100,
+   "out": 2167,
+   "row": 8,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "0:34:10.0〜 閉まった扉を手で引いても開かない（中は暗い）"
+  },
+  {
+   "src": "c07",
+   "in": 2385,
+   "out": 2461,
+   "row": 9,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:19:49.5〜 山の途中の道に並ぶ売店と人だかり"
+  },
+  {
+   "src": "c08",
+   "in": 600,
+   "out": 643,
+   "row": 10,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:25:20.0〜 売店の前に並ぶ人の列"
+  },
+  {
+   "src": "c07",
+   "in": 4665,
+   "out": 4702,
+   "row": 11,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:21:05.5〜 売店の中のお菓子の棚（カードで払う所は写っていない）"
+  },
+  {
+   "src": "c09",
+   "in": 75,
+   "out": 119,
+   "row": 12,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:45:32.5〜 休憩所の机にクッキーの袋とコーヒー"
+  },
+  {
+   "src": "c09",
+   "in": 2355,
+   "out": 2417,
+   "row": 13,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:46:48.5〜 割ったクッキーを見せる"
+  },
+  {
+   "src": "c10",
+   "in": 2325,
+   "out": 2373,
+   "row": 14,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "2:01:47.5〜 山道の階段を上る"
+  },
+  {
+   "src": "c11",
+   "in": 2085,
+   "out": 2131,
+   "row": 15,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「ロープウェイが動いてないから」: 山道の上にロープウェイの鉄塔"
+  },
+  {
+   "src": "c11",
+   "in": 2580,
+   "out": 2617,
+   "row": 15,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「これ間に合わないかも……」: 遠くの山へ続く長い道"
+  },
+  {
+   "src": "c11",
+   "in": 5355,
+   "out": 5395,
+   "row": 16,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「Googleマップみたら、」: 携帯の画面を見る（写っているのは天気の画面）"
+  },
+  {
+   "src": "c13",
+   "in": 1320,
+   "out": 1380,
+   "row": 16,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "「頂上から帰ったら、17時で真っ暗やん！」: まだ遠い山頂の稜線（夕方の空）"
+  },
+  {
+   "src": "c08",
+   "in": 1920,
+   "out": 1986,
+   "row": 17,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "1:26:04.0〜 売店の前の人だかり（並んでいた所）"
+  },
+  {
+   "src": "c14",
+   "in": 1890,
+   "out": 1940,
+   "row": 18,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "2:18:03.0〜 山道で、断念を言う自撮り"
+  },
+  {
+   "src": "c2_02",
+   "in": 5760,
+   "out": 5841,
+   "row": 19,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:20:12.0〜 急な下りの山道を急いで下りる（「駆け足で帰らないと暗くなるぞ」）"
+  },
+  {
+   "src": "c2_05",
+   "in": 420,
+   "out": 467,
+   "row": 20,
+   "zoom": {
+    "from": 1.8,
+    "to": 1.8,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:42:44.0〜 携帯のライトが照らす足元の道だけを画面いっぱいに（まわりは真っ暗）。犬の行と見た目を分けるために寄せる"
+  },
+  {
+   "src": "c2_04",
+   "in": 4278,
+   "out": 4337,
+   "row": 21,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:35:22.6〜 暗い山道の先から、野良犬が走ってきて真横を抜ける（「野良犬が」で現れる）"
+  },
+  {
+   "src": "c2_05",
+   "in": 2745,
+   "out": 2780,
+   "row": 22,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:44:01.5〜 山道を抜けて、街灯の明るい舗装の道へ"
+  },
+  {
+   "src": "c2_06",
+   "in": 150,
+   "out": 193,
+   "row": 23,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:50:35.0〜 夜空にライトアップされた十字架（大写し）"
+  },
+  {
+   "src": "c2_05",
+   "in": 570,
+   "out": 652,
+   "row": 24,
+   "zoom": {
+    "from": 1.26,
+    "to": 1.26,
+    "x": 0.5,
+    "y": 1.0,
+    "sx": 0.5,
+    "sy": 1.0
+   },
+   "note": "3:42:49.0〜 携帯のライトだけで下りる夜の山道（終わりの札が乗る）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/01.wav",
+    "tts_text": "北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、首都スコピエ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、首都スコピエ！",
+    "at": 100
+   },
+   {
+    "text": "街のどこからでも見える十字架まで歩きたい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/03.wav",
+    "tts_text": "街のどこからでも見える十字架まで歩きたい！",
+    "at": 156
+   },
+   {
+    "text": "ただ、日の入りは16時20分。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/04.wav",
+    "tts_text": "ただ、日の入りは16時20分。",
+    "at": 226
+   },
+   {
+    "text": "それまでに下りな、山道は真っ暗や。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/05.wav",
+    "tts_text": "それまでにおりな、やまみちはまっくらや。",
+    "at": 294
+   },
+   {
+    "text": "現金が80円しか無いから、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/06.wav",
+    "tts_text": "現金が80円しか無いから、",
+    "at": 361
+   },
+   {
+    "text": "バスやなくて、13時から歩いて登る！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/07.wav",
+    "tts_text": "バスやなくて、13時から歩いて登る！",
+    "at": 419
+   },
+   {
+    "text": "お腹ペコペコで見つけたスーパーが、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/08.wav",
+    "tts_text": "お腹ペコペコで見つけたスーパーが、",
+    "at": 494
+   },
+   {
+    "text": "まさかの日曜休み！絶望や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/09.wav",
+    "tts_text": "まさかの日曜休み！絶望や！",
+    "at": 552,
+    "mood": "tense_still"
+   },
+   {
+    "text": "山の途中で、売店を発見！奇跡や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/10.wav",
+    "tts_text": "山の途中で、売店を発見！奇跡や！",
+    "at": 619,
+    "mood": "up_pop"
+   },
+   {
+    "text": "人、並びすぎやろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/11.wav",
+    "tts_text": "人、並びすぎやろ！",
+    "at": 695,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "カードが使えたから、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/12.wav",
+    "tts_text": "カードが使えたから、",
+    "at": 738
+   },
+   {
+    "text": "クッキーとコーヒーを買う！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/13.wav",
+    "tts_text": "クッキーとコーヒーを買う！",
+    "at": 775
+   },
+   {
+    "text": "カントリーマームに近いけど、サクサク！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/14.wav",
+    "tts_text": "カントリーマームに近いけど、サクサク！",
+    "at": 819,
+    "mood": "up_pop"
+   },
+   {
+    "text": "元気出たので再出発！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/15.wav",
+    "tts_text": "元気出たので再出発！",
+    "at": 881
+   },
+   {
+    "text": "あれ、ロープウェイが動いてないからこれ間に合わないかも……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/16.wav",
+    "tts_text": "あれ、ロープウェイが動いてないからこれ間に合わないかも……",
+    "at": 929,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "Googleマップみたら、頂上から帰ったら、17時で真っ暗やん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/17.wav",
+    "tts_text": "グーグルマップみたら、頂上から帰ったら、じゅうななじで真っ暗やん！",
+    "at": 1012,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "売店で40分も使ってたんや……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/18.wav",
+    "tts_text": "売店で、よんじゅっぷんも使ってたんや……",
+    "at": 1112
+   },
+   {
+    "text": "やらかした……断念や。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/19.wav",
+    "tts_text": "やらかした……断念や。",
+    "at": 1178,
+    "mood": "tense_still"
+   },
+   {
+    "text": "しかも、これ駆け足で帰らないと暗くなるぞ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/20.wav",
+    "tts_text": "しかも、これ駆け足で帰らないと暗くなるぞ！",
+    "at": 1228
+   },
+   {
+    "text": "もう足元しか見えへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/21.wav",
+    "tts_text": "もう、あしもとしか見えへん！",
+    "at": 1309,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "怖い怖い！野良犬がおるやんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/22.wav",
+    "tts_text": "こわいこわい！のらいぬがおるやんか！",
+    "at": 1356,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "なんとか下りたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/23.wav",
+    "tts_text": "なんとかおりたら、",
+    "at": 1415
+   },
+   {
+    "text": "十字架がライトアップ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/24.wav",
+    "tts_text": "じゅうじかがライトアップ！",
+    "at": 1450,
+    "mood": "up_pop"
+   },
+   {
+    "text": "みんなは、夜の山道、下りれる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/qax/voice/qax-p1-v1/p1/25.wav",
+    "tts_text": "みんなは、よるのやまみち、おりれる？",
+    "at": 1493
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/qAXRe3qQyvo/p1/spec.json",
+  "fps": 30,
+  "frames": 1575,
+  "seconds": 52.5,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 100,
+    "voice_frames": 92,
+    "cuts": [
+     "3:20:03.5+2.07s",
+     "3:35:45.3+1.27s"
+    ],
+    "line": "北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 100,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "0:10:41.0+1.87s"
+    ],
+    "line": "やってきたのは、首都スコピエ！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 156,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:04:36.0+2.33s"
+    ],
+    "line": "街のどこからでも見える十字架まで歩きたい！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 226,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "0:09:08.0+2.27s"
+    ],
+    "line": "ただ、日の入りは16時20分。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 294,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "1:12:19.0+2.23s"
+    ],
+    "line": "それまでに下りな、山道は真っ暗や。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 361,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "0:26:31.0+1.93s"
+    ],
+    "line": "現金が80円しか無いから、",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 419,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "0:09:23.0+0.87s",
+     "1:12:37.0+1.63s"
+    ],
+    "line": "バスやなくて、13時から歩いて登る！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 494,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "0:34:01.0+1.93s"
+    ],
+    "line": "お腹ペコペコで見つけたスーパーが、",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 552,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "0:34:10.0+2.23s"
+    ],
+    "line": "まさかの日曜休み！絶望や！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 619,
+    "frames": 76,
+    "voice_frames": 68,
+    "cuts": [
+     "1:19:49.5+2.53s"
+    ],
+    "line": "山の途中で、売店を発見！奇跡や！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 695,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "1:25:20.0+1.43s"
+    ],
+    "line": "人、並びすぎやろ！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 738,
+    "frames": 37,
+    "voice_frames": 29,
+    "cuts": [
+     "1:21:05.5+1.23s"
+    ],
+    "line": "カードが使えたから、",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 775,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "1:45:32.5+1.47s"
+    ],
+    "line": "クッキーとコーヒーを買う！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 819,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "1:46:48.5+2.07s"
+    ],
+    "line": "カントリーマームに近いけど、サクサク！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 881,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "2:01:47.5+1.60s"
+    ],
+    "line": "元気出たので再出発！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 929,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "2:04:09.5+1.53s",
+     "2:04:26.0+1.23s"
+    ],
+    "line": "あれ、ロープウェイが動いてないからこれ間に合わないかも……",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1012,
+    "frames": 100,
+    "voice_frames": 92,
+    "cuts": [
+     "2:05:58.5+1.33s",
+     "2:14:44.0+2.00s"
+    ],
+    "line": "Googleマップみたら、頂上から帰ったら、17時で真っ暗やん！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1112,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "1:26:04.0+2.20s"
+    ],
+    "line": "売店で40分も使ってたんや……",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1178,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "2:18:03.0+1.67s"
+    ],
+    "line": "やらかした……断念や。",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1228,
+    "frames": 81,
+    "voice_frames": 73,
+    "cuts": [
+     "3:20:12.0+2.70s"
+    ],
+    "line": "しかも、これ駆け足で帰らないと暗くなるぞ！",
+    "telop": null
+   },
+   {
+    "row": 20,
+    "from": 1309,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "3:42:44.0+1.57s"
+    ],
+    "line": "もう足元しか見えへん！",
+    "telop": null
+   },
+   {
+    "row": 21,
+    "from": 1356,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "3:35:22.6+1.97s"
+    ],
+    "line": "怖い怖い！野良犬がおるやんか！",
+    "telop": null
+   },
+   {
+    "row": 22,
+    "from": 1415,
+    "frames": 35,
+    "voice_frames": 27,
+    "cuts": [
+     "3:44:01.5+1.17s"
+    ],
+    "line": "なんとか下りたら、",
+    "telop": null
+   },
+   {
+    "row": 23,
+    "from": 1450,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "3:50:35.0+1.43s"
+    ],
+    "line": "十字架がライトアップ！",
+    "telop": null
+   },
+   {
+    "row": 24,
+    "from": 1493,
+    "frames": 82,
+    "voice_frames": 59,
+    "cuts": [
+     "3:42:49.0+2.73s"
+    ],
+    "line": "みんなは、夜の山道、下りれる？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 359,
+   "raw_voice_s": 63.27,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 45.33,
+   "cps_voiced": 7.92,
+   "video_s": 52.5,
+   "cps_video": 6.84
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
