@@ -1,4 +1,3 @@
-import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
@@ -25,6 +24,7 @@ import {
   LEAVE,
   MAIN,
   NORDIC_GUIDE,
+  NORDIC_HREF,
   NORDIC_LOG,
   NORDIC_RIDES,
   ROUTE,
@@ -46,6 +46,7 @@ import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 import { shopsOf } from "@/content/nordicShops";
 import { foodsOf } from "@/content/nordicFood";
 import { travelHref } from "@/content/travelPath";
+import { chapterCrumbs, chapterOf } from "@/content/chapters";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -87,17 +88,25 @@ import { travelHref } from "@/content/travelPath";
  * 区画のいちばん下で、どちらがどちらかを断ってある（`Leg.hitch`）。
  */
 
+/**
+ * 1日ぶんの面を持つ章。**いまは北欧だけ**（旅程を日ごとに持っているのが北欧だけ）。
+ * 前は `/nordic/day/<n>` に立っていた。章の島の下へ移した（#1201。前の道は 301）。
+ */
+const DAY_CHAPTER = "nordic";
+
 export function generateStaticParams() {
-  return DAY_PAGES.map((d) => ({ n: d.id.replace(/^day-/, "") }));
+  /* 章の島（`[chapter]`）の下だが、**章の段もここで決める**——上の段の
+     `generateStaticParams` は章の島の面のぶんで、この面には効かない */
+  return DAY_PAGES.map((d) => ({ chapter: DAY_CHAPTER, n: d.id.replace(/^day-/, "") }));
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ n: string }>;
+  params: Promise<{ chapter: string; n: string }>;
 }): Promise<Metadata> {
-  const { n } = await params;
-  const day = dayBySlug(n);
+  const { chapter, n } = await params;
+  const day = chapter === DAY_CHAPTER ? dayBySlug(n) : undefined;
   if (!day) return {};
   const legs = day.legs ?? [];
   /* 区間のある日は「◯から◯」、無い日は「◯で休む」。
@@ -114,7 +123,7 @@ export async function generateMetadata({
     /* 一文の無い日がある（`lead?`）。**器の一文に落とさない**——落ちると
        その日の面が、島ぜんぶと同じことを名乗る。日付と道のりから作る */
     description: day.lead ?? `${dayName(day)}、${way}。`,
-    path: `/nordic/day/${n}`,
+    path: dayHref(day),
   });
 }
 
@@ -371,9 +380,9 @@ function Hours({
   );
 }
 
-export default async function NordicDayPage({ params }: { params: Promise<{ n: string }> }) {
-  const { n } = await params;
-  const day = dayBySlug(n);
+export default async function NordicDayPage({ params }: { params: Promise<{ chapter: string; n: string }> }) {
+  const { chapter, n } = await params;
+  const day = chapter === DAY_CHAPTER ? dayBySlug(n) : undefined;
   if (!day) notFound();
   const legs = day.legs ?? [];
 
@@ -467,7 +476,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
      出発の1週間前）をそのまま読んでいたので、旅のあいだじゅう**すでに越えた日の
      問いに票が入り続けていた**。
 
-     組み方は `/nordic` の `stops` と同じ。`route[i]` を発つのが `MAIN[i]`、
+     組み方は旅の節（`../../nordic.tsx`）の `stops` と同じ。`route[i]` を発つのが `MAIN[i]`、
      `route[i]` へ着くのが `MAIN[i-1]`。 */
   const route = STOP_SEQ.map((s, i) => ({
     ...s,
@@ -539,13 +548,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
   ];
 
   return (
-    <PageShell
-      crumbs={[
-        crumbOf("next"),
-        { label: "北欧ヒッチハイク", href: "/nordic" },
-        { label: dayName(day) },
-      ]}
-    >
+    <PageShell crumbs={chapterCrumbs(chapterOf(DAY_CHAPTER), { label: dayName(day) })}>
       <PageHead
         title={dayName(day)}
         lead={day.lead}
@@ -826,7 +829,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         )}
       </div>
 
-      <Link prefetch={false} className="tile" href="/nordic#plan">
+      <Link prefetch={false} className="tile" href={`${NORDIC_HREF}#plan`}>
         <span className="tile-mark">
           <Icon name="road" size={26} />
         </span>

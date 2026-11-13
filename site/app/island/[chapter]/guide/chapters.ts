@@ -13,7 +13,7 @@ import type { IconName } from "@/components/ui/Icon";
  * ## 面（`./page.tsx`）から外に出してある理由
  *
  * **入口の札が「10のコーナー」と手で書いてあって、しおりは11本あった**
- * （`app/nordic/page.tsx`）。コーナーを1つ足すたびに、入口と中身が食い違う。
+ * （`app/island/[chapter]/nordic.tsx`）。コーナーを1つ足すたびに、入口と中身が食い違う。
  * 数える先を1つにするために、並びをここに置いて、入口も面もここから数える
  * （`docs/island-standards.md` 8章）。
  */

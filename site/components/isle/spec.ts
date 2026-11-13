@@ -693,7 +693,7 @@ export function balkansSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): Isl
  * 「その章のときに何をしていたか」で建てるが、この島はまだ何も起きていない。
  * 建つのは、出発までの日数・企画の説明・旅のしおり・この旅の掲示板。
  *
- * 歩いた国のかわりに、その旅の国。行き先は `/nordic/<国>` で、
+ * 歩いた国のかわりに、その旅の国。行き先は `/travel/<国>` で、
  * 中身はもう全部そろっている（見どころ・地図・値段）。
  * **島の中に同じものを作り直さない。**
  */
@@ -718,7 +718,8 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       icon: "tent",
       size: 62,
       sign: true,
-      href: "/nordic",
+      /* 旅そのものは、この島の下の紙の頭にある（#1201。前は別の面 `/nordic`） */
+      href: "/island/nordic#trip",
       countdown: c.opensAt,
     },
     {
@@ -747,7 +748,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       blurb: "持ち物と、当日の動き",
       icon: "stall",
       size: 56,
-      href: "/nordic/guide",
+      href: "/island/nordic/guide",
     },
     {
       /* **字は表から作る**（`./board.ts`）。手で書くと、宛先を畳んだ日に

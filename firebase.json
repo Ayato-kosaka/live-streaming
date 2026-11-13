@@ -29,37 +29,37 @@
       },
       {
         "source": "/nordic/day/10",
-        "destination": "/nordic#day-10",
+        "destination": "/island/nordic#day-10",
         "type": 301
       },
       {
         "source": "/nordic/day/11",
-        "destination": "/nordic#day-11",
+        "destination": "/island/nordic#day-11",
         "type": 301
       },
       {
         "source": "/nordic/day/12",
-        "destination": "/nordic#day-12",
+        "destination": "/island/nordic#day-12",
         "type": 301
       },
       {
         "source": "/nordic/day/13",
-        "destination": "/nordic#day-13",
+        "destination": "/island/nordic#day-13",
         "type": 301
       },
       {
         "source": "/nordic/day/14",
-        "destination": "/nordic#day-14",
+        "destination": "/island/nordic#day-14",
         "type": 301
       },
       {
         "source": "/nordic/day/15",
-        "destination": "/nordic#day-15",
+        "destination": "/island/nordic#day-15",
         "type": 301
       },
       {
         "source": "/nordic/day/16",
-        "destination": "/nordic#day-16",
+        "destination": "/island/nordic#day-16",
         "type": 301
       },
       {
@@ -135,6 +135,26 @@
       {
         "source": "/north-macedonia",
         "destination": "/travel/north-macedonia",
+        "type": 301
+      },
+      {
+        "source": "/atlas",
+        "destination": "/island",
+        "type": 301
+      },
+      {
+        "source": "/nordic",
+        "destination": "/island/nordic",
+        "type": 301
+      },
+      {
+        "source": "/nordic/day/:n",
+        "destination": "/island/nordic/day/:n",
+        "type": 301
+      },
+      {
+        "source": "/nordic/guide",
+        "destination": "/island/nordic/guide",
         "type": 301
       }
     ],

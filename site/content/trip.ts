@@ -34,7 +34,7 @@ import { chapterDayNo, chapterDays, chapterNow, chapterSpan } from "@/content/ch
  * 旅の面を作った章だけ、ここに1行足す。
  */
 const TRIP_PAGES: Record<string, string> = {
-  nordic: "/nordic",
+  nordic: "/island/nordic",
 };
 
 /**

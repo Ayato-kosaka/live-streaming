@@ -202,7 +202,7 @@ export const THEMES: Theme[] = [
     id: "nordic",
     name: "北欧の旅",
     group: NORDIC_GROUP,
-    href: "/nordic",
+    href: "/island/nordic",
     /* **旅が終わったので、注文ではなく思い出を聞く欄にした。**
        見本の文の形が、そのまま集まるものの形になる（`georgia-bye` で学んだ）。
        「〜してほしい」のまま置いておくと、もう行かない国への注文が集まり続ける。
@@ -275,7 +275,7 @@ export const THEMES: Theme[] = [
     id: "leg-kutaisi-katowice",
     name: "クタイシ → カトヴィツェ",
     group: NORDIC_GROUP,
-    href: "/nordic/day/depart",
+    href: "/island/nordic/day/depart",
     lead: "唯一の飛行機の日。深夜1時5分に着いて、始発まで数時間あります。",
     placeholder: "例）空港のなかを探検してほしい",
     closed: true,

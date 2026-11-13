@@ -1,8 +1,4 @@
-import { crumbOf } from "@/components/island/layout";
-import type { Metadata } from "next";
-import { share } from "@/lib/share";
 import Link from "next/link";
-import PageShell from "@/components/ui/PageShell";
 import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import TripNow, { type Stop } from "@/components/nordic/TripNow";
@@ -26,6 +22,7 @@ import {
   MAIN,
   NORDIC_COUNTRIES,
   NORDIC_GUIDE,
+  NORDIC_GUIDE_HREF,
   ROUTE,
   THANKS,
   THEMES,
@@ -40,23 +37,6 @@ import MAP from "@/content/nordic/map.json";
 import { LINKS } from "@/content/site";
 import "./themes.css";
 
-export const metadata: Metadata = share({
-  key: "nordic",
-  title: "スウェーデンまでヒッチハイクで",
-  /* 距離は `HITCH_KM` から出す。**手で書かない。**
-     ここは「1,542km」で焼いてあって、画面が出す 1,377km と食い違っていた。
-     旅程が変わったときに、手で書いた数だけが古いまま残る
-     （`docs/island-standards.md` 8）。
-
-     **日付と、これから起きる言い方を書かない。** ここは `<meta>` なので、
-     次にビルドするまで直らない（`app/layout.tsx` の description と同じ理由）。
-     「2026年9月11日出発、9月20日ストックホルム着、27日に発つまで」「北上します」と
-     書いてあって、**9月27日にまるごと嘘になる字**だった。旅の日付は面の中に
-     `DEPART` / `ARRIVE` / `LEAVE` から出ているので、ここで言い直さない。 */
-  description: `スウェーデンに、会いたい人がいます。スウェーデン行きの飛行機が高いので、安いポーランド行きで飛んで、そこから${HITCH_KM.toLocaleString()}kmは人の車で北へ。旅のよてい、ルート地図、国ごとの見どころ、旅のしおり。`,
-  path: "/nordic",
-});
-
 const MOVE: Record<string, string> = {
   fly: "飛行機",
   hitch: "ヒッチハイク",
@@ -66,7 +46,24 @@ const MOVE: Record<string, string> = {
 };
 
 /**
- * 北欧ヒッチハイク旅。
+ * 北欧ヒッチハイク旅。**北欧の章の島（`/island/nordic`）の、島の下の紙。**
+ *
+ * ## なぜ章の島の紙に入れたか（#1201。2026-11-13）
+ *
+ * 前は旅そのもの（`/nordic`。旅程・地図・理由・応援）と、章の島（`/island/nordic`。
+ * 歩ける島と、その章の配信・歩いた国・いた人）が**別の2枚**だった。
+ * 同じ17日を2枚が別々に語っていて、日ごとの面（`/nordic/day/<n>`）のパンくずは
+ * 旅の面へ、島の連なりは章の島へ、と入口も割れていた。
+ *
+ * 1枚にして、**章の島をそのまま旅の面にした。** 島（板）がいちばん上にあるのは
+ * ほかの章の島と同じで、その下の紙の頭にこの旅の節が並び、続けて章のふりかえり
+ * （`IsleReview`）が来る。旅の節を章の島の下に置いたのは、日ごとの面としおりが
+ * `/island/nordic/…` に立つので、その1つ上の面に旅程表（日ごとの面への入口）が
+ * 無いと、パンくずの1段上が行き止まりになるから。
+ * 旅の節は前の面の中身のまま。見出しだけ、島の名前（h1）の下の段（h2）に下ろした。
+ *
+ * ショートは旅程表のすぐ下（`TripShorts`）に1回だけ出し、ふりかえりの紙では出さない
+ * （同じ4本が1枚に2回並ぶため）。
  *
  * この企画は「ヒッチハイクで北欧を回る」ではなく、
  * **会いたい人がいるので、スウェーデンまで陸路で会いに行く**話。
@@ -109,7 +106,7 @@ const MOVE: Record<string, string> = {
  *
  * 数字は意味のあるものだけ置く。読んで何も分からない数字は出さない。
  */
-export default async function NordicPage() {
+export default function NordicTrip() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
   const cityId = Object.fromEntries(MAP.cities.map((c) => [c.name, c.id]));
 
@@ -167,8 +164,9 @@ export default async function NordicPage() {
   );
 
   return (
-    <PageShell crumbs={[crumbOf("next"), { label: "北欧ヒッチハイク" }]}>
+    <>
       <TripNow
+        id="trip"
         stops={stops}
         mainLegs={MAIN.map((l) => l.id)}
         legOrder={ROUTE.map((l) => l.id)}
@@ -284,7 +282,7 @@ export default async function NordicPage() {
         </div>
       </section>
 
-      {/* 旅のよてい。**1日1行だけ。中身は `/nordic/day/[n]` にある。**
+      {/* 旅のよてい。**1日1行だけ。中身は `/island/nordic/day/[n]` にある。**
           9日ぶんの区間・注記・国境・わかれ道をここに全部並べていたころ、
           旅程表だけで 1,764px、面ぜんぶの3割近くを使っていた。
           「1日1日はシンプルにしながら、押せば詳しく見るページに入れる」
@@ -341,7 +339,7 @@ export default async function NordicPage() {
           紙の上に置かなくてもそれだけで押せるものに見える。 */}
       {/* 紙どうしのあいだは 32px 空く決まりなので、板1枚のときは自分で空ける。
           空けないと、すぐ下の紙の見出し（貼り紙）がこの板に乗り上げる。 */}
-      <Link prefetch={false} className="tile" href="/nordic/guide" style={{ marginBottom: "var(--sp-6)" }}>
+      <Link prefetch={false} className="tile" href={NORDIC_GUIDE_HREF} style={{ marginBottom: "var(--sp-6)" }}>
         <span className="tile-mark">
           <Icon name="book" size={26} />
         </span>
@@ -413,6 +411,6 @@ export default async function NordicPage() {
           <Icon name="external" size={14} />
         </a>
       </section>
-    </PageShell>
+    </>
   );
 }
