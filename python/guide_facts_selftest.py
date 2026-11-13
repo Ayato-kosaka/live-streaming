@@ -21,6 +21,18 @@
 `guide_facts.py` の比較を1つ壊して（例: `±90秒` の幅を広げる・読み上げの `>=` を `>` に）、
 ここが赤くなることを確かめてある。`python3 python/mutation_drill.py python/guide_facts_selftest.py`
 でも当てられる。
+
+## 抜く道具（`python/guide_extract.py`）も、ここで見る
+
+`claude -p` を呼ぶ所（`call_model`）は**偽物に差し替える**（本物は呼ばない。鍵もネットワークも要らない）。
+見るのは5つ——1枚に視聴者さんの素性が無い（チャットは本文だけ・呼びかけと @名前 と投げ銭の額は `〇〇`）／
+伏せ残しの見張りが、残った名前を見つける／NG の行を添えて直させると2回目で直る／直させるのは1回まで／
+2回目も落ちた項目だけを落として残りを置く／項目が0件になった回は置かない。
+
+**守りを1つずつ外して、その守りの対照だけが落ちることも、ここで当てる**（`DRILL`）。
+`mutation_drill.py` は `guide_extract.py` を当て先にしない（隣の selftest の名前で選ぶので）。だから外しかたを
+ここに1件ずつ書いた。チャットの投稿者名を出したときだけは、伏せ残しの見張りが呼び出しそのものを止めるので、
+抜く側の対照もいっしょに落ちる（守りが2枚あることの表れ。期待する集まりにそう書いてある）。
 """
 
 from __future__ import annotations
@@ -31,9 +43,11 @@ import io
 import json
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guide_extract as ge  # noqa: E402
 import guide_facts as gf  # noqa: E402
 
 ok: list[str] = []
@@ -249,6 +263,11 @@ def check_good(root: Path, table: Path) -> None:
     check("月で指すと同じものを見る", rc, 0)
     rc, _ = run(root, table, "check", "--country", "testland", "--city", "town")
     check("国と街で指すと同じものを見る", rc, 0)
+    # 寄せる表の places は「正の名前 → 別の書きかた」。どちらで書いても表に在る（city が正の名前に寄せる）
+    items = extra(kind="place", text="バザールを歩いた。", place={"name": "バザール", "heard": []})
+    r = gf.check_file(put(root, items), gf.load_table(table))
+    check("寄せる表: 表に無い場所の名前だけを数える（別の書きかたは表に在る）", sorted(r.off_table), ["ボート乗り場"])
+    put(root, GOOD)
 
 
 def check_guards(root: Path, table: Path) -> None:
@@ -476,9 +495,184 @@ def check_new_and_read(root: Path, table: Path) -> None:
     check("read: チャットの名前は出さない", "はなこ" in out or "Hanako" in out, False)
 
 
+# ---------------------------------------------------------------- 抜く道具（guide_extract.py）
+
+STEM_N = "2026-10-18_2202_NNN"   # 名前の入った材料（1枚を組むだけ。呼ばない）
+STEM_C = "2026-10-18_2202_CCC"   # 名前の入っていない材料（偽物の claude で抜くところまで）
+# 見出しにも名前が入る（議事録の見出しは機械が書くので「先生は @名前」がありうる）。流れには「名前 ¥額」
+NOTES_N = NOTES.replace("### [0:03:00] ボート", "### [0:03:00] ボートとたろうさん").replace(
+    "パスタとコーラの値段。", "パスタとコーラの値段。jiro1685 ¥320「おやつ代」。")
+TRANSCRIPT_C = TRANSCRIPT.replace("たろうさん、こんばんは。はなちゃん、こんばんは。今日も来てくれてありがとう。", "")
+NOTES_C = NOTES.replace("@さぶろう「いってらっしゃい」。", "")
+# 見張りが探す、こしらえた素性（1枚に1つでも在れば落とす）
+SECRETS = ["たろう", "はなこ", "hanako", "jiro", "さぶろう", "はなちゃん", "¥320", "¥"]
+BAD_QUOTE = "ほんまに来てよかったです"   # 字幕に無い言い回し（quote で落ちる）
+
+
+def ex_root(d: Path) -> tuple[Path, Path]:
+    root = d / "streams"
+    m = root / "2026" / "10"
+    m.mkdir(parents=True)
+    for stem, tr, notes in ((STEM_N, TRANSCRIPT, NOTES_N), (STEM_C, TRANSCRIPT_C, NOTES_C)):
+        (m / f"{stem}.transcript.txt").write_text(tr, encoding="utf-8")
+        (m / f"{stem}.chat.txt").write_text(CHAT, encoding="utf-8")
+        (m / f"{stem}.md").write_text(notes, encoding="utf-8")
+    table = d / "cities.json"
+    table.write_text(json.dumps(TABLE, ensure_ascii=False), encoding="utf-8")
+    return root, table
+
+
+class FakeClaude:
+    """`claude -p` の代わり。reply(1枚, 何回目) が返す data を、`claude -p --output-format json` の形で返す。"""
+
+    def __init__(self, reply):
+        self.reply, self.prompts = reply, []
+
+    def __call__(self, prompt, model, schema, timeout, effort=None):
+        self.prompts.append(prompt)
+        return {"structured_output": self.reply(prompt, len(self.prompts)), "duration_ms": 10, "total_cost_usd": 0,
+                "usage": {"input_tokens": len(prompt), "output_tokens": 100}}
+
+
+def bad_items() -> list:
+    return edit(4, quote=BAD_QUOTE)
+
+
+def run_extract(root: Path, table: Path, d: Path, reply) -> tuple[int, str, FakeClaude, Path]:
+    fake = FakeClaude(reply)
+    keep = ge.call_model
+    ge.call_model = fake
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+            rc = ge.main([STEM_C, "--root", str(root), "--table", str(table), "--out", str(d / "out")])
+    finally:
+        ge.call_model = keep
+    return rc, buf.getvalue(), fake, root / "2026" / "10" / f"{STEM_C}.facts.json"
+
+
+def extract_cases() -> dict[str, bool]:
+    """抜く道具の対照。名前 → 通ったか。外しかたの対照（DRILL）からも同じものを回す。"""
+    got: dict[str, bool] = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        root, table_p = ex_root(d)
+        table = gf.load_table(table_p)
+        m = ge.Material(root / "2026" / "10" / STEM_N, table)
+        prompt = ge.build(root, m, [(0, m.last)])
+        low = gf.norm(prompt).casefold()
+        got["伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い"] = (
+            not [s for s in SECRETS if s.casefold() in low] and "[0:03:00] ボートと〇〇さん" in prompt)
+        got["伏せる: チャットは本文を残す（読み上げの見分けに要る）"] = "スーパーで紫のラベルの梨ジュース飲んでほしい" in prompt
+        heads = dict((h.split("]")[0], h) for _, h in m.notes["heads"])
+        back = m.restore([{"kind": "fact", "src": {"lines": ["0:03:30"], "notes": "[0:03:00] ボートと〇〇さん"}}])
+        got["伏せる: 伏せて見せた見出しは、返ってきたら議事録の見出しそのものに戻す"] = (
+            back[0]["src"]["notes"] == heads["[0:03:00"] == "[0:03:00] ボートとたろうさん")
+        raw = TRANSCRIPT + CHAT + NOTES_N
+        found = set(ge.leaks(raw, m.names))
+        got["漏れの見張り: 伏せていない材料から、名前・呼びかけ・@名前・投げ銭の額を見つける"] = (
+            {"チャットの投稿者の名前", "呼びかけ", "@名前", "投げ銭の額"} <= found)
+
+        def good(p, n):
+            return {"items": copy.deepcopy(GOOD)}
+        rc, out, fake, dest = run_extract(root, table_p, d, good)
+        written = json.loads(dest.read_text(encoding="utf-8")) if dest.exists() else {}
+        got["抜く: 返ってきた項目が check を通れば、頭を機械で埋めて置く"] = (
+            rc == 0 and len(fake.prompts) == 1 and len(written.get("items", [])) == len(GOOD)
+            and written.get("video_id") == "CCC" and written.get("city") == "town")
+        dest.unlink(missing_ok=True)
+
+        def heals(p, n):
+            # 偽物の直し役は、NG の行が1枚に載っていれば直す（載っていなければ同じものを返す）
+            return {"items": copy.deepcopy(GOOD) if n > 1 and "[quote] #4" in p else bad_items()}
+        rc, out, fake, dest = run_extract(root, table_p, d, heals)
+        got["直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）"] = (
+            rc == 0 and len(fake.prompts) == 2 and fake.prompts[1].startswith(fake.prompts[0])
+            and dest.exists() and len(json.loads(dest.read_text(encoding="utf-8"))["items"]) == len(GOOD))
+        dest.unlink(missing_ok=True)
+
+        def stubborn(p, n):
+            return {"items": bad_items()}
+        rc, out, fake, dest = run_extract(root, table_p, d, stubborn)
+        got["直す: 直させるのは1回まで（呼ぶのは2回）"] = len(fake.prompts) == 2
+        kept = json.loads(dest.read_text(encoding="utf-8"))["items"] if dest.exists() else []
+        got[DROP] = (
+            rc == 0 and len(kept) == len(GOOD) - 1 and not any(x.get("quote") == BAD_QUOTE for x in kept)
+            and "落とした quote1" in out)
+        dest.unlink(missing_ok=True)
+
+        rc_a, _, _, dest_a = run_extract(root, table_p, d, lambda p, n: {"items": []})
+        made_a = dest_a.exists()
+        dest_a.unlink(missing_ok=True)
+        only_bad = [copy.deepcopy(GOOD[4]) | {"quote": BAD_QUOTE}]
+        rc_b, _, _, dest_b = run_extract(root, table_p, d, lambda p, n: {"items": copy.deepcopy(only_bad)})
+        got[ZERO] = (
+            (rc_a, made_a, rc_b, dest_b.exists()) == (2, False, 2, False))
+        dest_b.unlink(missing_ok=True)
+    return got
+
+
+ZERO = "0件: 項目が0件の返事も、落として0件になった回も置かない（終了 2）"
+DROP = "落とす: 2回目も落ちた項目だけを落として、残りを置く（落とした数を札ごとに出す）"
+# 呼べたときだけ通る対照（0件の対照は、呼ばずに終了 2 でも通るので入れない）
+EXTRACT_E2E = {"抜く: 返ってきた項目が check を通れば、頭を機械で埋めて置く",
+               "直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）",
+               "直す: 直させるのは1回まで（呼ぶのは2回）", DROP}
+_fix_prompt, _drop_ng = ge.fix_prompt, ge.drop_ng
+# 守りの外しかた → そのとき落ちるはずの対照（これ以外は通るはず）
+DRILL = [
+    ("字幕・議事録・見出しの名前を伏せない（mask_text を素通しに）",
+     {"mask_text": lambda s, names: gf.norm(s)},
+     {"伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い"}),
+    ("チャットの投稿者名と投げ銭の額を1枚に出す（chat_line）",
+     {"chat_line": lambda c, names: f"    チャット {c['paid'] or ''} {c['name']}: {c['body']}"},
+     {"伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い"} | EXTRACT_E2E),
+    ("伏せ残しの見張りを外す（leaks が何も見つけない）",
+     {"leaks": lambda text, names: []},
+     {"漏れの見張り: 伏せていない材料から、名前・呼びかけ・@名前・投げ銭の額を見つける"}),
+    ("直しの1枚に NG の行を載せない",
+     {"fix_prompt": lambda base, items, ng: _fix_prompt(base, items, [])},
+     {"直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）"}),
+    ("直させる回数を2回に（FIXES）", {"FIXES": 2}, {"直す: 直させるのは1回まで（呼ぶのは2回）"}),
+    # 落とさなければ、全部が落ちる回も「0件」にならず NG のまま（終了 1）になるので、0件の対照もいっしょに落ちる
+    ("2回目も落ちた項目を落とさない（drop_ng を素通しに）",
+     {"drop_ng": lambda m, table, items: (items, Counter(), ge.check_items(m, table, items))}, {DROP, ZERO}),
+    ("0件を通す（verdict が見るものの無さを見ない）", {"verdict": lambda r: 1 if r.ng else 0}, {ZERO}),
+]
+
+
+def check_extract() -> None:
+    got = extract_cases()
+    for name, passed in got.items():
+        check(name, passed, True)
+    check("抜く道具の対照が1件も無い、ではない", len(got) >= 8, True)
+    for label, patch, want in DRILL:
+        keep = {k: getattr(ge, k) for k in patch}
+        try:
+            for k, v in patch.items():
+                setattr(ge, k, v)
+            fell = {k for k, v in extract_cases().items() if not v}
+        finally:
+            for k, v in keep.items():
+                setattr(ge, k, v)
+        check(f"外す: {label} → その守りの対照だけが落ちる", sorted(fell), sorted(want))
+
+
+def check_windows() -> None:
+    wins = [{"from": "0:01:00", "to": "0:02:00"}, {"from": "0:02:30", "to": "0:03:00"},
+            {"from": "あさ", "to": "0:01:00"}, {"from": "0:09:00", "to": "0:08:00"}]
+    check("窓: 前後に幅を足して重なりを畳む・読めない窓と逆さの窓は捨てる",
+          ge.merge_windows(wins, 3600, 3600), [(30, 240)])
+    many = [{"from": f"0:{k:02d}:00", "to": f"0:{k:02d}:30"} for k in range(0, 60, 5)]
+    # 頭の窓は 0〜90秒、あとは1つ120秒。1行ぶん（30秒）ずつ足して数えると、5つ目で 720秒・6つ目で 840秒（上限 750秒）
+    check("窓: 合計が上限の1.25倍を超えたら、尻を切る", len(ge.merge_windows(many, 3600, 600)), 5)
+
+
 def main() -> int:
     check_units()
     check_table()
+    check_windows()
+    check_extract()
     with tempfile.TemporaryDirectory() as d:
         root, table = make_root(Path(d))
         check_good(root, table)
