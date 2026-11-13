@@ -24,8 +24,9 @@ import { LINKS, PROFILE, SITE } from "@/content/site";
  *
  * ## 確かめかた
  *
- *   python3 python/seo_audit.py --base http://localhost:<port> \
- *     --expect 'jsonld:/=WebSite,jsonld:/about=ProfilePage+Person,crumbs=jsonld'
+ *   tools/build.sh 3130
+ *   python3 python/seo_audit.py --dist site/.next-3130 --no-site \
+ *     --expect 'jsonld:/=WebSite,jsonld:/about=ProfilePage+Person,jsonld-bad=0,crumbs=jsonld'
  *
  * 見張りは `python/seo_audit_selftest.py`（名札を外した偽の面で、その足だけ落ちること）。
  */

@@ -5,7 +5,6 @@ import { streamsOfCity } from "@/content/cityStreams";
 import type { Country } from "@/content/countries";
 import { legendDays } from "@/content/legendDays";
 import { LEGENDS, type Legend } from "@/content/legends";
-import { MONTHS, type Month } from "@/content/months";
 import { RECIPES, type Recipe } from "@/content/recipes";
 import type { StreamType } from "@/content/streamTypes";
 import { UPDATES } from "@/content/updates";
@@ -96,7 +95,16 @@ const legendDaysOf = (l: Legend) => [
   ...l.streams.map((s) => s.date),
   ...(legendDays(l.slug)?.streams.map((s) => s[0]) ?? []),
 ];
-const monthDays = (m: Month) => [m.final, m.to, ...m.streams.map((s) => s.d)];
+/**
+ * 月のふりかえり1か月ぶんのうち、**日付の欄だけ。**
+ *
+ * `content/months.ts` をここで読まない。あの表は額と順位を持っていて、読んでよい場所が
+ * 決めてある（`python/months_safe_selftest.py`。索引は月を並べるだけ、と機械が見ている）。
+ * 索引（`app/sitemap.ts`）は前から許されているので、**あちらが表を読んで、こちらへ渡す。**
+ * こちらが受け取る型には、日付の欄しか書いていない。
+ */
+type MonthDays = { final: string; to: string; streams: { d: string }[] };
+const monthDays = (m: MonthDays) => [m.final, m.to, ...m.streams.map((s) => s.d)];
 
 /** 面の型ごとの `<lastmod>`。`app/sitemap.ts` だけが読む。型の表はこのファイルの頭 */
 export const LASTMOD = {
@@ -107,8 +115,8 @@ export const LASTMOD = {
   apps: () => newest([...APPS, ...PAST_APPS].flatMap(appDays)),
   legend: (l: Legend) => newest(legendDaysOf(l)),
   legends: () => newest(LEGENDS.flatMap(legendDaysOf)),
-  month: (m: Month) => newest(monthDays(m)),
-  months: () => newest(MONTHS.flatMap(monthDays)),
+  month: (m: MonthDays) => newest(monthDays(m)),
+  months: (all: MonthDays[]) => newest(all.flatMap(monthDays)),
   streamType: (t: StreamType) => newest(t.samples.map((s) => s.date)),
   /* 街の並べかたは `app/map/[slug]/page.tsx` の `towns` と同じ（その面に出る配信だけを見る） */
   country: (c: Country) =>

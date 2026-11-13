@@ -27,7 +27,8 @@ const TOP_LASTMOD: Record<string, () => string | undefined> = {
   "/kitchen": LASTMOD.kitchen,
   "/apps": LASTMOD.apps,
   "/legends": LASTMOD.legends,
-  "/months": LASTMOD.months,
+  // 月の表はここで読んで渡す（`lib/lastmod.ts` は `content/months.ts` を読まない。理由はあちらに）
+  "/months": () => LASTMOD.months(MONTHS),
   "/updates": LASTMOD.updates,
 };
 
