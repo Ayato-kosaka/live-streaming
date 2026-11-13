@@ -14,21 +14,21 @@
   "files": 2
  },
  "bytes": {
-  "plain": 36986,
-  "tar_gz": 9520,
+  "plain": 37008,
+  "tar_gz": 9525,
   "encrypted": 9536
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
    "bytes": 9536,
-   "sha256": "77a8e6bb3b48edf195ad8a9c338bb7de6c6050a208b97941a9c00debf554eebd"
+   "sha256": "138216266c7b5fb8dbbca40f195b655bb21199553be0449e8df6a010e96f5be9"
   }
  ],
- "hmac_sha256": "ca9fd0341afe1c34e8eb04507529967f98c80d258ee851f97cda4f1bc272f879",
+ "hmac_sha256": "da661f13261696a8953b216f7a7451abea9acab5a48de4d4b1c2f538c4abbc2d",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-13T13:18:12+00:00",
- "nonce": "7b4fa1eea99c5e7b5c32aceb"
+ "created_at": "2026-11-13T13:20:22+00:00",
+ "nonce": "743ed03e6c116b3899f59354"
 }
