@@ -44,7 +44,8 @@
 
 ## 見張り
 
-`python/guide_watch.py`（面に出た額・一言の場面・説明口調）。焼いたものに対して回す。
+`python/guide_watch.py`（面に出た額・一言の場面・説明口調）。焼いたものではなく、**書き出した HTML**に対して回す
+（`python3 python/guide_watch.py --dist site/.next-<ポート>`）。部品が足す字と、部品が組むリンクの秒まで見るため。
 """
 
 from __future__ import annotations
