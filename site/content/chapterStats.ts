@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-11-12
+ * 数えた日: 2026-11-13
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -266,21 +266,21 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   },
   // バルカン諸国周遊
   "balkans": {
-    people: 229,
-    streams: 52,
+    people: 237,
+    streams: 54,
     residents: [
-      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 45 },
-      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 45 },
-      { icon: "cf129e7ea06f499693a002543dcd7c290", days: 45 },
-      { icon: "f203e9529b7941c89940a568e03b83b00", days: 45 },
+      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 46 },
+      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 46 },
+      { icon: "cf129e7ea06f499693a002543dcd7c290", days: 46 },
+      { icon: "f203e9529b7941c89940a568e03b83b00", days: 46 },
       { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 44 },
-      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 41 },
-      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 35 },
+      { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 42 },
+      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 37 },
+      { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 35 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 35 },
-      { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 34 },
-      { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 29 },
-      { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 22 },
-      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 15 },
+      { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 30 },
+      { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 23 },
+      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 16 },
       { icon: "508cd9231743446bb25a93ae17dd3abf0", days: 15 },
       { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", days: 12 },
       { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", days: 11 },
@@ -294,16 +294,17 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
       { icon: "1FQFqrRn7Rx8mTT4KOs36_-H2LHeA4uWz", days: 2 },
       { icon: "1LtULnvCDROj6p-_lVx6_QaSgfVxDuUEx", days: 2 },
       { icon: "1bGJUOx4NJU112oix9BwSVrZQJgsakGIq", days: 2 },
+      { icon: "1h-O2B6oLncxDyQYVDwEsELSdGdajIc37", days: 2 },
       { icon: "7590ed1286e344a198f74674296e64d20", days: 2 },
       { icon: "c3cca678865a4021a048e617fab35db30", days: 2 },
       { icon: "d2ff6294640d4a5aa19bce30dfcbc8840", days: 2 },
       { icon: "1E73m2i7IyzhqXKYMDCbM0_nSSQpKRE4w", days: 1 },
-      { icon: "1h-O2B6oLncxDyQYVDwEsELSdGdajIc37", days: 1 },
       { icon: "1kzs_Lm8VmHXkfcW3_7LfssXu2P6sDA47", days: 1 },
       { icon: "1p46JvC_wbKo-rDEzE2pRMZh2neekNvta", days: 1 },
       { icon: "1rBAIvw3q0oxlgnGd9TJUNHKnIrYwr-bE", days: 1 },
       { icon: "1vSGLidkOCS4jkjbBrUYbJETo3wkGd3yD", days: 1 },
       { icon: "1y17p0D56itwNXWWEzo94jF4ThNETczQg", days: 1 },
+      { icon: "f139b565cbab4f4f83b51b6cc1d498340", days: 1 },
     ],
   },
 };
