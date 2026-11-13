@@ -31,6 +31,9 @@ SVG の `<title>` `<desc>` `<metadata>` も画面に出ないので除く。**�
     `<svg>` ごと捨てる読み手には読めない
   - `hidden` 属性の中 … Next が `<div hidden id="S:0">` で流し込むぶん。
     HTML には在るので数に入れるが、分けておく
+  - 閉じた畳み（`open` の無い `<details>`）の中 … 開くまで人には見えないが、HTML には在る。
+    **「人に見える字（`innerText`）」とこの道具の字数が合わないときは、まずここ**
+    （2026-11-13 の実測で、`/bulgaria` は 28,276字のうち 21,483字がここ。`innerText` は 6,875字）
 
 ## 落としてある HTML も測れるようにしてある（`--html`）
 
@@ -71,6 +74,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
+import http.client
 import json
 import re
 import statistics
@@ -203,7 +207,9 @@ def fetch(url: str, *, follow: bool = True, method: str = "GET",
             try:
                 status, headers, raw = _once(cur, method, timeout)
                 err = ""
-            except (urllib.error.URLError, TimeoutError, OSError) as e:
+            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, OSError, ValueError) as e:
+                # 途中で切れた・URL として読めない、も「届かなかった」に入れる。
+                # ここで例外を上げると、並びの1本が全体を道連れにして1面も出なくなる
                 err = f"{type(e).__name__}: {getattr(e, 'reason', e)}"
             time.sleep(PAUSE)
             # 混んでいる・向こうの一時的な不調だけ、間を空けてやり直す
@@ -296,6 +302,7 @@ class Page:
     text_main: int = 0
     text_svg: int = 0
     text_hidden: int = 0
+    text_folded: int = 0
     has_main: bool = False
     jsonld: list = field(default_factory=list)      # 生の字
     imgs: list = field(default_factory=list)        # (src, alt | None, main の中か)
@@ -318,9 +325,10 @@ class _Reader(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.p = Page()
-        self.stack: list[tuple[str, bool]] = []     # (タグ, hidden を持つか)
+        self.stack: list[tuple[str, bool, int]] = []    # (タグ, hidden を持つか, 畳みの増減)
         self.depth: Counter = Counter()             # いま開いているタグの数
         self.hidden = 0
+        self.folded = 0                             # いま何重の「閉じた畳みの中身」に居るか
         self.in_body = False
         self._title: list[str] | None = None
         self._head: list | None = None              # 読んでいる途中の見出し
@@ -379,17 +387,25 @@ class _Reader(HTMLParser):
                 self._ld = []
         if push:
             hid = "hidden" in a
-            self.stack.append((tag, hid))
+            # 閉じた `<details>` の中身は +1。その見出し（`<summary>`）の中だけは見えているので -1
+            fold = 0
+            if tag == "details" and "open" not in a:
+                fold = 1
+            elif tag == "summary" and self.stack and self.stack[-1][0] == "details" and self.stack[-1][2] == 1:
+                fold = -1
+            self.stack.append((tag, hid, fold))
             self.depth[tag] += 1
             self.hidden += hid
+            self.folded += fold
 
     def handle_endtag(self, tag):
-        if not any(t == tag for t, _ in self.stack):
+        if not any(t == tag for t, *_ in self.stack):
             return                                   # 開いていないものの閉じは捨てる
         while self.stack:
-            t, hid = self.stack.pop()
+            t, hid, fold = self.stack.pop()
             self.depth[t] -= 1
             self.hidden -= hid
+            self.folded -= fold
             self._closed(t)
             if t == tag:
                 break
@@ -436,6 +452,8 @@ class _Reader(HTMLParser):
             p.text_svg += n
         if self.hidden:
             p.text_hidden += n
+        if self.folded > 0:
+            p.text_folded += n
         if self._head is not None:
             self._head[1].append(data)
 
@@ -542,6 +560,7 @@ def measure(html: str, public_url: str, hosts: set[str]) -> dict:
     row["text_main_chars"] = p.text_main if p.has_main else ""
     row["text_svg_chars"] = p.text_svg
     row["text_hidden_chars"] = p.text_hidden
+    row["text_folded_chars"] = p.text_folded
     row["inline_script_bytes"] = p.inline_script_bytes
 
     types, bad = ld_types(p.jsonld)
@@ -604,6 +623,7 @@ COLS = ["path", "type", "status", "hops", "final_url", "html_bytes", "wire_bytes
         "desc_dup", "canon_count", "canon_abs", "canon_self", "og_title", "og_description",
         "og_image", "og_url", "og_url_self", "twitter_card", "h1_count", "h2_count",
         "h3_count", "text_chars", "text_main_chars", "text_svg_chars", "text_hidden_chars",
+        "text_folded_chars",
         "jsonld_count", "jsonld_types", "img_count", "img_alt_missing", "img_alt_empty",
         "img_main_count", "img_main_noalt",
         "links_internal", "links_internal_uniq", "links_fragment", "links_external",
@@ -925,7 +945,8 @@ def detail(row: dict, label: str = "") -> str:
     L.append(f"  description（{row['desc_len']}字）: {row['desc']}")
     L.append(f"  canonical: {row['canonical'] or '無い'} / JSON-LD: {row['jsonld_count']}個 {row['jsonld_types']}")
     L.append(f"  本文 {row['text_chars']:,}字（main の中 {format(row['text_main_chars'], ',') if row['text_main_chars'] != '' else '—'}"
-             f"・SVG の中 {row['text_svg_chars']:,}・hidden の中 {row['text_hidden_chars']:,}）")
+             f"・SVG の中 {row['text_svg_chars']:,}・hidden の中 {row['text_hidden_chars']:,}"
+             f"・閉じた畳みの中 {row['text_folded_chars']:,}）")
     L.append(f"  見出し h1 {row['h1_count']}・h2 {row['h2_count']}・h3 {row['h3_count']}"
              f"（最初の見出しより前の本文 {p.heads[0][2] if p.heads else p.text:,}字）")
     for i, (lv, text, at) in enumerate(p.heads):
@@ -1029,9 +1050,13 @@ def main(argv: list[str]) -> int:
     print("== HTML の重さ ==")
     print(f"  HTML 中央 {int(statistics.median(html_b)):,}B / 最大 {max(html_b):,}B"
           f"（{max(ok, key=lambda r: r['html_bytes'])['path']}）/ 合計 {sum(html_b):,}B")
-    print(f"  gzip で届く量 中央 {int(statistics.median(wire_b)):,}B / 最大 {max(wire_b):,}B")
+    print(f"  gzip で届く量 中央 {int(statistics.median(wire_b)):,}B / 最大 {max(wire_b):,}B"
+          "（本番は br でも返す。ブラウザに届くのはこれより小さい）")
     print(f"  うち埋め込みスクリプト（`self.__next_f` など）合計 {script_b:,}B"
-          f"（HTML の {script_b * 100 // max(1, sum(html_b))}%）\n")
+          f"（HTML の {script_b * 100 // max(1, sum(html_b))}%）")
+    all_t, fold_t = sum(r["text_chars"] for r in ok), sum(r["text_folded_chars"] for r in ok)
+    print(f"  本文の字 合計 {all_t:,}字・うち閉じた畳みの中 {fold_t:,}字（{fold_t * 100 // max(1, all_t)}%）"
+          f"・畳みを持つ面 {sum(1 for r in ok if r['text_folded_chars'])}/{len(ok)}\n")
 
     print("== 全体の数え（当たった面 / 分母） ==")
     tl = tallies(rows)
