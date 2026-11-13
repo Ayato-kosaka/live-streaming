@@ -30,13 +30,14 @@ import { dirname, join } from "node:path";
 import {
   FIREBASE_JSON,
   ROOT,
-  SNAPSHOT,
+  SNAPSHOTS,
   check,
   compileSource,
   loadRedirects,
-  readSnapshot,
+  readSnapshots,
   redirectOf,
   report,
+  snapLabel,
   srcTree,
 } from "./routemoves.mjs";
 
@@ -104,14 +105,17 @@ ok("印字の終了コードは、落ちた台で 1", report(chained, { tree: fa
 rmSync(dir, { recursive: true, force: true });
 
 /* ── 3. 本物 ─────────────────────────────────────────────────── */
-console.log("[3] 本物（作り直す前の本番の sitemap の写し × いまの firebase.json × 置き場）");
-const paths = readSnapshot(SNAPSHOT);
+console.log("[3] 本物（作り直しの便ごとの、本番の sitemap の写しぜんぶ × いまの firebase.json × 置き場）");
+/* 写しは便ごとに増える。**1枚目（第1便の前）を消していないこと**も見る——消すと、
+   第1便で動かした道（`/map` ほか）を誰も数えなくなる */
+if (!SNAPSHOTS.some((f) => f.endsWith("sitemap-2026-11-13.txt"))) stop("第1便の前の写し（sitemap-2026-11-13.txt）が無い");
+const paths = readSnapshots(SNAPSHOTS);
 const rules = loadRedirects(FIREBASE_JSON);
 const tree = srcTree();
 if (paths.length < 100) stop(`元帳が ${paths.length}本しか読めない`);
 if (tree.routes.length < 20 || !tree.has("/")) stop(`置き場の面が ${tree.routes.length}枚しか見つからない`);
 const res = check({ paths, rules, tree });
-const code = report(res, { tree, rules, snapshot: SNAPSHOT.replace(`${ROOT}/`, "") });
+const code = report(res, { tree, rules, snapshot: snapLabel(SNAPSHOTS) });
 ok("前の道が、全部どこかへ行く（連鎖も無い）", code === 0);
 
 /* 元帳の道を送っている転送を、1行ずつ抜く。**抜いても落ちない行は、何も守っていない** */

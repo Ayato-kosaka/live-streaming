@@ -16,8 +16,9 @@
  *
  * ## 何を数えるか
  *
- * 元帳は `tools/sprites/sitemap-2026-11-13.txt`（作り直す前の本番の sitemap の写し）。
- * 1本ずつ、Firebase Hosting と同じ順で引く（`docs/island-routing.md`。**転送が実ファイルより先**）:
+ * 元帳は `tools/sprites/sitemap-*.txt`（作り直しの**便ごとに**、その前の本番の sitemap の写しを1枚ずつ足す。
+ * 古い写しも消さない——第1便の前に載っていた道は、第2便のあとも行き場を持っていないといけない）。
+ * 写しを全部合わせた道を、1本ずつ、Firebase Hosting と同じ順で引く（`docs/island-routing.md`。**転送が実ファイルより先**）:
  *
  * 1. `firebase.json` の `redirects` のどれかに当たる → その先が**実ファイルとして在る**か
  * 2. 当たらない → その道が**実ファイルとして在る**か
@@ -39,7 +40,11 @@ import { fileURLToPath } from "node:url";
 import { repoRoot } from "./repo.mjs";
 
 export const ROOT = repoRoot(fileURLToPath(import.meta.url));
-export const SNAPSHOT = join(ROOT, "tools", "sprites", "sitemap-2026-11-13.txt");
+/** 元帳（作り直しの便ごとの、本番の sitemap の写し）。古い順 */
+export const SNAPSHOTS = readdirSync(join(ROOT, "tools", "sprites"))
+  .filter((n) => /^sitemap-\d{4}-\d{2}-\d{2}[^/]*\.txt$/.test(n))
+  .sort()
+  .map((n) => join(ROOT, "tools", "sprites", n));
 export const FIREBASE_JSON = join(ROOT, "firebase.json");
 
 /* ------------------------------------------------------------ 転送の当てかた */
@@ -177,12 +182,17 @@ export function srcTree({ app = join(ROOT, "site", "app"), pub = [join(ROOT, "pu
 
 /* ------------------------------------------------------------ 数える */
 
-/** 元帳の道。`#` で始まる行は注 */
-export function readSnapshot(file = SNAPSHOT) {
+/** 元帳1枚の道。`#` で始まる行は注 */
+export function readSnapshot(file) {
   return readFileSync(file, "utf8")
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith("#"));
+}
+
+/** 元帳を全部合わせた道（同じ道は1本に）。写しの古い順 */
+export function readSnapshots(files = SNAPSHOTS) {
+  return [...new Set(files.flatMap((f) => readSnapshot(f)))];
 }
 
 /**
@@ -223,6 +233,10 @@ export function check({ paths, rules, tree }) {
   return { paths, kept, moved, lost, chains: [...chainOf.values()], fixed, deadFixed };
 }
 
+/** 元帳の名前（印字用）。何枚を合わせたかが分かるように */
+export const snapLabel = (files) =>
+  `${files.length}枚: ${files.map((f) => f.replace(`${ROOT}/`, "").replace(/^tools\/sprites\//, "")).join(" ")}`;
+
 /** 分母と一緒に印字して、終了コードを返す */
 export function report(res, { tree, rules, snapshot, out = console.log }) {
   out(`前の道 ${res.paths.length}本（${snapshot}）／ ${tree.label} ／ 転送 ${rules.length}行`);
@@ -245,20 +259,24 @@ async function main() {
   const dists = [];
   for (let i = 0; i < argv.length; i++) if (argv[i] === "--dist") dists.push(resolve(argv[++i] ?? ""));
   const fbj = process.env.FIREBASE_JSON || FIREBASE_JSON;
-  const snap = process.env.SNAPSHOT || SNAPSHOT;
+  const snaps = process.env.SNAPSHOT ? [process.env.SNAPSHOT] : SNAPSHOTS;
   const missing = dists.filter((d) => !existsSync(d));
   if (missing.length) {
     console.log(`✕ 書き出しが無い: ${missing.join(" ")}。数えるものが無いので 2 で止めます`);
     return 2;
   }
-  const paths = readSnapshot(snap);
+  if (!snaps.length) {
+    console.log("✕ 元帳（tools/sprites/sitemap-*.txt）が1枚も無い。数えるものが無いので 2 で止めます");
+    return 2;
+  }
+  const paths = readSnapshots(snaps);
   const rules = loadRedirects(fbj);
   const tree = dists.length ? distTree(dists) : srcTree();
   if (paths.length < 20 || !tree.has("/")) {
     console.log(`✕ 元帳 ${paths.length}本・表紙が見つかるか ${tree.has("/")}。数えるものが無いので 2 で止めます`);
     return 2;
   }
-  return report(check({ paths, rules, tree }), { tree, rules, snapshot: snap.replace(`${ROOT}/`, "") });
+  return report(check({ paths, rules, tree }), { tree, rules, snapshot: snapLabel(snaps) });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

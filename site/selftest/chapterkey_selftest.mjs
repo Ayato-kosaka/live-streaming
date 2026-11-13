@@ -30,10 +30,11 @@
  *  2. **字の中の `/island/<slug>` が、ぜんぶ実在する章を指している。**
  *     `href: "/island/albania"` がこれで残っていた
  *  3. **`/island/<章>` を手で組み立てていない。**
- *     **いまいる章の島はトップそのもの**（`content/chapters.ts` の `chapterHref`）。
- *     手で組み立てると、いまいる章のときだけ**どこからもリンクの来ていない写しの面**
- *     へ送ることになる。実際に `lib/stay.ts` の `travelNow()` がそうなっていて、
- *     `/now` の「◯◯の島へ」が `/island/balkans` を指していた
+ *     章の島の道は `content/chapters.ts` の `chapterHref` 1か所が持つ。
+ *     2026-11-13 までは「いまいる章の島はトップそのもの」で、手で組み立てると
+ *     いまいる章のときだけ写しの面へ送ることになっていた（`lib/stay.ts` の `travelNow()` が
+ *     実際にそうなっていた）。いまはいまいる章でも章の島そのもの（#1201）だが、
+ *     **道を動かした日に1か所だけ古い道を指す**形は同じなので、組み立ては1か所に置いたまま見る
  *
  * **一覧はこの道具が出す。** 手で表を持たない——持った瞬間に、
  * 次に slug を書いた人が表に載らない（`docs/island-standards.md` §8）。
@@ -97,7 +98,6 @@ const TREES = ["app", "components", "lib", "content"];
  * 道具がそれを印字する（`docs/island-standards.md` §8。`watch_excuses.py` と同じ形）。
  * 理由が12文字に満たないものは、理由とみなさない。
  *
- * **ここに足すのは、「いまいる章でも `/island/<章>` が正しい」所だけ。**
  * 読む人のリンクなら、答えは `chapterHref` のほう。
  */
 const ALLOW_BUILD = new Map([
@@ -106,23 +106,9 @@ const ALLOW_BUILD = new Map([
     "章の表そのもの。`chapterHref` の中身がここに在る（2026-10-13）",
   ],
   [
-    join("components", "chain", "route.ts"),
-    "`chapterHref` を再輸出しているだけ。字としては残る（2026-10-13）",
-  ],
-  [
-    join("app", "sitemap.ts"),
-    "索引は**本物の URL**を並べる面で、読む人のリンクではない。いまいる章の島も、"
-      + "章が閉じた日から先はその URL で開かれる（2026-10-13）",
-  ],
-  [
     join("components", "chain", "AllIsleRow.tsx"),
     "章が引けなかったときの落とし先。引けたときは `chapterHref` に決めさせている"
       + "（同じ行に両方書いてある）（2026-10-13）",
-  ],
-  [
-    join("content", "directory.ts"),
-    "焼いた既定値。画面では `AllIsleRow` が `chapterHref` で引き直す"
-      + "——いまいる島は日付で変わるので、焼いた答えでは決められない（2026-10-13）",
   ],
 ]);
 
@@ -292,7 +278,7 @@ console.log("\n3. /island/<章> を手で組み立てていないか");
     ? ok("島そのものへの行き先は chapterHref が決めている")
     : ng(
         `${built.length}か所が手で組み立てている`,
-        "いまいる章の島はトップそのもの（`chapterHref`）。手で組むと**どこからもリンクの来ていない写しの面**へ送る",
+        "章の島の道は `chapterHref` 1か所が持つ。手で組むと、道を動かした日にそこだけ古い道を指す（#1201）",
       );
 }
 
