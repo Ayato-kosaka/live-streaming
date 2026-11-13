@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import BgMapSvg from "@/components/bulgaria/BgMapSvg";
+import BgMyMap from "@/components/bulgaria/BgMyMap";
 import { crumbOf } from "@/components/island/layout";
 import StickyNotes from "@/components/live/Notes";
 import Fold from "@/components/ui/Fold";
@@ -412,7 +412,7 @@ export default function BulgariaPage() {
         note={`${BG_SPOTS.length}か所`}
         lead="絵を押すと、入場料・所要時間・行きかた・ADVICE が出ます。"
       >
-        <BgMapSvg which="see" />
+        <BgMyMap which="see" />
         {spotsBy.map((group, gi) => (
           <div key={gi} className="bggroup">
             <h3 className="bgsub">
@@ -497,7 +497,7 @@ export default function BulgariaPage() {
         note={`${BG_FOOD.length}品`}
         lead="注意の印は豚か酒です。ブルガリア料理の看板がちょうどそこなので、件数が多くなります。"
       >
-        <BgMapSvg which="eat" showFar={false} />
+        <BgMyMap which="eat" />
         <Places rows={eatPlaces} />
         {foodBy.map((group, gi) => (
           <div key={gi} className="bggroup">
@@ -600,7 +600,7 @@ export default function BulgariaPage() {
         note={`${BG_BUY.length}つ`}
         lead="注意の印が付いているのは酒です。あやとは飲まないので、人に贈るときだけ。"
       >
-        <BgMapSvg which="buy" showFar={false} />
+        <BgMyMap which="buy" />
         <Places rows={buyPlaces} />
         <div className="bgtiles">
           {BG_BUY.map((b) => (
