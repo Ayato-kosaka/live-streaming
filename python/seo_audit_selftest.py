@@ -368,6 +368,9 @@ with tempfile.TemporaryDirectory() as _d:
     _site.write_text('export const SITE = {\n  name: "x",\n  url: "https://right.example",\n};\n'
                      'export const PROFILE = {\n  url: "https://wrong.example",\n};\n', encoding="utf-8")
     ok("SITE の url を読む", SA.site_url(Path(_d)), "https://right.example")
+    _site.write_text('export const SITE = {\n  /* 書き方の例 url: "https://comment.example" */\n'
+                     '  url: "https://right.example",\n};\n', encoding="utf-8")
+    ok("注釈の中の url を拾わない", SA.site_url(Path(_d)), "https://right.example")
     _site.write_text('export const SITE = {\n  name: "x",\n};\n'
                      'export const PROFILE = {\n  url: "https://wrong.example",\n};\n', encoding="utf-8")
     try:

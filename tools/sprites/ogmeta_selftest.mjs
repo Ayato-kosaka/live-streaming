@@ -120,6 +120,8 @@ try {
   const put = (body) => writeFileSync(join(fake, "site/content/site.ts"), body);
   put('export const SITE = {\n  name: "x",\n  url: "https://right.example",\n};\nexport const PROFILE = {\n  url: "https://wrong.example",\n};\n');
   check("SITE の url を読む", siteUrl(fake), "https://right.example");
+  put('export const SITE = {\n  /* 書き方の例 url: "https://comment.example" */\n  url: "https://right.example",\n};\n');
+  check("注釈の中の url を拾わない", siteUrl(fake), "https://right.example");
   put('export const SITE = {\n  name: "x",\n};\nexport const PROFILE = {\n  url: "https://wrong.example",\n};\n');
   let threw = false;
   try {

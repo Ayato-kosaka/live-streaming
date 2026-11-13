@@ -50,6 +50,7 @@ import { join } from "node:path";
 import { htmlFiles, norm } from "./crawltargets.mjs";
 import { DIST, checkAgainstSitemap } from "./islepages.mjs";
 import { fromRoot, repoPath } from "./repo.mjs";
+import { codeOnly, fields, objectBody } from "./tsread.mjs";
 
 /**
  * 正の URL（canonical と `og:url` が名乗る原点）。**`site/content/site.ts` の `SITE.url` を読む。**
@@ -58,16 +59,16 @@ import { fromRoot, repoPath } from "./repo.mjs";
  * **ここに字で書かない。** 2026-11-13 に独自ドメイン（`ayato-arigato.com`）へ移ったとき、
  * ここに古いドメインが直書きしてあって、直さなければ全面が「og:url が自分を指していない」で
  * 落ちるところだった（#1202）。読めなければ投げる——黙って古い宛先に落ちると、全部が嘘の赤になる。
+ * 読むのは `tsread.mjs`（焼き込みを読む口は1本。`tsread_selftest.mjs`）。
  *
  * @param {string} [root] リポジトリの根（対照で偽の根を渡す）
  */
 export function siteUrl(root) {
   const src = readFileSync(root ? join(root, "site/content/site.ts") : repoPath("site/content/site.ts"), "utf8");
-  // SITE の塊だけを見る（下の PROFILE などの `url:` を拾わない）
-  const body = (src.split(/export const SITE\s*=\s*\{/)[1] || "").split(/\n\};/)[0];
-  const m = body && /^\s*url:\s*"(https?:\/\/[^"/]+)"/m.exec(body);
-  if (!m) throw new Error("site/content/site.ts から SITE.url が読めない（`url: \"https://…\"` の1行を探している）");
-  return m[1];
+  const url = fields(objectBody(codeOnly(src), "SITE")).url || "";
+  if (!/^https?:\/\/[^/]+$/.test(url))
+    throw new Error(`site/content/site.ts の SITE.url が原点だけの URL として読めない（${url || "無い"}）`);
+  return url;
 }
 
 export const ORIGIN = siteUrl();

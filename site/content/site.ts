@@ -9,8 +9,7 @@ export const SITE = {
   /* **正の URL。** canonical・`og:url`・sitemap の `<loc>`・robots.txt・構造化データは
      全部ここから作る（`app/layout.tsx` の `metadataBase` もここを読む）。
      古い `live-streaming-d3cac.web.app` も同じ面を配り続けている（301 で送らない。#1202）。
-     見張り（`tools/sprites/ogmeta.mjs`・`python/seo_audit.py`）もこの行を読むので、
-     書き方（`url: "…"` の1行）を変えるならそちらも見る。 */
+     見張り（`tools/sprites/ogmeta.mjs`・`python/seo_audit.py`）もこの欄を読む。 */
   url: "https://ayato-arigato.com",
   /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、画面が出てから
      差し替えられない。旅のあいだ（`content/nights.ts`）は始まる時刻が決まらないので、
