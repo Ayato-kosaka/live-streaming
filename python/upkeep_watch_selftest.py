@@ -27,9 +27,9 @@
  16. **島をなおしたところ**（`/updates`）が、出したぶんに追いついているか。
      古ければ鳴る／そろっていれば鳴らない／履歴が見えないときは鳴らない、の3方向と、
      `/island-ship` が名指ししている置き場と食い違っていないこと
- 17. **案内を出しはじめた国が、歩いた国の表に居るか。** 表から国を抜くと
-     **こちら側**に鳴る／足すと黙る／まだ出していない案内は見ない／期間が過ぎても
-     黙らない、を仕込みで当ててから、**本番の `countries.ts` から同じ1行を抜いて**
+ 17. **案内の行が在る国が、歩いた国の表に居るか。** 表から国を抜くと
+     **こちら側**に鳴る／足すと黙る／日が進んでも黙らない／国を名乗らない行は
+     数えられない、を仕込みで当ててから、**本番の `countries.ts` から同じ1行を抜いて**
      もう一度当てる（2026-11-12 のブルガリアがこの形で、2日ぶん誰も鳴らなかった）
 
 そのあとに、**本文にもログにも視聴者さんの素性が1文字も出ない**ことを数える。
@@ -189,16 +189,25 @@ export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] 
 AHEAD_HAJIME = '  { slug: "hajime", name: "はじめの国", entered: "2026-09-28" },\n'
 AHEAD_TONARI = '  { slug: "tonari", name: "となりの国", entered: "2026-10-02" },\n'
 
-# **案内を出しはじめた国（`tonari`）が、どちらの表にも居ない**
-# （2026-11-12 の本番がこれ。面を出して案内を切り替えたのに、国を足し忘れた）
+# **案内の行が在る国（`tonari`）が、どちらの表にも居ない**
+# （2026-11-12 の本番がこれ。面を出して案内の行を足したのに、国を足し忘れた）
 COUNTRIES_NO_TONARI = COUNTRIES_OK.replace(AHEAD_TONARI, "")
 
-# 期間の無い案内（「いつでも当たる」行）の国が居ない
+# 前の国（`hajime`）のほうが居ない。**いま居る国の行だけを見ていない**ことを当てる
 COUNTRIES_NO_HAJIME = COUNTRIES_OK.replace(AHEAD_HAJIME, "")
 
 # 行は在るのに `entered` が空。`python/stays.py` はこの行を落とすので、居ないのと同じ
 COUNTRIES_TONARI_BLANK = COUNTRIES_OK.replace(
     AHEAD_TONARI, '  { slug: "tonari", name: "となりの国", entered: "" },\n')
+
+# `entered` に日付として読めない字。画面の側（`spec.ts` の `staysOf`）はこの行を
+# 数えないので、空と同じ結果になる
+COUNTRIES_TONARI_UNREADABLE = COUNTRIES_OK.replace(
+    AHEAD_TONARI, '  { slug: "tonari", name: "となりの国", entered: "来週" },\n')
+
+# 入る日が先（`TODAY` の翌日）。**日付は見ない**——表に居れば黙る
+COUNTRIES_TONARI_AHEAD = COUNTRIES_OK.replace(
+    AHEAD_TONARI, '  { slug: "tonari", name: "となりの国", entered: "2026-10-04" },\n')
 
 # 歩き終わって `COUNTRIES` へ移した形（`AHEAD_COUNTRIES` からは消す決まり）
 COUNTRIES_TONARI_DONE = COUNTRIES_NO_TONARI.replace(
@@ -214,24 +223,24 @@ COUNTRIES_AHEAD_EMPTY = COUNTRIES_OK.replace(AHEAD_HAJIME, "").replace(AHEAD_TON
 COUNTRIES_NO_AHEAD = COUNTRIES_OK.split("export const AHEAD_COUNTRIES")[0]
 
 # 仕込みの案内の表（`site/components/isle/spec.ts` の `GUIDES`）。**本番と同じ形**——
-# 期間つきの行が上、期間の無い行（いつでも当たる）がいちばん下に1つ。
+# 行が持つのは国の `slug` と行き先で、日付は無い（いつ出すかは国の表から導く）。
 # **国の表（`COUNTRIES`）に居る国を指さない。** 指すと、国の表を差し替える
 # 確かめ（`COUNTRIES_NO_ALBANIA` ほか）がこの引き金まで鳴らして、
 # 何を見ているのか分からなくなる
-SPEC_OK = """type Guide = { name: string; href: string; lead: string; from?: string; to?: string };
+SPEC_OK = """type Guide = { slug: string; name: string; href: string; lead: string };
 
 const GUIDES: Record<string, Guide[]> = {
   albania: [
     {
+      slug: "tonari",
       name: "となりの国・みやこ",
       href: "/tonari",
       /* 読みにくい形をわざと残す。本番がこうなっている（欄のあいだに注釈が挟まる） */
-      lead: "from: \\"2099-01-01\\" と本文に書いてあっても、欄ではない",
+      lead: "slug: \\"ghost\\" と本文に書いてあっても、欄ではない",
       icon: "church",
-      from: "2026-10-02",
-      to: "2026-10-09",
     },
     {
+      slug: "hajime",
       name: "はじめの国",
       href: "/hajime",
       lead: "海ぞいの国",
@@ -243,17 +252,14 @@ const GUIDES: Record<string, Guide[]> = {
 export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
 """
 
-# **まだ出していない案内**（`from` が `TODAY` の翌日）。着く前の国を足させない
-SPEC_NOT_YET = SPEC_OK.replace('from: "2026-10-02",', 'from: "2026-10-04",')
-
 # 案内の面を1枚も持たない時期（**正しい状態でありうる**）
 SPEC_EMPTY = "const GUIDES: Record<string, Guide[]> = {};\n"
 
 # `GUIDES` という表そのものが無い
 SPEC_NO_GUIDES = "export const OTHER = 1;\n"
 
-# 出しはじめる日が日付として読めない
-SPEC_BAD_FROM = SPEC_OK.replace('from: "2026-10-02",', 'from: "来週",')
+# 行が国を名乗っていない（`slug` の欄が無い）。どの国の案内か分からない
+SPEC_NO_SLUG = SPEC_OK.replace('      slug: "tonari",\n', "")
 
 # **閉じた章の国が、開いたまま**（2026-10-06 の本番がこれ）。
 # アルバニアの配信11本が「スウェーデン」として焼かれていた形
@@ -1384,7 +1390,7 @@ def without_ahead_row(src: str, slug: str) -> str:
 
 
 def case17_guide(tmp: Path):
-    """**案内を出しはじめた国が、歩いた国の表に居るか。両側から当てる。**
+    """**案内の行が在る国が、歩いた国の表に居るか。両側から当てる。**
 
     2026-11-12 にブルガリアへ移った日、面（`/bulgaria`）を出して表紙の案内も
     切り替えたのに、`AHEAD_COUNTRIES` に国を足していなかった。島は同じ
@@ -1393,8 +1399,12 @@ def case17_guide(tmp: Path):
 
     これは**こちらの落ち**（`Count.ours`）なので、数えるのは `waiting`（札）
     ではなく `ours`。あやとの札に1行も出ないことも、同じ重さで踏む。
+
+    **案内の表は日付を持たない**（いつ出すかは国の表の入った日から導く。
+    `site/components/isle/spec.ts` の `GUIDES`）。だからここも日付では当てない——
+    当てるのは「行の国が、国の表に居るか」だけ。
     """
-    print("\n[17] 案内を出しはじめた国が、歩いた国の表に居るか")
+    print("\n[17] 案内の行が在る国が、歩いた国の表に居るか")
 
     # **差し替えが空振りしていないこと。** 空振りすると、抜いたつもりの写しが
     # 元の字のままで、「抜くと鳴る」が何を見ているのか分からなくなる
@@ -1402,12 +1412,13 @@ def case17_guide(tmp: Path):
         "COUNTRIES_NO_TONARI": COUNTRIES_NO_TONARI != COUNTRIES_OK,
         "COUNTRIES_NO_HAJIME": COUNTRIES_NO_HAJIME != COUNTRIES_OK,
         "COUNTRIES_TONARI_BLANK": COUNTRIES_TONARI_BLANK != COUNTRIES_OK,
+        "COUNTRIES_TONARI_UNREADABLE": COUNTRIES_TONARI_UNREADABLE != COUNTRIES_OK,
+        "COUNTRIES_TONARI_AHEAD": COUNTRIES_TONARI_AHEAD != COUNTRIES_OK,
         "COUNTRIES_TONARI_DONE": COUNTRIES_TONARI_DONE != COUNTRIES_NO_TONARI,
         "COUNTRIES_AHEAD_EMPTY": COUNTRIES_AHEAD_EMPTY not in (
             COUNTRIES_NO_TONARI, COUNTRIES_NO_HAJIME),
         "COUNTRIES_NO_AHEAD": "AHEAD_COUNTRIES" not in COUNTRIES_NO_AHEAD,
-        "SPEC_NOT_YET": SPEC_NOT_YET != SPEC_OK,
-        "SPEC_BAD_FROM": SPEC_BAD_FROM != SPEC_OK,
+        "SPEC_NO_SLUG": SPEC_NO_SLUG != SPEC_OK,
     }
     ck("仕込みの差し替えが、ぜんぶ当たっている", all(swapped.values()),
        [k for k, v in swapped.items() if not v] or f"{len(swapped)}個")
@@ -1425,8 +1436,8 @@ def case17_guide(tmp: Path):
     ck("どの国の行が要るかが名指しで出る", "`tonari` の行" in line, line)
     ck("どのファイルのどの表かが出る",
        "countries.ts" in line and "AHEAD_COUNTRIES" in line, "出る")
-    ck("どの案内が、いつから出ているかが出る",
-       "/tonari" in line and "2026-10-02" in line, "出る")
+    ck("どの案内の行が在るのかが出る",
+       "/tonari" in line and "GUIDES" in line, "出る")
     ck("**あやとの札には1行も出ない**", c.waiting == 0, (c.urgent, c.later))
 
     gh = FakeGh()
@@ -1442,45 +1453,43 @@ def case17_guide(tmp: Path):
     ck("表に国を足すと黙る", not c.ours and c.waiting == 0, (c.ours, c.urgent, c.later))
     ck("終了コードも 0 に戻る", act(FakeGh(), apply=True, d=d_ok) == 0, "0")
 
-    # --- まだ出していない案内は見ない ---------------------------------------
+    # --- 日付は見ない --------------------------------------------------------
     #
-    # 着く前の国を足させない。足すと、歩く前から歩いたことになる
-    # （`content/countries.ts` の `AHEAD_COUNTRIES` の注）
-    d = make_content(tmp / "c17c", countries=COUNTRIES_NO_TONARI, spec=SPEC_NOT_YET)
+    # 案内の表は日付を持たない。表に居るか居ないかだけで決まる。
+    # 入る日が先の国でも、表に居れば黙る（その日が来るまで、画面は案内を出さない）
+    d = make_content(tmp / "c17c", countries=COUNTRIES_TONARI_AHEAD)
     c = uw.count(d, TODAY)
-    ck("出しはじめる日が明日の案内 → 鳴らない", not c.ours, c.ours)
-    c = uw.count(d, date(2026, 10, 4), state=quiet)
-    ck("その日が来たら鳴る", len(c.ours) == 1 and "tonari" in c.ours[0], c.ours)
+    ck("入る日が明日の国でも、表に居れば黙る", c.countable and not c.ours, (c.blind, c.ours))
 
-    # --- 期間が過ぎても、ひとりでに黙らない ----------------------------------
+    # --- 日が進んでも、ひとりでに黙らない ------------------------------------
     #
-    # 案内は `to` を過ぎると下の行へ戻る。**いま指している1つだけ**を見る作りだと、
-    # 足し忘れたまま期間が過ぎた日に、この引き金も一緒に黙る
+    # **いま居る国の行だけ**を見る作りだと、足し忘れたままつぎの国へ移った日に、
+    # この引き金も一緒に黙る
     d = make_content(tmp / "c17d", countries=COUNTRIES_NO_TONARI)
     c = uw.count(d, date(2026, 10, 20), state=quiet)
-    ck("案内の期間（〜10-09）を過ぎても鳴りつづける",
+    ck("日が進んでも鳴りつづける",
+       len(c.ours) == 1 and "tonari" in c.ours[0], c.ours)
+    c = uw.count(d, date(2026, 9, 20), state=quiet)
+    ck("章が始まる前の日に当てても同じ（日付で黙らない）",
        len(c.ours) == 1 and "tonari" in c.ours[0], c.ours)
 
-    # --- 期間の無い行（いつでも当たる行）は、章が始まった日から ---------------
+    # --- 前の国の行も見る ----------------------------------------------------
     d = make_content(tmp / "c17e", countries=COUNTRIES_NO_HAJIME)
     c = uw.count(d, TODAY)
-    ck("期間の無い案内の国が居ない → 鳴る",
+    ck("前の国が表に居ない → 鳴る",
        len(c.ours) == 1 and "`hajime` の行" in c.ours[0], c.ours)
-    # **期間の無い行に、出しはじめた日を言い切らない。** 知っているのは
-    # 章が始まった日までなので、そう書く
-    ck("期間を切っていない案内だと分かる字で出る（章が始まった日つき）",
-       bool(c.ours) and "期間を切らずに" in c.ours[0] and "2026-09-28" in c.ours[0],
-       c.ours)
-    c = uw.count(d, date(2026, 9, 20), state=quiet)
-    ck("章が始まる前は鳴らない", not c.ours, c.ours)
 
-    # --- 行は在るのに `entered` が空 ----------------------------------------
+    # --- 行は在るのに `entered` が読めない ----------------------------------
     #
     # `python/stays.py` は `entered` の無い行を落とす。行だけ在っても、
     # 国を知らないのと同じ結果になる
     d = make_content(tmp / "c17f", countries=COUNTRIES_TONARI_BLANK)
     c = uw.count(d, TODAY)
     ck("行は在るのに `entered` が空 → 鳴る",
+       len(c.ours) == 1 and "`tonari` の `entered`" in c.ours[0], c.ours)
+    d = make_content(tmp / "c17f2", countries=COUNTRIES_TONARI_UNREADABLE)
+    c = uw.count(d, TODAY)
+    ck("`entered` が日付として読めない → 鳴る",
        len(c.ours) == 1 and "`tonari` の `entered`" in c.ours[0], c.ours)
 
     # --- 歩き終わって `COUNTRIES` へ移した国は、どちらかに居ればよい ----------
@@ -1505,7 +1514,7 @@ def case17_guide(tmp: Path):
     # 空で渡すと、引き金が「案内は1つも出していない」と答えて毎晩通る
     for n, (label, kw, want) in enumerate((
         ("案内の表（`GUIDES`）が見つからない", {"spec": SPEC_NO_GUIDES}, "GUIDES"),
-        ("出しはじめる日が日付として読めない", {"spec": SPEC_BAD_FROM}, "`from`"),
+        ("案内の行が国を名乗っていない", {"spec": SPEC_NO_SLUG}, "`slug`"),
         ("`AHEAD_COUNTRIES` が見つからない", {"countries": COUNTRIES_NO_AHEAD},
          "AHEAD_COUNTRIES"),
     )):
@@ -1513,6 +1522,13 @@ def case17_guide(tmp: Path):
         ck(f"{label} → 数えられない",
            not c.countable and any(want in x for x in c.blind),
            c.blind or "数えられてしまった")
+    # **国を名乗らない行を、黙って飛ばさない。** 飛ばすと、その行の国が表に
+    # 居なくても永久に黙る（`COUNTRIES_NO_TONARI` と組んで、鳴るはずの形で当てる）
+    c = uw.count(make_content(tmp / "c17j9", countries=COUNTRIES_NO_TONARI,
+                              spec=SPEC_NO_SLUG), TODAY)
+    ck("国を名乗らない行 × その国が表に居ない → 緑で通さない（数えられない）",
+       not c.countable and any("/tonari" in x for x in c.blind),
+       c.blind or f"数えられてしまった（こちら待ち {len(c.ours)}件）")
 
     d = make_content(tmp / "c17k")
     (d.parent / "components" / "isle" / "spec.ts").unlink()
@@ -1527,8 +1543,8 @@ def case17_guide(tmp: Path):
     ck("仕込みの案内を読み落としていない（2行）",
        got.found and got.missed == 0 and len(got.rows) == 2,
        f"名乗り {got.declared} / 読めた {len(got.rows)}")
-    ck("`lead:` の本文に書いた `from:` を、欄と読まない",
-       [g["from"] for g in got.rows] == ["2026-10-02", ""], [g["from"] for g in got.rows])
+    ck("`lead:` の本文に書いた `slug:` を、欄と読まない",
+       [g["slug"] for g in got.rows] == ["tonari", "hajime"], [g["slug"] for g in got.rows])
     real_objects = ts_read.objects
     ts_read.objects = lambda body: (real_objects(body)[:-1]
                                     if len(real_objects(body)) > 1 else real_objects(body))
@@ -1565,7 +1581,7 @@ def case17_real():
 
     **国の名前をここに書かない。** 書くと、国を越えるたびに書き換えに来る
     名簿になる（`python/stays_selftest.py` が 2026-10-12 にそれで赤くなった）。
-    当てる相手は、本番の表から引く——今日までに出しはじめた案内のうち、
+    当てる相手は、本番の表から引く——案内の行が在る国のうち、
     歩いている最中の国（`AHEAD_COUNTRIES` に `entered` つきで居る国）。
 
     **いまの本番に落ちが在るかは、合否にしない**（落ちが在れば、毎晩の
@@ -1589,18 +1605,23 @@ def case17_real():
     ck("本番の `AHEAD_COUNTRIES` を読み落としていない", got_a.missed == 0,
        f"名乗り {got_a.declared} / 読めた {len(got_a.rows)}")
 
-    # 出しはじめた案内は、引き金と同じ口で引く（数えかたを2つ持たない）
-    shown = uw.guides_shown(uw.World(
+    ck("本番の案内の行が、ぜんぶ国を名乗っている",
+       all(g["slug"] for g in guides.rows),
+       [g["href"] for g in guides.rows if not g["slug"]] or f"{len(guides.rows)}行")
+
+    # 案内の行の国は、引き金と同じ口で引く（数えかたを2つ持たない）
+    shown = uw.guide_countries(uw.World(
         today=today,
         rows=uw.read_chapters((CONTENT / "chapters.ts").read_text(encoding="utf-8")).rows,
         countries=[], itineraries=set(), about="", legends=[], current={},
         stale_days=0, shown_at=None, updates_at=None,
         guides=guides.rows, ahead=[]))
-    walking = {a["slug"] for a in got_a.rows if a["entered"]}
-    targets = [slug for slug, _since, _g in shown if slug in walking]
-    print(f"    今日（{today}）までに出しはじめた案内 {len(shown)}つ"
-          f"（{'、'.join(s + '＝' + (g['from'] + '〜' if g['from'] else '期間なし') for s, _d, g in shown) or 'なし'}）。"
-          f"うち歩いている最中の国 {len(targets)}つ")
+    walking = {a["slug"]: a["entered"] for a in got_a.rows if a["entered"]}
+    targets = [slug for slug, _g in shown if slug in walking]
+    print(f"    案内の行が在る国 {len(shown)}つ"
+          f"（{'、'.join(s + '＝' + g['href'] for s, g in shown) or 'なし'}）。"
+          f"うち歩いている最中の国 {len(targets)}つ"
+          f"（{'、'.join(t + ' ' + walking[t] + '〜' for t in targets) or 'なし'}）")
     if not targets:
         # **0 を緑と読ませない**（§15）。当てる相手が居ない日は、そう印字する。
         # 仕込みの側（17）は相手を自分で持っているので、そちらは毎回当たる

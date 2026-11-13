@@ -148,16 +148,19 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
   /* 旅の面を持たない章。**行き先を作らない。**
      数字を板に出して、そこから先は常設の入口に任せる。
 
-     **いまいる国の案内（`/north-macedonia`）だけは、ここに入れる。**
+     **いまいる国の案内だけは、ここに入れる。**
      島に1軒足したかったが、表紙の島は13軒ぶんに詰めてあるので、
      14軒目を建てると寄りで入口が3つ届かなくなった（`COVER_R` の注）。
      行き先を減らさずに軒数を増やさない形が、この板の中。
-     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
+     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。
+     いま居る国が案内の面を持たない日は、この1行ごと出ない（前の国へ戻さない）。 */
   const st = CHAPTER_STATS[c.slug];
   /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
      章の `countries` は歩き終わってからしか埋まらない。 */
   const countries = chapterCountries(c, today).length;
-  const g = guideOf(c.slug);
+  /* **島を組む日と同じ日で選ぶ。** 日を渡さずに呼んでいたので、ここだけが
+     いつも本物の今日で選んでいて、日を差し替えた確かめがこの1行を素通りしていた */
+  const g = guideOf(c.slug, today);
   return {
     id: "trip",
     label: "この島のこと",
