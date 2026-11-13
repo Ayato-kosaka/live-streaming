@@ -225,6 +225,11 @@ if not BREAK:
     rows = gw.rows_of("north-macedonia", "skopje", ROOT / "streams")
     ok("-", "スコピエの facts が読める（0行なら置き場を見失っている）", len(rows) > 0, True)
     ok("-", "確かめが要る行も読んでいる（hold が付く）", any(x["hold"] == "verify" for x in rows), True)
+    # 面は焼いたものから書き出す。台本か facts を直して焼き直し忘れると、この見張りは古い面を見て緑になる
+    for key in gw.keys():
+        r = subprocess.run([sys.executable, str(ROOT / "python/guide_bake.py"), key, "--check"],
+                           capture_output=True, text=True, timeout=300)
+        ok("-", f"{key} の焼いたものが、いまの台本と facts と同じ（guide_bake.py --check）", r.returncode, 0)
     q = next((x for x in rows if x["it"].get("quote") and not x["hold"]), None)
     if q:
         with tempfile.TemporaryDirectory() as d:

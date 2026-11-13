@@ -42,7 +42,7 @@ import { fileURLToPath } from "node:url";
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
 import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
-import { sitemapReadsTravel, travelFixedRoutes } from "./travelreg.mjs";
+import { sitemapReadsCities, sitemapReadsTravel, travelCities, travelFixedRoutes } from "./travelreg.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
@@ -130,7 +130,10 @@ function metaBody(src) {
  * `export const metadata = { …, robots: { index: false, follow: false } }` の
  * `robots` の中の `index` を読む。**読み手は `tsread.mjs` 1本**。
  */
+/* 街のガイドの面は、`robots` を面に字で書かず、名簿の公開前の印（`draft`）から決める（`travelCityShare`） */
+const CITIES = travelCities(join(here, ".."));
 const hidden = (r) => {
+  if (CITIES.some((c) => c.route === r && c.draft)) return true;
   let src;
   try {
     src = readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8");
@@ -147,7 +150,11 @@ const open = found.filter((r) => !hidden(r));
 
 /* 国の面は字で書かず、名簿（`content/travel.ts`）から並べる（#1201）。
    **索引が名簿を読んでいるときだけ**、名簿の出す固定の道を「索引に在る」と数える */
-const viaTravel = sitemapReadsTravel(src) ? travelFixedRoutes(join(here, "..")) : [];
+const viaTravel = [
+  ...(sitemapReadsTravel(src) ? travelFixedRoutes(join(here, "..")) : []),
+  /* 街の面は、索引が `publicCities` を読んでいれば、印の無い街だけが索引に在る */
+  ...(sitemapReadsCities(src) ? CITIES.filter((c) => !c.draft).map((c) => c.route) : []),
+];
 const listed = (r) => src.includes(`"${r}"`) || viaTravel.includes(r);
 
 console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚・国の名簿から ${viaTravel.length}枚）`);
@@ -168,6 +175,10 @@ ok("索引が国の名簿を読まなくなったら、名簿の面を挙げる"
    true);
 // 索引のほうを空にしたら、検索に出す面が全部「無い」になる
 ok("索引が空なら、出す面を全部挙げる", open.filter(() => true).length, open.length);
+// 公開前の印を外した街は、索引が街の名簿を読まなくなったら挙げる（印を外す日に、索引の足し忘れを拾う）
+ok("印を外した街は、索引が街の名簿を読まないと挙げる",
+   CITIES.map((c) => c.route).filter((r) => found.includes(r) && !src.includes(`"${r}"`)).length === CITIES.length,
+   true);
 // **隠れている面を数に入れない。** 入れると、この見張りは永久に赤い
 ok("隠れている面は挙げない", found.filter(hidden).filter((r) => open.includes(r)), []);
 
