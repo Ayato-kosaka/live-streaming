@@ -71,6 +71,7 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `spec_rows` | spec が `rows` でなく `lines` で書いてある・行の数が原稿と違う、なら当てずに止まる（何の鍵で書いてあるかを言う）。`--no-spec` なら当てる |
 | `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
 | `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
+| `prev` | 十字架の登山の原稿 A の4行目「先週は雨で流れたリベンジや！」と、行の途中の「前回の配信で」を ✕。フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」・問いの前の締めの行・題が「リベンジ」を言っている回の本文・1行目の題は見ない。「昨日こねた生地」は前の回の事情ではないので見ない。あやとの書き直し（「…十字架まで歩きたい！」）は通す。11-13 のコメントより前の決まりでは当てない（L-PREV） |
 | `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない） |
 """
 from __future__ import annotations
@@ -127,7 +128,7 @@ CUTS = {
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
-              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick"}, "決まりの日を見ない"),
+              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
@@ -140,7 +141,7 @@ CUTS = {
     "sec_soft": ("lint.py", "        elif sec > LINE_SOFT:\n", "        elif False:\n", {"sec"}, "4秒を越える行を出さない"),
     "after_hard": ("lint.py", "    if len(between) >= AFTER_HARD:\n", "    if False:\n", {"after"}, "答えのあとの3行を落とさない"),
     "after_close": ("lint.py", '    if n >= 2 and "アーカイブ" in lines[-1] and ("？" in lines[-2] or "?" in lines[-2]):\n        return n - 1\n', "",
-                    {"after", "ask"}, "問い → アーカイブの終わりで、問いを締めに数えない"),
+                    {"after", "ask", "prev"}, "問い → アーカイブの終わりで、問いを締めに数えない"),
     "answer_mark": ("lint.py", '        if "【答】" in s:\n            answer.add(len(lines) + 1)\n', "",
                     {"after"}, "原稿の字の【答】を読まない"),
     "answer_spec": ("lint.py", '            if "【答】" in (r.get("why") or ""):\n                answer.add(i)\n', "            pass\n",
@@ -206,7 +207,7 @@ CUTS = {
     "ate_none": ("lint.py", "    if c.promises is None:\n", "    if False:\n", {"ate"}, "当て表の無い spec を、形の違いと区別しない"),
     "ate_read": ("lint.py", '        has_spec, promises = True, s.get("promises")\n', "        has_spec, promises = True, None\n", {"ate"},
                  "spec の promises を読まない"),
-    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved"},
+    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev"},
                   "同じ日の決まりの前後をコメントID で分けない"),
     "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
@@ -223,6 +224,13 @@ CUTS = {
                   {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
     "hypo": ("lint.py", '         hypo=("N5",)),\n', "         hypo=()),\n", {"hypo_link"}, "L-WIDE が仮説の台帳の番号を持たない"),
+    # ---- 2026-11-13（#1186、F-008 の5回目）: 前の回の事情の補足 ----
+    "prev": ("lint.py", "        m = next((x for x in PREV.finditer(ln) if x.group(0) not in said), None)\n", "        m = None\n",
+             {"prev"}, "前の回の事情（先週・リベンジ）を拾わない"),
+    "prev_close": ("lint.py", "    for i, ln in enumerate(c.lines[1:end - 1], 2):\n", "    for i, ln in enumerate(c.lines[1:], 2):\n",
+                   {"prev"}, "締めの行（次の配信への誘いの「リベンジに…」）まで拾う"),
+    "prev_title": ("lint.py", "    said = {m.group(0) for m in PREV.finditer(c.title)}\n", "    said = set()\n",
+                   {"prev"}, "題の約束が「リベンジ」の回の本文まで拾う"),
 }
 
 
@@ -615,6 +623,30 @@ def leg_nick(L):
             ("帳面に呼び名の直しが1つも無ければ「見ていない」（0件を緑にしない）", "L-NICK" in blind)]
 
 
+def leg_prev(L):
+    cross = ["北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！", "やってきたのは、首都スコピエ！",
+             "街のどこからでも見える十字架。", "先週は雨で流れたリベンジや！", "ただ、日の入りは16時20分。",
+             "みんなやったら、クッキーに並ぶ？先を急ぐ？"]
+    a = hits_of(L, ctx(L, cross), "L-PREV")
+    then = [h for h in L.lint(ctx(L, cross), "2026-11-13:6850635935")["hits"] if h.rule == "L-PREV"]
+    fixed = hits_of(L, ctx(L, cross[:2] + ["街のどこからでも見える十字架まで歩きたい！"] + cross[4:]), "L-PREV")
+    mid = hits_of(L, ctx(L, ["題", "前回の配信で言うてた店へ！", "みんなは？"]), "L-PREV")
+    foc = hits_of(L, fix(L, "approved/VusdZVyjgjQ_p1"), "L-PREV")
+    close = hits_of(L, ctx(L, ["題", "焼けた！", "リベンジは来週の配信で見てな？", "続きはアーカイブで！"]), "L-PREV")
+    title = hits_of(L, ctx(L, ["北マケドニアで滝にリベンジしたら、まさかの事態に！", "リベンジや！", "みんなは？"]), "L-PREV")
+    first = hits_of(L, ctx(L, ["前回の続きや！", "みんなは？"]), "L-PREV")
+    day = hits_of(L, ctx(L, ["題", "昨日こねた生地を焼く！", "みんなは？"]), "L-PREV")
+    return [("十字架 A の4行目「先週は雨で流れたリベンジや！」を ✕（行 4）", [(h.line, h.look) for h in a] == [(4, False)]),
+            ("あやとのコメント（2026-11-13:6850736486）より前の時点では当てない", not then),
+            ("あやとの書き直し（「…十字架まで歩きたい！」）は通す", not fixed),
+            ("行の途中の「前回の配信で」も ✕", [h.line for h in mid] == [2]),
+            ("フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」は見ない", not foc),
+            ("問いのあとにアーカイブの1行がある終わりでは、問いの行も締めとして見ない", not close),
+            ("題が「リベンジ」を言っている回の本文の「リベンジ」は見ない", not title),
+            ("1行目（読み上げる題）は見ない", not first),
+            ("「昨日こねた生地」（その日の話の中の昨日）は見ない", not day)]
+
+
 def leg_particle(L):
     def card_hits(card):
         return hits_of(L, ctx(L, ["題", "みんなは？"], title_card=card), "L-PARTICLE")
@@ -757,6 +789,7 @@ LEGS = {
     "inner": leg_inner, "nick": leg_nick, "particle": leg_particle, "ate": leg_ate,
     "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
     "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
+    "prev": leg_prev,
 }
 
 if __name__ == "__main__":
