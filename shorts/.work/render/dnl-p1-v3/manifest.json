@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__dnl-p1-v3",
  "mode": "render",
- "dest": "render/dnl-p1-v3/inbox",
+ "dest": "render/dnl-p1-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/dnl-p1-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1188,
-  "encrypted": 1200
+  "plain": 35402,
+  "tar_gz": 9127,
+  "encrypted": 9136
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1200,
-   "sha256": "1eaf7a7e37062fca754e9baf41aaee97ae1f73d2cb3b20d07751c2313c8be10e"
+   "bytes": 9136,
+   "sha256": "444fa58f2ead9397a06acd9ce45e2e51285ce4e698464f3ba79cac4edec92f02"
   }
  ],
- "hmac_sha256": "c694fa2032ace51c0416a4e804e511c0cbc5c0fa91769cad5271d32e62f1c915",
+ "hmac_sha256": "c3cdfaa120f1241c1cab3e85db148c69ce230275b1e0c3294b01a0b96c065faf",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-13T12:38:00+00:00",
+ "created_at": "2026-11-13T12:47:11+00:00",
  "nonce": "13fe26f7665a2173398c5da5"
 }
