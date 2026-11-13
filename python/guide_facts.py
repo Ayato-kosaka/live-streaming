@@ -11,8 +11,9 @@
 ## なぜ要るか
 
 行った街のガイドは「行った日・払った額・本人の一言・その場面の時刻つきリンク」で答える（#1196）。
-材料は配信の文字起こしで、**抜くのは1本につき1人の担当**（議事録と同じ分担。`python/stream_notes.py`）。
-人が読んで抜いたものは、黙って次のことが起きる（`docs/seo-2026-11/E_content.md` §4 が実測）。
+材料は配信の文字起こしで、**抜くのは `python/guide_extract.py`**（`claude -p` に1本ぶんの1枚を渡す。
+道具で回せないときは1本につき1人の担当）。抜いたものは、人でも機械でも、黙って次のことが起きる
+（`docs/seo-2026-11/E_content.md` §4 が実測）。
 
 - **言っていない数字が入る**: 議事録は機械が書いたもの。数字は1分のあいだに割れる（180円とも108円とも）
 - **視聴者さんの文が、本人の一言として入る**: 本人はチャットを声に出して読むので、字幕では本人の発話になる
@@ -700,7 +701,9 @@ def check_file(path: Path, table: dict) -> Result:
         "lines": lines, "last": lines[-1][0], "title": title, "chat": chat, "notes": notes,
         "names": name_forms({c["name"] for c in chat} | notes["names"]),
         "units": units, "canon_units": set(units.values()),
-        "places": set(city.get("places", {})),
+        # 正の名前と、その別の書きかた（`city` は別の書きかたを正の名前に寄せて束ねる）。
+        # 正の名前だけを見ていた間は、別の書きかたを表に足しても「表に無い」と数え続けていた
+        "places": set(city.get("places", {})) | {f for v in city.get("places", {}).values() for f in v},
         "trips": set(city.get("trips", {})),
     }
     # ほかの項目が名乗っている額（同じ行に2つの品の値段が並ぶのはふつうなので、互いに引く）
