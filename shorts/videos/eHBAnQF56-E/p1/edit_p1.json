@@ -1,0 +1,1441 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_v3.json",
+ "sources": {
+  "c05@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/05_2-28-15_2-35-00.mp4",
+   "watermark": "prism_live",
+   "t0": 8895.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c10@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/10_3-34-15_3-40-00.mp4",
+   "watermark": "prism_live",
+   "t0": 12855.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c01@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/01_1-01-00_1-02-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3660.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c03@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/03_1-20-45_1-25-30.mp4",
+   "watermark": "prism_live",
+   "t0": 4845.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c04@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/04_2-03-45_2-08-45.mp4",
+   "watermark": "prism_live",
+   "t0": 7425.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c06@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/06_2-41-15_2-43-15.mp4",
+   "watermark": "prism_live",
+   "t0": 9675.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c07@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/07_2-50-15_2-51-15.mp4",
+   "watermark": "prism_live",
+   "t0": 10215.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c08@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/08_3-01-15_3-05-30.mp4",
+   "watermark": "prism_live",
+   "t0": 10875.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  },
+  "c09@win": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/ingest/eHBAnQF56-E/clips/09_3-25-45_3-31-45.mp4",
+   "watermark": "prism_live",
+   "t0": 12345.0,
+   "crop": [
+    0,
+    212,
+    720,
+    745
+   ]
+  }
+ },
+ "cuts": [
+  {
+   "src": "c05@win",
+   "in": 11160,
+   "out": 11218,
+   "row": 0,
+   "note": "「北マケドニアの渓谷で川下りしようとしたら」: 岩山に囲まれたダムの上の湖に、ボートが浮かぶ（渓谷と川下りの舟が1枚に入る。F-073 の前半）"
+  },
+  {
+   "src": "c10@win",
+   "in": 5325,
+   "out": 5370,
+   "row": 0,
+   "blur": [
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 5130,
+       "rect": [
+        505,
+        485,
+        170,
+        170
+       ]
+      },
+      {
+       "f": 5160,
+       "rect": [
+        405,
+        585,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5190,
+       "rect": [
+        425,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5205,
+       "rect": [
+        305,
+        520,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5220,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5235,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5250,
+       "rect": [
+        305,
+        565,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5265,
+       "rect": [
+        450,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5280,
+       "rect": [
+        370,
+        570,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5295,
+       "rect": [
+        260,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5310,
+       "rect": [
+        295,
+        530,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5325,
+       "rect": [
+        290,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5340,
+       "rect": [
+        280,
+        535,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5370,
+       "rect": [
+        305,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5400,
+       "rect": [
+        285,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5430,
+       "rect": [
+        245,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5460,
+       "rect": [
+        115,
+        485,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5490,
+       "rect": [
+        95,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5520,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5610,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      }
+     ],
+     "from": 5130,
+     "to": 5610,
+     "note": "バス停に止まって走り去るワゴンの、運転席の影"
+    }
+   ],
+   "note": "「のんびりしすぎた！」: 日が沈んだあと、バス停の前に止まる札も字も無い銀色のワゴン（のんびりした結果の暗さと、この先の山場。hook.py の候補1。F-073 の後半・F-020。運転手さんはぼかし）"
+  },
+  {
+   "src": "c01@win",
+   "in": 1140,
+   "out": 1172,
+   "row": 1,
+   "note": "「首都からバスで、」: バスを降りて歩き出した山道と、色づいた山"
+  },
+  {
+   "src": "c01@win",
+   "in": 840,
+   "out": 879,
+   "row": 1,
+   "note": "「紅葉のマトカ渓谷へ！」: 道の先に紅葉の山（車が来る 1:01:34 の手前まで）"
+  },
+  {
+   "src": "c03@win",
+   "in": 510,
+   "out": 552,
+   "row": 2,
+   "note": "茂みの中を川のほうへ歩いていくと、川面が見えてくる"
+  },
+  {
+   "src": "c03@win",
+   "in": 870,
+   "out": 912,
+   "row": 3,
+   "note": "「岩山に紅葉に川や」: 青空の下の岩山・紅葉の斜面・澄んだ川が1枚に入る"
+  },
+  {
+   "src": "c03@win",
+   "in": 7920,
+   "out": 7955,
+   "row": 3,
+   "note": "「すごいわ！」: 岩山と紅葉を川越しに見上げる"
+  },
+  {
+   "src": "c03@win",
+   "in": 6660,
+   "out": 6705,
+   "row": 4,
+   "note": "川べりにしゃがみ、水へ手を伸ばす"
+  },
+  {
+   "src": "c03@win",
+   "in": 6780,
+   "out": 6817,
+   "row": 5,
+   "note": "「整う……」: 澄んだ川の水に手を入れたまま"
+  },
+  {
+   "src": "c03@win",
+   "in": 7260,
+   "out": 7290,
+   "row": 5,
+   "note": "「サウナの後の水風呂や！」: 底まで透けた冷たい川"
+  },
+  {
+   "src": "c04@win",
+   "in": 540,
+   "out": 572,
+   "row": 6,
+   "note": "「歩いてても目的のボートが」: スマホの地図の写真に写る目当てのボート乗り場"
+  },
+  {
+   "src": "c04@win",
+   "in": 5400,
+   "out": 5431,
+   "row": 6,
+   "note": "「どこにも無い！」: 見回しても岩山と紅葉だけで、ボートは無い"
+  },
+  {
+   "src": "c04@win",
+   "in": 2880,
+   "out": 2924,
+   "row": 7,
+   "note": "コーヒー屋の席で、コーヒーを口へ運ぶ（コーヒー屋に居る）"
+  },
+  {
+   "src": "c04@win",
+   "in": 5910,
+   "out": 5975,
+   "row": 8,
+   "note": "聞いて戻ってきた本人（固定の書き込みの札が下へ動く 2:07:13 の手前まで）"
+  },
+  {
+   "src": "c05@win",
+   "in": 480,
+   "out": 524,
+   "row": 9,
+   "note": "「ダムまで歩いてたら途中で、」: 紅葉の坂道の先に、赤い日よけの屋台"
+  },
+  {
+   "src": "c05@win",
+   "in": 1215,
+   "out": 1259,
+   "row": 9,
+   "note": "「トウモロコシの押し売り！」: 横から差し出される焼きトウモロコシ（売り手は手だけ）"
+  },
+  {
+   "src": "c05@win",
+   "in": 1980,
+   "out": 2029,
+   "row": 10,
+   "note": "もらったトウモロコシを手に、坂を歩く"
+  },
+  {
+   "src": "c05@win",
+   "in": 10650,
+   "out": 10710,
+   "row": 11,
+   "note": "岩壁の道から、ダムの上の湖に浮かぶボートが見える"
+  },
+  {
+   "src": "c06@win",
+   "in": 840,
+   "out": 890,
+   "row": 12,
+   "note": "「けど、ボートは5人集まるまで、」: 乗り場の桟橋と、つながれたボートの列"
+  },
+  {
+   "src": "c06@win",
+   "in": 1605,
+   "out": 1654,
+   "row": 12,
+   "note": "「無限に待機する仕様らしい！」: 誰も乗っていないボートが並ぶ"
+  },
+  {
+   "src": "c07@win",
+   "in": 30,
+   "out": 94,
+   "row": 13,
+   "note": "夕方の曇り空の渓谷、誰も来ない桟橋とボート"
+  },
+  {
+   "src": "c08@win",
+   "in": 1080,
+   "out": 1135,
+   "row": 14,
+   "note": "片付けの始まった乗り場の桟橋を歩く（つながれたボート）"
+  },
+  {
+   "src": "c08@win",
+   "in": 2220,
+   "out": 2287,
+   "row": 15,
+   "note": "岩壁の下の細い道を、もう1つの会社へ急ぐ"
+  },
+  {
+   "src": "c08@win",
+   "in": 7020,
+   "out": 7060,
+   "row": 16,
+   "note": "閉まった売り場に残る「Short tour with boat」の看板"
+  },
+  {
+   "src": "c09@win",
+   "in": 480,
+   "out": 534,
+   "row": 17,
+   "note": "「日が沈んできて、バス停まで、」: 日の沈んだあとの青い山道"
+  },
+  {
+   "src": "c09@win",
+   "in": 9840,
+   "out": 9895,
+   "row": 17,
+   "note": "「あと遠いから急いで帰る！」: 街灯の灯った、まだ続く暗い坂道"
+  },
+  {
+   "src": "c09@win",
+   "in": 9225,
+   "out": 9267,
+   "row": 18,
+   "note": "暗くなった道を急ぐ（街灯と、止めてある車）"
+  },
+  {
+   "src": "c10@win",
+   "in": 660,
+   "out": 722,
+   "row": 19,
+   "note": "手を振る向こうから、銀色のワゴンが寄ってくる"
+  },
+  {
+   "src": "c10@win",
+   "in": 840,
+   "out": 885,
+   "row": 20,
+   "note": "横に止まったワゴンの車体"
+  },
+  {
+   "src": "c10@win",
+   "in": 960,
+   "out": 992,
+   "row": 21,
+   "blur": [
+    {
+     "cells": 7,
+     "rect": [
+      540,
+      60,
+      180,
+      220
+     ],
+     "from": 900,
+     "to": 1125,
+     "note": "ドアの窓の上に写る運転手さんの頭（窓の上の端。多くは札の裏で切れる）"
+    }
+   ],
+   "note": "ワゴンのドアの取っ手（運転手さんの影は上の札の裏とぼかしで隠す）"
+  },
+  {
+   "src": "c10@win",
+   "in": 1740,
+   "out": 1791,
+   "row": 22,
+   "note": "乗り込んだ暗い車内と、窓の外の夕暮れの空"
+  },
+  {
+   "src": "c10@win",
+   "in": 3540,
+   "out": 3586,
+   "row": 23,
+   "note": "「って思いながら乗ったら、」: 走る車の窓の外を、夕暮れの空と街灯が流れる"
+  },
+  {
+   "src": "c10@win",
+   "in": 5205,
+   "out": 5250,
+   "row": 23,
+   "blur": [
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 5130,
+       "rect": [
+        505,
+        485,
+        170,
+        170
+       ]
+      },
+      {
+       "f": 5160,
+       "rect": [
+        405,
+        585,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5190,
+       "rect": [
+        425,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5205,
+       "rect": [
+        305,
+        520,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5220,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5235,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5250,
+       "rect": [
+        305,
+        565,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5265,
+       "rect": [
+        450,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5280,
+       "rect": [
+        370,
+        570,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5295,
+       "rect": [
+        260,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5310,
+       "rect": [
+        295,
+        530,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5325,
+       "rect": [
+        290,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5340,
+       "rect": [
+        280,
+        535,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5370,
+       "rect": [
+        305,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5400,
+       "rect": [
+        285,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5430,
+       "rect": [
+        245,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5460,
+       "rect": [
+        115,
+        485,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5490,
+       "rect": [
+        95,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5520,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5610,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      }
+     ],
+     "from": 5130,
+     "to": 5610,
+     "note": "バス停に止まって走り去るワゴンの、運転席の影"
+    }
+   ],
+   "note": "「バス停までマジで無料やった！」: 降りたバス停の前に止まる、札も字も無い銀色のワゴン（運転手さんはぼかし）"
+  },
+  {
+   "src": "c10@win",
+   "in": 5640,
+   "out": 5704,
+   "row": 24,
+   "note": "降りてすぐの本人の顔（驚いて笑う）"
+  },
+  {
+   "src": "c10@win",
+   "in": 5445,
+   "out": 5493,
+   "row": 25,
+   "blur": [
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 5130,
+       "rect": [
+        505,
+        485,
+        170,
+        170
+       ]
+      },
+      {
+       "f": 5160,
+       "rect": [
+        405,
+        585,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5190,
+       "rect": [
+        425,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5205,
+       "rect": [
+        305,
+        520,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5220,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5235,
+       "rect": [
+        205,
+        560,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5250,
+       "rect": [
+        305,
+        565,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5265,
+       "rect": [
+        450,
+        595,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5280,
+       "rect": [
+        370,
+        570,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5295,
+       "rect": [
+        260,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5310,
+       "rect": [
+        295,
+        530,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5325,
+       "rect": [
+        290,
+        550,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5340,
+       "rect": [
+        280,
+        535,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5370,
+       "rect": [
+        305,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5400,
+       "rect": [
+        285,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5430,
+       "rect": [
+        245,
+        545,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5460,
+       "rect": [
+        115,
+        485,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5490,
+       "rect": [
+        95,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5520,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      },
+      {
+       "f": 5610,
+       "rect": [
+        75,
+        465,
+        150,
+        150
+       ]
+      }
+     ],
+     "from": 5130,
+     "to": 5610,
+     "note": "バス停に止まって走り去るワゴンの、運転席の影"
+    }
+   ],
+   "note": "「みんなは、タダのタクシー、」: 走り去るワゴン（運転手さんはぼかし）"
+  },
+  {
+   "src": "c10@win",
+   "in": 9600,
+   "out": 9648,
+   "row": 25,
+   "note": "「乗る？断る？」: 着いたバス停で、カメラを見る本人"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/01.wav",
+    "tts_text": "北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "首都からバスで、紅葉のマトカ渓谷へ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/02.wav",
+    "tts_text": "首都からバスで、こうようのマトカ渓谷へ！",
+    "at": 103
+   },
+   {
+    "text": "川沿いを歩いていったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/03.wav",
+    "tts_text": "川沿いを歩いていったら、",
+    "at": 174
+   },
+   {
+    "text": "岩山に紅葉に川や、すごいわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/04.wav",
+    "tts_text": "いわやまに、こうように、川や、すごいわ！",
+    "at": 216,
+    "mood": "up_pop"
+   },
+   {
+    "text": "水の温度を確かめたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/05.wav",
+    "tts_text": "水の温度を確かめたら、",
+    "at": 293
+   },
+   {
+    "text": "整う……サウナの後の水風呂や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/06.wav",
+    "tts_text": "ととのう……サウナのあとの、水風呂や！",
+    "at": 338
+   },
+   {
+    "text": "歩いてても目的のボートがどこにも無い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/07.wav",
+    "tts_text": "歩いてても目的のボートがどこにも無い！",
+    "at": 405,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "コーヒー屋のおっちゃんに聞いたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/08.wav",
+    "tts_text": "コーヒー屋のおっちゃんに聞いたら、",
+    "at": 468
+   },
+   {
+    "text": "乗り場は、さらに10分奥やって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/09.wav",
+    "tts_text": "乗り場は、さらに、じゅっぷん奥やって！",
+    "at": 512
+   },
+   {
+    "text": "ダムまで歩いてたら途中で、トウモロコシの押し売り！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/10.wav",
+    "tts_text": "ダムまで歩いてたら途中で、トウモロコシの、押し売り！",
+    "at": 577
+   },
+   {
+    "text": "と思ったら、なんとタダ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/11.wav",
+    "tts_text": "と思ったら、なんとタダ！",
+    "at": 665,
+    "mood": "up_pop"
+   },
+   {
+    "text": "そんなこんなでやっとボート発見！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/12.wav",
+    "tts_text": "そんなこんなでやっとボート発見！",
+    "at": 714
+   },
+   {
+    "text": "けど、ボートは5人集まるまで、無限に待機する仕様らしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/13.wav",
+    "tts_text": "けど、ボートは五人集まるまで、無限に待機する仕様らしい！",
+    "at": 774
+   },
+   {
+    "text": "日が沈みかけても、誰も来えへん。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/14.wav",
+    "tts_text": "日が沈みかけても、誰もけえへん。",
+    "at": 873
+   },
+   {
+    "text": "結局、店じまいが始まった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/15.wav",
+    "tts_text": "結局、店じまいが始まった！",
+    "at": 937
+   },
+   {
+    "text": "急いでもう1つの会社も見に行ったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/16.wav",
+    "tts_text": "急いで、もうひとつの会社も見に行ったら……",
+    "at": 992
+   },
+   {
+    "text": "完全閉店してた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/17.wav",
+    "tts_text": "完全閉店してた！",
+    "at": 1059,
+    "mood": "tense_still"
+   },
+   {
+    "text": "日が沈んできて、バス停まで、あと遠いから急いで帰る！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/18.wav",
+    "tts_text": "日が沈んできて、バス停まで、あと遠いから、急いで帰る！",
+    "at": 1099
+   },
+   {
+    "text": "ギリギリ攻めすぎたな……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/19.wav",
+    "tts_text": "ギリギリ攻めすぎたな……",
+    "at": 1208,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "そこへ、タクシーに声をかけられて",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/20.wav",
+    "tts_text": "そこへ、タクシーに声をかけられて",
+    "at": 1250
+   },
+   {
+    "text": "ノーセンキューって断ったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/21.wav",
+    "tts_text": "ノーセンキューって断ったら、",
+    "at": 1312
+   },
+   {
+    "text": "「フリー！」って！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/22.wav",
+    "tts_text": "フリー！って！？",
+    "at": 1357,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "いやいや、怪しすぎるよ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/23.wav",
+    "tts_text": "いやいや、怪しすぎるよ！",
+    "at": 1389
+   },
+   {
+    "text": "って思いながら乗ったら、バス停までマジで無料やった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/24.wav",
+    "tts_text": "って思いながら乗ったら、バス停まで、マジで無料やった！",
+    "at": 1440,
+    "mood": "up_pop"
+   },
+   {
+    "text": "この国、詐欺って言葉がないんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/25.wav",
+    "tts_text": "この国、詐欺って言葉がないんか！",
+    "at": 1531
+   },
+   {
+    "text": "みんなは、タダのタクシー、乗る？断る？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ehb/voice/ehb-p1-v1/p1/26.wav",
+    "tts_text": "みんなは、タダのタクシー、乗る？断る？",
+    "at": 1595
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/eHBAnQF56-E/p1/spec.json",
+  "fps": 30,
+  "frames": 1691,
+  "seconds": 56.367,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "2:34:27.0+1.93s",
+     "3:37:12.5+1.50s"
+    ],
+    "line": "北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 103,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "1:01:38.0+1.07s",
+     "1:01:28.0+1.30s"
+    ],
+    "line": "首都からバスで、紅葉のマトカ渓谷へ！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 174,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "1:21:02.0+1.40s"
+    ],
+    "line": "川沿いを歩いていったら、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 216,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "1:21:14.0+1.40s",
+     "1:25:09.0+1.17s"
+    ],
+    "line": "岩山に紅葉に川や、すごいわ！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 293,
+    "frames": 45,
+    "voice_frames": 37,
+    "cuts": [
+     "1:24:27.0+1.50s"
+    ],
+    "line": "水の温度を確かめたら、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 338,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "1:24:31.0+1.23s",
+     "1:24:47.0+1.00s"
+    ],
+    "line": "整う……サウナの後の水風呂や！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 405,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "2:04:03.0+1.07s",
+     "2:06:45.0+1.03s"
+    ],
+    "line": "歩いてても目的のボートがどこにも無い！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 468,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "2:05:21.0+1.47s"
+    ],
+    "line": "コーヒー屋のおっちゃんに聞いたら、",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 512,
+    "frames": 65,
+    "voice_frames": 57,
+    "cuts": [
+     "2:07:02.0+2.17s"
+    ],
+    "line": "乗り場は、さらに10分奥やって！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 577,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "2:28:31.0+1.47s",
+     "2:28:55.5+1.47s"
+    ],
+    "line": "ダムまで歩いてたら途中で、トウモロコシの押し売り！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 665,
+    "frames": 49,
+    "voice_frames": 41,
+    "cuts": [
+     "2:29:21.0+1.63s"
+    ],
+    "line": "と思ったら、なんとタダ！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 714,
+    "frames": 60,
+    "voice_frames": 52,
+    "cuts": [
+     "2:34:10.0+2.00s"
+    ],
+    "line": "そんなこんなでやっとボート発見！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 774,
+    "frames": 99,
+    "voice_frames": 91,
+    "cuts": [
+     "2:41:43.0+1.67s",
+     "2:42:08.5+1.63s"
+    ],
+    "line": "けど、ボートは5人集まるまで、無限に待機する仕様らしい！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 873,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "2:50:16.0+2.13s"
+    ],
+    "line": "日が沈みかけても、誰も来えへん。",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 937,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "3:01:51.0+1.83s"
+    ],
+    "line": "結局、店じまいが始まった！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 992,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "3:02:29.0+2.23s"
+    ],
+    "line": "急いでもう1つの会社も見に行ったら……",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1059,
+    "frames": 40,
+    "voice_frames": 32,
+    "cuts": [
+     "3:05:09.0+1.33s"
+    ],
+    "line": "完全閉店してた！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1099,
+    "frames": 109,
+    "voice_frames": 101,
+    "cuts": [
+     "3:26:01.0+1.80s",
+     "3:31:13.0+1.83s"
+    ],
+    "line": "日が沈んできて、バス停まで、あと遠いから急いで帰る！",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1208,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "3:30:52.5+1.40s"
+    ],
+    "line": "ギリギリ攻めすぎたな……",
+    "telop": null
+   },
+   {
+    "row": 19,
+    "from": 1250,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "3:34:37.0+2.07s"
+    ],
+    "line": "そこへ、タクシーに声をかけられて",
+    "telop": null
+   },
+   {
+    "row": 20,
+    "from": 1312,
+    "frames": 45,
+    "voice_frames": 37,
+    "cuts": [
+     "3:34:43.0+1.50s"
+    ],
+    "line": "ノーセンキューって断ったら、",
+    "telop": null
+   },
+   {
+    "row": 21,
+    "from": 1357,
+    "frames": 32,
+    "voice_frames": 24,
+    "cuts": [
+     "3:34:47.0+1.07s"
+    ],
+    "line": "「フリー！」って！？",
+    "telop": null
+   },
+   {
+    "row": 22,
+    "from": 1389,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "3:35:13.0+1.70s"
+    ],
+    "line": "いやいや、怪しすぎるよ！",
+    "telop": null
+   },
+   {
+    "row": 23,
+    "from": 1440,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "3:36:13.0+1.53s",
+     "3:37:08.5+1.50s"
+    ],
+    "line": "って思いながら乗ったら、バス停までマジで無料やった！",
+    "telop": null
+   },
+   {
+    "row": 24,
+    "from": 1531,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "3:37:23.0+2.13s"
+    ],
+    "line": "この国、詐欺って言葉がないんか！",
+    "telop": null
+   },
+   {
+    "row": 25,
+    "from": 1595,
+    "frames": 96,
+    "voice_frames": 73,
+    "cuts": [
+     "3:37:16.5+1.60s",
+     "3:39:35.0+1.60s"
+    ],
+    "line": "みんなは、タダのタクシー、乗る？断る？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 388,
+   "raw_voice_s": 68.43,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 48.93,
+   "cps_voiced": 7.93,
+   "video_s": 56.37,
+   "cps_video": 6.88
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
