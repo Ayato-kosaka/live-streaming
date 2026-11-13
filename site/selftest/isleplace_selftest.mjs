@@ -141,7 +141,7 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { chapterIsle } = req(join(OUT, "components", "isle", "spec.js"));
+const { chapterIsle, guideOf } = req(join(OUT, "components", "isle", "spec.js"));
 const { CHAPTERS } = req(join(OUT, "content", "chapters.js"));
 console.log(`# 組み立てた絵の表: ${SRC}`);
 
@@ -269,7 +269,7 @@ const WANT = {
 
      - countries … この島で歩いた国（歩いている最中の国もふくむ）
      - facts ……… この島のこと（日数・配信・来た人。`chapterStats` が要る）
-     - guidebook … この国の歩きかた（`/north-macedonia`）
+     - guidebook … この国の歩きかた。**いま居る国が案内の面を持つ日だけ建つ**（下の `GUIDED`）
      - board ……… この旅に来ている付箋を読む板（`components/isle/board.ts`）
 
      **2026-10-19 に `shorts` が増えた。** この旅のショートを4本出して、
@@ -283,9 +283,24 @@ const WANT = {
      （`docs/island-misses.md` #210）。 */
   balkans: "countries shorts facts guidebook board pier",
 };
+/* **案内（guidebook）だけは、日で変わる。** 建つのは、いま居る国が案内の面を
+   持っているあいだ（`components/isle/spec.ts` の `guideOf`。国の表の入った日から導く）。
+   面を作っていない国へ入った日から、建たないのが正しい姿になる。
+
+   ここに「いつも建つ」と書いたままだと、その日から**関係のない PR まで全部赤くなる**
+   （直しようが、案内の面を作るか、ここを書き換えるかしか無い）。だから案内が出る日
+   かどうかは表に聞いて、**出る日には建っていること・出ない日には建っていないこと**の
+   両方を見る。「出る日かどうか」そのものが合っているかは
+   `site/selftest/islechapter_selftest.mjs` の 3 と 3b が見ている。 */
+const GUIDED = (slug) => Boolean(guideOf(slug));
+const want = (slug) =>
+  WANT[slug]
+    .split(" ")
+    .filter((id) => id !== "guidebook" || GUIDED(slug))
+    .join(" ");
 for (const i of isles) {
   const got = i.places.map((p) => p.id).join(" ");
-  check(`${i.slug} に建つ役割が変わっていない`, got === WANT[i.slug], `${got}（欲しいのは ${WANT[i.slug]}）`);
+  check(`${i.slug} に建つ役割が変わっていない`, got === want(i.slug), `${got}（欲しいのは ${want(i.slug)}）`);
 }
 
 // ---- 6 同じ島の中で、2つの役割が同じ絵になっていない
