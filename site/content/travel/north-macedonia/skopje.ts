@@ -1548,14 +1548,6 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "date": "2026-10-12"
       }
      }
-    },
-    {
-     "text": "泊まっているのは旅行者ばかりで、平和だった。",
-     "at": {
-      "v": "misSMBhPlkc",
-      "t": 3870,
-      "date": "2026-10-19"
-     }
     }
    ],
    "quotes": [],
@@ -2008,6 +2000,6 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
  "sources": [],
  "published": "2026-11-14",
  "updated": "2026-11-14",
- "hash": "ac679b73d0794800"
+ "hash": "71a16075d172edbd"
 }
 /* END GUIDE */;

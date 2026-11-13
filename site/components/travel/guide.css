@@ -384,7 +384,10 @@
 /* 本人の一言（吹き出し）。島のあやとの小さな絵から尾が出る。全体が1つのリンク */
 .tg-says { display: grid; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
 
+/* 吹き出しは言った字の長さまで。横幅いっぱいに伸ばすと、PC で「詐欺やんけ」の後ろが 700px 空く */
 .tg-say {
+  width: fit-content;
+  max-width: 100%;
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
   align-items: end;
