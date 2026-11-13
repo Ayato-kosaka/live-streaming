@@ -48,6 +48,10 @@
 **いま書いている回の組は入れない**（差の表の見出しの videoId と、`--video`・`--extra <videoId>=` が1本でも重なれば外す。`held_out`）。
 差の表の形が崩れていれば止まる（知らない種類・videoId の無い組）。黙って読み飛ばすと、1枚から手本が消えても気づけない。
 
+2回目（同じ日）: 1回目の1枚で書かせると、作文者は消す種類を当てすぎ、教会の回で題の約束を閉じる入り直しの景色まで消した。
+だから差の表の「あやとが残した行」（`KEEP_HEAD`）を、消す種類の下に「残した」として並べ、作文者が削って戻させた字（パソコン p2 の
+筋の段と助詞）は「残す — 削りすぎ」にまとめる。**批評役の1枚にも同じ節を入れる**（`critic_retouch`。いま見る原稿の行を引く例は伏せる）。
+
 ## 批評役の1枚
 
 作文者と**同じカード**を入れる。批評役は当てた ID を全部 `checked` に並べ、欠けたら `critic_gate.py` が ✕ にする。
@@ -110,7 +114,9 @@ CPS = 6.8      # 上限の倍率 1.4 で読んだ毎秒の字（`script_writing.
 GAP = 0.3      # 行の間（秒）
 CARD = 4.0     # 題の札を消す秒（帳面 F-015）
 # あやとが書いた字・決めた字（spec の why）。関所はこの行を落とす理由にしない（`script_writing.md` 7.3。まとめ役が裁く）
-AYATO = re.compile(r"あやとの(題|書き足し|字|添削)|あやと\s*#\d+\s*「")
+# 「あやと #1187 の題」「あやと #1187 の骨」と issue の番号を挟む形も同じ（2026-11-13、パソコン p2 の題の行に付かなかった）。
+# 「あやとの言葉 #976 を言い換えた」は、こちらが言い換えた字なので付けない
+AYATO = re.compile(r"あやと(?:\s*#\d+\s*)?の(題|骨|書き足し|字|添削)|あやと\s*#\d+\s*「")
 TIME = re.compile(r"^\[(\d+):(\d\d):(\d\d)\]\s*(.*)$")
 
 
@@ -185,6 +191,11 @@ def ids_line(led=None) -> str:
 REWRITE_GLOB = "rewrite_diff_*.md"
 KIND_HEAD = "| 種類 | 向き | 帳面 | 作文者が自分で直す言い方 |"
 PAIR_HEAD = "| # | 種類 | こちらの案 | あやとの書き直し |"
+# あやとが残した行（こちらの案のまま）と、作文者が削って戻させた字。「見かけ」は、その行が当てはまりそうに見える消す種類
+# （無ければ —）。2026-11-13 の1回目の磨きは消した例ばかり見せたので、作文者は題の約束を閉じる景色まで消した
+KEEP_HEAD = "| # | 見かけ | こちらの案 | あやとの書き直し | 残る訳 |"
+NO_KIND = "—"
+SAME = "（そのまま）"
 GROUP_HEAD = re.compile(r"^### (\S+) — (.+)$")   # 「### 教会 — DNLVmUpew48」。videoId は、その組の行の出来事が出てくる回
 NEW_KIND = "新"   # 帳面にまだ無い、あやとの書き直しの傾向
 WAYS = ("消す", "替える", "足す", "形")   # 当てる順。行を消すと、つなぐ・足す所が変わるので、消すが先
@@ -197,6 +208,8 @@ def rewrite_files() -> list:
 def rewrites(paths: list | None = None) -> tuple:
     """差の表を読む →（{種類: {"way", "ledger", "say"}}, [{"group", "videos", "kinds", "ours", "ayato"}]）。
 
+    残した行の表（`KEEP_HEAD`）の行も同じ並びに入れ、`"kept": True` と残る訳（`"why"`）を持たせる。`kinds` は見かけの種類
+    （— なら空）。直された数（`rewrite_counts`）には数えない。
     形が崩れていれば止まる（知らない種類・videoId の無い組・欄の数の違う行）。黙って読み飛ばすと、1枚から手本が消えても気づけない。
     """
     kinds, pairs = {}, []
@@ -212,15 +225,17 @@ def rewrites(paths: list | None = None) -> tuple:
                 mode = None
                 continue
             if ln.startswith("#"):
-                mode, group = None, (None if ln.startswith("## ") else group)
+                # 組の見出しの形でない「### 」（名前に空白があるなど）は、組を切る。前の組のまま読むと、
+                # 次の表の行が前の組の名前と videoId で入り、その回を外せない（2026-11-13、「パソコン p2」で踏んだ）
+                mode, group = None, (None if ln.startswith(("## ", "### ")) else group)
                 continue
             if ln == KIND_HEAD:
                 mode = "kind"
                 continue
-            if ln == PAIR_HEAD:
+            if ln in (PAIR_HEAD, KEEP_HEAD):
                 if group is None:
                     raise ValueError(f"{path.name}:{n} の組の表に、組の見出し（### 名前 — videoId）が無い")
-                mode = "pair"
+                mode = "pair" if ln == PAIR_HEAD else "keep"
                 continue
             if not ln.startswith("|"):
                 mode = None if ln else mode
@@ -230,10 +245,14 @@ def rewrites(paths: list | None = None) -> tuple:
             cells = [c.strip() for c in ln.strip("|").split("|")]
             if all(set(c) <= set("-: ") for c in cells):
                 continue
-            if len(cells) != 4:
-                raise ValueError(f"{path.name}:{n} の行の欄が {len(cells)} 個（4個のはず）")
+            want = 5 if mode == "keep" else 4
+            if len(cells) != want:
+                raise ValueError(f"{path.name}:{n} の行の欄が {len(cells)} 個（{want}個のはず）")
             if mode == "kind":
                 kinds[cells[0]] = {"way": cells[1], "ledger": cells[2], "say": cells[3]}
+            elif mode == "keep":
+                pairs.append({"group": group, "videos": videos, "kinds": tuple(k for k in cells[1].split("・") if k and k != NO_KIND),
+                              "ours": cells[2], "ayato": cells[3], "why": cells[4], "kept": True})
             else:
                 pairs.append({"group": group, "videos": videos, "kinds": tuple(k for k in cells[1].split("・") if k),
                               "ours": cells[2], "ayato": cells[3]})
@@ -257,6 +276,8 @@ def rewrite_counts(videos: list, data: tuple | None = None) -> dict:
     use, _ = held_out(pairs, videos)
     got = {}
     for p in use:
+        if p.get("kept"):   # 残した行は、直された所ではない
+            continue
         for k in p["kinds"]:
             fid = kinds[k]["ledger"]
             if fid != NEW_KIND:
@@ -268,43 +289,99 @@ def _said(cell: str) -> str:
     return cell if cell.startswith("（") else f"「{cell}」"
 
 
-def retouch_block(videos: list, data: tuple | None = None, per_kind: int = 3) -> str:
-    """作文者の1枚の「あやとの目で直す」。種類を、ほかの回で直された数の多い順に、例（ほかの回の組）つきで並べる。
+def _pick(cands: list, n: int) -> list:
+    """例を n 個まで、なるべく別々の回から取る（同じ回の例が3つ並ぶと、その回の話に引っ張られる）。"""
+    picked, seen, groups = [], set(), {q["group"] for q in cands}
+    for p in cands + cands:   # 1周目は別々の回から、2周目で足りない分を埋める
+        if len(picked) >= n:
+            break
+        if p in picked or (p["group"] in seen and len(seen) < len(groups)):
+            continue
+        picked.append(p)
+        seen.add(p["group"])
+    return picked
 
-    例は、なるべく別々の回から取る（同じ回の例が3つ並ぶと、その回の話に引っ張られる）。
+
+def _kept(p: dict) -> str:
+    said = _said(p["ours"]) if p["ayato"] == SAME else f"{_said(p['ours'])} → {_said(p['ayato'])}"
+    return f"{said}（{p['group']}。{p['why']}）"
+
+
+def retouch_block(videos: list, data: tuple | None = None, per_kind: int = 3, avoid: list | None = None) -> str:
+    """「あやとの目で直す」。種類を、ほかの回で直された数の多い順に、例（ほかの回の組）つきで並べる。
+
+    消す種類の下には、**同じ種類に見えるのに、あやとが残した行**を並べる。1回目（2026-11-13）は消した例だけを並べ、
+    作文者は教会の回で、題の約束を閉じる入り直しの景色まで「答えのあとの行」で消した（`rewrite_diff_2026-11-13.md` 6）。
+    見かけの種類が無い残した字（作文者が削って、戻させた筋の段・助詞）は、消す種類のすぐあとに1つにまとめる。
+
+    `avoid`（批評役の1枚の、いま見る原稿の行）を引いている例は伏せる（`cards` と同じ。例との一致で落とす・通すのを避ける）。
     """
     kinds, pairs = data or rewrites()
     use, out_groups = held_out(pairs, videos)
-    if not use:
+    changed = [p for p in use if not p.get("kept")]
+    stays = [p for p in use if p.get("kept")]
+    if not changed and not stays:
         return "（まだ、ほかの回のあやとの書き直しが無い。約束のカードで当てる）"
-    groups = list(dict.fromkeys(p["group"] for p in use))
+
+    def shown(p):
+        return not (avoid and quotes_script(f"{p['ours']} {p['ayato']}", avoid))
+    hidden = sum(1 for p in changed + stays if not shown(p))
+    groups = list(dict.fromkeys(p["group"] for p in changed))
     count = {k: 0 for k in kinds}
-    for p in use:
+    for p in changed:
         for k in p["kinds"]:
             count[k] += 1
     way = {w: i for i, w in enumerate(WAYS)}
-    order = sorted((k for k in kinds if count[k]),
+    order = sorted((k for k in kinds if count[k] or any(k in p["kinds"] for p in stays)),
                    key=lambda k: (way.get(kinds[k]["way"], len(WAYS)), -count[k], list(kinds).index(k)))
+    loose = [p for p in stays if not p["kinds"] and shown(p)]
+    last_cut = max((j for j, k in enumerate(order) if kinds[k]["way"] == WAYS[0]), default=-1)
     lines = [f"あやとが作文者の原稿を書き直した {len(groups)} 回（{'・'.join(groups)}）の差を、種類ごとに数えた。"
              f"{'→'.join(WAYS)} の順に、それぞれ多い順に並べてある"
              + (f"（**この回の組（{'・'.join(out_groups)}）は入れていない**）" if out_groups else "") + "。",
-             "帳面の ID が付いた種類は、約束のカードがあるのに外した所。「帳面に無い」は、あやとが書き直すときに毎回する直し。", ""]
-    for i, k in enumerate(order, 1):
+             "帳面の ID が付いた種類は、約束のカードがあるのに外した所。「帳面に無い」は、あやとが書き直すときに毎回する直し。",
+             "**「残した」は、その種類に見えるのに、あやとがこちらの案のまま残した行。** 消す種類を当てる前に、残した行と比べる。"
+             "その行が無いと次の行か題の約束に渡れないなら、残す。「残した」と同じ形と言えるのは、残る訳（括弧の中）まで同じときだけ"
+             "（見かけが同じでも、途中の反省・気持ち・前ふりだけの行は残す理由にならない）。"
+             + (f"（いま見る原稿の行を引いている例 {hidden} 個は、この1枚では伏せた。種類の言い方で当てる）" if hidden else ""), ""]
+    i = 0
+
+    def put_loose():
+        nonlocal i
+        if not loose:
+            return
+        i += 1
+        lines.append(f"{i}. **残す — 削りすぎ**（作文者が削って、戻させた字・{len(loose)}か所）: 短くするために、筋に要る段"
+                     "（何をした・なぜ）と助詞（を・は・から）を消さない。収まらなければ、出来事の切れ目で分けるか、35字までの1行のままにする")
+        lines.extend(f"   - {_kept(p)}" for p in loose)
+    if last_cut < 0:
+        put_loose()
+    for j, k in enumerate(order):
         kd = kinds[k]
         tag = "帳面に無い" if kd["ledger"] == NEW_KIND else kd["ledger"]
+        i += 1
         lines.append(f"{i}. **{kd['way']} — {k}**（{tag}・{count[k]}か所）: {kd['say']}")
-        mine = [p for p in use if k in p["kinds"]]
-        picked, seen = [], set()
-        for p in mine + mine:   # 1周目は別々の回から、2周目で足りない分を埋める
-            if len(picked) >= per_kind:
-                break
-            if p in picked or (p["group"] in seen and len(seen) < len({q["group"] for q in mine})):
-                continue
-            picked.append(p)
-            seen.add(p["group"])
-        for p in picked:
+        for p in _pick([p for p in changed if k in p["kinds"] and shown(p)], per_kind):
             lines.append(f"   - {_said(p['ours'])} → {_said(p['ayato'])}（{p['group']}）")
+        for p in _pick([p for p in stays if k in p["kinds"] and shown(p)], per_kind):
+            lines.append(f"   - **残した**: {_kept(p)}")
+        if j == last_cut:
+            put_loose()
     return "\n".join(lines)
+
+
+def critic_retouch(videos: list, avoid: list, data: tuple | None = None) -> str:
+    """批評役の1枚の「あやとの目で直す」（作文者と同じ節）。いま見る原稿の行を引く例と、この回の組は伏せる。
+
+    1回目（2026-11-13）は作文者の1枚にしか無く、批評役はあやとの直しの向きを知らないまま、作文者の原稿を通していた。
+    """
+    return ("### あやとの目で直す（ほかの回で、あやとがこちらの原稿を書き直した所。作文者にも同じ節を渡している）\n\n"
+            "あやとが書き直すときに毎回する直しなので、この原稿の行に同じ直しが要るかを当てる。\n\n"
+            "- 帳面の ID が付いた種類に当たる行は、そのカードの当たりとして `ledger` に挙げる。「帳面に無い」種類は落とす理由にせず、"
+            "`fixes` に直し案だけ書く\n"
+            "- **「残した」と同じ形の行を、消す側で挙げない。** 消す種類に見えても、その行が無いと次の行か題の約束に渡れない行は、"
+            "あやとが残してきた。行を消す直し案を出す前に、残した例と比べる\n\n"
+            + retouch_block(videos, data, avoid=avoid))
 
 
 def card_order_line(first: dict) -> str:
@@ -984,12 +1061,14 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=
     if bad:
         raise KeyError("雛形（critic_prompt.md）が対照の原稿の行を引いている（例は参考から取る）: "
                        + " / ".join(f"{n}「{ln}」" for n, ln in bad[:4]))
+    # いま見ている回（--video と、--extra に回を書いた写し）の組は入れない（作文者の1枚と同じ）
+    mine = videos_of(video) + [p.partition("=")[0] for p in extra or [] if "=" in p]
     return fill(tmpl, {
         "about": about.strip() or "（まとめ役が1〜3行で書く: 誰の何の配信か・この案の狙い）",
         "n": str(len(c.lines)),
         "table": script_table(c, rows),
         "lint": lint_block(script, sp if sp.exists() else None, as_of),
-        "cards": cards(avoid=c.lines),
+        "cards": cards(avoid=c.lines) + "\n\n" + critic_retouch(mine, c.lines),
         "ids": ids_line(),
         "refs": beats(refs) if refs else "（参考の指定なし）",
         "source": critic_source(video, ranges or [], rows, extra or []),
