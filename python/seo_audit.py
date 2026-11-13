@@ -103,10 +103,11 @@ PAUSE = 0.15
 MAX_HOPS = 5
 
 # 目安の線。**合否ではない**（数を出すだけ）。動かすと前の回と比べられなくなる
-# - title: Google の検索結果は全角30字前後で切れる。32 は「切れ始める」あたり
+# - title: Google の検索結果は全角30字前後で切れる。32 は「切れ始める」あたり。
+#   15 は「唐揚げ｜あやと島」（8字）のように、名前と島の名前だけで終わっている長さ
 # - description: 全角で 50〜120字が、スマホと PC の両方で切れずに出る幅
 # - 本文: 300字は、AI が1面から引用できる段落がやっと1つある量
-TITLE_LONG = 32
+TITLE_SHORT, TITLE_LONG = 15, 32
 DESC_SHORT, DESC_LONG = 50, 120
 THIN_TEXT = 300
 
@@ -312,7 +313,7 @@ class Page:
     time_dt: int = 0
     time_plain: int = 0
     inline_script_bytes: int = 0
-    chunks: list = field(default_factory=list)      # 本文の字そのもの（--text 用）
+    chunks: list = field(default_factory=list)      # 本文の字そのもの（生と JS 後の DOM を引き算するとき用）
 
 
 class _Reader(HTMLParser):
@@ -881,6 +882,7 @@ def tallies(rows: list[dict]) -> list[tuple[str, list[str], list[str]]]:
         ("canonical が自分の URL と一致しない面（無い面を含む）", c(lambda r: not r["canon_self"])),
         ("title が無い面", c(lambda r: not r["title_len"])),
         ("title がほかの面と同じ面", c(lambda r: r["title_dup"])),
+        (f"title が {TITLE_SHORT}字未満の面（無い面を除く）", c(lambda r: 0 < r["title_len"] < TITLE_SHORT)),
         (f"title が {TITLE_LONG}字を超える面", c(lambda r: r["title_len"] > TITLE_LONG)),
         ("description が無い面", c(lambda r: not r["desc_len"])),
         ("description がほかの面と同じ面", c(lambda r: r["desc_dup"])),
