@@ -1,0 +1,638 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style.json",
+ "sources": {
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/ingest/DNLVmUpew48/clips/01_1-33-30_1-41-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5610.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/ingest/DNLVmUpew48/clips/02_1-41-00_1-48-00.mp4",
+   "watermark": "prism_live",
+   "t0": 6060.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/ingest/DNLVmUpew48/clips/03_1-48-00_1-56-00.mp4",
+   "watermark": "prism_live",
+   "t0": 6480.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c01",
+   "in": 10755,
+   "out": 10811,
+   "row": 0,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「北マケドニアで教会に入ったら、」: 入ってすぐの堂内。シャンデリアと一面の聖像、台の前の人たち（hook.py の候補3。題の言葉の前半＝入った所。F-073）"
+  },
+  {
+   "src": "c02",
+   "in": 4215,
+   "out": 4270,
+   "row": 0,
+   "zoom": {
+    "from": 2.0,
+    "to": 2.0,
+    "x": 0.12,
+    "y": 0.55,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "「お祈りの最中で場違いすぎた！」: 聖像の台の前で2人が並んで深く頭を下げる（後ろ姿に寄せる。題の後半＝お祈りの最中。F-073）"
+  },
+  {
+   "src": "c01",
+   "in": 2334,
+   "out": 2378,
+   "row": 1,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「楽しみにしてた大聖堂、」: 並木の向こうに大聖堂の丸屋根が見える"
+  },
+  {
+   "src": "c01",
+   "in": 8715,
+   "out": 8745,
+   "row": 1,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「これは偉大や！」: 正面のアーチと十字の付いた大聖堂を見上げる"
+  },
+  {
+   "src": "c01",
+   "in": 10155,
+   "out": 10197,
+   "row": 2,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「どれどれって入ったら、」: 木の扉をくぐって中へ入る"
+  },
+  {
+   "src": "c01",
+   "in": 10395,
+   "out": 10430,
+   "row": 3,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「中は、」: 赤い絨毯の堂内へ、前の2人に続いて入る（後ろ姿）"
+  },
+  {
+   "src": "c02",
+   "in": 750,
+   "out": 793,
+   "row": 3,
+   "zoom": {
+    "from": 2.0,
+    "to": 2.0,
+    "x": 0.17,
+    "y": 0.55,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "「ゴリゴリにガチ勢がお祈りしてる！」: 聖像の台の前で男の人が何度も頭を下げる（後ろ姿に寄せる）"
+  },
+  {
+   "src": "c02",
+   "in": 2250,
+   "out": 2274,
+   "row": 4,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「あれ、、」: 見上げると天井一面の絵（周りを見回す間）"
+  },
+  {
+   "src": "c01",
+   "in": 10995,
+   "out": 11041,
+   "row": 4,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「観光客、僕しかおらん！」: 広い堂内に、お祈りする人がぽつぽつ。観光客らしい人はいない"
+  },
+  {
+   "src": "c01",
+   "in": 11325,
+   "out": 11378,
+   "row": 5,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「全員めっちゃ真剣な顔で、」: 聖像の台の前に人が並んでお祈りしている"
+  },
+  {
+   "src": "c02",
+   "in": 4725,
+   "out": 4780,
+   "row": 6,
+   "zoom": {
+    "from": 2.0,
+    "to": 2.0,
+    "x": 0.15,
+    "y": 0.55,
+    "sx": 0.5,
+    "sy": 0.5
+   },
+   "note": "「同じタイミングで十字を切ってる。」: 台の前で女の人が頭を下げてお祈りする（寄せる。十字の手の形はこの画質では見えない）"
+  },
+  {
+   "src": "c02",
+   "in": 6525,
+   "out": 6586,
+   "row": 7,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「僕だけ突っ立って、見よう見まねや。」: カメラが動かずに止まったまま、黒い服の人が前へ歩いていく（自分だけ立ち尽くしている画）"
+  },
+  {
+   "src": "c02",
+   "in": 9390,
+   "out": 9452,
+   "row": 8,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「あまりの場違い感に、いったん外へ。」: 黒い服の人の後ろについて、明るい外へ出る（逆光で顔は写らない）"
+  },
+  {
+   "src": "c02",
+   "in": 10335,
+   "out": 10366,
+   "row": 9,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「しばらくしたら、」: 外の広場から大聖堂の正面を見る"
+  },
+  {
+   "src": "c03",
+   "in": 45,
+   "out": 117,
+   "row": 9,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「観光客っぽい人が、ゾロゾロと入って行くぞ！？」: 観光客らしい一団が入口へ入っていく（後ろ姿）"
+  },
+  {
+   "src": "c03",
+   "in": 315,
+   "out": 351,
+   "row": 10,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「たぶん入ったらあかん時間に」: 広場から見た大聖堂。人が入口へ歩いていく"
+  },
+  {
+   "src": "c03",
+   "in": 705,
+   "out": 740,
+   "row": 10,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「入っちゃってたっぽい？」: 口に手を当てる本人（顔が話の中身になる行。F-058）"
+  },
+  {
+   "src": "c03",
+   "in": 5955,
+   "out": 5984,
+   "row": 11,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「観光客が増えてから」: 入口の前に観光客が増えている"
+  },
+  {
+   "src": "c03",
+   "in": 6675,
+   "out": 6704,
+   "row": 11,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「入り直したら、」: 観光客の後ろについて堂内へ（後ろ姿）"
+  },
+  {
+   "src": "c03",
+   "in": 7695,
+   "out": 7751,
+   "row": 12,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「天井も壁も、一面の絵！」: 天井と壁を埋める絵を見上げる"
+  },
+  {
+   "src": "c03",
+   "in": 7935,
+   "out": 7987,
+   "row": 13,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「みんなやったらこの場合、」: 聖像の壁と天井の絵"
+  },
+  {
+   "src": "c03",
+   "in": 13695,
+   "out": 13748,
+   "row": 13,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.172,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「そっと出る？じっと残る？」: シャンデリアと聖像の壁の前に観光客が集まる堂内の引き（終わりの札が乗る）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニアで教会に入ったら、お祈りの最中で場違いすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニアで教会に入ったら、お祈りの最中で場違いすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/01.wav",
+    "tts_text": "北マケドニアで、教会に入ったら、お祈りのさいちゅうで、場違いすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "楽しみにしてた大聖堂、これは偉大や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/02.wav",
+    "tts_text": "楽しみにしてた大聖堂、これは偉大や！",
+    "at": 111
+   },
+   {
+    "text": "どれどれって入ったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/03.wav",
+    "tts_text": "どれどれって入ったら、",
+    "at": 185
+   },
+   {
+    "text": "中は、ゴリゴリにガチ勢がお祈りしてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/04.wav",
+    "tts_text": "なかは、ゴリゴリに、ガチ勢がお祈りしてる！",
+    "at": 227
+   },
+   {
+    "text": "あれ、、観光客、僕しかおらん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/05.wav",
+    "tts_text": "あれ、、観光客、僕しかおらん！",
+    "at": 305
+   },
+   {
+    "text": "全員めっちゃ真剣な顔で、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/06.wav",
+    "tts_text": "全員めっちゃ真剣な顔で、",
+    "at": 375
+   },
+   {
+    "text": "同じタイミングで十字を切ってる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/07.wav",
+    "tts_text": "同じタイミングで十字を切ってる。",
+    "at": 428
+   },
+   {
+    "text": "僕だけ突っ立って、見よう見まねや。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/08.wav",
+    "tts_text": "僕だけ突っ立って、見よう見まねや。",
+    "at": 483
+   },
+   {
+    "text": "あまりの場違い感に、いったん外へ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/09.wav",
+    "tts_text": "あまりの場違い感に、いったん外へ。",
+    "at": 544
+   },
+   {
+    "text": "しばらくしたら、観光客っぽい人が、ゾロゾロと入って行くぞ！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/10.wav",
+    "tts_text": "しばらくしたら、観光客っぽい人が、ゾロゾロと入って行くぞ！？",
+    "at": 606
+   },
+   {
+    "text": "たぶん入ったらあかん時間に入っちゃってたっぽい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/11.wav",
+    "tts_text": "たぶん入ったらあかん時間に入っちゃってたっぽい？",
+    "at": 709
+   },
+   {
+    "text": "観光客が増えてから入り直したら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/12.wav",
+    "tts_text": "観光客が増えてから入り直したら、",
+    "at": 780
+   },
+   {
+    "text": "天井も壁も、一面の絵！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/13.wav",
+    "tts_text": "天井も壁も、一面の絵！",
+    "at": 838
+   },
+   {
+    "text": "みんなやったらこの場合、そっと出る？じっと残る？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/dnl/voice/dnl-p1-v1/p1/14.wav",
+    "tts_text": "みんなやったらこの場合、そっと出る？じっと残る？",
+    "at": 894
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/DNLVmUpew48/p1/spec.json",
+  "fps": 30,
+  "frames": 999,
+  "seconds": 33.3,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 111,
+    "voice_frames": 103,
+    "cuts": [
+     "1:39:28.5+1.87s",
+     "1:43:20.5+1.83s"
+    ],
+    "line": "北マケドニアで教会に入ったら、お祈りの最中で場違いすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 111,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:34:47.8+1.47s",
+     "1:38:20.5+1.00s"
+    ],
+    "line": "楽しみにしてた大聖堂、これは偉大や！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 185,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "1:39:08.5+1.40s"
+    ],
+    "line": "どれどれって入ったら、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 227,
+    "frames": 78,
+    "voice_frames": 70,
+    "cuts": [
+     "1:39:16.5+1.17s",
+     "1:41:25.0+1.43s"
+    ],
+    "line": "中は、ゴリゴリにガチ勢がお祈りしてる！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 305,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "1:42:15.0+0.80s",
+     "1:39:36.5+1.53s"
+    ],
+    "line": "あれ、、観光客、僕しかおらん！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 375,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "1:39:47.5+1.77s"
+    ],
+    "line": "全員めっちゃ真剣な顔で、",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 428,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "1:43:37.5+1.83s"
+    ],
+    "line": "同じタイミングで十字を切ってる。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 483,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "1:44:37.5+2.03s"
+    ],
+    "line": "僕だけ突っ立って、見よう見まねや。",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 544,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "1:46:13.0+2.07s"
+    ],
+    "line": "あまりの場違い感に、いったん外へ。",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 606,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "1:46:44.5+1.03s",
+     "1:48:01.5+2.40s"
+    ],
+    "line": "しばらくしたら、観光客っぽい人が、ゾロゾロと入って行くぞ！？",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 709,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "1:48:10.5+1.20s",
+     "1:48:23.5+1.17s"
+    ],
+    "line": "たぶん入ったらあかん時間に入っちゃってたっぽい？",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 780,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "1:51:18.5+0.97s",
+     "1:51:42.5+0.97s"
+    ],
+    "line": "観光客が増えてから入り直したら、",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 838,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "1:52:16.5+1.87s"
+    ],
+    "line": "天井も壁も、一面の絵！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 894,
+    "frames": 105,
+    "voice_frames": 82,
+    "cuts": [
+     "1:52:24.5+1.73s",
+     "1:55:36.5+1.77s"
+    ],
+    "line": "みんなやったらこの場合、そっと出る？じっと残る？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 231,
+   "raw_voice_s": 40.63,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 29.07,
+   "cps_voiced": 7.95,
+   "video_s": 33.3,
+   "cps_video": 6.94
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
