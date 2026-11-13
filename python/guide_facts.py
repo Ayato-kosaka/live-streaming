@@ -749,6 +749,9 @@ def cmd_city(args, root: Path, table: dict) -> int:
             s += f" 「{it['quote']}」"
         if it.get("verify"):
             s += f" 〔要確認: {it['verify']}〕"
+        # 場所の節の外では、どこの話かを頭に付ける（「ボートは5人集まるまで出ない」だけでは、どこのボートか分からない）
+        if x[0] != "place" and x[1]:
+            s = f"〈{x[1]}〉{s}"
         return f"- {s}{tail(x)}"
 
     out = [f"# {city['name']}（{country['name']}）— 配信から抜いた「実際に行った」の下書き", "",
@@ -785,14 +788,17 @@ def cmd_city(args, root: Path, table: dict) -> int:
             body += [line(x) for x in mine] + [""]
     out += body
     text = "\n".join(out).rstrip() + "\n"
-    n_lines = sum(1 for s in body if s.startswith("- ") or (s.startswith("| ") and "---" not in s and "何に" not in s))
-    n_num = sum(1 for x in rows if numbers_in(x[5]["text"]) or x[5].get("amounts"))
+    table_rows = [s for s in body if s.startswith("| ") and "---" not in s and not s.startswith("| 何に")]
+    bullets = [s for s in body if s.startswith("- ")]
+    # 「数字つき」は、尻の日付とリンクを除いた中身に算用数字が在る行。額の表の行は全部そう
+    n_num = len(table_rows) + sum(1 for s in bullets if re.search(r"\d", norm(s.rsplit("（", 1)[0])))
+    n_lines = len(table_rows) + len(bullets)
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(text, encoding="utf-8")
     else:
         sys.stdout.write(text)
-    print(f"下書き: 配信 {len(files)}本 / 項目 {len(rows)}件 / 行 {n_lines}行（うち数字つきの項目 {n_num}件）", file=sys.stderr)
+    print(f"下書き: 配信 {len(files)}本 / 項目 {len(rows)}件 / {n_lines}行（うち数字つき {n_num}行）", file=sys.stderr)
     return 0
 
 
