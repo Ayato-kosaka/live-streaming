@@ -1,4 +1,3 @@
-import { TRAVEL } from "@/content/travelPath";
 
 /** 配信の5つの型。押すとそれぞれの深掘りページに行く。 */
 export type StreamType = {
@@ -86,7 +85,7 @@ export const STREAM_TYPES: StreamType[] = [
        この字はデータなので画面が出てから数え直せない。国境を越えた日の朝、
        表紙と `/map` だけが増えて、この札だけ前の日の数を出す。
        行き先の面が数を出しているので、札は行き先だけ言う。 */
-    deeper: { label: "歩いてきた国を見る", href: TRAVEL },
+    deeper: { label: "歩いてきた国を見る", href: "/travel" },
   },
   {
     slug: "making",

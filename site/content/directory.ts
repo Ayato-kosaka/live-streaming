@@ -367,6 +367,13 @@ export const SHELVES: Shelf[] = [
  * 121 だった。**画面が「122枚」と名乗って、121枚しか無かった。**
  */
 const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
+
+/* **国の面は、ここに並んでいないと書き出しを止める。** 歩いた国は名簿から棚に並ぶが、
+   行く前の案内だけの国（`content/travel.ts` の `GUIDE_ONLY`）は棚を手で立てる（探し言葉は人が書く）。
+   立て忘れると、索引には在るのに `/all` から行けない面になる——前は配ったあとの
+   `prodsweep.mjs` で初めて分かった（#1201） */
+const offShelf = TRAVEL_PLACES.filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
+if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
 /** いまいる島の行が `/` に化けるぶん。**必ず1つ**（`chapterHref`） */
 const ISLE_NOW_ROWS = 1;
 export const DEST_COUNT = DEST_HREFS.size - ISLE_NOW_ROWS;

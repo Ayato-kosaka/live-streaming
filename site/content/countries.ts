@@ -337,7 +337,7 @@ export const COUNTRIES: Country[] = [
   /* ここから下の6カ国は北欧周遊（2026-09-12 〜 09-27）。
      **`region` は6つとも「ヨーロッパ」。** 「北欧」を足すこともできるが、
      `region` は `/map` の年表を地図の寄せボタン（`route.json` の `chapters`）に
-     結ぶ鍵で（`app/map/page.tsx` の `CHAPTER_OF`）、あちらに無い名前を作ると
+     結ぶ鍵で（`app/travel/page.tsx` の `CHAPTER_OF`）、あちらに無い名前を作ると
      **どの段にも入らず、6カ国が年表から黙って消える。**
      地方の名前としてもバルト三国からスウェーデンまでヨーロッパで間違いではない。
 

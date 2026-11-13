@@ -487,7 +487,7 @@ const GUIDES: Record<string, Guide[]> = {
     {
       slug: "north-macedonia",
       name: "北マケドニア",
-      href: travelHref("north-macedonia"),
+      href: "/travel/north-macedonia",
       /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
          国を越えた日にも、何ヶ月たっても本当のことだけ。 */
       lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",

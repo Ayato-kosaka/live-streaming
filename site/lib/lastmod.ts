@@ -118,7 +118,7 @@ export const LASTMOD = {
   month: (m: MonthDays) => newest(monthDays(m)),
   months: (all: MonthDays[]) => newest(all.flatMap(monthDays)),
   streamType: (t: StreamType) => newest(t.samples.map((s) => s.date)),
-  /* 街の並べかたは `app/map/[slug]/page.tsx` の `towns` と同じ（その面に出る配信だけを見る） */
+  /* 街の並べかたは `app/travel/[slug]/page.tsx` の `towns` と同じ（その面に出る配信だけを見る） */
   country: (c: Country) =>
     newest([
       ...[...new Set(c.stays.flatMap((s) => s.cities))].flatMap((city) => streamsOfCity(c.slug, city).map((v) => v.date)),

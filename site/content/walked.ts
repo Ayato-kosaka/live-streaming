@@ -1,6 +1,5 @@
 import { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry, type Country } from "./countries";
 import { chapterNow, tripDate, type Chapter } from "./chapters";
-import { TRAVEL, travelHref } from "@/content/travelPath";
 
 /**
  * 「これまで歩いた国」の数。**画面が出てから数え直す。**
@@ -133,11 +132,11 @@ export type ChapterCountry = {
 export function chapterCountries(c: Chapter, now: Date = new Date()): ChapterCountry[] {
   const done: ChapterCountry[] = c.countries.flatMap((slug) => {
     const k = COUNTRIES.find((x) => x.slug === slug);
-    return k ? [{ slug: k.slug, name: k.name, stays: k.stays, href: travelHref(k.slug), region: k.region }] : [];
+    return k ? [{ slug: k.slug, name: k.name, stays: k.stays, href: `/travel/${k.slug}`, region: k.region }] : [];
   });
   const known = new Set(done.map((k) => k.slug));
   const day = tripDate(now);
-  /* 章は**その国に入った日に動いていた章**で引く（`app/map/page.tsx` の年表と
+  /* 章は**その国に入った日に動いていた章**で引く（`app/travel/page.tsx` の年表と
      同じ決めかた）。日付だけで決まるので、焼き込んでも答えは動かない。 */
   const walking = walkingCountries()
     .filter((k) => !known.has(k.slug) && k.entered <= day)
@@ -147,7 +146,7 @@ export function chapterCountries(c: Chapter, now: Date = new Date()): ChapterCou
       name: k.name,
       // 街はまだ書けない（歩き終わってから `COUNTRIES` に書く決まり）。**推測で埋めない**
       stays: [{ from: k.entered, to: k.left, cities: [] }],
-      href: TRAVEL,
+      href: "/travel",
     }));
   return [...done, ...walking];
 }
