@@ -4,7 +4,7 @@
     python3 python/guide_facts.py new   <stem>                    # 頭だけ埋めた空のファイルを置く（議事録の見出しを地図として出す）
     python3 python/guide_facts.py read  <stem> 0:17:00 0:24:00    # 文字起こしをその窓だけ。--chat で同じ時刻のチャットを並べる（名前は伏せる）
     python3 python/guide_facts.py check [stem ...] [--month 2026-10] [--country north-macedonia [--city skopje]]
-    python3 python/guide_facts.py city  --country north-macedonia --city skopje [--out streams/guide/north-macedonia/skopje.md]
+    python3 python/guide_facts.py city  --country north-macedonia --city skopje [--trip matka-canyon] [-o 下書き.md]
 
 手順と結果の形の正は `.claude/skills/guide-facts/SKILL.md`。標準ライブラリだけで動く。
 
@@ -25,7 +25,15 @@
 
 `<stem>.facts.json` は `<stem>.transcript.txt` の読みかたの1つなので、同じ stem で隣に置く。
 別の置き場に集めると、配信が消えた・字幕を取り直した、のときに片方だけ残る。
-街ごとに束ねたものは作り直せるので、正にしない（`city` が毎回ここから組む）。
+街ごとに束ねたものは作り直せるので、正にしない——**git にも置かない**（`city` が毎回ここから組んで、
+標準出力か `-o` に出す。置くと、元を直した日から古くなる）。
+
+## 束ねかた（`city`）
+
+- **「そのまま出せる行」と「確かめが要る行」に分ける。** `verify` の付いた項目と、チャットが出どころの項目
+  （`via: "chat"`）は、面に出さない前提で後ろに回す。数は頭に出す
+- **日帰りの遠出（`trip`）は、街はそのままで、遠出ごとに束ねる。** `--trip <札>` でその遠出だけを出す
+- **測った値（`measured`）は、言った数字と分けて出す。** 乗った行と降りた行の時刻の差（字幕は30秒きざみ）
 
 ## 確かめるもの（NG の札）
 
@@ -43,6 +51,9 @@
 | `split` | 1項目に同じ単位の額が2つ以上在る／根拠の行の近くに、この項目が挙げていない同じ単位の額が在る／単位が言われていない——のに「確かめが要る」（`verify`）が無い |
 | `chatfirst` | 本文の数字・額が、本人が言う前にチャットに在る（チャットが出どころの数字を、本人が読み上げただけかもしれない）——のに `verify` が無い |
 | `place` | 場所の名前の「字幕での形」がその配信の字幕に在る（無ければ、名前が議事録か題名に在る） |
+| `via` | チャットが出どころの項目（`via: "chat"`）に、本人の一言（`quote`）が付いていない |
+| `measured` | 測った値の、始まりと終わりの行が文字起こしに在り（曲の行でない）、始まりが終わりより前 |
+| `trip` | 遠出の札が、寄せる表のその街の `trips` に在る |
 
 終了コード: 0=通った / 1=NG がある / **2=見るものが無い**（ファイルが無い・項目が0件・材料が読めない。
 緑に見えて何も見ていない、を避ける。`docs/island-standards.md` §15）。
@@ -75,7 +86,7 @@ KINDS = {
     "place": "どこへ行った",
     "food": "食べたもの",
     "stay": "泊まる",
-    "fact": "街のようす",
+    "fact": "そのほかの事実",
     "caution": "気をつけること",
     "quote": "本人の言い回し",
 }
@@ -345,6 +356,8 @@ class Result:
         self.kinds: Counter = Counter()
         self.with_amount = 0
         self.verify = 0
+        self.via = 0
+        self.measured = 0
         self.off_table: set[str] = set()
 
     def add(self, i, code, msg):
@@ -446,6 +459,16 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
             bad.append("換算の額が、元の額×rate と合わない")
     if amounts and not it.get("what"):
         bad.append("額の在る項目には、何の額か（what）が要る")
+    via, measured, trip = it.get("via"), it.get("measured"), it.get("trip")
+    if via not in (None, "chat"):
+        bad.append("via は \"chat\"（チャットが出どころで、本人は認めただけ）だけ")
+    if measured is not None and not (isinstance(measured, dict) and isinstance(measured.get("what"), str)
+                                     and measured["what"].strip()
+                                     and all(isinstance(measured.get(k), str) and re.fullmatch(sn.TIME, measured[k])
+                                             for k in ("from", "to"))):
+        bad.append("measured は {what, from, to}（from と to は文字起こしの行の時刻 h:mm:ss）")
+    if trip is not None and not isinstance(trip, str):
+        bad.append("trip は遠出の札（字）")
     for b in bad:
         r.add(i, "form", b)
     if bad:
@@ -457,6 +480,25 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
         r.with_amount += 1
     if verify:
         r.verify += 1
+    if via:
+        r.via += 1
+    if measured:
+        r.measured += 1
+
+    # --- チャットが出どころ・測った値・遠出
+    if via and (quote or kind == "quote"):
+        r.add(i, "via", "チャットが出どころの話（via: chat）に、本人の一言（quote）は付けない")
+    if measured:
+        ma, mb = (sn.sec(*re.fullmatch(sn.TIME, measured[k]).groups()) for k in ("from", "to"))
+        for k, lt in (("from", ma), ("to", mb)):
+            if lt not in by_t:
+                r.add(i, "measured", f"測った値の {k} [{measured[k]}] が文字起こしに無い")
+            elif by_t[lt] == MUSIC_LINE:
+                r.add(i, "measured", f"測った値の {k} [{measured[k]}] は曲の区間（伏せてある行）")
+        if ma >= mb:
+            r.add(i, "measured", f"測った値の始まり [{measured['from']}] が、終わり [{measured['to']}] より前でない")
+    if trip is not None and trip not in ctx["trips"]:
+        r.add(i, "trip", f"遠出の札 {trip!r} が、寄せる表のこの街の trips に無い")
 
     # --- 時刻と根拠（辿れるか）
     traced = True
@@ -599,7 +641,7 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
                 own = True
         if lead is not None and not own:
             late[n] = lead
-    if late and not verify:
+    if late and not verify and not via:
         for n, ct in late.items():
             r.add(i, "chatfirst", f"数字 {n} は、本人が言う前に [{sn.hms(ct)}] のチャットに在る（読み上げかもしれない）。"
                                   "本人が先に言った行を根拠にするか、確かめが要る（verify）の印を付ける")
@@ -659,6 +701,7 @@ def check_file(path: Path, table: dict) -> Result:
         "names": name_forms({c["name"] for c in chat} | notes["names"]),
         "units": units, "canon_units": set(units.values()),
         "places": set(city.get("places", {})),
+        "trips": set(city.get("trips", {})),
     }
     # ほかの項目が名乗っている額（同じ行に2つの品の値段が並ぶのはふつうなので、互いに引く）
     spans = []
@@ -727,7 +770,7 @@ def cmd_check(args, root: Path, table: dict) -> int:
         mark = "NG" if r.ng else "ok"
         kd = " ".join(f"{k}{r.kinds[k]}" for k in KINDS if r.kinds[k])
         print(f"  {mark}  {r.name}: 項目 {r.items}件（{kd}）額つき {r.with_amount}・確かめが要る {r.verify}"
-              f"・辿れない {r.untraceable}")
+              f"・チャットが出どころ {r.via}・測った値 {r.measured}・辿れない {r.untraceable}")
         for i, code, msg in r.ng:
             where = "頭" if i is None else f"#{i}"
             print(f"        [{code}] {where}: {msg}")
@@ -760,11 +803,19 @@ def amount_text(it: dict) -> str:
     return "・".join(out)
 
 
+def minutes(sec: int) -> str:
+    return f"{sec / 60:g}分"
+
+
 def cmd_city(args, root: Path, table: dict) -> int:
     country = table.get("countries", {}).get(args.country)
     city = (country or {}).get("cities", {}).get(args.city)
     if not city:
         print(f"::error::寄せる表に {args.country}/{args.city} が無い")
+        return 2
+    trips = city.get("trips", {})
+    if args.trip and args.trip not in trips:
+        print(f"::error::寄せる表の {args.country}/{args.city} に、遠出 {args.trip} が無い")
         return 2
     files = [p for p in find_files(root, [], None)
              if head_of(p).get("country") == args.country and head_of(p).get("city") == args.city]
@@ -781,78 +832,114 @@ def cmd_city(args, root: Path, table: dict) -> int:
     for name, forms in city.get("places", {}).items():
         for f in [name] + list(forms):
             canon[f] = name
-    rows = []   # (種類, 場所, 日付, 秒, video_id, 項目)
+    rows = []
     for p in files:
         d = head_of(p)
         for it in d["items"]:
-            sect = it.get("about") if it["kind"] == "quote" else it["kind"]
-            pl = canon.get((it.get("place") or {}).get("name"), (it.get("place") or {}).get("name"))
-            rows.append((sect, pl, d["date_local"], it["t"], d["video_id"], it))
-    rows.sort(key=lambda x: (x[2], x[3]))
-    dates = sorted({x[2] for x in rows})
+            pl = (it.get("place") or {}).get("name")
+            rows.append({"sect": it.get("about") if it["kind"] == "quote" else it["kind"],
+                         "place": canon.get(pl, pl), "date": d["date_local"], "t": it["t"],
+                         "vid": d["video_id"], "it": it, "trip": it.get("trip"),
+                         # 面に出さない理由。確かめが要る（verify）か、チャットが出どころ（via）か
+                         "hold": "verify" if it.get("verify") else ("chat" if it.get("via") else None)})
+    # 束ねる単位は、街そのもの（None）と、遠出ごと
+    scopes = [args.trip] if args.trip else [None] + [k for k in trips if any(x["trip"] == k for x in rows)]
+    rows = sorted((x for x in rows if x["trip"] in scopes), key=lambda x: (x["date"], x["t"]))
+    if not rows:
+        print("::error::束ねる項目が1件も無い")
+        return 2
+    ready = [x for x in rows if not x["hold"]]
+    held = [x for x in rows if x["hold"]]
+    dates = sorted({x["date"] for x in rows})
+
+    def scope_name(k) -> str:
+        return city["name"] if k is None else f"遠出: {trips[k].get('name', k)}"
 
     def tail(x) -> str:
-        return f"（{x[2]} {link(x[4], x[3])}）"
+        return f"（{x['date']} {link(x['vid'], x['t'])}）"
 
-    def line(x) -> str:
-        it = x[5]
+    def line(x, tag: bool = False) -> str:
+        it = x["it"]
         s = it["text"]
         if it["kind"] == "quote":
             s = f"「{it['quote']}」— {s}"
         elif it.get("quote"):
             s += f" 「{it['quote']}」"
-        if it.get("verify"):
-            s += f" 〔要確認: {it['verify']}〕"
-        # 場所の節の外では、どこの話かを頭に付ける（「ボートは5人集まるまで出ない」だけでは、どこのボートか分からない）
-        if x[0] != "place" and x[1]:
-            s = f"〈{x[1]}〉{s}"
+        if it.get("measured"):
+            m = it["measured"]
+            a, b = (sn.sec(*re.fullmatch(sn.TIME, m[k]).groups()) for k in ("from", "to"))
+            s += f" 〔測った値 約{minutes(b - a)}: {m['what']}（{link(x['vid'], a)} → {link(x['vid'], b)}）〕"
+        if tag:
+            if it.get("amounts"):
+                s += f" 〔額: {it['what']} {amount_text(it)}〕"
+            s += f" 〔要確認: {it['verify']}〕" if it.get("verify") else " 〔チャットが出どころ。本人は認めただけ〕"
+            s = f"［{KINDS[x['sect']]}］{s}"
+        # 場所の節の外では、どこの話かを頭に付ける（「ボートは5人集まるまで出ない」だけでは、どこのボートか分からない）。
+        # 遠出の束の中で、場所がその遠出の名前そのものなら要らない（見出しが同じことを言っている）
+        if (tag or x["sect"] != "place") and x["place"] and x["place"] != trips.get(x["trip"], {}).get("name"):
+            s = f"〈{x['place']}〉{s}"
         return f"- {s}{tail(x)}"
 
-    out = [f"# {city['name']}（{country['name']}）— 配信から抜いた「実際に行った」の下書き", "",
-           f"> `python3 python/guide_facts.py city --country {args.country} --city {args.city}` が作る。**手で直さない**"
-           "（元は `streams/YYYY/MM/<stem>.facts.json`）。",
-           f"> 材料: 配信 {len(files)}本（{'・'.join(dates)}）／項目 {len(rows)}件。",
+    head = trips[args.trip].get("name", args.trip) + f"（{city['name']}からの遠出）" if args.trip \
+        else f"{city['name']}（{country['name']}）"
+    cmd = f"python3 python/guide_facts.py city --country {args.country} --city {args.city}" \
+        + (f" --trip {args.trip}" if args.trip else "")
+    n_verify = sum(1 for x in held if x["hold"] == "verify")
+    out = [f"# {head}— 配信から抜いた「実際に行った」の下書き", "",
+           f"> `{cmd}` が作る。**手で直さない・git に置かない**（元は `streams/YYYY/MM/<stem>.facts.json`。いつでも作り直せる）。",
+           f"> 材料: 配信 {len({x['vid'] for x in rows})}本（{'・'.join(dates)}）／項目 {len(rows)}件。"
+           f"**そのまま出せる {len(ready)}件／確かめが要る {len(held)}件**"
+           f"（額や単位を確かめる {n_verify}件・チャットが出どころ {len(held) - n_verify}件）。",
            "> 額は本人が配信で口にしたまま。**円の額は、本人がその場で円に直して言ったもの（値札の額ではない）。**"
-           "「要確認」の付いた行は、動画か外の出どころで確かめてから面に載せる。", ""]
-    body = []
-    for kind, title in KINDS.items():
-        if kind == "quote":
+           "「測った値」は配信の時刻の差（字幕が30秒きざみなので、前後30秒）。", ""]
+    body = [f"## そのまま出せる行（{len(ready)}件）", ""]
+    for k in scopes:
+        mine_scope = [x for x in ready if x["trip"] == k]
+        if not mine_scope:
             continue
-        mine = [x for x in rows if x[0] == kind]
-        priced = [x for x in rows if x[5].get("amounts")] if kind == "price" else []
-        if not mine and not priced:
-            continue
-        body += [f"## {title}", ""]
-        if kind == "price":
-            body += ["| 何に | いくら | いつ | 場面 | 確かめ |", "| --- | --- | --- | --- | --- |"]
-            for x in priced:
-                it = x[5]
-                body.append(f"| {it['what']} | {amount_text(it)} | {x[2]} | {link(x[4], x[3])} | "
-                            f"{'要確認: ' + it['verify'] if it.get('verify') else ''} |")
-            body.append("")
-            mine = [x for x in mine if not x[5].get("amounts")]
-        if kind == "place":
-            names = []
-            for x in mine:
-                if x[1] not in names:
-                    names.append(x[1])
-            for n in names:
-                body += [f"### {n}", ""] + [line(x) for x in mine if x[1] == n] + [""]
-        elif mine:
-            body += [line(x) for x in mine] + [""]
-    out += body
-    text = "\n".join(out).rstrip() + "\n"
-    table_rows = [s for s in body if s.startswith("| ") and "---" not in s and not s.startswith("| 何に")]
-    bullets = [s for s in body if s.startswith("- ")]
+        body += [f"### {scope_name(k)}", ""]
+        for kind, title in KINDS.items():
+            if kind == "quote":
+                continue
+            mine = [x for x in mine_scope if x["sect"] == kind]
+            priced = [x for x in mine_scope if x["it"].get("amounts")] if kind == "price" else []
+            if not mine and not priced:
+                continue
+            body += [f"#### {title}", ""]
+            if priced:
+                body += ["| 何に | いくら | いつ | 場面 |", "| --- | --- | --- | --- |"]
+                body += [f"| {x['it']['what']} | {amount_text(x['it'])} | {x['date']} | {link(x['vid'], x['t'])} |"
+                         for x in priced]
+                body.append("")
+            if kind == "price":
+                mine = [x for x in mine if not x["it"].get("amounts")]
+            if kind == "place":
+                names = []
+                for x in mine:
+                    if x["place"] not in names:
+                        names.append(x["place"])
+                for n in names:
+                    body += [f"**{n}**", ""] + [line(x) for x in mine if x["place"] == n] + [""]
+            elif mine:
+                body += [line(x) for x in mine] + [""]
+    held_title = f"## 確かめが要る行（{len(held)}件）— このままでは面に出さない"
+    body += [held_title, ""]
+    for k in scopes:
+        mine_scope = [x for x in held if x["trip"] == k]
+        if mine_scope:
+            body += [f"### {scope_name(k)}", ""] + [line(x, tag=True) for x in mine_scope] + [""]
+    text = "\n".join(out + body).rstrip() + "\n"
+    lines_ready = [s for s in body[:body.index(held_title)]
+                   if s.startswith("- ") or (s.startswith("| ") and "&t=" in s)]
     # 「数字つき」は、尻の日付とリンクを除いた中身に算用数字が在る行。額の表の行は全部そう
-    n_num = len(table_rows) + sum(1 for s in bullets if re.search(r"\d", norm(s.rsplit("（", 1)[0])))
-    n_lines = len(table_rows) + len(bullets)
+    n_num = sum(1 for s in lines_ready if s.startswith("| ") or re.search(r"\d", norm(s.rsplit("（", 1)[0])))
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(text, encoding="utf-8")
     else:
         sys.stdout.write(text)
-    print(f"下書き: 配信 {len(files)}本 / 項目 {len(rows)}件 / {n_lines}行（うち数字つき {n_num}行）", file=sys.stderr)
+    print(f"下書き: 配信 {len({x['vid'] for x in rows})}本 / 項目 {len(rows)}件 / そのまま出せる {len(ready)}件"
+          f"（{len(lines_ready)}行・うち数字つき {n_num}行）/ 確かめが要る {len(held)}件", file=sys.stderr)
     return 0
 
 
@@ -921,6 +1008,10 @@ def cmd_new(args, root: Path, table: dict) -> int:
     print(f"字幕 {sum(len(s) for _, s in lines)}字・最後の行 [{sn.hms(lines[-1][0])}]。議事録の見出し（src.notes にそのまま写す）:")
     for _, h in notes["heads"]:
         print(f"  {h}")
+    trips = table["countries"][head["country"]]["cities"][head["city"]].get("trips", {})
+    if trips:
+        print("この街からの遠出の札（その遠出の項目に trip を付ける）: "
+              + "・".join(f"{k}（{v.get('name', k)}）" for k, v in trips.items()))
     return 0
 
 
@@ -962,7 +1053,8 @@ def main(argv: list[str] | None = None) -> int:
     y = sub.add_parser("city")
     y.add_argument("--country", required=True)
     y.add_argument("--city", required=True)
-    y.add_argument("--out")
+    y.add_argument("--trip", help="その遠出だけを束ねる（寄せる表の trips の札）")
+    y.add_argument("-o", "--out", help="書き出す先（無ければ標準出力）。git には置かない")
     pd = sub.add_parser("pending")
     pd.add_argument("--country")
     pd.add_argument("--city")

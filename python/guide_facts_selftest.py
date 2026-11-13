@@ -112,7 +112,8 @@ TABLE = {
         "testland": {
             "name": "テスト国", "tz": "Europe/Skopje", "heads": ["テスト国"],
             "money": {"デナール": ["デナル"]}, "base": "town", "no_city": ["滞在中の宿"],
-            "cities": {"town": {"name": "タウン", "heads": ["タウン"], "places": {"旧市街": ["バザール"]}}},
+            "cities": {"town": {"name": "タウン", "heads": ["タウン"], "places": {"旧市街": ["バザール"]},
+                                "trips": {"lake": {"name": "みずうみ"}}}},
         }
     },
 }
@@ -124,6 +125,7 @@ OLD = {"name": "旧市街", "heard": ["旧止街"]}
 GOOD = [
     {"kind": "move", "text": "バスは60番。片道50デナール。", "t": 30,
      "src": {"lines": ["0:00:30"], "notes": "[0:00:00] 旧市街へ"}, "what": "バス（片道）",
+     "measured": {"what": "バスに乗ってから降りるまで", "from": "0:00:30", "to": "0:03:30"},
      "amounts": [{"value": 50, "unit": "デナール", "as": "said"},
                  {"value": 150, "unit": "円", "as": "converted", "from": {"value": 50, "unit": "デナール"}, "rate": 3}]},
     {"kind": "place", "text": "旧市街を歩いた。", "t": 60,
@@ -143,12 +145,20 @@ GOOD = [
      "src": {"lines": ["0:01:00"], "notes": "[0:00:00] 旧市街へ"}, "place": OLD, "quote": "ほんまに来てよかったわ"},
     {"kind": "price", "text": "ボートは600。", "t": 210,
      "src": {"lines": ["0:03:30"], "notes": "[0:03:00] ボート"}, "what": "ボート",
-     "amounts": [{"value": 600, "unit": None, "as": "said"}], "verify": "単位を言っていない"},
+     "amounts": [{"value": 600, "unit": None, "as": "said"}], "verify": "単位を言っていない", "trip": "lake"},
     # 隣の行（0:01:30 と 0:02:30）の項目から見ると「近くの額」。ここが名乗っているので、あちらは落ちない
     {"kind": "price", "text": "梨ジュースは90円。", "t": 120,
      "src": {"lines": ["0:02:00"], "notes": "[0:01:30] スーパー"}, "what": "梨ジュース",
      "amounts": [{"value": 90, "unit": "円", "as": "said"}]},
+    # チャットが先に言い、本人は認めただけの話。一言は付けない
+    {"kind": "fact", "text": "旧市街は朝が静か。", "t": 0,
+     "src": {"lines": ["0:00:00"], "notes": "[0:00:00] 旧市街へ"}, "via": "chat"},
+    # 日帰りの遠出の項目
+    {"kind": "place", "text": "乗り場まで歩いた。", "t": 210,
+     "src": {"lines": ["0:03:30"], "notes": "[0:03:00] ボート"},
+     "place": {"name": "ボート乗り場", "heard": ["ボート"]}, "trip": "lake"},
 ]
+MEASURED = {"what": "バスに乗ってから降りるまで", "from": "0:00:30", "to": "0:03:30"}
 
 
 def make_root(d: Path) -> tuple[Path, Path]:
@@ -234,7 +244,7 @@ def check_good(root: Path, table: Path) -> None:
     rc, out = run(root, table, "check", STEM)
     check("通る形: 終了 0", rc, 0)
     check("通る形: 辿れない項目を数えて 0件と出す", "辿れない項目 0件 / NG 0件" in out, True)
-    check("通る形: 種類ごとの数", "項目 7件（move1 price3 place1 food1 quote1）額つき 5・確かめが要る 2" in out, True)
+    check("通る形: 種類ごとの数", "項目 9件（move1 price3 place2 food1 fact1 quote1）額つき 5・確かめが要る 2・チャットが出どころ 1・測った値 1" in out, True)
     rc, _ = run(root, table, "check", "--month", "2026-10")
     check("月で指すと同じものを見る", rc, 0)
     rc, _ = run(root, table, "check", "--country", "testland", "--city", "town")
@@ -293,7 +303,14 @@ def check_guards(root: Path, table: Path) -> None:
         ("split: 同じ単位の額が2つ在るのに印が無い", edit(3, verify=None), {"split"}),
         ("split: 近くの額（コーラ100円）を挙げていない", edit(2, other_amounts=None), {"split"}),
         ("split: 単位を言っていない額に印が無い", edit(5, verify=None), {"split"}),
-        ("split: 隣の行の額（梨ジュース90円）を、どの項目も名乗っていない", copy.deepcopy(GOOD[:6]), {"split"}),
+        ("split: 隣の行の額（梨ジュース90円）を、どの項目も名乗っていない", [copy.deepcopy(x) for k, x in enumerate(GOOD) if k != 6], {"split"}),
+        # --- チャットが出どころ・測った値・遠出
+        ("via: チャットが出どころの項目に、本人の一言を付ける", edit(7, quote="今日は旧止街を歩きます"), {"via"}),
+        ("measured: 始まりが終わりより後", edit(0, measured={**MEASURED, "from": "0:03:30", "to": "0:00:30"}), {"measured"}),
+        ("measured: 始まりと終わりが同じ行", edit(0, measured={**MEASURED, "to": "0:00:30"}), {"measured"}),
+        ("measured: 終わりの行が文字起こしに無い", edit(0, measured={**MEASURED, "to": "0:09:00"}), {"measured"}),
+        ("measured: 終わりの行が曲の区間", edit(0, measured={**MEASURED, "to": "0:03:00"}), {"measured"}),
+        ("trip: 寄せる表に無い遠出の札", edit(8, trip="mountain"), {"trip"}),
         # --- 場所の名前
         ("place: 字幕での形がこの配信の字幕に無い", edit(1, place={"name": "旧市街", "heard": ["オールドタウン"]}), {"place"}),
         ("place: 字幕にも議事録にも題名にも無い名前", edit(1, place={"name": "石の橋", "heard": []}), {"place"}),
@@ -305,6 +322,9 @@ def check_guards(root: Path, table: Path) -> None:
          edit(0, amounts=[{"value": 50, "unit": "デナール", "as": "said"},
                           {"value": 200, "unit": "円", "as": "converted", "from": {"value": 50, "unit": "デナール"}, "rate": 3}]),
          {"form"}),
+        ("form: via の値が決まりの外", edit(7, via="viewer"), {"form"}),
+        ("form: 測った値に、何を測ったか（what）が無い", edit(0, measured={"from": "0:00:30", "to": "0:03:30"}), {"form"}),
+        ("form: 測った値の時刻が h:mm:ss でない", edit(0, measured={**MEASURED, "to": "3分30秒"}), {"form"}),
         ("form: 表に無い単位", edit(5, amounts=[{"value": 600, "unit": "ペソ", "as": "said"}]), {"form"}),
     ]
     for name, items, want in cases:
@@ -336,6 +356,8 @@ def check_guards(root: Path, table: Path) -> None:
     check("chatfirst: 本人が言う前にチャットに同じ額", (rc, got), (1, {"chatfirst"}))
     rc, got = codes(root, table, edit(0, verify="チャットが先に額を書いている"))
     check("chatfirst: 確かめが要るの印が在れば通す", (rc, got), (0, set()))
+    rc, got = codes(root, table, edit(0, via="chat"))
+    check("chatfirst: チャットが出どころと名乗っていれば通す", (rc, got), (0, set()))
     c.write_text(CHAT + "[0:00:20] @はなこ: 片道は50デナルやで\n", encoding="utf-8")
     rc, got = codes(root, table, GOOD)
     check("chatfirst: 単位の言いかたが違っても同じ額と見る（デナル）", (rc, got), (1, {"chatfirst"}))
@@ -384,21 +406,46 @@ def check_blind(root: Path, table: Path) -> None:
 def check_city(root: Path, table: Path, d: Path) -> None:
     put(root, GOOD)
     out_md = d / "town.md"
-    rc, _ = run(root, table, "city", "--country", "testland", "--city", "town", "--out", str(out_md))
+    rc, _ = run(root, table, "city", "--country", "testland", "--city", "town", "-o", str(out_md))
     text = out_md.read_text(encoding="utf-8") if out_md.exists() else ""
+    ready, _, held = text.partition("## 確かめが要る行（3件）— このままでは面に出さない")
     check("city: 終了 0 で下書きが出る", (rc, text.startswith("# タウン（テスト国）")), (0, True))
+    check("city: そのまま出せる行と、確かめが要る行に分ける（数を頭に出す）",
+          ("**そのまま出せる 6件／確かめが要る 3件**（額や単位を確かめる 2件・チャットが出どころ 1件）" in text,
+           "## そのまま出せる行（6件）" in ready, bool(held)), (True, True, True))
+    check("city: 確かめが要る項目（verify）は、そのまま出せる側に出ない",
+          ("クッキー" in ready, "ボートは600" in ready, "クッキーは60デナール" in held, "ボートは600" in held),
+          (False, False, True, True))
+    check("city: チャットが出どころの項目は、そのまま出せる側に出ない",
+          ("旧市街は朝が静か" in ready, "旧市街は朝が静か。 〔チャットが出どころ。本人は認めただけ〕" in held), (False, True))
     check("city: 額の表に、何に・いくら・いつ・場面（時刻つきリンク）",
-          "| パスタ | 75円 | 2026-10-18 | [0:01:30](https://www.youtube.com/watch?v=AAA&t=90s) |  |" in text, True)
+          "| パスタ | 75円 | 2026-10-18 | [0:01:30](https://www.youtube.com/watch?v=AAA&t=90s) |" in ready, True)
     check("city: 換算と、単位の無い額と、要確認が見分けられる",
-          ("50デナール・150円（50デナール からの換算）" in text, "600（単位は言っていない）" in text,
-           "要確認: 単位を言っていない" in text), (True, True, True))
+          ("50デナール・150円（50デナール からの換算）" in ready, "〔額: ボート 600（単位は言っていない）〕" in held,
+           "〔要確認: 単位を言っていない〕" in held), (True, True, True))
+    check("city: 測った値は、言った数字と別に、両方の行へのリンクつきで出す",
+          "〔測った値 約3分: バスに乗ってから降りるまで（[0:00:30](https://www.youtube.com/watch?v=AAA&t=30s)"
+          " → [0:03:30](https://www.youtube.com/watch?v=AAA&t=210s)）〕" in ready, True)
     check("city: 場所ごとに、行った日・一言・場面",
-          "### 旧市街\n\n- 旧市街を歩いた。 「めっちゃ 綺麗やんか…来てよかった[です]わ」"
+          "**旧市街**\n\n- 旧市街を歩いた。 「めっちゃ 綺麗やんか…来てよかった[です]わ」"
           "（2026-10-18 [0:01:00](https://www.youtube.com/watch?v=AAA&t=60s)）\n"
-          "- 「ほんまに来てよかったわ」— 旧市街に着いたときの一言。" in text, True)
+          "- 「ほんまに来てよかったわ」— 旧市街に着いたときの一言。" in ready, True)
+    check("city: 遠出は、街の中でなく遠出ごとに束ねる",
+          (ready.index("### タウン") < ready.index("### 遠出: みずうみ") < ready.index("乗り場まで歩いた"),
+           held.index("### 遠出: みずうみ") < held.index("ボートは600")), (True, True))
     lines = [s for s in text.splitlines() if s.startswith("- ") or (s.startswith("| ") and "&t=" in s)]
-    check("city: どの行にも日付と時刻つきリンク", all("2026-10-18" in s and "&t=" in s for s in lines) and len(lines), 9)
+    check("city: どの行にも日付と時刻つきリンク", all("2026-10-18" in s and "&t=" in s for s in lines) and len(lines), 10)
     check("city: 視聴者さんの名前が出ない", any(n in text for n in ["たろう", "はなこ", "jiro", "さぶろう"]), False)
+    rc, out = run(root, table, "city", "--country", "testland", "--city", "town", "--trip", "lake")
+    check("city --trip: その遠出の項目だけを束ねる",
+          (rc, out.startswith("# みずうみ（タウンからの遠出）"), "乗り場まで歩いた" in out, "ボートは600" in out,
+           "パスタ" in out, "### タウン" in out), (0, True, True, True, False, False))
+    check("city --trip: 頭の数も、その遠出のぶんだけ",
+          "項目 2件。**そのまま出せる 1件／確かめが要る 1件**（額や単位を確かめる 1件・チャットが出どころ 0件）" in out, True)
+    rc, _ = run(root, table, "city", "--country", "testland", "--city", "town", "--trip", "mountain")
+    check("city --trip: 表に無い遠出は終了 2", rc, 2)
+    rc, out = run(root, table, "city", "--country", "testland", "--city", "town")
+    check("city: 書き出す先が無ければ標準出力に出す", (rc, out == text), (0, True))
     put(root, edit(2, text="パスタは85円。"))
     rc, _ = run(root, table, "city", "--country", "testland", "--city", "town")
     check("city: check を通っていない材料では組まない", rc, 1)
@@ -420,6 +467,7 @@ def check_new_and_read(root: Path, table: Path) -> None:
     made = json.loads(p.read_text(encoding="utf-8"))
     check("new: 頭を機械で埋めた空のファイルを置く", (rc, {k: made[k] for k in HEAD}, made["items"]), (0, HEAD, []))
     check("new: 議事録の見出しを地図として出す", "[0:01:30] スーパー" in out, True)
+    check("new: その街からの遠出の札を出す", "lake（みずうみ）" in out, True)
     rc, _ = run(root, table, "check", STEM)
     check("new: 置いただけのものは通らない（終了 2）", rc, 2)
     rc, out = run(root, table, "read", STEM, "0:01:30", "0:02:00", "--chat")
