@@ -7,6 +7,7 @@ import MeButton from "./MeButton";
 import { FOOT, UI } from "@/content/voice";
 import HashJump from "./HashJump";
 import { SayRoom } from "./Say";
+import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -96,27 +97,34 @@ export function IslandHeader({
 }
 
 export function Crumbs({ items }: { items: Crumb[] }) {
+  /* 同じ並びを、機械にも渡す（`lib/jsonld.tsx` の `breadcrumbLd`）。
+     **ここから作る**ので、パンくずを直せば名札も一緒に直る。画面には出ない
+     （`<script>` は箱を作らないので、`.wayrow` の並びにも数えられない）。 */
+  const ld = breadcrumbLd(items);
   return (
-    <nav className="crumbs" aria-label="現在地">
-      {/* 上の帯にも同じ「島」があるので、ここは先読みしない。
-          途中の階層は行き先が重い。/nordic/sweden のパンくずから /nordic を
-          先読みすると、それだけで 41KB(素 646KB)。押されるとは限らないぶんは持たない。 */}
-      <Link href="/" prefetch={false}>
-        島
-      </Link>
-      {items.map((it) => (
-        <span key={it.label}>
-          <i aria-hidden>›</i>
-          {it.href ? (
-            <Link href={it.href} prefetch={false}>
-              {it.label}
-            </Link>
-          ) : (
-            <b>{it.label}</b>
-          )}
-        </span>
-      ))}
-    </nav>
+    <>
+      <nav className="crumbs" aria-label="現在地">
+        {/* 上の帯にも同じ「島」があるので、ここは先読みしない。
+            途中の階層は行き先が重い。/nordic/sweden のパンくずから /nordic を
+            先読みすると、それだけで 41KB(素 646KB)。押されるとは限らないぶんは持たない。 */}
+        <Link href="/" prefetch={false}>
+          {SITE_ROOT_LABEL}
+        </Link>
+        {items.map((it) => (
+          <span key={it.label}>
+            <i aria-hidden>›</i>
+            {it.href ? (
+              <Link href={it.href} prefetch={false}>
+                {it.label}
+              </Link>
+            ) : (
+              <b>{it.label}</b>
+            )}
+          </span>
+        ))}
+      </nav>
+      {ld && <JsonLd data={ld} />}
+    </>
   );
 }
 

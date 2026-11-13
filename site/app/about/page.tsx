@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { JsonLd, profileLd } from "@/lib/jsonld";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import VoiceBubble from "@/components/ui/Voice";
@@ -26,9 +27,12 @@ import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
 
+/** 面の名前。題・パンくず・見出し・機械に渡す名札（`lib/jsonld.tsx`）が同じ字を読む */
+const NAME = "あやとのこと";
+
 export const metadata: Metadata = share({
   key: "about",
-  title: "あやとのこと",
+  title: NAME,
   description:
     "アプリを作りたくて日本を出た人の、ここまで。旅と配信とアプリの年表と、視聴者さんから見たあやと。",
   path: "/about",
@@ -329,10 +333,12 @@ export default function AboutPage() {
     .join("、");
 
   return (
-    <PageShell crumbs={[{ label: "あやとのこと" }]}>
+    <PageShell crumbs={[{ label: NAME }]}>
+      {/* 「この面は、この人のことを書いた面」の名札。画面には出ない（`lib/jsonld.tsx`） */}
+      <JsonLd data={profileLd(NAME)} />
       <PageHead
         icon="hut-ayato"
-        title="あやとのこと"
+        title={NAME}
         lead="アプリを作りたくて日本を出た人の、ここまでと、いま。"
       />
 

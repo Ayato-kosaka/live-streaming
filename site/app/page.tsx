@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
@@ -21,6 +22,11 @@ import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
 import Say, { SayRoom } from "@/components/ui/Say";
+import { selfOnly } from "@/lib/share";
+import { JsonLd, websiteLd } from "@/lib/jsonld";
+
+/* 題・一文・絵は器（`app/layout.tsx`）のまま。ここで足すのは居場所だけ（`lib/share.ts`） */
+export const metadata: Metadata = selfOnly("/");
 
 /**
  * トップページ。
@@ -373,6 +379,10 @@ export default function Home() {
         </Chapter>
       </div>
       <IslandFooter />
+      {/* 「ここは、あやと島という島」の名札。画面には出ない（`lib/jsonld.tsx`）。
+          **いちばん後ろに置く。** 頭や章のあいだに入れると、並びを数える CSS
+          （`:first-child` や隣どうしの指定）の数えが1つずれる。 */}
+      <JsonLd data={websiteLd()} />
     </main>
   );
 }
