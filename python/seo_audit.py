@@ -131,8 +131,30 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import urljoin, urlsplit
 
-# `tools/sprites/prod.mjs` の ORIGIN と同じ。本番の置き場
-ORIGIN = "https://live-streaming-d3cac.web.app"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ts_read import code_only, fields, object_body  # noqa: E402
+
+
+def site_url(root: Path | None = None) -> str:
+    """正の URL（canonical・sitemap の `<loc>` が名乗る原点）。`site/content/site.ts` の `SITE.url` を読む。
+
+    **ここに字で書かない。** 2026-11-13 に独自ドメインへ移ったとき（#1202）、ここに古いドメインが
+    直書きしてあった。読めなければ投げる（黙って古い宛先に落ちると、測る先が黙って入れ替わる）。
+    読むのは `ts_read`（焼き込みを読む口は1本。`python/ts_readers_selftest.py`）。
+    """
+    src = ((root or Path(__file__).resolve().parent.parent) / "site/content/site.ts").read_text(encoding="utf-8")
+    url = fields(object_body(code_only(src), "SITE")).get("url", "")
+    if not re.fullmatch(r"https?://[^/]+", url):
+        raise RuntimeError(f"site/content/site.ts の SITE.url が原点だけの URL として読めない（{url or '無い'}）")
+    return url
+
+
+# 本番の置き場。**正の URL**（`metadataBase` と同じ1行）
+ORIGIN = site_url()
+
+# Firebase Hosting がもとから持っている名前。**正の URL とは別のもの。** 独自ドメインへ移ったあとも
+# 同じ面をここで配り続けている（301 で送らない。#1202）。`--alt` の既定に使う
+HOSTING_DEFAULT = "https://live-streaming-d3cac.web.app"
 
 # 名乗り。**持ち主の名前・連絡先を入れない**（外のサービスのログに残る）
 UA = "seo-audit/1.0 (python-urllib; raw-html, no-js)"
@@ -1146,9 +1168,12 @@ def site_checks(base: str, entries: list[Entry], rows: list[dict], alt: str | No
         out.append((f"http://{host}/", (f"{g.status} → {g.headers.get('location', '')}" if g.status
                                         else f"届かない（{g.error}）")))
 
-    # 同じ中身を配る、もう1つのドメイン。Firebase Hosting は `*.firebaseapp.com` でも同じ面を配る
+    # 同じ中身を配る、もう1つのドメイン。Firebase Hosting は `*.firebaseapp.com` でも同じ面を配る。
+    # 正の URL（独自ドメイン）を測るときは、もとの `*.web.app` がその「もう1つ」になる
     if alt is None and host.endswith(".web.app"):
         alt = "https://" + host[: -len(".web.app")] + ".firebaseapp.com"
+    elif alt is None and host == urlsplit(ORIGIN).netloc.lower() and host != urlsplit(HOSTING_DEFAULT).netloc:
+        alt = HOSTING_DEFAULT
     if alt:
         main = fetch(root + "/")
         g = fetch(alt.rstrip("/") + "/", follow=False)
@@ -1389,7 +1414,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--detail", nargs="+", metavar="PATH", help="この面だけを取って、見出しの木・絵・リンクを出す")
     ap.add_argument("--html", help="落としてある HTML を測る（--as で道を言う）")
     ap.add_argument("--as", dest="as_path", default="/", help="--html の面の道")
-    ap.add_argument("--alt", help="同じ中身を配っていないか見る、もう1つのドメイン（既定は *.firebaseapp.com）")
+    ap.add_argument("--alt", help="同じ中身を配っていないか見る、もう1つのドメイン（既定は、正の URL を測るときは *.web.app、*.web.app を測るときは *.firebaseapp.com）")
     ap.add_argument("--no-site", action="store_true", help="サイト全体の検査を飛ばす")
     ap.add_argument("--dist", metavar="DIR", help="手元の書き出し（`site/.next-<port>` や `dist/`）を、この道具が配って測る")
     ap.add_argument("--expect", metavar="線,線,…", help="線を引いて合否を出す（頭の表）。0=通った / 1=外れた / 2=測れなかった")

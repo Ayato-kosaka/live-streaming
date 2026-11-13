@@ -37,7 +37,8 @@ import { NOW_FALLBACK, SITE } from "@/content/site";
  */
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://live-streaming-d3cac.web.app"),
+  /* 正の URL は `content/site.ts` の1か所。ここに字で書くと、片方だけ古くなる */
+  metadataBase: new URL(SITE.url),
   title: {
     default: "あやと島 — あやとと愉快な仲間達",
     template: "%s｜あやと島",
