@@ -263,6 +263,11 @@ def check_good(root: Path, table: Path) -> None:
     check("月で指すと同じものを見る", rc, 0)
     rc, _ = run(root, table, "check", "--country", "testland", "--city", "town")
     check("国と街で指すと同じものを見る", rc, 0)
+    # 寄せる表の places は「正の名前 → 別の書きかた」。どちらで書いても表に在る（city が正の名前に寄せる）
+    items = extra(kind="place", text="バザールを歩いた。", place={"name": "バザール", "heard": []})
+    r = gf.check_file(put(root, items), gf.load_table(table))
+    check("寄せる表: 表に無い場所の名前だけを数える（別の書きかたは表に在る）", sorted(r.off_table), ["ボート乗り場"])
+    put(root, GOOD)
 
 
 def check_guards(root: Path, table: Path) -> None:
