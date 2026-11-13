@@ -2,7 +2,7 @@
 
     python3 python/seo_audit.py                                   # 本番の sitemap.xml の全面
     python3 python/seo_audit.py --base https://… --out seo.tsv    # 面ごとの TSV も書く
-    python3 python/seo_audit.py --detail /bulgaria /north-macedonia   # その面だけ。見出しの木・絵・リンク
+    python3 python/seo_audit.py --detail /bulgaria /travel/north-macedonia   # その面だけ。見出しの木・絵・リンク
     python3 python/seo_audit.py --html dom.html --as /bulgaria    # 落としてある HTML を同じ物差しで測る
     python3 python/seo_audit.py --dist site/.next-3130 --no-site  # 手元の書き出しを測る（配るのも止めるのも道具がやる）
     python3 python/seo_audit.py --expect canonical=all,sitemap-dup=0   # 線を引いて、合否を出す

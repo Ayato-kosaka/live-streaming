@@ -209,7 +209,7 @@ STRUT_FILL = {"0"}
 
 # データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
 # 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
-PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "map"}
+PER_PAGE = {"site/content/nordic": "nordic", "site/content/atlas/c": "travel"}
 
 SOURCE_EXTS = (".ts", ".tsx", ".json")
 CSS_DIR = "site/app/css"
@@ -237,7 +237,7 @@ CORE_RANGES = [
 CORE_EXTRA = "○●△▲□■◇◆☆★♪♡←↑→↓⇒※℃±×÷…‥"
 # 北欧の地名で要る字。全面に配ると無駄なので、区画を絞って束に混ぜる。
 LATIN_EXT = [(0x00A0, 0x00FF), (0x0100, 0x017F)]
-LATIN_FAMS = ["nordic", "map", "index", "about"]
+LATIN_FAMS = ["nordic", "travel", "index", "about"]
 
 RE_LINE_COMMENT = re.compile(r"(?<!:)//[^\n]*")
 RE_BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.S)
@@ -425,7 +425,7 @@ def plan(
     # 全ページを同じ重さで数えると、料理20枚・国18枚のほうが多数決で勝ってしまい、
     # 入口のトップが重くなる。人が最初に踏む面を重く見る。
     W = {"index": 20}
-    for f in ("nordic", "map", "kitchen", "streams", "next", "board", "friends", "about", "now"):
+    for f in ("nordic", "travel", "kitchen", "streams", "next", "board", "friends", "about", "now"):
         W[f] = 5
     wt = [W.get(f, 1) for f in names]
     seen_w: dict[int, int] = {0: 0}
@@ -688,7 +688,7 @@ def main() -> None:
     )
     REPORT.write_text("\n".join(report) + "\n", encoding="utf8")
     print("■ 面ごとに落ちる書体（焼いた実寸。ここに無い字は端末の書体に落ちる）")
-    big = ["index", "nordic", "map", "kitchen", "streams", "next", "board", "friends", "nordic/finland"]
+    big = ["index", "nordic", "travel", "kitchen", "streams", "next", "board", "friends", "travel/finland"]
     for f in big + [x for x in pages if x not in big]:
         if f not in per["400"]:
             continue

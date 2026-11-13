@@ -61,7 +61,7 @@
  *
  * # (c) 国の案内の行き先を、面の無いところへ向ける → 3b の「行き先がぜんぶ在る」が落ちる
  * #     （いま居る国の行なら、3 の「その行き先の面が実在する」も一緒に落ちる）
- * sed 's#href: "/north-macedonia",#href: "/albania",#' site/components/isle/spec.ts > /tmp/spec-dead.ts
+ * sed 's#href: "/travel/north-macedonia",#href: "/albania",#' site/components/isle/spec.ts > /tmp/spec-dead.ts
  * SPEC_TS=/tmp/spec-dead.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (d) トップの紙に、国の名前を書き写す → 3 の裏が落ちる
@@ -140,6 +140,7 @@
 
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { sitemapReadsTravel, travelFixedRoutes } from "./travelreg.mjs";
 import Module from "node:module";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -410,8 +411,13 @@ const hereOn = (day, entries = ENTRIES) => {
   const got = entries.filter((e) => e.on <= day).at(-1);
   return got && (!got.left || day <= got.left) ? got : null;
 };
-/** 国の面（`app/<国>/page.tsx`）。**案内の面の道は、国の slug と同じ字にする決まり** */
-const countryPage = (slug) => existsSync(join(SITE, "app", slug, "page.tsx"));
+/**
+ * 国の面。**案内の面の道は、国の slug と同じ字にする決まり。**
+ * 旅のガイドの区画（`app/travel/<国>/page.tsx`。#1201）に移ったものと、
+ * まだ根に立っているもの（`app/<国>/page.tsx`。ブルガリアは次の便で移る）の両方を見る。
+ */
+const countryPage = (slug) =>
+  existsSync(join(SITE, "app", "travel", slug, "page.tsx")) || existsSync(join(SITE, "app", slug, "page.tsx"));
 
 const TODAY = dayOf(new Date());
 const here = hereOn(TODAY);
@@ -427,7 +433,7 @@ if (herePage) {
     Boolean(guide?.href) && guideOf(NOW.slug)?.slug === here.slug,
     guide?.href
       ? `案内が ${guideOf(NOW.slug)?.slug} を指している（居るのは ${here.slug}）`
-      : `面（app/${here.slug}/page.tsx）は在るのに、${NOW.slug} の案内の表（components/isle/spec.ts の GUIDES）に ${here.slug} の行が無い`,
+      : `面（app/travel/${here.slug}/page.tsx か app/${here.slug}/page.tsx）は在るのに、${NOW.slug} の案内の表（components/isle/spec.ts の GUIDES）に ${here.slug} の行が無い`,
   );
 } else {
   /* **案内が無いことは、赤ではない。** 面を作っていない国に居る日は、出さないのが
@@ -483,10 +489,12 @@ if (guide?.href) {
   /* 面を1枚増やす仕事は3か所（`app/sitemap.ts` の注）。索引から落ちると、
      検索からだけ見つからない面になる */
   const sitemap = readFileSync(join(SITE, "app", "sitemap.ts"), "utf8");
+  /* 国の面は、索引が字で書かずに名簿（`content/travel.ts`）から並べる（#1201） */
+  const viaTravel = sitemapReadsTravel(sitemap) ? travelFixedRoutes(SITE) : [];
   check(
-    "その行き先が、索引（sitemap.ts）にも載っている",
-    sitemap.includes(`"${guide.href}"`),
-    `${guide.href} が sitemap.ts に無い`,
+    "その行き先が、索引（sitemap.ts か、国の面の名簿）にも載っている",
+    sitemap.includes(`"${guide.href}"`) || viaTravel.includes(guide.href),
+    `${guide.href} が sitemap.ts にも content/travel.ts にも無い`,
   );
   /* 島に建てるだけでは足りない（送って読む人には小さな札が見つからない。#216 の裏）。
      トップの紙にも1本引いてあるが、**そこに国の名前を書き写していない**こと。

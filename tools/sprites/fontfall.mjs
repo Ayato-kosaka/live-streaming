@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright-core";
 import { fromRoot } from "./repo.mjs";
+import { loadRedirects, redirectOf } from "./routemoves.mjs";
 
 const EXE = process.env.PW_CHROME || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const SPORT = process.env.SPORT || "4130";
@@ -68,7 +69,14 @@ async function main() {
   }
   const b = await chromium.launch({ executablePath: EXE, args: ["--no-sandbox"] });
   let bad = 0;
-  for (const path of paths) {
+  /* 渡された道は**人が打つ道**として読む。引っ越した道（`/north-macedonia` → `/travel/north-macedonia`。#1201）は、
+     本番と同じく `firebase.json` の 301 を通して先の面を測る。書き出しの中を直に開くので、
+     転送を通さないと「無い面」を測って 2 で落ちる（`selftest.yml` が前の道を名指ししている） */
+  const rules = loadRedirects();
+  for (const asked of paths) {
+    const moved = redirectOf(asked, rules);
+    const path = moved ? moved.to : asked;
+    if (moved) console.log(`（${asked} は ${path} へ 301。そちらを測る）`);
     const ctx = await b.newContext({ viewport: { width: 430, height: 932 } });
     const p = await ctx.newPage();
     await p.goto(`http://127.0.0.1:${SPORT}${path}.html`, { waitUntil: "networkidle" });
