@@ -3,6 +3,7 @@ import MapZoom from "@/components/atlas/MapZoom";
 import MAP from "@/content/nordic/map.json";
 import Flag from "@/components/ui/Flag";
 import { NORDIC_COUNTRIES, ROUTE } from "@/content/nordic";
+import { travelHref } from "@/content/travelPath";
 
 /**
  * 北欧ルートの地図。
@@ -106,7 +107,7 @@ const PIN: Record<string, number> = { goal: 16, stay: 13, pass: 10, side: 8, lan
  * 街の押しどころの半径（ワールド単位）。
  *
  * **行き先の違う街と重ならない大きさまでしか広げない。**
- * 街は11あるが行き先は6つで、ポーランドの5つの街はどれも `/nordic/poland` へ行く。
+ * 街は11あるが行き先は6つで、ポーランドの5つの街はどれも国の面（`/travel/poland`）へ行く。
  * 同じ紙へ行く街どうしなら、取り違えても同じ場所に着くので重なってよい。
  * 困るのは**違う国どうし**で、タリン（エストニア）とヘルシンキ（フィンランド）は
  * 45.8 しか離れていない。ここに 68 の当たりを与えると、
@@ -740,7 +741,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         {Object.entries(countries).map(([slug, d]) => (
           <Link
             key={`go-${slug}`}
-            href={`/nordic/${slug}`}
+            href={travelHref(slug)}
             prefetch={false}
             className="nm-go"
             aria-label={name[slug]}
@@ -763,7 +764,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
         return (
           <Link
             key={c.id}
-            href={`/nordic/${c.country}`}
+            href={travelHref(c.country)}
             prefetch={false}
             className={`nmap-pin is-${c.kind}${c.cap ? " is-cap" : ""}${done(c.seq) ? " is-done" : ""}${
               here === c.id ? " is-now" : ""
@@ -958,7 +959,7 @@ export default function RouteMapSvg({ here }: { here?: string }) {
           （`docs/island-design.md` 3章の例外）。押せない札を1つも混ぜないこと。 */}
       <nav className="nmgo" aria-label="通る6カ国">
         {NORDIC_COUNTRIES.map((c) => (
-          <Link key={c.slug} className="nmgo-c" href={`/nordic/${c.slug}`} prefetch={false}>
+          <Link key={c.slug} className="nmgo-c" href={travelHref(c.slug)} prefetch={false}>
             <Flag slug={c.slug} size={22} />
             {c.name}
           </Link>

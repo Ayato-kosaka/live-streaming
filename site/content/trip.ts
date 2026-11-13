@@ -14,7 +14,7 @@
  *
  * 静的書き出し（`output: "export"`）なので、ここを呼んだ答えを HTML に
  * 焼くと、旅が終わっても口が残る。**呼ぶのは画面が出てから**
- * （`components/ui/TripDoor.tsx`／`app/map/parts.tsx`）。
+ * （`components/ui/TripDoor.tsx`／`app/travel/parts.tsx`）。
  *
  * ## 期間の決めかたを、ここで新しく作らない
  *

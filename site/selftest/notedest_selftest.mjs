@@ -288,9 +288,10 @@ const FROM = {
      出うるのは `leg-` 始まりの宛先だけ */
   "app/nordic/day/[n]/page.tsx::t.id": () => [...THEME_IDS].filter((id) => id.startsWith("leg-")),
   /* 国あて。**ここだけ `themeById()` を通さない**（国の slug をそのまま
-     宛先にしている）。国を1つ足して宛先を足し忘れた日に、上の
+     宛先にしている）。2026-11-13 に面（`/nordic/<国>`）から国の面（`/travel/<国>`）の
+     下の節へ移した（#1201）。国を1つ足して宛先を足し忘れた日に、上の
      「実在する」が赤くなるのはこの足 */
-  "app/nordic/[country]/page.tsx::c.slug": () => nordicSlugs(),
+  "components/nordic/CountryGuide.tsx::c.slug": () => nordicSlugs(),
   /* 企画あて。`themeById(plan.id)` を通すので、宛先の在る企画だけ */
   "components/live/NextPlans.tsx::theme.id": () =>
     [...PLAN_IDS].filter((id) => THEME_IDS.has(id)),
@@ -318,7 +319,7 @@ let TAGS = 0;
 for (const rel of FILES) {
   const src = readSrc(rel);
   /* その面が `Notes` を何という名前で呼んでいるか。**`StickyNotes` のような
-     付け替えも拾う**（`app/north-macedonia/page.tsx` が実際にそう呼んでいる）。 */
+     付け替えも拾う**（`app/travel/north-macedonia/page.tsx` が実際にそう呼んでいる）。 */
   const names = [
     ...src.matchAll(/import\s+(\w+)[^;]*?from\s+"(?:@\/components\/live\/Notes|\.\/Notes|\.\.\/live\/Notes)"/g),
   ].map((m) => m[1]);

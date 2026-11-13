@@ -205,8 +205,8 @@ function harvest({ read, only }) {
   const sel = only || 'a[href]';
   for (const a of document.querySelectorAll(sel)) {
     const href = a.getAttribute("href") || "";
-    // `/map` そのものだけ。`/map/france` は別の面
-    if (!/^\/map\/?(?:[?#]|$)/.test(href)) continue;
+    // `/travel`（歩いた国。2026-11-13 まで `/map`）そのものだけ。`/travel/france` は別の面
+    if (!/^\/travel\/?(?:[?#]|$)/.test(href)) continue;
     const m = text(a).match(/(\d+)\s*カ国/);
     if (!m) continue;
     const cls = (a.className || "").toString().trim().split(/\s+/)[0] || a.tagName.toLowerCase();
@@ -244,22 +244,22 @@ async function selftest(browser) {
 
   // 1. 2026-09-19 の表紙そのもの。帯 23 / 棚 22 の**2件とも**拾えること
   let r = await run(
-    `<a class="mei-num" href="/map"><em>23</em><span>カ国を歩いた</span></a>` +
-      `<a class="shelf-box" href="/map"><span class="shelf-n"><em>22</em><i>カ国</i></span><b>歩いた国</b></a>`,
+    `<a class="mei-num" href="/travel"><em>23</em><span>カ国を歩いた</span></a>` +
+      `<a class="shelf-box" href="/travel"><span class="shelf-n"><em>22</em><i>カ国</i></span><b>歩いた国</b></a>`,
   );
   check("表紙の名乗りを2件とも拾う", r.claims.map((c) => c.n).sort(), [22, 23]);
 
   // 2. そろっている面は、1件も食い違わない
   r = await run(
-    `<a class="mei-num" href="/map"><em>23</em><span>カ国を歩いた</span></a>` +
-      `<a class="shelf-box" href="/map"><em>23</em><i>カ国</i></a>`,
+    `<a class="mei-num" href="/travel"><em>23</em><span>カ国を歩いた</span></a>` +
+      `<a class="shelf-box" href="/travel"><em>23</em><i>カ国</i></a>`,
   );
   check("そろっていれば食い違い0", r.claims.filter((c) => c.n !== 23).length, 0);
 
   // 3. 別の集合を数えている「◯カ国」を、名乗りとして拾わない
   r = await run(
     `<a href="/nordic">この旅のこと 6カ国、17日</a>` +
-      `<a href="/map/france">フランス</a>` +
+      `<a href="/travel/france">フランス</a>` +
       `<div>この島で歩いた国 3カ国</div><p>5カ国の宿のキッチンで作った。</p>`,
   );
   check("旅の6カ国・島の3カ国・国のページは名乗りにしない", r.claims.length, 0);
@@ -270,7 +270,7 @@ async function selftest(browser) {
   r = await run(
     `<style>.mat{content-visibility:auto;contain-intrinsic-size:600px}</style>` +
       `<div style="height:1200px"></div>` +
-      `<div class="mat"><a class="shelf-box" href="/map"><em>22</em><i>カ国</i></a></div>`,
+      `<div class="mat"><a class="shelf-box" href="/travel"><em>22</em><i>カ国</i></a></div>`,
   );
   check("畳まれた棚（画面の外）も読める", r.claims.map((c) => c.n), [22]);
 
@@ -389,17 +389,17 @@ async function look(p, page) {
 }
 
 /**
- * `/map` は自分自身へのリンクを持たないので、ここだけ面ごとの読みかたを足す。
+ * `/travel`（歩いた国）は自分自身へのリンクを持たないので、ここだけ面ごとの読みかたを足す。
  * 章の合計が上の札と合っているかは、2026-09-17 にずれていたところ。
  */
 const EXTRA = {
-  "/map.html": [
-    ["/map の札", () => {
+  "/travel.html": [
+    ["/travel の札", () => {
       const el = [...document.querySelectorAll(".stat")].find((x) => (x.textContent || "").includes("歩いた国"));
       const m = (el?.textContent || "").match(/(\d+)/);
       return m ? +m[1] : null;
     }],
-    ["/map の年表（章の合計）", () => {
+    ["/travel の年表（章の合計）", () => {
       const notes = [...document.querySelectorAll(".hlist .fold-note, .hlist .f-note, .hlist summary")]
         .map((x) => (x.textContent || "").match(/(\d+)カ国/))
         .filter(Boolean)
@@ -431,7 +431,7 @@ for (const page of PAGES) {
 await ctx.close();
 
 console.log(`歩き終わった国 ${DONE.length}（国境の区間は数えない）／旅の国 ${AHEAD.length}`);
-console.log(`書き出した面 ${PAGES.length}枚を1周して、\`/map\` へ行くリンクの「◯カ国」を拾いました\n`);
+console.log(`書き出した面 ${PAGES.length}枚を1周して、\`/travel\` へ行くリンクの「◯カ国」を拾いました\n`);
 
 if (unopened.length) {
   console.log(`開けなかった面が ${unopened.length} 枚あります。**下の数字は当てになりません**:`);
@@ -439,7 +439,7 @@ if (unopened.length) {
   console.log("");
 }
 
-console.log("── 名乗り（**判定する**。押した先が `/map` なので、あちらの数と同じでなければならない）");
+console.log("── 名乗り（**判定する**。押した先が `/travel` なので、あちらの数と同じでなければならない）");
 for (const [page, cs] of found) for (const c of cs) console.log(`  ${page.padEnd(22)} ${c.where.padEnd(14)} ${String(c.n).padStart(3)}  「${c.t}」`);
 console.log(`  ${found.size}枚 / ${[...found.values()].reduce((a, c) => a + c.length, 0)}件`);
 
@@ -448,7 +448,7 @@ console.log(`\n── そのほかの「◯カ国」（**判定しない**。別
 for (const [page, o] of otherLines) console.log(`  ${page.padEnd(22)} 「${o}」`);
 
 if (!found.size) {
-  console.log("\n::error::`/map` へ行くリンクに「◯カ国」が1件もありません。読み方が外れています");
+  console.log("\n::error::`/travel` へ行くリンクに「◯カ国」が1件もありません。読み方が外れています");
   await b.close();
   process.exit(2);
 }

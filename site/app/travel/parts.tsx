@@ -189,7 +189,7 @@ export function StayLen({ slug, from, plus }: { slug: string; from: string; plus
   /* 画面が出るまでのあいだ出す数。`Days.tsx` と**同じ基準日**——焼いた日
      （`BUILT_AT`）——で引く。ここには日付を直に書いた `new Date` が置いて
      あった。焼き直しても動かない日付なので、**その日より後に入った国は
-     必ずマイナスになる。** 本番の `/map/sweden` が「いた日数 -15」を
+     必ずマイナスになる。** 本番の `/map/sweden`（いまの `/travel/sweden`）が「いた日数 -15」を
      焼いていた（`docs/island-misses.md` #5 #6）。
      出国済みならそこで止めるのも、引き直したあとと揃える。
      0 で止めるのは、開発サーバで `BUILT_AT` が1970年になるため

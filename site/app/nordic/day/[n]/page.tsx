@@ -45,6 +45,7 @@ import {
 import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 import { shopsOf } from "@/content/nordicShops";
 import { foodsOf } from "@/content/nordicFood";
+import { travelHref } from "@/content/travelPath";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -632,7 +633,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
         <section className="panel paper" id="enter">
           <h2>この日、国が変わった</h2>
           {enters.map((c) => (
-            <Link prefetch={false} key={c.slug} className="tile" href={`/nordic/${c.slug}`}>
+            <Link prefetch={false} key={c.slug} className="tile" href={travelHref(c.slug)}>
               <span className="tile-mark">
                 <Flag slug={c.slug} size={26} />
               </span>
@@ -750,7 +751,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 {c.country && c.list.length > 0 && (
                   <Link prefetch={false}
                     className="chip link"
-                    href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
+                    href={`${travelHref(c.country.slug)}#city-${encodeURIComponent(c.city)}`}
                   >
                     {c.city}の{c.list.length}件を読む
                     <Icon name="right" size={14} />
@@ -769,7 +770,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ n: s
                 {c.country && c.list.length > 0 && (
                   <Link prefetch={false}
                     className="chip link"
-                    href={`/nordic/${c.country.slug}#city-${encodeURIComponent(c.city)}`}
+                    href={`${travelHref(c.country.slug)}#city-${encodeURIComponent(c.city)}`}
                   >
                     {c.city}の{c.list.length}件を読む
                     <Icon name="right" size={14} />

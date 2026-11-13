@@ -271,7 +271,7 @@ export const PLANS: Plan[] = [
     ],
     /* `links` は外へ出る口（target=_blank）なので、島の中の面はここに置かない。
        行き先は `href` 1本にする。 */
-    href: "/map/georgia",
+    href: "/travel/georgia",
     /* 名前と1行は `/all`（`content/directory.ts` の「歩いた国」）と揃える。
        同じ面を、島の中で2通りに名乗らない。 */
     hrefName: "ジョージアのページへ",
@@ -429,7 +429,7 @@ export const PLANS: Plan[] = [
     /* 中身の正本は `/north-macedonia`。**ここに書き写さない**——
        2か所に置くと、片方だけ古くなる（`docs/island-standards.md` 8）。
        ここに置くのは「なぜそこへ行くのか」だけ。 */
-    href: "/north-macedonia",
+    href: "/travel/north-macedonia",
     hrefName: "北マケドニアのページへ",
     hrefNote: "どんな国か・スコピエ・食べもの・ことば",
     about: [
@@ -442,7 +442,7 @@ export const PLANS: Plan[] = [
       "オフリド湖まで足を延ばすか",
       "タヴチェ・グラフチェを、どの店で食べるか",
     ],
-    links: [{ label: "北マケドニアってどんな国か", href: "/north-macedonia" }],
+    links: [{ label: "北マケドニアってどんな国か", href: "/travel/north-macedonia" }],
   },
   /* 10月の月末配信（あやと 2026-10-15「10月31日にやります」）。
 

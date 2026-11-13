@@ -5,7 +5,7 @@
 > できたら次回から簡単にできるように方をコツをまとめて欲しい
 
 ソフィア（`/bulgaria`）を1枚作ったときの手順を、そのまま次の国で回せる形に残す。
-**北マケドニア（`/north-macedonia`）とソフィアで2回やって、2回目で型になった。**
+**北マケドニア（いまの `/travel/north-macedonia`）とソフィアで2回やって、2回目で型になった。**
 
 実物は `python/build_bulgaria.py` と `site/app/bulgaria/`。
 **迷ったらあれを丸ごと複製して、国の名前を置き換えるところから始める。**
@@ -263,7 +263,7 @@ if miss: raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 const GUIDES: Record<string, Guide[]> = {
   balkans: [
     { slug: "bulgaria", name: "ブルガリア・ソフィア", href: "/bulgaria", icon: "church", lead: "…" },
-    { slug: "north-macedonia", name: "北マケドニア", href: "/north-macedonia", icon: "mountain", lead: "…" },
+    { slug: "north-macedonia", name: "北マケドニア", href: "/travel/north-macedonia", icon: "mountain", lead: "…" },
   ],
 };
 ```
@@ -277,7 +277,7 @@ const GUIDES: Record<string, Guide[]> = {
   片方だけだと——
   - 行だけ足した → その案内は1日も当たらない。`python/upkeep_watch.py` の
     引き金「案内している国」がこちらに鳴る
-  - 国だけ足した → 表紙から案内が消える。面（`site/app/<国>/`）が在るのに行が無ければ
+  - 国だけ足した → 表紙から案内が消える。面（`site/app/travel/<国>/`）が在るのに行が無ければ
     `site/selftest/islechapter_selftest.mjs` が落ちる
 - **居る国に案内の面が無ければ、何も出ない。** 前の国へは戻さない
   （もう居ない国の歩きかたを「いま」に出さない）
@@ -297,30 +297,37 @@ const GUIDES: Record<string, Guide[]> = {
 
 ---
 
-## 6. 面を1枚増やす仕事は、面だけではない（7か所）
+## 6. 面を1枚増やす仕事は、面だけではない（国は2か所か5か所）
 
-**7か所ある。** 忘れると CI の見張りが赤くする（配ったあとに `prodsweep.mjs` が拾うものもある）。
+国の面はぜんぶ旅のガイドの区画（`/travel/<国>`）に立つ（#1201。2026-11-13 まで
+`/map/<国>`・`/nordic/<国>`・根の `/<国>` に割れていた）。**どの国が面を持つかは
+`site/content/travel.ts` の名簿1つ**で、索引・パンくず・名札（`BreadcrumbList`）・
+自分の居場所（canonical / `og:url`）・貼られたときの絵は、そこから出る。
+前はこれを7か所、手で直していた。
 
-| | どこ | 忘れるとどうなるか |
-| --- | --- | --- |
-| 1 | `site/app/<国>/page.tsx` ＋ `<国>.css` | — |
-| 2 | `site/app/sitemap.ts` | 「sitemap.xml に無い」で赤 |
-| 3 | `site/content/directory.ts`（`/all` の棚） | 索引から着けない |
-| 4 | `site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つ | 貼ったときの絵が 404 |
-| 5 | `site/components/island/layout.ts` の `under` | 砂浜の「いま居る場所」が決まらない（`here_selftest`） |
-| 6 | `python/stale_content_watch.py` の `BOOKS` | 「仕分けを決めて足してください」で止まる |
-| 7 | `tools/fonts/weights.json`（下の 6-2） | その面だけ端末の書体に落ちる |
+| | どこ | 歩き終わった国（`COUNTRIES`） | 行く前の案内だけの国 | 忘れるとどうなるか |
+| --- | --- | --- | --- | --- |
+| 1 | 名簿 | `site/content/countries.ts` の `COUNTRIES` に1行（面は `app/travel/[slug]` からひとりでに立つ） | `site/content/travel.ts` の `GUIDE_ONLY` に1行（国は `AHEAD_COUNTRIES` に居ること） | 面が立たない／名簿に無い面は書き出しが止まる |
+| 2 | 面 | 要らない | `site/app/travel/<国>/page.tsx` ＋ `<国>.css`。顔と道は `travelShare` `travelCrumbs` から | — |
+| 3 | `/all` の棚 | 要らない（歩いた国の棚に名簿から並ぶ） | `site/content/directory.ts` に棚（探し言葉は人が書く） | **書き出しが止まる**（`directory.ts` の最後） |
+| 4 | 中身の本の仕分け | 要らない（`countries.ts` は載っている） | `python/stale_content_watch.py` の `BOOKS` | 「仕分けを決めて足してください」で止まる |
+| 5 | 字の束（下の 6-2） | 測り直す | 測り直す | その面だけ端末の書体に落ちる |
 
-**6 の仕分けは「日数で測らない（SKIP）」にする。** 円の数字はレートから出しているので
-実勢とは離れていくが、面の頭に取った日を書いてあるので嘘にはならない。
-日数で見ると**滞在が終わった日から消しようのない赤**が立つ——行ってしまえば
-取り直す理由の無い表なので、誰にも直せない。
+**歩き終わった国は2か所（1と5）、行く前の案内だけの国は5か所。**
+貼られたときの絵は区画の1枚（`map`）を使うので、国ごとには焼かない。自前の絵を持たせるときだけ
+`site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つと、名簿の `card` を足す（北マケドニアがそれ）。
+
+もう手で書かなくてよくなったもの: `site/app/sitemap.ts`（名簿から並ぶ。字で書くと2回載って書き出しが止まる）・
+`site/components/island/layout.ts` の `under`（`/travel` の下は「歩いた国」の軒にひとりでに入る）。
+
+**道を動かしたら、前の道を 301 で新しい道へ送る**（`firebase.json` の `redirects`）。送り忘れは
+`tools/sprites/routemoves_selftest.mjs` が毎 PR で名指しする（元帳は作り直す前の本番の sitemap の写し）。
 
 **その日が来ると嘘になる字**（`python/text_expires_watch.py`）にも引っかかりうる。
 行事の説明に「前年は11月14日に開き、12月21日まで」のような**過去の記録**を書くと
 拾われるので、`ALLOW` に理由つきで入れる（鍵は「ファイル＋本文の頭40文字」）。
 
-…と、**字の束**（下）。4つめは `ONLY=<鍵> node tools/sprites/ogcards.mjs` で1枚だけ焼く。
+自前の絵を焼くときは `ONLY=<鍵> node tools/sprites/ogcards.mjs` で1枚だけ焼く。
 **全部焼くと、触っていない18枚まで差分に出る。**
 
 ```bash
@@ -338,6 +345,8 @@ ONLY=bulgaria node tools/sprites/ogcards.mjs
 tools/build.sh 3130
 python3 -m http.server 4130 --directory site/.next-3130 &
 DIST=site/.next-3130 SPORT=4130 node tools/sprites/fontweigh.mjs   # 153面を1枚ずつ。20分ほど
+# 足した面・動かした面だけなら ONLY と OUT で測って、表へ差し込む（#1201 で26面をこれで測った）:
+#   ONLY=/travel/sweden.html,/travel.html OUT=/tmp/w.json DIST=… SPORT=… node tools/sprites/fontweigh.mjs
 python3 tools/fonts/subset.py --export site/.next-3130
 ```
 

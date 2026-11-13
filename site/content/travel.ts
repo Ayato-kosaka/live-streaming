@@ -1,0 +1,104 @@
+import type { Metadata } from "next";
+import { crumbOf } from "@/components/island/layout";
+import { share, type ShareKey } from "@/lib/share";
+import { AHEAD_COUNTRIES, COUNTRIES, type Country } from "./countries";
+import { TRAVEL, travelHref } from "./travelPath";
+
+export { TRAVEL, travelHref };
+
+/**
+ * **`/travel/<国>` の名簿。国の面を数える出どころは、ここ1か所。**
+ *
+ * ## なぜ要るか
+ *
+ * 国の面を1枚増やすと、前は**7か所を手で**直していた（`docs/country-guide.md` 6章）。
+ * そのうち道に関わるもの——索引（`app/sitemap.ts`）・島のなか ぜんぶ（`content/directory.ts`）・
+ * パンくずと名札（`BreadcrumbList`）・自分の居場所（canonical / `og:url`）・貼られたときの絵——は、
+ * どれも「どの国が面を持っていて、道は何か」を自分で書き写していた。
+ * 書き写すと、道を1つ動かした日に1か所だけ古い道を指す（#1201 で `/map` を動かすときに数えた）。
+ * **ここから引けば、国を足すのは表に1行で済む。**
+ *
+ * ## 何が載るか
+ *
+ * - 歩き終わった国（`COUNTRIES`）。歩いた記録の面で、北欧の6か国は行く前の案内も同じ面の下に持つ
+ * - 行く前の案内だけを持つ国（`GUIDE_ONLY`）。まだ歩いている最中で、記録は歩き終わってから書く
+ *
+ * ブルガリアは**まだ載せない。** 面（`/bulgaria`）を別の担当が磨いている最中で、
+ * 引っ越しは次の便（#1201）。
+ */
+export type TravelPlace = {
+  slug: string;
+  /** 面の名前（パンくずの最後・見出しと同じ字） */
+  name: string;
+  /** 面の道 */
+  href: string;
+  /** 歩いた記録。**行く前の案内だけの国は持たない** */
+  country?: Country;
+  /** 貼られたときの絵（`lib/ogCards.json` の鍵） */
+  card: ShareKey;
+};
+
+/**
+ * 行く前の案内だけを持つ国。面は `app/travel/<slug>/page.tsx` に1枚ずつ（道が固定の面）。
+ *
+ * **歩き終わって `COUNTRIES` へ移ったら、ここから消す。** 両方に居ると、
+ * 同じ道の面が2枚になる（下で止める）。
+ */
+const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [{ slug: "north-macedonia", card: "northMacedonia" }];
+
+/** 歩いた記録の面の絵。国ごとに焼かない（区画ごとに1枚。`lib/share.ts` の頭） */
+const RECORD_CARD: ShareKey = "map";
+
+function build(): TravelPlace[] {
+  /* 島の札（`components/island/layout.ts` の `map`）は道を字で持っている（あちらは画面の部品からも
+     読まれるので、軽く置いてある）。**食い違ったまま書き出さない** */
+  if (crumbOf("map").href !== TRAVEL) {
+    throw new Error(`content/travel.ts: 島の札「歩いた国」の道（${crumbOf("map").href}）が ${TRAVEL} と違う`);
+  }
+  const walked = [...COUNTRIES]
+    .sort((a, b) => a.order - b.order)
+    .map((c) => ({ slug: c.slug, name: c.name, href: travelHref(c.slug), country: c, card: RECORD_CARD }));
+  const ahead = GUIDE_ONLY.map((g) => {
+    /* 名前は国の表から引く。ここに書き写すと、表の名前を直した日に面だけ古い名前で残る */
+    const a = AHEAD_COUNTRIES.find((x) => x.slug === g.slug);
+    if (!a) throw new Error(`content/travel.ts: ${g.slug} が AHEAD_COUNTRIES に無い（行く前の案内は、入った国にだけ置く）`);
+    return { slug: g.slug, name: a.name, href: travelHref(g.slug), card: g.card };
+  });
+  const all = [...walked, ...ahead];
+  /* **黙って1つに畳まない。** 同じ国が2回並ぶのは、歩き終わって `COUNTRIES` へ移したのに
+     `GUIDE_ONLY` から消し忘れたとき。書き出しを止めて、そこで気づく */
+  const seen = new Set<string>();
+  const twice = all.filter((p) => seen.size === seen.add(p.slug).size).map((p) => p.slug);
+  if (twice.length) throw new Error(`content/travel.ts: 同じ国が2回並んでいる（${twice.join(", ")}）`);
+  return all;
+}
+
+/** 国の面ぜんぶ。歩いた順、そのあとに行く前の案内だけの国 */
+export const TRAVEL_PLACES: TravelPlace[] = build();
+
+export const travelPlace = (slug: string) => TRAVEL_PLACES.find((p) => p.slug === slug);
+
+/**
+ * 名簿に**在るはずの**国。無ければ書き出しを止める。
+ * 名簿に無い国の面を作ると、索引にも `/all` にも出ない——空の行き先で黙って出さない。
+ */
+export function travelPage(slug: string): TravelPlace {
+  const p = travelPlace(slug);
+  if (!p) throw new Error(`content/travel.ts: ${slug} が名簿（TRAVEL_PLACES）に無い`);
+  return p;
+}
+
+/** 区画の名前（`/travel` の見出し・パンくず）。**島の札と同じ字**（`components/island/layout.ts`） */
+export const TRAVEL_LABEL = crumbOf("map").label;
+
+/** パンくず。**道の階層と同じ**（島 › 歩いた国 › <国>）。名札（`BreadcrumbList`）もここから出る */
+export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
+
+/**
+ * 国の面の、貼られたときの顔と自分の居場所（canonical / `og:url`）。
+ * 道と絵は名簿から引くので、面は題と一文だけを渡す。
+ */
+export function travelShare(slug: string, o: { title: string; description: string }): Metadata {
+  const p = travelPage(slug);
+  return share({ key: p.card, title: o.title, description: o.description, path: p.href });
+}

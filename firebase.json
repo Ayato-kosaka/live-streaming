@@ -9,22 +9,22 @@
     "redirects": [
       {
         "source": "/island/albania",
-        "destination": "/",
+        "destination": "/island/balkans",
         "type": 301
       },
       {
         "source": "/island/albania/**",
-        "destination": "/",
+        "destination": "/island/balkans",
         "type": 301
       },
       {
         "source": "/island/north-macedonia",
-        "destination": "/",
+        "destination": "/travel/north-macedonia",
         "type": 301
       },
       {
         "source": "/island/north-macedonia/**",
-        "destination": "/",
+        "destination": "/travel/north-macedonia",
         "type": 301
       },
       {
@@ -90,6 +90,51 @@
       {
         "source": "/next/new/**",
         "destination": "/board",
+        "type": 301
+      },
+      {
+        "source": "/map",
+        "destination": "/travel",
+        "type": 301
+      },
+      {
+        "source": "/map/:slug",
+        "destination": "/travel/:slug",
+        "type": 301
+      },
+      {
+        "source": "/nordic/poland",
+        "destination": "/travel/poland",
+        "type": 301
+      },
+      {
+        "source": "/nordic/lithuania",
+        "destination": "/travel/lithuania",
+        "type": 301
+      },
+      {
+        "source": "/nordic/latvia",
+        "destination": "/travel/latvia",
+        "type": 301
+      },
+      {
+        "source": "/nordic/estonia",
+        "destination": "/travel/estonia",
+        "type": 301
+      },
+      {
+        "source": "/nordic/finland",
+        "destination": "/travel/finland",
+        "type": 301
+      },
+      {
+        "source": "/nordic/sweden",
+        "destination": "/travel/sweden",
+        "type": 301
+      },
+      {
+        "source": "/north-macedonia",
+        "destination": "/travel/north-macedonia",
         "type": 301
       }
     ],

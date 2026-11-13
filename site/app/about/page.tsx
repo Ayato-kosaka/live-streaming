@@ -26,6 +26,7 @@ import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
+import { TRAVEL, travelHref } from "@/content/travelPath";
 
 /** 面の名前。題・パンくず・見出し・機械に渡す名札（`lib/jsonld.tsx`）が同じ字を読む */
 const NAME = "あやとのこと";
@@ -123,7 +124,7 @@ const STORY: Step[] = [
     kind: "live",
     what: "パリで配信を始めた",
     note: "「日本語を話したい」というタイトル。ここから全部が始まった",
-    href: "/map/france",
+    href: travelHref("france"),
     go: "フランスへ",
   },
   {
@@ -139,7 +140,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ヨーロッパを9カ国まわって、イギリスへ",
     note: "オランダ、ベルギー、中欧、ドイツ、そしてスコットランド",
-    href: "/map/uk",
+    href: travelHref("uk"),
     go: "イギリスへ",
   },
   {
@@ -147,7 +148,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ヨーロッパを出て、エジプトへ降りた",
     note: "ピラミッドと砂漠と、アブ・シンベルまで",
-    href: "/map/egypt",
+    href: travelHref("egypt"),
     go: "エジプトへ",
   },
   {
@@ -163,7 +164,7 @@ const STORY: Step[] = [
     kind: "app",
     what: "3つ目「なに食べよ」を作り始めた",
     note: "ヨルダンで「みんなで外食の悩みを解決するアプリを作ろう」と言い出した",
-    href: "/map/jordan",
+    href: travelHref("jordan"),
     go: "ヨルダンへ",
   },
   {
@@ -171,7 +172,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ジョージアに着いた",
     note: "いちばん長くいる国。ここでクッキング配信が定着した",
-    href: "/map/georgia",
+    href: travelHref("georgia"),
     go: "ジョージアへ",
   },
   {
@@ -286,7 +287,7 @@ const eraOf = (date: string) => {
 /** 島でやっていること。3枚とも、その中身を持っている面へ行く。 */
 const DOING = [
   {
-    href: "/map",
+    href: TRAVEL,
     art: <PackArt size={46} />,
     title: "歩く",
     /* **焼いた数を書かない。** 国境を越えた日の朝、行き先の `/map` だけが
@@ -599,7 +600,7 @@ export default function AboutPage() {
         <p className="muted" style={{ marginTop: 12 }}>
           配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。
         </p>
-        <Link prefetch={false} className="tile" href="/map" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href={TRAVEL} style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="flagpost" size={24} />
           </span>

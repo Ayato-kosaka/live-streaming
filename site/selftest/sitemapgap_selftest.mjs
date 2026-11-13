@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url";
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
 import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
+import { sitemapReadsTravel, travelFixedRoutes } from "./travelreg.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
@@ -144,18 +145,27 @@ const hidden = (r) => {
 };
 const open = found.filter((r) => !hidden(r));
 
-console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚）`);
+/* 国の面は字で書かず、名簿（`content/travel.ts`）から並べる（#1201）。
+   **索引が名簿を読んでいるときだけ**、名簿の出す固定の道を「索引に在る」と数える */
+const viaTravel = sitemapReadsTravel(src) ? travelFixedRoutes(join(here, "..")) : [];
+const listed = (r) => src.includes(`"${r}"`) || viaTravel.includes(r);
+
+console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚・国の名簿から ${viaTravel.length}枚）`);
 // 索引は字で持っている（`"/months"`）か、表から作る（`` `/months/${m.key}` ``）。
-// **固定の道は字でしか書けない**ので、字で当たるかだけを見る
-ok("索引に無い面", open.filter((r) => !src.includes(`"${r}"`)), []);
+// **固定の道は字か、国の名簿でしか書けない**ので、そのどちらかで当たるかを見る
+ok("索引に無い面", open.filter((r) => !listed(r)), []);
 
 console.log("[2] 索引に出していない面は、自分で「出さない」と言っている");
-ok("どちらでもない面", found.filter((r) => !src.includes(`"${r}"`) && !hidden(r)), []);
+ok("どちらでもない面", found.filter((r) => !listed(r) && !hidden(r)), []);
 
 console.log("[3] 対照（この見張りが、ほんとうに見ているか）");
 // わざと1枚増やして、落ちることを見る
 ok("**索引に無い面を混ぜたら見つける**",
-   [...open, "/まだ索引に無い面"].filter((r) => !src.includes(`"${r}"`)), ["/まだ索引に無い面"]);
+   [...open, "/まだ索引に無い面"].filter((r) => !listed(r)), ["/まだ索引に無い面"]);
+// 名簿から出る面も、**索引が名簿を読まなくなったら**挙げる
+ok("索引が国の名簿を読まなくなったら、名簿の面を挙げる",
+   open.filter((r) => !src.includes(`"${r}"`) && viaTravel.includes(r)).length > 0 || viaTravel.length === 0,
+   true);
 // 索引のほうを空にしたら、検索に出す面が全部「無い」になる
 ok("索引が空なら、出す面を全部挙げる", open.filter(() => true).length, open.length);
 // **隠れている面を数に入れない。** 入れると、この見張りは永久に赤い

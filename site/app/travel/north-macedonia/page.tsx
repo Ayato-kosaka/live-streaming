@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { share } from "@/lib/share";
 
-import { crumbOf } from "@/components/island/layout";
+import { travelCrumbs, travelShare } from "@/content/travel";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 /* 付箋の板。**この面には `Notes` という自前の部品がもう在る**（下の、読みものを
@@ -56,12 +55,11 @@ import "./nm.css";
  * あちらは画面が出てから数え直す。
  */
 
-export const metadata: Metadata = share({
-  key: "northMacedonia",
+/* 道と絵は名簿から（`content/travel.ts`）。前は `/north-macedonia` に立っていた（#1201） */
+export const metadata: Metadata = travelShare("north-macedonia", {
   title: "北マケドニア — 山と湖の国",
   /* 数は手で書かない。載っている件数から作る（`/nordic/guide` と同じ） */
   description: `海に出ない、山と湖の国。首都スコピエの見どころ${NM_SKOPJE.length}つ、街の外${NM_BEYOND.length}つ、食べもの${NM_EAT.length}品、ことば${NM_WORDS.length}。`,
-  path: "/north-macedonia",
 });
 
 /** 節の表。**絵はここ1か所で決める**——節の中で絵を別に書くと、ここと食い違う */
@@ -149,7 +147,7 @@ function Spots({ items }: { items: NmSpot[] }) {
 
 export default function NorthMacedoniaPage() {
   return (
-    <PageShell crumbs={[crumbOf("next"), { label: "北マケドニア" }]}>
+    <PageShell crumbs={travelCrumbs("北マケドニア")}>
       <PageHead
         mark={<Icon name="mountain" size={44} />}
         title="北マケドニア"

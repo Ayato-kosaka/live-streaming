@@ -2,6 +2,7 @@ import { DOORS } from "@/components/island/layout";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
+import { TRAVEL_LABEL, TRAVEL_PLACES, travelHref, travelPage } from "@/content/travel";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
@@ -131,17 +132,17 @@ export const SHELVES: Shelf[] = [
   },
   {
     id: "map",
-    title: "歩いた国",
+    title: TRAVEL_LABEL,
     // 終点の街を書かない（旅は毎日進む）。数は `COUNTRIES` から数える
     note: `行った順に${COUNTRIES.length}カ国`,
-    items: [...COUNTRIES]
-      .sort((a, b) => a.order - b.order)
-      .map((c) => ({
-        href: `/map/${c.slug}`,
-        name: c.name,
-        note: c.summary,
-        q: q(c.name, c.en, c.slug, c.region, c.stays.flatMap((s) => s.cities).join(" ")),
-      })),
+    /* 国の面の名簿（`content/travel.ts`）から。歩いた記録を持つ国だけ——行く前の案内だけの国は
+       下に自分の棚を持っている（混ぜると「行った順に◯カ国」と数が合わない） */
+    items: TRAVEL_PLACES.flatMap((p) => (p.country ? [{ ...p, c: p.country }] : [])).map(({ href, c }) => ({
+      href,
+      name: c.name,
+      note: c.summary,
+      q: q(c.name, c.en, c.slug, c.region, c.stays.flatMap((s) => s.cities).join(" ")),
+    })),
   },
   {
     id: "legends",
@@ -208,8 +209,11 @@ export const SHELVES: Shelf[] = [
         note: "お金・通信・服・サウナ・食べもの",
         q: q("旅のしおり guide 持ち物 サウナ お金"),
       },
+      /* 国の行は、歩いた記録の面へ（2026-11-13 に `/nordic/<国>` を寄せた。#1201）。
+         上の「歩いた国」の棚と同じ紙を指すが、**行は消さない**——北欧の旅から国を探す人は
+         ここを見る。紙の数は行き先で数えるので、2回は数えない（下の `DEST_COUNT`） */
       ...NORDIC_COUNTRIES.map((c) => ({
-        href: `/nordic/${c.slug}`,
+        href: travelHref(c.slug),
         name: c.name,
         note: c.catch,
         q: q(c.name, c.en, c.slug, c.catch, c.cities.join(" ")),
@@ -240,7 +244,7 @@ export const SHELVES: Shelf[] = [
   {
     /* 北マケドニア。**面は1枚だが、棚を立てる。**
        北欧の棚に混ぜると「北欧の旅」の中の1行になって、別の国の話だと読めない。
-       歩いて国の面（`/map/<国>`）ができたら、そちらもここへ並べる。 */
+       歩き終わったら、記録と案内は同じ1枚（`/travel/<国>`）に育つ（#1201）。 */
     id: "north-macedonia",
     title: "北マケドニア",
     /* **時点を言わない**（`docs/island-standards.md` 16章）。
@@ -248,7 +252,7 @@ export const SHELVES: Shelf[] = [
     note: "海に出ない、山と湖の国。首都はスコピエ",
     items: [
       {
-        href: "/north-macedonia",
+        href: travelPage("north-macedonia").href,
         name: "北マケドニア",
         note: "どんな国か・スコピエ・食べもの・ことば",
         q: q(
@@ -363,6 +367,13 @@ export const SHELVES: Shelf[] = [
  * 121 だった。**画面が「122枚」と名乗って、121枚しか無かった。**
  */
 const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
+
+/* **国の面は、ここに並んでいないと書き出しを止める。** 歩いた国は名簿から棚に並ぶが、
+   行く前の案内だけの国（`content/travel.ts` の `GUIDE_ONLY`）は棚を手で立てる（探し言葉は人が書く）。
+   立て忘れると、索引には在るのに `/all` から行けない面になる——前は配ったあとの
+   `prodsweep.mjs` で初めて分かった（#1201） */
+const offShelf = TRAVEL_PLACES.filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
+if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
 /** いまいる島の行が `/` に化けるぶん。**必ず1つ**（`chapterHref`） */
 const ISLE_NOW_ROWS = 1;
 export const DEST_COUNT = DEST_HREFS.size - ISLE_NOW_ROWS;

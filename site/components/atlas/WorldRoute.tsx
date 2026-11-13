@@ -14,6 +14,7 @@ import Flag from "@/components/ui/Flag";
 // まるごと束に入る（`components/ui/IconCore.tsx` の注）。
 import Icon from "@/components/ui/IconCore";
 import { isoDay } from "@/lib/isoDay";
+import { travelHref } from "@/content/travelPath";
 
 /**
  * 日本を出てから、これまでに歩いた国ぜんぶの1枚の地図。
@@ -669,7 +670,7 @@ export default function WorldRoute({
                 </span>
               ))}
             {/* 配信前に歩いた国の名札。**押せる丸は置かない。**
-                この2カ国には `/map/<slug>` のページが無いので、押せる形にすると
+                この2カ国には国の面（`/travel/<slug>`）が無いので、押せる形にすると
                 押しても何も起きない（`docs/island-play.md` 4章の「作り物の当たり」）。
                 街の名前と違って、世界ぜんぶの面（is-wide）でも消さない。
                 消すと、薄い国が名無しで2つ浮いているだけになる。 */}
@@ -845,7 +846,7 @@ export default function WorldRoute({
                 </a>
               );
             })()}
-            <Link className="acard-go" href={`/map/${open.slug}`} prefetch={false}>
+            <Link className="acard-go" href={travelHref(open.slug)} prefetch={false}>
               {open.name}のページへ
               <Icon name="right" size={14} />
             </Link>

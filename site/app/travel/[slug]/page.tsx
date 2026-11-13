@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { share } from "@/lib/share";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -14,19 +13,26 @@ import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import CountryMap from "@/components/atlas/CountryMap";
 import { StayLen, StayOut } from "../parts";
+import CountryGuide from "@/components/nordic/CountryGuide";
+import { nordicCountry } from "@/content/nordic";
+import { TRAVEL_PLACES, travelCrumbs, travelHref, travelShare } from "@/content/travel";
 // 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
 
+/* 面を持つ国は名簿（`content/travel.ts`）から。歩いた記録の無い国（行く前の案内だけ）は
+   道が固定の面（`app/travel/<国>/page.tsx`）なので、ここには来ない */
 export function generateStaticParams() {
-  return COUNTRIES.map((c) => ({ slug: c.slug }));
+  return TRAVEL_PLACES.filter((p) => p.country).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const c = countryBySlug(slug);
   if (!c) return {};
-  return share({ key: "map", title: c.name, description: c.summary, path: `/map/${slug}` });
+  /* 北欧の6か国は、前は行く前の案内（`/nordic/<国>`）が別の題と一文を持っていた。
+     2枚を1枚に寄せたので、題と一文は歩いた記録のほうに揃える（#1201） */
+  return travelShare(slug, { title: c.name, description: c.summary });
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
@@ -61,8 +67,8 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
    * スタンプに押す「◯カ国目」。**`order` ではなく、国だけを数え直した番号。**
    *
    * `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
-   * 1つ振ってある。`/map` の年表は前からそこを避けて数え直していて
-   * （`app/map/page.tsx` の `noOf`）、この面だけが `order` を生で押していた。
+   * 1つ振ってある。`/travel` の年表は前からそこを避けて数え直していて
+   * （`app/travel/page.tsx` の `noOf`）、この面だけが `order` を生で押していた。
    *
    * イランが表のいちばん後ろにいるあいだは、どちらも同じ数に見えていた。
    * **北欧の6カ国がその後ろに並んだ日に、初めて1つずれる**——
@@ -120,7 +126,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
   };
 
   return (
-    <PageShell crumbs={[{ label: "歩いた国", href: "/map" }, { label: c.name }]}>
+    <PageShell crumbs={travelCrumbs(c.name)}>
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />
@@ -319,9 +325,14 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
         </Panel>
       )}
 
+      {/* 行く前に調べたこと。**北欧の6か国だけ**、前は別の面（`/nordic/<国>`）に立っていた。
+          同じ国が2枚に割れて、互いにリンクも無かったので、歩いた記録の下へ寄せた（#1201）。
+          部品は向こうの面のものをそのまま並べている（`components/nordic/CountryGuide.tsx`） */}
+      {nordicCountry(c.slug) && <CountryGuide slug={c.slug} />}
+
       <nav className="pager">
         {prev ? (
-          <Link href={`/map/${prev.slug}`} prefetch={false}>
+          <Link href={travelHref(prev.slug)} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
             <Flag slug={prev.slug} size={20} />
             {prev.name}
@@ -330,7 +341,7 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
           <span />
         )}
         {next ? (
-          <Link href={`/map/${next.slug}`} prefetch={false}>
+          <Link href={travelHref(next.slug)} prefetch={false}>
             <Flag slug={next.slug} size={20} />
             {next.name}
             <Icon name="right" size={13} />

@@ -151,7 +151,7 @@ export function PageHead({
       折ってよい場所を選びたい面は `Phrase` を渡す（`components/ui/Phrase.tsx`）。 */
   title: ReactNode;
   /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
-      （`app/map/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
+      （`app/travel/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
       ほとんどの面は文字列のまま渡す。 */
   lead?: ReactNode;
   /** 案内役のひとこと。 */

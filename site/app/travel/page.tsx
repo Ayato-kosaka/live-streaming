@@ -15,20 +15,20 @@ import { HereRoute, HereStat, HereTag, MapHead, TripCountries, type TripStep } f
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
 import { chapterNow, tripDate } from "@/content/chapters";
-import { tripPageOf } from "@/content/trip";
 import { BUILT_AT } from "@/lib/builtAt";
 import { LEAVE, MAIN, NORDIC_COUNTRIES, cityName } from "@/content/nordic";
 import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
+import { TRAVEL, TRAVEL_LABEL, travelHref, travelPlace } from "@/content/travel";
 
 /* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
    国の名前を書くと、国境を越えた日から次のビルドまで嘘になる（前は
    「いまいるジョージアまで」だった）。 */
 export const metadata: Metadata = share({
   key: "map",
-  title: "歩いた国",
+  title: TRAVEL_LABEL,
   description:
     "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
-  path: "/map",
+  path: TRAVEL,
 });
 
 /**
@@ -144,8 +144,10 @@ const TRIP_STEPS: TripStep[] = walkingCountries()
        変わった日に見出しが前の旅の名前のまま残る。名前は `content/chapters.ts` が正本。
        日付だけで決まるので、焼き込んでも答えは動かない（旅の土地の暦の昼で引く）。 */
     const ch = chapterNow(new Date(`${from}T12:00:00+02:00`));
-    // その旅が国ごとの面を持っていれば、そこへ送る。持たない旅は送り先なし
-    const trip = tripPageOf(ch.slug);
+    /* 国の面を持っていれば、そこへ送る（名簿は `content/travel.ts`）。
+       前は「旅の面の下の国」（`/nordic/<国>`）を組み立てていたが、国の面は旅に関わらず
+       `/travel/<国>` の1枚になった（#1201）。持たない国は送り先なし */
+    const place = travelPlace(c.slug);
     return {
       slug: c.slug,
       name: it?.name ?? c.name,
@@ -157,7 +159,7 @@ const TRIP_STEPS: TripStep[] = walkingCountries()
       towns: it?.towns ?? [],
       chapter: ch.slug,
       chapterName: ch.name,
-      href: trip ? `${trip}/${c.slug}` : "",
+      href: place?.href ?? "",
     };
   })
   .filter((x) => x.from)
@@ -210,7 +212,7 @@ export default function MapPage() {
   const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
 
   return (
-    <PageShell crumbs={[{ label: "歩いた国" }]}>
+    <PageShell crumbs={[{ label: TRAVEL_LABEL }]}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
           カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。
@@ -362,7 +364,7 @@ export default function MapPage() {
                         <span className="atrip-no" aria-hidden>
                           {noOf.get(c.slug) ?? "—"}
                         </span>
-                        <Link className="atrip-card" href={`/map/${c.slug}`} prefetch={false}>
+                        <Link className="atrip-card" href={travelHref(c.slug)} prefetch={false}>
                           <span className="atrip-flag">
                             <Flag slug={c.slug} size={34} />
                           </span>
