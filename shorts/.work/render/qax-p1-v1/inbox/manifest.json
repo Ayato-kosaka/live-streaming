@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__qax-p1-v1",
+ "mode": "render",
+ "dest": "render/qax-p1-v1/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/qax-p1-v1.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 43258,
+  "tar_gz": 15894,
+  "encrypted": 15904
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 15904,
+   "sha256": "3d91f88b1ac03874423d20bd60a49ae8b54b082c742b91cf72514a566825eccc"
+  }
+ ],
+ "hmac_sha256": "616461e5b234fd829b7150359471fc655373978783c085c3eee924872a8c50f2",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-13T13:48:16+00:00",
+ "nonce": "83e6213fe8b1db5170504303"
+}
