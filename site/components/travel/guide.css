@@ -1,0 +1,875 @@
+/*
+ * 街のガイドの面（`/travel/<国>/<街>`）。型は `docs/guide-design.md`。
+ *
+ * **看板・パンくず・地は島のまま**（`PageShell`）。この面で足すのは、紙の上に置く部品だけ。
+ *
+ * ## 押せるものと、押せないもの（island-design 3章3）
+ *
+ * | 押せる（真下に厚み） | 押せない（平ら。落ち影だけ） |
+ * | --- | --- |
+ * | 吹き出し・驚く数・場面の札・場面のボタン・遠出のカードのボタン・Google マップ | Keyword の枠・表の地・出どころの1行・カードの地 |
+ *
+ * 厚みは `--pop`（48px のボタンで 6px）と `--pop-sm`（30px の札で 4px）。ぼかさない。
+ * 目次・料理の格子は「一面に並ぶマスが全部押せる」ので、1枚ずつに厚みを付けない（同じ章の例外）。
+ *
+ * ## 色
+ *
+ * 地と字は島のまま（`--paper` `--ink`）。差し色は1つ（`--tg-c`）で、節の線・番号・小見出しに使う。
+ * 白い字を乗せるのは `--tg-c` だけ（白に対して 5.2。4.5 要る）。
+ */
+
+.tg {
+  --tg-c: #c8362b;
+  --tg-c-lo: #f7dcd3;
+  --tg-c-deep: #8f2219;
+  --tg-sun: #ffd25e;
+  --tg-sun-ink: #5b3f15;
+  --tg-card: #fffdf3;
+  display: block;
+}
+
+/* ---- 表紙 ---------------------------------------------------------------- */
+
+.tg-hero-wrap { margin: 0 0 var(--sp-4); }
+
+/* **絵を先に、字をあとに。** 縦横の比を先に決めて、絵が来る前に高さを取る */
+.tg-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-2);
+  background: var(--tg-c-deep);
+  box-shadow: var(--shadow-2);
+  aspect-ratio: 4 / 3;
+}
+
+@media (min-width: 720px) {
+  .tg-hero { aspect-ratio: 16 / 9; }
+}
+
+.tg-hero.is-none { aspect-ratio: auto; }
+
+.tg-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 字は下3分の1に暗幕つきで重ねる。全面に敷くと絵が死ぬ */
+.tg-hero-body {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: var(--sp-6) var(--sp-4) var(--sp-4);
+  color: #fff;
+  background: linear-gradient(to top, rgba(26, 12, 8, 0.86) 0%, rgba(26, 12, 8, 0.66) 48%, rgba(26, 12, 8, 0) 100%);
+}
+
+.tg-hero.is-none .tg-hero-body { position: static; background: none; }
+
+.tg-hero-local {
+  display: block;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.92;
+}
+
+.tg-hero-body h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(30px, 9vw, 46px);
+  line-height: 1.2;
+  color: #fff;
+}
+
+.tg-hero-body p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 700;
+}
+
+.tg-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px var(--sp-3);
+  margin: var(--sp-2) 2px 0;
+}
+
+.tg-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.tg-dates span { white-space: nowrap; }
+
+.tg-credit {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.tg-credit a { color: var(--ink-2); }
+
+/* ---- 埋め込み ------------------------------------------------------------- */
+
+.tg-embed { margin: 0 0 var(--sp-4); }
+
+.tg-embed-box {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background: #1c1c1c;
+  box-shadow: var(--shadow-1);
+}
+
+.tg-embed-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.tg-embed-btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tg-embed-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 再生の印。押せるので厚みを付ける */
+.tg-embed-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -56%;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--tg-c);
+  color: #fff;
+  box-shadow: 0 var(--pop-d4) 0 var(--tg-c-deep);
+}
+
+.tg-embed-btn:active .tg-embed-play { translate: -50% calc(-56% + 4px); box-shadow: 0 var(--pop-d0) 0 var(--tg-c-deep); }
+
+.tg-embed figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 2px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tg-embed figcaption a { color: var(--ink); font-weight: 700; }
+.tg-embed figcaption span { font-size: 12px; color: var(--ink-2); }
+
+/* ---- 驚く数 --------------------------------------------------------------- */
+
+.tg-nums {
+  list-style: none;
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 720px) {
+  .tg-nums { grid-template-columns: repeat(3, 1fr); }
+}
+
+.tg-nums a {
+  display: block;
+  min-height: 48px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-1);
+  background: var(--tg-card);
+  border-left: 6px solid var(--tg-c);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-dark);
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-nums a:active { translate: 0 4px; box-shadow: var(--pop-push); }
+
+.tg-nums b {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 900;
+  color: var(--tg-c);
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-nums b em {
+  align-self: center;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--tg-sun);
+  color: var(--tg-sun-ink);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tg-nums b i { font-style: normal; font-size: 15px; color: var(--ink-2); }
+.tg-nums span { display: block; margin-top: 2px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+
+.tg-nums .tg-nums-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--tg-c-deep);
+  font-weight: 700;
+}
+
+/* ---- 目次 ----------------------------------------------------------------- */
+
+/* マスが全部押せるので、1枚ずつに厚みは付けない（island-design 3章3の例外）。落ち影だけ */
+.tg-toc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  scroll-margin-top: 72px;
+}
+
+@media (min-width: 720px) {
+  .tg-toc { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.tg-toc a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 8px;
+  min-height: 54px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tg-toc a:hover { background: var(--paper-2); }
+.tg-toc svg { grid-row: 1 / 3; color: var(--tg-c); }
+.tg-toc b { font-size: 14.5px; line-height: 1.35; }
+.tg-toc i { font-style: normal; font-size: 11.5px; color: var(--ink-3); }
+
+/* ---- 節 ------------------------------------------------------------------- */
+
+.tg-sec { margin: var(--sp-6) 0 0; scroll-margin-top: 72px; }
+
+.tg-sec-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--sp-3);
+  padding-bottom: var(--sp-2);
+  font-size: 20px;
+  line-height: 1.35;
+  border-bottom: 3px solid var(--tg-c);
+}
+
+.tg-sec-n {
+  flex: none;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--tg-c);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tg-sec-i { flex: none; color: var(--tg-c); }
+.tg-sec-t { min-width: 0; }
+
+/* 節の頭の答え。**太字にしない**（3章の6）。ここが AI に抜き出される所 */
+.tg-answer {
+  margin: 0 0 var(--sp-4);
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+
+.tg-sub {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: 15.5px;
+  color: var(--tg-c-deep);
+}
+
+.tg-up { margin: var(--sp-3) 0 0; text-align: right; font-size: 12.5px; }
+
+.tg-up a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 4px;
+  color: var(--ink-2);
+}
+
+.tg-note { margin: 4px 2px 0; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+
+/* ---- 行と場面の札 --------------------------------------------------------- */
+
+/* 場面の札の小さな YouTube の印。**1面に150個並ぶ**ので、印の SVG を1つずつ焼かない
+   （`Icon` で描くと1個 550B、HTML と RSC の両方で 90KB ずつ増えた）。形は `Icon` の youtube と同じ道 */
+.tg-yt {
+  flex: none;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: var(--tg-c);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.5 7.2a2.7 2.7 0 0 0-1.9-1.9C18.9 4.8 12 4.8 12 4.8s-6.9 0-8.6.5A2.7 2.7 0 0 0 1.5 7.2C1 8.9 1 12 1 12s0 3.1.5 4.8a2.7 2.7 0 0 0 1.9 1.9c1.7.5 8.6.5 8.6.5s6.9 0 8.6-.5a2.7 2.7 0 0 0 1.9-1.9c.5-1.7.5-4.8.5-4.8s0-3.1-.5-4.8zM9.8 15.3V8.7l5.7 3.3-5.7 3.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.5 7.2a2.7 2.7 0 0 0-1.9-1.9C18.9 4.8 12 4.8 12 4.8s-6.9 0-8.6.5A2.7 2.7 0 0 0 1.5 7.2C1 8.9 1 12 1 12s0 3.1.5 4.8a2.7 2.7 0 0 0 1.9 1.9c1.7.5 8.6.5 8.6.5s6.9 0 8.6-.5a2.7 2.7 0 0 0 1.9-1.9c.5-1.7.5-4.8.5-4.8s0-3.1-.5-4.8zM9.8 15.3V8.7l5.7 3.3-5.7 3.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.tg-lines { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: grid; gap: var(--sp-2); }
+
+.tg-lines li { display: grid; gap: 6px; }
+
+.tg-lines p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+
+/* 場面の札（30px で 4px の厚み） */
+.tg-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  margin: 2px 0 6px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  background: var(--tg-card);
+  border: 1.5px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--tg-c-deep);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-at:active { translate: 0 3px; box-shadow: var(--pop-push); }
+.tg-at svg { color: var(--tg-c); }
+
+/* 本人の一言（吹き出し）。島のあやとの小さな絵から尾が出る。全体が1つのリンク */
+.tg-says { display: grid; gap: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
+
+.tg-say {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tg-say-face { width: 26px; height: auto; margin-bottom: 4px; }
+
+.tg-say-b {
+  position: relative;
+  display: block;
+  padding: 10px 14px 8px;
+  border-radius: 18px;
+  background: #fff;
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+/* 尾。絵の側へ向ける */
+.tg-say-b::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  bottom: 12px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-left: 2px solid var(--frame);
+  border-bottom: 2px solid var(--frame);
+  transform: rotate(45deg) skew(10deg, 10deg);
+}
+
+.tg-say:active .tg-say-b { translate: 0 3px; box-shadow: var(--pop-push); }
+
+.tg-say-q { display: block; font-size: 15px; line-height: 1.7; font-weight: 700; }
+
+.tg-say-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--tg-c-deep);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-say-at svg { color: var(--tg-c); }
+
+/* この場面の配信ボタン（48px で 6px の厚み）。節に1つ */
+.tg-scene {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin: var(--sp-2) 0 0;
+  padding: 0 18px 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--tg-c);
+  color: #fff;
+  font-size: 14.5px;
+  text-decoration: none;
+  box-shadow: 0 var(--pop-d4) 0 var(--tg-c-deep);
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-scene:active { translate: 0 4px; box-shadow: 0 var(--pop-d0) 0 var(--tg-c-deep); }
+.tg-scene span { font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: 0.95; }
+
+/* 外の出どころの1行。押せる所は出どころの名前だけ */
+.tg-ext {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-0);
+  background: color-mix(in srgb, var(--paper-2) 70%, transparent);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ink-2);
+}
+
+.tg-ext a { color: var(--ink); font-weight: 700; }
+
+.tg-local { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-3); }
+
+/* ---- 移動の札 ------------------------------------------------------------- */
+
+.tg-move {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-1);
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+}
+
+.tg-move-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.tg-move-h svg { color: var(--ink-3); }
+
+.tg-move-h em {
+  margin-left: 4px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--tg-c-lo);
+  color: var(--tg-c-deep);
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tg-move-got { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 4px; font-size: 14.5px; }
+.tg-move-got .tg-move-said { color: var(--ink-3); }
+.tg-move-got b { color: var(--tg-c); font-size: 17px; }
+
+/* ---- 値段の表 ------------------------------------------------------------- */
+
+.tg-prices { display: grid; gap: var(--sp-3); margin: 0 0 var(--sp-4); }
+
+.tg-price {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.tg-price caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0 2px 4px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--tg-c-deep);
+}
+
+.tg-price th,
+.tg-price td { padding: 6px 8px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--paper-2); }
+
+.tg-price thead th { font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); font-weight: 700; }
+.tg-price tbody th { font-weight: 500; }
+.tg-price td:nth-child(2) { white-space: nowrap; font-weight: 900; color: var(--tg-c); font-variant-numeric: tabular-nums; }
+.tg-price td:last-child { width: 1%; }
+.tg-price td .tg-at { margin: 0; }
+.tg-price tbody tr:last-child > * { border-bottom: 0; }
+
+/* ---- Keyword の枠（押せないので平ら） --------------------------------------- */
+
+.tg-key {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-1);
+  border: 2px dashed var(--tg-c);
+  background: color-mix(in srgb, var(--tg-c-lo) 45%, var(--paper));
+}
+
+.tg-key-tag {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--tg-c-deep);
+}
+
+.tg-key-t { margin: 0 0 6px; font-size: 16px; font-weight: 900; color: var(--ink); }
+.tg-key .tg-lines { margin-bottom: 0; }
+.tg-key .tg-ext { background: rgba(255, 255, 255, 0.55); }
+
+/* ---- カード（見どころ・店・失敗談・遠出） ---------------------------------- */
+
+.tg-cards { display: grid; gap: var(--sp-4); }
+
+@media (min-width: 720px) {
+  .tg-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .tg-cards.is-flat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.tg-card {
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+  scroll-margin-top: 72px;
+}
+
+.tg-card-ph { margin: 0; }
+
+.tg-card-ph img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: cover;
+  background: var(--paper-2);
+}
+
+.tg-card-ph figcaption { padding: 4px var(--sp-4) 0; }
+
+.tg-card-b { padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+
+/* 色の小見出し。名前より先に「何の場所か」を言う */
+.tg-card-sub { margin: 0 0 2px; font-size: 12.5px; font-weight: 900; color: var(--tg-c); }
+
+.tg-card-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.tg-card-n {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--tg-c);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.tg-card .tg-local { margin: 2px 0 0; }
+
+.tg-went {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 var(--sp-2);
+  font-size: 12px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-went-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 2px;
+  padding: 1px 8px 1px 6px;
+  border-radius: var(--r-pill);
+  background: #e3f1d6;
+  color: #2f5b16;
+  font-weight: 900;
+}
+
+.tg-card .tg-lines { margin-top: var(--sp-2); }
+.tg-card.is-caution { border-left: 6px solid var(--tg-c); }
+.tg-card.is-caution .tg-card-h { font-size: 16px; }
+
+.tg-meases { display: grid; gap: 6px; margin: 0 0 var(--sp-2); }
+
+.tg-meas summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: var(--r-0);
+  background: var(--tg-sun);
+  color: var(--tg-sun-ink);
+  box-shadow: var(--pop-sm);
+  font-size: 12.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.tg-meas summary::-webkit-details-marker { display: none; }
+.tg-meas summary b { font-size: 14px; font-weight: 900; }
+.tg-meas summary span { min-width: 0; flex: 1 1 12em; }
+.tg-meas-c { flex: none; transition: rotate 0.15s; }
+.tg-meas[open] .tg-meas-c { rotate: 90deg; }
+
+.tg-meas p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tg-meas p a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  border: 1.5px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--tg-c-deep);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* 情報の塊。カードの最後の決まった所に置く（ca-voir の型） */
+.tg-info {
+  display: grid;
+  gap: 6px;
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-0);
+  background: var(--paper-2);
+  font-size: 13px;
+}
+
+.tg-info div { display: grid; grid-template-columns: 4.5em minmax(0, 1fr); align-items: center; gap: 8px; }
+.tg-info dt { font-weight: 900; color: var(--ink-2); }
+.tg-info dd { margin: 0; }
+.tg-info dd .tg-at { margin: 0 0 0 4px; }
+
+.tg-maps {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: #fff;
+  border: 1.5px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.tg-card .tg-scene { margin-top: var(--sp-3); }
+
+/* ---- 料理の格子 ----------------------------------------------------------- */
+
+/* マスが全部押せるので、1枚ずつに厚みは付けない */
+.tg-dishes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+}
+
+@media (min-width: 720px) {
+  .tg-dishes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.tg-dish {
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+  scroll-margin-top: 72px;
+}
+
+.tg-dish[open] { grid-column: 1 / -1; }
+
+.tg-dish summary { position: relative; display: block; cursor: pointer; list-style: none; }
+.tg-dish summary::-webkit-details-marker { display: none; }
+
+.tg-dish-ph { display: block; }
+
+.tg-dish-ph img { display: block; width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; background: var(--paper-2); }
+
+.tg-dish[open] .tg-dish-ph img { aspect-ratio: 16 / 10; }
+
+.tg-dish-b { display: block; padding: 8px 10px 10px; }
+.tg-dish-b h3 { margin: 0; font-size: 15px; line-height: 1.4; }
+.tg-dish-where { display: block; font-size: 12px; color: var(--ink-2); }
+.tg-dish-b .tg-went { margin: 4px 0 0; }
+
+.tg-dish-c {
+  position: absolute;
+  right: 8px;
+  bottom: 12px;
+  color: var(--ink-3);
+  transition: rotate 0.15s;
+}
+
+.tg-dish[open] .tg-dish-c { rotate: 90deg; }
+
+.tg-dish-more { padding: 0 var(--sp-4) var(--sp-3); }
+.tg-dish-price { margin: 0 0 var(--sp-2); font-size: 13.5px; }
+.tg-dish-price b { color: var(--tg-c); }
+
+/* ---- 配信の一覧 ----------------------------------------------------------- */
+
+.tg-vids { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+
+@media (min-width: 720px) {
+  .tg-vids { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---- 書き手・出どころ・次に読む --------------------------------------------- */
+
+.tg-writer {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-2);
+  background: var(--tg-card);
+  box-shadow: var(--shadow-1);
+}
+
+.tg-writer-face { width: 66px; height: auto; align-self: start; }
+.tg-writer-b p { margin: 0; }
+.tg-writer-name { font-size: 17px; }
+.tg-writer-sign { margin-top: 4px !important; font-size: 14.5px; font-weight: 900; color: var(--tg-c-deep); }
+.tg-writer-sub { font-size: 12.5px; color: var(--ink-2); }
+.tg-writer-by { margin-top: 6px !important; font-size: 12px; color: var(--ink-3); }
+
+.tg-writer-go { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-2); margin-top: var(--sp-3); }
+
+.tg-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-go:active { translate: 0 4px; box-shadow: var(--pop-push); }
+.tg-go svg { color: var(--tg-c); }
+
+.tg-sources,
+.tg-next { margin: var(--sp-5) 0 0; }
+
+.tg-sources-h { margin: 0 0 var(--sp-2); font-size: 15px; color: var(--ink-2); }
+
+.tg-sources ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+
+.tg-sources a { color: var(--ink); }
+.tg-sources .tg-local { display: inline; letter-spacing: 0.02em; }
+
+.tg-next ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+
+.tg-next a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 10px;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-1);
+  background: var(--tg-card);
+  box-shadow: var(--pop);
+  color: var(--ink);
+  text-decoration: none;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-next a:active { translate: 0 4px; box-shadow: var(--pop-push); }
+.tg-next a > svg:first-child { grid-row: 1 / 3; color: var(--tg-c); }
+.tg-next a > svg:last-child { grid-row: 1 / 3; grid-column: 3; color: var(--ink-3); }
+.tg-next b { font-size: 15px; }
+.tg-next i { font-style: normal; font-size: 12px; color: var(--ink-2); }
