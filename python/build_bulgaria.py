@@ -68,6 +68,11 @@ SRC = ROOT / "python" / "data" / "bulgaria"
 OUT_TS = ROOT / "site" / "content" / "bulgaria.ts"
 OUT_MAP = ROOT / "site" / "content" / "bulgaria" / "map.json"
 
+#: Google マイマップの埋め込みの id（`docs/mymaps.md`）。
+#: **面に直書きしない。** 3枚の地図は材料から焼いた CSV を取り込んで作ってあり、
+#: 作り直すと id が変わる。1か所に置いて、面はここから読む
+MIDS = json.loads((SRC / "mymaps" / "mids.json").read_text(encoding="utf-8"))
+
 F = json.loads((SRC / "facts.json").read_text(encoding="utf-8"))
 FILL = json.loads((SRC / "fill.json").read_text(encoding="utf-8"))
 
@@ -527,6 +532,59 @@ def main() -> None:
             ts.append("  { " + ", ".join(cell(k, r.get(k)) for k in keys) + " },")
         ts.append("] as const;")
         ts.append("")
+
+    # **地図はマイマップ**（あやと 2026-11-13「Googleマップが使いやすかった。
+    # 今のやつはGoogleマップと違って見慣れてなくて見にくい」）。
+    # `which` は面の節と1対1。足りない節があれば焼かずに落ちる——
+    # 地図の無い節が黙って出るより、焼けないほうがいい
+    want = {"see", "eat", "buy"}
+    got = {m["which"] for m in MIDS["maps"]}
+    if want - got:
+        raise SystemExit("マイマップの id が足りません: %s" % sorted(want - got))
+
+    # 開いた時点の中心と縮尺。**手で決めない。**
+    #
+    # 渡さないとマイマップは「全部のピンが入る縮尺」で開く。リラ修道院が62km 先に
+    # あるので、見たいものの地図が県ごと写って中心部が点の塊になった。
+    # そこで手で 15 と書いたら、今度は食べたいものの市場2つが画面の外に出た。
+    # **どちらも、ピンの広がりを見ていないから起きる。** ピンから出す。
+    #
+    # 見たいものだけは**近いものだけで枠を出す**。遠いものを入れると、
+    # 62km に合わせた縮尺に戻ってしまう——遠いものは地図の下に名前と距離で出る。
+    def view(pts):
+        """ピンの群れが収まる中心と縮尺。
+
+        横 4:3 の枠（スマホで幅いっぱい・およそ 400x300）に、広がりの 1.35倍が
+        入る縮尺を選ぶ。1.35 は余白——ピンの絵は点ではなく、下が尖った雫なので、
+        端のピンがちょうど枠線に乗ると頭が切れる。
+        """
+        la = [q["lat"] for q in pts]
+        lo = [q["lon"] for q in pts]
+        clat, clon = (min(la) + max(la)) / 2, (min(lo) + max(lo)) / 2
+        # 経度の幅は緯度で縮む。緯度の幅は「縦のほうが狭い」ぶんを横に直して比べる
+        dlon = max(max(lo) - min(lo), 1e-4) * 1.35
+        dlat = max(max(la) - min(la), 1e-4) * 1.35 * (400 / 300)
+        span = max(dlon, dlat / math.cos(math.radians(clat)))
+        # 幅 400px の画面に `span` 度が入る縮尺（256px のタイルが 2^z 枚で1周）
+        z = math.floor(math.log2(360.0 / span * (400 / 256)))
+        return "%.4f,%.4f" % (clat, clon), max(12, min(17, z))
+
+    pin_src = {
+        # **歩ける範囲のものだけ。** 遠いものは下の一覧が名前と距離で持つ。
+        # 入れると62km のリラ修道院に合わせた縮尺に戻って、中心部が潰れる
+        "see": [s for s in spots if km(s) <= WALK_KM],
+        # `used_eat` / `used_buy` は `tie()` が返した、実際にひもづいた場所の名前
+        "eat": [by_key[k] for k in dict.fromkeys(used_eat)],
+        "buy": [by_key[k] for k in dict.fromkeys(used_buy)],
+    }
+    mymaps = []
+    for m in MIDS["maps"]:
+        pts = pin_src[m["which"]]
+        if not pts:
+            raise SystemExit("%s のピンが0件です" % m["which"])
+        ll, z = view(pts)
+        mymaps.append({**m, "ll": ll, "z": z})
+    arr("BG_MYMAPS", mymaps, ["which", "mid", "title", "pins", "ll", "z"])
 
     arr("BG_FACTS", F["facts"], ["n", "unit", "cap"])
     arr("BG_IMAGE", F["image"], ["title", "body"])
