@@ -72,7 +72,7 @@
   font-weight: 900;
   font-size: 12px;
   letter-spacing: 0.24em;
-  text-transform: uppercase;
+  /* 大文字にしない。字の束は画面の字（小文字）から焼くので、大文字にすると Е が端末の書体に落ちる */
   opacity: 0.92;
 }
 
