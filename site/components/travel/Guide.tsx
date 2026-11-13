@@ -608,7 +608,9 @@ export function Sources({ ext, locals }: { ext: Ext[]; locals: { name: string; l
         {locals.map(({ name, l }) => (
           <li key={l.src}>
             {name}の現地のつづり <LocalName l={l} />（
-            <a href={l.src} target="_blank" rel="noopener noreferrer">
+            {/* 字は「Wikipedia」で揃えるが、読み上げでは場所ごとに名前を変える。
+                同じ名前のリンクが別々の先を指すと、読み上げで聞き分けられない（reachkeys の「おなじ字」） */}
+            <a href={l.src} target="_blank" rel="noopener noreferrer" aria-label={`${name}の Wikipedia`}>
               Wikipedia
             </a>
             ）
