@@ -5,6 +5,7 @@ import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
+import { travelHref } from "@/content/travelPath";
 /* 「あと◯日」の日を引くためだけ。**`content/plans.ts` の `nextPlan()` は
    読まない**——あちらは先の予定が0件になると行ってきた企画を返すので、
    島が過ぎた日からシールを数えることになる（`lib/leadPlan.ts` の注・#673）。 */
@@ -120,7 +121,7 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
         ...NORDIC_COUNTRIES.map((k) => ({
           label: k.name,
           sub: k.catch,
-          href: `/nordic/${k.slug}`,
+          href: travelHref(k.slug),
         })),
       ],
       /* 「なぜ北欧まで行くのか」と書いてあった。**帰ってきたあとも

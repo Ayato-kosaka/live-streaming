@@ -30,6 +30,7 @@
  */
 
 import { BUILT_AT, planById, planPhase } from "./plans";
+import { travelHref } from "@/content/travelPath";
 
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
@@ -167,7 +168,7 @@ export const THEMES: Theme[] = [
        アルバニアに `href` が無いのは、あちらに面が無いからで、
        ここで同じように省くと押せる先を1つ捨てることになる。
        **`id` は面の道と章の slug と同じ**（`content/chapters.ts`）。 */
-    href: "/north-macedonia",
+    href: travelHref("north-macedonia"),
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になり、
        焼き込みなので次のビルドまで直らない（`docs/island-misses.md` #135）。
@@ -218,7 +219,7 @@ export const THEMES: Theme[] = [
     id: "poland",
     name: "ポーランド",
     group: NORDIC_GROUP,
-    href: "/nordic/poland",
+    href: travelHref("poland"),
     lead: "ポーランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヴァヴェル城と、火を吹く龍の像が見たい",
     closed: true,
@@ -227,7 +228,7 @@ export const THEMES: Theme[] = [
     id: "lithuania",
     name: "リトアニア",
     group: NORDIC_GROUP,
-    href: "/nordic/lithuania",
+    href: travelHref("lithuania"),
     lead: "リトアニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）赤煉瓦の城と、十字架の丘が見たいです",
     closed: true,
@@ -236,7 +237,7 @@ export const THEMES: Theme[] = [
     id: "latvia",
     name: "ラトビア",
     group: NORDIC_GROUP,
-    href: "/nordic/latvia",
+    href: travelHref("latvia"),
     lead: "ラトビアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）リガの中央市場で、地元の人が買うものを見たい",
     closed: true,
@@ -245,7 +246,7 @@ export const THEMES: Theme[] = [
     id: "estonia",
     name: "エストニア",
     group: NORDIC_GROUP,
-    href: "/nordic/estonia",
+    href: travelHref("estonia"),
     lead: "エストニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）タリンの旧市街を、朝いちばんに歩いてほしい",
     closed: true,
@@ -254,7 +255,7 @@ export const THEMES: Theme[] = [
     id: "finland",
     name: "フィンランド",
     group: NORDIC_GROUP,
-    href: "/nordic/finland",
+    href: travelHref("finland"),
     lead: "フィンランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヘルシンキの市場で、朝ごはんを食べてほしい",
     closed: true,
@@ -263,7 +264,7 @@ export const THEMES: Theme[] = [
     id: "sweden",
     name: "スウェーデン",
     group: NORDIC_GROUP,
-    href: "/nordic/sweden",
+    href: travelHref("sweden"),
     lead: "スウェーデンで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ストックホルムの島を、歩いて渡ってほしい",
     closed: true,

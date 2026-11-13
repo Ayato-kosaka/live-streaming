@@ -35,6 +35,7 @@ import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
 import { nights } from "@/content/nights";
+import { travelHref } from "@/content/travelPath";
 /* 「いまどこ」の言い方は1か所（`lib/stay.ts` の `placeWord`）。
    板がここだけ独自に場所を言うと、同じ表紙の中で名刺と食い違う。 */
 import { placeWord, stayNow } from "@/lib/stay";
@@ -110,7 +111,7 @@ function milestone(today: string, now: Date): TodayNews | null {
         line: `今日、${c.name}に入りました`,
         title: `今日から ${c.name}`,
         body: `${c.stays.length > 1 ? `${c.name}は2度目。` : ""}${c.summary}`,
-        href: `/map/${c.slug}`,
+        href: travelHref(c.slug),
         go: "地図で見る",
       };
     }
@@ -157,7 +158,7 @@ function milestone(today: string, now: Date): TodayNews | null {
       line: `${c.name}にいて、今日で${here.days}日`,
       title: `${c.name} ${here.days}日目`,
       body: `${stay.from.replace(/-/g, "/")} に入って、まだいる。${stay.cities.join("・")}。`,
-      href: `/map/${c.slug}`,
+      href: travelHref(c.slug),
       go: "地図で見る",
     };
   }

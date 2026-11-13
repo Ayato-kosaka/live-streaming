@@ -11,6 +11,7 @@ import { STREAM_TYPES } from "@/content/streamTypes";
 import { ALL_APPS } from "@/content/apps";
 import { STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
+import { TRAVEL } from "@/content/travelPath";
 
 /**
  * これまでの棚。「これまで」の章の顔。
@@ -62,7 +63,7 @@ export default function Shelf() {
 
   const boxes: Box[] = [
     {
-      href: "/map",
+      href: TRAVEL,
       mark: "flagpost",
       name: "歩いた国",
       /* **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる

@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
-import { COUNTRIES } from "@/content/countries";
 import { RECIPES } from "@/content/recipes";
 import { MONTHS } from "@/content/months";
 import { APPS, PAST_APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
-import { DAY_PAGES, NORDIC_COUNTRIES, dayHref } from "@/content/nordic";
+import { DAY_PAGES, dayHref } from "@/content/nordic";
+import { TRAVEL, TRAVEL_PLACES } from "@/content/travel";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
 
@@ -38,7 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 行き先をぜんぶ並べた面。ここから全部の紙へリンクが1本ずつ出ているので、
     // 検索の側から見ても島の索引になる。
     "/all",
-    "/streams", "/map", "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    "/streams", TRAVEL, "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
     // 月ごとのふりかえり（#844）。**足し忘れて、配ったあとの見回りが赤くなった**（#872）
     "/months",
     /* あやと島案内鳥からのお知らせ（#851）。あやとの「気にしてる人少ないので、
@@ -58,8 +58,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // **足し忘れると `prodsweep.mjs` が「sitemap.xml に無い」で赤くする。**
     // 2026-10-08 に `/north-macedonia` を作ったとき、面と `/all` の棚は足したのに
     // ここを忘れて、配ったあとの見張りで見つかった。面を1枚増やす仕事は3か所ある。
+    // **国の面はここに書かない。** 下の `TRAVEL_PLACES`（`content/travel.ts`）から出る（#1201）
     "/nordic", "/nordic/guide",
-    "/north-macedonia",
     "/bulgaria",
     // 島から持って帰れるものと、お店で買えるもの（2026-10-08。言い方は 2026-10-14）。
     // **面を1枚増やす仕事は3か所**（上の注）。ここが3か所目
@@ -78,7 +78,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const rows: MetadataRoute.Sitemap = [
     ...top.map((p) => row(p, TOP_LASTMOD[p]?.())),
     ...STREAM_TYPES.map((t) => row(`/streams/${t.slug}`, LASTMOD.streamType(t))),
-    ...COUNTRIES.map((c) => row(`/map/${c.slug}`, LASTMOD.country(c))),
+    /* 国の面。歩いた国と、行く前の案内だけの国。**名簿は1つ**（`content/travel.ts`）。
+       北欧の6か国は前、行く前の案内（`/nordic/<国>`）がもう1行ずつ載っていた。
+       歩いた記録の面へ寄せたので、1国1行（#1201） */
+    ...TRAVEL_PLACES.map((p) => row(p.href, p.country ? LASTMOD.country(p.country) : undefined)),
     ...RECIPES.map((r) => row(`/kitchen/${r.slug}`, LASTMOD.recipe(r))),
     /* **`PAST_APPS` も並べる。** `appBySlug` は `APPS` だけを見ていて
        `/apps/spelieve` が 404 だった、という直しが `content/apps.ts` に
@@ -88,7 +91,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...LEGENDS.map((l) => row(`/legends/${l.slug}`, LASTMOD.legend(l))),
     // 月ごとのふりかえり、1か月ぶん
     ...MONTHS.map((m) => row(`/months/${m.key}`, LASTMOD.month(m))),
-    ...NORDIC_COUNTRIES.map((c) => row(`/nordic/${c.slug}`)),
     // 旅の1日ぶん。出発の日と1日目から7日目まで。
     ...DAY_PAGES.map((d) => row(dayHref(d))),
     // 過去の島の1章ぶん。`/atlas` から辿れる面で、中身は残り続ける

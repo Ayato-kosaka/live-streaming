@@ -1,13 +1,7 @@
-import { crumbOf } from "@/components/island/layout";
-import type { Metadata } from "next";
-import { share } from "@/lib/share";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel } from "@/components/ui/Bits";
-import Icon from "@/components/ui/Icon";
-import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
+import Icon from "@/components/ui/Icon";
 import CityMap, { cityKeys, type SpotKey } from "@/components/nordic/CityMap";
 import FarMark from "@/components/nordic/FarMark";
 import Notes from "@/components/live/Notes";
@@ -17,7 +11,6 @@ import Shops from "@/components/nordic/Shops";
 import { Mark } from "@/components/nordic/Marks";
 import MAP from "@/content/nordic/map.json";
 import {
-  NORDIC_COUNTRIES,
   ROUTE,
   loadSpots,
   nordicCountry,
@@ -26,28 +19,18 @@ import {
   type NordicSpot,
   type SpotCity,
 } from "@/content/nordic";
+import { tripPageOf } from "@/content/trip";
 
-export function generateStaticParams() {
-  return NORDIC_COUNTRIES.map((c) => ({ country: c.slug }));
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ country: string }>;
-}): Promise<Metadata> {
-  const { country } = await params;
-  const c = nordicCountry(country);
-  if (!c) return {};
-  const go = visitCitiesOf(c.slug);
-  return share({
-    key: "nordic",
-    title: `${c.name} — 北欧ヒッチハイク`,
-    // 降りる街を先に言う。国の名前だけだと、国じゅうを回るように読める。
-    description: `${c.catch} 行くのは${go.join("・")}。見どころ${c.spots}件と、この国であやとにやってほしいこと。`,
-    path: `/nordic/${country}`,
-  });
-}
+/*
+ * 北欧の国の「行く前に調べたこと」。国の面（`app/travel/[slug]/page.tsx`）の、
+ * 歩いた記録の下に並ぶ。
+ *
+ * 2026-11-13 まではこれが1枚の面（`/nordic/<国>`）だった。同じ国の歩いた記録
+ * （`/map/<国>`）とは互いにリンクが無く、見出しも同じ国名で、2枚に割れていた（#1201）。
+ * 寄せるときに**中身は作り直していない**——面の頭（見出し・題・一文・パンくず）を
+ * 歩いた記録のほうへ渡し、見出しの下にあった印（何カ国目・通貨・時差・いい時期）と
+ * 写真を、この節の頭へ移しただけ。前の道は `firebase.json` が 301 で国の面へ送る。
+ */
 
 /**
  * 見どころの4つの種類。**この順・この言い方で出す。**
@@ -243,14 +226,14 @@ function Way({ kind, leg }: { kind: string; leg: NonNullable<(typeof ROUTE)[numb
   );
 }
 
-export default async function NordicCountryPage({
-  params,
-}: {
-  params: Promise<{ country: string }>;
-}) {
-  const { country } = await params;
-  const c = nordicCountry(country);
-  if (!c) notFound();
+/** 節の見出しの id。島の中から「行く前に調べたこと」を指すときの錨 */
+export const GUIDE_ID = "before";
+
+export default async function CountryGuide({ slug }: { slug: string }) {
+  const c = nordicCountry(slug);
+  if (!c) return null;
+  const country = c.slug;
+  const trip = tripPageOf("nordic");
   const spots = await loadSpots(country);
 
   /* 行く街・寄るかもしれない街・行かない街。**分け方の出どころは旅程だけ**
@@ -265,9 +248,6 @@ export default async function NordicCountryPage({
   // （同じ写真を2つの大きさで取りに行かないため。`Spot` の覚え書き）。
   const heroSrc = hero?.big;
 
-  const idx = NORDIC_COUNTRIES.findIndex((x) => x.slug === c.slug);
-  const prev = NORDIC_COUNTRIES[idx - 1];
-  const next = NORDIC_COUNTRIES[idx + 1];
   // この国に入る区間と、この国から出る区間。「入って、出る」の形で見せると、
   // ルート全体のどこに挟まっている国なのかが1目で分かる。
   const inAt = ROUTE.findIndex((l) => l.enters === c.slug);
@@ -277,32 +257,37 @@ export default async function NordicCountryPage({
   const firstCity = MAP.cities.find((m) => m.country === c.slug)?.id;
 
   return (
-    <PageShell
-      crumbs={[
-        crumbOf("next"),
-        { label: "北欧ヒッチハイク", href: "/nordic" },
-        { label: c.name },
-      ]}
-    >
+    <section aria-labelledby={GUIDE_ID}>
+      {/* 節の頭。前は面の見出し（`PageHead`）だった。見出しの字は国の面の h1 が持つので、
+          ここは節の名前と、見出しの下にあった1行と印だけ */}
+      <Panel>
+        <h2 id={GUIDE_ID}>行く前に調べたこと</h2>
+        <p className="muted">{c.catch}</p>
+        <div className="phead-meta">
+          {/* 前はパンくず（島 › 企画 › 北欧ヒッチハイク › 国）が旅の面へ戻る口だった。
+              パンくずは歩いた国の形になったので、口はここへ移す。
+              「何カ国目」も、上のスタンプ（歩いた国の通し番号）と別の数なので旅の名前を添える */}
+          <span>
+            {trip ? (
+              <Link prefetch={false} className="phead-go" href={trip}>
+                北欧ヒッチハイク
+              </Link>
+            ) : (
+              "北欧ヒッチハイク"
+            )}
+            の{c.leg}カ国目
+          </span>
+          <span>{c.cur}</span>
+          <span>日本との時差 {c.tz}</span>
+          <span>いい時期 {c.best}</span>
+        </div>
+      </Panel>
       {hero?.big && (
         <div className="nchero is-plate">
-          <img src={hero.big} alt="" loading="eager" referrerPolicy="no-referrer" />
+          <img src={hero.big} alt="" loading="lazy" referrerPolicy="no-referrer" />
           <span className="nchero-credit">{hero.title} — Wikimedia Commons</span>
         </div>
       )}
-      <PageHead
-        title={c.name}
-        lead={c.catch}
-        mark={<Flag slug={c.slug} size={54} />}
-        meta={
-          <>
-            <span>{c.leg}カ国目</span>
-            <span>{c.cur}</span>
-            <span>日本との時差 {c.tz}</span>
-            <span>いい時期 {c.best}</span>
-          </>
-        }
-      />
 
       <section className="panel paper is-map">
         <h2>どこで入って、どこから出るのか</h2>
@@ -402,26 +387,6 @@ export default async function NordicCountryPage({
           テーマの id は国の slug と同じ（`content/themes.ts`）。 */}
       <Notes theme={c.slug} title={`${c.name}でこれやって`} />
 
-      <div className="nnav">
-        {prev ? (
-          <Link prefetch={false} href={`/nordic/${prev.slug}`}>
-            <Icon name="right" size={14} className="is-flip" />
-            <Flag slug={prev.slug} size={22} />
-            {prev.name}
-          </Link>
-        ) : (
-          <span />
-        )}
-        {next ? (
-          <Link prefetch={false} href={`/nordic/${next.slug}`}>
-            <Flag slug={next.slug} size={22} />
-            {next.name}
-            <Icon name="right" size={14} />
-          </Link>
-        ) : (
-          <span />
-        )}
-      </div>
-    </PageShell>
+    </section>
   );
 }

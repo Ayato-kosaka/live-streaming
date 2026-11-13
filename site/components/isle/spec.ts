@@ -38,6 +38,7 @@ import { boardPlate, type IsleBoardSpec } from "./board";
 import { isleIcon } from "./icons";
 import { pier, type Neighbour } from "./pier";
 import { isleSpanRange } from "./span";
+import { travelHref } from "@/content/travelPath";
 
 export type { Neighbour };
 
@@ -486,7 +487,7 @@ const GUIDES: Record<string, Guide[]> = {
     {
       slug: "north-macedonia",
       name: "北マケドニア",
-      href: "/north-macedonia",
+      href: travelHref("north-macedonia"),
       /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
          国を越えた日にも、何ヶ月たっても本当のことだけ。 */
       lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",
@@ -737,7 +738,7 @@ export function nordicSpec(c: Chapter, prev?: Neighbour): IsleSpec {
       items: NORDIC_COUNTRIES.map((k) => ({
         label: k.name,
         sub: k.catch,
-        href: `/nordic/${k.slug}`,
+        href: travelHref(k.slug),
       })),
     },
     {

@@ -10,6 +10,7 @@ import { NOW_FALLBACK } from "@/content/site";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
 import { stayAsPlace, stayClosedOn, stayDays, travelNow, tripAsPlace, tripDayWord, type TravelNow } from "@/lib/stay";
+import { TRAVEL, travelHref } from "@/content/travelPath";
 
 /**
  * 「いまどこ」の中身のうち、「いる国」に関わるところ。
@@ -172,7 +173,7 @@ export function NowCountry() {
         </>
       )}
 
-      <Link prefetch={false} className="pap-go" href={`/map/${c.slug}`} style={{ marginTop: "var(--sp-3)" }}>
+      <Link prefetch={false} className="pap-go" href={travelHref(c.slug)} style={{ marginTop: "var(--sp-3)" }}>
         <img src="/sprites/signpost.webp" alt="" />
         <span>
           <b>{c.name}でやったこと、ぜんぶ</b>
@@ -263,7 +264,7 @@ export function NowTrail() {
           const stay = lastStay(x);
           return (
             <li key={x.slug}>
-              <Link href={`/map/${x.slug}`} prefetch={false}>
+              <Link href={travelHref(x.slug)} prefetch={false}>
                 <Flag slug={x.slug} size={22} />
                 <b>{x.name}</b>
                 {stay && <i>{stay.from.slice(0, 7).replace("-", "/")}</i>}
@@ -272,7 +273,7 @@ export function NowTrail() {
           );
         })}
         <li>
-          <Link href="/map" prefetch={false} className="is-all">
+          <Link href={TRAVEL} prefetch={false} className="is-all">
             {/* **数を手で書かない。** ここは `17カ国ぜんぶ` と書いてあって、
                 歩いた国が19になっても17のままだった（`docs/island-misses.md` #104）。 */}
             <b><Walked />カ国ぜんぶ</b>
