@@ -6,7 +6,8 @@ import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
 import { DAY_PAGES, dayHref } from "@/content/nordic";
-import { TRAVEL, TRAVEL_PLACES } from "@/content/travel";
+import { TRAVEL, TRAVEL_PLACES, publicCities } from "@/content/travel";
+import { guideOf } from "@/content/travel/guides";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
 
@@ -82,6 +83,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
        北欧の6か国は前、行く前の案内（`/nordic/<国>`）がもう1行ずつ載っていた。
        歩いた記録の面へ寄せたので、1国1行（#1201） */
     ...TRAVEL_PLACES.map((p) => row(p.href, p.country ? LASTMOD.country(p.country) : undefined)),
+    /* 街のガイド（`/travel/<国>/<街>`）。**公開前の印（`draft`）が付いた街は並べない**
+       （`content/travel.ts` の `publicCities`）。更新日は、中身の字が変わった日（焼く道具が持つ） */
+    ...publicCities().map((c) => row(c.href, guideOf(c.country, c.slug).updated)),
     ...RECIPES.map((r) => row(`/kitchen/${r.slug}`, LASTMOD.recipe(r))),
     /* **`PAST_APPS` も並べる。** `appBySlug` は `APPS` だけを見ていて
        `/apps/spelieve` が 404 だった、という直しが `content/apps.ts` に

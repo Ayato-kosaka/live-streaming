@@ -8,6 +8,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
    読んで分からなくなる。 */
 import StickyNotes from "@/components/live/Notes";
 import NmMapSvg from "@/components/macedonia/NmMapSvg";
+import CityCards from "@/components/travel/CityCards";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import {
   NM_BEYOND,
@@ -166,6 +167,11 @@ export default function NorthMacedoniaPage() {
           </div>
         ))}
       </div>
+
+      {/* 実際に行った街のガイドへのカード（`docs/guide-design.md` 2-2 の4）。
+          **公開前の印が付いた街は出ない**（`content/travel.ts` の `TRAVEL_CITIES`）ので、
+          印があるあいだは何も描かない */}
+      <CityCards country="north-macedonia" />
 
       <div className="gbook">
         {/* **目次を置かない。** 節が7つで、閉じた札がそのまますぐ下に7枚並ぶ。

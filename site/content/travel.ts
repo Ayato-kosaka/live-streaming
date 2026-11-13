@@ -95,6 +95,72 @@ export const TRAVEL_LABEL = crumbOf("map").label;
 export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
 
 /**
+ * **`/travel/<国>/<街>` の名簿。** 実際に行った街のガイド（`docs/guide-design.md`）。
+ *
+ * ## 公開前の印（`draft`）
+ *
+ * 最初の街（スコピエ）は、あやとが全部読んでから検索に出す（#1197 Q3）。
+ * **印が付いているあいだ、その面は**——
+ *
+ * - 検索に載せない（面の `robots` が `index: false`）
+ * - 索引（`app/sitemap.ts`）と島のなか ぜんぶ（`/all`）の棚に並べない
+ * - 国の面からのカードを出さない
+ *
+ * 面そのものは書き出す（道を知っている人は読める）。**OK が出たら `draft: true` を消すだけで、
+ * 4つとも出る側へ倒れる。** ほかを書き換えなくていいように、4か所ともこの印1つを見ている。
+ */
+export type TravelCity = {
+  /** 国の slug（`TRAVEL_PLACES` に在ること） */
+  country: string;
+  slug: string;
+  /** 面の名前（パンくずの最後・h1 と同じ字） */
+  name: string;
+  /** 面の道 */
+  href: string;
+  /** 公開前。付いているあいだ、検索・索引・`/all`・国の面のカードに出さない */
+  draft?: true;
+};
+
+const CITIES: Omit<TravelCity, "href">[] = [{ country: "north-macedonia", slug: "skopje", name: "スコピエ", draft: true }];
+
+export const TRAVEL_CITIES: TravelCity[] = CITIES.map((c) => {
+  /* 国の面が無い街を立てない。パンくずの1つ上が行き止まりになる */
+  travelPage(c.country);
+  return { ...c, href: `${travelHref(c.country)}/${c.slug}` };
+});
+
+/** 名簿に在るはずの街。無ければ書き出しを止める */
+export function travelCity(country: string, slug: string): TravelCity {
+  const c = TRAVEL_CITIES.find((x) => x.country === country && x.slug === slug);
+  if (!c) throw new Error(`content/travel.ts: ${country}/${slug} が街の名簿（TRAVEL_CITIES）に無い`);
+  return c;
+}
+
+/** 出してよい街。**公開前の印が付いた街は入らない**（索引・`/all`・国の面のカードはここから引く） */
+export const publicCities = (country?: string) =>
+  TRAVEL_CITIES.filter((c) => !c.draft && (!country || c.country === country));
+
+/** 街のパンくず。島 › 歩いた国 › <国> › <街> */
+export function travelCityCrumbs(country: string, slug: string) {
+  const p = travelPage(country);
+  const c = travelCity(country, slug);
+  return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name }];
+}
+
+/** 街の面の、貼られたときの顔と居場所。**公開前は検索に出さない**（`robots` は印から） */
+export function travelCityShare(country: string, slug: string, o: { title: string; description: string }): Metadata {
+  const p = travelPage(country);
+  const c = travelCity(country, slug);
+  return share({
+    key: p.card,
+    title: o.title,
+    description: o.description,
+    path: c.href,
+    ...(c.draft ? { robots: { index: false, follow: true } } : {}),
+  });
+}
+
+/**
  * 国の面の、貼られたときの顔と自分の居場所（canonical / `og:url`）。
  * 道と絵は名簿から引くので、面は題と一文だけを渡す。
  */

@@ -2,7 +2,7 @@ import { DOORS } from "@/components/island/layout";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
-import { TRAVEL_LABEL, TRAVEL_PLACES, travelHref, travelPage } from "@/content/travel";
+import { TRAVEL_LABEL, TRAVEL_PLACES, publicCities, travelHref, travelPage } from "@/content/travel";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
@@ -260,6 +260,14 @@ export const SHELVES: Shelf[] = [
             "タヴチェグラフチェ アイヴァル ajvar デナル denar キリル文字 バルカン",
         ),
       },
+      /* 街のガイド。**公開前の印（`draft`）が付いた街は並べない**（`content/travel.ts` の `publicCities`）。
+         印を外した日に、ここへひとりでに1行増える */
+      ...publicCities("north-macedonia").map((c) => ({
+        href: c.href,
+        name: c.name,
+        note: "実際に行った記録。物価・行き方・マトカ渓谷",
+        q: q(c.name, c.slug, "スコピエ skopje 旅行記 物価 行き方 マトカ渓谷 matka チェバピ 旧市街 ホステル"),
+      })),
     ],
   },
   {
@@ -372,7 +380,7 @@ const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
    行く前の案内だけの国（`content/travel.ts` の `GUIDE_ONLY`）は棚を手で立てる（探し言葉は人が書く）。
    立て忘れると、索引には在るのに `/all` から行けない面になる——前は配ったあとの
    `prodsweep.mjs` で初めて分かった（#1201） */
-const offShelf = TRAVEL_PLACES.filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
+const offShelf = [...TRAVEL_PLACES, ...publicCities()].filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
 if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
 /** いまいる島の行が `/` に化けるぶん。**必ず1つ**（`chapterHref`） */
 const ISLE_NOW_ROWS = 1;

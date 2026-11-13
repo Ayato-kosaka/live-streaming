@@ -19,8 +19,9 @@ import { LINKS, PROFILE, SITE } from "@/content/site";
  *   生年月日は画面に出しているが、名札には入れない——年齢は画面が数え直すもので、
  *   機械に配って回るものではない
  * - **型を増やすのは、その型の中身が見えている面ができてから。**
- *   いま在るのは3つ: 島そのもの（`WebSite`）・本人（`ProfilePage` ＋ `Person`）・
- *   現在地（`BreadcrumbList`）。記事・動画・問いと答え・場所は、まだ出さない
+ *   いま在るのは4つ: 島そのもの（`WebSite`）・本人（`ProfilePage` ＋ `Person`）・
+ *   現在地（`BreadcrumbList`）・街のガイドの記事（`Article`。2026-11-14、`/travel/<国>/<街>`）。
+ *   動画・問いと答え・場所は、まだ出さない（`docs/guide-design.md` 6章「入れない」）
  *
  * ## 確かめかた
  *
@@ -43,6 +44,7 @@ export const SITE_ROOT_LABEL = "島";
 const ID = {
   site: `${SITE.url}/#website`,
   person: `${SITE.url}/about#person`,
+  org: `${SITE.url}/#org`,
 };
 
 /**
@@ -138,5 +140,40 @@ export function breadcrumbLd(items: { label: string; href?: string }[]): Ld | nu
       name: s.label,
       ...(s.href ? { item: abs(s.href) } : {}),
     })),
+  };
+}
+
+/**
+ * 街のガイドの記事（`/travel/<国>/<街>`）。`docs/guide-design.md` 6章・9章の1。
+ *
+ * - **`author` は島（`Organization`）。** 文を書いているのは案内鳥で、あやと本人ではない。
+ *   案内鳥を `Person` にすると、人でないものを人として名乗ることになる
+ * - あやと（`Person`）は `about` に置く。体験したのは本人
+ * - 日付は、表紙に見えている「公開」「最終更新」と**同じ値**（`<time datetime>` と食い違わせない）
+ */
+export function articleLd(o: {
+  path: string;
+  headline: string;
+  description: string;
+  datePublished: string;
+  dateModified: string;
+  image?: string;
+}): Ld {
+  const org = { "@type": "Organization", "@id": ID.org, name: SITE.name, url: abs("/") };
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: o.headline,
+    description: o.description,
+    url: abs(o.path),
+    mainEntityOfPage: abs(o.path),
+    inLanguage: "ja",
+    datePublished: o.datePublished,
+    dateModified: o.dateModified,
+    ...(o.image ? { image: [abs(o.image)] } : {}),
+    author: org,
+    publisher: org,
+    about: personLd(),
+    isPartOf: { "@id": ID.site },
   };
 }
