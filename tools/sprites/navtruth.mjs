@@ -288,8 +288,10 @@ async function main() {
   let paths = pathList();
   if (paths == null) {
     const xml = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    /* `<loc>` は正の URL（`SITE.url`）で焼かれていて、見る先（`BASE`）と同じとは限らない
+       （手元の口・古いドメイン。#1202）。頭を `BASE` で剥がさず、道だけを取る */
     paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
-      .map((m) => m[1].replace(BASE, "")).filter(Boolean);
+      .map((m) => new URL(m[1].trim()).pathname).filter(Boolean);
   }
   if (!paths.length) { console.error("見る面がありません"); process.exit(2); }
 

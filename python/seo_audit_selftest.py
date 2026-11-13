@@ -74,6 +74,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -357,6 +358,22 @@ ok("パンくずの途中の段に item が無いと困る",
 ok("いちばん奥の段は item が無くてよい", SA.ld_problems([json.dumps(ld_crumbs("島", "a", "b"))]), [])
 ok("`@context` が無いと困る", len(SA.ld_problems([json.dumps({"@type": "WebSite", "name": "x", "url": "y"})])), 1)
 ok("JSON として読めないと困る", len(SA.ld_problems(["{"])), 1)
+
+# 正の URL は `site/content/site.ts` の1行から。道具がドメインを持ち直すと、移した日に
+# 測る先が黙って古いほうに残る（#1202）
+ok("ORIGIN は原点だけの https", bool(re.fullmatch(r"https://[^/]+", SA.ORIGIN)), True)
+with tempfile.TemporaryDirectory() as _d:
+    (Path(_d) / "site/content").mkdir(parents=True)
+    _site = Path(_d) / "site/content/site.ts"
+    _site.write_text('export const SITE = {\n  name: "x",\n  url: "https://right.example",\n};\n'
+                     'export const PROFILE = {\n  url: "https://wrong.example",\n};\n', encoding="utf-8")
+    ok("SITE の url を読む", SA.site_url(Path(_d)), "https://right.example")
+    _site.write_text('export const SITE = {\n  name: "x",\n};\n'
+                     'export const PROFILE = {\n  url: "https://wrong.example",\n};\n', encoding="utf-8")
+    try:
+        ok("SITE に url が無ければ投げる（下の塊の url を拾わない）", SA.site_url(Path(_d)), "RuntimeError")
+    except RuntimeError:
+        ok("SITE に url が無ければ投げる（下の塊の url を拾わない）", "RuntimeError", "RuntimeError")
 
 
 # ---- 6. firebase.json の noindex --------------------------------------
