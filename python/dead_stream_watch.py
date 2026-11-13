@@ -236,6 +236,8 @@ PAGES: dict[str, str] = {
     "shorts.ts": "ショート動画の棚（/map, 島の棚）",
     "streamPeaks.ts": "コメントがいちばん重なった秒（配信カードの押しどころ）",
     "months.ts": "月ごとのふりかえりの、その月の配信ぜんぶ（/months/<年-月>）",
+    # 街のガイド（`content/travel/<国>/<街>.ts`。焼くのは `python/guide_bake.py`）
+    "skopje.ts": "スコピエのガイド（/travel/north-macedonia/skopje）の、一言と場面のリンク",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -246,8 +248,10 @@ PAGES: dict[str, str] = {
 # 一覧（`SIDE`）は「並んでいるうちの1枚」で、隣に生きた配信がある
 # `countryStats.ts` と `nordic.ts` は**1件を選んで押し出す側**。
 # 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
+# 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
+# 行き先はその1本しかない
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts")
+         "countryStats.ts", "nordic.ts", "skopje.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

@@ -575,6 +575,13 @@
 @media (min-width: 720px) {
   .tg-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .tg-cards.is-flat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* 遠出は節に1枚。2列の片側に置くと右半分が空くので、横いっぱいにして写真を左、字を右に */
+  .tg-card.is-trip {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
 .tg-card {
