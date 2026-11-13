@@ -39,7 +39,7 @@
 | `readaloud` | 言い回しが、その前後のチャットの文と重ならない（読み上げ） |
 | `identity` | 視聴者さんの素性（@名前・チャットの投稿者名・呼びかけ・投げ銭の額と語）が無い |
 | `music` | 歌詞の印の付いた行（`[音楽]`。#969）に掛からない |
-| `split` | 根拠の行の近くに、この項目が挙げていない同じ単位の額が在る／単位が言われていない／本人が言う前にチャットに同じ額が在る——のに「確かめが要る」（`verify`）が無い |
+| `split` | 1項目に同じ単位の額が2つ以上在る／根拠の行の近くに、この項目が挙げていない同じ単位の額が在る／単位が言われていない／本人が言う前にチャットに同じ額が在る——のに「確かめが要る」（`verify`）が無い |
 | `place` | 場所の名前の「字幕での形」がその配信の字幕に在る（無ければ、名前が議事録か題名に在る） |
 
 終了コード: 0=通った / 1=NG がある / **2=見るものが無い**（ファイルが無い・項目が0件・材料が読めない。
@@ -527,6 +527,12 @@ def check_item(i: int, it, ctx: dict, r: Result, spans: list) -> None:
     why = []
     if any(a["unit"] is None for a in said):
         why.append("単位が言われていない額が在る")
+    for u in sorted(units):
+        vals = sorted({as_num(a["value"]) for a in said if a["unit"] == u}, key=float)
+        if len(vals) > 1:
+            # 1項目に同じ単位の額は1つ。2つ在るのは、割れているか、別の品が混ざっているか
+            why.append(f"同じ単位の額が2つ以上在る（{'・'.join(v + u for v in vals)}）。"
+                       "割れているなら verify を、別の品なら other_amounts か別の項目に")
     if units:
         mine = {(as_num(a["value"]), a["unit"]) for a in amounts}
         mine |= {(as_num(a["value"]), a.get("unit")) for a in others}

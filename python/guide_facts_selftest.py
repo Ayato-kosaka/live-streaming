@@ -1,0 +1,412 @@
+"""**「実際に行った」の道具（`python/guide_facts.py`）が、守りを1つ外したファイルを、その札だけで落とすか。**
+
+    python3 python/guide_facts_selftest.py
+
+ネットワークも鍵も要らない。一時ディレクトリに小さな `streams/`（字幕・チャット・議事録）と
+寄せる表をこしらえて、`--root` `--table` で差し替えて当てる。本物の `streams/` には触らない。
+名前は全部こしらえたもの（視聴者さんの名前を見張りに書かない）。
+
+## なぜ要るか
+
+`check` が緑を返すと、束ねる側（`city`）と面を作る担当は、その額と一言を「配信で本人が言ったもの」
+として使う。**`check` が何も見ていなくても、緑は同じ緑に見える。** だから札を1つずつ、
+「その1点だけ崩したファイル」を作って、**その札だけが**出ることを確かめる
+（ほかの札まで一緒に出るなら、何が効いて落ちたのか分からない）。
+
+通るはずのもの——読み上げではない本人の一言・ほかの項目が名乗っている額・補い `[ ]` と中略 `…` の
+入った言い回し——が落ちないことも見る。落ちすぎる道具は、印（verify）を付けて黙らせる癖を生む。
+
+## 対照
+
+`guide_facts.py` の比較を1つ壊して（例: `±90秒` の幅を広げる・読み上げの `>=` を `>` に）、
+ここが赤くなることを確かめてある。`python3 python/mutation_drill.py python/guide_facts_selftest.py`
+でも当てられる。
+"""
+
+from __future__ import annotations
+
+import contextlib
+import copy
+import io
+import json
+import sys
+import tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guide_facts as gf  # noqa: E402
+
+ok: list[str] = []
+ng: list[str] = []
+
+
+def check(name: str, got, want) -> None:
+    if got == want:
+        ok.append(name)
+        print(f"  ok  {name}")
+    else:
+        ng.append(f"{name}: 欲しい {want!r} / 出た {got!r}")
+        print(f"  NG  {name}\n       欲しい {want!r}\n       出た   {got!r}")
+
+
+STEM = "2026-10-18_2202_AAA"
+
+TRANSCRIPT = """# 見本の配信で旧市街へ
+# https://www.youtube.com/watch?v=AAA
+# 開始: 2026-10-18 22:02 JST
+# 字幕: 自動
+# 行数: 10（30秒ごと）
+
+[0:00:00] こんばんは。今日は旧止街を歩きます。
+[0:00:30] バスは60番です。片道50デナールやった。
+[0:01:00] めっちゃ綺麗やんか。[笑い]いや、ほんまに来てよかったわ。
+[0:01:30] パスタが75円。コーラは100円やな。
+[0:02:00] スーパーで紫のラベルの梨ジュース飲んで欲しい。うまいらしい。
+[0:02:30] クッキーは180円ぐらい。60デナールで108円。
+[0:03:00] [音楽]
+[0:03:30] ボートは600やって。320円のお菓子も買った。
+[0:04:00] たろうさん、こんばんは。はなちゃん、こんばんは。今日も来てくれてありがとう。ランチにします。
+[0:04:30] ほなまた明日。
+"""
+
+CHAT = """# 見本の配信で旧市街へ
+# https://www.youtube.com/watch?v=AAA
+# 開始: 2026-10-18 22:02 JST
+
+[0:00:10] @たろう-x1y: こんばんは
+[0:00:12] ラン: やっほー
+[0:00:15] @あやとグルメアプリ: 【:hammer_and_wrench:定期】アプリは月50デナールから
+[0:01:50] Hanako_はなこ: スーパーで紫のラベルの梨ジュース飲んでほしい！うまいらしいぞ！
+[0:03:20] ¥320 @jiro1685: おやつ代
+"""
+
+NOTES = """# 2026-10-18 22:02 見本の配信で旧市街へ
+- URL: https://www.youtube.com/watch?v=AAA / 長さ 0:04:30
+- 場所: テスト国・タウン（旧市街→スーパー→ボート乗り場）
+- チャット 5件
+- 投げ銭 1件（¥320）: jiro1685 ¥320
+
+## ひとことで
+旧市街を歩いた回。
+
+## 流れ
+### [0:00:00] 旧市街へ
+60番のバス。@さぶろう「いってらっしゃい」。
+### [0:01:30] スーパー
+パスタとコーラの値段。
+### [0:03:00] ボート
+乗り場まで。
+
+## 視聴者さん
+- @たろう-x1y
+
+## 持ち越し・決まったこと
+なし
+"""
+
+TABLE = {
+    "money": {"円": []},
+    "countries": {
+        "testland": {
+            "name": "テスト国", "tz": "Europe/Skopje", "heads": ["テスト国"],
+            "money": {"デナール": ["デナル"]}, "base": "town", "no_city": ["滞在中の宿"],
+            "cities": {"town": {"name": "タウン", "heads": ["タウン"], "places": {"旧市街": ["バザール"]}}},
+        }
+    },
+}
+
+HEAD = {"schema": 1, "video_id": "AAA", "start_jst": "2026-10-18 22:02", "date_local": "2026-10-18",
+        "country": "testland", "city": "town", "place_line": "テスト国・タウン"}
+OLD = {"name": "旧市街", "heard": ["旧止街"]}
+
+GOOD = [
+    {"kind": "move", "text": "バスは60番。片道50デナール。", "t": 30,
+     "src": {"lines": ["0:00:30"], "notes": "[0:00:00] 旧市街へ"}, "what": "バス（片道）",
+     "amounts": [{"value": 50, "unit": "デナール", "as": "said"},
+                 {"value": 150, "unit": "円", "as": "converted", "from": {"value": 50, "unit": "デナール"}, "rate": 3}]},
+    {"kind": "place", "text": "旧市街を歩いた。", "t": 60,
+     "src": {"lines": ["0:00:00", "0:01:00"], "notes": "[0:00:00] 旧市街へ"}, "place": OLD,
+     # 空白・句読点の差、補い [ ]、中略 … は許す
+     "quote": "めっちゃ 綺麗やんか…来てよかった[です]わ"},
+    {"kind": "price", "text": "パスタは75円。", "t": 90,
+     "src": {"lines": ["0:01:30"], "notes": "[0:01:30] スーパー"}, "what": "パスタ",
+     "amounts": [{"value": 75, "unit": "円", "as": "said"}],
+     "other_amounts": [{"value": 100, "unit": "円", "what": "コーラ"}]},
+    {"kind": "food", "text": "クッキーは60デナール。円では180円とも108円とも言っている。", "t": 150,
+     "src": {"lines": ["0:02:30"], "notes": "[0:01:30] スーパー"}, "what": "クッキー",
+     "amounts": [{"value": 60, "unit": "デナール", "as": "said"}, {"value": 180, "unit": "円", "as": "said"},
+                 {"value": 108, "unit": "円", "as": "said"}],
+     "verify": "円の額が割れている"},
+    {"kind": "quote", "about": "place", "text": "旧市街に着いたときの一言。", "t": 60,
+     "src": {"lines": ["0:01:00"], "notes": "[0:00:00] 旧市街へ"}, "place": OLD, "quote": "ほんまに来てよかったわ"},
+    {"kind": "price", "text": "ボートは600。", "t": 210,
+     "src": {"lines": ["0:03:30"], "notes": "[0:03:00] ボート"}, "what": "ボート",
+     "amounts": [{"value": 600, "unit": None, "as": "said"}], "verify": "単位を言っていない"},
+]
+
+
+def make_root(d: Path) -> tuple[Path, Path]:
+    root = d / "streams"
+    m = root / "2026" / "10"
+    m.mkdir(parents=True)
+    (m / f"{STEM}.transcript.txt").write_text(TRANSCRIPT, encoding="utf-8")
+    (m / f"{STEM}.chat.txt").write_text(CHAT, encoding="utf-8")
+    (m / f"{STEM}.md").write_text(NOTES, encoding="utf-8")
+    table = d / "cities.json"
+    table.write_text(json.dumps(TABLE, ensure_ascii=False), encoding="utf-8")
+    return root, table
+
+
+def run(root: Path, table: Path, *argv: str) -> tuple[int, str]:
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
+        rc = gf.main(["--root", str(root), "--table", str(table), *argv])
+    return rc, buf.getvalue()
+
+
+def put(root: Path, items, head: dict | None = None) -> Path:
+    p = root / "2026" / "10" / f"{STEM}.facts.json"
+    p.write_text(json.dumps({**(head or HEAD), "items": items}, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def codes(root: Path, table: Path, items, head: dict | None = None) -> tuple[int, set[str]]:
+    """そのファイルを check にかけて（終了コード, 出た札の集まり）。"""
+    p = put(root, items, head)
+    rc, _ = run(root, table, "check", STEM)
+    r = gf.check_file(p, gf.load_table(table))
+    return rc, {c for _, c, _ in r.ng}
+
+
+def edit(i: int, **kw) -> list:
+    """GOOD の i 番目の欄を差し替えたもの。None を渡した欄は消す。"""
+    items = copy.deepcopy(GOOD)
+    for k, v in kw.items():
+        if v is None:
+            items[i].pop(k, None)
+        else:
+            items[i][k] = v
+    return items
+
+
+def extra(**it) -> list:
+    """GOOD の尻に1項目足したもの。"""
+    base = {"kind": "fact", "text": "見本。", "t": 0, "src": {"lines": ["0:00:00"], "notes": "[0:00:00] 旧市街へ"}}
+    return copy.deepcopy(GOOD) + [{**base, **it}]
+
+
+def check_units() -> None:
+    check("数字: カンマ・万・全角を同じ形に",
+          [gf.numval("1,500"), gf.numval("1万5000"), gf.numval("2万"), sorted(gf.numbers_in("１００円と1.5倍"))],
+          ["1500", "15000", "20000", ["1.5", "100"]])
+    long, short = gf.name_forms({"@たろう-x1y", "Hanako_はなこ", "@jiro1685", "@あやとグルメアプリ", "ラン"})
+    check("名前: 尻尾と区切りを落とした頭も探す", {"たろう", "hanako", "はなこ", "jiro1685"} <= long, True)
+    check("名前: 短い切れ端は敬称つきのときだけ", ("jiro" in long, "ラン" in short, "ラン" in long), (True, True, False))
+    check("名前: 配信者の側のアカウントは名前に数えない", any("あやと" in n for n in long | short), False)
+    check("読み上げ: 何字続けば同じ文と見るか（短い5字は4字、長いものは8字）",
+          [gf.overlap_need("詐欺やんけ"), gf.overlap_need("あ" * 10), gf.overlap_need("あ" * 30)], [4, 7, 8])
+    check("読み上げ: 続いた共通の字を数える", gf.lcs("紫のラベルの梨ジュース飲んで欲しい", "紫のラベルの梨ジュース飲んでほしい"), 14)
+
+
+def check_table() -> None:
+    real = gf.load_table(gf.TABLE)
+    got = [gf.resolve_place(h, real) for h in
+           ["北マケドニア・スコピエ", "北マケドニア", "北マケドニア・滞在中の宿", "北マケドニア・オフリド", "ジョージア・トビリシ"]]
+    check("寄せる表（本物）: 北マケドニアの頭の書きかた", got,
+          [("north-macedonia", "skopje", "名前"), ("north-macedonia", "skopje", "拠点"),
+           ("north-macedonia", "skopje", "拠点"), ("north-macedonia", None, "表に無い街"), (None, None, "表に無い国")])
+    units = gf.money_units(real, "north-macedonia")
+    check("寄せる表（本物）: 額は単位つきの形だけ拾う",
+          gf.money_in("60マケドニア通貨で180円ぐらい、600やって", units), [("60", "デナール"), ("180", "円")])
+    check("現地の日付: JST の深夜は前の日", gf.local_date("2026-10-16 01:06", "Europe/Skopje"), "2026-10-15")
+
+
+def check_good(root: Path, table: Path) -> None:
+    put(root, GOOD)
+    rc, out = run(root, table, "check", STEM)
+    check("通る形: 終了 0", rc, 0)
+    check("通る形: 辿れない項目を数えて 0件と出す", "辿れない項目 0件 / NG 0件" in out, True)
+    check("通る形: 種類ごとの数", "項目 6件（move1 price2 place1 food1 quote1）額つき 4・確かめが要る 2" in out, True)
+    rc, _ = run(root, table, "check", "--month", "2026-10")
+    check("月で指すと同じものを見る", rc, 0)
+    rc, _ = run(root, table, "check", "--country", "testland", "--city", "town")
+    check("国と街で指すと同じものを見る", rc, 0)
+
+
+def check_guards(root: Path, table: Path) -> None:
+    cases = [
+        # --- 時刻
+        ("time: 根拠の行が文字起こしに無い", edit(2, src={"lines": ["0:01:45"], "notes": "[0:01:30] スーパー"}), {"time"}),
+        ("time: t が根拠の行の外", edit(2, t=120), {"time"}),
+        ("time: t が配信の前", edit(0, t=-5), {"time"}),
+        ("time: 根拠の行を広く取りすぎ（5分を超える）", "wide", {"time"}),
+        # --- 議事録の見出し
+        ("notes: 見出しが議事録に無い", edit(2, src={"lines": ["0:01:30"], "notes": "[0:01:30] 市場"}), {"notes"}),
+        ("notes: t がその見出しの節の外", edit(0, src={"lines": ["0:00:30"], "notes": "[0:03:00] ボート"}), {"notes"}),
+        # --- 数字
+        ("number: 本文の数字を1つ書き換える（75→85）", edit(2, text="パスタは85円。"), {"number"}),
+        ("number: 字幕に在るが ±90秒より遠い数字", edit(0, text="バスは60番。片道50デナール。ボートは600。"), {"number"}),
+        ("number: 換算の額を本文に書く", edit(0, text="バスは60番。片道50デナールで150円。"), {"number"}),
+        # --- 言い回し
+        ("quote: 字幕に無い言い回し", edit(4, quote="来て正解やったわ"), {"quote"}),
+        ("quote: 字幕に在るが ±90秒より遠い", edit(4, quote="ほなまた明日"), {"quote"}),
+        ("quote: 中略の順が逆", edit(1, quote="来てよかったわ…めっちゃ綺麗やんか"), {"quote"}),
+        # --- 読み上げ
+        ("readaloud: 読み上げたチャットを本人の一言にする",
+         extra(kind="quote", about="food", text="梨ジュースの話。", t=120,
+               src={"lines": ["0:02:00"], "notes": "[0:01:30] スーパー"}, quote="紫のラベルの梨ジュース飲んで欲しい"), {"readaloud"}),
+        # --- 素性
+        ("identity: @名前", edit(1, text="旧市街を歩いた。@よしこ に教わった。"), {"identity"}),
+        ("identity: チャットの投稿者の名前（@ も尻尾も無い形）", edit(1, text="旧市街を歩いた。たろうに教わった。"), {"identity"}),
+        ("identity: 議事録にだけ在る名前", edit(1, text="旧市街を歩いた。さぶろうに見送られた。"), {"identity"}),
+        ("identity: 短い名前（2字）は、敬称が続くときだけ名前と見る", edit(1, text="旧市街を歩いた。ランさんの勧め。"), {"identity"}),
+        ("identity: 短い名前がふつうの語に入っているだけなら落とさない", edit(1, text="旧市街を歩いた。ランチの前。"), set()),
+        ("identity: 呼びかけの入った言い回し（チャットの表記と違うあだ名でも、形で落とす）",
+         extra(kind="quote", about="fact", text="挨拶。", t=240,
+               src={"lines": ["0:04:00"], "notes": "[0:03:00] ボート"}, quote="はなちゃん、こんばんは"), {"identity"}),
+        ("identity: 名前の入っていない挨拶は落とさない",
+         extra(kind="quote", about="fact", text="挨拶。", t=240,
+               src={"lines": ["0:04:00"], "notes": "[0:03:00] ボート"}, quote="今日も来てくれてありがとう"), set()),
+        ("identity: 投げ銭の話", edit(1, text="旧市街を歩いた。投げ銭のお礼を言った。"), {"identity"}),
+        ("identity: 投げ銭と同じ額",
+         extra(kind="price", text="お菓子は320円。", t=210, what="お菓子",
+               src={"lines": ["0:03:30"], "notes": "[0:03:00] ボート"},
+               amounts=[{"value": 320, "unit": "円", "as": "said"}]), {"identity"}),
+        # --- 歌詞の印
+        ("music: 伏せた行（[音楽]）を根拠にする",
+         extra(t=180, src={"lines": ["0:03:00"], "notes": "[0:03:00] ボート"}), {"music"}),
+        # --- 額の割れ
+        ("split: 同じ単位の額が2つ在るのに印が無い", edit(3, verify=None), {"split"}),
+        ("split: 近くの額（コーラ100円）を挙げていない", edit(2, other_amounts=None), {"split"}),
+        ("split: 単位を言っていない額に印が無い", edit(5, verify=None), {"split"}),
+        # --- 場所の名前
+        ("place: 字幕での形がこの配信の字幕に無い", edit(1, place={"name": "旧市街", "heard": ["オールドタウン"]}), {"place"}),
+        ("place: 字幕にも議事録にも題名にも無い名前", edit(1, place={"name": "石の橋", "heard": []}), {"place"}),
+        # --- 形
+        ("form: 種類が決まりの外", edit(1, kind="sight"), {"form"}),
+        ("form: 言い回しの項目に about が無い", edit(4, about=None), {"form"}),
+        ("form: 額に what が無い", edit(2, what=None), {"form"}),
+        ("form: 換算が元の額×rate と合わない",
+         edit(0, amounts=[{"value": 50, "unit": "デナール", "as": "said"},
+                          {"value": 200, "unit": "円", "as": "converted", "from": {"value": 50, "unit": "デナール"}, "rate": 3}]),
+         {"form"}),
+        ("form: 表に無い単位", edit(2, amounts=[{"value": 75, "unit": "ペソ", "as": "said"}]), {"form"}),
+    ]
+    for name, items, want in cases:
+        if items == "wide":
+            # 字幕を15分ぶんに伸ばして、頭と尻の行を根拠にする（数字も言い回しも無い項目）
+            p = root / "2026" / "10" / f"{STEM}.transcript.txt"
+            p.write_text(TRANSCRIPT + "".join(f"[0:{m:02d}:00] 歩いています。\n" for m in range(5, 16)), encoding="utf-8")
+            rc, got = codes(root, table, extra(kind="fact", text="歩いた。", t=210,
+                                               src={"lines": ["0:03:30", "0:09:00"], "notes": "[0:03:00] ボート"}))
+            p.write_text(TRANSCRIPT, encoding="utf-8")
+        else:
+            rc, got = codes(root, table, items)
+        check(name, (rc, got), (1 if want else 0, want))
+
+    # 額そのものを書き換えると、数字（字幕に無い）で落ちる。挙げなくなった元の額が「近くの額」として一緒に出てよい
+    rc, got = codes(root, table, edit(2, amounts=[{"value": 85, "unit": "円", "as": "said"}]))
+    check("number: 額を書き換える（75→85）", (rc, "number" in got), (1, True))
+
+    # 頭
+    rc, got = codes(root, table, GOOD, {**HEAD, "city": "village"})
+    check("head: 街が、議事録の場所から出る値と違う", (rc, got), (1, {"head"}))
+    rc, got = codes(root, table, GOOD, {**HEAD, "date_local": "2026-10-19"})
+    check("head: 現地の日付が違う", (rc, got), (1, {"head"}))
+
+    # 本人が言う前に、チャットに同じ額が在る（読み上げかもしれない）
+    c = root / "2026" / "10" / f"{STEM}.chat.txt"
+    c.write_text(CHAT + "[0:00:20] @はなこ: 片道は50デナールやで\n", encoding="utf-8")
+    rc, got = codes(root, table, GOOD)
+    check("split: 本人が言う前にチャットに同じ額", (rc, got), (1, {"split"}))
+    c.write_text(CHAT + "[0:00:50] @はなこ: 50デナールは安い\n", encoding="utf-8")
+    rc, got = codes(root, table, GOOD)
+    check("split: 本人が言ったあとのチャット（繰り返し）は落とさない", (rc, got), (0, set()))
+    c.write_text(CHAT, encoding="utf-8")
+    rc, got = codes(root, table, GOOD)
+    check("split: 配信者の側の定期の告知（50デナール）は読み上げに数えない", (rc, got), (0, set()))
+
+
+def check_blind(root: Path, table: Path) -> None:
+    put(root, [])
+    rc, out = run(root, table, "check", STEM)
+    check("0件を合格にしない: 項目が0件は終了 2", (rc, "項目が0件" in out), (2, True))
+    t = root / "2026" / "10" / f"{STEM}.transcript.txt"
+    put(root, GOOD)
+    t.write_text("# 題\n\n[0:00:00] [音楽]\n[0:00:30] [音楽]\n", encoding="utf-8")
+    rc, out = run(root, table, "check", STEM)
+    check("0件を合格にしない: 文字起こしが読めない（曲の行だけ）は終了 2", (rc, "文字起こしが読めない" in out), (2, True))
+    t.unlink()
+    rc, out = run(root, table, "check", STEM)
+    check("0件を合格にしない: 文字起こしが無いは終了 2", (rc, "材料が無い" in out), (2, True))
+    t.write_text(TRANSCRIPT, encoding="utf-8")
+    rc, _ = run(root, table, "check", "2026-10-19_2200_ZZZ")
+    check("0件を合格にしない: 指した stem のファイルが無いは終了 2", rc, 2)
+    rc, _ = run(root, table, "check", "--month", "2026-09")
+    check("0件を合格にしない: その月に1本も無いは終了 2", rc, 2)
+    (root / "2026" / "10" / f"{STEM}.facts.json").write_text("{", encoding="utf-8")
+    rc, _ = run(root, table, "check", STEM)
+    check("0件を合格にしない: JSON として読めないは終了 2", rc, 2)
+
+
+def check_city(root: Path, table: Path, d: Path) -> None:
+    put(root, GOOD)
+    out_md = d / "town.md"
+    rc, _ = run(root, table, "city", "--country", "testland", "--city", "town", "--out", str(out_md))
+    text = out_md.read_text(encoding="utf-8") if out_md.exists() else ""
+    check("city: 終了 0 で下書きが出る", (rc, text.startswith("# タウン（テスト国）")), (0, True))
+    check("city: 額の表に、何に・いくら・いつ・場面（時刻つきリンク）",
+          "| パスタ | 75円 | 2026-10-18 | [0:01:30](https://www.youtube.com/watch?v=AAA&t=90s) |  |" in text, True)
+    check("city: 換算と、単位の無い額と、要確認が見分けられる",
+          ("50デナール・150円（50デナール からの換算）" in text, "600（単位は言っていない）" in text,
+           "要確認: 単位を言っていない" in text), (True, True, True))
+    check("city: 場所ごとに、行った日・一言・場面",
+          "### 旧市街\n\n- 旧市街を歩いた。 「めっちゃ 綺麗やんか…来てよかった[です]わ」"
+          "（2026-10-18 [0:01:00](https://www.youtube.com/watch?v=AAA&t=60s)）\n"
+          "- 「ほんまに来てよかったわ」— 旧市街に着いたときの一言。" in text, True)
+    lines = [s for s in text.splitlines() if s.startswith("- ") or (s.startswith("| ") and "&t=" in s)]
+    check("city: どの行にも日付と時刻つきリンク", all("2026-10-18" in s and "&t=" in s for s in lines) and len(lines), 8)
+    check("city: 視聴者さんの名前が出ない", any(n in text for n in ["たろう", "はなこ", "jiro", "さぶろう"]), False)
+    put(root, edit(2, text="パスタは85円。"))
+    rc, _ = run(root, table, "city", "--country", "testland", "--city", "town")
+    check("city: check を通っていない材料では組まない", rc, 1)
+    rc, _ = run(root, table, "city", "--country", "testland", "--city", "nowhere")
+    check("city: 表に無い街は終了 2", rc, 2)
+
+
+def check_new_and_read(root: Path, table: Path) -> None:
+    p = root / "2026" / "10" / f"{STEM}.facts.json"
+    p.unlink()
+    rc, out = run(root, table, "new", STEM)
+    made = json.loads(p.read_text(encoding="utf-8"))
+    check("new: 頭を機械で埋めた空のファイルを置く", (rc, {k: made[k] for k in HEAD}, made["items"]), (0, HEAD, []))
+    check("new: 議事録の見出しを地図として出す", "[0:01:30] スーパー" in out, True)
+    rc, _ = run(root, table, "check", STEM)
+    check("new: 置いただけのものは通らない（終了 2）", rc, 2)
+    rc, out = run(root, table, "read", STEM, "0:01:30", "0:02:00", "--chat")
+    check("read: その窓の字幕と、同じ時刻のチャットの文", (rc, "[0:01:30] パスタが75円" in out, "梨ジュース飲んでほしい" in out),
+          (0, True, True))
+    check("read: チャットの名前は出さない", "はなこ" in out or "Hanako" in out, False)
+
+
+def main() -> int:
+    check_units()
+    check_table()
+    with tempfile.TemporaryDirectory() as d:
+        root, table = make_root(Path(d))
+        check_good(root, table)
+        check_guards(root, table)
+        check_blind(root, table)
+        check_city(root, table, Path(d))
+        check_new_and_read(root, table)
+    print(f"\n対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")
+    for line in ng:
+        print(f"::error::{line}")
+    if not ok:
+        print("::error::対照が0件です")
+        return 1
+    return 1 if ng else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
