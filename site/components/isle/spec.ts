@@ -25,12 +25,14 @@ import { APPS, PAST_APPS, type AppEntry, type AppMilestone } from "@/content/app
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
+import { COUNTRIES } from "@/content/countries";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import { chapterCountries } from "@/content/walked";
+import { chapterCountries, walkingCountries } from "@/content/walked";
 import { ALBANIA_GROUP, BULGARIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP } from "@/content/themes";
 import type { IconName } from "@/components/ui/icons";
+import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { boardPlate, type IsleBoardSpec } from "./board";
 import { isleIcon } from "./icons";
@@ -434,43 +436,55 @@ const BALKAN_BOARDS: { name: string; group: string }[] = [
  * 章を国ごとに割らないので（`content/chapters.ts` の `balkans`）、
  * 「この国の歩きかた」の行き先は章の slug からは決まらない。だから表で持つ。
  *
- * - **並びは新しい国が先。** 国を1つ越えたら、その国の行を先頭に足す
+ * ## いつ出すかは、ここに書かない
+ *
+ * **出すのは、その国に居るあいだだけ。** 居るあいだとは、その国に入った日から、
+ * つぎの国に入った前の日まで。つぎの国がまだ無ければ、開いたまま。
+ * 入った日は国の表（`content/countries.ts`）が持っているので、**そこから導く**（`ENTERED`）。
+ *
+ * 前は行ごとに `from`〜`to` を手で書いて、期間の無い行を「いつでも当たる」
+ * 受け皿にしていた。あやとが「一週間ほど」と言った日に `to: "2026-11-19"` と書いたが、
+ * 出る日は決まっていなかった——**11-20 になると、まだブルガリアに居ても、
+ * 表紙は11日に出た北マケドニアの案内へ戻る**形だった。
+ * 同じ事実（いつどの国に入ったか）を2か所に書くと、片方は見立てのまま残る
+ * （`docs/island-standards.md` 8章）。
+ *
  * - **面の無い国を書かない。** 書くと、押した先で島の玄関が 200 を返して、
  *   押した人には何が起きたのか分からない（`content/themes.ts` の同じ決まり）。
  *   アルバニアがここに無いのは、`/albania` という面が無いから
+ * - **いま居る国に行が無ければ、案内は出ない。** 前の国へは戻さない——
+ *   もう居ない国の歩きかたを「いま」に出すより、出さないほうが本当
  * - **章の外へ持ち越さない。** 章が変われば、この表に無い章になって札は建たない。
  *   持ち越すと、次の島に前の国の案内が建つ
- * - **滞在の決まっている国は、期間を書いて先頭に置く。** `from`〜`to` のあいだだけ
- *   そちらが選ばれ、過ぎれば**ひとりでに**下の国へ戻る（`guideOf`）。
- *   期間の無い行は「いつでも当たる」ので、いちばん下に1つだけ置く
+ * - **行を足すのは、その国を国の表に足すのと同じ変更で。** 国の表に居ない国の行は
+ *   いつまでも当たらないので、`python/upkeep_watch.py` の引き金「案内している国」が
+ *   名指しする（2026-11-12 に、面と行だけ出して国を足し忘れた）。
+ *   逆——国は足したのに行が無い——は `site/selftest/islechapter_selftest.mjs` が見る
+ * - 並びは新しい国が先（読む人のため。選ぶのは日付なので、順では決まらない）
  *
- * 行き先が本当に在るかは `site/selftest/islechapter_selftest.mjs` が数える。
+ * 行き先が本当に在るかも `site/selftest/islechapter_selftest.mjs` が数える。
  */
 type Guide = {
+  /** 国（`content/countries.ts` の slug）。**いつ出すかは、この国に入った日で決まる** */
+  slug: string;
   name: string;
   href: string;
   lead: string;
   /** 行き先の面が頭に出している印と同じ絵（その国の `page.tsx` の `PageHead`） */
   icon: IconName;
-  /** 出しはじめる日（JST の `YYYY-MM-DD`、その日を含む）。無ければ「いつでも」 */
-  from?: string;
-  /** 出しおわる日（その日を含む）。無ければ「ずっと」 */
-  to?: string;
 };
 
 const GUIDES: Record<string, Guide[]> = {
   balkans: [
     {
+      slug: "bulgaria",
       name: "ブルガリア・ソフィア",
       href: "/bulgaria",
       lead: "ローマの遺跡と、ただで湧く温泉の首都。見どころと食べものに、好みの印つき",
       icon: "church",
-      /* あやとの滞在（2026-11-12 に移動、1週間ほど）。
-         **過ぎたら北マケドニアへ戻る。** 戻すために誰かが手を入れる必要は無い */
-      from: "2026-11-12",
-      to: "2026-11-19",
     },
     {
+      slug: "north-macedonia",
       name: "北マケドニア",
       href: "/north-macedonia",
       /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
@@ -481,17 +495,84 @@ const GUIDES: Record<string, Guide[]> = {
   ],
 };
 
-/** JST のその日（`YYYY-MM-DD`）。**ブラウザの時間帯で切らない**——
-    日本の夜に見ている人と、現地（UTC+2）で見ているあやとで、入れ替わる日が1日ずれる */
-const jstDay = (d: Date) =>
-  new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
-
-/** その章の案内ぜんぶ（期間の行も含む）。**入れ替わりを面の側で決めるため**に出す
-    （`components/live/GuideLink.tsx`。焼いた日で決めると、次のビルドまで戻らない） */
-export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || [];
+/**
+ * 国に入った1回ぶん。**国の表（`content/countries.ts`）の写しではなく、読みかた。**
+ */
+export type Entered = {
+  slug: string;
+  /** 入った日（`YYYY-MM-DD`） */
+  on: string;
+  /** 出た日。**歩き終わった国の、閉じた滞在だけが持つ** */
+  left?: string;
+};
 
 /**
- * その章で、いま案内の面を持っている国。**無ければ `null`。**
+ * いつ、どの国に入ったか。**出どころは国の表だけ。**
+ *
+ * - 歩き終わった国（`COUNTRIES`）… 滞在1つが1回。頭の日が入った日
+ * - 歩いている最中の国（`AHEAD_COUNTRIES`）… `entered`。記録のある国と
+ *   重ねないのは `walkingCountries()` が持っている決まり
+ *
+ * **並べ替えはここでしない**（使う側の `staysOf` がする）。仕込みの並びを
+ * 渡して確かめられるように、素の並びのまま出す。
+ */
+export const ENTERED: Entered[] = [
+  ...COUNTRIES.flatMap((c) =>
+    c.stays.map((s) => ({ slug: c.slug, on: s.from, ...(s.to ? { left: s.to } : {}) })),
+  ),
+  ...walkingCountries().map((c) => ({ slug: c.slug, on: c.entered })),
+];
+
+/** 日付として読める字か。読めない字を `toISOString()` に渡すと、面ごと落ちる */
+const isDay = (s?: string): s is string =>
+  !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
+
+/** その日の前日。国の切れ目を引くためだけなので、暦は UTC で足りる */
+const dayBefore = (d: string) =>
+  new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
+
+/**
+ * その国に居た期間。**2度入った国は2つ返る。**
+ *
+ * 終わりは、**つぎの国に入った前の日**（人は2つの国に同時には居ない。
+ * `content/walked.ts` の `walkingCountries` と `python/stays.py` の
+ * `chapter_stays()` が同じ切りかた）。滞在が閉じてあれば、そのどちらか早いほう
+ * ——国を移る日は前の国の `to` とつぎの国の `from` が同じ日になるので、
+ * 境目の日は入った国が取る。つぎの国がまだ無く、閉じてもいなければ開いたまま。
+ *
+ * 入った日が読めない行は**数えない**（その国には入っていないのと同じ。
+ * 入っていない国の案内は出ないので、気づくのは `upkeep_watch.py` の側）。
+ */
+function staysOf(slug: string, entered: readonly Entered[]): GuideSpan[] {
+  const rows = entered.filter((e) => isDay(e.on)).sort((a, b) => a.on.localeCompare(b.on));
+  return rows.flatMap((e, i) => {
+    if (e.slug !== slug) return [];
+    const next = rows[i + 1];
+    const ends = [isDay(e.left) ? e.left : "", next ? dayBefore(next.on) : ""].filter(Boolean).sort();
+    return [{ from: e.on, ...(ends.length ? { to: ends[0] } : {}) }];
+  });
+}
+
+/**
+ * その章の案内ぜんぶに、**当たる期間を付けたもの。** 期間は国の表から導く。
+ *
+ * **入れ替わりを面の側で決めるため**に出す（`components/live/GuideLink.tsx`。
+ * 焼いた日で決めると、次のビルドまで替わらない）。国の表は書き出しのたびに
+ * 焼き直されるので、期間のほうは焼いてよい——動くのは「今日」だけ。
+ *
+ * @param slug 章（`content/chapters.ts` の slug）
+ * @param entered 国に入った日の並び。**確かめのときだけ渡す**（本番は国の表）
+ */
+export const guidesOf = (
+  slug?: string,
+  entered: readonly Entered[] = ENTERED,
+): (Guide & GuideSpan)[] =>
+  ((slug && GUIDES[slug]) || []).flatMap((g) =>
+    staysOf(g.slug, entered).map((span) => ({ ...g, ...span })),
+  );
+
+/**
+ * その章で、**その日に居る国**の案内。居る国に案内の面が無ければ `null`。
  *
  * 島の札（`guidePlace`）も、島の下の紙の板（`app/page.tsx`）も、ここから引く。
  * 国の名前を紙のほうへ書き写すと、国を越えた日に**紙だけが前の国を指す。**
@@ -500,19 +581,20 @@ export const guidesOf = (slug?: string): Guide[] => (slug && GUIDES[slug]) || []
  *
  * | | |
  * | --- | --- |
- * | トップの板（`GuideLink`） | 画面が出てからの今日。期間が来た日に、その場で入れ替わる |
+ * | トップの板（`GuideLink`） | 画面が出てからの今日。国を越えた日に、その場で入れ替わる |
  * | 島の札（`guidePlace`） | **焼いた日。** 次のビルドまで前の国を指す |
  *
  * 島の札まで画面の側で入れ替えるには、島の絵を作る仕掛け（`isleSpec`）ごと
  * ブラウザへ持っていくことになるので、そこまではしない。
  * 毎晩の配りがあるので、札が追いつくのは遅くとも翌日。
+ *
+ * 選びかたは `lib/guideDay.ts` の1本（トップの板と同じ式。JST の日で切る）。
  */
-export const guideOf = (slug?: string, on?: Date): Guide | null => {
-  const list = (slug && GUIDES[slug]) || [];
-  const day = jstDay(on ?? new Date());
-  /* 上から見て、**その日に当たる最初の1つ。** 期間を書いていない行はいつでも当たる */
-  return list.find((g) => (!g.from || day >= g.from) && (!g.to || day <= g.to)) || null;
-};
+export const guideOf = (
+  slug?: string,
+  on: Date = new Date(),
+  entered: readonly Entered[] = ENTERED,
+): (Guide & GuideSpan) | null => guideOn(guidesOf(slug, entered), on);
 
 /**
  * 案内の札の字。**島の建物でも、板の中の1行でも、同じ字にする**
@@ -525,12 +607,14 @@ export const GUIDE_LABEL = "この国の歩きかた";
 export const GUIDE_BLURB = "首都・見どころ・食べもの";
 
 /**
- * その章の「この国の歩きかた」。**案内の面を1枚も持たない章には建たない。**
+ * その章の「この国の歩きかた」。**その日に居る国が案内の面を持たなければ建たない**
+ * （案内の面を1枚も持たない章も同じ）。
  *
  * @param slug 章（`content/chapters.ts` の slug）
+ * @param on その日。渡さなければ今日（＝焼いた日。`guideOf` の表）
  */
-export const guidePlace = (slug?: string): IslePlaceSpec | null => {
-  const g = guideOf(slug);
+export const guidePlace = (slug?: string, on?: Date): IslePlaceSpec | null => {
+  const g = guideOf(slug, on);
   if (!g) return null;
   return {
     id: "guidebook",
@@ -569,8 +653,9 @@ export const guidePlace = (slug?: string): IslePlaceSpec | null => {
  *   **札の字は手で書かない**（`components/isle/board.ts`）——2026-10-11 に
  *   アルバニアあての宛先を畳んだのに字が「ここから貼れる」のまま残って、
  *   押した先で貼れない板になっていた（#223）
- * - **いまいる国の案内**（`/north-macedonia`）。行く先の中身が先に分かって
- *   いる国なので、島に降りた人が最初に欲しいのはそれ
+ * - **いまいる国の案内**（`guidePlace`）。行く先の中身が先に分かって
+ *   いる国なので、島に降りた人が最初に欲しいのはそれ。
+ *   **面を持たない国に居るあいだは建たない**（前の国の案内を残さない）
  */
 export function balkansSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSpec {
   const isle = isleSpec(c, prev, next);

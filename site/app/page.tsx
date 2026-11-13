@@ -252,11 +252,14 @@ export default function Home() {
               前の国を指す（`docs/island-standards.md` 8章）。
               案内の面を持たない章では、この板ごと出ない。
 
-              **どの国かを、焼いた日で決めない。** 滞在の決まっている国は
-              `GUIDES` に期間つきで入っていて、入れ替わりは**画面が出てから**
-              今日の日付で選び直す（`components/live/GuideLink.tsx`）。
-              ここで決め打つと、ビルドした日の国が焼き込まれて、
-              滞在が終わっても次のビルドまで戻らない。 */}
+              **どの国かを、焼いた日で決めない。** 出すのはその日に居る国の案内で、
+              入れ替わりは**画面が出てから**今日の日付で選び直す
+              （`components/live/GuideLink.tsx`）。ここで決め打つと、ビルドした日の
+              国が焼き込まれて、国を越えても次のビルドまで替わらない。
+
+              **期間をここにも表にも書かない。** `from`〜`to` は `guidesOf` が
+              国の表（`content/countries.ts` の入った日）から導いたもの。
+              居る国が案内の面を持たない日は、どの行にも当たらず、板ごと出ない。 */}
           <GuideLink
             items={guidesOf(baked.slug).map((g) => ({
               href: g.href,
