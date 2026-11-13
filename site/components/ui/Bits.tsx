@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import Icon from "./Icon";
+import { isoDay } from "@/lib/isoDay";
 
 /**
  * YouTube のサムネ + 再生リンク。埋め込みはクリックしてから読み込む(軽さのため)。
@@ -50,7 +51,7 @@ export function StreamCard({
         {(tag || date) && (
           <span className="scard-meta">
             {tag && <em>{tag}</em>}
-            {date && <time>{date.replace(/-/g, "/")}</time>}
+            {date && <time dateTime={isoDay(date)}>{date.replace(/-/g, "/")}</time>}
           </span>
         )}
         {/* YouTube に実在する題名。**引用なので直さない**

@@ -15,6 +15,7 @@ import { ArtBasket, ArtCam, ArtFlame, ArtMeeting, ArtPot, ArtShelf, ArtSignpost 
 import { kitchenTalk } from "@/content/kitchenTalk";
 import VoiceBubble from "@/components/ui/Voice";
 import KitchenDay from "@/components/streams/KitchenDay";
+import { isoDay } from "@/lib/isoDay";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -168,7 +169,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
                   <span className="rt-body">
                     <span className="rt-head">
                       <b>{s.label}</b>
-                      <time>{s.date.replace(/-/g, "/")}</time>
+                      <time dateTime={isoDay(s.date)}>{s.date.replace(/-/g, "/")}</time>
                       <span className="sub">{st.note}</span>
                     </span>
                     <span className="vids is-one">

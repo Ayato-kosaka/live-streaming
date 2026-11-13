@@ -8,6 +8,7 @@ import Fold from "@/components/ui/Fold";
 import { ALL_APPS, appBySlug, type AppMilestone } from "@/content/apps";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import { DishArt, HeadphoneArt, PhoneShot } from "@/components/atlas/art";
+import { isoDay } from "@/lib/isoDay";
 
 export function generateStaticParams() {
   // 配信より前に作っていた1本も面を持つ。旅に出た理由がそこにあるので、
@@ -143,7 +144,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
                   </span>
                   <div className="astep-body">
                     <div className="astep-head">
-                      <time>{m.date.replace(/-/g, "/")}</time>
+                      <time dateTime={isoDay(m.date)}>{m.date.replace(/-/g, "/")}</time>
                       <span className="astep-kind">{KIND[m.kind].label}</span>
                     </div>
                     <b>{m.title}</b>
