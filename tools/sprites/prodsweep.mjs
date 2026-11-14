@@ -4,7 +4,7 @@
  *   node tools/sprites/prodsweep.mjs
  *   ORIGIN=https://… node tools/sprites/prodsweep.mjs
  *   BREAK=status|h1|title|thin|follow|tell node tools/sprites/prodsweep.mjs   # 対照を空振りさせる
- *   BREAK=smiss|amiss|alias|excuse|unused|claim node tools/sprites/prodsweep.mjs   # 突き合わせのほう
+ *   BREAK=smiss|amiss|alias|excuse|unused|claim|draft|noidx node tools/sprites/prodsweep.mjs   # 突き合わせのほう
  *
  * 0＝通った / 1＝見つかった / 2＝数えるものが無い（対照が落ちた・読めない面がある）。
  * `| tail` を挟まない——終了コードが消える。
@@ -91,6 +91,31 @@
  * いまは章の島はいつも `/island/<章>`（#1201）なので、章の島でこの字が出る日は来ない
  * ——出たら、`/all` の行がまた別名へ送りはじめたということ。
  *
+ * ## 公開前の面（`<meta name="robots">` に noindex）
+ *
+ * 面は書き出してあるが、まだ検索に出さない面がある。`site/content/travel.ts` の
+ * 公開前の印（`draft: true`）が付いた街と記事で、あやとが読んで OK を出すまで
+ * **noindex で配り、sitemap にも `/all` にも並べない**（#1197）。2026-11-13 に
+ * スコピエの2面が入った日から、この見張りは「どちらにも無い」で6回続けて赤だった
+ * （#1215）——見張りがこの決まりを知らなかった。
+ *
+ * **ここは配られたバイト列の層を見る道具なので、`travel.ts` を読みに行かない。**
+ * 配られた面の `<head>` の `<meta name="robots">` に noindex が在って、`ABSENCES` に
+ * 1行も無い面を「公開前」と読む。印を消して公開した日には、面が noindex でなくなり、
+ * sitemap と `/all` に並ぶので、**ここで手で何かを消しに来なくて済む**（宣言を
+ * 手で足さないのはそのため。足すと、公開した日に `unused` で落ちる）。
+ *
+ * - 公開前の面が sitemap と `/all` に無いのは違反にしない。**黙っても畳まない**——
+ *   「— 公開前（noindex）」と1面ずつ字に出す（`ABSENCES` の行と同じ）
+ * - **逆に、noindex の面が索引に出ていたら違反**（`noidx`）。検索に載せないと
+ *   言いながら索引に出している＝印の決まりが崩れた
+ *   - sitemap は「検索に載せて」という頼みなので、**noindex の面はどれでも**載っていたら違反
+ *   - `/all` は人が島を歩く索引なので、違反にするのは**公開前の面だけ**。
+ *     `/design` は noindex だが `/all` には並べると決めてある（`ABSENCES` の理由）
+ * - `ABSENCES` に行の在る noindex の面（`/me` `/roulette` `/design` など）は、
+ *   いままでどおり宣言のほうで見る。**公開前とは読まない**
+ * - ヘッダの `X-Robots-Tag`（OBS の道具の面）は対象にしない。本文の層だけを見る
+ *
  * ## `/all` が名乗る枚数
  *
  * `/all` は「島にある紙、◯枚」と名乗る。**その数が、並んでいる行き先の数と
@@ -128,12 +153,13 @@
  * | 組 | 台 | 相手 |
  * | --- | --- | --- |
  * | 面の判定 | 8本 | 偽のサーバを 127.0.0.1 に立てる |
- * | 3つの一覧の突き合わせ | 14本 | 偽の一覧を3つ組で11本（`LIST_CONTROLS`）＋ 偽のサーバに
+ * | 3つの一覧の突き合わせ | 19本 | 偽の一覧を3つ組で16本（`LIST_CONTROLS`）＋ 偽のサーバに
  * |  |  | `sitemap.xml` と `/all` を置いて線ごしに3本（`runWireControls`） |
  *
  * 突き合わせのほうは、**面を1つわざと落とす／わざと増やす／理由を消す**が
  * それぞれ別の項目で落ちること、**別名で行ける形は通ること**、
- * **名前が違えば通らないこと**まで見る。
+ * **名前が違えば通らないこと**、**公開前の面は両方に無くて通り、どちらかに
+ * 出ていれば落ち、隣の公開している面の抜けまでは許さないこと**まで見る。
  * 足を1本ずつ抜いて落ちるところまで見るのは `prodsweep_selftest.mjs`（毎 PR）。
  */
 import { execFile } from "node:child_process";
@@ -346,12 +372,15 @@ export function excuseOk(why) {
  * | `excuse` | 載せないと決めた理由が、書いてあるか（12文字以上・日付つき） |
  * | `unused` | 載せないと決めた宣言が、まだ効いているか（掃除漏れ） |
  * | `claim` | `/all` が名乗る枚数と、並んでいる行き先の数が合うか |
+ * | `draft` | 公開前の面（noindex で、`ABSENCES` に行が無い）を、抜けていても通す |
+ * | `noidx` | noindex の面が索引に出ていないか（sitemap はどれでも・`/all` は公開前の面） |
  *
  * @param nameOf 面 → その面の `<h1>` の名前。`alias` の判定だけに使う
- * @returns {{union:string[], bad:{key:string,path:string,why:string}[], notes:string[], distinct:number}}
+ * @param noindex 配られた `<head>` の `<meta name="robots">` に noindex が在った面
+ * @returns {{union:string[], bad:{key:string,path:string,why:string}[], notes:string[], distinct:number, drafts:string[]}}
  */
 export function reconcile({
-  sitemap = [], all = [], app = [], nameOf = {}, claimed = null,
+  sitemap = [], all = [], app = [], nameOf = {}, claimed = null, noindex = [],
   absences = ABSENCES, legs = new Set(),
 } = {}) {
   const on = (l) => !legs.has(l);
@@ -363,6 +392,30 @@ export function reconcile({
 
   const has = { sitemap: new Set(sitemap), all: new Set(all.map((r) => r.href)) };
   const union = [...new Set([...sitemap, ...all.map((r) => r.href), ...app])].sort();
+
+  /* **公開前の面。** noindex で、`ABSENCES` に1行も無いもの。行の在る面は
+     「載せないと決めてある」ほうで見る——`/design` は noindex でも `/all` に
+     並べると決めてあるので、同じ印で2通りに読まない */
+  const hidden = new Set(noindex);
+  const decided = new Set(absences.map((a) => a.path));
+  const drafts = union.filter((p) => on("draft") && hidden.has(p) && !decided.has(p));
+  const isDraft = new Set(drafts);
+
+  /* 0. 検索に載せない面が、索引に出ている。**印の決まりが崩れた**
+        （面は noindex なのに、索引の側だけ公開した形になっている） */
+  if (on("noidx")) {
+    for (const p of union) {
+      if (!hidden.has(p)) continue;
+      /* sitemap は「検索に載せて」という頼み。noindex と両立しないので、どの面でも違反 */
+      if (has.sitemap.has(p)) {
+        bad.push({ key: "noidx", path: p, why: `noindex で配っているのに ${LIST_NAMES.sitemap} に出ている` });
+      }
+      /* `/all` は人が島を歩く索引。違反にするのは公開前の面だけ */
+      if (isDraft.has(p) && has.all.has(p)) {
+        bad.push({ key: "noidx", path: p, why: `公開前（noindex）なのに ${LIST_NAMES.all} に出ている` });
+      }
+    }
+  }
 
   /* 1. 理由そのもの。**宣言が効くかどうかとは別に見る**——理由を消したときに
         落ちるのはここ1つであってほしい（消したとたん「宣言が無い」でも
@@ -377,6 +430,13 @@ export function reconcile({
   /* 2. 一覧から抜けている面 */
   const used = new Set();
   for (const p of union) {
+    /* 公開前の面は、どちらにも無くてよい。**黙って畳まない**——1面1行で字に出す。
+       出ているほうは上の `noidx` が拾っている */
+    if (isDraft.has(p)) {
+      const out = ["sitemap", "all"].filter((l) => !has[l].has(p));
+      if (out.length) notes.push(`— 公開前（noindex）: ${p} は ${out.map((l) => LIST_NAMES[l]).join(" と ")} に出さない`);
+      continue;
+    }
     for (const list of ["sitemap", "all"]) {
       if (has[list].has(p)) continue;
       const k = `${p}\t${list}`;
@@ -423,7 +483,7 @@ export function reconcile({
     }
   }
 
-  return { union, bad, notes, distinct };
+  return { union, bad, notes, distinct, drafts };
 }
 
 /* ------------------------------------------------------------- 測りかた -- */
@@ -444,6 +504,25 @@ export function titleOf(html) {
   const m = /<title\b[^>]*>([\s\S]*?)<\/title>/i.exec(headOf(html));
   if (!m) return null;
   return m[1].replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * 配られた面が**検索に載せないと言っているか**（`<meta name="robots">` に noindex）。
+ *
+ * **`<head>` の中だけを見る。** 本文の側には Next の RSC の字（`"name":"robots"` の JSON）が
+ * 居るが、あれはタグではない。`none` は noindex, nofollow と同じ意味なので拾う。
+ * 属性の並びは問わない（`content` が先でも読む）。
+ */
+export function robotsNoindex(html) {
+  for (const [tag] of headOf(html).matchAll(/<meta\b[^>]*>/gi)) {
+    const name = /\bname\s*=\s*["']?([^"'\s>]+)/i.exec(tag);
+    if (!name || name[1].toLowerCase() !== "robots") continue;
+    const content = /\bcontent\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tag);
+    const words = (content ? content[1] ?? content[2] ?? content[3] : "").split(",")
+      .map((w) => w.trim().toLowerCase());
+    if (words.includes("noindex") || words.includes("none")) return true;
+  }
+  return false;
 }
 
 /** `<h1>` が何個あるか。**0個も2個も違反**（1つに絞られていることを見る） */
@@ -633,8 +712,13 @@ const LIST_BASE = () => ({
   app: ["/", "/x"],
   nameOf: { "/": "島", "/x": "エックス", "/y": "ワイ" },
   claimed: 3,
+  noindex: [],
   absences: [],
 });
+
+/** 公開前の面 `/d` を足した組。**静的な道にだけ在って、noindex で配られ、どちらの索引にも無い**
+    （2026-11-13 のスコピエの2面と同じ形） */
+const WITH_DRAFT = (b) => ({ ...b, app: [...b.app, "/d"], noindex: ["/d"] });
 
 const DATED = "いまは載せないと決めている（2026-09-19）";
 
@@ -680,6 +764,27 @@ export const LIST_CONTROLS = [
   ["alias-wrongname", false, ["amiss"], (b) => ({
     ...b, sitemap: [...b.sitemap, "/island/k"],
     nameOf: { ...b.nameOf, "/island/k": "ケー" } })],
+  /* **公開前の面は、両方に無くて通る。** 宣言を手で足していない（印を消した日に消しに来なくて済む） */
+  ["draft", true, [], WITH_DRAFT],
+  /* 公開前なのに sitemap に出た。検索に載せないと言いながら、載せてと頼んでいる */
+  ["draft-in-sitemap", false, ["noidx"], (b) => {
+    const d = WITH_DRAFT(b);
+    return { ...d, sitemap: [...d.sitemap, "/d"] };
+  }],
+  /* 公開前なのに `/all` に並んだ（名乗る数も一緒に動かす。動かさないと `claim` でも落ちる） */
+  ["draft-in-all", false, ["noidx"], (b) => {
+    const d = WITH_DRAFT(b);
+    return { ...d, all: [...d.all, { href: "/d", name: "ディー" }], claimed: 4 };
+  }],
+  /* **公開前の面が在っても、隣の公開している面の抜けは許さない。** 見逃しが面ごとでなく
+     丸ごとに広がっていれば、ここが通ってしまう */
+  ["draft-neighbor", false, ["amiss"], (b) => ({
+    ...WITH_DRAFT(b), all: b.all.filter((r) => r.href !== "/y"), claimed: 2 })],
+  /* noindex でも、`ABSENCES` に行の在る面は宣言のほうで見る。`/design` の形——
+     sitemap には出さないと決めてあり、`/all` には並べると決めてある */
+  ["decided-noindex", true, [], (b) => ({
+    ...b, sitemap: b.sitemap.filter((p) => p !== "/y"), noindex: ["/y"],
+    absences: [{ path: "/y", lists: ["sitemap"], why: `ワイは作る側の棚なので検索に出さない。${DATED}` }] })],
 ];
 
 /**
@@ -783,7 +888,7 @@ async function pool(items, fn) {
 async function main() {
   const legs = new Set(process.env.BREAK ? process.env.BREAK.split(",").filter(Boolean) : []);
   const known = new Set(["status", "h1", "title", "thin", "follow", "tell",
-    "smiss", "amiss", "alias", "excuse", "unused", "claim"]);
+    "smiss", "amiss", "alias", "excuse", "unused", "claim", "draft", "noidx"]);
   for (const l of legs) {
     if (!known.has(l)) {
       console.log(`::error::BREAK=${l} は知らない足です（${[...known].join(" ")}）`);
@@ -886,13 +991,19 @@ async function main() {
   /* 5. 3つの一覧の突き合わせ。**面を測ったあと**——`alias` は、
         抜けている面の `<h1>` の名前が要る（読めた面からしか取れない） */
   const nameOf = Object.fromEntries(seen.map((x) => [x.p, h1Name(x.r.body)]));
+  /* 検索に載せないと言っている面。**200 で返ったものだけ**——404 の面は Next が
+     noindex を付けて返すので、混ぜると壊れた面が「公開前」に化ける（そちらは `status` が拾う） */
+  const noindex = seen.filter((x) => x.r.status === 200 && robotsNoindex(x.r.body)).map((x) => x.p);
   const rec = reconcile({
-    sitemap: sm.paths, all: al.rows, app: app.paths, nameOf, claimed: al.claimed, legs,
+    sitemap: sm.paths, all: al.rows, app: app.paths, nameOf, claimed: al.claimed, noindex, legs,
   });
   console.log(`\n3つの一覧を突き合わせる（面は ${rec.union.length}／`
     + `sitemap ${sm.paths.length}・/all ${allHrefs.length}（行は ${al.rows.length}）・静的な道 ${app.paths.length}）`);
   console.log(`  /all の名乗り: 「島にある紙、${al.claimed ?? "?"}枚」／並んでいる行き先 ${rec.distinct}`);
+  console.log(`  検索に載せない面（<meta name="robots"> に noindex）: ${seen.length}面中 ${noindex.length}面`
+    + `（うち公開前 ${rec.drafts.length}・載せないと決めてある ${noindex.length - rec.drafts.length}）`);
   for (const [key, name] of [["smiss", "sitemap.xml に載っている"], ["amiss", "/all から1回で行ける"],
+    ["noidx", "検索に載せない面が、索引に出ていない"],
     ["excuse", "載せないと決めた理由が書いてある"], ["unused", "その宣言がまだ効いている"],
     ["claim", "/all の名乗りが、並んでいる数と合う"]]) {
     const b = rec.bad.filter((x) => x.key === key);
