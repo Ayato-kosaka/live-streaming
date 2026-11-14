@@ -222,7 +222,8 @@ class Baker:
         return {"v": x["v"], "t": x["t"], "date": x["date"]}
 
     # ------------------------------------------------------------ 字の確かめ
-    def allowed_numbers(self, xs: list[dict]) -> set[str]:
+    def allowed_numbers(self, xs: list[dict], ext: list[dict] | None = None) -> set[str]:
+        """結んだ行の数（と、外の出どころの1行の数）。記事（`guide_article.py`）も同じものを使う"""
         ok: set[str] = set()
         for x in xs:
             it = x["it"]
@@ -236,6 +237,9 @@ class Baker:
                 ok.add(gf.numval(mins(self.measured_sec(it))))
             y, mo, d = x["date"].split("-")
             ok |= {str(int(y)), str(int(mo)), str(int(d))}
+        for e in ext or []:
+            ok |= gf.numbers_in(e.get("text", ""))
+            ok |= {str(int(p)) for p in e.get("seen", "").split("-") if p}
         return ok
 
     def check_numbers(self, text: str, xs: list[dict], where: str) -> None:
@@ -323,6 +327,15 @@ class Baker:
                 self.errors.append(f"{w}: 見た日の形が YYYY-MM-DD でない（{e['seen']}）")
             out.append({k: e.get(k, "") for k in ("name", "url", "seen")})
         return out
+
+    def ext(self, e: dict, where: str) -> dict:
+        """外の出どころの1行（`{text, src, name, seen}`）。記事（`guide_article.py`）の Keyword が使う"""
+        for k in ("text", "src", "name", "seen"):
+            if not e.get(k):
+                self.errors.append(f"{where}: 外の出どころの行に {k} が無い（出どころの無い事実は載せない）")
+        if not str(e.get("src", "")).startswith("https://"):
+            self.errors.append(f"{where}: 外の出どころが https の URL でない")
+        return {k: e.get(k, "") for k in ("text", "src", "name", "seen")}
 
     def local(self, spec: dict | None, where: str) -> dict | None:
         if not spec:

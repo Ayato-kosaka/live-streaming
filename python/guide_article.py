@@ -464,7 +464,9 @@ def watch(key: str, dist: Path, streams: Path) -> int:
         return 2
     # `guide_watch` の「facts に無い額」のうち、足し直して合った額だけを外す（文言は `check_money` の1つ目の足）
     sum_ok = {f"[額] {v}円 が facts のどの行にも無い" for v in good}
-    errs += sec_errs + [e for e in r.errors if e not in sum_ok]
+    # 「1節に一言1つ」は `guide_watch` も見るようになった（#323。街の面の節の一言）。記事はここの
+    # `check_sections` が同じことを見ているので、2回数えない（対照 `BREAK=quotes` が効くように）
+    errs += sec_errs + [e for e in r.errors if e not in sum_ok and not e.startswith("[節の一言]")]
     seen = "・".join(f"{n}{c}" for n, c in r.seen.items()) + f"・節{secs}・足し算{sums}"
     if errs:
         print(f"✕ {key}（{seen}）: {len(errs)}件")
