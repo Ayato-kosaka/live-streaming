@@ -118,6 +118,14 @@ const KNOWN_ROUTES = [
   /* アラートのログの写し(#1160)。誰でも叩ける。断りの試験は
      `alert_log_selftest.mjs` */
   "alertLog.ts q.method === 'POST' && m",
+  /* 写真の取り込み（docs/card-import.md 3章）。**全部あやとだけ**で、
+     枝の入口でまとめて関所を通る。中の試験は `card_import_selftest.mjs` */
+  "cardImport.ts q.method === 'GET' && img",
+  "cardImport.ts q.method === 'GET' && q.path === '/cardimport'",
+  "cardImport.ts q.method === 'POST' && q.path === '/cardimport/calib'",
+  "cardImport.ts q.method === 'POST' && q.path === '/cardimport/decide'",
+  "cardImport.ts q.method === 'POST' && q.path === '/cardimport/put'",
+  "cardImport.ts q.method === 'POST' && q.path === '/cardimport/register'",
   "cards.ts q.method === 'GET' && q.path === '/cards'",
   "cards.ts q.method === 'GET' && q.path === '/cards/mine'",
   "cards.ts q.method === 'POST' && move",
@@ -954,6 +962,12 @@ const OWNER_ONLY = [
   ["POST", "/characters/aaaaaaaaaaaa"],
   ["DELETE", "/characters/aaaaaaaaaaaa"],
   ["GET", "/stickies/waiting"],
+  ["GET", "/cardimport"],
+  ["GET", `/cardimport/img/${"a".repeat(64)}`],
+  ["POST", "/cardimport/decide"],
+  ["POST", "/cardimport/calib"],
+  ["POST", "/cardimport/register"],
+  ["POST", "/cardimport/put"],
 ];
 
 console.log(
@@ -1255,7 +1269,8 @@ console.log("\n# 7. 口の一覧が、古くなっていない");
      枝ごとに `ownerUid(` を書かないので、そのぶんを足して数える。 */
   const owned = now.filter((r) => {
     const f = r.split(" ")[0];
-    return f === "fundDesk.ts" || f === "publicPurge.ts";
+    return f === "fundDesk.ts" || f === "publicPurge.ts" ||
+      f === "cardImport.ts";
   }).length;
   console.log(`  うち、枝の入口でまとめて関所を通るもの: ${owned} 本`);
 }
