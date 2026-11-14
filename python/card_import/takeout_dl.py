@@ -1,7 +1,10 @@
 """Takeout の zip を、EC2 のログイン済み Chrome（`~/cdp-gphotos`）で1つずつ落とす。
 
-    python3 takeout_dl.py list                 # 部品の数と大きさだけ（URL は出さない）
-    python3 takeout_dl.py get <番号> <置き場>   # 1つ落として、置いたファイルの名前を1行出す
+    python3 takeout_dl.py list <書き出しのID>                 # 部品の数（URL は出さない）
+    python3 takeout_dl.py get <書き出しのID> <番号> <置き場>   # 1つ落として、置いたファイルの名前を1行出す
+
+書き出しの ID は `https://takeout.google.com/manage` で行を開いた先の
+`/manage/archive/<ID>`。落とし口はこの面にしか並ばない（一覧の面には無い）。
 
 EC2 の `/home/ubuntu/cdp/`（`cdp.py` の隣）に置いて回す。**列 `gphotos` の札の中で。**
 
@@ -28,21 +31,21 @@ from pathlib import Path
 
 sys.path.insert(0, "/home/ubuntu/cdp")
 
-MANAGE = "https://takeout.google.com/manage"
+ARCHIVE = "https://takeout.google.com/manage/archive/{}"
 WAIT_SEC = 45 * 60
 
 # 落とし口の a を拾う JS。字（"Download"）に頼らず、行き先の形で拾う（言語が変わっても外れない）
 LINKS_JS = """[...document.querySelectorAll('a[href*="takeout/download"]')]
   .filter(a => a.offsetParent)
-  .map(a => {const r = a.closest('tr,li,div'); return {t: (r && r.innerText || '').replace(/\\s+/g,' ').slice(0,80)}})"""
+  .map(a => ({t: (a.getAttribute('aria-label') || a.innerText || '').replace(/\\s+/g,' ').slice(0,80)}))"""
 
 
-def _tab():
+def _tab(archive: str):
     from cdp import tab, up  # EC2 の上にしか無い
 
     up("gphotos")
     t = tab("gphotos")
-    t.go(MANAGE, wait=6)
+    t.go(ARCHIVE.format(archive), wait=6)
     return t
 
 
@@ -50,8 +53,8 @@ def _auth_needed(t) -> bool:
     return "accounts.google.com" in (t.js("location.host") or "")
 
 
-def cmd_list() -> int:
-    t = _tab()
+def cmd_list(archive: str) -> int:
+    t = _tab(archive)
     if _auth_needed(t):
         print("AUTH_REQUIRED")
         return 3
@@ -64,10 +67,10 @@ def _done_files(d: Path) -> set[str]:
     return {p.name for p in d.iterdir() if p.suffix == ".zip"}
 
 
-def cmd_get(i: int, out: str) -> int:
+def cmd_get(archive: str, i: int, out: str) -> int:
     d = Path(out)
     d.mkdir(parents=True, exist_ok=True)
-    t = _tab()
+    t = _tab(archive)
     if _auth_needed(t):
         print("AUTH_REQUIRED")
         return 3
@@ -95,10 +98,10 @@ def cmd_get(i: int, out: str) -> int:
 
 
 def main(argv: list[str]) -> int:
-    if argv[:1] == ["list"]:
-        return cmd_list()
-    if len(argv) == 3 and argv[0] == "get":
-        return cmd_get(int(argv[1]), argv[2])
+    if len(argv) == 2 and argv[0] == "list":
+        return cmd_list(argv[1])
+    if len(argv) == 4 and argv[0] == "get":
+        return cmd_get(argv[1], int(argv[2]), argv[3])
     print(__doc__)
     return 2
 
