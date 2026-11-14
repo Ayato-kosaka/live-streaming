@@ -248,7 +248,7 @@ function Japanese() {
             から、いつでも取り消せます
           </li>
           <li>
-            保存したものを消す … 島の中には、まだ自分で消すボタンがありません。下の「お問い合わせ」に、ログインに使ったチャンネルから「あやと島のデータを消して」と書いてください。確かめたうえで、上の「何を保存するか」の本人の記録と Firebase のログインの記録を消し、付箋・企画・投票・ハートに付いたアカウントの ID と名前も消します
+            保存したものを消す … 島の中には、まだ自分で消すボタンがありません。下の「お問い合わせ」のメールに、ログインに使ったチャンネルの名前かハンドルを添えて「あやと島のデータを消して」と書いてください。確かめたうえで、上の「何を保存するか」の本人の記録と Firebase のログインの記録を消し、付箋・企画・投票・ハートに付いたアカウントの ID と名前も消します
           </li>
         </ul>
       </Panel>
@@ -288,8 +288,10 @@ function Japanese() {
         <h2>お問い合わせ</h2>
         <p>
           このページのことや、保存している情報を見たい・消してほしいときは、
+          <a href="mailto:kosaka.ayato@gmail.com">kosaka.ayato@gmail.com</a>
+          にメールしてください。ログインに使ったチャンネルの名前かハンドルを書いてもらえると、どの記録かが分かります。
           <Out href={CONTACT}>あやとの YouTube チャンネル</Out>
-          の配信のチャットか、動画のコメントで知らせてください。ログインに使ったチャンネルから書いてもらえると、どの記録かが分かります。コメントは誰でも読めるので、メールアドレスなどは書かないでください。
+          の配信のチャットや動画のコメントでも受けますが、コメントは誰でも読めるので、メールアドレスなどは書かないでください。
         </p>
       </Panel>
     </>
@@ -449,8 +451,8 @@ function English() {
             <Out href={REVOKE}>Third-party apps &amp; services</Out>
           </li>
           <li>
-            Delete your data: there is no delete button on the island yet. Contact us (see below) from the channel you
-            signed in with, and say you want your {NAME_EN} data deleted. After checking, we delete your record listed
+            Delete your data: there is no delete button on the island yet. Email us (see &ldquo;Contact&rdquo; below) with the
+            name or handle of the channel you signed in with, and say you want your {NAME_EN} data deleted. After checking, we delete your record listed
             under &ldquo;What we store&rdquo; and your Firebase sign-in record, and remove your account ID and name from
             your sticky notes, plan ideas, votes and hearts
           </li>
@@ -491,10 +493,11 @@ function English() {
       <Panel>
         <h2>Contact</h2>
         <p>
-          For questions about this page, or to see or delete your data, write to us in the live chat or in a video
-          comment on <Out href={CONTACT}>Ayato&rsquo;s YouTube channel</Out>. Writing from the channel you signed in
-          with lets us find your record. Comments are public, so please do not include your email address or other
-          personal details.
+          For questions about this page, or to see or delete your data, email{" "}
+          <a href="mailto:kosaka.ayato@gmail.com">kosaka.ayato@gmail.com</a>. Tell us the name or handle of the
+          channel you signed in with so we can find your record. You can also write in the live chat or a video
+          comment on <Out href={CONTACT}>Ayato&rsquo;s YouTube channel</Out>, but comments are public, so please do
+          not include your email address or other personal details there.
         </p>
       </Panel>
     </section>
