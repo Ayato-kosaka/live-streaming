@@ -118,7 +118,9 @@ def mark_of(sec: str, spec: dict) -> tuple[str, str]:
 
     台本に書くのは判定に要る事実（`pork` `alcohol` `syrup` `fee`）だけで、印も理由の字もここが決める。
     """
-    text = spec.get("name", "") + spec.get("what", "")
+    # `"like": false` は、中身の字に好みの言葉がたまたま入っている件（マトカ渓谷の「修道院」で
+    # 「壁画だらけの正教会が好き」と出た）。好みの言葉では当てない。印の理由を手で書く口ではない
+    text = "" if spec.get("like") is False else spec.get("name", "") + spec.get("what", "")
     if sec in ("eat", "buy"):
         if spec.get("alcohol"):
             return "warn", ("お酒。あやとは飲まないので、人に贈るときだけ" if sec == "buy"

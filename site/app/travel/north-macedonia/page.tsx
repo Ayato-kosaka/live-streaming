@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { travelCrumbs, travelShare } from "@/content/travel";
+import { guideOf } from "@/content/travel/guides";
+import type { Item } from "@/content/travel/types";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 /* 付箋の板。**この面には `Notes` という自前の部品がもう在る**（下の、読みものを
@@ -18,7 +20,6 @@ import {
   NM_KNOW,
   NM_LEAD,
   NM_PRACTICAL,
-  NM_SKOPJE,
   NM_WORDS,
   type NmNote,
   type NmSpot,
@@ -56,17 +57,28 @@ import "./nm.css";
  * あちらは画面が出てから数え直す。
  */
 
+/**
+ * 首都スコピエとマトカ渓谷の入口。**中身はスコピエの面のもの**（`content/travel/north-macedonia/skopje.ts`）を
+ * そのまま引く。前はここに出どころの無い見どころを手で書いていて、スコピエの面と2か所で別の字になっていた（#1203）。
+ * 並べるのは、スコピエの面で★1・★2の見どころと、マトカ渓谷。1行目の字だけを出す
+ */
+const SKOPJE = guideOf("north-macedonia", "skopje");
+const DOOR: Item[] = [
+  ...(SKOPJE.sections.find((s) => s.id === "see")?.items ?? []).filter((it) => it.rank && it.rank <= 2),
+  ...(SKOPJE.sections.find((s) => s.id === "todo")?.items ?? []).filter((it) => it.key === "matka"),
+];
+
 /* 道と絵は名簿から（`content/travel.ts`）。前は `/north-macedonia` に立っていた（#1201） */
 export const metadata: Metadata = travelShare("north-macedonia", {
   title: "北マケドニア — 山と湖の国",
   /* 数は手で書かない。載っている件数から作る（`/nordic/guide` と同じ） */
-  description: `海に出ない、山と湖の国。首都スコピエの見どころ${NM_SKOPJE.length}つ、街の外${NM_BEYOND.length}つ、食べもの${NM_EAT.length}品、ことば${NM_WORDS.length}。`,
+  description: `海に出ない、山と湖の国。首都スコピエの見どころとマトカ渓谷${DOOR.length}つ、街の外${NM_BEYOND.length}つ、食べもの${NM_EAT.length}品、ことば${NM_WORDS.length}。`,
 });
 
 /** 節の表。**絵はここ1か所で決める**——節の中で絵を別に書くと、ここと食い違う */
 const CHAPTERS: { id: string; icon: IconName; title: string; note: string }[] = [
   { id: "know", icon: "info", title: "どんな国か", note: `${NM_KNOW.length}つ` },
-  { id: "skopje", icon: "oldtown", title: "首都スコピエ", note: `${NM_SKOPJE.length}か所` },
+  { id: "skopje", icon: "oldtown", title: "首都スコピエと、マトカ渓谷", note: `${DOOR.length}か所` },
   { id: "beyond", icon: "mountain", title: "街の外へ", note: `${NM_BEYOND.length}か所` },
   { id: "fun", icon: "sparkle", title: "こういうのが楽しそう", note: `${NM_FUN.length}つ` },
   { id: "eat", icon: "eat", title: "食べたらおいしそう", note: `${NM_EAT.length}品` },
@@ -120,6 +132,43 @@ function Notes({ items }: { items: NmNote[] }) {
         <Fold key={x.title} title={x.title} lead={x.body}>
           <p>{x.body}</p>
         </Fold>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * スコピエの入口の札。字はスコピエの面の1行目と、その出どころ。
+ * **公開前の印が付いているあいだは、スコピエの面へのリンクを置かない**（`CityCards` と同じ決まり。
+ * 印が外れると、上の `CityCards` に面への札が出る）
+ */
+function Door({ items }: { items: Item[] }) {
+  return (
+    <div className="gcards">
+      {items.map((it) => (
+        <div key={it.key} className="gcard nmspot">
+          <Icon name={it.icon as IconName} size={26} />
+          <span className="nmspot-h">
+            <b>{it.name}</b>
+            {it.local && (
+              <i className="nmspot-local" lang={it.local.lang}>
+                {it.local.text}
+                {it.local.roman ? ` / ${it.local.roman}` : ""}
+              </i>
+            )}
+          </span>
+          <span className="nmspot-b">
+            <p>{(it.what ?? "").split("。")[0]}。</p>
+            {it.src[0] && (
+              <p className="nmspot-how">
+                出どころ:{" "}
+                <a href={it.src[0].url} target="_blank" rel="noopener noreferrer">
+                  {it.src[0].name}
+                </a>
+              </p>
+            )}
+          </span>
+        </div>
       ))}
     </div>
   );
@@ -183,8 +232,8 @@ export default function NorthMacedoniaPage() {
           <Notes items={NM_KNOW} />
         </Chapter>
 
-        <Chapter id="skopje" n={2} title="首都スコピエ" note={`${NM_SKOPJE.length}か所。歩いて回れる`}>
-          <Spots items={NM_SKOPJE} />
+        <Chapter id="skopje" n={2} title="首都スコピエと、マトカ渓谷" note={`${DOOR.length}か所`}>
+          <Door items={DOOR} />
         </Chapter>
 
         <Chapter id="beyond" n={3} title="街の外へ" note={`${NM_BEYOND.length}か所。日帰りと、泊まりがけ`}>

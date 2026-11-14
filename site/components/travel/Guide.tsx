@@ -7,53 +7,69 @@ import { Vid } from "@/components/streams/Vid";
 import type { CityStream } from "@/content/cityStreams";
 import { LINKS, PROFILE } from "@/content/site";
 import type {
+  Article,
   Big,
-  Card,
-  Ext,
-  Keyword as KeywordT,
-  Line,
+  Item,
   Local,
+  Mark,
   Measured,
-  Move,
   Photo,
-  PriceTable,
+  PriceRow,
   Quote,
   Scene,
   SectionId,
+  Src,
+  Went as WentT,
 } from "@/content/travel/types";
 import { AYATO_SRC } from "@/lib/ayatoArt";
 
 import { hms, jpDate, md, videoUrl, watchUrl } from "./scene";
 
 /**
- * 街のガイドの面の部品（`docs/guide-design.md` 3章）。**どの街の面も、これを同じ並びで使う。**
+ * 街のガイドの面の部品。**どの街の面も、これを同じ並びで使う。**
+ *
+ * ## 骨組みと肉付け（2026-11-14 の作り直し。`docs/island-misses.md` #323）
+ *
+ * 骨は `/bulgaria` と同じ絵のタイル（見たい・食べたい・買いたい）と札（したい・基本情報）。
+ * 1件の中は**いつも同じ順**: 印の理由 → 行く前のガイド（`ExtBlock`。出どころつき）→
+ * 行った人の話（`WentBlock`。場面のリンクは1つ）→ Google マップ → 写真の出どころ。
+ *
+ * | 印（属性） | 何の印か | 見張り（`python/guide_watch.py`） |
+ * | --- | --- | --- |
+ * | `data-src` | 外の出どころの事実。中の額は出どころが正 | 出どころのリンクと見た日が在るか |
+ * | `data-went` | 行った人の話 | 場面のリンクが1つだけか |
+ * | `data-quote="ayato"` | 本人の一言 | 節に1つまでか・場面の秒が facts と同じか |
  *
  * - 押せるものには厚み、押せないものは平ら（48px のボタンで 6px、30px の札で 4px）
- * - 吹き出し・驚く数・場面の札は押せる（配信のその場面へ。素の `<a href>`）
- * - Keyword・表の地・出どころの1行は押せない
- *
- * 字はここに書かない。**街ごとの字は焼いた中身から、節の見出しと並びは面の側から。**
- * ここに残る字は、部品の名札（「この場面」「実測」「行った」など）だけ。
+ * - 字はここに書かない。**街ごとの字は焼いた中身から。** ここに残る字は部品の名札だけ
  */
 
 /* ---------------------------------------------------------------- 節の名簿 */
 
-/** 節の見出し（問いの形）・目次の短い形・絵。**街が変わっても変えない**（2-0） */
-export const SECTION_HEAD: Record<SectionId | "streams", { h: string; toc: string; icon: IconName }> = {
-  about: { h: "どんな街？ 歩いて安心？", toc: "どんな街？", icon: "oldtown" },
-  move: { h: "どう行く？ 着いたら、どう動く？", toc: "どう行く？", icon: "bus" },
-  money: { h: "いくらかかった？", toc: "いくら？", icon: "wallet" },
-  places: { h: "どこへ行った？", toc: "どこへ？", icon: "pin" },
-  food: { h: "何を食べた？", toc: "食べた", icon: "eat" },
-  stay: { h: "どこに泊まった？", toc: "泊まる", icon: "bunk" },
-  caution: { h: "気をつけることは？", toc: "気をつける", icon: "alert" },
-  trip: { h: "日帰りで、どこへ行ける？", toc: "日帰り", icon: "mountain" },
+/** 節の見出し・目次の短い形・絵。**`/bulgaria` と同じ骨組み**。街が変わっても変えない */
+export const SECTION_HEAD: Record<SectionId | "articles" | "streams", { h: string; toc: string; icon: IconName }> = {
+  see: { h: "見たいもの", toc: "見たい", icon: "see" },
+  eat: { h: "食べたいもの", toc: "食べたい", icon: "eat" },
+  buy: { h: "買いたいもの", toc: "買いたい", icon: "souvenir" },
+  todo: { h: "ここでしたいこと", toc: "したい", icon: "sparkle" },
+  basics: { h: "基本情報", toc: "基本情報", icon: "info" },
+  articles: { h: "もっと詳しく", toc: "記事", icon: "book" },
   streams: { h: "の配信", toc: "配信", icon: "youtube" },
 };
 
+/** 印の字。**1か所で決める**（`/bulgaria` の `MARK` と同じ言葉） */
+export const MARK: Record<Mark, { label: string; icon: IconName }> = {
+  good: { label: "あやとの好みに合う", icon: "heart" },
+  ok: { label: "たぶん合う", icon: "check" },
+  warn: { label: "注意（豚・酒・中東の甘い菓子）", icon: "alert" },
+};
+
+/** 星の言葉。★の数より、**何をしたらいいか**が先に読めるようにする */
+export const STAR = ["", "必見", "行けたら", "余裕があれば"];
+
 /* ---------------------------------------------------------------- 小さな部品 */
 
-/** 場面の札（「10/14 0:56:30」）。その行の事実の場面へ */
+/** 場面の札（「10/14 0:56:30」）。その話の場面へ */
 export function At({ at }: { at: Scene }) {
   return (
     <a className="tg-at" href={watchUrl(at)} target="_blank" rel="noopener noreferrer">
@@ -66,9 +82,9 @@ export function At({ at }: { at: Scene }) {
 
 /**
  * 本人の一言（吹き出し）。**全体が1つのリンク**で、YouTube のその場面が開く。
- * 字は facts の `quote` のまま（字幕の字。直さない）。
+ * 字は facts の `quote` のまま（字幕の字。直さない）。**節に1つまで。**
  */
-export function Say({ q }: { q: Quote }) {
+export function Say({ q, of }: { q: Quote; of?: string | null }) {
   return (
     <a className="tg-say" href={watchUrl(q.at)} target="_blank" rel="noopener noreferrer">
       <img className="tg-say-face" src={AYATO_SRC} alt="" width={26} height={38} loading="lazy" />
@@ -78,77 +94,11 @@ export function Say({ q }: { q: Quote }) {
         </span>
         <span className="tg-say-at">
           <i className="tg-yt" aria-hidden />
+          {of && <b>{of}で</b>}
           <time dateTime={q.at.date}>{md(q.at.date)}</time> {hms(q.at.t)}
         </span>
       </span>
     </a>
-  );
-}
-
-/** 一言の並び。4つ目からは畳む（2-1 の終わり） */
-export function Says({ qs, more = [] }: { qs: Quote[]; more?: Quote[] }) {
-  if (!qs.length && !more.length) return null;
-  return (
-    <div className="tg-says">
-      {qs.map((q) => (
-        <Say key={`${q.at.v}-${q.at.t}`} q={q} />
-      ))}
-      {more.length > 0 && (
-        <Fold title="ほかの一言" note={`${more.length}つ`}>
-          <div className="tg-says">
-            {more.map((q) => (
-              <Say key={`${q.at.v}-${q.at.t}`} q={q} />
-            ))}
-          </div>
-        </Fold>
-      )}
-    </div>
-  );
-}
-
-/** この場面の配信ボタン。**節に1つ**（その節でいちばん見てほしい場面） */
-export function SceneButton({ at }: { at: Scene }) {
-  return (
-    <a className="tg-scene" href={watchUrl(at)} target="_blank" rel="noopener noreferrer">
-      <Icon name="youtube" size={22} />
-      <b>この場面</b>
-      <span>
-        <time dateTime={at.date}>{md(at.date)}</time> {hms(at.t)}
-      </span>
-    </a>
-  );
-}
-
-/** 案内鳥の行。**どの行も場面を1つ持つ** */
-export function Lines({ lines }: { lines: Line[] }) {
-  if (!lines.length) return null;
-  return (
-    <ul className="tg-lines">
-      {lines.map((l) => (
-        <li key={`${l.at.v}-${l.at.t}-${l.text.slice(0, 8)}`}>
-          <p>
-            {l.text} <At at={l.at} />
-          </p>
-          {l.quote && <Say q={l.quote} />}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** 外の出どころの1行。出どころの名前がリンク */
-export function ExtLine({ e }: { e: Ext }) {
-  return (
-    <p className="tg-ext">
-      {e.text}
-      <span>
-        （
-        <a href={e.src} target="_blank" rel="noopener noreferrer">
-          {e.name}
-        </a>
-        ）
-      </span>
-    </p>
   );
 }
 
@@ -161,12 +111,25 @@ export function LocalName({ l, className = "tg-local" }: { l: Local; className?:
   );
 }
 
-/** 写真の出どころ。カードの写真は「あやと撮影・日付」、その日の配信へ */
+/**
+ * 写真の出どころ。あやとの写真は「あやと撮影・日付」でその日の配信へ、
+ * 借りた写真は作者とライセンスで元のページへ（CC の決まり）
+ */
 export function PhotoCredit({ p }: { p: Photo }) {
+  if (p.page) {
+    return (
+      <p className="tg-credit">
+        写真:{" "}
+        <a href={p.page} target="_blank" rel="noopener noreferrer">
+          {p.by}／{p.lic}（Wikimedia Commons）
+        </a>
+      </p>
+    );
+  }
   return (
     <p className="tg-credit">
-      <a href={videoUrl(p.v)} target="_blank" rel="noopener noreferrer" aria-label={`この写真の日の配信（${jpDate(p.day)}）`}>
-        あやと撮影・<time dateTime={p.day}>{jpDate(p.day)}</time>
+      <a href={videoUrl(p.v ?? "")} target="_blank" rel="noopener noreferrer" aria-label={`この写真の日の配信（${jpDate(p.day ?? "")}）`}>
+        あやと撮影・<time dateTime={p.day}>{jpDate(p.day ?? "")}</time>
       </a>
     </p>
   );
@@ -215,22 +178,298 @@ export function MeasuredTag({ m }: { m: Measured }) {
   );
 }
 
+/**
+ * 印ひとつ。**字（◎○⚠）ではなく絵で出す**（`/bulgaria` の `Badge` と同じ理由。
+ * ⚠ は本文の書体に無く、そこだけ端末の書体に落ちて文字化けに見える）
+ */
+export function Badge({ mark, big }: { mark: Mark; big?: boolean }) {
+  return (
+    <span className={`tg-mark is-${mark}${big ? " is-big" : ""}`}>
+      <b aria-hidden>
+        <Icon name={MARK[mark].icon} size={big ? 15 : 12} />
+      </b>
+      <span className="tg-sr">{MARK[mark].label}</span>
+    </span>
+  );
+}
+
+export function Star({ rank }: { rank: number }) {
+  return (
+    <span className="tg-star">
+      <b aria-hidden>{"★".repeat(rank)}</b>
+      <i>{STAR[rank]}</i>
+    </span>
+  );
+}
+
+/** 「行った」の札（日付つき） */
+function Stamp({ w }: { w: WentT }) {
+  return (
+    <p className="tg-stamp">
+      <span className={`tg-stamp-tag${w.stamp === "行った" ? "" : " is-soft"}`}>
+        <Icon name={w.stamp === "行った" ? "check" : "walk"} size={12} />
+        {w.stamp}
+      </span>
+      {w.days.map((d, i) => (
+        <span key={d}>
+          {i > 0 && "・"}
+          <time dateTime={d}>{md(d)}</time>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/** 値段の行。1行ずつ、その場面へ */
+export function PriceTable({ rows }: { rows: PriceRow[] }) {
+  if (!rows.length) return null;
+  return (
+    <table className="tg-price">
+      <thead>
+        <tr>
+          <th scope="col">何に</th>
+          <th scope="col">いくら</th>
+          <th scope="col">場面</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={`${r.at.v}-${r.at.t}`}>
+            <th scope="row">{r.what}</th>
+            <td>{r.amount}</td>
+            <td>
+              <At at={r.at} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/* ---------------------------------------------------------------- 骨組みと肉付け */
+
+/** 出どころの1行（名前がリンク・見た日） */
+function SrcLine({ src }: { src: Src[] }) {
+  return (
+    <p className="tg-src">
+      <Icon name="book" size={12} />
+      <span>
+        {src.map((s, i) => (
+          <span key={s.url}>
+            {i > 0 && "・"}
+            <a href={s.url} target="_blank" rel="noopener noreferrer">
+              {s.name}
+            </a>
+          </span>
+        ))}
+        （<time dateTime={src[0].seen}>{md(src[0].seen)}</time>に見た）
+      </span>
+    </p>
+  );
+}
+
+/** 行く前のガイド（外の出どころの事実）。**中の額は出どころが正**（facts と突き合わせない） */
+export function ExtBlock({ it }: { it: Pick<Item, "what" | "info" | "src"> }) {
+  if (!it.what && !it.info.length) return null;
+  return (
+    <div className="tg-ext" data-src="">
+      {it.what && <p>{it.what}</p>}
+      {it.info.length > 0 && (
+        <dl className="tg-ext-info">
+          {it.info.map((f) => (
+            <div key={f.label}>
+              <dt>{f.label}</dt>
+              <dd>{f.text}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <SrcLine src={it.src} />
+    </div>
+  );
+}
+
+/**
+ * 行った人の話。**話は1つ、場面のリンクも1つ**（話の終わりに）。
+ * 値段の行だけは1行ずつ場面を持つ（何をいくらで買ったかの証拠なので）。
+ */
+export function WentBlock({ w, photo = true, sizes = "(min-width: 720px) 440px, 92vw" }: { w: WentT; photo?: boolean; sizes?: string }) {
+  return (
+    <div className="tg-went" data-went="">
+      <Stamp w={w} />
+      {photo && w.photo && (
+        <figure className="tg-went-ph">
+          <Pic p={w.photo} sizes={sizes} />
+          <figcaption>
+            <PhotoCredit p={w.photo} />
+          </figcaption>
+        </figure>
+      )}
+      <p className="tg-went-t">
+        {w.text} <At at={w.at} />
+      </p>
+      {w.measured && <MeasuredTag m={w.measured} />}
+      <PriceTable rows={w.rows} />
+    </div>
+  );
+}
+
+function Maps({ it }: { it: Item }) {
+  if (!it.maps) return null;
+  return (
+    <a className="tg-maps" href={it.maps} target="_blank" rel="noopener noreferrer" aria-label={`Google マップで開く（${it.name}）`}>
+      <Icon name="map" size={15} />
+      Google マップで開く
+      <Icon name="external" size={13} />
+    </a>
+  );
+}
+
+/**
+ * 絵のタイル（見たい・食べたい・買いたい）。`/bulgaria` の `.bgtile` と同じ作り:
+ * 閉じているときは絵と名前だけ、押すと中身。**字は押すまで出さない**（縦を切る）
+ */
+export function Tile({ it, eager }: { it: Item; eager?: boolean }) {
+  const meta = it.went ? `${it.went.stamp}・${it.went.days.map(md).join("・")}` : (it.local?.roman ?? it.info[0]?.text ?? "");
+  return (
+    <details className={`tg-tile is-${it.mark ?? "ok"}${it.went ? " is-went" : ""}`} id={it.key}>
+      <summary>
+        <span className={`tg-shot${it.photo ? "" : " is-none"}`}>
+          {it.photo ? (
+            <Pic p={it.photo} sizes="(min-width: 760px) 240px, 46vw" eager={eager} />
+          ) : (
+            <Icon name={it.icon as IconName} size={40} />
+          )}
+        </span>
+        <span className="tg-tile-tag">
+          {it.mark && <Badge mark={it.mark} />}
+          {it.went && (
+            <span className={`tg-tile-went${it.went.stamp === "行った" ? "" : " is-soft"}`}>
+              {it.went.stamp === "行った" ? "行った" : it.went.stamp === "前を通った" ? "通った" : "調べた"}
+            </span>
+          )}
+        </span>
+        <span className="tg-tile-body">
+          <b>{it.name}</b>
+          {it.local && <i lang={it.local.lang}>{it.local.text}</i>}
+          <em>{meta}</em>
+        </span>
+        <Icon name="chevron" size={16} className="tg-tile-c" />
+      </summary>
+      <div className="tg-tile-more">
+        {it.markWhy && <p className="tg-tile-why">{it.markWhy}</p>}
+        {it.local && (it.local.roman || it.local.kana) && (
+          <p className="tg-tile-say">
+            <Icon name="phrase" size={13} />
+            {[it.local.roman, it.local.kana].filter(Boolean).join("／")}
+          </p>
+        )}
+        <ExtBlock it={it} />
+        {it.went && <WentBlock w={it.went} photo={false} />}
+        <Maps it={it} />
+        {it.photo && <PhotoCredit p={it.photo} />}
+      </div>
+    </details>
+  );
+}
+
+/** タイルを★で3段に。★の無い件（行った人の話だけの件）は最後の段にまとめる */
+export function Tiles({ items, rest }: { items: Item[]; rest: string }) {
+  const groups: { title: ReactNode; items: Item[] }[] = [1, 2, 3]
+    .map((r) => ({ title: <Star rank={r} />, items: items.filter((x) => x.rank === r) }))
+    .filter((g) => g.items.length);
+  const free = items.filter((x) => !x.rank);
+  if (free.length) groups.push({ title: <span className="tg-star is-free"><i>{rest}</i></span>, items: free });
+  return (
+    <>
+      {groups.map((g, gi) => (
+        <div key={gi} className="tg-group">
+          <h3 className="tg-groupsub">
+            {g.title}
+            <em>{g.items.length}件</em>
+          </h3>
+          <div className="tg-tiles">
+            {g.items.map((it, i) => (
+              <Tile key={it.key} it={it} eager={gi === 0 && i < 2} />
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** したいこと。**番号つきの札**（`/bulgaria` の `.bgtodo`）。行った話には、その日の写真 */
+export function Todos({ items }: { items: Item[] }) {
+  return (
+    <ol className="tg-todo">
+      {items.map((it, i) => (
+        <li key={it.key} id={it.key}>
+          <span className="tg-todo-n">{i + 1}</span>
+          <div className="tg-todo-b">
+            <h3>
+              {it.name}
+              {it.mark && <Badge mark={it.mark} />}
+            </h3>
+            {it.rank && <Star rank={it.rank} />}
+            {it.markWhy && <p className="tg-tile-why">{it.markWhy}</p>}
+            {it.photo && !it.went?.photo && (
+              <figure className="tg-went-ph">
+                <Pic p={it.photo} sizes="(min-width: 720px) 640px, 88vw" />
+                <figcaption>
+                  <PhotoCredit p={it.photo} />
+                </figcaption>
+              </figure>
+            )}
+            <ExtBlock it={it} />
+            {it.went && <WentBlock w={it.went} sizes="(min-width: 720px) 640px, 88vw" />}
+            <Maps it={it} />
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** 基本情報。1件1枚の札。外の事実が先、あやとの話があとに */
+export function Basics({ items }: { items: Item[] }) {
+  return (
+    <div className="tg-basics">
+      {items.map((it) => (
+        <article key={it.key} className="tg-basic" id={it.key}>
+          <h3>
+            <Icon name={it.icon as IconName} size={20} />
+            {it.name}
+          </h3>
+          <ExtBlock it={it} />
+          {it.went && <WentBlock w={it.went} />}
+        </article>
+      ))}
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- 節 */
 
-/** 節ひとつ。番号・絵・問いの見出し・答えの1〜2文・中身・場面ボタン・目次へ */
+/** 節ひとつ。番号・絵・見出し・頭の1〜2文・一言（節に1つ）・中身・目次へ */
 export function Sec({
   id,
   n,
   head,
-  answer,
-  scene,
+  note,
+  lead,
+  quote,
+  quoteOf,
   children,
 }: {
   id: string;
   n: number;
   head: { h: string; icon: IconName };
-  answer?: string;
-  scene?: Scene | null;
+  note?: string;
+  lead?: string;
+  quote?: Quote | null;
+  quoteOf?: string | null;
   children: ReactNode;
 }) {
   return (
@@ -239,10 +478,15 @@ export function Sec({
         <span className="tg-sec-n">{String(n).padStart(2, "0")}</span>
         <Icon name={head.icon} size={26} className="tg-sec-i" />
         <span className="tg-sec-t">{head.h}</span>
+        {note && <em className="tg-sec-note">{note}</em>}
       </h2>
-      {answer && <p className="tg-answer">{answer}</p>}
+      {lead && <p className="tg-answer">{lead}</p>}
+      {quote && (
+        <div className="tg-says">
+          <Say q={quote} of={quoteOf} />
+        </div>
+      )}
       {children}
-      {scene && <SceneButton at={scene} />}
       <p className="tg-up">
         <a href="#toc">
           <Icon name="up" size={14} />
@@ -253,7 +497,7 @@ export function Sec({
   );
 }
 
-/* ---------------------------------------------------------------- 表紙・驚く数・目次 */
+/* ---------------------------------------------------------------- 表紙・驚く数・目次・読みかた */
 
 export function Hero({
   name,
@@ -285,8 +529,7 @@ export function Hero({
       <div className="tg-hero-meta">
         <p className="tg-dates">
           <span>
-            行った日{" "}
-            <time dateTime={went.from}>{went.text}</time>
+            行った日 <time dateTime={went.from}>{went.text}</time>
           </span>
           <span>
             公開 <time dateTime={published}>{jpDate(published)}</time>
@@ -298,6 +541,20 @@ export function Hero({
         {cover && <PhotoCredit p={cover} />}
       </div>
     </header>
+  );
+}
+
+/** 頭の話（どんな街か）。外の事実と、行った人の話 */
+export function Intro({ ext, went }: { ext: { text: string; src: Src[] }; went: { text: string; at: Scene } }) {
+  return (
+    <div className="tg-intro">
+      <ExtBlock it={{ what: ext.text, info: [], src: ext.src }} />
+      <div className="tg-went" data-went="">
+        <p className="tg-went-t">
+          {went.text} <At at={went.at} />
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -327,7 +584,7 @@ export function Nums({ nums }: { nums: Big[] }) {
 
 export function Toc({ items }: { items: { id: string; label: string; icon: IconName; note: string }[] }) {
   return (
-    <nav className="tg-toc" id="toc" aria-label="この面の中身">
+    <nav className="tg-toc" id="toc" aria-label="中身">
       {items.map((c) => (
         <a key={c.id} href={`#${c.id}`}>
           <Icon name={c.icon} size={22} />
@@ -339,190 +596,50 @@ export function Toc({ items }: { items: { id: string; label: string; icon: IconN
   );
 }
 
-/* ---------------------------------------------------------------- 節の中身 */
-
-export function MoveCard({ m }: { m: Move }) {
+/** ★と印と「行った」の読みかた。**畳んでおく**——記号の意味は、見たくなってから読めばいい */
+export function Legend({ good, warn, went, rate }: { good: number; warn: number; went: number; rate: { text: string; src: Src[] } }) {
   return (
-    <div className="tg-move">
-      <p className="tg-move-h">
-        <b>{m.from}</b>
-        <Icon name="right" size={14} />
-        <b>{m.to}</b>
-        <em>{m.by}</em>
-      </p>
-      <p className="tg-move-got">
-        {m.said && (
-          <>
-            <span className="tg-move-said">{m.said}</span>
-            <Icon name="right" size={14} />
-          </>
-        )}
-        <b>{m.got}</b> <At at={m.at} />
-      </p>
-      <Lines lines={m.lines} />
-      {m.quote && <Say q={m.quote} />}
-    </div>
-  );
-}
-
-export function PriceTables({ tables }: { tables: PriceTable[] }) {
-  if (!tables.length) return null;
-  return (
-    <div className="tg-prices">
-      {tables.map((t) => (
-        <table key={t.caption} className="tg-price">
-          <caption>{t.caption}</caption>
-          <thead>
-            <tr>
-              <th scope="col">何に</th>
-              <th scope="col">いくら</th>
-              <th scope="col">いつ・場面</th>
-            </tr>
-          </thead>
-          <tbody>
-            {t.rows.map((r) => (
-              <tr key={`${r.at.v}-${r.at.t}`}>
-                <th scope="row">{r.what}</th>
-                <td>{r.amount}</td>
-                <td>
-                  <At at={r.at} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ))}
-      <p className="tg-note">円は、あやとがその場で円に直して言った額。</p>
-    </div>
-  );
-}
-
-export function Keyword({ k }: { k: KeywordT }) {
-  return (
-    <aside className="tg-key" aria-label={k.title}>
-      <p className="tg-key-tag">Keyword</p>
-      <p className="tg-key-t">{k.title}</p>
-      <Lines lines={k.lines} />
-      {k.ext.map((e) => (
-        <ExtLine key={e.src} e={e} />
-      ))}
-    </aside>
-  );
-}
-
-/** カードの「行った」の札（日付つき） */
-function Went({ days }: { days: string[] }) {
-  if (!days.length) return null;
-  return (
-    <p className="tg-went">
-      <span className="tg-went-tag">
-        <Icon name="check" size={12} />
-        行った
-      </span>
-      {days.map((d, i) => (
-        <span key={d}>
-          {i > 0 && "・"}
-          <time dateTime={d}>{md(d)}</time>
-        </span>
-      ))}
-    </p>
-  );
-}
-
-/**
- * 見どころ・店・失敗談・遠出のカード。**並びは毎回同じ**（ca-voir の「1軒ぶん」）:
- * 写真 → 色の小見出し → 番号と名前 → 現地のつづり → 行った → 行 → 測った値 → 一言 → 最後に情報の塊
- */
-export function CardView({ c, kind, sizes }: { c: Card; kind: "place" | "shop" | "caution" | "trip"; sizes: string }) {
-  return (
-    <article className={`tg-card is-${kind}`} id={`${kind}-${c.key}`}>
-      {c.photo && (
-        <figure className="tg-card-ph">
-          <Pic p={c.photo} sizes={sizes} />
-          <figcaption>
-            <PhotoCredit p={c.photo} />
-          </figcaption>
-        </figure>
-      )}
-      <div className="tg-card-b">
-        {c.sub && <p className="tg-card-sub">{c.sub}</p>}
-        <h3 className="tg-card-h">
-          {c.n !== undefined && <span className="tg-card-n">{c.n}</span>}
-          {c.name}
-        </h3>
-        {c.local && <LocalName l={c.local} />}
-        {kind !== "caution" && <Went days={c.went} />}
-        <Lines lines={c.lines} />
-        {c.measured.length > 0 && (
-          <div className="tg-meases">
-            {c.measured.map((m) => (
-              <MeasuredTag key={`${m.from.t}-${m.to.t}`} m={m} />
-            ))}
-          </div>
-        )}
-        <Says qs={c.quotes} more={c.more} />
-        {(c.info.length > 0 || c.maps) && (
-          <dl className="tg-info">
-            {c.info.map((f) => (
-              <div key={f.label}>
-                <dt>{f.label}</dt>
-                <dd>
-                  {f.text} <At at={f.at} />
-                </dd>
-              </div>
-            ))}
-            {c.maps && (
-              <div>
-                <dt>地図</dt>
-                <dd>
-                  <a className="tg-maps" href={c.maps} target="_blank" rel="noopener noreferrer" aria-label={`Google マップで開く（${c.name}）`}>
-                    <Icon name="map" size={14} />
-                    Google マップ
-                    <Icon name="external" size={12} />
-                  </a>
-                </dd>
-              </div>
-            )}
-          </dl>
-        )}
+    <Fold title="★ と 印 と「行った」の読みかた" lead="重要度と好みを分けてあります" note={`◎${good} 注意${warn} 行った${went}`}>
+      <div className="tg-key">
+        <p>
+          <b>★</b>は一般の重要度（必見／行けたら／余裕があれば）、丸い<b>印</b>は<b>あやとの好みに合うか</b>です。
+          「有名だけど合わない」を隠さないために、2つを混ぜていません。
+        </p>
+        <ul className="tg-key-marks">
+          {(Object.keys(MARK) as Mark[]).map((m) => (
+            <li key={m}>
+              <Badge mark={m} big />
+              {MARK[m].label}
+            </li>
+          ))}
+        </ul>
+        <p>
+          <b>「行った」</b>の札が付いた所は、あやとが実際に歩いた所で、写真はその日のもの。札の無い所は、行く前のガイドです。
+        </p>
+        <div className="tg-ext" data-src="">
+          <p>{rate.text}</p>
+          <SrcLine src={rate.src} />
+        </div>
       </div>
-    </article>
+    </Fold>
   );
 }
 
-/** 料理の格子。写真が先、その下に名前。押すと開く: どこで・額・一言・場面 */
-export function Dishes({ dishes }: { dishes: Card[] }) {
-  if (!dishes.length) return null;
+/** 記事への入口。**面がある記事だけ**を渡される（面の側が確かめる） */
+export function Articles({ items }: { items: Article[] }) {
   return (
-    <div className="tg-dishes">
-      {dishes.map((d) => (
-        <details key={d.key} className="tg-dish" id={`dish-${d.key}`}>
-          <summary>
-            {d.photo && (
-              <span className="tg-dish-ph">
-                <Pic p={d.photo} sizes="(min-width: 720px) 300px, 48vw" />
-              </span>
-            )}
-            <span className="tg-dish-b">
-              <h3>{d.name}</h3>
-              {d.where && <span className="tg-dish-where">{d.where}</span>}
-              <Went days={d.went} />
-            </span>
-            <Icon name="chevron" size={16} className="tg-dish-c" />
-          </summary>
-          <div className="tg-dish-more">
-            <Lines lines={d.lines} />
-            {d.price && (
-              <p className="tg-dish-price">
-                {d.price.what} <b>{d.price.amount}</b> <At at={d.price.at} />
-              </p>
-            )}
-            <Says qs={d.quotes} more={d.more} />
-            {d.photo && <PhotoCredit p={d.photo} />}
-          </div>
-        </details>
+    <ul className="tg-arts">
+      {items.map((a) => (
+        <li key={a.href}>
+          <Link href={a.href} prefetch={false}>
+            <Icon name={a.icon as IconName} size={26} />
+            <b>{a.title}</b>
+            <i>{a.note}</i>
+            <Icon name="right" size={16} />
+          </Link>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -587,33 +704,29 @@ export function Writer() {
   );
 }
 
-/** 出どころの一覧。外の事実の URL と、現地のつづりの出どころ */
-export function Sources({ ext, locals }: { ext: Ext[]; locals: { name: string; l: Local }[] }) {
+/** 出どころの一覧。外の事実の URL（見た日）と、借りた写真 */
+export function Sources({ src, photos }: { src: Src[]; photos: { name: string; p: Photo }[] }) {
   return (
     <section className="tg-sources" aria-labelledby="sources-h">
       <h2 id="sources-h" className="tg-sources-h">
         出どころ
       </h2>
       <ul>
-        <li>写真は、あやとがその日に撮ったもの</li>
-        <li>本人の一言と場面は、あやとの YouTube の配信</li>
-        {ext.map((e) => (
-          <li key={e.src}>
-            <a href={e.src} target="_blank" rel="noopener noreferrer">
+        <li>「行った」の話と写真は、あやとの YouTube の配信と、その日に撮った写真</li>
+        {src.map((e) => (
+          <li key={e.url}>
+            <a href={e.url} target="_blank" rel="noopener noreferrer">
               {e.name}
             </a>
             （<time dateTime={e.seen}>{jpDate(e.seen)}</time>に見た）
           </li>
         ))}
-        {locals.map(({ name, l }) => (
-          <li key={l.src}>
-            {name}の現地のつづり <LocalName l={l} />（
-            {/* 字は「Wikipedia」で揃えるが、読み上げでは場所ごとに名前を変える。
-                同じ名前のリンクが別々の先を指すと、読み上げで聞き分けられない（reachkeys の「おなじ字」） */}
-            <a href={l.src} target="_blank" rel="noopener noreferrer" aria-label={`${name}の Wikipedia`}>
-              Wikipedia
+        {photos.map(({ name, p }) => (
+          <li key={p.src}>
+            {name}の写真:{" "}
+            <a href={p.page} target="_blank" rel="noopener noreferrer" aria-label={`${name}の写真の元のページ`}>
+              {p.by}／{p.lic}
             </a>
-            ）
           </li>
         ))}
       </ul>

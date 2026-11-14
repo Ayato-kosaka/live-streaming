@@ -1426,8 +1426,8 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
       "roman": "Matka"
      },
      "rank": 1,
-     "mark": "good",
-     "markWhy": "壁画だらけの正教会が好き",
+     "mark": "ok",
+     "markWhy": "",
      "what": "スコピエの中心から西にある、約5,000haの渓谷。国でいちばん古い人造湖があり、洞窟が10（いちばん長いもので176m）と、中世の修道院がいくつも残る。トレスカ川のカヤックも人気で、山歩きの季節は復活祭のころから11月まで。",
      "info": [],
      "src": [
@@ -1693,7 +1693,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
       },
       "rows": [
        {
-        "what": "パスタ（ディスカウントスーパー）",
+        "what": "パスタ（スーパー）",
         "amount": "75円",
         "at": {
          "v": "NY9pzYrA-5o",
@@ -1702,7 +1702,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
         }
        },
        {
-        "what": "パン（ディスカウントスーパー）",
+        "what": "パン（スーパー）",
         "amount": "100円",
         "at": {
          "v": "NY9pzYrA-5o",
@@ -1711,7 +1711,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
         }
        },
        {
-        "what": "コーラ（ディスカウントスーパー）",
+        "what": "コーラ（スーパー）",
         "amount": "100円",
         "at": {
          "v": "NY9pzYrA-5o",
@@ -1756,7 +1756,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
         }
        },
        {
-        "what": "キャロットケーキとアメリカーノ（カフェ）",
+        "what": "ケーキとコーヒー（カフェ）",
         "amount": "約750円",
         "at": {
          "v": "misSMBhPlkc",
@@ -1765,7 +1765,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
         }
        },
        {
-        "what": "ホステル1泊（10日延ばしたあと）",
+        "what": "ホステル1泊（10日延長）",
         "amount": "約1,400円",
         "at": {
          "v": "UQdkUSro9Ck",
@@ -1993,6 +1993,6 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
  ],
  "published": "2026-11-14",
  "updated": "2026-11-14",
- "hash": "be7e42b161bd3583"
+ "hash": "a1c767cc446950f0"
 }
 /* END GUIDE */;
