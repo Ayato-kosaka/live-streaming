@@ -219,10 +219,16 @@ export async function planRegister(token: string, batch: string): Promise<Regist
 }
 
 /** `max` 枚まで登録して、残りの数を返す。画面が0になるまで呼ぶ */
-export async function stepRegister(token: string, batch: string, max: number): Promise<RegisterStep> {
+export async function stepRegister(
+  token: string,
+  batch: string,
+  max: number,
+  retryFailed = false,
+): Promise<RegisterStep> {
   const raw = await call<Record<string, unknown>>("/cardimport/register", token, {
     method: "POST",
-    body: JSON.stringify({ batch, max, dryRun: false }),
+    /* 失敗したものは、頼んだときだけ拾い直させる（毎回拾うと残りが0にならない） */
+    body: JSON.stringify({ batch, max, dryRun: false, retryFailed }),
   });
   const results = (Array.isArray(raw.results) ? raw.results : Array.isArray(raw.items) ? raw.items : [])
     .map((x): RegisterStep["results"][number] | null => {

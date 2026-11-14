@@ -107,7 +107,7 @@ export default function ImportRegister({
 
   /* ---------- 実行 ---------- */
   const run = useCallback(
-    async (total: number, already = 0) => {
+    async (total: number, already = 0, retryFailed = false) => {
       stop.current = false;
       let done = already;
       let tries = 0;
@@ -122,7 +122,7 @@ export default function ImportRegister({
           const t = await withRead(token());
           if (!t) throw new Error("no-token");
           /* 10枚ぶん写真を焼いてカードを作るので、読みものの12秒では足りない */
-          step = await withRead(stepRegister(t, batch, STEP), 120000);
+          step = await withRead(stepRegister(t, batch, STEP, retryFailed), 120000);
         } catch (e) {
           tries += 1;
           if (tries >= 3) {
@@ -298,7 +298,7 @@ export default function ImportRegister({
               )}
               <div className="cim-reg-row">
                 {failed.length > 0 ? (
-                  <button className="cim-btn is-go" onClick={() => run(failed.length)}>
+                  <button className="cim-btn is-go" onClick={() => run(failed.length, 0, true)}>
                     失敗したものだけもう一度
                   </button>
                 ) : (
