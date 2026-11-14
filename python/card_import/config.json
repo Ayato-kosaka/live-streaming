@@ -1,0 +1,39 @@
+{
+  "_": "閾値はここだけ（docs/card-import.md 4章）。それぞれの意味と決めた理由は conf.py の頭",
+  "range": {"from": "2024-09-11", "to": "2026-09-10"},
+  "read": {
+    "minSide": 480,
+    "keepLong": 1600,
+    "thumbLong": 400,
+    "webpQuality": 82,
+    "thumbQuality": 78,
+    "maxPixels": 200000000,
+    "minFreeGB": 0.8
+  },
+  "quality": {
+    "blurHard": 30,
+    "blurGood": 600,
+    "darkHard": 22,
+    "darkSoft": 50,
+    "clipHard": 0.45,
+    "clipSoft": 0.15
+  },
+  "irrelevant": {
+    "categories": ["screenshot", "document", "receipt", "screen"],
+    "drop": 0.55,
+    "doubt": 0.3
+  },
+  "group": {"phash": 10, "clip": 0.94, "looseClip": 0.85},
+  "existing": {
+    "url": "https://live-streaming-d3cac.web.app/island-api/nordic/photos",
+    "phash": 10,
+    "clip": 0.95
+  },
+  "score": {"sharp": 0.3, "exposure": 0.2, "aesthetic": 0.35, "relevant": 0.15},
+  "day": {"good": 0.7, "floor": 0.5, "min": 1, "sqrtGain": 1.2, "max": 10},
+  "diversity": {"similar": 0.35, "similarFrom": 0.6, "sameCategory": 0.06, "nearMeters": 150, "samePlace": 0.08},
+  "ambiguous": {"margin": 0.06},
+  "calib": {"count": 24, "sim": 0.85, "k": 5, "gain": 0.15},
+  "missing": {"minDays": 14},
+  "prune": {"afterEachSource": true}
+}
