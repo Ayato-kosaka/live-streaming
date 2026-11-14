@@ -1,0 +1,15 @@
+/* 取り込みへの入口（`ImportDoor.tsx`）。**あやとにだけ出る。**
+   待っている写真があるときは板のボタン（`.blank-go`）。無いときは字だけの1行で、
+   貼る道具の下に静かに置く。 */
+.cim-door { margin: 0 0 var(--sp-5); }
+.cim-door-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 48px;
+  font-size: var(--fs-note);
+  font-weight: 900;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
