@@ -1,36 +1,37 @@
 #!/usr/bin/env python3
-"""EC2 の上で動く（置き場 /home/ubuntu/cdp/cf_ec2.py）。Chrome（~/cdp-cloudflare）で Cloudflare を触る。
+"""EC2 の上で動く（置き場 /home/ubuntu/cdp/cf_ec2.py）。Chrome（~/cdp-cloudflare）で Cloudflare に入り、**読む**。
 手元からは cf.py が置いて呼ぶ。直に呼ぶときも CHECK_ONLY の意味は同じ。
 
-    python3 cf_ec2.py login                          # 「Google」で入る。CHECK_ONLY=1 ならアカウントの選択で押さずに止まる
-    python3 cf_ec2.py check                          # 入っているかだけ見る（Google の画面は1枚も開かない）
-    python3 cf_ec2.py dns-add TYPE NAME CONTENT …    # DNS only で足す。CHECK_ONLY=1 なら足さずに見るだけ
-    python3 cf_ec2.py token [--name 名前] [--secret 名前]   # DNS の編集だけのトークンを作って Secret へ。CHECK_ONLY=1 なら作らない
+    python3 cf_ec2.py login      # 入る。ログイン画面の「覚えたアカウントの行」（無ければ「Google」）を sha256 で当てて押す。
+                                 # CHECK_ONLY=1 なら押す前に止まる（スマホは鳴らない）
+    python3 cf_ec2.py check      # 入っているかだけ見る（何も押さない。Google の本人確認は1枚も開かない）
+    python3 cf_ec2.py dns-list   # ayato-arigato.com のいまの DNS を `  REC {json}` で1本1行（手元の cf.py が表にする）
 
 最後の行は必ず `RESULT: <札> …`（手元の cf.py はこれを読む）。札は
 LOGGED_IN / NOT_LOGGED_IN / CHECK_ONLY / EXPIRED / STOP / DONE。
+
+## 読むだけ
+
+DNS を足す・API トークンを作る・GitHub の Secret に入れる、の口は持たない。
+2026-11-13 にダッシュボードの中から DNS を足そうとしたら、Cloudflare の WAF が 403（Attention Required）で止めた。
+あれは Cloudflare の守りなので、ヘッダを写す・足すなどで抜けようとしない。DNS はあやとがスマホの Cloudflare で入れる
+（手元の cf.py dns-plan が、その打つ表を出す）。
 
 ## スマホを鳴らさない守り（Guard）
 
 accounts.google.com の画面（Document）への要求は、出る前に Fetch で1本ずつ止めて見る。
 `/challenge/` は**開いた時点で**あやとのスマホに通知が飛ぶ（2026-11-11・11-13 に、確かめずに開いて鳴らした）。
 だから「あやとのアカウントを sha256 で当てて押した直後」の `/challenge/dp` だけを通し、それ以外の `/challenge/`
-（パスワード・SMS・認証アプリ…）は要求ごと落とす。CHECK_ONLY と check・dns-add・token では1本も通さない。
+（パスワード・SMS・認証アプリ…）は要求ごと落とす。CHECK_ONLY と check・dns-list では1本も通さない。
 画面を見てから止めるのでは遅い（開いた時点で鳴る）ので、要求の段で止める。
-
-## 値を出さない
-
-API トークンの値は、ページの中の fetch の答えから python の変数に入り、確かめと `gh secret set` の stdin に渡すだけ。
-標準出力・ファイル・SSM のログには、長さと HTTP の答えしか出さない。
 """
-import hashlib, json, os, pwd, re, signal, subprocess, sys, time, urllib.error, urllib.parse, urllib.request
+import hashlib, json, os, signal, sys, time, urllib.parse, urllib.request
 
 sys.path.insert(0, "/home/ubuntu/cdp")
 import cdp  # noqa: E402
 
 NAME = "cloudflare"                       # Chrome の束と札の列の名前（~/cdp-cloudflare）
 ZONE = "ayato-arigato.com"
-REPO = "Ayato-kosaka/live-streaming"
 DASH = "https://dash.cloudflare.com"
 # あやとの Cloudflare（Google）のアカウント。公開リポジトリなので、メールを小文字にしたものの SHA-256 だけを持つ
 # （Doneru・SUZURI と同じアカウント。google_login.py の AYATO_SHA256 と同じ値）
@@ -72,39 +73,10 @@ signal.signal(signal.SIGTERM, _term)
 
 # ---------------------------------------------------------------- Chrome と守り
 
-def prep_profile():
-    """Chrome を起こす前に、終わるときにセッションの cookie も書き戻させる（起動の設定を「前回の続き」に）。
-    Cloudflare のダッシュボードの cookie に期限の無いもの（ブラウザを閉じたら消えるもの）が混ざっていると、
-    down で閉じたとたんにログインが消え、DNS を足すたびにあやとのスマホを鳴らすことになる。Chrome が
-    セッションの cookie を残すのは、起動したときの設定が「前回の続き」のときだけなので、起こす前に書く"""
-    cdp.hold(NAME)
-    if cdp._alive(cdp._port(NAME)):
-        return
-    pref = f"{cdp._udd(NAME)}/Default/Preferences"
-    if not os.path.exists(pref):
-        return  # 初回は up() が既定のプロファイルから写す。写したあと次の回から効く
-    try:
-        j = json.load(open(pref))
-    except ValueError:
-        say("  profile: Preferences が読めない。触らずに進む")
-        return
-    s = j.setdefault("session", {})
-    if s.get("restore_on_startup") == 1:
-        return
-    s["restore_on_startup"] = 1
-    tmp = pref + ".cf"
-    json.dump(j, open(tmp, "w"), separators=(",", ":"))
-    u = pwd.getpwnam("ubuntu")
-    os.chown(tmp, u.pw_uid, u.pw_gid)
-    os.replace(tmp, pref)
-    say("  profile: 起動の設定を「前回の続き」にした（閉じてもセッションの cookie を残す）")
-
-
 def open_tab():
-    prep_profile()
     cdp.up(NAME, "about:blank")
     ps = cdp.pages(NAME)
-    # 「前回の続き」で開いたタブは閉じて1枚にする（tab() が手前のよそのタブを拾わないように）
+    # よそのタブ（落ちたあとの復元など）は閉じて1枚にする（手前のよそのタブを拾わないように）
     for p in ps[1:]:
         try:
             urllib.request.urlopen(f"http://localhost:{cdp._port(NAME)}/json/close/{p['id']}", timeout=5)
@@ -129,6 +101,7 @@ class Guard:
     def __init__(self, t):
         self.t = t
         self.allow_dp = False    # あやとのアカウントを押した直後だけ True（CHECK_ONLY では立たない）
+        self.fix_prompt = True   # 「Google」から入るときだけ、入口に prompt=select_account を足す（覚えた行から入るときは触らない）
         self.stop = None         # 落とした理由（最初の1つ）。呼ぶ側が見て止まる
         self.entry = False
         t.call("Fetch.enable", patterns=[{"urlPattern": "https://accounts.google.com/*",
@@ -148,18 +121,18 @@ class Guard:
             self.stop = self.stop or why
             return
         if sp.path.startswith("/o/oauth2/") and not self.entry:
-            # Cloudflare の入口は prompt=select_account を自分で付けている（2026-11-13 に見た）。
-            # 付いていなければ足して開き直す。付けないと、Google は覚えたアカウントの本人確認へ直行する（Doneru で 2026-11-11）
             self.entry = True
             q = urllib.parse.parse_qsl(sp.query, keep_blank_values=True)
             pr = " ".join(v for k, v in q if k == "prompt").split()
-            if "select_account" not in pr:
+            if self.fix_prompt and "select_account" not in pr:
+                # 「Google」の入口は Cloudflare が prompt=select_account を自分で付けている（2026-11-13 に見た）。
+                # 付いていなければ足して開き直す。付けないと、Google は覚えたアカウントの本人確認へ直行する（Doneru で 2026-11-11）
                 say(f"  guard: {cdp.where(u)} に prompt=select_account を足して開き直す（元: {' '.join(pr) or 'なし'}）")
                 send(self.t, "Fetch.failRequest", requestId=rid, errorReason="Aborted")
                 q = [(k, v) for k, v in q if k != "prompt"] + [("prompt", " ".join(["select_account"] + pr))]
                 nav(self.t, urllib.parse.urlunsplit(sp._replace(query=urllib.parse.urlencode(q, quote_via=urllib.parse.quote))))
                 return
-            say(f"  guard: {cdp.where(u)}（prompt: {' '.join(pr)}）")
+            say(f"  guard: {cdp.where(u)}（prompt: {' '.join(pr) or 'なし'}）")
         send(self.t, "Fetch.continueRequest", requestId=rid)
 
     def pump(self, sec=0.0):
@@ -191,27 +164,25 @@ def href(t):
         return ""
 
 
-# ---------------------------------------------------------------- ダッシュボードの API（ページの中から）
-
-# ダッシュボードの画面が送るのと同じ形（2026-11-13 に cf-shared-auth の JS で見た）:
-# /api/v4/… を same-origin で、X-ATOK（window.bootstrap.atok）と X-Cross-Site-Security: dash を付ける
-API = r"""(async (method, path, body) => {
-  let atok = window.bootstrap && window.bootstrap.atok;
-  if (!atok) { try { const r = await fetch('/api/v4/system/bootstrap', {credentials: 'same-origin', headers: {'X-Cross-Site-Security': 'dash'}});
-    const seek = o => { if (!o || typeof o !== 'object') return null; if (typeof o.atok === 'string') return o.atok;
-      for (const v of Object.values(o)) { const x = seek(v); if (x) return x; } return null; };
-    atok = seek(await r.json()); } catch (e) {} }
-  const h = {'X-Cross-Site-Security': 'dash'}; if (atok) h['X-ATOK'] = atok;
-  if (body !== null) h['Content-Type'] = 'application/json';
-  const r = await fetch('/api/v4' + path, {method, credentials: 'same-origin', headers: h, body: body === null ? undefined : JSON.stringify(body)});
-  let j = null; try { j = await r.json(); } catch (e) {}
-  return {status: r.status, atok: !!atok, json: j};
-})(%s, %s, %s)"""
+def ready(t):
+    try:
+        return t.js("document.readyState") == "complete"
+    except Exception:
+        return False
 
 
-def api(t, method, path, body=None):
-    r = t.call("Runtime.evaluate", expression=API % (json.dumps(method), json.dumps(path), json.dumps(body)),
-               awaitPromise=True, returnByValue=True)
+# ---------------------------------------------------------------- ダッシュボードの中から読む
+
+# 2026-11-13 に 200 で通った形そのまま: /api/v4/… を同じ origin へ、cookie つきで、ヘッダは x-cross-site-security: dash だけ。
+# 通ったのは /zones?name=…・/zones/<id>/dns_records・/system/bootstrap。読みにだけ使う（method は渡さない＝GET だけ）。
+# 書き（DNS を足す）は同じ日に WAF の 403 で止まった。あれは Cloudflare の守りなので抜けようとしない（SKILL.md 6）
+READ = r"""(path => fetch('/api/v4' + path, {credentials: 'include', headers: {'x-cross-site-security': 'dash'}})
+  .then(async r => { let j = null; try { j = await r.json(); } catch (e) {} return {status: r.status, json: j}; })
+  .catch(e => ({status: -1, json: null})))(%s)"""
+
+
+def read(t, path):
+    r = t.call("Runtime.evaluate", expression=READ % json.dumps(path), awaitPromise=True, returnByValue=True)
     v = (r.get("result") or {}).get("value") or {}
     return v.get("status"), (v.get("json") or {})
 
@@ -220,61 +191,61 @@ def errs(j):
     return "; ".join(f"{e.get('code')} {e.get('message')}" for e in (j.get("errors") or [])) or "-"
 
 
-def whoami(t):
-    """入っていれば (True, 伏せたメール, あやとのアカウントか)。入っていなければ (False, HTTP の答え, None)"""
-    st, j = api(t, "GET", "/user")
-    em = ((j.get("result") or {}).get("email") or "") if st == 200 and j.get("success") else ""
-    if not em:
-        return False, st, None
-    return True, mask(em), sha(em) == ACCOUNT_SHA256
+def zone_seen(t):
+    """ゾーンが読めるか。('in', ゾーン) / ('other', 何件見えたか) / (None, HTTP の答え)。
+    ayato-arigato.com がちょうど1つ見えれば、その持ち主（あやとのアカウント）で入っている"""
+    st, j = read(t, "/zones?name=" + urllib.parse.quote(ZONE))
+    if st != 200:
+        return None, st
+    zs = j.get("result") or []
+    return ("in", zs[0]) if len(zs) == 1 else ("other", f"{ZONE} が {len(zs)} 件")
 
 
 def dash_state(t, g, sec=35):
-    """ダッシュボードを開き、入っているかを決める。(True, 伏せたメール, 一致) / (False, いまの場所, None)"""
+    """ダッシュボードを開き、入っているかを決める。('in', ゾーン) / ('other', 説明) / ('out', いまの場所)"""
     nav(t, DASH + "/")
-    end, first_login = time.time() + sec, None
+    end, first_out = time.time() + sec, None
     while time.time() < end:
         g.pump(1)
         if g.stop:
             raise Result("STOP", f"ダッシュボードを開いただけで Google の本人確認へ行こうとした（{g.stop}）。落とした", 3)
         u = urllib.parse.urlsplit(href(t))
-        if u.netloc != "dash.cloudflare.com":
+        if u.netloc != "dash.cloudflare.com" or not ready(t):
             continue
-        try:
-            if t.js("document.readyState") != "complete":
-                continue
-        except Exception:
-            continue
-        ok, a, b = whoami(t)
-        if ok:
-            return True, a, b
         if u.path.startswith(OUT_PATHS):
-            first_login = first_login or time.time()
-            if time.time() - first_login > 4:   # 一瞬だけ /login を通る画面があるので、居座ったら決める
-                return False, u.path, None
-    return False, cdp.where(href(t)), None
+            first_out = first_out or time.time()
+            if time.time() - first_out > 4:   # 一瞬だけ /login を通る画面があるので、居座ったら決める
+                return "out", u.path
+            continue
+        s, info = zone_seen(t)
+        if s:
+            return s, info
+    return "out", cdp.where(href(t))
 
 
 def need_login(t, g):
-    ok, who, match = dash_state(t, g)
-    if not ok:
-        raise Result("NOT_LOGGED_IN", f"Cloudflare に入っていない（{who}）。cf.py start → wait を先に", 4)
-    say(f"  logged in: {who} あやとのアカウント={match}")
-    if not match:
-        raise Result("STOP", "入っているのがあやとのアカウントではない。何もしない", 3)
-
-
-def zone_id(t):
-    st, j = api(t, "GET", "/zones?name=" + urllib.parse.quote(ZONE))
-    zs = j.get("result") or []
-    if st != 200 or len(zs) != 1:
-        raise Result("STOP", f"ゾーン {ZONE} が1つに決まらない（HTTP {st}・{len(zs)}件・{errs(j)}）", 3)
-    z = zs[0]
-    say(f"  zone: {ZONE} id={z.get('id')} status={z.get('status')} plan={(z.get('plan') or {}).get('name')}")
-    return z["id"]
+    s, info = dash_state(t, g)
+    if s == "out":
+        raise Result("NOT_LOGGED_IN", f"Cloudflare に入っていない（{info}）。cf.py start → wait を先に", 4)
+    if s == "other":
+        raise Result("STOP", f"入ってはいるが {info}（あやとのアカウントではない？）。何もしない", 3)
+    say(f"  zone: {ZONE} status={info.get('status')} ns={info.get('name_servers')}")
+    return info
 
 
 # ---------------------------------------------------------------- login
+
+# Cloudflare のログイン画面。覚えたアカウントの行（2026-11-13 に、前に「この端末に覚える」で入ったので出た）と「Google」。
+# 行はメールの字を持つ押しどころ。どれを押すかは Python が sha256 で決める（位置で選ばない）
+CF_LOGIN = r"""(() => { const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+  const label = e => (e.innerText || e.getAttribute('aria-label') || '').trim();
+  const els = [...document.querySelectorAll('button,a,[role=button]')].filter(vis);
+  const rows = els.filter(e => /@/.test(e.innerText || '') && !/^remove/i.test(label(e)));
+  window.__cfrows = rows;
+  const g = els.find(e => /^(continue with |sign in with )?google$/i.test(label(e)));
+  let google = null;
+  if (g) { g.scrollIntoView({block: 'center'}); const r = g.getBoundingClientRect(); google = [r.x + r.width / 2, r.y + r.height / 2]; }
+  return {google, saved: rows.map((e, i) => ({i, mail: ((e.innerText || '').match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/) || [''])[0].toLowerCase()}))}; })()"""
 
 # Google の画面で押す先を探す（Doneru の remote_refresh.sh の FIND を Cloudflare 用に削ったもの）
 FIND = r"""(() => {
@@ -293,11 +264,12 @@ FIND = r"""(() => {
   return {kind: 'none', diag: [...document.querySelectorAll('button,a,[role=button]')].filter(vis).map(e => txt(e).slice(0, 25)).slice(0, 20).join(' | ').replace(/\S+@\S+/g, '<mail>')};
 })()"""
 
-# 当てた行を画面の中へ送って座標を取り直し、その点で当たる要素の最寄りの行がその行そのものかを見る（違えば押さない）
-PRE = r"""(i => { const e = (window.__acct || [])[i]; if (!e) return null; e.scrollIntoView({block: 'center', behavior: 'instant'});
+# 当てた行を画面の中へ送って座標を取り直し、その点で当たる要素の最寄りの押しどころがその行（か、その中の同じ行の字）かを見る。
+# 違えば押さない（隣の行や「消す」の印を押さないように）
+AIM = r"""((key, sel, i) => { const e = (window[key] || [])[i]; if (!e) return null; e.scrollIntoView({block: 'center', behavior: 'instant'});
   const r = e.getBoundingClientRect(), x = r.x + r.width / 2, y = r.y + r.height / 2, h = document.elementFromPoint(x, y);
-  const row = h && h.closest('[data-identifier]');
-  return {x, y, ok: row === e, hit: h ? h.tagName.toLowerCase() : null}; })(%d)"""
+  const row = h && h.closest(sel), lb = row ? (row.innerText || row.getAttribute('aria-label') || '').trim() : '';
+  return {x, y, ok: !!row && (row === e || (e.contains(row) && !/^remove/i.test(lb))), hit: h ? h.tagName.toLowerCase() : null}; })(%s, %s, %d)"""
 
 # 本人確認の画面に出ているアカウント（見えている字から。無ければ属性から）
 EMAILS = r"""(() => { const re = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g, s = new Set();
@@ -308,16 +280,20 @@ EMAILS = r"""(() => { const re = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g, s = new Set();
 # dp の画面に大きく出る照合用の数字（1〜3桁だけの字の塊）
 NUMS = r"""[...document.querySelectorAll('body *')].filter(e => e.children.length === 0 && e.offsetParent !== null && /^\d{1,3}$/.test((e.innerText || '').trim())).map(e => e.innerText.trim())"""
 
-# Cloudflare のログイン画面の「Google」（aria-label は Continue with Google。2026-11-13）
-CF_GOOGLE = r"""(() => { const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-  const b = [...document.querySelectorAll('button,a,[role=button]')].filter(vis).find(e =>
-    /^(continue|sign in) with google$/i.test(e.getAttribute('aria-label') || '') || /^google$/i.test((e.innerText || '').trim()));
-  if (!b) return null; b.scrollIntoView({block: 'center'}); const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()"""
-
 
 def click(t, x, y):
     for typ in ("mouseMoved", "mousePressed", "mouseReleased"):
         t.call("Input.dispatchMouseEvent", type=typ, x=x, y=y, button="left", clickCount=1)
+
+
+def aim(t, key, sel, i):
+    t.js(AIM % (json.dumps(key), json.dumps(sel), i))
+    time.sleep(0.5)
+    p = t.js(AIM % (json.dumps(key), json.dumps(sel), i)) or {"ok": False}
+    say(f"  押す前の確かめ: [{i}] 座標=({round(p.get('x', -1))},{round(p.get('y', -1))}) 当たる要素={p.get('hit')} 行の中={p['ok']}")
+    if not p["ok"]:
+        raise Result("STOP", "押す座標があやとのアカウントの行に当たらない。押していない", 3)
+    return p
 
 
 def shot_masked(t, path, dot=None):
@@ -369,20 +345,18 @@ def on_dp(t, g):
         say(f"  challenge/dp: {int(time.time() - t0)}秒で先へ進んだ")
 
 
-def logged_in_now(t):
-    ok, who, match = whoami(t)
-    if not ok:
-        return False
-    # 閉じても残るかの見当: 期限の無い cookie（閉じると消える側）が Cloudflare のどれだけにあるか（名前だけ）
-    t.call("Network.enable")
-    cs = t.call("Network.getCookies", urls=[DASH + "/", "https://cloudflare.com/"]).get("cookies", [])
-    t.call("Network.disable")
-    sess = sorted({c["name"] for c in cs if c.get("session")})
-    say(f"  account: {who} あやとのアカウント={match}")
-    say(f"  cookies: 期限つき {sum(1 for c in cs if not c.get('session'))} / 期限なし {len(sess)} {sess}")
-    if not match:
-        raise Result("STOP", "入ったのがあやとのアカウントではない", 3)
-    return True
+def login_screen(t, g):
+    """ログイン画面で、覚えたアカウントの行か「Google」が出るまで最大25秒待つ。
+    描き終わるまで空に見え、行とボタンが同じ瞬間に出るとは限らないので、見えてから2秒置いて読み直したものを使う"""
+    nav(t, DASH + "/login")
+    for _ in range(25):
+        g.pump(1)
+        c = t.js(CF_LOGIN) if "dash.cloudflare.com/login" in href(t) else None
+        if c and (c.get("saved") or c.get("google")):
+            g.pump(2)
+            return t.js(CF_LOGIN) or c
+    say("  shot:", shot_masked(t, f"{SHOTS}/cf_login_stuck.jpg"))
+    raise Result("STOP", f"ログイン画面に、覚えたアカウントの行も「Google」も出ない（{cdp.where(href(t))}）。押していない", 3)
 
 
 def login():
@@ -390,40 +364,63 @@ def login():
     g = Guard(t)
     if os.path.exists(CHALLENGE_FILE):
         os.remove(CHALLENGE_FILE)
-    # もう入っていれば押さない
-    ok, who, match = dash_state(t, g)
-    if ok:
-        say(f"  account: {who} あやとのアカウント={match}")
-        if not match:
-            raise Result("STOP", "入っているのがあやとのアカウントではない。押していない", 3)
-        raise Result("LOGGED_IN", "もう入っていた（本人確認は要らなかった）", 0)
-    nav(t, DASH + "/login")
-    c = None
-    for _ in range(25):
-        g.pump(1)
-        c = t.js(CF_GOOGLE) if "dash.cloudflare.com/login" in href(t) else None
-        if c:
-            break
-    if not c:
-        say("  shot:", t.shot(f"{SHOTS}/cf_login_stuck.jpg", quality=60))
-        raise Result("STOP", f"ログイン画面に「Google」が出ない（{cdp.where(href(t))}）。押していない", 3)
-    say(f"  press: Cloudflare の「Google」 ({round(c[0])},{round(c[1])})")
-    time.sleep(0.5)
-    click(t, *c)
-    pressed, shown, end = 0, False, time.time() + 90
+    s, info = dash_state(t, g)
+    if s == "in":
+        raise Result("LOGGED_IN", "もう入っていた（何も押していない）", 0)
+    if s == "other":
+        raise Result("STOP", f"入ってはいるが {info}（あやとのアカウントではない？）。押していない", 3)
+    c = login_screen(t, g)
+    rows = c.get("saved") or []
+    hit = [r["i"] for r in rows if sha(r["mail"]) == ACCOUNT_SHA256]
+    if rows:
+        say(f"  saved: 覚えたアカウントの行 {len(rows)} 件、一致 {hit}")
+        for r in rows:
+            say(f"    [{r['i']}] {mask(r['mail'])} 一致={r['i'] in hit}")
+    chose = False   # あやとのアカウント（覚えた行か、Google の選択）を押したか。押したあとの同意だけ押す
+    if hit:
+        # いつもの道（2026-11-13 の実測。スマホは鳴らずにダッシュボードに着いた）
+        p = aim(t, "__cfrows", "button,a,[role=button]", hit[0])
+        if CHECK_ONLY:
+            say("  shot:", shot_masked(t, f"{SHOTS}/cf_chooser.jpg", (p["x"], p["y"])), f"{SHOTS}/cf_chooser.jpg")
+            nav(t, "about:blank")
+            raise Result("CHECK_ONLY", "覚えたアカウントの行で止めた（押していない。Google には進んでいない）", 0)
+        # 覚えたアカウントからは、Google が選択の画面を飛ばして数字の画面へ来ることがある（画面のアカウントは on_dp が照らす）。
+        # 入口の prompt は書き換えない（実測の道は書き換えずに通った。select_account を足すと別の道になる）
+        g.allow_dp, g.fix_prompt, chose = True, False, True
+        say(f"  press: 覚えたアカウントの行 [{hit[0]}] {mask(rows[hit[0]]['mail'])}")
+        click(t, p["x"], p["y"])
+    else:
+        # あやとの行が無いとき（覚えが消えた・Chrome の束を作り直した・よその行だけ）は「Google」から。
+        # Google の選択と dp を通るのでスマホが鳴る（2026-11-13 に、この道で1通鳴らした・#1202）
+        if not c.get("google"):
+            say("  shot:", shot_masked(t, f"{SHOTS}/cf_login_stuck.jpg"))
+            raise Result("STOP", "覚えたアカウントの行にあやとのアカウントが無く、「Google」も無い。何も押していない", 3)
+        x, y = c["google"]
+        say(f"  press: Cloudflare の「Google」 ({round(x)},{round(y)})（あやとの覚えた行が無い）")
+        time.sleep(0.5)
+        click(t, x, y)
+    follow(t, g, chose)
+
+
+def follow(t, g, chose):
+    """押したあと。ダッシュボードに着く・Google の選択・数字の画面・同意を、90秒の窓で1つずつ片づける"""
+    presses, shown, end = 0, False, time.time() + 90
     while time.time() < end:
         g.pump(1.5)
         if g.stop == "password":
             raise Result("STOP", "パスワード（Google のログインごと切れている。パスワードは打たない。あやとに入り直してもらう）", 3)
         if g.stop:
             raise Result("STOP", f"本人確認へ行こうとした（{g.stop}）。要求ごと落とした（スマホは鳴っていない）", 3)
-        url = href(t)
-        sp = urllib.parse.urlsplit(url)
+        sp = urllib.parse.urlsplit(href(t))
         if sp.netloc == "dash.cloudflare.com":
             if sp.path.startswith(("/two-factor", "/email-verify")):
                 raise Result("STOP", f"Cloudflare 側の本人確認（{sp.path}）。あやとの手が要る", 3)
-            if not sp.path.startswith(OUT_PATHS) and logged_in_now(t):
-                raise Result("LOGGED_IN", "ダッシュボードに着いた", 0)
+            if not sp.path.startswith(OUT_PATHS) and ready(t):
+                s, info = zone_seen(t)
+                if s == "in":
+                    raise Result("LOGGED_IN", f"ダッシュボードに着いた（{ZONE} が見える）", 0)
+                if s == "other":
+                    raise Result("STOP", f"入ったが {info}（あやとのアカウントではない？）", 3)
             continue
         if sp.netloc != "accounts.google.com":
             continue
@@ -448,26 +445,21 @@ def login():
                     say(f"    [{i}] {mask(a['id'])} 一致={i in hit} 状態={a.get('state') or '-'}")
             if not hit:
                 raise Result("STOP", "あやとのアカウントが選択肢に無い。何も押していない", 3)
-            p = t.js(PRE % hit[0])
-            time.sleep(0.5)
-            p = t.js(PRE % hit[0]) or {"ok": False}
-            say(f"  押す前の確かめ: [{hit[0]}] 座標=({round(p.get('x', -1))},{round(p.get('y', -1))}) 当たる要素={p.get('hit')} 行の中={p['ok']}")
-            if not p["ok"]:
-                raise Result("STOP", "押す座標があやとのアカウントの行に当たらない。押していない", 3)
+            p = aim(t, "__acct", "[data-identifier]", hit[0])
             if CHECK_ONLY:
                 say("  shot:", shot_masked(t, f"{SHOTS}/cf_chooser.jpg", (p["x"], p["y"])), f"{SHOTS}/cf_chooser.jpg")
                 nav(t, "about:blank")
-                raise Result("CHECK_ONLY", "アカウントの選択で止めた（押していない。/challenge/ には進んでいない）", 0)
-            if pressed >= 3:
+                raise Result("CHECK_ONLY", "Google のアカウントの選択で止めた（押していない。/challenge/ には進んでいない）", 0)
+            if presses >= 3:
                 raise Result("STOP", "アカウントを3回押しても選択の画面のまま。止める", 3)
-            g.allow_dp = True
-            pressed += 1
-            say(f"  press: [{hit[0]}] {mask(acc[hit[0]]['id'])}（{pressed}回目）")
+            g.allow_dp, chose = True, True
+            presses += 1
+            say(f"  press: [{hit[0]}] {mask(acc[hit[0]]['id'])}（{presses}回目）")
             click(t, p["x"], p["y"])
             g.pump(4)
             continue
-        if "x" in r and pressed:
-            # アカウントを押したあとの同意（Continue / 続行）だけ押す。押す前の画面では何も押さない
+        if "x" in r and chose:
+            # あやとのアカウントを押したあとの同意（Continue / 続行）だけ押す。押す前の画面では何も押さない
             say(f"  press: {r['kind']}（{sp.path}）")
             click(t, r["x"], r["y"])
             g.pump(4)
@@ -477,154 +469,42 @@ def login():
     raise Result("STOP", f"先へ進まない（{cdp.where(href(t))}）", 3)
 
 
-# ---------------------------------------------------------------- check
+# ---------------------------------------------------------------- check / dns-list
 
 def check():
     t = open_tab()
     g = Guard(t)
-    ok, who, match = dash_state(t, g)
-    if ok:
-        say(f"  account: {who} あやとのアカウント={match}")
-        raise Result("LOGGED_IN", "入っている", 0)
-    raise Result("NOT_LOGGED_IN", f"入っていない（{who}）", 4)
+    s, info = dash_state(t, g)
+    if s == "in":
+        raise Result("LOGGED_IN", f"入っている（{ZONE} が見える）", 0)
+    if s == "other":
+        raise Result("STOP", f"入ってはいるが {info}（あやとのアカウントではない？）", 3)
+    raise Result("NOT_LOGGED_IN", f"入っていない（{info}）", 4)
 
 
-# ---------------------------------------------------------------- dns-add
-
-PROXIABLE = {"A", "AAAA", "CNAME"}
-SOLE = {"A", "AAAA", "CNAME"}        # 同じ名前に別の値を足すと、流れが割れる（A を2つ＝半分は違う所へ）
-
-
-def fqdn(name):
-    name = name.strip().rstrip(".").lower()
-    if name in ("@", ZONE):
-        return ZONE
-    return name if name.endswith("." + ZONE) else f"{name}.{ZONE}"
-
-
-def norm(typ, v):
-    v = (v or "").strip()
-    if typ == "TXT":
-        # TXT は引用符つきで返ることがある（"..." と ... を同じものとして比べる）
-        return v[1:-1] if len(v) >= 2 and v[0] == v[-1] == '"' else v
-    if typ in ("CNAME", "NS", "MX"):
-        return v.rstrip(".").lower()
-    return v.lower()
-
-
-def dns_add(argv):
-    if not argv or len(argv) % 3:
-        raise Result("STOP", "使いかた: dns-add TYPE NAME CONTENT [TYPE NAME CONTENT …]", 2)
-    recs = [(argv[i].upper(), fqdn(argv[i + 1]), argv[i + 2]) for i in range(0, len(argv), 3)]
+def dns_list():
     t = open_tab()
     g = Guard(t)
-    need_login(t, g)
-    zid = zone_id(t)
-    added = same = bad = 0
-    for typ, name, content in recs:
-        st, j = api(t, "GET", f"/zones/{zid}/dns_records?per_page=100&name=" + urllib.parse.quote(name))
-        if st != 200 or not j.get("success"):
-            say(f"  ERROR: {typ} {name} の今の値が読めない（HTTP {st}・{errs(j)}）。足さない")
-            bad += 1
-            continue
-        ex = j.get("result") or []
-        hit = [r for r in ex if r.get("type") == typ and norm(typ, r.get("content")) == norm(typ, content)]
-        if hit:
-            px = hit[0].get("proxied")
-            say(f"  SAME: {typ} {name} {content} はもう在る（足さない）" + ("。**プロキシが入っている（橙の雲）。直していない**" if px else ""))
-            same += 1
-            continue
-        clash = [r for r in ex if (typ in SOLE and r.get("type") == typ) or (typ == "CNAME") or (r.get("type") == "CNAME")]
-        if clash:
-            say(f"  CLASH: {typ} {name} には別の値がある {[(r.get('type'), r.get('content')) for r in clash]}。足さない（書き換えもしない）")
-            bad += 1
-            continue
-        body = {"type": typ, "name": name, "content": content, "ttl": 1}
-        if typ in PROXIABLE:
-            body["proxied"] = False   # DNS only（灰色の雲）。橙にすると Firebase の証明書が進まない
-        if CHECK_ONLY:
-            say(f"  WOULD-ADD: {typ} {name} {content}（DNS only）")
-            continue
-        st, j = api(t, "POST", f"/zones/{zid}/dns_records", body)
-        r = j.get("result") or {}
-        if st == 200 and j.get("success"):
-            say(f"  ADDED: {typ} {name} {content} proxied={r.get('proxied')} id={r.get('id')}")
-            added += 1
-        else:
-            say(f"  ERROR: {typ} {name} を足せなかった（HTTP {st}・{errs(j)}）")
-            bad += 1
-    if CHECK_ONLY:
-        raise Result("CHECK_ONLY", f"足していない（在る {same}・足す予定 {len(recs) - same - bad}・足せない {bad}）", 0)
-    raise Result("DONE" if not bad else "STOP", f"足した {added}・もう在った {same}・足せなかった {bad}", 0 if not bad else 3)
-
-
-# ---------------------------------------------------------------- token
-
-def token(argv):
-    import argparse
-    p = argparse.ArgumentParser(prog="cf_ec2.py token")
-    p.add_argument("--name", default=f"github-actions dns {ZONE}")
-    p.add_argument("--secret", default="CLOUDFLARE_API_TOKEN")
-    a = p.parse_args(argv)
-    if not re.fullmatch(r"[A-Z][A-Z0-9_]*", a.secret):
-        raise Result("STOP", f"Secret の名前の形が違う: {a.secret}", 2)
-    t = open_tab()
-    g = Guard(t)
-    need_login(t, g)
-    zid = zone_id(t)
-    st, j = api(t, "GET", "/user/tokens/permission_groups")
-    pg = [x for x in (j.get("result") or []) if x.get("name") == "DNS Write"
-          and "com.cloudflare.api.account.zone" in (x.get("scopes") or [])]
-    if st != 200 or len(pg) != 1:
-        raise Result("STOP", f"権限「DNS Write」（Zone → DNS → Edit）が1つに決まらない（HTTP {st}・{len(pg)}件・{errs(j)}）", 3)
-    say(f"  permission: DNS Write id={pg[0]['id']}（Zone → DNS → Edit）")
-    st, j = api(t, "GET", "/user/tokens?per_page=50")
-    dup = [x for x in (j.get("result") or []) if x.get("name") == a.name]
-    say(f"  tokens: 今あるもの {len(j.get('result') or [])} 本（HTTP {st}）・同じ名前 {len(dup)} 本")
-    if dup:
-        raise Result("STOP", f"同じ名前のトークンがもう在る（{a.name}・id {dup[0].get('id')}）。作らない（値は二度と出ないので、要るなら古いのを消してから）", 3)
-    policies = [{"effect": "allow", "resources": {f"com.cloudflare.api.account.zone.{zid}": "*"},
-                 "permission_groups": [{"id": pg[0]["id"], "name": "DNS Write"}]}]
-    if CHECK_ONLY:
-        say(f"  WOULD-CREATE: 「{a.name}」 DNS Write を {ZONE} だけに → Secret {a.secret}")
-        raise Result("CHECK_ONLY", "作っていない", 0)
-    st, j = api(t, "POST", "/user/tokens", {"name": a.name, "policies": policies})
-    r = j.get("result") or {}
-    value = r.get("value") or ""
-    j = r = None   # 値の入った答えを持ち回らない
-    if st != 200 or not value:
-        raise Result("STOP", f"トークンを作れなかった（HTTP {st}）", 3)
-    say(f"  created: 長さ {len(value)}（値は出さない。画面にも二度と出ない）")
-    try:
-        # 作ったトークンで、本物の API から確かめる（有効か・このゾーンの DNS が読めるか）
-        def cfapi(path):
-            req = urllib.request.Request("https://api.cloudflare.com/client/v4" + path, headers={"Authorization": "Bearer " + value})
-            try:
-                with urllib.request.urlopen(req, timeout=20) as res:
-                    return res.status, json.load(res)
-            except urllib.error.HTTPError as e:
-                return e.code, {}
-        s1, v1 = cfapi("/user/tokens/verify")
-        s2, _ = cfapi(f"/zones/{zid}/dns_records?per_page=1")
-        say(f"  verify: HTTP {s1} status={(v1.get('result') or {}).get('status')}・{ZONE} の DNS を読む: HTTP {s2}")
-        if s1 != 200 or s2 != 200:
-            raise Result("STOP", "作ったトークンが確かめで通らない。Secret には入れていない（トークンは Cloudflare に残っている）", 3)
-        # 値は stdin で渡す（引数・環境変数・ファイルに置かない）。gh は EC2 の ubuntu がログイン済み（doneru-cookie と同じ）
-        pr = subprocess.run(["sudo", "-u", "ubuntu", "-i", "--", "gh", "secret", "set", a.secret, "--repo", REPO],
-                            input=value, text=True, capture_output=True)
-    finally:
-        value = None
-    if pr.returncode:
-        raise Result("STOP", f"gh secret set が落ちた（exit {pr.returncode}）: {pr.stderr.strip()[-200:]}", 3)
-    ls = subprocess.run(["sudo", "-u", "ubuntu", "-i", "--", "gh", "secret", "list", "--repo", REPO], capture_output=True, text=True)
-    say("  secret:", next((ln for ln in ls.stdout.splitlines() if ln.split()[:1] == [a.secret]), "（一覧に見えない）"))
-    raise Result("DONE", f"{a.secret} に入れた（DNS Write を {ZONE} だけ。値は出していない）", 0)
+    z = need_login(t, g)
+    recs, page = [], 1
+    while True:
+        st, j = read(t, f"/zones/{z['id']}/dns_records?per_page=100&page={page}")
+        if st != 200:
+            raise Result("STOP", f"DNS のレコードが読めない（HTTP {st}・{errs(j)}）", 3)
+        recs += j.get("result") or []
+        last = int((j.get("result_info") or {}).get("total_pages") or 1)
+        if page >= min(last, 10):
+            break
+        page += 1
+    for r in sorted(recs, key=lambda r: (r.get("name") or "", r.get("type") or "", r.get("content") or "")):
+        say("  REC " + json.dumps({k: r.get(k) for k in ("type", "name", "content", "proxied", "ttl")}, ensure_ascii=False))
+    raise Result("DONE", f"{ZONE} の DNS を {len(recs)} 本読んだ（読んだだけ。何も変えていない）", 0)
 
 
 # ----------------------------------------------------------------
 
 if __name__ == "__main__":
-    cmd, rest = (sys.argv[1] if len(sys.argv) > 1 else "check"), sys.argv[2:]
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "check"
     say(f"cf_ec2 {cmd} CHECK_ONLY={int(CHECK_ONLY)} start {time.strftime('%H:%M:%S', time.gmtime())} UTC")
     rc = 1
     try:
@@ -632,12 +512,10 @@ if __name__ == "__main__":
             login()
         elif cmd == "check":
             check()
-        elif cmd == "dns-add":
-            dns_add(rest)
-        elif cmd == "token":
-            token(rest)
+        elif cmd == "dns-list":
+            dns_list()
         else:
-            raise Result("STOP", f"知らない呼びかた: {cmd}", 2)
+            raise Result("STOP", f"知らない呼びかた: {cmd}（login / check / dns-list だけ）", 2)
         raise Result("STOP", "結果を決めずに終わった", 1)
     except Result as r:
         rc = r.rc
