@@ -7,11 +7,12 @@
     "thumbLong": 400,
     "webpQuality": 82,
     "thumbQuality": 78,
-    "maxPixels": 200000000
+    "maxPixels": 200000000,
+    "minFreeGB": 0.8
   },
   "quality": {
-    "blurHard": 12,
-    "blurGood": 260,
+    "blurHard": 30,
+    "blurGood": 600,
     "darkHard": 22,
     "darkSoft": 50,
     "clipHard": 0.45,
@@ -29,7 +30,7 @@
     "clip": 0.95
   },
   "score": {"sharp": 0.3, "exposure": 0.2, "aesthetic": 0.35, "relevant": 0.15},
-  "day": {"good": 0.55, "floor": 0.35, "min": 1, "sqrtGain": 1.2, "max": 10},
+  "day": {"good": 0.7, "floor": 0.5, "min": 1, "sqrtGain": 1.2, "max": 10},
   "diversity": {"similar": 0.35, "similarFrom": 0.6, "sameCategory": 0.06, "nearMeters": 150, "samePlace": 0.08},
   "ambiguous": {"margin": 0.06},
   "calib": {"count": 24, "sim": 0.85, "k": 5, "gain": 0.15},

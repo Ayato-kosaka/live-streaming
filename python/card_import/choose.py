@@ -11,8 +11,8 @@
 | `exactDup` | 同じ sha が先に出ていた（同じ写真がアルバムのフォルダにも入っている） |
 | `broken` | 解けない |
 | `outOfRange` | 期間の外・日付が無い |
-| `lowQuality` | 小さすぎる・ひどいブレ・暗すぎる・白飛び |
 | `irrelevant` | スクショ・書類・レシート・画面（CLIP の和が `irrelevant.drop` 以上、または名前がスクショ） |
+| `lowQuality` | 小さすぎる・ひどいブレ・暗すぎる・白飛び |
 | `nearDup` | 似た写真の束で、いちばん良い1枚ではなかった |
 | `alreadyCard` | 束が、すでにカードになっている写真と近い |
 | `pool` | 残ったもの。ここから日ごとに配る（`selected` `calib`） |
@@ -80,14 +80,16 @@ def hard_reason(p, cfg, rng: tuple[str, str]) -> str | None:
     if guards.on("range"):
         if not p["day"] or not (rng[0] <= p["day"] <= rng[1]):
             return "outOfRange"
+    # 無関係を先に見る。スマホの画面は白地なので、後にすると「白飛び」に数えてしまう
+    # （EC2 の実地で、画面風の PNG が lowQuality に落ちた）
+    if guards.on("irrelevant") and irrelevant_prob(p, cfg) >= cfg["irrelevant"]["drop"]:
+        return "irrelevant"
     q = cfg["quality"]
     if guards.on("quality"):
         if min(p["w0"], p["h0"]) < cfg["read"]["minSide"]:
             return "lowQuality"
         if p["blur"] < q["blurHard"] or p["dark"] < q["darkHard"] or p["clip"] > q["clipHard"]:
             return "lowQuality"
-    if guards.on("irrelevant") and irrelevant_prob(p, cfg) >= cfg["irrelevant"]["drop"]:
-        return "irrelevant"
     return None
 
 
@@ -156,15 +158,19 @@ def group(db, root, cfg, rng):
     e = cfg["existing"]
     survivors: list[dict] = []
     for grp in groups:
+        # 束の代表は、手元に絵のある中でいちばん点の高い1枚。絵が1枚も無い束
+        # （既存のカードに近いので scan のあとの prune が消した）は、頭が代表
         keepers = [p for p in grp if p["has_keep"]]
-        best = keepers[0] if keepers else None
+        best = keepers[0] if keepers else grp[0]
         for p in grp:
             if p is not best:
                 stage[p["seq"]] = "nearDup"
-        if best is None:
-            continue
         if guards.on("existing") and any(_matches_existing(p, existing, e) for p in grp):
             stage[best["seq"]] = "alreadyCard"
+            continue
+        if not best["has_keep"]:
+            # 絵が無いのは prune で束に負けたものだけ。代表になれないので束の数に入れる
+            stage[best["seq"]] = "nearDup"
             continue
         stage[best["seq"]] = "pool"
         survivors.append(best)

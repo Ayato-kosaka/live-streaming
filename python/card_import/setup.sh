@@ -1,7 +1,7 @@
 #!/bin/sh
 # EC2 に venv を作る。何度流してもよい（入っているものは入れ直さない）。
 #
-#   sudo -u ubuntu -H sh /home/ubuntu/cardimport/app/card_import/setup.sh
+#   sh /home/ubuntu/cardimport/app/card_import/setup.sh   （root で。中で ubuntu に替わる）
 #
 # 置き場は /home/ubuntu/cardimport/（docs/card-import.md 1章）:
 #   app/card_import/  道具（手元から ec2.py put で置く。公開のリポジトリと同じ中身）
@@ -13,6 +13,13 @@
 # 引いて数GB になり、空きが 6.8GB しか無い箱に入らない。
 set -eu
 R=${CARD_IMPORT_ROOT:-/home/ubuntu/cardimport}
+# SSM は root で走る。ensurepip（python3-venv）は Ubuntu 24.04 の素の箱に入っていない
+if [ "$(id -u)" = 0 ]; then
+  dpkg -s python3-venv >/dev/null 2>&1 || apt-get install -y -q python3-venv >/dev/null
+  mkdir -p "$R"
+  chown ubuntu:ubuntu "$R"
+  exec sudo -u ubuntu -H CARD_IMPORT_ROOT="$R" sh "$0"
+fi
 mkdir -p "$R/app" "$R/hf"
 if [ ! -x "$R/venv/bin/python" ]; then
   python3 -m venv "$R/venv"

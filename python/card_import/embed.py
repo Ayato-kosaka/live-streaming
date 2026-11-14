@@ -32,6 +32,10 @@ CATEGORIES: dict[str, list[str]] = {
     "screen": ["a photo of a computer monitor", "a photo of a laptop or a TV screen"],
 }
 AESTHETIC = ["a beautiful, well composed travel photo", "a blurry, badly composed, boring photo"]
+# 見栄えの2つの文の差を、どれだけ急に 0/1 へ倒すか。種類と同じ 100 にすると、
+# 既存のカードの写真（全部あやとが選んで貼ったもの）20枚の4分の1が 0.01 に出た
+# （2026-11-14、EC2 で実測）。文の近さの差は 0.01〜0.05 しか無いので、緩くする
+AES_SCALE = 30.0
 
 JA = {
     "sightseeing": "観光地", "street": "街並み", "building": "建物", "nature": "自然", "sea": "海・湖",
@@ -80,7 +84,7 @@ class OpenClip:
             v = self.model.encode_image(x)
             v = v / v.norm(dim=-1, keepdim=True)
             logits = (100.0 * v @ self.text.T)[0].tolist()
-            al = (100.0 * v @ self.aes.T)[0].tolist()
+            al = (AES_SCALE * v @ self.aes.T)[0].tolist()
         probs = dict(zip(self.cats, softmax(logits)))
         return v[0].tolist(), probs, softmax(al)[0]
 

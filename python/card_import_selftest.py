@@ -258,6 +258,11 @@ def pipeline(tmp: Path, fx, name: str, *, limit_first: int | None = None, crash_
     db = open_db(root)
     news = 0
     quiet = (lambda *a, **k: None)
+    # 本番と同じ順: 既存のカードを先に数えてから読む（読み終えるたびの prune が既存を見る）。
+    # 逆の順でしか回していなかったので、prune が既存に近い写真の絵を消すと、選ぶときに
+    # 「既存」ではなく「ほぼ同じ」に数えてしまうのを見逃した（EC2 の実地で出た）
+    existing.refresh(db, cfg, FakeClip(), photos=[("2025-03-01", "https://example.invalid/card.webp")],
+                     fetch=lambda url: card, log=quiet)
     if crash_after is not None:
         try:
             scan.scan(db, root, cfg, sources.open_source(str(z1)), FakeClip(crash_after), RANGE, log=quiet)
@@ -272,8 +277,6 @@ def pipeline(tmp: Path, fx, name: str, *, limit_first: int | None = None, crash_
     for z in (z1, z2):
         st = scan.scan(db, root, cfg, sources.open_source(str(z)), em, RANGE, log=quiet)
         news += st["new"]
-    existing.refresh(db, cfg, em, photos=[("2025-03-01", "https://example.invalid/card.webp")],
-                     fetch=lambda url: card, log=quiet)
     if labels:
         for sha, ans in labels.items():
             db.execute("INSERT OR REPLACE INTO labels VALUES(?,?,?)", (sha, ans, 0))

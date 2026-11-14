@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import time
 
 from . import guards
@@ -86,6 +87,11 @@ def scan(db, root, cfg, src, embedder, rng: tuple[str, str], limit: int | None =
             continue
         if limit is not None and st["new"] >= limit:
             return {**st, "done": False, "sec": time.monotonic() - t0}
+        # 空きが無くなる前に、きれいに止まる（同じ命令で続きから回る）。2GB の zip を
+        # 抱えたまま手元の絵が溜まると、6.8GB の箱はすぐ埋まる
+        if st["new"] % 50 == 0 and shutil.disk_usage(root).free < cfg["read"]["minFreeGB"] * 1e9:
+            log(f"  ディスクの空きが {cfg['read']['minFreeGB']} GB を切ったので止めた（prune してから続きを）")
+            return {**st, "done": False, "sec": time.monotonic() - t0, "diskFull": True}
         st["new"] += 1
         if e.kind != "image":
             db.execute("INSERT OR REPLACE INTO occ(source_id, member, sha, what) VALUES(?,?,NULL,'notImage')",
