@@ -101,7 +101,7 @@ const COVER_R = 410;
 
 /** その旅そのものの入口。中身は章によって変わる */
 function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
-  /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
+  /* 北欧は、旅の面（章の島 `/island/nordic` の紙）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
   if (c.slug === "nordic") {
     return {
@@ -117,7 +117,7 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
       size: 62,
       note: "ポーランドから入って、ストックホルムまで。",
       items: [
-        { label: "旅のしおり", sub: "持ち物と、当日の動き", href: "/nordic/guide", icon: "stall" },
+        { label: "旅のしおり", sub: "持ち物と、当日の動き", href: "/island/nordic/guide", icon: "stall" },
         ...NORDIC_COUNTRIES.map((k) => ({
           label: k.name,
           sub: k.catch,
@@ -126,7 +126,7 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
       ],
       /* 「なぜ北欧まで行くのか」と書いてあった。**帰ってきたあとも
          出しっぱなしになる字**なので、時点を言わない形にする */
-      more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/nordic" },
+      more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/island/nordic#trip" },
     };
   }
   /* **アルバニアの風船は、ここには建てない**（2026-10-11）。

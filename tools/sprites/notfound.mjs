@@ -109,6 +109,8 @@ const STATUS_ONLY = ["/alertbox", "/daily_user_stats", "/ve-comment", "/ve-posti
 const MOVED = [
   "/nordic/photos", "/nordic/photos/2024",
   "/map", "/map/georgia", "/nordic/sweden", "/north-macedonia", "/island/north-macedonia", "/island/albania",
+  // 旅の記録（章の島）の区画（#1201 の第2便）
+  "/atlas", "/nordic", "/nordic/day/3", "/nordic/guide",
 ];
 
 /**
@@ -122,7 +124,8 @@ function gonePaths() {
     "/kitchen/dummy-not-a-recipe",
     // `/map/<国>` は 301 で `/travel/<国>` へ送るので、無い国は送った先で 404 になる（#1201）
     "/travel/atlantis",
-    "/nordic/day/999",
+    // `/nordic/day/<n>` は 301 で `/island/nordic/day/<n>` へ送るので、無い日は送った先で 404 になる（#1201）
+    "/island/nordic/day/999",
     "/nordic/nowhereland",
     "/legends/nope",
     "/apps/no-such-app",

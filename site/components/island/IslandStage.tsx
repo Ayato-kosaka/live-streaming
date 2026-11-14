@@ -1980,7 +1980,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                 行き先をひらいたときだけ、6つの下に1本置く。
                 6つは「この島の中のどこへ行くか」、こちらは島の外へ出る話なので、
                 同じ列には並べずに、下に線を1本引いて分ける（`island.css`）。 */}
-            <Link className="bar-atlas" href="/atlas" prefetch={false}>
+            <Link className="bar-atlas" href="/island" prefetch={false}>
               <Icon name="map" size={15} />
               {UI.atlas}
             </Link>
@@ -2027,7 +2027,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
           そこまで来た人の次の問いは「ほかの島は」になる。島の絵が丸ごと画面に
           入っているので、案内板が島を隠すこともない（章の島も同じ位置に出る）。 */}
       {(mode !== "phone" || wide) && (
-        <Link className="stage-atlas" data-ui href="/atlas" prefetch={false}>
+        <Link className="stage-atlas" data-ui href="/island" prefetch={false}>
           <Icon name="map" size={15} />
           <span className="tool-label">{UI.atlas}</span>
         </Link>

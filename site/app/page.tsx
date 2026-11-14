@@ -17,7 +17,7 @@ import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
 import TripToday, { type TripDay } from "@/components/home/TripToday";
-import { DAYS, DAY_PAGES, cityName, dayHref, dayName } from "@/content/nordic";
+import { DAYS, DAY_PAGES, NORDIC_HREF, cityName, dayHref, dayName } from "@/content/nordic";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
@@ -77,7 +77,7 @@ const TRIP_DAYS: TripDay[] = DAYS.filter((d) => !!d.date).map((d) => {
   return {
     date: d.date!,
     name: dayName(d),
-    href: DAY_PAGES.includes(d) ? dayHref(d) : `/nordic#${d.id}`,
+    href: DAY_PAGES.includes(d) ? dayHref(d) : `${NORDIC_HREF}#${d.id}`,
     /* 動く日は「どこから どこへ」。動かない日は、その日を過ごす街ひとつ。
        街の名前を手で並べない——旅程の区間と、その日の街から引く。 */
     where: legs.length

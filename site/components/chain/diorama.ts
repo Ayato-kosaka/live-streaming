@@ -29,7 +29,6 @@
  * **ここでは 1つの値に固定する。**
  */
 
-import { ISLAND, PLACES } from "@/components/island/layout";
 import { islandRadius, type IslandArt } from "./shapes";
 
 /** 島に建っているもの。**位置も大きさも、歩ける島の値を島の半径で割った割合** */
@@ -124,34 +123,6 @@ export function side(rTop: number, yTop: number, rBot: number, yBot: number): st
     `A${f(rBot)},${f(hb)} 0 0 1 ${f(-rBot)},${f(yBot)}` +
     `Z`
   );
-}
-
-/**
- * いまいる島に建っているもの。
- *
- * **いまいる島だけ、渡る先がトップ（`/`）で島の作りが違う**
- * （`components/island/layout.ts` の 1200四方に手で置いた10軒）。
- * `isleSpec` で作ると配信の一覧が無い章になって、模型に3軒しか建たない。
- * **押した先に10軒建っているのに、押す前は3軒**では模型が嘘をつく。
- *
- * どの章が「いまいる島」かは日付で変わるので、**選ぶのは画面側**
- * （`Isles.tsx` が `chapterNow(new Date())` で引き直す）。ここは表を渡すだけ。
- */
-export const HOME_BUILDINGS: AtlasBuilding[] = (() => {
-  const r = ISLAND.radii.reduce((a, b) => a + b, 0) / ISLAND.radii.length;
-  return PLACES.map((p) => ({
-    icon: p.icon,
-    size: round(p.size / r),
-    /* **少し内へ寄せる。** トップの島とここでは輪郭の比が違うので、
-       そのまま写すと縁の建物が海に落ちる */
-    nx: round(((p.x - ISLAND.cx) / r) * 0.8),
-    ny: round(((p.y - ISLAND.cy) / (r * ISLAND.squash)) * 0.8),
-  }));
-})();
-
-/* 焼き出す HTML に入る数なので、桁を落とす */
-function round(v: number) {
-  return Math.round(v * 1000) / 1000;
 }
 
 /* ---- 主役は、枠に合わせて寄る --------------------------------------------

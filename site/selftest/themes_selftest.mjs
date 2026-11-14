@@ -88,7 +88,7 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
   THEMES_TS=/tmp/themes-order.ts node site/selftest/themes_selftest.mjs   # → 1
 
   # 5) 面が在るのに href を外す（押せる先を1つ捨てている）
-  sed 's|^    href: "/nordic",$||' \\
+  sed 's|^    href: "/island/nordic",$||' \\
     site/content/themes.ts > /tmp/themes-nohref.ts
   THEMES_TS=/tmp/themes-nohref.ts node site/selftest/themes_selftest.mjs   # → 1`;
 

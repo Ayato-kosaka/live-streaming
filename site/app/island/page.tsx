@@ -4,18 +4,19 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Isles from "@/components/chain/Isles";
 import { atlasIsles } from "@/components/chain/isles";
-import { CHAPTERS } from "@/content/chapters";
+import { CHAPTERS, ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 
 export const metadata: Metadata = share({
   key: "atlas",
-  title: "島の地図",
+  title: ISLAND_LABEL,
   /* **章の名前を手で並べない。** ここは「ヨーロッパ、中東、コーカサス、そして北欧。」と
      書いてあった。そのあいだに章が2つ増えていて（イランまで歩く・バルカン諸国周遊）、
      **いま立っている島がこの1文に入っていなかった。**
      `CHAPTERS` が章の唯一の出どころなので、そこから作る
      （`docs/island-misses.md` の決めごと3 / `docs/island-standards.md` §8）。 */
   description: `${CHAPTERS.map((c) => c.name).join("、")}。これまで渡ってきた島、ぜんぶ。`,
-  path: "/atlas",
+  /* 前は `/atlas`。旅の記録（章の島）の区画の入口へ移した（#1201。前の道は 301） */
+  path: ISLAND_PATH,
 });
 
 /**
@@ -44,12 +45,12 @@ export const metadata: Metadata = share({
  * あの計算は配信240本や企画の表を読むので、**ブラウザには絵と位置だけを渡す**
  * （`components/chain/isles.ts`）。
  */
-export default function AtlasPage() {
+export default function IslandIndexPage() {
   return (
-    <PageShell crumbs={[{ label: "島の地図" }]}>
+    <PageShell crumbs={[{ label: ISLAND_LABEL }]}>
       <PageHead
         icon="signpost-flags"
-        title="島の地図"
+        title={ISLAND_LABEL}
         lead="これまで渡ってきた島、ぜんぶ。"
         /* **島の名前を焼き込まない。** 「いまいるのはコーカサスの島」と書いてあると、
            北欧へ出発した日から嘘になる（いまいる島は日付で決まる）。

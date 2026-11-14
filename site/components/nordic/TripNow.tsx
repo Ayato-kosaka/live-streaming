@@ -122,6 +122,7 @@ export default function TripNow({
   hitchKm,
   arriveOn,
   until,
+  id,
 }: {
   stops: Stop[];
   /**
@@ -144,7 +145,7 @@ export default function TripNow({
    */
   dayByDate: Record<string, string>;
   /**
-   * 旅程表の行 → その日1日ぶんのページ（`/nordic/day/1`）。
+   * 旅程表の行 → その日1日ぶんのページ（`/island/nordic/day/1`）。
    *
    * **「今日のところへ」は、今日の面へ直に行く。**
    * ここが無かったあいだ、あの札は同じページの中の錨（`#day-1`）を指していて、
@@ -165,6 +166,8 @@ export default function TripNow({
   arriveOn: string;
   /** 旅が終わる日(YYYY-MM-DD)。ここを過ぎたら、旅程からは何も引かない */
   until: string;
+  /** 紙の錨。島の板の「この旅のこと」がここへ送る */
+  id?: string;
 }) {
   const [left, setLeft] = useState<number | null>(null);
   /**
@@ -449,13 +452,15 @@ export default function TripNow({
     // ここが板だったころ、生成りの地の上に厚み8pxの箱が925px積まれていた
     // （`docs/island-review-2.md` 3章）。紙の作りをこちらに写経すると、
     // 正本を直したときにこの面だけ取り残されるので、class を足すだけにする。
-    <section className="panel paper tnow">
+    <section className="panel paper tnow" id={id}>
       {/* h1 は場所の名前。文にしない（`docs/island-world.md` 7.5）。
           「会いたい人がいます」は良い一行なので消さず、すぐ下の lead に下ろす。
           前置きは h1 と1行まで。21面ぜんぶが同じ長さの前置きで始まると、
           並べたときに全部同じページに見える（同 7.6）。 */}
       <div className="tnow-top">
-        <h1>北欧ヒッチハイク</h1>
+        {/* **h2。** 章の島の紙に入ったので、面の h1 は島の名前（`IsleStage`）が持つ。
+            h1 が2つになると、どちらがこの面の名前か分からない（#1201） */}
+        <h2>北欧ヒッチハイク</h2>
         <p className="tnow-lead">
           <b>スウェーデンに、会いたい人がいます。</b>
           ポーランドからそこまで、人の車だけで {hitchKm.toLocaleString()}km。

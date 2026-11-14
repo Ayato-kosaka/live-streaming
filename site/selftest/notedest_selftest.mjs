@@ -286,7 +286,7 @@ const FROM = {
   "app/goods/page.tsx::theme": (rel) => literalsIn(rel),
   /* 区間あて。`themeById(\`leg-\${l.id}\`)` を通してから渡すので、
      出うるのは `leg-` 始まりの宛先だけ */
-  "app/nordic/day/[n]/page.tsx::t.id": () => [...THEME_IDS].filter((id) => id.startsWith("leg-")),
+  "app/island/[chapter]/day/[n]/page.tsx::t.id": () => [...THEME_IDS].filter((id) => id.startsWith("leg-")),
   /* 国あて。**ここだけ `themeById()` を通さない**（国の slug をそのまま
      宛先にしている）。2026-11-13 に面（`/nordic/<国>`）から国の面（`/travel/<国>`）の
      下の節へ移した（#1201）。国を1つ足して宛先を足し忘れた日に、上の

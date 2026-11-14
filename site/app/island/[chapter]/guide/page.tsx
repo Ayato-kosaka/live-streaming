@@ -1,10 +1,11 @@
-import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
-import { NORDIC_GUIDE as G, NORDIC_COUNTRIES, DAYS, cityCountry, cityName } from "@/content/nordic";
+import { NORDIC_GUIDE as G, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, DAYS, cityCountry, cityName } from "@/content/nordic";
+import { chapterCrumbs, chapterOf } from "@/content/chapters";
 import Flag from "@/components/ui/Flag";
 import GuideNow from "@/components/nordic/GuideNow";
 import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
@@ -14,8 +15,18 @@ export const metadata: Metadata = share({
   title: "旅のしおり — 北欧ヒッチハイク",
   // 品数は手で書かない（おみやげは13品なのに「20品」と書いてあった）。しおりから数える
   description: `お金、通信、服装、サウナの入り方、食べもの${G.food.length}品、おみやげ${G.souvenir.length}品、困ったとき。北欧とバルト三国を旅する前に読むもの。`,
-  path: "/nordic/guide",
+  path: NORDIC_GUIDE_HREF,
 });
+
+/**
+ * しおりを持つ章。**いまは北欧だけ。** 前は `/nordic/guide` に立っていた。
+ * 章の島の下へ移した（#1201。前の道は 301）。
+ */
+const GUIDE_CHAPTER = "nordic";
+
+export function generateStaticParams() {
+  return [{ chapter: GUIDE_CHAPTER }];
+}
 
 /**
  * 旅のしおり。
@@ -106,15 +117,10 @@ function Chapter({
   );
 }
 
-export default function NordicGuidePage() {
+export default async function NordicGuidePage({ params }: { params: Promise<{ chapter: string }> }) {
+  if ((await params).chapter !== GUIDE_CHAPTER) notFound();
   return (
-    <PageShell
-      crumbs={[
-        crumbOf("next"),
-        { label: "北欧ヒッチハイク", href: "/nordic" },
-        { label: "旅のしおり" },
-      ]}
-    >
+    <PageShell crumbs={chapterCrumbs(chapterOf(GUIDE_CHAPTER), { label: "旅のしおり" })}>
       <PageHead
         mark={<Icon name="book" size={44} />}
         title="旅のしおり"

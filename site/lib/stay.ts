@@ -66,7 +66,7 @@ export type TravelNow = {
   /** 章の名前。そのまま「いまどこ」になる */
   name: string;
   slug: string;
-  /** その旅の島。**いまいる章の島はトップそのもの**（`chapterHref`） */
+  /** その旅の島（`chapterHref`。いまいる章でも章の島そのもの） */
   href: string;
   /**
    * 入口の札に添える1行。**押した先に何が在るか。**
@@ -182,11 +182,9 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
   if (stayNow(now)) return null;
   const c = chapterNow(now);
   if (!c || !chapterRunning(c, now)) return null;
-  /* **行き先を手で組み立てない。** ここは `/island/${c.slug}` と書いていた。
-     いまいる章の島はトップそのものなので（`chapterHref`）、その写しの面
-     ——**141面で唯一どこからもリンクの来ていない面**——へ送っていた。
-     `chapterHref` に決めさせる。 */
-  const href = chapterHref(c, chapterNow(now));
+  /* **行き先を手で組み立てない。** 章の島の道は `chapterHref` 1か所が持つ
+     （道を動かした日に、ここだけ古い道を指さないように。#1201） */
+  const href = chapterHref(c);
   /* **「旅の◯カ国」を字に焼かない。** 下の `sub` を作る前は、呼ぶ側2か所
      （`app/now/parts.tsx` と `components/live/NowLive.tsx`）が
      「この旅のこと、旅の6カ国、旅のしおり」を**それぞれベタ書き**していた。

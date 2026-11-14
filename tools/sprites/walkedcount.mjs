@@ -258,7 +258,7 @@ async function selftest(browser) {
 
   // 3. 別の集合を数えている「◯カ国」を、名乗りとして拾わない
   r = await run(
-    `<a href="/nordic">この旅のこと 6カ国、17日</a>` +
+    `<a href="/island/nordic#trip">この旅のこと 6カ国、17日</a>` +
       `<a href="/travel/france">フランス</a>` +
       `<div>この島で歩いた国 3カ国</div><p>5カ国の宿のキッチンで作った。</p>`,
   );

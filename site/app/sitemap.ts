@@ -5,10 +5,10 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import { LEGENDS } from "@/content/legends";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { SITE } from "@/content/site";
-import { DAY_PAGES, dayHref } from "@/content/nordic";
+import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref } from "@/content/nordic";
 import { TRAVEL, TRAVEL_PLACES, publicCities } from "@/content/travel";
 import { guideOf } from "@/content/travel/guides";
-import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
+import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
 
 export const dynamic = "force-static";
@@ -60,7 +60,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 2026-10-08 に `/north-macedonia` を作ったとき、面と `/all` の棚は足したのに
     // ここを忘れて、配ったあとの見張りで見つかった。面を1枚増やす仕事は3か所ある。
     // **国の面はここに書かない。** 下の `TRAVEL_PLACES`（`content/travel.ts`）から出る（#1201）
-    "/nordic", "/nordic/guide",
+    // 北欧の旅そのもの（前の `/nordic`）は章の島（`/island/nordic`）へ寄せた。下の章の島の行に入っている
+    NORDIC_GUIDE_HREF,
     "/bulgaria",
     // 島から持って帰れるものと、お店で買えるもの（2026-10-08。言い方は 2026-10-14）。
     // **面を1枚増やす仕事は3か所**（上の注）。ここが3か所目
@@ -73,8 +74,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // **看板の6つは全部ここに並べる。** `/about` は頭のバーにも名刺にも
     // 出ているのに、索引から落ちていた（2026-09-13。109面を数えて見つけた）
     "/about",
-    // 過去の島を並べた面。ここから `/island/*` へ1本ずつ出ている
-    "/atlas",
+    // 島の地図（前の `/atlas`）。ここから章の島（`/island/<章>`）へ1本ずつ出ている。
+    // 字で書く（面の道は `app/island/` の箱の名前そのもの。`sitemapgap_selftest` が字で数える）
+    "/island",
   ];
   const rows: MetadataRoute.Sitemap = [
     ...top.map((p) => row(p, TOP_LASTMOD[p]?.())),
@@ -97,8 +99,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...MONTHS.map((m) => row(`/months/${m.key}`, LASTMOD.month(m))),
     // 旅の1日ぶん。出発の日と1日目から7日目まで。
     ...DAY_PAGES.map((d) => row(dayHref(d))),
-    // 過去の島の1章ぶん。`/atlas` から辿れる面で、中身は残り続ける
-    ...ISLE_CHAPTERS.map((c) => row(`/island/${c.slug}`)),
+    /* 章の島の1章ぶん。島の地図から辿れる面で、中身は残り続ける。
+       **いまいる章の島も、自分が正**（`chapterHref`。前は canonical が `/` で、ここに載せた URL と食い違っていた） */
+    ...ISLE_CHAPTERS.map((c) => row(chapterHref(c))),
     /* その章のあいだにやった配信の一覧。**索引から丸ごと落ちていた**
        （2026-09-19。`/all` からも章の島からも1回で行ける本物の面が4枚、
        検索からだけ見つからない状態が続いていた。いちばん大きいのは

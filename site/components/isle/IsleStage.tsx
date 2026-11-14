@@ -1622,7 +1622,7 @@ export default function IsleStage({ spec, cover }: { spec: IsleSpec; cover?: boo
             あちらは下のバーを開けば連なりへ行けるが（`.bar-atlas`）、
             章の島にバーは無い。消すと、寄りから連なりへ行く道が
             船着き場の札1枚だけになる。 */}
-        <Link className="isle-atlas" data-ui href="/atlas" prefetch={false}>
+        <Link className="isle-atlas" data-ui href="/island" prefetch={false}>
           <Icon name="map" size={15} />
           <span className="tool-label">{UI.atlas}</span>
         </Link>

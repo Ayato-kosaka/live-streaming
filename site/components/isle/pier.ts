@@ -23,7 +23,7 @@ export function pier(slug?: string, prev?: Neighbour, next?: Neighbour): IslePla
   const items: IsleItem[] = [];
   if (prev) items.push({ label: prev.name, sub: "ひとつ前の島", href: prev.href, icon: "canoe" });
   if (next) items.push({ label: next.name, sub: "つぎの島", href: next.href, icon: "canoe" });
-  items.push({ label: "島の地図", sub: "島の連なりぜんぶ", href: "/atlas", icon: "signpost" });
+  items.push({ label: "島の地図", sub: "島の連なりぜんぶ", href: "/island", icon: "signpost" });
   return {
     id: "pier",
     label: "となりの島へ",

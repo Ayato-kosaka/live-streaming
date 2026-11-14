@@ -414,7 +414,7 @@ APP = SA.ROOT / "site" / "app"
 routes = sorted({"/" + ("" if f.parent == APP else f.parent.relative_to(APP).as_posix())
                  for f in APP.rglob("page.tsx") if "[" not in f.as_posix()})
 moving = ["/months/2026-10", "/kitchen/egg-sandwich", "/travel/france", "/apps/nanitabeyo", "/legends/nordic",
-          "/streams/cooking", "/island/europe", "/island/europe/streams", "/nordic/day/1", "/travel/sweden",
+          "/streams/cooking", "/island/europe", "/island/europe/streams", "/island/nordic/day/1", "/travel/sweden",
           "/sitemap.xml", "/robots.txt", "/og.png", "/_next/static/chunks/x.js", "/island-api/state"]
 if len(routes) < 20:
     print(f"✕ 島の面が {len(routes)}枚しか見つからない（`site/app/**/page.tsx`）。数えられないので 2 で止めます")

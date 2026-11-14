@@ -7,7 +7,7 @@
 
 上から順に、**最初に当たったところで止まる。**
 
-1. `redirects` — `/nordic/photos` → `/cards`、`/map/:slug` → `/travel/:slug`（301）
+1. `redirects` — `/nordic/photos` → `/cards`、`/map/:slug` → `/travel/:slug`、`/nordic/day/:n` → `/island/nordic/day/:n`（301）
 2. **`public`（＝`dist`）の中の実ファイル** ← ここが本丸
 3. `rewrites` — `/island-api/**` は Functions、Expo の4面は `expo-app.html`
 4. どれにも当たらなければ **`dist/404.html` を、状態コード 404 で配る**
@@ -27,7 +27,8 @@
 
 ## 道を動かすとき（前の道は全部 301 で新しい道へ）
 
-道の作り直し（#1201。`/map` `/nordic/<国>` `/north-macedonia` → `/travel/…`）は、
+道の作り直し（#1201。第1便 `/map` `/nordic/<国>` `/north-macedonia` → `/travel/…`、
+第2便 `/atlas` `/nordic` `/nordic/day/<n>` `/nordic/guide` → `/island/…`）は、
 **面を動かすことと、`redirects` に前の道を足すことが1組。** 片方だけだと前の道が 404 になる
 ——検索に載っている道も、LINE に貼られた道も。島の中のリンクは新しい道に揃えるので、
 `crawl.mjs` では気づけない。
@@ -37,10 +38,16 @@ node tools/sprites/routemoves.mjs                                   # 置き場�
 node tools/sprites/routemoves.mjs --dist site/.next-3130 --dist public   # 書き出しから（正確）
 ```
 
-元帳は `tools/sprites/sitemap-2026-11-13.txt`（作り直す前の本番の sitemap の写し）。
+元帳は `tools/sprites/sitemap-*.txt`（作り直しの**便ごとに**、その前の本番の sitemap の写しを1枚足す。
+いまは第1便の前 `sitemap-2026-11-13.txt` と第2便の前 `sitemap-2026-11-14.txt`）。**古い写しは消さない**
+——第1便で動かした道も、第2便のあとで行き場を持っていないといけない。写しを全部合わせた道を
 1本ずつ「実ファイルとして在る」か「転送の先が実ファイルとして在る」かを見て、
 **転送の連鎖（301 → 301）も 0 であること**を見る。足すときは既存の行の順番を変えない
 （上から順に最初に当たった1本で止まる）。
+
+**`/nordic/**` のような受け皿の転送を足さない。** `/nordic/review`（`public/nordic/review.html`。
+配信で見せた授賞式の面）と `/nordic/city/*.svg`（日ごとの面の街の地図）は動かしていないので、
+転送は動かした道だけを1本ずつ名指しする（転送は実ファイルより先に効く。上の 1）。
 
 ## 受け皿（`"source": "**"` → `/index.html`）を置かない
 

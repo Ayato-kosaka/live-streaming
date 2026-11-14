@@ -218,7 +218,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ジョージアを出て、北欧へ発った",
     note: "クタイシから飛行機で。そこから先は、ぜんぶ人の車でつなぐ",
-    href: "/nordic",
+    href: "/island/nordic",
     go: "北欧の旅へ",
   },
   {

@@ -998,13 +998,23 @@ export const DAY_OF: Record<string, Day> = Object.fromEntries(
 export const dayName = (d: Day) => (d.n ? `${d.n}日目` : (d.label ?? ""));
 
 /**
- * 1日ぶんのページの住所。`day-1` → `/nordic/day/1`、`day-depart` → `/nordic/day/depart`。
+ * 北欧の旅の面。**章の島（`/island/nordic`）がそのまま旅の面**で、旅程・地図・理由は
+ * 島の下の紙に並ぶ。前は `/nordic`（旅）と `/island/nordic`（章の島）の2枚に割れていた（#1201）。
+ * 道の字は `content/chapters.ts` の `chapterHref` と同じ形（あちらは章の表を読むので、ここでは字で持つ）。
+ */
+export const NORDIC_HREF = "/island/nordic";
+
+/** 旅のしおり */
+export const NORDIC_GUIDE_HREF = `${NORDIC_HREF}/guide`;
+
+/**
+ * 1日ぶんのページの住所。`day-1` → `/island/nordic/day/1`、`day-depart` → `/island/nordic/day/depart`。
  *
  * **`Day.id` から作る。** 別に slug を持たせると、旅程が動いたときに
  * 片方だけ古くなる。`id` は「変えない」と決めてあるので、住所も変わらない。
  */
 export const daySlug = (d: Day) => d.id.replace(/^day-/, "");
-export const dayHref = (d: Day) => `/nordic/day/${daySlug(d)}`;
+export const dayHref = (d: Day) => `${NORDIC_HREF}/day/${daySlug(d)}`;
 
 /* 1日ぶんのページを持つ日（`DAY_PAGES`）は、日誌（`NORDIC_LOG`）を読むので
    そのすぐ下に置いてある。`dayBySlug` は関数なので、ここに在ってよい。 */

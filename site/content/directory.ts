@@ -1,11 +1,12 @@
 import { DOORS } from "@/components/island/layout";
-import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
+import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
+import { ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { TRAVEL_LABEL, TRAVEL_PLACES, publicCities, travelHref, travelPage } from "@/content/travel";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
-import { DAY_PAGES, NORDIC_COUNTRIES, cityName, dayHref, dayName } from "@/content/nordic";
+import { DAY_PAGES, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, NORDIC_HREF, cityName, dayHref, dayName } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { say } from "@/content/nights";
@@ -178,8 +179,11 @@ export const SHELVES: Shelf[] = [
        （`content/chapters.ts` の同じ決まり）。何の旅だったかだけを言う。 */
     note: "ポーランドからスウェーデンまで、ぜんぶ人の車で",
     items: [
+      /* 旅そのものは章の島（`/island/nordic`）の紙に寄せた（#1201）。下の「島の連なり」の
+         「北欧周遊」と同じ紙を指すが、**行は消さない**——北欧の旅を探す人はここを見る。
+         紙の数は行き先で数えるので、2回は数えない（下の `DEST_COUNT`） */
       {
-        href: "/nordic",
+        href: NORDIC_HREF,
         name: "北欧ヒッチハイク",
         note: "会いに行く理由と、通る道ぜんぶ",
         q: q("北欧ヒッチハイク nordic 旅 スウェーデン"),
@@ -204,7 +208,7 @@ export const SHELVES: Shelf[] = [
         ),
       })),
       {
-        href: "/nordic/guide",
+        href: NORDIC_GUIDE_HREF,
         name: "旅のしおり",
         note: "お金・通信・服・サウナ・食べもの",
         q: q("旅のしおり guide 持ち物 サウナ お金"),
@@ -275,9 +279,9 @@ export const SHELVES: Shelf[] = [
     title: "島の連なり",
     note: "これまで渡ってきた島、ぜんぶ",
     items: [
-      { href: "/atlas", name: "島の地図", note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas 連なり 章") },
+      { href: ISLAND_PATH, name: ISLAND_LABEL, note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas island 連なり 章") },
       ...ISLE_CHAPTERS.map((c) => ({
-        href: `/island/${c.slug}`,
+        href: chapterHref(c),
         name: c.name,
         /* まだ始まっていない章は from が空。年を出すと「年から」になる。
            **「次の島」と書かない。** 始まっていない章は1つとはかぎらないし
@@ -362,17 +366,11 @@ export const SHELVES: Shelf[] = [
  *
  * **行の数ではなく、行き先の数を数える。** 名乗っているのは「紙」なので、
  * 同じ紙へ行く行が2つあれば1枚。
- *
- * 章の島の行は、**いまいる島のぶんだけ `/` に化ける**——いまいる島は
- * `/island/<章>` ではなくトップそのもので（`components/chain/route.ts` の
- * `chapterHref`）、`/all` はその1行だけ画面が出てから行き先を引き直す
- * （`components/chain/AllIsleRow.tsx`）。`/` は「島」の行としてもう並んでいるから、
- * その1行は**すでに数えた紙**を指すことになる。
- *
- * **どれが化けるかは日付で変わるが、化けるのは必ず1つ**なので、この数は
- * 日付によらない。だから焼いてよい（焼いた数が翌日ずれる、が起きない）。
  * 2026-09-19 まではここが行の数（122）で、本番の `/all` に並んでいる行き先は
  * 121 だった。**画面が「122枚」と名乗って、121枚しか無かった。**
+ *
+ * 2026-11-13 までは、章の島の行が**いまいる島のぶんだけ `/` に化けて**いたので
+ * 1つ引いていた。いまは章の島はいつも `/island/<章>`（`chapterHref`。#1201）なので、引かない。
  */
 const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
 
@@ -382,6 +380,4 @@ const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
    `prodsweep.mjs` で初めて分かった（#1201） */
 const offShelf = [...TRAVEL_PLACES, ...publicCities()].filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
 if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
-/** いまいる島の行が `/` に化けるぶん。**必ず1つ**（`chapterHref`） */
-const ISLE_NOW_ROWS = 1;
-export const DEST_COUNT = DEST_HREFS.size - ISLE_NOW_ROWS;
+export const DEST_COUNT = DEST_HREFS.size;
