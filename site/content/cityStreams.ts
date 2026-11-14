@@ -2038,7 +2038,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "9S3zuyByWgo",
         "title": "【悲報】北マケドニア最終日",
         "date": "2026-11-11"
-      },
+      }
+    ]
+  },
+  "bulgaria": {
+    "ブルガリア": [
       {
         "videoId": "4izd3enURM8",
         "title": "🇧🇬ブルガリアいきます",
@@ -2048,6 +2052,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "-oDWI23uBgc",
         "title": "🇧🇬ブルガリアついたんやけど！！！！！",
         "date": "2026-11-12"
+      },
+      {
+        "videoId": "jnKVIXn4qQs",
+        "title": "🇧🇬ブルガリアのヨーグルト試してみよか！！",
+        "date": "2026-11-13"
       }
     ]
   }
