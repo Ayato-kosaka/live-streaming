@@ -120,7 +120,8 @@ export function PhotoCredit({ p }: { p: Photo }) {
     return (
       <p className="tg-credit">
         写真:{" "}
-        <a href={p.page} target="_blank" rel="noopener noreferrer">
+        {/* 同じ作者の写真が2枚あると、字が同じで行き先の違うリンクになる。読み上げでは何の写真かを言う（reachkeys の「おなじ字」） */}
+        <a href={p.page} target="_blank" rel="noopener noreferrer" aria-label={`写真の元のページ（${p.alt}・${p.by}／${p.lic}）`}>
           {p.by}／{p.lic}（Wikimedia Commons）
         </a>
       </p>

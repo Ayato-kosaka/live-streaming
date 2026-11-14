@@ -32,6 +32,11 @@
 | `sep` | 落ちすぎ: 要素の境目で字をくっつけない | 「1:12:40」＋「円は」を 40円 と読む |
 | `scope` | 落ちすぎ: 一言と配信の題は案内鳥の字ではない | 一言の中の「できます」 |
 | `blind` | 本文（`article.tg`）が無い面を「0件」にしない | 本文の無い面が通る |
+| `many` | 節の一言: 本人の一言は節に1つまで（#323） | 1節に一言が2つ |
+| `perline` | 場面: 行った話の場面のリンクは1本（一文ごとに付けない） | 話の中に場面が2本 |
+| `wentlink` | 場面: 行った話は場面のリンクを持つ | リンクの無い行った話 |
+| `extscene` | 場面: 外の事実（`data-src`）の中に配信の場面を置かない | 出どころの事実に場面の札 |
+| `nosrc` | 出どころ: 外の事実が、出どころのリンクと見た日を持つ | 出どころの無い外の事実 |
 
 **12通り当てても、同じ足を折っているなら1通り**（`island-misses.md` #128）。上は全部別の所を折っていて、
 それぞれ**その足の確かめだけ**が落ちることまで見る（ほかの足も一緒に落ちるなら、何が効いたのか分からない）。
@@ -59,7 +64,8 @@ if BREAK:
 ROOT = Path(__file__).resolve().parents[1]
 # 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる
 EXPECT = {"sep": {"sep", "clean"}, "scope": {"scope", "clean"}}
-LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "blind"]
+LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "blind",
+        "many", "perline", "wentlink", "extscene", "nosrc"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
 
@@ -118,26 +124,26 @@ def say(q: str, v: str, t: int, *, link: bool = True) -> str:
 def page(answer: str = "道が広く、車はゆっくり走る。", *, extra: str = "", say1: str | None = None,
          table: list[tuple[str, str, int, str]] | None = None, article: bool = True,
          desc: str = "スコピエへ行った記録。パンは100円。") -> str:
-    """面1枚。並びは `site/components/travel/Guide.tsx` の部品と同じ形"""
+    """面1枚。並びは `site/components/travel/Guide.tsx` の部品と同じ形（骨組み `data-src`・行った話 `data-went`）"""
     rows = table or [("パスタ", "75円", 1260, V1), ("パン", "100円", 1290, V1)]
     trs = "".join(f'<tr><th scope="row">{w}</th><td>{a}</td><td>{at(v, t)}</td></tr>' for w, a, t, v in rows)
     body = f"""
-<section class="tg-sec" id="about"><h2 class="tg-sec-h"><span class="tg-sec-t">どんな街？</span></h2>
+<section class="tg-sec" id="see"><h2 class="tg-sec-h"><span class="tg-sec-t">見たいもの</span></h2>
 <p class="tg-answer">{answer}</p>
 <div class="tg-says">{say1 if say1 is not None else say("なんかええ街やな", V2, 900)}</div>
-<ul class="tg-lines"><li><p>バスで7時間。 {at(V1, 60)}</p>{say("ながすぎるやろ", V1, 60)}</li></ul>
+<div class="tg-went" data-went=""><p class="tg-went-t">バスで7時間かかった。 {at(V1, 60)}</p></div>
 {extra}
 </section>
-<section class="tg-sec" id="money">
-<div class="tg-prices"><table class="tg-price"><caption>スーパー</caption>
-<thead><tr><th>何に</th><th>いくら</th><th>いつ・場面</th></tr></thead><tbody>{trs}</tbody></table>
+<section class="tg-sec" id="basics">
+<div class="tg-went" data-went=""><p class="tg-went-t">スーパーで買った。 {at(V1, 1260)}</p>
+<table class="tg-price"><thead><tr><th>何に</th><th>いくら</th><th>場面</th></tr></thead><tbody>{trs}</tbody></table>
 <p class="tg-note">円は、あやとがその場で円に直して言った額。</p></div>
-<aside class="tg-key"><p class="tg-key-t">値札の数字、円にすると？</p>
-<p class="tg-ext">1デナールは約2.7円（2026年10月12日・<a href="https://example.org/">中央銀行</a>）</p></aside>
+<div class="tg-ext" data-src=""><p>1デナールは約2.7円。</p>
+<p class="tg-src"><a href="https://example.org/">中央銀行</a>（<time datetime="2026-10-12">10/12</time>に見た）</p></div>
 </section>
-<section class="tg-sec" id="food">
-<details class="tg-dish"><summary><h3>スープ</h3></summary><div class="tg-dish-more">
-<p class="tg-dish-price">スープ <b>60デナール</b> {at(V2, 4290)}</p>
+<section class="tg-sec" id="eat">
+<details class="tg-tile"><summary><b>スープ</b></summary><div class="tg-tile-more">
+<div class="tg-went" data-went=""><p class="tg-dish-price">スープ <b>60デナール</b> {at(V2, 4290)}</p></div>
 {say("これうまいわ、ほんまにできますって", V2, 4290)}</div></details>
 </section>
 <figure class="tg-embed"><figcaption><a href="https://www.youtube.com/watch?v={V1}&amp;t=60s"><b data-quote="title">500円でできます！おすすめ旅</b></a></figcaption></figure>
@@ -210,6 +216,28 @@ e = run(page(answer="配信から抜き出しました。"))
 ok("mech", "地の文に画面の仕組みの説明 → 落ちる", any("仕組みの説明" in x for x in e), True)
 e = run(page(desc="確かめが要る額は出していません。"))
 ok("mech", "description にも同じ見張り", any(x.startswith("[口調] description") for x in e), True)
+
+
+# ---------------------------------------------------------------- 4-2. 節の一言・場面・出どころ（#323）
+
+print("[4-2] 節の一言・場面・出どころ")
+SRC = '<p class="tg-src"><a href="https://example.org/">出どころ</a>（<time datetime="2026-11-14">11/14</time>に見た）</p>'
+e = run(page(extra=say("ながすぎるやろ", V1, 60)))
+ok("many", "1つの節に本人の一言が2つ → 落ちる", any(x.startswith("[節の一言]") for x in e), True)
+e = run(page(extra=f'<div class="tg-went" data-went=""><p>バスに乗った。{at(V1, 60)} スーパーで買った。{at(V1, 1260)}</p></div>'))
+ok("perline", "行った話に場面のリンクが2本（一文ごと）→ 落ちる", any("場面のリンクが2本" in x for x in e), True)
+e = run(page(extra='<div class="tg-went" data-went=""><p>リンクの無い話。</p></div>'))
+ok("wentlink", "行った話に場面のリンクが無い → 落ちる", any("場面のリンクが無い" in x for x in e), True)
+e = run(page(extra=f'<div class="tg-ext" data-src=""><p>城塞は6世紀に建った。{at(V1, 60)}</p>{SRC}</div>'))
+ok("extscene", "外の事実の中に配信の場面のリンク → 落ちる", any("外の事実の中に" in x for x in e), True)
+e = run(page(extra='<div class="tg-ext" data-src=""><p>城塞は6世紀に建った。</p></div>'))
+ok("nosrc", "外の事実に出どころのリンクも見た日も無い → 落ちる", any(x.startswith("[出どころ]") for x in e), True)
+e = run(page(extra='<div class="tg-ext" data-src=""><p>城塞は6世紀に建った。</p><p><a href="https://example.org/">出どころ</a></p></div>'))
+ok("nosrc", "外の事実に見た日が無い → 落ちる", any("見た日" in x for x in e), True)
+# 値段の表の行と、測った値の始まり・終わりは、話の場面に数えない（落ちすぎない）
+e = run(page(extra=f'<div class="tg-went" data-went=""><p>着いた。{at(V1, 60)}</p>'
+                   f'<details class="tg-meas"><summary>実測</summary><p>{at(V1, 60)}{at(V1, 1260)}</p></details></div>'))
+ok("perline", "測った値の始まりと終わりのリンクは、話の場面に数えない", [x for x in e if x.startswith("[場面]")], [])
 
 
 # ---------------------------------------------------------------- 5. 本文の無い面
