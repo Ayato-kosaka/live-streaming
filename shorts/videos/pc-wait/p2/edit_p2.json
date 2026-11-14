@@ -1,0 +1,920 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p2",
+ "style": "style.json",
+ "sources": {
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/DNLVmUpew48/clips/01_0-09-45_0-11-15.mp4",
+   "watermark": "prism_live",
+   "t0": 585.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/yNA44SQbYjM/clips/01_0-00-50_0-01-45.mp4",
+   "watermark": "prism_live",
+   "t0": 50.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/da7K3qD5NmI/clips/01_0-40-15_0-41-45.mp4",
+   "watermark": "prism_live",
+   "t0": 2415.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/XKpFeM0mQ2I/clips/01_0-44-50_0-45-40.mp4",
+   "watermark": "prism_live",
+   "t0": 2690.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/ndhRAwZv918/clips/02_0-17-50_0-22-00.mp4",
+   "watermark": "prism_live",
+   "t0": 1070.0
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/yNA44SQbYjM/clips/02_0-03-50_0-05-10.mp4",
+   "watermark": "prism_live",
+   "t0": 230.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/ndhRAwZv918/clips/01_0-09-50_0-12-10.mp4",
+   "watermark": "prism_live",
+   "t0": 590.0
+  },
+  "c5_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/ndhRAwZv918/clips/03_0-43-50_0-47-40.mp4",
+   "watermark": "prism_live",
+   "t0": 2630.0
+  },
+  "c6_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/01_0-55-20_0-56-40.mp4",
+   "watermark": "prism_live",
+   "t0": 3320.0
+  },
+  "c6_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/02_1-25-50_1-29-50.mp4",
+   "watermark": "prism_live",
+   "t0": 5150.0
+  },
+  "c6_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/03_1-33-20_1-34-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5600.0
+  },
+  "c6_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/05_2-09-45_2-10-50.mp4",
+   "watermark": "prism_live",
+   "t0": 7785.0
+  },
+  "c6_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/04_2-05-40_2-06-30.mp4",
+   "watermark": "prism_live",
+   "t0": 7540.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c01",
+   "in": 378,
+   "out": 431,
+   "row": 0,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「北マケドニア旅行中にパソコンを送ったら、」: スコピエの旧市街の石畳と店の並び（自撮りでない街の画。島のキャラクターが消えた 0:09:57.5 から）"
+  },
+  {
+   "src": "c4_01",
+   "in": 1080,
+   "out": 1124,
+   "row": 0,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「まさかの事態に！」: 郵便局で申告が要ると言われた夜、顔をしかめる本人（答えの画。F-073 の後半。v1 下書きの 2:09:57 は顔がぶれて下に切れていたので替えた）"
+  },
+  {
+   "src": "c2_01",
+   "in": 2010,
+   "out": 2081,
+   "row": 1,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「7年愛用したパソコンの画面が壊れた！」: 画面が変な色になった様子を手振りで話す本人（壊れた画面そのものは配信に写っていない）"
+  },
+  {
+   "src": "c01",
+   "in": 600,
+   "out": 651,
+   "row": 2,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「日本語のキーボードが要るから、」: スコピエの旧市街を歩きながら話す本人"
+  },
+  {
+   "src": "c2_01",
+   "in": 540,
+   "out": 591,
+   "row": 2,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「日本で買い替えて、送ってもらう！」: 壊れた報告の続きで、買わなあかんと話す本人（ピンクの建物の前）"
+  },
+  {
+   "src": "c3_01",
+   "in": 300,
+   "out": 340,
+   "row": 3,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.176,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「荷物の税金が安いらしいから、」: 理由を話している本人（上の配信の題の書き込みは窓の外）"
+  },
+  {
+   "src": "c3_01",
+   "in": 1230,
+   "out": 1280,
+   "row": 3,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.176,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「北マケドニアへ移動！」: スマホの地図で、アルバニアから北マケドニアへ指でなぞる"
+  },
+  {
+   "src": "c5_02",
+   "in": 6240,
+   "out": 6296,
+   "row": 4,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「荷物が着いて郵便局に行ったら、」: 郵便局のガラス戸をくぐって、窓口の並ぶ広間に入る"
+  },
+  {
+   "src": "c4_01",
+   "in": 960,
+   "out": 1000,
+   "row": 5,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「14万円を超える物は、」: その夜、真顔で話す本人（「この顔色で分かるかも」の前後）"
+  },
+  {
+   "src": "c5_02",
+   "in": 6375,
+   "out": 6424,
+   "row": 5,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「税関の申告が要るらしい！」: 郵便局の広間で窓口に並ぶ人（後ろ姿）。v1 下書きの台の寄りは郵便局と分からなかったので替えた"
+  },
+  {
+   "src": "c4_02",
+   "in": 360,
+   "out": 398,
+   "row": 6,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「しかも、」: 宿の外で困った顔で話す本人"
+  },
+  {
+   "src": "c4_01",
+   "in": 60,
+   "out": 97,
+   "row": 6,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「申告を代わりにやる業者が要るって！」: バスの案内の明るい看板の前で話す本人"
+  },
+  {
+   "src": "c5_01",
+   "in": 480,
+   "out": 516,
+   "row": 7,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「業者に頼んだら、」: 建物の下で業者の返事を読む本人"
+  },
+  {
+   "src": "c5_02",
+   "in": 4920,
+   "out": 4950,
+   "row": 7,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「郵便局でやれって！」: 郵便局の建物（150 の青い幕）"
+  },
+  {
+   "src": "c5_01",
+   "in": 3480,
+   "out": 3522,
+   "row": 8,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「言うてることが違うやん！」: 頭の後ろに手をやってツッコむ本人"
+  },
+  {
+   "src": "c5_02",
+   "in": 4665,
+   "out": 4698,
+   "row": 9,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「泣く泣く、」: 郵便局の建物（150 の青い幕）へ歩いて向かう"
+  },
+  {
+   "src": "c5_02",
+   "in": 5700,
+   "out": 5727,
+   "row": 9,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「郵便局にもう一度！」: 郵便局の前で話す本人（顔の無い画が2秒以上続かないように）"
+  },
+  {
+   "src": "c5_02",
+   "in": 7320,
+   "out": 7354,
+   "row": 10,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「窓口は、」: 窓口の台の向こうで職員がスマホを触る手元（顔は窓の外）"
+  },
+  {
+   "src": "c5_03",
+   "in": 4560,
+   "out": 4602,
+   "row": 10,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「別の業者を探せの一点張り！」: 窓口から出てきて見上げる本人（v1 下書きの 0:46:12 は耳と顎だけだったので替えた）"
+  },
+  {
+   "src": "c5_03",
+   "in": 5475,
+   "out": 5544,
+   "row": 11,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「1日15回も来んなって、怒られた！」: 郵便局を出て、高架の下で話す本人（v1 下書きの 0:46:46 はぶれていたので替えた）"
+  },
+  {
+   "src": "c5_03",
+   "in": 6570,
+   "out": 6618,
+   "row": 12,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「15回も来てへんねんけど！」: 木の見える所まで出て、笑ってツッコむ本人"
+  },
+  {
+   "src": "c6_01",
+   "in": 300,
+   "out": 371,
+   "row": 13,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「2週間で出るつもりが、かれこれ1ヶ月！」: スコピエの長い歩道を歩く（後ろのカメラ）"
+  },
+  {
+   "src": "c6_02",
+   "in": 60,
+   "out": 100,
+   "row": 14,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「探しまくって、」: 木の下で電話しながら業者の事務所を探す本人"
+  },
+  {
+   "src": "c6_02",
+   "in": 6480,
+   "out": 6524,
+   "row": 14,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「やっと業者のおじさんたちに会えた！」: 事務所の建物に入り、階段の踊り場で見上げる本人（v1 下書きの 1:29:36 は顔が切れていたので替えた）"
+  },
+  {
+   "src": "c6_03",
+   "in": 300,
+   "out": 336,
+   "row": 15,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.6,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "audio_db": -12,
+   "note": "「めっちゃ親切で、」: 事務所の椅子で、電話の声のする方を見上げる本人（おじさんたちは画に入っていない）。おじさんが郵便局に電話している声（マケドニア語）を -12dB で小さく残す"
+  },
+  {
+   "src": "c6_05",
+   "in": 1440,
+   "out": 1481,
+   "row": 15,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「郵便局に電話してくれた！」: 事務所を出たところで話す本人（この前後で「郵便局にも電話してくれて」と言っている）"
+  },
+  {
+   "src": "c6_04",
+   "in": 840,
+   "out": 878,
+   "row": 16,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.4,
+    "y": 0.15,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「けど、旅行者が受け取った」: 業者の「99%…」を聞いて、額に手を当てて天井を見上げる本人"
+  },
+  {
+   "src": "c6_05",
+   "in": 1620,
+   "out": 1659,
+   "row": 16,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「前例が無いらしい！」: 建物を出て、マフラーを巻きながら話す本人"
+  },
+  {
+   "src": "c6_05",
+   "in": 480,
+   "out": 546,
+   "row": 17,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「結局、受け取れずに日本に返された！」: 事務所を出た建物の中で、カメラに向かって苦笑いする本人（「99%無理って言われちゃいました」の所。v1 下書きの 2:09:56.5 はぶれて顔が下に切れていた）"
+  },
+  {
+   "src": "c6_05",
+   "in": 1770,
+   "out": 1818,
+   "row": 18,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.078,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「みんなは、こんなことが起きても、」: 外で笑って話す本人"
+  },
+  {
+   "src": "c01",
+   "in": 420,
+   "out": 467,
+   "row": 18,
+   "zoom": {
+    "from": 1.454,
+    "to": 1.454,
+    "x": 0.5,
+    "y": 0.117,
+    "sx": 0.5,
+    "sy": 0
+   },
+   "note": "「旅を続けたい？」: スコピエの旧市街の店の並び（終わりの札）"
+  }
+ ],
+ "title": {
+  "text": "🇲🇰北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/01.wav",
+    "tts_text": "北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "7年愛用したパソコンの画面が壊れた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/02.wav",
+    "tts_text": "ななねん愛用したパソコンの画面が壊れた！",
+    "at": 97
+   },
+   {
+    "text": "日本語のキーボードが要るから、日本で買い替えて、送ってもらう！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/03.wav",
+    "tts_text": "日本語のキーボードがいるから、日本で買い替えて、送ってもらう！",
+    "at": 168
+   },
+   {
+    "text": "荷物の税金が安いらしいから、北マケドニアへ移動！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/04.wav",
+    "tts_text": "荷物の税金が安いらしいから、北マケドニアへ移動！",
+    "at": 270
+   },
+   {
+    "text": "荷物が着いて郵便局に行ったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/05.wav",
+    "tts_text": "荷物が着いて郵便局に行ったら、",
+    "at": 360
+   },
+   {
+    "text": "14万円を超える物は、税関の申告が要るらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/06.wav",
+    "tts_text": "14万円を超える物は、税関の申告がいるらしい！",
+    "at": 416
+   },
+   {
+    "text": "しかも、申告を代わりにやる業者が要るって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/07.wav",
+    "tts_text": "しかも、申告を代わりにやる業者がいるって！",
+    "at": 505
+   },
+   {
+    "text": "業者に頼んだら、郵便局でやれって！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/08.wav",
+    "tts_text": "業者に頼んだら、郵便局でやれって！",
+    "at": 580
+   },
+   {
+    "text": "言うてることが違うやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/09.wav",
+    "tts_text": "ゆうてることが違うやん！",
+    "at": 646
+   },
+   {
+    "text": "泣く泣く、郵便局にもう一度！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/10.wav",
+    "tts_text": "泣く泣く、郵便局にもう一度！",
+    "at": 688
+   },
+   {
+    "text": "窓口は、別の業者を探せの一点張り！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/11.wav",
+    "tts_text": "窓口は、別の業者を探せの一点張り！",
+    "at": 748
+   },
+   {
+    "text": "1日15回も来んなって、怒られた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/12.wav",
+    "tts_text": "いちにち15回もくんなって、怒られた！",
+    "at": 824
+   },
+   {
+    "text": "15回も来てへんねんけど！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/13.wav",
+    "tts_text": "15回も来てへんねんけど！",
+    "at": 893
+   },
+   {
+    "text": "2週間で出るつもりが、かれこれ1ヶ月！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/14.wav",
+    "tts_text": "2週間で出るつもりが、かれこれ1か月！",
+    "at": 941
+   },
+   {
+    "text": "探しまくって、やっと業者のおじさんたちに会えた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/15.wav",
+    "tts_text": "探しまくって、やっと業者のおじさんたちに会えた！",
+    "at": 1012
+   },
+   {
+    "text": "めっちゃ親切で、郵便局に電話してくれた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/16.wav",
+    "tts_text": "めっちゃ親切で、郵便局に電話してくれた！",
+    "at": 1096
+   },
+   {
+    "text": "けど、旅行者が受け取った前例が無いらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/17.wav",
+    "tts_text": "けど、旅行者が受け取った前例が無いらしい！",
+    "at": 1173
+   },
+   {
+    "text": "結局、受け取れずに日本に返された！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/18.wav",
+    "tts_text": "結局、受け取れずに日本に返された！",
+    "at": 1250
+   },
+   {
+    "text": "みんなは、こんなことが起きても旅を続けたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/voice/pcw-p2-v1/p2/19.wav",
+    "tts_text": "みんなは、こんなことが起きても、旅を続けたい？",
+    "at": 1316
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/pc-wait/p2/spec.json",
+  "fps": 30,
+  "frames": 1411,
+  "seconds": 47.033,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 97,
+    "voice_frames": 89,
+    "cuts": [
+     "DNLVmUpew48 0:09:57.6+1.77s",
+     "yNA44SQbYjM 0:01:26.0+1.47s"
+    ],
+    "line": "北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 97,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "da7K3qD5NmI 0:41:22.0+2.37s"
+    ],
+    "line": "7年愛用したパソコンの画面が壊れた！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 168,
+    "frames": 102,
+    "voice_frames": 94,
+    "cuts": [
+     "DNLVmUpew48 0:10:05.0+1.70s",
+     "da7K3qD5NmI 0:40:33.0+1.70s"
+    ],
+    "line": "日本語のキーボードが要るから、日本で買い替えて、送ってもらう！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 270,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "XKpFeM0mQ2I 0:45:00.0+1.33s",
+     "XKpFeM0mQ2I 0:45:31.0+1.67s"
+    ],
+    "line": "荷物の税金が安いらしいから、北マケドニアへ移動！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 360,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "ndhRAwZv918 0:21:18.0+1.87s"
+    ],
+    "line": "荷物が着いて郵便局に行ったら、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 416,
+    "frames": 89,
+    "voice_frames": 81,
+    "cuts": [
+     "yNA44SQbYjM 0:01:22.0+1.33s",
+     "ndhRAwZv918 0:21:22.5+1.63s"
+    ],
+    "line": "14万円を超える物は、税関の申告が要るらしい！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 505,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "yNA44SQbYjM 0:04:02.0+1.27s",
+     "yNA44SQbYjM 0:00:52.0+1.23s"
+    ],
+    "line": "しかも、申告を代わりにやる業者が要るって！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 580,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "ndhRAwZv918 0:10:06.0+1.20s",
+     "ndhRAwZv918 0:20:34.0+1.00s"
+    ],
+    "line": "業者に頼んだら、郵便局でやれって！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 646,
+    "frames": 42,
+    "voice_frames": 34,
+    "cuts": [
+     "ndhRAwZv918 0:11:46.0+1.40s"
+    ],
+    "line": "言うてることが違うやん！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 688,
+    "frames": 60,
+    "voice_frames": 52,
+    "cuts": [
+     "ndhRAwZv918 0:20:25.5+1.10s",
+     "ndhRAwZv918 0:21:00.0+0.90s"
+    ],
+    "line": "泣く泣く、郵便局にもう一度！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 748,
+    "frames": 76,
+    "voice_frames": 68,
+    "cuts": [
+     "ndhRAwZv918 0:21:54.0+1.13s",
+     "ndhRAwZv918 0:46:22.0+1.40s"
+    ],
+    "line": "窓口は、別の業者を探せの一点張り！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 824,
+    "frames": 69,
+    "voice_frames": 61,
+    "cuts": [
+     "ndhRAwZv918 0:46:52.5+2.30s"
+    ],
+    "line": "1日15回も来んなって、怒られた！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 893,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "ndhRAwZv918 0:47:29.0+1.60s"
+    ],
+    "line": "15回も来てへんねんけど！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 941,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "MfQqBEzDou8 0:55:30.0+2.37s"
+    ],
+    "line": "2週間で出るつもりが、かれこれ1ヶ月！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1012,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "MfQqBEzDou8 1:25:52.0+1.33s",
+     "MfQqBEzDou8 1:29:26.0+1.47s"
+    ],
+    "line": "探しまくって、やっと業者のおじさんたちに会えた！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1096,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "MfQqBEzDou8 1:33:30.0+1.20s",
+     "MfQqBEzDou8 2:10:33.0+1.37s"
+    ],
+    "line": "めっちゃ親切で、郵便局に電話してくれた！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1173,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "MfQqBEzDou8 2:06:08.0+1.27s",
+     "MfQqBEzDou8 2:10:39.0+1.30s"
+    ],
+    "line": "けど、旅行者が受け取った前例が無いらしい！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1250,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "MfQqBEzDou8 2:10:01.0+2.20s"
+    ],
+    "line": "結局、受け取れずに日本に返された！",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1316,
+    "frames": 95,
+    "voice_frames": 72,
+    "cuts": [
+     "MfQqBEzDou8 2:10:44.0+1.60s",
+     "DNLVmUpew48 0:09:59.0+1.57s"
+    ],
+    "line": "みんなは、こんなことが起きても旅を続けたい？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 338,
+   "raw_voice_s": 57.93,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 41.47,
+   "cps_voiced": 8.15,
+   "video_s": 47.03,
+   "cps_video": 7.19
+  }
+ },
+ "notes": [
+  {
+   "from": 416,
+   "to": 505,
+   "text": "800€"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ }
+}
