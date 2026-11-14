@@ -168,3 +168,71 @@ export function travelShare(slug: string, o: { title: string; description: strin
   const p = travelPage(slug);
   return share({ key: p.card, title: o.title, description: o.description, path: p.href });
 }
+
+/**
+ * **`/travel/<国>/<街>/<話>` の記事の名簿。** 勝てる問い1つに1枚で答える面（`docs/guide-design.md` ★3）。
+ *
+ * 公開前の印（`draft`）の意味は街と同じ: 付いているあいだ、検索に載せない・索引と `/all` に並べない。
+ * いまの索引（`app/sitemap.ts`）と `/all`（`content/directory.ts`）は**記事の名簿をまだ読まない**ので、
+ * 公開前の記事はどこにも並ばない。**印を外す日に、索引と `/all` と見張り（`site/selftest/travelreg.mjs`）に
+ * `publicArticles()` を読ませる**（読ませずに印だけ外すと、索引に無い面になる）。
+ *
+ * 索引の見張り（`sitemapgap_selftest.mjs`）は面の `metadata` の字を読むので、公開前のあいだは面にも
+ * `robots: { index: false }` を書く。印と食い違ったら書き出しを止める（`travelArticleShare`）。
+ */
+export type TravelArticle = {
+  country: string;
+  /** 街の slug（`TRAVEL_CITIES` に在ること） */
+  city: string;
+  slug: string;
+  /** パンくずの最後の字 */
+  crumb: string;
+  href: string;
+  draft?: true;
+};
+
+const ARTICLES: Omit<TravelArticle, "href">[] = [
+  { country: "north-macedonia", city: "skopje", slug: "prices", crumb: "物価", draft: true },
+];
+
+/* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
+export const TRAVEL_ARTICLES: TravelArticle[] = ARTICLES.map((a) => ({
+  ...a,
+  href: `${travelCity(a.country, a.city).href}/${a.slug}`,
+}));
+
+/** 名簿に在るはずの記事。無ければ書き出しを止める */
+export function travelArticle(country: string, city: string, slug: string): TravelArticle {
+  const a = TRAVEL_ARTICLES.find((x) => x.country === country && x.city === city && x.slug === slug);
+  if (!a) throw new Error(`content/travel.ts: ${country}/${city}/${slug} が記事の名簿（TRAVEL_ARTICLES）に無い`);
+  return a;
+}
+
+/** 出してよい記事。**公開前の印が付いた記事は入らない** */
+export const publicArticles = (country?: string) =>
+  TRAVEL_ARTICLES.filter((a) => !a.draft && (!country || a.country === country));
+
+/** 記事のパンくず。島 › 歩いた国 › <国> › <街> › <記事> */
+export function travelArticleCrumbs(country: string, city: string, slug: string) {
+  const p = travelPage(country);
+  const c = travelCity(country, city);
+  const a = travelArticle(country, city, slug);
+  return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name, href: c.href }, { label: a.crumb }];
+}
+
+/** 記事の、貼られたときの顔と居場所。`robots` は面が字で渡し、印と合っているかをここで見る */
+export function travelArticleShare(
+  country: string,
+  city: string,
+  slug: string,
+  o: { title: string; description: string; robots?: { index: false; follow: boolean } },
+): Metadata {
+  const p = travelPage(country);
+  const a = travelArticle(country, city, slug);
+  if (!!a.draft !== !!o.robots) {
+    throw new Error(
+      `content/travel.ts: ${a.href} の公開前の印（${a.draft ? "あり" : "なし"}）と、面の robots（${o.robots ? "index: false" : "なし"}）が食い違っている`,
+    );
+  }
+  return share({ key: p.card, title: o.title, description: o.description, path: a.href, ...(o.robots ? { robots: o.robots } : {}) });
+}
