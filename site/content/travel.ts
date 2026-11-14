@@ -173,12 +173,9 @@ export function travelShare(slug: string, o: { title: string; description: strin
  * **`/travel/<国>/<街>/<話>` の記事の名簿。** 勝てる問い1つに1枚で答える面（`docs/guide-design.md` ★3）。
  *
  * 公開前の印（`draft`）の意味は街と同じ: 付いているあいだ、検索に載せない・索引と `/all` に並べない。
- * いまの索引（`app/sitemap.ts`）と `/all`（`content/directory.ts`）は**記事の名簿をまだ読まない**ので、
- * 公開前の記事はどこにも並ばない。**印を外す日に、索引と `/all` と見張り（`site/selftest/travelreg.mjs`）に
- * `publicArticles()` を読ませる**（読ませずに印だけ外すと、索引に無い面になる）。
- *
- * 索引の見張り（`sitemapgap_selftest.mjs`）は面の `metadata` の字を読むので、公開前のあいだは面にも
- * `robots: { index: false }` を書く。印と食い違ったら書き出しを止める（`travelArticleShare`）。
+ * **出すときは、街と同じく印を1つ外すだけ。** 索引（`app/sitemap.ts`）と `/all`（`content/directory.ts`）は
+ * `publicArticles()` を読み、面の `robots` は印から決まり（`travelArticleShare`）、索引の見張り
+ * （`sitemapgap_selftest.mjs`）は面の字ではなく名簿の印を読む（`site/selftest/travelreg.mjs` の `travelArticles`）。
  */
 export type TravelArticle = {
   country: string;
@@ -220,7 +217,10 @@ export function travelArticleCrumbs(country: string, city: string, slug: string)
   return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name, href: c.href }, { label: a.crumb }];
 }
 
-/** 記事の、貼られたときの顔と居場所。`robots` は面が字で渡し、印と合っているかをここで見る */
+/**
+ * 記事の、貼られたときの顔と居場所。**`robots` は公開前の印から決める**（街の `travelCityShare` と同じ）。
+ * 面が `robots` を字で渡していたら、印と合っているかだけを見る（食い違ったら書き出しを止める）
+ */
 export function travelArticleShare(
   country: string,
   city: string,
@@ -229,10 +229,9 @@ export function travelArticleShare(
 ): Metadata {
   const p = travelPage(country);
   const a = travelArticle(country, city, slug);
-  if (!!a.draft !== !!o.robots) {
-    throw new Error(
-      `content/travel.ts: ${a.href} の公開前の印（${a.draft ? "あり" : "なし"}）と、面の robots（${o.robots ? "index: false" : "なし"}）が食い違っている`,
-    );
+  if (o.robots && !a.draft) {
+    throw new Error(`content/travel.ts: ${a.href} は公開前の印が無いのに、面が robots（index: false）を渡している`);
   }
-  return share({ key: p.card, title: o.title, description: o.description, path: a.href, ...(o.robots ? { robots: o.robots } : {}) });
+  const robots = a.draft ? (o.robots ?? { index: false as const, follow: true }) : undefined;
+  return share({ key: p.card, title: o.title, description: o.description, path: a.href, ...(robots ? { robots } : {}) });
 }

@@ -13,6 +13,16 @@
 | 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ | facts（`streams/**/*.facts.json`） |
 | 一言 | 吹き出し（`data-quote="ayato"`）が**全部**場面のリンクの中に在り、リンクの動画と秒が、その一言を持つ facts の行の `t` と同じ。チャットが出どころの行（`via`）の字は引かない。吹き出しの外に本人の一言を「」で置かない | facts |
 | 口調 | 案内鳥の字（一言・配信の題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
+| 節の一言 | 本人の一言は**節（`<section>`）に1つまで** | `docs/island-misses.md` #323 の決めごと2 |
+| 場面 | 行った人の話（`data-went`）は場面のリンクを**1つだけ**持つ（値段の表の行・測った値の始まりと終わりは数えない）。外の事実（`data-src`）の中に場面のリンクを置かない | #323 の決めごと2（一文ごとにリンクを付けない） |
+| 出どころ | 外の事実（`data-src`）が、出どころのリンク（https・YouTube 以外）と見た日（`<time datetime>`）を持つ | `docs/country-guide.md` 1-2・#323 の決めごと1 |
+
+## 2026-11-14 に足した3本（節の一言・場面・出どころ）
+
+最初のスコピエの面は「どの一文も配信へ辿れる」を面の形にしてしまい、場面のリンクが210本・一言が45個並んだ
+（#323）。前の見張りは「一言は場面のリンクの中に在るか」だけを見ていて、**一言とリンクが多すぎること**は
+見ていなかった——むしろ「リンクの無い行」を赤くする側だった。いまは逆に、骨組み（外の事実）には出どころを、
+肉付け（行った話）には場面を1つだけ、を見る。
 
 ## なぜ書き出した HTML を見るか
 
@@ -165,6 +175,16 @@ def is_quote(n: Node) -> bool:
     return n.attrs.get("data-quote") == "ayato"
 
 
+def is_src(n: Node) -> bool:
+    """外の出どころの事実（骨組み）"""
+    return "data-src" in n.attrs or "tg-ext" in n.cls()
+
+
+def is_went(n: Node) -> bool:
+    """行った人の話（肉付け）"""
+    return "data-went" in n.attrs
+
+
 def verbatim(n: Node) -> bool:
     """配信の題（そのまま出す。island-design 1章の例外）。埋め込みの題と、配信の一覧"""
     return n.attrs.get("data-quote") == "title" or "tg-vids" in n.cls()
@@ -204,7 +224,7 @@ def amounts_of(x: dict, units: dict) -> set[tuple[str, str]]:
 class Report:
     key: str
     errors: list[str] = field(default_factory=list)
-    seen: dict[str, int] = field(default_factory=lambda: {"額": 0, "表の行": 0, "一言": 0, "字": 0})
+    seen: dict[str, int] = field(default_factory=lambda: {"額": 0, "表の行": 0, "一言": 0, "話": 0, "外の事実": 0, "場面": 0, "字": 0})
 
     def ng(self, leg: str, msg: str) -> None:
         self.errors.append(f"[{leg}] {msg}")
@@ -218,8 +238,8 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report) -> None:
         (held if hold else ready).update(amounts_of(x, units))
 
     def ext(n: Node) -> bool:
-        # 外の出どころの行は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま
-        return "tg-ext" in n.cls() or verbatim(n)
+        # 外の出どころの事実は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま
+        return is_src(n) or verbatim(n)
 
     # 1. 面のどこに出た額も、確かめの要らない行に在る
     body = art.text(skip=ext, sep=SEP)
@@ -313,6 +333,46 @@ def check_quotes(art: Node, rows: list[dict], r: Report) -> None:
                 r.ng("一言", f"「{m.group(1)}」が吹き出しの外に在る（場面のリンクが無い）")
 
 
+
+def check_sections(art: Node, r: Report) -> None:
+    """節の一言は1つまで・行った話の場面は1つ・外の事実には出どころ（#323）"""
+    r.seen["場面"] = sum(1 for a in art.walk() if a.tag == "a" and scene_of(a))
+    if "many" not in BREAK:
+        for sec in (n for n in art.walk() if n.tag == "section"):
+            qs = [n for n in sec.walk() if is_quote(n)]
+            if len(qs) > 1:
+                r.ng("節の一言", f"節「{sec.attrs.get('id', '?')}」に本人の一言が{len(qs)}つ（1つまで）: "
+                     + "／".join(n.text().strip()[:12] for n in qs[:3]))
+
+    def counted(a: Node, box: Node) -> bool:
+        # 値段の表の行（何をいくらで買ったかの証拠）と、測った値の始まり・終わりは数えない
+        for p in a.up():
+            if p is box:
+                return True
+            if p.tag == "table" or "tg-meas" in p.cls():
+                return False
+        return True
+
+    for n in art.walk():
+        if is_went(n):
+            r.seen["話"] += 1
+            links = [a for a in n.walk() if a.tag == "a" and scene_of(a) and counted(a, n)]
+            if len(links) > 1 and "perline" not in BREAK:
+                r.ng("場面", f"行った話に場面のリンクが{len(links)}本（話1つに1本）: …{n.text()[:24]}…")
+            elif not links and "wentlink" not in BREAK:
+                r.ng("場面", f"行った話に場面のリンクが無い: …{n.text()[:24]}…")
+        elif is_src(n) and not any(is_src(p) for p in n.up()):
+            r.seen["外の事実"] += 1
+            if "extscene" not in BREAK and any(a.tag == "a" and scene_of(a) for a in n.walk()):
+                r.ng("場面", f"外の事実の中に配信の場面のリンク: …{n.text()[:24]}…")
+            if "nosrc" in BREAK:
+                continue
+            src = [a for a in n.walk() if a.tag == "a" and a.attrs.get("href", "").startswith("https://")
+                   and "youtube.com" not in a.attrs.get("href", "")]
+            seen = [x for x in n.walk() if x.tag == "time" and re.match(r"^\d{4}-\d\d-\d\d$", x.attrs.get("datetime", ""))]
+            if not src or not seen:
+                r.ng("出どころ", f"外の事実に{'出どころのリンク' if not src else '見た日'}が無い: …{n.text()[:24]}…")
+
 def check_tone(art: Node, head: dict, r: Report) -> None:
     def skip(n: Node) -> bool:
         # 本人の一言と配信の題は、案内鳥の字ではない
@@ -344,6 +404,7 @@ def check_page(key: str, page: str, rows: list[dict], units: dict) -> Report | N
     r = Report(key)
     check_money(art, rows, units, r)
     check_quotes(art, rows, r)
+    check_sections(art, r)
     check_tone(art, head, r)
     return r
 

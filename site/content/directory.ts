@@ -3,7 +3,8 @@ import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/c
 import { ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
-import { TRAVEL_LABEL, TRAVEL_PLACES, publicCities, travelHref, travelPage } from "@/content/travel";
+import { TRAVEL_LABEL, TRAVEL_PLACES, publicArticles, publicCities, travelHref, travelPage } from "@/content/travel";
+import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, NORDIC_HREF, cityName, dayHref, dayName } from "@/content/nordic";
@@ -269,9 +270,14 @@ export const SHELVES: Shelf[] = [
       ...publicCities("north-macedonia").map((c) => ({
         href: c.href,
         name: c.name,
-        note: "実際に行った記録。物価・行き方・マトカ渓谷",
-        q: q(c.name, c.slug, "スコピエ skopje 旅行記 物価 行き方 マトカ渓谷 matka チェバピ 旧市街 ホステル"),
+        note: "見る・食べる・買う・すること。行った人の話つき",
+        q: q(c.name, c.slug, "スコピエ skopje 観光 見どころ 食べ物 物価 マトカ渓谷 matka 旧市街 石橋 ケバピ ホステル"),
       })),
+      /* 街の記事（物価など）。街と同じく、印を外した日にここへひとりでに1行増える（`publicArticles`） */
+      ...publicArticles("north-macedonia").map((a) => {
+        const g = articleOf(a.country, a.city, a.slug);
+        return { href: a.href, name: g.h1[0], note: g.h1.slice(1).join(""), q: q(g.title, a.slug) };
+      }),
     ],
   },
   {
@@ -378,6 +384,6 @@ const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
    行く前の案内だけの国（`content/travel.ts` の `GUIDE_ONLY`）は棚を手で立てる（探し言葉は人が書く）。
    立て忘れると、索引には在るのに `/all` から行けない面になる——前は配ったあとの
    `prodsweep.mjs` で初めて分かった（#1201） */
-const offShelf = [...TRAVEL_PLACES, ...publicCities()].filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
+const offShelf = [...TRAVEL_PLACES, ...publicCities(), ...publicArticles()].filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
 if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
 export const DEST_COUNT = DEST_HREFS.size;

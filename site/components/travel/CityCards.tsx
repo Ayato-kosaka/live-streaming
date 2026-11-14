@@ -39,7 +39,7 @@ export default function CityCards({ country }: { country: string }) {
                   <b>{c.name}</b>
                   <span>{g.lead}</span>
                   <em>
-                    実際に行った記録を読む
+                    ガイドを読む
                     <Icon name="right" size={14} />
                   </em>
                 </span>

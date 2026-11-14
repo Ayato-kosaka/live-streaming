@@ -46,8 +46,8 @@ import "@/components/travel/article/article.css";
  *
  * ## 公開前
  *
- * 印は `content/travel.ts` の `ARTICLES` の `draft`。索引の見張りは面の字を読むので、
- * ここにも `robots` を書く（印と食い違うと `travelArticleShare` が書き出しを止める）。
+ * 印は `content/travel.ts` の `ARTICLES` の `draft`。`robots` は印から決まる（`travelArticleShare`）ので、
+ * ここには書かない。**出すときは印を1つ外すだけ**（街の面と同じ1手。索引・`/all`・見張りも名簿を読む）。
  */
 
 const COUNTRY = "north-macedonia";
@@ -58,7 +58,6 @@ const PATH = travelArticle(COUNTRY, CITY, SLUG).href;
 export const metadata: Metadata = travelArticleShare(COUNTRY, CITY, SLUG, {
   title: A.title,
   description: A.description,
-  robots: { index: false, follow: true },
 });
 
 /** 行った日。**国に入った日から、次の国に入った日まで**（`content/countries.ts`。街の面と同じ数えかた） */
