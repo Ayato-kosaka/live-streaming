@@ -1983,16 +1983,8 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
    ]
   }
  ],
- "articles": [
-  {
-   "href": "/travel/north-macedonia/skopje/prices",
-   "title": "スコピエの物価【2026年10月】",
-   "note": "1か月暮らして払った値段",
-   "icon": "wallet"
-  }
- ],
  "published": "2026-11-14",
  "updated": "2026-11-14",
- "hash": "7bf75116c6479065"
+ "hash": "43d0164be671fb1c"
 }
 /* END GUIDE */;

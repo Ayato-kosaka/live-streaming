@@ -48,3 +48,20 @@ export function travelCities(site) {
 
 /** 索引が街の名簿（公開してよい街だけ）を読んでいるか */
 export const sitemapReadsCities = (sitemapSrc) => /\bpublicCities\(/.test(sitemapSrc);
+
+/**
+ * 街の記事（`/travel/<国>/<街>/<話>`）の名簿（`content/travel.ts` の `ARTICLES`）。`draft` は公開前の印。
+ *
+ * 記事の面の `robots` も、街と同じく面に字で書かず印から決まる（`travelArticleShare`）。
+ * だから「検索に出さないと自分で言っている面か」は名簿の印で読む。出すときは印を1つ外すだけで、
+ * 索引が `publicArticles` を読んでいれば索引に在る（`sitemapReadsArticles`）。
+ */
+export function travelArticles(site) {
+  const root = travelRoot(site);
+  const src = readFileSync(join(site, "content", "travel.ts"), "utf8");
+  const rows = must(readArray(src, "ARTICLES", { keys: ["country", "city", "slug", "draft"] }), "content/travel.ts の ARTICLES");
+  return rows.map((r) => ({ route: `${root}/${r.country}/${r.city}/${r.slug}`, draft: r.draft === "true" }));
+}
+
+/** 索引が記事の名簿（公開してよい記事だけ）を読んでいるか */
+export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(/.test(sitemapSrc);

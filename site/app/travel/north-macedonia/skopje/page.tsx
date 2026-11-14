@@ -1,6 +1,3 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
-
 import type { Metadata } from "next";
 
 import Embed from "@/components/travel/Embed";
@@ -26,9 +23,18 @@ import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { CITY_STREAMS } from "@/content/cityStreams";
 import { AHEAD_COUNTRIES } from "@/content/countries";
-import { travelCity, travelCityCrumbs, travelCityShare, travelPage, TRAVEL, TRAVEL_LABEL } from "@/content/travel";
+import {
+  TRAVEL,
+  TRAVEL_ARTICLES,
+  TRAVEL_LABEL,
+  travelCity,
+  travelCityCrumbs,
+  travelCityShare,
+  travelPage,
+} from "@/content/travel";
+import { articleOf } from "@/content/travel/articles";
 import { guideOf } from "@/content/travel/guides";
-import type { Item, Photo, Scene, Section, Src } from "@/content/travel/types";
+import type { Article, Item, Photo, Scene, Section, Src } from "@/content/travel/types";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
 import "@/components/travel/guide.css";
@@ -110,11 +116,18 @@ function citedVideos(): Map<string, number> {
 const STREAMS_OPEN = 5;
 
 /**
- * 記事の面が在るか。**まだ無い記事の入口を出さない**（押して 404 になる札を置かない）。
- * 書き出しのときに `app/` の下を見る。記事の担当が面を足した次の書き出しから、札がひとりでに出る
+ * この街の記事（物価など）への札。名簿は `content/travel.ts` の `TRAVEL_ARTICLES`、字は記事の中身から。
+ *
+ * **公開前の印どうしで繋ぐ。** 公開した街の面から、公開前の記事へは繋がない（検索に出していない面へ、
+ * 出している面から道を付けない）。街も記事も公開前なら繋ぐ（あやとが読むときに辿れるように）。
+ * 記事の印を外した日に、公開した街の面にも札がひとりでに出る
  */
-function hasPage(href: string): boolean {
-  return existsSync(path.join(process.cwd(), "app", ...href.split("/").filter(Boolean), "page.tsx"));
+function articlesOf(country: string, city: string): Article[] {
+  const cityDraft = !!travelCity(country, city).draft;
+  return TRAVEL_ARTICLES.filter((a) => a.country === country && a.city === city && (!a.draft || cityDraft)).map((a) => {
+    const g = articleOf(a.country, a.city, a.slug);
+    return { href: a.href, title: g.h1[0], note: g.h1.slice(1).join(""), icon: g.answer.icon };
+  });
 }
 
 /** 目次の件数。**数は中身から数える**（手で書かない） */
@@ -152,7 +165,7 @@ export default function SkopjePage() {
     .sort((a, b) => a.date.localeCompare(b.date));
   const embedTitle = mine.find((s) => s.videoId === G.embed.v)?.title;
   if (!embedTitle) throw new Error(`skopje/page.tsx: 埋め込みの回 ${G.embed.v} が配信の一覧（cityStreams.ts）に無い`);
-  const articles = G.articles.filter((a) => hasPage(a.href));
+  const articles = articlesOf(COUNTRY, CITY);
 
   const all: Item[] = G.sections.flatMap((s) => s.items);
   const marked = all.filter((it) => it.mark);

@@ -120,7 +120,7 @@ export type Section = {
   items: Item[];
 };
 
-/** 記事（`/travel/<国>/<街>/<話>`）への入口。**面がまだ無い記事は出さない**（面の側が確かめる） */
+/** 記事（`/travel/<国>/<街>/<話>`）への札。名簿（`content/travel.ts` の `TRAVEL_ARTICLES`）と記事の中身から面の側が組む */
 export type Article = { href: string; title: string; note: string; icon: string };
 
 export type CityGuide = {
@@ -143,7 +143,6 @@ export type CityGuide = {
   streams: { country: string; city: string } | null;
   nums: Big[];
   sections: Section[];
-  articles: Article[];
   /** 公開（最初に焼いた日） */
   published: string;
   /** 最終更新（中身の字が変わった日だけ進む） */

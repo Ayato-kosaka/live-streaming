@@ -534,12 +534,6 @@ class Baker:
         extra = set(s["sections"]) - set(ORDER)
         if extra:
             self.errors.append(f"sections: 知らない節 {sorted(extra)}（並びは {ORDER}）")
-        arts = []
-        for i, a in enumerate(s.get("articles") or []):
-            if not a.get("href", "").startswith(f"/travel/{self.key}/"):
-                self.errors.append(f"articles[{i}]: 記事の道が /travel/{self.key}/ の下に無い")
-            arts.append({"href": a["href"], "title": a["title"], "note": a["note"],
-                         "icon": self.icon(a.get("icon", ""), f"articles[{i}]")})
         # 埋め込みの1本は機械で決める（9章の2）: その街で facts の項目がいちばん多い回、その回の最初の `place` から
         counts: dict[str, int] = {}
         for x in self.rows:
@@ -558,7 +552,6 @@ class Baker:
             "streams": s.get("streams"),
             "nums": nums,
             "sections": secs,
-            "articles": arts,
         }
 
     def report(self, g: dict | None = None) -> str:
