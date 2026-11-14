@@ -1,0 +1,517 @@
+/*
+ * 旅のガイドの記事（`/travel/<国>/<街>/<話>`）。型は `docs/guide-design.md` の ★ の章。
+ *
+ * **看板・パンくず・地は島のまま**（`PageShell`）。差し色は街の面と同じ1つ（`--ta-c`）。
+ * 街の面の `guide.css` は読まない（あちらは作り直しの最中。#1203）。名前は全部 `ta-` で始める。
+ *
+ * ## 押せるものと、押せないもの（island-design 3章3）
+ *
+ * | 押せる（真下に厚み） | 押せない（平ら） |
+ * | --- | --- |
+ * | 吹き出し・場面の札・この場面のボタン・次に読む・書き手の枠のボタン | 先に答えの箱・表の地・Keyword の枠・比べの表・写真 |
+ *
+ * 目次は「一面に並ぶ行が全部押せる」ので、1行ずつに厚みを付けない（同じ章の例外）。
+ */
+
+.ta {
+  --ta-c: #c8362b;
+  --ta-c-lo: #f7dcd3;
+  --ta-c-deep: #8f2219;
+  --ta-card: #fffdf3;
+  display: block;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.ta p { overflow-wrap: anywhere; }
+
+/* ---- 頭 ------------------------------------------------------------------- */
+
+.ta-head { margin: 0 0 var(--sp-4); }
+
+.ta-head h1 { margin: 0 0 var(--sp-2); line-height: 1.35; color: var(--ink); }
+
+.ta-h1-main {
+  display: block;
+  font-size: clamp(26px, 7.4vw, 38px);
+  font-weight: 900;
+}
+
+.ta-h1-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(16px, 4.4vw, 21px);
+  font-weight: 900;
+  color: var(--ta-c-deep);
+}
+
+.ta-lead { margin: 0 0 var(--sp-2); font-size: 15px; line-height: 1.85; color: var(--ink); }
+
+.ta-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin: 0 0 var(--sp-3);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.ta-dates span { white-space: nowrap; }
+
+/* 写真は先に縦横の比を決めて、絵が来る前に高さを取る */
+.ta-cover,
+.ta-fig { margin: 0; }
+
+.ta-cover img,
+.ta-fig img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--r-2);
+  box-shadow: var(--shadow-1);
+  background: var(--paper-2);
+}
+
+/* 表紙は横長に。先に答えの箱を、スマホの1画面目の下に覗かせる */
+.ta-cover img { aspect-ratio: 16 / 9; }
+
+.ta-fig { margin: var(--sp-3) 0; max-width: 520px; }
+
+.ta-cover figcaption,
+.ta-fig figcaption { margin: 4px 2px 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-3); }
+
+.ta-cover figcaption a,
+.ta-fig figcaption a { color: var(--ink-2); }
+
+/* ---- 目次（押せる行が並ぶので、1行ずつに厚みは付けない） ------------------- */
+
+.ta-toc {
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--ta-card);
+  box-shadow: var(--shadow-1);
+  scroll-margin-top: 72px;
+}
+
+.ta-toc-h { margin: 0 0 4px; font-size: 13px; font-weight: 900; color: var(--ta-c-deep); letter-spacing: 0.1em; }
+
+.ta-toc ol { list-style: none; margin: 0; padding: 0; display: grid; }
+
+@media (min-width: 720px) {
+  .ta-toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--sp-3); }
+}
+
+.ta-toc a {
+  display: grid;
+  grid-template-columns: 26px 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px;
+  border-radius: var(--r-0);
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ta-toc a:hover { background: var(--paper-2); }
+.ta-toc svg { color: var(--ta-c); }
+.ta-toc-n { font-size: 13px; font-weight: 900; color: var(--ta-c); font-variant-numeric: tabular-nums; }
+
+/* ---- 節 ------------------------------------------------------------------- */
+
+.ta-sec { margin: var(--sp-6) 0 0; scroll-margin-top: 72px; }
+
+.ta-sec-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--sp-3);
+  padding-bottom: var(--sp-2);
+  font-size: 20px;
+  line-height: 1.35;
+  border-bottom: 3px solid var(--ta-c);
+}
+
+.ta-sec-n { flex: none; font-size: 22px; font-weight: 900; color: var(--ta-c); font-variant-numeric: tabular-nums; line-height: 1; }
+.ta-sec-i { flex: none; color: var(--ta-c); }
+
+/* 節の頭の答え。**太字にしない**（3章の6）。ここが AI に抜き出される所 */
+.ta-answer { margin: 0 0 var(--sp-3); font-size: 15.5px; line-height: 1.85; color: var(--ink); }
+
+.ta-p { margin: 0 0 var(--sp-3); font-size: 15px; line-height: 1.9; color: var(--ink); }
+
+.ta-up { margin: var(--sp-3) 0 0; text-align: right; font-size: 12.5px; }
+
+.ta-up a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 4px;
+  color: var(--ink-2);
+}
+
+.ta-note { margin: var(--sp-2) 2px 0; font-size: 12.5px; line-height: 1.7; color: var(--ink-2); }
+
+/* ---- 先に答え（押せない。平らな箱） ----------------------------------------- */
+
+.ta-first {
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--ta-c-lo) 55%, var(--paper));
+  border: 2px solid var(--ta-c);
+}
+
+.ta-first .ta-sec-h { border-bottom-color: color-mix(in srgb, var(--ta-c) 50%, transparent); }
+
+.ta-days { list-style: none; margin: 0 0 var(--sp-3); padding: 0; display: grid; gap: var(--sp-2); }
+
+/* PC は、1つ目（土台の日）を左に大きく、足した日を右に重ねる */
+@media (min-width: 720px) {
+  .ta-days { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ta-day.is-base { grid-row: span 2; }
+}
+
+.ta-day {
+  padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-1);
+  background: var(--ta-card);
+  box-shadow: var(--shadow-1);
+}
+
+.ta-day-h { margin: 0; font-size: 13.5px; font-weight: 900; color: var(--ta-c-deep); }
+
+.ta-day-n { margin: 0 0 4px; }
+
+.ta-day-n b {
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--ta-c);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 足した日は1行に詰める: 名前と合計を横に、その下に「土台＋足したもの」 */
+.ta-day.is-plus {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.ta-day.is-plus .ta-day-n { margin: 0; }
+.ta-day.is-plus .ta-day-n b { font-size: 22px; }
+
+.ta-day-plus {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.ta-day-plus span { margin-left: 4px; }
+
+.ta-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+
+.ta-day li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.ta-day li span:last-child { white-space: nowrap; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ta-day li + li span:first-child::before { content: "＋ "; color: var(--ink-3); }
+
+.ta-points { margin: 0; display: grid; gap: var(--sp-2); }
+
+.ta-points > div {
+  display: grid;
+  grid-template-columns: 5.2em minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.ta-points dt { font-size: 13.5px; font-weight: 900; color: var(--ta-c-deep); line-height: 1.7; }
+.ta-points dd { margin: 0; font-size: 14.5px; line-height: 1.75; color: var(--ink); }
+
+/* ---- 場面の札・吹き出し・場面のボタン ----------------------------------------- */
+
+/* 小さな YouTube の印。1面に40個並ぶので、印の SVG を1つずつ焼かない（街の面と同じ作り） */
+.ta-yt {
+  flex: none;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: var(--ta-c);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.5 7.2a2.7 2.7 0 0 0-1.9-1.9C18.9 4.8 12 4.8 12 4.8s-6.9 0-8.6.5A2.7 2.7 0 0 0 1.5 7.2C1 8.9 1 12 1 12s0 3.1.5 4.8a2.7 2.7 0 0 0 1.9 1.9c1.7.5 8.6.5 8.6.5s6.9 0 8.6-.5a2.7 2.7 0 0 0 1.9-1.9c.5-1.7.5-4.8.5-4.8s0-3.1-.5-4.8zM9.8 15.3V8.7l5.7 3.3-5.7 3.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22.5 7.2a2.7 2.7 0 0 0-1.9-1.9C18.9 4.8 12 4.8 12 4.8s-6.9 0-8.6.5A2.7 2.7 0 0 0 1.5 7.2C1 8.9 1 12 1 12s0 3.1.5 4.8a2.7 2.7 0 0 0 1.9 1.9c1.7.5 8.6.5 8.6.5s6.9 0 8.6-.5a2.7 2.7 0 0 0 1.9-1.9c.5-1.7.5-4.8.5-4.8s0-3.1-.5-4.8zM9.8 15.3V8.7l5.7 3.3-5.7 3.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* 場面の札（30px で 4px の厚み） */
+.ta-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  background: var(--ta-card);
+  border: 1.5px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  color: var(--ta-c-deep);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.ta-at:active { translate: 0 3px; box-shadow: var(--pop-push); }
+
+.ta-says { margin: 0 0 var(--sp-3); }
+
+/* 吹き出しは言った字の長さまで */
+.ta-say {
+  width: fit-content;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ta-say-face { width: 26px; height: auto; margin-bottom: 4px; }
+
+.ta-say-b {
+  position: relative;
+  display: block;
+  padding: 10px 14px 8px;
+  border-radius: 18px;
+  background: #fff;
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop-sm);
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.ta-say-b::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  bottom: 12px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-left: 2px solid var(--frame);
+  border-bottom: 2px solid var(--frame);
+  transform: rotate(45deg) skew(10deg, 10deg);
+}
+
+.ta-say:active .ta-say-b { translate: 0 3px; box-shadow: var(--pop-push); }
+.ta-say-q { display: block; font-size: 15.5px; line-height: 1.7; font-weight: 700; }
+
+.ta-say-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--ta-c-deep);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* この場面の配信ボタン（48px で 6px の厚み）。記事の山場に1つ */
+.ta-scene {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin: 0 0 var(--sp-3);
+  padding: 0 18px 0 14px;
+  border-radius: var(--r-pill);
+  background: var(--ta-c);
+  color: #fff;
+  font-size: 14.5px;
+  text-decoration: none;
+  box-shadow: 0 var(--pop-d4) 0 var(--ta-c-deep);
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.ta-scene:active { translate: 0 4px; box-shadow: 0 var(--pop-d0) 0 var(--ta-c-deep); }
+.ta-scene span { font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: 0.95; }
+
+/* ---- 値段の表（押せない地。押せるのは場面の札だけ） ------------------------- */
+
+.ta-price {
+  width: 100%;
+  margin: var(--sp-2) 0 var(--sp-3);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--r-1);
+  overflow: hidden;
+  background: var(--ta-card);
+  box-shadow: var(--shadow-1);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.ta-price caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0 2px 4px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--ta-c-deep);
+}
+
+.ta-price th,
+.ta-price td { padding: 6px 8px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--paper-2); }
+
+.ta-price thead th { font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); font-weight: 700; }
+.ta-price tbody th { font-weight: 500; }
+.ta-price td:nth-child(2) { white-space: nowrap; font-weight: 900; color: var(--ta-c); font-variant-numeric: tabular-nums; }
+.ta-price td:last-child { width: 1%; }
+.ta-price tbody tr:last-child > * { border-bottom: 0; }
+
+/* 会計の行は品と分ける（品の数に入らない行） */
+.ta-price tr.is-total > * { background: color-mix(in srgb, var(--paper-2) 60%, var(--ta-card)); }
+.ta-price tr.is-total th { font-weight: 700; }
+
+/* ---- 比べ ---------------------------------------------------------------- */
+
+.ta-pairs { margin: 0 0 var(--sp-3); display: grid; gap: var(--sp-2); }
+
+.ta-pairs > div {
+  display: grid;
+  grid-template-columns: 5.6em minmax(0, 1fr);
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-1);
+  background: var(--ta-card);
+  box-shadow: var(--shadow-1);
+}
+
+.ta-pairs dt { font-size: 14px; font-weight: 900; color: var(--ta-c-deep); line-height: 1.75; }
+.ta-pairs dd { margin: 0; font-size: 14.5px; line-height: 1.75; color: var(--ink); }
+
+/* ---- Keyword の枠（押せないので平ら） --------------------------------------- */
+
+.ta-key {
+  margin: var(--sp-2) 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-1);
+  border: 2px dashed var(--ta-c);
+  background: color-mix(in srgb, var(--ta-c-lo) 45%, var(--paper));
+}
+
+.ta-key-tag { margin: 0; font-size: 11.5px; font-weight: 900; letter-spacing: 0.14em; color: var(--ta-c-deep); }
+.ta-key-t { margin: 0 0 6px; font-size: 16px; font-weight: 900; color: var(--ink); }
+.ta-key .ta-p { margin-bottom: var(--sp-2); }
+
+.ta-ext {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-0);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.ta-ext a { color: var(--ink); font-weight: 700; }
+
+/* ---- 配信・次に読む・書き手・出どころ --------------------------------------- */
+
+.ta-vids { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); }
+
+@media (min-width: 720px) {
+  .ta-vids { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.ta-end-h { margin: 0 0 var(--sp-2); font-size: 15px; color: var(--ink-2); }
+
+.ta-next,
+.ta-sources { margin: var(--sp-5) 0 0; }
+
+.ta-next ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+
+.ta-next a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 10px;
+  min-height: 56px;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-1);
+  background: var(--ta-card);
+  box-shadow: var(--pop);
+  color: var(--ink);
+  text-decoration: none;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.ta-next a:active { translate: 0 4px; box-shadow: var(--pop-push); }
+.ta-next a > svg:first-child { grid-row: 1 / 3; color: var(--ta-c); }
+.ta-next a > svg:last-child { grid-row: 1 / 3; grid-column: 3; color: var(--ink-3); }
+.ta-next b { font-size: 15px; }
+.ta-next i { font-style: normal; font-size: 12px; color: var(--ink-2); }
+
+.ta-writer {
+  display: grid;
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 0;
+  padding: var(--sp-4);
+  border-radius: var(--r-2);
+  background: var(--ta-card);
+  box-shadow: var(--shadow-1);
+}
+
+.ta-writer-face { width: 66px; height: auto; align-self: start; }
+.ta-writer-b p { margin: 0; }
+.ta-writer-name { font-size: 17px; }
+.ta-writer-sign { margin-top: 4px !important; font-size: 14.5px; font-weight: 900; color: var(--ta-c-deep); }
+.ta-writer-sub { font-size: 12.5px; color: var(--ink-2); }
+.ta-writer-by { margin-top: 6px !important; font-size: 12px; color: var(--ink-3); }
+.ta-writer-go { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-2); margin-top: var(--sp-3); }
+
+.ta-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  border: 2px solid var(--frame);
+  box-shadow: var(--pop);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.ta-go:active { translate: 0 4px; box-shadow: var(--pop-push); }
+.ta-go svg { color: var(--ta-c); }
+
+.ta-sources ul { margin: 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.8; color: var(--ink-2); }
+.ta-sources a { color: var(--ink); }
