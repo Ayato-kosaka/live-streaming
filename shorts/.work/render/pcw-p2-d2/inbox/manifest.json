@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__pcw-p2-d2",
+ "mode": "render",
+ "dest": "render/pcw-p2-d2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/pcw-p2-d2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1180,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "79f0e2c84830d31fd15d62426f878f7bed1164b1b426818216a579058df533e0"
+  }
+ ],
+ "hmac_sha256": "ca06bc4b0708d34803e7c46a810a7703da0cec72095a3c80b0f4c181ec3437f0",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-14T12:13:47+00:00",
+ "nonce": "111d9592ea2ae28bf60ab978"
+}
