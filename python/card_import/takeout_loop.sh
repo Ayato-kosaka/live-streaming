@@ -19,6 +19,9 @@ pass() {
       echo "$(date -u +%H:%M) get $i"
       out=$($DL drive-get "$MEMO" "$i" "$Z"); rc=$?
       if [ $rc -ne 0 ]; then echo "get $i failed rc=$rc $out"; [ $rc -eq 3 ] && exit 3; i=$((i+1)); continue; fi
+      # 落とし終えたら Chrome を閉じる。数える処理（CLIP 1.2GB）と Chrome が同時に乗ると、
+      # 4GB の箱がメモリで詰まって SSM ごと応答しなくなった（2026-11-15、15個目で70分止まった）
+      python3 -c "import sys; sys.path.insert(0,'/home/ubuntu/cdp'); from cdp import down; down('gphotos')" >/dev/null 2>&1
       eval "$RUN scan --delete $Z/$name'" && echo "$name" >> "$DONE" || echo "scan $i failed"
     fi
     i=$((i+1))
