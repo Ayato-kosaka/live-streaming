@@ -121,6 +121,11 @@ export type Item = {
   flags?: Flags;
   /** どのエリアか（`Area` の id） */
   area?: string;
+  /**
+   * 本当の位置（緯度・経度。出どころは `src` と同じ材料）。見どころマップのピンを、描いた絵の範囲（`MapBBox`）で
+   * 絵の上に直して置く。**無い所はピンにしない**（場所を確かめていない所を、地図の上に置かない）
+   */
+  at?: { lat: number; lon: number };
   /** この場所が出てくるやりたいこと（`Todo` の id）。**互いに繋ぐ**（#1228 決めたこと1） */
   todo?: string[];
   src: Src[];
@@ -169,10 +174,17 @@ export type Todo = {
   went?: Went;
 };
 
-/** エリア。エリア地図の色と名前、窓の中身 */
+/**
+ * エリア。見どころマップの地区の色と名前、窓の中身。
+ *
+ * **地図に描いてある地区だけを持つ。** 絵の外の所（山・郊外・日帰り）はエリアにしない——見どころマップの縁の矢印
+ * （`MapBeyond`）と、一覧の「地図の外」に出す（#1228。スコピエのヴォドノ山・ソフィアの山と郊外）
+ */
 export type Area = {
   id: string;
   name: string;
+  /** 現地の呼び名（地図の札は短い名前のまま、一覧と窓に添える。例: おしゃれエリア → デバル・マーロ） */
+  local?: Local;
   /** 塗りの色（地図の札・窓の頭）。濃い字を乗せるので明るい色 */
   color: string;
   lead: string;
@@ -253,6 +265,39 @@ export type Help = {
   calls: { num: string; label: string; note: string; src: Src[] }[];
   embassy: { name: string; address: string; tel: string; hours?: string; note?: string; maps: string; src: Src[] };
 };
+
+/**
+ * 描いた絵地図の範囲（緯度経度）。`public/guide/<国>/<街>/manifest.json` の `areamap.bbox`。
+ * 絵は OSM のタイルから描いたので、**緯度は web メルカトルで割る**（`content/guidebook/spotmap.ts` の `project`）
+ */
+export type MapBBox = { north: number; south: number; east: number; west: number };
+
+/** 8方位（絵の上が北） */
+export type MapDir = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
+
+/**
+ * 地図の外の所（manifest の `areamap.beyond`）。絵の縁に、向きの矢印と名前で出す。
+ *
+ * - `x` `y` は矢印の札の位置（絵の上の割合）。**本当の向き（地図の真ん中から見た方角）の縁に置く**
+ * - 押すと開く先は `id` で決める: 同じ id の見たいもの（`#see-<id>`）→ やりたいこと（`#do-<id>`）→
+ *   どちらも無ければ、現地の名前で Google マップを開く（「マップで見る」）
+ */
+export type MapBeyond = { id: string; name: string; local?: string; lat?: number; lon?: number; x: number; y: number; dir: MapDir };
+
+/**
+ * **見どころマップに、写真のピンを立てる代表の決まり。**（#1228。あやと 2026-11-15）
+ *
+ * 1. 座標（`Item.at`）が描いた絵の範囲（`MapBBox`）の中にあり、写真（行った日のカードか借りた写真）のある見たいものだけ
+ * 2. 選ぶ順: まず**エリアごとに1つ**（ピンの無い地区を作らない）。残りは 必見 → 行けたら → 余裕があれば → 星なし。
+ *    同じ星なら 行った所 → やりたいことに出てくる数 → データの並び
+ * 3. その順に、いちばん狭い絵（340px）の上で、本当の位置から 108px 以内に、ほかのピン・エリアの札・矢印と重ならず、
+ *    ほかの代表の点を隠さず、固まりの内側へ回り込まずに置けるものだけ立てる（固まった所は、点を残して引き出し線で外へ）
+ * 4. **最大 `max` 本**。札が置けないときは本数を減らす。立たなかったものは、地図の下の一覧にだけ出る（番号なし）
+ *
+ * 番号は一覧の並び（エリアの順 → その中はピンが先）で、1 から振る。実行は `content/guidebook/spotmap.ts`
+ */
+export type SpotRule = { max: 10 };
+export const SPOT_RULE: SpotRule = { max: 10 };
 
 /** Google マイマップの埋め込み（`docs/mymaps.md`）。中心と縮尺はピンの広がりから焼いたもの */
 export type MyMap = { mid: string; title: string; ll: string; z: number; pins: number };

@@ -106,15 +106,19 @@ const yen = (eur: number) => Math.round((eur * RATE.yen) / 100) * 100;
 /**
  * 見どころの id（窓の `#see-<id>`）とエリア。
  *
+ * **エリアの無いもの（ボヤナ教会・ヴィトシャ山・リラ修道院ほか）は、描いた絵地図の外。** 前は「山と郊外」という
+ * エリアの札にしていたが、見どころマップでは絵の縁の矢印（manifest の `beyond`）と、一覧の「地図の外」に出す
+ * （スコピエのヴォドノ山と同じ形。#1228）。
+ *
  * Google マップの道は焼いたもの（`BG_SPOTS.maps`。`python/build_bulgaria.py` の `spot_maps` が
  * 「現地の字の名前＋街」で組む）をそのまま使う。ここで語を書き直さない（2か所で組むと片方だけ古くなる）。
  */
-const SPOTS: Record<string, { id: string; area: string }> = {
+const SPOTS: Record<string, { id: string; area?: string }> = {
   "聖ゲオルギ教会（円堂）": { id: "rotunda", area: "center" },
   "古代セルディカ遺跡（ラルゴの地下）": { id: "serdica", area: "center" },
   "アレクサンドル・ネフスキー大聖堂": { id: "nevsky", area: "nevsky" },
   "中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": { id: "mineral-bath", area: "center" },
-  "ボヤナ教会（世界遺産）": { id: "boyana", area: "outer" },
+  "ボヤナ教会（世界遺産）": { id: "boyana" },
   "聖ネデリャ教会": { id: "nedelya", area: "center" },
   "聖ソフィア教会": { id: "sveta-sofia", area: "nevsky" },
   "バーニャ・バシ・モスク": { id: "banya-bashi", area: "center" },
@@ -128,10 +132,10 @@ const SPOTS: Record<string, { id: string; area: string }> = {
   "ロシア教会（奇蹟者聖ニコライ聖堂）": { id: "russian-church", area: "nevsky" },
   "イヴァン・ヴァゾフ国立劇場と市庭園": { id: "national-theatre", area: "nevsky" },
   "国立文化宮殿（NDK）": { id: "ndk", area: "south" },
-  "国立歴史博物館（ボヤナ）": { id: "history-museum", area: "outer" },
-  "ヴィトシャ山（チェルニ・ヴラフ）": { id: "vitosha", area: "outer" },
+  "国立歴史博物館（ボヤナ）": { id: "history-museum" },
+  "ヴィトシャ山（チェルニ・ヴラフ）": { id: "vitosha" },
   "ボリス公園": { id: "borisova", area: "south" },
-  "リラ修道院（日帰り）": { id: "rila", area: "outer" },
+  "リラ修道院（日帰り）": { id: "rila" },
 };
 
 const spotId = (name: string) => {
@@ -168,7 +172,8 @@ const SEE: Item[] = BG_SPOTS.map((s) => {
     facts,
     tip: s.advice,
     maps: s.maps,
-    area: m.area,
+    ...(m.area ? { area: m.area } : {}),
+    at: { lat: s.lat, lon: s.lon },
     src: srcs(s.src, s.feesrc),
   };
 });
@@ -369,14 +374,6 @@ const AREAS_BASE: Omit<Area, "see" | "src">[] = [
     lead: "テラスの並ぶ歩行者の大通り",
     body: "聖ネデリャ教会から南へ伸びる、街でいちばん有名な通り。突き当たりが国立文化宮殿（NDK）で、正面にヴィトシャ山が見える。南東には、ソフィアでいちばん大きなボリス公園。",
   },
-  {
-    id: "outer",
-    plan: [1, 3, 3],
-    name: "山と郊外",
-    color: "#d9ccf5",
-    lead: "バスで上がる山と、世界遺産の教会",
-    body: "街のすぐ南に2,290mのヴィトシャ山。麓に世界遺産のボヤナ教会と国立歴史博物館。南へ約120kmのリラ修道院は日帰りで行く。",
-  },
 ];
 
 const AREAS: Area[] = AREAS_BASE.map((a) => {
@@ -384,7 +381,7 @@ const AREAS: Area[] = AREAS_BASE.map((a) => {
   if (!mine.length) throw new Error(`content/guidebook/bulgaria-sofia.ts: 見どころが1つも無いエリア（${a.id}）`);
   return { ...a, see: mine.map((s) => spotId(s.name)), src: srcs(...mine.map((s) => s.src)) };
 });
-for (const it of SEE) if (!AREAS.some((a) => a.id === it.area)) throw new Error(`エリアの無い見どころ: ${it.name}`);
+for (const it of SEE) if (it.area && !AREAS.some((a) => a.id === it.area)) throw new Error(`エリアの無い見どころ: ${it.name}`);
 
 const fact = (n: string) => must(BG_FACTS, (f) => f.n === n, `驚く数「${n}」`);
 

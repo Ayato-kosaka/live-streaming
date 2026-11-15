@@ -113,7 +113,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   "areas": [
    {
     "id": "carsija",
-    "name": "旧市街チャルシヤ",
+    "name": "旧市街",
     "color": "#ffd98a",
     "lead": "オスマン時代からの市場",
     "see": [
@@ -150,6 +150,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "body": "モスク・隊商宿・小さな店が、石橋の北の路地に集まる",
+    "local": {
+     "text": "Стара чаршија",
+     "lang": "mk",
+     "roman": "Stara čaršija"
+    },
     "went": {
      "date": "2026-10-12",
      "scene": {
@@ -160,95 +165,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    },
    {
-    "id": "square",
-    "name": "マケドニア広場まわり",
-    "color": "#a9dcf5",
-    "lead": "噴水の上の巨大な戦士の像、凱旋門、像の並ぶ橋",
-    "see": [
-     "stone-bridge",
-     "square",
-     "clement",
-     "teresa",
-     "porta",
-     "archaeology",
-     "holocaust",
-     "struggle"
-    ],
-    "plan": [
-     1,
-     2,
-     3
-    ],
-    "src": [
-     {
-      "name": "Wikivoyage「Skopje/Centar」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikipedia「Macedonia Square, Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
-      "seen": "2026-11-15"
-     }
-    ],
-    "body": "2010年代に建った像と柱の建物が集まる",
-    "went": {
-     "date": "2026-10-15",
-     "scene": {
-      "v": "CKJvprUMOgA",
-      "t": 690,
-      "date": "2026-10-15"
-     }
-    }
-   },
-   {
-    "id": "newtown",
-    "name": "新市街（地震のあとの中心部）",
-    "color": "#d9ccf5",
-    "lead": "1963年の地震のあと、丹下健三の計画で建て直された中心部",
-    "see": [
-     "museum"
-    ],
-    "plan": [
-     2,
-     3,
-     2
-    ],
-    "src": [
-     {
-      "name": "Wikipedia「Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikivoyage「Skopje」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikivoyage「Skopje/Centar」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "OpenStreetMap（Diamond Mall）",
-      "url": "https://www.openstreetmap.org/way/1231158369",
-      "seen": "2026-11-15"
-     }
-    ],
-    "body": "駅とバスのターミナル、モール、半分壊れた旧駅舎の博物館がある",
-    "went": {
-     "date": "2026-10-28",
-     "scene": {
-      "v": "la_OkustLkA",
-      "t": 2105,
-      "date": "2026-10-28"
-     }
-    }
-   },
-   {
     "id": "debar-maalo",
-    "name": "デバル・マーロ",
+    "name": "おしゃれエリア",
     "color": "#ffc4d2",
     "lead": "並木道にレストラン・バー・カフェが並ぶ、街のボヘミアンな地区",
     "see": [],
@@ -274,52 +192,90 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "body": "1920年代にデバル地方から移った人たちが住みついた"
+    "body": "1920年代にデバル地方から移った人たちが住みついた",
+    "local": {
+     "text": "Дебар Маало",
+     "lang": "mk",
+     "roman": "Debar Maalo",
+     "kana": "デバル・マーロ"
+    }
    },
    {
-    "id": "vodno",
-    "name": "ヴォドノ山",
-    "color": "#bfe8a6",
-    "lead": "街の南西にそびえる山",
+    "id": "newtown",
+    "name": "新市街",
+    "color": "#d9ccf5",
+    "lead": "アレクサンダー大王の像と、像だらけの広場",
     "see": [
-     "st-pantaleon",
-     "millennium-cross"
+     "stone-bridge",
+     "square",
+     "clement",
+     "museum",
+     "teresa",
+     "porta",
+     "archaeology",
+     "holocaust",
+     "struggle"
     ],
     "plan": [
      1,
+     2,
+     2
+    ],
+    "src": [
+     {
+      "name": "Wikivoyage「Skopje/Centar」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikipedia「Skopje」",
+      "url": "https://en.wikipedia.org/wiki/Skopje",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "OpenStreetMap（Diamond Mall）",
+      "url": "https://www.openstreetmap.org/way/1231158369",
+      "seen": "2026-11-15"
+     }
+    ],
+    "body": "マケドニア広場の噴水の上に、高さ14.5mの騎馬像が立つ。2010年代の計画（スコピエ2014）で、像と柱の建物がこの地区にいくつも建った。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている",
+    "local": {
+     "text": "Центар",
+     "lang": "mk",
+     "roman": "Centar"
+    },
+    "went": {
+     "date": "2026-10-15",
+     "scene": {
+      "v": "CKJvprUMOgA",
+      "t": 690,
+      "date": "2026-10-15"
+     }
+    }
+   },
+   {
+    "id": "station",
+    "name": "バスターミナル・鉄道駅",
+    "color": "#a9dcf5",
+    "lead": "鉄道駅と長距離バスが1つの建物に入った交通センター",
+    "see": [],
+    "plan": [
      3,
+     2,
      1
     ],
     "src": [
      {
-      "name": "Wikivoyage「Skopje/Karpoš」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Karpo%C5%A1",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikipedia「Vodno」",
-      "url": "https://en.wikipedia.org/wiki/Vodno",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "OpenStreetMap（Millennium Cross）",
-      "url": "https://www.openstreetmap.org/way/229939246",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "OpenStreetMap（Middle Vodno）",
-      "url": "https://www.openstreetmap.org/node/13655181221",
+      "name": "Wikivoyage「Skopje」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje",
       "seen": "2026-11-15"
      }
     ],
-    "body": "中腹のスレドノ・ヴォドノから、頂上の十字架へロープウェイで上がる",
-    "went": {
-     "date": "2026-11-08",
-     "scene": {
-      "v": "qAXRe3qQyvo",
-      "t": 4740,
-      "date": "2026-11-08"
-     }
+    "body": "駅は丹下健三の設計で、高架の下にバスの乗り場がある。マケドニア広場まで歩いて15〜20分",
+    "local": {
+     "text": "Скопска железничка станица",
+     "lang": "mk",
+     "roman": "Skopska železnička stanica"
     }
    }
   ]
@@ -700,6 +656,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.0018,
+     "lon": 21.43749
+    },
     "src": [
      {
       "name": "Wikipedia「Old Bazaar, Skopje」",
@@ -746,6 +706,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "square-statues"
     ],
+    "at": {
+     "lat": 41.996986,
+     "lon": 21.433022
+    },
     "src": [
      {
       "name": "Wikipedia「Stone Bridge (Skopje)」",
@@ -758,7 +722,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "square",
@@ -784,6 +748,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "square-statues"
     ],
+    "at": {
+     "lat": 41.9961,
+     "lon": 21.4315
+    },
     "src": [
      {
       "name": "Wikipedia「Macedonia Square, Skopje」",
@@ -808,7 +776,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      ],
      "short": "frcgM9wiRr8"
     },
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "fortress",
@@ -839,6 +807,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "kale"
     ],
+    "at": {
+     "lat": 42.000511,
+     "lon": 21.433394
+    },
     "src": [
      {
       "name": "Wikipedia「Skopje Fortress」",
@@ -889,6 +861,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "debar-maalo-night"
     ],
+    "at": {
+     "lat": 41.998469,
+     "lon": 21.426288
+    },
     "src": [
      {
       "name": "Wikipedia「Church of St. Clement of Ohrid」",
@@ -912,7 +888,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "大聖堂は大きく、現代建築のような見た目だった。中は礼拝の最中で、観光客は誰もおらず、みんなが真剣。あやとはじっと様子を見てから、いったん外へ出た。"
      ]
     },
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "museum",
@@ -937,6 +913,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "body": "1963年7月26日の朝5時17分、マグニチュード6.1の地震で街の約8割が壊れ、1,000人以上が亡くなった。博物館は、そのとき大きく壊れた旧駅舎の、残った3分の1に1970年から入っていて、紀元前3000年ごろからの街の歴史を並べている。駅舎の時計は、地震の時刻で止まったまま。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D1%83%D0%B7%D0%B5%D1%98+%D0%BD%D0%B0+%D0%B3%D1%80%D0%B0%D0%B4+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.991043,
+     "lon": 21.429005
+    },
     "src": [
      {
       "name": "Wikipedia「1963 Skopje earthquake」",
@@ -988,6 +968,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BF%D0%BE%D0%BC%D0%B5%D0%BD+%D0%BA%D1%83%D1%9C%D0%B0+%D0%BD%D0%B0+%D0%9C%D0%B0%D1%98%D0%BA%D0%B0+%D0%A2%D0%B5%D1%80%D0%B5%D0%B7%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.993827,
+     "lon": 21.430809
+    },
     "src": [
      {
       "name": "Wikipedia「Memorial House of Mother Teresa」",
@@ -1010,7 +994,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "porta",
@@ -1038,6 +1022,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "square-statues"
     ],
+    "at": {
+     "lat": 41.994435,
+     "lon": 21.432597
+    },
     "src": [
      {
       "name": "Wikipedia「Porta Macedonia」",
@@ -1061,7 +1049,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "新市街を探して歩いていて、凱旋門とナポレオン風の騎馬像のある広場に出たところで、ここが新市街だと気づいた。"
      ]
     },
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "kursumli",
@@ -1089,6 +1077,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.003056,
+     "lon": 21.436944
+    },
     "src": [
      {
       "name": "Wikipedia「Kuršumli An」",
@@ -1134,6 +1126,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.002,
+     "lon": 21.4354
+    },
     "src": [
      {
       "name": "Wikipedia「Mustafa Pasha Mosque」",
@@ -1278,6 +1274,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.004,
+     "lon": 21.43956
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
@@ -1318,6 +1318,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.000846,
+     "lon": 21.435775
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
@@ -1352,6 +1356,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "carsija-walk"
     ],
+    "at": {
+     "lat": 42.001944,
+     "lon": 21.441389
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
@@ -1373,6 +1381,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "body": "1436年に建った、バルカンで残るいちばん古いモスクかもしれないとされるモスク。国でも指折りの大きさ。時計塔のとなり。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD+%D0%9C%D1%83%D1%80%D0%B0%D1%82+%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 42.0015,
+     "lon": 21.4414
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
@@ -1394,6 +1406,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "body": "15世紀後半の大浴場で、男湯と女湯が並ぶ。いまは19〜20世紀の美術の国立美術館で、丸屋根の内側の飾りだけでも見る価値がある。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%94%D0%B0%D1%83%D1%82+%D0%BF%D0%B0%D1%88%D0%B8%D0%BD+%D0%B0%D0%BC%D0%B0%D0%BC+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.9987,
+     "lon": 21.4357
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
@@ -1424,6 +1440,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%90%D1%80%D1%85%D0%B5%D0%BE%D0%BB%D0%BE%D1%88%D0%BA%D0%B8+%D0%BC%D1%83%D0%B7%D0%B5%D1%98+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.996904,
+     "lon": 21.434472
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Centar」",
@@ -1431,7 +1451,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "holocaust",
@@ -1450,6 +1470,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A5%D0%BE%D0%BB%D0%BE%D0%BA%D0%B0%D1%83%D1%81%D1%82+%D0%BC%D0%B5%D0%BC%D0%BE%D1%80%D0%B8%D1%98%D0%B0%D0%BB%D0%B5%D0%BD+%D1%86%D0%B5%D0%BD%D1%82%D0%B0%D1%80+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.998498,
+     "lon": 21.433439
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Centar」",
@@ -1457,7 +1481,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "struggle",
@@ -1476,6 +1500,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D1%83%D0%B7%D0%B5%D1%98+%D0%BD%D0%B0+%D0%BC%D0%B0%D0%BA%D0%B5%D0%B4%D0%BE%D0%BD%D1%81%D0%BA%D0%B0%D1%82%D0%B0+%D0%B1%D0%BE%D1%80%D0%B1%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "at": {
+     "lat": 41.998112,
+     "lon": 21.43301
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Centar」",
@@ -1483,7 +1511,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "square"
+    "area": "newtown"
    },
    {
     "id": "st-pantaleon",
@@ -1500,6 +1528,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "vodno"
     ],
+    "at": {
+     "lat": 41.977,
+     "lon": 21.374
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Karpoš」",
@@ -1507,8 +1539,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "line": "中心から5.2km",
-    "area": "vodno"
+    "line": "中心から5.2km"
    },
    {
     "id": "millennium-cross",
@@ -1536,6 +1567,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "vodno"
     ],
+    "at": {
+     "lat": 41.96502,
+     "lon": 21.394421
+    },
     "src": [
      {
       "name": "Wikipedia「Vodno」",
@@ -1553,8 +1588,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "line": "中心から4.6km",
-    "area": "vodno"
+    "line": "中心から4.6km"
    },
    {
     "id": "aqueduct",
@@ -1568,6 +1602,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "body": "街の北のヴィズベゴヴォ村にある、国でただ一つの水道橋の遺跡。いつ建ったかは分かっていない。55のアーチが386m残る。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BA%D0%BE%D0%BF%D1%81%D0%BA%D0%B8+%D0%B0%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82&hl=ja",
+    "at": {
+     "lat": 42.022388,
+     "lon": 21.418843
+    },
     "src": [
      {
       "name": "Wikivoyage「Skopje/Outer Skopje」",
@@ -1601,6 +1639,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "todo": [
      "matka"
     ],
+    "at": {
+     "lat": 41.950724,
+     "lon": 21.299731
+    },
     "src": [
      {
       "name": "Wikipedia「Matka Canyon」",
@@ -4062,6 +4104,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-16",
- "hash": "8bfd1d270dc5aa95"
+ "hash": "d5e56a3c1881860a"
 }
 /* END GUIDE */;

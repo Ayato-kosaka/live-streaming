@@ -22,83 +22,109 @@
   "src_small": "/guide/north-macedonia/skopje/areamap-400.webp",
   "w": 800,
   "h": 800,
-  "alt": "スコピエの絵地図。旧市街チャルシヤ・マケドニア広場まわり・新市街・デバル・マーロ・ヴォドノ山の5つが色で塗り分けてあり、石橋や城塞、モスク、山頂の十字架とロープウェイなどの目印が描いてある",
+  "alt": "スコピエの中心部の絵地図。旧市街・新市街・おしゃれなデバル・マーロ・バスターミナルと鉄道駅の4つの地区が色で塗り分けてあり、ヴァルダル川に架かる石橋や城塞、モスク、市場、騎馬像の噴水、凱旋門、旧駅舎、交通センターなどの目印が描いてある",
   "kind": "ai",
-  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園と森・guidebook.json の5エリアの範囲の色・目印13か所の番号・ロープウェイ）を渡し、その配置どおりに描かせた。エリアの地の色は面の札と同じ。北が上。字なし（エリアの名前は areas の位置に面の側で重ねる）",
+  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・あやとの地区分け（2026-11-15）の4地区の色・目印14か所の番号）を渡し、その配置どおりに描かせた。街の中心だけの 2.9km 四方。地区の範囲は guidebook.json の範囲と目印の座標の外形を、絵の上で隣の地区と接するまで広げたもの。北が上。字も番号もなし（地区の名前と見どころの番号は面の側で重ねる）",
   "areas": [
    {
     "id": "carsija",
-    "name": "旧市街チャルシヤ",
+    "name": "旧市街",
     "local": "Стара чаршија",
     "color": "#ffd98a",
-    "x": 0.8,
-    "y": 0.13,
+    "x": 0.55,
+    "y": 0.185,
     "source": [
-     "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-     "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje",
-     "https://www.openstreetmap.org/way/1532093164"
-    ]
-   },
-   {
-    "id": "square",
-    "name": "マケドニア広場まわり",
-    "local": "Плоштад Македонија",
-    "color": "#a9dcf5",
-    "x": 0.68,
-    "y": 0.255,
-    "source": [
-     "https://en.wikivoyage.org/wiki/Skopje/Centar",
-     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje"
+     "https://www.openstreetmap.org/way/1532093164",
+     "https://www.openstreetmap.org/way/32813170",
+     "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje"
     ]
    },
    {
     "id": "newtown",
-    "name": "新市街（地震のあとの中心部）",
+    "name": "新市街",
     "local": "Центар",
     "color": "#d9ccf5",
-    "x": 0.72,
-    "y": 0.37,
+    "x": 0.33,
+    "y": 0.845,
     "source": [
-     "https://en.wikipedia.org/wiki/Skopje",
-     "https://en.wikivoyage.org/wiki/Skopje",
      "https://en.wikivoyage.org/wiki/Skopje/Centar",
-     "https://www.openstreetmap.org/way/1231158369"
+     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
+     "https://en.wikipedia.org/wiki/Skopje"
     ]
    },
    {
     "id": "debar-maalo",
-    "name": "デバル・マーロ",
+    "name": "おしゃれエリア",
     "local": "Дебар Маало",
     "color": "#ffc4d2",
-    "x": 0.5,
-    "y": 0.135,
+    "x": 0.17,
+    "y": 0.225,
     "source": [
-     "https://en.wikivoyage.org/wiki/Skopje/Centar",
      "https://www.openstreetmap.org/node/6239561763",
+     "https://www.openstreetmap.org/way/1315915665",
+     "https://en.wikivoyage.org/wiki/Skopje/Centar"
+    ]
+   },
+   {
+    "id": "station",
+    "name": "バスターミナル・鉄道駅",
+    "local": "Скопска железничка станица",
+    "color": "#a9dcf5",
+    "x": 0.76,
+    "y": 0.905,
+    "source": [
      "https://en.wikivoyage.org/wiki/Skopje"
     ]
+   }
+  ],
+  "bbox": {
+   "west": 21.415,
+   "east": 21.4505,
+   "south": 41.9837,
+   "north": 42.0102
+  },
+  "beyond": [
+   {
+    "id": "suto-orizari",
+    "name": "シュト・オリザリ",
+    "local": "Шуто Оризари",
+    "lat": 42.0405453,
+    "lon": 21.423591,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965625"
+    ],
+    "x": 0.431,
+    "y": 0.06,
+    "dir": "n"
+   },
+   {
+    "id": "gazi-baba",
+    "name": "ガジ・ババ",
+    "local": "Гази Баба",
+    "lat": 41.9984446,
+    "lon": 21.4737249,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965627"
+    ],
+    "x": 0.94,
+    "y": 0.478,
+    "dir": "e"
    },
    {
     "id": "vodno",
     "name": "ヴォドノ山",
     "local": "Водно",
-    "color": "#bfe8a6",
-    "x": 0.2,
-    "y": 0.71,
+    "lat": 41.96502,
+    "lon": 21.394421,
     "source": [
-     "https://en.wikipedia.org/wiki/Vodno",
-     "https://en.wikivoyage.org/wiki/Skopje/Karpo%C5%A1",
      "https://www.openstreetmap.org/way/229939246",
-     "https://www.openstreetmap.org/node/13655181221"
-    ]
+     "https://en.wikipedia.org/wiki/Vodno"
+    ],
+    "x": 0.36,
+    "y": 0.94,
+    "dir": "s"
    }
   ],
-  "bbox": {
-   "west": 21.3865,
-   "east": 21.4509,
-   "south": 41.9605,
-   "north": 42.0085
-  },
   "base": {
    "by": "© OpenStreetMap contributors",
    "licence": "https://www.openstreetmap.org/copyright"

@@ -224,6 +224,9 @@ class Book:
         out = {"text": loc["text"], "lang": loc.get("lang", lang)}
         if loc.get("roman"):
             out["roman"] = loc["roman"]
+        # 読みの仮名。エリアの短い名前（おしゃれエリア）に、現地の呼び名（デバル・マーロ）を添えるのに使う
+        if loc.get("kana"):
+            out["kana"] = loc["kana"]
         return out
 
     # ------------------------------------------------------------ 行った箱
@@ -325,6 +328,9 @@ class Book:
                                                      (a.get("range") or {}).get("src"))}
             if more.strip():
                 area["body"] = more.strip()
+            loc = self.local(a.get("local"))
+            if loc:
+                area["local"] = loc
             wt = self.went("area", a, w)
             if wt:
                 area["went"] = wt
@@ -365,6 +371,9 @@ class Book:
                 it["maps"] = s["maps"]
             if (s.get("links") or {}).get("todo"):
                 it["todo"] = s["links"]["todo"]
+            # 本当の位置。見どころマップのピンを、描いた絵の範囲で絵の上に直して置く（面の側の `content/guidebook/spotmap.ts`）
+            if "lat" in s:
+                it["at"] = {"lat": s["lat"], "lon": s["lon"]}
             it["src"] = self.src(what.get("src"), *[i.get("src") for i in s.get("info") or []], (s.get("local") or {}).get("src"),
                                  (s.get("photo") or {}).get("src"))
             wt = self.went("see", s, w, story_from=[what])

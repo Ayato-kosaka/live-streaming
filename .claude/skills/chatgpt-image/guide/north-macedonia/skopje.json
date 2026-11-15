@@ -68,14 +68,12 @@
    {
     "id": "station",
     "name": "バスターミナル・鉄道駅",
-    "local": "Транспортен центар",
+    "local": "Скопска железничка станица",
     "color": "#a9dcf5",
     "x": 0.76,
     "y": 0.905,
     "source": [
-     "https://www.openstreetmap.org/way/75602006",
-     "https://en.wikivoyage.org/wiki/Skopje",
-     "https://www.openstreetmap.org/way/1231158369"
+     "https://en.wikivoyage.org/wiki/Skopje"
     ]
    }
   ],
@@ -122,7 +120,7 @@
      "https://www.openstreetmap.org/way/229939246",
      "https://en.wikipedia.org/wiki/Vodno"
     ],
-    "x": 0.424,
+    "x": 0.36,
     "y": 0.94,
     "dir": "s"
    }

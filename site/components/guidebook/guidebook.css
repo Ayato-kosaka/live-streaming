@@ -319,7 +319,11 @@
 
 .gb-chip:active { transform: translateY(var(--pop-d2)); box-shadow: none; }
 
-/* エリア地図 */
+/*
+ * 見どころマップ（`SpotMap.tsx`）。**ピン・札・矢印の大きさは、並べる側（`content/guidebook/spotmap.ts`）の見積もりと
+ * 同じ数にしてある**（ピン 44px・札 34px／2行 44px・字 12.5px・左右の余白 10px・右下の札 132x20）。変えるなら両方。
+ * 見積もりより大きく描くと、狭い画面で重なる。
+ */
 .gb-amap { margin: 0; }
 
 .gb-amap-art {
@@ -329,28 +333,229 @@
   background: #efe3c4;
 }
 
-.gb-amap-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gb-amap-art > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-/* 絵の上の名前の札。**位置は札の真ん中**（manifest の x・y） */
+/* 「イラスト・位置は目安」は右下（左下は地図の外の矢印が来る） */
+.gb-amap-art > .gb-pic-tag { left: auto; right: 6px; }
+
+/* 引き出し線（点 → ピン）。白いふちを下に敷いて、絵のどの色の上でも線が見えるように */
+.gb-amap-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gb-amap-lines line { stroke: #5b3f15; stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.gb-amap-lines line.is-halo { stroke: #fffdf3; stroke-width: 5px; }
+
+.gb-amap-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: #5b3f15;
+  box-shadow: 0 0 0 2px #fffdf3;
+  pointer-events: none;
+}
+
+/* 写真のピン。**位置は丸の真ん中** */
+.gb-amap-spot {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fffdf3;
+  box-shadow: 0 0 0 2.5px #fffdf3, 0 2px 6px rgb(60 40 10 / 0.45);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.gb-amap-spot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 当たりは 48px まで広げる（見た目は 44px のまま） */
+.gb-amap-spot::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; }
+.gb-amap-spot:active { transform: translate(-50%, -50%) scale(0.95); }
+
+/* 番号。ピンの左上と、一覧の頭で同じもの。地は地区の色 */
+.gb-amap-n {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--c, var(--gb-card));
+  color: var(--ink);
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 0 0 1.5px #fffdf3, 0 1px 2px rgb(60 40 10 / 0.35);
+}
+
+/* 丸の外へ出すのは 1px まで（並べる側は丸どうしを 6px 空けている） */
+.gb-amap-spot .gb-amap-n { position: absolute; left: 3px; top: 3px; }
+
+/* 地区の名前の札。**位置は札の真ん中**。長い名前は並べる側が2行に分けて渡す */
 .gb-amap-pin {
   position: absolute;
   transform: translate(-50%, -50%);
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  min-height: 40px;
-  padding: 0 12px;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 10px;
   border-radius: 999px;
   background: var(--c, var(--gb-card));
   color: var(--ink);
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 900;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 0 0 2px #fffdf3, 0 3px 0 color-mix(in srgb, var(--c, var(--frame)) 55%, #5b3f15);
+}
+
+.gb-amap-pin.is-2 { min-height: 44px; padding: 3px 10px; border-radius: 14px; }
+
+/* 当たりは上下 5px 広げる（1行の札で 44px） */
+.gb-amap-pin::after,
+.gb-amap-out::after { content: ""; position: absolute; inset: -5px -2px; }
+
+/* 地図の外の矢印。地区の札と見分けるため、紙の色の地に差し色の矢印 */
+.gb-amap-out {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fffdf3;
+  color: var(--ink);
+  font-size: 12.5px;
   font-weight: 900;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 var(--pop-d2) 0 color-mix(in srgb, var(--c, var(--frame)) 55%, #5b3f15);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--gb-c) 50%, transparent), 0 2px 5px rgb(60 40 10 / 0.3);
 }
 
-/* 当たり判定は 48px まで広げる（見た目は 40px のまま） */
-.gb-amap-pin::after { content: ""; position: absolute; inset: -4px -2px; }
+.gb-amap-arw { flex: none; fill: var(--gb-c); }
+
+/* 一覧（凡例）。地区ごとに、色の帯・名前・性格のひとこと、その下に番号と名前の札 */
+.gb-maplg { display: grid; align-content: start; gap: var(--sp-3); margin-top: var(--sp-3); }
+
+/* 広い画面は見開き（左に地図・右に一覧）。地図を幅いっぱいにすると、1枚で画面の高さを超えた */
+@media (min-width: 960px) {
+  .gb-amap:has(> .gb-amap-art) {
+    display: grid;
+    grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: start;
+  }
+
+  .gb-amap > .gb-maplg { margin-top: 0; }
+  .gb-amap > .gb-maplg .gb-lg-list > li { max-width: 100%; }
+}
+
+.gb-lg {
+  padding-left: 10px;
+  border-left: 5px solid var(--c, color-mix(in srgb, var(--ink) 25%, transparent));
+}
+
+.gb-lg-h {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.gb-lg-h b { font-size: 14.5px; font-weight: 900; line-height: 1.4; }
+.gb-lg-h b small { margin-left: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
+.gb-lg-h span { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+
+/* 札は詰めて並べる（1件1行にすると、一覧が地図の4倍の長さになった）。見た目 40px に、当たりを上下 2px 足して 44px */
+.gb-lg-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gb-lg-list a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 0 11px 0 7px;
+  border-radius: 999px;
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+.gb-lg-list a::after { content: ""; position: absolute; inset: -2px 0; }
+
+/* 長い名前は札の中で折る（1件で1行を取らせない。狭い画面で2列に並ぶ） */
+.gb-lg-list > li { display: flex; max-width: calc(50% - 2px); }
+.gb-lg-list a { padding-top: 3px; padding-bottom: 3px; word-break: auto-phrase; }
+
+.gb-lg-list a:active { transform: scale(0.97); }
+
+/* ピンの立たなかったもの。番号の代わりに地区の色の点 */
+.gb-lg-list a > i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c, color-mix(in srgb, var(--ink) 35%, transparent));
+}
+
+.gb-lg-list small { margin-left: 5px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+
+.gb-lg-more { margin-top: 4px; }
+
+.gb-lg-more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gb-lg-more > summary::-webkit-details-marker { display: none; }
+.gb-lg-more > summary::before { content: "▸"; color: var(--gb-c); transition: transform 0.15s; }
+.gb-lg-more[open] > summary::before { transform: rotate(90deg); }
+.gb-lg-more > .gb-lg-list { margin-top: 0; }
 
 /* 絵の無いあいだの、色の札のエリア地図（北が上。3列） */
 .gb-plan {

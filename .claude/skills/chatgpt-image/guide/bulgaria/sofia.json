@@ -49,8 +49,8 @@
     "name": "中心・セルディカ",
     "local": "Сердика",
     "color": "#ffd98a",
-    "x": 0.29,
-    "y": 0.42,
+    "x": 0.12,
+    "y": 0.5,
     "source": [
      "https://en.wikipedia.org/wiki/Serdica",
      "https://en.wikipedia.org/wiki/Largo,_Sofia",
@@ -62,8 +62,8 @@
     "name": "市場とシナゴーグ",
     "local": "Женски пазар",
     "color": "#bfe8a6",
-    "x": 0.21,
-    "y": 0.14,
+    "x": 0.13,
+    "y": 0.07,
     "source": [
      "https://en.wikipedia.org/wiki/Zhenski_pazar",
      "https://www.openstreetmap.org/way/96646570",
@@ -75,8 +75,8 @@
     "name": "ネフスキー大聖堂まわり",
     "local": "Александър Невски",
     "color": "#a9dcf5",
-    "x": 0.55,
-    "y": 0.49,
+    "x": 0.8,
+    "y": 0.3,
     "source": [
      "https://en.wikipedia.org/wiki/Tsar_Osvoboditel_Boulevard,_Sofia",
      "https://en.wikipedia.org/wiki/Alexander_Nevsky_Cathedral,_Sofia"
@@ -87,8 +87,8 @@
     "name": "ヴィトシャ大通りと公園",
     "local": "булевард Витоша",
     "color": "#ffc4d2",
-    "x": 0.37,
-    "y": 0.62,
+    "x": 0.42,
+    "y": 0.7,
     "source": [
      "https://en.wikipedia.org/wiki/Vitosha_Boulevard",
      "https://en.wikipedia.org/wiki/Borisova_gradina",
@@ -102,6 +102,34 @@
    "south": 42.6777,
    "north": 42.7083
   },
+  "beyond": [
+   {
+    "id": "vitosha",
+    "name": "ヴィトシャ山",
+    "local": "Витоша",
+    "lat": 42.563611,
+    "lon": 23.278333,
+    "source": [
+     "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/"
+    ],
+    "x": 0.36,
+    "y": 0.95,
+    "dir": "s"
+   },
+   {
+    "id": "boyana",
+    "name": "ボヤナ教会",
+    "local": "Боянска църква",
+    "lat": 42.644672,
+    "lon": 23.266172,
+    "source": [
+     "https://boyanachurch.info/en/visitors-information-en/"
+    ],
+    "x": 0.18,
+    "y": 0.78,
+    "dir": "sw"
+   }
+  ],
   "base": {
    "by": "© OpenStreetMap contributors",
    "licence": "https://www.openstreetmap.org/copyright"

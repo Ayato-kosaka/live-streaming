@@ -6,7 +6,8 @@
  *   DIST=site/.next-3130 SPORT=4130 node tools/sprites/guidebook.mjs                 # ソフィア
  *   DIST=… SPORT=… PAGE=/travel/north-macedonia/skopje node tools/sprites/guidebook.mjs
  *   …  BASE_PORT=4131 BASE_PAGE=/bulgaria node tools/sprites/guidebook.mjs       # 字の量を前の面と比べる
- *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ソフィアなら重なって落ちる）
+ *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ずらした札のある街で落ちる。ソフィアは矢印と重なる）
+ *   …  BREAK=spots node tools/sprites/guidebook.mjs    # 対照: 写真のピンを本当の位置へ戻す（引き出し線をやめる。固まった所で重なって落ちる。両方の街で落ちる）
  *
  * 終了コード 0＝通った / 1＝見つかった / 2＝数えるものが無い（面が開けない・窓が1つも無い）。
  *
@@ -22,7 +23,8 @@
  * | 元の位置に戻る | 札から開いて閉じると、開く前の高さ（±4px）と、押した札にフォーカス |
  * | 窓から窓へ | 窓の中の札で別の窓に入れ替わり、戻る1回で面に戻る |
  * | 字の量 | 最初に開いた状態（窓と畳みは閉じたまま）で `main` に見えている字の数。前の面と比べる |
-| エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
+ * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
+ * | 見どころマップ | 写真のピン・地区の札・地図の外の矢印が、390 と 1440 で**どの2つも重ならず**、ピンと矢印が絵の外にはみ出さない。どのピンも当たり 44px 以上（`hitbox.mjs`）。ピンと矢印を押すと窓が開く（窓の無い矢印は Google マップ）。一覧と札の行き先の窓が在る（#1228） |
  *
  * 撮った絵は `OUT`（既定 `/tmp/guidebook-shots`）に節ごとに置く（390px・dpr 2）。
  *
@@ -38,6 +40,8 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "no
 import { join } from "node:path";
 
 import { chromium } from "playwright-core";
+
+import { fmtHit, measure } from "./hitbox.mjs";
 
 const SPORT = process.env.SPORT || "4130";
 const PAGE = process.env.PAGE || "/travel/bulgaria/sofia";
@@ -136,6 +140,100 @@ async function pinCheck(p, width) {
   if (r.out.length) fail(`${width}px でエリアの札が絵の外にはみ出す: ${r.out.join("／")}`);
 }
 
+/**
+ * **見どころマップ**（`components/guidebook/SpotMap.tsx`。#1228）。写真のピン・地区の札・地図の外の矢印を、
+ * 書き出したもので測る:
+ *
+ * - どの2つも重ならない（ピンは丸で測る。ピンどうしは中心の距離、ピンと札・矢印は丸から長方形まで）
+ * - ピン・矢印が絵の外にはみ出さない（絵は `overflow: hidden` なので、はみ出したぶんは切れて押せない）
+ * - どのピンも当たりが 44px 以上（`hitbox.mjs` の測りかた。見た目の箱ではなく、中心から1pxずつ外へ）
+ * - ピンを押すとその見たいものの窓が開く・矢印は窓か Google マップ・一覧の札の行き先の窓が在る
+ *
+ * 対照: `BREAK=spots` で、ピンを本当の位置（引き出し線でずらす前）へ戻す。固まった所のある街なら、ここで落ちること
+ */
+async function spotCheck(p, width) {
+  if (process.env.BREAK === "spots")
+    await p.evaluate(() =>
+      document.querySelectorAll(".gb-amap-spot").forEach((e) => {
+        e.style.left = `${Number(e.dataset.tx) * 100}%`;
+        e.style.top = `${Number(e.dataset.ty) * 100}%`;
+      }),
+    );
+  const r = await p.evaluate(() => {
+    const art = document.querySelector(".gb-amap-art")?.getBoundingClientRect();
+    const box = (sel, kind) =>
+      [...document.querySelectorAll(sel)].map((e) => {
+        const b = e.getBoundingClientRect();
+        return { t: (e.querySelector(".sr-only") ?? e).textContent.trim() || e.getAttribute("href"), kind, b, cx: b.left + b.width / 2, cy: b.top + b.height / 2, r: b.width / 2 };
+      });
+    const spots = box(".gb-amap-spot", "ピン");
+    const rects = [...box(".gb-amap-pin", "札"), ...box(".gb-amap-out", "矢印")];
+    const toRect = (c, b) => Math.hypot(Math.max(b.left - c.cx, 0, c.cx - b.right), Math.max(b.top - c.cy, 0, c.cy - b.bottom));
+    const over = [];
+    for (let i = 0; i < spots.length; i++) {
+      for (let j = i + 1; j < spots.length; j++)
+        if (Math.hypot(spots[i].cx - spots[j].cx, spots[i].cy - spots[j].cy) < spots[i].r + spots[j].r) over.push(`ピン${spots[i].t} とピン${spots[j].t}`);
+      for (const q of rects) if (toRect(spots[i], q.b) < spots[i].r) over.push(`ピン${spots[i].t} と${q.kind}「${q.t}」`);
+    }
+    for (let i = 0; i < rects.length; i++)
+      for (let j = i + 1; j < rects.length; j++) {
+        const x = rects[i].b;
+        const y = rects[j].b;
+        if (rects[i].kind === "札" && rects[j].kind === "札") continue; // 札どうしは pinCheck が見る
+        if (x.left < y.right && y.left < x.right && x.top < y.bottom && y.top < x.bottom) over.push(`${rects[i].kind}「${rects[i].t}」と${rects[j].kind}「${rects[j].t}」`);
+      }
+    const out = art
+      ? [...spots, ...rects.filter((q) => q.kind === "矢印")]
+          .filter((q) => q.b.left < art.left - 0.5 || q.b.right > art.right + 0.5 || q.b.top < art.top - 0.5 || q.b.bottom > art.bottom + 0.5)
+          .map((q) => `${q.kind}${q.t}`)
+      : [];
+    return { art: !!art, spots: spots.length, arrows: rects.filter((q) => q.kind === "矢印").length, over, out };
+  });
+  if (!r.art) return notes.push(`${width}px: 見どころマップの絵が無い（ピンは見ていない）`);
+  notes.push(`${width}px: 写真のピン ${r.spots}本・地図の外の矢印 ${r.arrows}`);
+  if (!r.spots) fail(`${width}px で見どころマップに写真のピンが1本も無い`);
+  if (r.over.length) fail(`${width}px で見どころマップの重なり: ${r.over.slice(0, 6).join("／")}`);
+  if (r.out.length) fail(`${width}px で絵の外にはみ出す: ${r.out.join("／")}`);
+}
+
+/** ピンの当たり（44px 以上）と、ピン・矢印・一覧を押した先。390px で1回だけ */
+async function spotPress(p) {
+  const { rows, skipped } = await measure(p, { sel: ".gb-amap-spot", min: 44 });
+  const small = rows.filter((x) => x.small).map((x) => `${x.t || x.href}（${fmtHit(x)}）`);
+  if (skipped.length) fail(`ピンの真ん中が押せない: ${skipped.map((x) => `${x.t}（${x.why}）`).join("／")}`);
+  if (small.length) fail(`当たりが 44px に届かないピン: ${small.join("／")}`);
+  if (rows.length) notes.push(`ピンの当たり: いちばん小さい ${Math.min(...rows.map((x) => Math.min(...x.hit)))}px（${rows.length}本）`);
+  /* 押す。窓が開いて、その窓の id が押した札の行き先と同じ */
+  const hrefs = await p.$$eval(".gb-amap-spot, .gb-amap-out", (es) => es.map((e) => ({ href: e.getAttribute("href"), cls: e.className, target: e.getAttribute("target") })));
+  for (const [i, h] of hrefs.entries()) {
+    if (!h.href.startsWith("#")) {
+      if (!/^https:\/\/www\.google\.com\/maps\/search\/\?/.test(h.href) || h.target !== "_blank") fail(`地図の外の矢印の行き先が Google マップの検索ではない（${h.href}）`);
+      continue;
+    }
+    const el = p.locator(".gb-amap-spot, .gb-amap-out").nth(i);
+    const what = h.cls.includes("spot") ? "ピン" : "矢印";
+    await el.scrollIntoViewIfNeeded();
+    /* 指の届く所を押す（隠れていれば、Playwright は押さずに待ち続ける。そこで止めずに「押せない」と数える） */
+    const ok = await el.click({ timeout: 3000 }).then(
+      () => true,
+      () => false,
+    );
+    if (!ok) {
+      fail(`${what} ${h.href} が、ほかのものに隠れて押せない`);
+      continue;
+    }
+    await settle(p);
+    const got = await openId(p);
+    if (got !== h.href.slice(1)) fail(`${what}を押しても ${h.href} が開かない（開いたのは ${got}）`);
+    await p.keyboard.press("Escape");
+    await settle(p);
+  }
+  const lost = await p.$$eval(".gb-maplg a[href^='#'], .gb-amap-pin", (es) =>
+    es.map((e) => e.getAttribute("href").slice(1)).filter((id) => !document.getElementById(id)),
+  );
+  if (lost.length) fail(`見どころマップの一覧・札の行き先の窓が無い: ${lost.join(" ")}`);
+}
+
 const openId = (p) => p.evaluate(() => document.querySelector("dialog.gb-dlg[open]")?.id ?? null);
 const hashOf = (p) => p.evaluate(() => location.hash);
 const settle = (p, ms = 350) => p.waitForTimeout(ms);
@@ -190,10 +288,13 @@ async function main() {
     if (over > 0) fail(`390px で横あふれ ${over}px`);
     const height = await p.evaluate(() => document.documentElement.scrollHeight);
     await pinCheck(p, 390);
+    await spotCheck(p, 390);
     for (const id of order) {
       const el = await p.$(`[data-gb="${id}"]`);
       if (el) await el.screenshot({ path: join(OUT, `${String(ORDER.indexOf(id) + 1).padStart(2, "0")}-${id}.png`) });
     }
+    await p.locator(".gb-amap").screenshot({ path: join(OUT, "areamap-390.png") });
+    await spotPress(p);
 
     // ---- 2. 札から開いて、閉じるボタンで閉じる → 元の位置
     const first = todoIds[0];
@@ -320,6 +421,8 @@ async function main() {
       await new Promise((r) => setTimeout(r, 300));
     });
     await pinCheck(p3, 1440);
+    await spotCheck(p3, 1440);
+    await p3.locator(".gb-amap").screenshot({ path: join(OUT, "areamap-1440.png") });
     await p3.locator(`main a[href="#${first}"]`).first().click();
     await settle(p3, 600);
     await p3.locator(`#${first}`).screenshot({ path: join(OUT, "modal-todo-1440.png") });
@@ -352,7 +455,7 @@ async function main() {
     for (const x of bad) console.log(`  ✗ ${x}`);
     return 1;
   }
-  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）・エリアの札の重なり");
+  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）・エリアの札の重なり・見どころマップ（重なり・はみ出し・当たり 44px・押した先）");
   return 0;
 }
 

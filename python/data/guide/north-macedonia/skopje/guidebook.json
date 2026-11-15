@@ -177,7 +177,7 @@
   "areas": [
    {
     "key": "carsija",
-    "name": "旧市街チャルシヤ",
+    "name": "旧市街",
     "local": {
      "text": "Стара чаршија",
      "roman": "Stara čaršija",
@@ -310,284 +310,8 @@
     }
    },
    {
-    "key": "square",
-    "name": "マケドニア広場まわり",
-    "local": {
-     "text": "Плоштад Македонија",
-     "roman": "Ploštad Makedonija",
-     "src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "tone": {
-     "text": "噴水の上の巨大な戦士の像、凱旋門、像の並ぶ橋。2010年代に建った像と柱の建物が集まる",
-     "src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikipedia「Macedonia Square, Skopje」",
-       "url": "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "center": {
-     "lat": 41.9961,
-     "lon": 21.4315,
-     "coord_src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "range": {
-     "polygon": [
-      [
-       41.993178,
-       21.43016
-      ],
-      [
-       41.993504,
-       21.428003
-      ],
-      [
-       41.996826,
-       21.43102
-      ],
-      [
-       41.997746,
-       21.433391
-      ],
-      [
-       41.995799,
-       21.436954
-      ],
-      [
-       41.993708,
-       21.433074
-      ]
-     ],
-     "how": "石橋・広場・凱旋門・マザー・テレサ記念館・VMRO 広場・芸術の橋・文明の橋の座標（Wikivoyage）を囲み、90m 外へ広げた",
-     "src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "landmarks": [
-     {
-      "name": "マケドニア広場（戦士の像と噴水）",
-      "local": "Плоштад Македонија",
-      "lat": 41.995846,
-      "lon": 21.431453,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ]
-     },
-     {
-      "name": "石橋（カメン・モスト）",
-      "local": "Камен мост",
-      "lat": 41.996986,
-      "lon": 21.433022,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ]
-     }
-    ],
-    "went": {
-     "facts": [
-      {
-       "id": "CKJvprUMOgA@690#place",
-       "ref": "10-15 0:11:30",
-       "video": "CKJvprUMOgA",
-       "t": 690,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=690s"
-      },
-      {
-       "id": "hk39U7ZEKCQ@4860#place",
-       "ref": "10-17 1:21:00",
-       "video": "hk39U7ZEKCQ",
-       "t": 4860,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=4860s"
-      }
-     ]
-    },
-    "from_hub": [
-     "see/square"
-    ],
-    "scene": {
-     "id": "CKJvprUMOgA@690#place",
-     "video": "CKJvprUMOgA",
-     "t": 690,
-     "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=690s"
-    }
-   },
-   {
-    "key": "newtown",
-    "name": "新市街（地震のあとの中心部）",
-    "local": {
-     "text": "Центар",
-     "roman": "Centar",
-     "note": "区の名前。広場まわりとデバル・マーロも同じ区に入る",
-     "src": [
-      {
-       "name": "Wikipedia「Skopje」",
-       "url": "https://en.wikipedia.org/wiki/Skopje",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "tone": {
-     "text": "1963年の地震のあと、丹下健三の計画で建て直された中心部。駅とバスのターミナル、モール、半分壊れた旧駅舎の博物館がある",
-     "src": [
-      {
-       "name": "Wikipedia「Skopje」",
-       "url": "https://en.wikipedia.org/wiki/Skopje",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikivoyage「Skopje」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "center": {
-     "lat": 41.99113,
-     "lon": 21.43347,
-     "coord_src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "range": {
-     "polygon": [
-      [
-       41.989872,
-       21.445874
-      ],
-      [
-       41.990168,
-       21.428191
-      ],
-      [
-       41.991714,
-       21.426202
-      ],
-      [
-       41.995624,
-       21.434488
-      ]
-     ],
-     "how": "旧駅舎の博物館・交通センター・GTC・緑の市場・ラムストア・ダイヤモンド・モール・議会の座標（Wikivoyage・OSM）を囲み、90m 外へ広げた",
-     "src": [
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikivoyage「Skopje」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "OpenStreetMap（Diamond Mall）",
-       "url": "https://www.openstreetmap.org/way/1231158369",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "landmarks": [
-     {
-      "name": "スコピエ市博物館（旧駅舎）",
-      "local": "Музеј на град Скопје",
-      "lat": 41.991043,
-      "lon": 21.429005,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ]
-     },
-     {
-      "name": "交通センター（鉄道駅と長距離バス）",
-      "local": "Транспортен центар",
-      "lat": 41.99004,
-      "lon": 21.44481,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje",
-        "seen": "2026-11-15"
-       }
-      ]
-     }
-    ],
-    "went": {
-     "facts": [
-      {
-       "id": "la_OkustLkA@1985#place",
-       "ref": "10-28 0:33:05",
-       "video": "la_OkustLkA",
-       "t": 1985,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=1985s"
-      },
-      {
-       "id": "la_OkustLkA@2105#place",
-       "ref": "10-28 0:35:05",
-       "video": "la_OkustLkA",
-       "t": 2105,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2105s"
-      }
-     ]
-    },
-    "from_hub": [
-     "see/museum"
-    ],
-    "scene": {
-     "id": "la_OkustLkA@2105#place",
-     "video": "la_OkustLkA",
-     "t": 2105,
-     "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2105s"
-    }
-   },
-   {
     "key": "debar-maalo",
-    "name": "デバル・マーロ",
+    "name": "おしゃれエリア",
     "local": {
      "text": "Дебар Маало",
      "roman": "Debar Maalo",
@@ -597,7 +321,8 @@
        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
        "seen": "2026-11-15"
       }
-     ]
+     ],
+     "kana": "デバル・マーロ"
     },
     "tone": {
      "text": "並木道にレストラン・バー・カフェが並ぶ、街のボヘミアンな地区。1920年代にデバル地方から移った人たちが住みついた",
@@ -689,41 +414,37 @@
     "went": false
    },
    {
-    "key": "vodno",
-    "name": "ヴォドノ山",
+    "key": "newtown",
+    "name": "新市街",
     "local": {
-     "text": "Водно",
-     "roman": "Vodno",
+     "text": "Центар",
+     "roman": "Centar",
+     "note": "区の名前。広場まわりとデバル・マーロも同じ区に入る",
      "src": [
       {
-       "name": "Wikipedia「Vodno」",
-       "url": "https://en.wikipedia.org/wiki/Vodno",
+       "name": "Wikipedia「Skopje」",
+       "url": "https://en.wikipedia.org/wiki/Skopje",
        "seen": "2026-11-15"
       }
      ]
     },
     "tone": {
-     "text": "街の南西にそびえる山。中腹のスレドノ・ヴォドノから、頂上の十字架へロープウェイで上がる",
+     "text": "アレクサンダー大王の像と、像だらけの広場。マケドニア広場の噴水の上に、高さ14.5mの騎馬像が立つ。2010年代の計画（スコピエ2014）で、像と柱の建物がこの地区にいくつも建った。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている",
      "src": [
       {
-       "name": "Wikivoyage「Skopje/Karpoš」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Karpo%C5%A1",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikipedia「Vodno」",
-       "url": "https://en.wikipedia.org/wiki/Vodno",
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
        "seen": "2026-11-15"
       }
      ]
     },
     "center": {
-     "lat": 41.96502,
-     "lon": 21.394421,
+     "lat": 41.9961,
+     "lon": 21.4315,
      "coord_src": [
       {
-       "name": "OpenStreetMap（Millennium Cross）",
-       "url": "https://www.openstreetmap.org/way/229939246",
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
        "seen": "2026-11-15"
       }
      ]
@@ -731,64 +452,80 @@
     "range": {
      "polygon": [
       [
-       41.961891,
-       21.394835
+       41.989713,
+       21.429279
       ],
       [
-       41.97821,
-       21.370097
+       41.989951,
+       21.428508
       ],
       [
-       41.977332,
-       21.41209
+       41.991043,
+       21.427914
       ],
       [
-       41.962928,
-       21.400054
+       41.993504,
+       21.428003
+      ],
+      [
+       41.996826,
+       21.43102
+      ],
+      [
+       41.997746,
+       21.433391
+      ],
+      [
+       41.995799,
+       21.436954
+      ],
+      [
+       41.989951,
+       21.43005
       ]
      ],
-     "how": "ミレニアム・クロス・中腹（スレドノ・ヴォドノ）・聖パンテレイモン修道院・電波塔の座標を囲み、350m 外へ広げた",
+     "how": "広場まわりの範囲（石橋・広場・凱旋門・マザー・テレサ記念館ほかを囲んだもの）に、旧駅舎の博物館とダイヤモンド・モールのまわり 90m を足して外形を取り、8点までに減らした",
      "src": [
       {
-       "name": "OpenStreetMap（Millennium Cross）",
-       "url": "https://www.openstreetmap.org/way/229939246",
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
        "seen": "2026-11-15"
       },
       {
-       "name": "OpenStreetMap（Middle Vodno）",
-       "url": "https://www.openstreetmap.org/node/13655181221",
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
        "seen": "2026-11-15"
       },
       {
-       "name": "Wikivoyage「Skopje/Karpoš」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Karpo%C5%A1",
+       "name": "OpenStreetMap（Diamond Mall）",
+       "url": "https://www.openstreetmap.org/way/1231158369",
        "seen": "2026-11-15"
       }
      ]
     },
     "landmarks": [
      {
-      "name": "ミレニアム・クロス",
-      "local": "Милениумски крст",
-      "lat": 41.96502,
-      "lon": 21.394421,
+      "name": "マケドニア広場（戦士の像と噴水）",
+      "local": "Плоштад Македонија",
+      "lat": 41.995846,
+      "lon": 21.431453,
       "coord_src": [
        {
-        "name": "OpenStreetMap（Millennium Cross）",
-        "url": "https://www.openstreetmap.org/way/229939246",
+        "name": "Wikivoyage「Skopje/Centar」",
+        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
         "seen": "2026-11-15"
        }
       ]
      },
      {
-      "name": "ロープウェイの乗り場（スレドノ・ヴォドノ）",
-      "local": "Средно Водно",
-      "lat": 41.975999,
-      "lon": 21.40826,
+      "name": "スコピエ市博物館（旧駅舎）",
+      "local": "Музеј на град Скопје",
+      "lat": 41.991043,
+      "lon": 21.429005,
       "coord_src": [
        {
-        "name": "OpenStreetMap（Middle Vodno）",
-        "url": "https://www.openstreetmap.org/node/13655181221",
+        "name": "Wikivoyage「Skopje/Centar」",
+        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
         "seen": "2026-11-15"
        }
       ]
@@ -797,40 +534,145 @@
     "went": {
      "facts": [
       {
-       "id": "qAXRe3qQyvo@1200#place",
-       "ref": "11-08 0:20:00",
-       "video": "qAXRe3qQyvo",
-       "t": 1200,
+       "id": "CKJvprUMOgA@690#place",
+       "ref": "10-15 0:11:30",
+       "video": "CKJvprUMOgA",
+       "t": 690,
        "kind": "place",
-       "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=1200s"
+       "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=690s"
       },
       {
-       "id": "qAXRe3qQyvo@4740#fact",
-       "ref": "11-08 1:19:00",
-       "video": "qAXRe3qQyvo",
-       "t": 4740,
-       "kind": "fact",
-       "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=4740s"
+       "id": "hk39U7ZEKCQ@4860#place",
+       "ref": "10-17 1:21:00",
+       "video": "hk39U7ZEKCQ",
+       "t": 4860,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=4860s"
       },
       {
-       "id": "qAXRe3qQyvo@8280#caution",
-       "ref": "11-08 2:18:00",
-       "video": "qAXRe3qQyvo",
-       "t": 8280,
-       "kind": "caution",
-       "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=8280s"
+       "id": "la_OkustLkA@1985#place",
+       "ref": "10-28 0:33:05",
+       "video": "la_OkustLkA",
+       "t": 1985,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=1985s"
+      },
+      {
+       "id": "la_OkustLkA@2105#place",
+       "ref": "10-28 0:35:05",
+       "video": "la_OkustLkA",
+       "t": 2105,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2105s"
       }
      ]
     },
     "from_hub": [
-     "todo/vodno"
+     "see/square",
+     "see/museum"
     ],
     "scene": {
-     "id": "qAXRe3qQyvo@4740#fact",
-     "video": "qAXRe3qQyvo",
-     "t": 4740,
-     "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=4740s"
+     "id": "CKJvprUMOgA@690#place",
+     "video": "CKJvprUMOgA",
+     "t": 690,
+     "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=690s"
     }
+   },
+   {
+    "key": "station",
+    "name": "バスターミナル・鉄道駅",
+    "local": {
+     "text": "Скопска железничка станица",
+     "roman": "Skopska železnička stanica",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "tone": {
+     "text": "鉄道駅と長距離バスが1つの建物に入った交通センター。駅は丹下健三の設計で、高架の下にバスの乗り場がある。マケドニア広場まで歩いて15〜20分",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "center": {
+     "lat": 41.99117,
+     "lon": 21.446335,
+     "coord_src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       41.987337,
+       21.44481
+      ],
+      [
+       41.988129,
+       21.442239
+      ],
+      [
+       41.99004,
+       21.441174
+      ],
+      [
+       41.991951,
+       21.442239
+      ],
+      [
+       41.993873,
+       21.446335
+      ],
+      [
+       41.993081,
+       21.448906
+      ],
+      [
+       41.99117,
+       21.449971
+      ],
+      [
+       41.989259,
+       21.448906
+      ]
+     ],
+     "how": "鉄道駅と、市バス・長距離バスの乗り場の座標（Wikivoyage）のまわり 300m の外形を取り、8点までに減らした",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "交通センター（鉄道駅と長距離バス）",
+      "local": "Транспортен центар",
+      "lat": 41.99004,
+      "lon": 21.44481,
+      "coord_src": [
+       {
+        "name": "Wikivoyage「Skopje」",
+        "url": "https://en.wikivoyage.org/wiki/Skopje",
+        "seen": "2026-11-15"
+       }
+      ]
+     }
+    ],
+    "went": false
    }
   ]
  },
