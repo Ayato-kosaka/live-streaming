@@ -72,9 +72,9 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
   ]
  },
  "embed": {
-  "v": "_XzkJJIvpOE",
-  "t": 2490,
-  "date": "2026-10-27"
+  "v": "qAXRe3qQyvo",
+  "t": 1200,
+  "date": "2026-11-08"
  },
  "streams": {
   "country": "north-macedonia",
@@ -1995,6 +1995,6 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
  ],
  "published": "2026-11-14",
  "updated": "2026-11-15",
- "hash": "fcfbe9090e829f80"
+ "hash": "445195a1c731fe60"
 }
 /* END GUIDE */;
