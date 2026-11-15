@@ -15,9 +15,14 @@
 
 ## 使いかた
 
-    python3 python/build_nordic.py --dry-run
+    python3 python/guide_photos.py nordic   # 見どころの写真を島の置き場（site/public/travel/<国>/photos/）に落とす
+    python3 python/build_nordic.py          # 焼く（置き場に無い写真があれば止まる）
 
-（`build_nordic.py` はここを見る。`/tmp` は見ない）
+（`build_nordic.py` はここを見る。`/tmp` は見ない。`--dry-run` は無い——前ここに書いてあったが、
+渡しても黙って焼く）
+
+写真は Commons の URL を直に焼かない。Wikimedia が混んだ日に 429 で断られ、枠が空になる（2026-11-15）。
+この箱から Wikimedia が断る日は、`guide_photos.py` を Actions のランナーで回して写真を持ち帰る。
 
 ## 手で直さない
 
