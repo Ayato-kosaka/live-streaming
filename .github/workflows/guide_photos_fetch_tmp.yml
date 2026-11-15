@@ -1,0 +1,70 @@
+name: 借りた写真を置き場に落とす（使い捨て）
+
+# 作業箱から upload.wikimedia.org が 429 で断られる日に、python/guide_photos.py をランナーで回して
+# 落とした写真だけをこの枝にコミットする。この枝は写真を持ち帰ったら消す（master には入れない）。
+# 秘密は使わない。push は既定の GITHUB_TOKEN だけ（それが起こした push は次のワークフローを起こさない）。
+
+on:
+  push:
+    branches: ["claude/guide-photos-fetch-tmp"]
+    paths: [".github/workflows/guide_photos_fetch_tmp.yml", "python/guide_photos.py"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: guide-photos-fetch-tmp
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            python
+            site/content
+            site/public/travel
+            site/public/next
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: 道具を入れる（作業箱と同じ版）
+        run: python3 -m pip install --quiet "pillow==12.3.0"
+
+      - name: 落とす（置いたものは取り直さない）
+        run: |
+          rc=0
+          python3 python/guide_photos.py nordic plans || rc=$?
+          echo "guide_photos 終了コード ${rc}"
+          ls site/public/travel/*/photos site/public/next/photos 2>/dev/null | grep -c webp || true
+
+      - name: この枝にコミットして push
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A site/public/travel site/public/next
+          extra=$(git diff --cached --name-only | grep -v -E '^site/public/(travel/[a-z-]+|next)/photos/[a-z0-9-]+-[0-9]+\.webp$' || true)
+          if [ -n "$extra" ]; then
+            echo "::error::写真のほかが書き換わった: $extra"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo "置いた写真が無い"
+            exit 0
+          fi
+          git --no-pager diff --cached --stat | tail -3
+          git commit -q -m "借りた写真を置き場に落とした（ランナーで python/guide_photos.py nordic plans）"
+          for i in 1 2 3; do
+            git pull -q --rebase origin "$BRANCH" && git push -q origin "HEAD:$BRANCH" && exit 0
+            sleep $((i * 10))
+          done
+          echo "::error::push できなかった"
+          exit 1
