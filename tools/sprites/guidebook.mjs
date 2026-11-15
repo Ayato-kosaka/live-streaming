@@ -6,6 +6,7 @@
  *   DIST=site/.next-3130 SPORT=4130 node tools/sprites/guidebook.mjs                 # ソフィア
  *   DIST=… SPORT=… PAGE=/travel/north-macedonia/skopje node tools/sprites/guidebook.mjs
  *   …  BASE_PORT=4131 BASE_PAGE=/bulgaria node tools/sprites/guidebook.mjs       # 字の量を前の面と比べる
+ *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ソフィアなら重なって落ちる）
  *
  * 終了コード 0＝通った / 1＝見つかった / 2＝数えるものが無い（面が開けない・窓が1つも無い）。
  *
@@ -21,6 +22,7 @@
  * | 元の位置に戻る | 札から開いて閉じると、開く前の高さ（±4px）と、押した札にフォーカス |
  * | 窓から窓へ | 窓の中の札で別の窓に入れ替わり、戻る1回で面に戻る |
  * | 字の量 | 最初に開いた状態（窓と畳みは閉じたまま）で `main` に見えている字の数。前の面と比べる |
+| エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
  *
  * 撮った絵は `OUT`（既定 `/tmp/guidebook-shots`）に節ごとに置く（390px・dpr 2）。
  *
@@ -97,6 +99,43 @@ async function ctxOf(b, width) {
   return ctx;
 }
 
+/**
+ * エリア地図の札の重なり。札の箱（`getBoundingClientRect`）を2つずつ比べ、1px でも重なれば落とす。
+ * 絵（`.gb-amap-art`）は `overflow: hidden` なので、はみ出した札は切れて読めない——それも落とす。
+ * 絵が無い面（色の札の地図）は数えるものが無いので、数だけ出す
+ */
+async function pinCheck(p, width) {
+  /* 対照: `BREAK=pins` で、札を manifest の元の位置（ずらす前）へ戻す。重なる絵なら、ここで落ちること */
+  if (process.env.BREAK === "pins")
+    await p.evaluate(() =>
+      document.querySelectorAll(".gb-amap-pin").forEach((e) => {
+        e.style.left = `${Number(e.dataset.x) * 100}%`;
+        e.style.top = `${Number(e.dataset.y) * 100}%`;
+      }),
+    );
+  const r = await p.evaluate(() => {
+    const art = document.querySelector(".gb-amap-art");
+    const pins = [...document.querySelectorAll(".gb-amap-pin")].map((e) => ({ t: e.textContent.trim(), r: e.getBoundingClientRect() }));
+    const a = art?.getBoundingClientRect();
+    const over = [];
+    for (let i = 0; i < pins.length; i++)
+      for (let j = i + 1; j < pins.length; j++) {
+        const x = pins[i].r;
+        const y = pins[j].r;
+        if (x.left < y.right && y.left < x.right && x.top < y.bottom && y.top < x.bottom) over.push(`${pins[i].t} と ${pins[j].t}`);
+      }
+    const out = a ? pins.filter((q) => q.r.left < a.left - 0.5 || q.r.right > a.right + 0.5 || q.r.top < a.top - 0.5 || q.r.bottom > a.bottom + 0.5).map((q) => q.t) : [];
+    return { n: pins.length, over, out };
+  });
+  if (!r.n) {
+    notes.push(`${width}px: エリア地図の絵が無い（札の重なりは見ていない）`);
+    return;
+  }
+  notes.push(`${width}px: エリアの札 ${r.n}枚`);
+  if (r.over.length) fail(`${width}px でエリアの札が重なる: ${r.over.join("／")}`);
+  if (r.out.length) fail(`${width}px でエリアの札が絵の外にはみ出す: ${r.out.join("／")}`);
+}
+
 const openId = (p) => p.evaluate(() => document.querySelector("dialog.gb-dlg[open]")?.id ?? null);
 const hashOf = (p) => p.evaluate(() => location.hash);
 const settle = (p, ms = 350) => p.waitForTimeout(ms);
@@ -150,6 +189,7 @@ async function main() {
     const over = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (over > 0) fail(`390px で横あふれ ${over}px`);
     const height = await p.evaluate(() => document.documentElement.scrollHeight);
+    await pinCheck(p, 390);
     for (const id of order) {
       const el = await p.$(`[data-gb="${id}"]`);
       if (el) await el.screenshot({ path: join(OUT, `${String(ORDER.indexOf(id) + 1).padStart(2, "0")}-${id}.png`) });
@@ -275,6 +315,11 @@ async function main() {
     await settle(p3, 800);
     const over3 = await p3.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (over3 > 0) fail(`1440px で横あふれ ${over3}px`);
+    await p3.evaluate(async () => {
+      document.querySelector(".gb-amap")?.scrollIntoView();
+      await new Promise((r) => setTimeout(r, 300));
+    });
+    await pinCheck(p3, 1440);
     await p3.locator(`main a[href="#${first}"]`).first().click();
     await settle(p3, 600);
     await p3.locator(`#${first}`).screenshot({ path: join(OUT, "modal-todo-1440.png") });
@@ -307,7 +352,7 @@ async function main() {
     for (const x of bad) console.log(`  ✗ ${x}`);
     return 1;
   }
-  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）");
+  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）・エリアの札の重なり");
   return 0;
 }
 
