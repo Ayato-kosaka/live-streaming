@@ -9,15 +9,35 @@
    "watermark": "prism_live",
    "t0": 585.0
   },
+  "c7_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/01_a00_parcel_fly.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
   "c4_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/yNA44SQbYjM/clips/01_0-00-50_0-01-45.mp4",
    "watermark": "prism_live",
    "t0": 50.0
   },
-  "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/da7K3qD5NmI/clips/01_0-40-15_0-41-45.mp4",
+  "c7_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/02_a02_broken_screen.mp4",
    "watermark": "prism_live",
-   "t0": 2415.0
+   "t0": 60.0
+  },
+  "c7_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/03_a03_new_laptop_jp.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c7_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/04_a03_ship_from_jp.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c7_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/05_a04_cheap_tax.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
   },
   "c3_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/XKpFeM0mQ2I/clips/01_0-44-50_0-45-40.mp4",
@@ -29,52 +49,92 @@
    "watermark": "prism_live",
    "t0": 1070.0
   },
-  "c4_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/yNA44SQbYjM/clips/02_0-03-50_0-05-10.mp4",
+  "c7_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/06_a06_declaration.mp4",
    "watermark": "prism_live",
-   "t0": 230.0
+   "t0": 300.0
+  },
+  "c7_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/07_a07_broker.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
+  },
+  "c7_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/08_a08_go_post.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
   },
   "c5_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/ndhRAwZv918/clips/01_0-09-50_0-12-10.mp4",
    "watermark": "prism_live",
    "t0": 590.0
   },
+  "c7_09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/09_a11_find_other.mp4",
+   "watermark": "prism_live",
+   "t0": 480.0
+  },
+  "c7_10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/10_a12_scolded.mp4",
+   "watermark": "prism_live",
+   "t0": 540.0
+  },
   "c5_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/ndhRAwZv918/clips/03_0-43-50_0-47-40.mp4",
    "watermark": "prism_live",
    "t0": 2630.0
   },
-  "c6_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/01_0-55-20_0-56-40.mp4",
+  "c7_11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/11_a14_calendar.mp4",
    "watermark": "prism_live",
-   "t0": 3320.0
+   "t0": 600.0
   },
   "c6_02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/02_1-25-50_1-29-50.mp4",
    "watermark": "prism_live",
    "t0": 5150.0
   },
+  "c7_12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/12_a15_uncles.mp4",
+   "watermark": "prism_live",
+   "t0": 660.0
+  },
   "c6_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/03_1-33-20_1-34-00.mp4",
    "watermark": "prism_live",
    "t0": 5600.0
   },
-  "c6_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/05_2-09-45_2-10-50.mp4",
+  "c7_13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/13_a16_phone_call.mp4",
    "watermark": "prism_live",
-   "t0": 7785.0
+   "t0": 720.0
   },
   "c6_04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/04_2-05-40_2-06-30.mp4",
    "watermark": "prism_live",
    "t0": 7540.0
+  },
+  "c7_14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/14_a17_no_precedent.mp4",
+   "watermark": "prism_live",
+   "t0": 780.0
+  },
+  "c7_15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/art_clips/15_a18_returned.mp4",
+   "watermark": "prism_live",
+   "t0": 840.0
+  },
+  "c6_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/pcw/ingest/MfQqBEzDou8/clips/05_2-09-45_2-10-50.mp4",
+   "watermark": "prism_live",
+   "t0": 7785.0
   }
  },
  "cuts": [
   {
    "src": "c01",
    "in": 378,
-   "out": 431,
+   "out": 411,
    "row": 0,
    "zoom": {
     "from": 1.454,
@@ -84,12 +144,25 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "「北マケドニア旅行中にパソコンを送ったら、」: スコピエの旧市街の石畳と店の並び（自撮りでない街の画。島のキャラクターが消えた 0:09:57.5 から）"
+   "note": "「北マケドニア旅行中に」: スコピエの旧市街の石畳と店の並び（hook.py の候補1。島のキャラクターが消えた 0:09:57.5 から）"
+  },
+  {
+   "src": "c7_01",
+   "in": 15,
+   "out": 47,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "【絵・ChatGPT】「パソコンを送ったら、」: ノートパソコンの小包が、旅先の古い街の広場へ飛んでくる（旅行者は後ろ姿）"
   },
   {
    "src": "c4_01",
    "in": 1080,
-   "out": 1124,
+   "out": 1112,
    "row": 0,
    "zoom": {
     "from": 1.454,
@@ -99,67 +172,64 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "「まさかの事態に！」: 郵便局で申告が要ると言われた夜、顔をしかめる本人（答えの画。F-073 の後半。v1 下書きの 2:09:57 は顔がぶれて下に切れていたので替えた）"
+   "note": "「まさかの事態に！」: 郵便局で申告が要ると言われた夜、顔をしかめる本人（答えの画。落ちは伏せたまま。F-073 の後半）"
   },
   {
-   "src": "c2_01",
-   "in": 2010,
-   "out": 2081,
+   "src": "c7_02",
+   "in": 15,
+   "out": 86,
    "row": 1,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
+    "from": 1.0,
+    "to": 1.14,
     "x": 0.5,
-    "y": 0.117,
+    "y": 0.33
+   },
+   "note": "【絵・ChatGPT】「7年愛用したパソコンの画面が壊れた！」: 使い込んだノートパソコンの画面が横じまのノイズで壊れている（配信に画面そのものは写っていない）"
+  },
+  {
+   "src": "c7_03",
+   "in": 15,
+   "out": 66,
+   "row": 2,
+   "zoom": {
+    "from": 1.14,
+    "to": 1.0,
+    "x": 0.55,
+    "y": 0.35
+   },
+   "note": "【絵・ChatGPT】「日本語のキーボードが要るから、」: キーボードの見える新品のノートパソコンと日本の旗（日本で買い替える）"
+  },
+  {
+   "src": "c7_04",
+   "in": 15,
+   "out": 66,
+   "row": 2,
+   "zoom": {
+    "from": 1.16,
+    "to": 1.16,
+    "x": [
+     0.38,
+     0.62
+    ],
+    "y": 0.3,
     "sx": 0.5,
-    "sy": 0
+    "sy": 0.35
    },
-   "note": "「7年愛用したパソコンの画面が壊れた！」: 画面が変な色になった様子を手振りで話す本人（壊れた画面そのものは配信に写っていない）"
+   "note": "【絵・ChatGPT】「日本で買い替えて、送ってもらう！」: 小包を積んだ飛行機が日本から海を越えて飛ぶ"
   },
   {
-   "src": "c01",
-   "in": 540,
-   "out": 591,
-   "row": 2,
-   "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.1105,
-    "y": 0.1214,
-    "sx": 0,
-    "sy": 0
-   },
-   "note": "「日本語のキーボードが要るから、」: スコピエの旧市街を歩きながら話す本人"
-  },
-  {
-   "src": "c2_01",
-   "in": 540,
-   "out": 591,
-   "row": 2,
-   "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.097,
-    "y": 0.1496,
-    "sx": 0,
-    "sy": 0
-   },
-   "note": "「日本で買い替えて、送ってもらう！」: 壊れた報告の続きで、買わなあかんと話す本人（ピンクの建物の前）"
-  },
-  {
-   "src": "c3_01",
-   "in": 300,
-   "out": 340,
+   "src": "c7_05",
+   "in": 15,
+   "out": 55,
    "row": 3,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
+    "from": 1.0,
+    "to": 1.14,
     "x": 0.5,
-    "y": 0.176,
-    "sx": 0.5,
-    "sy": 0
+    "y": 0.35
    },
-   "note": "「荷物の税金が安いらしいから、」: 理由を話している本人（上の配信の題の書き込みは窓の外）"
+   "note": "【絵・ChatGPT】「荷物の税金が安いらしいから、」: 小包の横にコイン2枚と下向きの矢印（税金が安い）"
   },
   {
    "src": "c3_01",
@@ -194,7 +264,7 @@
   {
    "src": "c5_02",
    "in": 6285,
-   "out": 6329,
+   "out": 6321,
    "row": 5,
    "zoom": {
     "from": 1.454,
@@ -204,52 +274,51 @@
     "sx": 0.5,
     "sy": 0
    },
-   "note": "「14万円を超える物は、」: 郵便局の広間で窓口に並ぶ人（後ろ姿）。左上に小さな字「800€」が出るので顔の無い画"
+   "note": "「14万円を超える物は、」: 郵便局の広間で窓口に並ぶ人（後ろ姿）。左上に小さな字「800€」（v4 の下書きの窓口の台 0:21:47.5 は木の板にしか見えなかった）"
   },
   {
-   "src": "c5_02",
-   "in": 7125,
-   "out": 7170,
+   "src": "c7_06",
+   "in": 15,
+   "out": 68,
    "row": 5,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
+    "from": 1.0,
+    "to": 1.12,
     "x": 0.5,
-    "y": 0.117,
-    "sx": 0.5,
-    "sy": 0
+    "y": 0.33
    },
-   "note": "「税関の申告が要るらしい！」: 郵便局の窓口の台（職員の顔は写らない秒）"
+   "note": "【絵・ChatGPT】「税関の申告が要るらしい！」: 税関の机に、小包と、欄だけの申告書・ハンコ・お札の束"
   },
   {
-   "src": "c4_02",
-   "in": 480,
-   "out": 555,
+   "src": "c7_07",
+   "in": 15,
+   "out": 90,
    "row": 6,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.5,
-    "y": 0.117,
-    "sx": 0.5,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.6,
+    "y": 0.3
    },
-   "note": "「しかも、申告を代わりにやる業者が要るって！」: その夜、宿の外で話す本人（v1 の 0:00:52 は顔が大きく字に被った）"
+   "note": "【絵・ChatGPT】「しかも、申告を代わりにやる業者が要るって！」: 書類の山の机でハンコを持つ、スーツの顔の無い人形（申告の代行業者）"
   },
   {
-   "src": "c5_01",
-   "in": 480,
-   "out": 516,
+   "src": "c7_08",
+   "in": 15,
+   "out": 51,
    "row": 7,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.5,
-    "y": 0.117,
+    "from": 1.16,
+    "to": 1.16,
+    "x": [
+     0.4,
+     0.66
+    ],
+    "y": 0.3,
     "sx": 0.5,
-    "sy": 0
+    "sy": 0.35
    },
-   "note": "「業者に頼んだら、」: 建物の下で業者の返事を読む本人"
+   "note": "【絵・ChatGPT】「業者に頼んだら、」: スマホのチャットから、郵便局の建物を指す矢印（業者の返事は「郵便局で」）"
   },
   {
    "src": "c5_02",
@@ -327,34 +396,30 @@
    "note": "「窓口は、」: 窓口の台の向こうで職員がスマホを触る手元（顔は窓の外）"
   },
   {
-   "src": "c5_03",
-   "in": 4560,
-   "out": 4602,
+   "src": "c7_09",
+   "in": 15,
+   "out": 57,
    "row": 10,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.5,
-    "y": 0.117,
-    "sx": 0.5,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.6,
+    "y": 0.3
    },
-   "note": "「別の業者を探せの一点張り！」: 窓口から出てきて見上げる本人（v1 下書きの 0:46:12 は耳と顎だけだったので替えた）"
+   "note": "【絵・ChatGPT】「別の業者を探せの一点張り！」: 窓口の職員（顔の無い人形）が手のひらで止め、外を指さす。手前に旅行者の後ろ姿"
   },
   {
-   "src": "c5_03",
-   "in": 5220,
-   "out": 5289,
+   "src": "c7_10",
+   "in": 15,
+   "out": 84,
    "row": 11,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.5,
-    "y": 0.117,
-    "sx": 0.5,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.16,
+    "x": 0.6,
+    "y": 0.27
    },
-   "note": "「1日15回も来んなって、怒られた！」: 郵便局を出て、高架の下で笑って話す本人（v1 の 0:46:52.5 は顔が下にあって字に被った）"
+   "note": "【絵・ChatGPT】「1日15回も来んなって、怒られた！」: 郵便局の入口から職員が湯気と怒りのマークで怒り、入口の前に往復の足あとがぐるぐる（夕方の外の画。1枚目は窓口の絵が前の行の絵とほぼ同じ構図で、似た見た目の連続 3.70秒で落ちた）"
   },
   {
    "src": "c5_03",
@@ -372,24 +437,22 @@
    "note": "「15回も来てへんねんけど！」: 木の見える所まで出て、笑ってツッコむ本人"
   },
   {
-   "src": "c6_01",
-   "in": 300,
-   "out": 371,
+   "src": "c7_11",
+   "in": 15,
+   "out": 86,
    "row": 13,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
+    "from": 1.0,
+    "to": 1.12,
     "x": 0.5,
-    "y": 0.078,
-    "sx": 0.5,
-    "sy": 0
+    "y": 0.3
    },
-   "note": "「2週間で出るつもりが、かれこれ1ヶ月！」: スコピエの長い歩道を歩く（後ろのカメラ）"
+   "note": "【絵・ChatGPT】「2週間で出るつもりが、かれこれ1ヶ月！」: ひと月ぶん全部ばつ印のカレンダーがめくれて飛び、下にまとめたままのスーツケース"
   },
   {
    "src": "c6_02",
    "in": 60,
-   "out": 100,
+   "out": 98,
    "row": 14,
    "zoom": {
     "from": 1.65,
@@ -402,24 +465,22 @@
    "note": "「探しまくって、」: 木の下で電話しながら業者の事務所を探す本人"
   },
   {
-   "src": "c6_02",
-   "in": 6480,
-   "out": 6524,
+   "src": "c7_12",
+   "in": 15,
+   "out": 61,
    "row": 14,
    "zoom": {
-    "from": 1.55,
-    "to": 1.55,
-    "x": 0.0428,
-    "y": 0.0965,
-    "sx": 0,
-    "sy": 0
+    "from": 1.14,
+    "to": 1.0,
+    "x": 0.55,
+    "y": 0.3
    },
-   "note": "「やっと業者のおじさんたちに会えた！」: 事務所の建物に入り、階段の踊り場で見上げる本人（v1 下書きの 1:29:36 は顔が切れていたので替えた）"
+   "note": "【絵・ChatGPT】「やっと業者のおじさんたちに会えた！」: 事務所の入口で、顔の無い人形のおじさん2人が両手を広げて迎える"
   },
   {
    "src": "c6_03",
    "in": 300,
-   "out": 336,
+   "out": 335,
    "row": 15,
    "zoom": {
     "from": 1.454,
@@ -433,24 +494,22 @@
    "note": "「めっちゃ親切で、」: 事務所の椅子で、電話の声のする方を見上げる本人（おじさんたちは画に入っていない）。おじさんが郵便局に電話している声（マケドニア語）を -12dB で小さく残す"
   },
   {
-   "src": "c6_05",
-   "in": 1050,
-   "out": 1091,
+   "src": "c7_13",
+   "in": 15,
+   "out": 57,
    "row": 15,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.3122,
-    "y": 0.0867,
-    "sx": 0,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.3
    },
-   "note": "「郵便局に電話してくれた！」: 事務所を出たところの戸口で話す本人（v1 の 2:10:33 は顔が下にあって字に被った）"
+   "note": "【絵・ChatGPT】「郵便局に電話してくれた！」: 顔の無い人形のおじさんが受話器で電話し、点線が郵便局の建物へつながる"
   },
   {
    "src": "c6_04",
    "in": 840,
-   "out": 878,
+   "out": 875,
    "row": 16,
    "zoom": {
     "from": 1.65,
@@ -460,37 +519,33 @@
     "sx": 0,
     "sy": 0
    },
-   "note": "「けど、旅行者が受け取った」: 業者の「99%…」を聞いて、額に手を当てて天井を見上げる本人"
+   "note": "「けど、」: 業者の「99%…」を聞いて、額に手を当てて天井を見上げる本人"
   },
   {
-   "src": "c6_05",
-   "in": 1620,
-   "out": 1659,
+   "src": "c7_14",
+   "in": 15,
+   "out": 57,
    "row": 16,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.1004,
-    "y": 0.1122,
-    "sx": 0,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.55,
+    "y": 0.33
    },
-   "note": "「前例が無いらしい！」: 建物を出て、マフラーを巻きながら話す本人"
+   "note": "【絵・ChatGPT】「旅行者が受け取った前例が無いらしい！」: 真っ白な記録の帳面にスーツケースと赤い×。そばで旅行者の後ろ姿が頭を抱える"
   },
   {
-   "src": "c6_05",
-   "in": 720,
-   "out": 786,
+   "src": "c7_15",
+   "in": 15,
+   "out": 81,
    "row": 17,
    "zoom": {
-    "from": 1.454,
-    "to": 1.454,
-    "x": 0.1352,
-    "y": 0.1444,
-    "sx": 0,
-    "sy": 0
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.35
    },
-   "note": "「結局、受け取れずに日本に返された！」: 事務所を出た建物の中で、カメラを見下ろして話す本人（「99%無理って言われちゃいました」の直後。v2 の 2:10:05 は顔がぶれていた）"
+   "note": "【絵・ChatGPT】「結局、受け取れずに日本に返された！」: 角のへこんだ小包が、地球儀の上をUターンの矢印で日本へ戻る（配信は 11/10 まで。返されたのはあやとの #1187 の答え）"
   },
   {
    "src": "c6_05",
@@ -664,8 +719,9 @@
     "frames": 97,
     "voice_frames": 89,
     "cuts": [
-     "DNLVmUpew48 0:09:57.6+1.77s",
-     "yNA44SQbYjM 0:01:26.0+1.47s"
+     "DNLVmUpew48 0:09:57.6+1.10s",
+     "artPcwP2v04 0:00:00.5+1.07s",
+     "yNA44SQbYjM 0:01:26.0+1.07s"
     ],
     "line": "北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",
     "telop": null
@@ -676,7 +732,7 @@
     "frames": 71,
     "voice_frames": 63,
     "cuts": [
-     "da7K3qD5NmI 0:41:22.0+2.37s"
+     "artPcwP2v04 0:01:00.5+2.37s"
     ],
     "line": "7年愛用したパソコンの画面が壊れた！",
     "telop": null
@@ -687,8 +743,8 @@
     "frames": 102,
     "voice_frames": 94,
     "cuts": [
-     "DNLVmUpew48 0:10:03.0+1.70s",
-     "da7K3qD5NmI 0:40:33.0+1.70s"
+     "artPcwP2v04 0:02:00.5+1.70s",
+     "artPcwP2v04 0:03:00.5+1.70s"
     ],
     "line": "日本語のキーボードが要るから、日本で買い替えて、送ってもらう！",
     "telop": null
@@ -699,7 +755,7 @@
     "frames": 90,
     "voice_frames": 82,
     "cuts": [
-     "XKpFeM0mQ2I 0:45:00.0+1.33s",
+     "artPcwP2v04 0:04:00.5+1.33s",
      "XKpFeM0mQ2I 0:45:31.0+1.67s"
     ],
     "line": "荷物の税金が安いらしいから、北マケドニアへ移動！",
@@ -722,8 +778,8 @@
     "frames": 89,
     "voice_frames": 81,
     "cuts": [
-     "ndhRAwZv918 0:21:19.5+1.47s",
-     "ndhRAwZv918 0:21:47.5+1.50s"
+     "ndhRAwZv918 0:21:19.5+1.20s",
+     "artPcwP2v04 0:05:00.5+1.77s"
     ],
     "line": "14万円を超える物は、税関の申告が要るらしい！",
     "telop": null
@@ -734,7 +790,7 @@
     "frames": 75,
     "voice_frames": 67,
     "cuts": [
-     "yNA44SQbYjM 0:04:06.0+2.50s"
+     "artPcwP2v04 0:06:00.5+2.50s"
     ],
     "line": "しかも、申告を代わりにやる業者が要るって！",
     "telop": null
@@ -745,7 +801,7 @@
     "frames": 66,
     "voice_frames": 58,
     "cuts": [
-     "ndhRAwZv918 0:10:06.0+1.20s",
+     "artPcwP2v04 0:07:00.5+1.20s",
      "ndhRAwZv918 0:20:34.0+1.00s"
     ],
     "line": "業者に頼んだら、郵便局でやれって！",
@@ -781,7 +837,7 @@
     "voice_frames": 68,
     "cuts": [
      "ndhRAwZv918 0:21:54.0+1.13s",
-     "ndhRAwZv918 0:46:22.0+1.40s"
+     "artPcwP2v04 0:08:00.5+1.40s"
     ],
     "line": "窓口は、別の業者を探せの一点張り！",
     "telop": null
@@ -792,7 +848,7 @@
     "frames": 69,
     "voice_frames": 61,
     "cuts": [
-     "ndhRAwZv918 0:46:44.0+2.30s"
+     "artPcwP2v04 0:09:00.5+2.30s"
     ],
     "line": "1日15回も来んなって、怒られた！",
     "telop": null
@@ -814,7 +870,7 @@
     "frames": 71,
     "voice_frames": 63,
     "cuts": [
-     "MfQqBEzDou8 0:55:30.0+2.37s"
+     "artPcwP2v04 0:10:00.5+2.37s"
     ],
     "line": "2週間で出るつもりが、かれこれ1ヶ月！",
     "telop": null
@@ -825,8 +881,8 @@
     "frames": 84,
     "voice_frames": 76,
     "cuts": [
-     "MfQqBEzDou8 1:25:52.0+1.33s",
-     "MfQqBEzDou8 1:29:26.0+1.47s"
+     "MfQqBEzDou8 1:25:52.0+1.27s",
+     "artPcwP2v04 0:11:00.5+1.53s"
     ],
     "line": "探しまくって、やっと業者のおじさんたちに会えた！",
     "telop": null
@@ -837,8 +893,8 @@
     "frames": 77,
     "voice_frames": 69,
     "cuts": [
-     "MfQqBEzDou8 1:33:30.0+1.20s",
-     "MfQqBEzDou8 2:10:20.0+1.37s"
+     "MfQqBEzDou8 1:33:30.0+1.17s",
+     "artPcwP2v04 0:12:00.5+1.40s"
     ],
     "line": "めっちゃ親切で、郵便局に電話してくれた！",
     "telop": null
@@ -849,8 +905,8 @@
     "frames": 77,
     "voice_frames": 69,
     "cuts": [
-     "MfQqBEzDou8 2:06:08.0+1.27s",
-     "MfQqBEzDou8 2:10:39.0+1.30s"
+     "MfQqBEzDou8 2:06:08.0+1.17s",
+     "artPcwP2v04 0:13:00.5+1.40s"
     ],
     "line": "けど、旅行者が受け取った前例が無いらしい！",
     "telop": null
@@ -861,7 +917,7 @@
     "frames": 66,
     "voice_frames": 58,
     "cuts": [
-     "MfQqBEzDou8 2:10:09.0+2.20s"
+     "artPcwP2v04 0:14:00.5+2.20s"
     ],
     "line": "結局、受け取れずに日本に返された！",
     "telop": null
