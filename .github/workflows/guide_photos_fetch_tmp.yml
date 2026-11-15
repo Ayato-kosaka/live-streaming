@@ -19,7 +19,7 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v5
         with:
@@ -37,7 +37,11 @@ jobs:
       - name: 道具を入れる（作業箱と同じ版）
         run: python3 -m pip install --quiet "pillow==12.3.0"
 
+      # 1回目は 1枚ごとに 429（Retry-After 10秒）を挟んで 1枚15秒ほどかかった。途中で切れても、
+      # 置いたぶんはコミットまで進む（次に回せば、置いたものは取り直さない）
       - name: 落とす（置いたものは取り直さない）
+        timeout-minutes: 50
+        continue-on-error: true
         run: |
           rc=0
           python3 python/guide_photos.py nordic plans || rc=$?
@@ -45,6 +49,7 @@ jobs:
           ls site/public/travel/*/photos site/public/next/photos 2>/dev/null | grep -c webp || true
 
       - name: この枝にコミットして push
+        if: ${{ !cancelled() }}
         env:
           BRANCH: ${{ github.ref_name }}
         run: |
