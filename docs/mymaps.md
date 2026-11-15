@@ -37,6 +37,10 @@ python3 python/bulgaria_mymaps.py     # → python/data/bulgaria/mymaps/{see,eat
 
 ## Chrome 側の手（3枚ぶん繰り返す）
 
+**手で押さない。道具がある**（2026-11-15）: `python3 .claude/skills/mymaps/mymaps.py sync <mymaps の置き場>`
+が、下の手を EC2 の Chrome で押して mids.json まで書く。Drive のフォルダへ移すのは `move`、
+この箱から確かめるのは `verify`（`.claude/skills/mymaps/SKILL.md`）。下は、道具が押している手の控え。
+
 1. <https://www.google.com/mymaps> →「新しい地図を作成」
 2. 「インポート」→ CSV を選ぶ
 3. **位置の欄**に `緯度` と `経度`、**タイトルの欄**に `名前` を選ぶ
@@ -66,5 +70,5 @@ python3 python/bulgaria_mymaps.py     # → python/data/bulgaria/mymaps/{see,eat
 ## 作り直すとき
 
 **ピンを手で直さない。** 材料（`python/data/bulgaria/*.json`）を直して CSV を焼き直し、
-マイマップで**取り込み直す**（レイヤを消して入れ直す）。
+マイマップで**取り込み直す**（レイヤを消して入れ直す。`mymaps.py sync`。mid は変わらない）。
 手で直すと、面と地図で中身が食い違う。
