@@ -23,7 +23,9 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
       <ul className={`gb-tiles is-${cols}`}>
         {items.map((it, i) => (
           <li key={it.id} data-kinds={it.kinds?.join(" ")}>
-            <a className="gb-tile" href={`#${sheetId(kind, it.id)}`}>
+            {/* 同じ名前の品が食べたいと買いたいの両方にある（ラキヤ・ヴラネツ）。読み上げの名前に節を入れて分ける。
+                字で足すと、見えない字が面の字に数えられる（`guidebook.mjs` の字の量）ので、名前で渡す */}
+            <a className="gb-tile" href={`#${sheetId(kind, it.id)}`} aria-label={tileName(kind, it)}>
               <Picture
                 pic={it.pic}
                 sizes={cols === 3 ? "(min-width: 720px) 220px, 31vw" : "(min-width: 720px) 300px, 46vw"}
@@ -50,6 +52,12 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
 }
 
 const KICKER: Record<Kind, string> = { see: "見たいもの", eat: "食べたいもの", buy: "買いたいもの" };
+
+/** 札の読み上げの名前。名前・節・1行・印（豚肉あり・アルコールあり・行った） */
+function tileName(kind: Kind, it: Item) {
+  const marks = [it.flags?.pork && "豚肉あり", it.flags?.alcohol && "アルコールあり", it.went && "行った"].filter(Boolean);
+  return [`${shortName(it.name)}（${KICKER[kind]}）`, it.line, ...marks].filter(Boolean).join("・");
+}
 
 function ItemSheet({ kind, it, todo }: { kind: Kind; it: Item; todo: Todo[] }) {
   const ts = (it.todo ?? []).map((id) => todo.find((t) => t.id === id)).filter((t): t is Todo => !!t);
