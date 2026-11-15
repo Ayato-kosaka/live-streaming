@@ -8,6 +8,7 @@ import { SITE } from "@/content/site";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref } from "@/content/nordic";
 import { TRAVEL, TRAVEL_PLACES, publicArticles, publicCities } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
+import { guidebookOf } from "@/content/guidebook";
 import { guideOf } from "@/content/travel/guides";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
@@ -63,7 +64,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // **国の面はここに書かない。** 下の `TRAVEL_PLACES`（`content/travel.ts`）から出る（#1201）
     // 北欧の旅そのもの（前の `/nordic`）は章の島（`/island/nordic`）へ寄せた。下の章の島の行に入っている
     NORDIC_GUIDE_HREF,
-    "/bulgaria",
+    // ソフィア（前の `/bulgaria`）は街の面になった。下の `publicCities` から出る（#1228）
     // 島から持って帰れるものと、お店で買えるもの（2026-10-08。言い方は 2026-10-14）。
     // **面を1枚増やす仕事は3か所**（上の注）。ここが3か所目
     "/goods",
@@ -88,7 +89,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...TRAVEL_PLACES.map((p) => row(p.href, p.country ? LASTMOD.country(p.country) : undefined)),
     /* 街のガイド（`/travel/<国>/<街>`）。**公開前の印（`draft`）が付いた街は並べない**
        （`content/travel.ts` の `publicCities`）。更新日は、中身の字が変わった日（焼く道具が持つ） */
-    ...publicCities().map((c) => row(c.href, guideOf(c.country, c.slug).updated)),
+    /* ガイドブック型の街（#1228）は `content/guidebook/` が更新日を持つ。それ以外は前の型（`content/travel/guides.ts`） */
+    ...publicCities().map((c) => row(c.href, (guidebookOf(c.country, c.slug) ?? guideOf(c.country, c.slug)).updated)),
     /* 街の記事（`/travel/<国>/<街>/<話>`）。街と同じく、公開前の印が付いた記事は並べない（`publicArticles`） */
     ...publicArticles().map((a) => row(a.href, articleOf(a.country, a.city, a.slug).updated)),
     ...RECIPES.map((r) => row(`/kitchen/${r.slug}`, LASTMOD.recipe(r))),

@@ -24,7 +24,7 @@
 ## 印（あやとの好みに合うか）
 
 `/bulgaria` と同じ規則（`docs/country-guide.md` 2章）。**手で書かない。** 好みの言葉は
-`python/build_bulgaria.py` の `LIKE_FOOD` `LIKE_SPOT`（`python/data/bulgaria/taste.json` の実測）をそのまま使う。
+下の `LIKE_FOOD` `LIKE_SPOT`（`python/data/bulgaria/taste.json` の実測。前は `build_bulgaria.py` が持っていた）を使う。
 台本に書くのは、判定に要る事実（豚・酒・シロップ菓子・入場料）だけ。
 
 ## 最終更新の日付
@@ -65,8 +65,34 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402  facts の読みかた・確かめは束ねる道具と同じものを使う
 import stream_notes as sn  # noqa: E402
-from build_bulgaria import LIKE_FOOD, LIKE_SPOT  # noqa: E402  好みの言葉は1か所（ソフィアと同じ規則で印を付ける）
 from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
+# 好みに当たる言葉（`python/data/bulgaria/taste.json` の実測）。
+# **ソフィアは 2026-11-15 に好みの印をやめた**（#1228・`docs/island-misses.md` #326。豚と酒はアイコンで知らせる）。
+# 前は `build_bulgaria.py` から読んでいたが、あちらから消したので、スコピエを同じ決まりで作り直すまでここに置く
+LIKE_FOOD = [
+    ("ニンニク", "ニンニクの料理が好き"),
+    ("トマト", "トマトの系統が好き"),
+    ("唐辛子", "辛いものが好き"),
+    ("チーズ", "チーズたっぷりが好き"),
+    ("ヨーグルト", "ブルガリアで楽しみにしていたもの"),
+    ("パイ", "200円前後のパン・パイで機嫌が最高になる"),
+    ("パン", "200円前後のパン・パイで機嫌が最高になる"),
+    ("鶏", "鶏の料理が好き"),
+    ("じゃがいも", "じゃがいもの料理をよく作る"),
+    ("豆", "豆のスープをよく作る"),
+]
+LIKE_SPOT = [
+    ("市場", "「汚い」ローカル市場で機嫌がいい"),
+    ("食堂", "地元の激安食堂が好き"),
+    ("教会", "壁画だらけの正教会が好き"),
+    ("大聖堂", "壁画だらけの正教会が好き"),
+    ("修道院", "壁画だらけの正教会が好き"),
+    ("公園", "公園のベンチでパンとチーズを食べるのが好き"),
+    ("庭園", "公園のベンチでパンとチーズを食べるのが好き"),
+    ("山", "夕日の見える高台が好き（元「夕日研究家」）"),
+    ("展望", "夕日の見える高台が好き（元「夕日研究家」）"),
+    ("温泉", "ただで湧いているものが好き"),
+]
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "python/data/guide"
@@ -82,7 +108,7 @@ END = "/* END GUIDE */"
 ORDER = ["see", "eat", "buy", "todo", "basics"]
 STAMPS = ("行った", "前を通った", "行く前に調べた")
 
-# 高いと感じる入場料の線。`build_bulgaria.PRICEY_EUR`（8ユーロ）をデナルに直したもの（1ユーロ＝61.3644デナル）
+# 高いと感じる入場料の線。8ユーロ（前の `build_bulgaria.PRICEY_EUR`）をデナルに直したもの（1ユーロ＝61.3644デナル）
 PRICEY_MKD = 490
 
 REF = re.compile(r"^(\d\d-\d\d) (\d+:\d\d:\d\d)(?: ?#(\w+))?(?: ?@([\w-]+))?$")

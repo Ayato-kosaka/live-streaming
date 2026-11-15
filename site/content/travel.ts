@@ -23,8 +23,8 @@ export { TRAVEL, travelHref };
  * - 歩き終わった国（`COUNTRIES`）。歩いた記録の面で、北欧の6か国は行く前の案内も同じ面の下に持つ
  * - 行く前の案内だけを持つ国（`GUIDE_ONLY`）。まだ歩いている最中で、記録は歩き終わってから書く
  *
- * ブルガリアは**まだ載せない。** 面（`/bulgaria`）を別の担当が磨いている最中で、
- * 引っ越しは次の便（#1201）。
+ * ブルガリアは**国の面をまだ持たない。** 面はソフィアの1枚（`/travel/bulgaria/sofia`。前の `/bulgaria`。#1228）で、
+ * 国の案内（ことば・通貨・ビザ）もその面が兼ねている。街だけを持つ国は下の `CITY_ONLY`。
  */
 export type TravelPlace = {
   slug: string;
@@ -121,11 +121,36 @@ export type TravelCity = {
   draft?: true;
 };
 
-const CITIES: Omit<TravelCity, "href">[] = [{ country: "north-macedonia", slug: "skopje", name: "スコピエ", draft: true }];
+const CITIES: Omit<TravelCity, "href">[] = [
+  { country: "north-macedonia", slug: "skopje", name: "スコピエ", draft: true },
+  { country: "bulgaria", slug: "sofia", name: "ソフィア" },
+];
+
+/**
+ * **国の面（`/travel/<国>`）を持たず、街の面だけを持つ国。** パンくずは 島 › 歩いた国 › <街> で、国の段を飛ばす
+ * （行き止まりの段を作らない）。貼られたときの絵は国の1枚（`card`）。
+ *
+ * ブルガリアはソフィアの面が国の案内も兼ねている（前の `/bulgaria`。#1228）。国の面を建てた日に、
+ * ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
+ */
+const CITY_ONLY: { country: string; card: ShareKey }[] = [{ country: "bulgaria", card: "bulgaria" }];
+
+/** 街の上の国。国の面が在ればそれ、無ければ `CITY_ONLY` の行（どちらにも無ければ書き出しを止める） */
+function cityCountry(country: string): { page?: TravelPlace; card: ShareKey } {
+  const page = travelPlace(country);
+  const only = CITY_ONLY.find((c) => c.country === country);
+  if (page && only) throw new Error(`content/travel.ts: ${country} は国の面が在るのに CITY_ONLY にも居る（消し忘れ）`);
+  if (page) return { page, card: page.card };
+  if (!only) throw new Error(`content/travel.ts: ${country} の国の面が無い（TRAVEL_PLACES にも CITY_ONLY にも居ない）`);
+  if (!AHEAD_COUNTRIES.some((a) => a.slug === country) && !COUNTRIES.some((c) => c.slug === country)) {
+    throw new Error(`content/travel.ts: ${country} が国の表（content/countries.ts）に無い`);
+  }
+  return { card: only.card };
+}
 
 export const TRAVEL_CITIES: TravelCity[] = CITIES.map((c) => {
-  /* 国の面が無い街を立てない。パンくずの1つ上が行き止まりになる */
-  travelPage(c.country);
+  /* 上の国が決まらない街を立てない。パンくずの1つ上が行き止まりになる */
+  cityCountry(c.country);
   return { ...c, href: `${travelHref(c.country)}/${c.slug}` };
 });
 
@@ -142,17 +167,17 @@ export const publicCities = (country?: string) =>
 
 /** 街のパンくず。島 › 歩いた国 › <国> › <街> */
 export function travelCityCrumbs(country: string, slug: string) {
-  const p = travelPage(country);
+  const { page } = cityCountry(country);
   const c = travelCity(country, slug);
-  return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name }];
+  return page ? [crumbOf("map"), { label: page.name, href: page.href }, { label: c.name }] : [crumbOf("map"), { label: c.name }];
 }
 
 /** 街の面の、貼られたときの顔と居場所。**公開前は検索に出さない**（`robots` は印から） */
 export function travelCityShare(country: string, slug: string, o: { title: string; description: string }): Metadata {
-  const p = travelPage(country);
+  const { card } = cityCountry(country);
   const c = travelCity(country, slug);
   return share({
-    key: p.card,
+    key: card,
     title: o.title,
     description: o.description,
     path: c.href,

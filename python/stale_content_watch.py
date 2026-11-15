@@ -639,7 +639,7 @@ BOOKS: dict[str, Book] = {
     "nordicFood.ts": Book(HUMAN, SKIP, 0, "旅先のふだんのごはんの読みもの。日付を1つも持たない"),
     "bulgaria.ts": Book(
         HUMAN, SKIP, 0,
-        "ブルガリア（ソフィア）の案内（`/bulgaria`）。行く前に1回だけ書く読みもので、"
+        "ソフィアの調べた事実（`/travel/bulgaria/sofia` の材料。前の `/bulgaria`）。行く前に1回だけ書く読みもので、"
         "`python/build_bulgaria.py` が `python/data/bulgaria/*.json` から焼く。"
         "**日数では測らない。** 円の数字はレートから出しているので実勢とは離れていくが、"
         "面の頭に『1ユーロ＝177円（2026年11月6日時点の実勢レート）』と**取った日を"

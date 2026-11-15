@@ -89,8 +89,11 @@ async function main() {
     await p.goto(`http://127.0.0.1:${SPORT}${path}.html`, { waitUntil: "networkidle" });
     /* **畳みを開いてから数える。** 閉じた `<details>` の中の字は
        `innerText` に出てこない（`docs/island-misses.md` の「畳んだ中の絵を数えない」と同じ罠） */
+    /* **窓（`<dialog>`）も開いてから数える。** ガイドブックの面（`components/guidebook/`）は、詳しい字を
+       閉じた窓に焼いてある。閉じた窓の字も `innerText` に出てこない（畳みと同じ罠。#1228） */
     await p.evaluate(() => {
       for (const d of document.querySelectorAll("details")) d.open = true;
+      for (const d of document.querySelectorAll("dialog")) d.setAttribute("open", "");
     });
     await p.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 900) {

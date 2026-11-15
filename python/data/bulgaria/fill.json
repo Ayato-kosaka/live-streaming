@@ -139,7 +139,7 @@
   {
    "jp": "ボザ（穀物の発酵飲料）",
    "pork": false,
-   "alcohol": false,
+   "alcohol": true,
    "meat": "なし",
    "note": "キビなどの穀物を発酵させた飲み物。『обикновено готовата напитка съдържа от 0,5% до 1,0% алкохол』＝ふつうは0.5〜1.0%の微量のアルコールを含む。酒としては扱われず朝食に出るが、完全なノンアルコールではない。市販品で最大6%になるものがあるという記述もあるので、まったく口にできない人は避ける",
    "src": "https://bg.wikipedia.org/wiki/%D0%91%D0%BE%D0%B7%D0%B0"
@@ -175,6 +175,14 @@
    "meat": "なし",
    "note": "茹でた／蒸したとうもろこしを紙コップで売るだけの屋台で、肉もバターも入らないのがふつう。塩を振る。同じ屋台で売る焼きかぼちゃ（печена тиква）も肉なし",
    "src": "https://www.theculturetrip.com/europe/bulgaria/articles/street-foods-you-should-try-in-sofia"
+  },
+  {
+   "jp": "ルカンカ（干したサラミ）",
+   "pork": true,
+   "alcohol": false,
+   "meat": "豚と子牛",
+   "note": "ソーセージ・ハムは日本の動物検疫の対象。土産として持ち帰るには手続きが要るので、現地で食べるもの。",
+   "src": "https://www.maff.go.jp/aqs/tetuzuki/product/aq2.html"
   }
  ],
  "spots": [

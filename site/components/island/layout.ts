@@ -77,7 +77,7 @@ export type Place = {
    * 砂浜の「いま居る場所」は、いま開いている道から決める（`spotOfPath`）。
    * `/kitchen/…` `/travel/…` のように軒の道の下に居る面は、それだけで決まる。
    * 決まらないのは「中身としてはその軒のものなのに、別の道に立っている面」——
-   * 北欧ヒッチハイクも、行く国の案内も企画だが `/nordic` `/bulgaria` に
+   * 北欧ヒッチハイクも企画だが `/nordic` に
    * 立っている。**そこだけここに書く。**
    *
    * **長いほうが勝つ。** `/next/new` は `/next` の下にあるが、中身は
@@ -128,7 +128,8 @@ export const PLACES: Place[] = [
        北欧ヒッチハイク（前の `/nordic`）も同じ日に章の島 `/island/nordic` へ寄せた。
        パンくずが島の地図から生えるので（`content/chapters.ts` の `chapterCrumbs`）、
        砂浜も軒の外（島そのもの）に立たせる。上と下で別のことを言わない */
-    under: ["/bulgaria"],
+    /* 前は `under: ["/bulgaria"]` を持っていた。ソフィアは `/travel/bulgaria/sofia` に移り（#1228）、
+       `/travel` の下は「歩いた国」の軒にひとりでに入るので、この軒の下に立つ面はもう無い */
   },
   {
     id: "now",

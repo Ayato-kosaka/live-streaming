@@ -395,11 +395,11 @@ export const PLANS: Plan[] = [
       area: "ブルガリア",
       map: "https://maps.google.com/?q=Sofia+Bulgaria",
     },
-    /* 中身の正本は `/bulgaria`。**ここに書き写さない**——
+    /* 中身の正本は `/travel/bulgaria/sofia`（前の `/bulgaria`）。**ここに書き写さない**——
        2か所に置くと、片方だけ古くなる。ここに置くのは「なぜそこへ行くのか」だけ。 */
-    href: "/bulgaria",
+    href: "/travel/bulgaria/sofia",
     hrefName: "ソフィアの歩きかたへ",
-    hrefNote: "どんな街か・したいこと・基本情報・歩くコース・見どころ・食べもの",
+    hrefNote: "どんな街か・やりたいこと8選・見どころ・食べもの・1日の予算",
     about: [
       "北マケドニアの東どなり。首都ソフィアは、ローマ時代の遺跡が地下鉄の改札の真横に転がっている街で、見どころが中心の半径1kmにほぼ全部収まっている。",
       "街の真ん中に温泉が49か所湧いていて、中心の蛇口はいまも無料で開放されている。地元の人がポリタンクを提げて並んでいる。",
@@ -410,7 +410,7 @@ export const PLANS: Plan[] = [
       "リラ修道院（中心から62km）まで足を延ばすか",
       "ヴィトシャ山の高台から夕日を見るか",
     ],
-    links: [{ label: "ソフィアはどういう街か", href: "/bulgaria" }],
+    links: [{ label: "ソフィアはどういう街か", href: "/travel/bulgaria/sofia" }],
   },
   {
     id: "north-macedonia",

@@ -29,7 +29,8 @@ My Maps は CSV を取り込めるので、**取り込む元をこちらで作�
 | `buy.csv` | 買いたいものがひもづく店・市場 |
 
 **欄は My Maps の取り込み画面がそのまま読める形**（緯度・経度・名前・説明）。
-`印` は ◎○⚠ の代わりに言葉で入れる——My Maps の色分けに使えるので。
+**好みの印（◎○⚠）の列は持たない**（2026-11-15。#1228）。あやとの好みは読む人の役に立たないので、
+面からも地図からも外した（`docs/island-misses.md` #326）。
 """
 
 import csv
@@ -47,8 +48,6 @@ OUT = os.path.join(DATA, "mymaps")
 MLAT = re.compile(r"mlat=([-\d.]+)")
 MLON = re.compile(r"mlon=([-\d.]+)")
 
-MARK = {"good": "あやとの好みに合う", "ok": "たぶん合う", "warn": "注意（豚・酒・高い入場料）"}
-
 
 def load(name):
     with open(os.path.join(DATA, name), encoding="utf-8") as f:
@@ -65,31 +64,21 @@ def _bake():
 
 
 def rows_see():
-    """見たいもの22か所。
-
-    **印は焼くほうの規則から取る**（`build_bulgaria.py` の `mark_spot`）。
-    ここで書き直すと、規則が2か所になって片方だけ古くなる——面と地図で
-    ◎と⚠ が食い違うのがいちばん悪い。材料（`facts.json`）には印が無く、
-    入場料と名前から毎回決まる、というのが元々の決まり。
-    """
+    """見たいもの（`facts.json` の見どころ全部）。"""
     bb = _bake()
 
     facts = load("facts.json")
-    fee = {x["name"]: x.get("fee", "") for x in load("fill.json").get("spots", [])}
     out = []
     for s in facts["spots"]:
         lat, lon = s.get("lat"), s.get("lon")
         if lat is None or lon is None:
             continue
-        mark, _why = bb.mark_spot({**s, "fee": fee.get(s["name"], "")})
-        f = {"mark": mark}
         out.append({
             "名前": s["name"],
             "緯度": lat,
             "経度": lon,
             "説明": (s.get("what") or "")[:240],
             "現地表記": s.get("cyr", ""),
-            "印": MARK.get(f.get("mark", ""), ""),
             "Googleマップ": bb.spot_maps(s),
         })
     return out
@@ -123,7 +112,6 @@ def rows_places(kind):
             "経度": lon,
             "説明": (x.get("what") or "")[:240],
             "現地表記": x.get("cyr", ""),
-            "印": "",
             "Googleマップ": _bake().place_maps(x),
         })
     return out

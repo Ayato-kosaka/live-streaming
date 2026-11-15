@@ -414,10 +414,22 @@ const hereOn = (day, entries = ENTRIES) => {
 /**
  * 国の面。**案内の面の道は、国の slug と同じ字にする決まり。**
  * 旅のガイドの区画（`app/travel/<国>/page.tsx`。#1201）に移ったものと、
- * まだ根に立っているもの（`app/<国>/page.tsx`。ブルガリアは次の便で移る）の両方を見る。
+ * まだ根に立っているもの（`app/<国>/page.tsx`）の両方を見る。
+ *
+ * **国の面を持たず、街の面だけを持つ国もある**（ブルガリア。ソフィアの面 `app/travel/bulgaria/sofia/page.tsx` が
+ * 国の案内を兼ねる。#1228・`content/travel.ts` の `CITY_ONLY`）。その街の面が在れば、国の面が在るのと同じに読む
  */
+const cityPages = (slug) => {
+  const dir = join(SITE, "app", "travel", slug);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true })
+    .filter((d) => d.isDirectory() && existsSync(join(dir, d.name, "page.tsx")))
+    .map((d) => d.name);
+};
 const countryPage = (slug) =>
-  existsSync(join(SITE, "app", "travel", slug, "page.tsx")) || existsSync(join(SITE, "app", slug, "page.tsx"));
+  existsSync(join(SITE, "app", "travel", slug, "page.tsx")) ||
+  existsSync(join(SITE, "app", slug, "page.tsx")) ||
+  cityPages(slug).length > 0;
 
 const TODAY = dayOf(new Date());
 const here = hereOn(TODAY);
