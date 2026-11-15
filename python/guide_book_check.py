@@ -413,7 +413,12 @@ class Book:
                     if not str(x.get("page", "")).startswith("https://commons.wikimedia.org/wiki/File:"):
                         self.err(w, "元のページが Wikimedia Commons で無い")
                     th = x.get("thumbs") or {}
-                    for wd in ("250", "500", "960"):
+                    ow = x.get("w")
+                    if not isinstance(ow, int) or ow <= 0:
+                        self.err(w, "写真の元の幅（w）が無い")
+                        ow = 0
+                    # 元より大きい幅は Wikimedia が返さないので、元より小さい幅だけを求める
+                    for wd in [s for s in ("250", "500", "960") if int(s) < ow]:
                         u = str(th.get(wd, ""))
                         if not (u.startswith("https://upload.wikimedia.org/wikipedia/commons/thumb/") and f"/{wd}px-" in u):
                             self.err(w, f"{wd} 幅の URL が無い（Wikimedia の決まった幅）")

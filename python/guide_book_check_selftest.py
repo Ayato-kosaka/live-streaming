@@ -135,6 +135,7 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("無いショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "XXXXXXXXXXX"), {"shorts.ts に無い"}, {"当てた理由"}),
         ("ほかの国のショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "qcWK52DE0X8"), {"北マケドニアのショートでない"}, {"当てた理由"}),
         ("ショートに理由が無い", lambda d: [s.pop("basis", None) for s in d["shorts"]["items"]], {"当てた理由"}, set()),
+        ("写真の元の幅が無い", lambda d: d["todo"][0]["photo"]["commons"][0].pop("w"), {"元の幅"}, set()),
         ("写真の幅が勝手", lambda d: d["todo"][0]["photo"]["commons"][0]["thumbs"].__setitem__("500", "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/x.jpg/400px-x.jpg"), {"500 幅"}, set()),
     ]
 
