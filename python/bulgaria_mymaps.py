@@ -55,8 +55,13 @@ def load(name):
         return json.load(f)
 
 
-def gmap(lat, lon):
-    return f"https://www.google.com/maps/search/?api=1&query={lat},{lon}&hl=ja"
+def _bake():
+    """焼くほうの道具。**Google マップの道は焼くほうと同じ関数で作る**——
+    ここで別に組むと、面と My Maps の欄で片方だけ座標のまま残る
+    （2026-11-15 まで、両方とも座標で開いていた）。座標は `緯度` `経度` の欄に別に持つ。"""
+    sys.path.insert(0, HERE)
+    import build_bulgaria
+    return build_bulgaria
 
 
 def rows_see():
@@ -67,8 +72,7 @@ def rows_see():
     ◎と⚠ が食い違うのがいちばん悪い。材料（`facts.json`）には印が無く、
     入場料と名前から毎回決まる、というのが元々の決まり。
     """
-    sys.path.insert(0, HERE)
-    from build_bulgaria import mark_spot
+    bb = _bake()
 
     facts = load("facts.json")
     fee = {x["name"]: x.get("fee", "") for x in load("fill.json").get("spots", [])}
@@ -77,7 +81,7 @@ def rows_see():
         lat, lon = s.get("lat"), s.get("lon")
         if lat is None or lon is None:
             continue
-        mark, _why = mark_spot({**s, "fee": fee.get(s["name"], "")})
+        mark, _why = bb.mark_spot({**s, "fee": fee.get(s["name"], "")})
         f = {"mark": mark}
         out.append({
             "名前": s["name"],
@@ -86,7 +90,7 @@ def rows_see():
             "説明": (s.get("what") or "")[:240],
             "現地表記": s.get("cyr", ""),
             "印": MARK.get(f.get("mark", ""), ""),
-            "Googleマップ": gmap(lat, lon),
+            "Googleマップ": bb.spot_maps(s),
         })
     return out
 
@@ -120,7 +124,7 @@ def rows_places(kind):
             "説明": (x.get("what") or "")[:240],
             "現地表記": x.get("cyr", ""),
             "印": "",
-            "Googleマップ": gmap(lat, lon),
+            "Googleマップ": _bake().place_maps(x),
         })
     return out
 

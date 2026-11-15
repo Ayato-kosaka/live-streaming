@@ -6,6 +6,7 @@
   "カトヴィツェ": {
    "ok": true,
    "tz": "Europe/Warsaw",
+   "place": "Katowice",
    "center": [
     50.2599,
     19.0216
@@ -709,6 +710,7 @@
   "ストックホルム": {
    "ok": true,
    "tz": "Europe/Stockholm",
+   "place": "Stockholm",
    "center": [
     59.3293,
     18.0686
@@ -1423,6 +1425,7 @@
   "タリン": {
    "ok": true,
    "tz": "Europe/Tallinn",
+   "place": "Tallinn",
    "center": [
     59.437,
     24.7536
@@ -2159,6 +2162,7 @@
   "ビャウィストク": {
    "ok": true,
    "tz": "Europe/Warsaw",
+   "place": "Białystok",
    "center": [
     53.1325,
     23.1688
@@ -2543,6 +2547,7 @@
   "ヘルシンキ": {
    "ok": true,
    "tz": "Europe/Helsinki",
+   "place": "Helsinki",
    "center": [
     60.1699,
     24.9384
@@ -3301,6 +3306,7 @@
   "リガ": {
    "ok": true,
    "tz": "Europe/Riga",
+   "place": "Rīga",
    "center": [
     56.9496,
     24.1052
@@ -4103,6 +4109,7 @@
   "ワルシャワ": {
    "ok": true,
    "tz": "Europe/Warsaw",
+   "place": "Warszawa",
    "center": [
     52.2297,
     21.0122
@@ -4806,6 +4813,7 @@
   "ヴィリニュス": {
    "ok": true,
    "tz": "Europe/Vilnius",
+   "place": "Vilnius",
    "center": [
     54.6872,
     25.2797

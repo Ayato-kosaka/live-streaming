@@ -70,6 +70,7 @@ Overpass は混むと**中身の空いた答え**を返す（`docs/island-misses
     python3 tools/nordic/shops.py              # キャッシュがあれば使う
     python3 tools/nordic/shops.py ヴィリニュス     # 街を指定
     python3 tools/nordic/shops.py --force      # 落とし直す
+    python3 tools/nordic/shops.py --place      # 落とさずに、街の現地の名前（`place`）だけ書き直す
 
 出典の表示は ODbL の義務。`docs/nordic-shops.md` と画面の両方にある。
 """
@@ -416,7 +417,46 @@ TZ = {
 }
 
 
+def place_of(city):
+    """街の現地の名前（「Katowice」「Rīga」）。**地図アプリの検索に足す**。
+
+    あやと（2026-11-15）:「座標に飛ばされてよく分かりにくい。店が分かるように、
+    Google マップで検索をかけた状態で渡してほしい」。店の名前だけで探すと、
+    同じ名前の別の街の店に当たる。看板も Google の店の名前も現地の綴りなので、
+    街も現地の綴りで足す（組むのは `site/lib/mapsSearch.ts`）。
+    名前は `geocode.CENTER` の引き字の頭から取る——街の表をもう1つ作らない。
+    """
+    return G.CENTER[city][0].split(",")[0].strip()
+
+
+def with_place(city, d):
+    """街の dict に `place` を、時計（`tz`）の次に差す。**並びを変えない**（差分が読めるように）"""
+    out = {}
+    for k, v in d.items():
+        if k == "place":
+            continue
+        out[k] = v
+        if k == "tz":
+            out["place"] = place_of(city)
+    return out
+
+
+def main_place():
+    """**落とさずに `place` だけ書き直す。** 店の表は取った日のまま残す。
+
+    街の現地の名前を足しただけで Overpass へ投げ直すと、店の顔ぶれと取った日まで
+    動いてしまう（旅が終わった街は、もう取り直さない）。
+    """
+    data = json.load(open(OUT, encoding="utf-8"))
+    data["cities"] = {c: with_place(c, d) for c, d in data["cities"].items()}
+    json.dump(data, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1, sort_keys=False)
+    print("街の現地の名前を書いた: " + "、".join(f"{c}={place_of(c)}" for c in data["cities"]))
+    return 0
+
+
 def main():
+    if "--place" in sys.argv:
+        return main_place()
     only = [a for a in sys.argv[1:] if not a.startswith("-")]
     force = "--force" in sys.argv
 
@@ -444,6 +484,7 @@ def main():
                 print("    読めなかった。前に読めたぶんを残す")
                 continue
             cities_out[city] = {"ok": False, "tz": TZ.get(city, "Europe/Warsaw"),
+                                "place": place_of(city),
                                 "center": [clat, clon], "shops": []}
             print("    読めなかった")
             continue
@@ -451,6 +492,7 @@ def main():
         cities_out[city] = {
             "ok": True,
             "tz": TZ.get(city, "Europe/Warsaw"),
+            "place": place_of(city),
             "center": [round(clat, 6), round(clon, 6)],
             # **街ごとに、取った日を持つ。** 読めなかった街は前の表をそのまま
             # 残す作りなので、1つの日付でまとめると「読めた街の日」が

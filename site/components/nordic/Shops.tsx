@@ -102,7 +102,7 @@ export default function Shops({
           // 日本語にするのはここ（サーバ）。ブラウザで組み直すと、
           // 出た瞬間に字が入れ替わって読んでいる途中で動く
           hours: hoursJa(s.open),
-          href: mapHref(s),
+          href: mapHref(s, data.place),
         }),
       ),
   })).filter((g) => g.rows.length > 0);

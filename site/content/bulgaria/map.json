@@ -338,32 +338,32 @@
     {
      "name": "国立文化宮殿（NDK）",
      "km": 1.3,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.684722,23.318889&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9D%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%B0%D0%BB%D0%B5%D0%BD+%D0%B4%D0%B2%D0%BE%D1%80%D0%B5%D1%86+%D0%BD%D0%B0+%D0%BA%D1%83%D0%BB%D1%82%D1%83%D1%80%D0%B0%D1%82%D0%B0+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "ボリス公園",
      "km": 1.9,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.686389,23.340556&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%91%D0%BE%D1%80%D0%B8%D1%81%D0%BE%D0%B2%D0%B0+%D0%B3%D1%80%D0%B0%D0%B4%D0%B8%D0%BD%D0%B0+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "国立歴史博物館（ボヤナ）",
      "km": 6.2,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.655282,23.270829&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9D%D0%B0%D1%86%D0%B8%D0%BE%D0%BD%D0%B0%D0%BB%D0%B5%D0%BD+%D0%B8%D1%81%D1%82%D0%BE%D1%80%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8+%D0%BC%D1%83%D0%B7%D0%B5%D0%B9+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "ボヤナ教会（世界遺産）",
      "km": 7.3,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.644672,23.266172&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%91%D0%BE%D1%8F%D0%BD%D1%81%D0%BA%D0%B0+%D1%86%D1%8A%D1%80%D0%BA%D0%B2%D0%B0+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "ヴィトシャ山（チェルニ・ヴラフ）",
      "km": 15.2,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.563611,23.278333&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%92%D0%B8%D1%82%D0%BE%D1%88%D0%B0+%E2%80%93+%D0%A7%D0%B5%D1%80%D0%BD%D0%B8+%D0%B2%D1%80%D1%8A%D1%85+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "リラ修道院（日帰り）",
      "km": 62.4,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.134379,23.339551&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A0%D0%B8%D0%BB%D1%81%D0%BA%D0%B8+%D0%BC%D0%B0%D0%BD%D0%B0%D1%81%D1%82%D0%B8%D1%80+%E2%80%9E%D0%A1%D0%B2%D0%B5%D1%82%D0%B8+%D0%99%D0%BE%D0%B0%D0%BD+%D0%A0%D0%B8%D0%BB%D1%81%D0%BA%D0%B8%E2%80%9C&hl=ja"
     }
    ]
   },
@@ -502,17 +502,17 @@
     {
      "name": "マナスティルスカ",
      "km": 0.9,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.689343,23.324600&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D0%B0%D0%BD%D0%B0%D1%81%D1%82%D0%B8%D1%80%D1%81%D0%BA%D0%B0+%D0%BC%D0%B0%D0%B3%D0%B5%D1%80%D0%BD%D0%B8%D1%86%D0%B0+%D1%83%D0%BB.+%D0%A5%D0%B0%D0%BD+%D0%90%D1%81%D0%BF%D0%B0%D1%80%D1%83%D1%85+67+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "ポド・リピテ",
      "km": 2.0,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.681763,23.335484&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D0%BE%D0%B4+%D0%BB%D0%B8%D0%BF%D0%B8%D1%82%D0%B5+%D1%83%D0%BB.+%D0%95%D0%BB%D0%B8%D0%BD+%D0%9F%D0%B5%D0%BB%D0%B8%D0%BD+1+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     },
     {
      "name": "グラフ・イグナティエフの市場",
      "km": 0.9,
-     "maps": "https://www.google.com/maps/search/?api=1&query=42.689948,23.327621&hl=ja"
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A6%D1%8A%D1%80%D0%BA%D0%B2%D0%B0+%D0%A1%D0%B2.+%D0%A1%D0%B5%D0%B4%D0%BC%D0%BE%D1%87%D0%B8%D1%81%D0%BB%D0%B5%D0%BD%D0%B8%D1%86%D0%B8+%D0%A1%D0%BE%D1%84%D0%B8%D1%8F&hl=ja"
     }
    ]
   },

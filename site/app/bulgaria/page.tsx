@@ -64,6 +64,15 @@ import "./bg.css";
  * **決まった場所の無い料理には、ピンを作らない。** 「どのレストランにもある」を
  * どこか1軒に落とすと、現地で探して見つからない——歩いている人にいちばん効くのがそれ。
  *
+ * ## Google マップは名前で検索して開く（2026-11-15・あやと、ソフィア滞在中）
+ *
+ * > Google マップで開くボタンを押すと、座標に飛ばされてよく分かりにくい。
+ * > 店が分かるように、Google マップで検索をかけた状態で渡してほしい。
+ *
+ * 場所は「マップで見る」（現地の字の名前 ＋ ソフィア）、料理と土産は「近くで探す」
+ * （品の現地の名前 ＋ ソフィア。出している店が並ぶ）。字は焼くほう
+ * （`python/build_bulgaria.py`）が組んで、面は渡された道を貼るだけ。
+ *
  * ## 重要度は2本立てのまま
  *
  * | | |
@@ -226,10 +235,10 @@ function Places({ rows }: { rows: readonly (typeof BG_PLACES)[number][] }) {
             href={p.maps}
             target="_blank"
             rel="noreferrer"
-            aria-label={`Google マップで開く（${p.label}）`}
+            aria-label={`マップで見る（${p.label}）`}
           >
             <Icon name="map" size={14} />
-            マップ
+            マップで見る
           </a>
         </li>
       ))}
@@ -238,13 +247,14 @@ function Places({ rows }: { rows: readonly (typeof BG_PLACES)[number][] }) {
 }
 
 /**
- * 料理・土産ひとつにぶら下がる、場所への道。
+ * 料理・土産ひとつにぶら下がる、場所への道と「近くで探す」。
  *
- * **決まった場所の無い品には、1つも出さない。** 「どのレストランにもある」を
+ * **決まった場所の無い品には、場所の道を1つも出さない。** 「どのレストランにもある」を
  * どこか1軒に落として「ここ」と書くと、現地で探して見つからない。
+ * 「近くで探す」はどの品にも付ける。**検索は出している店を並べるだけで、
+ * 1軒を「ここ」と言っていない**ので、上の決まりには触れない。
  */
-function PinLinks({ pins }: { pins: readonly number[] }) {
-  if (!pins.length) return null;
+function PinLinks({ pins, near, of }: { pins: readonly number[]; near: string; of: string }) {
   return (
     <p className="bgpins">
       {BG_PLACES.filter((p) => pins.includes(p.n)).map((p) => (
@@ -253,7 +263,7 @@ function PinLinks({ pins }: { pins: readonly number[] }) {
           href={p.maps}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Google マップで開く（${p.label}）`}
+          aria-label={`マップで見る（${p.label}）`}
         >
           <b>{p.n}</b>
           <Icon name="map" size={13} />
@@ -261,6 +271,11 @@ function PinLinks({ pins }: { pins: readonly number[] }) {
           <Icon name="external" size={12} />
         </a>
       ))}
+      <a className="is-near" href={near} target="_blank" rel="noreferrer" aria-label={`近くで探す（${of}）`}>
+        <Icon name="search" size={13} />
+        近くで探す
+        <Icon name="external" size={12} />
+      </a>
     </p>
   );
 }
@@ -473,10 +488,10 @@ export default function BulgariaPage() {
                       href={s.maps}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label={`Google マップで開く（${s.name}）`}
+                      aria-label={`マップで見る（${s.name}）`}
                     >
                       <Icon name="map" size={15} />
-                      Google マップで開く
+                      マップで見る
                       <Icon name="external" size={13} />
                     </a>
                     <Credit s={s as Shot} of={s.name} />
@@ -540,7 +555,7 @@ export default function BulgariaPage() {
                       </li>
                     </ul>
                     {d.note && <p className="bgadvice is-food">{d.note}</p>}
-                    <PinLinks pins={d.pins} />
+                    <PinLinks pins={d.pins} near={d.near} of={d.jp} />
                     <Credit s={d as Shot} of={d.jp} />
                   </div>
                 </details>
@@ -625,7 +640,7 @@ export default function BulgariaPage() {
                     <span>{b.where}</span>
                   </li>
                 </ul>
-                <PinLinks pins={b.pins} />
+                <PinLinks pins={b.pins} near={b.near} of={b.what} />
                 <Credit s={b as Shot} of={b.what} />
               </div>
             </details>

@@ -100,8 +100,10 @@ export type Item = {
   info: { label: string; text: string }[];
   /** `what` と `info` の出どころ。どちらかが在れば1つ以上 */
   src: Src[];
-  /** Google マップ（名前で探す） */
+  /** 場所の Google マップ（現地の字の名前 ＋ 街で検索した状態。「マップで見る」） */
   maps?: string;
+  /** 料理・土産の Google マップ（品の現地の名前 ＋ 街で検索した状態。「近くで探す」） */
+  near?: string;
   /** タイルの絵。行った件はその日の写真、行っていない件は借りた写真 */
   photo?: Photo;
   went?: Went;

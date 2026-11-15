@@ -573,7 +573,9 @@
   margin: var(--sp-3) 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  /* スマホでは1列。押す札が「マップで見る」になって幅が要るので、2列だと名前が
+     3字ずつで折れた（ヴィトシャ山が4行）。1列なら名前は1行、背も2列のときと変わらない */
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: 6px;
 }
 
@@ -608,6 +610,7 @@
   font-size: 11.5px;
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .bgmap figcaption {
@@ -714,6 +717,14 @@
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
+}
+
+/* 「近くで探す」は場所の札ではなく、押して探す道。場所の札（紙の色）と見分けがつくように、
+   「マップで見る」と同じ色にする */
+.bgpins a.is-near {
+  background: var(--kiril);
+  border-color: transparent;
+  color: #fff;
 }
 
 .bgpins a b {

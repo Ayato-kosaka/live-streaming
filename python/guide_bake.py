@@ -66,6 +66,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402  facts の読みかた・確かめは束ねる道具と同じものを使う
 import stream_notes as sn  # noqa: E402
 from build_bulgaria import LIKE_FOOD, LIKE_SPOT  # noqa: E402  好みの言葉は1か所（ソフィアと同じ規則で印を付ける）
+from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "python/data/guide"
@@ -462,8 +463,17 @@ class Baker:
             self.errors.append(f"{where}: 「{spec['name']}」の外の事実に出どころが無い")
         if not has_ext and out["src"]:
             self.errors.append(f"{where}: 「{spec['name']}」に出どころだけ在って、外の事実が無い")
+        # Google マップは**名前で検索した状態**で開く（あやと 2026-11-15「座標に飛ばされて
+        # よく分かりにくい。検索をかけた状態で渡してほしい」）。字は `python/maps_link.py` の1か所で組む。
+        # 場所（台本に `maps` の在る件）は「マップで見る」: 現地の字の名前 ＋ 街の現地の名前。
+        # 台本の `maps` の字（英語）は、現地の字が無い件にだけ使う——看板も Google の店の名前も現地の字
+        city = (self.s.get("local") or {}).get("text", "")
         if spec.get("maps"):
-            out["maps"] = "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote(spec["maps"]) + "&hl=ja"
+            out["maps"] = maps_search(loc["text"], city) if loc else maps_search(spec["maps"])
+        # 料理と土産は「近くで探す」: 品の現地の名前 ＋ 街。出している店が並ぶだけで、1軒を「ここ」とは言わない。
+        # 現地の名前の無い件（行った店・ただの品物）には付けない——日本語の字で探しても現地では当たらない
+        if sec in ("eat", "buy") and loc:
+            out["near"] = maps_search(loc["text"], city)
         w = self.went(spec["went"], f"{where}.went") if spec.get("went") else None
         if not has_ext and not w:
             self.errors.append(f"{where}: 「{spec['name']}」に外の事実も、行った人の話も無い")
