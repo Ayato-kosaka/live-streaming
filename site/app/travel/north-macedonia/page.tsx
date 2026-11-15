@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 import { travelCrumbs, travelShare } from "@/content/travel";
-import { guideOf } from "@/content/travel/guides";
-import type { Item } from "@/content/travel/types";
+import { SKOPJE as SKOPJE_BOOK } from "@/content/guidebook/north-macedonia-skopje";
+import type { Item as BookItem } from "@/content/guidebook/types";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 /* 付箋の板。**この面には `Notes` という自前の部品がもう在る**（下の、読みものを
@@ -58,15 +58,33 @@ import "./nm.css";
  */
 
 /**
- * 首都スコピエとマトカ渓谷の入口。**中身はスコピエの面のもの**（`content/travel/north-macedonia/skopje.ts`）を
+ * 首都スコピエとマトカ渓谷の入口。**中身はスコピエの面のもの**（`content/guidebook/north-macedonia-skopje.ts`）を
  * そのまま引く。前はここに出どころの無い見どころを手で書いていて、スコピエの面と2か所で別の字になっていた（#1203）。
- * 並べるのは、スコピエの面で★1・★2の見どころと、マトカ渓谷。1行目の字だけを出す
+ * 並べるのは、スコピエの面で★1・★2の見どころ（マトカ渓谷も見たいものの★1）。1行目の字だけを出す
  */
-const SKOPJE = guideOf("north-macedonia", "skopje");
-const DOOR: Item[] = [
-  ...(SKOPJE.sections.find((s) => s.id === "see")?.items ?? []).filter((it) => it.rank && it.rank <= 2),
-  ...(SKOPJE.sections.find((s) => s.id === "todo")?.items ?? []).filter((it) => it.key === "matka"),
+type Door = { key: string; icon: IconName; name: string; local?: BookItem["local"]; what: string; src: BookItem["src"] };
+/** 札の絵。**名前の語で決める**（ガイドブックの見たいものは絵の名前を持たない） */
+const DOOR_ICON: [RegExp, IconName][] = [
+  [/教会|大聖堂|修道院/, "church"],
+  [/城塞/, "castle"],
+  [/橋/, "bridge"],
+  [/博物館|記念館/, "museum"],
+  [/モスク/, "mosque"],
+  [/広場|門/, "plaza"],
+  [/市場|バザール|パザル/, "market"],
+  [/渓谷/, "lake"],
+  [/山|クロス/, "mountain"],
 ];
+const DOOR: Door[] = SKOPJE_BOOK.see.items
+  .filter((it) => it.rank && it.rank <= 2 && it.body)
+  .map((it) => ({
+    key: it.id,
+    icon: DOOR_ICON.find(([re]) => re.test(it.name))?.[1] ?? "pin",
+    name: it.name,
+    local: it.local,
+    what: it.body,
+    src: it.src,
+  }));
 
 /* 道と絵は名簿から（`content/travel.ts`）。前は `/north-macedonia` に立っていた（#1201） */
 export const metadata: Metadata = travelShare("north-macedonia", {
@@ -142,12 +160,12 @@ function Notes({ items }: { items: NmNote[] }) {
  * **公開前の印が付いているあいだは、スコピエの面へのリンクを置かない**（`CityCards` と同じ決まり。
  * 印が外れると、上の `CityCards` に面への札が出る）
  */
-function Door({ items }: { items: Item[] }) {
+function Door({ items }: { items: Door[] }) {
   return (
     <div className="gcards">
       {items.map((it) => (
         <div key={it.key} className="gcard nmspot">
-          <Icon name={it.icon as IconName} size={26} />
+          <Icon name={it.icon} size={26} />
           <span className="nmspot-h">
             <b>{it.name}</b>
             {it.local && (
@@ -158,7 +176,7 @@ function Door({ items }: { items: Item[] }) {
             )}
           </span>
           <span className="nmspot-b">
-            <p>{(it.what ?? "").split("。")[0]}。</p>
+            <p>{it.what.split("。")[0]}。</p>
             {it.src[0] && (
               <p className="nmspot-how">
                 出どころ:{" "}

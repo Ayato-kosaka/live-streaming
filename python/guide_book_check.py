@@ -432,6 +432,7 @@ class Book:
                 for i, v in enumerate(x):
                     each(v, f"{where}[{i}]")
         each(self.d.get("todo"), "todo")
+        each(self.d.get("see"), "see")
         each(self.d.get("eat"), "eat")
         each(self.d.get("buy"), "buy")
 

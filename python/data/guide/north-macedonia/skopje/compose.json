@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "何か": "スコピエのガイドブックの面（/travel/north-macedonia/skopje）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
+    "なぜ分けたか": "guidebook.json は「行く前のガイド＋行った事実」で、集める担当が育てる。ここは面を作る側の判断（どの写真・どの一言・どの話・どの色）。同じ事実を2か所に書かない——ここに事実を足さない",
+    "話": "items の story は、facts の行をつないだ案内鳥の文（docs/guide-design.md ★2）。結んだ行（facts）に無い数を書くと、焼く道具が止める。言っていないことを言ったことにしない",
+    "一言": "say は節ごとに1つまで（docs/island-misses.md #323）。字は facts から写す——ここに書くのは、どの項目の場面の一言を使うかだけ",
+    "写真": "cards は、あやと島カードのその日の写真。置き場は site/public/travel/north-macedonia/skopje/<名前>-{480,960}.webp（python/guidebook_bake.py --photos が本番の口から取る）。行った項目の札の写真は、行った日のカードだけ",
+    "要約": "summary・guides の value と lead、about の大きい数は、材料の字を短くしたもの。材料の字に無い数を書くと、焼く道具が止める"
+  },
+  "title": "スコピエ観光ガイド【2026年】見どころ・食べ物・物価・マトカ渓谷",
+  "description": {
+    "text": "北マケドニアの首都スコピエのガイド。やりたいこと{todo}選、見どころ{see}か所、名物{eat}品、1日の予算。2026年10月に行った配信者の体験つき。マトカ渓谷へは60番のバスで実測49分。",
+    "facts": ["eHBAnQF56-E@330#move", "eHBAnQF56-E@4650#move"]
+  },
+  "persona": [
+    "バルカンを周る20〜30代の個人旅行者。ティラナかソフィアを出る前に、スコピエに何日寄って何をするか決めかねている（いちばん大事な読み手）",
+    "スコピエに2〜4日いる旅行者が、前の晩に「マトカ渓谷へ路線バスで行って帰ってこられるか」を調べる",
+    "着いたばかりの節約派が「今晩どこで安く食べるか」を探す"
+  ],
+  "terms": ["スコピエ 観光", "スコピエ 見どころ", "スコピエ 食べ物", "北マケドニア 物価", "マトカ渓谷"],
+  "published": "2026-11-14",
+  "cover": { "catch": 0, "card": "bridge" },
+  "cards": {
+    "bridge": { "id": "idJB58jymkv7ruUoHi6b", "day": "2026-10-15", "alt": "スコピエ。銅像が並ぶ橋と、その先の白い柱の建物（2026年10月15日）" },
+    "umbrellas": { "id": "DRsqSR8rFVNhtIzNraov", "day": "2026-10-13", "alt": "スコピエの旧市街。傘が吊られた石畳の通り（2026年10月13日）" },
+    "ship": { "id": "OtHW6odCwS5YrZ4RAs1q", "day": "2026-10-12", "alt": "スコピエの川沿い。川に浮かぶ木の帆船（2026年10月12日）" },
+    "warrior": { "id": "gcQbbkU01CrTYgTJVCJB", "day": "2026-10-15", "alt": "マケドニア広場。騎馬像をのせた柱と噴水、獅子の像（2026年10月15日）" },
+    "frescoes": { "id": "3ESRjYU7vINXJVlzhAWY", "day": "2026-10-17", "alt": "正教会の中。金色のシャンデリアと壁一面の絵（2026年10月17日）" },
+    "fortress": { "id": "ZD5XZHieGZS0sP1WWIHH", "day": "2026-10-18", "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）" },
+    "clement": { "id": "ra63DojiebD0A7zDVEvx", "day": "2026-10-20", "alt": "聖クリメント・オフリド大聖堂。丸屋根が重なる外観と噴水（2026年10月20日）" },
+    "terrace": { "id": "DknDcvNQLyDmZXtc9Vo5", "day": "2026-10-27", "alt": "スコピエの、テラス席のあるカフェが並ぶ通り（2026年10月27日）" },
+    "matka": { "id": "AYYZWlhuOc9sQGYkS9k1", "day": "2026-10-24", "alt": "マトカ渓谷。岩山のあいだの湖と、紅葉の木（2026年10月24日）" },
+    "kosmos-cevapi": { "id": "yHoYcDCtjqI9s9Z6cEQX", "day": "2026-10-14", "alt": "食堂コスモスのチェバピ5本（2026年10月14日）", "crop": [0.22, 0.2, 0.78, 0.62] },
+    "kosmos-beans": { "id": "yHoYcDCtjqI9s9Z6cEQX", "day": "2026-10-14", "alt": "食堂コスモスの豆の煮込み（2026年10月14日）", "crop": [0.25, 0.55, 0.85, 1.0] },
+    "carrot-cake": { "id": "qoyVwjUKbVwTeiAOmom0", "day": "2026-10-19", "alt": "JOY のキャロットケーキとアメリカーノ（2026年10月19日）" },
+    "panpan": { "id": "8lSF7XjBQmOmV13Nns0B", "day": "2026-10-23", "alt": "パン屋パンパンの紙袋とコーヒー（2026年10月23日）" }
+  },
+  "say": { "todo": "matka", "see": "frescoes", "eat": "tavche" },
+  "items": {
+    "see/old-bazaar": {
+      "card": "umbrellas",
+      "story": {
+        "text": "着いた日は月曜で、閉まっている店が多かった。次の日は雨で、見られたのは土産物のアクセサリーくらい。晴れた日にもう一度歩くと、通りの様子がまるで違って見えた。",
+        "facts": ["NY9pzYrA-5o@3480#place", "UQdkUSro9Ck@1200#place"]
+      }
+    },
+    "see/square": {
+      "card": "warrior",
+      "story": {
+        "text": "広場の噴水は、あやとがこれまで見た中でいちばん大きいかもしれないほど。銅像の並ぶ橋には、橋だけで20体はいて、30体ほどいそうだった。",
+        "facts": ["CKJvprUMOgA@690#place", "CKJvprUMOgA@1830#fact"]
+      }
+    },
+    "see/fortress": {
+      "card": "fortress",
+      "story": { "text": "入口で料金はかからず、そのまま中に入れた。", "facts": ["TDArug_te90@2220#place"] }
+    },
+    "see/clement": {
+      "card": "clement",
+      "story": {
+        "text": "大聖堂は大きく、現代建築のような見た目だった。中は礼拝の最中で、観光客は誰もおらず、みんなが真剣。あやとはじっと様子を見てから、いったん外へ出た。",
+        "facts": ["DNLVmUpew48@5670#place", "DNLVmUpew48@6360#caution"]
+      }
+    },
+    "see/porta": {
+      "story": {
+        "text": "新市街を探して歩いていて、凱旋門とナポレオン風の騎馬像のある広場に出たところで、ここが新市街だと気づいた。",
+        "facts": ["hk39U7ZEKCQ@4860#place"]
+      }
+    },
+    "see/vardar": {
+      "card": "ship",
+      "story": {
+        "text": "着いた日に川沿いを歩くと、川が臭くない。船が何隻も泊まっていた。あやとは、川の匂いでその国のインフラが分かると話した。",
+        "facts": ["NY9pzYrA-5o@2940#place"]
+      }
+    },
+    "see/frescoes": { "card": "frescoes" },
+    "see/terrace": { "card": "terrace" },
+    "see/matka": {
+      "card": "matka",
+      "story": {
+        "text": "岩山と紅葉と川が一度に見えて、水が澄んでいた。川の水に手を入れると、冷たかった。",
+        "facts": ["eHBAnQF56-E@4860#place", "eHBAnQF56-E@5040#place"]
+      }
+    },
+    "eat/tavche": { "card": "kosmos-beans" },
+    "eat/kebapi": {
+      "card": "kosmos-cevapi",
+      "story": {
+        "text": "食堂コスモスで頼んだチェバピは、炭の匂いをまとっていて、肉汁が広がった。あやとのたとえは、バーベキューで焼いたソーセージ。",
+        "facts": ["UQdkUSro9Ck@4290#food"]
+      }
+    },
+    "eat/doner": {
+      "story": {
+        "text": "ハムザのケバブは、唐辛子が口の中でシャリシャリ言うほどの激辛。それでも、とてもおいしかった。",
+        "facts": ["TDArug_te90@10230#food"]
+      }
+    },
+    "eat/joy": { "card": "carrot-cake", "kinds": ["sweets"] },
+    "eat/panpan": { "card": "panpan", "kinds": ["breakfast"] },
+    "buy/coffee": {
+      "story": {
+        "text": "スーパーの棚にトルココーヒーがずらりと並んでいた。違いが分からないまま、あやとは1つ選んで買った。",
+        "facts": ["donehL4hO68@6210#food"]
+      }
+    }
+  },
+  "about": {
+    "scupi": { "num": "1", "unit": "世紀末から" },
+    "ottoman": { "num": "5", "unit": "世紀あまり" },
+    "tange": { "num": "約8", "unit": "割が壊れた" },
+    "skopje2014": { "num": "2010", "unit": "年からの計画" }
+  },
+  "areas": {
+    "debar-maalo": { "color": "#ffc4d2", "plan": [1, 1, 1] },
+    "carsija": { "color": "#ffd98a", "plan": [2, 1, 2] },
+    "square": { "color": "#a9dcf5", "plan": [1, 2, 3] },
+    "vodno": { "color": "#bfe8a6", "plan": [1, 3, 1] },
+    "newtown": { "color": "#d9ccf5", "plan": [2, 3, 2] }
+  },
+  "summary": {
+    "season": { "icon": "sun", "value": "5・6・9・10月", "lead": "平年の最高気温が20〜30℃", "to": "#guide-season" },
+    "safety": { "icon": "key", "value": "危険情報は解除", "lead": "名所と市場ではスリに注意", "to": "#guide-safety" },
+    "budget": { "icon": "wallet", "label": "1日の予算", "value": "約2,400円", "lead": "宿約1,400円＋買い出し約1,000円", "to": "#budget" },
+    "transit": { "icon": "bus", "value": "歩いて回れる", "lead": "旧市街から広場まで1〜2時間", "to": "#guide-transit" }
+  },
+  "guides": {
+    "airport": { "icon": "plane", "lead": "街の南東20km。空港バスかタクシーで" },
+    "transit": { "icon": "bus", "lead": "赤い市バスは、乗り換えなしの1回払い" },
+    "pay": { "icon": "currency", "lead": "通貨はデナル。カードもよく使える" },
+    "sim": { "icon": "sim", "lead": "携帯の会社は4つ。どれも 5G" },
+    "safety": { "icon": "key", "lead": "人の集まる所では、スリとひったくりに注意" },
+    "phrases": { "icon": "phrase" }
+  },
+  "season": { "lead": "歩きやすいのは5・6・9・10月" },
+  "pack": {
+    "passport": "passport",
+    "cash": "coin",
+    "warm": "jacket",
+    "umbrella": "umbrella",
+    "insurance": "firstaid",
+    "translate": "phrase"
+  }
+}

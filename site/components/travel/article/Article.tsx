@@ -14,8 +14,8 @@ import type { ArticleSection, Block, Day, Ext, Photo, PriceRow, Quote, Scene } f
 /**
  * 旅のガイドの記事（`/travel/<国>/<街>/<話>`）の部品。型は `docs/guide-design.md` の ★ の章と 3章。
  *
- * 街の面の部品（`components/travel/Guide.tsx`）と見た目の言葉はそろえるが、**記事の側に写して持つ**
- * （あちらは作り直しの最中。#1203）。
+ * 前の街の面の部品（`components/travel/Guide.tsx`。2026-11-15 にガイドブック型 `components/guidebook/` へ移して消した）と
+ * 見た目の言葉をそろえて、**記事の側に写して持った**（#1203）。
  *
  * ## 見張りが読む印（`python/guide_watch.py`・`python/guide_article.py`）
  *

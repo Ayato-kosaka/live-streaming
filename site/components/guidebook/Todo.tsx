@@ -3,8 +3,8 @@ import type { Guidebook, Item, Todo as TodoT } from "@/content/guidebook/types";
 
 import { MiniTiles } from "./About";
 import Sheet from "./Sheet";
-import { WentVideo } from "./Videos";
-import { Credit, Picture, Sec, SrcLine, jpDate, sheetId } from "./parts";
+import { WentBox } from "./Videos";
+import { Credit, Ext, Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
 
 /**
  * 4 やりたいことN選。**いちばんの柱。** 大きな絵の札をN枚（パリの「8 THINGS TO DO」の形）。
@@ -16,6 +16,7 @@ import { Credit, Picture, Sec, SrcLine, jpDate, sheetId } from "./parts";
 export default function Todo({ g, n }: { g: Guidebook; n: number }) {
   const items = g.todo;
   const byId = new Map(g.see.items.map((s) => [s.id, s]));
+  const eatOf = new Map(g.eat.items.map((s) => [s.id, s]));
   return (
     <Sec id="todo" n={n} icon="sparkle" title={`やりたいこと${items.length}選`}>
       <ol className="gb-todo">
@@ -35,7 +36,14 @@ export default function Todo({ g, n }: { g: Guidebook; n: number }) {
         ))}
       </ol>
       {items.map((t, i) => (
-        <TodoSheet key={t.id} t={t} i={i} all={items} where={t.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)} />
+        <TodoSheet
+          key={t.id}
+          t={t}
+          i={i}
+          all={items}
+          where={t.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)}
+          eat={(t.eat ?? []).map((id) => eatOf.get(id)).filter((x): x is Item => !!x)}
+        />
       ))}
     </Sec>
   );
@@ -51,7 +59,7 @@ const ROWS: { key: keyof Pick<TodoT, "what" | "how" | "time" | "money" | "tip" |
   { key: "route", label: "回りかた" },
 ];
 
-function TodoSheet({ t, i, all, where }: { t: TodoT; i: number; all: TodoT[]; where: Item[] }) {
+function TodoSheet({ t, i, all, where, eat }: { t: TodoT; i: number; all: TodoT[]; where: Item[]; eat: Item[] }) {
   const prev = all[i - 1];
   const next = all[i + 1];
   return (
@@ -85,26 +93,31 @@ function TodoSheet({ t, i, all, where }: { t: TodoT; i: number; all: TodoT[]; wh
       }
     >
       <p className="gb-lead">{t.lead}</p>
-      {t.went && (
-        <div className="gb-went-box">
-          <span className="gb-went">行った</span>
-          <time dateTime={t.went.date}>{jpDate(t.went.date)}</time>
-          {t.went.story && <p>{t.went.story}</p>}
-          {t.went.say && <p className="gb-say">「{t.went.say}」</p>}
-          <WentVideo w={t.went} of={t.title} />
-        </div>
-      )}
+      {t.went && <WentBox w={t.went} of={t.title} />}
       <h4 className="gb-h4">どこ</h4>
       <MiniTiles items={where} />
-      <dl className="gb-facts is-todo">
-        {ROWS.map((r) => (
-          <div key={r.key}>
-            <dt>{r.label}</dt>
-            <dd>{t[r.key]}</dd>
-          </div>
-        ))}
-      </dl>
-      <SrcLine src={t.src} of={t.title} />
+      {eat.length > 0 && (
+        <p className="gb-rel">
+          <span>ここで食べる</span>
+          {eat.map((e) => (
+            <a key={e.id} href={`#${sheetId("eat", e.id)}`}>
+              {shortName(e.name)}
+            </a>
+          ))}
+        </p>
+      )}
+      <Ext>
+        <dl className="gb-facts is-todo">
+          {/* 材料に字の無い欄は出さない（空の見出しを置かない） */}
+          {ROWS.filter((r) => t[r.key]).map((r) => (
+            <div key={r.key}>
+              <dt>{r.label}</dt>
+              <dd>{t[r.key]}</dd>
+            </div>
+          ))}
+        </dl>
+        <SrcLine src={t.src} of={t.title} />
+      </Ext>
     </Sheet>
   );
 }
