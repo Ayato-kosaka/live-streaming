@@ -1651,7 +1651,14 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B0%D1%9A%D0%BE%D0%BD+%D0%9C%D0%B0%D1%82%D0%BA%D0%B0&hl=ja",
     "km": 12
    }
-  ]
+  ],
+  "map": {
+   "mid": "1tveamUYZuZSDvPKtlhi7nOxfXECJeyE",
+   "title": "スコピエ｜見たいもの",
+   "ll": "41.9975,21.4338",
+   "z": 14,
+   "pins": 22
+  }
  },
  "eat": {
   "kinds": [
@@ -2636,7 +2643,14 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Пивница Стар Град"
    }
-  ]
+  ],
+  "map": {
+   "mid": "1fd8fKc5Me33eWxk9qOY0FCk8hD7KoRI",
+   "title": "スコピエ｜食べたいもの",
+   "ll": "41.9951,21.4411",
+   "z": 13,
+   "pins": 16
+  }
  },
  "buy": {
   "items": [
@@ -3159,7 +3173,14 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Стара чаршија"
    }
-  ]
+  ],
+  "map": {
+   "mid": "1EuvkDx5PX_lviFQsR7I_z-ViOlA2k-4",
+   "title": "スコピエ｜買いたいもの",
+   "ll": "41.9963,21.4292",
+   "z": 13,
+   "pins": 10
+  }
  },
  "videos": {
   "streams": {
@@ -4040,7 +4061,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   }
  },
  "published": "2026-11-14",
- "updated": "2026-11-15",
- "hash": "dd591cc6b86f9e6e"
+ "updated": "2026-11-16",
+ "hash": "8bfd1d270dc5aa95"
 }
 /* END GUIDE */;
