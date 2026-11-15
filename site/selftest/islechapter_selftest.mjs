@@ -140,7 +140,7 @@
 
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
-import { sitemapReadsTravel, travelFixedRoutes } from "./travelreg.mjs";
+import { sitemapReadsCities, sitemapReadsTravel, travelCities, travelFixedRoutes } from "./travelreg.mjs";
 import Module from "node:module";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -501,8 +501,12 @@ if (guide?.href) {
   /* 面を1枚増やす仕事は3か所（`app/sitemap.ts` の注）。索引から落ちると、
      検索からだけ見つからない面になる */
   const sitemap = readFileSync(join(SITE, "app", "sitemap.ts"), "utf8");
-  /* 国の面は、索引が字で書かずに名簿（`content/travel.ts`）から並べる（#1201） */
-  const viaTravel = sitemapReadsTravel(sitemap) ? travelFixedRoutes(SITE) : [];
+  /* 国の面は、索引が字で書かずに名簿（`content/travel.ts`）から並べる（#1201）。
+     **街の面も同じ**（ソフィアは国の面を持たず、街の面が国の案内を兼ねる。#1228）——公開前の印の無い街だけが索引に出る */
+  const viaTravel = [
+    ...(sitemapReadsTravel(sitemap) ? travelFixedRoutes(SITE) : []),
+    ...(sitemapReadsCities(sitemap) ? travelCities(SITE).filter((c) => !c.draft).map((c) => c.route) : []),
+  ];
   check(
     "その行き先が、索引（sitemap.ts か、国の面の名簿）にも載っている",
     sitemap.includes(`"${guide.href}"`) || viaTravel.includes(guide.href),
