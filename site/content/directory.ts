@@ -3,7 +3,7 @@ import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/c
 import { ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
-import { TRAVEL_LABEL, TRAVEL_PLACES, publicArticles, publicCities, travelHref, travelPage } from "@/content/travel";
+import { TRAVEL_LABEL, TRAVEL_PLACES, publicArticles, publicCities, travelCity, travelHref, travelPage } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
@@ -235,9 +235,10 @@ export const SHELVES: Shelf[] = [
     note: "ローマの遺跡と、ただで湧く温泉の首都。首都はソフィア",
     items: [
       {
-        href: "/bulgaria",
+        /* 前の `/bulgaria`。街の面に移った（#1228）。道は名簿から引く */
+        href: travelCity("bulgaria", "sofia").href,
         name: "ブルガリア・ソフィア",
-        note: "どんな街か・したいこと・基本情報・歩くコース・見どころ・食べもの・買いもの・ことば",
+        note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・1日の予算・ことば",
         q: q(
           "ブルガリア bulgaria ソフィア sofia ヨーグルト バラ rose キリル文字 cyrillic " +
             "バニツァ banitsa タラトル tarator ショプスカ shopska ネフスキー nevski " +

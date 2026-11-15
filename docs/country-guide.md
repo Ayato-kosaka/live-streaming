@@ -7,7 +7,7 @@
 ソフィア（`/bulgaria`）を1枚作ったときの手順を、そのまま次の国で回せる形に残す。
 **北マケドニア（いまの `/travel/north-macedonia`）とソフィアで2回やって、2回目で型になった。**
 
-実物は `python/build_bulgaria.py` と `site/app/bulgaria/`。
+実物は `python/build_bulgaria.py` と `site/app/travel/bulgaria/sofia/`（2026-11-15 に `/bulgaria` から移した。部品は `site/components/guidebook/`）。
 **迷ったらあれを丸ごと複製して、国の名前を置き換えるところから始める。**
 
 ---
@@ -36,6 +36,10 @@
 ---
 
 ## 0-1. この型でいちばん大事なこと
+
+> **2026-11-15 に、この章の「印」をやめた**（#1228・`docs/island-misses.md` #326）。好みは人物像ではない。
+> 好みで品を外したり印を付けたりせず、豚肉あり・アルコールありをアイコンで知らせる（`components/guidebook/`）。
+> 下は、そう決めるまでの記録として残す。
 
 **「名物を並べる面」にしない。**
 
@@ -262,7 +266,7 @@ if miss: raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 ```ts
 const GUIDES: Record<string, Guide[]> = {
   balkans: [
-    { slug: "bulgaria", name: "ブルガリア・ソフィア", href: "/bulgaria", icon: "church", lead: "…" },
+    { slug: "bulgaria", name: "ブルガリア・ソフィア", href: "/travel/bulgaria/sofia", icon: "church", lead: "…" },
     { slug: "north-macedonia", name: "北マケドニア", href: "/travel/north-macedonia", icon: "mountain", lead: "…" },
   ],
 };

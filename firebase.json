@@ -8,6 +8,11 @@
     ],
     "redirects": [
       {
+        "source": "/bulgaria",
+        "destination": "/travel/bulgaria/sofia",
+        "type": 301
+      },
+      {
         "source": "/island/albania",
         "destination": "/island/balkans",
         "type": 301

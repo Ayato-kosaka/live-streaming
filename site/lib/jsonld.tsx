@@ -151,6 +151,24 @@ export function breadcrumbLd(items: { label: string; href?: string }[]): Ld | nu
  * - あやと（`Person`）は `about` に置く。体験したのは本人
  * - 日付は、表紙に見えている「公開」「最終更新」と**同じ値**（`<time datetime>` と食い違わせない）
  */
+/**
+ * 面に埋めた動画（ショート）1本。**埋めた動画にだけ付ける**（見えていない動画を名乗らない。上の決めごと）。
+ * 必須は `name` `thumbnailUrl` `uploadDate`（`python/seo_audit.py` の `LD_NEEDS` が見る）。#1228
+ */
+export function videoLd(o: { id: string; name: string; uploadDate: string; description?: string }): Ld {
+  return {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: o.name,
+    description: o.description ?? o.name,
+    thumbnailUrl: [`https://i.ytimg.com/vi/${o.id}/hqdefault.jpg`],
+    uploadDate: o.uploadDate,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${o.id}`,
+    url: `https://www.youtube.com/shorts/${o.id}`,
+    inLanguage: "ja",
+  };
+}
+
 export function articleLd(o: {
   path: string;
   headline: string;
@@ -170,7 +188,8 @@ export function articleLd(o: {
     inLanguage: "ja",
     datePublished: o.datePublished,
     dateModified: o.dateModified,
-    ...(o.image ? { image: [abs(o.image)] } : {}),
+    /* 借りた写真（Wikimedia）は道が丸ごと外の URL。島の道だけ島の頭を付ける */
+    ...(o.image ? { image: [/^https?:\/\//.test(o.image) ? o.image : abs(o.image)] } : {}),
     author: org,
     publisher: org,
     about: personLd(),

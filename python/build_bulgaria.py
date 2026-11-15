@@ -31,31 +31,23 @@
 **歩くコースは焼いていない。** 材料（`fill.json` の `course`）は残してある
 ——理由はあちらの `_course_why`。
 
-## なぜ「印」を機械で付けるのか
+## 好みの印は付けない。豚と酒は、アイコンで知らせる（2026-11-15。#1228）
 
-あやとの指示（2026-11-06）:
+あやと（#1228）:
 
-> 見たいもの … これまでの経験からどんなものが好きかも調べた上で
-> 食べたいもの … これまでの経験からどんな食べ物が好きかも調べた上で
+> 僕の好みを書いてることが多くて、第三者から見たときノイズになる。
 
-**ブルガリア料理の看板は豚で、あやとは豚が苦手。** 酒も2年前にやめている。
-普通に名物を並べると、**半分が食べられないもの**になる。
+前は、あやとの好み（豚が苦手・酒をやめた・ローカル市場が好き）を議事録から測って、
+規則1本で ◎○⚠ を付けていた。**読む人はあやとではない。** 好みで品を外したり印を
+付けたりせず、**豚肉あり・アルコールありの2つだけを事実として焼く**（`pork` `alcohol`）。
+選ぶのは読む人（`docs/island-misses.md` #326）。
 
-だから重要度を**2本立て**にする。混ぜると「有名だけどあやとには合わない」が
-表せなくなる。
+星（`rank`。1〜3）は一般の重要度なので残す。
 
-| | |
-| --- | --- |
-| **星**（1〜3） | 一般の重要度。必見／行けたら／余裕があれば |
-| **印**（◎○⚠） | **あやとに合うか。** ここで付ける |
+## 出どころも焼く
 
-**印は手で書かない。** 手で書くと、好みが変わったときに全部を見直すことになるし、
-「なぜその印なのか」が消える。**下の規則1本から出して、理由の字も一緒に出す。**
-
-## ⚠ を隠さない
-
-隠すと配信の場で頼んでしまう。**出したうえで、なぜかを1行添える。**
-「豚なので」「酒なので」「入場料が高いので」。
+面の終わりに出どころの一覧を出す（`docs/guide-design.md` 4-4）。だから
+**事実の1件ごとに `src` を連れてくる**（入場料は `feesrc`、肉の中身は `meatsrc`）。
 """
 
 import json
@@ -95,86 +87,6 @@ TILES = json.loads(_TL.read_text(encoding="utf-8")) if _TL.exists() else None
 #: あやと（2026-11-13）:「マップが日本語じゃなくて見にくい」。
 #: OSM のタイルに焼かれた字はブルガリア語のままなので、**こちらの札を日本語で描く。**
 PLACES = json.loads((SRC / "places.json").read_text(encoding="utf-8"))
-
-#: 高いと感じる線。あやとは 5,280円 の入場料を「5,280円するやんけ」と言って入らなかった。
-#: 1,770円（10ユーロ）はその3分の1だが、1日の買い出しが600〜700円の人なので、
-#: **2日ぶんを超えたら札を出す**という線にした
-PRICEY_EUR = 8.0
-
-#: 好みに当たる言葉。`taste.json` の実測から引いた。**ここを直せば印が全部動く**
-LIKE_FOOD = [
-    ("ニンニク", "ニンニクの料理が好き"),
-    ("トマト", "トマトの系統が好き"),
-    ("唐辛子", "辛いものが好き"),
-    ("チーズ", "チーズたっぷりが好き"),
-    ("ヨーグルト", "ブルガリアで楽しみにしていたもの"),
-    ("パイ", "200円前後のパン・パイで機嫌が最高になる"),
-    ("パン", "200円前後のパン・パイで機嫌が最高になる"),
-    ("鶏", "鶏の料理が好き"),
-    ("じゃがいも", "じゃがいもの料理をよく作る"),
-    ("豆", "豆のスープをよく作る"),
-]
-LIKE_SPOT = [
-    ("市場", "「汚い」ローカル市場で機嫌がいい"),
-    ("食堂", "地元の激安食堂が好き"),
-    ("教会", "壁画だらけの正教会が好き"),
-    ("大聖堂", "壁画だらけの正教会が好き"),
-    ("修道院", "壁画だらけの正教会が好き"),
-    ("公園", "公園のベンチでパンとチーズを食べるのが好き"),
-    ("庭園", "公園のベンチでパンとチーズを食べるのが好き"),
-    ("山", "夕日の見える高台が好き（元「夕日研究家」）"),
-    ("展望", "夕日の見える高台が好き（元「夕日研究家」）"),
-    ("温泉", "ただで湧いているものが好き"),
-]
-
-
-def yen_of(fee: str):
-    """入場料の字からユーロの数を拾う。**無ければ None。**"""
-    m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*ユーロ", fee or "")
-    return float(m.group(1)) if m else None
-
-
-def mark_food(d: dict):
-    """料理ひとつの印。**規則はここ1本。**"""
-    if d.get("alcohol"):
-        return "warn", "お酒。あやとは2年ほど前にやめている"
-    if d.get("pork"):
-        return "warn", "豚。あやとは豚肉が苦手（ハム・ソーセージも）"
-    for word, why in LIKE_FOOD:
-        if word in (d.get("jp", "") + d.get("what", "")):
-            return "good", why
-    if d.get("meat") == "なし":
-        return "ok", "肉が入らないので、豚を避けられる"
-    return "ok", ""
-
-
-def mark_buy(d: dict, alcohol: set):
-    """土産ひとつの印。
-
-    **ここにも印を出す。** 出さないと、ほかの節ぜんぶが ◎○⚠ を持っている面の中で
-    この節だけ無印になって、「酒は印の対象外」と読めてしまう。
-    ただし**土産は人に贈るもの**なので、⚠ の理由はそこまで言う。
-    """
-    if d["what"] in alcohol:
-        return "warn", "お酒。あやとは飲まないので、人に贈るときだけ"
-    for word, why in LIKE_FOOD:
-        if word in (d["what"] + d["why"]):
-            return "good", why
-    return "ok", ""
-
-
-def mark_spot(d: dict):
-    """行き先ひとつの印。"""
-    eur = yen_of(d.get("fee", ""))
-    if eur is not None and eur >= PRICEY_EUR:
-        return "warn", "入場料が高め。あやとは値段で入るかを決める"
-    for word, why in LIKE_SPOT:
-        if word in (d.get("name", "") + d.get("what", "")):
-            return "good", why
-    if "無料" in (d.get("fee") or ""):
-        return "ok", "ただで入れる"
-    return "ok", ""
-
 
 #: Google マップの検索に足す街の名前（現地の字）と、足さない見どころ（街の外にあるもの）
 CITY = PLACES["city"]
@@ -375,28 +287,24 @@ def main() -> None:
     spots, food, buy = [], [], []
     for s in F["spots"]:
         g = fill_spot[s["name"]]
-        m, why = mark_spot({**s, **g})
         # **Google マップの道は、名前から1か所で作る**（`spot_maps`）。
         # 材料のほうに書いた字を持ち回ると、`hl=ja` のような直しが片側にだけ残る
-        spots.append({**s, "fee": g.get("fee", ""), "mark": m, "why": why,
+        spots.append({**s, "fee": g.get("fee", ""), "feesrc": g.get("src", ""),
                       "maps": spot_maps(s),
                       **photo_of("spots", s["name"])})
     # 距離は下で地図を組むときに出す（同じ計算を2回書かない）
     for d in F["food"]:
         g = fill_food[d["jp"]]
-        m, why = mark_food({**d, **g})
+        # **豚と酒は事実として持つ**（好みの印にしない。#1228）
         food.append({**d, **{k: g[k] for k in ("pork", "alcohol", "meat", "note")},
-                     "mark": m, "why": why, "near": near_maps(d),
+                     "meatsrc": g.get("src", ""), "near": near_maps(d),
                      **photo_of("food", d["jp"])})
     alcohol = set(FILL["buy_alcohol"])
     miss_a = alcohol - {x["what"] for x in F["buy"]}
     if miss_a:
         raise SystemExit("土産の名前が合いません: %s" % sorted(miss_a))
     for x in F["buy"]:
-        m, why = mark_buy(x, alcohol)
-        # **`why` は土産そのものの説明**（`facts.json` が持っている欄）なので、
-        # 印の理由はぶつからない名前で足す
-        buy.append({**x, "mark": m, "markwhy": why, "near": near_maps(x),
+        buy.append({**x, "alcohol": x["what"] in alcohol, "near": near_maps(x),
                     **photo_of("buy", x["what"])})
 
     # ---- 街の地図。**緯度経度から座標を出すのはここだけ。**
@@ -529,7 +437,7 @@ def main() -> None:
                  # **札にも記号を入れる。** 丸が近いと、どの札がどの丸のものか
                  # 近さだけでは決まらない（実際に読めない組が出た）
                  "text": "%s %s" % (s["letter"], labels[s["name"]]),
-                 "mark": s["mark"], "star": s["rank"],
+                 "mark": "spot", "star": s["rank"],
                  "x": at(s)[0], "y": at(s)[1], "prio": s["rank"]} for s in near]
     maps["see"] = bake_map(
         see_pins, W, H, art,
@@ -549,15 +457,13 @@ def main() -> None:
         {"art": art, "center": c, "maps": maps},
         ensure_ascii=False, indent=1), encoding="utf-8")
 
-    ts = ['/** ブルガリア（ソフィア）の案内（`/bulgaria`）。',
+    ts = ['/** ソフィアの調べた事実（`/travel/bulgaria/sofia` の材料）。',
           ' *',
           ' * **手で直さない。** `python3 python/build_bulgaria.py` が焼く。',
           ' * 中身を直すなら `python/data/bulgaria/*.json` のほうを直す。',
           ' *',
-          ' * 印（`mark`）は好みの実測から機械で付けている。規則は焼くほうの冒頭。',
+          ' * 面の組み立て（やりたいこと・エリア・基本情報の並び）は `content/guidebook/bulgaria-sofia.ts`。',
           ' */',
-          "",
-          'export type Mark = "good" | "ok" | "warn";',
           "",
           'export const BG_RATE = "%s";' % esc(F["rate_note"]),
           'export const BG_LEAD = "%s";' % esc(F["lead"]),
@@ -630,9 +536,9 @@ def main() -> None:
     arr("BG_MYMAPS", mymaps, ["which", "mid", "title", "pins", "ll", "z"])
 
     arr("BG_FACTS", F["facts"], ["n", "unit", "cap"])
-    arr("BG_IMAGE", F["image"], ["title", "body"])
-    arr("BG_HISTORY", F["history"], ["title", "body"])
-    arr("BG_BASICS", F["basics"], ["title", "body"])
+    arr("BG_IMAGE", F["image"], ["title", "body", "src"])
+    arr("BG_HISTORY", F["history"], ["title", "body", "src"])
+    arr("BG_BASICS", F["basics"], ["title", "body", "src"])
     # **記号と「中心から◯km」を、一覧の側にも入れる。** 地図とつき合わせるのに要る
     letters = {s["name"]: s["letter"] for s in near}
     kms = {s["name"]: s["km"] for s in far}
@@ -640,8 +546,8 @@ def main() -> None:
         s["letter"] = letters.get(s["name"], "")
         s["far"] = kms.get(s["name"], 0)
     arr("BG_SPOTS", spots,
-        ["letter", "far", "name", "cyr", "roman", "kana", "rank", "mark", "why",
-         "what", "how", "walk", "stay", "fee", "advice", "maps", *PHOTO_KEYS])
+        ["letter", "far", "name", "cyr", "roman", "kana", "rank",
+         "what", "how", "walk", "stay", "fee", "advice", "maps", "src", "feesrc", *PHOTO_KEYS])
     # 表紙の1枚。**入れ子でも素でも読む**——集めるほうの形に、焼くほうを縛られない
     _h = PHOTOS.get("hero") or {}
     _h = _h.get("hero") if isinstance(_h.get("hero"), dict) else _h
@@ -656,28 +562,25 @@ def main() -> None:
     # 名前・説明・Google マップの道はここから引く（同じ字を何度も焼かない）
     arr("BG_PLACES", places, ["n", "key", "label", "roman", "what", "maps", "km", "on"])
     arr("BG_FOOD", food,
-        ["jp", "cyr", "roman", "kana", "rank", "mark", "why", "what", "where",
-         "price", "meat", "note", "pins", "near", *PHOTO_KEYS])
-    # **「ここでしたいこと」は、好みの実測と現地の事実を突き合わせた結論**なので、
-    # 事実（`facts.json`）ではなくこちら（`fill.json`）が持つ。印も手で置いてある
-    # ——規則1本では「市場でパイを買って公園で食べる」のような**組み合わせ**が出せない
-    arr("BG_TODO", FILL["todo"], ["what", "where", "why", "mark"])
+        ["jp", "cyr", "roman", "kana", "rank", "pork", "alcohol", "what", "where",
+         "price", "meat", "note", "pins", "near", "src", "meatsrc", *PHOTO_KEYS])
+    # **「ここでしたいこと」はもう焼かない**（#1228）。あやとの好みから組んだ結論だったので、
+    # 初めての人向けの「やりたいこと」は `content/guidebook/bulgaria-sofia.ts` が見どころの事実から組む
     arr("BG_BUY", buy,
-        ["what", "mark", "markwhy", "why", "where", "price", "pins", "near", *PHOTO_KEYS])
-    arr("BG_EVENTS", F["events"], ["what", "when", "body"])
+        ["what", "cyr", "alcohol", "why", "where", "price", "pins", "near", "src", *PHOTO_KEYS])
+    arr("BG_EVENTS", F["events"], ["what", "when", "body", "src"])
     arr("BG_WORDS", F["words"], ["cyr", "roman", "kana", "jp"])
 
     OUT_TS.write_text("\n".join(ts), encoding="utf-8")
-    g = sum(1 for x in food if x["mark"] == "good")
-    w = sum(1 for x in food if x["mark"] == "warn")
     shots = sum(1 for x in spots + food + buy if x.get("img")) + (1 if hero.get("img") else 0)
     want = len(spots) + len(food) + len(buy) + 1
     print("写真 %d/%d 枚" % (shots, want)
           + ("" if shots == want else "  **足りない: "
              + "、".join([x.get("name") or x.get("jp") or x.get("what")
                          for x in spots + food + buy if not x.get("img")][:6]) + "**"))
-    print("焼いた %s（見どころ %d・食べもの %d／◎%d ⚠%d）"
-          % (OUT_TS.name, len(spots), len(food), g, w))
+    print("焼いた %s（見どころ %d・食べもの %d／豚あり %d・酒 %d）"
+          % (OUT_TS.name, len(spots), len(food),
+             sum(1 for x in food if x["pork"]), sum(1 for x in food if x["alcohol"])))
     print("焼いた %s（%s）" % (OUT_MAP.name, "／".join(
         "%s ピン%d本・札%d枚・地図に入らないもの%d件"
         % (n, len(m["pins"]), sum(1 for p in m["pins"] if p.get("lw")), len(m["far"]))

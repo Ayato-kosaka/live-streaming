@@ -145,8 +145,9 @@ export const THEMES: Theme[] = [
     id: "bulgaria",
     name: "ソフィアでこれやって",
     group: BULGARIA_GROUP,
-    /* 行き先は `app/bulgaria/page.tsx`。**`id` は面の道と同じ字にする** */
-    href: "/bulgaria",
+    /* 行き先は `app/travel/bulgaria/sofia/page.tsx`（前の `/bulgaria`。#1228）。
+       **`id` は変えない**——付箋の宛先として Firestore に `bulgaria` で入っている。道だけ移した */
+    href: "/travel/bulgaria/sofia",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になる。
        **決まっている2つを置く**——街と、紙に載せた見どころ。
