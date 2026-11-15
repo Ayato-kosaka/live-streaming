@@ -545,8 +545,10 @@ def main() -> None:
     for s in spots:
         s["letter"] = letters.get(s["name"], "")
         s["far"] = kms.get(s["name"], 0)
+    # **緯度経度も一覧に入れる。** ガイドブックの見どころマップ（`content/guidebook/spotmap.ts`）が、
+    # 描いた絵地図の範囲で写真のピンを置くのに使う（#1228）
     arr("BG_SPOTS", spots,
-        ["letter", "far", "name", "cyr", "roman", "kana", "rank",
+        ["letter", "far", "name", "cyr", "roman", "kana", "rank", "lat", "lon",
          "what", "how", "walk", "stay", "fee", "advice", "maps", "src", "feesrc", *PHOTO_KEYS])
     # 表紙の1枚。**入れ子でも素でも読む**——集めるほうの形に、焼くほうを縛られない
     _h = PHOTOS.get("hero") or {}
