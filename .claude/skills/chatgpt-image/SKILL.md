@@ -1,6 +1,6 @@
 ---
 name: chatgpt-image
-description: 絵の背景透過・描き直し・新しく描くを、手元の道具か ChatGPT（EC2 の Chrome）で行う。どちらを使うかの決め方、絵を渡して頼み・できた絵を持ち帰り・島に出せる形に整えるまで。島の住人・ステッカー・グッズの絵を触るときに使う。トリガー語:「背景透過」「透過PNG」「白い地を抜く」「切り抜き」「絵を描き直す」「高解像度に」「ChatGPT で絵」「画像生成」「chatgpt-image」。
+description: 絵の背景透過・描き直し・新しく描くを、手元の道具か ChatGPT（EC2 の Chrome）で行う。どちらを使うかの決め方、絵を渡して頼み・できた絵を持ち帰り・島に出せる形に整えるまで。島の住人・ステッカー・グッズの絵を触るときに使う。街のガイドの絵（表紙・エリア地図・料理・土産）を一括で描くのもここ（6）。トリガー語:「ガイドの絵」「街のガイドの絵を描く」「背景透過」「透過PNG」「白い地を抜く」「切り抜き」「絵を描き直す」「高解像度に」「ChatGPT で絵」「画像生成」「chatgpt-image」。
 ---
 
 # 絵を作る・直す（背景透過から）
@@ -149,3 +149,24 @@ python3 .claude/skills/chatgpt-image/tidy.py <持ち帰った.png> <出力.png> 
 - 島に出す先ごとの手順は、それぞれのスキル・道具にある:
   - 住人の背景なし → `python/admin/characters_plain_swap.py`（`python/admin/plain_swap/README.md`）。そのあと SUZURI の住人グッズ（`suzuri` の characters.md）
   - あやとのステッカー → `site/content/goods.ts` の `STICKERS`（`file` は大きいまま、`art` は長い辺 480 の webp `quality=86`）
+
+## 6. 街のガイドの絵を一括で描く（表紙・エリア地図・料理・土産）
+
+道具は `guide_art.py`、街ごとに変わるのは**頼み書き** `guide/<国>/<街>.json` だけ（ソフィア・スコピエのを写して、
+`scene`・地図の `prompt` と `areas`・品ごとの `desc`（英語）と `alt`（面に出す字）を書き換える）。字を入れない・トーン・
+手本の1枚（ソフィアのショプスカ・サラダ／バラのオイル）を渡す、は道具が持つ。品の鍵は guidebook.json（無い街は面の TS）から読む。
+
+```bash
+G=.claude/skills/chatgpt-image/guide_art.py; C=bulgaria/sofia; W=<スクラッチ>/guide-art/$C   # 地図の下敷き（layout）は $W に置く
+python3 $G $C plan                 # 品・id・頼む文の長さ・後回し（手本や下敷きが無い）を1行ずつ
+python3 $G $C run --work $W        # manifest に無い品だけ EC2 へ。済んだ品は EC2 が飛ばす。描き直しは頼み書きの v を上げて --only food:<鍵>
+python3 $G $C status               # 待つのは send_later で（1件 1.5〜5分）。ポーリングしない
+python3 $G $C fetch --work $W && python3 $G $C finalize --work $W && python3 $G $C sheet --work $W   # 新しい街は --with bulgaria/sofia でトーンを混ぜて見る
+python3 $G $C check                # 頼み書きから manifest を作り直して、いまのと同じか（EC2 を使わない）
+```
+
+目安: EC2 は1枚1.5〜5分で、30品なら1.5〜2.5時間・断りが1割（2周目で埋まる。2026-11-15、ソフィア35品・スコピエ27品）。
+こちらが読むのは各段の数行と見比べの絵2枚（`sheet-items.png`・`sheet-tone.png`）で、回すぶんは見込み1〜2万トークン。
+頼み書き（2万字ほど）を書くのに見込み5〜8万トークン。手で回していたときは1人30万〜65万トークンだった。
+見比べで違った品は `fix`（描写の前に足す注意）か `desc` を直し、`v` を上げて `run --only` で描き直す。
+見張りは `guide_art_selftest.py`（偽の EC2 で回す）。

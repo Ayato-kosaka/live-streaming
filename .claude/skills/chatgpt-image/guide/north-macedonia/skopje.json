@@ -1,0 +1,255 @@
+{
+ "ja": "スコピエ",
+ "items": {
+  "guidebook": "python/data/guide/north-macedonia/skopje/guidebook.json"
+ },
+ "ec2_dir": "/home/ubuntu/chatgpt/skopje",
+ "stitch": "Balkan",
+ "scene": "Scene: Skopje, the capital of North Macedonia, on a clear late-autumn (November) afternoon, seen from the north bank of the Vardar river and looking south across it. In the middle ground is the old Stone Bridge: a long, low Ottoman-era bridge built of pale beige-grey stone blocks, with a row of many rounded arches over the calm green-blue Vardar river and a flat pedestrian deck with low stone parapets; a few tiny cheerful people stroll across it. At the far (south) end of the bridge opens Macedonia Square, wide and paved with pale stone; in its center is a large round fountain, and rising from the fountain a very tall, pale stone column topped by a big bronze statue of a warrior on a rearing horse holding a sword up, with small bronze lion statues on the rim of the fountain. Behind the square: cream and white city buildings and autumn trees with golden-yellow and orange leaves. In the background, filling the horizon: Vodno mountain, a long, broad, gently rounded forested ridge (NOT a sharp peak) in soft blue-green with autumn tints, and on its summit a very large open steel lattice cross in a dark rust-brown color (the Millennium Cross; it is NOT white) standing out as a slim silhouette against the sky. On the near (north) bank at the left edge, a short stretch of an old stone fortress wall with a squat crenellated tower on a small grassy hill (Skopje Fortress, Kale). Golden late-afternoon light with soft long shadows. ",
+ "cover": {
+  "v": 2,
+  "bias": 0.5,
+  "alt": "アーチの続く石橋と城塞の壁、噴水の上に騎馬像が立つマケドニア広場、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "note": "手描きの水彩・ガッシュ調。輪郭線なし・強い環境光・明るく彩度の高い色。石橋（石のアーチ）・マケドニア広場（噴水の上の柱に騎馬像）・ヴォドノ山（なだらかな山・頂の茶色の鉄の十字架）・城塞の壁を主に。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
+ },
+ "cover_tall": {
+  "v": 2,
+  "bias": 0.5,
+  "alt": "石橋と城塞の壁、マケドニア広場の騎馬像、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
+ },
+ "areamap": {
+  "v": 9,
+  "layout": "layout_city2.png",
+  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: the river, every road and every district border must stay where they are in the layout, and each landmark sits exactly on its numbered dot. In particular: the Skopje Fortress (3) is on the NORTH bank of the river, exactly on dot 3, on the SAME side of the river as the yellow Old Bazaar (never on the other bank); the Stone Bridge (1) crosses the river exactly at dot 1; the Warrior on a Horse fountain (2) is exactly on dot 2 on the south bank; the triumphal arch (7) is exactly on dot 7 at the edge of the square, not further south; the old railway station museum (8) is exactly on dot 8 and the Transport Center (9) exactly on dot 9, with the railway running through it. Keep every icon small so that it fits on its own dot and does not cover its neighbours. ",
+  "prompt": "Paint an illustrated tourist map of central Skopje, North Macedonia, as a square image (1024x1024), using the attached layout as the exact base. North is up. Keep the blue Vardar river, every white road, every green park and the four colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove districts. Each district keeps its own soft color from the layout, painted as a gently tinted ground with soft rounded edges and outlined by a soft dashed line in a slightly deeper shade of the same color, and drawn as what it really is: yellow = the Old Bazaar on the north bank of the river: Ottoman-era lanes of low shops with tiled roofs, small domes, minarets and a busy open-air market; lavender = the new town on the south bank: Macedonia Square with statues and fountains, pale neoclassical buildings, wide streets, modern blocks and a shopping mall; pink = Debar Maalo in the west: a cozy, stylish neighborhood of low houses on tree-lined streets with café and restaurant terraces; light blue = the bus and railway station quarter in the east: the long elevated station, railway tracks, buses and a few blocks around them. Everything outside the four districts is a calm, light warm-beige town of houses with tiled roofs and leafy streets, with only its real parks in green (the big City Park in the north-west with trees, paths and a small pond). There are no mountains and no arrows on this map. Main roads are cream-white ribbons, the river is a soft blue ribbon. At each numbered dark dot in the layout, draw a small cute illustrated landmark icon in that exact spot (do NOT draw the numbers or the dots themselves, and do not write any numbers anywhere): 1 Stone Bridge (long low pale stone bridge with many arches across the river); 2 Warrior on a Horse (bronze rider on a rearing horse on a tall column in a round fountain with lions); 3 Skopje Fortress, Kale (old stone fortress walls with towers on a small hill); 4 Kursumli An (old stone-and-brick caravanserai with small lead domes around a courtyard); 5 Mustafa Pasha Mosque (one big grey dome and one slender white minaret); 6 Clock Tower (tall slim hexagonal stone tower); 7 Porta Macedonia (a white triumphal arch); 8 old railway station museum (a pale building with a big clock stopped on its facade); 9 Transport Center (long modern station on raised concrete pillars with a train and buses); 10 St Clement of Ohrid Cathedral (modern church with many round domes in rings); 11 Debar Maalo (a tree-lined street with café tables and umbrellas); 12 Bit Pazar (open-air market stalls with fruit and vegetables under striped awnings); 13 Archaeology Museum (big pale neoclassical building with columns and a dome on the river bank); 14 Daut Pasha Hamam (low stone bathhouse with many small domes).",
+  "alt": "スコピエの中心部の絵地図。旧市街・新市街・おしゃれなデバル・マーロ・バスターミナルと鉄道駅の4つの地区が色で塗り分けてあり、ヴァルダル川に架かる石橋や城塞、モスク、市場、騎馬像の噴水、凱旋門、旧駅舎、交通センターなどの目印が描いてある",
+  "note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・あやとの地区分け（2026-11-15）の4地区の色・目印14か所の番号）を渡し、その配置どおりに描かせた。街の中心だけの 2.9km 四方。地区の範囲は guidebook.json の範囲と目印の座標の外形を、絵の上で隣の地区と接するまで広げたもの。北が上。字も番号もなし（地区の名前と見どころの番号は面の側で重ねる）",
+  "areas": [
+   {
+    "id": "carsija",
+    "name": "旧市街",
+    "local": "Стара чаршија",
+    "color": "#ffd98a",
+    "x": 0.55,
+    "y": 0.185,
+    "source": [
+     "https://www.openstreetmap.org/way/1532093164",
+     "https://www.openstreetmap.org/way/32813170",
+     "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje"
+    ]
+   },
+   {
+    "id": "newtown",
+    "name": "新市街",
+    "local": "Центар",
+    "color": "#d9ccf5",
+    "x": 0.33,
+    "y": 0.845,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Skopje/Centar",
+     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
+     "https://en.wikipedia.org/wiki/Skopje"
+    ]
+   },
+   {
+    "id": "debar-maalo",
+    "name": "おしゃれエリア",
+    "local": "Дебар Маало",
+    "color": "#ffc4d2",
+    "x": 0.17,
+    "y": 0.225,
+    "source": [
+     "https://www.openstreetmap.org/node/6239561763",
+     "https://www.openstreetmap.org/way/1315915665",
+     "https://en.wikivoyage.org/wiki/Skopje/Centar"
+    ]
+   },
+   {
+    "id": "station",
+    "name": "バスターミナル・鉄道駅",
+    "local": "Транспортен центар",
+    "color": "#a9dcf5",
+    "x": 0.76,
+    "y": 0.905,
+    "source": [
+     "https://www.openstreetmap.org/way/75602006",
+     "https://en.wikivoyage.org/wiki/Skopje",
+     "https://www.openstreetmap.org/way/1231158369"
+    ]
+   }
+  ],
+  "bbox": {
+   "west": 21.415,
+   "east": 21.4505,
+   "south": 41.9837,
+   "north": 42.0102
+  },
+  "beyond": [
+   {
+    "id": "suto-orizari",
+    "name": "シュト・オリザリ",
+    "local": "Шуто Оризари",
+    "lat": 42.0405453,
+    "lon": 21.423591,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965625"
+    ],
+    "x": 0.431,
+    "y": 0.06,
+    "dir": "n"
+   },
+   {
+    "id": "gazi-baba",
+    "name": "ガジ・ババ",
+    "local": "Гази Баба",
+    "lat": 41.9984446,
+    "lon": 21.4737249,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965627"
+    ],
+    "x": 0.94,
+    "y": 0.478,
+    "dir": "e"
+   },
+   {
+    "id": "vodno",
+    "name": "ヴォドノ山",
+    "local": "Водно",
+    "lat": 41.96502,
+    "lon": 21.394421,
+    "source": [
+     "https://www.openstreetmap.org/way/229939246",
+     "https://en.wikipedia.org/wiki/Vodno"
+    ],
+    "x": 0.424,
+    "y": 0.94,
+    "dir": "s"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "model": "bulgaria/sofia:food-shopska-salata",
+  "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし",
+  "items": {
+   "tavche": {
+    "desc": "Tavče gravče, the national dish of North Macedonia: a round, shallow, unglazed terracotta earthenware pan (tava) with sloping sides, filled to the rim with oven-baked white beans in a thick brick-red paprika sauce with onion; the top is slightly crusted and darker at the edges, still bubbling; one whole dried red chili pepper lies on top in the middle and a little chopped parsley is sprinkled over. Beside the pan: one long, thin pale-green pepper and a chunk of rustic bread.",
+    "alt": "素焼きの浅い土鍋で焼いた、赤い汁の豆のタヴチェ・グラフチェ。上に干した赤唐辛子がのっている"
+   },
+   "kebapi": {
+    "desc": "Macedonian kebapi: seven small, finger-sized grilled minced-meat sausages without casing (each about 8 cm long and thumb-thick, juicy brown with charcoal grill marks) on a plate, with a heap of finely chopped raw white onion and a soft, thick round flatbread (lepinja) cut open beside them, plus a small spoonful of orange-red pepper relish.",
+    "alt": "炭火で焼いた小さなケバピが並び、刻んだ玉ねぎと丸いパンが添えてある",
+    "wiki": "Ćevapi"
+   },
+   "burek": {
+    "desc": "Burek: a large round metal baking tray of golden, flaky burek made of many very thin, flat layered phyllo sheets (NOT a spiral), baked crisp and golden on top; one big wedge has been cut out and placed on a plate in front, showing the many thin flaky layers with a white crumbled-cheese filling; beside it a glass of thick white drinking yogurt.",
+    "alt": "薄い生地を何枚も重ねて焼いたブレク。切り分けた1切れに白いチーズの層が見え、ヨーグルトの飲み物が添えてある"
+   },
+   "shopska": {
+    "desc": "Shopska salad as served in North Macedonia: in a shallow plain white bowl, diced ripe red tomatoes, diced cucumbers, chopped roasted green peppers and thin raw onion slices, topped with a thick, fluffy heap of finely grated white brined cheese (sirenje) and one small sprig of parsley.",
+    "alt": "刻んだトマトときゅうり、ピーマンの上に、白いチーズをたっぷり削りかけたショプスカ・サラダ",
+    "model": "bulgaria/sofia:food-tarator"
+   },
+   "pastrmajlija": {
+    "desc": "Pastrmajlija: an oval, boat-shaped flatbread pie (about 35 cm long, like a long pide) with a puffy golden-brown crust rim, its flat center densely covered with small diced cubes of browned, juicy meat pressed into the dough, and two long pickled yellow peppers laid on top; served on a round metal plate.",
+    "alt": "楕円のパン生地に角切りの肉をのせて焼いたパストルマイリヤ。黄色い唐辛子の酢漬けがのっている"
+   },
+   "selsko-meso": {
+    "desc": "Selsko meso (village meat): a round, deep, glazed brown-terracotta clay pot filled with a stew of tender pork chunks, button mushrooms, onions and red and green pepper pieces in a thick reddish sauce of tomato and wine, topped with melted white cheese browned in spots, steaming; a small sprig of parsley; a slice of rustic bread beside it.",
+    "alt": "土鍋で豚肉ときのこ、ピーマンを煮込み、チーズを溶かしたセルスコ・メソ",
+    "wiki": "Selsko meso"
+   },
+   "polneti-piperki": {
+    "desc": "Polneti piperki (stuffed peppers): four whole pale-green bell peppers stuffed with rice and minced meat, their tops cut off and put back as little caps, baked until soft and slightly blistered, standing in a shallow brown baking dish in a light tomato sauce; a small bowl of thick white yogurt beside them.",
+    "alt": "米とひき肉を詰めて焼いたピーマンがトマトの汁に並び、ヨーグルトが添えてある",
+    "wiki": "Stuffed peppers"
+   },
+   "doner": {
+    "desc": "Doner kebab from a Skopje kebab shop: a soft folded flatbread sandwich generously filled with thin shavings of grilled doner meat, shredded lettuce and cabbage, tomato slices, onion and white garlic sauce, half-wrapped in plain white paper (no printing); a few French fries beside it.",
+    "alt": "薄くそいだ肉と野菜を、たたんだパンに挟んだドネル・ケバブ。フライドポテトが添えてある",
+    "wiki": "Doner kebab"
+   },
+   "sweets": {
+    "desc": "Tulumba and baklava: on a small plate, several tulumba (short, ridged, finger-shaped fried dough pieces about 6 cm long, golden-brown and glistening, soaked in clear sugar syrup) next to three diamond-shaped pieces of baklava (many thin golden phyllo layers with a brown chopped-walnut filling, glossy with syrup); a small glass of water beside the plate.",
+    "alt": "シロップに漬けた揚げ菓子のトゥルンバと、くるみを挟んだひし形のバクラヴァ"
+   },
+   "boza": {
+    "desc": "Boza: one tall clear glass filled with a thick, smooth, opaque pale yellow-beige fermented grain drink (like a thin pudding), with a fine pale froth on top and a light dusting of cinnamon; a long spoon beside the glass.",
+    "alt": "背の高いグラスに注いだ、とろりとした淡い黄色のボザ"
+   },
+   "mastika": {
+    "desc": "Mastika, the Macedonian anise-flavoured spirit: a plain clear glass bottle (no label) of colorless liquor, one small straight shot glass of the clear mastika, and one short tumbler in which mastika poured over ice cubes has turned cloudy milky-white; a small plate of white cheese cubes and green olives as a snack beside them.",
+    "alt": "ラベルの無い瓶と、透明なマスティカのグラス。氷を入れたほうは白く濁っている",
+    "wiki": "Mastika"
+   },
+   "rakija": {
+    "desc": "Macedonian rakija: a plain glass bottle (no label) of clear, colorless grape brandy with a cork, and two small thick-bottomed stemmed rakija glasses filled with the clear spirit; a small plate of white cheese and a few green olives beside them.",
+    "alt": "ラベルの無い瓶と、小さなグラス2つに注いだ透明なラキヤ。チーズとオリーブが添えてある",
+    "wiki": "Rakia"
+   },
+   "vranec-glass": {
+    "desc": "A large stemmed wine glass of Vranec, a very deep, dark purple-red wine (inky and almost opaque in the center with a violet rim), and a small bunch of dark purple-black grapes with a vine leaf beside it.",
+    "alt": "大きなグラスに注いだ濃い紫の赤ワイン・ヴラネツと、黒ぶどう"
+   },
+   "beer": {
+    "desc": "Local lager beer: a tall stemmed glass of clear golden pale lager with a thick white foam head and condensation drops, beside a brown glass beer bottle with NO label at all (plain bottle), and a small bowl of roasted salted peanuts.",
+    "alt": "泡の立った金色のビールのグラスと、ラベルの無い茶色の瓶、ピーナッツ",
+    "wiki": "Skopsko beer"
+   }
+  }
+ },
+ "buy": {
+  "model": "bulgaria/sofia:buy-rose-oil",
+  "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし",
+  "items": {
+   "cookie": {
+    "desc": "Macedonian supermarket butter cookies: an opened plain cardboard box (plain cream-colored, NO printing at all) full of round and flower-shaped golden butter biscuits, some topped with sliced almonds and some sprinkled with shredded coconut, with a few cookies stacked on the table in front of the box.",
+    "alt": "無地の箱に入ったバタークッキー。アーモンドやココナッツをのせたものもある"
+   },
+   "ajvar": {
+    "desc": "A short, wide glass jar of ajvar (a thick, smooth, deep orange-red relish of roasted red peppers) with a plain metal lid and no label, next to a small open bowl of it and a slice of rustic bread spread with ajvar; one whole roasted red pepper beside them.",
+    "alt": "瓶詰のアイヴァルと、小鉢に出したもの、アイヴァルを塗ったパン、焼いた赤いパプリカ"
+   },
+   "coffee": {
+    "desc": "Turkish coffee to take home: a plain kraft-paper bag (no printing) of very finely ground coffee, folded open to show the dark brown powder as fine as cocoa with a small spoon in it; beside it a small traditional hammered-copper coffee pot with a long handle (džezva) and one small white porcelain cup of Turkish coffee with a thick light-brown foam on top, on a saucer, with a cube of lokum.",
+    "alt": "細かく挽いたトルココーヒーの粉の袋と、銅のジェズヴァ、泡の立ったコーヒーの小さなカップ",
+    "wiki": "Turkish coffee"
+   },
+   "chocolate": {
+    "desc": "Chocolates made in Skopje: several chocolate bars in plain glossy paper wrappers of different solid colors (red, blue and gold) with NO writing and NO logos, one bar unwrapped and broken into squares of milk chocolate with whole hazelnuts, and a few round chocolate-coated wafer bonbons.",
+    "alt": "無地の包み紙の板チョコと、割ったヘーゼルナッツ入りのチョコレート、丸い菓子",
+    "wiki": "Evropa (company)"
+   },
+   "vranec": {
+    "desc": "A bottle of North Macedonian Vranec red wine: a tall dark-green glass wine bottle with a plain blank cream label (no writing) and a dark red capsule, standing beside a corkscrew and a small bunch of dark purple-black grapes with a vine leaf.",
+    "alt": "無地のラベルの赤ワインの瓶と、コルク抜き、黒ぶどう"
+   },
+   "rakija": {
+    "desc": "Homemade rakija from the farmers' market: a plain round glass bottle (reused, no label) of clear colorless fruit brandy closed with a cork, a second smaller flat glass flask of pale golden plum rakija, and a few ripe purple plums and green grapes beside them.",
+    "alt": "ラベルの無い瓶に詰めた自家製のラキヤと、プラムとぶどう",
+    "wiki": "Rakia"
+   },
+   "market": {
+    "desc": "Groceries from a Skopje food market: a small bundle of dried mountain tea (greenish-grey herb sprigs with small yellow flowers, tied with string), two small open paper bags of ground red paprika and dried chili flakes, a short string of dried red peppers, and a block of white brined sirenje cheese on wax paper.",
+    "alt": "束ねた山のお茶、パプリカと唐辛子の粉、干した赤唐辛子、白いチーズ"
+   },
+   "winter": {
+    "desc": "Winter accessories bought in Skopje: a long black knit scarf, neatly folded, a pair of dark grey knit gloves, and a soft charcoal-grey knit beanie hat, arranged together.",
+    "alt": "黒い長いマフラーと、灰色の手袋とニット帽"
+   },
+   "grocery": {
+    "desc": "A supermarket grocery haul for cooking in a guesthouse kitchen: a reusable cloth shopping bag with a clear plain bag of dry pasta (no printing), a bunch of carrots with green tops, a bunch of yellow bananas, a few tomatoes and a round loaf of bread, spilling out onto the table.",
+    "alt": "布の買い物袋からこぼれたパスタ・にんじん・バナナ・トマト・パン"
+   },
+   "crafts": {
+    "desc": "Silver filigree jewelry from the Old Bazaar of Skopje: a delicate pair of silver filigree earrings, a round silver filigree brooch made of fine twisted silver wire in lace-like flower patterns, a filigree pendant on a thin silver chain, and one thin gold ring, arranged on a small dark-blue velvet cloth.",
+    "alt": "銀の線をレースのように編んだ線細工（フィリグリー）の耳飾りとブローチ、ペンダント、金の指輪",
+    "wiki": "Filigree"
+   }
+  }
+ }
+}
