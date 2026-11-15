@@ -57,6 +57,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guide_photos as gp  # noqa: E402  借りた写真の置き場の道は1か所で引く
 from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -253,7 +254,21 @@ def bake_map(pins, W, H, art, far, aspect=1.15, min_w=520.0):
 
 #: 写真の欄。**出どころ（`cm`）と撮った人（`by`）とライセンス（`lic`）を必ず連れてくる。**
 #: どれか1つでも欠けたら、その写真は使わない——出どころの書けない絵を島に置かない
-PHOTO_KEYS = ("img", "thumb", "big", "cm", "by", "lic", "alt")
+#:
+#: `img`（960）と `thumb`（500）は**島の置き場の道**（`python/guide_photos.py` が Commons から落とした絵）。
+#: 面が Wikimedia から直に読むと、混んだ日に 429 で断られて写真が白く抜けた（2026-11-15）。
+#: 1920 の `big` は焼かない（置くのは 960 まで。大きい表紙は描いた絵のほう）
+PHOTO_KEYS = ("img", "thumb", "cm", "by", "lic", "alt")
+PHOTO_KEY = "bulgaria/sofia"
+
+
+def lent(p: dict) -> dict:
+    """借りた写真の1枚を、置き場の道に直す。**置いていなければ焼かずに止める**"""
+    img = gp.local(PHOTO_KEY, p["img"], 960, ROOT)
+    thumb = gp.local(PHOTO_KEY, p.get("thumb") or p["img"], 500, ROOT)
+    if not img or not thumb:
+        raise SystemExit("借りた写真が置き場に無い: %s（先に python3 python/guide_photos.py %s）" % (p["cm"], PHOTO_KEY))
+    return {**{k: p.get(k, "") for k in PHOTO_KEYS}, "img": img, "thumb": thumb}
 
 
 def photo_of(kind: str, key: str) -> dict:
@@ -261,7 +276,7 @@ def photo_of(kind: str, key: str) -> dict:
     p = (PHOTOS.get(kind) or {}).get(key) or {}
     if not all(p.get(k) for k in ("img", "cm", "lic")):
         return {k: "" for k in PHOTO_KEYS}
-    return {k: p.get(k, "") for k in PHOTO_KEYS}
+    return lent(p)
 
 
 def esc(s) -> str:
@@ -554,8 +569,7 @@ def main() -> None:
     _h = PHOTOS.get("hero") or {}
     _h = _h.get("hero") if isinstance(_h.get("hero"), dict) else _h
     hero = {k: (_h or {}).get(k, "") for k in PHOTO_KEYS}
-    if not all(hero.get(k) for k in ("img", "cm", "lic")):
-        hero = {k: "" for k in PHOTO_KEYS}
+    hero = lent(hero) if all(hero.get(k) for k in ("img", "cm", "lic")) else {k: "" for k in PHOTO_KEYS}
     ts.append("/** 面のいちばん上に敷く1枚。**無ければ空**で、面の側が字だけの頭に落とす */")
     ts.append("export const BG_HERO = { " + ", ".join(
         '%s: "%s"' % (k, esc(hero.get(k))) for k in PHOTO_KEYS) + " } as const;")

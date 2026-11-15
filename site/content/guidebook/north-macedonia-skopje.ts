@@ -554,15 +554,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    ],
    "pic": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Millennium_Cross_Vodno_2025_3.jpg/960px-Millennium_Cross_Vodno_2025_3.jpg",
+    "src": "/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-500.webp",
+    "w": 960,
+    "h": 652,
     "alt": "ヴォドノ山の頂に立つ、白い鉄骨のミレニアム・クロス",
     "kind": "photo",
     "credit": {
      "by": "kallerna",
      "lic": "CC BY-SA 4.0",
      "page": "https://commons.wikimedia.org/wiki/File:Millennium_Cross_Vodno_2025_3.jpg"
-    },
-    "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Millennium_Cross_Vodno_2025_3.jpg/500px-Millennium_Cross_Vodno_2025_3.jpg"
+    }
    },
    "went": {
     "date": "2026-11-08",
@@ -618,16 +620,23 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "tavche"
    ],
    "pic": {
-    "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg/960px-Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg",
+    "src": "/guide/north-macedonia/skopje/photos/starogradska-arhitektura-vo-deba-af1555af-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/starogradska-arhitektura-vo-deba-af1555af-500.webp",
+    "w": 960,
+    "h": 720,
     "alt": "デバル・マーロの古い家並み",
     "kind": "photo",
     "credit": {
      "by": "Hip.Hop_MKD ( А.М.-П. Методијевски карадакоски )",
      "lic": "CC BY-SA 3.0",
      "page": "https://commons.wikimedia.org/wiki/File:Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg"
-    },
-    "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg/500px-Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg"
-   }
+    }
+   },
+   "at": {
+    "lat": 42.001031,
+    "lon": 21.419801
+   },
+   "area": "debar-maalo"
   }
  ],
  "see": {
@@ -690,15 +699,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 1,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/08_Skopje.jpg/960px-08_Skopje.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/08-skopje-40c5c4c6-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/08-skopje-40c5c4c6-500.webp",
+     "w": 960,
+     "h": 720,
      "alt": "ヴァルダル川にかかる、アーチの連なる石橋",
      "kind": "photo",
      "credit": {
       "by": "Делфина",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:08_Skopje.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/08_Skopje.jpg/500px-08_Skopje.jpg"
+     }
     },
     "body": "ヴァルダル川にかかる石の橋で、街の紋章にも旗にも描かれている、スコピエの顔。ローマ時代の土台の上に、1451〜1469年、メフメト2世のもとで架けられた。長さ214m、幅6mで、半円のアーチが12。",
     "facts": [],
@@ -900,15 +911,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 2,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG/960px-Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG",
+     "src": "/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-500.webp",
+     "w": 960,
+     "h": 487,
      "alt": "地震で半分が壊れたまま残る旧駅舎（いまはスコピエ市博物館）",
      "kind": "photo",
      "credit": {
       "by": "Diego Delso",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG/500px-Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG"
+     }
     },
     "body": "1963年7月26日の朝5時17分、マグニチュード6.1の地震で街の約8割が壊れ、1,000人以上が亡くなった。博物館は、そのとき大きく壊れた旧駅舎の、残った3分の1に1970年から入っていて、紀元前3000年ごろからの街の歴史を並べている。駅舎の時計は、地震の時刻で止まったまま。",
     "facts": [],
@@ -946,15 +959,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 2,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Memorial_House_of_Mother_Teresa.jpg/960px-Memorial_House_of_Mother_Teresa.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/memorial-house-of-mother-teresa-e2a1c14c-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/memorial-house-of-mother-teresa-e2a1c14c-500.webp",
+     "w": 960,
+     "h": 645,
      "alt": "マザー・テレサ記念館の外観",
      "kind": "photo",
      "credit": {
       "by": "kallerna",
       "lic": "CC BY-SA 4.0",
       "page": "https://commons.wikimedia.org/wiki/File:Memorial_House_of_Mother_Teresa.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Memorial_House_of_Mother_Teresa.jpg/500px-Memorial_House_of_Mother_Teresa.jpg"
+     }
     },
     "body": "マザー・テレサは、1910年から1928年までスコピエで暮らした。記念館は、彼女が洗礼を受けた聖堂の跡に建ち、2009年1月に開いた。マケドニア広場のすぐ東。",
     "facts": [
@@ -1006,15 +1021,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 3,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Porta_Macedonia%2C_Skopie%2C_Macedonia_del_Norte%2C_2014-04-16%2C_DD_105.jpg/960px-Porta_Macedonia%2C_Skopie%2C_Macedonia_del_Norte%2C_2014-04-16%2C_DD_105.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/porta-macedonia-skopie-macedonia-3a1b7533-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/porta-macedonia-skopie-macedonia-3a1b7533-500.webp",
+     "w": 960,
+     "h": 689,
      "alt": "白い大理石の凱旋門、マケドニア門",
      "kind": "photo",
      "credit": {
       "by": "Diego Delso",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Porta_Macedonia%2C_Skopie%2C_Macedonia_del_Norte%2C_2014-04-16%2C_DD_105.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Porta_Macedonia%2C_Skopie%2C_Macedonia_del_Norte%2C_2014-04-16%2C_DD_105.jpg/500px-Porta_Macedonia%2C_Skopie%2C_Macedonia_del_Norte%2C_2014-04-16%2C_DD_105.jpg"
+     }
     },
     "body": "独立20年を記念して2012年1月にできた凱旋門。高さ21m、費用は440万ユーロ。外側は大理石の浮き彫りで覆われ、中の階段とエレベーターで屋上まで上がれる。",
     "facts": [],
@@ -1061,15 +1078,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 3,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Kurshumli-An-Skopje-MK.JPG/960px-Kurshumli-An-Skopje-MK.JPG",
+     "src": "/guide/north-macedonia/skopje/photos/kurshumli-an-skopje-mk-9bb8b870-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/kurshumli-an-skopje-mk-9bb8b870-500.webp",
+     "w": 960,
+     "h": 720,
      "alt": "石とれんがの回廊に囲まれた、クルシュムリ・アンの中庭",
      "kind": "photo",
      "credit": {
       "by": "Македонец",
       "lic": "CC BY 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Kurshumli-An-Skopje-MK.JPG"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Kurshumli-An-Skopje-MK.JPG/500px-Kurshumli-An-Skopje-MK.JPG"
+     }
     },
     "body": "15〜16世紀に建った、オスマン時代の隊商宿。屋根の丸屋根はもとは鉛で葺かれていて、それが名前（鉛の宿）になった。厩には馬が100頭入り、宿にも牢にも使われた。旧市街の中。",
     "facts": [],
@@ -1105,15 +1124,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 3,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Blue_dome_and_sky_%2828449231727%29.jpg/960px-Blue_dome_and_sky_%2828449231727%29.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/blue-dome-and-sky-28449231727-064e0c01-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/blue-dome-and-sky-28449231727-064e0c01-500.webp",
+     "w": 960,
+     "h": 602,
      "alt": "ムスタファ・パシャ・モスクの、青い空の下の丸屋根",
      "kind": "photo",
      "credit": {
       "by": "aiva.",
       "lic": "CC BY 2.0",
       "page": "https://commons.wikimedia.org/wiki/File:Blue_dome_and_sky_%2828449231727%29.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Blue_dome_and_sky_%2828449231727%29.jpg/500px-Blue_dome_and_sky_%2828449231727%29.jpg"
+     }
     },
     "body": "旧市街の上の台地に、1492年に建ったモスク。建てたのは、のちにセリム1世の宰相になるムスタファ・パシャ。建ったときの姿を、ほぼそのまま残している。",
     "facts": [
@@ -1258,15 +1279,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 2,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Bit_Pazar%2C_Skopje_2.jpg/960px-Bit_Pazar%2C_Skopje_2.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/bit-pazar-skopje-2-5e62ce1c-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/bit-pazar-skopje-2-5e62ce1c-500.webp",
+     "w": 960,
+     "h": 538,
      "alt": "旧市街の北の市場、ビト・パザル",
      "kind": "photo",
      "credit": {
       "by": "Resnjari",
       "lic": "CC BY-SA 4.0",
       "page": "https://commons.wikimedia.org/wiki/File:Bit_Pazar%2C_Skopje_2.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Bit_Pazar%2C_Skopje_2.jpg/500px-Bit_Pazar%2C_Skopje_2.jpg"
+     }
     },
     "body": "街でいちばん大きな食べ物の市場。旧市街の終わる所から始まり、何百年も同じ場所にある。果物・野菜・サラダ・チーズ・お茶・香辛料・花が並ぶ。",
     "facts": [],
@@ -1302,15 +1325,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 2,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Sv_Spas.jpg/960px-Sv_Spas.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/sv-spas-2e1e24ee-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/sv-spas-2e1e24ee-500.webp",
+     "w": 960,
+     "h": 640,
      "alt": "聖スパス教会（救世主教会）の外観",
      "kind": "photo",
      "credit": {
       "by": "Nikolovskii",
       "lic": "CC BY-SA 2.0",
       "page": "https://commons.wikimedia.org/wiki/File:Sv_Spas.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Sv_Spas.jpg/500px-Sv_Spas.jpg"
+     }
     },
     "body": "旧市街でいちばん大事な教会。オスマンの決まりで外は飾らず、床を地面より1m以上低くして建てた。中の木彫りのイコン壁で知られ、中庭に国の英雄ゴツェ・デルチェフの石棺がある。",
     "facts": [],
@@ -1350,6 +1375,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Saat-kula"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/45fd0a2c-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/45fd0a2c-500.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "赤れんがの時計塔。てっぺんに白い丸屋根の鐘楼が載っている",
+     "kind": "photo",
+     "credit": {
+      "by": "Kiril Simeonovski",
+      "lic": "CC BY-SA 3.0",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg"
+     }
+    },
     "body": "1572年に建った六角形の塔で、オスマン帝国で最初の時計塔とされる。上まで105段。時計は1963年の地震のあとの混乱でなくなった。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%B0%D0%B0%D1%82+%D0%BA%D1%83%D0%BB%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -1365,6 +1403,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg",
+      "seen": "2026-11-15"
      }
     ],
     "area": "carsija"
@@ -1378,6 +1421,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Sultan-muratova džamija"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/3-cf1c3975-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/3-cf1c3975-500.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "白い尖塔（ミナレット）と、アーチの回廊のあるモスク",
+     "kind": "photo",
+     "credit": {
+      "by": "Kiril Simeonovski",
+      "lic": "CC BY-SA 3.0",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg"
+     }
+    },
     "body": "1436年に建った、バルカンで残るいちばん古いモスクかもしれないとされるモスク。国でも指折りの大きさ。時計塔のとなり。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD+%D0%9C%D1%83%D1%80%D0%B0%D1%82+%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -1389,6 +1445,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg",
       "seen": "2026-11-15"
      }
     ],
@@ -1403,6 +1464,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Daut-pašin amam"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/daut-pasha-hamam-old-bazaar-skop-04db0b24-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/daut-pasha-hamam-old-bazaar-skop-04db0b24-500.webp",
+     "w": 960,
+     "h": 640,
+     "alt": "丸屋根が2つ並ぶ、石とれんがの浴場の建物。手前に夕方のテラス席",
+     "kind": "photo",
+     "credit": {
+      "by": "Andrew Milligan sumo",
+      "lic": "CC BY 2.0",
+      "page": "https://commons.wikimedia.org/wiki/File:Daut_Pasha_Hamam,_Old_Bazaar,_Skopje_(50353783656).jpg"
+     }
+    },
     "body": "15世紀後半の大浴場で、男湯と女湯が並ぶ。いまは19〜20世紀の美術の国立美術館で、丸屋根の内側の飾りだけでも見る価値がある。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%94%D0%B0%D1%83%D1%82+%D0%BF%D0%B0%D1%88%D0%B8%D0%BD+%D0%B0%D0%BC%D0%B0%D0%BC+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -1414,6 +1488,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Skopje/Stara Čaršija」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Daut_Pasha_Hamam,_Old_Bazaar,_Skopje_(50353783656).jpg",
       "seen": "2026-11-15"
      }
     ],
@@ -1428,6 +1507,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Muzej na arheologija"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/archaeological-museum-of-macedon-6495789c-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/archaeological-museum-of-macedon-6495789c-500.webp",
+     "w": 960,
+     "h": 644,
+     "alt": "白い列柱が並ぶ大きな博物館。川沿いに建っている",
+     "kind": "photo",
+     "credit": {
+      "by": "kallerna",
+      "lic": "CC BY-SA 4.0",
+      "page": "https://commons.wikimedia.org/wiki/File:Archaeological_Museum_of_Macedonia.jpg"
+     }
+    },
     "body": "川に面した新しいギリシャ風の建物に、6,000点を超える収蔵品。近くのスクピで見つかったヴィーナス像が目玉。",
     "facts": [
      {
@@ -1449,6 +1541,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "Wikivoyage「Skopje/Centar」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Archaeological_Museum_of_Macedonia.jpg",
+      "seen": "2026-11-15"
      }
     ],
     "area": "newtown"
@@ -1462,6 +1559,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Memorijalen centar na holokaustot"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/holocaust-memorial-center-for-th-00bd0fe3-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/holocaust-memorial-center-for-th-00bd0fe3-500.webp",
+     "w": 960,
+     "h": 636,
+     "alt": "石張りの角ばった建物とガラスの塔。前に広場とベンチ",
+     "kind": "photo",
+     "credit": {
+      "by": "Julian Lupyan",
+      "lic": "CC0",
+      "page": "https://commons.wikimedia.org/wiki/File:Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg"
+     }
+    },
     "body": "ホロコーストまでユダヤ人の街区だった所に建つ。殺された7,148人のマケドニアのユダヤ人を悼み、トレブリンカへ運んだ貨車などを並べる。",
     "facts": [
      {
@@ -1479,6 +1589,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "Wikivoyage「Skopje/Centar」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg",
+      "seen": "2026-11-15"
      }
     ],
     "area": "newtown"
@@ -1492,6 +1607,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Muzej na makedonskata borba"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/museum-of-the-macedonian-struggl-6ea5cc23-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/museum-of-the-macedonian-struggl-6ea5cc23-500.webp",
+     "w": 960,
+     "h": 540,
+     "alt": "白い2階建ての博物館。手前に人物の銅像と花壇",
+     "kind": "photo",
+     "credit": {
+      "by": "Тиверополник",
+      "lic": "CC BY-SA 3.0",
+      "page": "https://commons.wikimedia.org/wiki/File:Museum_of_the_Macedonian_Struggle.jpg"
+     }
+    },
     "body": "オスマン時代から1990年代の独立までの闘いを、たくさんの蝋人形でたどる博物館。独立20年の2011年に開いた。案内つきで回る。",
     "facts": [
      {
@@ -1509,6 +1637,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "Wikivoyage「Skopje/Centar」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Museum_of_the_Macedonian_Struggle.jpg",
+      "seen": "2026-11-15"
      }
     ],
     "area": "newtown"
@@ -1522,6 +1655,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Crkva Sv. Pantelejmon"
     },
     "rank": 2,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/church-of-st-panteleimon-nerezi-bd208c07-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/church-of-st-panteleimon-nerezi-bd208c07-500.webp",
+     "w": 960,
+     "h": 720,
+     "alt": "れんがと石の小さな教会。丸屋根がいくつも載り、木立に囲まれている",
+     "kind": "photo",
+     "credit": {
+      "by": "Dominik.Tefert at German Wikipedia",
+      "lic": "PD",
+      "page": "https://commons.wikimedia.org/wiki/File:Church_of_St._Panteleimon_(Nerezi).jpg"
+     }
+    },
     "body": "ヴォドノ山の中腹の村にある1164年の教会。ビザンツのコムネノス朝の壁画が多く残り、その1場面は50デナル札にも描かれている。街を見わたす場所にある。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%B2.+%D0%9F%D0%B0%D0%BD%D1%82%D0%B5%D0%BB%D0%B5%D1%98%D0%BC%D0%BE%D0%BD+%D0%93%D0%BE%D1%80%D0%BD%D0%BE+%D0%9D%D0%B5%D1%80%D0%B5%D0%B7%D0%B8&hl=ja",
@@ -1537,6 +1683,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "Wikivoyage「Skopje/Karpoš」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Karpo%C5%A1",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Church_of_St._Panteleimon_(Nerezi).jpg",
+      "seen": "2026-11-15"
      }
     ],
     "line": "中心から5.2km"
@@ -1551,15 +1702,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     },
     "rank": 2,
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Millennium_Cross_Vodno_2025_3.jpg/960px-Millennium_Cross_Vodno_2025_3.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-500.webp",
+     "w": 960,
+     "h": 652,
      "alt": "ヴォドノ山の頂に立つ、白い鉄骨のミレニアム・クロス",
      "kind": "photo",
      "credit": {
       "by": "kallerna",
       "lic": "CC BY-SA 4.0",
       "page": "https://commons.wikimedia.org/wiki/File:Millennium_Cross_Vodno_2025_3.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Millennium_Cross_Vodno_2025_3.jpg/500px-Millennium_Cross_Vodno_2025_3.jpg"
+     }
     },
     "body": "街の南西にそびえるヴォドノ山（1,066m）の頂に、高さ66mの十字架が2002年に建った。北マケドニアのキリスト教2000年の記念で、街を見わたす展望の場所になっている。中腹（標高557m）までバスが通い、そこから頂上へは2011年からロープウェイがある。",
     "facts": [],
@@ -1599,6 +1752,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Skopski akvadukt"
     },
     "rank": 3,
+    "pic": {
+     "src": "/guide/north-macedonia/skopje/photos/2014-01434308-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/2014-01434308-500.webp",
+     "w": 960,
+     "h": 560,
+     "alt": "草原の中に、石とれんがのアーチが一列に続く水道橋",
+     "kind": "photo",
+     "credit": {
+      "by": "Darkocv",
+      "lic": "CC BY-SA 3.0",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82,_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5,_2014.jpg"
+     }
+    },
     "body": "街の北のヴィズベゴヴォ村にある、国でただ一つの水道橋の遺跡。いつ建ったかは分かっていない。55のアーチが386m残る。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BA%D0%BE%D0%BF%D1%81%D0%BA%D0%B8+%D0%B0%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82&hl=ja",
@@ -1610,6 +1776,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Skopje/Outer Skopje」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Outer_Skopje",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82,_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5,_2014.jpg",
       "seen": "2026-11-15"
      }
     ],
@@ -1862,15 +2033,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Burek"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Burek.png/960px-Burek.png",
+     "src": "/guide/north-macedonia/skopje/photos/burek-54f25961-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/burek-54f25961-500.webp",
+     "w": 960,
+     "h": 720,
      "alt": "渦巻きに焼いたパイ、ブレク",
      "kind": "photo",
      "credit": {
       "by": "Popo le Chien",
       "lic": "CC0",
       "page": "https://commons.wikimedia.org/wiki/File:Burek.png"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Burek.png/500px-Burek.png"
+     }
     },
     "body": "薄い生地を重ねて焼いたパイ。中身はチーズ・ひき肉・ほうれん草・じゃがいもなど。バルカンでは、ヨーグルトの飲み物と一緒に食べることが多い。",
     "facts": [
@@ -1915,15 +2088,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Šopska salata"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Chopska.jpg/960px-Chopska.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/chopska-099f7e62-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/chopska-099f7e62-500.webp",
+     "w": 960,
+     "h": 720,
      "alt": "刻んだトマトときゅうりに、白いチーズをかけたショプスカ・サラダ",
      "kind": "photo",
      "credit": {
       "by": "Popo le Chien",
       "lic": "CC0",
       "page": "https://commons.wikimedia.org/wiki/File:Chopska.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Chopska.jpg/500px-Chopska.jpg"
+     }
     },
     "body": "トマト・きゅうり・玉ねぎ・ピーマンに、白いチーズをたっぷり削ってかけたサラダ。もとはブルガリアの国民食で、南東ヨーロッパで広く食べられている。",
     "facts": [
@@ -1962,15 +2137,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Pastrmajlija"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/PastrmajlijaAngela.JPG/960px-PastrmajlijaAngela.JPG",
+     "src": "/guide/north-macedonia/skopje/photos/pastrmajlijaangela-cffb6147-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/pastrmajlijaangela-cffb6147-500.webp",
+     "w": 960,
+     "h": 643,
      "alt": "楕円のパン生地に角切りの肉をのせて焼いた、パストルマイリヤ",
      "kind": "photo",
      "credit": {
       "by": "Slavica Panova",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:PastrmajlijaAngela.JPG"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/PastrmajlijaAngela.JPG/500px-PastrmajlijaAngela.JPG"
+     }
     },
     "body": "楕円のパン生地に、角切りの肉をのせて焼いたもの。名前は、塩漬けにして干した羊肉（パストルマ）から。卵やチーズをのせることもある。東部のシュティプで人気で、毎年お祭りも開かれる。燻製や干した豚肉・鶏肉を使う作りもある。",
     "facts": [
@@ -2136,15 +2313,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Tulumba / Baklava"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/2/24/Tulumba.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/tulumba-2429c457-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/tulumba-2429c457-500.webp",
+     "w": 500,
+     "h": 233,
      "alt": "シロップに漬けた揚げ菓子、トゥルンバ",
      "kind": "photo",
      "credit": {
       "by": "Risteristevski",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Tulumba.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Tulumba.jpg/250px-Tulumba.jpg"
+     }
     },
     "body": "棒状に絞った生地を揚げて、熱いうちに甘いシロップをかけた菓子。オスマン帝国の料理が広まった国々で食べられている。北マケドニアでは、バクラヴァやカダイフも定番の菓子。",
     "facts": [
@@ -2188,15 +2367,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Boza"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Boza.jpg/960px-Boza.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/boza-2f33bf9c-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/boza-2f33bf9c-500.webp",
+     "w": 960,
+     "h": 1280,
      "alt": "グラスに入った、とろりとした発酵の飲み物ボザ",
      "kind": "photo",
      "credit": {
       "by": "FoPen",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Boza.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Boza.jpg/500px-Boza.jpg"
+     }
     },
     "body": "穀物を発酵させた、とろりとした飲み物。甘酸っぱく、アルコールは1%ほど。北マケドニアでは、昔からアルバニア系の売り手が売ってきた。",
     "facts": [
@@ -2316,15 +2497,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Vranec"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Macedonian_Vranec.jpg/960px-Macedonian_Vranec.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/macedonian-vranec-f1b51523-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/macedonian-vranec-f1b51523-500.webp",
+     "w": 960,
+     "h": 1285,
      "alt": "北マケドニアの赤ワイン、ヴラネツの瓶",
      "kind": "photo",
      "credit": {
       "by": "Agne27",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Macedonian_Vranec.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Macedonian_Vranec.jpg/500px-Macedonian_Vranec.jpg"
+     }
     },
     "body": "北マケドニアでいちばん大事なぶどうの1つから造る、濃い紫の赤ワイン。大きな造り手にティクヴェシュとストビがある。",
     "facts": [
@@ -2734,15 +2917,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Ajvar"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Ajvar1_bright.jpg/960px-Ajvar1_bright.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/ajvar1-bright-d7b727a1-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/ajvar1-bright-d7b727a1-500.webp",
+     "w": 960,
+     "h": 720,
      "alt": "赤いパプリカのペースト、アイヴァル",
      "kind": "photo",
      "credit": {
       "by": "Off-shell",
       "lic": "CC BY-SA 4.0",
       "page": "https://commons.wikimedia.org/wiki/File:Ajvar1_bright.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Ajvar1_bright.jpg/500px-Ajvar1_bright.jpg"
+     }
     },
     "body": "焼いた赤いパプリカ（なすを混ぜることも）で作るペースト。パンに塗っても、つけ合わせにもなる。甘口・ピリ辛・激辛がある。「マケドニアのアイヴァル」は、世界知的所有権機関に名前が登録されている。家で作るものは秋にまとめて作って瓶に詰める。瓶は預ける荷物に入れる。",
     "facts": [
@@ -2859,15 +3044,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Vranec"
     },
     "pic": {
-     "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Macedonian_Vranec.jpg/960px-Macedonian_Vranec.jpg",
+     "src": "/guide/north-macedonia/skopje/photos/macedonian-vranec-f1b51523-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/macedonian-vranec-f1b51523-500.webp",
+     "w": 960,
+     "h": 1285,
      "alt": "北マケドニアの赤ワイン、ヴラネツの瓶",
      "kind": "photo",
      "credit": {
       "by": "Agne27",
       "lic": "CC BY-SA 3.0",
       "page": "https://commons.wikimedia.org/wiki/File:Macedonian_Vranec.jpg"
-     },
-     "small": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Macedonian_Vranec.jpg/500px-Macedonian_Vranec.jpg"
+     }
     },
     "body": "北マケドニアでいちばん大事なぶどうの1つから造る、濃い紫の赤ワイン。大きな造り手にティクヴェシュとストビがある。",
     "facts": [
@@ -4104,6 +4291,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-16",
- "hash": "d5e56a3c1881860a"
+ "hash": "88b88e99c01ccadc"
 }
 /* END GUIDE */;

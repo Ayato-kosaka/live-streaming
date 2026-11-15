@@ -88,12 +88,15 @@ const basic = (title: string) => must(BG_BASICS, (b) => b.title === title, `基�
 const history = (title: string) => must(BG_HISTORY, (b) => b.title === title, `歴史「${title}」`);
 const image = (title: string) => must(BG_IMAGE, (b) => b.title === title, `イメージ「${title}」`);
 
-type Shot = { img: string; thumb: string; big: string; cm: string; by: string; lic: string; alt: string };
+type Shot = { img: string; thumb: string; cm: string; by: string; lic: string; alt: string };
 
-/** 借りた写真。**出どころの書けない写真は使わない** */
+/**
+ * 借りた写真。**出どころの書けない写真は使わない**。絵は島の置き場（`/guide/bulgaria/sofia/photos/`）から配る
+ * （`python/guide_photos.py` が Commons から落とす。作者・ライセンス・元のページは Commons のまま出す）
+ */
 function photo(s: Shot): Pic | undefined {
   if (!s.img || !s.cm || !s.lic) return undefined;
-  return { src: s.img, small: s.thumb, big: s.big, alt: s.alt, kind: "photo", credit: { by: s.by, lic: s.lic, page: s.cm } };
+  return { src: s.img, small: s.thumb, alt: s.alt, kind: "photo", credit: { by: s.by, lic: s.lic, page: s.cm } };
 }
 
 /** 円に直す。**レートは1か所**（`BG_RATE` と同じ 1ユーロ＝177円・2026年11月6日） */

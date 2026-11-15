@@ -537,6 +537,11 @@ a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
 
 .gb-lg-list small { margin-left: 5px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
 
+/* 地図の外の札は、名前と行き先（マップで見る・中心から◯km）を2段に分ける。続けて流すと、390px で
+   「シュト・／オリザリ マップで見る」と名前の途中で折れた（2026-11-15） */
+.gb-lg-out { display: flex; flex-direction: column; }
+.gb-lg-out > small { margin-left: 0; line-height: 1.25; }
+
 .gb-lg-more { margin-top: 4px; }
 
 .gb-lg-more > summary {
