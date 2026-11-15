@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "cardimport__8cF6Q6y-zOkKs1VIqJS7T1Hj",
+ "mode": "cardimport",
+ "dest": "cardimport/8cF6Q6y-zOkKs1VIqJS7T1Hj",
+ "video": null,
+ "channel": null,
+ "request": "workflow_dispatch",
+ "status": "ok",
+ "stages": {
+  "url": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 1126,
+  "tar_gz": 871,
+  "encrypted": 880
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 880,
+   "sha256": "ab15bd3cd05db896107809f6555f6483a49a3f2c7d74b79bf2a79ac0c865f72c"
+  }
+ ],
+ "hmac_sha256": "cdaf9db5b6d3ecb9c7b00c1b3f0c69d55e1ca579e758d8cb283eff8ff6155a0f",
+ "pubkey_sha256": "4fd4118899797d7b3481db1c1387b12ebf851291999657dd28b641fa79f0f943",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/43740201926",
+ "created_at": "2026-11-15T17:17:05+00:00",
+ "nonce": "8cF6Q6y-zOkKs1VIqJS7T1Hj"
+}
