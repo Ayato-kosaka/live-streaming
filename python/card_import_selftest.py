@@ -72,6 +72,9 @@ CFG = {
     "diversity": {"similar": 0.35, "similarFrom": 0.6, "sameCategory": 0.06,
                   "nearMeters": 150, "samePlace": 0.08},
     "missing": {"minDays": 14},
+    # 偽の写真は大半がカメラの欄を持たない。ほかの足を動かさないため、ここでは外す
+    # （カメラ無しを落とす決めは、下の「カメラ無し」の足だけで見る）
+    "irrelevant": {"requireCamera": False},
 }
 
 CATS = list(CATEGORIES)
@@ -448,6 +451,20 @@ def legs(tmp: Path, fx, only: str | None = None) -> dict[str, list[str]]:
             ng.append("数が合わない")
         return ng
 
+    def camera():
+        """カメラ（EXIF の機種）の無い絵を、決めが効いているときだけ「無関係」で落とす。"""
+        on = conf.load({**CFG, "irrelevant": {"requireCamera": True}})
+        p = {"status": "measured", "day": "2025-03-01", "shotname": 0, "probs": "{}", "camera": 0,
+             "w0": 1600, "h0": 1200, "blur": 900.0, "dark": 120.0, "clip": 0.0}
+        ng = []
+        if choose.hard_reason(p, on, RANGE) != "irrelevant":
+            ng.append("カメラ無しが落ちない")
+        if choose.hard_reason({**p, "camera": 1}, on, RANGE) is not None:
+            ng.append("カメラ有りまで落ちた")
+        if choose.hard_reason(p, cfg, RANGE) is not None:
+            ng.append("決めを外しても、カメラ無しが落ちる")
+        return ng
+
     def names():
         ng = []
         for j, want in [("IMG_1234.JPG.json", "IMG_1234.JPG"),
@@ -466,7 +483,7 @@ def legs(tmp: Path, fx, only: str | None = None) -> dict[str, list[str]]:
                     ng.append(f"config.json に {sec}.{k} が無い")
         return ng
 
-    for name, fn in (("数と顔ぶれ", counts), ("1日の上限", quota), ("同じ日の散らばり", diversity),
+    for name, fn in (("カメラ無し", camera), ("数と顔ぶれ", counts), ("1日の上限", quota), ("同じ日の散らばり", diversity),
                      ("撮った土地の日付", local_day), ("迷う印", ambiguous), ("tar と一覧画", tar_and_sheet),
                      ("途中から再開", resume), ("答えを効かせる", labels), ("認識合わせ", calib),
                      ("名前と設定", names)):

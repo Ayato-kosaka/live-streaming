@@ -84,6 +84,13 @@ def hard_reason(p, cfg, rng: tuple[str, str]) -> str | None:
     # （EC2 の実地で、画面風の PNG が lowQuality に落ちた）
     if guards.on("irrelevant") and irrelevant_prob(p, cfg) >= cfg["irrelevant"]["drop"]:
         return "irrelevant"
+    # カメラ（EXIF の機種）の無い絵は、撮った写真ではない。本物の取り込み（2026-11-15）で、
+    # 迷う側に出た81枚のうちカメラ無しは67枚、そのうち残すべき写真は4枚だけで、
+    # 残りは配信の画面・アプリの画面・地図・AI で描いた絵だった。CLIP は「人の顔が
+    # 大きく写った配信の画面」を写真と見分けられない。送ってもらった本物の写真も
+    # 少し落ちるが、網羅は求めない（docs 4章）。
+    if guards.on("irrelevant") and cfg["irrelevant"].get("requireCamera") and not p["camera"]:
+        return "irrelevant"
     q = cfg["quality"]
     if guards.on("quality"):
         if min(p["w0"], p["h0"]) < cfg["read"]["minSide"]:
