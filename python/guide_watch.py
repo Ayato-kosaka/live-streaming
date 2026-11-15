@@ -1,16 +1,16 @@
 """**街のガイドの面を、書き出した HTML で見る。** 出す前の見張り3本（`docs/guide-design.md` 8章）。
 
-    python3 python/guide_watch.py --dist site/.next-3130                          # 台本のある街を全部
+    python3 python/guide_watch.py --dist site/.next-3130                          # 材料（guidebook.json）のある街を全部
     python3 python/guide_watch.py --dist site/.next-3130 north-macedonia/skopje   # 1つだけ
 
-終了コード 0=通った / 1=落ちた / **2=数えるものが無い**（台本が0本・面の本文が読めない。
+終了コード 0=通った / 1=落ちた / **2=数えるものが無い**（材料が0本・面の本文が読めない。
 `docs/island-standards.md` §15。「0件だったので通りました」とは言わない）。
 
 ## 何を見るか
 
 | 足 | 見ること | 正 |
 | --- | --- | --- |
-| 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ | facts（`streams/**/*.facts.json`） |
+| 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ。合計の額は、**同じ表・同じ行に並んだ額の足し算**のときだけ通す | facts（`streams/**/*.facts.json`） |
 | 一言 | 吹き出し（`data-quote="ayato"`）が**全部**場面のリンクの中に在り、リンクの動画と秒が、その一言を持つ facts の行の `t` と同じ。チャットが出どころの行（`via`）の字は引かない。吹き出しの外に本人の一言を「」で置かない | facts |
 | 口調 | 案内鳥の字（一言・配信の題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
 | 節の一言 | 本人の一言は**節（`<section>`）に1つまで** | `docs/island-misses.md` #323 の決めごと2 |
@@ -26,16 +26,30 @@
 
 ## なぜ書き出した HTML を見るか
 
-`python/guide_bake.py` も焼く前に同じことを止めている。それでも**面に出たもの**を見る理由は2つ。
+焼く道具（街は `python/guidebook_bake.py`、記事は `python/guide_article.py`）も焼く前に同じことを止めている。
+それでも**面に出たもの**を見る理由は2つ。
 
-1. **面は焼いたものだけでできていない。** 部品の名札（「この場面」「行った」）・表の下の1行・書き手の枠は
-   `site/components/travel/Guide.tsx` が持つ。焼く道具はそこを見ない
-2. **秒を写したあとで、部品が別の秒を出しうる。** 吹き出しのリンクを組むのは `scene.ts` の `watchUrl` で、
+1. **面は焼いたものだけでできていない。** 部品の名札（「この場面」「行った」）・表の合計の行・出どころの行は
+   部品（`site/components/guidebook/`）が持つ。焼く道具はそこを見ない
+2. **秒を写したあとで、部品が別の秒を出しうる。** 場面のリンクを組むのは部品（`Videos.tsx` の `watch`）で、
    焼いたものの `t` と面の `&t=` は別の場所で決まる。同じであることは、面を見ないと分からない
+
+## 2026-11-15 に、ガイドブック型の面（`components/guidebook/`）へ当てた
+
+スコピエの面は、前のハブ（`components/travel/Guide.tsx`・`article.tg`）からガイドブック型（`article.gb`）へ移った。
+目印は同じものを部品に持たせてある——骨組みの入れ物は `data-src`（`parts.tsx` の `Ext`）、行った箱は `data-went`
+（`Videos.tsx` の `WentBox`）、一言は場面の札の中の `data-quote="ayato"`、動画の題は `data-quote="title"`。
+足したのは2つ。
+
+- **合計の額**: 「あやとの1日」の表は、内訳（facts の行の額）の下に日ごとの合計を出す。合計そのものは facts に無いので、
+  同じ表・同じ行に並んだ確かめの済んだ額の、2〜4個の足し算に当たるときだけ通す（`summed`）。足し算に当たらない合計は落ちる
+- **外の出どころの表**: `data-src` の中の表（乗り物の目安など）は、場面の表として突き合わせない（出どころが正）
+
+材料（`python/data/guide/<国>/<街>/guidebook.json`）のある街を見る。前のハブの台本（`<国>/<街>.json`）では探さない。
 
 ## 足のつかまえかた
 
-- 本文は `<article class="tg">` の中だけ（島の枠——看板・足元——は全部の面に共通なので、ここでは見ない）
+- 本文は `<article class="tg">`（記事）か `<article class="gb">`（街のガイドブック）の中だけ（島の枠——看板・足元——は全部の面に共通なので、ここでは見ない）
 - 場面のリンクは `https://www.youtube.com/watch?v=<id>&t=<秒>s`（`scene.ts`）
 - 額は `guide_facts.money_in`（字幕を読む道具と同じ単位の表 `python/data/guide/cities.json`）で拾う。
   外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない
@@ -47,6 +61,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import itertools
 import json
 import re
 import sys
@@ -161,7 +176,7 @@ def parse(text: str) -> tuple[Node | None, dict]:
     t = Tree()
     t.feed(text)
     t.close()
-    art = next((n for n in t.root.walk() if n.tag == "article" and "tg" in n.cls()), None)
+    art = next((n for n in t.root.walk() if n.tag == "article" and n.cls() & {"tg", "gb"}), None)
     return art, t.head
 
 
@@ -230,6 +245,27 @@ class Report:
         self.errors.append(f"[{leg}] {msg}")
 
 
+#: 合計を探す入れ物。合計とその内訳が並ぶ所（表・表の行・札・段落）
+SUM_BLOCKS = {"table", "tr", "li", "p", "a", "dd"}
+
+
+def summed(art: Node, v: str, u: str, ready: set[tuple[str, str]], units: dict, skip) -> bool:
+    """`v` `u` が、同じ入れ物に並んだ確かめの済んだ額（2〜4個）の足し算か。**合計は言っていない数ではない**"""
+    if "sum" in BREAK:
+        return False
+    for n in art.walk():
+        if n.tag not in SUM_BLOCKS or skip(n) or any(skip(p) for p in n.up()):
+            continue
+        found = set(gf.money_in(n.text(skip=skip, sep=SEP), units))
+        if (v, u) not in found:
+            continue
+        parts = [float(x) for x, uu in found if uu == u and (x, uu) in ready and x != v]
+        for k in range(2, min(4, len(parts)) + 1):
+            if any(abs(sum(c) - float(v)) < 0.5 for c in itertools.combinations(parts, k)):
+                return True
+    return False
+
+
 def check_money(art: Node, rows: list[dict], units: dict, r: Report) -> None:
     ready: set[tuple[str, str]] = set()
     held: set[tuple[str, str]] = set()
@@ -245,7 +281,7 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report) -> None:
     body = art.text(skip=ext, sep=SEP)
     for v, u in gf.money_in(body, units):
         r.seen["額"] += 1
-        if (v, u) in ready:
+        if (v, u) in ready or summed(art, v, u, ready, units, ext):
             continue
         if (v, u) in held:
             r.ng("額", f"{v}{u} は確かめが要る行（verify）・チャットの行にしか無い")
@@ -260,6 +296,9 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report) -> None:
         at.setdefault((x["v"], x["t"]), []).append(x)
     cells: list[tuple[str, Node]] = []
     for n in art.walk():
+        # 外の出どころの表（乗り物の目安など）は、出どころが正。場面の表として突き合わせない
+        if ext(n) or any(ext(p) for p in n.up()):
+            continue
         if n.tag == "tr" and n.parent is not None and n.parent.tag == "tbody":
             td = [k for k in n.kids if isinstance(k, Node) and k.tag == "td"]
             if len(td) >= 2:
@@ -412,7 +451,8 @@ def check_page(key: str, page: str, rows: list[dict], units: dict) -> Report | N
 # ---------------------------------------------------------------- 回す
 
 def keys(scripts: Path = SCRIPTS) -> list[str]:
-    return sorted(f"{p.parent.name}/{p.stem}" for p in scripts.glob("*/*.json"))
+    """材料（`<国>/<街>/guidebook.json`）のある街。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
+    return sorted(f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json"))
 
 
 def page_path(dist: Path, key: str) -> Path | None:
@@ -424,7 +464,7 @@ def page_path(dist: Path, key: str) -> Path | None:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("key", nargs="*", help="<国>/<街>（無ければ台本のある街を全部）")
+    ap.add_argument("key", nargs="*", help="<国>/<街>（無ければ材料のある街を全部）")
     ap.add_argument("--dist", required=True, help="書き出した置き場（site/.next-3130 など）")
     ap.add_argument("--streams", default=str(ROOT / "streams"))
     ap.add_argument("--json", action="store_true")
@@ -432,7 +472,7 @@ def main(argv: list[str] | None = None) -> int:
     dist = Path(a.dist)
     ks = a.key or keys()
     if not ks:
-        print("::error::台本（python/data/guide/<国>/<街>.json）が1本も無い。見るものが無い")
+        print("::error::材料（python/data/guide/<国>/<街>/guidebook.json）が1本も無い。見るものが無い")
         return 2
     table = gf.load_table(ROOT / "python/data/guide/cities.json")
     bad = 0
@@ -449,7 +489,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         r = check_page(k, p.read_text(encoding="utf-8"), rows, gf.money_units(table, country))
         if r is None or not r.seen["一言"] or not r.seen["字"]:
-            print(f"::error::{k}: 面の本文（article.tg）か一言が読めない。見るものが無い")
+            print(f"::error::{k}: 面の本文（article.tg / article.gb）か一言が読めない。見るものが無い")
             return 2
         seen = "・".join(f"{n}{c}" for n, c in r.seen.items())
         out.append({"key": k, "errors": r.errors, "seen": r.seen})

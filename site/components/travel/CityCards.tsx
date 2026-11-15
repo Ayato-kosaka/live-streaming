@@ -1,10 +1,8 @@
 import Link from "next/link";
 
 import Icon from "@/components/ui/Icon";
+import { guidebookOf } from "@/content/guidebook";
 import { publicCities } from "@/content/travel";
-import { guideOf } from "@/content/travel/guides";
-
-import { Pic } from "./Guide";
 
 import "./cities.css";
 
@@ -26,15 +24,25 @@ export default function CityCards({ country }: { country: string }) {
       </h2>
       <ul>
         {cities.map((c) => {
-          const g = guideOf(c.country, c.slug);
+          /* 街の中身はガイドブック（`content/guidebook/`）。**名簿に在るのに中身が無い街は書き出しを止める** */
+          const g = guidebookOf(c.country, c.slug);
+          if (!g) throw new Error(`components/travel/CityCards.tsx: ${c.country}/${c.slug} の中身が content/guidebook/ に無い`);
           return (
             <li key={c.href}>
               <Link href={c.href} prefetch={false} className="tg-city">
-                {g.cover && (
-                  <span className="tg-city-ph">
-                    <Pic p={g.cover} sizes="(min-width: 720px) 420px, 92vw" />
-                  </span>
-                )}
+                <span className="tg-city-ph">
+                  <img
+                    src={g.cover.src}
+                    srcSet={g.cover.small ? `${g.cover.small} 480w, ${g.cover.src} 960w` : undefined}
+                    sizes="(min-width: 720px) 420px, 92vw"
+                    width={g.cover.w}
+                    height={g.cover.h}
+                    alt={g.cover.alt}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                  />
+                </span>
                 <span className="tg-city-b">
                   <b>{c.name}</b>
                   <span>{g.lead}</span>

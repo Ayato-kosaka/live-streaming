@@ -1,93 +1,61 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import Embed from "@/components/travel/Embed";
-import {
-  Articles,
-  Basics,
-  Hero,
-  Intro,
-  Legend,
-  NextRead,
-  Nums,
-  SECTION_HEAD,
-  Sec,
-  Sources,
-  StreamList,
-  Tiles,
-  Toc,
-  Todos,
-  Writer,
-} from "@/components/travel/Guide";
-import { jpRange } from "@/components/travel/scene";
-import Icon from "@/components/ui/Icon";
+import About from "@/components/guidebook/About";
+import Basics from "@/components/guidebook/Basics";
+import Cover from "@/components/guidebook/Cover";
+import { Buy, Eat, See } from "@/components/guidebook/Items";
+import SheetHost from "@/components/guidebook/SheetHost";
+import Sources from "@/components/guidebook/Sources";
+import Toc from "@/components/guidebook/Toc";
+import Todo from "@/components/guidebook/Todo";
+import Videos, { VideoLds } from "@/components/guidebook/Videos";
+import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
-import { CITY_STREAMS } from "@/content/cityStreams";
 import { AHEAD_COUNTRIES } from "@/content/countries";
-import {
-  TRAVEL,
-  TRAVEL_ARTICLES,
-  TRAVEL_LABEL,
-  travelCity,
-  travelCityCrumbs,
-  travelCityShare,
-  travelPage,
-} from "@/content/travel";
+import { readDrawn } from "@/content/guidebook/manifest";
+import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
+import { TRAVEL_ARTICLES, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
-import { guideOf } from "@/content/travel/guides";
-import type { Article, Item, Photo, Scene, Section, Src } from "@/content/travel/types";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
-import "@/components/travel/guide.css";
+import "@/components/guidebook/guidebook.css";
 
 /**
- * スコピエ（北マケドニア）の街の面（ハブ）。#1203（親 #1196）。
+ * スコピエ（北マケドニア）のガイドブック。#1228（前は #1203 のハブ）
  *
- * ## 誰が、何を調べて読むか（`docs/seo-2026-11/G_skopje_intent.md` 5章・6章）
+ * ## 行ったあとの最初の街
  *
- * **この面は「スコピエで何をする？」に答えるハブ。** 頭の語（スコピエ 観光）で大手に勝とうとしない。
- * 勝てる問い（物価・マトカ渓谷の行き方・安い店）は、1枚ずつの記事で深く答え、ここは入口になる。
+ * 骨組みはソフィアと同じガイドブック（表紙 → 目次 → どんな街 → やりたいこと → 見たい → 食べたい → 買いたい →
+ * 基本情報 → この街の動画）。そこに、あやとが行った記録（ブログ）を乗せる: 行った項目に「行った」の印・その日の
+ * あやと島カードの写真・短い話・① ショート → ② 配信の場面。一言は1節に1つまで（`docs/guide-design.md` ★）。
+ * **行っていない所も骨組みから消さない。**
  *
- * | 読む人 | いつ・何に困って | ここで得て満足するもの |
- * | --- | --- | --- |
- * | ① バルカンを周る20〜30代の個人旅行者（**いちばん大事**） | ティラナかソフィアを出る1〜2週間前。スコピエに何日寄って何をするか決めかねている | 見どころ・食べもの・買いものの骨組みと、1日いくらか・現金かカードか |
- * | ② スコピエに2〜4日いる旅行者 | 前の晩。マトカ渓谷へ路線バスで行って帰ってこられるか | 60番のバス・手前で降ろされること・ボートの人数・終バス |
- * | ③ 着いたばかりの節約派 | 今晩どこで安く食べるか | 食堂・ケバブ・パン屋・スーパーで何がいくらか |
- * | ④ 10〜11月に1か月ほど住むノマド | どれくらい寒いか・宿の長期割・祝日に何が閉まるか | 気候・防寒具の値段・宿・祝日 |
+ * ## 誰が、何を調べて読むか
  *
- * 狙う語: **スコピエ 観光／スコピエ 見どころ／スコピエ 食べ物／北マケドニア 物価／マトカ渓谷**。
- * 競合の上位3件は、2019年の ca-voir（値段が古い）・2025年の半日の街歩き（食事と物価が無い）・
- * 日付の無いまとめ。こちらが勝つのは「行く前のガイド」と「2026年10月に暮らした人の話と値段」が1枚に在ること。
+ * 読む人と狙う語は組み立て（`python/data/guide/north-macedonia/skopje/compose.json` の `persona` `terms`）。
+ * いちばん大事なのは、ティラナかソフィアを出る前に「スコピエに何日寄って何をするか」を決めかねている、
+ * バルカンを安く回る個人旅行者。狙う語は スコピエ 観光／スコピエ 見どころ／北マケドニア 物価／マトカ渓谷。
  *
- * ## 作り（2026-11-14 の作り直し。`docs/island-misses.md` #323）
- *
- * 最初の面は「配信の事実を並べた記録」で、あやとに30点と言われた。いまは `/bulgaria` と同じ骨組み
- * （見たい・食べたい・買いたい・したい・基本情報）に、行った所だけ話と写真を乗せる。
- * **行っていない所も骨組みから消さない。** 本人の一言は節に1つ、場面のリンクは行った所ごとに1つ。
- *
- * **字は1つもここに書かない。** 街ごとの字は `content/travel/north-macedonia/skopje.ts`
- * （`python/guide_bake.py` が台本 `python/data/guide/north-macedonia/skopje.json` と facts.json から焼く）。
+ * **字は1つもここに書かない。** 中身は `content/guidebook/north-macedonia-skopje.ts`
+ * （`python/guidebook_bake.py` が材料 `guidebook.json`・組み立て `compose.json`・facts から焼く）、部品は `components/guidebook/`。
+ * 描いた絵（表紙・エリア地図・料理・土産）は `public/guide/north-macedonia/skopje/manifest.json` から読み、
+ * 無ければ写真か色の札に落ちる。マイマップはまだ無いので、地図の枠は出さず、店の一覧の「マップ」の札で開く。
  *
  * ## 公開前
  *
- * あやとが全部読んでから検索に出す（#1197 Q3）。印は `content/travel.ts` の `TRAVEL_CITIES` の
- * `draft`。付いているあいだ `robots` が `index: false`（`travelCityShare` が印から決める）で、
- * 索引・`/all`・国の面のカードにも出ない。
- *
- * ## 日付を焼いてよい理由
- *
- * 面に出る日付は全部「起きた日」（行った日・場面の日・見た日・公開・最終更新）で、いつ読んでも本当。
+ * あやとが読んで OK を出すまで検索に出さない（`content/travel.ts` の `draft`。`robots` が `index: false`、
+ * 索引・`/all`・国の面のカードにも出ない）。
  */
 
-const COUNTRY = "north-macedonia";
-const CITY = "skopje";
-const G = guideOf(COUNTRY, CITY);
-const CITY_PATH = travelCity(COUNTRY, CITY).href;
+const G = SKOPJE;
+const CITY = travelCity(G.country, G.city);
 
-export const metadata: Metadata = travelCityShare(COUNTRY, CITY, { title: G.title, description: G.description });
+export const metadata: Metadata = travelCityShare(G.country, G.city, { title: G.title, description: G.description });
 
 /**
- * 行った日。**国に入った日から、次の国に入った日まで**（`content/countries.ts`）。
- * facts の日付の範囲で切ると、抜いていない回の日（10/31〜）が抜けて、短く見える。
+ * 居た期間。**国に入った日から、次の国に入った日まで**（`content/countries.ts`）。
+ * facts の日付で切ると、抜いていない回の日が抜けて短く見える
  */
 function stayOf(slug: string): { from: string; to: string } {
   const all = [...AHEAD_COUNTRIES].sort((a, b) => a.entered.localeCompare(b.entered));
@@ -96,168 +64,75 @@ function stayOf(slug: string): { from: string; to: string } {
   return { from: all[i].entered, to: all[i + 1]?.entered ?? all[i].entered };
 }
 
-/** 面の上で場面を引いた回と、引いた数（配信の一覧で、多い回を先に出す） */
-function citedVideos(): Map<string, number> {
-  const vs = new Map<string, number>([[G.embed.v, 1]]);
-  const add = (s: Scene | null | undefined) => s && vs.set(s.v, (vs.get(s.v) ?? 0) + 1);
-  G.nums.forEach((b) => add(b.at));
-  add(G.intro.went.at);
-  for (const s of G.sections) {
-    add(s.quote?.at);
-    s.items.forEach((it) => {
-      add(it.went?.at);
-      it.went?.rows.forEach((r) => add(r.at));
-    });
-  }
-  return vs;
-}
-
-/** 配信の一覧で、畳まずに見せる本数。**場面をよく引いた回から**（全部並べると、それだけで2画面になる） */
-const STREAMS_OPEN = 5;
-
 /**
- * この街の記事（物価など）への札。名簿は `content/travel.ts` の `TRAVEL_ARTICLES`、字は記事の中身から。
- *
- * **公開前の印どうしで繋ぐ。** 公開した街の面から、公開前の記事へは繋がない（検索に出していない面へ、
- * 出している面から道を付けない）。街も記事も公開前なら繋ぐ（あやとが読むときに辿れるように）。
- * 記事の印を外した日に、公開した街の面にも札がひとりでに出る
+ * この街の記事（物価など）への札。**公開前の印どうしで繋ぐ**——公開した街の面から、公開前の記事へは繋がない。
+ * 街も記事も公開前なら繋ぐ（あやとが読むときに辿れるように）。記事の印を外した日に、札がひとりでに出る
  */
-function articlesOf(country: string, city: string): Article[] {
+function articlesOf(country: string, city: string): { href: string; title: string; note: string; icon: IconName }[] {
   const cityDraft = !!travelCity(country, city).draft;
   return TRAVEL_ARTICLES.filter((a) => a.country === country && a.city === city && (!a.draft || cityDraft)).map((a) => {
-    const g = articleOf(a.country, a.city, a.slug);
-    return { href: a.href, title: g.h1[0], note: g.h1.slice(1).join(""), icon: g.answer.icon };
+    const x = articleOf(a.country, a.city, a.slug);
+    return { href: a.href, title: x.h1[0], note: x.h1.slice(1).join(""), icon: x.answer.icon };
   });
 }
 
-/** 目次の件数。**数は中身から数える**（手で書かない） */
-function noteOf(s: Section): string {
-  const went = s.items.filter((it) => it.went?.stamp === "行った").length;
-  const n = `${s.items.length}${s.id === "eat" ? "品" : s.id === "basics" ? "件" : s.id === "see" ? "か所" : "つ"}`;
-  return went ? `${n}・行った${went}` : n;
-}
-
-function Body({ s }: { s: Section }) {
-  switch (s.id) {
-    case "see":
-      return <Tiles items={s.items} rest="あやとが歩いて見つけた所" />;
-    case "eat":
-      return <Tiles items={s.items} rest="あやとが入った店" />;
-    case "buy":
-      return <Tiles items={s.items} rest="あやとが買ったもの" />;
-    case "todo":
-      return <Todos items={s.items} />;
-    case "basics":
-      return <Basics items={s.items} />;
-  }
-}
-
 export default function SkopjePage() {
-  const country = travelPage(COUNTRY);
-  const stay = stayOf(COUNTRY);
-  const streams = G.streams ? (CITY_STREAMS[G.streams.country]?.[G.streams.city] ?? []) : [];
-  /* その街に居たあいだの回だけ（次の国へ着いた日の回は、次の国の話） */
-  const mine = streams.filter((s) => s.date >= stay.from && s.date < stay.to);
-  const cited = citedVideos();
-  const top = [...mine]
-    .sort((a, b) => (cited.get(b.videoId) ?? 0) - (cited.get(a.videoId) ?? 0))
-    .slice(0, STREAMS_OPEN)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  const embedTitle = mine.find((s) => s.videoId === G.embed.v)?.title;
-  if (!embedTitle) throw new Error(`skopje/page.tsx: 埋め込みの回 ${G.embed.v} が配信の一覧（cityStreams.ts）に無い`);
-  const articles = articlesOf(COUNTRY, CITY);
-
-  const all: Item[] = G.sections.flatMap((s) => s.items);
-  const marked = all.filter((it) => it.mark);
-  const went = all.filter((it) => it.went?.stamp === "行った").length;
+  const drawn = readDrawn(G.country, G.city);
+  const articles = articlesOf(G.country, G.city);
+  const prices = articles.find((a) => a.href === G.basics.budget.article);
+  /* 描いた絵があれば、料理と土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先） */
+  const swap = (it: (typeof G.eat.items)[number], pic?: (typeof drawn.food)[string]) => (pic && !it.went ? { ...it, pic } : it);
+  const g = {
+    ...G,
+    stay: stayOf(G.country),
+    eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
+    buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
+  };
+  const usedDrawn = !!(drawn.cover || drawn.areamap || Object.keys(drawn.food).length || Object.keys(drawn.buy).length);
+  const went = (xs: { went?: unknown }[]) => xs.filter((x) => x.went).length;
+  const note = (n: number, unit: string, xs: { went?: unknown }[]) => `${n}${unit}${went(xs) ? `・行った${went(xs)}` : ""}`;
   const toc = [
-    ...G.sections.map((s) => ({ id: s.id, label: SECTION_HEAD[s.id].toc, icon: SECTION_HEAD[s.id].icon, note: noteOf(s) })),
-    ...(articles.length ? [{ id: "articles", label: SECTION_HEAD.articles.toc, icon: SECTION_HEAD.articles.icon, note: `${articles.length}本` }] : []),
-    ...(mine.length ? [{ id: "streams", label: SECTION_HEAD.streams.toc, icon: SECTION_HEAD.streams.icon, note: `${mine.length}本` }] : []),
+    { id: "about", label: "どんな街", icon: "oldtown" as const, note: `${g.about.cards.length}話・エリア${g.about.areas.length}` },
+    { id: "todo", label: `やりたいこと${g.todo.length}選`, icon: "sparkle" as const, note: note(g.todo.length, "つ", g.todo) },
+    { id: "see", label: "見たい", icon: "see" as const, note: note(g.see.items.length, "か所", g.see.items) },
+    { id: "eat", label: "食べたい", icon: "eat" as const, note: note(g.eat.items.length, "品", g.eat.items) },
+    { id: "buy", label: "買いたい", icon: "souvenir" as const, note: note(g.buy.items.length, "つ", g.buy.items) },
+    { id: "basics", label: "基本情報", icon: "info" as const, note: "予算・移動・治安" },
   ];
-  /* 出どころの一覧。同じ URL は1回だけ（見た日は全部同じ日に揃えてある） */
-  const src = new Map<string, Src>();
-  [...G.intro.ext.src, ...G.rate.src, ...all.flatMap((it) => it.src)].forEach((e) => src.has(e.url) || src.set(e.url, e));
-  const lent: { name: string; p: Photo }[] = all.flatMap((it) => (it.photo?.page ? [{ name: it.name, p: it.photo }] : []));
-
   return (
-    <PageShell crumbs={travelCityCrumbs(COUNTRY, CITY)}>
+    <PageShell crumbs={travelCityCrumbs(G.country, G.city)}>
       <JsonLd
         data={articleLd({
-          path: CITY_PATH,
+          path: CITY.href,
           headline: G.title,
           description: G.description,
           datePublished: G.published,
           dateModified: G.updated,
-          image: G.cover?.src,
+          image: (drawn.cover ?? G.cover).src,
         })}
       />
-      <article className="tg">
-        <Hero
-          name={G.name}
-          local={G.local}
-          lead={G.lead}
-          cover={G.cover}
-          went={{ ...stay, text: jpRange(stay.from, stay.to) }}
-          published={G.published}
-          updated={G.updated}
-        />
-
-        <Intro ext={G.intro.ext} went={G.intro.went} />
-
-        <Nums nums={G.nums} />
-
+      <VideoLds g={g} />
+      <article className="gb">
+        <Cover g={g} drawn={drawn} />
         <Toc items={toc} />
-
-        <Legend
-          good={marked.filter((it) => it.mark === "good").length}
-          warn={marked.filter((it) => it.mark === "warn").length}
-          went={went}
-          rate={G.rate}
-        />
-
-        {G.sections.map((s, i) => (
-          <Sec
-            key={s.id}
-            id={s.id}
-            n={i + 1}
-            head={SECTION_HEAD[s.id]}
-            note={noteOf(s)}
-            lead={s.lead}
-            quote={s.quote}
-            quoteOf={s.quoteOf}
-          >
-            <Body s={s} />
-          </Sec>
-        ))}
-
-        {articles.length > 0 && (
-          <Sec id="articles" n={G.sections.length + 1} head={SECTION_HEAD.articles}>
-            <Articles items={articles} />
-          </Sec>
-        )}
-
-        {mine.length > 0 && (
-          <Sec
-            id="streams"
-            n={G.sections.length + (articles.length ? 2 : 1)}
-            head={{ ...SECTION_HEAD.streams, h: `${G.name}${SECTION_HEAD.streams.h}` }}
-            note={`${mine.length}本`}
-          >
-            <Embed v={G.embed.v} t={G.embed.t} title={embedTitle} date={G.embed.date} play={<Icon name="play" size={30} />} />
-            <StreamList cited={top} rest={mine.filter((s) => !top.includes(s))} />
-          </Sec>
-        )}
-
-        <Writer />
-        <Sources src={[...src.values()]} photos={lent} />
-        <NextRead
-          items={[
-            { href: country.href, title: country.name, note: "国の案内。ことば・食べもの・街の外", icon: "mountain" },
-            { href: TRAVEL, title: TRAVEL_LABEL, note: "あやとが歩いた国の記録", icon: "globe" },
-          ]}
-        />
+        <About g={g} drawn={drawn} n={1} />
+        <Todo g={g} n={2} />
+        <See g={g} n={3} />
+        <Eat g={g} n={4} />
+        <Buy g={g} n={5} />
+        <Basics g={g} n={6} article={prices && { href: prices.href, title: prices.title }} />
+        {/* 面のいちばん下。導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228） */}
+        <Videos g={g} n={7} articles={articles} />
+        <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      <p className="gb-back">
+        <Link prefetch={false} href="/">
+          <Icon name="left" size={15} />
+          島へ戻る
+        </Link>
+      </p>
+      <SheetHost />
     </PageShell>
   );
 }

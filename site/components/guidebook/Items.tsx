@@ -6,8 +6,8 @@ import type { Guidebook, Item, MyMap as MyMapT, Place, Todo } from "@/content/gu
 
 import MyMap from "./MyMap";
 import Sheet from "./Sheet";
-import { WentVideo } from "./Videos";
-import { Credit, Facts, FlagMarks, LocalName, MapsLink, Picture, STAR, Sec, SrcLine, jpDate, sheetId, shortName } from "./parts";
+import { WentBox } from "./Videos";
+import { Credit, Ext, Facts, FlagMarks, LocalName, MapsLink, Picture, STAR, Sec, SrcLine, sheetId, shortName } from "./parts";
 
 type Kind = "see" | "eat" | "buy";
 
@@ -36,6 +36,7 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
               <span className="gb-tile-b">
                 <b>{shortName(it.name)}</b>
                 {it.line && <i>{it.line}</i>}
+                {it.went && <span className="gb-went">行った</span>}
               </span>
             </a>
           </li>
@@ -75,22 +76,18 @@ function ItemSheet({ kind, it, todo }: { kind: Kind; it: Item; todo: Todo[] }) {
         )}
       </p>
       <FlagMarks f={it.flags} big />
-      {it.went && (
-        <div className="gb-went-box">
-          <span className="gb-went">行った</span>
-          <time dateTime={it.went.date}>{jpDate(it.went.date)}</time>
-          {it.went.say && <p className="gb-say">「{it.went.say}」</p>}
-          <WentVideo w={it.went} of={it.name} />
-        </div>
-      )}
-      <p>{it.body}</p>
-      <Facts rows={it.facts} />
-      {it.tip && (
-        <p className="gb-tip">
-          <b>コツ</b>
-          {it.tip}
-        </p>
-      )}
+      {it.went && <WentBox w={it.went} of={it.name} />}
+      <ExtOf src={it.src}>
+        {it.body && <p>{it.body}</p>}
+        <Facts rows={it.facts} />
+        {it.tip && (
+          <p className="gb-tip">
+            <b>コツ</b>
+            {it.tip}
+          </p>
+        )}
+        <SrcLine src={it.src} of={it.name} />
+      </ExtOf>
       {it.maps && <MapsLink href={it.maps} of={it.name} label={kind === "see" ? "Google マップで開く" : "近くの店を Google マップで探す"} />}
       {ts.length > 0 && (
         <p className="gb-rel">
@@ -102,14 +99,21 @@ function ItemSheet({ kind, it, todo }: { kind: Kind; it: Item; todo: Todo[] }) {
           ))}
         </p>
       )}
-      <SrcLine src={it.src} of={it.name} />
     </Sheet>
   );
 }
 
+/** 出どころのある字だけを、外の事実の入れ物に入れる（出どころの無い入れ物を作らない） */
+function ExtOf({ src, children }: { src: unknown[]; children: ReactNode }) {
+  return src.length ? <Ext>{children}</Ext> : <>{children}</>;
+}
+
 /** 地図の下の、店・市場の一覧。**地図の番号と、名前で開く本物の Google マップを1つに結ぶ** */
 export function Places({ rows, items, kind }: { rows: Place[]; items: Item[]; kind: "eat" | "buy" }) {
-  return (
+  /* 店の説明に出どころが在る街（スコピエ）は、外の事実の入れ物に入れて、一覧の下に出どころを1行 */
+  const seen = new Set<string>();
+  const src = rows.flatMap((p) => p.src ?? []).filter((s) => !seen.has(s.url) && !!seen.add(s.url));
+  const list = (
     <ol className="gb-places">
       {rows.map((p, i) => {
         const here = items.filter((it) => it.places?.includes(p.id));
@@ -117,7 +121,10 @@ export function Places({ rows, items, kind }: { rows: Place[]; items: Item[]; ki
           <li key={p.id}>
             <b className="gb-places-n">{i + 1}</b>
             <span className="gb-places-b">
-              <b>{p.name}</b>
+              <b>
+                {p.name}
+                {p.went && <span className="gb-went">行った</span>}
+              </b>
               {p.roman && <i>{p.roman}</i>}
               <em>{p.what}</em>
               {p.km !== undefined && <span className="gb-far-km">中心から{p.km}km</span>}
@@ -138,6 +145,14 @@ export function Places({ rows, items, kind }: { rows: Place[]; items: Item[]; ki
       })}
     </ol>
   );
+  return src.length ? (
+    <Ext>
+      {list}
+      <SrcLine src={src} of={`${KICKER[kind]}の店と市場`} />
+    </Ext>
+  ) : (
+    list
+  );
 }
 
 /** 見たいもの。星の順に、必見と行けたらを並べ、余裕があればは畳む */
@@ -153,7 +168,7 @@ export function See({ g, n }: { g: Guidebook; n: number }) {
           <Tiles kind="see" items={rest} cols={2} todo={g.todo} />
         </Fold>
       )}
-      <MapBlock m={g.see.map} caption={`見たいもの${g.see.map.pins}か所。ピンを押すと名前と説明`} icon="map" title="地図で見る" />
+      {g.see.map && <MapBlock m={g.see.map} caption={`見たいもの${g.see.map.pins}か所。ピンを押すと名前と説明`} icon="map" title="地図で見る" />}
       {g.see.far.length > 0 && <h3 className="gb-sub is-small">中心から離れた所</h3>}
       {g.see.far.length > 0 && (
         <ul className="gb-far">
@@ -213,7 +228,7 @@ export function Eat({ g, n }: { g: Guidebook; n: number }) {
         </p>
         <Tiles kind="eat" items={items} cols={3} todo={g.todo} />
       </div>
-      <MapBlock m={map} caption={`${map.pins}か所。ピンを押すと名前と説明`} icon="eat" title="この料理は、ここで" />
+      <MapBlock m={map} caption={map && `${map.pins}か所。ピンを押すと名前と説明`} icon="eat" title="この料理は、ここで" />
       <Fold title="店と市場の一覧" note={`${places.length}か所`}>
         <Places rows={places} items={items} kind="eat" />
       </Fold>
@@ -238,7 +253,7 @@ export function Buy({ g, n }: { g: Guidebook; n: number }) {
   return (
     <Sec id="buy" n={n} icon="souvenir" title="何を買って帰る？">
       <Tiles kind="buy" items={items} cols={3} todo={g.todo} />
-      <MapBlock m={map} caption={`${map.pins}か所。ピンを押すと名前と説明`} icon="market" title="買える所" />
+      <MapBlock m={map} caption={map && `${map.pins}か所。ピンを押すと名前と説明`} icon="market" title="買える所" />
       <Fold title="店と市場の一覧" note={`${places.length}か所`}>
         <Places rows={places} items={items} kind="buy" />
       </Fold>
@@ -246,14 +261,18 @@ export function Buy({ g, n }: { g: Guidebook; n: number }) {
   );
 }
 
-function MapBlock({ m, caption, icon, title }: { m: MyMapT; caption: string; icon: IconName; title: string }) {
+/**
+ * 節の下の地図。**マイマップがまだ無い街は、枠を出さずに見出しだけ**——下の店の一覧の「マップ」の札が、
+ * 名前で検索した Google マップを1軒ずつ開く（#1228。マイマップは別の担当が作る）
+ */
+function MapBlock({ m, caption, icon, title }: { m?: MyMapT; caption?: string; icon: IconName; title: string }) {
   return (
     <div className="gb-mapblock">
       <h3 className="gb-sub">
         <Icon name={icon} size={20} />
         {title}
       </h3>
-      <MyMap m={m} caption={caption} />
+      {m && caption && <MyMap m={m} caption={caption} />}
     </div>
   );
 }

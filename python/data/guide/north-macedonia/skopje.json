@@ -1,6 +1,7 @@
 {
  "_meta": {
-  "何か": "スコピエの面（/travel/north-macedonia/skopje）の台本。python/guide_bake.py が facts.json と突き合わせて site/content/travel/north-macedonia/skopje.ts に焼く",
+  "いま": "2026-11-15 に、面はガイドブック型（python/data/guide/north-macedonia/skopje/guidebook.json と compose.json を python/guidebook_bake.py が焼く）へ移った。この台本からはもう焼かない。guidebook.json の from_hub（前の面の項目を全部引き継いだか）を python/guide_book_check.py が数える相手として残してある",
+  "何か": "（前の）スコピエの面（/travel/north-macedonia/skopje）の台本。python/guide_bake.py が facts.json と突き合わせて site/content/travel/north-macedonia/skopje.ts に焼いていた",
   "形": "骨組み（what・info・src）は外の出どころで立てる。行った所には went（行った人の話1つ・場面1つ・その日の写真）。行っていない所も骨組みから消さない（docs/island-misses.md #323・docs/guide-design.md の頭の章）",
   "結び": "refs・quote・at・ref は facts の行への結び（\"MM-DD h:mm:ss\"。同じ時刻に2行あれば \"#種類\"、別の配信と重なれば \"@動画\"）。一言の字・額・場面の秒は書かない（道具が facts から写す）",
   "話": "went.text は案内鳥の話。事実をつないで物語にしてよい。結んだ行に無い数字を書くと、焼くのが止まる。説明口調（できます・なっています・おすすめです）を書かない",

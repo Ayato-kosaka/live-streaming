@@ -37,6 +37,7 @@
 | `wentlink` | 場面: 行った話は場面のリンクを持つ | リンクの無い行った話 |
 | `extscene` | 場面: 外の事実（`data-src`）の中に配信の場面を置かない | 出どころの事実に場面の札 |
 | `nosrc` | 出どころ: 外の事実が、出どころのリンクと見た日を持つ | 出どころの無い外の事実 |
+| `sum` | 額: 合計の額を、同じ表に並んだ額の足し算のときだけ通す（ガイドブックの「あやとの1日」） | 内訳の足し算の合計が落ちる |
 
 **12通り当てても、同じ足を折っているなら1通り**（`island-misses.md` #128）。上は全部別の所を折っていて、
 それぞれ**その足の確かめだけ**が落ちることまで見る（ほかの足も一緒に落ちるなら、何が効いたのか分からない）。
@@ -62,10 +63,11 @@ if BREAK:
         gw.SEP = ""
 
 ROOT = Path(__file__).resolve().parents[1]
-# 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる
-EXPECT = {"sep": {"sep", "clean"}, "scope": {"scope", "clean"}}
+# 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる。
+# 合計の通る面（sum）も、境目の字をくっつけて読むと内訳の額が読めなくなるので、sep を抜くと一緒に赤くなる
+EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}}
 LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "blind",
-        "many", "perline", "wentlink", "extscene", "nosrc"]
+        "many", "perline", "wentlink", "extscene", "nosrc", "sum"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
 
@@ -123,8 +125,8 @@ def say(q: str, v: str, t: int, *, link: bool = True) -> str:
 
 def page(answer: str = "道が広く、車はゆっくり走る。", *, extra: str = "", say1: str | None = None,
          table: list[tuple[str, str, int, str]] | None = None, article: bool = True,
-         desc: str = "スコピエへ行った記録。パンは100円。") -> str:
-    """面1枚。並びは `site/components/travel/Guide.tsx` の部品と同じ形（骨組み `data-src`・行った話 `data-went`）"""
+         desc: str = "スコピエへ行った記録。パンは100円。", cls: str = "tg") -> str:
+    """面1枚。目印は面の部品と同じ形（骨組み `data-src`・行った話 `data-went`。いまは `site/components/guidebook/`、前は `components/travel/Guide.tsx`）"""
     rows = table or [("パスタ", "75円", 1260, V1), ("パン", "100円", 1290, V1)]
     trs = "".join(f'<tr><th scope="row">{w}</th><td>{a}</td><td>{at(v, t)}</td></tr>' for w, a, t, v in rows)
     body = f"""
@@ -149,7 +151,7 @@ def page(answer: str = "道が広く、車はゆっくり走る。", *, extra: s
 <figure class="tg-embed"><figcaption><a href="https://www.youtube.com/watch?v={V1}&amp;t=60s"><b data-quote="title">500円でできます！おすすめ旅</b></a></figcaption></figure>
 <div class="tg-vids"><a href="https://www.youtube.com/watch?v={V2}">ぜひご覧ください 3,000円</a></div>
 """
-    art = f'<article class="tg">{body}</article>' if article else f"<main>{body}</main>"
+    art = f'<article class="{cls}">{body}</article>' if article else f"<main>{body}</main>"
     return (f'<!DOCTYPE html><html><head><title>スコピエ旅行記｜物価・行き方</title>'
             f'<meta name="description" content="{desc}"/></head><body>'
             f'<header>島の看板。できます・おすすめ（島の枠は見ない）</header>{art}</body></html>')
@@ -188,6 +190,26 @@ ok("row", "表の行の額が、その行の場面の facts の額と違う → 
    any("その場面" in x and "合わない" in x for x in e), True)
 e = run(page(table=[("パン", "100円", 1290, V1), ("クッキー", "180円", 2130, V1)]))
 ok("row", "表の行に、確かめが要る行の額と場面 → 表の見張りでも落ちる", any("表の額「180円」" in x for x in e), True)
+
+
+def days(total: str) -> str:
+    """ガイドブックの「あやとの1日」の形。内訳（場面つき）の下に、合計の行（tfoot）"""
+    return (f'<div class="gb-went-box" data-went=""><table><tbody>'
+            f'<tr><th>パスタ</th><td>約75円</td><td>{at(V1, 1260)}</td></tr>'
+            f'<tr><th>パン</th><td>約100円</td><td>{at(V1, 1290)}</td></tr></tbody>'
+            f'<tfoot><tr><th>自炊の日</th><td>約{total}</td></tr></tfoot></table>'
+            f'<p>円は、その場で円に直した額。</p>{at(V1, 60)}</div>')
+
+
+e = run(page(extra=days("175円")))
+ok("sum", "合計の行が、同じ表の内訳の足し算（75円＋100円＝175円）→ 通る", legs_of(e, "額"), [])
+e = run(page(extra=days("185円")))
+ok("unbacked", "合計の行が、内訳の足し算に当たらない（185円）→ 落ちる", any("185円" in x for x in legs_of(e, "額")), True)
+e = run(page(extra='<div class="gb-ext" data-src=""><table><tbody><tr><th>市バス1回</th><td>35デナール</td><td>100円</td></tr>'
+                   '</tbody></table><p class="gb-src"><a href="https://example.org/">出どころ</a>'
+                   '<time datetime="2026-11-15">11/15</time></p></div>'))
+ok("clean", "外の出どころの表（data-src）は、場面の表として突き合わせない（落ちすぎない）", legs_of(e, "額"), [])
+ok("clean", "ガイドブック型の面（article.gb）も、前の面（article.tg）と同じに読む", run(page(cls="gb")), [])
 
 
 # ---------------------------------------------------------------- 3. 一言
@@ -253,11 +275,13 @@ if not BREAK:
     rows = gw.rows_of("north-macedonia", "skopje", ROOT / "streams")
     ok("-", "スコピエの facts が読める（0行なら置き場を見失っている）", len(rows) > 0, True)
     ok("-", "確かめが要る行も読んでいる（hold が付く）", any(x["hold"] == "verify" for x in rows), True)
-    # 面は焼いたものから書き出す。台本か facts を直して焼き直し忘れると、この見張りは古い面を見て緑になる
-    for key in gw.keys():
-        r = subprocess.run([sys.executable, str(ROOT / "python/guide_bake.py"), key, "--check"],
+    # 面は焼いたものから書き出す。材料か facts を直して焼き直し忘れると、この見張りは古い面を見て緑になる
+    ks = gw.keys()
+    ok("-", "材料（guidebook.json）のある街が見つかる（0なら置き場を見失っている）", len(ks) > 0, True)
+    for key in ks:
+        r = subprocess.run([sys.executable, str(ROOT / "python/guidebook_bake.py"), key, "--check"],
                            capture_output=True, text=True, timeout=300)
-        ok("-", f"{key} の焼いたものが、いまの台本と facts と同じ（guide_bake.py --check）", r.returncode, 0)
+        ok("-", f"{key} の焼いたものが、いまの材料と組み立てと facts と同じ（guidebook_bake.py --check）", r.returncode, 0)
     q = next((x for x in rows if x["it"].get("quote") and not x["hold"]), None)
     if q:
         with tempfile.TemporaryDirectory() as d:

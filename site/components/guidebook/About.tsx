@@ -3,7 +3,8 @@ import type { Drawn } from "@/content/guidebook/manifest";
 import type { Area, Guidebook, Item } from "@/content/guidebook/types";
 
 import Sheet from "./Sheet";
-import { Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
+import { WentBox } from "./Videos";
+import { Ext, Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
 
 /**
  * 3 どんな街。**歴史と街の性格を4枚の小さな札で**、その下に**エリア地図**。
@@ -29,20 +30,24 @@ export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: 
               <i>{c.unit}</i>
             </span>
             <span className="gb-about-t">{c.title}</span>
-            <span className="gb-about-l">{c.lead}</span>
+            {c.lead && <span className="gb-about-l">{c.lead}</span>}
           </a>
         ))}
       </div>
 
-      <h3 className="gb-sub">よく言われること</h3>
-      <div className="gb-chips">
-        {more.map((m) => (
-          <a key={m.id} className="gb-chip" href={`#${sheetId("more", m.id)}`}>
-            <Icon name={m.icon} size={22} />
-            <span>{m.title}</span>
-          </a>
-        ))}
-      </div>
+      {more.length > 0 && (
+        <>
+          <h3 className="gb-sub">よく言われること</h3>
+          <div className="gb-chips">
+            {more.map((m) => (
+              <a key={m.id} className="gb-chip" href={`#${sheetId("more", m.id)}`}>
+                <Icon name={m.icon} size={22} />
+                <span>{m.title}</span>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
 
       <h3 className="gb-sub">エリア</h3>
       <AreaMap areas={areas} drawn={drawn} />
@@ -53,25 +58,36 @@ export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: 
             <b>{c.num}</b>
             <i>{c.unit}</i>
           </p>
-          <p>{c.body}</p>
-          <SrcLine src={c.src} of={c.title} />
+          <Ext>
+            <p>{c.body}</p>
+            <SrcLine src={c.src} of={c.title} />
+          </Ext>
         </Sheet>
       ))}
       {more.map((m) => (
         <Sheet key={m.id} id={sheetId("more", m.id)} kicker="よく言われること" title={m.title}>
-          {m.parts.map((p, i) => (
-            <p key={i}>{p.text}</p>
-          ))}
-          <SrcLine src={m.src} of={m.title} />
+          <Ext>
+            {m.parts.map((p, i) => (
+              <p key={i}>{p.text}</p>
+            ))}
+            <SrcLine src={m.src} of={m.title} />
+          </Ext>
         </Sheet>
       ))}
       {areas.map((a) => (
         <Sheet key={a.id} id={sheetId("area", a.id)} kicker="エリア" title={a.name} tone={a.color}>
-          <p className="gb-lead">{a.lead}</p>
-          <p>{a.body}</p>
-          <h4 className="gb-h4">このエリアの見たいもの</h4>
-          <MiniTiles items={a.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)} />
-          <SrcLine src={a.src} of={a.name} />
+          {a.went && <WentBox w={a.went} of={a.name} label="歩いた" />}
+          <Ext>
+            <p className="gb-lead">{a.lead}</p>
+            {a.body && <p>{a.body}</p>}
+            <SrcLine src={a.src} of={a.name} />
+          </Ext>
+          {a.see.length > 0 && (
+            <>
+              <h4 className="gb-h4">このエリアの見たいもの</h4>
+              <MiniTiles items={a.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)} />
+            </>
+          )}
         </Sheet>
       ))}
     </Sec>
@@ -150,7 +166,10 @@ function AreaPlan({ areas }: { areas: Area[] }) {
         >
           <b>{a.name}</b>
           <span>{a.lead}</span>
-          <i>見たいもの {a.see.length}</i>
+          <i>
+            {a.see.length > 0 && `見たいもの ${a.see.length}`}
+            {a.went && <span className="gb-went">歩いた</span>}
+          </i>
         </a>
       ))}
     </div>

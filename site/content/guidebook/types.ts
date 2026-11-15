@@ -23,7 +23,12 @@ import type { IconName } from "@/components/ui/icons";
  */
 
 /** 出どころ1つ。**事実を書いたら必ず連れてくる**（`docs/guide-design.md` 4-4） */
-export type Src = { name: string; url: string };
+export type Src = {
+  name: string;
+  url: string;
+  /** 見た日（`YYYY-MM-DD`）。在れば出どころの行に「◯月◯日に見た」と出す（`docs/country-guide.md` 1-2） */
+  seen?: string;
+};
 
 /**
  * 絵1枚。**どの種類かで、添える字が変わる**（`docs/guide-design.md` 4章）。
@@ -75,8 +80,11 @@ export type Went = {
   short?: string;
   /** ② 配信アーカイブの場面（その時刻から開く） */
   scene?: Scene;
-  /** 短い話（案内鳥の文。言っていないことを足さない） */
-  story?: string;
+  /**
+   * 短い話（案内鳥の文。言っていないことを足さない）。段落ごと。**数は結んだ facts の行どおり**
+   * （焼く道具 `python/guidebook_bake.py` が止める）
+   */
+  story?: string[];
 };
 
 /** 豚肉・アルコール。**好みではなく事実**。アイコンで知らせて、選ぶのは読む人 */
@@ -129,6 +137,10 @@ export type Place = {
   maps: string;
   /** 中心から何km か。歩いて行かない所だけ */
   km?: number;
+  /** あやとが入った店（行ったあと） */
+  went?: boolean;
+  /** `what` の出どころ（在れば、一覧の下に出どころの行を出す） */
+  src?: Src[];
 };
 
 /**
@@ -151,6 +163,8 @@ export type Todo = {
   route: string;
   /** 出てくる見たいもの（`Item` の id）。窓の「どこ」と、見たいもの側からの繋ぎ */
   see: string[];
+  /** 出てくる食べたいもの（`Item` の id）。窓の「どこ」の下に並ぶ */
+  eat?: string[];
   src: Src[];
   went?: Went;
 };
@@ -162,7 +176,7 @@ export type Area = {
   /** 塗りの色（地図の札・窓の頭）。濃い字を乗せるので明るい色 */
   color: string;
   lead: string;
-  body: string;
+  body?: string;
   /** このエリアの見たいもの（`Item` の id） */
   see: string[];
   /**
@@ -171,6 +185,8 @@ export type Area = {
    */
   plan: [number, number, number];
   src: Src[];
+  /** 行ったあと: そのエリアを歩いた日と場面 */
+  went?: Went;
 };
 
 /** どんな街の札。大きい数1つ＋題＋1行。押すと本文 */
@@ -179,7 +195,8 @@ export type About = {
   num: string;
   unit: string;
   title: string;
-  lead: string;
+  /** 札の下の1行。無ければ数と題だけ */
+  lead?: string;
   body: string;
   src: Src[];
 };
@@ -195,6 +212,8 @@ export type Guide = {
   /** ことばの一覧（ひとこと現地語だけ） */
   words?: { local: Local; jp: string }[];
   src: Src[];
+  /** 行ったあと: あやとの場合（話と場面1つ） */
+  went?: Went;
 };
 
 /** 基本情報の頭の4枚。押すと `to` へ（窓の id か、面の中の錨） */
@@ -210,6 +229,15 @@ export type Summary = {
 /** 1日の予算の1行（宿代は別。値はユーロ） */
 export type BudgetRow = { label: string; what: string; eur: [number, number]; src: Src[] };
 
+/**
+ * 行ったあと: あやとの1日（**本人がその場で円に直して言った額**）。内訳は facts の行に1つずつ結ぶ。
+ * 合計は面の側で足す（足し算だけ。`python/guide_watch.py` が、合計が内訳の和かを見る）
+ */
+export type BudgetDay = { label: string; parts: { label: string; yen: number; at: Scene }[] };
+
+/** 小さな出費の目安（現地のお金と円。外の出どころ） */
+export type BudgetExtra = { label: string; local: string; yen: string; src: Src[] };
+
 export type Climate = {
   /** 月ごとの平均最高・平均最低（℃）と降水量（mm） */
   months: { hi: number; lo: number; mm: number }[];
@@ -223,7 +251,7 @@ export type Pack = { icon: IconName; label: string; why: string; src: Src[] };
 /** 困ったとき */
 export type Help = {
   calls: { num: string; label: string; note: string; src: Src[] }[];
-  embassy: { name: string; address: string; tel: string; hours: string; maps: string; src: Src[] };
+  embassy: { name: string; address: string; tel: string; hours?: string; note?: string; maps: string; src: Src[] };
 };
 
 /** Google マイマップの埋め込み（`docs/mymaps.md`）。中心と縮尺はピンの広がりから焼いたもの */
@@ -248,15 +276,18 @@ export type Guidebook = {
   /** 公開と最終更新（中身の字が変わった日。ビルドの日にしない） */
   published: string;
   updated: string;
+  /** 焼いた中身の指紋（焼く道具が「最終更新」を進めるかを決める。面には出さない） */
+  hash?: string;
   /** 行ったあと: 居た期間（表紙の「あやとが◯日いた」） */
   stay?: { from: string; to: string };
   /** 円に直すときのレート（字で「1ユーロ＝177円（2026年11月6日）」のように出す） */
   rate: { unit: string; yen: number; date: string };
   about: { cards: About[]; more: Guide[]; areas: Area[] };
   todo: Todo[];
-  see: { items: Item[]; map: MyMap; far: Place[] };
-  eat: { kinds: { id: string; label: string }[]; items: Item[]; places: Place[]; map: MyMap };
-  buy: { items: Item[]; places: Place[]; map: MyMap };
+  /** `map` はマイマップを作るまで無い。無いあいだは枠を出さず、一覧と「マップ」の札だけで成り立つ */
+  see: { items: Item[]; map?: MyMap; far: Place[] };
+  eat: { kinds: { id: string; label: string }[]; items: Item[]; places: Place[]; map?: MyMap };
+  buy: { items: Item[]; places: Place[]; map?: MyMap };
   /**
    * 面のいちばん下の「この街の動画」: ショートの横並び → アーカイブの一覧 → 配信を見に来る（チャンネル）。
    * `streams` は `content/cityStreams.ts` の鍵（国・街）。`shorts` はこの街のショート（`content/shorts.ts` の id）で、
@@ -268,7 +299,20 @@ export type Guidebook = {
     guides: Guide[];
     /** 季節の窓（旬の季節の札から開く。行事も入る） */
     season: Guide;
-    budget: { rows: BudgetRow[]; tips: { text: string; src: Src[] }[] };
+    budget: {
+      rows: BudgetRow[];
+      tips: { text: string; src: Src[] }[];
+      /** 行ったあと: あやとの1日 */
+      days?: BudgetDay[];
+      extras?: BudgetExtra[];
+      /** 円に直したレートの1文と、その出どころ */
+      rate?: string;
+      rateSrc?: Src[];
+      /** あやとの額の読みかた（話と場面1つ） */
+      note?: Went;
+      /** 物価の記事（`/travel/<国>/<街>/prices`） */
+      article?: string;
+    };
     pack: Pack[];
     climate: Climate;
     help: Help;

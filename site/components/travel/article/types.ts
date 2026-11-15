@@ -6,8 +6,8 @@ import type { IconName } from "@/components/ui/Icon";
  * 中身そのものは `python/guide_article.py` が台本と facts.json から焼く（`content/travel/<国>/<街>-<話>.ts`）。
  * **ここは形だけ。** 焼く道具と面が同じ形を読むように、1か所に置く。
  *
- * 街の面の形（`content/travel/types.ts`）は使わずに、ここに写してある。街の面は別の担当が作り直している
- * 最中で、あちらの形が動いても記事が巻き込まれないように（#1203）。字の意味は同じ。
+ * 前の街の面の形（`content/travel/types.ts`。2026-11-15 にガイドブック型 `content/guidebook/types.ts` へ移して消した）は使わずに、
+ * ここに写してある。街の面の形が動いても記事が巻き込まれないように（#1203）。字の意味は同じ。
  */
 
 /** 配信のその場面。`t` は配信の頭からの秒、`date` は現地の日付（YYYY-MM-DD） */

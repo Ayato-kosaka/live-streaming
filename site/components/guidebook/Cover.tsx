@@ -42,7 +42,9 @@ export default function Cover({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
           {g.stay && (
             <span className="gb-cover-stay">
               あやとが{days}日いた（
-              <time dateTime={g.stay.from}>{jpDate(g.stay.from)}</time>〜<time dateTime={g.stay.to}>{jpDate(g.stay.to)}</time>）
+              <time dateTime={g.stay.from}>{jpDate(g.stay.from)}</time>〜
+              {/* 同じ年なら、終わりの日の年は書かない（札が2行に折れて、年だけが次の行に落ちる） */}
+              <time dateTime={g.stay.to}>{g.stay.to.slice(0, 4) === g.stay.from.slice(0, 4) ? jpDate(g.stay.to).slice(5) : jpDate(g.stay.to)}</time>）
             </span>
           )}
         </div>

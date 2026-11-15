@@ -9,7 +9,6 @@ import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref } from "@/content/nordic";
 import { TRAVEL, TRAVEL_PLACES, publicArticles, publicCities } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { guidebookOf } from "@/content/guidebook";
-import { guideOf } from "@/content/travel/guides";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
 
@@ -89,8 +88,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...TRAVEL_PLACES.map((p) => row(p.href, p.country ? LASTMOD.country(p.country) : undefined)),
     /* 街のガイド（`/travel/<国>/<街>`）。**公開前の印（`draft`）が付いた街は並べない**
        （`content/travel.ts` の `publicCities`）。更新日は、中身の字が変わった日（焼く道具が持つ） */
-    /* ガイドブック型の街（#1228）は `content/guidebook/` が更新日を持つ。それ以外は前の型（`content/travel/guides.ts`） */
-    ...publicCities().map((c) => row(c.href, (guidebookOf(c.country, c.slug) ?? guideOf(c.country, c.slug)).updated)),
+    /* 街の中身はガイドブック（`content/guidebook/`。#1228）が更新日を持つ。**中身の無い街は書き出しを止める** */
+    ...publicCities().map((c) => {
+      const g = guidebookOf(c.country, c.slug);
+      if (!g) throw new Error(`app/sitemap.ts: ${c.country}/${c.slug} の中身が content/guidebook/ に無い`);
+      return row(c.href, g.updated);
+    }),
     /* 街の記事（`/travel/<国>/<街>/<話>`）。街と同じく、公開前の印が付いた記事は並べない（`publicArticles`） */
     ...publicArticles().map((a) => row(a.href, articleOf(a.country, a.city, a.slug).updated)),
     ...RECIPES.map((r) => row(`/kitchen/${r.slug}`, LASTMOD.recipe(r))),

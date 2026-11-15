@@ -224,7 +224,8 @@ async function main() {
     }
 
     // ---- 7. 食べたいものの窓を撮る
-    const eat = p.locator('main a[href^="#eat-"]').first();
+    /* 面の上の札だけ（やりたいことの窓の中にも食べたいものへの札がある。閉じた窓の中の札は押せない） */
+    const eat = p.locator('main a.gb-tile[href^="#eat-"]').first();
     if (await eat.count()) {
       await eat.scrollIntoViewIfNeeded();
       await eat.click();
