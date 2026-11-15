@@ -189,9 +189,13 @@ export function MapsLink({ href, of, label = "Google マップで開く" }: { hr
   );
 }
 
-/** 窓の終わりの出どころ（その1件のぶんだけ）。面の終わりには全部の一覧がある */
+/**
+ * 窓の終わりの出どころ（その1件のぶんだけ）。面の終わりには全部の一覧がある。
+ * 見た日（`Src.seen`）が在れば、いちばん新しい日を1つだけ添える（外の事実は「いつ見た字か」まで出す。`docs/country-guide.md` 1-2）
+ */
 export function SrcLine({ src, of }: { src: Src[]; of: string }) {
   if (!src.length) return null;
+  const seen = src.map((s) => s.seen ?? "").filter(Boolean).sort().at(-1);
   return (
     <p className="gb-src">
       <span>出どころ</span>
@@ -200,7 +204,24 @@ export function SrcLine({ src, of }: { src: Src[]; of: string }) {
           {s.name}
         </a>
       ))}
+      {seen && (
+        <i>
+          <time dateTime={seen}>{jpDate(seen)}</time>に見た
+        </i>
+      )}
     </p>
+  );
+}
+
+/**
+ * 外の事実（骨組み）の入れ物。**出どころの行を中に持つ**。`data-src` は見張り（`python/guide_watch.py`）の目印で、
+ * この中の額は出どころが正（配信の facts とは突き合わせない）。行った箱（`data-went`）をこの中に入れない
+ */
+export function Ext({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`gb-ext ${className}`} data-src="">
+      {children}
+    </div>
   );
 }
 

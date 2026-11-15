@@ -435,7 +435,8 @@
 .gb-about-t,
 .gb-dlg-t,
 .gb-plan-a b,
-.gb-guides b {
+.gb-guides b,
+.gb-table th b {
   word-break: auto-phrase;
   text-wrap: balance;
 }
@@ -458,7 +459,25 @@
 }
 
 .gb-went-box time { margin-left: 6px; font-size: var(--fs-note); }
+.gb-went-head { display: flex; align-items: center; margin: 0 0 var(--sp-2); }
+.gb-went-t { margin: 0 0 var(--sp-2); font-size: 14px; line-height: 1.75; }
+.gb-went-box .gb-table { margin-bottom: var(--sp-2); }
+
+/* 札の名前の下の「行った」。字の札と同じ大きさで、名前と重ねない */
+.gb-tile-b .gb-went,
+.gb-plan-a i .gb-went { justify-self: start; margin-top: 2px; }
+.gb-plan-a i .gb-went { margin-left: 6px; }
+.gb-places-b > b .gb-went { margin-left: 6px; vertical-align: 1px; }
+
+/* 一言は、場面の札の頭に乗せる（押すと、その場面で本人がそう言っている） */
 .gb-say { font-weight: 700; }
+.gb-scene.has-say { display: grid; gap: 4px; justify-items: start; padding-block: 10px; }
+.gb-scene.has-say .gb-say { font-size: 15px; line-height: 1.55; }
+/* `.gb-scene > span`（字の束を縦に積む）より強く当てる。絵と字は横に並べる */
+.gb-scene > .gb-scene-b { display: inline-flex; align-items: center; gap: 8px; }
+.gb-scene > .gb-say { display: block; }
+.gb-scene-b > span { display: grid; font-size: 14px; line-height: 1.4; }
+.gb-scene-b i { font-style: normal; font-size: 12px; font-weight: 400; color: var(--ink-2); }
 
 /* ---- 5〜7 札の格子 ------------------------------------------------------ */
 
@@ -966,6 +985,7 @@
 }
 
 .gb-src > span { font-weight: 700; }
+.gb-src > i { font-style: normal; font-size: var(--fs-min); }
 .gb-src a { position: relative; display: inline-flex; align-items: center; min-height: 32px; color: var(--accent-2); }
 .gb-src a::after { content: ""; position: absolute; inset: -8px -4px; }
 
@@ -1295,3 +1315,43 @@ html.gb-lock { overflow: hidden; }
 .gb-note { font-size: var(--fs-note); color: var(--ink-2); }
 .gb-back { margin: var(--sp-5) 0 0; }
 .gb-back a { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; font-weight: 700; }
+
+/* ---- 行ったあと（スコピエから） ------------------------------------------ */
+
+/* この街の記事（物価など）。配信のアーカイブの下に、押せる札で */
+.gb-articles { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.gb-articles a {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border-radius: var(--r-1);
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  box-shadow: 0 var(--pop-d3) 0 var(--frame-dark);
+  color: var(--ink);
+  text-decoration: none;
+}
+.gb-articles a:active { transform: translateY(var(--pop-d3)); box-shadow: none; }
+.gb-articles span { display: grid; min-width: 0; }
+.gb-articles b { font-size: 14px; line-height: 1.45; }
+.gb-articles i { font-style: normal; font-size: 12px; color: var(--ink-2); }
+.gb-article { margin: var(--sp-3) 0; }
+
+/* あやとの1日。合計の行（tfoot）は内訳の足し算 */
+.gb-table.is-days td a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  color: var(--accent-2);
+  font-size: 12px;
+}
+.gb-table.is-days td a::after { content: ""; position: absolute; inset: -8px -6px; }
+.gb-table.is-days tfoot th { display: grid; gap: 1px; text-align: left; font-weight: 400; }
+.gb-table.is-days tfoot th b { font-size: 13.5px; }
+.gb-table.is-days tfoot th span { font-size: 12px; color: var(--ink-2); }
+.gb-table.is-days tfoot td { font-weight: 900; color: var(--gb-c); }

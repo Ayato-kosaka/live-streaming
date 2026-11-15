@@ -282,7 +282,7 @@ QUERIES: dict[str, list[str]] = {
     "food::ラキヤ（果実の蒸留酒）": ["Rakia Bulgarian brandy", "ракия"],
     "food::アイリャン": ["Ayran drink", "айрян"],
     "food::メハナ（大衆食堂・居酒屋）という場所そのもの": ["cat:Restaurants in Bulgaria", "Mehana Bulgarian tavern interior", "механа ресторант"],
-    "food::焼きとうもろこし（街角の屋台）": ["boiled corn street stall Bulgaria", "варена царевица"],
+    "food::ゆでとうもろこし（街角の屋台）": ["boiled corn street stall Bulgaria", "варена царевица"],
     # buy（facts.json の what をそのまま鍵にする）
     "buy::バラのオイル／ローズウォーター": ["cat:Rose oil", "Bulgarian rose oil vial", "розово масло"],
     "buy::リュテニツァ（赤いペースト）": ["Lyutenitsa jar", "лютеница буркан"],

@@ -1,51 +1,38 @@
-"""**街のガイドの面（`/travel/<国>/<街>`）の中身を、台本と facts.json から焼く。**
+"""**facts.json に結んだ面（旅のガイドの記事）の共通の土台。** facts の行の読みかた・結び・数の確かめ・写真。
 
-    python3 python/guide_bake.py north-macedonia/skopje            # 焼く（site/content/travel/north-macedonia/skopje.ts）
-    python3 python/guide_bake.py north-macedonia/skopje --check    # 焼かずに、焼いてあるものが今の材料と同じかだけ（違えば 1）
-    python3 python/guide_bake.py north-macedonia/skopje --photos   # 台本の写真を本番の口と Wikimedia から取って、絵を置く（外に出る）
+    python3 python/guide_bake.py north-macedonia/skopje/prices --photos   # 台本の写真を本番の口と Wikimedia から取って、絵を置く（外に出る）
 
-終了コード 0=焼けた・同じ / 1=台本か材料に食い違いがある（何も書かない）/ 2=台本か材料が無い。
+終了コード 0=置けた / 1=取れない写真がある / 2=台本に写真が無い。
 
-## 骨組みと肉付け（2026-11-14 の作り直し）
+## いま、これを使っているもの
 
-最初の面は「配信の事実を並べた記録」で、あやとに30点と言われた（`docs/island-misses.md` #323）。
-**どの一文も配信へ辿れる、という守りを面の骨組みにしてしまった**のが根っこ。いまの形は逆にした:
+| 使う人 | 何に |
+| --- | --- |
+| `python/guide_article.py`（記事 `/travel/<国>/<街>/<話>`） | `Baker`（facts の行・結び・額の見せかた・写真）と、指紋・書き出しの印 |
+| `python/guidebook_bake.py`（街のガイドブック `/travel/<国>/<街>`） | `Baker` の facts の行と数の確かめ、カードの写真の口（`CARDS_API` `_get` `_save`）、指紋 |
 
-| 台本の欄 | 何か | 正 | 焼くときに止めるもの |
-| --- | --- | --- | --- |
-| `what` `info` | **骨組み**（行く前のガイド。行っていない所も載る） | 外の出どころ（`src`: 名前・URL・見た日） | 出どころが1つも無い／https でない／見た日が無い |
-| `went` | **肉付け**（行った人の話。1件に1つ） | facts の行（`refs`） | 結んだ行に無い数／確かめが要る行・チャットの行への結び／場面が結んだ行の外 |
-| `quote`（節の） | 本人の一言。**節に1つまで** | facts の `quote` | 一言の無い行・チャットの行 |
+## 前は街の面（ハブ）もここで焼いていた（2026-11-15 まで）
 
-**話（`went.text`）は物語にしてよい**（事実をつないで、案内鳥の言葉で）。ただし数と固有名は結んだ行どおり。
-台本には、本人の一言の字も、額も、場面の秒も書かない。書くのは facts の行への結び（`"10-14 1:38:30"`）だけで、
-字と秒はここが facts から写す。
+スコピエの街の面は、台本 `python/data/guide/north-macedonia/skopje.json` からここで焼いていた。
+**ガイドブック型（#1228）に移したので、ハブの組み立てと書き出しは外した。** 台本は、引き継ぎ漏れの見張り
+（`python/guide_book_check.py` の `from_hub`）の相手として残してある。
 
-## 印（あやとの好みに合うか）
+一緒に**好みの印も外した**（`mark_of` と好みの言葉の表。`docs/island-misses.md` #326）。あやとの好み（豚・酒・
+ローカル市場）で品に ◎○⚠ を付けていた。記事は印を使っていない。街のガイドブックは、豚肉あり・アルコールありを
+事実のアイコンで出すだけ（`components/guidebook/parts.tsx` の `FlagMarks`）。
 
-`/bulgaria` と同じ規則（`docs/country-guide.md` 2章）。**手で書かない。** 好みの言葉は
-下の `LIKE_FOOD` `LIKE_SPOT`（`python/data/bulgaria/taste.json` の実測。前は `build_bulgaria.py` が持っていた）を使う。
-台本に書くのは、判定に要る事実（豚・酒・シロップ菓子・入場料）だけ。
+## 結び（`refs`）の形
 
-## 最終更新の日付
-
-**中身の字が変わったときだけ進める**（`docs/guide-design.md` 9章の11）。焼いたものの頭に中身の指紋を持たせ、
-焼き直して指紋が同じなら日付を据え置く。公開の日付は、最初に焼いた日のまま動かさない。
+台本に書くのは facts の行への結び（`"10-14 1:38:30"`、絞るなら `#種類` `@動画`）だけで、本人の一言の字・額・場面の秒は
+ここが facts から写す。**確かめが要る行（`verify`）とチャットが出どころの行（`via`）は結べない。**
 
 ## 写真（`--photos`）
 
 - **あやとの写真**（`photos`）: 本番の `GET /island-api/cards` から、**台本に書いた写真の id の `url`（素の写真。
   住人は立っていない）だけ**を取る。同じ行に在る住人の名前とアイコンは読み捨てる——**保存しない・書き出さない**（#1203）
-- **借りた写真**（`commons`）: Wikimedia Commons のファイル。**行っていない所にだけ使う**（行った所は、その日の写真）。
-  作者・ライセンス・元のページを台本に書き、面に出す
+- **借りた写真**（`commons`）: Wikimedia Commons のファイル。作者・ライセンス・元のページを台本に書き、面に出す
 
 どちらも 480px と 960px 幅の WebP にして `site/public/travel/<国>/<街>/<鍵>-<幅>.webp` に置く。
-**借りた写真も手元に置く**——よそのサーバーの絵を面から直に引くと、向こうが落ちた日に穴が開く。
-
-## 見張り
-
-`python/guide_watch.py`（面に出た額・一言・節の一言の数・場面のリンクの数・出どころ・説明口調）。
-焼いたものではなく、**書き出した HTML**に対して回す（`python3 python/guide_watch.py --dist site/.next-<ポート>`）。
 """
 
 from __future__ import annotations
@@ -65,34 +52,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402  facts の読みかた・確かめは束ねる道具と同じものを使う
 import stream_notes as sn  # noqa: E402
-from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
-# 好みに当たる言葉（`python/data/bulgaria/taste.json` の実測）。
-# **ソフィアは 2026-11-15 に好みの印をやめた**（#1228・`docs/island-misses.md` #326。豚と酒はアイコンで知らせる）。
-# 前は `build_bulgaria.py` から読んでいたが、あちらから消したので、スコピエを同じ決まりで作り直すまでここに置く
-LIKE_FOOD = [
-    ("ニンニク", "ニンニクの料理が好き"),
-    ("トマト", "トマトの系統が好き"),
-    ("唐辛子", "辛いものが好き"),
-    ("チーズ", "チーズたっぷりが好き"),
-    ("ヨーグルト", "ブルガリアで楽しみにしていたもの"),
-    ("パイ", "200円前後のパン・パイで機嫌が最高になる"),
-    ("パン", "200円前後のパン・パイで機嫌が最高になる"),
-    ("鶏", "鶏の料理が好き"),
-    ("じゃがいも", "じゃがいもの料理をよく作る"),
-    ("豆", "豆のスープをよく作る"),
-]
-LIKE_SPOT = [
-    ("市場", "「汚い」ローカル市場で機嫌がいい"),
-    ("食堂", "地元の激安食堂が好き"),
-    ("教会", "壁画だらけの正教会が好き"),
-    ("大聖堂", "壁画だらけの正教会が好き"),
-    ("修道院", "壁画だらけの正教会が好き"),
-    ("公園", "公園のベンチでパンとチーズを食べるのが好き"),
-    ("庭園", "公園のベンチでパンとチーズを食べるのが好き"),
-    ("山", "夕日の見える高台が好き（元「夕日研究家」）"),
-    ("展望", "夕日の見える高台が好き（元「夕日研究家」）"),
-    ("温泉", "ただで湧いているものが好き"),
-]
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "python/data/guide"
@@ -104,12 +63,7 @@ JST = timezone(timedelta(hours=9))
 BEGIN = "/* BEGIN GUIDE */"
 END = "/* END GUIDE */"
 
-# 節の並び。**`/bulgaria` と同じ骨組み**（見たい・食べたい・買いたい・したい・基本情報）。街が変わっても変えない
-ORDER = ["see", "eat", "buy", "todo", "basics"]
-STAMPS = ("行った", "前を通った", "行く前に調べた")
 
-# 高いと感じる入場料の線。8ユーロ（前の `build_bulgaria.PRICEY_EUR`）をデナルに直したもの（1ユーロ＝61.3644デナル）
-PRICEY_MKD = 490
 
 REF = re.compile(r"^(\d\d-\d\d) (\d+:\d\d:\d\d)(?: ?#(\w+))?(?: ?@([\w-]+))?$")
 DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
@@ -140,42 +94,8 @@ def icon_names(path: Path) -> set[str]:
     return set(re.findall(r'"([a-z][a-zA-Z0-9]*)"', body))
 
 
-def mark_of(sec: str, spec: dict) -> tuple[str, str]:
-    """印ひとつ。**規則はここ1本**（`build_bulgaria.mark_food` `mark_buy` `mark_spot` と同じ考え）。
-
-    台本に書くのは判定に要る事実（`pork` `alcohol` `syrup` `fee`）だけで、印も理由の字もここが決める。
-    """
-    # `"like": false` は、中身の字に好みの言葉がたまたま入っている件（マトカ渓谷の「修道院」で
-    # 「壁画だらけの正教会が好き」と出た）。好みの言葉では当てない。印の理由を手で書く口ではない
-    text = "" if spec.get("like") is False else spec.get("name", "") + spec.get("what", "")
-    if sec in ("eat", "buy"):
-        if spec.get("alcohol"):
-            return "warn", ("お酒。あやとは飲まないので、人に贈るときだけ" if sec == "buy"
-                            else "お酒。あやとは2年ほど前にやめている")
-        if spec.get("pork") is True:
-            return "warn", "豚。あやとは豚肉が苦手（ハム・ソーセージも）"
-        if spec.get("syrup"):
-            return "warn", "シロップ漬けの中東系の菓子。あやとの好みから外れる（バクラヴァ系）"
-        if spec.get("pork") == "mix":
-            return "ok", "豚を混ぜる作りかたもある。頼む前に聞く"
-        for word, why in LIKE_FOOD:
-            if word in text:
-                return "good", why
-        return "ok", ""
-    fee = spec.get("fee") or ""
-    m = re.search(r"([0-9][0-9,]*)\s*デナル", fee)
-    if m and int(m.group(1).replace(",", "")) >= PRICEY_MKD:
-        return "warn", "入場料が高め。あやとは値段で入るかを決める"
-    for word, why in LIKE_SPOT:
-        if word in text:
-            return "good", why
-    if "無料" in fee:
-        return "ok", "ただで入れる"
-    return "ok", ""
-
-
 class Baker:
-    """1つの街の台本を、facts と突き合わせながら面の中身に組む。"""
+    """台本1本を、facts と突き合わせる。記事（`guide_article.py`）と街のガイドブック（`guidebook_bake.py`）が使う。"""
 
     def __init__(self, key: str, root: Path = ROOT, streams: Path | None = None, table: Path | None = None,
                  script: Path | None = None):
@@ -191,7 +111,6 @@ class Baker:
         self.icons = icon_names(ROOT / "site/components/ui/icons/index.ts")
         self.errors: list[str] = []
         self.used: set[int] = set()        # 使った行（id）。数を報告に出す
-        self.keys: set[str] = set()
         self._index()
 
     # ------------------------------------------------------------ 材料
@@ -432,198 +351,8 @@ class Baker:
             self.errors.append(f"{where}: 絵「{name}」が `IconName` に無い")
         return name
 
-    # ------------------------------------------------------------ 組む
-    def went(self, spec: dict, where: str) -> dict | None:
-        """行った人の話。**場面は1つ**（`at`。無ければ結んだ最初の行）"""
-        stamp = spec.get("stamp", "行った")
-        if stamp not in STAMPS:
-            self.errors.append(f"{where}: 札「{stamp}」は {STAMPS} のどれか")
-        xs = self.refs(spec.get("refs") or [], where)
-        if not xs:
-            self.errors.append(f"{where}: 話「{spec.get('text', '')[:20]}…」が facts のどの行にも結ばれていない")
-            return None
-        self.check_numbers(spec["text"], xs, where)
-        at = xs[0]
-        if spec.get("at"):
-            a = self.find(spec["at"], f"{where}.at")
-            if a and a["id"] not in {x["id"] for x in xs}:
-                self.errors.append(f"{where}: 場面「{spec['at']}」が、話に結んだ行（refs）の外")
-            at = a or at
-        out: dict = {"stamp": stamp, "days": sorted({x["date"] for x in xs}), "text": spec["text"],
-                     "at": self.scene(at), "rows": []}
-        ph = self.photo(spec.get("photo"), f"{where}.photo")
-        if ph:
-            if "day" not in ph:
-                self.errors.append(f"{where}: 行った話の写真は、あやとの写真だけ（借りた写真を体験に見せない）")
-            out["photo"] = ph
-        if spec.get("measured"):
-            m = self.measured(spec["measured"], f"{where}.measured")
-            if m:
-                out["measured"] = m
-        out["rows"] = [r for r in (self.price_row(s, f"{where}.rows[{i}]") for i, s in enumerate(spec.get("rows") or [])) if r]
-        return out
 
-    def item(self, spec: dict, sec: str, where: str) -> dict:
-        key = spec.get("key", "")
-        if not key or key in self.keys:
-            self.errors.append(f"{where}: 鍵「{key}」が無いか、ほかの件と同じ")
-        self.keys.add(key)
-        out: dict = {"key": key, "name": spec["name"], "icon": self.icon(spec.get("icon", ""), where)}
-        loc = self.local(spec.get("local"), where)
-        if loc:
-            out["local"] = loc
-        if sec != "basics":
-            if spec.get("rank") is not None:
-                if spec["rank"] not in (1, 2, 3):
-                    self.errors.append(f"{where}: ★は1〜3")
-                out["rank"] = spec["rank"]
-            out["mark"], out["markWhy"] = mark_of(sec, spec)
-        elif spec.get("rank") is not None:
-            self.errors.append(f"{where}: 基本情報に★を付けない")
-        if spec.get("what"):
-            out["what"] = spec["what"]
-        out["info"] = [{"label": f["label"], "text": f["text"]} for f in spec.get("info") or []]
-        out["src"] = self.src(spec.get("src"), where)
-        has_ext = bool(spec.get("what") or spec.get("info"))
-        if has_ext and not out["src"]:
-            self.errors.append(f"{where}: 「{spec['name']}」の外の事実に出どころが無い")
-        if not has_ext and out["src"]:
-            self.errors.append(f"{where}: 「{spec['name']}」に出どころだけ在って、外の事実が無い")
-        # Google マップは**名前で検索した状態**で開く（あやと 2026-11-15「座標に飛ばされて
-        # よく分かりにくい。検索をかけた状態で渡してほしい」）。字は `python/maps_link.py` の1か所で組む。
-        # 場所（台本に `maps` の在る件）は「マップで見る」: 現地の字の名前 ＋ 街の現地の名前。
-        # 台本の `maps` の字（英語）は、現地の字が無い件にだけ使う——看板も Google の店の名前も現地の字
-        city = (self.s.get("local") or {}).get("text", "")
-        if spec.get("maps"):
-            out["maps"] = maps_search(loc["text"], city) if loc else maps_search(spec["maps"])
-        # 料理と土産は「近くで探す」: 品の現地の名前 ＋ 街。出している店が並ぶだけで、1軒を「ここ」とは言わない。
-        # 現地の名前の無い件（行った店・ただの品物）には付けない——日本語の字で探しても現地では当たらない
-        if sec in ("eat", "buy") and loc:
-            out["near"] = maps_search(loc["text"], city)
-        w = self.went(spec["went"], f"{where}.went") if spec.get("went") else None
-        if not has_ext and not w:
-            self.errors.append(f"{where}: 「{spec['name']}」に外の事実も、行った人の話も無い")
-        if not has_ext and spec.get("rank") is not None:
-            self.errors.append(f"{where}: 外の出どころの無い件（行った人の話だけ）に★を付けない（重要度は一般の話）")
-        # タイルの絵は、行った件ならその日の写真、行っていない件なら借りた写真
-        ph = (w or {}).get("photo") or self.photo(spec.get("photo"), f"{where}.photo")
-        if ph:
-            out["photo"] = ph
-        if w:
-            out["went"] = w
-        return out
-
-    def section(self, sid: str, spec: dict) -> dict:
-        w = f"sections.{sid}"
-        lead = spec["lead"]
-        lead_x = self.refs(lead.get("refs") or [], f"{w}.lead")
-        self.check_numbers(lead["text"], lead_x, f"{w}.lead")
-        items = [self.item(it, sid, f"{w}.items[{i}]") for i, it in enumerate(spec.get("items") or [])]
-        if isinstance(spec.get("quote"), list):
-            # 本人の一言は、節でいちばん効く1つだけ（#323 の決めごと2）
-            self.errors.append(f"{w}: 一言は節に1つまで")
-            spec = {**spec, "quote": None}
-        q = self.quote(spec["quote"], f"{w}.quote") if spec.get("quote") else None
-        of = spec.get("quoteOf")
-        if q and of not in {it["key"] for it in items}:
-            self.errors.append(f"{w}: 一言の持ち主「{of}」が、この節の件に無い")
-        name_of = {it["key"]: it["name"] for it in items}
-        return {"id": sid, "lead": lead["text"], "quote": q, "quoteOf": name_of.get(of) if q else None, "items": items}
-
-    def build(self) -> dict:
-        s = self.s
-        for k in ("name", "title", "description", "lead", "cover", "intro", "rate", "sections"):
-            if k not in s:
-                self.errors.append(f"台本に {k} が無い")
-        if self.errors:
-            return {}
-        if not s.get("persona") or not s.get("terms"):
-            # 面の頭に、誰が・何を調べて読むかを書く（#323 の決めごと4）。書かずに作ると、どの問いにも答えない面になる
-            self.errors.append("台本に persona（読む人）と terms（狙う語）が無い")
-        lead_x = self.refs(s["lead"]["refs"], "lead")
-        self.check_numbers(s["lead"]["text"], lead_x, "lead")
-        if len(s["lead"]["text"]) > 40:
-            self.errors.append(f"lead: 表紙の一言は40字まで（{len(s['lead']['text'])}字）")
-        desc = s["description"]
-        self.check_numbers(desc["text"], self.refs(desc.get("refs") or [], "description"), "description")
-        if len(desc["text"]) > 120:
-            self.errors.append(f"description: 120字まで（{len(desc['text'])}字）")
-        intro_w = s["intro"]["went"]
-        ix = self.refs(intro_w["refs"], "intro.went")
-        self.check_numbers(intro_w["text"], ix, "intro.went")
-        at = self.find(intro_w["at"], "intro.went.at") if intro_w.get("at") else (ix[0] if ix else None)
-        intro = {"ext": {"text": s["intro"]["ext"]["text"], "src": self.src(s["intro"]["ext"].get("src"), "intro.ext")},
-                 "went": {"text": intro_w["text"], "at": self.scene(at) if at else {"v": "", "t": 0, "date": ""}}}
-        if not intro["ext"]["src"]:
-            self.errors.append("intro.ext: 出どころが無い")
-        rate = {"text": s["rate"]["text"], "src": self.src(s["rate"].get("src"), "rate")}
-        if not rate["src"]:
-            self.errors.append("rate: 出どころが無い")
-        nums = []
-        for i, b in enumerate(s.get("nums") or []):
-            x = self.find(b["ref"], f"nums[{i}]")
-            if not x:
-                continue
-            if b.get("measured"):
-                if not x["it"].get("measured"):
-                    self.errors.append(f"nums[{i}]: 「実測」と書くのに、行に測った値（measured）が無い")
-                    continue
-                n = mins(self.measured_sec(x["it"]))
-                if gf.numval(b["n"].replace("約", "")) != gf.numval(n):
-                    self.errors.append(f"nums[{i}]: 実測の値 {b['n']} が、測った値 {n} と違う")
-            else:
-                self.check_numbers(b["n"] + b["unit"] + b["cap"], [x], f"nums[{i}]")
-            nums.append({"n": b["n"], "unit": b["unit"], "cap": b["cap"], "measured": bool(b.get("measured")),
-                         "at": self.scene(x)})
-        secs = [self.section(sid, s["sections"][sid]) for sid in ORDER if sid in s["sections"]]
-        missing = [sid for sid in ORDER if sid not in s["sections"]]
-        if missing:
-            # 骨組みの節が欠けた面は、ガイドではなく記録になる（#323）
-            self.errors.append(f"sections: 骨組みの節が欠けている {missing}")
-        extra = set(s["sections"]) - set(ORDER)
-        if extra:
-            self.errors.append(f"sections: 知らない節 {sorted(extra)}（並びは {ORDER}）")
-        # 埋め込みの1本は機械で決める（9章の2）: その街で facts の項目がいちばん多い回、その回の最初の `place` から
-        counts: dict[str, int] = {}
-        for x in self.rows:
-            counts[x["v"]] = counts.get(x["v"], 0) + 1
-        top = max(self.heads, key=lambda h: (counts.get(h["v"], 0), h["start"]))
-        places = sorted(x["t"] for x in self.rows if x["v"] == top["v"] and x["it"]["kind"] == "place")
-        embed = {"v": top["v"], "t": places[0] if places else 0, "date": top["date"]}
-        return {
-            "country": self.country, "city": self.city, "name": s["name"],
-            "local": self.local(s.get("local"), "local"),
-            "title": s["title"], "description": desc["text"], "lead": s["lead"]["text"],
-            "cover": self.photo(s["cover"], "cover"),
-            "intro": intro,
-            "rate": rate,
-            "embed": embed,
-            "streams": s.get("streams"),
-            "nums": nums,
-            "sections": secs,
-        }
-
-    def report(self, g: dict | None = None) -> str:
-        out = [f"facts: 使った {len(self.used)}件 / そのまま出せる {len(self.ready)}件（項目 {len(self.rows)}件・配信 {len(self.heads)}本）"]
-        if g:
-            links = len(g["nums"]) + 1  # 驚く数・頭の話
-            for s in g["sections"]:
-                went = [it for it in s["items"] if it.get("went")]
-                been = [it for it in went if it["went"]["stamp"] == "行った"]
-                srcd = sum(1 for it in s["items"] if it["src"])
-                rows = sum(len(it["went"]["rows"]) for it in went)
-                links += len(went) + rows + (1 if s["quote"] else 0)
-                out.append(f"  {s['id']}: {len(s['items'])}件（行った {len(been)}・話のある件 {len(went)}・出どころつき {srcd}）"
-                           f"・一言 {1 if s['quote'] else 0}・値段の行 {rows}")
-            out.append(f"  場面のリンク（場面の札・吹き出し・驚く数・値段の行）: {links}本")
-        return "\n".join(out)
-
-
-# ---------------------------------------------------------------- 書き出し
-
-def out_path(key: str, content: Path = CONTENT) -> Path:
-    return content / f"{key}.ts"
-
+# ---------------------------------------------------------------- 書き出しの印（記事とガイドブックが使う）
 
 def read_baked(p: Path) -> dict | None:
     if not p.exists():
@@ -638,55 +367,6 @@ def read_baked(p: Path) -> dict | None:
 def fingerprint(g: dict) -> str:
     body = {k: v for k, v in g.items() if k not in ("published", "updated", "hash")}
     return hashlib.sha256(json.dumps(body, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
-
-
-def render(key: str, g: dict) -> str:
-    rel = f"python/data/guide/{key}.json"
-    return (
-        "/**\n"
-        f" * {g['name']}の面（`/travel/{key}`）の中身。**自動生成。手で直さない。**\n"
-        " *\n"
-        f" * 元は台本 `{rel}` と `streams/YYYY/MM/*.facts.json`。\n"
-        f" * 直すなら台本か facts のほうを直して、`python3 python/guide_bake.py {key}` で焼き直す。\n"
-        " * 一言の字・額・場面の秒は facts から写している（台本には結びしか無い）。\n"
-        " */\n"
-        'import type { CityGuide } from "@/content/travel/types";\n\n'
-        f"export const GUIDE: CityGuide = {BEGIN}\n"
-        + json.dumps(g, ensure_ascii=False, indent=1)
-        + f"\n{END};\n"
-    )
-
-
-def bake(key: str, *, check: bool = False, today: str | None = None, root: Path = ROOT,
-         content: Path = CONTENT, **kw) -> int:
-    try:
-        b = Baker(key, root=root, **kw)
-        g = b.build()
-    except Stop as e:
-        print(f"::error::{e}")
-        return 2
-    if b.errors:
-        for e in b.errors:
-            print(f"::error::{e}")
-        print(f"止めた: {len(b.errors)}件。何も書いていない")
-        return 1
-    p = out_path(key, content)
-    old = read_baked(p)
-    fp = fingerprint(g)
-    day = today or today_jst()
-    g = {**g, "published": (old or {}).get("published") or day,
-         "updated": (old or {}).get("updated") if old and old.get("hash") == fp else day, "hash": fp}
-    text = render(key, g)
-    if check:
-        same = p.exists() and p.read_text(encoding="utf-8") == text
-        print(("同じ" if same else "焼き直しが要る") + f": {p.relative_to(root) if p.is_relative_to(root) else p}")
-        print(b.report(g))
-        return 0 if same else 1
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
-    print(f"焼いた: {p.relative_to(root) if p.is_relative_to(root) else p}（指紋 {fp}・公開 {g['published']}・最終更新 {g['updated']}）")
-    print(b.report(g))
-    return 0
 
 
 # ---------------------------------------------------------------- 写真
@@ -779,15 +459,15 @@ def fetch_photos(key: str, root: Path = ROOT, only_commons: bool = False) -> int
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("key", help="<国>/<街>（例: north-macedonia/skopje）")
-    ap.add_argument("--check", action="store_true", help="焼かずに、焼いてあるものが同じかだけ見る")
+    ap.add_argument("key", help="台本の鍵（例: north-macedonia/skopje/prices）")
     ap.add_argument("--photos", action="store_true", help="台本の写真を本番の口と Commons から取って置く（外に出る）")
     ap.add_argument("--commons", action="store_true", help="--photos のうち、借りた写真だけ取る")
-    ap.add_argument("--today", help="今日の日付（見張りが差し替える）")
     a = ap.parse_args(argv)
-    if a.photos:
-        return fetch_photos(a.key, only_commons=a.commons)
-    return bake(a.key, check=a.check, today=a.today)
+    if not a.photos:
+        # 街の面はもうここで焼かない（`python/guidebook_bake.py`）。記事は `python/guide_article.py`
+        print("::error::焼くのは guidebook_bake.py（街）か guide_article.py（記事）。ここは --photos だけ")
+        return 2
+    return fetch_photos(a.key, only_commons=a.commons)
 
 
 if __name__ == "__main__":
