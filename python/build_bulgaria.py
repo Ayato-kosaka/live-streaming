@@ -61,7 +61,11 @@
 import json
 import math
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "python" / "data" / "bulgaria"
@@ -172,14 +176,48 @@ def mark_spot(d: dict):
     return "ok", ""
 
 
-def gmaps(lat: float, lon: float) -> str:
-    """Google マップをその場で開く道。
+#: Google マップの検索に足す街の名前（現地の字）と、足さない見どころ（街の外にあるもの）
+CITY = PLACES["city"]
+NO_CITY = set(PLACES.get("no_city") or [])
 
-    あやと（2026-11-13）:「Googleマップが使いやすかった」。
-    **`hl=ja` を必ず付ける。** 付けないと、現地の端末の言葉（ブルガリア語）で開く。
-    字は1か所でしか作らないので、付け忘れが片側にだけ残ることがない。
+
+def first_name(cyr: str, roman: str = "") -> str:
+    """検索に使う名前。**「A / B」と2つ並べた名前は前の1つ**——並べたまま探すと、
+    両方の字を持つ所にしか当たらない。現地の字が無ければローマ字で探す。"""
+    return ((cyr or roman or "").split(" / ")[0]).strip()
+
+
+def spot_maps(s: dict) -> str:
+    """見どころの Google マップ。**座標ではなく、現地の字の名前 ＋ 街で検索して開く。**
+
+    あやと（2026-11-15）:「座標に飛ばされてよく分かりにくい。店が分かるように、
+    Google マップで検索をかけた状態で渡してほしい」。座標だと名前の無い点が1つ
+    立つだけで、何の建物か・開いているかが出ない（`python/maps_link.py`）。
     """
-    return "https://www.google.com/maps/search/?api=1&query=%.6f,%.6f&hl=ja" % (lat, lon)
+    name = first_name(s.get("cyr", ""), s.get("roman", ""))
+    return maps_search(name) if s["name"] in NO_CITY else maps_search(name, CITY)
+
+
+def place_maps(p: dict) -> str:
+    """店・市場の Google マップ。**見どころと同じ場所（`from_spot`）は、見どころと同じ字で探す**
+    （同じ場所を2通りの字で探すと、片方だけ別の所に当たる）。店は `q`（名前と通り）＋ 街。"""
+    if p.get("from_spot"):
+        src = next((s for s in F["spots"] if s["name"] == p["from_spot"]), None)
+        if not src:
+            raise SystemExit("見どころに無い場所: %s" % p["from_spot"])
+        return spot_maps(src)
+    if not p.get("q"):
+        raise SystemExit("検索の字（q）が無い店: %s" % p["key"])
+    return maps_search(p["q"], CITY)
+
+
+def near_maps(d: dict) -> str:
+    """料理・土産の「近くで探す」。**品の現地の名前 ＋ 街**で、出している店の一覧を開く。
+
+    **1軒を「ここ」と言わない**決まり（`places.json` の頭）には触れない——
+    検索は店を並べるだけで、どれかを選んで渡してはいない。
+    """
+    return maps_search(first_name(d.get("cyr", ""), d.get("roman", "")), CITY)
 
 
 # ---------------------------------------------------------------------------
@@ -330,21 +368,26 @@ def main() -> None:
     if miss:
         raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 
+    bad_nc = NO_CITY - {s["name"] for s in F["spots"]}
+    if bad_nc:
+        raise SystemExit("places.json の no_city が見どころに無い: %s" % sorted(bad_nc))
+
     spots, food, buy = [], [], []
     for s in F["spots"]:
         g = fill_spot[s["name"]]
         m, why = mark_spot({**s, **g})
-        # **Google マップの道は、緯度経度から1か所で作る**（`gmaps`）。
+        # **Google マップの道は、名前から1か所で作る**（`spot_maps`）。
         # 材料のほうに書いた字を持ち回ると、`hl=ja` のような直しが片側にだけ残る
         spots.append({**s, "fee": g.get("fee", ""), "mark": m, "why": why,
-                      "maps": gmaps(s["lat"], s["lon"]),
+                      "maps": spot_maps(s),
                       **photo_of("spots", s["name"])})
     # 距離は下で地図を組むときに出す（同じ計算を2回書かない）
     for d in F["food"]:
         g = fill_food[d["jp"]]
         m, why = mark_food({**d, **g})
         food.append({**d, **{k: g[k] for k in ("pork", "alcohol", "meat", "note")},
-                     "mark": m, "why": why, **photo_of("food", d["jp"])})
+                     "mark": m, "why": why, "near": near_maps(d),
+                     **photo_of("food", d["jp"])})
     alcohol = set(FILL["buy_alcohol"])
     miss_a = alcohol - {x["what"] for x in F["buy"]}
     if miss_a:
@@ -353,7 +396,8 @@ def main() -> None:
         m, why = mark_buy(x, alcohol)
         # **`why` は土産そのものの説明**（`facts.json` が持っている欄）なので、
         # 印の理由はぶつからない名前で足す
-        buy.append({**x, "mark": m, "markwhy": why, **photo_of("buy", x["what"])})
+        buy.append({**x, "mark": m, "markwhy": why, "near": near_maps(x),
+                    **photo_of("buy", x["what"])})
 
     # ---- 街の地図。**緯度経度から座標を出すのはここだけ。**
     # 面の側で出し直さない（`components/macedonia/NmMapSvg.tsx` と同じ決まり）
@@ -438,7 +482,7 @@ def main() -> None:
             lat, lon = p["lat"], p["lon"]
         places.append({"key": p["key"], "n": i + 1, "label": p["label"],
                        "roman": p.get("roman", ""), "what": p["what"],
-                       "lat": lat, "lon": lon, "maps": gmaps(lat, lon),
+                       "lat": lat, "lon": lon, "maps": place_maps(p),
                        "km": round(km({"lat": lat, "lon": lon}), 1),
                        "on": on_art({"lat": lat, "lon": lon})})
     by_key = {p["key"]: p for p in places}
@@ -489,8 +533,7 @@ def main() -> None:
                  "x": at(s)[0], "y": at(s)[1], "prio": s["rank"]} for s in near]
     maps["see"] = bake_map(
         see_pins, W, H, art,
-        [{"name": s["name"], "km": s["km"], "maps": gmaps(s["lat"], s["lon"])}
-         for s in far])
+        [{"name": s["name"], "km": s["km"], "maps": s["maps"]} for s in far])
     eat_pins, eat_far = map_of(used_eat, lambda p: p["n"])
     maps["eat"] = bake_map(eat_pins, W, H, art, eat_far)
     used_buy = tie(PLACES["buy"], buy, "what")
@@ -614,13 +657,13 @@ def main() -> None:
     arr("BG_PLACES", places, ["n", "key", "label", "roman", "what", "maps", "km", "on"])
     arr("BG_FOOD", food,
         ["jp", "cyr", "roman", "kana", "rank", "mark", "why", "what", "where",
-         "price", "meat", "note", "pins", *PHOTO_KEYS])
+         "price", "meat", "note", "pins", "near", *PHOTO_KEYS])
     # **「ここでしたいこと」は、好みの実測と現地の事実を突き合わせた結論**なので、
     # 事実（`facts.json`）ではなくこちら（`fill.json`）が持つ。印も手で置いてある
     # ——規則1本では「市場でパイを買って公園で食べる」のような**組み合わせ**が出せない
     arr("BG_TODO", FILL["todo"], ["what", "where", "why", "mark"])
     arr("BG_BUY", buy,
-        ["what", "mark", "markwhy", "why", "where", "price", "pins", *PHOTO_KEYS])
+        ["what", "mark", "markwhy", "why", "where", "price", "pins", "near", *PHOTO_KEYS])
     arr("BG_EVENTS", F["events"], ["what", "when", "body"])
     arr("BG_WORDS", F["words"], ["cyr", "roman", "kana", "jp"])
 

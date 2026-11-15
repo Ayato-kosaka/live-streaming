@@ -91,9 +91,9 @@ export default function BgMyMap({ which }: { which: "see" | "eat" | "buy" }) {
                 href={f.maps}
                 target="_blank"
                 rel="noreferrer"
-                aria-label={`Google マップで開く（${f.name}）`}
+                aria-label={`マップで見る（${f.name}）`}
               >
-                マップ
+                マップで見る
               </a>
             </li>
           ))}

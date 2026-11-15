@@ -12,6 +12,7 @@
  */
 
 import SHOPS from "./nordic/shops.json";
+import { mapsSearch } from "@/lib/mapsSearch";
 
 export type Shop = {
   id: string;
@@ -42,6 +43,8 @@ export type CityShops = {
   ok: boolean;
   /** その街の時計。いま開いているかを画面で数えるのに使う */
   tz: string;
+  /** 街の現地の名前（「Katowice」）。地図アプリの検索に足す */
+  place: string;
   center: number[];
   shops: Shop[];
 };
@@ -81,12 +84,14 @@ export const SHOP_KINDS: { key: ShopKind; label: string }[] = [
 ];
 
 /**
- * 地図アプリを開く行き先。
+ * 地図アプリを開く行き先。**店の名前 ＋ 通りと番地 ＋ 街の現地の名前で検索して開く。**
  *
- * **座標で開く。名前で検索させない。** 同じ名前の別の支店に飛ぶことがある。
- * `geo:` は Android では開くが iPhone の Safari は知らない綴りとして落とす。
- * Google マップの `?api=1` の形なら、**入っていればアプリが開き、
- * 入っていなければブラウザの地図が開く**（iPhone / Android のどちらも）。
+ * 前は座標で開いていた（同じ名前の別の支店に飛ぶのを避けるため）。あやと（2026-11-15）:
+ * 「座標に飛ばされてよく分かりにくい。店が分かるように、Google マップで検索をかけた
+ * 状態で渡してほしい」——座標だと名前の無い点が1つ立つだけで、何の店かが出ない。
+ *
+ * 支店に飛ぶほうは**通りと番地を足して**防ぐ（同じ街に home&you が3軒、Miniso が2軒ある）。
+ * 番地を書いていない店は、名前と街で探す。組むのは `lib/mapsSearch.ts` の1か所。
+ * `geo:` は Android では開くが iPhone の Safari は知らない綴りとして落とすので使わない。
  */
-export const mapHref = (s: Shop) =>
-  `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lon}`;
+export const mapHref = (s: Shop, place: string) => mapsSearch(s.name, s.at, place);

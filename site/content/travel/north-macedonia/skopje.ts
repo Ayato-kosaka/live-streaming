@@ -157,7 +157,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Old%20Bazaar%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D1%82%D0%B0%D1%80%D0%B0+%D1%87%D0%B0%D1%80%D1%88%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/umbrellas-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/umbrellas-480.webp 480w, /travel/north-macedonia/skopje/umbrellas-960.webp 960w",
@@ -222,7 +222,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Stone%20Bridge%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B0%D0%BC%D0%B5%D0%BD+%D0%BC%D0%BE%D1%81%D1%82+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/stone-bridge-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/stone-bridge-480.webp 480w, /travel/north-macedonia/skopje/stone-bridge-960.webp 960w",
@@ -262,7 +262,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Macedonia%20Square%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D0%BB%D0%BE%D1%88%D1%82%D0%B0%D0%B4+%D0%9C%D0%B0%D0%BA%D0%B5%D0%B4%D0%BE%D0%BD%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/warrior-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/warrior-480.webp 480w, /travel/north-macedonia/skopje/warrior-960.webp 960w",
@@ -321,7 +321,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Skopje%20Fortress&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BA%D0%BE%D0%BF%D1%81%D0%BA%D0%BE+%D0%BA%D0%B0%D0%BB%D0%B5+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/fortress-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/fortress-480.webp 480w, /travel/north-macedonia/skopje/fortress-960.webp 960w",
@@ -379,7 +379,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=St.%20Clement%20of%20Ohrid%20Cathedral%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BE%D0%B1%D0%BE%D1%80%D0%BD%D0%B0+%D1%86%D1%80%D0%BA%D0%B2%D0%B0+%E2%80%9E%D0%A1%D0%B2.+%D0%9A%D0%BB%D0%B8%D0%BC%D0%B5%D0%BD%D1%82+%D0%9E%D1%85%D1%80%D0%B8%D0%B4%D1%81%D0%BA%D0%B8%E2%80%9C+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/clement-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/clement-480.webp 480w, /travel/north-macedonia/skopje/clement-960.webp 960w",
@@ -441,7 +441,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Museum%20of%20the%20City%20of%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D1%83%D0%B7%D0%B5%D1%98+%D0%BD%D0%B0+%D0%B3%D1%80%D0%B0%D0%B4+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/museum-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/museum-480.webp 480w, /travel/north-macedonia/skopje/museum-960.webp 960w",
@@ -498,7 +498,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Memorial%20House%20of%20Mother%20Teresa%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BF%D0%BE%D0%BC%D0%B5%D0%BD-%D0%BA%D1%83%D1%9C%D0%B0+%D0%BD%D0%B0+%D0%9C%D0%B0%D1%98%D0%BA%D0%B0+%D0%A2%D0%B5%D1%80%D0%B5%D0%B7%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/teresa-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/teresa-480.webp 480w, /travel/north-macedonia/skopje/teresa-960.webp 960w",
@@ -532,7 +532,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Porta%20Macedonia%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D0%BE%D1%80%D1%82%D0%B0+%D0%9C%D0%B0%D0%BA%D0%B5%D0%B4%D0%BE%D0%BD%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/porta-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/porta-480.webp 480w, /travel/north-macedonia/skopje/porta-960.webp 960w",
@@ -579,7 +579,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Kurshumli%20An%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D1%83%D1%80%D1%88%D1%83%D0%BC%D0%BB%D0%B8+%D0%B0%D0%BD+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/kursumli-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/kursumli-480.webp 480w, /travel/north-macedonia/skopje/kursumli-960.webp 960w",
@@ -613,7 +613,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Mustafa%20Pasha%20Mosque%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D1%83%D1%81%D1%82%D0%B0%D1%84%D0%B0-%D0%BF%D0%B0%D1%88%D0%B8%D0%BD%D0%B0+%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/mosque-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/mosque-480.webp 480w, /travel/north-macedonia/skopje/mosque-960.webp 960w",
@@ -803,6 +803,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%A2%D0%B0%D0%B2%D1%87%D0%B5+%D0%B3%D1%80%D0%B0%D0%B2%D1%87%D0%B5+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/tavche-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/tavche-480.webp 480w, /travel/north-macedonia/skopje/tavche-960.webp 960w",
@@ -836,6 +837,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%8C%D0%B5%D0%B1%D0%B0%D0%BF%D0%B8+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/kosmos-cevapi-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/kosmos-cevapi-480.webp 480w, /travel/north-macedonia/skopje/kosmos-cevapi-960.webp 672w",
@@ -890,6 +892,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%91%D1%83%D1%80%D0%B5%D0%BA+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/burek-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/burek-480.webp 480w, /travel/north-macedonia/skopje/burek-960.webp 960w",
@@ -923,6 +926,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%A8%D0%BE%D0%BF%D1%81%D0%BA%D0%B0+%D1%81%D0%B0%D0%BB%D0%B0%D1%82%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/shopska-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/shopska-480.webp 480w, /travel/north-macedonia/skopje/shopska-960.webp 960w",
@@ -956,6 +960,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D0%B0%D1%81%D1%82%D1%80%D0%BC%D0%B0%D1%98%D0%BB%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/pastrmajlija-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/pastrmajlija-480.webp 480w, /travel/north-macedonia/skopje/pastrmajlija-960.webp 960w",
@@ -989,6 +994,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%A2%D1%83%D0%BB%D1%83%D0%BC%D0%B1%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/tulumba-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/tulumba-480.webp 480w, /travel/north-macedonia/skopje/tulumba-960.webp 500w",
@@ -1022,6 +1028,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%91%D0%BE%D0%B7%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/boza-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/boza-480.webp 480w, /travel/north-macedonia/skopje/boza-960.webp 960w",
@@ -1059,7 +1066,8 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
        "seen": "2026-11-14"
       }
-     ]
+     ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D0%B0%D1%81%D1%82%D0%B8%D0%BA%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja"
     },
     {
      "key": "kosmos",
@@ -1286,6 +1294,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%90%D1%98%D0%B2%D0%B0%D1%80+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/ajvar-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/ajvar-480.webp 480w, /travel/north-macedonia/skopje/ajvar-960.webp 960w",
@@ -1389,6 +1398,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
+     "near": "https://www.google.com/maps/search/?api=1&query=%D0%92%D1%80%D0%B0%D0%BD%D0%B5%D1%86+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/vranec-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/vranec-480.webp 480w, /travel/north-macedonia/skopje/vranec-960.webp 960w",
@@ -1437,7 +1447,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Matka%20Canyon&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D0%B0%D1%82%D0%BA%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/matka-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/matka-480.webp 480w, /travel/north-macedonia/skopje/matka-960.webp 960w",
@@ -1537,7 +1547,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
        "seen": "2026-11-14"
       }
      ],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Millennium%20Cross%2C%20Skopje&hl=ja",
+     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9C%D0%B8%D0%BB%D0%B5%D0%BD%D0%B8%D1%83%D0%BC%D1%81%D0%BA%D0%B8+%D0%BA%D1%80%D1%81%D1%82+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
      "photo": {
       "src": "/travel/north-macedonia/skopje/cross-960.webp",
       "srcSet": "/travel/north-macedonia/skopje/cross-480.webp 480w, /travel/north-macedonia/skopje/cross-960.webp 960w",
@@ -1984,7 +1994,7 @@ export const GUIDE: CityGuide = /* BEGIN GUIDE */
   }
  ],
  "published": "2026-11-14",
- "updated": "2026-11-14",
- "hash": "43d0164be671fb1c"
+ "updated": "2026-11-15",
+ "hash": "fcfbe9090e829f80"
 }
 /* END GUIDE */;

@@ -316,12 +316,18 @@ export function WentBlock({ w, photo = true, sizes = "(min-width: 720px) 440px, 
   );
 }
 
+/**
+ * Google マップへ出る道。**どちらも名前で検索した状態で開く**（焼くほうの `python/guide_bake.py`）。
+ * 場所は「マップで見る」、料理と土産は「近くで探す」（出している店が並ぶ）
+ */
 function Maps({ it }: { it: Item }) {
-  if (!it.maps) return null;
+  const href = it.maps ?? it.near;
+  if (!href) return null;
+  const word = it.maps ? "マップで見る" : "近くで探す";
   return (
-    <a className="tg-maps" href={it.maps} target="_blank" rel="noopener noreferrer" aria-label={`Google マップで開く（${it.name}）`}>
-      <Icon name="map" size={15} />
-      Google マップで開く
+    <a className="tg-maps" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${word}（${it.name}）`}>
+      <Icon name={it.maps ? "map" : "search"} size={15} />
+      {word}
       <Icon name="external" size={13} />
     </a>
   );
