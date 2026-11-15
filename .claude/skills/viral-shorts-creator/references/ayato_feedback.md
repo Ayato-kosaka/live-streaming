@@ -1200,3 +1200,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1185#issuecomment-6861841458（マトカ渓谷の回 v7（ehb-p1-v7）を「2026/11/18」に出す。時刻の指定は無いので 21:30 JST）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1186#issuecomment-6861877065（十字架の回 v6（qax-p1-v6）を「2026/11/19」に出す。時刻の指定は無いので 21:30 JST。書き足した続きの5行もこのまま）
 
+- https://github.com/Ayato-kosaka/live-streaming/issues/1187#issuecomment-6893497775（チャットの書き置き。あやと 2026-11-15「オッケー空いてる日に予約して」＝パソコン待ちの回 v5（pcw-p2-v5）を出す。日付の指定は「空いてる日」なので、予約の無い最初の日 2026-11-20、時刻の指定は無いので 21:30 JST）
