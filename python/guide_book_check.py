@@ -20,7 +20,7 @@
    在るものだけ。しかも `went` の行の街・遠出と `town` が合うときだけ通る（オフリドの項目に、スコピエの行を結んでも落ちる）
 
 5. **動画の欄（導線: 検索 → ブログ → ショート → アーカイブ → ライブ）** — 行った項目は `scene`（その項目の went の行の1つ）を持つ。
-   `short` は `site/content/shorts.ts` に在る北マケドニア（🇲🇰）のショートで、当てた理由（`shorts.items` の `basis` と facts）がある。
+   `short` は `python/data/shorts.json`（`site/content/shorts.ts` の元）に在る北マケドニア（🇲🇰）のショートで、当てた理由（`shorts.items` の `basis` と facts）がある。
    行っていない項目には付けない（ショートの日付は出した日で、撮った日ではないので、日付では当てない）
 
 ほかに、面の形の約束（表紙のひとこと3案・25字、どんな街の札3〜4枚・60字、エリア4〜6・多角形4〜8点、やりたいこと8まで・見出し30字、
@@ -158,12 +158,16 @@ class Book:
             if isinstance(v, (dict, list)):
                 self.walk(v, f"{where}.{k}" if not name else f"{here}.{k}", town)
 
-    def shorts_ts(self) -> dict[str, str]:
-        """site/content/shorts.ts のショート（id → 題名）。読むだけ。"""
+    def shorts_known(self) -> dict[str, str]:
+        """チャンネルのショート（id → 題名）。
+
+        **`site/content/shorts.ts` は字で読まない**（TS を読む口は `python/ts_read.py` の1本。docs/island-misses.md の208）。
+        shorts.ts はこの控え（`python/data/shorts.json`）から `python/build_shorts.py` が焼くので、元の JSON を読む。
+        """
         if not hasattr(self, "_shorts"):
-            p = self.root / "site/content/shorts.ts"
-            t = p.read_text(encoding="utf-8") if p.exists() else ""
-            self._shorts = {m.group(1): m.group(2) for m in re.finditer(r'\{ id: "([^"]+)", date: "[^"]+", title: "([^"]+)"', t)}
+            p = self.root / "python/data/shorts.json"
+            d = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+            self._shorts = {s.get("id"): s.get("title", "") for s in d.get("shorts") or []}
         return self._shorts
 
     def check_video(self, x: dict, where: str) -> None:
@@ -184,9 +188,9 @@ class Book:
                 self.err(where, "場面の video・t・url が行と食い違う")
         sh = x.get("short")
         if sh:
-            title = self.shorts_ts().get(sh)
+            title = self.shorts_known().get(sh)
             if title is None:
-                self.err(where, f"ショート「{sh}」が site/content/shorts.ts に無い")
+                self.err(where, f"ショート「{sh}」が python/data/shorts.json に無い")
             elif "🇲🇰" not in title:
                 self.err(where, f"ショート「{sh}」は北マケドニアのショートでない（{title}）")
             basis = {s.get("id"): s for s in ((self.d.get("shorts") or {}).get("items") or [])}.get(sh) or {}
@@ -363,8 +367,8 @@ class Book:
         if not emb.get("name") or not emb.get("src"):
             self.err("basics.emergency.embassy", "大使館の名前と出どころが無い")
         for s in (d.get("shorts") or {}).get("items") or []:
-            if s.get("id") not in self.shorts_ts():
-                self.err("shorts", f"ショート「{s.get('id')}」が site/content/shorts.ts に無い")
+            if s.get("id") not in self.shorts_known():
+                self.err("shorts", f"ショート「{s.get('id')}」が python/data/shorts.json に無い")
         for u in d.get("unknown") or []:
             if not (u.get("what") and u.get("why")):
                 self.err("unknown", f"分からないものには what と why（{u}）")

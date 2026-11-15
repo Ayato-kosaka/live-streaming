@@ -132,7 +132,7 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("行ったのに場面が無い", lambda d: d["todo"][0].pop("scene"), {"場面（scene）が無い"}, set()),
         ("場面が went に無い行", lambda d: d["todo"][0]["scene"].__setitem__("id", d["see"][2]["went"]["facts"][0]["id"]), {"went の行に無い"}, {"食い違う"}),
         ("行っていない項目にショート", lambda d: next(t for t in d["todo"] if not t["went"]).__setitem__("short", "frcgM9wiRr8"), {"行っていない項目に"}, set()),
-        ("無いショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "XXXXXXXXXXX"), {"shorts.ts に無い"}, {"当てた理由"}),
+        ("無いショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "XXXXXXXXXXX"), {"shorts.json に無い"}, {"当てた理由"}),
         ("ほかの国のショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "qcWK52DE0X8"), {"北マケドニアのショートでない"}, {"当てた理由"}),
         ("ショートに理由が無い", lambda d: [s.pop("basis", None) for s in d["shorts"]["items"]], {"当てた理由"}, set()),
         ("写真の元の幅が無い", lambda d: d["todo"][0]["photo"]["commons"][0].pop("w"), {"元の幅"}, set()),
