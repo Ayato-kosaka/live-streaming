@@ -5,19 +5,26 @@
 そこにポーランドを足し、実際に通る国だけに絞って site/content/nordic/ に書き出す。
 
   - ノルウェーとデンマークは今回のルートから外れるので落とす。
-  - Wikimedia の画像は 2026 年から使える幅が決まっているので 500/960 に直す。
+  - 見どころの写真は **島の置き場の道**を焼く（`site/public/travel/<国>/photos/`。
+    `python/guide_photos.py` が Commons から 250・500・960 の幅で落とした絵）。
+    前は `upload.wikimedia.org` の縮小を直に指していて、Wikimedia が混んだ日に 429 で断られ、
+    写真の枠が空になった（2026-11-15）。置き場に無い写真があれば焼かずに止まる。
+    出どころ（`cm`。Commons のファイルのページ）は今までどおり面に出す。
 
-実行: python python/build_nordic.py
+実行: python3 python/guide_photos.py nordic && python3 python/build_nordic.py
 """
 
 import json
 import os
-import re
+import sys
 
 # **リポジトリの中に置いてある。** 前は `/tmp` にしか無く、箱が消えたら
 # 二度と焼き直せなかった（`docs/island-misses.md` #104 で拾った）。
 # ほかの `/tmp` 依存（地図）は curl で取り直せるが、**この2本は取り直せない**
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import guide_photos as gp  # noqa: E402  借りた写真の置き場の道は1か所で引く
 
 _SRC_DIR = Path(__file__).resolve().parent / "data" / "nordic-src"
 SRC = str(_SRC_DIR / "nordic.json")
@@ -46,23 +53,23 @@ POLAND_META = {
     "price": "58.0",
 }
 
-# Wikimedia は決まった幅のサムネイルしか返さなくなった。
-GOOD_WIDTHS = (120, 250, 330, 500, 960, 1920)
-
-
-def fix_width(url: str, want: int) -> str:
-    """Wikimedia のサムネイル幅を、いま使える幅に直す。
+def photo(slug: str, url: str, width: int) -> str:
+    """見どころの写真（材料の Commons の URL）を、島の置き場の道に直す。**置いていなければ焼かずに止める**
 
     Args:
-        url: 元のURL
-        want: 使いたい幅
+        slug: 国（`poland` など）
+        url: 材料の写真の URL（空なら写真の無い見どころ）
+        width: 面が読む幅（250・500・960）
     Returns:
-        直したURL
+        置き場の道（`/travel/<国>/photos/<名前>-<幅>.webp`）。写真の無い見どころは空
     """
-    if not url or "upload.wikimedia.org" not in url:
-        return url
-    w = min(GOOD_WIDTHS, key=lambda g: abs(g - want))
-    return re.sub(r"/(\d+)px-", f"/{w}px-", url)
+    if not url:
+        return ""
+    key = f"nordic/{slug}"
+    p = gp.local(key, url, width)
+    if p is None:
+        raise SystemExit(f"借りた写真が置き場に無い: {url}（先に python3 python/guide_photos.py {key}）")
+    return p
 
 
 def main() -> None:
@@ -97,9 +104,9 @@ def main() -> None:
                     # 1枚で 4倍払う（フィンランドは段が42あるので、着いた
                     # とたんに 18枚ぶん）。国の札（/nordic）は 72px の帯で
                     # 幅いっぱいに伸びるので、そちらは 500 のまま。
-                    "thumb": fix_width(s.get("img", ""), 250),
-                    "img": fix_width(s.get("img", ""), 500),
-                    "big": fix_width(s.get("big", ""), 960),
+                    "thumb": photo(slug, s.get("img", ""), 250),
+                    "img": photo(slug, s.get("img", ""), 500),
+                    "big": photo(slug, s.get("big", ""), 960),
                     "cm": s.get("cm") or "",
                 }
             )
