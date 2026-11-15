@@ -32,14 +32,19 @@ python3 $M verify python/data/bulgaria/mymaps python/data/guide/north-macedonia/
 
 | 手 | 画面 | 躓き |
 | --- | --- | --- |
-| 作る | マイマップの一覧の「新しい地図を作成」→ 題を `#map-title-desc-bar` から | 題は `<街>｜見たいもの` の形。面の見出しと同じ字 |
+| 作る | マイマップの一覧の「新しい地図を作成」→「ドライブに上がる」の確かめに CREATE → 題の字を押して題を付ける | **mid を控えてから題を付ける。** 題で落ちて控えずに抜けると、次の回がもう1枚作る（「無題の地図」を3枚溜めて、それを引き取った）。題の箱の真ん中は「表示回数」の行で、押しても開かない |
 | 取り込む | `#map-action-add-layer` → `#lyN-layerview-import-link` → ファイル選び（`docs.google.com/picker` の iframe）の「アップロード」→ 隠れた `<input type=file>` | ファイル選びは同じサイトなので別のタブにならない。`DOM.getDocument(pierce)` で input を拾い、`setFileInputFiles` に backendNodeId で渡す |
 | 列を選ぶ | 「目印を配置する列」で 緯度 に印 → 吹き出しで 緯度 → 経度 に印 → 吹き出しで 経度 → 続行 →「タイトル」で 名前 → 完了 | **吹き出しを選ばずに次の列の印を押すと、前の列の印が外れる** |
 | 古いレイヤを消す | レイヤの「レイヤ オプション」→「このレイヤを削除」→ 削除 | **足してから消す。** 先に消して取り込みが落ちると、地図が空のまま面に出る |
 | 名前を付け直す | 「このレイヤの名前を変更」 | 取り込んだレイヤはファイル名（`見たいもの.csv`）になる。CSV を `<見たいもの>.csv` の名前で送り、終わりに `.csv` を取る |
-| 共有 | `#map-action-share` → `#linksharing` を入れる → 閉じる | `#discoverability`（検索で見つかる）は触らない。**飛ばすと面で地図が空の枠になる**（赤くならない） |
-| フォルダへ移す | ドライブで地図を選ぶ → 上の「Move」→ 移動先 → Move | 地図の Drive の id は mid と同じ。下の 3 |
+| 共有 | `#map-action-share` → `#linksharing` を押す → 閉じる | **入っているかはスイッチで読まない。** ログインしていない側から KML が 200 か（403 なら非公開）で決め、非公開のときだけ押す。スイッチの `checked` は開き直すと入っていても「切」と読め、それを信じて押して2枚の共有を切った（2026-11-15）。`#discoverability`（検索で見つかる）は触らない |
+| フォルダへ移す | ドライブで題を検索 → 地図の札を選ぶ → 上の「Move」→ 移動先 → Move | 地図の Drive の id は mid と同じ。移動のダイアログは表の枠の `[role=dialog]` ではない（見出し「Move “…”」から Cancel のある箱まで登って、その中だけを触る）。下の 3 |
 
+- **押すのは本物のマウスで、押す点にその要素が居るのを確かめてから**（`press()`）。レイヤが増えると左の板が送られ、
+  測った直後の座標が隣の箱を指して「インポート」が開かなかった。ファイル選びの「アップロード」は JS の `click()` では開かず、
+  字は葉の要素に入っていない（字の節の位置を Range で測り、枠の位置を足して押す）
+- **要素を返す式を `returnByValue` で読まない。** `{}` になって Python では偽に読め、待ちが全部「待ちきれない」で落ちた
+- **埋め込みは非公開でも 200 を返す。** 公開かどうかは中に題が在るか・KML が 200 か（`verify` が見る）
 - **好みの印で色を分けたスタイル（「スタイル: 印」）は、取り込み直すと消える。** 印の列はもう無い（`docs/island-misses.md` #326）
 - **ログインが切れていたら止まる。** accounts.google.com に飛ばされた時点で `LOGIN_NEEDED` を出して抜ける
   （押さない・パスワードは打たない・本人確認の画面は開かない）。そこから先は `ec2-chrome` の 3
@@ -50,13 +55,13 @@ python3 $M verify python/data/bulgaria/mymaps python/data/guide/north-macedonia/
 <https://drive.google.com/drive/folders/1ldXPVCYmbhLOXfptFZnB12YdlWARA-MG>（`mymaps.py` の `FOLDER`）。
 
 - **ほかのファイルには触らない。** フォルダには前からほかの街のマイマップが入っている。道具が動かすのは mids.json の mid だけ
-- 移すのはドライブの画面（マイマップの「⋮」には「フォルダに追加」が無い。2026-11-15）
+- フォルダの名前は「GoogleMyMap」（My Drive > Travel の下）。移すのはドライブの画面（マイマップの「⋮」には「フォルダに追加」が無い。2026-11-15）
 - `move` は終わりにフォルダの中身の題を出す
 
 ## 4. 確かめる（この箱から）
 
 `verify` が mids.json の mid ごとに curl で見る（ブラウザが要らない。マイマップの埋め込みと KML はこの箱から届く）:
 
-- `https://www.google.com/maps/d/embed?mid=<mid>&hl=ja` が 200
+- `https://www.google.com/maps/d/embed?mid=<mid>&hl=ja` が 200 で、中に地図の題が在る（非公開でも 200 が返るので、題で見る）
 - `https://www.google.com/maps/d/kml?mid=<mid>&forcekml=1` のピンの数が CSV の行と同じで、名前が全部ある
 - 前の取り込みの残り（`印` の列・「あやとの好みに合う」「たぶん合う」「注意（…）」・◎○⚠△・`query=<緯度>,<経度>`）が 0

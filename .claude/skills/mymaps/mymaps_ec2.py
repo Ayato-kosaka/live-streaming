@@ -16,10 +16,10 @@
 - **レイヤは「足してから消す」。** 先に消すと、取り込みが途中で落ちたときに地図が空のまま残る（面の埋め込みが空の枠になる）
 - ファイル選びは www.google.com と同じサイトなので別のタブ（target）にならない。中の要素は
   DOM.getDocument(pierce) と、その枠の隔離ワールドで触る
-- 共有: 「共有」→ `#linksharing`（リンクを知っている人なら誰でも表示できる）を入れる。
-  `#discoverability`（検索で見つかる）は触らない
+- 共有: 「共有」→ `#linksharing`（リンクを知っている人なら誰でも表示できる）を押す。入っているかは
+  スイッチではなく、ログインしていない側から KML が読めるかで決める（public()）。`#discoverability` は触らない
 """
-import json, os, re, sys, time, urllib.parse, urllib.request
+import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 
 sys.path.insert(0, "/home/ubuntu/cdp")
 from cdp import Tab, pages, up, where  # noqa: E402
@@ -86,10 +86,13 @@ def fresh(url, wait=6):
 
 
 def until(t, expr, timeout=40, what=""):
+    # 要素を返す式は returnByValue で {} になり、Python では偽に読める（2026-11-15 に3枚とも
+    # 「編集画面を待ちきれない」で落ちた）。要素は true に直してから返す
+    wrapped = f"(() => {{ const v = ({expr}); return (v instanceof Node) ? true : v; }})()"
     end = time.time() + timeout
     while time.time() < end:
         try:
-            v = t.js(expr)
+            v = t.js(wrapped)
         except Exception:
             v = None
         if v:
@@ -100,6 +103,25 @@ def until(t, expr, timeout=40, what=""):
 
 def gone(t, expr, timeout=40, what=""):
     return until(t, f"!({expr})", timeout, what)
+
+
+def press(t, expr, tries=6):
+    """要素を本物のマウスで押す。**送ってから少し待って測り直し、その点に本当にその要素が居るかを見てから押す。**
+    レイヤが3枚を超えると左の板が送られ、送った直後に測った座標が隣のレイヤの箱を指して、
+    「インポート」を押したつもりで何も起きなかった（2026-11-15）"""
+    c = None
+    for i in range(tries):
+        t.js(f"(() => {{ const e = ({expr}); if (e) e.scrollIntoView({{block: 'center', behavior: 'instant'}}); }})()")
+        time.sleep(0.7)
+        c = t.js(f"""(() => {{ const e = ({expr}); if (!e) return null; const b = e.getBoundingClientRect();
+            const x = b.x + b.width / 2, y = b.y + b.height / 2; const h = document.elementFromPoint(x, y);
+            return [x, y, !!h && (h === e || e.contains(h))]; }})()""")
+        if c and c[2]:
+            break
+    if not c:
+        raise RuntimeError(f"not found: {expr[:120]}")
+    t.click_at(c[0], c[1])
+    return c
 
 
 def frame_eval(t, url_part, expr):
@@ -172,26 +194,50 @@ def create_map(title):
     """新しい地図を作って題を付ける。戻り値はタブ（mid は mid_of で読む）"""
     t = fresh(HOME)
     # 「新しい地図を作成」は一覧の上のボタン。字で当てる（class は毎回変わる）
-    t.click(f"[...document.querySelectorAll('button,[role=button],a')].find(e => {VIS}(e) && /新しい地図を作成|地図を新規作成/.test(e.innerText || e.getAttribute('aria-label') || ''))")
-    until(t, "/[?&]mid=/.test(location.href) && document.querySelector('#map-action-add-layer')", 60, "新しい地図の編集画面")
-    set_title(t, title)
+    press(t, f"[...document.querySelectorAll('button,[role=button],a')].find(e => {VIS}(e) && /新しい地図を作成|地図を新規作成/.test(e.innerText || e.getAttribute('aria-label') || ''))")
+    # 「マイマップを作ると題・サムネイルなどがドライブに上がる」の確かめが出る（2026-11-15。英語のまま）。CREATE を押す
+    ok = "/[?&]mid=/.test(location.href) && !!document.querySelector('#map-action-add-layer')"
+    agree = (f"[...document.querySelectorAll('[role=dialog] button,[role=dialog] [role=button],[role=alertdialog] button')]"
+             f".find(e => {VIS}(e) && /^(create|作成)$/i.test((e.innerText || '').trim()))")
+    end = time.time() + 90
+    while time.time() < end and not t.js(ok):
+        if t.js(f"!!({agree})"):
+            press(t, agree)
+            say("  ドライブに上がる確かめに CREATE")
+        time.sleep(2)
+    until(t, ok, 30, "新しい地図の編集画面")
+    # 題はここで付けない。mid を控えてから付ける（題で落ちて mid を控えずに抜けると、
+    # 次の回が地図をもう1枚作り「無題の地図」が溜まる。2026-11-15 に3枚溜めた）
     return t
 
 
+TITLE_EL = ("(b => b && [...b.querySelectorAll('*')].find(e => e.childElementCount === 0 && (e.innerText || '').trim()"
+            " && (e.innerText || '').trim() === (b.innerText || '').trim().split('\\n')[0].trim()))(document.querySelector('#map-title-desc-bar'))")
+
+
 def set_title(t, title):
-    t.click("document.querySelector('#map-title-desc-bar')")
-    until(t, f"[...document.querySelectorAll('[role=dialog] input')].find({VIS})", 20, "題の欄")
-    t.js(f"(() => {{ const i = [...document.querySelectorAll('[role=dialog] input')].find({VIS}); i.focus(); i.select(); }})()")
+    # 押すのは題の字そのもの。箱（#map-title-desc-bar）の真ん中は「表示回数・最終編集」の行で、押しても開かない
+    cur = t.js("(document.querySelector('#map-title-desc-bar') || {innerText: ''}).innerText.trim().split('\\n')[0].trim()")
+    box = f"[...document.querySelectorAll('input')].find(e => {VIS}(e) && e.value.trim() === {q(cur)})"
+    for _ in range(3):
+        press(t, TITLE_EL)
+        try:
+            until(t, box, 10, "題の欄")
+            break
+        except RuntimeError:
+            continue
+    until(t, box, 5, f"題の欄（いまの題 {cur}）")
+    t.js(f"(() => {{ const i = {box}; i.focus(); i.select(); }})()")
     t.type(title)
     time.sleep(0.5)
-    t.click(dlg_button("保存"))
+    press(t, dlg_button("保存"))
     until(t, f"(document.querySelector('#map-title-desc-bar') || {{}}).innerText.trim().startsWith({q(title)})", 20, "題が付いた")
 
 
 def layer_menu(t, ly, label):
-    t.click(f"document.querySelector('#{ly}-layer-header [aria-label=\"レイヤ オプション\"]')")
+    press(t, f"document.querySelector('#{ly}-layer-header [aria-label=\"レイヤ オプション\"]')")
     until(t, f"[...document.querySelectorAll('[role=menuitem]')].find(e => {VIS}(e) && e.innerText.trim() === {q(label)})", 10, label)
-    t.click(f"[...document.querySelectorAll('[role=menuitem]')].find(e => {VIS}(e) && e.innerText.trim() === {q(label)})")
+    press(t, f"[...document.querySelectorAll('[role=menuitem]')].find(e => {VIS}(e) && e.innerText.trim() === {q(label)})")
 
 
 def import_csv(t, path):
@@ -200,21 +246,32 @@ def import_csv(t, path):
         # 無いパスを渡すと Chrome は黙って空のファイルを渡す（ec2-chrome の 4）
         raise RuntimeError(f"CSV が無い: {path}")
     before = {ly for ly, _ in layers(t)}
-    t.click("document.querySelector('#map-action-add-layer')")
+    press(t, "document.querySelector('#map-action-add-layer')")
     ly = until(t, f"(() => {{ const b = new Set({q(sorted(before))}); const n = ({LAYERS}).find(x => !b.has(x[0])); return n && n[0]; }})()",
                20, "足したレイヤ")
-    t.click(f"document.querySelector('#{ly}-layerview-import-link')")
+    # 足した直後は「インポート」がまだ幅0のことがある。その座標（左上の 0,0）を押すと地図のピンを押してしまう
+    imp = f"(e => e && {VIS}(e) && e)(document.querySelector('#{ly}-layerview-import-link'))"
+    until(t, imp, 20, "足したレイヤの「インポート」")
+    time.sleep(1)
+    press(t, imp)
     until(t, f"[...document.querySelectorAll('iframe')].find(f => /docs\\.google\\.com\\/picker/.test(f.src) && {VIS}(f))", 30, "ファイル選び")
-    # 「アップロード」を開くまで input は無い。字で当ててその枠の中で押す
-    end = time.time() + 30
-    while time.time() < end:
+    # 「アップロード」を開くまで input は無い。**JS の click() では開かない**（2026-11-15。押した扱いにならず
+    # input が出なかった）。枠の中の字の位置に、枠の位置を足して、本物のマウスで押す
+    frame_box = t.js(f"(() => {{ const f = [...document.querySelectorAll('iframe')].find(f => /docs\\.google\\.com\\/picker/.test(f.src) && {VIS}(f));"
+                     " const b = f.getBoundingClientRect(); return [b.x, b.y]; })()")
+    end = time.time() + 40
+    while time.time() < end and not file_inputs(t):
+        # 字は葉の要素に入っていない（アイコンと並んだ字の節）。字の節そのものの位置を Range で測る
         r = frame_eval(t, "docs.google.com/picker",
-                       "(() => { const e = [...document.querySelectorAll('*')].find(e => e.childElementCount === 0 && "
-                       "/^(アップロード|Upload)$/.test((e.textContent || '').trim()) && e.getBoundingClientRect().width);"
-                       " if (!e) return false; (e.closest('[role=tab],[role=menuitem],[role=option],button,li,a') || e).click(); return true; })()")
-        if r and file_inputs(t):
-            break
-        time.sleep(1)
+                       "(() => { const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;"
+                       " while ((n = w.nextNode())) { if (/^(アップロード|Upload)$/.test(n.data.trim())) {"
+                       " const g = document.createRange(); g.selectNodeContents(n); const b = g.getBoundingClientRect();"
+                       " if (b.width) return [b.x + b.width / 2, b.y + b.height / 2]; } } return null; })()")
+        if r:
+            t.click_at(frame_box[0] + r[0], frame_box[1] + r[1])
+            time.sleep(2)
+        else:
+            time.sleep(1)
     ids = file_inputs(t)
     if not ids:
         raise RuntimeError("ファイル選びの「アップロード」に input が出ない")
@@ -223,23 +280,34 @@ def import_csv(t, path):
     for col in ("緯度", "経度"):
         lab = f"[...document.querySelectorAll('[id^=upload-checkbox-label-]')].find(e => e.innerText.trim() === {q(col)})"
         chk = f"({lab}).previousElementSibling.querySelector('[role=checkbox]')"
-        if not t.js(lab):
+        if not t.js(f"!!({lab})"):
             raise RuntimeError(f"CSV に {col} の列が無い")
-        if t.js(f"{chk}.getAttribute('aria-checked') === 'true' && ({lab}).parentElement.innerText.includes('({col})')"):
-            continue
-        t.click(f"({lab}).previousElementSibling")
-        radio = (f"[...document.querySelectorAll('[role=alertdialog] [role=radio]')]"
-                 f".find(e => {VIS}(e) && e.innerText.trim() === {q(col)})")
-        until(t, radio, 10, f"{col} の吹き出し")
-        t.click(radio)
-        until(t, f"{chk}.getAttribute('aria-checked') === 'true' && ({lab}).parentElement.innerText.includes('({col})')", 10, f"{col} に印")
-    t.click(dlg_button("続行"))
+        done = f"{chk}.getAttribute('aria-checked') === 'true' && ({lab}).parentElement.innerText.includes('({col})')"
+        # 吹き出しは列ごとに出る。前の列の吹き出しが閉じる途中で残っていると、そちらの radio を押してしまう
+        # （2026-11-15 に1枚それで落ちた）。いちばん新しい（最後の）吹き出しの中だけを見て、効くまで3回
+        radio = (f"(() => {{ const d = [...document.querySelectorAll('[role=alertdialog]')].filter({VIS}).pop();"
+                 f" return d && [...d.querySelectorAll('[role=radio]')].find(e => {VIS}(e) && e.innerText.trim() === {q(col)}); }})()")
+        for _ in range(3):
+            if t.js(done):
+                break
+            if t.js(f"{chk}.getAttribute('aria-checked') !== 'true'"):
+                press(t, f"({lab}).previousElementSibling")
+            until(t, radio, 10, f"{col} の吹き出し")
+            time.sleep(1)
+            press(t, radio)
+            try:
+                until(t, done, 5, f"{col} に印")
+            except RuntimeError:
+                continue
+        if not t.js(done):
+            raise RuntimeError(f"{col} の列に印が付かない")
+    press(t, dlg_button("続行"))
     title_radio = (f"[...document.querySelectorAll('[role=dialog] [role=radio]')]"
                    f".find(e => {VIS}(e) && e.innerText.trim() === '名前')")
     until(t, title_radio, 20, "タイトルとして使用する列")
-    t.click(title_radio)
+    press(t, title_radio)
     time.sleep(0.5)
-    t.click(dlg_button("完了"))
+    press(t, dlg_button("完了"))
     name = os.path.basename(path)
     until(t, f"(({LAYERS}).find(x => x[0] === {q(ly)}) || [])[1] === {q(name)}", 90, "取り込みが終わる")
     gone(t, f"[...document.querySelectorAll('[role=dialog]')].find({VIS})", 30, "ダイアログが閉じる")
@@ -252,7 +320,7 @@ def import_csv(t, path):
 def delete_layer(t, ly):
     layer_menu(t, ly, "このレイヤを削除")
     until(t, dlg_button("削除"), 10, "削除の確かめ")
-    t.click(dlg_button("削除"))
+    press(t, dlg_button("削除"))
     gone(t, f"({LAYERS}).find(x => x[0] === {q(ly)})", 20, f"{ly} が消える")
 
 
@@ -262,25 +330,42 @@ def rename_layer(t, ly, name):
     t.js(f"(() => {{ const i = [...document.querySelectorAll('[role=dialog] input')].find({VIS}); i.focus(); i.select(); }})()")
     t.type(name)
     time.sleep(0.4)
-    t.click(dlg_button("保存"))
+    press(t, dlg_button("保存"))
     until(t, f"(({LAYERS}).find(x => x[0] === {q(ly)}) || [])[1] === {q(name)}", 20, "レイヤ名が変わる")
 
 
-def share_link(t):
-    """リンクを知っている全員が閲覧可にする。戻り値は (前, 後)"""
-    t.click("document.querySelector('#map-action-share')")
-    until(t, "document.querySelector('#linksharing')", 20, "共有のダイアログ")
-    time.sleep(1)
-    before = t.js("document.querySelector('#linksharing').checked")
-    if not before:
-        t.click("document.querySelector('#linksharing')")
-        until(t, "document.querySelector('#linksharing').checked", 20, "リンクの共有が入る")
+KML = "https://www.google.com/maps/d/kml?mid={}&forcekml=1"
+
+
+def public(mid):
+    """**ログインしていない側から** KML が読めるか（200 = リンクを知っている人なら誰でも見られる・403 = 非公開）。
+    共有のダイアログのスイッチ（#linksharing の checked）は当てにならない: 開き直すと、入っていても「切」と読める
+    （2026-11-15。それを信じて押し、入っていた共有を2回切った。埋め込みは非公開でも 200 を返すので、そちらでも見えない）"""
+    try:
+        with urllib.request.urlopen(urllib.request.Request(KML.format(mid), headers={"User-Agent": "Mozilla/5.0"}), timeout=30) as r:
+            return r.status == 200
+    except urllib.error.HTTPError:
+        return False
+
+
+def share_link(t, mid):
+    """リンクを知っている全員が閲覧可にする。外から読めるときは何も押さない。戻り値は (前, 後)"""
+    before = public(mid)
+    if before:
+        return before, before
+    for _ in range(2):
+        press(t, "document.querySelector('#map-action-share')")
+        until(t, "document.querySelector('#linksharing')", 20, "共有のダイアログ")
+        time.sleep(3)
+        press(t, "document.querySelector('#linksharing')")
+        end = time.time() + 40
+        while time.time() < end and not public(mid):
+            time.sleep(3)
+        press(t, dlg_button("閉じる"))
         time.sleep(2)
-    after = t.js("document.querySelector('#linksharing').checked")
-    found = t.js("document.querySelector('#discoverability').checked")
-    t.click(dlg_button("閉じる"))
-    time.sleep(1)
-    return before, after, found
+        if public(mid):
+            return before, True
+    return before, public(mid)
 
 
 def saved(t, timeout=30):
@@ -327,9 +412,10 @@ def one(m, st, save):
         save()
     else:
         say(f"{m['key']}: 取り込みは済んでいる（{st['imported']}）")
-    if m.get("share") and not st.get("shared"):
-        b, a, found = share_link(t)
-        say(f"{m['key']}: リンクの共有 {b} → {a}（検索で見つかる: {found}）")
+    # 共有は毎回読む（入っていれば押さない）。控えを信じて飛ばすと、切れた共有に気づけない
+    if m.get("share"):
+        b, a = share_link(t, mid)
+        say(f"{m['key']}: 外から読めるか {b} → {a}")
         if not a:
             raise RuntimeError("リンクの共有が入らなかった")
         st["shared"] = True
@@ -409,6 +495,8 @@ def folder_items(folder):
     time.sleep(3)
     items = t.js("""(() => { const m = new Map(); for (const e of document.querySelectorAll('[data-id]')) {
         const b = e.getBoundingClientRect(); const s = (e.innerText || '').trim().split('\\n')[0].replace(/ More actions$/, '');
+        // 上のパンくず（My Drive > Travel > …）にも data-id がある。中身の数に入れない
+        if (e.closest('nav,[role=navigation],[aria-label*=readcrumb],[role=heading]')) continue;
         if (b.width && s && !m.has(e.getAttribute('data-id'))) m.set(e.getAttribute('data-id'), s); }
       return [...m.entries()]; })()""") or []
     name = re.sub(r"\s*-\s*Google (Drive|ドライブ)$", "", t.js("document.title") or "")

@@ -165,6 +165,10 @@ def write_mids(d: Path, mids, maps, state, s) -> int:
            or not state.get(f"{s}-{m['which']}", {}).get("mid") and not m["mid"]
            or state.get(f"{s}-{m['which']}", {}).get("error")]
     new = mids is None
+    if new and bad:
+        # 作りかけの mids.json（mid が null の地図）を残すと、面がそれを読んで空の枠を出す
+        print(f"済んでいない地図: {', '.join(bad)}。mids.json はまだ書かない（もう一度 sync を流すと続きから）")
+        return 1
     out = []
     for m in maps:
         st = state.get(f"{s}-{m['which']}", {})
@@ -240,11 +244,16 @@ def verify(dirs) -> int:
             kc, kb = curl(KML.format(m["mid"]))
             n = len(re.findall(r"<Placemark", kb))
             names = set(re.findall(r"<Placemark>\s*<name>([^<]*)</name>", kb))
-            left = [k for k, rx in STALE if rx.search(kb)]
+            # 残りは「CSV に無いのに地図に在る」もの。CSV がわざと持っている列（スコピエの「印: あやとが行った」）は残りではない
+            raw = (d / f"{m['which']}.csv").read_text(encoding="utf-8-sig")
+            have = {"印の列": "印" in (rows[0].keys() if rows else [])}
+            left = [k for k, rx in STALE if rx.search(kb) and not (have.get(k) or (k not in have and rx.search(raw)))]
             miss = {r["名前"] for r in rows} - {x.replace("&amp;", "&") for x in names}
-            ok = ec == "200" and kc == "200" and n == len(rows) and not left and not miss
+            # 埋め込みは非公開でも 200 を返す（中身が「権限がありません」）。題が中に在るかで公開を見る
+            pub = m["title"] in eb.replace("\\u003d", "=")
+            ok = ec == "200" and pub and kc == "200" and n == len(rows) and not left and not miss
             bad += not ok
-            print(f"| {m['title']} | {m['mid']} | {ec} | {kc} | {n}（{len(rows)}） | "
+            print(f"| {m['title']} | {m['mid']} | {ec}{'' if pub else '（非公開）'} | {kc} | {n}（{len(rows)}） | "
                   f"{'、'.join(left + ([f'無いピン {len(miss)}'] if miss else [])) or 'なし'} |")
     print(f"落ちた所 {bad}件")
     return 1 if bad else 0
