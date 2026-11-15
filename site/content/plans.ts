@@ -216,17 +216,21 @@ export const PLANS: Plan[] = [
        may have been removed." と出る。読む人には意味が分からないし、
        添えていた「去年の様子。こんな感じのお祭りです。」が指す先も無い。
        枠と添え書きは同じ1件なので、まとめて落とす。
-       お祭りの様子は、下の写真2枚と about の3行が引き受ける。 */
+       お祭りの様子は、下の写真2枚と about の3行が引き受ける。
+       写真は Commons から直に読まない（混んだ日に 429 で断られ、枠が空になる）。
+       `python/guide_photos.py plans` が `creditHref` の写真を島の置き場に落とし、`--check` が突き合わせる */
     photos: [
       {
-        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg",
-        alt: "ムタツミンダ公園の観覧車",
+        src: "/next/photos/tbilisi-mtatsminda-park-94609534-3168f235-960.webp",
+        /* 写真に写っているものを書く。前は「観覧車」「山の上から見た街」と書いてあったが、
+           写っているのは噴水と冬のツリーで、札と絵が食い違っていた（2026-11-15 に置き場へ移したとき、絵を見て直した） */
+        alt: "ムタツミンダ公園の噴水",
         credit: "Wikimedia Commons (CC BY-SA 2.0)",
         creditHref: "https://commons.wikimedia.org/wiki/File:Tbilisi_-_Mtatsminda_Park_(9460953464).jpg",
       },
       {
-        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mtatsminda_park_January_2013_01.jpg/960px-Mtatsminda_park_January_2013_01.jpg",
-        alt: "山の上から見たトビリシの街",
+        src: "/next/photos/mtatsminda-park-january-2013-01-6a746369-960.webp",
+        alt: "冬のムタツミンダ公園に立つ、大きなツリー",
         credit: "Jonathan Cardy / Wikimedia Commons (CC BY-SA 3.0)",
         creditHref: "https://commons.wikimedia.org/wiki/File:Mtatsminda_park_January_2013_01.jpg",
       },
