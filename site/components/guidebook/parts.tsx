@@ -92,8 +92,6 @@ export function Picture({
         alt={pic.kind === "illust" && pic.alt && !pic.alt.startsWith("イラスト") ? `イラスト：${pic.alt}` : pic.alt}
         loading={eager ? "eager" : "lazy"}
         decoding="async"
-        /* Wikimedia は参照元を見て断ることがある（`components/nordic/Countries.tsx` と同じ） */
-        referrerPolicy="no-referrer"
       />
       {pic.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
     </span>

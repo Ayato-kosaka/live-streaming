@@ -2225,6 +2225,15 @@
     ]
    },
    "went": false,
+   "lat": 42.001031,
+   "lon": 21.419801,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap（Skopski Merak）",
+     "url": "https://www.openstreetmap.org/way/363752338",
+     "seen": "2026-11-15"
+    }
+   ],
    "links": {
     "see": [
      "clement"
@@ -3359,6 +3368,26 @@
      }
     ]
    },
+   "photo": {
+    "file": "Саат-кула во Скопје.jpg",
+    "by": "Kiril Simeonovski",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg",
+    "alt": "赤れんがの時計塔。てっぺんに白い丸屋根の鐘楼が載っている",
+    "w": 2112,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg/250px-%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg/500px-%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg/960px-%D0%A1%D0%B0%D0%B0%D1%82-%D0%BA%D1%83%D0%BB%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5.jpg"
+    }
+   },
    "went": false,
    "lat": 42.001944,
    "lon": 21.441389,
@@ -3402,6 +3431,26 @@
      }
     ]
    },
+   "photo": {
+    "file": "Султан-муратова џамија во Скопје 3.jpg",
+    "by": "Kiril Simeonovski",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg",
+    "alt": "白い尖塔（ミナレット）と、アーチの回廊のあるモスク",
+    "w": 2736,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg/250px-%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg/500px-%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg/960px-%D0%A1%D1%83%D0%BB%D1%82%D0%B0%D0%BD-%D0%BC%D1%83%D1%80%D0%B0%D1%82%D0%BE%D0%B2%D0%B0_%D1%9F%D0%B0%D0%BC%D0%B8%D1%98%D0%B0_%D0%B2%D0%BE_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5_3.jpg"
+    }
+   },
    "went": false,
    "lat": 42.0015,
    "lon": 21.4414,
@@ -3440,6 +3489,26 @@
      }
     ]
    },
+   "photo": {
+    "file": "Daut Pasha Hamam, Old Bazaar, Skopje (50353783656).jpg",
+    "by": "Andrew Milligan sumo",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Daut_Pasha_Hamam,_Old_Bazaar,_Skopje_(50353783656).jpg",
+    "alt": "丸屋根が2つ並ぶ、石とれんがの浴場の建物。手前に夕方のテラス席",
+    "w": 6000,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Daut_Pasha_Hamam,_Old_Bazaar,_Skopje_(50353783656).jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg/250px-Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg/500px-Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg/960px-Daut_Pasha_Hamam%2C_Old_Bazaar%2C_Skopje_%2850353783656%29.jpg"
+    }
+   },
    "went": false,
    "lat": 41.9987,
    "lon": 21.4357,
@@ -3477,6 +3546,26 @@
       "seen": "2026-11-15"
      }
     ]
+   },
+   "photo": {
+    "file": "Archaeological Museum of Macedonia.jpg",
+    "by": "kallerna",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Archaeological_Museum_of_Macedonia.jpg",
+    "alt": "白い列柱が並ぶ大きな博物館。川沿いに建っている",
+    "w": 5215,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Archaeological_Museum_of_Macedonia.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Archaeological_Museum_of_Macedonia.jpg/250px-Archaeological_Museum_of_Macedonia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Archaeological_Museum_of_Macedonia.jpg/500px-Archaeological_Museum_of_Macedonia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Archaeological_Museum_of_Macedonia.jpg/960px-Archaeological_Museum_of_Macedonia.jpg"
+    }
    },
    "went": false,
    "lat": 41.996904,
@@ -3540,6 +3629,26 @@
      }
     ]
    },
+   "photo": {
+    "file": "Holocaust Memorial Center for the Jews of Macedonia.jpg",
+    "by": "Julian Lupyan",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg",
+    "alt": "石張りの角ばった建物とガラスの塔。前に広場とベンチ",
+    "w": 7341,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg/250px-Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg/500px-Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg/960px-Holocaust_Memorial_Center_for_the_Jews_of_Macedonia.jpg"
+    }
+   },
    "went": false,
    "lat": 41.998498,
    "lon": 21.433439,
@@ -3591,6 +3700,26 @@
      }
     ]
    },
+   "photo": {
+    "file": "Museum of the Macedonian Struggle.jpg",
+    "by": "Тиверополник",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Museum_of_the_Macedonian_Struggle.jpg",
+    "alt": "白い2階建ての博物館。手前に人物の銅像と花壇",
+    "w": 4320,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Museum_of_the_Macedonian_Struggle.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Museum_of_the_Macedonian_Struggle.jpg/250px-Museum_of_the_Macedonian_Struggle.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Museum_of_the_Macedonian_Struggle.jpg/500px-Museum_of_the_Macedonian_Struggle.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Museum_of_the_Macedonian_Struggle.jpg/960px-Museum_of_the_Macedonian_Struggle.jpg"
+    }
+   },
    "went": false,
    "lat": 41.998112,
    "lon": 21.43301,
@@ -3641,6 +3770,26 @@
       "seen": "2026-11-15"
      }
     ]
+   },
+   "photo": {
+    "file": "Church of St. Panteleimon (Nerezi).jpg",
+    "by": "Dominik.Tefert at German Wikipedia",
+    "lic": "PD",
+    "page": "https://commons.wikimedia.org/wiki/File:Church_of_St._Panteleimon_(Nerezi).jpg",
+    "alt": "れんがと石の小さな教会。丸屋根がいくつも載り、木立に囲まれている",
+    "w": 2560,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Church_of_St._Panteleimon_(Nerezi).jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Church_of_St._Panteleimon_%28Nerezi%29.jpg/250px-Church_of_St._Panteleimon_%28Nerezi%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Church_of_St._Panteleimon_%28Nerezi%29.jpg/500px-Church_of_St._Panteleimon_%28Nerezi%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Church_of_St._Panteleimon_%28Nerezi%29.jpg/960px-Church_of_St._Panteleimon_%28Nerezi%29.jpg"
+    }
    },
    "went": false,
    "lat": 41.977,
@@ -3755,6 +3904,26 @@
       "seen": "2026-11-15"
      }
     ]
+   },
+   "photo": {
+    "file": "Аквадукт, Скопје, 2014.jpg",
+    "by": "Darkocv",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82,_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5,_2014.jpg",
+    "alt": "草原の中に、石とれんがのアーチが一列に続く水道橋",
+    "w": 2500,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82,_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5,_2014.jpg",
+      "seen": "2026-11-15"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg/250px-%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg/500px-%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg/960px-%D0%90%D0%BA%D0%B2%D0%B0%D0%B4%D1%83%D0%BA%D1%82%2C_%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5%2C_2014.jpg"
+    }
    },
    "went": false,
    "lat": 42.022388,

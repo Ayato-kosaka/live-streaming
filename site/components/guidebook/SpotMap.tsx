@@ -38,10 +38,19 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
     const p = am.areas.find((x) => x.id === a.id || x.name === a.name);
     return p ? [{ id: a.id, name: a.name, x: p.x, y: p.y }] : [];
   });
-  const order = spotOrder(g.see.items, g.todo, areas.map((a) => a.id));
+  /* 立てる候補。見たいものと、**見たいものの1つも無い地区の**座標つきのやりたいこと（`SpotRule` の 1） */
+  const bare = new Set(areas.filter((a) => !g.see.items.some((it) => it.area === a.id)).map((a) => a.id));
+  const spots: Spot[] = [
+    ...g.see.items.map((it) => ({ id: it.id, name: it.name, pic: it.pic, area: it.area, at: it.at, rank: it.rank, went: it.went, href: `#${sheetId("see", it.id)}` })),
+    ...g.todo
+      .filter((t) => t.at && t.area && bare.has(t.area))
+      .map((t) => ({ id: `do:${t.id}`, name: t.title, pic: t.pic, area: t.area, at: t.at, went: t.went, href: `#${sheetId("do", t.id)}` })),
+  ];
+  const spotOf = new Map(spots.map((s) => [s.id, s]));
+  const order = spotOrder(spots, g.todo, areas.map((a) => a.id));
   const pos = new Map<string, { x: number; y: number }>();
-  if (am.bbox) for (const it of g.see.items) if (it.at) pos.set(it.id, project(am.bbox, it.at.lat, it.at.lon));
-  const onMap = (it: Item) => pos.has(it.id) && inBox(pos.get(it.id)!);
+  if (am.bbox) for (const it of spots) if (it.at) pos.set(it.id, project(am.bbox, it.at.lat, it.at.lon));
+  const onMap = (it: Spot) => pos.has(it.id) && inBox(pos.get(it.id)!);
   const lay = place(
     aspect,
     /* 写真の無いものは立てない（写真のピンの地図に、頭の1字だけの丸を混ぜない。`SpotRule` の 1） */
@@ -54,7 +63,7 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
 
   /* 一覧の組み。地区の並び → その中はピン（番号つき）が先、残りは選ぶ順。**番号は一覧の並びで1から** */
   const color = new Map(areas.map((a) => [a.id, a.color]));
-  const groups: { area?: Area; rows: Item[] }[] = areas.map((a) => ({ area: a, rows: order.filter((it) => it.area === a.id) }));
+  const groups: { area?: Area; rows: Spot[] }[] = areas.map((a) => ({ area: a, rows: order.filter((it) => it.area === a.id) }));
   const loose = order.filter((it) => onMap(it) && !(it.area && color.has(it.area)));
   if (loose.length) groups.push({ rows: loose });
   for (const gr of groups) gr.rows.sort((a, b) => Number(pinOf.has(b.id)) - Number(pinOf.has(a.id)));
@@ -130,7 +139,7 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
           );
         })}
         {lay.pins.map((p) => {
-          const it = seeIds.get(p.id)!;
+          const it = spotOf.get(p.id)!;
           return (
             <a
               key={p.id}
@@ -138,10 +147,10 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
               /* 本当の位置（絵の上の割合）。引き出し線でずらしたあとでも、見張りが元の位置を読む */
               data-tx={p.tx}
               data-ty={p.ty}
-              href={`#${sheetId("see", p.id)}`}
+              href={it.href}
               style={{ ...at(p), ["--c" as string]: (it.area && color.get(it.area)) || undefined }}
             >
-              <img src={tiny(it.pic!)} alt="" width={44} height={44} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+              <img src={tiny(it.pic!)} alt="" width={44} height={44} loading="lazy" decoding="async" />
               <b className="gb-amap-n" aria-hidden="true">
                 {num.get(p.id)}
               </b>
@@ -192,8 +201,8 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
                   <li key={b.id}>
                     <a href={to.href} {...(to.ext ? { target: "_blank", rel: "noreferrer" } : {})}>
                       <Arrow dir={b.dir} />
-                      <span>
-                        {b.name}
+                      <span className="gb-lg-out">
+                        <span>{b.name}</span>
                         {to.line && <small>{to.line}</small>}
                       </span>
                     </a>
@@ -208,14 +217,20 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
   );
 }
 
+/**
+ * 地図に立てる候補の1件。見たいもの（押すと見たいものの窓）と、見たいものの無い地区の座標つきのやりたいこと（やりたいことの窓）。
+ * やりたいことの `id` は頭に `do:` を付ける（同じ id の見たいものとやりたいことがある。スコピエのマトカ渓谷）
+ */
+type Spot = Pick<Item, "id" | "name" | "pic" | "area" | "at" | "rank" | "went"> & { href: string };
+
 /** 一覧の札。ピンの立ったものは番号、立たなかったものは地区の色の点 */
-function LegendRows({ rows, num }: { rows: Item[]; num: Map<string, number> }) {
+function LegendRows({ rows, num }: { rows: Spot[]; num: Map<string, number> }) {
   if (!rows.length) return null;
   return (
     <ul className="gb-lg-list">
       {rows.map((it) => (
         <li key={it.id}>
-          <a href={`#${sheetId("see", it.id)}`}>
+          <a href={it.href}>
             {num.has(it.id) ? <b className="gb-amap-n">{num.get(it.id)}</b> : <i aria-hidden="true" />}
             <span>{shortName(it.name)}</span>
           </a>
@@ -239,12 +254,13 @@ function Arrow({ dir }: { dir: MapDir }) {
 }
 
 /**
- * ピンの小さい写真。Wikimedia のサムネイルは決まった幅だけ返る（120 / 250 / 330 / 500 / 960 / 1920。`CLAUDE.md`）。
- * ピンは 44px なので、2倍の画面でも 120 で足りる（500 のままだと、10本で 10倍の重さになる）
+ * ピンの小さい写真。借りた写真は島の置き場に 120 / 500 / 960 の3つで置いてある（`python/guide_photos.py`。
+ * 置き場に 120 が揃っていることは、あちらの `--check` が見る）。ピンは 44px なので、2倍の画面でも 120 で足りる
+ * （500 のままだと、10本で 10倍の重さになる）
  */
 function tiny(p: Pic) {
   const s = p.small ?? p.src;
-  return /upload\.wikimedia\.org\/.+\/\d+px-[^/]+$/.test(s) ? s.replace(/\/\d+px-([^/]+)$/, "/120px-$1") : s;
+  return /\/photos\/[a-z0-9-]+-\d+\.webp$/.test(s) ? s.replace(/-\d+\.webp$/, "-120.webp") : s;
 }
 
 /** 絵の無いあいだの、色の札のエリア地図。**並びは大まかな位置関係**（`Area.plan`。北が上） */

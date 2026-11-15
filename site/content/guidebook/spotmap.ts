@@ -39,8 +39,13 @@ export const SPOT_D = 44;
 export const TAG_H = 34;
 /** 見た目の箱どうしのすきま。当たりを広げたぶん（上下 5px）が、となりの見た目に食い込まない幅 */
 const GAP = 6;
-/** ピンをずらしてよい距離（px。いちばん狭い絵で）。これより遠くなら、そのピンは立てない（一覧にだけ出す） */
-const SPOT_REACH = 108;
+/**
+ * ピンをずらしてよい距離（px。いちばん狭い絵で）。これより遠くなら、そのピンは立てない（一覧にだけ出す）。
+ * 前は 108 で、ソフィアの聖ソフィア教会が引き出し線 81px（390px の画面で 87px）の先に立った——線が長いと、
+ * どの点のピンなのか読めない。近くは先に立った大事な順のピン（中央鉱泉浴場・ネフスキー大聖堂）と札で塞がっていて、
+ * 寄せると別のピンが 100px 先へ追いやられた（2026-11-15）
+ */
+const SPOT_REACH = 72;
 /** 札をずらしてよい距離（px） */
 const TAG_REACH = 120;
 /** 点を隠さないための余白（点の半径 4px ＋ 白いふち） */
@@ -107,7 +112,7 @@ export const inBox = (p: { x: number; y: number }) => p.x >= 0 && p.x <= 1 && p.
  * エリアごとに1つを先にするのは、**地区分けの地図なのに、ピンの無い地区を作らない**ため（ソフィアの中心の必見4つを
  * 先に置くと、市場の一角にピンが1本も立たなかった）
  */
-export function spotOrder(items: Item[], todo: { see: string[] }[], areas: string[] = []) {
+export function spotOrder<T extends Pick<Item, "id" | "rank" | "went" | "area">>(items: T[], todo: { see: string[] }[], areas: string[] = []) {
   const uses = (id: string) => todo.filter((t) => t.see.includes(id)).length;
   const ranked = items
     .map((it, i) => ({ it, i }))
@@ -119,7 +124,7 @@ export function spotOrder(items: Item[], todo: { see: string[] }[], areas: strin
         a.i - b.i,
     )
     .map((x) => x.it);
-  const heads = areas.map((a) => ranked.find((it) => it.area === a)).filter((x): x is Item => !!x);
+  const heads = areas.map((a) => ranked.find((it) => it.area === a)).filter((x): x is T => !!x);
   return [...heads, ...ranked.filter((it) => !heads.includes(it))];
 }
 
@@ -203,21 +208,23 @@ function attempt(aspect: number, spots: Omit<In, "name">[], tags: In[], arrows: 
   /** 隠してはいけない点（代表の候補） */
   const keep = spots.slice(0, max).map((s) => ({ id: s.id, ...px(s) }));
   /* 固まり（ピン1つぶんより近い点どうしを、つながる限りまとめたもの）の重心。ピンを外へ開く向きの元 */
-  const hub = new Map<string, Pt>();
-  {
+  const hubOf = (pts: (Pt & { id: string })[]) => {
+    const m = new Map<string, Pt>();
     const link = SPOT_D + GAP + 10;
-    const grp = keep.map((_, i) => i);
+    const grp = pts.map((_, i) => i);
     const root = (i: number): number => (grp[i] === i ? i : (grp[i] = root(grp[i])));
-    keep.forEach((a, i) => keep.forEach((b, j) => j > i && dist(a, b) < link && (grp[root(i)] = root(j))));
-    keep.forEach((a, i) => {
-      const mem = keep.filter((_, j) => root(j) === root(i));
-      hub.set(a.id, { x: mem.reduce((s, d) => s + d.x, 0) / mem.length, y: mem.reduce((s, d) => s + d.y, 0) / mem.length });
+    pts.forEach((a, i) => pts.forEach((b, j) => j > i && dist(a, b) < link && (grp[root(i)] = root(j))));
+    pts.forEach((a, i) => {
+      const mem = pts.filter((_, j) => root(j) === root(i));
+      m.set(a.id, { x: mem.reduce((s, d) => s + d.x, 0) / mem.length, y: mem.reduce((s, d) => s + d.y, 0) / mem.length });
     });
-  }
+    return m;
+  };
+  let hub = hubOf(keep);
   /* 絵の右下の「イラスト・位置は目安」の札（CSS の `.gb-amap-art .gb-pic-tag`）。だれも重ならない */
   const boxes: Rect[] = [{ id: "イラストの札", w: NOTE_W, h: NOTE_H, x: W - 6 - NOTE_W / 2, y: H - 6 - NOTE_H / 2 }];
   const circles: (Pt & { id: string })[] = [];
-  const segs: Seg[] = [];
+  const segs: (Seg & { id: string })[] = [];
 
   /* 1 矢印。絵の縁に置く。はみ出すぶんは内側へ寄せる（動かすのはそれだけ） */
   for (const a of arrows) {
@@ -265,48 +272,87 @@ function attempt(aspect: number, spots: Omit<In, "name">[], tags: In[], arrows: 
   };
 
   /* 写真のピン。選ぶ順に、本当の位置から近い所を探す */
+  const ANG = 32;
+  /** 点 `t`（本当の位置）のピンを置ける、いちばんよい中心。`dots` は隠してはいけない点、`self` は自分の id */
+  const search = (self: string, t: Pt, dots: (Pt & { id: string })[]) => {
+    /* 固まった所の外向き（自分の固まりの重心から、自分の点へ）。ずらすならこの向きへ——西の物は西へ、東の物は東へ
+       開くので、ピンの並びが本当の並びと入れ替わらない */
+    const g = hub.get(self) ?? t;
+    const gl = dist(t, g);
+    const out1 = gl > 2 ? { x: (t.x - g.x) / gl, y: (t.y - g.y) / gl } : null;
+    let best: { c: Pt; score: number } | null = null;
+    for (let r = 0; r <= SPOT_REACH; r += 3) {
+      for (let k = 0; k < (r ? ANG : 1); k++) {
+        const th = (k / ANG) * Math.PI * 2;
+        const c = { x: t.x + r * Math.cos(th), y: t.y + r * Math.sin(th) };
+        if (c.x < R + 2 || c.x > W - R - 2 || c.y < R + 2 || c.y > H - R - 2) continue;
+        if (circles.some((o) => o.id !== self && dist(o, c) < 2 * R + GAP)) continue;
+        if (boxes.some((q) => toRect(c, q) < R + GAP)) continue;
+        if (dots.some((d) => d.id !== self && dist(d, c) < R + DOT_CLEAR)) continue;
+        if (segs.some((q) => q.id !== self && toSeg(c, q) < R + 2)) continue;
+        if (r > R - 8) {
+          const sg = { a: t, b: c };
+          if (circles.some((o) => o.id !== self && toSeg(o, sg) < R + 2)) continue;
+          if (boxes.some((q) => segRect(sg, q))) continue;
+          if (segs.some((q) => q.id !== self && segHit(sg, q))) continue;
+        }
+        /* 近いほど・外向きに近いほどよい（小さいほうを取る） */
+        const turn = out1 && r ? 1 - (Math.cos(th) * out1.x + Math.sin(th) * out1.y) : 0;
+        /* 内向き（90度より曲がる）へは引き出さない。固まりの反対側へ回ったピンは、隣と入れ替わって読める */
+        if (turn > 1 && r > R - 8) continue;
+        const score = r + 60 * turn;
+        if (!best || score < best.score) best = { c, score };
+      }
+    }
+    return best?.c ?? null;
+  };
+  /** もう立ったピンの、本当の位置（引き出し線の根もとの点） */
+  const roots = () => out.pins.map((q) => ({ id: q.id, ...px({ x: q.tx, y: q.ty }) }));
+
   const placePins = () => {
-    const ANG = 32;
     for (const s of spots) {
       if (out.pins.length >= max) break;
       const t = px(s);
       /* 自分の点が、もう置いたもので隠れているなら立てない（点の見えないピンは、どこを指すのか読めない） */
       if (circles.some((c) => dist(c, t) < R + DOT_CLEAR) || boxes.some((r) => toRect(t, r) < DOT_CLEAR)) continue;
-      /* 固まった所の外向き（自分の固まりの重心から、自分の点へ）。ずらすならこの向きへ——西の物は西へ、東の物は東へ
-         開くので、ピンの並びが本当の並びと入れ替わらない */
-      const g = hub.get(s.id) ?? t;
-      const gl = dist(t, g);
-      const out1 = gl > 2 ? { x: (t.x - g.x) / gl, y: (t.y - g.y) / gl } : null;
-      let best: { c: Pt; score: number } | null = null;
-      for (let r = 0; r <= SPOT_REACH; r += 3) {
-        for (let k = 0; k < (r ? ANG : 1); k++) {
-          const th = (k / ANG) * Math.PI * 2;
-          const c = { x: t.x + r * Math.cos(th), y: t.y + r * Math.sin(th) };
-          if (c.x < R + 2 || c.x > W - R - 2 || c.y < R + 2 || c.y > H - R - 2) continue;
-          if (circles.some((o) => dist(o, c) < 2 * R + GAP)) continue;
-          if (boxes.some((q) => toRect(c, q) < R + GAP)) continue;
-          if (keep.some((d) => d.id !== s.id && dist(d, c) < R + DOT_CLEAR)) continue;
-          if (segs.some((q) => toSeg(c, q) < R + 2)) continue;
-          if (r > R - 8) {
-            const sg = { a: t, b: c };
-            if (circles.some((o) => toSeg(o, sg) < R + 2)) continue;
-            if (boxes.some((q) => segRect(sg, q))) continue;
-            if (segs.some((q) => segHit(sg, q))) continue;
-          }
-          /* 近いほど・外向きに近いほどよい（小さいほうを取る） */
-          const turn = out1 && r ? 1 - (Math.cos(th) * out1.x + Math.sin(th) * out1.y) : 0;
-          /* 内向き（90度より曲がる）へは引き出さない。固まりの反対側へ回ったピンは、隣と入れ替わって読める */
-          if (turn > 1 && r > R - 8) continue;
-          const score = r + 60 * turn;
-          if (!best || score < best.score) best = { c, score };
-        }
-      }
-      if (!best) continue;
-      const c = best.c;
+      /* 守る点は、代表の候補と、もう立ったピン（候補の外から立ったものもある） */
+      const c = search(s.id, t, [...keep, ...roots()]);
+      if (!c) continue;
       const lead = dist(c, t) > R - 8;
       circles.push({ id: s.id, ...c });
-      if (lead) segs.push({ a: t, b: c });
+      if (lead) segs.push({ id: s.id, a: t, b: c });
       out.pins.push({ id: s.id, x: c.x / W, y: c.y / H, tx: s.x, ty: s.y, leader: lead });
+    }
+  };
+
+  /*
+   * 仕上げ: 引き出し線のピンを、全部置いたあとでもう一度、本当の位置の近くへ寄せる。
+   *
+   * 置いている最中は、まだ立つか分からない候補の点まで空けておく（`keep`）。立たなかった候補の点は地図に出ないのに、
+   * それを避けたピンが脇へ寄せられたままになる（ソフィアのネフスキー大聖堂は、立たなかった聖ソフィア教会の点を避けて
+   * 15px ずれていた）。ここでは**立ったピンの点だけ**を守って、いまより近くが空いていれば寄せる。
+   * ほかの決まり（重ならない・線が交わらない・札と矢印を隠さない・内向きへ回り込まない）はそのまま
+   */
+  const tidy = () => {
+    /* 外向きも、立ったピンの点だけで固まりを組み直して決める（立たなかった点を入れると、固まりの重心がずれる） */
+    hub = hubOf(roots());
+    for (const p of out.pins) {
+      if (!p.leader) continue;
+      const t = px({ x: p.tx, y: p.ty });
+      const ci = circles.findIndex((o) => o.id === p.id);
+      const [mine] = circles.splice(ci, 1);
+      const si = segs.findIndex((q) => q.id === p.id);
+      const [line] = segs.splice(si, 1);
+      const c = search(p.id, t, roots());
+      if (!c || dist(c, t) >= dist(mine, t) - 3) {
+        circles.push(mine);
+        segs.push(line);
+        continue;
+      }
+      const lead = dist(c, t) > R - 8;
+      circles.push({ id: p.id, ...c });
+      if (lead) segs.push({ id: p.id, a: t, b: c });
+      Object.assign(p, { x: c.x / W, y: c.y / H, leader: lead });
     }
   };
 
@@ -317,5 +363,6 @@ function attempt(aspect: number, spots: Omit<In, "name">[], tags: In[], arrows: 
     placeTags();
     placePins();
   }
+  tidy();
   return out;
 }

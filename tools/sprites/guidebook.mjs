@@ -8,6 +8,9 @@
  *   …  BASE_PORT=4131 BASE_PAGE=/bulgaria node tools/sprites/guidebook.mjs       # 字の量を前の面と比べる
  *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ずらした札のある街で落ちる。ソフィアは矢印と重なる）
  *   …  BREAK=spots node tools/sprites/guidebook.mjs    # 対照: 写真のピンを本当の位置へ戻す（引き出し線をやめる。固まった所で重なって落ちる。両方の街で落ちる）
+ *   …  BREAK=lead node tools/sprites/guidebook.mjs     # 対照: 線のあるピンを、本当の位置から絵の幅の3割先へ動かす（線が長くて落ちる）
+ *   …  BREAK=photo node tools/sprites/guidebook.mjs    # 対照: ピンの写真の道を壊す（描けていなくて落ちる）
+ *   …  BREAK=label node tools/sprites/guidebook.mjs    # 対照: 地図の外の札の名前を狭くする（名前が折れて落ちる。地図の外のある街で）
  *
  * 終了コード 0＝通った / 1＝見つかった / 2＝数えるものが無い（面が開けない・窓が1つも無い）。
  *
@@ -25,6 +28,7 @@
  * | 字の量 | 最初に開いた状態（窓と畳みは閉じたまま）で `main` に見えている字の数。前の面と比べる |
  * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
  * | 見どころマップ | 写真のピン・地区の札・地図の外の矢印が、390 と 1440 で**どの2つも重ならず**、ピンと矢印が絵の外にはみ出さない。どのピンも当たり 44px 以上（`hitbox.mjs`）。ピンと矢印を押すと窓が開く（窓の無い矢印は Google マップ）。一覧と札の行き先の窓が在る（#1228） |
+ * | 写真と線 | 書き出した HTML に Wikimedia から直に読む絵が0本。ピンの写真が全部描けている。引き出し線が上限（絵の幅の 72/340）より長くない。地図の外の札の名前が1行。ピンの無い地区は並べて出す（落とさない） |
  *
  * 撮った絵は `OUT`（既定 `/tmp/guidebook-shots`）に節ごとに置く（390px・dpr 2）。
  *
@@ -159,6 +163,17 @@ async function spotCheck(p, width) {
         e.style.top = `${Number(e.dataset.ty) * 100}%`;
       }),
     );
+  if (process.env.BREAK === "lead")
+    await p.evaluate(() =>
+      document.querySelectorAll(".gb-amap-spot").forEach((e) => {
+        e.style.left = `${Math.min(Number(e.dataset.tx) + 0.3, 0.9) * 100}%`;
+      }),
+    );
+  if (process.env.BREAK === "label") await p.addStyleTag({ content: ".gb-lg-out > span:first-child { max-width: 4em; }" });
+  if (process.env.BREAK === "photo") {
+    await p.evaluate(() => document.querySelectorAll(".gb-amap-spot img").forEach((i) => i.setAttribute("src", `${i.getAttribute("src")}.nothing`)));
+    await settle(p, 800);
+  }
   const r = await p.evaluate(() => {
     const art = document.querySelector(".gb-amap-art")?.getBoundingClientRect();
     const box = (sel, kind) =>
@@ -187,13 +202,45 @@ async function spotCheck(p, width) {
           .filter((q) => q.b.left < art.left - 0.5 || q.b.right > art.right + 0.5 || q.b.top < art.top - 0.5 || q.b.bottom > art.bottom + 0.5)
           .map((q) => `${q.kind}${q.t}`)
       : [];
-    return { art: !!art, spots: spots.length, arrows: rects.filter((q) => q.kind === "矢印").length, over, out };
+    /* 引き出し線の長さ。並べる側の上限（`content/guidebook/spotmap.ts` の SPOT_REACH。いちばん狭い絵 340px で 72px）を
+       絵の幅の割合で見る。ソフィアの聖ソフィア教会が 390px で 87px の線の先に立った（2026-11-15） */
+    const long = art
+      ? [...document.querySelectorAll(".gb-amap-spot")]
+          .map((e) => {
+            const b = e.getBoundingClientRect();
+            const len = Math.hypot(b.left + b.width / 2 - (art.left + Number(e.dataset.tx) * art.width), b.top + b.height / 2 - (art.top + Number(e.dataset.ty) * art.height));
+            return { t: e.querySelector(".sr-only")?.textContent.trim(), len, ratio: len / art.width };
+          })
+          .filter((x) => x.ratio > 72 / 340 + 0.01)
+          .map((x) => `${x.t}（${Math.round(x.len)}px）`)
+      : [];
+    /* ピンの写真が、本当に描けているか（読めなかった絵は白い丸になる） */
+    const blank = [...document.querySelectorAll(".gb-amap-spot img")]
+      .filter((i) => !i.complete || !i.naturalWidth)
+      .map((i) => i.closest("a").querySelector(".sr-only")?.textContent.trim() || i.getAttribute("src"));
+    /* ピンの無い地区（札はあるのに、一覧に番号が1つも無い）。見たいものもやりたいことも無い地区はありうるので、落とさず並べる */
+    const bare = [...document.querySelectorAll(".gb-lg")]
+      .filter((g) => g.querySelector("a.gb-lg-h") && !g.querySelector(".gb-amap-n"))
+      .map((g) => g.querySelector(".gb-lg-h b")?.firstChild?.textContent.trim());
+    /* 地図の外の一覧の札は、名前を1行に（「シュト・／オリザリ マップで見る」と、名前の途中で折れた。2026-11-15） */
+    const broken = [...document.querySelectorAll(".gb-lg-out > span:first-child")]
+      .filter((e) => {
+        const r = document.createRange();
+        r.selectNodeContents(e);
+        return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size > 1;
+      })
+      .map((e) => e.textContent.trim());
+    return { art: !!art, spots: spots.length, arrows: rects.filter((q) => q.kind === "矢印").length, over, out, long, blank, bare, broken };
   });
   if (!r.art) return notes.push(`${width}px: 見どころマップの絵が無い（ピンは見ていない）`);
   notes.push(`${width}px: 写真のピン ${r.spots}本・地図の外の矢印 ${r.arrows}`);
   if (!r.spots) fail(`${width}px で見どころマップに写真のピンが1本も無い`);
   if (r.over.length) fail(`${width}px で見どころマップの重なり: ${r.over.slice(0, 6).join("／")}`);
   if (r.out.length) fail(`${width}px で絵の外にはみ出す: ${r.out.join("／")}`);
+  if (r.long.length) fail(`${width}px で引き出し線が長いピン: ${r.long.join("／")}`);
+  if (r.blank.length) fail(`${width}px でピンの写真が描けていない: ${r.blank.join("／")}`);
+  if (r.broken.length) fail(`${width}px で地図の外の札の名前が折れている: ${r.broken.join("／")}`);
+  if (r.bare.length) notes.push(`${width}px: ピンの無い地区 ${r.bare.join("・")}`);
 }
 
 /** ピンの当たり（44px 以上）と、ピン・矢印・一覧を押した先。390px で1回だけ */
@@ -256,6 +303,10 @@ async function main() {
     if (empty.length) fail(`中身の無い窓: ${empty.slice(0, 5).join(" ")}`);
     const todoIds = rawDialogs.map((m) => m[1]).filter((id) => id.startsWith("do-"));
     notes.push(`書き出した HTML の窓 ${rawDialogs.length}（やりたいこと ${todoIds.length}）`);
+    /* 借りた写真は島の置き場から配る（`python/guide_photos.py`）。Wikimedia から直に読むと、混んだ日に 429 で
+       断られてピンが白い丸になった（2026-11-15）。作者のページへのリンク（commons.wikimedia.org）は数えない */
+    const wmImg = (raw.match(/(?:src|srcSet|srcset)="[^"]*upload\.wikimedia\.org/g) ?? []).length;
+    if (wmImg) fail(`書き出した HTML に Wikimedia から直に読む絵が ${wmImg} 本ある（python/guide_photos.py で置き場に落として焼き直す）`);
     if (!todoIds.length) fail("やりたいことの窓（#do-…）が無い");
     if (todoIds.length > 8) fail(`やりたいことが ${todoIds.length}（最大8）`);
 

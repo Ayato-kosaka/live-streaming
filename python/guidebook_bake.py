@@ -38,7 +38,9 @@
 
 - **行った項目は、その日のあやと島カード**（`compose.cards`。カードの日が、その項目の行った日のどれかでないと止める）。
   置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
-- **行っていない項目は、材料の借りた写真**（Wikimedia Commons。決まった幅のサムネイル）。作者とライセンスを持たない写真は使わない
+- **行っていない項目は、材料の借りた写真**（Wikimedia Commons）。作者とライセンスを持たない写真は使わない。
+  **面は Commons から直に読まない**——`python/guide_photos.py` が `site/public/guide/<国>/<街>/photos/` に落とした絵を指す
+  （置き場に無ければ止める。混んだ日に Wikimedia が 429 で断り、見どころマップのピンが白い丸になった）
 - 描いた絵（表紙・エリア地図・料理・土産）は面の側が `public/guide/<国>/<街>/manifest.json` から読む（ここでは触らない）
 
 ## 最終更新の日付
@@ -59,6 +61,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_bake as gb  # noqa: E402  facts の読みかた・数の確かめ・指紋・カードの写真の口は、記事と同じものを使う
 import guide_facts as gf  # noqa: E402
+import guide_photos as gp  # noqa: E402  借りた写真の置き場の道は1か所で引く
 from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
 
 ROOT = gb.ROOT
@@ -181,20 +184,22 @@ class Book:
         return out
 
     def commons(self, p: dict | None, where: str) -> dict | None:
-        """借りた写真。**決まった幅のサムネイル**（960・500。元が小さければ元のファイル）"""
+        """借りた写真。**島の置き場に落とした絵**（960・500。`python/guide_photos.py`）。作者・ライセンス・元のページは材料のまま"""
         if not p:
             return None
         for k in ("file", "by", "lic", "page", "alt", "w"):
             if not p.get(k):
                 self.err(where, f"借りた写真に {k} が無い（作者とライセンスを出す決まり）")
                 return None
-        th = p.get("thumbs") or {}
-        big = th.get("960") or gb.commons_url(p["file"], None)
-        small = th.get("500") or th.get("250")
-        out = {"src": big, "alt": p["alt"], "kind": "photo", "credit": {"by": p["by"], "lic": p["lic"], "page": p["page"]}}
-        if small and small != big:
-            out["small"] = small
-        return out
+        # 面は Wikimedia から直に読まない（混んだ日に 429 で断られ、ピンが白い丸になった）。置き場に落とした絵を配る
+        big = gp.local(self.key, p["file"], 960, self.root)
+        small = gp.local(self.key, p["file"], 500, self.root)
+        if not big or not small:
+            self.err(where, f"借りた写真「{p['file']}」が置き場に無い（先に python3 python/guide_photos.py {self.key}）")
+            return None
+        w, h = gb.Baker._size(self.root / "site/public" / big.lstrip("/"))
+        return {"src": big, "small": small, "w": w, "h": h, "alt": p["alt"], "kind": "photo",
+                "credit": {"by": p["by"], "lic": p["lic"], "page": p["page"]}}
 
     def card(self, name: str, where: str, days: set[str] | None = None) -> dict | None:
         """あやと島カードの写真。**行った項目は、行った日のカードだけ**"""
@@ -312,7 +317,7 @@ class Book:
                           "src": self.src(c.get("src"))})
         return {"cards": cards, "more": [], "areas": []}
 
-    def areas(self, see: list[dict]) -> list[dict]:
+    def areas(self, see: list[dict], todo: list[dict] = ()) -> list[dict]:
         comp = self.c.get("areas") or {}
         out = []
         for a in self.g["about"]["areas"]:
@@ -335,9 +340,12 @@ class Book:
             if wt:
                 area["went"] = wt
             out.append(area)
-        # 見どころをエリアに入れる。**線（多角形）の中**が先、どれにも入らなければ、近いエリアの中心から AREA_KM まで
+        # 見どころをエリアに入れる。**線（多角形）の中**が先、どれにも入らなければ、近いエリアの中心から AREA_KM まで。
+        # 座標を持つやりたいことも同じ決まりでエリアに入れる（見たいものの無い地区の、見どころマップの代表になる。
+        # `types.ts` の `SpotRule`）。エリアの `see` に並ぶのは見たいものだけ
         raw = {a["key"]: a for a in self.g["about"]["areas"]}
-        for it, spec in ((it, s) for it, s in zip(see, self.g["see"])):
+        pairs = [*zip(see, self.g["see"]), *zip(todo, self.g["todo"])]
+        for it, spec in pairs:
             if "lat" not in spec or spec.get("town") != self.g["city"]["town"]:
                 continue
             pt = (spec["lat"], spec["lon"])
@@ -346,7 +354,8 @@ class Book:
             pick = min(hits, key=dist.get) if hits else min(dist, key=dist.get)
             if hits or dist[pick] <= AREA_KM:
                 it["area"] = pick
-                next(x for x in out if x["id"] == pick)["see"].append(it["id"])
+                if "title" not in it:
+                    next(x for x in out if x["id"] == pick)["see"].append(it["id"])
         return out
 
     def see(self) -> tuple[list[dict], list[dict]]:
@@ -414,6 +423,11 @@ class Book:
                 it["eat"] = t["links"]["eat"]
             if pic:
                 it["pic"] = pic
+            # 本当の位置（材料が座標を持つときだけ。出どころは材料の `coord_src`）。見どころマップで、見たいものの無い地区の代表になる
+            if "lat" in t:
+                if not t.get("coord_src"):
+                    self.err(w, "やりたいことの座標に出どころ（coord_src）が無い")
+                it["at"] = {"lat": t["lat"], "lon": t["lon"]}
             wt = self.went("todo", t, w, story_from=own)
             if wt:
                 it["went"] = wt
@@ -665,8 +679,8 @@ class Book:
         sq = (sq_spec["lat"], sq_spec["lon"]) if sq_spec else (0.0, 0.0)
         see, far = self.see()
         about = self.about()
-        about["areas"] = self.areas(see)
         todo = self.todo()
+        about["areas"] = self.areas(see, todo)
         eat = [self.dish("eat", it, city_local) for it in g["eat"]["items"]] + self.went_notes()
         buy = [self.dish("buy", it, city_local) for it in g["buy"]["items"]]
         cover = c.get("cover") or {}
