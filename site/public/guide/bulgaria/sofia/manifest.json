@@ -408,5 +408,191 @@
    "kind": "ai",
    "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
   }
+ },
+ "do": {
+  "yogurt": {
+   "src": "/guide/bulgaria/sofia/do-yogurt-1600.webp",
+   "src_small": "/guide/bulgaria/sofia/do-yogurt-800.webp",
+   "w": 1600,
+   "h": 900,
+   "alt": "陶器の器のキセロ・ムリャコ、冷たいスープのタラトル、はちみつとくるみのヨーグルトが並ぶ卓で、ひと口食べて笑顔になる旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。ヨーグルトの器と料理は Wikipedia の説明と写真に合わせた。面の見出しの絵なので、16:9（3:2 で描かせて切った）と 4:5（2:3 で描かせて切った）を別々に描いた。字なし",
+   "variants": {
+    "16:9": {
+     "src": "/guide/bulgaria/sofia/do-yogurt-1600.webp",
+     "src_small": "/guide/bulgaria/sofia/do-yogurt-800.webp",
+     "w": 1600,
+     "h": 900
+    },
+    "4:5": {
+     "src": "/guide/bulgaria/sofia/do-yogurt-tall-1000.webp",
+     "src_small": "/guide/bulgaria/sofia/do-yogurt-tall-500.webp",
+     "w": 1000,
+     "h": 1250
+    }
+   }
+  },
+  "rose": {
+   "src": "/guide/bulgaria/sofia/do-rose-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-rose-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ローズオイルの小瓶、バラのジャム、バラの形の石けん、バラ模様の箱が並ぶお土産屋さんで、小瓶を手に取る旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-rose-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rose-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-rose-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rose-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "hotspring": {
+   "src": "/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-hotspring-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "鉱泉浴場の建物の前の、無料の温泉の蛇口。湯気の立つ水を、地元のおばあさんと並んでボトルにくむ旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-hotspring-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-hotspring-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-hotspring-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-hotspring-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "faiths": {
+   "src": "/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-faiths-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ミナレットのあるモスク、しま模様のシナゴーグ、ドームの教会が近くに並ぶ通りを歩く旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-faiths-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-faiths-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-faiths-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-faiths-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "mehana": {
+   "src": "/guide/bulgaria/sofia/do-mehana-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-mehana-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "民芸の皿と赤い織物で飾られたメハナで、ショプスカサラダと炭火焼きのケバプチェを前に乾杯する旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-mehana-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-mehana-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-mehana-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-mehana-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "banitsa": {
+   "src": "/guide/bulgaria/sofia/do-banitsa-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-banitsa-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "朝のパン屋で、うず巻きのバニツァをほおばり、ボザのグラスを手にする旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-banitsa-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-banitsa-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-banitsa-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-banitsa-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "xmas": {
+   "src": "/guide/bulgaria/sofia/do-xmas-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-xmas-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "雪の夕暮れ、国立劇場の前のクリスマスマーケット。灯りのともる木の屋台の前で、湯気の立つホットワインを手に笑う旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-xmas-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-xmas-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-xmas-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-xmas-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  },
+  "rila": {
+   "src": "/guide/bulgaria/sofia/do-rila-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-rila-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "緑の山に囲まれたリラ修道院。赤白黒のしま模様のアーチと色あざやかな壁画の教会を見上げる旅行者の絵",
+   "kind": "ai",
+   "prompt_note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-rila-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rila-600.webp",
+     "w": 1200,
+     "h": 900
+    },
+    "1:1": {
+     "src": "/guide/bulgaria/sofia/do-rila-square-800.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rila-square-400.webp",
+     "w": 800,
+     "h": 800
+    }
+   }
+  }
  }
 }
