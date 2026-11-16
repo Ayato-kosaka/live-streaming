@@ -633,7 +633,7 @@ def mode_register(batch: str, dry: bool, expect: int, post=None) -> int:
     for retry in (False, True):
         while rounds < 200:
             rounds += 1
-            r = post({"batch": batch, "max": 10, "retryFailed": retry})
+            r = post({"batch": batch, "max": 5, "retryFailed": retry})
             got = int(r.get("registered") or 0)
             done += got
             for f in r.get("failed") or []:

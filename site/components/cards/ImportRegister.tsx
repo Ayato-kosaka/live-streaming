@@ -15,7 +15,8 @@ import { cardWhen } from "./cards";
 import ImportImg from "./ImportImg";
 
 /** 1回に登録する枚数。口の `max` */
-const STEP = 10;
+/* 1回に登録する枚数。1枚ごとに写真を置いてカードを作るので、10枚だと Hosting の60秒に近づく */
+const STEP = 5;
 
 type Phase =
   | { k: "plan"; read: Read; plan?: RegisterPlan }
