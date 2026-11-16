@@ -7,7 +7,7 @@ import type { Guidebook, Item, MyMap as MyMapT, Place, Todo } from "@/content/gu
 import MyMap from "./MyMap";
 import Sheet from "./Sheet";
 import { WentBox } from "./Videos";
-import { Credit, Ext, Facts, FlagMarks, LocalName, MapsLink, Picture, STAR, Sec, SrcLine, sheetId, shortName } from "./parts";
+import { Credit, Ext, Facts, FlagMarks, LocalName, MapsLink, Marks, Picture, STAR, Sec, SrcLine, sheetId, shortName } from "./parts";
 
 type Kind = "see" | "eat" | "buy";
 
@@ -18,7 +18,9 @@ type Kind = "see" | "eat" | "buy";
  * **見たいものだけ、マイマップが上**——見たいものの地図は「どこにあるか」を先に知りたい人のもので、どんな街の地図
  * （概要）から「詳しい場所は…」で飛んでくる先でもある（`#see-mymap`）。食べたい・買いたいは、品を見てから店を探すので下。
  *
- * 札に出すのは絵・名前・1行（値段か距離）だけ。字は窓の中（あやと「文字文字しくならないように」）。
+ * 札に出すのは絵・名前・1行（値段か距離）と、印（`marks`。その国ならでは・値段・季節）だけ。字は窓の中（あやと「文字文字しくならないように」）。
+ * **豚肉あり・アルコールあり・必見・イラストは札に出さない**——豚と酒は窓の中のアイコン、星は窓の中、イラストは出どころの欄
+ * （あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙」「イラストのチップ要らない」・`docs/island-misses.md` #328）。
  * 一面に並ぶ札が全部押せるので、1枚ずつに厚みは付けない（`docs/island-design.md` 3章3の例外）。
  */
 export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; cols: 2 | 3; todo: Todo[] }) {
@@ -37,8 +39,7 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
                 eager={kind === "see" && i < 2}
                 label={shortName(it.name).slice(0, 1)}
               />
-              {it.rank === 1 && kind === "see" && <span className="gb-must">必見</span>}
-              <FlagMarks f={it.flags} />
+              <Marks m={it.marks} />
               <span className="gb-tile-b">
                 <b>{shortName(it.name)}</b>
                 {it.line && <i>{it.line}</i>}
@@ -57,9 +58,9 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
 
 const KICKER: Record<Kind, string> = { see: "見たいもの", eat: "食べたいもの", buy: "買いたいもの" };
 
-/** 札の読み上げの名前。名前・節・1行・印（豚肉あり・アルコールあり・行った） */
+/** 札の読み上げの名前。名前・節・1行・印（札に見えているものと同じ。豚肉・アルコールは窓の中で読む） */
 function tileName(kind: Kind, it: Item) {
-  const marks = [it.flags?.pork && "豚肉あり", it.flags?.alcohol && "アルコールあり", it.went && "行った"].filter(Boolean);
+  const marks = [...(it.marks ?? []).map((m) => m.text), it.went && "行った"].filter(Boolean);
   return [`${shortName(it.name)}（${KICKER[kind]}）`, it.line, ...marks].filter(Boolean).join("・");
 }
 
@@ -207,8 +208,6 @@ export function See({ g, n }: { g: Guidebook; n: number }) {
  */
 export function Eat({ g, n }: { g: Guidebook; n: number }) {
   const { kinds, items, places, map } = g.eat;
-  const pork = items.filter((it) => it.flags?.pork).length;
-  const alcohol = items.filter((it) => it.flags?.alcohol).length;
   const name = `gb-kind-${g.city}`;
   return (
     <Sec id="eat" n={n} icon="eat" title="食べたいもの">
@@ -230,16 +229,6 @@ export function Eat({ g, n }: { g: Guidebook; n: number }) {
             .map((k) => `.gb-eat:has(#${name}-${k.id}:checked) .gb-tiles > li:not([data-kinds~="${k.id}"]){display:none}`)
             .join("")}
         </style>
-        <p className="gb-legend">
-          <span className="gb-flag is-pork" aria-hidden="true">
-            <b>豚</b>
-          </span>
-          豚肉あり（{pork}品）
-          <span className="gb-flag is-alcohol" aria-hidden="true">
-            <b>酒</b>
-          </span>
-          アルコールあり（{alcohol}品）
-        </p>
         <Tiles kind="eat" items={items} cols={3} todo={g.todo} />
       </div>
       <MapBlock m={map} caption={map && `${map.pins}か所。ピンを押すと名前と説明`} icon="eat" title="この料理は、ここで" />

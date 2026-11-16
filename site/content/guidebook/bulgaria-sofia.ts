@@ -14,7 +14,7 @@ import {
 
 import { mapsSearch } from "@/lib/mapsSearch";
 
-import type { Area, Fact, Guidebook, Guide, Item, MyMap, Pic, Place, Src, Todo } from "./types";
+import type { Area, Fact, Guidebook, Guide, Item, Mark, MyMap, Pic, Place, Src, Todo } from "./types";
 
 /**
  * **ソフィアのガイドブック**（`/travel/bulgaria/sofia`。前の `/bulgaria`）。#1228
@@ -41,7 +41,8 @@ import type { Area, Fact, Guidebook, Guide, Item, MyMap, Pic, Place, Src, Todo }
  * ## あやとの好みは書かない（#1228・`docs/island-misses.md` #326）
  *
  * 前の面は、あやとの好み（豚・酒・ローカル市場）で ◎○⚠ を付け、「したいこと」も好みから組んでいた。
- * いまは**初めての人が見て面白いもの**を客観的に並べ、豚肉とアルコールはアイコンで知らせるだけにする。
+ * いまは**初めての人が見て面白いもの**を客観的に並べ、豚肉とアルコールは窓の中のアイコンで知らせるだけにする
+ * （札と一覧には出さない。あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙」。`docs/island-misses.md` #328）。
  * **安さの観点は残す**（読む人がバルカンを安く回る旅人だから）。
  */
 
@@ -66,6 +67,8 @@ const HOST: Record<string, string> = {
   "www.gov.uk": "GOV.UK",
   "www.maff.go.jp": "農林水産省 動物検疫所",
   "www.mofa.go.jp": "外務省",
+  "bnrnews.bg": "ブルガリア国営ラジオ",
+  "www.across-magazine.com": "across",
 };
 
 function src(url: string): Src {
@@ -117,7 +120,7 @@ const yen = (eur: number) => Math.round((eur * RATE.yen) / 100) * 100;
  * 「現地の字の名前＋街」で組む）をそのまま使う。ここで語を書き直さない（2か所で組むと片方だけ古くなる）。
  */
 const SPOTS: Record<string, { id: string; area?: string }> = {
-  "聖ゲオルギ教会（円堂）": { id: "rotunda", area: "center" },
+  "聖ゲオルギ教会（ロトンダ）": { id: "rotunda", area: "center" },
   "古代セルディカ遺跡（ラルゴの地下）": { id: "serdica", area: "center" },
   "アレクサンドル・ネフスキー大聖堂": { id: "nevsky", area: "nevsky" },
   "中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": { id: "mineral-bath", area: "center" },
@@ -185,7 +188,7 @@ const SEE: Item[] = BG_SPOTS.map((s) => {
 //
 // 前の8つは名所の紹介だった（壁画の教会をはしご・地下鉄の改札の横のローマの街・ヴィトシャ大通り…）。いまは
 // ミーハーでベタな欲求——本場のヨーグルト・バラのお土産・温泉・冬のマーケット——で選び直し、「行ってこれをしてきた！」
-// と言える形にした（`docs/island-misses.md` #327）。前の名所（円堂・セルディカの遺跡・ヴィトシャ大通り・ボヤナ教会・
+// と言える形にした（`docs/island-misses.md` #327）。前の名所（聖ゲオルギ教会・セルディカの遺跡・ヴィトシャ大通り・ボヤナ教会・
 // ヴィトシャ山）は見たいものの窓にそのまま居る。
 //
 // **字は全部、調べた事実（`content/bulgaria.ts`）か、この下に出どころつきで持つ字から。** 作らない・推測で埋めない。
@@ -235,32 +238,38 @@ const nevsky = spot("アレクサンドル・ネフスキー大聖堂");
 const theatre = spot("イヴァン・ヴァゾフ国立劇場と市庭園");
 const rila = spot("リラ修道院（日帰り）");
 
+const nedelya = spot("聖ネデリャ教会");
+
+/** 札の印。**値段（`price`）と季節（`season`）だけ**——やりたいことの札は題がその街ならではの話なので、`local` は付けない */
+const price = (text: string): Mark => ({ kind: "price", text });
+const season = (text: string): Mark => ({ kind: "season", text });
+
 const TODO: Todo[] = [
   {
     id: "yogurt",
     icon: "milk",
-    title: "本場のヨーグルトを、食べ比べたい！",
+    title: "本場のヨーグルトを食べ比べたい！",
     catch: "酸っぱくて濃い“本物”を、牛・羊・水牛で",
-    badge: "1個 1ユーロ前後",
+    marks: [price("1個 1ユーロ前後")],
     lead: "明治ブルガリアヨーグルトの国。本場のヨーグルトは甘くない",
     pic: photo(yogurt),
-    what: `ブルガリアのヨーグルトはキセロ・ムリャコ（кисело мляко＝酸っぱい乳）といって、甘くない。スーパーや市場では牛・羊・水牛と乳の違うものが並び、水牛（биволско）のものが濃くて評判がいい。食堂の定番は、水で緩めたヨーグルトにきゅうり・にんにく・くるみを入れた冷たいスープ（タラトル）。日本の「明治ブルガリアヨーグルト」は、1972年にブルガリア政府から国名を使う許可を取って生まれた。`,
-    how: `ヨーグルトはスーパー（Lidl・Kaufland・Billa は、どれも中心部にある）か、中央市場ホール。タラトルは食堂からメハナまで、どこにでもある。`,
+    what: `ブルガリアのヨーグルトはキセロ・ムリャコ（кисело мляко＝酸っぱい乳）といって、甘くない。スーパーには牛・羊・水牛と乳の違うものが並び、水牛（биволско）のものが濃くて評判がいい。食堂の定番は、水で緩めたヨーグルトにきゅうり・にんにく・くるみを入れた冷たいスープ（タラトル）。日本の「明治ブルガリアヨーグルト」は、1972年にブルガリア政府から国名を使う許可を取って生まれた。`,
+    how: `ヨーグルトはスーパーで（Lidl・Kaufland・Billa は、どれも中心部にある）。タラトルは食堂からメハナまで、どこにでもある。`,
     time: "",
     money: `スーパーで1個1ユーロ前後（約180円）。タラトルは店で2〜4ユーロ（約350〜700円）。`,
     tip: `砂糖やジャムは期待しない。向こうでは塩を振って食べ、冷たいスープやサラダ、肉料理のソースになる。`,
     route: `朝にスーパーで乳の違うものを買い、昼か夜の食堂でタラトルを前菜に頼む。`,
-    see: ["market-hall"],
+    see: [],
     eat: ["kiselo-mlyako", "tarator"],
-    src: srcs(yogurt.src, image("ヨーグルト").src, tarator.src, basic("いちばん安いスーパー").src, spot("中央市場ホール（ハリ）").src),
+    src: srcs(yogurt.src, image("ヨーグルト").src, tarator.src, basic("いちばん安いスーパー").src),
   },
   {
     id: "rose",
     icon: "flower",
-    title: "バラの国で、かわいいバラのお土産を探したい！",
+    title: "バラの国でかわいいお土産を探したい！",
     catch: "ローズオイルに、花びらのジャム",
-    badge: "ジャム 小瓶3ユーロから",
-    lead: "バラのオイルの世界最大の産地。小瓶ひとつで、いちばん有名な産物を持ち帰れる",
+    marks: [price("ジャム 小瓶3ユーロから")],
+    lead: "ブルガリアはバラのオイルの世界最大の産地",
     pic: photo(roseJam),
     what: `ブルガリアは、バラのオイル（розово масло）の世界最大の産地で、品質も最上級とされる。オイルやローズウォーターの小瓶のほか、バラの花びらをそのまま煮たジャムと、バラ風味の求肥菓子（ロクム）が、小瓶・小箱で配りやすい。`,
     when: `お土産はいつでも買える。バラの収穫と祭りは、カザンラクで毎年6月第1週（ソフィアの街なかにバラ畑は無い）。`,
@@ -276,9 +285,9 @@ const TODO: Todo[] = [
   {
     id: "hotspring",
     icon: "hotspring",
-    title: "街なかで湧く温泉に、ふれてみたい！",
+    title: "街なかで湧く温泉にふれたい！",
     catch: "街の真ん中の蛇口から、温泉がただで湧いている",
-    badge: "無料・24時間",
+    marks: [price("無料")],
     lead: "地元の人がポリタンクを持って並ぶ。街ができたのも、湯が出たからだとされる",
     pic: photo(bath),
     what: `${bath.what} 市内には49の鉱泉・温泉があり、街がここにできたのも、そもそも湯が出たからだとされる。`,
@@ -286,37 +295,37 @@ const TODO: Todo[] = [
     time: bath.stay,
     money: bath.fee,
     tip: bath.advice,
-    route: `すぐ西のバーニャ・バシ・モスクも、同じ湯の上に建っている（名前はトルコ語で「たくさんの浴場」）。中央市場ホールまでも歩いてすぐ。`,
-    see: ["mineral-bath", "banya-bashi", "market-hall"],
+    route: `すぐ西のバーニャ・バシ・モスクも、同じ湯の上に建っている（名前はトルコ語で「たくさんの浴場」）。`,
+    see: ["mineral-bath", "banya-bashi"],
     src: srcs(bath.src, bath.feesrc, mosque.src, history("温泉の上に建った街").src),
   },
   {
     id: "faiths",
     icon: "church",
-    title: "教会・モスク・シナゴーグを、はしごしたい！",
+    title: "教会・モスク・シナゴーグをはしごしたい！",
     catch: "4つの宗教の祈りの場が、歩いて数分の中に",
-    badge: "ソフィアならでは",
-    lead: "地元で「寛容のトライアングル」と呼ばれる一角。しめは金のドームの大聖堂",
+    marks: [price("教会とモスクは無料")],
+    lead: "「寛容のトライアングル」と呼ばれる一角。足をのばせば金のドームの大聖堂",
     pic: photo(nevsky),
-    what: `ヨーロッパでも最古級の現役モスク（バーニャ・バシ・モスク、1566年ごろ）、南東ヨーロッパ最大のシナゴーグ（1909年開堂）、カトリックの聖ヨシフ大聖堂、そして金のドームの正教会、アレクサンドル・ネフスキー大聖堂（1912年完成）。違う宗教の祈りの場が歩いて数分の範囲に並んでいて、地元ではこの一角を「寛容のトライアングル」と呼ぶ。`,
-    how: `聖ヨシフ大聖堂は中心から${joseph.walk.replace(/^中心から/, "")}、シナゴーグは${synagogue.walk.replace(/^中心から/, "")}、モスクは${mosque.walk.replace(/^中心から/, "")}。ネフスキー大聖堂だけ東へ離れていて、${nevsky.walk}（地下鉄 Св. Климент Охридски 駅から6分ほど）。`,
-    time: `見学だけで約${sumStay(["聖ヨシフ大聖堂", "ソフィア・シナゴーグ", "バーニャ・バシ・モスク", "アレクサンドル・ネフスキー大聖堂"])}`,
+    what: `正教会の聖ネデリャ教会、ヨーロッパでも最古級の現役モスク（バーニャ・バシ・モスク、1566年ごろ）、南東ヨーロッパ最大のシナゴーグ（1909年開堂）、カトリックの聖ヨシフ大聖堂。違う宗教の祈りの場が歩いて数分の範囲に並んでいて、この一角は「寛容のトライアングル」と呼ばれる。東へ15分ほど歩けば、金のドームのアレクサンドル・ネフスキー大聖堂（1912年完成）。`,
+    how: `聖ネデリャ教会は中心そのもの。聖ヨシフ大聖堂は中心から${joseph.walk.replace(/^中心から/, "")}、シナゴーグは${synagogue.walk.replace(/^中心から/, "")}、モスクは${mosque.walk.replace(/^中心から/, "")}。ネフスキー大聖堂だけ東へ離れていて、${nevsky.walk}（地下鉄 Св. Климент Охридски 駅から6分ほど）。`,
+    time: `4つの見学で約${sumStay(["聖ネデリャ教会", "聖ヨシフ大聖堂", "ソフィア・シナゴーグ", "バーニャ・バシ・モスク"])}。ネフスキー大聖堂まで入れて約${sumStay(["聖ネデリャ教会", "聖ヨシフ大聖堂", "ソフィア・シナゴーグ", "バーニャ・バシ・モスク", "アレクサンドル・ネフスキー大聖堂"])}`,
     money: `本堂はどこも無料（モスクは礼拝の時間を外せば入れる）。シナゴーグは有料だが、いまの額は公式に載っていない（ユーロ導入前のガイドは5レフ＝約2.56ユーロ）。ネフスキー大聖堂の地下のイコン博物館は大人10.00ユーロ（約1,770円）・月曜休み。`,
     tip: `肩と膝を出さない服装で。モスクは入口で靴を脱ぎ、女性は髪を覆う布が要る（貸し出しがある）。シナゴーグは金曜の日没〜土曜に見学できない時間帯があり、入口はブロックの裏手。`,
-    route: `聖ヨシフ大聖堂 → シナゴーグ → モスク →（東へ）ネフスキー大聖堂の順なら、戻らずに歩ける。モスクの向かいは温泉の蛇口、ネフスキー大聖堂の隣は街の名前の由来になった6世紀の聖ソフィア教会。`,
-    see: ["st-joseph", "synagogue", "banya-bashi", "nevsky", "sveta-sofia"],
-    src: srcs(history("寛容のトライアングル").src, joseph.src, joseph.feesrc, synagogue.src, synagogue.feesrc, mosque.src, mosque.feesrc, nevsky.src, nevsky.feesrc, spot("聖ソフィア教会").src),
+    route: `聖ネデリャ教会 → 聖ヨシフ大聖堂 → シナゴーグ → モスクの順なら、戻らずに歩ける。モスクの向かいは温泉の蛇口。ネフスキー大聖堂まで足をのばすなら、隣は街の名前の由来になった6世紀の聖ソフィア教会。`,
+    see: ["nedelya", "st-joseph", "synagogue", "banya-bashi", "nevsky", "sveta-sofia"],
+    src: srcs(history("寛容のトライアングル").src, nedelya.src, nedelya.feesrc, joseph.src, joseph.feesrc, synagogue.src, synagogue.feesrc, mosque.src, mosque.feesrc, nevsky.src, nevsky.feesrc, spot("聖ソフィア教会").src),
   },
   {
     id: "mehana",
     icon: "eat",
-    title: "ローカル食堂メハナで、おなかいっぱい食べたい！",
+    title: "伝統料理の店メハナでおなかいっぱい食べたい！",
     catch: "国旗の色のサラダから始めて、土鍋の煮込みまで",
-    badge: "主菜 8〜13ユーロ",
+    marks: [price("主菜 8〜13ユーロ")],
     lead: "木の内装に、刺繍の飾り。家族経営の食堂兼居酒屋",
     pic: photo(shopska),
     what: `メハナは、家族経営の食堂兼居酒屋。木を基調にした内装に、その地方の工芸品や刺繍が飾られている。食事はだいたい、トマト・きゅうりに白いチーズを雪のように削ってかけたショプスカ・サラダ（色が国旗と同じ白・緑・赤）から始まる。陶器で煮込んだ料理（ギュヴェチなど）が得意。`,
-    how: `ソフィアでは、修道院のレシピを出す Manastirska Magernitsa、品数の尽きないメニューの Hadjidraganovite Izbi、1926年築の文化財の Pod Lipite が名前を挙げられる。`,
+    how: `ソフィアでは、修道院のレシピを出す Manastirska Magernitsa、品数の多い Hadjidraganovite Izbi、1926年築の文化財の Pod Lipite がよく名前の挙がる店。`,
     time: "",
     money: `主菜で8〜13ユーロ（約1,400〜2,300円）。ショプスカ・サラダは4〜6ユーロ（約700〜1,100円）前後。`,
     tip: `炭火焼き（ケバプチェ）は、スカラ（скара）専門の小さな店の焼きたてのほうが確実。豚の焼き物も煮込みも並ぶので、豚や酒を避ける人は品ごとに確かめる。`,
@@ -328,13 +337,13 @@ const TODO: Todo[] = [
   {
     id: "banitsa",
     icon: "bread",
-    title: "朝はパン屋で、焼きたてのバニツァを食べたい！",
+    title: "朝はパン屋で焼きたてのバニツァを食べたい！",
     catch: "チーズのパイに、甘酸っぱいボザ。これが地元の朝ごはん",
-    badge: "1〜2ユーロ",
+    marks: [price("1〜2ユーロ")],
     lead: "ペカルナ（パン屋）ならどこでも。朝の焼きたてを狙う",
     pic: photo(banitsa),
     what: `薄いパイ生地に白チーズと卵を挟んで焼いたバニツァは、朝の定番。長ネギ入り、かぼちゃ入り（тиквеник）などがある。これに、小麦やキビを発酵させた、とろりと甘酸っぱい飲みもののボザを合わせるのが地元の朝食。`,
-    how: `ソフィアでは、Rainbow Factory、Furna（ステファン・スタンボロフ大通り脇。ボザもある）、ヴィトシャ大通り近くの Sweet and Salty が名前を挙げられる。`,
+    how: `ソフィアでは、Rainbow Factory、Furna（ステファン・スタンボロフ大通り脇。ボザもある）、ヴィトシャ大通り近くの Sweet and Salty がよく名前の挙がる店。`,
     time: "",
     money: `バニツァはパン屋で1〜2ユーロ（約180〜350円）。ボザも1〜2ユーロ（約180〜350円）。`,
     tip: `ボザはふつう0.5〜1.0%の微量のアルコールを含み、完全なノンアルコールではない。好き嫌いが割れる味。バニツァは店によって中身が違い、挽き肉やハム入りもあるので、肉を避けるなら焼き台の札を見る。`,
@@ -346,9 +355,9 @@ const TODO: Todo[] = [
   {
     id: "xmas",
     icon: "pine",
-    title: "冬はクリスマス市で、ホットワイン！",
+    title: "冬はクリスマスマーケットでホットワインを飲みたい！",
     catch: "国立劇場の前の庭園に、クリスマスマーケットが立つ",
-    badge: "冬だけ",
+    marks: [season("冬だけ")],
     lead: "毎年11月中旬から。ソフィアでいちばん古いクリスマスマーケット",
     what: `イヴァン・ヴァゾフ国立劇場の前の市庭園（アレクサンダル・バッテンベルク広場）に立つ、ドイツ・クリスマスマーケット。ホットワインと食べもの、手仕事の品の店、子どもの遊びがあり、コンサートや劇も開かれる。2025年で15回目の、ソフィアでいちばん古いクリスマスマーケット。`,
     when: `毎年11月中旬〜12月下旬。2025年は11月14日〜12月21日。開く日は毎年動くので、行く年の告知を確かめる。`,
@@ -363,10 +372,10 @@ const TODO: Todo[] = [
   {
     id: "rila",
     icon: "church",
-    title: "世界遺産のリラ修道院へ、日帰りで行きたい！",
+    title: "世界遺産のリラ修道院へ日帰りで行きたい！",
     catch: "山あいに、縞模様のアーチと極彩色のフレスコ",
-    badge: "世界遺産・日帰り",
-    lead: "ブルガリアに行って一か所だけ選ぶなら、多くの人がここを挙げる",
+    marks: [price("中庭と本堂は無料")],
+    lead: "ソフィアから南へ約120km。ブルガリア最大の修道院",
     pic: photo(rila),
     what: rila.what,
     how: `${rila.how}（${rila.walk}）`,
@@ -380,8 +389,10 @@ const TODO: Todo[] = [
 ];
 
 if (TODO.length > 8) throw new Error("content/guidebook/bulgaria-sofia.ts: やりたいことは最大8（#1228）");
-/* 印は短く（札の上の字を少なく）。12字を超える印は、狭い画面の細い札で2行に折れる */
-for (const t of TODO) if (t.badge && [...t.badge].length > 12) throw new Error(`content/guidebook/bulgaria-sofia.ts: やりたいこと「${t.id}」の印が12字を超える（${t.badge}）`);
+/* 印は短く（札の上の字を少なく）。12字を超える印は、狭い画面で札の幅いっぱいに伸びて題とぶつかる */
+for (const t of TODO)
+  for (const m of t.marks ?? [])
+    if ([...m.text].length > 12) throw new Error(`content/guidebook/bulgaria-sofia.ts: やりたいこと「${t.id}」の印が12字を超える（${m.text}）`);
 
 /* 見たいもの → やりたいこと の繋ぎ。**やりたいことの `see` から逆に引く**（2か所に書かない） */
 for (const it of SEE) {
@@ -407,23 +418,23 @@ const AREAS_BASE: Omit<Area, "see" | "src">[] = [
     plan: [2, 1, 1],
     name: "中心・セルディカ",
     color: "#ffd98a",
-    lead: "ローマの石畳と、湧き出る温泉",
-    body: "地下鉄セルディカ駅のまわり。2世紀の通りと城壁が改札の横に出ていて、4世紀の円堂・温泉の蛇口・モスクが歩いて数分の中に並ぶ。見どころの多くはここから歩いて回れる。",
+    lead: "ローマの石畳と湧き出る温泉",
+    body: "地下鉄セルディカ駅のまわり。2世紀の通りと城壁が改札の横に出ていて、4世紀の聖ゲオルギ教会・温泉の蛇口・モスクが歩いて数分の中に並ぶ。見どころの多くはここから歩いて回れる。",
   },
   {
     id: "market",
     plan: [1, 1, 1],
     name: "市場とシナゴーグ",
     color: "#bfe8a6",
-    lead: "量り売りのチーズとパイ。街の台所",
-    body: "1878年に始まった青空市場（女性市場）と、1911年の屋内市場（中央市場ホール）。土産物ではなく、街の人が今日の晩飯を買いに来る所。南東ヨーロッパ最大のシナゴーグとカトリックの大聖堂もこの一角。",
+    lead: "街でいちばん古い青空市場",
+    body: "1878年に始まった青空市場（女性市場）は、土産物ではなく、街の人が野菜や果物を買いに来る所。1911年の屋内市場の建物（中央市場ホール）には、2024年からスーパーが入っている。南東ヨーロッパ最大のシナゴーグとカトリックの大聖堂もこの一角。",
   },
   {
     id: "nevsky",
     plan: [3, 1, 1],
     name: "ネフスキー大聖堂まわり",
     color: "#a9dcf5",
-    lead: "金のドームと、街の名前になった教会",
+    lead: "金のドームと街の名前になった教会",
     body: "金のドームのアレクサンドル・ネフスキー大聖堂と、街の名前の由来になった6世紀の聖ソフィア教会が隣どうし。西へ戻ると、金のドームと緑の尖塔のロシア教会。国立劇場の前の市庭園は、市内でいちばん古い公園（1872年）。",
   },
   {
@@ -525,6 +536,19 @@ const FOOD_KIND: Record<string, string[]> = {
 /** 札の1行に出す値段。**ユーロの数だけ**（円と但し書きは窓の中）。「約」は落とさない（古い記事のレフを直した額がある）。数の無い字は出さない */
 const euroOf = (price: string) => price.match(/約?[0-9][0-9.,]*(?:〜[0-9][0-9.,]*)?\s*ユーロ/)?.[0].replace(/\s+/g, "");
 
+/**
+ * 札の印のうち「ブルガリアならでは」（`local`）。**ヨーグルトとバラだけ**（あやと 2026-11-16「『ヨーグルト』とか『薔薇』とか
+ * ブルガリアならではのチップならまだわかる」）。中身の事実（ヨーグルトが入る・バラから作る）は、それぞれの窓の字と出どころにある
+ */
+const LOCAL: Record<string, string> = {
+  "kiselo-mlyako": "ヨーグルト",
+  tarator: "ヨーグルト",
+  ayryan: "ヨーグルト",
+  "rose-oil": "バラ",
+  "rose-jam": "バラ",
+};
+const localMarks = (id: string): Mark[] | undefined => (LOCAL[id] ? [{ kind: "local", text: LOCAL[id] }] : undefined);
+
 const slug = (s: string) =>
   s
     .toLowerCase()
@@ -564,6 +588,7 @@ const EAT: Item[] = BG_FOOD.map((d) => {
     maps: d.near,
     places: d.pins.length ? placeIds(d.pins) : undefined,
     kinds,
+    marks: localMarks(id),
     flags: { pork: d.pork, alcohol: d.alcohol },
     src: srcs(d.src, d.meatsrc),
   };
@@ -579,7 +604,7 @@ const BUY_ID: Record<string, string> = {
   "ラキヤ（果実の蒸留酒）": "rakiya",
   "ブルガリアワイン（マヴルッド、メルニク）": "wine",
   "マルテニツァ（赤と白の紐飾り）": "martenitsa",
-  "白チーズとカシュカヴァル（量り売り）": "cheese",
+  "白チーズとカシュカヴァル": "cheese",
   "ローズジャムとローズのロクム": "rose-jam",
   "刺繍（シェヴィツァ）の小物": "shevitsa",
 };
@@ -600,12 +625,17 @@ const BUY: Item[] = BG_BUY.map((b) => {
     ],
     maps: b.near,
     places: b.pins.length ? placeIds(b.pins) : undefined,
+    marks: localMarks(id),
     flags: { alcohol: b.alcohol },
     src: srcs(b.src),
   };
 });
 
 /* やりたいこと → 食べたいもの・買いたいもの の繋ぎ。名前を打ち間違えた札を、黙って落とさない */
+{
+  const miss = Object.keys(LOCAL).filter((id) => !EAT.some((x) => x.id === id) && !BUY.some((x) => x.id === id));
+  if (miss.length) throw new Error(`content/guidebook/bulgaria-sofia.ts: ブルガリアならではの印が、無い品を指している（${miss.join("、")}）`);
+}
 {
   const eat = new Set(EAT.map((x) => x.id));
   const buy = new Set(BUY.map((x) => x.id));
@@ -735,9 +765,9 @@ const BUDGET = {
   ],
   tips: [
     {
-      text: "見どころの多くは無料。円堂・セルディカの地下通路・ネフスキー大聖堂の本堂・温泉の蛇口は、1円もかからない。",
+      text: "見どころの多くは無料。聖ゲオルギ教会・セルディカの地下通路・ネフスキー大聖堂の本堂・温泉の蛇口は、1円もかからない。",
       src: srcs(
-        spot("聖ゲオルギ教会（円堂）").feesrc,
+        spot("聖ゲオルギ教会（ロトンダ）").feesrc,
         spot("古代セルディカ遺跡（ラルゴの地下）").feesrc,
         spot("アレクサンドル・ネフスキー大聖堂").feesrc,
         spot("中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口").feesrc,
@@ -745,7 +775,7 @@ const BUDGET = {
     },
     { text: "1日に何度も乗るなら1日券（2.00ユーロ・約350円）。1回券は0.80ユーロ（約140円）。", src: srcs(b("市内の移動").src) },
     {
-      text: "スーパーは Lidl・Kaufland・Billa。野菜と果物は、スーパーより青空市場（女性市場・中央市場ホール）のほうが安い。",
+      text: "スーパーは Lidl・Kaufland・Billa。野菜と果物は、スーパーより青空市場（女性市場）のほうが安い。",
       src: srcs(b("いちばん安いスーパー").src),
     },
     { text: "ATMは銀行の名前が出ているものを使い、「ユーロで」を選ぶ。Euronet の ATM は避ける。", src: srcs(b("手数料無料のATM").src) },

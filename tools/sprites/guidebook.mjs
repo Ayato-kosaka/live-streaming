@@ -8,7 +8,8 @@
  *   …  BASE_PORT=4131 BASE_PAGE=/bulgaria node tools/sprites/guidebook.mjs       # 字の量を前の面と比べる
  *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ずらした札のある街で落ちる。ソフィアは矢印と重なる）
  *   …  BREAK=arrow node tools/sprites/guidebook.mjs    # 対照: 地図の外の矢印を絵の外へ出す（はみ出して落ちる。地図の外のある街で）
- *   …  BREAK=flat node tools/sprites/guidebook.mjs     # 対照: やりたいことの札を全部同じ大きさにする（1枚目が大きくない・大小が混ざらないで落ちる）
+ *   …  BREAK=mixed node tools/sprites/guidebook.mjs    # 対照: やりたいことを前の形（1枚目だけ大きく・残りは2列）に戻す（同じ大きさでない・縦1列でないで落ちる）
+ *   …  BREAK=chips node tools/sprites/guidebook.mjs    # 対照: 札に豚の印・「イラスト」の札・「必見」を1つずつ差し込む（札の印で落ちる）
  *   …  BREAK=mymap node tools/sprites/guidebook.mjs    # 対照: 見たいもののマイマップを節の終わりへ動かす（札より上にないで落ちる）
  *   …  BREAK=bignum node tools/sprites/guidebook.mjs   # 対照: どんな街に大きな数の札を1枚差し込む（大きな数の札があるで落ちる）
  *
@@ -27,7 +28,8 @@
  * | 窓から窓へ | 窓の中の札で別の窓に入れ替わり、戻る1回で面に戻る |
  * | 字の量 | 最初に開いた状態（窓と畳みは閉じたまま）で `main` に見えている字の数。前の面と比べる |
  * | 節の名前と絵 | 「見たいもの」「食べたいもの」「買いたいもの」。やりたいこと＝チェック（`checklist`）・見たいもの＝カメラ（`camera`）（あやと 2026-11-16） |
- * | やりたいこと | 390 と 1440 で、**1枚目が幅いっぱいで画面の高さの 45% 以上**・残りの札の大きさが2通り以上（単調でない）・行の端に穴が無い・札の字が70字まで・絵が描けている（絵の無い札は色の地）（#1228「やりたいこと8選がダサい」） |
+ * | やりたいこと | 390 と 1440 で、**どの札も同じ大きさ・4:3・縦1列**（あやと 2026-11-16「すべてのカードを同じサイズ・比率に統一し、縦1列に並べたい」）・札の字が70字まで・絵が描けている（絵の無い札は色の地） |
+ * | 札の印 | 面に見えている札（やりたいこと・見たい・食べたい・買いたい）の印が**その国ならでは・値段・季節（と「行った」）だけ**。豚・酒の印は窓の中だけ（一覧の凡例も無い）。「イラスト」「必見」の札が無い。札の読み上げの名前に「豚肉あり」「アルコールあり」が無い（あやと 2026-11-16・`docs/island-misses.md` #328） |
  * | どんな街 | 問いと答え（「歴史は？」）が2組以上・問いが「？」で終わる・答えに出どころの行。**大きな数の札（前の `gb-about-num`）と「よく言われること」が無い** |
  * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
  * | どんな街の地図 | 地区の札・地図の外の矢印が、390 と 1440 で**どの2つも重ならず**、絵の外にはみ出さない。当たり 44px 以上（`hitbox.mjs`）。押すと窓が開く（窓の無い矢印は Google マップ）。**写真のピン・番号の一覧が無い**（概要だけ。詳しい場所はマイマップ）。地区のひとことが地区の数だけ在り、行き先の窓が在る。「詳しい場所は」の案内の先（`#see-mymap`）が在る |
@@ -233,54 +235,60 @@ async function mapPress(p) {
 }
 
 /**
- * **やりたいこと**（`components/guidebook/Todo.tsx`。あやと 2026-11-16「写真とテキストの均等な並びで単調」）。
+ * **やりたいこと**（`components/guidebook/Todo.tsx`。あやと 2026-11-16「基本的には、すべてのカードを同じサイズ・比率に統一し、
+ * 縦1列に並べたい」）。
  *
- * - 1枚目が幅いっぱい（並びの幅の 95% 以上）で、画面の高さの 45% 以上
- * - 残りの札の大きさ（幅と高さ）が2通り以上（大小が混ざっている）
- * - 行の右の端に穴が無い（どの行も、いちばん右の札が並びの右の端まで届く）
+ * - どの札も同じ大きさ（幅と高さが ±1px）で、比が 4:3（±2%）
+ * - 縦1列（どの札も左の端が同じで、上の札の下に次の札がある）
  * - 札の字が70字まで（行き方・お金・コツは窓の中）・どの札にも題
  * - 絵が描けている（絵の無い札は色の地 `is-nopic`）
  *
- * 対照: `BREAK=flat` で、札を全部同じ大きさにする。ここで落ちること
+ * 対照: `BREAK=mixed` で、前の形（1枚目だけ大きく・残りは2列）に戻す。ここで落ちること
  */
 async function todoCheck(p, width) {
-  if (process.env.BREAK === "flat")
+  if (process.env.BREAK === "mixed")
     await p.addStyleTag({
       content:
-        ".gb-todo{grid-template-columns:repeat(2,1fr)!important;grid-auto-rows:auto!important}.gb-todo>li{grid-column:auto!important;grid-row:auto!important}.gb-todo-card{aspect-ratio:1/1!important;height:auto!important}",
+        ".gb-todo{grid-template-columns:repeat(2,1fr)!important;max-width:none!important}.gb-todo>li:first-child{grid-column:1/-1!important}.gb-todo>li:first-child>.gb-todo-card{aspect-ratio:4/5!important}",
     });
+  /* 札が縦1列で高いので、1440px では下の札が画面の外にあり、遅れて読む絵がまだ来ていない。1枚ずつ送って呼ぶ */
+  await p.evaluate(async () => {
+    for (const li of document.querySelectorAll(".gb-todo > li")) {
+      li.scrollIntoView({ block: "center" });
+      await new Promise((r) => setTimeout(r, 120));
+    }
+  });
+  await p.waitForLoadState("networkidle").catch(() => {});
   await p.locator(".gb-todo").scrollIntoViewIfNeeded();
   await settle(p, 400);
   const r = await p.evaluate(() => {
     const ol = document.querySelector(".gb-todo");
     if (!ol) return null;
-    const L = ol.getBoundingClientRect();
     const cards = [...ol.querySelectorAll(":scope > li > .gb-todo-card")].map((a) => {
       const b = a.getBoundingClientRect();
       const img = a.querySelector("img");
       return {
         w: b.width,
         h: b.height,
-        top: Math.round(b.top),
-        right: b.right,
+        left: b.left,
+        top: b.top,
+        bottom: b.bottom,
         chars: a.innerText.replace(/\s/g, "").length,
         title: a.querySelector(".gb-todo-t")?.textContent.trim() ?? "",
         drawn: a.classList.contains("is-nopic") || (!!img && img.complete && img.naturalWidth > 0),
         id: a.getAttribute("href"),
       };
     });
-    return { L: { w: L.width, right: L.right }, vh: window.innerHeight, cards };
+    return { cards };
   });
   if (!r || !r.cards.length) return fail(`${width}px でやりたいことの札が無い`);
-  const [hero, ...rest] = r.cards;
-  if (hero.w < r.L.w * 0.95 || hero.h < r.vh * 0.45)
-    fail(`${width}px でやりたいことの1枚目が大きくない（${Math.round(hero.w)}x${Math.round(hero.h)}px。並びの幅 ${Math.round(r.L.w)}px・画面の高さ ${r.vh}px）`);
-  const sizes = new Set(rest.map((c) => `${Math.round(c.w / 8)}x${Math.round(c.h / 8)}`));
-  if (rest.length >= 2 && sizes.size < 2) fail(`${width}px でやりたいことの札が全部同じ大きさ（単調。${[...sizes].join("・")}）`);
-  const rows = new Map();
-  for (const c of r.cards) rows.set(c.top, Math.max(rows.get(c.top) ?? 0, c.right));
-  const holes = [...rows.entries()].filter(([, right]) => right < r.L.right - 2).map(([top]) => top);
-  if (holes.length) fail(`${width}px でやりたいことの行の端に穴がある（${holes.length}行）`);
+  const [first] = r.cards;
+  const odd = r.cards.filter((c) => Math.abs(c.w - first.w) > 1 || Math.abs(c.h - first.h) > 1).map((c) => `${c.title}（${Math.round(c.w)}x${Math.round(c.h)}）`);
+  if (odd.length) fail(`${width}px でやりたいことの札の大きさがそろっていない（1枚目 ${Math.round(first.w)}x${Math.round(first.h)}px）: ${odd.join("／")}`);
+  const ratio = r.cards.filter((c) => Math.abs(c.w / c.h - 4 / 3) > (4 / 3) * 0.02).map((c) => `${c.title}（${(c.w / c.h).toFixed(2)}）`);
+  if (ratio.length) fail(`${width}px でやりたいことの札が 4:3 でない: ${ratio.join("／")}`);
+  const side = r.cards.filter((c, i) => Math.abs(c.left - first.left) > 1 || (i > 0 && c.top < r.cards[i - 1].bottom - 1)).map((c) => c.title);
+  if (side.length) fail(`${width}px でやりたいことが縦1列でない（横に並んだ札: ${side.join("／")}）`);
   const wordy = r.cards.filter((c) => c.chars > 70).map((c) => `${c.title}（${c.chars}字）`);
   if (wordy.length) fail(`${width}px でやりたいことの札の字が多い: ${wordy.join("／")}`);
   const untitled = r.cards.filter((c) => !c.title).map((c) => c.id);
@@ -288,7 +296,52 @@ async function todoCheck(p, width) {
   const blank = r.cards.filter((c) => !c.drawn).map((c) => c.title);
   if (blank.length) fail(`${width}px でやりたいことの絵が描けていない: ${blank.join("／")}`);
   notes.push(
-    `${width}px: やりたいこと ${r.cards.length}枚（1枚目 ${Math.round(hero.w)}x${Math.round(hero.h)}px・大きさ ${sizes.size}通り・札の字 最大${Math.max(...r.cards.map((c) => c.chars))}字）`,
+    `${width}px: やりたいこと ${r.cards.length}枚（どれも ${Math.round(first.w)}x${Math.round(first.h)}px・縦1列・札の字 最大${Math.max(...r.cards.map((c) => c.chars))}字）`,
+  );
+}
+
+/**
+ * **札の印**（あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙。『ヨーグルト』とか『薔薇』とかブルガリアならではのチップならまだわかる。
+ * 詳細モーダルで酒とかは出せば良い」「イラストのチップ要らない」・`docs/island-misses.md` #328）。390px で1回。
+ *
+ * - 面に見えている札の印（`[data-mark]`）が、その国ならでは（`local`）・値段（`price`）・季節（`season`）だけ
+ * - 豚・酒の印（`.gb-flag`）が窓の外に無い（札にも、食べたいものの凡例にも）。窓の中には在ってよい
+ * - 「必見」の札（`.gb-must`）・凡例（`.gb-legend`）が無い
+ * - 面に見えている字（窓と畳みは閉じたまま）に「イラスト」が無い
+ * - 札の読み上げの名前に「豚肉あり」「アルコールあり」が無い
+ *
+ * 対照: `BREAK=chips` で、食べたいものの最初の札に豚の印・「イラスト」の札・「必見」を差し込む。ここで落ちること
+ */
+async function chipCheck(p) {
+  if (process.env.BREAK === "chips")
+    await p.evaluate(() => {
+      const a = document.querySelector('main a.gb-tile[href^="#eat-"]');
+      if (!a) return;
+      a.insertAdjacentHTML("beforeend", '<span class="gb-flags"><span class="gb-flag is-pork"><b>豚</b></span></span><i class="gb-pic-tag">イラスト</i><span class="gb-must">必見</span>');
+      a.setAttribute("aria-label", `${a.getAttribute("aria-label")}・豚肉あり`);
+    });
+  const r = await p.evaluate(() => {
+    const main = document.querySelector("main");
+    const outside = (sel) => [...main.querySelectorAll(sel)].filter((e) => !e.closest("dialog"));
+    const kinds = {};
+    for (const e of outside("[data-mark]")) kinds[e.dataset.mark] = (kinds[e.dataset.mark] ?? 0) + 1;
+    return {
+      kinds,
+      flags: outside(".gb-flag").length,
+      inSheet: main.querySelectorAll("dialog .gb-flag").length,
+      must: outside(".gb-must, .gb-legend").length,
+      illust: (main.innerText.match(/イラスト/g) ?? []).length,
+      label: outside("a.gb-tile, a.gb-todo-card").filter((a) => /豚肉あり|アルコールあり/.test(a.getAttribute("aria-label") ?? "")).length,
+    };
+  });
+  const bad = Object.keys(r.kinds).filter((k) => !["local", "price", "season"].includes(k));
+  if (bad.length) fail(`札の印に、その国ならでは・値段・季節でないものがある: ${bad.join("・")}`);
+  if (r.flags) fail(`豚・酒の印が窓の外に ${r.flags} 個ある（札と一覧には出さない。窓の中だけ）`);
+  if (r.must) fail(`「必見」の札か、豚・酒の凡例が ${r.must} 個ある（札の印は、その国ならでは・値段・季節だけ）`);
+  if (r.illust) fail(`面に見えている字に「イラスト」が ${r.illust} 回ある（絵の上に札を乗せない。出どころの欄に1行）`);
+  if (r.label) fail(`札の読み上げの名前に「豚肉あり」「アルコールあり」が ${r.label} 枚ある（窓の中で読む）`);
+  notes.push(
+    `札の印: ${Object.entries(r.kinds).map(([k, n]) => `${k} ${n}`).join("・") || "なし"}／豚・酒は窓の中に ${r.inSheet} 個`,
   );
 }
 
@@ -407,6 +460,7 @@ async function main() {
     if (over > 0) fail(`390px で横あふれ ${over}px`);
     const height = await p.evaluate(() => document.documentElement.scrollHeight);
     await shapeCheck(p);
+    await chipCheck(p);
     await pinCheck(p, 390);
     await mapCheck(p, 390);
     await todoCheck(p, 390);
@@ -417,7 +471,7 @@ async function main() {
       if (el) await el.screenshot({ path: join(OUT, `${String(ORDER.indexOf(id) + 1).padStart(2, "0")}-${id}.png`) });
     }
     await p.locator(".gb-amap").screenshot({ path: join(OUT, "areamap-390.png") });
-    await p.locator(".gb-todo > li:first-child").screenshot({ path: join(OUT, "todo-hero-390.png") });
+    await p.locator(".gb-todo > li:first-child").screenshot({ path: join(OUT, "todo-first-390.png") });
     await mapPress(p);
 
     // ---- 2. 札から開いて、閉じるボタンで閉じる → 元の位置
@@ -474,18 +528,22 @@ async function main() {
     // ---- 6. 窓から窓へ（戻る1回で面に戻る）
     await card.click();
     await settle(p);
-    const inner = p.locator(`#${first} a[href^="#see-"]`).first();
+    /* 見たい・食べたい・買いたいのどれへの札でもよい（ヨーグルトの窓は、見たいものではなく食べたいものへ繋ぐ） */
+    const inner = p.locator(`#${first} :is(a[href^="#see-"], a[href^="#eat-"], a[href^="#buy-"])`).first();
     if (await inner.count()) {
       const to = (await inner.getAttribute("href")).slice(1);
       await inner.click();
       await settle(p);
       if ((await openId(p)) !== to) fail(`窓の中の札で ${to} に入れ替わらない`);
-      await p.locator(`#${to}`).screenshot({ path: join(OUT, "modal-see.png") });
+      await p.locator(`#${to}`).screenshot({ path: join(OUT, `modal-${to.split("-")[0]}-from-todo.png`) });
       await p.goBack();
       await settle(p, 600);
       if (await openId(p)) fail("窓から窓へ入れ替えたあと、戻る1回で面に戻らない");
     } else {
-      notes.push(`${first} の窓に見たいものへの札が無い（窓から窓へは見ていない）`);
+      notes.push(`${first} の窓に見たい・食べたい・買いたいへの札が無い（窓から窓へは見ていない）`);
+      /* 開いたまま次へ進むと、面の札が窓に隠れて押せない */
+      await p.keyboard.press("Escape");
+      await settle(p, 600);
     }
 
     // ---- 7. 食べたいものの窓を撮る
@@ -581,7 +639,7 @@ async function main() {
     for (const x of bad) console.log(`  ✗ ${x}`);
     return 1;
   }
-  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）・節の名前と絵・やりたいこと（大きな1枚目・大小・穴・字の量）・どんな街（問いと答え・大きな数なし）・地図（重なり・はみ出し・当たり 44px・押した先・ピンなし）");
+  console.log("  ✓ 並び・横あふれ・窓（HTML に在る・直に開く・閉じる4通り・元の位置・窓から窓へ）・節の名前と絵・やりたいこと（同じ大きさ・4:3・縦1列・字の量）・札の印（ならでは・値段・季節だけ／豚と酒は窓の中／イラストの札なし）・どんな街（問いと答え・大きな数なし）・地図（重なり・はみ出し・当たり 44px・押した先・ピンなし）");
   return 0;
 }
 

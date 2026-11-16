@@ -10,7 +10,7 @@
   "alt": "街の屋根が一面に広がり、その向こうに雪をかぶったヴィトシャ山が横たわっている"
  },
  "spots": {
-  "聖ゲオルギ教会（円堂）": {
+  "聖ゲオルギ教会（ロトンダ）": {
    "q": "Rotunda Saint George Sofia",
    "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/StGeorgeRotundaSofia.JPG/500px-StGeorgeRotundaSofia.JPG",
    "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/StGeorgeRotundaSofia.JPG/960px-StGeorgeRotundaSofia.JPG",
@@ -431,7 +431,7 @@
    "lic": "CC BY-SA 4.0",
    "alt": "白いヨーグルトの飲みものが、ストローをさしたグラスに入っている"
   },
-  "メハナ（大衆食堂・居酒屋）という場所そのもの": {
+  "メハナ（伝統料理の食堂）": {
    "q": "cat:Restaurants in Bulgaria",
    "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mehanadance.JPG/500px-Mehanadance.JPG",
    "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Mehanadance.JPG/960px-Mehanadance.JPG",
@@ -513,7 +513,7 @@
    "lic": "CC BY-SA 3.0",
    "alt": "赤と白の毛糸で作った房飾りのお守りが、いくつも並べてある"
   },
-  "白チーズとカシュカヴァル（量り売り）": {
+  "白チーズとカシュカヴァル": {
    "q": "cat:Sirene",
    "thumb": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg/500px-Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",
    "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg/960px-Bulgarischer_Salzlakenk%C3%A4se_ist_nicht_immer_Schafsk%C3%A4se.jpg",

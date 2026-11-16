@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import Icon, { type IconName } from "@/components/ui/Icon";
-import type { Fact, Flags, Local, Pic, Src } from "@/content/guidebook/types";
+import type { Fact, Flags, Local, Mark, Pic, Src } from "@/content/guidebook/types";
 
 /**
  * ガイドブックの面の、小さな部品（どの節でも使うもの）。**サーバで描き切る**（`Icon` を名前で引くので、
@@ -55,8 +55,10 @@ export function Sec({
 }
 
 /**
- * 絵1枚。**種類で添える字を変える**（借りた写真は撮った人、イラストは「イラスト」の札）。
- * 絵が無ければ、色の地の札だけ置く（**壊れた絵の枠を出さない**・穴を見せない）。
+ * 絵1枚。絵が無ければ、色の地の札だけ置く（**壊れた絵の枠を出さない**・穴を見せない）。
+ *
+ * **イラストに「イラスト」の札を乗せない**（あやと 2026-11-16「イラストのチップ要らない」・`docs/island-misses.md` #328）。
+ * AI で描いた絵であることは、面の終わりの出どころの欄に1行（`Sources.tsx`）と、読み上げの名前（`alt` の頭の「イラスト：」）で知らせる
  */
 export function Picture({
   pic,
@@ -95,19 +97,18 @@ export function Picture({
         loading={eager ? "eager" : "lazy"}
         decoding="async"
       />
-      {pic.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
     </span>
   );
 }
 
 /**
- * 絵の出どころ。**借りた写真は必ず出す**（撮った人の字が元のページへ）。
+ * 絵の出どころ。**借りた写真は必ず出す**（撮った人の字が元のページへ）。イラストは出さない（出どころの欄に1行。`Picture` と同じ理由）。
  * 名前に何の写真かを入れる——同じ写真家が何枚も撮っているので、字だけを名前にすると
  * 「おなじ字のリンクが別の先を指す」になる（`reachkeys`）。
  */
 export function Credit({ pic, of }: { pic?: Pic; of: string }) {
   if (!pic) return null;
-  if (pic.kind === "illust") return <p className="gb-credit">イラスト</p>;
+  if (pic.kind === "illust") return null;
   if (pic.kind === "card") return <p className="gb-credit">あやと撮影{pic.date ? `・${jpDate(pic.date)}` : ""}</p>;
   if (!pic.credit) return null;
   return (
@@ -134,6 +135,9 @@ export function LocalName({ l, full }: { l?: Local; full?: boolean }) {
 /**
  * 豚肉あり・アルコールあり。**好みの印ではなく、事実の印**（#1228）。選ぶのは読む人。
  *
+ * **窓の中だけで使う。** 札と一覧には出さない（あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙。詳細モーダルで酒とかは
+ * 出せば良い」・`docs/island-misses.md` #328）。札に出す印は `Marks`。
+ *
  * 字の札（「豚」「酒」）にしたのは、日本語で読む人にいちばん速く通じるから。絵だと
  * 「肉」と「豚」の違いが出ない。読み上げには長い名前で渡す。
  */
@@ -155,6 +159,23 @@ export function FlagMarks({ f, big }: { f?: Flags; big?: boolean }) {
           {big && <i>アルコールあり</i>}
         </span>
       )}
+    </span>
+  );
+}
+
+/**
+ * 札の上の印（`Mark`）。**その国ならでは・値段・季節の3種類だけ**（#328）。`data-mark` は見張りの目印
+ * （`tools/sprites/guidebook.mjs` が、札の上にこの3種類と「行った」以外の印が無いかを見る）
+ */
+export function Marks({ m, className = "" }: { m?: Mark[]; className?: string }) {
+  if (!m?.length) return null;
+  return (
+    <span className={`gb-marks ${className}`}>
+      {m.map((x) => (
+        <span key={x.text} className={`gb-mark is-${x.kind}`} data-mark={x.kind}>
+          {x.text}
+        </span>
+      ))}
     </span>
   );
 }

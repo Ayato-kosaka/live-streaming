@@ -4,19 +4,19 @@ import type { Guidebook, Item, Todo as TodoT } from "@/content/guidebook/types";
 import { MiniTiles, type Mini } from "./About";
 import Sheet from "./Sheet";
 import { WentBox } from "./Videos";
-import { Credit, Ext, Picture, Sec, SrcLine, sheetId } from "./parts";
+import { Credit, Ext, Marks, Picture, Sec, SrcLine, sheetId } from "./parts";
 
 /**
  * 4 やりたいことN選。**いちばんの柱。** 「この街ってこんなに楽しそう！」「これもあれもやってみたい！」と思ってもらう節。
  *
- * ## 見せかた（あやと 2026-11-16「やりたいこと8選がダサい（超重要）」）
+ * ## 見せかた（あやと 2026-11-16「基本的には、すべてのカードを同じサイズ・比率に統一し、縦1列に並べたい」）
  *
- * 前は写真と字の札を同じ大きさで8枚並べていて、単調だった。いまは雑誌の見開きの調子で、大小を混ぜる:
+ * **札は全部同じ大きさ・同じ比率（4:3。描いた絵と借りた写真の比）で、縦1列。** 前は1枚目だけ画面いっぱいに大きく、
+ * 残りを広い札と細い札の2列に混ぜていた（雑誌の見開きの調子）。大小で強弱を付けると、どれがいちばんかを
+ * こちらが決めることになり、読む人には並びが崩れて見えた（`docs/island-misses.md` #328）。
  *
- * - **1つ目は画面いっぱいの大きな絵**に、大きな題とキャッチコピー
- * - 残りは広い札（横長）と細い札（縦長）を交互に。狭い画面は2列、広い画面は4列。行の端で余った札は横へ広げる
- *   （`spans`。穴を空けない）
- * - 札の上の字は少なく: 番号・小さな印（`badge`）・題。キャッチコピーは1枚目だけ。行き方・お金・コツは窓の中
+ * 札の上の字は少なく: 番号・印（`marks`。値段か季節）・題。キャッチコピーと行き方・お金・コツは窓の中。
+ * 広い画面でも1列のまま、幅を絞る（4:3 の札を本文の幅いっぱいに広げると、8枚で画面5枚ぶんになる）。
  *
  * 絵は描いたもの（manifest の `do.<id>`）が先、無いあいだはデータの写真、それも無ければ落ち着いた色の地
  * （面の側で差し替える。`app/travel/<国>/<街>/page.tsx`）。
@@ -31,46 +31,32 @@ export default function Todo({ g, n }: { g: Guidebook; n: number }) {
     eat: new Map(g.eat.items.map((s) => [s.id, s])),
     buy: new Map(g.buy.items.map((s) => [s.id, s])),
   };
-  const lay = spans(items.length - 1);
   return (
     <Sec id="todo" n={n} icon="checklist" title={`やりたいこと${items.length}選`}>
       <ol className="gb-todo">
-        {items.map((t, i) => {
-          const size = i === 0 ? "hero" : lay[i - 1].m;
-          return (
-            <li key={t.id} className={`is-${size}`} data-d={i === 0 ? undefined : lay[i - 1].d} data-tone={i % 4}>
-              <a className={`gb-todo-card${t.pic ? "" : " is-nopic"}`} href={`#${sheetId("do", t.id)}`}>
-                {/* 絵の無いあいだは、色の地に大きな絵（`icon`）。描いた絵が来たら消える */}
-                {!t.pic && t.icon && (
-                  <span className="gb-todo-ic" aria-hidden="true">
-                    <Icon name={t.icon} size={size === "hero" ? 180 : 96} />
-                  </span>
-                )}
-                {t.pic && (
-                  <Picture
-                    pic={t.pic}
-                    sizes={size === "hero" ? "(min-width: 960px) 900px, 100vw" : size === "w" ? "(min-width: 720px) 450px, 100vw" : "(min-width: 720px) 225px, 50vw"}
-                    ratio={null}
-                    eager={i < 2}
-                  />
-                )}
-                <span className="gb-todo-top">
-                  <b className="gb-todo-n" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </b>
-                  {t.badge && <span className="gb-todo-badge">{t.badge}</span>}
-                  {/* 「イラスト」の札は印の並びに置く（左下は題が乗る。`docs/guide-design.md` 4-3 の例外） */}
-                  {t.pic?.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
+        {items.map((t, i) => (
+          <li key={t.id} data-tone={i % 4}>
+            <a className={`gb-todo-card${t.pic ? "" : " is-nopic"}`} href={`#${sheetId("do", t.id)}`}>
+              {/* 絵の無いあいだは、色の地に大きな絵（`icon`）。描いた絵が来たら消える */}
+              {!t.pic && t.icon && (
+                <span className="gb-todo-ic" aria-hidden="true">
+                  <Icon name={t.icon} size={120} />
                 </span>
-                <span className="gb-todo-b">
-                  <span className="gb-todo-t">{t.title}</span>
-                  {size === "hero" && <span className="gb-todo-c">{t.catch ?? t.lead}</span>}
-                  {t.went && <span className="gb-went">行った</span>}
-                </span>
-              </a>
-            </li>
-          );
-        })}
+              )}
+              {t.pic && <Picture pic={t.pic} sizes="(min-width: 720px) 600px, 100vw" ratio={null} eager={i < 1} />}
+              <span className="gb-todo-top">
+                <b className="gb-todo-n" aria-hidden="true">
+                  {String(i + 1).padStart(2, "0")}
+                </b>
+                <Marks m={t.marks} />
+              </span>
+              <span className="gb-todo-b">
+                <span className="gb-todo-t">{t.title}</span>
+                {t.went && <span className="gb-went">行った</span>}
+              </span>
+            </a>
+          </li>
+        ))}
       </ol>
       {items.map((t, i) => (
         <TodoSheet
@@ -91,22 +77,6 @@ export default function Todo({ g, n }: { g: Guidebook; n: number }) {
 
 const pick = (ids: string[], m: Map<string, Item>, kind: Mini["kind"]): Mini[] =>
   ids.flatMap((id) => (m.has(id) ? [{ kind, it: m.get(id)! }] : []));
-
-/**
- * 1つ目（大きな絵）の後ろに並ぶ札の大きさ。
- *
- * - `m`（狭い画面・2列）: 広い（2列ぶん）→ 細い → 細い の繰り返し。最後に細い札が1枚だけ残ったら、広い札にする
- * - `d`（広い画面・4列）: 広い＝2列・細い＝1列。最後の行が埋まらなければ、行の最後の札を残りの列まで広げる
- */
-function spans(n: number): { m: "w" | "h"; d: number }[] {
-  const m: ("w" | "h")[] = Array.from({ length: n }, (_, i) => (i % 3 === 0 ? "w" : "h"));
-  if (n > 0 && m[n - 1] === "h" && m[n - 2] !== "h") m[n - 1] = "w";
-  const out = m.map((x) => ({ m: x, d: x === "w" ? 2 : 1 }));
-  let col = 0;
-  for (const x of out) col = (col + x.d) % 4 || 0;
-  if (col && out.length) out[out.length - 1].d += 4 - col;
-  return out;
-}
 
 /** 見開きの字の欄（「どこで」は札の並びで上に出す）。見出しに絵は付けない（`parts.tsx` の `Facts` と同じ理由） */
 const ROWS: { key: keyof Pick<TodoT, "what" | "when" | "how" | "time" | "money" | "tip" | "route">; label: string }[] = [
@@ -161,7 +131,7 @@ function TodoSheet({ t, i, all, where }: { t: TodoT; i: number; all: TodoT[]; wh
     >
       {t.catch && <p className="gb-catch">{t.catch}</p>}
       <p className="gb-lead">
-        {t.badge && <span className="gb-todo-badge is-in">{t.badge}</span>}
+        <Marks m={t.marks} className="is-in" />
         {t.lead}
       </p>
       {t.went && <WentBox w={t.went} of={t.title} />}
