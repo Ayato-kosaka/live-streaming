@@ -298,6 +298,43 @@ md = cia.status_md({"b1": {"range": {"from": "2026-09-01", "to": "2026-09-30"}, 
 check("status の表に回・範囲・内訳が出て、sha は出ない",
       "| b1 | 2026-09-01 〜 2026-09-30 | 5 |" in md and A not in md and "| 1 | 3 | 1 |" in md, md)
 
+# ---------------------------------------------------------------- 7.5 登録（数が合わなければ1枚も登録しない）
+class FakeRegister:
+    """口の偽物。dryRun は見込みだけ、本番は max 枚ずつ減らす。1枚は1回目だけ失敗する。"""
+    def __init__(self, n: int):
+        self.left, self.calls, self.flaky = n, [], True
+    def __call__(self, body: dict) -> dict:
+        self.calls.append(body)
+        if body.get("dryRun"):
+            return {"total": self.left, "days": [{"day": "2024-09-12", "count": self.left}], "people": 3}
+        take = min(body.get("max", 10), self.left)
+        failed = []
+        if self.flaky and not body.get("retryFailed"):
+            self.flaky, take = False, take - 1
+            failed = [{"sha": "f" * 64, "error": "boom"}]
+            self.left -= 1
+        if body.get("retryFailed") and not self.flaky:
+            self.flaky = None
+            return {"registered": 1, "failed": [], "remaining": self.left - take,
+                    "results": [{"sha": "f" * 64, "status": "registered"}]}
+        self.left -= take
+        return {"registered": take, "failed": failed, "remaining": self.left, "results": []}
+
+fr = FakeRegister(24)
+try:
+    cia.mode_register("b1", False, 23, post=fr)
+    check("登録: 見込みと頼まれた数が違えば止まる", False, "止まらなかった")
+except cia.Bad:
+    check("登録: 見込みと頼まれた数が違えば止まる", not any(not c.get("dryRun") for c in fr.calls))
+fr = FakeRegister(24)
+rc = cia.mode_register("b1", True, 0, post=fr)
+check("登録: dryRun は1枚も登録しない", rc == 0 and all(c.get("dryRun") for c in fr.calls))
+fr = FakeRegister(24)
+rc = cia.mode_register("b1", False, 24, post=fr)
+check("登録: 数が合えば最後まで回り、失敗を1回拾い直す",
+      rc == 0 and any(c.get("retryFailed") for c in fr.calls) and fr.left == 0,
+      f"rc={rc} left={fr.left} calls={len(fr.calls)}")
+
 # ---------------------------------------------------------------- 8 URL を包む
 
 print("\n# 受け取り口の URL")

@@ -20,10 +20,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "url / ingest / labels / status"
+        description: "url / ingest / labels / status / register-dry / register"
         required: true
         type: choice
-        options: [url, ingest, labels, status]
+        options: [url, ingest, labels, status, register-dry, register]
       batch:
         description: "取り込みの名前（英数字と . _ -。url / ingest は必須・labels は空なら全部）"
         required: false
@@ -34,6 +34,10 @@ on:
         default: ""
       nonce:
         description: "url のとき: 作業箱が作った乱数（結果の置き場の名前になる）"
+        required: false
+        default: ""
+      expect:
+        description: "register のとき: 登録する枚数（dryRun の見込みと合わなければ登録しない）"
         required: false
         default: ""
       branch:
@@ -100,6 +104,7 @@ jobs:
           IN_PUBKEY: ${{ inputs.pubkey }}
           IN_NONCE: ${{ inputs.nonce }}
           IN_BRANCH: ${{ inputs.branch }}
+          IN_EXPECT: ${{ inputs.expect }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 python/card_import_actions.py
 
