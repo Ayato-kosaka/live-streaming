@@ -207,8 +207,9 @@ curl --fail -T batch.tar "$(python3 python/card_import_url.py --batch 2026-11-14
 ## 5. 消しかた
 
 - **Google フォトの元は、どの段でも消さない**
-- EC2 に落とした Takeout の zip は、読み終わったら消す（ディスクが 29GB しかない）。
-  Takeout の画面から1週間は落とし直せる
+- EC2 に落とした Takeout の zip は、読み終わったら消す（ディスクが 29GB しかない）
+- Takeout は**ドライブ届け**にする（メールのリンク届けは、落とすたびにパスワードを聞き直される）。
+  ドライブに置かれた zip は、登録が済んだら消す（あやとのドライブを 約36GB 使うため）
 - `cardImport/inbox/` の tar は開いたら消す
 - `cardImport/cand` `thumb` は、登録しなかった回の候補を次の回の取り込みで片づける
   （登録したものは `nordic/photos/` に別に置かれる）
