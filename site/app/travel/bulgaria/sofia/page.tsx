@@ -7,14 +7,14 @@ import Cover from "@/components/guidebook/Cover";
 import { Buy, Eat, See } from "@/components/guidebook/Items";
 import SheetHost from "@/components/guidebook/SheetHost";
 import Sources from "@/components/guidebook/Sources";
-import Toc from "@/components/guidebook/Toc";
+import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import StickyNotes from "@/components/live/Notes";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
-import { readDrawn } from "@/content/guidebook/manifest";
+import { readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
@@ -32,12 +32,12 @@ import "@/components/guidebook/guidebook.css";
  *
  * ## 並び（#1228 の表）
  *
- * 表紙 → 目次 → どんな街 → やりたいこと8選 → 見たい → 食べたい → 買いたい → 基本情報 → この街の動画。
+ * 表紙 → 目次 → どんな街 → やりたいこと8選 → 見たいもの → 食べたいもの → 買いたいもの → 基本情報 → この街の動画。
  * 1枚がごちゃつかないように、詳しい中身は**開く窓**（`Sheet`）と畳みに入れ、面に出す字を減らした
  * （あやと「1枚のページでごちゃごちゃにならないように、畳み込みやモーダルを使って綺麗に」）。
  *
  * **字は1つもここに書かない。** 街の中身は `content/guidebook/bulgaria-sofia.ts`、部品は
- * `components/guidebook/`。描いた絵（表紙・エリア地図・料理・土産）は `public/guide/bulgaria/sofia/manifest.json`
+ * `components/guidebook/`。描いた絵（表紙・エリア地図・やりたいこと・料理・土産）は `public/guide/bulgaria/sofia/manifest.json`
  * から読み、無ければ借りた写真か色の札に落ちる。
  *
  * ## あやとはこの面を持って、ソフィアを歩いている
@@ -53,21 +53,18 @@ export const metadata: Metadata = travelCityShare(G.country, G.city, { title: G.
 
 export default function SofiaPage() {
   const drawn = readDrawn(G.country, G.city);
-  /* 描いた絵があれば、料理と土産の絵を差し替える（**実在の場所は写真のまま**。#1228 Q1 の A） */
+  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A） */
   const g = {
     ...G,
+    todo: G.todo.map((t) => {
+      const pic = todoPic(drawn, t);
+      return pic ? { ...t, pic } : t;
+    }),
     eat: { ...G.eat, items: G.eat.items.map((it) => (drawn.food[it.id] ? { ...it, pic: drawn.food[it.id] } : it)) },
     buy: { ...G.buy, items: G.buy.items.map((it) => (drawn.buy[it.id] ? { ...it, pic: drawn.buy[it.id] } : it)) },
   };
-  const usedDrawn = !!(drawn.cover || drawn.areamap || Object.keys(drawn.food).length || Object.keys(drawn.buy).length);
-  const toc = [
-    { id: "about", label: "どんな街", icon: "oldtown" as const, note: `${g.about.cards.length}話・エリア${g.about.areas.length}` },
-    { id: "todo", label: `やりたいこと${g.todo.length}選`, icon: "sparkle" as const, note: `${g.todo.length}つ` },
-    { id: "see", label: "見たい", icon: "see" as const, note: `${g.see.items.length}か所` },
-    { id: "eat", label: "食べたい", icon: "eat" as const, note: `${g.eat.items.length}品` },
-    { id: "buy", label: "買いたい", icon: "souvenir" as const, note: `${g.buy.items.length}つ` },
-    { id: "basics", label: "基本情報", icon: "info" as const, note: "予算・移動・治安" },
-  ];
+  const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
+  const toc = tocOf(g);
   return (
     <PageShell crumbs={travelCityCrumbs(G.country, G.city)}>
       <JsonLd

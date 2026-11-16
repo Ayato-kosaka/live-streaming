@@ -560,8 +560,8 @@ def main() -> None:
     for s in spots:
         s["letter"] = letters.get(s["name"], "")
         s["far"] = kms.get(s["name"], 0)
-    # **緯度経度も一覧に入れる。** ガイドブックの見どころマップ（`content/guidebook/spotmap.ts`）が、
-    # 描いた絵地図の範囲で写真のピンを置くのに使う（#1228）
+    # 緯度経度も一覧に入れる。前はガイドブックの見どころマップが写真のピンを置くのに使っていた（#1228）。
+    # 2026-11-16 にピンをやめて、いまは面のどこも読んでいない（マイマップの CSV は `bulgaria_mymaps.py` が材料の JSON から直に読む）
     arr("BG_SPOTS", spots,
         ["letter", "far", "name", "cyr", "roman", "kana", "rank", "lat", "lon",
          "what", "how", "walk", "stay", "fee", "advice", "maps", "src", "feesrc", *PHOTO_KEYS])

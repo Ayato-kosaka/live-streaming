@@ -40,8 +40,8 @@
   置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
 - **行っていない項目は、材料の借りた写真**（Wikimedia Commons）。作者とライセンスを持たない写真は使わない。
   **面は Commons から直に読まない**——`python/guide_photos.py` が `site/public/guide/<国>/<街>/photos/` に落とした絵を指す
-  （置き場に無ければ止める。混んだ日に Wikimedia が 429 で断り、見どころマップのピンが白い丸になった）
-- 描いた絵（表紙・エリア地図・料理・土産）は面の側が `public/guide/<国>/<街>/manifest.json` から読む（ここでは触らない）
+  （置き場に無ければ止める。混んだ日に Wikimedia が 429 で断り、前の見どころマップのピンが白い丸になった）
+- 描いた絵（表紙・エリア地図・やりたいこと・料理・土産）は面の側が `public/guide/<国>/<街>/manifest.json` から読む（ここでは触らない）
 
 ## 最終更新の日付
 
@@ -75,8 +75,6 @@ FAR_KM = 2.5
 LABEL = {"see": "見たいもの", "eat": "食べたいもの", "buy": "買いたいもの"}
 #: どのエリアにも入らない見どころを、いちばん近いエリアに入れてよい距離
 AREA_KM = 1.2
-#: 大きい数の札（どんな街）の数と単位。題に無ければ本文から
-NUM = re.compile(r"(前?\d[\d,]*(?:〜\d[\d,]*)?)(世紀|年|割|か所|つ|万人|人|km|m)")
 
 
 class Stop(Exception):
@@ -298,26 +296,30 @@ class Book:
 
     # ------------------------------------------------------------ 節
     def about(self) -> dict:
+        """どんな街の問いと答え。**問いは組み立て**（`compose.about.<key>.q`）、**答えは材料の字のまま**（`about.cards[].text`）。
+
+        前は大きい数の札（`num` `unit`）だった。数を大きく見せる札は AI の作った面に見える、とあやとに言われて
+        問いと答えにした（#1228・2026-11-16・`docs/island-misses.md` #327）。問いに数を入れない（事実は答えの側に置く）
+        """
         a = self.g["about"]
         comp = self.c.get("about") or {}
         cards = []
         for c in a["cards"]:
             w = f"about.cards({c['key']})"
-            # 大きい数は組み立てが選ぶ（題と同じ数を選ぶと、札に同じ数が2回並ぶ）。無ければ題か本文の最初の数
-            if c["key"] in comp:
-                num, unit = comp[c["key"]]["num"], comp[c["key"]]["unit"]
-                self.check_short(num + unit, c["text"], w)
-            else:
-                m = NUM.search(c["title"]) or NUM.search(c["text"])
-                if not m:
-                    self.err(w, "大きい数の札にする数が、題にも本文にも無い")
-                    continue
-                num, unit = m.group(1), m.group(2)
-            cards.append({"id": c["key"], "num": num, "unit": unit, "title": c["title"], "body": c["text"],
-                          "src": self.src(c.get("src"))})
-        return {"cards": cards, "more": [], "areas": []}
+            q = (comp.get(c["key"]) or {}).get("q", "")
+            if not q:
+                self.err(w, "問い（compose.json の about.<key>.q）が無い")
+                continue
+            if len(q) > 15 or not q.endswith("？") or re.search(r"\d", q):
+                self.err(w, f"問いは15字まで・「？」で終わる・数を入れない（{q}）")
+            card: dict = {"id": c["key"]}
+            # 問いの頭の絵（`components/ui/Icon` の名前。違う名前は面の型が止める）
+            if comp[c["key"]].get("icon"):
+                card["icon"] = comp[c["key"]]["icon"]
+            cards.append({**card, "q": q, "a": c["text"], "src": self.src(c.get("src"))})
+        return {"cards": cards, "areas": []}
 
-    def areas(self, see: list[dict], todo: list[dict] = ()) -> list[dict]:
+    def areas(self, see: list[dict]) -> list[dict]:
         comp = self.c.get("areas") or {}
         out = []
         for a in self.g["about"]["areas"]:
@@ -341,11 +343,9 @@ class Book:
                 area["went"] = wt
             out.append(area)
         # 見どころをエリアに入れる。**線（多角形）の中**が先、どれにも入らなければ、近いエリアの中心から AREA_KM まで。
-        # 座標を持つやりたいことも同じ決まりでエリアに入れる（見たいものの無い地区の、見どころマップの代表になる。
-        # `types.ts` の `SpotRule`）。エリアの `see` に並ぶのは見たいものだけ
+        # （前は座標を持つやりたいことも入れて、見どころマップの写真のピンの代表にしていた。2026-11-16 にピンをやめた）
         raw = {a["key"]: a for a in self.g["about"]["areas"]}
-        pairs = [*zip(see, self.g["see"]), *zip(todo, self.g["todo"])]
-        for it, spec in pairs:
+        for it, spec in zip(see, self.g["see"]):
             if "lat" not in spec or spec.get("town") != self.g["city"]["town"]:
                 continue
             pt = (spec["lat"], spec["lon"])
@@ -354,8 +354,7 @@ class Book:
             pick = min(hits, key=dist.get) if hits else min(dist, key=dist.get)
             if hits or dist[pick] <= AREA_KM:
                 it["area"] = pick
-                if "title" not in it:
-                    next(x for x in out if x["id"] == pick)["see"].append(it["id"])
+                next(x for x in out if x["id"] == pick)["see"].append(it["id"])
         return out
 
     def see(self) -> tuple[list[dict], list[dict]]:
@@ -380,9 +379,6 @@ class Book:
                 it["maps"] = s["maps"]
             if (s.get("links") or {}).get("todo"):
                 it["todo"] = s["links"]["todo"]
-            # 本当の位置。見どころマップのピンを、描いた絵の範囲で絵の上に直して置く（面の側の `content/guidebook/spotmap.ts`）
-            if "lat" in s:
-                it["at"] = {"lat": s["lat"], "lon": s["lon"]}
             it["src"] = self.src(what.get("src"), *[i.get("src") for i in s.get("info") or []], (s.get("local") or {}).get("src"),
                                  (s.get("photo") or {}).get("src"))
             wt = self.went("see", s, w, story_from=[what])
@@ -423,11 +419,6 @@ class Book:
                 it["eat"] = t["links"]["eat"]
             if pic:
                 it["pic"] = pic
-            # 本当の位置（材料が座標を持つときだけ。出どころは材料の `coord_src`）。見どころマップで、見たいものの無い地区の代表になる
-            if "lat" in t:
-                if not t.get("coord_src"):
-                    self.err(w, "やりたいことの座標に出どころ（coord_src）が無い")
-                it["at"] = {"lat": t["lat"], "lon": t["lon"]}
             wt = self.went("todo", t, w, story_from=own)
             if wt:
                 it["went"] = wt
@@ -680,7 +671,7 @@ class Book:
         see, far = self.see()
         about = self.about()
         todo = self.todo()
-        about["areas"] = self.areas(see, todo)
+        about["areas"] = self.areas(see)
         eat = [self.dish("eat", it, city_local) for it in g["eat"]["items"]] + self.went_notes()
         buy = [self.dish("buy", it, city_local) for it in g["buy"]["items"]]
         cover = c.get("cover") or {}
@@ -712,7 +703,7 @@ class Book:
             "country": self.country, "city": self.city, "name": g["city"]["name"],
             "kicker": self.table["countries"][self.country]["name"],
             "local": {"text": city_local, "lang": g["city"]["local"]["lang"], "roman": g["city"]["local"]["roman"]},
-            "lead": lead, "cover": pic or {}, "title": c["title"], "description": desc,
+            "lead": lead, "cover": pic or {}, "title": c["title"].format(**counts), "description": desc,
             "rate": {"unit": "デナル", "yen": round(g["rate"]["eur_jpy"] / g["rate"]["eur_mkd"], 2), "date": "2026-11-13"},
             "about": about, "todo": todo,
             "see": {"items": see, "far": far, **({"map": maps["see"]} if "see" in maps else {})},

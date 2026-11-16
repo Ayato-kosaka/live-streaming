@@ -1,39 +1,76 @@
 import Icon from "@/components/ui/Icon";
 import type { Guidebook, Item, Todo as TodoT } from "@/content/guidebook/types";
 
-import { MiniTiles } from "./About";
+import { MiniTiles, type Mini } from "./About";
 import Sheet from "./Sheet";
 import { WentBox } from "./Videos";
-import { Credit, Ext, Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
+import { Credit, Ext, Picture, Sec, SrcLine, sheetId } from "./parts";
 
 /**
- * 4 やりたいことN選。**いちばんの柱。** 大きな絵の札をN枚（パリの「8 THINGS TO DO」の形）。
- * 押すと**見開き**が開く: どこ・何をする・行き方・時間・お金・コツ・回りかた。
+ * 4 やりたいことN選。**いちばんの柱。** 「この街ってこんなに楽しそう！」「これもあれもやってみたい！」と思ってもらう節。
  *
- * Nは街の大きさで決める（最大8。#1228）。見たいもの（場所の一覧）とは役割を分け、
- * 出てくる場所は窓の「どこ」から見たいものの窓へ繋ぐ。
+ * ## 見せかた（あやと 2026-11-16「やりたいこと8選がダサい（超重要）」）
+ *
+ * 前は写真と字の札を同じ大きさで8枚並べていて、単調だった。いまは雑誌の見開きの調子で、大小を混ぜる:
+ *
+ * - **1つ目は画面いっぱいの大きな絵**に、大きな題とキャッチコピー
+ * - 残りは広い札（横長）と細い札（縦長）を交互に。狭い画面は2列、広い画面は4列。行の端で余った札は横へ広げる
+ *   （`spans`。穴を空けない）
+ * - 札の上の字は少なく: 番号・小さな印（`badge`）・題。キャッチコピーは1枚目だけ。行き方・お金・コツは窓の中
+ *
+ * 絵は描いたもの（manifest の `do.<id>`）が先、無いあいだはデータの写真、それも無ければ落ち着いた色の地
+ * （面の側で差し替える。`app/travel/<国>/<街>/page.tsx`）。
+ *
+ * 押すと**見開き**が開く: どこで・何をする・いつ・行き方・時間・お金・コツ・回りかた。出てくる見たいもの・食べたいもの・
+ * 買いたいものは、窓の「どこで」からそれぞれの窓へ繋ぐ。
  */
 export default function Todo({ g, n }: { g: Guidebook; n: number }) {
   const items = g.todo;
-  const byId = new Map(g.see.items.map((s) => [s.id, s]));
-  const eatOf = new Map(g.eat.items.map((s) => [s.id, s]));
+  const of = {
+    see: new Map(g.see.items.map((s) => [s.id, s])),
+    eat: new Map(g.eat.items.map((s) => [s.id, s])),
+    buy: new Map(g.buy.items.map((s) => [s.id, s])),
+  };
+  const lay = spans(items.length - 1);
   return (
-    <Sec id="todo" n={n} icon="sparkle" title={`やりたいこと${items.length}選`}>
+    <Sec id="todo" n={n} icon="checklist" title={`やりたいこと${items.length}選`}>
       <ol className="gb-todo">
-        {items.map((t, i) => (
-          <li key={t.id}>
-            <a className="gb-todo-card" href={`#${sheetId("do", t.id)}`}>
-              <Picture pic={t.pic} sizes="(min-width: 720px) 300px, 46vw" ratio="4 / 5" eager={i < 2} label={String(i + 1)} />
-              <b className="gb-todo-n" aria-hidden="true">
-                {i + 1}
-              </b>
-              <span className="gb-todo-b">
-                <span className="gb-todo-t">{t.title}</span>
-                {t.went && <span className="gb-went">行った</span>}
-              </span>
-            </a>
-          </li>
-        ))}
+        {items.map((t, i) => {
+          const size = i === 0 ? "hero" : lay[i - 1].m;
+          return (
+            <li key={t.id} className={`is-${size}`} data-d={i === 0 ? undefined : lay[i - 1].d} data-tone={i % 4}>
+              <a className={`gb-todo-card${t.pic ? "" : " is-nopic"}`} href={`#${sheetId("do", t.id)}`}>
+                {/* 絵の無いあいだは、色の地に大きな絵（`icon`）。描いた絵が来たら消える */}
+                {!t.pic && t.icon && (
+                  <span className="gb-todo-ic" aria-hidden="true">
+                    <Icon name={t.icon} size={size === "hero" ? 180 : 96} />
+                  </span>
+                )}
+                {t.pic && (
+                  <Picture
+                    pic={t.pic}
+                    sizes={size === "hero" ? "(min-width: 960px) 900px, 100vw" : size === "w" ? "(min-width: 720px) 450px, 100vw" : "(min-width: 720px) 225px, 50vw"}
+                    ratio={null}
+                    eager={i < 2}
+                  />
+                )}
+                <span className="gb-todo-top">
+                  <b className="gb-todo-n" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </b>
+                  {t.badge && <span className="gb-todo-badge">{t.badge}</span>}
+                  {/* 「イラスト」の札は印の並びに置く（左下は題が乗る。`docs/guide-design.md` 4-3 の例外） */}
+                  {t.pic?.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
+                </span>
+                <span className="gb-todo-b">
+                  <span className="gb-todo-t">{t.title}</span>
+                  {size === "hero" && <span className="gb-todo-c">{t.catch ?? t.lead}</span>}
+                  {t.went && <span className="gb-went">行った</span>}
+                </span>
+              </a>
+            </li>
+          );
+        })}
       </ol>
       {items.map((t, i) => (
         <TodoSheet
@@ -41,17 +78,40 @@ export default function Todo({ g, n }: { g: Guidebook; n: number }) {
           t={t}
           i={i}
           all={items}
-          where={t.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)}
-          eat={(t.eat ?? []).map((id) => eatOf.get(id)).filter((x): x is Item => !!x)}
+          where={[
+            ...pick(t.see, of.see, "see"),
+            ...pick(t.eat ?? [], of.eat, "eat"),
+            ...pick(t.buy ?? [], of.buy, "buy"),
+          ]}
         />
       ))}
     </Sec>
   );
 }
 
-/** 見開きの7つ（「どこ」は札の並びで上に出す）。見出しに絵は付けない（`parts.tsx` の `Facts` と同じ理由） */
-const ROWS: { key: keyof Pick<TodoT, "what" | "how" | "time" | "money" | "tip" | "route">; label: string }[] = [
+const pick = (ids: string[], m: Map<string, Item>, kind: Mini["kind"]): Mini[] =>
+  ids.flatMap((id) => (m.has(id) ? [{ kind, it: m.get(id)! }] : []));
+
+/**
+ * 1つ目（大きな絵）の後ろに並ぶ札の大きさ。
+ *
+ * - `m`（狭い画面・2列）: 広い（2列ぶん）→ 細い → 細い の繰り返し。最後に細い札が1枚だけ残ったら、広い札にする
+ * - `d`（広い画面・4列）: 広い＝2列・細い＝1列。最後の行が埋まらなければ、行の最後の札を残りの列まで広げる
+ */
+function spans(n: number): { m: "w" | "h"; d: number }[] {
+  const m: ("w" | "h")[] = Array.from({ length: n }, (_, i) => (i % 3 === 0 ? "w" : "h"));
+  if (n > 0 && m[n - 1] === "h" && m[n - 2] !== "h") m[n - 1] = "w";
+  const out = m.map((x) => ({ m: x, d: x === "w" ? 2 : 1 }));
+  let col = 0;
+  for (const x of out) col = (col + x.d) % 4 || 0;
+  if (col && out.length) out[out.length - 1].d += 4 - col;
+  return out;
+}
+
+/** 見開きの字の欄（「どこで」は札の並びで上に出す）。見出しに絵は付けない（`parts.tsx` の `Facts` と同じ理由） */
+const ROWS: { key: keyof Pick<TodoT, "what" | "when" | "how" | "time" | "money" | "tip" | "route">; label: string }[] = [
   { key: "what", label: "何をする" },
+  { key: "when", label: "いつ" },
   { key: "how", label: "行き方" },
   { key: "time", label: "時間" },
   { key: "money", label: "お金" },
@@ -59,7 +119,7 @@ const ROWS: { key: keyof Pick<TodoT, "what" | "how" | "time" | "money" | "tip" |
   { key: "route", label: "回りかた" },
 ];
 
-function TodoSheet({ t, i, all, where, eat }: { t: TodoT; i: number; all: TodoT[]; where: Item[]; eat: Item[] }) {
+function TodoSheet({ t, i, all, where }: { t: TodoT; i: number; all: TodoT[]; where: Mini[] }) {
   const prev = all[i - 1];
   const next = all[i + 1];
   return (
@@ -69,10 +129,17 @@ function TodoSheet({ t, i, all, where, eat }: { t: TodoT; i: number; all: TodoT[
       title={t.title}
       wide
       hero={
-        <>
-          <Picture pic={t.pic} sizes="(min-width: 720px) 440px, 100vw" ratio="16 / 10" label={String(i + 1)} />
-          <Credit pic={t.pic} of={t.title} />
-        </>
+        t.pic ? (
+          <>
+            <Picture pic={t.pic} sizes="(min-width: 720px) 440px, 100vw" ratio="16 / 10" />
+            <Credit pic={t.pic} of={t.title} />
+          </>
+        ) : (
+          /* 絵の無いあいだは、札と同じ色の地と絵の帯（番号だけの大きな空の枠を出さない） */
+          <span className="gb-todo-ground" data-tone={i % 4} aria-hidden="true">
+            {t.icon && <Icon name={t.icon} size={88} />}
+          </span>
+        )
       }
       foot={
         <span className="gb-pager">
@@ -92,19 +159,17 @@ function TodoSheet({ t, i, all, where, eat }: { t: TodoT; i: number; all: TodoT[
         </span>
       }
     >
-      <p className="gb-lead">{t.lead}</p>
+      {t.catch && <p className="gb-catch">{t.catch}</p>}
+      <p className="gb-lead">
+        {t.badge && <span className="gb-todo-badge is-in">{t.badge}</span>}
+        {t.lead}
+      </p>
       {t.went && <WentBox w={t.went} of={t.title} />}
-      <h4 className="gb-h4">どこ</h4>
-      <MiniTiles items={where} />
-      {eat.length > 0 && (
-        <p className="gb-rel">
-          <span>ここで食べる</span>
-          {eat.map((e) => (
-            <a key={e.id} href={`#${sheetId("eat", e.id)}`}>
-              {shortName(e.name)}
-            </a>
-          ))}
-        </p>
+      {where.length > 0 && (
+        <>
+          <h4 className="gb-h4">どこで</h4>
+          <MiniTiles items={where} />
+        </>
       )}
       <Ext>
         <dl className="gb-facts is-todo">
