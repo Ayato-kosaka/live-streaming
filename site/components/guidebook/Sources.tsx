@@ -56,7 +56,8 @@ export default function Sources({ g, drawn }: { g: Guidebook; drawn: boolean }) 
             </li>
           ))}
         </ul>
-        {drawn && <p className="gb-note">イラストは、あやと島案内鳥が AI で描いたもの。</p>}
+        {/* 絵の上には「イラスト」の札を乗せない（あやと 2026-11-16「イラストのチップ要らない」）。AI で描いたことはここで1行 */}
+        {drawn && <p className="gb-note">写真ではない絵（表紙・地図・料理・お土産などのイラスト）は、あやと島案内鳥が AI で描いたもの。</p>}
       </Fold>
     </section>
   );

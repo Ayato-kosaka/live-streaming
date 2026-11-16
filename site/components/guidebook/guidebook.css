@@ -471,23 +471,23 @@
 /* ---- 4 やりたいこと ---------------------------------------------------- */
 
 /*
- * 雑誌の見開きの調子（あやと 2026-11-16「写真とテキストの均等な並びで単調」）。
- * 1枚目は画面いっぱいの大きな絵（`is-hero`）、残りは広い札（`is-w`・横長）と細い札（`is-h`・縦長）を混ぜる。
- * 字は絵の上に、下からの暗幕で乗せる（白に対して 4.5 以上）。大きさは部品（`Todo.tsx` の `spans`）が決める。
+ * **札は全部同じ大きさ・同じ比率（4:3）で、縦1列**（あやと 2026-11-16「すべてのカードを同じサイズ・比率に統一し、縦1列に並べたい」）。
+ * 前の「1枚目だけ大きく・残りは広い札と細い札の2列」はやめた（`docs/island-misses.md` #328）。
+ * 字は絵の上に、下からの暗幕で乗せる（白に対して 4.5 以上）。
  * 一面に並ぶ札が全部押せるので、1枚ずつに厚みは付けない（`docs/island-design.md` 3章3の例外）
  */
 .gb-todo {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
-  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  /* 広い画面でも1列。本文の幅いっぱいの 4:3 は、8枚で画面5枚ぶんになる */
+  max-width: 600px;
+  margin: 0 auto;
   padding: 0;
   list-style: none;
 }
 
 .gb-todo > li { display: grid; min-width: 0; }
-.gb-todo > li.is-hero,
-.gb-todo > li.is-w { grid-column: 1 / -1; }
 
 .gb-todo-card {
   position: relative;
@@ -496,19 +496,14 @@
   flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 3;
   border-radius: var(--r-2);
   background: #6c4a3c;
   color: #fff;
   text-decoration: none;
 }
 
-.is-w > .gb-todo-card { aspect-ratio: 16 / 10; }
-
 .gb-todo-card > .gb-pic { position: absolute; inset: 0; z-index: -2; }
-/* 「イラスト」の札は、番号と印の並びに置く（絵の左下は題が乗る。右上は細い札で印とぶつかる）。絵の中の札は出さない */
-.gb-todo-card > .gb-pic .gb-pic-tag { display: none; }
-.gb-todo-top > .gb-pic-tag { position: static; }
 .gb-todo-card:active { transform: scale(0.985); }
 
 /* 暗幕は下から。字の乗る所だけ濃く、絵の上半分は潰さない */
@@ -517,7 +512,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(to top, rgb(28 18 10 / 0.9) 0%, rgb(28 18 10 / 0.62) 38%, rgb(28 18 10 / 0) 68%);
+  background: linear-gradient(to top, rgb(28 18 10 / 0.9) 0%, rgb(28 18 10 / 0.62) 34%, rgb(28 18 10 / 0) 62%);
 }
 
 /* 絵の無いあいだの地。**落ち着いた深い色**に、白い字（暗幕は要らない） */
@@ -550,29 +545,38 @@
 /* 番号と印は左上 */
 .gb-todo-top {
   position: absolute;
-  top: 8px;
-  left: 10px;
-  right: 8px;
+  top: 12px;
+  left: 14px;
+  right: 12px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .gb-todo-n {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 6px rgb(0 0 0 / 0.55);
 }
 
-.gb-todo-badge {
+.gb-todo-b { display: grid; justify-items: start; gap: 6px; padding: 14px 16px 16px; }
+/* 語の切れ目で折る。カタカナの長い語（「クリスマスマーケットで」）が札の幅を超えるときだけ、語の中で折る */
+.gb-todo-t { font-size: clamp(19px, 5.4vw, 24px); font-weight: 900; line-height: 1.35; text-shadow: 0 1px 4px rgb(0 0 0 / 0.4); overflow-wrap: anywhere; }
+
+/*
+ * 札の上の印（`Marks`）。**その国ならでは・値段・季節の3種類だけ**（`docs/island-misses.md` #328）。
+ * 色で種類を分ける: ならでは＝差し色の地に白・値段＝クリームの地に差し色・季節＝淡い緑の地に深い緑
+ * （季節の印は、絵の無い札の深い緑の地にも乗るので、地を明るくする）
+ */
+.gb-marks { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+
+.gb-mark {
   display: inline-block;
   padding: 3px 9px;
   border-radius: 999px;
-  background: #fffdf3;
-  color: var(--gb-c);
   font-size: 12px;
   font-weight: 900;
   line-height: 1.3;
@@ -580,41 +584,27 @@
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
 }
 
-.gb-todo-b { display: grid; justify-items: start; gap: 4px; padding: 10px 12px 12px; }
-/* 語の切れ目で折る。カタカナの長い語（「クリスマスマーケットで」）が細い札の幅を超えるときだけ、語の中で折る */
-.gb-todo-t { font-size: 15px; font-weight: 900; line-height: 1.4; text-shadow: 0 1px 4px rgb(0 0 0 / 0.4); overflow-wrap: anywhere; }
-.gb-todo-c { font-size: 13px; font-weight: 700; line-height: 1.5; }
+.gb-mark.is-local { background: var(--gb-c); color: #fff; }
+.gb-mark.is-price { background: #fffdf3; color: var(--gb-c); }
+.gb-mark.is-season { background: #eef7e4; color: #2f5d46; }
+.gb-todo-top .gb-mark { padding: 4px 11px; font-size: 13px; }
 
-.is-w .gb-todo-t { font-size: 18px; }
+/* 写真の札の印は絵の左上に */
+.gb-tile > .gb-marks { position: absolute; top: 6px; left: 6px; right: 6px; }
+.gb-tile .gb-mark { padding: 2px 8px; font-size: var(--fs-min); }
 
-/* 1枚目。題を大きく（雑誌の表紙の見出しの調子） */
-.is-hero .gb-todo-top { top: 14px; left: 16px; gap: 10px; }
-.is-hero .gb-todo-n { font-size: 44px; }
-.is-hero .gb-todo-badge { padding: 4px 12px; font-size: 13.5px; }
-.is-hero .gb-todo-b { gap: 8px; padding: 20px 18px 20px; }
-.is-hero .gb-todo-t { font-size: clamp(27px, 7.6vw, 42px); line-height: 1.25; }
-.is-hero .gb-todo-c { font-size: 15.5px; }
+/* 窓の頭の印（字の行の頭に、平らに） */
+.gb-marks.is-in { margin-right: 8px; vertical-align: 1px; }
+.gb-marks.is-in .gb-mark { box-shadow: none; }
+.gb-marks.is-in .gb-mark.is-price { background: var(--gb-c); color: #fff; }
+.gb-marks.is-in .gb-mark.is-season { background: #2f5d46; color: #fff; }
 
-@media (min-width: 720px) {
-  .gb-todo { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 232px; gap: var(--sp-3); }
-  .gb-todo > li[data-d] { grid-column: span 1; }
-  .gb-todo > li[data-d="2"] { grid-column: span 2; }
-  .gb-todo > li[data-d="3"] { grid-column: span 3; }
-  .gb-todo > li[data-d="4"] { grid-column: 1 / -1; }
-  .gb-todo > li.is-hero { grid-column: 1 / -1; grid-row: span 2; }
-  .gb-todo-card,
-  .is-w > .gb-todo-card { aspect-ratio: auto; height: 100%; }
-  .is-hero .gb-todo-b { max-width: 72%; padding: 28px 30px; }
-}
-
-/* 窓の頭の大きなキャッチコピーと、印 */
+/* 窓の頭の大きなキャッチコピー */
 .gb-catch { margin: 0 0 var(--sp-2); color: var(--gb-c); font-size: 19px; font-weight: 900; line-height: 1.45; word-break: auto-phrase; }
-.gb-todo-badge.is-in { margin-right: 8px; background: var(--gb-c); color: #fff; box-shadow: none; vertical-align: 1px; }
 
 /* **見出しと札の題は、語の切れ目で折る**（「日帰りで行/く」のように1字だけ次の行に落とさない） */
 .gb-sec-head h2,
 .gb-todo-t,
-.gb-todo-c,
 .gb-tile-b b,
 .gb-qa-q,
 .gb-dlg-t,
@@ -696,25 +686,11 @@
 .gb-tiles.is-3 .gb-tile-b b { font-size: 12.5px; }
 .gb-tile-b i { font-style: normal; font-size: var(--fs-min); line-height: 1.4; color: var(--ink-2); }
 
-.gb-must {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--gb-c);
-  color: #fff;
-  font-size: var(--fs-min);
-  font-weight: 700;
-}
-
-/* 豚肉あり・アルコールあり。**事実の札**。写真の右上に丸く */
+/* 豚肉あり・アルコールあり。**事実の札**。**窓の中だけ**（札と一覧には出さない。`docs/island-misses.md` #328） */
 .gb-flags {
   display: inline-flex;
   gap: 3px;
 }
-
-.gb-tile .gb-flags { position: absolute; top: 5px; right: 5px; }
 
 .gb-flag {
   display: inline-flex;
@@ -739,19 +715,6 @@
 .gb-flag.is-alcohol > b { background: var(--gb-alcohol); }
 .gb-flags.is-big { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 var(--sp-2); }
 .gb-flags.is-big .gb-flag i { font-style: normal; font-size: 13px; font-weight: 700; }
-
-.gb-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  margin: 0 0 var(--sp-3);
-  font-size: var(--fs-note);
-  color: var(--ink-2);
-}
-
-.gb-legend .gb-flag { margin-left: 6px; }
-.gb-legend .gb-flag:first-child { margin-left: 0; }
 
 /* 食べたいものの絞り。**JS なし**（`:has()`。隠す規則は面の `<style>` がデータから書く） */
 .gb-kinds {

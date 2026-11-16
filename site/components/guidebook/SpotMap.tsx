@@ -104,7 +104,8 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
             </a>
           );
         })}
-        <i className="gb-pic-tag">イラスト・位置は目安</i>
+        {/* 「イラスト」の字は乗せない（出どころの欄に1行。`docs/island-misses.md` #328）。位置が目安なことだけ */}
+        <i className="gb-pic-tag">位置は目安</i>
       </div>
 
       {/* 地区の雰囲気のひとこと。札と同じ窓へ（地図の札は小さいので、指で押しやすい所をもう1つ） */}

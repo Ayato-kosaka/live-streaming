@@ -37,7 +37,6 @@ export default function Cover({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
             referrerPolicy="no-referrer"
           />
         </picture>
-        {wide.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
         <div className="gb-cover-body">
           <span className="gb-cover-k">{g.kicker}</span>
           <h1>

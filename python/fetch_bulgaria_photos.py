@@ -238,7 +238,7 @@ def search(q: str, limit: int = 8) -> list[dict]:
 QUERIES: dict[str, list[str]] = {
     "hero::": ["cat:Views of Sofia from Vitosha", "Sofia Bulgaria panorama Vitosha", "Alexander Nevsky Cathedral Sofia aerial"],
     # spots（facts.json の name をそのまま鍵にする）
-    "spots::聖ゲオルギ教会（円堂）": ["Rotunda Saint George Sofia", "Ротонда Свети Георги София"],
+    "spots::聖ゲオルギ教会（ロトンダ）": ["Rotunda Saint George Sofia", "Ротонда Свети Георги София"],
     "spots::古代セルディカ遺跡（ラルゴの地下）": ["Ancient Serdica Sofia archaeological complex", "Антична Сердика София", "cat:Ancient Serdica"],
     "spots::アレクサンドル・ネフスキー大聖堂": ["Alexander Nevsky Cathedral Sofia", "Храм Свети Александър Невски"],
     "spots::中央鉱泉浴場（ソフィア歴史博物館）と無料の温泉の蛇口": ["Central Mineral Baths Sofia", "Централна минерална баня София"],
@@ -281,7 +281,7 @@ QUERIES: dict[str, list[str]] = {
     "food::ボザ（穀物の発酵飲料）": ["Boza drink", "боза напитка"],
     "food::ラキヤ（果実の蒸留酒）": ["Rakia Bulgarian brandy", "ракия"],
     "food::アイリャン": ["Ayran drink", "айрян"],
-    "food::メハナ（大衆食堂・居酒屋）という場所そのもの": ["cat:Restaurants in Bulgaria", "Mehana Bulgarian tavern interior", "механа ресторант"],
+    "food::メハナ（伝統料理の食堂）": ["cat:Restaurants in Bulgaria", "Mehana Bulgarian tavern interior", "механа ресторант"],
     "food::ゆでとうもろこし（街角の屋台）": ["boiled corn street stall Bulgaria", "варена царевица"],
     # buy（facts.json の what をそのまま鍵にする）
     "buy::バラのオイル／ローズウォーター": ["cat:Rose oil", "Bulgarian rose oil vial", "розово масло"],
@@ -290,7 +290,7 @@ QUERIES: dict[str, list[str]] = {
     "buy::ラキヤ（果実の蒸留酒）": ["Rakia bottle Bulgaria", "ракия бутилка"],
     "buy::ブルガリアワイン（マヴルッド、メルニク）": ["Bulgarian wine Mavrud bottle", "Мавруд вино"],
     "buy::マルテニツァ（赤と白の紐飾り）": ["Martenitsa", "мартеници"],
-    "buy::白チーズとカシュカヴァル（量り売り）": ["cat:Sirene", "Bulgarian cheese market sirene", "кашкавал пазар"],
+    "buy::白チーズとカシュカヴァル": ["cat:Sirene", "Bulgarian cheese market sirene", "кашкавал пазар"],
     "buy::ローズジャムとローズのロクム": ["cat:Jams and jellies of Bulgaria", "rose jam Bulgaria lokum", "сладко от рози"],
     "buy::刺繍（シェヴィツァ）の小物": ["cat:Embroidery of Bulgaria", "Bulgarian embroidery shevitsa", "шевица бродерия"],
 }
@@ -305,7 +305,7 @@ CHOICES: dict[str, tuple[str, str, str]] = {
         "cat:Views of Sofia from Vitosha",
     ),
     # --- spots -------------------------------------------------------
-    "spots::聖ゲオルギ教会（円堂）": (
+    "spots::聖ゲオルギ教会（ロトンダ）": (
         "File:StGeorgeRotundaSofia.JPG",
         "赤れんがの丸い教会堂が、建物に囲まれた中庭に建っている。足もとに発掘された石積みが残る",
         "Rotunda Saint George Sofia",
@@ -516,7 +516,7 @@ CHOICES: dict[str, tuple[str, str, str]] = {
         "白いヨーグルトの飲みものが、ストローをさしたグラスに入っている",
         "Ayran drink",
     ),
-    "food::メハナ（大衆食堂・居酒屋）という場所そのもの": (
+    "food::メハナ（伝統料理の食堂）": (
         "File:Mehanadance.JPG",
         "民族衣装の人たちが手をつないで輪になり、食卓を囲む客の前で踊っている店の中",
         "cat:Restaurants in Bulgaria",
@@ -552,7 +552,7 @@ CHOICES: dict[str, tuple[str, str, str]] = {
         "赤と白の毛糸で作った房飾りのお守りが、いくつも並べてある",
         "Martenitsa",
     ),
-    "buy::白チーズとカシュカヴァル（量り売り）": (
+    "buy::白チーズとカシュカヴァル": (
         "File:Bulgarischer Salzlakenkäse ist nicht immer Schafskäse.jpg",
         "白いチーズの塊が、手書きの値札を立てた市場の台に積まれている",
         "cat:Sirene",
