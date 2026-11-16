@@ -572,6 +572,11 @@ def mode_labels(batch: str, store=None) -> int:
     for v in lab.values():
         tally[v] = tally.get(v, 0) + 1
     log("答え: " + json.dumps(tally, ensure_ascii=False))
+    # 作業箱は job summary を API で読めない（check-run の output に載らない）。1行1枚で
+    # ログにも出す。出るのは sha（写真の中身の指紋）と答えだけで、写真も日付も出ない。
+    # 波かっこで包むと、複数行の秘密を伏せる GitHub が "{" の行を *** に化かすので包まない。
+    for sha in sorted(lab):
+        log(f"LABEL {sha} {lab[sha]}")
     summary("## 認識合わせの答えと外したもの" + (f"（`{batch}`）" if batch else "") + "\n\n"
             "```json\n" + json.dumps(lab, indent=1, sort_keys=True) + "\n```\n")
     return 0
