@@ -2062,6 +2062,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "zDHHuafmP1A",
         "title": "🇧🇬ブルガリアのクリスマスマーケットいこか！",
         "date": "2026-11-14"
+      },
+      {
+        "videoId": "hJ6vFAGX3rI",
+        "title": "🇧🇬ブルガリアのバニツァいこか！",
+        "date": "2026-11-15"
       }
     ]
   }

@@ -34,7 +34,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "austria": { lives: 7, people: 18, msgs: 136, days: 7, top: ["2024-11-30", "A-5gn9cQM34", "日本は深夜やけど、オーストリアは良い時間なので靴磨きします", 6] },
   "azerbaijan": { lives: 21, people: 27, msgs: 2223, days: 19, top: ["2025-07-04", "I-9ORIGJG-w", "なにこれの新バージョンの紹介します。スーパー行きました。", 9] },
   "belgium": { lives: 17, people: 50, msgs: 2147, days: 12, top: ["2025-03-22", "_Crl6Z-HlBA", "後編【神回】ベルギーのワッフルはここから始まった！？リエージュで本物の味に出会う旅🧇", 16] },
-  "bulgaria": { lives: 2, people: 24, msgs: 633, days: 2, top: ["2026-11-13", "jnKVIXn4qQs", "🇧🇬ブルガリアのヨーグルト試してみよか！！", 18] },
+  "bulgaria": { lives: 3, people: 36, msgs: 1194, days: 3, top: ["2026-11-14", "zDHHuafmP1A", "🇧🇬ブルガリアのクリスマスマーケットいこか！", 25] },
   "cyprus": { lives: 17, people: 61, msgs: 4547, days: 15, top: ["2025-05-24", "GEthwfE5_vU", "【神回】キプロス・パフォス街歩き！古代遺跡から地中海サンセットまで🌅パフォスの名所ぜんぶ詰め込んで歩いてみた", 17] },
   "czech": { lives: 6, people: 20, msgs: 204, days: 6, top: ["2024-12-09", "QzkTER4Tml4", "チェコ最終日なので、質問コーナーします", 7] },
   "egypt": { lives: 37, people: 69, msgs: 9366, days: 27, top: ["2025-05-04", "cK0tttTZ3as", "GWエジプト祭り2日目 - ルクソール東側 神殿巡りとラクダ飯", 15] },
