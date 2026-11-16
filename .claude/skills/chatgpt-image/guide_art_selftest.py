@@ -354,7 +354,10 @@ def main() -> int:
         ok(tries == ["b"] and "ログイン" in st["b"]["error"], f"ログインが切れているのに残りも回した: {tries}")
 
         print("9. 見比べの1枚")
-        shutil.copytree(REPO / "tools/sprites", root / "tools/sprites", ignore=lambda d, n: [x for x in n if x != "sheet.py"])
+        # 写すのは並べる道具1本だけ。名前だけで "sheet.py" と書くと、同じ名前が3か所にあって
+        # 見張りの数え役（watch_census）がどれを呼んでいるか決められないので、置き場の道ごと書く
+        keep = Path("tools/sprites/sheet.py").name
+        shutil.copytree(REPO / "tools/sprites", root / "tools/sprites", ignore=lambda d, n: [x for x in n if x != keep])
         for n in ("food-soup", "food-pie", "food-tea", "buy-jam", "buy-cup"):
             png(work / "ref" / f"{n}.jpg", (500, 375))
         rc, _, _ = quiet(ga.sheet, sp, root, work)
