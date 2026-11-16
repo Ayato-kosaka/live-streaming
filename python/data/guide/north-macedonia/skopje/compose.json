@@ -5,9 +5,11 @@
     "話": "items の story は、facts の行をつないだ案内鳥の文（docs/guide-design.md ★2）。結んだ行（facts）に無い数を書くと、焼く道具が止める。言っていないことを言ったことにしない",
     "一言": "say は節ごとに1つまで（docs/island-misses.md #323）。字は facts から写す——ここに書くのは、どの項目の場面の一言を使うかだけ",
     "写真": "cards は、あやと島カードのその日の写真。置き場は site/public/travel/north-macedonia/skopje/<名前>-{480,960}.webp（python/guidebook_bake.py --photos が本番の口から取る）。行った項目の札の写真は、行った日のカードだけ",
-    "要約": "summary・guides の value と lead、about の大きい数は、材料の字を短くしたもの。材料の字に無い数を書くと、焼く道具が止める"
+    "要約": "summary・guides の value と lead は、材料の字を短くしたもの。材料の字に無い数を書くと、焼く道具が止める",
+    "どんな街": "about は問い（q）と頭の絵（icon。components/ui/Icon の名前）だけ。答えは材料の about.cards の字のまま。問いは15字まで・「？」で終わる・数を入れない（前の大きい数の札は 2026-11-16 にやめた。docs/island-misses.md #327）",
+    "題": "title の {todo} はやりたいことの数。人が打つ語の形（「スコピエ 観光」「マトカ渓谷」「スコピエ 銅像」）で、頭の語を30字より前に"
   },
-  "title": "スコピエ観光ガイド【2026年】見どころ・食べ物・物価・マトカ渓谷",
+  "title": "スコピエ観光でやりたいこと{todo}選【2026】北マケドニアの首都で旧市街・銅像の広場・マトカ渓谷",
   "description": {
     "text": "北マケドニアの首都スコピエのガイド。やりたいこと{todo}選、見どころ{see}か所、名物{eat}品、1日の予算。2026年10月に行った配信者の体験つき。マトカ渓谷へは60番のバスで実測49分。",
     "facts": ["eHBAnQF56-E@330#move", "eHBAnQF56-E@4650#move"]
@@ -108,10 +110,10 @@
     }
   },
   "about": {
-    "scupi": { "num": "1", "unit": "世紀末から" },
-    "ottoman": { "num": "5", "unit": "世紀あまり" },
-    "tange": { "num": "約8", "unit": "割が壊れた" },
-    "skopje2014": { "num": "2010", "unit": "年からの計画" }
+    "scupi": { "q": "歴史は？", "icon": "ruins" },
+    "ottoman": { "q": "旧市街は、いつの街？", "icon": "mosque" },
+    "tange": { "q": "建物が新しいのは、なぜ？", "icon": "brick" },
+    "skopje2014": { "q": "像と柱だらけなのは、なぜ？", "icon": "statue" }
   },
   "areas": {
     "debar-maalo": { "color": "#ffc4d2", "plan": [1, 1, 1] },

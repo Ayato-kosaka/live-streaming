@@ -7,6 +7,12 @@ import { Credit, jpDate } from "./parts";
  * 1 表紙。**絵を先に、字をあとに。** 街の絵（描いた表紙。無ければ借りた写真）＋国・街の名前・ひとこと。
  *
  * 描いた表紙が縦と横の2枚あれば、狭い画面に縦を出す（`<picture>`）。行ったあとは「あやとが◯日いた」の札が乗る。
+ *
+ * ## 見出し（h1）は、人が打つ語の形
+ *
+ * h1 は「ソフィア観光でやりたいこと8選」。大きく見せるのは街の名前で、後ろの語は2段目に小さく置く。
+ * 前は街の名前だけで、検索の語（「ソフィア 観光」）と見出しが合っていなかった（`docs/island-misses.md` #327）。
+ * 数はやりたいことの数から作る（手で書かない）
  */
 export default function Cover({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
   const wide = drawn.cover ?? g.cover;
@@ -34,7 +40,10 @@ export default function Cover({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
         {wide.kind === "illust" && <i className="gb-pic-tag">イラスト</i>}
         <div className="gb-cover-body">
           <span className="gb-cover-k">{g.kicker}</span>
-          <h1>{g.name}</h1>
+          <h1>
+            {g.name}
+            <span className="gb-cover-h1">観光でやりたいこと{g.todo.length}選</span>
+          </h1>
           <span className="gb-cover-local" lang={g.local.lang}>
             {g.local.text}
           </span>

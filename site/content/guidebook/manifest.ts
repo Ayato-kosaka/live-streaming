@@ -1,12 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { MapBBox, MapBeyond, MapDir, Pic } from "./types";
+import type { MapBeyond, MapDir, Pic, Todo } from "./types";
 
 /**
  * **描いた絵の置き場（`public/guide/<国>/<街>/manifest.json`）を読む。** 書き出すときに1回だけ。
  *
- * 表紙・エリア地図・料理・土産の絵は、別の担当が ChatGPT で描いて置く（#1228 Q1 の A）。
+ * 表紙・エリア地図・やりたいこと・料理・土産の絵は、別の担当が ChatGPT で描いて置く（#1228 Q1 の A）。
  * 置き場の形:
  *
  * ```json
@@ -15,6 +15,7 @@ import type { MapBBox, MapBeyond, MapDir, Pic } from "./types";
  *   "cover_tall": { "src": "cover-tall.webp", "w": 900, "h": 1200, "alt": "…" },
  *   "areamap": { "src": "areamap.webp", "w": 1200, "h": 1200, "alt": "…",
  *                "areas": [{ "id": "center", "name": "中心（セルディカ）", "x": 0.52, "y": 0.44 }] },
+ *   "do": { "<やりたいことの id>": { "src": "…", "src_small": "…", "w": 1200, "h": 1500, "alt": "…" } },
  *   "food": { "<料理の id>": { "src": "…", "src_small": "…", "w": 800, "h": 800, "alt": "…", "kind": "…" } },
  *   "buy": { "<土産の id>": { … } }
  * }
@@ -23,9 +24,9 @@ import type { MapBBox, MapBeyond, MapDir, Pic } from "./types";
  * - `src` は置き場からの相対（`cover.webp`）か、`/` で始まる道。**ファイルが無ければ使わない**
  *   （壊れた絵の枠を出さない。面の側は借りた写真か、色の地の札に落ちる）
  * - エリアの `x` `y` は名前の札を置く位置。0〜1 の割合（100 までなら百分率、それより大きければ絵の画素）
- * - 料理と土産の鍵は、データの `Item.id`（ラテン文字）。合わない鍵は使わない（面の側で数えて出す）
- * - エリア地図の `bbox`（北・南・東・西の緯度経度）が在れば、見たいものの座標を絵の上に直して**写真のピン**を立てる。
- *   `beyond` は絵の外の所（向きの矢印。形は `types.ts` の `MapBeyond`）。どちらも見どころマップ（`spotmap.ts`）が使う
+ * - やりたいことの鍵は `Todo.id`、料理と土産の鍵は `Item.id`（ラテン文字）。合わない鍵は使わない
+ * - エリア地図の `beyond` は絵の外の所（向きの矢印。形は `types.ts` の `MapBeyond`）。どんな街の地図（`spotmap.ts`）が使う。
+ *   `bbox`（緯度経度の範囲）は描く担当の控えで、面は読まない（前は見どころの写真のピンを立てるのに使った。2026-11-16 にやめた）
  *
  * **字は絵に焼かない**（`docs/guide-design.md` 4-2）。エリアの名前・ピン・矢印は面の側で重ねる。
  */
@@ -33,7 +34,9 @@ export type AreaPin = { id?: string; name?: string; x: number; y: number };
 export type Drawn = {
   cover?: Pic;
   coverTall?: Pic;
-  areamap?: Pic & { areas: AreaPin[]; bbox?: MapBBox; beyond: MapBeyond[] };
+  areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[] };
+  /** やりたいことの絵（`Todo.id` の鍵）。無いあいだは、データの写真か色の地 */
+  do: Record<string, Pic>;
   food: Record<string, Pic>;
   buy: Record<string, Pic>;
 };
@@ -49,7 +52,7 @@ const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : unde
 export function readDrawn(country: string, city: string): Drawn {
   const base = `/guide/${country}/${city}`;
   const pub = join(process.cwd(), "public");
-  const empty: Drawn = { food: {}, buy: {} };
+  const empty: Drawn = { do: {}, food: {}, buy: {} };
   const file = join(pub, base, "manifest.json");
   if (!existsSync(file)) return empty;
   let raw: unknown;
@@ -90,7 +93,7 @@ export function readDrawn(country: string, city: string): Drawn {
     return out;
   };
 
-  const out: Drawn = { cover: pic(raw.cover), coverTall: pic(raw.cover_tall), food: dict(raw.food), buy: dict(raw.buy) };
+  const out: Drawn = { cover: pic(raw.cover), coverTall: pic(raw.cover_tall), do: dict(raw.do), food: dict(raw.food), buy: dict(raw.buy) };
   const am = isObj(raw.areamap) ? raw.areamap : undefined;
   const amPic = pic(am);
   if (am && amPic) {
@@ -105,14 +108,6 @@ export function readDrawn(country: string, city: string): Drawn {
       if (x === undefined || y === undefined) return [];
       return [{ id: str(a.id), name: str(a.name), x: unit(x, w), y: unit(y, h) }];
     });
-    /* 範囲は4つ揃って、北＞南・東＞西のときだけ使う。**崩れた範囲でピンを打たない**（違う所を指すピンは、無いより悪い） */
-    const b = isObj(am.bbox) ? am.bbox : undefined;
-    const bb = b && { north: num(b.north), south: num(b.south), east: num(b.east), west: num(b.west) };
-    const bbox =
-      bb && bb.north !== undefined && bb.south !== undefined && bb.east !== undefined && bb.west !== undefined && bb.north > bb.south && bb.east > bb.west
-        ? (bb as MapBBox)
-        : undefined;
-    if (b && !bbox) throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap.bbox が崩れている`);
     const beyond = (Array.isArray(am.beyond) ? am.beyond : []).flatMap((a): MapBeyond[] => {
       if (!isObj(a)) return [];
       const id = str(a.id);
@@ -125,7 +120,19 @@ export function readDrawn(country: string, city: string): Drawn {
         throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap.beyond に欠けた所がある（${JSON.stringify(a)}）`);
       return [{ id, name, local: str(a.local), lat: num(a.lat), lon: num(a.lon), x: unit(x, w), y: unit(y, h), dir }];
     });
-    out.areamap = { ...amPic, areas, bbox, beyond };
+    out.areamap = { ...amPic, areas, beyond };
   }
   return out;
+}
+
+/**
+ * やりたいことの札の絵。**描いたもの（`do.<id>`）が先。** 無いあいだは、その体験に出てくる料理・土産の描いた絵
+ * （同じ温かいトーンの絵。ヨーグルトの体験ならキセロ・ムリャコの絵）。どちらも無ければ `undefined`——データの写真のまま、
+ * 写真も無ければ色の地（`components/guidebook/Todo.tsx`）。
+ *
+ * 料理の写真より、描いた料理の絵のほうが「おいしそう」が伝わった（2026-11-16。あやと「おいしそう！かわいい！楽しそう！と
+ * 感情が動く画像」）
+ */
+export function todoPic(d: Drawn, t: Pick<Todo, "id" | "eat" | "buy">): Pic | undefined {
+  return d.do[t.id] ?? (t.eat ?? []).map((id) => d.food[id]).find(Boolean) ?? (t.buy ?? []).map((id) => d.buy[id]).find(Boolean);
 }

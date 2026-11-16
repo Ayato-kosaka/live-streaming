@@ -9,7 +9,7 @@ import type { Fact, Flags, Local, Pic, Src } from "@/content/guidebook/types";
  */
 
 /** 窓の id。**節ごとに頭の字を決める**（`#do-<id>` が URL のハッシュになる） */
-export const sheetId = (sec: "do" | "see" | "eat" | "buy" | "about" | "more" | "area" | "guide", id: string) => `${sec}-${id}`;
+export const sheetId = (sec: "do" | "see" | "eat" | "buy" | "area" | "guide", id: string) => `${sec}-${id}`;
 
 /** 星の言葉（1＝必見）。`rank` の数だけ★を塗るのではない（`docs/country-guide.md` 8章） */
 export const STAR = ["", "必見", "行けたら", "余裕があれば"] as const;
@@ -34,7 +34,8 @@ export function Sec({
 }) {
   return (
     <section className="gb-sec" id={id} data-gb={id} aria-labelledby={`${id}-h`}>
-      <header className="gb-sec-head">
+      {/* `data-icon` は見張りの目印（やりたいこと＝チェック・見たいもの＝カメラ。`tools/sprites/guidebook.mjs`） */}
+      <header className="gb-sec-head" data-icon={icon}>
         <span className="gb-sec-n" aria-hidden="true">
           {String(n).padStart(2, "0")}
         </span>
@@ -68,21 +69,22 @@ export function Picture({
   pic?: Pic;
   sizes: string;
   eager?: boolean;
-  ratio?: string;
+  /** 縦横の比。`null` なら決めない（入れ物の側の CSS が大きさを決める。やりたいことの大小の札） */
+  ratio?: string | null;
   className?: string;
   /** 絵の無いときに地に出す字（名前の頭など）。読み上げには出さない */
   label?: string;
 }) {
   if (!pic) {
     return (
-      <span className={`gb-pic is-none ${className}`} style={{ aspectRatio: ratio }} aria-hidden="true">
+      <span className={`gb-pic is-none ${className}`} style={ratio ? { aspectRatio: ratio } : undefined} aria-hidden="true">
         {label && <b>{label}</b>}
       </span>
     );
   }
   const set = pic.small && pic.small !== pic.src ? `${pic.small} 500w, ${pic.src} 960w` : undefined;
   return (
-    <span className={`gb-pic ${className}`} style={{ aspectRatio: ratio }}>
+    <span className={`gb-pic ${className}`} style={ratio ? { aspectRatio: ratio } : undefined}>
       <img
         src={pic.src}
         srcSet={set}

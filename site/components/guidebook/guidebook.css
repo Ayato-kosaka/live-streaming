@@ -82,6 +82,15 @@
   text-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
 }
 
+/* h1 の2段目（「観光でやりたいこと8選」）。人が打つ語の形の見出しを、街の名前の下に小さく */
+.gb-cover-h1 {
+  display: block;
+  margin-top: 6px;
+  font-size: clamp(18px, 5.4vw, 28px);
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+}
+
 .gb-cover-local {
   display: block;
   margin-top: 2px;
@@ -265,63 +274,41 @@
 
 /* ---- 3 どんな街 -------------------------------------------------------- */
 
-.gb-about {
+/* 問いと答え。**問いは差し色の太字、答えは2〜3文**。押すものではないので平ら（厚みを付けない） */
+.gb-qa {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: var(--sp-2);
 }
 
-@media (min-width: 720px) { .gb-about { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 720px) { .gb-qa { grid-template-columns: 1fr 1fr; gap: var(--sp-3); } }
 
-.gb-about-card {
-  display: grid;
-  align-content: start;
-  gap: 4px;
-  min-height: 132px;
-  padding: var(--sp-3);
+.gb-qa-one {
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
   border-radius: var(--r-1);
   background: var(--gb-card);
   border: 1px solid var(--gb-line);
-  box-shadow: 0 var(--pop-d2) 0 var(--frame-dark);
-  color: var(--ink);
-  text-decoration: none;
+  border-left: 5px solid var(--gb-c);
 }
 
-.gb-about-card:active { transform: translateY(var(--pop-d2)); box-shadow: none; }
-
-.gb-about-num { display: flex; align-items: baseline; gap: 3px; color: var(--gb-c); }
-.gb-about-num b { font-size: 28px; font-weight: 900; line-height: 1.1; }
-.gb-about-num i { font-style: normal; font-size: 12px; font-weight: 700; }
-.gb-about-t { font-size: 14px; font-weight: 900; line-height: 1.35; }
-.gb-about-l { font-size: 12px; line-height: 1.5; color: var(--ink-2); }
-
-.gb-chips {
+.gb-qa-q {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.gb-chip {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 0 var(--sp-3) 0 var(--sp-2);
-  border-radius: 999px;
-  background: var(--gb-card);
-  border: 1px solid var(--gb-line);
-  box-shadow: 0 var(--pop-d2) 0 var(--frame-dark);
-  color: var(--ink);
-  font-size: 13.5px;
-  font-weight: 700;
-  text-decoration: none;
+  gap: 8px;
+  margin: 0 0 4px;
+  color: var(--gb-c);
+  font-size: 16.5px;
+  font-weight: 900;
+  line-height: 1.4;
 }
 
-.gb-chip:active { transform: translateY(var(--pop-d2)); box-shadow: none; }
+.gb-qa-q .ic { flex: none; }
+
+.gb-qa-a { margin: 0; font-size: 14.5px; line-height: 1.75; }
+.gb-qa-one .gb-src { margin-top: 6px; }
 
 /*
- * 見どころマップ（`SpotMap.tsx`）。**ピン・札・矢印の大きさは、並べる側（`content/guidebook/spotmap.ts`）の見積もりと
- * 同じ数にしてある**（ピン 44px・札 34px／2行 44px・字 12.5px・左右の余白 10px・右下の札 132x20）。変えるなら両方。
+ * どんな街の地図（`SpotMap.tsx`）。**札・矢印の大きさは、並べる側（`content/guidebook/spotmap.ts`）の見積もりと
+ * 同じ数にしてある**（札 34px／2行 44px・字 12.5px・左右の余白 10px・右下の札 132x20）。変えるなら両方。
  * 見積もりより大きく描くと、狭い画面で重なる。
  */
 .gb-amap { margin: 0; }
@@ -337,75 +324,6 @@
 
 /* 「イラスト・位置は目安」は右下（左下は地図の外の矢印が来る） */
 .gb-amap-art > .gb-pic-tag { left: auto; right: 6px; }
-
-/* 引き出し線（点 → ピン）。白いふちを下に敷いて、絵のどの色の上でも線が見えるように */
-.gb-amap-lines {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.gb-amap-lines line { stroke: #5b3f15; stroke-width: 2px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.gb-amap-lines line.is-halo { stroke: #fffdf3; stroke-width: 5px; }
-
-.gb-amap-dot {
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  margin: -4.5px 0 0 -4.5px;
-  border-radius: 50%;
-  background: #5b3f15;
-  box-shadow: 0 0 0 2px #fffdf3;
-  pointer-events: none;
-}
-
-/* 写真のピン。**位置は丸の真ん中** */
-.gb-amap-spot {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #fffdf3;
-  box-shadow: 0 0 0 2.5px #fffdf3, 0 2px 6px rgb(60 40 10 / 0.45);
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.gb-amap-spot img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-/* 当たりは 48px まで広げる（見た目は 44px のまま） */
-.gb-amap-spot::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; }
-.gb-amap-spot:active { transform: translate(-50%, -50%) scale(0.95); }
-
-/* 番号。ピンの左上と、一覧の頭で同じもの。地は地区の色 */
-.gb-amap-n {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  min-width: 19px;
-  height: 19px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: var(--c, var(--gb-card));
-  color: var(--ink);
-  font-size: 11.5px;
-  font-style: normal;
-  font-weight: 900;
-  line-height: 1;
-  box-shadow: 0 0 0 1.5px #fffdf3, 0 1px 2px rgb(60 40 10 / 0.35);
-}
-
-/* 丸の外へ出すのは 1px まで（並べる側は丸どうしを 6px 空けている） */
-.gb-amap-spot .gb-amap-n { position: absolute; left: 3px; top: 3px; }
 
 /* 地区の名前の札。**位置は札の真ん中**。長い名前は並べる側が2行に分けて渡す */
 .gb-amap-pin {
@@ -455,112 +373,68 @@
 
 .gb-amap-arw { flex: none; fill: var(--gb-c); }
 
-/* 一覧（凡例）。地区ごとに、色の帯・名前・性格のひとこと、その下に番号と名前の札 */
-.gb-maplg { display: grid; align-content: start; gap: var(--sp-3); margin-top: var(--sp-3); }
-
-/* 広い画面は見開き（左に地図・右に一覧）。地図を幅いっぱいにすると、1枚で画面の高さを超えた */
-@media (min-width: 960px) {
-  .gb-amap:has(> .gb-amap-art) {
-    display: grid;
-    grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
-    gap: var(--sp-4);
-    align-items: start;
-  }
-
-  .gb-amap > .gb-maplg { margin-top: 0; }
-  .gb-amap > .gb-maplg .gb-lg-list > li { max-width: 100%; }
-}
-
-.gb-lg {
-  padding-left: 10px;
-  border-left: 5px solid var(--c, color-mix(in srgb, var(--ink) 25%, transparent));
-}
-
-.gb-lg-h {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: 44px;
-  margin: 0;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.gb-lg-h b { font-size: 14.5px; font-weight: 900; line-height: 1.4; }
-.gb-lg-h b small { margin-left: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
-a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
-.gb-lg-h span { font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
-
-/* 札は詰めて並べる（1件1行にすると、一覧が地図の4倍の長さになった）。見た目 40px に、当たりを上下 2px 足して 44px */
-.gb-lg-list {
-  display: flex;
-  flex-wrap: wrap;
+/* 地区の雰囲気のひとこと。色の点・名前・ひとこと。押すとエリアの窓（地図の札と同じ） */
+.gb-amap-lg {
+  display: grid;
   gap: 4px;
-  margin: 4px 0 0;
+  margin: var(--sp-2) 0 0;
   padding: 0;
   list-style: none;
 }
 
-.gb-lg-list a {
+/* 名前とひとことは2段（横に並べると、ひとことが1字だけ次の行に落ちた） */
+.gb-amap-lg a {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 40px;
-  padding: 0 11px 0 7px;
-  border-radius: 999px;
-  background: var(--gb-card);
-  border: 1px solid var(--gb-line);
+  display: grid;
+  gap: 0;
+  min-height: 44px;
+  padding: 5px 4px 5px 24px;
   color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.3;
   text-decoration: none;
 }
 
-.gb-lg-list a::after { content: ""; position: absolute; inset: -2px 0; }
-
-/* 長い名前は札の中で折る（1件で1行を取らせない。狭い画面で2列に並ぶ） */
-.gb-lg-list > li { display: flex; max-width: calc(50% - 2px); }
-.gb-lg-list a { padding-top: 3px; padding-bottom: 3px; word-break: auto-phrase; }
-
-.gb-lg-list a:active { transform: scale(0.97); }
-
-/* ピンの立たなかったもの。番号の代わりに地区の色の点 */
-.gb-lg-list a > i {
-  flex: none;
-  width: 8px;
-  height: 8px;
+.gb-amap-lg a::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  width: 13px;
+  height: 13px;
   border-radius: 50%;
-  background: var(--c, color-mix(in srgb, var(--ink) 35%, transparent));
+  background: var(--c);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--c) 55%, #5b3f15);
 }
 
-.gb-lg-list small { margin-left: 5px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+.gb-amap-lg b { font-size: 14px; font-weight: 900; line-height: 1.45; }
+.gb-amap-lg span { font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.gb-amap-lg a:active { transform: scale(0.98); }
 
-/* 地図の外の札は、名前と行き先（マップで見る・中心から◯km）を2段に分ける。続けて流すと、390px で
-   「シュト・／オリザリ マップで見る」と名前の途中で折れた（2026-11-15） */
-.gb-lg-out { display: flex; flex-direction: column; }
-.gb-lg-out > small { margin-left: 0; line-height: 1.25; }
+/* 詳しい場所は、見たいもののマイマップへ（地図はマイマップと役目が違う。ここは概要だけ） */
+.gb-amap-more { margin: var(--sp-2) 0 0; }
 
-.gb-lg-more { margin-top: 4px; }
-
-.gb-lg-more > summary {
+.gb-amap-more a {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-height: 44px;
-  padding: 0 4px;
-  color: var(--ink-2);
-  font-size: 12.5px;
+  color: var(--gb-c);
+  font-size: 14px;
   font-weight: 900;
-  cursor: pointer;
-  list-style: none;
 }
 
-.gb-lg-more > summary::-webkit-details-marker { display: none; }
-.gb-lg-more > summary::before { content: "▸"; color: var(--gb-c); transition: transform 0.15s; }
-.gb-lg-more[open] > summary::before { transform: rotate(90deg); }
-.gb-lg-more > .gb-lg-list { margin-top: 0; }
+/* 広い画面は見開き（左に地図・右にひとこと）。地図を幅いっぱいにすると、1枚で画面の高さを超えた */
+@media (min-width: 960px) {
+  .gb-amap:has(> .gb-amap-art) {
+    display: grid;
+    grid-template-columns: minmax(0, 560px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 0 var(--sp-4);
+    align-items: start;
+  }
+
+  .gb-amap > .gb-amap-art { grid-row: 1 / span 2; }
+  .gb-amap > .gb-amap-lg { margin-top: 0; }
+}
 
 /* 絵の無いあいだの、色の札のエリア地図（北が上。3列） */
 .gb-plan {
@@ -596,53 +470,153 @@ a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
 
 /* ---- 4 やりたいこと ---------------------------------------------------- */
 
+/*
+ * 雑誌の見開きの調子（あやと 2026-11-16「写真とテキストの均等な並びで単調」）。
+ * 1枚目は画面いっぱいの大きな絵（`is-hero`）、残りは広い札（`is-w`・横長）と細い札（`is-h`・縦長）を混ぜる。
+ * 字は絵の上に、下からの暗幕で乗せる（白に対して 4.5 以上）。大きさは部品（`Todo.tsx` の `spans`）が決める。
+ * 一面に並ぶ札が全部押せるので、1枚ずつに厚みは付けない（`docs/island-design.md` 3章3の例外）
+ */
 .gb-todo {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-3) var(--sp-2);
+  gap: var(--sp-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@media (min-width: 720px) { .gb-todo { grid-template-columns: repeat(4, 1fr); } }
+.gb-todo > li { display: grid; min-width: 0; }
+.gb-todo > li.is-hero,
+.gb-todo > li.is-w { grid-column: 1 / -1; }
 
 .gb-todo-card {
   position: relative;
-  display: block;
-  color: var(--ink);
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r-2);
+  background: #6c4a3c;
+  color: #fff;
   text-decoration: none;
 }
 
-.gb-todo-card .gb-pic { border-radius: var(--r-1); }
-.gb-todo-card:active .gb-pic { transform: scale(0.98); }
+.is-w > .gb-todo-card { aspect-ratio: 16 / 10; }
 
-/* 大きな番号。写真の左上に、紙の色で */
-.gb-todo-n {
+.gb-todo-card > .gb-pic { position: absolute; inset: 0; z-index: -2; }
+/* 「イラスト」の札は、番号と印の並びに置く（絵の左下は題が乗る。右上は細い札で印とぶつかる）。絵の中の札は出さない */
+.gb-todo-card > .gb-pic .gb-pic-tag { display: none; }
+.gb-todo-top > .gb-pic-tag { position: static; }
+.gb-todo-card:active { transform: scale(0.985); }
+
+/* 暗幕は下から。字の乗る所だけ濃く、絵の上半分は潰さない */
+.gb-todo-card::before {
+  content: "";
   position: absolute;
-  top: 6px;
-  left: 6px;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to top, rgb(28 18 10 / 0.9) 0%, rgb(28 18 10 / 0.62) 38%, rgb(28 18 10 / 0) 68%);
+}
+
+/* 絵の無いあいだの地。**落ち着いた深い色**に、白い字（暗幕は要らない） */
+.gb-todo-card.is-nopic::before { background: radial-gradient(120% 80% at 80% 0%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 60%); }
+.gb [data-tone="0"] { --gb-ground: #8a5a1c; }
+.gb [data-tone="1"] { --gb-ground: #a8435e; }
+.gb [data-tone="2"] { --gb-ground: #2f5d46; }
+.gb [data-tone="3"] { --gb-ground: #2e5876; }
+.gb-todo-card.is-nopic { background-color: var(--gb-ground); }
+
+/* 窓の頭の帯（絵の無いあいだ）。札と同じ色の地に絵 */
+.gb-todo-ground {
   display: grid;
   place-items: center;
-  min-width: 40px;
-  height: 40px;
-  padding: 0 6px;
-  border-radius: 12px;
-  background: var(--gb-c);
-  color: #fff;
+  aspect-ratio: 16 / 7;
+  border-radius: var(--r-1);
+  background: radial-gradient(120% 90% at 80% 0%, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0) 60%), var(--gb-ground);
+}
+
+/* 絵の無いあいだの大きな絵。札の上半分の真ん中に */
+.gb-todo-ic {
+  position: absolute;
+  z-index: -1;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.25));
+}
+
+/* 番号と印は左上 */
+.gb-todo-top {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.gb-todo-n {
   font-size: 22px;
   font-weight: 900;
   line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.55);
 }
 
-.gb-todo-b { display: block; margin-top: 6px; }
-.gb-todo-t { display: block; font-size: 14px; font-weight: 900; line-height: 1.45; }
+.gb-todo-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fffdf3;
+  color: var(--gb-c);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+}
+
+.gb-todo-b { display: grid; justify-items: start; gap: 4px; padding: 10px 12px 12px; }
+/* 語の切れ目で折る。カタカナの長い語（「クリスマスマーケットで」）が細い札の幅を超えるときだけ、語の中で折る */
+.gb-todo-t { font-size: 15px; font-weight: 900; line-height: 1.4; text-shadow: 0 1px 4px rgb(0 0 0 / 0.4); overflow-wrap: anywhere; }
+.gb-todo-c { font-size: 13px; font-weight: 700; line-height: 1.5; }
+
+.is-w .gb-todo-t { font-size: 18px; }
+
+/* 1枚目。題を大きく（雑誌の表紙の見出しの調子） */
+.is-hero .gb-todo-top { top: 14px; left: 16px; gap: 10px; }
+.is-hero .gb-todo-n { font-size: 44px; }
+.is-hero .gb-todo-badge { padding: 4px 12px; font-size: 13.5px; }
+.is-hero .gb-todo-b { gap: 8px; padding: 20px 18px 20px; }
+.is-hero .gb-todo-t { font-size: clamp(27px, 7.6vw, 42px); line-height: 1.25; }
+.is-hero .gb-todo-c { font-size: 15.5px; }
+
+@media (min-width: 720px) {
+  .gb-todo { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 232px; gap: var(--sp-3); }
+  .gb-todo > li[data-d] { grid-column: span 1; }
+  .gb-todo > li[data-d="2"] { grid-column: span 2; }
+  .gb-todo > li[data-d="3"] { grid-column: span 3; }
+  .gb-todo > li[data-d="4"] { grid-column: 1 / -1; }
+  .gb-todo > li.is-hero { grid-column: 1 / -1; grid-row: span 2; }
+  .gb-todo-card,
+  .is-w > .gb-todo-card { aspect-ratio: auto; height: 100%; }
+  .is-hero .gb-todo-b { max-width: 72%; padding: 28px 30px; }
+}
+
+/* 窓の頭の大きなキャッチコピーと、印 */
+.gb-catch { margin: 0 0 var(--sp-2); color: var(--gb-c); font-size: 19px; font-weight: 900; line-height: 1.45; word-break: auto-phrase; }
+.gb-todo-badge.is-in { margin-right: 8px; background: var(--gb-c); color: #fff; box-shadow: none; vertical-align: 1px; }
 
 /* **見出しと札の題は、語の切れ目で折る**（「日帰りで行/く」のように1字だけ次の行に落とさない） */
 .gb-sec-head h2,
 .gb-todo-t,
+.gb-todo-c,
 .gb-tile-b b,
-.gb-about-t,
+.gb-qa-q,
 .gb-dlg-t,
 .gb-plan-a b,
 .gb-guides b,
@@ -818,7 +792,9 @@ a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
 .gb-kinds input:focus-visible + label { outline: 3px solid var(--accent-2); outline-offset: 2px; }
 
 /* 地図の下の店・市場 */
-.gb-mapblock { margin-top: var(--sp-4); }
+.gb-mapblock { margin-top: var(--sp-4); scroll-margin-top: 72px; }
+.gb-mapblock.is-first { margin-top: 0; }
+.gb-mapblock.is-first > .gb-sub { margin-top: 0; }
 
 .gb-places {
   display: grid;
@@ -1168,10 +1144,6 @@ a.gb-lg-h b::after { content: " ›"; color: var(--gb-c); }
 .gb-local i { font-style: normal; font-size: 12px; font-weight: 400; color: var(--ink-2); }
 .gb-star { font-size: 12.5px; font-weight: 700; color: var(--gb-c); }
 .gb-star b { margin-right: 3px; color: #e0a100; }
-
-.gb-bignum { display: flex; align-items: baseline; gap: 4px; margin: 0 0 var(--sp-2); color: var(--gb-c); }
-.gb-bignum b { font-size: 44px; font-weight: 900; line-height: 1.1; }
-.gb-bignum i { font-style: normal; font-size: 15px; font-weight: 700; }
 
 .gb-rel { display: grid; gap: 2px; margin: var(--sp-3) 0 0; }
 .gb-rel > span { font-size: 12px; font-weight: 700; color: var(--ink-2); }

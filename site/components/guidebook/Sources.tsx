@@ -8,7 +8,6 @@ import type { Guidebook, Pic, Src } from "@/content/guidebook/types";
 export default function Sources({ g, drawn }: { g: Guidebook; drawn: boolean }) {
   const all: Src[] = [
     ...g.about.cards.flatMap((x) => x.src),
-    ...g.about.more.flatMap((x) => x.src),
     ...g.about.areas.flatMap((x) => x.src),
     ...g.todo.flatMap((x) => x.src),
     ...g.see.items.flatMap((x) => x.src),

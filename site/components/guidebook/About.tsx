@@ -8,72 +8,40 @@ import { WentBox } from "./Videos";
 import { Ext, LocalName, Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
 
 /**
- * 3 どんな街。**歴史と街の性格を4枚の小さな札で**、その下に**見どころマップ**。
+ * 3 どんな街。**短い問いと、2〜3文の答え**（「歴史は？」「どんな雰囲気？」）。その下に**どのあたりに何がある？**の地図。
  *
- * 札は大きい数1つと題だけを見せて、本文は窓へ（あやと「文字文字しくならないように」）。
+ * ## 大きな数の札は、やめた（あやと 2026-11-16「どんな街の大きな数字は AI 臭い」）
  *
- * ## 見どころマップ
+ * 前は「前7000年ごろから」「49の温泉」のような大きい数1つと題の札で、本文は窓に入っていた。数を大きく見せても
+ * 街の姿は伝わらない。問いに短く答える形にして、答えは面にそのまま出す（窓を開かなくても読める長さ）。
+ * 「よく言われること」（標語・ヨーグルト・安い・バラ）の札も消した——ヨーグルトとバラはやりたいことに入っている
+ * （`docs/island-misses.md` #327）。
  *
- * 描いた絵地図の上に、地区の名前・番号つきの写真のピン・地図の外の矢印を面の側で重ね、下に地区ごとの一覧を置く
- * （`SpotMap.tsx`。#1228 あやと 2026-11-15「見どころマップみたいにしたいの」）。地区の札を押すと、そのエリアの窓。
+ * 地図は概要だけ（`SpotMap.tsx`）。地区の札を押すと、そのエリアの窓。
  */
 export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: number }) {
-  const { cards, more, areas } = g.about;
+  const { cards, areas } = g.about;
   const byId = new Map(g.see.items.map((s) => [s.id, s]));
   return (
     <Sec id="about" n={n} icon="oldtown" title={`${g.name}は、どんな街？`}>
-      <div className="gb-about">
+      <div className="gb-qa">
         {cards.map((c) => (
-          <a key={c.id} className="gb-about-card" href={`#${sheetId("about", c.id)}`}>
-            <span className="gb-about-num">
-              <b>{c.num}</b>
-              <i>{c.unit}</i>
-            </span>
-            <span className="gb-about-t">{c.title}</span>
-            {c.lead && <span className="gb-about-l">{c.lead}</span>}
-          </a>
+          <section key={c.id} className="gb-qa-one" aria-labelledby={`about-${c.id}-q`}>
+            <h3 id={`about-${c.id}-q`} className="gb-qa-q">
+              {c.icon && <Icon name={c.icon} size={30} />}
+              {c.q}
+            </h3>
+            <Ext>
+              <p className="gb-qa-a">{c.a}</p>
+              <SrcLine src={c.src} of={c.q} />
+            </Ext>
+          </section>
         ))}
       </div>
 
-      {more.length > 0 && (
-        <>
-          <h3 className="gb-sub">よく言われること</h3>
-          <div className="gb-chips">
-            {more.map((m) => (
-              <a key={m.id} className="gb-chip" href={`#${sheetId("more", m.id)}`}>
-                <Icon name={m.icon} size={22} />
-                <span>{m.title}</span>
-              </a>
-            ))}
-          </div>
-        </>
-      )}
-
-      <h3 className="gb-sub">見どころマップ</h3>
+      <h3 className="gb-sub">どのあたりに何がある？</h3>
       <SpotMap g={g} drawn={drawn} />
 
-      {cards.map((c) => (
-        <Sheet key={c.id} id={sheetId("about", c.id)} kicker="どんな街" title={c.title}>
-          <p className="gb-bignum">
-            <b>{c.num}</b>
-            <i>{c.unit}</i>
-          </p>
-          <Ext>
-            <p>{c.body}</p>
-            <SrcLine src={c.src} of={c.title} />
-          </Ext>
-        </Sheet>
-      ))}
-      {more.map((m) => (
-        <Sheet key={m.id} id={sheetId("more", m.id)} kicker="よく言われること" title={m.title}>
-          <Ext>
-            {m.parts.map((p, i) => (
-              <p key={i}>{p.text}</p>
-            ))}
-            <SrcLine src={m.src} of={m.title} />
-          </Ext>
-        </Sheet>
-      ))}
       {areas.map((a) => (
         <Sheet key={a.id} id={sheetId("area", a.id)} kicker="エリア" title={a.name} tone={a.color}>
           {a.local && (
@@ -90,7 +58,7 @@ export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: 
           {a.see.length > 0 && (
             <>
               <h4 className="gb-h4">このエリアの見たいもの</h4>
-              <MiniTiles items={a.see.map((id) => byId.get(id)).filter((x): x is Item => !!x)} />
+              <MiniTiles items={a.see.flatMap((id) => (byId.has(id) ? [{ kind: "see" as const, it: byId.get(id)! }] : []))} />
             </>
           )}
         </Sheet>
@@ -99,15 +67,18 @@ export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: 
   );
 }
 
-/** 窓の中の小さな札（見たいものへ）。押すと、その見たいものの窓に入れ替わる */
-export function MiniTiles({ items }: { items: Item[] }) {
+/** 窓の中の小さな札の1枚。どの節の窓へ繋ぐか（`kind`）と、その品 */
+export type Mini = { kind: "see" | "eat" | "buy"; it: Item };
+
+/** 窓の中の小さな札（見たいもの・食べたいもの・買いたいものへ）。押すと、その窓に入れ替わる */
+export function MiniTiles({ items }: { items: Mini[] }) {
   return (
     <ul className="gb-minis">
-      {items.map((s) => (
-        <li key={s.id}>
-          <a href={`#${sheetId("see", s.id)}`}>
-            <Picture pic={s.pic} sizes="96px" ratio="1 / 1" label={shortName(s.name).slice(0, 1)} />
-            <span>{shortName(s.name)}</span>
+      {items.map(({ kind, it }) => (
+        <li key={`${kind}-${it.id}`}>
+          <a href={`#${sheetId(kind, it.id)}`}>
+            <Picture pic={it.pic} sizes="96px" ratio="1 / 1" label={shortName(it.name).slice(0, 1)} />
+            <span>{shortName(it.name)}</span>
           </a>
         </li>
       ))}

@@ -7,13 +7,13 @@ import Cover from "@/components/guidebook/Cover";
 import { Buy, Eat, See } from "@/components/guidebook/Items";
 import SheetHost from "@/components/guidebook/SheetHost";
 import Sources from "@/components/guidebook/Sources";
-import Toc from "@/components/guidebook/Toc";
+import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { AHEAD_COUNTRIES } from "@/content/countries";
-import { readDrawn } from "@/content/guidebook/manifest";
+import { readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
 import { TRAVEL_ARTICLES, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
@@ -80,25 +80,17 @@ export default function SkopjePage() {
   const drawn = readDrawn(G.country, G.city);
   const articles = articlesOf(G.country, G.city);
   const prices = articles.find((a) => a.href === G.basics.budget.article);
-  /* 描いた絵があれば、料理と土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先） */
-  const swap = (it: (typeof G.eat.items)[number], pic?: (typeof drawn.food)[string]) => (pic && !it.went ? { ...it, pic } : it);
+  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先） */
+  const swap = <T extends { went?: unknown }>(it: T, pic?: (typeof drawn.food)[string]) => (pic && !it.went ? { ...it, pic } : it);
   const g = {
     ...G,
     stay: stayOf(G.country),
+    todo: G.todo.map((t) => swap(t, todoPic(drawn, t))),
     eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
     buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
   };
-  const usedDrawn = !!(drawn.cover || drawn.areamap || Object.keys(drawn.food).length || Object.keys(drawn.buy).length);
-  const went = (xs: { went?: unknown }[]) => xs.filter((x) => x.went).length;
-  const note = (n: number, unit: string, xs: { went?: unknown }[]) => `${n}${unit}${went(xs) ? `・行った${went(xs)}` : ""}`;
-  const toc = [
-    { id: "about", label: "どんな街", icon: "oldtown" as const, note: `${g.about.cards.length}話・エリア${g.about.areas.length}` },
-    { id: "todo", label: `やりたいこと${g.todo.length}選`, icon: "sparkle" as const, note: note(g.todo.length, "つ", g.todo) },
-    { id: "see", label: "見たい", icon: "see" as const, note: note(g.see.items.length, "か所", g.see.items) },
-    { id: "eat", label: "食べたい", icon: "eat" as const, note: note(g.eat.items.length, "品", g.eat.items) },
-    { id: "buy", label: "買いたい", icon: "souvenir" as const, note: note(g.buy.items.length, "つ", g.buy.items) },
-    { id: "basics", label: "基本情報", icon: "info" as const, note: "予算・移動・治安" },
-  ];
+  const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
+  const toc = tocOf(g);
   return (
     <PageShell crumbs={travelCityCrumbs(G.country, G.city)}>
       <JsonLd

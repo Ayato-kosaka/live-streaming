@@ -121,11 +121,6 @@ export type Item = {
   flags?: Flags;
   /** どのエリアか（`Area` の id） */
   area?: string;
-  /**
-   * 本当の位置（緯度・経度。出どころは `src` と同じ材料）。見どころマップのピンを、描いた絵の範囲（`MapBBox`）で
-   * 絵の上に直して置く。**無い所はピンにしない**（場所を確かめていない所を、地図の上に置かない）
-   */
-  at?: { lat: number; lon: number };
   /** この場所が出てくるやりたいこと（`Todo` の id）。**互いに繋ぐ**（#1228 決めたこと1） */
   todo?: string[];
   src: Src[];
@@ -149,40 +144,51 @@ export type Place = {
 };
 
 /**
- * やりたいこと1つ。**体験の形の題**（「〜を歩く」「〜へ日帰り」）。見たいもの（場所の一覧）とは役割を分け、
+ * やりたいこと1つ。**「ソフィアといえばこれ！」の、やってみたい体験**（#1228。あやと 2026-11-16「ソフィア 60点」）。
+ *
+ * 名所の紹介にしない。ミーハーでベタな欲求（本場のヨーグルト・バラのお土産・温泉・冬のマーケット）を、
+ * 「行ってこれをしてきた！」と言える形で選ぶ（`docs/island-misses.md` #327）。場所の一覧は見たいもの（`Item`）の仕事で、
  * 出てくる場所は `see` で見たいものへ繋ぐ。
  *
- * 窓（見開き）に出す7つ: どこ・何をする・行き方・時間・お金・コツ・回りかた
+ * 札に出すのは絵・題・印（と、1枚目だけ `catch`）。字は窓の中。
+ * 窓（見開き）に出すのは: どこで・何をする・いつ・行き方・時間・お金・コツ・回りかた。**出どころつき。作らない・推測で埋めない**
  */
 export type Todo = {
   id: string;
+  /** 体験の題。「〜したい！」の調子（読む人の頭の中の欲しいもの） */
   title: string;
-  /** 札の下の1行 */
+  /** 大きなキャッチコピー1行（1枚目の大きな札と、窓の頭）。無ければ `lead` */
+  catch?: string;
+  /** 札の小さな印（「冬だけ」「1個 1ユーロ前後」）。**事実だけ**——額・季節・無料は `src` の字に在るもの */
+  badge?: string;
+  /** 絵の無いあいだ、色の地に大きく置く絵（`components/ui/Icon`）。描いた絵か写真が来たら出ない */
+  icon?: IconName;
+  /** 札の下の1行（窓の頭にも出す） */
   lead: string;
   pic?: Pic;
   what: string;
+  /** いつ（季節もの・期間のあるものだけ） */
+  when?: string;
   how: string;
   time: string;
   money: string;
   tip: string;
   route: string;
-  /** 出てくる見たいもの（`Item` の id）。窓の「どこ」と、見たいもの側からの繋ぎ */
+  /** 出てくる見たいもの（`Item` の id）。窓の「どこで」と、見たいもの側からの繋ぎ */
   see: string[];
-  /** 出てくる食べたいもの（`Item` の id）。窓の「どこ」の下に並ぶ */
+  /** 出てくる食べたいもの（`Item` の id）。窓の「どこで」の下に並ぶ */
   eat?: string[];
+  /** 出てくる買いたいもの（`Item` の id）。窓の「どこで」の下に並ぶ */
+  buy?: string[];
   src: Src[];
   went?: Went;
-  /** 本当の位置（材料が出どころつきの座標を持つときだけ）。見たいものの無い地区で、見どころマップの代表になる（`SpotRule` の 1） */
-  at?: { lat: number; lon: number };
-  /** その位置のエリア（`Area` の id） */
-  area?: string;
 };
 
 /**
- * エリア。見どころマップの地区の色と名前、窓の中身。
+ * エリア。どんな街の地図（`components/guidebook/SpotMap.tsx`）の地区の色と名前・雰囲気のひとこと、窓の中身。
  *
- * **地図に描いてある地区だけを持つ。** 絵の外の所（山・郊外・日帰り）はエリアにしない——見どころマップの縁の矢印
- * （`MapBeyond`）と、一覧の「地図の外」に出す（#1228。スコピエのヴォドノ山・ソフィアの山と郊外）
+ * **地図に描いてある地区だけを持つ。** 絵の外の所（山・郊外・日帰り）はエリアにしない——地図の縁の矢印
+ * （`MapBeyond`）に出す（#1228。スコピエのヴォドノ山・ソフィアの山と郊外）
  */
 export type Area = {
   id: string;
@@ -205,15 +211,20 @@ export type Area = {
   went?: Went;
 };
 
-/** どんな街の札。大きい数1つ＋題＋1行。押すと本文 */
+/**
+ * どんな街の問いと答え1組。**短い問い（「歴史は？」）と、2〜3文の答え**（#1228。あやと 2026-11-16）。
+ *
+ * 前は大きい数1つ（「前7000年ごろから」「49の温泉」）の札だった。数を大きく見せる札は AI の作った面に見える、と
+ * 言われてやめた（`docs/island-misses.md` #327）。答えは出どころの字のまま、つないでよい（数字と固有名は材料どおり）
+ */
 export type About = {
   id: string;
-  num: string;
-  unit: string;
-  title: string;
-  /** 札の下の1行。無ければ数と題だけ */
-  lead?: string;
-  body: string;
+  /** 問いの頭の絵（歴史＝遺跡・お金＝硬貨…）。字だけの札が並ぶと、読む前に重く見える */
+  icon?: IconName;
+  /** 読む人の頭の中の問い。15字まで・「？」で終わる（焼く道具が止める） */
+  q: string;
+  /** 2〜3文の答え */
+  a: string;
   src: Src[];
 };
 
@@ -270,12 +281,6 @@ export type Help = {
   embassy: { name: string; address: string; tel: string; hours?: string; note?: string; maps: string; src: Src[] };
 };
 
-/**
- * 描いた絵地図の範囲（緯度経度）。`public/guide/<国>/<街>/manifest.json` の `areamap.bbox`。
- * 絵は OSM のタイルから描いたので、**緯度は web メルカトルで割る**（`content/guidebook/spotmap.ts` の `project`）
- */
-export type MapBBox = { north: number; south: number; east: number; west: number };
-
 /** 8方位（絵の上が北） */
 export type MapDir = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
 
@@ -287,23 +292,6 @@ export type MapDir = "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw";
  *   どちらも無ければ、現地の名前で Google マップを開く（「マップで見る」）
  */
 export type MapBeyond = { id: string; name: string; local?: string; lat?: number; lon?: number; x: number; y: number; dir: MapDir };
-
-/**
- * **見どころマップに、写真のピンを立てる代表の決まり。**（#1228。あやと 2026-11-15）
- *
- * 1. 座標（`Item.at`）が描いた絵の範囲（`MapBBox`）の中にあり、写真（行った日のカードか借りた写真）のある見たいものだけ。
- *    **見たいものの1つも無い地区だけは、その地区の座標つきのやりたいこと（`Todo.at`）を代表にする**（押すとやりたいことの窓。
- *    スコピエのおしゃれエリアに、ピンが1本も無かった。#1228）
- * 2. 選ぶ順: まず**エリアごとに1つ**（ピンの無い地区を作らない）。残りは 必見 → 行けたら → 余裕があれば → 星なし。
- *    同じ星なら 行った所 → やりたいことに出てくる数 → データの並び
- * 3. その順に、いちばん狭い絵（340px）の上で、本当の位置から 72px 以内に、ほかのピン・エリアの札・矢印と重ならず、
- *    ほかの代表の点を隠さず、固まりの内側へ回り込まずに置けるものだけ立てる（固まった所は、点を残して引き出し線で外へ）
- * 4. **最大 `max` 本**。札が置けないときは本数を減らす。立たなかったものは、地図の下の一覧にだけ出る（番号なし）
- *
- * 番号は一覧の並び（エリアの順 → その中はピンが先）で、1 から振る。実行は `content/guidebook/spotmap.ts`
- */
-export type SpotRule = { max: 10 };
-export const SPOT_RULE: SpotRule = { max: 10 };
 
 /** Google マイマップの埋め込み（`docs/mymaps.md`）。中心と縮尺はピンの広がりから焼いたもの */
 export type MyMap = { mid: string; title: string; ll: string; z: number; pins: number };
@@ -333,7 +321,7 @@ export type Guidebook = {
   stay?: { from: string; to: string };
   /** 円に直すときのレート（字で「1ユーロ＝177円（2026年11月6日）」のように出す） */
   rate: { unit: string; yen: number; date: string };
-  about: { cards: About[]; more: Guide[]; areas: Area[] };
+  about: { cards: About[]; areas: Area[] };
   todo: Todo[];
   /** `map` はマイマップを作るまで無い。無いあいだは枠を出さず、一覧と「マップ」の札だけで成り立つ */
   see: { items: Item[]; map?: MyMap; far: Place[] };

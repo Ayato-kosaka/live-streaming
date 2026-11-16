@@ -12,7 +12,11 @@ import { Credit, Ext, Facts, FlagMarks, LocalName, MapsLink, Picture, STAR, Sec,
 type Kind = "see" | "eat" | "buy";
 
 /**
- * 5〜7 見たい・食べたい・買いたい。**写真の札の格子 → 押すと窓**、その下に**マイマップ**。
+ * 5〜7 見たいもの・食べたいもの・買いたいもの。**写真の札の格子 → 押すと窓**と、**マイマップ**。
+ *
+ * 節の名前は「見たいもの」「食べたいもの」「買いたいもの」（あやと 2026-11-16。前は「どこを見る？」の問いの形）。
+ * **見たいものだけ、マイマップが上**——見たいものの地図は「どこにあるか」を先に知りたい人のもので、どんな街の地図
+ * （概要）から「詳しい場所は…」で飛んでくる先でもある（`#see-mymap`）。食べたい・買いたいは、品を見てから店を探すので下。
  *
  * 札に出すのは絵・名前・1行（値段か距離）だけ。字は窓の中（あやと「文字文字しくならないように」）。
  * 一面に並ぶ札が全部押せるので、1枚ずつに厚みは付けない（`docs/island-design.md` 3章3の例外）。
@@ -163,20 +167,22 @@ export function Places({ rows, items, kind }: { rows: Place[]; items: Item[]; ki
   );
 }
 
-/** 見たいもの。星の順に、必見と行けたらを並べ、余裕があればは畳む */
+/** 見たいもの。**マイマップが上**、その下に星の順の札（必見と行けたら）。余裕があればは畳む */
 export function See({ g, n }: { g: Guidebook; n: number }) {
   const items = g.see.items;
   const top = items.filter((s) => (s.rank ?? 3) <= 2).sort((a, b) => (a.rank ?? 3) - (b.rank ?? 3));
   const rest = items.filter((s) => (s.rank ?? 3) > 2);
   return (
-    <Sec id="see" n={n} icon="see" title="どこを見る？">
+    <Sec id="see" n={n} icon="camera" title="見たいもの">
+      {g.see.map && (
+        <MapBlock m={g.see.map} caption={`見たいもの${g.see.map.pins}か所。ピンを押すと名前と説明`} icon="map" title="地図で見る" id="see-mymap" first />
+      )}
       <Tiles kind="see" items={top} cols={2} todo={g.todo} />
       {rest.length > 0 && (
         <Fold title={`ほかにも${rest.length}か所`} lead={STAR[3]}>
           <Tiles kind="see" items={rest} cols={2} todo={g.todo} />
         </Fold>
       )}
-      {g.see.map && <MapBlock m={g.see.map} caption={`見たいもの${g.see.map.pins}か所。ピンを押すと名前と説明`} icon="map" title="地図で見る" />}
       {g.see.far.length > 0 && <h3 className="gb-sub is-small">中心から離れた所</h3>}
       {g.see.far.length > 0 && (
         <ul className="gb-far">
@@ -205,7 +211,7 @@ export function Eat({ g, n }: { g: Guidebook; n: number }) {
   const alcohol = items.filter((it) => it.flags?.alcohol).length;
   const name = `gb-kind-${g.city}`;
   return (
-    <Sec id="eat" n={n} icon="eat" title="何を食べる？">
+    <Sec id="eat" n={n} icon="eat" title="食べたいもの">
       <div className="gb-eat">
         <fieldset className="gb-kinds">
           <legend className="sr-only">種類で絞る</legend>
@@ -259,7 +265,7 @@ function KindRadio({ name, id, count, children }: { name: string; id: string; co
 export function Buy({ g, n }: { g: Guidebook; n: number }) {
   const { items, places, map } = g.buy;
   return (
-    <Sec id="buy" n={n} icon="souvenir" title="何を買って帰る？">
+    <Sec id="buy" n={n} icon="souvenir" title="買いたいもの">
       <Tiles kind="buy" items={items} cols={3} todo={g.todo} />
       <MapBlock m={map} caption={map && `${map.pins}か所。ピンを押すと名前と説明`} icon="market" title="買える所" />
       <Fold title="店と市場の一覧" note={`${places.length}か所`}>
@@ -273,9 +279,25 @@ export function Buy({ g, n }: { g: Guidebook; n: number }) {
  * 節の下の地図。**マイマップがまだ無い街は、枠を出さずに見出しだけ**——下の店の一覧の「マップ」の札が、
  * 名前で検索した Google マップを1軒ずつ開く（#1228。マイマップは別の担当が作る）
  */
-function MapBlock({ m, caption, icon, title }: { m?: MyMapT; caption?: string; icon: IconName; title: string }) {
+function MapBlock({
+  m,
+  caption,
+  icon,
+  title,
+  id,
+  first,
+}: {
+  m?: MyMapT;
+  caption?: string;
+  icon: IconName;
+  title: string;
+  /** 面の中の錨（どんな街の地図から飛んでくる先） */
+  id?: string;
+  /** 節の頭に置く（上の余白を詰める） */
+  first?: boolean;
+}) {
   return (
-    <div className="gb-mapblock">
+    <div className={`gb-mapblock${first ? " is-first" : ""}`} id={id}>
       <h3 className="gb-sub">
         <Icon name={icon} size={20} />
         {title}
