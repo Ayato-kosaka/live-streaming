@@ -17,6 +17,8 @@
  7. check: 作り直した manifest が同じなら 0、字が1つ違えば 1
  8. EC2 の一括: 済んだ品を飛ばす・落ちた品を2周目で埋める・ログイン切れで止める・DONE を書く
  9. 見比べの1枚: 参考写真と描いた絵を並べる（参考写真は手元に置いたもの。取りに行かない）
+10. やりたいこと（do）: 見出しは横と縦を別々に・ほかは1枚を 4:3 と 1:1 に・表紙の手本と建物の写真の渡しかた・
+    EC2 で切らずに持ち帰る・欄の形・持ち帰っていない形を残す・欠けた品は載せない・check・見比べ
 """
 from __future__ import annotations
 
@@ -361,6 +363,92 @@ def main() -> int:
         empty = with_city(sp, "xx/empty")
         rc, _, _ = quiet(ga.sheet, empty, root, tmp / "w2")
         ok(rc == 2, "並べる絵が1枚も無いのに sheet が 0")
+
+        print("10. やりたいこと（do）")
+        dsp = with_city(town(root), "xx/dotown")
+        png(root / "photos/bath.webp", (500, 375))
+        dsp["do"] = {"model": "xx/model:food-a", "note": "やりたいことの注", "items": {
+            "eat": {"ja": "食べる", "shape": "hero", "desc": "Eating.", "alt": "食べる字", "note": "見出しの注", "v_tall": 2},
+            "bath": {"ja": "湯", "desc": "A bath.", "alt": "湯の字", "photos": ["photos/bath.webp"], "ref": ["photos/bath.webp"]},
+            "walk": {"ja": "歩く", "desc": "Walking.", "alt": "歩く字", "photos": ["photos/none.webp"]}}}
+        ds = {s["slot"]: s for s in ga.slots(dsp, root) if s["sec"] == "do"}
+        ok(list(ds) == ["do:eat", "do:eat-tall", "do:bath", "do:walk"],
+           f"やりたいことの品が 頼み書きの並び・見出しは横と縦の2枚 になっていない: {list(ds)}")
+        ok(ds["do:eat"]["id"] == "do-eat" and ds["do:eat-tall"]["id"] == "do-eat-tall2",
+           "縦の版（v_tall）が縦の id にだけ付かない（縦だけ描き直せない）")
+        ok(ga.HERO_WIDE in ds["do:eat"]["prompt"] and ga.HERO_TALL in ds["do:eat-tall"]["prompt"]
+           and ga.CARD in ds["do:bath"]["prompt"], "見出しの横・縦と、4:3/1:1 に切る1枚とで、構図の頼みが入れ替わっている")
+        ok(all(s["prompt"].startswith(ga.SCENE_MATCH) and ga.NOTEXT in s["prompt"] and ga.PEOPLE in s["prompt"]
+               and ga.PAINT in s["prompt"] for s in ds.values()),
+           "やりたいことに 表紙の手本・字を入れない・人の頼み・絵のトーン のどれかが入っていない")
+        ok(ga.PHOTO_NOTE in ds["do:bath"]["prompt"] and ga.PHOTO_NOTE not in ds["do:eat"]["prompt"],
+           "建物の写真を渡す品にだけ、写真の扱い（PHOTO_NOTE）を書く、になっていない")
+        ok(ds["do:bath"]["refs"] == [("model", "xx/model:food-a"), ("photo", "photos/bath.webp")],
+           "手本（1枚目）と建物の写真の渡しかたが違う")
+        picked = {s["slot"]: s for s in ga.select(dsp, root, work, only=list(ds))}
+        ok("why" in picked["do:walk"] and "写真" in picked["do:walk"]["why"] and "why" not in picked["do:bath"],
+           "建物の写真が無い品を後回しにしない（か、在る品を後回しにした）")
+        ok(picked["do:bath"]["files"][1][1].endswith("/in/photo-bath.png"), "建物の写真を EC2 で PNG に直して渡していない")
+        # EC2 の上の詰めかたを、手元で本当に回す（やりたいことは描けたまま・料理は 800 角）
+        pk = tmp / "pack"
+        png(pk / "do-x-0.png", (1536, 1024))
+        png(pk / "food-y-0.png", (1024, 1024))
+        import subprocess
+        subprocess.run([sys.executable, "-", str(pk), "do-x", "food-y"], input=ga.PACK_PY, text=True, check=True,
+                       capture_output=True)
+        ok(Image.open(pk / "pack/do-x-0.webp").size == (1536, 1024) and Image.open(pk / "pack/food-y-0.webp").size == (800, 800),
+           "やりたいことの絵まで EC2 で正方形に切って持ち帰る（か、料理を切らない）")
+        dw, dout = tmp / "dwork", root / "site/public/guide/xx/dotown"
+        for i in ("cover2", "cover_tall", "areamap3", "food-soup", "food-pie2", "food-tea", "buy-jam", "buy-cup"):
+            png(dw / f"raw/{i}-0.png", (1536, 1024) if i.startswith("cover") else (1024, 1024))
+        png(dw / "raw/do-eat-0.png", (1536, 1024))
+        png(dw / "raw/do-eat-tall2-0.png", (1024, 1536))
+        png(dw / "raw/do-bath-0.png", (1536, 1024))
+        man, missing = ga.finalize(dsp, root, dw)
+        d = man["do"]
+        ok(list(man)[-1] == "do" and list(d) == ["eat", "bath"] and missing == ["do:walk"],
+           f"やりたいことの鍵の並び・無い品の数えかたが違う: {list(man)} / {list(d)} / {missing}")
+        ok(list(d["eat"]) == ["src", "src_small", "w", "h", "alt", "kind", "prompt_note", "variants"],
+           f"やりたいことの欄が決めた形と違う: {list(d['eat'])}")
+        ok(d["eat"]["variants"]["16:9"] == {"src": "/guide/xx/dotown/do-eat-1600.webp",
+                                            "src_small": "/guide/xx/dotown/do-eat-800.webp", "w": 1600, "h": 900}
+           and d["eat"]["src"] == "/guide/xx/dotown/do-eat-1600.webp", "見出しの横（16:9）の書き出しか、いちばん目の形の写しが違う")
+        ok((d["eat"]["variants"]["4:5"]["w"], d["eat"]["variants"]["4:5"]["h"]) == (1000, 1250)
+           and Image.open(dout / "do-eat-tall-500.webp").size == (500, 625), "見出しの縦（4:5）の寸法が違う")
+        ok(list(d["bath"]["variants"]) == ["4:3", "1:1"] and Image.open(dout / "do-bath-600.webp").size == (600, 450)
+           and Image.open(dout / "do-bath-square-400.webp").size == (400, 400), "1枚から 4:3 と 1:1 に切っていない")
+        ok(d["eat"]["prompt_note"] == "見出しの注" and d["bath"]["prompt_note"] == "やりたいことの注" and d["bath"]["alt"] == "湯の字",
+           "品ごとの注・字が頼み書きのまま入らない")
+        sel = [s["slot"] for s in ga.select(dsp, root, dw) if s["sec"] == "do"]
+        ok(sel == ["do:walk"], f"既定で、形のそろった品まで送っている: {sel}")
+        rc, _, out_ = quiet(ga.check, dsp, root)
+        ok(rc == 1 and "do:walk" in out_, "まだ描いていないやりたいことを check が数えない")
+        png(dw / "raw/do-walk-0.png", (1536, 1024))
+        ga.finalize(dsp, root, dw)
+        rc, _, out_ = quiet(ga.check, dsp, root)
+        ok(rc == 0 and "違い 0" in out_ and "やりたいこと 3" in out_, f"作り直して同じなのに check が通らない: {out_.strip()}")
+        for f in ("do-eat-0.png", "do-eat-tall2-0.png", "do-bath-0.png"):
+            (dw / "raw" / f).unlink()
+        png(dw / "raw/do-eat-0.png", (1536, 1024))
+        man2, missing2 = ga.finalize(dsp, root, dw)
+        ok(man2["do"]["eat"]["variants"]["4:5"] == d["eat"]["variants"]["4:5"] and man2["do"]["bath"] == d["bath"],
+           "持ち帰っていない形を manifest のまま残さない（横だけ描き直した日に縦が消える）")
+        (dout / "do-eat-tall-1000.webp").unlink()
+        sel = [s["slot"] for s in ga.select(dsp, root, dw) if s["sec"] == "do"]
+        ok(sel == ["do:eat-tall"], f"manifest に在っても絵のファイルが無い形を、描いてあることにした: {sel}")
+        man3, missing3 = ga.finalize(dsp, root, dw)
+        ok("eat" not in man3["do"] and "do:eat-tall" in missing3, "形が欠けた品を manifest に載せた（面が無い絵を読みに行く）")
+        png(dw / "raw/do-eat-tall2-0.png", (1024, 1536))
+        ga.finalize(dsp, root, dw)
+        cur = json.loads((dout / "manifest.json").read_text(encoding="utf-8"))
+        cur["do"]["bath"]["variants"]["1:1"]["w"] = 1
+        alt_m.write_text(json.dumps(cur, ensure_ascii=False), encoding="utf-8")
+        rc, _, out_ = quiet(ga.check, dsp, root, alt_m)
+        ok(rc == 1 and "/do/bath/variants/1:1/w" in out_, "やりたいことの形が頼み書きと違うのに check が通った")
+        rc, _, _ = quiet(ga.sheet, dsp, root, dw, None, ["do"])
+        ok(rc == 0 and Image.open(dw / "sheet-do.png").size[0] > 0, "やりたいことの見比べの1枚が作られない")
+        rc, _, out_ = quiet(ga.check, sp, root)
+        ok(rc == 0, f"やりたいことの無い街の check に、やりたいことが混ざった: {out_.strip()}")
     finally:
         ga.EC2 = None
         shutil.rmtree(tmp, ignore_errors=True)

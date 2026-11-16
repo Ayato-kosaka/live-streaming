@@ -10,7 +10,8 @@
     python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> check          # 頼み書きから manifest を作り直して、いまのと比べる
     python3 guide_art.py batch <jobs.json> <置き場>                           # EC2 の上（run が置いて起こす）
 
-品は `cover` `cover_tall` `areamap` `food:<鍵>` `buy:<鍵>`。終了コード: 0=通った / 1=落ちた・違った / 2=見るものが無い。
+品は `cover` `cover_tall` `areamap` `food:<鍵>` `buy:<鍵>` `do:<鍵>`（縦も描く品は `do:<鍵>-tall`）。
+終了コード: 0=通った / 1=落ちた・違った / 2=見るものが無い。
 
 ## なぜ道具にしたか（あやと 2026-11-15「持続可能なトークン消費となるような作戦に」）
 
@@ -34,11 +35,24 @@
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
 - `food` `buy`: `model`（手本 `<国>/<街>:<名前>`）・`note`・`items.<鍵>` = `desc`（英語の描写）・`alt`・`fix`・`v`・`model`・
   `ref`（見比べの参考写真の URL）か `wiki`（英語版 Wikipedia の記事名）
+- `do`（やりたいこと。#1228）: `model`（絵の調子の手本。表紙）・`note`・`items.<鍵>` = `ja`（会話の題）・`desc`（英語の場面）・
+  `alt`・`shape`（`hero`＝見出しの絵: 16:9 と 4:5 を別々に描く / `card`＝既定: 3:2 を1枚描いて 4:3 と 1:1 に切る）・
+  `photos`（実在の建物の形を合わせる写真。リポジトリの道。描く人に渡す）・`ref`（見比べに並べる写真。道か URL。並べてもよい）・
+  `fix`・`v`（縦は `v_tall`）・`bias`。並びは頼み書きの並び（面の並び）
 
 ## 品の一覧と鍵
 
 鍵は面のデータの `Item.id`。`guidebook.json`（eat.items / buy.items の key）か、それが無い街は面の TS（ソフィア）から読む。
-頼み書きに描写の無い品があれば止める（黙って描かない品を作らない）。
+頼み書きに描写の無い品があれば止める（黙って描かない品を作らない）。やりたいこと（`do`）は面のデータを待たずに
+頼み書きの `do.items` の鍵がそのまま品になる（面が作り替え中でも絵を先に用意できるように）。
+
+## やりたいことの絵（`do`）の書き出し
+
+`manifest.json` の `do.<鍵>` = `src`・`src_small`・`w`・`h`（いちばん目の形）・`alt`・`kind`・`prompt_note`・
+`variants`（`"16:9"` `"4:5"` か `"4:3"` `"1:1"` → `src`・`src_small`・`w`・`h`）。ファイルは `do-<鍵>-<幅>.webp`
+（いちばん目の形）と `do-<鍵>-tall-<幅>.webp`（4:5）・`do-<鍵>-square-<幅>.webp`（1:1）。
+料理と土産は写真風だが、やりたいことは**表紙と同じ絵本の調子**（表紙を手本に渡す。人が出てくる場面なので、
+写真風にすると人の顔が「誰か」に見える）。
 
 ## 済んだものを飛ばす・描き直す
 
@@ -105,11 +119,47 @@ MATCH = ("The attached image is the reference for the whole series. Match it exa
          "napkin, lighting and color grading. Only the subject changes: do NOT copy the food or objects from the "
          "reference. ")
 
+# やりたいこと（#1228「おいしそう！かわいい！楽しそう！行ってみたい！」）。人と場面を描くので、料理の写真風ではなく
+# 表紙の絵本の調子に寄せる。表紙を手本に渡し、場面は写させない
+SCENE_MATCH = ("The first attached image is the style reference for the whole series (the cover of the same guidebook). "
+               "Match its painting style exactly: the gouache-and-watercolor brushwork, no outlines, the very soft bright "
+               "light, the warm saturated but gentle colors, and the same cute, rounded little people. Do NOT copy its "
+               "scene, buildings or composition: only the style. ")
+PHOTO_NOTE = ("The other attached image(s) are real photos, given ONLY so that the real building's shape, proportions, "
+              "colors and details come out right. Do NOT copy their photographic look, camera angle or lighting: paint "
+              "the building in the illustration style of the first image, never photorealistic. ")
+DO_STYLE = ("This is one picture in a travel guidebook series about the fun things to do in {city}. At first glance it "
+            "must make the viewer feel 'how delicious!', 'how cute!', 'how fun!', 'I want to go there!': bright, happy, "
+            "inviting, full of small charming details. ")
+PEOPLE = ("People: generic cheerful travelers and friendly locals drawn in the same cute, rounded storybook style as the "
+          "reference; they must not resemble any real or famous person. Faces toward the viewer or in three-quarter "
+          "view, with both eyes and a happy smile clearly visible (never only seen from behind). ")
+# ChatGPT は 3:2・2:3・1:1 でしか描かない。面は 4:3 と 1:1 を混ぜて並べるので、3:2 で描かせて真ん中の正方形に要るものを集める
+CARD = ("Draw a wide landscape illustration (3:2, 1536x1024). It will be cropped both to 4:3 and to a centered square, "
+        "so put the main subject and all the people inside the central square (the middle two-thirds of the width); the "
+        "left and right sixths hold only background that may be cut away. ")
+HERO_WIDE = ("Draw a wide landscape illustration (3:2, 1536x1024). It will be cropped to 16:9 for a full-width headline "
+             "picture, so keep everything important away from the top and bottom 10%, and keep the top quarter calm and "
+             "simple (a soft, blurred background) so a headline can sit on it. ")
+HERO_TALL = ("Draw a tall portrait illustration (2:3, 1024x1536). It will be cropped to 4:5 for a full-screen headline "
+             "picture on phones, so keep everything important away from the top and bottom 9%, and keep the top quarter "
+             "calm and simple (a soft, blurred background) so a headline can sit on it. ")
+#: やりたいことの形 → 描く1枚ごとに（id の尾・構図の頼み・[(変種の名前, 切る比, 書き出す幅（大・小）, ファイルの尾)]）。
+#: 見出しの1枚は横と縦で構図が違うので別々に描く（表紙と同じ）。ほかは1枚を 4:3 と 1:1 に切る（同じ場面が大小で出る）
+DO_DRAWS = {
+    "hero": [("", HERO_WIDE, [("16:9", 16 / 9, (1600, 800), "")]),
+             ("-tall", HERO_TALL, [("4:5", 4 / 5, (1000, 500), "-tall")])],
+    "card": [("", CARD, [("4:3", 4 / 3, (1200, 600), ""), ("1:1", 1.0, (800, 400), "-square")])],
+}
+DO_FIELDS = ("src", "src_small", "w", "h")
+
 #: 品の形。名前（ファイルの頭）・切る比・書き出す幅（大・小）
 SHAPE = {"cover": ("cover", 16 / 9, (1600, 800)), "cover_tall": ("cover-tall", 4 / 5, (1600, 800)),
          "areamap": ("areamap", 1.0, (800, 400))}
 ITEM_SIZES = (800, 400)
-WHAT = {"cover": "表紙・横", "cover_tall": "表紙・縦", "areamap": "エリア地図", "food": "料理", "buy": "土産"}
+WHAT = {"cover": "表紙・横", "cover_tall": "表紙・縦", "areamap": "エリア地図", "food": "料理", "buy": "土産",
+        "do": "やりたいこと"}
+SECTIONS = ("food", "buy", "do")
 
 
 def die(msg: str, code: int = 2):
@@ -230,6 +280,22 @@ def slots(spec: dict, root: Path) -> list[dict]:
                         "v": it.get("v", 1), "prompt": prompt, "refs": [("model", model)] if model else [],
                         "label": f"{WHAT[sec]} {name.split('（')[0]}", "alt": it["alt"], "note": it.get("note", sp["note"]),
                         "bias": 0.5, "item": it, "item_name": name})
+    if "do" in spec:
+        sp = spec["do"]
+        city_en = spec.get("city_en") or spec["_city"].split("/")[1].replace("-", " ").title()
+        for k, it in sp["items"].items():
+            model = it.get("model", sp.get("model"))
+            photos = it.get("photos", [])
+            lead = (SCENE_MATCH if model else "") + (PHOTO_NOTE if photos else "")
+            for tail, frame, variants in DO_DRAWS[it.get("shape", "card")]:
+                prompt = (lead + frame + DO_STYLE.format(city=city_en) + "Scene: " + it.get("fix", "") + it["desc"]
+                          + " " + PEOPLE + PAINT + " " + NOTEXT)
+                out.append({"slot": f"do:{k}{tail}", "sec": "do", "key": k, "name": f"do-{k}{tail}",
+                            "base": f"do-{k}{tail}", "v": it.get("v" + tail.replace("-", "_"), 1), "prompt": prompt,
+                            "refs": ([("model", model)] if model else []) + [("photo", p) for p in photos],
+                            "label": f"{WHAT['do']} {it.get('ja', k)}{'（縦）' if tail else ''}", "alt": it["alt"],
+                            "note": it.get("note", sp["note"]), "bias": it.get("bias", 0.5), "item": it,
+                            "item_name": it.get("ja", k), "variants": variants, "main": not tail})
     for s in out:
         s["id"] = s["base"] + (str(s["v"]) if s["v"] > 1 else "")
         s["title"] = f"{time.strftime('%Y-%m-%d')} {'新しく描く' if s['v'] == 1 else '描き直し'}：{ja}の{s['label']}（街のガイドの面）"
@@ -243,6 +309,10 @@ def read_manifest(path: Path) -> dict:
 def drawn(man: dict, s: dict, out: Path) -> bool:
     """manifest に載っていて、絵のファイルも在るか"""
     e = man.get(s["sec"], {}).get(s["key"]) if s["sec"] else man.get(s["key"])
+    if e and s["sec"] == "do":
+        # やりたいことは、この1枚から切る形が全部そろっていて、ファイルも在るか（縦だけ落ちた日に横を描き直さない）
+        vs = e.get("variants", {})
+        return all(v[0] in vs and (out / Path(vs[v[0]]["src"]).name).is_file() for v in s["variants"])
     return bool(e) and (out / Path(e["src"]).name).is_file()
 
 
@@ -263,11 +333,15 @@ def select(spec: dict, root: Path, work: Path | None, only=None, all_=False) -> 
             if kind == "layout":
                 local = Path(ref) if os.path.isabs(ref) else (work or Path(".")) / ref
                 remote = f"{ec2_dir(spec)}/in/{Path(ref).name}"
+            elif kind == "photo":
+                local = root / ref
+                remote = f"{ec2_dir(spec)}/in/photo-{Path(ref).stem}.png"
             else:
                 local = model_file(ref, root)
                 remote = f"{ec2_dir(spec)}/in/model-{ref.replace('/', '-').replace(':', '-')}.png"
             if not local.is_file():
                 s["why"] = (f"下敷きが無い（{local}）" if kind == "layout"
+                            else f"建物の写真が無い（{local}）" if kind == "photo"
                             else f"手本がまだ無い（{ref}。手本を finalize してから、もう一度 run）")
             s["files"].append((str(local), remote))
         picked.append(s)
@@ -385,8 +459,9 @@ for i in ids:
     if not os.path.exists(p):
         continue
     im = Image.open(p).convert("RGB")
-    if not i.startswith("cover"):
+    if i.startswith(("food-", "buy-", "areamap")):
         # 料理・土産・地図は 800 角までしか使わない。持ち帰る量を減らすため、ここで真ん中を切って 800 に落とす
+        # （表紙とやりたいことは手元で 16:9・4:3・1:1 に切るので、描けたまま持ち帰る）
         s = min(im.size)
         im = im.crop(((im.width - s) // 2, (im.height - s) // 2, (im.width + s) // 2, (im.height + s) // 2))
         im = im.resize((800, 800), Image.LANCZOS)
@@ -473,7 +548,12 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None)
     old = read_manifest(out / "manifest.json")
     man: dict = {}
     missing = []
+    dos: dict = {}
     for s in slots(spec, root):
+        if s["sec"] == "do":
+            if not finalize_do(s, spec, work, out, old, dos.setdefault(s["key"], {"variants": {}, "order": []})):
+                missing.append(s["slot"])
+            continue
         name, ratio, sizes = SHAPE.get(s["slot"], (s["name"], 1.0, ITEM_SIZES))
         src = raw_of(work, s["id"])
         prev = (old.get(s["sec"], {}) if s["sec"] else old).get(s["key"])
@@ -499,10 +579,45 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None)
             man[s["key"]] = e
     for sec in ("food", "buy"):
         man.setdefault(sec, {})
-    # 鍵の並びは今の形（表紙・縦・地図・料理・土産）にそろえる。面は並びを見ないが、差分を小さくする
-    man = {k: man[k] for k in ("cover", "cover_tall", "areamap", "food", "buy") if k in man}
+    if "do" in spec:
+        man["do"] = {}
+        for k, d in dos.items():
+            if all(v in d["variants"] for v in d["order"]):   # 形が1つでも欠けた品は載せない（面が欠けた形を読みに行く）
+                main = d["variants"][d["order"][0]]
+                man["do"][k] = {**main, "alt": d["alt"], "kind": "ai", "prompt_note": d["note"],
+                                "variants": {v: d["variants"][v] for v in d["order"]}}
+    # 鍵の並びは今の形（表紙・縦・地図・料理・土産・やりたいこと）にそろえる。面は並びを見ないが、差分を小さくする
+    man = {k: man[k] for k in ("cover", "cover_tall", "areamap", "food", "buy", "do") if k in man}
     (out / "manifest.json").write_text(json.dumps(man, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return man, missing
+
+
+def finalize_do(s: dict, spec: dict, work: Path | None, out: Path, old: dict, d: dict) -> bool:
+    """やりたいことの1枚を、決まった形（16:9・4:5 か 4:3・1:1）に切って書き出し、`d` に積む。
+    持ち帰った絵が無ければ、いまの manifest の形のまま残す。どちらも無ければ False"""
+    from PIL import Image
+    if s["main"]:
+        d["alt"], d["note"] = s["alt"], s["note"]
+    prev = (old.get("do", {}).get(s["key"]) or {}).get("variants", {})
+    src = raw_of(work, s["id"])
+    im0 = Image.open(src).convert("RGB") if src is not None else None
+    whole = True
+    for vname, ratio, sizes, tail in s["variants"]:
+        d["order"].append(vname)
+        if im0 is not None:
+            im = crop(im0, ratio, s["bias"])
+            pics = []
+            for w in sizes:
+                h = round(im.height * w / im.width)
+                p = out / f"do-{s['key']}{tail}-{w}.webp"
+                im.resize((w, h), Image.LANCZOS).save(p, "WEBP", quality=84, method=6)
+                pics.append((url_dir(spec) + p.name, w, h))
+            d["variants"][vname] = {"src": pics[0][0], "src_small": pics[1][0], "w": pics[0][1], "h": pics[0][2]}
+        elif vname in prev and (out / Path(prev[vname]["src"]).name).is_file():
+            d["variants"][vname] = {k: prev[vname][k] for k in DO_FIELDS}
+        else:
+            whole = False
+    return whole
 
 
 def diff(a, b, path="") -> list[str]:
@@ -532,11 +647,12 @@ def check(spec: dict, root: Path, manifest: Path | None = None) -> int:
         return 2
     want = {f"{s['sec']}:{s['key']}" if s["sec"] else s["key"] for s in slots(spec, root)}
     have = {k for k in ("cover", "cover_tall", "areamap") if k in cur}
-    have |= {f"{sec}:{k}" for sec in ("food", "buy") for k in cur.get(sec, {})}
+    have |= {f"{sec}:{k}" for sec in SECTIONS for k in cur.get(sec, {})}
     with tempfile.TemporaryDirectory(prefix="guide-art-check-") as tmp:
         work, out = Path(tmp) / "work", Path(tmp) / "out"
         (work / "raw").mkdir(parents=True)
         for s in slots(spec, root):
+            # やりたいことは、いちばん目の形（src）を縦の1枚にも見立てる。切る比から寸法が決まるので manifest は同じになる
             e = (cur.get(s["sec"], {}) if s["sec"] else cur).get(s["key"])
             if e and (src / Path(e["src"]).name).is_file():
                 shutil.copy(src / Path(e["src"]).name, work / "raw" / f"{s['id']}-0.webp")
@@ -544,8 +660,8 @@ def check(spec: dict, root: Path, manifest: Path | None = None) -> int:
     bad = [f"品の鍵: 頼み書きにだけ {sorted(want - have)}" if want - have else "",
            f"品の鍵: manifest にだけ {sorted(have - want)}" if have - want else ""]
     bad = [b for b in bad if b] + diff(man, cur)
-    print(f"{spec['_city']}: 品 {len(want)}（表紙2・地図・料理 {len(man.get('food', {}))}・土産 {len(man.get('buy', {}))}）"
-          f" / 違い {len(bad)}")
+    print(f"{spec['_city']}: 品 {len(want)}（表紙2・地図・料理 {len(man.get('food', {}))}・土産 {len(man.get('buy', {}))}"
+          + (f"・やりたいこと {len(man['do'])}" if "do" in man else "") + f"） / 違い {len(bad)}")
     for b in bad[:20]:
         print("  " + b)
     return 1 if bad else 0
@@ -557,7 +673,7 @@ def ref_url(spec: dict, root: Path, s: dict) -> str | None:
     """参考写真。頼み書きの ref → guidebook.json の photo → 面の写真の表 → Wikipedia の記事の頭の絵"""
     it = s["item"]
     if it.get("ref"):
-        return it["ref"]
+        return it["ref"] if isinstance(it["ref"], str) else it["ref"][0]
     src = spec["items"]
     if "guidebook" in src:
         g = json.loads((root / src["guidebook"]).read_text(encoding="utf-8"))
@@ -579,14 +695,75 @@ def ref_url(spec: dict, root: Path, s: dict) -> str | None:
     return None
 
 
-def sheet(spec: dict, root: Path, work: Path, mix: dict | None = None) -> int:
-    """参考写真と描いた絵を上下に並べた1枚（sheet-items.png）と、描いた絵だけを並べた1枚（sheet-tone.png）"""
+def sheet_do(spec: dict, root: Path, work: Path) -> Path | None:
+    """やりたいことの見比べ（sheet-do.png）。頭の段に表紙と料理を置いてトーンを見比べ、品ごとに
+    描いた形を全部と参考写真（頼み書きの ref。手元の道か URL）を1段に並べる"""
+    from PIL import Image, ImageDraw
+    out = out_dir(spec, root)
+    man = read_manifest(out / "manifest.json").get("do", {})
+    rows = [(k, e) for k, e in man.items() if k in spec.get("do", {}).get("items", {})]
+    if not rows:
+        return None
+    H, pad = 260, 8
+
+    def tile(p, h=H):
+        im = Image.open(p).convert("RGB")
+        return im.resize((round(im.width * h / im.height), h), Image.LANCZOS)
+
+    def ref_tiles(it):
+        refs = it.get("ref") or []
+        refs = [refs] if isinstance(refs, str) else refs
+        tiles = []
+        for i, r in enumerate(refs):
+            local = work / "ref" / f"do-{Path(urllib.parse.urlparse(r).path).stem[:40]}-{i}.img"
+            if not local.is_file():
+                local.parent.mkdir(parents=True, exist_ok=True)
+                try:
+                    if r.startswith("http"):
+                        local.write_bytes(urllib.request.urlopen(urllib.request.Request(r, headers=UA), timeout=30).read())
+                    else:
+                        shutil.copy(root / r, local)
+                except OSError:
+                    continue
+            tiles.append(tile(local, H - 60))
+        return tiles
+
+    head = [tile(out / "cover-800.webp")] if (out / "cover-800.webp").is_file() else []
+    head += [tile(p) for p in sorted(out.glob("food-*-400.webp"))[:4]]
+    lines = [("tone: cover / food", head)]
+    for k, e in rows:
+        arts = [tile(out / Path(v["src_small"]).name) for v in e["variants"].values()
+                if (out / Path(v["src_small"]).name).is_file()]
+        lines.append((k, arts + ref_tiles(spec["do"]["items"][k])))
+    W = max(sum(t.width + pad for t in ts) for _, ts in lines) + pad
+    img = Image.new("RGB", (W, len(lines) * (H + 28) + pad), (238, 232, 210))
+    dr = ImageDraw.Draw(img)
+    y = pad
+    for label, ts in lines:
+        dr.text((pad, y), label, fill=(60, 50, 40))
+        x = pad
+        for t in ts:
+            img.paste(t, (x, y + 18))
+            x += t.width + pad
+        y += H + 28
+    p = work / "sheet-do.png"
+    img.save(p)
+    return p
+
+
+def sheet(spec: dict, root: Path, work: Path, mix: dict | None = None, only=None) -> int:
+    """参考写真と描いた絵を上下に並べた1枚（sheet-items.png）と、描いた絵だけを並べた1枚（sheet-tone.png）。
+    やりたいことは別の1枚（sheet-do.png）。`only` に節（food・buy・do）を渡すと、その節だけ"""
     from PIL import Image
     out = out_dir(spec, root)
+    secs = set(only or SECTIONS)
     ref, art = work / "cmp" / "ref", work / "cmp" / "art"
     for d in (ref, art):
         d.mkdir(parents=True, exist_ok=True)
-    items = [s for s in slots(spec, root) if s["sec"]]
+    do_sheet = sheet_do(spec, root, work) if "do" in secs and "do" in spec else None
+    if do_sheet:
+        print(f"やりたいこと: {do_sheet}")
+    items = [s for s in slots(spec, root) if s["sec"] in secs - {"do"}]
     names = []
     for s in items:
         a = out / f"{s['name']}-{ITEM_SIZES[1]}.webp"
@@ -608,6 +785,8 @@ def sheet(spec: dict, root: Path, work: Path, mix: dict | None = None) -> int:
         if r.is_file():
             Image.open(r).convert("RGB").save(ref / f"{s['name']}.png")
     if not names:
+        if do_sheet:
+            return 0
         print("✕ 並べる絵が無い（finalize がまだ）")
         return 2
     one = work / "sheet-items.png"
@@ -687,7 +866,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("city", help="<国>/<街>（site/public/guide の下の道）")
     ap.add_argument("cmd", choices=["plan", "run", "status", "fetch", "finalize", "sheet", "check"])
-    ap.add_argument("--only", nargs="*", help="品（cover・areamap・food:<鍵>…）か id")
+    ap.add_argument("--only", nargs="*", help="品（cover・areamap・food:<鍵>・do:<鍵>…）か id。sheet は節（food・buy・do）")
     ap.add_argument("--all", action="store_true", help="manifest に在る品も")
     ap.add_argument("--json", action="store_true", help="plan: EC2 に渡す jobs.json をそのまま出す")
     ap.add_argument("--work", help="スクラッチの置き場（下敷き・持ち帰った絵・見比べ）")
@@ -713,7 +892,7 @@ def main(argv=None) -> int:
             print(f"{s['slot']:<28} {s['id']:<26} {mark:<6} 文 {len(s['prompt']):>5}字 渡す絵 {len(s['files'])}"
                   + (f"  後回し: {s['why']}" if s.get("why") else ""))
         print(f"{len(picked)}品（料理 {sum(1 for s in picked if s['sec'] == 'food')}・土産 "
-              f"{sum(1 for s in picked if s['sec'] == 'buy')}）")
+              f"{sum(1 for s in picked if s['sec'] == 'buy')}・やりたいこと {sum(1 for s in picked if s['sec'] == 'do')}）")
         return 0 if picked else 2
     if a.cmd == "run":
         return run(spec, root, work, a.only, a.all)
@@ -724,10 +903,10 @@ def main(argv=None) -> int:
     if a.cmd == "finalize":
         man, missing = finalize(spec, root, work, Path(a.out) if a.out else None)
         print(f"manifest: 表紙・地図 {sum(1 for k in SHAPE if k in man)} / 料理 {len(man['food'])} / 土産 {len(man['buy'])}"
-              f" / 無い: {missing or 'なし'}")
+              + (f" / やりたいこと {len(man['do'])}" if "do" in man else "") + f" / 無い: {missing or 'なし'}")
         return 0 if not missing else 1
     if a.cmd == "sheet":
-        return sheet(spec, root, work, load_spec(a.mix) if a.mix else None)
+        return sheet(spec, root, work, load_spec(a.mix) if a.mix else None, a.only)
     return check(spec, root, Path(a.manifest) if a.manifest else None)
 
 
