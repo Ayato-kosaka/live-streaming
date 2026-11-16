@@ -40,6 +40,8 @@ type Status = typeof STATUSES[number];
 
 /** 一覧に返す上限。1回の取り込みで数百枚の想定。黙って切らないよう、超えたら札を出す。 */
 const MAX_LIST = 3000;
+/** 下見で、日ごとの人数を同時に引く日数 */
+const DRY_PARALLEL = 16;
 /** 外す／戻すを1回に受ける数。Firestore の取引の書き込み上限（500）の内側。 */
 const MAX_DECIDE = 400;
 /** 1回の登録で拾う既定の数と上限。1枚あたり置き場の読み書きとカードの作成で1秒前後。 */
@@ -530,15 +532,20 @@ export async function handleCardImport(
           const d = isDay(x.v.day) ? x.v.day : "";
           byDay.set(d, (byDay.get(d) ?? 0) + 1);
         }
+        const order = [...byDay].sort((a, b) => a[0].localeCompare(b[0]));
+        /* **日ごとの人数は、16日ずつまとめて引く。** 1日ずつ待つと、2年ぶんの
+           取り込み（255日）で 60秒を超え、Hosting が 502 を返した（2026-11-16、
+           確認の窓が出ないまま止まった）。1日あたり台帳を2本引くので、束ねても
+           同時に32本まで。 */
         const days: {day: string; count: number; people: number}[] = [];
-        for (const [day, count] of [...byDay].sort((a, b) =>
-          a[0].localeCompare(b[0]),
-        )) {
-          days.push({
-            day,
-            count,
-            people: day ? await deps.peopleOnDay(day) : 0,
-          });
+        for (let i = 0; i < order.length; i += DRY_PARALLEL) {
+          const part = order.slice(i, i + DRY_PARALLEL);
+          const ppl = await Promise.all(
+            part.map(([day]) => (day ? deps.peopleOnDay(day) : 0)),
+          );
+          part.forEach(([day, count], k) =>
+            days.push({day, count, people: ppl[k]}),
+          );
         }
         /* `people` は日ごとの人数の和（延べ）。同じ人が2日にいれば2と数える。
            カードは写真1枚 × 人で渡るので、渡る枚数ではない。 */

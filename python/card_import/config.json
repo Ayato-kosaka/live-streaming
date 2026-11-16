@@ -21,6 +21,7 @@
   "irrelevant": {
     "categories": ["screenshot", "document", "receipt", "screen"],
     "drop": 0.55,
+    "requireCamera": true,
     "doubt": 0.3
   },
   "group": {"phash": 10, "clip": 0.94, "looseClip": 0.85},
@@ -30,7 +31,7 @@
     "clip": 0.95
   },
   "score": {"sharp": 0.3, "exposure": 0.2, "aesthetic": 0.35, "relevant": 0.15},
-  "day": {"good": 0.7, "floor": 0.5, "min": 1, "sqrtGain": 1.2, "max": 10},
+  "day": {"good": 0.7, "floor": 0.5, "min": 1, "sqrtGain": 0.35, "max": 3},
   "diversity": {"similar": 0.35, "similarFrom": 0.6, "sameCategory": 0.06, "nearMeters": 150, "samePlace": 0.08},
   "ambiguous": {"margin": 0.06},
   "calib": {"count": 24, "sim": 0.85, "k": 5, "gain": 0.15},

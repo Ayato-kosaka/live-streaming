@@ -30,9 +30,14 @@ kosaka.ayato@gmail.com）。2026-11-14 はログインのし直し無しで Take
 
 1. `https://takeout.google.com/settings/takeout/custom/photos`
 2. 「All photo albums included」→ Deselect all → 期間にかかる「Photos from YYYY」だけに印 → OK
-3. Next step → 既定のまま（メールでリンク・1回・.zip・**2GB**）→ Create export
-4. **仕上がりは数時間〜数日。** `send_later` で3時間おきに `https://takeout.google.com/manage` を見る。
+3. Next step → **届け先を「Add to Drive」**・1回・.zip・**2GB** → Create export
+4. **Create export でパスワードを聞かれる**（2026-11-15）。画面を出したまま `/ask-ayato` で1回だけ頼む
+5. **仕上がりは数時間。** `send_later` で3時間おきに `https://takeout.google.com/manage` を見る。
    待つあいだ EC2 は止める（`ec2.py stop`）
+
+**メールのリンク届けにしない。** 落とすたびに Google がパスワードを聞き直す（本物で当たった）。
+ドライブ届けなら落とすときに聞かれないので、あやとの手は作るときの1回で済む。
+ドライブを書き出しの大きさぶん使う（2026-11 は 約36GB）。**登録が済んだら、その zip をドライブから消す**（8章）。
 
 年のアルバム単位なので、期間の外も入ってくる。期間で絞るのは `scan`（`--from` `--to`）。
 
@@ -40,15 +45,20 @@ kosaka.ayato@gmail.com）。2026-11-14 はログインのし直し無しで Take
 
 道具の置き直し（版が変わったとき・初回）: `python/card_import/` を EC2 の `app/` に置いて `setup.sh`。
 
-zip は**1つずつ**落として、読んで、消す（ディスクが小さい。空きが 0.8GB を切ると scan が止まる。
-同じ命令で続きから）。1枚 1.0〜1.3秒、2万枚で6〜7時間。**裏で回すときは札を持つ**:
+`python/card_import/takeout_dl.py` を EC2 の `/home/ubuntu/cdp/` に、`takeout_loop.sh` を `app/card_import/` に置き、
+**札を持って裏で回す**。ドライブから zip を1つずつ「落とす → 数える → 消す」を繰り返し、最後に一覧を取り直して
+抜けを拾い、`existing`（公開のカード写真と比べる用）と `status` まで回す（2026-11 は 18個・約5時間）:
 
 ```sh
 nohup /usr/local/sbin/ec2-queue hold gphotos --who card-import --purpose 'Takeout を数える' -- \
-  sh -c 'cd /home/ubuntu/cardimport/app && ../venv/bin/python -m card_import.run scan --from <開始> --to <終了> --delete <zip>' &
+  sh /home/ubuntu/cardimport/app/card_import/takeout_loop.sh <開始> <終了> > ~/cardimport/loop.log 2>&1 &
 ```
 
-続けて `existing`（公開のカード写真を落として、既に配っている写真を見分ける）。
+- 進みは `loop.log` と `zips_done.txt` の行数（札は取らずに読むだけ）。止まっても同じ命令で続きから
+- **ドライブの検索は全部を描かないことがある**（18個中2個が出なかった）。抜けた名前は
+  `drive.google.com/drive/search?q=<名前>` で引いて控え（`drive_zips.json`）に足し、`drive-get` → `scan` を手で
+- **SSM が `Undeliverable` で応答しなくなったら**、メモリで詰まっている（4GB に Chrome と CLIP が同時に乗った）。
+  再起動の権限は無いので `ec2.py stop --force` → `start` で起こし直し、同じ命令で続きから
 
 ## 3. 選ぶ
 
@@ -57,8 +67,12 @@ nohup /usr/local/sbin/ec2-queue hold gphotos --who card-import --purpose 'Takeou
 ../venv/bin/python -m card_import.run sheet  --batch <同じ>     # 迷うものだけの一覧画
 ```
 
-一覧画（`<root>/sheets/`）を `ec2.py get` で持ってきて**こちらが見る**。全部の写真は見ない。
-決めた番号を `judge 3=drop 5=keep` で書き戻す。数は `status`（名前もパスも出ない）。
+一覧画（`<root>/sheets/`）を `ec2.py get` でスクラッチパッドに持ってきて**こちらが見る**。全部の写真は見ない。
+決めた番号を `judge 3=drop 5=keep` で書き戻し、もう一度 `select`。数は `status`（名前もパスも出ない）。
+**視聴者さんの名前・ハンドルが写った画面の写真は落とす。**
+
+目安（2026-11）: 写真 9,861 → 期間内 5,341 → 候補 330（255日）。カメラの無い絵（スクショ・配信やアプリの画面・
+AI の絵）は `irrelevant.requireCamera` で落ちる。候補が多すぎたら `day.sqrtGain` と `day.max` を下げる。
 
 閾値は `python/card_import/config.json` だけを触る（理由は `conf.py`）。
 
@@ -83,7 +97,7 @@ EC2 で `pack` → `CARD_IMPORT_PUT_URL="$U" … upload <tar>`（URL は SSM の
 gh api -X POST …/card_import.yml/dispatches -f ref=master -f 'inputs[mode]=labels'
 ```
 
-summary の JSON を EC2 へ `labels` で読ませ、`select` → `sheet` → `pack` → `upload` → `ingest` をやり直す。
+ログの `LABEL <sha> <yes|no>` の行を `{sha: 答え}` の JSON にして EC2 へ置き、`labels` で読ませ、`select` → `sheet` → `pack` → `upload` → `ingest` をやり直す。
 答えは `islandCardImport` に残り、次の回からも効く（2回目以降は聞かない）。
 
 ## 6. 最終確認を頼む
@@ -97,7 +111,15 @@ summary の JSON を EC2 へ `labels` で読ませ、`select` → `sheet` → `p
 - `GET /island-api/nordic/photos` の写真の数が、登録した枚数ぶん増えたか（キャッシュバスタを付ける）
 - `card_import.yml` `mode=status` で `registered` と `failed` の数。`failed` があれば画面の「失敗したものだけもう一度」
 - EC2 で `clean --batch <B>`（手元の絵を消す。数と埋め込みは次の回の重複判定に残す）
+- **ドライブの Takeout の zip を消す**（EC2 の Chrome で `drive.google.com` の検索 `takeout-<日時>` → ゴミ箱）。
+  こちらが作った書き出しの写しで、Google フォトの元ではない
 - issue に1行で報告して閉じる（`docs/card-import.md` 5章の消しかたもここで済ませる）
+
+## つまずいたところ
+
+- `card_import.yml` が**キューに入ったまま20分以上動かない**ことがある（ほかのワークフローは動いていた）。
+  `card_import_url.py` は15〜25分で待つのをやめるので、終わるのを待ってから取り直す
+- Actions のログでは、複数行の秘密を伏せる都合で `{` `}` が `***` に化ける。数を読むときは中身だけ見る
 
 ## 消さないもの
 

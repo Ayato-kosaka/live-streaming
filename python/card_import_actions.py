@@ -572,6 +572,11 @@ def mode_labels(batch: str, store=None) -> int:
     for v in lab.values():
         tally[v] = tally.get(v, 0) + 1
     log("答え: " + json.dumps(tally, ensure_ascii=False))
+    # 作業箱は job summary を API で読めない（check-run の output に載らない）。1行1枚で
+    # ログにも出す。出るのは sha（写真の中身の指紋）と答えだけで、写真も日付も出ない。
+    # 波かっこで包むと、複数行の秘密を伏せる GitHub が "{" の行を *** に化かすので包まない。
+    for sha in sorted(lab):
+        log(f"LABEL {sha} {lab[sha]}")
     summary("## 認識合わせの答えと外したもの" + (f"（`{batch}`）" if batch else "") + "\n\n"
             "```json\n" + json.dumps(lab, indent=1, sort_keys=True) + "\n```\n")
     return 0
@@ -583,6 +588,69 @@ def mode_status(store=None) -> int:
     log(f"回 {len(runs)} / 候補 {len(docs)}")
     summary(status_md(runs, docs))
     return 0
+
+
+def mode_register(batch: str, dry: bool, expect: int, post=None) -> int:
+    """登録する（画面の「残り N 枚を登録」と同じ口）。**先に dryRun で数え、`expect` と合わなければ1枚も登録しない。**
+
+    画面のボタンはあやとのブラウザでしか押せない。あやとに「外したので登録して」と頼まれたときに、
+    こちらから同じ口を同じ順で呼ぶためのもの。数を合わせる止めは、外したつもりの写真が
+    外れていなかった・別の回を指していた、を登録の前に止めるため。
+    """
+    if post is None:
+        import requests
+        sys.path.insert(0, str(HERE / "admin"))
+        from _owner import API_BASE, owner_token  # noqa: E402
+
+        token = owner_token(FsStore().c)
+        sess = requests.Session()
+
+        def post(body: dict) -> dict:
+            for i in range(3):
+                try:
+                    r = sess.post(f"{API_BASE}/cardimport/register", json=body, timeout=300,
+                                  headers={"authorization": f"Bearer {token}"})
+                    if r.status_code == 200:
+                        return r.json()
+                    log(f"  !! 登録の口が HTTP {r.status_code}")
+                    if r.status_code < 500:
+                        break
+                except requests.RequestException as e:
+                    log(f"  !! 登録の口に届かない: {type(e).__name__}")
+                time.sleep(3 + 5 * i)
+            raise Bad("登録の口が答えない")
+
+    plan = post({"batch": batch, "dryRun": True})
+    total = int(plan.get("total") or 0)
+    days = plan.get("days") or []
+    log(f"登録の見込み: {total}枚・{len(days)}日・カードが渡る延べ {plan.get('people', 0)}人")
+    summary(f"## 登録（`{batch}`）\n\n見込み {total}枚・{len(days)}日・カードが渡る延べ {plan.get('people', 0)}人\n")
+    if dry:
+        return 0
+    if total != expect:
+        raise Bad(f"見込み {total}枚が、頼まれた {expect}枚と合わない。登録しない")
+    done, failed, rounds = 0, {}, 0
+    for retry in (False, True):
+        while rounds < 200:
+            rounds += 1
+            r = post({"batch": batch, "max": 5, "retryFailed": retry})
+            got = int(r.get("registered") or 0)
+            done += got
+            for f in r.get("failed") or []:
+                failed[f.get("sha", "")] = str(f.get("error", ""))[:40]
+            for x in r.get("results") or []:
+                if x.get("status") == "registered":
+                    failed.pop(x.get("sha", ""), None)
+            log(f"  登録 {done}枚・残り {r.get('remaining')}")
+            if not r.get("remaining") or got == 0:
+                break
+        if not failed:
+            break
+    log(f"登録した: {done}枚・失敗 {len(failed)}枚")
+    for sha, err in failed.items():
+        log(f"  失敗 {sha[:12]}… {err}")
+    summary(f"\n登録した {done}枚・失敗 {len(failed)}枚\n")
+    return 1 if failed else 0
 
 
 def main() -> int:
@@ -601,7 +669,14 @@ def main() -> int:
         return mode_labels(batch)
     if mode == "status":
         return mode_status()
-    raise Bad(f"mode は url / ingest / labels / status（来たのは {mode!r}）")
+    if mode in ("register-dry", "register"):
+        if not BATCH.match(batch):
+            raise Bad("batch が要る")
+        exp = (g("IN_EXPECT") or "").strip()
+        if mode == "register" and not exp.isdigit():
+            raise Bad("register には expect（登録する枚数）が要る")
+        return mode_register(batch, mode == "register-dry", int(exp or 0))
+    raise Bad(f"mode は url / ingest / labels / status / register-dry / register（来たのは {mode!r}）")
 
 
 if __name__ == "__main__":
