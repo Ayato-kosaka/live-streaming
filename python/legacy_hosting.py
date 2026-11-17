@@ -279,6 +279,9 @@ def main() -> int:
     b.add_argument("--island-site", default="",
                    help="渡すと、島（このサイトへ）と古いドメイン（--site へ）の2つを並べた設定を書く。"
                         "段 B の本番の配りが、配る step の前で firebase.json をこれに置き換える")
+    b.add_argument("--mode", choices=["301", "mirror"], default="301",
+                   help="mirror = 古いドメインにも島をそのまま配る（ドメインを新しいサイトへ移すあいだ）。"
+                        "301 = 古いドメインの島の面を新しいドメインへ送る")
     c = sub.add_parser("check")
     c.add_argument("--config", default=str(ROOT / "firebase.json"))
     c.add_argument("--sitemap", required=True)
@@ -311,10 +314,17 @@ def main() -> int:
                 return 1
             # 1本の firebase.json に2つ並べると、`firebase deploy --only hosting`
             # （action-hosting-deploy の live）が両方のサイトへ1回で配る
-            out = {**conf, "hosting": [{**island, "site": a.island_site}, legacy]}
+            # mirror: ドメインを新しいサイトへ移すあいだは、どちらのサイトも島を配る。
+            # 新しいドメインが古いサイトに付いたまま 301 を配ると、新しいドメインも
+            # 自分自身へ 301 する輪になるので、301 はドメインが移り終わってから
+            second = {**island, "site": a.site} if a.mode == "mirror" else legacy
+            out = {**conf, "hosting": [{**island, "site": a.island_site}, second]}
         else:
             out = {**conf, "hosting": legacy}
         Path(a.out).write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        if a.island_site and a.mode == "mirror":
+            print(f"{a.out}: 島を {a.island_site} と {a.site} の両方へ（301 はまだ配らない）")
+            return 0
         print(f"{a.out}: redirect {len(legacy['redirects'])} 本"
               f"（sitemap {len(sitemap)} ＋ いまある {len(island.get('redirects', []))}）→ {origin}")
         return 0

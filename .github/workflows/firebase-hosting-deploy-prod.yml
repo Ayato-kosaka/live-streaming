@@ -101,20 +101,47 @@ jobs:
       # **#1202 の段 B（古いドメインの島の面を、新しいドメインへ 301）。**
       # Hosting はホスト名ごとの redirect を書けないので、島を別のサイトに移し、
       # 古いドメイン（既定のサイト）には「島の面だけ 301」の設定を配る。
-      # リポジトリの変数 `ISLAND_SITE` に島のサイトの名前が入っている間だけ、
-      # firebase.json を「島 → ISLAND_SITE／古いドメイン → 301」の2つ並びに置き換える。
-      # 下の配る step（live）は `firebase deploy --only hosting` なので、1回で両方へ配る。
-      # **変数が空なら何もしない**（いまの1つのサイトのまま）。戻すときは変数を消して配り直す。
+      # 下の配る step（live）は `firebase deploy --only hosting` なので、firebase.json に
+      # 2つ並べておけば1回で両方へ配る。**リポジトリの変数2つで段を進める**:
+      #
+      # | `ISLAND_SITE` | `LEGACY_301` | 配るもの |
+      # | --- | --- | --- |
+      # | 空 | — | いまのまま（既定のサイト1つに島） |
+      # | 島のサイト名 | 空 | 島を**両方の**サイトへ（ドメインを移すあいだ。どちらで開いても同じ島） |
+      # | 島のサイト名 | `on` | 島 → 島のサイト／既定のサイト → 島の面だけ 301 |
+      #
+      # **301 は、新しいドメインが既定のサイトから外れたのを確かめてからでないと配らない。**
+      # 付いたまま配ると、新しいドメインも自分自身へ 301 する輪になる。
+      # 戻すときは `LEGACY_301` を消して配り直す（既定のサイトがまた島を配る）。
       # 規則は毎回 sitemap から作る（面が増えれば規則も増える。手で書かない）
       - name: 古いドメインに 301 を焼く（島のサイトが分かれてから）
         if: ${{ vars.ISLAND_SITE != '' }}
         env:
           ISLAND_SITE: ${{ vars.ISLAND_SITE }}
+          LEGACY_301: ${{ vars.LEGACY_301 }}
         run: |
           set -euo pipefail
           project="$(jq -r .projects.default .firebaserc)"
+          mode=mirror
+          if [ "$LEGACY_301" = "on" ]; then
+            mode=301
+            printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+            gcloud auth activate-service-account --key-file "$RUNNER_TEMP/sa.json" --quiet
+            rm -f "$RUNNER_TEMP/sa.json"
+            apex="$(python3 -c 'import sys; sys.path.insert(0, "python"); import legacy_hosting as L; print(L.site_url().split("//")[1])')"
+            doms="$(curl -sS -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+              "https://firebasehosting.googleapis.com/v1beta1/projects/$project/sites/$project/customDomains")"
+            if ! echo "$doms" | jq -e '(.customDomains // []) | type == "array"' > /dev/null || echo "$doms" | jq -e '.error' > /dev/null; then
+              echo "::error::既定のサイトの独自ドメインを読めませんでした。301 は配りません"
+              exit 1
+            fi
+            if echo "$doms" | jq -e --arg d "$apex" '(.customDomains // [])[] | select((.name | endswith("/" + $d)) and ((.redirectTarget // "") == ""))' > /dev/null; then
+              echo "::error::$apex がまだ既定のサイトに付いています。301 を配ると輪になるので配りません"
+              exit 1
+            fi
+          fi
           python3 python/legacy_hosting.py build --sitemap dist/sitemap.xml \
-            --site "$project" --island-site "$ISLAND_SITE" --out firebase.json
+            --site "$project" --island-site "$ISLAND_SITE" --mode "$mode" --out firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -311,7 +338,7 @@ jobs:
       # 段 B のあとだけ。古いドメインの島の面が全部 301 で新しいドメインの同じ道へ行き、
       # OBS・口・ログインの戻り先が 200 のままか（分母つき）
       - name: 古いドメインの島の面が 301 になっているか
-        if: ${{ !cancelled() && vars.ISLAND_SITE != '' }}
+        if: ${{ !cancelled() && vars.ISLAND_SITE != '' && vars.LEGACY_301 == 'on' }}
         run: |
           set -uo pipefail
           python3 python/legacy_hosting.py check --base https://live-streaming-d3cac.web.app \
