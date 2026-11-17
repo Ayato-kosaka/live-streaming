@@ -30,13 +30,17 @@
 ## 頼み書きの欄（`guide/<国>/<街>.json`。ソフィア・スコピエのを写して書き換える）
 
 - `ja`（会話の題に出す街の名前）・`items`（品をどこから読むか）・`ec2_dir`（EC2 の置き場）・`stitch`（布巾の刺繍の言葉）・`scene`（表紙の景色。英語）
-- `cover` `cover_tall`: `alt`・`note`（manifest の prompt_note）・`bias`（16:9 に切るとき、上を 0 下を 1 としてどこを残すか）・`v`
+- `style`（表紙とやりたいことの絵の調子。`storybook`＝既定の絵本 / `editorial`＝案2「大人の画集」#1228）・
+  `style_ref`（調子の手本の1枚。リポジトリの道。表紙とやりたいことの1枚目に渡す。あればやりたいことの `model` より先）
+- `cover` `cover_tall`: `alt`・`note`（manifest の prompt_note）・`bias`（16:9 に切るとき、上を 0 下を 1 としてどこを残すか）・`v`・
+  `photos`（実在の建物の形を合わせる写真）
 - `areamap`: `prompt`（街の地図の文。目印の番号つき）・`fix`・`layout`（字の無い下敷き。`--work` の中）・`alt`・`note`・
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
 - `food` `buy`: `model`（手本 `<国>/<街>:<名前>`）・`note`・`items.<鍵>` = `desc`（英語の描写）・`alt`・`fix`・`v`・`model`・
   `ref`（見比べの参考写真の URL）か `wiki`（英語版 Wikipedia の記事名）
 - `do`（やりたいこと。#1228）: `model`（絵の調子の手本。表紙）・`note`・`items.<鍵>` = `ja`（会話の題）・`desc`（英語の場面）・
-  `alt`・`shape`（`hero`＝見出しの絵: 16:9 と 4:5 を別々に描く / `card`＝既定: 3:2 を1枚描いて 4:3 と 1:1 に切る）・
+  `alt`・`shape`（`hero`＝見出しの絵: 16:9 と 4:5 を別々に描く / `card`＝既定: 3:2 を1枚描いて 4:3 と 1:1 に切る /
+  `card43`＝3:2 を1枚描いて 4:3 だけ。札が全部 4:3 で縦1列の面。`do.shape` で節の既定を変えられる）・
   `photos`（実在の建物の形を合わせる写真。リポジトリの道。描く人に渡す）・`ref`（見比べに並べる写真。道か URL。並べてもよい）・
   `fix`・`v`（縦は `v_tall`）・`bias`。並びは頼み書きの並び（面の並び）
 
@@ -49,10 +53,12 @@
 ## やりたいことの絵（`do`）の書き出し
 
 `manifest.json` の `do.<鍵>` = `src`・`src_small`・`w`・`h`（いちばん目の形）・`alt`・`kind`・`prompt_note`・
-`variants`（`"16:9"` `"4:5"` か `"4:3"` `"1:1"` → `src`・`src_small`・`w`・`h`）。ファイルは `do-<鍵>-<幅>.webp`
+`variants`（`"16:9"` `"4:5"` か `"4:3"` `"1:1"` か `"4:3"` だけ → `src`・`src_small`・`w`・`h`）。ファイルは `do-<鍵>-<幅>.webp`
 （いちばん目の形）と `do-<鍵>-tall-<幅>.webp`（4:5）・`do-<鍵>-square-<幅>.webp`（1:1）。
-料理と土産は写真風だが、やりたいことは**表紙と同じ絵本の調子**（表紙を手本に渡す。人が出てくる場面なので、
-写真風にすると人の顔が「誰か」に見える）。
+料理と土産は写真風だが、やりたいことは**表紙と同じ絵の調子**（人が出てくる場面なので、写真風にすると人の顔が
+「誰か」に見える）。ソフィアは案2「大人の画集」（`style: editorial`）: 人は小さく後ろ姿か手元だけで、主役は料理の
+質感・建物の迫力・景色の光。8枚が似通わないよう、頼み書きの `desc` に**構図・時間と光・色の基調**を品ごとに書き分ける
+（見比べは `sheet` の `sheet-do-grid.png`）。
 
 ## 済んだものを飛ばす・描き直す
 
@@ -144,12 +150,49 @@ HERO_WIDE = ("Draw a wide landscape illustration (3:2, 1536x1024). It will be cr
 HERO_TALL = ("Draw a tall portrait illustration (2:3, 1024x1536). It will be cropped to 4:5 for a full-screen headline "
              "picture on phones, so keep everything important away from the top and bottom 9%, and keep the top quarter "
              "calm and simple (a soft, blurred background) so a headline can sit on it. ")
+# 札が全部 4:3 で縦1列になった（#1228、2026-11-16）。1:1 に切らないので、真ん中の正方形に寄せる縛りを外し、
+# 横いっぱいの構図（建物の迫力・山の広がり）を描かせる。札の下には題が暗幕つきで乗る
+CARD43 = ("Draw a wide landscape illustration (3:2, 1536x1024). It will be cropped to 4:3 by cutting away the left and "
+          "right 6%, so keep everything important away from those two edges. A title will be laid over the bottom fifth "
+          "on a dark gradient, so put only quiet foreground there. ")
 #: やりたいことの形 → 描く1枚ごとに（id の尾・構図の頼み・[(変種の名前, 切る比, 書き出す幅（大・小）, ファイルの尾)]）。
-#: 見出しの1枚は横と縦で構図が違うので別々に描く（表紙と同じ）。ほかは1枚を 4:3 と 1:1 に切る（同じ場面が大小で出る）
+#: 見出しの1枚は横と縦で構図が違うので別々に描く（表紙と同じ）。`card` は1枚を 4:3 と 1:1 に切る（同じ場面が大小で出る）。
+#: `card43` は 4:3 だけ（札が同じ比で縦1列の面）
 DO_DRAWS = {
     "hero": [("", HERO_WIDE, [("16:9", 16 / 9, (1600, 800), "")]),
              ("-tall", HERO_TALL, [("4:5", 4 / 5, (1000, 500), "-tall")])],
     "card": [("", CARD, [("4:3", 4 / 3, (1200, 600), ""), ("1:1", 1.0, (800, 400), "-square")])],
+    "card43": [("", CARD43, [("4:3", 4 / 3, (1200, 600), "")])],
+}
+
+# ---- 案2「大人の画集」（#1228、あやと 2026-11-16「A 案2」）。頼み書きの `"style": "editorial"` で選ぶ
+# 子どもっぽいキャラをやめ、ガッシュ調の大人のエディトリアル。主役は料理の質感・建物の迫力・景色の光で、人は小さく
+# 後ろ姿か手元だけ。手本は候補の見比べで選ばれた3枚を1枚に並べたもの（頼み書きの `style_ref`）。3枚は主役も色も
+# 時間も違うので、「筆の調子だけ合わせ、色と構図は写さない」が伝わる（1枚だけ渡すと、その色に寄る）
+ED_PAINT = ("Style: a sophisticated editorial illustration for an adult travel art book: loose, confident gouache and "
+            "watercolor with visible brush strokes, dry-brush edges and paper grain, like the travel paintings a "
+            "professional illustrator makes for a premium travel magazine. Grown-up and elegant: NOT cute, NOT a "
+            "storybook, NOT anime, NOT chibi, no mascot characters, no smiling faces looking at the viewer. Realistic "
+            "proportions. Strong light and shadow, depth and atmosphere. No black outlines. It must read as a painting, "
+            "never as a photograph or smooth digital rendering.")
+ED_MATCH = ("The first attached image is the style reference: three separate paintings from this same series, placed "
+            "side by side. Match their painting style exactly: the matte gouache, the visible brush strokes and "
+            "dry-brush edges, the paper grain, the painterly simplification and the grown-up mood. Do NOT copy their "
+            "subjects, compositions, colors or light: this picture has its own, described below. Draw ONE single "
+            "picture, never a set of panels. ")
+ED_PHOTO_NOTE = ("The other attached image(s) are real photos, given ONLY so that the real building or object comes out "
+                 "right in shape, proportions, colors and details. Do NOT copy their photographic look, framing or light: "
+                 "paint it in the style of the first image, never photorealistic. ")
+ED_DO_STYLE = ("This is one full-page picture in a travel magazine's feature on the best things to do in {city}. Turning "
+               "to it should feel like turning a page of a beautiful travel magazine and make the viewer want to go "
+               "there. The whole feature shares one painting style, but every page has its own subject, composition, "
+               "palette and time of day: follow the composition, light and palette given below exactly. ")
+ED_PEOPLE = ("People, if any, are small and secondary: seen from behind, in silhouette, or only as hands; no faces turned "
+             "to the viewer; they must not resemble any real person. ")
+#: 絵の調子 → 頼む文の部品。`storybook` が既定（スコピエ・地図・料理と土産の手本はこちらのまま）
+STYLES = {
+    "storybook": {"paint": PAINT, "match": SCENE_MATCH, "photo": PHOTO_NOTE, "do": DO_STYLE, "people": PEOPLE},
+    "editorial": {"paint": ED_PAINT, "match": ED_MATCH, "photo": ED_PHOTO_NOTE, "do": ED_DO_STYLE, "people": ED_PEOPLE},
 }
 DO_FIELDS = ("src", "src_small", "w", "h")
 
@@ -252,6 +295,10 @@ def slots(spec: dict, root: Path) -> list[dict]:
     """描く品を全部。1品＝1つの dict（id・頼む文・渡す絵・面に出す字）"""
     items = items_of(spec, root)
     ja = spec["ja"]
+    if spec.get("style", "storybook") not in STYLES:
+        die(f"頼み書きの style が知らない調子: {spec['style']}（{' / '.join(STYLES)}）")
+    st = STYLES[spec.get("style", "storybook")]
+    sref = spec.get("style_ref")   # 絵の調子の手本（リポジトリの道）。表紙とやりたいことの1枚目に渡す
     out = []
     for slot in ("cover", "cover_tall", "areamap"):
         s = spec[slot]
@@ -259,8 +306,11 @@ def slots(spec: dict, root: Path) -> list[dict]:
             prompt = s.get("fix", "") + s["prompt"] + " " + MAP_STYLE
             files = [("layout", s["layout"])]
         else:
-            prompt = s.get("fix", "") + (WIDE if slot == "cover" else TALL) + spec["scene"] + PAINT + " " + NOTEXT
-            files = []
+            photos = s.get("photos", [])
+            lead = (st["match"] if sref else "") + (st["photo"] if photos else "")
+            prompt = (lead + s.get("fix", "") + (WIDE if slot == "cover" else TALL) + spec["scene"] + st["paint"] + " "
+                      + NOTEXT)
+            files = ([("style", sref)] if sref else []) + [("photo", p) for p in photos]
         out.append({"slot": slot, "sec": None, "key": slot, "name": SHAPE[slot][0], "base": slot,
                     "v": s.get("v", 1), "prompt": prompt, "refs": files, "label": WHAT[slot],
                     "alt": s["alt"], "note": s["note"], "bias": s.get("bias", 0.5)})
@@ -286,13 +336,18 @@ def slots(spec: dict, root: Path) -> list[dict]:
         for k, it in sp["items"].items():
             model = it.get("model", sp.get("model"))
             photos = it.get("photos", [])
-            lead = (SCENE_MATCH if model else "") + (PHOTO_NOTE if photos else "")
-            for tail, frame, variants in DO_DRAWS[it.get("shape", "card")]:
-                prompt = (lead + frame + DO_STYLE.format(city=city_en) + "Scene: " + it.get("fix", "") + it["desc"]
-                          + " " + PEOPLE + PAINT + " " + NOTEXT)
+            # 調子の手本は、頼み書きの style_ref があればそれ、無ければ品の model（表紙）
+            first = [("style", sref)] if sref else [("model", model)] if model else []
+            lead = (st["match"] if first else "") + (st["photo"] if photos else "")
+            shape = it.get("shape", sp.get("shape", "card"))
+            if shape not in DO_DRAWS:
+                die(f"やりたいこと {k} の shape が知らない形: {shape}（{' / '.join(DO_DRAWS)}）")
+            for tail, frame, variants in DO_DRAWS[shape]:
+                prompt = (lead + frame + st["do"].format(city=city_en) + "Scene: " + it.get("fix", "") + it["desc"]
+                          + " " + st["people"] + st["paint"] + " " + NOTEXT)
                 out.append({"slot": f"do:{k}{tail}", "sec": "do", "key": k, "name": f"do-{k}{tail}",
                             "base": f"do-{k}{tail}", "v": it.get("v" + tail.replace("-", "_"), 1), "prompt": prompt,
-                            "refs": ([("model", model)] if model else []) + [("photo", p) for p in photos],
+                            "refs": first + [("photo", p) for p in photos],
                             "label": f"{WHAT['do']} {it.get('ja', k)}{'（縦）' if tail else ''}", "alt": it["alt"],
                             "note": it.get("note", sp["note"]), "bias": it.get("bias", 0.5), "item": it,
                             "item_name": it.get("ja", k), "variants": variants, "main": not tail})
@@ -333,15 +388,16 @@ def select(spec: dict, root: Path, work: Path | None, only=None, all_=False) -> 
             if kind == "layout":
                 local = Path(ref) if os.path.isabs(ref) else (work or Path(".")) / ref
                 remote = f"{ec2_dir(spec)}/in/{Path(ref).name}"
-            elif kind == "photo":
+            elif kind in ("photo", "style"):
                 local = root / ref
-                remote = f"{ec2_dir(spec)}/in/photo-{Path(ref).stem}.png"
+                remote = f"{ec2_dir(spec)}/in/{kind}-{Path(ref).stem}.png"
             else:
                 local = model_file(ref, root)
                 remote = f"{ec2_dir(spec)}/in/model-{ref.replace('/', '-').replace(':', '-')}.png"
             if not local.is_file():
                 s["why"] = (f"下敷きが無い（{local}）" if kind == "layout"
                             else f"建物の写真が無い（{local}）" if kind == "photo"
+                            else f"絵の調子の手本が無い（{local}）" if kind == "style"
                             else f"手本がまだ無い（{ref}。手本を finalize してから、もう一度 run）")
             s["files"].append((str(local), remote))
         picked.append(s)
@@ -728,13 +784,27 @@ def sheet_do(spec: dict, root: Path, work: Path) -> Path | None:
             tiles.append(tile(local, H - 60))
         return tiles
 
-    head = [tile(out / "cover-800.webp")] if (out / "cover-800.webp").is_file() else []
-    head += [tile(p) for p in sorted(out.glob("food-*-400.webp"))[:4]]
-    lines = [("tone: cover / food", head)]
+    covers = [p for p in (out / "cover-800.webp", out / "cover-tall-800.webp") if p.is_file()]
+    if spec.get("style_ref") and (root / spec["style_ref"]).is_file():
+        # 調子の手本があれば、頭の段は手本と表紙（料理と土産は写真風なので、並べても調子の見比べにならない）
+        lines = [("tone: style_ref / cover", [tile(root / spec["style_ref"])] + [tile(p) for p in covers])]
+    else:
+        head = [tile(p) for p in covers[:1]] + [tile(p) for p in sorted(out.glob("food-*-400.webp"))[:4]]
+        lines = [("tone: cover / food", head)]
     for k, e in rows:
         arts = [tile(out / Path(v["src_small"]).name) for v in e["variants"].values()
                 if (out / Path(v["src_small"]).name).is_file()]
         lines.append((k, arts + ref_tiles(spec["do"]["items"][k])))
+    # 札だけを面の並びで4列に（似通っていないか・世界観がそろっているかは、並べて一度に見ないと分からない）
+    mains = [out / Path(e["src_small"]).name for _, e in rows if (out / Path(e["src_small"]).name).is_file()]
+    if mains:
+        cw, chh, per = 400, 300, 4
+        grid = Image.new("RGB", (per * (cw + pad) + pad, ((len(mains) + per - 1) // per) * (chh + pad) + pad),
+                         (238, 232, 210))
+        for i, p in enumerate(mains):
+            grid.paste(crop(Image.open(p).convert("RGB"), cw / chh).resize((cw, chh), Image.LANCZOS),
+                       (pad + (i % per) * (cw + pad), pad + (i // per) * (chh + pad)))
+        grid.save(work / "sheet-do-grid.png")
     W = max(sum(t.width + pad for t in ts) for _, ts in lines) + pad
     img = Image.new("RGB", (W, len(lines) * (H + 28) + pad), (238, 232, 210))
     dr = ImageDraw.Draw(img)
@@ -762,7 +832,8 @@ def sheet(spec: dict, root: Path, work: Path, mix: dict | None = None, only=None
         d.mkdir(parents=True, exist_ok=True)
     do_sheet = sheet_do(spec, root, work) if "do" in secs and "do" in spec else None
     if do_sheet:
-        print(f"やりたいこと: {do_sheet}")
+        print(f"やりたいこと: {do_sheet}" + (f"・札だけ {work / 'sheet-do-grid.png'}"
+                                              if (work / "sheet-do-grid.png").is_file() else ""))
     items = [s for s in slots(spec, root) if s["sec"] in secs - {"do"}]
     names = []
     for s in items:
