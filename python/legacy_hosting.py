@@ -363,6 +363,29 @@ def check(base: str, sitemap: list[str], new_origin: str, island_hosting: dict) 
     return 1 if bad else 0
 
 
+def add_verify(name: str) -> int:
+    """確認ファイルを `public/google-site-verification/<名前>.txt` に置き、firebase.json に rewrite を足す。
+
+    中身は Search Console が出すものと同じ1行（`google-site-verification: <名前>`）。
+    `.html` のまま `public/` に置くと cleanUrls が 301 するので、この形でしか置かない。
+    """
+    if not VERIFY.match("/" + name):
+        print(f"::error::確認ファイルの名前の形ではありません（google＋16桁の16進＋.html）: {name}")
+        return 1
+    d = ROOT / "public/google-site-verification"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{name}.txt").write_text(f"google-site-verification: {name}", encoding="utf-8")
+    fj = ROOT / "firebase.json"
+    conf = json.loads(fj.read_text(encoding="utf-8"))
+    rw = conf["hosting"].setdefault("rewrites", [])
+    src = "/" + name
+    if not any(r.get("source") == src for r in rw):
+        rw.append({"source": src, "destination": f"/google-site-verification/{name}.txt"})
+    fj.write_text(json.dumps(conf, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"足した: public/google-site-verification/{name}.txt と rewrite {src}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -381,8 +404,12 @@ def main() -> int:
     st.add_argument("--sitemap", default="")
     st.add_argument("--out", default="")
     st.add_argument("--default-site", default="")
+    v = sub.add_parser("add-verify", help="Search Console の確認ファイルを、跳ばずに 200 で配る形で足す")
+    v.add_argument("name", help="Search Console が出したファイル名（google<16桁>.html）")
     a = ap.parse_args()
 
+    if a.cmd == "add-verify":
+        return add_verify(a.name)
     if a.cmd == "stage":
         site, on = read_stage(Path(a.stage))
         if not a.out:
