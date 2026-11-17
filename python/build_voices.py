@@ -23,6 +23,18 @@
 
        python python/build_voices.py --dump /tmp/voices.json --rows /tmp/rows.json
 
+   **別の口も無い箱**（MCP も ADC も無い）は、読むのを手元でやって、選んだ行だけを
+   Actions に引かせる。`--chat` が `streams/*.chat.txt` から同じ決まりで候補を拾い、
+   1行ずつ指紋を付けて出す（もう載っている声には「済」）。選んだ指紋を渡すと、
+   `admin/voices_sealed.py` がこの SQL を流して、その行だけを封をして返す:
+
+       python python/build_voices.py --chat --since 2026-09-11
+       python3 python/sealed_run.py voices_sealed \\
+         '{"since":"2026-09-11","pick":["<指紋>", …]}' --out /tmp/voices_rows.json
+
+   返ってきた `rows` の `d` `v` `e` `a` `i` `m` を、そのまま `voices_picks.json` に置く
+   （`h` は指紋なので置かない）。
+
 2. `/tmp/voices.json` を**全部読んで**、出すものを選び、`python/voices_picks.json` に並べる。
    並べた順が、そのまま画面に出る順になる。選びかたの決まりは下の「選ぶときの決まり」。
 
@@ -48,6 +60,7 @@
 """
 
 import argparse
+import hashlib
 import json
 import logging
 import re
@@ -198,6 +211,52 @@ def icon_url(u: str | None) -> str:
     return f"{base}=s{ICON_PX}-c-k-c0x00ffffff-no-rj"
 
 
+def fingerprint(text: str) -> str:
+    """本文の指紋。手元で選んだ声を、本文を出さずに Actions へ指すためのもの。
+
+    空白の畳みかたは `stream_text.one_line` と同じ（全角の空白も半角1つにする）。
+    `streams/*.chat.txt` の本文はその形で置かれているので、手元の `chat.txt` から
+    作った指紋と、Actions が BigQuery の本文から作った指紋（`admin/voices_sealed.py`）が揃う。
+    """
+    one = re.sub(r"\s+", " ", text or "").strip()
+    return hashlib.sha256(one.encode("utf-8")).hexdigest()[:16]
+
+
+# `chat.txt` の1行。投げ銭（`¥500 @名前:`）とメンバー（`（メンバー）@名前:`）は
+# 名前の前に字が入るので、`@` で始まる行だけを取れば TEXT だけになる（SQL の event_type と同じ）
+CHAT_LINE = re.compile(r"\[(\d+:\d\d:\d\d)\] (@.*?): (.*)$")
+
+
+def chat_candidates(since: str) -> list[dict]:
+    """手元の `streams/*.chat.txt` から、SQL と同じ決まりで候補を拾う。
+
+    **BigQuery に繋げない箱で、読むところまでを手元で済ませるため。**
+    `chat.txt` は同じ `chat_messages` の本文を配信ごとに置いたものなので、
+    読んで選ぶのはこれで足りる。足りないのは名前（最新の表示名）・アイコン・
+    イベントIDで、そこは選んだ指紋を `admin/voices_sealed.py` に渡して持って帰る。
+
+    日付は `chat.txt` の名前の頭（配信の開始日・日本時間）で切る。
+    """
+    out = []
+    for f in sorted((ROOT / "streams").glob("*/*/*.chat.txt")):
+        stem = f.name.split(".")[0]
+        if stem[:10] < since:
+            continue
+        vid = stem.split("_", 2)[2]
+        for line in f.read_text(encoding="utf-8").splitlines():
+            m = CHAT_LINE.match(line)
+            if not m or m.group(2) == BOT_NAME:
+                continue
+            t = m.group(3).strip()
+            if not (10 <= len(t) <= 90):
+                continue
+            if not re.search(NAME_RE, t) or not re.search(GOOD_RE, t) or re.search(BAD_RE, t):
+                continue
+            out.append({"day": stem[:10], "v": vid, "at": m.group(1),
+                        "who": m.group(2), "m": t, "h": fingerprint(t)})
+    return out
+
+
 def esc(s: str) -> str:
     """TypeScript の文字列に入れる。改行は空白に潰す（1行の引用として出すので）。"""
     return re.sub(r"\s*\n\s*", " ", s).replace("\\", "\\\\").replace('"', '\\"')
@@ -260,6 +319,11 @@ def main() -> int:
     ap.add_argument("--build", action="store_true", help="picks を voices.ts に焼く")
     ap.add_argument("--sql", action="store_true", help="候補を引く SQL を出すだけ")
     ap.add_argument(
+        "--chat",
+        action="store_true",
+        help="BigQuery を引かずに、手元の streams/*.chat.txt から候補と指紋を出す",
+    )
+    ap.add_argument(
         "--since",
         default="2026-08-20",
         help="この日（UTC）から先を新しく読む。前に選んだものは日付によらず引き当てる",
@@ -270,6 +334,13 @@ def main() -> int:
         import os
 
         print(sql(os.getenv("BQ_PROJECT_ID", "live-streaming-d3cac"), a.since))
+        return 0
+
+    if a.chat:
+        picked = {fingerprint(p["m"]) for p in json.loads(PICKS.read_text(encoding="utf-8"))["picks"]}
+        for c in chat_candidates(a.since):
+            mark = "済" if c["h"] in picked else "  "
+            print(f'{c["h"]} {mark} {c["day"]} {c["v"]} {c["at"]} {c["who"]} | {c["m"]}')
         return 0
 
     if a.dump:
