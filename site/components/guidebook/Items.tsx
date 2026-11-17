@@ -27,16 +27,16 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
   return (
     <>
       <ul className={`gb-tiles is-${cols}`}>
-        {items.map((it, i) => (
+        {items.map((it) => (
           <li key={it.id} data-kinds={it.kinds?.join(" ")}>
             {/* 同じ名前の品が食べたいと買いたいの両方にある（ラキヤ・ヴラネツ）。読み上げの名前に節を入れて分ける。
                 字で足すと、見えない字が面の字に数えられる（`guidebook.mjs` の字の量）ので、名前で渡す */}
             <a className="gb-tile" href={`#${sheetId(kind, it.id)}`} aria-label={tileName(kind, it)}>
+              {/* どの札も遅れて読む。見たいものの節は面の半ば（390幅で y≈5,000）で、先に読ませると最初の1画面の代金に乗る（#944） */}
               <Picture
                 pic={it.pic}
                 sizes={cols === 3 ? "(min-width: 720px) 220px, 31vw" : "(min-width: 720px) 300px, 46vw"}
                 ratio={cols === 3 ? "1 / 1" : "4 / 3"}
-                eager={kind === "see" && i < 2}
                 label={shortName(it.name).slice(0, 1)}
               />
               <Marks m={it.marks} />

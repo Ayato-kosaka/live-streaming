@@ -84,7 +84,13 @@
 .ta-fig figcaption { margin: 4px 2px 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-3); }
 
 .ta-cover figcaption a,
-.ta-fig figcaption a { color: var(--ink-2); }
+.ta-fig figcaption a { position: relative; color: var(--ink-2); }
+
+/* 撮った日の配信へのリンク。字は 11.5px のまま、当たりだけ広げる。
+   上は写真の下端に 8px だけかぶせ、残りは下の余白（figure の下 12px）へ伸ばす。
+   上下に同じだけ広げると、写真の下 17px を押しても配信が開いてしまう */
+.ta-cover figcaption a::after,
+.ta-fig figcaption a::after { content: ""; position: absolute; inset: -9px -4px -25px; }
 
 /* ---- 目次（押せる行が並ぶので、1行ずつに厚みは付けない） ------------------- */
 
@@ -110,7 +116,7 @@
   grid-template-columns: 26px 22px minmax(0, 1fr);
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 48px;
   padding: 0 4px;
   border-radius: var(--r-0);
   color: var(--ink);
@@ -149,6 +155,7 @@
 .ta-up { margin: var(--sp-3) 0 0; text-align: right; font-size: 12.5px; }
 
 .ta-up a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -156,6 +163,9 @@
   padding: 0 4px;
   color: var(--ink-2);
 }
+
+/* 見た目の 32px は変えずに、当たりを 48px に（下は次の節までの 32px の余白） */
+.ta-up a::after { content: ""; position: absolute; inset: -8px -4px; }
 
 .ta-note { margin: var(--sp-2) 2px 0; font-size: 12.5px; line-height: 1.7; color: var(--ink-2); }
 
@@ -283,6 +293,11 @@
 
 .ta-at:active { translate: 0 3px; box-shadow: var(--pop-push); }
 
+/* 札は 30px のまま、当たりを上下 10px ずつ広げて 50px に。表の行も札の段は 50px にしてある
+   （`.ta-price td:last-child`）——行が低いと、隣の行の札と当たりを取り合い、表の端（overflow: hidden）で削れる */
+.ta-at { position: relative; }
+.ta-at::after { content: ""; position: absolute; inset: -10px -4px; }
+
 .ta-says { margin: 0 0 var(--sp-3); }
 
 /* 吹き出しは言った字の長さまで */
@@ -387,7 +402,7 @@
 .ta-price thead th { font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); font-weight: 700; }
 .ta-price tbody th { font-weight: 500; }
 .ta-price td:nth-child(2) { white-space: nowrap; font-weight: 900; color: var(--ta-c); font-variant-numeric: tabular-nums; }
-.ta-price td:last-child { width: 1%; }
+.ta-price td:last-child { width: 1%; padding-block: 10px; }
 .ta-price tbody tr:last-child > * { border-bottom: 0; }
 
 /* 会計の行は品と分ける（品の数に入らない行） */
@@ -435,7 +450,12 @@
   color: var(--ink);
 }
 
+/* 出どころの括弧（「（名前・◯日に見た）」）は**途中で折れない箱**にして、リンクの当たりをこの箱ぜんぶに広げる。
+   行をまたいだリンクに `::after` を付けると、当たりが1行目の頭から2行目の終わりまでの、形の決まらない四角になる。
+   箱が1行（23px）なら上下に 13.5px 足して 50px、2行（46px）なら 2px ずつ、3行なら足さない */
+.ta-ext-src { position: relative; display: inline-block; }
 .ta-ext a { color: var(--ink); font-weight: 700; }
+.ta-ext a::after { content: ""; position: absolute; inset: min(0px, calc((100% - 50px) / 2)) -4px; }
 
 /* ---- 配信・次に読む・書き手・出どころ --------------------------------------- */
 
@@ -514,4 +534,8 @@
 .ta-go svg { color: var(--ta-c); }
 
 .ta-sources ul { margin: 0; padding-left: 1.2em; font-size: 12.5px; line-height: 1.8; color: var(--ink-2); }
+/* 1件の当たりは、その行ぜんぶ（`::after` で行に広げる）。1行 23px に上下 13px で 48px。字は大きくしない。
+   `display` は変えない（flex にすると行頭の点が消える） */
+.ta-sources li:has(> a) { position: relative; padding-block: 13px; }
 .ta-sources a { color: var(--ink); }
+.ta-sources a::after { content: ""; position: absolute; inset: 0; }

@@ -22,17 +22,24 @@
 
 /** 位置を決める、いちばん狭い絵の幅（px）。390px の画面で絵は 366px。それより少し狭い端末（360px）も見込む */
 export const NARROW = 340;
-/** 札と矢印の見た目の高さ（CSS の `.gb-amap-pin` `.gb-amap-out` と同じ）。当たりは `::after` で 44px 以上 */
+/** 札と矢印の見た目の高さ（CSS の `.gb-amap-pin` `.gb-amap-out` と同じ）。当たりは `::after` で 48px 以上 */
 export const TAG_H = 34;
 /** 2行の札の見た目の高さ（CSS の `.gb-amap-pin.is-2` と同じ） */
 export const TAG_H2 = 44;
-/** 見た目の箱どうしのすきま。当たりを広げたぶん（上下 5px）が、となりの見た目に食い込まない幅 */
-const GAP = 6;
 /**
- * 札と矢印を絵の縁から離す幅（px）。当たりは `::after` で上下に 5px 広げてあり、絵は `overflow: hidden` なので、
+ * 見た目の箱どうしのすきま（横・縦）。**当たりどうしが重ならない幅**——当たりは `::after` で左右に 2px（横は前の 6px のまま）、上下に 7px
+ * 広げてある（`guidebook.css`。1行の札 34px で 48px に届かせるため）。前は縦も 6px で、上下 5px の当たりの
+ * 時代の幅だった。7px に広げたら、スコピエのヴォドノ山の矢印の上を新市街の札の当たりが取り、44px に削れた（#944）。
+ * 縦を 16px（上下 8px の当たり）にすると、ソフィアのヴィトシャ山とボヤナ教会の矢印（manifest で決まっていて動かせない）が
+ * 0.2px 足りずに重なったので、当たりを 7px・すきまを 14px にした
+ */
+const GAP_X = 6;
+const GAP_Y = 14;
+/**
+ * 札と矢印を絵の縁から離す幅（px）。当たりは `::after` で上下に 7px 広げてあり、絵は `overflow: hidden` なので、
  * 縁に寄せると当たりが切れる（スコピエのヴォドノ山の矢印が、絵の下の縁で当たり 43px になった。2026-11-16）
  */
-const EDGE = 6;
+const EDGE = 7;
 /** 札をずらしてよい距離（px） */
 const TAG_REACH = 120;
 /** 絵の右下の「イラスト・位置は目安」の札の大きさ（11.5px の字10字と余白） */
@@ -83,7 +90,7 @@ export type Placed = {
   arrows: { id: string; x: number; y: number }[];
 };
 
-const rectHit = (a: Rect, b: Rect) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + GAP && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + GAP;
+const rectHit = (a: Rect, b: Rect) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + GAP_X && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + GAP_Y;
 
 /**
  * 並べる。入力は割合（0〜1）、出力も割合。`tags` はエリアの札（manifest の位置）、`arrows` は地図の外の矢印（manifest の位置）。

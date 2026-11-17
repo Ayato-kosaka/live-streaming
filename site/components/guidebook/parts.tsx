@@ -246,6 +246,16 @@ export function Ext({ children, className = "" }: { children: ReactNode; classNa
   );
 }
 
+/**
+ * 描いた絵の幅を、ファイル名（`cover-tall-800.webp`）から読む。描く道具（`.claude/skills/chatgpt-image/guide_art.py`）が
+ * `<名前>-<幅>.webp` で書き出す決まりなので、置き場（manifest）に小さい版の幅が無くても `srcset` の幅を正しく書ける。
+ * 読めなければ `undefined`（呼ぶ側は大きい版だけにする）
+ */
+export function widthOf(url: string) {
+  const m = url.match(/-(\d{2,4})\.(?:webp|jpe?g|png|avif)$/);
+  return m ? Number(m[1]) : undefined;
+}
+
 /** 本文の日付（「2026年11月15日」） */
 export function jpDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);

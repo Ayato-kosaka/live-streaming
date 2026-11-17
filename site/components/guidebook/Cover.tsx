@@ -1,12 +1,15 @@
 import type { Drawn } from "@/content/guidebook/manifest";
 import type { Guidebook } from "@/content/guidebook/types";
 
-import { Credit, jpDate } from "./parts";
+import { Credit, jpDate, widthOf } from "./parts";
 
 /**
  * 1 表紙。**絵を先に、字をあとに。** 街の絵（描いた表紙。無ければ借りた写真）＋国・街の名前・ひとこと。
  *
  * 描いた表紙が縦と横の2枚あれば、狭い画面に縦を出す（`<picture>`）。行ったあとは「あやとが◯日いた」の札が乗る。
+ *
+ * **縦の表紙も、幅に合った1枚を読む**（小さい版と大きい版を `srcset` に並べる）。前は大きい版（1600px）だけを渡していて、
+ * 390幅のスマホ（2倍の画面で 780px あれば足りる）でも 523KB を読み、最初の1画面の上限（`firstload.mjs`）を超えていた（#944）。
  *
  * ## 見出し（h1）は、人が打つ語の形
  *
@@ -17,12 +20,15 @@ import { Credit, jpDate } from "./parts";
 export default function Cover({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
   const wide = drawn.cover ?? g.cover;
   const tall = drawn.coverTall;
+  /* 小さい版の幅はファイル名から読む（`-800.webp`）。読めなければ大きい版だけを渡す（幅を当て推量で書かない） */
+  const tallSmallW = tall?.small && tall.small !== tall.src ? widthOf(tall.small) : undefined;
+  const tallSet = tall && (tallSmallW && tall.w ? `${tall.small} ${tallSmallW}w, ${tall.src} ${tall.w}w` : tall.src);
   const days = g.stay ? Math.round((Date.parse(g.stay.to) - Date.parse(g.stay.from)) / 86400000) + 1 : 0;
   return (
     <div className="gb-cover-wrap" data-gb="cover">
       <div className="gb-cover">
         <picture>
-          {tall && <source media="(max-width: 719px)" srcSet={tall.src} width={tall.w} height={tall.h} />}
+          {tall && <source media="(max-width: 719px)" srcSet={tallSet} sizes="100vw" width={tall.w} height={tall.h} />}
           <img
             className="gb-cover-img"
             src={wide.src}

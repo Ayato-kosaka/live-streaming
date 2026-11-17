@@ -322,6 +322,14 @@
 
 .gb-amap-art > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
+/* **絵地図は、画面に近づいてから読む**（`LateArt.tsx` が `data-gb-late` を外す）。
+   390幅で地図は2画面目の下（y≈1,700）にあり、`loading="lazy"` だけでは Chrome が
+   画面の下 1,250px までを先に読むので、最初の1画面に 227KB が乗っていた（`firstload.mjs`）。
+   **`display: none` の lazy の絵は要求されない**ので、近づくまで箱だけ置く（箱の比は親が持つので、背は変わらない）。
+   JS の無い読み手には、はじめから出す */
+.gb-amap-art[data-gb-late] > img { display: none; }
+@media (scripting: none) { .gb-amap-art[data-gb-late] > img { display: block; } }
+
 /* 「イラスト・位置は目安」は右下（左下は地図の外の矢印が来る） */
 .gb-amap-art > .gb-pic-tag { left: auto; right: 6px; }
 
@@ -348,9 +356,10 @@
 
 .gb-amap-pin.is-2 { min-height: 44px; padding: 3px 10px; border-radius: 14px; }
 
-/* 当たりは上下 5px 広げる（1行の札で 44px） */
+/* 当たりは上下 7px 広げる（1行の札 34px で 48px）。札どうしのすきま（14px）と縁からの離れ（7px）は、
+   この幅に合わせて `content/guidebook/spotmap.ts` が取っている。片方だけ変えると、隣の当たりに削られる */
 .gb-amap-pin::after,
-.gb-amap-out::after { content: ""; position: absolute; inset: -5px -2px; }
+.gb-amap-out::after { content: ""; position: absolute; inset: -7px -2px; }
 
 /* 地図の外の矢印。地区の札と見分けるため、紙の色の地に差し色の矢印 */
 .gb-amap-out {
@@ -416,7 +425,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
+  min-height: 48px;
   color: var(--gb-c);
   font-size: 14px;
   font-weight: 900;
@@ -795,7 +804,9 @@
 .gb-places-b > em { font-style: normal; font-size: 12.5px; line-height: 1.5; }
 .gb-far-km { font-size: var(--fs-min); color: var(--gb-c); font-weight: 700; }
 
-.gb-places-it { display: flex; flex-wrap: wrap; gap: 0 10px; }
+/* 行のあいだ 16px は、下の当たり（上下 8px ずつ）が次の行の札に食われないため。
+   0 だと、折り返した2行目の札が1行目の下半分を取って、当たりが 32px に削れていた */
+.gb-places-it { display: flex; flex-wrap: wrap; gap: 16px 12px; }
 .gb-places-it a,
 .gb-far a {
   display: inline-flex;
@@ -806,9 +817,10 @@
   color: var(--accent-2);
 }
 
-/* 当たり判定は 48px まで広げる */
+/* 当たり判定は 48px まで広げる。**横も**——「ボザ」は字が2つで 26px しかない。
+   短い字は 50px になるまで左右に広げ、長い字は 4px ずつ（隣とのあいだ 12px に収まる） */
 .gb-places-it a { position: relative; }
-.gb-places-it a::after { content: ""; position: absolute; inset: -8px -4px; }
+.gb-places-it a::after { content: ""; position: absolute; inset: -8px min(-4px, calc((100% - 50px) / 2)); }
 
 .gb-far {
   display: grid;
@@ -961,6 +973,9 @@
 .gb-budget .fold { margin-top: var(--sp-3); }
 .gb-tips { display: grid; gap: var(--sp-2); margin: 0; padding: 0 0 0 1.2em; }
 .gb-tips p { margin: 0; }
+/* 安く済ませるコツの最後の出どころと、その下の出どころの行。あいだが 12px だと、上下 8px ずつ広げた当たりが
+   4px 重なって、上の行が削れた。16px あれば重ならない */
+.gb-tips + .gb-src { margin-top: var(--sp-4); }
 
 .gb-pack li {
   display: grid;
@@ -1119,11 +1134,13 @@
   font-weight: 700;
 }
 
+/* 行のあいだ 16px は、出どころが折り返したとき、下の行のリンクが上の行の当たりを
+   食わないため（`.gb-places-it` と同じ） */
 .gb-src {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 10px;
+  gap: 16px 12px;
   margin: var(--sp-3) 0 0;
   font-size: var(--fs-note);
   color: var(--ink-2);
@@ -1132,7 +1149,8 @@
 .gb-src > span { font-weight: 700; }
 .gb-src > i { font-style: normal; font-size: var(--fs-min); }
 .gb-src a { position: relative; display: inline-flex; align-items: center; min-height: 32px; color: var(--accent-2); }
-.gb-src a::after { content: ""; position: absolute; inset: -8px -4px; }
+/* 「外務省」のような3字の出どころは 38px しかない。短いものは 50px まで左右に広げる */
+.gb-src a::after { content: ""; position: absolute; inset: -8px min(-4px, calc((100% - 50px) / 2)); }
 
 .gb-minis {
   display: grid;
@@ -1401,8 +1419,10 @@ html.gb-lock { overflow: hidden; }
   background: rgb(0 0 0 / 0.55);
 }
 
-.gb-short figcaption { display: grid; gap: 1px; margin-top: 4px; font-size: 12px; line-height: 1.45; }
+/* 題の当たりは、題と日付の段ぜんぶ（`::after`）。題だけだと2行で 35px しかない */
+.gb-short figcaption { position: relative; display: grid; align-content: start; gap: 1px; min-height: 48px; margin-top: 4px; font-size: 12px; line-height: 1.45; }
 .gb-short figcaption a { color: var(--ink); font-weight: 700; }
+.gb-short figcaption a::after { content: ""; position: absolute; inset: 0; }
 .gb-short figcaption time { font-size: var(--fs-min); color: var(--ink-2); }
 
 .gb-went-video { display: grid; gap: var(--sp-2); margin-top: var(--sp-2); }
@@ -1452,9 +1472,12 @@ html.gb-lock { overflow: hidden; }
 /* ---- 面の終わり --------------------------------------------------------- */
 
 .gb-sources { margin: var(--sp-5) 0; }
+/* 1件の当たりは、その行ぜんぶ（名前と URL の段。`::after` で行に広げる）。
+   名前だけだと高さ 21px で、指が届かなかった。行は 48px あれば足りるので、字は大きくしない */
 .gb-src-list { display: grid; gap: 4px; margin: 0 0 var(--sp-3); padding: 0; list-style: none; font-size: var(--fs-note); }
-.gb-src-list li { display: grid; gap: 0; }
+.gb-src-list li { position: relative; display: grid; align-content: center; gap: 0; min-height: 48px; }
 .gb-src-list a { color: var(--accent-2); font-weight: 700; }
+.gb-src-list a::after { content: ""; position: absolute; inset: 0; }
 .gb-src-list i { font-style: normal; color: var(--ink-2); overflow-wrap: anywhere; }
 .gb-src-list.is-photo li { grid-template-columns: 1fr; }
 .gb-note { font-size: var(--fs-note); color: var(--ink-2); }

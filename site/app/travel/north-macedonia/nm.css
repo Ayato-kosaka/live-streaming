@@ -154,3 +154,17 @@
      添え物であることは、左の罫と字の小ささで出す。 */
   color: var(--ink);
 }
+
+/* 出どころのリンク。行は 22px なので、当たりだけ上下に 14px ずつ広げる（字は大きくしない）。
+   **途中で折れない箱（inline-block）にする**——行をまたいだリンクに `::after` を付けると、
+   当たりの箱が1行目の頭から2行目の終わりまでの、形の決まらない四角になる */
+.nmspot-how a {
+  position: relative;
+  display: inline-block;
+}
+
+.nmspot-how a::after {
+  content: "";
+  position: absolute;
+  inset: -14px min(-4px, calc((100% - 50px) / 2));
+}

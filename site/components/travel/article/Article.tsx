@@ -321,11 +321,16 @@ export function Pairs({ pairs }: { pairs: { head: string; text: string }[] }) {
 export function ExtLine({ e }: { e: Ext }) {
   return (
     <p className="tg-ext ta-ext">
-      {e.text}（
-      <a href={e.src} target="_blank" rel="noopener noreferrer">
-        {e.name}
-      </a>
-      ・<time dateTime={e.seen}>{jpDate(e.seen)}</time>に見た）
+      {e.text}
+      {/* 括弧ごと1つの箱（`.ta-ext-src`）。リンクの当たりをこの箱に広げるため。リンクだけを折れない箱にすると、
+          「（」が行末に1字だけ残った */}
+      <span className="ta-ext-src">
+        （
+        <a href={e.src} target="_blank" rel="noopener noreferrer">
+          {e.name}
+        </a>
+        ・<time dateTime={e.seen}>{jpDate(e.seen)}</time>に見た）
+      </span>
     </p>
   );
 }
