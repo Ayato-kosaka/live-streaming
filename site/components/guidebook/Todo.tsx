@@ -43,7 +43,8 @@ export default function Todo({ g, n }: { g: Guidebook; n: number }) {
                   <Icon name={t.icon} size={120} />
                 </span>
               )}
-              {t.pic && <Picture pic={t.pic} sizes="(min-width: 720px) 600px, 100vw" ratio={null} eager={i < 1} />}
+              {/* 1枚目も遅れて読む。節は表紙・目次・どんな街の下（390幅で y≈2,500）で、最初の1画面に入らない（#944） */}
+              {t.pic && <Picture pic={t.pic} sizes="(min-width: 720px) 600px, 100vw" ratio={null} />}
               <span className="gb-todo-top">
                 <b className="gb-todo-n" aria-hidden="true">
                   {String(i + 1).padStart(2, "0")}

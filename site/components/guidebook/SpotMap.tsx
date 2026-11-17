@@ -4,6 +4,7 @@ import { place, tagLines } from "@/content/guidebook/spotmap";
 import type { Area, Guidebook, MapBeyond, MapDir } from "@/content/guidebook/types";
 import { mapsSearch } from "@/lib/mapsSearch";
 
+import LateArt from "./LateArt";
 import { sheetId } from "./parts";
 
 /**
@@ -65,7 +66,8 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
 
   return (
     <figure className="gb-amap" data-gb="areamap">
-      <div className="gb-amap-art" style={{ aspectRatio: am.w && am.h ? `${am.w} / ${am.h}` : "1 / 1" }}>
+      {/* `data-gb-late`: 絵は画面に近づいてから読む（`LateArt.tsx`）。札と矢印は字なので、はじめから出る */}
+      <div className="gb-amap-art" data-gb-late="" style={{ aspectRatio: am.w && am.h ? `${am.w} / ${am.h}` : "1 / 1" }}>
         <img src={am.src} width={am.w} height={am.h} alt={`イラスト：${am.alt || "エリアの地図"}`} loading="lazy" decoding="async" />
         {lay.arrows.map((a) => {
           const b = am.beyond.find((x) => x.id === a.id)!;
@@ -120,6 +122,7 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
         ))}
       </ul>
       {toMap}
+      <LateArt />
     </figure>
   );
 }
