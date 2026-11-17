@@ -23,6 +23,8 @@
     BREAK=mark   python3 python/legacy_hosting_selftest.py   # 目印の字を片側だけ変える
     BREAK=stage  python3 python/legacy_hosting_selftest.py   # 段が空でも firebase.json を書き換える
     BREAK=verify python3 python/legacy_hosting_selftest.py   # 確認ファイルを残すものに数えない
+    BREAK=ship   python3 python/legacy_hosting_selftest.py   # 出したあとの突き合わせが段を見ない
+    BREAK=named  python3 python/legacy_hosting_selftest.py   # 古いドメインを名指ししてよい表から1つ抜く
 
 ## 段のファイル（`python/data/hosting_stage.json`）
 
@@ -44,6 +46,54 @@ sys.path.insert(0, str(HERE))
 
 BREAK = os.environ.get("BREAK", "")
 bad = 0
+
+
+# **古いドメインを名指ししてよいところ。** 島の面を開く道具の既定は正の URL（`tools/sprites/origin.mjs` の
+# `SITE_ORIGIN`）へ寄せた。段 B のあと古いドメインの島の面は 301 になるので、ここに無いところが
+# 古いドメインで面を開くと、黙って 301 を読む。口（`/island-api`）を引く字は数えない（301 の外）
+LEGACY_NAMED = {
+    # 段 B の仕掛けそのもの
+    "python/legacy_hosting.py": "古いドメイン用の設定を作り、数える",
+    "python/legacy_hosting_selftest.py": "この見張り",
+    "site/lib/handoff.ts": "手元の記録を取りに行く先",
+    "public/handoff.html": "受け渡しの面の説明",
+    "tools/sprites/handoff.mjs": "引き継ぎの試し（本番のホスト名のまま）",
+    ".github/workflows/legacy_preview.yml": "プレビューの説明",
+    ".github/workflows/firebase-hosting-deploy-prod.yml": "段 B のあと古いドメインを数える",
+    # 段 B のあとも古いドメインで動くもの
+    "tools/sprites/origin.mjs": "LEGACY_ORIGIN（OBS と口の宛先）の1か所",
+    ".github/workflows/alert_watch.yml": "OBS が開く /alertbox を、OBS と同じ古いドメインで確かめる",
+    "public/alert/perf.html": "OBS の計測面の案内（OBS は古いドメインのまま）",
+    "site/lib/firebase.ts": "ログインを同じホストで受けるドメインの一覧（古いドメインの /me などでもログインする）",
+    "site/selftest/firebase_selftest.mjs": "上の一覧の見張り",
+    "python/seo_audit.py": "比べる相手（同じ中身を配っていないか）としての古いドメイン",
+    "tools/sprites/prodcurl_selftest.mjs": "PASS に当たる名前で試す（偽のサーバで受け、本番には出ない）",
+    # 記録（宛先ではない）
+    "site/content/site.ts": "説明のコメント",
+    "tools/sprites/sitemap-2026-11-13.txt": "日付つきの写しの見出し",
+    "tools/shorts/stickies/README.md": "作業箱から島に届かなかった、という当時の記録",
+    ".github/workflows/stickies_pull.yml": "同じ記録",
+    "public/nordic/review.html": "過去の配信で映した面の字",
+}
+
+
+def scan_named() -> dict[str, list[int]]:
+    """古いドメインを名指ししている行（`/island-api` を引く字は除く）を、ファイルごとに返す。"""
+    pat = re.compile(r"live-streaming-d3cac\\?\.web\\?\.app(?!/island-api)")
+    out: dict[str, list[int]] = {}
+    for d in ["tools", "python", ".github", "site", "public"]:
+        for f in (REPO / d).rglob("*"):
+            if not f.is_file() or "node_modules" in f.parts or any(p.startswith(".next") for p in f.parts) \
+                    or f.suffix in {".png", ".jpg", ".webp", ".mp4", ".woff2", ".gz"}:
+                continue
+            try:
+                lines = f.read_text(encoding="utf-8").splitlines()
+            except (UnicodeDecodeError, OSError):
+                continue
+            hits = [i for i, ln in enumerate(lines, 1) if pat.search(ln)]
+            if hits:
+                out[str(f.relative_to(REPO))] = hits
+    return out
 
 
 def ok(name: str, good: bool, detail: str = "") -> None:
@@ -184,6 +234,28 @@ def main() -> int:
     for p in files:
         body = (pub / (p[1:] + ".txt")).read_text(encoding="utf-8").strip()
         ok(f"{p} の中身が自分の名前を名乗る", body == f"google-site-verification: {p[1:]}", body[:60])
+
+    # 9. 出したあとの突き合わせ（ship.py）は、301 の段で正の URL を見る
+    import ship
+    if BREAK == "ship":
+        ship.prod_base = lambda stage_text=None: "https://live-streaming-d3cac.web.app"
+    old_host = "https://live-streaming-d3cac.web.app"
+    ok("突き合わせ: 段が空なら web.app", ship.prod_base('{"island_site": "", "legacy_301": false}') == old_host)
+    ok("突き合わせ: mirror でも web.app（新しいドメインの証明書待ちに巻き込まれない）",
+       ship.prod_base('{"island_site": "ayato-arigato", "legacy_301": false}') == old_host)
+    got = ship.prod_base('{"island_site": "ayato-arigato", "legacy_301": true}')
+    ok("突き合わせ: 301 の段は正の URL", got == origin, got)
+
+    # 10. 古いドメインを名指ししてよいのは、理由のあるところだけ（口 /island-api を引く字は除く）
+    named = scan_named()
+    allow = dict(LEGACY_NAMED)
+    if BREAK == "named":
+        allow.pop("tools/sprites/origin.mjs")
+    extra = sorted(set(named) - set(allow))
+    ok("古いドメインを名指ししているのは、理由の表にあるところだけ", not extra,
+       "表に無い: " + ", ".join(f"{f}:{named[f][0]}" for f in extra[:6]))
+    gone = sorted(set(allow) - set(named))
+    ok("理由の表に、もう名指ししていないところが残っていない", not gone, ", ".join(gone))
 
     # 6. 受け渡しの面は検索に載せない
     noidx = [h["source"] for h in island.get("headers", [])

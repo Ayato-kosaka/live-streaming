@@ -61,8 +61,9 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SITE_ORIGIN } from "./origin.mjs";
 
-const BASE = process.env.BASE || "https://live-streaming-d3cac.web.app";
+const BASE = process.env.BASE || SITE_ORIGIN;
 const SELFTEST = process.argv.includes("--selftest");
 /**
  * 今日（JST）。行き先の日付と見比べる基準。

@@ -8,7 +8,8 @@ export const SITE = {
   tagline: "あやとと愉快な仲間達",
   /* **正の URL。** canonical・`og:url`・sitemap の `<loc>`・robots.txt・構造化データは
      全部ここから作る（`app/layout.tsx` の `metadataBase` もここを読む）。
-     古い `live-streaming-d3cac.web.app` も同じ面を配り続けている（301 で送らない。#1202）。
+     古い `live-streaming-d3cac.web.app` は、段 B（`python/data/hosting_stage.json` の `legacy_301`）が
+     入るまで同じ面を配り、入ったあとは島の面だけを 301 でここへ送る（#1202）。
      見張り（`tools/sprites/ogmeta.mjs`・`python/seo_audit.py`）もこの欄を読む。 */
   url: "https://ayato-arigato.com",
   /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、画面が出てから
