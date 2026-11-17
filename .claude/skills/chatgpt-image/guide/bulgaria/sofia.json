@@ -23,18 +23,26 @@
   "buy-rose-jam": "buy-rose-jam-lokum"
  },
  "stitch": "Bulgarian",
- "scene": "Scene: Sofia, the capital of Bulgaria, on a clear late-autumn (November) afternoon. The main subject is the Alexander Nevsky Cathedral: a large neo-Byzantine church of pale cream stone with round-arched windows, one big gilded GOLD central dome, several smaller domes in green copper with gold tips, and a tall bell tower on its west side topped with a small gold dome. Behind the city, filling the horizon, is Vitosha mountain: a broad, gently sloping, rounded massif (NOT a sharp peak), blue-green with forests and a light dusting of snow on its long flat top. Around the cathedral: autumn trees with golden-yellow and orange leaves, a wide square with pale paving stones, a few tiny cheerful people walking, and a small street cart selling steaming boiled corn on the cob. On the right side, terracotta-tiled rooftops of the old center and a small round red-brick church with a little dome (the Rotunda of St. George). Golden late-afternoon light with soft long shadows. ",
+ "style": "editorial",
+ "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+ "scene": "Scene: Sofia, the capital of Bulgaria, in late autumn. The hero is the Alexander Nevsky Cathedral, faithful to the cathedral photo: a large neo-Byzantine church of pale cream-grey stone with round-arched windows, one big gilded GOLD central dome, several smaller domes in green copper with gold tips, and a tall bell tower on its west side topped with a small gold dome. Behind the city, filling the horizon, is Vitosha mountain: a broad, gently sloping, rounded massif (NOT a sharp peak), blue with forests and a light dusting of snow on its long flat top. Around the cathedral: trees with golden-yellow autumn leaves, a wide square of pale paving stones with a few small passers-by seen from behind, and a small street cart selling steaming boiled corn on the cob. Light: late afternoon; the low sun gilds the gold dome and warms the stone, long shadows cross the square, and the mountain sits in cool blue haze. Palette: gold, green copper and warm cream stone with autumn yellow, against the cool blue mountain and a clear, pale sky. ",
  "cover": {
-  "v": 1,
-  "bias": 0.56,
-  "alt": "金のドームのアレクサンドル・ネフスキー大聖堂と、雪をかぶったヴィトシャ山。黄葉の広場にとうもろこしの屋台が出ている、秋のソフィアの絵",
-  "note": "手描きの水彩・ガッシュ調。輪郭線なし・強い環境光・明るく彩度の高い色。ネフスキー大聖堂（金の中央ドーム・緑のドーム・鐘楼）とヴィトシャ山（なだらかな山塊・頂に雪）を主に。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
+  "v": 2,
+  "bias": 0.15,
+  "alt": "午後の低い日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、雪をかぶったヴィトシャ山。黄葉の広場にとうもろこしの屋台が出ている、晩秋のソフィアの絵",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。大聖堂は写真を形の手本として渡した。ネフスキー大聖堂（金の中央ドーム・緑のドーム・鐘楼）とヴィトシャ山（なだらかな山塊・頂に雪）を主に、晩秋の夕方の光。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし",
+  "photos": [
+   "site/public/guide/bulgaria/sofia/photos/saint-alexander-nevsky-cathedral-7be3d693-500.webp"
+  ]
  },
  "cover_tall": {
-  "v": 1,
+  "v": 2,
   "bias": 0.5,
-  "alt": "金のドームのアレクサンドル・ネフスキー大聖堂と、その背に横たわるヴィトシャ山。黄葉の木々に囲まれた、秋のソフィアの絵",
-  "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
+  "alt": "午後の日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、その背に横たわるヴィトシャ山。黄葉の木々に囲まれた、晩秋のソフィアの絵",
+  "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "photos": [
+   "site/public/guide/bulgaria/sofia/photos/saint-alexander-nevsky-cathedral-7be3d693-500.webp"
+  ]
  },
  "areamap": {
   "v": 4,
@@ -278,44 +286,51 @@
   }
  },
  "do": {
-  "model": "bulgaria/sofia:cover",
-  "note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。料理・土産・建物は Wikipedia の説明と写真に合わせた（実在の建物は写真を形の手本として渡し、写真のふりはさせない）。3:2 で描かせて 4:3 と 1:1 に切った。字なし",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+  "shape": "card43",
   "items": {
    "yogurt": {
     "ja": "本場のヨーグルトの食べ比べ",
-    "shape": "hero",
-    "desc": "tasting real Bulgarian yogurt at a cozy little cafe table in Sofia on a bright morning. The food is the hero: big, close to the viewer and mouth-watering, filling the lower half of the picture. On a red-and-white embroidered table runner on a light wooden table: kiselo mlyako (thick, glossy, snow-white set yogurt) in a traditional glazed brown clay pot decorated with a simple cream-and-green Bulgarian folk pattern, a wooden spoon lifting a thick creamy spoonful; a bowl of tarator (cold yogurt soup: pale creamy white with small diced cucumber, chopped green dill and crushed walnuts, a few drops of oil); and a yogurt dessert: a glass bowl of thick strained yogurt drizzled with golden honey and topped with walnuts, next to a small dish of dark berry jam. Two happy travelers sit at the table tasting with spoons, eyes sparkling; one has just taken a bite and holds a hand to her cheek in delight. Behind them, a softly blurred sunny window with red geraniums.",
-    "alt": "陶器の器のキセロ・ムリャコ、冷たいスープのタラトル、はちみつとくるみのヨーグルトが並ぶ卓で、ひと口食べて笑顔になる旅行者の絵",
-    "note": "表紙と同じ手描きの水彩・ガッシュ調（表紙を手本として渡した）。人物は特定の人に見えない旅行者。ヨーグルトの器と料理は Wikipedia の説明と写真に合わせた。面の見出しの絵なので、16:9（3:2 で描かせて切った）と 4:5（2:3 で描かせて切った）を別々に描いた。字なし",
+    "desc": "authentic Bulgarian yogurt (kiselo mlyako), a close-up still life. Composition: seen from directly above (a flat lay), close and intimate: a traditional Troyan clay pot (glossy brown glaze with dripped cream, yellow and green rings, like the yogurt photo) sits a little left of center, brimming with thick, snow-white set yogurt painted in rich impasto so it looks firm, creamy and delicious; a wooden spoon resting in it has lifted one clean, glossy scoop, with a glint of translucent whey in the hollow. Its lid leans against the pot. The pot stands on a deep teal-green linen cloth crossed by one band of red Bulgarian cross-stitch embroidery; a few walnuts and a sprig of dill nearby. No hands, no people. Light: calm, cool morning daylight from a window at the upper left, one long soft diagonal shadow. Palette: creamy white, terracotta brown, deep teal green and a little crimson.",
+    "alt": "真上から見た、トロヤン焼きの茶色い壺いっぱいのキセロ・ムリャコ。木のさじが白くかたいヨーグルトをすくっている、朝の光の絵",
     "ref": [
      "site/public/guide/bulgaria/sofia/photos/bulgarian-yogurt-91adebcb-500.webp",
-     "site/public/guide/bulgaria/sofia/food-tarator-400.webp"
+     "site/public/guide/bulgaria/sofia/food-kiselo-mlyako-400.webp"
+    ],
+    "v": 2,
+    "photos": [
+     "site/public/guide/bulgaria/sofia/photos/bulgarian-yogurt-91adebcb-500.webp"
     ]
    },
    "rose": {
     "ja": "バラのかわいいお土産",
-    "desc": "choosing cute Bulgarian rose souvenirs in a small, sunny souvenir shop in Sofia. A happy traveler holds up a tiny glass vial of golden rose oil set in a little carved wooden case shaped like a small bottle, admiring it with a big smile, while a friend sniffs a rose-shaped soap. On the wooden counter and the shelves around them: small glass jars of pink-red rose petal jam with plain lids, a little basket of pink soaps shaped like roses, round and square gift boxes painted with pink roses and green leaves (patterns only, no writing), small glass bottles of rose water, and fresh pink Damask roses (loose, many-petaled pink flowers) in a vase with petals scattered on the counter. Soft pinks, creams and honey-colored wood; dreamy and very cute.",
-    "alt": "ローズオイルの小瓶、バラのジャム、バラの形の石けん、バラ模様の箱が並ぶお土産屋さんで、小瓶を手に取る旅行者の絵",
+    "desc": "Bulgarian rose souvenirs, an intimate close-up at eye level in a small souvenir shop. Composition: in the foreground, one hand (only the hand and wrist) holds up a tiny glass vial of golden rose oil in a small hand-carved wooden case shaped like a little bottle (like the rose oil photo), so the light shines through the oil and makes it glow amber-gold. Behind it, softly out of focus on the wooden counter: small glass jars of deep pink-red rose petal jam, pale pink soaps shaped like roses, round gift boxes painted with pink roses (patterns only, no writing), and a vase of fresh Damask roses (loose, many-petaled pink flowers) with fallen petals on the wood. Light: bright, soft midday light through a sheer lace curtain behind, gentle backlight and glow. Palette: blush pink and rose red, honey amber and pale gold, a little sage green, warm cream.",
+    "alt": "昼の光にかざした、木彫りのケースに入ったローズオイルの小瓶。後ろにバラのジャム、バラの形の石けん、ダマスクローズが並ぶお土産屋の絵",
     "ref": [
-     "site/public/guide/bulgaria/sofia/photos/rose-petals-jam-a84346be-500.webp",
-     "site/public/guide/bulgaria/sofia/buy-rose-oil-400.webp"
+     "site/public/guide/bulgaria/sofia/buy-rose-oil-400.webp",
+     "site/public/guide/bulgaria/sofia/photos/rose-petals-jam-a84346be-500.webp"
+    ],
+    "v": 2,
+    "photos": [
+     "site/public/guide/bulgaria/sofia/buy-rose-oil-800.webp"
     ]
    },
    "hotspring": {
     "ja": "街なかの温泉の蛇口",
-    "desc": "filling bottles with warm mineral spring water at the free public hot-spring taps in central Sofia, on a crisp, sunny autumn day. In front: a low stone fountain with a row of metal taps on a small paved square; warm water streams out and soft white steam rises in the cool air. A smiling traveler fills a bottle side by side with a friendly local grandmother in a headscarf, who is filling big water bottles from a little shopping trolley; they smile at each other. Behind them: the Central Mineral Baths of Sofia (today the city history museum), exactly as in the photo: a long, symmetrical building whose walls have horizontal stripes of warm yellow-ochre and cream with thin red-brown brick bands, rows of round-arched windows, a red-tiled roof with small corner turrets, and a taller central entrance pavilion topped with a small dome, decorated with colorful ceramic ornaments; a round fountain and green lawns in front. Golden autumn trees.",
-    "alt": "鉱泉浴場の建物の前の、無料の温泉の蛇口。湯気の立つ水を、地元のおばあさんと並んでボトルにくむ旅行者の絵",
+    "desc": "the Central Mineral Baths of Sofia and the free public hot-spring taps beside them; the architecture is the hero. Composition: a wide, low-angle view from the plaza, slightly from the left, so the long symmetrical facade feels grand and monumental and stretches across most of the width; the central entrance pavilion with its big arched window and its ribbed dome rises against the sky, and the tall slim brick chimney stands behind on the right, as in the photo. Keep the building faithful to the photo: walls in horizontal stripes of cream and terracotta-red brick bands with warm yellow-ochre panels, rows of round-arched windows, red-tiled roofs, small domed corner pavilions, a round fountain and lawns in front. In the lower left foreground, the low stone wall of public taps: warm mineral water pours out and soft white steam drifts up into the cold air while three or four small locals, seen from behind, fill plastic bottles. Light: a crisp, cold, cloudless late-autumn early afternoon; clear sun rakes across the facade with crisp shadows under the cornices. Palette: cream and brick red against a deep cobalt-blue sky, with touches of golden autumn leaves.",
+    "alt": "しま模様の中央鉱泉浴場を見上げる広場。手前の蛇口から湯気の立つ温泉が出ていて、地元の人がボトルにくんでいる、冬晴れの昼の絵",
     "photos": [
      "site/public/guide/bulgaria/sofia/photos/sofia-public-mineral-baths-sofia-1053e129-500.webp"
     ],
     "ref": [
      "site/public/guide/bulgaria/sofia/photos/sofia-public-mineral-baths-sofia-1053e129-500.webp"
-    ]
+    ],
+    "v": 2
    },
    "faiths": {
     "ja": "教会・モスク・シナゴーグの通り",
-    "desc": "strolling through central Sofia, where an Orthodox church, a mosque and a synagogue stand within a few minutes' walk of each other. A cheerful traveler with a small backpack and a camera walks along a sunny pedestrian street, looking around with delight. Around her, close together like in a storybook (a little closer than in reality): the Banya Bashi Mosque, as in the mosque photo (a squat building of red brick with pale stone bands, one large lead-grey dome, and a single slender minaret with a red-brick shaft, a white balcony ring and a pointed grey cap); the Sofia Synagogue, as in the synagogue photo (Moorish-revival, walls in horizontal stripes of red brick and cream stone, a wide cream front with a big arched window made of small round arches, corner towers with small dark domes, and one big dark central dome); and Sveta Nedelya Church, as in the church photo (an Orthodox church of warm grey-beige stone with a large central dome on a drum of arched windows, smaller domes, all domes in grey stone and grey metal, not green, and an arcade of round arches in front). Pigeons, autumn trees, a few small people.",
-    "alt": "ミナレットのあるモスク、しま模様のシナゴーグ、ドームの教会が近くに並ぶ通りを歩く旅行者の絵",
+    "desc": "a street corner in central Sofia where an Orthodox church, a mosque and a synagogue stand within a few minutes' walk of each other. Composition: a medium-wide view at street level with long-lens compression, so the three buildings stack up close together (closer than in reality): on the left the Banya Bashi Mosque, as in the mosque photo (a squat building of red brick with pale stone bands, one large lead-grey dome, and a single slender minaret with a red-brick shaft, a white balcony ring and a pointed grey cap); in the middle distance the Sofia Synagogue, as in the synagogue photo (Moorish-revival, walls in horizontal stripes of red brick and cream stone, a wide cream front with a big arched window made of small round arches, corner towers with small dark domes, and one big dark central dome); on the right Sveta Nedelya Church, as in the church photo (warm grey-beige stone, a large central dome on a drum of arched windows, smaller domes, all domes in grey stone and grey metal, not green, and an arcade of round arches in front). Between them a wide pedestrian street of wet paving stones that mirror the domes and the minaret; a few small passers-by seen from behind, one with an umbrella. Light: just after sunset, right after a rain shower: the sky is a soft lilac and apricot dusk, the first old street lamps glow warm, a few windows are lit, and the wet stones mirror the lamps, the sky and the silhouette of the minaret; the buildings sit in cool violet-grey half-light. Palette: lilac, dusky violet and slate grey, apricot and warm lamp gold, with the brick red of the mosque and the synagogue.",
+    "alt": "雨上がりの日暮れ、街灯のともる石畳に映るミナレットのモスク、しま模様のシナゴーグ、ドームの聖ネデリャ教会。3つが近くに並ぶ通りの絵",
     "photos": [
      "site/public/guide/bulgaria/sofia/photos/banya-bashi-mosque-sofia-40e022f6-500.webp",
      "site/public/guide/bulgaria/sofia/photos/sofia-synagogue-11c-7c6415e0-500.webp",
@@ -326,34 +341,35 @@
      "site/public/guide/bulgaria/sofia/photos/sofia-synagogue-11c-7c6415e0-500.webp",
      "site/public/guide/bulgaria/sofia/photos/sveta-nedelya-church-sofia-2021-19f47aa8-500.webp"
     ],
-    "v": 2,
-    "fix": "IMPORTANT: the synagogue has NO crosses and no religious symbols at all on its domes and towers (plain dark domes only); crosses appear ONLY on top of the Orthodox church. The mosque has no cross either. "
+    "v": 4,
+    "fix": "IMPORTANT: the synagogue has NO crosses and no religious symbols at all: its towers and domes end in plain rounded tops, with no spikes, rods or finials that could look like a cross; crosses appear ONLY on top of the Orthodox church. The mosque has no cross either. No tree branches or leaves hanging into the corners of the picture. "
    },
    "mehana": {
     "ja": "メハナで乾杯",
-    "desc": "raising glasses with friends in a cozy traditional Bulgarian tavern (mehana) in Sofia in the evening. Rustic dark wooden beams, white plaster walls hung with colorful glazed folk pottery plates, woven red folk rugs, and strings of dried red peppers and garlic; warm lantern light. On a table with a red-and-white woven folk tablecloth: a big shopska salad (diced tomatoes and cucumbers under a snowy mound of finely grated white cheese, one black olive on top), a sizzling platter of charcoal-grilled meat (kebapche: long, skinless grilled minced-meat sausages; kyufte: round flat grilled patties) with golden fries and a small bowl of red lyutenitsa relish, crusty bread and a clay wine jug. Three happy friends clink small glasses of rakia and red wine, laughing. Generous, hearty portions.",
-    "alt": "民芸の皿と赤い織物で飾られたメハナで、ショプスカサラダと炭火焼きのケバプチェを前に乾杯する旅行者の絵",
+    "desc": "an evening in a traditional Bulgarian tavern (mehana) in Sofia; the table is the hero. Composition: a medium close view from slightly above the table, looking across it into the room. On a red-and-white woven folk tablecloth in the foreground: a big shopska salad (diced tomatoes and cucumbers under a snowy mound of finely grated white sirene cheese, one black olive on top), a clay platter of charcoal-grilled kebapche (long, skinless grilled minced-meat sausages) and round kyufte patties with a little bowl of red lyutenitsa relish, crusty bread and a clay wine jug. Several hands (only hands and sleeves) raise small glasses of golden rakia and red wine in a toast above the table. Behind, softly out of focus: rustic dark wooden beams, white plaster walls hung with glazed folk pottery plates, a woven red rug and strings of dried red peppers and garlic. Light: warm candle and lantern light at night, deep shadows, glints on the glasses and the glaze. Palette: deep red and oxblood, dark walnut brown, warm candle gold, a little white.",
+    "alt": "ろうそくの灯るメハナの卓。ショプスカサラダと炭火焼きのケバプチェの上で、ラキヤとワインのグラスが乾杯している夜の絵",
     "ref": [
      "site/public/guide/bulgaria/sofia/photos/mehanadance-326de1d9-500.webp",
      "site/public/guide/bulgaria/sofia/food-kebapche-400.webp"
-    ]
+    ],
+    "v": 2
    },
    "banitsa": {
     "ja": "朝のバニツァとボザ",
-    "desc": "a Bulgarian breakfast at a small neighborhood bakery in Sofia on a crisp, sunny morning. A glass counter shows big round metal trays of golden banitsa (very thin phyllo rolled into a spiral coil, baked flaky and golden brown) and other pastries. In front, at a little window table in golden morning sunlight, a traveler happily bites into a warm slice of banitsa held in a paper napkin (flaky layers with a white cheese-and-egg filling) and holds a tall glass of boza (a thick, opaque, light caramel-beige malt drink) in the other hand. The friendly baker smiles behind the counter. Warm steam, cozy and cheap-and-cheerful.",
-    "alt": "朝のパン屋で、うず巻きのバニツァをほおばり、ボザのグラスを手にする旅行者の絵",
+    "desc": "a Bulgarian breakfast at a small neighborhood bakery in Sofia at sunrise. Composition: a medium close view across the bakery counter at eye level. In the foreground, a big round, shallow metal baking tray of freshly baked banitsa (very thin phyllo rolled into a spiral coil, baked flaky and golden brown, crisp and blistered on top), with one slice cut out to show the flaky layers and the white cheese-and-egg filling; a hand (only the hand) lifts a warm piece in a paper napkin; beside the tray stands a tall glass of boza (a thick, opaque, light caramel-beige malt drink). Behind, the shop window: low sunrise light streams in through the glass and lights up rising steam. Light: low, warm, slanting sunrise light with long shadows and glowing steam. Palette: honey gold, toasted amber and brown, warm cream, with cool blue-grey shadows.",
+    "alt": "朝日の差し込むパン屋のカウンター。焼きたてのうず巻きのバニツァを一切れ持ち上げる手と、ベージュのボザのグラスの絵",
     "ref": [
      "site/public/guide/bulgaria/sofia/food-banitsa-400.webp",
      "site/public/guide/bulgaria/sofia/photos/boza-bg-8c7dc7ef-500.webp"
     ],
-    "v": 2,
-    "fix": "Through the window: a sunny old street with autumn trees and pastel houses only, no famous landmark and no cathedral. "
+    "v": 3,
+    "fix": "Through the window: only a quiet old street with bare autumn trees, no famous landmark and no cathedral. "
    },
    "xmas": {
     "ja": "冬のクリスマスマーケット",
-    "desc": "the Christmas market in Sofia's City Garden in the early evening, in front of the Ivan Vazov National Theatre, as in the photo: a neoclassical building with deep red walls and cream-white trim, a portico of six white Corinthian columns, a triangular pediment with a cream sculpted relief, two corner towers with green domes topped by dark statues, and a low green dome in the middle; its windows glow warmly. In front of it: snow on the ground and on the roofs; rows of little wooden chalet stalls glowing with warm golden string lights and green garlands, selling gingerbread, roasted nuts, handmade ornaments and woolen goods; a big decorated Christmas tree full of lights. Two cheerful travelers in knitted hats and scarves hold steaming mugs of hot mulled wine (deep red, with orange slices and cinnamon sticks), cheeks pink, laughing together. Soft snow falling, a deep blue twilight sky, a warm cozy glow everywhere. Stall fronts have no signs or writing.",
-    "alt": "雪の夕暮れ、国立劇場の前のクリスマスマーケット。灯りのともる木の屋台の前で、湯気の立つホットワインを手に笑う旅行者の絵",
-    "v": 2,
+    "desc": "the Christmas market in Sofia's City Garden in front of the Ivan Vazov National Theatre on a snowy evening. Composition: a wide view from inside the market at eye level: two rows of small wooden chalet stalls with warm golden string lights and green garlands lead the eye toward the theatre at the back; a tall Christmas tree full of lights stands to one side; small figures seen from behind in coats and knitted hats, one holding a steaming mug of mulled wine. The theatre as in the photo: a neoclassical building with deep red walls and cream-white trim, a portico of six white Corinthian columns, a triangular pediment with a cream sculpted relief, two corner towers with green domes topped by dark statues, and a low green dome in the middle; its windows glow warmly. Snow on the ground, on the stall roofs and on the bare trees; soft snow falling. Light: deep blue twilight turning into night, everything lit by warm bulbs. Palette: deep navy and ultramarine, warm gold and amber light, white snow, and the theatre's deep red. Stall fronts have no signs or writing.",
+    "alt": "雪の降る夜、国立劇場の前の市庭園に並ぶクリスマスマーケットの木の屋台。電球の灯りの道の先に、赤い劇場が光る絵",
+    "v": 3,
     "fix": "Leave the band above the theatre's columns completely blank: no inscription, no letters. ",
     "photos": [
      "site/public/guide/bulgaria/sofia/photos/ivanvazov-national-theatre-7-1600cd77-500.webp"
@@ -364,14 +380,15 @@
    },
    "rila": {
     "ja": "リラ修道院へ日帰り",
-    "desc": "travelers gazing up in awe at Rila Monastery, the colorful World Heritage monastery deep in the Rila Mountains, exactly as in the photo. In its wide cobbled courtyard stands the main church: a long arcaded porch whose arches are striped in red, white and black, the porch walls and ceilings covered in bright, colorful frescoes, and several grey-lead domes. Behind it rises the medieval stone Hrelyo's Tower (a tall, square stone tower with a small roof). The courtyard is enclosed by four-storey residential wings with white walls, rows of arches striped in black and white, and dark wooden balconies. Steep forested green mountains rise all around under a clear blue sky. In front, two small travelers with backpacks look up at it in three-quarter view, mouths open in happy amazement.",
-    "alt": "緑の山に囲まれたリラ修道院。赤白黒のしま模様のアーチと色あざやかな壁画の教会を見上げる旅行者の絵",
+    "desc": "Rila Monastery deep in the Rila Mountains, a grand landscape and the widest view of the series. Composition: seen from a slightly raised viewpoint, the monastery sits small and precious in the lower third, faithful to the photo: the courtyard enclosed by four-storey residential wings with white walls, rows of arches striped in black and white, dark wooden balconies and red-tiled roofs; in it the main church with its arcaded porch whose arches are striped red, white and black, its colorful frescoes and several grey-lead domes; beside it the tall, square medieval stone Hrelyo's Tower. Above it, steep forested mountains and a high ridge with the first snow rise and fill the frame, layer after layer fading into mist. Only a few tiny figures in the courtyard, for scale. Light: early evening; the last warm sunlight touches the ridge and the striped arches while the valley falls into cool blue shadow. Palette: deep forest green, slate blue and mist grey, with warm accents of red, ochre and the black-and-white stripes.",
+    "alt": "雪をいただく尾根と深い森に抱かれたリラ修道院。しま模様のアーチと壁画の教会に、夕方の最後の日が当たる絵",
     "photos": [
      "site/public/guide/bulgaria/sofia/photos/2016-07-31-bulgaria-rila-monaste-8f4c2a73-500.webp"
     ],
     "ref": [
      "site/public/guide/bulgaria/sofia/photos/2016-07-31-bulgaria-rila-monaste-8f4c2a73-500.webp"
-    ]
+    ],
+    "v": 2
    }
   }
  }
