@@ -255,7 +255,7 @@
         ]
       },
       {
-        "source": "/@(alertbox|daily_user_stats|ve-comment|ve-postit)",
+        "source": "/@(alertbox|daily_user_stats|ve-comment|ve-postit|handoff)",
         "headers": [
           {
             "key": "X-Robots-Tag",

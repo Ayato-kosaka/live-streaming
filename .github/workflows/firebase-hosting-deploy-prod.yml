@@ -98,6 +98,23 @@ jobs:
             exit 0
           fi
           exit "$code"
+      # **#1202 の段 B（古いドメインの島の面を、新しいドメインへ 301）。**
+      # Hosting はホスト名ごとの redirect を書けないので、島を別のサイトに移し、
+      # 古いドメイン（既定のサイト）には「島の面だけ 301」の設定を配る。
+      # リポジトリの変数 `ISLAND_SITE` に島のサイトの名前が入っている間だけ、
+      # firebase.json を「島 → ISLAND_SITE／古いドメイン → 301」の2つ並びに置き換える。
+      # 下の配る step（live）は `firebase deploy --only hosting` なので、1回で両方へ配る。
+      # **変数が空なら何もしない**（いまの1つのサイトのまま）。戻すときは変数を消して配り直す。
+      # 規則は毎回 sitemap から作る（面が増えれば規則も増える。手で書かない）
+      - name: 古いドメインに 301 を焼く（島のサイトが分かれてから）
+        if: ${{ vars.ISLAND_SITE != '' }}
+        env:
+          ISLAND_SITE: ${{ vars.ISLAND_SITE }}
+        run: |
+          set -euo pipefail
+          project="$(jq -r .projects.default .firebaserc)"
+          python3 python/legacy_hosting.py build --sitemap dist/sitemap.xml \
+            --site "$project" --island-site "$ISLAND_SITE" --out firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -173,6 +190,9 @@ jobs:
       # 止まる。**2 では落とさない**——配れてはいるので。
       - name: 無い道が、ちゃんと 404 で返っているか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ vars.ISLAND_SITE != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/notfound.mjs && code=0 || code=$?
@@ -213,6 +233,9 @@ jobs:
       # 測れなかった理由は警告として残る。
       - name: 配った面が、面として配られているか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ vars.ISLAND_SITE != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/prodsweep.mjs && code=0 || code=$?
@@ -273,11 +296,29 @@ jobs:
       # **ここは 2 を警告に倒すだけ**（`prodsweep` と同じ形）。
       - name: 配ったカードの欄から、その人のカードぜんぶへ行けるか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ vars.ISLAND_SITE != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/cardgo.mjs && code=0 || code=$?
           if [ "$code" = "2" ]; then
             echo "::warning::本番のカードを数えられませんでした（配るのは済んでいます）"
+            exit 0
+          fi
+          exit "$code"
+
+      # 段 B のあとだけ。古いドメインの島の面が全部 301 で新しいドメインの同じ道へ行き、
+      # OBS・口・ログインの戻り先が 200 のままか（分母つき）
+      - name: 古いドメインの島の面が 301 になっているか
+        if: ${{ !cancelled() && vars.ISLAND_SITE != '' }}
+        run: |
+          set -uo pipefail
+          python3 python/legacy_hosting.py check --base https://live-streaming-d3cac.web.app \
+            --sitemap dist/sitemap.xml > legacy_check.md && code=0 || code=$?
+          tee -a "$GITHUB_STEP_SUMMARY" < legacy_check.md
+          if [ "$code" = "2" ]; then
+            echo "::warning::古いドメインを数えられませんでした（配るのは済んでいます）"
             exit 0
           fi
           exit "$code"

@@ -1,0 +1,172 @@
+name: 古いドメインの301をプレビューで試す
+
+# #1202 の段 B（古い `live-streaming-d3cac.web.app` の島の面を、新しいドメインの同じ道へ 301）を、
+# **本番の live には触らずに**、既定のサイトのプレビューの道（channel）へ配って数える。
+#
+# - 配るのは `python/legacy_hosting.py build` が作る「古いドメイン用」の設定だけ。
+#   プレビューの道は live と別の設定・別の中身を持つので、本番の面は1バイトも変わらない
+# - 数えるのは3つ: sitemap の全部の道が 301 一発で新しいドメインの同じ道へ（分母つき）／
+#   OBS・`/island-api`・ログインの戻り先・受け渡しの面が 200 のまま／
+#   クエリ・末尾の斜線・いまある内部の redirect が崩れないか
+# - ついでに、CI の鍵で何ができるか（サイトを足す・ドメインを付け替える）と、
+#   いまのサイトとドメインの繋がりを**読むだけ**で測る
+#
+# 結果は PR の1コメント（表）に出す。プレビューの道は3日で消える。
+on:
+  pull_request:
+    paths:
+      - "python/legacy_hosting.py"
+      - "public/handoff.html"
+      - "site/lib/handoff.ts"
+      - "tools/sprites/handoff.mjs"
+      - "firebase.json"
+      - ".github/workflows/legacy_preview.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: legacy-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    # よそのリポジトリからの PR には鍵を渡さない
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    env:
+      CHANNEL: legacy-301
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 書き出す（本番の配りと同じ手順）
+        run: |
+          # 本番の配り（firebase-hosting-deploy-prod.yml）と同じ2つだけ渡す。OBS の面を本物と同じ形で開くため
+          echo "EXPO_PUBLIC_GAS_LOG_API_URL=${{ secrets.EXPO_PUBLIC_GAS_LOG_API_URL }}" >> .env
+          echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
+          echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
+          npm ci && npm run build:web
+
+      - name: 古いドメイン用の設定を作る
+        run: python3 python/legacy_hosting.py build --sitemap dist/sitemap.xml --out firebase.legacy.json
+
+      - uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # **読むだけ。** サイトを作る・ドメインを動かすはしない。
+      # testIamPermissions は「この鍵が持っているもの」を返すだけで、何も変えない
+      - name: CI の鍵で何ができるか・いまの繋がり（読むだけ）
+        run: |
+          set -uo pipefail
+          project="$(jq -r .projects.default .firebaserc)"
+          tok="$(gcloud auth print-access-token)"
+          api() { curl -sS -H "Authorization: Bearer $tok" "$@"; }
+          {
+            echo "### CI の鍵（FIREBASE_SERVICE_ACCOUNT）が持っている権限"
+            echo
+            api -X POST -H 'Content-Type: application/json' \
+              "https://cloudresourcemanager.googleapis.com/v1/projects/$project:testIamPermissions" \
+              -d '{"permissions":["firebasehosting.sites.create","firebasehosting.sites.update","firebasehosting.sites.get","firebasehosting.sites.list","firebasehosting.sites.delete","firebase.projects.get","firebase.projects.update","cloudfunctions.functions.list"]}' \
+              | jq -r '"持っている: " + ((.permissions // []) | join(", ")) + (if .error then "\n読めなかった: " + .error.message else "" end)'
+            echo
+            echo "### いまのサイト"
+            echo
+            api "https://firebasehosting.googleapis.com/v1beta1/projects/$project/sites" \
+              | jq -r 'if .error then "読めなかった: " + .error.message else (.sites[] | "- `" + (.name | split("/") | last) + "`（" + (.type // "") + "）" + .defaultUrl) end'
+            echo
+            echo "### 既定のサイトに付いている独自ドメイン"
+            echo
+            api "https://firebasehosting.googleapis.com/v1beta1/projects/$project/sites/$project/customDomains" \
+              | jq -r 'if .error then "読めなかった: " + .error.message else ((.customDomains // [])[] | "- `" + (.name | split("/") | last) + "` 状態 " + (.hostState // "") + " / 所有 " + (.ownershipState // "") + " / 証明書 " + (.cert.state // "") + (if .redirectTarget then " → " + .redirectTarget else "" end)) end'
+            echo
+            echo "### 既定のサイトのプレビューの道"
+            echo
+            api "https://firebasehosting.googleapis.com/v1beta1/projects/$project/sites/$project/channels" \
+              | jq -r 'if .error then "読めなかった: " + .error.message else "\((.channels // []) | length) 本（live 込み）" end'
+          } > iam.md
+          cat iam.md
+
+      - name: プレビューの道へ配る（live には触らない）
+        id: deploy
+        run: |
+          set -euo pipefail
+          project="$(jq -r .projects.default .firebaserc)"
+          npx --yes firebase-tools@13 hosting:channel:deploy "$CHANNEL" \
+            --config firebase.legacy.json --expires 3d --project "$project" --json > channel.json
+          url="$(jq -r '.result | to_entries[0].value.url' channel.json)"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "配った先: $url"
+
+      - name: 数える
+        id: check
+        run: |
+          set -uo pipefail
+          python3 python/legacy_hosting.py check --base "${{ steps.deploy.outputs.url }}" \
+            --sitemap dist/sitemap.xml > check.md && code=0 || code=$?
+          cat check.md
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      # 古いドメイン → 新しいドメインで、手元の記録（localStorage）が残るか。
+      # 本番のホスト名のまま、書き出したもの（dist）を手元の HTTPS の受け口から返して試す
+      # （外へは出ない。中身は `tools/sprites/handoff.mjs` の頭）
+      - name: 手元の記録の引き継ぎを、書き出したもので試す
+        id: handoff
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -uo pipefail
+          sudo mkdir -p /opt/pw-browsers && sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          # 受け口は 443 で立てる（本番と同じ https のホスト名で開くため）
+          sudo sysctl -w net.ipv4.ip_unprivileged_port_start=0
+          node tools/sprites/handoff.mjs dist > handoff.md && code=0 || code=$?
+          cat handoff.md
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
+      - name: PR に1コメントで出す
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.deploy.outputs.url }}
+          CODE: ${{ steps.check.outputs.code }}
+        run: |
+          set -uo pipefail
+          mark='<!-- legacy-preview -->'
+          {
+            echo "$mark"
+            echo "## 古いドメインの 301 をプレビューの道で数えた（\`${GITHUB_SHA::7}\`）"
+            echo
+            echo "- プレビューの道: ${URL:-（配れなかった）}（3日で消える。本番の live は触っていない）"
+            echo "- 判定: $([ "$CODE" = "0" ] && echo '**合格**' || ([ "$CODE" = "1" ] && echo '**外れあり**' || echo '測れなかった'))"
+            echo
+            [ -f check.md ] && cat check.md
+            echo
+            echo "### 手元の記録の引き継ぎ（書き出したもの・本番のホスト名で）"
+            echo
+            [ -f handoff.md ] && grep '^|' handoff.md
+            echo
+            [ -f iam.md ] && cat iam.md
+          } > body.md
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.body | startswith(\"$mark\")) | .id" | tail -1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@body.md > /dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@body.md > /dev/null
+          fi
+
+      - name: 外れがあれば赤くする
+        run: |
+          rc=0
+          for code in "${{ steps.check.outputs.code }}" "${{ steps.handoff.outputs.code }}"; do
+            [ "$code" = "0" ] && continue
+            [ "$code" = "2" ] && { echo "::warning::数えられなかったものがあります"; continue; }
+            rc=1
+          done
+          exit "$rc"
