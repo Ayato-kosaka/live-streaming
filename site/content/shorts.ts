@@ -156,6 +156,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "nl-A72Io7Sc", date: "2026-11-13", title: "偏見をなくしたくて、🇮🇷イラン国境まで歩いたお話" },
     { id: "DjKYQtnrtMg", date: "2026-11-14", title: "🇲🇰北マケドニアでハードパン3種の実験をしたら、まさかの事態に！" },
     { id: "8pokq_0j_HE", date: "2026-11-15", title: "🇪🇪エストニアでハトにパンをあげたら、フンまみれにされた！" },
+    { id: "cJbIZUniHqk", date: "2026-11-16", title: "🇬🇧イギリス第三の街を、1日歩いて回ったらやばかった！" },
   ],
 };
 
