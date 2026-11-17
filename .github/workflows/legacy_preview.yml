@@ -16,6 +16,7 @@ on:
   pull_request:
     paths:
       - "python/legacy_hosting.py"
+      - "python/data/hosting_stage.json"
       - "public/handoff.html"
       - "site/lib/handoff.ts"
       - "tools/sprites/handoff.mjs"
@@ -48,6 +49,35 @@ jobs:
           echo "EXPO_PUBLIC_YOUTUBE_CHANNEL=${{ secrets.EXPO_PUBLIC_YOUTUBE_CHANNEL }}" >> .env
           echo "EXPO_PUBLIC_GIT_COMMIT=${{ github.sha }}" >> .env
           npm ci && npm run build:web
+
+      # **段が空（いまの値）なら、本番の配りは firebase.json に1バイトも触らない**ことを、
+      # 本番と同じ step（段を書く）を回して確かめる
+      - name: 段がいまの値なら、配るものは今と同じか
+        id: same
+        run: |
+          set -uo pipefail
+          python3 python/legacy_hosting.py stage | tee stage.txt
+          python3 python/legacy_hosting.py stage --sitemap dist/sitemap.xml --out firebase.json
+          if grep -qx 'island_site=' stage.txt; then
+            git diff --quiet -- firebase.json && r="○ 書き換えない" || r="**✕ 書き換えた**"
+          else
+            r="（段が進んでいるので見ない: $(tr '\n' ' ' < stage.txt)）"
+            git checkout -- firebase.json
+          fi
+          echo "| 段がいまの値なら、配る firebase.json は今と同じ | $r |" > same.md
+          cat same.md
+          case "$r" in *✕*) exit 1;; esac
+
+      # Search Console の確認ファイルの配りかた（rewrite で、跳ばずに 200）を、本物の Firebase で試す。
+      # **本番に偽の確認ファイルを置かない**ため、試しの名前はこのプレビューの書き出しにだけ足す
+      - name: 確認ファイルの配りかたを、試しの名前で足す（プレビューだけ）
+        run: |
+          set -euo pipefail
+          name=google0000000000000000.html
+          mkdir -p dist/google-site-verification
+          printf 'google-site-verification: %s' "$name" > "dist/google-site-verification/$name.txt"
+          jq --arg n "$name" '.hosting.rewrites += [{"source": ("/" + $n), "destination": ("/google-site-verification/" + $n + ".txt")}]' \
+            firebase.json > firebase.preview.json && mv firebase.preview.json firebase.json
 
       - name: 古いドメイン用の設定を作る
         run: python3 python/legacy_hosting.py build --sitemap dist/sitemap.xml --out firebase.legacy.json
@@ -146,6 +176,7 @@ jobs:
             echo "- 判定: $([ "$CODE" = "0" ] && echo '**合格**' || ([ "$CODE" = "1" ] && echo '**外れあり**' || echo '測れなかった'))"
             echo
             [ -f check.md ] && cat check.md
+            [ -f same.md ] && cat same.md
             echo
             echo "### 手元の記録の引き継ぎ（書き出したもの・本番のホスト名で）"
             echo

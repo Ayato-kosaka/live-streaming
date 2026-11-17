@@ -28,6 +28,28 @@ Firebase Hosting は `firebase.json` にホスト名ごとの redirect を書け
 フラグメントはサーバに届かず、Google も URL の一部として扱わないので、
 301 の行き先としての意味は変わらない。
 
+## 段はファイルで進める（`python/data/hosting_stage.json`）
+
+    {"island_site": "", "legacy_301": false}
+
+| island_site | legacy_301 | 配るもの |
+| --- | --- | --- |
+| 空 | false | いまのまま（既定のサイト1つに島。firebase.json に1バイトも触らない） |
+| サイト名 | false | 島を**両方の**サイトへ（ドメインを移すあいだ。どちらで開いても同じ島） |
+| サイト名 | true | 島 → 島のサイト／既定のサイト → 島の面だけ 301 |
+
+段は PR で進める（だれが・いつ進めたかが git に残る）。本番の配りは
+`python3 python/legacy_hosting.py stage` で読み、`stage --sitemap … --out firebase.json` で書く。
+
+## Search Console の確認ファイルは、301 の外で、跳ばずに 200
+
+確認ファイル（`google<16桁>.html`）は、Search Console が**その URL ちょうど**を見に来る
+（「転送は追わない」と書いてある）。ところが Hosting は `cleanUrls` なので、`public/` に
+`.html` のまま置くと `/google….html` → `/google…` へ 301 する。だから
+`public/google-site-verification/<名前>.txt` に置き、`firebase.json` の rewrite
+（`/<名前>` → そのファイル）で配る。この形の rewrite は `keep_paths()` が拾うので、
+古いドメインに残すものとして作る段階と配ったあとの2回数える（200・跳ばない・中身が名乗りと合う）。
+
 ## 終了コード
 
 0 = 合格 / 1 = 外れがある / 2 = 数えられなかった（測れないことと、外れていることは別）
@@ -80,6 +102,41 @@ KEEP_FIXED = [
 ]
 
 
+# 段のファイル。値の意味は頭の表
+STAGE_FILE = ROOT / "python/data/hosting_stage.json"
+# Hosting のサイト名の形（小文字・数字・ハイフン。Firebase の決まり）
+SITE_ID = re.compile(r"^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$")
+# Search Console の確認ファイルの道（`google` ＋16桁の16進 ＋ `.html`）
+VERIFY = re.compile(r"^/google[0-9a-f]{16}\.html$")
+
+
+def read_stage(path: Path = STAGE_FILE) -> tuple[str, bool]:
+    """段のファイルを読んで（島のサイト名, 301 を配るか）を返す。形が違えば止める（推して配らない）。"""
+    d = json.loads(path.read_text(encoding="utf-8"))
+    site, on = d.get("island_site", None), d.get("legacy_301", None)
+    if set(d) != {"island_site", "legacy_301"} or not isinstance(site, str) or not isinstance(on, bool):
+        raise SystemExit(f"{path.name} の形が違います（island_site: 文字・legacy_301: true/false の2つだけ）: {d}")
+    if site and not SITE_ID.match(site):
+        raise SystemExit(f"island_site がサイト名の形ではありません: {site!r}")
+    if on and not site:
+        raise SystemExit("legacy_301 を true にするのは、island_site が入ってから")
+    return site, on
+
+
+def staged(conf: dict, site: str, on: bool, legacy: dict | None, default_site: str) -> dict | None:
+    """段に合わせた firebase.json を返す。**いまのまま（段が空）なら None**（書き換えない）。"""
+    if not site:
+        return None
+    island = conf["hosting"]
+    # 1本の firebase.json に2つ並べると、`firebase deploy --only hosting`
+    # （action-hosting-deploy の live）が両方のサイトへ1回で配る。
+    # mirror のあいだは、どちらのサイトも島を配る。新しいドメインが古いサイトに
+    # 付いたまま 301 を配ると、新しいドメインも自分自身へ 301 する輪になるので、
+    # 301 はドメインが移り終わってから（配りの側でも Hosting の口で確かめる）
+    second = {**legacy, "site": default_site} if on else {**island, "site": default_site}
+    return {**conf, "hosting": [{**island, "site": site}, second]}
+
+
 def site_url() -> str:
     """正の URL を `site/content/site.ts` の1か所から読む（手で二重に持たない）。
 
@@ -96,8 +153,16 @@ def site_url() -> str:
     return url
 
 
-def keep_paths() -> list[str]:
-    out = list(KEEP_FIXED)
+def verify_paths(island_hosting: dict | None = None) -> list[str]:
+    """`firebase.json` の rewrite のうち、Search Console の確認ファイルを配るもの。"""
+    if island_hosting is None:
+        island_hosting = json.loads((ROOT / "firebase.json").read_text(encoding="utf-8"))["hosting"]
+    return sorted(r["source"] for r in island_hosting.get("rewrites", [])
+                  if VERIFY.match(r.get("source", "")) and r.get("destination"))
+
+
+def keep_paths(island_hosting: dict | None = None) -> list[str]:
+    out = list(KEEP_FIXED) + verify_paths(island_hosting)
     for f in sorted(glob.glob(str(ROOT / "public/*_monthly_review*.html"))
                     + glob.glob(str(ROOT / "public/*_donation_ceremony*.html"))):
         out.append("/" + Path(f).stem)  # cleanUrls なので .html を外した道で配られる
@@ -181,7 +246,7 @@ def build(island_hosting: dict, sitemap: list[str], new_origin: str) -> tuple[di
             if rx.match(p):
                 problems.append(f"sitemap の {p} が島の redirect（{r['source']}）にも当たる")
 
-    for k in keep_paths():
+    for k in keep_paths(island_hosting):
         for r in legacy["redirects"]:
             if glob_to_regex(r["source"]).match(k):
                 problems.append(f"古いドメインに残す {k} が {r['source']} に当たる")
@@ -199,6 +264,17 @@ class _NoFollow(urllib.request.HTTPRedirectHandler):
 
 
 _OPENER = urllib.request.build_opener(_NoFollow)
+
+
+def fetch_body(url: str) -> tuple[int, str]:
+    req = urllib.request.Request(url, method="GET", headers={"User-Agent": "ayato-legacy-check"})
+    try:
+        with _OPENER.open(req, timeout=30) as r:
+            return r.status, r.read(400).decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get("Location", "") if e.headers else ""
+    except Exception as e:  # noqa: BLE001
+        return -1, f"{type(e).__name__}: {e}"
 
 
 def fetch(url: str) -> tuple[int, str]:
@@ -231,7 +307,7 @@ def check(base: str, sitemap: list[str], new_origin: str, island_hosting: dict) 
     for p in miss[:15]:
         rows.append(f"| 　外れ `{p}` | {got[p][0]} `{got[p][1]}` |")
 
-    keeps = keep_paths()
+    keeps = keep_paths(island_hosting)
     with cf.ThreadPoolExecutor(8) as ex:
         kept = dict(zip(keeps, ex.map(lambda p: fetch(base + p), keeps)))
     k_ok = [p for p, (s, _) in kept.items() if s == 200]
@@ -240,6 +316,13 @@ def check(base: str, sitemap: list[str], new_origin: str, island_hosting: dict) 
     for p in keeps:
         s, loc = kept[p]
         rows.append(f"| 　`{p}` | {s}{(' → ' + loc) if loc else ''} |")
+
+    # 確認ファイルは、跳ばずに 200 で、中身が自分の名前を名乗っていること（Search Console が見る形）
+    for p in verify_paths(island_hosting):
+        s, body = fetch_body(base + p)
+        good = s == 200 and body.strip() == f"google-site-verification: {p[1:]}"
+        rows.append(f"| Search Console の確認ファイル `{p}` | {s} {'中身が合う' if good else '**外れ** `' + body[:60] + '`'} |")
+        bad += 0 if good else 1
 
     # 形の違う入りかた。行き先が崩れないか（クエリ・末尾の斜線・いまある内部の redirect）。
     # 古いドメインの中は手で1段ずつ追い、新しいドメインに出たところで止める
@@ -288,17 +371,45 @@ def main() -> int:
     b.add_argument("--sitemap", required=True)
     b.add_argument("--out", required=True)
     b.add_argument("--site", default="", help="配る先のサイト（空なら既定のサイト）")
-    b.add_argument("--island-site", default="",
-                   help="渡すと、島（このサイトへ）と古いドメイン（--site へ）の2つを並べた設定を書く。"
-                        "段 B の本番の配りが、配る step の前で firebase.json をこれに置き換える")
-    b.add_argument("--mode", choices=["301", "mirror"], default="301",
-                   help="mirror = 古いドメインにも島をそのまま配る（ドメインを新しいサイトへ移すあいだ）。"
-                        "301 = 古いドメインの島の面を新しいドメインへ送る")
     c = sub.add_parser("check")
     c.add_argument("--config", default=str(ROOT / "firebase.json"))
     c.add_argument("--sitemap", required=True)
     c.add_argument("--base", required=True)
+    st = sub.add_parser("stage", help="段のファイルを読む（--out を渡すと、段に合わせた firebase.json を書く）")
+    st.add_argument("--config", default=str(ROOT / "firebase.json"))
+    st.add_argument("--stage", default=str(STAGE_FILE))
+    st.add_argument("--sitemap", default="")
+    st.add_argument("--out", default="")
+    st.add_argument("--default-site", default="")
     a = ap.parse_args()
+
+    if a.cmd == "stage":
+        site, on = read_stage(Path(a.stage))
+        if not a.out:
+            # 配りの step が `>> $GITHUB_OUTPUT` で読む形
+            print(f"island_site={site}")
+            print(f"legacy_301={'true' if on else 'false'}")
+            return 0
+        conf = json.loads(Path(a.config).read_text(encoding="utf-8"))
+        default_site = a.default_site or json.loads((ROOT / ".firebaserc").read_text())["projects"]["default"]
+        legacy = None
+        if on:
+            sitemap = read_sitemap(a.sitemap)
+            if not sitemap:
+                print("::error::sitemap に道が1本もありません（0 を答えにしない）")
+                return 1
+            legacy, problems = build(conf["hosting"], sitemap, site_url())
+            for p in problems:
+                print("::error::" + p)
+            if problems:
+                return 1
+        out = staged(conf, site, on, legacy, default_site)
+        if out is None:
+            print("段: いまのまま（firebase.json は書き換えない）")
+            return 0
+        Path(a.out).write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"段: 島 → {site}／{default_site} → " + (f"島の面だけ 301（{len(legacy['redirects'])} 本）" if on else "島（mirror）"))
+        return 0
 
     conf = json.loads(Path(a.config).read_text(encoding="utf-8"))
     island = conf["hosting"]
@@ -320,23 +431,8 @@ def main() -> int:
             print("::error::" + p)
         if problems:
             return 1
-        if a.island_site:
-            if not a.site:
-                print("::error::--island-site を渡すときは、古いドメインのサイト（--site）も名指しする")
-                return 1
-            # 1本の firebase.json に2つ並べると、`firebase deploy --only hosting`
-            # （action-hosting-deploy の live）が両方のサイトへ1回で配る
-            # mirror: ドメインを新しいサイトへ移すあいだは、どちらのサイトも島を配る。
-            # 新しいドメインが古いサイトに付いたまま 301 を配ると、新しいドメインも
-            # 自分自身へ 301 する輪になるので、301 はドメインが移り終わってから
-            second = {**island, "site": a.site} if a.mode == "mirror" else legacy
-            out = {**conf, "hosting": [{**island, "site": a.island_site}, second]}
-        else:
-            out = {**conf, "hosting": legacy}
+        out = {**conf, "hosting": legacy}
         Path(a.out).write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        if a.island_site and a.mode == "mirror":
-            print(f"{a.out}: 島を {a.island_site} と {a.site} の両方へ（301 はまだ配らない）")
-            return 0
         print(f"{a.out}: redirect {len(legacy['redirects'])} 本"
               f"（sitemap {len(sitemap)} ＋ いまある {len(island.get('redirects', []))}）→ {origin}")
         return 0

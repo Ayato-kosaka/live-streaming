@@ -21,6 +21,13 @@
     BREAK=prefix python3 python/legacy_hosting_selftest.py   # 規則を区画の前方一致に崩す
     BREAK=keep   python3 python/legacy_hosting_selftest.py   # 残すものの一覧を空にする
     BREAK=mark   python3 python/legacy_hosting_selftest.py   # 目印の字を片側だけ変える
+    BREAK=stage  python3 python/legacy_hosting_selftest.py   # 段が空でも firebase.json を書き換える
+    BREAK=verify python3 python/legacy_hosting_selftest.py   # 確認ファイルを残すものに数えない
+
+## 段のファイル（`python/data/hosting_stage.json`）
+
+**いまの値（空・false）なら、配る firebase.json は1バイトも変わらない**ことをここで当てる。
+段を進めた PR では、mirror（両方のサイトに同じ島）と 301 の形になることも当てる。
 """
 
 from __future__ import annotations
@@ -70,6 +77,11 @@ def main() -> int:
         L.build = build
     if BREAK == "keep":
         L.KEEP_FIXED = []
+    if BREAK == "stage":
+        real_staged = L.staged
+        L.staged = lambda conf, site, on, legacy, default_site: real_staged(conf, site or "x-island", on, legacy, default_site)
+    if BREAK == "verify":
+        L.verify_paths = lambda island_hosting=None: []
     mark_py = L.MARK + ("x" if BREAK == "mark" else "")
 
     # 1. ふつうの sitemap なら通り、数が合う
@@ -125,6 +137,53 @@ def main() -> int:
     nonce_ts = "a-f0-9]{8,64}" in ts
     nonce_html = "a-f0-9]{8,64}" in html
     ok("合言葉の形が両側で同じ（16進 8〜64字）", nonce_ts and nonce_html)
+
+    # 7. 段のファイル。いまの値で読めて、空なら何も書き換えない
+    try:
+        site, on = L.read_stage()
+        ok("段のファイルが読める", True, f"island_site={site!r} legacy_301={on}")
+    except SystemExit as e:
+        ok("段のファイルが読める", False, str(e))
+        site, on = "", False
+    ok("段が空なら firebase.json を書き換えない（配るものは今と同じ）", L.staged(conf, "", False, None, "live-streaming-d3cac") is None)
+    mir = L.staged(conf, "ayato-arigato", False, None, "live-streaming-d3cac")
+    ok("mirror は両方のサイトに同じ島（301 を1本も足さない）",
+       bool(mir) and [h["site"] for h in mir["hosting"]] == ["ayato-arigato", "live-streaming-d3cac"]
+       and all({k: v for k, v in h.items() if k != "site"} == island for h in mir["hosting"]))
+    on301 = L.staged(conf, "ayato-arigato", True, legacy, "live-streaming-d3cac")
+    ok("301 の段は、既定のサイトに古いドメイン用の設定", bool(on301) and on301["hosting"][1]["redirects"] == legacy["redirects"]
+       and on301["hosting"][1]["site"] == "live-streaming-d3cac" and on301["hosting"][0]["site"] == "ayato-arigato")
+    import tempfile
+    for body, why in [('{"island_site": "", "legacy_301": true}', "島のサイトが無いのに 301"),
+                      ('{"island_site": "Ayato_Arigato", "legacy_301": false}', "サイト名の形ではない"),
+                      ('{"island_site": "", "legacy_301": "false"}', "true/false が字"),
+                      ('{"island_site": "", "legacy_301": false, "x": 1}', "知らない鍵")]:
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            f.write(body)
+        try:
+            L.read_stage(Path(f.name))
+            ok(f"段のファイルの形違いを止める（{why}）", False)
+        except SystemExit:
+            ok(f"段のファイルの形違いを止める（{why}）", True)
+        os.unlink(f.name)
+
+    # 8. Search Console の確認ファイル（rewrite で配る）は 301 の外
+    vf = "/google0123456789abcdef.html"
+    with_verify = {**island, "rewrites": island.get("rewrites", []) + [
+        {"source": vf, "destination": "/google-site-verification/google0123456789abcdef.html.txt"}]}
+    ok("確認ファイルを残すものに数える", vf in L.keep_paths(with_verify))
+    _, problems = L.build(with_verify, sm + [vf], origin)
+    ok("sitemap に確認ファイルが紛れたら落とす", any(vf in p for p in problems))
+    lg, problems = L.build(with_verify, sm, origin)
+    ok("確認ファイルに 301 の規則が当たらない",
+       not problems and not any(L.glob_to_regex(r["source"]).match(vf) for r in lg["redirects"]))
+    real = L.verify_paths()
+    pub = REPO / "public/google-site-verification"
+    files = sorted("/" + f.name[:-4] for f in pub.glob("google*.html.txt")) if pub.is_dir() else []
+    ok("public の確認ファイルと firebase.json の rewrite が1対1", real == files, f"rewrite {real} / ファイル {files}")
+    for p in files:
+        body = (pub / (p[1:] + ".txt")).read_text(encoding="utf-8").strip()
+        ok(f"{p} の中身が自分の名前を名乗る", body == f"google-site-verification: {p[1:]}", body[:60])
 
     # 6. 受け渡しの面は検索に載せない
     noidx = [h["source"] for h in island.get("headers", [])

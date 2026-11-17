@@ -78,6 +78,8 @@ WAIT_LABEL = "待ち-システム"
 # 読んでいて（`app/` の import を数えた）、そこだけ直した PR を「配り先なし」にすると
 # **直したのに出ていない**ものができる。`firebase.json` は Hosting が配る
 # （Functions の設定も持つが、そこを変えるのは稀なので、変えたら手で Functions も押す）。
+# `python/data/hosting_stage.json` は Hosting の段（#1202。どのサイトへ何を配るか）で、
+# 段を進める PR はそれだけを変える。ここに無いと「配り先なし」になって段が進まない。
 ROUTES: dict[str, dict] = {
     "hosting": {
         "file": "firebase-hosting-deploy-prod.yml",
@@ -85,7 +87,8 @@ ROUTES: dict[str, dict] = {
         "prefixes": ("site/", "public/", "app/", "components/", "hooks/", "constants/",
                      "lib/", "assets/", "web/"),
         "files": ("app.json", "metro.config.js", "package.json", "package-lock.json",
-                  "tsconfig.json", "firebase.json", "firestore.indexes.json"),
+                  "tsconfig.json", "firebase.json", "firestore.indexes.json",
+                  "python/data/hosting_stage.json", "python/legacy_hosting.py"),
     },
     "functions": {
         "file": "firebase-functions-deploy.yml",
