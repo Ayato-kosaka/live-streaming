@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>あやと島へ</title>
+<!--
+  古いドメイン（live-streaming-d3cac.web.app）の手元の記録を、新しいドメインへ渡す面（#1202 の段 B）。
+  流れと決めたことは site/lib/handoff.ts の頭。ここは「読んで、渡して、戻す」だけ。
+  NEW と SKIP の字は site/lib/handoff.ts・site/content/site.ts と同じ
+  （python/legacy_hosting_selftest.py が突き合わせる）。
+  古いドメインでは 301 の規則に当たらない（sitemap に無い）ので、ここは 200 で開く。
+-->
+<style>
+  :root { --bg: #3aa8c8; --ink: #ffffff; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--bg); color: var(--ink);
+         font: 700 16px/1.6 "Zen Maru Gothic", system-ui, sans-serif; }
+  a { color: var(--ink); }
+</style>
+</head>
+<body>
+<p><a id="go" href="https://ayato-arigato.com/">あやと島へ</a></p>
+<script>
+(function () {
+  var NEW = "https://ayato-arigato.com";
+  var SKIP = new RegExp("^ayato-(island-(signedin|signin-away|owner)|handoff-.*)$");
+  // URL に載せる量の上限。足りないときは小さい記録から順に詰め、大きい下書きを落とす
+  var BUDGET = 48000;
+  var to = "/", n = "", data = "";
+  try {
+    var p = {};
+    location.hash.slice(1).split("&").forEach(function (kv) {
+      var i = kv.indexOf("=");
+      if (i > 0) p[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1));
+    });
+    // 行き先は島の中の道だけ（よそのサイトへ送る踏み台にしない）
+    if (/^\/(?!\/)[^\s\\#]*$/.test(p.to || "")) to = p.to;
+    if (/^[a-f0-9]{8,64}$/.test(p.n || "")) n = p.n;
+    if (n) {
+      var ls = window.localStorage, items = [], o = {}, size = 0, i, k;
+      for (i = 0; i < ls.length; i++) {
+        k = ls.key(i);
+        if (/^ayato-/.test(k) && !SKIP.test(k)) items.push([k, ls.getItem(k) || ""]);
+      }
+      items.sort(function (a, b) { return a[1].length - b[1].length; });
+      for (i = 0; i < items.length; i++) {
+        size += items[i][0].length + items[i][1].length;
+        if (size > BUDGET) break;
+        o[items[i][0]] = items[i][1];
+      }
+      data = btoa(unescape(encodeURIComponent(JSON.stringify(o))))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+  } catch (e) { /* 読めなくても、島へは必ず戻す */ }
+  var url = NEW + to + (n ? "#handoff=" + data + "&n=" + n : "");
+  document.getElementById("go").href = url;
+  location.replace(url);
+})();
+</script>
+</body>
+</html>
