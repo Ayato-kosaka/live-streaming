@@ -106,10 +106,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          # リポジトリは大きい（作業木で 369MB）。読むのは python/ と .github/ と直下の設定だけ
+          # リポジトリは大きい（作業木で 369MB）。読むのは python/ と .github/ と直下の設定と site/content だけ。
+          # site/content は段が 301 のとき正の URL（site.ts の SITE.url）を読むのに要る（#1253 のマージ後にこれが無くて落ちた）
           sparse-checkout: |
             python
             .github
+            site/content
           filter: blob:none
 
       - uses: actions/setup-python@v6
@@ -171,6 +173,7 @@ jobs:
           sparse-checkout: |
             python
             .github
+            site/content
           filter: blob:none
 
       - uses: actions/setup-python@v6
