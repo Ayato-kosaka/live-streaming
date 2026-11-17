@@ -17,11 +17,10 @@
 
 ## 何を渡すか。**本文も名前も渡さない**
 
-ARGS はワークフローのログに出る。だから選んだ声は**指紋**で指す——
-本文の空白を1つに畳んで（`stream_text.one_line` と同じ畳みかた。
-`chat.txt` はその形で置かれている）、SHA-256 の頭16字。
-手元の `chat.txt` の本文から作った指紋と、ここで BigQuery の本文から
-作った指紋が同じになる。
+ARGS はワークフローのログに出る。だから選んだ声は**指紋**
+（`build_voices.fingerprint()`）で指す。手元の `chat.txt` の本文から作った指紋と、
+ここで BigQuery の本文から作った指紋が同じになる。指紋は
+`python python/build_voices.py --chat --since …` が候補ごとに出す。
 
 **本文は BigQuery のほうを返す。** `chat.txt` は全角の空白まで半角1つに
 畳んであるので、そちらを写すと引用が1文字変わる。
@@ -41,7 +40,6 @@ ARGS はワークフローのログに出る。だから選んだ声は**指紋*
 """
 
 import gzip
-import hashlib
 import json
 import os
 import re
@@ -57,15 +55,6 @@ from config import BQ_PROJECT_ID  # noqa: E402
 
 #: 流してよい量の上限。これを超えたら引かない
 MAX_BYTES = 1 << 30  # 1GiB
-
-
-def fingerprint(text: str) -> str:
-    """本文の指紋。空白の畳みかたは `stream_text.one_line` と同じにする。
-
-    `chat.txt` の本文はこの形で置かれているので、手元で作った指紋と揃う。
-    """
-    one = re.sub(r"\s+", " ", text or "").strip()
-    return hashlib.sha256(one.encode("utf-8")).hexdigest()[:16]
 
 
 def main() -> int:
@@ -92,7 +81,7 @@ def main() -> int:
     cands = [r for r in rows if r.get("k") == "v"]
     hit, seen = [], set()
     for r in cands:
-        h = fingerprint(r.get("m") or "")
+        h = build_voices.fingerprint(r.get("m") or "")
         # 同じ本文を同じ人が2回打っていることがある。最初の1件（日付の早いほう）を採る
         if h in want and h not in seen:
             seen.add(h)
