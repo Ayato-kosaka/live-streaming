@@ -137,6 +137,26 @@ def staged(conf: dict, site: str, on: bool, legacy: dict | None, default_site: s
     return {**conf, "hosting": [{**island, "site": site}, second]}
 
 
+def island_of(hosting: dict | list) -> dict:
+    """firebase.json の `hosting` から島の設定を1つ取り出す。
+
+    段が空なら dict が1つ。段を進めた配りでは `stage` が firebase.json を
+    **[島のサイト, 既定のサイト]** の配列に書き換えてから（`staged()`）、同じ job の中で
+    `check` を呼ぶ。配列のまま `.get` すると落ちて、301 を数えられなかった（#1253 の配り）。
+    島は段のファイルの `island_site` の名前のもの。名前で見つからなければ1本目（`staged()` の並び）。
+    """
+    if isinstance(hosting, dict):
+        return hosting
+    try:
+        want, _ = read_stage()
+    except SystemExit:
+        want = ""
+    for h in hosting:
+        if want and h.get("site") == want:
+            return h
+    return hosting[0]
+
+
 def site_url() -> str:
     """正の URL を `site/content/site.ts` の1か所から読む（手で二重に持たない）。
 
@@ -156,7 +176,7 @@ def site_url() -> str:
 def verify_paths(island_hosting: dict | None = None) -> list[str]:
     """`firebase.json` の rewrite のうち、Search Console の確認ファイルを配るもの。"""
     if island_hosting is None:
-        island_hosting = json.loads((ROOT / "firebase.json").read_text(encoding="utf-8"))["hosting"]
+        island_hosting = island_of(json.loads((ROOT / "firebase.json").read_text(encoding="utf-8"))["hosting"])
     return sorted(r["source"] for r in island_hosting.get("rewrites", [])
                   if VERIFY.match(r.get("source", "")) and r.get("destination"))
 
@@ -439,7 +459,7 @@ def main() -> int:
         return 0
 
     conf = json.loads(Path(a.config).read_text(encoding="utf-8"))
-    island = conf["hosting"]
+    island = island_of(conf["hosting"])
     try:
         sitemap = read_sitemap(a.sitemap)
     except Exception as e:  # noqa: BLE001
