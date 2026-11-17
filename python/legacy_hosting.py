@@ -64,7 +64,7 @@ KEEP_FIXED = [
     "/ve-comment",
     "/ve-postit",
     "/donut-progress",
-    "/alert/probe.html",
+    "/alert/probe",
     # 口（Functions へ渡す rewrite）。誰でも読める軽いもの
     "/island-api/fund",
     # ログインの戻り先と、その設定（Hosting の予約の道。redirect より先に配られる）
@@ -257,7 +257,12 @@ def check(base: str, sitemap: list[str], new_origin: str, island_hosting: dict) 
             if not url.startswith(base):
                 break
         sp = urllib.parse.urlsplit(url)
-        landed = sp.path + (f"?{sp.query}" if sp.query else "")
+        # Firebase は元のクエリを行き先の**後ろ**に足す。行き先にフラグメント（目印）があると
+        # `…/kitchen#from-legacy?from=yt` になる（2026-11-17 にプレビューで見た）。
+        # 新しいドメインの頭（`site/lib/handoff.ts`）がフラグメントからクエリを戻すので、
+        # ここもその読みかたで「着く道」を出す
+        q = sp.query or (sp.fragment.split("?", 1)[1] if "?" in sp.fragment else "")
+        landed = sp.path + (f"?{q}" if q else "")
         good = url.startswith(new_origin) and landed == want and len(chain) <= hops
         rows.append(f"| 入りかた `{p}` | {'→'.join(map(str, chain))} → `{url}`"
                     f"{'' if good else f' **外れ**（{want} へ {hops} 段で着くはず）'} |")

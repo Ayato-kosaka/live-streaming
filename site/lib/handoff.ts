@@ -7,6 +7,7 @@
  * ## 流れ（1つのブラウザで1回だけ）
  *
  * 1. 古いドメインの島の面 → 301 → `https://ayato-arigato.com/<道>#from-legacy`
+ *    （元のクエリは Firebase が後ろに足すので `#from-legacy?from=yt` になる。ここで URL へ戻す）
  *    （目印は `python/legacy_hosting.py` が規則に付ける）
  * 2. ここが目印を見て、古いドメインの `/handoff#n=<合言葉>&to=<道>` へ移る
  * 3. `/handoff`（`public/handoff.html`）が古いドメインの記録を読んで、
@@ -56,7 +57,10 @@ export const HANDOFF_SCRIPT =
   "a.concat(b).forEach(function(x){var t=JSON.stringify(x);if(!seen[t]){seen[t]=1;u.push(x)}});ls.setItem(k,JSON.stringify(u))}}catch(e){}}" +
   "return}" +
   // 古いドメインから 301 で来たとき
-  "if(h!==M)return;clean();" +
+  // Firebase は元のクエリを行き先の後ろに足すので、`#from-legacy?from=yt` の形で届く。
+  // フラグメントに落ちたクエリを、アプリが読む前に URL へ戻す
+  "if(h!==M&&h.indexOf(M+'?')!==0)return;" +
+  'history.replaceState(history.state,"",location.pathname+(h.length>M.length?h.slice(M.length):location.search));' +
   "if(ls.getItem(D)||/bot|crawl|spider|slurp|lighthouse|inspectiontool|headless/i.test(navigator.userAgent))return;" +
   'var r=new Uint8Array(12),n="",i;crypto.getRandomValues(r);for(i=0;i<r.length;i++)n+=(r[i]+256).toString(16).slice(1);' +
   'ss.setItem(N,n);ls.setItem(D,"1");' +

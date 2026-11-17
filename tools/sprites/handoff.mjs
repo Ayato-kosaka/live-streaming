@@ -9,9 +9,9 @@
  * 書き出し（島は `site/.next-*`、受け渡しの面は `public/handoff.html`）を返す。
  * 古いドメインの 301 は `python/legacy_hosting.py build` が作った規則をそのまま当てる。
  *
- * **本物の Firebase がクエリをどう引き継ぐかは、ここでは分からない**（行き先の
- * フラグメントの前に置く、と仮定している）。それはプレビューの道で数える
- * （`.github/workflows/legacy_preview.yml`）。
+ * 301 のクエリの足しかたは、プレビューの道で見た本物の Firebase に合わせてある
+ * （元のクエリを行き先の後ろに足す）。本物の 301 そのものは
+ * `.github/workflows/legacy_preview.yml` が数える。
  *
  * 0 = 通った / 1 = 外れがある / 2 = 試せなかった
  */
@@ -67,9 +67,9 @@ const server = createServer({ key: readFileSync(join(dir, "k.pem")), cert: readF
   if ("https://" + host === OLD) {
     const hit = RULES.find((x) => x.source === u.pathname);
     if (hit) {
-      // 本物の Firebase がクエリをどこに置くかはプレビューで数える。ここではフラグメントの前に置く
-      const [base, frag] = hit.destination.split("#");
-      res.writeHead(301, { location: base + u.search + (frag ? "#" + frag : "") });
+      // 本物の Firebase と同じく、元のクエリを行き先の**後ろ**に足す
+      // （`…/kitchen#from-legacy?from=yt`。2026-11-17 にプレビューの道で見た形）
+      res.writeHead(301, { location: hit.destination + u.search });
       return res.end();
     }
   }
