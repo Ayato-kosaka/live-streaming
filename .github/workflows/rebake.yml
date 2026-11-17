@@ -298,7 +298,7 @@ concurrency:
 
 jobs:
   rebake:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（2026-11-13 から og.png の撮り直しで毎晩落ちていた）
     permissions:
       # 焼き直した site/content/*.ts を master に押し戻す
       contents: write
