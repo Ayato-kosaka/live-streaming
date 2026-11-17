@@ -84,10 +84,11 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fromRoot } from "./repo.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 const run = promisify(execFile);
 
-export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+export const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
 const BREAK = process.env.BREAK || "";
 
 /** 無い道に出る字。`site/app/not-found.tsx` の h1 と同じでなければならない */

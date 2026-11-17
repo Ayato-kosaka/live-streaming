@@ -44,7 +44,7 @@ SRC = os.path.join(ROOT, "site", "content", "nordic")
 OUT = os.path.join(SRC, "geo.json")
 REPORT = os.path.join(ROOT, "tools", "nordic", "geo-report.txt")
 
-UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic city maps)"
+UA = "ayato-island/1.0 (https://ayato-arigato.com; nordic city maps)"
 API = "https://nominatim.openstreetmap.org/search"
 
 # 街の中心。**ここからの距離で、明らかに違うものを落とす。**

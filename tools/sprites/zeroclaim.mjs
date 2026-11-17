@@ -43,9 +43,11 @@ import { promisify } from "node:util";
 import { offline } from "./route.mjs";
 import { openChecked, reportMissing } from "./served.mjs";
 import { fromRoot } from "./repo.mjs";
+import { LEGACY_ORIGIN } from "./origin.mjs";
 
 const run = promisify(execFile);
-const PROD = "https://live-streaming-d3cac.web.app";
+const PROD = LEGACY_ORIGIN;
+// 口（/island-api）だけを引く。口は段 B のあとも古いドメインで 200（301 の外。origin.mjs）
 const SPORT = process.env.SPORT || "4230";
 const ORIGIN = `http://127.0.0.1:${SPORT}`;
 const DIST = fromRoot(process.env.DIST || "site/.next-3230");

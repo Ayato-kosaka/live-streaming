@@ -138,9 +138,9 @@ from dataclasses import dataclass, field
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEST = ROOT / "site/content/suzuriGoods.ts"
 SERIES = "カサ・アヤトの住人"
-UA = {"User-Agent": "ayato-island/1.0 (+https://live-streaming-d3cac.web.app)"}
+UA = {"User-Agent": "ayato-island/1.0 (+https://ayato-arigato.com)"}
 SEARCH = "https://suzuri.jp/search?q=" + urllib.parse.quote(SERIES)
-ISLAND = "https://live-streaming-d3cac.web.app/island-api/characters"
+ISLAND = "https://ayato-arigato.com/island-api/characters"
 
 # 焼き込みの鍵を名乗っている表。**字を読むのは `python/ts_read.py` の1本だけ**
 # （`docs/island-misses.md` #208）。ここに正規表現を書かない——`render()` が

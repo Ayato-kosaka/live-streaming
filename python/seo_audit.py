@@ -153,7 +153,8 @@ def site_url(root: Path | None = None) -> str:
 ORIGIN = site_url()
 
 # Firebase Hosting がもとから持っている名前。**正の URL とは別のもの。** 独自ドメインへ移ったあとも
-# 同じ面をここで配り続けている（301 で送らない。#1202）。`--alt` の既定に使う
+# 段 B（`python/data/hosting_stage.json`）が入るまでは同じ面を、入ったあとは島の面の 301 を返す
+# （#1202）。`--alt` の既定に使う（比べる相手。301 と出れば段 B が効いている）
 HOSTING_DEFAULT = "https://live-streaming-d3cac.web.app"
 
 # 名乗り。**持ち主の名前・連絡先を入れない**（外のサービスのログに残る）

@@ -172,10 +172,11 @@ import { repoPath } from "./repo.mjs";
 /* 痩せの境目は `prod.mjs` のものを借りる。**ここで決め直さない**
    （同じことを言う数が2つになると、片方だけ古くなる） */
 import { THIN_BYTES } from "./prod.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 const run = promisify(execFile);
 
-export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+export const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
 
 /** 一度に何本まで curl を走らせるか。箱の CPU は4つしかない */
 const LANES = Number(process.env.LANES || 6);

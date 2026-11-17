@@ -27,8 +27,9 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 import { apply } from "./asme.mjs";
+import { SITE_ORIGIN, OUR_HOSTS } from "./origin.mjs";
 
-export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+export const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
 /* 通す先。**置き場も配信のサムネも通す。** 図鑑の「落とす」は名簿が
    持っている置き場の URL を直に取りに行く。ここを止めたまま撮ると
    「絵が落ちた」と出て、直っているものを直っていないと読む
@@ -69,7 +70,7 @@ export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.ap
 // 通していないと**控えの書体で写る**。それでいて `document.fonts.check()` は
 // true を返す（@font-face の規則そのものが届いていないので、控えで描けてしまう）。
 // **「書体が当たった」と嘘の緑が出る**ので、宛先のほうで塞ぐ。
-const PASS = /live-streaming-d3cac\.web\.app|ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/;
+const PASS = new RegExp(`${OUR_HOSTS}|` + /ggpht\.com|googleusercontent\.com|storage\.googleapis\.com|i\.ytimg\.com|docs\.google\.com|i\.ibb\.co|cdn-public\.nanitabeyo\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/.source);
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };

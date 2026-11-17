@@ -27,12 +27,14 @@
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
+import { LEGACY_ORIGIN } from "./origin.mjs";
 
 const PORT = process.env.PORT || "4160";
 const OUT = process.env.OUT || "/tmp/pickfit";
 mkdirSync(OUT, { recursive: true });
 
-const PROD = "https://live-streaming-d3cac.web.app";
+const PROD = LEGACY_ORIGIN;
+// 口（/island-api）だけを引く。口は段 B のあとも古いドメインで 200（301 の外。origin.mjs）
 const ICONS = JSON.parse(readFileSync("/tmp/pickicons.json", "utf8"));
 /** 本番の返事。写真の URL と大きさは**本番のものをそのまま使う。** */
 const REALCARDS = JSON.parse(readFileSync("/tmp/cards-after.json", "utf8"));

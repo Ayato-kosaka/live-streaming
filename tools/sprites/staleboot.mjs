@@ -20,9 +20,10 @@
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
 import { readFileSync, unlinkSync } from "node:fs";
+import { SITE_ORIGIN, OUR_HOSTS } from "./origin.mjs";
 
-const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
+const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
+const PASS = new RegExp(`${OUR_HOSTS}|yt3\\.ggpht\\.com|googleusercontent\\.com|firebasestorage\\.googleapis\\.com`);
 const TYPE = { js: "application/javascript", css: "text/css", json: "application/json",
   svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg", webp: "image/webp",
   ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };

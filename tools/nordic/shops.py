@@ -98,7 +98,7 @@ CACHE = os.path.join(HERE, ".osmcache")
 sys.path.insert(0, HERE)
 import geocode as G  # noqa: E402  行く街の導出と距離計算を借りる
 
-UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic souvenir shops)"
+UA = "ayato-island/1.0 (https://ayato-arigato.com; nordic souvenir shops)"
 
 # 控え。**上から順に試す。** 2026-09-13 に叩いた結果を添えてある
 # （その日に生きていた順ではなく、混み具合は日で入れ替わるので順は目安）。

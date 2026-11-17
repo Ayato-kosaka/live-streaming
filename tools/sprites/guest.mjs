@@ -12,8 +12,9 @@
  */
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
-const O="https://live-streaming-d3cac.web.app";
-const PASS=/live-streaming-d3cac\.web\.app|googleusercontent\.com|upload\.wikimedia\.org|yt3\.ggpht\.com|ytimg\.com|firebasestorage\.googleapis\.com/;
+import { SITE_ORIGIN, OUR_HOSTS } from "./origin.mjs";
+const O=SITE_ORIGIN;
+const PASS=new RegExp(`${OUR_HOSTS}|googleusercontent\\.com|upload\\.wikimedia\\.org|yt3\\.ggpht\\.com|ytimg\\.com|firebasestorage\\.googleapis\\.com`);
 const T={js:"application/javascript",css:"text/css",html:"text/html",json:"application/json",svg:"image/svg+xml",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",ico:"image/x-icon",woff2:"font/woff2"};
 const b=await chromium.launch({executablePath:"/opt/pw-browsers/chromium-1194/chrome-linux/chrome",args:["--no-sandbox"]});
 for (const path of ["/","/nordic","/nordic/day/1","/cards","/me","/board","/friends"]) {

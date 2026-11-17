@@ -106,6 +106,7 @@ import { chromeLookedIn, chromePath } from "./chrome.mjs";
 import { offline } from "./route.mjs";
 import { blocked, redirects, thin, viaCurl } from "./prod.mjs";
 import { goesElsewhere, reachGap, verdict } from "./cardgojudge.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 
 /** この本を直に回したときだけ、本番を見に行く */
@@ -116,7 +117,7 @@ if (RUN) {
   /** 渡されたら手元の書き出しを見る。**空なら本番**（既定） */
   const PORT = process.env.PORT || "";
   /** 口を引く先。面も（`PORT` が無ければ）ここから開く */
-  const ORIGIN = (process.env.ORIGIN || "https://live-streaming-d3cac.web.app").replace(/\/$/, "");
+  const ORIGIN = (process.env.ORIGIN || SITE_ORIGIN).replace(/\/$/, "");
   const HERE = Boolean(PORT);
   /* 静的に配ったものは `.html` が要るが、本番の Hosting は拡張子なしで配る。
      間違えると 404 を掴んで「図鑑のマスが0」になり、出ているものが壊れて見える */

@@ -20,6 +20,7 @@
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync } from "node:fs";
+import { LEGACY_ORIGIN } from "./origin.mjs";
 
 const PORT = process.env.PORT || "4160";
 const OUT = process.env.OUT || "/tmp/cardicon";
@@ -44,7 +45,8 @@ const json = (r, body) =>
   r.fulfill({ status: 200, contentType: "application/json", body });
 
 /** 本番。キャラクターの絵は口ごしに来るので、ここへ付け替えて取りに行く */
-const PROD = "https://live-streaming-d3cac.web.app";
+const PROD = LEGACY_ORIGIN;
+// 口（/island-api）だけを引く。口は段 B のあとも古いドメインで 200（301 の外。origin.mjs）
 
 /** 外の絵は curl で取る。**canvas で焼くので CORS を付けて返す。** */
 const viaCurl = (r, type) => {

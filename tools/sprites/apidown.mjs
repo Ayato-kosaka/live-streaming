@@ -29,8 +29,9 @@
 import { chromium } from "playwright-core";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { SITE_ORIGIN, OUR_HOSTS } from "./origin.mjs";
 
-const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
 /* **どの面も口を叩く。** 本番の 118面を1面ずつ開いて数えたら、
    `/privacy` まで含めて **118/118 が island-api を叩いていた**（2026-09-14）。
    「口に依っているのは島まわりの数面だけ」は思い込みだったので、既定を
@@ -52,7 +53,7 @@ const MEPAGES = ["/me", "/me/desk", "/me/roulette"];
 const PAGES = ME ? MEPAGES : process.env.PAGELIST
   ? readFileSync(process.env.PAGELIST, "utf8").trim().split("\n").filter(Boolean)
   : (process.env.PAGES || "/,/nordic,/now,/cards,/board,/friends,/me").split(",");
-const PASS = /live-streaming-d3cac\.web\.app|yt3\.ggpht\.com|googleusercontent\.com|firebasestorage\.googleapis\.com/;
+const PASS = new RegExp(`${OUR_HOSTS}|yt3\\.ggpht\\.com|googleusercontent\\.com|firebasestorage\\.googleapis\\.com`);
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",
   jpeg: "image/jpeg", webp: "image/webp", ico: "image/x-icon", woff2: "font/woff2", txt: "text/plain" };

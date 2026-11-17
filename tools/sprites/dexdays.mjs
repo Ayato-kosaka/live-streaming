@@ -42,10 +42,11 @@ import { promisify } from "node:util";
 import { viaCurl } from "./prod.mjs";
 import { offline } from "./route.mjs";
 import { openChecked, reportMissing } from "./served.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 const run = promisify(execFile);
 
-const PROD = "https://live-streaming-d3cac.web.app";
+const PROD = SITE_ORIGIN;
 const SPORT = process.env.SPORT || "";
 const ORIGIN = process.env.ORIGIN || (SPORT ? `http://127.0.0.1:${SPORT}` : PROD);
 const LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(ORIGIN);
