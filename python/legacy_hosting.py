@@ -81,12 +81,19 @@ KEEP_FIXED = [
 
 
 def site_url() -> str:
-    """正の URL を `site/content/site.ts` の1か所から読む（手で二重に持たない）。"""
+    """正の URL を `site/content/site.ts` の1か所から読む（手で二重に持たない）。
+
+    読むのは `ts_read`（焼き込みを読む口は1本。`python/ts_readers_selftest.py`）。
+    `seo_audit.site_url()` と同じ読みかた。あちらを import すると重いので、口だけ借りる。
+    """
+    sys.path.insert(0, str(ROOT / "python"))
+    from ts_read import code_only, fields, object_body
+
     src = (ROOT / "site/content/site.ts").read_text(encoding="utf-8")
-    m = re.search(r'\burl:\s*"(https://[^"]+)"', src)
-    if not m:
-        raise SystemExit("site/content/site.ts から SITE.url を読めませんでした")
-    return m.group(1).rstrip("/")
+    url = fields(object_body(code_only(src), "SITE")).get("url", "")
+    if not re.fullmatch(r"https://[^/]+", url):
+        raise SystemExit(f"site/content/site.ts の SITE.url が原点だけの URL として読めない（{url or '無い'}）")
+    return url
 
 
 def keep_paths() -> list[str]:
