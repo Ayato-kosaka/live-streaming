@@ -25,6 +25,7 @@
     BREAK=verify python3 python/legacy_hosting_selftest.py   # 確認ファイルを残すものに数えない
     BREAK=ship   python3 python/legacy_hosting_selftest.py   # 出したあとの突き合わせが段を見ない
     BREAK=named  python3 python/legacy_hosting_selftest.py   # 古いドメインを名指ししてよい表から1つ抜く
+    BREAK=list   python3 python/legacy_hosting_selftest.py   # 段で配列にした firebase.json を、そのまま島として読む
 
 ## 段のファイル（`python/data/hosting_stage.json`）
 
@@ -132,6 +133,8 @@ def main() -> int:
         L.staged = lambda conf, site, on, legacy, default_site: real_staged(conf, site or "x-island", on, legacy, default_site)
     if BREAK == "verify":
         L.verify_paths = lambda island_hosting=None: []
+    if BREAK == "list":
+        L.island_of = lambda hosting: hosting
     mark_py = L.MARK + ("x" if BREAK == "mark" else "")
 
     # 1. ふつうの sitemap なら通り、数が合う
@@ -256,6 +259,30 @@ def main() -> int:
        "表に無い: " + ", ".join(f"{f}:{named[f][0]}" for f in extra[:6]))
     gone = sorted(set(allow) - set(named))
     ok("理由の表に、もう名指ししていないところが残っていない", not gone, ", ".join(gone))
+
+
+    # 11. 段を進めた配りでは、firebase.json が [島, 既定] の配列に書き換わってから check が走る。
+    #     配列のまま読むと 301 を数えられずに落ちた（#1253 の配り）。main の check の口を通して見る
+    staged_conf = L.staged(conf, "ayato-arigato", True, legacy, "live-streaming-d3cac")
+    with tempfile.TemporaryDirectory() as td:
+        cpath, spath = Path(td) / "firebase.json", Path(td) / "sitemap.xml"
+        cpath.write_text(json.dumps(staged_conf), encoding="utf-8")
+        spath.write_text("".join(f"<url><loc>{origin}{p}</loc></url>" for p in sm), encoding="utf-8")
+        seen = {}
+        real_check, real_argv = L.check, sys.argv
+        L.check = lambda base, sitemap, new_origin, island_hosting: seen.update(island=island_hosting) or 0
+        sys.argv = ["legacy_hosting.py", "check", "--base", "http://127.0.0.1:9", "--config", str(cpath), "--sitemap", str(spath)]
+        try:
+            rc = L.main()
+            got_island = seen.get("island")
+            good = (rc == 0 and isinstance(got_island, dict) and got_island.get("site") == "ayato-arigato"
+                    and L.keep_paths(got_island) == L.keep_paths(island))
+            ok("段で配列になった firebase.json でも、check は島の設定を読む", good,
+               f"渡ったもの: {type(got_island).__name__}")
+        except Exception as e:  # noqa: BLE001
+            ok("段で配列になった firebase.json でも、check は島の設定を読む", False, f"{type(e).__name__}: {e}")
+        finally:
+            L.check, sys.argv = real_check, real_argv
 
     # 6. 受け渡しの面は検索に載せない
     noidx = [h["source"] for h in island.get("headers", [])
