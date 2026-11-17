@@ -12,11 +12,61 @@
 # 2回やった。CLAUDE.md には「必ず既存 issue のコメントを読む」と書いてある。
 # **書いてあるのに読み飛ばすので、頭で突きつける。**
 #
-# GitHub は引かない。この箱のトークンは14文字のダミーで API に通らないし、
-# **黙って失敗する見張りは、無いほうがまし**（`docs/island-misses.md` #87）。
-# 取ってくる代わりに、取りに行く手順を出す。
+# GitHub から引くのは、こちらの番の札（`待ち-システム`）の一覧だけ。
+# ほかは取ってくる代わりに、取りに行く手順を出す。
+# **黙って失敗する見張りは、無いほうがまし**（`docs/island-misses.md` #87）なので、
+# 引けなかったときは「読めなかった（理由）」と言う。
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)" || exit 0
+
+# ── こちらの番の issue（札 `待ち-システム`）を並べる ──
+#
+# 札 `待ち-システム` は「あやとが答えて、こちらの番」の印。あやとが返事をすると
+# `待ち-あやと` からひとりでに裏返る（`docs/island-tickets.md` 5章）。
+# ところが**裏返った札を探しに行くのは、セッションの記憶に預けられていた。**
+# #147 で、あやとの「やって良いよ」を2日拾わなかった（`island-misses.md` #330）。
+# 1. が「1本ずつ見ろ」と言うだけだったので、こちらの番のものは頭で並べる。
+#
+# - **引けなかったら、理由を1行出して進む。「0本」と黙らない。** 引けなかったのと
+#   本当に0本なのが同じ字になると、#147 と同じ見落としに戻る
+# - 5秒で切る。セッションの頭を待たせない
+# - CI の上では引かない（ブラウザの段と同じ。そこはセッションの頭ではない）
+# - 札の名前を URL に直に書かない。gh は URL を符号化しないので、日本語の札は
+#   400 が返る（2026-11-17 に踏んだ）。`-f` で渡すと gh が符号化する
+# - 並びは動いた順。答えが来たばかりのものが上に来る
+# - この箱の GH_TOKEN は14文字のダミーだが、外へ出る道が本物の鍵を差し込むので
+#   `gh api` は通る（2026-11-17 に確かめた）
+#
+# 見張りは `python/session_start_waits_selftest.py`（偽の gh を PATH の先頭に置いて回す）。
+waits_us() {
+  local wl="待ち-システム" why="" wo="" we rc
+  if ! command -v gh >/dev/null 2>&1; then
+    why="gh が無い"
+  else
+    we=$(mktemp 2>/dev/null) || we=/dev/null
+    wo=$(timeout -k 1 5 gh api -X GET repos/Ayato-kosaka/live-streaming/issues --paginate \
+           -f state=open -f labels="$wl" -f sort=updated -f per_page=100 \
+           --jq '.[] | select(.pull_request|not) | "#\(.number) \(.title[0:40])"' 2>"$we")
+    rc=$?
+    if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+      why="5秒で返らなかった"
+    elif [ "$rc" -ne 0 ]; then
+      # gh は1行目に中身を言う（「HTTP 401: Bad credentials」など）
+      why=$(grep -m1 . "$we" 2>/dev/null)
+      why="${why:0:80}"
+      why="${why:-gh が終了コード $rc で終わった}"
+    fi
+    [ "$we" != /dev/null ] && rm -f "$we"
+  fi
+  if [ -n "$why" ]; then
+    echo "   $wl: 読めなかった（$why）"
+  elif [ -z "$wo" ]; then
+    echo "   $wl: 0本"
+  else
+    echo "   $wl: $(printf '%s\n' "$wo" | wc -l)本（あやとが答えて、こちらの番。動いた順）"
+    printf '%s\n' "$wo" | sed 's/^/     /'
+  fi
+}
 
 echo "──────── 始める前に ────────"
 echo
@@ -25,6 +75,7 @@ echo "   開いている issue を引いて、**最後のコメントが誰の�
 echo "     mcp__github__list_issues   state=open"
 echo "     mcp__github__issue_read    method=get_comments（1本ずつ）"
 echo "   「確認した」だけに見えても、**別の issue に指示が書いてある**ことがある。"
+[ -z "${CI:-}${GITHUB_ACTIONS:-}" ] && waits_us
 echo
 echo "2. **可否を預けない。** 決めて、やって、報告する（CLAUDE.md）。"
 echo "   「どちらにしますか」「押してみてください」で turn を終えない。"
