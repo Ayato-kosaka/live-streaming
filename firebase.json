@@ -215,6 +215,10 @@
       {
         "source": "/_expo/static/**",
         "destination": "/__gone__"
+      },
+      {
+        "source": "/googleef91ff9a41c7697c.html",
+        "destination": "/google-site-verification/googleef91ff9a41c7697c.html.txt"
       }
     ],
     "headers": [
