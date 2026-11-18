@@ -1,0 +1,87 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "4izd3enURM8__clips",
+ "mode": "clips",
+ "dest": "4izd3enURM8/clips",
+ "video": "4izd3enURM8",
+ "channel": null,
+ "request": "shorts/requests/bgmove-4izd3enURM8-p1v1-clips-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 12,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 7,
+  "clips_ok": 7,
+  "clip_seconds": 630.0,
+  "channel_entries": 0,
+  "files": 27
+ },
+ "bytes": {
+  "plain": 249591923,
+  "tar_gz": 249095187,
+  "encrypted": 249095200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "aa456ad6fb58461477707949d900c39a4e14a941b304b3f80dde39e4667412a5"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "a8ff66ef2cb255ee39cc2f82d46618e6cfb19c7914ba8cf4f4f4827f557864bc"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "31d240438f4a212d0bcaaffc453952c28f699a81384073ac937ea038d30780c9"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "057f165cb9f0282e3ae076f65c74881f1fee0c8eced6b208549edd2dd1222e24"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 47185920,
+   "sha256": "ad207e9985d96dd03d46e942aa75e8cd91b69255f0a80344f299d885092c2c54"
+  },
+  {
+   "name": "payload.enc.005",
+   "bytes": 13165600,
+   "sha256": "3b86596668a40e12ad9a928d9e9cb49359833c59b0f3d33336bb45cc036530a2"
+  }
+ ],
+ "hmac_sha256": "ad69e1758cb97943ee40396c605ba8863d69bc1588f0c96c5c7b1fd52c11c745",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44361956480",
+ "created_at": "2026-11-18T18:26:22+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 3622944,
+    "sha256": "db08b361d0b1c18cbba812979c4eb123f0a84f5093bd0c7deacd84fa062666e0"
+   }
+  ],
+  "hmac_sha256": "aa68013ff384c590e4966b9c78b82babba9abf9a8d25ed50c70233e9690b05c9",
+  "files": 16,
+  "sheets": 12,
+  "bytes": {
+   "plain": 3799285,
+   "tar_gz": 3622934,
+   "encrypted": 3622944
+  }
+ }
+}
