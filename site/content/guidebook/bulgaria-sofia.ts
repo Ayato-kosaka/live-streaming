@@ -248,7 +248,7 @@ const TODO: Todo[] = [
   {
     id: "yogurt",
     icon: "milk",
-    title: "本場のヨーグルトを食べ比べたい！",
+    title: "本場ブルガリアヨーグルト食べ比べたい！",
     catch: "酸っぱくて濃い“本物”を、牛・羊・水牛で",
     marks: [price("1個 1ユーロ前後")],
     lead: "明治ブルガリアヨーグルトの国。本場のヨーグルトは甘くない",
@@ -855,7 +855,8 @@ export const SOFIA: Guidebook = {
   name: "ソフィア",
   kicker: "ブルガリア",
   local: { text: "София", lang: "bg", roman: "Sofia" },
-  lead: "ローマの遺跡と、ただで湧く温泉の首都",
+  /* キャッチはあやとが7案から選んだ3番（#1228 2026-11-17）。島の紙（`components/isle/spec.ts`）と目録（`content/directory.ts`）も同じ字 */
+  lead: "二千年の歴史が足もとに眠る街",
   cover: hero,
   /* 題・説明は、人が打つ語の形（「ソフィア 観光」「ブルガリア ヨーグルト」「ブルガリア バラ」「ソフィア 温泉」。
      2026-11-16 に Google のサジェストで引いた。`docs/seo-2026-11/G_skopje_intent.md` と同じ測りかた）。

@@ -482,7 +482,8 @@ const GUIDES: Record<string, Guide[]> = {
       name: "ブルガリア・ソフィア",
       /* 街の面（前の `/bulgaria`。#1228）。国の面はまだ無く、ソフィアの面が国の案内を兼ねる */
       href: "/travel/bulgaria/sofia",
-      lead: "ローマの遺跡と、ただで湧く温泉の首都。やりたいこと8選と、1日の予算",
+      /* 頭はソフィアの面の表紙と同じキャッチ（`content/guidebook/bulgaria-sofia.ts` の `lead`） */
+      lead: "二千年の歴史が足もとに眠る街。やりたいこと8選と、1日の予算",
       icon: "church",
     },
     {
