@@ -232,7 +232,7 @@ export const SHELVES: Shelf[] = [
     id: "bulgaria",
     title: "ブルガリア",
     /* **時点を言わない**（`docs/island-standards.md` 16章） */
-    note: "ローマの遺跡と、ただで湧く温泉の首都。首都はソフィア",
+    note: "二千年の歴史が足もとに眠る街。首都はソフィア",
     items: [
       {
         /* 前の `/bulgaria`。街の面に移った（#1228）。道は名簿から引く */
