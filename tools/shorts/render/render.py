@@ -48,6 +48,7 @@ from PIL import Image, ImageDraw, ImageFont
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import live_badge as LB  # noqa: E402
 import orig_voice as OV  # noqa: E402
+import sticker as ST  # noqa: E402
 import talk as TK  # noqa: E402
 import textlook as TL  # noqa: E402
 
@@ -776,16 +777,68 @@ def source_crop(src: dict, meta: dict, style: dict) -> list[int]:
     if src.get("crop"):
         return [int(v) for v in src["crop"]]
     wm = src.get("watermark")
+    spec = style.get("watermarks", {}).get(wm) if wm else None
+    if wm and not spec:
+        sys.exit(f"style.json に透かしの定義が無い: {wm}")
+    bands = band_rows(src, spec, w, h)
+    if bands:
+        return keep_rows(bands, w, h, src)
     if not wm:
         return [0, 0, w, h]
-    spec = style.get("watermarks", {}).get(wm)
-    if not spec:
-        sys.exit(f"style.json に透かしの定義が無い: {wm}")
     if spec.get("mode", "crop") != "crop":
         return [0, 0, w, h]
     sy = h / spec["size"][1]
     top = math.floor((spec["rect"][1] - spec.get("margin", 0)) * sy)
     return [0, 0, w, top]
+
+
+def band_rows(src: dict, spec: dict | None, w: int, h: int) -> list[tuple[int, int]]:
+    """配信に焼き込まれた札の帯（#1284 の T5）を、元素材の行 [上, 下) で返す。帯が無ければ空。
+
+    配信ソフトの透かし（右下の PRISM）だけでなく、配信ごとに上下へ札が焼き込まれている
+    （ヨーグルトの回は上 y135〜235 に題の帯、下 y1115〜 にお城の絵と PRISM。720x1280 の画素）。
+    帯は2か所に書ける。様式の透かしの `bands`（その透かしを使う素材ぜんぶ）と、指示書の素材の `bands`
+    （`{"size": [720, 1280], "rows": [[135, 235], [1115, 1280]], "margin": 5}`。その素材だけ。配信ごとの
+    様式を `extends` で作らずに、1本の配信の素材にだけ掛けたいとき）。帯を1つも書かない回は空を返し、
+    今までの切り方（透かしの箱の上まで）のまま1画素も変わらない。
+    """
+    out: list[tuple[int, int]] = []
+    sets = []
+    if spec and spec.get("bands"):
+        sets.append(("様式の透かし", spec["bands"], spec.get("size") or [w, h], spec.get("margin", 0)))
+    sb = src.get("bands")
+    if sb:
+        if not isinstance(sb, dict) or not sb.get("rows"):
+            sys.exit(f"素材の bands は {{\"size\": [幅, 高さ], \"rows\": [[上, 下], …], \"margin\": 画素}} で書く: {sb}")
+        sets.append(("素材", sb["rows"], sb.get("size") or (spec or {}).get("size") or [w, h], sb.get("margin", 0)))
+    for where, rows, size, m in sets:
+        sy = h / size[1]
+        for r in rows:
+            y0, y1 = float(r[0]), float(r[1])
+            if not 0 <= y0 < y1:
+                sys.exit(f"{where}の帯 {r} は [上, 下) の行（上 < 下）で書く")
+            out.append((max(0, math.floor((y0 - m) * sy)), min(h, math.ceil((y1 + m) * sy))))
+    if out and spec and spec.get("mode", "crop") == "crop":
+        # 透かしの箱も帯として数える（帯より上に透かしがあることはないが、下に重なっていても同じ答えになる）
+        sy = h / spec["size"][1]
+        out.append((math.floor((spec["rect"][1] - spec.get("margin", 0)) * sy), h))
+    return out
+
+
+def keep_rows(bands: list[tuple[int, int]], w: int, h: int, src: dict) -> list[int]:
+    """帯を除いた行のうち、いちばん高い一続きを使う（[0, 上, 幅, 高さ]。左右は切らない）。"""
+    cuts = sorted(bands)
+    gaps, y = [], 0
+    for a, b in cuts:
+        if a > y:
+            gaps.append((y, a))
+        y = max(y, b)
+    if y < h:
+        gaps.append((y, h))
+    if not gaps:
+        sys.exit(f"帯で元素材の行が全部消える: {src.get('path')} {cuts}")
+    a, b = max(gaps, key=lambda g: (g[1] - g[0], -g[0]))
+    return [0, a, w, b - a]
 
 
 def delogo_rect(src: dict, meta: dict, style: dict) -> list[int] | None:
@@ -849,6 +902,12 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         dl = delogo_rect(src_def, meta, style)
         if dl:
             cut["delogo"] = dl
+        # 色の整え（T4）: 全カットの grade にカットの grade を重ねる。何も変えないカットには欄を残さない
+        # （書かない回の時間割と画は、前と1画素も変わらない）
+        g = grade_of(edit.get("grade"), c.get("grade"), f"{len(cuts)}番目のカット")
+        cut.pop("grade", None)
+        if g:
+            cut["grade"] = g
         cuts.append(cut)
         t += n
     total = t
@@ -1044,9 +1103,37 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
         telops.append(item)
         prev_end = b
 
-    return {"fps": fps, "size": [W, H], "frames": total, "cuts": cuts, "narration": lines,
-            "captions": captions, "titles": titles, "telops": telops, "notes": notes, "bgm": edit.get("bgm"),
-            "tempo": float(narr.get("tempo") or 1.0), "audio_override": edit.get("audio") or {}}
+    out = {"fps": fps, "size": [W, H], "frames": total, "cuts": cuts, "narration": lines,
+           "captions": captions, "titles": titles, "telops": telops, "notes": notes, "bgm": edit.get("bgm"),
+           "tempo": float(narr.get("tempo") or 1.0), "audio_override": edit.get("audio") or {}}
+    # 札で重ねる画像（T1）と効果音（T2）。書かない回は欄そのものを作らない（時間割が前と同じ）
+    stickers = ST.plan_items(edit, style, base, total, W, H, fps, resolve)
+    if stickers:
+        out["stickers"] = stickers
+    sfx = sfx_items(edit, base, total)
+    if sfx:
+        out["sfx"] = sfx
+    return out
+
+
+def sfx_items(edit: dict, base: Path, total: int) -> list[dict]:
+    """指示書の sfx[]（`{"at": コマ, "file": 音, "db": 0}`）を確かめて、書き出しが使う形にする。"""
+    out = []
+    for i, s in enumerate(edit.get("sfx") or []):
+        bad = sorted(set(s) - {"at", "file", "db", "note"})
+        if bad:
+            sys.exit(f"sfx[{i}]: 知らない欄 {bad}（書けるのは at・file・db・note）")
+        if "at" not in s or not s.get("file"):
+            sys.exit(f"sfx[{i}]: at（何コマ目）と file（音のファイル）が要る")
+        at = int(s["at"])
+        if not 0 <= at < total:
+            sys.exit(f"sfx[{i}]: at {at} が動画（{total} コマ）の中に無い")
+        path = resolve(base, s["file"])
+        if not Path(path).is_file():
+            sys.exit(f"sfx[{i}]: 音が無い: {path}")
+        out.append({"at": at, "file": str(path), "db": float(s.get("db", 0)),
+                    **({"note": str(s["note"])} if s.get("note") else {})})
+    return out
 
 
 def audio_cfg(p: dict, style: dict) -> dict:
@@ -2176,6 +2263,44 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     return narr_p, bgm_p, src_p
 
 
+def sfx_stem(p: dict, style: dict, work: Path) -> Path | None:
+    """効果音の束（T2）。指示書の sfx[] を、at のコマから鳴らす。書かない回は束を作らない（None）。
+
+    大きさは1つずつ「鳴っている間の RMS」（声と同じ測り。50ms の窓のうち、いちばん大きい窓から 20dB 以内）を
+    様式の `audio.sfx_rms_dbfs` に揃え、音ごとの db で上げ下げする。素材の録り方で音量がばらばらでも、
+    「同じ db なら同じくらいに聞こえる」にする。BGM と違ってナレーションの間も下げない
+    （大きい字・札・切り替えに合わせて鳴らす音で、声と重なるのが普通）。動画の終わりを越えるぶんは切り、
+    切った所は 10ms で消す（ぷつっと鳴らない）。
+    """
+    items = p.get("sfx") or []
+    if not items:
+        return None
+    au = audio_cfg(p, style)
+    spf = SR // p["fps"]
+    n = p["frames"] * spf
+    out = np.zeros((n, 2), dtype=np.float32)
+    target = au.get("sfx_rms_dbfs", -22.0)
+    fade = int(SR * 0.010)
+    for s in items:
+        x = decode_audio(Path(s["file"]), 2)
+        r = speech_rms(x.mean(axis=1)) if len(x) else 0.0
+        if r <= 0:
+            sys.exit(f"効果音が鳴っていない（無音のファイル）: {s['file']}")
+        g = db(target + s["db"]) / r
+        s["gain_db"] = round(20 * math.log10(g), 2)
+        s["seconds"] = round(len(x) / SR, 3)
+        a = s["at"] * spf
+        e = min(n, a + len(x))
+        seg = x[:e - a] * g
+        if e - a < len(x) and len(seg) > fade:
+            seg[-fade:] *= np.linspace(1, 0, fade, dtype=np.float32)[:, None]
+        out[a:e] += seg
+    path = work / "stem_sfx.f32"
+    out.astype("<f4").tofile(path)
+    p["sfx_rms_dbfs"] = target
+    return path
+
+
 # ---------------------------------------------------------------- 映像
 
 def cover_affine(c: dict, W: int, H: int) -> tuple[float, float, float, float]:
@@ -2456,6 +2581,73 @@ def gamma_lut(g: float) -> np.ndarray:
     return _GAMMA[g]
 
 
+# 色の整え（指示書の `grade`・カットの `grade`。#1284 の T4）。欄 → (変えない値, 書ける下限, 上限)。
+# いまの完成4本は彩度（コマの上15%を除いた HSV の S の平均）0.28〜0.33、料理の参考は 0.44・0.59。
+# 0.30 の配信の画を 0.44 まで寄せるのに saturation 1.5 前後が要るので、上限は 2.0 に置いた
+GRADE = {"saturation": (1.0, 0.5, 2.0), "contrast": (1.0, 0.7, 1.5), "warmth": (0.0, -0.3, 0.3)}
+_GRADE_LUT: dict[tuple, np.ndarray] = {}
+
+
+def grade_of(whole, own, where: str) -> dict | None:
+    """全カットの整え（whole）にカットの上書き（own）を重ねた値。何も変えないなら None（その画は1画素も触らない）。
+
+    own が false ならそのカットだけ整えない（夜の山場などで、元の色のまま見せる）。
+    """
+    if own is False:
+        return None
+    g = {**(whole or {}), **(own or {})}
+    if not g:
+        return None
+    bad = sorted(set(g) - set(GRADE))
+    if bad:
+        sys.exit(f"{where}: grade に知らない欄 {bad}（書けるのは {sorted(GRADE)}）")
+    out = {}
+    for k, (same, lo, hi) in GRADE.items():
+        v = float(g.get(k, same))
+        if not lo <= v <= hi:
+            sys.exit(f"{where}: grade の {k} {v} は {lo}〜{hi} で書く")
+        out[k] = v
+    if all(out[k] == GRADE[k][0] for k in GRADE):
+        return None
+    return out
+
+
+def grade_lut(g: dict) -> np.ndarray:
+    """コントラストと暖かさを1枚の表（256 x 3）にする。白と黒は動かさない。
+
+    コントラストはまん中の灰（128）を軸に広げる。暖かさは赤と青の明るさの曲がり（ガンマ）を逆向きに
+    曲げる（warmth 0.1 で、まん中の灰の赤が +8・青が −9。0 と 255 は動かない）。
+    """
+    key = (g["contrast"], g["warmth"])
+    if key not in _GRADE_LUT:
+        v = np.arange(256, dtype=np.float64)
+        c = np.clip(128 + (v - 128) * g["contrast"], 0, 255) / 255
+        w = g["warmth"]
+        r, gg, b = np.power(c, 1 / (1 + w)), c, np.power(c, 1 + w)
+        _GRADE_LUT[key] = np.round(np.stack([r, gg, b], axis=1) * 255).astype(np.uint8).reshape(1, 256, 3)
+    return _GRADE_LUT[key]
+
+
+def grade_frame(cv2, out: np.ndarray, g: dict) -> np.ndarray:
+    """書き出しの画（RGB）の色を整える。表を引く → 彩度（YCrCb の色の2面を灰から離す）。
+
+    どちらも OpenCV の 8bit の整数の道（表引き・色の変換の固定小数）なので、CPU が違っても同じ値になる。
+    """
+    if g["contrast"] != 1.0 or g["warmth"] != 0.0:
+        out = cv2.LUT(out, grade_lut(g))
+    s = g["saturation"]
+    if s != 1.0:
+        ycc = cv2.cvtColor(out, cv2.COLOR_RGB2YCrCb)
+        key = ("sat", s)
+        if key not in _GRADE_LUT:
+            _GRADE_LUT[key] = np.clip(np.round(128 + (np.arange(256) - 128) * s), 0, 255).astype(np.uint8)
+        lut = _GRADE_LUT[key]
+        ycc[:, :, 1] = cv2.LUT(ycc[:, :, 1], lut)
+        ycc[:, :, 2] = cv2.LUT(ycc[:, :, 2], lut)
+        out = cv2.cvtColor(ycc, cv2.COLOR_YCrCb2RGB)
+    return out
+
+
 def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarray:
     """元のコマ1枚 → 透かしを外し・顔をぼかし・1080x1920 に収めた1枚。"""
     if c.get("delogo"):
@@ -2483,6 +2675,8 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
             out = cv2.LUT(out, gamma_lut(c["gamma"]))
         if c.get("inset"):
             out = inset_of(cv2, img, out, c["inset"], c["in"] + j)
+        if c.get("grade"):
+            out = grade_frame(cv2, out, c["grade"])
         return out
     if c["fit"] == "blur":
         cx, cy, cw, ch = c["crop"]
@@ -2504,6 +2698,8 @@ def frame_of(cv2, img: np.ndarray, c: dict, j: int, W: int, H: int) -> np.ndarra
         if z != 1.0:
             M = np.array([[z, 0, W / 2 * (1 - z)], [0, z, H / 2 * (1 - z)]], dtype=np.float64)
             out = cv2.warpAffine(out, M, (W, H), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        if c.get("grade"):
+            out = grade_frame(cv2, out, c["grade"])
         return out
     sys.exit(f"未対応の fit: {c['fit']}")
 
@@ -2569,7 +2765,9 @@ def plate_key(p: dict, af: dict) -> str:
     srcs = sorted({c["path"] for c in p["cuts"]})
     stamp = [[s, os.path.getsize(s), int(os.path.getmtime(s))] for s in srcs if os.path.exists(s)]
     fx = [x for x in p.get("fx", []) if x.get("plate") is not False]
-    body = json.dumps({"v": 1, "cuts": p["cuts"], "fx": fx, "src": stamp, "af": af,
+    # 札（T1）も字なしの絵に入る。札の無い回は鍵の形を変えない（前の控えをそのまま使える）
+    sticks = {"stickers": p["stickers"]} if p.get("stickers") else {}
+    body = json.dumps({"v": 1, "cuts": p["cuts"], "fx": fx, "src": stamp, "af": af, **sticks,
                        "scale": DRAFT_SCALE, "every": DRAFT_FACE_EVERY}, sort_keys=True, default=str)
     return hashlib.sha256(body.encode()).hexdigest()
 
@@ -2718,15 +2916,28 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         # 前に本番で書いた字なしの版が残っていると、品質チェックがこの下書きと突き合わせてしまう
         (work / "no_text.mp4").unlink(missing_ok=True)
     narr_p, bgm_p, src_p = audio_stems(p, style, base, work)
+    # 効果音（T2）は BGM の隣の4つ目の束。書かない回は束が無く、混ぜる物も前と同じ3つ
+    (work / "stem_sfx.f32").unlink(missing_ok=True)   # 前の回の束を、この回の音と読ませない
+    sfx_p = sfx_stem(p, style, work)
+    extra = [sfx_p] if sfx_p else []
     layers = layout(p, style, work)
 
     enc = style["encode"]
     au = audio_cfg(p, style)
     p["audio"] = au
-    # 音の仕上げ（一定の音量＋リミッター）。BGM 入りと、BGM 抜き（TikTok 向け）を別々に作る
-    p["master"] = {"with_bgm": master([narr_p, bgm_p, src_p], work, "with_bgm", au, enc)}
+    # 音の仕上げ（一定の音量＋リミッター）。BGM 入りと、BGM 抜き（TikTok 向け）を別々に作る。
+    # 効果音は BGM 抜きにも入れる（曲ではなく編集の音。TikTok が足すのは曲だけ）
+    p["master"] = {"with_bgm": master([narr_p, bgm_p, src_p, *extra], work, "with_bgm", au, enc)}
     if no_bgm_out:
-        p["master"]["no_bgm"] = master([narr_p, src_p], work, "no_bgm", au, enc)
+        p["master"]["no_bgm"] = master([narr_p, src_p, *extra], work, "no_bgm", au, enc)
+
+    # 札（T1）の絵は1枚ずつ先に作り、コマごとに引けるようにしておく
+    sprites = [ST.sprite(it) for it in p.get("stickers", [])]
+    st_at: list[list[int]] = [[] for _ in range(p["frames"])]
+    for si, it in enumerate(p.get("stickers", [])):
+        it["footprint"] = ST.footprint(it, sprites[si])
+        for f in range(it["from"], it["to"]):
+            st_at[f].append(si)
 
     def compose(timeline: list[list[Overlay]], plate: bool):
         """書き出すコマ（OW x OH の RGB）を順に返す。字の絵は timeline のとおり、集中線は字なしでも入れる。"""
@@ -2747,6 +2958,9 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         for c in p["cuts"]:
             for j, img in enumerate(prefetch(decode_cut(c, fps))):
                 frame = frame_out(cv2, img, c, j, W, H, OW, OH)
+                # 札（T1）は画の一部。字なしの版にも同じに入れ、効果と字はその上に重ねる
+                for si in st_at[f]:
+                    ST.draw(cv2, frame, sprites[si], p["stickers"][si], f, k)
                 for fx in fx_at[f]:
                     if fx["type"] == "speedlines":
                         put(TL.speedlines(W, H, fx["cfg"], fx["seed"], f - fx["from"]), 0, 0, frame)
@@ -2948,7 +3162,7 @@ def render(edit_path: Path, out: Path, work: Path, text: bool = True, no_bgm_out
         # 突き合わせる。BGM 入りの束で BGM 抜きを測ると、BGM の段が合わない）
         w2 = no_bgm_work or Path(str(work.with_suffix("")) + "_nobgm.work")
         w2.mkdir(parents=True, exist_ok=True)
-        for name in ("stem_narration.f32", "stem_source.f32"):
+        for name in ("stem_narration.f32", "stem_source.f32", *(["stem_sfx.f32"] if sfx_p else [])):
             shutil.copyfile(work / name, w2 / name)
         np.zeros(p["frames"] * (SR // fps) * 2, dtype="<f4").tofile(w2 / "stem_bgm.f32")
         p2 = {**p, "bgm": None, "variant": "no_bgm", "out": str(no_bgm_out),

@@ -425,7 +425,8 @@ class Ctx:
                 return None
             n = int(self.plan["frames"]) * int(round(SR / self.plan["fps"]))
             out = {}
-            for name in ("narration", "bgm", "source"):
+            # sfx: 効果音の束（書き出しの sfx[]。#1284 の T2）。書いた回だけある
+            for name in ("narration", "bgm", "source", "sfx"):
                 p = self.work / f"stem_{name}.f32"
                 if p.exists():
                     a = np.fromfile(p, dtype="<f4")
@@ -452,8 +453,11 @@ class Ctx:
             narr = mono(st["narration"]).astype(np.float64)
             bgm = mono(st["bgm"]).astype(np.float64)
             src = mono(st["source"]).astype(np.float64) if "source" in st else None
+            # 効果音の束も1列にして当てる（入れないと、効果音が鳴る所の音が残りに出て、元音声の漏れや
+            # 声と BGM の比に混ざる）。無い回は列も無く、前と同じ当て方
+            sfx = mono(st["sfx"]).astype(np.float64) if "sfx" in st else None
             n = min(len(mix), len(narr))
-            ref = narr + bgm + (src if src is not None else 0)
+            ref = narr + bgm + (src if src is not None else 0) + (sfx if sfx is not None else 0)
             # ずれは ±50ms の範囲で探す（それ以上ずれていたら、もう同じ動画の束ではない）。
             # 1サンプルずつ内積を取ると 4801 回で 20 秒かかるので、FFT で全部のずれを一度に出す
             L0 = min(n, SR * 20)
@@ -470,11 +474,14 @@ class Ctx:
             L = n - abs(lag)
             m = mix[a0:a0 + L]
             cols = [narr[b0:b0 + L], bgm[b0:b0 + L]] + ([src[b0:b0 + L]] if src is not None else [])
+            if sfx is not None:
+                cols.append(sfx[b0:b0 + L])
             A = np.stack(cols, axis=1)
             coef, *_ = np.linalg.lstsq(A, m, rcond=None)
             resid = m - A @ coef
             return {"lag": int(lag), "corr": round(corr, 4), "gain_narration": float(coef[0]),
                     "gain_bgm": float(coef[1]), "gain_source": float(coef[2]) if src is not None else None,
+                    **({"gain_sfx": float(coef[-1])} if sfx is not None else {}),
                     "resid": resid, "offset": b0, "length": L}
         return self.memo("stem_fit", fit)
 

@@ -38,6 +38,8 @@
 | art_slow | 絵の窓に寄せ 1.0→1.04（線 6% の手前） | pass | pass | **fail** |
 | art_badkind | 台帳の印が `art: yes`（generated / free 以外） | pass | pass | **fail**（絵のカットと読まない＝止め絵） |
 | art_runner | Actions の並べ方（素材を `in/<sha256>.mp4` に置き、`remote.py` の `stream_info` → `write_stream_index` で台帳を書き戻す）で art_zoom と同じ | pass | pass | pass（印がランナーまで運ばれる） |
+| sticker_small | 動く場面3つの2つ目に、札（時間割の `stickers`。`render/sticker.py`）を画面の 7% で重ねる（見本 `insert_line12.jpg` の大きさ） | pass | pass | pass（札は止め絵と数えない・`measured.stickers` に 1枚） |
+| sticker_full | 同じ並びで、札が画面の全部を覆う | pass | pass | **fail**（覆う割合 100%・線 60%） |
 
 ## 守りを1つずつ外す（絵のカット。帳面 F-014、#1187）
 
@@ -50,6 +52,13 @@
 | `motion` | `still.ART_MIN_MOVE = 0`（動かない絵のカットも通す） | art_frozen・art_slow・art_pan_center |
 | `kind` | `still.ART_KINDS = ()`（台帳の印を読まない＝絵のカットを全部止め絵にする） | art_zoom・art_pan・art_runner（通るはずが落ちる）・art_frozen・art_slow・art_pan_center（落ちるが、絵のカットとして数えない） |
 | `carry` | `remote.ART_KEYS = ()`（ランナーの台帳に印を運ばない） | art_runner |
+
+札（#1284 の T1）の守りも同じ形で外し、札の足（`sticker_*`）だけを回し直す。
+
+| 外す守り | 何を外したか | 思ったとおりでなくなるはずの足 |
+| --- | --- | --- |
+| `sticker_cover` | `still.STICKER_COVER_STILL = 99`（画面を全部覆う札も止め絵と数えない） | sticker_full |
+| `sticker_any` | `still.STICKER_COVER_STILL = 0`（小さい札まで止め絵と数える＝動く画の上の札を止め絵にする） | sticker_small |
 
 終了コード 0=思ったとおり / 1=思ったとおりでない / 2=数えるものが無い（ffmpeg・OpenCV・顔の検出器）。
 """
@@ -164,7 +173,7 @@ def frames_of(src: Path, a: int, b: int):
     return fr
 
 
-def leg(box: Path, name: str, cuts: list[tuple]) -> tuple[Path, Path]:
+def leg(box: Path, name: str, cuts: list[tuple], stickers: list[dict] | None = None) -> tuple[Path, Path]:
     """カットの並びどおりに場面の絵をつないだ下書きの大きさ（540x960）の mp4 と、その時間割（`drill.synth_leg` の写し。
     カットに寄せ（zoom）を書ける・画像のファイルを素材にできる、の2つを足した）。寄せは時間割にだけ書き、
     絵には掛けない（3つの検査はどれも、寄せる前の元素材と時間割の寄せの数を読む）。"""
@@ -184,8 +193,10 @@ def leg(box: Path, name: str, cuts: list[tuple]) -> tuple[Path, Path]:
         at += b - a
     enc.stdin.close()
     enc.wait()
-    (work / "plan.json").write_text(json.dumps({"fps": FPS, "size": [1080, 1920], "frames": at, "draft": True,
-                                                "cuts": plan_cuts, "overlays": []}, ensure_ascii=False))
+    plan = {"fps": FPS, "size": [1080, 1920], "frames": at, "draft": True, "cuts": plan_cuts, "overlays": []}
+    if stickers:
+        plan["stickers"] = stickers   # 札は時間割にだけ書く（止め絵の検査が読むのは時間割の札の外接矩形）
+    (work / "plan.json").write_text(json.dumps(plan, ensure_ascii=False))
     return mp4, work
 
 
@@ -260,6 +271,49 @@ def art_legs(m: dict[str, Path]) -> dict[str, tuple]:
     }
 
 
+def sticker_legs(m: dict[str, Path]) -> dict[str, tuple]:
+    """札の足（#1284 の T1）。足の名前 → （カットの並び, 札, 落ちるはずの検査, 測った値の形）。"""
+    A, B, Cs = m["A"], m["B"], m["C"]
+    si = lambda r: r["still_image"]["measured"]  # noqa: E731
+    cuts = [(A, 0, 60), (B, 0, 75), (Cs, 0, 60)]
+    # 見本 insert_line12.jpg の札は書き出しの画素で 349x389（縁を含む）・傾き 4°。外接矩形は 375x412 ほど
+    small = [{"from": 60, "to": 135, "path": str(m["PNG"]), "footprint": [614, 1126, 989, 1538]}]
+    full = [{"from": 60, "to": 135, "path": str(m["PNG"]), "footprint": [-20, -20, 1100, 1940]}]
+    one = lambda r, cov, still: (len(si(r)["stickers"]) == 1 and abs(si(r)["stickers"][0]["cover"] - cov) < 0.002  # noqa: E731
+                                 and si(r)["stickers"][0]["still"] is still)
+    return {
+        "sticker_small": (cuts, small, {}, lambda r: one(r, 0.075, False) and not si(r)["stills"]),
+        "sticker_full": (cuts, full, {"still_image": "fail"}, lambda r: one(r, 1.0, True) and not si(r)["stills"]
+                         and "札" in r["still_image"]["summary"]),
+    }
+
+
+STICKER_BREAKS: dict[str, tuple[tuple[str, str, object], set[str], str]] = {
+    "sticker_cover": (("still", "STICKER_COVER_STILL", 99.0), {"sticker_full"}, "画面を全部覆う札も止め絵と数えない"),
+    "sticker_any": (("still", "STICKER_COVER_STILL", 0.0), {"sticker_small"}, "動く画の上の小さい札まで止め絵と数える"),
+}
+
+
+def sticker_drill(C, box: Path, m: dict[str, Path]) -> list[tuple[str, bool, str]]:
+    """札の守りを1つずつ外して札の足を回し直し、崩れた足が STICKER_BREAKS の思ったとおりかを見る。"""
+    import still
+    out = []
+    for name, ((_, attr, value), want, why) in STICKER_BREAKS.items():
+        keep_v = getattr(still, attr)
+        setattr(still, attr, value)
+        try:
+            broke = set()
+            for leg_name, (cuts, stickers, wnt, shape) in sticker_legs(m).items():
+                wrong, _ = run_leg(C, box, f"{leg_name}.{name}", cuts, wnt, shape, stickers)
+                if wrong:
+                    broke.add(leg_name)
+        finally:
+            setattr(still, attr, keep_v)
+        out.append((name, broke == want, f"{name}（still.{attr} = {value!r}。{why}）→ 崩れた足 {sorted(broke)}"
+                                         f"（欲しいのは {sorted(want)}）"))
+    return out
+
+
 # 外す守り → （差し替える（モジュール名, 値の名前, 外した値）, 思ったとおりでなくなるはずの足, 何を外したか）
 ART_BREAKS: dict[str, tuple[tuple[str, str, object], set[str], str]] = {
     "motion": (("still", "ART_MIN_MOVE", 0.0), {"art_frozen", "art_slow", "art_pan_center"}, "動かない絵のカットも通す"),
@@ -270,13 +324,14 @@ ART_BREAKS: dict[str, tuple[tuple[str, str, object], set[str], str]] = {
 }
 
 
-def run_leg(C, box: Path, name: str, cuts: list[tuple], want: dict, shape) -> tuple[list[str], dict]:
+def run_leg(C, box: Path, name: str, cuts: list[tuple], want: dict, shape,
+            stickers: list[dict] | None = None) -> tuple[list[str], dict]:
     """1つの足を並べて検査し、思ったとおりでないところ（空なら思ったとおり）と報告を返す。"""
     import common
     # 台帳の読みは素材の道ごとに覚えている。対照で同じ道の台帳を外した状態で読み直すので、足ごとに忘れさせる
     common._ENTRY.clear()
     common._STREAM.clear()
-    mp4, work = leg(box, name, cuts)
+    mp4, work = leg(box, name, cuts, stickers)
     ctx = C.make_ctx(mp4, work, crops=box / f"{name}.qa")
     rep = {r["id"]: r for r in C.run_checks(ctx, only=list(NEW + ALSO))["checks"]}
     wrong = []
@@ -356,13 +411,22 @@ def run(keep: Path | None) -> int:
                          " ／ ".join(rep[cid]["summary"] for cid in NEW if rep[cid]["status"] != "pass")))
             if keep:
                 (box / f"{name}.qa.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
-        drills = art_drill(C, box, m)
+        for name, (cuts, stickers, want, shape) in sticker_legs(m).items():
+            t0 = time.monotonic()
+            wrong, rep = run_leg(C, box, name, cuts, want, shape, stickers)
+            if wrong:
+                bad.append((name, wrong))
+            failed = [cid for cid in NEW + ALSO if rep[cid]["status"] != "pass"]
+            rows.append(("○" if not wrong else "✕", name, ", ".join(f"{k}={v}" for k, v in want.items()) or "（なし）",
+                         ", ".join(failed) or "（なし）", round(time.monotonic() - t0, 1),
+                         " ／ ".join(rep[cid]["summary"] for cid in NEW if rep[cid]["status"] != "pass")))
+        drills = art_drill(C, box, m) + sticker_drill(C, box, m)
         print()
         print("| | 足 | 落ちるはずの検査 | 落ちた検査 | 秒 | 落ちた検査の要約 |")
         print("| --- | --- | --- | --- | --- | --- |")
         for r in rows:
             print("| " + " | ".join(str(x) for x in r) + " |")
-        print("\n[対照] 絵のカットの守りを1つずつ外すと、その守りを見る足だけが思ったとおりでなくなるか")
+        print("\n[対照] 絵のカット・札の守りを1つずつ外すと、その守りを見る足だけが思ったとおりでなくなるか")
         for name, ok, line in drills:
             print(f"  {'○' if ok else '✕'} {line}")
         print(f"\n全体 {time.monotonic() - t_all:.1f}秒")
@@ -377,7 +441,7 @@ def run(keep: Path | None) -> int:
                 print(f"\n✕ 対照が外れた: {' / '.join(off)}（外しても、その足だけが崩れる形になっていない）")
             return 1
         print(f"○ {len(rows)}通り、思ったとおり（壊した足は壊したところを見る検査だけが落ち、ほかは pass）。"
-              f"絵のカットの守り {len(drills)}個を1つずつ外すと、その足だけが崩れた")
+              f"絵のカット・札の守り {len(drills)}個を1つずつ外すと、その足だけが崩れた")
         return 0
     finally:
         if tmp is not None:

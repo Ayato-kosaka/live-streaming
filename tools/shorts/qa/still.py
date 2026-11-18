@@ -50,6 +50,14 @@ v9 はカクつく区間を直すのに、いちばんくっきりした1コマ�
   印が無いので、寄せていても今までどおり落ちる。**配信の止め絵に `art` を書いて通さない**（印は描いた絵・フリー素材だけ）
 - どの絵がどれだけ動いたかは `measured.art_cuts` に並ぶ。人の目の検査の表で、絵のカットの行に印を付ける
 
+## 札で重ねた画像（#1284 の T1。2026-11-18）
+
+画像を全面の止め絵に差し替えず、**動いている配信の画の上に札で重ねる**（`render/sticker.py`。指示書の `stickers[]`）。
+札は時間割の `stickers` に並び、カットの元素材は札の下で動いたままなので、上の 1.〜3. は札を見ない（**札を止め絵と
+数えない**）。ただし札が画面の大半を覆うと、見えるのは止まった絵だけになる。そこで札ごとに、出来上がりの大きさの
+外接矩形（`footprint`。影は含めない）が画面に占める割合を測り、**6割以上**なら止め絵と数える（線 `STICKER_COVER_STILL`。
+見本 `insert_line12.jpg` の札は 7%、全面の絵は 100%）。どの札がどれだけ覆ったかは `measured.stickers` に並ぶ。
+
 ## 弱いところ
 
 - **寄せを元素材のファイルに焼き込んだ止め絵は、画素では見分けない。** 1枚の絵を ffmpeg の zoompan などで動かして
@@ -71,6 +79,7 @@ STILL_SHARE = 0.05    # 絵が変わった対がこれ未満のカットは止�
 MIN_PAIRS = 5         # 隣どうしの対がこれに満たないカット（6コマ未満）は、画素では決めない
 ART_KINDS = ("generated", "free")   # 絵の窓の台帳の印（art_clips.py）。画像生成・フリー素材
 ART_MIN_MOVE = 0.06   # 絵のカットは、時間割の寄せでこれ以上動く（倍率の比か、寄る先の流れ）。上の「絵のカット」
+STICKER_COVER_STILL = 0.6   # 札（stickers）が画面のこの割合以上を覆えば止め絵。上の「札で重ねた画像」
 
 
 def plan_mark(ctx: Ctx, s: dict) -> str | None:
@@ -120,10 +129,26 @@ def art_motion(z) -> float:
     return move
 
 
+def sticker_rows(plan: dict) -> list[dict]:
+    """時間割の札（stickers）ごとに、画面を覆う割合と、止め絵と数えるか。"""
+    W, H = (plan.get("size") or [1080, 1920])[:2]
+    fps = float(plan["fps"])
+    rows = []
+    for i, s in enumerate(plan.get("stickers") or []):
+        x0, y0, x1, y1 = s.get("footprint") or [0, 0, W, H]   # 置き場の分からない札は、全面とみなす
+        area = max(0, min(W, x1) - max(0, x0)) * max(0, min(H, y1) - max(0, y0))
+        cover = area / float(W * H)
+        rows.append({"k": i, "from_s": round(s["from"] / fps, 2), "to_s": round(s["to"] / fps, 2),
+                     "sec": round((s["to"] - s["from"]) / fps, 2), "file": Path(str(s.get("path", ""))).name,
+                     "cover": round(cover, 3), "still": cover >= STICKER_COVER_STILL})
+    return rows
+
+
 def check(ctx: Ctx) -> dict:
     cid, title = "still_image", "止め絵"
     th = {"changed_if_diff_ge": CHANGE_MAD, "still_if_changed_share_lt": STILL_SHARE, "min_pairs": MIN_PAIRS,
-          "image_ext": sorted(IMAGE_EXT), "art_kinds": list(ART_KINDS), "art_min_move": ART_MIN_MOVE}
+          "image_ext": sorted(IMAGE_EXT), "art_kinds": list(ART_KINDS), "art_min_move": ART_MIN_MOVE,
+          "sticker_cover_still": STICKER_COVER_STILL}
     segs = segments(ctx.plan)
     if not segs:
         return result(cid, title, NA, "時間割（plan.json の cuts）が無く、カットの元素材に戻れない", thresholds=th)
@@ -155,6 +180,8 @@ def check(ctx: Ctx) -> dict:
                                f"（動き {row['art_move']:.1%}・線 {ART_MIN_MOVE:.0%}）")
         rows.append(row)
     by_k = {s["k"]: s for s in segs}
+    stks = sticker_rows(ctx.plan)
+    big = [r for r in stks if r["still"]]
     stills = [r for r in rows if r["still"]]
     arts = [r for r in rows if r.get("art")]
     moving = [r for r in rows if not r["still"] and r["changed_share"] is not None and not r.get("art")]
@@ -165,6 +192,7 @@ def check(ctx: Ctx) -> dict:
          "art_cuts": [{k: r[k] for k in ("from_s", "to_s", "sec", "file", "art", "art_move", "still")} for r in arts],
          "art_seconds": round(sum(r["sec"] for r in arts), 2),
          "least_moving": ({k: least[k] for k in ("from_s", "to_s", "file", "changed_share")} if least else None),
+         "stickers": stks,
          "missing_sources": sorted({s["path"] for s in missing}), "rows": rows}
     problems = []
     for r in stills:
@@ -179,11 +207,18 @@ def check(ctx: Ctx) -> dict:
         src = f"。元の絵: {ent['range']}" if ent.get("range") else ""
         problems.append(f"{r['where']}: 止め絵（{how}）{zoom}{src} → カクつかない別の区間の映像に替える"
                         f"（無ければカクつく映像でもよい）")
+    for r in big:
+        problems.append(f"{r['from_s']:.2f}〜{r['to_s']:.2f}秒: 札（stickers[{r['k']}]・{r['file']}）が画面の "
+                        f"{r['cover']:.0%} を覆い、止め絵になっている（線 {STICKER_COVER_STILL:.0%}） → 札を小さくして"
+                        f"動く画を見せるか、全面で見せるなら絵のカット（art_clips.py）にして寄せで動かす")
     for s in missing:
         problems.append(f"{where(s)}: 元素材が無い（{s['path']}）")
-    if stills:
+    if stills or big:
         status = FAIL
-        summ = f"止め絵 {len(stills)} カット・合わせて {m['still_seconds']:.1f}秒（{len(rows)} カット中）"
+        summ = (f"止め絵 {len(stills)} カット・合わせて {m['still_seconds']:.1f}秒（{len(rows)} カット中）" if stills
+                else f"止め絵のカットは無い（{len(rows)} カット）")
+        if big:
+            summ += f"。画面の {STICKER_COVER_STILL:.0%} 以上を覆う札 {len(big)} 枚"
     elif missing:
         status = NA
         summ = f"元素材が {len(missing)} カットぶん無い"
@@ -195,4 +230,7 @@ def check(ctx: Ctx) -> dict:
         if arts:
             summ += (f"。絵のカット {len(arts)}（{m['art_seconds']:.1f}秒）は寄せで動く"
                      f"（動きがいちばん小さいもの {min(r['art_move'] for r in arts):.0%}・線 {ART_MIN_MOVE:.0%}）")
+        if stks:
+            summ += (f"。札 {len(stks)} 枚は動く画の上（いちばん大きい札で画面の "
+                     f"{max(r['cover'] for r in stks):.0%}・線 {STICKER_COVER_STILL:.0%}）")
     return result(cid, title, status, summ, measured=m, thresholds=th, problems=problems)
