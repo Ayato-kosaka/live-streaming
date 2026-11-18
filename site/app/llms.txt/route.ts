@@ -2,13 +2,11 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { guidebookOf } from "@/content/guidebook";
 import { LEGENDS } from "@/content/legends";
-import { MONTHS } from "@/content/months";
 import { RECIPES } from "@/content/recipes";
 import { LINKS, SITE } from "@/content/site";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { TRAVEL, publicArticles, publicCities } from "@/content/travel";
 import { abs } from "@/lib/jsonld";
-import { monthLabel } from "@/components/months/parts";
 
 /**
  * **`/llms.txt`——AI の読み手に「島が何で、どの面に何があるか」を1枚で渡す。**（#1262）
@@ -80,8 +78,9 @@ export function GET() {
     "",
     "## 月ごとのふりかえり",
     "",
+    /* 月の面は1行だけ。`content/months.ts`（額つきの順位を持つ）を読んでよいのは月の面だけなので
+       （`docs/island-money.md` 2.1・`python/months_safe_selftest.py`）、ここでは月ごとに並べない */
     line("月ごとのふりかえり", "/months", "ひと月ずつの配信の記録。出席ランキング、投げ銭ありがとう"),
-    ...MONTHS.map((m) => line(`${monthLabel(m)}のふりかえり`, `/months/${m.key}`)),
     "",
     "## 作っているアプリ",
     "",
