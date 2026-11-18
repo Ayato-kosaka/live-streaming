@@ -126,9 +126,9 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "struggle"
     ],
     "plan": [
+     2,
      1,
-     1,
-     3
+     2
     ],
     "src": [
      {
@@ -165,6 +165,36 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 1200,
       "date": "2026-10-14"
      }
+    }
+   },
+   {
+    "id": "debar-maalo",
+    "name": "デバル・マーロ",
+    "color": "#ffc4d2",
+    "lead": "並木道にカフェとレストランが並ぶ住宅街",
+    "see": [],
+    "plan": [
+     1,
+     1,
+     1
+    ],
+    "src": [
+     {
+      "name": "Wikivoyage「Skopje/Centar」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "OpenStreetMap（Debar Maalo（place=suburb））",
+      "url": "https://www.openstreetmap.org/node/6239561763",
+      "seen": "2026-11-18"
+     }
+    ],
+    "body": "1920年代にデバル地方から移った人たちが住みついた",
+    "local": {
+     "text": "Дебар Маало",
+     "lang": "mk",
+     "roman": "Debar Maalo"
     }
    },
    {
@@ -217,7 +247,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "body": "広場の噴水の上に、高さ14.5mの騎馬像が立つ。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている。西のデバル・マーロは並木道にレストランとカフェが並ぶ一角で、東には鉄道駅と長距離バスの交通センターがある",
+    "body": "広場の噴水の上に、高さ14.5mの騎馬像が立つ。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている。東には鉄道駅と長距離バスの交通センターがある",
     "local": {
      "text": "Центар",
      "lang": "mk",
@@ -4316,6 +4346,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-18",
- "hash": "c0b01fa935542aba"
+ "hash": "301d5ee31a8d81b7"
 }
 /* END GUIDE */;

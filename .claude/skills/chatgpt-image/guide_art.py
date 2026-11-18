@@ -668,7 +668,8 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
             elif base.is_file():
                 im = Image.open(base).convert("RGB")
             if im is not None:
-                im = gl().bake(im, spec["areamap"]["areas"])
+                # 描いたあとで足した地区（`districts[].paint`）の色を重ねてから、名前を焼く
+                im = gl().bake(gl().wash(im, spec["areamap"], s["bias"]), spec["areamap"]["areas"])
         if im is not None:
             pics = []
             for w in sizes:

@@ -483,6 +483,18 @@ def main() -> int:
         bsp["areamap"]["areas"][0]["label"] = ["Aの駅周辺"]
         bman2, _ = ga.finalize(bsp, root, tmp / "nowork", base=base)
         ok(bman2["areamap"]["areas"][0]["h"] < am["areas"][0]["h"], "持ち帰った絵が無い日に、焼く前の1枚から焼き直さない")
+        # 描いたあとで足した地区の色（`paint`）は、その範囲にだけ重なる。範囲の外の画素は変えない
+        bsp["areamap"]["bbox"] = {"west": 21.42, "east": 21.45, "south": 41.98, "north": 42.01}
+        bsp["areamap"]["districts"] = [{"id": "c", "color": "#ff3080", "paint": True,
+                                        "poly": [[42.004, 21.421], [42.004, 21.427], [42.000, 21.427], [42.000, 21.421]]}]
+        before = Image.open(bout / "町-見どころマップ-1200.webp").convert("RGB")
+        ga.finalize(bsp, root, tmp / "nowork", base=base)
+        after = Image.open(bout / "町-見どころマップ-1200.webp").convert("RGB")
+        inside, far = (round(1200 * 0.13), round(1500 * 0.30)), (1100, 1400)
+        ok(after.getpixel(inside)[1] < before.getpixel(inside)[1] - 20 and
+           sum(abs(x - y) for x, y in zip(after.getpixel(far), before.getpixel(far))) < 12,
+           f"足した地区の色が、範囲の中に重ならない・外まで変えた: {before.getpixel(inside)}→{after.getpixel(inside)} / {before.getpixel(far)}→{after.getpixel(far)}")
+        bsp["areamap"]["districts"] = []
         bsp["areamap"]["areas"][1].update({"x": 0.32, "y": 0.32})
         try:
             ga.finalize(bsp, root, tmp / "nowork", base=base)

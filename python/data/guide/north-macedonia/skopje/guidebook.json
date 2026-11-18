@@ -325,6 +325,124 @@
     ]
    },
    {
+    "key": "debar-maalo",
+    "name": "デバル・マーロ",
+    "local": {
+     "text": "Дебар Маало",
+     "roman": "Debar Maalo",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "tone": {
+     "text": "並木道にカフェとレストランが並ぶ住宅街。1920年代にデバル地方から移った人たちが住みついた",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "center": {
+     "lat": 42.001573,
+     "lon": 21.420064,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap（Debar Maalo（place=suburb））",
+       "url": "https://www.openstreetmap.org/node/6239561763",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       41.9997,
+       21.416
+      ],
+      [
+       42.004,
+       21.4155
+      ],
+      [
+       42.004,
+       21.427
+      ],
+      [
+       42.0012,
+       21.4275
+      ],
+      [
+       42.0001,
+       21.425
+      ],
+      [
+       41.9995,
+       21.42
+      ]
+     ],
+     "how": "OSM には地区の境の線が無い（点だけ）。OSM と Wikivoyage がデバル・マーロに入れている店（スコプスキ・メラク・イダディヤほか）とOSM の点を囲み、東はシティパークの南の住宅街を、聖クリメント・オフリド大聖堂の北（新市街の北西の角）まで広げた",
+     "src": [
+      {
+       "name": "OpenStreetMap（Debar Maalo（place=suburb））",
+       "url": "https://www.openstreetmap.org/node/6239561763",
+       "seen": "2026-11-18"
+      },
+      {
+       "name": "Wikivoyage「Skopje/Centar」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+       "seen": "2026-11-15"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "スコプスキ・メラク（老舗のマケドニア料理）",
+      "local": "Скопски мерак",
+      "lat": 42.001031,
+      "lon": 21.419801,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap（Skopski Merak）",
+        "url": "https://www.openstreetmap.org/way/363752338",
+        "seen": "2026-11-15"
+       }
+      ]
+     },
+     {
+      "name": "イダディヤ（古いカファナ）",
+      "local": "Идадија",
+      "lat": 42.00147,
+      "lon": 21.420986,
+      "coord_src": [
+       {
+        "name": "Wikivoyage「Skopje/Centar」",
+        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+        "seen": "2026-11-15"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "OpenStreetMap（Debar Maalo（place=suburb））",
+      "url": "https://www.openstreetmap.org/node/6239561763",
+      "seen": "2026-11-18"
+     },
+     {
+      "name": "Wikivoyage「Skopje/Centar」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+      "seen": "2026-11-15"
+     }
+    ]
+   },
+   {
     "key": "newtown",
     "name": "新市街",
     "local": {
@@ -340,7 +458,7 @@
      ]
     },
     "tone": {
-     "text": "マケドニア広場を中心にした、ヴァルダル川の南。広場の噴水の上に、高さ14.5mの騎馬像が立つ。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている。西のデバル・マーロは並木道にレストランとカフェが並ぶ一角で、東には鉄道駅と長距離バスの交通センターがある",
+     "text": "マケドニア広場を中心にした、ヴァルダル川の南。広場の噴水の上に、高さ14.5mの騎馬像が立つ。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている。東には鉄道駅と長距離バスの交通センターがある",
      "src": [
       {
        "name": "Wikivoyage「Skopje/Centar」",
