@@ -5,7 +5,7 @@
  "dest": "zDHHuafmP1A/clips",
  "video": "zDHHuafmP1A",
  "channel": null,
- "request": "shorts/requests/xmas-zDHHuafmP1A-p1v1-clips-20261118.json",
+ "request": "shorts/requests/boza-zDHHuafmP1A-p1v2-clips-hd-20261118.json",
  "status": "ok",
  "stages": {
   "download": "ok",
@@ -14,104 +14,84 @@
   "sheets": "ok"
  },
  "counts": {
-  "sheets": 22,
+  "sheets": 17,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 7,
-  "clips_ok": 7,
-  "clip_seconds": 1180.0,
+  "clips": 4,
+  "clips_ok": 4,
+  "clip_seconds": 870.0,
   "channel_entries": 0,
-  "files": 37
+  "files": 29
  },
  "bytes": {
-  "plain": 566183010,
-  "tar_gz": 565384369,
-  "encrypted": 565384384
+  "plain": 368953285,
+  "tar_gz": 368337881,
+  "encrypted": 368337888
  },
  "encrypted_files": [
   {
    "name": "payload.enc.000",
    "bytes": 47185920,
-   "sha256": "ccaba6ccd5f32662da5716d16c9d854918e2b97abd13e33976fb3b0a82d2558c"
+   "sha256": "efff8a2cdeeb2599d9087b583b469621952bb688c0edaafc61e92d6883d6f502"
   },
   {
    "name": "payload.enc.001",
    "bytes": 47185920,
-   "sha256": "6be0d44820b9941289553c115dde968f26f0c60d73983d2e05a6233b3098e55f"
+   "sha256": "f19c91e95d81a88ca7394d34a89b33ce83813c5ff6f3057a19e70f9c44d4a349"
   },
   {
    "name": "payload.enc.002",
    "bytes": 47185920,
-   "sha256": "d302ef94c9eb0d717d378638616ddb84a8713ff9986f2375dcfb9d9099020c1a"
+   "sha256": "04f6d7d7303a62e39cd39a4955dec3b187be1eb5066e218ac70e78fbb6694078"
   },
   {
    "name": "payload.enc.003",
    "bytes": 47185920,
-   "sha256": "ca603b4118dd3144e1e0e8b87d1487f52c4389fa89c45c549b109851b6d08907"
+   "sha256": "1b9cec44ef66adb895b36395c909e7eab18168f145d73267b0d124be5f364366"
   },
   {
    "name": "payload.enc.004",
    "bytes": 47185920,
-   "sha256": "6bf4b03ac616179ba1103a2a4a99327f9ab3ae29c78c36a4bc3ccaf83bac7ab6"
+   "sha256": "0ea665f604e8248fe287e97ab9319f2da3724fac232db458a703502715820cad"
   },
   {
    "name": "payload.enc.005",
    "bytes": 47185920,
-   "sha256": "26ee070940a1fa3c5275e89459fa62468576c48e2cacfe48ec83ba9538695755"
+   "sha256": "e246fee3adc51309e13f1a765384b0781ba4e9645a5978ef9321e71cda2704f3"
   },
   {
    "name": "payload.enc.006",
    "bytes": 47185920,
-   "sha256": "0c1c074f6b483989c0c4cf76b72aea40bf5fed781df162029b572fc28168fcd0"
+   "sha256": "f70a6858a2ccd99066e446be3d0e43ea0af839e513c999809039b6d5965551db"
   },
   {
    "name": "payload.enc.007",
-   "bytes": 47185920,
-   "sha256": "25b84de6a1bbb2723975e29457887da0319ab9d21620d1c0c40f136a2cefe61b"
-  },
-  {
-   "name": "payload.enc.008",
-   "bytes": 47185920,
-   "sha256": "23686ff231275377ffc48c77bbb1e15a78d6464224d89ad86ccf3f1536912863"
-  },
-  {
-   "name": "payload.enc.009",
-   "bytes": 47185920,
-   "sha256": "0920a78fed8276a561976ddbf84cfc9d8c4df21c0d93b5fd0a136d6cc888aca1"
-  },
-  {
-   "name": "payload.enc.010",
-   "bytes": 47185920,
-   "sha256": "fec276d09e174d6f629eaa8e257194126766c2147eef305c6b23baf5dafbd618"
-  },
-  {
-   "name": "payload.enc.011",
-   "bytes": 46339264,
-   "sha256": "ce50be6f16df6e7094fc496dc1d68e426907039afb98b661ccd4d1e9cb9a9d9d"
+   "bytes": 38036448,
+   "sha256": "34c5dab207df6d7ba459b862c23ac29047fc2cf153ac1a1b3721d243eee0823e"
   }
  ],
- "hmac_sha256": "1414b35b839b53193abf861ba08bf4a9dd83c730fb61658985c23cfffb09eb18",
+ "hmac_sha256": "d57b6f39c6b039a70a39007b01034550eea4bca8055c8310a6dd15e2f526c61a",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44370336019",
- "created_at": "2026-11-18T18:58:53+00:00",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44378158275",
+ "created_at": "2026-11-18T19:51:41+00:00",
  "sheets": {
   "key_file": "sheets.key.enc",
   "encrypted_files": [
    {
     "name": "sheets.enc",
-    "bytes": 7724896,
-    "sha256": "871fbcf6188f88a87e21be7ee3d641037ab341cf94da275e51af2f90894da005"
+    "bytes": 6270992,
+    "sha256": "19fdab16355afcb406fe94a1b31585b3fe9702f647fb586ff04a753de002f3d2"
    }
   ],
-  "hmac_sha256": "af8d2a74732a473b9e46fbe671e6dba665f5c965ea819b27e5d2de6c15590a82",
-  "files": 26,
-  "sheets": 22,
+  "hmac_sha256": "744c284d027c2ddde01ddc7ce5e034e52ab0a5d6a5e1b3ddc52d3147c6dec6fd",
+  "files": 21,
+  "sheets": 17,
   "bytes": {
-   "plain": 7979785,
-   "tar_gz": 7724882,
-   "encrypted": 7724896
+   "plain": 6492119,
+   "tar_gz": 6270990,
+   "encrypted": 6270992
   }
  }
 }
