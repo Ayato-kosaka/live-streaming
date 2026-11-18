@@ -264,6 +264,27 @@ check(
    まず見張りの前提が崩れていないかを見る）。 */
 const LAST = PLANS.map((p) => p.done || p.until || p.date || "0000-00-00").sort().at(-1);
 const AFTER_ALL = noon(Number(LAST.slice(0, 4)) + 1, 1, 15);
+
+/* **日付では終わらない企画が表に在ると、「ぜんぶ行ってきた日」は来ない。**
+   `endsWhen` だけを持つもの（`until` も `done` も無い）は、終わった日が入るまで
+   ずっと「いま」。2026-11-18 にブルガリアの1件をその形にしたら、下の対照2本が
+   「出た=bulgaria」で落ちた——見張りの前提（いつかは全部が過ぎる）のほうが
+   崩れていた（`docs/island-misses.md` #193 の決めごと4）。
+
+   だから2つに分ける。**(1) そういう企画は、翌年になっても先頭に出たまま**
+   （滞在の札が日付で表紙から消えない、を守る足。あやと 2026-11-18）。
+   **(2) 対照は、その企画に仮の終わった日を入れてから当てる**——見たいのは
+   「ぜんぶ行ってきた日に2つが違う答えを出すか」で、そこは変わらない。
+   仮の日は、当て終わったら外す。 */
+const OPEN = PLANS.filter((p) => p.date && p.endsWhen && !p.until && !p.done);
+if (OPEN.length > 0) {
+  check(
+    `日付では終わらない企画（${OPEN.map((p) => p.id).join(" ")}）は、${LAST} の翌年になっても先頭に出る`,
+    OPEN.some((p) => p.id === leadPlan(AFTER_ALL)?.id),
+    `出た=${leadPlan(AFTER_ALL)?.id}`,
+  );
+}
+for (const p of OPEN) p.done = p.date;
 const allPast = nextPlan(AFTER_ALL);
 check(
   `対照：ぜんぶ行ってきた日（${LAST} の翌年）に、\`nextPlan()\` は行ってきた企画を返す`,
@@ -275,6 +296,7 @@ check(
   leadPlan(AFTER_ALL) === undefined,
   `出た=${leadPlan(AFTER_ALL)?.id}`,
 );
+for (const p of OPEN) delete p.done;
 
 /* -------------------------------------------- 6. 今週、なにをするんだろう */
 
