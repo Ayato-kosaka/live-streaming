@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { fitTitle, span } from "@/lib/seoText";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { StreamCard } from "@/components/ui/Bits";
@@ -82,8 +83,8 @@ export async function generateMetadata({
   const n = CHAPTER_STREAMS[c.slug]?.length ?? 0;
   return share({
     key: "atlas",
-    title: `${c.name}の配信`,
-    description: `${c.from} から ${c.to} まで、${c.name}のあいだに配信した${n}本。`,
+    title: fitTitle(`${c.name}の配信${n}本（${span(c.from, c.to || undefined)}）`, `${c.name}の配信${n}本`),
+    description: `${c.from} から ${c.to || "いま"} まで、${c.name}のあいだに配信した${n}本。1本ずつ、日付と題とアーカイブへのリンク。`,
     path: `/island/${chapter}/streams`,
   });
 }

@@ -16,6 +16,9 @@ import { StayLen, StayOut } from "../parts";
 import CountryGuide from "@/components/nordic/CountryGuide";
 import { nordicCountry } from "@/content/nordic";
 import { TRAVEL_PLACES, travelCrumbs, travelHref, travelShare } from "@/content/travel";
+import { fitTitle, lead, span } from "@/lib/seoText";
+import { JsonLd, articleLd } from "@/lib/jsonld";
+import { LASTMOD } from "@/lib/lastmod";
 // 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
@@ -32,7 +35,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!c) return {};
   /* 北欧の6か国は、前は行く前の案内（`/nordic/<国>`）が別の題と一文を持っていた。
      2枚を1枚に寄せたので、題と一文は歩いた記録のほうに揃える（#1201） */
-  return travelShare(slug, { title: c.name, description: c.summary });
+  /* 題は「国＋旅の記録＋歩いた街」、一文の頭は「いつ・どの街を」。面に並ぶ滞在と同じ事実（#1199 の第2便）。
+     街が多い国は、32字に収まるところまで減らす */
+  const cities = [...new Set(c.stays.flatMap((s) => s.cities))];
+  const first = c.stays[0];
+  const last = c.stays[c.stays.length - 1];
+  const head = `${c.name}旅の記録`;
+  return travelShare(slug, {
+    title: fitTitle(...[3, 2, 1].map((k) => `${head} — ${cities.slice(0, k).join("・")}`), head),
+    description: first
+      ? lead(`${span(first.from, last.to || undefined)}、${cities.join("・")}を配信しながら歩いた。`, c.summary, "街ごとの配信のアーカイブつき。")
+      : c.summary,
+  });
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
@@ -127,6 +141,18 @@ export default async function CountryPage({ params }: { params: Promise<{ slug: 
 
   return (
     <PageShell crumbs={travelCrumbs(c.name)}>
+      {/* 歩いた記録の名札（#1262）。日付は面に並ぶ滞在のはじまりと、面に出る配信のいちばん新しい日（sitemap と同じ） */}
+      {c.stays[0] && (
+        <JsonLd
+          data={articleLd({
+            path: travelHref(c.slug),
+            headline: c.name,
+            description: c.summary,
+            datePublished: c.stays[0].from,
+            dateModified: LASTMOD.country(c),
+          })}
+        />
+      )}
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
           ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
       <PageHead title={c.name} lead={c.summary} />

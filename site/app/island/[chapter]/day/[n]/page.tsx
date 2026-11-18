@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { lead, ymd } from "@/lib/seoText";
+import { JsonLd, articleLd } from "@/lib/jsonld";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -122,7 +124,7 @@ export async function generateMetadata({
     title: `${dayName(day)} ${way} — 北欧ヒッチハイク`,
     /* 一文の無い日がある（`lead?`）。**器の一文に落とさない**——落ちると
        その日の面が、島ぜんぶと同じことを名乗る。日付と道のりから作る */
-    description: day.lead ?? `${dayName(day)}、${way}。`,
+    description: lead(`${day.date ? `${ymd(day.date)}、` : ""}北欧ヒッチハイクの${dayName(day)}（${way}）。`, day.lead ?? ""),
     path: dayHref(day),
   });
 }
@@ -549,6 +551,17 @@ export default async function NordicDayPage({ params }: { params: Promise<{ chap
 
   return (
     <PageShell crumbs={chapterCrumbs(chapterOf(DAY_CHAPTER), { label: dayName(day) })}>
+      {/* その日の記録の名札（#1262）。日付は面の頭に見えているその日 */}
+      {day.date && (
+        <JsonLd
+          data={articleLd({
+            path: dayHref(day),
+            headline: dayName(day),
+            description: day.lead ?? `${dayName(day)}の記録`,
+            datePublished: day.date,
+          })}
+        />
+      )}
       <PageHead
         title={dayName(day)}
         lead={day.lead}

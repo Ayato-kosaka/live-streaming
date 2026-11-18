@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { fitTitle, lead, ymd } from "@/lib/seoText";
 import HeroArt from "@/components/ui/HeroArt";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -25,7 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const r = recipeBySlug(slug);
   if (!r) return {};
-  return share({ key: "kitchen", title: r.name, description: r.note, path: `/kitchen/${slug}` });
+  /* 題と一文は「いつ・どの国の借りたキッチンで」を足す（面の頭の札と同じ事実）。#1199 の第2便 */
+  const c = countryNameBySlug(r.country)?.name ?? "";
+  return share({
+    key: "kitchen",
+    title: fitTitle(`${r.name} — ${c}で作った配信クッキング`, `${r.name} — ${c}で作った料理`, r.name),
+    description: lead(`${ymd(r.date)}、${c}の借りたキッチンで作った${r.name}。`, r.note, "その日の配信のアーカイブと、チャットの声つき。"),
+    path: `/kitchen/${slug}`,
+  });
 }
 
 /** その日が何の日だったか。マスの絵と、ひとことの説明。 */
@@ -100,7 +108,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
                   スプライトは中身の形に切り出してあって1枚ずつ幅が違うので
                   （食パンは 393px、ピザは 527px）、幅の数を書くと嘘になる。
                   この面で出す絵は1枚だけなので、大きいほうを常に配る。 */}
-              <HeroArt icon={r.icon} />
+              <HeroArt icon={r.icon} alt={`イラスト：${r.name}のスタンプ`} />
             </div>
             <p className="zk-hero-note">{r.note}</p>
           </div>

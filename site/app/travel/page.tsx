@@ -26,7 +26,7 @@ import { TRAVEL, TRAVEL_LABEL, travelHref, travelPlace } from "@/content/travel"
    「いまいるジョージアまで」だった）。 */
 export const metadata: Metadata = share({
   key: "map",
-  title: TRAVEL_LABEL,
+  title: `${TRAVEL_LABEL} — 2024年9月から旅して配信した国の地図`,
   description:
     "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
   path: TRAVEL,

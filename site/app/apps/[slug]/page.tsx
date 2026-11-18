@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { fitTitle } from "@/lib/seoText";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
@@ -20,7 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const a = appBySlug(slug);
   if (!a) return {};
-  return share({ key: "apps", title: a.name, description: a.summary, path: `/apps/${slug}` });
+  return share({
+    key: "apps",
+    title: fitTitle(`${a.name} — ${a.tagline}`, `${a.name} — あやとの自作アプリ`, a.name),
+    description: a.summary,
+    path: `/apps/${slug}`,
+  });
 }
 
 /**

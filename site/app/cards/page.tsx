@@ -7,7 +7,7 @@ import { PLAN_BY_DAY } from "@/content/planDays";
 
 export const metadata: Metadata = share({
   key: "cards",
-  title: "あやと島カード",
+  title: "あやと島カード — 配信の日の写真",
   /* **「好きなキャラクター」と書かない。** 写真に入れられるのは、その日
      投げ銭してくれた人だけ（`docs/island-cards.md` 1章）。誰でも好きに選べる
      かのように読める1行が、9/10 から検索結果とリンクのプレビューに出ていた。

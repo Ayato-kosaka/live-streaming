@@ -8,6 +8,9 @@ import { FOOT, UI } from "@/content/voice";
 import HashJump from "./HashJump";
 import { SayRoom } from "./Say";
 import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
+import { LINKS } from "@/content/site";
+
+const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href;
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -203,6 +206,13 @@ export function IslandFooter() {
       {/* **文の中に入れない。** 行内のリンクは文といっしょに折り返すので、
           当たるのは1行ぶんだけになる（実測 102x18。島の全面で同じ）。
           行き先は文ではないので、行から出して1つの押しどころにする。 */}
+      {/* どの面からも配信へ1本（#1199 の第2便）。検索と AI から来た人のゴールは、島の中ではなく配信（#1200）。
+          島の中で YouTube へのリンクを1本も持たない面が 18/143 あった（`/about` も 0本） */}
+      {YOUTUBE && (
+        <a href={YOUTUBE} className="ifoot-privacy" rel="noopener">
+          {UI.youtube}
+        </a>
+      )}
       <Link href="/privacy" prefetch={false} className="ifoot-privacy">プライバシーポリシー</Link>
     </footer>
   );

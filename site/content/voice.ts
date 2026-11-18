@@ -115,6 +115,8 @@ export const LETTER_TODO_NONE_NOTE = ["旅は進んでいます。", "配信は�
 export const UI = {
   enter: "はいる",
   backToIsland: "島にもどる",
+  /** 足もとの、配信（YouTube のチャンネル）への1本 */
+  youtube: "あやとの配信を見る（YouTube）",
   lookAround: "島をながめる",
   /** 島の連なりへ。旅の章ごとに島が1つ建っている（`docs/island-atlas.md`） */
   atlas: "島の地図",

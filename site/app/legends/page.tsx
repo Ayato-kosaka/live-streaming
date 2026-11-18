@@ -13,8 +13,8 @@ import { isoDay } from "@/lib/isoDay";
 
 export const metadata: Metadata = share({
   key: "legends",
-  title: "伝説の企画",
-  description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。語り継がれている企画たち。",
+  title: "伝説の企画 — 語り継がれている配信",
+  description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。視聴者さんと一緒に作って、いまも語り継がれている配信の企画たち。",
   path: "/legends",
 });
 
@@ -83,7 +83,7 @@ export default function LegendsPage() {
             <div className="zk-hero-art">
               {/* 主役の絵は、焼き直したほう（`sprites/hero/`）を直に指す。
                   1x/2x で配ると、等倍の画面がここだけ小さいほうを選ぶ */}
-              <HeroArt icon={top.icon} />
+              <HeroArt icon={top.icon} alt={`イラスト：${top.title}の記念碑`} />
             </div>
             <div className="lg-hero-fig">
               <Fig f={top.figure} />

@@ -20,8 +20,8 @@ import { ArtCam, ArtMedal, ArtStamp } from "@/components/streams/Art";
 
 export const metadata: Metadata = share({
   key: "streams",
-  title: "配信",
-  description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやと島の配信は5つの型でできています。",
+  title: "あやとの配信の5つの型",
+  description: "クッキング、おさんぽ、アプリ作り、企画会議、月末配信。あやとの YouTube 生配信は5つの型でできています。型ごとに、まず見てほしい回つき。",
   path: "/streams",
 });
 

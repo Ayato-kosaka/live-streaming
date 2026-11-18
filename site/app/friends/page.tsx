@@ -12,9 +12,10 @@ import { say } from "@/content/nights";
 
 export const metadata: Metadata = share({
   key: "friends",
-  title: "愉快な仲間達",
+  title: "愉快な仲間達 — 島に住んでいる視聴者さん",
   /* `<meta>` は焼かれたまま出るので、時刻を書かない（`content/site.ts` と同じ理由） */
-  description: "配信に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。",
+  description:
+    "配信に集まってくる仲間たち。自分で作ったキャラクターが、そのまま島を歩いています。これまでに描いた人ぜんぶと、自分のキャラクターの作りかた。",
   path: "/friends",
 });
 

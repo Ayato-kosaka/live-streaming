@@ -10,6 +10,9 @@
     BREAK=zero     python3 python/seo_audit_selftest.py  # 測れなかった線を「通った」にする
     BREAK=html     python3 python/seo_audit_selftest.py  # 手元の口で `.html` を先に試さない
     BREAK=glob     python3 python/seo_audit_selftest.py  # noindex の glob を「何にでも当たる」にする
+    BREAK=short    python3 python/seo_audit_selftest.py  # 題と一文の長さを「いつも長い」と読む
+    BREAK=yt       python3 python/seo_audit_selftest.py  # YouTube へのリンクを「いつも在る」と読む
+    BREAK=alt      python3 python/seo_audit_selftest.py  # main の絵の alt を「いつも在る」と読む
 
 終了コード 0=通った / 1=落ちた / **2=数えるものが無い**（`docs/island-standards.md` §15）。
 
@@ -42,6 +45,12 @@
 | `/kitchen` の `BreadcrumbList` を消す | `crumbs=jsonld` |
 | `/kitchen` の `<time>` から `datetime` を消す | `time-plain<=0` |
 | 道具の面を1つ、`X-Robots-Tag` なしで返す | `tools-noindex=all` |
+| `/kitchen/egg` の題を短くする | `title-short<=0` |
+| `/about` の一文を短くする | `desc-short<=0` |
+| `/kitchen` の main の絵を alt 空にする | `img-main-blank<=0` |
+| `/kitchen/egg` から YouTube へのリンクを外す | `youtube-none<=0` |
+| `/llms.txt` を消す | `file:/llms.txt=200` |
+| `/kitchen/egg` の `Article` から `author` を消す | `jsonld-bad=0` |
 
 ## 測れないものを、通さない
 
@@ -84,7 +93,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import seo_audit as SA  # noqa: E402
 
 BREAK = os.environ.get("BREAK", "")
-LEGS = ("canon", "dup", "lastmod", "type", "time", "zero", "html", "glob")
+LEGS = ("canon", "dup", "lastmod", "type", "time", "zero", "html", "glob", "short", "yt", "alt")
 FAILED: list[str] = []
 CHECKED = 0
 
@@ -110,11 +119,17 @@ if BREAK and BREAK not in LEGS:
 
 _measure, _facts, _types, _judge = SA.measure, SA.sitemap_facts, SA.ld_types, SA.judge
 
-if BREAK in ("canon", "time"):
+if BREAK in ("canon", "time", "short", "yt", "alt"):
     def _bent_measure(html, public_url, hosts):
         row = _measure(html, public_url, hosts)
         if BREAK == "canon":
             row.update(canon_count=1, canon_abs=1, canon_self=1)
+        elif BREAK == "short":
+            row.update(title_len=max(row["title_len"], 99), desc_len=max(row["desc_len"], 99))
+        elif BREAK == "yt":
+            row["links_youtube"] = max(1, row["links_youtube"])
+        elif BREAK == "alt":
+            row["img_main_noalt"] = 0
         else:
             row["time_datetime"] = max(1, row["time_datetime"])
         return row
@@ -152,6 +167,10 @@ SAYS = "https://fake-island.example"
 LD_SITE = {"@context": "https://schema.org", "@type": "WebSite", "name": "偽の島", "url": SAYS}
 LD_PROFILE = {"@context": "https://schema.org", "@type": "ProfilePage", "url": f"{SAYS}/about",
               "mainEntity": {"@type": "Person", "name": "だれか"}}
+# 記事（`site/lib/jsonld.tsx` の `articleLd`。#1262）。`@graph` の形で、著者は島・島の持ち主が人
+LD_ARTICLE = {"@context": "https://schema.org", "@graph": [{
+    "@type": "Article", "headline": "卵サンド", "datePublished": "2025-02-03",
+    "author": {"@type": "Organization", "name": "偽の島", "founder": {"@type": "Person", "name": "だれか"}}}]}
 
 
 def ld_crumbs(*names: str) -> dict:
@@ -162,20 +181,27 @@ def ld_crumbs(*names: str) -> dict:
         for i, n in enumerate(names)]}
 
 
+DESC = "偽の島の面の一文。検索結果に出る長さ（50字）に届くように、この面に何が在って、読んだ人がこれから何をするかを書いてある一文です。"
+YT = '<a href="https://www.youtube.com/@fake">配信</a>'
+IMG = '<img src="/x.webp" alt="イラスト：卵サンドのスタンプ">'
+
+
 def page(path: str, *, canon: str | None = "self", ld: tuple = (), crumbs: tuple = (),
-         times: str = '<time datetime="2026-08-21">2026/08/21</time>') -> str:
+         times: str = '<time datetime="2026-08-21">2026/08/21</time>', title: str | None = None,
+         desc: str = DESC, yt: str = YT, img: str = IMG) -> str:
     """偽の面1枚。`canon="self"` は自分の URL、`None` は無し、ほかはその道"""
     href = SAYS + ("" if path == "/" else path) if canon == "self" else (SAYS + canon if canon else "")
     blocks = list(ld) + ([ld_crumbs("島", *crumbs)] if crumbs else [])
     nav = ('<nav class="crumbs" aria-label="現在地"><a href="/">島</a>'
            + "".join(f"<span><i>›</i><b>{c}</b></span>" for c in crumbs) + "</nav>") if crumbs else ""
     return ("<!doctype html><html lang=\"ja\"><head><meta charset=\"utf-8\">"
-            f"<title>{path} の面｜偽の島</title>"
+            f"<title>{title or f'{path} の面 — 偽の島の、中身が分かる題'}｜偽の島</title>"
+            + (f'<meta name="description" content="{desc}">' if desc else "")
             + (f'<link rel="canonical" href="{href}">' if href else "")
-            + "</head><body><main>" + nav + f"<h1>{path}</h1><p>本文。</p>{times}"
+            + "</head><body><main>" + nav + f"<h1>{path}</h1><p>本文。</p>{img}{times}"
             + "".join(f'<script type="application/ld+json">{json.dumps(b, ensure_ascii=False)}</script>'
                       for b in blocks)
-            + "</main></body></html>")
+            + f"</main><footer>{yt}</footer></body></html>")
 
 
 def sitemap(rows: list[tuple[str, str]], extra: str = "") -> str:
@@ -202,13 +228,14 @@ def island(**over) -> dict:
         "/": page("/", ld=(LD_SITE,)),
         "/about": page("/about", ld=(LD_PROFILE,), crumbs=("あやとのこと",)),
         "/kitchen": page("/kitchen", crumbs=("作った料理",)),
-        "/kitchen/egg": page("/kitchen/egg", crumbs=("作った料理", "卵サンド")),
+        "/kitchen/egg": page("/kitchen/egg", ld=(LD_ARTICLE,), crumbs=("作った料理", "卵サンド")),
     }
     pages.update(over.get("pages", {}))
     site: dict[str, tuple] = {"/sitemap.xml": (200, "application/xml", over.get("sitemap", sitemap(ROWS)), {})}
     for path, body in pages.items():
         site["/" if path == "/" else path + ".html"] = (200, HTML, body, {})
     site["/kitchen"] = (301, HTML, "", {"Location": "/kitchen/"})
+    site["/llms.txt"] = (200, "text/plain; charset=utf-8", "# 偽の島\n\n> 一文\n", {})
     site["/kitchen/"] = (200, HTML, "<html><head><title>Directory listing</title></head>"
                          "<body><h1>Directory listing for /kitchen/</h1></body></html>", {})
     for path in WANT:
@@ -252,7 +279,9 @@ BASE = f"http://127.0.0.1:{SRV.server_address[1]}"
 # 健全な偽の島で、ぜんぶ通るはずの線
 LINES = ["canonical=all", "canonical-other<=0", "sitemap-dup=0", "priority=0", "lastmod-distinct>=2",
          "lastmod-future=0", "lastmod-bad=0", "jsonld:/=WebSite", "jsonld:/about=ProfilePage+Person",
-         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=0", "tools-noindex=all"]
+         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=0", "tools-noindex=all",
+         "jsonld:/kitchen/egg=Article", "title-short<=0", "desc-short<=0", "img-main-blank<=0", "youtube-none<=0",
+         "file:/llms.txt=200"]
 
 
 def run(site: dict, lines: list[str] | None = None) -> tuple[int, list[str], list[str]]:
@@ -284,7 +313,8 @@ P = island  # 短く書くため
 FAULTS: list[tuple[str, dict, str]] = [
     ("canonical 無し", {"pages": {"/about": page("/about", canon=None, ld=(LD_PROFILE,), crumbs=("あやとのこと",))}},
      "canonical=all"),
-    ("canonical が別の面", {"pages": {"/kitchen/egg": page("/kitchen/egg", canon="/kitchen", crumbs=("作った料理", "卵サンド"))}},
+    ("canonical が別の面", {"pages": {"/kitchen/egg": page("/kitchen/egg", canon="/kitchen", ld=(LD_ARTICLE,),
+                                                         crumbs=("作った料理", "卵サンド"))}},
      "canonical-other<=0"),
     ("sitemap の重複", {"sitemap": sitemap(ROWS + [("/about", "2026-08-01")])}, "sitemap-dup=0"),
     ("更新日が1通り", {"sitemap": sitemap([(p, "2026-11-13T13:43:09.000Z") for p, _ in ROWS])}, "lastmod-distinct>=2"),
@@ -301,6 +331,19 @@ FAULTS: list[tuple[str, dict, str]] = [
     ("`datetime` 無し", {"pages": {"/kitchen": page("/kitchen", crumbs=("作った料理",), times="<time>2026/08/21</time>")}},
      "time-plain<=0"),
     ("道具の面に noindex 無し", {"untagged": (WANT[0],)}, "tools-noindex=all"),
+    ("題が短い", {"pages": {"/kitchen/egg": page("/kitchen/egg", ld=(LD_ARTICLE,), crumbs=("作った料理", "卵サンド"),
+                                                 title="卵サンド")}}, "title-short<=0"),
+    ("一文が短い", {"pages": {"/about": page("/about", ld=(LD_PROFILE,), crumbs=("あやとのこと",), desc="短い")}},
+     "desc-short<=0"),
+    ("main の絵がぜんぶ alt 空", {"pages": {"/kitchen": page("/kitchen", crumbs=("作った料理",),
+                                                         img='<img src="/a.webp" alt=""><img src="/b.webp">')}},
+     "img-main-blank<=0"),
+    ("YouTube へのリンク無し", {"pages": {"/kitchen/egg": page("/kitchen/egg", ld=(LD_ARTICLE,), crumbs=("作った料理", "卵サンド"),
+                                                           yt="")}}, "youtube-none<=0"),
+    ("llms.txt 無し", {"drop": ("/llms.txt",)}, "file:/llms.txt=200"),
+    ("`Article` に author が無い", {"pages": {"/kitchen/egg": page("/kitchen/egg", crumbs=("作った料理", "卵サンド"), ld=(
+        {"@context": "https://schema.org", "@graph": [{"@type": "Article", "headline": "卵サンド",
+                                                       "datePublished": "2025-02-03"}]},))}}, "jsonld-bad=0"),
 ]
 for name, over, line in FAULTS:
     code, ng, na = run(P(**over))
@@ -325,6 +368,10 @@ code, ng, na = run(P(pages={p: page(p, ld=(LD_SITE,)) for p, _ in ROWS}), ["cano
 ok("見えるパンくずが1つも無いとき、`crumbs=jsonld` は通らない", (code, na), (2, ["crumbs=jsonld"]))
 code, ng, na = run(P(drop=tuple(WANT)), ["canonical=all", "tools-noindex=all"])
 ok("道具の面が1つも返らないとき、`tools-noindex=all` は通らない", (code, na), (2, ["tools-noindex=all"]))
+prod = SA.parse_expect("prod")
+ok("本番の線の束（`--expect prod`）が読めて、新しい線を持つ",
+   sorted({t.get("name") or t["kind"] for t in prod} & {"title-short", "desc-short", "img-main-blank", "youtube-none", "file"}),
+   ["desc-short", "file", "img-main-blank", "title-short", "youtube-none"])
 with contextlib.redirect_stderr(io.StringIO()):
     ok("読めない線は、測る前に 2", SA.main(["--base", BASE, "--expect", "canonical"]), 2)
     ok("知らない線も 2", SA.main(["--base", BASE, "--expect", "h1=all"]), 2)

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ key: stri
   return share({
     key: "months",
     title: `${monthLabel(m)}のふりかえり`,
-    description: `${md(m.from)}〜${md(m.to)} の${m.streams.length}本。出席ランキング、投げ銭ありがとう、タップタップ。`,
+    description: `${monthLabel(m)}（${md(m.from)}〜${md(m.to)}）に配信した${m.streams.length}本のふりかえり。出席ランキング、投げ銭ありがとう、タップタップ。`,
     path: `/months/${key}`,
   });
 }

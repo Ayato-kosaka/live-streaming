@@ -10,7 +10,7 @@ import { Face, man, md, yen } from "@/components/months/parts";
 
 export const metadata: Metadata = share({
   key: "months",
-  title: "月ごとのふりかえり",
+  title: "月ごとのふりかえり — 配信の出席と投げ銭",
   description:
     "ひと月ずつの記録。その月の流れ、出席ランキング、投げ銭ありがとう、タップタップ。月末配信の日で区切ってある。",
   path: "/months",

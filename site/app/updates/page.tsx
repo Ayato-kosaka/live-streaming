@@ -7,9 +7,9 @@ import "./updates.css";
 
 export const metadata: Metadata = share({
   key: "updates",
-  title: "島をなおしたところ",
+  title: "島をなおしたところ — あやと島の更新の記録",
   description:
-    "あやと島のどこが変わったか。こうしてほしいところも、ここから。",
+    "あやと島のどこが、いつ変わったか。新しい面や直したところを、日付つきで並べています。こうしてほしいところも、ここから。",
   path: "/updates",
 });
 

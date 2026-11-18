@@ -8,7 +8,7 @@ import { CHAPTERS, ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 
 export const metadata: Metadata = share({
   key: "atlas",
-  title: ISLAND_LABEL,
+  title: `${ISLAND_LABEL} — これまで渡ってきた旅の章`,
   /* **章の名前を手で並べない。** ここは「ヨーロッパ、中東、コーカサス、そして北欧。」と
      書いてあった。そのあいだに章が2つ増えていて（イランまで歩く・バルカン諸国周遊）、
      **いま立っている島がこの1文に入っていなかった。**

@@ -1,3 +1,4 @@
+import { guidebookOf } from "@/content/guidebook";
 import { LINKS, PROFILE, SITE } from "@/content/site";
 
 /**
@@ -21,8 +22,8 @@ import { LINKS, PROFILE, SITE } from "@/content/site";
  * - **型を増やすのは、その型の中身が見えている面ができてから。**
  *   いま在るのは6つ: 島そのもの（`WebSite`）・本人（`ProfilePage` ＋ `Person`）・
  *   現在地（`BreadcrumbList`）・街のガイドの記事（`Article`。2026-11-14、`/travel/<国>/<街>`）・
- *   面に埋めたショート（`VideoObject`。#1228）・街の見どころの一覧（`ItemList` ＋ `TouristAttraction`。#1262）。
- *   問いと答えは、まだ出さない（`docs/guide-design.md` 6章「入れない」）
+ *   面に埋めたショート（`VideoObject`。#1228）・街の見どころの一覧（`ItemList` ＋ `TouristAttraction`。#1262）・
+ *   街のガイドの「どんな街」の問いと答え（`FAQPage`。#1262。下の `articleLd`）
  *
  * ## 確かめかた
  *
@@ -145,14 +146,6 @@ export function breadcrumbLd(items: { label: string; href?: string }[]): Ld | nu
 }
 
 /**
- * 街のガイドの記事（`/travel/<国>/<街>`）。`docs/guide-design.md` 6章・9章の1。
- *
- * - **`author` は島（`Organization`）。** 文を書いているのは案内鳥で、あやと本人ではない。
- *   案内鳥を `Person` にすると、人でないものを人として名乗ることになる
- * - あやと（`Person`）は `about` に置く。体験したのは本人
- * - 日付は、表紙に見えている「公開」「最終更新」と**同じ値**（`<time datetime>` と食い違わせない）
- */
-/**
  * 面に埋めた動画（ショート）1本。**埋めた動画にだけ付ける**（見えていない動画を名乗らない。上の決めごと）。
  * 必須は `name` `thumbnailUrl` `uploadDate`（`python/seo_audit.py` の `LD_NEEDS` が見る）。#1228
  */
@@ -213,17 +206,32 @@ export function attractionListLd(o: {
   };
 }
 
+/**
+ * 記事（街のガイド `/travel/<国>/<街>`・国の旅の記録 `/travel/<国>`・北欧の日 `/island/nordic/day/<n>`）。
+ * `docs/guide-design.md` 6章・9章の1。
+ *
+ * - **`author` は島（`Organization`）。** 文を書いているのは案内鳥で、あやと本人ではない。
+ *   案内鳥を `Person` にすると、人でないものを人として名乗ることになる（Google の「著者を偽らない」）
+ * - **島の持ち主（`founder`）があやと（`Person`。`sameAs` に YouTube のチャンネル）。** #1262 で足した。
+ *   検索と AI の読み手が「誰の体験の記事か」を、島の名前から本人まで辿れるようにする。
+ *   あやとは `about` にも置く（体験したのは本人）
+ * - 日付は、面に見えている日付と**同じ値**（`<time datetime>` と食い違わせない）。更新日が面に無い面は省く
+ * - **街のガイドの面（`guidebookOf` が引ける道）は、「どんな街」の問いと答え（`about.cards`）を
+ *   `FAQPage` として同じ塊（`@graph`）に添える**（#1262）。Google は FAQ の札を島のような面には出さないが、
+ *   AI の読み手は問いと答えの組をそのまま引く。問いも答えも面にそのまま見えている字（窓の中ではない）。
+ *   面のファイルを触らずに、ここで足す（街のガイドの中身は別の担当が作っている）
+ */
 export function articleLd(o: {
   path: string;
   headline: string;
   description: string;
   datePublished: string;
-  dateModified: string;
+  dateModified?: string;
   image?: string;
 }): Ld {
-  const org = { "@type": "Organization", "@id": ID.org, name: SITE.name, url: abs("/") };
-  return {
-    "@context": "https://schema.org",
+  const person = personLd();
+  const org = { "@type": "Organization", "@id": ID.org, name: SITE.name, url: abs("/"), founder: person };
+  const article: Ld = {
     "@type": "Article",
     headline: o.headline,
     description: o.description,
@@ -231,12 +239,32 @@ export function articleLd(o: {
     mainEntityOfPage: abs(o.path),
     inLanguage: "ja",
     datePublished: o.datePublished,
-    dateModified: o.dateModified,
+    ...(o.dateModified ? { dateModified: o.dateModified } : {}),
     /* 借りた写真（Wikimedia）は道が丸ごと外の URL。島の道だけ島の頭を付ける */
     ...(o.image ? { image: [/^https?:\/\//.test(o.image) ? o.image : abs(o.image)] } : {}),
     author: org,
     publisher: org,
-    about: personLd(),
+    about: person,
     isPartOf: { "@id": ID.site },
+  };
+  const faq = guideFaq(o.path);
+  return { "@context": "https://schema.org", "@graph": faq ? [article, faq] : [article] };
+}
+
+/** 街のガイドの「どんな街」の問いと答え。ガイドの面でなければ null */
+function guideFaq(path: string): Ld | null {
+  const m = path.match(/^\/travel\/([^/]+)\/([^/]+)$/);
+  const g = m ? guidebookOf(m[1], m[2]) : undefined;
+  const cards = g?.about.cards ?? [];
+  if (!cards.length) return null;
+  return {
+    "@type": "FAQPage",
+    url: abs(path),
+    inLanguage: "ja",
+    mainEntity: cards.map((c) => ({
+      "@type": "Question",
+      name: c.q,
+      acceptedAnswer: { "@type": "Answer", text: c.a },
+    })),
   };
 }

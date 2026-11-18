@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { fitTitle, lead } from "@/lib/seoText";
 import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,7 +38,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const t = streamTypeBySlug(slug);
   if (!t) return {};
-  return share({ key: "streams", title: t.name, description: t.lead, path: `/streams/${slug}` });
+  /* 面の節（どういう回か・まず見てほしい3本）を一文の後ろに。#1199 の第2便 */
+  return share({
+    key: "streams",
+    title: fitTitle(`${t.name} — ${t.short.replace(/。$/, "")}`, `${t.name} — あやとの配信の型`, t.name),
+    description: lead(t.lead, "どういう回かと、まず見てほしい3本のアーカイブ。"),
+    path: `/streams/${slug}`,
+  });
 }
 
 /**
@@ -135,7 +142,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
                   料理と伝説の詳細と同じで、この面で出す絵は1枚だけなので
                   `srcset` で配り分けない（等倍の画面が小さいほうを選ぶと、
                   280px まで伸ばしたときにここだけぼける）。 */}
-              <HeroArt icon={t.icon} />
+              <HeroArt icon={t.icon} alt={`イラスト：${t.name}`} />
             </div>
             <p className="zk-hero-note">{t.short}</p>
           </div>

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { fitTitle, lead, span } from "@/lib/seoText";
+import { countryNameBySlug } from "@/content/countries";
 import Link from "next/link";
 
 import { Crumbs, IslandFooter } from "@/components/ui/PageShell";
@@ -63,8 +65,14 @@ export async function generateMetadata({
   if (!c) return {};
   return share({
     key: "atlas",
-    title: c.name,
-    description: c.from ? `${c.from} から ${c.to || "いま"} まで。${c.note}` : c.note,
+    /* 題に期間、一文の頭に「いつ・どの国を」。#1199 の第2便 */
+    title: c.from ? fitTitle(`${c.name}の旅と配信（${span(c.from, c.to || undefined)}）`, `${c.name}の旅と配信`) : c.name,
+    description: c.from
+      ? lead(
+          `${span(c.from, c.to || undefined)}、${c.countries.map((s) => countryNameBySlug(s)?.name ?? s).join("・")}をまわった${c.name}の記録。`,
+          c.note,
+        )
+      : c.note,
     /* **いまいる章でも、自分が正。** 前はいまいる章のときだけ canonical が `/` で、
        この面は sitemap に載っているのに「正はトップ」と名乗っていた（#1201）。
        道の字は `chapterHref` 1か所が持つ（`site/selftest/chapterkey_selftest.mjs` が数えている） */

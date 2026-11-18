@@ -11,8 +11,8 @@ import "./next.css";
 
 export const metadata: Metadata = share({
   key: "next",
-  title: "企画",
-  description: "日にちが決まった企画と、終わった企画。付箋でみんなの知恵を貼れます。",
+  title: "これからの企画と、終わった企画",
+  description: "日にちが決まった企画と、もう行ってきた企画。行く先で何をするか、付箋でみんなの知恵を貼れます。企画がどこから来てどこへ行くのかも。",
   path: "/next",
 });
 

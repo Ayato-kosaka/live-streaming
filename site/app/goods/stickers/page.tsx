@@ -48,9 +48,9 @@ import "../goods.css";
 
 export const metadata: Metadata = share({
   key: "goods",
-  title: "あやとステッカー",
+  title: `あやとステッカー — 持って帰れる${STICKERS.length}枚`,
   /* 数は手で書かない。名簿から出す（`/goods` と同じ決まり） */
-  description: `島から持って帰れるステッカー${STICKERS.length}枚。落として、好きなところに貼ってください。`,
+  description: `島から持って帰れるステッカー${STICKERS.length}枚。落として、好きなところに貼ってください。ほしいステッカーの頼みかたも。`,
   path: "/goods/stickers",
 });
 

@@ -16,7 +16,7 @@ import { ArtStamp } from "@/components/streams/Art";
 export const metadata: Metadata = share({
   key: "kitchen",
   title: "クッキング・スタンプ帳",
-  description: "旅先のキッチンで作ってきた料理のスタンプ帳。企画会議→買い出し→調理の3日がかりで作っています。",
+  description: "旅先の借りたキッチンで作ってきた料理のスタンプ帳。企画会議→買い出し→調理の3日がかりで、配信しながら作っています。",
   path: "/kitchen",
 });
 
