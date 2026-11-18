@@ -1,0 +1,16 @@
+{
+ "mode": "clips",
+ "videos": [
+  "hJ6vFAGX3rI"
+ ],
+ "ranges": [
+  "0:03:20-0:04:20",
+  "0:07:40-0:10:50",
+  "0:19:00-0:20:40",
+  "0:23:20-0:24:40",
+  "0:30:50-0:34:50",
+  "0:39:20-0:43:00",
+  "0:49:00-0:49:30"
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAr6aE6pMuoGcElneW48Co\n1Ws7V37180NYa4GJK2IRuo0gqBNiKEisJgV2adjDS7FaO6rPuEDHIGGKEYoJMrA6\noUQEcy+E6jd1bG/TZuqDbmI3L0qSFF8eJbRsr3ZtbOA1vkdCpnmoFxWgzL7s+geh\nLBTJsloWO1JWJx/gHTy/qAU6K/BYwevEusBoHOVTZa66MMz2yjo3Fe2faSounlsR\nbBeEuacNqO3CwpULfPYVVGpvuCD4jUh0kgY5aggDrh6UVKlnLr3YSEIPkLulw/jo\nZJtKi8FZFVLBR7yFBS5i4wRUivW4OidlvaYpIiYaNwyQHhwxFbOw8pqcCorhdwJ8\nV9qTrszuKLqjV1iM9DXBXo4I862+Y6CiDEJpdAJmzPb60BCbUTZBZW4oHmd0IJwS\n2KD1rVS9aknS9EnYHuCBdhH2TJgtAuXu+9xYLqHzRZG1uiT+hV6bj/KnNkWrmXpm\nBQVE8CZSByCQPOmg8vxFRE9g0v4ha4Mt93THu1dtg9nXAgMBAAE=\n-----END PUBLIC KEY-----\n"
+}
