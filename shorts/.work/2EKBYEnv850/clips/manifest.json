@@ -1,0 +1,92 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "2EKBYEnv850__clips",
+ "mode": "clips",
+ "dest": "2EKBYEnv850/clips",
+ "video": "2EKBYEnv850",
+ "channel": null,
+ "request": "shorts/requests/onsen-2EKBYEnv850-p1v1-clips-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 12,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 5,
+  "clips_ok": 5,
+  "clip_seconds": 580.0,
+  "channel_entries": 0,
+  "files": 25
+ },
+ "bytes": {
+  "plain": 294581726,
+  "tar_gz": 294173857,
+  "encrypted": 294173872
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "45c70ee7ecbee8fa6f11942986950f2b84124d0d0344d86de7fa55c4b008fb47"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "edfb10271ea6619a36a98e84cc786066dd6c78c3d1c5563938ddf246131fd086"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "679e2a3d466b183bf2a02c4f0c346579cc83cff938efca501c5d49e0280cb94d"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "ad6c42b09c29a2d42dcf86aa7ae2b8337602fcbb112277799e684225f9044c87"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 47185920,
+   "sha256": "6488289cef534e748dd668ab5a88eaf4541b3893539440a1655edfbaa621ae76"
+  },
+  {
+   "name": "payload.enc.005",
+   "bytes": 47185920,
+   "sha256": "b575995bd08a511adbc6ca75f2b5eaf8062832f6d2f23b74321aebc4561b9795"
+  },
+  {
+   "name": "payload.enc.006",
+   "bytes": 11058352,
+   "sha256": "d642993dafa5d9032ff9ea8ca2a6a85ff5049ca540fad976a19f525fe2db0c80"
+  }
+ ],
+ "hmac_sha256": "f761f092d8ab05339863f7f13cb8ddb6e25cae59d982ff12b6f95d095f22e4c7",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44367445036",
+ "created_at": "2026-11-18T18:48:10+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 4419712,
+    "sha256": "83857d612a45705ab0f1248b88029d735947d070581510ab9f5bc023af7e7cf4"
+   }
+  ],
+  "hmac_sha256": "a5223d67d677d845059a5e6a7d4095e31e22a5e664e14f790dabc7f678e4e009",
+  "files": 16,
+  "sheets": 12,
+  "bytes": {
+   "plain": 4555584,
+   "tar_gz": 4419711,
+   "encrypted": 4419712
+  }
+ }
+}
