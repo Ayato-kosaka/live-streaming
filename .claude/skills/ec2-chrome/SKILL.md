@@ -55,6 +55,7 @@ description: EC2（i-0684d39b0c1b1abb6）のログイン済み Chrome を、こ�
 | `desktop_input.py` | EC2（`/usr/local/sbin/desktop-input`、systemd の `desktop-input.service`） | 遠隔デスクトップ（:20）に**人の本物の入力**が最後にあった時刻を控える。`desktop-input idle` が「何ミリ秒前か・出どころ」を1行で出す。投稿の GUARD と idle-stop が聞く（2） |
 | `cdp.py` | EC2（`/home/ubuntu/cdp/cdp.py`） | `up(名前)` で Chrome を起動（拡張・部品の更新なし。無ければ既定のプロファイルから不要物を落として1回だけ複製。3）・`tab()`・`go`・`js`・`click_at`・`set_files`・`shot`・**`fetch_image(url, out)`**。**`up`・`tab`・`pages` は、列 `名前` の札を持っていなければ、そのプロセスの pid で取る**（取れるまで待つ。2.5）。頭に版の番号 `CDP_VERSION`。**EC2 の上では正の版より古くなると戻る。中身を変えたら番号を上げる**（2.5） |
 | `../chatgpt/chatgpt.py` | EC2（`/home/ubuntu/cdp/`） | ChatGPT の会話を開く・送る・書き終わりを待つ・返事を Markdown で読む・ファイルを渡す（`chatgpt` スキル）。絵を作るのは `chatgpt-image` |
+| `gsc_request.py` | EC2（`/home/ubuntu/cdp/`。`ec2.py put` で置く） | Search Console の URL 検査で「インデックス登録をリクエスト」を押す（`ytstudio` のプロファイル）。1面1行で押す前の状態と押したあと（リクエスト済み／上限）。設定は変えない。上限と出たら残りを押さずに止める（`docs/seo.md` 4章） |
 | `google_login.py` | EC2（`/home/ubuntu/cdp/`） | 「Google でログイン」を押し進める。アカウントはメールの SHA-256 で当てる・パスワード欄で止まる・スマホ確認の数字をファイルに書いて待つ・サイト側の画面（SUZURI の確認コード）は `on_site` で渡す。SUZURI（`suzuri/login.py`）が使う。Doneru の `remote_refresh.sh` は同じ手順をまだ自前で持っている |
 
 **`ec2.py run` と `ec2_exec.sh` の使い分け:** 箱がもう起きている（あやとが入っている・何回にも分けて触る）

@@ -214,6 +214,18 @@ function closedDays(stays: { from: string; to: string }[]) {
 }
 
 /**
+ * 配信の小さな絵の説明（「2026年10月の北マケドニアの配信: <題>」）。#1262・#332。
+ *
+ * 前は空で、国の面は main の絵が**ぜんぶ** alt 空になり、検索の機械から見ると「何の絵も名乗らない面」だった
+ * （`seo_audit.py` の `img-main-blank`。#1293 でこの型にそろえた北マケドニアで 58 → 59 に増えた）。
+ * 題は YouTube に実在するもの（焼き込みの `cityStreams.ts`）をそのまま。年月は配信の日から
+ */
+const thumbAlt = (country: string, date: string | undefined, title: string) => {
+  const m = date?.match(/^(\d{4})-(\d{2})/);
+  return `${m ? `${m[1]}年${Number(m[2])}月の` : ""}${country}の配信: ${title}`;
+};
+
+/**
  * 国ひとつの面。
  *
  * 上から順に「どこにいたか（地図）・いつ・配信の数 → 行った街 → 何があったか → 作ったごはん」。
@@ -416,6 +428,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                         title={v.title}
                         date={v.date}
                         nth={nthOf(v.date, v.videoId, v.title)}
+                        alt={thumbAlt(r.name, v.date, v.title)}
                       />
                     ))}
                   </div>
@@ -440,6 +453,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                       title={h.title}
                       date={h.date}
                       nth={nthOf(h.date, h.videoId, h.title)}
+                      alt={thumbAlt(r.name, h.date, h.title)}
                     />
                   </div>
                 )}
