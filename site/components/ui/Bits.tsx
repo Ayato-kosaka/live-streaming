@@ -20,12 +20,16 @@ export function StreamCard({
   date,
   tag,
   nth,
+  alt,
 }: {
   videoId: string;
   title: string;
   date?: string;
   tag?: string;
   nth?: number;
+  /** 小さな絵の説明。**渡さなければ空**（横に題名が在るので、読み上げには飾り）。画像検索と、絵しか読まない
+      読み手に「何の配信の絵か」を言いたい面だけが渡す（国の面。#1262・#332） */
+  alt?: string;
 }) {
   return (
     <a
@@ -38,7 +42,7 @@ export function StreamCard({
       <span className="scard-thumb">
         <img
           src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`}
-          alt=""
+          alt={alt ?? ""}
           loading="lazy"
           width={320}
           height={180}
