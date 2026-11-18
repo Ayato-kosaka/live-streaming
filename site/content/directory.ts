@@ -234,6 +234,13 @@ export const SHELVES: Shelf[] = [
     /* **時点を言わない**（`docs/island-standards.md` 16章） */
     note: "ローマの遺跡と、ただで湧く温泉の首都。首都はソフィア",
     items: [
+      /* 国の面（街のガイドの一覧。#1262）。国の案内はソフィアの面が持つので、ここは街を選ぶだけ */
+      {
+        href: travelPage("bulgaria").href,
+        name: "ブルガリア",
+        note: "街のガイドの一覧",
+        q: q("ブルガリア bulgaria 街 ガイド ソフィア sofia バルカン"),
+      },
       {
         /* 前の `/bulgaria`。街の面に移った（#1228）。道は名簿から引く */
         href: travelCity("bulgaria", "sofia").href,

@@ -356,6 +356,23 @@ ok("パンくずの途中の段に item が無いと困る",
        {"@type": "ListItem", "position": 2, "name": "a", "item": "x"},
        {"@type": "ListItem", "position": 3, "name": "b"}]})])), 1)
 ok("いちばん奥の段は item が無くてよい", SA.ld_problems([json.dumps(ld_crumbs("島", "a", "b"))]), [])
+# 街の見どころの一覧（`site/lib/jsonld.tsx` の `attractionListLd`。#1262）
+def ld_spots(*rows):
+    return {"@context": "https://schema.org", "@type": "ItemList", "numberOfItems": len(rows), "itemListElement": [
+        {"@type": "ListItem", "position": i + 1, "item": r} for i, r in enumerate(rows)]}
+
+
+SPOT = {"@type": "TouristAttraction", "name": "a", "url": "https://x/p#see-a",
+        "geo": {"@type": "GeoCoordinates", "latitude": 42.69, "longitude": 23.32}}
+ok("見どころの一覧が揃っていれば困らない", SA.ld_problems([json.dumps(ld_spots(SPOT, {**SPOT, "name": "b"}))]), [])
+ok("見どころに座標が無いと困る", len(SA.ld_problems([json.dumps(ld_spots({k: v for k, v in SPOT.items() if k != "geo"}))])), 1)
+ok("座標の片方が欠けると困る",
+   len(SA.ld_problems([json.dumps(ld_spots({**SPOT, "geo": {"@type": "GeoCoordinates", "latitude": 42.69}}))])), 1)
+ok("一覧の行に position が無いと困る",
+   len(SA.ld_problems([json.dumps({**ld_spots(SPOT), "itemListElement": [{"@type": "ListItem", "item": SPOT}]})])), 1)
+ok("一覧の行に中身が無いと困る",
+   len(SA.ld_problems([json.dumps({**ld_spots(SPOT), "itemListElement": [{"@type": "ListItem", "position": 1}]})])), 1)
+ok("一覧の数の欄と行の数が違うと困る", len(SA.ld_problems([json.dumps({**ld_spots(SPOT), "numberOfItems": 22})])), 1)
 ok("`@context` が無いと困る", len(SA.ld_problems([json.dumps({"@type": "WebSite", "name": "x", "url": "y"})])), 1)
 ok("JSON として読めないと困る", len(SA.ld_problems(["{"])), 1)
 

@@ -23,8 +23,9 @@ export { TRAVEL, travelHref };
  * - 歩き終わった国（`COUNTRIES`）。歩いた記録の面で、北欧の6か国は行く前の案内も同じ面の下に持つ
  * - 行く前の案内だけを持つ国（`GUIDE_ONLY`）。まだ歩いている最中で、記録は歩き終わってから書く
  *
- * ブルガリアは**国の面をまだ持たない。** 面はソフィアの1枚（`/travel/bulgaria/sofia`。前の `/bulgaria`。#1228）で、
- * 国の案内（ことば・通貨・ビザ）もその面が兼ねている。街だけを持つ国は下の `CITY_ONLY`。
+ * ブルガリアの国の面（`/travel/bulgaria`）は**街の一覧だけ**の1枚（#1262）。国の案内（ことば・通貨・ビザ）は
+ * ソフィアの面（`/travel/bulgaria/sofia`。前の `/bulgaria`。#1228）が兼ねていて、国の面に書き写さない
+ * （同じ字の面が2枚になると、検索の評価が割れる）。
  */
 export type TravelPlace = {
   slug: string;
@@ -44,7 +45,12 @@ export type TravelPlace = {
  * **歩き終わって `COUNTRIES` へ移ったら、ここから消す。** 両方に居ると、
  * 同じ道の面が2枚になる（下で止める）。
  */
-const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [{ slug: "north-macedonia", card: "northMacedonia" }];
+const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [
+  { slug: "north-macedonia", card: "northMacedonia" },
+  /* 2026-11-18 まで `CITY_ONLY`（国の面を持たず、ソフィアの面だけ）だった。`/travel/bulgaria` が 404 で、
+     ソフィアのパンくずにも国の段が無かった（#1262） */
+  { slug: "bulgaria", card: "bulgaria" },
+];
 
 /** 歩いた記録の面の絵。国ごとに焼かない（区画ごとに1枚。`lib/share.ts` の頭） */
 const RECORD_CARD: ShareKey = "map";
@@ -130,10 +136,10 @@ const CITIES: Omit<TravelCity, "href">[] = [
  * **国の面（`/travel/<国>`）を持たず、街の面だけを持つ国。** パンくずは 島 › 歩いた国 › <街> で、国の段を飛ばす
  * （行き止まりの段を作らない）。貼られたときの絵は国の1枚（`card`）。
  *
- * ブルガリアはソフィアの面が国の案内も兼ねている（前の `/bulgaria`。#1228）。国の面を建てた日に、
- * ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
+ * いまは空。ブルガリアがここに居たが、国の面（街の一覧）を建てて `GUIDE_ONLY` へ移した（#1262）。
+ * 国の面を建てた日に、ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
  */
-const CITY_ONLY: { country: string; card: ShareKey }[] = [{ country: "bulgaria", card: "bulgaria" }];
+const CITY_ONLY: { country: string; card: ShareKey }[] = [];
 
 /** 街の上の国。国の面が在ればそれ、無ければ `CITY_ONLY` の行（どちらにも無ければ書き出しを止める） */
 function cityCountry(country: string): { page?: TravelPlace; card: ShareKey } {
