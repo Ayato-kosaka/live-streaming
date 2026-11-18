@@ -7,6 +7,7 @@ import Cover from "@/components/guidebook/Cover";
 import { Buy, Eat, See } from "@/components/guidebook/Items";
 import SheetHost from "@/components/guidebook/SheetHost";
 import Sources from "@/components/guidebook/Sources";
+import SpotsLd from "@/components/guidebook/SpotsLd";
 import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
@@ -78,6 +79,8 @@ export default function SofiaPage() {
         })}
       />
       <VideoLds g={g} />
+      {/* 見たいもの22か所の名札（名前・座標・窓への錨）。#1262 */}
+      <SpotsLd g={g} path={CITY.href} />
       <article className="gb">
         <Cover g={g} drawn={drawn} />
         <Toc items={toc} />

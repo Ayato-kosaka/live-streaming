@@ -19,9 +19,10 @@ import { LINKS, PROFILE, SITE } from "@/content/site";
  *   生年月日は画面に出しているが、名札には入れない——年齢は画面が数え直すもので、
  *   機械に配って回るものではない
  * - **型を増やすのは、その型の中身が見えている面ができてから。**
- *   いま在るのは4つ: 島そのもの（`WebSite`）・本人（`ProfilePage` ＋ `Person`）・
- *   現在地（`BreadcrumbList`）・街のガイドの記事（`Article`。2026-11-14、`/travel/<国>/<街>`）。
- *   動画・問いと答え・場所は、まだ出さない（`docs/guide-design.md` 6章「入れない」）
+ *   いま在るのは6つ: 島そのもの（`WebSite`）・本人（`ProfilePage` ＋ `Person`）・
+ *   現在地（`BreadcrumbList`）・街のガイドの記事（`Article`。2026-11-14、`/travel/<国>/<街>`）・
+ *   面に埋めたショート（`VideoObject`。#1228）・街の見どころの一覧（`ItemList` ＋ `TouristAttraction`。#1262）。
+ *   問いと答えは、まだ出さない（`docs/guide-design.md` 6章「入れない」）
  *
  * ## 確かめかた
  *
@@ -166,6 +167,49 @@ export function videoLd(o: { id: string; name: string; uploadDate: string; descr
     embedUrl: `https://www.youtube-nocookie.com/embed/${o.id}`,
     url: `https://www.youtube.com/shorts/${o.id}`,
     inLanguage: "ja",
+  };
+}
+
+/** 島の道だけ島の頭を付ける（借りた写真は道が丸ごと外の URL） */
+const absAny = (p: string) => (/^https?:\/\//.test(p) ? p : abs(p));
+
+/**
+ * 街の見どころの一覧（`ItemList` ＋ `TouristAttraction`）。#1262
+ *
+ * 見どころの点は埋め込みのマイマップの中にしか無く、**Google は埋め込みの中身をこの面の中身として数えない。**
+ * 名前と座標を字で渡して、「この面は、どの場所の話か」を機械が当てなくて済むようにする。
+ *
+ * - 形は Google の「1枚の面に全部載っている一覧」（all-in-one-page）: `ListItem` に `position`、
+ *   中身の `url` は**同じ面の錨**（見どころの窓 `#see-<id>`。直に開くと窓が開く）
+ * - 欄は面に見えているものだけ: 名前・現地のつづり・窓の本文・窓の写真。座標だけは面に字で出ていないが、
+ *   面のマイマップの点そのもの（同じ材料の緯度・経度）
+ * - 並びは面の札と同じ（必見 → 行けたら → 余裕があれば）。組むのは `components/guidebook/SpotsLd.tsx`
+ */
+export function attractionListLd(o: {
+  path: string;
+  name: string;
+  items: { anchor: string; name: string; lat: number; lon: number; alternateName?: string[]; description?: string; image?: string }[];
+}): Ld {
+  const page = abs(o.path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: o.name,
+    url: page,
+    numberOfItems: o.items.length,
+    itemListElement: o.items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "TouristAttraction",
+        name: it.name,
+        url: `${page}#${it.anchor}`,
+        ...(it.alternateName?.length ? { alternateName: it.alternateName } : {}),
+        ...(it.description ? { description: it.description } : {}),
+        ...(it.image ? { image: absAny(it.image) } : {}),
+        geo: { "@type": "GeoCoordinates", latitude: it.lat, longitude: it.lon },
+      },
+    })),
   };
 }
 

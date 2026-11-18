@@ -480,7 +480,7 @@ const GUIDES: Record<string, Guide[]> = {
     {
       slug: "bulgaria",
       name: "ブルガリア・ソフィア",
-      /* 街の面（前の `/bulgaria`。#1228）。国の面はまだ無く、ソフィアの面が国の案内を兼ねる */
+      /* 街の面（前の `/bulgaria`。#1228）。国の案内はソフィアの面が兼ねる（国の面 `/travel/bulgaria` は街の一覧だけ。#1262） */
       href: "/travel/bulgaria/sofia",
       /* 頭はソフィアの面の表紙と同じキャッチ（`content/guidebook/bulgaria-sofia.ts` の `lead`） */
       lead: "二千年の歴史が足もとに眠る街。やりたいこと8選と、1日の予算",

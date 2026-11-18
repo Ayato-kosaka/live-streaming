@@ -219,6 +219,11 @@ LD_NEEDS: dict[str, list[str]] = {
     "BreadcrumbList": ["itemListElement"],
     # 面に埋めたショート（`site/lib/jsonld.tsx` の `videoLd`。#1228）。Google が動画の札に要ると書いている3つ
     "VideoObject": ["name", "thumbnailUrl", "uploadDate"],
+    # 街の見どころの一覧（`site/lib/jsonld.tsx` の `attractionListLd`。#1262）。名札を出す理由が
+    # 「名前と座標を字で渡す」なので、座標の欠けた場所は欠けとして数える
+    "ItemList": ["itemListElement"],
+    "TouristAttraction": ["name", "geo"],
+    "GeoCoordinates": ["latitude", "longitude"],
 }
 
 # このリポジトリの根。`firebase.json` と `public/` から、道具の面を数えるのに使う
@@ -604,6 +609,18 @@ def ld_problems(blocks: list[str]) -> list[str]:
                         bad.append(f"{where}BreadcrumbList の {i + 1}段目に position か name が無い")
                     elif i + 1 < len(items) and not it.get("item"):
                         bad.append(f"{where}BreadcrumbList の {i + 1}段目（途中の段）に item が無い")
+            if t == "ItemList":
+                # 一覧の1行ずつ。Google の一覧（carousel）は `ListItem` の `position` を1から順に要る。
+                # 中身は `item`（1枚の面に全部載っている形）か `url`（行ごとに面がある形）のどちらか
+                items = node.get("itemListElement")
+                items = items if isinstance(items, list) else []
+                for i, it in enumerate(items):
+                    if not isinstance(it, dict) or it.get("position") != i + 1:
+                        bad.append(f"{where}ItemList の {i + 1}行目に position が無い（1から順でない）")
+                    elif not it.get("item") and not it.get("url"):
+                        bad.append(f"{where}ItemList の {i + 1}行目に item も url も無い")
+                if isinstance(node.get("numberOfItems"), int) and node["numberOfItems"] != len(items):
+                    bad.append(f"{where}ItemList の numberOfItems（{node['numberOfItems']}）が行の数（{len(items)}）と違う")
         for k, v in node.items():
             for child in (v if isinstance(v, list) else [v]):
                 if isinstance(child, dict) and "@type" in child:
