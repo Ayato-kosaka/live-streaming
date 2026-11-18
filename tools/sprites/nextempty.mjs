@@ -53,6 +53,11 @@
  * 10. **焼いた HTML（`DIST` の `now.html`）に `M/D` が1つも無い。**
  *     焼いた字は動かないので、日付を焼いた時点で負け。
  *
+ * ## 日付では終わらない企画（2026-11-18 に足した。#1282）
+ *
+ * 11. `endsWhen` だけを持つ企画は、**いちばん先の日でも表紙に札が立っている。**
+ *     0件の側（3〜5）は、その企画を仮に終わらせてから見る（`OPEN` の頭）。
+ *
  * 撮った絵は `OUT` に置く。**数が通っても、目で見る。**
  *
  * ## 行の折れ方（2026-10-12 に足した）
@@ -71,12 +76,65 @@ import { join } from "node:path";
 import { tenseOf } from "./navtruth.mjs";
 import { offline } from "./route.mjs";
 import { fromRoot, repoPath } from "./repo.mjs";
-import { must, readArray } from "./tsread.mjs";
+import { arrayBody, codeOnly, countKeys, fields, must, objects, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "4150";
 const BASE = `http://127.0.0.1:${SPORT}`;
 const OUT = process.env.OUT || "/tmp/nextempty";
 const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+
+const PLANS_SRC = readFileSync(repoPath("site/content/plans.ts"), "utf8");
+const at = (iso) => `${iso}T11:00:00+09:00`;
+const plus = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
+
+/**
+ * **日付では終わらない企画**（`endsWhen` だけを持ち、`until` も `done` も無い）。
+ *
+ * 2026-11-18 にブルガリアの1件をこの形にした（あやと「その日が過ぎても進行中で
+ * 出るようにしてほしい」。#1282）。すると**どこまで時計を進めても表紙に企画の札が
+ * 立ったまま**で、0件の日が1日も来なくなった。この道具は「表のいちばん遅い日の
+ * 翌日からは0件」を前提にしていたので、0件の側（下の 3〜5）を1つも数えられずに
+ * 2 で止まった。崩れていたのは見張りの前提のほう（`leadplan_selftest.mjs` も
+ * 同じ日に同じ前提で落ちて、同じ形に分けた）。
+ *
+ * だから2つに分ける。
+ *  - **0件の側は、その企画に仮の終わった日を入れてから見る**（`closeOpen`）。
+ *    表の中身は書き出した JS が持っているので、配るときに `done` を1つ書き足す。
+ *    仮の日は**今日**。焼いた日にはまだ続いていて、そのあと終わった——
+ *    #770 と同じ形にする（`date` にすると、焼いた HTML と画面が出た直後の字が
+ *    食い違う）。
+ *  - **仮の日を入れない本物は、いちばん先の日でも表紙に札が立っている**（11）。
+ *    滞在の札が日付で表紙から消えない、を守る足。
+ *
+ * `until` は字ではなく名前（`NORDIC_UNTIL`）で書かれることがあるので、
+ * 欄の**値**ではなく**鍵が在るか**で見る。
+ */
+const TODAY = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const OPEN = objects(arrayBody(codeOnly(PLANS_SRC), "PLANS"))
+  .filter((o) => {
+    const has = (k) => countKeys(`{${o}}`, k) > 0;
+    return has("date") && has("endsWhen") && !has("until") && !has("done");
+  })
+  .map((o) => fields(o))
+  .map((f) => ({
+    id: f.id,
+    endsWhen: f.endsWhen,
+    href: f.href || `/next#${f.id}`,
+    closeOn: f.date > TODAY ? f.date : TODAY,
+  }));
+
+/**
+ * 表に在るいちばん遅い日（仮の終わった日も入れる）。**この翌日からは、どう数えても 0件。**
+ *
+ * 「どこに在っても日付の形をした字」を掃き寄せるので、ここは構造ではなく
+ * 字の並びを数えている——入れ子の `reached.when` も終わりの日として要るので、
+ * 欄を読む側に替えると拾えなくなる。
+ */
+const LAST = [...PLANS_SRC.matchAll(/"(20\d\d-\d\d-\d\d)"/g)]
+  .map((m) => m[1])
+  .concat(OPEN.map((p) => p.closeOn))
+  .sort()
+  .at(-1);
 
 /**
  * 進める日。**企画の在る日と、ぜんぶ終わったあとの日を必ず両方入れる。**
@@ -85,24 +143,16 @@ const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
  * 「企画の在る日」が片側へ寄って、対照が黙って崩れる
  * （`site/selftest/leadplan_selftest.mjs` が同じところで一度落ちている）。
  * 企画の表からその場で出す——いちばん先の `date:` がその企画の当日で、
- * 表に在るいちばん遅い日の翌日からは、どう数えても 0件。
+ * `LAST` の翌日からは 0件。
  */
 function daysFromPlans() {
-  const src = readFileSync(repoPath("site/content/plans.ts"), "utf8");
-  /* 企画の当日は、企画1件の**いちばん外側の `date`**（`tsread.mjs` の1本。#694）。
-     `all` のほうは「どこに在っても日付の形をした字」を掃き寄せるので、
-     ここは構造ではなく字の並びを数えている——入れ子の `reached.when` も
-     終わりの日として要るので、欄を読む側に替えると拾えなくなる。 */
-  const starts = must(readArray(src, "PLANS", { keys: ["date"], idKey: "id" }), "plans.ts の PLANS")
+  /* 企画の当日は、企画1件の**いちばん外側の `date`**（`tsread.mjs` の1本。#694）。 */
+  const starts = must(readArray(PLANS_SRC, "PLANS", { keys: ["date"], idKey: "id" }), "plans.ts の PLANS")
     .map((r) => r.date)
     .filter(Boolean)
     .sort();
-  const all = [...src.matchAll(/"(20\d\d-\d\d-\d\d)"/g)].map((m) => m[1]).sort();
-  if (!starts.length || !all.length) throw new Error("site/content/plans.ts から日付を1つも拾えませんでした");
-  const at = (iso) => `${iso}T11:00:00+09:00`;
-  const plus = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
-  const last = all[all.length - 1];
-  return [at(starts[starts.length - 1]), at(plus(last, 1)), at(plus(last, 40)), at(plus(last, 400))];
+  if (!starts.length || !LAST) throw new Error("site/content/plans.ts から日付を1つも拾えませんでした");
+  return [at(starts[starts.length - 1]), at(plus(LAST, 1)), at(plus(LAST, 40)), at(plus(LAST, 400))];
 }
 
 const DAYS = (process.env.DAYS || daysFromPlans().join(","))
@@ -135,6 +185,31 @@ const clock = (iso) => `(() => {
 /** 件数を名乗っている字か。「1件」「3 つ立っています」「あと2つ」。 */
 const COUNTS = /\d+\s*(件|つ)/;
 
+/** 仮の終わった日を書き足せた回数（企画の id → 回数）。0 のまま終わったら数えない */
+const closedHits = new Map();
+
+/**
+ * 日付では終わらない企画に、仮の `done` を書き足して配る（`OPEN` の頭）。
+ *
+ * **探す字は `endsWhen` の値そのもの**——表から読んだ値なので、言い回しを直しても
+ * 一緒に動く。書き出しの形が変わって見つからなければ、0件の日は来ないまま
+ * なので、下で数えずに 2 で止める（黙って片側だけ見ることにしない）。
+ */
+async function closeOpen(ctx) {
+  await ctx.route(/\/_next\/static\/chunks\/.+\.js(\?.*)?$/, async (r) => {
+    const res = await r.fetch();
+    let body = await res.text();
+    for (const p of OPEN) {
+      if (!p.endsWhen) continue;
+      const key = `endsWhen:${JSON.stringify(p.endsWhen)}`;
+      if (!body.includes(key)) continue;
+      body = body.split(key).join(`${key},done:${JSON.stringify(p.closeOn)}`);
+      closedHits.set(p.id, (closedHits.get(p.id) ?? 0) + 1);
+    }
+    await r.fulfill({ response: res, body });
+  });
+}
+
 const b = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
 mkdirSync(OUT, { recursive: true });
 
@@ -157,6 +232,9 @@ for (const iso of DAYS) {
     r.fulfill({ status: 200, contentType: "text/css", body: "" }),
   );
   await ctx.addInitScript(clock(iso));
+  /* `LAST` より後の日は 0件の側。日付では終わらない企画があれば、仮に終わらせて見る */
+  const closed = OPEN.length > 0 && day > LAST;
+  if (closed) await closeOpen(ctx);
   const p = await ctx.newPage();
 
   /** その日の `/next` を指す札（字 → 出てきた面） */
@@ -204,7 +282,44 @@ for (const iso of DAYS) {
     }
   }
 
-  seen.set(day, { labels, lead, none, nextNone });
+  seen.set(day, { labels, lead, none, nextNone, closed });
+  await ctx.close();
+}
+
+// -------------------- 11. 日付では終わらない企画は、日が過ぎても表紙に立っている
+
+/* **仮の終わった日を入れない本物で**、いちばん先の日を1回だけ開く。
+   上の 0件の側は仮に終わらせて見ているので、ここが無いと「本物は日付で
+   消えない」をどこも見ていないことになる（あやと 2026-11-18。#1282）。 */
+const openBad = [];
+let openRead = 0;
+if (OPEN.length) {
+  const far = plus(LAST, 400);
+  console.log(`\n■ 日付では終わらない企画を、仮の終わりを入れずに ${far} に開く`);
+  const ctx = await b.newContext({
+    viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
+    locale: "ja-JP", timezoneId: "Asia/Tokyo", isMobile: true, hasTouch: true,
+  });
+  await offline(ctx);
+  await ctx.route(/fonts\.googleapis\.com/, (r) =>
+    r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await ctx.addInitScript(clock(at(far)));
+  const p = await ctx.newPage();
+  const res = await p.goto(`${BASE}/index.html`, { waitUntil: "domcontentloaded" });
+  if (res && res.status() < 400) {
+    await p.waitForTimeout(1500);
+    openRead++;
+    /* 札が指す先で見分ける（字で探さない）。`NextUp.tsx` の `Card` は
+       `plan.href ?? /next#id` を指す */
+    const hrefs = await p.$$eval(".nextup-card", (as) => as.map((a) => a.getAttribute("href")));
+    for (const pl of OPEN) {
+      const ok = hrefs.includes(pl.href);
+      console.log(`  ${ok ? "○" : "×"} ${pl.id}（${pl.endsWhen}）表紙の札=${hrefs.join(" ") || "（無し）"}`);
+      if (!ok) openBad.push(`${far}: 日付では終わらない企画 ${pl.id} が表紙から消えた（${pl.endsWhen}まで出ているはず）`);
+    }
+    const el = await p.$(".nextup");
+    await (el ?? p).screenshot({ path: `${OUT}/${far}-top-open.png` });
+  }
   await ctx.close();
 }
 // ------------------------------------------------- 5. 行の折れ方（幅を振る）
@@ -249,6 +364,7 @@ let wrapRead = 0;
     r.fulfill({ status: 200, contentType: "text/css", body: "" }),
   );
   await ctx.addInitScript(clock(`${day0}T11:00:00+09:00`));
+  if (seen.get(day0)?.closed) await closeOpen(ctx);
   const p = await ctx.newPage();
   /* **対照**: `BREAK=nophrase` で `Phrase`（折る場所を1つに絞る仕掛け。
      `site/components/ui/Phrase.tsx`）を外す。外したら落ちることを見ておかないと、
@@ -466,7 +582,19 @@ if (pagesRead < DAYS.length * PAGES.length) {
   process.exit(2);
 }
 
-const bad = [...wrapBad, ...nowBad];
+const bad = [...wrapBad, ...nowBad, ...openBad];
+if (OPEN.length) {
+  const missed = OPEN.filter((p) => !closedHits.get(p.id));
+  console.log(`\n仮に終わらせた企画 ${OPEN.length - missed.length} / ${OPEN.length}（${OPEN.map((p) => `${p.id}→${p.closeOn}`).join(" ")}）`);
+  if (missed.length) {
+    console.error(`書き出しの JS に ${missed.map((p) => `endsWhen:"${p.endsWhen}"`).join(" ")} が見つからず、仮の終わった日を入れられませんでした。0件の日が来ないので数えません`);
+    process.exit(2);
+  }
+  if (!openRead) {
+    console.error("日付では終わらない企画を、本物のままで1度も開けませんでした");
+    process.exit(2);
+  }
+}
 console.log(`\n見た島だより ${nowRead} / ${DAYS.length * 2}（${DAYS.length}日 × 2通り）`);
 if (nowRead < DAYS.length * 2) {
   console.error("島だよりを開けなかった日があります。数える前に止めます");
