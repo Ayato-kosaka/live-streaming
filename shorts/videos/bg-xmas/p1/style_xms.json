@@ -1,0 +1,95 @@
+{
+ "_note": "クリスマスマーケットの回 p1（#1268）の様式。ヨーグルトの回の style_ygt.json と同じ（style_v3 に重ねて、題の札の箱を外し縦のまん中寄りへ）",
+ "extends": "style_v3.json",
+ "title_card": {
+  "top": 470,
+  "max_height": 560,
+  "box": {
+   "alpha": 0
+  },
+  "lines": [
+   {
+    "font": "caption",
+    "size": 82,
+    "min_size": 52,
+    "look": {
+     "fill": "#FDFDFD",
+     "outline": [
+      {
+       "color": "#FDFDFD",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.055
+      }
+     ],
+     "tracking": -0.04
+    },
+    "wrap_below": 80
+   },
+   {
+    "font": "caption",
+    "size": 114,
+    "min_size": 64,
+    "wrap_below": 72,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FBEE1E"
+       ],
+       [
+        0.2,
+        "#FEF21D"
+       ],
+       [
+        0.3,
+        "#FDF674"
+       ],
+       [
+        0.35,
+        "#FDFCA1"
+       ],
+       [
+        0.45,
+        "#FDF758"
+       ],
+       [
+        0.55,
+        "#FCEE06"
+       ],
+       [
+        0.75,
+        "#FDE103"
+       ],
+       [
+        1.0,
+        "#FAE707"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#EF0101",
+       "width_em": 0.057
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.079
+      }
+     ],
+     "glow": {
+      "color": "#EBD050",
+      "half_px": 16,
+      "extent_px": 35
+     },
+     "tracking": -0.07,
+     "line_pitch_em": 1.105
+    }
+   }
+  ],
+  "max_width": 690
+ }
+}

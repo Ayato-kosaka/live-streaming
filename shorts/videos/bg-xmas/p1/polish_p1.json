@@ -1,0 +1,168 @@
+{
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページのクリスマスマーケットの絵・カード 11-14 の光の天井と全部盛りのワッフルの切り抜き（人の顔はぼかした）・ChatGPT で描いた X4（ホットワイン）。効果音はポケットサウンド（mp3 はリポジトリに置かない）",
+ "stream_path_mark": "/ingest/",
+ "bands": {
+  "size": [
+   720,
+   1280
+  ],
+  "rows": [
+   [
+    135,
+    235
+   ],
+   [
+    1115,
+    1280
+   ]
+  ],
+  "margin": 5
+ },
+ "grade": {
+  "saturation": 1.6,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "cut_grade": [],
+ "stickers": [
+  {
+   "row": 5,
+   "cut": 1,
+   "from_s": 0.1,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-xmas-1200.webp",
+   "x": 540,
+   "y": 1360,
+   "w": 460,
+   "rotate": -4,
+   "why": "「こじんまりしてるかも」: 思い浮かべたクリスマスマーケット（ガイドの絵）"
+  },
+  {
+   "row": 11,
+   "from_s": 0.15,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_lights.png",
+   "x": 790,
+   "y": 1330,
+   "w": 330,
+   "rotate": 5,
+   "why": "「人がいっぱい」: カードの光の天井（高画質）"
+  },
+  {
+   "row": 17,
+   "cut": 1,
+   "from_s": 0.1,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_stall.png",
+   "x": 790,
+   "y": 1330,
+   "w": 320,
+   "rotate": 5,
+   "why": "「店の人が」: カードのワッフルの屋台（店の人の顔は写らない）"
+  },
+  {
+   "row": 18,
+   "cut": 1,
+   "from_s": 0.1,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_waffle.png",
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "why": "「クレープや」: カードの全部盛り（高画質）"
+  }
+ ],
+ "sfx_files": {
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/hyokkori.mp3",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kuu.mp3",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+  "fuwa": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/fuwa_s.wav",
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/pito_s.wav",
+  "jan": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/enter_s.wav"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 3,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 5,
+   "cut": 1,
+   "off_s": 0.1,
+   "name": "pop"
+  },
+  {
+   "row": 6,
+   "off_s": 0.1,
+   "name": "fuwa",
+   "db": -4
+  },
+  {
+   "row": 9,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 11,
+   "off_s": 0.15,
+   "name": "pop"
+  },
+  {
+   "row": 13,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -4
+  },
+  {
+   "row": 14,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 17,
+   "cut": 1,
+   "off_s": 0.1,
+   "name": "pop"
+  },
+  {
+   "row": 18,
+   "cut": 1,
+   "off_s": 0.6,
+   "name": "jan"
+  },
+  {
+   "row": 20,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 21,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -4
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 1,
+   "text": "◆ソフィア"
+  },
+  {
+   "row": 7,
+   "cut": 1,
+   "text": "◆国立劇場前のクリスマスマーケット"
+  }
+ ]
+}
