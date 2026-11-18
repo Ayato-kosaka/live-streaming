@@ -501,6 +501,45 @@ def main() -> int:
             ok(False, "札が重なるのに黙って焼いた")
         except ValueError as e:
             ok("重なる" in str(e), f"札が重なるときの止めかたが違う: {e}")
+
+        print("12. 題を焼いた表紙（#1228）")
+        # 画像検索で押してもらうために、表紙の絵に街の名前・「観光ガイド」・キャッチを焼く。焼く前の1枚は仮の置き場へ
+        tsp = with_city(town(root), "xx/titled")
+        tsp["title"] = {"name": "テスト町", "label": "観光ガイド", "catch": "港の見える町", "kicker": "テスト国"}
+        tsp["cover"].update({"file": "テスト町-観光ガイド", "title": {"x": 0.96, "y": 0.05, "anchor": "tr", "scale": 0.85}})
+        tsp["cover_tall"].update({"file": "テスト町-観光ガイド-縦", "title": {"x": 0.5, "y": 0.955, "anchor": "bc", "scale": 1.2}})
+        tw, tb = tmp / "twork", tmp / "tbases"
+        png(tw / "raw/cover2-0.png", (1536, 1024), (40, 90, 160))
+        png(tw / "raw/cover_tall-0.png", (1024, 1536), (40, 90, 160))
+        tman, _ = ga.finalize(tsp, root, tw, base=tmp / "tbase.webp", bases=tb)
+        tout = root / "site/public/guide/xx/titled"
+        c, ct = tman["cover"], tman["cover_tall"]
+        ok(c["src"] == "/guide/xx/titled/テスト町-観光ガイド-1600.webp" and ct["src"] == "/guide/xx/titled/テスト町-観光ガイド-縦-1600.webp",
+           f"題を焼いた表紙の名前が頼み書きの file でない: {c['src']} / {ct['src']}")
+        ok(c.get("titled") is True and ct.get("titled") is True and c["alt"].startswith("テスト町観光ガイド「港の見える町」。"),
+           f"題を焼いた表紙に titled と、焼いた字で始まる alt が載らない: {c.get('titled')} {c['alt'][:30]}")
+        ok(c.get("og", {}).get("src") == "/guide/xx/titled/テスト町-観光ガイド-og.jpg"
+           and Image.open(tout / "テスト町-観光ガイド-og.jpg").size == (1200, 630) and "og" not in ct,
+           f"og の 1200x630 の JPEG が横の表紙にだけ付かない: {c.get('og')} / {ct.get('og')}")
+        big = Image.open(tout / "テスト町-観光ガイド-1600.webp").convert("RGB")
+        # 札は右上（紙の色）。左下は元の絵の色のまま
+        ok(big.getpixel((930, 300))[0] > 200 and big.getpixel((100, 800))[0] < 80,
+           f"札が頼み書きの置き場（右上）に焼けていない: 右上 {big.getpixel((930, 300))} 左下 {big.getpixel((100, 800))}")
+        ok(ga.cover_base(tsp, "cover", tb).is_file() and Image.open(ga.cover_base(tsp, "cover", tb)).size == (1600, 900),
+           "焼く前の表紙を残していない（キャッチだけ直した日に焼き直せない）")
+        # 持ち帰った絵が無い日は、焼く前の1枚から焼き直す（焼いた絵にもう1度焼かない）
+        before = Image.open(tout / "テスト町-観光ガイド-1600.webp").convert("RGB").getpixel((100, 800))
+        tsp["title"]["catch"] = "港の見える古い町"
+        tman2, _ = ga.finalize(tsp, root, tmp / "nowork", base=tmp / "tbase.webp", bases=tb)
+        ok(tman2["cover"]["alt"].startswith("テスト町観光ガイド「港の見える古い町」") and
+           Image.open(tout / "テスト町-観光ガイド-1600.webp").convert("RGB").getpixel((100, 800)) == before,
+           "キャッチだけ直した日に、焼く前の1枚から焼き直さない")
+        tsp["cover"]["title"]["scale"] = 2.0
+        try:
+            ga.finalize(tsp, root, tmp / "nowork", base=tmp / "tbase.webp", bases=tb)
+            ok(False, "題の札が絵の外へはみ出すのに黙って焼いた")
+        except ValueError as e:
+            ok("外へ出る" in str(e), f"題の札がはみ出すときの止めかたが違う: {e}")
     finally:
         ga.EC2 = None
         shutil.rmtree(tmp, ignore_errors=True)

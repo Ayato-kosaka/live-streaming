@@ -15,7 +15,7 @@ import StickyNotes from "@/components/live/Notes";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
-import { readDrawn, todoPic } from "@/content/guidebook/manifest";
+import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
@@ -50,10 +50,16 @@ import "@/components/guidebook/guidebook.css";
 const G = SOFIA;
 const CITY = travelCity(G.country, G.city);
 
-export const metadata: Metadata = travelCityShare(G.country, G.city, { title: G.title, description: G.description });
+/* 貼られたときの絵は、題を焼いた表紙（あやと 2026-11-18 #1228。焼いていなければ国の1枚のまま） */
+const DRAWN = readDrawn(G.country, G.city);
+export const metadata: Metadata = coverShare(
+  travelCityShare(G.country, G.city, { title: G.title, description: G.description }),
+  DRAWN,
+  DRAWN.cover?.alt ?? G.title,
+);
 
 export default function SofiaPage() {
-  const drawn = readDrawn(G.country, G.city);
+  const drawn = DRAWN;
   /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A） */
   const g = {
     ...G,

@@ -14,7 +14,7 @@ import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { AHEAD_COUNTRIES } from "@/content/countries";
-import { readDrawn, todoPic } from "@/content/guidebook/manifest";
+import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
 import { TRAVEL_ARTICLES, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
@@ -58,7 +58,13 @@ import "@/components/guidebook/guidebook.css";
 const G = SKOPJE;
 const CITY = travelCity(G.country, G.city);
 
-export const metadata: Metadata = travelCityShare(G.country, G.city, { title: G.title, description: G.description });
+/* 貼られたときの絵は、題を焼いた表紙（あやと 2026-11-18 #1228。焼いていなければ国の1枚のまま） */
+const DRAWN = readDrawn(G.country, G.city);
+export const metadata: Metadata = coverShare(
+  travelCityShare(G.country, G.city, { title: G.title, description: G.description }),
+  DRAWN,
+  DRAWN.cover?.alt ?? G.title,
+);
 
 /**
  * 居た期間。**国に入った日から、次の国に入った日まで**（`content/countries.ts`）。
@@ -84,7 +90,7 @@ function articlesOf(country: string, city: string): { href: string; title: strin
 }
 
 export default function SkopjePage() {
-  const drawn = readDrawn(G.country, G.city);
+  const drawn = DRAWN;
   const articles = articlesOf(G.country, G.city);
   const prices = articles.find((a) => a.href === G.basics.budget.article);
   /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先）。

@@ -12,6 +12,8 @@
  *   …  BREAK=chips node tools/sprites/guidebook.mjs    # 対照: 札に豚の印・「イラスト」の札・「必見」を1つずつ差し込む（札の印で落ちる）
  *   …  BREAK=mymap node tools/sprites/guidebook.mjs    # 対照: 見たいもののマイマップを節の終わりへ動かす（札より上にないで落ちる）
  *   …  BREAK=bignum node tools/sprites/guidebook.mjs   # 対照: どんな街に大きな数の札を1枚差し込む（大きな数の札があるで落ちる）
+ *   …  BREAK=qa node tools/sprites/guidebook.mjs       # 対照: どんな街に「お金は？」「言葉は？」を足して4組にする（問いの数と、基本情報と同じ話で落ちる）
+ *   …  BREAK=title node tools/sprites/guidebook.mjs    # 対照: 題と h1 を前の「〈街〉観光でやりたいこと8選」に戻す（題と表紙の字で落ちる）
  *
  * 終了コード 0＝通った / 1＝見つかった / 2＝数えるものが無い（面が開けない・窓が1つも無い）。
  *
@@ -30,7 +32,8 @@
  * | 節の名前と絵 | 「見たいもの」「食べたいもの」「買いたいもの」。やりたいこと＝チェック（`checklist`）・見たいもの＝カメラ（`camera`）（あやと 2026-11-16） |
  * | やりたいこと | 390 と 1440 で、**どの札も同じ大きさ・4:3・縦1列**（あやと 2026-11-16「すべてのカードを同じサイズ・比率に統一し、縦1列に並べたい」）・札の字が70字まで・絵が描けている（絵の無い札は色の地） |
  * | 札の印 | 面に見えている札（やりたいこと・見たい・食べたい・買いたい）の印が**その国ならでは・値段・季節（と「行った」）だけ**。豚・酒の印は窓の中だけ（一覧の凡例も無い）。「イラスト」「必見」の札が無い。札の読み上げの名前に「豚肉あり」「アルコールあり」が無い（あやと 2026-11-16・`docs/island-misses.md` #328） |
- * | どんな街 | 問いと答え（「歴史は？」）が2組以上・問いが「？」で終わる・答えに出どころの行。**大きな数の札（前の `gb-about-num`）と「よく言われること」が無い** |
+ * | 題と表紙の字 | `<title>` と h1 が「〈街〉観光ガイド」で始まり、「やりたいこと◯選」が無い（あやと 2026-11-18 #1228「この面は『やりたいこと8選』の面ではない」）。題を焼いた表紙（`is-titled`）は、絵の上に字を重ねず（暗幕の字が無い）、og:image が焼いた絵（`-og.jpg`） |
+ * | どんな街 | 問いと答え（「歴史は？」）が**2〜3組**・問いが「？」で終わる・答えに出どころの行。**大きな数の札（前の `gb-about-num`）と「よく言われること」が無い**。お金・言葉の問いが無い（基本情報と同じ話。あやと 2026-11-18） |
  * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
  * | 名前を焼いた地図 | ソフィア（#1262）は札が絵の一部。面の札（`.gb-amap-pin.is-baked`）は透明の押しどころで、上と同じ重なり・はみ出し・当たり 44px・押した先を見る |
  * | どんな街の地図 | 地区の札・地図の外の矢印が、390 と 1440 で**どの2つも重ならず**、絵の外にはみ出さない。当たり 44px 以上（`hitbox.mjs`）。押すと窓が開く（窓の無い矢印は Google マップ）。**写真のピン・番号の一覧が無い**（概要だけ。詳しい場所はマイマップ）。地区のひとことが地区の数だけ在り、行き先の窓が在る。「詳しい場所は」の案内の先（`#see-mymap`）が在る |
@@ -359,6 +362,16 @@ async function shapeCheck(p) {
       a.innerHTML = '<span class="gb-about-num"><b>49</b><i>の温泉</i></span>';
       document.querySelector("#about .gb-qa")?.append(a);
     });
+  if (process.env.BREAK === "qa")
+    await p.evaluate(() => {
+      const one = document.querySelector("#about .gb-qa-one");
+      for (const q of ["お金は？", "言葉は？"]) {
+        const c = one?.cloneNode(true);
+        if (!c) continue;
+        c.querySelector(".gb-qa-q").textContent = q;
+        one.parentElement.append(c);
+      }
+    });
   if (process.env.BREAK === "mymap")
     await p.evaluate(() => {
       const m = document.getElementById("see-mymap");
@@ -385,8 +398,10 @@ async function shapeCheck(p) {
       mapInSee: !!map && !!map.closest("#see"),
     };
   });
-  if (r.qa.length < 2) fail(`どんな街の問いと答えが ${r.qa.length}組（2組以上）`);
+  if (r.qa.length < 2 || r.qa.length > 3) fail(`どんな街の問いと答えが ${r.qa.length}組（2〜3組。その街が何で知られているかで選ぶ）`);
   for (const x of r.qa) {
+    /* お金と言葉は基本情報（通貨・ひとこと現地語）と同じ話（あやと 2026-11-18 #1228「基本情報に書いてあるので要らない」） */
+    if (/お金|通貨|言葉|ことば/.test(x.q)) fail(`どんな街の問い「${x.q}」は基本情報と同じ話（その街が何で知られているかで選ぶ）`);
     if (!x.q.endsWith("？")) fail(`どんな街の問いが「？」で終わっていない（${x.q}）`);
     if (!x.a) fail(`どんな街の問い「${x.q}」に答えが無い`);
     if (!x.src) fail(`どんな街の問い「${x.q}」の答えに出どころの行が無い`);
@@ -401,6 +416,36 @@ async function shapeCheck(p) {
   if (r.hasMap && !r.mapInSee) fail("見たいもののマイマップ（#see-mymap）が見たいものの節の外にある");
   if (r.hasMap && !r.mapFirst) fail("見たいもののマイマップ（#see-mymap）が、見たいものの札より上にない");
   notes.push(`どんな街: 問いと答え ${r.qa.length}組（${r.qa.map((x) => x.q).join("・")}）・見たいもののマイマップ ${r.hasMap ? "札より上" : "無し"}`);
+}
+
+/**
+ * **題と表紙の字**（書き出した HTML。JS を動かす前）。h1 は「〈街〉観光ガイド」で始まり、題も同じ字で始まる。
+ * どちらにも「やりたいこと◯選」を入れない（節の見出しにだけ残す）。題を焼いた表紙は、絵の上に暗幕の字を重ねず、
+ * og:image がその絵を切った JPEG。
+ *
+ * 対照: `BREAK=title` で題と h1 を前の字（「〈街〉観光でやりたいこと8選」）に戻す
+ */
+function headCheck(raw) {
+  const text = (h) => h.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  let title = text(raw.match(/<title>([\s\S]*?)<\/title>/)?.[1] ?? "");
+  let h1 = text(raw.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? "");
+  if (process.env.BREAK === "title") {
+    const town = h1.split("観光")[0];
+    title = `${town}観光でやりたいこと8選【2026年・地図付き】`;
+    h1 = `${town}観光でやりたいこと8選`;
+  }
+  if (!title || !h1) return fail(`題（${title ? "有" : "無"}）か h1（${h1 ? "有" : "無"}）が書き出した HTML に無い`);
+  const head = h1.match(/^(.+?観光ガイド)/)?.[1];
+  if (!head) fail(`h1 が「〈街〉観光ガイド」で始まっていない（${h1}）`);
+  else if (!title.startsWith(head)) fail(`題が h1 と同じ「${head}」で始まっていない（${title}）`);
+  for (const [k, v] of [["題", title], ["h1", h1]]) if (/やりたいこと\s*\d+\s*選/.test(v)) fail(`${k}に「やりたいこと◯選」がある（${v}）——この面はガイドの面。◯選は節の見出しだけ`);
+  const titled = /class="gb-cover-wrap is-titled"/.test(raw);
+  if (titled) {
+    if (/class="gb-cover-body"/.test(raw)) fail("題を焼いた表紙の上に、暗幕の字（gb-cover-body）も重ねている（同じ字が二重に見える）");
+    const og = raw.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? "";
+    if (!/-og\.jpg$/.test(decodeURI(og))) fail(`題を焼いた表紙があるのに、og:image が焼いた絵ではない（${decodeURI(og) || "無し"}）`);
+  }
+  notes.push(`題: ${title}／h1: ${h1}／表紙 ${titled ? "題を焼いた絵（字は絵の下）" : "字を重ねる表紙"}`);
 }
 
 const openId = (p) => p.evaluate(() => document.querySelector("dialog.gb-dlg[open]")?.id ?? null);
@@ -429,6 +474,7 @@ async function main() {
        断られてピンが白い丸になった（2026-11-15）。作者のページへのリンク（commons.wikimedia.org）は数えない */
     const wmImg = (raw.match(/(?:src|srcSet|srcset)="[^"]*upload\.wikimedia\.org/g) ?? []).length;
     if (wmImg) fail(`書き出した HTML に Wikimedia から直に読む絵が ${wmImg} 本ある（python/guide_photos.py で置き場に落として焼き直す）`);
+    headCheck(raw);
     if (!todoIds.length) fail("やりたいことの窓（#do-…）が無い");
     if (todoIds.length > 8) fail(`やりたいことが ${todoIds.length}（最大8）`);
 

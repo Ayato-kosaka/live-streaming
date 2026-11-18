@@ -345,3 +345,80 @@ def bake(im, areas: list[dict]):
             td.text((cx, y0 + pady + lh * i + lh / 2), t, font=f, fill=INK + (255,), anchor="mm")
     shadow = shadow.filter(ImageFilter.GaussianBlur(fs * 0.18))
     return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), shadow), top).convert("RGB")
+
+
+# ---------------------------------------------------------------- 表紙に題を焼く
+
+#: 題の札の字の高さ（絵の幅×`scale` に対して）。街の名前は**横 240px に縮めても 23px 前後**（読める）。
+#: 上から 国・街の名前・「観光ガイド」の帯・キャッチ。行の高さは字の高さの 1.2〜1.6 倍
+TITLE_FS = {"kicker": 0.027, "name": 0.098, "label": 0.042, "catch": 0.029}
+TITLE_LH = {"kicker": 0.040, "name": 0.115, "label": 0.064, "catch": 0.046}
+TITLE_PAD = 0.03          # 札の内の余白（同じく幅×scale に対して）
+TITLE_EDGE = 0.04         # 札と絵の端のあいだ（絵の幅・高さに対して）。og の 1.91:1 に切っても札が切れない
+TITLE_PAPER = (255, 250, 228)   # 面の `--paper`
+TITLE_ACCENT = (179, 64, 47)    # 面の `--gb-c`（「観光ガイド」の帯。白い字が 4.5 以上で読める）
+
+
+def _title_fonts(u: float):
+    from PIL import ImageFont
+    return {k: ImageFont.truetype(str(font("Bold" if k == "kicker" else "Black")), round(u * v)) for k, v in TITLE_FS.items()}
+
+
+def title_box(t: dict, W: int, scale: float = 1.0) -> tuple[float, float]:
+    """題の札の幅と高さ（画素）。いちばん長い行（街の名前かキャッチ）で幅が決まる"""
+    u = W * scale
+    f = _title_fonts(u)
+    pad = u * TITLE_PAD
+    widths = [f["kicker"].getlength(t["kicker"]), f["name"].getlength(t["name"]),
+              f["label"].getlength(t["label"]) + u * 0.05, f["catch"].getlength(t["catch"])]
+    h = pad * 1.6 + sum(u * v for v in TITLE_LH.values())
+    return max(widths) + 2 * pad, h
+
+
+def bake_title(im, t: dict, at: dict):
+    """表紙の絵に題の札を焼いた絵を返す。
+
+    **画像検索で押してもらうため**（あやと 2026-11-18 #1228「水彩のイラストだけが出て、誰も押さない。ほかのサイトの絵には
+    字が入っている」）。日本の旅行ブログのアイキャッチと同じく、街の名前を大きく・「観光ガイド」を帯で・キャッチを小さく。
+    字はこちらで焼く（ChatGPT に字を描かせない。面と同じ丸ゴシック）。札は面の紙の色（`--paper`）の角丸で、絵の上に置く。
+
+    `t` は字（`name` 街・`label` 観光ガイド・`catch` キャッチ・`kicker` 国）、`at` は置き場（`x`・`y` は札の基準の点の位置。割合。
+    `anchor` は札のどこを基準にするか: 縦 `t`/`m`/`b` ＋ 横 `l`/`c`/`r`。`scale` は字の大きさの倍率）。
+    札が絵の端から `TITLE_EDGE` より外へ出るときは止める（og に切ったときに札が欠ける。黙って焼かない）
+    """
+    from PIL import Image, ImageDraw, ImageFilter
+    W, H = im.size
+    scale = at.get("scale", 1.0)
+    u = W * scale
+    f = _title_fonts(u)
+    w, h = title_box(t, W, scale)
+    anchor = at.get("anchor", "tc")
+    if len(anchor) != 2 or anchor[0] not in "tmb" or anchor[1] not in "lcr":
+        raise ValueError(f"題の札の anchor「{anchor}」は 縦 t/m/b ＋ 横 l/c/r（例 tr）")
+    x0 = at["x"] * W - {"l": 0, "c": w / 2, "r": w}[anchor[1]]
+    y0 = at["y"] * H - {"t": 0, "m": h / 2, "b": h}[anchor[0]]
+    ex, ey = W * TITLE_EDGE, H * TITLE_EDGE
+    if x0 < ex - 0.5 or y0 < ey - 0.5 or x0 + w > W - ex + 0.5 or y0 + h > H - ey + 0.5:
+        raise ValueError(f"題の札「{t['name']}{t['label']}」が絵の端（{TITLE_EDGE:.0%}）より外へ出る"
+                         f"（札 {w:.0f}x{h:.0f}px・左上 {x0:.0f},{y0:.0f}・絵 {W}x{H}。頼み書きの title の x・y・scale を直す）")
+    shadow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    top = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sd, td = ImageDraw.Draw(shadow), ImageDraw.Draw(top)
+    r = u * 0.025
+    sd.rounded_rectangle((x0, y0 + u * 0.008, x0 + w, y0 + h + u * 0.008), r, fill=(60, 40, 20, 110))
+    # 絵が少し透ける紙（238/255）。字は面の `--ink`
+    td.rounded_rectangle((x0, y0, x0 + w, y0 + h), r, fill=TITLE_PAPER + (238,))
+    cx, y = x0 + w / 2, y0 + u * TITLE_PAD * 0.8
+    ink = INK + (255,)
+    for k in ("kicker", "name", "label", "catch"):
+        lh = u * TITLE_LH[k]
+        if k == "label":
+            bw = f["label"].getlength(t["label"]) + u * 0.05
+            m = u * 0.006
+            td.rounded_rectangle((cx - bw / 2, y + m, cx + bw / 2, y + lh - m), (lh - 2 * m) / 2, fill=TITLE_ACCENT + (255,))
+            td.text((cx, y + lh / 2), t[k], font=f[k], fill=(255, 255, 255, 255), anchor="mm")
+        else:
+            td.text((cx, y + lh / 2), t[k], font=f[k], fill=ink, anchor="mm")
+        y += lh
+    shadow = shadow.filter(ImageFilter.GaussianBlur(u * 0.01))
+    return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), shadow), top).convert("RGB")
