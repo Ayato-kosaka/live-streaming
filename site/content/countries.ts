@@ -600,15 +600,14 @@ export const countryNameBySlug = (slug: string): { slug: string; name: string } 
  * 二重に数える——あちらは `known` で弾いているが、**弾かれるものを置いておく
  * 理由が無い。** 歩き終わったら、記録を持たせて `COUNTRIES` へ移す。
  */
-/* `en` は国の面のパスポートに出す英字の国名（`app/travel/record.tsx`）。歩き終わって `COUNTRIES` へ移すときも要る */
-export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string; en?: string }[] = [
+export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = [
   /* アルバニア。あやとが 2026-09-28 に着いた（本人の知らせ）。
      **街はまだ入れていない。** ここが持つのは名前と旗の鍵だけで、
      街と滞在は歩き終わってから `COUNTRIES` に書く決まり。
 
      `entered` を入れた日から「歩いた国」の数に1つ足される
      （`content/walked.ts`）。着いた日なので、そこは合っている。 */
-  { slug: "albania", name: "アルバニア", entered: "2026-09-28", en: "Albania" },
+  { slug: "albania", name: "アルバニア", entered: "2026-09-28" },
   /* 北マケドニア。あやとが 2026-10-12 に着いた（本人の知らせ。`content/plans.ts` の
      `north-macedonia` の `date` と同じ日）。アルバニアと**同じ島（`balkans`）のまま**で、
      章は足さない決まりなので（`content/chapters.ts` の `balkans`）、
@@ -621,7 +620,7 @@ export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string; en?
 
      `entered` が入った日から、`content/walked.ts` が1つ足して数える。
      `/map` の年表もここから並ぶので、**数と並びが同じ出どころ**になる。 */
-  { slug: "north-macedonia", name: "北マケドニア", entered: "2026-10-12", en: "North Macedonia" },
+  { slug: "north-macedonia", name: "北マケドニア", entered: "2026-10-12" },
   /* ブルガリア。あやとが 2026-11-12 に着いた。**本人の知らせを待たずに、配信から読んだ日。**
      3つが同じ日を指している——
        1. 11-11 の配信で「明日ブルガリア行きます」「12時40分に着く」
@@ -654,7 +653,7 @@ export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string; en?
 
      **旗も要る**（`components/ui/Flag.tsx`）。国だけ足して旗を忘れると `Flag` が
      null を返して、`/now` のいちばん大きい絵が消える（`tools/sprites/walkedcount.mjs`）。 */
-  { slug: "bulgaria", name: "ブルガリア", entered: "2026-11-12", en: "Bulgaria" },
+  { slug: "bulgaria", name: "ブルガリア", entered: "2026-11-12" },
 ];
 
 /**

@@ -158,7 +158,6 @@ function walkingRecord(slug: string): CountryRecord | undefined {
   return {
     slug,
     name: k.name,
-    en: k.en,
     summary,
     headLead,
     stays: [{ from: k.entered, to: k.left }],

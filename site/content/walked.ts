@@ -78,8 +78,6 @@ export type WalkingCountry = {
   entered: string;
   /** 出た日。まだその国にいれば空 */
   left: string;
-  /** 英字の国名。書いてあれば */
-  en?: string;
 };
 
 export function walkingCountries(): WalkingCountry[] {
@@ -92,7 +90,6 @@ export function walkingCountries(): WalkingCountry[] {
     name: c.name,
     entered: c.entered,
     left: rows[i + 1] ? prevDay(rows[i + 1].entered) : "",
-    en: c.en,
   }));
 }
 
