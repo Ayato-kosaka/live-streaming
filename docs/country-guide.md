@@ -9,6 +9,9 @@
 
 実物は `python/build_bulgaria.py` と `site/app/travel/bulgaria/sofia/`（2026-11-15 に `/bulgaria` から移した。部品は `site/components/guidebook/`）。
 **迷ったらあれを丸ごと複製して、国の名前を置き換えるところから始める。**
+——**ただし街の面（ガイドブック型）は、2026-11-18 から `/city-guide` の順で作る。** ソフィアは手で組んだ TS で、
+焼く道具に載っていない。次の街はスコピエの道（材料 `guidebook.json` → 組み立て `compose.json` → `python/guidebook_bake.py`）を写す。
+ここに残るのは、国の面・調べかた・写真・通貨・字の束・測る6つ。
 
 ---
 
