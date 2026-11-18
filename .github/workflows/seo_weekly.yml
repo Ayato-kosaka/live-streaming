@@ -1,0 +1,75 @@
+# **毎週、Search Console の数を API で読んで、#1262 に表を1コメント書く**（SEO・AIO の PDCA の Check。#1262）。
+#
+# あやと（2026-11-18）「SEO・AIO はできる対策は全部やって、PDCA 回せるようにしてね」。
+# それまで数は EC2 の Chrome で画面の字を読み、issue に手で写していた。**人が行かない週は何も残らない。**
+# 表の中身・「0」を答えにしない決め・出さないもの（狙う語以外の語）は `python/seo_weekly.py` の頭、
+# 表の読みかたと「効いた／効いていない」の決めかたは `docs/seo.md`。
+#
+# ## 鍵
+#
+# 新しい秘密は作らない。`FIREBASE_SERVICE_ACCOUNT` のサービスアカウントを Search Console の
+# `sc-domain:ayato-arigato.com` に「制限付き」で足し、`live-streaming-d3cac` で Search Console API を
+# 有効にした（2026-11-18）。求める scope は読むだけ（`webmasters.readonly`）。
+#
+# ## サイトの作りの線
+#
+# 同じ回に `seo_audit.py --expect prod` を本番へ当てて、合否を表の7節に添える。
+# 入れた手（題・説明・絵の alt・YouTube へのリンク・構造化データ・llms.txt）が戻ったら、ここで「外れた」と出る。
+#
+# ## いつ
+#
+# 月曜の朝（日本時間）に読めるように、日曜 21:41 UTC。定時は何時間も遅れて走る（`python3 python/cron_lag.py`）が、
+# 週に1本なので遅れは困らない。手で押すときは Actions の「検索の週の数」（`dry_run` で issue に書かずに要約へ）。
+name: 検索の週の数
+
+on:
+  schedule:
+    - cron: "41 21 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "issue に書かずに、表を run の要約に出すだけ"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: seo-weekly
+  cancel-in-progress: false
+
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # 要るのは鍵から読み取りの札を作る2つだけ（requirements.txt の BigQuery ほかは要らない）
+      - name: 道具を入れる
+        run: python -m pip install --quiet google-auth requests
+
+      # 合否は表に添えるだけ。**ここで落としても表は書く**（落ちたことは表の7節と終了コードに出る）
+      - name: サイトの作りの線を本番へ当てる
+        run: |
+          set -uo pipefail
+          python3 python/seo_audit.py --expect prod > audit.txt 2>&1 && code=0 || code=$?
+          echo "seo_audit の終了コード: $code"
+          sed -n '/== 合否/,$p' audit.txt
+
+      - name: 表を書く
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: python3 python/seo_weekly.py --audit audit.txt $DRY

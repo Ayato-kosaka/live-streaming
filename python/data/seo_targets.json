@@ -1,0 +1,32 @@
+{
+  "_": "狙う語と見る面（docs/seo.md の Plan）。週の表（python/seo_weekly.py）はここだけを読む。語を足す・外すのはここで、表の道具は直さない。queries は同じ意図の言い換え（空白・全角半角は道具が揃える）。image: true は画像検索の表にも出す。#1262 の2章の14行と、国の面の1語（ブルガリア 観光）",
+  "site": "sc-domain:ayato-arigato.com",
+  "origin": "https://ayato-arigato.com",
+  "issue": 1262,
+  "targets": [
+    {"label": "ソフィア 見どころマップ", "page": "/travel/bulgaria/sofia", "image": true, "queries": ["ソフィア 見どころマップ", "ソフィア 見どころ マップ"]},
+    {"label": "ソフィア 観光 マップ／地図", "page": "/travel/bulgaria/sofia", "image": true, "queries": ["ソフィア 観光 マップ", "ソフィア 観光 地図", "ブルガリア ソフィア 地図", "ソフィア 地図"]},
+    {"label": "ソフィア 観光", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 観光", "ブルガリア ソフィア 観光"]},
+    {"label": "ソフィア 観光 モデルコース／1日観光", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 観光 モデルコース", "ソフィア 1日観光", "ソフィア 一日観光"]},
+    {"label": "ブルガリア ヨーグルト 本場", "page": "/travel/bulgaria/sofia", "queries": ["ブルガリア ヨーグルト 本場"]},
+    {"label": "ブルガリア バラ お土産", "page": "/travel/bulgaria/sofia", "queries": ["ブルガリア バラ お土産"]},
+    {"label": "ソフィア 物価／ブルガリア 物価", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 物価", "ブルガリア 物価", "ブルガリア 物価 2026", "ブルガリア ユーロ 物価"]},
+    {"label": "ソフィア 温泉", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 温泉", "ソフィア 中央温泉浴場"]},
+    {"label": "ソフィア クリスマスマーケット", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア クリスマスマーケット"]},
+    {"label": "ソフィア リラ修道院 行き方", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア リラ修道院 行き方", "リラ修道院 行き方", "ソフィア リラ修道院"]},
+    {"label": "ソフィア 空港から市内", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 空港から市内", "ソフィア 空港 市内"]},
+    {"label": "スコピエ 観光", "page": "/travel/north-macedonia/skopje", "queries": ["スコピエ 観光", "北マケドニア スコピエ 観光"]},
+    {"label": "スコピエ 物価", "page": "/travel/north-macedonia/skopje/prices", "queries": ["スコピエ 物価", "北マケドニア 物価"]},
+    {"label": "スコピエ 見どころ／北マケドニア 観光", "page": "/travel/north-macedonia/skopje", "queries": ["スコピエ 見どころ", "北マケドニア 観光"]},
+    {"label": "ブルガリア 観光", "page": "/travel/bulgaria", "queries": ["ブルガリア 観光", "ブルガリア 旅行"]}
+  ],
+  "image_contains": ["見どころマップ"],
+  "pages": [
+    {"label": "ソフィア", "path": "/travel/bulgaria/sofia"},
+    {"label": "ブルガリア", "path": "/travel/bulgaria"},
+    {"label": "表紙", "path": "/"},
+    {"label": "歩いた国", "path": "/travel"},
+    {"label": "スコピエ", "path": "/travel/north-macedonia/skopje"},
+    {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices"}
+  ]
+}

@@ -370,6 +370,51 @@ jobs:
           exit "$code"
 
   # ------------------------------------------------------------------
+  # **配ったあと、中身が変わった面を IndexNow（Bing・Yandex ほか）に知らせる**（#1262）。
+  #
+  # Bing は Copilot と ChatGPT の検索の元。島は Bing Webmaster Tools に入っていない（あやとの
+  # アカウントの同意が要る）が、IndexNow はアカウント無しで「この URL が変わった」を送れる。
+  # 何を送るか・鍵のファイル・終了コードは `python/indexnow.py` の頭。
+  #
+  # - **落ちても配りを赤くしない**（`continue-on-error`）。知らせは取りに来るのを早めるだけで、
+  #   配ったものはもう本番に出ている。ここが赤いせいで `配りが赤いを issue に映す` が立つと、嘘の赤になる
+  # - 下流を `workflow_run` で繋がずにこの run の中で回すのは、毎晩の配り（`rebake.yml` が
+  #   GITHUB_TOKEN で押す）の完了は別のワークフローを起こさないから（下の `wake_ship_down` の注と同じ）
+  # - 前の回の指紋は actions/cache に置く。流れて無くなったら全部送る（島の面の数なら1回で送れる）。
+  #   **送れたときだけ控えを残す**——断られた回は、次の配りのあとに同じ面を送り直す
+  indexnow:
+    needs: build_and_deploy
+    if: ${{ success() && !inputs.wake_only }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 前の回の指紋
+        uses: actions/cache/restore@v4
+        with:
+          path: .indexnow
+          key: indexnow-${{ github.run_id }}
+          restore-keys: indexnow-
+
+      - name: 変わった面を知らせる
+        run: python3 python/indexnow.py --state .indexnow/state.json
+
+      - name: 指紋を残す
+        if: ${{ success() }}
+        uses: actions/cache/save@v4
+        with:
+          path: .indexnow
+          key: indexnow-${{ github.run_id }}
+
+  # ------------------------------------------------------------------
   # **配り終わったことを、下流（`配りが赤いを issue に映す`）に自分で伝える。**
   #
   # ## なぜ `workflow_run` では届かないか（#865。実測つき）
