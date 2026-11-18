@@ -45,71 +45,202 @@
   ]
  },
  "areamap": {
-  "v": 4,
-  "layout": "layout3.png",
-  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, river and district border must stay where it is in the layout, and each landmark sits exactly on its numbered dot. In particular: the Eagles' Bridge (10) is exactly where the diagonal river meets the end of the diagonal boulevard at dot 10; the Palace of Culture (7) is exactly at dot 7, at the south end of the straight pedestrian boulevard (do not move it further south); the Lily Pond (13) is exactly at dot 13; the market stalls (11) are exactly at dot 11. ",
-  "prompt": "Paint an illustrated tourist map of central Sofia, Bulgaria, as a square image (1024x1024), using the attached layout as the exact base. North is up. Keep every white road, every blue river, every green park and the six colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove districts. There are FOUR colored districts; each keeps its own soft color from the layout, painted as a gently tinted ground with soft rounded edges, and drawn as what it really is: yellow = the old center with Roman ruins, churches, a mosque and the baths; light green = the market quarter of low houses with tiled roofs, market stalls and a synagogue (NOT a park or forest: houses on light-green-tinted ground); light blue = the cathedral and theatre quarter with squares and gardens; pink = the south side: the long pedestrian Vitosha Boulevard lined with shops and trees down to the Palace of Culture, the quiet streets south of the center, and the big Borisova Garden (the park itself stays lush green with trees and paths, framed by the pink district). Everything outside the four districts, including the whole northeast, is a calm, light warm-beige town of houses with tiled roofs and leafy streets, with only its real small parks in green. Main boulevards are cream-white ribbons, rivers are soft blue ribbons. At each numbered dark dot in the layout, draw a small cute illustrated landmark icon in that exact spot (do NOT draw the numbers or the dots themselves): 1 Alexander Nevsky Cathedral (big gold central dome, green domes, bell tower); 2 St Nedelya Church (cream church with a grey dome); 3 Banya Bashi Mosque (one dome and one slender minaret); 4 Central Mineral Baths (yellow-and-red striped bath building with small domes); 5 Rotunda of St George (small round red-brick church); 6 Lions' Bridge (bridge over the river with four bronze lions); 7 National Palace of Culture (large modern building with a fountain plaza in a park); 8 National Theatre (red-and-white neoclassical theatre with columns and a fountain in a small garden); 9 Russian Church (small white church with gold onion domes); 10 Eagles' Bridge (bridge with four tall columns topped with bronze eagles); 11 Zhenski Pazar market (colorful market stalls with striped awnings along the street); 12 Vasil Levski Monument (tall grey stone column); 13 Lily Pond (small pond with water lilies); 14 Sofia Synagogue (large pale stone synagogue with one big central dome).",
-  "alt": "ソフィア中心部の絵地図。中心・市場・ネフスキー大聖堂まわり・ヴィトシャ大通りと公園の4つが色で塗り分けてあり、大聖堂やモスク、橋などの目印が描いてある",
-  "note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・面の4エリアの色・目印14か所の番号）を渡し、その配置どおりに描かせた。北が上。字なし（エリアの名前は areas の位置に面の側で重ねる）",
-  "areas": [
+  "v": 5,
+  "layout": "layout5.png",
+  "file": "ソフィア-見どころマップ-地区分け",
+  "ratio": 0.8,
+  "sizes": [1200, 800],
+  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, river and district border must stay where it is in the layout, and each landmark sits exactly on its numbered dot. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
+  "prompt": "Paint an illustrated sightseeing map of central Sofia, Bulgaria, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every blue river, every green park and the four colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; rivers are soft blue ribbons; roads are clean cream-white ribbons. Paint the four districts as flat translucent watercolor washes in their own colors from the layout (pink, lavender, aqua and yellow), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Alexander Nevsky Cathedral (big gold central dome, green domes, bell tower); 2 Zhenski Pazar open-air market (a short row of colorful market stalls with striped awnings and fruit crates); 3 Central Mineral Baths (yellow-and-red striped bath house with small domes); 4 Banya Bashi Mosque (one dome and one slender minaret), standing right next to 3; 5 National Palace of Culture (large modern building with a fountain plaza); 6 Russian Church (small white church with gold onion domes); 7 National Theatre (red-and-white neoclassical theatre with columns). These seven landmarks are the only drawn objects on the map.",
+  "alt": "ソフィアの見どころマップ（地区分け）。セルディカ駅周辺・ジェンスキー・パザール周辺・アレクサンドル・ネフスキー大聖堂周辺・ヴィトシャ通り周辺の4つの地区を色で分け、名前を書いた絵地図。ネフスキー大聖堂・女性市場・中央鉱泉浴場・国立文化宮殿などの目印の絵つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
+  "bbox": {
+   "west": 23.3125,
+   "east": 23.3415,
+   "south": 42.6783,
+   "north": 42.7103
+  },
+  "districts": [
    {
-    "id": "center",
-    "name": "中心・セルディカ",
-    "local": "Сердика",
-    "color": "#ffd98a",
-    "x": 0.12,
-    "y": 0.5,
-    "source": [
-     "https://en.wikipedia.org/wiki/Serdica",
-     "https://en.wikipedia.org/wiki/Largo,_Sofia",
-     "https://www.openstreetmap.org/node/12808986074"
+    "id": "market",
+    "color": "#f7a9c4",
+    "poly": [
+     [42.6981, 23.319],
+     [42.6994, 23.3216],
+     [42.7011, 23.3219],
+     [42.7032, 23.3196],
+     [42.7056, 23.3166],
+     [42.7049, 23.3143],
+     [42.7022, 23.315],
+     [42.6997, 23.3168],
+     [42.6979, 23.3178]
     ]
    },
    {
+    "id": "center",
+    "color": "#bdb8f2",
+    "poly": [
+     [42.6994, 23.3216],
+     [42.7011, 23.3219],
+     [42.7008, 23.3246],
+     [42.6992, 23.3262],
+     [42.6966, 23.326],
+     [42.6958, 23.3236],
+     [42.6959, 23.3203],
+     [42.6981, 23.319]
+    ]
+   },
+   {
+    "id": "nevsky",
+    "color": "#8fd6d8",
+    "poly": [
+     [42.6992, 23.3262],
+     [42.6998, 23.33],
+     [42.699, 23.3352],
+     [42.6965, 23.3378],
+     [42.6933, 23.3368],
+     [42.6927, 23.332],
+     [42.6928, 23.3247],
+     [42.6966, 23.326]
+    ]
+   },
+   {
+    "id": "south",
+    "color": "#ffd76e",
+    "poly": [
+     [42.6959, 23.3203],
+     [42.6958, 23.3236],
+     [42.6966, 23.326],
+     [42.6928, 23.3247],
+     [42.6927, 23.332],
+     [42.6906, 23.3335],
+     [42.6884, 23.3305],
+     [42.686, 23.324],
+     [42.6843, 23.3222],
+     [42.6829, 23.3196],
+     [42.6836, 23.3165],
+     [42.6862, 23.317],
+     [42.693, 23.3192]
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "n": 1,
+    "what": "アレクサンドル・ネフスキー大聖堂",
+    "lat": 42.695833,
+    "lon": 23.332956
+   },
+   {
+    "n": 2,
+    "what": "女性市場（ジェンスキ・パザール）",
+    "lat": 42.70068,
+    "lon": 23.318208
+   },
+   {
+    "n": 3,
+    "what": "中央鉱泉浴場",
+    "lat": 42.699367,
+    "lon": 23.323681
+   },
+   {
+    "n": 4,
+    "what": "バーニャ・バシ・モスク",
+    "lat": 42.699444,
+    "lon": 23.3225
+   },
+   {
+    "n": 5,
+    "what": "国立文化宮殿（NDK）",
+    "lat": 42.684722,
+    "lon": 23.318889
+   },
+   {
+    "n": 6,
+    "what": "ロシア教会",
+    "lat": 42.695694,
+    "lon": 23.328935
+   },
+   {
+    "n": 7,
+    "what": "イヴァン・ヴァゾフ国立劇場",
+    "lat": 42.694167,
+    "lon": 23.326389
+   }
+  ],
+  "areas": [
+   {
     "id": "market",
-    "name": "市場とシナゴーグ",
+    "name": "ジェンスキー・パザール周辺",
+    "label": [
+     "ジェンスキー・",
+     "パザール周辺"
+    ],
     "local": "Женски пазар",
-    "color": "#bfe8a6",
-    "x": 0.13,
-    "y": 0.07,
+    "color": "#f7a9c4",
+    "x": 0.19,
+    "y": 0.155,
     "source": [
+     "https://www.arukikata.co.jp/tokuhain/255179/",
      "https://en.wikipedia.org/wiki/Zhenski_pazar",
      "https://www.openstreetmap.org/way/96646570",
      "https://www.openstreetmap.org/way/397651408"
     ]
    },
    {
-    "id": "nevsky",
-    "name": "ネフスキー大聖堂まわり",
-    "local": "Александър Невски",
-    "color": "#a9dcf5",
-    "x": 0.8,
-    "y": 0.3,
+    "id": "center",
+    "name": "セルディカ駅周辺",
+    "label": [
+     "セルディカ駅",
+     "周辺"
+    ],
+    "local": "Сердика",
+    "color": "#bdb8f2",
+    "x": 0.31,
+    "y": 0.395,
     "source": [
+     "https://www.arukikata.co.jp/webmagazine/235561/",
+     "https://en.wikipedia.org/wiki/Serdica",
+     "https://en.wikipedia.org/wiki/Largo,_Sofia",
+     "https://www.openstreetmap.org/node/12808986074"
+    ]
+   },
+   {
+    "id": "nevsky",
+    "name": "アレクサンドル・ネフスキー大聖堂周辺",
+    "label": [
+     "ネフスキー",
+     "大聖堂周辺"
+    ],
+    "local": "Александър Невски",
+    "color": "#8fd6d8",
+    "x": 0.72,
+    "y": 0.512,
+    "source": [
+     "https://www.veltra.com/jp/guide/international/spot-international/81165/",
      "https://en.wikipedia.org/wiki/Tsar_Osvoboditel_Boulevard,_Sofia",
      "https://en.wikipedia.org/wiki/Alexander_Nevsky_Cathedral,_Sofia"
     ]
    },
    {
     "id": "south",
-    "name": "ヴィトシャ大通りと公園",
+    "name": "ヴィトシャ通り周辺",
+    "label": [
+     "ヴィトシャ通り",
+     "周辺"
+    ],
     "local": "булевард Витоша",
-    "color": "#ffc4d2",
-    "x": 0.42,
-    "y": 0.7,
+    "color": "#ffd76e",
+    "x": 0.54,
+    "y": 0.64,
     "source": [
+     "https://4travel.jp/os_shisetsu_tips/13978512",
      "https://en.wikipedia.org/wiki/Vitosha_Boulevard",
      "https://en.wikipedia.org/wiki/Borisova_gradina",
      "https://www.openstreetmap.org/relation/16947241"
     ]
    }
   ],
-  "bbox": {
-   "west": 23.31,
-   "east": 23.352,
-   "south": 42.6777,
-   "north": 42.7083
-  },
   "beyond": [
    {
     "id": "vitosha",
@@ -120,8 +251,8 @@
     "source": [
      "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/"
     ],
-    "x": 0.36,
-    "y": 0.95,
+    "x": 0.39,
+    "y": 0.955,
     "dir": "s"
    },
    {
@@ -133,8 +264,8 @@
     "source": [
      "https://boyanachurch.info/en/visitors-information-en/"
     ],
-    "x": 0.18,
-    "y": 0.78,
+    "x": 0.12,
+    "y": 0.53,
     "dir": "sw"
    }
   ],

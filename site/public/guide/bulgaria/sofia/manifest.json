@@ -18,71 +18,100 @@
   "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
  },
  "areamap": {
-  "src": "/guide/bulgaria/sofia/areamap-800.webp",
-  "src_small": "/guide/bulgaria/sofia/areamap-400.webp",
-  "w": 800,
-  "h": 800,
-  "alt": "ソフィア中心部の絵地図。中心・市場・ネフスキー大聖堂まわり・ヴィトシャ大通りと公園の4つが色で塗り分けてあり、大聖堂やモスク、橋などの目印が描いてある",
+  "src": "/guide/bulgaria/sofia/ソフィア-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/bulgaria/sofia/ソフィア-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "ソフィアの見どころマップ（地区分け）。セルディカ駅周辺・ジェンスキー・パザール周辺・アレクサンドル・ネフスキー大聖堂周辺・ヴィトシャ通り周辺の4つの地区を色で分け、名前を書いた絵地図。ネフスキー大聖堂・女性市場・中央鉱泉浴場・国立文化宮殿などの目印の絵つき",
   "kind": "ai",
-  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・面の4エリアの色・目印14か所の番号）を渡し、その配置どおりに描かせた。北が上。字なし（エリアの名前は areas の位置に面の側で重ねる）",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
+  "baked": true,
   "areas": [
    {
-    "id": "center",
-    "name": "中心・セルディカ",
-    "local": "Сердика",
-    "color": "#ffd98a",
-    "x": 0.12,
-    "y": 0.5,
-    "source": [
-     "https://en.wikipedia.org/wiki/Serdica",
-     "https://en.wikipedia.org/wiki/Largo,_Sofia",
-     "https://www.openstreetmap.org/node/12808986074"
-    ]
-   },
-   {
     "id": "market",
-    "name": "市場とシナゴーグ",
+    "name": "ジェンスキー・パザール周辺",
+    "label": [
+     "ジェンスキー・",
+     "パザール周辺"
+    ],
     "local": "Женски пазар",
-    "color": "#bfe8a6",
-    "x": 0.13,
-    "y": 0.07,
+    "color": "#f7a9c4",
+    "x": 0.19,
+    "y": 0.155,
     "source": [
+     "https://www.arukikata.co.jp/tokuhain/255179/",
      "https://en.wikipedia.org/wiki/Zhenski_pazar",
      "https://www.openstreetmap.org/way/96646570",
      "https://www.openstreetmap.org/way/397651408"
-    ]
+    ],
+    "w": 0.3067,
+    "h": 0.108
+   },
+   {
+    "id": "center",
+    "name": "セルディカ駅周辺",
+    "label": [
+     "セルディカ駅",
+     "周辺"
+    ],
+    "local": "Сердика",
+    "color": "#bdb8f2",
+    "x": 0.31,
+    "y": 0.395,
+    "source": [
+     "https://www.arukikata.co.jp/webmagazine/235561/",
+     "https://en.wikipedia.org/wiki/Serdica",
+     "https://en.wikipedia.org/wiki/Largo,_Sofia",
+     "https://www.openstreetmap.org/node/12808986074"
+    ],
+    "w": 0.3067,
+    "h": 0.108
    },
    {
     "id": "nevsky",
-    "name": "ネフスキー大聖堂まわり",
+    "name": "アレクサンドル・ネフスキー大聖堂周辺",
+    "label": [
+     "ネフスキー",
+     "大聖堂周辺"
+    ],
     "local": "Александър Невски",
-    "color": "#a9dcf5",
-    "x": 0.8,
-    "y": 0.3,
+    "color": "#8fd6d8",
+    "x": 0.72,
+    "y": 0.512,
     "source": [
+     "https://www.veltra.com/jp/guide/international/spot-international/81165/",
      "https://en.wikipedia.org/wiki/Tsar_Osvoboditel_Boulevard,_Sofia",
      "https://en.wikipedia.org/wiki/Alexander_Nevsky_Cathedral,_Sofia"
-    ]
+    ],
+    "w": 0.265,
+    "h": 0.108
    },
    {
     "id": "south",
-    "name": "ヴィトシャ大通りと公園",
+    "name": "ヴィトシャ通り周辺",
+    "label": [
+     "ヴィトシャ通り",
+     "周辺"
+    ],
     "local": "булевард Витоша",
-    "color": "#ffc4d2",
-    "x": 0.42,
-    "y": 0.7,
+    "color": "#ffd76e",
+    "x": 0.54,
+    "y": 0.64,
     "source": [
+     "https://4travel.jp/os_shisetsu_tips/13978512",
      "https://en.wikipedia.org/wiki/Vitosha_Boulevard",
      "https://en.wikipedia.org/wiki/Borisova_gradina",
      "https://www.openstreetmap.org/relation/16947241"
-    ]
+    ],
+    "w": 0.3483,
+    "h": 0.108
    }
   ],
   "bbox": {
-   "west": 23.31,
-   "east": 23.352,
-   "south": 42.6777,
-   "north": 42.7083
+   "west": 23.3125,
+   "east": 23.3415,
+   "south": 42.6783,
+   "north": 42.7103
   },
   "beyond": [
    {
@@ -94,8 +123,8 @@
     "source": [
      "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/"
     ],
-    "x": 0.36,
-    "y": 0.95,
+    "x": 0.39,
+    "y": 0.955,
     "dir": "s"
    },
    {
@@ -107,8 +136,8 @@
     "source": [
      "https://boyanachurch.info/en/visitors-information-en/"
     ],
-    "x": 0.18,
-    "y": 0.78,
+    "x": 0.12,
+    "y": 0.53,
     "dir": "sw"
    }
   ],

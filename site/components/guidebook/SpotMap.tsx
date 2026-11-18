@@ -1,11 +1,14 @@
 import Icon from "@/components/ui/Icon";
 import type { Drawn } from "@/content/guidebook/manifest";
+import { SITE } from "@/content/site";
 import { place, tagLines } from "@/content/guidebook/spotmap";
 import type { Area, Guidebook, MapBeyond, MapDir } from "@/content/guidebook/types";
+import { travelCity } from "@/content/travel";
+import { JsonLd, abs } from "@/lib/jsonld";
 import { mapsSearch } from "@/lib/mapsSearch";
 
 import LateArt from "./LateArt";
-import { sheetId } from "./parts";
+import { sheetId, widthOf } from "./parts";
 
 /**
  * **どんな街の地図**（#1228）。どのあたりが、どんな地区か——**概要だけ**を1枚で伝える。
@@ -24,7 +27,21 @@ import { sheetId } from "./parts";
  *
  * 位置は書き出すときに決める（`content/guidebook/spotmap.ts`）。JS を使わないので、画面が出た瞬間から押せる。
  * 絵が無い街は、エリアの色の札を大まかな位置関係（北が上）で並べる——**壊れた絵の枠を出さない**。
+ *
+ * ## 名前を焼いた地図（`am.baked`。ソフィア。#1262）
+ *
+ * あやと（2026-11-18）「見どころマップと検索したら、画像検索の結果に、地区の表示が出て欲しい」。画像検索に出るのは
+ * 絵だけなので、地区の色と名前を**絵に焼いた**（`.claude/skills/chatgpt-image/guide_layout.py`）。面の側は:
+ *
+ * - 札を重ねない。焼いた札の上に**透明の押しどころ**だけ置く（押すとエリアの窓。前と同じ）
+ * - 見出しを「<街>の見どころマップ（地区分け）」にし、絵の名前・alt と同じ語にそろえる（検索の側が絵と語を結ぶ）
+ * - 大きい版（横 1200px）を `src`、小さい版を `srcSet` に。ImageObject（構造化データ）にも大きい版を載せる。
+ *   画像のサイトマップは `app/sitemap.ts`
  */
+/** 地図のすぐ上の見出し（`About.tsx`）。名前を焼いた地図は、絵の名前・alt・構造化データと同じ語 */
+export const mapTitle = (g: Guidebook, drawn: Drawn) =>
+  drawn.areamap?.baked ? `${g.name}の見どころマップ（地区分け）` : "どのあたりに何がある？";
+
 export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
   const areas = g.about.areas;
   const am = drawn.areamap;
@@ -50,9 +67,15 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
   /* 地区の札は、manifest の位置に id か名前で合わせる。合わない地区は札を出さず、下のひとことにだけ出る */
   const tagIn = areas.flatMap((a) => {
     const p = am.areas.find((x) => x.id === a.id || x.name === a.name);
-    return p ? [{ id: a.id, name: a.name, x: p.x, y: p.y }] : [];
+    return p ? [{ id: a.id, name: a.name, x: p.x, y: p.y, w: p.w ?? 0, h: p.h ?? 0 }] : [];
   });
-  const lay = place(aspect, tagIn, am.beyond);
+  if (am.baked) {
+    /* 絵に焼いた名前と、面の地区の名前が食い違ったら止める（絵は読み直せない。名前を直したら焼き直す） */
+    const off = areas.filter((a) => !am.areas.some((x) => x.id === a.id && x.name === a.name));
+    if (off.length)
+      throw new Error(`SpotMap: 地図の絵に焼いた地区の名前が、面の地区と合わない（${off.map((a) => a.name).join("・")}）。guide_art.py finalize で焼き直す`);
+  }
+  const lay = am.baked ? place(aspect, [], am.beyond, tagIn) : place(aspect, tagIn, am.beyond);
 
   const seeIds = new Set(g.see.items.map((it) => it.id));
   const todoIds = new Set(g.todo.map((t) => t.id));
@@ -64,11 +87,43 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
         : { href: mapsSearch(b.local ?? b.name, g.local.text), ext: true };
   const at = (p: { x: number; y: number }) => ({ left: `${p.x * 100}%`, top: `${p.y * 100}%` });
 
+  const smallW = am.small && am.small !== am.src ? widthOf(am.small) : undefined;
+  const page = travelCity(g.country, g.city).href;
+
   return (
     <figure className="gb-amap" data-gb="areamap">
+      {am.baked && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "ImageObject",
+            /* 道に日本語が入る（絵の名前に「見どころマップ」）。機械に渡す URL は %XX にしておく */
+            contentUrl: encodeURI(abs(am.src)),
+            url: encodeURI(abs(am.src)),
+            name: mapTitle(g, drawn),
+            caption: am.alt,
+            ...(am.w && am.h ? { width: am.w, height: am.h } : {}),
+            encodingFormat: "image/webp",
+            inLanguage: "ja",
+            contentLocation: { "@type": "Place", name: g.name },
+            mainEntityOfPage: abs(page),
+            creditText: SITE.name,
+            creator: { "@type": "Organization", name: SITE.name, url: abs("/") },
+            copyrightNotice: `地図のデータ ${MAP_DATA}`,
+          }}
+        />
+      )}
       {/* `data-gb-late`: 絵は画面に近づいてから読む（`LateArt.tsx`）。札と矢印は字なので、はじめから出る */}
       <div className="gb-amap-art" data-gb-late="" style={{ aspectRatio: am.w && am.h ? `${am.w} / ${am.h}` : "1 / 1" }}>
-        <img src={am.src} width={am.w} height={am.h} alt={`イラスト：${am.alt || "エリアの地図"}`} loading="lazy" decoding="async" />
+        <img
+          src={am.src}
+          {...(am.baked && smallW && am.w ? { srcSet: `${am.small} ${smallW}w, ${am.src} ${am.w}w`, sizes: "(min-width: 720px) 640px, 100vw" } : {})}
+          width={am.w}
+          height={am.h}
+          alt={`イラスト：${am.alt || "エリアの地図"}`}
+          loading="lazy"
+          decoding="async"
+        />
         {lay.arrows.map((a) => {
           const b = am.beyond.find((x) => x.id === a.id)!;
           const to = goTo(b);
@@ -89,6 +144,20 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
         {lay.tags.map((t) => {
           const a = areas.find((x) => x.id === t.id)!;
           const o = tagIn.find((x) => x.id === t.id)!;
+          if (am.baked)
+            /* 焼いた札の上の、透明の押しどころ。字は絵に在るので、ここは読み上げにだけ名前を渡す */
+            return (
+              <a
+                key={a.id}
+                className="gb-amap-pin is-baked"
+                data-x={o.x}
+                data-y={o.y}
+                href={`#${sheetId("area", a.id)}`}
+                style={{ ...at(t), width: `${o.w * 100}%`, height: `${o.h * 100}%` }}
+              >
+                <span className="gb-amap-vh">{a.name}</span>
+              </a>
+            );
           const ls = tagLines(a.name);
           return (
             <a
@@ -126,6 +195,9 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
     </figure>
   );
 }
+
+/** 地図の下敷きのデータの出どころ（manifest の `base`。ここでは構造化データの字に使う） */
+const MAP_DATA = "© OpenStreetMap contributors";
 
 const ROT: Record<MapDir, number> = { n: 0, ne: 45, e: 90, se: 135, s: 180, sw: 225, w: 270, nw: 315 };
 const DIR_NAME: Record<MapDir, string> = { n: "北", ne: "北東", e: "東", se: "南東", s: "南", sw: "南西", w: "西", nw: "北西" };

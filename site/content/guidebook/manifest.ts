@@ -29,12 +29,17 @@ import type { MapBeyond, MapDir, Pic, Todo } from "./types";
  *   `bbox`（緯度経度の範囲）は描く担当の控えで、面は読まない（前は見どころの写真のピンを立てるのに使った。2026-11-16 にやめた）
  *
  * **字は絵に焼かない**（`docs/guide-design.md` 4-2）。エリアの名前・ピン・矢印は面の側で重ねる。
+ * **ただし `areamap.baked` の地図は、地区の色と名前を絵に焼いてある**（あやと 2026-11-18 #1262「見どころマップと検索したら、
+ * 画像検索の結果に、地区の表示が出て欲しい」。画像検索に出るのは絵だけなので、面の側で重ねた字は写らない）。
+ * そのときエリアの `x` `y` `w` `h` は**焼いた札の箱**（中心と幅・高さ。割合）で、面は透明の押しどころを重ねるだけ。
+ * 焼くのは `.claude/skills/chatgpt-image/guide_art.py finalize`（`guide_layout.py`）
  */
-export type AreaPin = { id?: string; name?: string; x: number; y: number };
+export type AreaPin = { id?: string; name?: string; x: number; y: number; w?: number; h?: number };
 export type Drawn = {
   cover?: Pic;
   coverTall?: Pic;
-  areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[] };
+  /** `baked`: 地区の名前を絵に焼いた地図。`small` は面で使う小さい版（`src` は画像検索に出す大きい版） */
+  areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[]; baked: boolean };
   /** やりたいことの絵（`Todo.id` の鍵）。無いあいだは、データの写真か色の地 */
   do: Record<string, Pic>;
   food: Record<string, Pic>;
@@ -106,7 +111,9 @@ export function readDrawn(country: string, city: string): Drawn {
       const x = num(a.x);
       const y = num(a.y);
       if (x === undefined || y === undefined) return [];
-      return [{ id: str(a.id), name: str(a.name), x: unit(x, w), y: unit(y, h) }];
+      const bw = num(a.w);
+      const bh = num(a.h);
+      return [{ id: str(a.id), name: str(a.name), x: unit(x, w), y: unit(y, h), ...(bw && bh ? { w: bw, h: bh } : {}) }];
     });
     const beyond = (Array.isArray(am.beyond) ? am.beyond : []).flatMap((a): MapBeyond[] => {
       if (!isObj(a)) return [];
@@ -120,7 +127,11 @@ export function readDrawn(country: string, city: string): Drawn {
         throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap.beyond に欠けた所がある（${JSON.stringify(a)}）`);
       return [{ id, name, local: str(a.local), lat: num(a.lat), lon: num(a.lon), x: unit(x, w), y: unit(y, h), dir }];
     });
-    out.areamap = { ...amPic, areas, beyond };
+    const baked = am.baked === true;
+    /* 焼いた地図は、札の箱が無いと押しどころを重ねられない。**黙って押せない地図にしない** */
+    if (baked && areas.some((a) => !a.w || !a.h))
+      throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap は名前を焼いてあるのに、札の箱（w・h）の無い地区がある`);
+    out.areamap = { ...amPic, areas, beyond, baked };
   }
   return out;
 }

@@ -452,6 +452,37 @@ def main() -> int:
         ok(rc == 0 and Image.open(dw / "sheet-do.png").size[0] > 0, "やりたいことの見比べの1枚が作られない")
         rc, _, out_ = quiet(ga.check, sp, root)
         ok(rc == 0, f"やりたいことの無い街の check に、やりたいことが混ざった: {out_.strip()}")
+
+        print("11. 地区の名前を焼いた地図（#1262）")
+        # 札の字は面と同じ丸ゴシック（控えに無ければ落とす）。焼く前の1枚は頼み書きの隣ではなく、ここの置き場へ
+        bsp = with_city(town(root), "xx/baked")
+        bsp["areamap"].update({"file": "町-見どころマップ", "ratio": 0.8, "sizes": [1200, 800], "areas": [
+            {"id": "a", "name": "Aの駅周辺", "label": ["Aの駅", "周辺"], "color": "#bdb8f2", "x": 0.3, "y": 0.3},
+            {"id": "b", "name": "B・C通り周辺", "label": ["B・", "C通り周辺"], "color": "#ffd76e", "x": 0.6, "y": 0.7}]})
+        bw, base = tmp / "bwork", tmp / "base.webp"
+        png(bw / "raw/areamap3-0.png", (1024, 1536), (240, 235, 225))
+        bman, _ = ga.finalize(bsp, root, bw, base=base)
+        am = bman["areamap"]
+        bout = root / "site/public/guide/xx/baked"
+        ok(am["src"] == "/guide/xx/baked/町-見どころマップ-1200.webp" and (am["w"], am["h"]) == (1200, 1500)
+           and Image.open(bout / "町-見どころマップ-800.webp").size == (800, 1000),
+           f"地図の名前・形（4:5）・大きい版（1200）が頼み書きのとおりでない: {am['src']} {am['w']}x{am['h']}")
+        ok(am.get("baked") is True and all(x.get("w") and x.get("h") for x in am["areas"]),
+           "名前を焼いた地図に baked と札の箱（w・h）が載らない（面が押しどころを重ねられない）")
+        big = Image.open(bout / "町-見どころマップ-1200.webp").convert("RGB")
+        a = am["areas"][0]
+        ok(sum(big.getpixel((round(a["x"] * 1200), round(a["y"] * 1500 + dy)))[0] < 140 for dy in range(-30, 31)) > 0,
+           "札の真ん中に字の画素が無い（焼けていない）")
+        ok(Image.open(base).size == (1200, 1500), "焼く前の1枚を残していない（名前だけ直した日に焼き直せない）")
+        bsp["areamap"]["areas"][0]["label"] = ["Aの駅周辺"]
+        bman2, _ = ga.finalize(bsp, root, tmp / "nowork", base=base)
+        ok(bman2["areamap"]["areas"][0]["h"] < am["areas"][0]["h"], "持ち帰った絵が無い日に、焼く前の1枚から焼き直さない")
+        bsp["areamap"]["areas"][1].update({"x": 0.32, "y": 0.32})
+        try:
+            ga.finalize(bsp, root, tmp / "nowork", base=base)
+            ok(False, "札が重なるのに黙って焼いた")
+        except ValueError as e:
+            ok("重なる" in str(e), f"札が重なるときの止めかたが違う: {e}")
     finally:
         ga.EC2 = None
         shutil.rmtree(tmp, ignore_errors=True)

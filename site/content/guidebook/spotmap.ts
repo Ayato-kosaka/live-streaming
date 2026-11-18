@@ -18,8 +18,15 @@
  * 位置は書き出すときに1回だけ決める（JS を使わない。画面が出た瞬間から押せる）。札の大きさは px なので、
  * 狭い画面ほど相対的に大きく見えて重なる。**いちばん狭い絵（`NARROW`）で重ならなければ、広い画面でも重ならない。**
  * 矢印どうしが重なるときと、札がどうしても置けないときは、**書き出しを止める**（黙って重ねない）。
+ *
+ * ## 名前を焼いた地図（`fixed`）
+ *
+ * 地区の名前を絵に焼いた地図（#1262。画像検索に地区名を写すため）は、札が絵の一部なので**動かせない**。
+ * 焼いた札の箱（押しどころ。`HIT` 未満なら `HIT` に広げる）を先に置き、矢印はそれを避けて置く。
  */
 
+/** 押しどころのいちばん小さい辺（px）。焼いた札の押しどころは、札がこれより小さくてもここまで広げる（CSS の `.gb-amap-pin.is-baked`） */
+export const HIT = 48;
 /** 位置を決める、いちばん狭い絵の幅（px）。390px の画面で絵は 366px。それより少し狭い端末（360px）も見込む */
 export const NARROW = 340;
 /** 札と矢印の見た目の高さ（CSS の `.gb-amap-pin` `.gb-amap-out` と同じ）。当たりは `::after` で 48px 以上 */
@@ -90,14 +97,14 @@ export type Placed = {
   arrows: { id: string; x: number; y: number }[];
 };
 
-const rectHit = (a: Rect, b: Rect) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + GAP_X && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + GAP_Y;
+const rectHit = (a: Rect, b: Rect, gx = GAP_X, gy = GAP_Y) => Math.abs(a.x - b.x) < (a.w + b.w) / 2 + gx && Math.abs(a.y - b.y) < (a.h + b.h) / 2 + gy;
 
 /**
  * 並べる。入力は割合（0〜1）、出力も割合。`tags` はエリアの札（manifest の位置）、`arrows` は地図の外の矢印（manifest の位置）。
  * 矢印を先に置く（縁の向きは動かせない）。札は manifest の位置から近い順に空いた所へ（横に動かすほうを重く見る。
  * 横の位置は地区の意味が強い）
  */
-export function place(aspect: number, tags: In[], arrows: In[]): Placed {
+export function place(aspect: number, tags: In[], arrows: In[], fixed: (In & { w: number; h: number })[] = []): Placed {
   const W = NARROW;
   const H = NARROW * aspect;
   const px = (p: { x: number; y: number }) => ({ x: p.x * W, y: p.y * H });
@@ -105,6 +112,16 @@ export function place(aspect: number, tags: In[], arrows: In[]): Placed {
   const inside = (r: Rect) => r.x - r.w / 2 >= EDGE && r.x + r.w / 2 <= W - EDGE && r.y - r.h / 2 >= EDGE && r.y + r.h / 2 <= H - EDGE;
   /* 絵の右下の「イラスト・位置は目安」の札（CSS の `.gb-amap-art .gb-pic-tag`）。だれも重ならない */
   const boxes: Rect[] = [{ id: "イラストの札", w: NOTE_W, h: NOTE_H, x: W - 6 - NOTE_W / 2, y: H - 6 - NOTE_H / 2 }];
+
+  /* 0 絵に焼いた札。動かさない（押しどころの大きさで場所を取る） */
+  for (const f of fixed) {
+    const r = { id: f.name, ...px(f), w: Math.max(f.w * W, HIT), h: Math.max(f.h * H, HIT) };
+    /* 焼いた札の押しどころは `::after` で広げない（CSS の `.gb-amap-pin.is-baked`）ので、札どうしはすきま無しで比べる */
+    const o = boxes.find((q) => rectHit(q, r, 0, 0));
+    if (o) throw new Error(`spotmap: 絵に焼いた札「${f.name}」と「${o.id}」が重なる（頼み書きの areas の x・y を離して焼き直す）`);
+    boxes.push(r);
+    out.tags.push({ id: f.id, x: f.x, y: f.y });
+  }
 
   /* 1 矢印。絵の縁に置く。はみ出すぶんは内側へ寄せる（動かすのはそれだけ） */
   for (const a of arrows) {

@@ -6,7 +6,7 @@
  *   DIST=site/.next-3130 SPORT=4130 node tools/sprites/guidebook.mjs                 # ソフィア
  *   DIST=… SPORT=… PAGE=/travel/north-macedonia/skopje node tools/sprites/guidebook.mjs
  *   …  BASE_PORT=4131 BASE_PAGE=/bulgaria node tools/sprites/guidebook.mjs       # 字の量を前の面と比べる
- *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ずらした札のある街で落ちる。ソフィアは矢印と重なる）
+ *   …  BREAK=pins node tools/sprites/guidebook.mjs     # 対照: エリアの札をずらす前の位置へ戻す（ずらした札のある街で落ちる。ソフィアは名前を絵に焼いたので動かない＝落ちない）
  *   …  BREAK=arrow node tools/sprites/guidebook.mjs    # 対照: 地図の外の矢印を絵の外へ出す（はみ出して落ちる。地図の外のある街で）
  *   …  BREAK=mixed node tools/sprites/guidebook.mjs    # 対照: やりたいことを前の形（1枚目だけ大きく・残りは2列）に戻す（同じ大きさでない・縦1列でないで落ちる）
  *   …  BREAK=chips node tools/sprites/guidebook.mjs    # 対照: 札に豚の印・「イラスト」の札・「必見」を1つずつ差し込む（札の印で落ちる）
@@ -32,6 +32,7 @@
  * | 札の印 | 面に見えている札（やりたいこと・見たい・食べたい・買いたい）の印が**その国ならでは・値段・季節（と「行った」）だけ**。豚・酒の印は窓の中だけ（一覧の凡例も無い）。「イラスト」「必見」の札が無い。札の読み上げの名前に「豚肉あり」「アルコールあり」が無い（あやと 2026-11-16・`docs/island-misses.md` #328） |
  * | どんな街 | 問いと答え（「歴史は？」）が2組以上・問いが「？」で終わる・答えに出どころの行。**大きな数の札（前の `gb-about-num`）と「よく言われること」が無い** |
  * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
+ * | 名前を焼いた地図 | ソフィア（#1262）は札が絵の一部。面の札（`.gb-amap-pin.is-baked`）は透明の押しどころで、上と同じ重なり・はみ出し・当たり 44px・押した先を見る |
  * | どんな街の地図 | 地区の札・地図の外の矢印が、390 と 1440 で**どの2つも重ならず**、絵の外にはみ出さない。当たり 44px 以上（`hitbox.mjs`）。押すと窓が開く（窓の無い矢印は Google マップ）。**写真のピン・番号の一覧が無い**（概要だけ。詳しい場所はマイマップ）。地区のひとことが地区の数だけ在り、行き先の窓が在る。「詳しい場所は」の案内の先（`#see-mymap`）が在る |
  * | 見たいもののマイマップ | マイマップのある街で、`#see-mymap` が見たいものの最初の札より上 |
  * | 写真 | 書き出した HTML に Wikimedia から直に読む絵が0本 |
