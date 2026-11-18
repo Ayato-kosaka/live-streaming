@@ -47,6 +47,12 @@ export const metadata: Metadata = {
   /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、旅に出た日から
      次のビルドまで直せない。いつ読んでも本当のことだけにする（`content/site.ts`）。 */
   description: SITE.description,
+  /* **検索と Discover に、絵を大きく出してよいと言う**（#1262・#332）。言わないと Google は「既定の大きさ」の
+     小さな絵しか出さない。Discover は横 1200px 以上の絵と、この札（`max-image-preview:large`）を求めている。
+     検索の上位の旅の面は 67% がこれを持っていて、島は 0面だった（`python/seo_compete.py`）。
+     抜き書きと動画の下見も切らない（-1 = 上限なし）。**`noindex` の面は自分の `robots` で丸ごと置き換わる**
+     （Next は `robots` を親と混ぜない）ので、検索に出さない面にこの札は付かない */
+  robots: { "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   /* **ここは表紙（`/`）と、面を持たない 404 のぶん。**
      ほかの面は `lib/share.ts` が面ごとに出す。Next は `openGraph` を親と
      混ぜないので、面が1つでも書けばここは丸ごと置き換わる。

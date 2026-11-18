@@ -93,11 +93,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...publicCities().map((c) => {
       const g = guidebookOf(c.country, c.slug);
       if (!g) throw new Error(`app/sitemap.ts: ${c.country}/${c.slug} の中身が content/guidebook/ に無い`);
-      /* 地区の名前を焼いた見どころマップは、画像のサイトマップ（`<image:image>`）にも載せる（#1262。画像検索に地区分けの
-         絵を出す）。道に日本語が入るので %XX にしてから渡す */
-      const am = readDrawn(c.country, c.slug).areamap;
+      /* **面に出ている描いた絵を、ぜんぶ画像のサイトマップ（`<image:image>`）に載せる**（#1262・#332）。
+         前は地区の名前を焼いた見どころマップの1枚だけで、表紙・やりたいこと・料理・土産の絵は Google が面を読んで
+         見つけるのを待つしかなかった。見どころマップを先頭に（画像検索に出したい1枚）。道に日本語が入るので %XX に。
+         **見たいもの（実在の場所）の写真は載せない**——借りた写真で、島の絵ではない */
+      const d = readDrawn(c.country, c.slug);
+      const pics = [
+        d.areamap?.baked ? d.areamap.src : undefined,
+        d.cover?.src,
+        ...[d.do, d.food, d.buy].flatMap((m) => Object.values(m).map((p) => p.src)),
+      ].filter((s): s is string => !!s);
       const r = row(c.href, g.updated);
-      return am?.baked ? { ...r, images: [encodeURI(`${SITE.url}${am.src}`)] } : r;
+      return pics.length ? { ...r, images: [...new Set(pics)].map((s) => encodeURI(`${SITE.url}${s}`)) } : r;
     }),
     /* 街の記事（`/travel/<国>/<街>/<話>`）。街と同じく、公開前の印が付いた記事は並べない（`publicArticles`） */
     ...publicArticles().map((a) => row(a.href, articleOf(a.country, a.city, a.slug).updated)),

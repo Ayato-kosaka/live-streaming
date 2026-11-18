@@ -76,6 +76,8 @@ REPO = os.environ.get("GITHUB_REPOSITORY", "Ayato-kosaka/live-streaming")
 
 # 前の週のコメントを見分ける印。**中の JSON を前週比に使う**（載った面の数は API が履歴を持たない）
 MARK = "<!-- seo-weekly v1 "
+# 8節（点数）を付けるか。点数は本番・YouTube・検索の結果を読みに行くので、対照（偽の Search Console）では切る
+SCORE = os.environ.get("SEO_WEEKLY_SCORE", "1") != "0"
 LAG_DAYS = 3
 # URL 検査は 1プロパティ 1分 600回・1日 2,000回まで。1回 5秒ほどかかる（2026-11-18、本物の鍵で 149面に
 # 約14分）ので、4本ずつ並べる（1分 50回ほど。上限の 1/10）。1本ごとに少し待つ
@@ -363,6 +365,49 @@ def audit_lines(path: str | None) -> tuple[list[str], bool]:
     return out, True
 
 
+def score_section(cfg: dict, origin: str, p_now: dict | None, insp: dict, prev_mark: dict | None,
+                  mark: dict, unread: list[str]) -> list[str]:
+    """8節。面ごとの点（前週比）と、いちばん点を失っている項目3つ。採点は `seo_score.py`（#332）。
+
+    週の表が持っている2つ（その面の週の表示・URL 検査で載っているか）を採点に渡す。**読めなかったものは渡さない**
+    （採点の側で「？ 測れない」になり、0点に数えて「？」を付けて出る）。"""
+    import seo_score
+    pages = [p for p in cfg["pages"] if p.get("kind")]
+    extra: dict = {}
+    for pg in pages:
+        e: dict = {}
+        if p_now is not None:
+            e["impr"] = int(total(p_now.get(pg["path"], []))["impressions"])
+        st = insp.get(origin + (pg["path"] if pg["path"] != "/" else ""))
+        if st is not None:
+            e["indexed"] = st.get("verdict") in ("PASS", "PARTIAL")
+        extra[pg["path"]] = e
+    out = ["\n### 8. 点数（`seo_score.py`。上位の面と同じ物差しで 100点満点）\n"]
+    try:
+        res = seo_score.measure(origin, pages, youtube=True, targets=cfg["targets"], extra=extra)
+    except Exception as e:  # noqa: BLE001 — 採点が転んでも、ほかの節は書く
+        unread.append(f"点数: {type(e).__name__}: {str(e)[:WHY_MAX]}")
+        return out + ["**読めなかった**。"]
+    before = (prev_mark or {}).get("score") or {}
+    mark["score"] = {}
+    rows = []
+    for p in res["pages"]:
+        if "items" not in p:
+            rows.append([f"{p['label']} `{p['path']}`", "読めなかった", "", p.get("error", "")])
+            continue
+        mark["score"][p["path"]] = p["points"]
+        b = before.get(p["path"])
+        lost = sorted((r for r in p["items"]), key=lambda r: -(r["weight"] - (r["got"] or 0)))[:3]
+        label = {it.id: it.label for it in seo_score.CARD}
+        rows.append([f"{p['label']} `{p['path']}`", f"**{p['points']:g}**",
+                     f"{b:g}" if isinstance(b, (int, float)) else "—",
+                     "・".join(f"{label[r['id']].split('（')[0]}（{r['value']}）" for r in lost)])
+    out.append(table(["面", "点", "前週", "いちばん失っている3つ"], rows))
+    out.append("\n項目と重みは [`docs/seo.md`](https://github.com/" + REPO + "/blob/master/docs/seo.md) の6章。"
+               "「測れない」は0点に数えている（0 と書いていない）。")
+    return out
+
+
 def build(cfg: dict, today: date, con: Console | None, auth_err: str | None,
           prev_mark: dict | None, inspect_n: int | None, audit: str | None) -> tuple[str, int, dict]:
     origin = cfg["origin"]
@@ -552,6 +597,10 @@ def build(cfg: dict, today: date, con: Console | None, auth_err: str | None,
         else:
             out.append(f"通った {len(good)}本・**外れた／測れなかった {len(bad)}本**:")
             out += [f"- {ln}" for ln in (bad or a_lines)[:12]]
+
+    # 8. 点数（seo_score の採点表。上位の面と同じ物差しで 100点満点）
+    if SCORE:
+        out += score_section(cfg, origin, p_now, insp, prev_mark, mark, unread)
 
     if unread:
         out.append("\n### 読めなかったもの\n")

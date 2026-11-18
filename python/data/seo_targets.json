@@ -21,12 +21,13 @@
     {"label": "ブルガリア 観光", "page": "/travel/bulgaria", "queries": ["ブルガリア 観光", "ブルガリア 旅行"]}
   ],
   "image_contains": ["見どころマップ"],
+  "_pages": "kind は採点の型（python/seo_score.py の CARD の applies。guide=街・article=記事・country=国・home=表紙・hub=一覧）。head は題の前半に在ってほしい語",
   "pages": [
-    {"label": "ソフィア", "path": "/travel/bulgaria/sofia"},
-    {"label": "ブルガリア", "path": "/travel/bulgaria"},
-    {"label": "表紙", "path": "/"},
-    {"label": "歩いた国", "path": "/travel"},
-    {"label": "スコピエ", "path": "/travel/north-macedonia/skopje"},
-    {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices"}
+    {"label": "ソフィア", "path": "/travel/bulgaria/sofia", "kind": "guide", "head": "ソフィア観光"},
+    {"label": "ブルガリア", "path": "/travel/bulgaria", "kind": "country", "head": "ブルガリア"},
+    {"label": "表紙", "path": "/", "kind": "home", "head": "あやと"},
+    {"label": "歩いた国", "path": "/travel", "kind": "hub"},
+    {"label": "スコピエ", "path": "/travel/north-macedonia/skopje", "kind": "guide", "head": "スコピエ観光"},
+    {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices", "kind": "article", "head": "スコピエの物価"}
   ]
 }

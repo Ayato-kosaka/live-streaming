@@ -160,6 +160,8 @@ def load(base: str):
     import seo_weekly
     m = importlib.reload(seo_weekly)
     m.INSPECT_PAUSE = 0
+    # 点数（8節）は本番・YouTube・検索の結果を読みに行くので切る。採点そのものの対照は seo_score_selftest.py
+    m.SCORE = False
     brk = os.environ.get("BREAK", "")
     if brk == "norm":
         m.norm_q = lambda s: s

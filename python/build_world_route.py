@@ -136,6 +136,27 @@ BEFORE_AT = {
     "italy": ("イタリア", 13.60, 42.30),
 }
 
+# いま歩いている旅の国（`content/countries.ts` の `AHEAD_COUNTRIES`）。**`ROUTE` には入れない。**
+#
+# `ROUTE` は歩き終わった国（`order` と1対1）で、世界1枚の番号つきの塗りになる。歩いている最中の国を
+# そこへ混ぜると、記録（滞在・街・見どころ）が入る前から世界の地図で「歩いた国」に塗られる。
+# こちらは**寄りの地図だけ**に使う——国の面（`/travel/<国>`）の頭に、その国がヨーロッパのどのあたりかを出すため
+# （あやと 2026-11-18「その国がヨーロッパのどのあたりかが分かれば良い。ルートは出さなくていい」）。
+# 歩き終わって `COUNTRIES` へ移したら、ここから `ROUTE` へ移す。
+WALKING = {
+    "Albania": "albania",
+    "Macedonia": "north-macedonia",
+    "Bulgaria": "bulgaria",
+}
+
+# 歩いている最中の国の寄りの地図に立てる街（首都）。**世界1枚の `CITIES` には足さない**——あちらに足すと、
+# 世界の地図に点と線の起点が増える。ここは「国のどこに首都があるか」の目印だけで、線は引かない。
+# (id, 表示名, 経度, 緯度, 国, 種類)。座標は街の中心（OpenStreetMap の街の点）
+WALK_CITIES = [
+    ("skopje", "スコピエ", 21.4314, 41.9965, "north-macedonia", "hub"),
+    ("sofia", "ソフィア", 23.3219, 42.6977, "bulgaria", "hub"),
+]
+
 LAKES = {
     "Lake Nasser", "Dead Sea", "Lake Sevan", "Lake Van", "Lake Urmia", "Lake Tuz",
     "Lake Balaton", "Lake Geneva", "Bodensee", "IJsselmeer", "Markermeer",
@@ -844,6 +865,10 @@ ZOOM = {
     # 拡大ではなくその国の範囲で投影し直したものなので、焼くのはここでしかできない。
     "spain": (-9.6, 3.6, 35.9, 43.9),
     "italy": (6.4, 18.8, 35.3, 47.2),
+    # いま歩いている旅の国（`WALKING`）。**国の輪ぎりぎりにしない。** 面で言いたいのは
+    # 「ヨーロッパのどのあたりか」なので、まわりの海（アドリア海・エーゲ海・黒海）が入るところまで引く
+    "north-macedonia": (15.6, 27.4, 37.6, 46.2),
+    "bulgaria": (17.6, 31.4, 38.4, 47.0),
 }
 
 
@@ -1226,9 +1251,22 @@ def scale_of(project, lon_min: float, lon_max: float, lat_min: float, lat_max: f
     return {"km": km, "len": round(km / per), "kmPerUnit": round(per, 4)}
 
 
-def main() -> None:
+def main(only: set[str] | None = None) -> None:
+    """焼く。
+
+    Args:
+        only: 寄りの地図をこの国だけ焼く（世界1枚は焼かない）。None ならぜんぶ。
+            歩いている最中の国の地図を足すときに、ほかの24枚と世界1枚を焼き直さないため
+            （元データは `@master` を引くので、焼き直すと足していない国まで字が動きうる）
+    """
     topo = json.load(open(SRC, encoding="utf-8"))
     arcs = decode_arcs(topo)
+    if only is not None:
+        unknown = only - set(ZOOM)
+        if unknown:
+            raise SystemExit(f"--only: ZOOM に無い国 {sorted(unknown)}")
+        zoom_all(topo, arcs, only)
+        return
 
     # ---- 世界1枚 ----------------------------------------------------
     out, project = build(
@@ -1314,10 +1352,18 @@ def main() -> None:
     print(f"  countries {sum(len(v) for v in out['countries'].values()) / 1024:6.1f} KB")
     print(f"  woods {len(out['woods'])} / dunes {len(out['dunes'])} / peaks {len(out['peaks'])} / glints {len(out['glints'])}")
 
+    zoom_all(topo, arcs, None)
+
+
+def zoom_all(topo: dict, arcs: list, only: set[str] | None) -> None:
+    """国ごとの寄りの地図を焼く。`only` があれば、その国だけ。"""
     # ---- 国ごとの寄り ----------------------------------------------
     os.makedirs(OUT_DIR_C, exist_ok=True)
     total = 0
+    walking = set(WALKING.values())
     for slug, (a, b, c, d) in ZOOM.items():
+        if only is not None and slug not in only:
+            continue
         # 手で決めた範囲は国の端ぎりぎりのことがあり、ヨルダンとUAEが
         # 画面の下辺で切れていた。四方に少し足してから横長に広げる。
         px = (b - a) * 0.05
@@ -1336,18 +1382,27 @@ def main() -> None:
         co, cproj = build(
             topo, arcs, a, b, c, d, 900.0,
             eps=eps, min_area=2.5, detail=True, dots=52,
-            route=({**ROUTE, **BEFORE} if slug in BEFORE.values() else ROUTE),
+            route=(
+                {**ROUTE, **BEFORE} if slug in BEFORE.values()
+                # 歩いている最中の国は、自分と、同じ旅で歩いた隣の国も塗る（`WALKING`）
+                else {**ROUTE, **WALKING} if slug in walking
+                else ROUTE
+            ),
         )
         mine = {x[0] for x in CITIES if x[4] == slug}
+        # 歩いている最中の国には、その国の首都の点だけを足す（`WALK_CITIES`）。ほかの国の地図には出さない
+        spots = CITIES + ([x for x in WALK_CITIES if x[4] == slug] if slug in walking else [])
         co["cities"] = [
             {
                 "id": cid, "name": nm, "country": country, "kind": kind,
                 "x": round(cproj(lon, lat)[0], 1), "y": round(cproj(lon, lat)[1], 1),
             }
-            for cid, nm, lon, lat, country, kind in CITIES
+            for cid, nm, lon, lat, country, kind in spots
             if a - 0.6 < lon < b + 0.6 and c - 0.6 < lat < d + 0.6
         ]
-        co["legs"] = make_legs(cproj, mine, co["view"]["w"], co["view"]["h"])
+        # **歩いている最中の国には線を引かない**（あやと 2026-11-18「ルートは出さなくていい」）。
+        # 区間（`LEGS`）も歩き終わった国のものしか無い
+        co["legs"] = [] if slug in walking else make_legs(cproj, mine, co["view"]["w"], co["view"]["h"])
         co["scale"] = scale_of(cproj, a, b, c, d)
         co["slug"] = slug
         p = f"{OUT_DIR_C}/{slug}.json"
@@ -1360,4 +1415,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    # `--only bulgaria,north-macedonia` … その国の寄りの地図だけを焼く（世界1枚とほかの国は触らない）
+    args = sys.argv[1:]
+    main(set(args[args.index("--only") + 1].split(",")) if "--only" in args else None)
