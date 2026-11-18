@@ -1,16 +1,121 @@
 {
  "checked_through": {
-  "start": 1791814065,
-  "jst": "2026-10-12 23:07",
-  "id": "NY9pzYrA-5o"
+  "start": 1794920491,
+  "jst": "2026-11-17 22:01",
+  "id": "aGOz5otlEs8"
  },
- "last_run": "2026-10-13",
+ "last_run": "2026-11-18",
  "hold": {},
  "videos": {
+  "aGOz5otlEs8": {
+   "title": "🇧🇬ブルガリアの聖ソフィア教会みにいこか！",
+   "start": "2026-11-17 22:01",
+   "state": "editing",
+   "claims_left": 1,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "r5TzQ2uUS1U",
+     "song": "HURT / ",
+     "action": "mute"
+    }
+   ],
+   "why": "HURT / "
+  },
+  "zDHHuafmP1A": {
+   "title": "🇧🇬ブルガリアのクリスマスマーケットいこか！",
+   "start": "2026-11-14 22:01",
+   "state": "editing",
+   "claims_left": 3,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "5D99anAudCo",
+     "song": "Just A Girl / Justin Moon|Justin Moon|Macy Marshburn",
+     "action": "erase"
+    }
+   ],
+   "why": "Just A Girl / Justin Moon|Justin Moon|Macy Marshburn"
+  },
+  "-oDWI23uBgc": {
+   "title": "🇧🇬ブルガリアついたんやけど！！！！！",
+   "start": "2026-11-12 20:29",
+   "state": "editing",
+   "claims_left": 1,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "qlHhx8yzAq0",
+     "song": "Fastlove, Pt. 1 / George Michael",
+     "action": "erase"
+    }
+   ],
+   "why": "Fastlove, Pt. 1 / George Michael"
+  },
+  "dv6hDuR0teU": {
+   "title": "🇲🇰北マケドニアで１０月の月末配信や！",
+   "start": "2026-10-31 19:01",
+   "state": "editing",
+   "claims_left": 30,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "0aLyjLUfNoo",
+     "song": "Sto Sviraca / Sasa Matic",
+     "action": "erase"
+    }
+   ],
+   "why": "Sto Sviraca / Sasa Matic"
+  },
+  "la_OkustLkA": {
+   "title": "🇲🇰北マケドニアのショッピングモールみにいこか！防寒具買いたい！",
+   "start": "2026-10-28 22:02",
+   "state": "editing",
+   "claims_left": 2,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "K2eZBeVJblE",
+     "song": "The Best / Tina Turner",
+     "action": "erase"
+    }
+   ],
+   "why": "The Best / Tina Turner"
+  },
+  "eHBAnQF56-E": {
+   "title": "🇲🇰北マケドニアのマトカ渓谷いこー！紅葉みながら川下りや！",
+   "start": "2026-10-24 21:23",
+   "state": "editing",
+   "claims_left": 8,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "8KnNzyQnmHk",
+     "song": "Ku shkove naten / Dafina Zeqiri",
+     "action": "erase"
+    }
+   ],
+   "why": "Ku shkove naten / Dafina Zeqiri"
+  },
+  "vZ2O8pabk1g": {
+   "title": "【緊急】ホステル追い出されました",
+   "start": "2026-10-23 18:59",
+   "state": "editing",
+   "claims_left": 1,
+   "history": [
+    {
+     "date": "2026-11-18",
+     "claim": "YmjQASr_89w",
+     "song": "Fuego / Gotts Street Park",
+     "action": "erase"
+    }
+   ],
+   "why": "Fuego / Gotts Street Park"
+  },
   "C1dzddgQr30": {
    "title": "アルバニアで大型ショッピングモールいこ！スニーカー買いに行こ！",
    "start": "2026-10-01 22:26",
-   "state": "to-erase",
+   "state": "editing",
    "claims_left": 3,
    "history": [
     {
@@ -54,6 +159,12 @@
      "claim": "Y-8_2MnznFI",
      "song": "Bad Dreams (HUGEL Extended Remix) / Teddy Swims",
      "action": "erase"
+    },
+    {
+     "date": "2026-11-18",
+     "claim": "eaXFVdrR-O0",
+     "song": "Low / DJ Spade, Dawda",
+     "action": "erase"
     }
    ],
    "why": "Low / DJ Spade, Dawda"
@@ -61,56 +172,15 @@
   "kunXt2sXnFQ": {
    "title": "【七日目】親友に会いにスウェーデンまでヒッチハイクします、エストニア🇪🇪タリン　まで",
    "start": "2026-09-18 13:03",
-   "state": "to-mute",
+   "state": "error",
    "claims_left": 5,
    "history": [],
-   "why": "THAT'S SO TRUE / "
-  },
-  "k4DxGQlkD6U": {
-   "title": "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日",
-   "start": "2026-09-17 19:00",
-   "state": "editing",
-   "claims_left": 0,
-   "history": [
-    {
-     "date": "2026-10-12",
-     "claim": "_1fZb26Iyxw",
-     "song": "It's A Man's, Man's, Man's World / James Brown",
-     "action": "erase"
-    },
-    {
-     "date": "2026-10-12",
-     "claim": "znIAll7Y2Jk",
-     "song": "Wish I Was Your Lover / Enrique Iglesias",
-     "action": "erase"
-    },
-    {
-     "date": "2026-10-12",
-     "claim": "ztEFKNPJFrY",
-     "song": "テルーの唄（歌集バージョン） / 手嶌 葵",
-     "action": "erase"
-    },
-    {
-     "date": "2026-10-13",
-     "claim": "U-O0aGYr19Y",
-     "song": "海の見える街 / ",
-     "action": "mute"
-    }
-   ],
-   "why": "動画編集が進行中"
-  },
-  "hrXYXcu9IDE": {
-   "title": "【一日目】親友に会いにスウェーデンまで、ワルシャワまで",
-   "start": "2026-09-12 13:21",
-   "state": "editing",
-   "claims_left": 1,
-   "history": [],
-   "why": "申し立てを再処理中（曲の消去のあと）"
+   "why": "RuntimeError: timeout: !!(() => { for (const b of document.querySelectorAll('ytcp-button')) {\n        if (b.innerText.trim("
   },
   "Pnbi01M0t0I": {
    "title": "土曜やしトビリシ海まで歩こか！",
    "start": "2026-07-11 21:57",
-   "state": "to-erase",
+   "state": "editing",
    "claims_left": 5,
    "history": [
     {
@@ -129,6 +199,12 @@
      "date": "2026-10-12",
      "claim": "Kwtb6azY_KI",
      "song": "MIRROR MIRROR [LP23] / 平井 大",
+     "action": "erase"
+    },
+    {
+     "date": "2026-11-18",
+     "claim": "Xr0cElMURVc",
+     "song": "Fushigina Poketto / Icchy & Naru (BomBom Academy)",
      "action": "erase"
     }
    ],
@@ -239,7 +315,7 @@
   "6ZezMEA3emg": {
    "title": "【帰路ヒッチハイク②】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。12日目ヒッチハイクでエレバンに帰る",
    "start": "2026-05-10 14:48",
-   "state": "editing",
+   "state": "to-erase",
    "claims_left": 32,
    "history": [
     {
@@ -255,7 +331,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "Loveline (Remastered) / Tavares"
   },
   "gse7fek4Cpk": {
    "title": "【5日目①】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
@@ -281,8 +357,8 @@
   "5cWmE-KqHLA": {
    "title": "四月の月末配信じゃい！！！",
    "start": "2026-04-25 18:59",
-   "state": "editing",
-   "claims_left": 5,
+   "state": "to-erase",
+   "claims_left": 4,
    "history": [
     {
      "date": "2026-10-12",
@@ -297,7 +373,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "J'attendrai / Jill Barber"
   },
   "OeptOBqm1dY": {
    "title": "ショッピングモールなう",
@@ -681,13 +757,13 @@
      "action": "erase"
     }
    ],
-   "why": "At Night (Alan Braxe Remix) / Shakedown"
+   "why": "At Night (Alan Braxe Remix [Remastered 2023]) / Shakedown"
   },
   "-5Ihju_Nzgc": {
    "title": "後編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃",
    "start": "2025-03-29 01:53",
-   "state": "editing",
-   "claims_left": 11,
+   "state": "to-mute",
+   "claims_left": 10,
    "history": [
     {
      "date": "2026-10-12",
@@ -708,7 +784,7 @@
      "action": "mute"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "FAINT OF HEART / "
   },
   "BTl89GOp-QU": {
    "title": "ベルギー🇧🇪リエージュからドイツ🇩🇪ケルンに移動します 21:30~",
@@ -867,8 +943,8 @@
   "fqk0KVAqMps": {
    "title": "【神回】ロンドン街散策！！ノッティングヒルから、アフタヌーンティー、冬のワンダーランドへ！",
    "start": "2025-01-05 19:12",
-   "state": "editing",
-   "claims_left": 4,
+   "state": "to-erase",
+   "claims_left": 3,
    "history": [
     {
      "date": "2026-10-12",
@@ -877,7 +953,7 @@
      "action": "erase"
     }
    ],
-   "why": "動画編集が進行中"
+   "why": "Bei Mir Bist Du Schön / Draumnaach Orchestra"
   },
   "ceSScIFdVuE": {
    "title": "ヨーロッパ旅が終わってしまったので1時間配信します😕",
@@ -946,7 +1022,7 @@
      "action": "mute"
     }
    ],
-   "why": "I Will Survive (Single Version) / Gloria Gaynor"
+   "why": "I Will Survive (Phil Kelsey 7\" Remix) / Gloria Gaynor"
   },
   "aencgvAwwn4": {
    "title": "ハンガリー最終日、別れはいつも突然に😢",
