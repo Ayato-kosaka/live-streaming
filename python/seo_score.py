@@ -289,10 +289,13 @@ def judge(it: Item, f: dict, site: dict) -> tuple[float, str]:
     if it.id == "mapimg":
         return float(f["map_imgs"] > 0), f"{f['map_imgs']}枚"
     if it.id == "alt":
+        # 自分の絵が1枚も無い面（飾りだけ・借りた絵だけ）は、名乗らせる絵が無いので当てない。0点にすると
+        # 「飾りを飾りのまま置いた」ことで点を失う（/travel が 2 → 0 になった。2026-11-18）
         a = sum(1 for _, alt in own if alt and alt.strip())
-        return (_ratio(a / len(own), 0.9) if own else 0.0), f"{a}/{len(own)}"
+        return (_ratio(a / len(own), 0.9), f"{a}/{len(own)}") if own else (NA, "自分の絵が無い")
     if it.id == "named":
-        return (_ratio(f["imgs_named"] / f["imgs"], 0.9) if f["imgs"] else 0.0), f"{f['imgs_named']}/{f['imgs']}"
+        return ((_ratio(f["imgs_named"] / f["imgs"], 0.9), f"{f['imgs_named']}/{f['imgs']}") if f["imgs"]
+                else (NA, "絵が無い"))
     if it.id == "imgn":
         return _ratio(f["imgs"], 15), f"{f['imgs']}枚"
     if it.id == "imgld":
