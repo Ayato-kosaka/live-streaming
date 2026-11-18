@@ -1,0 +1,1326 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "jnKVIXn4qQs-p1",
+ "style": "style_ygt.json",
+ "sources": {
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/01_card_bottle.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/05_1-35-58_1-39-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5758.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/02_guide_cover.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/03_card_tram.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_gen/01_gen_D1.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/01_0-35-50_0-36-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2150.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/04_card_stalls.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/05_card_spice.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest2/jnKVIXn4qQs/clips/01_0-33-25_0-34-45.mp4",
+   "watermark": "prism_live",
+   "t0": 2005.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/06_1-41-20_1-42-10.mp4",
+   "watermark": "prism_live",
+   "t0": 6080.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/04_1-33-30_1-34-10.mp4",
+   "watermark": "prism_live",
+   "t0": 5610.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/02_1-28-00_1-28-40.mp4",
+   "watermark": "prism_live",
+   "t0": 5280.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/03_1-30-25_1-31-30.mp4",
+   "watermark": "prism_live",
+   "t0": 5425.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest2/jnKVIXn4qQs/clips/02_1-31-25_1-32-40.mp4",
+   "watermark": "prism_live",
+   "t0": 5485.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_gen/02_gen_D2.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/06_card_park.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 53,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.09,
+    "x": 0.45,
+    "y": 0.55
+   },
+   "note": "「ブルガリアのヨーグルト、」: あやと島カード 11-13（МЛЕКАРНИЦА の前のいちごの瓶）。0秒目を配信の粗い1コマにしない（F-079）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 2544,
+   "out": 2596,
+   "row": 0,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.22,
+    "x": 0.62,
+    "y": 0.33
+   },
+   "note": "「本当に美味しいか検証して見た！」: 瓶を傾けて飲む（答えの画。F-073）"
+  },
+  {
+   "src": "c3_02",
+   "in": 15,
+   "out": 49,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "ガイドの表紙の絵（ネフスキー大聖堂）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_03",
+   "in": 15,
+   "out": 48,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.62,
+    "y": 0.55
+   },
+   "note": "カード 11-12 黄色い路面電車の通り（ソフィアの街）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c4_01",
+   "in": 15,
+   "out": 98,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "描いた絵 D1（日本のスーパーのプレーンヨーグルト。字・ロゴなし）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01",
+   "in": 210,
+   "out": 246,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "女性市場の広場へ歩く（＋壺のヨーグルトの札）"
+  },
+  {
+   "src": "c01",
+   "in": 1548,
+   "out": 1574,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "ЖЕНСКИ ПАЗАР の門（場所の札）"
+  },
+  {
+   "src": "c3_04",
+   "in": 15,
+   "out": 39,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.4,
+    "y": 0.5
+   },
+   "note": "カード 11-13 屋台の並び（ヨーグルトが無い）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_05",
+   "in": 15,
+   "out": 40,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "カード 11-13 スパイスと土産の屋台（ヨーグルトが無い）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 618,
+   "out": 676,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.4,
+    "y": 0.55
+   },
+   "note": "土産物の焼き物の店（ヨーグルトは出てこない）。疑う顔は配信に写っていない（0:33:25〜0:34:45 は外向きのカメラだけ）"
+  },
+  {
+   "src": "c01",
+   "in": 960,
+   "out": 1031,
+   "row": 6,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.18,
+    "x": 0.42,
+    "y": 0.45
+   },
+   "note": "農家の市の看板に写るヨーグルトのカップへ寄る"
+  },
+  {
+   "src": "c06",
+   "in": 744,
+   "out": 807,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.45,
+    "y": 0.3
+   },
+   "note": "本人のツッコミの顔（F-058: 顔が中身になる行）。看板が続くと似た見た目が3秒を越えるので顔に替えた"
+  },
+  {
+   "src": "c04",
+   "in": 345,
+   "out": 419,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "ソフィアの通りを歩いて店へ向かう（＋ МЛЕКАРНИЦА の看板の札）。店の前 1:28:12 は次の行の冷蔵棚と同じ素材で似た見た目が 4.5秒続いたので、別の通りに替えた"
+  },
+  {
+   "src": "c02",
+   "in": 828,
+   "out": 889,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "冷蔵棚いっぱいのヨーグルト"
+  },
+  {
+   "src": "c02",
+   "in": 618,
+   "out": 671,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "店の中（棚と奥の冷蔵棚）。冷蔵棚の画が3行続くと似た見た目が3秒を越えるので、店の中に替えた"
+  },
+  {
+   "src": "c03",
+   "in": 1080,
+   "out": 1132,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "冷蔵棚の前の手元（＋アイランの札・訳の注）"
+  },
+  {
+   "src": "c2_02",
+   "in": 1020,
+   "out": 1063,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.55,
+    "y": 0.6
+   },
+   "note": "店で受け取った「Айран」の瓶（ラベルにアイランと書いてある）。1行 3.2秒を1カットにしない（cut_length）"
+  },
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 76,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.45,
+    "y": 0.68
+   },
+   "note": "カードの瓶（高画質の瓶で画質を覆う。F-080）。前の行の店の瓶と続けて、いちごの飲むヨーグルトを見せる",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c4_02",
+   "in": 15,
+   "out": 67,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 1.12,
+   "note": "描いた絵 D2（回想の白い飲み物。少し暗く・色を抜く）",
+   "grade": {
+    "saturation": 0.55,
+    "contrast": 0.95,
+    "warmth": -0.05
+   }
+  },
+  {
+   "src": "c06",
+   "in": 288,
+   "out": 331,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "構えた真顔（不安）。D2 だけで 3.2秒続けない。1:36:18 は空と木しか写らなかった"
+  },
+  {
+   "src": "c3_06",
+   "in": 15,
+   "out": 36,
+   "row": 14,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "カード 11-13 夕方の公園",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 846,
+   "out": 896,
+   "row": 14,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.18,
+    "x": 0.38,
+    "y": 0.55
+   },
+   "note": "開けた瓶の中のピンクへ寄る"
+  },
+  {
+   "src": "c2_02",
+   "in": 708,
+   "out": 741,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "店のレジでおっちゃんと瓶（顔は写っていない）。振っている所は配信に無い"
+  },
+  {
+   "src": "c05",
+   "in": 1020,
+   "out": 1066,
+   "row": 15,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.15,
+    "x": 0.4,
+    "y": 0.55
+   },
+   "note": "トロトロの中身"
+  },
+  {
+   "src": "c05",
+   "in": 1624,
+   "out": 1692,
+   "row": 16,
+   "note": "本人の声 V1「うわ、めっちゃいちごの匂いする」（瓶を鼻に近づける）"
+  },
+  {
+   "src": "c05",
+   "in": 1843,
+   "out": 1894,
+   "row": 16,
+   "note": "本人の声 V1「イチゴケーキみたいな匂いするよ」"
+  },
+  {
+   "src": "c05",
+   "in": 2538,
+   "out": 2577,
+   "row": 17,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.18,
+    "x": 0.62,
+    "y": 0.3
+   },
+   "note": "「飲んでみたら……」（AI の声）: 飲む"
+  },
+  {
+   "src": "c05",
+   "in": 3435,
+   "out": 3482,
+   "row": 17,
+   "zoom": {
+    "from": 1.2,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "本人の声 V2「全然美味しいわ」の顔（声と同じ秒）"
+  },
+  {
+   "src": "c05",
+   "in": 3594,
+   "out": 3637,
+   "row": 18,
+   "note": "本人の声 V3「日本の」"
+  },
+  {
+   "src": "c05",
+   "in": 3662,
+   "out": 3705,
+   "row": 18,
+   "note": "本人の声 V3「飲むヨーグルトに似てる」"
+  },
+  {
+   "src": "c05",
+   "in": 3977,
+   "out": 4013,
+   "row": 18,
+   "note": "本人の声 V3「すごくよく似てるよ」"
+  },
+  {
+   "src": "c05",
+   "in": 4607,
+   "out": 4650,
+   "row": 19,
+   "note": "本人の声 V4 前半"
+  },
+  {
+   "src": "c05",
+   "in": 4740,
+   "out": 4816,
+   "row": 19,
+   "note": "本人の声 V4 後半"
+  },
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 85,
+   "row": 20,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.45,
+    "y": 0.6
+   },
+   "note": "0秒目と同じカードの瓶（輪にする）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアのヨーグルト、\n本当に美味しいか検証して見た！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 90
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアのヨーグルト、本当に美味しいか検証して見た！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアのヨーグルト、本当に美味しいか検証して見た！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、ブルガリアの首都ソフィア！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、ブルガリアの首都ソフィア！",
+    "at": 90
+   },
+   {
+    "text": "ヨーグルトって言うたら、明治ブルガリアヨーグルトやん？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/03.wav",
+    "tts_text": "ヨーグルトって言うたら、明治ブルガリアヨーグルトやん？",
+    "at": 157,
+    "highlight": [
+     "明治ブルガリアヨーグルト"
+    ]
+   },
+   {
+    "text": "本場で食べて見たい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/04.wav",
+    "tts_text": "本場で食べて見たい！",
+    "at": 240,
+    "mood": "excited"
+   },
+   {
+    "text": "けど、市場を歩いても、全然出てこんし……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/05.wav",
+    "tts_text": "けど、市場を歩いても、全然出てこんし……",
+    "at": 276
+   },
+   {
+    "text": "日本が勝手に騒いでるだけちゃう？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/06.wav",
+    "tts_text": "日本が勝手に騒いでるだけちゃう？",
+    "at": 351,
+    "mood": "anxious"
+   },
+   {
+    "text": "やっと見つけたら、ただのプレーンヨーグルト！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/07.wav",
+    "tts_text": "やっと見つけたら、ただのプレーンヨーグルト！",
+    "at": 409,
+    "highlight": [
+     "ただの"
+    ]
+   },
+   {
+    "text": "食べても「ヨーグルトや」ってなるだけやろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/08.wav",
+    "tts_text": "食べても「ヨーグルトや」ってなるだけやろ！",
+    "at": 480,
+    "big": "shake_white",
+    "split": "食べても｜「ヨーグルトや」って｜なるだけやろ！"
+   },
+   {
+    "text": "作戦変更で、乳製品の専門店へ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/09.wav",
+    "tts_text": "作戦変更で、乳製品の専門店へ！",
+    "at": 543,
+    "mood": "excited"
+   },
+   {
+    "text": "入ったら、棚がぜんぶヨーグルト！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/10.wav",
+    "tts_text": "入ったら、棚がぜんぶヨーグルト！",
+    "at": 617,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "飲む用を、おっちゃんに聞いたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/11.wav",
+    "tts_text": "のむようを、おっちゃんに聞いたら、",
+    "at": 678
+   },
+   {
+    "text": "人気は、ヨーグルトに塩と水を混ぜたアイランらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/12.wav",
+    "tts_text": "人気は、ヨーグルトに塩と水を混ぜたアイランらしい！",
+    "at": 731,
+    "highlight": [
+     "アイランらしい！"
+    ]
+   },
+   {
+    "text": "僕は、いちごの飲むヨーグルトにした！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/13.wav",
+    "tts_text": "僕は、いちごの飲むヨーグルトにした！",
+    "at": 826,
+    "mood": "excited"
+   },
+   {
+    "text": "前に海外で飲んだヨーグルトの飲み物、苦手やってん……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/14.wav",
+    "tts_text": "前に海外で飲んだヨーグルトの飲み物、苦手やってん……",
+    "at": 887,
+    "mood": "anxious"
+   },
+   {
+    "text": "公園で開けたら、すっごいピンク！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/15.wav",
+    "tts_text": "公園で開けたら、すっごいピンク！",
+    "at": 990,
+    "big": "glow_pink",
+    "caption_from": 982
+   },
+   {
+    "text": "おっちゃんが店で勝手に振ってくれたから、トロトロ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/16.wav",
+    "tts_text": "おっちゃんが店で勝手に振ってくれたから、トロトロ！",
+    "at": 1053,
+    "highlight": [
+     "トロトロ！"
+    ]
+   },
+   {
+    "text": "うわ、イチゴケーキみたいな匂い！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/narr/orig_p1_16.wav",
+    "at": 1132,
+    "parts": [
+     {
+      "text": "うわ、めっちゃいちごの匂いする。"
+     },
+     {
+      "text": "イチゴケーキみたいな匂いするよ。"
+     }
+    ]
+   },
+   {
+    "text": "飲んでみたら……全然うまいわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/18_mix.wav",
+    "tts_text": "飲んでみたら……",
+    "at": 1251,
+    "parts": [
+     {
+      "text": "飲んでみたら……"
+     },
+     {
+      "text": "全然美味しいわ。",
+      "big": "shake_white"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "日本の飲むヨーグルトに似てるけど、",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/narr/orig_p1_18.wav",
+    "at": 1337,
+    "parts": [
+     {
+      "text": "あの、日本の飲むヨーグルトに似てる。"
+     },
+     {
+      "text": "すごくよく似てるよ。"
+     }
+    ]
+   },
+   {
+    "text": "もっとヨーグルトの酸味が残ってる！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/narr/orig_p1_19.wav",
+    "at": 1459,
+    "parts": [
+     {
+      "text": "割とそのヨーグルトの酸味みたいなのが残ってる。"
+     }
+    ]
+   },
+   {
+    "text": "みんなも、本場で飲んでみたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/voice/ygt-p1-v1/p1/21.wav",
+    "tts_text": "みんなも、本場で飲んでみたい？",
+    "at": 1578,
+    "big": "brush_zoom"
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/jnKVIXn4qQs/p1/spec.json",
+  "fps": 30,
+  "frames": 1648,
+  "seconds": 54.933,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "ygtArtP1v01 0:00:00.5+1.27s",
+     "1:37:22.8+1.73s"
+    ],
+    "line": "ブルガリアのヨーグルト、本当に美味しいか検証して見た！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 90,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "ygtArtP1v01 0:01:00.5+1.13s",
+     "ygtArtP1v01 0:02:00.5+1.10s"
+    ],
+    "line": "やってきたのは、ブルガリアの首都ソフィア！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 157,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "ygtGenP1v01 0:00:00.5+2.77s"
+    ],
+    "line": "ヨーグルトって言うたら、明治ブルガリアヨーグルトやん？",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 240,
+    "frames": 36,
+    "voice_frames": 28,
+    "cuts": [
+     "0:35:57.0+1.20s"
+    ],
+    "line": "本場で食べて見たい！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 276,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "0:36:41.6+0.87s",
+     "ygtArtP1v01 0:03:00.5+0.80s",
+     "ygtArtP1v01 0:04:00.5+0.83s"
+    ],
+    "line": "けど、市場を歩いても、全然出てこんし……",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 351,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "0:33:45.6+1.93s"
+    ],
+    "line": "日本が勝手に騒いでるだけちゃう？",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 409,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "0:36:22.0+2.37s"
+    ],
+    "line": "やっと見つけたら、ただのプレーンヨーグルト！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 480,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "1:41:44.8+2.10s"
+    ],
+    "line": "食べても「ヨーグルトや」ってなるだけやろ！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 8,
+    "from": 543,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:33:41.5+2.47s"
+    ],
+    "line": "作戦変更で、乳製品の専門店へ！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 617,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "1:28:27.6+2.03s"
+    ],
+    "line": "入ったら、棚がぜんぶヨーグルト！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 10,
+    "from": 678,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "1:28:20.6+1.77s"
+    ],
+    "line": "飲む用を、おっちゃんに聞いたら、",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 731,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "1:31:01.0+1.73s",
+     "1:31:59.0+1.43s"
+    ],
+    "line": "人気は、ヨーグルトに塩と水を混ぜたアイランらしい！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 826,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "ygtArtP1v01 0:00:00.5+2.03s"
+    ],
+    "line": "僕は、いちごの飲むヨーグルトにした！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 887,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "ygtGenP1v01 0:01:00.5+1.73s",
+     "1:41:29.6+1.43s"
+    ],
+    "line": "前に海外で飲んだヨーグルトの飲み物、苦手やってん……",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 982,
+    "frames": 71,
+    "voice_frames": 55,
+    "cuts": [
+     "ygtArtP1v01 0:05:00.5+0.70s",
+     "1:36:26.2+1.67s"
+    ],
+    "line": "公園で開けたら、すっごいピンク！",
+    "telop": null,
+    "big": "glow_pink"
+   },
+   {
+    "row": 15,
+    "from": 1053,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "1:31:48.6+1.10s",
+     "1:36:32.0+1.53s"
+    ],
+    "line": "おっちゃんが店で勝手に振ってくれたから、トロトロ！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1132,
+    "frames": 119,
+    "voice_frames": 111,
+    "cuts": [
+     "1:36:52.1+2.27s",
+     "1:36:59.4+1.70s"
+    ],
+    "line": "うわ、イチゴケーキみたいな匂い！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "うわ、めっちゃいちごの匂いする。"
+     },
+     {
+      "text": "イチゴケーキみたいな匂いするよ。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 17,
+    "from": 1251,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "1:37:22.6+1.30s",
+     "1:37:52.5+1.57s"
+    ],
+    "line": "飲んでみたら……全然うまいわ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "飲んでみたら……"
+     },
+     {
+      "text": "全然美味しいわ。",
+      "big": "shake_white"
+     }
+    ]
+   },
+   {
+    "row": 18,
+    "from": 1337,
+    "frames": 122,
+    "voice_frames": 114,
+    "cuts": [
+     "1:37:57.8+1.43s",
+     "1:38:00.1+1.43s",
+     "1:38:10.6+1.20s"
+    ],
+    "line": "日本の飲むヨーグルトに似てるけど、",
+    "telop": null,
+    "parts": [
+     {
+      "text": "あの、日本の飲むヨーグルトに似てる。"
+     },
+     {
+      "text": "すごくよく似てるよ。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 19,
+    "from": 1459,
+    "frames": 119,
+    "voice_frames": 111,
+    "cuts": [
+     "1:38:31.6+1.43s",
+     "1:38:36.0+2.53s"
+    ],
+    "line": "もっとヨーグルトの酸味が残ってる！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "割とそのヨーグルトの酸味みたいなのが残ってる。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 20,
+    "from": 1578,
+    "frames": 70,
+    "voice_frames": 47,
+    "cuts": [
+     "ygtArtP1v01 0:00:00.5+2.33s"
+    ],
+    "line": "みんなも、本場で飲んでみたい？",
+    "telop": null,
+    "big": "brush_zoom"
+   }
+  ],
+  "speech": {
+   "chars": 300,
+   "raw_voice_s": 48.57,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 34.77,
+   "cps_voiced": 8.63,
+   "video_s": 54.93,
+   "cps_video": 5.46
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.5,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-kiselo-mlyako-800.webp",
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "out": "cut",
+   "from": 6,
+   "to": 38
+  },
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-yogurt-1200.webp",
+   "x": 540,
+   "y": 1340,
+   "w": 440,
+   "rotate": -4,
+   "from": 244,
+   "to": 276
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/artsrc/sticker_sign.png",
+   "x": 540,
+   "y": 640,
+   "w": 640,
+   "rotate": -3,
+   "from": 546,
+   "to": 617
+  },
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-ayryan-800.webp",
+   "crop": [
+    44,
+    0,
+    712,
+    800
+   ],
+   "x": 802,
+   "y": 1332,
+   "w": 322,
+   "from": 735,
+   "to": 826
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/draw/D3.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 320,
+   "rotate": 5,
+   "pop": [
+    0.85,
+    0.9,
+    0.95,
+    0.98,
+    1.0
+   ],
+   "from": 1141,
+   "to": 1251
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/draw/D4.jpg",
+   "x": 280,
+   "y": 1340,
+   "w": 300,
+   "rotate": -5,
+   "from": 1341,
+   "to": 1459
+  }
+ ],
+ "sfx": [
+  {
+   "at": 6,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 88,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 155,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 244,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 480,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 546,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 617,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 735,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1003,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1141,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/fuwa_s.wav",
+   "db": -4
+  },
+  {
+   "at": 1290,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1341,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
+   "db": 0
+  }
+ ],
+ "notes": [
+  {
+   "from": 124,
+   "to": 157,
+   "text": "◆ソフィア"
+  },
+  {
+   "from": 276,
+   "to": 302,
+   "text": "◆女性市場（ジェンスキ・パザール）"
+  },
+  {
+   "from": 678,
+   "to": 731,
+   "text": "Which one is for drinking?"
+  },
+  {
+   "from": 731,
+   "to": 826,
+   "text": "アイラン＝ヨーグルト＋塩＋水"
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（壺のヨーグルト・アイラン・壺と刺繍）・カード 11-13 の看板の切り抜き・ChatGPT で描いた D3 D4。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）"
+}
