@@ -54,8 +54,11 @@ import { ArtStamp } from "@/components/streams/Art";
  * - 行った街 … 街のガイドの名簿（`content/travel.ts` の `CITIES`。実際に行った街だけが載る）
  * - 一言 … その国に入った日に動いていた旅（`content/chapters.ts`）と、滞在の長さ
  *
- * 「この国であったこと」（人が選んで書く見どころ）は、歩き終わって `COUNTRIES` へ移すときに書く。
- * それまでは節ごと出さない（**空の節を出さない**）。
+ * - この国であったこと … その滞在の配信（`content/cityStreams.ts`。毎晩焼かれる）。押すとその配信へ飛ぶ
+ *
+ * 「この国であったこと」の見出しと一言（人が選んで書く見どころ）は、歩き終わって `COUNTRIES` へ移すときに書く。
+ * それまでは**焼き込みの配信そのもの**を並べる（あやと 2026-11-18「配信へ飛ばすやつも残して。ブルガリアにも欲しい」）。
+ * 前はここを空にしていたので、ソフィアの行がガイドのカードになったブルガリアでは、6回の配信がどこにも出ていなかった。
  */
 
 type Town = {
@@ -81,6 +84,17 @@ type CountryRecord = {
   stays: { from: string; to: string }[];
   towns: Town[];
   highlights: Highlight[];
+  /**
+   * 「この国であったこと」に並べる配信（いま歩いている旅の国だけ）。**同じ配信を1つの面に2回出さない**——
+   * 街の畳みに出ている配信はここに入れない（ガイドのカードになった街の配信だけが来る）
+   */
+  stayStreams: CityStream[];
+  /**
+   * 「ここからの配信」の底。**いま歩いている旅の国だけ**——その滞在の配信は国の名前の欄に
+   * 期間ぶん全部が焼かれている（`python/stays.py` の `chapter_stays()`）ので、実在する本数の下限になる。
+   * 歩き終わった国の街の欄は題名で拾った代表なので、底には使わない（0）
+   */
+  streamFloor: number;
   /** スタンプに押す「◯カ国目」。国でない区間（`iran-border`）は無し */
   walkedNo?: number;
   /** 面に出る配信の、いちばん新しい日（名札の `dateModified`） */
@@ -123,6 +137,8 @@ function walkedRecord(c: Country): CountryRecord {
     stays: c.stays,
     towns: [...new Set(c.stays.flatMap((s) => s.cities))].map((name) => town(c.slug, name, streamsOfCity(c.slug, name))),
     highlights: c.highlights,
+    stayStreams: [],
+    streamFloor: 0,
     walkedNo: isWalkedCountry(c.slug) ? walkedNo : undefined,
     modified: LASTMOD.country(c),
   };
@@ -141,6 +157,9 @@ function walkingRecord(slug: string): CountryRecord | undefined {
      `python/build_city_streams.py` が歩き終わった国にも使っている決まり。街が2つ以上なら、どちらの配信か言えない */
   const all = streamsOfCity(slug, k.name);
   const towns = names.map((n) => town(slug, n, names.length === 1 ? all : []));
+  /* 街の畳みに配信が出ていれば（ガイドがまだ公開前の街）、そちらから辿れる。出ていなければ
+     （街がガイドのカードになった・街が2つ以上で振り分けられない）、「この国であったこと」に並べる */
+  const inTown = towns.some((t) => !t.guide && t.streams.length > 0);
   /* 旅の名前は、その国に入った日に動いていた章（`app/travel/page.tsx` の年表と同じ引き方） */
   const trip = chapterNow(new Date(`${k.entered}T12:00:00+02:00`)).name;
   const where = names.length === 1 ? `${names[0]}に` : "";
@@ -163,6 +182,8 @@ function walkingRecord(slug: string): CountryRecord | undefined {
     stays: [{ from: k.entered, to: k.left }],
     towns,
     highlights: [],
+    stayStreams: inTown ? [] : all,
+    streamFloor: new Set(all.map((v) => v.videoId)).size,
     /* 年表（`/travel` の `TripCountries`）と同じ番号。歩き終わった国の数の続き */
     walkedNo: WALKED_DONE + i + 1,
     modified: all.map((v) => v.date).sort().at(-1),
@@ -232,8 +253,7 @@ const thumbAlt = (country: string, date: string | undefined, title: string) => {
  * 出来事は畳んでおいて、見出しだけを並べる。開くと本文と配信が出る。
  * 縦に長い読み物にすると、どの国も同じ壁に見えてしまう。
  *
- * **中身の無い節は出さない。** 歩いている最中の国には「この国であったこと」がまだ無く、
- * 料理をしていない国には「作ったごはん」が無い。空の見出しだけを置かない。
+ * **中身の無い節は出さない。** 料理をしていない国には「作ったごはん」が無い。空の見出しだけを置かない。
  */
 export function CountryRecordPage({ r, children }: { r: CountryRecord; children?: React.ReactNode }) {
   /* 前後の国は、面を持つ国だけで並べる（歩いた順 → いま歩いている旅の国）。面の無い国へ送ると行き止まり */
@@ -253,7 +273,11 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
    * いちばん長くいた国を、6日いた国と同じ大きさに見せていた。
    */
   const stat = countryStat(r.slug);
-  const lives = stat?.lives ?? r.towns.reduce((n, t) => n + t.streams.length, 0);
+  /* **面に並べた配信より少ない数を言わない。** `countryStats` の本数は「コメントが1件でも付いた配信」を
+     数えている（チャットから数えるため）。ブルガリアに着いた日の配信（2026-11-12）はコメントが0件で、
+     面には7本並ぶのに「ここからの配信 6」と出ていた。滞在ぶんの配信の本数（`streamFloor`）で底を打つ。
+     歩き終わった国は街の欄が代表なので、前どおり `countryStats` だけ（無ければ街の欄の足し算） */
+  const lives = Math.max(stat?.lives ?? r.towns.reduce((n, t) => n + t.streams.length, 0), r.streamFloor);
   /* 出国の日が入っていない滞在。書き出した日で数字が止まるので画面が出てから数え直すが、
      **次の島へ渡っていれば、そこで止める**（`./parts.tsx` の `StayLen`）。
      でないと、もう出た国の日数が毎日1ずつ増えつづける。 */
@@ -279,6 +303,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   };
   for (const t of r.towns) if (!t.guide) for (const v of t.streams) seen(v.date, v.videoId, v.title);
   for (const h of r.highlights) if (h.videoId) seen(h.date, h.videoId, h.title);
+  for (const v of r.stayStreams) seen(v.date, v.videoId, v.title);
   const nthOf = (date: string | undefined, videoId: string, title: string) => {
     const ids = sameDay.get(`${date ?? ""}\u0000${title}`);
     return ids && ids.length > 1 ? ids.indexOf(videoId) + 1 : undefined;
@@ -394,7 +419,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
       </Panel>
 
       {/* 「いちばん人が集まった日」は置かない（あやと 2026-11-18「要らない」）。
-          人が集まった配信は、数字（来ていた人）と、すぐ下の街の配信から辿れる */}
+          人が集まった配信は、数字（来ていた人）と、下の街の配信・この国であったことから辿れる */}
 
       {r.towns.length > 0 && (
         <Panel>
@@ -439,10 +464,25 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
         </Panel>
       )}
 
-      {r.highlights.length > 0 && (
+      {(r.highlights.length > 0 || r.stayStreams.length > 0) && (
         <Panel>
           <h2>この国であったこと</h2>
           <div className="hlist">
+            {/* いま歩いている旅の国は、配信そのもの。畳みの形は人が書いた見どころと同じにして、
+                歩き終わって見どころが書かれた日に、見た目を変えずに中身だけが替わるようにする。
+                題名は YouTube に実在するもの（絵文字も含めて引用。`data-quote`） */}
+            {r.stayStreams.map((v, i) => (
+              <Fold
+                key={v.videoId}
+                title={<span data-quote="title">{v.title}</span>}
+                note={fmt(v.date)}
+                open={i === 0}
+              >
+                <div className="scards">
+                  <StreamCard videoId={v.videoId} title={v.title} date={v.date} nth={nthOf(v.date, v.videoId, v.title)} />
+                </div>
+              </Fold>
+            ))}
             {r.highlights.map((h, i) => (
               <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
                 <p>{h.note}</p>
