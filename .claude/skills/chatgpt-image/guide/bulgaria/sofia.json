@@ -26,9 +26,12 @@
  "style": "editorial",
  "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
  "scene": "Scene: Sofia, the capital of Bulgaria, in late autumn. The hero is the Alexander Nevsky Cathedral, faithful to the cathedral photo: a large neo-Byzantine church of pale cream-grey stone with round-arched windows, one big gilded GOLD central dome, several smaller domes in green copper with gold tips, and a tall bell tower on its west side topped with a small gold dome. Behind the city, filling the horizon, is Vitosha mountain: a broad, gently sloping, rounded massif (NOT a sharp peak), blue with forests and a light dusting of snow on its long flat top. Around the cathedral: trees with golden-yellow autumn leaves, a wide square of pale paving stones with a few small passers-by seen from behind, and a small street cart selling steaming boiled corn on the cob. Light: late afternoon; the low sun gilds the gold dome and warms the stone, long shadows cross the square, and the mountain sits in cool blue haze. Palette: gold, green copper and warm cream stone with autumn yellow, against the cool blue mountain and a clear, pale sky. ",
+ "title": {"name": "ソフィア", "label": "観光ガイド", "catch": "二千年の歴史が足もとに眠る街", "kicker": "ブルガリア"},
  "cover": {
   "v": 2,
   "bias": 0.15,
+  "file": "ソフィア-観光ガイド",
+  "title": {"x": 0.96, "y": 0.05, "anchor": "tr", "scale": 0.85},
   "alt": "午後の低い日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、雪をかぶったヴィトシャ山。黄葉の広場にとうもろこしの屋台が出ている、晩秋のソフィアの絵",
   "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。大聖堂は写真を形の手本として渡した。ネフスキー大聖堂（金の中央ドーム・緑のドーム・鐘楼）とヴィトシャ山（なだらかな山塊・頂に雪）を主に、晩秋の夕方の光。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし",
   "photos": [
@@ -38,6 +41,8 @@
  "cover_tall": {
   "v": 2,
   "bias": 0.5,
+  "file": "ソフィア-観光ガイド-縦",
+  "title": {"x": 0.5, "y": 0.955, "anchor": "bc", "scale": 1.2},
   "alt": "午後の日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、その背に横たわるヴィトシャ山。黄葉の木々に囲まれた、晩秋のソフィアの絵",
   "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
   "photos": [

@@ -130,6 +130,48 @@
 
 .gb-cover-foot .gb-credit { margin: 0; }
 
+/* 題を焼いた表紙（#1228）。絵の上に字を重ねず、h1 は絵の上に記事の題として（ブログの「記事の題 → アイキャッチ」）。
+   h1 は1つの文の大きさ。絵の大きな街の名前と張り合わせない（同じ字が二重に見える）。地は紙のまま、字は `--ink` */
+.gb-cover-head { margin: 0 4px var(--sp-3); }
+
+.gb-cover-kl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  color: #fff;
+}
+
+.gb-cover-head .gb-cover-local {
+  display: inline;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  opacity: 1;
+}
+
+.gb-cover-head h1 {
+  margin: 6px 0 0;
+  color: var(--ink);
+  font-size: clamp(19px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+}
+
+/* 面が答える語。色だけ1段薄く。**語の途中で折らない**（「グ／ルメ」と割れた。390px）——収まらなければ丸ごと次の行へ */
+.gb-cover-head .gb-cover-h1 {
+  display: inline-block;
+  color: var(--ink-2);
+  font-size: 0.82em;
+}
+
+.gb-cover-head .gb-cover-stay {
+  margin-top: 8px;
+  background: var(--gb-c-lo);
+}
+
 /* ---- 2 目次 ------------------------------------------------------------ */
 
 .gb-toc {

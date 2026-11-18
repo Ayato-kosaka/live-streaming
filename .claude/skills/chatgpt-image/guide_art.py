@@ -35,6 +35,11 @@
   `style_ref`（調子の手本の1枚。リポジトリの道。表紙とやりたいことの1枚目に渡す。あればやりたいことの `model` より先）
 - `cover` `cover_tall`: `alt`・`note`（manifest の prompt_note）・`bias`（16:9 に切るとき、上を 0 下を 1 としてどこを残すか）・`v`・
   `photos`（実在の建物の形を合わせる写真）
+  - **表紙に題を焼く**なら、頼み書きの頭に `title`（`name` 街の名前・`label`「観光ガイド」・`catch` 面のキャッチと同じ字・`kicker` 国）、
+    `cover` `cover_tall` にそれぞれ `title`（札の置き場 `x`・`y`・`anchor`・`scale`。`guide_layout.bake_title`）と `file`（絵の名前。
+    ソフィアは「ソフィア-観光ガイド」）。画像検索に出る絵に街の名前が写るように（あやと 2026-11-18 #1228）。横の表紙は og の
+    1200x630 の JPEG（`<街>-guide-og.jpg`。英数字だけの名前）も書き出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に
+    残すので、キャッチを変えた日は `finalize` だけで焼き直せる
 - `areamap`: `prompt`（街の地図の文。目印の番号つき）・`fix`・`layout`（字の無い下敷き。`--work` の中）・`alt`・`note`・
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
   - 下敷きを道具で作るなら `districts`（地区の多角形。緯度経度）と `marks`（目印の番号と緯度経度）。`layout` が `bbox` の範囲で作る
@@ -614,9 +619,28 @@ def baked(spec: dict) -> bool:
     return any("label" in x for x in spec.get("areamap", {}).get("areas", []))
 
 
+def titled(spec: dict, slot: str) -> bool:
+    """表紙に題を焼くか（頼み書きの頭に `title` があり、その表紙にも置き場の `title` が在る）"""
+    return slot in ("cover", "cover_tall") and "title" in spec and "title" in spec.get(slot, {})
+
+
+def cover_base(spec: dict, slot: str, where: Path | None = None) -> Path:
+    """題を焼く前の表紙（頼み書きの隣。面には出さない）。キャッチを直したら、ChatGPT を使わずにここから焼き直す"""
+    return (where or SPECS) / f"{spec['_city']}-{SHAPE[slot][0]}-base.webp"
+
+
+#: og の絵の形（`lib/share.ts` と同じ 1200x630）。横の表紙の真ん中を切る
+OG_SIZE = (1200, 630)
+
+
 def entry(s: dict, spec: dict) -> dict:
     """面に出す字の欄（絵の欄は別）。並びは今の manifest と同じ"""
     e = {"alt": s["alt"], "kind": "ai", "prompt_note": s["note"]}
+    if titled(spec, s["slot"]):
+        # 絵に焼いた字を alt の頭に（絵の字と読み上げの字を同じにする）。面の `Cover` は字を絵の上に重ねない
+        t = spec["title"]
+        e["alt"] = f"{t['name']}{t['label']}「{t['catch']}」。{s['alt']}"
+        e["titled"] = True
     if s["slot"] == "areamap":
         a = spec["areamap"]
         if baked(spec):
@@ -637,7 +661,8 @@ def base_path(spec: dict) -> Path:
 
 
 def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
-             base: Path | None = None) -> tuple[dict, list[str]]:
+             base: Path | None = None, bases: Path | None = None) -> tuple[dict, list[str]]:
+    """`base` は名前を焼く前の地図、`bases` は題を焼く前の表紙を置く場所（既定は頼み書きの隣。見張りは仮の置き場を渡す）"""
     from PIL import Image
     out = out or out_dir(spec, root)
     base = base or base_path(spec)
@@ -670,6 +695,19 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
             if im is not None:
                 # 描いたあとで足した地区（`districts[].paint`）の色を重ねてから、名前を焼く
                 im = gl().bake(gl().wash(im, spec["areamap"], s["bias"]), spec["areamap"]["areas"])
+        if titled(spec, s["slot"]):
+            # 表紙の題も地図の名前と同じ回しかた: いちばん大きい版に焼いてから縮める。焼く前の1枚を残し、
+            # 持ち帰った絵が無い日（キャッチだけ直した日）はそこから焼き直す
+            name = spec[s["slot"]].get("file", name)
+            bp = cover_base(spec, s["slot"], bases)
+            if im is not None:
+                im = im.resize((sizes[0], round(im.height * sizes[0] / im.width)), Image.LANCZOS)
+                bp.parent.mkdir(parents=True, exist_ok=True)
+                im.save(bp, "WEBP", quality=90, method=6)
+            elif bp.is_file():
+                im = Image.open(bp).convert("RGB")
+            if im is not None:
+                im = gl().bake_title(im, spec["title"], spec[s["slot"]]["title"])
         if im is not None:
             pics = []
             for w in sizes:
@@ -678,9 +716,17 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
                 im.resize((w, h), Image.LANCZOS).save(p, "WEBP", quality=84, method=6)
                 pics.append((url_dir(spec) + p.name, w, h))
             pic = {"src": pics[0][0], "src_small": pics[1][0], "w": pics[0][1], "h": pics[0][2]}
+            if titled(spec, s["slot"]) and s["slot"] == "cover":
+                # 貼られたときの絵（og）。SNS は webp を読まない所があるので JPEG。真ん中を 1.91:1 に切る（札は端から離してある）。
+                # **名前は英数字だけ**（`<街>-guide-og.jpg`）。日本語の名前は URL で %E3… に化け、貼られた先の読み手と
+                # 見張り（`tools/sprites/ogmeta.mjs` は配ったものの中を化けたままの道で探す）で取りこぼす（2026-11-18 に後者で赤）
+                og = crop(im, OG_SIZE[0] / OG_SIZE[1]).resize(OG_SIZE, Image.LANCZOS)
+                p = out / f"{spec['_city'].split('/')[-1]}-guide-og.jpg"
+                og.save(p, "JPEG", quality=86, optimize=True, progressive=True)
+                pic["og"] = {"src": url_dir(spec) + p.name, "w": OG_SIZE[0], "h": OG_SIZE[1]}
         elif prev and (out / Path(prev["src"]).name).is_file():
             # 持ち帰った絵が無い品は、いまの絵のまま残す（字の欄だけ頼み書きに合わせる）
-            pic = {k: prev[k] for k in ("src", "src_small", "w", "h")}
+            pic = {k: prev[k] for k in ("src", "src_small", "w", "h", "og") if k in prev}
         else:
             missing.append(s["slot"])
             continue
@@ -770,9 +816,13 @@ def check(spec: dict, root: Path, manifest: Path | None = None) -> int:
                 # 名前を焼いた地図は、焼く前の1枚から作り直す（焼いた絵に、もう1度焼かない）
                 if base_path(spec).is_file():
                     shutil.copy(base_path(spec), work / "raw" / f"{s['id']}-0.webp")
+            elif titled(spec, s["slot"]):
+                # 題を焼いた表紙も同じ（焼く前の1枚から）
+                if cover_base(spec, s["slot"]).is_file():
+                    shutil.copy(cover_base(spec, s["slot"]), work / "raw" / f"{s['id']}-0.webp")
             elif e and (src / Path(e["src"]).name).is_file():
                 shutil.copy(src / Path(e["src"]).name, work / "raw" / f"{s['id']}-0.webp")
-        man, missing = finalize(spec, root, work, out, Path(tmp) / "base.webp")
+        man, missing = finalize(spec, root, work, out, Path(tmp) / "base.webp", Path(tmp) / "bases")
     bad = [f"品の鍵: 頼み書きにだけ {sorted(want - have)}" if want - have else "",
            f"品の鍵: manifest にだけ {sorted(have - want)}" if have - want else ""]
     bad = [b for b in bad if b] + diff(man, cur)

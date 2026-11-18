@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import type { Metadata } from "next";
+
 import type { MapBeyond, MapDir, Pic, Todo } from "./types";
 
 /**
@@ -32,12 +34,22 @@ import type { MapBeyond, MapDir, Pic, Todo } from "./types";
  * **ただし `areamap.baked` の地図は、地区の色と名前を絵に焼いてある**（あやと 2026-11-18 #1262「見どころマップと検索したら、
  * 画像検索の結果に、地区の表示が出て欲しい」。画像検索に出るのは絵だけなので、面の側で重ねた字は写らない）。
  * そのときエリアの `x` `y` `w` `h` は**焼いた札の箱**（中心と幅・高さ。割合）で、面は透明の押しどころを重ねるだけ。
- * 焼くのは `.claude/skills/chatgpt-image/guide_art.py finalize`（`guide_layout.py`）
+ * 焼くのは `.claude/skills/chatgpt-image/guide_art.py finalize`（`guide_layout.py`）。
+ * **表紙も、`cover.titled` の絵は題（街の名前・「観光ガイド」・キャッチ）を焼いてある**（同じ日、#1228。理由は地図と同じ）。
+ * `cover.og` はその横の表紙を 1200x630 に切った JPEG（貼られたときの絵）
  */
 export type AreaPin = { id?: string; name?: string; x: number; y: number; w?: number; h?: number };
 export type Drawn = {
   cover?: Pic;
   coverTall?: Pic;
+  /**
+   * 表紙に題（街の名前・「観光ガイド」・キャッチ）を焼いてある（あやと 2026-11-18 #1228「画像検索で水彩のイラストだけが出て、
+   * 誰も押さない」）。そのとき面は表紙の上に字を重ねず、見出しを絵の下に置く（`components/guidebook/Cover.tsx`）。
+   * 横と縦の**両方**が焼けているときだけ true（狭い画面で字の無い縦の絵が出て、見出しが絵の外だけになるのを防ぐ）
+   */
+  coverTitled: boolean;
+  /** 貼られたときの絵（1200x630 の JPEG。焼いた横の表紙の真ん中）。`coverShare` が og:image にする */
+  og?: { src: string; w: number; h: number };
   /** `baked`: 地区の名前を絵に焼いた地図。`small` は面で使う小さい版（`src` は画像検索に出す大きい版） */
   areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[]; baked: boolean };
   /** やりたいことの絵（`Todo.id` の鍵）。無いあいだは、データの写真か色の地 */
@@ -57,7 +69,7 @@ const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : unde
 export function readDrawn(country: string, city: string): Drawn {
   const base = `/guide/${country}/${city}`;
   const pub = join(process.cwd(), "public");
-  const empty: Drawn = { do: {}, food: {}, buy: {} };
+  const empty: Drawn = { coverTitled: false, do: {}, food: {}, buy: {} };
   const file = join(pub, base, "manifest.json");
   if (!existsSync(file)) return empty;
   let raw: unknown;
@@ -98,7 +110,20 @@ export function readDrawn(country: string, city: string): Drawn {
     return out;
   };
 
-  const out: Drawn = { cover: pic(raw.cover), coverTall: pic(raw.cover_tall), do: dict(raw.do), food: dict(raw.food), buy: dict(raw.buy) };
+  const cover = pic(raw.cover);
+  const coverTall = pic(raw.cover_tall);
+  const titledOf = (v: unknown) => isObj(v) && v.titled === true;
+  const ogRaw = isObj(raw.cover) && isObj(raw.cover.og) ? raw.cover.og : undefined;
+  const ogSrc = ogRaw && url(ogRaw.src);
+  const out: Drawn = {
+    cover,
+    coverTall,
+    coverTitled: !!cover && titledOf(raw.cover) && (!coverTall || titledOf(raw.cover_tall)),
+    og: ogRaw && ogSrc ? { src: ogSrc, w: num(ogRaw.w) ?? 1200, h: num(ogRaw.h) ?? 630 } : undefined,
+    do: dict(raw.do),
+    food: dict(raw.food),
+    buy: dict(raw.buy),
+  };
   const am = isObj(raw.areamap) ? raw.areamap : undefined;
   const amPic = pic(am);
   if (am && amPic) {
@@ -134,6 +159,20 @@ export function readDrawn(country: string, city: string): Drawn {
     out.areamap = { ...amPic, areas, beyond, baked };
   }
   return out;
+}
+
+/**
+ * 街の面の、貼られたときの顔。**題を焼いた表紙があれば、og:image をその絵にする**（あやと 2026-11-18 #1228）。
+ * 無ければ渡された `meta`（国の1枚）のまま。題・一文・居場所・robots は `travelCityShare` のものを変えない
+ */
+export function coverShare(meta: Metadata, d: Drawn, alt: string): Metadata {
+  if (!d.og || !d.coverTitled) return meta;
+  const img = { url: encodeURI(d.og.src), width: d.og.w, height: d.og.h, alt };
+  return {
+    ...meta,
+    openGraph: { ...meta.openGraph, images: [img] },
+    twitter: { ...meta.twitter, images: [img.url] },
+  };
 }
 
 /**

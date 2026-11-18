@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import Icon from "@/components/ui/Icon";
 import { guidebookOf } from "@/content/guidebook";
+import { guideCardLabel } from "@/content/guidebook/heading";
 import type { Guidebook } from "@/content/guidebook/types";
 import type { TravelCity } from "@/content/travel";
 
@@ -21,8 +22,10 @@ import "./cities.css";
  *
  * ## 押すところの字は、その面に在るものの名前
  *
- * 押す先に何が在るか（やりたいこと◯選・見どころマップ）を言うと、読む人には押した先が分かり、
- * 検索の読み手にはリンクの字が面の中身の名前になる（#1262 の3手の3）。数は中身から数える。無いものは言わない。
+ * 押す先に何が在るか（観光ガイド・見どころマップ）を言うと、読む人には押した先が分かり、
+ * 検索の読み手にはリンクの字が面の中身の名前になる（#1262 の3手の3）。字は街の面の題と同じ所から引く
+ * （`content/guidebook/heading.ts`。前は「やりたいこと8選と見どころマップ」で、面の題を「観光ガイド」に
+ * 直した日に、ここだけ古い字が残った。#1228・`docs/island-misses.md` #333）。
  */
 export default function CityCard({ city }: { city: TravelCity }) {
   /* 街の中身はガイドブック（`content/guidebook/`）。**名簿に在るのに中身が無い街は書き出しを止める** */
@@ -55,8 +58,7 @@ export default function CityCard({ city }: { city: TravelCity }) {
   );
 }
 
-/** 押す先に在るもの。やりたいことの数と、見たいものの地図（マイマップ）。どちらも無ければ「ガイドを読む」 */
+/** 押す先に在るもの（「観光ガイド・見どころマップ」）。字は街の面の h1 と同じ所（`guideCardLabel`） */
 function holds(g: Guidebook) {
-  const parts = [g.todo.length ? `やりたいこと${g.todo.length}選` : "", g.see.map ? "見どころマップ" : ""].filter(Boolean);
-  return parts.length ? parts.join("と") : "ガイドを読む";
+  return guideCardLabel(g);
 }
