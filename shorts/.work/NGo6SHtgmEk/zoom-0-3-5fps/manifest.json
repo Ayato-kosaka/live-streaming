@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "NGo6SHtgmEk__zoom-0-3-5fps",
+ "mode": "zoom",
+ "dest": "NGo6SHtgmEk/zoom-0-3-5fps",
+ "video": "NGo6SHtgmEk",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-hook-NGo6SHtgmEk-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 3,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 615009,
+  "tar_gz": 590834,
+  "encrypted": 590848
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 590848,
+   "sha256": "c1fa8d664af5320b59ba19e17bcb0bec0819758e658043f830a83b6b2a2a1138"
+  }
+ ],
+ "hmac_sha256": "df44c89276eae75bbab3225243e4abf114f05b5ebb0cdecb316b4bf057be2a42",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44308569065",
+ "created_at": "2026-11-18T13:40:40+00:00"
+}
