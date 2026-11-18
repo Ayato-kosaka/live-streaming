@@ -1,0 +1,187 @@
+{
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（丸いバニツァ・モスクと教会の並ぶ絵）・チーズと卵の1切れ（同じ絵の切り抜き）と ChatGPT で描いた B4（断面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）",
+ "stream_path_mark": "/ingest",
+ "bands": {
+  "size": [
+   720,
+   1280
+  ],
+  "rows": [
+   [
+    145,
+    270
+   ],
+   [
+    1070,
+    1280
+   ]
+  ],
+  "margin": 5
+ },
+ "bands_by_file": {
+  "01_0-03-20_0-04-20": {
+   "size": [
+    720,
+    1280
+   ],
+   "rows": [
+    [
+     1070,
+     1280
+    ]
+   ],
+   "margin": 5
+  }
+ },
+ "grade": {
+  "saturation": 1.5,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "cut_grade": [],
+ "stickers": [
+  {
+   "row": 2,
+   "from_s": 0.25,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "x": 790,
+   "y": 1345,
+   "w": 330,
+   "rotate": 5,
+   "why": "いちばん楽しみにしてたバニツァ（丸い焼き型）"
+  },
+  {
+   "row": 10,
+   "from_s": 0.2,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "x": 540,
+   "y": 1360,
+   "w": 560,
+   "rotate": -3,
+   "why": "全然違う宗教（モスクと教会が並ぶ絵）"
+  },
+  {
+   "row": 13,
+   "cut": 1,
+   "from_s": 0.15,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "crop": [
+    60,
+    400,
+    560,
+    400
+   ],
+   "x": 300,
+   "y": 1350,
+   "w": 360,
+   "rotate": -4,
+   "why": "定番のチーズと卵（1切れ）"
+  },
+  {
+   "row": 15,
+   "cut": 1,
+   "from_s": 0.15,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/draw/B4.jpg",
+   "x": 300,
+   "y": 1360,
+   "w": 330,
+   "rotate": -5,
+   "why": "外パリパリ・中ねっとり・チーズゴロゴロ"
+  }
+ ],
+ "sfx_files": {
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/hyokkori.mp3",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kuu.mp3",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kira_s.wav",
+  "fuwa": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/fuwa_s.wav",
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/pito_s.wav",
+  "jan": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/enter_s.wav"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 0,
+   "cut": 2,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 2,
+   "off_s": 0.25,
+   "name": "pop"
+  },
+  {
+   "row": 4,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 6,
+   "off_s": 0.1,
+   "name": "fuwa",
+   "db": -4
+  },
+  {
+   "row": 7,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 9,
+   "cut": 2,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 10,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 12,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 13,
+   "cut": 1,
+   "off_s": 0.15,
+   "name": "pop"
+  },
+  {
+   "row": 15,
+   "cut": 1,
+   "off_s": 0.15,
+   "name": "pop"
+  },
+  {
+   "row": 16,
+   "off_s": 0.0,
+   "name": "jan"
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 1,
+   "text": "◆ソフィア"
+  },
+  {
+   "row": 8,
+   "text": "◆聖七人の教会"
+  }
+ ]
+}

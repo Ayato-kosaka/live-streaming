@@ -1,0 +1,1163 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "hJ6vFAGX3rI-p1",
+ "style": "style_ban.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/01_guide_banitsa.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/02b_0-08-40_0-10-50.mp4",
+   "watermark": "prism_live",
+   "t0": 520.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/04_0-23-20_0-24-40.mp4",
+   "watermark": "prism_live",
+   "t0": 1400.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/03_guide_cover.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/02_guide_bakery.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/03_0-19-00_0-20-40.mp4",
+   "watermark": "prism_live",
+   "t0": 1140.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/02a_0-07-40_0-08-40.mp4",
+   "watermark": "prism_live",
+   "t0": 460.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/04_gen_B5.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/01_gen_B1.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/02_gen_B2.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/05_0-30-50_0-34-50.mp4",
+   "watermark": "prism_live",
+   "t0": 1850.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/03_gen_B3.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/06_0-39-20_0-43-00.mp4",
+   "watermark": "prism_live",
+   "t0": 2360.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/07_0-49-00_0-49-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2940.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 57,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "「ブルガリアで名物のバニツァを探したら、」: 案内ページのバニツァの絵（丸い焼き型と1切れ）。0秒目を配信の粗い1コマにしない（F-079）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c03",
+   "in": 480,
+   "out": 510,
+   "row": 0,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「見どころが多すぎた！」の1つ目: キノコの傘とキャンディの柱の、お菓子の家みたいな店（F-073）"
+  },
+  {
+   "src": "c05",
+   "in": 180,
+   "out": 209,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「見どころが多すぎた！」の2つ目: 元モスクの教会の中（金のイコノスタシスと壁画）"
+  },
+  {
+   "src": "c2_03",
+   "in": 15,
+   "out": 41,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "案内ページの表紙の絵（ネフスキー大聖堂）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c03",
+   "in": 2100,
+   "out": 2126,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "ソフィアの歩行者の通り（場所の札）"
+  },
+  {
+   "src": "c03",
+   "in": 3735,
+   "out": 3805,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "バニツァを探して通りを歩く（＋バニツァの絵の札）。v1 の自撮り（0:03:38）は顔が画面の真ん中を占めて字が被った"
+  },
+  {
+   "src": "c2_02",
+   "in": 15,
+   "out": 66,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.45,
+    "y": 0.6
+   },
+   "note": "案内ページの絵（パン屋の窓辺の丸いバニツァ）。あやとの「→イメージわかる画像を挿入する」",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 30,
+   "out": 62,
+   "row": 4,
+   "note": "「歩いてたら、」（AI の声）: 落ち葉の道を歩く（v1 の 0:07:43 は次の赤い店と似た見た目が続いた）"
+  },
+  {
+   "src": "c02",
+   "in": 690,
+   "out": 753,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.55,
+    "y": 0.45
+   },
+   "note": "本人の声「な、何これ？ちょっと待って。」: 赤いお菓子の店が現れる"
+  },
+  {
+   "src": "c03",
+   "in": 720,
+   "out": 767,
+   "row": 5,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "キノコの傘のテーブルとキャンディの柱"
+  },
+  {
+   "src": "c3_04",
+   "in": 15,
+   "out": 62,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "描いた絵 B5（夢の国のようなお菓子の家の店）。v2 は同じ店の外・窓・中の3カットが似た見た目で 4.7秒続いた",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c03",
+   "in": 1830,
+   "out": 1877,
+   "row": 6,
+   "zoom": {
+    "from": 1.02,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "店の中のお菓子の家の飾り"
+  },
+  {
+   "src": "c03",
+   "in": 3480,
+   "out": 3527,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "店を離れて通りを歩き出す"
+  },
+  {
+   "src": "c04",
+   "in": 390,
+   "out": 450,
+   "row": 8,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.25,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "木の向こうに丸屋根の教会が出てくる"
+  },
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 56,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.55,
+    "y": 0.45
+   },
+   "note": "「元はモスクで、」: 描いた絵 B1（16世紀の黒い石のモスク）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_02",
+   "in": 15,
+   "out": 54,
+   "row": 9,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.0,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「倉庫と刑務所になって、」: 描いた絵 B2（鉄格子と木箱）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 900,
+   "out": 934,
+   "row": 9,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.25,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "「今は教会！」: 十字架の載った今の教会"
+  },
+  {
+   "src": "c05",
+   "in": 330,
+   "out": 387,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "モスクの形の丸天井と壁画（＋案内ページの、モスクと教会の並ぶ絵の札）"
+  },
+  {
+   "src": "c04",
+   "in": 2685,
+   "out": 2742,
+   "row": 10,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.18,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "十字架の載った外観（v1 は丸天井の1カットで 3.8秒になった。v3 の 0:20:20 は手のスマホの画面、v4 の 0:20:22 は広場の方を向いていた）"
+  },
+  {
+   "src": "c06",
+   "in": 840,
+   "out": 897,
+   "row": 11,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.35,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "お目当てのパン屋の扉の丸い看板に寄る（v1 は扉の下のガラスが顔に読まれ、字が被った）"
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 93,
+   "row": 12,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.0,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「入ったら、イメージと違ったけど、」（AI の声）: 思っていた丸いバニツァ（案内ページの絵。4行目で見せた絵と同じ）。v1 の店の中の棚は次の台と似た見た目が続いた",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c06",
+   "in": 2085,
+   "out": 2169,
+   "row": 12,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "本人の声「これがバニッツや。これ全部バニッツや。」: 棚に並ぶバニツァ"
+  },
+  {
+   "src": "c3_03",
+   "in": 15,
+   "out": 58,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「アップルシナモンと迷ったけど、」: 描いた絵 B3（アップルシナモンとチーズの2種類）。v1 の指さしの台は前後の台と似た見た目が続いた",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c06",
+   "in": 5490,
+   "out": 5534,
+   "row": 13,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "定番のチーズと卵の並ぶ台"
+  },
+  {
+   "src": "c07",
+   "in": 3015,
+   "out": 3082,
+   "row": 14,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "2階のイートインで、やっと一口"
+  },
+  {
+   "src": "c07",
+   "in": 5400,
+   "out": 5447,
+   "row": 15,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.45,
+    "y": 0.55
+   },
+   "note": "かじって噛む"
+  },
+  {
+   "src": "c08",
+   "in": 300,
+   "out": 348,
+   "row": 15,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.25,
+    "x": 0.35,
+    "y": 0.7
+   },
+   "note": "かじった断面（＋描いた絵 B4 の札）"
+  },
+  {
+   "src": "c07",
+   "in": 1050,
+   "out": 1117,
+   "row": 16,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "値段を確かめて目を丸くする本人"
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 104,
+   "row": 17,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.07,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "0秒目と同じバニツァの絵（輪にする）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアで名物のバニツァを探したら、\n見どころが多すぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 90
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアで名物のバニツァを探したら、見どころが多すぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアで名物のバニツァを探したら、見どころが多すぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、首都のソフィア！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、首都のソフィア！",
+    "at": 101
+   },
+   {
+    "text": "いちばん楽しみにしてたバニツァを食べに行く！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/03.wav",
+    "tts_text": "いちばん楽しみにしてたバニツァを食べに行く！",
+    "at": 153,
+    "mood": "up_pop"
+   },
+   {
+    "text": "チーズパイみたいなパンやねん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/04.wav",
+    "tts_text": "チーズパイみたいなパンやねん！",
+    "at": 223
+   },
+   {
+    "text": "歩いてたら、なんやこれ！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/05_mix.wav",
+    "tts_text": "歩いてたら、",
+    "at": 274,
+    "parts": [
+     {
+      "text": "歩いてたら、"
+     },
+     {
+      "text": "な、何これ？ちょっと待って。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "お菓子の家みたいな店や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/06.wav",
+    "tts_text": "お菓子の家みたいな店や！",
+    "at": 369,
+    "mood": "up_pop"
+   },
+   {
+    "text": "急に夢の国が現れたやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/07_mix.wav",
+    "at": 416,
+    "parts": [
+     {
+      "text": "急に夢の国現れたなあ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "あかん、バニツァ探さな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/08.wav",
+    "tts_text": "あかん、バニツァ探さな！",
+    "at": 510,
+    "big": "shake_white"
+   },
+   {
+    "text": "今度は、でっかい教会出てきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/09.wav",
+    "tts_text": "今度は、でっかい教会出てきた！",
+    "at": 557
+   },
+   {
+    "text": "調べたら、元はモスクで、倉庫と刑務所になって、今は教会！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/10.wav",
+    "tts_text": "調べたら、元はモスクで、倉庫と刑務所になって、今は教会！",
+    "at": 617
+   },
+   {
+    "text": "全然違う宗教やのに、そんなんあり！？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/11_mix.wav",
+    "at": 731,
+    "parts": [
+     {
+      "text": "そんなあり？",
+      "big": "shake_red"
+     },
+     {
+      "text": "めっちゃ全然違う宗教やけど。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "やっと、お目当てのお店に着いた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/12.wav",
+    "tts_text": "やっと、お目当てのお店に着いた！",
+    "at": 845,
+    "mood": "up_pop"
+   },
+   {
+    "text": "入ったら、イメージと違ったけど、これ全部バニツァやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/13_mix.wav",
+    "tts_text": "入ったら、イメージと違ったけど、",
+    "at": 902,
+    "parts": [
+     {
+      "text": "入ったら、イメージと違ったけど、"
+     },
+     {
+      "text": "これがバニッツや。これ全部バニッツや。",
+      "big": "brush_zoom"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "アップルシナモンと迷ったけど、定番のチーズと卵にした！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/14.wav",
+    "tts_text": "アップルシナモンと迷ったけど、定番のチーズと卵にした！",
+    "at": 1064
+   },
+   {
+    "text": "寄り道しまくって、やっといただきます！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/15.wav",
+    "tts_text": "寄り道しまくって、やっといただきます！",
+    "at": 1151
+   },
+   {
+    "text": "外パリパリ、中ねっとりで、チーズゴロゴロ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/16.wav",
+    "tts_text": "外パリパリ、中ねっとりで、チーズゴロゴロ！",
+    "at": 1228,
+    "big": "glow_yellow",
+    "caption_from": 1218
+   },
+   {
+    "text": "お値段は630円ほどやった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/17.wav",
+    "tts_text": "お値段は630円ほどやった！",
+    "at": 1321,
+    "big": "glow_pink",
+    "caption_from": 1313
+   },
+   {
+    "text": "みんなは、名物を探してても寄り道しちゃう？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/voice/ban-p1-v1/p1/18.wav",
+    "tts_text": "みんなは、名物を探してても寄り道しちゃう？",
+    "at": 1380
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/hJ6vFAGX3rI/p1/spec.json",
+  "fps": 30,
+  "frames": 1469,
+  "seconds": 48.967,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 101,
+    "voice_frames": 93,
+    "cuts": [
+     "banArtP1v01 0:00:00.5+1.40s",
+     "0:08:56.0+1.00s",
+     "0:23:26.0+0.97s"
+    ],
+    "line": "ブルガリアで名物のバニツァを探したら、見どころが多すぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 101,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "banArtP1v01 0:02:00.5+0.87s",
+     "0:09:50.0+0.87s"
+    ],
+    "line": "やってきたのは、首都のソフィア！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 153,
+    "frames": 70,
+    "voice_frames": 62,
+    "cuts": [
+     "0:10:44.5+2.33s"
+    ],
+    "line": "いちばん楽しみにしてたバニツァを食べに行く！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 223,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "banArtP1v01 0:01:00.5+1.70s"
+    ],
+    "line": "チーズパイみたいなパンやねん！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 274,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "0:19:01.0+1.07s",
+     "0:08:03.0+2.10s"
+    ],
+    "line": "歩いてたら、なんやこれ！？",
+    "telop": null,
+    "parts": [
+     {
+      "text": "歩いてたら、"
+     },
+     {
+      "text": "な、何これ？ちょっと待って。"
+     }
+    ]
+   },
+   {
+    "row": 5,
+    "from": 369,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:09:04.0+1.57s"
+    ],
+    "line": "お菓子の家みたいな店や！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 416,
+    "frames": 94,
+    "voice_frames": 86,
+    "cuts": [
+     "banGenP1v01 0:03:00.5+1.57s",
+     "0:09:41.0+1.57s"
+    ],
+    "line": "急に夢の国が現れたやん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "急に夢の国現れたなあ。"
+     }
+    ]
+   },
+   {
+    "row": 7,
+    "from": 510,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "0:10:36.0+1.57s"
+    ],
+    "line": "あかん、バニツァ探さな！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 8,
+    "from": 557,
+    "frames": 60,
+    "voice_frames": 52,
+    "cuts": [
+     "0:19:13.0+2.00s"
+    ],
+    "line": "今度は、でっかい教会出てきた！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 617,
+    "frames": 114,
+    "voice_frames": 106,
+    "cuts": [
+     "banGenP1v01 0:00:00.5+1.37s",
+     "banGenP1v01 0:01:00.5+1.30s",
+     "0:19:30.0+1.13s"
+    ],
+    "line": "調べたら、元はモスクで、倉庫と刑務所になって、今は教会！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 731,
+    "frames": 114,
+    "voice_frames": 106,
+    "cuts": [
+     "0:23:31.0+1.90s",
+     "0:20:29.5+1.90s"
+    ],
+    "line": "全然違う宗教やのに、そんなんあり！？",
+    "telop": null,
+    "parts": [
+     {
+      "text": "そんなあり？",
+      "big": "shake_red"
+     },
+     {
+      "text": "めっちゃ全然違う宗教やけど。"
+     }
+    ]
+   },
+   {
+    "row": 11,
+    "from": 845,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "0:31:18.0+1.90s"
+    ],
+    "line": "やっと、お目当てのお店に着いた！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 902,
+    "frames": 162,
+    "voice_frames": 154,
+    "cuts": [
+     "banArtP1v01 0:00:00.5+2.60s",
+     "0:31:59.5+2.80s"
+    ],
+    "line": "入ったら、イメージと違ったけど、これ全部バニツァやん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "入ったら、イメージと違ったけど、"
+     },
+     {
+      "text": "これがバニッツや。これ全部バニッツや。",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "row": 13,
+    "from": 1064,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "banGenP1v01 0:02:00.5+1.43s",
+     "0:33:53.0+1.47s"
+    ],
+    "line": "アップルシナモンと迷ったけど、定番のチーズと卵にした！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1151,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "0:41:00.5+2.23s"
+    ],
+    "line": "寄り道しまくって、やっといただきます！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1218,
+    "frames": 95,
+    "voice_frames": 77,
+    "cuts": [
+     "0:42:20.0+1.57s",
+     "0:49:10.0+1.60s"
+    ],
+    "line": "外パリパリ、中ねっとりで、チーズゴロゴロ！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 16,
+    "from": 1313,
+    "frames": 67,
+    "voice_frames": 51,
+    "cuts": [
+     "0:39:55.0+2.23s"
+    ],
+    "line": "お値段は630円ほどやった！",
+    "telop": null,
+    "big": "glow_pink"
+   },
+   {
+    "row": 17,
+    "from": 1380,
+    "frames": 89,
+    "voice_frames": 66,
+    "cuts": [
+     "banArtP1v01 0:00:00.5+2.97s"
+    ],
+    "line": "みんなは、名物を探してても寄り道しちゃう？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 240,
+   "raw_voice_s": 40.0,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 28.63,
+   "cps_voiced": 8.38,
+   "video_s": 48.97,
+   "cps_video": 4.9
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.5,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "x": 790,
+   "y": 1345,
+   "w": 330,
+   "rotate": 5,
+   "from": 161,
+   "to": 223
+  },
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "x": 540,
+   "y": 1360,
+   "w": 560,
+   "rotate": -3,
+   "from": 737,
+   "to": 845
+  },
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "crop": [
+    60,
+    400,
+    560,
+    400
+   ],
+   "x": 300,
+   "y": 1350,
+   "w": 360,
+   "rotate": -4,
+   "from": 1111,
+   "to": 1151
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/draw/B4.jpg",
+   "x": 300,
+   "y": 1360,
+   "w": 330,
+   "rotate": -5,
+   "from": 1269,
+   "to": 1313
+  }
+ ],
+ "sfx": [
+  {
+   "at": 70,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 99,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 161,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 306,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 419,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/fuwa_s.wav",
+   "db": -4
+  },
+  {
+   "at": 510,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 729,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 731,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 980,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1111,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1269,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1313,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/sfx/enter_s.wav",
+   "db": 0
+  }
+ ],
+ "notes": [
+  {
+   "from": 127,
+   "to": 153,
+   "text": "◆ソフィア"
+  },
+  {
+   "from": 557,
+   "to": 617,
+   "text": "◆聖七人の教会"
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（丸いバニツァ・モスクと教会の並ぶ絵）・チーズと卵の1切れ（同じ絵の切り抜き）と ChatGPT で描いた B4（断面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）"
+}
