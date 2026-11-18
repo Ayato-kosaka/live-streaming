@@ -1078,7 +1078,8 @@ PRESETS = {
         # 街のガイド（記事・見どころ・どんな街の問いと答え）と、国の旅の記録の記事
         "jsonld:/travel/bulgaria/sofia=Article+ItemList+FAQPage", "jsonld:/travel/france=Article",
         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=1", "tools-noindex=all",
-        "title-short<=0", "desc-short<=0", "img-main-blank<=58", "youtube-none<=0",
+        # img-main-blank: 58 → 40（2026-11-18。国の面の配信の小さな絵に alt。#1296）
+        "title-short<=0", "desc-short<=0", "img-main-blank<=40", "youtube-none<=0",
         "file:/llms.txt=200",
     ]),
 }
