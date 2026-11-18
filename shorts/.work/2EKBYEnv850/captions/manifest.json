@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "2EKBYEnv850__captions",
+ "mode": "captions",
+ "dest": "2EKBYEnv850/captions",
+ "video": "2EKBYEnv850",
+ "channel": null,
+ "request": "shorts/requests/onsen-2EKBYEnv850-captions-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "captions": "ok"
+ },
+ "counts": {
+  "caption_segments": 1260,
+  "caption_lines": 1776,
+  "files": 6
+ },
+ "bytes": {
+  "plain": 687388,
+  "tar_gz": 117155,
+  "encrypted": 117168
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 117168,
+   "sha256": "b557583bf06e912ecb87bbdd0bee204dd9f10fbd1e31bab2a63f76d44dff80d7"
+  }
+ ],
+ "hmac_sha256": "a93ff55318bebfe6ebf5e1ffed67bbf662b3ad32bb7927779786ff5159352b8b",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44361320529",
+ "created_at": "2026-11-18T17:43:19+00:00"
+}
