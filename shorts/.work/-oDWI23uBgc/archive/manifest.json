@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "-oDWI23uBgc__archive",
+ "mode": "archive",
+ "dest": "-oDWI23uBgc/archive",
+ "video": "-oDWI23uBgc",
+ "channel": null,
+ "request": "shorts/requests/bgmove-oDWI23uBgc-p1v1-archive-20261118b.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
+ },
+ "counts": {
+  "sheets": 53,
+  "caption_segments": 2026,
+  "transcript_segments": 234,
+  "cuts": 41,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 67
+ },
+ "bytes": {
+  "plain": 18676157,
+  "tar_gz": 14934775,
+  "encrypted": 14934784
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 14934784,
+   "sha256": "7246b86c8dad6e2d5eeb33870cd83471165b9c092bd36522328f11c60008bf90"
+  }
+ ],
+ "hmac_sha256": "240738357b5e642ea62f5a15a0bda6b2838e2976685a14fea2752e7bbc65e9cc",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44361956480",
+ "created_at": "2026-11-18T19:07:33+00:00"
+}
