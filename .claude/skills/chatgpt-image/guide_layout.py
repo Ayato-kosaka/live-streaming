@@ -250,6 +250,41 @@ def layout(am: dict, out: Path, width: int = 1024) -> tuple[int, int]:
     return im.size
 
 
+# ---------------------------------------------------------------- あとから足す地区の色
+
+def wash(im, am: dict, bias: float = 0.5):
+    """頼み書きの `districts` のうち `paint: true` のもの（ChatGPT が描いた後で足した地区）の色を、描けた絵に重ねて返す。
+
+    2026-11-18、スコピエの地図に3つ目の地区（デバル・マーロ）を足した。描き直すと ChatGPT の絵が変わるので、
+    残した焼く前の1枚（`<街>-areamap-base.webp`）に、下敷きと同じ緯度経度→画素の写しで薄い色を重ねる。
+    描けた絵は下敷きの配置どおりなので（`fix` で守らせている）、同じ写しで重なる。絵の外へ出るぶんは切れる
+    """
+    from PIL import Image, ImageDraw, ImageFilter
+    ds = [d for d in am.get("districts", []) if d.get("paint")]
+    if not ds:
+        return im
+    bb = am["bbox"]
+    W, H = im.size
+    y0, y1 = _wy(bb["north"]), _wy(bb["south"])
+    # 下敷きの縦の長さ（幅に対して）。描けた絵はこれを ratio に切ったもの
+    full = W * (y1 - y0) / (_wx(bb["east"]) - _wx(bb["west"]))
+    off = (full - H) * bias
+
+    def px(lat, lon):
+        return ((lon - bb["west"]) / (bb["east"] - bb["west"]) * W, (_wy(lat) - y0) / (y1 - y0) * full - off)
+    fill = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    edge = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    fd, ed = ImageDraw.Draw(fill), ImageDraw.Draw(edge)
+    for d in ds:
+        pts = [px(la, lo) for la, lo in d["poly"]]
+        c = _hex(d["color"])
+        fd.polygon(pts, fill=c + (120,))
+        ed.line(pts + pts[:1], fill=tuple(round(v * 0.88) for v in c) + (110,), width=max(2, round(W * 0.005)), joint="curve")
+    fill = fill.filter(ImageFilter.GaussianBlur(W * 0.004))
+    edge = edge.filter(ImageFilter.GaussianBlur(W * 0.003))
+    return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), fill), edge).convert("RGB")
+
+
 # ---------------------------------------------------------------- 札を焼く
 
 def font(style: str = "Black") -> Path:

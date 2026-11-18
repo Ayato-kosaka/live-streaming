@@ -39,8 +39,8 @@
   ],
   "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: the river, every road and both district borders must stay where they are in the layout, and each landmark sits exactly on its numbered dot. The Skopje Fortress (3), the mosque (4) and the market (5) are on the NORTH bank of the river, inside the yellow district; the Stone Bridge (1) crosses the river exactly at dot 1; the warrior fountain (2), Mother Teresa's house (6), the old station (7), the cathedral (8) and the Transport Center (9) are on the SOUTH bank. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
   "prompt": "Paint an illustrated sightseeing map of central Skopje, North Macedonia, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, the blue Vardar river, every green park and the two colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; the river is a soft blue ribbon; roads are clean cream-white ribbons. Paint the two districts as flat translucent watercolor washes in their own colors from the layout (warm yellow north of the river, soft lavender south of it), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Stone Bridge (a long low pale stone bridge with many round arches across the river); 2 the Warrior on a Horse fountain (a bronze rider on a rearing horse on a tall pale column rising from a round fountain); 3 Skopje Fortress, Kale (old stone fortress walls with a squat crenellated tower on a small grassy hill); 4 Mustafa Pasha Mosque (one big lead-grey dome and one slender white minaret); 5 Bit Pazar market (a short row of market stalls with striped awnings and fruit crates); 6 Mother Teresa Memorial House (rough grey stone walls with round arches, white upper floors and a small teal glass cube on top); 7 the old railway station museum (a pale building with a big clock on its facade); 8 St Clement of Ohrid Cathedral (a modern church of many round domes stacked in rings); 9 the Transport Center (a long modern station on raised concrete pillars with a small train). These nine landmarks are the only drawn objects on the map.",
-  "alt": "スコピエの見どころマップ（地区分け）。ヴァルダル川の北の旧市街と、南の新市街の2つの地区を色で分け、名前を書いた絵地図。石橋・マケドニア広場の戦士の像・城塞・モスク・ビト・パザル・マザー・テレサ記念館・旧駅舎の博物館・聖クリメント大聖堂・交通センターの目印の絵つき",
-  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印9か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
+  "alt": "スコピエの見どころマップ（地区分け）。ヴァルダル川の北の旧市街、南の新市街、その北西のデバル・マーロの3つの地区を色で分け、名前を書いた絵地図。石橋・マケドニア広場の戦士の像・城塞・モスク・ビト・パザル・マザー・テレサ記念館・旧駅舎の博物館・聖クリメント大聖堂・交通センターの目印の絵つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・旧市街と新市街の色・目印9か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。デバル・マーロの色は描いたあとで足した（下敷きと同じ緯度経度の写しで、こちらの道具が重ねた）。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
   "bbox": {
    "west": 21.421,
    "east": 21.4475,
@@ -123,6 +123,37 @@
       21.4235
      ]
     ]
+   },
+   {
+    "id": "debar-maalo",
+    "color": "#ffc4d2",
+    "paint": true,
+    "poly": [
+     [
+      41.9997,
+      21.416
+     ],
+     [
+      42.004,
+      21.4155
+     ],
+     [
+      42.004,
+      21.427
+     ],
+     [
+      42.0012,
+      21.4275
+     ],
+     [
+      42.0001,
+      21.425
+     ],
+     [
+      41.9995,
+      21.42
+     ]
+    ]
    }
   ],
   "marks": [
@@ -196,6 +227,22 @@
      "https://skyticket.jp/guide/71254/",
      "https://4travel.jp/os_shisetsu/10503451",
      "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje"
+    ]
+   },
+   {
+    "id": "debar-maalo",
+    "name": "デバル・マーロ",
+    "label": [
+     "デバル・",
+     "マーロ"
+    ],
+    "local": "Дебар Маало",
+    "color": "#ffc4d2",
+    "x": 0.105,
+    "y": 0.29,
+    "source": [
+     "https://www.openstreetmap.org/node/6239561763",
+     "https://en.wikivoyage.org/wiki/Skopje/Centar"
     ]
    },
    {
