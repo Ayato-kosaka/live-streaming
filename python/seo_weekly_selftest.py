@@ -209,10 +209,12 @@ def legs(m, fake: Fake) -> dict[str, str | None]:
     row = next((ln for ln in out.splitlines() if ln.startswith("| ソフィア 観光 マップ／地図 |")), "")
     leg("束ねる", "4（前週 1）" in row and "14.0位（前週 30.0位）" in row, f"束ねた行が違う: {row!r}")
     yog = next((ln for ln in out.splitlines() if ln.startswith("| ブルガリア ヨーグルト 本場 |")), "")
-    leg("行なし", "—（前週 —）" in yog and "| 0（" not in yog, f"行の無い語: {yog!r}")
+    leg("行なし", yog.endswith("| — | — | — |") and "| 0" not in yog, f"行の無い語: {yog!r}")
     leg("人の語", "やまだたろう" not in out and "この週 2語" in out, "狙う語以外の語が出たか、数が違う")
     sofia = next((ln for ln in out.splitlines() if ln.startswith("| ソフィア `/travel/bulgaria/sofia` |")), "")
     leg("錨", sofia.count("3（前週 —）") == 1 and "載っている" in sofia, f"面の行: {sofia!r}")
+    leg("内訳", "載っている内訳: Submitted and indexed 2" in out and "載っていない理由: Crawled - currently not indexed 2" in out,
+        "載った面の内訳が違う")
     leg("載った面", "載っている **2/4**（前週 1/4" in out and "`/` → https://old.example/" in out
         and '"indexed": 2' in out, "載った面の節が違う")
     img = next((ln for ln in out.splitlines() if ln.startswith("| 「見どころマップ」を含む語 |")), "")

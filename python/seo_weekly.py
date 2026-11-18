@@ -61,6 +61,7 @@ import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -71,12 +72,15 @@ SCOPE = "https://www.googleapis.com/auth/webmasters.readonly"
 # 偽の口へ向けるのは対照だけ（`seo_weekly_selftest.py`）。本番では読まない
 API = os.environ.get("SEO_WEEKLY_API_BASE", "https://searchconsole.googleapis.com").rstrip("/")
 GH_API = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+REPO = os.environ.get("GITHUB_REPOSITORY", "Ayato-kosaka/live-streaming")
 
 # 前の週のコメントを見分ける印。**中の JSON を前週比に使う**（載った面の数は API が履歴を持たない）
 MARK = "<!-- seo-weekly v1 "
 LAG_DAYS = 3
-# URL 検査は 1プロパティ 1分 600回・1日 2,000回まで。sitemap の全面（150前後）を1本ずつ、少し待って
+# URL 検査は 1プロパティ 1分 600回・1日 2,000回まで。1回 5秒ほどかかる（2026-11-18、本物の鍵で 149面に
+# 約14分）ので、4本ずつ並べる（1分 50回ほど。上限の 1/10）。1本ごとに少し待つ
 INSPECT_PAUSE = 0.25
+INSPECT_WORKERS = 4
 # 理由の字は長いと表が崩れる。API の返事には鍵は入らない（入るのはサービスアカウントの名前まで）
 WHY_MAX = 140
 
@@ -278,7 +282,9 @@ def cell(now: dict | None, prev: dict | None, key: str) -> str:
         if not t["rows"]:
             return "—"
         return pos_s(t["position"]) if key == "position" else num(t[key])
-    return f"{one(now)}（前週 {one(prev)}）"
+    a, b = one(now), one(prev)
+    # どちらの週も行が無いなら「—」だけ（15語の表がほとんど「—（前週 —）」で埋まると、動いた行が見えない）
+    return "—" if a == b == "—" else f"{a}（前週 {b}）"
 
 
 def table(head: list[str], rows: list[list[str]]) -> str:
@@ -392,15 +398,23 @@ def build(cfg: dict, today: date, con: Console | None, auth_err: str | None,
         todo = list(dict.fromkeys([u for u in want_pages] + urls))
         if inspect_n is not None:
             todo = todo[:inspect_n]
-        for u in todo:
+        def one(u: str) -> tuple[str, dict | None, str | None]:
             try:
-                insp[u] = con.inspect(u)
+                return u, con.inspect(u), None
             except Unread as e:
-                insp_err.append(str(e))
-                # 権限・止められた（403/429）は、続けても同じ答え。そこで止めて読めなかったと書く
-                if re.match(r"HTTP (401|403|429)", str(e)):
-                    break
-            time.sleep(INSPECT_PAUSE)
+                return u, None, str(e)
+            finally:
+                time.sleep(INSPECT_PAUSE)
+
+        # 1本目だけ先に。権限・止められた（401/403/429）は、続けても同じ答えなので、そこで止める
+        first = one(todo[0]) if todo else None
+        rest = todo[1:] if first and not (first[2] and re.match(r"HTTP (401|403|429)", first[2])) else []
+        with ThreadPoolExecutor(INSPECT_WORKERS) as ex:
+            for u, st, err in ([first] if first else []) + list(ex.map(one, rest)):
+                if err:
+                    insp_err.append(err)
+                else:
+                    insp[u] = st
         if insp_err:
             unread.append(f"URL 検査: {len(insp_err)}面 読めなかった（{insp_err[0]}）")
 
@@ -411,7 +425,7 @@ def build(cfg: dict, today: date, con: Console | None, auth_err: str | None,
     out.append(f"## 検索の週の数（{w['now'][0].year}年 {md(w['now'])}・前週 {md(w['prev'])}）")
     out.append("")
     out.append(f"Search Console（`{cfg['site']}`）を API で読んだ。数が固まるのを待って、{LAG_DAYS}日前までの7日。"
-               "読みかたと「効いた／効いていない」の決めかたは [`docs/seo.md`](../blob/master/docs/seo.md) の Check。")
+               f"読みかたと「効いた／効いていない」の決めかたは [`docs/seo.md`](https://github.com/{REPO}/blob/master/docs/seo.md) の Check。")
     if auth_err:
         out.append("")
         out.append(f"**読めなかった**: {auth_err}。数はどれも書いていない（0 ではない）。")
@@ -494,14 +508,16 @@ def build(cfg: dict, today: date, con: Console | None, auth_err: str | None,
                   if isinstance(pv.get("indexed"), int) and isinstance(pv.get("inspected"), int) else "（前週の表が無い）")
         part = "" if len(sm_insp) == len(urls) else f"（sitemap {len(urls)}面のうち {len(sm_insp)}面を検査）"
         out.append(f"載っている **{len(on)}/{len(sm_insp)}**{part}{prev_s}")
-        why_n: dict[str, int] = {}
-        for s in sm_insp.values():
-            if s.get("verdict") != "PASS":
-                k = s.get("coverageState") or s.get("verdict") or "分からない"
-                why_n[k] = why_n.get(k, 0) + 1
-        if why_n:
-            out.append("\n載っていない理由: " + "・".join(
-                f"{k} {v}" for k, v in sorted(why_n.items(), key=lambda x: -x[1])))
+        # 「載っている」は URL 検査の verdict が PASS（Search Console の「有効」）。内訳の字（coverageState）も
+        # 並べて、数が何から来たかを読めるようにする（画面の「ページ」の表は数日遅れて固まるので、数が合わないことがある）
+        for label, want in (("載っている内訳", True), ("載っていない理由", False)):
+            n: dict[str, int] = {}
+            for st in sm_insp.values():
+                if (st.get("verdict") == "PASS") == want:
+                    k = st.get("coverageState") or st.get("verdict") or "分からない"
+                    n[k] = n.get(k, 0) + 1
+            if n:
+                out.append(f"\n{label}: " + "・".join(f"{k} {v}" for k, v in sorted(n.items(), key=lambda x: -x[1])))
         odd = [(u, s.get("googleCanonical")) for u, s in sm_insp.items()
                if s.get("googleCanonical") and s.get("userCanonical")
                and s["googleCanonical"].rstrip("/") != s["userCanonical"].rstrip("/")]
