@@ -31,6 +31,7 @@ import traceback
 import types
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 
@@ -81,20 +82,43 @@ def run_legs(legs: dict, ctx, quiet: bool) -> tuple:
     return failed, checked
 
 
+def _child(script: Path, name: str):
+    env = dict(os.environ, BREAK=name)
+    return subprocess.run([sys.executable, str(script)], capture_output=True, text=True, env=env,
+                          timeout=300, check=False)
+
+
+def drill_jobs() -> int:
+    """対照の子を何本並べるか。`LEGS_JOBS` で変えられる（混んだ箱なら 1）。
+
+    1本ずつだと、brief_selftest（対照74個）が回し役の1本の上限（300秒）を越えた（PR #1283 の CI）。並べても子どうしは
+    同じ物を書き壊さない: 置き場は子ごとに TemporaryDirectory・mkdtemp で別にし、brief.py の字幕の控え
+    （brief-corpus-*.txt）は pid つきの写しに書いてから os.replace で差し替える。足を足すとき、子どうしで同じ道に
+    書くなら、先に置き場を分ける（並べた子が互いの書きかけを読むと、守りと関係の無い足が落ちて対照が外れる）。
+    """
+    try:
+        n = int(os.environ.get("LEGS_JOBS", ""))
+    except ValueError:
+        n = min(4, os.cpu_count() or 1)
+    return max(1, n)
+
+
 def drill(script: Path, cuts: dict) -> list:
     print("[対照] 守りを1つずつ外すと、その足だけが落ちるか")
     bad = []
-    for name, (fname, _, _, want, why) in cuts.items():
-        env = dict(os.environ, BREAK=name)
-        r = subprocess.run([sys.executable, str(script)], capture_output=True, text=True, env=env,
-                           timeout=300, check=False)
-        line = [ln for ln in r.stdout.splitlines() if ln.startswith("LEGS_FAILED ")]
-        got = set(json.loads(line[-1][len("LEGS_FAILED "):])) if line else None
-        hit = got == set(want) and r.returncode == 1
-        shown = sorted(got) if got is not None else "（読めない: " + (r.stdout + r.stderr).strip()[-300:] + "）"
-        print(f"  {'○' if hit else '✕'} BREAK={name}（{fname}: {why}）→ 落ちた足 {shown}（欲しいのは {sorted(want)}）")
-        if not hit:
-            bad.append(name)
+    # 子は並べて回し、出すのは対照の並び順のまま（上から順に、終わるのを待って1行ずつ）
+    with ThreadPoolExecutor(max_workers=drill_jobs()) as pool:
+        runs = {name: pool.submit(_child, script, name) for name in cuts}
+        for name, (fname, _, _, want, why) in cuts.items():
+            r = runs[name].result()
+            line = [ln for ln in r.stdout.splitlines() if ln.startswith("LEGS_FAILED ")]
+            got = set(json.loads(line[-1][len("LEGS_FAILED "):])) if line else None
+            hit = got == set(want) and r.returncode == 1
+            shown = sorted(got) if got is not None else "（読めない: " + (r.stdout + r.stderr).strip()[-300:] + "）"
+            print(f"  {'○' if hit else '✕'} BREAK={name}（{fname}: {why}）→ 落ちた足 {shown}（欲しいのは {sorted(want)}）",
+                  flush=True)
+            if not hit:
+                bad.append(name)
     return bad
 
 

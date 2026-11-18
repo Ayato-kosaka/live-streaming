@@ -53,7 +53,7 @@
 | `e_secs` | 前の版の指示書があれば、表の秒とカットは指示書の実際の値。行の数が原稿と違う指示書は使わない |
 | `e_plan` | 企画の地図と取り込みの表は、その案（A）の節と共通の節だけ。B・C の節を名指さない |
 | `e_streams` | 配信の videoId は spec の時間軸の割り当て（`2:=…`）から重ねずに。「使わない」と書いた配信は入れない |
-| `e_fill` | 雛形の {{…}} が残らず、フランス A で 2万字以下 |
+| `e_fill` | 雛形の {{…}} が残らない。企画が4万字を越える作り物の回（`fake_episode`）でも、1枚は2万字以下（大きさは本物の回では見ない。制作物が育つと、上限の近くで対照が e_fill まで落とした） |
 | `e_others` | 銅像・地下鉄・城塞の回でも、落ちずに2万字以下で出て、その回の原稿の1行目が表に入る |
 | `e_pick` | 案を付けない回はいちばん新しい版（銅像は p2）。案が要る回で案が無い・無い案は止まる |
 | `e_cmds` | 雛形に書いた道具と `--引数` が今の道具に在る。無い引数・無い道具は止まる。同じ行の別の道具の引数は通す |
@@ -1108,9 +1108,46 @@ def leg_e_streams(B):
             ("回の名前（france-2025）は videoId に数えない", "france-2025" not in ids)]
 
 
+def fake_episode(td: Path) -> Path:
+    """本編集の1枚の大きさを見る、作り物の回（案 A・B・C の企画と、A の原稿・spec）。企画は上限の倍（4万字）を越え、
+    その大半は1枚に入れない所（読まない小節・ほかの案の節）。入れてよい所は小さく置く。
+
+    大きさを本物の回（フランス A）で見ていたら、上限 2万字まで 211字のところへ帳面の F-014 の書き足し（2026-11-15。23字）が
+    入り、ほかの案の節まで名指す対照（e_scope）が 20,001字になって e_fill まで落とした（e_machine も残り 29字だった）。
+    本物の回の字数で決まる足は、制作物が育つたびに守りと関係無く色が変わる。ここで見るのは「企画がどれだけ大きくても、
+    入れない所が1枚に漏れない」こと。本物の回が上限に収まるかは、組むたびに brief.py が「注意」で言う。
+    """
+    vdir = td / "zz-fixture/p1"
+    vdir.mkdir(parents=True)
+    lines = ["作り物の回の1行目！", "二行目の声。", "三行目の声。", "みんなは？"]
+    (vdir / "script_A.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    rows = [{"line": ln, "src": [f"1:00:0{i}.0"], "visual": "作り物の画", "card": i == 0} for i, ln in enumerate(lines)]
+    (vdir / "spec_A.json").write_text(json.dumps({"id": "A", "title_card": "作り物の題", "_note": "1:=Zzzzzzzzzz1 作り物の配信",
+                                                  "rows": rows}, ensure_ascii=False), encoding="utf-8")
+
+    def filler(n: int) -> str:
+        return "\n".join(f"- 作り物の記録の{i}行目。1枚には入れない字。" for i in range(n))
+    plan = ["# 作り物の回 — 原稿 p1（3案）", "", "> あやとの決定（作り物）: この字で組む。", "",
+            "## 2. 3案に共通の決めごと", filler(5),
+            "## A 作り物の案", "### 写す参考と、拍の写し表", filler(400), "### 原稿（4行）", filler(40),
+            "### 似た見た目の続き（h7）", filler(5),
+            "### 取り込み（A の画の clips）", "\n".join(f"| 区間{i} | Zzzzzzzzzz1 | 1:00:{i:02d} |" for i in range(5)),
+            "### 本編集（v1）", filler(5),
+            "## B 作り物の別の案", "#### 書き出しへの指定（画と字の見せ方）", filler(120), "### 似た見た目の続き（h7）", filler(120),
+            "## C 作り物の三つ目の案", "### 似た見た目の続き（h7）", filler(120), "### あやとに頼む録画", filler(120),
+            "## レビューの記録", filler(800)]
+    (vdir / "plan.md").write_text("\n".join(plan) + "\n", encoding="utf-8")
+    return vdir
+
+
 def leg_e_fill(B):
     text = edit_brief(B, str(FR), "A")
-    return [("雛形の {{…}} が残らない", "{{" not in text), (f"2万字以下（{len(text):,}字）", len(text) <= B.EDIT_MAX),
+    with tempfile.TemporaryDirectory() as td:
+        vdir = fake_episode(Path(td))
+        plan_n = len((vdir / "plan.md").read_text(encoding="utf-8"))
+        fake = B.build_edit_brief(vdir, "A", "", None, None)
+    return [("雛形の {{…}} が残らない（フランス A・作り物の回）", "{{" not in text and "{{" not in fake),
+            (f"企画が {plan_n:,}字の作り物の回でも、1枚は2万字以下（{len(fake):,}字）", plan_n > 2 * B.EDIT_MAX and len(fake) <= B.EDIT_MAX),
             ("道の変数（V）に回の置き場が入る", "`V=shorts/videos/france-2025/p1`" in text and "$V/spec_A.json" in text)]
 
 
