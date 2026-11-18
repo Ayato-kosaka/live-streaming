@@ -518,8 +518,8 @@ def main() -> int:
            f"題を焼いた表紙の名前が頼み書きの file でない: {c['src']} / {ct['src']}")
         ok(c.get("titled") is True and ct.get("titled") is True and c["alt"].startswith("テスト町観光ガイド「港の見える町」。"),
            f"題を焼いた表紙に titled と、焼いた字で始まる alt が載らない: {c.get('titled')} {c['alt'][:30]}")
-        ok(c.get("og", {}).get("src") == "/guide/xx/titled/テスト町-観光ガイド-og.jpg"
-           and Image.open(tout / "テスト町-観光ガイド-og.jpg").size == (1200, 630) and "og" not in ct,
+        ok(c.get("og", {}).get("src") == "/guide/xx/titled/titled-guide-og.jpg"
+           and Image.open(tout / "titled-guide-og.jpg").size == (1200, 630) and "og" not in ct,
            f"og の 1200x630 の JPEG が横の表紙にだけ付かない: {c.get('og')} / {ct.get('og')}")
         big = Image.open(tout / "テスト町-観光ガイド-1600.webp").convert("RGB")
         # 札は右上（紙の色）。左下は元の絵の色のまま

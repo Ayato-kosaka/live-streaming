@@ -182,5 +182,5 @@ EC2 に残っていると、一括は描かずに古い絵を返す。2026-11-18
 **表紙にも題を焼く**（#1228・`docs/island-misses.md` #332。画像検索で水彩の絵だけが出て、誰も押さなかった）。頼み書きの頭に `title`
 （`name` 街・`label` 観光ガイド・`catch` 面のキャッチと同じ字・`kicker` 国）、`cover` `cover_tall` に札の置き場 `title`（`x` `y` `anchor` `scale`）と
 `file`（ソフィアは「ソフィア-観光ガイド」）。札は街の主役（大聖堂・像）を隠さない空・水・広場へ。`finalize` が焼いて、横の表紙から og の
-1200x630 の JPEG も出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に残るので、キャッチを変えた日は
+1200x630 の JPEG（`<街>-guide-og.jpg`。英数字の名前）も出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に残るので、キャッチを変えた日は
 `finalize` だけで焼き直す。出す前に横 240px に縮めて街の名前が読めるかを見る。
