@@ -87,8 +87,11 @@ export default function SkopjePage() {
   const drawn = readDrawn(G.country, G.city);
   const articles = articlesOf(G.country, G.city);
   const prices = articles.find((a) => a.href === G.basics.budget.article);
-  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先） */
-  const swap = <T extends { went?: unknown }>(it: T, pic?: (typeof drawn.food)[string]) => (pic && !it.went ? { ...it, pic } : it);
+  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先）。
+     行ったのにその日の写真が無い品（箱入りクッキー・防寒具・ドネル・ケバブ…）は、描いた絵に落とす。前は字1つの色の札で、
+     行った品ほど絵が無く見えた（2026-11-18、本番の 390 幅で6枚） */
+  const swap = <T extends { went?: unknown; pic?: unknown }>(it: T, pic?: (typeof drawn.food)[string]) =>
+    pic && (!it.went || !it.pic) ? { ...it, pic } : it;
   const g = {
     ...G,
     stay: stayOf(G.country),
