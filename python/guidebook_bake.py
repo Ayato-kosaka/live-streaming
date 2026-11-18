@@ -266,7 +266,12 @@ class Book:
             s = comp["story"]
             xs = self.rows_of(s.get("facts"), f"{where}.story")
             self.check_numbers(s["text"], xs, f"{where}.story")
-            story.append(s["text"])
+            # `first`: 行った所の感想は、材料の話（行き方・コツ）より前に置く（あやと 2026-11-18 #1228
+            # 「ブログなんで、行った所は感想をもっと入れてもいい」）。感想が窓の終わりの注意書きに埋もれないように
+            if s.get("first"):
+                story.insert(0, s["text"])
+            else:
+                story.append(s["text"])
         out: dict = {"date": min(r["date"] for r in rows), "scene": self.scene(at)}
         if story:
             out["story"] = story

@@ -8,9 +8,12 @@
  "style": "editorial",
  "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
  "scene": "Scene: Skopje, the capital of North Macedonia, on a clear late-autumn (November) afternoon, seen from the north bank of the Vardar river and looking south across it. In the middle ground is the old Stone Bridge: a long, low Ottoman-era bridge built of pale beige-grey stone blocks, with a row of many rounded arches over the calm green-blue Vardar river and a flat pedestrian deck with low stone parapets; a few tiny cheerful people stroll across it. At the far (south) end of the bridge opens Macedonia Square, wide and paved with pale stone; in its center is a large round fountain, and rising from the fountain a very tall, pale stone column topped by a big bronze statue of a warrior on a rearing horse holding a sword up, with small bronze lion statues on the rim of the fountain. Behind the square: cream and white city buildings and autumn trees with golden-yellow and orange leaves. In the background, filling the horizon: Vodno mountain, a long, broad, gently rounded forested ridge (NOT a sharp peak) in soft blue-green with autumn tints, and on its summit a very large open steel lattice cross in a dark rust-brown color (the Millennium Cross; it is NOT white) standing out as a slim silhouette against the sky. On the near (north) bank at the left edge, a short stretch of an old stone fortress wall with a squat crenellated tower on a small grassy hill (Skopje Fortress, Kale). Golden late-afternoon light with soft long shadows. ",
+ "title": {"name": "スコピエ", "label": "観光ガイド", "catch": "マザー・テレサが生まれた街", "kicker": "北マケドニア"},
  "cover": {
   "v": 3,
   "bias": 0.5,
+  "file": "スコピエ-観光ガイド",
+  "title": {"x": 0.96, "y": 0.955, "anchor": "br", "scale": 0.85},
   "alt": "晩秋の午後の日に照らされた、アーチの続く石橋と騎馬像の噴水のマケドニア広場。左に城塞の壁、奥に頂の十字架が見えるヴォドノ山。スコピエの絵",
   "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。石橋・騎馬像の噴水・城塞は写真を形の手本として渡した。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし",
   "photos": [
@@ -21,6 +24,8 @@
  "cover_tall": {
   "v": 3,
   "bias": 0.5,
+  "file": "スコピエ-観光ガイド-縦",
+  "title": {"x": 0.5, "y": 0.955, "anchor": "bc", "scale": 1.2},
   "alt": "晩秋の午後の石橋と、騎馬像の噴水のマケドニア広場。奥に頂の十字架が見えるヴォドノ山。スコピエの絵",
   "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
   "photos": [

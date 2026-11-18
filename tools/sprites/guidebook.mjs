@@ -445,7 +445,7 @@ function headCheck(raw) {
     const og = raw.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? "";
     if (!/-og\.jpg$/.test(decodeURI(og))) fail(`題を焼いた表紙があるのに、og:image が焼いた絵ではない（${decodeURI(og) || "無し"}）`);
   }
-  notes.push(`題: ${title}／h1: ${h1}／表紙 ${titled ? "題を焼いた絵（字は絵の下）" : "字を重ねる表紙"}`);
+  notes.push(`題: ${title}／h1: ${h1}／表紙 ${titled ? "題を焼いた絵（h1 は絵の上）" : "字を重ねる表紙"}`);
 }
 
 const openId = (p) => p.evaluate(() => document.querySelector("dialog.gb-dlg[open]")?.id ?? null);
