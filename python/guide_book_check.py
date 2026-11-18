@@ -282,7 +282,7 @@ class Book:
         about = d.get("about") or {}
         cards = about.get("cards") or []
         # 2026-11-18 に 3〜4 から 2〜3 にした。問いはその街が何で語られているかで選び、基本情報と同じ話（お金・言葉）を
-        # 置かない（あやと #1228「お金と言葉は基本情報に書いてあるので要らない」・`docs/island-misses.md` #332）
+        # 置かない（あやと #1228「お金と言葉は基本情報に書いてあるので要らない」・`docs/island-misses.md` #333）
         if not 2 <= len(cards) <= 3:
             self.err("about.cards", f"札は2〜3枚（{len(cards)}枚）")
         for c in cards:
