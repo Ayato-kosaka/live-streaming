@@ -241,6 +241,12 @@ def main() -> int:
         ok(model_puts and all(c[2].endswith(".webp") for c in model_puts) and ".png" in sh,
            "手本を webp で送って EC2 で PNG に直していない")
         ok(all(f.endswith(".png") for j in jobs for f in j["files"]), "ChatGPT に渡す絵の道が PNG でない")
+        ok("STALE" in sh and "cover2-0.png" in sh and "food-pie-0.png" not in sh.split("mkdir")[0],
+           "一括を起こす前に、EC2 に前の絵が在る品を見ていない（別名の品まで見ている）")
+        fake.calls.clear()
+        fake.answers = ["STALE: areamap3(2026-11-15)"]
+        rc, _, out_ = quiet(ga.run, sp, root, work)
+        ok(rc == 1 and "v を上げて" in out_, "EC2 に前の絵が在る品を送って、古い絵を持ち帰る道を開けた")
         fake.calls.clear()
         rc, _, out_ = quiet(ga.run, sp, root, work, only=["buy:cup"])
         ok(rc == 2 and not fake.calls, "後回しの品だけのとき、EC2 に触った・0 で終わった")

@@ -385,6 +385,8 @@ class Book:
             if wt:
                 it["went"] = wt
             if "lat" in s:
+                # 面には出さない。検索と AI の読み手に渡す見どころの名札（`components/guidebook/SpotsLd.tsx`）だけが読む（#1262）
+                it["geo"] = {"lat": s["lat"], "lon": s["lon"]}
                 d = km((sq["lat"], sq["lon"]), (s["lat"], s["lon"]))
                 if d >= FAR_KM:
                     k = round(d, 1) if d < 10 else round(d)
@@ -403,7 +405,11 @@ class Book:
             join = lambda ps: "".join(text_of(p) for p in ps)  # noqa: E731
             ph = t.get("photo") or {}
             pic = None
-            if t.get("went") and ph.get("card"):
+            # 1枚のカードを2つに切って使う日がある（食堂コスモスのチェバピと豆の煮込み）。どちらの切りかたかは組み立てで選ぶ
+            comp_card = ((self.c.get("items") or {}).get(f"todo/{t['key']}") or {}).get("card")
+            if t.get("went") and comp_card:
+                pic = self.card(comp_card, w, self.went_days(t))
+            elif t.get("went") and ph.get("card"):
                 name = self.card_by_id(ph["card"]["id"])
                 if not name:
                     self.err(w, f"材料のカード {ph['card']['id']} が compose.json の cards に無い")
@@ -417,6 +423,22 @@ class Book:
                   "src": self.src(*[p.get("src") for k in ext for p in ext[k]])}
             if (t.get("links") or {}).get("eat"):
                 it["eat"] = t["links"]["eat"]
+            # 題は「〜したい！」で20字まで（`docs/guide-copy.md` 3章。飾りはリードへ）
+            if len(t["title"]) > 20 or not t["title"].endswith("！"):
+                self.err(w, f"題は「〜したい！」の形で20字まで（{len(t['title'])}字「{t['title']}」）")
+            # 札の印は値段か季節だけ・12字まで（`docs/island-misses.md` #328。やりたいことの題は、その街ならではの話なので
+            # 「その国ならでは」の印は付けない）。印の数は、窓に出す字（出どころつき）か、あやとの行の字に在るものだけ
+            marks = []
+            for m in t.get("marks") or []:
+                if m.get("kind") not in ("price", "season") or not m.get("text") or len(m["text"]) > 12:
+                    self.err(w, f"札の印は値段（price）か季節（season）で12字まで（{m}）")
+                    continue
+                said = "".join(text_of(p) for ps in pts.values() for p in ps or [])
+                if gf.numbers_in(m["text"]) - gf.numbers_in(said):
+                    self.err(w, f"札の印「{m['text']}」の数が、窓の字に無い")
+                marks.append({"kind": m["kind"], "text": m["text"]})
+            if marks:
+                it["marks"] = marks
             if pic:
                 it["pic"] = pic
             wt = self.went("todo", t, w, story_from=own)

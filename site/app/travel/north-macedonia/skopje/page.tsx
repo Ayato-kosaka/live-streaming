@@ -7,6 +7,7 @@ import Cover from "@/components/guidebook/Cover";
 import { Buy, Eat, See } from "@/components/guidebook/Items";
 import SheetHost from "@/components/guidebook/SheetHost";
 import Sources from "@/components/guidebook/Sources";
+import SpotsLd from "@/components/guidebook/SpotsLd";
 import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
@@ -39,8 +40,14 @@ import "@/components/guidebook/guidebook.css";
  *
  * **字は1つもここに書かない。** 中身は `content/guidebook/north-macedonia-skopje.ts`
  * （`python/guidebook_bake.py` が材料 `guidebook.json`・組み立て `compose.json`・facts から焼く）、部品は `components/guidebook/`。
- * 描いた絵（表紙・エリア地図・料理・土産）は `public/guide/north-macedonia/skopje/manifest.json` から読み、
- * 無ければ写真か色の札に落ちる。マイマップはまだ無いので、地図の枠は出さず、店の一覧の「マップ」の札で開く。
+ * 描いた絵（表紙・見どころマップ・行っていないやりたいこと・料理・土産）は `public/guide/north-macedonia/skopje/manifest.json`
+ * から読み、無ければ写真か色の札に落ちる。マイマップは見たい・食べたい・買いたいの3枚（`mymaps/mids.json`）。
+ *
+ * ## ソフィアの型（2026-11-18。#1228）
+ *
+ * 言葉は `docs/guide-copy.md` の型（キャッチは型3「マザー・テレサが生まれた街」）、やりたいことは「〜したい！」の7つで
+ * 札は全部 4:3・縦1列・印は値段と季節だけ、どんな街は4つの問い、見どころマップは地区名を焼いた D2 の絵地図
+ * （旧市街・新市街。日本語の頁の分けかた）、見たいもの22か所の名札（座標つき）。ソフィアと同じ部品で、街の字は焼いた中身だけ。
  *
  * ## 公開前
  *
@@ -104,6 +111,8 @@ export default function SkopjePage() {
         })}
       />
       <VideoLds g={g} />
+      {/* 見たいもの22か所の名札（名前・座標・窓への錨）。ソフィアと同じ（#1262） */}
+      <SpotsLd g={g} path={CITY.href} />
       <article className="gb">
         <Cover g={g} drawn={drawn} />
         <Toc items={toc} />
