@@ -23,7 +23,7 @@
    `short` は `python/data/shorts.json`（`site/content/shorts.ts` の元）に在る北マケドニア（🇲🇰）のショートで、当てた理由（`shorts.items` の `basis` と facts）がある。
    行っていない項目には付けない（ショートの日付は出した日で、撮った日ではないので、日付では当てない）
 
-ほかに、面の形の約束（表紙のひとこと3案・25字、どんな街の札3〜4枚・60字、エリア4〜6・多角形4〜8点、やりたいこと8まで・見出し30字、
+ほかに、面の形の約束（表紙のひとこと3案・25字、どんな街の札2〜3枚・60字、エリア4〜6・多角形4〜8点、やりたいこと8まで・見出し30字、
 実用ガイド6つ・ひとこと10個）・好みの印を付けない（`mark` `like` `syrup` を置かない。#1228 の返事）・
 いまのハブの項目を全部引き継いでいる（`from_hub`）・CSV が材料と同じ、を見る。
 
@@ -281,8 +281,10 @@ class Book:
                 self.err("cover.catch", f"25字を超える（{plen(c['text'])}字）「{c['text']}」")
         about = d.get("about") or {}
         cards = about.get("cards") or []
-        if not 3 <= len(cards) <= 4:
-            self.err("about.cards", f"札は3〜4枚（{len(cards)}枚）")
+        # 2026-11-18 に 3〜4 から 2〜3 にした。問いはその街が何で語られているかで選び、基本情報と同じ話（お金・言葉）を
+        # 置かない（あやと #1228「お金と言葉は基本情報に書いてあるので要らない」・`docs/island-misses.md` #333）
+        if not 2 <= len(cards) <= 3:
+            self.err("about.cards", f"札は2〜3枚（{len(cards)}枚）")
         for c in cards:
             if plen(c.get("text", "")) > 60:
                 self.err(f"about.cards({c.get('key')})", f"60字を超える（{plen(c['text'])}字）")
