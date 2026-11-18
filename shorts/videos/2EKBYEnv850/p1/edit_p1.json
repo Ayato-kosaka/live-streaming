@@ -1,0 +1,1165 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "2EKBYEnv850-p1",
+ "style": "style_ons.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/01_guide_hotspring.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/05_0-29-00_0-30-20.mp4",
+   "watermark": "prism_live",
+   "t0": 1740.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      90,
+      183
+     ],
+     [
+      1110,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/03_guide_cover.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/02_0-15-00_0-17-40.mp4",
+   "watermark": "prism_live",
+   "t0": 900.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      90,
+      183
+     ],
+     [
+      1110,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/03_gen_O3.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/01_gen_O1.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/01_0-02-20_0-02-50.mp4",
+   "watermark": "prism_live",
+   "t0": 140.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      90,
+      183
+     ],
+     [
+      1110,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/03_0-20-50_0-24-15.mp4",
+   "watermark": "prism_live",
+   "t0": 1250.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      90,
+      183
+     ],
+     [
+      1110,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/02_guide_baths.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c3_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/07_gen_O7.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
+  },
+  "c3_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/08_gen_O9.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/04_gen_O4.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/05_gen_O5.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/04_0-25-20_0-27-05.mp4",
+   "watermark": "prism_live",
+   "t0": 1520.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      90,
+      183
+     ],
+     [
+      1110,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/06_gen_O6.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 53,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.45,
+    "y": 0.6
+   },
+   "note": "「ブルガリアで温泉を飲んでみたら、」: 案内ページの絵（温泉の蛇口で湯を汲む人。後ろ姿）。0秒目を配信の粗い1コマにしない（F-079）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 480,
+   "out": 526,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「激まずすぎた！」: 飲んだあとの本人のしかめ顔（答えの画。F-073。18行目と同じ瞬間を先に見せる）"
+  },
+  {
+   "src": "c2_03",
+   "in": 15,
+   "out": 49,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "案内ページの表紙の絵（ネフスキー大聖堂）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c02",
+   "in": 0,
+   "out": 33,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "雨のソフィアの広場とハト（場所の札）"
+  },
+  {
+   "src": "c3_03",
+   "in": 15,
+   "out": 82,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "描いた絵 O3（温泉の上に建つ街の断面）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 72,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "描いた絵 O1（日本の露天風呂）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01",
+   "in": 270,
+   "out": 324,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "話す本人（自撮り）"
+  },
+  {
+   "src": "c03",
+   "in": 0,
+   "out": 32,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "建物の角まで歩いて着く（v1 の 0:15:24 の広場は、次の行の建物と似た見た目で 3.5秒続いた）"
+  },
+  {
+   "src": "c02",
+   "in": 4590,
+   "out": 4662,
+   "row": 6,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "「え、これが温泉の建物？」（AI の声）: 中央鉱泉浴場の建物"
+  },
+  {
+   "src": "c2_02",
+   "in": 15,
+   "out": 53,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "本人の声「めっちゃ素敵。」: 案内ページの同じ建物の絵（1カットだと 3秒を越える）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c03",
+   "in": 120,
+   "out": 197,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "建物の横を歩いて探す（＋案内ページの蛇口の絵の札）"
+  },
+  {
+   "src": "c03",
+   "in": 2070,
+   "out": 2124,
+   "row": 8,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.22,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "湯気の立つ蛇口の湯船（縞の壁の前の行と似た見た目が続かないよう、蛇口の構えは12行目へ）"
+  },
+  {
+   "src": "c03",
+   "in": 3120,
+   "out": 3150,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「嗅いでみたら、」（AI の声）: 顔を近づける（髪が入る）"
+  },
+  {
+   "src": "c3_07",
+   "in": 15,
+   "out": 67,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "本人の声「なんか、コケの匂い」: 描いた絵 O7（コケと湯気）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01",
+   "in": 480,
+   "out": 530,
+   "row": 10,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "空を見上げる本人の顔（不安）"
+  },
+  {
+   "src": "c03",
+   "in": 600,
+   "out": 643,
+   "row": 11,
+   "zoom": {
+    "from": 1.15,
+    "to": 1.3,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "蛇口の湯船へ近づく"
+  },
+  {
+   "src": "c03",
+   "in": 5476,
+   "out": 5540,
+   "row": 12,
+   "zoom": {
+    "from": 1.25,
+    "to": 1.35,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "本人の声「あちあちちあちちちちち！」: 湯に手を当てる（声と同じ秒）"
+  },
+  {
+   "src": "c3_08",
+   "in": 15,
+   "out": 62,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "描いた絵 O9（湯にぬれた手のひら）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_04",
+   "in": 15,
+   "out": 63,
+   "row": 14,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.4,
+    "y": 0.6
+   },
+   "note": "描いた絵 O4（蛇口へ歩いてくるおっちゃんの後ろ姿）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_05",
+   "in": 15,
+   "out": 67,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.55,
+    "y": 0.45
+   },
+   "note": "本人の声「おっちゃんめっちゃ飲んでたよ。」: 描いた絵 O5（湯を飲むおっちゃん）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 180,
+   "out": 224,
+   "row": 16,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "蛇口から直に湯を飲む本人（＋おっちゃんの絵の札）"
+  },
+  {
+   "src": "c05",
+   "in": 465,
+   "out": 543,
+   "row": 17,
+   "zoom": {
+    "from": 1.05,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "本人の声「うわ、まっずい。」: しかめ顔"
+  },
+  {
+   "src": "c04",
+   "in": 2979,
+   "out": 3027,
+   "row": 17,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "本人の声「まずいわ。」: 1回目に飲んだあとの顔（声より 0.85秒前から。v1 は 0:27:01.5 から空が写った）"
+  },
+  {
+   "src": "c05",
+   "in": 705,
+   "out": 762,
+   "row": 18,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "笑ってしまう本人（＋温泉卵の絵の札）"
+  },
+  {
+   "src": "c3_06",
+   "in": 15,
+   "out": 95,
+   "row": 19,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.55,
+    "y": 0.6
+   },
+   "note": "描いた絵 O6（ボトルを持って蛇口に並ぶ地元の人の後ろ姿）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 91,
+   "row": 20,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.07,
+    "x": 0.45,
+    "y": 0.6
+   },
+   "note": "0秒目と同じ温泉の蛇口の絵（輪にする）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアで温泉を飲んでみたら、\n激まずすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 90
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアで温泉を飲んでみたら、激まずすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアで温泉を飲んでみたら、げきまずすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、ブルガリアの首都ソフィア！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、ブルガリアの首都ソフィア！",
+    "at": 84
+   },
+   {
+    "text": "この街、温泉の上に建ってるらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/03.wav",
+    "tts_text": "この街、温泉の上に建ってるらしい！",
+    "at": 151
+   },
+   {
+    "text": "温泉大国の日本出身やけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/04.wav",
+    "tts_text": "温泉大国の日本出身やけど、",
+    "at": 218
+   },
+   {
+    "text": "温泉を飲んだことは無いんよな。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/05.wav",
+    "tts_text": "温泉を飲んだことは無いんよな。",
+    "at": 275
+   },
+   {
+    "text": "歩いて着いたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/06.wav",
+    "tts_text": "歩いて着いたら、",
+    "at": 329
+   },
+   {
+    "text": "え、これが温泉の建物？めっちゃ素敵！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/07_mix.wav",
+    "tts_text": "え、これが温泉の建物？めっちゃ素敵！",
+    "at": 361,
+    "parts": [
+     {
+      "text": "え、これが温泉の建物？"
+     },
+     {
+      "text": "めっちゃ素敵。",
+      "big": "glow_pink"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "温泉の出る蛇口もあるらしくて、探したら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/08.wav",
+    "tts_text": "温泉の出る蛇口もあるらしくて、探したら……",
+    "at": 471
+   },
+   {
+    "text": "あ、これや！湯気が出てる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/09.wav",
+    "tts_text": "あ、これや！湯気が出てる！",
+    "at": 548
+   },
+   {
+    "text": "嗅いでみたら、コケの匂い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/10_mix.wav",
+    "tts_text": "嗅いでみたら、",
+    "at": 602,
+    "parts": [
+     {
+      "text": "嗅いでみたら、"
+     },
+     {
+      "text": "なんか、コケの匂い"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "100度とかあったらどうしよう……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/11.wav",
+    "tts_text": "100度とかあったらどうしよう……",
+    "at": 684,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "思い切って触ってみたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/12.wav",
+    "tts_text": "思い切って触ってみたら……",
+    "at": 734
+   },
+   {
+    "text": "あちちちち！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/narr/orig_p1_12.wav",
+    "at": 777,
+    "parts": [
+     {
+      "text": "あちあちちあちちちちち！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "text": "しかも、手がぬめぬめや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/14.wav",
+    "tts_text": "しかも、手がぬめぬめや！",
+    "at": 841
+   },
+   {
+    "text": "そこへ地元のおっちゃんが来たら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/15.wav",
+    "tts_text": "そこへ地元のおっちゃんが来たら、",
+    "at": 888
+   },
+   {
+    "text": "え、この湯をめっちゃ飲んでる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/16_mix.wav",
+    "at": 936,
+    "parts": [
+     {
+      "text": "おっちゃんめっちゃ飲んでたよ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "ほな、僕も飲んでみる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/17.wav",
+    "tts_text": "ほな、僕も飲んでみる！",
+    "at": 988
+   },
+   {
+    "text": "うわ、まずいわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/18_mix.wav",
+    "at": 1032,
+    "parts": [
+     {
+      "text": "うわ、まっずい。",
+      "big": "shake_white"
+     },
+     {
+      "text": "まずいわ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "温泉卵の汁みたいな味する！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/19.wav",
+    "tts_text": "温泉卵の汁みたいな味する！",
+    "at": 1158,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "なのに地元の人は、並んでこの湯を取り合いしてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/20.wav",
+    "tts_text": "なのに地元の人は、並んでこの湯を取り合いしてる！",
+    "at": 1215
+   },
+   {
+    "text": "みんなやったら、この温泉、飲んでみる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/voice/ons-p1-v1/p1/21.wav",
+    "tts_text": "みんなやったら、この温泉、飲んでみる？",
+    "at": 1295
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/2EKBYEnv850/p1/spec.json",
+  "fps": 30,
+  "frames": 1371,
+  "seconds": 45.7,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "onsArtP1v01 0:00:00.5+1.27s",
+     "0:29:16.0+1.53s"
+    ],
+    "line": "ブルガリアで温泉を飲んでみたら、激まずすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 84,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "onsArtP1v01 0:02:00.5+1.13s",
+     "0:15:00.0+1.10s"
+    ],
+    "line": "やってきたのは、ブルガリアの首都ソフィア！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 151,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "onsGenP1v01 0:02:00.5+2.23s"
+    ],
+    "line": "この街、温泉の上に建ってるらしい！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 218,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "onsGenP1v01 0:00:00.5+1.90s"
+    ],
+    "line": "温泉大国の日本出身やけど、",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 275,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "0:02:29.0+1.80s"
+    ],
+    "line": "温泉を飲んだことは無いんよな。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 329,
+    "frames": 32,
+    "voice_frames": 24,
+    "cuts": [
+     "0:20:50.0+1.07s"
+    ],
+    "line": "歩いて着いたら、",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 361,
+    "frames": 110,
+    "voice_frames": 102,
+    "cuts": [
+     "0:17:33.0+2.40s",
+     "onsArtP1v01 0:01:00.5+1.27s"
+    ],
+    "line": "え、これが温泉の建物？めっちゃ素敵！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "え、これが温泉の建物？"
+     },
+     {
+      "text": "めっちゃ素敵。",
+      "big": "glow_pink"
+     }
+    ]
+   },
+   {
+    "row": 7,
+    "from": 471,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:20:54.0+2.57s"
+    ],
+    "line": "温泉の出る蛇口もあるらしくて、探したら……",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 548,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "0:21:59.0+1.80s"
+    ],
+    "line": "あ、これや！湯気が出てる！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 602,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "0:22:34.0+1.00s",
+     "onsGenP1v01 0:06:00.5+1.73s"
+    ],
+    "line": "嗅いでみたら、コケの匂い！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "嗅いでみたら、"
+     },
+     {
+      "text": "なんか、コケの匂い"
+     }
+    ]
+   },
+   {
+    "row": 10,
+    "from": 684,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "0:02:36.0+1.67s"
+    ],
+    "line": "100度とかあったらどうしよう……",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 734,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "0:21:10.0+1.43s"
+    ],
+    "line": "思い切って触ってみたら……",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 777,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:23:52.5+2.13s"
+    ],
+    "line": "あちちちち！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "あちあちちあちちちちち！",
+      "big": "shake_red"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 13,
+    "from": 841,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "onsGenP1v01 0:07:00.5+1.57s"
+    ],
+    "line": "しかも、手がぬめぬめや！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 888,
+    "frames": 48,
+    "voice_frames": 40,
+    "cuts": [
+     "onsGenP1v01 0:03:00.5+1.60s"
+    ],
+    "line": "そこへ地元のおっちゃんが来たら、",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 936,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "onsGenP1v01 0:04:00.5+1.73s"
+    ],
+    "line": "え、この湯をめっちゃ飲んでる！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "おっちゃんめっちゃ飲んでたよ。"
+     }
+    ]
+   },
+   {
+    "row": 16,
+    "from": 988,
+    "frames": 44,
+    "voice_frames": 36,
+    "cuts": [
+     "0:29:06.0+1.47s"
+    ],
+    "line": "ほな、僕も飲んでみる！",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1032,
+    "frames": 126,
+    "voice_frames": 118,
+    "cuts": [
+     "0:29:15.5+2.60s",
+     "0:26:59.3+1.60s"
+    ],
+    "line": "うわ、まずいわ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "うわ、まっずい。",
+      "big": "shake_white"
+     },
+     {
+      "text": "まずいわ。"
+     }
+    ]
+   },
+   {
+    "row": 18,
+    "from": 1158,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "0:29:23.5+1.90s"
+    ],
+    "line": "温泉卵の汁みたいな味する！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 19,
+    "from": 1215,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "onsGenP1v01 0:05:00.5+2.67s"
+    ],
+    "line": "なのに地元の人は、並んでこの湯を取り合いしてる！",
+    "telop": null
+   },
+   {
+    "row": 20,
+    "from": 1295,
+    "frames": 76,
+    "voice_frames": 53,
+    "cuts": [
+     "onsArtP1v01 0:00:00.5+2.53s"
+    ],
+    "line": "みんなやったら、この温泉、飲んでみる？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 226,
+   "raw_voice_s": 36.9,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 26.47,
+   "cps_voiced": 8.54,
+   "video_s": 45.7,
+   "cps_video": 4.95
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": -1.0
+ },
+ "grade": {
+  "saturation": 1.75,
+  "contrast": 1.1,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "crop": [
+    380,
+    20,
+    820,
+    560
+   ],
+   "x": 790,
+   "y": 1360,
+   "w": 420,
+   "rotate": 4,
+   "from": 281,
+   "to": 329
+  },
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "crop": [
+    0,
+    380,
+    560,
+    520
+   ],
+   "x": 300,
+   "y": 1360,
+   "w": 380,
+   "rotate": -4,
+   "from": 480,
+   "to": 548
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O5.jpg",
+   "x": 790,
+   "y": 1360,
+   "w": 300,
+   "rotate": 5,
+   "from": 997,
+   "to": 1032
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O2.jpg",
+   "x": 300,
+   "y": 1370,
+   "w": 330,
+   "rotate": -5,
+   "from": 1164,
+   "to": 1215
+  }
+ ],
+ "sfx": [
+  {
+   "at": 82,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 149,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 281,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 433,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 480,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 682,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 684,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 777,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 997,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1032,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1160,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1164,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/hyokkori.mp3",
+   "db": 0
+  }
+ ],
+ "notes": [
+  {
+   "from": 118,
+   "to": 151,
+   "text": "◆ソフィア"
+  },
+  {
+   "from": 361,
+   "to": 471,
+   "text": "◆中央鉱泉浴場"
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（中央鉱泉浴場の建物・温泉の蛇口。同じ絵の切り抜き）と ChatGPT で描いた O5（湯を飲むおっちゃん）・O2（温泉卵）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。雨の日の配信なので、配信の素材の彩度は 1.75・コントラスト 1.1（v1 の 1.5 では彩度 0.38）"
+}

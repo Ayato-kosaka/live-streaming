@@ -1,0 +1,173 @@
+{
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（中央鉱泉浴場の建物・温泉の蛇口。同じ絵の切り抜き）と ChatGPT で描いた O5（湯を飲むおっちゃん）・O2（温泉卵）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。雨の日の配信なので、配信の素材の彩度は 1.75・コントラスト 1.1（v1 の 1.5 では彩度 0.38）",
+ "stream_path_mark": "/ingest",
+ "bands": {
+  "size": [
+   720,
+   1280
+  ],
+  "rows": [
+   [
+    90,
+    183
+   ],
+   [
+    1110,
+    1280
+   ]
+  ],
+  "margin": 5
+ },
+ "bands_by_file": {},
+ "grade": {
+  "saturation": 1.75,
+  "contrast": 1.1,
+  "warmth": 0.05
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "cut_grade": [],
+ "stickers": [
+  {
+   "row": 4,
+   "from_s": 0.2,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "crop": [
+    380,
+    20,
+    820,
+    560
+   ],
+   "x": 790,
+   "y": 1360,
+   "w": 420,
+   "rotate": 4,
+   "why": "温泉（ソフィアの温泉の建物）"
+  },
+  {
+   "row": 7,
+   "from_s": 0.3,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "crop": [
+    0,
+    380,
+    560,
+    520
+   ],
+   "x": 300,
+   "y": 1360,
+   "w": 380,
+   "rotate": -4,
+   "why": "温泉の出る蛇口（らしい）"
+  },
+  {
+   "row": 16,
+   "from_s": 0.3,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O5.jpg",
+   "x": 790,
+   "y": 1360,
+   "w": 300,
+   "rotate": 5,
+   "why": "僕も（おっちゃんみたいに）"
+  },
+  {
+   "row": 18,
+   "from_s": 0.2,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O2.jpg",
+   "x": 300,
+   "y": 1370,
+   "w": 330,
+   "rotate": -5,
+   "why": "温泉卵の汁"
+  }
+ ],
+ "sfx_files": {
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/hyokkori.mp3",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kuu.mp3",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/kira_s.wav",
+  "fuwa": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/fuwa_s.wav",
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/pito_s.wav",
+  "jan": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/sfx/enter_s.wav"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 1,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 4,
+   "off_s": 0.2,
+   "name": "pop"
+  },
+  {
+   "row": 6,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 7,
+   "off_s": 0.3,
+   "name": "pop"
+  },
+  {
+   "row": 9,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 10,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 12,
+   "off_s": 0.0,
+   "name": "jan"
+  },
+  {
+   "row": 16,
+   "off_s": 0.3,
+   "name": "pop"
+  },
+  {
+   "row": 17,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 18,
+   "off_s": 0.2,
+   "name": "pop"
+  },
+  {
+   "row": 18,
+   "off_s": 0.05,
+   "name": "kira",
+   "db": -3
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 1,
+   "text": "◆ソフィア"
+  },
+  {
+   "row": 6,
+   "text": "◆中央鉱泉浴場"
+  }
+ ]
+}
