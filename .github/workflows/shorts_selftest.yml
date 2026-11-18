@@ -111,6 +111,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/render/flag_selftest.py
 
+      # 続けて書いた「……」「——」「ーー」を1つの塊として組む（ヨーグルトの回 ygt-p1-v2 の「苦手やってん……」が
+      # 「… …」に見えた、2026-11-18）。様式3つの見た目ぜんぶで1コマずつ描き、継ぎ目の空きを測り、守りを1つずつ外して
+      # 落ちるかを見る。隙間は書体の字形で出るので、本物の書体を見張りが一時の置き場に落として使う（fetch_fonts.sh の写し）。
+      # numpy と OpenCV が要るので、国旗と同じく回し役の SKIP に載せ、ここで名指しで回す
+      - name: 続けて書く字（……・——・ーー）の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/join_selftest.py
+
       # BGM の頭の無音を飛ばす・最後の画に注の札（CTA）を出す（あやと F-041・F-042、2026-10-21）。
       # 合成の素材で書き出しの音の束と時間割を見て、本物の書き出し（下書き）を1回通す。守り8つを1つずつ外して1分ほど
       - name: BGM の頭と最後の札の見張り
@@ -176,6 +184,7 @@ jobs:
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
             ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
             ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
+            ! -path 'tools/shorts/render/join_selftest.py' \
             ! -path 'tools/shorts/render/orig_voice_selftest.py' \
             ! -path 'tools/shorts/render/live_badge_selftest.py' ! -path 'tools/shorts/qa/badge_selftest.py' \
             ! -path 'tools/shorts/render/talk_selftest.py' ! -path 'tools/shorts/render/polish_selftest.py' \

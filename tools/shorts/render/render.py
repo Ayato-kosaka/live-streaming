@@ -502,7 +502,7 @@ def balanced2(chunks: list[str], font: ImageFont.FreeTypeFont, max_px: int) -> l
 
 def text_len(s: str, font: ImageFont.FreeTypeFont) -> float:
     """字の幅（px）。国旗（🇦🇱）は絵の幅で数える。国旗の無い字は font.getlength と同じ値。"""
-    return TL.advance(s, font, 0.0) if TL.has_flag(s) else font.getlength(s)
+    return TL.advance(s, font, 0.0) if TL.has_flag(s) or TL.has_join(s) else font.getlength(s)
 
 
 def wrap(text: str, font: ImageFont.FreeTypeFont, max_px: int) -> list[str]:
@@ -710,6 +710,11 @@ def telop_card(lines: list[str], st: dict, fpath: Path, size: float, visible: in
     return out
 
 
+def run_len(t: str, f: ImageFont.FreeTypeFont) -> float:
+    """テロップの走り1つの送り。続けて書いた字（「ーー」）があるときだけ、継ぎ目を直した送り（TL.advance）。"""
+    return TL.advance(t, f, 0.0) if TL.has_join(t) else f.getlength(t)
+
+
 def telop_canvas(lines: list[str], st: dict, fpath: Path, size: float, visible: int | None = None) -> Image.Image:
     """テロップ（強調の字）。数字だけ digit_scale 倍に大きくする（「あと25分」の 25）。
 
@@ -725,7 +730,7 @@ def telop_canvas(lines: list[str], st: dict, fpath: Path, size: float, visible: 
     rows = []
     for ln in lines:
         runs = [(m.group(0), f_dig if m.group(0)[0].isdigit() else f_main) for m in _RUN.finditer(ln)]
-        rows.append((runs, sum(f.getlength(t) for t, f in runs)))
+        rows.append((runs, sum(run_len(t, f) for t, f in runs)))
     sh_dy = round(st.get("shadow_dy", 0) * size / st["size"])
     pad = stroke + st.get("pad", 0)
     w = math.ceil(max(r[1] for r in rows)) + 2 * pad
@@ -744,10 +749,22 @@ def telop_canvas(lines: list[str], st: dict, fpath: Path, size: float, visible: 
                         break
                     shown += ch
                     left -= 1 if ch.strip() else 0
-                if shown:
+                if shown and TL.has_join(shown):
+                    # 続けて書いた字（「ーー」）は1字ずつ、継ぎ目の送りを直して置く（textlook の「続けて書いて1つに
+                    # 見せる字」）。重ねた線の継ぎ目に後ろの字の縁が乗らないよう、縁を全部描いてから塗りを全部描く
+                    ps = TL.split_joins(shown)
+                    xs = [x]
+                    for a, b in zip(ps, ps[1:]):
+                        xs.append(xs[-1] + f.getlength(a) + TL.join_step(a, b, f, 0.0))
+                    for pc, px in zip(ps, xs):
+                        d.text((px, y + asc + dy), pc, font=f, anchor="ls", fill=stroke_fill,
+                               stroke_width=stroke, stroke_fill=stroke_fill)
+                    for pc, px in zip(ps, xs):
+                        d.text((px, y + asc + dy), pc, font=f, anchor="ls", fill=fill)
+                elif shown:
                     d.text((x, y + asc + dy), shown, font=f, anchor="ls", fill=fill,
                            stroke_width=stroke, stroke_fill=stroke_fill)
-                x += f.getlength(t)
+                x += run_len(t, f)
             y += line_h + gap
 
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
