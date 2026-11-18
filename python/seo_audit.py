@@ -32,6 +32,14 @@
 | `crumbs=jsonld` | 見えるパンくずを持つ面と、`BreadcrumbList` を持つ面が同じ集まりか | 見えるパンくずを持つ面 |
 | `time-plain<=N` | `<time>` は在るのに `datetime` が1つも無い面 | `<time>` を持つ面 |
 | `tools-noindex=all` | `firebase.json` が noindex を付けると決めた道具の面に、`X-Robots-Tag: noindex` が返るか | 200 で返った道具の面 |
+| `title-short<=N` | 題が 15字（`TITLE_SHORT`）に届かない面（#1199 の第2便） | 題の在る面 |
+| `desc-short<=N` | 一文（`description`）が 50字（`DESC_SHORT`）に届かない面 | 一文の在る面 |
+| `img-main-blank<=N` | `<main>` に絵が在るのに、**どの絵にも** alt が無い面（飾りしか無い面、とは言い切れないので数で縛る） | `<main>` に絵の在る面 |
+| `youtube-none<=N` | YouTube への `<a>` も埋め込みも1本も無い面（ゴールは「島 → 配信」。#1200） | 読めた面 |
+| `file:<道>=200` | その道が 200 で、HTML でない中身を返すか（`/llms.txt` など。`--no-site` でも見る） | — |
+
+**`--expect prod`** は本番に引く線の束（`PRESETS["prod"]`）。週の表（`seo_weekly.yml`）が毎週これを本番へ当てる。
+入れた手が戻ったら落ちるように、数の線は**入れた日の本番の値**で縛ってある（下げたら、ここも下げる）。
 
 数の線は `=` `>=` `<=` のどれでも書ける。`all` は分母と同じ数。
 **分母が 0 の線は通さない**（`jsonld-bad=0` は、構造化データが1つも無い面の集まりでは 2 になる）。
@@ -224,6 +232,12 @@ LD_NEEDS: dict[str, list[str]] = {
     "ItemList": ["itemListElement"],
     "TouristAttraction": ["name", "geo"],
     "GeoCoordinates": ["latitude", "longitude"],
+    # 記事（街のガイド・国の旅の記録・北欧の日。`articleLd`）と、どんな街の問いと答え（`FAQPage`）。#1262
+    "Article": ["headline", "author", "datePublished"],
+    "Organization": ["name"],
+    "FAQPage": ["mainEntity"],
+    "Question": ["name", "acceptedAnswer"],
+    "Answer": ["text"],
 }
 
 # このリポジトリの根。`firebase.json` と `public/` から、道具の面を数えるのに使う
@@ -1052,12 +1066,28 @@ def serve_dist(directory: str) -> tuple[http.server.ThreadingHTTPServer, str]:
 # ---- 線を引く（--expect）----------------------------------------------
 
 EXPECT_COUNTS = ("canonical", "canonical-other", "sitemap-dup", "priority", "lastmod-distinct", "lastmod-future",
-                 "lastmod-bad", "jsonld-bad", "time-plain", "tools-noindex")
+                 "lastmod-bad", "jsonld-bad", "time-plain", "tools-noindex",
+                 "title-short", "desc-short", "img-main-blank", "youtube-none")
+
+# 本番に引く線の束（`--expect prod`）。週の表（`.github/workflows/seo_weekly.yml`）が毎週本番へ当てる。
+# **数の線は、入れた日（2026-11-18、#1262）の値で縛る。** 直して下がったら、ここも下げる（戻ったら落ちる）
+PRESETS = {
+    "prod": ",".join([
+        "canonical=all", "sitemap-dup=0", "priority=0", "lastmod-distinct>=2", "lastmod-future=0", "lastmod-bad=0",
+        "jsonld:/=WebSite", "jsonld:/about=ProfilePage+Person",
+        # 街のガイド（記事・見どころ・どんな街の問いと答え）と、国の旅の記録の記事
+        "jsonld:/travel/bulgaria/sofia=Article+ItemList+FAQPage", "jsonld:/travel/france=Article",
+        "jsonld-bad=0", "crumbs=jsonld", "time-plain<=1", "tools-noindex=all",
+        "title-short<=0", "desc-short<=0", "img-main-blank<=58", "youtube-none<=0",
+        "file:/llms.txt=200",
+    ]),
+}
 _TERM = re.compile(r"^(?P<name>[a-z-]+)(?::(?P<path>/[^=<>]*))?(?P<op>>=|<=|=)(?P<val>[^=<>]+)$")
 
 
 def parse_expect(text: str) -> list[dict]:
     """`--expect` の字を線の並びに。**読めない線は、測る前に落とす**（黙って捨てない）。"""
+    text = PRESETS.get(text.strip(), text)
     out = []
     for raw in (t.strip() for t in text.split(",")):
         if not raw:
@@ -1070,6 +1100,8 @@ def parse_expect(text: str) -> list[dict]:
             out.append({"raw": raw, "kind": "types", "path": norm_path(path), "types": val.split("+")})
         elif name == "crumbs" and not path and op == "=" and val == "jsonld":
             out.append({"raw": raw, "kind": "crumbs"})
+        elif name == "file" and path and op == "=" and val == "200":
+            out.append({"raw": raw, "kind": "file", "path": path})
         elif name in EXPECT_COUNTS and not path and (val == "all" or val.isdigit()):
             out.append({"raw": raw, "kind": "count", "name": name, "op": op, "val": val})
         else:
@@ -1083,7 +1115,8 @@ def _names(xs: list[str]) -> str:
     return f"（{', '.join(xs[:NAME_UP_TO])}{' …' if len(xs) > NAME_UP_TO else ''}）" if xs else ""
 
 
-def judge(terms: list[dict], rows: list[dict], sm: dict, tools: dict | None) -> list[tuple[str, str, str]]:
+def judge(terms: list[dict], rows: list[dict], sm: dict, tools: dict | None,
+          base: str | None = None) -> list[tuple[str, str, str]]:
     """線ごとに（線, "ok" / "ng" / "na", 言い分）。**"na" は測れなかった**（分母が 0）。"""
     ok = [r for r in rows if r["_ok"]]
     has_time = [r for r in ok if r["time_datetime"] or r["time_no_datetime"]]
@@ -1117,6 +1150,21 @@ def judge(terms: list[dict], rows: list[dict], sm: dict, tools: dict | None) -> 
         if name == "tools-noindex":
             t = tools or {"tagged": [], "live": [], "untagged": []}
             return len(t["tagged"]), len(t["live"]), t["untagged"], "200 で返った道具の面"
+        if name == "title-short":
+            has = [r for r in ok if r["title_len"]]
+            short = [r["path"] for r in has if r["title_len"] < TITLE_SHORT]
+            return len(short), len(has), short, "題の在る面"
+        if name == "desc-short":
+            has = [r for r in ok if r["desc_len"]]
+            short = [r["path"] for r in has if r["desc_len"] < DESC_SHORT]
+            return len(short), len(has), short, "一文の在る面"
+        if name == "img-main-blank":
+            has = [r for r in ok if r["img_main_count"]]
+            blank = [r["path"] for r in has if r["img_main_noalt"] == r["img_main_count"]]
+            return len(blank), len(has), blank, "`<main>` に絵の在る面"
+        if name == "youtube-none":
+            none = [r["path"] for r in ok if not (r["links_youtube"] or r["youtube_iframes"])]
+            return len(none), len(ok), none, "読めた面"
         raise KeyError(name)
 
     out: list[tuple[str, str, str]] = []
@@ -1134,6 +1182,14 @@ def judge(terms: list[dict], rows: list[dict], sm: dict, tools: dict | None) -> 
             # 通っていても、残っているものが数えるほどなら道を言う（「1/106」だけでは、どの面か分からない）
             tell = named if (not hit or (t["op"] == "<=" and got)) else []
             out.append((t["raw"], "ok" if hit else "ng", f"{got}/{den}" + _names(tell)))
+        elif t["kind"] == "file":
+            if not base:
+                out.append((t["raw"], "na", "測る先が分からない"))
+                continue
+            g = fetch(base + t["path"])
+            real = g.status == 200 and "html" not in g.ctype.lower() and bool(g.body.strip())
+            out.append((t["raw"], "ok" if real else "ng",
+                        f"{g.status or g.error}" + (f"・{len(g.body):,}B・{g.ctype}" if g.status == 200 else "")))
         elif t["kind"] == "types":
             row = next((r for r in ok if r["path"] == t["path"]), None)
             if row is None:
@@ -1601,7 +1657,7 @@ def run(a: argparse.Namespace, base: str, terms: list[dict]) -> int:
 
     if not terms:
         return 0
-    verdicts = judge(terms, rows, sm, tools)
+    verdicts = judge(terms, rows, sm, tools, base)
     mark = {"ok": "○", "ng": "×", "na": "？"}
     print("\n== 合否（--expect） ==")
     for raw, state, said in verdicts:

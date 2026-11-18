@@ -9,7 +9,8 @@ import { AnvilArt, DishArt, HeadphoneArt } from "@/components/atlas/art";
 
 export const metadata: Metadata = share({
   key: "apps",
-  title: "アプリ",
+  /* 題と一文は、検索結果で「何の面か」が分かるように面の中身から足す（#1199 の第2便。水増しはしない） */
+  title: "旅先で作っている自作アプリ",
   description:
     "旅先で作っている自作アプリ「なに食べよ」と「なにこれオーディオガイド」、そして日本を出るきっかけになった「スペリーブ」。",
   path: "/apps",

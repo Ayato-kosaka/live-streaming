@@ -64,9 +64,9 @@ import "./goods.css";
 
 export const metadata: Metadata = share({
   key: "goods",
-  title: "あやとグッズ",
+  title: "あやとグッズ — ステッカーとLINEスタンプ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
-  description: `島から持って帰れるものと、お店で買えるもの。ステッカー${STICKERS.length}枚、LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類。`,
+  description: `島から持って帰れるもの（ステッカー${STICKERS.length}枚）と、お店で買えるもの（LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類ほか）を、1枚に並べました。`,
   path: "/goods",
 });
 

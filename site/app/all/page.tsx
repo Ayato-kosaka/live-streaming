@@ -12,9 +12,10 @@ import Say, { SayRoom } from "@/components/ui/Say";
 
 export const metadata: Metadata = share({
   key: "all",
-  title: "島のなか ぜんぶ",
+  /* 題と一文は、検索結果で「何の面か」が分かるように面の中身から足す（#1199 の第2便。水増しはしない） */
+  title: "島のなか ぜんぶ — あやと島の紙の一覧",
   description:
-    "島にある紙を、ぜんぶ1枚に並べました。名前を打つと絞れます。",
+    "旅の記録・作った料理・伝説の企画・月ごとのふりかえり・グッズまで、島にある紙をぜんぶ1枚に並べました。名前を打つと絞れます。",
   path: "/all",
 });
 

@@ -12,8 +12,8 @@ import "./now.css";
 
 export const metadata: Metadata = share({
   key: "now",
-  title: "いま何してる",
-  description: "あやとが今どこにいて、島だよりに何を書いていったか。",
+  title: "あやとはいま何してる？",
+  description: "あやとが今どこにいて、島だよりに何を書いていったか。その前にいた場所と、この先の話まで、旅の途中のいまを1枚に。",
   path: "/now",
 });
 

@@ -32,6 +32,8 @@ import WIDE from "@/content/heroWide.json";
  * どの絵に2倍があるかは `content/heroWide.json`（焼いたときに書き出す）。
  * **画面から推測させない。** 無い絵に `@2x` を書くと 404 を取りにいく。
  */
+/* `alt` はその面の主役の名前（「イラスト：唐揚げのスタンプ」）。検索と読み上げに、この面が何の面かを渡す（#1199 の第2便）。
+   既定の空は、飾りとして置くときだけ */
 export default function HeroArt({ icon, alt = "" }: { icon: string; alt?: string }) {
   if (!(WIDE as string[]).includes(icon)) {
     return <img src={`/sprites/hero/${icon}.webp`} alt={alt} />;

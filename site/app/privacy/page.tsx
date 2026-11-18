@@ -10,7 +10,7 @@ import "./privacy.css";
 export const metadata: Metadata = share({
   key: "home",
   title: "プライバシーポリシー",
-  description: "あやと島が YouTube のログインで何を取得し、どう使うか。",
+  description: "あやと島が YouTube のログインで何を読み、何に使い、何を保存するか。いつまで置いておくか、やめたいとき・消したいときと、お問い合わせ。",
   path: "/privacy",
 });
 
