@@ -234,12 +234,12 @@ export const SHELVES: Shelf[] = [
     /* **時点を言わない**（`docs/island-standards.md` 16章） */
     note: "二千年の歴史が足もとに眠る街。首都はソフィア",
     items: [
-      /* 国の面（街のガイドの一覧。#1262）。国の案内はソフィアの面が持つので、ここは街を選ぶだけ */
+      /* 国の面（旅の記録。ほかの国と同じ型。`app/travel/record.tsx`）。国の案内はソフィアの面が持つ */
       {
         href: travelPage("bulgaria").href,
         name: "ブルガリア",
-        note: "街のガイドの一覧",
-        q: q("ブルガリア bulgaria 街 ガイド ソフィア sofia バルカン"),
+        note: "いつ行ったか・配信の数・行った街",
+        q: q("ブルガリア bulgaria 旅の記録 配信 行った街 ソフィア sofia バルカン"),
       },
       {
         /* 前の `/bulgaria`。街の面に移った（#1228）。道は名簿から引く */
@@ -264,14 +264,13 @@ export const SHELVES: Shelf[] = [
        「これから行く国」と書くと、着いた日から嘘になる。 */
     note: "海に出ない、山と湖の国。首都はスコピエ",
     items: [
+      /* 国の面（旅の記録。ほかの国と同じ型。`app/travel/record.tsx`）。前は行く前の読みもの
+         （どんな国か・ことば）で、探し言葉もそちらの中身だった。面に無い語で引っかけない */
       {
         href: travelPage("north-macedonia").href,
         name: "北マケドニア",
-        note: "どんな国か・スコピエ・食べもの・ことば",
-        q: q(
-          "北マケドニア north macedonia スコピエ skopje オフリド ohrid マトカ matka " +
-            "タヴチェグラフチェ アイヴァル ajvar デナル denar キリル文字 バルカン",
-        ),
+        note: "いつ行ったか・配信の数・行った街・作ったごはん・付箋",
+        q: q("北マケドニア north macedonia 旅の記録 配信 行った街 スコピエ skopje 料理 付箋 バルカン"),
       },
       /* 街のガイド。**公開前の印（`draft`）が付いた街は並べない**（`content/travel.ts` の `publicCities`）。
          印を外した日に、ここへひとりでに1行増える */

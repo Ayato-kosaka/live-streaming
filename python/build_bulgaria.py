@@ -323,7 +323,7 @@ def main() -> None:
                     **photo_of("buy", x["what"])})
 
     # ---- 街の地図。**緯度経度から座標を出すのはここだけ。**
-    # 面の側で出し直さない（`components/macedonia/NmMapSvg.tsx` と同じ決まり）
+    # 面の側で出し直さない（`python/build_world_route.py` の国の寄りの地図と同じ決まり）
     #
     # ## 節ごとに1枚（2026-11-13・あやと）
     #
