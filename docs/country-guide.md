@@ -200,7 +200,7 @@ if miss: raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 ## 3. 地図を焼く
 
 **面の側で緯度経度から座標を出さない。必ずズレる**
-（`components/macedonia/NmMapSvg.tsx` と同じ決まり）。
+（`python/build_world_route.py` の国の寄りの地図と同じ決まり）。
 
 ### 3-1. 遠いものを同じ絵に載せない
 

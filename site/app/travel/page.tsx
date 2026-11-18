@@ -11,7 +11,6 @@ import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countrie
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import Days from "@/components/atlas/Days";
-import CityCards from "@/components/travel/CityCards";
 import { HereRoute, HereStat, HereTag, MapHead, TripCountries, type TripStep } from "./parts";
 import MAP from "@/content/atlas/route.json";
 import { PROFILE } from "@/content/site";
@@ -255,11 +254,9 @@ export default function MapPage() {
         <HereRoute slug={here.slug} />
       </Panel>
 
-      {/* 街のガイド。**常に置く**（#1262）。前はソフィアへ行けるのが表紙の期間限定の札の2本だけで、
-          企画の期間が過ぎると島の中から辿れなくなっていた。下の年表の国の行（→ 国の面 → 街）とは別に、
-          ここから街へ1回で着く。並ぶのは公開した街だけ（`content/travel.ts` の `publicCities`）で、
-          スコピエは公開前の印が外れた日にひとりでに増える */}
-      <CityCards title="街のガイド" />
+      {/* **街のガイドの節を置かない。** ここは国の一覧で、街を混ぜると粒度が揃わない（あやと 2026-11-18）。
+          街へは、下の年表の国の行 → 国の面の「行った街」→ ガイド、の1本で入る（`./record.tsx`）。
+          国の行は企画の期間に関係なく常に在るので、期間が過ぎても島の中から辿れる（#1262 で塞いだ穴） */}
 
       {/* **配信より前の6週間を、地図と年表のあいだに置く。**
           下の一覧は配信タイトルから復元したものなので、配信の無い6週間が

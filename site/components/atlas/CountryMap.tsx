@@ -73,7 +73,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
     <>
       <div className="amap" style={{ ["--am-ratio" as string]: `${w} / ${h}` }}>
         <div className="amap-stage">
-          <svg className="amap-svg" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`${name}の中を移動したところ`}>
+          <svg className="amap-svg" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={m.legs.length ? `${name}の中を移動したところ` : `${name}と、そのまわりの国`}>
             <defs>
               <linearGradient id={`${uid}-sea`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#2f97d8" />
@@ -210,8 +210,9 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
         </div>
       </div>
 
-      {/* どの線が何なのか。線の太さも刻みも、地図に引いてあるものを写す */}
-      <div className="amap-foot">
+      {/* どの線が何なのか。線の太さも刻みも、地図に引いてあるものを写す。
+          **線の無い地図（いま歩いている旅の国）には置かない**——空の帯が地図の下に隙間として残る */}
+      {used.length > 0 && <div className="amap-foot">
         {used.map((k) => {
           const st = MOVE[k];
           return (
@@ -230,7 +231,7 @@ export default function CountryMap({ slug, name }: { slug: string; name: string 
             </span>
           );
         })}
-      </div>
+      </div>}
     </>
   );
 }

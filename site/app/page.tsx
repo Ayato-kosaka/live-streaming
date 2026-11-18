@@ -25,8 +25,13 @@ import Say, { SayRoom } from "@/components/ui/Say";
 import { selfOnly } from "@/lib/share";
 import { JsonLd, websiteLd } from "@/lib/jsonld";
 
-/* 題・一文・絵は器（`app/layout.tsx`）のまま。ここで足すのは居場所だけ（`lib/share.ts`） */
-export const metadata: Metadata = selfOnly("/");
+/* 一文・絵は器（`app/layout.tsx`）のまま。**題だけ表紙で持つ**（#332）。器の題（17字）は名前と標語だけで、
+   検索結果で「何の面か」が言えていなかった（上位の面の題は 35〜53字）。器の題は 404 などにも出るので、そちらは触らない。
+   頭は名前のまま（「あやと」で引かれる面）。足すのは面に在るもの（配信・街のガイド・料理）だけ */
+export const metadata: Metadata = {
+  ...selfOnly("/"),
+  title: { absolute: "あやと島 — あやとと愉快な仲間達｜旅して毎晩配信、行った街のガイドと料理" },
+};
 
 /**
  * トップページ。

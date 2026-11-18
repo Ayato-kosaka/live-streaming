@@ -8,7 +8,7 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
-import { stayClosedOn, stayNow, travelNow, type StayNow, type TravelNow } from "@/lib/stay";
+import { stayClosedOn, stayNow, stayWord, travelNow, type StayNow, type TravelNow } from "@/lib/stay";
 import { tripDate } from "@/content/chapters";
 import { BUILT_AT } from "@/lib/builtAt";
 import { tripPageOf } from "@/content/trip";
@@ -198,6 +198,25 @@ export function StayLen({ slug, from, plus }: { slug: string; from: string; plus
   const bakedEnd = bakedOut ? Date.parse(`${bakedOut}T00:00:00Z`) : BUILT_AT.getTime();
   const baked = Math.max(0, Math.floor((bakedEnd - new Date(from).getTime()) / 86400000) + plus);
   return <>{(n ?? baked).toLocaleString()}</>;
+}
+
+/**
+ * 滞在の長さの、ざっくりした言い方（「1週間ほど」）。**まだ続いている滞在のためのもの。**
+ *
+ * 国の面の一言（「ソフィアに来て、1週間ほど。」）に入る。焼いたままだと、出した日の長さで止まるので、
+ * `StayLen` と同じく画面が出てから数え直す。出国したら、そこで止まる。
+ * 最初の描画は焼いた日（`BUILT_AT`）で引く（`docs/island-misses.md` #30）。
+ */
+export function StayAbout({ slug, from }: { slug: string; from: string }) {
+  const count = (now: Date) => {
+    const out = stayClosedOn(slug, now);
+    const end = out ? Date.parse(`${out}T00:00:00Z`) : now.getTime();
+    return Math.max(0, Math.floor((end - new Date(from).getTime()) / 86400000));
+  };
+  const [n, setN] = useState(() => count(BUILT_AT));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setN(count(new Date())), [slug, from]);
+  return <>{stayWord(n, true)}</>;
 }
 
 /**
