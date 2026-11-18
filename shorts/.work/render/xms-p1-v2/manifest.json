@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__xms-p1-v2",
  "mode": "render",
- "dest": "render/xms-p1-v2/inbox",
+ "dest": "render/xms-p1-v2",
  "video": null,
  "channel": null,
  "request": "shorts/render/xms-p1-v2.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 7042,
-  "tar_gz": 2956,
-  "encrypted": 2960
+  "plain": 36451,
+  "tar_gz": 9377,
+  "encrypted": 9392
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 2960,
-   "sha256": "c0a1beb1ce5d137577053799c433c45b638ba9c5cbbe6673c5d7d11341b90f38"
+   "bytes": 9392,
+   "sha256": "4616ed6669c4361debefaba6f82224e975a8496cce1e62b54e7b497175625180"
   }
  ],
- "hmac_sha256": "20a787e4225f11ca07408c0fcf2892ea03a7f89888f1d82d1e2ad8e1be42a53a",
+ "hmac_sha256": "48a5e88500884ae06be0f8d1bba1b687d5b7c4a2b7053e739017be7d333256b1",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-18T20:41:07+00:00",
+ "created_at": "2026-11-18T20:51:52+00:00",
  "nonce": "46893e1ce1c7caa553855513"
 }
