@@ -1,0 +1,42 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__Orenoguidebook__shorts",
+ "mode": "channel",
+ "dest": "channels/Orenoguidebook/shorts",
+ "video": null,
+ "channel": "@Orenoguidebook",
+ "request": "shorts/requests/island-intro-channels-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "channel": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 10,
+  "files": 5
+ },
+ "bytes": {
+  "plain": 12203,
+  "tar_gz": 3623,
+  "encrypted": 3632
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 3632,
+   "sha256": "b7f9b3344ff8fd1d65fcf43ecf45f69dd75b8709e9c6e1b2b9797288be93c371"
+  }
+ ],
+ "hmac_sha256": "7874fdf0bd867157da6cbe30ca46d7d55c5cc3f0f1b96faa6abe56e4a0506bdc",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44296551379",
+ "created_at": "2026-11-18T12:45:29+00:00"
+}
