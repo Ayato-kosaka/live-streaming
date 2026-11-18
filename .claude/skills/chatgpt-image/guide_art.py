@@ -38,7 +38,7 @@
   - **表紙に題を焼く**なら、頼み書きの頭に `title`（`name` 街の名前・`label`「観光ガイド」・`catch` 面のキャッチと同じ字・`kicker` 国）、
     `cover` `cover_tall` にそれぞれ `title`（札の置き場 `x`・`y`・`anchor`・`scale`。`guide_layout.bake_title`）と `file`（絵の名前。
     ソフィアは「ソフィア-観光ガイド」）。画像検索に出る絵に街の名前が写るように（あやと 2026-11-18 #1228）。横の表紙は og の
-    1200x630 の JPEG（`<file>-og.jpg`）も書き出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に
+    1200x630 の JPEG（`<街>-guide-og.jpg`。英数字だけの名前）も書き出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に
     残すので、キャッチを変えた日は `finalize` だけで焼き直せる
 - `areamap`: `prompt`（街の地図の文。目印の番号つき）・`fix`・`layout`（字の無い下敷き。`--work` の中）・`alt`・`note`・
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
@@ -717,9 +717,11 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
                 pics.append((url_dir(spec) + p.name, w, h))
             pic = {"src": pics[0][0], "src_small": pics[1][0], "w": pics[0][1], "h": pics[0][2]}
             if titled(spec, s["slot"]) and s["slot"] == "cover":
-                # 貼られたときの絵（og）。SNS は webp を読まない所があるので JPEG。真ん中を 1.91:1 に切る（札は端から離してある）
+                # 貼られたときの絵（og）。SNS は webp を読まない所があるので JPEG。真ん中を 1.91:1 に切る（札は端から離してある）。
+                # **名前は英数字だけ**（`<街>-guide-og.jpg`）。日本語の名前は URL で %E3… に化け、貼られた先の読み手と
+                # 見張り（`tools/sprites/ogmeta.mjs` は配ったものの中を化けたままの道で探す）で取りこぼす（2026-11-18 に後者で赤）
                 og = crop(im, OG_SIZE[0] / OG_SIZE[1]).resize(OG_SIZE, Image.LANCZOS)
-                p = out / f"{name}-og.jpg"
+                p = out / f"{spec['_city'].split('/')[-1]}-guide-og.jpg"
                 og.save(p, "JPEG", quality=86, optimize=True, progressive=True)
                 pic["og"] = {"src": url_dir(spec) + p.name, "w": OG_SIZE[0], "h": OG_SIZE[1]}
         elif prev and (out / Path(prev["src"]).name).is_file():
