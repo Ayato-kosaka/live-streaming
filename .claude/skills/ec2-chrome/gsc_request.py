@@ -11,6 +11,8 @@
 
 2026-11-18 に2回、手で CDP を組んで押した（#1264 の街と国の面・#1295 の地図の絵を読ませ直す）。1回目は押したあとの窓を
 3分の内に読み取れず、「通ったかは、あすの URL 検査で」と書いた。**同じ仕事を2回したら道具にする**（`CLAUDE.md`）。
+最初の版は検査の頁へ URL で直に行って 404 だった。頭の検査の欄に打つ形に直して、同じ日にソフィアと表紙で
+「Indexing requested（優先のクロールの列に入った）」まで読み取れた。
 
 ## 決めごと
 
@@ -51,9 +53,25 @@ def main(urls: list[str]) -> int:
     up("ytstudio", "https://search.google.com/search-console")
     t = tab("ytstudio")
     code = 0
+    home = f"https://search.google.com/search-console?resource_id={urllib.parse.quote(PROPERTY, safe='')}"
     for n, u in enumerate(urls):
-        t.go("https://search.google.com/search-console/inspect?resource_id="
-             f"{urllib.parse.quote(PROPERTY, safe='')}&id={urllib.parse.quote(u, safe='')}", wait=6)
+        # 検査の頁へ URL で直に行くと 404 だった（2026-11-18）。人と同じく、頭の「Inspect any URL」の欄に打って Enter
+        t.go(home, wait=8)
+        box = ("[...document.querySelectorAll('input')].find(i => /Inspect any URL|URL を検査|URL の検査/"
+               ".test((i.getAttribute('aria-label') || '') + (i.placeholder || '')) && i.getBoundingClientRect().width > 0)")
+        try:
+            t.click(box)
+        except RuntimeError:
+            b = body(t)
+            signed_out = any(x in b[:400] for x in SIGNIN)
+            print(f"{u}\t前: {'入っていない（ログインが切れている）' if signed_out else '検査の欄が見つからなかった'}")
+            t.shot(f"/home/ubuntu/shots/gsc-{n}.jpg")
+            return 1
+        time.sleep(0.5)
+        t.type(u)
+        time.sleep(0.5)
+        t.key("Enter", "Enter", 13)
+        time.sleep(6)
         st, b = None, ""
         for _ in range(60):                      # 検査の結果が出るまで（ふつう 10〜40秒）
             b = body(t)
