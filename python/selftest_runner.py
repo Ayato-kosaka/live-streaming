@@ -111,6 +111,11 @@ mjs が要るもの（実測で切り分け）:
     `lib` をもう片方が読む
   - `characters_name_match` と `characters_why` は、**同じ名前の一時ファイル**
     （`RUNNER_TEMP` か `TMPDIR` の下の `_name_match_harness.cjs`）を書いて node に読ませる
+  - 列 `対照を CPU の数だけ並べる` だけは書き合いではなく **CPU の取り合い**。どれも守りを外す子を
+    自分で CPU の数だけ並べるので、2本重なると子が CPU の数の倍を越える。2026-11-18 の CI で、
+    ec2_queue（子4本）と brief（子4本）が重なり、ec2_queue の実時間で待つ足が伸びて 300.1秒で切られた。
+    列に入れて1本ずつにしたら、手元の4本並べで ec2_queue 290.8秒 → 183.5秒・brief 252.1秒 → 194.1秒、
+    壁時計も 513秒 → 480秒（列の外の見張りが、空いた CPU で先に進む）
 
 列の外の見張りは、リポジトリの中へも `.git` へも1バイトも書かない
 （`__pycache__` を除く。あれは書き出してから名前を付け替えるので、読む側が
@@ -253,6 +258,18 @@ LANES: dict[str, tuple[tuple[str, ...], str]] = {
          "python/admin/characters_why_selftest.py"),
         "どちらも RUNNER_TEMP（無ければ TMPDIR）の下の同じ名前のファイルへ、本物の"
         "突き合わせを動かす台を書いて node に読ませる。並べると、相手が書き直している途中の台を読む"),
+    # この列だけは書き合いではなく CPU の取り合い。列の中の順は SLOW_FIRST の順
+    "対照を CPU の数だけ並べる": (
+        (".claude/skills/ec2-chrome/ec2_queue_selftest.py",
+         "tools/shorts/script/brief_selftest.py",
+         "tools/shorts/script/lint_selftest.py",
+         ".claude/skills/ec2-chrome/cdp_heal_selftest.py",
+         "tools/shorts/script/critic_gate_selftest.py",
+         "tools/shorts/post/desktop_guard_selftest.py",
+         ".claude/skills/ec2-chrome/stop_guard_selftest.py"),
+        "どれも守りを1つずつ外す子を、自分で4本（多くは CPU の数）並べて起こす。2本重なると子が CPU の数の倍を越えて"
+        "取り合い、実時間で待つ足（ec2_queue の心拍・kill -9 のあと）が伸びて、回し役の1本の上限（300秒）に"
+        "届いた（PR #1283。4本並べの CI で ec2_queue 300.1秒・brief と重なって。手元の同じ条件で 290.8秒）"),
 }
 
 # **先に起こすもの。順番だけの手がかりで、結果は変わらない。**
@@ -650,7 +667,8 @@ def run_all(found: list[Path], cwd: Path, env: dict,
     def rank(i: int) -> tuple:
         rel = rels[i]
         if lane_of(rel) is not None:
-            return (0, 0, i)
+            # 列の中も長いものから（CPU の列は、時間で待つ ec2_queue を先頭に）
+            return (0, slow.get(rel, len(slow)), i)
         if rel in slow:
             return (1, slow[rel], i)
         return (2, 0, i)
