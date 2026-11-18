@@ -31,6 +31,25 @@
 | still_png | 素材が画像のファイル | pass | pass | **fail**（時間割の印） |
 | still_ledger | 動く素材だが、取り込みの台帳に `source_png` | pass | pass | **fail**（台帳の印） |
 | judder | 4コマずつ同じ絵（実質 7.5fps）の素材 | pass | pass | pass（絵が変わる対 25%）。source_stutter は **fail** |
+| art_zoom | 絵の窓（`render/art_clips.py`。台帳に `art: generated`）に、時間割で寄せ 1.0→1.1 | pass | pass | pass（絵のカット・動き 10%） |
+| art_pan | 絵の窓を 1.15 倍に寄せて、寄る先 x を 0.35→0.65 に流す（`sx` / `sy` で画面に置く形） | pass | pass | pass（動きは余りの幅 13% まで） |
+| art_pan_center | 同じ流しを `sx` / `sy` 無しで（寄る先を中心に拡大するだけ） | pass | pass | **fail**（絵が動くのは 0.15 × 0.3 = 4.5%） |
+| art_frozen | 絵の窓に寄せを掛けない | pass | pass | **fail**（絵のカットが動いていない） |
+| art_slow | 絵の窓に寄せ 1.0→1.04（線 6% の手前） | pass | pass | **fail** |
+| art_badkind | 台帳の印が `art: yes`（generated / free 以外） | pass | pass | **fail**（絵のカットと読まない＝止め絵） |
+| art_runner | Actions の並べ方（素材を `in/<sha256>.mp4` に置き、`remote.py` の `stream_info` → `write_stream_index` で台帳を書き戻す）で art_zoom と同じ | pass | pass | pass（印がランナーまで運ばれる） |
+
+## 守りを1つずつ外す（絵のカット。帳面 F-014、#1187）
+
+本物の守りを1つ外した状態で、絵の窓の足（`art_*`）だけを回し直し、**外した守りを見る足だけが**思ったとおりでなくなる
+ことを見る（外しても全部が緑なら、その足は守りを見ていない）。外すのは、モジュールの値をその場で差し替えるだけ（ファイルは
+書き換えない）。
+
+| 外す守り | 何を外したか | 思ったとおりでなくなるはずの足 |
+| --- | --- | --- |
+| `motion` | `still.ART_MIN_MOVE = 0`（動かない絵のカットも通す） | art_frozen・art_slow・art_pan_center |
+| `kind` | `still.ART_KINDS = ()`（台帳の印を読まない＝絵のカットを全部止め絵にする） | art_zoom・art_pan・art_runner（通るはずが落ちる）・art_frozen・art_slow・art_pan_center（落ちるが、絵のカットとして数えない） |
+| `carry` | `remote.ART_KEYS = ()`（ランナーの台帳に印を運ばない） | art_runner |
 
 終了コード 0=思ったとおり / 1=思ったとおりでない / 2=数えるものが無い（ffmpeg・OpenCV・顔の検出器）。
 """
@@ -47,6 +66,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent / "render"))
 import drill  # noqa: E402
 
 FPS = drill.FPS
@@ -91,7 +111,47 @@ def materials(box: Path) -> dict[str, Path]:
     m["L"] = led / "01_canvas.mp4"
     shutil.copy(m["E"], m["L"])
     (led / "index.json").write_text(json.dumps({"clips": [{"file": m["L"].name, "source_png": "screenshot.png"}]}))
+    # 絵の窓（本物の art_clips.py で作る）。止め絵の検査が読むのは台帳の印と、時間割の寄せ
+    import art_clips
+    pic = box / "pic.png"
+    Image.fromarray(g[30]).save(pic)
+    idx = art_clips.build([pic], box / "art", "artSelftest", "generated", 4.0, {})
+    m["ART"] = box / "art" / idx["clips"][0]["file"]
+    bad = box / "art_badkind"
+    bad.mkdir(exist_ok=True)
+    m["ARTX"] = bad / m["ART"].name
+    shutil.copy(m["ART"], m["ARTX"])
+    (bad / "index.json").write_text(json.dumps({"video": "artSelftesX", "clips": [
+        {**idx["clips"][0], "art": "yes"}]}, ensure_ascii=False))
+    m["RUN"] = runner_copy(box, m["ART"], "runner")
     return m
+
+
+# remote.py は ingest/ の `common` を読む（こちらの qa/ の `common` と同じ名前）ので、別の子で回す。
+# 対照の「外す守り」（remote の値の差し替え）は、子に JSON で渡して子の中で差し替える
+_RUNNER = """
+import json, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import remote
+for k, v in json.loads(sys.argv[4]).items():
+    setattr(remote, k, tuple(v) if isinstance(v, list) else v)
+src, run = Path(sys.argv[2]), Path(sys.argv[3])
+dst = run / (remote.sha256_file(src) + src.suffix)
+dst.write_bytes(src.read_bytes())
+remote.write_stream_index({"sources": {"a1": {"path": "in/" + dst.name, "stream": remote.stream_info(src)}}}, run)
+print(dst)
+"""
+
+
+def runner_copy(box: Path, src: Path, tag: str, breaks: dict | None = None) -> Path:
+    """Actions の並べ方の写し。素材を `in/<sha256>.mp4` に置き、指示書の素材の欄に写した台帳（`remote.stream_info`）から
+    `in/index.json` を書き戻す（`remote.write_stream_index`。ランナーの job がすることと同じ）。"""
+    run = box / tag / "in"
+    run.mkdir(parents=True, exist_ok=True)
+    r = subprocess.run([sys.executable, "-c", _RUNNER, str(HERE.parent / "render"), str(src), str(run),
+                        json.dumps(breaks or {})], capture_output=True, text=True, check=True)
+    return Path(r.stdout.strip().splitlines()[-1])
 
 
 def frames_of(src: Path, a: int, b: int):
@@ -168,7 +228,102 @@ def legs(m: dict[str, Path]) -> dict[str, tuple]:
                          and si(r)["stills"][0]["changed_share"] > 0.5),
         "judder": ([(A, 0, 60), (J, 0, 75), (B, 0, 60)], {"source_stutter": "fail"},
                    lambda r: not si(r)["stills"] and 0.15 <= si(r)["rows"][1]["changed_share"] <= 0.35),
+        **art_legs(m),
     }
+
+
+def art_legs(m: dict[str, Path]) -> dict[str, tuple]:
+    """絵の窓の足（帳面 F-014）。守りを外す対照（ART_BREAKS）は、この足だけを回し直す。"""
+    A, B, ART = m["A"], m["B"], m["ART"]
+    z = lambda a, b, **kw: {"zoom": {"from": a, "to": b, "x": 0.5, "y": 0.5, **kw}}  # noqa: E731
+    si = lambda r: r["still_image"]["measured"]  # noqa: E731
+    art1 = lambda r, mv: (len(si(r)["art_cuts"]) == 1 and si(r)["art_cuts"][0]["art"] == "generated"  # noqa: E731
+                          and abs(si(r)["art_cuts"][0]["art_move"] - mv) < 0.002)
+    return {
+        "art_zoom": ([(A, 0, 60), (ART, 0, 75, z(1.0, 1.1)), (B, 0, 60)], {},
+                     lambda r: art1(r, 0.1) and not si(r)["stills"] and si(r)["rows"][1]["changed_share"] == 0.0),
+        "art_pan": ([(A, 0, 60), (ART, 0, 75, z(1.15, 1.15, x=[0.35, 0.65], sx=0.5, sy=0.5)), (B, 0, 60)], {},
+                    lambda r: art1(r, 0.13) and not si(r)["stills"]),
+        # sx / sy の無い形は寄る先を中心に拡大するだけ。同じ流しでも絵は (1.15 − 1) × 0.3 = 4.5% しか動かない
+        "art_pan_center": ([(A, 0, 60), (ART, 0, 75, z(1.15, 1.15, x=[0.35, 0.65])), (B, 0, 60)],
+                           {"still_image": "fail"}, lambda r: art1(r, 0.045) and len(si(r)["stills"]) == 1),
+        "art_frozen": ([(A, 0, 60), (ART, 0, 75), (B, 0, 60)], {"still_image": "fail"},
+                       lambda r: art1(r, 0.0) and len(si(r)["stills"]) == 1
+                       and "絵のカット" in (si(r)["stills"][0]["mark"] or "")),
+        "art_slow": ([(A, 0, 60), (ART, 0, 75, z(1.0, 1.04)), (B, 0, 60)], {"still_image": "fail"},
+                     lambda r: art1(r, 0.04) and len(si(r)["stills"]) == 1),
+        "art_badkind": ([(A, 0, 60), (m["ARTX"], 0, 75, z(1.0, 1.1)), (B, 0, 60)], {"still_image": "fail"},
+                        lambda r: not si(r)["art_cuts"] and len(si(r)["stills"]) == 1
+                        and si(r)["stills"][0]["changed_share"] == 0.0),
+        "art_runner": ([(A, 0, 60), (m["RUN"], 0, 75, z(1.0, 1.1)), (B, 0, 60)], {},
+                       lambda r: art1(r, 0.1) and not si(r)["stills"]),
+    }
+
+
+# 外す守り → （差し替える（モジュール名, 値の名前, 外した値）, 思ったとおりでなくなるはずの足, 何を外したか）
+ART_BREAKS: dict[str, tuple[tuple[str, str, object], set[str], str]] = {
+    "motion": (("still", "ART_MIN_MOVE", 0.0), {"art_frozen", "art_slow", "art_pan_center"}, "動かない絵のカットも通す"),
+    # 印を読まないと、動かない絵の足（frozen・slow・pan_center）も「止め絵では落ちるが、絵のカットとしては数えない」形に崩れる
+    "kind": (("still", "ART_KINDS", ()), {"art_zoom", "art_pan", "art_runner", "art_frozen", "art_slow", "art_pan_center"},
+             "台帳の絵の印を読まない"),
+    "carry": (("remote", "ART_KEYS", ()), {"art_runner"}, "ランナーの台帳に絵の印を運ばない"),
+}
+
+
+def run_leg(C, box: Path, name: str, cuts: list[tuple], want: dict, shape) -> tuple[list[str], dict]:
+    """1つの足を並べて検査し、思ったとおりでないところ（空なら思ったとおり）と報告を返す。"""
+    import common
+    # 台帳の読みは素材の道ごとに覚えている。対照で同じ道の台帳を外した状態で読み直すので、足ごとに忘れさせる
+    common._ENTRY.clear()
+    common._STREAM.clear()
+    mp4, work = leg(box, name, cuts)
+    ctx = C.make_ctx(mp4, work, crops=box / f"{name}.qa")
+    rep = {r["id"]: r for r in C.run_checks(ctx, only=list(NEW + ALSO))["checks"]}
+    wrong = []
+    for cid in NEW + ALSO:
+        if rep[cid]["status"] != want.get(cid, "pass"):
+            wrong.append(f"{cid}: {rep[cid]['status']}（欲しいのは {want.get(cid, 'pass')}。{rep[cid]['summary']}）")
+    # 分母: どの検査も、並べたカットを全部見たうえでの答えであること（似た見た目の連続は、絵が変わらない
+    # つなぎでまとめたあとのカットを見るので、長さの検査がまとめた数と同じこと）
+    seen = {"cut_length": (rep["cut_length"]["measured"].get("plan_cuts"), len(cuts)),
+            "still_image": (rep["still_image"]["measured"].get("cuts"), len(cuts)),
+            "similar_run": (rep["similar_run"]["measured"].get("cuts"), rep["cut_length"]["measured"].get("cuts"))}
+    for cid, (n, need) in seen.items():
+        if n != need:
+            wrong.append(f"{cid} が見たカット {n}（{need} のはず）")
+    try:
+        fits = bool(shape(rep))
+    except (KeyError, TypeError, IndexError):
+        fits = False
+    if not fits:
+        wrong.append("測った値の形が思ったとおりでない: " + " ／ ".join(
+            f"{cid} {rep[cid]['summary']}" for cid in NEW))
+    return wrong, rep
+
+
+def art_drill(C, box: Path, m: dict[str, Path]) -> list[tuple[str, bool, str]]:
+    """守りを1つずつ外して絵の窓の足を回し直し、崩れた足が ART_BREAKS の思ったとおりかを見る。"""
+    import still
+    out = []
+    for name, ((mod, attr, value), want, why) in ART_BREAKS.items():
+        # still はこの子の中で差し替える。remote は台帳を書き戻す子（runner_copy）の中で差し替える
+        keep_v = getattr(still, attr) if mod == "still" else None
+        if mod == "still":
+            setattr(still, attr, value)
+        try:
+            mm = {**m, "RUN": runner_copy(box, m["ART"], f"runner_{name}",   # 外した状態で台帳を書き戻し直す
+                                          {attr: value} if mod == "remote" else None)}
+            broke = set()
+            for leg_name, (cuts, wnt, shape) in art_legs(mm).items():
+                wrong, _ = run_leg(C, box, f"{leg_name}.{name}", cuts, wnt, shape)
+                if wrong:
+                    broke.add(leg_name)
+        finally:
+            if mod == "still":
+                setattr(still, attr, keep_v)
+        out.append((name, broke == want, f"{name}（{mod}.{attr} = {value!r}。{why}）→ 崩れた足 {sorted(broke)}"
+                                         f"（欲しいのは {sorted(want)}）"))
+    return out
 
 
 def run(keep: Path | None) -> int:
@@ -192,28 +347,7 @@ def run(keep: Path | None) -> int:
         rows, bad = [], []
         for name, (cuts, want, shape) in legs(m).items():
             t0 = time.monotonic()
-            mp4, work = leg(box, name, cuts)
-            ctx = C.make_ctx(mp4, work, crops=box / f"{name}.qa")
-            rep = {r["id"]: r for r in C.run_checks(ctx, only=list(NEW + ALSO))["checks"]}
-            wrong = []
-            for cid in NEW + ALSO:
-                if rep[cid]["status"] != want.get(cid, "pass"):
-                    wrong.append(f"{cid}: {rep[cid]['status']}（欲しいのは {want.get(cid, 'pass')}。{rep[cid]['summary']}）")
-            # 分母: どの検査も、並べたカットを全部見たうえでの答えであること（似た見た目の連続は、絵が変わらない
-            # つなぎでまとめたあとのカットを見るので、長さの検査がまとめた数と同じこと）
-            seen = {"cut_length": (rep["cut_length"]["measured"].get("plan_cuts"), len(cuts)),
-                    "still_image": (rep["still_image"]["measured"].get("cuts"), len(cuts)),
-                    "similar_run": (rep["similar_run"]["measured"].get("cuts"), rep["cut_length"]["measured"].get("cuts"))}
-            for cid, (n, need) in seen.items():
-                if n != need:
-                    wrong.append(f"{cid} が見たカット {n}（{need} のはず）")
-            try:
-                fits = bool(shape(rep))
-            except (KeyError, TypeError, IndexError):
-                fits = False
-            if not fits:
-                wrong.append("測った値の形が思ったとおりでない: " + " ／ ".join(
-                    f"{cid} {rep[cid]['summary']}" for cid in NEW))
+            wrong, rep = run_leg(C, box, name, cuts, want, shape)
             if wrong:
                 bad.append((name, wrong))
             failed = [cid for cid in NEW + ALSO if rep[cid]["status"] != "pass"]
@@ -222,19 +356,28 @@ def run(keep: Path | None) -> int:
                          " ／ ".join(rep[cid]["summary"] for cid in NEW if rep[cid]["status"] != "pass")))
             if keep:
                 (box / f"{name}.qa.json").write_text(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+        drills = art_drill(C, box, m)
         print()
         print("| | 足 | 落ちるはずの検査 | 落ちた検査 | 秒 | 落ちた検査の要約 |")
         print("| --- | --- | --- | --- | --- | --- |")
         for r in rows:
             print("| " + " | ".join(str(x) for x in r) + " |")
+        print("\n[対照] 絵のカットの守りを1つずつ外すと、その守りを見る足だけが思ったとおりでなくなるか")
+        for name, ok, line in drills:
+            print(f"  {'○' if ok else '✕'} {line}")
         print(f"\n全体 {time.monotonic() - t_all:.1f}秒")
-        if bad:
-            print("\n✕ 思ったとおりでない:")
-            for name, ws in bad:
-                for w in ws:
-                    print(f"  {name}: {w}")
+        off = [name for name, ok, _ in drills if not ok]
+        if bad or off:
+            if bad:
+                print("\n✕ 思ったとおりでない:")
+                for name, ws in bad:
+                    for w in ws:
+                        print(f"  {name}: {w}")
+            if off:
+                print(f"\n✕ 対照が外れた: {' / '.join(off)}（外しても、その足だけが崩れる形になっていない）")
             return 1
-        print(f"○ {len(rows)}通り、思ったとおり（壊した足は壊したところを見る検査だけが落ち、ほかは pass）")
+        print(f"○ {len(rows)}通り、思ったとおり（壊した足は壊したところを見る検査だけが落ち、ほかは pass）。"
+              f"絵のカットの守り {len(drills)}個を1つずつ外すと、その足だけが崩れた")
         return 0
     finally:
         if tmp is not None:

@@ -98,6 +98,8 @@ UPLOAD_WAIT = 1500
 MEDIA = (".mp4", ".mov", ".mkv", ".m4a", ".wav", ".mp3", ".aac", ".flac", ".png", ".jpg", ".jpeg",
          ".webp", ".json", ".ttf", ".otf")
 JST = dt.timezone(dt.timedelta(hours=9))
+# 絵の窓（art_clips.py）の台帳の印。ランナーの in/index.json まで運ぶ（stream_info）
+ART_KEYS = ("art", "art_image")
 # 本体の job が GCS に置くもの（work 一式は tar.gz にまとめる）。目で見る絵は proof.py が作る
 OUT_FILES = ("{id}.mp4", "{id}.qa.json", "{id}.qa.md", "{id}_strips.jpg", "{id}_strips.json",
              "{id}.sheet.jpg", "{id}.plan.json", "{id}.work.tgz",
@@ -610,6 +612,9 @@ def stream_info(p: Path) -> dict | None:
     ランナーには素材だけが sha256 の名前で並び、index.json は運ばれない。品質チェックの使い回しの検査は
     「同じ配信の同じ瞬間か」をこれで見て、元素材のカクつきの検査は差し替える区間を配信の時刻で出すので、
     指示書の素材の欄に写して運ぶ（job が `in/index.json` に書き戻す。qa/common.py の stream_of が読む形）。
+
+    絵の窓（`art_clips.py`。帳面 F-014）の印 `art`・`art_image` も一緒に運ぶ。止め絵の検査は台帳のこの印で
+    「動かしてよい絵」と読むので、運ばないとランナーでは全部の絵のカットが止め絵で落ちる（作業箱では通るのに）。
     """
     try:
         j = json.loads((p.parent / "index.json").read_text(encoding="utf-8"))
@@ -617,7 +622,8 @@ def stream_info(p: Path) -> dict | None:
         return None
     for c in j.get("clips", []) if isinstance(j, dict) else []:
         if isinstance(c, dict) and c.get("file") == p.name and j.get("video"):
-            return {"video": str(j["video"]), "start": float(c.get("start") or 0.0)}
+            return {"video": str(j["video"]), "start": float(c.get("start") or 0.0),
+                    **{k: c[k] for k in ART_KEYS if c.get(k)}}
     return None
 
 
@@ -627,7 +633,8 @@ def write_stream_index(edit: dict, into: Path) -> int:
     for src in (edit.get("sources") or {}).values():
         st = src.get("stream") if isinstance(src, dict) else None
         if isinstance(st, dict) and str(src.get("path", "")).startswith("in/"):
-            clips.append({"file": Path(src["path"]).name, "video": st["video"], "start": st["start"]})
+            clips.append({"file": Path(src["path"]).name, "video": st["video"], "start": st["start"],
+                          **{k: st[k] for k in ART_KEYS if st.get(k)}})
     if clips:
         (into / "index.json").write_text(json.dumps({"clips": clips}, ensure_ascii=False, indent=1),
                                          encoding="utf-8")

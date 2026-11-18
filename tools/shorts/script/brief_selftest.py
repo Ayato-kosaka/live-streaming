@@ -18,7 +18,7 @@
 | `holdout` | 批評役の1枚では、見ている原稿の行を引く直しの例（銅像 p2 → F-039 の例）を伏せ、決まりは残す。ほかの原稿では例を残す。作文者の1枚では伏せない |
 | `ranges` | 書き起こしは、区間に掛かる30秒の行だけ |
 | `fill` | 雛形の {{…}} が1つでも残れば止まる |
-| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない。`orig_voice` のある行に【元の声】（F-051） |
+| `ayato` | spec の why が「あやとの題」「あやとの書き足し」「あやとの添削」「あやと #NNN「…」」「あやと #NNN の題」「あやと #NNN の骨」の行に【あやと】、言い換えの「あやとの言葉 #976 を…」には付けない。`orig_voice` のある行に【元の声】（F-051） |
 | `c_source` | 批評役の1枚に、`--video` の配信の字幕が入る（フォカッチャの下書きなら、作文者が根拠に挙げた 2:44:00 の行）。`--video` が無ければ「渡していない」と書く（#1014、F-047） |
 | `c_ranges` | 字幕の区間は、spec の why・src に書いた時刻の前後30秒。重なる区間は1つにまとめ、src の小数の秒も読む |
 | `c_leak` | 批評役の雛形は、対照の原稿の行を8字以上そのまま引かない（終わりの形「アーカイブ見てね」は数えない）。引いた字をこしらえると拾い、1枚を作らずに止まる |
@@ -37,7 +37,10 @@
 | `c_extra` | 批評役の1枚に `--extra` の写しが入る。`<videoId>=<道>` ならその回のチャットで伏せ、回を書かなければ「伏せていない」と書く |
 | `c_pending` | spec の画に「確認中」のある行に【画は確認中】の印。批評役の1枚の表の印の列にも出て、雛形の (h) に「確認中は当てない・回に無い画は『回に無い:』で挙げる」の線引きがある |
 | `w_ate` | 当て表の雛形（表と spec の promises の形）に、カードの ID が全部・1回ずつ並ぶ |
-| `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及があれば、時刻と言葉だけを書く（字幕の文は写さない） |
+| `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及・前の回の事情（先週・リベンジ。L-PREV）があれば、時刻と言葉だけを書く（字幕の文は写さない） |
+| `w_pairs` | あやとの書き直しの差の表（`references/rewrite_diff_*.md`）: 本物の表が読めて、組の種類が全部「種類」の表にある。こしらえた2組の表で、いま書いている回（`--video`）の組は「あやとの目で直す」にも、カードの並びの数にも入らず、ほかの回の組は入る。知らない種類の組は止まる。カードは直された数の多い順に先頭へ並び、見出しに数が付く（数が無ければ帳面の順）。**雛形の字と「種類」の表の言い方に、差の表のあやとの行（8字の窓）が1つも無い**（どの回にも出る字なので、書くとその回で答えが漏れる）。作文者の1枚に節と数の行が入る |
+| `w_stay` | あやとが残した行の表（2026-11-13 の2回目）: 本物に10行以上あり、教会を書くときの「残した」と戻した字は、消す種類の例と同じくらいの数。こしらえた表で、いま書いている回の残した行は入らず、ほかの回の残した行は見かけの消す種類の下に「残した」で入る。見かけの無い戻した字は「残す — 削りすぎ」にまとめて消す種類のすぐあとに。直された数には数えない。見かけに知らない種類・名前に空白のある組の見出しは止まる。本物で、教会を書くときは入り直しの景色が入らず、マトカ渓谷を書くときは「答えのあとの行」の下に入る。パソコン p2 の戻した字が「削りすぎ」に入る |
+| `c_retouch` | 批評役の1枚に、カードのあとで「あやとの目で直す」（作文者と同じ節。「残した」と、消す側で挙げない線引きつき）が入る。いま見る原稿の行を引く例は伏せて数を書き、`--video` の回の組は入れない |
 
 本編集の担当の1枚（`brief.py edit`）。担当はこれ1枚と企画の名指した小節だけを読む（#1011）ので、1枚から落ちたものは担当に届かない。
 本物の回（フランス周遊 A・銅像・地下鉄・城塞）で組んで確かめる。
@@ -50,7 +53,7 @@
 | `e_secs` | 前の版の指示書があれば、表の秒とカットは指示書の実際の値。行の数が原稿と違う指示書は使わない |
 | `e_plan` | 企画の地図と取り込みの表は、その案（A）の節と共通の節だけ。B・C の節を名指さない |
 | `e_streams` | 配信の videoId は spec の時間軸の割り当て（`2:=…`）から重ねずに。「使わない」と書いた配信は入れない |
-| `e_fill` | 雛形の {{…}} が残らず、フランス A で 2万字以下 |
+| `e_fill` | 雛形の {{…}} が残らない。企画が4万字を越える作り物の回（`fake_episode`）でも、1枚は2万字以下（大きさは本物の回では見ない。制作物が育つと、上限の近くで対照が e_fill まで落とした） |
 | `e_others` | 銅像・地下鉄・城塞の回でも、落ちずに2万字以下で出て、その回の原稿の1行目が表に入る |
 | `e_pick` | 案を付けない回はいちばん新しい版（銅像は p2）。案が要る回で案が無い・無い案は止まる |
 | `e_cmds` | 雛形に書いた道具と `--引数` が今の道具に在る。無い引数・無い道具は止まる。同じ行の別の道具の引数は通す |
@@ -94,7 +97,8 @@ CUTS = {
                 {"holdout"}, "見ている原稿の行を引く例も渡す"),
     "rows_stop": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"rows_stop"},
                   "rows の無い spec を黙って読む（lint.build が止めている）"),
-    "c_cards": ("brief.py", '        "cards": cards(avoid=c.lines),\n', '        "cards": "",\n', {"c_cards"}, "批評役の1枚にカードを入れない"),
+    "c_cards": ("brief.py", '        "cards": cards(avoid=c.lines) + "\\n\\n" + critic_retouch(mine, c.lines),\n',
+                '        "cards": critic_retouch(mine, c.lines),\n', {"c_cards"}, "批評役の1枚にカードを入れない"),
     "w_chat": ("brief.py", "    if chat:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_nochat"},
                "--chat を黙って受け取る"),
     "w_particle": ("brief.py", "        if drops:\n", "        if False:\n", {"w_fixed"}, "題の札の助詞の抜けを作文者に書かない"),
@@ -164,10 +168,39 @@ CUTS = {
     "c_pending": ("brief.py", "    if pending_visual(r):\n", "    if False:\n", {"c_pending"}, "画が確認中の行に印を付けない"),
     "w_watch": ("brief.py", "        at = [ln.split(\"]\", 1)[0].lstrip(\"[\") for ln in lines if lint_mod.nick_at(ln, bad)]\n",
                 "        at = []\n", {"w_watch"}, "字幕の呼び名を作文者に書かない"),
+    "w_prev": ("brief.py", "        m = lint_mod.PREV.search(ln)\n", "        m = None\n", {"w_watch"}, "字幕の前の回の事情（先週・リベンジ）を作文者に書かない"),
+    # あやとの書き直しの差の表（2026-11-13 #1192）
+    "pairs_holdout": ("brief.py", '    use = [p for p in pairs if not vs & set(p["videos"])]\n', "    use = list(pairs)\n",
+                      {"w_pairs", "w_stay", "c_retouch"},
+                      "いま書いている回の組も、手本と数に入れる（答えを渡す）"),
+    "pairs_first": ("brief.py", "        items = sorted(items, key=lambda it: (-first.get(it.id, 0), pos[it.id]))\n", "        items = items\n",
+                    {"w_pairs"}, "カードを、書き直しで直された数の順に並べない"),
+    "pairs_unknown": ("brief.py", "    if unknown:\n        raise ValueError(f\"差の表の組に", "    if False:\n        raise ValueError(f\"差の表の組に",
+                      {"w_pairs", "w_stay"}, "種類の表に無い種類の組を黙って読む"),
+    # あやとが残した行（2026-11-13 の2回目。1回目は消した例だけで、作文者が題の約束を閉じる景色まで消した）
+    "stay_holdout": ("brief.py", '    stays = [p for p in use if p.get("kept")]\n', '    stays = [p for p in pairs if p.get("kept")]\n',
+                     {"w_stay"}, "いま書いている回の、あやとが残した行も手本に入れる（答えを渡す）"),
+    "stay_show": ("brief.py", '            lines.append(f"   - **残した**: {_kept(p)}")\n', "            pass\n", {"w_stay", "c_retouch"},
+                  "あやとが残した行を、消す種類の下に出さない（1回目の形。作文者・批評役の両方の1枚から消える）"),
+    "stay_loose": ("brief.py", '    loose = [p for p in stays if not p["kinds"] and shown(p)]\n', "    loose = []\n", {"w_stay"},
+                   "作文者が削って戻させた字（見かけの種類の無い行）を出さない"),
+    "stay_count": ("brief.py", '        if p.get("kept"):   # 残した行は、直された所ではない\n            continue\n', "", {"w_stay"},
+                   "残した行まで、カードの並びの「直された数」に数える"),
+    "stay_head": ("brief.py", '(None if ln.startswith(("## ", "### ")) else group)', '(None if ln.startswith("## ") else group)', {"w_stay"},
+                  "組の見出しの形でない「### 」のあとの表を、前の組のまま読む"),
+    # 批評役の1枚の「あやとの目で直す」（2026-11-13 の2回目）
+    "c_retouch": ("brief.py", '        "cards": cards(avoid=c.lines) + "\\n\\n" + critic_retouch(mine, c.lines),\n',
+                  '        "cards": cards(avoid=c.lines),\n', {"c_retouch"}, "批評役の1枚に「あやとの目で直す」を入れない（1回目の形）"),
+    "c_retouch_hide": ("brief.py", "        return not (avoid and quotes_script(f\"{p['ours']} {p['ayato']}\", avoid))\n",
+                       "        return True\n", {"c_retouch"}, "いま見る原稿の行を引いている例も、批評役に見せる"),
+    "c_retouch_mine": ("brief.py", '    mine = videos_of(video) + [p.partition("=")[0] for p in extra or [] if "=" in p]\n', "    mine = []\n",
+                       {"c_retouch"}, "批評役の1枚に、いま見ている回の組も入れる"),
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
                {"ranges", "c_source"}, "区間の外の行まで入れる"),
     "fill": ("brief.py", "    if left:\n", "    if False:\n", {"fill"}, "埋めていない所を見逃す"),
     "ayato": ("brief.py", '    if AYATO.search(why):\n', "    if False:\n", {"ayato"}, "【あやと】を付けない"),
+    "ayato_num": ("brief.py", r"(?:\s*#\d+\s*)?の(題|骨|", "の(題|", {"ayato"},
+                  "「あやと #1187 の題」「あやと #1187 の骨」に【あやと】を付けない（2026-11-13 まで）"),
     # 批評役の1枚の配信の字幕（#1014、F-047）
     "c_video": ("brief.py", "    if not videos and not extra:\n", "    if True:\n", {"c_source", "c_multi", "c_extra"},
                 "批評役の1枚に配信の字幕を入れない"),
@@ -278,6 +311,8 @@ def leg_cards(B):
     return [(f"題・言い回し・事実・構成の {len(script_cats)} 項目が全部入る", bool(script_cats) and all(i in ids for i in script_cats)),
             (f"分類は別でも原稿の段を名指す {len(staged)} 項目（F-014 画・F-019 音・F-050 進め方ほか）と、帳面の外の X2 も入る",
              {"F-014", "F-019", "F-050"} <= set(staged) and all(i in ids for i in staged) and "X2" in ids),
+            # 作文者が spec の題の行の画を決めるので、当てる場所に書く段を足した（2026-11-13）
+            ("F-073（題の札の行も、題の前半・後半で画を割る。分類は画）は、当てる場所が書く段なので入る", "F-073" in staged and "F-073" in ids),
             ("F-044（往復の上限）・画や音だけの項目（F-012・F-028 ほか）は入らない",
              "F-044" in other and "F-012" in other and not any(i in ids for i in other)),
             (f"1枚に、全部の ID の見出しが1枚ずつ（{len(ids)}枚）", all(block.count(f"### {i} ") == 1 for i in ids))]
@@ -360,6 +395,9 @@ def leg_fill(B):
 
 def leg_ayato(B):
     return [("「あやとの題（#977）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの題（#977 2026-10-21）"})),
+            # issue の番号を挟む形（2026-11-13、パソコン p2 の題の行。spec の why の字のまま）
+            ("「あやと #1187 の題」に【あやと】", "【あやと】" in B.marks({"why": "題の札をそのまま読む（あやと #1187 の題）"})),
+            ("「あやと #1187 の骨」に【あやと】", "【あやと】" in B.marks({"why": "【足】【答】配信に無い結末（11/11 以降）。あやと #1187 の骨。"})),
             ("「あやと #975「日本の三倍や！…」」に【あやと】", "【あやと】" in B.marks({"why": "あやと #975「日本の三倍や！とかでいいんじゃ無い？」"})),
             ("「あやとの添削（#1014）」に【あやと】", "【あやと】" in B.marks({"why": "あやとの添削（#1014 2026-10-23）。2:47:30「ちょっと待つわ」"})),
             ("言い換え「あやとの言葉 #976 を、まとめ役が言い換えた」には付けない",
@@ -796,12 +834,205 @@ def leg_w_watch(B):
     lines = ["[0:00:00] ここはポチだらけの草原です。", "[0:00:30] いま配信のコメントで道を教えてもらいました。",
              "[0:01:00] ボタンをポチっと押した。"]
     got = B.watch_block(lines)
+    prev = B.watch_block(["[0:03:00] 先週は雨で流れたから、今日はリベンジや。", "[0:03:30] 昨日こねた生地を焼く。"])
     return [("字幕の呼び名「ポチ」を、時刻（0:00:00）と直す言葉（野良犬）つきで書く", "「ポチ」が 1 か所（0:00:00）" in got and "野良犬" in got),
+            ("前の回の事情（先週）を、時刻（0:03:00）と L-PREV つきで書く。「昨日こねた」は数えない",
+             "前の回・ほかの日の事情に触れている所が 1 か所（0:03:00「先週」）" in prev and "L-PREV" in prev and "前の回" not in got),
             ("「ポチっと」は数えない", "（0:01:00" not in got),
             ("コメントに触れた時刻（0:00:30）を書く", "0:00:30「コメント」" in got),
             ("伏せた読み上げ（〔コメントの読み上げ〕）は「読み上げ」として数え、印の中の「コメント」は数えない",
              "0:02:00「読み上げ」" in B.watch_block(["[0:02:00] それ〔コメントの読み上げ〕やな"])),
             ("字幕の文はそのまま写さない", "道を教えてもらいました" not in got and "草原です" not in got)]
+
+
+PAIRS_FAKE = """# 差の表（見張り）
+
+## 2. 種類
+
+| 種類 | 向き | 帳面 | 作文者が自分で直す言い方 |
+| --- | --- | --- | --- |
+| みはり消す | 消す | F-056 | みはりの言い方その一 |
+| みはり足す | 足す | 新 | みはりの言い方その二 |
+
+## 4. 組ごとの差
+
+### 一の回 — Xxxxxxxxxx1
+
+| # | 種類 | こちらの案 | あやとの書き直し |
+| ---: | --- | --- | --- |
+| 1 | みはり消す | いちのかいのこちらのぎょう | （消す） |
+| 2 | みはり足す・みはり消す | いちのかいのもとのぎょう | いちのかいのあやとのぎょう |
+
+### 二の回 — Yyyyyyyyyy2・Wwwwwwwwww3
+
+| # | 種類 | こちらの案 | あやとの書き直し |
+| ---: | --- | --- | --- |
+| 1 | みはり消す | にのかいのこちらのぎょう | にのかいのあやとのぎょう |
+"""
+
+
+def _norm8(s: str) -> str:
+    return re.sub(r"[\s「」『』（）()…、。！？!?・ー〜,，【】／]", "", s)
+
+
+def _windows(s: str, k: int = 8) -> set:
+    # 題の決まり文句（F-071「まさかの事態に」）は、どの回の題にも出る型なので窓に数えない
+    n = _norm8(s).replace("まさかの事態に", "|")
+    return {w for w in (n[i:i + k] for i in range(len(n) - k + 1)) if "|" not in w}
+
+
+def leg_w_pairs(B):
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "rewrite_diff_2099-01-01.md"
+        f.write_text(PAIRS_FAKE, encoding="utf-8")
+        data = B.rewrites([f])
+        bad = Path(td) / "rewrite_diff_2099-01-02.md"
+        bad.write_text(PAIRS_FAKE.replace("| 1 | みはり消す | にのかい", "| 1 | 知らない種類 | にのかい"), encoding="utf-8")
+        try:
+            B.rewrites([bad])
+            stopped = False
+        except ValueError:
+            stopped = True
+    one = B.retouch_block(["Xxxxxxxxxx1"], data)
+    two = B.retouch_block(["Wwwwwwwwww3"], data)
+    both = B.retouch_block(["ZZZZZZZZZZ1"], data)
+    kinds, pairs = B.rewrites()
+    # あやとが残した行は「こちらの案」の欄があやとの字（2026-11-13 の2回目から）
+    ayato = set().union(*(_windows(p["ayato"]) for p in pairs if not p["ayato"].startswith("（")),
+                        *(_windows(p["ours"]) for p in pairs if p.get("kept")))
+    tmpl = B.WRITER_TMPL.read_text(encoding="utf-8").split(B.MARK, 1)[-1]
+    in_tmpl = sorted(w for w in ayato if w in _norm8(tmpl))
+    in_say = sorted(w for w in ayato if any(w in _norm8(k["say"]) for k in kinds.values()))
+    first = B.rewrite_counts(["ZZZZZZZZZZ1"], data)
+    block = B.cards(first={"F-056": 3, "F-008": 5})
+    heads = re.findall(r"^### (\S+) ", block, re.M)
+    plain = re.findall(r"^### (\S+) ", B.cards(), re.M)
+    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
+    return [(f"本物の差の表が読める（種類 {len(kinds)}・組の行 {len(pairs)}）。どの組の行も videoId を持つ",
+             bool(kinds) and bool(pairs) and all(p["videos"] for p in pairs)),
+            ("いま書いている回（一の回）の行は「あやとの目で直す」に入らず、ほかの回（二の回）の行は入る",
+             "いちのかい" not in one and "にのかいのあやとのぎょう" in one and "この回の組（一の回）は入れていない" in one),
+            ("見出しの videoId のどれか1本（Wwwwwwwwww3）と重なっても、その組を外す", "にのかい" not in two and "いちのかいのあやとのぎょう" in two),
+            ("重ならない回なら、両方の組が入る", "いちのかい" in both and "にのかい" in both and "入れていない" not in both),
+            ("カードの並びの数も、いま書いている回の組を数えない（F-056: 3組ぶん → 一の回を外すと1）",
+             first == {"F-056": 3} and B.rewrite_counts(["Xxxxxxxxxx1"], data) == {"F-056": 1}),
+            ("種類の表に無い種類の組は止まる", stopped),
+            ("カードは直された数の多い順に先頭へ（F-008 → F-056）、見出しに数が付く",
+             heads[:2] == ["F-008", "F-056"] and "あやとの書き直しで5か所直された" in block),
+            ("数を渡さなければ帳面の順（見出しに数が付かない）", plain[:1] == ["F-004"] and "書き直しで" not in B.cards()),
+            ("雛形の字に、差の表のあやとの行（8字の窓）が無い" + (f" ← {in_tmpl[:3]}" if in_tmpl else ""), not in_tmpl),
+            ("「種類」の表の言い方に、差の表のあやとの行（8字の窓）が無い" + (f" ← {in_say[:3]}" if in_say else ""), not in_say),
+            ("作文者の1枚に「あやとの目で直す」の節と、カードの並びの数の行が入る",
+             "### あやとの目で直す" in w and "直された数の多い順" in w and "{{" not in w)]
+
+
+# 残した行の表（2026-11-13 の2回目）。一の回・二の回に1行ずつ、二の回には見かけの種類の無い「戻した字」も
+STAY_FAKE = PAIRS_FAKE.replace("| 2 | みはり足す・みはり消す | いちのかいのもとのぎょう | いちのかいのあやとのぎょう |\n", """\
+| 2 | みはり足す・みはり消す | いちのかいのもとのぎょう | いちのかいのあやとのぎょう |
+
+あやとが残した行:
+
+| # | 見かけ | こちらの案 | あやとの書き直し | 残る訳 |
+| ---: | --- | --- | --- | --- |
+| 1 | みはり消す | いちのかいののこしたぎょう | （そのまま） | いちのわけ |
+""").replace("| 1 | みはり消す | にのかいのこちらのぎょう | にのかいのあやとのぎょう |\n", """\
+| 1 | みはり消す | にのかいのこちらのぎょう | にのかいのあやとのぎょう |
+| 2 | みはり足す | にのかいのたすまえ | にのかいのたしたあと |
+""") + """
+あやとが残した行:
+
+| # | 見かけ | こちらの案 | あやとの書き直し | 残る訳 |
+| ---: | --- | --- | --- | --- |
+| 1 | みはり消す | にのかいののこしたぎょう | （そのまま） | にのわけ |
+| 2 | — | にのかいのけずったじ | にのかいのもどしたじ | にのもどしたわけ |
+"""
+
+
+def _item(block: str, text: str) -> str:
+    """「あやとの目で直す」の、text を含む例の行が属する種類の見出し（`N. **向き — 種類**`）。無ければ空。"""
+    head = ""
+    for ln in block.splitlines():
+        if re.match(r"^\d+\. \*\*", ln):
+            head = re.sub(r"^\d+\. \*\*(.+?)\*\*.*$", r"\1", ln)
+        elif text in ln:
+            return head
+    return ""
+
+
+def leg_w_stay(B):
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "rewrite_diff_2099-01-01.md"
+        f.write_text(STAY_FAKE, encoding="utf-8")
+        data = B.rewrites([f])
+
+        def stops(text):
+            g = Path(td) / "rewrite_diff_2099-01-02.md"
+            g.write_text(text, encoding="utf-8")
+            try:
+                B.rewrites([g])
+            except ValueError:
+                return True
+            return False
+        unknown = stops(STAY_FAKE.replace("| 1 | みはり消す | にのかいののこした", "| 1 | 知らない種類 | にのかいののこした"))
+        spaced = stops(STAY_FAKE.replace("### 二の回 — ", "### 二の 回 — "))
+    one = B.retouch_block(["Xxxxxxxxxx1"], data)
+    counts = B.rewrite_counts(["ZZZZZZZZZZ1"], data)
+    kinds, pairs = B.rewrites()
+    kept = [p for p in pairs if p.get("kept")]
+    church = B.retouch_block(["DNLVmUpew48"])
+    matoka = B.retouch_block(["eHBAnQF56-E"])
+
+    def tally(block):
+        """（消す種類の、消した・直した例の数, 残した例と戻した字の数）"""
+        cut = stay = 0
+        head = ""
+        for ln in block.splitlines():
+            if re.match(r"^\d+\. \*\*", ln):
+                head = ln
+            elif ln.startswith("   - ") and ("**残した**" in ln or "**残す —" in head):
+                stay += 1
+            elif ln.startswith("   - ") and "**消す —" in head:
+                cut += 1
+        return cut, stay
+    cut_n, stay_n = tally(church)
+    order = [re.sub(r"^\d+\. \*\*(\S+) — .*$", r"\1", ln) for ln in one.splitlines() if re.match(r"^\d+\. \*\*", ln)]
+    return [(f"本物の差の表に、あやとが残した行が {len(kept)} 行（10行以上）。どれも組の videoId を持つ",
+             len(kept) >= 10 and all(p["videos"] for p in kept)),
+            ("いま書いている回（一の回）の残した行は入らず、ほかの回（二の回）の残した行が、見かけの種類（みはり消す）の下に「残した」で入る",
+             "いちのかいののこした" not in one and _item(one, "にのかいののこしたぎょう") == "消す — みはり消す"
+             and "**残した**: 「にのかいののこしたぎょう」（二の回。にのわけ）" in one),
+            ("見かけの種類の無い戻した字は「残す — 削りすぎ」にまとめ、消す種類のすぐあと（足す種類の前）に置く",
+             _item(one, "にのかいのもどしたじ").startswith("残す — 削りすぎ") and order == ["消す", "残す", "足す"]),
+            ("残した行は、カードの並びの「直された数」に数えない（F-056 は直された3組ぶんのまま）", counts == {"F-056": 3}),
+            ("残した行の見かけに、種類の表に無い種類があれば止まる", unknown),
+            ("組の見出しの形でない「### 」（名前に空白）のあとの表は、前の組のまま読まずに止まる", spaced),
+            (f"本物で、教会を書くときの「残した」と戻した字（{stay_n}）は、消す種類の例（{cut_n}）と同じくらい（半分から2倍）",
+             cut_n > 0 and cut_n / 2 <= stay_n <= cut_n * 2),
+            ("教会を書くときは、教会の入り直しの景色（残した行）が入らず、マトカ渓谷を書くときは「答えのあとの行」の下に入る",
+             "天井も壁も" not in church and _item(matoka, "天井も壁も") == "消す — 答えのあとの行"),
+            ("パソコン p2 の戻した字（筋の段・助詞）が、教会を書くときの「残す — 削りすぎ」に入る",
+             _item(church, "日本で買い替えて").startswith("残す — 削りすぎ") and _item(church, "安いらしいから").startswith("残す — 削りすぎ"))]
+
+
+def leg_c_retouch(B):
+    plain = B.build_critic(VUSD_NG, None, [], "x")
+    sec = plain.split("### あやとの目で直す", 1)[1].split("\n## ", 1)[0] if "### あやとの目で直す" in plain else ""
+    with tempfile.TemporaryDirectory() as td:
+        sc = Path(td) / "script.txt"
+        # 本物の差の表の残した行（十字架）と、直された行（パン3種のこちらの案）を、そのまま引いた原稿
+        sc.write_text(f"{NEUTRAL[0]}\nカントリーマームに近いけど、サクサク！\n"
+                      "でも僕は、入れすぎると生地が弱るって疑ってる！\nみんなは？\n", encoding="utf-8")
+        quoted = B.build_critic(sc, None, [], "x")
+    church = B.build_critic(VUSD_NG, None, [], "x", "DNLVmUpew48")
+    qsec = quoted.split("### あやとの目で直す", 1)[1].split("\n## ", 1)[0] if "### あやとの目で直す" in quoted else ""
+    return [("批評役の1枚の約束のカードのあとに「あやとの目で直す」の節があり、「残した」と、消す側で挙げない線引きが入る",
+             bool(sec) and "**残した**" in sec and "消す側で挙げない" in sec and plain.find("### F-008 ") < plain.find("### あやとの目で直す")),
+            ("いま見る原稿の行を引いていなければ、その例（十字架の残した行・パン3種の直した行）は出る",
+             "カントリーマームに近い" in sec and "生地が弱るって疑ってる" in sec),
+            ("いま見る原稿の行を引いている例は伏せ、伏せた数を書く",
+             bool(qsec) and "カントリーマームに近い" not in qsec and "生地が弱るって疑ってる" not in qsec and "この1枚では伏せた" in qsec),
+            ("--video の回（教会）の組は入れない（直した例「ゴリゴリにガチ勢」が、ほかの回では出て、教会では出ない）",
+             "ゴリゴリにガチ勢" in sec and "ゴリゴリにガチ勢" not in church and "この回の組（教会）は入れていない" in church)]
 
 
 # ---------- 本編集の1枚 ----------
@@ -877,9 +1108,46 @@ def leg_e_streams(B):
             ("回の名前（france-2025）は videoId に数えない", "france-2025" not in ids)]
 
 
+def fake_episode(td: Path) -> Path:
+    """本編集の1枚の大きさを見る、作り物の回（案 A・B・C の企画と、A の原稿・spec）。企画は上限の倍（4万字）を越え、
+    その大半は1枚に入れない所（読まない小節・ほかの案の節）。入れてよい所は小さく置く。
+
+    大きさを本物の回（フランス A）で見ていたら、上限 2万字まで 211字のところへ帳面の F-014 の書き足し（2026-11-15。23字）が
+    入り、ほかの案の節まで名指す対照（e_scope）が 20,001字になって e_fill まで落とした（e_machine も残り 29字だった）。
+    本物の回の字数で決まる足は、制作物が育つたびに守りと関係無く色が変わる。ここで見るのは「企画がどれだけ大きくても、
+    入れない所が1枚に漏れない」こと。本物の回が上限に収まるかは、組むたびに brief.py が「注意」で言う。
+    """
+    vdir = td / "zz-fixture/p1"
+    vdir.mkdir(parents=True)
+    lines = ["作り物の回の1行目！", "二行目の声。", "三行目の声。", "みんなは？"]
+    (vdir / "script_A.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    rows = [{"line": ln, "src": [f"1:00:0{i}.0"], "visual": "作り物の画", "card": i == 0} for i, ln in enumerate(lines)]
+    (vdir / "spec_A.json").write_text(json.dumps({"id": "A", "title_card": "作り物の題", "_note": "1:=Zzzzzzzzzz1 作り物の配信",
+                                                  "rows": rows}, ensure_ascii=False), encoding="utf-8")
+
+    def filler(n: int) -> str:
+        return "\n".join(f"- 作り物の記録の{i}行目。1枚には入れない字。" for i in range(n))
+    plan = ["# 作り物の回 — 原稿 p1（3案）", "", "> あやとの決定（作り物）: この字で組む。", "",
+            "## 2. 3案に共通の決めごと", filler(5),
+            "## A 作り物の案", "### 写す参考と、拍の写し表", filler(400), "### 原稿（4行）", filler(40),
+            "### 似た見た目の続き（h7）", filler(5),
+            "### 取り込み（A の画の clips）", "\n".join(f"| 区間{i} | Zzzzzzzzzz1 | 1:00:{i:02d} |" for i in range(5)),
+            "### 本編集（v1）", filler(5),
+            "## B 作り物の別の案", "#### 書き出しへの指定（画と字の見せ方）", filler(120), "### 似た見た目の続き（h7）", filler(120),
+            "## C 作り物の三つ目の案", "### 似た見た目の続き（h7）", filler(120), "### あやとに頼む録画", filler(120),
+            "## レビューの記録", filler(800)]
+    (vdir / "plan.md").write_text("\n".join(plan) + "\n", encoding="utf-8")
+    return vdir
+
+
 def leg_e_fill(B):
     text = edit_brief(B, str(FR), "A")
-    return [("雛形の {{…}} が残らない", "{{" not in text), (f"2万字以下（{len(text):,}字）", len(text) <= B.EDIT_MAX),
+    with tempfile.TemporaryDirectory() as td:
+        vdir = fake_episode(Path(td))
+        plan_n = len((vdir / "plan.md").read_text(encoding="utf-8"))
+        fake = B.build_edit_brief(vdir, "A", "", None, None)
+    return [("雛形の {{…}} が残らない（フランス A・作り物の回）", "{{" not in text and "{{" not in fake),
+            (f"企画が {plan_n:,}字の作り物の回でも、1枚は2万字以下（{len(fake):,}字）", plan_n > 2 * B.EDIT_MAX and len(fake) <= B.EDIT_MAX),
             ("道の変数（V）に回の置き場が入る", "`V=shorts/videos/france-2025/p1`" in text and "$V/spec_A.json" in text)]
 
 
@@ -1038,7 +1306,7 @@ LEGS = {
     "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
     "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
     "w_read": leg_w_read, "w_real": leg_w_real, "w_short": leg_w_short, "w_keep": leg_w_keep, "w_corpus": leg_w_corpus, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
-    "c_pending": leg_c_pending,
+    "c_pending": leg_c_pending, "w_pairs": leg_w_pairs, "w_stay": leg_w_stay, "c_retouch": leg_c_retouch,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
     "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
