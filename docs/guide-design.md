@@ -446,7 +446,7 @@ aruco の手描きの絵地図から取るのは、**見下ろしの見取り図
 | 節の頭 | **1〜2文で答える。** 数字と日付を入れる（AI が抜き出すのはここ。Bing の公式の助言） |
 | 数字 | 値段と移動は `<table>` で。div で表を組まない |
 | 日付 | 行った日・公開・最終更新を表紙に見える字で。「公開」「最終更新」と書く。`<time datetime>` と、構造化データの `datePublished` `dateModified` を**同じ値に。** **最終更新は、中身の字が変わった日だけ進める**（ビルドの日にしない。#1196 のやらないこと） |
-| 構造化データ | `Article`（`headline` `author` `datePublished` `dateModified` `image` `inLanguage: "ja"`）と `BreadcrumbList`（見えるパンくずと同じ）。`lib/jsonld.tsx` に足す（あちらの決めごと「見えている字と同じことだけ」）。**入れない**: `FAQPage`（廃止）・`HowTo`・`TouristAttraction`・`Review`・`VideoObject`（視聴の面ではない） |
+| 構造化データ | `Article`（`headline` `author` `datePublished` `dateModified` `image` `inLanguage: "ja"`）と `BreadcrumbList`（見えるパンくずと同じ）。`lib/jsonld.tsx` に足す（あちらの決めごと「見えている字と同じことだけ」）。見たいものは `ItemList` ＋ `TouristAttraction`（名前・現地のつづり・座標・窓への錨 `#see-<id>`。部品は `components/guidebook/SpotsLd.tsx`）——**#1262 で「入れない」から外した。** 点はマイマップの埋め込みの中にしか無く、Google は埋め込みの中身を面の中身として数えない。**入れない**: `FAQPage`（廃止）・`HowTo`・`Review`・`VideoObject`（視聴の面ではない。埋めたショートだけは付ける。4章） |
 | 生の HTML に本文 | 静的書き出しで、本文・表・一言・場面のリンクを全部焼く。**画面が出てから取りに行く所（Firestore など）に本文を置かない。** AI の読み手は JS を動かさない |
 | 畳んだ中身 | `<details>`（`Fold`）だけを使う。中身は最初から HTML に在る。開いたときに取りに行く・描く作りにしない |
 | iframe の中身 | 地図と埋め込みは iframe でよいが、**場所の名前・Google マップへのリンク・配信の URL と時刻は、HTML の字でも置く**（iframe の中は読まれない） |

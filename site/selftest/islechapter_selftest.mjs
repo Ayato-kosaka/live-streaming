@@ -416,8 +416,8 @@ const hereOn = (day, entries = ENTRIES) => {
  * 旅のガイドの区画（`app/travel/<国>/page.tsx`。#1201）に移ったものと、
  * まだ根に立っているもの（`app/<国>/page.tsx`）の両方を見る。
  *
- * **国の面を持たず、街の面だけを持つ国もある**（ブルガリア。ソフィアの面 `app/travel/bulgaria/sofia/page.tsx` が
- * 国の案内を兼ねる。#1228・`content/travel.ts` の `CITY_ONLY`）。その街の面が在れば、国の面が在るのと同じに読む
+ * **国の面を持たず、街の面だけを持つ国もありうる**（`content/travel.ts` の `CITY_ONLY`。ブルガリアは 2026-11-18 まで
+ * そうだった。#1228 #1262）。その街の面が在れば、国の面が在るのと同じに読む
  */
 const cityPages = (slug) => {
   const dir = join(SITE, "app", "travel", slug);

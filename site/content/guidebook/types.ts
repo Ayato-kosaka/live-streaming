@@ -129,6 +129,12 @@ export type Item = {
    * 料理・土産は「品の名前＋街」で近くの店が並ぶ。組むのは `lib/mapsSearch.ts`（焼くほうは `python/maps_link.py`）
    */
   maps?: string;
+  /**
+   * 見たいものの座標（材料の緯度・経度をそのまま）。**面には出さない**——検索と AI の読み手に渡す名札
+   * （`components/guidebook/SpotsLd.tsx`）だけが読む。点は埋め込みのマイマップの中にしか無く、
+   * Google は埋め込みの中身をこの面の中身として数えない（#1262）。持たない街は名札を出さない
+   */
+  geo?: { lat: number; lon: number };
   /** 食べられる・買える所（`Place` の id）。**決まった店の無い品には置かない** */
   places?: string[];
   /** 食べたいもので絞る札（`Guidebook["eat"]["kinds"]` の id） */
