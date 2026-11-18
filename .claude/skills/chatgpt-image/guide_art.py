@@ -2,6 +2,7 @@
 """**街のガイドの絵（表紙の横と縦・エリア地図・料理・土産）を、ChatGPT（EC2 の Chrome）に一括で描かせて面の置き場に出す。**
 
     python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> plan [--all|--only 品…] [--json]
+    python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> layout --work <スクラッチ>   # 地図の下敷き（guide_layout.py）
     python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> run [--all|--only 品…] --work <スクラッチ>
     python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> status
     python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> fetch --work <スクラッチ>
@@ -36,6 +37,10 @@
   `photos`（実在の建物の形を合わせる写真）
 - `areamap`: `prompt`（街の地図の文。目印の番号つき）・`fix`・`layout`（字の無い下敷き。`--work` の中）・`alt`・`note`・
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
+  - 下敷きを道具で作るなら `districts`（地区の多角形。緯度経度）と `marks`（目印の番号と緯度経度）。`layout` が `bbox` の範囲で作る
+  - **地区の名前を絵に焼く**なら `areas[].label`（札の行の並び）。焼いた札の箱が manifest に載り（`baked`）、面は透明の押しどころを重ねる。
+    焼く前の1枚は頼み書きの隣（`<街>-areamap-base.webp`）に残すので、名前を直した日は `finalize` だけで焼き直せる（#1262）
+  - `file`（絵の名前。ソフィアは「ソフィア-見どころマップ-地区分け」）・`ratio`（切る比。幅÷高さ）・`sizes`（書き出す幅。大きいほうが画像検索に出る版）
 - `food` `buy`: `model`（手本 `<国>/<街>:<名前>`）・`note`・`items.<鍵>` = `desc`（英語の描写）・`alt`・`fix`・`v`・`model`・
   `ref`（見比べの参考写真の URL）か `wiki`（英語版 Wikipedia の記事名）
 - `do`（やりたいこと。#1228）: `model`（絵の調子の手本。表紙）・`note`・`items.<鍵>` = `ja`（会話の題）・`desc`（英語の場面）・
@@ -83,6 +88,13 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+
+
+def gl():
+    """下敷きと札の道具（`guide_layout.py`）。EC2 の一括（batch）は使わないので、使うときに読む（EC2 には置かない）"""
+    sys.path.insert(0, str(HERE))
+    import guide_layout
+    return guide_layout
 ROOT = HERE.parents[2] if len(HERE.parents) > 2 else HERE
 SPECS = HERE / "guide"
 EC2_TOOLS = "/home/ubuntu/cdp"
@@ -515,9 +527,9 @@ for i in ids:
     if not os.path.exists(p):
         continue
     im = Image.open(p).convert("RGB")
-    if i.startswith(("food-", "buy-", "areamap")):
-        # 料理・土産・地図は 800 角までしか使わない。持ち帰る量を減らすため、ここで真ん中を切って 800 に落とす
-        # （表紙とやりたいことは手元で 16:9・4:3・1:1 に切るので、描けたまま持ち帰る）
+    if i.startswith(("food-", "buy-")):
+        # 料理・土産は 800 角までしか使わない。持ち帰る量を減らすため、ここで真ん中を切って 800 に落とす
+        # （表紙・やりたいこと・地図は手元で切るので、描けたまま持ち帰る。地図は画像検索に出す 1200 の版を持つ）
         s = min(im.size)
         im = im.crop(((im.width - s) // 2, (im.height - s) // 2, (im.width + s) // 2, (im.height + s) // 2))
         im = im.resize((800, 800), Image.LANCZOS)
@@ -586,20 +598,38 @@ def raw_of(work: Path | None, id: str) -> Path | None:
     return next((p for e in (".png", ".webp") if (p := work / "raw" / f"{id}-0{e}").is_file()), None)
 
 
+def baked(spec: dict) -> bool:
+    """地図の絵に地区の名前を焼くか（頼み書きの areas に `label` が在る）"""
+    return any("label" in x for x in spec.get("areamap", {}).get("areas", []))
+
+
 def entry(s: dict, spec: dict) -> dict:
     """面に出す字の欄（絵の欄は別）。並びは今の manifest と同じ"""
     e = {"alt": s["alt"], "kind": "ai", "prompt_note": s["note"]}
     if s["slot"] == "areamap":
         a = spec["areamap"]
+        if baked(spec):
+            # 札は絵に焼いてある。面は札の箱（`w`・`h`）に透明の押しどころを重ねるだけ（`SpotMap.tsx`）
+            e["baked"] = True
         for k in ("areas", "bbox", "beyond", "base"):
             if k in a:
                 e[k] = a[k]
+        if baked(spec):
+            r = a.get("ratio", 1.0)
+            e["areas"] = [{**x, **gl().box(x["label"], r), "x": x["x"], "y": x["y"]} for x in a["areas"]]
     return e
 
 
-def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None) -> tuple[dict, list[str]]:
+def base_path(spec: dict) -> Path:
+    """地区の名前を焼く前の地図（頼み書きの隣。面には出さない）。名前を直したら、ChatGPT を使わずにここから焼き直す"""
+    return SPECS / f"{spec['_city']}-areamap-base.webp"
+
+
+def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
+             base: Path | None = None) -> tuple[dict, list[str]]:
     from PIL import Image
     out = out or out_dir(spec, root)
+    base = base or base_path(spec)
     out.mkdir(parents=True, exist_ok=True)
     old = read_manifest(out / "manifest.json")
     man: dict = {}
@@ -611,10 +641,24 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None)
                 missing.append(s["slot"])
             continue
         name, ratio, sizes = SHAPE.get(s["slot"], (s["name"], 1.0, ITEM_SIZES))
+        if s["slot"] == "areamap":
+            # 地図は頼み書きで形と名前を変えられる（ソフィアは 4:5・1200 の版・名前に「見どころマップ」。#1262）
+            am = spec["areamap"]
+            name, ratio, sizes = am.get("file", name), am.get("ratio", ratio), tuple(am.get("sizes", sizes))
         src = raw_of(work, s["id"])
         prev = (old.get(s["sec"], {}) if s["sec"] else old).get(s["key"])
-        if src is not None:
-            im = crop(Image.open(src).convert("RGB"), ratio, s["bias"])
+        im = crop(Image.open(src).convert("RGB"), ratio, s["bias"]) if src is not None else None
+        if s["slot"] == "areamap" and baked(spec):
+            # 地区の名前は、いちばん大きい版に焼いてから縮める（どの版にも同じ札が写る）。焼く前の1枚を残しておき、
+            # 持ち帰った絵が無い日（名前だけ直した日）はそこから焼き直す
+            if im is not None:
+                im = im.resize((sizes[0], round(im.height * sizes[0] / im.width)), Image.LANCZOS)
+                im.save(base, "WEBP", quality=90, method=6)
+            elif base.is_file():
+                im = Image.open(base).convert("RGB")
+            if im is not None:
+                im = gl().bake(im, spec["areamap"]["areas"])
+        if im is not None:
             pics = []
             for w in sizes:
                 h = round(im.height * w / im.width)
@@ -710,9 +754,13 @@ def check(spec: dict, root: Path, manifest: Path | None = None) -> int:
         for s in slots(spec, root):
             # やりたいことは、いちばん目の形（src）を縦の1枚にも見立てる。切る比から寸法が決まるので manifest は同じになる
             e = (cur.get(s["sec"], {}) if s["sec"] else cur).get(s["key"])
-            if e and (src / Path(e["src"]).name).is_file():
+            if s["slot"] == "areamap" and baked(spec):
+                # 名前を焼いた地図は、焼く前の1枚から作り直す（焼いた絵に、もう1度焼かない）
+                if base_path(spec).is_file():
+                    shutil.copy(base_path(spec), work / "raw" / f"{s['id']}-0.webp")
+            elif e and (src / Path(e["src"]).name).is_file():
                 shutil.copy(src / Path(e["src"]).name, work / "raw" / f"{s['id']}-0.webp")
-        man, missing = finalize(spec, root, work, out)
+        man, missing = finalize(spec, root, work, out, Path(tmp) / "base.webp")
     bad = [f"品の鍵: 頼み書きにだけ {sorted(want - have)}" if want - have else "",
            f"品の鍵: manifest にだけ {sorted(have - want)}" if have - want else ""]
     bad = [b for b in bad if b] + diff(man, cur)
@@ -936,7 +984,7 @@ def main(argv=None) -> int:
         return 0
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("city", help="<国>/<街>（site/public/guide の下の道）")
-    ap.add_argument("cmd", choices=["plan", "run", "status", "fetch", "finalize", "sheet", "check"])
+    ap.add_argument("cmd", choices=["plan", "layout", "run", "status", "fetch", "finalize", "sheet", "check"])
     ap.add_argument("--only", nargs="*", help="品（cover・areamap・food:<鍵>・do:<鍵>…）か id。sheet は節（food・buy・do）")
     ap.add_argument("--all", action="store_true", help="manifest に在る品も")
     ap.add_argument("--json", action="store_true", help="plan: EC2 に渡す jobs.json をそのまま出す")
@@ -950,7 +998,7 @@ def main(argv=None) -> int:
     root = Path(a.root)
     spec = load_spec(a.city, a.spec)
     work = Path(a.work) if a.work else None
-    if a.cmd in ("run", "fetch", "sheet") and work is None:
+    if a.cmd in ("layout", "run", "fetch", "sheet") and work is None:
         die(f"{a.cmd} には --work（スクラッチの置き場）が要る")
     if a.cmd == "plan":
         picked = select(spec, root, work, a.only, a.all or not a.only)
@@ -965,6 +1013,11 @@ def main(argv=None) -> int:
         print(f"{len(picked)}品（料理 {sum(1 for s in picked if s['sec'] == 'food')}・土産 "
               f"{sum(1 for s in picked if s['sec'] == 'buy')}・やりたいこと {sum(1 for s in picked if s['sec'] == 'do')}）")
         return 0 if picked else 2
+    if a.cmd == "layout":
+        am = spec["areamap"]
+        size = gl().layout(am, work / am["layout"])
+        print(f"下敷き {work / am['layout']}（{size[0]}×{size[1]}・地区 {len(am.get('districts', []))}・目印 {len(am.get('marks', []))}）")
+        return 0
     if a.cmd == "run":
         return run(spec, root, work, a.only, a.all)
     if a.cmd == "status":

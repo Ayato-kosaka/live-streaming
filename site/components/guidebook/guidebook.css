@@ -356,6 +356,28 @@
 
 .gb-amap-pin.is-2 { min-height: 44px; padding: 3px 10px; border-radius: 14px; }
 
+/* 名前を焼いた地図（#1262）の札は絵の一部。ここは**透明の押しどころ**だけ（幅と高さは焼いた札の箱。
+   `content/guidebook/spotmap.ts` の `HIT` と同じ 48px より小さくしない）。押したと分かるように、押した瞬間だけ縁を出す */
+.gb-amap-pin.is-baked {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 18px;
+  background: transparent;
+  box-shadow: none;
+}
+.gb-amap-pin.is-baked:active,
+.gb-amap-pin.is-baked:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 55%, transparent); }
+.gb-amap-pin.is-baked::after { content: none; }
+.gb-amap-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* 当たりは上下 7px 広げる（1行の札 34px で 48px）。札どうしのすきま（14px）と縁からの離れ（7px）は、
    この幅に合わせて `content/guidebook/spotmap.ts` が取っている。片方だけ変えると、隣の当たりに削られる */
 .gb-amap-pin::after,

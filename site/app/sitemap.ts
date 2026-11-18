@@ -9,6 +9,7 @@ import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref } from "@/content/nordic";
 import { TRAVEL, TRAVEL_PLACES, publicArticles, publicCities } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { guidebookOf } from "@/content/guidebook";
+import { readDrawn } from "@/content/guidebook/manifest";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
 
@@ -92,7 +93,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...publicCities().map((c) => {
       const g = guidebookOf(c.country, c.slug);
       if (!g) throw new Error(`app/sitemap.ts: ${c.country}/${c.slug} の中身が content/guidebook/ に無い`);
-      return row(c.href, g.updated);
+      /* 地区の名前を焼いた見どころマップは、画像のサイトマップ（`<image:image>`）にも載せる（#1262。画像検索に地区分けの
+         絵を出す）。道に日本語が入るので %XX にしてから渡す */
+      const am = readDrawn(c.country, c.slug).areamap;
+      const r = row(c.href, g.updated);
+      return am?.baked ? { ...r, images: [encodeURI(`${SITE.url}${am.src}`)] } : r;
     }),
     /* 街の記事（`/travel/<国>/<街>/<話>`）。街と同じく、公開前の印が付いた記事は並べない（`publicArticles`） */
     ...publicArticles().map((a) => row(a.href, articleOf(a.country, a.city, a.slug).updated)),

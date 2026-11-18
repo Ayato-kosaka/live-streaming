@@ -3,7 +3,7 @@ import type { Drawn } from "@/content/guidebook/manifest";
 import type { Guidebook, Item } from "@/content/guidebook/types";
 
 import Sheet from "./Sheet";
-import SpotMap from "./SpotMap";
+import SpotMap, { mapTitle } from "./SpotMap";
 import { WentBox } from "./Videos";
 import { Ext, LocalName, Picture, Sec, SrcLine, sheetId, shortName } from "./parts";
 
@@ -39,7 +39,8 @@ export default function About({ g, drawn, n }: { g: Guidebook; drawn: Drawn; n: 
         ))}
       </div>
 
-      <h3 className="gb-sub">どのあたりに何がある？</h3>
+      {/* 名前を焼いた地図は「<街>の見どころマップ（地区分け）」。絵の名前・alt と同じ語にそろえる（#1262） */}
+      <h3 className="gb-sub">{mapTitle(g, drawn)}</h3>
       <SpotMap g={g} drawn={drawn} />
 
       {areas.map((a) => (

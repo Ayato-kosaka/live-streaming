@@ -159,6 +159,7 @@ python3 .claude/skills/chatgpt-image/tidy.py <持ち帰った.png> <出力.png> 
 ```bash
 G=.claude/skills/chatgpt-image/guide_art.py; C=bulgaria/sofia; W=<スクラッチ>/guide-art/$C   # 地図の下敷き（layout）は $W に置く
 python3 $G $C plan                 # 品・id・頼む文の長さ・後回し（手本や下敷きが無い）を1行ずつ
+python3 $G $C layout --work $W     # 地図の下敷き（OpenStreetMap の道・川・公園＋頼み書きの地区の色と目印の番号）を $W に作る
 python3 $G $C run --work $W        # manifest に無い品だけ EC2 へ。済んだ品は EC2 が飛ばす。描き直しは頼み書きの v を上げて --only food:<鍵>
 python3 $G $C status               # 待つのは send_later で（1件 1.5〜5分）。ポーリングしない
 python3 $G $C fetch --work $W && python3 $G $C finalize --work $W && python3 $G $C sheet --work $W   # 新しい街は --with bulgaria/sofia でトーンを混ぜて見る
@@ -170,3 +171,8 @@ python3 $G $C check                # 頼み書きから manifest を作り直し
 頼み書き（2万字ほど）を書くのに見込み5〜8万トークン。手で回していたときは1人30万〜65万トークンだった。
 見比べで違った品は `fix`（描写の前に足す注意）か `desc` を直し、`v` を上げて `run --only` で描き直す。
 見張りは `guide_art_selftest.py`（偽の EC2 で回す）。
+
+**エリア地図（見どころマップ）は、地区の色と名前を絵に焼く**（#1262。画像検索に出るのは絵だけ）。字は ChatGPT に描かせず、
+`finalize` がこちらの道具（`guide_layout.py`。面と同じ丸ゴシック）で焼く。頼み書きの `areas[].label` に札の行を書き、
+位置（x・y）は描けた絵を見て決める（札が重なる・はみ出すときは `finalize` が止まる）。出す前に、絵を横 240px に縮めて地区名が読めるかを見る。
+地区の名前の決めかたは `docs/guide-copy.md` 5章（日本語のガイドの字。作った呼び名を使わない）。
