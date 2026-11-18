@@ -471,7 +471,14 @@ def run(spec: dict, root: Path, work: Path, only=None, all_=False) -> int:
     e.put(str(jf), f"{D}/jobs.json")
     alias = "".join(f"[ -f {D}/{old}-0.png ] && [ ! -f {D}/{new}-0.png ] && cp {D}/{old}-0.png {D}/{new}-0.png\n"
                     for new, old in spec.get("ec2_alias", {}).items())
-    sh = (f"mkdir -p {D}/in\n"
+    # 送る品の id の絵が EC2 に**もう在る**と、一括はそれを描いたものとして飛ばし、fetch が古い絵を持ち帰る。
+    # 2026-11-18、スコピエの地図を v10 で頼んだら、11-15 に別の担当が v10 で試し描きした絵（家と木のある前の型）が
+    # 返ってきた。manifest に載らなかった試し描きは、頼み書きの v を見ても分からない。だから一括を起こす前に止める
+    ids = [j["id"] for j in jobs if j["id"] not in spec.get("ec2_alias", {})]
+    stale = "".join(f"[ -f {D}/{i}-0.png ] && S=\"$S {i}($(date -r {D}/{i}-0.png +%F))\"\n" for i in ids)
+    sh = (f"S=''\n{stale}"
+          f"if [ -n \"$S\" ]; then echo \"STALE:$S\"; exit 0; fi\n"
+          f"mkdir -p {D}/in\n"
           f"python3 -c 'import sys; from PIL import Image; a=sys.argv[1:]; "
           f"[Image.open(a[i]).convert(\"RGB\").save(a[i+1]) for i in range(0, len(a), 2)]' "
           + " ".join(f"{a} {b}" for a, b in conv) + "\n" + alias +
@@ -480,6 +487,10 @@ def run(spec: dict, root: Path, work: Path, only=None, all_=False) -> int:
           f"python3 {EC2_TOOLS}/guide_art.py batch {D}/jobs.json {D} > {D}/log-jobs.txt 2>&1 &\n"
           f"sleep 8\n{QUEUE} list 2>&1 | tail -3\ntail -3 {D}/log-jobs.txt\n")
     st, out = e.run(sh, 120, quiet=True)
+    if "STALE:" in out:
+        print(f"送らなかった: EC2 に前の絵が在る品 {out.split('STALE:', 1)[1].strip()}。描かれずに古い絵が返ってくる。"
+              "頼み書きのその品の v を上げて、もう一度 run（id が変わる）")
+        return 1
     print(out.strip()[-600:])
     print(f"送った {len(jobs)}件（1件 1.5〜5分）。待つのは send_later で。様子は `status`、終わったら `fetch`")
     return 0 if st == "Success" else 1

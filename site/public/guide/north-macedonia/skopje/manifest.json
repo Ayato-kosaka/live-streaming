@@ -4,112 +4,72 @@
   "src_small": "/guide/north-macedonia/skopje/cover-800.webp",
   "w": 1600,
   "h": 900,
-  "alt": "アーチの続く石橋と城塞の壁、噴水の上に騎馬像が立つマケドニア広場、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "alt": "晩秋の午後の日に照らされた、アーチの続く石橋と騎馬像の噴水のマケドニア広場。左に城塞の壁、奥に頂の十字架が見えるヴォドノ山。スコピエの絵",
   "kind": "ai",
-  "prompt_note": "手描きの水彩・ガッシュ調。輪郭線なし・強い環境光・明るく彩度の高い色。石橋（石のアーチ）・マケドニア広場（噴水の上の柱に騎馬像）・ヴォドノ山（なだらかな山・頂の茶色の鉄の十字架）・城塞の壁を主に。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。石橋・騎馬像の噴水・城塞は写真を形の手本として渡した。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
  },
  "cover_tall": {
   "src": "/guide/north-macedonia/skopje/cover-tall-1600.webp",
   "src_small": "/guide/north-macedonia/skopje/cover-tall-800.webp",
   "w": 1600,
   "h": 2000,
-  "alt": "石橋と城塞の壁、マケドニア広場の騎馬像、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "alt": "晩秋の午後の石橋と、騎馬像の噴水のマケドニア広場。奥に頂の十字架が見えるヴォドノ山。スコピエの絵",
   "kind": "ai",
   "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
  },
  "areamap": {
-  "src": "/guide/north-macedonia/skopje/areamap-800.webp",
-  "src_small": "/guide/north-macedonia/skopje/areamap-400.webp",
-  "w": 800,
-  "h": 800,
-  "alt": "スコピエの中心部の絵地図。旧市街・新市街・おしゃれなデバル・マーロ・バスターミナルと鉄道駅の4つの地区が色で塗り分けてあり、ヴァルダル川に架かる石橋や城塞、モスク、市場、騎馬像の噴水、凱旋門、旧駅舎、交通センターなどの目印が描いてある",
+  "src": "/guide/north-macedonia/skopje/スコピエ-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/north-macedonia/skopje/スコピエ-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "スコピエの見どころマップ（地区分け）。ヴァルダル川の北の旧市街と、南の新市街の2つの地区を色で分け、名前を書いた絵地図。石橋・マケドニア広場の戦士の像・城塞・モスク・ビト・パザル・マザー・テレサ記念館・旧駅舎の博物館・聖クリメント大聖堂・交通センターの目印の絵つき",
   "kind": "ai",
-  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・あやとの地区分け（2026-11-15）の4地区の色・目印14か所の番号）を渡し、その配置どおりに描かせた。街の中心だけの 2.9km 四方。地区の範囲は guidebook.json の範囲と目印の座標の外形を、絵の上で隣の地区と接するまで広げたもの。北が上。字も番号もなし（地区の名前と見どころの番号は面の側で重ねる）",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印9か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
+  "baked": true,
   "areas": [
    {
     "id": "carsija",
     "name": "旧市街",
+    "label": [
+     "旧市街"
+    ],
     "local": "Стара чаршија",
     "color": "#ffd98a",
-    "x": 0.55,
-    "y": 0.185,
+    "x": 0.69,
+    "y": 0.36,
     "source": [
-     "https://www.openstreetmap.org/way/1532093164",
-     "https://www.openstreetmap.org/way/32813170",
+     "https://skyticket.jp/guide/71254/",
+     "https://4travel.jp/os_shisetsu/10503451",
      "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje"
-    ]
+    ],
+    "w": 0.1817,
+    "h": 0.0687
    },
    {
     "id": "newtown",
     "name": "新市街",
+    "label": [
+     "新市街"
+    ],
     "local": "Центар",
     "color": "#d9ccf5",
-    "x": 0.33,
-    "y": 0.845,
+    "x": 0.63,
+    "y": 0.7,
     "source": [
-     "https://en.wikivoyage.org/wiki/Skopje/Centar",
-     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
-     "https://en.wikipedia.org/wiki/Skopje"
-    ]
-   },
-   {
-    "id": "debar-maalo",
-    "name": "おしゃれエリア",
-    "local": "Дебар Маало",
-    "color": "#ffc4d2",
-    "x": 0.17,
-    "y": 0.225,
-    "source": [
-     "https://www.openstreetmap.org/node/6239561763",
-     "https://www.openstreetmap.org/way/1315915665",
-     "https://en.wikivoyage.org/wiki/Skopje/Centar"
-    ]
-   },
-   {
-    "id": "station",
-    "name": "バスターミナル・鉄道駅",
-    "local": "Скопска железничка станица",
-    "color": "#a9dcf5",
-    "x": 0.76,
-    "y": 0.905,
-    "source": [
-     "https://en.wikivoyage.org/wiki/Skopje"
-    ]
+     "https://skyticket.jp/guide/71254/",
+     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje"
+    ],
+    "w": 0.1817,
+    "h": 0.0687
    }
   ],
   "bbox": {
-   "west": 21.415,
-   "east": 21.4505,
-   "south": 41.9837,
-   "north": 42.0102
+   "west": 21.421,
+   "east": 21.4475,
+   "south": 41.98203,
+   "north": 42.01157
   },
   "beyond": [
-   {
-    "id": "suto-orizari",
-    "name": "シュト・オリザリ",
-    "local": "Шуто Оризари",
-    "lat": 42.0405453,
-    "lon": 21.423591,
-    "source": [
-     "https://www.openstreetmap.org/relation/6965625"
-    ],
-    "x": 0.431,
-    "y": 0.06,
-    "dir": "n"
-   },
-   {
-    "id": "gazi-baba",
-    "name": "ガジ・ババ",
-    "local": "Гази Баба",
-    "lat": 41.9984446,
-    "lon": 21.4737249,
-    "source": [
-     "https://www.openstreetmap.org/relation/6965627"
-    ],
-    "x": 0.94,
-    "y": 0.478,
-    "dir": "e"
-   },
    {
     "id": "vodno",
     "name": "ヴォドノ山",
@@ -117,12 +77,25 @@
     "lat": 41.96502,
     "lon": 21.394421,
     "source": [
-     "https://www.openstreetmap.org/way/229939246",
-     "https://en.wikipedia.org/wiki/Vodno"
+     "https://en.wikipedia.org/wiki/Vodno",
+     "https://en.wikipedia.org/wiki/Millennium_Cross"
     ],
-    "x": 0.36,
+    "x": 0.16,
     "y": 0.94,
-    "dir": "s"
+    "dir": "sw"
+   },
+   {
+    "id": "matka",
+    "name": "マトカ渓谷",
+    "local": "Матка",
+    "lat": 41.950724,
+    "lon": 21.299731,
+    "source": [
+     "https://en.wikipedia.org/wiki/Matka_Canyon"
+    ],
+    "x": 0.1,
+    "y": 0.6,
+    "dir": "w"
    }
   ],
   "base": {
@@ -348,6 +321,25 @@
    "alt": "銀の線をレースのように編んだ線細工（フィリグリー）の耳飾りとブローチ、ペンダント、金の指輪",
    "kind": "ai",
    "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  }
+ },
+ "do": {
+  "teresa": {
+   "src": "/guide/north-macedonia/skopje/do-teresa-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-teresa-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "晩秋の朝の日を受ける、石のアーチと白い壁、屋上にガラスの箱が乗ったマザー・テレサ記念館。前の角に白いマザー・テレサの像",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。行った所はあやとの写真を出すので、描くのは行っていない所だけ。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-teresa-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-teresa-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
   }
  }
 }

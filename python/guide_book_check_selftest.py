@@ -88,6 +88,11 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
     def store0(d):
         return d["eat"]["items"][0]["stores"][0]
 
+    def walk(d):
+        """場面が結んだ行の1つ目ではない、行ったやりたいこと（旧市街）。1つ目の行を壊しても、場面の札が混ざらない。
+        前は `todo[0]` だったが、並びを変えたら（2026-11-18）1つ目が場面と同じ行の項目になり、ほかの札が混ざった"""
+        return next(t for t in d["todo"] if t["key"] == "carsija-walk")
+
     def matka(d):
         return next(t for t in d["todo"] if t["town"] == "matka-canyon")
 
@@ -105,11 +110,11 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("店の座標を外す", lambda d: [store0(d).pop("lat"), store0(d).pop("lon")], {"座標の無い店"}, {"CSV を組めない"}),
         ("店がオフリドの座標", lambda d: store0(d).__setitem__("lat", 41.112794), {"枠の外"}, csv_only),
         ("座標の出どころを外す", lambda d: store0(d).pop("coord_src"), {"座標の出どころ"}, set()),
-        ("行ったの行が無い", lambda d: d["todo"][0]["went"]["facts"][0].__setitem__("id", "XXXXXXXXXXX@1#place"), {"facts の行に辿れない"}, set()),
-        ("行ったが確かめの要る行", lambda d: d["todo"][0]["went"]["facts"].__setitem__(0, fact_of(verify_id)), {"確かめが要る行"}, {"合わない"}),
-        ("行ったがチャットの行", lambda d: d["todo"][0]["went"]["facts"].__setitem__(0, fact_of(via_id)), {"チャットが出どころ"}, {"合わない", "確かめが要る行"}),
-        ("時刻がずれた結び", lambda d: d["todo"][0]["went"]["facts"][0].__setitem__("ref", "10-01 0:00:01"), {"ref"}, set()),
-        ("場面の URL がずれる", lambda d: d["todo"][0]["went"]["facts"][0].__setitem__("url", "https://www.youtube.com/watch?v=x"), {"url が配信の時刻"}, set()),
+        ("行ったの行が無い", lambda d: walk(d)["went"]["facts"][0].__setitem__("id", "XXXXXXXXXXX@1#place"), {"facts の行に辿れない"}, set()),
+        ("行ったが確かめの要る行", lambda d: walk(d)["went"]["facts"].__setitem__(0, fact_of(verify_id)), {"確かめが要る行"}, {"合わない"}),
+        ("行ったがチャットの行", lambda d: walk(d)["went"]["facts"].__setitem__(0, fact_of(via_id)), {"チャットが出どころ"}, {"合わない", "確かめが要る行"}),
+        ("時刻がずれた結び", lambda d: walk(d)["went"]["facts"][0].__setitem__("ref", "10-01 0:00:01"), {"ref"}, set()),
+        ("場面の URL がずれる", lambda d: walk(d)["went"]["facts"][0].__setitem__("url", "https://www.youtube.com/watch?v=x"), {"url が配信の時刻"}, set()),
         ("オフリドの項目にスコピエの行", ohrid_item, {"行っていない街", "合わない"}, set()),
         ("スコピエの項目の街をオフリドに", lambda d: d["todo"][0].__setitem__("town", "ohrid"), {"行っていない街", "合わない"}, set()),
         ("渓谷の項目にスコピエの行", lambda d: matka(d)["went"].__setitem__("facts", [copy.deepcopy(skopje_went)]), {"合わない"}, {"went の行に無い"}),
@@ -121,7 +126,8 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("札が61字", lambda d: d["about"]["cards"][0].__setitem__("text", "あ" * 61), {"60字を超える"}, set()),
         ("やりたいことが9", lambda d: d["todo"].extend(copy.deepcopy(d["todo"][:3])), {"8まで"}, set()),
         ("見出しが31字", lambda d: d["todo"][0].__setitem__("head", "あ" * 31), {"30字を超える"}, set()),
-        ("エリアが3", lambda d: d["about"].__setitem__("areas", d["about"]["areas"][:3]), {"4〜6"}, set()),
+        ("エリアが1", lambda d: d["about"].__setitem__("areas", d["about"]["areas"][:1]), {"2〜6"}, set()),
+        ("地区の名前の出どころが無い", lambda d: d["about"]["areas"][0].pop("name_src"), {"name_src"}, set()),
         ("多角形が3点", lambda d: d["about"]["areas"][0]["range"].__setitem__("polygon", d["about"]["areas"][0]["range"]["polygon"][:3]), {"4〜8点"}, set()),
         ("ひとことが9個", lambda d: d["basics"]["guide"][5]["phrases"].pop(), {"10個"}, set()),
         ("実用ガイドが5つ", lambda d: d["basics"]["guide"].pop(0), {"6つ"}, {"引き継いでいない"}),
@@ -130,7 +136,7 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("予算の足し算", lambda d: d["basics"]["budget"]["days"][0].__setitem__("total_yen", 9999), {"足し算"}, set()),
         ("写真が NC", lambda d: d["todo"][0]["photo"]["commons"][0].__setitem__("lic", "CC BY-NC 4.0"), {"自由に使えるライセンス"}, set()),
         ("行ったのに場面が無い", lambda d: d["todo"][0].pop("scene"), {"場面（scene）が無い"}, set()),
-        ("場面が went に無い行", lambda d: d["todo"][0]["scene"].__setitem__("id", d["see"][2]["went"]["facts"][0]["id"]), {"went の行に無い"}, {"食い違う"}),
+        ("場面が went に無い行", lambda d: walk(d)["scene"].__setitem__("id", d["see"][2]["went"]["facts"][0]["id"]), {"went の行に無い"}, {"食い違う"}),
         ("行っていない項目にショート", lambda d: next(t for t in d["todo"] if not t["went"]).__setitem__("short", "frcgM9wiRr8"), {"行っていない項目に"}, set()),
         ("無いショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "XXXXXXXXXXX"), {"shorts.json に無い"}, {"当てた理由"}),
         ("ほかの国のショート", lambda d: next(t for t in d["todo"] if t.get("short")).__setitem__("short", "qcWK52DE0X8"), {"北マケドニアのショートでない"}, {"当てた理由"}),
