@@ -86,11 +86,17 @@ import {
   loadEvents,
   mintForImage,
   resyncCardsOfImage,
+  tipsForImage,
+  whoKey,
   type ImageRole,
 } from "./streamEvents";
 /* **チャンネルの持ち主を確かめる唯一の道。** ここ以外から
    `islandUsers.channelId` に値が入らないようにしてある（`POST /me` の注）。 */
 import {ownedChannel} from "./youtubeOwner";
+/* 写真の取り込み（Google フォト → カード）。同じ理由で外に置いてある。
+   **登録はここの `saveEventImage` を借りる**（手で貼る口と同じ道。
+   `docs/card-import.md` 3章）。 */
+import {handleCardImport} from "./cardImport";
 import {capHit} from "./capWatch";
 
 if (admin.apps.length === 0) admin.initializeApp();
@@ -2530,6 +2536,21 @@ async function eventsOnDay(day: string): Promise<EventBrief[]> {
   }));
 }
 
+/**
+ * 画像の置き方の、手で貼る口と違うところ。**手で貼る口は何も渡さない**
+ * （渡さなければ、前と1バイトも変わらない）。
+ *
+ * 写真の取り込み（`cardImport.ts`）だけが使う。数百枚を一度に登録するので
+ * 1日120枚の枠を使わず、どの候補から来たかを `importSha` に残す
+ * （同じ候補を2回登録しないための止め。`docs/card-import.md` 2章）。
+ */
+type SaveOpts = {
+  /** false なら1日の枠（`nphoto`）を数えない */
+  quota?: boolean;
+  /** 取り込みの候補の sha。あれば書類に書く */
+  importSha?: string;
+};
+
 /** 画像を1枚置いた結果。 */
 type SavedImage =
   | {ok: true; id: string; doc: Json; events: EventBrief[]}
@@ -2550,6 +2571,7 @@ type SavedImage =
  * @param {string} day その日（YYYY-MM-DD）
  * @param {string} wantEvent どの企画か。空なら日付から選ぶ
  * @param {ImageRole} role 役目
+ * @param {SaveOpts} opts 手で貼る口と違うところ（取り込みだけが渡す）
  * @return {Promise<SavedImage>} 置いた結果
  */
 async function saveEventImage(
@@ -2558,6 +2580,7 @@ async function saveEventImage(
   day: string,
   wantEvent: string,
   role: ImageRole,
+  opts: SaveOpts = {},
 ): Promise<SavedImage> {
   // data URL で来ても、中身だけで来ても受ける
   const b64 = String(b.image ?? "").replace(/^data:[^,]*,/, "");
@@ -2608,7 +2631,10 @@ async function saveEventImage(
   /* **1日の枠は、断るものを全部断ってから数える。** 先に数えると、
      形が違って弾かれた1枚や、企画IDを打ち間違えた1枚で枠が減る。
      旅の途中に電波の悪いところで貼り直すので、そこは減らさない。 */
-  if (!(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))) {
+  if (
+    opts.quota !== false &&
+    !(await takeQuota(uid, "nphoto", PHOTOS_PER_DAY))
+  ) {
     return {ok: false, code: 429, error: "too many today"};
   }
 
@@ -2653,6 +2679,8 @@ async function saveEventImage(
     createdAt: at,
     updatedAt: at,
   };
+  // 取り込みから来たときだけ足す。手で貼った書類には欄ごと作らない
+  if (opts.importSha) doc.importSha = opts.importSha;
   /* **旧 `nordicPhotos` には、もう書かない**（2026-10-13）。
      読む口が無くなったので、写しを作る理由が無い。
 
@@ -2681,6 +2709,29 @@ async function saveEventImage(
     logger.warn("mint for image failed", ref.id, String(e));
   }
   return {ok: true, id: ref.id, doc, events};
+}
+
+/**
+ * その日の写真を1枚登録したら、**何人に**カードが渡るか。
+ *
+ * 写真の取り込みの下見（`POST /cardimport/register` の `dryRun`）が使う。
+ * 当たりの式は持たない。`saveEventImage` が選ぶのと同じ企画（その日の
+ * いちばん古いもの）を付けた写真として `tipsForImage` に聞き、
+ * カードと同じ「1人1枚」（`whoKey`）で数える。**名前も ID も返さない。**
+ * @param {string} day 写真の日（YYYY-MM-DD）
+ * @return {Promise<number>} 人数
+ */
+async function peopleOnDay(day: string): Promise<number> {
+  if (!isDay(day)) return 0;
+  const events = await eventsOnDay(day);
+  let ev = null;
+  if (events[0]) {
+    const s = await STREAM_EVENTS.doc(events[0].id).get();
+    if (s.exists) ev = eventRef(s.id, s.data() ?? {});
+  }
+  const image = imageRef("", {role: "card", day, streamEventId: ev?.id ?? ""});
+  const tips = await tipsForImage(image, ev);
+  return new Set(tips.map((t) => whoKey(t.channelId)).filter((w) => !!w)).size;
 }
 
 /**
@@ -2962,6 +3013,44 @@ export const islandApi = onRequest(
           },
           res,
           {ownerUid, doneruNow},
+        )
+      ) {
+        return;
+      }
+
+      /* ---------------- 写真の取り込み ----------------
+         中身は `cardImport.ts`。ここは取り付けだけ。扱ったら true。
+         **全部あやとだけ。** 登録はここの `saveEventImage` を、枠を使わず・
+         `importSha` を書く形で借りる。手で貼る口（`/nordic/photos`）は
+         何も渡さないので、前と1バイトも変わらない。 */
+      if (
+        await handleCardImport(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            query: (req.query ?? {}) as Json,
+            body,
+          },
+          res,
+          {
+            ownerUid,
+            bucket: BUCKET,
+            saveImage: async (uid, buf, day, sha, size) => {
+              const out = await saveEventImage(
+                uid,
+                {image: buf.toString("base64"), w: size.w, h: size.h},
+                day,
+                "",
+                "card",
+                {quota: false, importSha: sha},
+              );
+              return out.ok ?
+                {ok: true, id: out.id} :
+                {ok: false, error: out.error};
+            },
+            peopleOnDay,
+          },
         )
       ) {
         return;

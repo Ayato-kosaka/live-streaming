@@ -18,7 +18,7 @@
  */
 
 import { artOf } from "./shapes";
-import { isleSpec, nordicSpec } from "@/components/isle/spec";
+import { chapterIsle } from "@/components/isle/spec";
 import { buildWorld, SQUASH } from "@/components/isle/world";
 import { CHAPTERS } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
@@ -33,14 +33,12 @@ export function atlasIsles(): AtlasIsle[] {
       return k ? [k.region as string] : [];
     });
     const art = artOf(c.slug, regions);
-    /* **まだ始まっていない島でも、`nordicSpec` を当てるのは旅の予定が
-       入っている島だけ。** あちらは北欧の旅のしおり・北欧の掲示板・北欧の国を
-       建てる作りなので、行き先しか決まっていない島に当てると、
-       別の島の模型に北欧の建物が5つ建つ。中身のあるものだけを建てる
-       `isleSpec` なら、素材が無い島は船着き場だけになる
-       （`docs/island-atlas.md` 4章「素材の足りない章は、建つものが自然に減る」）。 */
-    const planned = c.opensAt || c.plannedDays;
-    const spec = c.from || !planned ? isleSpec(c) : nordicSpec(c);
+    /* **章の島の面（`app/island/[chapter]/page.tsx`）と同じ1本で建てる**（`chapterIsle`）。
+       前はここだけ「始まっていない島で、旅の予定が入っている島は `nordicSpec`、ほかは
+       `isleSpec`」と自分で振り分けていて、いまいる島はトップ（`/`）へ渡るので
+       模型もトップの10軒を描いていた。いまいる島も章の島へ渡るようになったので（#1201）、
+       振り分けを面と1つにして、旅の島（バルカンの案内の板など）も模型に建てる。 */
+    const spec = chapterIsle(c);
     const w = buildWorld(spec);
     return {
       slug: c.slug,

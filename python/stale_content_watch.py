@@ -639,7 +639,7 @@ BOOKS: dict[str, Book] = {
     "nordicFood.ts": Book(HUMAN, SKIP, 0, "旅先のふだんのごはんの読みもの。日付を1つも持たない"),
     "bulgaria.ts": Book(
         HUMAN, SKIP, 0,
-        "ブルガリア（ソフィア）の案内（`/bulgaria`）。行く前に1回だけ書く読みもので、"
+        "ソフィアの調べた事実（`/travel/bulgaria/sofia` の材料。前の `/bulgaria`）。行く前に1回だけ書く読みもので、"
         "`python/build_bulgaria.py` が `python/data/bulgaria/*.json` から焼く。"
         "**日数では測らない。** 円の数字はレートから出しているので実勢とは離れていくが、"
         "面の頭に『1ユーロ＝177円（2026年11月6日時点の実勢レート）』と**取った日を"
@@ -652,7 +652,7 @@ BOOKS: dict[str, Book] = {
     ),
     "northMacedonia.ts": Book(
         HUMAN, SKIP, 0,
-        "北マケドニアの案内（`/north-macedonia`）。見どころ・食べもの・ことばの読みもので、"
+        "北マケドニアの案内（`/travel/north-macedonia`）。見どころ・食べもの・ことばの読みもので、"
         "**今日がいつかを知らないと決められない字は1つも置いていない**"
         "（お祭りは「毎年10月」まで。移動する日は企画の表が持つ）。"
         "中にある数字（1963年の地震、2,764m、288m）は動かない事実なので、古くならない",
@@ -718,6 +718,11 @@ BOOKS: dict[str, Book] = {
     "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
     "planDays.ts": Book(DERIVED, SKIP, 0, "日付→企画の表。`plans.ts` と `nordic.ts` から組む"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
+    "travel.ts": Book(
+        DERIVED, SKIP, 0,
+        "国の面（`/travel/<国>`）の名簿。`countries.ts` から組む。**自分では日付を持たない**（#1201）",
+    ),
+    "travelPath.ts": Book(DERIVED, SKIP, 0, "旅のガイドの区画の道（`/travel`）の字だけ。日付を持たない（#1201）"),
     "walked.ts": Book(
         DERIVED, SKIP, 0,
         "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"

@@ -2040,6 +2040,45 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "date": "2026-11-11"
       }
     ]
+  },
+  "bulgaria": {
+    "ブルガリア": [
+      {
+        "videoId": "4izd3enURM8",
+        "title": "🇧🇬ブルガリアいきます",
+        "date": "2026-11-12"
+      },
+      {
+        "videoId": "-oDWI23uBgc",
+        "title": "🇧🇬ブルガリアついたんやけど！！！！！",
+        "date": "2026-11-12"
+      },
+      {
+        "videoId": "jnKVIXn4qQs",
+        "title": "🇧🇬ブルガリアのヨーグルト試してみよか！！",
+        "date": "2026-11-13"
+      },
+      {
+        "videoId": "zDHHuafmP1A",
+        "title": "🇧🇬ブルガリアのクリスマスマーケットいこか！",
+        "date": "2026-11-14"
+      },
+      {
+        "videoId": "hJ6vFAGX3rI",
+        "title": "🇧🇬ブルガリアのバニツァいこか！",
+        "date": "2026-11-15"
+      },
+      {
+        "videoId": "2EKBYEnv850",
+        "title": "🇧🇬ブルガリアの温泉みに行こか！",
+        "date": "2026-11-16"
+      },
+      {
+        "videoId": "aGOz5otlEs8",
+        "title": "🇧🇬ブルガリアの聖ソフィア教会みにいこか！",
+        "date": "2026-11-17"
+      }
+    ]
   }
 };
 

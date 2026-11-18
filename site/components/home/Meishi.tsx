@@ -9,6 +9,7 @@ import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
 import { placeWord } from "@/lib/stay";
 import NowPlace from "./NowPlace";
+import { TRAVEL } from "@/content/travelPath";
 
 /**
  * 「2024-09-11」→「2024年9月11日」。
@@ -79,7 +80,7 @@ export default function Meishi() {
           </em>
           <span>本の配信</span>
         </Link>
-        <Link prefetch={false} className="mei-num" href="/map">
+        <Link prefetch={false} className="mei-num" href={TRAVEL}>
           {/* **焼いた数を出さない。** 国境を越えた日の朝から、その晩の焼き直しが
               配られるまで1つ少ない数が出る。押した先（`/map`）が並べている数と
               食い違うので、ここも画面が出てから数え直す（`content/walked.ts`）。 */}

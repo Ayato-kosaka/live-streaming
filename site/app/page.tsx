@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import IslandStage from "@/components/island/IslandStage";
@@ -16,11 +17,16 @@ import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
 import TripToday, { type TripDay } from "@/components/home/TripToday";
-import { DAYS, DAY_PAGES, cityName, dayHref, dayName } from "@/content/nordic";
+import { DAYS, DAY_PAGES, NORDIC_HREF, cityName, dayHref, dayName } from "@/content/nordic";
 import Meishi from "@/components/home/Meishi";
 import Shelf from "@/components/home/Shelf";
 import Latest from "@/components/home/Latest";
 import Say, { SayRoom } from "@/components/ui/Say";
+import { selfOnly } from "@/lib/share";
+import { JsonLd, websiteLd } from "@/lib/jsonld";
+
+/* 題・一文・絵は器（`app/layout.tsx`）のまま。ここで足すのは居場所だけ（`lib/share.ts`） */
+export const metadata: Metadata = selfOnly("/");
 
 /**
  * トップページ。
@@ -71,7 +77,7 @@ const TRIP_DAYS: TripDay[] = DAYS.filter((d) => !!d.date).map((d) => {
   return {
     date: d.date!,
     name: dayName(d),
-    href: DAY_PAGES.includes(d) ? dayHref(d) : `/nordic#${d.id}`,
+    href: DAY_PAGES.includes(d) ? dayHref(d) : `${NORDIC_HREF}#${d.id}`,
     /* 動く日は「どこから どこへ」。動かない日は、その日を過ごす街ひとつ。
        街の名前を手で並べない——旅程の区間と、その日の街から引く。 */
     where: legs.length
@@ -246,11 +252,14 @@ export default function Home() {
               前の国を指す（`docs/island-standards.md` 8章）。
               案内の面を持たない章では、この板ごと出ない。
 
-              **どの国かを、焼いた日で決めない。** 滞在の決まっている国は
-              `GUIDES` に期間つきで入っていて、入れ替わりは**画面が出てから**
-              今日の日付で選び直す（`components/live/GuideLink.tsx`）。
-              ここで決め打つと、ビルドした日の国が焼き込まれて、
-              滞在が終わっても次のビルドまで戻らない。 */}
+              **どの国かを、焼いた日で決めない。** 出すのはその日に居る国の案内で、
+              入れ替わりは**画面が出てから**今日の日付で選び直す
+              （`components/live/GuideLink.tsx`）。ここで決め打つと、ビルドした日の
+              国が焼き込まれて、国を越えても次のビルドまで替わらない。
+
+              **期間をここにも表にも書かない。** `from`〜`to` は `guidesOf` が
+              国の表（`content/countries.ts` の入った日）から導いたもの。
+              居る国が案内の面を持たない日は、どの行にも当たらず、板ごと出ない。 */}
           <GuideLink
             items={guidesOf(baked.slug).map((g) => ({
               href: g.href,
@@ -373,6 +382,10 @@ export default function Home() {
         </Chapter>
       </div>
       <IslandFooter />
+      {/* 「ここは、あやと島という島」の名札。画面には出ない（`lib/jsonld.tsx`）。
+          **いちばん後ろに置く。** 頭や章のあいだに入れると、並びを数える CSS
+          （`:first-child` や隣どうしの指定）の数えが1つずれる。 */}
+      <JsonLd data={websiteLd()} />
     </main>
   );
 }

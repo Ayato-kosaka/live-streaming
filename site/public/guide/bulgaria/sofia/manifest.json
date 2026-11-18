@@ -1,0 +1,550 @@
+{
+ "cover": {
+  "src": "/guide/bulgaria/sofia/cover-1600.webp",
+  "src_small": "/guide/bulgaria/sofia/cover-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "午後の低い日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、雪をかぶったヴィトシャ山。黄葉の広場にとうもろこしの屋台が出ている、晩秋のソフィアの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。大聖堂は写真を形の手本として渡した。ネフスキー大聖堂（金の中央ドーム・緑のドーム・鐘楼）とヴィトシャ山（なだらかな山塊・頂に雪）を主に、晩秋の夕方の光。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
+ },
+ "cover_tall": {
+  "src": "/guide/bulgaria/sofia/cover-tall-1600.webp",
+  "src_small": "/guide/bulgaria/sofia/cover-tall-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "午後の日に金のドームが光るアレクサンドル・ネフスキー大聖堂と、その背に横たわるヴィトシャ山。黄葉の木々に囲まれた、晩秋のソフィアの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
+ },
+ "areamap": {
+  "src": "/guide/bulgaria/sofia/areamap-800.webp",
+  "src_small": "/guide/bulgaria/sofia/areamap-400.webp",
+  "w": 800,
+  "h": 800,
+  "alt": "ソフィア中心部の絵地図。中心・市場・ネフスキー大聖堂まわり・ヴィトシャ大通りと公園の4つが色で塗り分けてあり、大聖堂やモスク、橋などの目印が描いてある",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・面の4エリアの色・目印14か所の番号）を渡し、その配置どおりに描かせた。北が上。字なし（エリアの名前は areas の位置に面の側で重ねる）",
+  "areas": [
+   {
+    "id": "center",
+    "name": "中心・セルディカ",
+    "local": "Сердика",
+    "color": "#ffd98a",
+    "x": 0.12,
+    "y": 0.5,
+    "source": [
+     "https://en.wikipedia.org/wiki/Serdica",
+     "https://en.wikipedia.org/wiki/Largo,_Sofia",
+     "https://www.openstreetmap.org/node/12808986074"
+    ]
+   },
+   {
+    "id": "market",
+    "name": "市場とシナゴーグ",
+    "local": "Женски пазар",
+    "color": "#bfe8a6",
+    "x": 0.13,
+    "y": 0.07,
+    "source": [
+     "https://en.wikipedia.org/wiki/Zhenski_pazar",
+     "https://www.openstreetmap.org/way/96646570",
+     "https://www.openstreetmap.org/way/397651408"
+    ]
+   },
+   {
+    "id": "nevsky",
+    "name": "ネフスキー大聖堂まわり",
+    "local": "Александър Невски",
+    "color": "#a9dcf5",
+    "x": 0.8,
+    "y": 0.3,
+    "source": [
+     "https://en.wikipedia.org/wiki/Tsar_Osvoboditel_Boulevard,_Sofia",
+     "https://en.wikipedia.org/wiki/Alexander_Nevsky_Cathedral,_Sofia"
+    ]
+   },
+   {
+    "id": "south",
+    "name": "ヴィトシャ大通りと公園",
+    "local": "булевард Витоша",
+    "color": "#ffc4d2",
+    "x": 0.42,
+    "y": 0.7,
+    "source": [
+     "https://en.wikipedia.org/wiki/Vitosha_Boulevard",
+     "https://en.wikipedia.org/wiki/Borisova_gradina",
+     "https://www.openstreetmap.org/relation/16947241"
+    ]
+   }
+  ],
+  "bbox": {
+   "west": 23.31,
+   "east": 23.352,
+   "south": 42.6777,
+   "north": 42.7083
+  },
+  "beyond": [
+   {
+    "id": "vitosha",
+    "name": "ヴィトシャ山",
+    "local": "Витоша",
+    "lat": 42.563611,
+    "lon": 23.278333,
+    "source": [
+     "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/"
+    ],
+    "x": 0.36,
+    "y": 0.95,
+    "dir": "s"
+   },
+   {
+    "id": "boyana",
+    "name": "ボヤナ教会",
+    "local": "Боянска църква",
+    "lat": 42.644672,
+    "lon": 23.266172,
+    "source": [
+     "https://boyanachurch.info/en/visitors-information-en/"
+    ],
+    "x": 0.18,
+    "y": 0.78,
+    "dir": "sw"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "shopska-salata": {
+   "src": "/guide/bulgaria/sofia/food-shopska-salata-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-shopska-salata-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "刻んだトマトときゅうりの上に、白いチーズを雪のように削りかけたショプスカ・サラダ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "banitsa": {
+   "src": "/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-banitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄い生地をうず巻きに巻いて焼いたバニツァ。切り分けた1切れに、白いチーズの層が見える",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "kebapche": {
+   "src": "/guide/bulgaria/sofia/food-kebapche-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-kebapche-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "炭火で焼いた細長いケバプチェが3本。白いチーズをかけたフライドポテトが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "kyufte": {
+   "src": "/guide/bulgaria/sofia/food-kyufte-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-kyufte-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "平たく丸いキュフテが3つ。レタスとトマトが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "tarator": {
+   "src": "/guide/bulgaria/sofia/food-tarator-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-tarator-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "刻んだきゅうりとディル、くるみが浮かぶ、白く冷たいタラトル",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "kiselo-mlyako": {
+   "src": "/guide/bulgaria/sofia/food-kiselo-mlyako-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-kiselo-mlyako-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "茶色の陶器の壺に入った、固くて白いブルガリアのヨーグルトを木のスプーンですくったところ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "gyuvech": {
+   "src": "/guide/bulgaria/sofia/food-gyuvech-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-gyuvech-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "素焼きの浅い土鍋で、肉と野菜を赤いパプリカの汁で焼き上げたギュヴェチ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "kavarma": {
+   "src": "/guide/bulgaria/sofia/food-kavarma-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-kavarma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "小さな土鍋で煮込んだ肉と野菜の上に、卵を落としたカヴァルマ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "musaka": {
+   "src": "/guide/bulgaria/sofia/food-musaka-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-musaka-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "じゃがいもと挽き肉の上に、卵とヨーグルトの衣を焼き付けたブルガリアのムサカ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "shkembe-chorba": {
+   "src": "/guide/bulgaria/sofia/food-shkembe-chorba-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-shkembe-chorba-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤いパプリカの油が浮かぶ白いモツのスープ。にんにく酢と唐辛子が添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "sarma": {
+   "src": "/guide/bulgaria/sofia/food-sarma-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-sarma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ぶどうの葉で小さく巻いたサルマが並び、白いヨーグルトのソースが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "lyutenitsa": {
+   "src": "/guide/bulgaria/sofia/food-lyutenitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-lyutenitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼いたパプリカとトマトを煮詰めた赤いリュテニツァを小鉢に盛り、パンに塗ったところ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "sirene-kashkaval": {
+   "src": "/guide/bulgaria/sofia/food-sirene-kashkaval-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-sirene-kashkaval-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いチーズ（シレネ）の塊と、黄色いカシュカヴァルを木の板に載せたところ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "lukanka": {
+   "src": "/guide/bulgaria/sofia/food-lukanka-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-lukanka-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "平たく押して干したサラミのルカンカ。薄く切った断面は赤茶色で、皮は白い",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "patatnik": {
+   "src": "/guide/bulgaria/sofia/food-patatnik-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-patatnik-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "すりおろしたじゃがいもを丸く焼いたパタトニク。切り口にミントの緑が見える",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "mish-mash": {
+   "src": "/guide/bulgaria/sofia/food-mish-mash-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-mish-mash-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "パプリカとトマトを卵でとじ、白いチーズを混ぜたミシュ・マシュ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "bob-chorba": {
+   "src": "/guide/bulgaria/sofia/food-bob-chorba-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-bob-chorba-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いんげん豆と野菜を煮込んだ、赤みのあるボブ・チョルバ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "mekitsa": {
+   "src": "/guide/bulgaria/sofia/food-mekitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-mekitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "粉砂糖をふった揚げパンのメキツァ。ジャムと白いチーズが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "boza": {
+   "src": "/guide/bulgaria/sofia/food-boza-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-boza-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "背の高いグラスに注いだ、とろりとした薄茶色のボザ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "rakiya": {
+   "src": "/guide/bulgaria/sofia/food-rakiya-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-rakiya-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ラベルの無い瓶と、小さなグラス2つに注いだ果実の蒸留酒ラキヤ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "ayryan": {
+   "src": "/guide/bulgaria/sofia/food-ayryan-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-ayryan-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "泡の立った白いアイリャンのグラス",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "mehana": {
+   "src": "/guide/bulgaria/sofia/food-mehana-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-mehana-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤と白の織物を掛けたメハナの食卓。土鍋の煮込みとサラダとパン、奥に干した赤唐辛子",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  },
+  "varena-tsarevitsa": {
+   "src": "/guide/bulgaria/sofia/food-varena-tsarevitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/food-varena-tsarevitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "皮を持ち手にした、湯気の立つゆでとうもろこし2本",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光で全部そろえた（1枚目のショプスカ・サラダを手本として渡した）。見た目は Wikipedia の説明と写真（python/data/bulgaria/photos.json）に合わせた。字なし"
+  }
+ },
+ "buy": {
+  "rose-oil": {
+   "src": "/guide/bulgaria/sofia/buy-rose-oil-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-rose-oil-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "小さな瓶のバラのオイルとローズウォーター、ピンクのダマスクローズ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "lyutenitsa": {
+   "src": "/guide/bulgaria/sofia/buy-lyutenitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-lyutenitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "瓶詰のリュテニツァと、小鉢に出したもの、パン",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "troyan-pottery": {
+   "src": "/guide/bulgaria/sofia/buy-troyan-pottery-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-troyan-pottery-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "茶色の地に白・緑・青の滴の模様を流した、トロヤン焼きのマグと皿と水差し",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "rakiya": {
+   "src": "/guide/bulgaria/sofia/buy-rakiya-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-rakiya-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "コルク栓の瓶に入ったラキヤと、小さなグラス2つ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "wine": {
+   "src": "/guide/bulgaria/sofia/buy-wine-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-wine-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ブルガリアの赤ワインの瓶とグラス、黒ぶどう",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "martenitsa": {
+   "src": "/guide/bulgaria/sofia/buy-martenitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-martenitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤と白の毛糸で作ったマルテニツァ。腕輪と房飾りと、白と赤の小さな人形",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "cheese": {
+   "src": "/guide/bulgaria/sofia/buy-cheese-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-cheese-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "蝋引きの紙に半分包んだ、白いチーズの塊と黄色いカシュカヴァル",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "rose-jam": {
+   "src": "/guide/bulgaria/sofia/buy-rose-jam-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-rose-jam-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "バラの花びらのジャムの小瓶と、粉砂糖をまぶしたバラのロクム",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  },
+  "shevitsa": {
+   "src": "/guide/bulgaria/sofia/buy-shevitsa-800.webp",
+   "src_small": "/guide/bulgaria/sofia/buy-shevitsa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤と黒の幾何学模様を刺した、白い布のハンカチとしおり",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。料理と同じ卓・布巾・光でそろえた（1枚目のバラのオイルを手本として渡した）。瓶と箱は字なし"
+  }
+ },
+ "do": {
+  "yogurt": {
+   "src": "/guide/bulgaria/sofia/do-yogurt-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-yogurt-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "真上から見た、トロヤン焼きの茶色い壺いっぱいのキセロ・ムリャコ。木のさじが白くかたいヨーグルトをすくっている、朝の光の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-yogurt-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-yogurt-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "rose": {
+   "src": "/guide/bulgaria/sofia/do-rose-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-rose-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "昼の光にかざした、木彫りのケースに入ったローズオイルの小瓶。後ろにバラのジャム、バラの形の石けん、ダマスクローズが並ぶお土産屋の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-rose-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rose-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "hotspring": {
+   "src": "/guide/bulgaria/sofia/do-hotspring-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-hotspring-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "しま模様の中央鉱泉浴場を見上げる広場。手前の蛇口から湯気の立つ温泉が出ていて、地元の人がボトルにくんでいる、冬晴れの昼の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-hotspring-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-hotspring-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "faiths": {
+   "src": "/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-faiths-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "雨上がりの日暮れ、街灯のともる石畳に映るミナレットのモスク、しま模様のシナゴーグ、ドームの聖ネデリャ教会。3つが近くに並ぶ通りの絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-faiths-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-faiths-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "mehana": {
+   "src": "/guide/bulgaria/sofia/do-mehana-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-mehana-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ろうそくの灯るメハナの卓。ショプスカサラダと炭火焼きのケバプチェの上で、ラキヤとワインのグラスが乾杯している夜の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-mehana-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-mehana-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "banitsa": {
+   "src": "/guide/bulgaria/sofia/do-banitsa-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-banitsa-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "朝日の差し込むパン屋のカウンター。焼きたてのうず巻きのバニツァを一切れ持ち上げる手と、ベージュのボザのグラスの絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-banitsa-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-banitsa-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "xmas": {
+   "src": "/guide/bulgaria/sofia/do-xmas-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-xmas-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "雪の降る夜、国立劇場の前の市庭園に並ぶクリスマスマーケットの木の屋台。電球の灯りの道の先に、赤い劇場が光る絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-xmas-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-xmas-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "rila": {
+   "src": "/guide/bulgaria/sofia/do-rila-1200.webp",
+   "src_small": "/guide/bulgaria/sofia/do-rila-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "雪をいただく尾根と深い森に抱かれたリラ修道院。しま模様のアーチと壁画の教会に、夕方の最後の日が当たる絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。手本は候補の見比べで選ばれた3枚）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。実在の建物と器は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/bulgaria/sofia/do-rila-1200.webp",
+     "src_small": "/guide/bulgaria/sofia/do-rila-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  }
+ }
+}

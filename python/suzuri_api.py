@@ -47,7 +47,7 @@ from suzuri_common import DESCRIPTION, ITEM_IDS, SAMPLE_VARIANT, TITLE, layout, 
 BASE = "https://suzuri.jp/api/v1"
 USER_ID = 2272949            # ayato_arigato（編集画面の data-current-user の id）
 SERIES = "カサ・アヤトの住人"
-ISLAND = "https://live-streaming-d3cac.web.app/island-api/characters"
+ISLAND = "https://ayato-arigato.com/island-api/characters"
 # 作る品目。缶バッジとパネルの大きさは、作った直後に PUT で入れる（POST で効くかは確かめていない）
 SAFE_ITEMS = ["sticker", "acrylic-keychain", "can-badge", "mug", "acrylic-panel"]
 # 公開のログに中身を出してはいけない口
@@ -69,7 +69,7 @@ def call(method, path, body=None, query=None, tries=3):
     for i in range(tries):
         req = urllib.request.Request(url, data=data, method=method, headers={
             "Authorization": f"Bearer {_key()}", "Content-Type": "application/json", "Accept": "application/json",
-            "User-Agent": "ayato-island/1.0 (+https://live-streaming-d3cac.web.app)"})
+            "User-Agent": "ayato-island/1.0 (+https://ayato-arigato.com)"})
         try:
             with urllib.request.urlopen(req, timeout=120) as r:
                 raw = r.read()

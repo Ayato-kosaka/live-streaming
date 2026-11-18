@@ -78,6 +78,8 @@ WAIT_LABEL = "待ち-システム"
 # 読んでいて（`app/` の import を数えた）、そこだけ直した PR を「配り先なし」にすると
 # **直したのに出ていない**ものができる。`firebase.json` は Hosting が配る
 # （Functions の設定も持つが、そこを変えるのは稀なので、変えたら手で Functions も押す）。
+# `python/data/hosting_stage.json` は Hosting の段（#1202。どのサイトへ何を配るか）で、
+# 段を進める PR はそれだけを変える。ここに無いと「配り先なし」になって段が進まない。
 ROUTES: dict[str, dict] = {
     "hosting": {
         "file": "firebase-hosting-deploy-prod.yml",
@@ -85,7 +87,8 @@ ROUTES: dict[str, dict] = {
         "prefixes": ("site/", "public/", "app/", "components/", "hooks/", "constants/",
                      "lib/", "assets/", "web/"),
         "files": ("app.json", "metro.config.js", "package.json", "package-lock.json",
-                  "tsconfig.json", "firebase.json", "firestore.indexes.json"),
+                  "tsconfig.json", "firebase.json", "firestore.indexes.json",
+                  "python/data/hosting_stage.json", "python/legacy_hosting.py"),
     },
     "functions": {
         "file": "firebase-functions-deploy.yml",
@@ -571,8 +574,31 @@ def fetch(url: str) -> tuple[int, str, bytes]:
     return 0, url, b""
 
 
-def prod_base() -> str:
-    """本番のドメイン。**`firebase.json` の `site` → `.firebaserc` の default** の順で読む。"""
+STAGE = "python/data/hosting_stage.json"
+
+
+def prod_base(stage_text: str | None = None) -> str:
+    """本番のドメイン（出したあとに突き合わせる先）。
+
+    **段 B（`python/data/hosting_stage.json` の `legacy_301: true`）のあとは正の URL**
+    （`site/content/site.ts` の `SITE.url`）。古いドメインの島の面は 301 になるので、
+    そこで突き合わせると全部「跳んだ」になる（#1202）。
+
+    それまで（段が空・mirror）は今までどおり **`firebase.json` の `site` → `.firebaserc` の default**
+    の web.app。mirror のあいだは両方のサイトが同じ島を配るのでどちらで見ても同じだが、
+    ドメインの付け替えで新しいドメインが証明書待ちになる時間があるので、web.app のほうを見る。
+
+    `stage_text` は**出した PR をマージしたあとの**段のファイルの中身。301 へ進める PR そのものを
+    出すとき、マージ前の手元の段で読むと web.app の 301 を突き合わせて落ちる。
+    """
+    try:
+        stage = json.loads(stage_text) if stage_text else json.loads((REPO / STAGE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        stage = {}
+    if stage.get("legacy_301") is True and stage.get("island_site"):
+        sys.path.insert(0, str(REPO / "python"))
+        import legacy_hosting  # noqa: E402  正の URL を読む口は1本（ts_read）
+        return legacy_hosting.site_url()
     site = None
     try:
         h = json.loads((REPO / "firebase.json").read_text(encoding="utf-8")).get("hosting")
@@ -983,7 +1009,7 @@ def ship_one(gh: Gh, d: Decision, docs: dict) -> bool:
 
     plan = route(d.files)
     deps = [k for k in ROUTES if plan[k]]
-    base = prod_base()
+    base = prod_base((raw_file(gh, STAGE, sha) or b"").decode("utf-8") or None)
     lines_dep, fails, check_line = [], [], ""
     for k in deps:
         before = prod_marks(base, ["/"]) if k == "hosting" else {}

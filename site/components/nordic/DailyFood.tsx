@@ -7,7 +7,7 @@ import { foodCountryName, foodsOf, type DailyFood as Food } from "@/content/nord
  * その国の、ふだんのごはん。
  *
  * **国の slug を1つ受け取って、その国のぶんだけを描く。** 旅程も日付も見ない。
- * だから日ごとの面（`/nordic/day/[n]`）にも、国の面（`/nordic/[country]`）にも
+ * だから日ごとの面（`/nordic/day/[n]`）にも、国の面（`/travel/[slug]` の「行く前に調べたこと」）にも
  * 同じものを置ける。どこに差し込むかは、置く側が決める。
  *
  * ## 畳んでおく

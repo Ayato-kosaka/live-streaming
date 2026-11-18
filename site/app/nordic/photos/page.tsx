@@ -1,10 +1,10 @@
-import { crumbOf } from "@/components/island/layout";
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell from "@/components/ui/PageShell";
 import GoTo from "@/components/ui/GoTo";
 import Icon from "@/components/ui/Icon";
+import { chapterCrumbs, chapterOf } from "@/content/chapters";
 
 export const metadata: Metadata = share({
   key: "cards",
@@ -36,13 +36,8 @@ export const metadata: Metadata = share({
  */
 export default function NordicPhotosPage() {
   return (
-    <PageShell
-      crumbs={[
-        crumbOf("next"),
-        { label: "北欧ヒッチハイク", href: "/nordic" },
-        { label: "旅の写真" },
-      ]}
-    >
+    /* 旅の面は北欧の章の島へ寄せた（#1201）。パンくずもそちらから生やす */
+    <PageShell crumbs={chapterCrumbs(chapterOf("nordic"), { label: "旅の写真" })}>
       <GoTo to="/cards" />
       <section className="panel paper">
         <h1>旅の写真</h1>

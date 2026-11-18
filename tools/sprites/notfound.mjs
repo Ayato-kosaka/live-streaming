@@ -84,10 +84,11 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fromRoot } from "./repo.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 const run = promisify(execFile);
 
-export const ORIGIN = process.env.ORIGIN || "https://live-streaming-d3cac.web.app";
+export const ORIGIN = process.env.ORIGIN || SITE_ORIGIN;
 const BREAK = process.env.BREAK || "";
 
 /** 無い道に出る字。`site/app/not-found.tsx` の h1 と同じでなければならない */
@@ -102,8 +103,16 @@ const LIVE_404 = ["/404"];
 /** 紙ではないもの。200 だけ見る（Expo の面は SPA の殻なので h1 を持たない） */
 const STATUS_ONLY = ["/alertbox", "/daily_user_stats", "/ve-comment", "/ve-postit", "/sitemap.xml", "/robots.txt"];
 
-/** 引っ越した道。受け皿より前に居るので、外しても残る */
-const MOVED = ["/nordic/photos", "/nordic/photos/2024"];
+/**
+ * 引っ越した道。受け皿より前に居るので、外しても残る。
+ * 旅のガイドの区画（#1201）へ移した道は、系統ごとに1本ずつ（全部は `routemoves.mjs` が数える）
+ */
+const MOVED = [
+  "/nordic/photos", "/nordic/photos/2024",
+  "/map", "/map/georgia", "/nordic/sweden", "/north-macedonia", "/island/north-macedonia", "/island/albania",
+  // 旅の記録（章の島）の区画（#1201 の第2便）
+  "/atlas", "/nordic", "/nordic/day/3", "/nordic/guide",
+];
 
 /**
  * わざと作った、絶対に実在しない道。**道の系統ごとに1本ずつ**置く。
@@ -114,8 +123,10 @@ function gonePaths() {
   const r = randomBytes(6).toString("hex");
   return [
     "/kitchen/dummy-not-a-recipe",
-    "/map/atlantis",
-    "/nordic/day/999",
+    // `/map/<国>` は 301 で `/travel/<国>` へ送るので、無い国は送った先で 404 になる（#1201）
+    "/travel/atlantis",
+    // `/nordic/day/<n>` は 301 で `/island/nordic/day/<n>` へ送るので、無い日は送った先で 404 になる（#1201）
+    "/island/nordic/day/999",
     "/nordic/nowhereland",
     "/legends/nope",
     "/apps/no-such-app",

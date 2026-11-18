@@ -10,6 +10,7 @@ import { useOwner } from "@/lib/auth";
 import CardMonth from "./CardMonth";
 import CardSheet from "./CardSheet";
 import DayPanel from "./DayPanel";
+import ImportDoor from "./ImportDoor";
 import { useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 
 /**
@@ -88,6 +89,8 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
       {/* 貼る道具は紙の上に載せない。**板（`.dform`）そのものが作業台**で、
           紙に入れると枠が二重になる（`docs/island-design.md` 3章）。 */}
       {owner && <PhotoPost onAdded={add} />}
+      {/* Google フォトから取り込んだ写真をまとめて登録する面への入口（`/cards/import`） */}
+      {owner && <ImportDoor />}
 
       {/* まだ待っている口がある。**「無い」とも「読めなかった」とも言えない** */}
       {waiting && (days === null || days.length === 0) && (
@@ -109,7 +112,7 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
         <div className="blank">
           <b>まだ1枚もありません</b>
           <p>配信のあった日に撮った写真が、ここに並びます。</p>
-          <Link prefetch={false} className="blank-go" href="/nordic">
+          <Link prefetch={false} className="blank-go" href="/island/nordic#plan">
             旅のよていを見る
             <Icon name="right" size={15} />
           </Link>

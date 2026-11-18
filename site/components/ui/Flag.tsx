@@ -272,6 +272,16 @@ const FLAGS: Record<string, Spec> = {
     ],
   },
 
+  /* ブルガリア。上から白・緑・赤の横3本（国旗法の指定は Pantone の 17-5936 と
+     18-1664 で、RGB に直すと #00966e と #d62612）。**絵は入れない**——
+     ハンガリー（赤・白・緑）ともイランの区間（緑・白・赤）とも帯の順が違うので、
+     20px でも色の並びだけで見分けがつく。
+
+     **`content/countries.ts` の `AHEAD_COUNTRIES` に国を足したら、ここにも足す。**
+     無いと `Flag` が null を返して、`/now` のいちばん大きい絵が消える
+     （`tools/sprites/walkedcount.mjs` が「旗が Flag.tsx にない」で赤くする）。 */
+  bulgaria: { k: "h", bands: ["#ffffff", "#00966e", "#d62612"] },
+
   // --- これから行く国 ---
   poland: { k: "h", bands: ["#ffffff", "#dc143c"] },
   lithuania: { k: "h", bands: ["#fdb913", "#006a44", "#c1272d"] },

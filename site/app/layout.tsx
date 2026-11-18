@@ -4,6 +4,7 @@ import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
 import Here from "@/components/live/Here";
 import { NOW_FALLBACK, SITE } from "@/content/site";
+import { HANDOFF_SCRIPT } from "@/lib/handoff";
 
 /* 島の書体は `app/css/fonts.css`（自動生成。`tools/fonts/subset.py`）が持っている。
  * 丸ゴシックは、あつ森の字の「角が無い・字面が大きい・線が均一」に近い。
@@ -37,7 +38,8 @@ import { NOW_FALLBACK, SITE } from "@/content/site";
  */
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://live-streaming-d3cac.web.app"),
+  /* 正の URL は `content/site.ts` の1か所。ここに字で書くと、片方だけ古くなる */
+  metadataBase: new URL(SITE.url),
   title: {
     default: "あやと島 — あやとと愉快な仲間達",
     template: "%s｜あやと島",
@@ -81,6 +83,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // それは承知のうえなので suppressHydrationWarning で黙らせる
     <html lang="ja" suppressHydrationWarning>
       <head>
+        {/* 古いドメインから 301 で来た人だけ、手元の記録を取りに1往復する（`lib/handoff.ts`）。
+            島を描き始める前に移りたいので、いちばん上に置く。目印の無い人には何も起きない */}
+        <script dangerouslySetInnerHTML={{ __html: HANDOFF_SCRIPT }} />
         {/* 島の空の色を見ている人の時計に、島の景色をあやとの現在地に合わせる。
             描き始める前に決めたいので、React を待たずにここで入れておく。
             現在地はこのあと IslandTheme が本物の値で上書きする。 */}

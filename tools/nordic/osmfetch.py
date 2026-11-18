@@ -44,7 +44,7 @@ MIRRORS = [
     "https://overpass.kumi.systems/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ]
-UA = "ayato-island/1.0 (https://live-streaming-d3cac.web.app; nordic city maps)"
+UA = "ayato-island/1.0 (https://ayato-arigato.com; nordic city maps)"
 
 # いま返してくれているミラー（`MIRRORS` の添字）。`query()` が書き換える。
 _LIVE = [0]

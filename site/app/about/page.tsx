@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
+import { JsonLd, profileLd } from "@/lib/jsonld";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import VoiceBubble from "@/components/ui/Voice";
@@ -25,10 +26,14 @@ import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
+import { TRAVEL, travelHref } from "@/content/travelPath";
+
+/** 面の名前。題・パンくず・見出し・機械に渡す名札（`lib/jsonld.tsx`）が同じ字を読む */
+const NAME = "あやとのこと";
 
 export const metadata: Metadata = share({
   key: "about",
-  title: "あやとのこと",
+  title: NAME,
   description:
     "アプリを作りたくて日本を出た人の、ここまで。旅と配信とアプリの年表と、視聴者さんから見たあやと。",
   path: "/about",
@@ -119,7 +124,7 @@ const STORY: Step[] = [
     kind: "live",
     what: "パリで配信を始めた",
     note: "「日本語を話したい」というタイトル。ここから全部が始まった",
-    href: "/map/france",
+    href: travelHref("france"),
     go: "フランスへ",
   },
   {
@@ -135,7 +140,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ヨーロッパを9カ国まわって、イギリスへ",
     note: "オランダ、ベルギー、中欧、ドイツ、そしてスコットランド",
-    href: "/map/uk",
+    href: travelHref("uk"),
     go: "イギリスへ",
   },
   {
@@ -143,7 +148,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ヨーロッパを出て、エジプトへ降りた",
     note: "ピラミッドと砂漠と、アブ・シンベルまで",
-    href: "/map/egypt",
+    href: travelHref("egypt"),
     go: "エジプトへ",
   },
   {
@@ -159,7 +164,7 @@ const STORY: Step[] = [
     kind: "app",
     what: "3つ目「なに食べよ」を作り始めた",
     note: "ヨルダンで「みんなで外食の悩みを解決するアプリを作ろう」と言い出した",
-    href: "/map/jordan",
+    href: travelHref("jordan"),
     go: "ヨルダンへ",
   },
   {
@@ -167,7 +172,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ジョージアに着いた",
     note: "いちばん長くいる国。ここでクッキング配信が定着した",
-    href: "/map/georgia",
+    href: travelHref("georgia"),
     go: "ジョージアへ",
   },
   {
@@ -213,7 +218,7 @@ const STORY: Step[] = [
     kind: "travel",
     what: "ジョージアを出て、北欧へ発った",
     note: "クタイシから飛行機で。そこから先は、ぜんぶ人の車でつなぐ",
-    href: "/nordic",
+    href: "/island/nordic",
     go: "北欧の旅へ",
   },
   {
@@ -282,7 +287,7 @@ const eraOf = (date: string) => {
 /** 島でやっていること。3枚とも、その中身を持っている面へ行く。 */
 const DOING = [
   {
-    href: "/map",
+    href: TRAVEL,
     art: <PackArt size={46} />,
     title: "歩く",
     /* **焼いた数を書かない。** 国境を越えた日の朝、行き先の `/map` だけが
@@ -329,10 +334,12 @@ export default function AboutPage() {
     .join("、");
 
   return (
-    <PageShell crumbs={[{ label: "あやとのこと" }]}>
+    <PageShell crumbs={[{ label: NAME }]}>
+      {/* 「この面は、この人のことを書いた面」の名札。画面には出ない（`lib/jsonld.tsx`） */}
+      <JsonLd data={profileLd(NAME)} />
       <PageHead
         icon="hut-ayato"
-        title="あやとのこと"
+        title={NAME}
         lead="アプリを作りたくて日本を出た人の、ここまでと、いま。"
       />
 
@@ -593,7 +600,7 @@ export default function AboutPage() {
         <p className="muted" style={{ marginTop: 12 }}>
           配信を始めるまえの{BEFORE_STREAM_DAYS}日、{before}と歩いて、パリで1本目を出しました。
         </p>
-        <Link prefetch={false} className="tile" href="/map" style={{ marginTop: 12 }}>
+        <Link prefetch={false} className="tile" href={TRAVEL} style={{ marginTop: 12 }}>
           <span className="tile-mark">
             <Icon name="flagpost" size={24} />
           </span>

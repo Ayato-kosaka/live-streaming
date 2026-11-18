@@ -2,6 +2,7 @@ import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import Flag from "@/components/ui/Flag";
 import { loadSpots, nordicCountry, NORDIC_COUNTRIES } from "@/content/nordic";
+import { travelHref } from "@/content/travelPath";
 
 /**
  * 通る6カ国。**この面から国のページへ出ていく、ただ1つの入口。**
@@ -55,7 +56,7 @@ export default async function Countries() {
   return (
     <div className="ncountries">
       {cards.map(({ c, spot }) => (
-        <Link key={c.slug} className="ncountry" href={`/nordic/${c.slug}`} prefetch={false}>
+        <Link key={c.slug} className="ncountry" href={travelHref(c.slug)} prefetch={false}>
           <span className="ncountry-img">
             {spot?.img && (
               <img src={spot.img} alt="" loading="lazy" referrerPolicy="no-referrer" />

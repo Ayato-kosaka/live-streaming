@@ -37,16 +37,24 @@
  *
  * `prodsweep.mjs` は面を集めるために3つの一覧を持っている（sitemap・`/all`・
  * `site/app` の静的な道）。**3つが食い違っていること自体が不具合**なので、
- * そこも判定にした。足は6本で、こちらも**1本抜くたびに別々の台が落ちる。**
+ * そこも判定にした。足は8本で、こちらも**1本抜くたびに別々の台が落ちる。**
  *
  * | 抜く足 | 落ちる台［落ちる項目］ |
  * | --- | --- |
  * | `smiss` | `added`［—］（sitemap に無い面が通る＝検索から見つからない面ができる） |
- * | `amiss` | `dropped` `alias-wrongname`［—］ |
+ * | `amiss` | `dropped` `alias-wrongname` `draft-neighbor`［—］ |
  * | `alias` | `alias`［amiss］（別名で行けるものまで落ちる） |
  * | `excuse` | `excuse-empty` `excuse-nodate`［—］ |
  * | `unused` | `unused`［—］（効かなくなった宣言が残る） |
  * | `claim` | `claim` `claim-none`［—］ |
+ * | `draft` | `draft`［amiss smiss］ほか4台（公開前の面が「抜け」で落ちる。#1215 の6回の赤がこれ） |
+ * | `noidx` | `draft-in-sitemap` `draft-in-all`［—］（noindex の面が索引に出ても通る） |
+ *
+ * ## 公開前の面（2026-11-14 から）
+ *
+ * `<head>` の `<meta name="robots">` に noindex が在って、`ABSENCES` に行の無い面は
+ * 公開前と読み、sitemap と `/all` に無くても通す（`prodsweep.mjs` の頭の注）。
+ * ここでは読みかた（`robotsNoindex`）と、公開前の面が出す1行まで見る。
  */
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -55,7 +63,7 @@ import { createServer } from "node:http";
 
 import {
   ABSENCES, CONTROLS, LIST_CONTROLS, countH1, excuseOk, fetchOne, h1Name, judgePage, normPath,
-  parseAll, reconcile, runControls, runListControls, runWireControls, sitemapPaths,
+  parseAll, reconcile, robotsNoindex, runControls, runListControls, runWireControls, sitemapPaths,
   staticAppPaths, titleOf,
 } from "./prodsweep.mjs";
 import { THIN_BYTES } from "./prod.mjs";
@@ -152,6 +160,25 @@ console.log("3. 判定（題名・h1・痩せ）");
   check("h1 を数える（属性つきも）",
     countH1('<h1 class="a">あ</h1><h1>い</h1>') === 2, String(countH1('<h1 class="a">あ</h1><h1>い</h1>')));
   check("h1 が無ければ 0", countH1("<h2>あ</h2>") === 0, String(countH1("<h2>あ</h2>")));
+
+  /* 検索に載せないと言っているか。**本番の公開前の面の字そのもの**（2026-11-14 の実測）から */
+  const head = (m) => `<html><head><title>面</title>${m}</head><body><h1>面</h1></body></html>`;
+  const NI = [
+    ["公開前の面（noindex, follow）", '<meta name="robots" content="noindex, follow"/>', true],
+    ["本人の面（noindex, nofollow）", '<meta name="robots" content="noindex, nofollow"/>', true],
+    ["none も noindex と同じ", '<meta name="robots" content="none">', true],
+    ["属性の並びが逆でも読む", "<meta content='NOINDEX' name='Robots'>", true],
+    ["index, follow は載せる面", '<meta name="robots" content="index, follow"/>', false],
+    ["nofollow だけなら載せる面", '<meta name="robots" content="nofollow"/>', false],
+    ["robots 以外の名前は見ない", '<meta name="googlebot" content="noindex"/>', false],
+    ["meta が無ければ載せる面", "", false],
+  ];
+  for (const [name, m, want] of NI) check(`noindex の読み: ${name}`, robotsNoindex(head(m)) === want, String(!want));
+  /* 本文の側の RSC の JSON に `"robots"` と書いてあっても、タグではないので拾わない */
+  const rsc = `<html><head><title>面</title></head><body><h1>面</h1><script>self.__next_f.push([1,`
+    + `"[\\"$\\",\\"meta\\",\\"0\\",{\\"name\\":\\"robots\\",\\"content\\":\\"noindex\\"}]"])</script>`
+    + `<meta name="robots" content="noindex"></body></html>`;
+  check("本文の側の robots は拾わない（<head> の中だけ）", robotsNoindex(rsc) === false, "拾った");
 
   const good = { status: 200, bytes: 50000, hops: 0, final: "/x", url: "/x",
     body: "<html><head><title>面</title></head><body><h1>面</h1></body></html>", err: null };
@@ -288,19 +315,41 @@ console.log("6. 突き合わせの対照が、素で揃う／足を1本ずつ抜
   /** 抜く足 → 外れてほしい台［外れてほしい項目］ */
   const WANT = {
     smiss: "added[]",
-    amiss: "alias-wrongname[] dropped[]",
+    amiss: "alias-wrongname[] draft-neighbor[] dropped[]",
     alias: "alias[amiss]",
     excuse: "excuse-empty[] excuse-nodate[]",
     unused: "unused[]",
     claim: "claim-none[] claim[]",
+    /* 公開前と読めなくなると、公開前の面が「抜け」で落ちる（#1215 の赤そのもの） */
+    draft: "draft-in-all[smiss] draft-in-sitemap[amiss noidx] draft-neighbor[amiss smiss] draft[amiss smiss]",
+    noidx: "draft-in-all[] draft-in-sitemap[]",
   };
   const got = {};
   for (const leg of Object.keys(WANT)) {
     got[leg] = sig(runListControls({ legs: new Set([leg]) }));
     check(`BREAK=${leg} で外れる台`, got[leg] === WANT[leg], got[leg] || "1本も外れなかった");
   }
-  check("6本の抜きかたが、6とおり別々に落ちる",
-    new Set(Object.values(got)).size === 6, `${new Set(Object.values(got)).size}とおり`);
+  check(`${Object.keys(WANT).length}本の抜きかたが、${Object.keys(WANT).length}とおり別々に落ちる`,
+    new Set(Object.values(got)).size === Object.keys(WANT).length, `${new Set(Object.values(got)).size}とおり`);
+
+  /* **公開前の面は、黙って0に畳まない。** 通るだけでなく、1面1行で字に出ること */
+  const draft = rows.find((r) => r.name === "draft");
+  check("公開前の面は通って、「公開前（noindex）」の1行が出る",
+    draft.got && draft.notes.length === 1
+      && draft.notes[0].startsWith("— 公開前（noindex）: /d は ") && draft.notes[0].includes("sitemap.xml")
+      && draft.notes[0].includes("/all"),
+    JSON.stringify(draft.notes));
+  /* `/design` の形。noindex でも宣言の在る面は、宣言のほうの字で出る（公開前と言わない） */
+  const decided = rows.find((r) => r.name === "decided-noindex");
+  check("宣言の在る noindex の面は、公開前と読まない",
+    decided.got && decided.notes.every((n) => !n.includes("公開前")),
+    JSON.stringify(decided.notes));
+  /* 404 の面を混ぜない、は呼ぶ側の仕事なので、ここでは noindex を渡したときの数だけ見る */
+  const rec = reconcile({ sitemap: ["/"], all: [{ href: "/", name: "島" }], app: ["/", "/d", "/me"],
+    claimed: 1, noindex: ["/d", "/me"],
+    absences: [{ path: "/me", lists: ["sitemap", "all"], why: "本人だけの面（2026-09-19）" }] });
+  check("公開前と読むのは、宣言の無い noindex の面だけ",
+    rec.drafts.join(" ") === "/d" && rec.bad.length === 0, JSON.stringify({ d: rec.drafts, bad: rec.bad }));
 
   /* **面を1つわざと落とす／わざと増やす／理由を消すが、別々に落ちる**
      （同じ足を3回折っているだけ、になっていないか） */

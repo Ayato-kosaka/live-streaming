@@ -102,7 +102,7 @@ export default function Shops({
           // 日本語にするのはここ（サーバ）。ブラウザで組み直すと、
           // 出た瞬間に字が入れ替わって読んでいる途中で動く
           hours: hoursJa(s.open),
-          href: mapHref(s),
+          href: mapHref(s, data.place),
         }),
       ),
   })).filter((g) => g.rows.length > 0);
@@ -137,7 +137,7 @@ export default function Shops({
           店の前に立った人がその場で開けるように、道を1本だけ通す。 */}
       {groups.length > 0 && (
         <p className="chips nshop-book">
-          <Link prefetch={false} className="chip link" href="/nordic/guide#souvenir">
+          <Link prefetch={false} className="chip link" href="/island/nordic/guide#souvenir">
             <Icon name="book" size={18} />
             しおりの、おみやげ{SOUVENIRS}品
           </Link>

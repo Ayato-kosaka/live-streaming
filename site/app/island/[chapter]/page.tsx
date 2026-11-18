@@ -10,7 +10,19 @@ import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
 import { chapterIsle, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { chapterNeighbours, type Chapter } from "@/content/chapters";
+import { ISLAND_PATH, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
+import NordicTrip from "./nordic";
+
+/**
+ * 章の島の紙の頭に、**その旅そのもの**を並べる章。
+ *
+ * 北欧は旅の面（旅程・地図・理由・応援）を持っていて、前は `/nordic` に別の1枚で立っていた。
+ * 章の島と同じ17日を2枚が別々に語っていたので、章の島の紙へ寄せた（#1201。理由は `./nordic.tsx` の頭）。
+ * 旅の面を持つ章が増えたら、ここに1行足す。
+ */
+const TRIP_PAPER: Record<string, () => React.ReactNode> = {
+  nordic: NordicTrip,
+};
 
 /**
  * 過去の島と、次の島。**歩ける。**
@@ -53,9 +65,9 @@ export async function generateMetadata({
     key: "atlas",
     title: c.name,
     description: c.from ? `${c.from} から ${c.to || "いま"} まで。${c.note}` : c.note,
-    /* **手で `/island/<章>` と組まない。** いまいる章の島はトップそのものなので、
-       手で組むと `og:url` と canonical が**どこからもリンクの来ていない写しの面**を
-       指す（`site/selftest/chapterkey_selftest.mjs` が数えている） */
+    /* **いまいる章でも、自分が正。** 前はいまいる章のときだけ canonical が `/` で、
+       この面は sitemap に載っているのに「正はトップ」と名乗っていた（#1201）。
+       道の字は `chapterHref` 1か所が持つ（`site/selftest/chapterkey_selftest.mjs` が数えている） */
     path: chapterHref(c),
   });
 }
@@ -79,7 +91,7 @@ export default async function ChapterIsland({
   const prev = near(back);
   const next = near(on);
   /* **`nordicSpec` は「まだ始まっていない章」の spec ではなく、北欧旅の spec。**
-     中の板は `/nordic` を指し、「なぜ北欧まで行くのか」と書いてある。
+     中の板は旅の節（`/island/nordic#trip`）を指し、「なぜ北欧まで行くのか」と書いてある。
      `c.from` の有無だけで振り分けていたので、アルバニアの島に北欧の板が5枚建ち、
      「これから歩く国 6カ国、0日」まで出ていた（島ぜんぶが別の旅のもの）。
 
@@ -125,6 +137,7 @@ export default async function ChapterIsland({
      渡し板が桟橋から消える（いまのバルカンは最後の章なので目には見えないが、
      次の章を1行足した日に消える）。 */
   const spec = chapterIsle(c, prev, next);
+  const Trip = TRIP_PAPER[c.slug];
 
   return (
     <>
@@ -132,7 +145,7 @@ export default async function ChapterIsland({
 
       <main className="page isle-page">
         <div className="wayrow">
-          <Crumbs items={[{ label: "島の地図", href: "/atlas" }, { label: c.name }]} />
+          <Crumbs items={chapterCrumbs(c)} />
         </div>
 
         {/* **「〜いままで」を焼かない。** ここは `c.to` を直に見ていたので、
@@ -143,10 +156,14 @@ export default async function ChapterIsland({
           <IsleSpan chapter={c} kind="lead" baked={isleLead(c)} />
         </p>
 
+        {/* その旅そのもの（旅程・地図・理由・応援）。旅の面を持つ章だけ */}
+        {Trip && <Trip />}
+
         {/* その章を、その島の中で振り返る紙（`components/isle/IsleReview.tsx`）。
             島に建っている建物の板は「島から出ずに見る1枚」で、こちらは
-            **腰を据えて読むほう。** 段は中身のあるものだけ出る。 */}
-        <IsleReview chapter={c} />
+            **腰を据えて読むほう。** 段は中身のあるものだけ出る。
+            旅の節がショートを旅程表のすぐ下に出している章では、ここで2回出さない */}
+        <IsleReview chapter={c} shorts={!Trip} />
 
         {/* 島から島へ。船着き場からも渡れるが、紙の上にも渡し板を置いておく */}
         <nav className="chap-sail" aria-label="となりの島">
@@ -171,7 +188,7 @@ export default async function ChapterIsland({
         </nav>
 
         <p className="chain-foot">
-          <Link href="/atlas" prefetch={false}>
+          <Link href={ISLAND_PATH} prefetch={false}>
             島の地図にもどる
           </Link>
         </p>

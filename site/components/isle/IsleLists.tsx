@@ -5,6 +5,7 @@ import Longer from "@/components/ui/Longer";
 import type { AppMilestone } from "@/content/apps";
 import type { Short } from "@/content/shorts";
 import { shortHref, shortThumb } from "@/content/shorts";
+import { isoDay } from "@/lib/isoDay";
 
 /**
  * 島の紙の中で、**溜まる並び**を畳むところ（`docs/island-standards.md` 7）。
@@ -29,13 +30,13 @@ export function MarkList({ marks }: { marks: AppMilestone[] }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <time>{m.date.replace(/-/g, "/")}</time>
+              <time dateTime={isoDay(m.date)}>{m.date.replace(/-/g, "/")}</time>
               <b>{m.title}</b>
               <Icon name="external" size={13} />
             </a>
           ) : (
             <span className="isle-mark-row">
-              <time>{m.date.replace(/-/g, "/")}</time>
+              <time dateTime={isoDay(m.date)}>{m.date.replace(/-/g, "/")}</time>
               <b>{m.title}</b>
             </span>
           )}

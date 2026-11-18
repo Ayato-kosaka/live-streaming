@@ -5,7 +5,7 @@
  *   python3 -m http.server 4290 --directory site/.next-3190 &
  *   SPORT=4290 node tools/sprites/dexfit.mjs      # 0=通った / 1=見つかった / 2=数えるものが無い
  *
- *   ORIGIN=https://live-streaming-d3cac.web.app node tools/sprites/dexfit.mjs
+ *   ORIGIN=https://ayato-arigato.com node tools/sprites/dexfit.mjs
  *
  * **4190 は使わない。** Chrome も node の fetch も「危ない口」として塞いでいて
  * （ManageSieve）、node からは `bad port` で1本も取りに行けない。

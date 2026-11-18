@@ -9,6 +9,7 @@ import { Fig } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting, ArtMonument } from "@/components/streams/Art";
 import Ask from "@/components/live/Ask";
+import { isoDay } from "@/lib/isoDay";
 
 export const metadata: Metadata = share({
   key: "legends",
@@ -141,7 +142,11 @@ export default function LegendsPage() {
                 </span>
                 <span className="plaque-b">
                   <b>{l.title}</b>
-                  <time>{l.span ?? l.date.replace(/-/g, "/")}</time>
+                  {/* 期間（`span`）の字を出している札には付けない。`dateTime` は1つの日しか
+                      言えず、頭の日を入れると見えている字と食い違う（`lib/isoDay.ts`） */}
+                  <time dateTime={l.span ? undefined : isoDay(l.date)}>
+                    {l.span ?? l.date.replace(/-/g, "/")}
+                  </time>
                   <span className={`plaque-fig${/^[\d,.]+$/.test(l.figure.n) ? "" : " is-word"}`}>
                     <b>{l.figure.n}</b>
                     {l.figure.unit && <i>{l.figure.unit}</i>}

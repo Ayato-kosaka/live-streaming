@@ -366,19 +366,48 @@ export function chapterOf(slug: string): Chapter {
 }
 
 /**
- * 島の行き先。**いまいる島はトップそのもの**（`docs/island-atlas.md` 7章）。
+ * 旅の記録（章の島）の区画の道。島の地図はここに立ち、章の島はこの下に1つずつ立つ（#1201）。
+ *
+ *     /island                    島の地図（章の連なり。前の `/atlas`）
+ *     /island/<章>               章の島（北欧は旅そのものの紙も同じ面に持つ。前の `/nordic`）
+ *     /island/<章>/day/<n>       その旅の1日ぶん
+ *     /island/<章>/guide         その旅のしおり
+ *     /island/<章>/streams       その章の配信
+ *
+ * 前の道は `firebase.json` の `redirects` が 301 でここへ送る。
+ */
+export const ISLAND_PATH = "/island";
+
+/** 区画の名前（`/island` の見出し・パンくず）。島の頭の「島の地図」と同じ字 */
+export const ISLAND_LABEL = "島の地図";
+
+/**
+ * 章の島の行き先。**いまいる章でも、章の島そのもの。**
+ *
+ * 前は「いまいる島はトップそのもの」で、いまいる章のときだけ `/` を返していた。
+ * その章の島（`/island/<章>`）は書き出されて sitemap にも載るのに、canonical は `/` を名乗り、
+ * 島の中からのリンクは1本も来ていなかった。しかも答えが日付で変わるので、
+ * 旅が進むたびに同じ島の正の URL が `/` と `/island/<章>` を行き来していた（#1201）。
+ * **表紙は表紙、章の島は章の島。** いまいる島へは、島の地図から章の島として渡る。
  *
  * **ここに置いてあるのは、章の表のとなりだから。** 前は
  * `components/chain/route.ts` にあったが、あのファイルは `chapterStreams.ts`
  * （毎晩焼く大きい表）を読むので、**行き先を1つ引きたいだけの面まで
  * それを束に抱き込む。** `components/chain/route.ts` からは再輸出してある。
- *
- * `now` を渡せるようにしてあるのは、**「いまいる島」が日付で変わるから**。
- * 画面（クライアント）は `chapterNow(new Date())` を渡すこと。
  */
-export function chapterHref(c: Chapter, now: Chapter = NOW_CHAPTER): string {
-  return c.slug === now.slug ? "/" : `/island/${c.slug}`;
+export function chapterHref(c: Chapter): string {
+  return `/island/${c.slug}`;
 }
+
+/**
+ * 章の島の下の面のパンくず。**道の階層と同じ**（島 › 島の地図 › <章> › …）。
+ * 見えるパンくずと名札（`BreadcrumbList`）の両方がここから出る。
+ */
+export const chapterCrumbs = (c: Chapter, ...rest: { label: string; href?: string }[]) => [
+  { label: ISLAND_LABEL, href: ISLAND_PATH },
+  rest.length ? { label: c.name, href: chapterHref(c) } : { label: c.name },
+  ...rest,
+];
 
 /**
  * 次の島。**日付で決める。**

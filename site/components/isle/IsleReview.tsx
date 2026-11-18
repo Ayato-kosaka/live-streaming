@@ -52,7 +52,17 @@ import { charImg } from "@/lib/charImg";
  * 全部を縦に積むと、この面だけで 3万px になる。並びは `Longer` で畳んで、
  * **押せば最後まで出る**（上限で切らない）。
  */
-export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
+export default function IsleReview({
+  chapter: c,
+  shorts: withShorts = true,
+}: {
+  chapter: Chapter;
+  /**
+   * ショートの段を出すか。**旅の節（`app/island/[chapter]/nordic.tsx`）を持つ章では出さない**
+   * ——あちらが旅程表のすぐ下に同じショートを並べているので、1枚に2回並ぶ（#1201）
+   */
+  shorts?: boolean;
+}) {
   const days = chapterDays(c);
   const st = CHAPTER_STATS[c.slug];
   /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
@@ -189,7 +199,7 @@ export default function IsleReview({ chapter: c }: { chapter: Chapter }) {
         </Zone>
       )}
 
-      {shorts.length > 0 && (
+      {withShorts && shorts.length > 0 && (
         <Zone>
           <H note={`${shorts.length}本`}>この島のショート動画</H>
           <ShortGrid shorts={shorts} />

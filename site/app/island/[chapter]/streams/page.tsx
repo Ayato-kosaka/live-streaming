@@ -7,7 +7,7 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
-import { chapterHref } from "@/content/chapters";
+import { chapterCrumbs, chapterHref } from "@/content/chapters";
 
 /**
  * 過去の島の配信だけを並べる面。
@@ -124,16 +124,9 @@ export default async function ChapterStreams({
   }
 
   return (
-    <PageShell
-      crumbs={[
-        { label: "島の地図", href: "/atlas" },
-        /* **行き先を手で組み立てない。** いまいる章の島はトップそのものなので
-           （`chapterHref`）、`/island/${c.slug}` と書くと、その章が「いまいる章」に
-           なった日だけ**どこからもリンクの来ていない写しの面**へ送ることになる。 */
-        { label: c.name, href: chapterHref(c) },
-        { label: "配信" },
-      ]}
-    >
+    /* **行き先を手で組み立てない。** 島の地図と章の島の道は `chapterCrumbs`（`chapterHref`）が持つ。
+       前は章の島を手で `/island/${c.slug}` と書きかけて、いまいる章のときだけ写しの面へ送る形だった */
+    <PageShell crumbs={chapterCrumbs(c, { label: "配信" })}>
       <PageHead
         icon="tower-studio"
         title={`${c.name}の配信`}

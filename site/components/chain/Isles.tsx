@@ -22,7 +22,7 @@ import { chapterHref } from "./route";
 import { islandRadius } from "./shapes";
 import Diorama, { buildStage, type BuildStage } from "./Diorama";
 
-import { dio, fit, HOME_BUILDINGS, type AtlasIsle } from "./diorama";
+import { dio, fit, type AtlasIsle } from "./diorama";
 
 /**
  * 島の地図。**模型を1つずつ見て、選んで、渡る。**
@@ -161,7 +161,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
     // 模型は枠に合わせて寄せてあるので、寄せたぶんを掛けてから渡す
     return Math.round(d.Dh * fit(d.box) * 10) / 10;
   })();
-  const { sail, boat, stageRef } = useSail(nowCh, water);
+  const { sail, boat, stageRef } = useSail(water);
   /* 指ではらっても島が変わる。**矢印を狙わせない。**
      スマホで模型を見ている人は、まず横に払う */
   const swipe = useSwipe(
@@ -210,7 +210,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
               key={isle.slug}
               className={`atl-isle is-${slot}`}
               data-ch={isle.slug}
-              href={chapterHref(c, nowCh)}
+              href={chapterHref(c)}
               prefetch={false}
               /* 模型そのものも押せる（**押す場所は物そのもの**）。ただし読み上げに
                  出すのは下の札1枚だけ。同じ行き先のリンクが2つ読み上がると、
@@ -224,9 +224,10 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                   slug={isle.slug}
                   days={d}
                   art={isle.art}
-                  /* **いまいる島だけ、渡る先はトップ。** あちらは10軒建って
-                     いるので、章の島の作りで描くと模型が嘘をつく */
-                  buildings={c.slug === nowCh.slug ? HOME_BUILDINGS : isle.buildings}
+                  /* **いまいる島も、渡る先は章の島**（`chapterHref`。#1201）。
+                     模型は渡った先に建っているものを描く。前はいまいる島だけ渡る先が
+                     トップで、トップの10軒を描いていた */
+                  buildings={isle.buildings}
                   stage={c === nextCh && planned ? stage : undefined}
                 />
               </span>
@@ -240,7 +241,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
             札まで動くと、島を変えるたびに名前の位置が跳ねる */}
         <Link
           className="atl-tag"
-          href={chapterHref(cur, nowCh)}
+          href={chapterHref(cur)}
           prefetch={false}
           onClick={(e) => sail(e, cur)}
         >
@@ -396,7 +397,7 @@ const ym = (ms: number) => {
    しておけば、JS が何をしようと必ず行ける。
    ---------------------------------------------------------------------- */
 
-function useSail(nowCh: Chapter, water: number) {
+function useSail(water: number) {
   const router = useRouter();
   const stageRef = useRef<HTMLDivElement>(null);
   const [trip, setTrip] = useState(false);
@@ -412,9 +413,9 @@ function useSail(nowCh: Chapter, water: number) {
       // 次のフレームで行き先を書くと、そこまで transition が効く。
       // 同じフレームで書くと、ブラウザは差を見ないので瞬間移動になる
       requestAnimationFrame(() => requestAnimationFrame(() => setMoved(true)));
-      window.setTimeout(() => router.push(chapterHref(c, nowCh)), SAIL_MS);
+      window.setTimeout(() => router.push(chapterHref(c)), SAIL_MS);
     },
-    [router, trip, nowCh],
+    [router, trip],
   );
 
   const boat = trip ? (

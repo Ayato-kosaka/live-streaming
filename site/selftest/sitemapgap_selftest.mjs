@@ -42,6 +42,14 @@ import { fileURLToPath } from "node:url";
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
 import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
+import {
+  sitemapReadsArticles,
+  sitemapReadsCities,
+  sitemapReadsTravel,
+  travelArticles,
+  travelCities,
+  travelFixedRoutes,
+} from "./travelreg.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
@@ -129,7 +137,12 @@ function metaBody(src) {
  * `export const metadata = { …, robots: { index: false, follow: false } }` の
  * `robots` の中の `index` を読む。**読み手は `tsread.mjs` 1本**。
  */
+/* 街のガイドの面は、`robots` を面に字で書かず、名簿の公開前の印（`draft`）から決める（`travelCityShare`） */
+const CITIES = travelCities(join(here, ".."));
+/* 街の記事も同じ（`travelArticleShare`）。**出すときは名簿の印を1つ外すだけ**で、面は触らない */
+const ARTICLES = travelArticles(join(here, ".."));
 const hidden = (r) => {
+  if ([...CITIES, ...ARTICLES].some((c) => c.route === r && c.draft)) return true;
   let src;
   try {
     src = readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8");
@@ -144,20 +157,42 @@ const hidden = (r) => {
 };
 const open = found.filter((r) => !hidden(r));
 
-console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚）`);
+/* 国の面は字で書かず、名簿（`content/travel.ts`）から並べる（#1201）。
+   **索引が名簿を読んでいるときだけ**、名簿の出す固定の道を「索引に在る」と数える */
+const viaTravel = [
+  ...(sitemapReadsTravel(src) ? travelFixedRoutes(join(here, "..")) : []),
+  /* 街の面は、索引が `publicCities` を読んでいれば、印の無い街だけが索引に在る */
+  ...(sitemapReadsCities(src) ? CITIES.filter((c) => !c.draft).map((c) => c.route) : []),
+  /* 記事の面も、索引が `publicArticles` を読んでいれば、印の無い記事だけが索引に在る */
+  ...(sitemapReadsArticles(src) ? ARTICLES.filter((c) => !c.draft).map((c) => c.route) : []),
+];
+const listed = (r) => src.includes(`"${r}"`) || viaTravel.includes(r);
+
+console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚・国の名簿から ${viaTravel.length}枚）`);
 // 索引は字で持っている（`"/months"`）か、表から作る（`` `/months/${m.key}` ``）。
-// **固定の道は字でしか書けない**ので、字で当たるかだけを見る
-ok("索引に無い面", open.filter((r) => !src.includes(`"${r}"`)), []);
+// **固定の道は字か、国の名簿でしか書けない**ので、そのどちらかで当たるかを見る
+ok("索引に無い面", open.filter((r) => !listed(r)), []);
 
 console.log("[2] 索引に出していない面は、自分で「出さない」と言っている");
-ok("どちらでもない面", found.filter((r) => !src.includes(`"${r}"`) && !hidden(r)), []);
+ok("どちらでもない面", found.filter((r) => !listed(r) && !hidden(r)), []);
 
 console.log("[3] 対照（この見張りが、ほんとうに見ているか）");
 // わざと1枚増やして、落ちることを見る
 ok("**索引に無い面を混ぜたら見つける**",
-   [...open, "/まだ索引に無い面"].filter((r) => !src.includes(`"${r}"`)), ["/まだ索引に無い面"]);
+   [...open, "/まだ索引に無い面"].filter((r) => !listed(r)), ["/まだ索引に無い面"]);
+// 名簿から出る面も、**索引が名簿を読まなくなったら**挙げる
+ok("索引が国の名簿を読まなくなったら、名簿の面を挙げる",
+   open.filter((r) => !src.includes(`"${r}"`) && viaTravel.includes(r)).length > 0 || viaTravel.length === 0,
+   true);
 // 索引のほうを空にしたら、検索に出す面が全部「無い」になる
 ok("索引が空なら、出す面を全部挙げる", open.filter(() => true).length, open.length);
+// 公開前の印を外した街は、索引が街の名簿を読まなくなったら挙げる（印を外す日に、索引の足し忘れを拾う）
+ok("印を外した街は、索引が街の名簿を読まないと挙げる",
+   CITIES.map((c) => c.route).filter((r) => found.includes(r) && !src.includes(`"${r}"`)).length === CITIES.length,
+   true);
+// 記事も同じ。**記事の面は道が固定なので、名簿の印で隠れていなければ索引に要る**——印を外して索引が名簿を読まない日を拾う
+ok("名簿の記事は、どれも道が固定の面として見えている（名簿の読み口が外れていない）",
+   ARTICLES.length > 0 && ARTICLES.every((c) => found.includes(c.route)), true);
 // **隠れている面を数に入れない。** 入れると、この見張りは永久に赤い
 ok("隠れている面は挙げない", found.filter(hidden).filter((r) => open.includes(r)), []);
 

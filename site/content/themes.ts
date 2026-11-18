@@ -145,8 +145,9 @@ export const THEMES: Theme[] = [
     id: "bulgaria",
     name: "ソフィアでこれやって",
     group: BULGARIA_GROUP,
-    /* 行き先は `app/bulgaria/page.tsx`。**`id` は面の道と同じ字にする** */
-    href: "/bulgaria",
+    /* 行き先は `app/travel/bulgaria/sofia/page.tsx`（前の `/bulgaria`。#1228）。
+       **`id` は変えない**——付箋の宛先として Firestore に `bulgaria` で入っている。道だけ移した */
+    href: "/travel/bulgaria/sofia",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になる。
        **決まっている2つを置く**——街と、紙に載せた見どころ。
@@ -163,11 +164,11 @@ export const THEMES: Theme[] = [
     id: "north-macedonia",
     name: "北マケドニアでこれやって",
     group: MACEDONIA_GROUP,
-    /* **行き先を書く。** この国の面が在る（`app/north-macedonia/page.tsx`）。
+    /* **行き先を書く。** この国の面が在る（`app/travel/north-macedonia/page.tsx`）。
        アルバニアに `href` が無いのは、あちらに面が無いからで、
        ここで同じように省くと押せる先を1つ捨てることになる。
        **`id` は面の道と章の slug と同じ**（`content/chapters.ts`）。 */
-    href: "/north-macedonia",
+    href: "/travel/north-macedonia",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になり、
        焼き込みなので次のビルドまで直らない（`docs/island-misses.md` #135）。
@@ -202,7 +203,7 @@ export const THEMES: Theme[] = [
     id: "nordic",
     name: "北欧の旅",
     group: NORDIC_GROUP,
-    href: "/nordic",
+    href: "/island/nordic",
     /* **旅が終わったので、注文ではなく思い出を聞く欄にした。**
        見本の文の形が、そのまま集まるものの形になる（`georgia-bye` で学んだ）。
        「〜してほしい」のまま置いておくと、もう行かない国への注文が集まり続ける。
@@ -218,7 +219,7 @@ export const THEMES: Theme[] = [
     id: "poland",
     name: "ポーランド",
     group: NORDIC_GROUP,
-    href: "/nordic/poland",
+    href: "/travel/poland",
     lead: "ポーランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヴァヴェル城と、火を吹く龍の像が見たい",
     closed: true,
@@ -227,7 +228,7 @@ export const THEMES: Theme[] = [
     id: "lithuania",
     name: "リトアニア",
     group: NORDIC_GROUP,
-    href: "/nordic/lithuania",
+    href: "/travel/lithuania",
     lead: "リトアニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）赤煉瓦の城と、十字架の丘が見たいです",
     closed: true,
@@ -236,7 +237,7 @@ export const THEMES: Theme[] = [
     id: "latvia",
     name: "ラトビア",
     group: NORDIC_GROUP,
-    href: "/nordic/latvia",
+    href: "/travel/latvia",
     lead: "ラトビアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）リガの中央市場で、地元の人が買うものを見たい",
     closed: true,
@@ -245,7 +246,7 @@ export const THEMES: Theme[] = [
     id: "estonia",
     name: "エストニア",
     group: NORDIC_GROUP,
-    href: "/nordic/estonia",
+    href: "/travel/estonia",
     lead: "エストニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）タリンの旧市街を、朝いちばんに歩いてほしい",
     closed: true,
@@ -254,7 +255,7 @@ export const THEMES: Theme[] = [
     id: "finland",
     name: "フィンランド",
     group: NORDIC_GROUP,
-    href: "/nordic/finland",
+    href: "/travel/finland",
     lead: "フィンランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヘルシンキの市場で、朝ごはんを食べてほしい",
     closed: true,
@@ -263,7 +264,7 @@ export const THEMES: Theme[] = [
     id: "sweden",
     name: "スウェーデン",
     group: NORDIC_GROUP,
-    href: "/nordic/sweden",
+    href: "/travel/sweden",
     lead: "スウェーデンで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ストックホルムの島を、歩いて渡ってほしい",
     closed: true,
@@ -275,7 +276,7 @@ export const THEMES: Theme[] = [
     id: "leg-kutaisi-katowice",
     name: "クタイシ → カトヴィツェ",
     group: NORDIC_GROUP,
-    href: "/nordic/day/depart",
+    href: "/island/nordic/day/depart",
     lead: "唯一の飛行機の日。深夜1時5分に着いて、始発まで数時間あります。",
     placeholder: "例）空港のなかを探検してほしい",
     closed: true,

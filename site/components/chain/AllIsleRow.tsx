@@ -13,15 +13,11 @@ import { chapterHref } from "./route";
  *
  * ## なぜ、この1行だけ画面が出てから決めるのか
  *
- * **いまいる島は `/island/<章>` ではなく、トップそのもの**
- * （`docs/island-atlas.md` 7章・`components/chain/route.ts` の `chapterHref`）。
- * どれが「いまいる島」かは日付で変わるのに、`/all` は静的書き出しなので、
+ * **どれが「いまいる島」かは日付で変わる**のに、`/all` は静的書き出しなので、
  * 焼いた答えのままだと出発の日をまたいでも変わらない（`CLAUDE.md`）。
+ * いまいる島の行だけ添え書きが「いまここ。島に降りる」になるので、そこを画面が出てから引き直す。
  *
- * 実際、北欧に出発したあとの `/all` は `/island/nordic` を
- * 「これから建っていく島」として案内していた。押した先は紙1行の面で、
- * **同じ島が `/` にも建っている。** 連なり（`/atlas`）は正しく `/` へ送るので、
- * 薄いほうへの入口はここ1本だけ残っていた。
+ * 行き先は日付で変わらない（`content/chapters.ts` の `chapterHref`。いまいる章でも章の島そのもの。#1201）。
  *
  * 判定は `chapterNow(new Date())` 1つで、島の連なりや表紙と同じもの。
  */
@@ -53,12 +49,11 @@ export default function AllIsleRow({
      ——決めかたが2か所に分かれると、片方だけ古くなる */
   const c = CHAPTERS.find((x) => x.slug === slug);
   return (
-    <Link className="dx" href={c ? chapterHref(c, now) : `/island/${slug}`} prefetch={false}>
+    <Link className="dx" href={c ? chapterHref(c) : `/island/${slug}`} prefetch={false}>
       <span className="dx-body">
         <b>{name}</b>
-        {/* いまいる島は、押した先が島そのもの。**「これから建っていく島」と
-            書いたままにしない**——降りれば10軒建っている島に、
-            まだ何も無いと言うことになる */}
+        {/* いまいる島は、**「これから建っていく島」と書いたままにしない**
+            ——降りれば建っている島に、まだ何も無いと言うことになる */}
         <i>{here ? "いまここ。島に降りる" : note}</i>
       </span>
       <Icon name="right" size={15} className="dx-go" />

@@ -149,8 +149,9 @@ check("対照に、落としもので挙げてはいけない1枚と挙げてほ
 check("BREAK=nofiles がある（足す足を折れる）", /nofiles/.test(src));
 
 console.log("\n[6] 本物の木で、リンクと行き先が繋がっているか");
-const nordicPage = readFileSync(repoPath("site", "app", "nordic", "page.tsx"), "utf8");
-check("`/nordic` は `/nordic/review` へ `<a>` で送っている（`<Link>` ではない）",
+/* 北欧の旅の節は 2026-11-13 に章の島（`/island/nordic`）の紙へ寄せた（#1201）。送り元はそちらの部品 */
+const nordicPage = readFileSync(repoPath("site", "app", "island", "[chapter]", "nordic.tsx"), "utf8");
+check("`/island/nordic` の旅の節は `/nordic/review` へ `<a>` で送っている（`<Link>` ではない）",
   /<a className="tile" href="\/nordic\/review"/.test(nordicPage));
 check("その行き先のファイルが `public/` に在る", real.includes("/nordic/review"));
 

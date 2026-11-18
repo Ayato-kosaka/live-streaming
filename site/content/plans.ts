@@ -216,17 +216,21 @@ export const PLANS: Plan[] = [
        may have been removed." と出る。読む人には意味が分からないし、
        添えていた「去年の様子。こんな感じのお祭りです。」が指す先も無い。
        枠と添え書きは同じ1件なので、まとめて落とす。
-       お祭りの様子は、下の写真2枚と about の3行が引き受ける。 */
+       お祭りの様子は、下の写真2枚と about の3行が引き受ける。
+       写真は Commons から直に読まない（混んだ日に 429 で断られ、枠が空になる）。
+       `python/guide_photos.py plans` が `creditHref` の写真を島の置き場に落とし、`--check` が突き合わせる */
     photos: [
       {
-        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg",
-        alt: "ムタツミンダ公園の観覧車",
+        src: "/next/photos/tbilisi-mtatsminda-park-94609534-3168f235-960.webp",
+        /* 写真に写っているものを書く。前は「観覧車」「山の上から見た街」と書いてあったが、
+           写っているのは噴水と冬のツリーで、札と絵が食い違っていた（2026-11-15 に置き場へ移したとき、絵を見て直した） */
+        alt: "ムタツミンダ公園の噴水",
         credit: "Wikimedia Commons (CC BY-SA 2.0)",
         creditHref: "https://commons.wikimedia.org/wiki/File:Tbilisi_-_Mtatsminda_Park_(9460953464).jpg",
       },
       {
-        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Mtatsminda_park_January_2013_01.jpg/960px-Mtatsminda_park_January_2013_01.jpg",
-        alt: "山の上から見たトビリシの街",
+        src: "/next/photos/mtatsminda-park-january-2013-01-6a746369-960.webp",
+        alt: "冬のムタツミンダ公園に立つ、大きなツリー",
         credit: "Jonathan Cardy / Wikimedia Commons (CC BY-SA 3.0)",
         creditHref: "https://commons.wikimedia.org/wiki/File:Mtatsminda_park_January_2013_01.jpg",
       },
@@ -271,7 +275,7 @@ export const PLANS: Plan[] = [
     ],
     /* `links` は外へ出る口（target=_blank）なので、島の中の面はここに置かない。
        行き先は `href` 1本にする。 */
-    href: "/map/georgia",
+    href: "/travel/georgia",
     /* 名前と1行は `/all`（`content/directory.ts` の「歩いた国」）と揃える。
        同じ面を、島の中で2通りに名乗らない。 */
     hrefName: "ジョージアのページへ",
@@ -329,12 +333,12 @@ export const PLANS: Plan[] = [
     },
     note: "スウェーデンに、会いたい人がいる。飛行機が高いのでポーランドまで飛んで、そこから先はヒッチハイク。",
     tags: ["北欧", "バルト", "ヒッチハイク", "会いに行く"],
-    href: "/nordic",
+    href: "/island/nordic",
     hrefName: "北欧ヒッチハイクのページへ",
     hrefNote: "ルート・行き先・国ごとの見どころ",
     /** いちばん近くて、いちばん大きい企画。トップの先頭に出す。 */
     big: true,
-    /* ここは `/nordic` の「会いに行く理由」の要約。**向こうを直したらここも直す。**
+    /* ここは `/island/nordic` の「会いに行く理由」の要約。**向こうを直したらここも直す。**
        出どころが2つあると、片方だけ古くなる（実際に一度そうなった）。 */
     about: [
       "2023年8月1日に出会った友だちが、スウェーデンにいる。3ヶ月だけ日本に留学に来ていて、帰ってしまった。",
@@ -395,11 +399,11 @@ export const PLANS: Plan[] = [
       area: "ブルガリア",
       map: "https://maps.google.com/?q=Sofia+Bulgaria",
     },
-    /* 中身の正本は `/bulgaria`。**ここに書き写さない**——
+    /* 中身の正本は `/travel/bulgaria/sofia`（前の `/bulgaria`）。**ここに書き写さない**——
        2か所に置くと、片方だけ古くなる。ここに置くのは「なぜそこへ行くのか」だけ。 */
-    href: "/bulgaria",
+    href: "/travel/bulgaria/sofia",
     hrefName: "ソフィアの歩きかたへ",
-    hrefNote: "どんな街か・したいこと・基本情報・歩くコース・見どころ・食べもの",
+    hrefNote: "どんな街か・やりたいこと8選・見どころ・食べもの・1日の予算",
     about: [
       "北マケドニアの東どなり。首都ソフィアは、ローマ時代の遺跡が地下鉄の改札の真横に転がっている街で、見どころが中心の半径1kmにほぼ全部収まっている。",
       "街の真ん中に温泉が49か所湧いていて、中心の蛇口はいまも無料で開放されている。地元の人がポリタンクを提げて並んでいる。",
@@ -410,7 +414,7 @@ export const PLANS: Plan[] = [
       "リラ修道院（中心から62km）まで足を延ばすか",
       "ヴィトシャ山の高台から夕日を見るか",
     ],
-    links: [{ label: "ソフィアはどういう街か", href: "/bulgaria" }],
+    links: [{ label: "ソフィアはどういう街か", href: "/travel/bulgaria/sofia" }],
   },
   {
     id: "north-macedonia",
@@ -429,7 +433,7 @@ export const PLANS: Plan[] = [
     /* 中身の正本は `/north-macedonia`。**ここに書き写さない**——
        2か所に置くと、片方だけ古くなる（`docs/island-standards.md` 8）。
        ここに置くのは「なぜそこへ行くのか」だけ。 */
-    href: "/north-macedonia",
+    href: "/travel/north-macedonia",
     hrefName: "北マケドニアのページへ",
     hrefNote: "どんな国か・スコピエ・食べもの・ことば",
     about: [
@@ -442,7 +446,7 @@ export const PLANS: Plan[] = [
       "オフリド湖まで足を延ばすか",
       "タヴチェ・グラフチェを、どの店で食べるか",
     ],
-    links: [{ label: "北マケドニアってどんな国か", href: "/north-macedonia" }],
+    links: [{ label: "北マケドニアってどんな国か", href: "/travel/north-macedonia" }],
   },
   /* 10月の月末配信（あやと 2026-10-15「10月31日にやります」）。
 

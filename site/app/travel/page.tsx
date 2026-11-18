@@ -1,0 +1,414 @@
+import type { Metadata } from "next";
+import { share } from "@/lib/share";
+import Link from "next/link";
+import PageShell from "@/components/ui/PageShell";
+import { Panel, Stat } from "@/components/ui/Bits";
+import Fold from "@/components/ui/Fold";
+import Walked from "@/components/atlas/Walked";
+import { WALKED_DONE, walkingCountries } from "@/content/walked";
+import { isWalkedCountry } from "@/content/countries";
+import { BEFORE_STREAM, BEFORE_STREAM_DAYS, COUNTRIES } from "@/content/countries";
+import Flag from "@/components/ui/Flag";
+import Icon from "@/components/ui/Icon";
+import Days from "@/components/atlas/Days";
+import CityCards from "@/components/travel/CityCards";
+import { HereRoute, HereStat, HereTag, MapHead, TripCountries, type TripStep } from "./parts";
+import MAP from "@/content/atlas/route.json";
+import { PROFILE } from "@/content/site";
+import { chapterNow, tripDate } from "@/content/chapters";
+import { BUILT_AT } from "@/lib/builtAt";
+import { LEAVE, MAIN, NORDIC_COUNTRIES, cityName } from "@/content/nordic";
+import { shortHref, shortThumb, shortsOf } from "@/content/shorts";
+import { TRAVEL, TRAVEL_LABEL, travelHref, travelPlace } from "@/content/travel";
+
+/* **焼いた字に「いま」を入れない。** ここは書き出したあと差し替えられないので、
+   国の名前を書くと、国境を越えた日から次のビルドまで嘘になる（前は
+   「いまいるジョージアまで」だった）。 */
+export const metadata: Metadata = share({
+  key: "map",
+  title: TRAVEL_LABEL,
+  description:
+    "2024年9月に日本を出てから、これまでに歩いた国ぜんぶ。歩いた線と乗り物の線を1枚の地図にしました。",
+  path: TRAVEL,
+});
+
+/**
+ * 歩いた国。
+ *
+ * 主役は地図。表で17行並べても「どこをどう回ったか」は伝わらないので、
+ * まず1枚の地図を出して、そのあとに順番の年表を置く。
+ * 国のピンからも年表からも、同じ国のページへ行ける。
+ *
+ * ## 年表を章で畳んである理由
+ *
+ * 17カ国を素で並べると 2,648px（3.1画面）あって、この面だけで 5.1画面あった。
+ * `docs/island-ux.md` 8.1 の「入口の面は3画面まで」を大きくこえている。
+ * 主役の地図が画面から流れていくほど下に長い面は、地図を見せる面ではない。
+ *
+ * 区切りは**地図を寄せるボタンと同じ3章**を使う。国が持っている region
+ * （「中東・アフリカ」）ではなく章の名前で見出しを付けるのは、
+ * 同じ面の中でボタンと見出しが違う名前だと、別の区切りに見えるから。
+ *
+ * 開いておくのは、いまいる国が入っている章だけ。旅は続いているので、
+ * 「いまどこまで来たか」がいちばん先に読めるほうがいい。
+ */
+
+/** 出発の日。ここから今日までを数える。 */
+const START = "2024-10-28";
+
+/** 配信を始める前の6週間に出したショート。章ではないので、島ではなくここに出る */
+const BEFORE = shortsOf("before-stream");
+/* **「旅した日数」は日本を出た日から数える。**
+   配信の初回（2024-10-28）から数えていたので、6週間ぶん足りていなかった。
+   イギリス・バルセロナ・ローマを2週間ずつ回っていた47日は、配信が無いだけで
+   旅ではある。`site.ts` の PROFILE から引くので、ここに日付を写さない。 */
+
+/** 国の region を、地図の章に結び直す。章の名前は route.json（＝寄せるボタン）が正本。 */
+const CHAPTER_OF: Record<string, string> = {
+  "ヨーロッパ": "europe",
+  "中東・アフリカ": "mideast",
+  "コーカサス": "caucasus",
+};
+
+/**
+ * 旅程を持っている旅の、国ごとの区間。**日付は旅程が正で、手で書かない。**
+ *
+ * いまここにあるのは北欧（`content/nordic.ts` の ROUTE）だけ。入った日も出た日も
+ * 通った街も、旅程の区間から引く。旅が進めばひとりでに増える。
+ */
+const ITINERARY = (() => {
+  type Leg = { name: string; en: string; from: string; to: string; towns: { name: string; date: string }[] };
+  const m = new Map<string, Leg>();
+  let cur: Leg | undefined;
+  for (const l of MAIN) {
+    if (l.enters) {
+      const c = NORDIC_COUNTRIES.find((x) => x.slug === l.enters);
+      if (!c) continue;
+      // 前の国は、次の国に入った日に出たことになる
+      if (cur) cur.to = l.date ?? "";
+      // `en` は旅程のほうが総大文字（"POLAND"）。年表の他の行と同じ書き方にそろえる
+      cur = {
+        name: c.name,
+        en: c.en.charAt(0) + c.en.slice(1).toLowerCase(),
+        from: l.date ?? "",
+        to: "",
+        towns: [],
+      };
+      m.set(c.slug, cur);
+    }
+    if (cur && l.date) cur.towns.push({ name: cityName(l.to), date: l.date });
+  }
+  // 最後の国は、旅が終わる日まで。**終わりを空けたままにしない**（ジョージアと同じ）
+  if (cur) cur.to = LEAVE.date;
+  return m;
+})();
+
+/**
+ * いま歩いている旅の国。**`content/countries.ts` の `COUNTRIES` には足さない。**
+ *
+ * あちらは「歩いた国」の一覧で、`order`（何カ国目）も世界地図の焼き込みも
+ * そこから数えている。歩いている最中の国を混ぜると、歩く前から歩いたことになる
+ * （`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
+ *
+ * ## 並べるものは `AHEAD_COUNTRIES` から引く。旅程からではない
+ *
+ * ここは旅程（北欧の ROUTE）だけを見て組み立てていた。**旅程は、旅が始まる前に
+ * 書き終わっているとは限らない。** アルバニアは 2026-09-28 に着いた時点で
+ * 旅程が1行も無く（どこを回るかは本人も未定）、この段に**絶対に現れなかった。**
+ * 表紙・`/now`・`/about` が24と言っている日に、年表の合計だけが23で止まる。
+ *
+ * 数えかたは `content/walked.ts` が持っている1本に合わせる——**歩き終わった国
+ * （`COUNTRIES`）＋ いま歩いている旅のうち今日までに入った国（`AHEAD_COUNTRIES`）。**
+ * 並べるものと数えるものを別の出どころから引くと、また食い違う。
+ *
+ * 日付は、旅程があればそちらが正（区間の日付）。無ければ `entered` を使う。
+ * 街は、旅程が無ければ**空のまま。** 分からないものを埋めない。
+ *
+ * **出た日だけは、旅程が無くても埋まる。** つぎの国に入った日が分かっていれば、
+ * 前の国を出たのはその前日——人は2つの国に同時には居ない。`python/stays.py` の
+ * `chapter_stays()` が焼き込みをそう区切っている（`_prev_day`）ので、
+ * ここで空のままにすると**画面だけが前の国を開いたまま**にする。
+ * 2026-10-12 に北マケドニアへ移った日がそれで、アルバニアと北マケドニアが
+ * 2行とも「◯◯/◯◯ –」と出る。どちらにも居るように読める。
+ *
+ * ここはサーバ側（静的書き出し）で1度だけ組み立てる。出す出さないを決めるのは
+ * 画面が出てから（`./parts.tsx` の `TripCountries`）。
+ */
+/* 歩いている最中の国と、その切れ目は `content/walked.ts` が持っている。
+   **ここで組み直さない**——島の札（`components/isle/spec.ts`）も同じものを
+   読んでいるので、式が2本あると片方だけ直した日に数が割れる。 */
+const TRIP_STEPS: TripStep[] = walkingCountries()
+  .map((c) => {
+    const it = ITINERARY.get(c.slug);
+    const from = it?.from || c.entered;
+    /* 章は**その国に入った日に動いていた章**を引く。"nordic" と書くと、旅が
+       変わった日に見出しが前の旅の名前のまま残る。名前は `content/chapters.ts` が正本。
+       日付だけで決まるので、焼き込んでも答えは動かない（旅の土地の暦の昼で引く）。 */
+    const ch = chapterNow(new Date(`${from}T12:00:00+02:00`));
+    /* 国の面を持っていれば、そこへ送る（名簿は `content/travel.ts`）。
+       前は「旅の面の下の国」（`/nordic/<国>`）を組み立てていたが、国の面は旅に関わらず
+       `/travel/<国>` の1枚になった（#1201）。持たない国は送り先なし */
+    const place = travelPlace(c.slug);
+    return {
+      slug: c.slug,
+      name: it?.name ?? c.name,
+      en: it?.en,
+      from,
+      /* 旅程が終わりを持っていればそれが正。無ければ、つぎの国に入った前日まで
+         （`walkingCountries()` の `left`）。いまいる国なら開いたままが事実 */
+      to: it?.to || c.left,
+      towns: it?.towns ?? [],
+      chapter: ch.slug,
+      chapterName: ch.name,
+      href: place?.href ?? "",
+    };
+  })
+  .filter((x) => x.from)
+  .sort((a, b) => a.from.localeCompare(b.from));
+
+/** 焼いたときに、もう旅に出ていたか。年表のどの章を開いておくかを決める。 */
+const TRIP_ON = TRIP_STEPS.some((x) => x.from <= tripDate(BUILT_AT));
+
+const ym = (d: string) => (d ? `${d.slice(0, 4)}/${d.slice(5, 7)}` : "いま");
+
+/** 滞在の期間を「2024/10 – 11」のように縮める。同じ年なら年を省く。 */
+function span(s: { from: string; to: string }) {
+  const a = ym(s.from);
+  const b = ym(s.to);
+  if (!s.to) return `${a} –`;
+  if (a === b) return a;
+  return a.slice(0, 4) === b.slice(0, 4) ? `${a} – ${b.slice(5)}` : `${a} – ${b}`;
+}
+
+/** 章の1行。**国の名前で言う**（国境までの区間は名前に出さない）。 */
+function leadOf(list: { slug: string; name: string }[]) {
+  const only = list.filter((c) => isWalkedCountry(c.slug));
+  const use = only.length ? only : list;
+  return use.length > 1 ? `${use[0].name}から${use[use.length - 1].name}まで` : `${use[0].name}`;
+}
+
+export default function MapPage() {
+  /* **いちばん新しく歩いた国**（滞在の始まりがいちばん新しい国）。
+     並びの最後にすると、GWにイラン国境まで歩いた回が最後に来てしまう。
+
+     前はここが「滞在の終わりが空いている国」だった。終わりの欄は人が手で入れる
+     ものなので、**入っていない＝まだ居る**として読むと、出国しても居つづける
+     （`docs/island-misses.md` #24）。ジョージアの出国が入った日から、この探し方では
+     1件も見つからず**フランス**に落ちていた。日付で決める。
+
+     ここは焼き込みなので「いまいる国」とは言い切れない。旅に出れば、まだこの表に
+     無い国を歩いている。**「いま」を言うところだけ、画面が出てから引き直す**
+     （`./parts.tsx`）。 */
+  const lastFrom = (c: (typeof COUNTRIES)[number]) =>
+    c.stays.map((s) => s.from).sort().at(-1) ?? "";
+  const here = [...COUNTRIES].sort((a, b) => lastFrom(b).localeCompare(lastFrom(a)))[0];
+  const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
+  const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
+  /* **番号は「国に入った順」で、`order` ではない。**
+     `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
+     1つ振ってある。それをそのまま出すと、旅の1国目（`WALKED_DONE` の次）と
+     **同じ番号が2つ出る。** 国だけに振り直して、区間には番号を出さない。 */
+  const noOf = new Map(ordered.filter((c) => isWalkedCountry(c.slug)).map((c, i) => [c.slug, i + 1]));
+  // 章は route.json（＝地図を寄せるボタン）から。「ぜんぶ」は年表の区切りにならないので外す。
+  const chapters = (MAP.chapters as { id: string; label: string }[]).filter((x) => x.id !== "all");
+
+  return (
+    <PageShell crumbs={[{ label: TRAVEL_LABEL }]}>
+      {/* h1 は場所の名前（docs/island-world.md 7.5）。
+          国の数は静的書き出しで焼き込まれるので、見出しには入れない。
+          カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。
+
+          前置きの最後の1文だけが「いま」を言うので、そこは画面が出てから
+          引き直す（`./parts.tsx`）。焼いたままだと、旅に出た日から
+          「いまはコーカサスにいます」が残りつづける。 */}
+      <MapHead region={here.region} />
+
+      {/* 4つを同じ重さで並べると、どれも「ただの数」に見える。
+          先頭を大きくするのは CSS がやるので、こちらは添え字で中身の差を言う。
+          国は旅の端から端、街は泊まった所だけ、日数は起点、いまここは数ではなく状態。 */}
+      <div className="stats" style={{ marginBottom: 16 }}>
+        {/* **「パリからトビリシまで」と書かない。** すぐ下に「その前に6週間ある」と
+            書いてある面で、いちばん上の数字が「パリから」だと面が自分と喧嘩する。
+
+            **数は画面が出てから数え直す**（`components/atlas/Walked.tsx`）。
+            ここは `visited.length`（＝`countries.ts` の国から国境の区間を引いたもの）で
+            数えていて、**表紙が19と言っている日に17と出していた**
+            （`docs/island-misses.md` #104）。そのあと焼き込みの `COUNTRIES_WALKED` に
+            変えたが、あれは**日付で答えの変わる数を、晩に1度だけ焼いたもの**で、
+            国境を越えた日の朝は1つ少ない。数えかたは `content/walked.ts`。 */}
+        <Stat value={<Walked />} label="歩いた国" sub="いま歩いている旅もふくむ" />
+        <Stat value={cities.size} label="通った街" sub="泊まった街だけ" />
+        <Stat value={<Days from={PROFILE.leftJapan} />} label="旅した日数" sub="日本を出た日から" />
+        {/* いまいる国の名前は数ヶ月変わらないので、この欄だけが止まって見えていた。
+            添え字を滞在の日数にすると、旅が進んでいることが毎日1ずつ出る
+            （`docs/island-play.md` 仕掛け10）。国の名前は上の見出しにも出ている。 */}
+        <HereStat slug={here.slug} name={here.name} />
+      </div>
+
+      <Panel>
+        <h2>どこをどう回ったんだろう</h2>
+        <p className="muted">
+          ピンを押すと、その国のことが出てくる。「パリから、たどる」で、出発から今日までを順に回る。
+        </p>
+        {/* **「いまここ」の輪は、いまいる国にしか出さない。** 旅に出ているあいだ
+            この地図に居場所は無いので、輪は消して名札だけ残す（`./parts.tsx`）。 */}
+        <HereRoute slug={here.slug} />
+      </Panel>
+
+      {/* 街のガイド。**常に置く**（#1262）。前はソフィアへ行けるのが表紙の期間限定の札の2本だけで、
+          企画の期間が過ぎると島の中から辿れなくなっていた。下の年表の国の行（→ 国の面 → 街）とは別に、
+          ここから街へ1回で着く。並ぶのは公開した街だけ（`content/travel.ts` の `publicCities`）で、
+          スコピエは公開前の印が外れた日にひとりでに増える */}
+      <CityCards title="街のガイド" />
+
+      {/* **配信より前の6週間を、地図と年表のあいだに置く。**
+          下の一覧は配信タイトルから復元したものなので、配信の無い6週間が
+          まるごと抜けている。「1カ国目はフランス」と読めてしまうが、
+          実際はその前にロンドン・バルセロナ・ローマを回っている。
+
+          **日付が届いたので入れた**（2026-09-06、GitHub #121）。前は「2週間ずつ」と
+          書いていたが、実際は 16日・12日・12日で、そろっていなかった。
+          パリだけは滞在の途中で配信が始まっているので、その1行だけ断る。 */}
+      <Panel className="mbefore">
+        <h2>その前に、配信していない6週間がある</h2>
+        <p>
+          日本を出たのは{PROFILE.leftJapan.replace(/-/g, "/")}、パリで配信を始めたのは
+          {START.replace(/-/g, "/")}。そのあいだの{BEFORE_STREAM_DAYS}日は、
+          {BEFORE_STREAM.map((c) => c.city ?? c.name).join("、")}と歩いていました。
+          この6週間のぶんは、下の一覧には出てきません。かわりに、ショート動画が
+          {BEFORE.length}本あります。
+        </p>
+        <ol className="mbefore-list">
+          {BEFORE_STREAM.map((c) => (
+            <li key={c.slug}>
+              <b>{c.city ?? c.name}</b>
+              <i>{c.city ? c.name : ""}</i>
+              {/* 日付まで出すと1行に4つ並んで読めなくなるので、日数だけ。
+                  パリは滞在の途中で配信が始まっているので、そこだけ言い添える */}
+              <span>{c.days}日{c.streamBegan ? "・この街で配信が始まった" : ""}</span>
+            </li>
+          ))}
+        </ol>
+        {/* **ここに出すと決めた理由。**
+            この段はもともと「配信が無いので出てきません」で終わっていた。
+            でも実際には動画が15本あるので、そのままだと嘘に近い。
+
+            ヨーロッパ周遊の島には置けない。島に建つのは章のあいだにあったことだけで
+            （`docs/island-atlas.md` 4章）、この15本は公開日が 2024-09-17〜10-19、
+            章が始まる 2024-10-28 より**全部前**にある（`python/build_shorts.py`）。
+            章の外のものを島に建てると、島が嘘をつく。
+
+            畳んであるのは、地図と年表のあいだに 15枚の絵が居座ると
+            この段が主役に見えてしまうから（`docs/island-design.md` 4章）。
+            **何本あるかは畳んだままでも読める。** */}
+        <div className="hlist">
+          <Fold
+            title="この6週間に出したショート動画"
+            lead={`${BEFORE[0].city}から${BEFORE[BEFORE.length - 1].city}まで、出した順に`}
+            note={`${BEFORE.length}本`}
+          >
+            <ul className="mshorts">
+              {BEFORE.map((s) => (
+                <li key={s.id}>
+                  <a href={shortHref(s.id)} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={shortThumb(s.id)}
+                      alt={s.title} data-quote="title"
+                      width={480}
+                      height={360}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    {/* 絵にも字にも、実在する題名がそのまま入る（`noemoji.mjs` の印） */}
+                    <b data-quote="title">{s.title}</b>
+                    {/* **日付を出さない。** この段は「2週間ずつ」しか聞いていないので
+                        日付を書かない決まりで作ってある（上の注）。ショートの日付は
+                        撮った日ではなく出した日なので、ここに並べると
+                        「9/17 にロンドンにいた」と読めてしまう */}
+                    <i>{s.city}</i>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Fold>
+        </div>
+      </Panel>
+
+      <Panel>
+        <h2>行った順に、ぜんぶ</h2>
+        <p className="muted">番号は、初めてその国に入った順。</p>
+        {/* `.folds` は紙を1枚敷く部品なので、紙のパネルの中では使わない。
+            紙の上に紙が乗って貼り紙に見える（app/css/ui.css の注）。
+            ここは国のページの「この国であったこと」と同じ `.hlist`。 */}
+        <div className="hlist">
+          {chapters.map((ch) => {
+            const list = ordered.filter((c) => CHAPTER_OF[c.region] === ch.id);
+            if (!list.length) return null;
+            return (
+              <Fold
+                key={ch.id}
+                title={ch.label}
+                /* **国の名前で言う。** 章の最後が国境までの区間だと
+                   「アゼルバイジャンからイラン（国境まで）まで」になって、
+                   すぐ隣の「3カ国」と数が合わないように読める */
+                lead={leadOf(list)}
+                /* **国だけ数える。** `list.length` で数えていたので、国ではない
+                   「イラン（国境まで）」がコーカサスを1つ水増ししていた。
+                   章の合計 21 が、表紙と `/now` の 20 と食い違う元。 */
+                note={`${list.filter((c) => isWalkedCountry(c.slug)).length}カ国`}
+                /* 開いておくのは、いまどこまで来たかが読める章ひとつだけ。
+                   旅に出ているあいだは、いちばん下の「いま歩いている旅」がそれ */
+                open={!TRIP_ON && list.some((c) => c.slug === here.slug)}
+              >
+                <ol className="atrip">
+                  {list.map((c) => {
+                    const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
+                    return (
+                      <li key={c.slug}>
+                        <span className="atrip-rail" aria-hidden />
+                        {/* 国境までの区間には番号を出さない。**数えていないものに
+                            番号を振らない**——振ると、隣の「3カ国」と合わなくなる */}
+                        <span className="atrip-no" aria-hidden>
+                          {noOf.get(c.slug) ?? "—"}
+                        </span>
+                        <Link className="atrip-card" href={travelHref(c.slug)} prefetch={false}>
+                          <span className="atrip-flag">
+                            <Flag slug={c.slug} size={34} />
+                          </span>
+                          <span className="atrip-body">
+                            <span className="atrip-name">
+                              <b>{c.name}</b>
+                              <em>{c.en}</em>
+                            </span>
+                            <span className="atrip-when">{c.stays.map(span).join("、")}</span>
+                            <span className="atrip-tags">
+                              {towns.slice(0, 5).map((t) => (
+                                <span key={t}>{t}</span>
+                              ))}
+                              {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
+                              {c.slug === here.slug && <HereTag slug={c.slug} />}
+                            </span>
+                          </span>
+                          <Icon name="right" size={15} className="tile-go" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </Fold>
+            );
+          })}
+          {/* いま歩いている旅の国。国境を越えた日にひとりでに1行増える。
+              見出しは旅ごとに分かれる（章の名前は `chapterName` で渡してある）。 */}
+          <TripCountries
+            steps={TRIP_STEPS}
+            /* 通し番号の続きは**国の数**から。`COUNTRIES.length` だと
+               「イラン（国境まで）」が1つ番号を食って、旅の1国目が19番になる */
+            start={WALKED_DONE}
+            open={TRIP_ON}
+          />
+        </div>
+      </Panel>
+    </PageShell>
+  );
+}

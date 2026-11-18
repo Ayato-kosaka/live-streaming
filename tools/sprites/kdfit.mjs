@@ -6,7 +6,7 @@
  *   python3 -m http.server 4300 --directory site/.next-3200 &
  *   SPORT=4300 node tools/sprites/kdfit.mjs      # 0=通った / 1=見つかった / 2=数えるものが無い
  *
- *   ORIGIN=https://live-streaming-d3cac.web.app node tools/sprites/kdfit.mjs
+ *   ORIGIN=https://ayato-arigato.com node tools/sprites/kdfit.mjs
  *
  * **4190 を配り先に使わない。** Chrome も node の fetch も「危ない口」として
  * 塞いでいて（ManageSieve）、絵が全部「配られていない」に化ける（#167）。
@@ -194,8 +194,8 @@ const b = await chromium.launch({
  * 取りに行って**返ってこなかった要求**（ctx ごと）。
  *
  * `prod.mjs` の `blocked()` は**ホスト名しか持たない。** 本番は要求の 98% が
- * 同じホスト（`live-streaming-d3cac.web.app`）なので、1本こけたときに
- * 「`live-streaming-d3cac.web.app(取れず) ×1`」としか出ず、**絵なのか
+ * 同じホスト（本番の島。`ayato-arigato.com`）なので、1本こけたときに
+ * 「`ayato-arigato.com(取れず) ×1`」としか出ず、**絵なのか
  * 束ねた JS なのか書体なのかが分からない。** 直すにも、もう一度回すかを
  * 決めるにも、どれが落ちたかが要る。ここで URL ごと控えておく。
  *

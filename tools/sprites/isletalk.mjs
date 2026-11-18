@@ -52,10 +52,11 @@ import { existsSync } from "node:fs";
 import { viaCurl, blocked } from "./prod.mjs";
 import { offline } from "./route.mjs";
 import { openChecked } from "./served.mjs";
+import { SITE_ORIGIN } from "./origin.mjs";
 
 const SPORT = process.env.SPORT || "";
 const ORIGIN =
-  process.env.ORIGIN || (SPORT ? `http://127.0.0.1:${SPORT}` : "https://live-streaming-d3cac.web.app");
+  process.env.ORIGIN || (SPORT ? `http://127.0.0.1:${SPORT}` : SITE_ORIGIN);
 /** 手元に配ったものを見ているか。本番は curl 経由にしないとブラウザが届かない */
 const LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(ORIGIN);
 const WIDTHS = (process.env.WIDTHS || "360,390,1280").split(",").map((s) => parseInt(s, 10));

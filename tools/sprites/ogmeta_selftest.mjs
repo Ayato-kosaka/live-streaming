@@ -26,9 +26,10 @@
  * 名簿に在る札の絵が `site/public/og/` に置いてあることは、ここで数える
  * （ブラウザも焼き出しも要らない）。
  */
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CARDS_C, CONTROLS, LOOK_C, cardsOf, headOf, judge, pixelsOf, runControls } from "./ogmeta.mjs";
+import { CARDS_C, CONTROLS, LOOK_C, ORIGIN, cardsOf, headOf, judge, pixelsOf, runControls, siteUrl } from "./ogmeta.mjs";
 import { repoPath } from "./repo.mjs";
 
 const ok = [];
@@ -107,6 +108,31 @@ const share = readFileSync(repoPath("site/lib/share.ts"), "utf8");
 check("share.ts が名簿を読んでいる", /from "\.\/ogCards\.json"/.test(share), true);
 const gen = readFileSync(repoPath("tools/sprites/ogcards.mjs"), "utf8");
 check("焼く道具が名簿を読んでいる", /site\/lib\/ogCards\.json/.test(gen), true);
+
+/* 8. 正の URL を、`site/content/site.ts` の1か所から読んでいること。
+      道具がドメインを自分で持ち直すと、移した日に全面が嘘の赤になる（#1202） */
+check("ORIGIN は原点だけの絶対 URL", /^https:\/\/[^/]+$/.test(ORIGIN), true);
+const layout = readFileSync(repoPath("site/app/layout.tsx"), "utf8");
+check("metadataBase が SITE.url から作られている", /metadataBase:\s*new URL\(SITE\.url\)/.test(layout), true);
+const fake = mkdtempSync(join(tmpdir(), "ogmeta-"));
+try {
+  mkdirSync(join(fake, "site/content"), { recursive: true });
+  const put = (body) => writeFileSync(join(fake, "site/content/site.ts"), body);
+  put('export const SITE = {\n  name: "x",\n  url: "https://right.example",\n};\nexport const PROFILE = {\n  url: "https://wrong.example",\n};\n');
+  check("SITE の url を読む", siteUrl(fake), "https://right.example");
+  put('export const SITE = {\n  /* 書き方の例 url: "https://comment.example" */\n  url: "https://right.example",\n};\n');
+  check("注釈の中の url を拾わない", siteUrl(fake), "https://right.example");
+  put('export const SITE = {\n  name: "x",\n};\nexport const PROFILE = {\n  url: "https://wrong.example",\n};\n');
+  let threw = false;
+  try {
+    siteUrl(fake);
+  } catch {
+    threw = true;
+  }
+  check("SITE に url が無ければ投げる（下の塊の url を拾わない）", threw, true);
+} finally {
+  rmSync(fake, { recursive: true, force: true });
+}
 
 console.log(`対照 ${ok.length + ng.length}件中 ${ok.length}件通った`);
 for (const line of ng) console.log(`::error::${line}`);

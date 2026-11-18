@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth";
+import { readySignIn, useAuth } from "@/lib/auth";
 import Icon from "@/components/ui/IconCore";
 
 /**
@@ -21,6 +21,29 @@ import Icon from "@/components/ui/IconCore";
 export default function SignIn({ compact = false }: { compact?: boolean }) {
   const { user, signIn, error, busy } = useAuth();
   const [open, setOpen] = useState(false);
+  const go = useRef<HTMLButtonElement>(null);
+
+  /* **ボタンが画面に出たら、ログインの一式を先に取っておく。**
+     押されてから取りに行くと、押した瞬間からポップアップまでに通信が挟まって
+     iPhone が塞ぐ（`lib/auth.tsx` の `readySignIn`）。
+     出たとき、にするのは**畳みの中や画面の外では取らない**ため。掲示板では
+     この部品が閉じた畳みの中に置いてあり、開かない人には何も乗らない。 */
+  useEffect(() => {
+    const b = go.current;
+    if (!b) return;
+    const take = () => void readySignIn().catch(() => {});
+    if (typeof IntersectionObserver === "undefined") {
+      take();
+      return;
+    }
+    const seen = new IntersectionObserver((es) => {
+      if (!es.some((e) => e.isIntersecting)) return;
+      seen.disconnect();
+      take();
+    });
+    seen.observe(b);
+    return () => seen.disconnect();
+  }, [user, compact, open]);
 
   if (user === undefined) return null;
 
@@ -67,7 +90,7 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
         Google の画面に移ります。<b>「このアプリは確認されていません」</b>と出たら、
         「詳細」→「あやと島（安全ではないページ）に移動」。
       </p>
-      <button className="signin-go" onClick={signIn} disabled={busy}>
+      <button ref={go} className="signin-go" onClick={() => void signIn()} disabled={busy}>
         {busy ? "つないでいます…" : "YouTubeでログイン"}
       </button>
       {error && <p className="err">{error}</p>}

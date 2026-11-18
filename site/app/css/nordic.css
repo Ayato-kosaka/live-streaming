@@ -28,7 +28,8 @@
 .tnow {
   position: relative;
 }
-.tnow-top h1 {
+/* 旅の名前。章の島の紙に入ったので h2（面の h1 は島の名前。#1201）。見た目は h1 だったころのまま */
+.tnow-top h2 {
   margin: 0;
   font-size: clamp(21px, 6.4vw, 33px);
   font-weight: 900;

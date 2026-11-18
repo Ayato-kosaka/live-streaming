@@ -1,0 +1,353 @@
+{
+ "cover": {
+  "src": "/guide/north-macedonia/skopje/cover-1600.webp",
+  "src_small": "/guide/north-macedonia/skopje/cover-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "アーチの続く石橋と城塞の壁、噴水の上に騎馬像が立つマケドニア広場、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "kind": "ai",
+  "prompt_note": "手描きの水彩・ガッシュ調。輪郭線なし・強い環境光・明るく彩度の高い色。石橋（石のアーチ）・マケドニア広場（噴水の上の柱に騎馬像）・ヴォドノ山（なだらかな山・頂の茶色の鉄の十字架）・城塞の壁を主に。上の3分の1は字を重ねるための空。3:2 で描かせて 16:9 に切った。字なし"
+ },
+ "cover_tall": {
+  "src": "/guide/north-macedonia/skopje/cover-tall-1600.webp",
+  "src_small": "/guide/north-macedonia/skopje/cover-tall-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "石橋と城塞の壁、マケドニア広場の騎馬像、その奥に頂の十字架が見えるヴォドノ山。黄葉の木々に囲まれた、秋のスコピエの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし"
+ },
+ "areamap": {
+  "src": "/guide/north-macedonia/skopje/areamap-800.webp",
+  "src_small": "/guide/north-macedonia/skopje/areamap-400.webp",
+  "w": 800,
+  "h": 800,
+  "alt": "スコピエの中心部の絵地図。旧市街・新市街・おしゃれなデバル・マーロ・バスターミナルと鉄道駅の4つの地区が色で塗り分けてあり、ヴァルダル川に架かる石橋や城塞、モスク、市場、騎馬像の噴水、凱旋門、旧駅舎、交通センターなどの目印が描いてある",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap のタイルから作った字の無い下敷き（道・川・公園・あやとの地区分け（2026-11-15）の4地区の色・目印14か所の番号）を渡し、その配置どおりに描かせた。街の中心だけの 2.9km 四方。地区の範囲は guidebook.json の範囲と目印の座標の外形を、絵の上で隣の地区と接するまで広げたもの。北が上。字も番号もなし（地区の名前と見どころの番号は面の側で重ねる）",
+  "areas": [
+   {
+    "id": "carsija",
+    "name": "旧市街",
+    "local": "Стара чаршија",
+    "color": "#ffd98a",
+    "x": 0.55,
+    "y": 0.185,
+    "source": [
+     "https://www.openstreetmap.org/way/1532093164",
+     "https://www.openstreetmap.org/way/32813170",
+     "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje"
+    ]
+   },
+   {
+    "id": "newtown",
+    "name": "新市街",
+    "local": "Центар",
+    "color": "#d9ccf5",
+    "x": 0.33,
+    "y": 0.845,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Skopje/Centar",
+     "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
+     "https://en.wikipedia.org/wiki/Skopje"
+    ]
+   },
+   {
+    "id": "debar-maalo",
+    "name": "おしゃれエリア",
+    "local": "Дебар Маало",
+    "color": "#ffc4d2",
+    "x": 0.17,
+    "y": 0.225,
+    "source": [
+     "https://www.openstreetmap.org/node/6239561763",
+     "https://www.openstreetmap.org/way/1315915665",
+     "https://en.wikivoyage.org/wiki/Skopje/Centar"
+    ]
+   },
+   {
+    "id": "station",
+    "name": "バスターミナル・鉄道駅",
+    "local": "Скопска железничка станица",
+    "color": "#a9dcf5",
+    "x": 0.76,
+    "y": 0.905,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Skopje"
+    ]
+   }
+  ],
+  "bbox": {
+   "west": 21.415,
+   "east": 21.4505,
+   "south": 41.9837,
+   "north": 42.0102
+  },
+  "beyond": [
+   {
+    "id": "suto-orizari",
+    "name": "シュト・オリザリ",
+    "local": "Шуто Оризари",
+    "lat": 42.0405453,
+    "lon": 21.423591,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965625"
+    ],
+    "x": 0.431,
+    "y": 0.06,
+    "dir": "n"
+   },
+   {
+    "id": "gazi-baba",
+    "name": "ガジ・ババ",
+    "local": "Гази Баба",
+    "lat": 41.9984446,
+    "lon": 21.4737249,
+    "source": [
+     "https://www.openstreetmap.org/relation/6965627"
+    ],
+    "x": 0.94,
+    "y": 0.478,
+    "dir": "e"
+   },
+   {
+    "id": "vodno",
+    "name": "ヴォドノ山",
+    "local": "Водно",
+    "lat": 41.96502,
+    "lon": 21.394421,
+    "source": [
+     "https://www.openstreetmap.org/way/229939246",
+     "https://en.wikipedia.org/wiki/Vodno"
+    ],
+    "x": 0.36,
+    "y": 0.94,
+    "dir": "s"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "tavche": {
+   "src": "/guide/north-macedonia/skopje/food-tavche-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-tavche-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "素焼きの浅い土鍋で焼いた、赤い汁の豆のタヴチェ・グラフチェ。上に干した赤唐辛子がのっている",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "kebapi": {
+   "src": "/guide/north-macedonia/skopje/food-kebapi-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-kebapi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "炭火で焼いた小さなケバピが並び、刻んだ玉ねぎと丸いパンが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "burek": {
+   "src": "/guide/north-macedonia/skopje/food-burek-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-burek-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄い生地を何枚も重ねて焼いたブレク。切り分けた1切れに白いチーズの層が見え、ヨーグルトの飲み物が添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "shopska": {
+   "src": "/guide/north-macedonia/skopje/food-shopska-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-shopska-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "刻んだトマトときゅうり、ピーマンの上に、白いチーズをたっぷり削りかけたショプスカ・サラダ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "pastrmajlija": {
+   "src": "/guide/north-macedonia/skopje/food-pastrmajlija-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-pastrmajlija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "楕円のパン生地に角切りの肉をのせて焼いたパストルマイリヤ。黄色い唐辛子の酢漬けがのっている",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "selsko-meso": {
+   "src": "/guide/north-macedonia/skopje/food-selsko-meso-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-selsko-meso-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "土鍋で豚肉ときのこ、ピーマンを煮込み、チーズを溶かしたセルスコ・メソ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "polneti-piperki": {
+   "src": "/guide/north-macedonia/skopje/food-polneti-piperki-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-polneti-piperki-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "米とひき肉を詰めて焼いたピーマンがトマトの汁に並び、ヨーグルトが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "doner": {
+   "src": "/guide/north-macedonia/skopje/food-doner-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-doner-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄くそいだ肉と野菜を、たたんだパンに挟んだドネル・ケバブ。フライドポテトが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "sweets": {
+   "src": "/guide/north-macedonia/skopje/food-sweets-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-sweets-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "シロップに漬けた揚げ菓子のトゥルンバと、くるみを挟んだひし形のバクラヴァ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "boza": {
+   "src": "/guide/north-macedonia/skopje/food-boza-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-boza-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "背の高いグラスに注いだ、とろりとした淡い黄色のボザ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "mastika": {
+   "src": "/guide/north-macedonia/skopje/food-mastika-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-mastika-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ラベルの無い瓶と、透明なマスティカのグラス。氷を入れたほうは白く濁っている",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "rakija": {
+   "src": "/guide/north-macedonia/skopje/food-rakija-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-rakija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ラベルの無い瓶と、小さなグラス2つに注いだ透明なラキヤ。チーズとオリーブが添えてある",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "vranec-glass": {
+   "src": "/guide/north-macedonia/skopje/food-vranec-glass-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-vranec-glass-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "大きなグラスに注いだ濃い紫の赤ワイン・ヴラネツと、黒ぶどう",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "beer": {
+   "src": "/guide/north-macedonia/skopje/food-beer-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-beer-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "泡の立った金色のビールのグラスと、ラベルの無い茶色の瓶、ピーナッツ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  }
+ },
+ "buy": {
+  "cookie": {
+   "src": "/guide/north-macedonia/skopje/buy-cookie-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-cookie-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "無地の箱に入ったバタークッキー。アーモンドやココナッツをのせたものもある",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "ajvar": {
+   "src": "/guide/north-macedonia/skopje/buy-ajvar-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-ajvar-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "瓶詰のアイヴァルと、小鉢に出したもの、アイヴァルを塗ったパン、焼いた赤いパプリカ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "coffee": {
+   "src": "/guide/north-macedonia/skopje/buy-coffee-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-coffee-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "細かく挽いたトルココーヒーの粉の袋と、銅のジェズヴァ、泡の立ったコーヒーの小さなカップ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "chocolate": {
+   "src": "/guide/north-macedonia/skopje/buy-chocolate-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-chocolate-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "無地の包み紙の板チョコと、割ったヘーゼルナッツ入りのチョコレート、丸い菓子",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "vranec": {
+   "src": "/guide/north-macedonia/skopje/buy-vranec-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-vranec-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "無地のラベルの赤ワインの瓶と、コルク抜き、黒ぶどう",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "rakija": {
+   "src": "/guide/north-macedonia/skopje/buy-rakija-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-rakija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ラベルの無い瓶に詰めた自家製のラキヤと、プラムとぶどう",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "market": {
+   "src": "/guide/north-macedonia/skopje/buy-market-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-market-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "束ねた山のお茶、パプリカと唐辛子の粉、干した赤唐辛子、白いチーズ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "winter": {
+   "src": "/guide/north-macedonia/skopje/buy-winter-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-winter-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "黒い長いマフラーと、灰色の手袋とニット帽",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "grocery": {
+   "src": "/guide/north-macedonia/skopje/buy-grocery-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-grocery-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "布の買い物袋からこぼれたパスタ・にんじん・バナナ・トマト・パン",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  },
+  "crafts": {
+   "src": "/guide/north-macedonia/skopje/buy-crafts-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/buy-crafts-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "銀の線をレースのように編んだ線細工（フィリグリー）の耳飾りとブローチ、ペンダント、金の指輪",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
+  }
+ }
+}

@@ -61,8 +61,9 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { SITE_ORIGIN } from "./origin.mjs";
 
-const BASE = process.env.BASE || "https://live-streaming-d3cac.web.app";
+const BASE = process.env.BASE || SITE_ORIGIN;
 const SELFTEST = process.argv.includes("--selftest");
 /**
  * 今日（JST）。行き先の日付と見比べる基準。
@@ -288,8 +289,10 @@ async function main() {
   let paths = pathList();
   if (paths == null) {
     const xml = await (await fetch(`${BASE}/sitemap.xml`)).text();
+    /* `<loc>` は正の URL（`SITE.url`）で焼かれていて、見る先（`BASE`）と同じとは限らない
+       （手元の口・古いドメイン。#1202）。頭を `BASE` で剥がさず、道だけを取る */
     paths = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
-      .map((m) => m[1].replace(BASE, "")).filter(Boolean);
+      .map((m) => new URL(m[1].trim()).pathname).filter(Boolean);
   }
   if (!paths.length) { console.error("見る面がありません"); process.exit(2); }
 

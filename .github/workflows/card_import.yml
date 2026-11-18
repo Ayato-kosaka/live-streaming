@@ -1,0 +1,113 @@
+name: 写真の取り込み
+
+# Google フォトの写真を、あやと島カードの候補として取り込む（Actions 側）。
+# 仕様は `docs/card-import.md`、本体は `python/card_import_actions.py`。
+#
+# - url    … tar 1本ぶんの受け取り口（署名付き PUT URL・1時間）を作り、**依頼の公開鍵で包んで**
+#            作業枝に置く。作業箱からは `python3 python/card_import_url.py --batch <回>` の1コマンド
+# - ingest … 受け取った tar を開いて検め、候補を私有の置き場（Functions 経由）と Firestore に置く。tar は消す
+# - labels … 認識合わせの答えと外したものを `{sha: yes|no|excluded}` で job summary に出す
+# - status … 回ごとの範囲・数・状態の内訳を job summary に表で出す
+#
+# **なぜ暗号化か。** このリポジトリは公開で、Actions のログも誰でも読める。URL は持っている人なら
+# 誰でも上げられる鍵なので、ログにも summary にも出さない（`shorts_preview.yml` と同じ形）。
+# ログ・summary・成果物に写真を置かない。出すのは数と sha と日付の範囲だけ。
+#
+# **定時では回さない（schedule を付けない）。** 取り込みは EC2 が tar を上げ終わってから、
+# 人（のセッション）が押す。
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "url / ingest / labels / status / register-dry / register"
+        required: true
+        type: choice
+        options: [url, ingest, labels, status, register-dry, register]
+      batch:
+        description: "取り込みの名前（英数字と . _ -。url / ingest は必須・labels は空なら全部）"
+        required: false
+        default: ""
+      pubkey:
+        description: "url のとき: 結果を包む RSA 公開鍵（PEM。改行が空白に化けてもよい）"
+        required: false
+        default: ""
+      nonce:
+        description: "url のとき: 作業箱が作った乱数（結果の置き場の名前になる）"
+        required: false
+        default: ""
+      expect:
+        description: "register のとき: 登録する枚数（dryRun の見込みと合わなければ登録しない）"
+        required: false
+        default: ""
+      branch:
+        description: "url のとき: 結果を置く枝（claude/ で始まる）"
+        required: false
+        default: "claude/card-import-inbox"
+
+permissions:
+  contents: read
+
+concurrency:
+  # 同じ回の取り込みを2本同時に流さない（状態の決まりが前後する）
+  group: card-import-${{ inputs.batch || inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      # url の結果（暗号文）を作業枝に積むためだけ
+      contents: write
+    env:
+      BQ_PROJECT_ID: ${{ vars.BQ_PROJECT_ID || secrets.BQ_PROJECT_ID }}
+    steps:
+      # 作業枝の暗号文を落とさない（shorts_preview.yml と同じ）。道具と、包む・積む小物だけ取る
+      - uses: actions/checkout@v5
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            python
+            tools/shorts/ingest
+            tools/shorts/preview
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 道具を入れる
+        # requirements.txt は logsafe_selftest が要る（ほかの見張りと同じ入れかた）
+        run: |
+          python3 -m pip install --quiet -r python/requirements.txt
+          python3 -m pip install --quiet "google-cloud-storage==3.17.1"
+
+      # 資格情報に触る前に、偽物で約束を回す（状態の決まり・断る tar・URL を出さない）
+      - name: 約束を偽物で先に回す
+        run: python3 python/card_import_actions_selftest.py
+
+      # 取り込みはあやとの札を作る道（python/admin/_owner.py → _fs → logsafe）を通る。
+      # 公開のログに素性を出さない側が効いているかを、同じ job の手前で見る（#500）
+      - name: 公開のログに素性が出ない側が効いているか
+        run: python3 python/logsafe_selftest.py
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: 回す
+        env:
+          PYTHONUNBUFFERED: "1"
+          IN_MODE: ${{ inputs.mode }}
+          IN_BATCH: ${{ inputs.batch }}
+          IN_PUBKEY: ${{ inputs.pubkey }}
+          IN_NONCE: ${{ inputs.nonce }}
+          IN_BRANCH: ${{ inputs.branch }}
+          IN_EXPECT: ${{ inputs.expect }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 python/card_import_actions.py
+
+      - name: 資格情報の写しを消す
+        if: always()
+        run: rm -f "$GITHUB_WORKSPACE"/gha-creds-*.json

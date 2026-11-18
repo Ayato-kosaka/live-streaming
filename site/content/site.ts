@@ -6,7 +6,12 @@ import { RECIPES } from "./recipes";
 export const SITE = {
   name: "あやと島",
   tagline: "あやとと愉快な仲間達",
-  url: "https://live-streaming-d3cac.web.app",
+  /* **正の URL。** canonical・`og:url`・sitemap の `<loc>`・robots.txt・構造化データは
+     全部ここから作る（`app/layout.tsx` の `metadataBase` もここを読む）。
+     古い `live-streaming-d3cac.web.app` は、段 B（`python/data/hosting_stage.json` の `legacy_301`）が
+     入るまで同じ面を配り、入ったあとは島の面だけを 301 でここへ送る（#1202）。
+     見張り（`tools/sprites/ogmeta.mjs`・`python/seo_audit.py`）もこの欄を読む。 */
+  url: "https://ayato-arigato.com",
   /* **ここに時刻を書かない。** `<meta>` は焼かれたまま出るので、画面が出てから
      差し替えられない。旅のあいだ（`content/nights.ts`）は始まる時刻が決まらないので、
      ここは**いつ読んでも本当のこと**だけにする。 */
@@ -178,10 +183,10 @@ export const NOW_FALLBACK = {
 
 /** サイトに出す数字の初期値。/island-api/state の stats で上書きされる。 */
 export const STATS_FALLBACK = {
-  streams: 840,
-  streamDays: 685,
-  comments: 163963,
-  people: 2441,
+  streams: 847,
+  streamDays: 691,
+  comments: 166386,
+  people: 2458,
   /* **歩いた国の数はここに置かない。**「焼き込みから数える」まで来ていたが、
      焼き込みでも足りなかった。この数は**日付で変わる**（旅程を今日で切って
      数える）のに、静的書き出しは焼いた日の数を固める。国境を越えた日の 00:00 から
@@ -202,5 +207,5 @@ export const STATS_FALLBACK = {
      料理が増えるたびに同じことが起きるので、出どころを1つにする。 */
   recipes: RECIPES.length,
   since: "2024-10-28",
-  updatedAt: "2026-11-12",
+  updatedAt: "2026-11-18",
 };

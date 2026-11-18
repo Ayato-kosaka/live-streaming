@@ -1,0 +1,355 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { Panel, StreamCard } from "@/components/ui/Bits";
+import Fold from "@/components/ui/Fold";
+import { COUNTRIES, countryBySlug } from "@/content/countries";
+import { isWalkedCountry } from "@/content/countries";
+import { RECIPES } from "@/content/recipes";
+import { streamsOfCity } from "@/content/cityStreams";
+import { countryStat } from "@/content/countryStats";
+import Flag from "@/components/ui/Flag";
+import Icon from "@/components/ui/Icon";
+import CountryMap from "@/components/atlas/CountryMap";
+import { StayLen, StayOut } from "../parts";
+import CountryGuide from "@/components/nordic/CountryGuide";
+import { nordicCountry } from "@/content/nordic";
+import { TRAVEL_PLACES, travelCrumbs, travelHref, travelShare } from "@/content/travel";
+// 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
+// （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
+import { ArtStamp } from "@/components/streams/Art";
+
+/* 面を持つ国は名簿（`content/travel.ts`）から。歩いた記録の無い国（行く前の案内だけ）は
+   道が固定の面（`app/travel/<国>/page.tsx`）なので、ここには来ない */
+export function generateStaticParams() {
+  return TRAVEL_PLACES.filter((p) => p.country).map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const c = countryBySlug(slug);
+  if (!c) return {};
+  /* 北欧の6か国は、前は行く前の案内（`/nordic/<国>`）が別の題と一文を持っていた。
+     2枚を1枚に寄せたので、題と一文は歩いた記録のほうに揃える（#1201） */
+  return travelShare(slug, { title: c.name, description: c.summary });
+}
+
+const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
+
+/** この面に出す料理の数。これより多い国は、のこりを「作った料理」へ渡す。 */
+const DISHES = 8;
+
+/** 終わった滞在の日数。まだ続いている滞在はここに入れない（画面側で数え直す）。 */
+function closedDays(stays: { from: string; to: string }[]) {
+  const day = 86400000;
+  return stays
+    .filter((s) => s.to)
+    .reduce((n, s) => n + Math.max(1, Math.round((new Date(s.to).getTime() - new Date(s.from).getTime()) / day)), 0);
+}
+
+/**
+ * 国ひとつのページ。
+ *
+ * 上から順に「どこにいたか（地図）→ どんな街か → 何があったか」。
+ * 出来事は畳んでおいて、見出しだけを並べる。開くと本文と配信が出る。
+ * 縦に長い読み物にすると、17カ国ぶんのどれも同じ壁に見えてしまう。
+ */
+export default async function CountryPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const c = countryBySlug(slug);
+  if (!c) notFound();
+  const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
+  const idx = ordered.findIndex((x) => x.slug === c.slug);
+  const prev = ordered[idx - 1];
+  const next = ordered[idx + 1];
+  /**
+   * スタンプに押す「◯カ国目」。**`order` ではなく、国だけを数え直した番号。**
+   *
+   * `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
+   * 1つ振ってある。`/travel` の年表は前からそこを避けて数え直していて
+   * （`app/travel/page.tsx` の `noOf`）、この面だけが `order` を生で押していた。
+   *
+   * イランが表のいちばん後ろにいるあいだは、どちらも同じ数に見えていた。
+   * **北欧の6カ国がその後ろに並んだ日に、初めて1つずれる**——
+   * ポーランドは18番目に歩いた国なのに、`order` は 19 になる。
+   * 同じ面のことを、年表と札が別の数で言うのがいちばん悪い。
+   */
+  const walkedNo =
+    ordered.filter((x) => isWalkedCountry(x.slug)).findIndex((x) => x.slug === c.slug) + 1;
+  const cooked = RECIPES.filter((r) => r.country === c.slug);
+  const towns = [...new Set(c.stays.flatMap((s) => s.cities))];
+  /**
+   * その国での数（`content/countryStats.ts`）。
+   *
+   * 前は `cityStreams` の本数を足していたが、あれは**街ごとの代表**なので
+   * ジョージアが「ここからの配信 6本」と出ていた。実物は 378本。
+   * いちばん長くいた国を、6日いた国と同じ大きさに見せていた。
+   */
+  const stat = countryStat(c.slug);
+  const lives = stat?.lives ?? towns.reduce((n, t) => n + streamsOfCity(c.slug, t).length, 0);
+  /**
+   * いちばん人が集まった日を出すかどうか。
+   *
+   * 2本しか無い国では「いちばん」に意味が無いし、その1本は
+   * すぐ下の「この国であったこと」にもう出ている。同じ回を2回出さない。
+   */
+  const peak =
+    stat && stat.lives >= 3 && !c.highlights.some((h) => h.videoId === stat.top[1]) ? stat : null;
+  /* 出国の日が入っていない滞在。書き出した日で数字が止まるので画面が出てから数え直すが、
+     **次の島へ渡っていれば、そこで止める**（`../parts.tsx` の `StayLen`）。
+     でないと、もう出た国の日数が毎日1ずつ増えつづける。 */
+  const staying = c.stays.find((s) => !s.to);
+  const days = closedDays(c.stays);
+
+  /* 同じ日に同じ題名が2本あるぶんだけ、「その日の何本目か」を控える。
+     読み上げはリンクの字だけを並べて読むので、日付も題名も同じ2枚は
+     1文字も違わずに読まれる（エジプトは 2025-05-10 の1つの題名で6本）。
+     題名は YouTube に実在するものなので直せない
+     （`docs/island-design.md` 1章の唯一の例外）。
+     **ぶつかっていない配信には何も足さない**——どれにも「1本目」が付くと、
+     読み上げがうるさいだけで見分けの役に立たない。
+     数えるのは**この面に出る全部**（街の畳みと、出来事の畳みをまたぐ）。
+     街ごとに数えると、別の街に同じ回が出ている国で取りこぼす
+     （`app/island/[chapter]/streams/page.tsx` と同じ形）。 */
+  const sameDay = new Map<string, string[]>();
+  const seen = (date: string | undefined, videoId: string, title: string) => {
+    const key = `${date ?? ""}\u0000${title}`;
+    const ids = sameDay.get(key) ?? [];
+    if (!ids.includes(videoId)) sameDay.set(key, [...ids, videoId]);
+  };
+  for (const city of towns) for (const v of streamsOfCity(c.slug, city)) seen(v.date, v.videoId, v.title);
+  for (const h of c.highlights) if (h.videoId) seen(h.date, h.videoId, h.title);
+  const nthOf = (date: string | undefined, videoId: string, title: string) => {
+    const ids = sameDay.get(`${date ?? ""}\u0000${title}`);
+    return ids && ids.length > 1 ? ids.indexOf(videoId) + 1 : undefined;
+  };
+
+  return (
+    <PageShell crumbs={travelCrumbs(c.name)}>
+      {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
+          ここは名前と1行だけにする（docs/island-world.md 7.6 の前置きを短く）。 */}
+      <PageHead title={c.name} lead={c.summary} />
+
+      {/* パスポートの1ページ。国の地図・入国のスタンプ・入出国の日付・数字を、
+          1枚の紙に罫で割って収める（docs/ac-reference.md 7章）。
+          17カ国ぶんが同じ型で並ぶので、国ごとの違いが中身だけになる。
+
+          **主役は地図ひとつ。** 本物の図鑑の面は、絵が縦の半分以上を占めていて、
+          そのまわりに何も載っていない（ac-reference 7章 4）。
+          前は 64px の旗と国名と丸い印を1行に並べたうえで、
+          地図を別のパネルに出していた。紙の上でいちばん大きいものが
+          「入国と出国の表」だったので、どこを見ればいいのか言えていなかった。
+
+          旗を大きくして主役にするのは試して、やめた。`Flag` は 20〜30px で
+          読めるように角丸と縁の線を決めてあるので、186px にすると
+          角丸が幅の1割、縁が 7px の灰色の帯になって、旗に見えない。
+
+          日本語の国名はここには出さない。すぐ上の h1 が国名なので、
+          同じ字が2回続く。ここに残すのはローマ字名と地方だけ。 */}
+      <Panel className="apass">
+        <div className="apass-top">
+          <CountryMap slug={c.slug} name={c.name} />
+          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける。
+
+              **国でない面には押さない。** 「イラン（国境まで）」は国境まで
+              歩いた区間で、入国していない（`content/walked.ts` の
+              `isWalkedCountry`）。数のほうはそう数えているのに、ここだけ
+              「18カ国目」と押していた。**数えないと決めたものに順番を振ると、
+              押した印だけが別の数を言う。** */}
+          {isWalkedCountry(c.slug) && (
+            <span className="apass-stamp" aria-hidden>
+              <b>{walkedNo}</b>
+              <i>カ国目</i>
+            </span>
+          )}
+        </div>
+
+        <p className="apass-who">
+          <span className="apass-flag">
+            <Flag slug={c.slug} size={30} />
+          </span>
+          <em>{c.en}</em>
+          <i>{c.region}</i>
+        </p>
+
+        {/* **国でない面では「入国／出国」と書かない。** 「イラン（国境まで）」は
+            国境まで歩いた区間で、入国していない。数からも外し、カ国目の印も
+            押さないと決めた面が、ここだけ「入国 2026/04/29」と言っていた。
+            **1か所を直したら、同じことを別の言い方で言っている場所を探す。** */}
+        <dl className="apass-log">
+          {c.stays.map((st, i) => (
+            <div key={i}>
+              <dt>{isWalkedCountry(c.slug) ? "入国" : "はじまり"}</dt>
+              <dd>{fmt(st.from)}</dd>
+              <dt>{isWalkedCountry(c.slug) ? "出国" : "おわり"}</dt>
+              {/* 出国の欄が空いているのは「まだいる」とは限らない。
+                  次の島へ渡った日で閉じる（`../parts.tsx`） */}
+              <dd>{st.to ? fmt(st.to) : <StayOut slug={c.slug} />}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="apass-num">
+          <div>
+            <b>
+              {staying ? <StayLen slug={c.slug} from={staying.from} plus={days} /> : days.toLocaleString()}
+            </b>
+            <span>いた日数</span>
+          </div>
+          <div>
+            <b>{towns.length}</b>
+            <span>回った街</span>
+          </div>
+          <div>
+            <b>{lives.toLocaleString()}</b>
+            <span>ここからの配信</span>
+          </div>
+          {/* のべではなく、その国にいたあいだに来ていた人。同じ人を何日ぶんも数えない
+              （`.claude/skills/monthly-review/SKILL.md` 3章）。個人別は出さない。 */}
+          {!!stat?.people && (
+            <div>
+              <b>{stat.people.toLocaleString()}</b>
+              <span>来ていた人</span>
+            </div>
+          )}
+          {!!stat?.msgs && (
+            <div>
+              <b>{stat.msgs.toLocaleString()}</b>
+              <span>飛んだコメント</span>
+            </div>
+          )}
+        </div>
+      </Panel>
+
+      {/* この国でいちばん人が集まった日。「盛り上がったところ」は数えれば分かる事実なので、
+          こちらで選ばずに数から出す（`content/countryStats.ts`）。 */}
+      {peak && (
+        <Panel>
+          <h2>いちばん人が集まった日</h2>
+          <div className="scards" style={{ marginTop: "var(--sp-3)" }}>
+            <StreamCard
+              videoId={peak.top[1]}
+              title={peak.top[2]}
+              date={peak.top[0]}
+              tag={`${peak.top[3]}人`}
+            />
+          </div>
+        </Panel>
+      )}
+
+      <Panel>
+        <h2>行った街</h2>
+        <div className="cities">
+          {towns.map((city) => {
+            const vids = streamsOfCity(c.slug, city);
+            if (!vids.length) {
+              return (
+                <div key={city} className="city is-quiet">
+                  <span className="city-head">
+                    <b>{city}</b>
+                    <i>配信はのこっていない</i>
+                  </span>
+                </div>
+              );
+            }
+            return (
+              <details key={city} className="city">
+                <summary className="city-head">
+                  <b>{city}</b>
+                  <i>{vids.length}本の配信</i>
+                </summary>
+                <div className="scards">
+                  {vids.map((v) => (
+                    <StreamCard
+                      key={v.videoId}
+                      videoId={v.videoId}
+                      title={v.title}
+                      date={v.date}
+                      nth={nthOf(v.date, v.videoId, v.title)}
+                    />
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      </Panel>
+
+      <Panel>
+        <h2>この国であったこと</h2>
+        <div className="hlist">
+          {c.highlights.map((h, i) => (
+            <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
+              <p>{h.note}</p>
+              {h.videoId && (
+                <div className="scards">
+                  <StreamCard
+                    videoId={h.videoId}
+                    title={h.title}
+                    date={h.date}
+                    nth={nthOf(h.date, h.videoId, h.title)}
+                  />
+                </div>
+              )}
+            </Fold>
+          ))}
+        </div>
+      </Panel>
+
+      {cooked.length > 0 && (
+        <Panel>
+          <h2>この国で作ったごはん</h2>
+          {/* 押せる札は 48px＋厚み6px なので、1品で1行 48px 使う。
+              ジョージアは25品あって、これだけで 1,224px（1.5画面）あった。
+              ここは料理の本体ではなく「この国で何を作ったか」を言う場所なので、
+              8品まで出して、その先は「作った料理」に渡す。 */}
+          <div className="chips">
+            {cooked.slice(0, DISHES).map((r) => (
+              <Link key={r.slug} className="chip" href={`/kitchen/${r.slug}`} prefetch={false}>
+                <img className="mini-icon" src={`/sprites/${r.icon}.webp`} alt="" />
+                {r.name}
+              </Link>
+            ))}
+          </div>
+          {cooked.length > DISHES && (
+            <Link prefetch={false} className="tile" href="/kitchen" style={{ marginTop: 12 }}>
+              <ArtStamp size={44} className="tile-icon" />
+              <span className="tile-text">
+                <b>のこりの{cooked.length - DISHES}品も見る</b>
+                <i>作った料理のスタンプ帳に、{c.name}の{cooked.length}品ぜんぶ</i>
+              </span>
+              <Icon name="right" size={16} className="tile-go" />
+            </Link>
+          )}
+        </Panel>
+      )}
+
+      {/* 行く前に調べたこと。**北欧の6か国だけ**、前は別の面（`/nordic/<国>`）に立っていた。
+          同じ国が2枚に割れて、互いにリンクも無かったので、歩いた記録の下へ寄せた（#1201）。
+          部品は向こうの面のものをそのまま並べている（`components/nordic/CountryGuide.tsx`） */}
+      {nordicCountry(c.slug) && <CountryGuide slug={c.slug} />}
+
+      <nav className="pager">
+        {prev ? (
+          <Link href={travelHref(prev.slug)} prefetch={false}>
+            <Icon name="right" size={13} className="is-flip" />
+            <Flag slug={prev.slug} size={20} />
+            {prev.name}
+          </Link>
+        ) : (
+          <span />
+        )}
+        {next ? (
+          <Link href={travelHref(next.slug)} prefetch={false}>
+            <Flag slug={next.slug} size={20} />
+            {next.name}
+            <Icon name="right" size={13} />
+          </Link>
+        ) : (
+          <span />
+        )}
+      </nav>
+    </PageShell>
+  );
+}

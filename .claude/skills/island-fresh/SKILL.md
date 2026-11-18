@@ -311,9 +311,28 @@ python python/build_voices.py --sql --since 2026-08-20    # 候補を引く SQL
 python python/build_voices.py --dump /tmp/voices_cand.json --rows /tmp/voices_rows.json
 ```
 
+**MCP が無い箱**（2026-11-17 はそうだった）は、読むのを手元でやって、
+選んだ行だけを Actions に引かせる。`chat.txt` は同じ `chat_messages` の本文なので、
+読んで選ぶのはこれで足りる。足りないのは名前・アイコン・イベントIDだけ:
+
+```bash
+python python/build_voices.py --chat --since 2026-11-15   # 候補に指紋を付けて出す（載っている声は「済」）
+python3 python/sealed_run.py voices_sealed \
+  '{"since":"2026-11-15","pick":["<指紋>", …]}' --out /tmp/voices_rows.json   # 選んだ行だけ、封をして返る
+```
+
+`--since` は `voices.ts` のいちばん新しい日。指紋で指すのは、ARGS が公開のログに出るから
+（本文も名前も渡さない）。返った `rows` の `h` は指紋なので置かない。
+
 読んで選び、`python/voices_picks.json` の `picks` に**行をそのまま**足す
 （`d` `v` `e` `a` `i` `m`）。**`a`（名前）と `i`（アイコン）は手で書かない。**
-並び順がそのまま画面に出る順。**同じ人ばかりにならないように見る**（いま11件で最多3件）。
+並び順がそのまま画面に出る順で、**頭の4件だけが開いて出る**（`/about` の `VOICE_OPEN`）。
+**同じ人ばかりにならないように見る**（いま20件で最多4件）。
+
+**`:sparkles:` のような字の絵文字が入った声は選ばない。** YouTube の絵文字は
+`chat_messages` に名前のまま入っていて、吹き出しにもそのまま字で出る。
+本文は直せないので、入っていない声から選ぶ。名前が本名に見える人・
+住まいや勤めが読める声（「夜勤中なので」）も選ばない。
 
 ```bash
 python python/build_voices.py --build

@@ -362,6 +362,23 @@ localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 `/cards/mine` には残っていること・**写真に入れられる人が1人も変わらない**
 ことは `node functions/selftest/cards_public_selftest.mjs`。
 
+### 3.1 写真の取り込み（`/cardimport/…`。あやとだけ）
+
+中身は `functions/src/cardImport.ts`。入出力と状態の決まりは
+[`card-import.md`](./card-import.md) の2〜3章が正。
+
+| メソッド | パス | 何を |
+| --- | --- | --- |
+| `GET` | `/cardimport` | 取り込みの一覧と、いちばん新しい（`?batch=`）回の候補 |
+| `GET` | `/cardimport/img/<sha>` | 候補の中身（webp）。`?s=t` で一覧用。`Cache-Control: private` |
+| `POST` | `/cardimport/decide` | 外す／戻す（candidate ⇄ excluded だけ） |
+| `POST` | `/cardimport/calib` | 認識合わせの答え |
+| `POST` | `/cardimport/register` | `max` 枚まで登録（手で貼るのと同じ `saveEventImage`。**1日120枚の枠は使わない**）。`dryRun` は1バイトも書かない |
+| `POST` | `/cardimport/put` | 取り込み（Actions）が候補を私有の置き場に置く |
+
+**枝の入口で `ownerUid` を1回見て、どの口もそこで 403。**
+確かめは `node functions/selftest/card_import_selftest.mjs`。
+
 ## 4. 付箋
 
 **入れ物は1つ（`islandNotes`）で、口が2つある。** 画面が切り替わっている途中の日に、

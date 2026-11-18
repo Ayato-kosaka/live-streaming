@@ -7,7 +7,7 @@
     "アイコンの寸法は焼くときに直す（build_voices.py の ICON_PX）ので、s32 のままでよい。",
     "本文は1文字も直さない。誤字も全角カンマもそのまま。直した瞬間に引用ではなくなる。",
     "名前が出るようになったので、同じ人ばかりにならないように見ている。",
-    "いまは14件で、いちばん多い人が3件。"
+    "いまは20件で、いちばん多い人が4件。"
   ],
   "picks": [
     {
@@ -19,12 +19,12 @@
       "m": "新参者ですが、あやとさんのお人柄とイケメンぷりにファンになりました。これからもあやとさんの魅力一杯の配信を楽しませて下さいね"
     },
     {
-      "d": "2026-09-03",
-      "v": "5-1bHix5X1s",
-      "e": "ChwKGkNNdmQzX19IMHBZREZWSEtMUUFkREljQm9n",
-      "a": "@dekobokov6229",
-      "i": "https://yt4.ggpht.com/TBVbh4mgVwZC5oTx0QDAV1XspuVsfsWFiiI-j1IL7WVfd4lBU59qw_zH0aMO5b6k5fSfRMqW=s32-c-k-c0x00ffffff-no-rj",
-      "m": "あやとさんの人柄がいいんだね。"
+      "d": "2026-09-30",
+      "v": "cpOZCgtD4GI",
+      "e": "ChwKGkNLU2Eyc1MtbHBjREZlQVlyUVlkYTJ3cW1B",
+      "a": "@ゆずたつ-q3n",
+      "i": "https://yt4.ggpht.com/GYd3209Y07xARRocOJMo9ZMSWW7U6hqFRA_Qhr77WuMsgq2OG4g42JTSsZGCyxOWYEKfz4FIBQ=s32-c-k-c0x00ffffff-no-rj",
+      "m": "あやとのすごいところはどこでも暮らしていけるところだよね！あやとが近くにおったら友だちになりたいって思う人めっちゃおると思うわ"
     },
     {
       "d": "2026-07-17",
@@ -43,6 +43,22 @@
       "m": "このアプリアヤトさんが作ったの？凄いな"
     },
     {
+      "d": "2026-09-03",
+      "v": "5-1bHix5X1s",
+      "e": "ChwKGkNNdmQzX19IMHBZREZWSEtMUUFkREljQm9n",
+      "a": "@dekobokov6229",
+      "i": "https://yt4.ggpht.com/TBVbh4mgVwZC5oTx0QDAV1XspuVsfsWFiiI-j1IL7WVfd4lBU59qw_zH0aMO5b6k5fSfRMqW=s32-c-k-c0x00ffffff-no-rj",
+      "m": "あやとさんの人柄がいいんだね。"
+    },
+    {
+      "d": "2026-10-19",
+      "v": "misSMBhPlkc",
+      "e": "ChwKGkNMS0s2OU9peHBjREZkRG41d01kd0g4Wk13",
+      "a": "@さおり-k1n",
+      "i": "https://yt4.ggpht.com/ytc/AIdro_mjnA6ZE9iNXl4mk79i6juy6mECoHsRFNngkA-_B7OHfXgXIKpWjeLVeG3fGIRJhZSqCvwA=s32-c-k-c0x00ffffff-no-rj",
+      "m": "この楽しくて心地いい、あやとさんの配信に、もっと沢山の人に気づいて欲しいよね"
+    },
+    {
       "d": "2026-02-11",
       "v": "u2bIxRNKa6g",
       "e": "ChwKGkNMS1U1N1BEMFpJREZSY19yUVlkWk4wRE93",
@@ -59,6 +75,14 @@
       "m": "あやとくんは，日本に帰らずずーっと旅してるのは、ほんとすごいよね"
     },
     {
+      "d": "2026-10-16",
+      "v": "E2oGYjnVQSA",
+      "e": "ChwKGkNOVzNyc1h0dnBjREZUVENMUUFkdU9vNU1n",
+      "a": "@Omacha_おまっちゃ",
+      "i": "https://yt4.ggpht.com/2WQC76YKBEVs_3CSgsSSn_H8Mw7YtgXNTmfJMyZVLdoO-HMHx8GhXoAQXrolFu6HczEEr3sGVr8=s32-c-k-c0x00ffffff-no-rj",
+      "m": "あやとん、なんか可愛いな、愛されキャラだな"
+    },
+    {
       "d": "2026-05-16",
       "v": "c-ogYrwX8iA",
       "e": "ChwKGkNJenlfTXVMdnBRREZlckRMUUFkbDVNVkR3",
@@ -73,6 +97,14 @@
       "a": "@Blackcoffee-j5h",
       "i": "https://yt4.ggpht.com/ytc/AIdro_l5ZIbBEgwtZgFkpa5rNV02u-8Vx6YggfmL2j0PeAXobTQsCm2wmmfwdUlmilBjHqr4mA=s32-c-k-c0x00ffffff-no-rj",
       "m": "あやとさんの関西弁と言葉選びがね、本当に気持ち良くて癒されるね。同じ関西人だから嬉しくてね。"
+    },
+    {
+      "d": "2026-09-16",
+      "v": "Xvdk_P4gKoU",
+      "e": "ChwKGkNNbXY4TFRGODVZREZVRTFkZ1lkLTlvRVNn",
+      "a": "@よつば-p7g",
+      "i": "https://yt4.ggpht.com/YDXWZGANa4z_EcQbA3iV7Qu9OBL7hYi4j847cdvnCjJk5srLrAlOdbaOM5sqXQuhzC5xoO5uNA=s32-c-k-c0x00ffffff-no-rj",
+      "m": "あやとさん対応力凄いですわ！"
     },
     {
       "d": "2026-07-12",
@@ -129,6 +161,14 @@
       "a": "@aoi1685",
       "i": "https://yt4.ggpht.com/7kIqlftaj8J6wMIiqSVp8-0QP72rbfrbnEkZYFZ58LI0o6SKSYID1enifwQrpf6JSs_-7xZCk9U=s32-c-k-c0x00ffffff-no-rj",
       "m": "ちょっと旅行してくるーから2年ってすごい"
+    },
+    {
+      "d": "2026-11-15",
+      "v": "hJ6vFAGX3rI",
+      "e": "ChwKGkNLZTVyWm1GaXBnREZhelF3Z1FkYXc4bnFn",
+      "a": "@さおり-k1n",
+      "i": "https://yt4.ggpht.com/ytc/AIdro_mjnA6ZE9iNXl4mk79i6juy6mECoHsRFNngkA-_B7OHfXgXIKpWjeLVeG3fGIRJhZSqCvwA=s32-c-k-c0x00ffffff-no-rj",
+      "m": "こんばんは　昨日のXmasマーケットは、あやとさん幸せいっぱいな顔でこっちも幸せな気持ちになったよ"
     }
   ]
 }

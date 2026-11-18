@@ -10,7 +10,8 @@
  * 見るのは3つ:
  *
  *   1. 押すと**新しい窓**が開くか（面を離れていないか）
- *   2. その窓の行き先が、**その店の座標**になっているか
+ *   2. その窓の行き先が、**その店の名前で検索した**形になっているか（座標ではない。
+ *      あやと 2026-11-15「座標に飛ばされてよく分かりにくい。検索をかけた状態で渡してほしい」）
  *   3. 出た先が本当に地図か（外へは出られない箱なので、**要求を横取りして
  *      どの URL を取りに行ったか**を見る。中身は Google からは取れない）
  *
@@ -59,11 +60,15 @@ for (const [label, dev] of [
   console.log(`  新しい窓: ${popup ? popup.url() : "開かなかった"}`);
   console.log(`  元の面  : ${p.url().endsWith(`${PATH}.html`) ? "そのまま" : `離れた（${p.url()}）`}`);
   console.log(`  取りに行った先: ${asked[0] ?? "（無し）"}`);
+  const q = popup ? new URL(popup.url()).searchParams.get("query") ?? "" : "";
   const ok =
     popup &&
-    popup.url().startsWith("https://www.google.com/maps/search/?api=1&query=") &&
-    /query=-?\d+\.\d+,-?\d+\.\d+$/.test(popup.url());
-  console.log(`  判定: ${ok ? "座標つきで地図が開いた" : "開いていない"}`);
+    popup.url().startsWith("https://www.google.com/maps/search/?") &&
+    !!name &&
+    q.includes(name) &&
+    !/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/.test(q);
+  console.log(`  検索の字: ${q || "（無し）"}`);
+  console.log(`  判定: ${ok ? "店の名前で検索した地図が開いた" : "開いていない"}`);
   await ctx.close();
 }
 await b.close();

@@ -29,3 +29,33 @@
 /* 読み取りスコープの URL は47文字つづきの1語。柱を細くすると、語の切れ目が
    無いまま紙から出る。ここだけ語の途中で折ってよい、と言う。 */
 .ppol code { overflow-wrap: anywhere; }
+
+/* 最終更新の日。前置きの下に小さく1行。**審査の人がまず探す字**なので、
+   畳んだり紙の奥に置いたりしない。 */
+.ppol .ppol-date {
+  margin: 0;
+  font-size: clamp(12.5px, 3.3vw, 14px);
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+/* 文の中を流れている行き先（Google のポリシー・取り消しの場所・問い合わせ先）。
+   **文の中なので板にしない。** 前の版は宛先が mailto の1本で、`pages.css` の
+   `p > a[href^="mailto:"]` が上下の余白で押しどころを稼いでいた。宛先が
+   YouTube のチャンネルに替わって、行き先は箇条の中にも入るので、同じ手を
+   この面の中だけで当てる（インラインの上下 padding は行の箱を押し広げないので、
+   行送りは1px も動かない）。 */
+.ppol :is(p, li) > a {
+  padding-block: var(--tap-inline);
+  position: relative;
+}
+
+/* 英語の版の入口（前置きの「English」と、審査に出す `/privacy#en`）。
+   着いた先の見出しは紙の上ぶちから `--sp-6` ぶん上へはみ出しているので、
+   何もしないと**見出しの上半分が画面の外**に出る（390px で実測 -12px）。
+   広い幅では看板（93px。`app/css/nordic.css` の `.gchap` と同じ値）が上に
+   貼りついて、見出しごと隠れる（1440px で見出しの位置に看板が来ていた）。 */
+.ppol-en { scroll-margin-top: calc(var(--sp-6) + var(--sp-4)); }
+@media (min-width: 900px) {
+  .ppol-en { scroll-margin-top: calc(93px + var(--sp-6) + var(--sp-4)); }
+}

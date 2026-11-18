@@ -1,0 +1,32 @@
+{
+  "_why": [
+    "Google マイマップの埋め込みの id。あやとの kosaka.ayato のアカウントで作ってある。",
+    "作った手順と、作り直すときの決まりは docs/mymaps.md。",
+    "**ここを手で書き換えて地図を差し替えない。** ピンの中身は python/data/bulgaria/*.json が正で、",
+    "CSV を焼き直して（python/bulgaria_mymaps.py）マイマップに取り込み直す。",
+    "**3枚とも『リンクを知っている全員が閲覧可』が要る。** 非公開に戻すと、面から地図が消える",
+    "（面は壊れず、地図の枠だけが空になる。赤くならないので気づけない）。",
+    "**開いた時点の中心と縮尺（ll / z）はここに書かない。** build_bulgaria.py がピンの広がりから出す",
+    "——手で書いて2回外した（62km のリラ修道院に引っぱられて県ごと写る／市場2つが画面の外）。"
+  ],
+  "maps": [
+    {
+      "which": "see",
+      "mid": "1Tyy1w_82ZIyrC_ww4tJqG-Ur4w620js",
+      "title": "ソフィア｜見たいもの",
+      "pins": 22
+    },
+    {
+      "which": "eat",
+      "mid": "1cQbup6OSUcdMAPsEHL-y_VA5zQjJNlk",
+      "title": "ソフィア｜食べたいもの",
+      "pins": 9
+    },
+    {
+      "which": "buy",
+      "mid": "1aBZCxQ2BHp-ctr1PQbCfIr6H8kx4vWE",
+      "title": "ソフィア｜買いたいもの",
+      "pins": 2
+    }
+  ]
+}

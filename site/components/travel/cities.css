@@ -1,0 +1,47 @@
+/*
+ * 国の面の「どの街へ行った？」（`CityCards`）。街の面の差し色（`guide.css` の `--tg-c`）と同じ赤。
+ * カードは押せるので厚みを付ける（48px 以上で 6px）。
+ */
+
+.tg-cities { margin: var(--sp-5) 0; --tg-c: #c8362b; }
+
+.tg-cities-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--sp-3);
+  font-size: 19px;
+}
+
+.tg-cities-h svg { color: var(--tg-c); }
+.tg-cities ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-4); }
+
+.tg-city {
+  display: grid;
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: #fffdf3;
+  box-shadow: var(--pop);
+  color: var(--ink);
+  text-decoration: none;
+  transition: translate 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+
+.tg-city:active { translate: 0 4px; box-shadow: var(--pop-push); }
+
+.tg-city-ph img { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; object-fit: cover; }
+
+.tg-city-b { display: grid; gap: 2px; padding: var(--sp-3) var(--sp-4); }
+.tg-city-b b { font-size: 19px; }
+.tg-city-b span { font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+
+.tg-city-b em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-style: normal;
+  font-weight: 900;
+  font-size: 13.5px;
+  color: var(--tg-c);
+}

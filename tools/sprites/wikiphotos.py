@@ -24,7 +24,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 SRC = os.path.join(ROOT, "site", "content", "nordic")
 OUT = "/tmp/wiki"
 SKIP = {"citymaps.json", "geo.json", "index.json", "map.json"}
-UA = "ayato-island-shot/1.0 (https://live-streaming-d3cac.web.app)"
+UA = "ayato-island-shot/1.0 (https://ayato-arigato.com)"
 
 
 def urls():

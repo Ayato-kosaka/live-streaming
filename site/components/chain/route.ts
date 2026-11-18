@@ -1,11 +1,10 @@
-import { CHAPTERS, type Chapter } from "@/content/chapters";
+import { CHAPTERS, chapterHref, type Chapter } from "@/content/chapters";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 
 /**
  * 島の行き先は `content/chapters.ts` に移した。**ここからは再輸出だけ。**
  *
- * 中身（いまいる島は `/`、ほかは `/island/<章>`）も、`now` を渡せる理由も
- * あちらの `chapterHref` に書いてある。
+ * 中身（いまいる章でも `/island/<章>`）は、あちらの `chapterHref` に書いてある。
  *
  * 移したのは、このファイルが `chapterStreams.ts`（毎晩焼く大きい表）を読むから。
  * **行き先を1つ引きたいだけの面が、それを束ごと抱き込んでいた。**
@@ -38,15 +37,13 @@ export const ISLE_STREAM_CHAPTERS: Chapter[] = ISLE_CHAPTERS.filter(
 /**
  * `/all` が「章の島の行」を見分けるための表（行き先 → 章の slug）。
  *
- * **いまいる島は `/island/<章>` ではない。トップそのもの**（`chapterHref`）。
- * それを知っているのは日付なので、焼いた一覧（`content/directory.ts`）では
- * 決められない。一覧のほうは全部の章を並べておいて、
- * 画面が出てから行き先を引き直す（`components/chain/AllIsleRow.tsx`）。
+ * **どれが「いまいる島」かは日付で変わる**ので、焼いた一覧（`content/directory.ts`）では
+ * 決められない。一覧のほうは全部の章を並べておいて、いまいる島の行の添え書きだけ
+ * 画面が出てから引き直す（`components/chain/AllIsleRow.tsx`）。
  *
  * これが無かったころ、旅に出ると `/all` だけが `/island/nordic` を
- * 「これから建っていく島」として案内していた。**同じ島が2か所にあり、
- * しかも片方は紙1行の薄い面**という状態が、旅のあいだ17日つづく。
+ * 「これから建っていく島」として案内していた。
  */
 export const ISLE_ROW: Record<string, string> = Object.fromEntries(
-  ISLE_CHAPTERS.map((c) => [`/island/${c.slug}`, c.slug]),
+  ISLE_CHAPTERS.map((c) => [chapterHref(c), c.slug]),
 );

@@ -138,6 +138,15 @@ def run_hook(hook: Path, root: Path, extra: dict[str, str] | None = None
     env = {k: v for k, v in os.environ.items()
            if k not in ("CI", "GITHUB_ACTIONS", "GIT_DIR", "GIT_WORK_TREE")}
     env["SESSION_HOOK_PW_ROOT"] = str(root)
+    # 頭は `待ち-システム` の札を gh で引きに行く（その段は
+    # `session_start_waits_selftest.py` が見る）。ここで本物の GitHub へ64回
+    # 出ないよう、すぐ落ちる偽の gh を PATH の先頭に置く
+    fake = root.parent / "fakebin"
+    if not (fake / "gh").exists():
+        fake.mkdir(exist_ok=True)
+        (fake / "gh").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        (fake / "gh").chmod(0o755)
+    env["PATH"] = f"{fake}{os.pathsep}{env.get('PATH', '')}"
     env.update(extra or {})
     return subprocess.run(["bash", str(hook)], cwd=str(root.parent), env=env,
                           capture_output=True, text=True, timeout=60, check=False)

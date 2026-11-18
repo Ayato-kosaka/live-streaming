@@ -2,7 +2,7 @@ name: 投げ銭アラートのログを見る
 
 # **#1160（11/6・11/8 に投げ銭の演出が出なかった）の再発を、本物の配信のログで見張る。**
 #
-# 見張る期限はここ1か所。過ぎたら何もしない（cron が残っていても1行も読まない・書かない）。
+# 見張る期限はここ1か所。過ぎたら定時の回は何もしない（cron が残っていても1行も読まない・書かない）。手で押した回は読む。
 # 延ばすときはこの1行だけを直す。
 env:
   WATCH_UNTIL: "2026-11-13T23:59:59+09:00"
@@ -79,7 +79,9 @@ jobs:
           set -euo pipefail
           now=$(date -u +%s)
           until=$(date -u -d "$WATCH_UNTIL" +%s)
-          if [ "$now" -gt "$until" ]; then
+          # 期限で止めるのは定時の回だけ。手で押した回は、期限の後でも読む
+          # （期限の直前の配信は、最後の定時の回より後に終わることがある。11/13 がそれだった）
+          if [ "$now" -gt "$until" ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "見張りの期限（$WATCH_UNTIL）を過ぎたので、何もしません" | tee -a "$GITHUB_STEP_SUMMARY"
             echo "GO=0" >> "$GITHUB_ENV"
           else

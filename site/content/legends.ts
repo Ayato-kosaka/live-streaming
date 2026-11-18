@@ -294,12 +294,12 @@ export const LEGENDS: Legend[] = [
     ],
     pages: [
       {
-        href: "/nordic/guide",
+        href: "/island/nordic/guide",
         title: "旅のしおり",
         note: "島のみんなが教えてくれたことを、行く前に読むところと歩きながら引くところに分けて1枚に。",
       },
       {
-        href: "/nordic",
+        href: "/island/nordic",
         title: "北欧ヒッチハイク",
         note: "16日の旅程。どの街で誰に乗せてもらったかが日ごとに残っている。",
       },

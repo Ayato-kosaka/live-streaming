@@ -5,6 +5,7 @@ import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
+import { travelHref } from "@/content/travelPath";
 /* 「あと◯日」の日を引くためだけ。**`content/plans.ts` の `nextPlan()` は
    読まない**——あちらは先の予定が0件になると行ってきた企画を返すので、
    島が過ぎた日からシールを数えることになる（`lib/leadPlan.ts` の注・#673）。 */
@@ -100,7 +101,7 @@ const COVER_R = 410;
 
 /** その旅そのものの入口。中身は章によって変わる */
 function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
-  /* 北欧は、旅の面（`/nordic`）がもうそろっている。**島の中に作り直さない。**
+  /* 北欧は、旅の面（章の島 `/island/nordic` の紙）がもうそろっている。**島の中に作り直さない。**
      しおりも国もあちらにあるので、板からはそこへ送る */
   if (c.slug === "nordic") {
     return {
@@ -116,16 +117,16 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
       size: 62,
       note: "ポーランドから入って、ストックホルムまで。",
       items: [
-        { label: "旅のしおり", sub: "持ち物と、当日の動き", href: "/nordic/guide", icon: "stall" },
+        { label: "旅のしおり", sub: "持ち物と、当日の動き", href: "/island/nordic/guide", icon: "stall" },
         ...NORDIC_COUNTRIES.map((k) => ({
           label: k.name,
           sub: k.catch,
-          href: `/nordic/${k.slug}`,
+          href: travelHref(k.slug),
         })),
       ],
       /* 「なぜ北欧まで行くのか」と書いてあった。**帰ってきたあとも
          出しっぱなしになる字**なので、時点を言わない形にする */
-      more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/nordic" },
+      more: { label: "この旅のこと", sub: "なぜ北欧なのか", href: "/island/nordic#trip" },
     };
   }
   /* **アルバニアの風船は、ここには建てない**（2026-10-11）。
@@ -148,16 +149,19 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
   /* 旅の面を持たない章。**行き先を作らない。**
      数字を板に出して、そこから先は常設の入口に任せる。
 
-     **いまいる国の案内（`/north-macedonia`）だけは、ここに入れる。**
+     **いまいる国の案内だけは、ここに入れる。**
      島に1軒足したかったが、表紙の島は13軒ぶんに詰めてあるので、
      14軒目を建てると寄りで入口が3つ届かなくなった（`COVER_R` の注）。
      行き先を減らさずに軒数を増やさない形が、この板の中。
-     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。 */
+     **字は表から作る**（`spec.ts` の `GUIDES`）——ここに国の名前を書かない。
+     いま居る国が案内の面を持たない日は、この1行ごと出ない（前の国へ戻さない）。 */
   const st = CHAPTER_STATS[c.slug];
   /* **歩いている最中の国も数える**（`content/walked.ts` の `chapterCountries`）。
      章の `countries` は歩き終わってからしか埋まらない。 */
   const countries = chapterCountries(c, today).length;
-  const g = guideOf(c.slug);
+  /* **島を組む日と同じ日で選ぶ。** 日を渡さずに呼んでいたので、ここだけが
+     いつも本物の今日で選んでいて、日を差し替えた確かめがこの1行を素通りしていた */
+  const g = guideOf(c.slug, today);
   return {
     id: "trip",
     label: "この島のこと",

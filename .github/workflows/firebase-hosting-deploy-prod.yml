@@ -98,6 +98,69 @@ jobs:
             exit 0
           fi
           exit "$code"
+      # **#1202 の段 B（古いドメインの島の面を、新しいドメインへ 301）。**
+      # Hosting はホスト名ごとの redirect を書けないので、島を別のサイトに移し、
+      # 古いドメイン（既定のサイト）には「島の面だけ 301」の設定を配る。
+      # 下の配る step（live）は `firebase deploy --only hosting` なので、firebase.json に
+      # 2つ並べておけば1回で両方へ配る。**段は `python/data/hosting_stage.json` で、PR で進める**:
+      #
+      # | island_site | legacy_301 | 配るもの |
+      # | --- | --- | --- |
+      # | 空 | false | いまのまま（firebase.json に1バイトも触らない） |
+      # | 島のサイト名 | false | 島を**両方の**サイトへ（ドメインを移すあいだ。どちらで開いても同じ島） |
+      # | 島のサイト名 | true | 島 → 島のサイト／既定のサイト → 島の面だけ 301 |
+      #
+      # 戻すときは、段のファイルを1つ前の値に戻して配り直す。
+      # 規則は毎回 sitemap から作る（面が増えれば規則も増える。手で書かない）
+      - name: 段を読む（python/data/hosting_stage.json）
+        id: stage
+        run: python3 python/legacy_hosting.py stage | tee -a "$GITHUB_OUTPUT"
+
+      # 島のサイトが無ければ作る。**作れた名前が段の名前と違ったら止める**
+      # （サイト名は Firebase 全体で1つずつ。よそに取られていると別の名前を返されうる）。
+      # 301 の段では、新しいドメインが既定のサイトから外れたのを Hosting の口で確かめてから配る。
+      # 付いたまま 301 を配ると、新しいドメインも自分自身へ 301 する輪になる。読めなかったときも配らない
+      - name: 島のサイトを用意する
+        if: ${{ steps.stage.outputs.island_site != '' }}
+        env:
+          ISLAND_SITE: ${{ steps.stage.outputs.island_site }}
+          LEGACY_301: ${{ steps.stage.outputs.legacy_301 }}
+        run: |
+          set -euo pipefail
+          project="$(jq -r .projects.default .firebaserc)"
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/sa.json"
+          gcloud auth activate-service-account --key-file "$RUNNER_TEMP/sa.json" --quiet
+          rm -f "$RUNNER_TEMP/sa.json"
+          tok="$(gcloud auth print-access-token)"
+          api="https://firebasehosting.googleapis.com/v1beta1/projects/$project/sites"
+          code="$(curl -sS -o site.json -w '%{http_code}' -H "Authorization: Bearer $tok" "$api/$ISLAND_SITE")"
+          if [ "$code" = "404" ]; then
+            code="$(curl -sS -o site.json -w '%{http_code}' -X POST -H "Authorization: Bearer $tok" \
+              -H 'Content-Type: application/json' -d '{}' "$api?siteId=$ISLAND_SITE")"
+            echo "島のサイトを作った（$code）"
+          fi
+          got="$(jq -r '.name // "" | split("/") | last' site.json)"
+          if [ "$code" != "200" ] || [ "$got" != "$ISLAND_SITE" ]; then
+            echo "::error::島のサイトを用意できませんでした（$code）。段の名前 $ISLAND_SITE ／ 返ってきた名前 ${got:-無い}: $(jq -c '.error.message // empty' site.json)"
+            exit 1
+          fi
+          echo "島のサイト: $got（$(jq -r .defaultUrl site.json)）" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$LEGACY_301" = "true" ]; then
+            apex="$(python3 -c 'import sys; sys.path.insert(0, "python"); import legacy_hosting as L; print(L.site_url().split("//")[1])')"
+            doms="$(curl -sS -H "Authorization: Bearer $tok" "$api/$project/customDomains")"
+            if ! echo "$doms" | jq -e '(.customDomains // []) | type == "array"' > /dev/null || echo "$doms" | jq -e '.error' > /dev/null; then
+              echo "::error::既定のサイトの独自ドメインを読めませんでした。301 は配りません"
+              exit 1
+            fi
+            if echo "$doms" | jq -e --arg d "$apex" '(.customDomains // [])[] | select((.name | endswith("/" + $d)) and ((.redirectTarget // "") == ""))' > /dev/null; then
+              echo "::error::$apex がまだ既定のサイトに付いています。301 を配ると輪になるので配りません"
+              exit 1
+            fi
+          fi
+
+      - name: 段に合わせて firebase.json を書く
+        if: ${{ steps.stage.outputs.island_site != '' }}
+        run: python3 python/legacy_hosting.py stage --sitemap dist/sitemap.xml --out firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -173,6 +236,9 @@ jobs:
       # 止まる。**2 では落とさない**——配れてはいるので。
       - name: 無い道が、ちゃんと 404 で返っているか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ steps.stage.outputs.island_site != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/notfound.mjs && code=0 || code=$?
@@ -213,6 +279,9 @@ jobs:
       # 測れなかった理由は警告として残る。
       - name: 配った面が、面として配られているか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ steps.stage.outputs.island_site != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/prodsweep.mjs && code=0 || code=$?
@@ -273,11 +342,29 @@ jobs:
       # **ここは 2 を警告に倒すだけ**（`prodsweep` と同じ形）。
       - name: 配ったカードの欄から、その人のカードぜんぶへ行けるか
         if: ${{ !cancelled() }}
+        env:
+          # 段 B のあとは新しいドメインを見る（古いドメインの島の面は 301 になる）。空なら道具の既定
+          ORIGIN: ${{ steps.stage.outputs.island_site != '' && 'https://ayato-arigato.com' || '' }}
         run: |
           set -uo pipefail
           node tools/sprites/cardgo.mjs && code=0 || code=$?
           if [ "$code" = "2" ]; then
             echo "::warning::本番のカードを数えられませんでした（配るのは済んでいます）"
+            exit 0
+          fi
+          exit "$code"
+
+      # 段 B のあとだけ。古いドメインの島の面が全部 301 で新しいドメインの同じ道へ行き、
+      # OBS・口・ログインの戻り先が 200 のままか（分母つき）
+      - name: 古いドメインの島の面が 301 になっているか
+        if: ${{ !cancelled() && steps.stage.outputs.legacy_301 == 'true' }}
+        run: |
+          set -uo pipefail
+          python3 python/legacy_hosting.py check --base https://live-streaming-d3cac.web.app \
+            --sitemap dist/sitemap.xml > legacy_check.md && code=0 || code=$?
+          tee -a "$GITHUB_STEP_SUMMARY" < legacy_check.md
+          if [ "$code" = "2" ]; then
+            echo "::warning::古いドメインを数えられませんでした（配るのは済んでいます）"
             exit 0
           fi
           exit "$code"

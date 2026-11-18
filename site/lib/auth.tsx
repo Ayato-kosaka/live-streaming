@@ -1,7 +1,7 @@
 "use client";
 
-import type { User } from "firebase/auth";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { Auth, User, UserCredential } from "firebase/auth";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { firebaseAuth } from "@/lib/firebase";
 import { API_BASE, loadMe, type Me } from "@/lib/api";
 
@@ -18,7 +18,7 @@ import { API_BASE, loadMe, type Me } from "@/lib/api";
  * 同意画面の前に「このアプリは確認されていません」という警告が出る。
  * それを隠さず、押す前に説明する。
  *
- * ## firebase/auth は押されてから読む
+ * ## firebase/auth は、ログインのボタンが画面に出てから読む
  *
  * この島は名前もログインも要らずに遊べる。ほとんどの人はログインを押さない。
  * それなのに firebase/auth（85KB・縮めて 23KB）が全ページに乗っていて、実測で
@@ -27,10 +27,21 @@ import { API_BASE, loadMe, type Me } from "@/lib/api";
  * かわりに「この端末は一度ログインした」という印だけを localStorage に置く。
  *   - 印が無い人 … 何も取りにいかない。ログインしていない人として即座に始まる
  *   - 印がある人 … その場で読み込んで、前のログインを引き継ぐ
- *   - 押した人   … そこで読み込む
+ *   - ボタンが画面に出た人 … そこで読み込む（`readySignIn`。押した瞬間に開くため）
+ *   - リダイレクトで戻ってきた人 … その場で読み込んで、結果を受け取る
  *
  * 印だけ消えて Firebase 側のログインが残っている端末では、いったんログアウトに
  * 見える。押せば同じアカウントで戻るので、入れなくなることはない。
+ *
+ * ## 押してから、ポップアップを開くまでに通信を挟まない
+ *
+ * 前は押されてから SDK を取りに行き、届いてからポップアップを開いていた。
+ * iPhone のブラウザは、押した瞬間から間の空いたポップアップを「人が開いた」と
+ * 見なさずに塞ぐ（2026-11-14、あやとのスマホで「ブロックしたポップアップ」と
+ * 「ログインできませんでした」。2回目は SDK が手元に在るので開いた）。
+ * いまはボタンが出た時点で一式を取っておき、押されたらその場で開く。
+ * それでも塞がれたら（押すのが一式より早かった・ポップアップを許さない入れ物）、
+ * 面ごと Google へ移るログイン（リダイレクト）でやり直す。
  */
 
 /** 島でのその人。YouTube のチャンネルと結びついている。 */
@@ -114,6 +125,32 @@ const SIGNED_IN = "ayato-island-signedin";
 function everSignedIn(): boolean {
   try {
     return localStorage.getItem(SIGNED_IN) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * リダイレクトでログインに出ていった印。**戻ってきた面で結果を受け取る合図。**
+ *
+ * 印が無いと、一度もログインしていない端末（上の `SIGNED_IN` が無い）は
+ * 戻ってきても SDK を読まないので、ログインが無かったことになる。
+ * 同じタブの中でだけ要るので sessionStorage に置く（Firebase も同じところで待っている）。
+ */
+const AWAY = "ayato-island-signin-away";
+
+function wentAway(on: boolean) {
+  try {
+    if (on) sessionStorage.setItem(AWAY, "1");
+    else sessionStorage.removeItem(AWAY);
+  } catch {
+    /* 置けない端末では、Firebase のリダイレクトもそもそも戻ってこられない */
+  }
+}
+
+function cameBack(): boolean {
+  try {
+    return sessionStorage.getItem(AWAY) === "1";
   } catch {
     return false;
   }
@@ -203,6 +240,59 @@ async function fetchChannel(accessToken: string) {
   };
 }
 
+/** 押されたら、待たずにポップアップを開くための一式。 */
+type Kit = { auth: Auth; fb: typeof import("firebase/auth") };
+
+/** 届いた一式。**押した処理はここだけを見る**（届いていなければ待つ道へ）。 */
+let kit: Kit | null = null;
+let kitting: Promise<Kit> | null = null;
+
+/**
+ * ログインの一式を先に取っておく。**ログインのボタンが画面に出たときに呼ぶ**（`SignIn.tsx`）。
+ *
+ * ボタンの出ない面では誰も呼ばないので、ログインを使わない人には今までどおり何も乗らない。
+ * 携帯と Safari では、Firebase がこの初期化のついでにポップアップの受け口（iframe）も
+ * 先に開く。押されるまでにそこまで済んでいれば、押してから開くまでに通信が挟まらない。
+ *
+ * 2回目からは同じ約束を返す。取りに行けなかったら捨てて、次に呼ばれたらもう一度。
+ */
+export function readySignIn(): Promise<Kit> {
+  if (!kitting) {
+    const p = Promise.all([firebaseAuth(), import("firebase/auth")]).then(
+      ([auth, fb]) => (kit = { auth, fb }),
+    );
+    p.catch(() => {
+      if (kitting === p) kitting = null;
+    });
+    kitting = p;
+  }
+  return kitting;
+}
+
+const codeOf = (e: unknown) => String((e as { code?: string })?.code ?? e);
+
+/**
+ * ポップアップが開けなかった。**面ごと移るログイン（リダイレクト）でやり直す。**
+ *
+ * `popup-blocked` は、ブラウザが `window.open` を断った。
+ * `operation-not-supported-in-this-environment` は、ポップアップを持たない入れ物
+ * （アプリの中のブラウザなど）。どちらも、リダイレクトなら通る。
+ */
+function popupRefused(e: unknown): boolean {
+  const code = codeOf(e);
+  return code.includes("popup-blocked") || code.includes("operation-not-supported-in-this-environment");
+}
+
+/** 失敗を、画面に出す一言にする。`null` は何も言わない（自分で閉じた・やめた）。 */
+function sayFailed(e: unknown): string | null {
+  const code = codeOf(e);
+  if (code.includes("popup-closed") || code.includes("cancel")) return null;
+  if (code.includes("operation-not-allowed") || code.includes("configuration-not-found")) {
+    return "いまログインを準備している最中です。しばらくしてからまた試してみてください。";
+  }
+  return "ログインできませんでした。もう一度ためしてみてください。";
+}
+
 /**
  * いま入っている人の uid。**フックの外から引くための控え。**
  *
@@ -224,41 +314,127 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<IslandUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** ログインの状態を聞いている口。**1本だけ**（引き継ぎ・押した・戻ってきた、のどれから始まっても） */
+  const off = useRef<(() => void) | null>(null);
+  const giveUp = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  /** 押したときに YouTube から取ったチャンネル。Google の表示名より先に出す */
+  const seen = useRef<{ uid: string; channelId: string; name: string } | null>(null);
+  /** 「もう一度」を押されたら増える。読み直しはこれを見て走る（下の `POST /me`） */
+  const [again, setAgain] = useState(0);
+  const reloadMe = useCallback(() => setAgain((n) => n + 1), []);
+
+  const watch = useCallback((k: Kit) => {
+    if (off.current) return;
+    off.current = k.fb.onAuthStateChanged(k.auth, (u) => {
+      clearTimeout(giveUp.current);
+      currentUid = u?.uid ?? null;
+      setFbUser(u);
+    });
+  }, []);
+
+  /* ---------------- 押して入った・戻ってきて入った、のあと ----------------
+   *
+   * ポップアップでもリダイレクトでも、ここから先は同じ。**2か所に書き写さない**
+   * （片方だけ直すと、もう片方のログインだけ「入ったのに名前が出ない」になる）。 */
+  const welcome = useCallback(
+    async (res: UserCredential, k: Kit) => {
+      // ここまで来たら次からは黙って引き継ぐ
+      rememberSignedIn(true);
+      const cred = k.fb.GoogleAuthProvider.credentialFromResult(res);
+      /* チャンネルが読めなくても、ログインは済んでいる。**失敗に倒さない** */
+      const channel = cred?.accessToken ?
+        await fetchChannel(cred.accessToken).catch(() => null) :
+        null;
+      const idToken = await res.user.getIdToken();
+      /* サーバー側にも「この人が来た」と伝えておく。
+         **送るのは合言葉（`ytToken`）で、チャンネルIDではない。**
+         長いあいだ、ここで取った `channelId` をそのまま送って、
+         サーバーはそれを確かめずに `islandUsers` へ書いていた。
+         チャンネルIDは公開の値なので、島にログインできる人なら
+         誰でも他人のIDを名乗れて、名乗った先では他人のカードが読め、
+         他人のスタンプのことばが上書きできた。
+         いまは `channels?mine=true` を**サーバーが引く**
+         （`functions/src/youtubeOwner.ts`）。
+
+         **`channelId` は、もう送らない。** 新しい口はこれが body に
+         在るだけで 400 を返す（黙って無視すると、塞がったことを外から
+         確かめられなくなるため）。
+
+         だから**配るのは Hosting が先、Functions があと。**
+         そのあいだ（新しい画面 × 古い口）は、古いほうが `channelId` を
+         見つけられないので**結びが1回ぶん増えないだけ**で、
+         いま結んである人は何も変わらない。**開くほうへは倒れない。**
+
+         `channel` は画面の表示（下の `seen`）にだけ使う。 */
+      await fetch(`${API_BASE}/me`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ ytToken: cred?.accessToken ?? undefined }),
+      }).catch(() => null);
+      const uid = res.user.uid;
+      if (channel) {
+        const name = channel.handle || channel.title || "";
+        seen.current = { uid, channelId: channel.channelId, name };
+        // もう出ている人（戻ってきて、引き継ぎのほうが先に済んだ）には、ここで重ねる
+        setProfile((p) =>
+          p && p.uid === uid ? { ...p, channelId: channel.channelId, name: name || p.name } : p,
+        );
+      }
+      /* **入ったことを画面に知らせる。** 前はここで聞いている口が1本も無く
+         （一度も入っていない端末では、引き継ぎの口を開かない）、押して入っても
+         面を開き直すまでログインの前の顔のままだった。 */
+      currentUid = uid;
+      setFbUser(res.user);
+      watch(k);
+      // 結んだあとの自分を読み直す（先に読んだぶんは、結ぶ前の答えのことがある）
+      reloadMe();
+    },
+    [watch, reloadMe],
+  );
 
   useEffect(() => {
+    const back = cameBack();
     // 一度も押していない端末では、ここで何も取りにいかない。
-    if (!everSignedIn()) {
+    if (!everSignedIn() && !back) {
       setFbUser(null);
       return;
     }
-    let off = () => {};
     let gone = false;
     // ログインがまだ有効になっていないと、状態が一度も返ってこないことがある。
     // 待ち続けると画面にログインの入口が出ないので、少し待って諦める。
-    const giveUp = setTimeout(() => setFbUser((v) => (v === undefined ? null : v)), 2500);
+    giveUp.current = setTimeout(() => setFbUser((v) => (v === undefined ? null : v)), 2500);
     (async () => {
+      let k: Kit;
       try {
-        const [auth, { onAuthStateChanged }] = await Promise.all([
-          firebaseAuth(),
-          import("firebase/auth"),
-        ]);
-        if (gone) return;
-        off = onAuthStateChanged(auth, (u) => {
-          clearTimeout(giveUp);
-          currentUid = u?.uid ?? null;
-          setFbUser(u);
-        });
+        k = await readySignIn();
       } catch {
-        clearTimeout(giveUp);
+        clearTimeout(giveUp.current);
         setFbUser(null);
+        return;
+      }
+      if (gone) return;
+      watch(k);
+      if (!back) return;
+      /* リダイレクトで出ていって、戻ってきた。結果を受け取って、押したときと同じ道へ */
+      wentAway(false);
+      setBusy(true);
+      try {
+        /* 返事が来ないまま「つないでいます…」で押せなくならないよう、待つ上限を切る */
+        const res = await withRead(k.fb.getRedirectResult(k.auth), READ_MS * 2);
+        if (res && !gone) await welcome(res, k);
+      } catch (e) {
+        if (!gone) setError(sayFailed(e));
+      } finally {
+        if (!gone) setBusy(false);
       }
     })();
     return () => {
       gone = true;
-      clearTimeout(giveUp);
-      off();
+      clearTimeout(giveUp.current);
+      off.current?.();
+      off.current = null;
     };
-  }, []);
+  }, [watch, welcome]);
 
   useEffect(() => {
     if (!fbUser) {
@@ -266,10 +442,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(fbUser === null ? null : null);
       return;
     }
+    const mine = seen.current?.uid === fbUser.uid ? seen.current : null;
     setProfile({
       uid: fbUser.uid,
-      name: fbUser.displayName ?? "名無しさん",
+      name: mine?.name || (fbUser.displayName ?? "名無しさん"),
       photo: fbUser.photoURL ?? undefined,
+      channelId: mine?.channelId,
     });
   }, [fbUser]);
 
@@ -287,9 +465,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [meRead, setMeRead] = useState<Read>("wait");
   /** 前に口が返した答え。読み直しが通るまでは、これで出し分ける */
   const [knownOwner, setKnownOwner] = useState<boolean | null>(null);
-  /** 「もう一度」を押されたら増える。読み直しはこれを見て走る */
-  const [again, setAgain] = useState(0);
-  const reloadMe = useCallback(() => setAgain((n) => n + 1), []);
 
   /* 端末が覚えている答えは、画面が出てから読む。
      書き出しに焼いた HTML と食い違わせないため（`output: "export"`）。 */
@@ -391,71 +566,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const signIn = useCallback(async () => {
+  /**
+   * 押されたとき。**`async` にしない。ポップアップを開くまでに `await` を置かない。**
+   *
+   * 一式（`readySignIn`）が届いていれば、この呼び出しの中で `signInWithPopup` まで進む。
+   * あいだに通信が1本でも挟まると、iPhone のブラウザは押したことと結びつけずに塞ぐ。
+   * 届く前に押されたときだけ待つ——そのときは塞がれやすいので、下でリダイレクトへ移る。
+   */
+  const signIn = useCallback((): Promise<void> => {
     setBusy(true);
     setError(null);
-    try {
-      const [auth, { GoogleAuthProvider, signInWithPopup }] = await Promise.all([
-        firebaseAuth(),
-        import("firebase/auth"),
-      ]);
-      const provider = new GoogleAuthProvider();
+    const popup = (k: Kit) => {
+      const provider = new k.fb.GoogleAuthProvider();
       provider.addScope(YOUTUBE_SCOPE);
-      const res = await signInWithPopup(auth, provider);
-      // ここまで来たら次からは黙って引き継ぐ
-      rememberSignedIn(true);
-      const cred = GoogleAuthProvider.credentialFromResult(res);
-      const channel = cred?.accessToken ? await fetchChannel(cred.accessToken) : null;
-      const idToken = await res.user.getIdToken();
-      /* サーバー側にも「この人が来た」と伝えておく。
-         **送るのは合言葉（`ytToken`）で、チャンネルIDではない。**
-         長いあいだ、ここで取った `channelId` をそのまま送って、
-         サーバーはそれを確かめずに `islandUsers` へ書いていた。
-         チャンネルIDは公開の値なので、島にログインできる人なら
-         誰でも他人のIDを名乗れて、名乗った先では他人のカードが読め、
-         他人のスタンプのことばが上書きできた。
-         いまは `channels?mine=true` を**サーバーが引く**
-         （`functions/src/youtubeOwner.ts`）。
-
-         **`channelId` は、もう送らない。** 新しい口はこれが body に
-         在るだけで 400 を返す（黙って無視すると、塞がったことを外から
-         確かめられなくなるため）。
-
-         だから**配るのは Hosting が先、Functions があと。**
-         そのあいだ（新しい画面 × 古い口）は、古いほうが `channelId` を
-         見つけられないので**結びが1回ぶん増えないだけ**で、
-         いま結んである人は何も変わらない。**開くほうへは倒れない。**
-
-         `channel` は画面の表示（下の `setProfile`）にだけ使う。 */
-      await fetch(`${API_BASE}/me`, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${idToken}` },
-        body: JSON.stringify({ ytToken: cred?.accessToken ?? undefined }),
-      }).catch(() => null);
-      if (channel) {
-        setProfile((p) =>
-          p ?
-            {
-              ...p,
-              channelId: channel.channelId,
-              name: channel.handle || channel.title || p.name,
-            } :
-            p,
-        );
-      }
-    } catch (e) {
-      const code = String((e as { code?: string })?.code ?? e);
-      if (code.includes("popup-closed") || code.includes("cancelled-popup")) {
-        setError(null);
-      } else if (code.includes("operation-not-allowed") || code.includes("configuration-not-found")) {
-        setError("いまログインを準備している最中です。しばらくしてからまた試してみてください。");
-      } else {
-        setError("ログインできませんでした。もう一度ためしてみてください。");
-      }
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+      return k.fb.signInWithPopup(k.auth, provider).then(
+        (res) => welcome(res, k),
+        (e) => {
+          if (!popupRefused(e)) throw e;
+          /* 塞がれた。面ごと Google へ移って、戻ってきた面で受け取る（上の `cameBack`）。
+             移っていくあいだは「つないでいます…」のまま（ここには戻ってこない） */
+          wentAway(true);
+          return k.fb.signInWithRedirect(k.auth, provider);
+        },
+      );
+    };
+    return (kit ? popup(kit) : readySignIn().then(popup)).then(
+      () => setBusy(false),
+      (e) => {
+        wentAway(false);
+        setError(sayFailed(e));
+        setBusy(false);
+      },
+    );
+  }, [welcome]);
 
   const signOut = useCallback(async () => {
     rememberSignedIn(false);
@@ -465,11 +608,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setKnownOwner(null);
     setMeRead("ok");
     try {
-      const [auth, { signOut: fbSignOut }] = await Promise.all([
-        firebaseAuth(),
-        import("firebase/auth"),
-      ]);
-      await fbSignOut(auth);
+      const k = await readySignIn();
+      await k.fb.signOut(k.auth);
     } catch {
       /* 元からログインしていなければ何もしない */
     }

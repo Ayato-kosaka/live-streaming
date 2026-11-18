@@ -11,6 +11,7 @@ import { STREAM_TYPES } from "@/content/streamTypes";
 import { ALL_APPS } from "@/content/apps";
 import { STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
+import { TRAVEL } from "@/content/travelPath";
 
 /**
  * これまでの棚。「これまで」の章の顔。
@@ -62,11 +63,11 @@ export default function Shelf() {
 
   const boxes: Box[] = [
     {
-      href: "/map",
+      href: TRAVEL,
       mark: "flagpost",
       name: "歩いた国",
       /* **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる
-         （`app/map/page.tsx` の同じ注）。出発した日はもう動かないので、そこだけ言う */
+         （`app/travel/page.tsx` の同じ注）。出発した日はもう動かないので、そこだけ言う */
       note: "日本を出てから、どこをどう通ってきたか",
       /* **焼いた数を出さない。** ここは `STATS_FALLBACK.countries`（＝毎晩焼く
          `COUNTRIES_WALKED`）を出していて、**同じ表紙の名刺の帯が 23、この札が 22**

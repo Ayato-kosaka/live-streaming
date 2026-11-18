@@ -20,6 +20,7 @@
  */
 import { chromium } from "playwright-core";
 import { fromRoot } from "./repo.mjs";
+import { loadRedirects, redirectOf } from "./routemoves.mjs";
 
 const EXE = process.env.PW_CHROME || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const SPORT = process.env.SPORT || "4130";
@@ -53,6 +54,17 @@ const ALLOW = new Map([
   ["ć", "ラテンの c アキュート。写真家の名前（Petar Milošević）の中だけ"],
   ["č", "ラテンの c カロン。北マケドニア語のラテン表記"],
   ["ǵ", "ラテンの g アキュート。北マケドニア語のラテン表記（ǵomleze）"],
+  // スコピエの面（`/travel/north-macedonia/skopje`）と国の面の入口の、見どころの現地のつづり（#1203）。
+  // 2026-11-14 に Zen Maru Gothic の cmap を読んで、4字とも無いことを確かめた（ј Ќ č š と同じ）
+  ["ќ", "キリルの ќе。北マケドニア語の表記（Спомен-куќа＝マザー・テレサ記念館）"],
+  ["џ", "キリルの џе。北マケドニア語の表記（џамија＝モスク）"],
+  ["ž", "ラテンの z カロン。北マケドニア語のラテン表記（džamija）"],
+  ["Ć", "ラテンの C アキュート。出どころの名前（Wikipedia「Ćevapi」）の中だけ"],
+  // スコピエのガイドブック（#1228）。2026-11-15 に書体を焼き直したうえで Zen Maru Gothic の cmap を読み、
+  // 3つの太さとも2字が無いことを確かめた（č š ќ と同じ。焼き直しても入らない）
+  ["Č", "ラテンの C カロン。出どころの名前（Wikivoyage「Skopje/Stara Čaršija」）の中だけ。国の面の入口にも出る"],
+  ["Ḱ", "ラテンの K アキュート。北マケドニア語のラテン表記（Ḱebapi＝ケバピ）"],
+  ["☺", "配信の題の中だけ（題はそのまま出す。island-design 1章の例外）。/travel/north-macedonia/skopje の埋め込み"],
   // バルト3国の字（`/nordic/guide` ほか）。これも書体そのものに無い
   ["ē", "ラトビア語"], ["ņ", "ラトビア語"], ["ķ", "ラトビア語"], ["ā", "ラトビア語"],
   ["ī", "ラトビア語"], ["Š", "ラトビア語"],
@@ -68,14 +80,24 @@ async function main() {
   }
   const b = await chromium.launch({ executablePath: EXE, args: ["--no-sandbox"] });
   let bad = 0;
-  for (const path of paths) {
+  /* 渡された道は**人が打つ道**として読む。引っ越した道（`/north-macedonia` → `/travel/north-macedonia`。#1201）は、
+     本番と同じく `firebase.json` の 301 を通して先の面を測る。書き出しの中を直に開くので、
+     転送を通さないと「無い面」を測って 2 で落ちる（`selftest.yml` が前の道を名指ししている） */
+  const rules = loadRedirects();
+  for (const asked of paths) {
+    const moved = redirectOf(asked, rules);
+    const path = moved ? moved.to : asked;
+    if (moved) console.log(`（${asked} は ${path} へ 301。そちらを測る）`);
     const ctx = await b.newContext({ viewport: { width: 430, height: 932 } });
     const p = await ctx.newPage();
     await p.goto(`http://127.0.0.1:${SPORT}${path}.html`, { waitUntil: "networkidle" });
     /* **畳みを開いてから数える。** 閉じた `<details>` の中の字は
        `innerText` に出てこない（`docs/island-misses.md` の「畳んだ中の絵を数えない」と同じ罠） */
+    /* **窓（`<dialog>`）も開いてから数える。** ガイドブックの面（`components/guidebook/`）は、詳しい字を
+       閉じた窓に焼いてある。閉じた窓の字も `innerText` に出てこない（畳みと同じ罠。#1228） */
     await p.evaluate(() => {
       for (const d of document.querySelectorAll("details")) d.open = true;
+      for (const d of document.querySelectorAll("dialog")) d.setAttribute("open", "");
     });
     await p.evaluate(async () => {
       for (let y = 0; y < document.body.scrollHeight; y += 900) {
