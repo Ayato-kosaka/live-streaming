@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "ls3-qMM0pAE__reference",
+ "mode": "reference",
+ "dest": "ls3-qMM0pAE/reference",
+ "video": "ls3-qMM0pAE",
+ "channel": null,
+ "request": "shorts/requests/island-intro-refs1-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "skipped",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 3,
+  "caption_segments": 0,
+  "transcript_segments": 2,
+  "cuts": 8,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 16
+ },
+ "bytes": {
+  "plain": 797501,
+  "tar_gz": 750361,
+  "encrypted": 750368
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 750368,
+   "sha256": "31d61dc8bed3bce928396028e5a22d0c82e819363b16f7baf908a0871b68ace2"
+  }
+ ],
+ "hmac_sha256": "53971c4c23b1c94ce950ec4bd270b36730e4450a6eacd5ac37dab173f66ddc72",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44296551379",
+ "created_at": "2026-11-18T12:51:47+00:00"
+}
