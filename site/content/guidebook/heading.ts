@@ -1,3 +1,5 @@
+import type { Guidebook } from "./types";
+
 /**
  * 街のガイドの面の見出しの字（h1・`<title>`・表紙に焼く題で同じ字を使う）。
  *
@@ -9,3 +11,12 @@
  */
 export const GUIDE_LABEL = "観光ガイド";
 export const GUIDE_TOPICS = "見どころマップ・やりたいこと・グルメ";
+
+/**
+ * 街の面へのリンクの字（国の面の「行った街」のカード）。h1 と同じ「観光ガイド」と、地図の節が在れば「見どころマップ」。
+ * 島の足もとのリンク（`components/ui/PageShell.tsx`）と同じ形。前のカードは「やりたいこと8選と見どころマップ」で、
+ * 面の題を直した日に古い字が残った（#1228）
+ */
+export function guideCardLabel(g: Pick<Guidebook, "about" | "see">): string {
+  return g.about.areas.length || g.see.map ? `${GUIDE_LABEL}・見どころマップ` : GUIDE_LABEL;
+}
