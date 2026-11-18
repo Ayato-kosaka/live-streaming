@@ -29,6 +29,9 @@ import latvia from "@/content/atlas/c/latvia.json";
 import estonia from "@/content/atlas/c/estonia.json";
 import finland from "@/content/atlas/c/finland.json";
 import sweden from "@/content/atlas/c/sweden.json";
+/* いま歩いている旅の国（`python/build_world_route.py` の `WALKING`）。線は無く、国の場所と首都だけ */
+import northMacedonia from "@/content/atlas/c/north-macedonia.json";
+import bulgaria from "@/content/atlas/c/bulgaria.json";
 
 export type CountryMapData = {
   view: { w: number; h: number };
@@ -72,4 +75,6 @@ export const COUNTRY_MAPS: Record<string, CountryMapData> = {
   estonia,
   finland,
   sweden,
+  "north-macedonia": northMacedonia,
+  bulgaria,
 } as unknown as Record<string, CountryMapData>;

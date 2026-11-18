@@ -102,6 +102,23 @@ export function tripDayWord(days: number): string {
 }
 
 /**
+ * 滞在の長さの、ざっくりした言い方（「1週間ほど」「1か月ほど」）。国の面の一言に使う。
+ *
+ * 日数は国の面の「いた日数」と同じ数えかた（入った日は0日目。`app/travel/parts.tsx` の `StayLen`）。
+ * 同じ面で「6日」と「2週間ほど」が並ばないように、切れ目は7日・14日・21日・30日のまわりに置く。
+ *
+ * @param open まだ続いている滞在か。続いていて日が浅いうちは「まだ数日」と言う
+ */
+export function stayWord(days: number, open = false): string {
+  if (days <= 3) return open ? "まだ数日" : "数日";
+  if (days <= 10) return "1週間ほど";
+  if (days <= 17) return "2週間ほど";
+  if (days <= 24) return "3週間ほど";
+  if (days <= 45) return "1か月ほど";
+  return `${Math.round(days / 30)}か月ほど`;
+}
+
+/**
  * その国を歩いた章。**本線のうち、いちばん新しいもの。**
  *
  * 枝（イランまで歩く）は本線の滞在を閉じる側ではないので見ない。
