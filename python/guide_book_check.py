@@ -287,10 +287,15 @@ class Book:
             if plen(c.get("text", "")) > 60:
                 self.err(f"about.cards({c.get('key')})", f"60字を超える（{plen(c['text'])}字）")
         areas = about.get("areas") or []
-        if not 4 <= len(areas) <= 6:
-            self.err("about.areas", f"エリアは4〜6（{len(areas)}）")
+        # 2026-11-18 に 4〜6 から 2〜6 にした。地区の名前は日本語のガイドの字だけで、分けすぎて見どころの無い地区は
+        # 隣に含める（`docs/guide-copy.md` 5章）。スコピエは日本語の頁の分けかたが「旧市街・新市街」の2つ
+        if not 2 <= len(areas) <= 6:
+            self.err("about.areas", f"エリアは2〜6（{len(areas)}）")
         for a in areas:
             w = f"about.areas({a.get('key')})"
+            # 名前は、日本語のガイドがその一帯をそう呼んでいる頁を持つ（作った呼び名を使わない。`docs/guide-copy.md` 5章）
+            if not a.get("name_src"):
+                self.err(w, f"名前「{a.get('name')}」の出どころ（name_src。日本語のガイドの頁）が無い")
             poly = (a.get("range") or {}).get("polygon") or []
             if not 4 <= len(poly) <= 8:
                 self.err(w, f"範囲の多角形は4〜8点（{len(poly)}点）")

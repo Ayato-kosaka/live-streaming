@@ -18,7 +18,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   "lang": "mk",
   "roman": "Skopje"
  },
- "lead": "石橋の北はオスマンの市場、南は像の広場",
+ "lead": "マザー・テレサが生まれた街",
  "cover": {
   "src": "/travel/north-macedonia/skopje/bridge-960.webp",
   "small": "/travel/north-macedonia/skopje/bridge-480.webp",
@@ -28,8 +28,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   "kind": "card",
   "date": "2026-10-15"
  },
- "title": "スコピエ観光でやりたいこと6選【2026】北マケドニアの首都で旧市街・銅像の広場・マトカ渓谷",
- "description": "北マケドニアの首都スコピエのガイド。やりたいこと6選、見どころ25か所、名物14品、1日の予算。2026年10月に行った配信者の体験つき。マトカ渓谷へは60番のバスで実測49分。",
+ "title": "スコピエ観光でやりたいこと7選【2026年・地図付き】北マケドニア",
+ "description": "北マケドニアの首都スコピエ観光でやりたいこと7選。銅像だらけのマケドニア広場、旧市街のバザール、マザー・テレサ記念館、マトカ渓谷への日帰り、国民食タヴチェ・グラフチェ。見どころマップと、2026年10月に行った配信者の体験つき。",
  "rate": {
   "unit": "デナル",
   "yen": 2.88,
@@ -38,41 +38,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  "about": {
   "cards": [
    {
-    "id": "scupi",
+    "id": "history",
     "icon": "ruins",
     "q": "歴史は？",
-    "a": "1世紀末にローマの町スクピとして築かれ、518年の地震で廃れたのち、ユスティニアヌス1世が建て直した。",
-    "src": [
-     {
-      "name": "Wikipedia「Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     }
-    ]
-   },
-   {
-    "id": "ottoman",
-    "icon": "mosque",
-    "q": "旧市街は、いつの街？",
-    "a": "オスマン帝国が5世紀あまり治めた。旧市街のモスクや隊商宿は、そのころに建ったもの。",
-    "src": [
-     {
-      "name": "Wikipedia「Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikipedia「Old Bazaar, Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Old_Bazaar,_Skopje",
-      "seen": "2026-11-15"
-     }
-    ]
-   },
-   {
-    "id": "tange",
-    "icon": "brick",
-    "q": "建物が新しいのは、なぜ？",
-    "a": "1963年の地震で街の約8割が壊れ、中心部は日本の建築家・丹下健三の計画で建て直された。",
+    "a": "ローマの町スクピに始まり、オスマン帝国が5世紀あまり治めた。1963年の地震のあと、丹下健三の計画で建て直された。",
     "src": [
      {
       "name": "Wikipedia「Skopje」",
@@ -87,19 +56,50 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     ]
    },
    {
-    "id": "skopje2014",
-    "icon": "statue",
-    "q": "像と柱だらけなのは、なぜ？",
-    "a": "広場のまわりの像と柱の建物の多くは、2010〜2014年の計画で建った。費用をめぐり評判は割れる。",
+    "id": "mood",
+    "icon": "oldtown",
+    "q": "どんな雰囲気？",
+    "a": "ヴァルダル川を境に、北はオスマン時代の旧市街、南は地震のあとの新市街。見どころは石橋のまわりに集まる。",
     "src": [
      {
-      "name": "Wikipedia「Macedonia Square, Skopje」",
-      "url": "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
-      "seen": "2026-11-15"
+      "name": "skyticket 観光ガイド「北マケドニアの首都スコピエの観光スポット13選｜マザー・テレサ生誕の地」（2024年9月2日更新）",
+      "url": "https://skyticket.jp/guide/71254/",
+      "seen": "2026-11-18"
      },
      {
-      "name": "Wikipedia「Skopje 2014」",
-      "url": "https://en.wikipedia.org/wiki/Skopje_2014",
+      "name": "Wikivoyage「Skopje」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje",
+      "seen": "2026-11-15"
+     }
+    ]
+   },
+   {
+    "id": "money",
+    "icon": "coin",
+    "q": "お金は？",
+    "a": "通貨はデナル（1ユーロ＝61.3644デナルで固定）。カードはよく使えるが、市場の店は現金だけのことが多い。",
+    "src": [
+     {
+      "name": "Wikipedia「Macedonian denar」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_denar",
+      "seen": "2026-11-14"
+     },
+     {
+      "name": "Wikivoyage「North Macedonia」",
+      "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
+      "seen": "2026-11-15"
+     }
+    ]
+   },
+   {
+    "id": "words",
+    "icon": "phrase",
+    "q": "言葉は？",
+    "a": "マケドニア語で、文字はキリル文字。地元の人向けの店はキリル文字だけのことが多い。観光の仕事の人は英語が上手。",
+    "src": [
+     {
+      "name": "Wikivoyage「North Macedonia」",
+      "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
       "seen": "2026-11-15"
      }
     ]
@@ -120,12 +120,15 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "sv-spas",
      "clock-tower",
      "sultan-murat",
-     "daut-pasha"
+     "daut-pasha",
+     "archaeology",
+     "holocaust",
+     "struggle"
     ],
     "plan": [
-     2,
      1,
-     2
+     1,
+     3
     ],
     "src": [
      {
@@ -142,6 +145,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "OpenStreetMap（Skopje Old Bazaar（historic=district））",
       "url": "https://www.openstreetmap.org/way/1532093164",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "skyticket 観光ガイド「北マケドニアの首都スコピエの観光スポット13選｜マザー・テレサ生誕の地」（2024年9月2日更新）",
+      "url": "https://skyticket.jp/guide/71254/",
+      "seen": "2026-11-18"
      }
     ],
     "body": "モスク・隊商宿・小さな店が、石橋の北の路地に集まる",
@@ -160,67 +168,38 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    },
    {
-    "id": "debar-maalo",
-    "name": "おしゃれエリア",
-    "color": "#ffc4d2",
-    "lead": "並木道にレストラン・バー・カフェが並ぶ、街のボヘミアンな地区",
-    "see": [],
-    "plan": [
-     1,
-     1,
-     1
-    ],
-    "src": [
-     {
-      "name": "Wikivoyage「Skopje/Centar」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "OpenStreetMap（Debar Maalo（place=suburb））",
-      "url": "https://www.openstreetmap.org/node/6239561763",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikivoyage「Skopje」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     }
-    ],
-    "body": "1920年代にデバル地方から移った人たちが住みついた",
-    "local": {
-     "text": "Дебар Маало",
-     "lang": "mk",
-     "roman": "Debar Maalo",
-     "kana": "デバル・マーロ"
-    }
-   },
-   {
     "id": "newtown",
     "name": "新市街",
     "color": "#d9ccf5",
-    "lead": "アレクサンダー大王の像と、像だらけの広場",
+    "lead": "マケドニア広場を中心にした、ヴァルダル川の南",
     "see": [
      "stone-bridge",
      "square",
      "clement",
      "museum",
      "teresa",
-     "porta",
-     "archaeology",
-     "holocaust",
-     "struggle"
+     "porta"
     ],
     "plan": [
      1,
      2,
-     2
+     3
     ],
     "src": [
      {
       "name": "Wikivoyage「Skopje/Centar」",
       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "Wikivoyage「Skopje」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje",
+      "seen": "2026-11-15"
+     },
+     {
+      "name": "skyticket 観光ガイド「北マケドニアの首都スコピエの観光スポット13選｜マザー・テレサ生誕の地」（2024年9月2日更新）",
+      "url": "https://skyticket.jp/guide/71254/",
+      "seen": "2026-11-18"
      },
      {
       "name": "Wikipedia「Skopje」",
@@ -231,9 +210,14 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "name": "OpenStreetMap（Diamond Mall）",
       "url": "https://www.openstreetmap.org/way/1231158369",
       "seen": "2026-11-15"
+     },
+     {
+      "name": "OpenStreetMap（Debar Maalo（place=suburb））",
+      "url": "https://www.openstreetmap.org/node/6239561763",
+      "seen": "2026-11-15"
      }
     ],
-    "body": "マケドニア広場の噴水の上に、高さ14.5mの騎馬像が立つ。2010年代の計画（スコピエ2014）で、像と柱の建物がこの地区にいくつも建った。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている",
+    "body": "広場の噴水の上に、高さ14.5mの騎馬像が立つ。1963年の地震のあとに建て直された中心部で、半分壊れた旧駅舎は、地震を伝える市の博物館になっている。西のデバル・マーロは並木道にレストランとカフェが並ぶ一角で、東には鉄道駅と長距離バスの交通センターがある",
     "local": {
      "text": "Центар",
      "lang": "mk",
@@ -247,39 +231,79 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-15"
      }
     }
-   },
-   {
-    "id": "station",
-    "name": "バスターミナル・鉄道駅",
-    "color": "#a9dcf5",
-    "lead": "鉄道駅と長距離バスが1つの建物に入った交通センター",
-    "see": [],
-    "plan": [
-     3,
-     2,
-     1
-    ],
-    "src": [
-     {
-      "name": "Wikivoyage「Skopje」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje",
-      "seen": "2026-11-15"
-     }
-    ],
-    "body": "駅は丹下健三の設計で、高架の下にバスの乗り場がある。マケドニア広場まで歩いて15〜20分",
-    "local": {
-     "text": "Скопска железничка станица",
-     "lang": "mk",
-     "roman": "Skopska železnička stanica"
-    }
    }
   ]
  },
  "todo": [
   {
+   "id": "square-statues",
+   "title": "銅像だらけのマケドニア広場を歩きたい！",
+   "lead": "噴水の戦士像から凱旋門まで、像をめぐって歩く",
+   "what": "噴水の上に立つ高さ14.5mの騎馬像の広場から、像の並ぶ橋、川向こうのフィリッポス2世像、凱旋門マケドニア門までを歩く。広場とそのまわりの像・噴水・柱の建物の多くは「スコピエ2014」計画で建ち、136の建造物に見積もりで8,000万〜5億ユーロがかかった。費用と歴史の描きかたをめぐって評判が割れている。",
+   "how": "広場は街のまん中。旧市街とは石橋でつながっている。",
+   "time": "",
+   "money": "広場と橋はただ。マケドニア門は中の階段とエレベーターで屋上まで上がれる。",
+   "tip": "芸術の橋には音楽家などの像が29体、文明の橋には28体並ぶ。",
+   "route": "マケドニア広場 → 文明の橋 → カルポシュ蜂起広場（フィリッポス2世像）→ 芸術の橋 → マザー・テレサ記念館 → マケドニア門。",
+   "see": [
+    "square",
+    "stone-bridge",
+    "porta",
+    "teresa"
+   ],
+   "src": [
+    {
+     "name": "Wikivoyage「Skopje/Centar」",
+     "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+     "seen": "2026-11-15"
+    },
+    {
+     "name": "Wikivoyage「Skopje/Stara Čaršija」",
+     "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
+     "seen": "2026-11-15"
+    },
+    {
+     "name": "Wikipedia「Macedonia Square, Skopje」",
+     "url": "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
+     "seen": "2026-11-14"
+    },
+    {
+     "name": "Wikipedia「Skopje 2014」",
+     "url": "https://en.wikipedia.org/wiki/Skopje_2014",
+     "seen": "2026-11-14"
+    },
+    {
+     "name": "Wikipedia「Porta Macedonia」",
+     "url": "https://en.wikipedia.org/wiki/Porta_Macedonia",
+     "seen": "2026-11-14"
+    }
+   ],
+   "pic": {
+    "src": "/travel/north-macedonia/skopje/warrior-top-960.webp",
+    "small": "/travel/north-macedonia/skopje/warrior-top-480.webp",
+    "w": 960,
+    "h": 720,
+    "alt": "マケドニア広場の、騎馬の戦士像をのせた柱と噴水（2026年10月15日）",
+    "kind": "card",
+    "date": "2026-10-15"
+   },
+   "went": {
+    "date": "2026-10-15",
+    "scene": {
+     "v": "CKJvprUMOgA",
+     "t": 690,
+     "date": "2026-10-15"
+    },
+    "story": [
+     "あやとが見つけたのは、左手にショットガン、右手に拳銃の像と、鼻先だけピカピカの牛の像。"
+    ],
+    "short": "frcgM9wiRr8"
+   }
+  },
+  {
    "id": "carsija-walk",
-   "title": "旧市街チャルシヤを歩く",
-   "lead": "隊商宿とモスクの路地を、ビト・パザルの市場まで",
+   "title": "旧市街のバザールに迷い込みたい！",
+   "lead": "オスマン時代のモスクがおよそ30残る市場",
    "what": "石橋を渡った先の旧市街を歩き、オスマン時代の隊商宿（ハン）・モスク・時計塔をめぐって、北の端の市場ビト・パザルまで抜ける。道を作るために一部は壊されたが、それでもバルカンで最大の古い市場。通りごとに金・靴・鍋・服と、商う品が分かれていた。少なくとも12世紀から商いが続き、オスマン時代のモスクがおよそ30残る。",
    "how": "マケドニア広場から石橋を渡ると、旧市街の入口のカルポシュ蜂起広場に出る。",
    "time": "旧市街・城塞・地震のあとの建物を歩いてざっと見るなら1〜2時間。",
@@ -339,121 +363,63 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
    }
   },
   {
-   "id": "square-statues",
-   "title": "像だらけのマケドニア広場を歩く",
-   "lead": "噴水の戦士像から凱旋門まで、スコピエ2014をめぐる",
-   "what": "噴水の上に立つ高さ14.5mの騎馬像の広場から、像の並ぶ橋、川向こうのフィリッポス2世像、凱旋門マケドニア門までを歩く。広場とそのまわりの像・噴水・柱の建物の多くは「スコピエ2014」計画で建ち、136の建造物に見積もりで8,000万〜5億ユーロがかかった。費用と歴史の描きかたをめぐって評判が割れている。",
-   "how": "広場は街のまん中。旧市街とは石橋でつながっている。",
-   "time": "",
-   "money": "広場と橋はただ。マケドニア門は中の階段とエレベーターで屋上まで上がれる。",
-   "tip": "芸術の橋には音楽家などの像が29体、文明の橋には28体並ぶ。",
-   "route": "マケドニア広場 → 文明の橋 → カルポシュ蜂起広場（フィリッポス2世像）→ 芸術の橋 → マザー・テレサ記念館 → マケドニア門。",
+   "id": "teresa",
+   "title": "マザー・テレサ記念館を訪ねたい！",
+   "lead": "マザー・テレサが洗礼を受けた聖堂の跡に建つ",
+   "what": "マザー・テレサが生まれ育った街の、彼女の記念館。子どものころの写真や身の回りの品、活動の資料が並び、上の階は礼拝堂になっている。マザー・テレサは、1910年から1928年までスコピエで暮らした。記念館は、彼女が洗礼を受けた聖堂の跡に建ち、2009年1月に開いた。",
+   "how": "マケドニア広場から南へ、歩行者の通り（マケドニア通り）を歩いて数分。",
+   "time": "火曜から日曜の10:00〜18:00（最後の入場 17:45）。月曜と祝日は休み。",
+   "money": "入場はただ。館内の案内（ガイド）もただ。",
+   "tip": "1階に売店がある。",
+   "route": "マケドニア広場の像を見たあと、南へ歩いて記念館へ。",
    "see": [
-    "square",
-    "stone-bridge",
-    "porta",
     "teresa"
    ],
    "src": [
     {
-     "name": "Wikivoyage「Skopje/Centar」",
-     "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-     "seen": "2026-11-15"
+     "name": "skyticket 観光ガイド「北マケドニアの首都スコピエの観光スポット13選｜マザー・テレサ生誕の地」（2024年9月2日更新）",
+     "url": "https://skyticket.jp/guide/71254/",
+     "seen": "2026-11-18"
     },
     {
-     "name": "Wikivoyage「Skopje/Stara Čaršija」",
-     "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-     "seen": "2026-11-15"
-    },
-    {
-     "name": "Wikipedia「Macedonia Square, Skopje」",
-     "url": "https://en.wikipedia.org/wiki/Macedonia_Square,_Skopje",
+     "name": "Wikipedia「Memorial House of Mother Teresa」",
+     "url": "https://en.wikipedia.org/wiki/Memorial_House_of_Mother_Teresa",
      "seen": "2026-11-14"
     },
     {
-     "name": "Wikipedia「Skopje 2014」",
-     "url": "https://en.wikipedia.org/wiki/Skopje_2014",
+     "name": "In Your Pocket（Mother Teresa Memorial House）",
+     "url": "https://www.inyourpocket.com/mother-teresa-memorial-house_150514v",
      "seen": "2026-11-14"
     },
     {
-     "name": "Wikipedia「Porta Macedonia」",
-     "url": "https://en.wikipedia.org/wiki/Porta_Macedonia",
-     "seen": "2026-11-14"
+     "name": "マザー・テレサ記念館（公式・来館の案内）",
+     "url": "https://memorialhouseofmotherteresa.com/%d0%b7%d0%b0-%d0%bf%d0%be%d1%81%d0%b5%d1%82%d0%b8%d1%82%d0%b5%d0%bb%d0%b8/",
+     "seen": "2026-11-18"
+    }
+   ],
+   "marks": [
+    {
+     "kind": "price",
+     "text": "入場無料"
     }
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/warrior-960.webp",
-    "small": "/travel/north-macedonia/skopje/warrior-480.webp",
+    "src": "/guide/north-macedonia/skopje/photos/memorial-house-of-mother-teresa-e2a1c14c-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/memorial-house-of-mother-teresa-e2a1c14c-500.webp",
     "w": 960,
-    "h": 1280,
-    "alt": "マケドニア広場。騎馬像をのせた柱と噴水、獅子の像（2026年10月15日）",
-    "kind": "card",
-    "date": "2026-10-15"
-   },
-   "went": {
-    "date": "2026-10-15",
-    "scene": {
-     "v": "CKJvprUMOgA",
-     "t": 690,
-     "date": "2026-10-15"
-    },
-    "story": [
-     "あやとが見つけたのは、左手にショットガン、右手に拳銃の像と、鼻先だけピカピカの牛の像。"
-    ],
-    "short": "frcgM9wiRr8"
-   }
-  },
-  {
-   "id": "kale",
-   "title": "城塞（カレ）から街を見下ろす",
-   "lead": "6世紀の砦の上から、ヴァルダル川と街をながめる",
-   "what": "旧市街の上の丘に残る城塞の城壁と塔を歩き、ヴァルダル川と街を見下ろす。スコピエの谷でいちばん高い丘にあり、街を見わたせる。最初の砦は6世紀に、ローマの町の石で築かれた。",
-   "how": "旧市街から坂を上がる。ムスタファ・パシャ・モスクのすぐ西。",
-   "time": "",
-   "money": "入場はただ。",
-   "tip": "",
-   "route": "旧市街チャルシヤを歩いたあと、最後に上がると、歩いた路地を上から見られる。",
-   "see": [
-    "fortress"
-   ],
-   "src": [
-    {
-     "name": "Wikivoyage「Skopje/Stara Čaršija」",
-     "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-     "seen": "2026-11-15"
-    },
-    {
-     "name": "Wikipedia「Skopje Fortress」",
-     "url": "https://en.wikipedia.org/wiki/Skopje_Fortress",
-     "seen": "2026-11-14"
+    "h": 645,
+    "alt": "マザー・テレサ記念館の外観",
+    "kind": "photo",
+    "credit": {
+     "by": "kallerna",
+     "lic": "CC BY-SA 4.0",
+     "page": "https://commons.wikimedia.org/wiki/File:Memorial_House_of_Mother_Teresa.jpg"
     }
-   ],
-   "pic": {
-    "src": "/travel/north-macedonia/skopje/fortress-960.webp",
-    "small": "/travel/north-macedonia/skopje/fortress-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
-    "kind": "card",
-    "date": "2026-10-18"
-   },
-   "went": {
-    "date": "2026-10-18",
-    "scene": {
-     "v": "TDArug_te90",
-     "t": 9930,
-     "date": "2026-10-18"
-    },
-    "story": [
-     "夕日を見るなら早めに。あやとが日の入りに合わせて行くと門はもう閉まっていて、入口の隣の駐車場から日が沈むのを見た。",
-     "城塞の手前の堀に架かる橋は、あやとが渡るのをやめたほど傷んで見えた。"
-    ],
-    "short": "ieMGyM2QjCA"
    }
   },
   {
    "id": "matka",
-   "title": "マトカ渓谷へ、60番のバスで日帰り",
+   "title": "マトカ渓谷へ日帰りで行きたい！",
    "lead": "岩山と湖の渓谷へ。路線バスで約1時間",
    "what": "トレスカ川をせき止めた湖のまわりの渓谷で、川沿いを歩き、中世の修道院を見て、ボートで洞窟ヴレロへ渡る。国でいちばん人気の外遊びの場所のひとつ。洞窟が10あり、ヴレロ洞窟は「新・世界七不思議（自然）」の候補77に入った。",
    "how": "交通センター（鉄道駅とバスターミナルの建物）の市バス乗り場から60番。あやとは、いちばん大きい中央のバス停が始発だと思い込んで、乗る場所を間違えた。乗る前に、時刻表の出るアプリ SkopjeBus で乗り場を確かめる。",
@@ -513,13 +479,125 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
    }
   },
   {
-   "id": "vodno",
-   "title": "ヴォドノ山へ、街から歩いて登る",
-   "lead": "頂の十字架へは、中腹からロープウェイもある",
-   "what": "街の南西のヴォドノ山を登る。頂（1,066m）には、高さ66mのミレニアム・クロスが立つ。街のどこからでも見える山で、街を見わたす展望の場所。十字架は2002年に、キリスト教2000年を記念して建った。",
-   "how": "ロープウェイなら、市バスで中腹のスレドノ・ヴォドノ（557m）へ行き、そこから頂まで1.75km。ロープウェイは2011年から。",
+   "id": "tavche",
+   "title": "国民食タヴチェ・グラフチェを食べたい！",
+   "lead": "素焼きの土鍋で焼いて、そのまま出てくる豆",
+   "what": "北マケドニアの国民食とされる豆の料理。素焼きの土鍋（タヴァ）に入れて焼き、そのまま出てくる。名前は「タヴァに入った豆」。テトヴォ風が人気。",
+   "how": "1836年に建った伝統家屋の食堂オールド・ハウスは、マケドニアの料理を出す。西のデバル・マーロには、並木道に食堂とバーが並ぶ。スコプスキ・メラクは生演奏のある古典的なマケドニア料理の店。",
    "time": "",
-   "money": "ロープウェイは100デナル（約290円。Wikivoyage の2016年の値段）。",
+   "money": "",
+   "tip": "多くのカファナ（酒も料理も出す昔ながらの食堂）は、生演奏の夜がある。",
+   "route": "",
+   "see": [],
+   "src": [
+    {
+     "name": "Wikipedia「Tavče gravče」",
+     "url": "https://en.wikipedia.org/wiki/Tav%C4%8De_grav%C4%8De",
+     "seen": "2026-11-14"
+    },
+    {
+     "name": "Wikivoyage「Skopje」",
+     "url": "https://en.wikivoyage.org/wiki/Skopje",
+     "seen": "2026-11-15"
+    },
+    {
+     "name": "Wikivoyage「Skopje/Centar」",
+     "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
+     "seen": "2026-11-15"
+    },
+    {
+     "name": "Wikipedia「Kafana」",
+     "url": "https://en.wikipedia.org/wiki/Kafana",
+     "seen": "2026-11-15"
+    }
+   ],
+   "eat": [
+    "tavche"
+   ],
+   "pic": {
+    "src": "/travel/north-macedonia/skopje/kosmos-beans-960.webp",
+    "small": "/travel/north-macedonia/skopje/kosmos-beans-480.webp",
+    "w": 720,
+    "h": 720,
+    "alt": "食堂コスモスの豆の煮込み（2026年10月14日）",
+    "kind": "card",
+    "date": "2026-10-14"
+   },
+   "went": {
+    "date": "2026-10-14",
+    "scene": {
+     "v": "UQdkUSro9Ck",
+     "t": 4470,
+     "date": "2026-10-14"
+    },
+    "story": [
+     "旧市街の食堂コスモスは、あやとが行列に並んで入った店。チェバピと豆の煮込みを食べた。",
+     "11月9日の配信で、あやとはコスモスの豆の煮込みのほうがクリーミーだったと振り返った。"
+    ]
+   }
+  },
+  {
+   "id": "kale",
+   "title": "城塞から街を見下ろしたい！",
+   "lead": "6世紀の砦の上から、ヴァルダル川と街をながめる",
+   "what": "旧市街の上の丘に残る城塞の城壁と塔を歩き、ヴァルダル川と街を見下ろす。スコピエの谷でいちばん高い丘にあり、街を見わたせる。最初の砦は6世紀に、ローマの町の石で築かれた。",
+   "how": "旧市街から坂を上がる。ムスタファ・パシャ・モスクのすぐ西。",
+   "time": "",
+   "money": "入場はただ。",
+   "tip": "",
+   "route": "旧市街チャルシヤを歩いたあと、最後に上がると、歩いた路地を上から見られる。",
+   "see": [
+    "fortress"
+   ],
+   "src": [
+    {
+     "name": "Wikivoyage「Skopje/Stara Čaršija」",
+     "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
+     "seen": "2026-11-15"
+    },
+    {
+     "name": "Wikipedia「Skopje Fortress」",
+     "url": "https://en.wikipedia.org/wiki/Skopje_Fortress",
+     "seen": "2026-11-14"
+    }
+   ],
+   "marks": [
+    {
+     "kind": "price",
+     "text": "入場無料"
+    }
+   ],
+   "pic": {
+    "src": "/travel/north-macedonia/skopje/fortress-960.webp",
+    "small": "/travel/north-macedonia/skopje/fortress-480.webp",
+    "w": 960,
+    "h": 1280,
+    "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
+    "kind": "card",
+    "date": "2026-10-18"
+   },
+   "went": {
+    "date": "2026-10-18",
+    "scene": {
+     "v": "TDArug_te90",
+     "t": 9930,
+     "date": "2026-10-18"
+    },
+    "story": [
+     "夕日を見るなら早めに。あやとが日の入りに合わせて行くと門はもう閉まっていて、入口の隣の駐車場から日が沈むのを見た。",
+     "城塞の手前の堀に架かる橋は、あやとが渡るのをやめたほど傷んで見えた。"
+    ],
+    "short": "ieMGyM2QjCA"
+   }
+  },
+  {
+   "id": "vodno",
+   "title": "ヴォドノ山から街を見わたしたい！",
+   "lead": "頂に高さ66mの十字架。街から歩いて登れる",
+   "what": "街の南西のヴォドノ山を登る。頂（1,066m）には、高さ66mのミレニアム・クロスが立つ。街のどこからでも見える山で、街を見わたす展望の場所。十字架は2002年に、キリスト教2000年を記念して建った。",
+   "how": "ロープウェイは、市バスで行ける中腹のスレドノ・ヴォドノ（557m）から頂まで。2011年に開いた。動いているかは、行く前に確かめる。",
+   "time": "",
+   "money": "",
    "tip": "ロープウェイは月曜と、毎月最後の火曜は動かない。歩くなら、中腹から頂上までの道が人気。尾根づたいにマトカ渓谷まで約18kmを歩く人もいる。",
    "route": "中腹の手前のゴルノ・ネレジ村には、1164年の壁画が残る聖パンテレイモン修道院がある。帰りに寄れる。",
    "see": [
@@ -579,54 +657,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "登る途中で見つけたスーパーは、日曜で休みだった。"
     ]
    }
-  },
-  {
-   "id": "debar-maalo-night",
-   "title": "デバル・マーロのカファナで夕ごはん",
-   "lead": "生演奏のある店で、マケドニア料理とラキヤを",
-   "what": "並木道に食堂とバーが並ぶデバル・マーロで、カファナ（酒も料理も出す昔ながらの食堂）に入って夕ごはんにする。街のボヘミアンな地区で、通りにはレストラン・バー・カフェが数えきれないほど並ぶ。スコプスキ・メラクは生演奏のある古典的なマケドニア料理の店で、街でいちばん知られた伝統料理の店のひとつ。",
-   "how": "マケドニア広場から西へ。聖クリメント・オフリド大聖堂の先。",
-   "time": "",
-   "money": "",
-   "tip": "多くのカファナは生演奏の夜がある。イダディヤは、街でいちばん古いカファナのひとつ。",
-   "route": "夕方に聖クリメント・オフリド大聖堂を見て、そのままデバル・マーロへ歩く。",
-   "see": [
-    "clement"
-   ],
-   "src": [
-    {
-     "name": "Wikivoyage「Skopje/Centar」",
-     "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-     "seen": "2026-11-15"
-    },
-    {
-     "name": "Wikipedia「Kafana」",
-     "url": "https://en.wikipedia.org/wiki/Kafana",
-     "seen": "2026-11-15"
-    },
-    {
-     "name": "Wikivoyage「Skopje」",
-     "url": "https://en.wikivoyage.org/wiki/Skopje",
-     "seen": "2026-11-15"
-    }
-   ],
-   "eat": [
-    "rakija",
-    "tavche"
-   ],
-   "pic": {
-    "src": "/guide/north-macedonia/skopje/photos/starogradska-arhitektura-vo-deba-af1555af-960.webp",
-    "small": "/guide/north-macedonia/skopje/photos/starogradska-arhitektura-vo-deba-af1555af-500.webp",
-    "w": 960,
-    "h": 720,
-    "alt": "デバル・マーロの古い家並み",
-    "kind": "photo",
-    "credit": {
-     "by": "Hip.Hop_MKD ( А.М.-П. Методијевски карадакоски )",
-     "lic": "CC BY-SA 3.0",
-     "page": "https://commons.wikimedia.org/wiki/File:Starogradska_arhitektura_vo_Debar_Maalo%2C_Skopje_na_Ilindenska.jpg"
-    }
-   }
   }
  ],
  "see": {
@@ -673,6 +703,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "着いた日は月曜で、閉まっている店が多かった。次の日は雨で、見られたのは土産物のアクセサリーくらい。晴れた日にもう一度歩くと、通りの様子がまるで違って見えた。"
      ]
     },
+    "geo": {
+     "lat": 42.0018,
+     "lon": 21.43749
+    },
     "area": "carsija"
    },
    {
@@ -715,6 +749,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.996986,
+     "lon": 21.433022
+    },
     "area": "newtown"
    },
    {
@@ -764,6 +802,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "広場の噴水は、あやとがこれまで見た中でいちばん大きいかもしれないほど。銅像の並ぶ橋には、橋だけで20体はいて、30体ほどいそうだった。"
      ],
      "short": "frcgM9wiRr8"
+    },
+    "geo": {
+     "lat": 41.9961,
+     "lon": 21.4315
     },
     "area": "newtown"
    },
@@ -820,6 +862,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      ],
      "short": "ieMGyM2QjCA"
     },
+    "geo": {
+     "lat": 42.000511,
+     "lon": 21.433394
+    },
     "area": "carsija"
    },
    {
@@ -869,6 +915,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "大聖堂は大きく、現代建築のような見た目だった。中は礼拝の最中で、観光客は誰もおらず、みんなが真剣。あやとはじっと様子を見てから、いったん外へ出た。"
      ]
     },
+    "geo": {
+     "lat": 41.998469,
+     "lon": 21.426288
+    },
     "area": "newtown"
    },
    {
@@ -913,6 +963,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.991043,
+     "lon": 21.429005
+    },
     "area": "newtown"
    },
    {
@@ -937,15 +991,15 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Memorial_House_of_Mother_Teresa.jpg"
      }
     },
-    "body": "マザー・テレサは、1910年から1928年までスコピエで暮らした。記念館は、彼女が洗礼を受けた聖堂の跡に建ち、2009年1月に開いた。マケドニア広場のすぐ東。",
+    "body": "マザー・テレサは、1910年から1928年までスコピエで暮らした。記念館は、彼女が洗礼を受けた聖堂の跡に建ち、2009年1月に開いた。マケドニア広場から南へ歩いて数分。",
     "facts": [
      {
       "label": "開いている時間",
-      "text": "9:00〜20:00（土日は14:00まで）"
+      "text": "10:00〜18:00（最後の入場 17:45）。月曜と祝日は休み"
      },
      {
       "label": "入場",
-      "text": "ただ"
+      "text": "ただ（ガイドもただ）"
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%BF%D0%BE%D0%BC%D0%B5%D0%BD+%D0%BA%D1%83%D1%9C%D0%B0+%D0%BD%D0%B0+%D0%9C%D0%B0%D1%98%D0%BA%D0%B0+%D0%A2%D0%B5%D1%80%D0%B5%D0%B7%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -961,9 +1015,14 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-14"
      },
      {
-      "name": "Wikivoyage「Skopje/Centar」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-      "seen": "2026-11-15"
+      "name": "skyticket 観光ガイド「北マケドニアの首都スコピエの観光スポット13選｜マザー・テレサ生誕の地」（2024年9月2日更新）",
+      "url": "https://skyticket.jp/guide/71254/",
+      "seen": "2026-11-18"
+     },
+     {
+      "name": "マザー・テレサ記念館（公式・来館の案内）",
+      "url": "https://memorialhouseofmotherteresa.com/%d0%b7%d0%b0-%d0%bf%d0%be%d1%81%d0%b5%d1%82%d0%b8%d1%82%d0%b5%d0%bb%d0%b8/",
+      "seen": "2026-11-18"
      },
      {
       "name": "Wikimedia Commons（ファイルのページ）",
@@ -971,6 +1030,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.993827,
+     "lon": 21.430809
+    },
     "area": "newtown"
    },
    {
@@ -1024,6 +1087,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "新市街を探して歩いていて、凱旋門とナポレオン風の騎馬像のある広場に出たところで、ここが新市街だと気づいた。"
      ]
     },
+    "geo": {
+     "lat": 41.994435,
+     "lon": 21.432597
+    },
     "area": "newtown"
    },
    {
@@ -1066,6 +1133,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.003056,
+     "lon": 21.436944
+    },
     "area": "carsija"
    },
    {
@@ -1118,6 +1189,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.002,
+     "lon": 21.4354
+    },
     "area": "carsija"
    },
    {
@@ -1259,6 +1334,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.004,
+     "lon": 21.43956
+    },
     "area": "carsija"
    },
    {
@@ -1306,6 +1385,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.000846,
+     "lon": 21.435775
+    },
     "area": "carsija"
    },
    {
@@ -1348,6 +1431,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.001944,
+     "lon": 21.441389
+    },
     "area": "carsija"
    },
    {
@@ -1387,6 +1474,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.0015,
+     "lon": 21.4414
+    },
     "area": "carsija"
    },
    {
@@ -1426,6 +1517,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.9987,
+     "lon": 21.4357
+    },
     "area": "carsija"
    },
    {
@@ -1474,7 +1569,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "newtown"
+    "geo": {
+     "lat": 41.996904,
+     "lon": 21.434472
+    },
+    "area": "carsija"
    },
    {
     "id": "holocaust",
@@ -1518,7 +1617,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "newtown"
+    "geo": {
+     "lat": 41.998498,
+     "lon": 21.433439
+    },
+    "area": "carsija"
    },
    {
     "id": "struggle",
@@ -1562,7 +1665,11 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "area": "newtown"
+    "geo": {
+     "lat": 41.998112,
+     "lon": 21.43301
+    },
+    "area": "carsija"
    },
    {
     "id": "st-pantaleon",
@@ -1604,6 +1711,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.977,
+     "lon": 21.374
+    },
     "line": "中心から5.2km"
    },
    {
@@ -1651,6 +1762,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 41.96502,
+     "lon": 21.394421
+    },
     "line": "中心から4.6km"
    },
    {
@@ -1690,6 +1805,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
+    "geo": {
+     "lat": 42.022388,
+     "lon": 21.418843
+    },
     "line": "中心から3.1km"
    },
    {
@@ -1733,6 +1852,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "story": [
       "岩山と紅葉と川が一度に見えて、水が澄んでいた。川の水に手を入れると、冷たかった。"
      ]
+    },
+    "geo": {
+     "lat": 41.950724,
+     "lon": 21.299731
     },
     "line": "中心から12km"
    }
@@ -4192,7 +4315,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   }
  },
  "published": "2026-11-14",
- "updated": "2026-11-16",
- "hash": "2cae8365390bcd11"
+ "updated": "2026-11-18",
+ "hash": "c0b01fa935542aba"
 }
 /* END GUIDE */;
