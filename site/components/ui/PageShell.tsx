@@ -9,6 +9,7 @@ import HashJump from "./HashJump";
 import { SayRoom } from "./Say";
 import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
 import { LINKS } from "@/content/site";
+import { publicCities } from "@/content/travel";
 
 const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href;
 
@@ -208,6 +209,15 @@ export function IslandFooter() {
           行き先は文ではないので、行から出して1つの押しどころにする。 */}
       {/* どの面からも配信へ1本（#1199 の第2便）。検索と AI から来た人のゴールは、島の中ではなく配信（#1200）。
           島の中で YouTube へのリンクを1本も持たない面が 18/143 あった（`/about` も 0本） */}
+      {/* **行った街のガイドへ、どの面からも1本ずつ**（#332）。ソフィアへ島の中から来るリンクは 6面だけで、
+          検索の側から見ると「島の中で大事にされていない面」だった（`python/seo_score.py` の被リンク）。
+          字は面の中身そのもの（観光ガイドと見どころマップ）。**名簿は `content/travel.ts` の1つ**——公開前の印が
+          付いた街は出ない（印を外した日に、ここにもひとりでに並ぶ） */}
+      {publicCities().map((c) => (
+        <Link key={c.href} href={c.href} prefetch={false} className="ifoot-privacy">
+          {c.name}観光ガイド・見どころマップ
+        </Link>
+      ))}
       {YOUTUBE && (
         <a href={YOUTUBE} className="ifoot-privacy" rel="noopener">
           {UI.youtube}
