@@ -915,28 +915,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Romanian sarmale with polenta.jpg",
-      "by": "Lauren Stephan",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Romanian_sarmale_with_polenta.jpg",
-      "alt": "サルマーレとママリガ、サワークリームの皿",
-      "w": 4032,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Romanian_sarmale_with_polenta.jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Romanian_sarmale_with_polenta.jpg/250px-Romanian_sarmale_with_polenta.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Romanian_sarmale_with_polenta.jpg/500px-Romanian_sarmale_with_polenta.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Romanian_sarmale_with_polenta.jpg/960px-Romanian_sarmale_with_polenta.jpg"
-      }
-     }
-    ]
+    "drawn": "eat"
    }
   },
   {
@@ -989,28 +968,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Papanași.jpg",
-      "by": "Josep Renalias Lohen11",
-      "lic": "CC BY 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Papana%C8%99i.jpg",
-      "alt": "パパナシ。丸いドーナツにサワークリームとジャム",
-      "w": 3700,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Papana%C8%99i.jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Papana%C8%99i.jpg/250px-Papana%C8%99i.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Papana%C8%99i.jpg/500px-Papana%C8%99i.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Papana%C8%99i.jpg/960px-Papana%C8%99i.jpg"
-      }
-     }
-    ]
+    "drawn": "eat"
    }
   },
   {
@@ -1168,23 +1126,23 @@
    "photo": {
     "commons": [
      {
-      "file": "Bucuresti, Romania. ATHENEUL ROMAN. (Interior-Hall) (3) (B-II-m-A-18789).jpg",
-      "by": "Britchi Mirela",
+      "file": "Ateneo Rumano, Bucarest, Rumanía, 2016-05-29, DD 73.jpg",
+      "by": "Diego Delso (1974–)",
       "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Bucuresti,_Romania._ATHENEUL_ROMAN._(Interior-Hall)_(3)_(B-II-m-A-18789).jpg",
-      "alt": "アテネ音楽堂の中。大理石の階段と柱のロビー",
-      "w": 3648,
+      "page": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+      "alt": "白い柱と緑の丸屋根のルーマニア・アテネ音楽堂。前に芝生の庭",
+      "w": 6592,
       "src": [
        {
         "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Bucuresti,_Romania._ATHENEUL_ROMAN._(Interior-Hall)_(3)_(B-II-m-A-18789).jpg",
+        "url": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
         "seen": "2026-11-19"
        }
       ],
       "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/250px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/500px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/960px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg"
+       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/250px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/500px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/960px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg"
       }
      }
     ]

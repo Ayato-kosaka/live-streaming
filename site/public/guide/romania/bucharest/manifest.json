@@ -1,4 +1,47 @@
 {
+ "cover": {
+  "src": "/guide/romania/bucharest/ブカレスト-観光ガイド-1600.webp",
+  "src_small": "/guide/romania/bucharest/ブカレスト-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "ブカレスト観光ガイド「「小パリ」と称えられた街」。晩秋の午後の日に照らされた、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂。前の庭に色づいた木。ブカレストの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。アテネ音楽堂は写真を形の手本として渡した。上の3分の1は空。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/romania/bucharest/bucharest-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "晩秋の午後の日に照らされた、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂。前の庭に色づいた木。ブカレストの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/romania/bucharest/ブカレスト-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/romania/bucharest/ブカレスト-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "ブカレスト観光ガイド「「小パリ」と称えられた街」。晩秋の午後の、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂と色づいた木。ブカレストの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
  "areamap": {
   "src": "/guide/romania/bucharest/ブカレスト-見どころマップ-地区分け-1200.webp",
   "src_small": "/guide/romania/bucharest/ブカレスト-見どころマップ-地区分け-800.webp",

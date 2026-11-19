@@ -340,8 +340,11 @@ class Book:
             if not t.get("points"):
                 self.err(w, "本文の要点が無い")
             ph = t.get("photo") or {}
-            if not ph.get("commons") and not ph.get("card"):
-                self.err(w, "写真の候補が無い")
+            # 料理を食べる体験は、その料理の描いた絵を札にしてよい（`content/guidebook/manifest.ts` の `todoPic`）。
+            # 材料には `photo.drawn: "eat"` と、結んだ食べたいもの（`links.eat`）を持たせる。実在の場所には当てない（#1228 Q1）
+            drawn = ph.get("drawn") == "eat" and bool((t.get("links") or {}).get("eat"))
+            if not ph.get("commons") and not ph.get("card") and not drawn:
+                self.err(w, "写真の候補が無い（料理の体験なら photo.drawn: \"eat\" と links.eat）")
         for sec in ("see",):
             for it in d.get(sec) or []:
                 if "went" not in it:
