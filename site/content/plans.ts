@@ -181,6 +181,16 @@ const NORDIC_UNTIL = "2026-09-27";
 /** 「2026-09-27」→「9月27日」。**企画の文の中で、日を手で書かないため。** */
 const md = (d: string) => `${+d.slice(5, 7)}月${+d.slice(8, 10)}日`;
 
+/**
+ * 国から国へ移る滞在の終わり。**札にそのまま「…終わり」と出る字**（`PlanCard`）。
+ *
+ * この字を持つ企画は、**つぎにこの字を持つ企画が始まる日の前の日**で終わる
+ * （`closeStays`）。字だけ持たせて終わりを人が `done` に入れる形だと、
+ * つぎの国へ移った日に入れ忘れた1日ぶん、表紙の先頭が前の国を指したままになる
+ * （いま行っている企画は日の早い順に先頭へ出るので、あとから始まった国が後ろに回る）。
+ */
+export const NEXT_MOVE = "つぎの国へ移ったら";
+
 export const PLANS: Plan[] = [
   {
     id: "food-wine-fest",
@@ -386,16 +396,56 @@ export const PLANS: Plan[] = [
      同じ見立ては `components/isle/spec.ts` の `GUIDES` にも在って、
      あちらは先に外してあった——**同じ日付を2か所に置くと、片方だけ残る**
      （`docs/island-standards.md` 8）。滞在を1か所に書く作り直しは #1274。
-     つぎの国へ移ったら、移った日を `done` に入れる。
+     終わりは、つぎの国（`romania`）の日から `closeStays` が入れる。ここに `until` を書かない。
 
      **「行ってきます」と書かない。** 札は過ぎたあとも残るので、
      日が過ぎると嘘になる言い方を入れない（`north-macedonia` と同じ）。 */
+  /* ルーマニアへ移る日（あやと 2026-11-19「ルーマニアに21日に移動するんで、
+     ルーマニアのブカレストのページを作って。21日から2週間ぐらい行くと思う。
+     で、これから何するんだろうのところに入れておいて」）。
+
+     **「2週間ぐらい」を `until` に書かない。** ブルガリアの「一週間ほど」を
+     日にして入れていたら、まだ居るのに表紙から札が下がる形だった（#1282）。
+     ブルガリアと同じ `NEXT_MOVE` を持たせる——これで、この日にブルガリアの札が
+     「行ってきた」へ下がり、この札がつぎの国の日まで先頭に残る。
+     行き先の面（ブカレストの街のガイド）は、面を出す PR で `href` を足す。 */
+  {
+    id: "romania",
+    title: "ルーマニア・ブカレストへ移動",
+    when: "2026年11月21日(土)",
+    date: "2026-11-21",
+    endsWhen: NEXT_MOVE,
+    note: "ブルガリアから北どなりのルーマニアへ。首都ブカレストに、2週間ほど。",
+    tags: ["ルーマニア", "ブカレスト", "移動"],
+    place: {
+      name: "ブカレスト",
+      area: "ルーマニア",
+      map: "https://maps.google.com/?q=Bucharest+Romania",
+    },
+    /* 出どころはルーマニア観光局（「小パリ」・1459年の文書）と、議会宮殿の見学の窓口（cic.cdep.ro）。
+       面の中身はガイドの面が正本で、ここに置くのは「どんな街へ行くのか」だけ。
+
+       **字を選んである**（2026-11-19）。`/next` が焼いた書体の束で描けない字を足すと、
+       その面だけ払っていない1本を引く（`fontbudget_selftest` の「記録の古さ」。初めの文は
+       「紀・政・権・総・圏…」で 308KB 引いた）。言い換えて、引くのは「館」の 15KB だけにした。
+       字を足すときは `tools/fonts/weights.json` を測り直す（`docs/country-guide.md` 6-2）。 */
+    about: [
+      "首都ブカレストは、戦前まで「小パリ」と呼ばれた街。パリにならった凱旋門が、いまも大通りに立っている。",
+      "街の真ん中には、チャウシェスクの時代に建てられた「国民の館（議会宮殿）」がある。世界でもとびきり大きな建物で、中はガイドつきの見学で回れる。",
+      "ブカレストの名前が初めて出てくるのは1459年の文書で、出したのはドラキュラのモデルとされるヴラド3世。",
+    ],
+    asks: [
+      "ブカレストのどこに腰を据えるか",
+      "国民の館の見学に入るか",
+      "ドラキュラ城（ブラン城）まで足を延ばすか",
+    ],
+  },
   {
     id: "bulgaria",
     title: "ブルガリア・ソフィアへ移動",
     when: "2026年11月12日(木)",
     date: "2026-11-12",
-    endsWhen: "つぎの国へ移ったら",
+    endsWhen: NEXT_MOVE,
     note: "北マケドニアから東へ。ローマの遺跡と温泉が街の真ん中にある首都ソフィアに、一週間ほど。",
     tags: ["ブルガリア", "ソフィア", "移動"],
     place: {
@@ -513,6 +563,43 @@ export const PLANS: Plan[] = [
        楽しみにする材料は、上の絵と `about` の3行が引き受ける。 */
   },
 ];
+
+/** 「2026-11-21」→「2026-11-20」。暦の上の前の日（時差を挟まない） */
+function dayBefore(d: string): string {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, day - 1)).toISOString().slice(0, 10);
+}
+
+/**
+ * `NEXT_MOVE` を持つ滞在に、**つぎの滞在が始まる日の前の日**を `until` として入れる。
+ *
+ * 国を移る日は、移るときに言われる（あやと 2026-11-18）。言われた日を
+ * つぎの国の企画に書けば、前の国の終わりもそこで決まる。**同じ日を2か所に
+ * 手で書かない**（`docs/island-standards.md` 8）——前の国に `done` を手で入れる形だと、
+ * 移る日が1日ずれたときに片方だけ古くなる。
+ *
+ * つぎの滞在がまだ無い（いちばん新しい国）は、そのまま。日付では終わらない。
+ * `until` か `done` を人が書いてあれば、それが勝つ（触らない）。
+ */
+export function closeStays(rows: Plan[]): Plan[] {
+  const starts = rows
+    .filter((p) => p.endsWhen === NEXT_MOVE && p.date)
+    .map((p) => p.date as string)
+    .sort();
+  return rows.map((p) => {
+    if (p.endsWhen !== NEXT_MOVE || !p.date || p.until || p.done) return p;
+    const next = starts.find((d) => d > (p.date as string));
+    return next ? { ...p, until: dayBefore(next) } : p;
+  });
+}
+
+/* 終わりを入れた1件で、表の同じ場所を置き換える。**表は `PLANS = [` の字のまま置く**——
+   島の道具は表を字で読む（`tools/sprites/tsread.mjs`・`python/ts_read.py`）。
+   別の名前の表を `closeStays` に通して `PLANS` に入れる形にしたら、
+   字で読む口が `PLANS` を1件も見つけられなくなった（`tsread_selftest`）。 */
+closeStays(PLANS).forEach((p, i) => {
+  PLANS[i] = p;
+});
 
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
 
