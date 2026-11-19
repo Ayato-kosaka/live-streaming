@@ -459,7 +459,10 @@ def watch(key: str, dist: Path, streams: Path) -> int:
     good, errs, sums = check_sums(page, rows, units)
     sec_errs, secs = check_sections(page)
     r = gw.check_page(key, page, rows, units)
-    if r is None or not r.seen["一言"] or not r.seen["字"] or not secs or not sums:
+    # 足し算は「1日いくら」を答える記事（物価）だけが持つ。行った日の話の記事（マトカ渓谷。台本の answer.days が空）は
+    # 足し算を持たないので、0 を「見るものが無い」にしない。台本に days が在るのに面で 0 なら、これまでどおり 2
+    want_sums = bool(json.loads(script_path(key).read_text(encoding="utf-8"))["answer"].get("days")) if script_path(key).exists() else True
+    if r is None or not r.seen["一言"] or not r.seen["字"] or not secs or (want_sums and not sums):
         print(f"::error::{key}: 面の本文（article.tg）・節・一言・足し算のどれかが読めない。見るものが無い")
         return 2
     # `guide_watch` の「facts に無い額」のうち、足し直して合った額だけを外す（文言は `check_money` の1つ目の足）
