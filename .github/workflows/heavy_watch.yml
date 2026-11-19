@@ -666,24 +666,6 @@ jobs:
             printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
           fi
 
-      # 一時（この枝だけ）: 借りた写真をランナーから落とす。作業箱の出口は Wikimedia に 429 で締め出されている
-      - name: 借りた写真を落とす（artifact photos）
-        if: ${{ env.GUIDE != '' }}
-        timeout-minutes: 25
-        continue-on-error: true
-        run: |
-          pip install pillow
-          python3 python/guide_photos.py "$GUIDE"
-          ls "site/public/guide/$GUIDE/photos" | wc -l
-
-      - name: 落とした写真を置く
-        if: ${{ always() && env.GUIDE != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: photos
-          path: site/public/guide/${{ inputs.guide }}/photos/
-          if-no-files-found: ignore
-
       - name: site の依存を入れる
         working-directory: site
         run: npm ci --no-audit --no-fund

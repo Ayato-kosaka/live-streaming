@@ -62,7 +62,11 @@ export default function BucharestPage() {
   const drawn = DRAWN;
   /* 札の絵は、描いた絵（料理・土産）→ 借りた写真の順。見たいもの（実在の場所）には描いた絵を当てない
      （#1228 Q1 の A）。決めかたは `dress`（ソフィア・スコピエと同じ） */
-  const g = dress(G, drawn);
+  const dressed = dress(G, drawn);
+  /* 借りた写真が取れていない見たいもの（2026-11-19。Wikimedia が 429 で断った）は、この版では並べない。
+     実在の場所に描いた絵は当てない（#1228 Q1）・字1つの空の札も置かない。マイマップには15か所ぜんぶのピンが在る。
+     写真が取れて材料に戻ったら、ひとりでに並ぶ */
+  const g = { ...dressed, see: { ...dressed.see, items: dressed.see.items.filter((it) => it.pic) } };
   const went = firstWent(g);
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);

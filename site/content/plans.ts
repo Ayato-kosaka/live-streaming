@@ -427,7 +427,7 @@ export const PLANS: Plan[] = [
     endsWhen: "つぎの国へ移ったら",
     href: "/travel/romania/bucharest",
     hrefName: "ブカレストの歩きかたへ",
-    hrefNote: "どんな街か・やりたいこと8選・見どころ・食べもの",
+    hrefNote: "どんな街か・見どころマップ・食べもの",
     note: "ブルガリアから北どなりのルーマニアへ。首都ブカレストに、2週間ほど。",
     tags: ["ルーマニア", "ブカレスト", "移動"],
     place: {
