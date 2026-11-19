@@ -260,6 +260,7 @@ STRUT_FILL = {"0"}
 SOLO = [
     "travel/bulgaria/sofia",
     "travel/north-macedonia/skopje",
+    "travel/romania/bucharest",
 ]
 
 

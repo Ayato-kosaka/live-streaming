@@ -50,8 +50,8 @@ NO_PREF = ("mark", "like", "syrup")
 DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 FID = re.compile(r"^([A-Za-z0-9_-]{11})@(\d+)#([a-z]+)$")
 REF = re.compile(r"^(\d{2})-(\d{2}) (\d+):(\d{2}):(\d{2})$")
-#: スコピエの街とマトカ渓谷が入る枠（南, 北, 西, 東）。外の座標は打ち間違いか、別の街
-BBOX = (41.85, 42.15, 21.20, 21.75)
+#: 座標の枠（南, 北, 西, 東）は国の表（`python/data/guide/cities.json`）の街の `bbox` と、日帰りの遠出の `bbox`。
+#: 外の座標は打ち間違いか、別の街。前はスコピエとマトカ渓谷の枠をここに決め打ちしていた（#1292）
 GUIDE_KEYS = ("airport", "transit", "pay", "sim", "safety", "phrases")
 #: 自由に使えるライセンスだけ。NC（営利不可）・ND（改変不可）・fair use は落とす（docs/country-guide.md 1-2-1）
 LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d|CC BY-SA \d\.\d)$")
@@ -74,6 +74,7 @@ class Book:
         self.d = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else None
         self.rows = self._rows()
         self.towns = self._towns()
+        self.boxes, self.flag, self.cname = self._place()
 
     # ------------------------------------------------------------ 材料
     def _rows(self) -> dict[str, dict]:
@@ -88,6 +89,17 @@ class Book:
                 out[fid] = {"v": d.get("video_id"), "date": d.get("date_local", ""), "country": d.get("country"),
                             "city": d.get("city"), "it": it}
         return out
+
+    def _place(self) -> tuple[list[tuple[float, float, float, float]], str, str]:
+        """国の表から、座標の枠（街と日帰りの遠出）・国旗（ショートの題の頭）・国の名前。"""
+        t = json.loads((self.root / "python/data/guide/cities.json").read_text(encoding="utf-8"))
+        c = (t.get("countries") or {}).get(self.country) or {}
+        city = (c.get("cities") or {}).get(self.city) or {}
+        boxes = [tuple(b) for b in [city.get("bbox")] + [v.get("bbox") for v in (city.get("trips") or {}).values()] if b]
+        return boxes, c.get("flag", ""), c.get("name", self.country)
+
+    def in_box(self, lat: float, lon: float) -> bool:
+        return any(s <= lat <= n and w <= lon <= e for s, n, w, e in self.boxes)
 
     def _towns(self) -> set[str]:
         """行ったことのある街と、その街からの日帰り（cities.json）。ここに無い town は「行った」にできない。"""
@@ -191,8 +203,8 @@ class Book:
             title = self.shorts_known().get(sh)
             if title is None:
                 self.err(where, f"ショート「{sh}」が python/data/shorts.json に無い")
-            elif "🇲🇰" not in title:
-                self.err(where, f"ショート「{sh}」は北マケドニアのショートでない（{title}）")
+            elif not self.flag or self.flag not in title:
+                self.err(where, f"ショート「{sh}」は{self.cname}のショートでない（{title}。国の表の flag「{self.flag}」）")
             basis = {s.get("id"): s for s in ((self.d.get("shorts") or {}).get("items") or [])}.get(sh) or {}
             if not (basis.get("basis") or {}).get("facts"):
                 self.err(where, f"ショート「{sh}」をこの項目に当てた理由（shorts.items の basis と facts）が無い")
@@ -212,9 +224,10 @@ class Book:
         if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
             self.err(where, "座標が数で無い")
             return
-        s, n, w, e = BBOX
-        if not (s <= lat <= n and w <= lon <= e):
-            self.err(where, f"座標 {lat},{lon} がスコピエとマトカ渓谷の枠の外")
+        if not self.boxes:
+            self.err(where, f"国の表（cities.json）の {self.key} に座標の枠（bbox）が無い")
+        elif not self.in_box(lat, lon):
+            self.err(where, f"座標 {lat},{lon} が枠の外（街と日帰りの遠出。cities.json の bbox）")
         if not x.get("coord_src"):
             self.err(where, "座標の出どころ（coord_src）が無い")
 
@@ -305,8 +318,7 @@ class Book:
                 if not (isinstance(p, list) and len(p) == 2):
                     self.err(w, f"多角形の点の形が違う（{p}）")
                     continue
-                s, n, we, e = BBOX
-                if not (s <= p[0] <= n and we <= p[1] <= e):
+                if not self.in_box(p[0], p[1]):
                     self.err(w, f"多角形の点 {p} が枠の外")
             if not (a.get("range") or {}).get("src"):
                 self.err(w, "範囲の出どころが無い")
@@ -362,7 +374,8 @@ class Book:
                 else:
                     self.check_src(g["phrases_src"], "basics.guide(phrases)")
                 for p in ph:
-                    if not all(p.get(k) for k in ("mk", "roman", "kana", "ja")):
+                    # 現地の字の鍵はスコピエの名残で mk。次の街からは local でもよい（#1292）
+                    if not ((p.get("local") or p.get("mk")) and all(p.get(k) for k in ("roman", "kana", "ja"))):
                         self.err("basics.guide(phrases)", f"ひとことの欄が欠けている（{p}）")
         summary = (d.get("basics") or {}).get("summary") or []
         if [s.get("key") for s in summary] != ["season", "safety", "budget", "transit"]:
@@ -543,7 +556,7 @@ class Book:
         grab({k: v for k, v in self.d.items() if k != "shorts"})
         allmk = [s.get("id") for s in (self.d.get("shorts") or {}).get("items") or []]
         used = {s for _, s in short}
-        return f"場面 {len(scene)}項目・ショート {len(short)}項目（北マケドニアのショート {len(allmk)}本のうち付いた {len(used & set(allmk))}本）"
+        return f"場面 {len(scene)}項目・ショート {len(short)}項目（{self.cname}のショート {len(allmk)}本のうち付いた {len(used & set(allmk))}本）"
 
 
 def main(argv: list[str] | None = None) -> int:

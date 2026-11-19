@@ -118,9 +118,11 @@ class Book:
                 raise Stop(f"{key} の {f} が無い（{d / f}）")
         self.g = json.loads((d / "guidebook.json").read_text(encoding="utf-8"))
         self.c = json.loads((d / "compose.json").read_text(encoding="utf-8"))
-        # facts の行は記事と同じ拾いかた（確かめの済んでいないファイルが1本でもあれば止まる）
+        # facts の行は記事と同じ拾いかた（確かめの済んでいないファイルが1本でもあれば止まる）。
+        # 行く前の街（材料の city.pre_trip）は facts が1本も無くても焼く（#1292）
         try:
-            self.b = gb.Baker(key, root=root, streams=streams, script=d / "compose.json")
+            self.b = gb.Baker(key, root=root, streams=streams, script=d / "compose.json",
+                              pre_trip=bool(self.g["city"].get("pre_trip")))
         except gb.Stop as e:
             raise Stop(str(e)) from e
         self.rows = {f"{x['v']}@{x['t']}#{x['it']['kind']}": x for x in self.b.rows}
@@ -221,10 +223,11 @@ class Book:
     def card_by_id(self, cid: str) -> str | None:
         return next((k for k, v in (self.c.get("cards") or {}).items() if v["id"] == cid), None)
 
-    def local(self, loc, lang: str = "mk") -> dict | None:
+    def local(self, loc, lang: str | None = None) -> dict | None:
         if not isinstance(loc, dict) or not loc.get("text"):
             return None
-        out = {"text": loc["text"], "lang": loc.get("lang", lang)}
+        # 言葉の既定は、その街の言葉（材料の city.local.lang）。スコピエの mk を決め打ちしていた（#1292）
+        out = {"text": loc["text"], "lang": loc.get("lang", lang or self.g["city"]["local"]["lang"])}
         if loc.get("roman"):
             out["roman"] = loc["roman"]
         # 読みの仮名。エリアの短い名前（おしゃれエリア）に、現地の呼び名（デバル・マーロ）を添えるのに使う
@@ -362,9 +365,21 @@ class Book:
                 next(x for x in out if x["id"] == pick)["see"].append(it["id"])
         return out
 
+    def center(self) -> dict:
+        """面の中心（遠い見どころの「中心から◯km」とマイマップの枠の起点）。スコピエはマケドニア広場（鍵 square）、
+        無ければ見たいものの rank 1 の1件目。前は build() だけが square を決め打ちしていて、無い街は (0, 0) になった（#1292）"""
+        rank1 = next(s for s in self.g["see"] if s.get("rank") == 1 and "lat" in s)
+        return next((s for s in self.g["see"] if s["key"] == "square"), rank1)
+
+    def rate(self) -> dict:
+        """面に出す円の直しかた。通貨の名前・1ユーロあたりの現地の額・参照レートの日は材料の rate が持つ
+        （スコピエのデナル・eur_mkd・2026-11-13 を決め打ちしていた。#1292）"""
+        r = self.g["rate"]
+        per_eur = r.get("eur_local", r.get("eur_mkd"))
+        return {"unit": r.get("unit", "デナル"), "yen": round(r["eur_jpy"] / per_eur, 2), "date": r.get("date", "2026-11-13")}
+
     def see(self) -> tuple[list[dict], list[dict]]:
-        center = next(s for s in self.g["see"] if s.get("rank") == 1 and "lat" in s)
-        sq = next((s for s in self.g["see"] if s["key"] == "square"), center)
+        sq = self.center()
         items, far = [], []
         for s in self.g["see"]:
             w = f"see({s['key']})"
@@ -544,7 +559,9 @@ class Book:
             own = [p for p in pts if not has_src(p)]
             words = None
             if g.get("phrases"):
-                words = [{"local": {"text": p["mk"], "lang": "mk", "roman": p["roman"], "kana": p["kana"]}, "jp": p["ja"]} for p in g["phrases"]]
+                lang = self.g["city"]["local"]["lang"]
+                words = [{"local": {"text": p.get("local") or p["mk"], "lang": lang, "roman": p["roman"], "kana": p["kana"]}, "jp": p["ja"]}
+                         for p in g["phrases"]]
             lead = c.get("lead")
             if not lead and words:
                 lead = f"{words[0]['local']['text']}（{words[0]['local']['kana']}）＝{words[0]['jp']}"
@@ -621,8 +638,9 @@ class Book:
             if sum(p["yen"] for p in parts) != d["total_yen"]:
                 self.err(f"basics.budget({d['label']})", "内訳の足し算が合計と合わない")
             days.append({"label": d["label"], "parts": parts})
-        extras = [{"label": x["label"], "local": f"{x['den']}デナル", "yen": f"{x['yen']}円", "src": self.src(x.get("src"))}
-                  for x in bud.get("extras") or []]
+        unit = self.rate()["unit"]
+        extras = [{"label": x["label"], "local": f"{x.get('local', x.get('den'))}{unit}", "yen": f"{x['yen']}円",
+                   "src": self.src(x.get("src"))} for x in bud.get("extras") or []]
         note = None
         if bud.get("note") and not has_src(bud["note"]):
             note = self.went("guide", {"key": "budget"}, "basics.budget.note", story_from=[bud["note"]], facts=bud["note"].get("facts"))
@@ -693,8 +711,8 @@ class Book:
     def build(self) -> dict:
         g, c = self.g, self.c
         city_local = g["city"]["local"]["text"]
-        sq_spec = next((s for s in g["see"] if s["key"] == "square"), None)
-        sq = (sq_spec["lat"], sq_spec["lon"]) if sq_spec else (0.0, 0.0)
+        sq_spec = self.center()
+        sq = (sq_spec["lat"], sq_spec["lon"])
         see, far = self.see()
         about = self.about()
         todo = self.todo()
@@ -708,7 +726,14 @@ class Book:
             lead = ""
         else:
             lead = catch[cover["catch"]]["text"]
-        pic = self.card(cover.get("card", ""), "cover")
+        # 表紙の写真は、行った街はその日のカード（組み立ての cover.card）、行く前の街は借りた写真（材料の cover.photo。#1292）。
+        # 描いた表紙が在れば面はそちらを出すので、ここは描いていない日の受け皿と出どころの欄
+        if cover.get("card"):
+            pic = self.card(cover["card"], "cover")
+        else:
+            pic = self.commons((g.get("cover") or {}).get("photo"), "cover")
+            if not pic:
+                self.err("cover", "表紙の写真が無い（組み立ての cover.card か、材料の cover.photo）")
         counts = {"todo": len(todo), "see": len(see), "eat": len(g["eat"]["items"])}
         desc = c["description"]["text"].format(**counts)
         self.check_numbers(desc, self.rows_of(c["description"].get("facts"), "description"), "description",
@@ -731,7 +756,7 @@ class Book:
             "kicker": self.table["countries"][self.country]["name"],
             "local": {"text": city_local, "lang": g["city"]["local"]["lang"], "roman": g["city"]["local"]["roman"]},
             "lead": lead, "cover": pic or {}, "title": c["title"].format(**counts), "description": desc,
-            "rate": {"unit": "デナル", "yen": round(g["rate"]["eur_jpy"] / g["rate"]["eur_mkd"], 2), "date": "2026-11-13"},
+            "rate": self.rate(),
             "about": about, "todo": todo,
             "see": {"items": see, "far": far, **({"map": maps["see"]} if "see" in maps else {})},
             "eat": {"kinds": [{"id": k["key"], "label": k["name"]} for k in g["eat"]["kinds"]], "items": eat, "places": self.places("eat", sq),
