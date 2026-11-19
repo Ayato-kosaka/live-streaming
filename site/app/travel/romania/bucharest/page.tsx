@@ -15,7 +15,7 @@ import Writer from "@/components/travel/article/Writer";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
-import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
+import { coverShare, dress, readDrawn } from "@/content/guidebook/manifest";
 import { BUCHAREST } from "@/content/guidebook/romania-bucharest";
 import { travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { JsonLd, articleLd } from "@/lib/jsonld";
@@ -60,15 +60,9 @@ export const metadata: Metadata = coverShare(
 
 export default function BucharestPage() {
   const drawn = DRAWN;
-  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（行った項目はまだ無い） */
-  const swap = <T extends { went?: unknown; pic?: unknown }>(it: T, pic?: (typeof drawn.food)[string]) =>
-    pic && (!it.went || !it.pic) ? { ...it, pic } : it;
-  const g = {
-    ...G,
-    todo: G.todo.map((t) => swap(t, todoPic(drawn, t))),
-    eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
-    buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
-  };
+  /* 札の絵は、描いた絵（料理・土産）→ 借りた写真の順。見たいもの（実在の場所）には描いた絵を当てない
+     （#1228 Q1 の A）。決めかたは `dress`（ソフィア・スコピエと同じ） */
+  const g = dress(G, drawn);
   const went = firstWent(g);
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);
