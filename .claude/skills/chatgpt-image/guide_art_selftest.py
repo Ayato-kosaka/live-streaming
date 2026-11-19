@@ -8,7 +8,7 @@
 足された日に、関係の無い PR が赤くなるから。そちらは `guide_art.py <国>/<街> check` で見る。
 
 見る足:
- 1. 組む: 品の id・版（v2 → `cover2`）・字を入れない・手本を渡す品にだけ MATCH・手本そのものには渡さない・題
+ 1. 組む: 品の id・版（v2 → `cover2`）・字を入れない・料理と土産に布を描かせない・手本を渡す品にだけ MATCH・手本そのものには渡さない・題
  2. 面の TS から品を読む（roman の slug・BUY_ID の表）。描写の無い品・id の無い品は止める
  3. 送る品の選び: 既定は manifest に無い品だけ・--only・手本や下敷きが無い品は後回し・知らない品は止める
  4. run: 道具と渡す絵を置き、手本の webp を PNG に直し、札（ec2-queue hold chatgpt）の中で一括を起こす。後回しは送らない
@@ -180,8 +180,16 @@ def main() -> int:
         ok(ga.PAINT in ss["cover"]["prompt"] and ga.PAINT in ss["areamap"]["prompt"], "絵のトーン（PAINT）が無い")
         ok(ss["areamap"]["prompt"].startswith("FIX! Paint a map.") and ss["areamap"]["prompt"].endswith(ga.MAP_STYLE),
            "地図の頼みが 直し → 街の文 → 型 の順でない")
-        ok(ss["food:soup"]["prompt"].startswith(ga.MATCH) and "Testish cross-stitch" in ss["food:soup"]["prompt"],
-           "料理に手本の頼み（MATCH）か布巾の刺繍の言葉が入っていない")
+        ok(ss["food:soup"]["prompt"].startswith(ga.MATCH), "料理に手本の頼み（MATCH）が入っていない")
+        # 布を描かせない（あやと 2026-11-19「全部ハンカチ（布）が写っていて AI 生成っぽい」）。料理と土産の全部に
+        # 「布を描かない」が入り、前の布巾の言葉（刺繍の布・ナプキンを置く）が残っていないこと
+        fb = [s for s in ss.values() if s["sec"] in ("food", "buy")]
+        ok(fb and all(ga.NOCLOTH in s["prompt"] for s in fb), "料理か土産に、布を描かない頼み（NOCLOTH）が入っていない品がある")
+        ok(not any(w in s["prompt"].replace(ga.NOCLOTH, "").replace(ga.MATCH, "") for s in fb
+                   for w in ("napkin", "cross-stitch", "linen", "Testish")),
+           "料理か土産の頼みに、布巾を置かせる言葉が残っている")
+        ok("do NOT copy any napkin" in ga.MATCH and "napkin, lighting" not in ga.MATCH,
+           "手本に合わせる頼み（MATCH）が、手本の布巾まで写させる")
         ok(ss["food:pie"]["prompt"].endswith("Subject: PIE FIX A pie."), "品の直し（fix）が描写の前に付かない")
         ok(ss["food:tea"]["refs"] == [("model", "xx/model:food-c")], "品ごとの手本（model）が街の手本より先に効かない")
         ok(ss["buy:jam"]["refs"] == [] and not ss["buy:jam"]["prompt"].startswith(ga.MATCH),
