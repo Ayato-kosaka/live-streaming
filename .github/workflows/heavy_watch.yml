@@ -666,6 +666,44 @@ jobs:
             printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
           fi
 
+      # 一時（この枝だけ。マージする前に外す）: 借りた写真をランナーの出口から1回だけ取る。名乗り（UA）は道具のまま。
+      # 1枚ごとに60秒あけ、429 が1回でも返ったらそこで止める（締め出しを長引かせない）
+      - name: 借りた写真を1枚ずつ取る（artifact photos）
+        if: ${{ env.GUIDE != '' }}
+        timeout-minutes: 30
+        continue-on-error: true
+        run: |
+          pip install pillow
+          python3 - <<'PY'
+          import os, sys, time, urllib.error, urllib.request
+          sys.path.insert(0, "python")
+          import guide_photos as gp
+          key = os.environ["GUIDE"]
+          want = gp.wanted(key)
+          todo = [(n, i) for n, i in sorted(want.items()) if not gp.done(key, n)]
+          print(f"要る {len(want)} 枚・残り {len(todo)} 枚（名乗り: {gp.UA}）", flush=True)
+          for k, (name, info) in enumerate(todo):
+              if k:
+                  time.sleep(60)
+              req = urllib.request.Request(gp.source(name, info, gp.widths_of(key)[-1]), headers={"User-Agent": gp.UA})
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      data = r.read()
+              except urllib.error.HTTPError as e:
+                  print(f"止めた: {e.code}（Retry-After={e.headers.get('Retry-After') if e.headers else None}）{name}", flush=True)
+                  break
+              gp.save(data, key, name)
+              print(f"置いた: {name}", flush=True)
+          PY
+
+      - name: 取った写真を置く
+        if: ${{ always() && env.GUIDE != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: photos
+          path: site/public/guide/${{ inputs.guide }}/photos/
+          if-no-files-found: ignore
+
       - name: site の依存を入れる
         working-directory: site
         run: npm ci --no-audit --no-fund
