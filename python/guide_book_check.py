@@ -54,7 +54,8 @@ REF = re.compile(r"^(\d{2})-(\d{2}) (\d+):(\d{2}):(\d{2})$")
 #: 外の座標は打ち間違いか、別の街。前はスコピエとマトカ渓谷の枠をここに決め打ちしていた（#1292）
 GUIDE_KEYS = ("airport", "transit", "pay", "sim", "safety", "phrases")
 #: 自由に使えるライセンスだけ。NC（営利不可）・ND（改変不可）・fair use は落とす（docs/country-guide.md 1-2-1）
-LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d|CC BY-SA \d\.\d)$")
+#: 国ごとの移植版（「CC BY-SA 3.0 ro」のように末尾に国の2字）も同じ許諾なので通す。NC・ND は今までどおり落とす
+LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d( [a-z]{2})?|CC BY-SA \d\.\d( [a-z]{2})?)$")
 CSV_COLS = ["名前", "緯度", "経度", "説明", "現地表記", "印", "Googleマップ"]
 
 

@@ -152,7 +152,8 @@ UP = re.compile(
 )
 #: 手書きの表の、借りた写真の出どころのリンク（`creditHref: "https://commons.wikimedia.org/wiki/File:…"`）
 CREDIT = re.compile(r"creditHref:\s*[\"']https://commons\.wikimedia\.org/wiki/(File:[^\"'\s?#]+)")
-LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d|CC BY-SA \d\.\d)$")
+#: 国ごとの移植版（「CC BY-SA 3.0 ro」のように末尾に国の2字）も同じ許諾なので通す。NC・ND は今までどおり落とす
+LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d( [a-z]{2})?|CC BY-SA \d\.\d( [a-z]{2})?)$")
 
 
 def norm(name: str) -> str:
