@@ -455,6 +455,15 @@ def keys(scripts: Path = SCRIPTS) -> list[str]:
     return sorted(f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json"))
 
 
+def pre_trip(key: str, scripts: Path = SCRIPTS) -> bool:
+    """材料が「行く前の街」の印（`city.pre_trip`）を持つか。材料が読めなければ False（行った街として厳しく見る）"""
+    p = scripts / key / "guidebook.json"
+    try:
+        return bool(json.loads(p.read_text(encoding="utf-8"))["city"].get("pre_trip"))
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
 def page_path(dist: Path, key: str) -> Path | None:
     for p in (dist / "travel" / f"{key}.html", dist / "travel" / key / "index.html"):
         if p.exists():
@@ -484,13 +493,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"::error::{k}: 書き出した面が {dist}/travel/{k}.html に無い（先に tools/build.sh）")
             return 2
         rows = rows_of(country, city, Path(a.streams))
-        if not rows:
+        # 行く前の街（材料の city.pre_trip。#1292）は facts がまだ無いのが正しい。「行った」の突き合わせは飛ばし、
+        # 口調と節は見る。**行った街なのに facts が無いのは、読む道具が置き場を見失ったときなので 2 のまま**
+        pre = pre_trip(k)
+        if not rows and not pre:
             print(f"::error::{k}: facts の行が1つも無い。突き合わせる相手が無い")
             return 2
         r = check_page(k, p.read_text(encoding="utf-8"), rows, gf.money_units(table, country))
-        if r is None or not r.seen["一言"] or not r.seen["字"]:
+        if r is None or not r.seen["字"] or (not pre and not r.seen["一言"]):
             print(f"::error::{k}: 面の本文（article.tg / article.gb）か一言が読めない。見るものが無い")
             return 2
+        if pre:
+            print(f"  {k}: 行く前の街（材料の city.pre_trip）。facts が {len(rows)}行なので、「行った」の突き合わせは飛ばした")
+            if r.seen["一言"]:
+                r.errors.append(f"行く前の街なのに、あやとの一言が {r.seen['一言']}つある（行っていない街で「言った」にしない）")
         seen = "・".join(f"{n}{c}" for n, c in r.seen.items())
         out.append({"key": k, "errors": r.errors, "seen": r.seen})
         if r.errors:
