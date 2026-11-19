@@ -44,6 +44,22 @@
  "cover": {
   "catch": [
    {
+    "text": "「東欧のパリ」と称えられた街",
+    "type": "型3（「愛称」と称えられる＋呼び名。あやとが 2026-11-19 に #1228 で選んだ）",
+    "src": [
+     {
+      "name": "Wikipedia「Bucharest」",
+      "url": "https://en.wikipedia.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Proto Thema「Bucharest: The affordable Paris of Eastern Europe」（2024年9月30日）",
+      "url": "https://en.protothema.gr/2024/09/30/bucharest-the-affordable-paris-of-eastern-europe/",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
     "text": "「小パリ」と称えられた街",
     "type": "型3（「愛称」と称えられる＋呼び名。手本「『ドナウの真珠』と称えられる歴史都市ブダペスト」）",
     "src": [
@@ -71,17 +87,6 @@
      {
       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
       "url": "https://romaniatourism.com/ja/bucharest.html",
-      "seen": "2026-11-19"
-     }
-    ]
-   },
-   {
-    "text": "東欧の小パリ、ブカレストへ",
-    "type": "型5（呼び名、名前＋へ。手本「光の国、スウェーデンへ」）",
-    "src": [
-     {
-      "name": "Wikipedia（日本語）「ブカレスト」",
-      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
       "seen": "2026-11-19"
      }
     ]
@@ -540,6 +545,344 @@
  },
  "todo": [
   {
+   "key": "palace",
+   "town": "bucharest",
+   "title": "巨大な国民の館を見学したい！",
+   "head": "重さ世界一とされる議会の建物の中へ",
+   "points": {
+    "what": [
+     {
+      "text": "議会の建物「国民の館」の中を、ガイドについて歩いて回る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "チャウシェスクの命で1984年に建て始めた。12階・1,100の部屋があり、重さは世界一とされる。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "いまも議会の下院と上院が入っていて、建物の7割ほどは使われていない。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "床の広さは36万5,000平方メートル。地下にも8階あり、いちばん下は核シェルター。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "材料はほとんどルーマニアのもので、大理石が100万立方メートル、クリスタルのシャンデリアが480基（メディアシュのガラス工場の作）。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "建てるために、ウラヌスの丘を平らにし、古い街の中心のおよそ7平方キロメートルを取り壊した。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "見学はガイドつきで、パスポートを持って行く。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "西の棟には国立現代美術館があり、2004年に開いた。ガラスの別棟から外の入口で入る。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "見学はおよそ1時間20分。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Bucharest」",
+     "url": "https://en.wikivoyage.org/wiki/Bucharest",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Wikipedia「Palace of the Parliament」",
+     "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "palace"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "bran",
+   "town": "bran",
+   "title": "ドラキュラ城へ日帰りしたい！",
+   "head": "トランシルヴァニアの山あいに立つ14世紀の城",
+   "points": {
+    "what": [
+     {
+      "text": "ブラン城（ドラキュラ城）を見に、トランシルヴァニアの山あいまで日帰りで行く。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bran」",
+        "url": "https://en.wikivoyage.org/wiki/Bran",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。「ドラキュラ城」の名で売り出されている。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bran」",
+        "url": "https://en.wikivoyage.org/wiki/Bran",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "ブカレストから列車かバスでブラショフまで約3時間。ブラショフのバスターミナル2から、ブラン行きのバスで約45分。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bran」",
+        "url": "https://en.wikivoyage.org/wiki/Bran",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "10月から3月は16時に閉まる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bran」",
+        "url": "https://en.wikivoyage.org/wiki/Bran",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [
+     {
+      "text": "入口の券売機は混みやすいので、切符はネットで買っておくとよい。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bran」",
+        "url": "https://en.wikivoyage.org/wiki/Bran",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Bran」",
+     "url": "https://en.wikivoyage.org/wiki/Bran",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "bran"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "caru",
+   "town": "bucharest",
+   "title": "老舗ビアホールで乾杯したい！",
+   "head": "1879年の醸造所から始まった旧市街の名店",
+   "points": {
+    "what": [
+     {
+      "text": "旧市街のビアホール、カル・ク・ベレでビールを飲む。",
+      "src": [
+       {
+        "name": "Wikipedia「Caru' cu Bere」",
+        "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1879年にビールの醸造所として始まり、1899年にレストランになった。ネオ・ゴシックの建物で、中はアール・ヌーヴォーの飾り。",
+      "src": [
+       {
+        "name": "Wikipedia「Caru' cu Bere」",
+        "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "旧市街のスタヴロポレオス通り5番。",
+      "src": [
+       {
+        "name": "Wikipedia「Caru' cu Bere」",
+        "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "自家製のビールは300mlで22.5レイ、400mlで29.5レイ、1リットルで65.5レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "サルマーレは87レイ、パパナシは61レイ（同じ献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "「1メートルのビール」は、10杯ぶん・4リットルを1枚の板にのせて出す（222レイ）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "献立はルーマニア語と英語。ミティテイ・豆のチョルバ・焼きなすのサラダも載っている。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Caru' cu Bere」",
+     "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "old-town",
+     "stavropoleos"
+    ],
+    "eat": [
+     "bere",
+     "mici",
+     "sarmale"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
    "key": "sarmale",
    "town": "bucharest",
    "title": "本場のサルマーレを食べたい！",
@@ -579,7 +922,28 @@
       ]
      }
     ],
-    "how": [],
+    "how": [
+     {
+      "text": "ラ・ママでは、キャベツのサルマーレにママリガと燻製の豚ばらを添えて、3個42レイ・5個56レイ（2026年版の献立）。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "カル・ク・ベレでは、ママリガ・サワークリーム・青唐辛子を添えて87レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "time": [],
     "money": [],
     "tips": [
@@ -592,6 +956,16 @@
         "seen": "2026-11-19"
        }
       ]
+     },
+     {
+      "text": "ラ・ママのサルマーレの中身は、豚と牛のひき肉・玉ねぎ・トマトペースト・米。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
      }
     ],
     "route": []
@@ -600,6 +974,16 @@
     {
      "name": "Wikipedia「Romanian cuisine」",
      "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "La Mama「Meniu」（ediția 1/2026）",
+     "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
      "seen": "2026-11-19"
     }
    ],
@@ -611,7 +995,7 @@
     ]
    },
    "photo": {
-    "drawn": "eat"
+    "drawn": "do"
    }
   },
   {
@@ -644,7 +1028,28 @@
       ]
      }
     ],
-    "how": [],
+    "how": [
+     {
+      "text": "ラ・ママでは、生の牛のチーズの生地に、ジャムとサワークリームをかけて1個21レイ・2個32レイ（2026年版の献立）。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "カル・ク・ベレでは、甘いチーズの生地に自家製のジャムとサワークリームで61レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "time": [],
     "money": [],
     "tips": [],
@@ -655,6 +1060,16 @@
      "name": "Wikipedia「Romanian cuisine」",
      "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
      "seen": "2026-11-19"
+    },
+    {
+     "name": "La Mama「Meniu」（ediția 1/2026）",
+     "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+     "seen": "2026-11-19"
     }
    ],
    "went": false,
@@ -664,7 +1079,72 @@
     ]
    },
    "photo": {
-    "drawn": "eat"
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "carusel",
+   "town": "bucharest",
+   "title": "光あふれる本屋さんに行きたい！",
+   "head": "銀行だった建物を直した白い吹き抜けの書店",
+   "points": {
+    "what": [
+     {
+      "text": "旧市街の書店、カルトゥレシュティ・カルセルの中を歩く。",
+      "src": [
+       {
+        "name": "Wikipedia「Cărturești Carusel」",
+        "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "20世紀の初めにクリソヴェローニ家の銀行の本店として建った建物。荒れていたのを5年かけて直し、2015年に直し終えた。",
+      "src": [
+       {
+        "name": "Wikipedia「Cărturești Carusel」",
+        "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "旧市街のリプスカニ通り55番。",
+      "src": [
+       {
+        "name": "Wikipedia「Cărturești Carusel」",
+        "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Cărturești Carusel」",
+     "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "carusel",
+     "old-town"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
    }
   },
   {
@@ -711,7 +1191,38 @@
     ],
     "time": [],
     "money": [],
-    "tips": [],
+    "tips": [
+     {
+      "text": "ホールの壁には、ダキアの征服から1918年の大ルーマニアまでの歴史を描いた、長さ75メートル・高さ3メートルのフレスコ画がぐるりと続く。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "席は794。建てる費用の一部は、28年続いた「アテネ音楽堂に1レウを！」の募金で集めた。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "設計はフランスの建築家アルベール・ガルロン。2007年に欧州遺産ラベルに選ばれた。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "route": []
    },
    "src": [
@@ -729,33 +1240,105 @@
    "went": false,
    "links": {
     "see": [
-     "athenaeum"
+     "athenaeum",
+     "revolution"
     ]
    },
    "photo": {
-    "commons": [
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "xmas",
+   "town": "bucharest",
+   "title": "クリスマスマーケットを歩きたい！",
+   "head": "国民の館の前の広場に屋台と大きなツリー",
+   "points": {
+    "what": [
      {
-      "file": "Ateneo Rumano, Bucarest, Rumanía, 2016-05-29, DD 73.jpg",
-      "by": "Diego Delso (1974–)",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
-      "alt": "白い柱と緑の丸屋根のルーマニア・アテネ音楽堂。前に芝生の庭",
-      "w": 6592,
+      "text": "ブカレストのクリスマスマーケットで、屋台をのぞいて歩く。",
       "src": [
        {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+        "name": "Newsweek România「Târgurile de Crăciun din București se deschid oficial pe 29 noiembrie 2025 și țin până pe 28 decembrie」",
+        "url": "https://newsweek.ro/actualitate/targurile-de-craciun-din-bucuresti-se-deschid-oficial-pe-29-noiembrie-2025-si-tin-pana-pe-28-decembrie",
         "seen": "2026-11-19"
        }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/250px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/500px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/960px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg"
-      }
+      ]
      }
+    ],
+    "why": [
+     {
+      "text": "2025年は国民の館の前の憲法広場で、11月29日から12月28日まで開いた。",
+      "src": [
+       {
+        "name": "Newsweek România「Târgurile de Crăciun din București se deschid oficial pe 29 noiembrie 2025 și țin până pe 28 decembrie」",
+        "url": "https://newsweek.ro/actualitate/targurile-de-craciun-din-bucuresti-se-deschid-oficial-pe-29-noiembrie-2025-si-tin-pana-pe-28-decembrie",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "2025年は平日12時〜22時、土日10時〜22時に開いていた。",
+      "src": [
+       {
+        "name": "Playtech「8 târguri de Crăciun în București, în 2025」",
+        "url": "https://playtech.ro/2025/8-targuri-de-craciun-in-bucuresti-in-2025-harta-completa-si-programul-fiecaruia/",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "2025年は、初日の11月29日の夕方に街のクリスマスの明かりもともった。",
+      "src": [
+       {
+        "name": "Newsweek România「Târgurile de Crăciun din București se deschid oficial pe 29 noiembrie 2025 și țin până pe 28 decembrie」",
+        "url": "https://newsweek.ro/actualitate/targurile-de-craciun-din-bucuresti-se-deschid-oficial-pe-29-noiembrie-2025-si-tin-pana-pe-28-decembrie",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Newsweek România「Târgurile de Crăciun din București se deschid oficial pe 29 noiembrie 2025 și țin până pe 28 decembrie」",
+     "url": "https://newsweek.ro/actualitate/targurile-de-craciun-din-bucuresti-se-deschid-oficial-pe-29-noiembrie-2025-si-tin-pana-pe-28-decembrie",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Playtech「8 târguri de Crăciun în București, în 2025」",
+     "url": "https://playtech.ro/2025/8-targuri-de-craciun-in-bucuresti-in-2025-harta-completa-si-programul-fiecaruia/",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "palace"
     ]
-   }
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "season",
+     "text": "冬だけ",
+     "src": [
+      {
+       "name": "Newsweek România「Târgurile de Crăciun din București se deschid oficial pe 29 noiembrie 2025 și țin până pe 28 decembrie」",
+       "url": "https://newsweek.ro/actualitate/targurile-de-craciun-din-bucuresti-se-deschid-oficial-pe-29-noiembrie-2025-si-tin-pana-pe-28-decembrie",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ]
   }
  ],
  "see": [
@@ -776,7 +1359,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "リプスカニ通りを中心にした石畳の一帯。中世からの商いの中心で、いまは直した古い建物にレストランとバーが並び、若い人でにぎわう。",
+    "text": "リプスカニ通りを中心にした石畳の一帯。中世から19世紀の初めまで、街とワラキアでいちばんの商いの場だった。名前は品物の来た町ライプツィヒから。職人の組合ごとに通りがあり、毛皮屋通り・鞍屋通りの名がいまも残る。直した古い建物にレストランとバーが並び、若い人でにぎわう。",
     "src": [
      {
       "name": "Wikipedia（日本語）「ブカレスト」",
@@ -786,6 +1369,11 @@
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Lipscani」",
+      "url": "https://en.wikipedia.org/wiki/Lipscani",
       "seen": "2026-11-19"
      }
     ]
@@ -807,6 +1395,26 @@
      "caru",
      "carusel"
     ]
+   },
+   "photo": {
+    "file": "Bucharest - Sunset on Lipscani Street (28592940111).jpg",
+    "by": "Ștefan Jurcă from Munich, Germany",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Sunset_on_Lipscani_Street_(28592940111).jpg",
+    "alt": "夕暮れのリプスカニ通り。古い建物の前にテラス席が並ぶ",
+    "w": 4608,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Sunset_on_Lipscani_Street_(28592940111).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/250px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/500px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/960px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg"
+    }
    }
   },
   {
@@ -826,7 +1434,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。",
+    "text": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。部屋は1,100、大理石は100万立方メートル。",
     "src": [
      {
       "name": "Wikipedia「Palace of the Parliament」",
@@ -847,6 +1455,17 @@
    ],
    "info": [
     {
+     "label": "行きかた",
+     "text": "イズヴォル通り2-4番。地下鉄M1・M3のイズヴォル駅。入口は北の側",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
      "label": "見学",
      "text": "ガイドつきの見学で中に入る。パスポートを持って行く",
      "src": [
@@ -863,6 +1482,26 @@
     "todo": [
      "palace"
     ]
+   },
+   "photo": {
+    "file": "Fountains in front of the Romanian Palace of Parliament in Bucharest (47981521036).jpg",
+    "by": "dronepicr",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_(47981521036).jpg",
+    "alt": "噴水の並ぶ大通りの先に、明かりのともった国民の館",
+    "w": 3996,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_(47981521036).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg/250px-Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg/500px-Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg/960px-Fountains_in_front_of_the_Romanian_Palace_of_Parliament_in_Bucharest_%2847981521036%29.jpg"
+    }
    }
   },
   {
@@ -882,7 +1521,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "1989年の革命の舞台の1つになった広場。真ん中に記念碑が立ち、まわりに旧王宮や大学図書館の建物が並ぶ。",
+    "text": "1989年の革命の舞台の1つになった広場で、それまでの名前は「宮殿広場」。1989年12月21日にチャウシェスクがここで演説し、翌22日に旧共産党中央委員会の建物からヘリコプターで逃げた。真ん中に記念碑が立ち、まわりに旧王宮・アテネ音楽堂・大学図書館の建物が並ぶ。",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
@@ -892,6 +1531,11 @@
      {
       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
       "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Revolution Square, Bucharest」",
+      "url": "https://en.wikipedia.org/wiki/Revolution_Square,_Bucharest",
       "seen": "2026-11-19"
      }
     ]
@@ -906,8 +1550,40 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja"
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "地下鉄のウニヴェルシターテ駅から600m。統一広場や北駅、国民の館からも歩ける",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "(3) Bucuresti, Romania. Piata Palatului - Piata Revolutiei (vedere de ansamblu).jpg",
+    "by": "Britchi Mirela",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:(3)_Bucuresti,_Romania._Piata_Palatului_-_Piata_Revolutiei_(vedere_de_ansamblu).jpg",
+    "alt": "革命広場。広い石畳の広場と、まわりに並ぶ大きな建物",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:(3)_Bucuresti,_Romania._Piata_Palatului_-_Piata_Revolutiei_(vedere_de_ansamblu).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/250px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/500px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/960px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg"
+    }
+   }
   },
   {
    "key": "athenaeum",
@@ -926,7 +1602,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた絵がぐるりと続く。",
+    "text": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた長さ75メートルのフレスコ画がぐるりと続く。設計はフランスの建築家アルベール・ガルロン。",
     "src": [
      {
       "name": "Wikipedia「Romanian Athenaeum」",
@@ -950,7 +1626,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ベンジャミン・フランクリン通り1-3番。革命広場のそばで、地下鉄M2のピアツァ・ロマナ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Ateneul+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
    "links": {
     "todo": [
@@ -995,11 +1683,16 @@
    },
    "rank": 2,
    "what": {
-    "text": "18世紀の初めに建った小さな修道院の教会。石の彫刻と壁画で知られる。",
+    "text": "1724年に建った小さな修道院の教会で、石の彫刻と壁画で知られる。形はルーマニアの「ブルンコヴェアヌ様式」。もとの修道院で残るのは教会だけ。いまは女子修道院で、神学とビザンティン聖歌の本を8,000冊あまり持つ。",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Stavropoleos Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Stavropoleos_Monastery",
       "seen": "2026-11-19"
      }
     ]
@@ -1015,7 +1708,27 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja"
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Bucharest - Stavropoleos Monastery (28648667365).jpg",
+    "by": "Ștefan Jurcă from Munich, Germany",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Stavropoleos_Monastery_(28648667365).jpg",
+    "alt": "スタヴロポレオス修道院の中庭。彫刻のある石の柱の回廊",
+    "w": 4608,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Stavropoleos_Monastery_(28648667365).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/250px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/500px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/960px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg"
+    }
+   }
   },
   {
    "key": "curtea",
@@ -1058,8 +1771,40 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja"
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "フランツェザ通り25-31番。地下鉄のピアツァ・ウニリイ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Curtea Veche Church with garden, Bucharest, 2017.jpg",
+    "by": "DimiTalen",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Curtea_Veche_Church_with_garden,_Bucharest,_2017.jpg",
+    "alt": "旧王宮跡のそばに立つ、れんがの縞模様の古い教会と庭",
+    "w": 5846,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Curtea_Veche_Church_with_garden,_Bucharest,_2017.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/250px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/500px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/960px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg"
+    }
+   }
   },
   {
    "key": "carusel",
@@ -1103,6 +1848,26 @@
     "todo": [
      "carusel"
     ]
+   },
+   "photo": {
+    "file": "Libraria Carturesti Carusel - Interior ziua.jpg",
+    "by": "Mihai Petre",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
+    "alt": "白い吹き抜けのまわりに本棚の階が重なる、カルトゥレシュティ・カルセルの中",
+    "w": 1605,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/250px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/500px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/960px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg"
+    }
    }
   },
   {
@@ -1147,7 +1912,27 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Calea+Victoriei+Bucure%C8%99ti&hl=ja"
+   "maps": "https://www.google.com/maps/search/?api=1&query=Calea+Victoriei+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Calea Victoriei (2).jpg",
+    "by": "Leontin l",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Calea_Victoriei_(2).jpg",
+    "alt": "古い建物と新しいビルが並ぶ勝利通り",
+    "w": 2048,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Calea_Victoriei_(2).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Calea_Victoriei_%282%29.jpg/250px-Calea_Victoriei_%282%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Calea_Victoriei_%282%29.jpg/500px-Calea_Victoriei_%282%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Calea_Victoriei_%282%29.jpg/960px-Calea_Victoriei_%282%29.jpg"
+    }
+   }
   },
   {
    "key": "cec",
@@ -1166,11 +1951,16 @@
    },
    "rank": 3,
    "what": {
-    "text": "勝利通りの南の入口に立つ、貯蓄銀行（CEC）の本店だった建物。",
+    "text": "勝利通りに立つ、国でいちばん古い銀行（いまの CEC 銀行）の本店として1897〜1900年に建った建物。設計はポール・ゴテロー。ガラスと鉄の丸屋根をのせる。向かいは国立歴史博物館。",
     "src": [
      {
       "name": "OpenStreetMap「Palatul Casei de Economii şi Consemnaţiuni」",
       "url": "https://www.openstreetmap.org/way/973712798",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「CEC Palace」",
+      "url": "https://en.wikipedia.org/wiki/CEC_Palace",
       "seen": "2026-11-19"
      }
     ]
@@ -1186,7 +1976,27 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+CEC+Bucure%C8%99ti&hl=ja"
+   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+CEC+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "CEC Palace, Bucharest-.jpg",
+    "by": "Yair-haklai",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:CEC_Palace,_Bucharest-.jpg",
+    "alt": "アーチの入口と丸屋根のCEC宮殿",
+    "w": 2184,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:CEC_Palace,_Bucharest-.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/CEC_Palace%2C_Bucharest-.jpg/250px-CEC_Palace%2C_Bucharest-.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/CEC_Palace%2C_Bucharest-.jpg/500px-CEC_Palace%2C_Bucharest-.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/CEC_Palace%2C_Bucharest-.jpg/960px-CEC_Palace%2C_Bucharest-.jpg"
+    }
+   }
   },
   {
    "key": "patriarchal",
@@ -1205,11 +2015,16 @@
    },
    "rank": 3,
    "what": {
-    "text": "ルーマニア正教会の総主教の大聖堂。国民の館の東の小さな丘に立つ。",
+    "text": "ルーマニア正教会の総主教の大聖堂。国民の館の東の小さな丘（府主教の丘）に立つ。ワラキア公コンスタンティン・シェルバンの命で1655年に建て始め、1659年にできた。",
     "src": [
      {
       "name": "OpenStreetMap「Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"」",
       "url": "https://www.openstreetmap.org/way/232296927",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Romanian Patriarchal Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Romanian_Patriarchal_Cathedral",
       "seen": "2026-11-19"
      }
     ]
@@ -1225,7 +2040,27 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja"
+   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Catedrala Patriarhală, București (2023) - IMG 02.jpg",
+    "by": "Chainwit.",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Catedrala_Patriarhal%C4%83,_Bucure%C8%99ti_(2023)_-_IMG_02.jpg",
+    "alt": "白い壁と灰色の丸屋根が3つ並ぶ総主教大聖堂",
+    "w": 4032,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Catedrala_Patriarhal%C4%83,_Bucure%C8%99ti_(2023)_-_IMG_02.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/250px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/500px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/960px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg"
+    }
+   }
   },
   {
    "key": "arc",
@@ -1244,7 +2079,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "いまの石の門は1936年にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
+    "text": "高さ27メートルの門。1878年の独立のあと、急いで木の門を建てたのが始まりで、いまの石の門はペトレ・アントネスクの設計で1936年12月1日にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
@@ -1254,6 +2089,11 @@
      {
       "name": "Wikipedia「Great Union Day」",
       "url": "https://en.wikipedia.org/wiki/Great_Union_Day",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Arcul de Triumf」",
+      "url": "https://en.wikipedia.org/wiki/Arcul_de_Triumf",
       "seen": "2026-11-19"
      }
     ]
@@ -1268,8 +2108,40 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Arcul+de+Triumf+Bucure%C8%99ti&hl=ja"
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラム41番のカジン停留所か、地下鉄M2のアヴィアトリロル駅から500m",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Arcul+de+Triumf+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Arcul de Triumf.JPG",
+    "by": "Vaivoda Vlad",
+    "lic": "CC BY-SA 3.0 ro",
+    "page": "https://commons.wikimedia.org/wiki/File:Arcul_de_Triumf.JPG",
+    "alt": "並木の大通りの先に立つ凱旋門",
+    "w": 3408,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Arcul_de_Triumf.JPG",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Arcul_de_Triumf.JPG/250px-Arcul_de_Triumf.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Arcul_de_Triumf.JPG/500px-Arcul_de_Triumf.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Arcul_de_Triumf.JPG/960px-Arcul_de_Triumf.JPG"
+    }
+   }
   },
   {
    "key": "village",
@@ -1288,11 +2160,16 @@
    },
    "rank": 2,
    "what": {
-    "text": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。建物は300ほど。",
+    "text": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。社会学者ディミトリエ・グスティが作り、1936年に開いた。トランシルヴァニア・モルドヴァ・マラムレシュなど7つの地方の、17〜20世紀の建物が並ぶ。いちばん古いのは17世紀のマラムレシュの木の教会。",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Dimitrie Gusti National Village Museum」",
+      "url": "https://en.wikipedia.org/wiki/Dimitrie_Gusti_National_Village_Museum",
       "seen": "2026-11-19"
      }
     ]
@@ -1307,8 +2184,40 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja"
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "キセレフ通り28-30番。トラム41番のアグロノミエ停留所か、地下鉄M2のアヴィアトリロル駅から公園を抜けて15分ほど",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Dimitrie Gusti national village museum Bucharest house veranda.jpg",
+    "by": "Cris Coman",
+    "lic": "PD",
+    "page": "https://commons.wikimedia.org/wiki/File:Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
+    "alt": "農村博物館の古い木の家。軒の深い縁側",
+    "w": 1200,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/250px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/500px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/960px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg"
+    }
+   }
   },
   {
    "key": "park",
@@ -1327,11 +2236,16 @@
    },
    "rank": 3,
    "what": {
-    "text": "湖を囲む、市内でいちばん大きな公園。夏は貸しボートが出る。",
+    "text": "湖を囲む、市内でいちばん大きな公園。広さは約187ヘクタールで、そのうち74ヘクタールが湖。1936年に作り始め、1939年に開いた。もとの名前はヘラストラウ公園。夏は貸しボートが出る。",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「King Michael I Park」",
+      "url": "https://en.wikipedia.org/wiki/King_Michael_I_Park",
       "seen": "2026-11-19"
      }
     ]
@@ -1347,7 +2261,27 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja"
+   "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Herastrau park leaves (Unsplash).jpg",
+    "by": "Rula Sibai rulasibai",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Herastrau_park_leaves_(Unsplash).jpg",
+    "alt": "紅葉した木と落ち葉、その向こうの湖。ヘラストラウ公園の秋",
+    "w": 4106,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Herastrau_park_leaves_(Unsplash).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/250px-Herastrau_park_leaves_%28Unsplash%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/500px-Herastrau_park_leaves_%28Unsplash%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/960px-Herastrau_park_leaves_%28Unsplash%29.jpg"
+    }
+   }
   },
   {
    "key": "ceausescu",
@@ -1385,8 +2319,40 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Prim%C4%83verii+Bucure%C8%99ti&hl=ja"
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "地下鉄のアヴィアトリロル駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Prim%C4%83verii+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Chess table in Palatul Primǎverii aka Spring Palace in Bucharest Romania.jpg",
+    "by": "Tim Adams",
+    "lic": "CC BY 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg",
+    "alt": "チャウシェスク邸の中。金色の椅子とチェスの卓",
+    "w": 2396,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg/250px-Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg/500px-Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg/960px-Chess_table_in_Palatul_Prim%C7%8Everii_aka_Spring_Palace_in_Bucharest_Romania.jpg"
+    }
+   }
   },
   {
    "key": "bran",
@@ -1405,11 +2371,16 @@
    },
    "rank": 2,
    "what": {
-    "text": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。「ドラキュラ城」として知られるが、小説のドラキュラともヴラド・ツェペシュとも、関わりは薄いとされる。",
+    "text": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。1920年からはマリア王妃が好んで暮らした。「ドラキュラ城」として知られるが、小説に城は出てこず、作者のストーカーがここへ来た証拠も無い。2009年から王家の子孫が開いた国で初めての私設の博物館で、マリア王妃の集めた美術と家具を見せる。",
     "src": [
      {
       "name": "Wikivoyage「Bran」",
       "url": "https://en.wikivoyage.org/wiki/Bran",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Bran Castle」",
+      "url": "https://en.wikipedia.org/wiki/Bran_Castle",
       "seen": "2026-11-19"
      }
     ]
@@ -1430,6 +2401,544 @@
     "todo": [
      "bran"
     ]
+   },
+   "photo": {
+    "file": "Bran Castle TB1.jpg",
+    "by": "Todor Bozhinov",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bran_Castle_TB1.jpg",
+    "alt": "森の上の岩に立つ、赤い屋根と白い壁のブラン城",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bran_Castle_TB1.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/250px-Bran_Castle_TB1.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/500px-Bran_Castle_TB1.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/960px-Bran_Castle_TB1.jpg"
+    }
+   }
+  },
+  {
+   "key": "national-art",
+   "town": "bucharest",
+   "name": "ルーマニア国立美術館（旧王宮）",
+   "local": {
+    "text": "Muzeul Național de Artă al României",
+    "roman": "Muzeul National de Arta al Romaniei",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Art of Romania」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Art_of_Romania",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "革命広場に面した旧王宮の建物に入る美術館。ルーマニアの中世と近代の美術と、王家が集めたヨーロッパの絵を見せる。1989年の革命で建物が傷ついた。",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Art of Romania」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Art_of_Romania",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.440074,
+   "lon": 26.095788,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Muzeul Național de Artă al României」",
+     "url": "https://www.openstreetmap.org/node/2634652837",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "勝利通り49-53番。地下鉄M2のピアツァ・ヴィクトリエイ駅か、ウニヴェルシターテ駅から600m",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+de+Art%C4%83+al+Rom%C3%A2niei+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "The National Museum of Art of Romania (11321261983).jpg",
+    "by": "Jorge Láscar from Australia",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:The_National_Museum_of_Art_of_Romania_(11321261983).jpg",
+    "alt": "革命広場の記念碑と、奥に立つ旧王宮の建物（いまはルーマニア国立美術館）",
+    "w": 4288,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:The_National_Museum_of_Art_of_Romania_(11321261983).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/250px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/500px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/960px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "peasant",
+   "town": "bucharest",
+   "name": "ルーマニア農民博物館",
+   "local": {
+    "text": "Muzeul Național al Țăranului Român",
+    "roman": "Muzeul National al Taranului Roman",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of the Romanian Peasant」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_the_Romanian_Peasant",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "農村の暮らしの品を10万点あまり持つ博物館。民族衣装の布・イコン・焼き物が並ぶ。1996年に「ヨーロッパ・ミュージアム・オブ・ザ・イヤー」に選ばれた。建物は1912〜1941年に建った、ルーマニアの伝統の形を取り入れたネオ・ルーマニア様式。",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of the Romanian Peasant」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_the_Romanian_Peasant",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.454423,
+   "lon": 26.083983,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Muzeul Național al Țăranului Român」",
+     "url": "https://www.openstreetmap.org/node/2634652844",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "キセレフ通り3番。地下鉄M2のピアツァ・ヴィクトリエイ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+al+%C8%9A%C4%83ranului+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Bucharest, Romania. National Museum of the Romanian Peasant. Ceramic collection.jpg",
+    "by": "Britchi V.I.Iulia",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest,_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+    "alt": "ルーマニア農民博物館の焼き物の部屋。棚に並ぶ壺と皿",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest,_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/250px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/500px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/960px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg"
+    }
+   }
+  },
+  {
+   "key": "cismigiu",
+   "town": "bucharest",
+   "name": "チシミジウ公園",
+   "local": {
+    "text": "Grădina Cișmigiu",
+    "roman": "Gradina Cismigiu",
+    "src": [
+     {
+      "name": "Wikipedia「Cișmigiu Gardens」",
+      "url": "https://en.wikipedia.org/wiki/Ci%C8%99migiu_Gardens",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1847年に開いた、中心部でいちばん古く大きな公園（14.6ヘクタール）。まん中に人の手で掘った池がある。ドイツの園芸家マイヤーが小道と岩場を作り、池へ下りるロマン主義の庭にした。",
+    "src": [
+     {
+      "name": "Wikipedia「Cișmigiu Gardens」",
+      "url": "https://en.wikipedia.org/wiki/Ci%C8%99migiu_Gardens",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.43726,
+   "lon": 26.0906,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Parcul Cișmigiu」",
+     "url": "https://www.openstreetmap.org/way/16291869",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Gr%C4%83dina+Ci%C8%99migiu+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Cismigiu - rowboats.jpg",
+    "by": "Joe Mabel",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Cismigiu_-_rowboats.jpg",
+    "alt": "チシミジウ公園の池に浮かぶ貸しボート",
+    "w": 3624,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Cismigiu_-_rowboats.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/250px-Cismigiu_-_rowboats.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/500px-Cismigiu_-_rowboats.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/960px-Cismigiu_-_rowboats.jpg"
+    }
+   }
+  },
+  {
+   "key": "manuc",
+   "town": "bucharest",
+   "name": "ハヌル・ルイ・マヌク（旧市街の宿屋）",
+   "local": {
+    "text": "Hanul lui Manuc",
+    "roman": "Hanul lui Manuc",
+    "src": [
+     {
+      "name": "Wikipedia「Hanul lui Manuc」",
+      "url": "https://en.wikipedia.org/wiki/Hanul_lui_Manuc",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1808年にアルメニア人の商人マヌク・ベイが建てた隊商宿。木の回廊が囲む大きな中庭を持ち、いまも宿とレストランとして使われる、街でいちばん古い宿の建物。1806〜1812年の露土戦争を終わらせたブカレスト条約の、前の話し合いの場になった。",
+    "src": [
+     {
+      "name": "Wikipedia「Hanul lui Manuc」",
+      "url": "https://en.wikipedia.org/wiki/Hanul_lui_Manuc",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.42972,
+   "lon": 26.102347,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Hanu' lui Manuc」",
+     "url": "https://www.openstreetmap.org/node/2486324769",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Hanul+lui+Manuc+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Bucharest - Hanul lui Manuc (2023) - img 03.jpg",
+    "by": "Chainwit.",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Hanul_lui_Manuc_(2023)_-_img_03.jpg",
+    "alt": "ハヌル・ルイ・マヌクの中庭と、2階を囲む木の回廊",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Hanul_lui_Manuc_(2023)_-_img_03.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/250px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/500px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/960px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg"
+    }
+   }
+  },
+  {
+   "key": "macca",
+   "town": "bucharest",
+   "name": "マッカ・ヴィラクロッセ・パサージュ",
+   "local": {
+    "text": "Pasajul Macca-Vilacrosse",
+    "roman": "Pasajul Macca-Vilacrosse",
+    "src": [
+     {
+      "name": "In Your Pocket「Pasajul Macca-Vilacrosse」",
+      "url": "https://www.inyourpocket.com/romania/bucharest/venues/pasajul-macca-vilacrosse",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "1891年にできた、黄色いガラスの屋根のアーケード。勝利通りから旧市街へ抜ける。",
+    "src": [
+     {
+      "name": "In Your Pocket「Pasajul Macca-Vilacrosse」",
+      "url": "https://www.inyourpocket.com/romania/bucharest/venues/pasajul-macca-vilacrosse",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.433016,
+   "lon": 26.098887,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Pasajul Macca - Vilacrosse」",
+     "url": "https://www.openstreetmap.org/way/657740103",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pasajul+Macca-Vilacrosse+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Pasajul Macca-Villacrosse - Vedere Interior.jpg",
+    "by": "Mihai Petre",
+    "lic": "CC BY-SA 3.0 ro",
+    "page": "https://commons.wikimedia.org/wiki/File:Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+    "alt": "マッカ・ヴィラクロッセ・パサージュの中。ガラスの天窓の下の丸い吹き抜け",
+    "w": 1620,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/250px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/500px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/960px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg"
+    }
+   }
+  },
+  {
+   "key": "salvation",
+   "town": "bucharest",
+   "name": "国民救済大聖堂",
+   "local": {
+    "text": "Catedrala Mântuirii Neamului",
+    "roman": "Catedrala Mantuirii Neamului",
+    "src": [
+     {
+      "name": "Wikipedia「People's Salvation Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/People%27s_Salvation_Cathedral",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "国民の館の向かいの丘に建つ、ルーマニア正教会の大聖堂。2010年に建て始め、2025年10月26日にモザイクが聖別されて15年の工事を終えた。高さは十字架の先まで133メートル。",
+    "src": [
+     {
+      "name": "Wikipedia「People's Salvation Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/People%27s_Salvation_Cathedral",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.425905,
+   "lon": 26.082294,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Catedrala Națională」",
+     "url": "https://www.openstreetmap.org/way/232332568",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+M%C3%A2ntuirii+Neamului+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "People's Salvation Cathedral (1).jpg",
+    "by": "Turgidson",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:People%27s_Salvation_Cathedral_(1).jpg",
+    "alt": "建てている途中の国民救済大聖堂。金色の丸屋根とクレーン",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:People%27s_Salvation_Cathedral_(1).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/250px-People%27s_Salvation_Cathedral_%281%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/500px-People%27s_Salvation_Cathedral_%281%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/960px-People%27s_Salvation_Cathedral_%281%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "peles",
+   "town": "sinaia",
+   "name": "ペレシュ城（シナイア）",
+   "local": {
+    "text": "Castelul Peleș",
+    "roman": "Castelul Peles",
+    "src": [
+     {
+      "name": "Wikipedia「Peleș Castle」",
+      "url": "https://en.wikipedia.org/wiki/Pele%C8%99_Castle",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "カルパチアの山あいの町シナイアに、国王カロル1世が建てた夏の城。1883年に開き、1914年まで建て増した。ネオ・ルネサンスとゴシック・リヴァイヴァルを混ぜた形で、その場で作った電気で全部をまかなった世界で初めての城とされる。1953年から博物館。",
+    "src": [
+     {
+      "name": "Wikipedia「Peleș Castle」",
+      "url": "https://en.wikipedia.org/wiki/Pele%C8%99_Castle",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 45.360085,
+   "lon": 25.542733,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Castelul Peleș」",
+     "url": "https://www.openstreetmap.org/way/1454368027",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "シナイアは、ブカレストとブラショフを結ぶ幹線の鉄道の途中の駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Sinaia」",
+       "url": "https://en.wikivoyage.org/wiki/Sinaia",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Castelul+Pele%C8%99+Sinaia&hl=ja",
+   "photo": {
+    "file": "Peles Castle - Sinaia - Romania 01.jpg",
+    "by": "Adam Jones Adam63",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+    "alt": "森を背にした、木組みの壁と尖った塔のペレシュ城",
+    "w": 3072,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/250px-Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/500px-Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/960px-Peles_Castle_-_Sinaia_-_Romania_01.jpg"
+    }
+   }
+  },
+  {
+   "key": "snagov",
+   "town": "snagov",
+   "name": "スナゴフ修道院",
+   "local": {
+    "text": "Mănăstirea Snagov",
+    "roman": "Manastirea Snagov",
+    "src": [
+     {
+      "name": "Wikipedia「Snagov Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Snagov_Monastery",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "スナゴフ湖の島に立つ修道院。いまの教会は1521年の建物。ヴラド・ツェペシュが葬られたという言い伝えがあるが、確かではない。1933〜1934年に墓を開けたときは、中に何も無かった。島へは2009年にできた歩道橋で渡る。",
+    "src": [
+     {
+      "name": "Wikipedia「Snagov Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Snagov_Monastery",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.729703,
+   "lon": 26.175741,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Mănăstirea Snagov」",
+     "url": "https://www.openstreetmap.org/way/25511874",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Snagov&hl=ja",
+   "photo": {
+    "file": "Snagov monastery, frontal view.JPG",
+    "by": "Ferran Cornellà",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snagov_monastery,_frontal_view.JPG",
+    "alt": "スナゴフ修道院の正面。れんがと石の縞の壁の小さな教会",
+    "w": 2736,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Snagov_monastery,_frontal_view.JPG",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/250px-Snagov_monastery%2C_frontal_view.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/500px-Snagov_monastery%2C_frontal_view.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/960px-Snagov_monastery%2C_frontal_view.JPG"
+    }
    }
   }
  ],
@@ -1514,15 +3023,79 @@
       },
       "went": false,
       "maps": "https://www.google.com/maps/search/?api=1&query=Hanu%27+lui+Manuc+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
      }
     ],
     "went": false,
     "pork_note": {
-     "text": "ひき肉の種類は店や家で違う。トランシルヴァニアでは燻した豚の足や皮を鍋に入れる。米と香草だけの作りもある。",
+     "text": "ひき肉の種類は店や家で違う。トランシルヴァニアでは燻した豚の足や皮を鍋に入れる。米と香草だけの作りもある。ラ・ママの献立では豚と牛のひき肉。",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
        "seen": "2026-11-19"
       }
      ]
@@ -1558,7 +3131,72 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false,
     "pork_note": {
      "text": "羊だけの作りと、豚・子牛・羊を合わせる作りがある。",
@@ -1600,7 +3238,72 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false,
     "pork_note": {
      "text": "具はスープの種類で違う（肉・野菜・もつ）。",
@@ -1608,6 +3311,422 @@
       {
        "name": "Wikipedia「Romanian cuisine」",
        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "ciorba-perisoare",
+    "name": "チョルバ・デ・ペリショアレ（肉団子の酸っぱいスープ）",
+    "local": {
+     "text": "Ciorbă de perișoare",
+     "roman": "Ciorbă de perișoare",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "肉団子（ペリショアレ）を入れた酸っぱいスープ。肉団子はトルコから伝わったとされる。ラ・ママの献立では、ひき肉と米の団子に、にんじん・パプリカ・トマトを合わせ、発酵させた酸っぱい汁（ボルシュ）で味をつける。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ラ・ママの献立では、肉団子は豚のひき肉。ほかの店の肉は確かめていない。",
+     "src": [
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "tochitura",
+    "name": "トキトゥーラ（肉の煮込み）",
+    "local": {
+     "text": "Tochitură",
+     "roman": "Tochitură",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": true,
+    "what": {
+     "text": "豚肉と、生と燻製のソーセージをトマトのソースで煮る。角切りの豚肉を焼いて、塩けのある白いチーズ（テレメアなど）と目玉焼きを添える作りもある。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "fasole",
+    "name": "ファソレ・ク・カルナツィ（豆と腸詰めの煮込み）",
+    "local": {
+     "text": "Fasole cu cârnați",
+     "roman": "Fasole cu cârnați",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "豆（ファソレ）と、にんにくのきいた腸詰め（カルナツィ）の料理。腸詰めは燻製にしたものが多い。豆はつぶしてペースト（ファソレ・バトゥタ）にもする。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "腸詰めの肉の種類は確かめていない。カル・ク・ベレの豆のチョルバには燻製の豚肉が入る。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "note": {
+     "text": "カル・ク・ベレの献立にはパンの器に入れた豆と燻製の豚肉のチョルバ（49.5レイ）と豆のペースト、クルテア・ベラリロルの献立には豆のペーストがある。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Curtea Berarilor「Meniu mâncare」",
+       "url": "https://curteaberarilor.com/meniu-mancare/",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "salata-de-vinete",
+    "name": "サラタ・デ・ヴィネテ（焼きなすのペースト）",
+    "local": {
+     "text": "Salată de vinete",
+     "roman": "Salată de vinete",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "焼いて皮をむいたなすに、刻んだ玉ねぎと塩を合わせ、油かマヨネーズで練る。パンにのせて食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "bulz",
+    "name": "ブルズ（チーズ入りのママリガ焼き）",
+    "local": {
+     "text": "Bulz",
+     "roman": "Bulz",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ママリガ（とうもろこしの粥）にルーマニアの羊のチーズとサワークリームを合わせて焼く。ラ・ママの献立ではブルドゥフのチーズと熟成させたテレメアを入れ、目玉焼きをのせる（36レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ラ・ママのブルズには、燻製の豚ばら（カイザー）がのる。",
+     "src": [
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
        "seen": "2026-11-19"
       }
      ]
@@ -1642,15 +3761,43 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false
    },
    {
-    "key": "papanasi",
-    "name": "パパナシ（揚げドーナツ）",
+    "key": "telemea",
+    "name": "テレメア（白いチーズ）",
     "local": {
-     "text": "Papanași",
-     "roman": "Papanași",
+     "text": "Telemea",
+     "roman": "Telemea",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
@@ -1660,12 +3807,94 @@
      ]
     },
     "kinds": [
-     "sweets"
+     "local"
     ],
     "alcohol": false,
     "pork": false,
     "what": {
-     "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げる。果物のジャムかシロップと、サワークリームをかける。",
+     "text": "牛か羊の乳で作る白いチーズで、フェタに少し似ている。サラダにも、ママリガにも合わせる。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "shaorma",
+    "name": "シャオルマ（ルーマニアのシャワルマ）",
+    "local": {
+     "text": "Șaormă",
+     "roman": "Șaormă",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
@@ -1674,8 +3903,66 @@
       }
      ]
     },
-    "stores": [],
-    "went": false
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "国でいちばん好かれている屋台の食べ物の1つ。ブカレストのシャオルマの店は、量で30〜45レイ（2025年）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+       "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "dristor",
+      "name": "ドリストル・ケバプ 旧市街店（シャオルマ）",
+      "local": "Dristor Kebap",
+      "area": "old-town",
+      "lat": 44.430046,
+      "lon": 26.100283,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Dristor Kebap」",
+        "url": "https://www.openstreetmap.org/node/1731040881",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "街の名物のようになったシャオルマのチェーン。値段は量で30〜45レイ（2025年）。",
+       "src": [
+        {
+         "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+         "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Dristor+Kebap+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "肉の種類は出どころに書かれていない。店で確かめる。",
+     "src": [
+      {
+       "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+       "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
    },
    {
     "key": "covrigi",
@@ -1738,6 +4025,397 @@
     "went": false
    },
    {
+    "key": "placinta",
+    "name": "プラチンタ（パイ）",
+    "local": {
+     "text": "Plăcintă",
+     "roman": "Plăcintă",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "昔からの焼き菓子のパイ。ラ・ママの献立のプラチンタは、パイ生地で甘い牛のチーズを包んで焼く（25レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "papanasi",
+    "name": "パパナシ（揚げドーナツ）",
+    "local": {
+     "text": "Papanași",
+     "roman": "Papanași",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げる。果物のジャムかシロップと、サワークリームをかける。カル・ク・ベレの献立では61レイ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "gogosi",
+    "name": "ゴゴシ（揚げドーナツ）",
+    "local": {
+     "text": "Gogoși",
+     "roman": "Gogoși",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "「ドーナツ」と訳されるが、揚げた生地に近い。ラ・ママの献立では5個で29レイ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "savarina",
+    "name": "サヴァリナ（シロップの菓子）",
+    "local": {
+     "text": "Savarină",
+     "roman": "Savarină",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "発酵させた生地を丸い型で焼き、ラムのシロップに浸して、ホイップクリームを詰める。上にいちごかサワーチェリーのジャム。いまもケーキ屋でいちばん好かれる菓子の1つ。",
+     "src": [
+      {
+       "name": "Newsweek România「Cine a inventat savarina」（2025年9月1日）",
+       "url": "https://newsweek.ro/timp-liber/cine-a-inventat-savarina-deliciosul-desert-iubit-de-romani-un-rege-in-exil-la-originea-prajiturii",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "anapan",
+      "name": "アナ・パン シュティルベイ・ヴォダ通り店（菓子とパン）",
+      "local": "Ana Pan",
+      "area": "cismigiu",
+      "lat": 44.438955,
+      "lon": 26.078951,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ana Pan」",
+        "url": "https://www.openstreetmap.org/node/7015451321",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "市内に店のある菓子とパンの店。1切れ売りの菓子にアマンディナとサヴァリナ（どちらも21.9レイ）。",
+       "src": [
+        {
+         "name": "Ana Pan「Prăjituri la bucată」（店のネットの品書き）",
+         "url": "https://www.anapan.ro/prajituri-la-bucata/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ana+Pan+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "amandina",
+    "name": "アマンディナ（チョコのケーキ）",
+    "local": {
+     "text": "Amandină",
+     "roman": "Amandină",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "チョコレートのスポンジに、アーモンドとチョコレートのクリームを挟み、チョコレートの糖衣をかけたケーキ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "anapan",
+      "name": "アナ・パン シュティルベイ・ヴォダ通り店（菓子とパン）",
+      "local": "Ana Pan",
+      "area": "cismigiu",
+      "lat": 44.438955,
+      "lon": 26.078951,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ana Pan」",
+        "url": "https://www.openstreetmap.org/node/7015451321",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "市内に店のある菓子とパンの店。1切れ売りの菓子にアマンディナとサヴァリナ（どちらも21.9レイ）。",
+       "src": [
+        {
+         "name": "Ana Pan「Prăjituri la bucată」（店のネットの品書き）",
+         "url": "https://www.anapan.ro/prajituri-la-bucata/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ana+Pan+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "kurtos",
+    "name": "クルトシュ・カラーチ（煙突菓子）",
+    "local": {
+     "text": "Cozonac secuiesc",
+     "roman": "Cozonac secuiesc",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "生地を棒に巻いて焼き、グラニュー糖と溶かしたバターをまぶした筒の形の菓子。ハンガリーの名前はクルトシュ・カラーチ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
     "key": "cozonac",
     "name": "コゾナック（甘いパン）",
     "local": {
@@ -1767,6 +4445,248 @@
      ]
     },
     "stores": [],
+    "went": false
+   },
+   {
+    "key": "bere",
+    "name": "ルーマニアのビール",
+    "local": {
+     "text": "Bere",
+     "roman": "Bere",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "ドイツの流れをくむ金色のピルスナーが多い。地元の醸造所の銘柄と、クラフトビールもある。カル・ク・ベレは自家製のビール（400mlで29.5レイ）、クルテア・ベラリロルはおもにティミショアレアナ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "vin",
+    "name": "ルーマニアワイン（フェテアスカ・ネアグラ）",
+    "local": {
+     "text": "Fetească neagră",
+     "roman": "Fetească neagră",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "ルーマニアのワインには3,000年を超える伝統がある。フェテアスカ・ネアグラは古くからある在来の黒ぶどうで、深いルビー色の赤になる。カル・ク・ベレではグラスで34レイから。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikipedia「Fetească neagră」",
+       "url": "https://en.wikipedia.org/wiki/Feteasc%C4%83_neagr%C4%83",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "visinata",
+    "name": "ヴィシナータ（さくらんぼのリキュール）",
+    "local": {
+     "text": "Vișinată",
+     "roman": "Vișinată",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "サワーチェリーのリキュール。カル・ク・ベレの献立に2種類ある（29〜33レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false
    },
    {
@@ -1827,7 +4747,17 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
      }
     ],
-    "went": false
+    "went": false,
+    "note": {
+     "text": "カル・ク・ベレの献立にあるのは、すもものパーリンカ（32レイ）。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
    }
   ]
  },
@@ -1943,6 +4873,189 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Mega+Image+Bucure%C8%99ti&hl=ja"
      }
     ],
+    "went": false
+   },
+   {
+    "key": "magiun",
+    "name": "マジウン（すもものジャム）",
+    "local": {
+     "text": "Magiun de prune Topoloveni",
+     "roman": "Magiun de prune Topoloveni",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "すもものジャム。トポロヴェニのマジウンは、ルーマニアの地理的表示（PGI）に登録されている。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "rom",
+    "name": "ROMのチョコバー",
+    "local": {
+     "text": "Rom",
+     "roman": "Rom",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "1964年から同じ作りの、ラムの香りがするチョコバー。包みは国旗の3色で、名前は国の名の頭3文字。",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": true,
+    "alcohol_note": {
+     "text": "中のラムのクリームに、エタノールとラムが少し入っている（ラムは0.1%）。",
+     "src": [
+      {
+       "name": "Sezamo「Rom autentic baton de ciocolata」（ルーマニアのネットスーパーの品書き。原材料の欄）",
+       "url": "https://www.sezamo.ro/9453-rom-autentic-baton-de-ciocolata",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "eugenia",
+    "name": "オイゲニアのビスケット",
+    "local": {
+     "text": "Eugenia",
+     "roman": "Eugenia",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ココアかバニラのクリームを挟んだビスケット。70年あまり作られている、共産主義の時代からある数少ないビスケットの1つ。",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "gerovital",
+    "name": "ジェロヴィタールの化粧品",
+    "local": {
+     "text": "Gerovital",
+     "roman": "Gerovital",
+     "src": [
+      {
+       "name": "Wikipedia「Farmec」",
+       "url": "https://en.wikipedia.org/wiki/Farmec",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ルーマニアでいちばん大きい化粧品の会社ファルメク（クルジュ＝ナポカ）の銘柄。医師アナ・アスランが作った「ジェロヴィタールH3」の名と作る権利を持つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Farmec」",
+       "url": "https://en.wikipedia.org/wiki/Farmec",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "gerovital",
+      "name": "ジェロヴィタール パークレイク店（化粧品）",
+      "local": "Gerovital",
+      "area": "parklake",
+      "lat": 44.419849,
+      "lon": 26.148373,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Gerovital」",
+        "url": "https://www.openstreetmap.org/node/11009898049",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "ファルメクがブカレストに開いた最初のジェロヴィタールの店（2016年）。商業施設パークレイクの中で、ジェロヴィタールとアスラヴィタールの品を全部置く。",
+       "src": [
+        {
+         "name": "Actual de Cluj「Farmec deschide la București primul magazin Gerovital din România」（2016年9月21日）",
+         "url": "https://actualdecluj.ro/?p=66837",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "OpenStreetMap「Gerovital」",
+         "url": "https://www.openstreetmap.org/node/11009898049",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Gerovital+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "wine",
+    "name": "ルーマニアワインの瓶",
+    "local": {
+     "text": "Vin românesc",
+     "roman": "Vin romanesc",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ワインの伝統は3,000年を超える。在来のぶどうのフェテアスカ・グラサ・タマイオアサ・ブスイオアカ・バベアスカで作るワインが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
     "went": false
    },
    {
@@ -2637,8 +5750,16 @@
    "why": "2025-2026年の季節の値段の表が見つからない（音楽祭の値段だけ）"
   },
   {
-   "what": "サルマーレ・パパナシ・ミティテイを出す店と値段",
-   "why": "2024年以降の出どころで、品と店と値段を結べたのはハヌル・ルイ・マヌクの郷土料理までだった"
+   "what": "ペレシュ城の開いている曜日と入場料",
+   "why": "Wikivoyage の曜日と値段（30レイ）は日付が無い。公式の頁は確かめていない"
+  },
+  {
+   "what": "スナゴフ修道院への行きかた",
+   "why": "島へ渡る歩道橋（2009年）までしか確かめられていない。ブカレストからのバスは見つからない"
+  },
+  {
+   "what": "マジウン・ROM・オイゲニア・ワインの瓶を買える店",
+   "why": "ネットのスーパーの品書きはあるが、街の店の名前と、いまも置いていることを書いた出どころが見つからない"
   },
   {
    "what": "チャウシェスク邸の見学の申し込みと値段",
@@ -2649,31 +5770,6 @@
    "why": "店の名前と、いまも売っていることを書いた2024年以降の出どころが見つからない"
   }
  ],
- "later": {
-  "reason": "借りた写真（Commons）が 429 で取れなかったやりたいこと。写真が取れたら todo へ戻す（2026-11-19）",
-  "todo": [
-   {
-    "key": "palace",
-    "title": "巨大な国民の館を見学したい！"
-   },
-   {
-    "key": "bran",
-    "title": "ドラキュラ城へ日帰りしたい！"
-   },
-   {
-    "key": "caru",
-    "title": "老舗ビアホールで乾杯したい！"
-   },
-   {
-    "key": "carusel",
-    "title": "光あふれる本屋さんに行きたい！"
-   },
-   {
-    "key": "xmas",
-    "title": "クリスマスマーケットを歩きたい！"
-   }
-  ]
- },
  "shorts": {
   "src": [
    {

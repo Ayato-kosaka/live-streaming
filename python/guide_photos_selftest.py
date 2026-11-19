@@ -322,6 +322,16 @@ def fetching() -> None:
                  get=always, sleep=lambda *_: None, log=lambda *_: None)
         ok(tries and all("/thumb/" in u for u in tries), f"429 で諦めた写真は、元のファイルを取りに行かない（{len(tries)} 本）")
 
+        # --gentle: 429 が1回でも返ったら、取り直さず・次の写真へも進まずに止める（締め出しを長引かせない）
+        tries.clear()
+        gslept: list[float] = []
+        two = make_root(Path(t) / "g", {"x": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/F_busy.jpg/960px-F_busy.jpg",
+                                         "y": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/G_busy.jpg/960px-G_busy.jpg"})
+        grc = gp.fetch(KEY, two, get=always, sleep=gslept.append, log=lambda *_: None, gentle=True)
+        ok(len(tries) == 1 and grc == 1, f"--gentle は 429 が1回で止める（叩いた {len(tries)} 本・{grc}）")
+        ok(not gslept, f"--gentle は 429 のあと待って取り直さない（待った {gslept}）")
+        ok(gp.GENTLE_GAP >= 60, f"--gentle の間は60秒以上（{gp.GENTLE_GAP}）")
+
         # Retry-After が決めた秒より長ければ、そちらを待つ
         waited: list[float] = []
         n = {"i": 0}
