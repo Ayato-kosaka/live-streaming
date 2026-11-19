@@ -285,6 +285,17 @@ class Book:
         if at is None:
             return None
         story: list[str] = []
+        # 行った日の話を1枚の記事に厚く書いた項目（`compose.items[].article`。記事の台本は `<国>/<街>/<話>.json`）は、
+        # 窓には組み立ての要約だけを残して「続きを読む」で記事へ繋ぐ（あやと 2026-11-19「がっつり書いた行ったは、
+        # モーダルではなくページ遷移でもいい」）。材料の細かい話は記事の側に書く
+        art = comp.get("article")
+        script = self.root / "python/data/guide" / self.key / f"{art}.json" if art else None
+        if script is not None:
+            if not script.exists():
+                self.err(where, f"記事「{art}」の台本が無い（python/data/guide/{self.key}/{art}.json）")
+            elif not comp.get("story"):
+                self.err(where, f"記事「{art}」へ繋ぐ項目に、窓に残す要約（story）が無い")
+            story_from = ()
         for t in story_from:
             if text_of(t) and not has_src(t):
                 xs = self.rows_of(t.get("facts"), where)
@@ -309,6 +320,8 @@ class Book:
                 out["pic"] = pic
         if story:
             out["story"] = story
+        if script is not None and script.exists():
+            out["more"] = {"href": f"/travel/{self.key}/{art}", "title": json.loads(script.read_text(encoding="utf-8"))["h1"][0]}
         if x.get("short"):
             out["short"] = x["short"]
         if (self.c.get("say") or {}).get(sec) == key:

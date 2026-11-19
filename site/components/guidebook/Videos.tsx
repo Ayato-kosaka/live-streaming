@@ -135,6 +135,15 @@ export function WentBox({ w, of, label = "行った" }: { w: Went; of: string; l
           {t}
         </p>
       ))}
+      {w.more && (
+        <a className="gb-went-more" href={w.more.href}>
+          <span>
+            続きを読む
+            <b>{w.more.title}</b>
+          </span>
+          <Icon name="right" size={18} />
+        </a>
+      )}
       <WentVideo w={w} of={of} />
     </div>
   );

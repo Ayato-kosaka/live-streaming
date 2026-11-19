@@ -1,5 +1,6 @@
 import type { GuideArticle } from "@/components/travel/article/types";
 import { ARTICLE as SOFIA_PRICES } from "./bulgaria/sofia-prices";
+import { ARTICLE as SKOPJE_MATKA } from "./north-macedonia/skopje-matka";
 import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
 
 /**
@@ -11,6 +12,7 @@ import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
  */
 const ARTICLES: Record<string, GuideArticle> = {
   "north-macedonia/skopje/prices": SKOPJE_PRICES,
+  "north-macedonia/skopje/matka": SKOPJE_MATKA,
   "bulgaria/sofia/prices": SOFIA_PRICES,
 };
 

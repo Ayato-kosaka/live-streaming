@@ -239,6 +239,9 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "north-macedonia", city: "skopje", slug: "prices", crumb: "物価" },
   /* ソフィアの物価（#1262）。配信で言った額だけで組むので、公開前の印は付けない */
   { country: "bulgaria", city: "sofia", slug: "prices", crumb: "物価" },
+  /* マトカ渓谷に行ってきた（#1228。あやと 2026-11-19「がっつり書いた行ったは、ページ遷移でもいい」）。
+     配信の facts だけで書いた一人称の旅の記録なので、公開前の印は付けない。街のガイドの窓から「続きを読む」で繋ぐ */
+  { country: "north-macedonia", city: "skopje", slug: "matka", crumb: "マトカ渓谷" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */

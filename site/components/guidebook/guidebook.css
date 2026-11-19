@@ -713,6 +713,23 @@
 /* その日のあやと島カード。札の絵は替えずに、ここに出す（あやと 2026-11-19） */
 .gb-went-pic { margin: 0 0 var(--sp-2); }
 .gb-went-pic .gb-pic { border-radius: var(--r-1); }
+/* 行った日の話を厚く書いた記事への入口。窓の中の要約の下に1つ（押しどころは 48px 以上） */
+.gb-went-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  min-height: 48px;
+  margin: 0 0 var(--sp-2);
+  padding: 8px 12px;
+  border-radius: var(--r-1);
+  background: #fff;
+  color: #2c6a3c;
+  text-decoration: none;
+  font-size: 14px;
+}
+.gb-went-more > span { display: grid; gap: 2px; }
+.gb-went-more b { color: var(--ink); font-size: var(--fs-note); }
 .gb-went-t { margin: 0 0 var(--sp-2); font-size: 14px; line-height: 1.75; }
 .gb-went-box .gb-table { margin-bottom: var(--sp-2); }
 
