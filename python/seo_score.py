@@ -19,8 +19,14 @@
 
 - 面は JS を動かさずに読む（`seo_page.features`。AI の読み手と同じ目）
 - 被リンクと表紙からの深さは、sitemap の全面を読んで数える（`seo_audit.py` と同じ数えかた）
-- **外からのリンク**は、面が貼っている YouTube の動画の説明欄に、その面の URL が在るかを、動画の公開の頁から読む
-  （API の鍵は要らない）。島へ人を連れてくるいちばん太い道なので重い
+- **外からのリンク**は、面が貼っている YouTube の動画の説明欄に、その面の URL が在るかを読む。島へ人を連れてくる
+  いちばん太い道なので重い。読むのは **YouTube Data API**（`videos.list`。鍵は `FIREBASE_SERVICE_ACCOUNT` の
+  サービスアカウントに読むだけの scope を求める。公開の動画の説明欄は誰の鍵でも読める）。動画の公開の頁は
+  この箱からも Actions からも説明欄の入っていない形で返る（2026-11-19 に Actions で確かめた: 3本とも 200・説明欄なし。
+  API は3本とも読めた）。鍵が無い手元では頁を読みに行き、読めなければ「？」
+- **手元で測れない2つ（外からのリンク・Search Console の週の表示）は、週の表（#1262。毎週 Actions が書く）の印から引く。**
+  週の表は `/travel/` の面ぜんぶの説明欄の当たりと、面ごとの週の表示を印（`<!-- seo-weekly v1 … -->`）に残す。
+  引いた値には「（週の表 〈週の終わり〉）」を付けて出す（`--no-week` で引かない）
 - 1項目ずつ「満点の何割か」を出す（数で決まる項目は線までの割合。0/1 の項目は 0 か満点）
 
 ## 公開に出さないもの
@@ -34,9 +40,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
@@ -53,8 +63,14 @@ from seo_page import features  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 TARGETS = ROOT / "python" / "data" / "seo_targets.json"
 YT_BASE = "https://www.youtube.com"
-YT_MAX = 12          # 1面ぶんで読みに行く動画の上限（面の上から。貼っている動画が多い面でも、YouTube に連打しない）
+YT_MAX = 12          # 1面ぶんで読みに行く動画の頁の上限（面の上から。貼っている動画が多い面でも、YouTube に連打しない）
 YT_PAUSE = 1.5
+# YouTube Data API。`videos.list` は 50本で1回・1単位（1日 10,000単位）。対照は偽の口へ向ける
+YT_API = os.environ.get("SEO_YT_API_BASE", "https://www.googleapis.com/youtube/v3").rstrip("/")
+YT_SCOPE = "https://www.googleapis.com/auth/youtube.readonly"
+YT_API_MAX = 200     # 1面ぶんで API に読ませる動画の上限（国の面は 50本ほど貼っている）
+GH_API = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
+WEEK_MARK = "<!-- seo-weekly v1 "
 ORIGIN = json.loads(TARGETS.read_text(encoding="utf-8"))["origin"]
 VIDEO = re.compile(r"(?:youtube\.com/(?:watch\?v=|shorts/|embed/|live/)|youtu\.be/)([\w-]{11})")
 
@@ -203,10 +219,69 @@ def graph_facts(links: dict[str, set[str]]) -> tuple[dict[str, int], dict[str, i
     return {p: len(s) for p, s in inbound.items()}, depth
 
 
+def points_to(desc: str, needle: str) -> bool:
+    """説明欄がその面を指しているか。**道の続きは数えない**——国の面（`/travel/bulgaria`）を、
+    街の面（`/travel/bulgaria/sofia`）を指した説明欄で当たりにしない（前は字が含まれるかだけを見ていた）"""
+    return re.search(re.escape(needle) + r"(?!/?[\w.%-])", desc) is not None
+
+
+_YT_TOKEN: list = []
+
+
+def yt_token() -> str | None:
+    """YouTube Data API の鍵（読むだけ）。Actions では `google-github-actions/auth` が置いた鍵。**無ければ None**
+    （手元。`GOOGLE_APPLICATION_CREDENTIALS` が無いときは探しに行かない——GCE の口を待って止まる）。値は出さない"""
+    if _YT_TOKEN:
+        return _YT_TOKEN[0]
+    tok = None
+    if os.environ.get("SEO_YT_FAKE_TOKEN") is not None:          # 対照だけ
+        tok = os.environ["SEO_YT_FAKE_TOKEN"] or None
+    elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        try:
+            import google.auth
+            import google.auth.transport.requests
+            creds, _ = google.auth.default(scopes=[YT_SCOPE])
+            creds.refresh(google.auth.transport.requests.Request())
+            tok = creds.token
+        except Exception:  # noqa: BLE001 — どの形で落ちても「鍵が無い」に寄せる（頁を読みに行く）
+            tok = None
+    _YT_TOKEN.append(tok)
+    return tok
+
+
+def yt_api(video_ids: list[str]) -> tuple[dict[str, str] | None, str]:
+    """（{動画: 説明欄}, 読めなかった理由）。鍵が無ければ（None, ""）——呼ぶ側は頁を読みに行く。
+    消えた・非公開の動画は返ってこない（読めた数に入れない）"""
+    tok = yt_token()
+    if not tok:
+        return None, ""
+    out: dict[str, str] = {}
+    for i in range(0, len(video_ids), 50):
+        ids = ",".join(video_ids[i:i + 50])
+        req = urllib.request.Request(f"{YT_API}/videos?part=snippet&id={ids}&fields=items(id,snippet/description)",
+                                     headers={"Authorization": f"Bearer {tok}", "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                got = json.loads(r.read() or b"{}")
+        except urllib.error.HTTPError as e:
+            return None, f"YouTube Data API が HTTP {e.code}"
+        except Exception as e:  # noqa: BLE001
+            return None, f"YouTube Data API に届かない（{type(e).__name__}）"
+        for it in got.get("items", []):
+            out[it["id"]] = (it.get("snippet") or {}).get("description", "")
+    return out, ""
+
+
 def yt_backlinks(video_ids: list[str], needle: str) -> tuple[int, int, str]:
-    """（説明欄が needle を含む動画の数, 読めた数, 読めなかった理由）。"""
+    """（説明欄が needle を指している動画の数, 読めた数, 読めなかった理由）。API を先に、鍵が無ければ動画の頁"""
     hit = read = 0
     why = ""
+    descs, api_why = yt_api(video_ids[:YT_API_MAX]) if video_ids else (None, "")
+    if descs is not None:
+        hit = sum(points_to(d, needle) for d in descs.values())
+        if video_ids and not descs:
+            why = "YouTube Data API が動画を1本も返さなかった"
+        return hit, len(descs), why
 
     def one(v: str) -> tuple[bool, bool]:
         # 名乗りがブラウザでないと、説明欄の入っていない頁が返る（2026-11-18 に seo-audit の名乗りで 87本中 0本）
@@ -220,7 +295,7 @@ def yt_backlinks(video_ids: list[str], needle: str) -> tuple[int, int, str]:
             desc = json.loads(f'"{m.group(1)}"')
         except ValueError:
             desc = m.group(1)
-        return True, needle in desc
+        return True, points_to(desc, needle)
 
     # **1本ずつ、間を空けて。** 並べて取ると YouTube が 429 を返し、そのあと数分は1本も読めない（2026-11-18 に踏んだ）
     for v in video_ids[:YT_MAX]:
@@ -229,8 +304,87 @@ def yt_backlinks(video_ids: list[str], needle: str) -> tuple[int, int, str]:
         hit += h
         time.sleep(YT_PAUSE)
     if video_ids and not read:
-        why = "動画の頁が1本も読めなかった"
+        why = api_why or "動画の頁が1本も読めなかった"
     return hit, read, why
+
+
+def page_videos(html: str) -> list[str]:
+    """面が貼っている動画（上から、同じものは1回）"""
+    p = read_html(html)
+    return list(dict.fromkeys(VIDEO.findall(" ".join(p.links + p.iframes))))
+
+
+def yt_sweep(base: str, paths: list[str]) -> tuple[dict[str, list[int]], str]:
+    """面ごとの［説明欄が指している本数, 読めた本数］。**週の表が印に残す**（手元の採点が引く）。
+    API の鍵が無い・読めなければ（{}, 理由）。動画は面をまたいで束ねて、50本ずつ読む"""
+    vids: dict[str, list[str]] = {}
+    for p in paths:
+        got = fetch(base + p)
+        if got.status == 200:
+            v = page_videos(got.text)[:YT_API_MAX]
+            if v:
+                vids[p] = v
+    allv = list(dict.fromkeys(v for vs in vids.values() for v in vs))
+    if not allv:
+        return {}, ""
+    descs, why = yt_api(allv)
+    if descs is None:
+        return {}, why or "YouTube Data API の鍵が無い"
+    needle = urlsplit(ORIGIN).netloc
+    out = {}
+    for p, vs in vids.items():
+        read = [descs[v] for v in vs if v in descs]
+        if read:
+            out[p] = [sum(points_to(d, needle + p) for d in read), len(read)]
+    return out, ""
+
+
+def week_facts(issue: int, repo: str) -> dict | None:
+    """週の表（#1262）のいちばん新しい印のうち、説明欄か週の表示を持つもの。**手元で測れない2つ**を引くため。
+    読めなければ None（引かずに「？」のまま）。鍵は GH_TOKEN / GITHUB_TOKEN か `gh auth token`（無くても公開の issue は読める）"""
+    tok = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if not tok:
+        try:
+            tok = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, timeout=10).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            tok = ""
+    last = None
+    for page in range(1, 20):
+        req = urllib.request.Request(f"{GH_API}/repos/{repo}/issues/{issue}/comments?per_page=100&page={page}",
+                                     headers={"Accept": "application/vnd.github+json",
+                                              **({"Authorization": f"Bearer {tok}"} if tok else {})})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as r:
+                got = json.loads(r.read() or b"[]")
+        except Exception:  # noqa: BLE001
+            return last
+        for c in got if isinstance(got, list) else []:
+            body = c.get("body") or ""
+            i = body.find(WEEK_MARK)
+            if i < 0:
+                continue
+            try:
+                mk = json.loads(body[i + len(WEEK_MARK):body.find("-->", i)].strip())
+            except ValueError:
+                continue
+            if isinstance(mk, dict) and ("yt" in mk or "impr" in mk):
+                last = mk
+        if not isinstance(got, list) or len(got) < 100:
+            return last
+    return last
+
+
+def apply_week(site: dict, path: str, week: dict | None) -> None:
+    """手元で測れなかった2つを、週の表の印で埋める（引いた週の終わりの日を添える）。**測れたものは上書きしない**"""
+    if not week:
+        return
+    note = f"週の表 {week.get('end', '')}".strip()
+    if "impr" not in site and week.get("impr_ok"):
+        site["impr"] = int((week.get("impr") or {}).get(path, 0))
+        site["impr_note"] = note
+    yt = (week.get("yt") or {}).get(path)
+    if yt and not site.get("yt_read"):
+        site.update({"yt_hit": int(yt[0]), "yt_read": int(yt[1]), "yt_why": "", "yt_note": note})
 
 
 # ---- 採点 ----
@@ -323,7 +477,7 @@ def judge(it: Item, f: dict, site: dict) -> tuple[float, str]:
         if not read:
             # 貼っていないのは 0点。貼っているのに読めなかったのは「測れない」（0 と書かない）
             return (None, site["yt_why"]) if site.get("yt_why") else (0.0, "貼っている動画が無い")
-        return _ratio(hit / read, 0.5), f"{hit}/{read}本"
+        return _ratio(hit / read, 0.5), f"{hit}/{read}本" + (f"・{site['yt_note']}" if site.get("yt_note") else "")
     if it.id == "serp":
         ranks = site.get("serp")                    # {語: 順位 or None}
         if ranks is None:
@@ -342,7 +496,8 @@ def judge(it: Item, f: dict, site: dict) -> tuple[float, str]:
         return _ratio(top / len(ranks), 0.5), f"{top}/{len(ranks)}語"
     if it.id == "impr":
         n = site.get("impr")
-        return (_ratio(n, 50), f"{n}回") if n is not None else (None, "測れない（週の表から）")
+        return ((_ratio(n, 50), f"{n}回" + (f"・{site['impr_note']}" if site.get("impr_note") else "")) if n is not None
+                else (None, "測れない（週の表から）"))
     raise KeyError(it.id)
 
 
@@ -422,8 +577,9 @@ def search_ranks(targets: list[dict], path: str, origin: str, cache: dict) -> tu
 
 
 def measure(base: str, pages: list[dict], youtube: bool = True, today: date | None = None,
-            targets: list[dict] | None = None, extra: dict | None = None) -> dict:
-    """面ごとに採点する。targets を渡すと検索の順位も引く。extra は週の表から（{道: {"impr": n, "indexed": bool}}）。"""
+            targets: list[dict] | None = None, extra: dict | None = None, week: dict | None = None) -> dict:
+    """面ごとに採点する。targets を渡すと検索の順位も引く。extra は週の表から（{道: {"impr": n, "indexed": bool}}）。
+    week は週の表の印（`week_facts`）。手元で測れなかった週の表示・外からのリンクを、そこから埋める"""
     sitemap, why = read_sitemap(base)
     links = crawl_links(base, sorted(sitemap)) if sitemap else {}
     inbound, depth = graph_facts(links) if links else ({}, {})
@@ -451,12 +607,13 @@ def measure(base: str, pages: list[dict], youtube: bool = True, today: date | No
             site["depth"] = depth.get(path)
             site["children"], site["siblings"] = children_of(path, kind, outs, sitemap)
         if youtube and kind in ("guide", "article", "country"):
-            vids = list(dict.fromkeys(VIDEO.findall(" ".join(p.links + p.iframes))))
+            vids = page_videos(got.text)
             hit, read, ywhy = yt_backlinks(vids, urlsplit(ORIGIN).netloc + path)
             site.update({"yt_hit": hit, "yt_read": read, "yt_why": ywhy, "yt_linked": len(vids)})
         if targets is not None:
             site["serp"], site["imgserp"] = search_ranks(targets, path, ORIGIN, cache)
         site.update((extra or {}).get(path, {}))
+        apply_week(site, path, week if kind in ("guide", "article", "country") else {k: v for k, v in (week or {}).items() if k != "yt"})
         sc = score(f, kind, site)
         out["pages"].append({"path": path, "label": pg.get("label", path), "kind": kind, **sc,
                              "features": {k: v for k, v in f.items() if not k.startswith("_")}, "site": site})
@@ -524,6 +681,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--compete", metavar="FILE", help="seo_compete.py run の compete.json。上位の面の割合の列を足す")
     ap.add_argument("--no-youtube", action="store_true")
     ap.add_argument("--no-serp", action="store_true", help="検索の順位を引かない（手元の書き出しを測るとき）")
+    ap.add_argument("--no-week", action="store_true", help="週の表（#1262）の印から、週の表示・外からのリンクを引かない")
     ap.add_argument("--targets", default=str(TARGETS))
     a = ap.parse_args(argv)
     if a.card:
@@ -532,7 +690,8 @@ def main(argv: list[str]) -> int:
     cfg = json.loads(Path(a.targets).read_text(encoding="utf-8"))
     base = (a.base or cfg["origin"]).rstrip("/")
     pages = [p for p in cfg["pages"] if p.get("kind")]
-    res = measure(base, pages, youtube=not a.no_youtube, targets=None if a.no_serp else cfg["targets"])
+    week = None if a.no_week or not cfg.get("issue") else week_facts(cfg["issue"], os.environ.get("GITHUB_REPOSITORY", "Ayato-kosaka/live-streaming"))
+    res = measure(base, pages, youtube=not a.no_youtube, targets=None if a.no_serp else cfg["targets"], week=week)
     res["at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     prev = None
     if a.compete:
@@ -540,6 +699,10 @@ def main(argv: list[str]) -> int:
     print(table(res, prev))
     if res["sitemap_error"]:
         print(f"\n- sitemap: {res['sitemap_error']}（被リンク・深さ・画像のサイトマップは測れない）")
+    if week:
+        print(f"\n- 週の表示・外からのリンクのうち手元で測れないものは、週の表（#{cfg['issue']}・{week.get('end', '')} までの週）の印から")
+    elif not a.no_week and cfg.get("issue"):
+        print(f"\n- 週の表（#{cfg['issue']}）の印が読めなかった（週の表示・外からのリンクは「？」のまま）")
     if a.json:
         Path(a.json).write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
     return 0 if any("items" in p for p in res["pages"]) else 2

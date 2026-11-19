@@ -24,6 +24,13 @@
 | 画像検索 | searchAnalytics（`type: image`） | 画像検索ぜんたいと、「見どころマップ」を含む語・地図の語 |
 | 載った面 | URL 検査（sitemap の全面） | Google に載っている面の数（前週比は前の週のコメントの印から） |
 | sitemap | sitemaps.list | 最終読み込み・送った数・エラー |
+| 点数 | `seo_score.py`（YouTube Data API で説明欄も） | 決めた面の 100点満点と、いちばん失っている3つ |
+
+**手元の採点（`python3 python/seo_score.py`）が引く数も、ここで印に残す**（#1262）。この箱からは Search Console も
+YouTube の説明欄も読めないので、週の表の印から引く:
+
+- `impr` — 面ごとの週の表示（**表示のあった面だけ**。印に無い面は 0。`impr_ok` が無い週は読めなかった）
+- `yt` — `/travel/` の面ぜんぶの［説明欄がその面を指している本数, 読めた本数］（貼っている動画の説明欄。API で読む）
 
 週は「3日前まで」の7日（Search Console の数は2〜3日遅れて固まる）。前週はその前の7日。
 
@@ -388,6 +395,22 @@ def score_section(cfg: dict, origin: str, p_now: dict | None, insp: dict, prev_m
     except Exception as e:  # noqa: BLE001 — 採点が転んでも、ほかの節は書く
         unread.append(f"点数: {type(e).__name__}: {str(e)[:WHY_MAX]}")
         return out + ["**読めなかった**。"]
+    # 手元の採点が引く2つ（`seo_score.py` の `week_facts`）。**読めなかった週は印に置かない**（0 と書かない）
+    if p_now is not None:
+        mark["impr_ok"] = True
+        mark["impr"] = {k: n for k, v in sorted(p_now.items()) if (n := int(total(v)["impressions"]))}
+    yt = {p["path"]: [p["site"]["yt_hit"], p["site"]["yt_read"]] for p in res["pages"]
+          if "items" in p and p["site"].get("yt_read") and not p["site"].get("yt_note")}
+    try:
+        sm, _ = seo_score.read_sitemap(origin)
+        more, ywhy = seo_score.yt_sweep(origin, [x for x in sorted(sm) if x.startswith("/travel/") and x not in yt])
+    except Exception as e:  # noqa: BLE001 — 採点の表は書く
+        more, ywhy = {}, f"{type(e).__name__}"
+    if ywhy:
+        unread.append(f"YouTube の説明欄（/travel/ の面）: {ywhy[:WHY_MAX]}")
+    yt.update(more)
+    if yt:
+        mark["yt"] = yt
     before = (prev_mark or {}).get("score") or {}
     mark["score"] = {}
     rows = []
