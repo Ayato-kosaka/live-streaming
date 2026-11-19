@@ -78,6 +78,10 @@ FAR_KM = 2.5
 LABEL = {"see": "見たいもの", "eat": "食べたいもの", "buy": "買いたいもの"}
 #: どのエリアにも入らない見どころを、いちばん近いエリアに入れてよい距離
 AREA_KM = 1.2
+#: 本人の言葉（`said`）として話に使ってよい人。配信の外で、本人がこちらに言った字（チャットで口述した例文など）
+SAID_BY = {"あやと"}
+#: 本人の言葉を話に入れるとき、整えてよいのは句読点と空白だけ。比べる前にこれを落とす
+SAID_LOOSE = re.compile(r"[\s、。，．,.・！!？?]")
 
 
 class Stop(Exception):
@@ -165,6 +169,24 @@ class Book:
         bad = gf.numbers_in(text) - self.b.allowed_numbers(xs) - meas - (extra or set())
         if bad:
             self.err(where, f"「{text[:40]}…」の数 {sorted(bad)} が、結んだ行に無い（言っていない数を足さない）")
+
+    def check_said(self, s: dict, where: str) -> set[str]:
+        """話の出どころに**本人の言葉**（`said`）を使うときの確かめ。返すのは本人の言葉に在る数（話に書いてよい）。
+
+        配信の facts に無い字（「ホステルの都合上」）でも、本人がこちらに口述した字なら出どころになる
+        （あやと 2026-11-19、旧市街の例文を口述して「全然魅力的じゃない」）。ただし**句読点と空白のほかは1字も
+        変えずに**話の中に在ること——言い換えると、本人の言葉ではなくこちらの字になる。`said` は
+        `[{"by": "あやと", "date": "YYYY-MM-DD", "text": "…"}]`（いつ・誰が言ったかを控える）
+        """
+        out: set[str] = set()
+        for x in s.get("said") or []:
+            if x.get("by") not in SAID_BY or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", x.get("date", "")) or not x.get("text"):
+                self.err(where, f"本人の言葉は by（{'・'.join(sorted(SAID_BY))}）・date（YYYY-MM-DD）・text を持つ（{x}）")
+                continue
+            if SAID_LOOSE.sub("", x["text"]) not in SAID_LOOSE.sub("", s.get("text", "")):
+                self.err(where, f"本人の言葉「{x['text'][:24]}…」が、句読点のほかは同じ字のまま話に無い（言い換えない）")
+            out |= gf.numbers_in(x["text"])
+        return out
 
     def check_short(self, text: str, source: str, where: str) -> None:
         """要約の字（組み立て）の数が、元の材料の字に在るか"""
@@ -268,7 +290,7 @@ class Book:
         if comp.get("story"):
             s = comp["story"]
             xs = self.rows_of(s.get("facts"), f"{where}.story")
-            self.check_numbers(s["text"], xs, f"{where}.story")
+            self.check_numbers(s["text"], xs, f"{where}.story", extra=self.check_said(s, f"{where}.story"))
             # `first`: 行った所の感想は、材料の話（行き方・コツ）より前に置く（あやと 2026-11-18 #1228
             # 「ブログなんで、行った所は感想をもっと入れてもいい」）。感想が窓の終わりの注意書きに埋もれないように
             if s.get("first"):

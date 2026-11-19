@@ -16,6 +16,8 @@
 
 - 場面の秒・日付・一言の字は **facts から写す**。組み立て（`went.json`）には、どの行かしか書かない
 - 話の数は**結んだ行に在るものだけ**（`guide_bake.Baker.allowed_numbers`。言っていない数を足さない）
+- 配信の外で本人が口述した字は、話の `said`（`[{"by": "あやと", "date": …, "text": …}]`）に控えれば出どころになる。
+  **句読点と空白のほかは1字も変えずに**話の中に在ること（`guidebook_bake.Book.check_said`）
 - 確かめが要る行（verify）とチャットの行は結ばない
 - **場面のリンクは箱に1つ**（`scene`。項目の行のうちの1つ。`docs/island-misses.md` #323）
 - **一言は節に1つまで**（`say`）。場面の行に本人の一言（`quote`）が無ければ止める
@@ -99,7 +101,8 @@ class Went(gbb.Book):
                 if not xs:
                     self.err(where, "話に結んだ行が無い（言っていないことを言ったことにしない）")
                     continue
-                self.check_numbers(s["text"], xs, where)
+                # 本人の言葉（`said`。配信の外で口述した字）も出どころにできる。句読点のほかは変えない（`Book.check_said`）
+                self.check_numbers(s["text"], xs, where, extra=self.check_said(s, where))
                 story.append(s["text"])
             w: dict = {"date": min(r["date"] for r in rows), "scene": self.scene(at)}
             if story:
