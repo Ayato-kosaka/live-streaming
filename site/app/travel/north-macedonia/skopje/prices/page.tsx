@@ -44,10 +44,10 @@ import "@/components/travel/article/article.css";
  * （`python/guide_article.py` が台本 `python/data/guide/north-macedonia/skopje/prices.json` と facts.json から焼く）。
  * ここが持つのは並びだけ。
  *
- * ## 公開前
+ * ## 公開
  *
- * 印は `content/travel.ts` の `ARTICLES` の `draft`。`robots` は印から決まる（`travelArticleShare`）ので、
- * ここには書かない。**出すときは印を1つ外すだけ**（街の面と同じ1手。索引・`/all`・見張りも名簿を読む）。
+ * 印は `content/travel.ts` の `ARTICLES` の `draft`（2026-11-19 に街の面と一緒に外した）。`robots` は印から決まる
+ * （`travelArticleShare`）ので、ここには書かない。索引・`/all`・見張りも名簿を読む。
  */
 
 const COUNTRY = "north-macedonia";
