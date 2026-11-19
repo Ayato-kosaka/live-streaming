@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "fmjra-9vb2w__reference",
+ "mode": "reference",
+ "dest": "fmjra-9vb2w/reference",
+ "video": "fmjra-9vb2w",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-refs1-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1256,
+  "tar_gz": 1043,
+  "encrypted": 1056
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1056,
+   "sha256": "413449b44e3e00ef5f56e6b8018b511172aa5251e03056f8c4b43a4629daa238"
+  }
+ ],
+ "hmac_sha256": "b8f0c5a8acfcf54cfb0a381f554264898750b4c4b9a621f9c7013832bd157611",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:28:13+00:00"
+}
