@@ -8,6 +8,7 @@ import IsleBoard from "./IsleBoard";
 import Icon from "@/components/ui/IconCore";
 import { shortHref, shortThumb } from "@/content/shorts";
 import { useChapterDays } from "./ChapDays";
+import { NOT_YET } from "@/lib/useToday";
 import type { IsleFact, IslePlaceSpec } from "./spec";
 
 /**
@@ -19,10 +20,12 @@ import type { IsleFact, IslePlaceSpec } from "./spec";
  */
 function Fact({ f }: { f: IsleFact }) {
   const n = useChapterDays(f.since, NaN);
+  /* 歩いている島の日数は、今日が分かるまで場所だけ取る（`ChapDays.tsx`。#337） */
+  const v = !f.since ? f.n : n === null ? NOT_YET : Number.isFinite(n) ? n.toLocaleString() : f.n;
   return (
     <li>
       <b>
-        {f.since && Number.isFinite(n) ? n.toLocaleString() : f.n}
+        {v}
         {f.unit && <span>{f.unit}</span>}
       </b>
       <i>{f.cap}</i>

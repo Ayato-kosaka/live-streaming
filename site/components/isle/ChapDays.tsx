@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CHAPTERS, chapterDays, type Chapter } from "@/content/chapters";
+import { CHAPTERS, chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
+import { BUILT_AT } from "@/lib/builtAt";
+import { NOT_YET, useToday } from "@/lib/useToday";
 
 /**
  * 章にいた日数。**画面が出てから数え直す。**
@@ -16,34 +17,48 @@ import { CHAPTERS, chapterDays, type Chapter } from "@/content/chapters";
  * 「あと◯分」は1つも出していない）。
  */
 export default function ChapDays({ chapter, baked }: { chapter: Chapter; baked: number }) {
-  return <>{useChapterDays(chapter.slug, baked).toLocaleString()}</>;
+  const n = useChapterDays(chapter.slug, baked);
+  return <>{n === null ? NOT_YET : n.toLocaleString()}</>;
 }
 
 /**
- * 章の slug から、いま何日目かを数える。**焼いた数は最初の1枚だけ。**
+ * 章の日数が**もう動かない**か。焼いた日の時点で、その章が終わっていたか。
+ *
+ * 終わった章の日数は、どの日に読んでも同じなので焼いてよい（JS を読まない
+ * 読み手にも「この島にいた 17日」が残る）。**いま歩いている章の日数は焼かない**——
+ * 焼いた日の数は焼いた日のうちしか本当でなく、焼いてから日付をまたげば
+ * JS が動く前の札が1日ずれる（`docs/island-misses.md` #337）。
+ * まだ始まっていない章も焼かない（始まった日から数えはじめるので）。
+ */
+export function closedWhenBaked(c: Chapter): boolean {
+  return chapterSpan(c, BUILT_AT).to !== null;
+}
+
+/**
+ * 章の slug から、いま何日目かを数える。
  *
  * 章そのものではなく slug を取るのは、**島に建てるものの表（`IsleSpec`）が
  * サーバからブラウザへ丸ごと渡る**から（`app/page.tsx` → `Cover` →
  * `IsleStage`）。章の中身をそこへ入れると、島1つぶんの札に章の全部が付いてくる。
  *
- * `baked` を返すのは画面が出るまでのあいだだけ。焼いた側は `BUILT_AT` 相当の
- * 日で数えてあるので、サーバ側とブラウザ側の最初の1枚が食い違わない
- * （`docs/island-misses.md` #30）。
+ * **画面が出るまでは、終わった章なら `baked`、それ以外は `null`。**
+ * `null` を受けた側は数を出さずに場所だけ取る（`lib/useToday.ts` の `NOT_YET`）。
+ * 前は歩いている章でも `baked`（焼いた日の数）を返していて、表紙の札が
+ * JS の動く前に前の日の数を出していた（#337）。サーバ側と最初の1枚は
+ * どちらも同じ答えになる（`BUILT_AT` しか見ない）ので、水あわせは落ちない（#30）。
+ *
+ * 数え直しは `useToday` の刻み（1分に1度）。島は配信のあいだ何時間も
+ * 開きっぱなしになる面で、日付をまたいだ瞬間から次に開き直すまで1日ずれるので。
  *
  * @param slug  章の slug。無いもの・表に無いものを渡したら `baked` のまま
- * @param baked 焼いたときの答え
+ * @param baked 焼いたときの答え。**終わった章のときだけ**、画面が出るまでに出す
  */
-export function useChapterDays(slug: string | undefined, baked: number): number {
-  const [n, setN] = useState<number | null>(null);
-  useEffect(() => {
-    const c = CHAPTERS.find((x) => x.slug === slug);
-    if (!c) return;
-    const tick = () => setN(chapterDays(c, new Date()));
-    tick();
-    const id = setInterval(tick, 60_000);
-    return () => clearInterval(id);
-  }, [slug]);
-  return n ?? baked;
+export function useChapterDays(slug: string | undefined, baked: number): number | null {
+  const today = useToday();
+  const c = CHAPTERS.find((x) => x.slug === slug);
+  if (!c) return baked;
+  if (today) return chapterDays(c, today);
+  return closedWhenBaked(c) ? baked : null;
 }
 
 /**
@@ -59,13 +74,16 @@ export function useChapterDays(slug: string | undefined, baked: number): number 
  * だけにして、数はここで作る。
  *
  * @param since 数え直す材料（章の slug と、数のうしろに付く字）
- * @param baked 焼いた字。画面が出るまでと、章が引けなかったときに出す
+ * @param baked 焼いた字。**終わった章**の画面が出るまでと、章が引けなかったときに出す
  */
 export function useSinceWord(
   since: { chapter: string; tail: string } | undefined,
   baked: string,
 ): string {
   const n = useChapterDays(since?.chapter, NaN);
-  if (!since || !Number.isFinite(n)) return baked;
+  if (!since) return baked;
+  // 歩いている章で、まだ今日が分からない。数を名乗らず場所だけ取る（#337）
+  if (n === null) return NOT_YET;
+  if (!Number.isFinite(n)) return baked;
   return `${n.toLocaleString()}${since.tail}`;
 }

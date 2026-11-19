@@ -106,9 +106,15 @@ export default function Meishi() {
           使っていて、表紙が「10月28日に日本を出て 685日目」、`/about` と `/map` が
           「9月11日／732日」と、同じことを47日ちがえて言っていた。
           `content/site.ts` の冒頭にその反省が書いてあるのに、表紙だけ残っていた。
-          字も日付から作る。手で書くと、また片方だけ古くなる。 */}
+          字も日付から作る。手で書くと、また片方だけ古くなる。
+
+          **「きょうで ◯ 日目」は、数と一緒にだけ出す**（#337）。数は画面が
+          出るまで無いので、文の途中に置くと焼いた HTML が「きょうで 日目」になる。
+          出るまでは「◯年◯月◯日に日本を出発。」で1文として閉じておく——
+          日付だけの文は、どの日に読んでも本当。 */}
       <p className="mei-since">
-        {when(PROFILE.leftJapan)}に日本を出て、きょうで <Days from={PROFILE.leftJapan} /> 日目。
+        {when(PROFILE.leftJapan)}に日本を出発
+        <Days from={PROFILE.leftJapan} head="。きょうで " tail=" 日目" wait="" />。
       </p>
 
       <div className="mei-gos">
