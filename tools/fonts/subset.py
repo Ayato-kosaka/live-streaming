@@ -257,8 +257,13 @@ STRUT_FILL = {"0"}
 #
 # 面を足したら、その面の書き出しに `<link rel="canonical">` があることを確かめる
 # （`solo_rule()` の当たり判定がそれを見る。`fontbudget_selftest.mjs` が書き出しで当てる）。
+#
+# 街のガイドから分けた「行った」の記事も、束で上限を超えたらここに並べる。ソフィアのヨーグルトの記事
+# （2026-11-19）は、束で数えると 1,150.8KB（上限 980KB）だった——記事にしか出ない字（乳・専・陶・塩…）が
+# どの面も先に取りに行かない冷たい束（400 で 218KB・900 で 135KB）に入っていて、それを丸ごと引いていた。
 SOLO = [
     "travel/bulgaria/sofia",
+    "travel/bulgaria/sofia/yogurt",
     "travel/north-macedonia/skopje",
     "travel/romania/bucharest",
 ]

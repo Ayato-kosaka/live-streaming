@@ -109,6 +109,15 @@ class Went(gbb.Book):
                 w["story"] = story
             if x.get("short"):
                 w["short"] = x["short"]
+            # 行った日の話を1枚の記事に厚く書いた項目は、窓には要約だけを残して「続きを読む」で記事へ繋ぐ
+            # （あやと 2026-11-19「がっつり書いた行ったは、ページ遷移でもいい」。スコピエの `guidebook_bake.py` と同じ）
+            if x.get("article"):
+                script = self.root / "python/data/guide" / self.key / f"{x['article']}.json"
+                if not script.exists():
+                    self.err(key, f"記事「{x['article']}」の台本が無い（python/data/guide/{self.key}/{x['article']}.json）")
+                else:
+                    w["more"] = {"href": f"/travel/{self.key}/{x['article']}",
+                                 "title": json.loads(script.read_text(encoding="utf-8"))["h1"][0]}
             if say.get(sec) == iid:
                 q = at["it"].get("quote")
                 if not q:
