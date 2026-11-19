@@ -1359,14 +1359,17 @@
       ]
      },
      {
-      "text": "あやとは、いちばん大きい中央のバス停が始発だと思い込んで、乗る場所を間違えた。乗る前に、時刻表の出るアプリ SkopjeBus で乗り場を確かめる。",
+      "text": "乗る前に、時刻表の出るアプリ SkopjeBus で乗り場を確かめる。",
       "src": [
        {
         "name": "Wikivoyage「Skopje」",
         "url": "https://en.wikivoyage.org/wiki/Skopje",
         "seen": "2026-11-15"
        }
-      ],
+      ]
+     },
+     {
+      "text": "乗る場所は、いちばん大きい中央のバス停が始発だと思い込んで、間違えてしまいました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@210#caution",
@@ -4136,31 +4139,12 @@
        }
       ],
       "why": {
-       "text": "あやとが行列に並んで入った旧市街の食堂。チェバピと豆の煮込みを食べ、11月9日には、ここの豆の煮込みのほうがクリーミーだったと言った。",
-       "facts": [
+       "text": "旧市街の食堂。OSM で旧市街にある「Kosmos」はこの1軒。",
+       "src": [
         {
-         "id": "UQdkUSro9Ck@3390#place",
-         "ref": "10-14 0:56:30",
-         "video": "UQdkUSro9Ck",
-         "t": 3390,
-         "kind": "place",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=3390s"
-        },
-        {
-         "id": "UQdkUSro9Ck@4470#food",
-         "ref": "10-14 1:14:30",
-         "video": "UQdkUSro9Ck",
-         "t": 4470,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=4470s"
-        },
-        {
-         "id": "WiSPWzjqZZA@6240#food",
-         "ref": "11-09 1:44:00",
-         "video": "WiSPWzjqZZA",
-         "t": 6240,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=WiSPWzjqZZA&t=6240s"
+         "name": "OpenStreetMap（Kosmos）",
+         "url": "https://www.openstreetmap.org/node/6514996385",
+         "seen": "2026-11-15"
         }
        ]
       },
@@ -4434,38 +4418,12 @@
        }
       ],
       "why": {
-       "text": "あやとが行列に並んで入った旧市街の食堂。チェバピは炭の匂いがして肉汁が広がり、パンは無料で出てきた。OSM で旧市街にある「Kosmos」はこの1軒。",
+       "text": "旧市街の食堂。OSM で旧市街にある「Kosmos」はこの1軒。",
        "src": [
         {
          "name": "OpenStreetMap（Kosmos）",
          "url": "https://www.openstreetmap.org/node/6514996385",
          "seen": "2026-11-15"
-        }
-       ],
-       "facts": [
-        {
-         "id": "UQdkUSro9Ck@3390#place",
-         "ref": "10-14 0:56:30",
-         "video": "UQdkUSro9Ck",
-         "t": 3390,
-         "kind": "place",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=3390s"
-        },
-        {
-         "id": "UQdkUSro9Ck@4290#food",
-         "ref": "10-14 1:11:30",
-         "video": "UQdkUSro9Ck",
-         "t": 4290,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=4290s"
-        },
-        {
-         "id": "UQdkUSro9Ck@5520#food",
-         "ref": "10-14 1:32:00",
-         "video": "UQdkUSro9Ck",
-         "t": 5520,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=5520s"
         }
        ]
       },
@@ -5258,22 +5216,12 @@
        }
       ],
       "why": {
-       "text": "旧市街でいちばん安いと言われる、とあやとが聞いて入った店。OSM で旧市街にあるハムザはビトパザルスカ通りのこの1軒（もう1軒は広場の南）。",
+       "text": "旧市街のケバブ屋。OSM で旧市街にあるハムザはビトパザルスカ通りのこの1軒（もう1軒は広場の南）。",
        "src": [
         {
          "name": "OpenStreetMap（Hamza Doner（Bitpazarska））",
          "url": "https://www.openstreetmap.org/node/6814247285",
          "seen": "2026-11-15"
-        }
-       ],
-       "facts": [
-        {
-         "id": "TDArug_te90@10050#food",
-         "ref": "10-18 2:47:30",
-         "video": "TDArug_te90",
-         "t": 10050,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=TDArug_te90&t=10050s"
         }
        ]
       },
@@ -7324,38 +7272,12 @@
    },
    {
     "key": "warm",
-    "text": "10月の終わりからの防寒具。平年の11月は最高12.5℃・最低2.8℃。あやとは10月27日に急な寒さで手が震え、次の日にマフラーと手袋を買った。",
+    "text": "10月の終わりからの防寒具。平年の11月は最高12.5℃・最低2.8℃。",
     "src": [
      {
       "name": "Wikipedia「Skopje」（気候の表。スコピエ国際空港・1991〜2020年の平年値）",
       "url": "https://en.wikipedia.org/wiki/Skopje#Climate",
       "seen": "2026-11-15"
-     }
-    ],
-    "facts": [
-     {
-      "id": "_XzkJJIvpOE@1410#caution",
-      "ref": "10-27 0:23:30",
-      "video": "_XzkJJIvpOE",
-      "t": 1410,
-      "kind": "caution",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1410s"
-     },
-     {
-      "id": "_XzkJJIvpOE@1680#fact",
-      "ref": "10-27 0:28:00",
-      "video": "_XzkJJIvpOE",
-      "t": 1680,
-      "kind": "fact",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1680s"
-     },
-     {
-      "id": "la_OkustLkA@3935#price",
-      "ref": "10-28 1:05:35",
-      "video": "la_OkustLkA",
-      "t": 3935,
-      "kind": "price",
-      "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=3935s"
      }
     ]
    },
@@ -7393,22 +7315,12 @@
    },
    {
     "key": "translate",
-    "text": "翻訳アプリ。地元の人向けの店はキリル文字だけのことが多い。あやとはスーパーで品名を Google 翻訳で調べた。",
+    "text": "翻訳アプリ。地元の人向けの店はキリル文字だけのことが多い。",
     "src": [
      {
       "name": "Wikivoyage「North Macedonia」",
       "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
       "seen": "2026-11-15"
-     }
-    ],
-    "facts": [
-     {
-      "id": "urwD3EmjTxs@870#food",
-      "ref": "10-29 0:14:30",
-      "video": "urwD3EmjTxs",
-      "t": 870,
-      "kind": "food",
-      "url": "https://www.youtube.com/watch?v=urwD3EmjTxs&t=870s"
      }
     ]
    }
