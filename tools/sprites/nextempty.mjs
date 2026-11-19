@@ -57,6 +57,8 @@
  *
  * 11. `endsWhen` だけを持つ企画は、**いちばん先の日でも表紙に札が立っている。**
  *     0件の側（3〜5）は、その企画を仮に終わらせてから見る（`OPEN` の頭）。
+ * 12. 「つぎの国へ移ったら」の鎖の前の国は、**つぎの国の日に表紙から下がり、その前の日はまだ立つ**
+ *     （2026-11-19。`HANDOFF` の頭）。日付で終わらないのは鎖のいちばん新しい1件だけで、それは 11 が見る。
  *
  * 撮った絵は `OUT` に置く。**数が通っても、目で見る。**
  *
@@ -110,7 +112,7 @@ const plus = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86400000)
  * 欄の**値**ではなく**鍵が在るか**で見る。
  */
 const TODAY = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
-const OPEN = objects(arrayBody(codeOnly(PLANS_SRC), "PLANS"))
+const RAW_OPEN = objects(arrayBody(codeOnly(PLANS_SRC), "PLANS"))
   .filter((o) => {
     const has = (k) => countKeys(`{${o}}`, k) > 0;
     return has("date") && has("endsWhen") && !has("until") && !has("done");
@@ -118,10 +120,28 @@ const OPEN = objects(arrayBody(codeOnly(PLANS_SRC), "PLANS"))
   .map((o) => fields(o))
   .map((f) => ({
     id: f.id,
+    date: f.date,
     endsWhen: f.endsWhen,
     href: f.href || `/next#${f.id}`,
     closeOn: f.date > TODAY ? f.date : TODAY,
   }));
+
+/**
+ * **国から国へ移る滞在は、鎖になっている**（2026-11-19。#1308・#1311）。
+ *
+ * 「つぎの国へ移ったら」（`content/plans.ts` の `NEXT_MOVE`。字は表の定数から読む）を持つ企画は、
+ * **つぎにこの字を持つ企画が始まる日の前の日**で終わる（`closeStays`）。日付で終わらないのは、
+ * 鎖のいちばん新しい1件（いまはルーマニア）だけ。前の国（ブルガリア）は、つぎの国の日に表紙から下がる。
+ *
+ * ルーマニアを足した日、この道具は表を字で読んだまま「`until` が無いから日付で終わらない」として
+ * ブルガリアも 11 に入れ、翌年の表紙に立っていないのを赤にした。崩れていたのは道具の前提のほう。
+ * だから鎖の前の国は 11 から外し、**つぎの国の日に下がる・その前の日にはまだ立つ**を 12 で見る
+ * （あやとの「いる国は日付で消えない」は、いちばん新しい1件で 11 が守る）。
+ */
+const NEXT_MOVE = (PLANS_SRC.match(/export const NEXT_MOVE = "([^"]+)"/) || [])[1] || "";
+const CHAIN = RAW_OPEN.filter((p) => NEXT_MOVE && p.endsWhen === NEXT_MOVE).sort((a, b) => a.date.localeCompare(b.date));
+const HANDOFF = CHAIN.slice(0, -1).map((p, i) => ({ ...p, next: CHAIN[i + 1] }));
+const OPEN = RAW_OPEN.filter((p) => !HANDOFF.some((h) => h.id === p.id));
 
 /**
  * 表に在るいちばん遅い日（仮の終わった日も入れる）。**この翌日からは、どう数えても 0件。**
@@ -321,6 +341,40 @@ if (OPEN.length) {
     await (el ?? p).screenshot({ path: `${OUT}/${far}-top-open.png` });
   }
   await ctx.close();
+}
+
+// -------------------- 12. 鎖の前の国は、つぎの国の日に表紙から下がる（その前の日は、まだ立っている）
+
+/* 仮の終わりを入れない本物で、つぎの国の日とその前の日を開く。前の日に立っていないなら、移る前から
+   消えている。つぎの国の日に立っているなら、移ったのに表紙が前の国を指している（#1308 で直した形の逆戻り） */
+let handRead = 0;
+for (const h of HANDOFF) {
+  for (const [day, want] of [[plus(h.next.date, -1), true], [h.next.date, false]]) {
+    const ctx = await b.newContext({
+      viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
+      locale: "ja-JP", timezoneId: "Asia/Tokyo", isMobile: true, hasTouch: true,
+    });
+    await offline(ctx);
+    await ctx.route(/fonts\.googleapis\.com/, (r) =>
+      r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+    await ctx.addInitScript(clock(at(day)));
+    const p = await ctx.newPage();
+    const res = await p.goto(`${BASE}/index.html`, { waitUntil: "domcontentloaded" });
+    if (res && res.status() < 400) {
+      await p.waitForTimeout(1500);
+      handRead++;
+      const hrefs = await p.$$eval(".nextup-card", (as) => as.map((a) => a.getAttribute("href")));
+      const has = hrefs.includes(h.href);
+      const ok = has === want && (want || hrefs.includes(h.next.href));
+      console.log(`  ${ok ? "○" : "×"} ${day} ${h.id}${want ? "はまだ立つ" : `は下がり、${h.next.id}が立つ`} 表紙の札=${hrefs.join(" ") || "（無し）"}`);
+      if (!ok) {
+        openBad.push(want
+          ? `${day}: つぎの国（${h.next.id}）の前の日なのに ${h.id} が表紙に無い`
+          : `${day}: ${h.next.id} に移った日なのに、表紙が ${h.id} を指しているか ${h.next.id} が無い`);
+      }
+    }
+    await ctx.close();
+  }
 }
 // ------------------------------------------------- 5. 行の折れ方（幅を振る）
 
@@ -594,6 +648,10 @@ if (OPEN.length) {
     console.error("日付では終わらない企画を、本物のままで1度も開けませんでした");
     process.exit(2);
   }
+}
+if (CHAIN.length > 1 && handRead < HANDOFF.length * 2) {
+  console.error(`鎖の前の国を、つぎの国の日とその前の日で ${handRead}/${HANDOFF.length * 2} しか開けませんでした`);
+  process.exit(2);
 }
 console.log(`\n見た島だより ${nowRead} / ${DAYS.length * 2}（${DAYS.length}日 × 2通り）`);
 if (nowRead < DAYS.length * 2) {

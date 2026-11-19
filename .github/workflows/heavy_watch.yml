@@ -92,6 +92,16 @@ on:
         required: false
         default: false
         type: boolean
+      fonts:
+        description: "書体を測り直す面（/next.html のように , でつなぐ）。入れると fontbake が測って焼き、artifact fonts に置く"
+        required: false
+        default: ""
+        type: string
+      guide:
+        description: "街のガイドの面（<国>/<街>。例 romania/bucharest）。入れると、その面も測って焼き、面の見張りも回す（fontbake）"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -616,6 +626,144 @@ jobs:
           echo "── reachwatch 終了コード ${rc}"
           exit "$rc"
 
+
+  # **書体の測り直しと焼き直し・街のガイドの面1枚ぶんの見張り**（手で押したときだけ。`fonts` か `guide` を入れる）。
+  #
+  # 面の字を足したら、その面を `fontweigh.mjs` で測り直して表（`tools/fonts/weights.json`）へ差し込み、
+  # `subset.py` で焼き直す（`docs/country-guide.md` 6-2）。しないと、その面が焼いた束に無い字を描いて
+  # 払っていない1本を引き、`fontfall.mjs` の「記録が古い」で赤くなる（#1308 の /next がそれ）。
+  # 作業箱で書き出すと 600MB を超え、箱の置き場が尽きる日がある（2026-11-19 に空き 467MB）ので、ここで回す。
+  # **焼いたものは artifact `fonts` に置くだけ**（枝へは書かない）。落として枝に積み、PR の見張りで緑を見る。
+  #
+  # `guide`（<国>/<街>）を入れると、その面も測って、面の見張り4本（guide_watch・guidebook.mjs・seo_audit・
+  # fontbudget）を同じ書き出しに当てる。`guidebook.mjs` は Actions に乗っていなかった（#1292 の穴）
+  fontbake:
+    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.fonts != '' || inputs.guide != '') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      FONT_PAGES: ${{ inputs.fonts }}
+      GUIDE: ${{ inputs.guide }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 入力を確かめる
+        run: |
+          set -euo pipefail
+          if [ -n "$GUIDE" ]; then
+            printf '%s' "$GUIDE" | grep -Eq '^[a-z-]+/[a-z-]+$' || { echo "::error::guide は <国>/<街>（小文字と - だけ）: $GUIDE"; exit 2; }
+            test -f "python/data/guide/$GUIDE/guidebook.json" || { echo "::error::材料が無い: $GUIDE"; exit 2; }
+          fi
+          if [ -n "$FONT_PAGES" ]; then
+            printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
+          fi
+
+      - name: site の依存を入れる
+        working-directory: site
+        run: npm ci --no-audit --no-fund
+
+      - name: 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: npx next build
+
+      - name: 確認用の道具の依存を入れる（playwright-core）
+        working-directory: tools/sprites
+        run: npm ci --no-audit --no-fund
+
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+      - name: Python の依存を入れる
+        run: pip install -r python/requirements.txt fonttools brotli
+
+      # 測った面だけを表へ差し込む（ほかの面の行は触らない）→ 焼き直す
+      - name: 面の書体を測り直して焼く
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4214 --directory site/.next-ci >/tmp/serve.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4214/index.html" && break; sleep 1; done
+          only="$FONT_PAGES"
+          if [ -n "$GUIDE" ]; then only="${only:+$only,}/travel/$GUIDE.html"; fi
+          echo "測る面: $only"
+          ONLY="$only" OUT=/tmp/w.json DIST=site/.next-ci SPORT=4214 node tools/sprites/fontweigh.mjs
+          ONLY_PAGES="$only" python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path("tools/fonts/weights.json")
+          table = json.loads(p.read_text(encoding="utf-8"))
+          got = json.loads(Path("/tmp/w.json").read_text(encoding="utf-8"))
+          want = [x[1:-5] if x != "/index.html" else "index" for x in os.environ["ONLY_PAGES"].split(",")]
+          miss = [w for w in want if w not in got]
+          if miss:
+              raise SystemExit(f"fontweigh の答えに {miss} が無い（答えの頭: {sorted(got)[:5]}）")
+          for w in want:
+              old = table.get(w) or {}
+              table[w] = got[w]
+              print(w, {k: f"{len(old.get(k, ''))} → {len(v)}" for k, v in got[w].items()})
+          p.write_text(json.dumps(table, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+          PY
+          python3 tools/fonts/subset.py --export site/.next-ci
+          git status --short tools/fonts site/public/fonts site/app/css
+
+      - name: 焼いた書体を置く（artifact fonts）
+        uses: actions/upload-artifact@v4
+        with:
+          name: fonts
+          path: |
+            tools/fonts/
+            site/public/fonts/
+            site/app/css/fonts.css
+
+      # 落ちた1本で止めない。**全部回してから、まとめて落ちる**
+      - name: 見張り（fontbudget・街のガイドなら guide_watch・guidebook.mjs・seo_audit）
+        run: |
+          set -uo pipefail
+          python3 -m http.server 4214 --directory site/.next-ci >/tmp/serve.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4214/index.html" && break; sleep 1; done
+          rows=()
+          DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs; rows+=("fontbudget_selftest $?")
+          if [ -n "$GUIDE" ]; then
+            python3 python/guide_watch.py --dist site/.next-ci "$GUIDE"; rows+=("guide_watch $?")
+            DIST=site/.next-ci SPORT=4214 PAGE="/travel/$GUIDE" OUT=/tmp/guidebook node tools/sprites/guidebook.mjs; rows+=("guidebook.mjs $?")
+            python3 python/seo_audit.py --dist site/.next-ci --no-site --detail "/travel/$GUIDE"; rows+=("seo_audit $?")
+          fi
+          echo "| 見張り | 終了コード |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
+          bad=0
+          for x in "${rows[@]}"; do
+            set -- $x; echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; echo "── $1 終了コード $2"
+            [ "$2" = 0 ] || bad=1
+          done
+          exit "$bad"
+
+      - name: 撮った絵を置く（artifact guidebook）
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: guidebook
+          path: /tmp/guidebook/
+          if-no-files-found: ignore
 
   # **上の2本が赤いあいだ、issue を1本だけ開いておく**（`python/heavy_down.py`）。
   # また通れば自分で閉じる。
