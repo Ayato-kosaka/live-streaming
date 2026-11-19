@@ -32,7 +32,6 @@ import { stayWord } from "@/lib/stay";
 import { span } from "@/lib/seoText";
 import { JsonLd, abs, articleLd } from "@/lib/jsonld";
 import { LASTMOD } from "@/lib/lastmod";
-import { jstNow } from "@/lib/nightly";
 import { SITE } from "@/content/site";
 import { countryMapArt } from "@/components/atlas/mapArt";
 import Writer from "@/components/travel/article/Writer";
@@ -223,14 +222,15 @@ function livesOf(r: CountryRecord): number {
 }
 
 /**
- * いた日数。閉じた滞在は面の札（いた日数）と同じ数えかた。**まだ続いている滞在は、書き出した日まで**——
- * 題と一文は `<head>` の字で、画面が出てから数え直せない。毎晩配り直すので、1日以内に追いつく
- * （画面の札は `./parts.tsx` の `StayLen` が数え直している）
+ * いた日数（面の札「いた日数」と同じ数えかた）と、まだ続いている滞在か。
+ *
+ * **まだ続いている滞在（いま居る国）の長さは、題と一文に入れない。** 題と一文は `<head>` の字で、画面が出てから
+ * 数え直せない。書き出した日の「1週間」は、次の配りまで（配りが止まればいつまでも）そのまま残り、日ごとに嘘になる
+ * （`tools/sprites/datebake.mjs` が、時計を進めた書き出しと突き合わせて赤くした。「1週間」→「1年」・【2026年】→【2026〜2027年】）。
+ * 画面の札は `./parts.tsx` の `StayLen` が数え直している
  */
 function stayDays(r: CountryRecord): { days: number; open: boolean } {
-  const open = r.stays.find((s) => !s.to);
-  const closed = closedDays(r.stays);
-  return open ? { days: closed + daysBetween(open.from, jstNow().date), open: true } : { days: closed, open: false };
+  return { days: closedDays(r.stays), open: r.stays.some((s) => !s.to) };
 }
 
 /** 題の「長さ」。1週間に届かなければ日で、それより長ければ週・月・年で丸める（ジョージアの384日は「1年」） */
@@ -256,9 +256,11 @@ const DESC_MAX = 160;
 /**
  * 題と一文。**頭は国名のまま**（「ブルガリア」で探す人の語を前半に）。
  *
- * - 題: 「〈国〉旅行記【〈年〉】〈旅〉で〈長さ〉・〈街〉」。例「ブルガリア旅行記【2026年】バルカン諸国周遊で1週間・ソフィア」。
+ * - 題: 「〈国〉旅行記【〈年〉】〈旅〉で〈長さ〉・〈街〉」。例「イギリス旅行記【2025年】ヨーロッパ周遊で2か月・ロンドン・エディンバラ」。
+ *   いま居る国は長さを言わない（「ブルガリア旅行記【2026年】バルカン諸国周遊・ソフィア」。`stayDays` の注）。
  *   はみ出すなら後ろの街から落とす。前は「〈国〉旅の記録 — 〈街〉」で21字しかなく、何の面か（いつ・どの旅の・どれだけ）が言えていなかった（#1262）
- * - 一文: いつ・何日・どの街を・配信の本数と人数（面の札と同じ数）・面の一言。160字を超えるなら後ろから落とす
+ * - 一文: いつ・何日（いま居る国は「〈入った日〉から」だけ）・どの街を・配信の本数と人数（面の札と同じ数）・面の一言。
+ *   80〜160字に収まるように後ろから落とす
  *
  * **足すのは面に見えている事実だけ**（`lib/seoText.ts` の決めごと）。画面に見える見出しは変えない（`<head>` の字だけ）
  */
@@ -267,13 +269,13 @@ export function recordMetadata(r: CountryRecord): Metadata {
   const first = r.stays[0];
   const last = r.stays[r.stays.length - 1];
   const { days, open } = stayDays(r);
-  const len = lenWord(days);
-  const until = last?.to || jstNow().date;
+  /* いま居る国は、長さを言わない（`stayDays` の注）。年も入った年だけ（終わりの年は、まだ決まっていない） */
+  const len = open ? "" : lenWord(days);
   const y0 = first?.from.slice(0, 4);
-  const y1 = until.slice(0, 4);
+  const y1 = open ? y0 : last?.to.slice(0, 4);
   const yr = first ? (y0 === y1 ? `${y0}年` : `${y0}〜${y1}年`) : "";
   /* 「イランまで歩く」は「〜で」が続かないので「イランまで歩いた〈長さ〉」 */
-  const tripLen = r.trip ? (/歩く$/.test(r.trip) ? `${r.trip.replace(/歩く$/, "歩いた")}${len}` : `${r.trip}で${len}`) : len;
+  const tripLen = !r.trip ? len : !len ? r.trip : /歩く$/.test(r.trip) ? `${r.trip.replace(/歩く$/, "歩いた")}${len}` : `${r.trip}で${len}`;
   const head = `${r.name}旅行記${yr ? `【${yr}】` : ""}${tripLen}`;
   const titles = [...cities.map((_, i) => `${head}・${cities.slice(0, cities.length - i).join("・")}`), head, `${r.name}旅行記${yr ? `【${yr}】` : ""}${len}`];
   const title = titles.find((t) => clen(t) + SUFFIX <= TITLE_MAX) ?? titles[titles.length - 1];
@@ -282,7 +284,7 @@ export function recordMetadata(r: CountryRecord): Metadata {
   const when = !first
     ? ""
     : open
-      ? `${ymdJa(first.from)}から${len}`
+      ? `${ymdJa(first.from)}から`
       : r.stays.length === 1
         ? first.from === last.to
           ? `${ymdJa(first.from)}の1日`
@@ -296,7 +298,7 @@ export function recordMetadata(r: CountryRecord): Metadata {
   /* 一文の終わりは、その面に在る節の一言。ガイドしか無い国に「配信のアーカイブつき」と書かない */
   const tail = r.towns.some((t) => !t.guide && t.streams.length) ? "街ごとの配信のアーカイブつき。" : r.towns.some((t) => t.guide) ? "街のガイドつき。" : "";
   const body = (towns: string[], withNums: string[]) =>
-    `${when ? `${when}、` : ""}${r.name}${towns.length ? `の${towns.join("・")}` : ""}を配信しながら歩いた旅行記。${withNums.length ? `${withNums.join("・")}。` : ""}`;
+    `${when ? `${when}、` : ""}${r.name}${towns.length ? `の${towns.join("・")}` : ""}を配信しながら${open ? "歩いている" : "歩いた"}旅行記。${withNums.length ? `${withNums.join("・")}。` : ""}`;
   /* 面の一言が、頭の「いつ」と同じ日を言い直しているとき（いま歩いている国の「〈日〉に入った。」）は、先に落とす */
   const says = (x: string) => !!first && x.includes(ymdJa(first.from));
   const sum = says(r.summary) ? "" : r.summary;
