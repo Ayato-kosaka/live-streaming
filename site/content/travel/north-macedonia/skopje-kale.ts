@@ -10,10 +10,10 @@ import type { GuideArticle } from "@/components/travel/article/types";
 export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
 {
  "slug": "kale",
- "title": "スコピエ城塞に行ってきた【2026年10月】夕日を待って激辛ケバブを食べた日の記録",
+ "title": "スコピエ城塞に行ってきた【2026年10月】夕日を見て激辛ケバブを食べた日の記録",
  "h1": [
   "スコピエ城塞に行ってきた【2026年10月】",
-  "夕日を待って激辛ケバブを食べた日の記録"
+  "夕日を見て激辛ケバブを食べた日の記録"
  ],
  "description": "2026年10月、北マケドニアのスコピエ城塞（カレ）へ歩いて行った配信者あやとの記録。無料の入口、門が閉まって駐車場から見た夕日、旧市街の激辛ケバブと野良犬まで。",
  "lead": "スコピエ城塞へ歩いて行き、夕日を待った日の記録です。城塞は無料で入れたのに、夕日の時間には門が閉まっていて、駐車場から見た空は少し焼けただけ。帰りは旧市街で激辛のケバブを食べました。",
@@ -157,6 +157,6 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
  ],
  "published": "2026-11-20",
  "updated": "2026-11-20",
- "hash": "cc6b34864ec4b52b"
+ "hash": "e72e369654421fd0"
 }
 /* END GUIDE */;
