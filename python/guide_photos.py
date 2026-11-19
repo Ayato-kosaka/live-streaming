@@ -70,7 +70,9 @@ WIDTHS = (120, 500, 960)
 #: 北欧の国の面の幅。段の頭の 52px 角（`nspot-th`）・国の札と見たいものの一覧・開いた写真と国の表紙。
 #: `python/build_nordic.py` が前から Commons に頼んでいた 250・500・960 と同じ（見た目を変えない）
 NORDIC_WIDTHS = (250, 500, 960)
-UA = "guide-photo-mirror/1.0 (static travel guide; Commons photos with credit)"
+# 名乗りには連絡先を入れる（Wikimedia の User-Agent policy）。入れていなかった 2026-11-19 に、置き場が
+# この名乗りにだけ 429 を返し続けた。島の URL を入れるのは、あやとが #1228 で決めた（2026-11-19「1・連絡先入れる」）
+UA = "guide-photo-mirror/1.0 (https://ayato-arigato.com; static travel guide; Commons photos with credit)"
 #: 429 のあと待つ秒。2026-11-14 に間を置かず16枚取って半分断られた（`guide_bake.fetch_photos`）
 WAITS = (5, 20, 60, 120)
 #: 1枚ごとの間（秒）
