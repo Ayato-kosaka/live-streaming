@@ -38,6 +38,8 @@
 | `extscene` | 場面: 外の事実（`data-src`）の中に配信の場面を置かない | 出どころの事実に場面の札 |
 | `nosrc` | 出どころ: 外の事実が、出どころのリンクと見た日を持つ | 出どころの無い外の事実 |
 | `sum` | 額: 合計の額を、同じ表に並んだ額の足し算のときだけ通す（ガイドブックの「あやとの1日」） | 内訳の足し算の合計が落ちる |
+| `floor` | 数: 窓の数がソフィアの面の数（やりたいこと8・見たいもの22・食べたいもの23）以上 | どれか1つが下限より1少ない |
+| `drawn` | 数: やりたいことの札の絵が全部、その街のその札の描いた絵（`do-<id>`） | 借りた写真の札・別の札の絵・数えられない札 |
 
 **12通り当てても、同じ足を折っているなら1通り**（`island-misses.md` #128）。上は全部別の所を折っていて、
 それぞれ**その足の確かめだけ**が落ちることまで見る（ほかの足も一緒に落ちるなら、何が効いたのか分からない）。
@@ -67,7 +69,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # 合計の通る面（sum）も、境目の字をくっつけて読むと内訳の額が読めなくなるので、sep を抜くと一緒に赤くなる
 EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}}
 LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "blind",
-        "many", "perline", "wentlink", "extscene", "nosrc", "sum"]
+        "many", "perline", "wentlink", "extscene", "nosrc", "sum", "floor", "drawn"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
 
@@ -268,6 +270,45 @@ print("[5] 本文（article.tg）の無い面")
 ok("blind", "本文の無い面は「0件」ではなく、見るものが無い（None）", run(page(article=False)), None)
 
 
+# ---------------------------------------------------------------- 5b. 数の下限（2026-11-19）
+
+def floor_html(key: str, *, do: int = 8, see: int = 22, eat: int = 23, photo: frozenset = frozenset(),
+               swap: bool = False, cards: int | None = None) -> str:
+    """数の下限の札と窓（面の部品と同じ形: 札は `a.gb-todo-card`、窓は `<dialog id="do-…">`）。
+    `photo` に入れた番号のやりたいことだけ借りた写真の札にする。`swap` は1枚目の札に2枚目の描いた絵を入れる"""
+    def src(i: int) -> str:
+        if i in photo:
+            return f"/guide/{key}/photos/p{i}-960.webp"
+        return f"/guide/{key}/do-t{1 if swap and i == 0 else i}-1200.webp"
+    li = "".join(f'<li><a class="gb-todo-card" href="#do-t{i}"><span class="gb-pic"><img src="{src(i)}" alt="イラスト"/></span></a></li>'
+                 for i in range(do if cards is None else cards))
+    dlg = "".join(f'<dialog id="{k}-t{i}" class="gb-dlg"><p>窓</p></dialog>' for k, m in (("do", do), ("see", see), ("eat", eat)) for i in range(m))
+    return f"<ol>{li}</ol>{dlg}"
+
+
+def floor_of(html_: str, key: str = "xx/test") -> list[str]:
+    art, _ = gw.parse(f'<html><body><article class="gb"><p>道が広い。</p>{html_}</article></body></html>')
+    r = gw.Report(key)
+    gw.check_floor(art, key, r)
+    return r.errors
+
+
+print("[5b] 数の下限（ソフィアの面の数）と、やりたいことの札の絵")
+ok("clean", "ソフィアの数（8・22・23）で、札が全部描いた絵なら0件", floor_of(floor_html("xx/test")), [])
+ok("clean", "下限より多いぶんは落とさない", floor_of(floor_html("xx/test", see=30, eat=40)), [])
+for k, low in (("do", 7), ("see", 21), ("eat", 22)):
+    e = floor_of(floor_html("xx/test", **{k: low}))
+    ok("floor", f"{gw.FLOOR_NAME[k]}が {low}（下限より1つ少ない）→ 落ちる", any(gw.FLOOR_NAME[k] in x and "下限" in x for x in e), True)
+e = floor_of(floor_html("xx/test", photo=frozenset({3})))
+ok("drawn", "やりたいことの1枚が借りた写真 → 落ちる", any("描いた絵ではない" in x for x in e), True)
+e = floor_of(floor_html("xx/test", swap=True))
+ok("drawn", "札に別のやりたいことの描いた絵 → 落ちる", any("「t0」の札が描いた絵ではない" in x for x in e), True)
+e = floor_of(floor_html("xx/test", cards=0))
+ok("drawn", "窓はあるのに札が数えられない（札の形が変わった）→ 落ちる", any("合わない" in x for x in e), True)
+e = floor_of(floor_html("other/city"), key="xx/test")
+ok("drawn", "ほかの街の描いた絵を入れた札 → 落ちる", any("描いた絵ではない" in x for x in e), True)
+
+
 # ---------------------------------------------------------------- 6. 本物の facts を読む
 
 if not BREAK:
@@ -308,7 +349,8 @@ if not BREAK:
         (dist / "travel/romania").mkdir(parents=True)
         (dist / "travel/north-macedonia").mkdir(parents=True)
         body = '<html><head><title>x</title></head><body><article class="gb"><p>道が広く、車はゆっくり走る。</p></article></body></html>'
-        (dist / "travel/romania/bucharest.html").write_text(body, encoding="utf-8")
+        full = body.replace("</article>", floor_html("romania/bucharest") + "</article>")
+        (dist / "travel/romania/bucharest.html").write_text(full, encoding="utf-8")
         (dist / "travel/north-macedonia/skopje.html").write_text(body, encoding="utf-8")
         ok("-", "ブカレストの材料は、行く前の街の印を持つ", gw.pre_trip("romania/bucharest"), True)
         ok("-", "スコピエの材料は、行く前の街の印を持たない", gw.pre_trip("north-macedonia/skopje"), False)
@@ -318,16 +360,25 @@ if not BREAK:
         code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "north-macedonia/skopje", "--dist", str(dist),
                                "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
         ok("-", "対照: 行った街から facts を抜くと 2（置き場を見失ったのと同じ）", code, 2)
+        # 数の下限は面ごとに当たる。札の無いブカレストは 1、下限より前に作ったスコピエは理由つきで外れる
+        (dist / "travel/romania/bucharest.html").write_text(body, encoding="utf-8")
+        r = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
+                            "--streams", str(empty)], capture_output=True, text=True, timeout=120)
+        ok("-", "対照: 札の無いブカレストは、数の下限で 1", (r.returncode, "下限" in r.stdout), (1, True))
+        ok("-", "下限より前に作った面には、外した理由が書いてある", all(len(v) > 10 for v in gw.FLOOR_BEFORE.values()), True)
+        ok("-", "下限を外した面は、材料のある街だけ（消えた街の除外を残さない）", set(gw.FLOOR_BEFORE) <= set(gw.keys()), True)
+        (dist / "travel/romania/bucharest.html").write_text(full, encoding="utf-8")
         (dist / "travel/romania/bucharest.html").write_text(
             '<html><head><title>x</title></head><body><article class="gb"><p>道が広い。</p>'
-            f'{say("ここ安いね", "abcdefghijk", 60)}</article></body></html>', encoding="utf-8")
+            f'{say("ここ安いね", "abcdefghijk", 60)}{floor_html("romania/bucharest")}</article></body></html>', encoding="utf-8")
         code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
                                "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
         ok("-", "対照: 行く前の街に一言を置くと 1", code, 1)
         # 行く前の街の額は、材料の外の事実（出どころつきの字）に在れば通る。無い額は 1
         for amt, want in (("5レイ", 0), ("999レイ", 1)):
             (dist / "travel/romania/bucharest.html").write_text(
-                f'<html><head><title>x</title></head><body><article class="gb"><p>地下鉄は1回{amt}。</p></article></body></html>',
+                f'<html><head><title>x</title></head><body><article class="gb"><p>地下鉄は1回{amt}。</p>'
+                f'{floor_html("romania/bucharest")}</article></body></html>',
                 encoding="utf-8")
             code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
                                    "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode

@@ -77,6 +77,8 @@ UA = "guide-photo-mirror/1.0 (https://ayato-arigato.com; static travel guide; Co
 WAITS = (5, 20, 60, 120)
 #: 1枚ごとの間（秒）
 GAP = 4.0
+#: `--gentle` の1枚ごとの間（秒）。置き場が 429 を返している日に、締め出しを長引かせない取りかた（2026-11-19。ブカレスト）
+GENTLE_GAP = 60.0
 
 _NSRC = "python/data/nordic-src"
 #: 北欧の6か国の材料。**その国の見どころの `img` と `big` だけ**を見る。元の `nordic.json` には、ルートから外した
@@ -154,7 +156,8 @@ UP = re.compile(
 )
 #: 手書きの表の、借りた写真の出どころのリンク（`creditHref: "https://commons.wikimedia.org/wiki/File:…"`）
 CREDIT = re.compile(r"creditHref:\s*[\"']https://commons\.wikimedia\.org/wiki/(File:[^\"'\s?#]+)")
-LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d|CC BY-SA \d\.\d)$")
+#: 国ごとの移植版（「CC BY-SA 3.0 ro」のように末尾に国の2字）も同じ許諾なので通す。NC・ND は今までどおり落とす
+LIC_OK = re.compile(r"^(CC0|PD|CC BY \d\.\d( [a-z]{2})?|CC BY-SA \d\.\d( [a-z]{2})?)$")
 
 
 def norm(name: str) -> str:
@@ -303,18 +306,18 @@ def _get(url: str) -> bytes:
         return r.read()
 
 
-def pull(url: str, get=_get, sleep=time.sleep, log=print) -> tuple[bytes | None, int]:
+def pull(url: str, get=_get, sleep=time.sleep, log=print, waits: tuple[int, ...] = WAITS) -> tuple[bytes | None, int]:
     """1本取る。戻りは（中身, 断られたときの番号）。**429 だけは待って取り直す**（ほかの断りは、待っても変わらない）。
     待つのは `WAITS` と、Wikimedia が返す Retry-After の長いほう"""
-    for i in range(len(WAITS) + 1):
+    for i in range(len(waits) + 1):
         try:
             return get(url), 200
         except urllib.error.HTTPError as e:
-            if e.code != 429 or i == len(WAITS):
+            if e.code != 429 or i == len(waits):
                 log(f"  断られた（{e.code}）: {url}")
                 return None, e.code
             ra = (e.headers or {}).get("Retry-After") if e.headers is not None else None
-            wait = max(WAITS[i], int(ra) if ra and str(ra).isdigit() else 0)
+            wait = max(waits[i], int(ra) if ra and str(ra).isdigit() else 0)
             log(f"  429。{wait}秒待って取り直す")
             sleep(wait)
         except urllib.error.URLError as e:
@@ -347,7 +350,10 @@ def save(data: bytes, key: str, name: str, root: Path = ROOT) -> None:
         tmp.replace(f)
 
 
-def fetch(key: str, root: Path = ROOT, get=_get, sleep=time.sleep, log=print) -> int:
+def fetch(key: str, root: Path = ROOT, get=_get, sleep=time.sleep, log=print, gentle: bool = False) -> int:
+    """`gentle` は、置き場が 429 を返している日の取りかた: 1枚ごとに `GENTLE_GAP` 秒あけ、429 は取り直さず、
+    **1回でも返ったらその回はそこで止める**（続けて叩くと締め出しが長引く）。名乗り（`UA`）は変えない"""
+    gap = GENTLE_GAP if gentle else GAP
     want = wanted(key, root)
     if not want:
         log(f"::error::{key}: 材料に借りた写真が1枚も無い（置き場が動いた？）")
@@ -357,9 +363,12 @@ def fetch(key: str, root: Path = ROOT, get=_get, sleep=time.sleep, log=print) ->
         if done(key, name, root):
             continue
         if got or bad:
-            sleep(GAP)
+            sleep(gap)
         url = source(name, info, widths_of(key)[-1])
-        data, code = pull(url, get, sleep, log)
+        data, code = pull(url, get, sleep, log, waits=() if gentle else WAITS)
+        if gentle and code == 429:
+            log(f"{key}: 429 が返ったので、この回はここで止める（いま置いた {got}・残り {sum(not done(key, n, root) for n in want)}）")
+            return 1
         if data is None and code in (400, 404) and "/thumb/" in url:
             # 元の幅を持たない材料（ソフィア・北欧・企画）で、元がいちばん大きい幅より小さかったとき（縮小が無い）。
             # **429 のときは元のファイルへ逃げない**（数十 MB の元を、締め出されている最中に取りに行くことになる）
@@ -480,6 +489,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("key", nargs="*", help="面（例: north-macedonia/skopje・nordic/finland・nordic・plans）。無ければ全部")
     ap.add_argument("--check", action="store_true", help="落とさずに確かめるだけ")
     ap.add_argument("--lookup", nargs="+", metavar="FILE", help="Commons のファイル名から、材料の写真の欄を組む")
+    ap.add_argument("--gentle", action="store_true", help="1枚ごとに60秒あけ、429 が1回でも返ったら止める（置き場が締め出している日）")
     a = ap.parse_args(argv)
     if a.lookup:
         return lookup(a.lookup)
@@ -488,7 +498,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"::error::知らない面: {', '.join(unknown)}（{', '.join(PLACES)}）")
         return 2
     if not a.check:
-        rc = max(fetch(k) for k in keys)
+        rc = max(fetch(k, gentle=a.gentle) for k in keys)
         if rc:
             return rc
     worst = 0
