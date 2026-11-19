@@ -5,12 +5,12 @@
  * 直すならそちらを直して、`python3 python/guidebook_went.py bulgaria/sofia` で焼き直す。
  * 鍵は「節/項目の id」。面の中身（手で組んだ TS）が、項目の id で当てる。
  */
-import type { Pic, Went } from "./types";
+import type { Went } from "./types";
 
-export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, { pic?: Pic; went: Went }> } = /* BEGIN GUIDE */
+export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, { went: Went }> } = /* BEGIN GUIDE */
 {
  "updated": "2026-11-19",
- "hash": "a4acc981962418ff",
+ "hash": "be1b390dbe046ace",
  "items": {
   "todo/yogurt": {
    "went": {
@@ -21,18 +21,18 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "女性市場ではヨーグルトがなかなか見つからず、やっと見つけたのはふつうのプレーンで、買うほどではなかった。",
-     "乳製品専門店まで行くと、プレーンやイチゴ味など、ヨーグルトの種類がとても多かった。あやとが選んだのはイチゴのアイリャン。"
-    ]
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",
-    "small": "/travel/bulgaria/sofia/yogurt-shop-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "ソフィアの乳製品の店（Млекарница）の前で、イチゴのアイリャンの瓶を持つ手（2026年11月13日）",
-    "kind": "card",
-    "date": "2026-11-13"
+     "まずは女性市場で探しましたが、ヨーグルトが全然出てこない。やっと見つけたのはふつうのプレーンヨーグルトで、買うほどではないかなと思いました。",
+     "そこで乳製品の専門店まで行ってみると、プレーンやイチゴ味など、ヨーグルトの種類がとても多いです。選んだのはイチゴのアイリャンです。"
+    ],
+    "pic": {
+     "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",
+     "small": "/travel/bulgaria/sofia/yogurt-shop-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "ソフィアの乳製品の店（Млекарница）の前で、イチゴのアイリャンの瓶を持つ手（2026年11月13日）",
+     "kind": "card",
+     "date": "2026-11-13"
+    }
    }
   },
   "todo/hotspring": {
@@ -44,7 +44,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "あやとも蛇口の湯を飲んでみた。温泉卵の汁のような味で、ぬめぬめしていた。"
+     "蛇口の温泉水を飲んでみましたが、正直まずかったです。温泉卵の汁のような味で、ぬめぬめしていました。"
     ],
     "say": "引くほどまずいです"
    }
@@ -58,7 +58,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-15"
     },
     "story": [
-     "あやとが入ったパン屋は、パンの種類が多く、ヨーグルトも売っていた。丸いバニツァを想像していたら、形も中身もさまざまで、アップルシナモンとくるみ、ポテト入りのビーガン、ほうれん草とチーズと卵などが並んでいた。"
+     "バニツァを買いに入ったパン屋は、パンの種類が多く、ヨーグルトも売っていました。バニツァは丸いものを想像していたら、形も中身もいろいろ。アップルシナモンとくるみ、ポテト入りのビーガン、ほうれん草とチーズと卵などが並んでいました。"
     ]
    }
   },
@@ -71,18 +71,18 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-14"
     },
     "story": [
-     "あやとが行ったときは開いた初日の夜で、準備が間に合わず、ホットチョコの店はまだ開いていなかった。ワッフル屋でバナナとストロベリーの両方を頼むと、ミックスにしてくれた。",
-     "昼にもう一度通ると、ソーセージの匂いが漂い、夜には分からなかったツリーの飾りまで見えた。"
-    ]
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/xmas-market-960.webp",
-    "small": "/travel/bulgaria/sofia/xmas-market-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "ソフィアのクリスマスマーケット。赤い飾りのツリーと、屋台に集まる人たち（2026年11月14日）",
-    "kind": "card",
-    "date": "2026-11-14"
+     "行ったのは開いた初日の夜で、準備が間に合っておらず、ホットチョコの店はまだ開いていませんでした。ワッフル屋でバナナとストロベリーの両方を頼んだら、ミックスにしてくれました。",
+     "昼にもう一度通ると、ソーセージがたくさん売られていて、フランクフルトの匂いでおなかが減ってきます。ツリーの飾りも凝っていて、夜には分からなかったデコレーションまで見えました。"
+    ],
+    "pic": {
+     "src": "/travel/bulgaria/sofia/xmas-market-960.webp",
+     "small": "/travel/bulgaria/sofia/xmas-market-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "ソフィアのクリスマスマーケット。赤い飾りのツリーと、屋台に集まる人たち（2026年11月14日）",
+     "kind": "card",
+     "date": "2026-11-14"
+    }
    }
   },
   "see/zhenski-pazar": {
@@ -94,17 +94,17 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "あやとが初めて行ったとき、お土産屋の並びを見て想像以上だと驚いた。紅茶やスパイスが瓶で量り売りされ、陶器屋にはコップなどかわいい器が並ぶ。北マケドニアやアルバニアの市場より清潔だと感じたそう。"
-    ]
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/zhenski-pazar-960.webp",
-    "small": "/travel/bulgaria/sofia/zhenski-pazar-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "ソフィアの女性市場。瓶に入った紅茶やスパイスと、木箱に盛ったナッツ（2026年11月13日）",
-    "kind": "card",
-    "date": "2026-11-13"
+     "目当ての女性市場に着いて、お土産屋の並びを見たときは、想像以上だと思いました。紅茶やスパイスが瓶に入って量り売りされていて、種類は数えきれないほど。陶器屋も多く、コップなどかわいい器が並んでいます。窓ごしの屋台で清潔感があり、北マケドニアやアルバニアの市場より清潔だと感じました。"
+    ],
+    "pic": {
+     "src": "/travel/bulgaria/sofia/zhenski-pazar-960.webp",
+     "small": "/travel/bulgaria/sofia/zhenski-pazar-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "ソフィアの女性市場。瓶に入った紅茶やスパイスと、木箱に盛ったナッツ（2026年11月13日）",
+     "kind": "card",
+     "date": "2026-11-13"
+    }
    }
   },
   "see/serdica": {
@@ -116,18 +116,18 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "あやとは初め、石の遺構を温泉の跡だと思った。調べると、古代ローマの都市セルディカの遺跡で、セルディカはソフィアの元の名前だった。",
-     "別の日に地下道へ入ると、急にローマ時代の遺跡が現れて、異世界のようだと驚いた。"
-    ]
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/serdica-960.webp",
-    "small": "/travel/bulgaria/sofia/serdica-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "ソフィアの中心。バーニャ・バシ・モスクと、手前の掘り下げた石の遺構（2026年11月13日）",
-    "kind": "card",
-    "date": "2026-11-13"
+     "初めは、石の遺構を温泉の跡だと思っていました。調べてみると、古代ローマの都市セルディカの遺跡で、セルディカはソフィアの元の名前らしいです。",
+     "別の日に地下道へ入ると、急にローマ時代の遺跡が現れて、異世界に来たのかと思いました。"
+    ],
+    "pic": {
+     "src": "/travel/bulgaria/sofia/serdica-960.webp",
+     "small": "/travel/bulgaria/sofia/serdica-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "ソフィアの中心。バーニャ・バシ・モスクと、手前の掘り下げた石の遺構（2026年11月13日）",
+     "kind": "card",
+     "date": "2026-11-13"
+    }
    }
   },
   "see/mineral-bath": {
@@ -139,7 +139,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "温泉の蛇口から湯気が立ち、地元の人たちが並んで温泉水を汲んでいた。あやとが触ると湯は熱く、ぬめぬめしていた。"
+     "湯気が出ている温泉の蛇口を見つけました。地元の人たちが並んで温泉水を汲んでいます。触ってみると熱くて、ぬめぬめ。50度ぐらいあるかもしれません。"
     ]
    }
   },
@@ -152,7 +152,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "あやとの第一印象は、大きくてかっこいい。中には、あやとが正教会では珍しいと話したステンドグラスがあり、壁画は古く、歴史を感じる色合いだった。あやとが行ったときは、2階の入口が閉じていて上がれなかった。"
+     "大聖堂の第一印象は、大きくてかっこいい。中にはステンドグラスがあって、正教会では珍しいと思いました。壁画は古く、歴史を感じる色合いです。少し前に行った北マケドニアの教会は絵の色が新しかったので、違いがよく分かりました。2階は入口が閉じていて、上がれませんでした。"
     ],
     "say": "画面いっぱいにシャンデリアよ"
    }
@@ -166,7 +166,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "聖ネデリャ教会の前から歩き出すと、高い建物は少なく、路面の店が続く。あやとは、何でも揃う商店街のようだと言った。"
+     "歩行者通りの始まりにある聖ネデリャ教会の前から歩き出しました。ブルガリアは高い建物が少なく、路面の店が多い。何でも揃う商店街のような通りです。"
     ]
    }
   },
@@ -179,7 +179,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "あやとは、かっこいい劇場だと言って写真を撮った。"
+     "かっこいい劇場だなと思って、写真を撮りました。"
     ]
    }
   },
@@ -192,19 +192,19 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "あやとが乳製品専門店で選んだのは、イチゴのアイリャン。真っピンクでトロトロ、塩気はまったく無く、日本の飲むヨーグルトによく似ていた。",
-     "アルメニアで飲んだヨーグルトの飲みものがとてもまずかったので警戒していたが、想像よりずっとおいしかった。"
+     "乳製品の専門店で選んだのは、イチゴのアイリャン。真っピンクでトロトロ、ホイップやイチゴケーキのような匂いがします。飲んでみると全然おいしい。塩気はまったく無く、日本の飲むヨーグルトによく似ていますが、ジュースっぽさより、ヨーグルトの酸味や風味がしっかりしています。",
+     "アルメニアで飲んだヨーグルトのジュースがとてもまずかったので、警戒していました。でも、想像よりずっとおいしかったです。"
     ],
-    "say": "正味みんなまずいを期待してたやろ"
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",
-    "small": "/travel/bulgaria/sofia/yogurt-shop-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "ソフィアの乳製品の店（Млекарница）の前で、イチゴのアイリャンの瓶を持つ手（2026年11月13日）",
-    "kind": "card",
-    "date": "2026-11-13"
+    "say": "正味みんなまずいを期待してたやろ",
+    "pic": {
+     "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",
+     "small": "/travel/bulgaria/sofia/yogurt-shop-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "ソフィアの乳製品の店（Млекарница）の前で、イチゴのアイリャンの瓶を持つ手（2026年11月13日）",
+     "kind": "card",
+     "date": "2026-11-13"
+    }
    }
   },
   "eat/banitsa": {
@@ -216,7 +216,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-15"
     },
     "story": [
-     "迷った末に選んだのは、定番らしいチーズと卵のバニツァ。3.6ユーロ（638円）。2階のイートインで食べてみると、チーズは濃厚でしょっぱく、外はパリパリ、中はねっとりしたパイ生地だった。"
+     "迷った末に選んだのは、定番らしいチーズと卵のバニツァ。3.6ユーロ、日本円で638円でした。2階のイートインで食べてみると、チーズは濃厚でしょっぱく、北マケドニアやアルバニアのチーズに近い味。外はパリパリ、中はねっとりしたパイ生地に、チーズがゴロゴロ入っていました。"
     ]
    }
   },
@@ -229,7 +229,7 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "女性市場の中の、ブルガリア料理のファストフード店「ピストル36」で、4ユーロぐらいでお任せにしてもらうと、出てきたのは3ユーロのムサカ。挽き肉・じゃがいも・にんじんにヨーグルトと卵のソースをかけて焼いた家庭料理で、食べてみたあやとのたとえは、肉じゃがの分厚いオムレツ。"
+     "女性市場の中にあるブルガリア料理のファストフード店「ピストル36」で、4ユーロぐらいでお任せにしてもらいました。出てきたのは3ユーロのムサカ。念願の一皿です。挽き肉・じゃがいも・にんじんの上に、ヨーグルトと卵のソースをかけて焼いた家庭料理で、食べてみると肉じゃがの分厚いオムレツみたいな味でした。"
     ]
    }
   },
@@ -242,17 +242,17 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-14"
     },
     "story": [
-     "あやとが買ったボザは、1L入りで150円ぐらいだった。"
-    ]
-   },
-   "pic": {
-    "src": "/travel/bulgaria/sofia/boza-960.webp",
-    "small": "/travel/bulgaria/sofia/boza-480.webp",
-    "w": 960,
-    "h": 1280,
-    "alt": "1L入りのボザの瓶と、ピンクのお菓子（2026年11月14日）",
-    "kind": "card",
-    "date": "2026-11-14"
+     "買ったボザは、1L入りで150円ぐらいでした。"
+    ],
+    "pic": {
+     "src": "/travel/bulgaria/sofia/boza-960.webp",
+     "small": "/travel/bulgaria/sofia/boza-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "1L入りのボザの瓶と、ピンクのお菓子（2026年11月14日）",
+     "kind": "card",
+     "date": "2026-11-14"
+    }
    }
   }
  }

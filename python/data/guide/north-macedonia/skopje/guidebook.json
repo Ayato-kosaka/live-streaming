@@ -3,14 +3,25 @@
   "何か": "スコピエを「ガイドブック型の街の面」（#1228）に作り替えるための材料。面（site/）はここから作る。焼く道具はまだ無い",
   "見張り": "python3 python/guide_book_check.py が数える（出どころの無い事実・座標の無い店・facts に辿れない「行った」・行っていない街の「行った」）。マイマップの CSV も同じ道具が書く（--mymaps）",
   "出どころ": "事実を持つ欄（text・what・why・tone）のある入れ物には、src（外の出どころ。https と見た日）か facts（配信の行）のどちらかを必ず付ける。座標（lat・lon）には coord_src",
-  "行った": "went は false か {facts: [...]}。facts の id は「動画ID@秒#種類」で、streams/YYYY/MM/<stem>.facts.json の行に1対1で当たる。verify（確かめが要る）とチャットが出どころ（via）の行は使わない。推測で行ったにしない",
+  "行った": "went は false か {facts: [...]}。facts の id は「動画ID@秒#種類」で、streams/YYYY/MM/<stem>.facts.json の行に1対1で当たる。verify（確かめが要る）とチャットが出どころ（via）の行は使わない。推測で行ったにしない。行った箱の字（facts だけを持つ字）は**あやとの一人称**で書く（docs/guide-blog.md）",
   "街": "town は、その項目がある街（skopje）か、その街からの日帰り（cities.json の trips。matka-canyon）。行った印は、facts の行の街・遠出と town が合うときだけ通る",
   "好み": "あやとの好みで外さない・印を付けない（#1228 の返事 2026-11-15）。料理と飲み物は alcohol・pork を持つだけ（null は店や作りで違う。pork_note に理由）",
   "動画": "導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（#1228）。行った項目に scene（配信アーカイブの動画と秒。その項目の went の行の1つ）を、当てられた項目に short（site/content/shorts.ts のショートの id）を持たせる。どのショートかは題名と、同じ日の配信の facts で決めた（shorts.items の basis）。ショートの日付は出した日で、撮った日ではない",
   "円": "円は 1ユーロ＝61.3644デナル（固定）と 1ユーロ＝176.83円（2026年11月13日の欧州中央銀行の参照レート）で直し、10円で丸めた。あやとの額は、あやとがその場で円に直して言ったもの",
   "引き継ぎ": "from_hub は、いまのハブの台本（python/data/guide/north-macedonia/skopje.json）の節と項目の鍵。ハブの項目は全部どこかに引き継ぐ",
   "rank": "見たいものの rank は、初めての人に向けた見どころの大きさ（1 が定番）。あやとの好みではない",
-  "地図": "多角形（range.polygon）は、OSM の地区の線か、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない"
+  "地図": "多角形（range.polygon）は、OSM の地区の線か、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない",
+  "外した品": {
+   "何か": "2026-11-19 に面から外した品（あやと「買いたいものに『防寒具』『市場の買い出し』があって意味がわからない。ガイドブックになっていない」）。配信の facts から作った品で、ガイドブックの品（外の出どころで、初めての人が『食べたい・買いたい・見たい』と言える品）にならなかった。防寒具・自炊の買い出し・市場の食材・箱入りクッキー・JOY（カフェ）・名前を確かめていない正教会。docs/island-misses.md #335",
+   "from_hub": [
+    "buy/cookie",
+    "buy/discount",
+    "buy/winter",
+    "eat/joy",
+    "see/frescoes",
+    "todo/market"
+   ]
+  }
  },
  "city": {
   "key": "north-macedonia/skopje",
@@ -404,7 +415,18 @@
       ]
      }
     ],
-    "went": false,
+    "went": {
+     "facts": [
+      {
+       "id": "_XzkJJIvpOE@2490#place",
+       "ref": "10-27 0:41:30",
+       "video": "_XzkJJIvpOE",
+       "t": 2490,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2490s"
+      }
+     ]
+    },
     "name_src": [
      {
       "name": "OpenStreetMap（Debar Maalo（place=suburb））",
@@ -416,6 +438,15 @@
       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
       "seen": "2026-11-15"
      }
+    ],
+    "scene": {
+     "id": "_XzkJJIvpOE@2490#place",
+     "video": "_XzkJJIvpOE",
+     "t": 2490,
+     "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2490s"
+    },
+    "from_hub": [
+     "see/terrace"
     ]
    },
    {
@@ -704,7 +735,7 @@
       ]
      },
      {
-      "text": "あやとが見つけたのは、左手にショットガン、右手に拳銃の像と、鼻先だけピカピカの牛の像。",
+      "text": "歩いていて見つけた変わり種は、左手にショットガン、右手に拳銃を持った像。牛の像は、みんなにさわられたのか鼻先だけピカピカでした。",
       "facts": [
        {
         "id": "hk39U7ZEKCQ@2970#fact",
@@ -940,7 +971,7 @@
     ],
     "tips": [
      {
-      "text": "晴れた日に歩く。あやとは雨の日に土産のアクセサリーくらいしか見られず、晴れた日にもう一度歩くと通りの様子がまるで違った。",
+      "text": "次の日は雨で、見られたのは土産物のアクセサリーくらい。晴れた日にもう一度歩くと、通りの様子がまるで違いました。紅茶には、トルコっぽさを感じました。歩くなら晴れた日がいちばんです。",
       "facts": [
        {
         "id": "UQdkUSro9Ck@1200#place",
@@ -953,7 +984,7 @@
       ]
      },
      {
-      "text": "月曜と祝日は閉まる店が多い。",
+      "text": "着いた日は月曜で、開いていない店が多かったです。次の日に聞くと、着いた日は北マケドニアの大きな祝日だったらしいです。月曜と祝日は、閉まる店が多いと思っておくと安心です。",
       "facts": [
        {
         "id": "NY9pzYrA-5o@3480#place",
@@ -1303,7 +1334,7 @@
       ]
      },
      {
-      "text": "あやとが着いたとき、岩山と紅葉と川が一度に見えて、水が澄んでいた。",
+      "text": "渓谷に着いてまず目に入ったのは、岩山と紅葉と川。それが一度に見えて、水も澄んでいました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@4860#place",
@@ -1328,14 +1359,17 @@
       ]
      },
      {
-      "text": "あやとは、いちばん大きい中央のバス停が始発だと思い込んで、乗る場所を間違えた。乗る前に、時刻表の出るアプリ SkopjeBus で乗り場を確かめる。",
+      "text": "乗る前に、時刻表の出るアプリ SkopjeBus で乗り場を確かめる。",
       "src": [
        {
         "name": "Wikivoyage「Skopje」",
         "url": "https://en.wikivoyage.org/wiki/Skopje",
         "seen": "2026-11-15"
        }
-      ],
+      ]
+     },
+     {
+      "text": "乗る場所は、いちばん大きい中央のバス停が始発だと思い込んで、間違えてしまいました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@210#caution",
@@ -1348,7 +1382,7 @@
       ]
      },
      {
-      "text": "あやとは60番に乗ってから、渓谷の手前で降ろされるまで約49分。その日は終点まで行かず手前で折り返し、そこから歩いて30分だった。",
+      "text": "行きは60番のバスで、渓谷の手前で降ろされるまで約49分。首都からバスで1時間ほどで来られるのは、うれしいところです。ただこの日は終点まで行かずに手前で折り返されて、そこから30分歩きました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@4650#move",
@@ -1381,7 +1415,7 @@
       ]
      },
      {
-      "text": "この日の渓谷行きのバスは2本しか無かった。帰りのバスはもう終わっていて、夜のバスでようやく帰った。",
+      "text": "この日、渓谷行きのバスは2本だけ。帰りは、調べたらもうバスが終わっていて、最悪だと思いました。しばらくすると夜のバスのようなものが来て、なんとか帰れました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@1170#move",
@@ -1434,7 +1468,7 @@
     ],
     "tips": [
      {
-      "text": "エンジンのボートは客が5人集まるまで出ない。乗り場は6時に閉まり、あやとは夕方に5人集まらず乗れなかった。ボートに乗るなら早い時間に。",
+      "text": "エンジンのボートは、客が5人集まるまで出ません。乗り場は6時に閉まるらしく、5時半を最終便にしたいと言われましたが、その時間に5人は集まらず、乗れないまま閉店。ボートに乗るなら、早い時間に行くのが安心です。",
       "facts": [
        {
         "id": "eHBAnQF56-E@9690#caution",
@@ -1455,7 +1489,7 @@
       ]
      },
      {
-      "text": "道の看板には狼・毒ヘビ・イノシシ・クマ・キツネがいると書いてある。",
+      "text": "道の看板には、狼・毒ヘビ・イノシシ・クマ・キツネがいると書いてあって、動物がこんなにいるのかと驚きました。",
       "facts": [
        {
         "id": "eHBAnQF56-E@5820#caution",
@@ -1631,7 +1665,7 @@
     "why": [],
     "how": [
      {
-      "text": "旧市街の食堂コスモスは、あやとが行列に並んで入った店。チェバピと豆の煮込みを食べた。",
+      "text": "旧市街の食堂コスモスには行列ができていて、先に3人と2人のグループが並んでいました。5分ぐらいと言われましたが、海外の5分なので10分は見ておいたほうがいいです。頼んだのはチェバピと豆の煮込み。",
       "facts": [
        {
         "id": "UQdkUSro9Ck@3390#place",
@@ -1686,7 +1720,7 @@
     "money": [],
     "tips": [
      {
-      "text": "11月9日の配信で、あやとはコスモスの豆の煮込みのほうがクリーミーだったと振り返った。",
+      "text": "11月9日に自分でも作ってみたら、コスモスのほうが、生クリームでも入っているのかと思うくらいクリーミーだった気がしました。本場の味を確かめに、もう一度食べに行きたいです。",
       "facts": [
        {
         "id": "WiSPWzjqZZA@6240#food",
@@ -1857,7 +1891,7 @@
     ],
     "tips": [
      {
-      "text": "夕日を見るなら早めに。あやとが日の入りに合わせて行くと門はもう閉まっていて、入口の隣の駐車場から日が沈むのを見た。",
+      "text": "夕日の時間に間に合うように歩いて行ったら、入口の門はもう閉まっていました。そこにいた日本人の方が教えてくれて、入口の隣の駐車場から日が沈むのを見ました。夕日を見るなら、門が閉まる前に早めに。",
       "facts": [
        {
         "id": "TDArug_te90@9690#caution",
@@ -1878,7 +1912,7 @@
       ]
      },
      {
-      "text": "城塞の手前の堀に架かる橋は、あやとが渡るのをやめたほど傷んで見えた。",
+      "text": "城塞の手前の堀に架かる橋は、壊れかけに見えました。下はがけの堀なので、渡るのはやめて別の道を探しました。",
       "facts": [
        {
         "id": "TDArug_te90@2010#caution",
@@ -2048,7 +2082,7 @@
       ]
      },
      {
-      "text": "あやとは宿から歩いて登り、山の途中の駐車場に並ぶ出店で、梨ジュースとクッキーを買ってひと休みした。15時20分、あと1時間で日が暮れるので、十字架の手前で引き返した。",
+      "text": "宿から歩いて登りました。20分ほどで街を抜けて、ゆるやかな坂道に。山の途中の駐車場に着くと店が無くてがっかりしましたが、出店が並んでいて、北マケドニアで有名な梨ジュースが買えました。冷たかったです。15時20分、あと1時間で日が暮れるので、十字架の手前で引き返しました。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@1200#place",
@@ -2104,7 +2138,7 @@
     ],
     "how": [
      {
-      "text": "歩くなら、街から山道を登る。あやとが見た地図アプリでは、十字架まで歩いて2時間6分の道だった。",
+      "text": "地図アプリで調べると、十字架までは歩いて2時間6分の道でした。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@540#move",
@@ -2132,7 +2166,7 @@
       ]
      },
      {
-      "text": "あやとが行く前の晩に調べると、昔の案内にはバスがあると書いてあるのに、地図アプリでは歩きの道しか出なかった。",
+      "text": "行く前に調べたときは、昔の案内にはバスがあると書いてあるのに、いまの地図アプリでは歩きの道しか出ませんでした。最悪、歩くつもりで出かけました。",
       "facts": [
        {
         "id": "28Tcc0c5sNE@7710#move",
@@ -2147,7 +2181,7 @@
     ],
     "money": [
      {
-      "text": "山の途中の駐車場の出店では、クレジットカードが使えた。",
+      "text": "駐車場の出店では、クレジットカードが使えました。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@4830#fact",
@@ -2172,7 +2206,7 @@
       ]
      },
      {
-      "text": "あやとが行った11月8日は、地図アプリの口コミに、工事でロープウェイが使えないとあった。動いているかを先に確かめる。",
+      "text": "行った11月8日は、地図アプリの口コミに、工事でロープウェイが使えないとありました。本来はバスで行って、そこからロープウェイで登る道です。動いているかは、先に確かめておくと安心です。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@480#caution",
@@ -2185,7 +2219,7 @@
       ]
      },
      {
-      "text": "日が沈むと、山道はすぐ暗くなる。あやとは携帯のライトで足元だけを見て下りた。下りの道は急で滑りやすく、野良犬もいた。",
+      "text": "日が沈むと山道はすぐに暗くなって、携帯のライトで地面だけを照らして下りました。下りの道は急で滑りやすく、何回も足をふみ外しました。下り始めてすぐ、野良犬が3びきいて、ほえられないようににげました。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@12570#caution",
@@ -2214,7 +2248,7 @@
       ]
      },
      {
-      "text": "登る途中で見つけたスーパーは、日曜で休みだった。",
+      "text": "登る途中でスーパーを見つけて喜んだのに、日曜日で休みでした。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@2070#caution",
@@ -2256,7 +2290,7 @@
     ],
     "time": [
      {
-      "text": "あやとは宿から、山の途中の出店のある駐車場まで1時間ちょいだった。",
+      "text": "宿から出店のある駐車場までは、1時間ちょっとで来られました。",
       "facts": [
        {
         "id": "qAXRe3qQyvo@5010#move",
@@ -3247,110 +3281,6 @@
    }
   },
   {
-   "key": "frescoes",
-   "town": "skopje",
-   "name": "壁画だらけの正教会（名前は確かめていない）",
-   "rank": null,
-   "what": {
-    "text": "あやとが10月17日に入った、壁一面に絵が続く正教会。色合いがきれいにまとまっていて、今まで見た中でいちばんだと言った。",
-    "facts": [
-     {
-      "id": "hk39U7ZEKCQ@3630#fact",
-      "ref": "10-17 1:00:30",
-      "video": "hk39U7ZEKCQ",
-      "t": 3630,
-      "kind": "fact",
-      "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=3630s"
-     }
-    ]
-   },
-   "went": {
-    "facts": [
-     {
-      "id": "hk39U7ZEKCQ@3420#quote",
-      "ref": "10-17 0:57:00",
-      "video": "hk39U7ZEKCQ",
-      "t": 3420,
-      "kind": "quote",
-      "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=3420s"
-     },
-     {
-      "id": "hk39U7ZEKCQ@3630#fact",
-      "ref": "10-17 1:00:30",
-      "video": "hk39U7ZEKCQ",
-      "t": 3630,
-      "kind": "fact",
-      "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=3630s"
-     }
-    ]
-   },
-   "from_hub": [
-    "see/frescoes"
-   ],
-   "scene": {
-    "id": "hk39U7ZEKCQ@3420#quote",
-    "video": "hk39U7ZEKCQ",
-    "t": 3420,
-    "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=3420s"
-   }
-  },
-  {
-   "key": "terrace",
-   "town": "skopje",
-   "name": "テラスのカフェが並ぶ通り（場所は確かめていない）",
-   "rank": null,
-   "what": {
-    "text": "あやとが「おしゃれ地区」と呼んだ通り。テラス席のカフェと中東風のパン屋がぽつぽつ並び、飲食店が多かった。",
-    "facts": [
-     {
-      "id": "_XzkJJIvpOE@2490#place",
-      "ref": "10-27 0:41:30",
-      "video": "_XzkJJIvpOE",
-      "t": 2490,
-      "kind": "place",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2490s"
-     },
-     {
-      "id": "_XzkJJIvpOE@3120#place",
-      "ref": "10-27 0:52:00",
-      "video": "_XzkJJIvpOE",
-      "t": 3120,
-      "kind": "place",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=3120s"
-     },
-     {
-      "id": "_XzkJJIvpOE@2970#fact",
-      "ref": "10-27 0:49:30",
-      "video": "_XzkJJIvpOE",
-      "t": 2970,
-      "kind": "fact",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2970s"
-     }
-    ]
-   },
-   "went": {
-    "facts": [
-     {
-      "id": "_XzkJJIvpOE@2490#place",
-      "ref": "10-27 0:41:30",
-      "video": "_XzkJJIvpOE",
-      "t": 2490,
-      "kind": "place",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2490s"
-     }
-    ]
-   },
-   "from_hub": [
-    "see/terrace"
-   ],
-   "scene": {
-    "id": "_XzkJJIvpOE@2490#place",
-    "video": "_XzkJJIvpOE",
-    "t": 2490,
-    "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2490s"
-   }
-  },
-  {
    "key": "bit-pazar",
    "town": "skopje",
    "name": "ビト・パザル（市場）",
@@ -4209,31 +4139,12 @@
        }
       ],
       "why": {
-       "text": "あやとが行列に並んで入った旧市街の食堂。チェバピと豆の煮込みを食べ、11月9日には、ここの豆の煮込みのほうがクリーミーだったと言った。",
-       "facts": [
+       "text": "旧市街の食堂。OSM で旧市街にある「Kosmos」はこの1軒。",
+       "src": [
         {
-         "id": "UQdkUSro9Ck@3390#place",
-         "ref": "10-14 0:56:30",
-         "video": "UQdkUSro9Ck",
-         "t": 3390,
-         "kind": "place",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=3390s"
-        },
-        {
-         "id": "UQdkUSro9Ck@4470#food",
-         "ref": "10-14 1:14:30",
-         "video": "UQdkUSro9Ck",
-         "t": 4470,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=4470s"
-        },
-        {
-         "id": "WiSPWzjqZZA@6240#food",
-         "ref": "11-09 1:44:00",
-         "video": "WiSPWzjqZZA",
-         "t": 6240,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=WiSPWzjqZZA&t=6240s"
+         "name": "OpenStreetMap（Kosmos）",
+         "url": "https://www.openstreetmap.org/node/6514996385",
+         "seen": "2026-11-15"
         }
        ]
       },
@@ -4389,7 +4300,7 @@
      "eat/tavche"
     ],
     "related": {
-     "text": "あやとは10月14日にコスモスで、トマトとチーズでクリーミーな、大きい豆の甘い煮込みを食べた。11月9日に宿のキッチンでタヴチェ・グラフチェを作ったとき、コスモスのはもっとクリーミーだったと比べた。",
+     "text": "10月14日に食堂コスモスで食べた豆の煮込みは、トマトとチーズでクリーミーで、大きい豆が甘かったです。11月9日には宿のキッチンで自分でも作ってみました。白インゲン豆を前の日に8時間ぐらい水でもどして、1時間ぐらい煮込み。それでも、コスモスのほうがもっとクリーミーだった気がしました。",
      "facts": [
       {
        "id": "UQdkUSro9Ck@4470#food",
@@ -4507,38 +4418,12 @@
        }
       ],
       "why": {
-       "text": "あやとが行列に並んで入った旧市街の食堂。チェバピは炭の匂いがして肉汁が広がり、パンは無料で出てきた。OSM で旧市街にある「Kosmos」はこの1軒。",
+       "text": "旧市街の食堂。OSM で旧市街にある「Kosmos」はこの1軒。",
        "src": [
         {
          "name": "OpenStreetMap（Kosmos）",
          "url": "https://www.openstreetmap.org/node/6514996385",
          "seen": "2026-11-15"
-        }
-       ],
-       "facts": [
-        {
-         "id": "UQdkUSro9Ck@3390#place",
-         "ref": "10-14 0:56:30",
-         "video": "UQdkUSro9Ck",
-         "t": 3390,
-         "kind": "place",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=3390s"
-        },
-        {
-         "id": "UQdkUSro9Ck@4290#food",
-         "ref": "10-14 1:11:30",
-         "video": "UQdkUSro9Ck",
-         "t": 4290,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=4290s"
-        },
-        {
-         "id": "UQdkUSro9Ck@5520#food",
-         "ref": "10-14 1:32:00",
-         "video": "UQdkUSro9Ck",
-         "t": 5520,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=UQdkUSro9Ck&t=5520s"
         }
        ]
       },
@@ -4765,6 +4650,93 @@
     },
     "from_hub": [
      "eat/burek"
+    ]
+   },
+   {
+    "key": "bakery",
+    "name": "ベーカリー",
+    "local": null,
+    "kinds": [
+     "breakfast",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "街のあちこちに小さなベーカリー・カフェがあり、ブレクなどのパイが買える。",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "pork_note": {
+     "text": "並ぶのはブレクなどのパイで、中身は店と種類で違う。",
+     "src": [
+      {
+       "name": "Wikivoyage「Skopje」",
+       "url": "https://en.wikivoyage.org/wiki/Skopje",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikipedia「Börek」",
+       "url": "https://en.wikipedia.org/wiki/B%C3%B6rek",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": {
+     "facts": [
+      {
+       "id": "vZ2O8pabk1g@9840#place",
+       "ref": "10-23 2:44:00",
+       "video": "vZ2O8pabk1g",
+       "t": 9840,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=vZ2O8pabk1g&t=9840s"
+      },
+      {
+       "id": "misSMBhPlkc@2370#caution",
+       "ref": "10-19 0:39:30",
+       "video": "misSMBhPlkc",
+       "t": 2370,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=misSMBhPlkc&t=2370s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "vZ2O8pabk1g@9840#place",
+     "video": "vZ2O8pabk1g",
+     "t": 9840,
+     "url": "https://www.youtube.com/watch?v=vZ2O8pabk1g&t=9840s"
+    },
+    "note": {
+     "text": "祝日で閉まっている店が多い日も、パン屋のパンパンは開いていました。17時に閉まるらしく、行ったときにはパンが2種類しか残っていなかったので、行くなら早めの時間に。",
+     "facts": [
+      {
+       "id": "vZ2O8pabk1g@9840#place",
+       "ref": "10-23 2:44:00",
+       "video": "vZ2O8pabk1g",
+       "t": 9840,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=vZ2O8pabk1g&t=9840s"
+      },
+      {
+       "id": "misSMBhPlkc@2370#caution",
+       "ref": "10-19 0:39:30",
+       "video": "misSMBhPlkc",
+       "t": 2370,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=misSMBhPlkc&t=2370s"
+      }
+     ]
+    },
+    "from_hub": [
+     "eat/panpan"
     ]
    },
    {
@@ -5244,22 +5216,12 @@
        }
       ],
       "why": {
-       "text": "旧市街でいちばん安いと言われる、とあやとが聞いて入った店。OSM で旧市街にあるハムザはビトパザルスカ通りのこの1軒（もう1軒は広場の南）。",
+       "text": "旧市街のケバブ屋。OSM で旧市街にあるハムザはビトパザルスカ通りのこの1軒（もう1軒は広場の南）。",
        "src": [
         {
          "name": "OpenStreetMap（Hamza Doner（Bitpazarska））",
          "url": "https://www.openstreetmap.org/node/6814247285",
          "seen": "2026-11-15"
-        }
-       ],
-       "facts": [
-        {
-         "id": "TDArug_te90@10050#food",
-         "ref": "10-18 2:47:30",
-         "video": "TDArug_te90",
-         "t": 10050,
-         "kind": "food",
-         "url": "https://www.youtube.com/watch?v=TDArug_te90&t=10050s"
         }
        ]
       },
@@ -5327,7 +5289,7 @@
      "eat/hamza"
     ],
     "note": {
-     "text": "旧市街で先に入ったケバブ屋は1個1,500円、チェーン店も単品で約800円で、あやとはどちらも見送ってハムザへ行った。辛さを聞かれて「はい」と答えると激辛になる。",
+     "text": "旧市街で先に入ったケバブ屋は1個1,500円もして、見送りました。チェーンの店も単品で800円ぐらいで、高い。結局ハムザに入ると、スパイシーかと聞かれてなんとなくイエスと答えたら、ギトギトの赤いソースで激辛のケバブに。早歩きで運んだので、べちゃべちゃにもなりました。",
      "facts": [
       {
        "id": "TDArug_te90@9000#price",
@@ -5888,246 +5850,10 @@
     "went": false
    }
   ],
-  "went_notes": [
-   {
-    "key": "joy",
-    "name": "JOY（カフェ）",
-    "from_hub": [
-     "eat/joy"
-    ],
-    "text": "あやとはキャロットケーキとアメリカーノで約750円。キャロットケーキは粘りが強く、上の砂糖が甘い。",
-    "facts": [
-     {
-      "id": "misSMBhPlkc@2970#price",
-      "ref": "10-19 0:49:30",
-      "video": "misSMBhPlkc",
-      "t": 2970,
-      "kind": "price",
-      "url": "https://www.youtube.com/watch?v=misSMBhPlkc&t=2970s"
-     },
-     {
-      "id": "misSMBhPlkc@3690#food",
-      "ref": "10-19 1:01:30",
-      "video": "misSMBhPlkc",
-      "t": 3690,
-      "kind": "food",
-      "url": "https://www.youtube.com/watch?v=misSMBhPlkc&t=3690s"
-     }
-    ],
-    "why_not_on_map": "街に「Joy Café & Bakery」が2軒あり（マケドニヤ通りとカルポシュ）、どちらに入ったかが配信から決められない"
-   },
-   {
-    "key": "panpan",
-    "name": "パン屋パンパン",
-    "from_hub": [
-     "eat/panpan"
-    ],
-    "text": "祝日で閉まる店が多い日にも開いていた。17時に閉まるらしく、遅く行くとパンが2種類しか残っていなかった。",
-    "facts": [
-     {
-      "id": "vZ2O8pabk1g@9840#place",
-      "ref": "10-23 2:44:00",
-      "video": "vZ2O8pabk1g",
-      "t": 9840,
-      "kind": "place",
-      "url": "https://www.youtube.com/watch?v=vZ2O8pabk1g&t=9840s"
-     },
-     {
-      "id": "misSMBhPlkc@2370#caution",
-      "ref": "10-19 0:39:30",
-      "video": "misSMBhPlkc",
-      "t": 2370,
-      "kind": "caution",
-      "url": "https://www.youtube.com/watch?v=misSMBhPlkc&t=2370s"
-     }
-    ],
-    "why_not_on_map": "カピシュテツとアエロドロムの2軒に行ったが、OSM にも検索にも店の場所が見つからない"
-   }
-  ]
+  "went_notes": []
  },
  "buy": {
   "items": [
-   {
-    "key": "cookie",
-    "name": "マケドニアの箱入りクッキー",
-    "local": null,
-    "what": {
-     "text": "スーパーの箱入りクッキー。あやとが買ったのは300g入りで150円、バターの味が効いていた。バニラ・アーモンド・ココナッツと味を変えて、毎日1箱食べていた。サクッとして、パン屋やケーキ屋のクッキーのよう。",
-     "facts": [
-      {
-       "id": "0upPnKMc5po@3870#price",
-       "ref": "10-21 1:04:30",
-       "video": "0upPnKMc5po",
-       "t": 3870,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=3870s"
-      },
-      {
-       "id": "donehL4hO68@4660#food",
-       "ref": "10-13 1:17:40",
-       "video": "donehL4hO68",
-       "t": 4660,
-       "kind": "food",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=4660s"
-      },
-      {
-       "id": "0upPnKMc5po@3900#food",
-       "ref": "10-21 1:05:00",
-       "video": "0upPnKMc5po",
-       "t": 3900,
-       "kind": "food",
-       "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=3900s"
-      },
-      {
-       "id": "0upPnKMc5po@3960#fact",
-       "ref": "10-21 1:06:00",
-       "video": "0upPnKMc5po",
-       "t": 3960,
-       "kind": "fact",
-       "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=3960s"
-      },
-      {
-       "id": "_XzkJJIvpOE@4620#food",
-       "ref": "10-27 1:17:00",
-       "video": "_XzkJJIvpOE",
-       "t": 4620,
-       "kind": "food",
-       "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=4620s"
-      }
-     ]
-    },
-    "alcohol": false,
-    "stores": [
-     {
-      "key": "kam",
-      "name": "カム・マーケット（中心部の店）",
-      "local": "Кам маркет",
-      "area": "newtown",
-      "lat": 41.988882,
-      "lon": 21.428254,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Кам Маркет（50-ta Divizija））",
-        "url": "https://www.openstreetmap.org/node/1851607184",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "国でいちばん安いスーパーのチェーン（アルディ風）。この店は中心部の50番師団通り。",
-       "src": [
-        {
-         "name": "Wikivoyage「North Macedonia」",
-         "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
-         "seen": "2026-11-15"
-        },
-        {
-         "name": "OpenStreetMap（Кам Маркет）",
-         "url": "https://www.openstreetmap.org/node/1851607184",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B0%D0%BC+%D0%BC%D0%B0%D1%80%D0%BA%D0%B5%D1%82+50-%D1%82%D0%B0+%D0%94%D0%B8%D0%B2%D0%B8%D0%B7%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja"
-     },
-     {
-      "key": "ramstore",
-      "name": "ラムストア（カピシュテツ）",
-      "local": "Рамстор",
-      "area": "newtown",
-      "lat": 41.993066,
-      "lon": 21.416744,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Ramstore（Kapištec））",
-        "url": "https://www.openstreetmap.org/way/1568898470",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "中心部の南西、カピシュテツのスーパー（OSM）。",
-       "src": [
-        {
-         "name": "OpenStreetMap（Ramstore（Kapištec））",
-         "url": "https://www.openstreetmap.org/way/1568898470",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Ramstore+Kapishtec+Skopje&hl=ja"
-     },
-     {
-      "key": "vero",
-      "name": "スーパー・ヴェロ",
-      "local": "Супер Веро",
-      "area": "newtown",
-      "lat": 41.99303,
-      "lon": 21.44162,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "大きなスーパーの入ったモール。レストランやカフェ、携帯会社の店もある。",
-       "src": [
-        {
-         "name": "Wikivoyage「Skopje/Centar」",
-         "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Super+Vero+Skopje&hl=ja"
-     }
-    ],
-    "went": {
-     "facts": [
-      {
-       "id": "0upPnKMc5po@3870#price",
-       "ref": "10-21 1:04:30",
-       "video": "0upPnKMc5po",
-       "t": 3870,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=3870s"
-      },
-      {
-       "id": "hk39U7ZEKCQ@5700#food",
-       "ref": "10-17 1:35:00",
-       "video": "hk39U7ZEKCQ",
-       "t": 5700,
-       "kind": "food",
-       "url": "https://www.youtube.com/watch?v=hk39U7ZEKCQ&t=5700s"
-      }
-     ]
-    },
-    "from_hub": [
-     "buy/cookie"
-    ],
-    "note": {
-     "text": "旧市街から歩いた先のクッキー屋の量り売りは約500円で、あやとは買わなかった。",
-     "facts": [
-      {
-       "id": "_XzkJJIvpOE@2730#price",
-       "ref": "10-27 0:45:30",
-       "video": "_XzkJJIvpOE",
-       "t": 2730,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=2730s"
-      }
-     ]
-    },
-    "scene": {
-     "id": "0upPnKMc5po@3870#price",
-     "video": "0upPnKMc5po",
-     "t": 3870,
-     "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=3870s"
-    }
-   },
    {
     "key": "ajvar",
     "name": "アイヴァルの瓶",
@@ -6296,22 +6022,12 @@
      ]
     },
     "what": {
-     "text": "北マケドニアでいちばん飲まれているコーヒー。スーパーには袋がたくさん並び、200g入りの大きな袋もあった。",
+     "text": "北マケドニアでいちばん飲まれているコーヒー。",
      "src": [
       {
        "name": "Wikipedia「Macedonian cuisine」",
        "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
        "seen": "2026-11-15"
-      }
-     ],
-     "facts": [
-      {
-       "id": "donehL4hO68@6210#food",
-       "ref": "10-13 1:43:30",
-       "video": "donehL4hO68",
-       "t": 6210,
-       "kind": "food",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=6210s"
       }
      ]
     },
@@ -6680,473 +6396,16 @@
     "went": false
    },
    {
-    "key": "market",
-    "name": "市場の食材（チーズ・香辛料・お茶）",
-    "local": null,
-    "what": {
-     "text": "市場では果物・野菜・サラダ・チーズ・お茶・香辛料・花が買える。緑の市場のほうが値段は手ごろ。",
-     "src": [
-      {
-       "name": "Wikivoyage「Skopje/Stara Čaršija」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-       "seen": "2026-11-15"
-      },
-      {
-       "name": "Wikivoyage「Skopje/Centar」",
-       "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-       "seen": "2026-11-15"
-      }
-     ]
-    },
-    "alcohol": false,
-    "stores": [
-     {
-      "key": "bit-pazar",
-      "name": "ビト・パザル（市場）",
-      "local": "Бит-пазар",
-      "area": "carsija",
-      "lat": 42.003719,
-      "lon": 21.439488,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Bit pazar）",
-        "url": "https://www.openstreetmap.org/way/32813170",
-        "seen": "2026-11-15"
-       },
-       {
-        "name": "Wikivoyage「Skopje/Stara Čaršija」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "街でいちばん大きな食べ物の市場。果物・野菜・チーズ・お茶・香辛料・花。",
-       "src": [
-        {
-         "name": "Wikivoyage「Skopje/Stara Čaršija」",
-         "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=%D0%91%D0%B8%D1%82-%D0%BF%D0%B0%D0%B7%D0%B0%D1%80+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja"
-     },
-     {
-      "key": "zelen-pazar",
-      "name": "緑の市場（ゼレン・パザル）",
-      "local": "Зелен пазар",
-      "area": "newtown",
-      "lat": 41.991093,
-      "lon": 21.433371,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Зелен пазар）",
-        "url": "https://www.openstreetmap.org/way/32689267",
-        "seen": "2026-11-15"
-       },
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "旅行者が少ない農家の市場で、値段が手ごろ。自家製の蒸留酒も売っている。議会の近く。",
-       "src": [
-        {
-         "name": "Wikivoyage「Skopje/Centar」",
-         "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-         "seen": "2026-11-15"
-        },
-        {
-         "name": "Wikivoyage「Skopje/Stara Čaršija」",
-         "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=%D0%97%D0%B5%D0%BB%D0%B5%D0%BD+%D0%BF%D0%B0%D0%B7%D0%B0%D1%80+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja"
-     }
-    ],
-    "went": false,
-    "from_hub": [
-     "todo/market"
-    ],
-    "note": {
-     "text": "あやとは着いた次の日、傘・爪切り・ドラゴン柄の髭剃り・スニーカーまで何でも売っている、とても広いマーケットを見た（どの市場かは配信から決められない）。",
-     "facts": [
-      {
-       "id": "donehL4hO68@510#fact",
-       "ref": "10-13 0:08:30",
-       "video": "donehL4hO68",
-       "t": 510,
-       "kind": "fact",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=510s"
-      }
-     ]
-    }
-   },
-   {
-    "key": "winter",
-    "name": "防寒具（マフラー・手袋・ニット帽）",
-    "local": null,
-    "what": {
-     "text": "10月の終わりに急に寒くなり、1週間前まで半袖だったあやとは手が震えるほどだった。マフラーと手袋を合わせて約1,500円で買い、寒さはだいぶましになった。",
-     "facts": [
-      {
-       "id": "_XzkJJIvpOE@1680#fact",
-       "ref": "10-27 0:28:00",
-       "video": "_XzkJJIvpOE",
-       "t": 1680,
-       "kind": "fact",
-       "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1680s"
-      },
-      {
-       "id": "_XzkJJIvpOE@1410#caution",
-       "ref": "10-27 0:23:30",
-       "video": "_XzkJJIvpOE",
-       "t": 1410,
-       "kind": "caution",
-       "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1410s"
-      },
-      {
-       "id": "la_OkustLkA@3935#price",
-       "ref": "10-28 1:05:35",
-       "video": "la_OkustLkA",
-       "t": 3935,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=3935s"
-      },
-      {
-       "id": "urwD3EmjTxs@1710#caution",
-       "ref": "10-29 0:28:30",
-       "video": "urwD3EmjTxs",
-       "t": 1710,
-       "kind": "caution",
-       "url": "https://www.youtube.com/watch?v=urwD3EmjTxs&t=1710s"
-      }
-     ]
-    },
-    "alcohol": false,
-    "stores": [
-     {
-      "key": "lcw",
-      "name": "LC ワイキキ（ダイヤモンド・モール）",
-      "local": "LC Waikiki",
-      "area": "newtown",
-      "lat": 41.990082,
-      "lon": 21.429392,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（LC Waikiki（Železnička））",
-        "url": "https://www.openstreetmap.org/node/13418045401",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "あやとがダイヤモンド・モールで入った服のチェーン店。売れ残りの黒の長いマフラーが300円、手袋は約1,200円だった。OSM のこの店はダイヤモンド・モールの位置にある。",
-       "src": [
-        {
-         "name": "OpenStreetMap（LC Waikiki）",
-         "url": "https://www.openstreetmap.org/node/13418045401",
-         "seen": "2026-11-15"
-        },
-        {
-         "name": "OpenStreetMap（Diamond Mall）",
-         "url": "https://www.openstreetmap.org/way/1231158369",
-         "seen": "2026-11-15"
-        }
-       ],
-       "facts": [
-        {
-         "id": "la_OkustLkA@2105#place",
-         "ref": "10-28 0:35:05",
-         "video": "la_OkustLkA",
-         "t": 2105,
-         "kind": "place",
-         "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2105s"
-        },
-        {
-         "id": "la_OkustLkA@2555#price",
-         "ref": "10-28 0:42:35",
-         "video": "la_OkustLkA",
-         "t": 2555,
-         "kind": "price",
-         "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2555s"
-        },
-        {
-         "id": "la_OkustLkA@2975#price",
-         "ref": "10-28 0:49:35",
-         "video": "la_OkustLkA",
-         "t": 2975,
-         "kind": "price",
-         "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2975s"
-        }
-       ]
-      },
-      "went": {
-       "facts": [
-        {
-         "id": "la_OkustLkA@2555#price",
-         "ref": "10-28 0:42:35",
-         "video": "la_OkustLkA",
-         "t": 2555,
-         "kind": "price",
-         "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2555s"
-        },
-        {
-         "id": "la_OkustLkA@3935#price",
-         "ref": "10-28 1:05:35",
-         "video": "la_OkustLkA",
-         "t": 3935,
-         "kind": "price",
-         "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=3935s"
-        }
-       ]
-      },
-      "maps": "https://www.google.com/maps/search/?api=1&query=LC+Waikiki+Diamond+Mall+Skopje&hl=ja",
-      "scene": {
-       "id": "la_OkustLkA@2555#price",
-       "video": "la_OkustLkA",
-       "t": 2555,
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2555s"
-      }
-     }
-    ],
-    "went": {
-     "facts": [
-      {
-       "id": "la_OkustLkA@2555#price",
-       "ref": "10-28 0:42:35",
-       "video": "la_OkustLkA",
-       "t": 2555,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2555s"
-      },
-      {
-       "id": "la_OkustLkA@3935#price",
-       "ref": "10-28 1:05:35",
-       "video": "la_OkustLkA",
-       "t": 3935,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=3935s"
-      }
-     ]
-    },
-    "from_hub": [
-     "buy/winter"
-    ],
-    "scene": {
-     "id": "la_OkustLkA@2555#price",
-     "video": "la_OkustLkA",
-     "t": 2555,
-     "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=2555s"
-    }
-   },
-   {
-    "key": "grocery",
-    "name": "自炊の買い出し（スーパー）",
-    "local": null,
-    "what": {
-     "text": "あやとはほぼ毎日スーパーで買い出して、宿の台所で自炊した。パスタは75円、ニンジンもバナナも1kg約100円。1回の買い出しは約1,000〜1,300円。",
-     "facts": [
-      {
-       "id": "NY9pzYrA-5o@1260#price",
-       "ref": "10-12 0:21:00",
-       "video": "NY9pzYrA-5o",
-       "t": 1260,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=NY9pzYrA-5o&t=1260s"
-      },
-      {
-       "id": "donehL4hO68@5075#price",
-       "ref": "10-13 1:24:35",
-       "video": "donehL4hO68",
-       "t": 5075,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=5075s"
-      },
-      {
-       "id": "donehL4hO68@5795#price",
-       "ref": "10-13 1:36:35",
-       "video": "donehL4hO68",
-       "t": 5795,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=5795s"
-      },
-      {
-       "id": "CKJvprUMOgA@7680#price",
-       "ref": "10-15 2:08:00",
-       "video": "CKJvprUMOgA",
-       "t": 7680,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=7680s"
-      },
-      {
-       "id": "0upPnKMc5po@6060#price",
-       "ref": "10-21 1:41:00",
-       "video": "0upPnKMc5po",
-       "t": 6060,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=0upPnKMc5po&t=6060s"
-      }
-     ]
-    },
-    "alcohol": false,
-    "stores": [
-     {
-      "key": "kam",
-      "name": "カム・マーケット（中心部の店）",
-      "local": "Кам маркет",
-      "area": "newtown",
-      "lat": 41.988882,
-      "lon": 21.428254,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Кам Маркет（50-ta Divizija））",
-        "url": "https://www.openstreetmap.org/node/1851607184",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "国でいちばん安いスーパーのチェーン（アルディ風）。この店は中心部の50番師団通り。",
-       "src": [
-        {
-         "name": "Wikivoyage「North Macedonia」",
-         "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
-         "seen": "2026-11-15"
-        },
-        {
-         "name": "OpenStreetMap（Кам Маркет）",
-         "url": "https://www.openstreetmap.org/node/1851607184",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B0%D0%BC+%D0%BC%D0%B0%D1%80%D0%BA%D0%B5%D1%82+50-%D1%82%D0%B0+%D0%94%D0%B8%D0%B2%D0%B8%D0%B7%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja"
-     },
-     {
-      "key": "ramstore",
-      "name": "ラムストア（カピシュテツ）",
-      "local": "Рамстор",
-      "area": "newtown",
-      "lat": 41.993066,
-      "lon": 21.416744,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap（Ramstore（Kapištec））",
-        "url": "https://www.openstreetmap.org/way/1568898470",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "中心部の南西、カピシュテツのスーパー（OSM）。",
-       "src": [
-        {
-         "name": "OpenStreetMap（Ramstore（Kapištec））",
-         "url": "https://www.openstreetmap.org/way/1568898470",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Ramstore+Kapishtec+Skopje&hl=ja"
-     },
-     {
-      "key": "vero",
-      "name": "スーパー・ヴェロ",
-      "local": "Супер Веро",
-      "area": "newtown",
-      "lat": 41.99303,
-      "lon": 21.44162,
-      "coord_src": [
-       {
-        "name": "Wikivoyage「Skopje/Centar」",
-        "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-        "seen": "2026-11-15"
-       }
-      ],
-      "why": {
-       "text": "大きなスーパーの入ったモール。レストランやカフェ、携帯会社の店もある。",
-       "src": [
-        {
-         "name": "Wikivoyage「Skopje/Centar」",
-         "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-         "seen": "2026-11-15"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Super+Vero+Skopje&hl=ja"
-     }
-    ],
-    "went": {
-     "facts": [
-      {
-       "id": "NY9pzYrA-5o@1020#place",
-       "ref": "10-12 0:17:00",
-       "video": "NY9pzYrA-5o",
-       "t": 1020,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=NY9pzYrA-5o&t=1020s"
-      },
-      {
-       "id": "CKJvprUMOgA@7680#price",
-       "ref": "10-15 2:08:00",
-       "video": "CKJvprUMOgA",
-       "t": 7680,
-       "kind": "price",
-       "url": "https://www.youtube.com/watch?v=CKJvprUMOgA&t=7680s"
-      }
-     ]
-    },
-    "from_hub": [
-     "buy/discount"
-    ],
-    "note": {
-     "text": "着いた日に行った「街でいちばん安いと噂のディスカウントスーパー」は、廃墟のようなビルの中にあり、入口が狭い。店の名前と場所は配信から決められない。",
-     "facts": [
-      {
-       "id": "NY9pzYrA-5o@1020#place",
-       "ref": "10-12 0:17:00",
-       "video": "NY9pzYrA-5o",
-       "t": 1020,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=NY9pzYrA-5o&t=1020s"
-      }
-     ]
-    },
-    "scene": {
-     "id": "NY9pzYrA-5o@1020#place",
-     "video": "NY9pzYrA-5o",
-     "t": 1020,
-     "url": "https://www.youtube.com/watch?v=NY9pzYrA-5o&t=1020s"
-    }
-   },
-   {
     "key": "crafts",
     "name": "旧市街の金銀の細工とアクセサリー",
     "local": null,
     "what": {
-     "text": "旧市街は通りごとに品が分かれ、金の通りもあった。あやとが歩いたときは、並ぶ店の9割ほどがジュエリー屋で、ドレス屋も多かった。",
+     "text": "旧市街は通りごとに品が分かれ、金の通りもある。",
      "src": [
       {
        "name": "Wikivoyage「Skopje/Stara Čaršija」",
        "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
        "seen": "2026-11-15"
-      }
-     ],
-     "facts": [
-      {
-       "id": "donehL4hO68@1440#place",
-       "ref": "10-13 0:24:00",
-       "video": "donehL4hO68",
-       "t": 1440,
-       "kind": "place",
-       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=1440s"
       }
      ]
     },
@@ -7197,6 +6456,19 @@
      "video": "donehL4hO68",
      "t": 1440,
      "url": "https://www.youtube.com/watch?v=donehL4hO68&t=1440s"
+    },
+    "note": {
+     "text": "旧市街を歩くと、並ぶ店の9割ほどがジュエリー屋で、ドレス屋も多かったです。",
+     "facts": [
+      {
+       "id": "donehL4hO68@1440#place",
+       "ref": "10-13 0:24:00",
+       "video": "donehL4hO68",
+       "t": 1440,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=donehL4hO68&t=1440s"
+      }
+     ]
     }
    }
   ]
@@ -7322,7 +6594,7 @@
       ]
      },
      {
-      "text": "あやとはアルバニアから国境越えのバスで来た。4時間と聞いていたのに7時間かかり、着いたのは16時。",
+      "text": "アルバニアからは国境越えのバスで来ました。8時に出て4時間で着くと聞いていたのに、実際は7時間ぐらい。着いたのは16時で、だまされたかと思いました。",
       "facts": [
        {
         "id": "NY9pzYrA-5o@60#move",
@@ -7384,7 +6656,7 @@
       ]
      },
      {
-      "text": "あやとは、乗るときに払った切符が読み取り機になかなか反応せず苦労した。バス停の電光掲示板は、昼は光が弱くて読めなかった。",
+      "text": "市バスは乗るときに払います。払ったあと切符を読み取り機にかざすのですが、なかなか反応しなくて大変でした。バス停の電光掲示板は光が弱く、昼間はまったく読めませんでした。",
       "facts": [
        {
         "id": "eHBAnQF56-E@660#move",
@@ -7464,7 +6736,7 @@
       ]
      },
      {
-      "text": "あやとはスーパーでカードが使えた。それでも ATM で約3万円を下ろして、現金を持ち歩いた。",
+      "text": "スーパーではクレジットカードが使えました。ATM は苦手で、間違えて3万円ぐらい下ろしてしまったので、それからは現金を持ち歩いています。",
       "facts": [
        {
         "id": "NY9pzYrA-5o@1830#price",
@@ -7522,7 +6794,7 @@
       ]
      },
      {
-      "text": "あやとは着いたその日に SIM を買って開通した。最初は1週間用で、次に1か月用に替えた。",
+      "text": "着いたその日に SIM を買って、開通できました。最初に買ったのは1週間用だったので、次は1か月用に替えました。",
       "facts": [
        {
         "id": "NY9pzYrA-5o@90#move",
@@ -7582,7 +6854,7 @@
       ]
      },
      {
-      "text": "あやとの印象は、きれいでゴミが少なく、治安は悪くない。泊まったホステルも旅行者ばかりで平和だった。",
+      "text": "街はきれいでゴミが少なく、治安は悪くない印象です。泊まったホステルも旅行者ばかりで、平和でした。",
       "facts": [
        {
         "id": "CKJvprUMOgA@1140#fact",
@@ -7603,7 +6875,7 @@
       ]
      },
      {
-      "text": "旧市街でケバブを食べていたら、野良犬に持っていかれそうになった（地元の人が助けてくれた）。",
+      "text": "旧市街でケバブを食べていたら、野良犬に持っていかれそうに。地元の人が石をなげて助けてくれました。",
       "facts": [
        {
         "id": "TDArug_te90@10710#caution",
@@ -8000,38 +7272,12 @@
    },
    {
     "key": "warm",
-    "text": "10月の終わりからの防寒具。平年の11月は最高12.5℃・最低2.8℃。あやとは10月27日に急な寒さで手が震え、次の日にマフラーと手袋を買った。",
+    "text": "10月の終わりからの防寒具。平年の11月は最高12.5℃・最低2.8℃。",
     "src": [
      {
       "name": "Wikipedia「Skopje」（気候の表。スコピエ国際空港・1991〜2020年の平年値）",
       "url": "https://en.wikipedia.org/wiki/Skopje#Climate",
       "seen": "2026-11-15"
-     }
-    ],
-    "facts": [
-     {
-      "id": "_XzkJJIvpOE@1410#caution",
-      "ref": "10-27 0:23:30",
-      "video": "_XzkJJIvpOE",
-      "t": 1410,
-      "kind": "caution",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1410s"
-     },
-     {
-      "id": "_XzkJJIvpOE@1680#fact",
-      "ref": "10-27 0:28:00",
-      "video": "_XzkJJIvpOE",
-      "t": 1680,
-      "kind": "fact",
-      "url": "https://www.youtube.com/watch?v=_XzkJJIvpOE&t=1680s"
-     },
-     {
-      "id": "la_OkustLkA@3935#price",
-      "ref": "10-28 1:05:35",
-      "video": "la_OkustLkA",
-      "t": 3935,
-      "kind": "price",
-      "url": "https://www.youtube.com/watch?v=la_OkustLkA&t=3935s"
      }
     ]
    },
@@ -8069,22 +7315,12 @@
    },
    {
     "key": "translate",
-    "text": "翻訳アプリ。地元の人向けの店はキリル文字だけのことが多い。あやとはスーパーで品名を Google 翻訳で調べた。",
+    "text": "翻訳アプリ。地元の人向けの店はキリル文字だけのことが多い。",
     "src": [
      {
       "name": "Wikivoyage「North Macedonia」",
       "url": "https://en.wikivoyage.org/wiki/North_Macedonia",
       "seen": "2026-11-15"
-     }
-    ],
-    "facts": [
-     {
-      "id": "urwD3EmjTxs@870#food",
-      "ref": "10-29 0:14:30",
-      "video": "urwD3EmjTxs",
-      "t": 870,
-      "kind": "food",
-      "url": "https://www.youtube.com/watch?v=urwD3EmjTxs&t=870s"
      }
     ]
    }
@@ -8299,7 +7535,7 @@
     "basics/holidays"
    ],
    "went": {
-    "text": "あやとが着いた次の日に聞くと前の日は大きな祝日で、どこの店も閉まっていた。10月23日も祝日で、郵便局もスーパーも閉まっていた。",
+    "text": "着いた次の日に聞くと、前の日は大きな祝日で、どこの店も閉まっていたそうです。10月23日も祝日で、郵便局もスーパーも閉まっていました。",
     "facts": [
      {
       "id": "donehL4hO68@370#caution",
@@ -8342,7 +7578,7 @@
    ]
   },
   "autumn": {
-   "text": "10月後半は並木が色づく。あやとは10月17日に紅葉を見て、もう冬という感じで寒いと言った。",
+   "text": "10月17日には紅葉が色づいていて、もう冬という感じの寒さでした。3日後には、3割ほどだった並木がほぼ真っ赤に。",
    "facts": [
     {
      "id": "hk39U7ZEKCQ@5010#fact",

@@ -347,15 +347,6 @@
   }
  },
  "buy": {
-  "cookie": {
-   "src": "/guide/north-macedonia/skopje/buy-cookie-800.webp",
-   "src_small": "/guide/north-macedonia/skopje/buy-cookie-400.webp",
-   "w": 800,
-   "h": 800,
-   "alt": "無地の箱に入ったバタークッキー。アーモンドやココナッツをのせたものもある",
-   "kind": "ai",
-   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
-  },
   "ajvar": {
    "src": "/guide/north-macedonia/skopje/buy-ajvar-800.webp",
    "src_small": "/guide/north-macedonia/skopje/buy-ajvar-400.webp",
@@ -398,33 +389,6 @@
    "w": 800,
    "h": 800,
    "alt": "ラベルの無い瓶に詰めた自家製のラキヤと、プラムとぶどう",
-   "kind": "ai",
-   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
-  },
-  "market": {
-   "src": "/guide/north-macedonia/skopje/buy-market-800.webp",
-   "src_small": "/guide/north-macedonia/skopje/buy-market-400.webp",
-   "w": 800,
-   "h": 800,
-   "alt": "束ねた山のお茶、パプリカと唐辛子の粉、干した赤唐辛子、白いチーズ",
-   "kind": "ai",
-   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
-  },
-  "winter": {
-   "src": "/guide/north-macedonia/skopje/buy-winter-800.webp",
-   "src_small": "/guide/north-macedonia/skopje/buy-winter-400.webp",
-   "w": 800,
-   "h": 800,
-   "alt": "黒い長いマフラーと、灰色の手袋とニット帽",
-   "kind": "ai",
-   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
-  },
-  "grocery": {
-   "src": "/guide/north-macedonia/skopje/buy-grocery-800.webp",
-   "src_small": "/guide/north-macedonia/skopje/buy-grocery-400.webp",
-   "w": 800,
-   "h": 800,
-   "alt": "布の買い物袋からこぼれたパスタ・にんじん・バナナ・トマト・パン",
    "kind": "ai",
    "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし"
   },

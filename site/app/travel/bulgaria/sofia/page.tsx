@@ -17,8 +17,7 @@ import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
-import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
-import type { Pic } from "@/content/guidebook/types";
+import { coverShare, dress, readDrawn } from "@/content/guidebook/manifest";
 import { travelArticle, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { JsonLd, articleLd } from "@/lib/jsonld";
@@ -71,15 +70,9 @@ export const metadata: Metadata = coverShare(
 
 export default function SofiaPage() {
   const drawn = DRAWN;
-  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A）。
-     **行った項目のその日のカードは差し替えない**（あやとが撮ったものが先。スコピエと同じ）。カードの無い日の行った項目は描いた絵のまま */
-  const swap = <T extends { pic?: Pic }>(it: T, pic?: Pic) => (pic && it.pic?.kind !== "card" ? { ...it, pic } : it);
-  const g = {
-    ...G,
-    todo: G.todo.map((t) => swap(t, todoPic(drawn, t))),
-    eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
-    buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
-  };
+  /* 描いた絵があれば、やりたいこと・料理・土産の札の絵にする（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A）。
+     行った項目のその日のカードは札に使わず、窓の中の「あやとの旅の記録」に出す（あやと 2026-11-19。決めかたは `dress`） */
+  const g = dress(G, drawn);
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);
   /* 行った最初の日（配信の facts から焼いた「行った」のいちばん早い日）。**居た期間と日数は出さない**——
