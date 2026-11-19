@@ -119,6 +119,7 @@ export const COLLECT = (nearSrc) => {
       // **島の書体で出る字だけ**を数える。同じ面の中に、わざと端末の書体で
       // 出している段がある（`tokens.css` の2本目以降だけを並べた font-family）。
       // そこの字まで焼くと、誰も取りに行かない字で束が太る
+      // 面ひとりぶんの1本（`"Maru Island <面>"`。`subset.py` の `SOLO`）も頭が同じなので、ここで一緒に数える
       if (!/^"?Maru Island/.test(cs.fontFamily)) continue;
       const w = parseInt(cs.fontWeight, 10) || 400;
       for (const n of el.childNodes) if (n.nodeType === 3) add(w, n.nodeValue);

@@ -61,10 +61,10 @@
  * `BREAK=alt` のように自分で渡すと、その1通りだけを全部の面に当てて帰る。
  */
 import { chromium } from "playwright-core";
-import { COLLECT, NEAR } from "./fontweigh.mjs";
+import { COLLECT, NEAR, keyOf } from "./fontweigh.mjs";
 import { discover, DIST } from "./islepages.mjs";
 import { offline } from "./route.mjs";
-import { CSS, faces, isStrut } from "./fontfaces.mjs";
+import { CSS, faces, isStrut, picker, soloRules } from "./fontfaces.mjs";
 
 const PORT = process.env.PORT || "4170";
 const BASE = `http://localhost:${PORT}`;
@@ -87,6 +87,7 @@ const MAX_KB = +(process.env.MAX_KB || 220);
  * @param {ReturnType<typeof faces>} all
  */
 async function one(b, page, how, all) {
+  const pick = picker(all, soloRules());
   {
     const ctx = await b.newContext({ viewport: { width: W, height: 844 }, isMobile: W < 640 });
     /* BREAK=alt … 絵を落としたまま測る（#848 を作った測りかた） */
@@ -130,7 +131,9 @@ async function one(b, page, how, all) {
       for (const w of [400, 700, 900]) {
         for (const c of drawn[String(w)] || "") {
           const cp = c.codePointAt(0);
-          const i = all.findIndex((f) => f.w === w && f.ranges.some(([lo, hi]) => lo <= cp && cp <= hi));
+          /* **ブラウザと同じ順に引く**——その面に効く1本（`subset.py` の `SOLO`）が先、無ければふだんの束。
+             束だけで引くと、ひとりぶんの面は取りに行った1本が全部「空振り」に見える */
+          const i = pick(keyOf(page), w, cp);
           if (i >= 0) need.add(all[i].url);
         }
       }

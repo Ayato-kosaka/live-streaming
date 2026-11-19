@@ -15,6 +15,41 @@
  *   3. 1面あたりの平均が上限を超えていないか（1面だけ軽くして他を太らせる切り方よけ）
  *   4. **表（`weights.json`）が、島の面ぜんぶを持っているか**（下の「分母」）
  *   5. **表を作る拾いかた（`fontweigh.mjs` の `COLLECT`）が、字を太さごとに正しく拾うか**（下の「拾いかた」）
+ *   6. **表の記録が、書き出した面より古くないか**（下の「記録の古さ」。書き出しがあるときだけ）
+ *   7. **面ひとりぶんの1本（`subset.py` の `SOLO`）が、その面で本当に効くか**（下の「ひとりぶん」）
+ *
+ * ## 記録の古さ——表が古いと、1〜3 は古い表の上で緑になる（2026-11-19）
+ *
+ * 1〜3 は表に書いてある字で払う量を見積もる。**面の字が増えても、表を測り直さなければ
+ * 見積もりは動かない。** 2026-11-19 にそれが起きていた——この見張りは
+ * `/travel/bulgaria/sofia` を 906.8KB（上限の中）と言い、表を測り直して同じ式で
+ * 数えると **1,206.6KB** だった。増えた字は焼いたとき表に無かったので、どの面も
+ * 取りに行かないはずの冷たい束（400 と 900 で 127KB ずつ）に入っていて、面はそれを引いていた。
+ * そのとき表と測り直しを突き合わせると、**155面のうち148面**の記録が古かった。
+ *
+ * だから**書き出した HTML の地の字**（`<script>` などの中身は除く。`subset.py` の
+ * `from_export()` と同じ剥がしかた）を表の記録と突き合わせる。記録に無い字が
+ * あれば、それが**その面で、まだ払っていない1本**を引くかを見る:
+ *
+ *   - その面が描く太さのどれかで、すでに払っている1本に入っている字 … 0KB
+ *     （日付や曜日の字はたいていこれ。毎晩の焼き直しで動く字で赤くしない）
+ *   - どの太さでも、払っていない1本に入っている字 … いちばん安い太さのその1本
+ *
+ * 足したものが `STALE_KB` 以上、または見積もりに足して上限を超えたら赤。
+ * **太さは HTML から分からない**ので、いちばん安い太さを選ぶ（＝少なく見積もる）。
+ * 少なく見積もっても赤なら、測り直しは要る。
+ *
+ * **書き出しが無い場（CI の `selftest` job）では見ない**——HTML が無いので。
+ * 書き出しを持つ `reachkeys` job（`selftest.yml`）がここを `DIST=` つきで回す。
+ *
+ * ## ひとりぶん——効かない1本は、見積もりの上でだけ軽い（2026-11-19）
+ *
+ * 字の多い面は、その面が描く字だけの1本を太さごとに持つ（`subset.py` の `SOLO`）。
+ * 見積もりは「その面ではまずその1本から引く」として数えるが、ブラウザがそうするのは
+ * `fonts.css` の当たり判定（`<link rel="canonical">` の末尾）がその面に当たったときだけ。
+ * 当たらなければ面はふだんの束を引いて、**実際は重いまま、ここは軽いと言う。**
+ * だから書き出しで当たり判定を当てる。もう1つ、家族の中に 400/700/900 が
+ * 揃っているか——欠けると、ブラウザは近い太さの1本で描く（900 の見出しが 700 になる）。
  *
  * ## 拾いかた——表そのものが嘘だと、1〜4 は嘘の表の上で緑になる（2026-10-26）
  *
@@ -68,6 +103,15 @@
  *   drop  … 束を1つ無かったことにする。落ちる字を数えられなければ同じ
  *   hole  … 表から面を1枚抜く（#902 当時の姿）。分母の足が効いていなければ素通りする
  *   blind … 面を1枚も見つけられない置き場を数えさせる。**0 で緑にならない**か
+ *   unscoped … ひとりぶんの当たり判定を無かったことにする。ひとりぶんの面がふだんの束を
+ *           引いて上限を超えなければ、ひとりぶんを数える足は効いていない
+ *   noweight … ひとりぶんの家族から 900 の1本を抜く（太さ合わせで 700 に化ける日の姿）
+ *   stale … 面の HTML に、その面がまだ払っていない1本の字を1つ足す（記録が古い日の姿）。
+ *           書き出しがあるときだけ
+ *   unbaked … 面の HTML に、どの1本にも焼いていない漢字を1つ足す（払う量は0なので、払う量だけ
+ *           見ていると素通りする）。書き出しがあるときだけ
+ *   nocanon … ひとりぶんの面の HTML から canonical を抜く。書き出しがあるときだけ
+ *   glyphless … ふだんの束の範囲に、書体に字形の無い字を1つ足す
  *
  * 拾いかたの対照は**守りを外した写し**。`COLLECT` を字のまま写し、守りを1つずつ外して
  * 偽の面に当てる（本物のファイルは触らない）。拾いかたの足が効いていなければ素通りする。
@@ -79,21 +123,29 @@
  * 終了コード 0=通った / 1=超えた・落ちる字がある・表に無い面がある・字の拾いかたが狂った /
  * 2=数えるものが無い。
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COLLECT, NEAR, pageKeys } from "./fontweigh.mjs";
 import { DIST } from "./islepages.mjs";
+import { FAMILY, faces, picker, soloRules } from "./fontfaces.mjs";
+import { loadRedirects, redirectOf } from "./routemoves.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const CSS = join(ROOT, "site", "app", "css", "fonts.css");
-const FONTS = join(ROOT, "site", "public", "fonts");
 const SEEN = join(ROOT, "tools", "fonts", "weights.json");
+/* 面が島の書体で描くのに、Zen Maru Gothic が字形を持たない字（`subset.py` の `glyphs()` が書く）。
+   どの1本の `unicode-range` にも入れていない——入れるとブラウザは取りに行ってから字形が無いと知る
+   （ソフィアの面が 🇧🇬 のために字形の無い束を2本・90KB 引いていた）。はじめから端末の書体で出る字なので、
+   **落ちる字には数えない** */
+const ABSENT = join(ROOT, "tools", "fonts", "absent.json");
 
 /* ── 上限。**測った値に1割の余裕**を足したもの ───────────────────────
    余裕を広く取ると、太ったことに気づけない。足した字が束をまたいだ日は
    ここが赤くなるので、`subset.py` を回し直して、出た数字でここを書き直す。 */
 const MAX_KB = 980;   // いちばん重い面（2026-11-06・153面で 931KB = /nordic/guide）
+/* 2026-11-19（155面）: 表を測り直すと /travel/north-macedonia/skopje 1,252.2KB・/travel/bulgaria/sofia 1,206.6KB で
+   超えていた。**上限は上げずに**、2面を面ひとりぶんの1本（`subset.py` の `SOLO`）にして 312.5 / 332.2KB。
+   いまいちばん重いのは /island/nordic/guide 845.4KB、1面あたり 383.7KB */
 
 /* ## なぜ 900 から上げたか（2026-11-06）
  *
@@ -133,65 +185,189 @@ const INVISIBLE = /[\s\u200B-\u200F\u2028\u2029\u3000\uFEFF]/;
 
 const near = eval(NEAR);
 
-/* ── 焼いたものを読む ───────────────────────────────────────────── */
-function faces() {
-  const css = readFileSync(CSS, "utf8");
+/* 記録に無い字が、まだ払っていない1本をこれだけ引いたら赤（「記録の古さ」）。
+   束のいちばん小さいもの（数KB）を引く字は、測り直すほどの嘘ではない。
+   いちばん小さい冷たい束（2026-11-19 の焼き直しで 700 の 46KB）を1本でも引けば鳴る高さに置く */
+const STALE_KB = 20;
+
+const WEIGHTS = [400, 700, 900];
+
+/**
+ * 面ごとに、払うバイト数と落ちる字を数える。
+ * @param rules ひとりぶんの1本の当たり判定（`soloRules()`）
+ * @param break_ "share"（太さの切り分けを共有する） / "drop"（束を1つ無かったことに）
+ */
+function measure(seen, all, rules, break_) {
+  // drop … ふだんの 700 の束を1つ無かったことにする（焼きそこねた日の姿）
+  const gone = break_ === "drop" ? all.findIndex((x) => x.w === 700 && x.family === FAMILY) : -1;
+  const use = all.filter((_, i) => i !== gone);
+  const pick = picker(use, rules);
+  const rows = [];
+  for (const [page, rec] of Object.entries(seen)) {
+    const union = Object.values(rec).join("");
+    let missing = 0;
+    const hit = new Set();
+    for (const w of WEIGHTS) {
+      const chars = break_ === "share" ? union : rec[String(w)] || "";
+      if (!chars) continue;
+      for (const c of chars) {
+        const at = pick(page, w, c.codePointAt(0));
+        if (at < 0) { if (!INVISIBLE.test(c) && !absent[w].has(c)) missing++; }
+        else hit.add(at);
+      }
+    }
+    let bytes = 0;
+    for (const i of hit) bytes += use[i].bytes;
+    rows.push({ page, bytes, missing, hit, pick, use });
+  }
+  return rows;
+}
+
+/* ── ひとりぶんの1本（`subset.py` の `SOLO`） ──────────────────────── */
+
+/**
+ * ひとりぶんの家族が、太さ3つを揃えて焼かれているか・表に載っている面か。
+ * @param break_ "noweight"（家族から 900 を抜く）
+ */
+function soloShape(seen, all, rules, break_) {
+  const bad = [];
+  for (const [page, fam] of rules) {
+    if (!seen[page]) bad.push(`ひとりぶんの1本 ${fam} の面が表に無い`);
+    const ws = new Set(all.filter((f) => f.family === fam && !(break_ === "noweight" && f.w === 900)).map((f) => f.w));
+    const lack = WEIGHTS.filter((w) => !ws.has(w));
+    if (lack.length) bad.push(`${fam} に太さ ${lack.join("/")} が無い（ブラウザは近い太さの1本で描く＝見た目が変わる）`);
+    if (all.some((f) => f.family === fam && f.bytes === null)) bad.push(`${fam} の1本が焼かれていない`);
+  }
+  /* 家族はあるのに当たり判定が無い（＝どの面でも引かれない）1本 */
+  const used = new Set(rules.values());
+  const orphan = [...new Set(all.map((f) => f.family))].filter((f) => f !== FAMILY && !used.has(f));
+  if (orphan.length) bad.push(`当たり判定の無い1本 ${orphan.join(" / ")}（どの面でも引かれない）`);
+  return bad;
+}
+
+/**
+ * 字形の無い字が、どれかの1本の `unicode-range` に入っていないか（入っていると、ブラウザは
+ * 字形の無い1本を取りに行ってから端末の書体へ進む）。
+ * @param break_ "glyphless"（ふだんの 700 の1本目に、字形の無い字を1つ足す）
+ */
+function glyphless(all, break_) {
+  const bad = [];
+  const use = break_ === "glyphless"
+    ? all.map((f, i) => (i === all.findIndex((x) => x.w === 700 && x.family === FAMILY) && absent[700].size
+      ? { ...f, ranges: f.ranges.concat([[[...absent[700]][0].codePointAt(0), [...absent[700]][0].codePointAt(0)]]) }
+      : f))
+    : all;
+  for (const f of use) {
+    const hit = [...absent[f.w] ?? []].filter((c) => f.ranges.some(([lo, hi]) => lo <= c.codePointAt(0) && c.codePointAt(0) <= hi));
+    if (hit.length) bad.push(`${f.url.split("/").pop()} の範囲に、書体に字形の無い字 ${hit.length}字（${hit.slice(0, 8).join("")}）`);
+  }
+  return bad;
+}
+
+/* ── 書き出しの地の字（「記録の古さ」） ─────────────────────────────── */
+
+/**
+ * 書き出した面の、地の字。`subset.py` の `from_export()` と同じ剥がしかたに、
+ * `<title>` `<noscript>` `<template>` を足す（`COLLECT` が数えないもの）。
+ */
+function htmlText(html) {
+  return html
+    .replace(/<(script|style|title|noscript|template)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d));
+}
+
+/** 書き出しの中の、その面の HTML。無ければ null */
+function readPage(dist, page) {
+  const p = join(dist, `${page}.html`);
+  return existsSync(p) ? readFileSync(p, "utf8") : null;
+}
+
+/**
+ * 記録に無い字が、まだ払っていない1本をいくら引くかを、面ごとに少なく見積もる。
+ *
+ * @param rows `measure()` の答え（払っている1本 `hit` と、引く順 `pick`）
+ * @param html 面 → HTML（無い面は数えない）
+ * @returns {{page:string, unknown:string, extra:number, est:number}[]} 記録に無い字がある面だけ
+ */
+function staleness(seen, rows, html) {
   const out = [];
-  for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
-    const body = m[1];
-    const w = +(body.match(/font-weight:\s*(\d+)/) || [])[1];
-    const url = (body.match(/url\("([^"]+)"\)/) || [])[1];
-    const ur = (body.match(/unicode-range:\s*([^;]+);/) || [])[1];
-    if (!w || !url || !ur) continue;
-    const ranges = ur.split(",").map((r) => {
-      const [a, b] = r.trim().replace(/^U\+/i, "").split("-");
-      return [parseInt(a, 16), parseInt(b ?? a, 16)];
-    });
-    out.push({ w, url, ranges, bytes: statSync(join(FONTS, url.replace("/fonts/", ""))).size });
+  for (const r of rows) {
+    const h = html.get(r.page);
+    if (h == null) continue;
+    const rec = seen[r.page];
+    /* 島の書体で1字も描かない面（`/roulette` はゲームの書体）。HTML の地の字は
+       別の書体で出ているので、記録に無くても古いとは言えない */
+    if (!Object.values(rec).join("")) continue;
+    const have = new Set(Object.values(rec).join(""));
+    const unknown = [...new Set(htmlText(h))].filter((c) => !have.has(c) && !INVISIBLE.test(c) && c.codePointAt(0) > 0x1f);
+    if (!unknown.length) continue;
+    /* その面が描く太さ。1字も記録が無い面は、ふだんの字（400）で描くものとする */
+    const ws = WEIGHTS.filter((w) => (rec[String(w)] || "").length);
+    /* 少なく見積もる（いちばん安い太さ）ものと、多く見積もる（いちばん高い太さ）ものの2つ */
+    const pull = new Set();
+    const pullHi = new Set();
+    /* どの太さでも、どの1本にも入っていない字（書体には字形がある）。**表にも束にも無い**＝
+       その面の字を数え直さないまま焼いた。払う量は0だが、画面では端末の書体で出ている */
+    const unbaked = [];
+    for (const c of unknown) {
+      let lo = null;
+      let hi = null;
+      let baked = false;
+      for (const w of ws.length ? ws : [400]) {
+        const i = r.pick(r.page, w, c.codePointAt(0));
+        if (i >= 0) baked = true;
+        const cost = i < 0 || r.hit.has(i) ? 0 : r.use[i].bytes;
+        if (lo === null || cost < lo.cost) lo = { cost, i };
+        if (hi === null || cost > hi.cost) hi = { cost, i };
+      }
+      if (lo.cost) pull.add(lo.i);
+      if (hi.cost) pullHi.add(hi.i);
+      if (!baked && !WEIGHTS.some((w) => absent[w].has(c))) unbaked.push(c);
+    }
+    const sum = (set) => [...set].reduce((a, i) => a + r.use[i].bytes, 0);
+    out.push({ page: r.page, unknown: unknown.join(""), unbaked: unbaked.join(""), extra: sum(pull), extraHi: sum(pullHi), est: r.bytes });
   }
   return out;
 }
 
-/** 太さごとに「この字はどの束か」の早見表を作る。 */
-function index(all) {
-  const by = new Map();
-  for (const [i, f] of all.entries()) {
-    if (!by.has(f.w)) by.set(f.w, new Map());
-    const m = by.get(f.w);
-    for (const [lo, hi] of f.ranges) for (let c = lo; c <= hi; c++) if (!m.has(c)) m.set(c, i);
+/** 記録の古さで落ちる理由を返す（空なら通った） */
+function judgeStale(found) {
+  const bad = [];
+  for (const s of found) {
+    const kb = s.extra / 1024;
+    const hi = (s.est + s.extraHi) / 1024;
+    const head = `${s.page} の記録が古い: 表に無い字 ${[...s.unknown].length}字（${[...s.unknown].slice(0, 12).join("")}）が、`;
+    if (s.unbaked) {
+      bad.push(head + `うち ${[...s.unbaked].length}字（${[...s.unbaked].slice(0, 12).join("")}）はどの1本にも焼いていない（画面では端末の書体で出る）`);
+    } else if (kb >= STALE_KB) {
+      bad.push(head + `まだ払っていない1本を少なくとも ${kb.toFixed(1)}KB 引く（見積もり ${(s.est / 1024).toFixed(1)} → ${((s.est + s.extra) / 1024).toFixed(1)}KB 以上）`);
+    } else if (s.extraHi && hi > MAX_KB) {
+      /* いちばん安い太さなら0でも、いちばん高い太さで描いていれば上限を超える。
+         どちらで描いているかは HTML から言えない＝**上限の中だとは言えない** */
+      bad.push(head + `描く太さしだいで ${(s.est / 1024).toFixed(1)} → ${hi.toFixed(1)}KB（上限 ${MAX_KB}KB）。上限の中だとは言えない`);
+    }
   }
-  return by;
+  return bad;
 }
 
 /**
- * 面ごとに、払うバイト数と落ちる字を数える。
- * @param break_ "share"（太さの切り分けを共有する） / "drop"（束を1つ無かったことに）
+ * ひとりぶんの面の書き出しに、当たり判定（canonical の末尾）が当たるか。
+ * @param break_ "nocanon"（面の HTML から canonical を抜く）
  */
-function measure(seen, all, break_) {
-  // drop … 700 の束を1つ無かったことにする（焼きそこねた日の姿）
-  const gone = break_ === "drop" ? all.findIndex((x) => x.w === 700) : -1;
-  const use = all.filter((_, i) => i !== gone);
-  const by = index(use);
-  const rows = [];
-  for (const [page, rec] of Object.entries(seen)) {
-    const union = Object.values(rec).join("");
-    let bytes = 0;
-    let missing = 0;
-    const hit = new Set();
-    for (const w of [400, 700, 900]) {
-      const chars = break_ === "share" ? union : rec[String(w)] || "";
-      if (!chars) continue;
-      for (const c of chars) {
-        const cp = c.codePointAt(0);
-        const at = by.get(w)?.get(cp);
-        if (at === undefined) { if (!INVISIBLE.test(c)) missing++; }
-        else hit.add(at);
-      }
+function soloScope(rules, html, break_) {
+  const bad = [];
+  for (const page of rules.keys()) {
+    let h = html.get(page);
+    if (h == null) { bad.push(`ひとりぶんの面 ${page} が書き出しに無い`); continue; }
+    if (break_ === "nocanon") h = h.replace(/<link rel="canonical"[^>]*>/g, "");
+    const href = (h.match(/<link rel="canonical" href="([^"]*)"/) || [])[1];
+    if (!href || !href.endsWith(`/${page}`)) {
+      bad.push(`${page} の書き出しの canonical が ${href ?? "無い"}（fonts.css の当たり判定 \`href$="/${page}"\` が当たらず、面はふだんの束を引く）`);
     }
-    for (const i of hit) bytes += use[i].bytes;
-    rows.push({ page, bytes, missing });
   }
-  return rows;
+  return bad;
 }
 
 /* ── 分母。島の面ぜんぶが、表に載っているか（#902） ───────────────── */
@@ -389,9 +565,60 @@ try {
   process.exit(2);
 }
 const all = faces();
+const rules = soloRules();
+/* 字形の無い字の表。**無ければ数えない**——無いまま回すと、絵文字の出る面がぜんぶ「落ちる字」で赤くなり、
+   本物の落ちが埋もれる */
+let absent;
+try {
+  const raw = JSON.parse(readFileSync(ABSENT, "utf8"));
+  absent = Object.fromEntries(WEIGHTS.map((w) => [w, new Set(raw[String(w)] ?? "")]));
+} catch (e) {
+  console.log(`✕ ${ABSENT} が読めない: ${e.message}（\`tools/fonts/subset.py\` が書く）`);
+  process.exit(2);
+}
 if (!all.length || Object.keys(seen).length < 50) {
   console.log(`✕ 数えるものが無い（束 ${all.length}本 / 面 ${Object.keys(seen).length}枚）`);
   process.exit(2);
+}
+/* 書き出しの HTML（記録の古さ・ひとりぶんの当たり判定）。**無ければ空**——その2つは見ない */
+const html = new Map();
+/* Hosting が 301 で余所へ送る面（`/next/new` → `/board` など）は、読む人に HTML が
+   届かない。焼いてあるのは中身の無い殻で、`fontweigh.mjs` は送り先の字を記録している
+   ——突き合わせると、送り先と殻の違いを「古い」と言ってしまう */
+const moves = loadRedirects();
+const moved = [];
+if (pageKeys(DIST).length) {
+  for (const page of Object.keys(seen)) {
+    if (redirectOf(page === "index" ? "/" : `/${page}`, moves)) { moved.push(page); continue; }
+    const h = readPage(DIST, page);
+    if (h != null) html.set(page, h);
+  }
+}
+
+/**
+ * 記録の古さの対照に使う「その面がまだ払っていない、高い1本の字」を探す。
+ * その面が描く**どの太さでも**、払っていない STALE_KB 以上の1本から出る字でないと、
+ * 少なく見積もる式（いちばん安い太さを選ぶ）では0に化けて、対照にならない。
+ */
+function costlyChar(row) {
+  const rec = seen[row.page];
+  const have = new Set(Object.values(rec).join(""));
+  const ws = WEIGHTS.filter((w) => (rec[String(w)] || "").length);
+  for (const [i, f] of row.use.entries()) {
+    if (row.hit.has(i) || f.bytes < STALE_KB * 1024) continue;
+    for (const [lo, hi] of f.ranges) {
+      for (let cp = lo; cp <= hi; cp++) {
+        const c = String.fromCodePoint(cp);
+        if (have.has(c) || INVISIBLE.test(c) || WEIGHTS.some((w) => absent[w].has(c))) continue;
+        const dear = (ws.length ? ws : [400]).every((w) => {
+          const j = row.pick(row.page, w, cp);
+          return j >= 0 && !row.hit.has(j) && row.use[j].bytes >= STALE_KB * 1024;
+        });
+        if (dear) return c;
+      }
+    }
+  }
+  return null;
 }
 
 console.log("[対照] わざと壊した入力で、この見張りが落ちるか");
@@ -399,7 +626,7 @@ let ok = true;
 for (const [name, why] of [["share", "太さごとの切り分けをやめる"], ["drop", "束を1つ無かったことに"]]) {
   // share は「太さごとに切るのをやめた日」の姿。その太さで焼いていない字が
   // 落ちるのは当たり前なので、**大きさだけ**で落ちることを見る
-  const bad = judge(measure(seen, all, name), `${name}（${why}）`, name === "share" ? "size" : null);
+  const bad = judge(measure(seen, all, rules, name), `${name}（${why}）`, name === "share" ? "size" : null);
   const mark = bad.length ? "○" : "✕";
   if (!bad.length) ok = false;
   console.log(`  ${mark} ${name} → ${bad.length ? bad[0] : "**素通りした。この見張りは効いていない**"}`);
@@ -418,6 +645,74 @@ for (const [name, why] of [["share", "太さごとの切り分けをやめる"],
   const bad = judgeCoverage(seen, "blind（面を1枚も見つけられない置き場）", "blind");
   console.log(`  ${bad === null ? "○" : "✕"} blind → ${bad === null ? "数えるものが無い（2 で落ちる）" : "**0面を数えて先へ進んだ**"}`);
   if (bad !== null) ok = false;
+}
+/* ひとりぶんの対照。**ひとりぶんの面が無い日は当てるものが無い**ので飛ばす
+   （焼いたのに当たり判定を読めなかった日は、本物の `soloShape` が「当たり判定の無い1本」で落とす） */
+if (rules.size) {
+  {
+    /* 当たり判定を無かったことにする。ひとりぶんの面がふだんの束を引いて重くならなければ、
+       ひとりぶんを数える足は、何も見ていない */
+    const rows = measure(seen, all, new Map(), null).filter((r) => rules.has(r.page));
+    const bad = judge(rows, `unscoped（ひとりぶんの ${rows.length}面をふだんの束で）`, "size");
+    console.log(`  ${bad.length ? "○" : "✕"} unscoped → ${bad.length ? bad[0] : "**素通りした。ひとりぶんの足は効いていない**"}`);
+    if (!bad.length) ok = false;
+  }
+  {
+    const bad = soloShape(seen, all, rules, "noweight");
+    console.log(`  ${bad.length ? "○" : "✕"} noweight（ひとりぶんの家族から 900 を抜く）→ ${bad.length ? bad[0] : "**素通りした。太さの揃いを見ていない**"}`);
+    if (!bad.length) ok = false;
+  }
+}
+{
+  const bad = glyphless(all, "glyphless");
+  console.log(`  ${bad.length ? "○" : "✕"} glyphless（字形の無い字を束の範囲に1つ足す）→ ${bad.length ? bad[0] : absent[700].size ? "**素通りした。字形の無い字の範囲を見ていない**" : "足す字が無い（700 に字形の無い字が1つも無い）"}`);
+  if (!bad.length && absent[700].size) ok = false;
+}
+if (html.size) {
+  {
+    /* 面の HTML に、その面がまだ払っていない高い1本の字を1つ足す。記録の古さの足が
+       効いていなければ素通りする。足す面は、ひとりぶんの面があればそこ（いちばん守りたい面） */
+    // 島の書体で1字も描かない面は、記録の古さを見ない面（`staleness()`）なので、足しても当たらない
+    const rows = measure(seen, all, rules, null).filter((r) => html.has(r.page) && Object.values(seen[r.page]).join(""));
+    /* ひとりぶんの面を先に、次に軽い面から（払っていない1本が多いので、足す字が見つかりやすい）。
+       その面が束を広く引いていると、どの太さでも高い字が残っていないことがある */
+    const order = rows.filter((r) => rules.has(r.page)).concat(rows.filter((r) => !rules.has(r.page)).sort((a, b) => a.bytes - b.bytes));
+    let row = order[0];
+    let c = null;
+    for (const r of order) {
+      c = costlyChar(r);
+      if (c) { row = r; break; }
+    }
+    let bad = [];
+    if (c) {
+      const fake = new Map(html);
+      fake.set(row.page, html.get(row.page) + `<p>${c}</p>`);
+      bad = judgeStale(staleness(seen, [row], fake));
+    }
+    console.log(`  ${bad.length ? "○" : "✕"} stale（${row.page} に「${c ?? "？"}」を1字足す）→ ${bad.length ? bad[0] : c ? "**素通りした。記録の古さの足は効いていない**" : "足す字を作れなかった"}`);
+    if (!bad.length) ok = false;
+  }
+  {
+    /* 面の HTML に、どの1本にも焼いていない漢字を1つ足す（字を足したのに、表も束も直さなかった日の姿）。
+       払う量は0なので、払う量だけを見ていると素通りする */
+    const rows = measure(seen, all, rules, null).filter((r) => html.has(r.page) && Object.values(seen[r.page]).join(""));
+    const row = rows.find((r) => rules.has(r.page)) ?? rows[0];
+    let c = null;
+    for (let cp = 0x4e00; cp <= 0x9fff && !c; cp++) {
+      const x = String.fromCodePoint(cp);
+      if (WEIGHTS.every((w) => row.pick(row.page, w, cp) < 0 && !absent[w].has(x))) c = x;
+    }
+    const fake = new Map(html);
+    if (c) fake.set(row.page, html.get(row.page) + `<p>${c}</p>`);
+    const bad = c ? judgeStale(staleness(seen, [row], fake)) : [];
+    console.log(`  ${bad.length ? "○" : "✕"} unbaked（${row.page} に焼いていない「${c ?? "？"}」を1字足す）→ ${bad.length ? bad[0] : "**素通りした。焼いていない字を見ていない**"}`);
+    if (!bad.length) ok = false;
+  }
+  if (rules.size) {
+    const bad = soloScope(rules, html, "nocanon");
+    console.log(`  ${bad.length ? "○" : "✕"} nocanon（ひとりぶんの面から canonical を抜く）→ ${bad.length ? bad[0] : "**素通りした。当たり判定を書き出しで見ていない**"}`);
+    if (!bad.length) ok = false;
+  }
 }
 /* 拾いかたの対照。**守りを外した写しを偽の面に当てて、外れることを見てから**本物を当てる。
    写しが投げたのは「外れた」に数えない（写しかたが壊れているだけかもしれない） */
@@ -462,19 +757,37 @@ if (cover === null) {
   console.log("\n✕ 数えるものが無い。**「上限の中にある」とは言わない**");
   process.exit(2);
 }
-const bad = cover.concat(judge(measure(seen, all, null), "いま", null));
+const rows = measure(seen, all, rules, null);
+const size = judge(rows, "いま", null);
+for (const r of rows.filter((x) => rules.has(x.page))) {
+  console.log(`  ひとりぶん  ${r.page} ${(r.bytes / 1024).toFixed(1)}KB（${r.hit.size}本）`);
+}
+const shape = soloShape(seen, all, rules, null).concat(glyphless(all, null));
+let stale = [];
+if (html.size) {
+  const found = staleness(seen, rows, html);
+  stale = judgeStale(found).concat(soloScope(rules, html, null));
+  console.log(
+    `  記録の古さ  書き出しの ${html.size}面と突き合わせ（301 で余所へ送る ${moved.length}面は除く）  表に無い字がある面 ${found.length}枚` +
+    `（うち焼いていない字がある面 ${found.filter((s) => s.unbaked).length}枚・払っていない1本を引く面 ${found.filter((s) => s.extra).length}枚・${STALE_KB}KB 以上 ${found.filter((s) => s.extra >= STALE_KB * 1024).length}枚）`
+  );
+} else {
+  console.log("  記録の古さ  書き出しが無いので見ない（書き出しを持つ `selftest.yml` の reachkeys job が見る）");
+}
+const bad = cover.concat(size, shape, stale);
 if (bad.length) {
   for (const b of bad) console.log(`  ✕ ${b}`);
-  if (cover.length) {
+  if (cover.length || stale.length) {
     console.log("\n表（`tools/fonts/weights.json`）が島の面に追いついていない。**数え直してから焼く:**");
     console.log("  tools/build.sh 3250");
     console.log("  python3 -m http.server 4250 --directory site/.next-3250 &");
     console.log("  DIST=site/.next-3250 SPORT=4250 node tools/sprites/fontweigh.mjs   # offline() を通すこと（#266）");
     console.log("  python3 tools/fonts/subset.py --export site/.next-3250");
   }
-  if (bad.length > cover.length) {
-    console.log("\n書体が太った。`tools/fonts/subset.py` を回し直して、出た数字でこの上限を書き直す");
+  if (size.length) {
+    console.log("\n書体が太った。`tools/fonts/subset.py` を回し直す。それでも超える面は、上限を上げる前に");
+    console.log("`subset.py` の `SOLO`（その面の字だけの1本）に足せないかを見る");
   }
   process.exit(1);
 }
-console.log("○ 書体は上限の中にあり、表は島の面ぜんぶを持っている");
+console.log("○ 書体は上限の中にあり、表は島の面ぜんぶを持っていて、書き出しより古くない");
