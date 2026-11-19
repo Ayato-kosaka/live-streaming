@@ -2762,7 +2762,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
     "facts": [
      {
       "label": "アルコール",
-      "text": "中のクリームに、エタノールとラムが少し入っている（ラムは0.1%）。"
+      "text": "中のラムのクリームに、エタノールとラムが少し入っている（ラムは0.1%）。"
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Rom+Bucure%C8%99ti&hl=ja",
@@ -2776,8 +2776,8 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-19"
      },
      {
-      "name": "Open Food Facts「Rom ciocolată cu lapte」（2026年11月16日更新）",
-      "url": "https://world.openfoodfacts.org/product/5941047823892",
+      "name": "Sezamo「Rom autentic baton de ciocolata」（ルーマニアのネットスーパーの品書き。原材料の欄）",
+      "url": "https://www.sezamo.ro/9453-rom-autentic-baton-de-ciocolata",
       "seen": "2026-11-19"
      }
     ]
@@ -3541,6 +3541,6 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-19",
  "updated": "2026-11-20",
- "hash": "ae2f8cdf4806ff2d"
+ "hash": "008349204c0e8470"
 }
 /* END GUIDE */;

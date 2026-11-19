@@ -4929,11 +4929,11 @@
     },
     "alcohol": true,
     "alcohol_note": {
-     "text": "中のクリームに、エタノールとラムが少し入っている（ラムは0.1%）。",
+     "text": "中のラムのクリームに、エタノールとラムが少し入っている（ラムは0.1%）。",
      "src": [
       {
-       "name": "Open Food Facts「Rom ciocolată cu lapte」（2026年11月16日更新）",
-       "url": "https://world.openfoodfacts.org/product/5941047823892",
+       "name": "Sezamo「Rom autentic baton de ciocolata」（ルーマニアのネットスーパーの品書き。原材料の欄）",
+       "url": "https://www.sezamo.ro/9453-rom-autentic-baton-de-ciocolata",
        "seen": "2026-11-19"
       }
      ]
