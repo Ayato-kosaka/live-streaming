@@ -850,17 +850,16 @@ const FAR: Place[] = BG_SPOTS.filter((s) => s.far > 0).map((s) => ({
 // 行った（肉付け）
 
 /**
- * あやとが行った所・食べたもの（2026-11-13〜。`docs/guide-design.md` ★1）。行った項目に「行った」の印・その日のあやと島カード・
- * 短い話・配信の場面が乗る。**字・場面の秒・写真は焼いたもの**（`./bulgaria-sofia-went.ts`。元は
- * `python/data/guide/bulgaria/sofia/went.json` と配信の facts。焼くのは `python/guidebook_went.py`）。ここでは id で当てるだけ。
- * **骨組みは消さない**——行っていない所もそのまま並ぶ。カードの無い日の行った項目は、今の絵のまま
+ * あやとが行った所・食べたもの（2026-11-13〜。`docs/guide-design.md` ★1）。行った項目に「行った」の印と、窓の中の
+ * 「あやとの旅の記録」（その日のあやと島カード・短い話・配信の場面）が乗る。**字・場面の秒・写真は焼いたもの**
+ * （`./bulgaria-sofia-went.ts`。元は `python/data/guide/bulgaria/sofia/went.json` と配信の facts。焼くのは
+ * `python/guidebook_went.py`）。ここでは id で当てるだけ。**骨組みは消さない**——行っていない所もそのまま並ぶ。
+ * **札の絵は替えない**（カードは窓の中の箱に。札の絵の決めかたは `./manifest.ts` の `dress`）
  */
 function wear(sec: "todo" | "see" | "eat" | "buy", xs: (Item | Todo)[]): void {
   for (const x of xs) {
     const w = SOFIA_WENT.items[`${sec}/${x.id}`];
-    if (!w) continue;
-    x.went = w.went;
-    if (w.pic) x.pic = w.pic;
+    if (w) x.went = w.went;
   }
 }
 wear("todo", TODO);
