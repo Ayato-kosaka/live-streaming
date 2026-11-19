@@ -17,9 +17,15 @@
 
 ## どの回を焼くか
 
-議事録の `- 場所:` の頭が、寄せる表（`python/data/guide/cities.json`）の国に寄る回だけ。
+議事録の `- 場所:` の頭が、寄せる表（`python/data/guide/cities.json`）の国に寄る回と、
+**その国の滞在の日に始まった回**（`python/stays.py` の `read_ahead_chapters()`）。
 表に在る国＝街のガイドを作っている国で、「この国であったこと」に配信を並べるのもその国（歩いている最中の国）。
 全部の回を焼くと、使わない字を何百本も抱える。
+
+滞在の日でも拾うのは、**国の面が配信を日付で並べている**から（`cityStreams.ts` の国の欄は滞在の期間ぶん）。
+国境を越える日の回は、場所の頭が前の国になる（2026-10-12 の「北マケドニア共和国いこかー！？」は
+`- 場所: アルバニア（…スコピエ行きの長距離バス車内）`）。場所だけで選ぶと、北マケドニアの面の35本のうち
+その1本だけが一言なしで並んでいた。
 
 ## 1〜2行の選びかた
 
@@ -61,8 +67,24 @@ def pick(gist: str) -> str:
     return "".join(out)
 
 
-def digests(streams: Path, table: dict) -> list[tuple[str, str, str]]:
-    """（開始の日時, 動画の id, 1〜2行）を古い順に。表の国に寄る回だけ"""
+Stay = tuple[str, str, str]  # （国, 入った日, 出た日。まだ居れば空）
+
+
+def table_stays(table: dict) -> list[Stay]:
+    """表の国の滞在。国の面が配信を並べる期間と同じもの（`stays.read_ahead_chapters()`）"""
+    import stays as st  # 焼くときだけ countries.ts を読む（対照は滞在を自分で渡す）
+
+    want = set(table.get("countries", {}))
+    return [(c["slug"], s["from"], s["to"]) for c in st.read_ahead_chapters() if c["slug"] in want for s in c["stays"]]
+
+
+def in_stay(day: str, stays: list[Stay]) -> bool:
+    return any(day >= a and (not b or day <= b) for _, a, b in stays)
+
+
+def digests(streams: Path, table: dict, stays: list[Stay] | None = None) -> list[tuple[str, str, str]]:
+    """（開始の日時, 動画の id, 1〜2行）を古い順に。表の国に寄る回と、表の国の滞在の日に始まった回"""
+    stays = table_stays(table) if stays is None else stays
     rows = []
     for r in sn.read_manifest(streams):
         md = sn.md_path(streams, r)
@@ -71,7 +93,7 @@ def digests(streams: Path, table: dict) -> list[tuple[str, str, str]]:
             continue
         notes = gf.read_notes(md)
         country, _, _ = gf.resolve_place(notes["place"], table)
-        if not country:
+        if not country and not in_stay((r.get("start_jst") or "")[:10], stays):
             continue
         line = pick(sn.section(notes["text"], "## ひとことで"))
         if line:
@@ -101,8 +123,9 @@ def render(rows: list[tuple[str, str, str]]) -> str:
     )
 
 
-def bake(streams: Path = sn.STREAMS, table_path: Path = gf.TABLE, out: Path = OUT, check: bool = False) -> int:
-    rows = digests(streams, gf.load_table(table_path))
+def bake(streams: Path = sn.STREAMS, table_path: Path = gf.TABLE, out: Path = OUT, check: bool = False,
+         stays: list[Stay] | None = None) -> int:
+    rows = digests(streams, gf.load_table(table_path), stays)
     if not rows:
         print("::error::焼くものが1本も無い（議事録が読めない・表の国に寄る回が無い）")
         return 2
