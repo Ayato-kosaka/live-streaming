@@ -324,6 +324,14 @@ if not BREAK:
         code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
                                "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
         ok("-", "対照: 行く前の街に一言を置くと 1", code, 1)
+        # 行く前の街の額は、材料の外の事実（出どころつきの字）に在れば通る。無い額は 1
+        for amt, want in (("5レイ", 0), ("999レイ", 1)):
+            (dist / "travel/romania/bucharest.html").write_text(
+                f'<html><head><title>x</title></head><body><article class="gb"><p>地下鉄は1回{amt}。</p></article></body></html>',
+                encoding="utf-8")
+            code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
+                                   "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
+            ok("-", f"行く前の街の額「{amt}」は、材料の外の事実に{'在るので 0' if want == 0 else '無いので 1'}", code, want)
 
 
 # ---------------------------------------------------------------- 7. 対照

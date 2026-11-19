@@ -1307,7 +1307,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      },
      {
       "h": "",
-      "text": "タクシーは到着ロビーの公式の機械で呼ぶ。中心まで61〜65レイ（約2,000〜2,130円）。"
+      "text": "タクシーは到着ロビーにある公式のタッチパネルで呼ぶ。中心まで61〜65レイ（約2,000〜2,130円）。"
      }
     ],
     "src": [
@@ -1385,7 +1385,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      },
      {
       "h": "",
-      "text": "eSIM が使える。SIM は空港の到着ロビーのタクシーの機械の近くの売店でも買える。"
+      "text": "eSIM が使える。SIM は空港の到着ロビーの、タクシーを呼ぶタッチパネルの近くの売店でも買える。"
      }
     ],
     "src": [
@@ -1859,6 +1859,6 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-19",
  "updated": "2026-11-20",
- "hash": "30e97c435ae9c62d"
+ "hash": "bb378f598c0efc1c"
 }
 /* END GUIDE */;
