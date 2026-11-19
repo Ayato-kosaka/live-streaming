@@ -77,6 +77,8 @@
 | 2026-11-19 | 街の面の **og:image と Article の絵を字の無い表紙に**（og 1200x630・Article は 16:9・4:3・1:1 の3枚、横 1200px）。題を焼いた絵は面の表紙（画像検索に出す絵）だけ（#332 の決めごと3） | `tools/sprites/guidebook.mjs` の共有の絵（`BREAK=share`）・`guide_art_selftest.py` の12 |
 | 2026-11-19 | **見どころマップに題の帯（「〈街〉 見どころマップ」）と目印の名前を焼いた**（ソフィア7・スコピエ9。番号の点は足さない）。画像検索の上位の地図の形 | `guide_art_selftest.py` の11・`content/guidebook/spotmap.ts`（矢印が焼いた字に乗れば書き出しが止まる） |
 | 2026-11-19 | **街の面に書き手の枠**（記事と同じ `Writer`。署名は「あやと島案内鳥」、スコピエは「あやとが2026年10月12日〜に行った街」）。構造化データの書き手は変えない（#1287） | 採点の「書き手」・`guidebook.mjs` の書き手（`BREAK=writer`） |
+| 2026-11-19 | **国の面（26か国）**: 題を「〈国〉旅行記【〈年〉】〈旅〉で〈長さ〉・〈街〉」（25〜45字）、一文を「いつ・何日・どの街・配信の本数と人数」（80〜160字）に。地図を**焼いた1枚の絵**（`/travel/<国>/<国名>の地図-1200.webp`。alt も「〈国〉の地図。…」）にして、`ImageObject` と画像のサイトマップへ。面のいちばん下に書き手の枠。画面の並びと見出しは変えない | `tools/sprites/countrymap_selftest.mjs`（焼いた絵が古い・無い）・採点の「地図」「書き手」「画像のサイトマップ」 |
+| 2026-11-19 | **採点の「？」を測れるように**: 週の表が YouTube Data API（`FIREBASE_SERVICE_ACCOUNT` に読むだけの scope）で `/travel/` の面ぜんぶの説明欄を読み、面ごとの週の表示と一緒に印に残す。手元の採点はその印から引く（「・週の表 〈日〉」と添えて出す）。説明欄の当たりは**道の続きを数えない**（ソフィアを指す説明欄を、国の面の当たりにしない） | `seo_score_selftest.py` の「API」「道の続き」「週の表」 |
 
 **入れていないもの**: Bing Webmaster Tools（入るには、あやとの Google アカウントの情報を bing.com に渡す同意と、
 新しい Bing の利用者の作成が要る。#1262 で止めた）。IndexNow で URL は Bing に届く。順位や語の数を Bing の側で見たくなったら、そのとき入る。
@@ -150,7 +152,8 @@
 | 題と一文 | `site/lib/seoText.ts`（面ごとの `generateMetadata` から） | `title-short` `desc-short` |
 | 構造化データ | `site/lib/jsonld.tsx` | `jsonld-bad` と型ごとの線 |
 | `/llms.txt` | `site/app/llms.txt/route.ts`（面の名簿から毎回作る） | `file:/llms.txt=200` |
-| 採点（100点） | `python/seo_score.py`（項目と重みは `CARD`。面の型と狙う語は `seo_targets.json` の `pages` の `kind` `head`） | `python/seo_score_selftest.py`（対照4つ） |
+| 採点（100点） | `python/seo_score.py`（項目と重みは `CARD`。面の型と狙う語は `seo_targets.json` の `pages` の `kind` `head`）。手元で測れない2つ（外からのリンク・週の表示）は週の表の印から引く | `python/seo_score_selftest.py`（対照6つ） |
+| 国の地図の絵 | `site/components/atlas/countryArt.ts`（絵の組みかた。面と焼く道具が同じ1本を読む）→ `tools/sprites/countrymap_bake.mjs` で焼く → `site/content/atlas/mapArt.json`（焼いた絵の指紋）。地図のデータか組みかたを変えたら焼き直す（古いと面は SVG を直に描くほうへ戻り、検索の点だけが落ちる） | `tools/sprites/countrymap_selftest.mjs` |
 | 競合の表 | `python/seo_compete.py run --out <置き場>`（Yahoo! JAPAN の上位を読んで同じ物差しで） | 採点と同じ物差し（`python/seo_page.py`） |
 
 - 週の表は**狙う語以外の語を1つも出さない**（数と表示の合計だけ）。打たれた語には人の名前が混ざりうる。issue も Actions のログも公開
@@ -170,6 +173,7 @@
 - **いちばん重いのは「結果」（25点）。** 狙う語で10位以内に居るか・画像検索に絵が出るか・表示が出ているか。
   入れた手をいくら数えても、人が来なければ点にならない
 - **測れなかった項目は 0点に数えて「？」を付ける**（満点に化けさせない。0 とも書かない）。
+  この箱から読めない2つ（YouTube の説明欄・Search Console）は、週の表の印から引いて「・週の表 〈週の終わり〉」を添える。
   その面に狙う語を決めていない項目（国の面の画像検索など）だけは、満点にも数えない
 - 面の型（街・記事・国・表紙・一覧）ごとに、当たる項目の重みの和で割って 100点にする
 - 「上位の面」の割合は、`seo_compete.py run` で引いた狙う語18語の上位（Yahoo! JAPAN）の、読めた面ぜんぶ（2026-11-18 は 98面）

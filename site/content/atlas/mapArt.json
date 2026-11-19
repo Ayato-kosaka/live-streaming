@@ -1,0 +1,158 @@
+{
+ "armenia": {
+  "name": "アルメニア",
+  "hash": "b649e8c5412ec4c6ffbd5a1afd8e6fefd0a81c8a",
+  "w": 1200,
+  "h": 800
+ },
+ "austria": {
+  "name": "オーストリア",
+  "hash": "95ed1daaff95c595182227cb2201af1f2cca11db",
+  "w": 1200,
+  "h": 800
+ },
+ "azerbaijan": {
+  "name": "アゼルバイジャン",
+  "hash": "991b06c8ee5dc35fb98cd86b85a4d2eb6e8b4204",
+  "w": 1200,
+  "h": 800
+ },
+ "belgium": {
+  "name": "ベルギー",
+  "hash": "88532d141d99e62cfd10a70b9fca46a5de722720",
+  "w": 1200,
+  "h": 800
+ },
+ "bulgaria": {
+  "name": "ブルガリア",
+  "hash": "c540d7f7bc4b675303362b8e75d8af3adfafbf0c",
+  "w": 1200,
+  "h": 800
+ },
+ "cyprus": {
+  "name": "キプロス",
+  "hash": "35ef0206f5756f11f8232e29bbeb22e9bdaff046",
+  "w": 1200,
+  "h": 800
+ },
+ "czech": {
+  "name": "チェコ",
+  "hash": "ecff2c7b9e17c5989eabff2a658a72cbb3002777",
+  "w": 1200,
+  "h": 800
+ },
+ "egypt": {
+  "name": "エジプト",
+  "hash": "093a1ca337119f5ce27fe7e6d546e18a90212575",
+  "w": 1200,
+  "h": 800
+ },
+ "estonia": {
+  "name": "エストニア",
+  "hash": "e92cb0e70bff3ede877c956827a06212e13f92b3",
+  "w": 1200,
+  "h": 800
+ },
+ "finland": {
+  "name": "フィンランド",
+  "hash": "5be39c0b4d002dcbe7beccb2a6c7a4f210f4315c",
+  "w": 1200,
+  "h": 800
+ },
+ "france": {
+  "name": "フランス",
+  "hash": "4f29f0519a397cfc87c3fe5bc7b4efa0ae7131fa",
+  "w": 1200,
+  "h": 800
+ },
+ "georgia": {
+  "name": "ジョージア",
+  "hash": "acec8f055a0f37f4b980cb372c24ee1072e748f3",
+  "w": 1200,
+  "h": 800
+ },
+ "germany": {
+  "name": "ドイツ",
+  "hash": "08bda71df8a8e36198f3ff6b71ea50cec6685e43",
+  "w": 1200,
+  "h": 800
+ },
+ "hungary": {
+  "name": "ハンガリー",
+  "hash": "6b4c3e5961852358158cb34f8a0ec51731cbf031",
+  "w": 1200,
+  "h": 800
+ },
+ "iran-border": {
+  "name": "イラン（国境まで）",
+  "hash": "82badd82fb4770b8547312ebd967252bea9615be",
+  "w": 1200,
+  "h": 800
+ },
+ "jordan": {
+  "name": "ヨルダン",
+  "hash": "8059483d1edc7be7d8f299b7181c77b792d6ffa6",
+  "w": 1200,
+  "h": 800
+ },
+ "latvia": {
+  "name": "ラトビア",
+  "hash": "6a7b97091d4be643a020376069818b37080282e1",
+  "w": 1200,
+  "h": 800
+ },
+ "lithuania": {
+  "name": "リトアニア",
+  "hash": "e7ad1bd3aea3ecba8b27f5d886d6b7ed71ace3ab",
+  "w": 1200,
+  "h": 800
+ },
+ "netherlands": {
+  "name": "オランダ",
+  "hash": "7a3b607223256bd3163a204d6354e9329646a0f6",
+  "w": 1200,
+  "h": 800
+ },
+ "north-macedonia": {
+  "name": "北マケドニア",
+  "hash": "e4a30b8ce58e8a1d2307b6a6104d02bc3657af4d",
+  "w": 1200,
+  "h": 800
+ },
+ "poland": {
+  "name": "ポーランド",
+  "hash": "4e16688b7ab78ecac97d466b61a8426707831795",
+  "w": 1200,
+  "h": 800
+ },
+ "slovakia": {
+  "name": "スロバキア",
+  "hash": "4d8ad28c8cef0594d030e8f6cec45d08d315a099",
+  "w": 1200,
+  "h": 800
+ },
+ "sweden": {
+  "name": "スウェーデン",
+  "hash": "4b07dad04a923d54fde65d09c0d62e953bf44c8f",
+  "w": 1200,
+  "h": 800
+ },
+ "turkey": {
+  "name": "トルコ",
+  "hash": "fdd3d4d9714e33e59a96637235115fc64fab1748",
+  "w": 1200,
+  "h": 800
+ },
+ "uae": {
+  "name": "アラブ首長国連邦",
+  "hash": "35926903a141aef4608829770e2c12399888d081",
+  "w": 1200,
+  "h": 800
+ },
+ "uk": {
+  "name": "イギリス",
+  "hash": "df42d0ad5bd3d8fb62839c3aa5bc067ecc6a8501",
+  "w": 1200,
+  "h": 800
+ }
+}
