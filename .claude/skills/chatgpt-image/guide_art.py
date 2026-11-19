@@ -30,7 +30,7 @@
 
 ## 頼み書きの欄（`guide/<国>/<街>.json`。ソフィア・スコピエのを写して書き換える）
 
-- `ja`（会話の題に出す街の名前）・`items`（品をどこから読むか）・`ec2_dir`（EC2 の置き場）・`stitch`（布巾の刺繍の言葉）・`scene`（表紙の景色。英語）
+- `ja`（会話の題に出す街の名前）・`items`（品をどこから読むか）・`ec2_dir`（EC2 の置き場）・`scene`（表紙の景色。英語）
 - `style`（表紙とやりたいことの絵の調子。`storybook`＝既定の絵本 / `editorial`＝案2「大人の画集」#1228）・
   `style_ref`（調子の手本の1枚。リポジトリの道。表紙とやりたいことの1枚目に渡す。あればやりたいことの `model` より先）
 - `cover` `cover_tall`: `alt`・`note`（manifest の prompt_note）・`bias`（16:9 に切るとき、上を 0 下を 1 としてどこを残すか）・`v`・
@@ -131,21 +131,25 @@ TALL = ("Draw a tall portrait illustration (2:3, 1024x1536). It will be cropped 
 MAP_STYLE = ("Top-down bird's-eye view with icons gently tilted, like a picture map in a cozy travel guidebook. " + PAINT
              + " " + NOTEXT + " No compass letters, no legend, no title, no frame with writing.")
 _TABLE = ("camera at a 45-degree overhead angle; the {what} centered and filling about 60% of the frame; a warm "
-          "light-oak wooden table; a folded cream linen napkin with a thin red {stitch} cross-stitch border in the "
-          "bottom-left corner")
+          "light-oak wooden table, bare")
+# 布を描かせない（あやと 2026-11-19「食べたいもの・買いたいものの絵に、全部ハンカチ（布）が写っていて AI 生成っぽい」）。前は全部の皿の左下に刺繍の布巾を置かせていて、どの絵も同じ小道具の組み写真に見えた。
+# 品そのものが布（刺繍の小物）のときは、品だけを描かせる。描写（desc）に布を書かない決まりは `docs/guide-design.md` 4-2
+NOCLOTH = ("No cloth of any kind: no napkin, no handkerchief, no tablecloth, no placemat, no tea towel, no fabric under or "
+           "beside the subject; the bare wooden table only. If the subject itself is a textile, draw only the subject. ")
 FOOD_STYLE = ("A square 1:1 food photograph (1024x1024) for a travel guidebook series. Every image in the series uses this "
-              "exact setup: " + _TABLE.format(what="food", stitch="{stitch}") + " and nothing else on the table unless "
+              "exact setup: " + _TABLE.format(what="food") + " and nothing else on the table unless "
               "described; soft natural daylight from the upper left, gentle soft shadows, bright and airy, warm cozy color "
               "grading; the far side of the table fades into a soft blur. Plain off-white stoneware dishes unless a "
-              "traditional vessel is described. No hands, no people. " + NOTEXT)
+              "traditional vessel is described. No hands, no people. " + NOCLOTH + NOTEXT)
 BUY_STYLE = ("A square 1:1 product still-life photograph (1024x1024) for a travel guidebook series of souvenirs. Every "
-             "image in the series uses this exact setup: " + _TABLE.format(what="objects", stitch="{stitch}") + "; soft "
+             "image in the series uses this exact setup: " + _TABLE.format(what="objects") + "; soft "
              "natural daylight from the upper left, gentle soft shadows, bright and airy, warm cozy color grading; the far "
              "side of the table fades into a soft blur. No hands, no people. Bottles, jars, bags and boxes have NO labels "
-             "or blank plain labels only. " + NOTEXT)
+             "or blank plain labels only. " + NOCLOTH + NOTEXT)
+# 手本（シリーズの1枚目）は布巾つきで描いた絵が残っている。合わせるのは角度・光・机までで、布は写させない
 MATCH = ("The attached image is the reference for the whole series. Match it exactly in camera angle, distance, table, "
-         "napkin, lighting and color grading. Only the subject changes: do NOT copy the food or objects from the "
-         "reference. ")
+         "lighting and color grading. Only the subject changes: do NOT copy the food or objects from the "
+         "reference, and do NOT copy any napkin, cloth or fabric from it. ")
 
 # やりたいこと（#1228「おいしそう！かわいい！楽しそう！行ってみたい！」）。人と場面を描くので、料理の写真風ではなく
 # 表紙の絵本の調子に寄せる。表紙を手本に渡し、場面は写させない
@@ -341,7 +345,7 @@ def slots(spec: dict, root: Path) -> list[dict]:
         missing = [k for k, _ in items[sec] if k not in sp["items"]]
         if missing:
             die(f"頼み書きの {sec} に描写の無い品: {missing}（面のデータに品が足された。描写と alt を書き足す）")
-        style = (FOOD_STYLE if sec == "food" else BUY_STYLE).format(stitch=spec.get("stitch", "Balkan"))
+        style = FOOD_STYLE if sec == "food" else BUY_STYLE
         for k, name in items[sec]:
             it = sp["items"][k]
             model = it.get("model", sp.get("model"))
