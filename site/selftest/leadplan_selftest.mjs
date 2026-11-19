@@ -298,6 +298,63 @@ check(
 );
 for (const p of OPEN) delete p.done;
 
+/* ------------------------------------- 5b. つぎの国へ移った日に、先頭が入れ替わる
+
+   **滞在（`NEXT_MOVE`）は、つぎの滞在の日の前の日で終わる**（`closeStays`）。
+   2026-11-19 にルーマニアの1件を足したとき、ブルガリアの1件は「つぎの国へ
+   移ったら」の字を持つだけで、終わりは人が `done` を入れる形だった。
+   いま行っている企画は日の早い順に先頭へ出るので、入れ忘れた日は
+   **ルーマニアへ移ったのに表紙がソフィアを指す。**
+
+   日を焼かない（上の 5 と同じ）。**表のいちばん新しい2つの滞在**で当てる。 */
+const { closeStays, NEXT_MOVE } = plans;
+const STAYS = PLANS.filter((p) => p.endsWhen === NEXT_MOVE && p.date).sort((a, b) =>
+  a.date.localeCompare(b.date),
+);
+check(`滞在を数えている（${STAYS.map((p) => p.id).join(" ")}）`, STAYS.length >= 2, `数えた=${STAYS.length}`);
+if (STAYS.length >= 2) {
+  const [prev, last] = STAYS.slice(-2);
+  const [y, m, d] = last.date.split("-").map(Number);
+  const moveDay = noon(y, m, d);
+  const eve = noon(y, m, d - 1);
+  check(`${last.id} の日（${last.date}）、先頭は ${last.id}`, leadPlan(moveDay)?.id === last.id, `出た=${leadPlan(moveDay)?.id}`);
+  check(
+    `${last.id} の日、${prev.id} は「行ってきた」`,
+    planPhase(prev, moveDay) === "after",
+    `出た=${planPhase(prev, moveDay)}`,
+  );
+  check(`その前の日、${prev.id} はまだ「いま」`, planPhase(prev, eve) === "during", `出た=${planPhase(prev, eve)}`);
+  check(
+    `${last.id} の翌日も、表紙の「これから」は0件にならない`,
+    planAheadCount(noon(y, m, d + 1)) > 0,
+    `数えた=${planAheadCount(noon(y, m, d + 1))}`,
+  );
+}
+
+/* 作った表で、入れかたそのものを当てる。**対照は `closeStays` を通さない表**——
+   通さないと、移った日に先頭が前の国のまま（＝2026-11-19 までの作り） */
+const stayRows = [
+  plan("a", "2026-11-12", { endsWhen: NEXT_MOVE }),
+  plan("b", "2026-11-21", { endsWhen: NEXT_MOVE }),
+];
+const closed = closeStays(stayRows);
+check("前の滞在は、つぎの滞在の前の日で終わる", closed[0].until === "2026-11-20", `出た=${closed[0].until}`);
+check("いちばん新しい滞在には、終わりを入れない", closed[1].until === undefined, `出た=${closed[1].until}`);
+check(
+  "人が書いた終わりには触らない",
+  closeStays([{ ...stayRows[0], done: "2026-11-18" }, stayRows[1]])[0].until === undefined,
+);
+check(
+  "月をまたぐ前の日も読める（12-01 → 11-30）",
+  closeStays([stayRows[0], plan("c", "2026-12-01", { endsWhen: NEXT_MOVE })])[0].until === "2026-11-30",
+);
+check("移った日、先頭はつぎの滞在", boardWith(closed, noon(2026, 11, 21)).lead?.id === "b");
+check(
+  "対照：`closeStays` を通さない表では、移った日も先頭が前の滞在",
+  boardWith(stayRows, noon(2026, 11, 21)).lead?.id === "a",
+  `出た=${boardWith(stayRows, noon(2026, 11, 21)).lead?.id}`,
+);
+
 /* -------------------------------------------- 6. 今週、なにをするんだろう */
 
 /** **本番の `week`**（`curl .../island-api/state` 2026-10-07）。作った字ではない */
