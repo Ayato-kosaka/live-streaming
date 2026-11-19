@@ -35,8 +35,9 @@ export default function SpotsLd({ g, path }: { g: Guidebook; path: string }) {
           lon: it.geo!.lon,
           alternateName: [it.local?.text, it.local?.roman].filter((x): x is string => !!x),
           description: it.body || undefined,
-          /* 窓の写真（借りた写真）。描いた絵や色の札は場所そのものではないので渡さない */
-          image: it.pic?.kind === "photo" ? (it.pic.big ?? it.pic.src) : undefined,
+          /* 窓の写真（借りた写真か、行った日のあやと島カード）。描いた絵や色の札は場所そのものではないので渡さない。
+             カードも渡すのは、行った所の写真が借りた写真に置き換わる（ソフィア 2026-11-19）ので、渡さないと名札から絵が消えるから */
+          image: it.pic?.kind === "photo" || it.pic?.kind === "card" ? (it.pic.big ?? it.pic.src) : undefined,
         })),
       })}
     />

@@ -16,8 +16,9 @@ import Writer from "@/components/travel/article/Writer";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
-import { GUIDE_BY } from "@/content/guidebook/heading";
+import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
 import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
+import type { Pic } from "@/content/guidebook/types";
 import { travelArticle, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { JsonLd, articleLd } from "@/lib/jsonld";
@@ -48,6 +49,11 @@ import "@/components/guidebook/guidebook.css";
  *
  * 前の面の役目（現地で使える）を欠かさない: 見たい・食べたい・買いたいの地図（マイマップ）・
  * 名前で開く Google マップ・入場料と行き方・ことば・付箋。
+ *
+ * ## 行ったあとの肉付け（2026-11-19。スコピエの形）
+ *
+ * 行った項目に「行った」の印・その日のあやと島カード・短い話・配信の場面が乗る（`content/guidebook/bulgaria-sofia-went.ts`。
+ * 焼くのは `python/guidebook_went.py`）。**行っていない所も骨組みから消さない。**
  */
 
 const G = SOFIA;
@@ -65,18 +71,20 @@ export const metadata: Metadata = coverShare(
 
 export default function SofiaPage() {
   const drawn = DRAWN;
-  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A） */
+  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える（**見たいもの＝実在の場所は写真のまま**。#1228 Q1 の A）。
+     **行った項目のその日のカードは差し替えない**（あやとが撮ったものが先。スコピエと同じ）。カードの無い日の行った項目は描いた絵のまま */
+  const swap = <T extends { pic?: Pic }>(it: T, pic?: Pic) => (pic && it.pic?.kind !== "card" ? { ...it, pic } : it);
   const g = {
     ...G,
-    todo: G.todo.map((t) => {
-      const pic = todoPic(drawn, t);
-      return pic ? { ...t, pic } : t;
-    }),
-    eat: { ...G.eat, items: G.eat.items.map((it) => (drawn.food[it.id] ? { ...it, pic: drawn.food[it.id] } : it)) },
-    buy: { ...G.buy, items: G.buy.items.map((it) => (drawn.buy[it.id] ? { ...it, pic: drawn.buy[it.id] } : it)) },
+    todo: G.todo.map((t) => swap(t, todoPic(drawn, t))),
+    eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
+    buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
   };
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);
+  /* 行った最初の日（配信の facts から焼いた「行った」のいちばん早い日）。**居た期間と日数は出さない**——
+     あやとはまだソフィアに居て、終わりの日と日数は時間で変わる字になる（書き出しに焼くと、次の日から嘘になる） */
+  const went = firstWent(g);
   return (
     <PageShell crumbs={travelCityCrumbs(G.country, G.city)}>
       <JsonLd
@@ -104,8 +112,8 @@ export default function SofiaPage() {
         <Basics g={g} n={6} article={PRICES} />
         {/* 面のいちばん下。導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228） */}
         <Videos g={g} n={7} />
-        {/* 書き手の枠（記事の面と同じ。検索の上位の 7割が書き手を見せている。#1262） */}
-        <Writer by={GUIDE_BY.before} />
+        {/* 書き手の枠（記事の面と同じ。検索の上位の 7割が書き手を見せている。#1262）。行った日は配信の facts から（スコピエと同じ） */}
+        <Writer by={went ? GUIDE_BY.after : GUIDE_BY.before} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
 
