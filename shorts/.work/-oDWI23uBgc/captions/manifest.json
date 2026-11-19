@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "-oDWI23uBgc__captions",
+ "mode": "captions",
+ "dest": "-oDWI23uBgc/captions",
+ "video": "-oDWI23uBgc",
+ "channel": null,
+ "request": "shorts/requests/bgmove-oDWI23uBgc-captions-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed",
+  "captions": "failed"
+ },
+ "counts": {
+  "caption_segments": 0,
+  "caption_lines": 0,
+  "files": 4
+ },
+ "bytes": {
+  "plain": 2212,
+  "tar_gz": 1440,
+  "encrypted": 1456
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1456,
+   "sha256": "a75de4dde418d629f0141cc7dd18f2c14e6e5b4fd4e7e0fa509c2f9e1571d40a"
+  }
+ ],
+ "hmac_sha256": "48d7921f21f52d12f2553762930e7132a257615605923e4213e8b8dbfbc81129",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T02:40:21+00:00"
+}

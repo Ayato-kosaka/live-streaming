@@ -1,0 +1,43 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "0to8ufDQvtM__zoom-0-3-5fps",
+ "mode": "zoom",
+ "dest": "0to8ufDQvtM/zoom-0-3-5fps",
+ "video": "0to8ufDQvtM",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-hook-0to8ufDQvtM-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "visual": "ok"
+ },
+ "counts": {
+  "sheets": 2,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 3,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 10
+ },
+ "bytes": {
+  "plain": 578759,
+  "tar_gz": 554611,
+  "encrypted": 554624
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 554624,
+   "sha256": "204e665cc45a60366d7a866e33d6f780c1be0c975ecb958ed42bd7b34e06ef0a"
+  }
+ ],
+ "hmac_sha256": "f04b272292bebb702daae1570d008181226c158d14b5889d1951249490d2cd2e",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:21:23+00:00"
+}

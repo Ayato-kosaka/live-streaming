@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "m156VWNEriU__zoom-0-3-5fps",
+ "mode": "zoom",
+ "dest": "m156VWNEriU/zoom-0-3-5fps",
+ "video": "m156VWNEriU",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-hook-m156VWNEriU-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1307,
+  "tar_gz": 1058,
+  "encrypted": 1072
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1072,
+   "sha256": "52e0160d10518b01684f248d8902273c7808e08f0aabf45a2fe98b023286ae57"
+  }
+ ],
+ "hmac_sha256": "3ec7e1b50964daac9d8f9a3522b605b0b15b76c7df4ecbc8b926a64b3e879aa0",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:24:18+00:00"
+}

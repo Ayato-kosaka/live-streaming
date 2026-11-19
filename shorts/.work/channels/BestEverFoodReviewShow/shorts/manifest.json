@@ -1,0 +1,42 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__BestEverFoodReviewShow__shorts",
+ "mode": "channel",
+ "dest": "channels/BestEverFoodReviewShow/shorts",
+ "video": null,
+ "channel": "@BestEverFoodReviewShow",
+ "request": "shorts/requests/yogurt-editplan-channels-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "channel": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 120,
+  "files": 5
+ },
+ "bytes": {
+  "plain": 77429,
+  "tar_gz": 14233,
+  "encrypted": 14240
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 14240,
+   "sha256": "bb11765dfd842accb363b1e1ba5966e2b70130ac4a077659ebe51834d283a67b"
+  }
+ ],
+ "hmac_sha256": "5ca4541d6635fbd810974f660f7c6c28124f93f36811fe78b298662d7a4b99e2",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:14:19+00:00"
+}

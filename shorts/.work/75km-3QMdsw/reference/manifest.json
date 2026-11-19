@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "75km-3QMdsw__reference",
+ "mode": "reference",
+ "dest": "75km-3QMdsw/reference",
+ "video": "75km-3QMdsw",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-refs2-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1256,
+  "tar_gz": 1055,
+  "encrypted": 1056
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1056,
+   "sha256": "eb74835167b0d5d28301f6cba19d3215a2620b20f2482d7b0482d743497f885c"
+  }
+ ],
+ "hmac_sha256": "4bb8f39df6b946d5841c5c62b0a7962c30bb32f024151e29d4c898b805977ad5",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:23:52+00:00"
+}

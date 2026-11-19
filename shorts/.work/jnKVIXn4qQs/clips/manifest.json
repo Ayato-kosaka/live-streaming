@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "jnKVIXn4qQs__clips",
+ "mode": "clips",
+ "dest": "jnKVIXn4qQs/clips",
+ "video": "jnKVIXn4qQs",
+ "channel": null,
+ "request": "shorts/requests/yogurt-jnKVIXn4qQs-editplan-clips-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1391,
+  "tar_gz": 1134,
+  "encrypted": 1136
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1136,
+   "sha256": "bb9466864de5fdcdea6df8fed4b8b213946e93d913a345353b85a7a22855d15d"
+  }
+ ],
+ "hmac_sha256": "a0dff97de3ef9a5a3fac68785fc9fa81e6bd18294cbb82dc997bf5e48231ef00",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:28:15+00:00"
+}
