@@ -526,7 +526,8 @@
     "ja": "冬のクリスマスマーケット",
     "desc": "the Christmas market on Constitution Square in Bucharest at dusk. Composition: a wide view at eye level from inside the market: two rows of small wooden chalet stalls with warm string lights and fir garlands lead the eye toward the back; a huge Christmas tree covered in lights stands on one side; small figures in winter coats and hats, seen from behind, stroll between the stalls, one holding a steaming mug. At the far end rises the enormous, long, symmetrical white facade of the Palace of the Parliament, rows and rows of windows and colonnades, softly lit in warm light. A little frost on the stall roofs, no deep snow. Light: early dusk, the sky a smooth gradient from deep violet at the top to rose and peach at the horizon, everything below lit by warm bulbs. Palette: violet and dusty rose sky, warm gold and amber lights, dark fir green, and the pale glowing palace.",
     "alt": "夕暮れの憲法広場のクリスマスマーケット。木の屋台の明かりと大きなツリーの奥に、国民の館が光る絵",
-    "fix": "Stall fronts have no signs or writing. "
+    "fix": "Stall fronts have no signs or writing. Make the market lively and close, with NO empty pavement: the viewpoint is inside a narrow, busy lane between the stalls, close to them; the stall counters overflow with gingerbread hearts, glass ornaments, candles, sweets and steaming pots of mulled wine; many small visitors in winter coats crowd the lane and gather at the counters, seen from behind or in profile; in the middle ground a couple walks arm in arm away from the viewer. The palace stays far at the back, framed between the stall roofs and the tree. ",
+   "v": 2
    }
   }
  }
