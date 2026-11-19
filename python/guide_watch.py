@@ -266,8 +266,10 @@ def summed(art: Node, v: str, u: str, ready: set[tuple[str, str]], units: dict, 
     return False
 
 
-def check_money(art: Node, rows: list[dict], units: dict, r: Report) -> None:
-    ready: set[tuple[str, str]] = set()
+def check_money(art: Node, rows: list[dict], units: dict, r: Report, outside: set[tuple[str, str]] | None = None) -> None:
+    """`outside` は、行く前の街の材料の外の事実（出どころつきの字）に在る額。行く前の街は facts が無いので、
+    要約の札（「1回3〜5レイ」）のように出どころの印の無い所に出た額は、材料の外の事実と突き合わせる"""
+    ready: set[tuple[str, str]] = set(outside or ())
     held: set[tuple[str, str]] = set()
     for x in rows:
         hold = x["hold"] if "verify" not in BREAK else None
@@ -433,7 +435,7 @@ def around(s: str, w: str, n: int = 18) -> str:
     return re.sub(r"\s+", " ", s[max(0, i - n): i + len(w) + n])
 
 
-def check_page(key: str, page: str, rows: list[dict], units: dict) -> Report | None:
+def check_page(key: str, page: str, rows: list[dict], units: dict, outside: set[tuple[str, str]] | None = None) -> Report | None:
     """1枚ぶん。本文（`article.tg`）が無ければ None（数えるものが無い）"""
     art, head = parse(page)
     if art is None:
@@ -441,7 +443,7 @@ def check_page(key: str, page: str, rows: list[dict], units: dict) -> Report | N
             return None
         art = Node("article", {"class": "tg"})
     r = Report(key)
-    check_money(art, rows, units, r)
+    check_money(art, rows, units, r, outside)
     check_quotes(art, rows, r)
     check_sections(art, r)
     check_tone(art, head, r)
@@ -453,6 +455,35 @@ def check_page(key: str, page: str, rows: list[dict], units: dict) -> Report | N
 def keys(scripts: Path = SCRIPTS) -> list[str]:
     """材料（`<国>/<街>/guidebook.json`）のある街。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
     return sorted(f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json"))
+
+
+def outside_amounts(key: str, units: dict, scripts: Path = SCRIPTS) -> set[tuple[str, str]]:
+    """材料の外の事実（`src` を持つ入れ物の `text`）に在る額。**出どころの無い字の額は数えない**"""
+    out: set[tuple[str, str]] = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            if x.get("src") and isinstance(x.get("text"), str):
+                out.update(gf.money_in(x["text"], units))
+            for v in x.values():
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    try:
+        walk(json.loads((scripts / key / "guidebook.json").read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        pass
+    return out
+
+
+def pre_trip(key: str, scripts: Path = SCRIPTS) -> bool:
+    """材料が「行く前の街」の印（`city.pre_trip`）を持つか。材料が読めなければ False（行った街として厳しく見る）"""
+    p = scripts / key / "guidebook.json"
+    try:
+        return bool(json.loads(p.read_text(encoding="utf-8"))["city"].get("pre_trip"))
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 def page_path(dist: Path, key: str) -> Path | None:
@@ -484,13 +515,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"::error::{k}: 書き出した面が {dist}/travel/{k}.html に無い（先に tools/build.sh）")
             return 2
         rows = rows_of(country, city, Path(a.streams))
-        if not rows:
+        # 行く前の街（材料の city.pre_trip。#1292）は facts がまだ無いのが正しい。「行った」の突き合わせは飛ばし、
+        # 口調と節は見る。**行った街なのに facts が無いのは、読む道具が置き場を見失ったときなので 2 のまま**
+        pre = pre_trip(k)
+        if not rows and not pre:
             print(f"::error::{k}: facts の行が1つも無い。突き合わせる相手が無い")
             return 2
-        r = check_page(k, p.read_text(encoding="utf-8"), rows, gf.money_units(table, country))
-        if r is None or not r.seen["一言"] or not r.seen["字"]:
+        units = gf.money_units(table, country)
+        r = check_page(k, p.read_text(encoding="utf-8"), rows, units, outside_amounts(k, units) if pre else None)
+        if r is None or not r.seen["字"] or (not pre and not r.seen["一言"]):
             print(f"::error::{k}: 面の本文（article.tg / article.gb）か一言が読めない。見るものが無い")
             return 2
+        if pre:
+            print(f"  {k}: 行く前の街（材料の city.pre_trip）。facts が {len(rows)}行なので、「行った」の突き合わせは飛ばした")
+            if r.seen["一言"]:
+                r.errors.append(f"行く前の街なのに、あやとの一言が {r.seen['一言']}つある（行っていない街で「言った」にしない）")
         seen = "・".join(f"{n}{c}" for n, c in r.seen.items())
         out.append({"key": k, "errors": r.errors, "seen": r.seen})
         if r.errors:

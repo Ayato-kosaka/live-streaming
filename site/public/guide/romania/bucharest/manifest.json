@@ -1,0 +1,302 @@
+{
+ "cover": {
+  "src": "/guide/romania/bucharest/ブカレスト-観光ガイド-1600.webp",
+  "src_small": "/guide/romania/bucharest/ブカレスト-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "ブカレスト観光ガイド「「小パリ」と称えられた街」。晩秋の午後の日に照らされた、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂。前の庭に色づいた木。ブカレストの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。アテネ音楽堂は写真を形の手本として渡した。上の3分の1は空。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/romania/bucharest/bucharest-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "晩秋の午後の日に照らされた、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂。前の庭に色づいた木。ブカレストの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/romania/bucharest/bucharest-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/romania/bucharest/ブカレスト-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/romania/bucharest/ブカレスト-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "ブカレスト観光ガイド「「小パリ」と称えられた街」。晩秋の午後の、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂と色づいた木。ブカレストの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
+ "areamap": {
+  "src": "/guide/romania/bucharest/ブカレスト-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/romania/bucharest/ブカレスト-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "ブカレストの見どころマップ（地区分け）。旧市街・国民の館周辺・革命広場周辺の3つの地区を色で分け、名前を書いた絵地図。国民の館・総主教大聖堂・統一広場の噴水・CEC宮殿・スタヴロポレオス修道院・革命広場の記念碑・アテネ音楽堂の目印の絵と名前つき",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・公園・3つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。凱旋門より北は地図の外（矢印）",
+  "baked": true,
+  "areas": [
+   {
+    "id": "old-town",
+    "name": "旧市街",
+    "label": [
+     "旧市街"
+    ],
+    "local": "Centrul Vechi",
+    "color": "#ffd98a",
+    "x": 0.83,
+    "y": 0.575,
+    "source": [
+     "https://romaniatourism.com/ja/bucharest.html",
+     "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88"
+    ],
+    "w": 0.1817,
+    "h": 0.0687
+   },
+   {
+    "id": "civic",
+    "name": "国民の館周辺",
+    "label": [
+     "国民の館周辺"
+    ],
+    "local": "Centrul Civic",
+    "color": "#d9ccf5",
+    "x": 0.3,
+    "y": 0.93,
+    "source": [
+     "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+     "https://romaniatourism.com/ja/bucharest.html"
+    ],
+    "w": 0.3067,
+    "h": 0.0687
+   },
+   {
+    "id": "revolution",
+    "name": "革命広場周辺",
+    "label": [
+     "革命広場周辺"
+    ],
+    "local": "Piața Revoluției",
+    "color": "#ffc4d2",
+    "x": 0.5,
+    "y": 0.42,
+    "source": [
+     "https://romaniatourism.com/ja/bucharest.html"
+    ],
+    "w": 0.3067,
+    "h": 0.0687
+   }
+  ],
+  "bbox": {
+   "west": 26.0809,
+   "east": 26.1061,
+   "south": 44.4205,
+   "north": 44.4475
+  },
+  "beyond": [
+   {
+    "id": "arc",
+    "name": "凱旋門",
+    "local": "Arcul de Triumf",
+    "lat": 44.46719,
+    "lon": 26.078127,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Bucharest"
+    ],
+    "x": 0.15,
+    "y": 0.19,
+    "dir": "n"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  },
+  "painted": [
+   {
+    "name": "ブカレスト 見どころマップ",
+    "x": 0.5,
+    "y": 0.0468,
+    "w": 1.0,
+    "h": 0.0936
+   },
+   {
+    "name": "国民の館",
+    "x": 0.21,
+    "y": 0.855,
+    "w": 0.1367,
+    "h": 0.0407
+   },
+   {
+    "name": "総主教大聖堂",
+    "x": 0.82,
+    "y": 0.915,
+    "w": 0.19,
+    "h": 0.0407
+   },
+   {
+    "name": "統一広場",
+    "x": 0.86,
+    "y": 0.855,
+    "w": 0.1367,
+    "h": 0.0407
+   },
+   {
+    "name": "CEC宮殿",
+    "x": 0.56,
+    "y": 0.635,
+    "w": 0.1348,
+    "h": 0.0407
+   },
+   {
+    "name": "スタヴロポレオス修道院",
+    "x": 0.8,
+    "y": 0.66,
+    "w": 0.2433,
+    "h": 0.0667
+   },
+   {
+    "name": "革命広場",
+    "x": 0.65,
+    "y": 0.34,
+    "w": 0.1367,
+    "h": 0.0407
+   },
+   {
+    "name": "アテネ音楽堂",
+    "x": 0.645,
+    "y": 0.205,
+    "w": 0.19,
+    "h": 0.0407
+   }
+  ]
+ },
+ "food": {
+  "sarmale": {
+   "src": "/guide/romania/bucharest/food-sarmale-800.webp",
+   "src_small": "/guide/romania/bucharest/food-sarmale-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "陶器の器に入ったサルマーレと、黄色いママリガとサワークリーム",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "mici": {
+   "src": "/guide/romania/bucharest/food-mici-800.webp",
+   "src_small": "/guide/romania/bucharest/food-mici-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "皮のない焼きソーセージのミティテイに、マスタードとパン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "ciorba": {
+   "src": "/guide/romania/bucharest/food-ciorba-800.webp",
+   "src_small": "/guide/romania/bucharest/food-ciorba-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白く濁ったもつのスープ、チョルバ・デ・ブルタ。サワークリームと青唐辛子を添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "mamaliga": {
+   "src": "/guide/romania/bucharest/food-mamaliga-800.webp",
+   "src_small": "/guide/romania/bucharest/food-mamaliga-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "木の板にのった黄色いママリガ。白いチーズとサワークリーム",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "papanasi": {
+   "src": "/guide/romania/bucharest/food-papanasi-800.webp",
+   "src_small": "/guide/romania/bucharest/food-papanasi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "揚げたパパナシに、サワークリームと赤いさくらんぼのジャム",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "covrigi": {
+   "src": "/guide/romania/bucharest/food-covrigi-800.webp",
+   "src_small": "/guide/romania/bucharest/food-covrigi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ごまをまぶした輪の形のパン、コヴリジ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "cozonac": {
+   "src": "/guide/romania/bucharest/food-cozonac-800.webp",
+   "src_small": "/guide/romania/bucharest/food-cozonac-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "くるみとココアの渦が見えるコゾナックの切り口",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "tuica": {
+   "src": "/guide/romania/bucharest/food-tuica-800.webp",
+   "src_small": "/guide/romania/bucharest/food-tuica-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "すももの蒸留酒ツイカの瓶と小さなグラス、すもも",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  }
+ },
+ "buy": {
+  "horezu": {
+   "src": "/guide/romania/bucharest/buy-horezu-800.webp",
+   "src_small": "/guide/romania/bucharest/buy-horezu-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "こげ茶・赤・緑・青で模様を描いたホレズ焼きの皿と水差し",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（ブラウスは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "ie": {
+   "src": "/guide/romania/bucharest/buy-ie-800.webp",
+   "src_small": "/guide/romania/bucharest/buy-ie-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "肩に赤と黒の刺繍が入った白いブラウス、イエ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（ブラウスは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "zacusca": {
+   "src": "/guide/romania/bucharest/buy-zacusca-800.webp",
+   "src_small": "/guide/romania/bucharest/buy-zacusca-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "瓶詰めのザクスカと、塗ったパン",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（ブラウスは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "tuica": {
+   "src": "/guide/romania/bucharest/buy-tuica-800.webp",
+   "src_small": "/guide/romania/bucharest/buy-tuica-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ツイカとパーリンカの瓶、すもも",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（ブラウスは品そのもの）。瓶・袋・箱は字なし"
+  }
+ }
+}

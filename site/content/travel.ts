@@ -135,6 +135,8 @@ const CITIES: Omit<TravelCity, "href">[] = [
   /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
   { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
   { country: "bulgaria", slug: "sofia", name: "ソフィア" },
+  /* 行く前の街（あやとは 2026-11-21 に移る。`content/plans.ts` の `romania`）。国の面はまだ無い（`CITY_ONLY`） */
+  { country: "romania", slug: "bucharest", name: "ブカレスト", draft: true },
 ];
 
 /**
@@ -144,7 +146,12 @@ const CITIES: Omit<TravelCity, "href">[] = [
  * いまは空。ブルガリアがここに居たが、国の面（街の一覧）を建てて `GUIDE_ONLY` へ移した（#1262）。
  * 国の面を建てた日に、ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
  */
-const CITY_ONLY: { country: string; card: ShareKey }[] = [];
+const CITY_ONLY: { country: string; card: ShareKey; before?: true }[] = [
+  /* ルーマニア（2026-11-19）。**行く前の国**（`before`）。国に入った日が国の表（`content/countries.ts` の
+     `AHEAD_COUNTRIES`）に入るのは、入った日に入れる決まりなので、それまでは国の表に居ない。
+     入った日に国の面を建てて `GUIDE_ONLY` へ移すまで、パンくずは 島 › 歩いた国 › ブカレスト */
+  { country: "romania", card: "map", before: true },
+];
 
 /** 街の上の国。国の面が在ればそれ、無ければ `CITY_ONLY` の行（どちらにも無ければ書き出しを止める） */
 function cityCountry(country: string): { page?: TravelPlace; card: ShareKey } {
@@ -153,7 +160,10 @@ function cityCountry(country: string): { page?: TravelPlace; card: ShareKey } {
   if (page && only) throw new Error(`content/travel.ts: ${country} は国の面が在るのに CITY_ONLY にも居る（消し忘れ）`);
   if (page) return { page, card: page.card };
   if (!only) throw new Error(`content/travel.ts: ${country} の国の面が無い（TRAVEL_PLACES にも CITY_ONLY にも居ない）`);
-  if (!AHEAD_COUNTRIES.some((a) => a.slug === country) && !COUNTRIES.some((c) => c.slug === country)) {
+  /* 行く前の国（`before`）は、まだ国の表に居なくてよい。入った日に国の表へ入っても、ここでは止めない
+     （止めると、入った晩の毎晩の配りが落ちる）。国の面を建てた日に `before` ごと `GUIDE_ONLY` へ移す */
+  const listed = AHEAD_COUNTRIES.some((a) => a.slug === country) || COUNTRIES.some((c) => c.slug === country);
+  if (!only.before && !listed) {
     throw new Error(`content/travel.ts: ${country} が国の表（content/countries.ts）に無い`);
   }
   return { card: only.card };

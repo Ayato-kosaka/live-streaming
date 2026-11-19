@@ -1,0 +1,2687 @@
+{
+ "_meta": {
+  "何か": "ブカレストを「ガイドブック型の街の面」（/travel/romania/bucharest）にするための材料。行く前の街（facts は無い）。焼くのは python/guidebook_bake.py",
+  "見張り": "python3 python/guide_book_check.py romania/bucharest（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
+  "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）か Wikipedia。値段と「いまも」は2024年以降の出どころ。確かめきれないものは unknown へ",
+  "行った": "まだ行っていない（2026-11-21 に移る）。went は全部 false。行ったあとは配信の facts に結ぶ（スコピエの形）",
+  "円": "円は 1ユーロ＝5.3467レイ・174.85円（2026年11月18日の欧州中央銀行の参照レート）で直し、10円で丸めた",
+  "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。凱旋門より北は見どころマップの外（矢印）",
+  "rank": "見たいものの rank は、初めての人に向けた見どころの大きさ（1 が定番）",
+  "選んだ問い": "どんな街の問いは、日本語の頁がブカレストを語る「小パリ」・国民の館・ドラキュラ（ヴラド・ツェペシュ）の3つ（about.why_src）"
+ },
+ "city": {
+  "key": "romania/bucharest",
+  "name": "ブカレスト",
+  "town": "bucharest",
+  "pre_trip": true,
+  "local": {
+   "text": "București",
+   "lang": "ro",
+   "roman": "Bucuresti",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「ブカレスト」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+     "seen": "2026-11-19"
+    }
+   ]
+  }
+ },
+ "rate": {
+  "text": "1レウは約32.7円。ルーマニアのレウ（RON。複数形はレイ）は変動相場で、円は1ユーロ＝5.3467レイ・174.85円（2026年11月18日の欧州中央銀行の参照レート）で直した。",
+  "src": [
+   {
+    "name": "欧州中央銀行（ユーロの参照レート）",
+    "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "seen": "2026-11-19"
+   }
+  ],
+  "unit": "レイ",
+  "eur_local": 5.3467,
+  "eur_jpy": 174.85,
+  "date": "2026-11-18"
+ },
+ "cover": {
+  "catch": [
+   {
+    "text": "「小パリ」と称えられた街",
+    "type": "型3（「愛称」と称えられる＋呼び名。手本「『ドナウの真珠』と称えられる歴史都市ブダペスト」）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "text": "パリの香り漂う街",
+    "type": "型2（決まった動詞＋呼び名。手本「宮廷文化の香り漂う 音楽の都」）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "text": "東欧の小パリ、ブカレストへ",
+    "type": "型5（呼び名、名前＋へ。手本「光の国、スウェーデンへ」）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  ],
+  "photo": {
+   "file": "Ateneo Rumano, Bucarest, Rumanía, 2016-05-29, DD 73.jpg",
+   "by": "Diego Delso (1974–)",
+   "lic": "CC BY-SA 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+   "alt": "白い柱と緑の丸屋根のルーマニア・アテネ音楽堂。前に芝生の庭",
+   "w": 6592,
+   "src": [
+    {
+     "name": "Wikimedia Commons（ファイルのページ）",
+     "url": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+     "seen": "2026-11-19"
+    }
+   ],
+   "thumbs": {
+    "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/250px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+    "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/500px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+    "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/960px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg"
+   }
+  }
+ },
+ "about": {
+  "cards": [
+   {
+    "key": "paris",
+    "title": "小パリ",
+    "text": "戦間期のブカレストは、優雅な建物の並ぶ街並みから「小パリ」と呼ばれた。いまの凱旋門は1936年にできた。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "palace",
+    "title": "国民の館",
+    "text": "チャウシェスク政権が1984年に建て始めた議会の建物。重さは世界一とされ、いまも7割ほどが使われていない。",
+    "src": [
+     {
+      "name": "Wikipedia「Palace of the Parliament」",
+      "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "dracula",
+    "title": "ドラキュラ",
+    "text": "ブカレストが史書に初めて出るのは1459年。ドラキュラのモデルとされるヴラド・ツェペシュの居城としてだった。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia（日本語）「ヴラド・ツェペシュ」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%B4%E3%83%A9%E3%83%89%E3%83%BB%E3%83%84%E3%82%A7%E3%83%9A%E3%82%B7%E3%83%A5",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  ],
+  "why_src": [
+   {
+    "name": "Wikipedia（日本語）「ブカレスト」",
+    "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+    "seen": "2026-11-19",
+    "words": "「小パリ」という愛称・1459年・ヴラド・ツェペシュの居城・国民の館"
+   },
+   {
+    "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+    "url": "https://romaniatourism.com/ja/bucharest.html",
+    "seen": "2026-11-19",
+    "words": "「リトルパリ」・1459年の文書・国会議事堂（人民の家）"
+   }
+  ],
+  "areas": [
+   {
+    "key": "old-town",
+    "name": "旧市街",
+    "local": {
+     "text": "Centrul Vechi",
+     "roman": "Centrul Vechi",
+     "src": [
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "tone": {
+     "text": "リプスカニ通りを中心にした石畳の一帯。古い教会と宿屋のあいだに、レストランとバーが並ぶ。",
+     "src": [
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikipedia（日本語）「ブカレスト」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.43151,
+     "lon": 26.1002,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Centrul Vechi」",
+       "url": "https://www.openstreetmap.org/way/240572668",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.4336,
+       26.0958
+      ],
+      [
+       44.4336,
+       26.103
+      ],
+      [
+       44.4318,
+       26.1058
+      ],
+      [
+       44.4288,
+       26.105
+      ],
+      [
+       44.4286,
+       26.099
+      ],
+      [
+       44.43,
+       26.0958
+      ]
+     ],
+     "how": "旧市街（Centrul Vechi）の点のまわりに、スタヴロポレオス修道院・CEC宮殿・旧王宮跡・カルトゥレシュティ・カルセルを囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Centrul Vechi」",
+       "url": "https://www.openstreetmap.org/way/240572668",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "スタヴロポレオス修道院",
+      "local": "Stavropoleos",
+      "lat": 44.431783,
+      "lon": 26.098829,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Biserica Mănăstirii \"Stavropoleos\"」",
+        "url": "https://www.openstreetmap.org/way/78444014",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "name": "カルトゥレシュティ・カルセル",
+      "local": "Cărturești Carusel",
+      "lat": 44.431894,
+      "lon": 26.101578,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Cărturești Carusel」",
+        "url": "https://www.openstreetmap.org/node/3355049764",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19",
+      "words": "旧市街（Centrul Vechi）・リプスカーニ通り"
+     },
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19",
+      "words": "リプスカニ（中世からの商業中心地区）"
+     }
+    ]
+   },
+   {
+    "key": "civic",
+    "name": "国民の館周辺",
+    "local": {
+     "text": "Centrul Civic",
+     "roman": "Centrul Civic",
+     "src": [
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "tone": {
+     "text": "国民の館と、統一広場へまっすぐ延びる大通りの一帯。総主教大聖堂の丘もここ。",
+     "src": [
+      {
+       "name": "Wikipedia「Palace of the Parliament」",
+       "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.42751,
+     "lon": 26.087248,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Palatul Parlamentului」",
+       "url": "https://www.openstreetmap.org/relation/2230391",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.4295,
+       26.08
+      ],
+      [
+       44.4295,
+       26.0955
+      ],
+      [
+       44.4284,
+       26.0988
+      ],
+      [
+       44.4282,
+       26.1062
+      ],
+      [
+       44.4228,
+       26.1062
+      ],
+      [
+       44.4218,
+       26.08
+      ]
+     ],
+     "how": "国民の館・統一大通り・統一広場・総主教大聖堂を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Palatul Parlamentului」",
+       "url": "https://www.openstreetmap.org/relation/2230391",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "OpenStreetMap「Piața Unirii」",
+       "url": "https://www.openstreetmap.org/way/1457676979",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "国民の館",
+      "local": "Palatul Parlamentului",
+      "lat": 44.42751,
+      "lon": 26.087248,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Palatul Parlamentului」",
+        "url": "https://www.openstreetmap.org/relation/2230391",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "name": "総主教大聖堂",
+      "local": "Catedrala Patriarhală",
+      "lat": 44.424563,
+      "lon": 26.097951,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"」",
+        "url": "https://www.openstreetmap.org/way/232296927",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19",
+      "words": "国民の館（目印＋周辺。docs/guide-copy.md 5章の2）"
+     },
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19",
+      "words": "市民センター（Centrul Civic）"
+     }
+    ]
+   },
+   {
+    "key": "revolution",
+    "name": "革命広場周辺",
+    "local": {
+     "text": "Piața Revoluției",
+     "roman": "Piata Revolutiei",
+     "src": [
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "tone": {
+     "text": "勝利通り沿いに、アテネ音楽堂や旧王宮の建物が並ぶ。1989年の革命の舞台になった広場がまん中。",
+     "src": [
+      {
+       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+       "url": "https://romaniatourism.com/ja/bucharest.html",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.438657,
+     "lon": 26.097498,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Piața Revoluției」",
+       "url": "https://www.openstreetmap.org/way/1454580957",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.4465,
+       26.0915
+      ],
+      [
+       44.4465,
+       26.1005
+      ],
+      [
+       44.44,
+       26.1012
+      ],
+      [
+       44.434,
+       26.0995
+      ],
+      [
+       44.434,
+       26.0935
+      ],
+      [
+       44.44,
+       26.0905
+      ]
+     ],
+     "how": "革命広場・アテネ音楽堂・勝利通りの北へ延びる区間を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Piața Revoluției」",
+       "url": "https://www.openstreetmap.org/way/1454580957",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "OpenStreetMap「Ateneul Român」",
+       "url": "https://www.openstreetmap.org/way/16291602",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "アテネ音楽堂",
+      "local": "Ateneul Român",
+      "lat": 44.441357,
+      "lon": 26.097361,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ateneul Român」",
+        "url": "https://www.openstreetmap.org/way/16291602",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "name": "革命広場",
+      "local": "Piața Revoluției",
+      "lat": 44.438657,
+      "lon": 26.097498,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Piața Revoluției」",
+        "url": "https://www.openstreetmap.org/way/1454580957",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19",
+      "words": "革命広場（Piata Revolutiei）（目印＋周辺）"
+     }
+    ]
+   }
+  ]
+ },
+ "todo": [
+  {
+   "key": "sarmale",
+   "town": "bucharest",
+   "title": "本場のサルマーレを食べたい！",
+   "head": "ロールキャベツにママリガとサワークリーム",
+   "points": {
+    "what": [
+     {
+      "text": "ルーマニアのロールキャベツ、サルマーレを食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "酢漬けのキャベツかぶどうの葉で、ひき肉と米と玉ねぎを包み、陶器の鍋で何時間も煮る。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "とうもろこしの粥ママリガを添えて食べることが多い。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "米と香草だけで包んだ、肉の入らない作りもある。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Romanian cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "eat": [
+     "sarmale",
+     "mamaliga"
+    ]
+   },
+   "photo": {
+    "drawn": "eat"
+   }
+  },
+  {
+   "key": "papanasi",
+   "town": "bucharest",
+   "title": "揚げたてのパパナシを食べたい！",
+   "head": "チーズの生地にジャムとサワークリーム",
+   "points": {
+    "what": [
+     {
+      "text": "ルーマニアの揚げドーナツ、パパナシを食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げて作る。果物のジャムかシロップと、サワークリームをかける。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Romanian cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "eat": [
+     "papanasi"
+    ]
+   },
+   "photo": {
+    "drawn": "eat"
+   }
+  },
+  {
+   "key": "athenaeum",
+   "town": "bucharest",
+   "title": "アテネ音楽堂で名曲を聴きたい！",
+   "head": "1888年に開いた丸屋根のホールで演奏会",
+   "points": {
+    "what": [
+     {
+      "text": "ルーマニア・アテネ音楽堂で、ジョルジェ・エネスク・フィルハーモニーの演奏会を聴く。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1888年に開いた、街でいちばん格の高い音楽堂。丸屋根の円い建物で、ジョルジェ・エネスク音楽祭の会場でもある。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "切符はネットと、アテネ音楽堂の窓口で買える（2025-2026年の季節）。",
+      "src": [
+       {
+        "name": "Știri pe surse「George Enescu Philharmonic puts tickets on sale for second part of 2025 - 2026 season」",
+        "url": "https://www.stiripesurse.ro/george-enescu-philharmonic-puts-tickets-on-sale-for-second-part-of-2025-2026-season_3842712",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Romanian Athenaeum」",
+     "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Știri pe surse「George Enescu Philharmonic puts tickets on sale for second part of 2025 - 2026 season」",
+     "url": "https://www.stiripesurse.ro/george-enescu-philharmonic-puts-tickets-on-sale-for-second-part-of-2025-2026-season_3842712",
+     "seen": "2026-11-19"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "athenaeum"
+    ]
+   },
+   "photo": {
+    "commons": [
+     {
+      "file": "Ateneo Rumano, Bucarest, Rumanía, 2016-05-29, DD 73.jpg",
+      "by": "Diego Delso (1974–)",
+      "lic": "CC BY-SA 4.0",
+      "page": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+      "alt": "白い柱と緑の丸屋根のルーマニア・アテネ音楽堂。前に芝生の庭",
+      "w": 6592,
+      "src": [
+       {
+        "name": "Wikimedia Commons（ファイルのページ）",
+        "url": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+        "seen": "2026-11-19"
+       }
+      ],
+      "thumbs": {
+       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/250px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/500px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/960px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg"
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "see": [
+  {
+   "key": "old-town",
+   "town": "bucharest",
+   "name": "旧市街（リプスカニ）",
+   "local": {
+    "text": "Centrul Vechi",
+    "roman": "Centrul Vechi",
+    "src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "リプスカニ通りを中心にした石畳の一帯。中世からの商いの中心で、いまは直した古い建物にレストランとバーが並び、若い人でにぎわう。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.43151,
+   "lon": 26.1002,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Centrul Vechi」",
+     "url": "https://www.openstreetmap.org/way/240572668",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Centrul+Vechi+Bucure%C8%99ti&hl=ja",
+   "links": {
+    "todo": [
+     "caru",
+     "carusel"
+    ]
+   }
+  },
+  {
+   "key": "palace",
+   "town": "bucharest",
+   "name": "国民の館（議会宮殿）",
+   "local": {
+    "text": "Palatul Parlamentului",
+    "roman": "Palatul Parlamentului",
+    "src": [
+     {
+      "name": "Wikipedia「Palace of the Parliament」",
+      "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。",
+    "src": [
+     {
+      "name": "Wikipedia「Palace of the Parliament」",
+      "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.42751,
+   "lon": 26.087248,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Palatul Parlamentului」",
+     "url": "https://www.openstreetmap.org/relation/2230391",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [
+    {
+     "label": "見学",
+     "text": "ガイドつきの見学で中に入る。パスポートを持って行く",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Parlamentului+Bucure%C8%99ti&hl=ja",
+   "links": {
+    "todo": [
+     "palace"
+    ]
+   }
+  },
+  {
+   "key": "revolution",
+   "town": "bucharest",
+   "name": "革命広場",
+   "local": {
+    "text": "Piața Revoluției",
+    "roman": "Piata Revolutiei",
+    "src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "1989年の革命の舞台の1つになった広場。真ん中に記念碑が立ち、まわりに旧王宮や大学図書館の建物が並ぶ。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.438657,
+   "lon": 26.097498,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Piața Revoluției」",
+     "url": "https://www.openstreetmap.org/way/1454580957",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "athenaeum",
+   "town": "bucharest",
+   "name": "ルーマニア・アテネ音楽堂",
+   "local": {
+    "text": "Ateneul Român",
+    "roman": "Ateneul Roman",
+    "src": [
+     {
+      "name": "Wikipedia「Romanian Athenaeum」",
+      "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた絵がぐるりと続く。",
+    "src": [
+     {
+      "name": "Wikipedia「Romanian Athenaeum」",
+      "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.441357,
+   "lon": 26.097361,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Ateneul Român」",
+     "url": "https://www.openstreetmap.org/way/16291602",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Ateneul+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
+   "links": {
+    "todo": [
+     "athenaeum"
+    ]
+   },
+   "photo": {
+    "file": "Ateneo Rumano, Bucarest, Rumanía, 2016-05-29, DD 73.jpg",
+    "by": "Diego Delso (1974–)",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+    "alt": "白い柱と緑の丸屋根のルーマニア・アテネ音楽堂。前に芝生の庭",
+    "w": 6592,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Ateneo_Rumano,_Bucarest,_Ruman%C3%ADa,_2016-05-29,_DD_73.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/250px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/500px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg/960px-Ateneo_Rumano%2C_Bucarest%2C_Ruman%C3%ADa%2C_2016-05-29%2C_DD_73.jpg"
+    }
+   }
+  },
+  {
+   "key": "stavropoleos",
+   "town": "bucharest",
+   "name": "スタヴロポレオス修道院",
+   "local": {
+    "text": "Mănăstirea Stavropoleos",
+    "roman": "Manastirea Stavropoleos",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "18世紀の初めに建った小さな修道院の教会。石の彫刻と壁画で知られる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.431783,
+   "lon": 26.098829,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Biserica Mănăstirii \"Stavropoleos\"」",
+     "url": "https://www.openstreetmap.org/way/78444014",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "curtea",
+   "town": "bucharest",
+   "name": "旧王宮跡（クルテア・ヴェケ）",
+   "local": {
+    "text": "Curtea Veche",
+    "roman": "Curtea Veche",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ワラキアの公たちの宮廷の跡。1459年にこの地の城塞がヴラド・ツェペシュの居城になったのが、ブカレストが史書に出る最初とされる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.430094,
+   "lon": 26.102063,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Biserica „Sfântul Anton - Curtea Veche”」",
+     "url": "https://www.openstreetmap.org/way/150803286",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "carusel",
+   "town": "bucharest",
+   "name": "カルトゥレシュティ・カルセル（書店）",
+   "local": {
+    "text": "Cărturești Carusel",
+    "roman": "Carturesti Carusel",
+    "src": [
+     {
+      "name": "Wikipedia「Cărturești Carusel」",
+      "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "20世紀の初めに銀行の本店として建った建物を、5年かけて直した書店。直し終えたのは2015年。",
+    "src": [
+     {
+      "name": "Wikipedia「Cărturești Carusel」",
+      "url": "https://en.wikipedia.org/wiki/C%C4%83rture%C8%99ti_Carusel",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.431894,
+   "lon": 26.101578,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Cărturești Carusel」",
+     "url": "https://www.openstreetmap.org/node/3355049764",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=C%C4%83rture%C8%99ti+Carusel+Bucure%C8%99ti&hl=ja",
+   "links": {
+    "todo": [
+     "carusel"
+    ]
+   }
+  },
+  {
+   "key": "calea",
+   "town": "bucharest",
+   "name": "勝利通り（カレア・ヴィクトリエイ）",
+   "local": {
+    "text": "Calea Victoriei",
+    "roman": "Calea Victoriei",
+    "src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "旧市街の西の端から北へ延びる大通り。革命広場とアテネ音楽堂の前を通る。名前は「勝利の道」の意味。",
+    "src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Calea Victoriei」",
+      "url": "https://en.wikipedia.org/wiki/Calea_Victoriei",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.442081,
+   "lon": 26.094047,
+   "coord_src": [
+    {
+     "name": "Wikipedia「Calea Victoriei」",
+     "url": "https://en.wikipedia.org/wiki/Calea_Victoriei",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Calea+Victoriei+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "cec",
+   "town": "bucharest",
+   "name": "CEC宮殿",
+   "local": {
+    "text": "Palatul CEC",
+    "roman": "Palatul CEC",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "勝利通りの南の入口に立つ、貯蓄銀行（CEC）の本店だった建物。",
+    "src": [
+     {
+      "name": "OpenStreetMap「Palatul Casei de Economii şi Consemnaţiuni」",
+      "url": "https://www.openstreetmap.org/way/973712798",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.432013,
+   "lon": 26.096478,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Palatul Casei de Economii şi Consemnaţiuni」",
+     "url": "https://www.openstreetmap.org/way/973712798",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+CEC+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "patriarchal",
+   "town": "bucharest",
+   "name": "総主教大聖堂",
+   "local": {
+    "text": "Catedrala Patriarhală",
+    "roman": "Catedrala Patriarhala",
+    "src": [
+     {
+      "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+      "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ルーマニア正教会の総主教の大聖堂。国民の館の東の小さな丘に立つ。",
+    "src": [
+     {
+      "name": "OpenStreetMap「Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"」",
+      "url": "https://www.openstreetmap.org/way/232296927",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.424563,
+   "lon": 26.097951,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"」",
+     "url": "https://www.openstreetmap.org/way/232296927",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "arc",
+   "town": "bucharest",
+   "name": "凱旋門",
+   "local": {
+    "text": "Arcul de Triumf",
+    "roman": "Arcul de Triumf",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "いまの石の門は1936年にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Great Union Day」",
+      "url": "https://en.wikipedia.org/wiki/Great_Union_Day",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.46719,
+   "lon": 26.078127,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Arcul de Triumf」",
+     "url": "https://www.openstreetmap.org/way/217851530",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Arcul+de+Triumf+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "village",
+   "town": "bucharest",
+   "name": "農村博物館",
+   "local": {
+    "text": "Muzeul Național al Satului „Dimitrie Gusti”",
+    "roman": "Muzeul National al Satului Dimitrie Gusti",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。建物は300ほど。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.471581,
+   "lon": 26.077914,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Muzeul Național al Satului Dimitrie Gusti」",
+     "url": "https://www.openstreetmap.org/way/29701978",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "park",
+   "town": "bucharest",
+   "name": "ヘラストラウ公園（ミハイ1世公園）",
+   "local": {
+    "text": "Parcul Regele Mihai I",
+    "roman": "Parcul Regele Mihai I",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "湖を囲む、市内でいちばん大きな公園。夏は貸しボートが出る。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.473553,
+   "lon": 26.089427,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Parcul Regele Mihai I」",
+     "url": "https://www.openstreetmap.org/node/725321807",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "ceausescu",
+   "town": "bucharest",
+   "name": "チャウシェスク邸（春の宮殿）",
+   "local": {
+    "text": "Palatul Primăverii",
+    "roman": "Palatul Primaverii",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ニコラエ・チャウシェスクが暮らした家。いまは中を見て回れる博物館。",
+    "src": [
+     {
+      "name": "OpenStreetMap「Palatul Primăverii (fosta locuință a lui Nicolae Ceaușescu)」",
+      "url": "https://www.openstreetmap.org/way/38236017",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.468877,
+   "lon": 26.092324,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Palatul Primăverii (fosta locuință a lui Nicolae Ceaușescu)」",
+     "url": "https://www.openstreetmap.org/way/38236017",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Prim%C4%83verii+Bucure%C8%99ti&hl=ja"
+  },
+  {
+   "key": "bran",
+   "town": "bran",
+   "name": "ブラン城（ドラキュラ城）",
+   "local": {
+    "text": "Castelul Bran",
+    "roman": "Castelul Bran",
+    "src": [
+     {
+      "name": "Wikivoyage「Bran」",
+      "url": "https://en.wikivoyage.org/wiki/Bran",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。「ドラキュラ城」として知られるが、小説のドラキュラともヴラド・ツェペシュとも、関わりは薄いとされる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bran」",
+      "url": "https://en.wikivoyage.org/wiki/Bran",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 45.515077,
+   "lon": 25.367237,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Castelul Bran」",
+     "url": "https://www.openstreetmap.org/relation/3300200",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Castelul+Bran&hl=ja",
+   "links": {
+    "todo": [
+     "bran"
+    ]
+   }
+  }
+ ],
+ "eat": {
+  "kinds": [
+   {
+    "key": "local",
+    "name": "ルーマニアの料理"
+   },
+   {
+    "key": "quick",
+    "name": "安く手早く"
+   },
+   {
+    "key": "sweets",
+    "name": "甘いもの"
+   },
+   {
+    "key": "drinks",
+    "name": "飲み物"
+   }
+  ],
+  "items": [
+   {
+    "key": "sarmale",
+    "name": "サルマーレ（ロールキャベツ）",
+    "local": {
+     "text": "Sarmale",
+     "roman": "Sarmale",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "酢漬けのキャベツかぶどうの葉で、ひき肉と米と玉ねぎを包み、陶器の鍋で何時間も煮る。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "manuc",
+      "name": "ハヌル・ルイ・マヌク（旧市街の宿屋のレストラン）",
+      "local": "Hanu' lui Manuc",
+      "area": "old-town",
+      "lat": 44.42972,
+      "lon": 26.102347,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hanu' lui Manuc」",
+        "url": "https://www.openstreetmap.org/node/2486324769",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1808年の宿屋の建物を使った旧市街のレストラン。郷土料理を出す。",
+       "src": [
+        {
+         "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
+         "url": "https://romaniatourism.com/ja/bucharest.html",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hanu%27+lui+Manuc+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ひき肉の種類は店や家で違う。トランシルヴァニアでは燻した豚の足や皮を鍋に入れる。米と香草だけの作りもある。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "mici",
+    "name": "ミティテイ（皮なしの焼きソーセージ）",
+    "local": {
+     "text": "Mititei",
+     "roman": "Mititei",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "にんにく・タイム・パプリカで味をつけたひき肉を、棒の形にして焼く。マスタードとパンを添える。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "羊だけの作りと、豚・子牛・羊を合わせる作りがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "ciorba",
+    "name": "チョルバ（酸っぱいスープ）",
+    "local": {
+     "text": "Ciorbă",
+     "roman": "Ciorbă",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "レモン汁や酢、ザワークラウトの汁で酸味をつけたスープ。もつのチョルバ・デ・ブルタには、サワークリームと卵の黄身、にんにくが入る。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "具はスープの種類で違う（肉・野菜・もつ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "mamaliga",
+    "name": "ママリガ（とうもろこしの粥）",
+    "local": {
+     "text": "Mămăligă",
+     "roman": "Mămăligă",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "とうもろこしの粉を煮た、ルーマニア風のポレンタ。それだけでも、料理に添えても食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "papanasi",
+    "name": "パパナシ（揚げドーナツ）",
+    "local": {
+     "text": "Papanași",
+     "roman": "Papanași",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げる。果物のジャムかシロップと、サワークリームをかける。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "covrigi",
+    "name": "コヴリジ（ルーマニアのプレッツェル）",
+    "local": {
+     "text": "Covrigi",
+     "roman": "Covrigi",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "輪の形の焼いたパン。ごまをまぶしたものが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "luca",
+      "name": "ルカ（コヴリジのパン屋）",
+      "local": "Luca",
+      "area": "old-town",
+      "lat": 44.435257,
+      "lon": 26.099385,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Luca」",
+        "url": "https://www.openstreetmap.org/node/9410316001",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "コヴリジのチェーン。コーヒーも安い。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Luca+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "cozonac",
+    "name": "コゾナック（甘いパン）",
+    "local": {
+     "text": "Cozonac",
+     "roman": "Cozonac",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "牛乳・卵・砂糖・バターを練り込んだ甘いパンで、クリスマスの定番。くるみやけしの実を巻き込む。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "tuica",
+    "name": "ツイカ（すももの蒸留酒）",
+    "local": {
+     "text": "Țuică",
+     "roman": "Țuică",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "すももから作る強い蒸留酒。国のすももの4分の3ほどがツイカになる。2回蒸留した果実の蒸留酒はパーリンカと呼ぶ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   }
+  ]
+ },
+ "buy": {
+  "items": [
+   {
+    "key": "horezu",
+    "name": "ホレズ焼き（陶器）",
+    "local": {
+     "text": "Ceramica de Horezu",
+     "roman": "Ceramica de Horezu",
+     "src": [
+      {
+       "name": "UNESCO「Decision of the Intergovernmental Committee: 7.COM 11.28」（ホレズの陶器）",
+       "url": "https://ich.unesco.org/en/decisions/7.COM/11.28",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ヴルチャ県の北で手作りされる陶器。こげ茶・赤・緑・青と「ホレズの象牙色」で伝統の模様を描く。2012年にユネスコの無形文化遺産になった。",
+     "src": [
+      {
+       "name": "UNESCO「Decision of the Intergovernmental Committee: 7.COM 11.28」（ホレズの陶器）",
+       "url": "https://ich.unesco.org/en/decisions/7.COM/11.28",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "ie",
+    "name": "刺繍のブラウス「イエ」",
+    "local": {
+     "text": "Ie",
+     "roman": "Ie",
+     "src": [
+      {
+       "name": "UNESCO「The art of the traditional blouse with embroidery on the shoulder (altiță)」",
+       "url": "https://ich.unesco.org/en/RL/the-art-of-the-traditional-blouse-with-embroidery-on-the-shoulder-alti-an-element-of-cultural-identity-in-romania-and-the-republic-of-moldova-01861",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "天然の糸で手作りする白いブラウスで、肩に色とりどりの刺繍が入る。男女の民族衣装の1つで、2022年にユネスコの無形文化遺産になった。",
+     "src": [
+      {
+       "name": "UNESCO「The art of the traditional blouse with embroidery on the shoulder (altiță)」",
+       "url": "https://ich.unesco.org/en/RL/the-art-of-the-traditional-blouse-with-embroidery-on-the-shoulder-alti-an-element-of-cultural-identity-in-romania-and-the-republic-of-moldova-01861",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "zacusca",
+    "name": "ザクスカ（野菜のペースト）",
+    "local": {
+     "text": "Zacuscă",
+     "roman": "Zacusca",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "焼いたなすと赤ピーマン、炒めた玉ねぎ、トマトペーストを、弱火で長く煮たペースト。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "megaimage",
+      "name": "メガ・イマージュ（統一広場のスーパー）",
+      "local": "Mega Image",
+      "area": "civic",
+      "lat": 44.428449,
+      "lon": 26.104556,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Mega Image」",
+        "url": "https://www.openstreetmap.org/node/1439628129",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "統一広場の角にあるスーパー。",
+       "src": [
+        {
+         "name": "OpenStreetMap「Mega Image」",
+         "url": "https://www.openstreetmap.org/node/1439628129",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Mega+Image+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "tuica",
+    "name": "ツイカ・パーリンカの瓶",
+    "local": {
+     "text": "Țuică",
+     "roman": "Tuica",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "すももの蒸留酒ツイカと、2回蒸留した果実の蒸留酒パーリンカ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [
+     {
+      "key": "megaimage",
+      "name": "メガ・イマージュ（統一広場のスーパー）",
+      "local": "Mega Image",
+      "area": "civic",
+      "lat": 44.428449,
+      "lon": 26.104556,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Mega Image」",
+        "url": "https://www.openstreetmap.org/node/1439628129",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "統一広場の角にあるスーパー。",
+       "src": [
+        {
+         "name": "OpenStreetMap「Mega Image」",
+         "url": "https://www.openstreetmap.org/node/1439628129",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Mega+Image+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   }
+  ]
+ },
+ "basics": {
+  "summary": [
+   {
+    "key": "season",
+    "title": "旬の季節",
+    "text": "平年の最高気温が18〜31℃になるのは4〜10月。11月は10.5℃、12月は4.2℃まで下がる。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安",
+    "text": "欧州の中では概して治安は良好。客引きのバーの法外な会計と、空港や駅の白タクに注意。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "budget",
+    "title": "予算",
+    "text": "バスとトラムは90分で3レイ（約100円）、地下鉄は1回5レイ（約160円）。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "移動",
+    "text": "地下鉄は5路線。地下鉄の駅とたいていのバスは、カードのタッチで乗れる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  ],
+  "guide": [
+   {
+    "key": "airport",
+    "title": "空港から市内へ",
+    "points": [
+     {
+      "text": "アンリ・コアンダ国際空港（OTP）は市の中心から北へ約18km。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "急行バス100番が統一広場まで走る。90分で3レイ（約100円。2025年7月）。カードのタッチで払える。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "北駅（ガラ・デ・ノルド）までの列車もある。おおよそ40分おき。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "タクシーは到着ロビーにある公式のタッチパネルで呼ぶ。中心まで61〜65レイ（約2,000〜2,130円）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "市内の乗り物",
+    "points": [
+     {
+      "text": "地下鉄（メトロレックス）は M1〜M5 の5路線で、5時から23時ごろまで。夜通しは走らない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "バス・トラム・トロリーバスは90分で3レイ。地下鉄の紙の切符は2回で10レイ（2025年9月）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "カードのタッチで、地下鉄の全駅とたいていのバス、一部のトラムに乗れる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pay",
+    "title": "払いかたとチップ",
+    "points": [
+     {
+      "text": "通貨はレウ（複数形はレイ。RON）。1レウは約32.7円（2026年11月18日の参照レート）。",
+      "src": [
+       {
+        "name": "欧州中央銀行（ユーロの参照レート）",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "空港の両替はレートが1割ほど悪い。北駅の両替もよくない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "sim",
+    "title": "ネットと SIM",
+    "points": [
+     {
+      "text": "携帯の会社は2025年10月から Orange・Vodafone・Digi の3つ（Telekom の携帯は Vodafone と Digi が引き継いだ）。",
+      "src": [
+       {
+        "name": "Business Forum「Vodafone and Digi complete Telekom Romania mobile acquisition」（2025年10月2日）",
+        "url": "https://www.businessforum.ro/industry/20251002/vodafone-and-digi-complete-telekom-romania-mobile-acquisition-2377/amp",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "eSIM が使える。SIM は空港の到着ロビーの、タクシーを呼ぶタッチパネルの近くの売店でも買える。",
+      "src": [
+       {
+        "name": "Wikivoyage「Bucharest」",
+        "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安のコツ",
+    "points": [
+     {
+      "text": "客引きに誘われたバーで、注文に見合わない法外な会計をされた日本人の例がある。客引きにはついて行かない。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "空港や駅では、無許可の白タクが親切を装って近づき、高い料金を請求する。通常20〜30レイのところを40〜60レイなど。配車アプリか公式の乗り場で。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "公共交通機関の中ではスリ、ホテルやレストランでは置き引きに注意。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "phrases",
+    "title": "ルーマニア語のひとこと",
+    "phrases": [
+     {
+      "local": "Bună ziua",
+      "roman": "buna ziua",
+      "kana": "ブナ・ズィウア",
+      "ja": "こんにちは"
+     },
+     {
+      "local": "Bună dimineața",
+      "roman": "buna dimineata",
+      "kana": "ブナ・ディミネアツァ",
+      "ja": "おはようございます"
+     },
+     {
+      "local": "Mulțumesc",
+      "roman": "multumesc",
+      "kana": "ムルツメスク",
+      "ja": "ありがとう"
+     },
+     {
+      "local": "Da",
+      "roman": "da",
+      "kana": "ダ",
+      "ja": "はい"
+     },
+     {
+      "local": "Nu",
+      "roman": "nu",
+      "kana": "ヌ",
+      "ja": "いいえ"
+     },
+     {
+      "local": "Pardon",
+      "roman": "pardon",
+      "kana": "パルドン",
+      "ja": "すみません"
+     },
+     {
+      "local": "Cât costă asta?",
+      "roman": "cat costa asta",
+      "kana": "クト・コスタ・アスタ？",
+      "ja": "これはいくらですか？"
+     },
+     {
+      "local": "Nota, vă rog",
+      "roman": "nota va rog",
+      "kana": "ノタ・ヴァ・ログ",
+      "ja": "お勘定をお願いします"
+     },
+     {
+      "local": "Poftă bună",
+      "roman": "pofta buna",
+      "kana": "ポフタ・ブナ",
+      "ja": "召し上がれ"
+     },
+     {
+      "local": "La revedere",
+      "roman": "la revedere",
+      "kana": "ラ・レヴェデレ",
+      "ja": "さようなら"
+     }
+    ],
+    "phrases_src": [
+     {
+      "name": "Wikivoyage「Romanian phrasebook」",
+      "url": "https://en.wikivoyage.org/wiki/Romanian_phrasebook",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  ],
+  "budget": {
+   "days": [],
+   "extras": [
+    {
+     "label": "バス・トラム1回（90分）",
+     "local": "3",
+     "yen": "100",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "label": "地下鉄1回（2回券を割って）",
+     "local": "5",
+     "yen": "160",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "label": "地下鉄とバスの乗り継ぎ（120分）",
+     "local": "7",
+     "yen": "230",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "label": "空港バス100番（90分）",
+     "local": "3",
+     "yen": "100",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "label": "空港から中心までタクシー",
+     "local": "61〜65",
+     "yen": "2,000〜2,130",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "label": "地下鉄の10回券",
+     "local": "40",
+     "yen": "1,310",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ]
+  },
+  "packing": [
+   {
+    "key": "passport",
+    "text": "パスポート。国民の館の見学でも見せる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "cash",
+    "text": "少しのレイの現金。空港の両替はレートが1割ほど悪いので、両替は街で。",
+    "src": [
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "warm",
+    "text": "冬の上着。11月の平均最低は1.4℃、12月は-3.3℃。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ブカレスト」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "bottle",
+    "text": "水のボトル。水道水は濁ることがあり、飲むのは市販の水がすすめられている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "insurance",
+    "text": "海外旅行の保険。救急病院は国立救急病院（電話 021-599-2300）。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
+    "key": "translate",
+    "text": "翻訳のアプリ。警察に届けるときはルーマニア語の通訳が要る。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  ],
+  "climate": {
+   "where": "ブカレスト（1991〜2020年の平年値）",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「ブカレスト」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+     "seen": "2026-11-19"
+    }
+   ],
+   "months": [
+    {
+     "month": "1月",
+     "high": 3.0,
+     "low": -5.0,
+     "rain_mm": 40.1
+    },
+    {
+     "month": "2月",
+     "high": 6.3,
+     "low": -3.5,
+     "rain_mm": 33.0
+    },
+    {
+     "month": "3月",
+     "high": 12.3,
+     "low": 0.3,
+     "rain_mm": 42.4
+    },
+    {
+     "month": "4月",
+     "high": 18.5,
+     "low": 4.9,
+     "rain_mm": 50.2
+    },
+    {
+     "month": "5月",
+     "high": 24.1,
+     "low": 9.7,
+     "rain_mm": 70.4
+    },
+    {
+     "month": "6月",
+     "high": 28.1,
+     "low": 13.9,
+     "rain_mm": 82.7
+    },
+    {
+     "month": "7月",
+     "high": 30.4,
+     "low": 15.6,
+     "rain_mm": 68.6
+    },
+    {
+     "month": "8月",
+     "high": 30.6,
+     "low": 15.2,
+     "rain_mm": 48.9
+    },
+    {
+     "month": "9月",
+     "high": 25.0,
+     "low": 10.7,
+     "rain_mm": 60.5
+    },
+    {
+     "month": "10月",
+     "high": 18.0,
+     "low": 5.7,
+     "rain_mm": 60.7
+    },
+    {
+     "month": "11月",
+     "high": 10.5,
+     "low": 1.4,
+     "rain_mm": 43.6
+    },
+    {
+     "month": "12月",
+     "high": 4.2,
+     "low": -3.3,
+     "rain_mm": 47.0
+    }
+   ]
+  },
+  "emergency": {
+   "numbers": [
+    {
+     "no": "112",
+     "what": "警察・救急・消防",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
+     "no": "021-599-2300",
+     "what": "国立救急病院（ブカレスト）",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "embassy": {
+    "name": "在ルーマニア日本国大使館",
+    "exists": true,
+    "address": "Șoseaua Nicolae Titulescu 4-8, București",
+    "tel": "（市外局番 021）319-1890",
+    "url": "https://www.ro.emb-japan.go.jp/",
+    "text": "ブカレストに日本の大使館がある。犯罪の被害に遭ったら、警察に届けて大使館にも知らせる。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "OpenStreetMap「Ambasada Japoniei」",
+      "url": "https://www.openstreetmap.org/node/4281742495",
+      "seen": "2026-11-19"
+     }
+    ],
+    "lat": 44.452499,
+    "lon": 26.082184,
+    "coord_src": [
+     {
+      "name": "OpenStreetMap「Ambasada Japoniei」",
+      "url": "https://www.openstreetmap.org/node/4281742495",
+      "seen": "2026-11-19"
+     }
+    ],
+    "maps": "https://www.google.com/maps/search/?api=1&query=Ambasada+Japoniei+Bucure%C8%99ti&hl=ja"
+   },
+   "water": {
+    "text": "水道は配管の手入れが悪く、水が濁ることがある。飲むのは市販のボトルの水がすすめられている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（ルーマニア 安全対策基礎データ。2025年11月7日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_177.html",
+      "seen": "2026-11-19"
+     }
+    ]
+   }
+  },
+  "holidays": {
+   "text": "12月1日は国の祝日（大統一の日）。ブカレストでは軍のパレードがあり、凱旋門のそばのキセレフ通りか、憲法広場で開かれる。",
+   "src": [
+    {
+     "name": "Wikipedia「Great Union Day」",
+     "url": "https://en.wikipedia.org/wiki/Great_Union_Day",
+     "seen": "2026-11-19"
+    }
+   ]
+  },
+  "time": {
+   "text": "ルーマニアは東ヨーロッパ時間（UTC+2）で、日本より7時間遅い。3月の最終日曜から10月の最終日曜までは夏時間（UTC+3）で6時間遅い。",
+   "src": [
+    {
+     "name": "Wikipedia「Time in Romania」",
+     "url": "https://en.wikipedia.org/wiki/Time_in_Romania",
+     "seen": "2026-11-19"
+    }
+   ]
+  }
+ },
+ "unknown": [
+  {
+   "what": "国民の館の見学の値段と、予約の要るなし",
+   "why": "見つかった値段が頁ごとに違う（35〜85レイ）。公式（cic.cdep.ro）は 2026-11-19 に開けなかった"
+  },
+  {
+   "what": "ブラン城の入場料",
+   "why": "Wikivoyage は日付の無い値段、ほかの頁は2025年に40〜45レイ・2026年に90レイと食い違う"
+  },
+  {
+   "what": "2026年のクリスマスマーケットの会場と期間",
+   "why": "2025年の分（憲法広場・11月29日〜12月28日）しか見つからない"
+  },
+  {
+   "what": "旧王宮跡（クルテア・ヴェケ）の博物館がいま開いているか",
+   "why": "Wikivoyage は2018年9月から改修で閉館と書くが、日付が古い"
+  },
+  {
+   "what": "アテネ音楽堂の演奏会の切符の値段",
+   "why": "2025-2026年の季節の値段の表が見つからない（音楽祭の値段だけ）"
+  },
+  {
+   "what": "サルマーレ・パパナシ・ミティテイを出す店と値段",
+   "why": "2024年以降の出どころで、品と店と値段を結べたのはハヌル・ルイ・マヌクの郷土料理までだった"
+  },
+  {
+   "what": "チャウシェスク邸の見学の申し込みと値段",
+   "why": "OpenStreetMap の「博物館」の札しか確かめられていない"
+  },
+  {
+   "what": "ホレズ焼き・刺繍のブラウスを買える店",
+   "why": "店の名前と、いまも売っていることを書いた2024年以降の出どころが見つからない"
+  }
+ ],
+ "later": {
+  "reason": "借りた写真（Commons）が 429 で取れなかったやりたいこと。写真が取れたら todo へ戻す（2026-11-19）",
+  "todo": [
+   {
+    "key": "palace",
+    "title": "巨大な国民の館を見学したい！"
+   },
+   {
+    "key": "bran",
+    "title": "ドラキュラ城へ日帰りしたい！"
+   },
+   {
+    "key": "caru",
+    "title": "老舗ビアホールで乾杯したい！"
+   },
+   {
+    "key": "carusel",
+    "title": "光あふれる本屋さんに行きたい！"
+   },
+   {
+    "key": "xmas",
+    "title": "クリスマスマーケットを歩きたい！"
+   }
+  ]
+ },
+ "shorts": {
+  "src": [
+   {
+    "name": "site/content/shorts.ts の balkans の章（チャンネルのショートのタブから焼いたもの）",
+    "url": "https://www.youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w/shorts",
+    "seen": "2026-11-19"
+   }
+  ],
+  "items": []
+ }
+}

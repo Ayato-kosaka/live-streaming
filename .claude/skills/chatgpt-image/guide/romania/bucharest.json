@@ -1,0 +1,394 @@
+{
+ "ja": "ブカレスト",
+ "items": {
+  "guidebook": "python/data/guide/romania/bucharest/guidebook.json"
+ },
+ "ec2_dir": "/home/ubuntu/chatgpt/bucharest",
+ "stitch": "Romanian",
+ "style": "editorial",
+ "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+ "scene": "Scene: Bucharest, the capital of Romania, on a clear late-autumn (November) afternoon. In the middle ground stands the Romanian Athenaeum: a round neoclassical concert hall with cream-white walls, a tall dome of green-grey patinated copper with small round windows in its drum, and a front portico of six tall white Ionic columns under a triangular pediment, reached by a few wide steps. In front of it, a small garden with lawn, low clipped hedges and a few autumn trees with golden-yellow and orange leaves; a few tiny cheerful people stroll on the paths. On both sides, elegant cream and pale stone buildings of the old boulevard. A calm, simple pale sky fills the upper part.",
+ "title": {
+  "name": "ブカレスト",
+  "label": "観光ガイド",
+  "catch": "「小パリ」と称えられた街",
+  "kicker": "ルーマニア"
+ },
+ "cover": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "ブカレスト-観光ガイド",
+  "title": {
+   "x": 0.04,
+   "y": 0.955,
+   "anchor": "bl",
+   "scale": 0.85
+  },
+  "alt": "晩秋の午後の日に照らされた、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂。前の庭に色づいた木。ブカレストの絵",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。アテネ音楽堂は写真を形の手本として渡した。上の3分の1は空。3:2 で描かせて 16:9 に切った。字なし",
+  "photos": [
+   "site/public/guide/romania/bucharest/photos/ateneo-rumano-bucarest-rumania-2-0b72e4bc-500.webp"
+  ]
+ },
+ "cover_tall": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "ブカレスト-観光ガイド-縦",
+  "title": {
+   "x": 0.5,
+   "y": 0.955,
+   "anchor": "bc",
+   "scale": 1.2
+  },
+  "alt": "晩秋の午後の、緑の丸屋根と白い柱のルーマニア・アテネ音楽堂と色づいた木。ブカレストの絵",
+  "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "photos": [
+   "site/public/guide/romania/bucharest/photos/ateneo-rumano-bucarest-rumania-2-0b72e4bc-500.webp"
+  ]
+ },
+ "areamap": {
+  "v": 1,
+  "layout": "layout1.png",
+  "file": "ブカレスト-見どころマップ-地区分け",
+  "ratio": 0.8,
+  "sizes": [
+   1200,
+   800
+  ],
+  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, every park and the three district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. The Palace of the Parliament (1) is the biggest landmark, at the lower left; the Patriarchal Cathedral (2) and the Union Square fountains (3) are at the bottom right; CEC Palace (4) and Stavropoleos (5) are close together in the yellow district in the middle; the Revolution Square memorial (6) and the Athenaeum (7) are in the pink district at the top. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
+  "prompt": "Paint an illustrated sightseeing map of central Bucharest, Romania, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every green park and the three colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; any water is a soft blue; roads are clean cream-white ribbons. Paint the three districts as flat translucent watercolor washes in their own colors from the layout (warm yellow for the old town in the middle, soft lavender for the palace area at the bottom, soft pink for the Revolution Square area at the top), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width; the Palace of the Parliament may be about 12%), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 the Palace of the Parliament (an enormous pale cream neoclassical palace with many rows of windows and columns, wide and massive, stepping up to a central tower block); 2 the Patriarchal Cathedral (a white Orthodox church with three grey domes on a small green hill); 3 the Union Square fountains (a long row of round fountain basins with small water jets); 4 CEC Palace (a pale stone palace with a big glass-and-metal dome and an arched entrance); 5 Stavropoleos Monastery church (a tiny Brâncovenesc church with a small dome, a porch of carved stone columns and red-brown tiled roof); 6 the Memorial of Rebirth in Revolution Square (a tall slim white marble obelisk spike with a small dark crown-like basket near the top); 7 the Romanian Athenaeum (a round cream-white concert hall with a green-grey copper dome and a portico of six white columns). These seven landmarks are the only drawn objects on the map.",
+  "alt": "ブカレストの見どころマップ（地区分け）。旧市街・国民の館周辺・革命広場周辺の3つの地区を色で分け、名前を書いた絵地図。国民の館・総主教大聖堂・統一広場の噴水・CEC宮殿・スタヴロポレオス修道院・革命広場の記念碑・アテネ音楽堂の目印の絵と名前つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・公園・3つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。凱旋門より北は地図の外（矢印）",
+  "bbox": {
+   "west": 26.0809,
+   "east": 26.1061,
+   "south": 44.4205,
+   "north": 44.4475
+  },
+  "districts": [
+   {
+    "id": "old-town",
+    "color": "#ffd98a",
+    "poly": [
+     [
+      44.4336,
+      26.0958
+     ],
+     [
+      44.4336,
+      26.103
+     ],
+     [
+      44.4318,
+      26.1058
+     ],
+     [
+      44.4288,
+      26.105
+     ],
+     [
+      44.4286,
+      26.099
+     ],
+     [
+      44.43,
+      26.0958
+     ]
+    ]
+   },
+   {
+    "id": "civic",
+    "color": "#d9ccf5",
+    "poly": [
+     [
+      44.4295,
+      26.08
+     ],
+     [
+      44.4295,
+      26.0955
+     ],
+     [
+      44.4284,
+      26.0988
+     ],
+     [
+      44.4282,
+      26.1062
+     ],
+     [
+      44.4228,
+      26.1062
+     ],
+     [
+      44.4218,
+      26.08
+     ]
+    ]
+   },
+   {
+    "id": "revolution",
+    "color": "#ffc4d2",
+    "poly": [
+     [
+      44.4465,
+      26.0915
+     ],
+     [
+      44.4465,
+      26.1005
+     ],
+     [
+      44.44,
+      26.1012
+     ],
+     [
+      44.434,
+      26.0995
+     ],
+     [
+      44.434,
+      26.0935
+     ],
+     [
+      44.44,
+      26.0905
+     ]
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "n": 1,
+    "what": "国民の館（議会宮殿）",
+    "lat": 44.42751,
+    "lon": 26.087248
+   },
+   {
+    "n": 2,
+    "what": "総主教大聖堂",
+    "lat": 44.424563,
+    "lon": 26.097951
+   },
+   {
+    "n": 3,
+    "what": "統一広場の噴水",
+    "lat": 44.428006,
+    "lon": 26.10251
+   },
+   {
+    "n": 4,
+    "what": "CEC宮殿",
+    "lat": 44.432013,
+    "lon": 26.096478
+   },
+   {
+    "n": 5,
+    "what": "スタヴロポレオス修道院",
+    "lat": 44.431783,
+    "lon": 26.098829
+   },
+   {
+    "n": 6,
+    "what": "革命広場の記念碑",
+    "lat": 44.438657,
+    "lon": 26.097498
+   },
+   {
+    "n": 7,
+    "what": "アテネ音楽堂",
+    "lat": 44.441357,
+    "lon": 26.097361
+   }
+  ],
+  "title": {
+   "name": "ブカレスト",
+   "label": "見どころマップ"
+  },
+  "names": [
+   {
+    "id": "palace",
+    "label": [
+     "国民の館"
+    ],
+    "x": 0.21,
+    "y": 0.855
+   },
+   {
+    "id": "patriarchal",
+    "label": [
+     "総主教大聖堂"
+    ],
+    "x": 0.82,
+    "y": 0.915
+   },
+   {
+    "id": "unirii",
+    "label": [
+     "統一広場"
+    ],
+    "x": 0.86,
+    "y": 0.855
+   },
+   {
+    "id": "cec",
+    "label": [
+     "CEC宮殿"
+    ],
+    "x": 0.56,
+    "y": 0.635
+   },
+   {
+    "id": "stavropoleos",
+    "label": [
+     "スタヴロポレオス",
+     "修道院"
+    ],
+    "x": 0.8,
+    "y": 0.66
+   },
+   {
+    "id": "revolution",
+    "label": [
+     "革命広場"
+    ],
+    "x": 0.65,
+    "y": 0.34
+   },
+   {
+    "id": "athenaeum",
+    "label": [
+     "アテネ音楽堂"
+    ],
+    "x": 0.645,
+    "y": 0.205
+   }
+  ],
+  "areas": [
+   {
+    "id": "old-town",
+    "name": "旧市街",
+    "label": [
+     "旧市街"
+    ],
+    "local": "Centrul Vechi",
+    "color": "#ffd98a",
+    "x": 0.83,
+    "y": 0.575,
+    "source": [
+     "https://romaniatourism.com/ja/bucharest.html",
+     "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88"
+    ]
+   },
+   {
+    "id": "civic",
+    "name": "国民の館周辺",
+    "label": [
+     "国民の館周辺"
+    ],
+    "local": "Centrul Civic",
+    "color": "#d9ccf5",
+    "x": 0.3,
+    "y": 0.93,
+    "source": [
+     "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
+     "https://romaniatourism.com/ja/bucharest.html"
+    ]
+   },
+   {
+    "id": "revolution",
+    "name": "革命広場周辺",
+    "label": [
+     "革命広場周辺"
+    ],
+    "local": "Piața Revoluției",
+    "color": "#ffc4d2",
+    "x": 0.5,
+    "y": 0.42,
+    "source": [
+     "https://romaniatourism.com/ja/bucharest.html"
+    ]
+   }
+  ],
+  "beyond": [
+   {
+    "id": "arc",
+    "name": "凱旋門",
+    "local": "Arcul de Triumf",
+    "lat": 44.46719,
+    "lon": 26.078127,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Bucharest"
+    ],
+    "x": 0.15,
+    "y": 0.19,
+    "dir": "n"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "model": "bulgaria/sofia:food-shopska-salata",
+  "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし",
+  "items": {
+   "sarmale": {
+    "desc": "Romanian sarmale: four or five plump cabbage rolls (soft pale-green pickled cabbage leaves wrapped around minced meat and rice), glossy and golden, served in a small round brown glazed earthenware bowl, with a wedge of firm yellow mămăligă (polenta) and a spoonful of thick white sour cream beside them, and one small green hot pepper.",
+    "alt": "陶器の器に入ったサルマーレと、黄色いママリガとサワークリーム"
+   },
+   "mici": {
+    "desc": "Romanian mititei: five short, thick, skinless grilled sausages of minced meat (about 10 cm long, juicy brown with dark grill marks) on a plain plate, with a small heap of yellow mustard and a crusty white bread roll.",
+    "alt": "皮のない焼きソーセージのミティテイに、マスタードとパン"
+   },
+   "ciorba": {
+    "desc": "Romanian ciorbă de burtă: a deep plain bowl of creamy pale off-white tripe soup with thin strips of tripe, a dollop of white sour cream on top, and beside the bowl one long thin green hot pepper and a small dish of white garlic sauce.",
+    "alt": "白く濁ったもつのスープ、チョルバ・デ・ブルタ。サワークリームと青唐辛子を添えて"
+   },
+   "mamaliga": {
+    "desc": "Romanian mămăligă: a round, smooth, golden-yellow cornmeal polenta loaf turned out on a small wooden board, one slice cut off, with crumbled white sheep cheese and a spoonful of sour cream beside it.",
+    "alt": "木の板にのった黄色いママリガ。白いチーズとサワークリーム"
+   },
+   "papanasi": {
+    "desc": "Romanian papanași: two fried cheese doughnuts stacked on a plate — a big golden-brown ring-shaped doughnut with a small round doughnut ball on top — covered with thick white sour cream and dark red sour-cherry jam running down the sides.",
+    "alt": "揚げたパパナシに、サワークリームと赤いさくらんぼのジャム"
+   },
+   "covrigi": {
+    "desc": "Romanian covrigi: three ring-shaped baked bread pretzels, shiny brown and generously covered with white sesame seeds and a few grains of coarse salt, stacked loosely on the table.",
+    "alt": "ごまをまぶした輪の形のパン、コヴリジ"
+   },
+   "cozonac": {
+    "desc": "Romanian cozonac: a tall loaf of sweet bread on a plain plate, with two slices cut and laid in front, showing a dark walnut-and-cocoa swirl spiralling through the soft yellow crumb.",
+    "alt": "くるみとココアの渦が見えるコゾナックの切り口"
+   },
+   "tuica": {
+    "desc": "Romanian țuică: a small clear glass bottle with NO label, filled with clear plum brandy, and two small filled shot glasses beside it, with three dark purple plums.",
+    "alt": "すももの蒸留酒ツイカの瓶と小さなグラス、すもも"
+   }
+  }
+ },
+ "buy": {
+  "model": "bulgaria/sofia:buy-rose-oil",
+  "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（ブラウスは品そのもの）。瓶・袋・箱は字なし",
+  "items": {
+   "horezu": {
+    "desc": "Horezu ceramics from Romania: one round decorated plate standing upright and one small jug, glazed earthenware with a warm ivory background and traditional painted motifs in dark brown, rust red, green and blue — a stylized rooster in the middle of the plate, spirals and wavy lines around the rim.",
+    "alt": "こげ茶・赤・緑・青で模様を描いたホレズ焼きの皿と水差し"
+   },
+   "ie": {
+    "fix": "The blouse itself is the subject and the only fabric in the picture; nothing under it. ",
+    "desc": "A Romanian traditional ie blouse: a white handmade blouse folded neatly on the table, showing the shoulder band (altiță) with dense colorful geometric cross-stitch embroidery in red and black, and thinner embroidered lines running down the sleeve.",
+    "alt": "肩に赤と黒の刺繍が入った白いブラウス、イエ"
+   },
+   "zacusca": {
+    "desc": "Romanian zacuscă: an open glass jar with NO label, filled with a thick orange-red roasted vegetable spread (eggplant and red pepper), the lid beside it, and a slice of rustic bread spread with it.",
+    "alt": "瓶詰めのザクスカと、塗ったパン"
+   },
+   "tuica": {
+    "desc": "Two glass bottles of Romanian fruit brandy with NO labels — one tall clear bottle of țuică and one round flat flask of pălincă — with a few dark purple plums and one small filled glass.",
+    "alt": "ツイカとパーリンカの瓶、すもも"
+   }
+  }
+ }
+}

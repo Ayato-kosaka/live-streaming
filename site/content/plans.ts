@@ -415,19 +415,19 @@ export const PLANS: Plan[] = [
      ブルガリアと同じ `NEXT_MOVE` を持たせる——これで、この日にブルガリアの札が
      「行ってきた」へ下がり、この札がつぎの国の日まで先頭に残る。
 
-     **`href` は、ブカレストの街のガイドの面が出るまで「歩いた国」（`/travel`）へ向ける**（2026-11-19。#1311）。
-     `href` が無いと、表紙の札は `/next#romania` を指し、札の字（「あと2日」「進行中」）が日で変わる。
-     `/next` を指す札の字が日で変わらないことを、重い見張り（`nextempty.mjs` の 1）が見ていて赤くなった。
-     ガイドの面を出す PR で `/travel/romania/bucharest` に替える。 */
+     **行き先はブカレストの街のガイド**（`/travel/romania/bucharest`。公開前の印のまま出した面）。
+     `href` が無いと、表紙の札は `/next#romania` を指し、札の字（「あと2日」「進行中」）が日で変わる
+     （重い見張り `nextempty.mjs` の 1。#1311 で面が出るまで `/travel` へ向けていた）。
+     札の字（`hrefName` `hrefNote`）は `/next` の書体の記録に在る字だけで書いた（ソフィアと同じ言い回し）。 */
   {
     id: "romania",
     title: "ルーマニア・ブカレストへ移動",
     when: "2026年11月21日(土)",
     date: "2026-11-21",
     endsWhen: "つぎの国へ移ったら",
-    href: "/travel",
-    hrefName: "歩いた国のページへ",
-    hrefNote: "これまでに歩いた国と街",
+    href: "/travel/romania/bucharest",
+    hrefName: "ブカレストの歩きかたへ",
+    hrefNote: "どんな街か・見どころマップ・食べもの",
     note: "ブルガリアから北どなりのルーマニアへ。首都ブカレストに、2週間ほど。",
     tags: ["ルーマニア", "ブカレスト", "移動"],
     place: {
@@ -452,6 +452,7 @@ export const PLANS: Plan[] = [
       "国民の館の見学に入るか",
       "ドラキュラ城（ブラン城）まで足を延ばすか",
     ],
+    links: [{ label: "ブカレストはどういう街か", href: "/travel/romania/bucharest" }],
   },
   {
     id: "bulgaria",

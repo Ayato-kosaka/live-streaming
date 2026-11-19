@@ -134,6 +134,17 @@ PLACES: dict[str, dict] = {
     },
 }
 
+# 材料を焼く道に乗った街（`python/data/guide/<国>/<街>/guidebook.json`）は、スコピエと同じ形で足す。
+# 前は街を1つずつここに書く表で、次の街（ブカレスト）が「知らない面」で止まった（#1292）
+for _book in sorted((ROOT / "python/data/guide").glob("*/*/guidebook.json")):
+    _key = f"{_book.parent.parent.name}/{_book.parent.name}"
+    PLACES.setdefault(_key, {
+        "dir": f"guide/{_key}/photos",
+        "widths": WIDTHS,
+        "from": [(f"python/data/guide/{_key}/guidebook.json", ())],
+        "baked": [f"site/content/guidebook/{_key.replace('/', '-')}.ts"],
+    })
+
 #: Commons の絵の道（縮小か元のファイル）。名前と、縮小なら幅
 UP = re.compile(
     # 名前に `|` は入らない（MediaWiki の題に使えない字）。北欧の材料は控えの道を `|` でつないでいる

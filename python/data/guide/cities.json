@@ -17,6 +17,7 @@
   "countries": {
     "north-macedonia": {
       "name": "北マケドニア",
+      "flag": "🇲🇰",
       "tz": "Europe/Skopje",
       "heads": ["北マケドニア", "北マケドニア共和国", "マケドニア"],
       "money": {
@@ -27,6 +28,7 @@
       "cities": {
         "skopje": {
           "name": "スコピエ",
+          "bbox": [41.85, 42.15, 21.20, 21.75],
           "heads": ["スコピエ", "スコピー", "スコピア"],
           "places": {
             "旧市街": ["オールドバザール", "旧市街の通り", "バザール"],
@@ -72,6 +74,7 @@
     },
     "bulgaria": {
       "name": "ブルガリア",
+      "flag": "🇧🇬",
       "tz": "Europe/Sofia",
       "heads": ["ブルガリア"],
       "money": {
@@ -104,6 +107,28 @@
             "ピストル36": []
           },
           "trips": {}
+        }
+      }
+    },
+    "romania": {
+      "name": "ルーマニア",
+      "flag": "🇷🇴",
+      "tz": "Europe/Bucharest",
+      "heads": ["ルーマニア"],
+      "money": {
+        "レイ": ["レウ", "lei", "leu", "ron"]
+      },
+      "base": "bucharest",
+      "no_city": ["滞在中の宿", "ホステル", "宿"],
+      "cities": {
+        "bucharest": {
+          "name": "ブカレスト",
+          "bbox": [44.33, 44.55, 25.95, 26.25],
+          "heads": ["ブカレスト"],
+          "places": {},
+          "trips": {
+            "bran": {"name": "ブラン城", "bbox": [45.45, 45.60, 25.30, 25.45]}
+          }
         }
       }
     }
