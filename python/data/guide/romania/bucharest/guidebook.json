@@ -2671,15 +2671,79 @@
       },
       "went": false,
       "maps": "https://www.google.com/maps/search/?api=1&query=Hanu%27+lui+Manuc+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
      }
     ],
     "went": false,
     "pork_note": {
-     "text": "ひき肉の種類は店や家で違う。トランシルヴァニアでは燻した豚の足や皮を鍋に入れる。米と香草だけの作りもある。",
+     "text": "ひき肉の種類は店や家で違う。トランシルヴァニアでは燻した豚の足や皮を鍋に入れる。米と香草だけの作りもある。ラ・ママの献立では豚と牛のひき肉。",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
        "seen": "2026-11-19"
       }
      ]
@@ -2715,7 +2779,72 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false,
     "pork_note": {
      "text": "羊だけの作りと、豚・子牛・羊を合わせる作りがある。",
@@ -2757,7 +2886,72 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false,
     "pork_note": {
      "text": "具はスープの種類で違う（肉・野菜・もつ）。",
@@ -2765,6 +2959,422 @@
       {
        "name": "Wikipedia「Romanian cuisine」",
        "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "ciorba-perisoare",
+    "name": "チョルバ・デ・ペリショアレ（肉団子の酸っぱいスープ）",
+    "local": {
+     "text": "Ciorbă de perișoare",
+     "roman": "Ciorbă de perișoare",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "肉団子（ペリショアレ）を入れた酸っぱいスープ。肉団子はトルコから伝わったとされる。ラ・ママの献立では、ひき肉と米の団子に、にんじん・パプリカ・トマトを合わせ、発酵させた酸っぱい汁（ボルシュ）で味をつける。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ラ・ママの献立では、肉団子は豚のひき肉。ほかの店の肉は確かめていない。",
+     "src": [
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "tochitura",
+    "name": "トキトゥーラ（肉の煮込み）",
+    "local": {
+     "text": "Tochitură",
+     "roman": "Tochitură",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": true,
+    "what": {
+     "text": "豚肉と、生と燻製のソーセージをトマトのソースで煮る。角切りの豚肉を焼いて、塩けのある白いチーズ（テレメアなど）と目玉焼きを添える作りもある。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "fasole",
+    "name": "ファソレ・ク・カルナツィ（豆と腸詰めの煮込み）",
+    "local": {
+     "text": "Fasole cu cârnați",
+     "roman": "Fasole cu cârnați",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "豆（ファソレ）と、にんにくのきいた腸詰め（カルナツィ）の料理。腸詰めは燻製にしたものが多い。豆はつぶしてペースト（ファソレ・バトゥタ）にもする。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "腸詰めの肉の種類は確かめていない。カル・ク・ベレの豆のチョルバには燻製の豚肉が入る。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "note": {
+     "text": "カル・ク・ベレの献立にはパンの器に入れた豆と燻製の豚肉のチョルバ（49.5レイ）と豆のペースト、クルテア・ベラリロルの献立には豆のペーストがある。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Curtea Berarilor「Meniu mâncare」",
+       "url": "https://curteaberarilor.com/meniu-mancare/",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   },
+   {
+    "key": "salata-de-vinete",
+    "name": "サラタ・デ・ヴィネテ（焼きなすのペースト）",
+    "local": {
+     "text": "Salată de vinete",
+     "roman": "Salată de vinete",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "焼いて皮をむいたなすに、刻んだ玉ねぎと塩を合わせ、油かマヨネーズで練る。パンにのせて食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "bulz",
+    "name": "ブルズ（チーズ入りのママリガ焼き）",
+    "local": {
+     "text": "Bulz",
+     "roman": "Bulz",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ママリガ（とうもろこしの粥）にルーマニアの羊のチーズとサワークリームを合わせて焼く。ラ・ママの献立ではブルドゥフのチーズと熟成させたテレメアを入れ、目玉焼きをのせる（36レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ラ・ママのブルズには、燻製の豚ばら（カイザー）がのる。",
+     "src": [
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
        "seen": "2026-11-19"
       }
      ]
@@ -2799,15 +3409,43 @@
       }
      ]
     },
-    "stores": [],
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false
    },
    {
-    "key": "papanasi",
-    "name": "パパナシ（揚げドーナツ）",
+    "key": "telemea",
+    "name": "テレメア（白いチーズ）",
     "local": {
-     "text": "Papanași",
-     "roman": "Papanași",
+     "text": "Telemea",
+     "roman": "Telemea",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
@@ -2817,12 +3455,94 @@
      ]
     },
     "kinds": [
-     "sweets"
+     "local"
     ],
     "alcohol": false,
     "pork": false,
     "what": {
-     "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げる。果物のジャムかシロップと、サワークリームをかける。",
+     "text": "牛か羊の乳で作る白いチーズで、フェタに少し似ている。サラダにも、ママリガにも合わせる。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "shaorma",
+    "name": "シャオルマ（ルーマニアのシャワルマ）",
+    "local": {
+     "text": "Șaormă",
+     "roman": "Șaormă",
      "src": [
       {
        "name": "Wikipedia「Romanian cuisine」",
@@ -2831,8 +3551,66 @@
       }
      ]
     },
-    "stores": [],
-    "went": false
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "国でいちばん好かれている屋台の食べ物の1つ。ブカレストのシャオルマの店は、量で30〜45レイ（2025年）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+       "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "dristor",
+      "name": "ドリストル・ケバプ 旧市街店（シャオルマ）",
+      "local": "Dristor Kebap",
+      "area": "old-town",
+      "lat": 44.430046,
+      "lon": 26.100283,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Dristor Kebap」",
+        "url": "https://www.openstreetmap.org/node/1731040881",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "街の名物のようになったシャオルマのチェーン。値段は量で30〜45レイ（2025年）。",
+       "src": [
+        {
+         "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+         "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Dristor+Kebap+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "肉の種類は出どころに書かれていない。店で確かめる。",
+     "src": [
+      {
+       "name": "Bucharest.ro「The most popular shawarma spots in Bucharest」（2025年10月3日）",
+       "url": "https://www.bucharest.ro/articles/the-most-popular-shawarma-spots-in-bucharest-590",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
    },
    {
     "key": "covrigi",
@@ -2895,6 +3673,397 @@
     "went": false
    },
    {
+    "key": "placinta",
+    "name": "プラチンタ（パイ）",
+    "local": {
+     "text": "Plăcintă",
+     "roman": "Plăcintă",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "昔からの焼き菓子のパイ。ラ・ママの献立のプラチンタは、パイ生地で甘い牛のチーズを包んで焼く（25レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "papanasi",
+    "name": "パパナシ（揚げドーナツ）",
+    "local": {
+     "text": "Papanași",
+     "roman": "Papanași",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "甘いチーズと卵とセモリナの生地を、ゆでるか揚げる。果物のジャムかシロップと、サワークリームをかける。カル・ク・ベレの献立では61レイ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "gogosi",
+    "name": "ゴゴシ（揚げドーナツ）",
+    "local": {
+     "text": "Gogoși",
+     "roman": "Gogoși",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "「ドーナツ」と訳されるが、揚げた生地に近い。ラ・ママの献立では5個で29レイ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "La Mama「Meniu」（ediția 1/2026）",
+       "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "lamama",
+      "name": "ラ・ママ ウニヴェルシターテ店（ルーマニア料理）",
+      "local": "La Mama Universitate",
+      "area": "old-town",
+      "lat": 44.434841,
+      "lon": 26.099416,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「La Mama」",
+        "url": "https://www.openstreetmap.org/node/2448573340",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "手ごろな値段のルーマニア料理の店で、市内に5軒ある。献立に肉団子のチョルバ（27レイ）・サルマーレ（42レイから）・ブルズ（36レイ）・パパナシ（21レイから）。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "La Mama「Meniu」（ediția 1/2026）",
+         "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=La+Mama+Universitate+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "savarina",
+    "name": "サヴァリナ（シロップの菓子）",
+    "local": {
+     "text": "Savarină",
+     "roman": "Savarină",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "発酵させた生地を丸い型で焼き、ラムのシロップに浸して、ホイップクリームを詰める。上にいちごかサワーチェリーのジャム。いまもケーキ屋でいちばん好かれる菓子の1つ。",
+     "src": [
+      {
+       "name": "Newsweek România「Cine a inventat savarina」（2025年9月1日）",
+       "url": "https://newsweek.ro/timp-liber/cine-a-inventat-savarina-deliciosul-desert-iubit-de-romani-un-rege-in-exil-la-originea-prajiturii",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "anapan",
+      "name": "アナ・パン シュティルベイ・ヴォダ通り店（菓子とパン）",
+      "local": "Ana Pan",
+      "area": "cismigiu",
+      "lat": 44.438955,
+      "lon": 26.078951,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ana Pan」",
+        "url": "https://www.openstreetmap.org/node/7015451321",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "市内に店のある菓子とパンの店。1切れ売りの菓子にアマンディナとサヴァリナ（どちらも21.9レイ）。",
+       "src": [
+        {
+         "name": "Ana Pan「Prăjituri la bucată」（店のネットの品書き）",
+         "url": "https://www.anapan.ro/prajituri-la-bucata/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ana+Pan+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "amandina",
+    "name": "アマンディナ（チョコのケーキ）",
+    "local": {
+     "text": "Amandină",
+     "roman": "Amandină",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "チョコレートのスポンジに、アーモンドとチョコレートのクリームを挟み、チョコレートの糖衣をかけたケーキ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "anapan",
+      "name": "アナ・パン シュティルベイ・ヴォダ通り店（菓子とパン）",
+      "local": "Ana Pan",
+      "area": "cismigiu",
+      "lat": 44.438955,
+      "lon": 26.078951,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ana Pan」",
+        "url": "https://www.openstreetmap.org/node/7015451321",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "市内に店のある菓子とパンの店。1切れ売りの菓子にアマンディナとサヴァリナ（どちらも21.9レイ）。",
+       "src": [
+        {
+         "name": "Ana Pan「Prăjituri la bucată」（店のネットの品書き）",
+         "url": "https://www.anapan.ro/prajituri-la-bucata/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ana+Pan+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "kurtos",
+    "name": "クルトシュ・カラーチ（煙突菓子）",
+    "local": {
+     "text": "Cozonac secuiesc",
+     "roman": "Cozonac secuiesc",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "生地を棒に巻いて焼き、グラニュー糖と溶かしたバターをまぶした筒の形の菓子。ハンガリーの名前はクルトシュ・カラーチ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
     "key": "cozonac",
     "name": "コゾナック（甘いパン）",
     "local": {
@@ -2924,6 +4093,248 @@
      ]
     },
     "stores": [],
+    "went": false
+   },
+   {
+    "key": "bere",
+    "name": "ルーマニアのビール",
+    "local": {
+     "text": "Bere",
+     "roman": "Bere",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "ドイツの流れをくむ金色のピルスナーが多い。地元の醸造所の銘柄と、クラフトビールもある。カル・ク・ベレは自家製のビール（400mlで29.5レイ）、クルテア・ベラリロルはおもにティミショアレアナ。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     },
+     {
+      "key": "berarilor",
+      "name": "クルテア・ベラリロル（旧市街のビアホール）",
+      "local": "Curtea Berarilor",
+      "area": "old-town",
+      "lat": 44.430684,
+      "lon": 26.101246,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Curtea Berarilor」",
+        "url": "https://www.openstreetmap.org/node/1416623907",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "旧市街のビアホールで、ビールはおもにティミショアレアナ。献立に焼いたミティテイ・豆のペースト・焼きなすのサラダ・日替わりのチョルバ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Bucharest」",
+         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu mâncare」",
+         "url": "https://curteaberarilor.com/meniu-mancare/",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "Curtea Berarilor「Meniu băuturi」",
+         "url": "https://curteaberarilor.com/meniu-bauturi/",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Berarilor+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "vin",
+    "name": "ルーマニアワイン（フェテアスカ・ネアグラ）",
+    "local": {
+     "text": "Fetească neagră",
+     "roman": "Fetească neagră",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "ルーマニアのワインには3,000年を超える伝統がある。フェテアスカ・ネアグラは古くからある在来の黒ぶどうで、深いルビー色の赤になる。カル・ク・ベレではグラスで34レイから。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Wikipedia「Fetească neagră」",
+       "url": "https://en.wikipedia.org/wiki/Feteasc%C4%83_neagr%C4%83",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "visinata",
+    "name": "ヴィシナータ（さくらんぼのリキュール）",
+    "local": {
+     "text": "Vișinată",
+     "roman": "Vișinată",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "サワーチェリーのリキュール。カル・ク・ベレの献立に2種類ある（29〜33レイ）。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      },
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "caru",
+      "name": "カル・ク・ベレ（旧市街のビアホール）",
+      "local": "Caru' cu Bere",
+      "area": "old-town",
+      "lat": 44.432001,
+      "lon": 26.098106,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Caru' cu Bere」",
+        "url": "https://www.openstreetmap.org/node/916075216",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "1879年のビール醸造所から始まったビアホール。建物は国の歴史的建造物。",
+       "src": [
+        {
+         "name": "Wikipedia「Caru' cu Bere」",
+         "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
+     }
+    ],
     "went": false
    },
    {
@@ -2984,7 +4395,17 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Caru%27+cu+Bere+Bucure%C8%99ti&hl=ja"
      }
     ],
-    "went": false
+    "went": false,
+    "note": {
+     "text": "カル・ク・ベレの献立にあるのは、すもものパーリンカ（32レイ）。",
+     "src": [
+      {
+       "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+       "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
    }
   ]
  },
@@ -3100,6 +4521,189 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Mega+Image+Bucure%C8%99ti&hl=ja"
      }
     ],
+    "went": false
+   },
+   {
+    "key": "magiun",
+    "name": "マジウン（すもものジャム）",
+    "local": {
+     "text": "Magiun de prune Topoloveni",
+     "roman": "Magiun de prune Topoloveni",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "すもものジャム。トポロヴェニのマジウンは、ルーマニアの地理的表示（PGI）に登録されている。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "rom",
+    "name": "ROMのチョコバー",
+    "local": {
+     "text": "Rom",
+     "roman": "Rom",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "1964年から同じ作りの、ラムの香りがするチョコバー。包みは国旗の3色で、名前は国の名の頭3文字。",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": true,
+    "alcohol_note": {
+     "text": "中のクリームに、エタノールとラムが少し入っている（ラムは0.1%）。",
+     "src": [
+      {
+       "name": "Open Food Facts「Rom ciocolată cu lapte」（2026年11月16日更新）",
+       "url": "https://world.openfoodfacts.org/product/5941047823892",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "eugenia",
+    "name": "オイゲニアのビスケット",
+    "local": {
+     "text": "Eugenia",
+     "roman": "Eugenia",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ココアかバニラのクリームを挟んだビスケット。70年あまり作られている、共産主義の時代からある数少ないビスケットの1つ。",
+     "src": [
+      {
+       "name": "Le Petit Journal Bucarest「Ces 5 sucreries roumaines qui nous rappellent notre enfance」（2025年2月19日更新）",
+       "url": "https://lepetitjournal.com/bucarest/communaute/ces-5-sucreries-roumaines-qui-nous-rappellent-notre-enfance-324018",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "gerovital",
+    "name": "ジェロヴィタールの化粧品",
+    "local": {
+     "text": "Gerovital",
+     "roman": "Gerovital",
+     "src": [
+      {
+       "name": "Wikipedia「Farmec」",
+       "url": "https://en.wikipedia.org/wiki/Farmec",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ルーマニアでいちばん大きい化粧品の会社ファルメク（クルジュ＝ナポカ）の銘柄。医師アナ・アスランが作った「ジェロヴィタールH3」の名と作る権利を持つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Farmec」",
+       "url": "https://en.wikipedia.org/wiki/Farmec",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "gerovital",
+      "name": "ジェロヴィタール パークレイク店（化粧品）",
+      "local": "Gerovital",
+      "area": "parklake",
+      "lat": 44.419849,
+      "lon": 26.148373,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Gerovital」",
+        "url": "https://www.openstreetmap.org/node/11009898049",
+        "seen": "2026-11-19"
+       }
+      ],
+      "why": {
+       "text": "ファルメクがブカレストに開いた最初のジェロヴィタールの店（2016年）。商業施設パークレイクの中で、ジェロヴィタールとアスラヴィタールの品を全部置く。",
+       "src": [
+        {
+         "name": "Actual de Cluj「Farmec deschide la București primul magazin Gerovital din România」（2016年9月21日）",
+         "url": "https://actualdecluj.ro/?p=66837",
+         "seen": "2026-11-19"
+        },
+        {
+         "name": "OpenStreetMap「Gerovital」",
+         "url": "https://www.openstreetmap.org/node/11009898049",
+         "seen": "2026-11-19"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Gerovital+Bucure%C8%99ti&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "wine",
+    "name": "ルーマニアワインの瓶",
+    "local": {
+     "text": "Vin românesc",
+     "roman": "Vin romanesc",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "what": {
+     "text": "ワインの伝統は3,000年を超える。在来のぶどうのフェテアスカ・グラサ・タマイオアサ・ブスイオアカ・バベアスカで作るワインが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Romanian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
     "went": false
    },
    {
@@ -3794,8 +5398,16 @@
    "why": "2025-2026年の季節の値段の表が見つからない（音楽祭の値段だけ）"
   },
   {
-   "what": "サルマーレ・パパナシ・ミティテイを出す店と値段",
-   "why": "2024年以降の出どころで、品と店と値段を結べたのはハヌル・ルイ・マヌクの郷土料理までだった"
+   "what": "ペレシュ城の開いている曜日と入場料",
+   "why": "Wikivoyage の曜日と値段（30レイ）は日付が無い。公式の頁は確かめていない"
+  },
+  {
+   "what": "スナゴフ修道院への行きかた",
+   "why": "島へ渡る歩道橋（2009年）までしか確かめられていない。ブカレストからのバスは見つからない"
+  },
+  {
+   "what": "マジウン・ROM・オイゲニア・ワインの瓶を買える店",
+   "why": "ネットのスーパーの品書きはあるが、街の店の名前と、いまも置いていることを書いた出どころが見つからない"
   },
   {
    "what": "チャウシェスク邸の見学の申し込みと値段",
