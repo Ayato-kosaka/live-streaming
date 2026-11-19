@@ -5,7 +5,7 @@ import { Panel, StreamCard } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug, isWalkedCountry, type Country } from "@/content/countries";
 import { WALKED_DONE, walkingCountries } from "@/content/walked";
-import { chapterNow } from "@/content/chapters";
+import { CHAPTERS, chapterNow } from "@/content/chapters";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
 import { STREAM_DIGEST } from "@/content/streamDigest";
@@ -29,9 +29,12 @@ import {
 } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { stayWord } from "@/lib/stay";
-import { fitTitle, lead, span } from "@/lib/seoText";
-import { JsonLd, articleLd } from "@/lib/jsonld";
+import { span } from "@/lib/seoText";
+import { JsonLd, abs, articleLd } from "@/lib/jsonld";
 import { LASTMOD } from "@/lib/lastmod";
+import { SITE } from "@/content/site";
+import { countryMapArt } from "@/components/atlas/mapArt";
+import Writer from "@/components/travel/article/Writer";
 // 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
@@ -102,6 +105,8 @@ type CountryRecord = {
   walkedNo?: number;
   /** 面に出る配信の、いちばん新しい日（名札の `dateModified`） */
   modified?: string;
+  /** その国を回った旅（章）の名前。題の「〈旅〉で〈長さ〉」に使う */
+  trip?: string;
 };
 
 /** 街の行。その国の公開してあるガイドと名前が合えば、ガイドへのカードになる */
@@ -144,6 +149,8 @@ function walkedRecord(c: Country): CountryRecord {
     streamFloor: 0,
     walkedNo: isWalkedCountry(c.slug) ? walkedNo : undefined,
     modified: LASTMOD.country(c),
+    /* その国を数えている章。**新しい章から探す**（同じ国に2回入っていれば、あとの旅）。枝（イランまで歩く）も見る */
+    trip: [...CHAPTERS].reverse().find((x) => x.countries.includes(c.slug))?.name,
   };
 }
 
@@ -190,6 +197,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
     /* 年表（`/travel` の `TripCountries`）と同じ番号。歩き終わった国の数の続き */
     walkedNo: WALKED_DONE + i + 1,
     modified: all.map((v) => v.date).sort().at(-1),
+    trip,
   };
 }
 
@@ -207,21 +215,105 @@ export function mustRecord(slug: string): CountryRecord {
   return r;
 }
 
-/** 題と一文。**題は「国＋旅の記録＋歩いた街」、一文の頭は「いつ・どの街を」。** 面に並ぶ滞在と同じ事実（#1199 の第2便） */
+/** その国での配信の本数。**面に並べた配信より少ない数を言わない**（下の `CountryRecordPage` の札と、題の一文で同じ数） */
+function livesOf(r: CountryRecord): number {
+  const stat = countryStat(r.slug);
+  return Math.max(stat?.lives ?? r.towns.reduce((n, t) => n + t.streams.length, 0), r.streamFloor);
+}
+
+/**
+ * いた日数（面の札「いた日数」と同じ数えかた）と、まだ続いている滞在か。
+ *
+ * **まだ続いている滞在（いま居る国）の長さは、題と一文に入れない。** 題と一文は `<head>` の字で、画面が出てから
+ * 数え直せない。書き出した日の「1週間」は、次の配りまで（配りが止まればいつまでも）そのまま残り、日ごとに嘘になる
+ * （`tools/sprites/datebake.mjs` が、時計を進めた書き出しと突き合わせて赤くした。「1週間」→「1年」・【2026年】→【2026〜2027年】）。
+ * 画面の札は `./parts.tsx` の `StayLen` が数え直している
+ */
+function stayDays(r: CountryRecord): { days: number; open: boolean } {
+  return { days: closedDays(r.stays), open: r.stays.some((s) => !s.to) };
+}
+
+/** 題の「長さ」。1週間に届かなければ日で、それより長ければ週・月・年で丸める（ジョージアの384日は「1年」） */
+function lenWord(days: number): string {
+  if (days < 7) return `${Math.max(1, days)}日`;
+  if (days <= 10) return "1週間";
+  if (days <= 17) return "2週間";
+  if (days <= 27) return "3週間";
+  if (days <= 45) return "1か月";
+  if (days <= 330) return `${Math.round(days / 30)}か月`;
+  return `${Math.round(days / 365)}年`;
+}
+
+const clen = (s: string) => [...s].length;
+/** 「｜あやと島」（`app/layout.tsx` の `title.template`） */
+const SUFFIX = 6;
+/** 題は「｜あやと島」込みで 25〜45字（`python/seo_score.py` の採点表。上位の題の中央は 33〜54字。`docs/seo.md` 6・7章） */
+const TITLE_MAX = 45;
+/** 一文は 80〜160字（同じ採点表） */
+const DESC_MIN = 80;
+const DESC_MAX = 160;
+
+/**
+ * 題と一文。**頭は国名のまま**（「ブルガリア」で探す人の語を前半に）。
+ *
+ * - 題: 「〈国〉旅行記【〈年〉】〈旅〉で〈長さ〉・〈街〉」。例「イギリス旅行記【2025年】ヨーロッパ周遊で2か月・ロンドン・エディンバラ」。
+ *   いま居る国は長さを言わない（「ブルガリア旅行記【2026年】バルカン諸国周遊・ソフィア」。`stayDays` の注）。
+ *   はみ出すなら後ろの街から落とす。前は「〈国〉旅の記録 — 〈街〉」で21字しかなく、何の面か（いつ・どの旅の・どれだけ）が言えていなかった（#1262）
+ * - 一文: いつ・何日（いま居る国は「〈入った日〉から」だけ）・どの街を・配信の本数と人数（面の札と同じ数）・面の一言。
+ *   80〜160字に収まるように後ろから落とす
+ *
+ * **足すのは面に見えている事実だけ**（`lib/seoText.ts` の決めごと）。画面に見える見出しは変えない（`<head>` の字だけ）
+ */
 export function recordMetadata(r: CountryRecord): Metadata {
-  /* 北欧の6か国は、前は行く前の案内（`/nordic/<国>`）が別の題と一文を持っていた。
-     2枚を1枚に寄せたので、題と一文は歩いた記録のほうに揃える（#1201）。街が多い国は、32字に収まるところまで減らす */
   const cities = r.towns.map((t) => t.name);
   const first = r.stays[0];
   const last = r.stays[r.stays.length - 1];
-  const head = `${r.name}旅の記録`;
-  const walked = cities.length ? `${cities.join("・")}を配信しながら歩いた。` : `${r.name}を配信しながら歩いた。`;
+  const { days, open } = stayDays(r);
+  /* いま居る国は、長さを言わない（`stayDays` の注）。年も入った年だけ（終わりの年は、まだ決まっていない） */
+  const len = open ? "" : lenWord(days);
+  const y0 = first?.from.slice(0, 4);
+  const y1 = open ? y0 : last?.to.slice(0, 4);
+  const yr = first ? (y0 === y1 ? `${y0}年` : `${y0}〜${y1}年`) : "";
+  /* 「イランまで歩く」は「〜で」が続かないので「イランまで歩いた〈長さ〉」 */
+  const tripLen = !r.trip ? len : !len ? r.trip : /歩く$/.test(r.trip) ? `${r.trip.replace(/歩く$/, "歩いた")}${len}` : `${r.trip}で${len}`;
+  const head = `${r.name}旅行記${yr ? `【${yr}】` : ""}${tripLen}`;
+  const titles = [...cities.map((_, i) => `${head}・${cities.slice(0, cities.length - i).join("・")}`), head, `${r.name}旅行記${yr ? `【${yr}】` : ""}${len}`];
+  const title = titles.find((t) => clen(t) + SUFFIX <= TITLE_MAX) ?? titles[titles.length - 1];
+
+  const stat = countryStat(r.slug);
+  const when = !first
+    ? ""
+    : open
+      ? `${ymdJa(first.from)}から`
+      : r.stays.length === 1
+        ? first.from === last.to
+          ? `${ymdJa(first.from)}の1日`
+          : `${ymdJa(first.from)}〜${first.from.slice(0, 4) === last.to.slice(0, 4) ? md(last.to) : ymdJa(last.to)}の${days.toLocaleString()}日間`
+        : `${span(first.from, last.to)}に${r.stays.length}回、あわせて${days.toLocaleString()}日`;
+  const nums = [
+    `ここからの配信${livesOf(r).toLocaleString()}本`,
+    stat?.people ? `来ていた人${stat.people.toLocaleString()}人` : "",
+    stat?.msgs ? `飛んだコメント${stat.msgs.toLocaleString()}件` : "",
+  ].filter(Boolean);
   /* 一文の終わりは、その面に在る節の一言。ガイドしか無い国に「配信のアーカイブつき」と書かない */
   const tail = r.towns.some((t) => !t.guide && t.streams.length) ? "街ごとの配信のアーカイブつき。" : r.towns.some((t) => t.guide) ? "街のガイドつき。" : "";
-  return travelShare(r.slug, {
-    title: cities.length ? fitTitle(...[3, 2, 1].map((k) => `${head} — ${cities.slice(0, k).join("・")}`), head) : fitTitle(head),
-    description: first ? lead(`${span(first.from, last.to || undefined)}、${walked}`, r.summary, tail) : r.summary,
-  });
+  const body = (towns: string[], withNums: string[]) =>
+    `${when ? `${when}、` : ""}${r.name}${towns.length ? `の${towns.join("・")}` : ""}を配信しながら${open ? "歩いている" : "歩いた"}旅行記。${withNums.length ? `${withNums.join("・")}。` : ""}`;
+  /* 面の一言が、頭の「いつ」と同じ日を言い直しているとき（いま歩いている国の「〈日〉に入った。」）は、先に落とす */
+  const says = (x: string) => !!first && x.includes(ymdJa(first.from));
+  const sum = says(r.summary) ? "" : r.summary;
+  /* 長い順に並べて、80〜160字に収まる最初のもの（一言 → 終わりの一言 → 街の数 → 数の札、の順に落とす） */
+  const descs = [
+    `${body(cities, nums)}${sum}${tail}`,
+    `${body(cities, nums)}${sum}`,
+    `${body(cities, nums)}${tail}`,
+    ...cities.slice(1).map((_, i) => `${body(cities.slice(0, cities.length - 1 - i), nums)}${tail}`),
+    `${body(cities, nums)}${r.summary}${tail}`,
+    body(cities.slice(0, 1), nums.slice(0, 2)),
+  ];
+  const fits = (d: string) => clen(d) >= DESC_MIN && clen(d) <= DESC_MAX;
+  const description = descs.find(fits) ?? descs.find((d) => clen(d) <= DESC_MAX) ?? descs[descs.length - 1];
+  return travelShare(r.slug, { title, description });
 }
 
 const fmt = (d: string) => (d ? d.replace(/-/g, "/") : "いま");
@@ -284,14 +376,16 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   /* **面に並べた配信より少ない数を言わない。** `countryStats` の本数は「コメントが1件でも付いた配信」を
      数えている（チャットから数えるため）。ブルガリアに着いた日の配信（2026-11-12）はコメントが0件で、
      面には7本並ぶのに「ここからの配信 6」と出ていた。滞在ぶんの配信の本数（`streamFloor`）で底を打つ。
-     歩き終わった国は街の欄が代表なので、前どおり `countryStats` だけ（無ければ街の欄の足し算） */
-  const lives = Math.max(stat?.lives ?? r.towns.reduce((n, t) => n + t.streams.length, 0), r.streamFloor);
+     歩き終わった国は街の欄が代表なので、前どおり `countryStats` だけ（無ければ街の欄の足し算）。
+     **式は `livesOf` の1つ**（題の一文も同じ数を言う） */
+  const lives = livesOf(r);
   /* 出国の日が入っていない滞在。書き出した日で数字が止まるので画面が出てから数え直すが、
      **次の島へ渡っていれば、そこで止める**（`./parts.tsx` の `StayLen`）。
      でないと、もう出た国の日数が毎日1ずつ増えつづける。 */
   const staying = r.stays.find((s) => !s.to);
   const days = closedDays(r.stays);
   const isCountry = isWalkedCountry(r.slug);
+  const art = countryMapArt(r.slug, r.name);
 
   /* 同じ日に同じ題名が2本あるぶんだけ、「その日の何本目か」を控える。
      読み上げはリンクの字だけを並べて読むので、日付も題名も同じ2枚は
@@ -329,6 +423,30 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
             datePublished: r.stays[0].from,
             dateModified: r.modified,
           })}
+        />
+      )}
+      {/* 国の地図の絵（`components/atlas/mapArt.ts` が焼いた1枚）の名札。画像検索に「〈国〉の地図」として渡す（#1262・#332）。
+          地図の形は Natural Earth（パブリックドメイン）から島が描いたもの */}
+      {art && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "ImageObject",
+            /* 道に日本語が入る（「〈国〉の地図」）。機械に渡す URL は %XX にしておく */
+            contentUrl: encodeURI(abs(art.src)),
+            url: encodeURI(abs(art.src)),
+            name: `${r.name}の地図`,
+            caption: art.alt,
+            width: art.w,
+            height: art.h,
+            encodingFormat: "image/webp",
+            inLanguage: "ja",
+            contentLocation: { "@type": "Place", name: r.name },
+            mainEntityOfPage: abs(travelHref(r.slug)),
+            creditText: SITE.name,
+            creator: { "@type": "Organization", name: SITE.name, url: abs("/") },
+            copyrightNotice: "地図のデータ Natural Earth",
+          }}
         />
       )}
       {/* 旗はすぐ下のパスポートに出る。見出しにも置くと同じ絵が2つ並ぶので、
@@ -560,6 +678,11 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
 
       {/* その国だけが持つもの（北マケドニアの付箋の板）。型の外にあるので、面のほうから渡す */}
       {children}
+
+      {/* 書き手の枠（記事・街のガイドと同じ `Writer`）。署名は「あやと島案内鳥」。検索の上位の 7割が書き手を見せていて、
+          国の面には無かった（#1262 の採点表）。**面のいちばん下に置く**——上の並び（国名・一言・地図・いつ・数・行った街・
+          この国であったこと・ごはん）は変えない */}
+      <Writer />
 
       <nav className="pager">
         {prev ? (
