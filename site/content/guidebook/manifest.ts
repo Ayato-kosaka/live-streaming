@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import type { Metadata } from "next";
 
-import type { MapBeyond, MapDir, Pic, Todo } from "./types";
+import type { Guidebook, Item, MapBeyond, MapDir, Pic, Todo } from "./types";
 
 /**
  * **描いた絵の置き場（`public/guide/<国>/<街>/manifest.json`）を読む。** 書き出すときに1回だけ。
@@ -213,4 +213,32 @@ export function coverShare(meta: Metadata, d: Drawn, alt: string): Metadata {
  */
 export function todoPic(d: Drawn, t: Pick<Todo, "id" | "eat" | "buy">): Pic | undefined {
   return d.do[t.id] ?? (t.eat ?? []).map((id) => d.food[id]).find(Boolean) ?? (t.buy ?? []).map((id) => d.buy[id]).find(Boolean);
+}
+
+/**
+ * **札の絵を決める。** 描いた絵（manifest）→ データの絵（借りた写真）の順。**その日のあやと島カードは札に使わない**——
+ * 窓の中の「行った」の箱（`Went.pic`。`components/guidebook/Videos.tsx` の `WentBox`）に出す
+ * （あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい。元のイラストのまま。
+ * 窓を開いた中の『行った』の所に、あやと島カードの写真を出す」）。前は行った項目だけ札の絵がカードに替わり、
+ * 描いた絵の並びに写真が混ざって、骨組み（ガイド）と肉付け（行った）の区別が消えていた。
+ *
+ * ガイドの絵が1枚も無い項目（借りた写真の無い見どころ）だけ、カードを札の絵に回す（空の札を置かない。
+ * `docs/guide-design.md` 4-1）。そのときは箱には重ねて出さない（同じ写真が窓に2回出る）。
+ * 見たいもの（実在の場所）には描いた絵を当てない（#1228 Q1 の A）。ソフィアとスコピエの面が同じものを使う
+ */
+export function dress<G extends Pick<Guidebook, "todo" | "see" | "eat" | "buy">>(g: G, d: Drawn): G {
+  const put = <T extends Item | Todo>(it: T, drawn?: Pic): T => {
+    const pic = drawn ?? it.pic;
+    if (pic) return pic === it.pic ? it : { ...it, pic };
+    if (!it.went?.pic) return it;
+    const { pic: card, ...went } = it.went;
+    return { ...it, pic: card, went };
+  };
+  return {
+    ...g,
+    todo: g.todo.map((t) => put(t, todoPic(d, t))),
+    see: { ...g.see, items: g.see.items.map((it) => put(it)) },
+    eat: { ...g.eat, items: g.eat.items.map((it) => put(it, d.food[it.id])) },
+    buy: { ...g.buy, items: g.buy.items.map((it) => put(it, d.buy[it.id])) },
+  };
 }

@@ -120,13 +120,15 @@ def cases(real: dict) -> list[tuple[str, object, set[str], set[str]]]:
         ("渓谷の項目にスコピエの行", lambda d: matka(d)["went"].__setitem__("facts", [copy.deepcopy(skopje_went)]), {"合わない"}, {"went の行に無い"}),
         ("行ったを true に", lambda d: see0(d).__setitem__("went", True), {"went は false か"}, csv_only),
         ("好みの印を置く", lambda d: d["eat"]["items"][0].__setitem__("mark", "good"), {"好みの印"}, set()),
-        ("ハブの項目を落とす", lambda d: d["eat"]["went_notes"].pop(0), {"引き継いでいない"}, set()),
+        # 2026-11-19 に行った店の欄（went_notes）を空にした（ガイドの品にならない品を外した）ので、品の引き継ぎの札を剥がして当てる
+        ("ハブの項目を落とす", lambda d: next(it for it in d["eat"]["items"] if it.get("from_hub")).pop("from_hub"), {"引き継いでいない"}, set()),
         ("ハブに無い鍵", lambda d: see0(d)["from_hub"].append("see/nowhere"), {"ハブに無い鍵"}, set()),
         ("ひとことが26字", lambda d: d["cover"]["catch"][0].__setitem__("text", "あ" * 26), {"25字を超える"}, set()),
         ("札が61字", lambda d: d["about"]["cards"][0].__setitem__("text", "あ" * 61), {"60字を超える"}, set()),
         ("やりたいことが9", lambda d: d["todo"].extend(copy.deepcopy(d["todo"][:3])), {"8まで"}, set()),
         ("見出しが31字", lambda d: d["todo"][0].__setitem__("head", "あ" * 31), {"30字を超える"}, set()),
-        ("エリアが1", lambda d: d["about"].__setitem__("areas", d["about"]["areas"][:1]), {"2〜6"}, set()),
+        # 地区も前のハブの項目を引き継ぐ（デバル・マーロは前の「テラスのカフェが並ぶ通り」。2026-11-19）ので、削った地区の引き継ぎは出てよい
+        ("エリアが1", lambda d: d["about"].__setitem__("areas", d["about"]["areas"][:1]), {"2〜6"}, {"引き継いでいない"}),
         ("地区の名前の出どころが無い", lambda d: d["about"]["areas"][0].pop("name_src"), {"name_src"}, set()),
         ("多角形が3点", lambda d: d["about"]["areas"][0]["range"].__setitem__("polygon", d["about"]["areas"][0]["range"]["polygon"][:3]), {"4〜8点"}, set()),
         ("ひとことが9個", lambda d: d["basics"]["guide"][5]["phrases"].pop(), {"10個"}, set()),

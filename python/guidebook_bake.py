@@ -36,8 +36,11 @@
 
 ## 写真
 
-- **行った項目は、その日のあやと島カード**（`compose.cards`。カードの日が、その項目の行った日のどれかでないと止める）。
-  置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
+- **札の絵はガイドの絵（描いた絵・借りた写真）のまま。その日のあやと島カードは、窓の中の行った箱に**（`Went.pic`。
+  あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい。窓の中の『行った』の所に出す」）。
+  前は行った項目の札の絵をカードに差し替えていて、描いた絵の並びに写真が混ざった。ガイドの絵が1枚も無い項目
+  （借りた写真の無い見どころ）だけ、面の側（`content/guidebook/manifest.ts` の `dress`）がカードを札の絵に回す。
+  カードは `compose.cards`。カードの日が、その項目の行った日のどれかでないと止める。置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
 - **行っていない項目は、材料の借りた写真**（Wikimedia Commons）。作者とライセンスを持たない写真は使わない。
   **面は Commons から直に読まない**——`python/guide_photos.py` が `site/public/guide/<国>/<街>/photos/` に落とした絵を指す
   （置き場に無ければ止める。混んだ日に Wikimedia が 429 で断り、前の見どころマップのピンが白い丸になった）
@@ -276,6 +279,12 @@ class Book:
             else:
                 story.append(s["text"])
         out: dict = {"date": min(r["date"] for r in rows), "scene": self.scene(at)}
+        # その日のカードは、札の絵ではなく窓の中の行った箱に（あやと 2026-11-19）。日は行った日のどれか
+        card = comp.get("card") or (x.get("photo") or {}).get("card_name")
+        if card:
+            pic = self.card(card, where, {r["date"] for r in rows})
+            if pic:
+                out["pic"] = pic
         if story:
             out["story"] = story
         if x.get("short"):
@@ -294,12 +303,10 @@ class Book:
         return {r["date"] for r in self.rows_of((w or {}).get("facts") if isinstance(w, dict) else [], "")}
 
     def pic_for(self, sec: str, x: dict, where: str, fallback: dict | None) -> dict | None:
-        """行った項目はその日のカード、行っていない項目は借りた写真"""
+        """札の絵は借りた写真（描いた絵は面の側が manifest から重ねる）。**カードは札に使わない**——行った箱の `pic`（`went`）"""
         name = ((self.c.get("items") or {}).get(f"{sec}/{x.get('key')}") or {}).get("card")
-        if name:
-            if not x.get("went") and sec != "eat-note":
-                self.err(where, f"行っていない項目に、カード「{name}」を付けている")
-            return self.card(name, where, self.went_days(x) if sec != "eat-note" else None)
+        if name and not x.get("went"):
+            self.err(where, f"行っていない項目に、カード「{name}」を付けている")
         return self.commons(fallback, where)
 
     # ------------------------------------------------------------ 節
@@ -424,19 +431,19 @@ class Book:
             own = [p for k in ("what", "why", "how", "time", "money", "tips", "route") for p in pts.get(k) or [] if not has_src(p)]
             join = lambda ps: "".join(text_of(p) for p in ps)  # noqa: E731
             ph = t.get("photo") or {}
-            pic = None
+            # 札の絵は借りた写真か描いた絵（面の側が manifest から重ねる）。**その日のカードは窓の中の行った箱に**
+            # （あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい」）。
             # 1枚のカードを2つに切って使う日がある（食堂コスモスのチェバピと豆の煮込み）。どちらの切りかたかは組み立てで選ぶ
             comp_card = ((self.c.get("items") or {}).get(f"todo/{t['key']}") or {}).get("card")
-            if t.get("went") and comp_card:
-                pic = self.card(comp_card, w, self.went_days(t))
-            elif t.get("went") and ph.get("card"):
+            if t.get("went") and not comp_card and ph.get("card"):
                 name = self.card_by_id(ph["card"]["id"])
                 if not name:
                     self.err(w, f"材料のカード {ph['card']['id']} が compose.json の cards に無い")
                 else:
-                    pic = self.card(name, w, self.went_days(t))
-            if not pic:
-                pic = self.commons((ph.get("commons") or [None])[0], w)
+                    t = {**t, "photo": {**ph, "card_name": name}}
+            elif comp_card and not t.get("went"):
+                self.err(w, f"行っていない項目に、カード「{comp_card}」を付けている")
+            pic = self.commons((ph.get("commons") or [None])[0], w)
             it = {"id": t["key"], "title": t["title"], "lead": t["head"], "what": join(ext["what"] + ext["why"]),
                   "how": join(ext["how"]), "time": join(ext["time"]), "money": join(ext["money"]), "tip": join(ext["tips"]),
                   "route": join(ext["route"]), "see": (t.get("links") or {}).get("see") or [],
@@ -536,12 +543,7 @@ class Book:
             if not comp.get("kinds"):
                 self.err(w, "絞りの札（compose.json の kinds）が無い")
             it = {"id": n["key"], "name": n["name"], "body": "", "facts": [], "kinds": comp.get("kinds") or [], "src": []}
-            days = {r["date"] for r in self.rows_of(n.get("facts"), w)}
-            name = comp.get("card")
-            if name:
-                pic = self.card(name, w, days)
-                if pic:
-                    it["pic"] = pic
+            # カードは行った箱に（`went`）。札の絵が無いので、面の側がカードを札に回す
             wt = self.went("eat", {"key": n["key"], "went": {"facts": n.get("facts")}}, w, story_from=[n])
             if wt:
                 it["went"] = wt

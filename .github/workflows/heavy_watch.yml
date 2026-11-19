@@ -666,25 +666,6 @@ jobs:
             printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
           fi
 
-      # 街の面が借りる Commons の写真を、島の置き場へ落とす（`python/guide_photos.py`）。作業箱からは
-      # `upload.wikimedia.org` が 429 で断られ続ける日がある（2026-11-19、17枚が15分で1枚も落ちなかった）。
-      # ランナーは出口の住所が別なので通る（`commons_photos.yml` と同じ理由）。落としたものは artifact `photos`。
-      # **書き出しより先に置く**——面がまだ組み上がっていない回でも、写真だけは持ち帰れるように
-      - name: 借りた写真を落とす（artifact photos）
-        if: ${{ env.GUIDE != '' }}
-        run: |
-          set -euo pipefail
-          pip install pillow
-          python3 python/guide_photos.py "$GUIDE"
-          ls "site/public/guide/$GUIDE/photos" | wc -l
-
-      - name: 落とした写真を置く
-        if: ${{ env.GUIDE != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: photos
-          path: site/public/guide/${{ inputs.guide }}/photos/
-
       - name: site の依存を入れる
         working-directory: site
         run: npm ci --no-audit --no-fund

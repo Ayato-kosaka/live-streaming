@@ -112,12 +112,13 @@ class Went(gbb.Book):
                     self.err(key, f"一言に選んだのに、場面の行（{sc}）に本人の一言（quote）が無い")
                 else:
                     w["say"] = q
-            out: dict = {"went": w}
+            # その日のカードは、札の絵ではなく窓の中の行った箱に（あやと 2026-11-19「やりたいことの札の絵は、
+            # あやと島カードの写真に替えなくていい。窓の中の『行った』の所に出す」）
             if x.get("card"):
                 pic = self.card(x["card"], key, {r["date"] for r in rows})
                 if pic:
-                    out["pic"] = pic
-            items[key] = out
+                    w["pic"] = pic
+            items[key] = {"went": w}
         for sec, iid in say.items():
             if f"{sec}/{iid}" not in items:
                 self.err("say", f"一言に選んだ「{sec}/{iid}」が items に無い")
@@ -134,7 +135,7 @@ class Went(gbb.Book):
                 f"・場面 {sum(1 for v in its.values() if v['went'].get('scene'))}"
                 f"・ショート {sum(1 for v in its.values() if v['went'].get('short'))}"
                 f"・一言 {sum(1 for v in its.values() if v['went'].get('say'))}"
-                f"・カード {sum(1 for v in its.values() if v.get('pic'))}"
+                f"・カード {sum(1 for v in its.values() if v['went'].get('pic'))}"
                 f"・いちばん早い日 {min((v['went']['date'] for v in its.values()), default='—')}")
 
 
@@ -155,8 +156,8 @@ def render(key: str, g: dict) -> str:
         f" * 直すならそちらを直して、`python3 python/guidebook_went.py {key}` で焼き直す。\n"
         " * 鍵は「節/項目の id」。面の中身（手で組んだ TS）が、項目の id で当てる。\n"
         " */\n"
-        'import type { Pic, Went } from "./types";\n\n'
-        f"export const {const_of(key)}: {{ updated: string; hash: string; items: Record<string, {{ pic?: Pic; went: Went }}> }} = {gb.BEGIN}\n"
+        'import type { Went } from "./types";\n\n'
+        f"export const {const_of(key)}: {{ updated: string; hash: string; items: Record<string, {{ went: Went }}> }} = {gb.BEGIN}\n"
         + json.dumps(g, ensure_ascii=False, indent=1)
         + f"\n{gb.END};\n"
     )
