@@ -483,7 +483,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Sunset_on_Lipscani_Street_(28592940111).jpg"
      }
     },
-    "body": "リプスカニ通りを中心にした石畳の一帯。中世からの商いの中心で、いまは直した古い建物にレストランとバーが並び、若い人でにぎわう。",
+    "body": "リプスカニ通りを中心にした石畳の一帯。中世から19世紀の初めまで、街とワラキアでいちばんの商いの場だった。名前は品物の来た町ライプツィヒから。職人の組合ごとに通りがあり、毛皮屋通り・鞍屋通りの名がいまも残る。直した古い建物にレストランとバーが並び、若い人でにぎわう。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Centrul+Vechi+Bucure%C8%99ti&hl=ja",
     "todo": [
@@ -499,6 +499,11 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Lipscani」",
+      "url": "https://en.wikipedia.org/wiki/Lipscani",
       "seen": "2026-11-19"
      },
      {
@@ -600,7 +605,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:(3)_Bucuresti,_Romania._Piata_Palatului_-_Piata_Revolutiei_(vedere_de_ansamblu).jpg"
      }
     },
-    "body": "1989年の革命の舞台の1つになった広場。真ん中に記念碑が立ち、まわりに旧王宮や大学図書館の建物が並ぶ。",
+    "body": "1989年の革命の舞台の1つになった広場で、それまでの名前は「宮殿広場」。1989年12月21日にチャウシェスクがここで演説し、翌22日に旧共産党中央委員会の建物からヘリコプターで逃げた。真ん中に記念碑が立ち、まわりに旧王宮・アテネ音楽堂・大学図書館の建物が並ぶ。",
     "facts": [
      {
       "label": "行きかた",
@@ -617,6 +622,11 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      {
       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
       "url": "https://romaniatourism.com/ja/bucharest.html",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Revolution Square, Bucharest」",
+      "url": "https://en.wikipedia.org/wiki/Revolution_Square,_Bucharest",
       "seen": "2026-11-19"
      },
      {
@@ -709,13 +719,18 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Stavropoleos_Monastery_(28648667365).jpg"
      }
     },
-    "body": "18世紀の初めに建った小さな修道院の教会。石の彫刻と壁画で知られる。",
+    "body": "1724年に建った小さな修道院の教会で、石の彫刻と壁画で知られる。形はルーマニアの「ブルンコヴェアヌ様式」。もとの修道院で残るのは教会だけ。いまは女子修道院で、神学とビザンティン聖歌の本を8,000冊あまり持つ。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Stavropoleos Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Stavropoleos_Monastery",
       "seen": "2026-11-19"
      },
      {
@@ -899,13 +914,18 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:CEC_Palace,_Bucharest-.jpg"
      }
     },
-    "body": "勝利通りの南の入口に立つ、貯蓄銀行（CEC）の本店だった建物。",
+    "body": "勝利通りに立つ、国でいちばん古い銀行（いまの CEC 銀行）の本店として1897〜1900年に建った建物。設計はポール・ゴテロー。ガラスと鉄の丸屋根をのせる。向かいは国立歴史博物館。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+CEC+Bucure%C8%99ti&hl=ja",
     "src": [
      {
       "name": "OpenStreetMap「Palatul Casei de Economii şi Consemnaţiuni」",
       "url": "https://www.openstreetmap.org/way/973712798",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「CEC Palace」",
+      "url": "https://en.wikipedia.org/wiki/CEC_Palace",
       "seen": "2026-11-19"
      },
      {
@@ -947,13 +967,18 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Catedrala_Patriarhal%C4%83,_Bucure%C8%99ti_(2023)_-_IMG_02.jpg"
      }
     },
-    "body": "ルーマニア正教会の総主教の大聖堂。国民の館の東の小さな丘に立つ。",
+    "body": "ルーマニア正教会の総主教の大聖堂。国民の館の東の小さな丘（府主教の丘）に立つ。ワラキア公コンスタンティン・シェルバンの命で1655年に建て始め、1659年にできた。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja",
     "src": [
      {
       "name": "OpenStreetMap「Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"」",
       "url": "https://www.openstreetmap.org/way/232296927",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Romanian Patriarchal Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Romanian_Patriarchal_Cathedral",
       "seen": "2026-11-19"
      },
      {
@@ -995,7 +1020,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Arcul_de_Triumf.JPG"
      }
     },
-    "body": "いまの石の門は1936年にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
+    "body": "高さ27メートルの門。1878年の独立のあと、急いで木の門を建てたのが始まりで、いまの石の門はペトレ・アントネスクの設計で1936年12月1日にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
     "facts": [
      {
       "label": "行きかた",
@@ -1012,6 +1037,11 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikipedia「Great Union Day」",
       "url": "https://en.wikipedia.org/wiki/Great_Union_Day",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Arcul de Triumf」",
+      "url": "https://en.wikipedia.org/wiki/Arcul_de_Triumf",
       "seen": "2026-11-19"
      },
      {
@@ -1048,7 +1078,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg"
      }
     },
-    "body": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。建物は300ほど。",
+    "body": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。社会学者ディミトリエ・グスティが作り、1936年に開いた。トランシルヴァニア・モルドヴァ・マラムレシュなど7つの地方の、17〜20世紀の建物が並ぶ。いちばん古いのは17世紀のマラムレシュの木の教会。",
     "facts": [
      {
       "label": "行きかた",
@@ -1060,6 +1090,11 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Dimitrie Gusti National Village Museum」",
+      "url": "https://en.wikipedia.org/wiki/Dimitrie_Gusti_National_Village_Museum",
       "seen": "2026-11-19"
      },
      {
@@ -1096,13 +1131,18 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Herastrau_park_leaves_(Unsplash).jpg"
      }
     },
-    "body": "湖を囲む、市内でいちばん大きな公園。夏は貸しボートが出る。",
+    "body": "湖を囲む、市内でいちばん大きな公園。広さは約187ヘクタールで、そのうち74ヘクタールが湖。1936年に作り始め、1939年に開いた。もとの名前はヘラストラウ公園。夏は貸しボートが出る。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja",
     "src": [
      {
       "name": "Wikivoyage「Bucharest」",
       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「King Michael I Park」",
+      "url": "https://en.wikipedia.org/wiki/King_Michael_I_Park",
       "seen": "2026-11-19"
      },
      {
@@ -1192,7 +1232,7 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Bran_Castle_TB1.jpg"
      }
     },
-    "body": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。「ドラキュラ城」として知られるが、小説のドラキュラともヴラド・ツェペシュとも、関わりは薄いとされる。",
+    "body": "1377年にトランシルヴァニアとワラキアの境を守るために建った城。1920年からはマリア王妃が好んで暮らした。「ドラキュラ城」として知られるが、小説に城は出てこず、作者のストーカーがここへ来た証拠も無い。2009年から王家の子孫が開いた国で初めての私設の博物館で、マリア王妃の集めた美術と家具を見せる。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Castelul+Bran&hl=ja",
     "todo": [
@@ -1202,6 +1242,11 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      {
       "name": "Wikivoyage「Bran」",
       "url": "https://en.wikivoyage.org/wiki/Bran",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Bran Castle」",
+      "url": "https://en.wikipedia.org/wiki/Bran_Castle",
       "seen": "2026-11-19"
      },
      {
@@ -3496,6 +3541,6 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-19",
  "updated": "2026-11-20",
- "hash": "da53557fae379bb6"
+ "hash": "ae2f8cdf4806ff2d"
 }
 /* END GUIDE */;
