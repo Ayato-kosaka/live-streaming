@@ -1,0 +1,42 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "channels__MarkWiens__shorts",
+ "mode": "channel",
+ "dest": "channels/MarkWiens/shorts",
+ "video": null,
+ "channel": "@MarkWiens",
+ "request": "shorts/requests/yogurt-editplan-channels-20261118.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "channel": "ok"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 71,
+  "files": 5
+ },
+ "bytes": {
+  "plain": 54031,
+  "tar_gz": 9916,
+  "encrypted": 9920
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 9920,
+   "sha256": "42ed44e4e68da08d338a01b85d51651bb78615de32f0dae1331543eac8a63fc5"
+  }
+ ],
+ "hmac_sha256": "d1b3d7be965a48009dd763bfe77790c5b0a3ce3905704fc3f97e0b346a2e3a32",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:15:08+00:00"
+}
