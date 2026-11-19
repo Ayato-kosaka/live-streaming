@@ -335,6 +335,7 @@ export const SHELVES: Shelf[] = [
         note: "ステッカー・カード・キャラクター・LINEスタンプ・SUZURI",
         q: q(
           "あやとグッズ goods グッズ ステッカー sticker シール LINEスタンプ line stamp " +
+            "LINE STORE ちゃす 仲間たち " +
             "スタンプ カレンダー calendar SUZURI suzuri トートバッグ tシャツ 透かし 無料",
         ),
       },

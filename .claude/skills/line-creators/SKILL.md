@@ -54,7 +54,10 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 | タグ | `/sticker/<スタンプID>/tag#/01`（枠ごと） |
 | アカウント設定 | `/seller/edit_basic`（基本情報 / メール / 振込先のタブ） |
 
-最初のセットは **スタンプ ID 48307603**（「ちゃす！集まれ、あやと島の仲間たち」、2026-10-13 に申請）。
+最初のセットは **スタンプ ID 48307603**（「ちゃす！集まれ、あやと島の仲間たち」、2026-10-13 に申請、
+2026-11-19 に承認されて売り出された。#856）。店の頁は `https://store.line.me/stickershop/product/38090699/ja`。
+**店の商品 ID（38090699）は、Creators Market のスタンプ ID（48307603）と別の数。** 店の頁を作るときは、スタンプ ID ではなく、1セットの管理の頁にある「Store page link」（`line.me/S/sticker/<店の ID>`）から取る（2026-11-19、スタンプ ID で店の頁を引いて404が続き、売り出されていないと読み違えて8時間待った）
+島の `/goods` の店への札は `site/content/goods.ts` の `LINE_STORE`（絵は `tools/goods/linestore.py` が焼く）。
 
 ## 4. 画面の癖（2026-10-13 に踏んだもの）
 
@@ -173,3 +176,8 @@ EC2 には `zip` が無い。python の `zipfile` で固める。
 
 - 申請したら #716 に書く（何を、どの並びで、いくらで出したか）
 - 承認・差し戻しは「Message Center」（`/message/`）とメールに来る
+- **承認と、店に並ぶのは同じ時刻ではない。** 最初のセットは、あやとの「通った」（2026-11-19）から
+  2時間たっても店の頁（`store.line.me/stickershop/product/<ID>/ja`）も絵の置き場
+  （`stickershop.line-scdn.net/stickershop/v1/product/<ID>/LINEStorePC/main.png`）も 404 だった。
+  島に店へのリンクを出す PR は先に作っておき、**店の頁が curl で 200 になってから**札 `出す` を付ける
+  （404 のリンクを本番に出さない）
