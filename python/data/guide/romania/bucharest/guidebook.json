@@ -1450,6 +1450,17 @@
    ],
    "info": [
     {
+     "label": "行きかた",
+     "text": "イズヴォル通り2-4番。地下鉄M1・M3のイズヴォル駅。入口は北の側",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    },
+    {
      "label": "見学",
      "text": "ガイドつきの見学で中に入る。パスポートを持って行く",
      "src": [
@@ -1529,7 +1540,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "地下鉄のウニヴェルシターテ駅から600m。統一広場や北駅、国民の館からも歩ける",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "(3) Bucuresti, Romania. Piata Palatului - Piata Revolutiei (vedere de ansamblu).jpg",
@@ -1593,7 +1616,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ベンジャミン・フランクリン通り1-3番。革命広場のそばで、地下鉄M2のピアツァ・ロマナ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Ateneul+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
    "links": {
     "todo": [
@@ -1721,7 +1756,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "フランツェザ通り25-31番。地下鉄のピアツァ・ウニリイ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "Curtea Veche Church with garden, Bucharest, 2017.jpg",
@@ -2031,7 +2078,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラム41番のカジン停留所か、地下鉄M2のアヴィアトリロル駅から500m",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Arcul+de+Triumf+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "Arcul de Triumf.JPG",
@@ -2090,7 +2149,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "キセレフ通り28-30番。トラム41番のアグロノミエ停留所か、地下鉄M2のアヴィアトリロル駅から公園を抜けて15分ほど",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "Dimitrie Gusti national village museum Bucharest house veranda.jpg",
@@ -2208,7 +2279,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "地下鉄のアヴィアトリロル駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Prim%C4%83verii+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "Chess table in Palatul Primǎverii aka Spring Palace in Bucharest Romania.jpg",
@@ -2336,7 +2419,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "勝利通り49-53番。地下鉄M2のピアツァ・ヴィクトリエイ駅か、ウニヴェルシターテ駅から600m",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+de+Art%C4%83+al+Rom%C3%A2niei+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "The National Museum of Art of Romania (11321261983).jpg",
@@ -2395,7 +2490,19 @@
      "seen": "2026-11-19"
     }
    ],
-   "info": [],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "キセレフ通り3番。地下鉄M2のピアツァ・ヴィクトリエイ駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Bucharest」",
+       "url": "https://en.wikivoyage.org/wiki/Bucharest",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
    "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+al+%C8%9A%C4%83ranului+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
    "photo": {
     "file": "Bucharest, Romania. National Museum of the Romanian Peasant. Ceramic collection.jpg",

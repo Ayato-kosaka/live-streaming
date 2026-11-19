@@ -543,6 +543,10 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
     "body": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。部屋は1,100、大理石は100万立方メートル。",
     "facts": [
      {
+      "label": "行きかた",
+      "text": "イズヴォル通り2-4番。地下鉄M1・M3のイズヴォル駅。入口は北の側"
+     },
+     {
       "label": "見学",
       "text": "ガイドつきの見学で中に入る。パスポートを持って行く"
      }
@@ -597,7 +601,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "1989年の革命の舞台の1つになった広場。真ん中に記念碑が立ち、まわりに旧王宮や大学図書館の建物が並ぶ。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "地下鉄のウニヴェルシターテ駅から600m。統一広場や北駅、国民の館からも歩ける"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -645,7 +654,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた長さ75メートルのフレスコ画がぐるりと続く。設計はフランスの建築家アルベール・ガルロン。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "ベンジャミン・フランクリン通り1-3番。革命広場のそばで、地下鉄M2のピアツァ・ロマナ駅"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Ateneul+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
     "todo": [
      "athenaeum"
@@ -739,7 +753,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "ワラキアの公たちの宮廷の跡。1459年にこの地の城塞がヴラド・ツェペシュの居城になったのが、ブカレストが史書に出る最初とされる。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "フランツェザ通り25-31番。地下鉄のピアツァ・ウニリイ駅"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -977,7 +996,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "いまの石の門は1936年にできた。12月1日の国の祝日の軍のパレードは、この門のそばのキセレフ通りか、国民の館の前の憲法広場で開かれる。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "トラム41番のカジン停留所か、地下鉄M2のアヴィアトリロル駅から500m"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Arcul+de+Triumf+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -1025,7 +1049,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "国じゅうから運んできた昔の家や教会が、湖のほとりの林に並ぶ野外の博物館。建物は300ほど。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "キセレフ通り28-30番。トラム41番のアグロノミエ停留所か、地下鉄M2のアヴィアトリロル駅から公園を抜けて15分ほど"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -1111,7 +1140,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "ニコラエ・チャウシェスクが暮らした家。いまは中を見て回れる博物館。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "地下鉄のアヴィアトリロル駅"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Palatul+Prim%C4%83verii+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -1205,7 +1239,12 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "革命広場に面した旧王宮の建物に入る美術館。ルーマニアの中世と近代の美術と、王家が集めたヨーロッパの絵を見せる。1989年の革命で建物が傷ついた。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "勝利通り49-53番。地下鉄M2のピアツァ・ヴィクトリエイ駅か、ウニヴェルシターテ駅から600m"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+de+Art%C4%83+al+Rom%C3%A2niei+Bucure%C8%99ti&hl=ja",
     "src": [
      {
@@ -1253,12 +1292,22 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
      }
     },
     "body": "農村の暮らしの品を10万点あまり持つ博物館。民族衣装の布・イコン・焼き物が並ぶ。1996年に「ヨーロッパ・ミュージアム・オブ・ザ・イヤー」に選ばれた。建物は1912〜1941年に建った、ルーマニアの伝統の形を取り入れたネオ・ルーマニア様式。",
-    "facts": [],
+    "facts": [
+     {
+      "label": "行きかた",
+      "text": "キセレフ通り3番。地下鉄M2のピアツァ・ヴィクトリエイ駅"
+     }
+    ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+al+%C8%9A%C4%83ranului+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
     "src": [
      {
       "name": "Wikipedia「National Museum of the Romanian Peasant」",
       "url": "https://en.wikipedia.org/wiki/National_Museum_of_the_Romanian_Peasant",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
       "seen": "2026-11-19"
      },
      {
@@ -3447,6 +3496,6 @@ export const BUCHAREST: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-19",
  "updated": "2026-11-20",
- "hash": "47e5d05eecacd115"
+ "hash": "da53557fae379bb6"
 }
 /* END GUIDE */;
