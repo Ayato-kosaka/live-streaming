@@ -67,6 +67,11 @@ const EXCUSES = new Map([
     "`/me` の中からだけ行く。その `/me` はログインした人の看板にしか出ないので、"
       + "焼いた字を歩いても道が見えない（2026-10-13）",
   ],
+  [
+    "/cards/import",
+    "`/cards` の壁の下に、ログインしたあやとにだけ画面が出たあとで出る入口から行く"
+      + "（`components/cards/ImportDoor.tsx`。`CardWall` が `useOwner` で出し分ける）。焼いた字には道が無い（2026-11-19）",
+  ],
 ]);
 
 const die = (why) => {
