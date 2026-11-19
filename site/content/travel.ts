@@ -242,6 +242,10 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   /* マトカ渓谷に行ってきた（#1228。あやと 2026-11-19「がっつり書いた行ったは、ページ遷移でもいい」）。
      配信の facts だけで書いた一人称の旅の記録なので、公開前の印は付けない。街のガイドの窓から「続きを読む」で繋ぐ */
   { country: "north-macedonia", city: "skopje", slug: "matka", crumb: "マトカ渓谷" },
+  /* スコピエ城塞に行ってきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "kale", crumb: "スコピエ城塞" },
+  /* ヴォドノ山に登ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "vodno", crumb: "ヴォドノ山" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
