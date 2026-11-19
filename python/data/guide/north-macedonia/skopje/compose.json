@@ -184,7 +184,8 @@
           "eHBAnQF56-E@4860#place",
           "eHBAnQF56-E@5040#place"
         ]
-      }
+      },
+      "article": "matka"
     },
     "eat/tavche": {
       "card": "kosmos-beans"
@@ -257,12 +258,17 @@
     },
     "todo/matka": {
       "story": {
-        "text": "いちばん心残りなのは、ボートに乗れなかったことです。1つずつのんびり味わっていたら、乗りそびれてしまいました。マトカ渓谷に着いたら、まずボートを押さえるべきでした。",
+        "text": "スコピエから60番のバスで日帰りしました。岩山と紅葉と川が一度に見える渓谷だったのに、ボートには乗れず、帰りはバスも終わっていて、最後は通りがかりの車に助けてもらいました。",
         "facts": [
-          "eHBAnQF56-E@11130#quote"
+          "eHBAnQF56-E@330#move",
+          "eHBAnQF56-E@4860#place",
+          "eHBAnQF56-E@10950#caution",
+          "eHBAnQF56-E@12870#fact",
+          "eHBAnQF56-E@13320#caution"
         ],
         "first": true
-      }
+      },
+      "article": "matka"
     },
     "todo/kale": {
       "story": {
