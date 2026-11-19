@@ -88,7 +88,7 @@ export function MapHead({ region }: { region: string }) {
  * 国ではなく旅そのものを出す。
  */
 export function HereStat({ slug, name }: { slug: string; name: string }) {
-  /* **段（旅か・国か）は焼いた日で決めてよいが、日数は焼かない**（#337）。
+  /* **段（旅か・国か）は焼いた日で決めてよいが、日数は焼かない**（#339）。
      札がどちらの形かは、画面が出るまで焼いた日（`BUILT_AT`）の答えで出し、
      「◯日目」だけを今日が分かってから入れる。焼いた日の日数は、焼いた日の
      うちしか本当でない——焼いてから日付をまたいだ晩に、JS が動く前の札が
@@ -195,7 +195,7 @@ export function StayLen({ slug, from, plus }: { slug: string; from: string; plus
     const end = out ? Date.parse(`${out}T00:00:00Z`) : now.getTime();
     return Math.max(0, Math.floor((end - new Date(from).getTime()) / 86400000) + plus);
   };
-  /* **まだいる国の日数は、今日が分かるまで出さない**（#337）。焼いた日の
+  /* **まだいる国の日数は、今日が分かるまで出さない**（#339）。焼いた日の
      日数は、焼いた日のうちしか本当でない。
      焼いた日にもう出国していれば、数はそこで止まっていて、どの日に読んでも
      同じなので焼いてよい（JS を読まない読み手にも、終わった滞在の長さは残る）。

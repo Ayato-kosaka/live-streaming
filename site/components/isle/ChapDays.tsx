@@ -27,7 +27,7 @@ export default function ChapDays({ chapter, baked }: { chapter: Chapter; baked: 
  * 終わった章の日数は、どの日に読んでも同じなので焼いてよい（JS を読まない
  * 読み手にも「この島にいた 17日」が残る）。**いま歩いている章の日数は焼かない**——
  * 焼いた日の数は焼いた日のうちしか本当でなく、焼いてから日付をまたげば
- * JS が動く前の札が1日ずれる（`docs/island-misses.md` #337）。
+ * JS が動く前の札が1日ずれる（`docs/island-misses.md` #339）。
  * まだ始まっていない章も焼かない（始まった日から数えはじめるので）。
  */
 export function closedWhenBaked(c: Chapter): boolean {
@@ -44,7 +44,7 @@ export function closedWhenBaked(c: Chapter): boolean {
  * **画面が出るまでは、終わった章なら `baked`、それ以外は `null`。**
  * `null` を受けた側は数を出さずに場所だけ取る（`lib/useToday.ts` の `NOT_YET`）。
  * 前は歩いている章でも `baked`（焼いた日の数）を返していて、表紙の札が
- * JS の動く前に前の日の数を出していた（#337）。サーバ側と最初の1枚は
+ * JS の動く前に前の日の数を出していた（#339）。サーバ側と最初の1枚は
  * どちらも同じ答えになる（`BUILT_AT` しか見ない）ので、水あわせは落ちない（#30）。
  *
  * 数え直しは `useToday` の刻み（1分に1度）。島は配信のあいだ何時間も
@@ -82,7 +82,7 @@ export function useSinceWord(
 ): string {
   const n = useChapterDays(since?.chapter, NaN);
   if (!since) return baked;
-  // 歩いている章で、まだ今日が分からない。数を名乗らず場所だけ取る（#337）
+  // 歩いている章で、まだ今日が分からない。数を名乗らず場所だけ取る（#339）
   if (n === null) return NOT_YET;
   if (!Number.isFinite(n)) return baked;
   return `${n.toLocaleString()}${since.tail}`;

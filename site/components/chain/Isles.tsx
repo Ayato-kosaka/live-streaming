@@ -303,7 +303,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
           <p className="atl-nums">
             {/* 日数を先頭に置く。**島の大きさを決めているのはこれ** */}
             <span>
-              {/* **歩いている島の日数は、今日が分かるまで出さない**（#337）。
+              {/* **歩いている島の日数は、今日が分かるまで出さない**（#339）。
                   焼いた日の数は焼いた日のうちしか本当でない。終わった島の数は
                   どの日に読んでも同じなので焼く（`isle/ChapDays.tsx` と同じ決め） */}
               {today || closedWhenBaked(cur) ? (

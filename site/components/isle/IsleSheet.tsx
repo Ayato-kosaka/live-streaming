@@ -20,7 +20,7 @@ import type { IsleFact, IslePlaceSpec } from "./spec";
  */
 function Fact({ f }: { f: IsleFact }) {
   const n = useChapterDays(f.since, NaN);
-  /* 歩いている島の日数は、今日が分かるまで場所だけ取る（`ChapDays.tsx`。#337） */
+  /* 歩いている島の日数は、今日が分かるまで場所だけ取る（`ChapDays.tsx`。#339） */
   const v = !f.since ? f.n : n === null ? NOT_YET : Number.isFinite(n) ? n.toLocaleString() : f.n;
   return (
     <li>
