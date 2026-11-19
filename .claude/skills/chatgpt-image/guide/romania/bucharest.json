@@ -313,15 +313,15 @@
   "beyond": [
    {
     "id": "arc",
-    "name": "凱旋門・農村博物館",
+    "name": "凱旋門",
     "local": "Arcul de Triumf",
     "lat": 44.46719,
     "lon": 26.078127,
     "source": [
      "https://en.wikivoyage.org/wiki/Bucharest"
     ],
-    "x": 0.2,
-    "y": 0.06,
+    "x": 0.15,
+    "y": 0.19,
     "dir": "n"
    }
   ],
