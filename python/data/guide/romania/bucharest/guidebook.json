@@ -44,6 +44,22 @@
  "cover": {
   "catch": [
    {
+    "text": "「東欧のパリ」と称えられた街",
+    "type": "型3（「愛称」と称えられる＋呼び名。あやとが 2026-11-19 に #1228 で選んだ）",
+    "src": [
+     {
+      "name": "Wikipedia「Bucharest」",
+      "url": "https://en.wikipedia.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Proto Thema「Bucharest: The affordable Paris of Eastern Europe」（2024年9月30日）",
+      "url": "https://en.protothema.gr/2024/09/30/bucharest-the-affordable-paris-of-eastern-europe/",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   {
     "text": "「小パリ」と称えられた街",
     "type": "型3（「愛称」と称えられる＋呼び名。手本「『ドナウの真珠』と称えられる歴史都市ブダペスト」）",
     "src": [
@@ -71,17 +87,6 @@
      {
       "name": "ルーマニア政府観光局「ブカレスト」（日本語）",
       "url": "https://romaniatourism.com/ja/bucharest.html",
-      "seen": "2026-11-19"
-     }
-    ]
-   },
-   {
-    "text": "東欧の小パリ、ブカレストへ",
-    "type": "型5（呼び名、名前＋へ。手本「光の国、スウェーデンへ」）",
-    "src": [
-     {
-      "name": "Wikipedia（日本語）「ブカレスト」",
-      "url": "https://ja.wikipedia.org/wiki/%E3%83%96%E3%82%AB%E3%83%AC%E3%82%B9%E3%83%88",
       "seen": "2026-11-19"
      }
     ]
@@ -626,28 +631,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Piata Unirii Union Square Palace of Parliament Bucuresti Bucharest Romania 01.JPG",
-      "by": "Cris Coman",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG",
-      "alt": "統一広場の噴水と、国民の館へまっすぐ延びる大通り",
-      "w": 1200,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG/250px-Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG/500px-Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG/960px-Piata_Unirii_Union_Square_Palace_of_Parliament_Bucuresti_Bucharest_Romania_01.JPG"
-      }
-     }
-    ]
+    "drawn": "do"
    }
   },
   {
@@ -733,28 +717,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Bran Castle TB1.jpg",
-      "by": "Todor Bozhinov",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Bran_Castle_TB1.jpg",
-      "alt": "森の上の岩に立つ、赤い屋根と白い壁のブラン城",
-      "w": 3648,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Bran_Castle_TB1.jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/250px-Bran_Castle_TB1.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/500px-Bran_Castle_TB1.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/960px-Bran_Castle_TB1.jpg"
-      }
-     }
-    ]
+    "drawn": "do"
    }
   },
   {
@@ -819,28 +782,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Caru' cu Bere Bucharest, Romania (16277021890).jpg",
-      "by": "Clay Gilliland",
-      "lic": "CC BY-SA 2.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Caru%27_cu_Bere_Bucharest,_Romania_(16277021890).jpg",
-      "alt": "カル・ク・ベレの中。シャンデリアの下で食卓を囲む人たち",
-      "w": 3264,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Caru%27_cu_Bere_Bucharest,_Romania_(16277021890).jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg/250px-Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg/500px-Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg/960px-Caru%27_cu_Bere_Bucharest%2C_Romania_%2816277021890%29.jpg"
-      }
-     }
-    ]
+    "drawn": "do"
    }
   },
   {
@@ -915,7 +857,7 @@
     ]
    },
    "photo": {
-    "drawn": "eat"
+    "drawn": "do"
    }
   },
   {
@@ -968,7 +910,7 @@
     ]
    },
    "photo": {
-    "drawn": "eat"
+    "drawn": "do"
    }
   },
   {
@@ -1033,28 +975,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Libraria Carturesti Carusel - Interior ziua.jpg",
-      "by": "Mihai Petre",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
-      "alt": "白い吹き抜けのまわりに本棚の階が重なる、カルトゥレシュティ・カルセルの中",
-      "w": 1605,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/250px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/500px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Libraria_Carturesti_Carusel_-_Interior_ziua.jpg/960px-Libraria_Carturesti_Carusel_-_Interior_ziua.jpg"
-      }
-     }
-    ]
+    "drawn": "do"
    }
   },
   {
@@ -1124,28 +1045,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Bucuresti, Romania. ATHENEUL ROMAN. (Interior-Hall) (3) (B-II-m-A-18789).jpg",
-      "by": "Britchi Mirela",
-      "lic": "CC BY-SA 4.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Bucuresti,_Romania._ATHENEUL_ROMAN._(Interior-Hall)_(3)_(B-II-m-A-18789).jpg",
-      "alt": "アテネ音楽堂の中。大理石の階段と柱のロビー",
-      "w": 3648,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Bucuresti,_Romania._ATHENEUL_ROMAN._(Interior-Hall)_(3)_(B-II-m-A-18789).jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/250px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/500px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg/960px-Bucuresti%2C_Romania._ATHENEUL_ROMAN._%28Interior-Hall%29_%283%29_%28B-II-m-A-18789%29.jpg"
-      }
-     }
-    ]
+    "drawn": "do"
    }
   },
   {
@@ -1224,28 +1124,7 @@
     ]
    },
    "photo": {
-    "commons": [
-     {
-      "file": "Bucharest Christmas Market 2014 - 22 (16017115792).jpg",
-      "by": "Joe Mabel from Seattle, US",
-      "lic": "CC BY-SA 2.0",
-      "page": "https://commons.wikimedia.org/wiki/File:Bucharest_Christmas_Market_2014_-_22_(16017115792).jpg",
-      "alt": "クリスマスマーケット。大きな飾りと屋台のまわりを歩く人たち",
-      "w": 4288,
-      "src": [
-       {
-        "name": "Wikimedia Commons（ファイルのページ）",
-        "url": "https://commons.wikimedia.org/wiki/File:Bucharest_Christmas_Market_2014_-_22_(16017115792).jpg",
-        "seen": "2026-11-19"
-       }
-      ],
-      "thumbs": {
-       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg/250px-Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg",
-       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg/500px-Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg",
-       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg/960px-Bucharest_Christmas_Market_2014_-_22_%2816017115792%29.jpg"
-      }
-     }
-    ]
+    "drawn": "do"
    },
    "marks": [
     {
@@ -2213,6 +2092,500 @@
      "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/250px-Bran_Castle_TB1.jpg",
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/500px-Bran_Castle_TB1.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Bran_Castle_TB1.jpg/960px-Bran_Castle_TB1.jpg"
+    }
+   }
+  },
+  {
+   "key": "national-art",
+   "town": "bucharest",
+   "name": "ルーマニア国立美術館（旧王宮）",
+   "local": {
+    "text": "Muzeul Național de Artă al României",
+    "roman": "Muzeul National de Arta al Romaniei",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Art of Romania」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Art_of_Romania",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "革命広場に面した旧王宮の建物に入る美術館。ルーマニアの中世と近代の美術と、王家が集めたヨーロッパの絵を見せる。1989年の革命で建物が傷ついた。",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Art of Romania」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Art_of_Romania",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.440074,
+   "lon": 26.095788,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Muzeul Național de Artă al României」",
+     "url": "https://www.openstreetmap.org/node/2634652837",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+de+Art%C4%83+al+Rom%C3%A2niei+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "The National Museum of Art of Romania (11321261983).jpg",
+    "by": "Jorge Láscar from Australia",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:The_National_Museum_of_Art_of_Romania_(11321261983).jpg",
+    "alt": "革命広場に面した旧王宮の正面。いまはルーマニア国立美術館",
+    "w": 4288,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:The_National_Museum_of_Art_of_Romania_(11321261983).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/250px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/500px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg/960px-The_National_Museum_of_Art_of_Romania_%2811321261983%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "peasant",
+   "town": "bucharest",
+   "name": "ルーマニア農民博物館",
+   "local": {
+    "text": "Muzeul Național al Țăranului Român",
+    "roman": "Muzeul National al Taranului Roman",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of the Romanian Peasant」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_the_Romanian_Peasant",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "農村の暮らしの品を10万点あまり持つ博物館。民族衣装の布・イコン・焼き物が並ぶ。1996年に「ヨーロッパ・ミュージアム・オブ・ザ・イヤー」に選ばれた。",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of the Romanian Peasant」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_the_Romanian_Peasant",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.454423,
+   "lon": 26.083983,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Muzeul Național al Țăranului Român」",
+     "url": "https://www.openstreetmap.org/node/2634652844",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Na%C8%9Bional+al+%C8%9A%C4%83ranului+Rom%C3%A2n+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Bucharest, Romania. National Museum of the Romanian Peasant. Ceramic collection.jpg",
+    "by": "Britchi V.I.Iulia",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest,_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+    "alt": "ルーマニア農民博物館の焼き物の部屋。棚に並ぶ壺と皿",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest,_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/250px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/500px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg/960px-Bucharest%2C_Romania._National_Museum_of_the_Romanian_Peasant._Ceramic_collection.jpg"
+    }
+   }
+  },
+  {
+   "key": "cismigiu",
+   "town": "bucharest",
+   "name": "チシミジウ公園",
+   "local": {
+    "text": "Grădina Cișmigiu",
+    "roman": "Gradina Cismigiu",
+    "src": [
+     {
+      "name": "Wikipedia「Cișmigiu Gardens」",
+      "url": "https://en.wikipedia.org/wiki/Ci%C8%99migiu_Gardens",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1847年に開いた、中心部でいちばん古く大きな公園（14.6ヘクタール）。まん中に人の手で掘った池がある。",
+    "src": [
+     {
+      "name": "Wikipedia「Cișmigiu Gardens」",
+      "url": "https://en.wikipedia.org/wiki/Ci%C8%99migiu_Gardens",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikivoyage「Bucharest」",
+      "url": "https://en.wikivoyage.org/wiki/Bucharest",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.43726,
+   "lon": 26.0906,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Parcul Cișmigiu」",
+     "url": "https://www.openstreetmap.org/way/16291869",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Gr%C4%83dina+Ci%C8%99migiu+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Cismigiu - rowboats.jpg",
+    "by": "Joe Mabel",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Cismigiu_-_rowboats.jpg",
+    "alt": "チシミジウ公園の池に浮かぶ貸しボート",
+    "w": 3624,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Cismigiu_-_rowboats.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/250px-Cismigiu_-_rowboats.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/500px-Cismigiu_-_rowboats.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Cismigiu_-_rowboats.jpg/960px-Cismigiu_-_rowboats.jpg"
+    }
+   }
+  },
+  {
+   "key": "manuc",
+   "town": "bucharest",
+   "name": "ハヌル・ルイ・マヌク（旧市街の宿屋）",
+   "local": {
+    "text": "Hanul lui Manuc",
+    "roman": "Hanul lui Manuc",
+    "src": [
+     {
+      "name": "Wikipedia「Hanul lui Manuc」",
+      "url": "https://en.wikipedia.org/wiki/Hanul_lui_Manuc",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1808年にアルメニア人の商人マヌク・ベイが建てた隊商宿。木の回廊が囲む大きな中庭を持ち、いまも宿とレストランとして使われる、街でいちばん古い宿の建物。",
+    "src": [
+     {
+      "name": "Wikipedia「Hanul lui Manuc」",
+      "url": "https://en.wikipedia.org/wiki/Hanul_lui_Manuc",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.42972,
+   "lon": 26.102347,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Hanu' lui Manuc」",
+     "url": "https://www.openstreetmap.org/node/2486324769",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Hanul+lui+Manuc+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Bucharest - Hanul lui Manuc (2023) - img 03.jpg",
+    "by": "Chainwit.",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Hanul_lui_Manuc_(2023)_-_img_03.jpg",
+    "alt": "ハヌル・ルイ・マヌクの中庭と、2階を囲む木の回廊",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Hanul_lui_Manuc_(2023)_-_img_03.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/250px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/500px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg/960px-Bucharest_-_Hanul_lui_Manuc_%282023%29_-_img_03.jpg"
+    }
+   }
+  },
+  {
+   "key": "macca",
+   "town": "bucharest",
+   "name": "マッカ・ヴィラクロッセ・パサージュ",
+   "local": {
+    "text": "Pasajul Macca-Vilacrosse",
+    "roman": "Pasajul Macca-Vilacrosse",
+    "src": [
+     {
+      "name": "In Your Pocket「Pasajul Macca-Vilacrosse」",
+      "url": "https://www.inyourpocket.com/romania/bucharest/venues/pasajul-macca-vilacrosse",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "1891年にできた、黄色いガラスの屋根のアーケード。勝利通りから旧市街へ抜ける。",
+    "src": [
+     {
+      "name": "In Your Pocket「Pasajul Macca-Vilacrosse」",
+      "url": "https://www.inyourpocket.com/romania/bucharest/venues/pasajul-macca-vilacrosse",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.433016,
+   "lon": 26.098887,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Pasajul Macca - Vilacrosse」",
+     "url": "https://www.openstreetmap.org/way/657740103",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pasajul+Macca-Vilacrosse+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "Pasajul Macca-Villacrosse - Vedere Interior.jpg",
+    "by": "Mihai Petre",
+    "lic": "CC BY-SA 3.0 ro",
+    "page": "https://commons.wikimedia.org/wiki/File:Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+    "alt": "黄色いガラスの屋根が続く、マッカ・ヴィラクロッセ・パサージュの中",
+    "w": 1620,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/250px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/500px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg/960px-Pasajul_Macca-Villacrosse_-_Vedere_Interior.jpg"
+    }
+   }
+  },
+  {
+   "key": "salvation",
+   "town": "bucharest",
+   "name": "国民救済大聖堂",
+   "local": {
+    "text": "Catedrala Mântuirii Neamului",
+    "roman": "Catedrala Mantuirii Neamului",
+    "src": [
+     {
+      "name": "Wikipedia「People's Salvation Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/People%27s_Salvation_Cathedral",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "国民の館の向かいの丘に建つ、ルーマニア正教会の大聖堂。2010年に建て始め、2025年10月26日にモザイクが聖別されて15年の工事を終えた。高さは十字架の先まで133メートル。",
+    "src": [
+     {
+      "name": "Wikipedia「People's Salvation Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/People%27s_Salvation_Cathedral",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.425905,
+   "lon": 26.082294,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Catedrala Națională」",
+     "url": "https://www.openstreetmap.org/way/232332568",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+M%C3%A2ntuirii+Neamului+Bucure%C8%99ti&hl=ja",
+   "photo": {
+    "file": "People's Salvation Cathedral (1).jpg",
+    "by": "Turgidson",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:People%27s_Salvation_Cathedral_(1).jpg",
+    "alt": "金色の丸屋根を重ねた国民救済大聖堂",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:People%27s_Salvation_Cathedral_(1).jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/250px-People%27s_Salvation_Cathedral_%281%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/500px-People%27s_Salvation_Cathedral_%281%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/People%27s_Salvation_Cathedral_%281%29.jpg/960px-People%27s_Salvation_Cathedral_%281%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "peles",
+   "town": "sinaia",
+   "name": "ペレシュ城（シナイア）",
+   "local": {
+    "text": "Castelul Peleș",
+    "roman": "Castelul Peles",
+    "src": [
+     {
+      "name": "Wikipedia「Peleș Castle」",
+      "url": "https://en.wikipedia.org/wiki/Pele%C8%99_Castle",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "カルパチアの山あいの町シナイアに、国王カロル1世が建てた夏の城。1883年に開き、1914年まで建て増した。1953年から博物館。",
+    "src": [
+     {
+      "name": "Wikipedia「Peleș Castle」",
+      "url": "https://en.wikipedia.org/wiki/Pele%C8%99_Castle",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 45.360085,
+   "lon": 25.542733,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Castelul Peleș」",
+     "url": "https://www.openstreetmap.org/way/1454368027",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "シナイアは、ブカレストとブラショフを結ぶ幹線の鉄道の途中の駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Sinaia」",
+       "url": "https://en.wikivoyage.org/wiki/Sinaia",
+       "seen": "2026-11-19"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Castelul+Pele%C8%99+Sinaia&hl=ja",
+   "photo": {
+    "file": "Peles Castle - Sinaia - Romania 01.jpg",
+    "by": "Adam Jones Adam63",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+    "alt": "森を背にした、木組みの壁と尖った塔のペレシュ城",
+    "w": 3072,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/250px-Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/500px-Peles_Castle_-_Sinaia_-_Romania_01.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Peles_Castle_-_Sinaia_-_Romania_01.jpg/960px-Peles_Castle_-_Sinaia_-_Romania_01.jpg"
+    }
+   }
+  },
+  {
+   "key": "snagov",
+   "town": "snagov",
+   "name": "スナゴフ修道院",
+   "local": {
+    "text": "Mănăstirea Snagov",
+    "roman": "Manastirea Snagov",
+    "src": [
+     {
+      "name": "Wikipedia「Snagov Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Snagov_Monastery",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "スナゴフ湖の島に立つ修道院。いまの教会は1521年の建物。ヴラド・ツェペシュが葬られたという言い伝えがあるが、確かではない。島へは2009年にできた歩道橋で渡る。",
+    "src": [
+     {
+      "name": "Wikipedia「Snagov Monastery」",
+      "url": "https://en.wikipedia.org/wiki/Snagov_Monastery",
+      "seen": "2026-11-19"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.729703,
+   "lon": 26.175741,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Mănăstirea Snagov」",
+     "url": "https://www.openstreetmap.org/way/25511874",
+     "seen": "2026-11-19"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Snagov&hl=ja",
+   "photo": {
+    "file": "Snagov monastery, frontal view.JPG",
+    "by": "Ferran Cornellà",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Snagov_monastery,_frontal_view.JPG",
+    "alt": "スナゴフ修道院の正面。れんがと石の縞の壁の小さな教会",
+    "w": 2736,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Snagov_monastery,_frontal_view.JPG",
+      "seen": "2026-11-19"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/250px-Snagov_monastery%2C_frontal_view.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/500px-Snagov_monastery%2C_frontal_view.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Snagov_monastery%2C_frontal_view.JPG/960px-Snagov_monastery%2C_frontal_view.JPG"
     }
    }
   }

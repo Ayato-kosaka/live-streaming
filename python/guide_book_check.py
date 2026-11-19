@@ -343,9 +343,12 @@ class Book:
             ph = t.get("photo") or {}
             # 料理を食べる体験は、その料理の描いた絵を札にしてよい（`content/guidebook/manifest.ts` の `todoPic`）。
             # 材料には `photo.drawn: "eat"` と、結んだ食べたいもの（`links.eat`）を持たせる。実在の場所には当てない（#1228 Q1）
-            drawn = ph.get("drawn") == "eat" and bool((t.get("links") or {}).get("eat"))
+            # `photo.drawn: "do"` は、やりたいことのために描いた絵（`do-<key>`。ソフィアの型）。札が全部描いた絵の面は
+            # こちらにする（2026-11-19 #1228 あやと「描いた絵と写真が混ざっている」）。描けているかは面の見張り
+            # （`guide_watch.py` の下限）が書き出しで数える。ここは材料に札の絵の当てがあるかだけを見る
+            drawn = (ph.get("drawn") == "eat" and bool((t.get("links") or {}).get("eat"))) or ph.get("drawn") == "do"
             if not ph.get("commons") and not ph.get("card") and not drawn:
-                self.err(w, "写真の候補が無い（料理の体験なら photo.drawn: \"eat\" と links.eat）")
+                self.err(w, "写真の候補が無い（料理の体験なら photo.drawn: \"eat\" と links.eat。描いた絵なら photo.drawn: \"do\"）")
         for sec in ("see",):
             for it in d.get(sec) or []:
                 if "went" not in it:
