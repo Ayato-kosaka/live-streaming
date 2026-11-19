@@ -707,7 +707,7 @@ export function planPhase(p: Plan, now = new Date()): PlanPhase {
      `endsWhen` を持つものは、`done` が入るまで日付では終わらせない。 */
   /* 終わりの日。事実（`done`）が先、次に終わる予定の日（`until`）。
      どちらも無いときだけ、`endsWhen` が「日付では終わらない」を効かせる。 */
-  const end = p.done || p.until || (p.endsWhen ? "" : p.date);
+  const end = p.done || p.until || p.date;
   if (end && (daysUntil(end, now) ?? 0) < 0) return "after";
   return "during";
 }
