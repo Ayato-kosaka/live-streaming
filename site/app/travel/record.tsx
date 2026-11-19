@@ -8,6 +8,7 @@ import { WALKED_DONE, walkingCountries } from "@/content/walked";
 import { chapterNow } from "@/content/chapters";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
+import { STREAM_DIGEST } from "@/content/streamDigest";
 import { countryStat } from "@/content/countryStats";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
@@ -18,6 +19,7 @@ import CountryGuide from "@/components/nordic/CountryGuide";
 import { nordicCountry } from "@/content/nordic";
 import {
   TRAVEL_CITIES,
+  publicArticles,
   publicCities,
   travelCrumbs,
   travelHref,
@@ -25,6 +27,7 @@ import {
   travelShare,
   type TravelCity,
 } from "@/content/travel";
+import { articleOf } from "@/content/travel/articles";
 import { stayWord } from "@/lib/stay";
 import { fitTitle, lead, span } from "@/lib/seoText";
 import { JsonLd, articleLd } from "@/lib/jsonld";
@@ -265,6 +268,11 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   const prev = seq[idx - 1];
   const next = seq[idx + 1];
   const cooked = RECIPES.filter((x) => x.country === r.slug);
+  /* 行った街の記事（`/travel/<国>/<街>/<話>`）。題の頭（「ソフィアの物価【…】」）を札の字に、残りを添え書きに */
+  const articles = publicArticles(r.slug).map((a) => {
+    const x = articleOf(a.country, a.city, a.slug);
+    return { href: a.href, title: x.h1[0], note: x.h1.slice(1).join(""), icon: x.answer.icon };
+  });
   /**
    * その国での数（`content/countryStats.ts`）。
    *
@@ -461,6 +469,17 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
               );
             })}
           </div>
+          {/* 街の記事（物価など）。公開前の印が付いた記事は出さない——印を外した日に、ここにもひとりでに出る */}
+          {articles.map((a) => (
+            <Link key={a.href} prefetch={false} className="tile" href={a.href} style={{ marginTop: 12 }}>
+              <Icon name={a.icon} size={32} className="tile-icon" />
+              <span className="tile-text">
+                <b>{a.title}</b>
+                <i>{a.note}</i>
+              </span>
+              <Icon name="right" size={16} className="tile-go" />
+            </Link>
+          ))}
         </Panel>
       )}
 
@@ -478,6 +497,9 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                 note={fmt(v.date)}
                 open={i === 0}
               >
+                {/* その回に何があったかの1〜2行。人が書く見どころの代わりに、議事録の「ひとことで」から焼いたもの
+                    （`content/streamDigest.ts`。#1262 で本文が166字しか無かった）。議事録の無い回はカードだけ */}
+                {STREAM_DIGEST[v.videoId] && <p>{STREAM_DIGEST[v.videoId]}</p>}
                 <div className="scards">
                   <StreamCard videoId={v.videoId} title={v.title} date={v.date} nth={nthOf(v.date, v.videoId, v.title)} />
                 </div>

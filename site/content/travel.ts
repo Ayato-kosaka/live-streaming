@@ -224,6 +224,8 @@ export type TravelArticle = {
 
 const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "north-macedonia", city: "skopje", slug: "prices", crumb: "物価", draft: true },
+  /* ソフィアの物価（#1262）。配信で言った額だけで組むので、公開前の印は付けない */
+  { country: "bulgaria", city: "sofia", slug: "prices", crumb: "物価" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */

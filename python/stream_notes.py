@@ -381,6 +381,11 @@ def main(argv: list[str] | None = None) -> int:
         return check(root, a.month, a.stems)
     out = index(root, a.month)
     print(f"書いた: {out}")
+    if root == STREAMS:
+        # 国の面に添える1〜2行も、議事録が増えたこの場で焼く（`python/stream_digest.py`）。
+        # 目次と同じく「ひとことで」から作るので、別の日に回すと面だけが古くなる。見張りの差し替えた root では焼かない
+        import stream_digest
+        return stream_digest.bake()
     return 0
 
 

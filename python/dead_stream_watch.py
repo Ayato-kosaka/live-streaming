@@ -240,6 +240,9 @@ PAGES: dict[str, str] = {
     "north-macedonia-skopje.ts": "スコピエのガイドブック（/travel/north-macedonia/skopje）の、行った所の場面・一言・あやとの1日の額のリンク",
     # 旅のガイドの記事（`content/travel/<国>/<街>-<話>.ts`。焼くのは `python/guide_article.py`）
     "skopje-prices.ts": "スコピエの物価の記事（/travel/north-macedonia/skopje/prices）の、値段の表と一言の場面のリンク",
+    "sofia-prices.ts": "ソフィアの物価の記事（/travel/bulgaria/sofia/prices）の、値段の表と一言の場面のリンク",
+    # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
+    "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -253,7 +256,8 @@ PAGES: dict[str, str] = {
 # 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
 # 行き先はその1本しかない
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "skopje-prices.ts")
+         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "skopje-prices.ts",
+         "sofia-prices.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、
@@ -261,7 +265,7 @@ FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
 # 死んだときに見るのはその1枚かどうか
 SIDE = ("streamTypes.ts", "cityStreams.ts", "onThisDay.ts", "kitchenTalk.ts",
         "chapterStreams.ts", "legendDays.ts", "shorts.ts", "streamPeaks.ts",
-        "months.ts")
+        "months.ts", "streamDigest.ts")
 
 # 対照の生きた側。**あやとの配信から選んだ、いまのところ公開のもの。**
 # 3本並べてあるのは、1本が非公開になった日に見張りごと止まらないため。
