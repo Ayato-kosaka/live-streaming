@@ -147,7 +147,8 @@
         "facts": [
           "TDArug_te90@2220#place"
         ]
-      }
+      },
+      "article": "kale"
     },
     "see/clement": {
       "card": "clement",
@@ -278,7 +279,8 @@
           "TDArug_te90@9930#fact"
         ],
         "first": true
-      }
+      },
+      "article": "kale"
     },
     "todo/vodno": {
       "story": {
@@ -288,7 +290,8 @@
           "qAXRe3qQyvo@12300#quote"
         ],
         "first": true
-      }
+      },
+      "article": "vodno"
     },
     "eat/bakery": {
       "card": "panpan"
