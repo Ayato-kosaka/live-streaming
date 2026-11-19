@@ -1,4 +1,5 @@
 import type { GuideArticle } from "@/components/travel/article/types";
+import { ARTICLE as SOFIA_PRICES } from "./bulgaria/sofia-prices";
 import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
 
 /**
@@ -10,6 +11,7 @@ import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
  */
 const ARTICLES: Record<string, GuideArticle> = {
   "north-macedonia/skopje/prices": SKOPJE_PRICES,
+  "bulgaria/sofia/prices": SOFIA_PRICES,
 };
 
 /** 記事の中身。**無ければ書き出しを止める**（名簿に在るのに中身の無い記事を黙って出さない） */

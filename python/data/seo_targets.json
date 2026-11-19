@@ -10,7 +10,7 @@
     {"label": "ソフィア 観光 モデルコース／1日観光", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 観光 モデルコース", "ソフィア 1日観光", "ソフィア 一日観光"]},
     {"label": "ブルガリア ヨーグルト 本場", "page": "/travel/bulgaria/sofia", "queries": ["ブルガリア ヨーグルト 本場"]},
     {"label": "ブルガリア バラ お土産", "page": "/travel/bulgaria/sofia", "queries": ["ブルガリア バラ お土産"]},
-    {"label": "ソフィア 物価／ブルガリア 物価", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 物価", "ブルガリア 物価", "ブルガリア 物価 2026", "ブルガリア ユーロ 物価"]},
+    {"label": "ソフィア 物価／ブルガリア 物価", "page": "/travel/bulgaria/sofia/prices", "queries": ["ソフィア 物価", "ブルガリア 物価", "ブルガリア 物価 2026", "ブルガリア ユーロ 物価"]},
     {"label": "ソフィア 温泉", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア 温泉", "ソフィア 中央温泉浴場"]},
     {"label": "ソフィア クリスマスマーケット", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア クリスマスマーケット"]},
     {"label": "ソフィア リラ修道院 行き方", "page": "/travel/bulgaria/sofia", "queries": ["ソフィア リラ修道院 行き方", "リラ修道院 行き方", "ソフィア リラ修道院"]},
@@ -28,6 +28,7 @@
     {"label": "表紙", "path": "/", "kind": "home", "head": "あやと"},
     {"label": "歩いた国", "path": "/travel", "kind": "hub"},
     {"label": "スコピエ", "path": "/travel/north-macedonia/skopje", "kind": "guide", "head": "スコピエ観光"},
-    {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices", "kind": "article", "head": "スコピエの物価"}
+    {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices", "kind": "article", "head": "スコピエの物価"},
+    {"label": "ソフィアの物価", "path": "/travel/bulgaria/sofia/prices", "kind": "article", "head": "ソフィアの物価"}
   ]
 }

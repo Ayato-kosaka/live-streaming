@@ -16,7 +16,8 @@ import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
 import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
-import { travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
+import { travelArticle, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
+import { articleOf } from "@/content/travel/articles";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
 import "@/components/guidebook/guidebook.css";
@@ -49,6 +50,8 @@ import "@/components/guidebook/guidebook.css";
 
 const G = SOFIA;
 const CITY = travelCity(G.country, G.city);
+/* 物価の記事（#1262）。1日の予算の下から、払った額を品ごとに見に行けるように */
+const PRICES = { href: travelArticle(G.country, G.city, "prices").href, title: articleOf(G.country, G.city, "prices").h1[0] };
 
 /* 貼られたときの絵は、題を焼いた表紙（あやと 2026-11-18 #1228。焼いていなければ国の1枚のまま） */
 const DRAWN = readDrawn(G.country, G.city);
@@ -95,7 +98,7 @@ export default function SofiaPage() {
         <See g={g} n={3} />
         <Eat g={g} n={4} />
         <Buy g={g} n={5} />
-        <Basics g={g} n={6} />
+        <Basics g={g} n={6} article={PRICES} />
         {/* 面のいちばん下。導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228） */}
         <Videos g={g} n={7} />
         <Sources g={g} drawn={usedDrawn} />

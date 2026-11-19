@@ -252,6 +252,11 @@ export const SHELVES: Shelf[] = [
             "ボヤナ boyana リラ修道院 rila ヴィトシャ vitosha ユーロ euro レフ lev バルカン",
         ),
       },
+      /* 街の記事（物価など）。北マケドニアの棚と同じく、名簿の公開した記事から（`publicArticles`） */
+      ...publicArticles("bulgaria").map((a) => {
+        const g = articleOf(a.country, a.city, a.slug);
+        return { href: a.href, name: g.h1[0], note: g.h1.slice(1).join(""), q: q(g.title, a.slug, "物価 値段 prices") };
+      }),
     ],
   },
   {

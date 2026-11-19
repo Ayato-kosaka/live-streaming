@@ -717,6 +717,12 @@ BOOKS: dict[str, Book] = {
     "roulette.ts": Book(HUMAN, SKIP, 0, "ルーレットの結果に投げる1行。画面に出る言葉"),
     "trip.ts": Book(DERIVED, SKIP, 0, "旅の面の入口。`nordic.ts` から組む"),
     "tripPlaces.ts": Book(DERIVED, SKIP, 0, "旅程で降りる街。`nordic.ts` から導出する"),
+    "streamDigest.ts": Book(
+        MACHINE_HUMAN, SKIP, 0,
+        "配信1本の1〜2行（国の面の「この国であったこと」。#1262）。人が `/stream-notes` で足した議事録から、"
+        "`python/stream_digest.py` が続けて焼く。**古いかどうかは日数ではなく、議事録と同じか**で決まるので、"
+        "そちらは `stream_digest_selftest.py` が見る。日数を2か所に置かない",
+    ),
     "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
     "planDays.ts": Book(DERIVED, SKIP, 0, "日付→企画の表。`plans.ts` と `nordic.ts` から組む"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
