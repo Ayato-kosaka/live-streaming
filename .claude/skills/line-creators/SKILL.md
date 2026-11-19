@@ -175,3 +175,8 @@ EC2 には `zip` が無い。python の `zipfile` で固める。
 
 - 申請したら #716 に書く（何を、どの並びで、いくらで出したか）
 - 承認・差し戻しは「Message Center」（`/message/`）とメールに来る
+- **承認と、店に並ぶのは同じ時刻ではない。** 最初のセットは、あやとの「通った」（2026-11-19）から
+  2時間たっても店の頁（`store.line.me/stickershop/product/<ID>/ja`）も絵の置き場
+  （`stickershop.line-scdn.net/stickershop/v1/product/<ID>/LINEStorePC/main.png`）も 404 だった。
+  島に店へのリンクを出す PR は先に作っておき、**店の頁が curl で 200 になってから**札 `出す` を付ける
+  （404 のリンクを本番に出さない）
