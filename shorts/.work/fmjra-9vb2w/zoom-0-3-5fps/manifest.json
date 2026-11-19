@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "fmjra-9vb2w__zoom-0-3-5fps",
+ "mode": "zoom",
+ "dest": "fmjra-9vb2w/zoom-0-3-5fps",
+ "video": "fmjra-9vb2w",
+ "channel": null,
+ "request": "shorts/requests/yogurt-editplan-hook-fmjra-9vb2w-20261118.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1307,
+  "tar_gz": 1057,
+  "encrypted": 1072
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1072,
+   "sha256": "40885f1cf9ccdd48b1a02fe657004ebc41e48ed48799da3da5f2cb4f6a23feaf"
+  }
+ ],
+ "hmac_sha256": "5e095c368b69249e39b3a1377142137889f13023ba75c2d0713a7775b979a52a",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/44438330710",
+ "created_at": "2026-11-19T04:23:51+00:00"
+}
