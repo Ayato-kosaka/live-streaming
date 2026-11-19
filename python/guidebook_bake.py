@@ -36,8 +36,11 @@
 
 ## 写真
 
-- **行った項目は、その日のあやと島カード**（`compose.cards`。カードの日が、その項目の行った日のどれかでないと止める）。
-  置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
+- **札の絵はガイドの絵（描いた絵・借りた写真）のまま。その日のあやと島カードは、窓の中の行った箱に**（`Went.pic`。
+  あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい。窓の中の『行った』の所に出す」）。
+  前は行った項目の札の絵をカードに差し替えていて、描いた絵の並びに写真が混ざった。ガイドの絵が1枚も無い項目
+  （借りた写真の無い見どころ）だけ、面の側（`content/guidebook/manifest.ts` の `dress`）がカードを札の絵に回す。
+  カードは `compose.cards`。カードの日が、その項目の行った日のどれかでないと止める。置き場は `site/public/travel/<国>/<街>/<名前>-{480,960}.webp`（前のハブと記事と同じ所。取りかたも前のハブの `guide_bake.fetch_photos` と同じ口）
 - **行っていない項目は、材料の借りた写真**（Wikimedia Commons）。作者とライセンスを持たない写真は使わない。
   **面は Commons から直に読まない**——`python/guide_photos.py` が `site/public/guide/<国>/<街>/photos/` に落とした絵を指す
   （置き場に無ければ止める。混んだ日に Wikimedia が 429 で断り、前の見どころマップのピンが白い丸になった）
@@ -75,6 +78,10 @@ FAR_KM = 2.5
 LABEL = {"see": "見たいもの", "eat": "食べたいもの", "buy": "買いたいもの"}
 #: どのエリアにも入らない見どころを、いちばん近いエリアに入れてよい距離
 AREA_KM = 1.2
+#: 本人の言葉（`said`）として話に使ってよい人。配信の外で、本人がこちらに言った字（チャットで口述した例文など）
+SAID_BY = {"あやと"}
+#: 本人の言葉を話に入れるとき、整えてよいのは句読点と空白だけ。比べる前にこれを落とす
+SAID_LOOSE = re.compile(r"[\s、。，．,.・！!？?]")
 
 
 class Stop(Exception):
@@ -118,9 +125,11 @@ class Book:
                 raise Stop(f"{key} の {f} が無い（{d / f}）")
         self.g = json.loads((d / "guidebook.json").read_text(encoding="utf-8"))
         self.c = json.loads((d / "compose.json").read_text(encoding="utf-8"))
-        # facts の行は記事と同じ拾いかた（確かめの済んでいないファイルが1本でもあれば止まる）
+        # facts の行は記事と同じ拾いかた（確かめの済んでいないファイルが1本でもあれば止まる）。
+        # 行く前の街（材料の city.pre_trip）は facts が1本も無くても焼く（#1292）
         try:
-            self.b = gb.Baker(key, root=root, streams=streams, script=d / "compose.json")
+            self.b = gb.Baker(key, root=root, streams=streams, script=d / "compose.json",
+                              pre_trip=bool(self.g["city"].get("pre_trip")))
         except gb.Stop as e:
             raise Stop(str(e)) from e
         self.rows = {f"{x['v']}@{x['t']}#{x['it']['kind']}": x for x in self.b.rows}
@@ -162,6 +171,24 @@ class Book:
         bad = gf.numbers_in(text) - self.b.allowed_numbers(xs) - meas - (extra or set())
         if bad:
             self.err(where, f"「{text[:40]}…」の数 {sorted(bad)} が、結んだ行に無い（言っていない数を足さない）")
+
+    def check_said(self, s: dict, where: str) -> set[str]:
+        """話の出どころに**本人の言葉**（`said`）を使うときの確かめ。返すのは本人の言葉に在る数（話に書いてよい）。
+
+        配信の facts に無い字（「ホステルの都合上」）でも、本人がこちらに口述した字なら出どころになる
+        （あやと 2026-11-19、旧市街の例文を口述して「全然魅力的じゃない」）。ただし**句読点と空白のほかは1字も
+        変えずに**話の中に在ること——言い換えると、本人の言葉ではなくこちらの字になる。`said` は
+        `[{"by": "あやと", "date": "YYYY-MM-DD", "text": "…"}]`（いつ・誰が言ったかを控える）
+        """
+        out: set[str] = set()
+        for x in s.get("said") or []:
+            if x.get("by") not in SAID_BY or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", x.get("date", "")) or not x.get("text"):
+                self.err(where, f"本人の言葉は by（{'・'.join(sorted(SAID_BY))}）・date（YYYY-MM-DD）・text を持つ（{x}）")
+                continue
+            if SAID_LOOSE.sub("", x["text"]) not in SAID_LOOSE.sub("", s.get("text", "")):
+                self.err(where, f"本人の言葉「{x['text'][:24]}…」が、句読点のほかは同じ字のまま話に無い（言い換えない）")
+            out |= gf.numbers_in(x["text"])
+        return out
 
     def check_short(self, text: str, source: str, where: str) -> None:
         """要約の字（組み立て）の数が、元の材料の字に在るか"""
@@ -221,10 +248,11 @@ class Book:
     def card_by_id(self, cid: str) -> str | None:
         return next((k for k, v in (self.c.get("cards") or {}).items() if v["id"] == cid), None)
 
-    def local(self, loc, lang: str = "mk") -> dict | None:
+    def local(self, loc, lang: str | None = None) -> dict | None:
         if not isinstance(loc, dict) or not loc.get("text"):
             return None
-        out = {"text": loc["text"], "lang": loc.get("lang", lang)}
+        # 言葉の既定は、その街の言葉（材料の city.local.lang）。スコピエの mk を決め打ちしていた（#1292）
+        out = {"text": loc["text"], "lang": loc.get("lang", lang or self.g["city"]["local"]["lang"])}
         if loc.get("roman"):
             out["roman"] = loc["roman"]
         # 読みの仮名。エリアの短い名前（おしゃれエリア）に、現地の呼び名（デバル・マーロ）を添えるのに使う
@@ -265,7 +293,7 @@ class Book:
         if comp.get("story"):
             s = comp["story"]
             xs = self.rows_of(s.get("facts"), f"{where}.story")
-            self.check_numbers(s["text"], xs, f"{where}.story")
+            self.check_numbers(s["text"], xs, f"{where}.story", extra=self.check_said(s, f"{where}.story"))
             # `first`: 行った所の感想は、材料の話（行き方・コツ）より前に置く（あやと 2026-11-18 #1228
             # 「ブログなんで、行った所は感想をもっと入れてもいい」）。感想が窓の終わりの注意書きに埋もれないように
             if s.get("first"):
@@ -273,6 +301,12 @@ class Book:
             else:
                 story.append(s["text"])
         out: dict = {"date": min(r["date"] for r in rows), "scene": self.scene(at)}
+        # その日のカードは、札の絵ではなく窓の中の行った箱に（あやと 2026-11-19）。日は行った日のどれか
+        card = comp.get("card") or (x.get("photo") or {}).get("card_name")
+        if card:
+            pic = self.card(card, where, {r["date"] for r in rows})
+            if pic:
+                out["pic"] = pic
         if story:
             out["story"] = story
         if x.get("short"):
@@ -291,12 +325,10 @@ class Book:
         return {r["date"] for r in self.rows_of((w or {}).get("facts") if isinstance(w, dict) else [], "")}
 
     def pic_for(self, sec: str, x: dict, where: str, fallback: dict | None) -> dict | None:
-        """行った項目はその日のカード、行っていない項目は借りた写真"""
+        """札の絵は借りた写真（描いた絵は面の側が manifest から重ねる）。**カードは札に使わない**——行った箱の `pic`（`went`）"""
         name = ((self.c.get("items") or {}).get(f"{sec}/{x.get('key')}") or {}).get("card")
-        if name:
-            if not x.get("went") and sec != "eat-note":
-                self.err(where, f"行っていない項目に、カード「{name}」を付けている")
-            return self.card(name, where, self.went_days(x) if sec != "eat-note" else None)
+        if name and not x.get("went"):
+            self.err(where, f"行っていない項目に、カード「{name}」を付けている")
         return self.commons(fallback, where)
 
     # ------------------------------------------------------------ 節
@@ -362,9 +394,21 @@ class Book:
                 next(x for x in out if x["id"] == pick)["see"].append(it["id"])
         return out
 
+    def center(self) -> dict:
+        """面の中心（遠い見どころの「中心から◯km」とマイマップの枠の起点）。スコピエはマケドニア広場（鍵 square）、
+        無ければ見たいものの rank 1 の1件目。前は build() だけが square を決め打ちしていて、無い街は (0, 0) になった（#1292）"""
+        rank1 = next(s for s in self.g["see"] if s.get("rank") == 1 and "lat" in s)
+        return next((s for s in self.g["see"] if s["key"] == "square"), rank1)
+
+    def rate(self) -> dict:
+        """面に出す円の直しかた。通貨の名前・1ユーロあたりの現地の額・参照レートの日は材料の rate が持つ
+        （スコピエのデナル・eur_mkd・2026-11-13 を決め打ちしていた。#1292）"""
+        r = self.g["rate"]
+        per_eur = r.get("eur_local", r.get("eur_mkd"))
+        return {"unit": r.get("unit", "デナル"), "yen": round(r["eur_jpy"] / per_eur, 2), "date": r.get("date", "2026-11-13")}
+
     def see(self) -> tuple[list[dict], list[dict]]:
-        center = next(s for s in self.g["see"] if s.get("rank") == 1 and "lat" in s)
-        sq = next((s for s in self.g["see"] if s["key"] == "square"), center)
+        sq = self.center()
         items, far = [], []
         for s in self.g["see"]:
             w = f"see({s['key']})"
@@ -409,19 +453,19 @@ class Book:
             own = [p for k in ("what", "why", "how", "time", "money", "tips", "route") for p in pts.get(k) or [] if not has_src(p)]
             join = lambda ps: "".join(text_of(p) for p in ps)  # noqa: E731
             ph = t.get("photo") or {}
-            pic = None
+            # 札の絵は借りた写真か描いた絵（面の側が manifest から重ねる）。**その日のカードは窓の中の行った箱に**
+            # （あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい」）。
             # 1枚のカードを2つに切って使う日がある（食堂コスモスのチェバピと豆の煮込み）。どちらの切りかたかは組み立てで選ぶ
             comp_card = ((self.c.get("items") or {}).get(f"todo/{t['key']}") or {}).get("card")
-            if t.get("went") and comp_card:
-                pic = self.card(comp_card, w, self.went_days(t))
-            elif t.get("went") and ph.get("card"):
+            if t.get("went") and not comp_card and ph.get("card"):
                 name = self.card_by_id(ph["card"]["id"])
                 if not name:
                     self.err(w, f"材料のカード {ph['card']['id']} が compose.json の cards に無い")
                 else:
-                    pic = self.card(name, w, self.went_days(t))
-            if not pic:
-                pic = self.commons((ph.get("commons") or [None])[0], w)
+                    t = {**t, "photo": {**ph, "card_name": name}}
+            elif comp_card and not t.get("went"):
+                self.err(w, f"行っていない項目に、カード「{comp_card}」を付けている")
+            pic = self.commons((ph.get("commons") or [None])[0], w)
             it = {"id": t["key"], "title": t["title"], "lead": t["head"], "what": join(ext["what"] + ext["why"]),
                   "how": join(ext["how"]), "time": join(ext["time"]), "money": join(ext["money"]), "tip": join(ext["tips"]),
                   "route": join(ext["route"]), "see": (t.get("links") or {}).get("see") or [],
@@ -521,12 +565,7 @@ class Book:
             if not comp.get("kinds"):
                 self.err(w, "絞りの札（compose.json の kinds）が無い")
             it = {"id": n["key"], "name": n["name"], "body": "", "facts": [], "kinds": comp.get("kinds") or [], "src": []}
-            days = {r["date"] for r in self.rows_of(n.get("facts"), w)}
-            name = comp.get("card")
-            if name:
-                pic = self.card(name, w, days)
-                if pic:
-                    it["pic"] = pic
+            # カードは行った箱に（`went`）。札の絵が無いので、面の側がカードを札に回す
             wt = self.went("eat", {"key": n["key"], "went": {"facts": n.get("facts")}}, w, story_from=[n])
             if wt:
                 it["went"] = wt
@@ -544,7 +583,9 @@ class Book:
             own = [p for p in pts if not has_src(p)]
             words = None
             if g.get("phrases"):
-                words = [{"local": {"text": p["mk"], "lang": "mk", "roman": p["roman"], "kana": p["kana"]}, "jp": p["ja"]} for p in g["phrases"]]
+                lang = self.g["city"]["local"]["lang"]
+                words = [{"local": {"text": p.get("local") or p["mk"], "lang": lang, "roman": p["roman"], "kana": p["kana"]}, "jp": p["ja"]}
+                         for p in g["phrases"]]
             lead = c.get("lead")
             if not lead and words:
                 lead = f"{words[0]['local']['text']}（{words[0]['local']['kana']}）＝{words[0]['jp']}"
@@ -621,8 +662,9 @@ class Book:
             if sum(p["yen"] for p in parts) != d["total_yen"]:
                 self.err(f"basics.budget({d['label']})", "内訳の足し算が合計と合わない")
             days.append({"label": d["label"], "parts": parts})
-        extras = [{"label": x["label"], "local": f"{x['den']}デナル", "yen": f"{x['yen']}円", "src": self.src(x.get("src"))}
-                  for x in bud.get("extras") or []]
+        unit = self.rate()["unit"]
+        extras = [{"label": x["label"], "local": f"{x.get('local', x.get('den'))}{unit}", "yen": f"{x['yen']}円",
+                   "src": self.src(x.get("src"))} for x in bud.get("extras") or []]
         note = None
         if bud.get("note") and not has_src(bud["note"]):
             note = self.went("guide", {"key": "budget"}, "basics.budget.note", story_from=[bud["note"]], facts=bud["note"].get("facts"))
@@ -693,8 +735,8 @@ class Book:
     def build(self) -> dict:
         g, c = self.g, self.c
         city_local = g["city"]["local"]["text"]
-        sq_spec = next((s for s in g["see"] if s["key"] == "square"), None)
-        sq = (sq_spec["lat"], sq_spec["lon"]) if sq_spec else (0.0, 0.0)
+        sq_spec = self.center()
+        sq = (sq_spec["lat"], sq_spec["lon"])
         see, far = self.see()
         about = self.about()
         todo = self.todo()
@@ -708,7 +750,14 @@ class Book:
             lead = ""
         else:
             lead = catch[cover["catch"]]["text"]
-        pic = self.card(cover.get("card", ""), "cover")
+        # 表紙の写真は、行った街はその日のカード（組み立ての cover.card）、行く前の街は借りた写真（材料の cover.photo。#1292）。
+        # 描いた表紙が在れば面はそちらを出すので、ここは描いていない日の受け皿と出どころの欄
+        if cover.get("card"):
+            pic = self.card(cover["card"], "cover")
+        else:
+            pic = self.commons((g.get("cover") or {}).get("photo"), "cover")
+            if not pic:
+                self.err("cover", "表紙の写真が無い（組み立ての cover.card か、材料の cover.photo）")
         counts = {"todo": len(todo), "see": len(see), "eat": len(g["eat"]["items"])}
         desc = c["description"]["text"].format(**counts)
         self.check_numbers(desc, self.rows_of(c["description"].get("facts"), "description"), "description",
@@ -731,7 +780,7 @@ class Book:
             "kicker": self.table["countries"][self.country]["name"],
             "local": {"text": city_local, "lang": g["city"]["local"]["lang"], "roman": g["city"]["local"]["roman"]},
             "lead": lead, "cover": pic or {}, "title": c["title"].format(**counts), "description": desc,
-            "rate": {"unit": "デナル", "yen": round(g["rate"]["eur_jpy"] / g["rate"]["eur_mkd"], 2), "date": "2026-11-13"},
+            "rate": self.rate(),
             "about": about, "todo": todo,
             "see": {"items": see, "far": far, **({"map": maps["see"]} if "see" in maps else {})},
             "eat": {"kinds": [{"id": k["key"], "label": k["name"]} for k in g["eat"]["kinds"]], "items": eat, "places": self.places("eat", sq),

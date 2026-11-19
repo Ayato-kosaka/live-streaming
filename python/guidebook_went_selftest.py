@@ -173,7 +173,27 @@ def missing_row(c):
     c["items"][k]["facts"].append("xxxxxxxxxxx@1#place")
 
 
+def said_reworded(c):
+    """本人の言葉（said）を控えたのに、話の字は言い換えている"""
+    k = first(lambda k, v: v.get("story"))
+    if not k:
+        return False
+    st = c["items"][k]["story"][0]
+    st["said"] = [{"by": "あやと", "date": "2026-11-19", "text": "本人が口述したままの字で、話には入っていない"}]
+
+
+def said_bad_by(c):
+    """本人の言葉の主が、決まった人でない（チャットの視聴者さんの字を本人の言葉にしない）"""
+    k = first(lambda k, v: v.get("story"))
+    if not k:
+        return False
+    st = c["items"][k]["story"][0]
+    st["said"] = [{"by": "だれか", "date": "2026-11-19", "text": st["text"]}]
+
+
 broken("話に、結んだ行に無い数", add_number)
+broken("本人の言葉を言い換えて話に入れる", said_reworded)
+broken("本人の言葉の主が決まった人でない", said_bad_by)
 broken("カードの日が行った日に無い", wrong_day)
 broken("一言を、本人の一言の無い場面の項目に", say_no_quote)
 broken("確かめが要る行（verify）を結ぶ", verify_row)
@@ -181,6 +201,15 @@ broken("場面が項目の行の外", scene_outside)
 broken("話の行が項目の行の外", story_outside)
 broken("使っていないカード", unused_card)
 broken("無い行を結ぶ", missing_row)
+
+# 本人の言葉は、句読点と空白だけ違っていてよい（あやとの口述を、句読点を整えて話に入れる。2026-11-19）
+c = copy.deepcopy(base)
+k = first(lambda k, v: v.get("story"))
+st = c["items"][k]["story"][0]
+st["said"] = [{"by": "あやと", "date": "2026-11-19", "text": st["text"].replace("、", "").replace("。", "")}]
+with tempfile.TemporaryDirectory() as t:
+    code, _ = bake(c, Path(t))
+ok("本人の言葉が句読点だけ違う → 焼ける", code, 0)
 
 print("[3] 組み立てが無ければ 2（0件を合格にしない）")
 with tempfile.TemporaryDirectory() as t:

@@ -4,7 +4,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug, isWalkedCountry, type Country } from "@/content/countries";
-import { WALKED_DONE, walkingCountries } from "@/content/walked";
+import { WALKED_DONE, chapterCountries, walkingCountries } from "@/content/walked";
 import { CHAPTERS, chapterNow } from "@/content/chapters";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
@@ -58,7 +58,7 @@ import { ArtStamp } from "@/components/streams/Art";
  *   つぎの国がまだ無ければ開いたまま——**日付では終わらない**（#1282。移る日は移るときに分かる）
  * - 配信の数と人数 … `content/countryStats.ts`（毎晩 BigQuery から焼かれる）
  * - 行った街 … 街のガイドの名簿（`content/travel.ts` の `CITIES`。実際に行った街だけが載る）
- * - 一言 … その国に入った日に動いていた旅（`content/chapters.ts`）と、滞在の長さ
+ * - 一言 … その国に入った日に動いていた旅（`content/chapters.ts`）の何カ国目か（`chapterCountries`）と、滞在の長さ
  *
  * - この国であったこと … その滞在の配信（`content/cityStreams.ts`。毎晩焼かれる）。押すとその配信へ飛ぶ
  *
@@ -171,16 +171,24 @@ function walkingRecord(slug: string): CountryRecord | undefined {
      （街がガイドのカードになった・街が2つ以上で振り分けられない）、「この国であったこと」に並べる */
   const inTown = towns.some((t) => !t.guide && t.streams.length > 0);
   /* 旅の名前は、その国に入った日に動いていた章（`app/travel/page.tsx` の年表と同じ引き方） */
-  const trip = chapterNow(new Date(`${k.entered}T12:00:00+02:00`)).name;
+  const chapter = chapterNow(new Date(`${k.entered}T12:00:00+02:00`));
+  const trip = chapter.name;
+  /* その旅の何カ国目か。**島（章）が歩いた国を数える式と同じ1つ**（`content/walked.ts` の `chapterCountries`）。
+     前は「〈旅〉のとちゅうに回った国」で、旅のどこに置かれた国かが言えていなかった（あやと 2026-11-19
+     「北マケドニアのページは、滞在の説明とかない」）。押してあるスタンプは歩いた国ぜんぶの通し番号なので、
+     ここは旅の名前を頭に付けて、どちらの数かを字で分ける */
+  const nth = chapterCountries(chapter).findIndex((x) => x.slug === slug) + 1;
+  const order = nth > 0 ? `${trip}の${nth}カ国目。` : `${trip}のとちゅうに${k.left ? "回った" : "回っている"}国。`;
   const where = names.length === 1 ? `${names[0]}に` : "";
   const summary = k.left
-    ? `${trip}のとちゅうに回った国。${where}${stayWord(daysBetween(k.entered, k.left))}いた。`
-    : `${trip}のとちゅうに回っている国。${ymdJa(k.entered)}に入った。`;
+    ? `${order}${where}${stayWord(daysBetween(k.entered, k.left))}いた。`
+    : `${order}${ymdJa(k.entered)}に入った。`;
   const headLead = k.left ? (
     summary
   ) : (
     <>
-      {trip}のとちゅうに回っている国。{where ? `${where}来て、` : "入って、"}
+      {order}
+      {where ? `${where}来て、` : "入って、"}
       <StayAbout slug={slug} from={k.entered} />。
     </>
   );
@@ -619,7 +627,15 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                     （`content/streamDigest.ts`。#1262 で本文が166字しか無かった）。議事録の無い回はカードだけ */}
                 {STREAM_DIGEST[v.videoId] && <p>{STREAM_DIGEST[v.videoId]}</p>}
                 <div className="scards">
-                  <StreamCard videoId={v.videoId} title={v.title} date={v.date} nth={nthOf(v.date, v.videoId, v.title)} />
+                  {/* 絵の説明は街の畳み・見どころと同じ（`thumbAlt`。#1296）。ここだけ空だったので、街の畳みから
+                      この節へ配信が移る国（街のガイドを公開した北マケドニア）で、名乗らない絵が35枚増えるところだった */}
+                  <StreamCard
+                    videoId={v.videoId}
+                    title={v.title}
+                    date={v.date}
+                    nth={nthOf(v.date, v.videoId, v.title)}
+                    alt={thumbAlt(r.name, v.date, v.title)}
+                  />
                 </div>
               </Fold>
             ))}

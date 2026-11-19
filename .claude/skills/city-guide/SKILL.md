@@ -17,6 +17,7 @@ description: 街のガイドの面（ガイドブック型。`/travel/<国>/<街
 | --- | --- |
 | `docs/guide-design.md` の ★章 | 面の形（骨組みはガイド・肉付けは体験・やりたいこと・どんな街・地図・札の印）。**★章が下の0〜9章より勝つ** |
 | `docs/guide-copy.md` | キャッチ・やりたいことの見出しとリード・地区の呼び名（軸 A/B）。**言葉を書く直前にもう一度** |
+| `docs/guide-blog.md` | 行った箱（「あやとの旅の記録」）の感想。**あやとの一人称・です／ます**、その日の事情 → まず思ったこと → 良かった・困った → 次に行く人へ |
 | `docs/country-guide.md` | 写真（1-2-1）・通貨のいま（1-3）・国の面を足す場所（6章）・字の束（6-2）・出す前に測る6つ（7章） |
 | `docs/island-misses.md` #323 #326〜#333 | ガイドの面で外したこと（4章に1行ずつ） |
 | `docs/seo.md` | 狙う語の決めかた・入れた手の控え・週の表の読みかた |
@@ -82,11 +83,13 @@ description: 街のガイドの面（ガイドブック型。`/travel/<国>/<街
 - **案2「大人の画集」**（あやと 2026-11-16）。頼み書きはスコピエのを写して `scene`・品ごとの `desc`（英語）と `alt` を書き換える。
   `style_ref` はソフィアの1枚のまま（トーンをそろえる）
 - **実在の場所は本物の写真**（#1228 の Q1 は A）。描くのは表紙・見どころマップ・料理・土産と、行っていないやりたいこと
+- **料理と土産の絵に布を描かせない**（ナプキン・ハンカチ・テーブルクロス。`docs/guide-design.md` 4-2 の「布」）。道具が頼み文に入れるので、`desc` に布を書かない
 - **表紙には題を焼く**（#333）。頼み書きの頭に `title`（街の名前・「観光ガイド」・キャッチ・国）、`cover` `cover_tall` に札の置き場 `title` と `file`。
   札は街の主役（建物・像）を隠さない所へ。`finalize` が焼く。**横 240px に縮めて街の名前が読めるか**を自分で見る（縮めかたは5章「地図・表紙の 240px」）
 - **og と記事の絵は字の無い表紙から**（`finalize` が og の 1200x630 と Article の 16:9・4:3・1:1 を切る。#332 の決めごと3）。題を焼いた絵は面の表紙だけ。
   主役が切れる比は頼み書きの `cover.share`（スコピエの 4:3 は縦から）
-- **行った所は、その日のあやとのカード**が描いた絵より先（`compose.json` の `cards`）
+- **札の絵は描いた絵・借りた写真のまま。その日のあやとのカードは窓の中の行った箱に**（`compose.json` の `cards`。2026-11-19 に改めた。
+  あやと「やりたいことの札の絵は、あやと島カードの写真に替えなくていい」。`docs/island-misses.md` #335）
 - 回しかたは `/chatgpt-image` 6（`plan` → `layout` → `run` → `status` は `send_later` で待つ → `fetch` → `finalize` → `sheet`）。
   見るのは `sheet` の2枚だけ。新しい街は `sheet --with bulgaria/sofia` でトーンを混ぜて見る
 
@@ -190,6 +193,8 @@ EC2 の Chrome（札 `ytstudio`。`/ec2-chrome`）で Search Console の URL 検
 - **返事を拾い忘れる**（`docs/island-misses.md` #330）: 要約の「〜待ち」を信じず、issue を開いて確かめる
 - **段の旗を倒したときの道具**（`docs/island-misses.md` #331）: `draft` のように旗で道が分かれる道具は、倒した値で1回通してから倒す
 - **題と表紙を面の中身で立てる・問いを真似しない**（`docs/island-misses.md` #332・#333）: 題と h1 は「〈街〉観光ガイド」、表紙の絵に題を焼く。どんな街の問いは、その街が何で語られているかを調べて2〜3つ
+- **行った感想を三人称の記録にしない・facts から品を作らない**（`docs/island-misses.md` #335）: 行った箱は `docs/guide-blog.md` の型で、あやとの一人称。
+  品はガイドの品だけ（防寒具・自炊の買い出しは「ガイドブックになっていない」）で、体験はその品の窓に肉付けする
 - ほかに: ガイドを配信の事実の並びにしない（`docs/island-misses.md` #323）・行っていない街を「行った」と書かない（`docs/island-misses.md` #324）
 
 ## 5. 道具の呼び方（`<国>/<街>` を取る。2026-11-18 にスコピエで1つずつ確かめた）
@@ -197,24 +202,24 @@ EC2 の Chrome（札 `ytstudio`。`/ec2-chrome`）で Search Console の URL 検
 | 段 | 呼び方 | 確かめかた | 穴（次に作る人へ） |
 | --- | --- | --- | --- |
 | facts | `python3 python/guide_facts.py pending --country <国>`／`city --country <国> --city <街> -o <scratch>/<街>.md`。抜くのは `python3 python/guide_extract.py --pending --country <国> --out <scratch>/guide --jobs 3`（`claude -p`） | `pending`・`city` は乾いた実行 0。`guide_extract` は `--help` | — |
-| 材料の確かめ | `python3 python/guide_book_check.py <国>/<街>` | 乾いた実行 0 | **座標の枠（`BBOX`）とショートの国旗（🇲🇰）がスコピエ固定**。次の街の前に、材料か国の表から読むように直す |
+| 材料の確かめ | `python3 python/guide_book_check.py <国>/<街>` | 乾いた実行 0 | 座標の枠と国旗は国の表（`python/data/guide/cities.json` の国の `flag`・街と日帰りの遠出の `bbox`）から読む。**新しい国・街は先にそこへ足す**（2026-11-19 ブカレストで埋めた。#1292） |
 | 材料を集める | **無い** | — | 11-15 に「1回の `claude -p` に決まった形で書かせ、道具で出どころを確かめる」と決めたが、道具はまだ。いまは担当が集める |
 | 人物像と狙う語 | **無い** | — | サジェストは curl（`G_skopje_intent.md` の測りかた） |
-| 写真（Commons） | `gh workflow run commons_photos.yml -f 'queries={"<料理>":"<1語>"}' -f limit=10`（artifact `photos`）→ `python3 python/guide_photos.py --lookup "File:<名前>.jpg" …`（材料の写真の欄を組む。外に出る）／`--check <国>/<街>` | `--check` 0・ワークフローは `gh workflow view` で入力を見た | — |
+| 写真（Commons） | `gh workflow run commons_photos.yml -f 'queries={"<料理>":"<1語>"}' -f limit=10`（artifact `photos`）→ `python3 python/guide_photos.py --lookup "File:<名前>.jpg" …`（材料の写真の欄を組む。外に出る）／`--check <国>/<街>`。置き場へ落とすのは `gh workflow run heavy_watch.yml --ref <枝> -f guide=<国>/<街>`（artifact `photos`。作業箱からは 429 で落ちない日がある） | `--check` 0・ワークフローは `gh workflow view` で入力を見た | — |
 | カードの写真 | `python3 python/guidebook_bake.py <国>/<街> --photos` | `--help` | 外に出る |
 | 行った（手で組んだ街） | `python3 python/guidebook_went.py <国>/<街>`（組み立ては `python/data/guide/<国>/<街>/went.json`。`--photos` でカード・`--check` で比べる）。焼いた `<国>-<街>-went.ts` を面の TS が id で当てる | `guidebook_went_selftest.py`（崩した組み立てを1点ずつ止める） | ソフィアだけ。材料を焼く道に移したら要らない |
-| 焼く | `python3 python/guidebook_bake.py <国>/<街>`（`--check` で焼かずに比べる） | `--check` 0 | **通貨がスコピエ固定**（`デナル`・`eur_mkd`・レートの日付）。行く前の街（facts の無い街）を焼いたことはまだ無い |
+| 焼く | `python3 python/guidebook_bake.py <国>/<街>`（`--check` で焼かずに比べる） | `--check` 0 | 通貨は材料の `rate`（`unit`・`eur_local`・`date`）、行く前の街は材料の `city.pre_trip: true` で facts 無しに焼ける・表紙は `cover.photo`（2026-11-19 ブカレストで埋めた） |
 | 面 | **無い**（スコピエの `page.tsx` を写す） | — | — |
 | 絵 | `python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> plan｜layout｜run｜status｜fetch｜finalize｜sheet｜check --work <scratch>/guide-art/<国>/<街>` | `plan`・`check` 0 | — |
-| 地図・表紙の 240px | **無い**。`python3 -c "from PIL import Image; im=Image.open('<…>-1200.webp'); im.resize((240, round(240*im.height/im.width)), Image.LANCZOS).save('<scratch>/am240.png')"`（表紙は `<街>-観光ガイド-1600.webp` と `-縦-1600.webp`） | 乾いた実行 0 | — |
+| 地図・表紙の 240px | `python3 python/guide_thumb.py <国>/<街> --out <scratch>/thumb240.png`（manifest の見どころマップと表紙2枚を横 240px で1枚に並べる。読めるかは目で見る） | スコピエで 0 | — |
 | マイマップの CSV | `python3 python/guide_book_check.py <国>/<街> --mymaps` | 乾いた実行 0（差分 0） | — |
 | マイマップ | `python3 .claude/skills/mymaps/mymaps.py sync python/data/guide/<国>/<街>/mymaps --city <街の名前>`／`move <dir>`／`verify <dir>` | `verify` 0 | `sync` `move` は EC2（`run_in_background`） |
 | 記事 | `python3 python/guide_article.py <国>/<街>/<話> --check` | 乾いた実行 0 | — |
 | 面の見張り | `python3 python/guide_watch.py --dist site/.next-<port> <国>/<街>` | 書き出し無しで 2 | — |
-| 形の見張り | `DIST=… SPORT=… PAGE=/travel/<国>/<街> node tools/sprites/guidebook.mjs` | 配っていない口で 2 | **Actions に乗っていない**（`heavy_watch.yml` に無い）。手元の書き出しで回す |
+| 形の見張り | `DIST=… SPORT=… PAGE=/travel/<国>/<街> node tools/sprites/guidebook.mjs`。Actions なら `gh workflow run heavy_watch.yml --ref <枝> -f guide=<国>/<街>`（`fontbake` が書き出し1枚に guide_watch・guidebook.mjs・seo_audit・fontbudget を当てる） | 配っていない口で 2 | — |
 | 重い見張り | `gh workflow run heavy_watch.yml --ref <枝>`（reachwatch・firstload・nospec。`apply` は付けない＝見るだけ） | `gh workflow view` で入力を見た | — |
 | 検索の作り | `python3 python/seo_audit.py --no-site --detail /travel/<国>/<街>`（本番）／`--dist site/.next-<port>`（出す前。置き場に `sitemap.xml` が要る） | 本番で 0・`--dist` も 0 | — |
-| 字の束 | 街の面を `tools/fonts/subset.py` の `SOLO` に足す（その面の字だけの1本。ソフィア 1,206.6 → 332.2KB）→ `ONLY=/travel/<国>/<街>.html OUT=… DIST=… SPORT=… node tools/sprites/fontweigh.mjs` で測って表へ差し込む → `python3 tools/fonts/subset.py --export site/.next-<port>` → `DIST=site/.next-<port> node tools/sprites/fontbudget_selftest.mjs`（書き出しを渡すと、表の古さまで見る） | `--help`・構文 | — |
+| 字の束 | 街の面を `tools/fonts/subset.py` の `SOLO` に足す（その面の字だけの1本。ソフィア 1,206.6 → 332.2KB）→ `ONLY=/travel/<国>/<街>.html OUT=… DIST=… SPORT=… node tools/sprites/fontweigh.mjs` で測って表へ差し込む → `python3 tools/fonts/subset.py --export site/.next-<port>` → `DIST=site/.next-<port> node tools/sprites/fontbudget_selftest.mjs`（書き出しを渡すと、表の古さまで見る）。**作業箱で書き出せない日は** `gh workflow run heavy_watch.yml --ref <枝> -f guide=<国>/<街>`（字の変わったほかの面は `-f fonts=/next.html,…`）→ artifact `fonts` を落として積む | `--help`・構文 | — |
 | あやとを呼ぶ | `gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/call_ayato.yml/dispatches -f ref=master -f 'inputs[issue]=<番号>' -f 'inputs[text]=<何を決めてほしいか>'` | `gh workflow view` で入力を見た（押すと通知が飛ぶので押していない） | 字は公開のログに出る |
 | インデックス登録 | **無い**（EC2 の Chrome で手で） | — | — |
 | 週の表 | 月曜の朝にひとりでに。手で見るなら `gh workflow run seo_weekly.yml -f dry_run=true`（issue に書かずに要約へ） | `gh workflow view` で入力を見た | — |

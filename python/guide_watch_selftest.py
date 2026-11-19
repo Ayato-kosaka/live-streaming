@@ -301,6 +301,38 @@ if not BREAK:
                                    "--dist", d], capture_output=True, text=True, timeout=120).returncode
             ok("-", "書き出しに無い面は 2", code, 2)
 
+    # 行く前の街（材料の city.pre_trip）は facts が無いのが正しい。行った街から facts を抜いたときは 2 のまま（分かれること）
+    with tempfile.TemporaryDirectory() as d:
+        dist, empty = Path(d) / "dist", Path(d) / "streams"
+        empty.mkdir()
+        (dist / "travel/romania").mkdir(parents=True)
+        (dist / "travel/north-macedonia").mkdir(parents=True)
+        body = '<html><head><title>x</title></head><body><article class="gb"><p>道が広く、車はゆっくり走る。</p></article></body></html>'
+        (dist / "travel/romania/bucharest.html").write_text(body, encoding="utf-8")
+        (dist / "travel/north-macedonia/skopje.html").write_text(body, encoding="utf-8")
+        ok("-", "ブカレストの材料は、行く前の街の印を持つ", gw.pre_trip("romania/bucharest"), True)
+        ok("-", "スコピエの材料は、行く前の街の印を持たない", gw.pre_trip("north-macedonia/skopje"), False)
+        code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
+                               "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
+        ok("-", "行く前の街は、facts が無くても 0（「行った」の突き合わせを飛ばす）", code, 0)
+        code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "north-macedonia/skopje", "--dist", str(dist),
+                               "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
+        ok("-", "対照: 行った街から facts を抜くと 2（置き場を見失ったのと同じ）", code, 2)
+        (dist / "travel/romania/bucharest.html").write_text(
+            '<html><head><title>x</title></head><body><article class="gb"><p>道が広い。</p>'
+            f'{say("ここ安いね", "abcdefghijk", 60)}</article></body></html>', encoding="utf-8")
+        code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
+                               "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
+        ok("-", "対照: 行く前の街に一言を置くと 1", code, 1)
+        # 行く前の街の額は、材料の外の事実（出どころつきの字）に在れば通る。無い額は 1
+        for amt, want in (("5レイ", 0), ("999レイ", 1)):
+            (dist / "travel/romania/bucharest.html").write_text(
+                f'<html><head><title>x</title></head><body><article class="gb"><p>地下鉄は1回{amt}。</p></article></body></html>',
+                encoding="utf-8")
+            code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
+                                   "--streams", str(empty)], capture_output=True, text=True, timeout=120).returncode
+            ok("-", f"行く前の街の額「{amt}」は、材料の外の事実に{'在るので 0' if want == 0 else '無いので 1'}", code, want)
+
 
 # ---------------------------------------------------------------- 7. 対照
 

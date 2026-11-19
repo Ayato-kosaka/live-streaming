@@ -16,7 +16,7 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { AHEAD_COUNTRIES } from "@/content/countries";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
-import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
+import { coverShare, dress, readDrawn } from "@/content/guidebook/manifest";
 import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
 import { TRAVEL_ARTICLES, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
@@ -52,10 +52,10 @@ import "@/components/guidebook/guidebook.css";
  * 旧市街と新市街。2026-11-18 #1228）、題は「スコピエ観光ガイド」で表紙の絵に題を焼いた、見どころマップは地区名を焼いた D2 の絵地図
  * （旧市街・新市街。日本語の頁の分けかた）、見たいもの22か所の名札（座標つき）。ソフィアと同じ部品で、街の字は焼いた中身だけ。
  *
- * ## 公開前
+ * ## 公開
  *
- * あやとが読んで OK を出すまで検索に出さない（`content/travel.ts` の `draft`。`robots` が `index: false`、
- * 索引・`/all`・国の面のカードにも出ない）。
+ * あやとが読んで OK を出した日（2026-11-19）に、`content/travel.ts` の公開前の印（`draft`）を外した。
+ * 印が付いているあいだは `robots` が `index: false` で、索引・`/all`・国の面のカードにも出なかった。
  */
 
 const G = SKOPJE;
@@ -96,18 +96,10 @@ export default function SkopjePage() {
   const drawn = DRAWN;
   const articles = articlesOf(G.country, G.city);
   const prices = articles.find((a) => a.href === G.basics.budget.article);
-  /* 描いた絵があれば、やりたいこと・料理・土産の絵を差し替える。**行った項目はその日の写真のまま**（あやとが撮ったものが先）。
-     行ったのにその日の写真が無い品（箱入りクッキー・防寒具・ドネル・ケバブ…）は、描いた絵に落とす。前は字1つの色の札で、
-     行った品ほど絵が無く見えた（2026-11-18、本番の 390 幅で6枚） */
-  const swap = <T extends { went?: unknown; pic?: unknown }>(it: T, pic?: (typeof drawn.food)[string]) =>
-    pic && (!it.went || !it.pic) ? { ...it, pic } : it;
-  const g = {
-    ...G,
-    stay: stayOf(G.country),
-    todo: G.todo.map((t) => swap(t, todoPic(drawn, t))),
-    eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
-    buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
-  };
+  /* 描いた絵があれば、やりたいこと・料理・土産の札の絵にする。行った項目のその日のカードは札に使わず、
+     窓の中の「あやとの旅の記録」に出す（あやと 2026-11-19「やりたいことの札の絵は、あやと島カードの写真に替えなくていい」。
+     決めかたは `dress`。ソフィアと同じ） */
+  const g = { ...dress(G, drawn), stay: stayOf(G.country) };
   const went = firstWent(g);
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);

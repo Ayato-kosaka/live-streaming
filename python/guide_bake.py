@@ -98,8 +98,11 @@ class Baker:
     """台本1本を、facts と突き合わせる。記事（`guide_article.py`）と街のガイドブック（`guidebook_bake.py`）が使う。"""
 
     def __init__(self, key: str, root: Path = ROOT, streams: Path | None = None, table: Path | None = None,
-                 script: Path | None = None):
+                 script: Path | None = None, pre_trip: bool = False):
         self.key = key
+        # 行く前の街（配信の facts が1本も無い街）。**街のガイドブックだけが立てる**——記事は行った話なので、
+        # facts が無ければ止まるのが正しい。ガイドブックは骨組み（出どころつきの外の事実）だけで焼ける（#1292）
+        self.pre_trip = pre_trip
         self.country, self.city = key.split("/")
         self.root = root
         self.streams = streams or root / "streams"
@@ -117,7 +120,7 @@ class Baker:
     def _index(self) -> None:
         files = [p for p in gf.find_files(self.streams, [], None)
                  if gf.head_of(p).get("country") == self.country and gf.head_of(p).get("city") == self.city]
-        if not files:
+        if not files and not self.pre_trip:
             raise Stop(f"{self.key} の .facts.json が1本も無い")
         for p in files:
             r = gf.check_file(p, self.table)

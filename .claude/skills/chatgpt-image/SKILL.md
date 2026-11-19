@@ -155,6 +155,8 @@ python3 .claude/skills/chatgpt-image/tidy.py <持ち帰った.png> <出力.png> 
 道具は `guide_art.py`、街ごとに変わるのは**頼み書き** `guide/<国>/<街>.json` だけ（ソフィア・スコピエのを写して、
 `scene`・地図の `prompt` と `areas`・品ごとの `desc`（英語）と `alt`（面に出す字）を書き換える）。字を入れない・トーン・
 手本の1枚（ソフィアのショプスカ・サラダ／バラのオイル）を渡す、は道具が持つ。品の鍵は guidebook.json（無い街は面の TS）から読む。
+**料理と土産に布を描かせない**（ナプキン・ハンカチ・テーブルクロス・敷物。あやと 2026-11-19「全部ハンカチ（布）が写っていて AI 生成っぽい」）。
+道具が頼み文に `NOCLOTH` を入れ、手本の布巾も写させない。`desc` にも布を書かない（品そのものが布のときだけ、品として書く）。
 
 ```bash
 G=.claude/skills/chatgpt-image/guide_art.py; C=bulgaria/sofia; W=<スクラッチ>/guide-art/$C   # 地図の下敷き（layout）は $W に置く
