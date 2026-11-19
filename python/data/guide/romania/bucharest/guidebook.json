@@ -1353,26 +1353,6 @@
      "caru",
      "carusel"
     ]
-   },
-   "photo": {
-    "file": "Bucharest - Sunset on Lipscani Street (28592940111).jpg",
-    "by": "Ștefan Jurcă from Munich, Germany",
-    "lic": "CC BY 2.0",
-    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Sunset_on_Lipscani_Street_(28592940111).jpg",
-    "alt": "夕暮れのリプスカニ通り。古い建物の前にテラス席が並ぶ",
-    "w": 4608,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Sunset_on_Lipscani_Street_(28592940111).jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/250px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/500px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg/960px-Bucharest_-_Sunset_on_Lipscani_Street_%2828592940111%29.jpg"
-    }
    }
   },
   {
@@ -1473,27 +1453,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "(3) Bucuresti, Romania. Piata Palatului - Piata Revolutiei (vedere de ansamblu).jpg",
-    "by": "Britchi Mirela",
-    "lic": "CC BY-SA 4.0",
-    "page": "https://commons.wikimedia.org/wiki/File:(3)_Bucuresti,_Romania._Piata_Palatului_-_Piata_Revolutiei_(vedere_de_ansamblu).jpg",
-    "alt": "革命広場。広い石畳の広場と、まわりに並ぶ大きな建物",
-    "w": 3648,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:(3)_Bucuresti,_Romania._Piata_Palatului_-_Piata_Revolutiei_(vedere_de_ansamblu).jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/250px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/500px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg/960px-%283%29_Bucuresti%2C_Romania._Piata_Palatului_-_Piata_Revolutiei_%28vedere_de_ansamblu%29.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pia%C8%9Ba+Revolu%C8%9Biei+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "athenaeum",
@@ -1601,27 +1561,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "Bucharest - Stavropoleos Monastery (28648667365).jpg",
-    "by": "Ștefan Jurcă from Munich, Germany",
-    "lic": "CC BY 2.0",
-    "page": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Stavropoleos_Monastery_(28648667365).jpg",
-    "alt": "スタヴロポレオス修道院の中庭。彫刻のある石の柱の回廊",
-    "w": 4608,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Bucharest_-_Stavropoleos_Monastery_(28648667365).jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/250px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/500px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg/960px-Bucharest_-_Stavropoleos_Monastery_%2828648667365%29.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%83n%C4%83stirea+Stavropoleos+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "curtea",
@@ -1665,27 +1605,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "Curtea Veche Church with garden, Bucharest, 2017.jpg",
-    "by": "DimiTalen",
-    "lic": "CC0",
-    "page": "https://commons.wikimedia.org/wiki/File:Curtea_Veche_Church_with_garden,_Bucharest,_2017.jpg",
-    "alt": "旧王宮跡のそばに立つ、れんがの縞模様の古い教会と庭",
-    "w": 5846,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Curtea_Veche_Church_with_garden,_Bucharest,_2017.jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/250px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/500px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg/960px-Curtea_Veche_Church_with_garden%2C_Bucharest%2C_2017.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=Curtea+Veche+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "carusel",
@@ -1871,27 +1791,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "Catedrala Patriarhală, București (2023) - IMG 02.jpg",
-    "by": "Chainwit.",
-    "lic": "CC BY-SA 4.0",
-    "page": "https://commons.wikimedia.org/wiki/File:Catedrala_Patriarhal%C4%83,_Bucure%C8%99ti_(2023)_-_IMG_02.jpg",
-    "alt": "白い壁と灰色の丸屋根が3つ並ぶ総主教大聖堂",
-    "w": 4032,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Catedrala_Patriarhal%C4%83,_Bucure%C8%99ti_(2023)_-_IMG_02.jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/250px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/500px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg/960px-Catedrala_Patriarhal%C4%83%2C_Bucure%C8%99ti_%282023%29_-_IMG_02.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=Catedrala+Patriarhal%C4%83+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "arc",
@@ -1974,27 +1874,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "Dimitrie Gusti national village museum Bucharest house veranda.jpg",
-    "by": "Cris Coman",
-    "lic": "PD",
-    "page": "https://commons.wikimedia.org/wiki/File:Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
-    "alt": "農村博物館の古い木の家。軒の深い縁側",
-    "w": 1200,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/250px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/500px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg/960px-Dimitrie_Gusti_national_village_museum_Bucharest_house_veranda.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzeul+Satului+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "park",
@@ -2033,27 +1913,7 @@
     }
    ],
    "info": [],
-   "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja",
-   "photo": {
-    "file": "Herastrau park leaves (Unsplash).jpg",
-    "by": "Rula Sibai rulasibai",
-    "lic": "CC0",
-    "page": "https://commons.wikimedia.org/wiki/File:Herastrau_park_leaves_(Unsplash).jpg",
-    "alt": "紅葉した木と落ち葉、その向こうの湖。ヘラストラウ公園の秋",
-    "w": 4106,
-    "src": [
-     {
-      "name": "Wikimedia Commons（ファイルのページ）",
-      "url": "https://commons.wikimedia.org/wiki/File:Herastrau_park_leaves_(Unsplash).jpg",
-      "seen": "2026-11-19"
-     }
-    ],
-    "thumbs": {
-     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/250px-Herastrau_park_leaves_%28Unsplash%29.jpg",
-     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/500px-Herastrau_park_leaves_%28Unsplash%29.jpg",
-     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Herastrau_park_leaves_%28Unsplash%29.jpg/960px-Herastrau_park_leaves_%28Unsplash%29.jpg"
-    }
-   }
+   "maps": "https://www.google.com/maps/search/?api=1&query=Parcul+Regele+Mihai+I+Bucure%C8%99ti&hl=ja"
   },
   {
    "key": "ceausescu",
