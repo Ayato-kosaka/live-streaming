@@ -3338,7 +3338,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
    "title": "スコピエ｜買いたいもの",
    "ll": "41.9953,21.4292",
    "z": 14,
-   "pins": 10
+   "pins": 8
   }
  },
  "videos": {
@@ -4221,6 +4221,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-19",
- "hash": "d1e1c0b2663dc3d8"
+ "hash": "3e08bd9b04e2b06b"
 }
 /* END GUIDE */;
