@@ -157,6 +157,8 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "DjKYQtnrtMg", date: "2026-11-14", title: "🇲🇰北マケドニアでハードパン3種の実験をしたら、まさかの事態に！" },
     { id: "8pokq_0j_HE", date: "2026-11-15", title: "🇪🇪エストニアでハトにパンをあげたら、フンまみれにされた！" },
     { id: "cJbIZUniHqk", date: "2026-11-16", title: "🇬🇧イギリス第三の街を、1日歩いて回ったらやばかった！" },
+    { id: "ZHlmGcnAGq8", date: "2026-11-17", title: "🇲🇰北マケドニアで教会に入ったら、お祈りの最中で場違いすぎた！" },
+    { id: "uuuZpzpJiHk", date: "2026-11-18", title: "🇲🇰北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！" },
   ],
 };
 
