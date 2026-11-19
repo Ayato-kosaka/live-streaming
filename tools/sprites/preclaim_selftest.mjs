@@ -30,6 +30,8 @@
  *    子として起こして、外した状態で**判定が死ぬ**ことまで見る。
  *    ここが無いと、「対照が5つとも通った」は
  *    **`BREAK=` が何も外していないとき**にも出る
+ * 7. **時の数だけを見る判定（`dayClaim`）**——`datebake.mjs` の3が使う。
+ *    時の数は拾い、段（まもなく・移動中）と並びの残りの数は拾わない（#337）
  *
  * ## 壊した写しで落ちること
  *
@@ -48,7 +50,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { judge, servedDiff, subtract, verdict } from "./preclaim.mjs";
+import { countClaim, dayClaim, judge, servedDiff, subtract, verdict } from "./preclaim.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 let OK = 0;
@@ -78,6 +80,7 @@ const MUST = [
   ["あと 7 日", "焼いた日からの残りなので、翌日には合わない"],
   ["もう出発しました", "出発の前に読むと嘘"],
   ["旅は7日目です", "日ごとに1ずつずれる"],
+  ["旅に出て 53日目", "#337。焼いてから数えるまでに日付をまたいだ晩、`/travel` の札に出ていた"],
   ["きょうの配信はお休みです", "焼いた日の「きょう」でしかない"],
   ["ストックホルムに到着。", "着く前に読むと嘘"],
   ["募集中", "締め切ったあとも残る"],
@@ -221,6 +224,49 @@ console.log("# 6. BREAK の足が、1本ずつ折れる");
     `console.log((await servedDiff(["/nowhere-at-all.html"], "/nonexistent-dir", "http://127.0.0.1:1")).length);`;
   check("BREAK=nodist で突き合わせが死ぬ", askChild("nodist", D) === "0", askChild("nodist", D));
   check("BREAK を渡さなければ落ちる", askChild("", D) === "1", askChild("", D));
+}
+
+/* ------------------------------- 7. 時の数だけを見る（`dayClaim`） -- */
+
+/* `datebake.mjs` の3（JS が動く前の字に、日で変わる時の数が無いか）が使う。
+   **時の数は拾い、段と並びの残りの数は拾わない**——段は焼いた日の段で焼いてよい
+   （#336 の決めごと4）ので、ここで段まで拾うと datebake が毎晩「焼いた日の段」で
+   赤くなる。「あと2つだす」は焼いた並びの残りで、並びと一緒に読めば本当（#337）。 */
+console.log("# 7. 時の数だけを見る（dayClaim）");
+{
+  const DAY_MUST = [
+    ["旅に出て 53日目", "", ""],
+    ["2024年9月11日に日本を出て、きょうで 724 日目。", "", ""],
+    ["あと 7 日", "", ""],
+    ["1年ぶりの日本", "", ""],
+    // 札の大きい数字と見出しが別の段（`/travel` の「旅した日数」がこの形）
+    ["756", "", "旅した日数"],
+    ["614", "", "毎日配信の日数"],
+  ];
+  for (const [line, prev, next] of DAY_MUST) {
+    const j = dayClaim(line, prev, next);
+    check(`時の数として拾う「${line}」`, j.hit, j.hit ? "" : "拾わなかった");
+  }
+  const DAY_NOT = [
+    ["まもなく", "", "", "段の言い切り。数ではない（judge は拾う）"],
+    ["いま移動中", "", "", "同上"],
+    ["ストックホルムに到着。", "", "", "同上"],
+    ["9/11", "", "", "絶対の日付"],
+    ["2026年11月19日", "", "", "同上"],
+    ["66人の住人", "", "", "相対の単位が付いていない"],
+    ["あと2つだす", "", "2026年11月12日", "並びの残りの数（`Longer`）。隣の日付の数を、この行のせいにしない"],
+    ["あと 12 件", "", "", "同上"],
+  ];
+  for (const [line, prev, next, why] of DAY_NOT) {
+    const j = dayClaim(line, prev, next);
+    check(`時の数として拾わない「${line}」（${why}）`, !j.hit, j.hit ? `［${j.why}］で拾った` : "");
+  }
+  // **`dayClaim` は `countClaim` の内側。** `countClaim` は `judge` の3つめと同じ答え
+  for (const [line, prev, next] of DAY_MUST) {
+    check(`countClaim も拾う「${line}」`, countClaim(line, prev, next).hit, "拾わなかった");
+    check(`judge も拾う「${line}」`, judge(line, prev, next).hit, "拾わなかった");
+  }
+  check("「あと2つだす」は countClaim なら拾う（数の族そのものは狭めていない）", countClaim("あと2つだす").hit, "拾わなかった");
 }
 
 /* ------------------------------------------------------------------ まとめ -- */

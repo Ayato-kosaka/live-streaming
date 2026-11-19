@@ -28,6 +28,9 @@
  *      何を測っても通る）
  *   2. **A を、B の日の時計で開く。** そこが B の字になっていれば数え直して
  *      いる。A の字のままなら**焼いたまま**——それが見つけたいもの
+ *   3. **1 で見つけた字そのもの（JS が動く前の字）に、今日から数える時の
+ *      数が無いか。** 2 が通っても、JS が動く前の字は焼いた日の数のまま配られる
+ *      （#337。下の「3」の注）。ファイルだけで見られるので、ブラウザより先に回す
  *
  * ## 対照（この道具が落ちられることを、毎回先に見る）
  *
@@ -37,6 +40,7 @@
  *
  *   BREAK=noclock  … B の日の時計を刺さない。全部が「焼いたまま」で 1 になる
  *   BREAK=sameday  … B のかわりに A を突き合わせる。候補 0件で 2 になる
+ *   BREAK=nocount  … 3 の判定を外す。3 の対照（仕込んだ数を拾えるか）が外れて 2 になる
  *
  * ## 焼いた日は、書き出したものから読む
  *
@@ -51,6 +55,7 @@ import { chromium } from "playwright-core";
 import { DIST, PAGES, checkAgainstSitemap } from "./islepages.mjs";
 import { offline } from "./route.mjs";
 import { fromRoot } from "./repo.mjs";
+import { dayClaim } from "./preclaim.mjs";
 
 const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const SPORT = process.env.SPORT || "4201";
@@ -214,6 +219,73 @@ if (!nCand)
 for (const [p, hits] of cand)
   for (const h of hits) console.log(`  ${p}  「${h.a}」→「${h.b}」`);
 
+// ---------------------------------------------------------------- 3. JS が動く前の字に、日で変わる数が無いか
+
+/**
+ * **焼いた字のうち日で変わったもの（1 の候補）が、今日を知らないと出せない数か。**
+ *
+ * ## なぜ要るか（`docs/island-misses.md` #337）
+ *
+ * 2 は「画面が出たあとに数え直しているか」しか見ない。数え直していても、
+ * **JS が動く前の字は焼いた日の数のまま配られる。** その字が本当なのは焼いた日の
+ * うちだけで、翌日に開いた人の1瞬目と、JS を読まない読み手には、きのうの数が出る。
+ *
+ * それを見ていたのは `preclaim.mjs`（JS 前と後の引き算）だけで、あちらは
+ * **焼いた日と見る日が同じなら差が出ない。** 毎晩の見張りは書き出してすぐ数えるので、
+ * 赤くなるのは**書き出しと数えるあいだに日付をまたいだ晩だけ**だった。
+ * 2026-11-19 の夜、書き出しが 21:41 UTC、`/travel` を読んだのが 22:03 UTC で、
+ * 旅の暦（`content/chapters.ts` の `tripDate`。UTC+2 で切る）の日付をまたぎ、
+ * 「旅に出て 53日目」で赤くなった。**差分（`/goods` だけ）とは関係なく。**
+ *
+ * こちらは日を変えて2回焼いてあるので、**どの時刻に回しても同じ答えになる。**
+ *
+ * **見るのは時の数だけ。** 段（旅のとちゅうか・終わったか）は焼いた日の段で焼いてよい
+ * （#336 の決めごと4）ので、`preclaim.mjs` の3つの族のうち数の族の、さらに
+ * 時を数えるものだけを当てる（`dayClaim`。判定の正本はあちら1か所）。
+ * 並びの残りの数（「あと2つだす」）は焼いた並びと一緒に読めば本当で、段の側に入る。
+ *
+ * @param {Map<string, {i: number, a: string}[]>} c 面 → 候補
+ * @param {(p: string) => string[]} tokensOf その面の焼いた字の並び（隣の字を窓に使う）
+ * @returns {{page: string, a: string, why: string}[]}
+ */
+function countsBaked(c, tokensOf) {
+  // 壊しかた `nocount`: 判定を外す。**何を焼いていても 0件になる**
+  if (BREAK === "nocount") return [];
+  const out = [];
+  for (const [p, hits] of c) {
+    const t = tokensOf(p) || [];
+    for (const h of hits) {
+      const j = dayClaim(h.a, t[h.i - 1] || "", t[h.i + 1] || "");
+      if (j.hit) out.push({ page: p, a: h.a, why: j.why });
+    }
+  }
+  return out;
+}
+
+/* **対照が先**（`docs/island-standards.md` §15）。作り物の候補を2面ぶん組んで、
+   **焼いた時の数は拾い、焼いた段・日付・並びの残りの数は拾わない**ことを見る。
+   外れたら数字を出さずに 2。拾わない側は、実際に日で変わって候補に出る字
+   （`/next` の「あと2つだす」は、先の企画が過ぎると「あと3つだす」になる）。 */
+{
+  const plant = new Map([
+    ["/plant-a", [{ i: 1, a: "旅に出て 53日目" }, { i: 3, a: "756" }]],
+    ["/plant-b", [{ i: 1, a: "北欧周遊" }, { i: 3, a: "11/19" }, { i: 5, a: "旅がおわった" }, { i: 6, a: "あと2つだす" }]],
+  ]);
+  const toks = {
+    "/plant-a": ["旅に出て", "旅に出て 53日目", "", "756", "旅した日数"],
+    "/plant-b": ["いまは", "北欧周遊", "", "11/19", "", "旅がおわった", "あと2つだす", "2026年11月12日"],
+  };
+  const got = countsBaked(plant, (p) => toks[p]).map((x) => x.a);
+  const want = ["旅に出て 53日目", "756"];
+  const ok = got.length === want.length && want.every((w) => got.includes(w));
+  console.log(`\n■ 対照（JS 前の字に日で変わる数）: 拾った ${got.length ? got.map((x) => `「${x}」`).join("") : "なし"}（ほしい: ${want.map((x) => `「${x}」`).join("")}）`);
+  if (!ok) cannotCount("3 の対照が外れた（焼いた時の数を拾えない・段や並びの数まで拾っている）");
+}
+
+const counted = countsBaked(cand, (p) => baked(DIST_A, p));
+console.log(`\n■ JS が動く前の字に、日で変わる時の数: ${counted.length}か所`);
+for (const x of counted) console.log(`  × ${x.page}  「${x.a}」  ［${x.why}］`);
+
 // ---------------------------------------------------------------- 2. A を、2つの時計で開く
 
 const b = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
@@ -347,12 +419,19 @@ for (const [p, hits] of cand) {
 await b.close();
 
 console.log(`\n焼き込まれた日付の字 ${nCand}か所 — 数え直していた ${ok} / 焼いたまま ${frozen.length} / 位置が取れず ${lost.length}`);
+console.log(`JS が動く前の字に、日で変わる数 ${counted.length}か所`);
 if (lost.length) cannotCount(`${lost.length}か所で位置が取れなかった（測れていないものを「焼いたまま 0件」に混ぜない）`);
 if (frozen.length) {
   console.error(`\n× 焼いたままの字が ${frozen.length}か所`);
   for (const s of frozen) console.error(`  ${s}`);
   console.error("  直しかた: 字ではなく「何から数えるか」を渡して、画面が出てから数え直す");
   console.error("  （`site/components/atlas/Days.tsx` / `site/components/isle/ChapDays.tsx`）");
-  process.exit(1);
 }
-console.log("○ 焼いた日付の字は、ぜんぶ画面が出てから数え直していました");
+if (counted.length) {
+  console.error(`\n× JS が動く前の字に、日で変わる数が ${counted.length}か所`);
+  for (const x of counted) console.error(`  ${x.page}  「${x.a}」`);
+  console.error("  直しかた: 数は今日が分かるまで出さない（`site/lib/useToday.ts` の `useToday` / `NOT_YET`）");
+  console.error("  段（どの章か・終わったか）は焼いた日の段で焼いてよい。数だけを外す");
+}
+if (frozen.length || counted.length) process.exit(1);
+console.log("○ 焼いた日付の字は、ぜんぶ画面が出てから数え直していて、JS が動く前に数を名乗っていませんでした");
