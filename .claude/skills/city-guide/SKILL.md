@@ -59,7 +59,11 @@ description: 街のガイドの面（ガイドブック型。`/travel/<国>/<街
    「いまもある・やっている」・値段・行き方・入場料は **2024年以降の出どころ**で確かめる（#328）。確かめきれないものは消さずに、
    PR か issue に「現地で確かめてほしいもの」として箇条書き。通貨は現地のいまを引く（`docs/country-guide.md` 1-3）
 4. 実在の場所の写真は Commons から（Actions「写真の候補を探す」→ 必ず目で選ぶ）。行った所は、その日のあやと島カード
-5. **合格**: `guide_book_check.py <国>/<街>` が 0（出どころの無い事実・座標の無い店・facts に辿れない「行った」・行っていない街の「行った」が 0）。
+5. **材料は台本に書く。** `python/data/guide/<国>/<街>/book.py` に出どころの表（`SRC`）と事実を書き、
+   `python3 python/guide_book_build.py build <国>/<街>` で `guidebook.json` と `compose.json` を書く（JSON を手で直さない。
+   `build --check` が台本との食い違いを 1 で返す）。座標は `… geo <国>/<街> 鍵=問い`（国の表の枠の外は捨てる）、
+   借りた写真の欄は `… photo <国>/<街> 鍵=File:…`。形はブカレストの台本（`python/data/guide/romania/bucharest/book.py`）を写す
+6. **合格**: `guide_book_check.py <国>/<街>` が 0（出どころの無い事実・座標の無い店・facts に辿れない「行った」・行っていない街の「行った」が 0）。
    道具にスコピエ固定の所があるので、次の街では先にそこを直す（5章の「穴」）
 
 ### 2-2. 言葉 → 見せる①
@@ -221,7 +225,7 @@ EC2 の Chrome（札 `ytstudio`。`/ec2-chrome`）で Search Console の URL 検
 | --- | --- | --- | --- |
 | facts | `python3 python/guide_facts.py pending --country <国>`／`city --country <国> --city <街> -o <scratch>/<街>.md`。抜くのは `python3 python/guide_extract.py --pending --country <国> --out <scratch>/guide --jobs 3`（`claude -p`） | `pending`・`city` は乾いた実行 0。`guide_extract` は `--help` | — |
 | 材料の確かめ | `python3 python/guide_book_check.py <国>/<街>` | 乾いた実行 0 | 座標の枠と国旗は国の表（`python/data/guide/cities.json` の国の `flag`・街と日帰りの遠出の `bbox`）から読む。**新しい国・街は先にそこへ足す**（2026-11-19 ブカレストで埋めた。#1292） |
-| 材料を集める | **無い** | — | 11-15 に「1回の `claude -p` に決まった形で書かせ、道具で出どころを確かめる」と決めたが、道具はまだ。いまは担当が集める |
+| 材料を書く | `python3 python/guide_book_build.py build <国>/<街>`（台本 `python/data/guide/<国>/<街>/book.py` から `guidebook.json`・`compose.json`。`--check` で書かずに比べる）／`geo <国>/<街> 鍵=問い …`（Nominatim → `geo.json`）／`photo <国>/<街> 鍵=File:… …`（→ `photos.json`） | `guide_book_build_selftest.py`（本物のブカレストで `--check` 0・書き損じ4種と枠の外の座標を止める） | 事実を集めるのは担当（11-15 に決めた `claude -p` に書かせる道具はまだ）。台本はブカレストから（2026-11-19。#1292）。スコピエは JSON を手で書いた街で、台本は無い |
 | 人物像と狙う語 | **無い** | — | サジェストは curl（`G_skopje_intent.md` の測りかた） |
 | 写真（Commons） | `gh workflow run commons_photos.yml -f 'queries={"<料理>":"<1語>"}' -f limit=10`（artifact `photos`）→ `python3 python/guide_photos.py --lookup "File:<名前>.jpg" …`（材料の写真の欄を組む。外に出る）／`--check <国>/<街>`。置き場へ落とすのは `gh workflow run heavy_watch.yml --ref <枝> -f guide=<国>/<街>`（artifact `photos`。作業箱からは 429 で落ちない日がある） | `--check` 0・ワークフローは `gh workflow view` で入力を見た | — |
 | カードの写真 | `python3 python/guidebook_bake.py <国>/<街> --photos` | `--help` | 外に出る |
