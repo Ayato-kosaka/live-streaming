@@ -12,6 +12,7 @@ import { guidebookOf } from "@/content/guidebook";
 import { readDrawn } from "@/content/guidebook/manifest";
 import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { LASTMOD } from "@/lib/lastmod";
+import { countryMapArt } from "@/components/atlas/mapArt";
 
 export const dynamic = "force-static";
 
@@ -86,7 +87,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     /* 国の面。歩いた国と、行く前の案内だけの国。**名簿は1つ**（`content/travel.ts`）。
        北欧の6か国は前、行く前の案内（`/nordic/<国>`）がもう1行ずつ載っていた。
        歩いた記録の面へ寄せたので、1国1行（#1201） */
-    ...TRAVEL_PLACES.map((p) => row(p.href, p.country ? LASTMOD.country(p.country) : undefined)),
+    ...TRAVEL_PLACES.map((p) => {
+      const r = row(p.href, p.country ? LASTMOD.country(p.country) : undefined);
+      /* **国の地図の絵（「〈国〉の地図」）を画像のサイトマップに**（#1262・#332）。面の主役の絵で、島が描いたもの。
+         焼いた絵が古い・無い国は面が SVG を直に描くので、ここにも載せない（`components/atlas/mapArt.ts`） */
+      const art = countryMapArt(p.slug, p.name);
+      return art ? { ...r, images: [encodeURI(`${SITE.url}${art.src}`)] } : r;
+    }),
     /* 街のガイド（`/travel/<国>/<街>`）。**公開前の印（`draft`）が付いた街は並べない**
        （`content/travel.ts` の `publicCities`）。更新日は、中身の字が変わった日（焼く道具が持つ） */
     /* 街の中身はガイドブック（`content/guidebook/`。#1228）が更新日を持つ。**中身の無い街は書き出しを止める** */
