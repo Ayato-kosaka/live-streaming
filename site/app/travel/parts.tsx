@@ -8,9 +8,10 @@ import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
-import { stayClosedOn, stayNow, stayWord, travelNow, type StayNow, type TravelNow } from "@/lib/stay";
+import { stayClosedOn, stayNow, stayWord, travelNow, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
 import { tripDate } from "@/content/chapters";
 import { BUILT_AT } from "@/lib/builtAt";
+import { NOT_YET, useToday } from "@/lib/useToday";
 import { tripPageOf } from "@/content/trip";
 
 /**
@@ -87,16 +88,19 @@ export function MapHead({ region }: { region: string }) {
  * 国ではなく旅そのものを出す。
  */
 export function HereStat({ slug, name }: { slug: string; name: string }) {
-  const [trip, setTrip] = useState<TravelNow | null>(() => travelNow(BUILT_AT));
-  const [stay, setStay] = useState<StayNow | null>(() => stayNow(BUILT_AT));
+  /* **段（旅か・国か）は焼いた日で決めてよいが、日数は焼かない**（#339）。
+     札がどちらの形かは、画面が出るまで焼いた日（`BUILT_AT`）の答えで出し、
+     「◯日目」だけを今日が分かってから入れる。焼いた日の日数は、焼いた日の
+     うちしか本当でない——焼いてから日付をまたいだ晩に、JS が動く前の札が
+     「旅に出て 53日目」のまま残って、重い見張りが赤くなった。
+     引き直しは `useToday` の刻み（1分）に乗せる。開きっぱなしの面が
+     日付をまたいでも、札が前の日のまま残らない。 */
+  const today = useToday();
+  const at = today ?? BUILT_AT;
+  const trip = travelNow(at);
+  const stay = stayNow(at);
   /** その国を出た日。旅から帰って、次の島がまだ始まっていない日に出す */
-  const [left, setLeft] = useState<string | null>(() => stayClosedOn(slug, BUILT_AT));
-  useEffect(() => {
-    const now = new Date();
-    setTrip(travelNow(now));
-    setStay(stayNow(now));
-    setLeft(stayClosedOn(slug, now));
-  }, [slug]);
+  const left = stayClosedOn(slug, at);
 
   if (trip)
     return (
@@ -112,7 +116,10 @@ export function HereStat({ slug, name }: { slug: string; name: string }) {
           </svg>
         }
         label={trip.name}
-        sub={`旅に出て ${trip.days.toLocaleString()}日目`}
+        /* 字は `lib/stay.ts` の `tripDayWord` から（`/now` の帯と同じ字）。
+           ここだけ自分で組んでいたので、出発の日に `/now` が「旅に出た日」、
+           ここが「旅に出て 0日目」と言うところだった */
+        sub={today ? tripDayWord(trip.days) : NOT_YET}
       />
     );
   return (
@@ -123,7 +130,9 @@ export function HereStat({ slug, name }: { slug: string; name: string }) {
          まだ始まっていない日は、出た日を出す。数えられない日だけ黙る */
       sub={
         stay
-          ? `滞在 ${stay.days.toLocaleString()}日目`
+          ? today
+            ? `滞在 ${stay.days.toLocaleString()}日目`
+            : NOT_YET
           : left
             ? `${left.replace(/-/g, "/")} まで`
             : "いまここ"
@@ -178,26 +187,23 @@ export function StayOut({ slug }: { slug: string }) {
  * @param plus 終わった滞在ぶんの日数
  */
 export function StayLen({ slug, from, plus }: { slug: string; from: string; plus: number }) {
-  const [n, setN] = useState<number | null>(null);
-  useEffect(() => {
-    const out = stayClosedOn(slug, new Date());
-    const end = out ? Date.parse(`${out}T00:00:00Z`) : Date.now();
-    /* 引き直したほうも 0 で止める。先の日付から始まる国を足したときに
-       マイナスの日数を出さないため */
-    setN(Math.max(0, Math.floor((end - new Date(from).getTime()) / 86400000) + plus));
-  }, [slug, from, plus]);
-  /* 画面が出るまでのあいだ出す数。`Days.tsx` と**同じ基準日**——焼いた日
-     （`BUILT_AT`）——で引く。ここには日付を直に書いた `new Date` が置いて
-     あった。焼き直しても動かない日付なので、**その日より後に入った国は
-     必ずマイナスになる。** 本番の `/map/sweden`（いまの `/travel/sweden`）が「いた日数 -15」を
-     焼いていた（`docs/island-misses.md` #5 #6）。
-     出国済みならそこで止めるのも、引き直したあとと揃える。
-     0 で止めるのは、開発サーバで `BUILT_AT` が1970年になるため
-     （`Days.tsx` と同じ理由）。**日数にマイナスは無い** */
-  const bakedOut = stayClosedOn(slug, BUILT_AT);
-  const bakedEnd = bakedOut ? Date.parse(`${bakedOut}T00:00:00Z`) : BUILT_AT.getTime();
-  const baked = Math.max(0, Math.floor((bakedEnd - new Date(from).getTime()) / 86400000) + plus);
-  return <>{(n ?? baked).toLocaleString()}</>;
+  const today = useToday();
+  /* 出国済みならそこで止める。**日数にマイナスは無い**——先の日付から始まる
+     国を足したとき、開発サーバで `BUILT_AT` が1970年になるとき（`Days.tsx`）。 */
+  const count = (now: Date) => {
+    const out = stayClosedOn(slug, now);
+    const end = out ? Date.parse(`${out}T00:00:00Z`) : now.getTime();
+    return Math.max(0, Math.floor((end - new Date(from).getTime()) / 86400000) + plus);
+  };
+  /* **まだいる国の日数は、今日が分かるまで出さない**（#339）。焼いた日の
+     日数は、焼いた日のうちしか本当でない。
+     焼いた日にもう出国していれば、数はそこで止まっていて、どの日に読んでも
+     同じなので焼いてよい（JS を読まない読み手にも、終わった滞在の長さは残る）。
+     前はここに日付を直に書いた `new Date` が置いてあって、その日より後に
+     入った国は必ずマイナスになった——本番の `/map/sweden`（いまの
+     `/travel/sweden`）が「いた日数 -15」を焼いていた（#5 #6）。 */
+  if (!today && !stayClosedOn(slug, BUILT_AT)) return <>{NOT_YET}</>;
+  return <>{count(today ?? BUILT_AT).toLocaleString()}</>;
 }
 
 /**
