@@ -369,7 +369,7 @@ let wrapRead = 0;
   /* **対照**: `BREAK=nophrase` で `Phrase`（折る場所を1つに絞る仕掛け。
      `site/components/ui/Phrase.tsx`）を外す。外したら落ちることを見ておかないと、
      ここが通っても何も言っていない（`docs/island-standards.md` §15）。 */
-  const BREAK = process.env.BREAK || "";
+  const BREAK = process.env.BREAK || "nophrase";
   console.log(`\n■ 行の折れ方（0件の日 ${day0}）${BREAK ? ` ※対照 ${BREAK}` : ""}`);
   for (const [url, sel, name] of [
     ["/next.html", ".nx-none > h2", "/next の見出し"],
