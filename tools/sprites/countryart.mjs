@@ -17,6 +17,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 
 import { repoPath } from "./repo.mjs";
+import { must, readArray } from "./tsread.mjs";
 
 registerHooks({
   resolve(spec, ctx, next) {
@@ -38,25 +39,29 @@ export const BAKED = repoPath("site/content/atlas/mapArt.json");
 export const PUBLIC = repoPath("site/public");
 export const sha1 = (s) => createHash("sha1").update(s).digest("hex");
 
-/** 面を持つ国の地図（`countryMaps.ts` が束ねている JSON）。{ slug: 地図のデータ } */
-export function maps() {
-  const src = readFileSync(repoPath("site/components/atlas/countryMaps.ts"), "utf8");
+/**
+ * 国の面を持つ国の、日本語の名前。歩き終わった国（`COUNTRIES`）といま歩いている旅の国（`AHEAD_COUNTRIES`）。
+ * 面の `CountryMap` に渡る名前と同じもの。**面の側で名前が合わなければ、焼いた絵は使われない**
+ * （`mapArt.ts` が名前も突き合わせる）。焼き込みは字で読む口（`tsread.mjs`）から——読み落としたら 2 で止まる
+ */
+export function names() {
+  const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
   const out = {};
-  for (const [, file] of src.matchAll(/from "@\/content\/atlas\/c\/([\w-]+)\.json"/g)) {
-    out[file] = JSON.parse(readFileSync(repoPath(`site/content/atlas/c/${file}.json`), "utf8"));
+  for (const list of ["COUNTRIES", "AHEAD_COUNTRIES"]) {
+    for (const r of must(readArray(src, list, { keys: ["slug", "name"] }), `content/countries.ts の ${list}`)) out[r.slug] ??= r.name;
   }
   return out;
 }
 
 /**
- * 国の日本語の名前（`content/countries.ts` の `slug: "…", name: "…"`）。面の `CountryMap` に渡る名前と同じもの。
- * **面の側で名前が合わなければ、焼いた絵は使われない**（`mapArt.ts` が名前も突き合わせる）
+ * 面を持つ国の地図（`python/build_world_route.py` が焼いた `site/content/atlas/c/<国>.json`）。{ slug: 地図のデータ }。
+ * 国の表に在って、地図の JSON が在る国（行く前の案内だけの国・地図の無い国は焼かない）
  */
-export function names() {
-  const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
+export function maps() {
   const out = {};
-  for (const [, slug, name] of src.matchAll(/slug:\s*"([\w-]+)",\s*name:\s*"([^"]+)"/g)) {
-    out[slug] ??= name;
+  for (const slug of Object.keys(names())) {
+    const f = repoPath(`site/content/atlas/c/${slug}.json`);
+    if (existsSync(f)) out[slug] = JSON.parse(readFileSync(f, "utf8"));
   }
   return out;
 }

@@ -15,7 +15,7 @@
  *
  * ## 見るもの
  *
- * 1. 面を持つ国（`countryMaps.ts` が束ねる地図）の全部に、焼いた控え（`content/atlas/mapArt.json`）があり、
+ * 1. 面を持つ国（国の表に在って、地図の JSON が在る国）の全部に、焼いた控え（`content/atlas/mapArt.json`）があり、
  *    **いまの絵の字の指紋と名前が控えと同じ**
  * 2. 控えの幅ぶんの絵のファイルが在り、WebP で、中身が空でない
  * 3. 絵の色の表（`countryArt.ts` の `ART_COLORS`）が、面の CSS（`atlas.css` `tokens.css` の `:root`）と同じ値
@@ -103,7 +103,7 @@ const controls = {
   "色を1つ変える": () => ({ colors: { ...art.ART_COLORS, "--am-sea-deep": "#000000" } }),
 };
 if (!one) {
-  console.error("数えるものが無い（countryMaps.ts から地図が1つも引けない）");
+  console.error("数えるものが無い（国の表（content/countries.ts）と地図の JSON から、国が1つも引けない）");
   process.exit(2);
 }
 const deaf = Object.entries(controls).filter(([, mk]) => check({ ...real, exists: undefined, ...mk() }).ng.length === 0);
