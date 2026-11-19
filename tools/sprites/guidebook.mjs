@@ -14,6 +14,8 @@
  *   …  BREAK=bignum node tools/sprites/guidebook.mjs   # 対照: どんな街に大きな数の札を1枚差し込む（大きな数の札があるで落ちる）
  *   …  BREAK=qa node tools/sprites/guidebook.mjs       # 対照: どんな街に「お金は？」「言葉は？」を足して4組にする（問いの数と、基本情報と同じ話で落ちる）
  *   …  BREAK=title node tools/sprites/guidebook.mjs    # 対照: 題と h1 を前の「〈街〉観光でやりたいこと8選」に戻す（題と表紙の字で落ちる）
+ *   …  BREAK=share node tools/sprites/guidebook.mjs    # 対照: og:image を題を焼いた絵に、記事の絵を表紙の1枚に戻す（共有の絵で落ちる）
+ *   …  BREAK=writer node tools/sprites/guidebook.mjs   # 対照: 書き手の枠を抜く（書き手で落ちる）
  *
  * 終了コード 0＝通った / 1＝見つかった / 2＝数えるものが無い（面が開けない・窓が1つも無い）。
  *
@@ -32,7 +34,9 @@
  * | 節の名前と絵 | 「見たいもの」「食べたいもの」「買いたいもの」。やりたいこと＝チェック（`checklist`）・見たいもの＝カメラ（`camera`）（あやと 2026-11-16） |
  * | やりたいこと | 390 と 1440 で、**どの札も同じ大きさ・4:3・縦1列**（あやと 2026-11-16「すべてのカードを同じサイズ・比率に統一し、縦1列に並べたい」）・札の字が70字まで・絵が描けている（絵の無い札は色の地） |
  * | 札の印 | 面に見えている札（やりたいこと・見たい・食べたい・買いたい）の印が**その国ならでは・値段・季節（と「行った」）だけ**。豚・酒の印は窓の中だけ（一覧の凡例も無い）。「イラスト」「必見」の札が無い。札の読み上げの名前に「豚肉あり」「アルコールあり」が無い（あやと 2026-11-16・`docs/island-misses.md` #328） |
- * | 題と表紙の字 | `<title>` と h1 が「〈街〉観光ガイド」で始まり、「やりたいこと◯選」が無い（あやと 2026-11-18 #1228「この面は『やりたいこと8選』の面ではない」）。題を焼いた表紙（`is-titled`）は、絵の上に字を重ねず（暗幕の字が無い）、og:image が焼いた絵（`-og.jpg`） |
+ * | 題と表紙の字 | `<title>` と h1 が「〈街〉観光ガイド」で始まり、「やりたいこと◯選」が無い（あやと 2026-11-18 #1228「この面は『やりたいこと8選』の面ではない」）。題を焼いた表紙（`is-titled`）は、絵の上に字を重ねない（暗幕の字が無い） |
+ * | 書き手 | 記事の面と同じ書き手の枠（`Writer`）が在り、署名が「あやと島案内鳥」。行った街（表紙に「あやとが◯日いた」）は「あやとが◯〜に行った」の行も（検索の上位の 71% が書き手を見せている。`docs/seo.md` 7章） |
+ * | 共有の絵 | 描いた表紙のある街で、og:image が**字の無い**表紙を切った 1200x630（`-cover-1200x630.jpg`）。記事の構造化データの絵が**字の無い** 16:9・4:3・1:1 の3枚で、どれも横 1200px 以上（配ったファイルの寸法を読む）。題を焼いた絵は面の表紙に残す（Google は og:image と構造化データの絵に字の多い絵を避けるよう言っている。`docs/island-misses.md` #332 の決めごと3） |
  * | どんな街 | 問いと答え（「歴史は？」）が**2〜3組**・問いが「？」で終わる・答えに出どころの行。**大きな数の札（前の `gb-about-num`）と「よく言われること」が無い**。お金・言葉の問いが無い（基本情報と同じ話。あやと 2026-11-18） |
  * | エリアの札 | 描いたエリア地図の上の名前の札が、**390 と 1440 で互いに重ならず、絵の外にはみ出さない**（ソフィアの「中心・セルディカ」と「ネフスキー大聖堂まわり」が 390px で重なった。2026-11-15） |
  * | 名前を焼いた地図 | ソフィア（#1262）は札が絵の一部。面の札（`.gb-amap-pin.is-baked`）は透明の押しどころで、上と同じ重なり・はみ出し・当たり 44px・押した先を見る |
@@ -420,8 +424,7 @@ async function shapeCheck(p) {
 
 /**
  * **題と表紙の字**（書き出した HTML。JS を動かす前）。h1 は「〈街〉観光ガイド」で始まり、題も同じ字で始まる。
- * どちらにも「やりたいこと◯選」を入れない（節の見出しにだけ残す）。題を焼いた表紙は、絵の上に暗幕の字を重ねず、
- * og:image がその絵を切った JPEG。
+ * どちらにも「やりたいこと◯選」を入れない（節の見出しにだけ残す）。題を焼いた表紙は、絵の上に暗幕の字を重ねない。
  *
  * 対照: `BREAK=title` で題と h1 を前の字（「〈街〉観光でやりたいこと8選」）に戻す
  */
@@ -442,10 +445,89 @@ function headCheck(raw) {
   const titled = /class="gb-cover-wrap is-titled"/.test(raw);
   if (titled) {
     if (/class="gb-cover-body"/.test(raw)) fail("題を焼いた表紙の上に、暗幕の字（gb-cover-body）も重ねている（同じ字が二重に見える）");
-    const og = raw.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? "";
-    if (!/-og\.jpg$/.test(decodeURI(og))) fail(`題を焼いた表紙があるのに、og:image が焼いた絵ではない（${decodeURI(og) || "無し"}）`);
   }
   notes.push(`題: ${title}／h1: ${h1}／表紙 ${titled ? "題を焼いた絵（h1 は絵の上）" : "字を重ねる表紙"}`);
+}
+
+/**
+ * **書き手の枠**（書き出した HTML）。記事の面と同じ枠（`components/travel/article/Writer.tsx`）が在り、署名が「あやと島案内鳥」
+ * （視聴者さんに見せる所で別の名を名乗らない）。行った街（表紙に「あやとが◯日いた」）は、配信の facts の日から「あやとが◯〜に行った」。
+ *
+ * 対照: `BREAK=writer` で枠を抜く
+ */
+function writerCheck(raw) {
+  let html = raw.match(/<aside class="ta-writer"[\s\S]*?<\/aside>/)?.[0] ?? "";
+  if (process.env.BREAK === "writer") html = "";
+  const text = html.replace(/<[^>]+>/g, "");
+  if (!/aria-label="書き手"/.test(html)) return fail("書き手の枠（記事の面と同じ Writer）が無い");
+  if (!text.includes("あやと島案内鳥")) fail("書き手の枠に署名「あやと島案内鳥」が無い");
+  if (/claude/i.test(text)) fail("書き手の枠で、案内鳥でない名を名乗っている");
+  const para = (cls) => html.match(new RegExp(`<p class="${cls}">([\\s\\S]*?)</p>`))?.[1]?.replace(/<[^>]+>/g, "") ?? "";
+  const went = /class="gb-cover-stay"/.test(raw);
+  const line = para("ta-writer-went");
+  if (went && !/あやとが.+〜に行った/.test(line)) fail("行った街なのに、書き手の枠に「あやとが◯〜に行った」が無い");
+  notes.push(`書き手: ${para("ta-writer-by") || "—"}${line ? `／${line}` : ""}`);
+}
+
+/** JPEG の寸法（SOF の印から読む）。JPEG でなければ null */
+function jpegSize(buf) {
+  if (buf.length < 4 || buf[0] !== 0xff || buf[1] !== 0xd8) return null;
+  let i = 2;
+  while (i + 9 < buf.length && buf[i] === 0xff) {
+    const m = buf[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(m)) return { w: buf.readUInt16BE(i + 7), h: buf.readUInt16BE(i + 5) };
+    i += 2 + buf.readUInt16BE(i + 2);
+  }
+  return null;
+}
+
+/**
+ * **共有の絵**（書き出した HTML と、配ったファイル）。描いた表紙のある街で、og:image は**字の無い**表紙を切った 1200x630、
+ * 記事（`Article`）の構造化データの絵は**字の無い** 16:9・4:3・1:1 の3枚（Google の Article の手引き。横 1200px 以上）。
+ * 題を焼いた表紙は面に出す絵（画像検索に出す絵）で、こちらとは別（Google は og:image と構造化データの絵に字の多い絵を
+ * 避けるよう言っている。`docs/island-misses.md` #332 の決めごと3）。字の無い絵かは名前で見分ける
+ * （`guide_art.py` の `share_pics` が字の無い表紙から切った絵だけに `-cover-…` の名前を付ける。画素の見張りは `guide_art_selftest.py` の12）。
+ *
+ * 対照: `BREAK=share` で og:image を前の「題を焼いた絵」（`-guide-og.jpg`）に、記事の絵を表紙の1枚に戻す
+ */
+async function shareCheck(raw) {
+  if (!/class="gb-cover-wrap is-titled"/.test(raw)) return notes.push("共有の絵: 描いた表紙が無い街（国の1枚のまま）");
+  const local = (u) => decodeURI(new URL(u, "http://x").pathname);
+  let og = local(raw.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? "/");
+  const lds = [...raw.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap((m) => {
+    try {
+      const j = JSON.parse(m[1]);
+      return j["@graph"] ?? [j];
+    } catch {
+      return [];
+    }
+  });
+  let imgs = [lds.find((x) => x["@type"] === "Article")?.image ?? []].flat().map(local);
+  if (process.env.BREAK === "share") {
+    og = og.replace(/-cover-1200x630\.jpg$/, "-guide-og.jpg");
+    imgs = imgs.slice(0, 1);
+  }
+  const size = async (path) => {
+    const r = await fetch(`http://127.0.0.1:${SPORT}${encodeURI(path)}`);
+    return r.ok ? jpegSize(Buffer.from(await r.arrayBuffer())) : null;
+  };
+  if (!/-cover-1200x630\.jpg$/.test(og)) fail(`og:image が字の無い表紙を切った絵（-cover-1200x630.jpg）でない（${og}）——題を焼いた絵を共有の絵にしない`);
+  else {
+    const s = await size(og);
+    if (!s || s.w !== 1200 || s.h !== 630) fail(`og:image が 1200x630 の JPEG として配られていない（${og}: ${s ? `${s.w}x${s.h}` : "読めない"}）`);
+  }
+  const want = ["16x9", "4x3", "1x1"];
+  const got = [];
+  for (const [i, k] of want.entries()) {
+    const path = imgs[i] ?? "";
+    const s = path ? await size(path) : null;
+    const [rw, rh] = k.split("x").map(Number);
+    got.push(s ? `${s.w}x${s.h}` : "無し");
+    if (!path.endsWith(`-cover-${k}.jpg`) || !s || s.w < 1200 || Math.abs(s.w / s.h - rw / rh) > 0.01)
+      fail(`記事の絵の ${i + 1}枚目が、字の無い表紙の ${k}（横 1200px 以上の JPEG）でない（${path || "無し"}: ${got.at(-1)}）`);
+  }
+  if (imgs.length !== want.length) fail(`記事の絵が ${imgs.length}枚（16:9・4:3・1:1 の3枚）`);
+  notes.push(`共有の絵: og ${og.split("/").pop()}／記事の絵 ${got.join("・")}`);
 }
 
 const openId = (p) => p.evaluate(() => document.querySelector("dialog.gb-dlg[open]")?.id ?? null);
@@ -475,6 +557,8 @@ async function main() {
     const wmImg = (raw.match(/(?:src|srcSet|srcset)="[^"]*upload\.wikimedia\.org/g) ?? []).length;
     if (wmImg) fail(`書き出した HTML に Wikimedia から直に読む絵が ${wmImg} 本ある（python/guide_photos.py で置き場に落として焼き直す）`);
     headCheck(raw);
+    await shareCheck(raw);
+    writerCheck(raw);
     if (!todoIds.length) fail("やりたいことの窓（#do-…）が無い");
     if (todoIds.length > 8) fail(`やりたいことが ${todoIds.length}（最大8）`);
 

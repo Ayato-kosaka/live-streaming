@@ -36,9 +36,13 @@ import type { MapBeyond, MapDir, Pic, Todo } from "./types";
  * そのときエリアの `x` `y` `w` `h` は**焼いた札の箱**（中心と幅・高さ。割合）で、面は透明の押しどころを重ねるだけ。
  * 焼くのは `.claude/skills/chatgpt-image/guide_art.py finalize`（`guide_layout.py`）。
  * **表紙も、`cover.titled` の絵は題（街の名前・「観光ガイド」・キャッチ）を焼いてある**（同じ日、#1228。理由は地図と同じ）。
- * `cover.og` はその横の表紙を 1200x630 に切った JPEG（貼られたときの絵）
+ *
+ * **`cover.og`（貼られたときの絵。1200x630）と `cover.ld`（記事の構造化データの絵。16:9・4:3・1:1）は、字の無い表紙から切った JPEG**
+ * （`guide_art.py` の `share_pics`）。Google は og:image と構造化データの絵に字の多い絵を避けるよう言っている
+ * （Discover の手引き。`docs/island-misses.md` #332 の決めごと3）。題を焼いた表紙は面に出す絵（画像検索に出す絵）で、こちらとは別
  */
 export type AreaPin = { id?: string; name?: string; x: number; y: number; w?: number; h?: number };
+export type Painted = { name: string; x: number; y: number; w: number; h: number };
 export type Drawn = {
   cover?: Pic;
   coverTall?: Pic;
@@ -48,10 +52,15 @@ export type Drawn = {
    * 横と縦の**両方**が焼けているときだけ true（狭い画面で字の無い縦の絵が出て、見出しが絵の外だけになるのを防ぐ）
    */
   coverTitled: boolean;
-  /** 貼られたときの絵（1200x630 の JPEG。焼いた横の表紙の真ん中）。`coverShare` が og:image にする */
-  og?: { src: string; w: number; h: number };
-  /** `baked`: 地区の名前を絵に焼いた地図。`small` は面で使う小さい版（`src` は画像検索に出す大きい版） */
-  areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[]; baked: boolean };
+  /** 貼られたときの絵（1200x630 の JPEG。**字の無い**横の表紙の真ん中）。`coverShare` が og:image にする */
+  og?: { src: string; w: number; h: number; alt?: string };
+  /** 記事の構造化データの絵（Article の `image`）。**字の無い**表紙を 16:9・4:3・1:1 に切った JPEG（横 1200px）。無ければ空 */
+  ld: { src: string; w: number; h: number }[];
+  /**
+   * `baked`: 地区の名前を絵に焼いた地図。`small` は面で使う小さい版（`src` は画像検索に出す大きい版）。
+   * `painted`: 絵に焼いた題の帯と目印の名前の箱（中心と幅・高さ。割合）。押しどころは重ねず、地図の外の矢印をこの上に置かない
+   */
+  areamap?: Pic & { areas: AreaPin[]; beyond: MapBeyond[]; baked: boolean; painted: Painted[] };
   /** やりたいことの絵（`Todo.id` の鍵）。無いあいだは、データの写真か色の地 */
   do: Record<string, Pic>;
   food: Record<string, Pic>;
@@ -69,7 +78,7 @@ const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : unde
 export function readDrawn(country: string, city: string): Drawn {
   const base = `/guide/${country}/${city}`;
   const pub = join(process.cwd(), "public");
-  const empty: Drawn = { coverTitled: false, do: {}, food: {}, buy: {} };
+  const empty: Drawn = { coverTitled: false, ld: [], do: {}, food: {}, buy: {} };
   const file = join(pub, base, "manifest.json");
   if (!existsSync(file)) return empty;
   let raw: unknown;
@@ -115,11 +124,20 @@ export function readDrawn(country: string, city: string): Drawn {
   const titledOf = (v: unknown) => isObj(v) && v.titled === true;
   const ogRaw = isObj(raw.cover) && isObj(raw.cover.og) ? raw.cover.og : undefined;
   const ogSrc = ogRaw && url(ogRaw.src);
+  /* 記事の絵は、3つの比が揃って在るときだけ（欠けた比を黙って1枚に減らさない。ファイルが無い絵は数えない） */
+  const ldRaw = isObj(raw.cover) && Array.isArray(raw.cover.ld) ? raw.cover.ld : [];
+  const ld = ldRaw.flatMap((v) => {
+    const src = isObj(v) ? url(v.src) : undefined;
+    const w = isObj(v) ? num(v.w) : undefined;
+    const h = isObj(v) ? num(v.h) : undefined;
+    return src && w && h ? [{ src, w, h }] : [];
+  });
   const out: Drawn = {
     cover,
     coverTall,
     coverTitled: !!cover && titledOf(raw.cover) && (!coverTall || titledOf(raw.cover_tall)),
-    og: ogRaw && ogSrc ? { src: ogSrc, w: num(ogRaw.w) ?? 1200, h: num(ogRaw.h) ?? 630 } : undefined,
+    og: ogRaw && ogSrc ? { src: ogSrc, w: num(ogRaw.w) ?? 1200, h: num(ogRaw.h) ?? 630, alt: str(ogRaw.alt) } : undefined,
+    ld: ld.length === ldRaw.length ? ld : [],
     do: dict(raw.do),
     food: dict(raw.food),
     buy: dict(raw.buy),
@@ -156,18 +174,28 @@ export function readDrawn(country: string, city: string): Drawn {
     /* 焼いた地図は、札の箱が無いと押しどころを重ねられない。**黙って押せない地図にしない** */
     if (baked && areas.some((a) => !a.w || !a.h))
       throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap は名前を焼いてあるのに、札の箱（w・h）の無い地区がある`);
-    out.areamap = { ...amPic, areas, beyond, baked };
+    const painted = (Array.isArray(am.painted) ? am.painted : []).flatMap((a): Painted[] => {
+      if (!isObj(a)) return [];
+      const [name, x, y, w, h] = [str(a.name), num(a.x), num(a.y), num(a.w), num(a.h)];
+      /* 欠けた箱は**黙って落とさない**（矢印が焼いた字の上に乗っても気づけなくなる） */
+      if (!name || x === undefined || y === undefined || !w || !h)
+        throw new Error(`content/guidebook/manifest.ts: ${base}/manifest.json の areamap.painted に欠けた所がある（${JSON.stringify(a)}）`);
+      return [{ name, x, y, w, h }];
+    });
+    out.areamap = { ...amPic, areas, beyond, baked, painted };
   }
   return out;
 }
 
 /**
- * 街の面の、貼られたときの顔。**題を焼いた表紙があれば、og:image をその絵にする**（あやと 2026-11-18 #1228）。
- * 無ければ渡された `meta`（国の1枚）のまま。題・一文・居場所・robots は `travelCityShare` のものを変えない
+ * 街の面の、貼られたときの顔。**描いた表紙があれば、og:image をその字の無い1枚にする**（`cover.og`）。
+ * 前は題を焼いた表紙を切っていた（2026-11-18 #1228）が、Google は og:image に字の多い絵を避けるよう言っている（#332 の決めごと3）。
+ * 題を焼いた絵は面の表紙（画像検索に出る絵）に残す。無ければ渡された `meta`（国の1枚）のまま。
+ * 題・一文・居場所・robots は `travelCityShare` のものを変えない
  */
 export function coverShare(meta: Metadata, d: Drawn, alt: string): Metadata {
-  if (!d.og || !d.coverTitled) return meta;
-  const img = { url: encodeURI(d.og.src), width: d.og.w, height: d.og.h, alt };
+  if (!d.og) return meta;
+  const img = { url: encodeURI(d.og.src), width: d.og.w, height: d.og.h, alt: d.og.alt ?? alt };
   return {
     ...meta,
     openGraph: { ...meta.openGraph, images: [img] },

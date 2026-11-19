@@ -57,8 +57,8 @@
   "sizes": [1200, 800],
   "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, river and district border must stay where it is in the layout, and each landmark sits exactly on its numbered dot. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
   "prompt": "Paint an illustrated sightseeing map of central Sofia, Bulgaria, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every blue river, every green park and the four colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; rivers are soft blue ribbons; roads are clean cream-white ribbons. Paint the four districts as flat translucent watercolor washes in their own colors from the layout (pink, lavender, aqua and yellow), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Alexander Nevsky Cathedral (big gold central dome, green domes, bell tower); 2 Zhenski Pazar open-air market (a short row of colorful market stalls with striped awnings and fruit crates); 3 Central Mineral Baths (yellow-and-red striped bath house with small domes); 4 Banya Bashi Mosque (one dome and one slender minaret), standing right next to 3; 5 National Palace of Culture (large modern building with a fountain plaza); 6 Russian Church (small white church with gold onion domes); 7 National Theatre (red-and-white neoclassical theatre with columns). These seven landmarks are the only drawn objects on the map.",
-  "alt": "ソフィアの見どころマップ（地区分け）。セルディカ駅周辺・ジェンスキー・パザール周辺・アレクサンドル・ネフスキー大聖堂周辺・ヴィトシャ通り周辺の4つの地区を色で分け、名前を書いた絵地図。ネフスキー大聖堂・女性市場・中央鉱泉浴場・国立文化宮殿などの目印の絵つき",
-  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）",
+  "alt": "ソフィアの見どころマップ（地区分け）。セルディカ駅周辺・ジェンスキー・パザール周辺・アレクサンドル・ネフスキー大聖堂周辺・ヴィトシャ通り周辺の4つの地区を色で分け、名前を書いた絵地図。ネフスキー大聖堂・ロシア教会・国立劇場・女性市場・バーニャ・バシ・モスク・中央鉱泉浴場・国立文化宮殿の目印の絵と名前つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262。画像検索の縮小でも読めるように）。題の帯（「ソフィア 見どころマップ」）と、描いた目印の名前も同じ字で焼いた（#332。画像検索の上位の地図の形。番号の点は足さない）",
   "bbox": {
    "west": 23.3125,
    "east": 23.3415,
@@ -173,6 +173,16 @@
     "lon": 23.326389
    }
   ],
+  "title": {"name": "ソフィア", "label": "見どころマップ"},
+  "names": [
+   {"id": "nevsky", "label": ["ネフスキー大聖堂"], "x": 0.755, "y": 0.31},
+   {"id": "church", "label": ["ロシア教会"], "x": 0.594, "y": 0.352},
+   {"id": "theatre", "label": ["国立劇場"], "x": 0.47, "y": 0.535},
+   {"id": "market", "label": ["女性市場"], "x": 0.18, "y": 0.29},
+   {"id": "mosque", "label": ["モスク"], "x": 0.252, "y": 0.334},
+   {"id": "baths", "label": ["中央鉱泉浴場"], "x": 0.412, "y": 0.334},
+   {"id": "ndk", "label": ["国立文化宮殿"], "x": 0.405, "y": 0.845}
+  ],
   "areas": [
    {
     "id": "market",
@@ -201,8 +211,8 @@
     ],
     "local": "Сердика",
     "color": "#bdb8f2",
-    "x": 0.31,
-    "y": 0.395,
+    "x": 0.25,
+    "y": 0.425,
     "source": [
      "https://www.arukikata.co.jp/webmagazine/235561/",
      "https://en.wikipedia.org/wiki/Serdica",
@@ -270,7 +280,7 @@
      "https://boyanachurch.info/en/visitors-information-en/"
     ],
     "x": 0.12,
-    "y": 0.53,
+    "y": 0.6,
     "dir": "sw"
    }
   ],

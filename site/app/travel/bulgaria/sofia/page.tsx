@@ -12,9 +12,11 @@ import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import StickyNotes from "@/components/live/Notes";
+import Writer from "@/components/travel/article/Writer";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
+import { GUIDE_BY } from "@/content/guidebook/heading";
 import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
 import { JsonLd, articleLd } from "@/lib/jsonld";
@@ -50,7 +52,7 @@ import "@/components/guidebook/guidebook.css";
 const G = SOFIA;
 const CITY = travelCity(G.country, G.city);
 
-/* 貼られたときの絵は、題を焼いた表紙（あやと 2026-11-18 #1228。焼いていなければ国の1枚のまま） */
+/* 貼られたときの絵は、字の無い表紙（#332 の決めごと3。題を焼いた絵は面の表紙と画像検索に。描いていなければ国の1枚のまま） */
 const DRAWN = readDrawn(G.country, G.city);
 export const metadata: Metadata = coverShare(
   travelCityShare(G.country, G.city, { title: G.title, description: G.description }),
@@ -81,7 +83,8 @@ export default function SofiaPage() {
           description: G.description,
           datePublished: G.published,
           dateModified: G.updated,
-          image: (drawn.cover ?? G.cover).src,
+          /* 記事の絵は字の無い表紙の 16:9・4:3・1:1（Google の Article の手引き。#332）。切っていなければ表紙の1枚 */
+          image: drawn.ld.length ? drawn.ld.map((x) => x.src) : (drawn.cover ?? G.cover).src,
         })}
       />
       <VideoLds g={g} />
@@ -98,6 +101,8 @@ export default function SofiaPage() {
         <Basics g={g} n={6} />
         {/* 面のいちばん下。導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228） */}
         <Videos g={g} n={7} />
+        {/* 書き手の枠（記事の面と同じ。検索の上位の 7割が書き手を見せている。#1262） */}
+        <Writer by={GUIDE_BY.before} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
 

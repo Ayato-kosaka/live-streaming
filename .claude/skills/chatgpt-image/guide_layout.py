@@ -20,6 +20,13 @@
 - 札の字の高さは絵の幅の 4.2%。**画像検索の縮小（横 240px）で 10px** になり、読める（2026-11-18 に縮めて見た）
 - 札は地区の色の角丸、白いふちと薄い影。字は面の `--ink`
 - 2行の札は頼み書きの `label` の通りに折る。行の終わりの「・」は描かない（「ジェンスキー・／パザール周辺」→「ジェンスキー／パザール周辺」）
+
+## 題の帯と目印の名前を焼く（`bake_map_title`・`bake_names`）
+
+画像検索の上位の地図は、どれも題の帯（「SOFIA ATTRACTION MAP」）と目印ごとの名前を絵に入れている（`docs/seo.md` 7章・#332）。
+帯は絵のいちばん上の横いっぱい（紙の色に街の名前と、赤い札の「見どころマップ」。240px で街の名前が 15px）、目印の名前は
+描いてある目印の絵の真下か脇に白い札（字は絵の幅の 2.7%）。**番号の点は足さない**（あやと 2026-11-16「見どころマップは詳しすぎてダサい、概要だけ」）。
+焼く順は 目印の名前 → 地区の名前 → 帯（あとのものほど上）。札どうし・地区の札・帯が重なるときは止める
 - 返すのは札の箱（中心と幅・高さ。割合）。面はここに透明の押しどころを重ねる（`components/guidebook/SpotMap.tsx`）
 """
 from __future__ import annotations
@@ -314,9 +321,19 @@ def box(label: list[str], ratio: float, W: int = 1200) -> dict:
     return {"w": round(w / W, 4), "h": round(h / (W / ratio), 4)}
 
 
-def bake(im, areas: list[dict]):
+def _hit(a: dict, b: dict) -> bool:
+    """2つの箱（中心と幅・高さ。割合）が重なるか"""
+    return abs(a["x"] - b["x"]) < (a["w"] + b["w"]) / 2 and abs(a["y"] - b["y"]) < (a["h"] + b["h"]) / 2
+
+
+def area_boxes(areas: list[dict], W: int, H: int) -> dict[str, dict]:
+    """地区の札の箱（`bake` が焼くのと同じ寸法）。目印の名前と題の帯が、地区の札に重ならないかを見るのに使う"""
+    return {f"地区の札「{a['id']}」": {**box(a["label"], W / H, W), "x": a["x"], "y": a["y"]} for a in areas if "label" in a}
+
+
+def bake(im, areas: list[dict], avoid: dict[str, dict] | None = None):
     """`areas` の `label`（行の並び）を `x`・`y`（札の中心。割合）に焼いた絵を返す。
-    札が絵の外にはみ出す・札どうしが重なるときは止める（黙って重ねない）"""
+    札が絵の外にはみ出す・札どうしが重なる・`avoid`（題の帯など、先に場所を取ったもの）に重なるときは止める（黙って重ねない）"""
     from PIL import Image, ImageDraw, ImageFilter
     W, H = im.size
     f, fs, lh, padx, pady, edge = _metrics(W)
@@ -325,12 +342,15 @@ def bake(im, areas: list[dict]):
     sd, td = ImageDraw.Draw(shadow), ImageDraw.Draw(top)
     boxes = {}
     for a in areas:
+        for k, o in (avoid or {}).items():
+            if _hit({**box(a["label"], W / H, W), "x": a["x"], "y": a["y"]}, o):
+                raise ValueError(f"札「{a['id']}」が{k}に重なる（頼み書きの areas の x・y を離す）")
         lines = _lines(a["label"])
         b = box(a["label"], W / H, W)
         if a["x"] - b["w"] / 2 < 0 or a["x"] + b["w"] / 2 > 1 or a["y"] - b["h"] / 2 < 0 or a["y"] + b["h"] / 2 > 1:
             raise ValueError(f"札「{''.join(lines)}」が絵の外にはみ出す（頼み書きの areas の x・y を内側へ）")
         for k, o in boxes.items():
-            if abs(a["x"] - o["x"]) < (b["w"] + o["w"]) / 2 and abs(a["y"] - o["y"]) < (b["h"] + o["h"]) / 2:
+            if _hit({**b, "x": a["x"], "y": a["y"]}, o):
                 raise ValueError(f"札「{a['id']}」と「{k}」が重なる（頼み書きの areas の x・y を離す）")
         boxes[a["id"]] = {**b, "x": a["x"], "y": a["y"]}
         w, h = b["w"] * W - 2 * edge, b["h"] * H - 2 * edge
@@ -344,6 +364,109 @@ def bake(im, areas: list[dict]):
         for i, t in enumerate(lines):
             td.text((cx, y0 + pady + lh * i + lh / 2), t, font=f, fill=INK + (255,), anchor="mm")
     shadow = shadow.filter(ImageFilter.GaussianBlur(fs * 0.18))
+    return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), shadow), top).convert("RGB")
+
+
+# ---------------------------------------------------------------- 見どころマップの題の帯と、目印の名前
+
+#: 題の帯（地図のいちばん上、横いっぱい）。字の高さは絵の幅に対して。**横 240px に縮めて街の名前が 15px・帯の字が 12px**
+MAP_TITLE_FS = {"name": 0.064, "label": 0.05}
+MAP_TITLE_H = 0.105   # 帯の高さ（絵の幅に対して。1200px の絵で 126px）
+#: 目印の名前の札。字の高さは絵の幅の 2.7%（1200px で 32px）。画像検索の縮小（240px）で読ませるのは題と地区の名前で、
+#: 目印の名前は開いた絵で読む字
+NAME_FS = 0.027
+
+
+def map_title_box(W: int, H: int) -> dict:
+    """題の帯の箱（中心と幅・高さ。割合）。影のぶんを少し足す（地区の札・目印の名前を帯の影にも重ねない）"""
+    h = (W * MAP_TITLE_H + W * 0.012) / H
+    return {"x": 0.5, "y": h / 2, "w": 1.0, "h": h}
+
+
+def bake_map_title(im, t: dict):
+    """見どころマップのいちばん上に、題の帯（「ソフィア」＋赤い札の「見どころマップ」）を焼いた絵を返す。
+
+    **画像検索の上位の地図は、どれも題の帯を絵に焼いている**（「SOFIA ATTRACTION MAP」。`docs/seo.md` 7章、#332）。
+    表紙の題（`bake_title`）と同じ作り: 紙の色の地に街の名前を面の `--ink` で、「見どころマップ」を `--gb-c` の札に白で。
+    帯は地図の絵の上に重ねる（絵の寸法と地区の札の位置を変えない）。字が帯からあふれるときは止める
+    """
+    from PIL import Image, ImageDraw, ImageFilter, ImageFont
+    W, H = im.size
+    fn = ImageFont.truetype(str(font("Black")), round(W * MAP_TITLE_FS["name"]))
+    fl = ImageFont.truetype(str(font("Black")), round(W * MAP_TITLE_FS["label"]))
+    bh = W * MAP_TITLE_H
+    gap, padx = W * 0.022, W * 0.03
+    nw = fn.getlength(t["name"])
+    lw = fl.getlength(t["label"]) + 2 * padx
+    total = nw + gap + lw
+    if total > W * 0.92:
+        raise ValueError(f"見どころマップの題「{t['name']}{t['label']}」が帯に収まらない（{total:.0f}px / 絵 {W}px）")
+    shadow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    top = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sd, td = ImageDraw.Draw(shadow), ImageDraw.Draw(top)
+    sd.rectangle((0, 0, W, bh + W * 0.006), fill=(60, 40, 20, 110))
+    td.rectangle((0, 0, W, bh), fill=TITLE_PAPER + (242,))
+    # 帯の下の細い線（地図と帯の境目を、影だけに任せない）
+    td.rectangle((0, bh - W * 0.005, W, bh), fill=TITLE_ACCENT + (255,))
+    x0, cy = (W - total) / 2, (bh - W * 0.005) / 2
+    td.text((x0, cy), t["name"], font=fn, fill=INK + (255,), anchor="lm")
+    ph = W * MAP_TITLE_FS["label"] * 1.45
+    lx = x0 + nw + gap
+    td.rounded_rectangle((lx, cy - ph / 2, lx + lw, cy + ph / 2), ph / 2, fill=TITLE_ACCENT + (255,))
+    td.text((lx + lw / 2, cy), t["label"], font=fl, fill=(255, 255, 255, 255), anchor="mm")
+    shadow = shadow.filter(ImageFilter.GaussianBlur(W * 0.006))
+    return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), shadow), top).convert("RGB")
+
+
+def _name_metrics(W: int):
+    from PIL import ImageFont
+    fs = round(W * NAME_FS)
+    return ImageFont.truetype(str(font("Bold")), fs), fs, round(fs * 1.22), round(fs * 0.48), round(fs * 0.26), max(1, round(fs * 0.08))
+
+
+def name_box(label: list[str], W: int, H: int) -> dict:
+    """目印の名前の札の幅と高さ（割合）"""
+    f, fs, lh, padx, pady, edge = _name_metrics(W)
+    lines = _lines(label)
+    return {"w": (max(f.getlength(t) for t in lines) + 2 * padx + 2 * edge) / W,
+            "h": (lh * len(lines) + 2 * pady + 2 * edge) / H}
+
+
+def bake_names(im, names: list[dict], avoid: dict[str, dict]):
+    """描いてある目印の絵のそばに、その名前の札（白い角丸に `--ink` の字）を焼いた絵を返す。
+
+    画像検索の上位の地図は、目印ごとに名前を書いている（#332）。**番号の点は足さない**（あやと 2026-11-16「見どころマップは
+    詳しすぎてダサい、概要だけ」）。焼くのは絵に描いてある目印だけで、名前は面の見たいものの字にそろえる。
+    `names` は `label`（行の並び）と札の中心 `x`・`y`（割合。描けた絵を見て、目印の絵の真下か脇に置く）。
+    `avoid` は地区の札と題の帯の箱。札が絵の外へ出る・ほかの札や `avoid` に重なるときは止める（黙って重ねない）
+    """
+    from PIL import Image, ImageDraw, ImageFilter
+    W, H = im.size
+    f, fs, lh, padx, pady, edge = _name_metrics(W)
+    shadow = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    top = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    sd, td = ImageDraw.Draw(shadow), ImageDraw.Draw(top)
+    taken = dict(avoid)
+    for n in names:
+        lines = _lines(n["label"])
+        b = {**name_box(n["label"], W, H), "x": n["x"], "y": n["y"]}
+        if b["x"] - b["w"] / 2 < 0 or b["x"] + b["w"] / 2 > 1 or b["y"] - b["h"] / 2 < 0 or b["y"] + b["h"] / 2 > 1:
+            raise ValueError(f"目印の名前「{''.join(lines)}」が絵の外にはみ出す（頼み書きの names の x・y を内側へ）")
+        for k, o in taken.items():
+            if _hit(b, o):
+                raise ValueError(f"目印の名前「{''.join(lines)}」が{k}に重なる（頼み書きの names の x・y を離す）")
+        # 地区と同じ id の目印がある（ネフスキー大聖堂と、その周辺の地区）。札の名前で控え、地区の箱を上書きしない
+        taken[f"目印「{''.join(lines)}」"] = b
+        w, h = b["w"] * W - 2 * edge, b["h"] * H - 2 * edge
+        cx, cy = b["x"] * W, b["y"] * H
+        x0, y0 = cx - w / 2, cy - h / 2
+        r = min(h / 2, fs * 0.7)
+        sd.rounded_rectangle((x0 - edge, y0 - edge + fs * 0.1, x0 + w + edge, y0 + h + edge + fs * 0.1), r + edge, fill=(60, 40, 20, 80))
+        td.rounded_rectangle((x0 - edge, y0 - edge, x0 + w + edge, y0 + h + edge), r + edge, fill=INK + (90,))
+        td.rounded_rectangle((x0, y0, x0 + w, y0 + h), r, fill=(255, 255, 255, 245))
+        for i, t in enumerate(lines):
+            td.text((cx, y0 + pady + lh * i + lh / 2), t, font=f, fill=INK + (255,), anchor="mm")
+    shadow = shadow.filter(ImageFilter.GaussianBlur(fs * 0.2))
     return Image.alpha_composite(Image.alpha_composite(im.convert("RGBA"), shadow), top).convert("RGB")
 
 

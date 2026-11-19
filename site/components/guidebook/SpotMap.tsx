@@ -75,7 +75,7 @@ export default function SpotMap({ g, drawn }: { g: Guidebook; drawn: Drawn }) {
     if (off.length)
       throw new Error(`SpotMap: 地図の絵に焼いた地区の名前が、面の地区と合わない（${off.map((a) => a.name).join("・")}）。guide_art.py finalize で焼き直す`);
   }
-  const lay = am.baked ? place(aspect, [], am.beyond, tagIn) : place(aspect, tagIn, am.beyond);
+  const lay = am.baked ? place(aspect, [], am.beyond, tagIn, am.painted) : place(aspect, tagIn, am.beyond);
 
   const seeIds = new Set(g.see.items.map((it) => it.id));
   const todoIds = new Set(g.todo.map((t) => t.id));

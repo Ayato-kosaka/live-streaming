@@ -494,7 +494,34 @@ def main() -> int:
         ok(after.getpixel(inside)[1] < before.getpixel(inside)[1] - 20 and
            sum(abs(x - y) for x, y in zip(after.getpixel(far), before.getpixel(far))) < 12,
            f"足した地区の色が、範囲の中に重ならない・外まで変えた: {before.getpixel(inside)}→{after.getpixel(inside)} / {before.getpixel(far)}→{after.getpixel(far)}")
+        # 題の帯と目印の名前（#332。画像検索の上位の地図の形）。帯は絵のいちばん上、名前は頼み書きの置き場に
         bsp["areamap"]["districts"] = []
+        bsp["areamap"]["title"] = {"name": "町", "label": "見どころマップ"}
+        bsp["areamap"]["names"] = [{"id": "tower", "label": ["塔"], "x": 0.8, "y": 0.45}]
+        ga.finalize(bsp, root, tmp / "nowork", base=base)
+        big = Image.open(bout / "町-見どころマップ-1200.webp").convert("RGB")
+        band = [big.getpixel((x, 20)) for x in (30, 1170)]
+        ok(all(p[0] > 235 and p[1] > 235 for p in band) and min(big.getpixel((x, 63))[0] for x in range(300, 900, 4)) < 140,
+           f"題の帯（紙の色の地と字）が絵のいちばん上に焼けていない: 端 {band}")
+        ok(min(big.getpixel((round(0.8 * 1200) + dx, round(0.45 * 1500)))[0] for dx in range(-16, 17)) < 140
+           and big.getpixel((round(0.8 * 1200), round(0.45 * 1500) - 40))[0] < 245,
+           "目印の名前の札が頼み書きの置き場に焼けていない")
+        for what, change in (("目印の名前が地区の札に", {"x": 0.3, "y": 0.3}), ("目印の名前が題の帯に", {"x": 0.5, "y": 0.03})):
+            bsp["areamap"]["names"][0].update(change)
+            try:
+                ga.finalize(bsp, root, tmp / "nowork", base=base)
+                ok(False, f"{what}重なるのに黙って焼いた")
+            except ValueError as e:
+                ok("重なる" in str(e), f"{what}重なるときの止めかたが違う: {e}")
+        bsp["areamap"]["names"] = []
+        bsp["areamap"]["areas"][0].update({"y": 0.06})
+        try:
+            ga.finalize(bsp, root, tmp / "nowork", base=base)
+            ok(False, "地区の札が題の帯に重なるのに黙って焼いた")
+        except ValueError as e:
+            ok("題の帯" in str(e), f"地区の札が題の帯に重なるときの止めかたが違う: {e}")
+        bsp["areamap"]["areas"][0].update({"y": 0.3})
+        del bsp["areamap"]["title"]
         bsp["areamap"]["areas"][1].update({"x": 0.32, "y": 0.32})
         try:
             ga.finalize(bsp, root, tmp / "nowork", base=base)
@@ -518,13 +545,25 @@ def main() -> int:
            f"題を焼いた表紙の名前が頼み書きの file でない: {c['src']} / {ct['src']}")
         ok(c.get("titled") is True and ct.get("titled") is True and c["alt"].startswith("テスト町観光ガイド「港の見える町」。"),
            f"題を焼いた表紙に titled と、焼いた字で始まる alt が載らない: {c.get('titled')} {c['alt'][:30]}")
-        ok(c.get("og", {}).get("src") == "/guide/xx/titled/titled-guide-og.jpg"
-           and Image.open(tout / "titled-guide-og.jpg").size == (1200, 630) and "og" not in ct,
+        ok(c.get("og", {}).get("src") == "/guide/xx/titled/titled-cover-1200x630.jpg"
+           and Image.open(tout / "titled-cover-1200x630.jpg").size == (1200, 630) and "og" not in ct,
            f"og の 1200x630 の JPEG が横の表紙にだけ付かない: {c.get('og')} / {ct.get('og')}")
         big = Image.open(tout / "テスト町-観光ガイド-1600.webp").convert("RGB")
         # 札は右上（紙の色）。左下は元の絵の色のまま
         ok(big.getpixel((930, 300))[0] > 200 and big.getpixel((100, 800))[0] < 80,
            f"札が頼み書きの置き場（右上）に焼けていない: 右上 {big.getpixel((930, 300))} 左下 {big.getpixel((100, 800))}")
+        # 貼られたときの絵と記事の絵は、**字の無い**表紙から切る（#332 の決めごと3。Google は og:image と構造化データの絵に
+        # 字の多い絵を避けるよう言っている）。焼いた表紙で紙の色になる右上が、元の絵の色のまま
+        og = Image.open(tout / "titled-cover-1200x630.jpg").convert("RGB")
+        ok(og.getpixel((1000, 120))[0] < 80 and c["og"].get("alt") == "表紙の字",
+           f"og が題を焼いた絵から切られている（右上 {og.getpixel((1000, 120))}）か、alt が焼いた字のまま: {c['og'].get('alt')}")
+        ld = c.get("ld") or []
+        sizes = [(x["w"], x["h"]) for x in ld]
+        ok(sizes == [(1200, 675), (1200, 900), (1200, 1200)]
+           and all(Image.open(tout / Path(x["src"]).name).size == (x["w"], x["h"]) for x in ld),
+           f"記事の絵が 16:9・4:3・1:1（横 1200px）の3枚でない: {sizes}")
+        ok(all(Image.open(tout / Path(x["src"]).name).convert("RGB").getpixel((x["w"] - 60, 40))[0] < 80 for x in ld),
+           "記事の絵のどれかが、題を焼いた絵から切られている（右上が紙の色）")
         ok(ga.cover_base(tsp, "cover", tb).is_file() and Image.open(ga.cover_base(tsp, "cover", tb)).size == (1600, 900),
            "焼く前の表紙を残していない（キャッチだけ直した日に焼き直せない）")
         # 持ち帰った絵が無い日は、焼く前の1枚から焼き直す（焼いた絵にもう1度焼かない）

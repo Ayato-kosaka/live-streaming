@@ -11,9 +11,11 @@ import SpotsLd from "@/components/guidebook/SpotsLd";
 import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
+import Writer from "@/components/travel/article/Writer";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { AHEAD_COUNTRIES } from "@/content/countries";
+import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
 import { coverShare, readDrawn, todoPic } from "@/content/guidebook/manifest";
 import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
 import { TRAVEL_ARTICLES, travelCity, travelCityCrumbs, travelCityShare } from "@/content/travel";
@@ -59,7 +61,7 @@ import "@/components/guidebook/guidebook.css";
 const G = SKOPJE;
 const CITY = travelCity(G.country, G.city);
 
-/* 貼られたときの絵は、題を焼いた表紙（あやと 2026-11-18 #1228。焼いていなければ国の1枚のまま） */
+/* 貼られたときの絵は、字の無い表紙（#332 の決めごと3。題を焼いた絵は面の表紙と画像検索に。描いていなければ国の1枚のまま） */
 const DRAWN = readDrawn(G.country, G.city);
 export const metadata: Metadata = coverShare(
   travelCityShare(G.country, G.city, { title: G.title, description: G.description }),
@@ -106,6 +108,7 @@ export default function SkopjePage() {
     eat: { ...G.eat, items: G.eat.items.map((it) => swap(it, drawn.food[it.id])) },
     buy: { ...G.buy, items: G.buy.items.map((it) => swap(it, drawn.buy[it.id])) },
   };
+  const went = firstWent(g);
   const usedDrawn = !!(drawn.cover || drawn.areamap || [drawn.do, drawn.food, drawn.buy].some((d) => Object.keys(d).length));
   const toc = tocOf(g);
   return (
@@ -117,7 +120,8 @@ export default function SkopjePage() {
           description: G.description,
           datePublished: G.published,
           dateModified: G.updated,
-          image: (drawn.cover ?? G.cover).src,
+          /* 記事の絵は字の無い表紙の 16:9・4:3・1:1（Google の Article の手引き。#332）。切っていなければ表紙の1枚 */
+          image: drawn.ld.length ? drawn.ld.map((x) => x.src) : (drawn.cover ?? G.cover).src,
         })}
       />
       <VideoLds g={g} />
@@ -134,6 +138,8 @@ export default function SkopjePage() {
         <Basics g={g} n={6} article={prices && { href: prices.href, title: prices.title }} />
         {/* 面のいちばん下。導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228） */}
         <Videos g={g} n={7} articles={articles} />
+        {/* 書き手の枠（記事の面と同じ。検索の上位の 7割が書き手を見せている。#1262）。行った日は配信の facts から */}
+        <Writer by={GUIDE_BY.after} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
 
