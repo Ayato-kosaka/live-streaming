@@ -14,8 +14,8 @@ import { CountryRecordPage, mustRecord, recordMetadata } from "../record";
  * 行く前に調べた中身（`content/northMacedonia.ts`）は消していない。出どころの URL を足してから
  * スコピエのガイドへ流す予定のもの（`docs/guide-design.md` 4章・12）。
  *
- * スコピエのガイドは公開前の印（`draft`）が付いているので、「行った街」のスコピエはまだ配信の畳み。
- * 印が外れた日に、ガイドへのカードへひとりでに替わる（`content/travel.ts` の `publicCities`）。
+ * 「行った街」のスコピエはガイドへのカード（2026-11-19 にスコピエの公開前の印を外した。`content/travel.ts` の `publicCities`）。
+ * 配信35本は街の畳みから「この国であったこと」へ移り、議事録の一言が添う（`../record.tsx` の `stayStreams`）。
  */
 const R = mustRecord("north-macedonia");
 

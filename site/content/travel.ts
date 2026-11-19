@@ -108,7 +108,8 @@ export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
  *
  * ## 公開前の印（`draft`）
  *
- * 最初の街（スコピエ）は、あやとが全部読んでから検索に出す（#1197 Q3）。
+ * 最初の街（スコピエ）は、あやとが全部読んでから検索に出した（#1197 Q3。2026-11-19 に OK で印を外した）。
+ * 次の街も、あやとが仕上がりを見て OK を出すまでは印を付けて出す（`.claude/skills/city-guide/SKILL.md` 2-9〜2-11）。
  * **印が付いているあいだ、その面は**——
  *
  * - 検索に載せない（面の `robots` が `index: false`）
@@ -131,7 +132,8 @@ export type TravelCity = {
 };
 
 const CITIES: Omit<TravelCity, "href">[] = [
-  { country: "north-macedonia", slug: "skopje", name: "スコピエ", draft: true },
+  /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
+  { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
   { country: "bulgaria", slug: "sofia", name: "ソフィア" },
 ];
 
@@ -223,7 +225,8 @@ export type TravelArticle = {
 };
 
 const ARTICLES: Omit<TravelArticle, "href">[] = [
-  { country: "north-macedonia", city: "skopje", slug: "prices", crumb: "物価", draft: true },
+  /* 街の面と同じ日に印を外した（2026-11-19。あやと「スコピエのところにリンクを入れてほしい」） */
+  { country: "north-macedonia", city: "skopje", slug: "prices", crumb: "物価" },
   /* ソフィアの物価（#1262）。配信で言った額だけで組むので、公開前の印は付けない */
   { country: "bulgaria", city: "sofia", slug: "prices", crumb: "物価" },
 ];

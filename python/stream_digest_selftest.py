@@ -12,7 +12,8 @@
 | 短い1文 | 1文目が40字に届かない | 2文目まで（3文目は足さない） |
 | 名前 | 1文目に `@名前` | その文を飛ばして次の文 |
 | 伏せ字 | 1文目に〇〇 | その文を飛ばして次の文 |
-| 表に無い国 | `- 場所:` が表に無い国 | 焼かない |
+| 表に無い国 | `- 場所:` が表に無い国で、表の国の滞在の外の日 | 焼かない |
+| 国境の日 | `- 場所:` は表に無い国だが、表の国の滞在の日に始まった回（国の面は日付で並べる） | 焼く |
 | 古い | 焼いたあとに議事録の「ひとことで」を書き換える | `--check` が 1 |
 | 本物 | リポジトリの議事録と `site/content/streamDigest.ts` | `--check` が 0（議事録を足して焼き忘れると、ここで赤） |
 
@@ -59,7 +60,12 @@ CASES = {
     "vNAME": ("ブルガリア・ソフィア", "@まこも-z3i が来た回。" + LONG, LONG),
     "vMASK": ("ブルガリア", "〇〇に住む人と話した回。" + LONG, LONG),
     "vOTHER": ("トルコ・イスタンブール", LONG, None),
+    # 2026-11-15 に始まった回。場所の頭は前の国でも、ブルガリアの滞在の日なので国の面に並ぶ
+    "vEDGE": ("トルコ（ソフィア行きの長距離バス車内）", LONG, LONG),
 }
+
+# 対照の滞在。**本物の countries.ts を読ませない**（本物のブルガリアは 11-12 からなので、vOTHER の日が入ってしまう）
+STAYS = [("bulgaria", "2026-11-15", "")]
 
 
 def build(d: Path) -> tuple[Path, Path, Path]:
@@ -92,23 +98,23 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
         streams, table, out = build(d)
-        ok("焼ける（終了 0）", run(streams=streams, table_path=table, out=out) == 0)
-        got = {v: t for _, v, t in sd.digests(streams, sd.gf.load_table(table))}
+        ok("焼ける（終了 0）", run(streams=streams, table_path=table, out=out, stays=STAYS) == 0)
+        got = {v: t for _, v, t in sd.digests(streams, sd.gf.load_table(table), STAYS)}
         for vid, (_, _, want) in CASES.items():
             if want is None:
-                ok(f"{vid}: 表に無い国は焼かない", vid not in got)
+                ok(f"{vid}: 表に無い国で滞在の外の日は焼かない", vid not in got)
             else:
                 ok(f"{vid}: {want[:16]}…", got.get(vid) == want)
         text = out.read_text(encoding="utf-8")
         ok("面の字に @ も〇〇も無い", "@" not in text and "〇〇" not in text)
-        ok("焼いた直後は --check が 0", run(streams=streams, table_path=table, out=out, check=True) == 0)
+        ok("焼いた直後は --check が 0", run(streams=streams, table_path=table, out=out, check=True, stays=STAYS) == 0)
         md = next((streams / "2026/11").glob("*vLONG.md"))
         md.write_text(note("ブルガリア・ソフィア", "書き換えた回。" + LONG), encoding="utf-8")
-        ok("議事録を書き換えると --check が 1", run(streams=streams, table_path=table, out=out, check=True) == 1)
+        ok("議事録を書き換えると --check が 1", run(streams=streams, table_path=table, out=out, check=True, stays=STAYS) == 1)
         empty = d / "empty"
         empty.mkdir()
         (empty / "manifest.tsv").write_text(HEAD, encoding="utf-8")
-        ok("議事録が無ければ 2", run(streams=empty, table_path=table, out=d / "x.ts") == 2)
+        ok("議事録が無ければ 2", run(streams=empty, table_path=table, out=d / "x.ts", stays=STAYS) == 2)
 
     # 本物: 議事録を足したのに焼き忘れると、ここで赤くなる
     real = run(check=True)
