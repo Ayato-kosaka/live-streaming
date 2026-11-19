@@ -109,6 +109,17 @@
  * **1つでも外れたら、本物の面の数字を1つも出さずに 2 で落ちる。**
  * `BREAK=` は判定の足を1本ずつ抜く（#128 の決めごと1）。
  *
+ * ## 焼いた日と読む日が同じだと、焼いた数は差に出ない（#339）
+ *
+ * 引き算なので、**焼いた日のうちに読めば、焼いた日の数（「旅に出て 53日目」）は
+ * JS の前と後で同じ字になって消える。** 毎晩の見張りは書き出してすぐ読むので、
+ * 拾えるのは**書き出しと読むあいだに日付をまたいだ回だけ**——同じコードが、
+ * 回した時刻しだいで緑にも赤にもなる（2026-11-19。書き出し 21:41 UTC・`/travel` を
+ * 読んだのが 22:03 UTC で、旅の暦の日付をまたいで赤くなった）。
+ *
+ * 焼いた数は、**日を変えて2回焼いてある `datebake.mjs` の3**が、時刻に依らず見る
+ * （判定はここの `countClaim`。1つの正本を2つの道具が使う）。
+ *
  * ## CI に繋いであるのは、判定だけ
  *
  * この道具そのものは**書き出し（`site/.next-*`）とブラウザが要る。**
@@ -235,8 +246,10 @@ const COUNTED_CTX = [
 const FAMILIES = [
   { name: "いまを指す語", re: new RegExp(DEIXIS) },
   { name: "段を言い切るかたち", re: new RegExp(PHASE.join("|")) },
-  { name: "今日を知らないと出せない数", re: new RegExp(COUNTED.join("|")) },
 ];
+/** 3つめの族。**数だけは `countClaim()` からも引ける**ように、ほかの2つと分けて持つ */
+const COUNTED_NAME = "今日を知らないと出せない数";
+const COUNTED_RE = new RegExp(COUNTED.join("|"));
 
 /**
  * **逃がすもの。** どの日に読んでも本当な字。
@@ -265,6 +278,21 @@ export function judge(line, prev = "", next = "") {
   if (!UNKNOWN.test(t) && !DATE_ONLY.test(t)) {
     for (const f of FAMILIES) if (f.re.test(t)) return { hit: true, why: f.name };
   }
+  return countClaim(line, prev, next);
+}
+
+/**
+ * **今日を知らないと出せない数**だけを見る（3つめの族）。
+ *
+ * `judge()` の3つめをそのまま切り出したもの。`judge()` はここを呼ぶだけなので、
+ * 数の族の正本はここ1か所（`dayClaim()` もここを通る）。
+ *
+ * @returns {{hit: boolean, why: string}}
+ */
+export function countClaim(line, prev = "", next = "") {
+  const t = line.trim();
+  if (!t) return { hit: false, why: "" };
+  if (!UNKNOWN.test(t) && !DATE_ONLY.test(t) && COUNTED_RE.test(t)) return { hit: true, why: COUNTED_NAME };
   /* 数だけの行は、**隣の行に見出しがある**ことがある。窓で当て直す。
      数字を持っているのは「その行」でなければならない——隣の行の数を
      この行のせいにしない */
@@ -273,9 +301,39 @@ export function judge(line, prev = "", next = "") {
        中の数と見出しが当たってしまう */
     const win = squash(prev).slice(-24) + squash(t) + squash(next).slice(0, 24);
     for (const re of COUNTED_CTX) {
-      if (re.test(win)) return { hit: true, why: `今日を知らないと出せない数（隣の行と合わせて「${win.slice(0, 40)}」）` };
+      if (re.test(win)) return { hit: true, why: `${COUNTED_NAME}（隣の行と合わせて「${win.slice(0, 40)}」）` };
     }
   }
+  return { hit: false, why: "" };
+}
+
+/** 時の単位。数のすぐうしろに付いていれば、その数は時を数えている */
+const TIME_UNIT = "(?:日|週|ヶ月|か月|カ月|箇月|年|時間|分|秒|泊|晩)";
+/** 時を数える見出し。札の大きい数字と見出しが別の段に割れているときに、見出しの側で見る */
+const TIME_NOUN = "(?:日数|日目|日め|年目|年め|ヶ月目|か月目|カ月目|週目|週め|連続|経過|以来|ぶり)";
+
+/**
+ * **今日から数える時の数**（◯日目・◯日・あと◯日・旅した日数 ◯）だけを見る。
+ *
+ * `countClaim()` で拾ったもののうち、数に時の単位が付いているもの、
+ * または数だけの段で見出しが時を言っているもの。`datebake.mjs` の3が
+ * 「焼いた字のうち、日で変わった字」に当てる（#339）。
+ *
+ * **あちらは段を焼くのを認めている**（#336 の決めごと4）ので、3つの族ぜんぶでは
+ * 当てられない。並びの残りの数（`components/ui/Longer.tsx` の「あと◯枚だす」）も、
+ * 焼いた並びの残りを数えたもので、焼いた並びと一緒に読めば本当——並びのほうが
+ * 焼いた日の段なので、こちらも段の側に入る。**時の数は、焼いた日のうちしか
+ * 本当でない**ので、焼いてよい日が1日も無い。
+ *
+ * @returns {{hit: boolean, why: string}}
+ */
+export function dayClaim(line, prev = "", next = "") {
+  const c = countClaim(line, prev, next);
+  if (!c.hit) return c;
+  const t = line.trim();
+  if (new RegExp(`\\d+\\s*${TIME_UNIT}`).test(t) || new RegExp(TIME_NOUN).test(t)) return c;
+  // 数だけの段（札の大きい数字）。見出しが時を言っていれば時の数
+  if (/^[\d,.\s]+$/.test(t) && new RegExp(TIME_NOUN).test(squash(prev).slice(-24) + squash(next).slice(0, 24))) return c;
   return { hit: false, why: "" };
 }
 
