@@ -582,6 +582,36 @@
         "seen": "2026-11-19"
        }
       ]
+     },
+     {
+      "text": "床の広さは36万5,000平方メートル。地下にも8階あり、いちばん下は核シェルター。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "材料はほとんどルーマニアのもので、大理石が100万立方メートル、クリスタルのシャンデリアが480基（メディアシュのガラス工場の作）。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "建てるために、ウラヌスの丘を平らにし、古い街の中心のおよそ7平方キロメートルを取り壊した。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
+        "seen": "2026-11-19"
+       }
+      ]
      }
     ],
     "how": [
@@ -591,6 +621,16 @@
        {
         "name": "Wikivoyage「Bucharest」",
         "url": "https://en.wikivoyage.org/wiki/Bucharest",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "西の棟には国立現代美術館があり、2004年に開いた。ガラスの別棟から外の入口で入る。",
+      "src": [
+       {
+        "name": "Wikipedia「Palace of the Parliament」",
+        "url": "https://en.wikipedia.org/wiki/Palace_of_the_Parliament",
         "seen": "2026-11-19"
        }
       ]
@@ -763,14 +803,66 @@
      }
     ],
     "time": [],
-    "money": [],
-    "tips": [],
+    "money": [
+     {
+      "text": "自家製のビールは300mlで22.5レイ、400mlで29.5レイ、1リットルで65.5レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "サルマーレは87レイ、パパナシは61レイ（同じ献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "「1メートルのビール」は、10杯ぶん・4リットルを1枚の板にのせて出す（222レイ）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "献立はルーマニア語と英語。ミティテイ・豆のチョルバ・焼きなすのサラダも載っている。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "route": []
    },
    "src": [
     {
      "name": "Wikipedia「Caru' cu Bere」",
      "url": "https://en.wikipedia.org/wiki/Caru%27_cu_Bere",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu băutură」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-bautura-carucubere-septembrie.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
      "seen": "2026-11-19"
     }
    ],
@@ -779,6 +871,11 @@
     "see": [
      "old-town",
      "stavropoleos"
+    ],
+    "eat": [
+     "bere",
+     "mici",
+     "sarmale"
     ]
    },
    "photo": {
@@ -825,7 +922,28 @@
       ]
      }
     ],
-    "how": [],
+    "how": [
+     {
+      "text": "ラ・ママでは、キャベツのサルマーレにママリガと燻製の豚ばらを添えて、3個42レイ・5個56レイ（2026年版の献立）。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "カル・ク・ベレでは、ママリガ・サワークリーム・青唐辛子を添えて87レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "time": [],
     "money": [],
     "tips": [
@@ -838,6 +956,16 @@
         "seen": "2026-11-19"
        }
       ]
+     },
+     {
+      "text": "ラ・ママのサルマーレの中身は、豚と牛のひき肉・玉ねぎ・トマトペースト・米。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
      }
     ],
     "route": []
@@ -846,6 +974,16 @@
     {
      "name": "Wikipedia「Romanian cuisine」",
      "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "La Mama「Meniu」（ediția 1/2026）",
+     "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
      "seen": "2026-11-19"
     }
    ],
@@ -890,7 +1028,28 @@
       ]
      }
     ],
-    "how": [],
+    "how": [
+     {
+      "text": "ラ・ママでは、生の牛のチーズの生地に、ジャムとサワークリームをかけて1個21レイ・2個32レイ（2026年版の献立）。",
+      "src": [
+       {
+        "name": "La Mama「Meniu」（ediția 1/2026）",
+        "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "カル・ク・ベレでは、甘いチーズの生地に自家製のジャムとサワークリームで61レイ（2026年9月の献立）。",
+      "src": [
+       {
+        "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+        "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "time": [],
     "money": [],
     "tips": [],
@@ -900,6 +1059,16 @@
     {
      "name": "Wikipedia「Romanian cuisine」",
      "url": "https://en.wikipedia.org/wiki/Romanian_cuisine",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "La Mama「Meniu」（ediția 1/2026）",
+     "url": "https://lamama.ro/wp-content/uploads/2026/04/meniu1.pdf",
+     "seen": "2026-11-19"
+    },
+    {
+     "name": "Caru' cu Bere「Meniu mâncare」（2026年9月の献立）",
+     "url": "https://www.carucubere.ro/wp-content/uploads/2026/09/meniu-mancare-carucubere-septembrie.pdf",
      "seen": "2026-11-19"
     }
    ],
@@ -1022,7 +1191,38 @@
     ],
     "time": [],
     "money": [],
-    "tips": [],
+    "tips": [
+     {
+      "text": "ホールの壁には、ダキアの征服から1918年の大ルーマニアまでの歴史を描いた、長さ75メートル・高さ3メートルのフレスコ画がぐるりと続く。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "席は794。建てる費用の一部は、28年続いた「アテネ音楽堂に1レウを！」の募金で集めた。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     },
+     {
+      "text": "設計はフランスの建築家アルベール・ガルロン。2007年に欧州遺産ラベルに選ばれた。",
+      "src": [
+       {
+        "name": "Wikipedia「Romanian Athenaeum」",
+        "url": "https://en.wikipedia.org/wiki/Romanian_Athenaeum",
+        "seen": "2026-11-19"
+       }
+      ]
+     }
+    ],
     "route": []
    },
    "src": [
@@ -1229,7 +1429,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。",
+    "text": "チャウシェスクの命で1984年に建て始め、1997年にできた議会の建物。重さは世界一とされ、行政の建物としてはアメリカの国防総省に次ぐ大きさ。部屋は1,100、大理石は100万立方メートル。",
     "src": [
      {
       "name": "Wikipedia「Palace of the Parliament」",
@@ -1369,7 +1569,7 @@
    },
    "rank": 1,
    "what": {
-    "text": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた絵がぐるりと続く。",
+    "text": "1888年に開いた丸屋根の音楽堂で、ジョルジェ・エネスク・フィルハーモニーの本拠。中の壁には、ルーマニアの歴史を描いた長さ75メートルのフレスコ画がぐるりと続く。設計はフランスの建築家アルベール・ガルロン。",
     "src": [
      {
       "name": "Wikipedia「Romanian Athenaeum」",
@@ -2176,7 +2376,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "農村の暮らしの品を10万点あまり持つ博物館。民族衣装の布・イコン・焼き物が並ぶ。1996年に「ヨーロッパ・ミュージアム・オブ・ザ・イヤー」に選ばれた。",
+    "text": "農村の暮らしの品を10万点あまり持つ博物館。民族衣装の布・イコン・焼き物が並ぶ。1996年に「ヨーロッパ・ミュージアム・オブ・ザ・イヤー」に選ばれた。建物は1912〜1941年に建った、ルーマニアの伝統の形を取り入れたネオ・ルーマニア様式。",
     "src": [
      {
       "name": "Wikipedia「National Museum of the Romanian Peasant」",
@@ -2235,7 +2435,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "1847年に開いた、中心部でいちばん古く大きな公園（14.6ヘクタール）。まん中に人の手で掘った池がある。",
+    "text": "1847年に開いた、中心部でいちばん古く大きな公園（14.6ヘクタール）。まん中に人の手で掘った池がある。ドイツの園芸家マイヤーが小道と岩場を作り、池へ下りるロマン主義の庭にした。",
     "src": [
      {
       "name": "Wikipedia「Cișmigiu Gardens」",
@@ -2299,7 +2499,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "1808年にアルメニア人の商人マヌク・ベイが建てた隊商宿。木の回廊が囲む大きな中庭を持ち、いまも宿とレストランとして使われる、街でいちばん古い宿の建物。",
+    "text": "1808年にアルメニア人の商人マヌク・ベイが建てた隊商宿。木の回廊が囲む大きな中庭を持ち、いまも宿とレストランとして使われる、街でいちばん古い宿の建物。1806〜1812年の露土戦争を終わらせたブカレスト条約の、前の話し合いの場になった。",
     "src": [
      {
       "name": "Wikipedia「Hanul lui Manuc」",
@@ -2476,7 +2676,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "カルパチアの山あいの町シナイアに、国王カロル1世が建てた夏の城。1883年に開き、1914年まで建て増した。1953年から博物館。",
+    "text": "カルパチアの山あいの町シナイアに、国王カロル1世が建てた夏の城。1883年に開き、1914年まで建て増した。ネオ・ルネサンスとゴシック・リヴァイヴァルを混ぜた形で、その場で作った電気で全部をまかなった世界で初めての城とされる。1953年から博物館。",
     "src": [
      {
       "name": "Wikipedia「Peleș Castle」",
@@ -2547,7 +2747,7 @@
    },
    "rank": 3,
    "what": {
-    "text": "スナゴフ湖の島に立つ修道院。いまの教会は1521年の建物。ヴラド・ツェペシュが葬られたという言い伝えがあるが、確かではない。島へは2009年にできた歩道橋で渡る。",
+    "text": "スナゴフ湖の島に立つ修道院。いまの教会は1521年の建物。ヴラド・ツェペシュが葬られたという言い伝えがあるが、確かではない。1933〜1934年に墓を開けたときは、中に何も無かった。島へは2009年にできた歩道橋で渡る。",
     "src": [
      {
       "name": "Wikipedia「Snagov Monastery」",
