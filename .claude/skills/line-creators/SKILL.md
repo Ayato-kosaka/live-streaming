@@ -55,7 +55,8 @@ description: LINE Creators Market（creator.line.me）で LINE スタンプを�
 | アカウント設定 | `/seller/edit_basic`（基本情報 / メール / 振込先のタブ） |
 
 最初のセットは **スタンプ ID 48307603**（「ちゃす！集まれ、あやと島の仲間たち」、2026-10-13 に申請、
-2026-11-19 に承認されて売り出された。#856）。店の頁は `https://store.line.me/stickershop/product/48307603/ja`。
+2026-11-19 に承認されて売り出された。#856）。店の頁は `https://store.line.me/stickershop/product/38090699/ja`。
+**店の商品 ID（38090699）は、Creators Market のスタンプ ID（48307603）と別の数。** 店の頁を作るときは、スタンプ ID ではなく、1セットの管理の頁にある「Store page link」（`line.me/S/sticker/<店の ID>`）から取る（2026-11-19、スタンプ ID で店の頁を引いて404が続き、売り出されていないと読み違えて8時間待った）
 島の `/goods` の店への札は `site/content/goods.ts` の `LINE_STORE`（絵は `tools/goods/linestore.py` が焼く）。
 
 ## 4. 画面の癖（2026-10-13 に踏んだもの）

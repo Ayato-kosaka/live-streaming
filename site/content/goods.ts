@@ -659,7 +659,7 @@ export const LINE_PRICE = 190;
  * `tools/goods/linestore.py`。透かしを焼かない理由もそちらの頭に書いた。
  */
 export const LINE_STORE = {
-  href: "https://store.line.me/stickershop/product/48307603/ja",
+  href: "https://store.line.me/stickershop/product/38090699/ja",
   name: "ちゃす！集まれ、あやと島の仲間たち",
   /* 空白の無い題は1かたまりになって、マスの幅で無理に切られる（`ShopGoods.nameParts`）。
      読点と「！」のあとで折れるようにする */
