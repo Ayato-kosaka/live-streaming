@@ -515,13 +515,11 @@ const ALLOW = {
     "`functions/src` の TS を**1行だけ当てて書き替える**仕込み（字面の手術）。焼き込みは読まない",
   ],
   "site/selftest/popdepth_selftest.mjs": [1, "CSS の変数を読む（TS ではない）"],
-  "tools/sprites/fontbudget_selftest.mjs": [
-    1,
-    "`app/css/fonts.css` の `@font-face` を読む（`font-weight` / `url` / `unicode-range`）。**焼き込みの TS ではない。** `font-weight:\\s*(\\d+)` が欄読みの形に見えるだけ",
-  ],
   "tools/sprites/fontfaces.mjs": [
-    1,
-    "`app/css/fonts.css` の `@font-face` を読む口。書体の空振りを数える側は、自前に読まずにここを読む。**焼き込みの TS ではない。** `fontbudget_selftest.mjs` と同じ形",
+    3,
+    "`app/css/fonts.css` の `@font-face` を読む口。書体の空振りを数える側（`fontbudget_selftest.mjs` も 2026-11-19 から）は、" +
+      "自前に読まずにここを読む。**焼き込みの TS ではない。** 3本は `font-weight` と `font-family`（面ひとりぶんの1本の家族）と、" +
+      "その1本を面に当てる宣言（`:root:has(link[rel=\"canonical\"]…) body { font-family: … }`）",
   ],
   "tools/sprites/deckctrl.mjs": [
     1,

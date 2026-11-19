@@ -49,6 +49,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CSS = join(ROOT, "site", "app", "css", "fonts.css");
+/* 面が島の書体で描くのに、Zen Maru Gothic が字形を持たない字（`subset.py` の `glyphs()` が書く）。
+   2026-11-19 から、字形の無い字は `unicode-range` に入れない（入れるとブラウザは字形の無い1本を
+   取りに行ってから端末の書体へ進む）。**焼けない字なので、焼かれていない字に数えない。**
+   数えると、範囲から外した日に 58 → 123 字へ跳ねた（中身は Ј š ć ㊗ ～ など焼けない字） */
+const ABSENT = join(ROOT, "tools", "fonts", "absent.json");
 
 /* 見るところと、しきい値（上の表のとおり。実測 4 と 50） */
 const WATCH = [
@@ -116,7 +121,7 @@ function count(cov, break_) {
   for (const w of WATCH) {
     const { set, files } = charsOf(w.dirs);
     const use = break_ === "blind" ? new Set() : cov;
-    let miss = [...set].filter((cp) => !use.has(cp) && !outside(cp));
+    let miss = [...set].filter((cp) => !use.has(cp) && !outside(cp) && !absent.has(cp));
     if (break_ === "flood") miss = miss.concat(Array.from({ length: 300 }, (_, i) => 0x9000 + i));
     rows.push({ ...w, files, miss: miss.length, 例: miss.slice(0, 12).map((c) => String.fromCodePoint(c)).join("") });
   }
@@ -133,6 +138,11 @@ function judge(rows, label) {
 
 const css = readFileSync(CSS, "utf8");
 const cov = covered(css);
+/* 無ければ空のまま数える（字形の無い字のぶん多く出るだけで、見落としには倒れない） */
+const absent = new Set();
+try {
+  for (const s of Object.values(JSON.parse(readFileSync(ABSENT, "utf8")))) for (const c of s) absent.add(c.codePointAt(0));
+} catch { console.log(`（${ABSENT} が読めない。字形の無い字も数える）`); }
 if (cov.size < 500) {
   console.log(`✕ ${CSS} から字の範囲を ${cov.size} しか読めなかった。数えるものが無い`);
   process.exit(2);
