@@ -16,7 +16,7 @@
 | 節の一言 | 本人の一言は**節（`<section>`）に1つまで** | `docs/island-misses.md` #323 の決めごと2 |
 | 場面 | 行った人の話（`data-went`）は場面のリンクを**1つだけ**持つ（値段の表の行・測った値の始まりと終わりは数えない）。外の事実（`data-src`）の中に場面のリンクを置かない | #323 の決めごと2（一文ごとにリンクを付けない） |
 | 出どころ | 外の事実（`data-src`）が、出どころのリンク（https・YouTube 以外）と見た日（`<time datetime>`）を持つ | `docs/country-guide.md` 1-2・#323 の決めごと1 |
-| 数 | 窓の数がソフィアの面の数以上（やりたいこと8・見たいもの22・食べたいもの23）。やりたいことの札の絵は全部 `do-<id>` の描いた絵。下限より前に作った面は `FLOOR_BEFORE` に理由つきで外す | #1228（2026-11-19 あやと「ソフィアに比べて全体にしょぼい」「描いた絵と写真が混ざっている」）・`/city-guide` の下限 |
+| 数 | 窓の数がソフィアの面の数以上（やりたいこと8・見たいもの22・食べたいもの23）。やりたいことの札の絵は全部 `do-<id>` の描いた絵。下限より前に作った面は、まだ届いていない足だけを `FLOOR_BEFORE` に理由つきで外す | #1228（2026-11-19 あやと「ソフィアに比べて全体にしょぼい」「描いた絵と写真が混ざっている」）・`/city-guide` の下限 |
 
 ## 2026-11-14 に足した3本（節の一言・場面・出どころ）
 
@@ -444,20 +444,26 @@ def around(s: str, w: str, n: int = 18) -> str:
 # だから**書き出した面の札**を数える。数は本番のソフィア（2026-11-19）: やりたいこと8・見たいもの22・食べたいもの23
 FLOOR = {"do": 8, "see": 22, "eat": 23}
 FLOOR_NAME = {"do": "やりたいこと", "see": "見たいもの", "eat": "食べたいもの"}
-# 下限を決める前に作った面。下限を当てると落ちるが、いま数を足す担当がいない（数を上げるのは #1204 の第2段で、
-# 行ったあとの面に作り変えるとき）。**ここに足すときは理由を書く。** 理由の無い除外は見張りを外したのと同じ
-FLOOR_BEFORE = {
-    "north-macedonia/skopje": "下限（2026-11-19）より前に作った面（やりたいこと7・食べたいもの15）。数を上げるのは #1204 の第2段",
+# 下限を決める前に作った面の、**まだ届いていない足だけ**（面 → 足 → 理由。足は FLOOR の鍵か "drawn"）。
+# 面ごと外すと、届いている足（数）まで見なくなる。**ここに足すときは理由と、届く見込みを書く。**
+# 理由の無い除外は見張りを外したのと同じ。届いたら消す（空になれば面ごと消す）
+FLOOR_BEFORE: dict[str, dict[str, str]] = {
+    "north-macedonia/skopje": {
+        "eat": "下限（2026-11-19）より前に作った面で、食べたいものは15品。足すかどうかは運営が決める（#1228）",
+        "drawn": "やりたいこと8枚のうち描いた絵は teresa の1枚。残り7枚は注文書 python/data/guide/north-macedonia/skopje/art_order.json で頼んである",
+    },
 }
 
 
-def check_floor(art: Node, key: str, r: Report) -> dict[str, int]:
+def check_floor(art: Node, key: str, r: Report, skip: dict[str, str] | None = None) -> dict[str, int]:
     """札の数と、やりたいことの札の絵が全部描いた絵（`/guide/<国>/<街>/do-<id>-*.webp`）か。
 
     札の数は窓（`<dialog id="do-…">` など）で数える。写真の無い見たいものは面から落ちる（`dress` のあと絞る）ので、
     材料の数ではなく窓の数がいま見えている札の数。絵は札（`a.gb-todo-card`）の `<img src>` で見る——描いた絵は
-    manifest から `do-<id>` の名前で入り、借りた写真は `photos/` の下から入る
+    manifest から `do-<id>` の名前で入り、借りた写真は `photos/` の下から入る。
+    `skip` に在る足（`FLOOR_BEFORE` の面の、まだ届いていない足）は数えるだけで落とさない
     """
+    skip = skip or {}
     n = {k: 0 for k in FLOOR}
     for d in art.walk():
         if d.tag == "dialog":
@@ -465,7 +471,7 @@ def check_floor(art: Node, key: str, r: Report) -> dict[str, int]:
             if head in n:
                 n[head] += 1
     for k, low in FLOOR.items():
-        if n[k] < low and "floor" not in BREAK:
+        if n[k] < low and k not in skip and "floor" not in BREAK:
             r.ng("数", f"{FLOOR_NAME[k]}が {n[k]}（下限 {low}。ソフィアの面の数）")
     drawn = re.compile(rf"^/guide/{re.escape(key)}/do-([a-z0-9-]+)-\d+\.webp$")
     cards = [a for a in art.walk() if a.tag == "a" and "gb-todo-card" in a.cls()]
@@ -473,7 +479,7 @@ def check_floor(art: Node, key: str, r: Report) -> dict[str, int]:
         want = (a.attrs.get("href") or "").removeprefix("#do-")
         img = next((i for i in a.walk() if i.tag == "img"), None)
         m = drawn.match((img.attrs.get("src") or "") if img else "")
-        if (m is None or m.group(1) != want) and "drawn" not in BREAK:
+        if (m is None or m.group(1) != want) and "drawn" not in skip and "drawn" not in BREAK:
             got = img.attrs.get("src") if img else "絵が無い"
             r.ng("数", f"やりたいこと「{want}」の札が描いた絵ではない（{got}）")
     if len(cards) != n["do"] and "drawn" not in BREAK:
@@ -573,11 +579,11 @@ def main(argv: list[str] | None = None) -> int:
         if r is None or not r.seen["字"] or (not pre and not r.seen["一言"]):
             print(f"::error::{k}: 面の本文（article.tg / article.gb）か一言が読めない。見るものが無い")
             return 2
-        if k in FLOOR_BEFORE:
-            print(f"  {k}: 数の下限は当てていない（{FLOOR_BEFORE[k]}）")
-        else:
-            n = check_floor(parse(text)[0], k, r)
-            print(f"  {k}: 札の数 " + "・".join(f"{FLOOR_NAME[x]}{n[x]}（下限{FLOOR[x]}）" for x in FLOOR))
+        skip = FLOOR_BEFORE.get(k) or {}
+        n = check_floor(parse(text)[0], k, r, skip)
+        print(f"  {k}: 札の数 " + "・".join(f"{FLOOR_NAME[x]}{n[x]}（下限{FLOOR[x]}）" for x in FLOOR))
+        for leg, why in skip.items():
+            print(f"  {k}: 下限の「{FLOOR_NAME.get(leg, '描いた絵')}」はまだ当てていない（{why}）")
         if pre:
             print(f"  {k}: 行く前の街（材料の city.pre_trip）。facts が {len(rows)}行なので、「行った」の突き合わせは飛ばした")
             if r.seen["一言"]:

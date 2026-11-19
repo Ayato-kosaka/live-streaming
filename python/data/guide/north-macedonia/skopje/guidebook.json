@@ -1295,6 +1295,100 @@
    }
   },
   {
+   "key": "quake-clock",
+   "town": "skopje",
+   "title": "地震で止まった駅の時計を見たい！",
+   "head": "1963年の朝5時17分を指したままの旧駅舎",
+   "points": {
+    "what": [
+     {
+      "text": "旧駅舎（いまはスコピエ市博物館）の壁の時計を見上げる。針は1963年の地震の時刻で止まったまま。",
+      "src": [
+       {
+        "name": "Wikipedia「1963 Skopje earthquake」",
+        "url": "https://en.wikipedia.org/wiki/1963_Skopje_earthquake",
+        "seen": "2026-11-20"
+       },
+       {
+        "name": "Wikipedia「Museum of the City of Skopje」",
+        "url": "https://en.wikipedia.org/wiki/Museum_of_the_City_of_Skopje",
+        "seen": "2026-11-20"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1963年7月26日の朝5時17分、マグニチュード6.1の地震で街の約8割が壊れ、1,000人以上が亡くなった。",
+      "src": [
+       {
+        "name": "Wikipedia「1963 Skopje earthquake」",
+        "url": "https://en.wikipedia.org/wiki/1963_Skopje_earthquake",
+        "seen": "2026-11-20"
+       }
+      ]
+     },
+     {
+      "text": "博物館は、大きく壊れた旧駅舎の残った3分の1に1970年から入っていて、紀元前3000年ごろからの街の歴史を並べている。",
+      "src": [
+       {
+        "name": "Wikipedia「Museum of the City of Skopje」",
+        "url": "https://en.wikipedia.org/wiki/Museum_of_the_City_of_Skopje",
+        "seen": "2026-11-20"
+       }
+      ]
+     }
+    ],
+    "how": [],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「1963 Skopje earthquake」",
+     "url": "https://en.wikipedia.org/wiki/1963_Skopje_earthquake",
+     "seen": "2026-11-20"
+    },
+    {
+     "name": "Wikipedia「Museum of the City of Skopje」",
+     "url": "https://en.wikipedia.org/wiki/Museum_of_the_City_of_Skopje",
+     "seen": "2026-11-20"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "museum"
+    ]
+   },
+   "photo": {
+    "commons": [
+     {
+      "file": "Antigua estación de ferrocarril, Skopie, Macedonia, 2014-04-17, DD 15.JPG",
+      "by": "Diego Delso",
+      "lic": "CC BY-SA 3.0",
+      "page": "https://commons.wikimedia.org/wiki/File:Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG",
+      "alt": "地震で半分が壊れたまま残る旧駅舎（いまはスコピエ市博物館）",
+      "w": 4649,
+      "src": [
+       {
+        "name": "Wikimedia Commons（ファイルのページ）",
+        "url": "https://commons.wikimedia.org/wiki/File:Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG",
+        "seen": "2026-11-15"
+       }
+      ],
+      "thumbs": {
+       "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG/250px-Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG",
+       "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG/500px-Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG",
+       "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG/960px-Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG"
+      }
+     }
+    ]
+   }
+  },
+  {
    "key": "matka",
    "town": "matka-canyon",
    "title": "マトカ渓谷へ日帰りで行きたい！",
